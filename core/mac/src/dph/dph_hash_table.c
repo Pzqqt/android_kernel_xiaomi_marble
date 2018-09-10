@@ -34,6 +34,7 @@
 #include "dph_global.h"
 #include "lim_api.h"
 #include "wma_if.h"
+#include "wlan_mlme_api.h"
 
 /* --------------------------------------------------------------------- */
 /**
@@ -258,8 +259,8 @@ tpDphHashNode dph_init_sta_state(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 	qdf_mem_copy(pStaDs->staAddr, staAddr, sizeof(tSirMacAddr));
 
 	/* Initialize fragmentation threshold */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_FRAGMENTATION_THRESHOLD, &val) !=
-	    QDF_STATUS_SUCCESS)
+	if (wlan_mlme_get_frag_threshold(pMac->psoc, &val) !=
+					 QDF_STATUS_SUCCESS)
 		pe_warn("could not retrieve fragmentation threshold");
 	else
 		pStaDs->fragSize = (uint16_t) val;

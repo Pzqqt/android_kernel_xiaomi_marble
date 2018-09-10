@@ -1678,52 +1678,48 @@ wma_process_update_beacon_params(tp_wma_handle wma,
 }
 
 /**
- * wma_update_cfg_params() - update cfg parameters to target
+ * wma_update_rts_params() - update cfg parameters to target
  * @wma: wma handle
- * @cfgParam: cfg parameter
+ * @value: rts_threshold
  *
  * Return: none
  */
-void wma_update_cfg_params(tp_wma_handle wma, struct scheduler_msg *cfgParam)
+void wma_update_rts_params(tp_wma_handle wma, uint32_t value)
 {
 	uint8_t vdev_id;
-	uint32_t param_id;
-	uint32_t cfg_val;
 	QDF_STATUS ret;
-	/* get mac to access CFG data base */
-	struct sAniSirGlobal *pmac;
-
-	switch (cfgParam->bodyval) {
-	case WNI_CFG_RTS_THRESHOLD:
-		param_id = WMI_VDEV_PARAM_RTS_THRESHOLD;
-		break;
-	case WNI_CFG_FRAGMENTATION_THRESHOLD:
-		param_id = WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD;
-		break;
-	default:
-		WMA_LOGD("Unhandled cfg parameter %d", cfgParam->bodyval);
-		return;
-	}
-
-	pmac = cds_get_context(QDF_MODULE_ID_PE);
-
-	if (NULL == pmac) {
-		WMA_LOGE("%s: Failed to get pmac", __func__);
-		return;
-	}
-
-	if (wlan_cfg_get_int(pmac, (uint16_t) cfgParam->bodyval,
-			     &cfg_val) != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("Failed to get value for CFG PARAMS %d. returning without updating",
-			cfgParam->bodyval);
-		return;
-	}
 
 	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
 		if (wma->interfaces[vdev_id].handle != 0) {
 			ret = wma_vdev_set_param(wma->wmi_handle,
-							      vdev_id, param_id,
-							      cfg_val);
+						 vdev_id,
+						 WMI_VDEV_PARAM_RTS_THRESHOLD,
+						 value);
+			if (QDF_IS_STATUS_ERROR(ret))
+				WMA_LOGE("Update cfg param fail for vdevId %d",
+					 vdev_id);
+		}
+	}
+}
+
+/**
+ * wma_update_frag_params() - update cfg parameters to target
+ * @wma: wma handle
+ * @value: frag_threshold
+ *
+ * Return: none
+ */
+void wma_update_frag_params(tp_wma_handle wma, uint32_t value)
+{
+	uint8_t vdev_id;
+	QDF_STATUS ret;
+
+	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
+		if (wma->interfaces[vdev_id].handle != 0) {
+			ret = wma_vdev_set_param(wma->wmi_handle,
+					vdev_id,
+					WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD,
+					value);
 			if (QDF_IS_STATUS_ERROR(ret))
 				WMA_LOGE("Update cfg params failed for vdevId %d",
 					vdev_id);

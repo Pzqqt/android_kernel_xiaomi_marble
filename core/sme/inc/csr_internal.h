@@ -400,10 +400,8 @@ struct csr_neighbor_roamconfig {
 
 struct csr_config {
 	uint32_t agingCount;
-	uint32_t FragmentationThreshold;
 	uint32_t channelBondingMode24GHz;
 	uint32_t channelBondingMode5GHz;
-	uint32_t RTSThreshold;
 	eCsrPhyMode phyMode;
 	enum csr_cfgdot11mode uCfgDot11Mode;
 	enum band_info eBand;

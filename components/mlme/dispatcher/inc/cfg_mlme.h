@@ -39,6 +39,7 @@
 #include "cfg_mlme_sap.h"
 #include "cfg_mlme_scoring.h"
 #include "cfg_mlme_oce.h"
+#include "cfg_mlme_threshold.h"
 #include "cfg_mlme_feature_flag.h"
 #include "cfg_mlme_wep_params.h"
 
@@ -61,6 +62,8 @@
 	CFG_SCORING_ALL \
 	CFG_STA_ALL \
 	CFG_VHT_CAPS_ALL \
-	CFG_WEP_PARAMS_ALL
+	CFG_WEP_PARAMS_ALL \
+	CFG_THRESHOLD_ALL \
+	CFG_VHT_CAPS_ALL
 
 #endif /* __CFG_MLME_H */

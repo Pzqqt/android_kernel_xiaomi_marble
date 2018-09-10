@@ -121,53 +121,6 @@ struct hdd_context;
 #define CFG_ENABLE_NUD_TRACKING_DEFAULT         (1)
 #endif
 
-/*
- * <ini>
- * RTSThreshold - Will provide RTSThreshold
- * @Min: 0
- * @Max: 1048576
- * @Default: 2347
- *
- * This ini is used to set default RTSThreshold
- * If minimum value 0 is selectd then it will use always RTS
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_RTS_THRESHOLD_NAME                 "RTSThreshold"
-#define CFG_RTS_THRESHOLD_MIN                  WNI_CFG_RTS_THRESHOLD_STAMIN     /* min is 0, meaning always use RTS. */
-#define CFG_RTS_THRESHOLD_MAX                  WNI_CFG_RTS_THRESHOLD_STAMAX     /* max is the max frame size */
-#define CFG_RTS_THRESHOLD_DEFAULT              WNI_CFG_RTS_THRESHOLD_STADEF
-
-/*
- * <ini>
- * gFragmentationThreshold - It will set fragmentation threshold
- * @Min: 256
- * @Max: 8000
- * @Default: 8000
- *
- * This ini is used to indicate default fragmentation threshold
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_FRAG_THRESHOLD_NAME                "gFragmentationThreshold"
-#define CFG_FRAG_THRESHOLD_MIN                 WNI_CFG_FRAGMENTATION_THRESHOLD_STAMIN
-#define CFG_FRAG_THRESHOLD_MAX                 WNI_CFG_FRAGMENTATION_THRESHOLD_STAMAX
-#define CFG_FRAG_THRESHOLD_DEFAULT             WNI_CFG_FRAGMENTATION_THRESHOLD_STADEF
-
 #define CFG_OPERATING_CHANNEL_NAME             "gOperatingChannel"
 #define CFG_OPERATING_CHANNEL_MIN              (0)
 #define CFG_OPERATING_CHANNEL_MAX              (14)
@@ -10443,8 +10396,6 @@ struct hdd_config {
 	bool enable_nud_tracking;
 #endif
 	bool enable_connected_scan;
-	uint32_t RTSThreshold;
-	uint32_t FragmentationThreshold;
 	uint8_t OperatingChannel;
 	bool ShortSlotTimeEnabled;
 	bool Is11dSupportEnabled;

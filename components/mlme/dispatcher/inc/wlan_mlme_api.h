@@ -330,6 +330,48 @@ QDF_STATUS wlan_mlme_get_oce_sap_enabled_info(struct wlan_objmgr_psoc *psoc,
 					      bool *value);
 
 /**
+ * wlan_mlme_get_rts_threshold() - Get the RTS threshold config
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_rts_threshold(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *value);
+
+/**
+ * wlan_mlme_set_rts_threshold() - Set the RTS threshold config
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_rts_threshold(struct wlan_objmgr_psoc *psoc,
+				       uint32_t value);
+
+/**
+ * wlan_mlme_get_frag_threshold() - Get the Fragmentation threshold
+ *                                  config
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_frag_threshold(struct wlan_objmgr_psoc *psoc,
+					uint32_t *value);
+
+/**
+ * wlan_mlme_set_frag_threshold() - Set the Fragmentation threshold
+ *                                  config
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_frag_threshold(struct wlan_objmgr_psoc *psoc,
+					uint32_t value);
+
+/**
  * wlan_mlme_get_fils_enabled_info() - Get the fils enable info for driver
  * @psoc: pointer to psoc object
  * @value: pointer to the value which will be filled for the caller

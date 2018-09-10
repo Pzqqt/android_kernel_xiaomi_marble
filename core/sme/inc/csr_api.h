@@ -1042,13 +1042,11 @@ struct csr_neighbor_report_offload_params {
 };
 
 typedef struct tagCsrConfigParam {
-	uint32_t FragmentationThreshold;
 	/* keep this uint32_t. This gets converted to ePhyChannelBondState */
 	uint32_t channelBondingMode24GHz;
 	uint32_t channelBondingMode5GHz;
 	eCsrPhyMode phyMode;
 	enum band_info eBand;
-	uint32_t RTSThreshold;
 	uint32_t HeartbeatThresh50;
 	uint32_t HeartbeatThresh24;
 	enum band_info bandCapability;     /* indicate hw capability */

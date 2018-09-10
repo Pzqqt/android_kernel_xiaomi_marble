@@ -649,7 +649,9 @@ void wma_update_protection_mode(tp_wma_handle wma, uint8_t vdev_id,
 void wma_process_update_beacon_params(tp_wma_handle wma,
 				 tUpdateBeaconParams *bcn_params);
 
-void wma_update_cfg_params(tp_wma_handle wma, struct scheduler_msg *cfgParam);
+void wma_update_rts_params(tp_wma_handle wma, uint32_t value);
+
+void wma_update_frag_params(tp_wma_handle wma, uint32_t value);
 
 void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info);
 

@@ -54,6 +54,7 @@
 #include <wlan_scan_public_structs.h>
 #include <wlan_action_oui_public_struct.h>
 #include <wlan_action_oui_ucfg_api.h>
+#include "wlan_mlme_api.h"
 #include <wlan_utility.h>
 #include "wlan_mlme_public_struct.h"
 #include "cfg_mlme.h"
@@ -1317,10 +1318,8 @@ void csr_set_default_dot11_mode(tpAniSirGlobal pMac)
 
 void csr_set_global_cfgs(tpAniSirGlobal pMac)
 {
-
-	cfg_set_int(pMac, WNI_CFG_FRAGMENTATION_THRESHOLD,
-			csr_get_frag_thresh(pMac));
-	cfg_set_int(pMac, WNI_CFG_RTS_THRESHOLD, csr_get_rts_thresh(pMac));
+	wlan_mlme_set_frag_threshold(pMac->psoc, csr_get_frag_thresh(pMac));
+	wlan_mlme_set_rts_threshold(pMac->psoc, csr_get_rts_thresh(pMac));
 	cfg_set_int(pMac, WNI_CFG_11D_ENABLED,
 			((pMac->roam.configParam.Is11hSupportEnabled) ?
 			pMac->roam.configParam.Is11dSupportEnabled :
@@ -1676,14 +1675,11 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.phyMode = eCSR_DOT11_MODE_AUTO;
 	pMac->roam.configParam.eBand = BAND_ALL;
 	pMac->roam.configParam.uCfgDot11Mode = eCSR_CFG_DOT11_MODE_AUTO;
-	pMac->roam.configParam.FragmentationThreshold =
-		eCSR_DOT11_FRAG_THRESH_DEFAULT;
 	pMac->roam.configParam.HeartbeatThresh24 = 40;
 	pMac->roam.configParam.HeartbeatThresh50 = 40;
 	pMac->roam.configParam.Is11dSupportEnabled = false;
 	pMac->roam.configParam.Is11eSupportEnabled = true;
 	pMac->roam.configParam.Is11hSupportEnabled = true;
-	pMac->roam.configParam.RTSThreshold = 2346;
 	pMac->roam.configParam.shortSlotTime = true;
 	pMac->roam.configParam.WMMSupportMode = eCsrRoamWmmAuto;
 	pMac->roam.configParam.ProprietaryRatesEnabled = true;
@@ -2773,8 +2769,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			(pParam->WMMSupportMode == eCsrRoamWmmNoQos) ? 0 : 1);
 		pMac->roam.configParam.Is11eSupportEnabled =
 			pParam->Is11eSupportEnabled;
-		pMac->roam.configParam.FragmentationThreshold =
-			pParam->FragmentationThreshold;
 		pMac->roam.configParam.Is11dSupportEnabled =
 			pParam->Is11dSupportEnabled;
 		pMac->roam.configParam.Is11hSupportEnabled =
@@ -2807,7 +2801,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.channelBondingMode5GHz =
 			csr_convert_cb_ini_value_to_phy_cb_state(pParam->
 							channelBondingMode5GHz);
-		pMac->roam.configParam.RTSThreshold = pParam->RTSThreshold;
 		pMac->roam.configParam.phyMode = pParam->phyMode;
 		pMac->roam.configParam.shortSlotTime = pParam->shortSlotTime;
 		pMac->roam.configParam.HeartbeatThresh24 =
@@ -3199,14 +3192,12 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->is_force_1x1 = cfg_params->is_force_1x1;
 	pParam->WMMSupportMode = cfg_params->WMMSupportMode;
 	pParam->Is11eSupportEnabled = cfg_params->Is11eSupportEnabled;
-	pParam->FragmentationThreshold = cfg_params->FragmentationThreshold;
 	pParam->Is11dSupportEnabled = cfg_params->Is11dSupportEnabled;
 	pParam->Is11hSupportEnabled = cfg_params->Is11hSupportEnabled;
 	pParam->channelBondingMode24GHz = csr_convert_phy_cb_state_to_ini_value(
 					cfg_params->channelBondingMode24GHz);
 	pParam->channelBondingMode5GHz = csr_convert_phy_cb_state_to_ini_value(
 					cfg_params->channelBondingMode5GHz);
-	pParam->RTSThreshold = cfg_params->RTSThreshold;
 	pParam->phyMode = cfg_params->phyMode;
 	pParam->shortSlotTime = cfg_params->shortSlotTime;
 	pParam->HeartbeatThresh24 = cfg_params->HeartbeatThresh24;

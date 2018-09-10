@@ -614,6 +614,71 @@ QDF_STATUS ucfg_mlme_get_oce_sap_enabled_info(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_get_rts_threshold() - Get the rts threshold config
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_rts_threshold(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *value)
+{
+	return wlan_mlme_get_rts_threshold(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_rts_threshold() - Set the rts threshold config
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_rts_threshold(struct wlan_objmgr_psoc *psoc,
+				       uint32_t value)
+{
+	return wlan_mlme_set_rts_threshold(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_frag_threshold() - Get the fragmentation threshold
+ *                                  config
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_frag_threshold(struct wlan_objmgr_psoc *psoc,
+					uint32_t *value)
+{
+	return wlan_mlme_get_frag_threshold(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_frag_threshold() - set the frag threshold config
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_frag_threshold(struct wlan_objmgr_psoc *psoc,
+					uint32_t value)
+{
+	return wlan_mlme_set_frag_threshold(psoc, value);
+}
+
+/**
  * ucfg_mlme_get_fils_enabled_info() - Get fils enable/disable info
  *
  * @psoc: pointer to psoc object

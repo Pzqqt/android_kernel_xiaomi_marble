@@ -101,6 +101,9 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "cfg_mlme_sta.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_mlme_public_struct.h"
+#include "cfg_ucfg_api.h"
+#include "cfg_mlme_threshold.h"
 
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
@@ -4449,21 +4452,26 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_RTSCTS:
 	{
 		uint32_t value;
+		uint32_t rts_threshold_val;
 
 		if (!mac_handle)
 			return -EINVAL;
 
 		hdd_debug("WMI_VDEV_PARAM_ENABLE_RTSCTS val 0x%x", set_value);
+		status = ucfg_mlme_get_rts_threshold(hdd_ctx->psoc,
+						     &rts_threshold_val);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get rts threshold failed");
+			return -EINVAL;
+		}
 
 		if ((set_value & HDD_RTSCTS_EN_MASK) ==
 		    HDD_RTSCTS_ENABLE)
-			value =
-				(WLAN_HDD_GET_CTX(adapter))->config->
-				RTSThreshold;
+			value = rts_threshold_val;
 		else if (((set_value & HDD_RTSCTS_EN_MASK) == 0)
 			 || ((set_value & HDD_RTSCTS_EN_MASK) ==
 			     HDD_CTS_ENABLE)) {
-			value = WNI_CFG_RTS_THRESHOLD_STAMAX;
+			value = cfg_max(CFG_RTS_THRESHOLD);
 		} else {
 			ret = -EIO;
 			break;
@@ -4473,8 +4481,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 					  WMI_VDEV_PARAM_ENABLE_RTSCTS,
 					  set_value, VDEV_CMD);
 		if (!ret) {
-			if (sme_cfg_set_int(mac_handle, WNI_CFG_RTS_THRESHOLD,
-					    value) != QDF_STATUS_SUCCESS) {
+			if (ucfg_mlme_set_rts_threshold(hdd_ctx->psoc,
+							value) !=
+							QDF_STATUS_SUCCESS) {
 				hdd_err("FAILED TO SET RTSCTS");
 				ret = -EIO;
 				break;

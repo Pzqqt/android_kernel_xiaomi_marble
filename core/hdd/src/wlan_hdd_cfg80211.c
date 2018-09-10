@@ -118,7 +118,6 @@
 #include <wlan_hdd_active_tos.h>
 #include <wlan_hdd_sar_limits.h>
 #include <wlan_hdd_ota_test.h>
-#include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
 #include "wlan_extscan_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
@@ -126,6 +125,7 @@
 #include "wlan_crypto_global_api.h"
 #include "wlan_nl_to_crypto_params.h"
 #include "wlan_crypto_global_def.h"
+#include "cfg_mlme_threshold.h"
 #include "cfg_ucfg_api.h"
 
 #define g_mode_rates_size (12)
@@ -17541,7 +17541,6 @@ static int __wlan_hdd_cfg80211_set_wiphy_params(struct wiphy *wiphy,
 						u32 changed)
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	mac_handle_t mac_handle;
 	int status;
 
 	hdd_enter();
@@ -17559,21 +17558,21 @@ static int __wlan_hdd_cfg80211_set_wiphy_params(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	mac_handle = hdd_ctx->mac_handle;
 	if (changed & WIPHY_PARAM_RTS_THRESHOLD) {
 		u32 rts_threshold = (wiphy->rts_threshold == -1) ?
-				    WNI_CFG_RTS_THRESHOLD_STAMAX : wiphy->rts_threshold;
+				     cfg_max(CFG_RTS_THRESHOLD) :
+				     wiphy->rts_threshold;
 
-		if ((WNI_CFG_RTS_THRESHOLD_STAMIN > rts_threshold) ||
-		    (WNI_CFG_RTS_THRESHOLD_STAMAX < rts_threshold)) {
+		if ((cfg_min(CFG_RTS_THRESHOLD) > rts_threshold) ||
+		    (cfg_max(CFG_RTS_THRESHOLD) < rts_threshold)) {
 			hdd_err("Invalid RTS Threshold value: %u",
 				rts_threshold);
 			return -EINVAL;
 		}
 
-		if (0 != sme_cfg_set_int(mac_handle, WNI_CFG_RTS_THRESHOLD,
-					 rts_threshold)) {
-			hdd_err("sme_cfg_set_int failed for rts_threshold value %u",
+		if (0 != ucfg_mlme_set_rts_threshold(hdd_ctx->psoc,
+		    rts_threshold)) {
+			hdd_err("mlme_set_rts_threshold failed for val %u",
 				rts_threshold);
 			return -EIO;
 		}
@@ -17583,20 +17582,19 @@ static int __wlan_hdd_cfg80211_set_wiphy_params(struct wiphy *wiphy,
 
 	if (changed & WIPHY_PARAM_FRAG_THRESHOLD) {
 		u16 frag_threshold = (wiphy->frag_threshold == -1) ?
-				     WNI_CFG_FRAGMENTATION_THRESHOLD_STAMAX :
+				     cfg_max(CFG_FRAG_THRESHOLD) :
 				     wiphy->frag_threshold;
 
-		if ((WNI_CFG_FRAGMENTATION_THRESHOLD_STAMIN > frag_threshold) ||
-		    (WNI_CFG_FRAGMENTATION_THRESHOLD_STAMAX < frag_threshold)) {
+		if ((cfg_min(CFG_FRAG_THRESHOLD) > frag_threshold) ||
+		    (cfg_max(CFG_FRAG_THRESHOLD) < frag_threshold)) {
 			hdd_err("Invalid frag_threshold value %hu",
 				frag_threshold);
 			return -EINVAL;
 		}
 
-		if (0 != sme_cfg_set_int(mac_handle,
-					 WNI_CFG_FRAGMENTATION_THRESHOLD,
-					 frag_threshold)) {
-			hdd_err("sme_cfg_set_int failed for frag_threshold value %hu",
+		if (0 != ucfg_mlme_set_frag_threshold(hdd_ctx->psoc,
+						      frag_threshold)) {
+			hdd_err("mlme_set_frag_threshold failed for val %hu",
 				frag_threshold);
 			return -EIO;
 		}

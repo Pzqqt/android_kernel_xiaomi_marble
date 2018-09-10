@@ -376,20 +376,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_CONNECTED_SCAN_MIN,
 		     CFG_ENABLE_CONNECTED_SCAN_MAX),
 
-	REG_VARIABLE(CFG_RTS_THRESHOLD_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, RTSThreshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_RTS_THRESHOLD_DEFAULT,
-		     CFG_RTS_THRESHOLD_MIN,
-		     CFG_RTS_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_FRAG_THRESHOLD_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, FragmentationThreshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_FRAG_THRESHOLD_DEFAULT,
-		     CFG_FRAG_THRESHOLD_MIN,
-		     CFG_FRAG_THRESHOLD_MAX),
-
 	REG_VARIABLE(CFG_OPERATING_CHANNEL_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, OperatingChannel,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5604,17 +5590,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_AP_LINK_MONITOR_TIMEOUT to CFG");
 	}
 
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_FRAGMENTATION_THRESHOLD,
-		    config->FragmentationThreshold) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_FRAGMENTATION_THRESHOLD to CFG");
-	}
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_RTS_THRESHOLD,
-		     config->RTSThreshold) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_RTS_THRESHOLD to CFG");
-	}
-
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_11D_ENABLED,
 		     config->Is11dSupportEnabled) == QDF_STATUS_E_FAILURE) {
 		status = false;
@@ -5778,10 +5753,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	/* Config params obtained from the registry
 	 * To Do: set regulatory information here
 	 */
-
-	smeConfig->csrConfig.RTSThreshold = pConfig->RTSThreshold;
-	smeConfig->csrConfig.FragmentationThreshold =
-		pConfig->FragmentationThreshold;
 	smeConfig->csrConfig.shortSlotTime = pConfig->ShortSlotTimeEnabled;
 	smeConfig->csrConfig.Is11dSupportEnabled = pConfig->Is11dSupportEnabled;
 	smeConfig->csrConfig.HeartbeatThresh24 = pConfig->HeartbeatThresh24;

@@ -1690,12 +1690,12 @@ bool csr_is_nullssid(uint8_t *pBssSsid, uint8_t len)
 
 uint32_t csr_get_frag_thresh(tpAniSirGlobal mac_ctx)
 {
-	return mac_ctx->roam.configParam.FragmentationThreshold;
+	return mac_ctx->mlme_cfg->threshold.frag_threshold;
 }
 
 uint32_t csr_get_rts_thresh(tpAniSirGlobal mac_ctx)
 {
-	return mac_ctx->roam.configParam.RTSThreshold;
+	return mac_ctx->mlme_cfg->threshold.rts_threshold;
 }
 
 static eCsrPhyMode csr_translate_to_phy_mode_from_bss_desc(

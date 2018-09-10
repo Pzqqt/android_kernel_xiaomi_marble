@@ -75,6 +75,7 @@
 #include "init_deinit_lmac.h"
 #include <target_if.h>
 #include "wlan_mlme_public_struct.h"
+#include "wlan_mlme_api.h"
 
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address
@@ -2550,8 +2551,9 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("Failed to set WMI VDEV MCC_BROADCAST_PROBE_ENABLE");
 
-	if (wlan_cfg_get_int(mac, WNI_CFG_RTS_THRESHOLD,
-			     &cfg_val) == QDF_STATUS_SUCCESS) {
+	if (wlan_mlme_get_rts_threshold(mac->psoc,
+					&cfg_val) ==
+					QDF_STATUS_SUCCESS) {
 		ret = wma_vdev_set_param(wma_handle->wmi_handle,
 					self_sta_req->session_id,
 					WMI_VDEV_PARAM_RTS_THRESHOLD,
@@ -2559,11 +2561,12 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		if (QDF_IS_STATUS_ERROR(ret))
 			WMA_LOGE("Failed to set WMI_VDEV_PARAM_RTS_THRESHOLD");
 	} else {
-		WMA_LOGE("Failed to get value for WNI_CFG_RTS_THRESHOLD, leaving unchanged");
+		WMA_LOGE("Fail to get val for rts threshold, leave unchanged");
 	}
 
-	if (wlan_cfg_get_int(mac, WNI_CFG_FRAGMENTATION_THRESHOLD,
-			     &cfg_val) == QDF_STATUS_SUCCESS) {
+	if (wlan_mlme_get_frag_threshold(mac->psoc,
+					 &cfg_val) ==
+					 QDF_STATUS_SUCCESS) {
 		ret = wma_vdev_set_param(wma_handle->wmi_handle,
 					self_sta_req->session_id,
 					WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD,
@@ -2571,7 +2574,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		if (QDF_IS_STATUS_ERROR(ret))
 			WMA_LOGE("Failed to set WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD");
 	} else {
-		WMA_LOGE("Failed to get value for WNI_CFG_FRAGMENTATION_THRESHOLD, leaving unchanged");
+		WMA_LOGE("Fail to get val for frag threshold, leave unchanged");
 	}
 
 	ht_cap_info = &mac->mlme_cfg->ht_caps.ht_cap_info;
