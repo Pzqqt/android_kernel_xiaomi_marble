@@ -133,6 +133,31 @@ int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 int hdd_objmgr_release_and_destroy_vdev(struct hdd_adapter *adapter);
 
 /**
+ * hdd_objmgr_get_vdev() - Get reference of vdev from adapter
+ * @adapter: hdd adapter
+ *
+ * This API gets vdev object reference from hdd adapter
+ *
+ * Return: pointer to vdev object for success, NULL for failure
+ */
+#define hdd_objmgr_get_vdev(adapter) \
+	__hdd_objmgr_get_vdev(adapter, __func__)
+struct wlan_objmgr_vdev *__hdd_objmgr_get_vdev(struct hdd_adapter *adapter,
+					       const char *func);
+
+/**
+ * hdd_objmgr_put_vdev() - Release reference of vdev from adapter
+ * @adapter: hdd adapter
+ *
+ * This API releases vdev object reference from hdd adapter
+ *
+ * Return: void
+ */
+#define hdd_objmgr_put_vdev(adapter) \
+	__hdd_objmgr_put_vdev(adapter, __func__)
+void __hdd_objmgr_put_vdev(struct hdd_adapter *adapter, const char *func);
+
+/**
  * hdd_objmgr_set_peer_mlme_auth_state() - set the peer mlme auth state
  * @vdev: vdev pointer
  * @is_authenticated: Peer mlme auth state true/false

@@ -748,6 +748,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 #endif
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
+	struct wlan_objmgr_vdev *vdev;
 
 	hdd_enter_dev(dev);
 
@@ -811,12 +812,16 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 		break;
 
 	case NETDEV_GOING_DOWN:
-		if (ucfg_scan_get_vdev_status(adapter->vdev) !=
+		vdev = hdd_objmgr_get_vdev(adapter);
+		if (!vdev)
+			break;
+		if (ucfg_scan_get_vdev_status(vdev) !=
 				SCAN_NOT_IN_PROGRESS) {
 			wlan_abort_scan(hdd_ctx->pdev, INVAL_PDEV_ID,
 					adapter->session_id, INVALID_SCAN_ID,
 					true);
 		}
+		hdd_objmgr_put_vdev(adapter);
 		cds_flush_work(&adapter->scan_block_work);
 		/* Need to clean up blocked scan request */
 		wlan_hdd_cfg80211_scan_block_cb(&adapter->scan_block_work);
@@ -3914,20 +3919,31 @@ QDF_STATUS hdd_sme_close_session_callback(uint8_t session_id)
 
 int hdd_vdev_ready(struct hdd_adapter *adapter)
 {
+	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS status;
 
-	status = pmo_vdev_ready(adapter->vdev);
-	if (QDF_IS_STATUS_ERROR(status))
-		return qdf_status_to_os_return(status);
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
 
-	status = ucfg_reg_11d_vdev_created_update(adapter->vdev);
-	if (QDF_IS_STATUS_ERROR(status))
+	status = pmo_vdev_ready(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_objmgr_put_vdev(adapter);
 		return qdf_status_to_os_return(status);
+	}
+
+	status = ucfg_reg_11d_vdev_created_update(vdev);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_objmgr_put_vdev(adapter);
+		return qdf_status_to_os_return(status);
+	}
 
 	if (wma_capability_enhanced_mcast_filter())
-		status = ucfg_pmo_enhanced_mc_filter_enable(adapter->vdev);
+		status = ucfg_pmo_enhanced_mc_filter_enable(vdev);
 	else
-		status = ucfg_pmo_enhanced_mc_filter_disable(adapter->vdev);
+		status = ucfg_pmo_enhanced_mc_filter_disable(vdev);
+
+	hdd_objmgr_put_vdev(adapter);
 
 	return qdf_status_to_os_return(status);
 }
@@ -3938,6 +3954,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	int errno;
 	struct hdd_context *hdd_ctx;
 	uint8_t vdev_id;
+	struct wlan_objmgr_vdev *vdev;
 
 	vdev_id = adapter->session_id;
 	hdd_info("destroying vdev %d", vdev_id);
@@ -3948,8 +3965,12 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 		return -EINVAL;
 	}
 
-	status = ucfg_reg_11d_vdev_delete_update(adapter->vdev);
-	ucfg_scan_set_vdev_del_in_progress(adapter->vdev);
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+	status = ucfg_reg_11d_vdev_delete_update(vdev);
+	ucfg_scan_set_vdev_del_in_progress(vdev);
+	hdd_objmgr_put_vdev(adapter);
 
 	/* close sme session (destroy vdev in firmware via legacy API) */
 	qdf_event_reset(&adapter->qdf_session_close_event);
@@ -4029,6 +4050,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 	bool bval;
 	struct hdd_context *hdd_ctx;
 	struct sme_session_params sme_session_params = {0};
+	struct wlan_objmgr_vdev *vdev;
 
 	hdd_info("creating new vdev");
 
@@ -4115,9 +4137,13 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 	}
 
 	if (adapter->device_mode == QDF_STA_MODE ||
-	    adapter->device_mode == QDF_P2P_CLIENT_MODE)
-		wlan_vdev_set_max_peer_count(adapter->vdev,
-					     HDD_MAX_VDEV_PEER_COUNT);
+	    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
+		vdev = hdd_objmgr_get_vdev(adapter);
+		if (!vdev)
+			goto hdd_vdev_destroy_procedure;
+		wlan_vdev_set_max_peer_count(vdev, HDD_MAX_VDEV_PEER_COUNT);
+		hdd_objmgr_put_vdev(adapter);
+	}
 
 	hdd_info("vdev %d created successfully", adapter->session_id);
 
@@ -4298,7 +4324,8 @@ void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
 	hdd_exit();
 }
 
-static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
+static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
 				bool rtnl_held)
 {
 	struct net_device *dev = NULL;
@@ -4313,6 +4340,7 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter 
 	hdd_nud_deinit_tracking(adapter);
 	qdf_mutex_destroy(&adapter->disconnection_status_lock);
 	hdd_apf_context_destroy(adapter);
+	qdf_spinlock_destroy(&adapter->vdev_lock);
 
 	wlan_hdd_debugfs_csr_deinit(adapter);
 
@@ -5048,6 +5076,8 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		return NULL;
 	}
 
+	qdf_spinlock_create(&adapter->vdev_lock);
+
 	hdd_init_completion(adapter);
 	INIT_WORK(&adapter->scan_block_work, wlan_hdd_cfg80211_scan_block_cb);
 	qdf_list_create(&adapter->blocked_scan_request_q, WLAN_MAX_SCAN_COUNT);
@@ -5215,6 +5245,7 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 	unsigned long rc;
 	tsap_config_t *sap_config;
 	mac_handle_t mac_handle;
+	struct wlan_objmgr_vdev *vdev;
 
 	hdd_enter();
 
@@ -5310,9 +5341,15 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 #endif
 #endif
 
-		if (adapter->device_mode == QDF_STA_MODE)
-			wlan_cfg80211_sched_scan_stop(hdd_ctx->pdev,
-						      adapter->dev);
+		if (adapter->device_mode == QDF_STA_MODE) {
+			struct wlan_objmgr_vdev *vdev;
+
+			vdev = hdd_objmgr_get_vdev(adapter);
+			if (vdev) {
+				wlan_cfg80211_sched_scan_stop(vdev);
+				hdd_objmgr_put_vdev(adapter);
+			}
+		}
 
 		if (wlan_hdd_try_disconnect(adapter)) {
 			hdd_err("Can't disconnect adapter");
@@ -5414,8 +5451,12 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 		/*
 		 * If Do_Not_Break_Stream was enabled clear avoid channel list.
 		 */
-		if (policy_mgr_is_dnsc_set(adapter->vdev))
-			wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, 0);
+		vdev = hdd_objmgr_get_vdev(adapter);
+		if (vdev) {
+			if (policy_mgr_is_dnsc_set(vdev))
+				wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, 0);
+			hdd_objmgr_put_vdev(adapter);
+		}
 
 #ifdef WLAN_OPEN_SOURCE
 		cancel_work_sync(&adapter->ipv4_notifier_work);
@@ -5497,9 +5538,15 @@ static void hdd_reset_scan_operation(struct hdd_context *hdd_ctx,
 	case QDF_NDI_MODE:
 		wlan_hdd_scan_abort(adapter);
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
-		if (adapter->device_mode == QDF_STA_MODE)
-			wlan_cfg80211_sched_scan_stop(hdd_ctx->pdev,
-						      adapter->dev);
+		if (adapter->device_mode == QDF_STA_MODE) {
+			struct wlan_objmgr_vdev *vdev;
+
+			vdev = hdd_objmgr_get_vdev(adapter);
+			if (vdev) {
+				wlan_cfg80211_sched_scan_stop(vdev);
+				hdd_objmgr_put_vdev(adapter);
+			}
+		}
 		break;
 	case QDF_P2P_GO_MODE:
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
@@ -5520,6 +5567,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 	struct qdf_mac_addr peerMacAddr;
 	int sta_id;
 	bool value;
+	struct wlan_objmgr_vdev *vdev;
 
 	hdd_enter();
 
@@ -5533,7 +5581,11 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		if ((adapter->device_mode == QDF_STA_MODE) ||
 		    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 			/* Stop tdls timers */
-			hdd_notify_tdls_reset_adapter(adapter->vdev);
+			vdev = hdd_objmgr_get_vdev(adapter);
+			if (vdev) {
+				hdd_notify_tdls_reset_adapter(vdev);
+				hdd_objmgr_put_vdev(adapter);
+			}
 			adapter->session.station.hdd_reassoc_scenario = false;
 		}
 		ucfg_mlme_get_sap_internal_restart(hdd_ctx->psoc, &value);
