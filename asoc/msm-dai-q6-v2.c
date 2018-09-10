@@ -40,6 +40,7 @@
 #define CHANNEL_STATUS_MASK_INIT 0x0
 #define CHANNEL_STATUS_MASK 0x4
 #define AFE_API_VERSION_CLOCK_SET 1
+#define MSM_DAI_SYSFS_ENTRY_MAX_LEN 64
 
 #define DAI_FORMATS_S16_S24_S32_LE (SNDRV_PCM_FMTBIT_S16_LE | \
 				    SNDRV_PCM_FMTBIT_S24_LE | \
@@ -218,6 +219,7 @@ struct msm_dai_q6_spdif_dai_data {
 	u16 port_id;
 	struct afe_spdif_port_config spdif_port;
 	struct afe_event_fmt_update fmt_event;
+	struct kobject *kobj;
 };
 
 struct msm_dai_q6_spdif_event_msg {
@@ -1459,39 +1461,6 @@ static int msm_dai_q6_spdif_source_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int msm_dai_q6_spdif_ext_state_get(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-
-	struct msm_dai_q6_spdif_dai_data *dai_data = kcontrol->private_data;
-
-	ucontrol->value.integer.value[0] =
-		dai_data->fmt_event.status & 0x3;
-	return 0;
-}
-
-static int msm_dai_q6_spdif_ext_format_get(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-
-	struct msm_dai_q6_spdif_dai_data *dai_data = kcontrol->private_data;
-
-	ucontrol->value.integer.value[0] =
-		dai_data->fmt_event.data_format & 0x1;
-	return 0;
-}
-
-static int msm_dai_q6_spdif_ext_rate_get(struct snd_kcontrol *kcontrol,
-		struct snd_ctl_elem_value *ucontrol)
-{
-
-	struct msm_dai_q6_spdif_dai_data *dai_data = kcontrol->private_data;
-
-	ucontrol->value.integer.value[0] =
-		dai_data->fmt_event.sample_rate;
-	return 0;
-}
-
 static const char * const spdif_format[] = {
 	"LPCM",
 	"Compr"
@@ -1499,10 +1468,6 @@ static const char * const spdif_format[] = {
 
 static const char * const spdif_source[] = {
 	"Optical", "EXT-ARC", "Coaxial", "VT-ARC"
-};
-
-static const char * const spdif_state[] = {
-	"Inactive", "Active", "EOS"
 };
 
 static const struct soc_enum spdif_rx_config_enum[] = {
@@ -1513,11 +1478,6 @@ static const struct soc_enum spdif_tx_config_enum[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(spdif_source), spdif_source),
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(spdif_format), spdif_format),
 };
-
-static const struct soc_enum spdif_tx_status_enum[] = {
-	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(spdif_state), spdif_state),
-	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(spdif_format), spdif_format),
- };
 
 static int msm_dai_q6_spdif_chstatus_put(struct snd_kcontrol *kcontrol,
 		struct snd_ctl_elem_value *ucontrol)
@@ -1607,21 +1567,6 @@ static const struct snd_kcontrol_new spdif_tx_config_controls[] = {
 	SOC_ENUM_EXT("SEC SPDIF TX Format", spdif_tx_config_enum[1],
 			msm_dai_q6_spdif_format_get,
 			msm_dai_q6_spdif_format_put)
-};
-
-static const struct snd_kcontrol_new spdif_tx_status_controls[] = {
-	SOC_ENUM_EXT("PRI SPDIF TX EXT State", spdif_tx_status_enum[0],
-			msm_dai_q6_spdif_ext_state_get, NULL),
-	SOC_ENUM_EXT("PRI SPDIF TX EXT Format", spdif_tx_status_enum[1],
-			msm_dai_q6_spdif_ext_format_get, NULL),
-	SOC_SINGLE_EXT("PRI SPDIF TX EXT Rate", 0, 0, 192000, 0,
-			msm_dai_q6_spdif_ext_rate_get, NULL),
-	SOC_ENUM_EXT("SEC SPDIF TX EXT State", spdif_tx_status_enum[0],
-			msm_dai_q6_spdif_ext_state_get, NULL),
-	SOC_ENUM_EXT("SEC SPDIF TX EXT Format", spdif_tx_status_enum[1],
-			msm_dai_q6_spdif_ext_format_get, NULL),
-	SOC_SINGLE_EXT("SEC SPDIF TX EXT Rate", 0, 0, 192000, 0,
-			msm_dai_q6_spdif_ext_rate_get, NULL)
 };
 
 static void msm_dai_q6_spdif_process_event(uint32_t opcode, uint32_t token,
@@ -1734,6 +1679,102 @@ static int msm_dai_q6_spdif_prepare(struct snd_pcm_substream *substream,
 	return rc;
 }
 
+static ssize_t msm_dai_q6_spdif_sysfs_rda_audio_state(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	ssize_t ret;
+	struct msm_dai_q6_spdif_dai_data *dai_data = dev_get_drvdata(dev);
+
+	if (!dai_data) {
+		pr_err("%s: invalid input\n", __func__);
+		return -EINVAL;
+	}
+
+	ret = snprintf(buf, MSM_DAI_SYSFS_ENTRY_MAX_LEN, "%d\n",
+		dai_data->fmt_event.status);
+	pr_debug("%s: '%d'\n", __func__, dai_data->fmt_event.status);
+
+	return ret;
+}
+
+static ssize_t msm_dai_q6_spdif_sysfs_rda_audio_format(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	ssize_t ret;
+	struct msm_dai_q6_spdif_dai_data *dai_data = dev_get_drvdata(dev);
+
+	if (!dai_data) {
+		pr_err("%s: invalid input\n", __func__);
+		return -EINVAL;
+	}
+
+	ret = snprintf(buf, MSM_DAI_SYSFS_ENTRY_MAX_LEN, "%d\n",
+		dai_data->fmt_event.data_format);
+	pr_debug("%s: '%d'\n", __func__, dai_data->fmt_event.data_format);
+
+	return ret;
+}
+
+static ssize_t msm_dai_q6_spdif_sysfs_rda_audio_rate(struct device *dev,
+	struct device_attribute *attr, char *buf)
+{
+	ssize_t ret;
+	struct msm_dai_q6_spdif_dai_data *dai_data = dev_get_drvdata(dev);
+
+	if (!dai_data) {
+		pr_err("%s: invalid input\n", __func__);
+		return -EINVAL;
+	}
+
+	ret = snprintf(buf, MSM_DAI_SYSFS_ENTRY_MAX_LEN, "%d\n",
+		dai_data->fmt_event.sample_rate);
+	pr_debug("%s: '%d'\n", __func__, dai_data->fmt_event.sample_rate);
+
+	return ret;
+}
+
+static DEVICE_ATTR(audio_state, 0444, msm_dai_q6_spdif_sysfs_rda_audio_state,
+	NULL);
+static DEVICE_ATTR(audio_format, 0444, msm_dai_q6_spdif_sysfs_rda_audio_format,
+	NULL);
+static DEVICE_ATTR(audio_rate, 0444, msm_dai_q6_spdif_sysfs_rda_audio_rate,
+	NULL);
+
+static struct attribute *msm_dai_q6_spdif_fs_attrs[] = {
+	&dev_attr_audio_state.attr,
+	&dev_attr_audio_format.attr,
+	&dev_attr_audio_rate.attr,
+	NULL,
+};
+static struct attribute_group msm_dai_q6_spdif_fs_attrs_group = {
+	.attrs = msm_dai_q6_spdif_fs_attrs,
+};
+
+static int msm_dai_q6_spdif_sysfs_create(struct snd_soc_dai *dai,
+	struct msm_dai_q6_spdif_dai_data *dai_data)
+{
+	int rc;
+
+	rc = sysfs_create_group(&dai->dev->kobj,
+		&msm_dai_q6_spdif_fs_attrs_group);
+	if (rc) {
+		pr_err("%s: failed, rc=%d\n", __func__, rc);
+		return rc;
+	}
+	dai_data->kobj = &dai->dev->kobj;
+
+	return 0;
+}
+
+static void msm_dai_q6_spdif_sysfs_remove(struct snd_soc_dai *dai,
+	struct msm_dai_q6_spdif_dai_data *dai_data)
+{
+	if (dai_data->kobj)
+		sysfs_remove_group(dai_data->kobj,
+			&msm_dai_q6_spdif_fs_attrs_group);
+	dai_data->kobj = NULL;
+}
+
 static int msm_dai_q6_spdif_dai_probe(struct snd_soc_dai *dai)
 {
 	struct msm_dai_q6_spdif_dai_data *dai_data;
@@ -1773,39 +1814,23 @@ static int msm_dai_q6_spdif_dai_probe(struct snd_soc_dai *dai)
 				 dai_data));
 		break;
 	case AFE_PORT_ID_PRIMARY_SPDIF_TX:
+		rc = msm_dai_q6_spdif_sysfs_create(dai, dai_data);
+
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				snd_ctl_new1(&spdif_tx_config_controls[0],
 				dai_data));
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				snd_ctl_new1(&spdif_tx_config_controls[1],
 				dai_data));
-
-		rc = snd_ctl_add(dai->component->card->snd_card,
-				snd_ctl_new1(&spdif_tx_status_controls[0],
-				dai_data));
-		rc = snd_ctl_add(dai->component->card->snd_card,
-				snd_ctl_new1(&spdif_tx_status_controls[1],
-				dai_data));
-		rc = snd_ctl_add(dai->component->card->snd_card,
-				snd_ctl_new1(&spdif_tx_status_controls[2],
-				dai_data));
 		break;
 	case AFE_PORT_ID_SECONDARY_SPDIF_TX:
+		rc = msm_dai_q6_spdif_sysfs_create(dai, dai_data);
+
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				snd_ctl_new1(&spdif_tx_config_controls[2],
 				dai_data));
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				snd_ctl_new1(&spdif_tx_config_controls[3],
-				dai_data));
-
-		rc = snd_ctl_add(dai->component->card->snd_card,
-				snd_ctl_new1(&spdif_tx_status_controls[3],
-				dai_data));
-		rc = snd_ctl_add(dai->component->card->snd_card,
-				snd_ctl_new1(&spdif_tx_status_controls[4],
-				dai_data));
-		rc = snd_ctl_add(dai->component->card->snd_card,
-				snd_ctl_new1(&spdif_tx_status_controls[5],
 				dai_data));
 		break;
 	}
@@ -1866,6 +1891,9 @@ static int msm_dai_q6_spdif_dai_remove(struct snd_soc_dai *dai)
 
 		clear_bit(STATUS_PORT_STARTED, dai_data->status_mask);
 	}
+
+	msm_dai_q6_spdif_sysfs_remove(dai, dai_data);
+
 	kfree(dai_data);
 
 	return 0;
