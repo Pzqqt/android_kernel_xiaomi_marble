@@ -108,26 +108,23 @@ void wlan_cfg80211_tdls_priv_deinit(struct vdev_osif_priv *osif_priv);
 
 /**
  * wlan_cfg80211_tdls_add_peer() - process cfg80211 add TDLS peer request
- * @pdev: pdev object
- * @dev: Pointer to net device
+ * @vdev: vdev object
  * @mac: MAC address for TDLS peer
  *
  * Return: 0 for success; negative errno otherwise
  */
-int wlan_cfg80211_tdls_add_peer(struct wlan_objmgr_pdev *pdev,
-				struct net_device *dev, const uint8_t *mac);
+int wlan_cfg80211_tdls_add_peer(struct wlan_objmgr_vdev *vdev,
+				const uint8_t *mac);
 
 /**
  * wlan_cfg80211_tdls_update_peer() - process cfg80211 update TDLS peer request
- * @pdev: pdev object
- * @dev: Pointer to net device
+ * @vdev: vdev object
  * @mac: MAC address for TDLS peer
  * @params: Pointer to station parameters
  *
  * Return: 0 for success; negative errno otherwise
  */
-int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_pdev *pdev,
-				   struct net_device *dev,
+int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_vdev *vdev,
 				   const uint8_t *mac,
 				   struct station_parameters *params);
 
@@ -143,15 +140,13 @@ int wlan_cfg80211_tdls_configure_mode(struct wlan_objmgr_vdev *vdev,
 
 /**
  * wlan_cfg80211_tdls_oper() - process cfg80211 operation on an TDLS peer
- * @pdev: pdev object
- * @dev: net device
+ * @vdev: vdev object
  * @peer: MAC address of the TDLS peer
  * @oper: cfg80211 TDLS operation
  *
  * Return: 0 on success; negative errno otherwise
  */
-int wlan_cfg80211_tdls_oper(struct wlan_objmgr_pdev *pdev,
-			    struct net_device *dev,
+int wlan_cfg80211_tdls_oper(struct wlan_objmgr_vdev *vdev,
 			    const uint8_t *peer,
 			    enum nl80211_tdls_operation oper);
 
@@ -168,8 +163,7 @@ int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
 
 /**
  * wlan_cfg80211_tdls_mgmt() - process tdls management frames from the supplicant
- * @pdev: pdev object
- * @dev: net device
+ * @vdev: vdev object
  * @peer: MAC address of the TDLS peer
  * @action_code: type of TDLS mgmt frame to be sent
  * @dialog_token: dialog token used in the frame
@@ -181,11 +175,11 @@ int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
  *
  * Return: 0 on success; negative errno otherwise
  */
-int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
-				struct net_device *dev, const uint8_t *peer,
-				uint8_t action_code, uint8_t dialog_token,
-				uint16_t status_code, uint32_t peer_capability,
-				const uint8_t *buf, size_t len);
+int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_vdev *vdev,
+			    const uint8_t *peer,
+			    uint8_t action_code, uint8_t dialog_token,
+			    uint16_t status_code, uint32_t peer_capability,
+			    const uint8_t *buf, size_t len);
 
 /**
  * wlan_tdls_antenna_switch() - process tdls antenna switch

@@ -153,27 +153,23 @@ struct wlan_cfg80211_inform_bss {
 #ifdef FEATURE_WLAN_SCAN_PNO
 /**
  * wlan_cfg80211_sched_scan_start() - cfg80211 scheduled scan(pno) start
- * @pdev: pdev pointer
- * @dev: Pointer network device
+ * @vdev: vdev pointer
  * @request: Pointer to cfg80211 scheduled scan start request
  * @scan_backoff_multiplier: multiply scan period by this after max cycles
  *
  * Return: 0 for success, non zero for failure
  */
-int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
-	struct net_device *dev,
-	struct cfg80211_sched_scan_request *request,
-	uint8_t scan_backoff_multiplier);
+int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
+				   struct cfg80211_sched_scan_request *request,
+				   uint8_t scan_backoff_multiplier);
 
 /**
  * wlan_cfg80211_sched_scan_stop() - cfg80211 scheduled scan(pno) stop
- * @pdev: pdev pointer
- * @dev: Pointer network device
+ * @vdev: vdev pointer
  *
  * Return: 0 for success, non zero for failure
  */
-int wlan_cfg80211_sched_scan_stop(struct wlan_objmgr_pdev *pdev,
-	struct net_device *dev);
+int wlan_cfg80211_sched_scan_stop(struct wlan_objmgr_vdev *vdev);
 #endif
 
 /**
@@ -221,7 +217,7 @@ QDF_STATUS wlan_cfg80211_scan_priv_deinit(
 
 /**
  * wlan_cfg80211_scan() - API to process cfg80211 scan request
- * @pdev: Pointer to pdev
+ * @vdev: Pointer to vdev
  * @request: Pointer to scan request
  * @params: scan params
  *
@@ -231,9 +227,9 @@ QDF_STATUS wlan_cfg80211_scan_priv_deinit(
  *
  * Return: 0 for success, non zero for failure
  */
-int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
-		struct cfg80211_scan_request *request,
-		struct scan_params *params);
+int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
+		       struct cfg80211_scan_request *request,
+		       struct scan_params *params);
 
 /**
  * wlan_cfg80211_inform_bss_frame_data() - API to inform beacon to cfg80211

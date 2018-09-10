@@ -370,29 +370,20 @@ static inline void wlan_hdd_sched_scan_update_relative_rssi(
 }
 #endif
 
-int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
-	struct net_device *dev,
-	struct cfg80211_sched_scan_request *request,
-	uint8_t scan_backoff_multiplier)
+int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
+				   struct cfg80211_sched_scan_request *request,
+				   uint8_t scan_backoff_multiplier)
 {
 	struct pno_scan_req_params *req;
 	int i, j, ret = 0;
 	QDF_STATUS status;
 	uint8_t num_chan = 0, channel;
-	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 	struct wlan_objmgr_psoc *psoc;
 	uint32_t valid_ch[SCAN_PNO_MAX_NETW_CHANNELS_EX] = {0};
 
-	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
-		WLAN_OSIF_ID);
-	if (!vdev) {
-		cfg80211_err("vdev object is NULL");
-		return -EIO;
-	}
-
 	if (ucfg_scan_get_pno_in_progress(vdev)) {
 		cfg80211_debug("pno is already in progress");
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 		return -EBUSY;
 	}
 
@@ -403,7 +394,6 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 				INVAL_VDEV_ID, INVAL_SCAN_ID, true);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			cfg80211_err("aborting the existing scan is unsuccessful");
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 			return -EBUSY;
 		}
 	}
@@ -411,7 +401,6 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	req = qdf_mem_malloc(sizeof(*req));
 	if (!req) {
 		cfg80211_err("req malloc failed");
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 		return -ENOMEM;
 	}
 
@@ -579,30 +568,13 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	cfg80211_info("PNO scan request offloaded");
 
 error:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 	qdf_mem_free(req);
 	return ret;
 }
 
-int wlan_cfg80211_sched_scan_stop(struct wlan_objmgr_pdev *pdev,
-	struct net_device *dev)
+int wlan_cfg80211_sched_scan_stop(struct wlan_objmgr_vdev *vdev)
 {
 	QDF_STATUS status;
-	struct wlan_objmgr_vdev *vdev;
-
-	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
-		WLAN_OSIF_ID);
-	if (!vdev) {
-	/*
-	 * cfg80211 expects sched_scan_stop command to always succeed.
-	 * There can be recovery or any other error in the driver between the
-	 * sched_scan_start and sched_scan_stop commands. If driver does
-	 * not return success in this case there is a possibility of further
-	 * sched_scan_start request might not be received again.
-	 */
-		cfg80211_err("vdev object is NULL");
-		return 0;
-	}
 
 	status = ucfg_scan_pno_stop(vdev);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -610,7 +582,6 @@ int wlan_cfg80211_sched_scan_stop(struct wlan_objmgr_pdev *pdev,
 	else
 		cfg80211_info("PNO scan disabled");
 
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 	return 0;
 }
 #endif /*FEATURE_WLAN_SCAN_PNO */
@@ -1189,18 +1160,17 @@ static inline void wlan_cfg80211_update_scan_policy_type_flags(
 }
 #endif
 
-int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
-		struct cfg80211_scan_request *request,
-		struct scan_params *params)
+int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
+		       struct cfg80211_scan_request *request,
+		       struct scan_params *params)
 {
-	struct net_device *dev = request->wdev->netdev;
 	struct scan_start_request *req;
 	struct wlan_ssid *pssid;
 	uint8_t i;
 	int ret = 0;
 	uint8_t num_chan = 0, channel;
 	uint32_t c_freq;
-	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 	wlan_scan_requester req_id;
 	struct pdev_osif_priv *osif_priv;
 	struct wlan_objmgr_psoc *psoc;
@@ -1210,22 +1180,13 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	struct net_device *netdev = NULL;
 	QDF_STATUS qdf_status;
 
-	/* Get the vdev object */
-	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
-		WLAN_OSIF_ID);
-	if (vdev == NULL) {
-		cfg80211_err("vdev object is NULL");
-		return -EIO;
-	}
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc) {
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 		cfg80211_err("Invalid psoc object");
 		return -EINVAL;
 	}
 	req = qdf_mem_malloc(sizeof(*req));
 	if (!req) {
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 		cfg80211_err("Failed to allocate scan request memory");
 		return -EINVAL;
 	}
@@ -1237,7 +1198,6 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	req_id = osif_priv->osif_scan->req_id;
 	scan_id = ucfg_scan_get_scan_id(psoc);
 	if (!scan_id) {
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 		cfg80211_err("Invalid scan id");
 		qdf_mem_free(req);
 		return -EINVAL;
@@ -1434,7 +1394,6 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	ret = qdf_status_to_os_return(qdf_status);
 
 end:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 	return ret;
 }
 

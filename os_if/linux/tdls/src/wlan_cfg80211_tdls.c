@@ -181,10 +181,10 @@ void hdd_notify_sta_disconnect(uint8_t session_id,
 	notify_info.user_disconnect = user_disconnect;
 	ucfg_tdls_notify_sta_disconnect(&notify_info);
 }
-int wlan_cfg80211_tdls_add_peer(struct wlan_objmgr_pdev *pdev,
-				struct net_device *dev, const uint8_t *mac)
+
+int wlan_cfg80211_tdls_add_peer(struct wlan_objmgr_vdev *vdev,
+				const uint8_t *mac)
 {
-	struct wlan_objmgr_vdev *vdev;
 	struct tdls_add_peer_params *add_peer_req;
 	int status;
 	struct vdev_osif_priv *osif_priv;
@@ -198,16 +198,9 @@ int wlan_cfg80211_tdls_add_peer(struct wlan_objmgr_pdev *pdev,
 
 	cfg80211_debug("Add TDLS peer " QDF_MAC_ADDR_STR,
 		       QDF_MAC_ADDR_ARRAY(mac));
-	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
-							 WLAN_OSIF_ID);
-	if (vdev == NULL) {
-		cfg80211_err("vdev object is NULL");
-		return -EIO;
-	}
 
 	add_peer_req = qdf_mem_malloc(sizeof(*add_peer_req));
 	if (!add_peer_req) {
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 		cfg80211_err("Failed to allocate tdls add peer request mem");
 		return -EINVAL;
 	}
@@ -242,7 +235,6 @@ int wlan_cfg80211_tdls_add_peer(struct wlan_objmgr_pdev *pdev,
 	}
 error:
 	qdf_mem_free(add_peer_req);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 	return status;
 }
 
@@ -394,12 +386,10 @@ wlan_cfg80211_tdls_extract_params(struct tdls_update_peer_params *req_info,
 		req_info->is_qos_wmm_sta = true;
 }
 
-int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_pdev *pdev,
-				   struct net_device *dev,
+int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_vdev *vdev,
 				   const uint8_t *mac,
 				   struct station_parameters *params)
 {
-	struct wlan_objmgr_vdev *vdev;
 	struct tdls_update_peer_params *req_info;
 	int status;
 	struct vdev_osif_priv *osif_priv;
@@ -413,16 +403,9 @@ int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_pdev *pdev,
 
 	cfg80211_debug("Update TDLS peer " QDF_MAC_ADDR_STR,
 		       QDF_MAC_ADDR_ARRAY(mac));
-	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
-							 WLAN_OSIF_ID);
-	if (vdev == NULL) {
-		cfg80211_err("vdev object is NULL");
-		return -EIO;
-	}
 
 	req_info = qdf_mem_malloc(sizeof(*req_info));
 	if (!req_info) {
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 		cfg80211_err("Failed to allocate tdls add peer request mem");
 		return -EINVAL;
 	}
@@ -457,7 +440,6 @@ int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_pdev *pdev,
 	}
 error:
 	qdf_mem_free(req_info);
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 	return status;
 }
 
@@ -526,12 +508,10 @@ int wlan_cfg80211_tdls_configure_mode(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
-int wlan_cfg80211_tdls_oper(struct wlan_objmgr_pdev *pdev,
-			    struct net_device *dev,
+int wlan_cfg80211_tdls_oper(struct wlan_objmgr_vdev *vdev,
 			    const uint8_t *peer,
 			    enum nl80211_tdls_operation oper)
 {
-	struct wlan_objmgr_vdev *vdev;
 	struct vdev_osif_priv *osif_priv;
 	struct osif_tdls_vdev *tdls_priv;
 	int status;
@@ -547,14 +527,6 @@ int wlan_cfg80211_tdls_oper(struct wlan_objmgr_pdev *pdev,
 		cfg80211_warn(
 			"We don't support in-driver setup/teardown/discovery");
 		return -ENOTSUPP;
-	}
-
-	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev,
-							 dev->dev_addr,
-							 WLAN_OSIF_ID);
-	if (vdev == NULL) {
-		cfg80211_err("vdev object is NULL");
-		return -EIO;
 	}
 
 	cfg80211_debug("%s start", tdls_oper_to_str(oper));
@@ -596,8 +568,6 @@ int wlan_cfg80211_tdls_oper(struct wlan_objmgr_pdev *pdev,
 	}
 
 error:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
-
 	return status;
 }
 
@@ -674,13 +644,6 @@ int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 	unsigned long rc;
 
-	if (wlan_objmgr_vdev_try_get_ref(vdev, WLAN_OSIF_ID) !=
-							QDF_STATUS_SUCCESS) {
-		len = scnprintf(buf, buflen,
-				"\nNo TDLS VDEV is null\n");
-		return len;
-	}
-
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 	tdls_priv = osif_priv->osif_tdls;
 
@@ -711,17 +674,15 @@ int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
 	len = tdls_priv->tdls_user_cmd_len;
 
 error_get_tdls_peers:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 	return len;
 }
 
-int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
-				struct net_device *dev, const uint8_t *peer_mac,
-				uint8_t action_code, uint8_t dialog_token,
-				uint16_t status_code, uint32_t peer_capability,
-				const uint8_t *buf, size_t len)
+int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_vdev *vdev,
+			    const uint8_t *peer_mac,
+			    uint8_t action_code, uint8_t dialog_token,
+			    uint16_t status_code, uint32_t peer_capability,
+			    const uint8_t *buf, size_t len)
 {
-	struct wlan_objmgr_vdev *vdev;
 	struct tdls_action_frame_request mgmt_req;
 	struct vdev_osif_priv *osif_priv;
 	struct osif_tdls_vdev *tdls_priv;
@@ -736,14 +697,6 @@ int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
 	if (status)
 		return status;
 
-	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev,
-							 dev->dev_addr,
-							 WLAN_OSIF_ID);
-	if (vdev == NULL) {
-		cfg80211_err("vdev object is NULL");
-		return -EIO;
-	}
-
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 
 	tdls_priv = osif_priv->osif_tdls;
@@ -752,7 +705,6 @@ int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
 	if (TDLS_VDEV_MAGIC == tdls_priv->mgmt_tx_completion_status) {
 		cfg80211_err(QDF_MAC_ADDR_STR " action %d couldn't sent, as one is pending. return EBUSY",
 			     QDF_MAC_ADDR_ARRAY(peer_mac), action_code);
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 		return -EBUSY;
 	}
 
@@ -838,7 +790,6 @@ int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
 	}
 
 error_mgmt_req:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 	return status;
 }
 
@@ -853,7 +804,6 @@ int wlan_tdls_antenna_switch(struct wlan_objmgr_vdev *vdev, uint32_t mode)
 		cfg80211_err("vdev is NULL");
 		return -EAGAIN;
 	}
-	wlan_objmgr_vdev_get_ref(vdev, WLAN_OSIF_ID);
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
 	tdls_priv = osif_priv->osif_tdls;
@@ -878,8 +828,6 @@ int wlan_tdls_antenna_switch(struct wlan_objmgr_vdev *vdev, uint32_t mode)
 	ret = tdls_priv->tdls_antenna_switch_status;
 	cfg80211_debug("tdls antenna switch status:%d", ret);
 error:
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
-
 	return ret;
 }
 
