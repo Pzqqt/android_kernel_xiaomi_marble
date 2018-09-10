@@ -272,6 +272,7 @@ QDF_STATUS scheduler_post_msg_by_priority(uint32_t qid,
 		/* change legacy WMA message id to new target_if mq id */
 		que_id = QDF_MODULE_ID_TARGET_IF;
 	}
+	qdf_mtrace(src_id, dest_id, msg->type, 0xFF, 0);
 
 	qidx = sched_ctx->queue_ctx.scheduler_msg_qid_to_qidx[que_id];
 	if (qidx >= SCHEDULER_NUMBER_OF_MSG_QUEUE) {
