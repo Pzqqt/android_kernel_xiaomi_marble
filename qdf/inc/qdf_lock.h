@@ -144,8 +144,9 @@ do {\
 		lock->stats.num_large_holds++; \
 	if (QDF_LOCK_STATS_BUG_ON && max_hold_time && \
 	    held_time > qdf_usecs_to_log_timestamp(max_hold_time)) { \
-		qdf_warn("BEFORE_UNLOCK: lock held too long (%lluus)", \
-		       qdf_log_timestamp_to_usecs(held_time)); \
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, \
+			"BEFORE_UNLOCK: lock held too long (%lluus)", \
+			qdf_log_timestamp_to_usecs(held_time)); \
 		QDF_BUG(0); \
 	} \
 	lock->stats.acquired_by = NULL; \
@@ -158,7 +159,8 @@ void qdf_lock_stats_cookie_create(struct lock_stats *stats,
 static inline void qdf_lock_stats_destroy(struct lock_stats *stats)
 {
 	if (QDF_LOCK_STATS_DESTROY_PRINT) {
-		qdf_debug("%s: lock: %s %d \t"
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
+			"%s: lock: %s %d \t"
 			"acquired:\t%d\tcontended:\t%d\t"
 			"contention_time\t%llu\tmax_contention_wait:\t%llu\t"
 			"non_contention_time\t%llu\t"
