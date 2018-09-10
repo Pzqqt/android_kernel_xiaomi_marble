@@ -1330,8 +1330,7 @@ end:
 QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 				 void *pMsgBuf)
 {
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  FL(" Msg = %d for RRM measurement"), msg_type);
+	sme_debug("Msg = %d for RRM measurement", msg_type);
 
 	/* switch on the msg type & make the state transition accordingly */
 	switch (msg_type) {
@@ -1344,11 +1343,7 @@ QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 		break;
 
 	default:
-		/* err msg */
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("sme_rrm_msg_processor:unknown msg type = %d"),
-			  msg_type);
-
+		sme_err("Unknown msg type: %d", msg_type);
 		break;
 	}
 
@@ -1413,10 +1408,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 					(void *)pMac);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "rrm_open: Fail to init timer");
-
+		sme_err("Fail to init measurement timer");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1427,10 +1419,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 					(void *)pMac);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "rrm_open: Fail to init timer");
-
+		sme_err("Fail to init neighbor rsp wait timer");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1438,8 +1427,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 
 	qdf_ret_status = csr_ll_open(&pSmeRrmContext->neighborReportCache);
 	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "rrm_open: Fail to open neighbor cache result");
+		sme_err("Fail to open neighbor cache result");
 		return QDF_STATUS_E_FAILURE;
 	}
 

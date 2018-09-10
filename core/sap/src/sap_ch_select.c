@@ -1549,8 +1549,6 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (NULL == pBeaconStruct) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "Unable to allocate memory in sap_compute_spect_weight");
 		return;
 	}
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,

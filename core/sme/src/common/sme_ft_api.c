@@ -330,7 +330,7 @@ QDF_STATUS sme_ft_update_key(tHalHandle hHal, uint32_t sessionId,
 	if (!(QDF_IS_STATUS_SUCCESS(status)))
 		return QDF_STATUS_E_FAILURE;
 
-	sme_debug("sme_ft_update_key is received in state %d",
+	sme_debug("FT update key is received in state %d",
 		  pSession->ftSmeContext.FTState);
 
 	/* Global Station FT State */

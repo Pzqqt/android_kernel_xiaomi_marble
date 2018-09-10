@@ -4252,7 +4252,7 @@ static bool csr_lookup_bkid(tpAniSirGlobal pMac, uint32_t sessionId,
 		fRC = true;
 	} while (0);
 	sme_debug(
-		"csr_lookup_bkid called return match = %d pMac->roam.NumBkidCache = %d",
+		"return match = %d pMac->roam.NumBkidCache = %d",
 		fRC, pSession->NumBkidCache);
 
 	return fRC;
@@ -4637,7 +4637,7 @@ uint8_t csr_retrieve_wpa_ie(tpAniSirGlobal pMac,
 				qdf_mem_copy(pWpaIe, pProfile->pWPAReqIE,
 					     cbWpaIe);
 			} else
-				sme_warn("csr_retrieve_wpa_ie detect invalid WPA IE length (%d)",
+				sme_warn("Invalid WPA IE length: %d",
 					pProfile->nWPAReqIELength);
 		} else
 			cbWpaIe = csr_construct_wpa_ie(pMac, pProfile,
@@ -4671,7 +4671,7 @@ uint8_t csr_retrieve_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 				qdf_mem_copy(pRsnIe, pProfile->pRSNReqIE,
 					     cbRsnIe);
 			} else {
-				sme_warn("csr_retrieve_rsn_ie detect invalid RSN IE length (%d)",
+				sme_warn("Invalid RSN IE length: %d",
 					pProfile->nRSNReqIELength);
 			}
 			break;
@@ -4706,7 +4706,7 @@ uint8_t csr_retrieve_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 				qdf_mem_copy(pWapiIe, pProfile->pWAPIReqIE,
 					     cbWapiIe);
 			} else
-				sme_warn("csr_retrieve_wapi_ie detect invalid WAPI IE length (%d)",
+				sme_warn("Invalid WAPI IE length: %d",
 					pProfile->nWAPIReqIELength);
 		} else
 			cbWapiIe =

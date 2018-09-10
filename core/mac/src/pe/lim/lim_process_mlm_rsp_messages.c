@@ -2455,11 +2455,6 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 
 	if (add_bss_params == 0)
 		goto end;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (session_entry->bRoamSynchInProgress)
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			"LFR3:lim_process_sta_mlm_add_bss_rsp");
-#endif
 
 	if (QDF_STATUS_SUCCESS == add_bss_params->status) {
 		if (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE ==

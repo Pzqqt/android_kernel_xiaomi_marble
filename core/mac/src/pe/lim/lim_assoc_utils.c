@@ -2016,8 +2016,7 @@ QDF_STATUS lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 			sta_ds->supportedRates.supportedMCSSet[i] =
 				mcs_set[i] & supported_mcs_set[i];
 
-		pe_debug("lim_populate_matching_rate_set: MCS Rate Set Bitmap"
-				" from  CFG and DPH : ");
+		pe_debug("MCS Rate Set Bitmap from CFG and DPH: ");
 		for (i = 0; i < SIR_MAC_MAX_SUPPORTED_MCS_SET; i++) {
 			pe_debug("%x %x ", mcs_set[i],
 			    sta_ds->supportedRates.supportedMCSSet[i]);
@@ -3359,7 +3358,7 @@ QDF_STATUS lim_extract_ap_capabilities(tpAniSirGlobal pMac,
 {
 	qdf_mem_set((uint8_t *) beaconStruct, sizeof(tSirProbeRespBeacon), 0);
 
-	pe_debug("lim_extract_ap_capabilities: The IE's being received are:");
+	pe_debug("The IE's being received are:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 				pIE, ieLen);
 	/* Parse the Beacon IE's, Don't try to parse if we dont have anything in IE */

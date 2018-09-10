@@ -881,8 +881,7 @@ ol_tx_sched_select_batch_wrr_adv(
 	} else {
 		used_credits = 0;
 		/* TODO: find its reason */
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "ol_tx_sched_select_batch_wrr_adv: error, no TXQ can be popped.");
+		ol_txrx_err("Error, no TXQ can be popped");
 	}
 	return used_credits;
 }

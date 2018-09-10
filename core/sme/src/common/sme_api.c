@@ -711,7 +711,7 @@ QDF_STATUS sme_open(tHalHandle hHal)
 	pMac->sme.currDeviceMode = QDF_STA_MODE;
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(
 					&pMac->sme.lkSmeGlobalLock))) {
-		sme_err("sme_open failed init lock");
+		sme_err("Init lock failed");
 		return  QDF_STATUS_E_FAILURE;
 	}
 	status = csr_open(pMac);
@@ -4321,7 +4321,6 @@ QDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
 		pMsg = qdf_mem_malloc(sizeof(tAniGenericChangeCountryCodeReq));
 
 		if (NULL == pMsg) {
-			sme_err("sme_generic_change_country_code: failed to allocate mem for req");
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -4338,7 +4337,7 @@ QDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
 
 		if (QDF_STATUS_SUCCESS !=
 		    scheduler_post_msg(QDF_MODULE_ID_SME, &msg)) {
-			sme_err("sme_generic_change_country_code failed to post msg to self");
+			sme_err("Failed to post msg to self");
 			qdf_mem_free(pMsg);
 			status = QDF_STATUS_E_FAILURE;
 		}
@@ -6107,9 +6106,6 @@ QDF_STATUS sme_set_tm_level(tHalHandle hHal, uint16_t newTMLevel, uint16_t
 			(tAniSetTmLevelReq *)
 			qdf_mem_malloc(sizeof(tAniSetTmLevelReq));
 		if (NULL == setTmLevelReq) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Not able to allocate memory for sme_set_tm_level",
-				  __func__);
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -9875,8 +9871,7 @@ QDF_STATUS sme_update_access_policy_vendor_ie(tHalHandle hal,
 
 	msg = qdf_mem_malloc(msg_len);
 	if (!msg) {
-		sme_err("failed to allocate memory for sme_update_access_policy_vendor_ie");
-		return QDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	msg->msg_type = (uint16_t)eWNI_SME_UPDATE_ACCESS_POLICY_VENDOR_IE;

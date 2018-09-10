@@ -1019,7 +1019,7 @@ static void pe_free_nested_messages(struct scheduler_msg *msg)
 {
 	switch (msg->type) {
 	case WMA_SET_LINK_STATE_RSP:
-		pe_debug("pe_free_nested_messages: WMA_SET_LINK_STATE_RSP");
+		pe_debug("WMA_SET_LINK_STATE_RSP");
 		qdf_mem_free(((tpLinkStateParams) msg->bodyptr)->callbackArg);
 		break;
 	default:

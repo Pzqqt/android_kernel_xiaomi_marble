@@ -534,7 +534,6 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 	if (NULL == pBeaconStruct) {
-		pe_err("No memory for creating lim_fill_ft_session");
 		return;
 	}
 

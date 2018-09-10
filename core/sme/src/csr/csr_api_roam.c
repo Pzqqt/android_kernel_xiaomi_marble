@@ -1248,7 +1248,7 @@ QDF_STATUS csr_start(tpAniSirGlobal pMac)
 			status = csr_neighbor_roam_init(pMac, i);
 		csr_init_tl_stats(pMac);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			sme_warn("csr_start: Couldn't Init HO control blk ");
+			sme_warn("Couldn't Init HO control blk");
 			break;
 		}
 		/* Register with scan component */
@@ -1296,7 +1296,7 @@ QDF_STATUS csr_ready(tpAniSirGlobal pMac)
 	 */
 	status = csr_apply_channel_and_power_list(pMac);
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		sme_err("csr_apply_channel_and_power_list failed during csr_ready with status: %d",
+		sme_err("csr_apply_channel_and_power_list failed status: %d",
 			status);
 
 	return status;
@@ -2092,8 +2092,6 @@ QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 
 	pMsg = qdf_mem_malloc(sizeof(tAniGetTsmStatsReq));
 	if (!pMsg) {
-		sme_err(
-			"csr_get_tsm_stats: failed to allocate mem for req");
 		return QDF_STATUS_E_NOMEM;
 	}
 	/* need to initiate a stats request to PE */
@@ -2106,7 +2104,7 @@ QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 	pMsg->pDevContext = pContext;
 	status = umac_send_mb_message_to_mac(pMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_debug("csr_get_tsm_stats: failed to send down the rssi req");
+		sme_debug("Failed to send down the TSM req (status=%d)", status);
 		/* pMsg is freed by cds_send_mb_message_to_mac */
 		status = QDF_STATUS_E_FAILURE;
 	}
@@ -4699,14 +4697,14 @@ csr_roam_get_associated_stas(tpAniSirGlobal pMac, uint32_t sessionId,
 	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
 
 	if (!pSession) {
-		sme_err("csr_roam_get_associated_stas:CSR Session not found");
+		sme_err("CSR Session not found");
 		return status;
 	}
 	if (pSession->pConnectBssDesc) {
 		qdf_mem_copy(bssId.bytes, pSession->pConnectBssDesc->bssId,
 			     sizeof(struct qdf_mac_addr));
 	} else {
-		sme_err("csr_roam_get_associated_stas:Connected BSS Description in CSR Session not found");
+		sme_err("Connected BSS Description in CSR Session not found");
 		return status;
 	}
 	sme_debug("CSR getting associated stations for Bssid: " MAC_ADDRESS_STR,
@@ -5064,9 +5062,7 @@ static QDF_STATUS csr_roam_get_qos_info_from_bss(tpAniSirGlobal pMac,
 		if (!QDF_IS_STATUS_SUCCESS(
 			csr_get_parsed_bss_description_ies(
 				pMac, pBssDesc, &pIes))) {
-			/* err msg */
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "csr_roam_get_qos_info_from_bss() failed");
+			sme_err("csr_get_parsed_bss_description_ies() failed");
 			break;
 		}
 		/* check if the AP is QAP & it supports APSD */
@@ -13283,17 +13279,13 @@ void csr_roam_wm_status_change_complete(tpAniSirGlobal pMac,
 				    LL_ACCESS_LOCK)) {
 				csr_release_command(pMac, pCommand);
 			} else {
-	sme_err(
-	" ******csr_roam_wm_status_change_complete fail to release command");
+				sme_err("Failed to release command");
 			}
-
 		} else {
-	sme_warn(
-"CSR: WmStatusChange Completion called but LOST LINK command is not ACTIVE ...");
+			sme_warn("CSR: LOST LINK command is not ACTIVE ...");
 		}
 	} else {
-	sme_warn(
-	"CSR: WmStatusChange Completion called but NO commands are ACTIVE ...");
+		sme_warn("CSR: NO commands are ACTIVE ...");
 	}
 }
 
@@ -17789,8 +17781,7 @@ static void csr_roam_link_up(tpAniSirGlobal pMac, struct qdf_mac_addr bssid)
 	 * profile info from pmac global structure
 	 */
 
-	sme_debug(
-		" csr_roam_link_up: WLAN link UP with AP= " MAC_ADDRESS_STR,
+	sme_debug("WLAN link UP with AP= " MAC_ADDRESS_STR,
 		MAC_ADDR_ARRAY(bssid.bytes));
 	/* Check for user misconfig of RSSI trigger threshold */
 	pMac->roam.configParam.vccRssiThreshold =
@@ -18026,8 +18017,7 @@ tListElem *csr_roam_find_in_pe_stats_req_list(
 
 	pEntry = csr_ll_peek_head(&pMac->roam.peStatsReqList, LL_ACCESS_LOCK);
 	if (!pEntry) {
-		/* list empty */
-		sme_debug("csr_roam_find_in_pe_stats_req_list: List empty, no request to PE");
+		sme_debug("List empty, no request to PE");
 		return NULL;
 	}
 	while (pEntry) {
@@ -18158,7 +18148,6 @@ QDF_STATUS csr_get_rssi(tpAniSirGlobal pMac,
 
 	pMsg = qdf_mem_malloc(sizeof(tAniGetRssiReq));
 	if (NULL == pMsg) {
-		sme_err("csr_get_rssi: failed to allocate mem for req ");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -20801,7 +20790,6 @@ QDF_STATUS csr_handoff_request(tpAniSirGlobal pMac,
 
 	pMsg = qdf_mem_malloc(sizeof(tAniHandoffReq));
 	if (NULL == pMsg) {
-		sme_err("csr_handoff_request: failed to allocate mem for req ");
 		return QDF_STATUS_E_NOMEM;
 	}
 	pMsg->msgType = eWNI_SME_HANDOFF_REQ;

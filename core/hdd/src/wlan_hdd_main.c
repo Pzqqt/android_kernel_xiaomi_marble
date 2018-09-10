@@ -12462,7 +12462,7 @@ static ssize_t wlan_hdd_state_ctrl_param_write(struct file *filp,
 		rc = wait_for_completion_timeout(&wlan_start_comp,
 				msecs_to_jiffies(HDD_WLAN_START_WAIT_TIME));
 		if (!rc) {
-			hdd_alert("Timed-out waiting in wlan_hdd_state_ctrl_param_write");
+			hdd_alert("Timed-out!!");
 			ret = -EINVAL;
 			return ret;
 		}

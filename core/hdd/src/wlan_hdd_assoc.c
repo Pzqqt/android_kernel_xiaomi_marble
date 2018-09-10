@@ -1337,8 +1337,6 @@ static void hdd_send_association_event(struct net_device *dev,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (NULL != pCsrRoamInfo)
 		if (pCsrRoamInfo->roamSynchInProgress) {
-			/* change logging before release */
-			hdd_debug("LFR3:hdd_send_association_event");
 			/* Update tdls module about the disconnection event */
 			hdd_notify_sta_disconnect(adapter->session_id,
 						 true, false,

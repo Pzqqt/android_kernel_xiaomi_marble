@@ -1152,7 +1152,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	 * channel cannot advance state machine here as said above
 	 */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  FL("before exiting sap_channel_sel channel=%d"),
+		  FL("Channel: %d"),
 		  sap_context->channel);
 
 	return QDF_STATUS_SUCCESS;
@@ -3625,14 +3625,14 @@ QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sapContext)
 
 	if (NULL == sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid sapContext pointer on sap_init_dfs_channel_nol_list");
+			  FL("Invalid sapContext pointer"));
 		return QDF_STATUS_E_FAULT;
 	}
 	hHal = CDS_GET_HAL_CB();
 
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "In %s invalid hHal", __func__);
+			  FL("Invalid hHal"));
 		return QDF_STATUS_E_FAULT;
 	}
 	pMac = PMAC_STRUCT(hHal);

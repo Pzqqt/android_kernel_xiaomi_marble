@@ -672,7 +672,7 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 				ol_rx_frames_free(htt_pdev, frag_list);
 			}
 			ol_rx_frames_free(htt_pdev, tmp_next);
-			ol_txrx_err("ol_rx_defrag: PN Check failed\n");
+			ol_txrx_err("PN Check failed");
 			return;
 		}
 		/* remove FCS from each fragment */
@@ -699,7 +699,7 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 			if (!ol_rx_frag_tkip_decap(pdev, cur, hdr_space)) {
 				/* TKIP decap failed, discard frags */
 				ol_rx_frames_free(htt_pdev, frag_list);
-				ol_txrx_err("\n ol_rx_defrag: TKIP decap failed\n");
+				ol_txrx_err("TKIP decap failed");
 				return;
 			}
 			cur = tmp_next;
@@ -712,13 +712,13 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 			if (!ol_rx_frag_ccmp_demic(pdev, cur, hdr_space)) {
 				/* CCMP demic failed, discard frags */
 				ol_rx_frames_free(htt_pdev, frag_list);
-				ol_txrx_err("\n ol_rx_defrag: CCMP demic failed\n");
+				ol_txrx_err("CCMP demic failed");
 				return;
 			}
 			if (!ol_rx_frag_ccmp_decap(pdev, cur, hdr_space)) {
 				/* CCMP decap failed, discard frags */
 				ol_rx_frames_free(htt_pdev, frag_list);
-				ol_txrx_err("\n ol_rx_defrag: CCMP decap failed\n");
+				ol_txrx_err("CCMP decap failed");
 				return;
 			}
 			cur = tmp_next;
@@ -733,7 +733,7 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 			if (!ol_rx_frag_wep_decap(pdev, cur, hdr_space)) {
 				/* wep decap failed, discard frags */
 				ol_rx_frames_free(htt_pdev, frag_list);
-				ol_txrx_err("\n ol_rx_defrag: wep decap failed\n");
+				ol_txrx_err("wep decap failed");
 				return;
 			}
 			cur = tmp_next;
@@ -757,7 +757,7 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 			ol_rx_err(pdev->ctrl_pdev,
 				  vdev->vdev_id, peer->mac_addr.raw, tid, 0,
 				  OL_RX_DEFRAG_ERR, msdu, NULL, 0);
-			ol_txrx_err("\n ol_rx_defrag: TKIP demic failed\n");
+			ol_txrx_err("TKIP demic failed");
 			return;
 		}
 	}

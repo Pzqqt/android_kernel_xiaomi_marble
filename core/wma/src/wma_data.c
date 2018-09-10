@@ -1918,7 +1918,7 @@ QDF_STATUS wma_set_thermal_mgmt(tp_wma_handle wma_handle,
 	struct thermal_cmd_params mgmt_thermal_info = {0};
 
 	if (!wma_handle) {
-		WMA_LOGE("%s:'wma_set_thermal_mgmt':invalid input", __func__);
+		wma_err("Invalid input");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3069,7 +3069,7 @@ QDF_STATUS wma_lro_config_cmd(void *handle,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (NULL == wma || NULL == wma_lro_cmd) {
-		WMA_LOGE("wma_lro_config_cmd': invalid input!");
+		wma_err("Invalid input!");
 		return QDF_STATUS_E_FAILURE;
 	}
 

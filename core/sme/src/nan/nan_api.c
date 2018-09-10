@@ -134,8 +134,7 @@ QDF_STATUS sme_nan_event(tHalHandle hHal, void *pMsg)
 			  FL("msg ptr is NULL"));
 		status = QDF_STATUS_E_FAILURE;
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  FL("SME: Received sme_nan_event"));
+		sme_debug("Received eWNI_SME_NAN_EVENT");
 		if (pMac->sme.nan_callback) {
 			pMac->sme.nan_callback(pMac->hdd_handle,
 					      (tSirNanEvent *) pMsg);

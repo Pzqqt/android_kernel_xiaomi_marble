@@ -414,13 +414,10 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 
 		retCode = wma_post_ctrl_msg(pMac, &msgQ);
 		if (QDF_STATUS_SUCCESS != retCode) {
-			pe_err("lim_send_probe_rsp_template_to_hal: FAIL bytes %d retcode[%X]",
-				nBytes, retCode);
+			pe_err("FAIL bytes %d retcode[%X]", nBytes, retCode);
 			qdf_mem_free(pprobeRespParams);
 		} else {
-			pe_debug(
-				FL
-					("lim_send_probe_rsp_template_to_hal: Probe response template msg posted to HAL of bytes %d"),
+			pe_debug("Probe response template msg posted to HAL of bytes %d",
 				nBytes);
 		}
 	}

@@ -689,7 +689,6 @@ QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal pMac,
 	pExcludeUnencryptParam =
 		qdf_mem_malloc(sizeof(tSirWlanExcludeUnencryptParam));
 	if (NULL == pExcludeUnencryptParam) {
-		pe_err("Unable to allocate memory during lim_send_exclude_unencrypt_ind");
 		return QDF_STATUS_E_NOMEM;
 	}
 

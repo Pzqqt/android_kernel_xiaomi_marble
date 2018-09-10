@@ -1121,8 +1121,7 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 	if (session->roam_synch_in_progress &&
 		(eSIR_ROAM_AUTH_STATUS_AUTHENTICATED ==
 		session->roam_synch_data->authStatus)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"LFR3:csr_neighbor_roam_indicate_connect");
+		sme_debug("LFR3: Authenticated");
 		qdf_copy_macaddr(&roamInfo.peerMac,
 			&session->connectedProfile.bssid);
 		roamInfo.roamSynchInProgress =

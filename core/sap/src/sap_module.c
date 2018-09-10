@@ -379,7 +379,7 @@ QDF_STATUS sap_deinit_ctx(struct sap_context *sap_ctx)
 QDF_STATUS sap_destroy_ctx(struct sap_context *sap_ctx)
 {
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "sap_destroy_ctx invoked");
+		  FL("Enter"));
 
 	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -655,7 +655,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	tpAniSirGlobal pmac = NULL;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "wlansap_start_bss: sapContext=%pK", sap_ctx);
+		  FL("sapContext=%pK"), sap_ctx);
 
 	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,

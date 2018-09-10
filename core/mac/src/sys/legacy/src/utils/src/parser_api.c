@@ -133,7 +133,7 @@ int find_ie_location(tpAniSirGlobal pMac, tpSirRSNie pRsnIe, uint8_t EID)
 		} else if (EID != pRsnIe->rsnIEdata[idx] &&
 			/* & if no more IE, */
 			   bytesLeft <= (uint16_t) (ieLen)) {
-			pe_debug("No IE (%d) in find_ie_location", EID);
+			pe_debug("No IE (%d)", EID);
 			return ret_val;
 		}
 		bytesLeft -= ieLen;
@@ -1250,7 +1250,7 @@ populate_dot11f_ht_info(tpAniSirGlobal pMac,
 	};
 
 	if (NULL == psessionEntry) {
-		pe_err("Invalid session entry in populate_dot11f_ht_info()");
+		pe_err("Invalid session entry");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1501,8 +1501,7 @@ populate_dot11f_rsn(tpAniSirGlobal pMac,
 					status);
 				return QDF_STATUS_E_FAILURE;
 			}
-			pe_debug("dot11f_unpack_ie_rsn returned 0x%08x in populate_dot11f_rsn",
-				   status);
+			pe_debug("status 0x%08x", status);
 		}
 
 	}
@@ -1546,12 +1545,10 @@ populate_dot11f_wapi(tpAniSirGlobal pMac,
 						       pRsnIe->rsnIEdata[idx + 1],
 						       pDot11f, false);
 			if (DOT11F_FAILED(status)) {
-				pe_err("Parse failure in populate_dot11f_wapi (0x%08x)",
-					status);
+				pe_err("Parse failure (0x%08x)", status);
 				return QDF_STATUS_E_FAILURE;
 			}
-			pe_debug("dot11f_unpack_ie_rsn returned 0x%08x in populate_dot11f_wapi",
-				   status);
+			pe_debug("status 0x%08x", status);
 		}
 	}
 
@@ -4466,9 +4463,7 @@ sir_convert_addts_req2_struct(tpAniSirGlobal pMac,
 	uint32_t status;
 
 	if (SIR_MAC_QOS_ADD_TS_REQ != *(pFrame + 1)) {
-		pe_err("sir_convert_addts_req2_struct invoked "
-		       "with an Action of %d; this is not "
-		       "supported & is probably an error",
+		pe_err("Action of %d; this is not supported & is probably an error",
 			*(pFrame + 1));
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4487,9 +4482,7 @@ sir_convert_addts_req2_struct(tpAniSirGlobal pMac,
 							 &wmmaddts, false);
 		break;
 	default:
-		pe_err("sir_convert_addts_req2_struct invoked "
-		       "with a Category of %d; this is not"
-		       " supported & is probably an error",
+		pe_err("Category of %d; this is not supported & is probably an error",
 			*pFrame);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4594,9 +4587,7 @@ sir_convert_addts_rsp2_struct(tpAniSirGlobal pMac,
 	uint32_t status;
 
 	if (SIR_MAC_QOS_ADD_TS_RSP != *(pFrame + 1)) {
-		pe_err("sir_convert_addts_rsp2_struct invoked "
-		       "with an Action of %d; this is not "
-		       "supported & is probably an error",
+		pe_err("Action of %d; this is not supported & is probably an error",
 			*(pFrame + 1));
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4618,9 +4609,7 @@ sir_convert_addts_rsp2_struct(tpAniSirGlobal pMac,
 							  &wmmaddts, false);
 		break;
 	default:
-		pe_err("sir_convert_addts_rsp2_struct invoked "
-		       "with a Category of %d; this is not"
-		       " supported & is probably an error",
+		pe_err("Category of %d; this is not supported & is probably an error",
 			*pFrame);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5151,8 +5140,7 @@ populate_dot11f_tclas(tpAniSirGlobal pMac,
 			pOld->tclasParams.t8021dq.tag;
 		break;
 	default:
-		pe_err("Bad TCLAS type %d in populate_dot11f_tclas",
-			pDot11f->classifier_type);
+		pe_err("Bad TCLAS type %d", pDot11f->classifier_type);
 		return QDF_STATUS_E_FAILURE;
 	}
 
