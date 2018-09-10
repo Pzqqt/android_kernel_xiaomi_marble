@@ -246,4 +246,91 @@ QDF_STATUS ucfg_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
 	return wlan_mlme_configure_chain_mask(psoc, session_id);
 }
 
+/*
+ * ucfg_mlme_get_sta_keep_alive_period() - Get the sta keep alive period
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_sta_keep_alive_period(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *val);
+
+/**
+ * ucfg_mlme_get_pmkid_modes() - Get PMKID modes
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_pmkid_modes(struct wlan_objmgr_psoc *psoc,
+			  uint32_t *val);
+
+/**
+ * ucfg_mlme_set_pmkid_modes() - Set PMKID modes
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_pmkid_modes(struct wlan_objmgr_psoc *psoc,
+			  uint32_t val);
+
+/**
+ * ucfg_mlme_get_dot11p_mode() - Get the setting about 802.11p mode
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_dot11p_mode(struct wlan_objmgr_psoc *psoc,
+			  uint8_t *val);
+
+/**
+ * ucfg_mlme_get_go_cts2self_for_sta() - Stop NOA and start using cts2self
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_go_cts2self_for_sta(struct wlan_objmgr_psoc *psoc,
+				  bool *val);
+
+/**
+ * ucfg_mlme_get_force_rsne_override() - Force rsnie override from user
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_force_rsne_override(struct wlan_objmgr_psoc *psoc,
+				  bool *val);
+
+/**
+ * ucfg_mlme_get_qcn_ie_support() - QCN IE support or not
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_qcn_ie_support(struct wlan_objmgr_psoc *psoc,
+			     bool *val);
+
+/**
+ * ucfg_mlme_get_tgt_gtx_usr_cfg() - Get the target gtx user config
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_tgt_gtx_usr_cfg(struct wlan_objmgr_psoc *psoc,
+			      uint32_t *val);
 #endif /* _WLAN_MLME_UCFG_API_H_ */

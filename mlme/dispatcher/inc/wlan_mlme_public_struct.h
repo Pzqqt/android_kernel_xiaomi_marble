@@ -25,6 +25,9 @@
 
 #include <wlan_cmn.h>
 
+#define CFG_PMKID_MODES_OKC                        (0x1)
+#define CFG_PMKID_MODES_PMKSA_CACHING              (0x2)
+
 /**
  * struct mlme_ht_capabilities_info - HT Capabilities Info
  * @l_sig_tx_op_protection: L-SIG TXOP Protection Mechanism support
@@ -229,12 +232,61 @@ struct wlan_mlme_obss_ht40 {
 };
 
 /**
+ * enum dot11p_mode - The 802.11p mode of operation
+ * @WLAN_HDD_11P_DISABLED:   802.11p mode is disabled
+ * @WLAN_HDD_11P_STANDALONE: 802.11p-only operation
+ * @WLAN_HDD_11P_CONCURRENT: 802.11p and WLAN operate concurrently
+ */
+enum dot11p_mode {
+	CFG_11P_DISABLED = 0,
+	CFG_11P_STANDALONE,
+	CFG_11P_CONCURRENT,
+};
+
+/**
+ * struct wlan_mlme_sta_cfg - MLME STA configuration items
+ * @sta_keep_alive_period:          Sends NULL frame to AP period
+ * @tgt_gtx_usr_cfg:                Target gtx user config
+ * @pmkid_modes:                    Enable PMKID modes
+ * @wait_cnf_timeout:               Wait assoc cnf timeout
+ * @dot11p_mode:                    Set 802.11p mode
+ * @fils_max_chan_guard_time:       Set maximum channel guard time
+ * @current_rssi:                   Current rssi
+ * @ignore_peer_erp_info:           Ignore peer infrormation
+ * @sta_prefer_80mhz_over_160mhz:   Set Sta preference to connect in 80HZ/160HZ
+ * @enable_5g_ebt:                  Set default 5G early beacon termination
+ * @deauth_before_connection:       Send deauth before connection or not
+ * @enable_go_cts2self_for_sta:     Stop NOA and start using cts2self
+ * @qcn_ie_support:                 QCN IE support
+ * @force_rsne_override:            Force rsnie override from user
+ * @single_tid:                     Set replay counter for all TID
+ */
+struct wlan_mlme_sta_cfg {
+	uint32_t sta_keep_alive_period;
+	uint32_t tgt_gtx_usr_cfg;
+	uint32_t pmkid_modes;
+	uint32_t wait_cnf_timeout;
+	uint8_t dot11p_mode;
+	uint8_t fils_max_chan_guard_time;
+	uint8_t current_rssi;
+	bool ignore_peer_erp_info;
+	bool sta_prefer_80mhz_over_160mhz;
+	bool enable_5g_ebt;
+	bool deauth_before_connection;
+	bool enable_go_cts2self_for_sta;
+	bool qcn_ie_support;
+	bool force_rsne_override;
+	bool single_tid;
+};
+
+/**
  * struct wlan_mlme_cfg - MLME config items
  * @ht_cfg: HT related CFG Items
  * @obss_ht40:obss ht40 CFG Items
  * @vht_cfg: VHT related CFG Items
  * @rates: Rates related cfg items
  * @sap_protection_cfg: SAP erp protection related CFG items
+ * @sta: sta CFG Items
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_ht_caps ht_caps;
@@ -245,6 +297,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_sap_protection sap_protection_cfg;
 	struct wlan_mlme_chainmask chainmask_cfg;
 	struct wlan_mlme_cfg_sap sap_cfg;
+	struct wlan_mlme_sta_cfg sta;
 };
 
 #endif
