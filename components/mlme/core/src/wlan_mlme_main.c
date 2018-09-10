@@ -244,6 +244,41 @@ static void mlme_init_obss_ht40_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_default(CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD);
 }
 
+static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_sta_cfg *sta)
+{
+	sta->sta_keep_alive_period =
+		cfg_get(psoc, CFG_INFRA_STA_KEEP_ALIVE_PERIOD);
+	sta->tgt_gtx_usr_cfg =
+		cfg_get(psoc, CFG_TGT_GTX_USR_CFG);
+	sta->pmkid_modes =
+		cfg_get(psoc, CFG_PMKID_MODES);
+	sta->ignore_peer_erp_info =
+		cfg_get(psoc, CFG_IGNORE_PEER_ERP_INFO);
+	sta->sta_prefer_80mhz_over_160mhz =
+		cfg_get(psoc, CFG_STA_PREFER_80MHZ_OVER_160MHZ);
+	sta->enable_5g_ebt =
+		cfg_get(psoc, CFG_PPS_ENABLE_5G_EBT);
+	sta->deauth_before_connection =
+		cfg_get(psoc, CFG_ENABLE_DEAUTH_BEFORE_CONNECTION);
+	sta->dot11p_mode =
+		cfg_get(psoc, CFG_DOT11P_MODE);
+	sta->enable_go_cts2self_for_sta =
+		cfg_get(psoc, CFG_ENABLE_GO_CTS2SELF_FOR_STA);
+	sta->qcn_ie_support =
+		cfg_get(psoc, CFG_QCN_IE_SUPPORT);
+	sta->fils_max_chan_guard_time =
+		cfg_get(psoc, CFG_FILS_MAX_CHAN_GUARD_TIME);
+	sta->force_rsne_override =
+		cfg_get(psoc, CFG_FORCE_RSNE_OVERRIDE);
+	sta->single_tid =
+		cfg_get(psoc, CFG_SINGLE_TID_RC);
+	sta->wait_cnf_timeout =
+		(uint32_t)cfg_default(CFG_WT_CNF_TIMEOUT);
+	sta->current_rssi =
+		(uint32_t)cfg_default(CFG_CURRENT_RSSI);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -264,6 +299,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_chainmask_cfg(psoc, &mlme_cfg->chainmask_cfg);
 	mlme_update_sap_cfg(psoc, &mlme_cfg->sap_cfg);
 	mlme_init_obss_ht40_cfg(psoc, &mlme_cfg->obss_ht40);
+	mlme_init_sta_cfg(psoc, &mlme_cfg->sta);
 
 	return status;
 }

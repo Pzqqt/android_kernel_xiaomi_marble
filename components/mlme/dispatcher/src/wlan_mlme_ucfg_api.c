@@ -19,6 +19,8 @@
  * DOC: define UCFG APIs exposed by the mlme component
  */
 
+#include "cfg_ucfg_api.h"
+#include "cfg_mlme_sta.h"
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_api.h"
 #include "wlan_mlme_ucfg_api.h"
@@ -100,3 +102,146 @@ QDF_STATUS ucfg_mlme_pdev_close(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+QDF_STATUS
+ucfg_mlme_get_sta_keep_alive_period(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_INFRA_STA_KEEP_ALIVE_PERIOD);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.sta.sta_keep_alive_period;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_pmkid_modes(struct wlan_objmgr_psoc *psoc,
+			  uint32_t *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_PMKID_MODES);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.sta.pmkid_modes;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_pmkid_modes(struct wlan_objmgr_psoc *psoc,
+			  uint32_t val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_obj->cfg.sta.pmkid_modes = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_dot11p_mode(struct wlan_objmgr_psoc *psoc,
+			  uint8_t *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_DOT11P_MODE);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.sta.dot11p_mode;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_go_cts2self_for_sta(struct wlan_objmgr_psoc *psoc,
+				  bool *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_ENABLE_GO_CTS2SELF_FOR_STA);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.sta.enable_go_cts2self_for_sta;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_force_rsne_override(struct wlan_objmgr_psoc *psoc,
+				  bool *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_FORCE_RSNE_OVERRIDE);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.sta.force_rsne_override;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_qcn_ie_support(struct wlan_objmgr_psoc *psoc,
+			     bool *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_QCN_IE_SUPPORT);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.sta.qcn_ie_support;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_tgt_gtx_usr_cfg(struct wlan_objmgr_psoc *psoc,
+			      uint32_t *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_TGT_GTX_USR_CFG);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.sta.tgt_gtx_usr_cfg;
+
+	return QDF_STATUS_SUCCESS;
+}

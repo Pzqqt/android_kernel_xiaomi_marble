@@ -29,6 +29,7 @@
 #include "cfg_mlme_vht_caps.h"
 #include "cfg_qos.h"
 #include "cfg_mlme_rates.h"
+#include "cfg_mlme_sta.h"
 #include "cfg_sap_protection.h"
 #include "cfg_mlme_sap.h"
 
@@ -40,6 +41,7 @@
 	CFG_QOS_ALL \
 	CFG_RATES_ALL \
 	CFG_SAP_PROTECTION_ALL \
-	CFG_SAP_ALL
+	CFG_SAP_ALL \
+	CFG_STA_ALL
 
 #endif /* __CFG_MLME_H */
