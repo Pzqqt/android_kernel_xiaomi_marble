@@ -3726,7 +3726,7 @@ void hdd_set_station_ops(struct net_device *dev)
 /**
  * hdd_alloc_station_adapter() - allocate the station hdd adapter
  * @hdd_ctx: global hdd context
- * @macAddr: mac address to assign to the interface
+ * @mac_addr: mac address to assign to the interface
  * @name: User-visible name of the interface
  *
  * hdd adapter pointer would point to the netdev->priv space, this function
@@ -3734,92 +3734,86 @@ void hdd_set_station_ops(struct net_device *dev)
  *
  * Return: the pointer to hdd adapter, otherwise NULL
  */
-static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx,
-						tSirMacAddr macAddr,
-						unsigned char name_assign_type,
-						const char *name)
+static struct hdd_adapter *
+hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
+			  unsigned char name_assign_type, const char *name)
 {
-	struct net_device *dev = NULL;
-	struct hdd_adapter *adapter = NULL;
+	struct net_device *dev;
+	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
 	QDF_STATUS qdf_status;
-	/*
-	 * cfg80211 initialization and registration....
-	 */
-	dev = alloc_netdev_mq(sizeof(struct hdd_adapter), name,
+
+	/* cfg80211 initialization and registration */
+	dev = alloc_netdev_mq(sizeof(*adapter), name,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)) || defined(WITH_BACKPORTS)
-				   name_assign_type,
+			      name_assign_type,
 #endif
-				(QDF_GLOBAL_MONITOR_MODE == cds_get_conparam() ?
-				hdd_mon_mode_ether_setup : ether_setup),
-				NUM_TX_QUEUES);
+			      (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE ?
+			       hdd_mon_mode_ether_setup : ether_setup),
+			      NUM_TX_QUEUES);
 
-	if (dev != NULL) {
-
-		/* Save the pointer to the net_device in the HDD adapter */
-		adapter = (struct hdd_adapter *) netdev_priv(dev);
-
-		qdf_mem_zero(adapter, sizeof(struct hdd_adapter));
-		sta_ctx = &adapter->session.station;
-		qdf_mem_set(sta_ctx->conn_info.staId,
-			sizeof(sta_ctx->conn_info.staId),
-			HDD_WLAN_INVALID_STA_ID);
-		adapter->dev = dev;
-		adapter->hdd_ctx = hdd_ctx;
-		adapter->magic = WLAN_HDD_ADAPTER_MAGIC;
-		adapter->session_id = HDD_SESSION_ID_INVALID;
-
-		qdf_status = qdf_event_create(
-				&adapter->qdf_session_open_event);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			hdd_err("Session open QDF event init failed!");
-			free_netdev(adapter->dev);
-			return NULL;
-		}
-
-		qdf_status = qdf_event_create(
-				&adapter->qdf_session_close_event);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			hdd_err("Session close QDF event init failed!");
-			free_netdev(adapter->dev);
-			return NULL;
-		}
-
-		adapter->offloads_configured = false;
-		adapter->is_link_up_service_needed = false;
-		adapter->disconnection_in_progress = false;
-		adapter->send_mode_change = true;
-		/* Init the net_device structure */
-		strlcpy(dev->name, name, IFNAMSIZ);
-
-		qdf_mem_copy(dev->dev_addr, (void *)macAddr,
-			     sizeof(tSirMacAddr));
-		qdf_mem_copy(adapter->mac_addr.bytes, macAddr,
-			     sizeof(tSirMacAddr));
-		dev->watchdog_timeo = HDD_TX_TIMEOUT;
-
-		if (hdd_ctx->config->enable_ip_tcp_udp_checksum_offload)
-			dev->features |=
-				NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
-		dev->features |= NETIF_F_RXCSUM;
-
-		hdd_set_tso_flags(hdd_ctx, dev);
-
-		hdd_set_station_ops(adapter->dev);
-
-		hdd_dev_setup_destructor(dev);
-		dev->ieee80211_ptr = &adapter->wdev;
-		dev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
-		adapter->wdev.wiphy = hdd_ctx->wiphy;
-		adapter->wdev.netdev = dev;
-		/* set dev's parent to underlying device */
-		SET_NETDEV_DEV(dev, hdd_ctx->parent_dev);
-		hdd_wmm_init(adapter);
-		spin_lock_init(&adapter->pause_map_lock);
-		adapter->start_time = adapter->last_time = qdf_system_ticks();
+	if (!dev) {
+		hdd_err("Failed to allocate new net_device '%s'", name);
+		return NULL;
 	}
 
+	adapter = netdev_priv(dev);
+
+	qdf_mem_zero(adapter, sizeof(*adapter));
+	sta_ctx = &adapter->session.station;
+	qdf_mem_set(sta_ctx->conn_info.staId, sizeof(sta_ctx->conn_info.staId),
+		    HDD_WLAN_INVALID_STA_ID);
+	adapter->dev = dev;
+	adapter->hdd_ctx = hdd_ctx;
+	adapter->magic = WLAN_HDD_ADAPTER_MAGIC;
+	adapter->session_id = HDD_SESSION_ID_INVALID;
+
+	qdf_status = qdf_event_create(&adapter->qdf_session_open_event);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		goto free_net_dev;
+
+	qdf_status = qdf_event_create(&adapter->qdf_session_close_event);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		goto free_net_dev;
+
+	adapter->offloads_configured = false;
+	adapter->is_link_up_service_needed = false;
+	adapter->disconnection_in_progress = false;
+	adapter->send_mode_change = true;
+
+	/* Init the net_device structure */
+	strlcpy(dev->name, name, IFNAMSIZ);
+
+	qdf_mem_copy(dev->dev_addr, mac_addr, sizeof(tSirMacAddr));
+	qdf_mem_copy(adapter->mac_addr.bytes, mac_addr, sizeof(tSirMacAddr));
+	dev->watchdog_timeo = HDD_TX_TIMEOUT;
+
+	if (hdd_ctx->config->enable_ip_tcp_udp_checksum_offload)
+		dev->features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+	dev->features |= NETIF_F_RXCSUM;
+
+	hdd_set_tso_flags(hdd_ctx, dev);
+	hdd_set_station_ops(adapter->dev);
+
+	hdd_dev_setup_destructor(dev);
+	dev->ieee80211_ptr = &adapter->wdev;
+	dev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
+	adapter->wdev.wiphy = hdd_ctx->wiphy;
+	adapter->wdev.netdev = dev;
+
+	/* set dev's parent to underlying device */
+	SET_NETDEV_DEV(dev, hdd_ctx->parent_dev);
+	hdd_wmm_init(adapter);
+	spin_lock_init(&adapter->pause_map_lock);
+	adapter->start_time = qdf_system_ticks();
+	adapter->last_time = adapter->start_time;
+
 	return adapter;
+
+free_net_dev:
+	free_netdev(adapter->dev);
+
+	return NULL;
 }
 
 static QDF_STATUS hdd_register_interface(struct hdd_adapter *adapter, bool rtnl_held)
