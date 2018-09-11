@@ -138,6 +138,8 @@ struct hal_hw_txrx_ops qca6390_hal_hw_txrx_ops = {
 	hal_rx_link_desc_msdu0_ptr_generic,
 	hal_reo_status_get_header_generic,
 	hal_rx_status_get_tlv_info_generic,
+	hal_tx_desc_set_search_type_generic,
+	hal_tx_desc_set_search_index_generic,
 };
 
 struct hal_hw_srng_config hw_srng_table_6390[] = {

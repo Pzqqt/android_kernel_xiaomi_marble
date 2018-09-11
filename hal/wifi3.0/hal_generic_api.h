@@ -1515,3 +1515,51 @@ static inline void hal_srng_dst_hw_init_generic(void *halsoc,
 
 }
 #endif
+
+/**
+ * hal_tx_desc_set_search_type - Set the search type value
+ * @desc: Handle to Tx Descriptor
+ * @search_type: search type
+ *		     0 – Normal search
+ *		     1 – Index based address search
+ *		     2 – Index based flow search
+ *
+ * Return: void
+ */
+#ifdef TCL_DATA_CMD_2_SEARCH_TYPE_OFFSET
+static void hal_tx_desc_set_search_type_generic(void *desc,
+						uint8_t search_type)
+{
+	HAL_SET_FLD(desc, TCL_DATA_CMD_2, SEARCH_TYPE) |=
+		HAL_TX_SM(TCL_DATA_CMD_2, SEARCH_TYPE, search_type);
+}
+#else
+static void hal_tx_desc_set_search_type_generic(void *desc,
+						uint8_t search_type)
+{
+}
+
+#endif
+
+/**
+ * hal_tx_desc_set_search_index - Set the search index value
+ * @desc: Handle to Tx Descriptor
+ * @search_index: The index that will be used for index based address or
+ *                flow search. The field is valid when 'search_type' is
+ *                1 0r 2
+ *
+ * Return: void
+ */
+#ifdef TCL_DATA_CMD_5_SEARCH_INDEX_OFFSET
+static void hal_tx_desc_set_search_index_generic(void *desc,
+						 uint32_t search_index)
+{
+	HAL_SET_FLD(desc, TCL_DATA_CMD_5, SEARCH_INDEX) |=
+		HAL_TX_SM(TCL_DATA_CMD_5, SEARCH_INDEX, search_index);
+}
+#else
+static void hal_tx_desc_set_search_index_generic(void *desc,
+						 uint32_t search_index)
+{
+}
+#endif

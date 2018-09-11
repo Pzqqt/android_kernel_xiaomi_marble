@@ -307,6 +307,8 @@ struct hal_hw_txrx_ops {
 	uint32_t (*hal_rx_status_get_tlv_info)(void *rx_tlv_hdr,
 			void *ppdu_info,
 			void *hal);
+	void (*hal_tx_desc_set_search_type)(void *desc, uint8_t search_type);
+	void (*hal_tx_desc_set_search_index)(void *desc, uint32_t search_index);
 };
 
 /**

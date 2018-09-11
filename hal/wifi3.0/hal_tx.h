@@ -923,6 +923,38 @@ static inline void hal_tx_desc_set_lmac_id(struct hal_soc *hal_soc,
 }
 
 /**
+ * hal_tx_desc_set_search_type - Set the search type value
+ * @desc: Handle to Tx Descriptor
+ * @search_type: search type
+ *		     0 – Normal search
+ *		     1 – Index based address search
+ *		     2 – Index based flow search
+ *
+ * Return: void
+ */
+static inline void hal_tx_desc_set_search_type(struct hal_soc *hal_soc,
+					       void *desc, uint8_t search_type)
+{
+	hal_soc->ops->hal_tx_desc_set_search_type(desc, search_type);
+}
+
+/**
+ * hal_tx_desc_set_search_index - Set the search index value
+ * @desc: Handle to Tx Descriptor
+ * @search_index: The index that will be used for index based address or
+ *                flow search. The field is valid when 'search_type' is
+ *                1 0r 2
+ *
+ * Return: void
+ */
+static inline void hal_tx_desc_set_search_index(struct hal_soc *hal_soc,
+						void *desc,
+						uint32_t search_index)
+{
+	hal_soc->ops->hal_tx_desc_set_search_index(desc, search_index);
+}
+
+/**
  * hal_tx_comp_get_status() - TQM Release reason
  * @hal_desc: completion ring Tx status
  *
