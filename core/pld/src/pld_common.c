@@ -427,19 +427,19 @@ void pld_get_default_fw_files(struct pld_fw_files *pfw_files)
 {
 	memset(pfw_files, 0, sizeof(*pfw_files));
 
-	strlcpy(pfw_files->image_file, PLD_IMAGE_FILE,
+	strlcpy(pfw_files->image_file, PREFIX PLD_IMAGE_FILE,
 		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->board_data, PLD_BOARD_DATA_FILE,
+	strlcpy(pfw_files->board_data, PREFIX PLD_BOARD_DATA_FILE,
 		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->otp_data, PLD_OTP_FILE,
+	strlcpy(pfw_files->otp_data, PREFIX PLD_OTP_FILE,
 		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->utf_file, PLD_UTF_FIRMWARE_FILE,
+	strlcpy(pfw_files->utf_file, PREFIX PLD_UTF_FIRMWARE_FILE,
 		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->utf_board_data, PLD_BOARD_DATA_FILE,
+	strlcpy(pfw_files->utf_board_data, PREFIX PLD_BOARD_DATA_FILE,
 		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->epping_file, PLD_EPPING_FILE,
+	strlcpy(pfw_files->epping_file, PREFIX PLD_EPPING_FILE,
 		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->setup_file, PLD_SETUP_FILE,
+	strlcpy(pfw_files->setup_file, PREFIX PLD_SETUP_FILE,
 		PLD_MAX_FILE_NAME);
 }
 

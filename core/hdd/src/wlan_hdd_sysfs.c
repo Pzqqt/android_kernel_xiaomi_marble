@@ -37,7 +37,7 @@
 #ifdef MULTI_IF_NAME
 #define DRIVER_NAME MULTI_IF_NAME
 #else
-#define DRIVER_NAME "wlan"
+#define DRIVER_NAME "wifi"
 #endif
 
 static struct kobject *wlan_kobject;
@@ -120,25 +120,25 @@ void hdd_sysfs_create_version_interface(struct wlan_objmgr_psoc *psoc)
 	uint32_t psoc_id;
 	char buf[MAX_PSOC_ID_SIZE];
 
-	wlan_kobject = kobject_create_and_add("wifi", kernel_kobj);
-	if (!wlan_kobject) {
-		hdd_err("could not allocate wlan kobject");
+	driver_kobject = kobject_create_and_add(DRIVER_NAME, kernel_kobj);
+	if (!driver_kobject) {
+		hdd_err("could not allocate driver kobject");
 		return;
 	}
 
-	driver_kobject = kobject_create_and_add(DRIVER_NAME, wlan_kobject);
-	if (!driver_kobject) {
-		hdd_err("could not allocate driver kobject");
-		goto free_wlan_kobj;
-	}
-
-	error = sysfs_create_file(driver_kobject, &dr_ver_attribute.attr);
-	if (error) {
-		hdd_err("could not create driver sysfs file");
+	wlan_kobject = kobject_create_and_add("wlan", driver_kobject);
+	if (!wlan_kobject) {
+		hdd_err("could not allocate wlan kobject");
 		goto free_drv_kobj;
 	}
 
-	fw_kobject = kobject_create_and_add("fw", driver_kobject);
+	error = sysfs_create_file(wlan_kobject, &dr_ver_attribute.attr);
+	if (error) {
+		hdd_err("could not create wlan sysfs file");
+		goto free_wlan_kobj;
+	}
+
+	fw_kobject = kobject_create_and_add("fw", wlan_kobject);
 	if (!fw_kobject) {
 		hdd_err("could not allocate fw kobject");
 		goto free_fw_kobj;
@@ -169,13 +169,13 @@ free_fw_kobj:
 	kobject_put(fw_kobject);
 	fw_kobject = NULL;
 
-free_drv_kobj:
-	kobject_put(driver_kobject);
-	driver_kobject = NULL;
-
 free_wlan_kobj:
 	kobject_put(wlan_kobject);
 	wlan_kobject = NULL;
+
+free_drv_kobj:
+	kobject_put(driver_kobject);
+	driver_kobject = NULL;
 }
 
 void hdd_sysfs_destroy_version_interface(void)
@@ -185,9 +185,9 @@ void hdd_sysfs_destroy_version_interface(void)
 		psoc_kobject = NULL;
 		kobject_put(fw_kobject);
 		fw_kobject = NULL;
-		kobject_put(driver_kobject);
-		driver_kobject = NULL;
 		kobject_put(wlan_kobject);
 		wlan_kobject = NULL;
+		kobject_put(driver_kobject);
+		driver_kobject = NULL;
 	}
 }

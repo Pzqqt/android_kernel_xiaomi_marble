@@ -24,6 +24,12 @@
 #endif
 #include "pld_internal.h"
 
+#ifdef MULTI_IF_NAME
+#define PREFIX MULTI_IF_NAME "/"
+#else
+#define PREFIX ""
+#endif
+
 #ifndef HIF_PCI
 static inline int pld_pcie_register_driver(void)
 {

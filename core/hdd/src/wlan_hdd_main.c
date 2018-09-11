@@ -202,6 +202,12 @@ static struct attribute *attrs[] = {
 };
 
 #define MODULE_INITIALIZED 1
+
+#ifdef MULTI_IF_NAME
+#define WLAN_LOADER_NAME "boot_" MULTI_IF_NAME
+#else
+#define WLAN_LOADER_NAME "boot_wlan"
+#endif
 #endif
 
 #define HDD_OPS_INACTIVITY_TIMEOUT (120000)
@@ -12971,7 +12977,7 @@ static int wlan_init_sysfs(void)
 	wlan_loader->loaded_state = 0;
 	wlan_loader->attr_group->attrs = attrs;
 
-	wlan_loader->boot_wlan_obj = kobject_create_and_add("boot_wlan",
+	wlan_loader->boot_wlan_obj = kobject_create_and_add(WLAN_LOADER_NAME,
 							    kernel_kobj);
 	if (!wlan_loader->boot_wlan_obj) {
 		hdd_err("sysfs create and add failed");

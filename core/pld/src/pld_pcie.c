@@ -632,20 +632,20 @@ int pld_pcie_get_fw_files_for_target(struct device *dev,
 	if (ret)
 		return ret;
 
-	strlcpy(pfw_files->image_file, cnss_fw_files.image_file,
-		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->board_data, cnss_fw_files.board_data,
-		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->otp_data, cnss_fw_files.otp_data,
-		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->utf_file, cnss_fw_files.utf_file,
-		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->utf_board_data, cnss_fw_files.utf_board_data,
-		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->epping_file, cnss_fw_files.epping_file,
-		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->evicted_data, cnss_fw_files.evicted_data,
-		PLD_MAX_FILE_NAME);
+	scnprintf(pfw_files->image_file, PLD_MAX_FILE_NAME, PREFIX "%s",
+		  cnss_fw_files.image_file);
+	scnprintf(pfw_files->board_data, PLD_MAX_FILE_NAME, PREFIX "%s",
+		  cnss_fw_files.board_data);
+	scnprintf(pfw_files->otp_data, PLD_MAX_FILE_NAME, PREFIX "%s",
+		  cnss_fw_files.otp_data);
+	scnprintf(pfw_files->utf_file, PLD_MAX_FILE_NAME, PREFIX "%s",
+		  cnss_fw_files.utf_file);
+	scnprintf(pfw_files->utf_board_data, PLD_MAX_FILE_NAME, PREFIX "%s",
+		  cnss_fw_files.utf_board_data);
+	scnprintf(pfw_files->epping_file, PLD_MAX_FILE_NAME, PREFIX "%s",
+		  cnss_fw_files.epping_file);
+	scnprintf(pfw_files->evicted_data, PLD_MAX_FILE_NAME, PREFIX "%s",
+		  cnss_fw_files.evicted_data);
 
 	return 0;
 }
