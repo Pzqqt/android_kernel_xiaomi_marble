@@ -3522,6 +3522,10 @@ struct afe_abr_enc_cfg_t {
 	 * Information to set up IMC between decoder and encoder.
 	 */
 	struct afe_imc_dec_enc_info imc_info;
+	/*
+	 * Flag to indicate whether ABR is enabled.
+	 */
+	bool is_abr_enabled;
 } __packed;
 
 #define AFE_PARAM_ID_APTX_SYNC_MODE  0x00013205
