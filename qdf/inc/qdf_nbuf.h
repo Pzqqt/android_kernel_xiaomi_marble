@@ -1336,7 +1336,8 @@ qdf_nbuf_alloc_fl(qdf_device_t osdev, qdf_size_t size, int reserve, int align,
 
 static inline void qdf_nbuf_free(qdf_nbuf_t buf)
 {
-	__qdf_nbuf_free(buf);
+	if (qdf_likely(buf))
+		__qdf_nbuf_free(buf);
 }
 
 /**

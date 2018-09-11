@@ -2652,15 +2652,16 @@ qdf_export_symbol(qdf_nbuf_alloc_debug);
 
 void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, uint8_t *file, uint32_t line)
 {
+	if (qdf_unlikely(!nbuf))
+		return;
+
 	if (qdf_nbuf_is_tso(nbuf) && qdf_nbuf_get_users(nbuf) > 1)
 		goto free_buf;
 
 	/* Remove SKB from internal QDF tracking table */
-	if (qdf_likely(nbuf)) {
-		qdf_nbuf_panic_on_free_if_mapped(nbuf, file, line);
-		qdf_net_buf_debug_delete_node(nbuf);
-		qdf_nbuf_history_add(nbuf, file, line, QDF_NBUF_FREE);
-	}
+	qdf_nbuf_panic_on_free_if_mapped(nbuf, file, line);
+	qdf_net_buf_debug_delete_node(nbuf);
+	qdf_nbuf_history_add(nbuf, file, line, QDF_NBUF_FREE);
 
 free_buf:
 	__qdf_nbuf_free(nbuf);
