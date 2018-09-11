@@ -30,8 +30,8 @@
 			"1,2,3,4,5,6,7,8,9,0", \
 			"CFG_SSID")
 
-#define CFG_BEACON_INTERVAL CFG_UINT( \
-			"cfg_beacon_interval", \
+#define CFG_BEACON_INTERVAL CFG_INI_UINT( \
+			"gBeaconInterval", \
 			0, \
 			65535, \
 			100, \
@@ -87,10 +87,10 @@
  *
  * </ini>
  */
- #define CFG_INI_ENABLE_LTE_COEX CFG_INI_BOOL( \
-			"cfg_enable_lte_coex", \
+ #define CFG_ENABLE_LTE_COEX CFG_INI_BOOL( \
+			"gEnableLTECoex", \
 			0, \
-			"CFG_ENABLE_LTE_COEX")
+			"enabled lte coex")
 
 #define CFG_RMC_ACTION_PERIOD_FREQUENCY CFG_UINT( \
 			"cfg_rcm_action_period_frequency", \
@@ -117,13 +117,13 @@
  *
  * </ini>
  */
- #define CFG_INI_RATE_FOR_TX_MGMT CFG_INI_UINT( \
-			"cfg_rate_for_tx_mgmt", \
+ #define CFG_RATE_FOR_TX_MGMT CFG_INI_UINT( \
+			"gRateForTxMgmt", \
 			0, \
 			0xFF, \
 			0xFF, \
 			CFG_VALUE_OR_DEFAULT, \
-			"CFG_INI_RATE_FOR_TX_MGMT")
+			"set rate for mgmt tx")
 
 /*
  * <ini>
@@ -141,13 +141,13 @@
  *
  * </ini>
  */
- #define CFG_INI_RATE_FOR_TX_MGMT_2G CFG_INI_UINT( \
-			"cfg_rate_for_tx_mgmt_2g", \
+ #define CFG_RATE_FOR_TX_MGMT_2G CFG_INI_UINT( \
+			"gRateForTxMgmt2G", \
 			0, \
 			255, \
 			255, \
 			CFG_VALUE_OR_DEFAULT, \
-			"CFG_INI_RATE_FOR_TX_MGMT_2G")
+			"set rate for mgmt tx 2g")
 
 /*
  * <ini>
@@ -166,13 +166,13 @@
  *
  * </ini>
  */
- #define CFG_INI_RATE_FOR_TX_MGMT_5G CFG_INI_UINT( \
-			"cfg_rate_for_tx_mgmt_5g", \
+ #define CFG_RATE_FOR_TX_MGMT_5G CFG_INI_UINT( \
+			"gRateForTxMgmt5G", \
 			0, \
 			255, \
 			255, \
 			CFG_VALUE_OR_DEFAULT, \
-			"CFG_INI_RATE_FOR_TX_MGMT_5G")
+			"set rate for mgmt tx 5g")
 
 /*
  * <ini>
@@ -191,10 +191,10 @@
  *
  * </ini>
  */
-#define CFG_INI_TELE_BCN_WAKEUP_EN CFG_INI_BOOL( \
+#define CFG_TELE_BCN_WAKEUP_EN CFG_INI_BOOL( \
 			"gTelescopicBeaconWakeupEn", \
 			0, \
-			"CFG_TELE_BCN_WAKEUP_EN")
+			"set tescopic beacon wakeup")
 
 /*
  * <ini>
@@ -213,13 +213,13 @@
  *
  * </ini>
  */
- #define CFG_INI_TELE_BCN_MAX_LI CFG_INI_UINT( \
+ #define CFG_TELE_BCN_MAX_LI CFG_INI_UINT( \
 			"telescopicBeaconMaxListenInterval", \
 			0, \
 			7, \
 			5, \
 			CFG_VALUE_OR_DEFAULT, \
-			"CFG_TELE_BCN_MAX_LI")
+			"set telescopic beacon max listen")
 
 /*
  * <ini>
@@ -234,10 +234,10 @@
  *
  * </ini>
  */
- #define CFG_INI_SAP_GET_PEER_INFO CFG_INI_BOOL( \
+ #define CFG_SAP_GET_PEER_INFO CFG_INI_BOOL( \
 			"gSapGetPeerInfo", \
 			0, \
-			"CFG_INI_SAP_GET_PEER_INFO")
+			"sap get peer info")
 
 /*
  * <ini>
@@ -256,10 +256,10 @@
  *
  * </ini>
  */
- #define CFG_INI_SAP_ALLOW_ALL_CHANNEL_PARAM CFG_INI_BOOL( \
+ #define CFG_SAP_ALLOW_ALL_CHANNEL_PARAM CFG_INI_BOOL( \
 			"gSapAllowAllChannel", \
 			0, \
-			"CFG_INI_SAP_ALLOW_ALL_CHANNEL_PARAM")
+			"sap allow all channel params")
 
 /*
  * <ini>
@@ -278,13 +278,13 @@
  *
  * </ini>
  */
- #define CFG_INI_SAP_MAX_NO_PEERS CFG_INI_UINT( \
+ #define CFG_SAP_MAX_NO_PEERS CFG_INI_UINT( \
 			"gSoftApMaxPeers", \
 			1, \
 			32, \
 			32, \
 			CFG_VALUE_OR_DEFAULT, \
-			"CFG_INI_SAP_MAX_NO_PEERS")
+			"max no of peers")
 
 /*
  * <ini>
@@ -303,13 +303,13 @@
  *
  * </ini>
  */
- #define CFG_INI_SAP_MAX_OFFLOAD_PEERS CFG_INI_UINT( \
+ #define CFG_SAP_MAX_OFFLOAD_PEERS CFG_INI_UINT( \
 			"gMaxOffloadPeers", \
 			2, \
 			5, \
 			2, \
 			CFG_VALUE_OR_DEFAULT, \
-			"CFG_INI_SAP_MAX_OFFLOAD_PEERS")
+			"max offload peers")
 
 /*
  * <ini>
@@ -328,13 +328,13 @@
  *
  * </ini>
  */
- #define CFG_INI_SAP_MAX_OFFLOAD_REORDER_BUFFS CFG_INI_UINT( \
+ #define CFG_SAP_MAX_OFFLOAD_REORDER_BUFFS CFG_INI_UINT( \
 			"gMaxOffloadReorderBuffs", \
 			0, \
 			3, \
 			2, \
 			CFG_VALUE_OR_DEFAULT, \
-			"CFG_INI_SAP_MAX_OFFLOAD_REORDER_BUFFS")
+			"sap max offload reorder buffs")
 
 /*
  * <ini>
@@ -353,13 +353,13 @@
  *
  * </ini>
  */
- #define CFG_INI_SAP_CH_SWITCH_BEACON_CNT CFG_INI_UINT( \
+ #define CFG_SAP_CH_SWITCH_BEACON_CNT CFG_INI_UINT( \
 			"g_sap_chanswitch_beacon_cnt", \
 			1, \
 			10, \
 			10, \
 			CFG_VALUE_OR_DEFAULT, \
-			"CFG_INI_SAP_CH_SWITCH_BEACON_CNT")
+			"set channel switch beacon count")
 
 /*
  * <ini>
@@ -376,10 +376,10 @@
  *
  * </ini>
  */
-#define CFG_INI_SAP_CH_SWITCH_MODE CFG_INI_BOOL( \
+#define CFG_SAP_CH_SWITCH_MODE CFG_INI_BOOL( \
 			"g_sap_chanswitch_mode", \
 			1, \
-			"CFG_INI_SAP_CH_SWITCH_MODE")
+			"sap channel switch mode")
 
 /*
  * <ini>
@@ -398,10 +398,10 @@
  *
  * </ini>
  */
- #define CFG_INI_SAP_INTERNAL_RESTART_NAME CFG_INI_BOOL( \
+ #define CFG_SAP_INTERNAL_RESTART CFG_INI_BOOL( \
 			"gEnableSapInternalRestart", \
 			1, \
-			"CFG_SAP_INTERNAL_RESTART_NAME")
+			"sap internal restart")
 
 /*
  * <ini>
@@ -420,10 +420,10 @@
  *
  * </ini>
  */
- #define CFG_INI_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_NAME CFG_INI_BOOL( \
+ #define CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_NAME CFG_INI_BOOL( \
 			"gChanSwitchHostapdRateEnabled", \
 			0, \
-			"CFG_INI_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_NAME")
+			"chan switch hostapd rate enabled")
 
 /*
  * gReducedBeaconInterval - beacon interval reduced
@@ -444,13 +444,13 @@
  *
  * </ini>
  */
-#define CFG_INI_REDUCED_BEACON_INTERVAL CFG_INI_UINT( \
+#define CFG_REDUCED_BEACON_INTERVAL CFG_INI_UINT( \
 			"gReducedBeaconInterval", \
 			0, \
 			100, \
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
-			"CFG_INI_REDUCED_BEACON_INTERVAL")
+			"reduced beacon interval")
 
  #define CFG_SAP_ALL \
 	CFG(CFG_SSID) \
@@ -459,22 +459,22 @@
 	CFG(CFG_LISTEN_INTERVAL) \
 	CFG(CFG_11G_ONLY_POLICY) \
 	CFG(CFG_ASSOC_STA_LIMIT) \
-	CFG(CFG_INI_ENABLE_LTE_COEX) \
+	CFG(CFG_ENABLE_LTE_COEX) \
 	CFG(CFG_RMC_ACTION_PERIOD_FREQUENCY) \
-	CFG(CFG_INI_RATE_FOR_TX_MGMT) \
-	CFG(CFG_INI_RATE_FOR_TX_MGMT_2G) \
-	CFG(CFG_INI_RATE_FOR_TX_MGMT_5G) \
-	CFG(CFG_INI_TELE_BCN_WAKEUP_EN) \
-	CFG(CFG_INI_TELE_BCN_MAX_LI) \
-	CFG(CFG_INI_SAP_GET_PEER_INFO) \
-	CFG(CFG_INI_SAP_ALLOW_ALL_CHANNEL_PARAM) \
-	CFG(CFG_INI_SAP_MAX_NO_PEERS) \
-	CFG(CFG_INI_SAP_MAX_OFFLOAD_PEERS) \
-	CFG(CFG_INI_SAP_MAX_OFFLOAD_REORDER_BUFFS) \
-	CFG(CFG_INI_SAP_CH_SWITCH_BEACON_CNT) \
-	CFG(CFG_INI_SAP_CH_SWITCH_MODE) \
-	CFG(CFG_INI_SAP_INTERNAL_RESTART_NAME) \
-	CFG(CFG_INI_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_NAME) \
-	CFG(CFG_INI_REDUCED_BEACON_INTERVAL)
+	CFG(CFG_RATE_FOR_TX_MGMT) \
+	CFG(CFG_RATE_FOR_TX_MGMT_2G) \
+	CFG(CFG_RATE_FOR_TX_MGMT_5G) \
+	CFG(CFG_TELE_BCN_WAKEUP_EN) \
+	CFG(CFG_TELE_BCN_MAX_LI) \
+	CFG(CFG_SAP_GET_PEER_INFO) \
+	CFG(CFG_SAP_ALLOW_ALL_CHANNEL_PARAM) \
+	CFG(CFG_SAP_MAX_NO_PEERS) \
+	CFG(CFG_SAP_MAX_OFFLOAD_PEERS) \
+	CFG(CFG_SAP_MAX_OFFLOAD_REORDER_BUFFS) \
+	CFG(CFG_SAP_CH_SWITCH_BEACON_CNT) \
+	CFG(CFG_SAP_CH_SWITCH_MODE) \
+	CFG(CFG_SAP_INTERNAL_RESTART) \
+	CFG(CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_NAME) \
+	CFG(CFG_REDUCED_BEACON_INTERVAL)
 
 #endif /* __CFG_MLME_SAP_H */

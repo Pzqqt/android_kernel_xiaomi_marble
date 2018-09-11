@@ -366,4 +366,231 @@ ucfg_mlme_set_roaming_offload(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_get_first_scan_bucket_threshold(struct wlan_objmgr_psoc *psoc,
 					  uint8_t *val);
+/**
+ * ucfg_mlme_set_sap_listen_interval() - Set the Sap listen interval
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_sap_listen_interval(struct wlan_objmgr_psoc *psoc,
+					     int value)
+{
+	return wlan_mlme_set_sap_listen_interval(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_assoc_sta_limit() - Set the assoc sta limit
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_assoc_sta_limit(struct wlan_objmgr_psoc *psoc,
+					 int value)
+{
+	return wlan_mlme_set_assoc_sta_limit(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_rmc_action_period_freq() - Set the rmc action period frequency
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_rmc_action_period_freq(struct wlan_objmgr_psoc *psoc,
+						int value)
+{
+	return wlan_mlme_set_rmc_action_period_freq(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_sap_get_peer_info() - get the sap get peer info
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_sap_get_peer_info(struct wlan_objmgr_psoc *psoc,
+					   bool *value)
+{
+	return wlan_mlme_get_sap_get_peer_info(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_sap_allow_all_channels() - get the sap allow all channels
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_sap_allow_all_channels(struct wlan_objmgr_psoc *psoc,
+						bool *value)
+{
+	return wlan_mlme_get_sap_allow_all_channels(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_sap_max_peers() - get the sap max peers
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_sap_max_peers(struct wlan_objmgr_psoc *psoc,
+				       int *value)
+{
+	return wlan_mlme_get_sap_max_peers(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_sap_max_peers() - Set the sap max peers
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_sap_max_peers(struct wlan_objmgr_psoc *psoc, int value)
+{
+	return wlan_mlme_set_sap_max_peers(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_sap_max_offload_peers() - get the sap max offload peers
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_sap_max_offload_peers(struct wlan_objmgr_psoc *psoc,
+					       int *value)
+{
+	return wlan_mlme_get_sap_max_offload_peers(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_sap_max_offload_reorder_buffs() - get the sap max offload
+ * reorder buffs
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_sap_max_offload_reorder_buffs(struct wlan_objmgr_psoc
+						       *psoc, int *value)
+{
+	return wlan_mlme_get_sap_max_offload_reorder_buffs(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_sap_chn_switch_bcn_count() - get the sap channel
+ * switch beacon count
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_sap_chn_switch_bcn_count(struct wlan_objmgr_psoc *psoc,
+						  int *value)
+{
+	return wlan_mlme_get_sap_chn_switch_bcn_count(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_sap_channel_switch_mode() - get the sap channel switch mode
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_sap_channel_switch_mode(struct wlan_objmgr_psoc *psoc,
+						 bool *value)
+{
+	return wlan_mlme_get_sap_chn_switch_mode(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_sap_internal_restart() - get sap internal restart value
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_sap_internal_restart(struct wlan_objmgr_psoc *psoc,
+					      bool *value)
+{
+	return wlan_mlme_get_sap_internal_restart(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_sap_reduces_beacon_interval() - get the sap reduces beacon
+ * interval
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_sap_reduces_beacon_interval(struct wlan_objmgr_psoc
+						     *psoc, int *value)
+{
+	return wlan_mlme_get_sap_reduced_beacon_interval(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_sap_chan_switch_rate_enabled() - get the sap channel
+ * switch rate enabled.
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_sap_chan_switch_rate_enabled(struct wlan_objmgr_psoc
+						      *psoc, bool *value)
+{
+	return wlan_mlme_get_sap_chan_switch_rate_enabled(psoc, value);
+}
+
 #endif /* _WLAN_MLME_UCFG_API_H_ */

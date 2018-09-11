@@ -113,8 +113,8 @@ struct wlan_mlme_cfg_sap {
 	uint8_t sap_max_offload_peers;
 	uint8_t sap_max_offload_reorder_buffs;
 	uint8_t sap_ch_switch_beacon_cnt;
+	bool sap_internal_restart;
 	bool sap_ch_switch_mode;
-	bool sap_internal_restart_name;
 	bool chan_switch_hostapd_rate_enabled_name;
 	uint8_t reduced_beacon_interval;
 };
