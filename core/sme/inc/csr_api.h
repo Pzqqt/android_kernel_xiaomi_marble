@@ -1015,20 +1015,6 @@ struct csr_sta_roam_policy_params {
 };
 
 /**
- * struct csr_mbo_thresholds - mbo related thresholds
- * @mbo_candidate_rssi_thres - Candidate RSSI threshold
- * @mbo_current_rssi_thres - Current RSSI threshold
- * @mbo_current_rssi_mcc_thres - Current RSSI MCC threshold
- * mbo_candidate_rssi_btc_thres - Candidate RSSI BTC threshold
- */
-struct csr_mbo_thresholds {
-	int8_t mbo_candidate_rssi_thres;
-	int8_t mbo_current_rssi_thres;
-	int8_t mbo_current_rssi_mcc_thres;
-	int8_t mbo_candidate_rssi_btc_thres;
-};
-
-/**
  * struct csr_neighbor_report_offload_params - neighbor report offload params
  * @params_bitmask: bitmask to specify which of the below are enabled
  * @time_offset: time offset after 11k offload command to trigger a neighbor
@@ -1263,7 +1249,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t num_disallowed_aps;
 	struct sir_score_config bss_score_params;
 	uint8_t oce_feature_bitmap;
-	struct csr_mbo_thresholds mbo_thresholds;
 	uint32_t btm_offload_config;
 	uint32_t btm_solicited_timeout;
 	uint32_t btm_max_attempt_cnt;

@@ -4645,37 +4645,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_ENABLE_SCORING_FOR_ROAM_MIN,
 		CFG_ENABLE_SCORING_FOR_ROAM_MAX),
 
-	REG_VARIABLE(CFG_MBO_CANDIDATE_RSSI_THRESHOLD_NAME,
-		WLAN_PARAM_SignedInteger, struct hdd_config,
-		mbo_candidate_rssi_thres,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_CANDIDATE_RSSI_THRESHOLD_DEFAULT,
-		CFG_CANDIDATE_RSSI_THRESHOLD_MIN,
-		CFG_CANDIDATE_RSSI_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_MBO_CURRENT_RSSI_THRESHOLD_NAME,
-		WLAN_PARAM_SignedInteger, struct hdd_config,
-		mbo_current_rssi_thres,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_CURRENT_RSSI_THRESHOLD_DEFAULT,
-		CFG_CURRENT_RSSI_THRESHOLD_MIN,
-		CFG_CURRENT_RSSI_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_MBO_CUR_RSSI_MCC_THRESHOLD_NAME,
-		WLAN_PARAM_SignedInteger, struct hdd_config,
-		mbo_current_rssi_mcc_thres,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_MBO_CUR_RSSI_MCC_THRESHOLD_DEFAULT,
-		CFG_MBO_CUR_RSSI_MCC_THRESHOLD_MIN,
-		CFG_MBO_CUR_RSSI_MCC_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_MBO_CAND_RSSI_BTC_THRESHOLD_NAME,
-		WLAN_PARAM_SignedInteger, struct hdd_config,
-		mbo_candidate_rssi_btc_thres,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_MBO_CAND_RSSI_BTC_THRESHOLD_DEFAULT,
-		CFG_MBO_CAND_RSSI_BTC_THRESHOLD_MIN,
-		CFG_MBO_CAND_RSSI_BTC_THRESHOLD_MAX),
 	REG_VARIABLE(CFG_IS_FILS_ENABLED_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, is_fils_enabled,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -7269,14 +7238,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		(pConfig->rssi_assoc_reject_enabled *
 		WMI_VDEV_OCE_REASSOC_REJECT_FEATURE_BITMAP);
 	smeConfig->csrConfig.oce_feature_bitmap = val;
-	smeConfig->csrConfig.mbo_thresholds.mbo_candidate_rssi_thres =
-		hdd_ctx->config->mbo_candidate_rssi_thres;
-	smeConfig->csrConfig.mbo_thresholds.mbo_current_rssi_thres =
-		hdd_ctx->config->mbo_current_rssi_thres;
-	smeConfig->csrConfig.mbo_thresholds.mbo_current_rssi_mcc_thres =
-		hdd_ctx->config->mbo_current_rssi_mcc_thres;
-	smeConfig->csrConfig.mbo_thresholds.mbo_candidate_rssi_btc_thres =
-		hdd_ctx->config->mbo_candidate_rssi_btc_thres;
 	smeConfig->csrConfig.btm_offload_config =
 			hdd_ctx->config->btm_offload_config;
 	smeConfig->csrConfig.btm_solicited_timeout =

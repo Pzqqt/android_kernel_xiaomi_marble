@@ -15734,6 +15734,14 @@ static bool sme_get_status_for_candidate(tHalHandle hal,
 					bool is_bt_in_progress)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct wlan_mlme_mbo *mbo_cfg;
+	int8_t current_rssi_mcc_thres;
+
+	if (!(mac_ctx->mlme_cfg)) {
+		pe_err("mlme cfg is NULL");
+		return false;
+	}
+	mbo_cfg = &mac_ctx->mlme_cfg->mbo_cfg;
 
 	/*
 	 * Low RSSI based rejection
@@ -15741,10 +15749,8 @@ static bool sme_get_status_for_candidate(tHalHandle hal,
 	 * bss rssi is greater than mbo_current_rssi_thres, then reject the
 	 * candidate with MBO reason code 4.
 	 */
-	if ((bss_desc->rssi < mac_ctx->roam.configParam.mbo_thresholds.
-	    mbo_candidate_rssi_thres) &&
-	    (conn_bss_desc->rssi > mac_ctx->roam.configParam.mbo_thresholds.
-	    mbo_current_rssi_thres)) {
+	if ((bss_desc->rssi < mbo_cfg->mbo_candidate_rssi_thres) &&
+	    (conn_bss_desc->rssi > mbo_cfg->mbo_current_rssi_thres)) {
 		sme_err("Candidate BSS "MAC_ADDRESS_STR" has LOW RSSI(%d), hence reject",
 			MAC_ADDR_ARRAY(bss_desc->bssId), bss_desc->rssi);
 		info->status = QCA_STATUS_REJECT_LOW_RSSI;
@@ -15760,9 +15766,8 @@ static bool sme_get_status_for_candidate(tHalHandle hal,
 		 * mbo_current_rssi_mss_thres, then reject the candidate with
 		 * MBO reason code 3.
 		 */
-		if ((conn_bss_desc->rssi >
-		    mac_ctx->roam.configParam.mbo_thresholds.
-		    mbo_current_rssi_mcc_thres) &&
+		current_rssi_mcc_thres = mbo_cfg->mbo_current_rssi_mcc_thres;
+		if ((conn_bss_desc->rssi > current_rssi_mcc_thres) &&
 		    csr_is_mcc_channel(mac_ctx, bss_desc->channelId)) {
 			sme_err("Candidate BSS "MAC_ADDRESS_STR" causes MCC, hence reject",
 				MAC_ADDR_ARRAY(bss_desc->bssId));
@@ -15781,9 +15786,7 @@ static bool sme_get_status_for_candidate(tHalHandle hal,
 		if (WLAN_REG_IS_5GHZ_CH(conn_bss_desc->channelId) &&
 		    WLAN_REG_IS_24GHZ_CH(bss_desc->channelId) &&
 		    is_bt_in_progress &&
-		    (bss_desc->rssi <
-		    mac_ctx->roam.configParam.mbo_thresholds.
-		    mbo_candidate_rssi_btc_thres)) {
+		    (bss_desc->rssi < mbo_cfg->mbo_candidate_rssi_btc_thres)) {
 			sme_err("Candidate BSS "MAC_ADDRESS_STR" causes BT coex, hence reject",
 				MAC_ADDR_ARRAY(bss_desc->bssId));
 			info->status =
