@@ -117,6 +117,33 @@ static void mlme_init_chainmask_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_RX_CHAIN_MASK_5G);
 }
 
+#ifdef WLAN_FEATURE_11W
+static void mlme_init_pmf_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_generic *gen)
+{
+	gen->pmf_sa_query_max_retries =
+		cfg_get(psoc, CFG_PMF_SA_QUERY_MAX_RETRIES);
+	gen->pmf_sa_query_retry_interval =
+		cfg_get(psoc, CFG_PMF_SA_QUERY_RETRY_INTERVAL);
+}
+#else
+static void mlme_init_pmf_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_generic *gen)
+{
+	gen->pmf_sa_query_max_retries =
+		cfg_default(CFG_PMF_SA_QUERY_MAX_RETRIES);
+	gen->pmf_sa_query_retry_interval =
+		cfg_default(CFG_PMF_SA_QUERY_RETRY_INTERVAL);
+}
+#endif /*WLAN_FEATURE_11W*/
+
+static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
+				  struct wlan_mlme_generic *gen)
+{
+	gen->rtt3_enabled = cfg_default(CFG_RTT3_ENABLE);
+	mlme_init_pmf_cfg(psoc, gen);
+}
+
 static void mlme_init_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 				    struct wlan_mlme_ht_caps *ht_caps)
 {
@@ -704,6 +731,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	}
 
 	mlme_cfg = &mlme_obj->cfg;
+	mlme_init_generic_cfg(psoc, &mlme_cfg->gen);
 	mlme_init_ht_cap_in_cfg(psoc, &mlme_cfg->ht_caps);
 	mlme_init_mbo_cfg(psoc, &mlme_cfg->mbo_cfg);
 	mlme_init_qos_cfg(psoc, &mlme_cfg->qos_mlme_params);
