@@ -2860,8 +2860,7 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 	vdev = peer->vdev;
 	if (NULL == vdev) {
 		ol_txrx_err("The vdev is not present anymore\n");
-		err_code = 0xbad1;
-		goto ERR_STATE;
+		return -EINVAL;
 	}
 
 	pdev = vdev->pdev;
