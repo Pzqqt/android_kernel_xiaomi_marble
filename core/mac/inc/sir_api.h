@@ -7143,4 +7143,14 @@ struct sir_sae_msg {
 	uint8_t sae_status;
 };
 
+/**
+ * struct set_pcl_req - Request message to set the PCL
+ * @chan_weights: PCL channel weights
+ * @band: Supported band
+ */
+struct set_pcl_req {
+	struct wmi_pcl_chan_weights chan_weights;
+	enum band_info band;
+};
+
 #endif /* __SIR_API_H */

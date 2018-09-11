@@ -13247,6 +13247,28 @@ QDF_STATUS sme_reset_rssi_threshold_breached_cb(mac_handle_t mac_handle)
 	return sme_set_rssi_threshold_breached_cb(mac_handle, NULL);
 }
 
+static enum band_info sme_get_connected_roaming_vdev_band(void)
+{
+	enum band_info band = BAND_ALL;
+	tpAniSirGlobal mac = sme_get_mac_context();
+	struct csr_roam_session *session;
+	uint8_t session_id, channel;
+
+	if (!mac) {
+		sme_debug("MAC Context is NULL");
+		return band;
+	}
+	session_id = csr_get_roam_enabled_sta_sessionid(mac);
+	if (session_id != CSR_SESSION_ID_INVALID) {
+		session = CSR_GET_SESSION(mac, session_id);
+		channel = session->connectedProfile.operationChannel;
+		band = csr_get_rf_band(channel);
+		return band;
+	}
+
+	return band;
+}
+
 /*
  * sme_pdev_set_pcl() - Send WMI_PDEV_SET_PCL_CMDID to the WMA
  * @hal: Handle returned by macOpen
@@ -13260,8 +13282,8 @@ QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list *msg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac   = sme_get_mac_context();
 	struct scheduler_msg message = {0};
-	struct wmi_pcl_chan_weights *req_msg;
-	uint32_t len, i;
+	struct set_pcl_req *req_msg;
+	uint32_t i;
 
 	if (!mac) {
 		sme_err("mac is NULL");
@@ -13273,20 +13295,23 @@ QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list *msg)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	len = sizeof(*req_msg);
-
-	req_msg = qdf_mem_malloc(len);
+	req_msg = qdf_mem_malloc(sizeof(*req_msg));
 	if (!req_msg) {
 		sme_err("qdf_mem_malloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	req_msg->band = BAND_ALL;
+	if (CSR_IS_ROAM_INTRA_BAND_ENABLED(mac)) {
+		req_msg->band = sme_get_connected_roaming_vdev_band();
+		sme_debug("Connected STA band %d", req_msg->band);
+	}
 	for (i = 0; i < msg->pcl_len; i++) {
-		req_msg->pcl_list[i] =  msg->pcl_list[i];
-		req_msg->weight_list[i] =  msg->weight_list[i];
+		req_msg->chan_weights.pcl_list[i] =  msg->pcl_list[i];
+		req_msg->chan_weights.weight_list[i] =  msg->weight_list[i];
 	}
 
-	req_msg->pcl_len = msg->pcl_len;
+	req_msg->chan_weights.pcl_len = msg->pcl_len;
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (status != QDF_STATUS_SUCCESS) {

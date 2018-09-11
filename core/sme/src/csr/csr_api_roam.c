@@ -19717,6 +19717,7 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 	struct roam_ext_params *roam_params_src;
 	uint8_t i, temp_session_id;
 	uint8_t op_channel;
+	bool prev_roaming_state;
 
 	sme_debug("RSO Command %d, Session id %d, Reason %d", command,
 		   session_id, reason);
@@ -19994,18 +19995,22 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			req_buf->assoc_ie.addIEdata, req_buf->assoc_ie.length);
 
+	prev_roaming_state = roam_info->b_roam_scan_offload_started;
+	if (ROAM_SCAN_OFFLOAD_START == command)
+		roam_info->b_roam_scan_offload_started = true;
+	else if (ROAM_SCAN_OFFLOAD_STOP == command)
+		roam_info->b_roam_scan_offload_started = false;
+	policy_mgr_pdev_set_pcl(mac_ctx->psoc, QDF_STA_MODE);
+
 	if (!QDF_IS_STATUS_SUCCESS(
 		csr_roam_send_rso_cmd(mac_ctx, session_id, req_buf))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to post message to PE",
 			  __func__);
+		roam_info->b_roam_scan_offload_started = prev_roaming_state;
+		policy_mgr_pdev_set_pcl(mac_ctx->psoc, QDF_STA_MODE);
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (ROAM_SCAN_OFFLOAD_START == command)
-		roam_info->b_roam_scan_offload_started = true;
-	else if (ROAM_SCAN_OFFLOAD_STOP == command)
-		roam_info->b_roam_scan_offload_started = false;
-
 	/* update the last sent cmd */
 	roam_info->last_sent_cmd = command;
 
