@@ -921,8 +921,6 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 	}
 	mutex_lock(&swrm->mlock);
 
-	if (enable)
-		pm_runtime_get_sync(swrm->dev);
 	bank = get_inactive_bank_num(swrm);
 
 	if (enable) {
@@ -983,6 +981,8 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 	else {
 		swrm_disable_ports(master, inactive_bank);
 		swrm_cleanup_disabled_port_reqs(master);
+	}
+	if (!swrm_is_port_en(master)) {
 		dev_dbg(&master->dev, "%s: pm_runtime auto suspend triggered\n",
 			__func__);
 		pm_runtime_mark_last_busy(swrm->dev);
@@ -1014,6 +1014,8 @@ static int swrm_connect_port(struct swr_master *master,
 	}
 
 	mutex_lock(&swrm->mlock);
+	if (!swrm_is_port_en(master))
+		pm_runtime_get_sync(swrm->dev);
 
 	for (i = 0; i < portinfo->num_port; i++) {
 		ret = swrm_get_master_port(swrm, &mstr_port_id, &mstr_ch_msk,
