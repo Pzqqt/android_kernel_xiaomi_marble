@@ -36,6 +36,7 @@
 #include "cfg_sap_protection.h"
 #include "cfg_mlme_sap.h"
 #include "cfg_mlme_scoring.h"
+#include "cfg_mlme_oce.h"
 
 /* Please Maintain Alphabetic Order here */
 #define CFG_MLME_ALL \
@@ -45,6 +46,7 @@
 	CFG_LFR_ALL \
 	CFG_MBO_ALL \
 	CFG_OBSS_HT40_ALL \
+	CFG_OCE_ALL \
 	CFG_QOS_ALL \
 	CFG_RATES_ALL \
 	CFG_SAP_ALL \

@@ -273,4 +273,54 @@ QDF_STATUS wlan_mlme_get_sap_reduced_beacon_interval(struct wlan_objmgr_psoc
 QDF_STATUS wlan_mlme_get_sap_chan_switch_rate_enabled(struct wlan_objmgr_psoc
 						      *psoc, bool *value);
 
+/**
+ * wlan_mlme_get_oce_sta_enabled_info() - Get the OCE feature enable
+ * info for STA
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_oce_sta_enabled_info(struct wlan_objmgr_psoc *psoc,
+					      bool *value);
+
+/**
+ * wlan_mlme_get_oce_sap_enabled_info() - Get the OCE feature enable
+ * info for SAP
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_oce_sap_enabled_info(struct wlan_objmgr_psoc *psoc,
+					      bool *value);
+
+/**
+ * wlan_mlme_get_fils_enabled_info() - Get the fils enable info for driver
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
+					   bool *value);
+/**
+ * wlan_mlme_set_fils_enabled_info() - Set the fils enable info for driver
+ * @psoc: pointer to psoc object
+ * @value: value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
+					   bool value);
+
+/**
+ * wlan_mlme_set_enable_bcast_probe_rsp() - Set enable bcast probe resp info
+ * @psoc: pointer to psoc object
+ * @value: value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_enable_bcast_probe_rsp(struct wlan_objmgr_psoc *psoc,
+						bool value);
 #endif /* _WLAN_MLME_API_H_ */

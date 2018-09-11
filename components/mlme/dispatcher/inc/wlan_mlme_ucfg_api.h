@@ -575,4 +575,95 @@ QDF_STATUS ucfg_mlme_get_sap_chan_switch_rate_enabled(struct wlan_objmgr_psoc
 	return wlan_mlme_get_sap_chan_switch_rate_enabled(psoc, value);
 }
 
+/**
+ * ucfg_mlme_get_oce_sta_enabled_info() - Get OCE feature enable/disable
+ * info for STA
+ *
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * OCE STA feature enable value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_oce_sta_enabled_info(struct wlan_objmgr_psoc *psoc,
+					      bool *value)
+{
+	return wlan_mlme_get_oce_sta_enabled_info(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_oce_sap_enabled_info() - Get OCE feature enable/disable
+ * info for SAP
+ *
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * OCE SAP feature enable value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_oce_sap_enabled_info(struct wlan_objmgr_psoc *psoc,
+					      bool *value)
+{
+	return wlan_mlme_get_oce_sap_enabled_info(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_fils_enabled_info() - Get fils enable/disable info
+ *
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * fils enable value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
+					   bool *value)
+{
+	return wlan_mlme_get_fils_enabled_info(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_fils_enabled_info() - Set fils enable info
+ *
+ * @psoc: pointer to psoc object
+ * @value: value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to set the
+ * fils enable value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
+					   bool value)
+{
+	return wlan_mlme_set_fils_enabled_info(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_enable_bcast_probe_rsp() - Set enable bcast probe resp info
+ *
+ * @psoc: pointer to psoc object
+ * @value: value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to set the
+ * enable bcast probe resp info
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_enable_bcast_probe_rsp(struct wlan_objmgr_psoc *psoc,
+						bool value)
+{
+	return wlan_mlme_set_enable_bcast_probe_rsp(psoc, value);
+}
 #endif /* _WLAN_MLME_UCFG_API_H_ */

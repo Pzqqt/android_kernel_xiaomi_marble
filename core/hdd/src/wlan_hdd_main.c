@@ -8793,14 +8793,6 @@ static void hdd_override_ini_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->IpaConfig);
 	}
 
-	if (!hdd_ctx->config->rssi_assoc_reject_enabled ||
-	    !hdd_ctx->config->enable_bcast_probe_rsp) {
-		hdd_debug("OCE disabled, rssi_assoc_reject_enabled: %d enable_bcast_probe_rsp: %d",
-			  hdd_ctx->config->rssi_assoc_reject_enabled,
-			  hdd_ctx->config->enable_bcast_probe_rsp);
-		hdd_ctx->config->oce_sta_enabled = 0;
-	}
-
 	if (hdd_ctx->config->action_oui_enable && !ucfg_action_oui_enabled()) {
 		hdd_ctx->config->action_oui_enable = 0;
 		hdd_err("Ignore ini: %s, since no action_oui component",

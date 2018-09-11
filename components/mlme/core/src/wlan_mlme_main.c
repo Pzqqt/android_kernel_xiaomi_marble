@@ -21,7 +21,7 @@
 
 #include "wlan_mlme_main.h"
 #include "cfg_ucfg_api.h"
-#include "wlan_scan_public_structs.h"
+#include "wmi_unified.h"
 
 struct wlan_mlme_psoc_obj *mlme_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
 {
@@ -640,6 +640,57 @@ static void mlme_init_scoring_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_SCORING_OCE_WAN_SCORE_IDX_15_TO_12));
 }
 
+static void mlme_init_oce_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_oce *oce)
+{
+	uint8_t val;
+	bool rssi_assoc_reject_enabled;
+	bool probe_req_rate_enabled;
+	bool probe_resp_rate_enabled;
+	bool beacon_rate_enabled;
+	bool probe_req_deferral_enabled;
+	bool fils_discovery_sap_enabled;
+	bool esp_for_roam_enabled;
+
+	oce->enable_bcast_probe_rsp =
+		cfg_get(psoc, CFG_ENABLE_BCAST_PROBE_RESP);
+	oce->oce_sta_enabled = cfg_get(psoc, CFG_OCE_ENABLE_STA);
+	oce->oce_sap_enabled = cfg_get(psoc, CFG_OCE_ENABLE_SAP);
+	oce->fils_enabled = cfg_get(psoc, CFG_IS_FILS_ENABLED);
+
+	rssi_assoc_reject_enabled =
+		cfg_get(psoc, CFG_OCE_ENABLE_RSSI_BASED_ASSOC_REJECT);
+	probe_req_rate_enabled = cfg_get(psoc, CFG_OCE_PROBE_REQ_RATE);
+	probe_resp_rate_enabled = cfg_get(psoc, CFG_OCE_PROBE_RSP_RATE);
+	beacon_rate_enabled = cfg_get(psoc, CFG_OCE_BEACON_RATE);
+	probe_req_deferral_enabled =
+		cfg_get(psoc, CFG_ENABLE_PROBE_REQ_DEFERRAL);
+	fils_discovery_sap_enabled =
+		cfg_get(psoc, CFG_ENABLE_FILS_DISCOVERY_SAP);
+	esp_for_roam_enabled = cfg_get(psoc, CFG_ENABLE_ESP_FEATURE);
+
+	if (!rssi_assoc_reject_enabled ||
+	    !oce->enable_bcast_probe_rsp) {
+		oce->oce_sta_enabled = 0;
+	}
+
+	val = (probe_req_rate_enabled *
+	WMI_VDEV_OCE_PROBE_REQUEST_RATE_FEATURE_BITMAP) +
+	(probe_resp_rate_enabled *
+	WMI_VDEV_OCE_PROBE_RESPONSE_RATE_FEATURE_BITMAP) +
+	(beacon_rate_enabled *
+	WMI_VDEV_OCE_BEACON_RATE_FEATURE_BITMAP) +
+	(probe_req_deferral_enabled *
+	 WMI_VDEV_OCE_PROBE_REQUEST_DEFERRAL_FEATURE_BITMAP) +
+	(fils_discovery_sap_enabled *
+	 WMI_VDEV_OCE_FILS_DISCOVERY_FRAME_FEATURE_BITMAP) +
+	(esp_for_roam_enabled *
+	 WMI_VDEV_OCE_ESP_FEATURE_BITMAP) +
+	(rssi_assoc_reject_enabled *
+	 WMI_VDEV_OCE_REASSOC_REJECT_FEATURE_BITMAP);
+	oce->feature_bitmap = val;
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -665,6 +716,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_sta_cfg(psoc, &mlme_cfg->sta);
 	mlme_init_lfr_cfg(psoc, &mlme_cfg->lfr);
 	mlme_init_scoring_cfg(psoc, &mlme_cfg->scoring);
+	mlme_init_oce_cfg(psoc, &mlme_cfg->oce);
 
 	return status;
 }

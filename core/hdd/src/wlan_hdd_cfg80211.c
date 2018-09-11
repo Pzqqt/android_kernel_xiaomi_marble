@@ -3308,7 +3308,9 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 	struct sk_buff *skb = NULL;
 	uint32_t dbs_capability = 0;
 	bool one_by_one_dbs, two_by_two_dbs;
+	bool value;
 	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
+	QDF_STATUS status;
 	int ret_val;
 
 	uint8_t feature_flags[(NUM_QCA_WLAN_VENDOR_FEATURES + 7) / 8] = {0};
@@ -3341,11 +3343,19 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 			QCA_WLAN_VENDOR_FEATURE_P2P_LISTEN_OFFLOAD);
 
-	if (hdd_ctx->config->oce_sta_enabled)
+	value = 0;
+	status = ucfg_mlme_get_oce_sta_enabled_info(hdd_ctx->hdd_psoc, &value);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("could not get OCE STA enable info");
+	if (value)
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 					      QCA_WLAN_VENDOR_FEATURE_OCE_STA);
 
-	if (hdd_ctx->config->oce_sap_enabled)
+	value = 0;
+	status = ucfg_mlme_get_oce_sap_enabled_info(hdd_ctx->hdd_psoc, &value);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("could not get OCE SAP enable info");
+	if (value)
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 					  QCA_WLAN_VENDOR_FEATURE_OCE_STA_CFON);
 
@@ -6014,16 +6024,29 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	if (adapter->device_mode == QDF_STA_MODE &&
 	    tb[QCA_WLAN_VENDOR_ATTR_CONFIG_DISABLE_FILS]) {
 		uint8_t disable_fils;
+		bool value;
 
 		disable_fils = nla_get_u8(tb[
 			QCA_WLAN_VENDOR_ATTR_CONFIG_DISABLE_FILS]);
 		hdd_debug("Set disable_fils - %d", disable_fils);
+		value = !disable_fils;
 
-		qdf_status = sme_update_fils_setting(mac_handle,
-						     adapter->session_id,
-						     disable_fils);
+		qdf_status = ucfg_mlme_set_fils_enabled_info(hdd_ctx->hdd_psoc,
+							     value);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			hdd_err("could not set fils enabled info");
+
+		qdf_status = ucfg_mlme_set_enable_bcast_probe_rsp(
+					hdd_ctx->hdd_psoc, value);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			hdd_err("could not set enable bcast probe resp info");
+
+		qdf_status = wma_cli_set_command(
+				(int)adapter->session_id,
+				(int)WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE,
+				!disable_fils, VDEV_CMD);
 		if (qdf_status != QDF_STATUS_SUCCESS) {
-			hdd_err("set disable_fils failed");
+			hdd_err("failed to set enable bcast probe resp");
 			ret_val = -EINVAL;
 		}
 	}
@@ -12067,8 +12090,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0))
 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_VHT_IBSS);
 #endif
-	if (pCfg->is_fils_enabled)
-		wlan_hdd_cfg80211_set_wiphy_fils_feature(wiphy);
 
 	wlan_hdd_cfg80211_set_wiphy_scan_flags(wiphy);
 
@@ -12349,10 +12370,20 @@ static void wlan_hdd_update_ht_cap(struct hdd_context *hdd_ctx)
 void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 {
 	int value;
+	bool fils_enabled;
+	QDF_STATUS status;
 
 	ucfg_mlme_get_sap_max_peers(hdd_ctx->hdd_psoc, &value);
 	hdd_ctx->wiphy->max_ap_assoc_sta = value;
 	wlan_hdd_update_ht_cap(hdd_ctx);
+
+	fils_enabled = 0;
+	status = ucfg_mlme_get_fils_enabled_info(hdd_ctx->hdd_psoc,
+						 &fils_enabled);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("could not get fils enabled info");
+	if (fils_enabled)
+		wlan_hdd_cfg80211_set_wiphy_fils_feature(hdd_ctx->wiphy);
 }
 
 /**
@@ -15133,14 +15164,20 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 	struct csr_roam_profile *roam_profile;
 	enum eAniAuthType auth_type;
 	uint8_t *buf;
+	bool value;
+	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	roam_profile = hdd_roam_profile(adapter);
 
-	if (!hdd_ctx->config->is_fils_enabled) {
-		hdd_err("FILS disabled");
+	value = 0;
+	status = ucfg_mlme_get_fils_enabled_info(hdd_ctx->hdd_psoc, &value);
+	if (QDF_IS_STATUS_ERROR(status) || !value) {
+		hdd_err("get_fils_enabled status: %d fils_enabled: %d",
+			status, value);
 		return -EINVAL;
 	}
+
 	hdd_clear_fils_connection_info(adapter);
 	roam_profile->fils_con_info =
 		qdf_mem_malloc(sizeof(*roam_profile->fils_con_info));

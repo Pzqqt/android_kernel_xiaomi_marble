@@ -16170,7 +16170,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 
 		if (pSession->pCurRoamProfile->csrPersona == QDF_STA_MODE)
 			csr_join_req->enable_bcast_probe_rsp =
-				pMac->roam.configParam.enable_bcast_probe_rsp;
+				pMac->mlme_cfg->oce.enable_bcast_probe_rsp;
 
 		csr_join_req->enable_session_twt_support = csr_enable_twt(pIes);
 		status = umac_send_mb_message_to_mac(csr_join_req);
@@ -17108,13 +17108,13 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 					qos_aggr->tx_aggr_sw_retry_threshold_vo;
 
 	add_sta_self_req->enable_bcast_probe_rsp =
-				pMac->roam.configParam.enable_bcast_probe_rsp;
+			pMac->mlme_cfg->oce.enable_bcast_probe_rsp;
 	add_sta_self_req->fils_max_chan_guard_time =
 				pMac->mlme_cfg->sta.fils_max_chan_guard_time;
 	add_sta_self_req->pkt_err_disconn_th =
-				pMac->roam.configParam.pkt_err_disconn_th;
+			pMac->roam.configParam.pkt_err_disconn_th;
 	add_sta_self_req->oce_feature_bitmap =
-				pMac->roam.configParam.oce_feature_bitmap;
+			pMac->mlme_cfg->oce.feature_bitmap;
 
 	msg.type = WMA_ADD_STA_SELF_REQ;
 	msg.reserved = 0;
