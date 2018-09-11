@@ -1130,7 +1130,7 @@ int hif_ce_bus_late_resume(struct hif_softc *scn)
 {
 	int ce_id;
 	struct CE_state *ce_state;
-	int write_index;
+	int write_index = 0;
 	bool index_updated;
 
 	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
