@@ -164,6 +164,19 @@ static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_SAP_MAX_INACTIVITY_OVERRIDE);
 }
 
+static void mlme_init_mbo_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_mbo *mbo_params)
+{
+	mbo_params->mbo_candidate_rssi_thres =
+			cfg_get(psoc, CFG_MBO_CANDIDATE_RSSI_THRESHOLD);
+	mbo_params->mbo_current_rssi_thres =
+			cfg_get(psoc, CFG_MBO_CURRENT_RSSI_THRESHOLD);
+	mbo_params->mbo_current_rssi_mcc_thres =
+			cfg_get(psoc, CFG_MBO_CUR_RSSI_MCC_THRESHOLD);
+	mbo_params->mbo_candidate_rssi_btc_thres =
+			cfg_get(psoc, CFG_MBO_CAND_RSSI_BTC_THRESHOLD);
+}
+
 static void mlme_update_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
 				     struct wlan_mlme_rates *rates)
 {
@@ -293,6 +306,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 
 	mlme_cfg = &mlme_obj->cfg;
 	mlme_update_ht_cap_in_cfg(psoc, &mlme_cfg->ht_caps.ht_cap_info);
+	mlme_init_mbo_cfg(psoc, &mlme_cfg->mbo_cfg);
 	mlme_init_qos_cfg(psoc, &mlme_cfg->qos_mlme_params);
 	mlme_update_rates_in_cfg(psoc, &mlme_cfg->rates);
 	mlme_update_sap_protection_cfg(psoc, &mlme_cfg->sap_protection_cfg);

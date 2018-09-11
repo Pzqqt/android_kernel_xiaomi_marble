@@ -119,6 +119,20 @@ struct wlan_mlme_cfg_sap {
 	uint8_t reduced_beacon_interval;
 };
 
+/**
+ * struct wlan_mlme_mbo - Multiband Operation related ini configs
+ * @mbo_candidate_rssi_thres:
+ * @mbo_current_rssi_thres:
+ * @mbo_current_rssi_mcc_thres:
+ * @mbo_candidate_rssi_btc_thres:
+ */
+struct wlan_mlme_mbo {
+	int8_t mbo_candidate_rssi_thres;
+	int8_t mbo_current_rssi_thres;
+	int8_t mbo_current_rssi_mcc_thres;
+	int8_t mbo_candidate_rssi_btc_thres;
+};
+
 struct wlan_mlme_vht_caps {
 	/* VHT related configs */
 };
@@ -291,6 +305,7 @@ struct wlan_mlme_sta_cfg {
 struct wlan_mlme_cfg {
 	struct wlan_mlme_ht_caps ht_caps;
 	struct wlan_mlme_obss_ht40 obss_ht40;
+	struct wlan_mlme_mbo mbo_cfg;
 	struct wlan_mlme_vht_caps vht_caps;
 	struct wlan_mlme_qos qos_mlme_params;
 	struct wlan_mlme_rates rates;
