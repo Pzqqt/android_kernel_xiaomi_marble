@@ -1582,15 +1582,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		/* PE SessionId is stored as a part of JoinReq */
 		mlm_join_req->sessionId = session->peSessionId;
 
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_JOIN_FAILURE_TIMEOUT,
-			(uint32_t *) &mlm_join_req->joinFailureTimeout) !=
-			QDF_STATUS_SUCCESS) {
-			pe_err("couldn't retrieve JoinFailureTimer value"
-				" setting to default value");
-			mlm_join_req->joinFailureTimeout =
-				WNI_CFG_JOIN_FAILURE_TIMEOUT_STADEF;
-		}
-
 		/* copy operational rate from session */
 		qdf_mem_copy((void *)&session->rateSet,
 			(void *)&sme_join_req->operationalRateSet,

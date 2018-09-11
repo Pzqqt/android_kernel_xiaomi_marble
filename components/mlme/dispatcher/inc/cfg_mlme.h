@@ -34,6 +34,7 @@
 #include "cfg_mlme_mbo.h"
 #include "cfg_mlme_vht_caps.h"
 #include "cfg_qos.h"
+#include "cfg_mlme_timeout.h"
 #include "cfg_mlme_rates.h"
 #include "wlan_mlme_product_details_cfg.h"
 #include "cfg_mlme_sta.h"
@@ -66,6 +67,7 @@
 	CFG_SCORING_ALL \
 	CFG_STA_ALL \
 	CFG_THRESHOLD_ALL \
+	CFG_TIMEOUT_ALL \
 	CFG_VHT_CAPS_ALL \
 	CFG_VHT_CAPS_ALL \
 	CFG_WEP_PARAMS_ALL

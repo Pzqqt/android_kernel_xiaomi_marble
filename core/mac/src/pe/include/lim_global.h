@@ -203,7 +203,6 @@ typedef struct sLimMlmAuthReq {
 } tLimMlmAuthReq, *tpLimMlmAuthReq;
 
 typedef struct sLimMlmJoinReq {
-	uint32_t joinFailureTimeout;
 	tSirMacRateSet operationalRateSet;
 	uint8_t sessionId;
 	tSirBssDescription bssDescription;

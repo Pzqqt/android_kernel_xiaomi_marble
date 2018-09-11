@@ -39,6 +39,7 @@
 #include "cds_utils.h"
 #include "sir_types.h"
 #include "cfg_api.h"
+#include "cfg_ucfg_api.h"
 #include "sme_power_save_api.h"
 #include "wma.h"
 #include "wlan_policy_mgr_api.h"
@@ -405,7 +406,7 @@ static ePhyChanBondState csr_get_cb_mode_from_ies(tpAniSirGlobal pMac,
 						  tDot11fBeaconIEs *pIes);
 
 static void csr_roaming_state_config_cnf_processor(tpAniSirGlobal pMac,
-			tSmeCmd *pCommand, uint32_t result, uint8_t session_id);
+			tSmeCmd *pCommand, uint8_t session_id);
 static QDF_STATUS csr_roam_open(tpAniSirGlobal pMac);
 static QDF_STATUS csr_roam_close(tpAniSirGlobal pMac);
 static bool csr_roam_is_same_profile_keys(tpAniSirGlobal pMac,
@@ -4533,6 +4534,7 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 				       tDot11fBeaconIEs *pIes)
 {
 	enum csr_cfgdot11mode cfgDot11Mode;
+	uint32_t join_timeout;
 
 	QDF_ASSERT(pIes != NULL);
 	if (pIes == NULL)
@@ -4643,18 +4645,15 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 	 * Join timeout: if we find a BeaconInterval in the BssDescription,
 	 * then set the Join Timeout to be 10 x the BeaconInterval.
 	 */
+	pBssConfig->uJoinTimeOut = cfg_default(CFG_JOIN_FAILURE_TIMEOUT);
 	if (pBssDesc->beaconInterval) {
 		/* Make sure it is bigger than the minimal */
-		pBssConfig->uJoinTimeOut =
-			QDF_MAX(10 * pBssDesc->beaconInterval,
-				CSR_JOIN_FAILURE_TIMEOUT_MIN);
-		if (pBssConfig->uJoinTimeOut > CSR_JOIN_FAILURE_TIMEOUT_DEFAULT)
-			pBssConfig->uJoinTimeOut =
-					CSR_JOIN_FAILURE_TIMEOUT_DEFAULT;
-	} else {
-		pBssConfig->uJoinTimeOut =
-			CSR_JOIN_FAILURE_TIMEOUT_DEFAULT;
+		join_timeout = QDF_MAX(10 * pBssDesc->beaconInterval,
+				       cfg_min(CFG_JOIN_FAILURE_TIMEOUT));
+		if (join_timeout < pBssConfig->uJoinTimeOut)
+			pBssConfig->uJoinTimeOut = join_timeout;
 	}
+
 	/* validate CB */
 	if ((pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11N) ||
 	    (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11N_ONLY) ||
@@ -4778,7 +4777,7 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 			pMac->roam.configParam.HeartbeatThresh24;
 	}
 	/* Join timeout */
-	pBssConfig->uJoinTimeOut = CSR_JOIN_FAILURE_TIMEOUT_DEFAULT;
+	pBssConfig->uJoinTimeOut = cfg_default(CFG_JOIN_FAILURE_TIMEOUT);
 
 	return status;
 }
@@ -5295,8 +5294,8 @@ static void csr_set_cfg_rate_set_from_profile(tpAniSirGlobal pMac,
 			ExtendedOperationalRatesLength);
 }
 
-void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result,
-					uint8_t session_id)
+static void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac,
+					  uint8_t session_id)
 {
 	tListElem *pEntry =
 		csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_LOCK);
@@ -5322,7 +5321,7 @@ void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result,
 	if (CSR_IS_ROAM_JOINING(pMac, sessionId)
 	    && CSR_IS_ROAM_SUBSTATE_CONFIG(pMac, sessionId)) {
 		csr_roaming_state_config_cnf_processor(pMac, pCommand,
-				(uint32_t) result, session_id);
+						       session_id);
 	}
 }
 
@@ -5334,7 +5333,6 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 				       struct sDot11fBeaconIEs *pIes,
 				       bool resetCountry)
 {
-	QDF_STATUS status;
 	uint32_t cfgCb = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 	uint8_t channel = 0;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
@@ -5397,8 +5395,9 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 				     pProfile, pBssDesc, pIes);
 	else
 		csr_set_cfg_rate_set_from_profile(pMac, pProfile);
-	status = cfg_set_int(pMac, WNI_CFG_JOIN_FAILURE_TIMEOUT,
-			pBssConfig->uJoinTimeOut);
+
+	pMac->mlme_cfg->timeouts.join_failure_timeout =
+		pBssConfig->uJoinTimeOut;
 	/* Any roaming related changes should be above this line */
 	if (pSession && pSession->roam_synch_in_progress) {
 		sme_debug("Roam synch is in progress Session_id: %d",
@@ -5410,7 +5409,8 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 	 */
 	csr_roam_substate_change(pMac, eCSR_ROAM_SUBSTATE_CONFIG, sessionId);
 
-	csr_roam_ccm_cfg_set_callback(pMac, status, sessionId);
+	csr_roam_ccm_cfg_set_callback(pMac, sessionId);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -9670,7 +9670,8 @@ bool csr_is_roam_command_waiting_for_session(tpAniSirGlobal pMac,
 
 static void
 csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
-			tSmeCmd *cmd, uint32_t result, uint8_t sme_session_id)
+				       tSmeCmd *cmd,
+				       uint8_t sme_session_id)
 {
 	struct tag_csrscan_result *scan_result = NULL;
 	tSirBssDescription *bss_desc = NULL;
@@ -9697,28 +9698,6 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 		sme_warn("Roam command canceled");
 		csr_roam_complete(mac_ctx, eCsrNothingToJoin, NULL,
 					sme_session_id);
-		return;
-	}
-
-	if (!QDF_IS_STATUS_SUCCESS(result)) {
-		/*
-		 * In the event the configuration failed, for infra let the roam
-		 * processor attempt to join something else...
-		 */
-		if (cmd->u.roamCmd.pRoamBssEntry
-		    && CSR_IS_INFRASTRUCTURE(&cmd->u.roamCmd.roamProfile)) {
-			csr_roam(mac_ctx, cmd);
-		} else {
-			/* We need to complete the command */
-			if (csr_is_bss_type_ibss
-				    (cmd->u.roamCmd.roamProfile.BSSType)) {
-				csr_roam_complete(mac_ctx, eCsrStartBssFailure,
-						  NULL, sme_session_id);
-			} else {
-				csr_roam_complete(mac_ctx, eCsrNothingToJoin,
-						  NULL, sme_session_id);
-			}
-		}
 		return;
 	}
 

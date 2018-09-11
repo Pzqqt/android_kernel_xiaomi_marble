@@ -30,6 +30,7 @@
 #include "lim_utils.h"
 #include "lim_assoc_utils.h"
 #include "lim_security_utils.h"
+#include "wlan_mlme_public_struct.h"
 #include <lim_api.h>
 
 /* channel Switch Timer in ticks */
@@ -92,10 +93,8 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal pMac)
 		return false;
 	}
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_JOIN_FAILURE_TIMEOUT,
-			     &cfgValue) != QDF_STATUS_SUCCESS)
-		pe_err("could not retrieve JoinFailureTimeout value");
-	cfgValue = SYS_MS_TO_TICKS(cfgValue);
+	cfgValue = SYS_MS_TO_TICKS(
+			pMac->mlme_cfg->timeouts.join_failure_timeout);
 	/* Create Join failure timer and activate it later */
 	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimJoinFailureTimer,
 			    "JOIN FAILURE TIMEOUT",
@@ -596,15 +595,8 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 			pe_err("Unable to deactivate Join Failure timer");
 		}
 
-		if (wlan_cfg_get_int(pMac, WNI_CFG_JOIN_FAILURE_TIMEOUT,
-				     &val) != QDF_STATUS_SUCCESS) {
-			/**
-			 * Could not get JoinFailureTimeout value
-			 * from CFG. Log error.
-			 */
-			pe_err("could not retrieve JoinFailureTimeout value");
-		}
-		val = SYS_MS_TO_TICKS(val);
+		val = SYS_MS_TO_TICKS(
+				pMac->mlme_cfg->timeouts.join_failure_timeout);
 
 		if (tx_timer_change(&pMac->lim.limTimers.gLimJoinFailureTimer,
 				    val, 0) != TX_SUCCESS) {

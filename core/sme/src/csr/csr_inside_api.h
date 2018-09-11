@@ -375,9 +375,6 @@ bool csr_roam_is_channel_valid(tpAniSirGlobal pMac, uint8_t channel);
 /* pNumChan is a caller allocated space with the sizeof pChannels */
 QDF_STATUS csr_get_cfg_valid_channels(tpAniSirGlobal pMac, uint8_t *pChannels,
 				      uint32_t *pNumChan);
-void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result,
-					uint8_t session_id);
-
 int8_t csr_get_cfg_max_tx_power(tpAniSirGlobal pMac, uint8_t channel);
 
 /* To free the last roaming profile */
