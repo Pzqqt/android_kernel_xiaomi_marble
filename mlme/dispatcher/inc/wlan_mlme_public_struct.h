@@ -618,6 +618,23 @@ struct wlan_mlme_scoring_cfg {
 };
 
 /**
+ * struct wlan_mlme_oce - OCE related config items
+ * @enable_bcast_probe_rsp: enable broadcast probe response
+ * @oce_sta_enabled: enable/disable oce feature for sta
+ * @oce_sap_enabled: enable/disable oce feature for sap
+ * @fils_enabled: enable/disable fils support
+ * @feature_bitmap: oce feature bitmap
+ *
+ */
+struct wlan_mlme_oce {
+	bool enable_bcast_probe_rsp;
+	bool oce_sta_enabled;
+	bool oce_sap_enabled;
+	bool fils_enabled;
+	uint8_t feature_bitmap;
+};
+
+/**
  * struct wlan_mlme_cfg - MLME config items
  * @ht_cfg: HT related CFG Items
  * @he_caps: HE related cfg items
@@ -643,6 +660,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_cfg_sap sap_cfg;
 	struct wlan_mlme_sta_cfg sta;
 	struct wlan_mlme_scoring_cfg scoring;
+	struct wlan_mlme_oce oce;
 };
 
 #endif

@@ -448,3 +448,73 @@ QDF_STATUS wlan_mlme_get_sap_chan_switch_rate_enabled(struct wlan_objmgr_psoc
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS wlan_mlme_get_oce_sta_enabled_info(struct wlan_objmgr_psoc *psoc,
+					      bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
+
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.oce.oce_sta_enabled;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_oce_sap_enabled_info(struct wlan_objmgr_psoc *psoc,
+					      bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
+
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.oce.oce_sap_enabled;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
+					   bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
+
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.oce.fils_enabled;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_set_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
+					   bool value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
+
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_obj->cfg.oce.fils_enabled = value;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_set_enable_bcast_probe_rsp(struct wlan_objmgr_psoc *psoc,
+						bool value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
+
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_obj->cfg.oce.enable_bcast_probe_rsp = value;
+	return QDF_STATUS_SUCCESS;
+}
