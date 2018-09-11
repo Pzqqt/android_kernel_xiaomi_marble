@@ -48,7 +48,7 @@ static int hdd_green_ap_check_enable(struct hdd_context *hdd_ctx,
 			continue;
 
 		status = policy_mgr_mode_specific_num_active_sessions(
-					hdd_ctx->hdd_psoc, mode, &num_sessions);
+					hdd_ctx->psoc, mode, &num_sessions);
 		hdd_debug("No. of active sessions for mode: %d is %d",
 			  mode, num_sessions);
 		if (status != QDF_STATUS_SUCCESS) {
@@ -128,10 +128,10 @@ int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 		return 0;
 	}
 
-	policy_mgr_mode_specific_num_active_sessions(hdd_ctx->hdd_psoc,
+	policy_mgr_mode_specific_num_active_sessions(hdd_ctx->psoc,
 						     QDF_SAP_MODE,
 						     &num_sap_sessions);
-	policy_mgr_mode_specific_num_active_sessions(hdd_ctx->hdd_psoc,
+	policy_mgr_mode_specific_num_active_sessions(hdd_ctx->psoc,
 						     QDF_P2P_GO_MODE,
 						     &num_p2p_go_sessions);
 

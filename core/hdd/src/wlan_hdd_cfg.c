@@ -6255,7 +6255,7 @@ void hdd_get_pmkid_modes(struct hdd_context *hdd_ctx,
 	uint32_t cur_pmkid_modes;
 	QDF_STATUS status;
 
-	status = ucfg_mlme_get_pmkid_modes(hdd_ctx->hdd_psoc, &cur_pmkid_modes);
+	status = ucfg_mlme_get_pmkid_modes(hdd_ctx->psoc, &cur_pmkid_modes);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("get pmkid modes fail");
 

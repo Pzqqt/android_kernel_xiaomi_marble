@@ -67,7 +67,7 @@ void hdd_ipa_set_tx_flow_info(void)
 		return;
 	}
 
-	psoc = hdd_ctx->hdd_psoc;
+	psoc = hdd_ctx->psoc;
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		switch (adapter->device_mode) {

@@ -2145,7 +2145,7 @@ __iw_softap_stopbss(struct net_device *dev,
 			}
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
-		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
+		policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
 					     adapter->device_mode,
 					     adapter->session_id);
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,

@@ -4509,7 +4509,7 @@ static int drv_cmd_set_okc_mode(struct hdd_adapter *adapter,
 	value = value + command_len + 1;
 
 	/* get the current configured value */
-	status = ucfg_mlme_get_pmkid_modes(hdd_ctx->hdd_psoc,
+	status = ucfg_mlme_get_pmkid_modes(hdd_ctx->psoc,
 					   &cur_pmkid_modes);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("get pmkid modes failed");
@@ -4542,7 +4542,7 @@ static int drv_cmd_set_okc_mode(struct hdd_adapter *adapter,
 		cur_pmkid_modes |= CFG_PMKID_MODES_OKC;
 	else
 		cur_pmkid_modes &= ~CFG_PMKID_MODES_OKC;
-	status = ucfg_mlme_set_pmkid_modes(hdd_ctx->hdd_psoc,
+	status = ucfg_mlme_set_pmkid_modes(hdd_ctx->psoc,
 					   cur_pmkid_modes);
 	if (status != QDF_STATUS_SUCCESS) {
 		ret = -EPERM;
@@ -4707,14 +4707,14 @@ static int drv_cmd_miracast(struct hdd_adapter *adapter,
 		hdd_err("Failed to set miracast");
 		return -EBUSY;
 	}
-	ret_status = ucfg_scan_set_miracast(hdd_ctx->hdd_psoc,
+	ret_status = ucfg_scan_set_miracast(hdd_ctx->psoc,
 					    filterType ? true : false);
 	if (QDF_IS_STATUS_ERROR(ret_status)) {
 		hdd_err("Failed to set miracastn scan");
 		return -EBUSY;
 	}
 
-	if (policy_mgr_is_mcc_in_24G(hdd_ctx->hdd_psoc))
+	if (policy_mgr_is_mcc_in_24G(hdd_ctx->psoc))
 		return wlan_hdd_set_mas(adapter, filterType);
 
 exit:
@@ -6654,7 +6654,7 @@ int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 
 	/* Check TDLS status and update antenna mode */
 	if ((QDF_STA_MODE == adapter->device_mode) &&
-	    policy_mgr_is_sta_active_connection_exists(hdd_ctx->hdd_psoc)) {
+	    policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc)) {
 		ret = wlan_hdd_tdls_antenna_switch(hdd_ctx, adapter, mode);
 		if (0 != ret)
 			goto exit;

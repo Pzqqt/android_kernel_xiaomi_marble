@@ -763,7 +763,7 @@ static int hdd_stop_bss_link(struct hdd_adapter *adapter)
 			hdd_debug("Deleting SAP/P2P link!!!!!!");
 
 		clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
-		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
+		policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
 					adapter->device_mode,
 					adapter->session_id);
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
@@ -1670,7 +1670,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		qdf_atomic_set(&adapter->dfs_radar_found, 0);
 
 		status = policy_mgr_set_chan_switch_complete_evt(
-						hdd_ctx->hdd_psoc);
+						hdd_ctx->psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("set event failed");
 			goto stopbss;
@@ -1799,17 +1799,17 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		hdd_debug("check for SAP restart");
 		policy_mgr_check_concurrent_intf_and_restart_sap(
-						hdd_ctx->hdd_psoc);
+						hdd_ctx->psoc);
 
 		if (policy_mgr_is_hw_mode_change_after_vdev_up(
-			hdd_ctx->hdd_psoc)) {
+			hdd_ctx->psoc)) {
 			hdd_debug("check for possible hw mode change");
 			status = policy_mgr_set_hw_mode_on_channel_switch(
-				hdd_ctx->hdd_psoc, adapter->session_id);
+				hdd_ctx->psoc, adapter->session_id);
 			if (QDF_IS_STATUS_ERROR(status))
 				hdd_debug("set hw mode change not done");
 			policy_mgr_set_do_hw_mode_change_flag(
-					hdd_ctx->hdd_psoc, false);
+					hdd_ctx->psoc, false);
 		}
 		/*
 		 * set this event at the very end because once this events
@@ -2267,7 +2267,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		/* Update the beacon Interval if it is P2P GO */
 		qdf_status = policy_mgr_change_mcc_go_beacon_interval(
-			hdd_ctx->hdd_psoc, adapter->session_id,
+			hdd_ctx->psoc, adapter->session_id,
 			adapter->device_mode);
 		if (QDF_STATUS_SUCCESS != qdf_status) {
 			hdd_err("Failed to update Beacon interval status: %d",
@@ -2746,7 +2746,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	 * should will be prevented.
 	 */
 	if (!policy_mgr_allow_concurrency_csa(
-				hdd_ctx->hdd_psoc,
+				hdd_ctx->psoc,
 				policy_mgr_convert_device_mode_to_qdf_type(
 					adapter->device_mode),
 				target_channel,
@@ -2756,7 +2756,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		return -EINVAL;
 	}
 
-	status = policy_mgr_reset_chan_switch_complete_evt(hdd_ctx->hdd_psoc);
+	status = policy_mgr_reset_chan_switch_complete_evt(hdd_ctx->psoc);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("clear event failed");
 		qdf_atomic_set(&adapter->dfs_radar_found, 0);
@@ -2913,10 +2913,10 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 		hdd_ctx->config->WlanMccToSccSwitchMode) {
 		if (QDF_IS_STATUS_ERROR(
 			policy_mgr_valid_sap_conc_channel_check(
-				hdd_ctx->hdd_psoc,
+				hdd_ctx->psoc,
 				&intf_ch,
 				policy_mgr_mode_specific_get_channel(
-					hdd_ctx->hdd_psoc, PM_SAP_MODE)))) {
+					hdd_ctx->psoc, PM_SAP_MODE)))) {
 			hdd_debug("can't move sap to %d",
 				hdd_sta_ctx->conn_info.operationChannel);
 			return QDF_STATUS_E_FAILURE;
@@ -3176,7 +3176,7 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 
 	hdd_debug("dev = %pK, adapter = %pK, concurrency_mode=0x%x",
 		dev, adapter,
-		(int)policy_mgr_get_concurrency_mode(hdd_ctx->hdd_psoc));
+		(int)policy_mgr_get_concurrency_mode(hdd_ctx->psoc));
 
 	/* Init the net_device structure */
 	strlcpy(dev->name, (const char *)iface_name, IFNAMSIZ);
@@ -4515,9 +4515,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	hdd_notify_teardown_tdls_links(adapter->vdev);
 
-	if (policy_mgr_is_hw_mode_change_in_progress(hdd_ctx->hdd_psoc)) {
+	if (policy_mgr_is_hw_mode_change_in_progress(hdd_ctx->psoc)) {
 		status = policy_mgr_wait_for_connection_update(
-			hdd_ctx->hdd_psoc);
+			hdd_ctx->psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("qdf wait for event failed!!");
 			return -EINVAL;
@@ -4654,7 +4654,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		pConfig->acs_dfs_mode = wlan_hdd_get_dfs_mode(mode);
 	}
 
-	policy_mgr_update_user_config_sap_chan(hdd_ctx->hdd_psoc,
+	policy_mgr_update_user_config_sap_chan(hdd_ctx->psoc,
 					       pConfig->channel);
 	hdd_debug("pConfig->channel %d, pConfig->acs_dfs_mode %d",
 		pConfig->channel, pConfig->acs_dfs_mode);
@@ -5077,7 +5077,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 
 	if (check_for_concurrency) {
-		if (!policy_mgr_allow_concurrency(hdd_ctx->hdd_psoc,
+		if (!policy_mgr_allow_concurrency(hdd_ctx->psoc,
 				policy_mgr_convert_device_mode_to_qdf_type(
 					adapter->device_mode),
 					pConfig->channel, HW_MODE_20_MHZ)) {
@@ -5143,7 +5143,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	/* Initialize WMM configuation */
 	hdd_wmm_init(adapter);
 	if (hostapd_state->bss_state == BSS_START) {
-		policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
+		policy_mgr_incr_active_session(hdd_ctx->psoc,
 					adapter->device_mode,
 					adapter->session_id);
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
@@ -5338,7 +5338,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
 
 		/*BSS stopped, clear the active sessions for this device mode*/
-		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
+		policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
 						adapter->device_mode,
 						adapter->session_id);
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
@@ -5564,9 +5564,9 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		adapter, hdd_device_mode_to_string(adapter->device_mode),
 		adapter->device_mode, cds_is_sub_20_mhz_enabled());
 
-	if (policy_mgr_is_hw_mode_change_in_progress(hdd_ctx->hdd_psoc)) {
+	if (policy_mgr_is_hw_mode_change_in_progress(hdd_ctx->psoc)) {
 		status = policy_mgr_wait_for_connection_update(
-			hdd_ctx->hdd_psoc);
+			hdd_ctx->psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("qdf wait for event failed!!");
 			return -EINVAL;
@@ -5581,20 +5581,20 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (policy_mgr_is_sap_mandatory_chan_list_enabled(hdd_ctx->hdd_psoc)) {
+	if (policy_mgr_is_sap_mandatory_chan_list_enabled(hdd_ctx->psoc)) {
 		if (WLAN_REG_IS_5GHZ_CH(channel)) {
 			hdd_debug("channel %hu, sap mandatory chan list enabled",
 			          channel);
 			if (!policy_mgr_get_sap_mandatory_chan_list_len(
-							hdd_ctx->hdd_psoc))
+							hdd_ctx->psoc))
 				policy_mgr_init_sap_mandatory_2g_chan(
-							hdd_ctx->hdd_psoc);
+							hdd_ctx->psoc);
 
-			policy_mgr_add_sap_mandatory_chan(hdd_ctx->hdd_psoc,
+			policy_mgr_add_sap_mandatory_chan(hdd_ctx->psoc,
 							  channel);
 		} else {
 			policy_mgr_init_sap_mandatory_2g_chan(
-							hdd_ctx->hdd_psoc);
+							hdd_ctx->psoc);
 		}
 	}
 
@@ -5605,10 +5605,10 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
-							hdd_ctx->hdd_psoc);
+							hdd_ctx->psoc);
 	sta_cnt =
 		policy_mgr_mode_specific_connection_count(
-					hdd_ctx->hdd_psoc, PM_STA_MODE, NULL);
+					hdd_ctx->psoc, PM_STA_MODE, NULL);
 
 	hdd_debug("sta_sap_scc_on_dfs_chan %u, sta_cnt %u",
 		  sta_sap_scc_on_dfs_chan, sta_cnt);
@@ -5661,7 +5661,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	}
 
 	/* check if concurrency is allowed */
-	if (!policy_mgr_allow_concurrency(hdd_ctx->hdd_psoc,
+	if (!policy_mgr_allow_concurrency(hdd_ctx->psoc,
 				policy_mgr_convert_device_mode_to_qdf_type(
 				adapter->device_mode),
 				channel,
@@ -5670,7 +5670,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	status = policy_mgr_reset_connection_update(hdd_ctx->hdd_psoc);
+	status = policy_mgr_reset_connection_update(hdd_ctx->psoc);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("ERR: clear event failed");
 
@@ -5687,14 +5687,14 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	 * back to single MAC 2x2 (if initial was 2x2).
 	 */
 
-	policy_mgr_checkn_update_hw_mode_single_mac_mode(hdd_ctx->hdd_psoc,
+	policy_mgr_checkn_update_hw_mode_single_mac_mode(hdd_ctx->psoc,
 							 channel);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to stop DBS opportunistic timer");
 		return -EINVAL;
 	}
 
-	status = policy_mgr_current_connections_update(hdd_ctx->hdd_psoc,
+	status = policy_mgr_current_connections_update(hdd_ctx->psoc,
 			adapter->session_id, channel,
 			POLICY_MGR_UPDATE_REASON_START_AP);
 	if (status == QDF_STATUS_E_FAILURE) {
@@ -5703,7 +5703,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	}
 
 	if (QDF_STATUS_SUCCESS == status) {
-		status = policy_mgr_wait_for_connection_update(hdd_ctx->hdd_psoc);
+		status = policy_mgr_wait_for_connection_update(hdd_ctx->psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("ERROR: qdf wait for event failed!!");
 			return -EINVAL;
@@ -5796,7 +5796,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 							  sap_config->channel);
 		}
 
-		ucfg_mlme_get_sap_inactivity_override(hdd_ctx->hdd_psoc, &val);
+		ucfg_mlme_get_sap_inactivity_override(hdd_ctx->psoc, &val);
 		if (val) {
 			sta_inactivity_timer = qdf_mem_malloc(
 					sizeof(*sta_inactivity_timer));

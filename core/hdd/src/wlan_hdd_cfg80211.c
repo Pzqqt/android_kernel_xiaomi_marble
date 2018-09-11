@@ -5186,7 +5186,7 @@ static int wlan_hdd_save_default_scan_ies(struct hdd_context *hdd_ctx,
 	}
 
 	scan_info->default_scan_ies_len = ie_len;
-	ucfg_mlme_get_qcn_ie_support(hdd_ctx->hdd_psoc, &add_qcn_ie);
+	ucfg_mlme_get_qcn_ie_support(hdd_ctx->psoc, &add_qcn_ie);
 	if (add_qcn_ie)
 		ie_len += (QCN_IE_HDR_LEN + QCN_IE_VERSION_SUBATTR_LEN);
 
@@ -6051,7 +6051,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		}
 	}
 
-	ucfg_mlme_get_force_rsne_override(hdd_ctx->hdd_psoc, &b_value);
+	ucfg_mlme_get_force_rsne_override(hdd_ctx->psoc, &b_value);
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RSN_IE] && b_value) {
 		uint8_t force_rsne_override;
 
