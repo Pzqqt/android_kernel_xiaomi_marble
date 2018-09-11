@@ -416,6 +416,12 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 		if (!(qdf_nbuf_is_rx_chfrag_start(nbuf) &&
 		      hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr)))
 			return;
+	} else {
+		/* For HKv2 Source port learing is not needed in STA mode
+		 * as we have support in HW
+		 */
+		if (soc->ast_override_support)
+			return;
 	}
 
 	memcpy(wds_src_mac, (qdf_nbuf_data(nbuf) + IEEE80211_ADDR_LEN),

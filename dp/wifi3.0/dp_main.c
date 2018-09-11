@@ -8129,13 +8129,18 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 	target_type = hal_get_target_type(soc->hal_soc);
 	switch (target_type) {
 	case TARGET_TYPE_QCA6290:
+		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
+					       REO_DST_RING_SIZE_QCA6290);
+		soc->ast_override_support = 1;
+		break;
 #ifdef QCA_WIFI_QCA6390
 	case TARGET_TYPE_QCA6390:
-#endif
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCA6290);
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, true);
+		soc->ast_override_support = 1;
 		break;
+#endif
 	case TARGET_TYPE_QCA8074:
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCA8074);
@@ -8147,6 +8152,7 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 					       REO_DST_RING_SIZE_QCA8074);
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, false);
 		soc->hw_nac_monitor_support = 1;
+		soc->ast_override_support = 1;
 		break;
 	default:
 		qdf_print("%s: Unknown tgt type %d\n", __func__, target_type);

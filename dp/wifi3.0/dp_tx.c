@@ -923,7 +923,12 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_set_buf_offset(hal_tx_desc_cached, tx_desc->pkt_offset);
 	hal_tx_desc_set_encap_type(hal_tx_desc_cached, tx_desc->tx_encap_type);
 	hal_tx_desc_set_lmac_id(soc->hal_soc, hal_tx_desc_cached,
-				HAL_TX_DESC_DEFAULT_LMAC_ID);
+				vdev->pdev->pdev_id);
+
+	hal_tx_desc_set_search_type(soc->hal_soc, hal_tx_desc_cached,
+				    vdev->search_type);
+	hal_tx_desc_set_search_index(soc->hal_soc, hal_tx_desc_cached,
+				     vdev->bss_ast_hash);
 	hal_tx_desc_set_dscp_tid_table_id(soc->hal_soc, hal_tx_desc_cached,
 					  vdev->dscp_tid_map_id);
 	hal_tx_desc_set_encrypt_type(hal_tx_desc_cached,
@@ -3214,6 +3219,11 @@ void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
 		vdev->hal_desc_addr_search_flags = HAL_TX_DESC_ADDRY_EN;
 	else
 		vdev->hal_desc_addr_search_flags = HAL_TX_DESC_ADDRX_EN;
+
+	if (vdev->opmode == wlan_op_mode_sta)
+		vdev->search_type = HAL_TX_ADDR_INDEX_SEARCH;
+	else
+		vdev->search_type = HAL_TX_ADDR_SEARCH_DEFAULT;
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2

@@ -688,6 +688,9 @@ struct dp_soc {
 	/*cce disable*/
 	bool cce_disable;
 
+	/*ast override support in HW*/
+	bool ast_override_support;
+
 	/* Link descriptor memory banks */
 	struct {
 		void *base_vaddr_unaligned;
@@ -1407,6 +1410,10 @@ struct dp_vdev {
 
 	/* SWAR for HW: Enable WEP bit in the AMSDU frames for RAW mode */
 	bool raw_mode_war;
+
+	/* Address search type to be set in TX descriptor */
+	uint8_t search_type;
+
 	/* AST hash value for BSS peer in HW valid for STA VAP*/
 	uint16_t bss_ast_hash;
 };
