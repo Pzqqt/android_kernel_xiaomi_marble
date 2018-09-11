@@ -28,6 +28,7 @@
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/dma-mapping.h>
+#include <linux/version.h>
 #include <asm/cacheflush.h>
 #include <qdf_types.h>
 #include <qdf_net_types.h>
@@ -960,6 +961,60 @@ __qdf_nbuf_reset(struct sk_buff *skb, int reserve, int align)
 
 	skb_reserve(skb, reserve);
 }
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 14, 0))
+/**
+ * qdf_nbuf_dev_scratch_is_supported() - dev_scratch support for network buffer
+ *                                       in kernel
+ *
+ * Return: true if dev_scratch is supported
+ *         false if dev_scratch is not supported
+ */
+static inline bool __qdf_nbuf_is_dev_scratch_supported(void)
+{
+	return true;
+}
+
+/**
+ * qdf_nbuf_get_dev_scratch() - get dev_scratch of network buffer
+ * @skb: Pointer to network buffer
+ *
+ * Return: dev_scratch if dev_scratch supported
+ *         0 if dev_scratch not supported
+ */
+static inline unsigned long __qdf_nbuf_get_dev_scratch(struct sk_buff *skb)
+{
+	return skb->dev_scratch;
+}
+
+/**
+ * qdf_nbuf_set_dev_scratch() - set dev_scratch of network buffer
+ * @skb: Pointer to network buffer
+ * @value: value to be set in dev_scratch of network buffer
+ *
+ * Return: void
+ */
+static inline void
+__qdf_nbuf_set_dev_scratch(struct sk_buff *skb, unsigned long value)
+{
+	skb->dev_scratch = value;
+}
+#else
+static inline bool __qdf_nbuf_is_dev_scratch_supported(void)
+{
+	return false;
+}
+
+static inline unsigned long __qdf_nbuf_get_dev_scratch(struct sk_buff *skb)
+{
+	return 0;
+}
+
+static inline void
+__qdf_nbuf_set_dev_scratch(struct sk_buff *skb, unsigned long value)
+{
+}
+#endif /* KERNEL_VERSION(4, 14, 0) */
 
 /**
  * __qdf_nbuf_head() - return the pointer the skb's head pointer

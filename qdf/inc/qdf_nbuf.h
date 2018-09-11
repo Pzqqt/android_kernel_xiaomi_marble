@@ -1589,6 +1589,42 @@ static inline void qdf_nbuf_reset(qdf_nbuf_t buf, int reserve, int align)
 }
 
 /**
+ * qdf_nbuf_dev_scratch_is_supported() - dev_scratch support for network buffer
+ *                                       in kernel
+ *
+ * Return: true if dev_scratch is supported
+ *         false if dev_scratch is not supported
+ */
+static inline bool qdf_nbuf_is_dev_scratch_supported(void)
+{
+	return __qdf_nbuf_is_dev_scratch_supported();
+}
+
+/**
+ * qdf_nbuf_get_dev_scratch() - get dev_scratch of network buffer
+ * @buf: Pointer to network buffer
+ *
+ * Return: dev_scratch if dev_scratch supported
+ *         0 if dev_scratch not supported
+ */
+static inline unsigned long qdf_nbuf_get_dev_scratch(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_get_dev_scratch(buf);
+}
+
+/**
+ * qdf_nbuf_set_dev_scratch() - set dev_scratch of network buffer
+ * @buf: Pointer to network buffer
+ * @value: value to be set in dev_scratch of network buffer
+ *
+ * Return: void
+ */
+static inline void qdf_nbuf_set_dev_scratch(qdf_nbuf_t buf, unsigned long value)
+{
+	__qdf_nbuf_set_dev_scratch(buf, value);
+}
+
+/**
  * qdf_nbuf_peek_header() - return the data pointer & length of the header
  * @buf: Network nbuf
  * @addr: Data pointer
