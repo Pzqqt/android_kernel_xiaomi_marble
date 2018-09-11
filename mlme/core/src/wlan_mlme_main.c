@@ -318,6 +318,13 @@ static void mlme_init_edca_params(struct wlan_mlme_edca_params *edca_params)
 	mlme_init_edca_etsi_cfg(edca_params);
 }
 
+static void mlme_init_timeout_cfg(struct wlan_objmgr_psoc *psoc,
+				  struct wlan_mlme_timeout *timeouts)
+{
+	timeouts->join_failure_timeout = cfg_get(psoc,
+						 CFG_JOIN_FAILURE_TIMEOUT);
+}
+
 static void mlme_init_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 				    struct wlan_mlme_ht_caps *ht_caps)
 {
@@ -985,6 +992,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_cfg = &mlme_obj->cfg;
 	mlme_init_generic_cfg(psoc, &mlme_cfg->gen);
 	mlme_init_edca_params(&mlme_cfg->edca_params);
+	mlme_init_timeout_cfg(psoc, &mlme_cfg->timeouts);
 	mlme_init_ht_cap_in_cfg(psoc, &mlme_cfg->ht_caps);
 	mlme_init_mbo_cfg(psoc, &mlme_cfg->mbo_cfg);
 	mlme_init_qos_cfg(psoc, &mlme_cfg->qos_mlme_params);

@@ -839,6 +839,14 @@ struct wlan_mlme_threshold {
 	uint32_t frag_threshold;
 };
 
+/*
+ * struct wlan_mlme_timeout - mlme timeout related config items
+ * @join_failure_timeout: join failure timeout
+ */
+struct wlan_mlme_timeout {
+	uint32_t join_failure_timeout;
+};
+
 /**
  * struct wlan_mlme_oce - OCE related config items
  * @enable_bcast_probe_rsp: enable broadcast probe response
@@ -899,20 +907,25 @@ struct wlan_mlme_wep_cfg {
 /**
  * struct wlan_mlme_cfg - MLME config items
  * @chainmask_cfg: VHT chainmask related cfg items
- * @ht_cfg: HT related CFG Items
+ * @edca_params: edca related CFG items
+ * @gen: Generic CFG items
+ * @ht_caps: HT related CFG Items
  * @he_caps: HE related cfg items
  * @lfr: LFR related CFG Items
  * @obss_ht40:obss ht40 CFG Items
  * @mbo_cfg: Multiband Operation related CFG items
  * @vht_caps: VHT related CFG Items
+ * @qos_mlme_params: QOS CFG Items
  * @rates: Rates related cfg items
  * @product_details: product details related CFG Items
  * @sap_protection_cfg: SAP erp protection related CFG items
- * @acs: ACS related CFG items
  * @sap_cfg: sap CFG items
  * @sta: sta CFG Items
  * @scoring: BSS Scoring related CFG Items
+ * @oce: OCE related CFG items
  * @threshold: threshold related cfg items
+ * @timeouts: mlme timeout related CFG items
+ * @acs: ACS related CFG items
  * @feature_flags: Feature flag config items
  * @wep_params:  WEP related config items
  */
@@ -935,6 +948,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_scoring_cfg scoring;
 	struct wlan_mlme_oce oce;
 	struct wlan_mlme_threshold threshold;
+	struct wlan_mlme_timeout timeouts;
 	struct wlan_mlme_acs acs;
 	struct wlan_mlme_feature_flag feature_flags;
 	struct wlan_mlme_wep_cfg wep_params;
