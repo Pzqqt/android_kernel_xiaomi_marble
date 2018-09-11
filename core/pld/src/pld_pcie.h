@@ -140,6 +140,11 @@ static inline void pld_pcie_link_down(struct device *dev)
 {
 }
 
+static inline int pld_pcie_is_fw_down(struct device *dev)
+{
+	return 0;
+}
+
 static inline int pld_pcie_athdiag_read(struct device *dev, uint32_t offset,
 					uint32_t memtype, uint32_t datalen,
 					uint8_t *output)
@@ -268,6 +273,11 @@ void pld_pcie_device_self_recovery(struct device *dev,
 static inline void pld_pcie_link_down(struct device *dev)
 {
 	cnss_pci_link_down(dev);
+}
+
+static inline int pld_pcie_is_fw_down(struct device *dev)
+{
+	return cnss_pci_is_device_down(dev);
 }
 
 static inline int pld_pcie_athdiag_read(struct device *dev, uint32_t offset,

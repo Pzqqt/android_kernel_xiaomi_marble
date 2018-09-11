@@ -1494,6 +1494,8 @@ int pld_is_fw_down(struct device *dev)
 		ret = pld_snoc_is_fw_down(dev);
 		break;
 	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_is_fw_down(dev);
+		break;
 	case PLD_BUS_TYPE_SDIO:
 	case PLD_BUS_TYPE_USB:
 		break;
