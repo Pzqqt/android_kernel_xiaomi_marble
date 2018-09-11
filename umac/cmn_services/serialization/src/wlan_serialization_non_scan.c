@@ -285,12 +285,6 @@ wlan_ser_move_multiple_non_scan_pending_to_active(
 		qdf_mem_copy(&cmd_to_remove, &pending_cmd_list->cmd,
 			     sizeof(struct wlan_serialization_command));
 
-		if (!wlan_serialization_is_active_cmd_allowed(&cmd_to_remove)) {
-			ser_debug("Can't add to active queue cmd_id:%d",
-				  cmd_to_remove.cmd_id);
-			continue;
-		}
-
 		qdf_status = wlan_ser_remove_non_scan_cmd(ser_pdev_obj,
 							  &pending_cmd_list,
 							  &cmd_to_remove,
