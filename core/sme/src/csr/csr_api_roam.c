@@ -15358,6 +15358,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	bool is_vendor_ap_present;
 	struct vdev_type_nss *vdev_type_nss;
 	struct action_oui_search_attr vendor_ap_search_attr;
+	tDot11fIEVHTCaps *vht_caps = NULL;
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -16014,8 +16015,12 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 
 		csr_join_req->vht_config.su_beam_formee = value;
 
+		if (pIes->VHTCaps.present)
+			vht_caps = &pIes->VHTCaps;
+		else if (pIes->vendor_vht_ie.VHTCaps.present)
+			vht_caps = &pIes->vendor_vht_ie.VHTCaps;
 		/* Set BF CSN value only if SU Bformee is enabled */
-		if (csr_join_req->vht_config.su_beam_formee) {
+		if (vht_caps && csr_join_req->vht_config.su_beam_formee) {
 			txBFCsnValue = (uint8_t)value1;
 			/*
 			 * Certain commercial AP display a bad behavior when
@@ -16025,18 +16030,11 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			 * CSN cap of less than 4. To avoid such issues, take a
 			 * min of self and peer CSN while sending ASSOC request.
 			 */
-			if (txBFCsnValue < 4) {
-				if (IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
-					pIes->VHTCaps.csnofBeamformerAntSup)
+			if (pIes->Vendor1IE.present &&
+					vht_caps->csnofBeamformerAntSup < 4) {
+				if (vht_caps->csnofBeamformerAntSup)
 					txBFCsnValue = QDF_MIN(txBFCsnValue,
-					  pIes->VHTCaps.csnofBeamformerAntSup);
-				else if (IS_BSS_VHT_CAPABLE(
-					pIes->vendor_vht_ie.VHTCaps)
-					&& pIes->vendor_vht_ie.VHTCaps.
-					csnofBeamformerAntSup)
-					txBFCsnValue = QDF_MIN(txBFCsnValue,
-					  pIes->vendor_vht_ie.
-					  VHTCaps.csnofBeamformerAntSup);
+					  vht_caps->csnofBeamformerAntSup);
 			}
 		}
 		csr_join_req->vht_config.csnof_beamformer_antSup = txBFCsnValue;
