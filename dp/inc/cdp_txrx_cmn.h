@@ -1329,6 +1329,31 @@ static inline void cdp_set_vdev_dscp_tid_map(ol_txrx_soc_handle soc,
 }
 
 /**
+ * cdp_ath_get_total_per(): function to get hw retries
+ * @soc : soc handle
+ * @pdev: pdev handle
+ *
+ * Return: get hw retries
+ */
+static inline
+int cdp_ath_get_total_per(ol_txrx_soc_handle soc,
+			  struct cdp_pdev *pdev)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_get_total_per)
+		return 0;
+
+	return soc->ops->cmn_drv_ops->txrx_get_total_per(pdev);
+}
+
+/**
  * cdp_set_pdev_dscp_tid_map(): function to change tid values in DSCP-tid map
  * @pdev: pdev handle
  * @map_id: id of the tid map

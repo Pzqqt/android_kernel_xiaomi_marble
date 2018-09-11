@@ -7070,6 +7070,23 @@ static int  dp_txrx_get_vdev_stats(struct cdp_vdev *vdev_handle, void *buf,
 }
 
 /*
+ * dp_get_total_per(): get total per
+ * @pdev_handle: DP_PDEV handle
+ *
+ * Return: % error rate using retries per packet and success packets
+ */
+static int dp_get_total_per(struct cdp_pdev *pdev_handle)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	dp_aggregate_pdev_stats(pdev);
+	if ((pdev->stats.tx.tx_success.num + pdev->stats.tx.retries) == 0)
+		return 0;
+	return ((pdev->stats.tx.retries * 100) /
+		((pdev->stats.tx.tx_success.num) + (pdev->stats.tx.retries)));
+}
+
+/*
  * dp_txrx_stats_publish(): publish pdev stats into a buffer
  * @pdev_handle: DP_PDEV handle
  * @buf: to hold pdev_stats
@@ -7897,6 +7914,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	/* TODO: get API's for dscp-tid need to be added*/
 	.set_vdev_dscp_tid_map = dp_set_vdev_dscp_tid_map_wifi3,
 	.set_pdev_dscp_tid_map = dp_set_pdev_dscp_tid_map_wifi3,
+	.txrx_get_total_per = dp_get_total_per,
 	.txrx_stats_request = dp_txrx_stats_request,
 	.txrx_set_monitor_mode = dp_vdev_set_monitor_mode,
 	.txrx_get_pdev_id_frm_pdev = dp_get_pdev_id_frm_pdev,
