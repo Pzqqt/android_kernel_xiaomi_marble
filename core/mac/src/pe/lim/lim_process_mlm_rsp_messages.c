@@ -401,22 +401,14 @@ static void lim_send_mlm_assoc_req(tpAniSirGlobal mac_ctx,
 
 	/*
 	 * If telescopic beaconing is enabled, set listen interval to
-	 * WNI_CFG_TELE_BCN_MAX_LI
+	 * CFG_TELE_BCN_MAX_LI
 	 */
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_TELE_BCN_WAKEUP_EN, &tele_bcn)
-		!= QDF_STATUS_SUCCESS)
-		pe_err("Couldn't get WNI_CFG_TELE_BCN_WAKEUP_EN");
+	tele_bcn = mac_ctx->mlme_cfg->sap_cfg.tele_bcn_wakeup_en;
+	if (tele_bcn)
+		val = mac_ctx->mlme_cfg->sap_cfg.tele_bcn_max_li;
+	else
+		val = mac_ctx->mlme_cfg->sap_cfg.listen_interval;
 
-	val = WNI_CFG_LISTEN_INTERVAL_STADEF;
-	if (tele_bcn) {
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_TELE_BCN_MAX_LI, &val) !=
-			QDF_STATUS_SUCCESS)
-			pe_err("could not retrieve ListenInterval");
-	} else {
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_LISTEN_INTERVAL,
-			 &val) != QDF_STATUS_SUCCESS)
-			pe_err("could not retrieve ListenInterval");
-	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_ASSOC_REQ_EVENT,
 		session_entry, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
@@ -2121,11 +2113,11 @@ static void lim_process_ap_mlm_add_bss_rsp(tpAniSirGlobal pMac,
 			    || (psessionEntry->gStartBssWPAIe.present))
 				pe_debug("WPA/WPA2 SAP configuration");
 			else {
-				if (pMac->lim.gLimAssocStaLimit >
+				if (pMac->mlme_cfg->sap_cfg.assoc_sta_limit >
 				    MAX_SUPPORTED_PEERS_WEP) {
 					pe_debug("WEP SAP Configuration");
-					pMac->lim.gLimAssocStaLimit =
-						MAX_SUPPORTED_PEERS_WEP;
+					pMac->mlme_cfg->sap_cfg.assoc_sta_limit
+					= MAX_SUPPORTED_PEERS_WEP;
 					isWepEnabled = true;
 				}
 			}
@@ -2145,9 +2137,11 @@ static void lim_process_ap_mlm_add_bss_rsp(tpAniSirGlobal pMac,
 		/* In lim_apply_configuration gLimAssocStaLimit is assigned from cfg.
 		 * So update the value to 16 in case SoftAP is configured in WEP.
 		 */
-		if ((pMac->lim.gLimAssocStaLimit > MAX_SUPPORTED_PEERS_WEP)
+		if ((pMac->mlme_cfg->sap_cfg.assoc_sta_limit >
+		    MAX_SUPPORTED_PEERS_WEP)
 		    && (isWepEnabled))
-			pMac->lim.gLimAssocStaLimit = MAX_SUPPORTED_PEERS_WEP;
+			pMac->mlme_cfg->sap_cfg.assoc_sta_limit =
+			MAX_SUPPORTED_PEERS_WEP;
 		psessionEntry->staId = pAddBssParams->staContext.staIdx;
 		mlmStartCnf.resultCode = eSIR_SME_SUCCESS;
 	} else {

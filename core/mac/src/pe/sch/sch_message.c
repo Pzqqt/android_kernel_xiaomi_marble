@@ -111,12 +111,6 @@ void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg)
 	switch (pSchMsg->type) {
 	case SIR_CFG_PARAM_UPDATE_IND:
 		switch (pSchMsg->bodyval) {
-		case WNI_CFG_BEACON_INTERVAL:
-			/* What to do for IBSS ?? - TBD */
-			if (LIM_IS_AP_ROLE(psessionEntry))
-				sch_set_beacon_interval(pMac, psessionEntry);
-			break;
-
 		case WNI_CFG_COUNTRY_CODE:
 			pe_debug("sch: WNI_CFG_COUNTRY_CODE changed");
 			sch_edca_profile_update_all(pMac);

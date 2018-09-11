@@ -522,9 +522,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 					psessionEntry);
 	}
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_LISTEN_INTERVAL, &listenInterval) !=
-	    QDF_STATUS_SUCCESS)
-		pe_err("Couldn't get LISTEN_INTERVAL");
+	listenInterval = pMac->mlme_cfg->sap_cfg.listen_interval;
 	pAddStaParams->listenInterval = (uint16_t) listenInterval;
 
 	wlan_cfg_get_int(pMac, WNI_CFG_DOT11_MODE, &selfStaDot11Mode);
@@ -660,38 +658,14 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	pMlmReassocReq->sessionId = psessionEntry->peSessionId;
 
 	/* If telescopic beaconing is enabled, set listen interval
-	   to WNI_CFG_TELE_BCN_MAX_LI
+	   to CFG_TELE_BCN_MAX_LI
 	 */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_TELE_BCN_WAKEUP_EN, &teleBcnEn) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("Couldn't get WNI_CFG_TELE_BCN_WAKEUP_EN");
-		qdf_mem_free(pMlmReassocReq);
-		return;
-	}
+	teleBcnEn = pMac->mlme_cfg->sap_cfg.tele_bcn_wakeup_en;
+	if (teleBcnEn)
+		val = pMac->mlme_cfg->sap_cfg.tele_bcn_max_li;
+	else
+		val = pMac->mlme_cfg->sap_cfg.listen_interval;
 
-	if (teleBcnEn) {
-		if (wlan_cfg_get_int(pMac, WNI_CFG_TELE_BCN_MAX_LI, &val) !=
-		    QDF_STATUS_SUCCESS) {
-			/**
-			 * Could not get ListenInterval value
-			 * from CFG. Log error.
-			 */
-			pe_err("could not retrieve ListenInterval");
-			qdf_mem_free(pMlmReassocReq);
-			return;
-		}
-	} else {
-		if (wlan_cfg_get_int(pMac, WNI_CFG_LISTEN_INTERVAL, &val) !=
-		    QDF_STATUS_SUCCESS) {
-			/**
-			 * Could not get ListenInterval value
-			 * from CFG. Log error.
-			 */
-			pe_err("could not retrieve ListenInterval");
-			qdf_mem_free(pMlmReassocReq);
-			return;
-		}
-	}
 	if (lim_set_link_state
 		    (pMac, eSIR_LINK_PREASSOC_STATE, psessionEntry->bssId,
 		    psessionEntry->selfMacAddr, NULL, NULL) != QDF_STATUS_SUCCESS) {

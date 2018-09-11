@@ -693,13 +693,7 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 	}
 
 	/* Set Listen Interval */
-	if (wlan_cfg_get_int(mac, WNI_CFG_LISTEN_INTERVAL,
-			     &cfg_data_val) != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get value for WNI_CFG_LISTEN_INTERVAL");
-		cfg_data_val = POWERSAVE_DEFAULT_LISTEN_INTERVAL;
-	}
-
+	cfg_data_val = mac->mlme_cfg->sap_cfg.listen_interval;
 	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 					      WMI_VDEV_PARAM_LISTEN_INTERVAL,
 					      cfg_data_val);

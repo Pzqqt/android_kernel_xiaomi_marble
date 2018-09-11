@@ -7179,10 +7179,7 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 			ibss_log->operatingChannel =
 				bss_desc->channelId;
 		}
-		if (QDF_IS_STATUS_SUCCESS(wlan_cfg_get_int(
-					mac_ctx,
-					WNI_CFG_BEACON_INTERVAL,
-					&bi)))
+		bi = mac_ctx->mlme_cfg->sap_cfg.beacon_interval;
 			/* U8 is not enough for BI */
 			ibss_log->beaconInterval = (uint8_t) bi;
 		WLAN_HOST_DIAG_LOG_REPORT(ibss_log);
@@ -11993,9 +11990,7 @@ csr_roam_diag_joined_new_bss(tpAniSirGlobal mac_ctx,
 			     pNewBss->ssId.length);
 		pIbssLog->operatingChannel = pNewBss->channelNumber;
 	}
-	if (QDF_IS_STATUS_SUCCESS(wlan_cfg_get_int(mac_ctx,
-						   WNI_CFG_BEACON_INTERVAL,
-						   &bi)))
+	bi = mac_ctx->mlme_cfg->sap_cfg.beacon_interval;
 		/* U8 is not enough for beacon interval */
 		pIbssLog->beaconInterval = (uint8_t) bi;
 	WLAN_HOST_DIAG_LOG_REPORT(pIbssLog);

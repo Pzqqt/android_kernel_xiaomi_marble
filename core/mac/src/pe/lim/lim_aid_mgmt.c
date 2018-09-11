@@ -115,7 +115,8 @@ uint16_t lim_assign_peer_idx(tpAniSirGlobal pMac, tpPESession pSessionEntry)
 
 	/* make sure we haven't exceeded the configurable limit on associations */
 	/* This count is global to ensure that it doesn't exceed the hardware limits. */
-	if (pe_get_current_stas_count(pMac) >= pMac->lim.gLimAssocStaLimit) {
+	if (pe_get_current_stas_count(pMac) >=
+	    pMac->mlme_cfg->sap_cfg.assoc_sta_limit) {
 		/* too many associations already active */
 		return 0;
 	}

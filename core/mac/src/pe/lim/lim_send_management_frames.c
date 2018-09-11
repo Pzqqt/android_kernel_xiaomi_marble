@@ -600,13 +600,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		frm->BeaconInterval.interval =
 			mac_ctx->sch.schObject.gSchBeaconInterval;
 	} else {
-		sir_status = wlan_cfg_get_int(mac_ctx,
-				WNI_CFG_BEACON_INTERVAL, &cfg);
-		if (QDF_STATUS_SUCCESS != sir_status) {
-			pe_err("Failed to get WNI_CFG_BEACON_INTERVAL (%d)",
-				sir_status);
-			goto err_ret;
-		}
+		cfg = mac_ctx->mlme_cfg->sap_cfg.beacon_interval;
 		frm->BeaconInterval.interval = (uint16_t) cfg;
 	}
 

@@ -126,4 +126,151 @@ QDF_STATUS wlan_mlme_get_num_11ag_tx_chains(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_mlme_configure_chain_mask(struct wlan_objmgr_psoc *psoc,
 					  uint8_t session_id);
 
+/**
+ * wlan_mlme_set_sap_listen_interval() - Set the sap listen interval
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_sap_listen_interval(struct wlan_objmgr_psoc *psoc,
+					     int value);
+
+/**
+ * wlan_mlme_set_assoc_sta_limit() - Set the assoc sta limit
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_assoc_sta_limit(struct wlan_objmgr_psoc *psoc,
+					 int value);
+
+/**
+ * wlan_mlme_set_rmc_action_period_freq() - Set the rmc action period frequency
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_rmc_action_period_freq(struct wlan_objmgr_psoc *psoc,
+						int value);
+
+/**
+ * wlan_mlme_set_sap_get_peer_info() - get the sap get peer info
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_get_peer_info(struct wlan_objmgr_psoc *psoc,
+					   bool *value);
+
+/**
+ * wlan_mlme_get_sap_allow_all_channels() - get the value of sap allow all
+ * channels
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_allow_all_channels(struct wlan_objmgr_psoc *psoc,
+						bool *value);
+
+/**
+ * wlan_mlme_get_sap_allow_all_channels() - get the value sap max peers
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_max_peers(struct wlan_objmgr_psoc *psoc,
+				       int *value);
+
+/**
+ * wlan_mlme_set_sap_max_peers() - set the value sap max peers
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_set_sap_max_peers(struct wlan_objmgr_psoc *psoc,
+				       int value);
+
+/**
+ * wlan_mlme_get_sap_max_offload_peers() - get the value sap max offload peers
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_max_offload_peers(struct wlan_objmgr_psoc *psoc,
+					       int *value);
+
+/**
+ * wlan_mlme_get_sap_max_offload_reorder_buffs() - get the value sap max offload
+ * reorder buffs.
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_max_offload_reorder_buffs(struct wlan_objmgr_psoc
+						       *psoc, int *value);
+
+/**
+ * wlan_mlme_get_sap_chn_switch_bcn_count() - get the value sap max channel
+ * switch beacon count
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_chn_switch_bcn_count(struct wlan_objmgr_psoc *psoc,
+						  int *value);
+
+/**
+ * wlan_mlme_get_sap_chn_switch_mode() - get the sap channel
+ * switch mode
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_chn_switch_mode(struct wlan_objmgr_psoc *psoc,
+					     bool *value);
+
+/**
+ * wlan_mlme_get_sap_internal_restart() - get the sap internal
+ * restart
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_internal_restart(struct wlan_objmgr_psoc *psoc,
+					      bool *value);
+
+/**
+ * wlan_mlme_get_sap_reduced_beacon_interval() - get the sap reduced
+ * beacon interval
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_reduced_beacon_interval(struct wlan_objmgr_psoc
+						     *psoc, int *value);
+
+/**
+ * wlan_mlme_get_sap_chan_switch_rate_enabled() - get the sap rate hostapd
+ * enabled beacon interval
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_chan_switch_rate_enabled(struct wlan_objmgr_psoc
+						      *psoc, bool *value);
+
 #endif /* _WLAN_MLME_API_H_ */

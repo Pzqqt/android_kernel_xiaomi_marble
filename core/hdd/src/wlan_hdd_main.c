@@ -1219,6 +1219,7 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 	bool tdls_off_channel;
 	bool tdls_buffer_sta;
 	uint32_t tdls_uapsd_mask;
+	bool value;
 #endif
 	/* Set up UAPSD */
 	config->apUapsdEnabled &= cfg->uapsd;
@@ -1264,11 +1265,14 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 		cfg_tdls_set_sleep_sta_enable(hdd_ctx->hdd_psoc, false);
 #endif
 	hdd_update_roam_offload(hdd_ctx, cfg);
-	config->sap_get_peer_info &= cfg->get_peer_info_enabled;
+
+	if (ucfg_mlme_get_sap_get_peer_info(hdd_ctx->hdd_psoc, &value) ==
+	   QDF_STATUS_SUCCESS)
+		value &= cfg->get_peer_info_enabled;
+
 	config->MAWCEnabled &= cfg->is_fw_mawc_capable;
 	hdd_update_tdls_config(hdd_ctx);
 	sme_update_tgt_services(hdd_ctx->mac_handle, cfg);
-
 }
 
 /**
@@ -2910,13 +2914,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 
 		hdd_update_ipa_component_config(hdd_ctx);
 
-		ret = hdd_update_config(hdd_ctx);
-		if (ret) {
-			hdd_err("Failed to update configuration; errno: %d",
-				ret);
-			goto cds_free;
-		}
-
 		hdd_update_cds_ac_specs_params(hdd_ctx);
 
 		status = hdd_component_psoc_open(hdd_ctx->hdd_psoc);
@@ -2924,7 +2921,14 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 			hdd_err("Failed to Open legacy components; status: %d",
 				status);
 			ret = qdf_status_to_os_return(status);
-			goto deinit_config;
+			goto cds_free;
+		}
+
+		ret = hdd_update_config(hdd_ctx);
+		if (ret) {
+			hdd_err("Failed to update configuration; errno: %d",
+				ret);
+			goto cds_free;
 		}
 
 		status = wbuff_module_init();
@@ -3035,8 +3039,6 @@ close:
 
 hdd_psoc_close:
 	hdd_component_psoc_close(hdd_ctx->hdd_psoc);
-
-deinit_config:
 	cds_deinit_ini_config();
 
 cds_free:
@@ -5406,6 +5408,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 	struct hdd_station_ctx *sta_ctx;
 	struct qdf_mac_addr peerMacAddr;
 	int sta_id;
+	bool value;
 
 	hdd_enter();
 
@@ -5422,8 +5425,8 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			hdd_notify_tdls_reset_adapter(adapter->vdev);
 			adapter->session.station.hdd_reassoc_scenario = false;
 		}
-
-		if (hdd_ctx->config->sap_internal_restart &&
+		ucfg_mlme_get_sap_internal_restart(hdd_ctx->hdd_psoc, &value);
+		if (value &&
 		    adapter->device_mode == QDF_SAP_MODE) {
 			wlan_hdd_netif_queue_control(adapter,
 						     WLAN_STOP_ALL_NETIF_QUEUE,
@@ -6172,6 +6175,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
 	eConnectionState connState;
+	bool value;
 
 	hdd_enter();
 
@@ -6240,7 +6244,9 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 			break;
 
 		case QDF_SAP_MODE:
-			if (hdd_ctx->config->sap_internal_restart)
+			ucfg_mlme_get_sap_internal_restart(hdd_ctx->hdd_psoc,
+							   &value);
+			if (value)
 				hdd_start_ap_adapter(adapter);
 
 			break;
@@ -8423,6 +8429,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 	uint32_t i;
 	bool found = false;
 	uint8_t restart_chan;
+	bool value;
 
 	hdd_for_each_adapter(hdd_ctxt, adapter) {
 		if (!(adapter->device_mode == QDF_SAP_MODE &&
@@ -8483,9 +8490,10 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 			hdd_debug("sending coex indication");
 			wlan_hdd_send_svc_nlink_msg(hdd_ctxt->radio_index,
 					WLAN_SVC_LTE_COEX_IND, NULL, 0);
-			hdd_debug("driver to start sap: %d",
-				hdd_ctxt->config->sap_internal_restart);
-			if (hdd_ctxt->config->sap_internal_restart)
+			ucfg_mlme_get_sap_internal_restart(hdd_ctxt->hdd_psoc,
+							   &value);
+			hdd_debug("driver to start sap: %d", value);
+			if (value)
 				hdd_switch_sap_channel(adapter, restart_chan,
 						       true);
 			else
@@ -9441,6 +9449,7 @@ static inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
 static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 {
 	struct cds_config_info *cds_cfg;
+	int value;
 
 	cds_cfg = (struct cds_config_info *)qdf_mem_malloc(sizeof(*cds_cfg));
 	if (!cds_cfg) {
@@ -9485,10 +9494,13 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->crash_inject_enabled;
 
 	cds_cfg->enable_mc_list = hdd_ctx->config->fEnableMCAddrList;
-	cds_cfg->ap_maxoffload_peers = hdd_ctx->config->apMaxOffloadPeers;
 
-	cds_cfg->ap_maxoffload_reorderbuffs =
-		hdd_ctx->config->apMaxOffloadReorderBuffs;
+	ucfg_mlme_get_sap_max_offload_peers(hdd_ctx->hdd_psoc,
+					    &value);
+	cds_cfg->ap_maxoffload_peers = value;
+	ucfg_mlme_get_sap_max_offload_reorder_buffs(hdd_ctx->hdd_psoc,
+						    &value);
+	cds_cfg->ap_maxoffload_reorderbuffs = value;
 
 	cds_cfg->ap_disable_intrabss_fwd =
 		hdd_ctx->config->apDisableIntraBssFwd;
@@ -9544,7 +9556,8 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->apf_packet_filter_enable =
 		hdd_ctx->config->apf_packet_filter_enable;
 	cds_cfg->self_gen_frm_pwr = hdd_ctx->config->self_gen_frm_pwr;
-	cds_cfg->max_station = hdd_ctx->config->maxNumberOfPeers;
+	ucfg_mlme_get_sap_max_peers(hdd_ctx->hdd_psoc, &value);
+	cds_cfg->max_station = value;
 	cds_cfg->sub_20_channel_width = WLAN_SUB_20_CH_WIDTH_NONE;
 	cds_cfg->flow_steering_enabled = hdd_ctx->config->flow_steering_enable;
 	cds_cfg->max_msdus_per_rxinorderind =
@@ -10686,6 +10699,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	uint16_t num_11b_tx_chains = 0;
 	uint16_t num_11ag_tx_chains = 0;
 	struct policy_mgr_dp_cbacks dp_cbs = {0};
+	bool value;
 
 	mac_handle = hdd_ctx->mac_handle;
 
@@ -10711,8 +10725,9 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 				    set_value, PDEV_CMD);
 	}
 
-	if (hdd_ctx->config->sap_get_peer_info) {
-		set_value = hdd_ctx->config->sap_get_peer_info;
+	ucfg_mlme_get_sap_get_peer_info(hdd_ctx->hdd_psoc, &value);
+	if (value) {
+		set_value = value;
 		sme_cli_set_command(0,
 				    (int)WMI_PDEV_PARAM_PEER_STATS_INFO_ENABLE,
 				    set_value, PDEV_CMD);

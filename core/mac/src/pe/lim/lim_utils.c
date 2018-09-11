@@ -6649,7 +6649,8 @@ void lim_del_pmf_sa_query_timer(tpAniSirGlobal mac_ctx, tpPESession pe_session)
 	tpDphHashNode sta_ds = NULL;
 
 	for (associated_sta = 1;
-			associated_sta < mac_ctx->lim.gLimAssocStaLimit;
+			associated_sta <
+			mac_ctx->mlme_cfg->sap_cfg.assoc_sta_limit;
 			associated_sta++) {
 		sta_ds = dph_get_hash_entry(mac_ctx, associated_sta,
 				&pe_session->dph.dphHashTable);

@@ -2487,28 +2487,6 @@ enum hdd_dot11_mode {
 #define CFG_AP_LINK_MONITOR_PERIOD_MAX           (50)
 #define CFG_AP_LINK_MONITOR_PERIOD_DEFAULT       (10)
 
-/*
- * <ini>
- * gBeaconInterval - Beacon interval for SoftAP
- * @Min: 0
- * @Max: 65535
- * @Default: 100
- *
- * This ini is used to set beacon interval for SoftAP
- *
- * Related: None.
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_BEACON_INTERVAL_NAME               "gBeaconInterval"
-#define CFG_BEACON_INTERVAL_MIN                WNI_CFG_BEACON_INTERVAL_STAMIN
-#define CFG_BEACON_INTERVAL_MAX                WNI_CFG_BEACON_INTERVAL_STAMAX
-#define CFG_BEACON_INTERVAL_DEFAULT            WNI_CFG_BEACON_INTERVAL_STADEF
-
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 #define CFG_WLAN_AUTO_SHUTDOWN              "gWlanAutoShutdown"
 #define CFG_WLAN_AUTO_SHUTDOWN_MIN          (0)
@@ -2554,11 +2532,6 @@ enum hdd_dot11_mode {
 #define CFG_DISABLE_PACKET_FILTER_MIN		(0)
 #define CFG_DISABLE_PACKET_FILTER_MAX		(1)
 #define CFG_DISABLE_PACKET_FILTER_DEFAULT	(1)
-
-#define CFG_ENABLE_LTE_COEX              "gEnableLTECoex"
-#define CFG_ENABLE_LTE_COEX_MIN               (0)
-#define CFG_ENABLE_LTE_COEX_MAX               (1)
-#define CFG_ENABLE_LTE_COEX_DEFAULT           (0)
 
 #define CFG_VCC_RSSI_TRIGGER_NAME             "gVccRssiTrigger"
 #define CFG_VCC_RSSI_TRIGGER_MIN              (0)
@@ -3792,11 +3765,6 @@ enum station_keepalive_method {
 #define CFG_RM_CAPABILITY_NAME            "rm_capability"
 #define CFG_RM_CAPABILITY_DEFAULT         "73,10,91,00,04"
 
-#define CFG_TELE_BCN_MAX_LI_NAME                     "telescopicBeaconMaxListenInterval"
-#define CFG_TELE_BCN_MAX_LI_MIN                      (0)
-#define CFG_TELE_BCN_MAX_LI_MAX                      (7)
-#define CFG_TELE_BCN_MAX_LI_DEFAULT                  (5)
-
 #define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_NAME      "gNeighborLookupThreshold"
 #define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MIN       (10)
 #define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MAX       (120)
@@ -3826,29 +3794,6 @@ enum station_keepalive_method {
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_MIN                 (0)
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_MAX                 (16)
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_DEFAULT             (14)
-
-/*
- * <ini>
- * gTelescopicBeaconWakeupEn - Set teles copic beacon wakeup
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set default teles copic beacon wakeup
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_TELE_BCN_WAKEUP_EN_NAME            "gTelescopicBeaconWakeupEn"
-#define CFG_TELE_BCN_WAKEUP_EN_MIN             (0)
-#define CFG_TELE_BCN_WAKEUP_EN_MAX             (1)
-#define CFG_TELE_BCN_WAKEUP_EN_DEFAULT         (0)
 
 #define CFG_AP_DATA_AVAIL_POLL_PERIOD_NAME      "gApDataAvailPollInterval"
 #define CFG_AP_DATA_AVAIL_POLL_PERIOD_MIN       (WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD_STAMIN)
@@ -5257,85 +5202,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gSapGetPeerInfo - Enable/Disable remote peer info query support
- * @Min: 0 - Disable remote peer info query support
- * @Max: 1 - Enable remote peer info query support
- * @Default: 0
- *
- * This ini is used to enable/disable remote peer info query support
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_SAP_GET_PEER_INFO                      "gSapGetPeerInfo"
-#define CFG_SAP_GET_PEER_INFO_MIN                   (0)
-#define CFG_SAP_GET_PEER_INFO_MAX                   (1)
-#define CFG_SAP_GET_PEER_INFO_DEFAULT               (0)
-
-/*
- * <ini>
- * gRateForTxMgmt - rate for tx mgmt frame
- * @Min: 0x0
- * @Max: 0xFF
- * @Default: 0xFF
- *
- * This ini is used to configure the rate for tx
- * mgmt frame. Default 0xFF means disable.
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_RATE_FOR_TX_MGMT                  "gRateForTxMgmt"
-#define CFG_RATE_FOR_TX_MGMT_MIN              (WNI_CFG_RATE_FOR_TX_MGMT_STAMIN)
-#define CFG_RATE_FOR_TX_MGMT_MAX              (WNI_CFG_RATE_FOR_TX_MGMT_STAMAX)
-#define CFG_RATE_FOR_TX_MGMT_DEFAULT          (WNI_CFG_RATE_FOR_TX_MGMT_STADEF)
-
-/*
- * <ini>
- * gRateForTxMgmt2G - rate for tx mgmt frame on 2G
- * @Min: 0x0
- * @Max: 0xFF
- * @Default: 0xFF
- *
- * This ini is used to configure the rate for tx
- * mgmt frame on 2G Band. Default 0xFF means disable.
- * It has higher priority and will overwrite gRateForTxMgmt
- * setting.
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_RATE_FOR_TX_MGMT_2G            "gRateForTxMgmt2G"
-#define CFG_RATE_FOR_TX_MGMT_2G_MIN        (WNI_CFG_RATE_FOR_TX_MGMT_2G_STAMIN)
-#define CFG_RATE_FOR_TX_MGMT_2G_MAX        (WNI_CFG_RATE_FOR_TX_MGMT_2G_STAMAX)
-#define CFG_RATE_FOR_TX_MGMT_2G_DEFAULT    (WNI_CFG_RATE_FOR_TX_MGMT_2G_STADEF)
-
-/*
- * <ini>
- * gRateForTxMgmt5G - rate for tx mgmt frame on 5G
- * @Min: 0x0
- * @Max: 0xFF
- * @Default: 0xFF
- *
- * This ini is used to configure the rate for tx
- * mgmt frame on 5G Band. Default 0xFF means disable.
- * It has higher priority and will overwrite gRateForTxMgmt
- * setting.
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_RATE_FOR_TX_MGMT_5G            "gRateForTxMgmt5G"
-#define CFG_RATE_FOR_TX_MGMT_5G_MIN        (WNI_CFG_RATE_FOR_TX_MGMT_5G_STAMIN)
-#define CFG_RATE_FOR_TX_MGMT_5G_MAX        (WNI_CFG_RATE_FOR_TX_MGMT_5G_STAMAX)
-#define CFG_RATE_FOR_TX_MGMT_5G_DEFAULT    (WNI_CFG_RATE_FOR_TX_MGMT_5G_STADEF)
-
-/*
- * <ini>
  * gPreventLinkDown - Enable to prevent bus link from going down
  * @Min: 0
  * @Max: 1
@@ -5513,14 +5379,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER_MAX     (1)
 #define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER_DEFAULT (0)
 
-/*
- * SAP ALLOW All Channels
- */
-#define CFG_SAP_ALLOW_ALL_CHANNEL_PARAM_NAME          "gSapAllowAllChannel"
-#define CFG_SAP_ALLOW_ALL_CHANNEL_PARAM_MIN           (0)
-#define CFG_SAP_ALLOW_ALL_CHANNEL_PARAM_MAX           (1)
-#define CFG_SAP_ALLOW_ALL_CHANNEL_PARAM_DEFAULT       (0)
-
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP             "gDisableLDPCWithTxbfAP"
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP_MIN         (0)
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP_MAX         (1)
@@ -5690,11 +5548,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_VHT_MPDU_LEN_MIN                           (0)
 #define CFG_VHT_MPDU_LEN_MAX                           (2)
 #define CFG_VHT_MPDU_LEN_DEFAULT                       (0)
-
-#define CFG_SAP_MAX_NO_PEERS                       "gSoftApMaxPeers"
-#define CFG_SAP_MAX_NO_PEERS_MIN                   (1)
-#define CFG_SAP_MAX_NO_PEERS_MAX                   (SIR_SAP_MAX_NUM_PEERS)
-#define CFG_SAP_MAX_NO_PEERS_DEFAULT               (SIR_SAP_MAX_NUM_PEERS)
 
 /*
  * <ini>
@@ -6042,16 +5895,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_LL_TX_FLOW_START_QUEUE_OFFSET_MAX      (30)
 
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
-
-#define CFG_SAP_MAX_OFFLOAD_PEERS                  "gMaxOffloadPeers"
-#define CFG_SAP_MAX_OFFLOAD_PEERS_MIN              (2)
-#define CFG_SAP_MAX_OFFLOAD_PEERS_MAX              (5)
-#define CFG_SAP_MAX_OFFLOAD_PEERS_DEFAULT          (2)
-
-#define CFG_SAP_MAX_OFFLOAD_REORDER_BUFFS          "gMaxOffloadReorderBuffs"
-#define CFG_SAP_MAX_OFFLOAD_REORDER_BUFFS_MIN      (0)
-#define CFG_SAP_MAX_OFFLOAD_REORDER_BUFFS_MAX      (3)
-#define CFG_SAP_MAX_OFFLOAD_REORDER_BUFFS_DEFAULT  (2)
 
 #ifdef FEATURE_WLAN_RA_FILTERING
 #define CFG_RA_FILTER_ENABLE_NAME                  "gRAFilterEnable"
@@ -7874,11 +7717,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_SUB_20_CHANNEL_WIDTH_MAX               (WLAN_SUB_20_CH_WIDTH_10)
 #define CFG_SUB_20_CHANNEL_WIDTH_DEFAULT           (WLAN_SUB_20_CH_WIDTH_NONE)
 
-#define CFG_SAP_INTERNAL_RESTART_NAME    "gEnableSapInternalRestart"
-#define CFG_SAP_INTERNAL_RESTART_MIN     (0)
-#define CFG_SAP_INTERNAL_RESTART_MAX     (1)
-#define CFG_SAP_INTERNAL_RESTART_DEFAULT (1)
-
 /*
  * <ini>
  * restart_beaconing_on_chan_avoid_event - control the beaconing entity to move
@@ -9419,7 +9257,6 @@ enum hdd_wext_control {
  * corresponding IE needs to be included in probe request.
  *
  * Example:
- * ========
  * If IE 221 needs to be in the probe request, set the corresponding bit
  * as follows:
  * a= IE/32 = 221/32 = 6 = g_probe_req_ie_bitmap_6
@@ -9641,46 +9478,6 @@ enum hdd_wext_control {
 #define CFG_PROBE_REQ_OUI_NAME    "gProbeReqOUIs"
 #define CFG_PROBE_REQ_OUI_DEFAULT ""
 /* End of probe request IE whitelisting feature ini params */
-
-/*
- * <ini>
- * g_sap_chanswitch_beacon_cnt - channel switch beacon count
- * @Min: 1
- * @Max: 10
- * @Default: 10
- *
- * This ini is used to configure channel switch beacon count
- *
- * Related: none
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_SAP_CH_SWITCH_BEACON_CNT         "g_sap_chanswitch_beacon_cnt"
-#define CFG_SAP_CH_SWITCH_BEACON_CNT_MIN     (1)
-#define CFG_SAP_CH_SWITCH_BEACON_CNT_MAX     (10)
-#define CFG_SAP_CH_SWITCH_BEACON_CNT_DEFAULT (10)
-
-/*
- * <ini>
- * g_sap_chanswitch_mode - channel switch mode
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to configure channel switch mode
- *
- * Related: none
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_SAP_CH_SWITCH_MODE         "g_sap_chanswitch_mode"
-#define CFG_SAP_CH_SWITCH_MODE_MIN     (0)
-#define CFG_SAP_CH_SWITCH_MODE_MAX     (1)
-#define CFG_SAP_CH_SWITCH_MODE_DEFAULT (1)
 
 /**
  * gSetRTSForSIFSBursting - set rts for sifs bursting
@@ -10133,35 +9930,6 @@ enum hdd_external_acs_policy {
 #define CFG_IS_SAE_ENABLED_MIN     (0)
 #define CFG_IS_SAE_ENABLED_MAX     (1)
 
-/*
- * <ini>
- * gChanSwitchHostapdRateEnabled - Enable/disable hostapd rate when doing SAP
- * channel switch
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set supported rates calculated from hostapd.conf file
- * or not when doing SAP channel switch. It must set it to 0 when cross-band
- * channel switch happens such as from 2G to 5G or 5G to 2G.
- *
- * Related: When doing SAP channel switch, if gChanSwitchHostapdRateEnabled is
- * set to 1, supported rates will be calculated from hostapd.conf file,
- * if gChanSwitchHostapdRateEnabled is set to 0, supported rates will be
- * calculated from driver default rates.
- *
- * Supported Feature: SAP
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_NAME \
-	"gChanSwitchHostapdRateEnabled"
-#define CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_MIN     (0)
-#define CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_MAX     (1)
-#define CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_DEFAULT (0)
-
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 /*
  * <ini>
@@ -10221,30 +9989,6 @@ enum hdd_external_acs_policy {
 #define CFG_DFS_BEACON_TX_ENHANCED_MIN     (0)
 #define CFG_DFS_BEACON_TX_ENHANCED_MAX     (1)
 #define CFG_DFS_BEACON_TX_ENHANCED_DEFAULT (0)
-
-/*
- * gReducedBeaconInterval - beacon interval reduced
- * @Min: 0
- * @Max: 100
- * @Default: 0
- *
- * This ini is used to reduce beacon interval before channel
- * switch (when val great than 0, or the feature is disabled).
- * It would reduce the downtime on the STA side which is
- * waiting for beacons from the AP to resume back transmission.
- * Switch back the beacon_interval to its original value after
- * channel switch based on the timeout.
- *
- * Related: none
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_REDUCED_BEACON_INTERVAL         "gReducedBeaconInterval"
-#define CFG_REDUCED_BEACON_INTERVAL_MIN     (0)
-#define CFG_REDUCED_BEACON_INTERVAL_MAX     (100)
-#define CFG_REDUCED_BEACON_INTERVAL_DEFAULT (0)
 
 /*
  * oce_enable_rssi_assoc_reject - Enable/disable rssi based assoc rejection
@@ -11322,11 +11066,9 @@ struct hdd_config {
 	uint16_t apProtection;
 	bool apOBSSProtEnabled;
 	bool apDisableIntraBssFwd;
-	uint8_t enableLTECoex;
 	uint32_t apKeepAlivePeriod;
 	enum station_keepalive_method sta_keepalive_method;
 	uint32_t apLinkMonitorPeriod;
-	uint32_t nBeaconInterval;
 	uint8_t nTxPowerCap;    /* In dBm */
 	bool allow_tpc_from_ap;
 	uint8_t disablePacketFilter;
@@ -11480,7 +11222,6 @@ struct hdd_config {
 	bool AddTSWhenACMIsOff;
 
 	uint8_t nBandCapability;
-	bool teleBcnWakeupEn;
 
 /* QDF Trace Control*/
 	uint16_t qdf_trace_enable_wdi;
@@ -11510,7 +11251,6 @@ struct hdd_config {
 #ifdef ENABLE_MTRACE_LOG
 	bool enable_mtrace;
 #endif
-	uint16_t nTeleBcnMaxListenInterval;
 	uint8_t enableBypass11d;
 	uint8_t enableDFSChnlScan;
 	uint8_t enable_dfs_pno_chnl_scan;
@@ -11591,7 +11331,6 @@ struct hdd_config {
 	uint8_t scanAgingTimeout;
 	uint8_t disableLDPCWithTxbfAP;
 	uint8_t enableMCCAdaptiveScheduler;
-	bool sapAllowAllChannel;
 	bool enableSSR;
 	bool enable_data_stall_det;
 	bool enableVhtFor24GHzBand;
@@ -11637,7 +11376,6 @@ struct hdd_config {
 	uint32_t WlanAutoShutdown;
 #endif
 	uint8_t wowEnable;
-	uint8_t maxNumberOfPeers;
 	uint8_t disableDFSChSwitch;
 	uint8_t enableDFSMasterCap;
 	uint16_t thermalTempMinLevel0;
@@ -11658,10 +11396,6 @@ struct hdd_config {
 	bool fRegChangeDefCountry;
 	bool acs_with_more_param;
 	uint32_t auto_channel_select_weight;
-	bool sap_get_peer_info;
-	uint8_t rate_for_tx_mgmt;
-	uint8_t rate_for_tx_mgmt_2g;
-	uint8_t rate_for_tx_mgmt_5g;
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	uint32_t TxFlowLowWaterMark;
 	uint32_t TxFlowHighWaterMarkOffset;
@@ -11677,8 +11411,6 @@ struct hdd_config {
 	uint32_t TxFlowStopQueueThreshold;
 	uint32_t TxFlowStartQueueOffset;
 #endif
-	uint8_t apMaxOffloadPeers;
-	uint8_t apMaxOffloadReorderBuffs;
 	bool advertiseConcurrentOperation;
 	bool enableMemDeepSleep;
 	bool enable_cck_tx_fir_override;
@@ -11896,9 +11628,6 @@ struct hdd_config {
 	bool multicast_replay_filter;
 	bool goptimize_chan_avoid_event;
 	bool fw_timeout_crash;
-	/* beacon count before channel switch */
-	uint8_t sap_chanswitch_beacon_cnt;
-	uint8_t sap_chanswitch_mode;
 	uint32_t rx_wakelock_timeout;
 	uint32_t max_sched_scan_plan_interval;
 	uint32_t max_sched_scan_plan_iterations;
@@ -11976,7 +11705,6 @@ struct hdd_config {
 	bool enable_dtim_1chrx;
 	int8_t rssi_thresh_offset_5g;
 	uint32_t scan_11d_interval;
-	bool chan_switch_hostapd_rate_enabled;
 	bool is_bssid_hint_priority;
 	bool is_fils_enabled;
 	uint16_t wlm_latency_enable;
@@ -11990,7 +11718,6 @@ struct hdd_config {
 #endif
 	uint8_t enable_phy_reg_retention;
 	uint8_t dfs_beacon_tx_enhanced;
-	uint16_t reduced_beacon_interval;
 	bool rssi_assoc_reject_enabled;
 	bool oce_probe_req_rate_enabled;
 	bool oce_probe_resp_rate_enabled;

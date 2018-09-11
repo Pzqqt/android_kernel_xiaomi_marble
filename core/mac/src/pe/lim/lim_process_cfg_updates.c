@@ -234,14 +234,6 @@ void lim_handle_cf_gparam_update(tpAniSirGlobal pMac, uint32_t cfgId)
 		}
 		break;
 
-	case WNI_CFG_ASSOC_STA_LIMIT:
-		if (wlan_cfg_get_int(pMac, WNI_CFG_ASSOC_STA_LIMIT, &val1) !=
-		    QDF_STATUS_SUCCESS) {
-			pe_err("Unable to get WNI_CFG_ASSOC_STA_LIMIT");
-			break;
-		}
-		pMac->lim.gLimAssocStaLimit = (uint16_t) val1;
-		break;
 	default:
 		break;
 	}
@@ -365,11 +357,6 @@ static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	if (wlan_cfg_get_int(pMac, WNI_CFG_11D_ENABLED, &val) != QDF_STATUS_SUCCESS)
 		pe_err("cfg get 11d enabled failed");
 	psessionEntry->lim11dEnabled = (val) ? 1 : 0;
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_ASSOC_STA_LIMIT, &val) != QDF_STATUS_SUCCESS) {
-		pe_err("cfg get assoc sta limit failed");
-	}
-	pMac->lim.gLimAssocStaLimit = (uint16_t) val;
 
 	pe_debug("Updated Lim shadow state based on CFG");
 }

@@ -32,6 +32,7 @@
 #include <wlan_hdd_stats.h>
 #include <wlan_hdd_hostapd.h>
 #include <wlan_hdd_station_info.h>
+#include "wlan_mlme_ucfg_api.h"
 
 /*
  * define short names for the global vendor params
@@ -996,6 +997,8 @@ static int hdd_get_connected_station_info(struct hdd_context *hdd_ctx,
 	uint32_t nl_buf_len;
 	struct sir_peer_info_ext peer_info;
 	bool txrx_rate = true;
+	bool value;
+	QDF_STATUS status;
 
 	nl_buf_len = NLMSG_HDRLEN;
 	nl_buf_len += (sizeof(stainfo->max_phy_rate) + NLA_HDRLEN) +
@@ -1006,7 +1009,10 @@ static int hdd_get_connected_station_info(struct hdd_context *hdd_ctx,
 		(sizeof(stainfo->is_qos_enabled) + NLA_HDRLEN) +
 		(sizeof(stainfo->mode) + NLA_HDRLEN);
 
-	if (!hdd_ctx->config->sap_get_peer_info ||
+	status = ucfg_mlme_get_sap_get_peer_info(hdd_ctx->hdd_psoc, &value);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_err("Unable to fetch sap ger peer info");
+	if (!value ||
 	    wlan_hdd_get_peer_info(adapter, mac_addr, &peer_info)) {
 		hdd_err("fail to get tx/rx rate");
 		txrx_rate = false;

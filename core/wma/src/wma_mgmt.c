@@ -715,61 +715,49 @@ void wma_set_vdev_mgmt_rate(tp_wma_handle wma, uint8_t vdev_id)
 		return;
 	}
 
-	if (wlan_cfg_get_int(mac, WNI_CFG_RATE_FOR_TX_MGMT,
-			     &cfg_val) == QDF_STATUS_SUCCESS) {
-		band = CDS_BAND_ALL;
-		if ((cfg_val == WNI_CFG_RATE_FOR_TX_MGMT_STADEF) ||
-		    !wma_verify_rate_code(cfg_val, band)) {
-			WMA_LOGD("default WNI_CFG_RATE_FOR_TX_MGMT, ignore");
-		} else {
-			ret = wma_vdev_set_param(
-				wma->wmi_handle,
-				vdev_id,
-				WMI_VDEV_PARAM_MGMT_TX_RATE,
-				cfg_val);
-			if (ret)
-				WMA_LOGE(
-				"Failed to set WMI_VDEV_PARAM_MGMT_TX_RATE"
-				);
-		}
+	cfg_val = mac->mlme_cfg->sap_cfg.rate_tx_mgmt;
+	band = CDS_BAND_ALL;
+	if ((cfg_val == WNI_CFG_RATE_FOR_TX_MGMT_STADEF) ||
+	    !wma_verify_rate_code(cfg_val, band)) {
+		WMA_LOGD("default WNI_CFG_RATE_FOR_TX_MGMT, ignore");
 	} else {
-		WMA_LOGE("Failed to get value of WNI_CFG_RATE_FOR_TX_MGMT");
+		ret = wma_vdev_set_param(
+			wma->wmi_handle,
+			vdev_id,
+			WMI_VDEV_PARAM_MGMT_TX_RATE,
+			cfg_val);
+		if (ret)
+			WMA_LOGE(
+			"Failed to set WMI_VDEV_PARAM_MGMT_TX_RATE"
+			);
 	}
 
-	if (wlan_cfg_get_int(mac, WNI_CFG_RATE_FOR_TX_MGMT_2G,
-			     &cfg_val) == QDF_STATUS_SUCCESS) {
-		band = CDS_BAND_2GHZ;
-		if ((cfg_val == WNI_CFG_RATE_FOR_TX_MGMT_2G_STADEF) ||
-		    !wma_verify_rate_code(cfg_val, band)) {
-			WMA_LOGD("use default 2G MGMT rate.");
-			per_band_mgmt_tx_rate &=
-			    ~(1 << TX_MGMT_RATE_2G_ENABLE_OFFSET);
-		} else {
-			per_band_mgmt_tx_rate |=
-			    (1 << TX_MGMT_RATE_2G_ENABLE_OFFSET);
-			per_band_mgmt_tx_rate |=
-			    ((cfg_val & 0x7FF) << TX_MGMT_RATE_2G_OFFSET);
-		}
+	cfg_val = mac->mlme_cfg->sap_cfg.rate_tx_mgmt_2g;
+	band = CDS_BAND_2GHZ;
+	if ((cfg_val == WNI_CFG_RATE_FOR_TX_MGMT_2G_STADEF) ||
+	    !wma_verify_rate_code(cfg_val, band)) {
+		WMA_LOGD("use default 2G MGMT rate.");
+		per_band_mgmt_tx_rate &=
+		    ~(1 << TX_MGMT_RATE_2G_ENABLE_OFFSET);
 	} else {
-		WMA_LOGE("Failed to get value of WNI_CFG_RATE_FOR_TX_MGMT_2G");
+		per_band_mgmt_tx_rate |=
+		    (1 << TX_MGMT_RATE_2G_ENABLE_OFFSET);
+		per_band_mgmt_tx_rate |=
+		    ((cfg_val & 0x7FF) << TX_MGMT_RATE_2G_OFFSET);
 	}
 
-	if (wlan_cfg_get_int(mac, WNI_CFG_RATE_FOR_TX_MGMT_5G,
-			     &cfg_val) == QDF_STATUS_SUCCESS) {
-		band = CDS_BAND_5GHZ;
-		if ((cfg_val == WNI_CFG_RATE_FOR_TX_MGMT_5G_STADEF) ||
-		    !wma_verify_rate_code(cfg_val, band)) {
-			WMA_LOGD("use default 5G MGMT rate.");
-			per_band_mgmt_tx_rate &=
-			    ~(1 << TX_MGMT_RATE_5G_ENABLE_OFFSET);
-		} else {
-			per_band_mgmt_tx_rate |=
-			    (1 << TX_MGMT_RATE_5G_ENABLE_OFFSET);
-			per_band_mgmt_tx_rate |=
-			    ((cfg_val & 0x7FF) << TX_MGMT_RATE_5G_OFFSET);
-		}
+	cfg_val = mac->mlme_cfg->sap_cfg.rate_tx_mgmt;
+	band = CDS_BAND_5GHZ;
+	if ((cfg_val == WNI_CFG_RATE_FOR_TX_MGMT_5G_STADEF) ||
+	    !wma_verify_rate_code(cfg_val, band)) {
+		WMA_LOGD("use default 5G MGMT rate.");
+		per_band_mgmt_tx_rate &=
+		    ~(1 << TX_MGMT_RATE_5G_ENABLE_OFFSET);
 	} else {
-		WMA_LOGE("Failed to get value of WNI_CFG_RATE_FOR_TX_MGMT_5G");
+		per_band_mgmt_tx_rate |=
+		    (1 << TX_MGMT_RATE_5G_ENABLE_OFFSET);
+		per_band_mgmt_tx_rate |=
+		    ((cfg_val & 0x7FF) << TX_MGMT_RATE_5G_OFFSET);
 	}
 
 	ret = wma_vdev_set_param(

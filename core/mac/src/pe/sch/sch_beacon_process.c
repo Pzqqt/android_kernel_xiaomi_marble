@@ -413,8 +413,11 @@ sch_bcn_process_sta(tpAniSirGlobal mac_ctx,
 
 	/* No need to send DTIM Period and Count to HAL/SMAC */
 	/* SMAC already parses TIM bit. */
-	if (bcn->timPresent)
-		cfg_set_int(mac_ctx, WNI_CFG_DTIM_PERIOD, bcn->tim.dtimPeriod);
+	if (bcn->timPresent) {
+		if (cfg_in_range(CFG_DTIM_PERIOD, bcn->tim.dtimPeriod))
+			mac_ctx->mlme_cfg->sap_cfg.dtim_interval =
+						bcn->tim.dtimPeriod;
+	}
 
 	if (mac_ctx->lim.gLimProtectionControl !=
 			WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)

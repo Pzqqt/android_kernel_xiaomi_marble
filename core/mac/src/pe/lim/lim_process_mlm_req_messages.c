@@ -346,9 +346,7 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 
 	/* Configuration related parameters to be changed to support BT-AMP */
 
-	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(mac_ctx, WNI_CFG_LISTEN_INTERVAL,
-					     &val))
-		pe_warn("Couldn't get LISTEN_INTERVAL");
+	val = mac_ctx->mlme_cfg->sap_cfg.listen_interval;
 	sta_param->listenInterval = (uint16_t) val;
 
 	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(mac_ctx, WNI_CFG_SHORT_PREAMBLE,

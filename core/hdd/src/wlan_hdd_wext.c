@@ -4178,13 +4178,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 		if (!mac_handle)
 			return -EINVAL;
 
-		if ((WNI_CFG_ASSOC_STA_LIMIT_STAMIN > set_value) ||
-		    (WNI_CFG_ASSOC_STA_LIMIT_STAMAX < set_value)) {
-			ret = -EINVAL;
-		} else if (sme_cfg_set_int(mac_handle, WNI_CFG_ASSOC_STA_LIMIT,
-					set_value)
+		if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->hdd_psoc, set_value)
 			   != QDF_STATUS_SUCCESS) {
-			hdd_err("WNI_CFG_ASSOC_STA_LIMIT failed");
+			hdd_err("CFG_ASSOC_STA_LIMIT failed");
 			ret = -EIO;
 		}
 		break;
@@ -5531,11 +5527,12 @@ static int __iw_setnone_getint(struct net_device *dev,
 	}
 	case WE_GET_MAX_ASSOC:
 	{
-		if (sme_cfg_get_int(mac_handle, WNI_CFG_ASSOC_STA_LIMIT,
-				    (uint32_t *) value) != QDF_STATUS_SUCCESS) {
-			hdd_err("WNI_CFG_ASSOC_STA_LIMIT failed");
+		if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->hdd_psoc, *value) !=
+		    QDF_STATUS_SUCCESS) {
+			hdd_err("CFG_ASSOC_STA_LIMIT failed");
 			ret = -EIO;
 		}
+
 		break;
 	}
 

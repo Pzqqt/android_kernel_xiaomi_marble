@@ -4508,6 +4508,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	enum dfs_mode mode;
 	struct hdd_adapter *sta_adapter;
 	uint8_t ignore_cac = 0;
+	int value;
+	bool val;
 
 	hdd_enter();
 
@@ -4614,9 +4616,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	pConfig->auto_channel_select_weight =
 			     iniConfig->auto_channel_select_weight;
 	pConfig->disableDFSChSwitch = iniConfig->disableDFSChSwitch;
-	pConfig->sap_chanswitch_beacon_cnt =
-			    iniConfig->sap_chanswitch_beacon_cnt;
-	pConfig->sap_chanswitch_mode = iniConfig->sap_chanswitch_mode;
+	ucfg_mlme_get_sap_chn_switch_bcn_count(hdd_ctx->hdd_psoc, &value);
+	pConfig->sap_chanswitch_beacon_cnt = value;
+	ucfg_mlme_get_sap_channel_switch_mode(hdd_ctx->hdd_psoc, &val);
+	pConfig->sap_chanswitch_mode = val;
 
 	/* channel is already set in the set_channel Call back */
 	/* pConfig->channel = pCommitConfig->channel; */
@@ -4624,19 +4627,20 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	/* Protection parameter to enable or disable */
 	pConfig->protEnabled = iniConfig->apProtEnabled;
 
-	pConfig->chan_switch_hostapd_rate_enabled =
-		iniConfig->chan_switch_hostapd_rate_enabled;
+	ucfg_mlme_get_sap_chan_switch_rate_enabled(hdd_ctx->hdd_psoc, &val);
+	pConfig->chan_switch_hostapd_rate_enabled = val;
 
 	if (iniConfig->WlanMccToSccSwitchMode !=
 			QDF_MCC_TO_SCC_SWITCH_DISABLE) {
 		pConfig->chan_switch_hostapd_rate_enabled = false;
 	}
-
 	pConfig->enOverLapCh = iniConfig->gEnableOverLapCh;
+
+	ucfg_mlme_get_sap_reduces_beacon_interval(hdd_ctx->hdd_psoc, &value);
 	pConfig->dtim_period = pBeacon->dtim_period;
 	pConfig->dfs_beacon_tx_enhanced = iniConfig->dfs_beacon_tx_enhanced;
-	pConfig->reduced_beacon_interval =
-			iniConfig->reduced_beacon_interval;
+
+	pConfig->reduced_beacon_interval = value;
 	hdd_debug("acs_mode %d", pConfig->acs_cfg.acs_mode);
 
 	if (pConfig->acs_cfg.acs_mode == true) {

@@ -1316,6 +1316,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 	struct hdd_adapter *adapter;
 	int ret;
 	bool bug_on_reinit_failure = CFG_BUG_ON_REINIT_FAILURE_DEFAULT;
+	bool value;
 
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
 
@@ -1366,7 +1367,8 @@ QDF_STATUS hdd_wlan_re_init(void)
 	hdd_send_default_scan_ies(hdd_ctx);
 	hdd_info("WLAN host driver reinitiation completed!");
 
-	if (hdd_ctx->config->sap_internal_restart)
+	ucfg_mlme_get_sap_internal_restart(hdd_ctx->hdd_psoc, &value);
+	if (value)
 		hdd_ssr_restart_sap(hdd_ctx);
 
 	hdd_wlan_ssr_reinit_event();

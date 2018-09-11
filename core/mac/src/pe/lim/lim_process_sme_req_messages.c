@@ -983,9 +983,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			mlm_start_req->wps_state = session->wps_state;
 
 		} else {
-			if (wlan_cfg_get_int(mac_ctx,
-				WNI_CFG_DTIM_PERIOD, &val) != QDF_STATUS_SUCCESS)
-				pe_err("could not retrieve DTIM Period");
+			val = mac_ctx->mlme_cfg->sap_cfg.dtim_interval;
 			mlm_start_req->dtimPeriod = (uint8_t) val;
 		}
 
@@ -1961,23 +1959,15 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 
 	/*
 	 * If telescopic beaconing is enabled, set listen interval to
-	 * WNI_CFG_TELE_BCN_MAX_LI
+	 * CFG_TELE_BCN_MAX_LI
 	 */
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_TELE_BCN_WAKEUP_EN,
-				&tele_bcn_en) != QDF_STATUS_SUCCESS)
-		pe_err("Couldn't get WNI_CFG_TELE_BCN_WAKEUP_EN");
 
-	val = WNI_CFG_LISTEN_INTERVAL_STADEF;
+	tele_bcn_en = mac_ctx->mlme_cfg->sap_cfg.tele_bcn_wakeup_en;
 
-	if (tele_bcn_en) {
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_TELE_BCN_MAX_LI, &val) !=
-		    QDF_STATUS_SUCCESS)
-			pe_err("could not retrieve ListenInterval");
-	} else {
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_LISTEN_INTERVAL, &val) !=
-		    QDF_STATUS_SUCCESS)
-			pe_err("could not retrieve ListenInterval");
-	}
+	if (tele_bcn_en)
+		val = mac_ctx->mlme_cfg->sap_cfg.tele_bcn_max_li;
+	else
+		val = mac_ctx->mlme_cfg->sap_cfg.listen_interval;
 
 	mlm_reassoc_req->listenInterval = (uint16_t) val;
 

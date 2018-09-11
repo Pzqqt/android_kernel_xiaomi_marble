@@ -736,12 +736,7 @@ static bool lim_chk_is_11b_sta_supported(tpAniSirGlobal mac_ctx,
 	uint32_t cfg_11g_only;
 
 	if (phy_mode == WNI_CFG_PHY_MODE_11G) {
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_11G_ONLY_POLICY,
-			&cfg_11g_only) != QDF_STATUS_SUCCESS) {
-			pe_err("couldn't get 11g-only flag");
-			return false;
-		}
-
+		cfg_11g_only = mac_ctx->mlme_cfg->sap_cfg.sap_11g_policy;
 		if (!assoc_req->extendedRatesPresent && cfg_11g_only) {
 			/*
 			 * Received Re/Association Request from 11b STA when 11g
@@ -1009,7 +1004,7 @@ static bool lim_process_assoc_req_no_sta_ctx(tpAniSirGlobal mac_ctx,
 {
 	/* Requesting STA is not currently associated */
 	if (pe_get_current_stas_count(mac_ctx) ==
-			mac_ctx->lim.gLimAssocStaLimit) {
+			mac_ctx->mlme_cfg->sap_cfg.assoc_sta_limit) {
 		/*
 		 * Maximum number of STAs that AP can handle reached.
 		 * Send Association response to peer MAC entity

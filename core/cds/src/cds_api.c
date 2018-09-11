@@ -68,6 +68,7 @@
 #ifdef QCA_WIFI_QCA8074
 #include <target_if_dp.h>
 #endif
+#include "wlan_mlme_ucfg_api.h"
 
 /* Preprocessor Definitions and Constants */
 
@@ -594,7 +595,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	 * con_mode change happens from FTM mode to any other mode.
 	 */
 	if (QDF_DRIVER_TYPE_PRODUCTION == cds_cfg->driver_type)
-		hdd_ctx->config->maxNumberOfPeers = cds_cfg->max_station;
+		ucfg_mlme_set_sap_max_peers(psoc, cds_cfg->max_station);
 
 	HTCHandle = cds_get_context(QDF_MODULE_ID_HTC);
 	if (!HTCHandle) {

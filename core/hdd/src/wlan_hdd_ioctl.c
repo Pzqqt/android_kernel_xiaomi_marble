@@ -5109,11 +5109,10 @@ static int drv_cmd_set_rmc_action_period(struct hdd_adapter *adapter,
 	hdd_debug("uActionPeriod %d", uActionPeriod);
 	mac_handle = hdd_ctx->mac_handle;
 
-	if (sme_cfg_set_int(mac_handle,
-			    WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY,
-			    uActionPeriod)) {
-		hdd_err("Could not set SETRMCACTIONPERIOD %d",
-			  uActionPeriod);
+	if (ucfg_mlme_set_rmc_action_period_freq(hdd_ctx->hdd_psoc,
+						 uActionPeriod) !=
+						 QDF_STATUS_SUCCESS) {
+		hdd_err("Could not set SETRMCACTIONPERIOD %d", uActionPeriod);
 		ret = -EINVAL;
 		goto exit;
 	}

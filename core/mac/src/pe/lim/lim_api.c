@@ -207,7 +207,6 @@ static void __lim_init_vars(tpAniSirGlobal pMac)
 
 static void __lim_init_assoc_vars(tpAniSirGlobal pMac)
 {
-	pMac->lim.gLimAssocStaLimit = 0;
 	pMac->lim.gLimIbssStaLimit = 0;
 	/* Place holder for current authentication request */
 	/* being handled */
@@ -280,13 +279,7 @@ static QDF_STATUS __lim_init_config(tpAniSirGlobal pMac)
 	 * and they will be used throughout when there is no session
 	 */
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_ASSOC_STA_LIMIT, &val1)
-		!= QDF_STATUS_SUCCESS){
-		pe_err("cfg get assoc sta limit failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	pMac->lim.gLimAssocStaLimit = val1;
+	val1 = pMac->mlme_cfg->sap_cfg.assoc_sta_limit;
 	pMac->lim.gLimIbssStaLimit = val1;
 	ht_cap_info = &pMac->mlme_cfg->ht_caps.ht_cap_info;
 

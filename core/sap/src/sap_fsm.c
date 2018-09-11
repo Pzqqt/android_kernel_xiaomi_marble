@@ -3180,7 +3180,7 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 			  FL("band_start_ch %d, band_end_ch %d"),
 			  band_start_ch, band_end_ch);
 
-	sme_cfg_get_int(hal, WNI_CFG_ENABLE_LTE_COEX, &en_lte_coex);
+	en_lte_coex = mac_ctx->mlme_cfg->sap_cfg.enable_lte_coex;
 
 	/* Check if LTE coex is enabled and 2.4GHz is selected */
 	if (en_lte_coex && (band_start_ch == CHAN_ENUM_1) &&

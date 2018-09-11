@@ -125,6 +125,7 @@
 #include "wlan_crypto_global_api.h"
 #include "wlan_nl_to_crypto_params.h"
 #include "wlan_crypto_global_def.h"
+#include "cfg_ucfg_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -12238,8 +12239,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	if (pCfg->enableDFSMasterCap)
 		wlan_hdd_cfg80211_set_dfs_offload_feature(wiphy);
 
-	wiphy->max_ap_assoc_sta = pCfg->maxNumberOfPeers;
-
 #ifdef QCA_HT_2040_COEX
 	wiphy->features |= NL80211_FEATURE_AP_MODE_CHAN_WIDTH_CHANGE;
 #endif
@@ -12352,8 +12351,10 @@ static void wlan_hdd_update_ht_cap(struct hdd_context *hdd_ctx)
  */
 void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 {
-	hdd_ctx->wiphy->max_ap_assoc_sta = hdd_ctx->config->maxNumberOfPeers;
+	int value;
 
+	ucfg_mlme_get_sap_max_peers(hdd_ctx->hdd_psoc, &value);
+	hdd_ctx->wiphy->max_ap_assoc_sta = value;
 	wlan_hdd_update_ht_cap(hdd_ctx);
 }
 
@@ -12657,12 +12658,17 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 	u32 indx = 0;
 	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 	uint8_t fValidChannel = false, count = 0;
-	struct hdd_config *hdd_pConfig_ini =
-		(WLAN_HDD_GET_CTX(adapter))->config;
+	QDF_STATUS status;
+	bool value;
+	struct hdd_context *hdd_ctx;
 
 	num_ch = WNI_CFG_VALID_CHANNEL_LIST_LEN;
-
-	if (hdd_pConfig_ini->sapAllowAllChannel) {
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	status = ucfg_mlme_get_sap_allow_all_channels(hdd_ctx->hdd_psoc,
+						      &value);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_err("Unable to fetch sap allow all channels");
+	if (value) {
 		/* Validate the channel */
 		for (count = CHAN_ENUM_1; count <= CHAN_ENUM_173; count++) {
 			if (channel == WLAN_REG_CH_NUM(count)) {
@@ -17243,14 +17249,12 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		}
 		qdf_copy_macaddr(&bssid, &hdd_ctx->config->IbssBssid);
 	}
-	if ((params->beacon_interval > CFG_BEACON_INTERVAL_MIN)
-	    && (params->beacon_interval <= CFG_BEACON_INTERVAL_MAX))
+
+	if (cfg_in_range(CFG_BEACON_INTERVAL, params->beacon_interval))
 		roam_profile->beaconInterval = params->beacon_interval;
-	else {
-		roam_profile->beaconInterval = CFG_BEACON_INTERVAL_DEFAULT;
-		hdd_debug("input beacon interval %d TU is invalid, use default %d TU",
-			params->beacon_interval, roam_profile->beaconInterval);
-	}
+	else
+		roam_profile->beaconInterval = cfg_get(hdd_ctx->hdd_psoc,
+						       CFG_BEACON_INTERVAL);
 
 	/* Set Channel */
 	if (channelNum)	{

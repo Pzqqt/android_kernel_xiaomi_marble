@@ -39,6 +39,7 @@
 #include "wlan_dfs_utils_api.h"
 #include <wlan_ipa_ucfg_api.h>
 #include <wlan_cfg80211_mc_cp_stats.h>
+#include "wlan_mlme_ucfg_api.h"
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
@@ -540,14 +541,13 @@ static __iw_softap_setparam(struct net_device *dev,
 				hdd_warn("Setting it to max allowed and continuing");
 				set_value = WNI_CFG_ASSOC_STA_LIMIT_STAMAX;
 			}
-			status = sme_cfg_set_int(mac_handle,
-						 WNI_CFG_ASSOC_STA_LIMIT,
-						 set_value);
-			if (status != QDF_STATUS_SUCCESS) {
-				hdd_err("setMaxAssoc failure, status: %d",
-				       status);
+			if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->hdd_psoc,
+							  set_value) !=
+			    QDF_STATUS_SUCCESS) {
+				hdd_err("CFG_ASSOC_STA_LIMIT failed");
 				ret = -EIO;
 			}
+
 		}
 		break;
 
@@ -1205,7 +1205,6 @@ static __iw_softap_getparam(struct net_device *dev,
 	struct hdd_adapter *adapter = (netdev_priv(dev));
 	int *value = (int *)extra;
 	int sub_cmd = value[0];
-	QDF_STATUS status;
 	int ret;
 	struct hdd_context *hdd_ctx;
 
@@ -1222,14 +1221,12 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	switch (sub_cmd) {
 	case QCSAP_PARAM_MAX_ASSOC:
-		status = sme_cfg_get_int(hdd_ctx->mac_handle,
-					 WNI_CFG_ASSOC_STA_LIMIT,
-					 (uint32_t *)value);
-		if (QDF_STATUS_SUCCESS != status) {
-			hdd_err("get WNI_CFG_ASSOC_STA_LIMIT failed status: %d",
-				status);
+		if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->hdd_psoc, *value) !=
+		    QDF_STATUS_SUCCESS) {
+			hdd_err("CFG_ASSOC_STA_LIMIT failed");
 			ret = -EIO;
 		}
+
 		break;
 
 	case QCSAP_PARAM_GET_WLAN_DBG:
