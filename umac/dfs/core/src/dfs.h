@@ -1087,6 +1087,7 @@ struct wlan_dfs {
 	qdf_spinlock_t dfs_nol_lock;
 	uint16_t tx_leakage_threshold;
 	bool dfs_use_nol_subchannel_marking;
+	uint8_t        dfs_spoof_test_done:1;
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
 	os_timer_t     dfs_host_wait_timer;
 	uint32_t       dfs_average_pri;
@@ -1095,8 +1096,7 @@ struct wlan_dfs {
 	uint8_t        dfs_is_host_wait_running:1,
 				   dfs_average_params_sent:1,
 				   dfs_no_res_from_fw:1,
-				   dfs_spoof_check_failed:1,
-				   dfs_spoof_test_done:1;
+				   dfs_spoof_check_failed:1;
 	struct dfs_channel dfs_radar_found_chan;
 	int            dfs_status_timeout_override;
 #endif

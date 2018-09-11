@@ -1310,8 +1310,9 @@ void dfs_radar_found_action(struct wlan_dfs *dfs,
 	 * wait timer.
 	 */
 	if (!bangradar &&
-	    (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_FCC_DOMAIN) &&
-	    lmac_is_host_dfs_check_support_enabled(dfs->dfs_pdev_obj)) {
+	   (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_FCC_DOMAIN) &&
+	   lmac_is_host_dfs_check_support_enabled(dfs->dfs_pdev_obj) &&
+	   (dfs->dfs_spoof_test_done ? dfs->dfs_use_nol : 1)) {
 		dfs_radarfound_action_fcc(dfs, seg_id);
 	} else {
 		dfs_radarfound_action_generic(dfs, seg_id);
