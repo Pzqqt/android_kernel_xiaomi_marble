@@ -5874,7 +5874,7 @@ void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)
 	tPmfSaQueryTimerId timerId;
 	tpPESession psessionEntry;
 	tpDphHashNode pSta;
-	uint32_t maxRetries;
+	uint8_t maxretries;
 
 	pe_debug("SA Query timer fires");
 	timerId.value = param;
@@ -5898,14 +5898,9 @@ void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)
 		return;
 
 	/* Increment the retry count, check if reached maximum */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_PMF_SA_QUERY_MAX_RETRIES,
-			     &maxRetries) != QDF_STATUS_SUCCESS) {
-		pe_err("Could not retrieve PMF SA Query maximum retries value");
-		pSta->pmfSaQueryState = DPH_SA_QUERY_NOT_IN_PROGRESS;
-		return;
-	}
+	maxretries = pMac->mlme_cfg->gen.pmf_sa_query_max_retries;
 	pSta->pmfSaQueryRetryCount++;
-	if (pSta->pmfSaQueryRetryCount >= maxRetries) {
+	if (pSta->pmfSaQueryRetryCount >= maxretries) {
 		pe_err("SA Query timed out,Deleting STA");
 		lim_print_mac_addr(pMac, pSta->staAddr, LOGE);
 		lim_send_disassoc_mgmt_frame(pMac,

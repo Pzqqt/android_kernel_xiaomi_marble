@@ -1144,7 +1144,6 @@ populate_dot11f_ext_cap(tpAniSirGlobal pMac,
 			bool isVHTEnabled, tDot11fIEExtCap *pDot11f,
 			tpPESession psessionEntry)
 {
-	uint32_t val = 0;
 	struct s_ext_cap *p_ext_cap;
 
 	pDot11f->present = 1;
@@ -1169,13 +1168,7 @@ populate_dot11f_ext_cap(tpAniSirGlobal pMac,
 	if (isVHTEnabled == true)
 		p_ext_cap->oper_mode_notification = 1;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_RTT3_ENABLE, &val) !=
-							QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve RTT3 Variable from DAT File");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (val) {
+	if (pMac->mlme_cfg->gen.rtt3_enabled) {
 		uint32_t ftm = ucfg_wifi_pos_get_ftm_cap(pMac->psoc);
 		if (!psessionEntry || LIM_IS_STA_ROLE(psessionEntry)) {
 			p_ext_cap->fine_time_meas_initiator =

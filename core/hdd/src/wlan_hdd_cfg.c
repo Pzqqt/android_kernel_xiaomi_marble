@@ -2649,21 +2649,6 @@ struct reg_table_entry g_registry_table[] = {
 			    VAR_FLAGS_NONE,
 			    (void *)CFG_ENABLE_CONCURRENT_STA_DEFAULT),
 
-#ifdef WLAN_FEATURE_11W
-	REG_VARIABLE(CFG_PMF_SA_QUERY_MAX_RETRIES_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, pmfSaQueryMaxRetries,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PMF_SA_QUERY_MAX_RETRIES_DEFAULT,
-		     CFG_PMF_SA_QUERY_MAX_RETRIES_MIN,
-		     CFG_PMF_SA_QUERY_MAX_RETRIES_MAX),
-
-	REG_VARIABLE(CFG_PMF_SA_QUERY_RETRY_INTERVAL_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, pmfSaQueryRetryInterval,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PMF_SA_QUERY_RETRY_INTERVAL_DEFAULT,
-		     CFG_PMF_SA_QUERY_RETRY_INTERVAL_MIN,
-		     CFG_PMF_SA_QUERY_RETRY_INTERVAL_MAX),
-#endif
 	REG_VARIABLE(CFG_MAX_CONCURRENT_CONNECTIONS_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, gMaxConcurrentActiveSessions,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5790,22 +5775,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_DISABLE_LDPC_WITH_TXBF_AP to CFG");
 	}
-
-#ifdef WLAN_FEATURE_11W
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_PMF_SA_QUERY_MAX_RETRIES,
-			    config->pmfSaQueryMaxRetries) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_SA_QUERY_MAX_RETRIES to CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL,
-			    config->pmfSaQueryRetryInterval) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_SA_QUERY_RETRY_INTERVAL to CFG");
-	}
-#endif
 
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_IBSS_ATIM_WIN_SIZE,
 			    config->ibssATIMWinSize) ==

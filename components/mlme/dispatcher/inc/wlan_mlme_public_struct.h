@@ -354,6 +354,19 @@ struct wlan_mlme_chainmask {
 	uint8_t rx_chain_mask_5g;
 };
 
+/* struct wlan_mlme_generic - Generic CFG config items
+ *
+ * @rtt3_enabled:  RTT3 enable or disable info
+ * @pmf_sa_query_max_retries: PMF query max retries for SAP
+ * @pmf_sa_query_retry_interval: PMF query retry interval for SAP
+ *
+ */
+struct wlan_mlme_generic {
+	bool rtt3_enabled;
+	uint8_t pmf_sa_query_max_retries;
+	uint16_t pmf_sa_query_retry_interval;
+};
+
 /**
  * struct wlan_mlme_obss_ht40 - OBSS HT40 config items
  * @active_dwelltime:        obss active dwelltime
@@ -647,6 +660,7 @@ struct wlan_mlme_oce {
  * @scoring: BSS Scoring related CFG Items
  */
 struct wlan_mlme_cfg {
+	struct wlan_mlme_generic gen;
 	struct wlan_mlme_ht_caps ht_caps;
 	struct wlan_mlme_he_caps he_caps;
 	struct wlan_mlme_lfr_cfg lfr;

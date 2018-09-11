@@ -1119,8 +1119,8 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	tDot11fIEExtCap extracted_ext_cap;
 	bool extracted_flag = false;
 #ifdef WLAN_FEATURE_11W
-	uint32_t retry_int;
-	uint32_t max_retries;
+	uint8_t retry_int;
+	uint16_t max_retries;
 #endif
 
 	if (NULL == pe_session) {
@@ -1256,20 +1256,14 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		}
 #ifdef WLAN_FEATURE_11W
 		if (eSIR_MAC_TRY_AGAIN_LATER == status_code) {
-			if (wlan_cfg_get_int
-				    (mac_ctx, WNI_CFG_PMF_SA_QUERY_MAX_RETRIES,
-				    &max_retries) != QDF_STATUS_SUCCESS)
-				pe_err("get WNI_CFG_PMF_SA_QUERY_MAX_RETRIES failure");
-			else if (wlan_cfg_get_int
-					 (mac_ctx,
-					 WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL,
-					 &retry_int) != QDF_STATUS_SUCCESS)
-				pe_err("get WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL failure");
-			else
-				populate_dot11f_timeout_interval(mac_ctx,
-					&frm.TimeoutInterval,
-					SIR_MAC_TI_TYPE_ASSOC_COMEBACK,
-					(max_retries -
+			max_retries =
+			mac_ctx->mlme_cfg->gen.pmf_sa_query_max_retries;
+			retry_int =
+			mac_ctx->mlme_cfg->gen.pmf_sa_query_retry_interval;
+			populate_dot11f_timeout_interval(mac_ctx,
+							 &frm.TimeoutInterval,
+						SIR_MAC_TI_TYPE_ASSOC_COMEBACK,
+						(max_retries -
 						sta->pmfSaQueryRetryCount)
 						* retry_int);
 		}

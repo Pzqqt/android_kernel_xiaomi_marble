@@ -830,7 +830,8 @@ void wma_set_sta_sa_query_param(tp_wma_handle wma,
 				  uint8_t vdev_id)
 {
 	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
-	uint32_t max_retries, retry_interval;
+	uint8_t max_retries;
+	uint16_t retry_interval;
 
 	WMA_LOGD(FL("Enter:"));
 
@@ -838,18 +839,9 @@ void wma_set_sta_sa_query_param(tp_wma_handle wma,
 		WMA_LOGE(FL("mac context is NULL"));
 		return;
 	}
-	if (wlan_cfg_get_int
-		    (mac, WNI_CFG_PMF_SA_QUERY_MAX_RETRIES,
-		    &max_retries) != QDF_STATUS_SUCCESS) {
-		max_retries = DEFAULT_STA_SA_QUERY_MAX_RETRIES_COUNT;
-		WMA_LOGE(FL("Failed to get value for WNI_CFG_PMF_SA_QUERY_MAX_RETRIES"));
-	}
-	if (wlan_cfg_get_int
-		    (mac, WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL,
-		    &retry_interval) != QDF_STATUS_SUCCESS) {
-		retry_interval = DEFAULT_STA_SA_QUERY_RETRY_INTERVAL;
-		WMA_LOGE(FL("Failed to get value for WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL"));
-	}
+
+	max_retries = mac->mlme_cfg->gen.pmf_sa_query_max_retries;
+	retry_interval = mac->mlme_cfg->gen.pmf_sa_query_retry_interval;
 
 	wmi_unified_set_sta_sa_query_param_cmd(wma->wmi_handle,
 						vdev_id,

@@ -25,6 +25,7 @@
 #include "wni_cfg.h"
 #include "sir_api.h"
 #include "cfg_api.h"
+#include "cfg_ucfg_api.h"
 
 #include "sch_api.h"
 #include "utils_api.h"
@@ -1276,7 +1277,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 	uint8_t *ht_cap_ie = NULL;
 #ifdef WLAN_FEATURE_11W
 	tPmfSaQueryTimerId timer_id;
-	uint32_t retry_interval;
+	uint16_t retry_interval;
 #endif
 	tDot11fIEVHTCaps *vht_caps;
 	tpSirAssocReq tmp_assoc_req;
@@ -1575,17 +1576,9 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 	sta_ds->pmfSaQueryState = DPH_SA_QUERY_NOT_IN_PROGRESS;
 	timer_id.fields.sessionId = session->peSessionId;
 	timer_id.fields.peerIdx = peer_idx;
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL,
-			&retry_interval) != QDF_STATUS_SUCCESS) {
-		pe_err("Couldn't get PMF SA Query retry interval value");
-		lim_reject_association(mac_ctx, hdr->sa, sub_type, true,
-			auth_type, peer_idx, false,
-			eSIR_MAC_UNSPEC_FAILURE_STATUS,
-			session);
-		return false;
-	}
-	if (WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL_STAMIN > retry_interval) {
-		retry_interval = WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL_STADEF;
+	retry_interval = mac_ctx->mlme_cfg->gen.pmf_sa_query_retry_interval;
+	if (cfg_min(CFG_PMF_SA_QUERY_RETRY_INTERVAL) > retry_interval) {
+		retry_interval = cfg_default(CFG_PMF_SA_QUERY_RETRY_INTERVAL);
 	}
 	if (sta_ds->rmfEnabled &&
 		tx_timer_create(mac_ctx, &sta_ds->pmfSaQueryTimer,

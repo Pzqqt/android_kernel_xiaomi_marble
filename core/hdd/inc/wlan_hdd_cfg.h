@@ -6251,53 +6251,6 @@ enum hdd_link_speed_rpt_type {
 
 #endif /* MSM_PLATFORM */
 
-#ifdef WLAN_FEATURE_11W
-/*
- * <ini>
- * pmfSaQueryMaxRetries - Control PMF SA query retries for SAP
- * @Min: 0
- * @Max: 20
- * @Default: 5
- *
- * This ini to set the number of PMF SA query retries for SAP
- *
- * Related: None.
- *
- * Supported Feature: PMF(11W)
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_PMF_SA_QUERY_MAX_RETRIES_NAME          "pmfSaQueryMaxRetries"
-#define CFG_PMF_SA_QUERY_MAX_RETRIES_DEFAULT       (5)
-#define CFG_PMF_SA_QUERY_MAX_RETRIES_MIN           (0)
-#define CFG_PMF_SA_QUERY_MAX_RETRIES_MAX           (20)
-
-/*
- * <ini>
- * pmfSaQueryRetryInterval - Control PMF SA query retry interval
- * for SAP in ms
- * @Min: 0
- * @Max: 2000
- * @Default: 200
- *
- * This ini to set the PMF SA query retry interval for SAP in ms
- *
- * Related: None.
- *
- * Supported Feature: PMF(11W)
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_PMF_SA_QUERY_RETRY_INTERVAL_NAME       "pmfSaQueryRetryInterval"
-#define CFG_PMF_SA_QUERY_RETRY_INTERVAL_DEFAULT    (200)
-#define CFG_PMF_SA_QUERY_RETRY_INTERVAL_MIN        (0)
-#define CFG_PMF_SA_QUERY_RETRY_INTERVAL_MAX        (2000)
-#endif
-
 /*
  * <ini>
  * gMaxConcurrentActiveSessions - Maximum number of concurrent connections.
@@ -11192,11 +11145,6 @@ struct hdd_config {
 
 	/* RTS profile parameter */
 	uint32_t rts_profile;
-
-#ifdef WLAN_FEATURE_11W
-	uint32_t pmfSaQueryMaxRetries;
-	uint32_t pmfSaQueryRetryInterval;
-#endif
 
 	uint8_t gMaxConcurrentActiveSessions;
 
