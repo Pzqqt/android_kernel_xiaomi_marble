@@ -52,11 +52,11 @@ void hdd_nan_datapath_target_config(struct hdd_context *hdd_ctx,
 					struct wma_tgt_cfg *tgt_cfg)
 {
 	hdd_ctx->nan_datapath_enabled =
-			cfg_nan_get_datapath_enable(hdd_ctx->hdd_psoc) &&
+			cfg_nan_get_datapath_enable(hdd_ctx->psoc) &&
 			tgt_cfg->nan_datapath_enabled;
 	hdd_debug("NAN Datapath Enable: %d (Host: %d FW: %d)",
 		  hdd_ctx->nan_datapath_enabled,
-		  cfg_nan_get_datapath_enable(hdd_ctx->hdd_psoc),
+		  cfg_nan_get_datapath_enable(hdd_ctx->psoc),
 		  tgt_cfg->nan_datapath_enabled);
 }
 
@@ -355,7 +355,7 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
-	return os_if_nan_process_ndp_cmd(hdd_ctx->hdd_psoc,
+	return os_if_nan_process_ndp_cmd(hdd_ctx->psoc,
 					 data, data_len);
 }
 
@@ -472,7 +472,7 @@ int hdd_ndi_open(char *iface_name)
 		return -EINVAL;
 	}
 
-	if (cfg_nan_get_ndi_mac_randomize(hdd_ctx->hdd_psoc)) {
+	if (cfg_nan_get_ndi_mac_randomize(hdd_ctx->psoc)) {
 		if (hdd_get_random_nan_mac_addr(hdd_ctx, &random_ndi_mac)) {
 			hdd_err("get random mac address failed");
 			return -EFAULT;
@@ -511,7 +511,7 @@ int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
 		return -EINVAL;
 	}
 
-	op_channel = cfg_nan_get_ndi_channel(hdd_ctx->hdd_psoc);
+	op_channel = cfg_nan_get_ndi_channel(hdd_ctx->psoc);
 	adapter = hdd_get_adapter_by_iface_name(hdd_ctx, iface_name);
 	if (!adapter) {
 		hdd_err("adapter is null");

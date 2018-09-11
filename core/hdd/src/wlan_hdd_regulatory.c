@@ -540,15 +540,15 @@ static int hdd_regulatory_init_no_offload(struct hdd_context *hdd_ctx,
 
 	reg_info->cc_src = SOURCE_DRIVER;
 
-	ucfg_reg_set_default_country(hdd_ctx->hdd_psoc, reg_info->alpha2);
+	ucfg_reg_set_default_country(hdd_ctx->psoc, reg_info->alpha2);
 
 	cds_fill_and_send_ctl_to_fw(reg_info);
 
 	wlan_reg_get_dfs_region(hdd_ctx->pdev, &dfs_reg);
 
 	reg_program_config_vars(hdd_ctx, &config_vars);
-	ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);
-	ucfg_reg_program_mas_chan_list(hdd_ctx->hdd_psoc,
+	ucfg_reg_set_config_vars(hdd_ctx->psoc, config_vars);
+	ucfg_reg_program_mas_chan_list(hdd_ctx->psoc,
 				       reg_channels,
 				       hdd_ctx->reg.alpha2,
 				       dfs_reg);
@@ -1026,8 +1026,8 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		wlan_reg_get_dfs_region(hdd_ctx->pdev, &dfs_reg);
 
 		reg_program_config_vars(hdd_ctx, &config_vars);
-		ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);
-		ucfg_reg_program_mas_chan_list(hdd_ctx->hdd_psoc,
+		ucfg_reg_set_config_vars(hdd_ctx->psoc, config_vars);
+		ucfg_reg_program_mas_chan_list(hdd_ctx->psoc,
 					       reg_channels,
 					       hdd_ctx->reg.alpha2,
 					       dfs_reg);
@@ -1315,7 +1315,7 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 	fill_wiphy_band_channels(wiphy, chan_list, NL80211_BAND_2GHZ);
 	fill_wiphy_band_channels(wiphy, chan_list, NL80211_BAND_5GHZ);
 
-	cc_src = ucfg_reg_get_cc_and_src(hdd_ctx->hdd_psoc, alpha2);
+	cc_src = ucfg_reg_get_cc_and_src(hdd_ctx->psoc, alpha2);
 	qdf_mem_copy(hdd_ctx->reg.alpha2, alpha2, REG_ALPHA2_LEN + 1);
 	sme_set_cc_src(hdd_ctx->mac_handle, cc_src);
 
@@ -1346,11 +1346,11 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
 
 	reg_program_config_vars(hdd_ctx, &config_vars);
-	ucfg_reg_register_chan_change_callback(hdd_ctx->hdd_psoc,
+	ucfg_reg_register_chan_change_callback(hdd_ctx->psoc,
 					       hdd_regulatory_dyn_cbk,
 					       NULL);
 
-	ucfg_reg_set_config_vars(hdd_ctx->hdd_psoc, config_vars);
+	ucfg_reg_set_config_vars(hdd_ctx->psoc, config_vars);
 
 	wiphy->regulatory_flags |= REGULATORY_WIPHY_SELF_MANAGED;
 	/* Check the kernel version for upstream commit aced43ce780dc5 that
@@ -1362,7 +1362,7 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 	wiphy->features |= NL80211_FEATURE_CELL_BASE_REG_HINTS;
 #endif
 	wiphy->reg_notifier = hdd_reg_notifier;
-	offload_enabled = ucfg_reg_is_regdb_offloaded(hdd_ctx->hdd_psoc);
+	offload_enabled = ucfg_reg_is_regdb_offloaded(hdd_ctx->psoc);
 	hdd_debug("regulatory offload_enabled %d", offload_enabled);
 	if (offload_enabled) {
 		hdd_ctx->reg_offload = true;
@@ -1373,7 +1373,7 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 		fill_wiphy_band_channels(wiphy, cur_chan_list,
 					 NL80211_BAND_5GHZ);
 
-		cc_src = ucfg_reg_get_cc_and_src(hdd_ctx->hdd_psoc, alpha2);
+		cc_src = ucfg_reg_get_cc_and_src(hdd_ctx->psoc, alpha2);
 		qdf_mem_copy(hdd_ctx->reg.alpha2, alpha2, REG_ALPHA2_LEN + 1);
 		sme_set_cc_src(hdd_ctx->mac_handle, cc_src);
 	} else {

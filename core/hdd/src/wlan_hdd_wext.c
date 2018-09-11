@@ -3080,7 +3080,7 @@ static int wlan_hdd_write_suspend_resume_stats(struct hdd_context *hdd_ctx,
 			sr_stats->suspend_fail[SUSPEND_FAIL_SCAN],
 			sr_stats->suspend_fail[SUSPEND_FAIL_INITIAL_WAKEUP]);
 
-	status = ucfg_mc_cp_stats_write_wow_stats(hdd_ctx->hdd_psoc,
+	status = ucfg_mc_cp_stats_write_wow_stats(hdd_ctx->psoc,
 						  &buffer[ret], max_len - ret,
 						  &ret);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -3423,14 +3423,14 @@ int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 		hdd_err("LDCP is already disabled");
 		return 0;
 	}
-	status = ucfg_mlme_get_ht_cap_info(hdd_ctx->hdd_psoc, &ht_cap_info);
+	status = ucfg_mlme_get_ht_cap_info(hdd_ctx->psoc, &ht_cap_info);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to get HT capability info");
 		return -EIO;
 	}
 
 	ht_cap_info.adv_coding_cap = value;
-	status = ucfg_mlme_set_ht_cap_info(hdd_ctx->hdd_psoc, ht_cap_info);
+	status = ucfg_mlme_set_ht_cap_info(hdd_ctx->psoc, ht_cap_info);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to set HT capability info");
 		return -EIO;
@@ -3497,7 +3497,7 @@ int hdd_set_tx_stbc(struct hdd_adapter *adapter, int value)
 	hdd_debug("%d", value);
 	if (value) {
 		/* make sure HT capabilities allow this */
-		status = ucfg_mlme_get_ht_cap_info(hdd_ctx->hdd_psoc,
+		status = ucfg_mlme_get_ht_cap_info(hdd_ctx->psoc,
 						   &ht_cap_info);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_err("Failed to get HT capability info");
@@ -3563,7 +3563,7 @@ int hdd_set_rx_stbc(struct hdd_adapter *adapter, int value)
 	hdd_debug("%d", value);
 	if (value) {
 		/* make sure HT capabilities allow this */
-		status = ucfg_mlme_get_ht_cap_info(hdd_ctx->hdd_psoc,
+		status = ucfg_mlme_get_ht_cap_info(hdd_ctx->psoc,
 						   &ht_cap_info);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_err("Failed to get HT capability info");
@@ -4178,7 +4178,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		if (!mac_handle)
 			return -EINVAL;
 
-		if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->hdd_psoc, set_value)
+		if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->psoc, set_value)
 			   != QDF_STATUS_SUCCESS) {
 			hdd_err("CFG_ASSOC_STA_LIMIT failed");
 			ret = -EIO;
@@ -5527,7 +5527,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	}
 	case WE_GET_MAX_ASSOC:
 	{
-		if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->hdd_psoc, *value) !=
+		if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->psoc, *value) !=
 		    QDF_STATUS_SUCCESS) {
 			hdd_err("CFG_ASSOC_STA_LIMIT failed");
 			ret = -EIO;
@@ -5538,7 +5538,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 
 	case WE_GET_CONCURRENCY_MODE:
 	{
-		*value = policy_mgr_get_concurrency_mode(hdd_ctx->hdd_psoc);
+		*value = policy_mgr_get_concurrency_mode(hdd_ctx->psoc);
 
 		hdd_debug("concurrency mode=%d", *value);
 		break;
@@ -5548,7 +5548,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	{
 		sme_get_config_param(mac_handle, sme_config);
 		*value = (sme_config->csrConfig.enable2x2 == 0) ? 1 : 2;
-		if (policy_mgr_is_current_hwmode_dbs(hdd_ctx->hdd_psoc))
+		if (policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc))
 			*value = *value - 1;
 		hdd_debug("GET_NSS: Current NSS:%d", *value);
 		break;
@@ -6069,7 +6069,7 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 			return -EPERM;
 		}
 		hdd_debug("%d %d %d", value[1], value[2], value[3]);
-		policy_mgr_set_dual_mac_scan_config(hdd_ctx->hdd_psoc,
+		policy_mgr_set_dual_mac_scan_config(hdd_ctx->psoc,
 			value[1], value[2], value[3]);
 		break;
 	case WE_SET_FW_TEST:
@@ -6149,7 +6149,7 @@ static inline int iw_get_oem_data_cap_wrapper(struct net_device *dev,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	return os_if_wifi_pos_populate_caps(hdd_ctx->hdd_psoc,
+	return os_if_wifi_pos_populate_caps(hdd_ctx->psoc,
 					(struct wifi_pos_driver_caps *)extra);
 }
 #else
@@ -6887,7 +6887,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 			hdd_err("Invalid input params received for the IOCTL");
 			return 0;
 		}
-		policy_mgr_incr_connection_count_utfw(hdd_ctx->hdd_psoc,
+		policy_mgr_incr_connection_count_utfw(hdd_ctx->psoc,
 			apps_args[0], apps_args[1], apps_args[2], apps_args[3],
 			apps_args[4], apps_args[5], apps_args[6], apps_args[7]);
 	}
@@ -6900,7 +6900,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 			hdd_err("Invalid input params received for the IOCTL");
 			return 0;
 		}
-		policy_mgr_decr_connection_count_utfw(hdd_ctx->hdd_psoc,
+		policy_mgr_decr_connection_count_utfw(hdd_ctx->psoc,
 			apps_args[0], apps_args[1]);
 	}
 	break;
@@ -6915,7 +6915,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 			hdd_err("Invalid input params received for the IOCTL");
 			return 0;
 		}
-		policy_mgr_update_connection_info_utfw(hdd_ctx->hdd_psoc,
+		policy_mgr_update_connection_info_utfw(hdd_ctx->psoc,
 			apps_args[0], apps_args[1], apps_args[2], apps_args[3],
 			apps_args[4], apps_args[5], apps_args[6], apps_args[7]);
 	}
@@ -6949,7 +6949,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 			hdd_err("Invalid input param received for the IOCTL");
 			return 0;
 		}
-		policy_mgr_get_pcl(hdd_ctx->hdd_psoc, apps_args[0],
+		policy_mgr_get_pcl(hdd_ctx->psoc, apps_args[0],
 				pcl, &pcl_len,
 				weight_list, QDF_ARRAY_SIZE(weight_list));
 		pr_info("PCL list for role[%d] is {", apps_args[0]);
@@ -6963,7 +6963,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 	{
 		if (apps_args[0] == 0) {
 			hdd_err("set hw mode for single mac");
-			policy_mgr_pdev_set_hw_mode(hdd_ctx->hdd_psoc,
+			policy_mgr_pdev_set_hw_mode(hdd_ctx->psoc,
 					adapter->session_id,
 					HW_MODE_SS_2x2,
 					HW_MODE_80_MHZ,
@@ -6975,7 +6975,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 					POLICY_MGR_UPDATE_REASON_UT, PM_NOP);
 		} else if (apps_args[0] == 1) {
 			hdd_err("set hw mode for dual mac");
-			policy_mgr_pdev_set_hw_mode(hdd_ctx->hdd_psoc,
+			policy_mgr_pdev_set_hw_mode(hdd_ctx->psoc,
 					adapter->session_id,
 					HW_MODE_SS_1x1,
 					HW_MODE_80_MHZ,
@@ -6997,7 +6997,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 			return 0;
 		}
 		policy_mgr_current_connections_update(
-			hdd_ctx->hdd_psoc,
+			hdd_ctx->psoc,
 			adapter->session_id, apps_args[0],
 			POLICY_MGR_UPDATE_REASON_UT);
 	}
@@ -7013,7 +7013,7 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 			hdd_err("Invalid input params received for the IOCTL");
 			return 0;
 		}
-		allow = policy_mgr_allow_concurrency(hdd_ctx->hdd_psoc,
+		allow = policy_mgr_allow_concurrency(hdd_ctx->psoc,
 				apps_args[0], apps_args[1], apps_args[2]);
 		pr_info("allow %d {0 = don't allow, 1 = allow}", allow);
 	}
@@ -7106,7 +7106,7 @@ static void hdd_ch_avoid_unit_cmd(struct hdd_context *hdd_ctx,
 		cnt++;
 	}
 	ch_avoid.ch_avoid_range_cnt = cnt;
-	ucfg_reg_unit_simulate_ch_avoid(hdd_ctx->hdd_psoc, &ch_avoid);
+	ucfg_reg_unit_simulate_ch_avoid(hdd_ctx->psoc, &ch_avoid);
 }
 #else
 static void hdd_ch_avoid_unit_cmd(struct hdd_context *hdd_ctx,
@@ -8999,7 +8999,7 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 			return -EPERM;
 		}
 		hdd_debug("%d %d", value[1], value[2]);
-		policy_mgr_set_dual_mac_fw_mode_config(hdd_ctx->hdd_psoc,
+		policy_mgr_set_dual_mac_fw_mode_config(hdd_ctx->psoc,
 			value[1], value[2]);
 		break;
 	case WE_DUMP_DP_TRACE_LEVEL:

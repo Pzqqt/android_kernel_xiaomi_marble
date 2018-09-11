@@ -1274,7 +1274,7 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 #endif
 	hdd_update_roam_offload(hdd_ctx, cfg);
 
-	if (ucfg_mlme_get_sap_get_peer_info(hdd_ctx->hdd_psoc, &value) ==
+	if (ucfg_mlme_get_sap_get_peer_info(hdd_ctx->psoc, &value) ==
 	   QDF_STATUS_SUCCESS)
 		value &= cfg->get_peer_info_enabled;
 
@@ -4566,7 +4566,7 @@ static int hdd_send_coex_config_params(struct hdd_context *hdd_ctx,
 {
 	struct coex_config_params coex_cfg_params = {0};
 	struct wlan_fwol_coex_config config = {0};
-	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
 	QDF_STATUS status;
 
 	if (!hdd_ctx) {
@@ -5542,7 +5542,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			hdd_notify_tdls_reset_adapter(adapter->vdev);
 			adapter->session.station.hdd_reassoc_scenario = false;
 		}
-		ucfg_mlme_get_sap_internal_restart(hdd_ctx->hdd_psoc, &value);
+		ucfg_mlme_get_sap_internal_restart(hdd_ctx->psoc, &value);
 		if (value &&
 		    adapter->device_mode == QDF_SAP_MODE) {
 			wlan_hdd_netif_queue_control(adapter,
@@ -6371,7 +6371,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 			break;
 
 		case QDF_SAP_MODE:
-			ucfg_mlme_get_sap_internal_restart(hdd_ctx->hdd_psoc,
+			ucfg_mlme_get_sap_internal_restart(hdd_ctx->psoc,
 							   &value);
 			if (value)
 				hdd_start_ap_adapter(adapter);
@@ -8617,7 +8617,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 			hdd_debug("sending coex indication");
 			wlan_hdd_send_svc_nlink_msg(hdd_ctxt->radio_index,
 					WLAN_SVC_LTE_COEX_IND, NULL, 0);
-			ucfg_mlme_get_sap_internal_restart(hdd_ctxt->hdd_psoc,
+			ucfg_mlme_get_sap_internal_restart(hdd_ctxt->psoc,
 							   &value);
 			hdd_debug("driver to start sap: %d", value);
 			if (value)
@@ -9614,10 +9614,9 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 
 	cds_cfg->enable_mc_list = hdd_ctx->config->fEnableMCAddrList;
 
-	ucfg_mlme_get_sap_max_offload_peers(hdd_ctx->hdd_psoc,
-					    &value);
+	ucfg_mlme_get_sap_max_offload_peers(hdd_ctx->psoc, &value);
 	cds_cfg->ap_maxoffload_peers = value;
-	ucfg_mlme_get_sap_max_offload_reorder_buffs(hdd_ctx->hdd_psoc,
+	ucfg_mlme_get_sap_max_offload_reorder_buffs(hdd_ctx->psoc,
 						    &value);
 	cds_cfg->ap_maxoffload_reorderbuffs = value;
 
@@ -9675,7 +9674,7 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->apf_packet_filter_enable =
 		hdd_ctx->config->apf_packet_filter_enable;
 	cds_cfg->self_gen_frm_pwr = hdd_ctx->config->self_gen_frm_pwr;
-	ucfg_mlme_get_sap_max_peers(hdd_ctx->hdd_psoc, &value);
+	ucfg_mlme_get_sap_max_peers(hdd_ctx->psoc, &value);
 	cds_cfg->max_station = value;
 	cds_cfg->sub_20_channel_width = WLAN_SUB_20_CH_WIDTH_NONE;
 	cds_cfg->flow_steering_enabled = hdd_ctx->config->flow_steering_enable;
@@ -9773,7 +9772,7 @@ static int hdd_init_thermal_info(struct hdd_context *hdd_ctx)
 	thermal_param.sme_throttle_duty_cycle_tbl[3] =
 		hdd_ctx->config->throttle_dutycycle_level3;
 
-	status = ucfg_fwol_get_thermal_temp(hdd_ctx->hdd_psoc, &thermal_temp);
+	status = ucfg_fwol_get_thermal_temp(hdd_ctx->psoc, &thermal_temp);
 	if (QDF_IS_STATUS_ERROR(status))
 		return qdf_status_to_os_return(status);
 
@@ -10849,7 +10848,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 				    set_value, PDEV_CMD);
 	}
 
-	ucfg_mlme_get_sap_get_peer_info(hdd_ctx->hdd_psoc, &value);
+	ucfg_mlme_get_sap_get_peer_info(hdd_ctx->psoc, &value);
 	if (value) {
 		set_value = value;
 		sme_cli_set_command(0,

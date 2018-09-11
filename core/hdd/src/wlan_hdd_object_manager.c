@@ -104,7 +104,7 @@ int hdd_objmgr_create_and_store_psoc(struct hdd_context *hdd_ctx,
 	}
 
 	hdd_init_psoc_qdf_ctx(psoc);
-	hdd_ctx->hdd_psoc = psoc;
+	hdd_ctx->psoc = psoc;
 
 	return 0;
 
@@ -117,9 +117,9 @@ psoc_destroy:
 int hdd_objmgr_release_and_destroy_psoc(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
-	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
 
-	hdd_ctx->hdd_psoc = NULL;
+	hdd_ctx->psoc = NULL;
 
 	QDF_BUG(psoc);
 	if (!psoc)
@@ -136,7 +136,7 @@ int hdd_objmgr_release_and_destroy_psoc(struct hdd_context *hdd_ctx)
 void hdd_objmgr_update_tgt_max_vdev_psoc(struct hdd_context *hdd_ctx,
 					 uint8_t max_vdev)
 {
-	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
 
 	if (!psoc) {
 		hdd_err("Psoc NULL");
@@ -149,7 +149,7 @@ void hdd_objmgr_update_tgt_max_vdev_psoc(struct hdd_context *hdd_ctx,
 int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
-	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
 	struct wlan_objmgr_pdev *pdev;
 	struct pdev_osif_priv *priv;
 	struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap_ptr;

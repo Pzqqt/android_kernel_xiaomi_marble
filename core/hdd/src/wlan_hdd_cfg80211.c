@@ -3344,7 +3344,7 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 			QCA_WLAN_VENDOR_FEATURE_P2P_LISTEN_OFFLOAD);
 
 	value = 0;
-	status = ucfg_mlme_get_oce_sta_enabled_info(hdd_ctx->hdd_psoc, &value);
+	status = ucfg_mlme_get_oce_sta_enabled_info(hdd_ctx->psoc, &value);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("could not get OCE STA enable info");
 	if (value)
@@ -3352,7 +3352,7 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 					      QCA_WLAN_VENDOR_FEATURE_OCE_STA);
 
 	value = 0;
-	status = ucfg_mlme_get_oce_sap_enabled_info(hdd_ctx->hdd_psoc, &value);
+	status = ucfg_mlme_get_oce_sap_enabled_info(hdd_ctx->psoc, &value);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("could not get OCE SAP enable info");
 	if (value)
@@ -6031,13 +6031,13 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		hdd_debug("Set disable_fils - %d", disable_fils);
 		value = !disable_fils;
 
-		qdf_status = ucfg_mlme_set_fils_enabled_info(hdd_ctx->hdd_psoc,
+		qdf_status = ucfg_mlme_set_fils_enabled_info(hdd_ctx->psoc,
 							     value);
 		if (QDF_IS_STATUS_ERROR(qdf_status))
 			hdd_err("could not set fils enabled info");
 
-		qdf_status = ucfg_mlme_set_enable_bcast_probe_rsp(
-					hdd_ctx->hdd_psoc, value);
+		qdf_status = ucfg_mlme_set_enable_bcast_probe_rsp(hdd_ctx->psoc,
+								  value);
 		if (QDF_IS_STATUS_ERROR(qdf_status))
 			hdd_err("could not set enable bcast probe resp info");
 
@@ -12409,12 +12409,12 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 	bool fils_enabled;
 	QDF_STATUS status;
 
-	ucfg_mlme_get_sap_max_peers(hdd_ctx->hdd_psoc, &value);
+	ucfg_mlme_get_sap_max_peers(hdd_ctx->psoc, &value);
 	hdd_ctx->wiphy->max_ap_assoc_sta = value;
 	wlan_hdd_update_ht_cap(hdd_ctx);
 
 	fils_enabled = 0;
-	status = ucfg_mlme_get_fils_enabled_info(hdd_ctx->hdd_psoc,
+	status = ucfg_mlme_get_fils_enabled_info(hdd_ctx->psoc,
 						 &fils_enabled);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("could not get fils enabled info");
@@ -12728,8 +12728,7 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 
 	num_ch = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	status = ucfg_mlme_get_sap_allow_all_channels(hdd_ctx->hdd_psoc,
-						      &value);
+	status = ucfg_mlme_get_sap_allow_all_channels(hdd_ctx->psoc, &value);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Unable to fetch sap allow all channels");
 	if (value) {
@@ -15207,7 +15206,7 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 	roam_profile = hdd_roam_profile(adapter);
 
 	value = 0;
-	status = ucfg_mlme_get_fils_enabled_info(hdd_ctx->hdd_psoc, &value);
+	status = ucfg_mlme_get_fils_enabled_info(hdd_ctx->psoc, &value);
 	if (QDF_IS_STATUS_ERROR(status) || !value) {
 		hdd_err("get_fils_enabled status: %d fils_enabled: %d",
 			status, value);
@@ -17323,7 +17322,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	if (cfg_in_range(CFG_BEACON_INTERVAL, params->beacon_interval))
 		roam_profile->beaconInterval = params->beacon_interval;
 	else
-		roam_profile->beaconInterval = cfg_get(hdd_ctx->hdd_psoc,
+		roam_profile->beaconInterval = cfg_get(hdd_ctx->psoc,
 						       CFG_BEACON_INTERVAL);
 
 	/* Set Channel */

@@ -213,7 +213,7 @@ int wlan_hdd_set_filter(struct hdd_context *hdd_ctx,
 		}
 
 		if (QDF_STATUS_SUCCESS !=
-			pmo_ucfg_set_pkt_filter(hdd_ctx->hdd_psoc,
+			pmo_ucfg_set_pkt_filter(hdd_ctx->psoc,
 				pmo_set_pkt_fltr_req,
 				sessionId)) {
 			hdd_err("Failure to execute Set Filter");
@@ -236,7 +236,7 @@ int wlan_hdd_set_filter(struct hdd_context *hdd_ctx,
 
 		pmo_clr_pkt_fltr_param->filter_id = request->filter_id;
 		if (QDF_STATUS_SUCCESS !=
-			pmo_ucfg_clear_pkt_filter(hdd_ctx->hdd_psoc,
+			pmo_ucfg_clear_pkt_filter(hdd_ctx->psoc,
 			    pmo_clr_pkt_fltr_param,
 			    sessionId)) {
 			hdd_err("Failure to execute Clear Filter");

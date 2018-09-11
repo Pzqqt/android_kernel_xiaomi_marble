@@ -69,7 +69,7 @@ static int __wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
-	if (!cfg_nan_get_enable(hdd_ctx->hdd_psoc)) {
+	if (!cfg_nan_get_enable(hdd_ctx->psoc)) {
 		hdd_err("NaN support is not enabled in INI");
 		return -EPERM;
 	}
@@ -157,6 +157,6 @@ void wlan_hdd_cfg80211_nan_callback(hdd_handle_t hdd_handle, tSirNanEvent *msg)
  */
 bool wlan_hdd_nan_is_supported(struct hdd_context *hdd_ctx)
 {
-	return cfg_nan_get_enable(hdd_ctx->hdd_psoc) &&
+	return cfg_nan_get_enable(hdd_ctx->psoc) &&
 		sme_is_feature_supported_by_fw(NAN);
 }

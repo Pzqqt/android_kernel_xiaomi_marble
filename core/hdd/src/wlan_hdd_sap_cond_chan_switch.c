@@ -112,13 +112,13 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
 		 * 6. But, we are in need of a DFS channel. So, going with the
 		 * first channel from the valid channel list.
 		 */
-		status = policy_mgr_get_valid_chans(hdd_ctx->hdd_psoc,
+		status = policy_mgr_get_valid_chans(hdd_ctx->psoc,
 						    channel_list, &len);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("Failed to get channel list");
 			return -EINVAL;
 		}
-		policy_mgr_update_with_safe_channel_list(hdd_ctx->hdd_psoc,
+		policy_mgr_update_with_safe_channel_list(hdd_ctx->psoc,
 							 channel_list, &len,
 							 pcl_weights,
 							 weight_len);
@@ -180,7 +180,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	if (wlan_hdd_validate_context(hdd_ctx) != 0)
 		return -EINVAL;
 
-	if (policy_mgr_get_connection_count(hdd_ctx->hdd_psoc) > 1) {
+	if (policy_mgr_get_connection_count(hdd_ctx->psoc) > 1) {
 		hdd_err("pre cac not allowed in concurrency");
 		return -EINVAL;
 	}
@@ -331,7 +331,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	 * connection update should result in DBS mode
 	 */
 	status = policy_mgr_update_and_wait_for_connection_update(
-					hdd_ctx->hdd_psoc,
+					hdd_ctx->psoc,
 					ap_adapter->session_id,
 					pre_cac_chan,
 					POLICY_MGR_UPDATE_REASON_PRE_CAC);

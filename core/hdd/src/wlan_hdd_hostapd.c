@@ -4616,9 +4616,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	pConfig->auto_channel_select_weight =
 			     iniConfig->auto_channel_select_weight;
 	pConfig->disableDFSChSwitch = iniConfig->disableDFSChSwitch;
-	ucfg_mlme_get_sap_chn_switch_bcn_count(hdd_ctx->hdd_psoc, &value);
+	ucfg_mlme_get_sap_chn_switch_bcn_count(hdd_ctx->psoc, &value);
 	pConfig->sap_chanswitch_beacon_cnt = value;
-	ucfg_mlme_get_sap_channel_switch_mode(hdd_ctx->hdd_psoc, &val);
+	ucfg_mlme_get_sap_channel_switch_mode(hdd_ctx->psoc, &val);
 	pConfig->sap_chanswitch_mode = val;
 
 	/* channel is already set in the set_channel Call back */
@@ -4627,7 +4627,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	/* Protection parameter to enable or disable */
 	pConfig->protEnabled = iniConfig->apProtEnabled;
 
-	ucfg_mlme_get_sap_chan_switch_rate_enabled(hdd_ctx->hdd_psoc, &val);
+	ucfg_mlme_get_sap_chan_switch_rate_enabled(hdd_ctx->psoc, &val);
 	pConfig->chan_switch_hostapd_rate_enabled = val;
 
 	if (iniConfig->WlanMccToSccSwitchMode !=
@@ -4636,7 +4636,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 	pConfig->enOverLapCh = iniConfig->gEnableOverLapCh;
 
-	ucfg_mlme_get_sap_reduces_beacon_interval(hdd_ctx->hdd_psoc, &value);
+	ucfg_mlme_get_sap_reduces_beacon_interval(hdd_ctx->psoc, &value);
 	pConfig->dtim_period = pBeacon->dtim_period;
 	pConfig->dfs_beacon_tx_enhanced = iniConfig->dfs_beacon_tx_enhanced;
 

@@ -1708,10 +1708,7 @@ struct hdd_cache_channels {
  * @g_event_flags: a bitmap of hdd_driver_flags
  */
 struct hdd_context {
-	union {
-		struct wlan_objmgr_psoc *psoc;
-		struct wlan_objmgr_psoc *hdd_psoc;
-	};
+	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
 	mac_handle_t mac_handle;
 	struct wiphy *wiphy;
@@ -2374,8 +2371,7 @@ static inline bool roaming_offload_enabled(struct hdd_context *hdd_ctx)
 {
 	bool is_roam_offload;
 
-	ucfg_mlme_get_roaming_offload(hdd_ctx->hdd_psoc,
-				      &is_roam_offload);
+	ucfg_mlme_get_roaming_offload(hdd_ctx->psoc, &is_roam_offload);
 
 	return is_roam_offload;
 }

@@ -4433,16 +4433,16 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 		rx_nss = adapter->hdd_stats.class_a_stat.rx_nss;
 
 		if ((tx_nss > 1) &&
-		    policy_mgr_is_current_hwmode_dbs(hdd_ctx->hdd_psoc) &&
-		    !policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->hdd_psoc)) {
+		    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc) &&
+		    !policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->psoc)) {
 			hdd_debug("Hw mode is DBS, Reduce nss(%d) to 1",
 				  tx_nss);
 			tx_nss--;
 		}
 
 		if ((rx_nss > 1) &&
-		    policy_mgr_is_current_hwmode_dbs(hdd_ctx->hdd_psoc) &&
-		    !policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->hdd_psoc)) {
+		    policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc) &&
+		    !policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->psoc)) {
 			hdd_debug("Hw mode is DBS, Reduce nss(%d) to 1",
 				  rx_nss);
 			rx_nss--;

@@ -4886,7 +4886,7 @@ static void hdd_set_power_save_offload_config(struct hdd_context *hdd_ctx)
 		 * Make sure CFG is updated because PE reads this
 		 * from CFG at the time of assoc or reassoc
 		 */
-		ucfg_mlme_set_sap_listen_interval(hdd_ctx->hdd_psoc,
+		ucfg_mlme_set_sap_listen_interval(hdd_ctx->psoc,
 						  listenInterval);
 	}
 

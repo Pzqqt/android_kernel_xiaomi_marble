@@ -77,13 +77,13 @@ static QDF_STATUS
 hdd_get_num_wow_filters(struct hdd_context *hdd_ctx, uint8_t *num_filters)
 {
 	QDF_STATUS status;
-	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
 
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_HDD_ID_OBJ_MGR);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	*num_filters = ucfg_pmo_get_num_wow_filters(hdd_ctx->hdd_psoc);
+	*num_filters = ucfg_pmo_get_num_wow_filters(hdd_ctx->psoc);
 
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_HDD_ID_OBJ_MGR);
 

@@ -541,7 +541,7 @@ static __iw_softap_setparam(struct net_device *dev,
 				hdd_warn("Setting it to max allowed and continuing");
 				set_value = WNI_CFG_ASSOC_STA_LIMIT_STAMAX;
 			}
-			if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->hdd_psoc,
+			if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->psoc,
 							  set_value) !=
 			    QDF_STATUS_SUCCESS) {
 				hdd_err("CFG_ASSOC_STA_LIMIT failed");
@@ -1221,7 +1221,7 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	switch (sub_cmd) {
 	case QCSAP_PARAM_MAX_ASSOC:
-		if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->hdd_psoc, *value) !=
+		if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->psoc, *value) !=
 		    QDF_STATUS_SUCCESS) {
 			hdd_err("CFG_ASSOC_STA_LIMIT failed");
 			ret = -EIO;

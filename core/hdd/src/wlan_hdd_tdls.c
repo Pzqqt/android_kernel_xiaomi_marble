@@ -466,7 +466,7 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
 
-	cfg_tdls_get_support_enable(hdd_ctx->hdd_psoc, &tdls_support);
+	cfg_tdls_get_support_enable(hdd_ctx->psoc, &tdls_support);
 	if (!tdls_support) {
 		hdd_debug("TDLS Disabled in INI OR not enabled in FW. "
 			"Cannot process TDLS commands");
@@ -641,7 +641,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
 
-	cfg_tdls_get_support_enable(hdd_ctx->hdd_psoc, &tdls_support);
+	cfg_tdls_get_support_enable(hdd_ctx->psoc, &tdls_support);
 	if (!tdls_support) {
 		hdd_debug("TDLS Disabled in INI OR not enabled in FW. "
 			"Cannot process TDLS commands");
@@ -801,7 +801,7 @@ int hdd_set_tdls_scan_type(struct hdd_context *hdd_ctx, int val)
 		return -EINVAL;
 	}
 
-	cfg_tdls_set_scan_enable(hdd_ctx->hdd_psoc, (bool)val);
+	cfg_tdls_set_scan_enable(hdd_ctx->psoc, (bool)val);
 
 	return 0;
 }

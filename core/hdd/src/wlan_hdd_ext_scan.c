@@ -1645,7 +1645,7 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -1784,7 +1784,7 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 	if (0 != retval)
 		return -EINVAL;
 
-	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -1983,7 +1983,7 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	if (0 != retval)
 		return -EINVAL;
 
-	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -2422,7 +2422,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 	if (0 != ret)
 		return -EINVAL;
 
-	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -2650,11 +2650,11 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 	uint32_t min_dwell_time_passive_bucket;
 	uint32_t max_dwell_time_passive_bucket;
 
-	ucfg_extscan_get_active_min_time(hdd_ctx->hdd_psoc,
+	ucfg_extscan_get_active_min_time(hdd_ctx->psoc,
 					&extscan_active_min_chn_time);
-	ucfg_extscan_get_active_max_time(hdd_ctx->hdd_psoc,
+	ucfg_extscan_get_active_max_time(hdd_ctx->psoc,
 					 &max_dwell_time_active_bucket);
-	ucfg_extscan_get_passive_max_time(hdd_ctx->hdd_psoc,
+	ucfg_extscan_get_passive_max_time(hdd_ctx->psoc,
 					 &max_dwell_time_passive_bucket);
 
 	min_dwell_time_active_bucket = max_dwell_time_active_bucket;
@@ -3125,7 +3125,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 	if (0 != retval)
 		return -EINVAL;
 
-	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -3339,7 +3339,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 	if (0 != retval)
 		return -EINVAL;
 
-	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -3467,7 +3467,7 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 	if (0 != retval)
 		return -EINVAL;
 
-	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -3582,7 +3582,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy *wiphy,
 	if (0 != retval)
 		return -EINVAL;
 
-	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}
@@ -3792,7 +3792,7 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 	if (ret_val)
 		return ret_val;
 
-	if (!ucfg_extscan_get_enable(hdd_ctx->hdd_psoc)) {
+	if (!ucfg_extscan_get_enable(hdd_ctx->psoc)) {
 		hdd_err("extscan not supported");
 		return -ENOTSUPP;
 	}

@@ -82,7 +82,7 @@ static int wlan_hdd_listen_offload_start(struct hdd_adapter *adapter,
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	psoc = hdd_ctx->hdd_psoc;
+	psoc = hdd_ctx->psoc;
 	if (!psoc) {
 		hdd_err("psoc is null");
 		return -EINVAL;
@@ -282,7 +282,7 @@ static int wlan_hdd_listen_offload_stop(struct hdd_adapter *adapter)
 
 	vdev_id = (uint32_t)adapter->session_id;
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	psoc = hdd_ctx->hdd_psoc;
+	psoc = hdd_ctx->psoc;
 	if (!psoc) {
 		hdd_err("psoc is null");
 		return -EINVAL;

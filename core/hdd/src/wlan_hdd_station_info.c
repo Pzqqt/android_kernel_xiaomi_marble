@@ -1009,7 +1009,7 @@ static int hdd_get_connected_station_info(struct hdd_context *hdd_ctx,
 		(sizeof(stainfo->is_qos_enabled) + NLA_HDRLEN) +
 		(sizeof(stainfo->mode) + NLA_HDRLEN);
 
-	status = ucfg_mlme_get_sap_get_peer_info(hdd_ctx->hdd_psoc, &value);
+	status = ucfg_mlme_get_sap_get_peer_info(hdd_ctx->psoc, &value);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Unable to fetch sap ger peer info");
 	if (!value ||
