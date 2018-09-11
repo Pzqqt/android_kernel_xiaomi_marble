@@ -256,7 +256,8 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
 		(struct cdp_pdev *)pdev, adapter->session_id),
-		adapter, adapter->vdev, &txrx_ops);
+		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
+		&txrx_ops);
 	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;
 	adapter->tx_fn = txrx_ops.tx.tx;
 
