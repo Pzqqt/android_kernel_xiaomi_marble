@@ -26,6 +26,27 @@
 
 /*
  * <ini>
+ * drop_bcn_on_chan_mismatch - drop the beacon for chan mismatch
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to decide drop the beacon or not if channel received
+ * in metadata doesn't match the one in beacon.
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DROP_BCN_ON_CHANNEL_MISMATCH CFG_INI_BOOL(\
+		"drop_bcn_on_chan_mismatch",\
+		true,\
+		"drop bcn on channel mismatch")
+
+/*
+ * <ini>
  * gActiveMaxChannelTime - Set max channel time for active scan
  * @Min: 0
  * @Max: 10000
@@ -186,6 +207,7 @@
 			"Set priority for connection with bssid_hint")
 
 #define CFG_SCAN_ALL \
+	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
 	CFG(CFG_ACTIVE_MAX_CHANNEL_TIME) \
 	CFG(CFG_ACTIVE_MAX_2G_CHANNEL_TIME) \
 	CFG(CFG_PASSIVE_MAX_CHANNEL_TIME) \
