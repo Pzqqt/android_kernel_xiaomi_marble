@@ -6090,7 +6090,7 @@ static void hdd_set_fine_time_meas_cap(struct hdd_context *hdd_ctx)
 
 	/* Make sure only supported capabilities are enabled in INI */
 	capability &= CFG_FINE_TIME_MEAS_CAPABILITY_MAX;
-	ucfg_wifi_pos_set_ftm_cap(hdd_ctx->hdd_psoc, capability);
+	ucfg_wifi_pos_set_ftm_cap(hdd_ctx->psoc, capability);
 
 	hdd_debug("fine time meas capability - INI: %04x Enabled: %04x",
 		config->fine_time_meas_cap,
@@ -6648,7 +6648,7 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->sta_sap_scc_on_lte_coex_chan;
 	user_cfg->dbs_selection_policy = hdd_ctx->config->dbs_selection_policy;
 	user_cfg->vdev_priority_list = hdd_ctx->config->vdev_priority_list;
-	status = policy_mgr_set_user_cfg(hdd_ctx->hdd_psoc, user_cfg);
+	status = policy_mgr_set_user_cfg(hdd_ctx->psoc, user_cfg);
 	qdf_mem_free(user_cfg);
 
 	return status;
@@ -7134,7 +7134,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->min_delay_btw_roam_scans;
 	smeConfig->csrConfig.roam_trigger_reason_bitmask =
 		hdd_ctx->config->roam_trigger_reason_bitmask;
-	status = ucfg_mlme_get_ignore_peer_ht_mode(hdd_ctx->hdd_psoc,
+	status = ucfg_mlme_get_ignore_peer_ht_mode(hdd_ctx->psoc,
 						   &ignore_peer_ht_mode);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Get ignore_peer_ht_mode failed");
@@ -7492,7 +7492,7 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 		hdd_err("Could not pass on WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE to CFG");
 	}
 
-	qdf_status = ucfg_mlme_get_ht_cap_info(hdd_ctx->hdd_psoc, &ht_cap_info);
+	qdf_status = ucfg_mlme_get_ht_cap_info(hdd_ctx->psoc, &ht_cap_info);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to get HT Cap info");
 		status = false;
@@ -7506,7 +7506,7 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 		ht_cap_info.tx_stbc = val32;
 	}
 
-	qdf_status = ucfg_mlme_set_ht_cap_info(hdd_ctx->hdd_psoc, ht_cap_info);
+	qdf_status = ucfg_mlme_set_ht_cap_info(hdd_ctx->psoc, ht_cap_info);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		status = false;
 		hdd_err("Could not set the HT_CAP_INFO");

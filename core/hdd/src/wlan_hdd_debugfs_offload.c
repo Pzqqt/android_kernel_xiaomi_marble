@@ -69,7 +69,7 @@ wlan_hdd_mc_addr_list_info_debugfs(struct hdd_context *hdd_ctx,
 		return length;
 	}
 
-	status = pmo_ucfg_get_mc_addr_list(hdd_ctx->hdd_psoc,
+	status = pmo_ucfg_get_mc_addr_list(hdd_ctx->psoc,
 					   adapter->session_id,
 					   &mc_addr_list);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

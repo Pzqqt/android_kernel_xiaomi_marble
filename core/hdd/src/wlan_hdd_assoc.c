@@ -1352,7 +1352,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		}
 
 		if (!hdd_is_roam_sync_in_progress(pCsrRoamInfo)) {
-			policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
+			policy_mgr_incr_active_session(hdd_ctx->psoc,
 				adapter->device_mode, adapter->session_id);
 			hdd_green_ap_start_state_mc(hdd_ctx,
 						    adapter->device_mode, true);
@@ -1433,7 +1433,7 @@ static void hdd_send_association_event(struct net_device *dev,
 #endif
 	} else if (eConnectionState_IbssConnected ==    /* IBss Associated */
 			sta_ctx->conn_info.connState) {
-		policy_mgr_update_connection_info(hdd_ctx->hdd_psoc,
+		policy_mgr_update_connection_info(hdd_ctx->psoc,
 				adapter->session_id);
 		memcpy(wrqu.ap_addr.sa_data, sta_ctx->conn_info.bssId.bytes,
 				ETH_ALEN);
@@ -1442,7 +1442,7 @@ static void hdd_send_association_event(struct net_device *dev,
 	} else {                /* Not Associated */
 		hdd_debug("wlan: disconnected");
 		memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
-		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
+		policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
 				adapter->device_mode, adapter->session_id);
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
@@ -1870,7 +1870,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	wlan_hdd_clear_link_layer_stats(adapter);
 
 	hdd_debug("check for SAP restart");
-	policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->hdd_psoc);
+	policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->psoc);
 	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 
 	/* Unblock anyone waiting for disconnect to complete */
@@ -1884,7 +1884,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 
 	hdd_print_bss_info(sta_ctx);
 
-	if (policy_mgr_is_sta_active_connection_exists(hdd_ctx->hdd_psoc))
+	if (policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc))
 		sme_enable_roaming_on_connected_sta(mac_handle);
 
 	return status;
@@ -2321,7 +2321,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	 * successful reassoc decrement the active session count here.
 	 */
 	if (!hdd_is_roam_sync_in_progress(pCsrRoamInfo)) {
-		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
+		policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
 				adapter->device_mode, adapter->session_id);
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    false);
@@ -2811,7 +2811,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		/* Indicate 'connect' status to user space */
 		hdd_send_association_event(dev, roam_info);
 
-		if (policy_mgr_is_mcc_in_24G(hdd_ctx->hdd_psoc)) {
+		if (policy_mgr_is_mcc_in_24G(hdd_ctx->psoc)) {
 			if (hdd_ctx->miracast_value)
 				wlan_hdd_set_mas(adapter,
 					hdd_ctx->miracast_value);
@@ -2879,7 +2879,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 #endif
 
 		hdd_debug("check if STA chan ok for DNBS");
-		if (policy_mgr_is_chan_ok_for_dnbs(hdd_ctx->hdd_psoc,
+		if (policy_mgr_is_chan_ok_for_dnbs(hdd_ctx->psoc,
 					sta_ctx->conn_info.operationChannel,
 					&ok)) {
 			hdd_err("Unable to check DNBS eligibility for chan:%d",
@@ -3045,7 +3045,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						if (!hdd_is_roam_sync_in_progress
 								(roam_info)) {
 						policy_mgr_decr_session_set_pcl(
-							hdd_ctx->hdd_psoc,
+							hdd_ctx->psoc,
 							adapter->device_mode,
 							adapter->session_id);
 						hdd_green_ap_start_state_mc(
@@ -3286,15 +3286,15 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 #endif
 		hdd_debug("check for SAP restart");
 		policy_mgr_check_concurrent_intf_and_restart_sap(
-			hdd_ctx->hdd_psoc);
+			hdd_ctx->psoc);
 		if (roam_info->pBssDesc)
 			policy_mgr_checkn_update_hw_mode_single_mac_mode
-				(hdd_ctx->hdd_psoc,
+				(hdd_ctx->psoc,
 				 roam_info->pBssDesc->channelId);
 	} else {
 		bool connect_timeout = false;
 		/* do we need to change the HW mode */
-		policy_mgr_check_n_start_opportunistic_timer(hdd_ctx->hdd_psoc);
+		policy_mgr_check_n_start_opportunistic_timer(hdd_ctx->psoc);
 		if (roam_info && roam_info->is_fils_connection &&
 		    eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE == roamResult)
 			qdf_copy_macaddr(&roam_info->bssid,
@@ -3554,13 +3554,13 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 				bss);
 		}
 		if (eCSR_ROAM_RESULT_IBSS_STARTED == roamResult) {
-			policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
+			policy_mgr_incr_active_session(hdd_ctx->psoc,
 				adapter->device_mode, adapter->session_id);
 			hdd_green_ap_start_state_mc(hdd_ctx,
 						    adapter->device_mode, true);
 		} else if (eCSR_ROAM_RESULT_IBSS_JOIN_SUCCESS == roamResult ||
 				eCSR_ROAM_RESULT_IBSS_COALESCED == roamResult) {
-			policy_mgr_update_connection_info(hdd_ctx->hdd_psoc,
+			policy_mgr_update_connection_info(hdd_ctx->psoc,
 					adapter->session_id);
 		}
 		break;
@@ -4552,9 +4552,9 @@ static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 		hdd_err("channel change notification failed");
 
 	hdd_debug("check for SAP restart");
-	policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->hdd_psoc);
+	policy_mgr_check_concurrent_intf_and_restart_sap(hdd_ctx->psoc);
 
-	status = policy_mgr_set_hw_mode_on_channel_switch(hdd_ctx->hdd_psoc,
+	status = policy_mgr_set_hw_mode_on_channel_switch(hdd_ctx->psoc,
 		adapter->session_id);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_debug("set hw mode change not done");
@@ -4888,7 +4888,7 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 		hdd_napi_serialize(1);
 		hdd_set_connection_in_progress(true);
 		hdd_set_roaming_in_progress(true);
-		policy_mgr_restart_opportunistic_timer(hdd_ctx->hdd_psoc, true);
+		policy_mgr_restart_opportunistic_timer(hdd_ctx->psoc, true);
 		break;
 	case eCSR_ROAM_ABORT:
 		hdd_debug("Firmware aborted roaming operation, previous connection is still valid");

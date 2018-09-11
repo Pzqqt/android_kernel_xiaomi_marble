@@ -383,7 +383,7 @@ static int hdd_encrypt_decrypt_msg(struct hdd_adapter *adapter,
 
 	cookie = osif_request_cookie(request);
 
-	qdf_status = ucfg_disa_encrypt_decrypt_req(hdd_ctx->hdd_psoc,
+	qdf_status = ucfg_disa_encrypt_decrypt_req(hdd_ctx->psoc,
 				&context->request,
 				hdd_encrypt_decrypt_msg_cb,
 				cookie);

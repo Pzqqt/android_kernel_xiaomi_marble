@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -211,7 +211,7 @@ void fill_report(struct hdd_context *hdd_ctx, char *title,
 	report[report_idx].status = status;
 	snprintf(report[report_idx].dbs_value,
 		MAX_ALLOWED_CHAR_IN_REPORT, "%s",
-		policy_mgr_is_hw_dbs_capable(hdd_ctx->hdd_psoc)
+		policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc)
 		? "enable" : "disable");
 	snprintf(report[report_idx].system_conf,
 		MAX_ALLOWED_CHAR_IN_REPORT, "%s",
@@ -631,7 +631,7 @@ void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 	sme_cbacks.sme_get_valid_channels = sme_get_valid_channels;
 	sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 	/* flush the entire table first */
-	ret = policy_mgr_psoc_enable(hdd_ctx->hdd_psoc);
+	ret = policy_mgr_psoc_enable(hdd_ctx->psoc);
 	if (!QDF_IS_STATUS_SUCCESS(ret)) {
 		hdd_err("Policy manager initialization failed");
 		return;
@@ -639,7 +639,7 @@ void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 
 	for (sub_type = 0; sub_type < PM_MAX_NUM_OF_MODE; sub_type++) {
 		/* validate one connection is created or no */
-		if (policy_mgr_get_connection_count(hdd_ctx->hdd_psoc) != 0) {
+		if (policy_mgr_get_connection_count(hdd_ctx->psoc) != 0) {
 			hdd_err("Test failed - No. of connection is not 0");
 			return;
 		}
@@ -649,7 +649,7 @@ void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 			sub_type, system_pref);
 
 		/* check PCL value for second connection is correct or no */
-		policy_mgr_get_pcl(hdd_ctx->hdd_psoc, sub_type, pcl, &pcl_len,
+		policy_mgr_get_pcl(hdd_ctx->psoc, sub_type, pcl, &pcl_len,
 				weight_list, QDF_ARRAY_SIZE(weight_list));
 		status = wlan_hdd_validate_pcl(hdd_ctx,
 				pcl_type, pcl, pcl_len, 0, 0,
@@ -691,7 +691,7 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 		sme_cbacks.sme_get_valid_channels = sme_get_valid_channels;
 		sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 		/* flush the entire table first */
-		ret = policy_mgr_psoc_enable(hdd_ctx->hdd_psoc);
+		ret = policy_mgr_psoc_enable(hdd_ctx->psoc);
 		if (!QDF_IS_STATUS_SUCCESS(ret)) {
 			hdd_err("Policy manager initialization failed");
 			return;
@@ -700,12 +700,12 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 		/* sub_type mapping between HDD and WMA are different */
 		wlan_hdd_map_subtypes_hdd_wma(&dummy_type, &sub_type);
 		/* add first connection as STA */
-		policy_mgr_incr_connection_count_utfw(hdd_ctx->hdd_psoc,
+		policy_mgr_incr_connection_count_utfw(hdd_ctx->psoc,
 				vdevid, tx_stream,
 				rx_stream, chain_mask, type, dummy_type,
 				channel_id, mac_id);
 		/* validate one connection is created or no */
-		if (policy_mgr_get_connection_count(hdd_ctx->hdd_psoc) != 1) {
+		if (policy_mgr_get_connection_count(hdd_ctx->psoc) != 1) {
 			hdd_err("Test failed - No. of connection is not 1");
 			return;
 		}
@@ -714,7 +714,7 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 			/* get the PCL value & check the channels accordingly */
 			second_index =
 			policy_mgr_get_second_connection_pcl_table_index(
-				hdd_ctx->hdd_psoc);
+				hdd_ctx->psoc);
 			if (PM_MAX_ONE_CONNECTION_MODE == second_index) {
 				/* not valid combination*/
 				hdd_err("couldn't find index for 2nd connection pcl table");
@@ -726,9 +726,9 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 			pcl_type = policy_mgr_get_pcl_from_second_conn_table(
 				second_index, next_sub_type, system_pref,
 				policy_mgr_is_hw_dbs_capable(
-					hdd_ctx->hdd_psoc));
+					hdd_ctx->psoc));
 			/* check PCL for second connection is correct or no */
-			policy_mgr_get_pcl(hdd_ctx->hdd_psoc,
+			policy_mgr_get_pcl(hdd_ctx->psoc,
 				next_sub_type, pcl, &pcl_len,
 				weight_list, QDF_ARRAY_SIZE(weight_list));
 			status = wlan_hdd_validate_pcl(hdd_ctx,
@@ -797,7 +797,7 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 		sme_cbacks.sme_get_valid_channels = sme_get_valid_channels;
 		sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
 		/* flush the entire table first */
-		ret = policy_mgr_psoc_enable(hdd_ctx->hdd_psoc);
+		ret = policy_mgr_psoc_enable(hdd_ctx->psoc);
 		if (!QDF_IS_STATUS_SUCCESS(ret)) {
 			hdd_err("Policy manager initialization failed");
 			return;
@@ -806,11 +806,11 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 		/* sub_type mapping between HDD and WMA are different */
 		wlan_hdd_map_subtypes_hdd_wma(&dummy_type_1, &sub_type_1);
 		/* add first connection as STA */
-		policy_mgr_incr_connection_count_utfw(hdd_ctx->hdd_psoc,
+		policy_mgr_incr_connection_count_utfw(hdd_ctx->psoc,
 			vdevid_1, tx_stream_1, rx_stream_1, chain_mask_1,
 			type_1,	dummy_type_1, channel_id_1, mac_id_1);
 		/* validate one connection is created or no */
-		if (policy_mgr_get_connection_count(hdd_ctx->hdd_psoc) != 1) {
+		if (policy_mgr_get_connection_count(hdd_ctx->psoc) != 1) {
 			hdd_err("Test fail - No. of connection not 1");
 			return;
 		}
@@ -821,12 +821,12 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 			/* sub_type mapping between HDD and WMA are different */
 			wlan_hdd_map_subtypes_hdd_wma(&dummy_type_2,
 					&sub_type_2);
-			policy_mgr_incr_connection_count_utfw(hdd_ctx->hdd_psoc,
+			policy_mgr_incr_connection_count_utfw(hdd_ctx->psoc,
 				vdevid_2, tx_stream_2, rx_stream_2,
 				chain_mask_2, type_2,
 				dummy_type_2, channel_id_2, mac_id_2);
 			/* validate two connections are created or no */
-			if (policy_mgr_get_connection_count(hdd_ctx->hdd_psoc)
+			if (policy_mgr_get_connection_count(hdd_ctx->psoc)
 				!= 2) {
 				hdd_err("Test fail - No. connection not 2");
 				return;
@@ -835,7 +835,7 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 			while (next_sub_type < PM_MAX_NUM_OF_MODE) {
 				third_index =
 				policy_mgr_get_third_connection_pcl_table_index(
-						hdd_ctx->hdd_psoc);
+						hdd_ctx->psoc);
 				if (PM_MAX_TWO_CONNECTION_MODE ==
 						third_index) {
 					/* not valid combination */
@@ -849,8 +849,8 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 					third_index, next_sub_type,
 					system_pref,
 					policy_mgr_is_hw_dbs_capable(
-					hdd_ctx->hdd_psoc));
-				policy_mgr_get_pcl(hdd_ctx->hdd_psoc,
+					hdd_ctx->psoc));
+				policy_mgr_get_pcl(hdd_ctx->psoc,
 					next_sub_type,
 					pcl, &pcl_len,
 					weight_list,
@@ -872,7 +872,7 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 				next_sub_type++;
 			}
 			/* remove entry to make a room for next iteration */
-			policy_mgr_decr_connection_count(hdd_ctx->hdd_psoc,
+			policy_mgr_decr_connection_count(hdd_ctx->psoc,
 				vdevid_2);
 		}
 		next_sub_type = PM_STA_MODE;
