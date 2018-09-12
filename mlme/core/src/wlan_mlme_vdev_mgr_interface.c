@@ -18,7 +18,6 @@
 /**
  * DOC: define internal APIs related to the mlme component
  */
-#include <wlan_objmgr_vdev_obj.h>
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
 #include "lim_utils.h"
@@ -460,20 +459,19 @@ static QDF_STATUS ap_mlme_vdev_start_req_failed(struct vdev_mlme_obj *vdev_mlme,
 }
 
 /**
- * sap_mlme_vdev_restart_send() a callback to send vdev restart
+ * ap_mlme_vdev_restart_send() a callback to send vdev restart
  * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
+ * @data_len: event data length
+ * @data: event data
  *
  * This function is called to initiate and send vdev restart req
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
-					    uint16_t event_data_len,
-					    void *event_data)
+					    uint16_t data_len, void *data)
 {
-	return QDF_STATUS_SUCCESS;
+	return lim_ap_mlme_vdev_restart_send(vdev_mlme, data_len, data);
 }
 
 static QDF_STATUS ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
@@ -484,15 +482,72 @@ static QDF_STATUS ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 	return QDF_STATUS_SUCCESS;
 }
 
-static
-QDF_STATUS ap_mlme_vdev_legacy_hdl_create(struct vdev_mlme_obj *vdev_mlme)
+QDF_STATUS ap_mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
+					       bool val)
 {
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+
+	mlme_priv->chan_switch_in_progress = val;
+
 	return QDF_STATUS_SUCCESS;
 }
 
+bool ap_mlme_get_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return false;
+	}
+
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+
+	return mlme_priv->chan_switch_in_progress;
+}
+
+/**
+ * ap_mlme_vdev_legacy_hdl_create () - Create sap mlme legacy priv object
+ * @vdev_mlme: vdev mlme object
+ *
+ * Return: QDF_STATUS
+ */
+static
+QDF_STATUS ap_mlme_vdev_legacy_hdl_create(struct vdev_mlme_obj *vdev_mlme)
+{
+	vdev_mlme->legacy_vdev_ptr =
+		qdf_mem_malloc(sizeof(struct mlme_legacy_priv));
+	if (!vdev_mlme->legacy_vdev_ptr) {
+		mlme_err("failed to allocate meory for legacy_vdev_ptr");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * ap_mlme_vdev_legacy_hdl_destroy () - Destroy sap mlme legacy priv object
+ * @vdev_mlme: vdev mlme object
+ *
+ * Return: QDF_STATUS
+ */
 static
 QDF_STATUS ap_mlme_vdev_legacy_hdl_destroy(struct vdev_mlme_obj *vdev_mlme)
 {
+	qdf_mem_free(vdev_mlme->legacy_vdev_ptr);
+	vdev_mlme->legacy_vdev_ptr = NULL;
+
 	return QDF_STATUS_SUCCESS;
 }
 

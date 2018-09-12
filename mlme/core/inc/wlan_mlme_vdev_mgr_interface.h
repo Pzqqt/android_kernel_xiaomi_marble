@@ -23,7 +23,19 @@
 #define _WLAN_MLME_VDEV_MGR_INT_API_H_
 
 #ifdef CONFIG_VDEV_SM
+#include <wlan_objmgr_vdev_obj.h>
 #include "include/wlan_vdev_mlme.h"
+
+/**
+ * struct mlme_legacy_priv - VDEV MLME legacy priv object
+ * @chan_switch_in_progress: flag to indicate that channel switch is in progress
+ * @hidden_ssid_restart_in_progress: flag to indicate hidden ssid restart is
+ *                                   in progress
+ */
+struct mlme_legacy_priv {
+	bool chan_switch_in_progress;
+	bool hidden_ssid_restart_in_progress;
+};
 
 /**
  * mlme_register_vdev_mgr_ops() - Register vdev mgr ops
@@ -43,5 +55,24 @@ QDF_STATUS mlme_register_vdev_mgr_ops(void *mlme);
  * Return: QDF_STATUS
  */
 QDF_STATUS mlme_unregister_vdev_mgr_ops(struct vdev_mlme_obj *vdev_mlme);
+
+/**
+ * ap_mlme_set_chan_switch_in_progress() - set mlme priv restart in progress
+ * @vdev: vdev pointer
+ * @val: value to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ap_mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
+					       bool val);
+
+/**
+ * ap_mlme_get_chan_switch_in_progress() - get mlme priv restart in progress
+ * @vdev: vdev pointer
+ *
+ * Return: value of mlme priv restart in progress
+ */
+bool ap_mlme_get_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev);
+
 #endif
 #endif
