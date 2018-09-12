@@ -617,7 +617,7 @@ wlan_serialization_non_scan_cmd_status(
 	/* Look in the pdev non scan active queue */
 	queue = &pdev_q->active_list;
 
-	wlan_serialization_acquire_lock(pdev_q);
+	wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
 
 	node = wlan_serialization_find_cmd(
 			queue, WLAN_SER_MATCH_CMD_TYPE,
@@ -641,7 +641,7 @@ wlan_serialization_non_scan_cmd_status(
 	cmd_status = wlan_serialization_is_cmd_in_active_pending(
 			cmd_in_active, cmd_in_pending);
 
-	wlan_serialization_release_lock(pdev_q);
+	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
 
 	ser_exit();
 	return cmd_status;
@@ -813,7 +813,7 @@ wlan_serialization_vdev_scan_status(struct wlan_objmgr_vdev *vdev)
 
 	pdev_q = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_SCAN];
 
-	wlan_serialization_acquire_lock(pdev_q);
+	wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
 
 	cmd_in_active =
 	wlan_serialization_is_cmd_in_vdev_list(
@@ -826,7 +826,7 @@ wlan_serialization_vdev_scan_status(struct wlan_objmgr_vdev *vdev)
 	status = wlan_serialization_is_cmd_in_active_pending(
 			cmd_in_active, cmd_in_pending);
 
-	wlan_serialization_release_lock(pdev_q);
+	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
 	ser_exit();
 
 	return status;
@@ -857,7 +857,7 @@ wlan_serialization_pdev_scan_status(struct wlan_objmgr_pdev *pdev)
 
 	pdev_q = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_SCAN];
 
-	wlan_serialization_acquire_lock(pdev_q);
+	wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
 
 	cmd_in_active = !qdf_list_empty(&pdev_q->active_list);
 	cmd_in_pending = !qdf_list_empty(&pdev_q->pending_list);
@@ -865,7 +865,7 @@ wlan_serialization_pdev_scan_status(struct wlan_objmgr_pdev *pdev)
 	status = wlan_serialization_is_cmd_in_active_pending(
 			cmd_in_active, cmd_in_pending);
 
-	wlan_serialization_release_lock(pdev_q);
+	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
 
 	return status;
 }
@@ -910,7 +910,7 @@ wlan_serialization_get_scan_cmd_using_scan_id(
 
 	pdev_q = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_SCAN];
 
-	wlan_serialization_acquire_lock(pdev_q);
+	wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
 
 	if (is_scan_cmd_from_active_queue)
 		queue = &pdev_q->active_list;
@@ -931,7 +931,7 @@ wlan_serialization_get_scan_cmd_using_scan_id(
 		}
 	}
 
-	wlan_serialization_release_lock(pdev_q);
+	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
 
 release_vdev_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
@@ -980,7 +980,7 @@ void *wlan_serialization_get_active_cmd(
 
 	pdev_q = wlan_serialization_get_pdev_queue_obj(ser_pdev_obj, cmd_type);
 
-	wlan_serialization_acquire_lock(pdev_q);
+	wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
 
 	queue = &pdev_q->active_list;
 
@@ -997,7 +997,7 @@ void *wlan_serialization_get_active_cmd(
 		umac_cmd = cmd_list->cmd.umac_cmd;
 	}
 
-	wlan_serialization_release_lock(pdev_q);
+	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
 
 release_vdev_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);

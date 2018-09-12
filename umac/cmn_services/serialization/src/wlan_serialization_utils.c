@@ -1140,6 +1140,8 @@ QDF_STATUS wlan_serialization_cleanup_all_timers(
 		goto error;
 	}
 
+	wlan_serialization_acquire_lock(&psoc_ser_obj->timer_lock);
+
 	for (i = 0; psoc_ser_obj->max_active_cmds > i; i++) {
 		ser_timer = &psoc_ser_obj->timers[i];
 		if (!ser_timer->cmd)
@@ -1151,6 +1153,7 @@ QDF_STATUS wlan_serialization_cleanup_all_timers(
 		}
 	}
 
+	wlan_serialization_release_lock(&psoc_ser_obj->timer_lock);
 error:
 	ser_exit();
 	return status;
@@ -1783,53 +1786,33 @@ error:
 }
 
 QDF_STATUS
-wlan_serialization_acquire_lock(
-		struct wlan_serialization_pdev_queue *pdev_queue)
+wlan_serialization_acquire_lock(qdf_spinlock_t *lock)
 {
-	if (!pdev_queue) {
-		ser_err("invalid object");
-		return QDF_STATUS_E_FAILURE;
-	}
-	qdf_spin_lock_bh(&pdev_queue->pdev_queue_lock);
+	qdf_spin_lock_bh(lock);
 
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS
-wlan_serialization_release_lock(
-		struct wlan_serialization_pdev_queue *pdev_queue)
+wlan_serialization_release_lock(qdf_spinlock_t *lock)
 {
-	if (!pdev_queue) {
-		ser_err("invalid object");
-		return QDF_STATUS_E_FAILURE;
-	}
-	qdf_spin_unlock_bh(&pdev_queue->pdev_queue_lock);
+	qdf_spin_unlock_bh(lock);
 
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS
-wlan_serialization_create_lock(
-		struct wlan_serialization_pdev_queue *pdev_queue)
+wlan_serialization_create_lock(qdf_spinlock_t *lock)
 {
-	if (!pdev_queue) {
-		ser_err("invalid object");
-		return QDF_STATUS_E_FAILURE;
-	}
-	qdf_spinlock_create(&pdev_queue->pdev_queue_lock);
+	qdf_spinlock_create(lock);
 
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS
-wlan_serialization_destroy_lock(
-		struct wlan_serialization_pdev_queue *pdev_queue)
+wlan_serialization_destroy_lock(qdf_spinlock_t *lock)
 {
-	if (!pdev_queue) {
-		ser_err("invalid object");
-		return QDF_STATUS_E_FAILURE;
-	}
-	qdf_spinlock_destroy(&pdev_queue->pdev_queue_lock);
+	qdf_spinlock_destroy(lock);
 
 	return QDF_STATUS_SUCCESS;
 }
