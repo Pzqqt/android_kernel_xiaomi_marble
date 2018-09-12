@@ -389,3 +389,153 @@ ucfg_get_alternative_chainmask_enabled(struct wlan_objmgr_psoc *psoc,
 				fwol_obj->cfg.alternative_chainmask_enabled;
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS ucfg_get_smart_chainmask_enabled(struct wlan_objmgr_psoc *psoc,
+					    bool *smart_chainmask_enabled)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*smart_chainmask_enabled =
+				fwol_obj->cfg.smart_chainmask_enabled;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_fwol_get_rts_profile(struct wlan_objmgr_psoc *psoc,
+				     uint16_t *get_rts_profile)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*get_rts_profile = fwol_obj->cfg.get_rts_profile;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_fwol_get_enable_fw_log_level(struct wlan_objmgr_psoc *psoc,
+					     uint16_t *enable_fw_log_level)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*enable_fw_log_level = fwol_obj->cfg.enable_fw_log_level;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_fwol_get_enable_fw_log_type(struct wlan_objmgr_psoc *psoc,
+					    uint16_t *enable_fw_log_type)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*enable_fw_log_type = fwol_obj->cfg.enable_fw_log_type;
+	return QDF_STATUS_SUCCESS;
+}
+
+#ifdef FEATURE_WLAN_RA_FILTERING
+QDF_STATUS ucfg_fwol_set_is_rate_limit_enabled(struct wlan_objmgr_psoc *psoc,
+					       bool is_rate_limit_enabled)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	fwol_obj->cfg.is_rate_limit_enabled = is_rate_limit_enabled;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_fwol_get_is_rate_limit_enabled(struct wlan_objmgr_psoc *psoc,
+					       bool *is_rate_limit_enabled)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*is_rate_limit_enabled = fwol_obj->cfg.is_rate_limit_enabled;
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef WLAN_FEATURE_TSF
+QDF_STATUS ucfg_fwol_get_tsf_gpio_pin(struct wlan_objmgr_psoc *psoc,
+				      uint32_t *tsf_gpio_pin)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*tsf_gpio_pin = fwol_obj->cfg.tsf_gpio_pin;
+	return QDF_STATUS_SUCCESS;
+}
+#else
+QDF_STATUS ucfg_fwol_get_tsf_gpio_pin(struct wlan_objmgr_psoc *psoc,
+				      uint32_t *tsf_gpio_pin)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+#ifdef DHCP_SERVER_OFFLOAD
+QDF_STATUS
+ucfg_fwol_get_enable_dhcp_server_offload(struct wlan_objmgr_psoc *psoc,
+					 bool *enable_dhcp_server_offload)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*enable_dhcp_server_offload = fwol_obj->cfg.enable_dhcp_server_offload;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_fwol_get_dhcp_max_num_clients(struct wlan_objmgr_psoc *psoc,
+					      uint32_t *dhcp_max_num_clients)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*dhcp_max_num_clients = fwol_obj->cfg.dhcp_max_num_clients;
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+

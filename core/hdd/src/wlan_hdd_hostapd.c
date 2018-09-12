@@ -4482,6 +4482,37 @@ int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx,
 	return 0;
 }
 #endif
+
+/**
+ * wlan_hdd_is_dhcp_enabled: Enable DHCP offload
+ * @hdd_ctx: HDD context handler
+ * @adapter: Adapter pointer
+ *
+ * Return: None
+ */
+#ifdef DHCP_SERVER_OFFLOAD
+static void wlan_hdd_is_dhcp_enabled(struct hdd_context *hdd_ctx,
+				     struct hdd_adapter *adapter)
+{
+	bool enable_dhcp_server_offload;
+	QDF_STATUS status;
+
+	status = ucfg_fwol_get_enable_dhcp_server_offload(
+						hdd_ctx->psoc,
+						&enable_dhcp_server_offload);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	if (enable_dhcp_server_offload)
+		wlan_hdd_set_dhcp_server_offload(adapter);
+}
+#else
+static void wlan_hdd_is_dhcp_enabled(struct hdd_context *hdd_ctx,
+				     struct hdd_adapter *adapter)
+{
+}
+#endif
+
 /**
  * wlan_hdd_cfg80211_start_bss() - start bss
  * @adapter: Pointer to hostapd adapter
@@ -5169,11 +5200,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		hdd_green_ap_start_state_mc(hdd_ctx, adapter->device_mode,
 					    true);
 	}
-#ifdef DHCP_SERVER_OFFLOAD
-	if (iniConfig->enableDHCPServerOffload)
-		wlan_hdd_set_dhcp_server_offload(adapter);
-#endif /* DHCP_SERVER_OFFLOAD */
 
+	wlan_hdd_is_dhcp_enabled(hdd_ctx, adapter);
 	ucfg_p2p_status_start_bss(adapter->vdev);
 
 	/* Check and restart SAP if it is on unsafe channel */

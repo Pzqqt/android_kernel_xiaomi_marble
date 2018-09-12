@@ -154,6 +154,8 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
 #define HDD_NUM_NL80211_BANDS   ((enum nl80211_band)IEEE80211_NUM_BANDS)
 #endif
 
+#define TSF_GPIO_PIN_INVALID 255
+
 /** Length of the TX queue for the netdev */
 #define HDD_NETDEV_TX_QUEUE_LEN (3000)
 

@@ -23,11 +23,11 @@
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_tsf.h"
 #include "wma_api.h"
+#include "wlan_fwol_ucfg_api.h"
 #include <qca_vendor.h>
 
 static struct completion tsf_sync_get_completion_evt;
 #define WLAN_TSF_SYNC_GET_TIMEOUT 2000
-
 /**
  * enum hdd_tsf_op_result - result of tsf operation
  *
@@ -1269,6 +1269,7 @@ int wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 void wlan_hdd_tsf_init(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
+	uint32_t tsf_gpio_pin = TSF_GPIO_PIN_INVALID;
 
 	if (!hdd_ctx)
 		return;
@@ -1278,11 +1279,15 @@ void wlan_hdd_tsf_init(struct hdd_context *hdd_ctx)
 
 	qdf_atomic_init(&hdd_ctx->cap_tsf_flag);
 
-	if (hdd_ctx->config->tsf_gpio_pin == TSF_GPIO_PIN_INVALID)
+	status = ucfg_fwol_get_tsf_gpio_pin(hdd_ctx->psoc, &tsf_gpio_pin);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	if (tsf_gpio_pin == TSF_GPIO_PIN_INVALID)
 		goto fail;
 
 	status = sme_set_tsf_gpio(hdd_ctx->mac_handle,
-				  hdd_ctx->config->tsf_gpio_pin);
+				  tsf_gpio_pin);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("set tsf GPIO failed, status: %d", status);
 		goto fail;

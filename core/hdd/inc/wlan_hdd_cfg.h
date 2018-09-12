@@ -4067,26 +4067,6 @@ enum hdd_link_speed_rpt_type {
 #endif
 #endif
 
-
-/* gFwDebugLogType takes values from enum dbglog_process_t,
- * make default value as DBGLOG_PROCESS_NET_RAW to give the
- * logs to net link since cnss_diag service is started at boot
- * time by default.
- */
-#define CFG_ENABLE_FW_LOG_TYPE            "gFwDebugLogType"
-#define CFG_ENABLE_FW_LOG_TYPE_MIN        (0)
-#define CFG_ENABLE_FW_LOG_TYPE_MAX        (255)
-#define CFG_ENABLE_FW_LOG_TYPE_DEFAULT    (3)
-
-/* gFwDebugLogLevel takes values from enum DBGLOG_LOG_LVL,
- * make default value as DBGLOG_WARN to enable error and
- * warning logs by default.
- */
-#define CFG_ENABLE_FW_DEBUG_LOG_LEVEL          "gFwDebugLogLevel"
-#define CFG_ENABLE_FW_DEBUG_LOG_LEVEL_MIN      (0)
-#define CFG_ENABLE_FW_DEBUG_LOG_LEVEL_MAX      (255)
-#define CFG_ENABLE_FW_DEBUG_LOG_LEVEL_DEFAULT  (3)
-
 /* For valid values of log levels check enum DBGLOG_LOG_LVL and
  * for valid values of module ids check enum WLAN_MODULE_ID.
  */
@@ -4110,47 +4090,6 @@ enum hdd_link_speed_rpt_type {
 
 #define CFG_ENABLE_CONCURRENT_STA           "gEnableConcurrentSTA"
 #define CFG_ENABLE_CONCURRENT_STA_DEFAULT   ""
-
-/*
- * <ini>
- * gEnableRTSProfiles - It will use configuring different RTS profiles
- * @Min: 0
- * @Max: 66
- * @Default: 33
- *
- * This ini used for configuring different RTS profiles
- * to firmware.
- * Following are the valid values for the rts profile:
- * RTSCTS_DISABLED				0
- * NOT_ALLOWED					1
- * NOT_ALLOWED					2
- * RTSCTS_DISABLED				16
- * RTSCTS_ENABLED_4_SECOND_RATESERIES		17
- * CTS2SELF_ENABLED_4_SECOND_RATESERIES		18
- * RTSCTS_DISABLED				32
- * RTSCTS_ENABLED_4_SWRETRIES			33
- * CTS2SELF_ENABLED_4_SWRETRIES			34
- * NOT_ALLOWED					48
- * NOT_ALLOWED					49
- * NOT_ALLOWED					50
- * RTSCTS_DISABLED				64
- * RTSCTS_ENABLED_4_ALL_RATESERIES		65
- * CTS2SELF_ENABLED_4_ALL_RATESERIES		66
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_FW_RTS_PROFILE              "gEnableRTSProfiles"
-#define CFG_ENABLE_FW_RTS_PROFILE_MIN          (0)
-#define CFG_ENABLE_FW_RTS_PROFILE_MAX          (66)
-#define CFG_ENABLE_FW_RTS_PROFILE_DEFAULT      (33)
-
 
 /*
  * QDF Trace Enable Control
@@ -5274,11 +5213,6 @@ enum hdd_link_speed_rpt_type {
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 
 #ifdef FEATURE_WLAN_RA_FILTERING
-#define CFG_RA_FILTER_ENABLE_NAME                  "gRAFilterEnable"
-#define CFG_RA_FILTER_ENABLE_MIN                   (0)
-#define CFG_RA_FILTER_ENABLE_MAX                   (1)
-#define CFG_RA_FILTER_ENABLE_DEFAULT               (1)
-
 #define CFG_RA_RATE_LIMIT_INTERVAL_NAME            "gRArateLimitInterval"
 #define CFG_RA_RATE_LIMIT_INTERVAL_MIN             (60)
 #define CFG_RA_RATE_LIMIT_INTERVAL_MAX             (3600)
@@ -5759,16 +5693,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_DEAUTH_TO_DISASSOC_MAP_DEFAULT (0)
 
 #ifdef DHCP_SERVER_OFFLOAD
-#define CFG_DHCP_SERVER_OFFLOAD_SUPPORT_NAME      "gDHCPServerOffloadEnable"
-#define CFG_DHCP_SERVER_OFFLOAD_SUPPORT_MIN       (0)
-#define CFG_DHCP_SERVER_OFFLOAD_SUPPORT_MAX       (1)
-#define CFG_DHCP_SERVER_OFFLOAD_SUPPORT_DEFAULT   (CFG_DHCP_SERVER_OFFLOAD_SUPPORT_MIN)
-
-#define CFG_DHCP_SERVER_OFFLOAD_NUM_CLIENT_NAME     "gDHCPMaxNumClients"
-#define CFG_DHCP_SERVER_OFFLOAD_NUM_CLIENT_MIN      (1)
-#define CFG_DHCP_SERVER_OFFLOAD_NUM_CLIENT_MAX      (8)
-#define CFG_DHCP_SERVER_OFFLOAD_NUM_CLIENT_DEFAULT  (CFG_DHCP_SERVER_OFFLOAD_NUM_CLIENT_MAX)
-
 #define CFG_DHCP_SERVER_IP_NAME     "gDHCPServerIP"
 #define CFG_DHCP_SERVER_IP_DEFAULT  ""
 #endif /* DHCP_SERVER_OFFLOAD */
@@ -6131,29 +6055,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_MAX_MSDUS_PER_RXIND_DEFAULT       (32)
 
 /*
- * <ini>
- * gEnableSmartChainmask - Enable Smart Chainmask
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable the Smart Chainmask feature via
- * the WMI_PDEV_PARAM_SMART_CHAINMASK_SCHEME firmware parameter.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_SMART_CHAINMASK_NAME    "gEnableSmartChainmask"
-#define CFG_ENABLE_SMART_CHAINMASK_MIN     (0)
-#define CFG_ENABLE_SMART_CHAINMASK_MAX     (1)
-#define CFG_ENABLE_SMART_CHAINMASK_DEFAULT (0)
-
-/*
  * set the self gen power value from
  * 0 to 0xffff
  */
@@ -6373,13 +6274,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_INFORM_BSS_RSSI_RAW_MIN                (0)
 #define CFG_INFORM_BSS_RSSI_RAW_MAX                (1)
 #define CFG_INFORM_BSS_RSSI_RAW_DEFAULT            (1)
-
-/* GPIO pin to toggle when capture tsf */
-#define CFG_SET_TSF_GPIO_PIN_NAME                  "gtsf_gpio_pin"
-#define CFG_SET_TSF_GPIO_PIN_MIN                   (0)
-#define CFG_SET_TSF_GPIO_PIN_MAX                   (254)
-#define TSF_GPIO_PIN_INVALID                       (255)
-#define CFG_SET_TSF_GPIO_PIN_DEFAULT               (TSF_GPIO_PIN_INVALID)
 
 #ifdef WLAN_FEATURE_TSF_PLUS
 /* PTP options */
@@ -9290,7 +9184,6 @@ struct hdd_config {
 #endif
 
 #ifdef FEATURE_WLAN_RA_FILTERING
-	bool IsRArateLimitEnabled;
 	uint16_t RArateLimitInterval;
 #endif
 #ifdef FEATURE_WLAN_SCAN_PNO
@@ -9501,13 +9394,7 @@ struct hdd_config {
 	u8  periodic_stats_disp_time;
 #endif /* MSM_PLATFORM */
 
-	/* FW debug log parameters */
-	uint32_t enableFwLogType;
-	uint32_t enableFwLogLevel;
 	uint8_t enableFwModuleLogLevel[FW_MODULE_LOG_LEVEL_STRING_LENGTH];
-
-	/* RTS profile parameter */
-	uint32_t rts_profile;
 
 	uint8_t gMaxConcurrentActiveSessions;
 
@@ -9543,8 +9430,6 @@ struct hdd_config {
 
 	bool gEnableDeauthToDisassocMap;
 #ifdef DHCP_SERVER_OFFLOAD
-	bool enableDHCPServerOffload;
-	uint32_t dhcpMaxNumClients;
 	uint8_t dhcpServerIP[IPADDR_STRING_LENGTH];
 #endif /* DHCP_SERVER_OFFLOAD */
 	bool enable_mac_spoofing;
@@ -9589,7 +9474,6 @@ struct hdd_config {
 	uint8_t dbs_scan_selection[CFG_DBS_SCAN_PARAM_LENGTH];
 	uint32_t sta_sap_scc_on_dfs_chan;
 	uint32_t sta_sap_scc_on_lte_coex_chan;
-	bool smart_chainmask_enabled;
 	uint16_t  self_gen_frm_pwr;
 #ifdef FEATURE_WLAN_SCAN_PNO
 	bool pno_channel_prediction;
@@ -9607,8 +9491,6 @@ struct hdd_config {
 #endif
 	uint8_t inform_bss_rssi_raw;
 #ifdef WLAN_FEATURE_TSF
-	uint32_t tsf_gpio_pin;
-
 #ifdef WLAN_FEATURE_TSF_PLUS
 	uint8_t tsf_ptp_options;
 #endif /* WLAN_FEATURE_TSF_PLUS */

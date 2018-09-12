@@ -1908,7 +1908,8 @@ static int hdd_generate_macaddr_auto(struct hdd_context *hdd_ctx)
 static void hdd_update_ra_rate_limit(struct hdd_context *hdd_ctx,
 				     struct wma_tgt_cfg *cfg)
 {
-	hdd_ctx->config->IsRArateLimitEnabled = cfg->is_ra_rate_limit_enabled;
+	ucfg_fwol_set_is_rate_limit_enabled(hdd_ctx->psoc,
+					    cfg->is_ra_rate_limit_enabled);
 }
 #else
 static void hdd_update_ra_rate_limit(struct hdd_context *hdd_ctx,
@@ -4411,6 +4412,8 @@ static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
 	uint8_t count = 0, numentries = 0,
 			moduleloglevel[FW_MODULE_LOG_LEVEL_STRING_LENGTH];
 	uint32_t value = 0;
+	QDF_STATUS status;
+	uint16_t enable_fw_log_level, enable_fw_log_type;
 	int ret;
 
 	if (QDF_GLOBAL_FTM_MODE == cds_get_conparam() ||
@@ -4420,21 +4423,25 @@ static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
 	}
 
 	/* Enable FW logs based on INI configuration */
-	hdd_ctx->fw_log_settings.dl_type =
-			hdd_ctx->config->enableFwLogType;
+	status = ucfg_fwol_get_enable_fw_log_type(hdd_ctx->psoc,
+						  &enable_fw_log_type);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
 	ret = sme_cli_set_command(adapter->session_id,
 			WMI_DBGLOG_TYPE,
-			hdd_ctx->config->enableFwLogType,
+			enable_fw_log_type,
 			DBG_CMD);
 	if (ret != 0)
 		hdd_err("Failed to enable FW log type ret %d",
 			ret);
 
-	hdd_ctx->fw_log_settings.dl_loglevel =
-			hdd_ctx->config->enableFwLogLevel;
+	status = ucfg_fwol_get_enable_fw_log_level(hdd_ctx->psoc,
+						   &enable_fw_log_level);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
 	ret = sme_cli_set_command(adapter->session_id,
 			WMI_DBGLOG_LOG_LEVEL,
-			hdd_ctx->config->enableFwLogLevel,
+			enable_fw_log_level,
 			DBG_CMD);
 	if (ret != 0)
 		hdd_err("Failed to enable FW log level ret %d",
@@ -4672,7 +4679,7 @@ err:
 int hdd_set_fw_params(struct hdd_adapter *adapter)
 {
 	int ret;
-	uint16_t upper_brssi_thresh, lower_brssi_thresh;
+	uint16_t upper_brssi_thresh, lower_brssi_thresh, rts_profile;
 	bool enable_dtim_1chrx;
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
@@ -4808,9 +4815,13 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 		goto error;
 	}
 
+	status = ucfg_fwol_get_rts_profile(hdd_ctx->psoc, &rts_profile);
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EINVAL;
+
 	ret = sme_cli_set_command(adapter->session_id,
 				  WMI_VDEV_PARAM_ENABLE_RTSCTS,
-				  hdd_ctx->config->rts_profile,
+				  rts_profile,
 				  VDEV_CMD);
 	if (ret) {
 		hdd_err("FAILED TO SET RTSCTS Profile ret:%d", ret);
@@ -9611,10 +9622,17 @@ static inline void hdd_txrx_populate_cds_config(struct cds_config_info
 static inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
 			      struct hdd_context *hdd_ctx)
 {
+	bool is_rate_limit_enabled;
+	QDF_STATUS status;
+
+	status = ucfg_fwol_get_is_rate_limit_enabled(hdd_ctx->psoc,
+						     &is_rate_limit_enabled);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
 	cds_cfg->ra_ratelimit_interval =
 		hdd_ctx->config->RArateLimitInterval;
-	cds_cfg->is_ra_ratelimit_enabled =
-		hdd_ctx->config->IsRArateLimitEnabled;
+	cds_cfg->is_ra_ratelimit_enabled = is_rate_limit_enabled;
 }
 #else
 static inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
@@ -10200,12 +10218,19 @@ static void hdd_initialize_mac_address(struct hdd_context *hdd_ctx)
 static int hdd_set_smart_chainmask_enabled(struct hdd_context *hdd_ctx)
 {
 	int vdev_id = 0;
-	int value = hdd_ctx->config->smart_chainmask_enabled;
+	QDF_STATUS status;
+	bool smart_chainmask_enabled;
 	int param_id = WMI_PDEV_PARAM_SMART_CHAINMASK_SCHEME;
 	int vpdev = PDEV_CMD;
 	int ret;
 
-	ret = sme_cli_set_command(vdev_id, param_id, value, vpdev);
+	status = ucfg_get_smart_chainmask_enabled(hdd_ctx->psoc,
+						  &smart_chainmask_enabled);
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EINVAL;
+
+	ret = sme_cli_set_command(vdev_id, param_id,
+				  (int)smart_chainmask_enabled, vpdev);
 	if (ret)
 		hdd_err("WMI_PDEV_PARAM_SMART_CHAINMASK_SCHEME failed %d", ret);
 
@@ -13808,10 +13833,18 @@ static inline void hdd_ra_populate_pmo_config(
 			struct pmo_psoc_cfg *psoc_cfg,
 			struct hdd_context *hdd_ctx)
 {
+	bool is_rate_limit_enabled;
+	QDF_STATUS status;
+
+	status = ucfg_fwol_get_is_rate_limit_enabled(hdd_ctx->psoc,
+						     &is_rate_limit_enabled);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
 	psoc_cfg->ra_ratelimit_interval =
 		hdd_ctx->config->RArateLimitInterval;
 	psoc_cfg->ra_ratelimit_enable =
-		hdd_ctx->config->IsRArateLimitEnabled;
+		is_rate_limit_enabled;
 }
 #else
 static inline void hdd_ra_populate_pmo_config(

@@ -12812,7 +12812,9 @@ static void wlan_hdd_set_dhcp_server_offload(struct hdd_adapter *adapter)
 	uint8_t srv_ip[IPADDR_NUM_ENTRIES];
 	uint8_t num;
 	uint32_t temp;
+	uint32_t dhcp_max_num_clients;
 	mac_handle_t mac_handle;
+	QDF_STATUS status;
 
 	pDhcpSrvInfo = qdf_mem_malloc(sizeof(*pDhcpSrvInfo));
 	if (NULL == pDhcpSrvInfo) {
@@ -12821,7 +12823,13 @@ static void wlan_hdd_set_dhcp_server_offload(struct hdd_adapter *adapter)
 	}
 	pDhcpSrvInfo->vdev_id = adapter->session_id;
 	pDhcpSrvInfo->dhcpSrvOffloadEnabled = true;
-	pDhcpSrvInfo->dhcpClientNum = hdd_ctx->config->dhcpMaxNumClients;
+
+	status = ucfg_fwol_get_dhcp_max_num_clients(hdd_ctx->psoc,
+						    &dhcp_max_num_clients);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	pDhcpSrvInfo->dhcpClientNum = dhcp_max_num_clients;
 	hdd_string_to_u8_array(hdd_ctx->config->dhcpServerIP,
 			       srv_ip, &numEntries, IPADDR_NUM_ENTRIES);
 	if (numEntries != IPADDR_NUM_ENTRIES) {
