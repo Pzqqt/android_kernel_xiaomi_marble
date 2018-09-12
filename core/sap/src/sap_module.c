@@ -1264,8 +1264,9 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 					       enum phy_ch_width target_bw,
 					       bool strict)
 {
-
+#ifndef CONFIG_VDEV_SM
 	tWLAN_SAPEvent sapEvent;
+#endif
 	tpAniSirGlobal pMac = NULL;
 	void *hHal = NULL;
 	bool valid;
@@ -1394,7 +1395,9 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 			pMac->sap.SapDfsInfo.cac_state =
 					eSAP_DFS_DO_NOT_SKIP_CAC;
 			sap_cac_reset_notify(hHal);
-
+#ifdef CONFIG_VDEV_SM
+			sme_csa_restart(hHal, sapContext->sessionId);
+#else
 			/*
 			 * Post the eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START
 			 * to SAP state machine to process the channel
@@ -1407,7 +1410,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 			sapEvent.u2 = 0;
 
 			sap_fsm(sapContext, &sapEvent);
-
+#endif
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Failed to request Channel Change, since SAP is not in SAP_STARTED state",

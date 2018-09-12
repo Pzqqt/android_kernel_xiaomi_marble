@@ -8463,6 +8463,21 @@ QDF_STATUS lim_ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 	return QDF_STATUS_SUCCESS;
 }
 
+static inline void lim_send_csa_restart_resp(tpAniSirGlobal mac_ctx,
+					     tpPESession session)
+{
+	struct scheduler_msg msg = {0};
+	QDF_STATUS status;
+
+	msg.type = eWNI_SME_CSA_RESTART_RSP;
+	msg.bodyptr = NULL;
+	msg.bodyval = session->smeSessionId;
+
+	status = scheduler_post_msg(QDF_MODULE_ID_SME, &msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		sme_err("Failed to post eWNI_SME_CSA_RESTART_RSP");
+}
+
 QDF_STATUS lim_ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
 					  enum beacon_update_op op,
 					  uint16_t data_len, void *data)
@@ -8473,11 +8488,12 @@ QDF_STATUS lim_ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
 		pe_err("event_data is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
+	session = (tpPESession)data;
 
-	if (op == BEACON_INIT) {
-		session = (tpPESession)data;
+	if (op == BEACON_INIT)
 		lim_send_beacon_ind(session->mac_ctx, session);
-	}
+	else if (op == BEACON_CSA)
+		lim_send_csa_restart_resp(session->mac_ctx, session);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -8516,6 +8532,27 @@ QDF_STATUS lim_ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 				      uint16_t data_len, void *data)
 {
 	return lim_send_vdev_stop((tpPESession)data);
+}
+
+QDF_STATUS lim_ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
+					 uint16_t data_len, void *data)
+{
+	tpPESession session = (tpPESession)data;
+
+	if (!data) {
+		pe_err("data is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	lim_set_channel(session->mac_ctx, session->currentOperChannel,
+			session->ch_center_freq_seg0,
+			session->ch_center_freq_seg1,
+			session->ch_width,
+			session->maxTxPower, session->peSessionId,
+			session->cac_duration_ms,
+			session->dfs_regdomain);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 #else

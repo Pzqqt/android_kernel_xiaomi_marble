@@ -34,6 +34,7 @@
 #include "wma_sar_public_structs.h"
 #include <cdp_txrx_ops.h>
 #include "include/wlan_vdev_mlme.h"
+#include "wlan_mlme_vdev_mgr_interface.h"
 
 typedef void *WMA_HANDLE;
 

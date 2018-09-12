@@ -1319,6 +1319,16 @@ static QDF_STATUS dfs_msg_processor(tpAniSirGlobal mac,
 			  session_id);
 		break;
 	}
+	case eWNI_SME_CSA_RESTART_RSP:
+	{
+		session_id = msg->bodyval;
+		roam_status = 0;
+		roam_result = eCSR_ROAM_RESULT_CSA_RESTART_RSP;
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			  "sapdfs: Received eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_REQ vdevid%d",
+			  session_id);
+		break;
+	}
 	default:
 	{
 		sme_err("Invalid DFS message: 0x%x", msg->type);
@@ -2108,6 +2118,7 @@ QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 	case eWNI_SME_DFS_RADAR_FOUND:
 	case eWNI_SME_DFS_CAC_COMPLETE:
 	case eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND:
+	case eWNI_SME_CSA_RESTART_RSP:
 		status = dfs_msg_processor(pMac, pMsg);
 		qdf_mem_free(pMsg->bodyptr);
 		break;
@@ -10465,6 +10476,21 @@ QDF_STATUS sme_roam_start_beacon_req(tHalHandle hHal, struct qdf_mac_addr bssid,
 	}
 	return status;
 }
+
+#ifdef CONFIG_VDEV_SM
+QDF_STATUS sme_csa_restart(tpAniSirGlobal mac_ctx, uint8_t session_id)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		status = csr_csa_restart(mac_ctx, session_id);
+		sme_release_global_lock(&mac_ctx->sme);
+	}
+
+	return status;
+}
+#endif
 
 /**
  * sme_roam_csa_ie_request() - request CSA IE transmission from PE

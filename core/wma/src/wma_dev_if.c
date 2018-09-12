@@ -1305,9 +1305,14 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 							&iface->beacon_filter);
 			}
 		}
-
+#ifdef CONFIG_VDEV_SM
+		wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+					      WLAN_VDEV_SM_EV_RESTART_RESP,
+					      sizeof(*params), params);
+#else
 		wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
 					   (void *)params, 0);
+#endif
 	} else if (req_msg->msg_type == WMA_ADD_BSS_REQ) {
 		tpAddBssParams bssParams = (tpAddBssParams) req_msg->user_data;
 

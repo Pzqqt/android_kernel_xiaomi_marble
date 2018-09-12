@@ -1083,6 +1083,16 @@ void lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx,
  */
 void lim_send_mgmt_frame_tx(tpAniSirGlobal mac_ctx,
 		struct scheduler_msg *msg);
+
+/**
+ * lim_send_csa_restart_req() - send csa restart req
+ * @mac_ctx Pointer to Global MAC structure
+ * @vdev_id: vdev id
+ *
+ * Return: None
+ */
+void lim_send_csa_restart_req(tpAniSirGlobal mac_ctx, uint8_t vdev_id);
+
 /**
  * lim_process_mlm_start_req() - process MLM_START_REQ message
  *

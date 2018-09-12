@@ -875,6 +875,18 @@ QDF_STATUS sme_roam_channel_change_req(tHalHandle hHal,
 
 QDF_STATUS sme_roam_start_beacon_req(tHalHandle hHal,
 		struct qdf_mac_addr bssid, uint8_t dfsCacWaitStatus);
+
+#ifdef CONFIG_VDEV_SM
+/**
+ * sme_csa_restart() - request CSA IE transmission from PE
+ * @mac_ctx: mac context
+ * @session_id: SAP session id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_csa_restart(tpAniSirGlobal mac_ctx, uint8_t session_id);
+#endif
+
 QDF_STATUS sme_roam_csa_ie_request(tHalHandle hHal, struct qdf_mac_addr bssid,
 				   uint8_t targetChannel, uint8_t csaIeReqd,
 				   struct ch_params *ch_params);

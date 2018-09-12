@@ -1191,6 +1191,14 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 		wlansap_roam_process_dfs_radar_found(mac_ctx, sap_ctx,
 						&qdf_ret_status);
 		break;
+	case eCSR_ROAM_RESULT_CSA_RESTART_RSP:
+		qdf_ret_status = wlansap_dfs_send_csa_ie_request(sap_ctx);
+
+		if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status))
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+				  FL("CSR roam_result = eCSR_ROAM_RESULT_CSA_RESTART_RSP %d"),
+				  roam_result);
+		break;
 	case eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS:
 		wlansap_roam_process_dfs_chansw_update(hal, sap_ctx,
 				&qdf_ret_status);

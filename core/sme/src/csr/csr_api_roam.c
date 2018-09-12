@@ -20909,6 +20909,25 @@ QDF_STATUS csr_send_ext_change_channel(tpAniSirGlobal mac_ctx, uint32_t channel,
 	return status;
 }
 
+#ifdef CONFIG_VDEV_SM
+QDF_STATUS csr_csa_restart(tpAniSirGlobal mac_ctx, uint8_t session_id)
+{
+	QDF_STATUS status;
+	struct scheduler_msg message = {0};
+
+	/* Serialize the req through MC thread */
+	message.bodyval = session_id;
+	message.type    = eWNI_SME_CSA_RESTART_REQ;
+	status = scheduler_post_msg(QDF_MODULE_ID_PE, &message);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("scheduler_post_msg failed!(err=%d)", status);
+		status = QDF_STATUS_E_FAILURE;
+	}
+
+	return status;
+}
+#endif
+
 /**
  * csr_roam_send_chan_sw_ie_request() - Request to transmit CSA IE
  * @mac_ctx:        Global MAC context

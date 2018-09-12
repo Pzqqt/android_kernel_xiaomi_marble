@@ -999,6 +999,17 @@ void csr_clear_votes_for_country_info(tpAniSirGlobal pMac);
 
 QDF_STATUS csr_send_ext_change_channel(tpAniSirGlobal mac_ctx,
 				uint32_t channel, uint8_t session_id);
+#ifdef CONFIG_VDEV_SM
+/**
+ * csr_csa_start() - request CSA IE transmission from PE
+ * @mac_ctx: handle returned by mac_open
+ * @session_id: SAP session id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS csr_csa_restart(tpAniSirGlobal mac_ctx, uint8_t session_id);
+#endif
+
 
 #ifdef QCA_HT_2040_COEX
 QDF_STATUS csr_set_ht2040_mode(tpAniSirGlobal pMac, uint32_t sessionId,

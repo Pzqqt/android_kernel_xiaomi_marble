@@ -37,6 +37,7 @@
 #include "lim_timer_utils.h"
 #include "lim_trace.h"
 #include "include/wlan_vdev_mlme.h"
+#include "wlan_mlme_vdev_mgr_interface.h"
 
 typedef enum {
 	ONE_BYTE = 1,
@@ -1566,6 +1567,21 @@ QDF_STATUS lim_ap_mlme_vdev_disconnect_peers(struct vdev_mlme_obj *vdev_mlme,
  */
 QDF_STATUS lim_ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 				      uint16_t data_len, void *data);
+
+/**
+ * lim_ap_mlme_vdev_restart_send - Invokes VDEV restart operation
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes VDEV restart operation
+ *
+ * Return: SUCCESS on successful completion of restart operation
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS lim_ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
+					 uint16_t data_len, void *data);
+
 #endif
 
 #endif /* __LIM_UTILS_H */

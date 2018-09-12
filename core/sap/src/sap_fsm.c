@@ -2262,7 +2262,11 @@ sap_fsm_state_init(struct sap_context *sap_ctx,
 				  QDF_TRACE_LEVEL_ERROR,
 				  FL("sap_goto_starting failed"));
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_START) {
-#ifndef CONFIG_VDEV_SM
+#ifdef CONFIG_VDEV_SM
+		sap_ctx->fsm_state = SAP_STARTING;
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
+			  FL("from state SAP_INIT => SAP_STARTING"));
+#else
 		/*
 		 * No need of state check here, caller is expected to perform
 		 * the checks before sending the event
@@ -2681,12 +2685,19 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 					  QDF_TRACE_LEVEL_INFO_MED,
 					  FL("sapdfs: Sending CSAIE for sapctx[%pK]"),
 					  temp_sap_ctx);
+#ifdef CONFIG_VDEV_SM
+				qdf_status = sme_csa_restart(mac_ctx,
+						       temp_sap_ctx->sessionId);
+#else
 
 				qdf_status =
 					wlansap_dfs_send_csa_ie_request(temp_sap_ctx);
+#endif
 			}
 		}
-	} else if (eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START == msg) {
+	}
+#ifndef CONFIG_VDEV_SM
+	else if (eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START == msg) {
 		enum QDF_OPMODE persona;
 
 		if (!sap_ctx) {
@@ -2704,7 +2715,9 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 
 		if ((QDF_SAP_MODE == persona) || (QDF_P2P_GO_MODE == persona))
 			qdf_status = wlansap_dfs_send_csa_ie_request(sap_ctx);
-	} else {
+	}
+#endif
+	else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, invalid event msg %d"),
 			  "SAP_STARTED", msg);

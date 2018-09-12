@@ -2080,6 +2080,11 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
+#ifdef CONFIG_VDEV_SM
+	case eWNI_SME_CSA_RESTART_REQ:
+		lim_send_csa_restart_req(mac_ctx, msg->bodyval);
+		break;
+#endif
 	default:
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;

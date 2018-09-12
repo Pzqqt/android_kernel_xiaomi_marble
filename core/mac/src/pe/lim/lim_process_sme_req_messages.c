@@ -5024,6 +5024,9 @@ static void lim_process_sme_channel_change_request(tpAniSirGlobal mac_ctx,
 		ch_change_req->targetChannel;
 	session_entry->limRFBand =
 		lim_get_rf_band(session_entry->currentOperChannel);
+	session_entry->cac_duration_ms = ch_change_req->cac_duration_ms;
+	session_entry->dfs_regdomain = ch_change_req->dfs_regdomain;
+	session_entry->maxTxPower = max_tx_pwr;
 
 	/* Update the global beacon filter */
 	lim_update_bcn_probe_filter(mac_ctx, session_entry);
@@ -5045,6 +5048,23 @@ static void lim_process_sme_channel_change_request(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy(&session_entry->extRateSet,
 			&ch_change_req->extended_rateset,
 			sizeof(session_entry->extRateSet));
+
+#ifdef CONFIG_VDEV_SM
+	ap_mlme_set_chan_switch_in_progress(session_entry->vdev, true);
+	if (wlan_vdev_mlme_get_state(session_entry->vdev) ==
+	    WLAN_VDEV_S_DFS_CAC_WAIT)
+		wlan_vdev_mlme_sm_deliver_evt(session_entry->vdev,
+					      WLAN_VDEV_SM_EV_RADAR_DETECTED,
+					      sizeof(*session_entry),
+					      session_entry);
+	else
+		wlan_vdev_mlme_sm_deliver_evt(session_entry->vdev,
+					      WLAN_VDEV_SM_EV_CSA_COMPLETE,
+					      sizeof(*session_entry),
+					      session_entry);
+
+
+#else
 	lim_set_channel(mac_ctx, ch_change_req->targetChannel,
 			session_entry->ch_center_freq_seg0,
 			session_entry->ch_center_freq_seg1,
@@ -5052,6 +5072,7 @@ static void lim_process_sme_channel_change_request(tpAniSirGlobal mac_ctx,
 			max_tx_pwr, session_entry->peSessionId,
 			ch_change_req->cac_duration_ms,
 			ch_change_req->dfs_regdomain);
+#endif
 }
 
 /******************************************************************************
@@ -6152,5 +6173,23 @@ void lim_process_obss_color_collision_info(tpAniSirGlobal mac_ctx,
 		       obss_color_info->vdev_id, obss_color_info->evt_type);
 		return;
 	}
+}
+#endif
+
+#ifdef CONFIG_VDEV_SM
+void lim_send_csa_restart_req(tpAniSirGlobal mac_ctx, uint8_t vdev_id)
+{
+	tpPESession session;
+
+	session = pe_find_session_by_sme_session_id(mac_ctx, vdev_id);
+
+	if (!session) {
+		pe_err("session not found for vdev id %d", vdev_id);
+		return;
+	}
+
+	wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+				      WLAN_VDEV_SM_EV_CSA_RESTART,
+				      sizeof(*session), session);
 }
 #endif
