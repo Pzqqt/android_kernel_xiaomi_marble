@@ -12921,6 +12921,8 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 		WMI_RSRC_CFG_FLAG_TCL_CCE_DISABLE_SET(resource_cfg->flag1, 1);
 
 	wmi_copy_twt_resource_config(resource_cfg, tgt_res_cfg);
+	resource_cfg->peer_map_unmap_v2_support =
+		tgt_res_cfg->peer_map_unmap_v2;
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd

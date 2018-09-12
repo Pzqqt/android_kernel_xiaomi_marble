@@ -2950,6 +2950,8 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			u_int16_t peer_id;
 			u_int16_t hw_peer_id;
 			u_int8_t vdev_id;
+			u_int8_t is_wds;
+			struct dp_soc *dpsoc = (struct dp_soc *)soc->dp_soc;
 
 			peer_id = HTT_RX_PEER_MAP_PEER_ID_GET(*msg_word);
 			hw_peer_id =
@@ -2963,16 +2965,28 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 				"HTT_T2H_MSG_TYPE_PEER_MAP msg for peer id %d vdev id %d n",
 				peer_id, vdev_id);
 
+			/*
+			 * check if peer already exists for this peer_id, if so
+			 * this peer map event is in response for a wds peer add
+			 * wmi command sent during wds source port learning.
+			 * in this case just add the ast entry to the existing
+			 * peer ast_list.
+			 */
+			is_wds = !!(dpsoc->peer_id_to_obj_map[peer_id]);
 			dp_rx_peer_map_handler(soc->dp_soc, peer_id, hw_peer_id,
-						vdev_id, peer_mac_addr);
+					       vdev_id, peer_mac_addr, 0,
+					       is_wds);
 			break;
 		}
 	case HTT_T2H_MSG_TYPE_PEER_UNMAP:
 		{
 			u_int16_t peer_id;
+			u_int8_t vdev_id;
 			peer_id = HTT_RX_PEER_UNMAP_PEER_ID_GET(*msg_word);
+			vdev_id = HTT_RX_PEER_UNMAP_VDEV_ID_GET(*msg_word);
 
-			dp_rx_peer_unmap_handler(soc->dp_soc, peer_id);
+			dp_rx_peer_unmap_handler(soc->dp_soc, peer_id,
+						 vdev_id, NULL, 0);
 			break;
 		}
 	case HTT_T2H_MSG_TYPE_SEC_IND:
@@ -3071,6 +3085,64 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	case HTT_T2H_MSG_TYPE_EXT_STATS_CONF:
 		{
 			dp_txrx_fw_stats_handler(soc->dp_soc, htt_t2h_msg);
+			break;
+		}
+	case HTT_T2H_MSG_TYPE_PEER_MAP_V2:
+		{
+			u_int8_t mac_addr_deswizzle_buf[HTT_MAC_ADDR_LEN];
+			u_int8_t *peer_mac_addr;
+			u_int16_t peer_id;
+			u_int16_t hw_peer_id;
+			u_int8_t vdev_id;
+			bool is_wds;
+			u_int16_t ast_hash;
+
+			peer_id = HTT_RX_PEER_MAP_V2_SW_PEER_ID_GET(*msg_word);
+			hw_peer_id =
+			HTT_RX_PEER_MAP_V2_HW_PEER_ID_GET(*(msg_word + 2));
+			vdev_id = HTT_RX_PEER_MAP_V2_VDEV_ID_GET(*msg_word);
+			peer_mac_addr =
+			htt_t2h_mac_addr_deswizzle((u_int8_t *)(msg_word + 1),
+						   &mac_addr_deswizzle_buf[0]);
+			is_wds =
+			HTT_RX_PEER_MAP_V2_NEXT_HOP_GET(*(msg_word + 3));
+			ast_hash =
+			HTT_RX_PEER_MAP_V2_AST_HASH_VALUE_GET(*(msg_word + 3));
+			QDF_TRACE(QDF_MODULE_ID_TXRX,
+				  QDF_TRACE_LEVEL_INFO,
+				  "HTT_T2H_MSG_TYPE_PEER_MAP msg for peer id %d vdev id %d n",
+				  peer_id, vdev_id);
+
+			dp_rx_peer_map_handler(soc->dp_soc, peer_id,
+					       hw_peer_id, vdev_id,
+					       peer_mac_addr, ast_hash,
+					       is_wds);
+			break;
+		}
+	case HTT_T2H_MSG_TYPE_PEER_UNMAP_V2:
+		{
+			u_int8_t mac_addr_deswizzle_buf[HTT_MAC_ADDR_LEN];
+			u_int8_t *peer_mac_addr;
+			u_int16_t peer_id;
+			u_int8_t vdev_id;
+			u_int8_t is_wds;
+
+			peer_id =
+			HTT_RX_PEER_UNMAP_V2_SW_PEER_ID_GET(*msg_word);
+			vdev_id = HTT_RX_PEER_UNMAP_V2_VDEV_ID_GET(*msg_word);
+			peer_mac_addr =
+			htt_t2h_mac_addr_deswizzle((u_int8_t *)(msg_word + 1),
+						   &mac_addr_deswizzle_buf[0]);
+			is_wds =
+			HTT_RX_PEER_UNMAP_V2_NEXT_HOP_GET(*(msg_word + 2));
+			QDF_TRACE(QDF_MODULE_ID_TXRX,
+				  QDF_TRACE_LEVEL_INFO,
+				  "HTT_T2H_MSG_TYPE_PEER_MAP msg for peer id %d vdev id %d n",
+				  peer_id, vdev_id);
+
+			dp_rx_peer_unmap_handler(soc->dp_soc, peer_id,
+						 vdev_id, peer_mac_addr,
+						 is_wds);
 			break;
 		}
 	default:

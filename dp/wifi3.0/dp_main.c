@@ -3728,7 +3728,8 @@ static void dp_vdev_flush_peers(struct dp_vdev *vdev)
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
 	for (i = 0; i < j ; i++)
-		dp_rx_peer_unmap_handler(soc, peer_ids[i]);
+		dp_rx_peer_unmap_handler(soc, peer_ids[i], vdev->vdev_id,
+					 NULL, 0);
 
 	qdf_mem_free(peer_ids);
 
@@ -7645,7 +7646,8 @@ static QDF_STATUS dp_config_for_nac_rssi(struct cdp_vdev *vdev_handle,
 #endif
 
 static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
-		uint32_t max_peers)
+					   uint32_t max_peers,
+					   bool peer_map_unmap_v2)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 
@@ -7655,6 +7657,8 @@ static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
 
 	if (dp_peer_find_attach(soc))
 		return QDF_STATUS_E_FAILURE;
+
+	soc->is_peer_map_unmap_v2 = peer_map_unmap_v2;
 
 	return QDF_STATUS_SUCCESS;
 }

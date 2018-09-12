@@ -599,7 +599,7 @@ union dp_align_mac_addr {
 		uint32_t bytes_abcd;
 		uint16_t bytes_ef;
 	} align4;
-	struct {
+	struct __attribute__((__packed__)) {
 		uint16_t bytes_ab;
 		uint32_t bytes_cdef;
 	} align4_2;
@@ -619,6 +619,8 @@ union dp_align_mac_addr {
  * @is_bss: flag to indicate if entry corresponds to bss peer
  * @pdev_id: pdev ID
  * @vdev_id: vdev ID
+ * @ast_hash_value: hast value in HW
+ * @ref_cnt: reference count
  * @type: flag to indicate type of the entry(static/WDS/MEC)
  * @hash_list_elem: node in soc AST hash list (mac address used as hash)
  */
@@ -632,6 +634,8 @@ struct dp_ast_entry {
 	bool is_bss;
 	uint8_t pdev_id;
 	uint8_t vdev_id;
+	uint16_t ast_hash_value;
+	qdf_atomic_t ref_cnt;
 	enum cdp_txrx_ast_entry_type type;
 	TAILQ_ENTRY(dp_ast_entry) ase_list_elem;
 	TAILQ_ENTRY(dp_ast_entry) hash_list_elem;
@@ -921,6 +925,8 @@ struct dp_soc {
 
 	/* Smart monitor capability for HKv2 */
 	uint8_t hw_nac_monitor_support;
+	/* Flag to indicate if HTT v2 is enabled*/
+	bool is_peer_map_unmap_v2;
 };
 
 #ifdef IPA_OFFLOAD
@@ -1401,6 +1407,8 @@ struct dp_vdev {
 
 	/* SWAR for HW: Enable WEP bit in the AMSDU frames for RAW mode */
 	bool raw_mode_war;
+	/* AST hash value for BSS peer in HW valid for STA VAP*/
+	uint16_t bss_ast_hash;
 };
 
 

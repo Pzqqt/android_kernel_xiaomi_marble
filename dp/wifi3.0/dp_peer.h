@@ -69,8 +69,12 @@ dp_peer_find_by_id(struct dp_soc *soc,
 }
 
 void dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
-	uint16_t hw_peer_id, uint8_t vdev_id, uint8_t *peer_mac_addr);
-void dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id);
+			    uint16_t hw_peer_id, uint8_t vdev_id,
+			    uint8_t *peer_mac_addr, uint16_t ast_hash,
+			    uint8_t is_wds);
+void dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id,
+			      uint8_t vdev_id, uint8_t *peer_mac_addr,
+			      uint8_t is_wds);
 void dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 	enum htt_sec_type sec_type, int is_unicast,
 	u_int32_t *michael_key, u_int32_t *rx_pn);
@@ -82,6 +86,9 @@ int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
 		uint32_t flags);
 
 void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry);
+
+void dp_peer_ast_unmap_handler(struct dp_soc *soc,
+			       struct dp_ast_entry *ast_entry);
 
 int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 			struct dp_ast_entry *ast_entry,	uint32_t flags);
