@@ -121,6 +121,14 @@ struct wlan_fwol_ie_whitelist {
  * @lower_brssi_thresh: Lower BRSSI threshold
  * @enable_dtim_1chrx: Enable/disable DTIM 1 CHRX
  * @alternative_chainmask_enabled: Alternate chainmask
+ * @smart_chainmask_enabled: Enable/disable chainmask
+ * @get_rts_profile: Set the RTS profile
+ * @enable_fw_log_level: Set the FW log level
+ * @enable_fw_log_type: Set the FW log type
+ * @is_rate_limit_enabled: Enable/disable RA rate limited
+ * @tsf_gpio_pin: TSF GPIO Pin config
+ * @enable_dhcp_server_offload: DHCP Offload is enabled or not
+ * @dhcp_max_num_clients: Max number of DHCP client supported
  */
 struct wlan_fwol_cfg {
 	/* Add CFG and INI items here */
@@ -136,6 +144,20 @@ struct wlan_fwol_cfg {
 	uint16_t lower_brssi_thresh;
 	bool enable_dtim_1chrx;
 	bool alternative_chainmask_enabled;
+	bool smart_chainmask_enabled;
+	uint16_t get_rts_profile;
+	uint16_t enable_fw_log_level;
+	uint16_t enable_fw_log_type;
+#ifdef FEATURE_WLAN_RA_FILTERING
+	bool is_rate_limit_enabled;
+#endif
+#ifdef WLAN_FEATURE_TSF
+	uint32_t tsf_gpio_pin;
+#endif
+#ifdef DHCP_SERVER_OFFLOAD
+	bool enable_dhcp_server_offload;
+	uint32_t dhcp_max_num_clients;
+#endif
 };
 
 /**

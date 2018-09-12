@@ -209,4 +209,92 @@ QDF_STATUS
 ucfg_get_alternative_chainmask_enabled(struct wlan_objmgr_psoc *psoc,
 				       bool *alternative_chainmask_enabled);
 
+/**
+ * ucfg_get_smart_chainmask_enabled() - Assigns smart_chainmask_enabled value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_get_smart_chainmask_enabled(struct wlan_objmgr_psoc *psoc,
+					    bool *smart_chainmask_enabled);
+
+/**
+ * ucfg_fwol_get_rts_profile() - Assigns get_rts_profile value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_rts_profile(struct wlan_objmgr_psoc *psoc,
+				     uint16_t *get_rts_profile);
+
+/**
+ * ucfg_fwol_get_enable_fw_log_level() - Assigns enable_fw_log_level value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_enable_fw_log_level(struct wlan_objmgr_psoc *psoc,
+					     uint16_t *enable_fw_log_level);
+
+/**
+ * ucfg_fwol_get_enable_fw_log_type() - Assigns enable_fw_log_type value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_enable_fw_log_type(struct wlan_objmgr_psoc *psoc,
+					    uint16_t *enable_fw_log_type);
+
+#ifdef FEATURE_WLAN_RA_FILTERING
+/**
+ * ucfg_fwol_set_is_rate_limit_enabled() - Sets the is_rate_limit_enabled value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_set_is_rate_limit_enabled(struct wlan_objmgr_psoc *psoc,
+					       bool is_rate_limit_enabled);
+
+/**
+ * ucfg_fwol_get_is_rate_limit_enabled() - Assigns is_rate_limit_enabled value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_is_rate_limit_enabled(struct wlan_objmgr_psoc *psoc,
+					       bool *is_rate_limit_enabled);
+
+#endif /* FEATURE_WLAN_RA_FILTERING */
+
+/**
+ * ucfg_fwol_get_tsf_gpio_pin() - Assigns tsf_gpio_pin value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+
+QDF_STATUS ucfg_fwol_get_tsf_gpio_pin(struct wlan_objmgr_psoc *psoc,
+				      uint32_t *tsf_gpio_pin);
+
+#ifdef DHCP_SERVER_OFFLOAD
+/**
+ * ucfg_fwol_get_enable_dhcp_server_offload()-Assign enable_dhcp_server_offload
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_fwol_get_enable_dhcp_server_offload(struct wlan_objmgr_psoc *psoc,
+					 bool *enable_dhcp_server_offload);
+
+/**
+ * ucfg_fwol_get_dhcp_max_num_clients() - Assigns dhcp_max_num_clients value
+ * @psoc: pointer to the psoc object
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_dhcp_max_num_clients(struct wlan_objmgr_psoc *psoc,
+					      uint32_t *dhcp_max_num_clients);
+
+#endif
 #endif /* _WLAN_FWOL_UCFG_API_H_ */

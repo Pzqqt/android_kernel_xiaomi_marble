@@ -233,8 +233,215 @@
 		0, \
 		"Enable Co-Ex Alternative Chainmask")
 
+/*
+ * <ini>
+ * gEnableSmartChainmask - Enable Smart Chainmask
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable the Smart Chainmask feature via
+ * the WMI_PDEV_PARAM_SMART_CHAINMASK_SCHEME firmware parameter.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_SMART_CHAINMASK CFG_INI_BOOL( \
+		"gEnableSmartChainmask", \
+		0, \
+		"Enable/disable the Smart Chainmask feature")
+
+/*
+ * <ini>
+ * gEnableRTSProfiles - It will use configuring different RTS profiles
+ * @Min: 0
+ * @Max: 66
+ * @Default: 33
+ *
+ * This ini used for configuring different RTS profiles
+ * to firmware.
+ * Following are the valid values for the rts profile:
+ * RTSCTS_DISABLED				0
+ * NOT_ALLOWED					1
+ * NOT_ALLOWED					2
+ * RTSCTS_DISABLED				16
+ * RTSCTS_ENABLED_4_SECOND_RATESERIES		17
+ * CTS2SELF_ENABLED_4_SECOND_RATESERIES		18
+ * RTSCTS_DISABLED				32
+ * RTSCTS_ENABLED_4_SWRETRIES			33
+ * CTS2SELF_ENABLED_4_SWRETRIES			34
+ * NOT_ALLOWED					48
+ * NOT_ALLOWED					49
+ * NOT_ALLOWED					50
+ * RTSCTS_DISABLED				64
+ * RTSCTS_ENABLED_4_ALL_RATESERIES		65
+ * CTS2SELF_ENABLED_4_ALL_RATESERIES		66
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_FW_RTS_PROFILE CFG_INI_INT( \
+		"gEnableRTSProfiles", \
+		0, \
+		66, \
+		33, \
+		CFG_VALUE_OR_DEFAULT, \
+		"It is used to configure different RTS profiles")
+
+/* <ini>
+ * gFwDebugLogLevel: Takes values from enum DBGLOG_LOG_LVL,
+ * make default value as DBGLOG_WARN to enable error and
+ * warning logs by default.
+ * @Min: 0
+ * @Max: 255
+ * @Default: 3
+ *
+ * Related: None
+ *
+ * Supported Features: Debugging
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_FW_DEBUG_LOG_LEVEL CFG_INI_INT( \
+		"gFwDebugLogLevel", \
+		0, \
+		255, \
+		3, \
+		CFG_VALUE_OR_DEFAULT, \
+		"enable error and warning logs by default")
+
+/* <ini>
+ * gFwDebugLogType: takes values from enum dbglog_process_t,
+ * make default value as DBGLOG_PROCESS_NET_RAW to give the
+ * logs to net link since cnss_diag service is started at boot
+ * time by default.
+ * @Min: 0
+ * @Max: 255
+ * @Default: 3
+ *
+ * Related: None
+ *
+ * Supported Features: Debugging
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_FW_LOG_TYPE CFG_INI_INT( \
+		"gFwDebugLogType", \
+		0, \
+		255, \
+		3, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Default value to be given to the net link cnss_diag service")
+
+#ifdef FEATURE_WLAN_RA_FILTERING
+/* <ini>
+ * gRAFilterEnable
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * Related: None
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_RA_FILTER_ENABLE CFG_INI_BOOL( \
+		"gRAFilterEnable", \
+		1, \
+		"Enable RA Filter")
+#else
+#define CFG_RA_FILTER_ENABLE
+#endif
+
+/* <ini>
+ * gtsf_gpio_pin
+ * @Min: 0
+ * @Max: 254
+ * @Default: 255
+ *
+ * GPIO pin to toggle when capture tsf
+ *
+ * Related: None
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_SET_TSF_GPIO_PIN CFG_INI_INT( \
+		"gtsf_gpio_pin", \
+		0, \
+		254, \
+		255, \
+		CFG_VALUE_OR_DEFAULT, \
+		"GPIO pin to toggle when capture tsf")
+
+#ifdef DHCP_SERVER_OFFLOAD
+/* <ini>
+ * gEnableDeauthToDisassocMap
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * DHCP Server offload support
+ *
+ * Related: None
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DHCP_SERVER_OFFLOAD_SUPPORT CFG_INI_BOOL( \
+		"gEnableDeauthToDisassocMap", \
+		0, \
+		"DHCP Server offload support")
+
+/* <ini>
+ * gDHCPMaxNumClients
+ * @Min: 1
+ * @Max: 8
+ * @Default: 8
+ *
+ * Number of DHCP server offload clients
+ *
+ * Related: None
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DHCP_SERVER_OFFLOAD_NUM_CLIENT CFG_INI_INT( \
+		"gDHCPMaxNumClients", \
+		1, \
+		8, \
+		8, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Number of DHCP server offload clients")
+
+#define CFG_FWOL_DHCP \
+		CFG(CFG_DHCP_SERVER_OFFLOAD_SUPPORT) \
+		CFG(CFG_DHCP_SERVER_OFFLOAD_NUM_CLIENT)
+
+#else
+#define CFG_FWOL_DHCP
+#endif
 
 #define CFG_FWOL_GENERIC_ALL \
+	CFG_FWOL_DHCP \
 	CFG(CFG_ENABLE_ANI) \
 	CFG(CFG_SET_RTS_FOR_SIFS_BURSTING) \
 	CFG(CFG_MAX_MPDUS_IN_AMPDU) \
@@ -243,6 +450,12 @@
 	CFG(CFG_UPPER_BRSSI_THRESH) \
 	CFG(CFG_LOWER_BRSSI_THRESH) \
 	CFG(CFG_DTIM_1CHRX_ENABLE) \
-	CFG(CFG_ENABLE_COEX_ALT_CHAINMASK)
+	CFG(CFG_ENABLE_COEX_ALT_CHAINMASK) \
+	CFG(CFG_ENABLE_SMART_CHAINMASK) \
+	CFG(CFG_ENABLE_FW_RTS_PROFILE) \
+	CFG(CFG_ENABLE_FW_DEBUG_LOG_LEVEL) \
+	CFG(CFG_ENABLE_FW_LOG_TYPE) \
+	CFG(CFG_RA_FILTER_ENABLE) \
+	CFG(CFG_SET_TSF_GPIO_PIN)
 
 #endif
