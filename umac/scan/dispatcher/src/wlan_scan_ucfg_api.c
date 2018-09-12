@@ -1145,6 +1145,7 @@ ucfg_scan_cancel_sync(struct scan_cancel_request *req)
 		return status;
 	}
 
+	memset(&cancel_scan_event, 0, sizeof(cancel_scan_event));
 	/*
 	 * If cancel req is to cancel all scan of pdev or vdev
 	 * wait until all scan of pdev or vdev get cancelled
