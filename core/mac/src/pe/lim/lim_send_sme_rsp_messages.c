@@ -2402,7 +2402,7 @@ lim_send_bss_color_change_ie_update(tpAniSirGlobal mac_ctx,
 	/* Update the beacon template and send to FW */
 	if (sch_set_fixed_beacon_fields(mac_ctx, session) != QDF_STATUS_SUCCESS) {
 		pe_err("Unable to set BSS color change IE in beacon");
-	       return;
+		return;
 	}
 
 	/* Send update beacon template message */

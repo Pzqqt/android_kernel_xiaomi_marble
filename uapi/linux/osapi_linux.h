@@ -115,10 +115,10 @@ typedef struct timer_list A_TIMER;
 
 #define wait_event_interruptible_timeout(wq, condition, timeout)	\
 	({									\
-		 long __ret = timeout;						 \
-		 if (!(condition))						 \
-			 __wait_event_interruptible_timeout(wq, condition, __ret); \
-		 __ret;								 \
+		long __ret = timeout;						 \
+		if (!(condition))						 \
+			__wait_event_interruptible_timeout(wq, condition, __ret); \
+		__ret;								 \
 	 })
 #endif /* wait_event_interruptible_timeout */
 

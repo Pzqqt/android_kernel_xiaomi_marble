@@ -1048,7 +1048,7 @@ static bool sap_check_channels_same_band(uint16_t ch_num1, uint16_t ch_num2)
 	     ch_num2 <= SIR_11B_CHANNEL_END) ||
 	    (ch_num1 >= SIR_11A_CHANNEL_BEGIN &&
 	     ch_num2 >= SIR_11A_CHANNEL_BEGIN))
-	    return true;
+		return true;
 
 	return false;
 }

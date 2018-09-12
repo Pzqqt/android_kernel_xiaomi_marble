@@ -1332,7 +1332,7 @@ __lim_process_radio_measure_request(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			nStatus, frameLen);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 				   pBody, frameLen);
-		    goto err;
+		goto err;
 	} else if (DOT11F_WARNED(nStatus)) {
 		pe_debug("There were warnings while unpacking a Radio Measure request (0x%08x, %d bytes):",
 			nStatus, frameLen);

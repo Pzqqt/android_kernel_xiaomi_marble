@@ -1090,9 +1090,9 @@ lim_decide_ap_protection_on_delete(tpAniSirGlobal mac_ctx,
 					session_entry->protStaCache[i].addr,
 					sta_ds->staAddr,
 					sizeof(tSirMacAddr)))) {
-				 session_entry->gLim11gParams.numSta--;
-				 session_entry->protStaCache[i].active = false;
-				 break;
+				session_entry->gLim11gParams.numSta--;
+				session_entry->protStaCache[i].active = false;
+				break;
 			}
 		}
 

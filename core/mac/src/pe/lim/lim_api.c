@@ -2662,9 +2662,9 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal pMac,
 					       dph_table);
 		if (!sta_ds) {
 			if (subType == SIR_MAC_MGMT_ASSOC_REQ)
-			    return eMGMT_DROP_NO_DROP;
+				return eMGMT_DROP_NO_DROP;
 			else
-			    return eMGMT_DROP_EXCESSIVE_MGMT_FRAME;
+				return eMGMT_DROP_EXCESSIVE_MGMT_FRAME;
 		}
 
 		if (subType == SIR_MAC_MGMT_ASSOC_REQ)

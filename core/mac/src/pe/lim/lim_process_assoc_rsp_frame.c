@@ -852,7 +852,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	if (assoc_rsp->QosMapSet.present)
 		qdf_mem_copy(&session_entry->QosMapSet,
 			&assoc_rsp->QosMapSet, sizeof(tSirQosMapSet));
-	 else
+	else
 		qdf_mem_zero(&session_entry->QosMapSet, sizeof(tSirQosMapSet));
 
 	if (assoc_rsp->obss_scanparams.present)

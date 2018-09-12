@@ -137,7 +137,7 @@ static QDF_STATUS pmo_core_is_gtk_enabled_in_fwr(
 		pmo_err("cache request mac:%pM, peer mac:%pM are not same",
 			vdev_ctx->vdev_gtk_req.bssid.bytes,
 			peer_bssid.bytes);
-		 return QDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (vdev_ctx->vdev_gtk_req.flags != PMO_GTK_OFFLOAD_ENABLE) {

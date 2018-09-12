@@ -2609,7 +2609,7 @@ static void csr_update_bss_with_fils_data(tpAniSirGlobal mac_ctx,
 				SIR_FILS_IND_ELEM_OFFSET,
 				*(scan_entry->ie_list.fils_indication + 1),
 				&fils_indication, false);
-	 if (DOT11F_FAILED(ret)) {
+	if (DOT11F_FAILED(ret)) {
 		sme_err("unpack failed ret: 0x%x", ret);
 		return;
 	}

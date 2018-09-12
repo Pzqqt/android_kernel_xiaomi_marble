@@ -96,7 +96,7 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
 		 * don't trigger STA deletion to avoid the race
 		 * condition.
 		 */
-		 if ((stads &&
+		if ((stads &&
 		     ((stads->mlmStaContext.mlmState !=
 			eLIM_MLM_LINK_ESTABLISHED_STATE) &&
 		      (stads->mlmStaContext.mlmState !=

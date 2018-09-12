@@ -260,7 +260,7 @@ static void populate_dot11f_tdls_offchannel_params(
 		}
 
 		if (valid_count >= ARRAY_SIZE(suppChannels->bands))
-			 break;
+			break;
 		suppChannels->bands[valid_count][0] = validChan[i];
 		suppChannels->bands[valid_count][1] = 1;
 		valid_count++;
