@@ -260,7 +260,7 @@ static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 			dp_err("peer not found for local_id %u!",
 			       peer_local_id);
 			qdf_nbuf_list_free(nbuf_list);
-			continue;
+			goto dequeue_rx_thread;
 		}
 
 		vdev = cdp_peer_get_vdev(soc, peer);
@@ -270,7 +270,7 @@ static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 			dp_err("vdev not found for local_id %u!, pkt dropped",
 			       peer_local_id);
 			qdf_nbuf_list_free(nbuf_list);
-			continue;
+			goto dequeue_rx_thread;
 		}
 
 		cdp_get_os_rx_handles_from_vdev(soc, vdev, &stack_fn,
@@ -281,10 +281,12 @@ static int dp_rx_thread_process_nbufq(struct dp_rx_thread *rx_thread)
 			rx_thread->stats.dropped_others +=
 							num_list_elements;
 			qdf_nbuf_list_free(nbuf_list);
+			goto dequeue_rx_thread;
 		}
 		stack_fn(osif_vdev, nbuf_list);
 		rx_thread->stats.nbuf_sent_to_stack += num_list_elements;
 
+dequeue_rx_thread:
 		nbuf_list = dp_rx_tm_thread_dequeue(rx_thread);
 	}
 
