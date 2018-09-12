@@ -551,6 +551,9 @@ CONFIG_ENABLE_MTRACE_LOG := y
 #Flag to enable nud tracking feature
 CONFIG_WLAN_NUD_TRACKING := y
 
+#Flag to enable wbuff feature
+CONFIG_WLAN_WBUFF := y
+
 #Flag to enable set and get disable channel list feature
 CONFIG_DISABLE_CHANNEL_LIST :=y
 

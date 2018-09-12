@@ -89,6 +89,9 @@ PANIC_ON_BUG := y
 WLAN_WARN_ON_ASSERT := y
 CONFIG_WLAN_LOGGING_SOCK_SVC := y
 
+#Flag to enable wbuff feature
+CONFIG_WLAN_WBUFF := n
+
 # other features
 WLAN_OPEN_SOURCE := y
 CONFIG_ATH_PERF_PWR_OFFLOAD := y

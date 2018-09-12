@@ -563,6 +563,18 @@ ifeq ($(CONFIG_LEAK_DETECTION), y)
 	QDF_OBJS += $(QDF_OBJ_DIR)/qdf_debug_domain.o
 endif
 
+############ WBUFF ############
+WBUFF_OS_DIR :=	wbuff
+WBUFF_OS_INC_DIR := $(WBUFF_OS_DIR)/inc
+WBUFF_OS_SRC_DIR := $(WBUFF_OS_DIR)/src
+WBUFF_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(WBUFF_OS_SRC_DIR)
+
+WBUFF_INC :=	-I$(WLAN_COMMON_INC)/$(WBUFF_OS_INC_DIR) \
+
+ifeq ($(CONFIG_WLAN_WBUFF), y)
+WBUFF_OBJS += 	$(WBUFF_OBJ_DIR)/wbuff.o
+endif
+
 ##########QAL #######
 QAL_OS_DIR :=	qal
 QAL_OS_INC_DIR := $(QAL_OS_DIR)/inc
@@ -1587,6 +1599,7 @@ INCS :=		$(HDD_INC) \
 		$(SYS_INC) \
 		$(QAL_INC) \
 		$(QDF_INC) \
+		$(WBUFF_INC) \
 		$(CDS_INC) \
 		$(CFG_INC) \
 		$(DFS_INC) \
@@ -1686,6 +1699,7 @@ OBJS :=		$(HDD_OBJS) \
 		$(SYS_OBJS) \
 		$(QAL_OBJS) \
 		$(QDF_OBJS) \
+		$(WBUFF_OBJS) \
 		$(CDS_OBJS) \
 		$(CFG_OBJS) \
 		$(FTM_OBJS)
@@ -2097,6 +2111,9 @@ cppflags-$(CONFIG_IPA_OFFLOAD) += -DIPA_OFFLOAD
 ifeq ($(CONFIG_ARCH_SDX20), y)
 cppflags-y += -DSYNC_IPA_READY
 endif
+
+#Enable wbuff
+cppflags-$(CONFIG_WLAN_WBUFF) += -DWLAN_FEATURE_WBUFF
 
 #Enable GTK Offload
 cppflags-$(CONFIG_GTK_OFFLOAD) += -DWLAN_FEATURE_GTK_OFFLOAD
