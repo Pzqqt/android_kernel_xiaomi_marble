@@ -105,9 +105,8 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sapContext,
    SIDE EFFECTS
    ============================================================================*/
 
-#ifndef CONFIG_VDEV_SM
 static int sap_stop_dfs_cac_timer(struct sap_context *sapContext);
-#endif
+
 /*==========================================================================
    FUNCTION    sapStartDfsCacTimer
 
@@ -2500,20 +2499,49 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 		}
 	} else if (msg == eSAP_MAC_START_FAILS ||
 			msg == eSAP_HDD_STOP_INFRA_BSS) {
-		/*
-		 * Transition from SAP_STARTING to SAP_INIT
-		 * (both without substates)
-		 */
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("from state %s => %s"),
-			  "SAP_STARTING", "SAP_INIT");
 
-		/* Advance outer statevar */
-		sap_ctx->fsm_state = SAP_INIT;
-		qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
-				eSAP_START_BSS_EVENT,
-				(void *) eSAP_STATUS_FAILURE);
-		qdf_status = sap_goto_init(sap_ctx);
+#ifdef CONFIG_VDEV_SM
+		if (msg == eSAP_HDD_STOP_INFRA_BSS &&
+		    wlan_vdev_mlme_get_state(sap_ctx->vdev) ==
+		    WLAN_VDEV_S_DFS_CAC_WAIT) {
+			/* Transition from SAP_STARTING to SAP_STOPPING */
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+				  FL("In cac wait state from state %s => %s"),
+				  "SAP_STARTING", "SAP_STOPPING");
+			/*
+			 * Stop the CAC timer only in following conditions
+			 * single AP: if there is a single AP then stop timer
+			 * mulitple APs: incase of multiple APs, make sure that
+			 *               all APs are down.
+			 */
+			if (!sap_find_valid_concurrent_session(hal)) {
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					  QDF_TRACE_LEVEL_INFO_MED,
+					  FL("sapdfs: no sessions are valid, stopping timer"));
+				sap_stop_dfs_cac_timer(sap_ctx);
+			}
+
+			sap_ctx->fsm_state = SAP_STOPPING;
+			qdf_status = sap_goto_stopping(sap_ctx);
+		} else
+#endif
+		{
+			/*
+			 * Transition from SAP_STARTING to SAP_INIT
+			 * (both without substates)
+			 */
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+				  FL("from state %s => %s"),
+				  "SAP_STARTING", "SAP_INIT");
+
+			/* Advance outer statevar */
+			sap_ctx->fsm_state = SAP_INIT;
+			qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
+							  eSAP_START_BSS_EVENT,
+							  (void *)
+							  eSAP_STATUS_FAILURE);
+			qdf_status = sap_goto_init(sap_ctx);
+		}
 		/* Close the SME session */
 	} else if (msg == eSAP_OPERATING_CHANNEL_CHANGED) {
 		/* The operating channel has changed, update hostapd */
@@ -3524,7 +3552,6 @@ void sap_dfs_cac_timer_callback(void *data)
 	sap_fsm(sapContext, &sapEvent);
 }
 
-#ifndef CONFIG_VDEV_SM
 /*
  * Function to stop the DFS CAC Timer
  */
@@ -3561,7 +3588,6 @@ static int sap_stop_dfs_cac_timer(struct sap_context *sapContext)
 
 	return 0;
 }
-#endif
 
 /*
  * Function to start the DFS CAC Timer

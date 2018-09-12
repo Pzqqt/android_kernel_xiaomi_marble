@@ -8504,11 +8504,24 @@ QDF_STATUS lim_ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 	return status;
 }
 
+QDF_STATUS lim_ap_mlme_vdev_disconnect_peers(struct vdev_mlme_obj *vdev_mlme,
+					     uint16_t data_len, void *data)
+{
+	lim_delete_all_peers((tpPESession)data);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS lim_ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
+				      uint16_t data_len, void *data)
+{
+	return lim_send_vdev_stop((tpPESession)data);
+}
+
 #else
 
 void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session)
 {
 	lim_send_beacon_ind(mac_ctx, session);
 }
-
 #endif

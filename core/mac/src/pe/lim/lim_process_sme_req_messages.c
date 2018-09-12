@@ -2930,9 +2930,22 @@ void lim_delete_all_peers(tpPESession session)
 			QDF_ASSERT(0);
 		}
 	}
+
+#ifdef CONFIG_VDEV_SM
+	status =
+	    wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					  WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE,
+					  sizeof(*session), session);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("failed to post WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE for vdevid %d",
+		       session->smeSessionId);
+		lim_send_stop_bss_failure_resp(mac_ctx, session);
+	}
+#endif
+
 }
 
-void lim_send_vdev_stop(tpPESession session)
+QDF_STATUS lim_send_vdev_stop(tpPESession session)
 {
 	tpAniSirGlobal mac_ctx = session->mac_ctx;
 	QDF_STATUS status;
@@ -2943,6 +2956,8 @@ void lim_send_vdev_stop(tpPESession session)
 		pe_err("delBss failed for bss %d", session->bssIdx);
 		lim_send_stop_bss_failure_resp(mac_ctx, session);
 	}
+
+	return status;
 }
 
 /**
@@ -2951,12 +2966,30 @@ void lim_send_vdev_stop(tpPESession session)
  *
  * Return None
  */
+#ifdef CONFIG_VDEV_SM
+static void lim_delete_peers_and_send_vdev_stop(tpPESession session)
+{
+	tpAniSirGlobal mac_ctx = session->mac_ctx;
+	QDF_STATUS status;
+
+	status = wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					       WLAN_VDEV_SM_EV_DOWN,
+					       sizeof(*session), session);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("failed to post WLAN_VDEV_SM_EV_DOWN for vdevid %d",
+		       session->smeSessionId);
+		lim_send_stop_bss_failure_resp(mac_ctx, session);
+	}
+}
+#else
 static void lim_delete_peers_and_send_vdev_stop(tpPESession session)
 {
 	lim_delete_all_peers(session);
 	/* send a delBss to HAL and wait for a response */
 	lim_send_vdev_stop(session);
 }
+#endif
+
 
 static void
 __lim_handle_sme_stop_bss_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)

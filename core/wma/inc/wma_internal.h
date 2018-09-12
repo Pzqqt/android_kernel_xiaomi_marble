@@ -548,6 +548,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
  * Return: none
  */
 void wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req);
+
 /**
  * __wma_vdev_stop_resp_handler() - vdev stop response handler
  * @handle: wma handle
@@ -1474,5 +1475,16 @@ QDF_STATUS wma_get_roam_scan_stats(WMA_HANDLE handle,
  */
 int wma_roam_scan_stats_event_handler(void *handle, uint8_t *event,
 				      uint32_t len);
+
+/**
+ * wma_send_del_bss_response() - send del bss resp to upper layer
+ * @wma: wma handle.
+ * @vdev_id: vdev ID of device for which MCC has to be checked
+ *
+ * This function sends del bss resp to upper layer
+ *
+ * Return: none
+ */
+void wma_send_vdev_down_bss(tp_wma_handle wma, struct wma_target_req *req);
 
 #endif

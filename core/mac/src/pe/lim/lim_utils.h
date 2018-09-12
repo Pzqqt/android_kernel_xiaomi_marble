@@ -1376,9 +1376,9 @@ void lim_delete_all_peers(tpPESession session);
  * lim_send_vdev_stop() -send delete bss/stop vdev req
  * @session: session pointer
  *
- * Return None
+ * Return QDF_STATUS
  */
-void lim_send_vdev_stop(tpPESession session);
+QDF_STATUS lim_send_vdev_stop(tpPESession session);
 
 /**
  * lim_send_start_bss_confirm() -send start bss confirm req
@@ -1539,6 +1539,33 @@ QDF_STATUS lim_ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS lim_ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 				    uint16_t data_len, void *data);
 
+/**
+ * lim_ap_mlme_vdev_disconnect_peers - Disconnect peers
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API trigger stations disconnection connected with AP
+ *
+ * Return: SUCCESS on successful invocation of station disconnection
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS lim_ap_mlme_vdev_disconnect_peers(struct vdev_mlme_obj *vdev_mlme,
+					     uint16_t data_len, void *data);
+
+/**
+ * lim_ap_mlme_vdev_stop_send - Invokes VDEV stop operation
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes VDEV stop operation
+ *
+ * Return: SUCCESS on successful completion of stop operation
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS lim_ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
+				      uint16_t data_len, void *data);
 #endif
 
 #endif /* __LIM_UTILS_H */

@@ -423,6 +423,50 @@ uint8_t wma_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
  */
 QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 					   uint16_t data_len, void *data);
+
+/**
+ * wma_ap_mlme_vdev_stop_continue - VDEV stop response handling
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes VDEV stop response actions
+ *
+ * Return: SUCCESS on successful completion of stop response operation
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS wma_ap_mlme_vdev_stop_continue(struct vdev_mlme_obj *vdev_mlme,
+					  uint16_t data_len, void *data);
+
+/**
+ * wma_ap_mlme_vdev_down_send - VDEV down operation
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes VDEV down operation
+ *
+ * Return: SUCCESS on successful completion of VDEV down operation
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS wma_ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
+				      uint16_t data_len, void *data);
+
+/**
+ * wma_ap_mlme_vdev_notify_down_complete - VDEV init state transition
+ * notification
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API notifies MLME on moving to INIT state
+ *
+ * Return: SUCCESS on successful completion of down notification
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS
+wma_ap_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
+				      uint16_t data_len, void *data);
 #endif
 
 #endif

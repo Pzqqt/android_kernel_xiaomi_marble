@@ -364,6 +364,85 @@ ap_mlme_vdev_notify_up_complete(struct vdev_mlme_obj *vdev_mlme,
 }
 
 /**
+ * ap_mlme_vdev_disconnect_peers() - callback to disconnect all connected peers
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to disconnect all connected peers
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS ap_mlme_vdev_disconnect_peers(struct vdev_mlme_obj *vdev_mlme,
+						uint16_t data_len, void *data)
+{
+	return lim_ap_mlme_vdev_disconnect_peers(vdev_mlme, data_len, data);
+}
+
+/**
+ * ap_mlme_vdev_stop_send() - callback to send stop vdev request
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to send stop vdev request
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
+					 uint16_t data_len, void *data)
+{
+	return lim_ap_mlme_vdev_stop_send(vdev_mlme, data_len, data);
+}
+
+/**
+ * ap_mlme_vdev_stop_continue() - callback to handle stop vdev resp
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to handle stop vdev resp
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS ap_mlme_vdev_stop_continue(struct vdev_mlme_obj *vdev_mlme,
+					     uint16_t data_len, void *data)
+{
+	return wma_ap_mlme_vdev_stop_continue(vdev_mlme, data_len, data);
+}
+
+/**
+ * ap_mlme_vdev_down_send() - callback to send vdev down req
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to send vdev down req
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
+					 uint16_t data_len, void *data)
+{
+	return wma_ap_mlme_vdev_down_send(vdev_mlme, data_len, data);
+}
+/**
+ * ap_vdev_notify_down_complete() - callback to indicate vdev down is completed
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to indicate vdev down is completed
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS ap_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
+					       uint16_t data_len, void *data)
+{
+	return wma_ap_mlme_vdev_notify_down_complete(vdev_mlme, data_len, data);
+}
+
+/**
  * ap_mlme_vdev_start_req_failed () - vdev start req fail callback
  * @vdev_mlme: vdev mlme object
  * @event_data_len: event data length
@@ -399,93 +478,6 @@ static QDF_STATUS ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 
 static QDF_STATUS ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 					       enum vdev_cmd_type type,
-					       uint16_t event_data_len,
-					       void *event_data)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * ap_mlme_vdev_disconnect_peers() – callback to disconnect all
- *                                   connected peers
- * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
- *
- * This function is called to disconnect all connected peers
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS ap_mlme_vdev_disconnect_peers(struct vdev_mlme_obj *vdev_mlme,
-						uint16_t event_data_len,
-						void *event_data)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * ap_mlme_vdev_stop_send() – callback to send stop vdev request
- * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
- *
- * This function is called to send stop vdev request
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
-					 uint16_t event_data_len,
-					 void *event_data)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * ap_mlme_vdev_stop_continue() – callback to handle stop vdev resp
- * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
- *
- * This function is called to handle stop vdev resp
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS ap_mlme_vdev_stop_continue(struct vdev_mlme_obj *vdev_mlme,
-					     uint16_t event_data_len,
-					     void *event_data)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * ap_mlme_vdev_down_send() – callback to send vdev down req
- * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
- *
- * This function is called to send vdev down req
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
-					 uint16_t event_data_len,
-					 void *event_data)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * ap_vdev_notify_down_complete() – callback to indicate vdev
- *                                  down is completed
- * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
- *
- * This function is called to indicate vdev down is completed
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS ap_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 					       uint16_t event_data_len,
 					       void *event_data)
 {

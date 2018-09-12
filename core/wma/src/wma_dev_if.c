@@ -2080,20 +2080,12 @@ void wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req)
 	}
 }
 
-/**
- * wma_send_del_bss_response() - send del bss resp to upper layer
- * @wma: wma handle.
- * @vdev_id: vdev ID of device for which MCC has to be checked
- *
- * This function sends del bss resp to upper layer
- *
- * Return: none
- */
-static void
-wma_send_vdev_down_bss(tp_wma_handle wma, struct wma_target_req *req)
+void wma_send_vdev_down_bss(tp_wma_handle wma, struct wma_target_req *req)
 {
 	uint8_t vdev_id;
-
+#ifdef CONFIG_VDEV_SM
+	struct wma_txrx_node *iface = &wma->interfaces[req->vdev_id];
+#endif
 	if (!req) {
 		WMA_LOGE("%s req is NULL", __func__);
 		return;
@@ -2110,7 +2102,13 @@ wma_send_vdev_down_bss(tp_wma_handle wma, struct wma_target_req *req)
 		wma_check_and_find_mcc_ap(wma, vdev_id);
 	}
 
+#ifdef CONFIG_VDEV_SM
+	wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+				      WLAN_VDEV_SM_EV_DOWN_COMPLETE,
+				      sizeof(*req), req);
+#else
 	wma_send_del_bss_response(wma, req);
+#endif
 }
 
 QDF_STATUS
@@ -2196,8 +2194,13 @@ __wma_vdev_stop_resp_handler(wmi_vdev_stopped_event_fixed_param *resp_event)
 		   wma->wmi_handle,
 		   wmi_service_sync_delete_cmds))
 			goto free_req_msg;
-
+#ifdef CONFIG_VDEV_SM
+		wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+					      WLAN_VDEV_SM_EV_MLME_DOWN_REQ,
+					      sizeof(*req_msg), req_msg);
+#else
 		wma_send_vdev_down_bss(wma, req_msg);
+#endif
 	} else if (req_msg->msg_type == WMA_SET_LINK_STATE) {
 		tpLinkStateParams params =
 			(tpLinkStateParams) req_msg->user_data;
@@ -2252,6 +2255,9 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	WMI_VDEV_STOPPED_EVENTID_param_tlvs *param_buf;
 	wmi_vdev_stopped_event_fixed_param *resp_event;
+#ifdef CONFIG_VDEV_SM
+	struct wma_txrx_node *iface;
+#endif
 	int32_t status = 0;
 
 	WMA_LOGD("%s: Enter", __func__);
@@ -2270,7 +2276,15 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
+#ifdef CONFIG_VDEV_SM
+	iface = &wma->interfaces[resp_event->vdev_id];
+	status =  wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+						WLAN_VDEV_SM_EV_STOP_RESP,
+						sizeof(*resp_event),
+						resp_event);
+#else
 	status = __wma_vdev_stop_resp_handler(resp_event);
+#endif
 	if (QDF_IS_STATUS_ERROR(status))
 		return -EINVAL;
 
@@ -3192,7 +3206,17 @@ int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 		}
 		wma_send_msg(wma, WMA_SET_LINK_STATE_RSP, (void *)params, 0);
 	} else if (req_msg->type == WMA_DELETE_PEER_RSP) {
+#ifdef CONFIG_VDEV_SM
+		struct wma_txrx_node *iface =
+					&wma->interfaces[req_msg->vdev_id];
+
+		wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+					      WLAN_VDEV_SM_EV_MLME_DOWN_REQ,
+					      sizeof(*req_msg), req_msg);
+#else
 		wma_send_vdev_down_bss(wma, req_msg);
+#endif
+
 	}
 	qdf_mem_free(req_msg);
 	return status;
