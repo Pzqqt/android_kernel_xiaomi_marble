@@ -975,7 +975,7 @@ QDF_STATUS send_peer_rx_reorder_queue_setup_cmd_tlv(wmi_unified_t wmi,
 			WMI_PEER_REORDER_QUEUE_SETUP_CMDID)) {
 		WMI_LOGP("%s: fail to send WMI_PEER_REORDER_QUEUE_SETUP_CMDID",
 			__func__);
-		qdf_nbuf_free(buf);
+		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	WMI_LOGD("%s: peer_macaddr %pM vdev_id %d, tid %d\n", __func__,
@@ -1022,7 +1022,7 @@ QDF_STATUS send_peer_rx_reorder_queue_remove_cmd_tlv(wmi_unified_t wmi,
 			WMI_PEER_REORDER_QUEUE_REMOVE_CMDID)) {
 		WMI_LOGP("%s: fail to send WMI_PEER_REORDER_QUEUE_REMOVE_CMDID",
 			__func__);
-		qdf_nbuf_free(buf);
+		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	WMI_LOGD("%s: peer_macaddr %pM vdev_id %d, tid_map %d", __func__,
@@ -14324,7 +14324,7 @@ QDF_STATUS send_enable_enhance_multicast_offload_tlv(
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 			sizeof(*cmd), WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID);
 	if (status != QDF_STATUS_SUCCESS) {
-		qdf_nbuf_free(buf);
+		wmi_buf_free(buf);
 		WMI_LOGE("%s:Failed to send ENHANCED_MCAST_FILTER_CMDID",
 			__func__);
 	}
@@ -15373,7 +15373,7 @@ QDF_STATUS send_fw_test_cmd_tlv(wmi_unified_t wmi_handle,
 	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
 				 WMI_FWTEST_CMDID)) {
 		WMI_LOGP("%s: failed to send fw test command", __func__);
-		qdf_nbuf_free(wmi_buf);
+		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 
