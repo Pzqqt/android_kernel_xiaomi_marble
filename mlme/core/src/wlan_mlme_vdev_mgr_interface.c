@@ -444,18 +444,17 @@ static QDF_STATUS ap_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 /**
  * ap_mlme_vdev_start_req_failed () - vdev start req fail callback
  * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
+ * @data_len: event data length
+ * @data: event data
  *
  * This function is called to handle vdev start req/rsp failure
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS ap_mlme_vdev_start_req_failed(struct vdev_mlme_obj *vdev_mlme,
-						uint16_t event_data_len,
-						void *event_data)
+						uint16_t data_len, void *data)
 {
-	return QDF_STATUS_SUCCESS;
+	return lim_ap_mlme_vdev_start_req_failed(vdev_mlme, data_len, data);
 }
 
 /**
@@ -474,12 +473,23 @@ static QDF_STATUS ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 	return lim_ap_mlme_vdev_restart_send(vdev_mlme, data_len, data);
 }
 
+/**
+ * ap_mlme_vdev_stop_start_send() - handle vdev stop during start req
+ * @vdev_mlme: vdev mlme object
+ * @type: restart req or start req
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to handle vdev stop during start req
+ *
+ * Return: QDF_STATUS
+ */
 static QDF_STATUS ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 					       enum vdev_cmd_type type,
-					       uint16_t event_data_len,
-					       void *event_data)
+					       uint16_t data_len, void *data)
 {
-	return QDF_STATUS_SUCCESS;
+	return wma_ap_mlme_vdev_stop_start_send(vdev_mlme, type,
+						data_len, data);
 }
 
 QDF_STATUS ap_mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
@@ -551,6 +561,41 @@ bool ap_mlme_get_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev)
 	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
 
 	return mlme_priv->hidden_ssid_restart_in_progress;
+}
+
+QDF_STATUS
+ap_mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+
+	mlme_priv->vdev_start_failed = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool ap_mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return false;
+	}
+
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+
+	return mlme_priv->vdev_start_failed;
 }
 
 /**
