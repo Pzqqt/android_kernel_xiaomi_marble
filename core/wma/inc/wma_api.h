@@ -468,6 +468,22 @@ QDF_STATUS wma_ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS
 wma_ap_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 				      uint16_t data_len, void *data);
+
+/**
+ * wma_ap_mlme_vdev_stop_start_send - handle vdev stop during start req
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @type: restart req or start req
+ * @data_len: data size
+ * @data: event data
+ *
+ * API handle vdev stop during start req
+ *
+ * Return: SUCCESS alsways
+ */
+QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
+					    enum vdev_cmd_type type,
+					    uint16_t data_len, void *data);
+
 #endif
 
 #endif

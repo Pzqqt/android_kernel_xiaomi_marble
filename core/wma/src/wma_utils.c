@@ -4800,11 +4800,8 @@ QDF_STATUS wma_get_roam_scan_stats(WMA_HANDLE handle,
 #ifdef CONFIG_VDEV_SM
 
 static QDF_STATUS
-wma_ap_vdev_send_start_resp(struct vdev_mlme_obj *vdev_mlme,
-			    tpAddBssParams add_bss)
+wma_ap_vdev_send_start_resp(tp_wma_handle wma, tpAddBssParams add_bss)
 {
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-
 	WMA_LOGD(FL("Sending add bss rsp to umac(vdev %d status %d)"),
 		 add_bss->bssIdx, add_bss->status);
 	wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
@@ -4827,7 +4824,7 @@ QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 		wma_send_msg(wma, WMA_HIDDEN_SSID_RESTART_RSP, data, 0);
 		ap_mlme_set_hidden_ssid_restart_in_progress(vdev, false);
 	} else {
-		status = wma_ap_vdev_send_start_resp(vdev_mlme, data);
+		status = wma_ap_vdev_send_start_resp(wma, (tpAddBssParams)data);
 	}
 
 	return status;
@@ -4856,9 +4853,26 @@ wma_ap_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	wma_send_del_bss_response(wma, (struct wma_target_req *)data);
+	if (!ap_mlme_get_vdev_start_failed(vdev_mlme->vdev))
+		wma_send_del_bss_response(wma, (struct wma_target_req *)data);
+	else
+		ap_mlme_set_vdev_start_failed(vdev_mlme->vdev, false);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
+					    enum vdev_cmd_type type,
+					    uint16_t data_len, void *data)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	tpAddBssParams bss_params = (tpAddBssParams)data;
+
+	if (wma_send_vdev_stop_to_fw(wma, bss_params->bssIdx))
+		WMA_LOGE(FL("Failed to send vdev stop for vdev id %d"),
+			 bss_params->bssIdx);
+
+	return wma_ap_vdev_send_start_resp(wma, bss_params);
 }
 
 #endif

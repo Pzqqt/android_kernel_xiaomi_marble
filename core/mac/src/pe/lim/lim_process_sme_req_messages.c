@@ -2972,9 +2972,17 @@ static void lim_delete_peers_and_send_vdev_stop(tpPESession session)
 	tpAniSirGlobal mac_ctx = session->mac_ctx;
 	QDF_STATUS status;
 
-	status = wlan_vdev_mlme_sm_deliver_evt(session->vdev,
-					       WLAN_VDEV_SM_EV_DOWN,
+	if (wlan_vdev_mlme_get_substate(session->vdev) ==
+	    WLAN_VDEV_SS_START_RESTART_PROGRESS)
+		status =
+		 wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					       WLAN_VDEV_SM_EV_RESTART_REQ_FAIL,
 					       sizeof(*session), session);
+	else
+		status = wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+						       WLAN_VDEV_SM_EV_DOWN,
+						       sizeof(*session),
+						       session);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("failed to post WLAN_VDEV_SM_EV_DOWN for vdevid %d",
 		       session->smeSessionId);

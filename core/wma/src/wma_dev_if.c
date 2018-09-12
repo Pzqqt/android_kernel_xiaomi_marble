@@ -909,21 +909,25 @@ static void wma_send_start_resp(tp_wma_handle wma,
 				wmi_vdev_start_response_event_fixed_param *
 				resp_event)
 {
+	struct wma_txrx_node *iface = &wma->interfaces[resp_event->vdev_id];
+
 	if (!resp_event->status && QDF_IS_STATUS_SUCCESS(add_bss->status)) {
-		add_bss->status = wlan_vdev_mlme_sm_deliver_evt(
-				      wma->interfaces[resp_event->vdev_id].vdev,
-				      WLAN_VDEV_SM_EV_START_RESP,
-				      sizeof(*add_bss),
-				      add_bss);
+		add_bss->status =
+		  wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+						WLAN_VDEV_SM_EV_START_RESP,
+						sizeof(*add_bss), add_bss);
 		if (QDF_IS_STATUS_SUCCESS(add_bss->status))
 			return;
 	}
 
 	/* Send vdev stop if vdev start was success */
 	if (QDF_IS_STATUS_ERROR(add_bss->status) &&
-	    !resp_event->status)
-		if (wma_send_vdev_stop_to_fw(wma, resp_event->vdev_id))
-			WMA_LOGE(FL("Failed to send vdev stop"));
+	    !resp_event->status) {
+		wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+					      WLAN_VDEV_SM_EV_DOWN,
+					      sizeof(*add_bss),	add_bss);
+		return;
+	}
 
 	WMA_LOGD(FL("Sending add bss rsp to umac(vdev %d status %d)"),
 		 resp_event->vdev_id, add_bss->status);

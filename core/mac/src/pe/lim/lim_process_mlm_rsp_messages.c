@@ -47,7 +47,6 @@
 
 void lim_process_mlm_join_cnf(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_auth_cnf(tpAniSirGlobal, uint32_t *);
-void lim_process_mlm_start_cnf(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_assoc_ind(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_assoc_cnf(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_reassoc_ind(tpAniSirGlobal, uint32_t *);

@@ -422,6 +422,16 @@ void lim_process_mlm_req_messages(tpAniSirGlobal, struct scheduler_msg *);
 void lim_process_mlm_rsp_messages(tpAniSirGlobal, uint32_t, uint32_t *);
 void lim_process_sme_del_bss_rsp(tpAniSirGlobal, uint32_t, tpPESession);
 
+/**
+ * lim_process_mlm_start_cnf(): called to processes MLM_START_CNF message from
+ * MLM State machine.
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg_buf: A pointer to the MLM message buffer
+ *
+ * Return: None
+ */
+void lim_process_mlm_start_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf);
+
 void lim_get_random_bssid(tpAniSirGlobal pMac, uint8_t *data);
 
 /* Function to handle HT and HT IE CFG parameter intializations */

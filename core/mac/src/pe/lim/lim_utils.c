@@ -8423,13 +8423,6 @@ void lim_process_ap_ecsa_timeout(void *data)
 	}
 }
 
-void lim_send_start_bss_confirm(tpAniSirGlobal mac_ctx,
-				     tLimMlmStartCnf *start_cnf)
-{
-	lim_post_sme_message(mac_ctx, LIM_MLM_START_CNF,
-			     (uint32_t *)start_cnf);
-}
-
 #ifdef CONFIG_VDEV_SM
 
 void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session)
@@ -8558,7 +8551,55 @@ QDF_STATUS lim_ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS lim_ap_mlme_vdev_start_req_failed(struct vdev_mlme_obj *vdev_mlme,
+					     uint16_t data_len, void *data)
+{
+	tpAniSirGlobal mac_ctx;
+
+	/* store mac ctx in vdev_mlme legacy_vdev_ptr?*/
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		pe_err("mac_ctx is NULL");
+		if (data)
+			qdf_mem_free(data);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	lim_process_mlm_start_cnf(mac_ctx, data);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void lim_send_start_bss_confirm(tpAniSirGlobal mac_ctx,
+				tLimMlmStartCnf *start_cnf)
+{
+	if (start_cnf->resultCode == eSIR_SME_SUCCESS) {
+		lim_post_sme_message(mac_ctx, LIM_MLM_START_CNF,
+				     (uint32_t *)start_cnf);
+	} else {
+		tpPESession session;
+
+		session = pe_find_session_by_session_id(mac_ctx,
+							start_cnf->sessionId);
+		if (!session) {
+			pe_err("session is NULL");
+			return;
+		}
+		ap_mlme_set_vdev_start_failed(session->vdev, true);
+		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					      WLAN_VDEV_SM_EV_START_REQ_FAIL,
+					      sizeof(*start_cnf), start_cnf);
+	}
+}
+
 #else
+
+void lim_send_start_bss_confirm(tpAniSirGlobal mac_ctx,
+				tLimMlmStartCnf *start_cnf)
+{
+	lim_post_sme_message(mac_ctx, LIM_MLM_START_CNF,
+			     (uint32_t *)start_cnf);
+}
 
 void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session)
 {

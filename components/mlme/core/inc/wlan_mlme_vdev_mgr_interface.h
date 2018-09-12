@@ -31,10 +31,12 @@
  * @chan_switch_in_progress: flag to indicate that channel switch is in progress
  * @hidden_ssid_restart_in_progress: flag to indicate hidden ssid restart is
  *                                   in progress
+ * @vdev_start_failed: flag to indicate that vdev start failed.
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
 	bool hidden_ssid_restart_in_progress;
+	bool vdev_start_failed;
 };
 
 /**
@@ -94,6 +96,24 @@ ap_mlme_set_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev,
  * Return: value of mlme priv hidden ssid restart in progress
  */
 bool ap_mlme_get_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ap_mlme_set_vdev_start_failed() - set mlme priv vdev restart fail flag
+ * @vdev: vdev pointer
+ * @val: value to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ap_mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val);
+
+/**
+ * ap_mlme_get_vdev_start_failed() - get mlme priv vdev restart fail flag
+ * @vdev: vdev pointer
+ *
+ * Return: value of mlme priv vdev restart fail flag
+ */
+bool ap_mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev);
 
 #endif
 #endif
