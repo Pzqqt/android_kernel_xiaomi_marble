@@ -1982,7 +1982,7 @@ void qdf_dp_display_ptr_record(struct qdf_dp_trace_record_s *record,
 	char prepend_str[QDF_DP_TRACE_PREPEND_STR_SIZE];
 	struct qdf_dp_trace_ptr_buf *buf =
 		(struct qdf_dp_trace_ptr_buf *)record->data;
-	bool is_free_pkt_ptr_record;
+	bool is_free_pkt_ptr_record = false;
 
 	if ((record->code == QDF_DP_TRACE_FREE_PACKET_PTR_RECORD) ||
 	    (record->code == QDF_DP_TRACE_LI_DP_FREE_PACKET_PTR_RECORD))
