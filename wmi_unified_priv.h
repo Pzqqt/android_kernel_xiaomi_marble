@@ -30,6 +30,7 @@
 #include <wmi_unified.h>
 #endif
 #include "qdf_atomic.h"
+#include <wbuff.h>
 
 #ifdef CONVERGED_P2P_ENABLE
 #include <wlan_p2p_public_struct.h>
@@ -1795,6 +1796,7 @@ struct wmi_host_abi_version {
 struct wmi_unified {
 	void *scn_handle;    /* handle to device */
 	osdev_t  osdev; /* handle to use OS-independent services */
+	struct wbuff_mod_handle *wbuff_handle; /* handle to wbuff */
 	qdf_atomic_t pending_cmds;
 	HTC_ENDPOINT_ID wmi_endpoint_id;
 	uint16_t max_msg_len;
