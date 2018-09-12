@@ -245,7 +245,7 @@ void lim_process_mlm_start_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 					FL("Start Beacon with ssid %s Ch %d"),
 					psessionEntry->ssId.ssId,
 					psessionEntry->currentOperChannel);
-			lim_send_beacon_ind(pMac, psessionEntry);
+			lim_send_beacon(pMac, psessionEntry);
 			lim_enable_obss_detection_config(pMac, psessionEntry);
 			lim_send_obss_color_collision_cfg(pMac, psessionEntry,
 					OBSS_COLOR_COLLISION_DETECTION);

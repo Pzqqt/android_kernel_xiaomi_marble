@@ -21,6 +21,8 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include "wlan_mlme_main.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
+#include "lim_utils.h"
+#include "wma_api.h"
 
 static struct vdev_mlme_ops sta_mlme_ops;
 static struct vdev_mlme_ops ap_mlme_ops;
@@ -271,37 +273,93 @@ static QDF_STATUS sta_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * ap_mlme_vdev_start_send () - send vdev start
+ /**
+ * ap_mlme_vdev_start_send () - send vdev start req
  * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
+ * @data_len: event data length
+ * @data: event data
  *
  * This function is called to initiate actions of VDEV start ie start bss
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
-					  uint16_t event_data_len,
-					  void *event_data)
+					  uint16_t data_len, void *data)
 {
-	return QDF_STATUS_SUCCESS;
+	return lim_ap_mlme_vdev_start_send(vdev_mlme, data_len, data);
 }
 
 /**
  * ap_mlme_vdev_start_continue () - vdev start rsp calback
  * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
+ * @data_len: event data length
+ * @data: event data
  *
  * This function is called to handle the VDEV START/RESTART calback
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
-					      uint16_t event_data_len,
-					      void *event_data)
+					      uint16_t data_len, void *data)
 {
+	return wma_ap_mlme_vdev_start_continue(vdev_mlme, data_len, data);
+}
+
+/**
+ * ap_mlme_vdev_update_beacon() - callback to initiate beacon update
+ * @vdev_mlme: vdev mlme object
+ * @op: beacon operation
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to update beacon
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
+					     enum beacon_update_op op,
+					     uint16_t data_len, void *data)
+{
+	return lim_ap_mlme_vdev_update_beacon(vdev_mlme, op, data_len, data);
+}
+
+/**
+ * ap_mlme_vdev_up_send() - callback to send vdev up
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to send vdev up req
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
+				       uint16_t data_len, void *data)
+{
+	return lim_ap_mlme_vdev_up_send(vdev_mlme, data_len, data);
+}
+
+/**
+ * ap_mlme_vdev_notify_up_complete() - callback to notify up completion
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to indicate up is completed
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+ap_mlme_vdev_notify_up_complete(struct vdev_mlme_obj *vdev_mlme,
+				uint16_t data_len, void *data)
+{
+	if (!vdev_mlme) {
+		mlme_err("data is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pe_debug("Vdev %d is up", wlan_vdev_get_id(vdev_mlme->vdev));
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -318,59 +376,6 @@ static QDF_STATUS ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 static QDF_STATUS ap_mlme_vdev_start_req_failed(struct vdev_mlme_obj *vdev_mlme,
 						uint16_t event_data_len,
 						void *event_data)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * ap_mlme_vdev_update_beacon() - callback to initiate beacon update
- * @vdev_mlme: vdev mlme object
- * @op: beacon operation
- * @event_data_len: event data length
- * @event_data: event data
- *
- * This function is called to update beacon
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
-					     enum beacon_update_op op,
-					     uint16_t event_data_len,
-					     void *event_data)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * ap_mlme_vdev_up_send() – callback to send vdev up
- * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
- *
- * This function is called to send vdev up req
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
-				       uint16_t event_data_len,
-				       void *event_data)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * ap_mlme_vdev_notify_up_complete() – callback to notify up completion
- * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
- *
- * This function is called to indicate up is completed
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS ap_mlme_vdev_notify_up_complete(struct vdev_mlme_obj *vdev_mlme,
-						  uint16_t event_data_len,
-						  void *event_data)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -393,7 +398,7 @@ static QDF_STATUS ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 }
 
 static QDF_STATUS ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
-					       uint8_t restart,
+					       enum vdev_cmd_type type,
 					       uint16_t event_data_len,
 					       void *event_data)
 {
@@ -568,8 +573,6 @@ static struct vdev_mlme_ops sta_mlme_ops = {
 /**
  * struct ap_mlme_ops - VDEV MLME operation callbacks strucutre for beaconing
  *                      interface
- * @mlme_vdev_validate_basic_params:    callback to validate VDEV basic params
- * @mlme_vdev_reset_proto_params:       callback to Reset protocol params
  * @mlme_vdev_start_send:               callback to initiate actions of VDEV
  *                                      MLME start operation
  * @mlme_vdev_restart_send:             callback to initiate actions of VDEV
@@ -590,14 +593,12 @@ static struct vdev_mlme_ops sta_mlme_ops = {
  *                                      MLME stop operation
  * @mlme_vdev_stop_continue:            callback to initiate operations on
  *                                      LMAC/FW stop response
- * @mlme_vdev_bss_peer_delete_continue: callback to initiate operations on BSS
- *                                      peer delete completion
  * @mlme_vdev_down_send:                callback to initiate actions of VDEV
  *                                      MLME down operation
+ * @mlme_vdev_notify_down_complete:     callback to notify VDEV MLME on moving
+ *                                      to INIT state
  * @mlme_vdev_legacy_hdl_create:        callback to invoke creation of legacy
  *                                      vdev object
- * @mlme_vdev_legacy_hdl_post_create:   callback to invoke post creation actions
- *                                      of legacy vdev object
  * @mlme_vdev_legacy_hdl_destroy:       callback to invoke destroy of legacy
  *                                      vdev object
  */
@@ -611,7 +612,7 @@ static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_notify_up_complete = ap_mlme_vdev_notify_up_complete,
 	.mlme_vdev_update_beacon = ap_mlme_vdev_update_beacon,
 	.mlme_vdev_disconnect_peers = ap_mlme_vdev_disconnect_peers,
-	.mlme_vdev_disconnect_peers = ap_vdev_dfs_cac_timer_stop,
+	.mlme_vdev_dfs_cac_timer_stop = ap_vdev_dfs_cac_timer_stop,
 	.mlme_vdev_stop_send = ap_mlme_vdev_stop_send,
 	.mlme_vdev_stop_continue = ap_mlme_vdev_stop_continue,
 	.mlme_vdev_down_send = ap_mlme_vdev_down_send,

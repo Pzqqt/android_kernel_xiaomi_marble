@@ -33,6 +33,7 @@
 #include "wlan_policy_mgr_api.h"
 #include "wma_sar_public_structs.h"
 #include <cdp_txrx_ops.h>
+#include "include/wlan_vdev_mlme.h"
 
 typedef void *WMA_HANDLE;
 
@@ -407,4 +408,21 @@ void wma_wmi_stop(void);
  */
 uint8_t wma_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
 			uint8_t *nss, uint8_t *mcs_rate_flag);
+#ifdef CONFIG_VDEV_SM
+
+/**
+ * wma_ap_mlme_vdev_start_continue - VDEV start response handling
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes VDEV start response actions
+ *
+ * Return: SUCCESS on successful completion of start response operation
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
+					   uint16_t data_len, void *data);
+#endif
+
 #endif

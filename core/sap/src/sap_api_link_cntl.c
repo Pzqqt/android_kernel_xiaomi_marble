@@ -578,7 +578,7 @@ wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
 	QDF_STATUS qdf_status;
 	tWLAN_SAPEvent sap_event;
 
-	if (sap_ctx->fsm_state == SAP_DFS_CAC_WAIT) {
+	if (sap_is_dfs_cac_wait_state(sap_ctx)) {
 		if (sap_ctx->csr_roamProfile.disableDFSChSwitch) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				QDF_TRACE_LEVEL_ERROR,
@@ -889,10 +889,11 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 		}
 
 		if (sap_ctx->fsm_state != SAP_STARTED &&
-		    sap_ctx->fsm_state != SAP_DFS_CAC_WAIT) {
+		    !sap_is_dfs_cac_wait_state(sap_ctx)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-				  FL("Ignore Radar event in sap state %d"),
-				  sap_ctx->fsm_state);
+				  FL("Ignore Radar event in sap state %d cac wait state %d"),
+				  sap_ctx->fsm_state,
+				  sap_is_dfs_cac_wait_state(sap_ctx));
 			goto EXIT;
 		}
 

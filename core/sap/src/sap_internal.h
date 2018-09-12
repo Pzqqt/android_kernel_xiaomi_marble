@@ -34,6 +34,7 @@
 #include "sap_ch_select.h"
 #include <wlan_scan_public_structs.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include "wlan_vdev_mlme_api.h"
 
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
@@ -88,7 +89,9 @@ extern "C" {
  */
 enum sap_fsm_state {
 	SAP_INIT,
+#ifndef CONFIG_VDEV_SM
 	SAP_DFS_CAC_WAIT,
+#endif
 	SAP_STARTING,
 	SAP_STARTED,
 	SAP_STOPPING
@@ -466,6 +469,31 @@ static inline uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
  * Return: Selected operating channel number
  */
 uint8_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg);
+
+/*
+ * sap_is_dfs_cac_wait_state() - check if sap is in cac wait state
+ * @sap_ctx: sap context to check
+ *
+ * Return: true if sap is in cac wait state
+ */
+#ifdef CONFIG_VDEV_SM
+static inline bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx)
+{
+	if (!sap_ctx)
+		return false;
+
+	return (wlan_vdev_mlme_get_state(sap_ctx->vdev) ==
+		WLAN_VDEV_S_DFS_CAC_WAIT);
+}
+#else
+static inline bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx)
+{
+	if (!sap_ctx)
+		return false;
+
+	return (sap_ctx->fsm_state == SAP_DFS_CAC_WAIT);
+}
+#endif
 
 /**
  * sap_channel_in_acs_channel_list() - check if channel in acs channel list

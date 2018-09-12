@@ -903,14 +903,25 @@ send_rsp:
  *
  * Return: none
  */
+#ifdef CONFIG_VDEV_SM
 static void wma_send_start_resp(tp_wma_handle wma,
-			       tpAddBssParams add_bss,
-			       wmi_vdev_start_response_event_fixed_param *
-			       resp_event)
+				tpAddBssParams add_bss,
+				wmi_vdev_start_response_event_fixed_param *
+				resp_event)
 {
+	if (!resp_event->status && QDF_IS_STATUS_SUCCESS(add_bss->status)) {
+		add_bss->status = wlan_vdev_mlme_sm_deliver_evt(
+				      wma->interfaces[resp_event->vdev_id].vdev,
+				      WLAN_VDEV_SM_EV_START_RESP,
+				      sizeof(*add_bss),
+				      add_bss);
+		if (QDF_IS_STATUS_SUCCESS(add_bss->status))
+			return;
+	}
+
 	/* Send vdev stop if vdev start was success */
 	if (QDF_IS_STATUS_ERROR(add_bss->status) &&
-	   !resp_event->status)
+	    !resp_event->status)
 		if (wma_send_vdev_stop_to_fw(wma, resp_event->vdev_id))
 			WMA_LOGE(FL("Failed to send vdev stop"));
 
@@ -918,6 +929,23 @@ static void wma_send_start_resp(tp_wma_handle wma,
 		 resp_event->vdev_id, add_bss->status);
 	wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
 }
+#else
+static void wma_send_start_resp(tp_wma_handle wma,
+				tpAddBssParams add_bss,
+				wmi_vdev_start_response_event_fixed_param *
+				resp_event)
+{
+	/* Send vdev stop if vdev start was success */
+	if (QDF_IS_STATUS_ERROR(add_bss->status) &&
+	    !resp_event->status)
+		if (wma_send_vdev_stop_to_fw(wma, resp_event->vdev_id))
+			WMA_LOGE(FL("Failed to send vdev stop"));
+
+	WMA_LOGD(FL("Sending add bss rsp to umac(vdev %d status %d)"),
+		 resp_event->vdev_id, add_bss->status);
+	wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
+}
+#endif
 
 /**
  * wma_vdev_start_rsp() - send vdev start response to upper layer

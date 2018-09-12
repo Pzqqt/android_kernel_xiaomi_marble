@@ -672,9 +672,9 @@ void wma_send_probe_rsp_tmpl(tp_wma_handle wma,
  * @wma: wma handle
  * @vdev_id: vdev id
  *
- * Return: none
+ * Return: QDF_STATUS
  */
-void wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id);
+QDF_STATUS wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id);
 
 void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info);
 

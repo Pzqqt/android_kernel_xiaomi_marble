@@ -4546,13 +4546,15 @@ QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+#ifndef CONFIG_VDEV_SM
 	if (wma_is_vdev_up(params->vdev_id)) {
 		WMA_LOGD("vdev %d is already up for bssid %pM. Do not send",
 			 params->vdev_id, bssid);
 		return QDF_STATUS_SUCCESS;
 	}
-
+#endif
 	vdev = &wma->interfaces[params->vdev_id];
+
 	status = wmi_unified_vdev_up_send(wma->wmi_handle, bssid, params);
 	wma_release_wakelock(&vdev->vdev_start_wakelock);
 
@@ -4794,3 +4796,25 @@ QDF_STATUS wma_get_roam_scan_stats(WMA_HANDLE handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef CONFIG_VDEV_SM
+
+static QDF_STATUS
+wma_ap_vdev_send_start_resp(struct vdev_mlme_obj *vdev_mlme,
+			    tpAddBssParams add_bss)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	WMA_LOGD(FL("Sending add bss rsp to umac(vdev %d status %d)"),
+		 add_bss->bssIdx, add_bss->status);
+	wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
+					   uint16_t data_len, void *data)
+{
+	return wma_ap_vdev_send_start_resp(vdev_mlme, data);
+}
+#endif

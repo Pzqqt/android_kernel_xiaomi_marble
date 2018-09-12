@@ -23,6 +23,7 @@
 #include <sir_common.h>
 #include "ani_global.h"
 #include "sys_wrapper.h"
+#include "wlan_vdev_mlme_api.h"
 
 /* / System role definition on a per BSS */
 typedef enum eBssSystemRole {

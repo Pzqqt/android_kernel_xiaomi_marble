@@ -544,6 +544,16 @@ lim_configure_ap_start_bss_session(tpAniSirGlobal mac_ctx, tpPESession session,
  *
  * Return: QDF_STATUS
  */
+#ifdef CONFIG_VDEV_SM
+static QDF_STATUS
+lim_send_start_vdev_req(tpPESession session, tLimMlmStartReq *mlm_start_req)
+{
+	return wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					     WLAN_VDEV_SM_EV_START,
+					     sizeof(*mlm_start_req),
+					     mlm_start_req);
+}
+#else
 static QDF_STATUS
 lim_send_start_vdev_req(tpPESession session, tLimMlmStartReq *mlm_start_req)
 {
@@ -551,6 +561,7 @@ lim_send_start_vdev_req(tpPESession session, tLimMlmStartReq *mlm_start_req)
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 /**
  * __lim_handle_sme_start_bss_request() - process SME_START_BSS_REQ message
@@ -4891,7 +4902,7 @@ static void lim_process_sme_start_beacon_req(tpAniSirGlobal pMac, uint32_t *pMsg
 			  FL("Start Beacon with ssid %s Ch %d"),
 			  psessionEntry->ssId.ssId,
 			  psessionEntry->currentOperChannel);
-		lim_send_beacon_ind(pMac, psessionEntry);
+		lim_send_beacon(pMac, psessionEntry);
 		lim_enable_obss_detection_config(pMac, psessionEntry);
 		lim_send_obss_color_collision_cfg(pMac, psessionEntry,
 					OBSS_COLOR_COLLISION_DETECTION);

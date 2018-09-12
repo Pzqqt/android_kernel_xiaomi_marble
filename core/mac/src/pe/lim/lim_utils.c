@@ -8430,3 +8430,85 @@ void lim_send_start_bss_confirm(tpAniSirGlobal mac_ctx,
 			     (uint32_t *)start_cnf);
 }
 
+#ifdef CONFIG_VDEV_SM
+
+void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session)
+{
+	if (wlan_vdev_mlme_get_state(session->vdev) ==
+	    WLAN_VDEV_S_DFS_CAC_WAIT)
+		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					      WLAN_VDEV_SM_EV_DFS_CAC_COMPLETED,
+					      sizeof(*session), session);
+	else
+		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					      WLAN_VDEV_SM_EV_START_SUCCESS,
+					      sizeof(*session), session);
+}
+
+QDF_STATUS lim_ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
+				       uint16_t data_len, void *data)
+{
+	tpAniSirGlobal mac_ctx;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		pe_err("mac_ctx is NULL");
+		if (data)
+			qdf_mem_free(data);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	lim_process_mlm_start_req(mac_ctx, (tLimMlmStartReq *)data);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS lim_ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
+					  enum beacon_update_op op,
+					  uint16_t data_len, void *data)
+{
+	tpPESession session;
+
+	if (!data) {
+		pe_err("event_data is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (op == BEACON_INIT) {
+		session = (tpPESession)data;
+		lim_send_beacon_ind(session->mac_ctx, session);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS lim_ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
+				    uint16_t data_len, void *data)
+{
+	struct scheduler_msg msg = {0};
+	QDF_STATUS status;
+	tpPESession session = (tpPESession)data;
+
+	if (!session) {
+		pe_err("session is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	msg.type = SIR_HAL_SEND_AP_VDEV_UP;
+	msg.bodyval = session->smeSessionId;
+
+	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE("Failed to post SIR_HAL_SEND_AP_VDEV_UP");
+
+	return status;
+}
+
+#else
+
+void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session)
+{
+	lim_send_beacon_ind(mac_ctx, session);
+}
+
+#endif

@@ -36,6 +36,8 @@
 #include "lim_scan_result_utils.h"
 #include "lim_timer_utils.h"
 #include "lim_trace.h"
+#include "include/wlan_vdev_mlme.h"
+
 typedef enum {
 	ONE_BYTE = 1,
 	TWO_BYTE = 2
@@ -1483,4 +1485,60 @@ static inline void lim_set_peer_twt_cap(tpPESession session,
  */
 void lim_rx_invalid_peer_process(tpAniSirGlobal mac_ctx,
 				 struct scheduler_msg *lim_msg);
+
+/**
+ * lim_send_beacon() - send beacon indication to firmware
+ * @mac_ctx: Pointer to Global MAC structure
+ * @session: session pointer
+ *
+ * Return: None
+ */
+void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session);
+
+#ifdef CONFIG_VDEV_SM
+/**
+ * lim_ap_mlme_vdev_start_send() - Invokes VDEV start operation
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes VDEV start operation
+ *
+ * Return: SUCCESS on successful completion of start operation
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS lim_ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
+				       uint16_t data_len, void *event);
+/*
+ * lim_ap_mlme_vdev_update_beacon() - Updates beacon
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @op: beacon update type
+ * @data_len: data size
+ * @data: event data
+ *
+ * API updates/allocates/frees the beacon
+ *
+ * Return: SUCCESS on successful update of beacon
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS lim_ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
+					  enum beacon_update_op op,
+					  uint16_t data_len, void *data);
+
+/**
+ * lim_ap_mlme_vdev_up_send() - VDEV up operation
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes VDEV up operations
+ *
+ * Return: SUCCESS on successful completion of up operation
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS lim_ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
+				    uint16_t data_len, void *data);
+
+#endif
+
 #endif /* __LIM_UTILS_H */
