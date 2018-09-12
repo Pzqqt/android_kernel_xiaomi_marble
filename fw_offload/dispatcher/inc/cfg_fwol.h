@@ -23,7 +23,10 @@
 #include "cfg_converged.h"
 #include "qdf_types.h"
 
-#define CFG_FWOL_ALL
+#include "cfg_coex.h"
+
+#define CFG_FWOL_ALL \
+	CFG_COEX_ALL
 
 #endif /* __CFG_FWOL_H */
 

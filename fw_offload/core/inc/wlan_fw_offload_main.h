@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012 - 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,11 +34,39 @@
 #define fwol_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_FWOL, params)
 
 /**
+ * struct wlan_fwol_three_antenna_btc - Three antenna BTC config items
+ * @btc_mode: Config BTC mode
+ * @antenna_isolation: Antenna isolation
+ * @max_tx_power_for_btc: Max wlan tx power in co-ex scenario
+ * @wlan_low_rssi_threshold: Wlan low rssi threshold for BTC mode switching
+ * @bt_low_rssi_threshold: BT low rssi threshold for BTC mode switching
+ * @bt_interference_low_ll: Lower limit of low level BT interference
+ * @bt_interference_low_ul: Upper limit of low level BT interference
+ * @bt_interference_medium_ll: Lower limit of medium level BT interference
+ * @bt_interference_medium_ul: Upper limit of medium level BT interference
+ * @bt_interference_high_ll: Lower limit of high level BT interference
+ * @bt_interference_high_ul: Upper limit of high level BT interference
+ */
+struct wlan_fwol_coex_config {
+	uint8_t btc_mode;
+	uint8_t antenna_isolation;
+	uint8_t max_tx_power_for_btc;
+	int16_t wlan_low_rssi_threshold;
+	int16_t bt_low_rssi_threshold;
+	int16_t bt_interference_low_ll;
+	int16_t bt_interference_low_ul;
+	int16_t bt_interference_medium_ll;
+	int16_t bt_interference_medium_ul;
+	int16_t bt_interference_high_ll;
+	int16_t bt_interference_high_ul;
+};
+
+/**
  * struct wlan_fwol_cfg - fwol config items
+ * coex_config: coex config items
  */
 struct wlan_fwol_cfg {
-	/* Add CFG and INI items here */
-	int test;
+	struct wlan_fwol_coex_config coex_config;
 };
 
 /**

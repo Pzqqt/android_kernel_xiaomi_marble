@@ -149,3 +149,19 @@ void ucfg_fwol_deinit(void)
 		fwol_err("unable to unregister psoc create handle");
 }
 
+QDF_STATUS
+ucfg_fwol_get_coex_config_params(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_fwol_coex_config *coex_config)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*coex_config = fwol_obj->cfg.coex_config;
+
+	return QDF_STATUS_SUCCESS;
+}

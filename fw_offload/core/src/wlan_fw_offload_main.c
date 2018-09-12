@@ -28,6 +28,32 @@ struct wlan_fwol_psoc_obj *fwol_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
 						     WLAN_UMAC_COMP_FWOL);
 }
 
+static void
+fwol_update_coex_config_in_cfg(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_fwol_coex_config *coex_config)
+{
+	coex_config->btc_mode = cfg_get(psoc, CFG_BTC_MODE);
+	coex_config->antenna_isolation = cfg_get(psoc, CFG_ANTENNA_ISOLATION);
+	coex_config->max_tx_power_for_btc =
+				cfg_get(psoc, CFG_MAX_TX_POWER_FOR_BTC);
+	coex_config->wlan_low_rssi_threshold =
+				cfg_get(psoc, CFG_WLAN_LOW_RSSI_THRESHOLD);
+	coex_config->bt_low_rssi_threshold =
+				cfg_get(psoc, CFG_BT_LOW_RSSI_THRESHOLD);
+	coex_config->bt_interference_low_ll =
+				cfg_get(psoc, CFG_BT_INTERFERENCE_LOW_LL);
+	coex_config->bt_interference_low_ul =
+				cfg_get(psoc, CFG_BT_INTERFERENCE_LOW_UL);
+	coex_config->bt_interference_medium_ll =
+				cfg_get(psoc, CFG_BT_INTERFERENCE_MEDIUM_LL);
+	coex_config->bt_interference_medium_ul =
+				cfg_get(psoc, CFG_BT_INTERFERENCE_MEDIUM_UL);
+	coex_config->bt_interference_high_ll =
+				cfg_get(psoc, CFG_BT_INTERFERENCE_HIGH_LL);
+	coex_config->bt_interference_high_ul =
+				cfg_get(psoc, CFG_BT_INTERFERENCE_HIGH_UL);
+}
+
 QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -41,7 +67,8 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	}
 
 	fwol_cfg = &fwol_obj->cfg;
-	/* Populate the CFG and INI here using CFG_GET */
+
+	fwol_update_coex_config_in_cfg(psoc, &fwol_cfg->coex_config);
 
 	return status;
 }

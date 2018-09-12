@@ -26,6 +26,8 @@
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_cmn.h>
 
+#include "wlan_fw_offload_main.h"
+
 /**
  * ucfg_fwol_psoc_open() - FWOL component Open
  * @psoc: pointer to psoc object
@@ -63,5 +65,16 @@ QDF_STATUS ucfg_fwol_init(void);
  * Return: QDF_STATUS_SUCCESS - in case of success else return error
  */
 void ucfg_fwol_deinit(void);
+
+/**
+ * ucfg_fwol_get_coex_config_params() - Get coex config params
+ * @psoc: Pointer to psoc object
+ * @coex_config: Pointer to struct wlan_fwol_coex_config
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ucfg_fwol_get_coex_config_params(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_fwol_coex_config *coex_config);
 
 #endif /* _WLAN_FWOL_UCFG_API_H_ */
