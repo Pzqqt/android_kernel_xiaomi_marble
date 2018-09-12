@@ -2661,7 +2661,7 @@ void lim_process_mlm_update_hidden_ssid_rsp(tpAniSirGlobal mac_ctx,
 	}
 	/* Update beacon */
 	sch_set_fixed_beacon_fields(mac_ctx, session_entry);
-	lim_send_beacon_ind(mac_ctx, session_entry);
+	lim_send_beacon(mac_ctx, session_entry);
 
 free_req:
 	if (NULL != hidden_ssid_vdev_restart) {

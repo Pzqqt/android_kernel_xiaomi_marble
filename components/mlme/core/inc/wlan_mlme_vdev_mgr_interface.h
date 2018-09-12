@@ -74,5 +74,26 @@ QDF_STATUS ap_mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
  */
 bool ap_mlme_get_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev);
 
+/**
+ * ap_mlme_set_hidden_ssid_restart_in_progress() - set mlme priv hidden ssid
+ * restart in progress
+ * @vdev: vdev pointer
+ * @val: value to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+ap_mlme_set_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev,
+					    bool val);
+
+/**
+ * ap_mlme_get_hidden_ssid_restart_in_progress() - get mlme priv hidden ssid
+ * restart in progress
+ * @vdev: vdev pointer
+ *
+ * Return: value of mlme priv hidden ssid restart in progress
+ */
+bool ap_mlme_get_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev);
+
 #endif
 #endif

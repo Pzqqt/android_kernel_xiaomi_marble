@@ -3873,8 +3873,16 @@ static void lim_handle_update_ssid_hidden(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
+#ifdef CONFIG_VDEV_SM
+	ap_mlme_set_hidden_ssid_restart_in_progress(session->vdev, true);
+	wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+				      WLAN_VDEV_SM_EV_FW_VDEV_RESTART,
+				      sizeof(*session), session);
+#else
+
 	/* Send vdev restart */
 	lim_send_vdev_restart(mac_ctx, session, session->smeSessionId);
+#endif
 
 	return;
 }

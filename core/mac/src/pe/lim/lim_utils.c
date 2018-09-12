@@ -8544,13 +8544,16 @@ QDF_STATUS lim_ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	lim_set_channel(session->mac_ctx, session->currentOperChannel,
-			session->ch_center_freq_seg0,
-			session->ch_center_freq_seg1,
-			session->ch_width,
-			session->maxTxPower, session->peSessionId,
-			session->cac_duration_ms,
-			session->dfs_regdomain);
+	if (ap_mlme_get_hidden_ssid_restart_in_progress(vdev_mlme->vdev))
+		lim_send_vdev_restart(session->mac_ctx, session,
+				      session->smeSessionId);
+	else
+		lim_set_channel(session->mac_ctx, session->currentOperChannel,
+				session->ch_center_freq_seg0,
+				session->ch_center_freq_seg1,
+				session->ch_width, session->maxTxPower,
+				session->peSessionId, session->cac_duration_ms,
+				session->dfs_regdomain);
 
 	return QDF_STATUS_SUCCESS;
 }

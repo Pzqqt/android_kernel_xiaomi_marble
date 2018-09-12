@@ -1223,9 +1223,15 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			__func__);
 		qdf_atomic_set(&iface->vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
-
+#ifdef CONFIG_VDEV_SM
+		wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+					      WLAN_VDEV_SM_EV_RESTART_RESP,
+					      sizeof(*hidden_ssid_restart),
+					      hidden_ssid_restart);
+#else
 		wma_send_msg(wma, WMA_HIDDEN_SSID_RESTART_RSP,
 				(void *)hidden_ssid_restart, 0);
+#endif
 	}
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE

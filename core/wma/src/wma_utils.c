@@ -4817,11 +4817,15 @@ QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
 
-	if (ap_mlme_get_chan_switch_in_progress(vdev_mlme->vdev)) {
+	if (ap_mlme_get_chan_switch_in_progress(vdev)) {
 		wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
 					   data, 0);
-		ap_mlme_set_chan_switch_in_progress(vdev_mlme->vdev, false);
+		ap_mlme_set_chan_switch_in_progress(vdev, false);
+	} else if (ap_mlme_get_hidden_ssid_restart_in_progress(vdev)) {
+		wma_send_msg(wma, WMA_HIDDEN_SSID_RESTART_RSP, data, 0);
+		ap_mlme_set_hidden_ssid_restart_in_progress(vdev, false);
 	} else {
 		status = wma_ap_vdev_send_start_resp(vdev_mlme, data);
 	}

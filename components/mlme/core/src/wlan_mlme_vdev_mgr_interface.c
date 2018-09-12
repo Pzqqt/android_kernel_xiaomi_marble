@@ -517,6 +517,42 @@ bool ap_mlme_get_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev)
 	return mlme_priv->chan_switch_in_progress;
 }
 
+QDF_STATUS
+ap_mlme_set_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev,
+					    bool val)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+
+	mlme_priv->hidden_ssid_restart_in_progress = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool ap_mlme_get_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return false;
+	}
+
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+
+	return mlme_priv->hidden_ssid_restart_in_progress;
+}
+
 /**
  * ap_mlme_vdev_legacy_hdl_create () - Create sap mlme legacy priv object
  * @vdev_mlme: vdev mlme object
