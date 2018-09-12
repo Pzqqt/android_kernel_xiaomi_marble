@@ -4551,6 +4551,108 @@ error:
 }
 
 /**
+ * hdd_send_coex_config_params() - Send coex config params to FW
+ * @hdd_ctx: HDD context
+ * @adapter: Primary adapter context
+ *
+ * This function is used to send all coex config related params to FW
+ *
+ * Return: 0 on success and -EINVAL on failure
+ */
+static int hdd_send_coex_config_params(struct hdd_context *hdd_ctx,
+				       struct hdd_adapter *adapter)
+{
+	struct coex_config_params coex_cfg_params = {0};
+	struct wlan_fwol_coex_config config = {0};
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	QDF_STATUS status;
+
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is invalid");
+		goto err;
+	}
+
+	if (!adapter) {
+		hdd_err("adapter is invalid");
+		goto err;
+	}
+
+	if (!psoc) {
+		hdd_err("HDD psoc is invalid");
+		goto err;
+	}
+
+	status = ucfg_fwol_get_coex_config_params(psoc, &config);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Unable to get coex config params");
+		goto err;
+	}
+
+	coex_cfg_params.vdev_id = adapter->session_id;
+	coex_cfg_params.config_type = WMI_COEX_CONFIG_TX_POWER;
+	coex_cfg_params.config_arg1 = config.max_tx_power_for_btc;
+
+	status = sme_send_coex_config_cmd(&coex_cfg_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send coex Tx power");
+		goto err;
+	}
+
+	coex_cfg_params.config_type = WMI_COEX_CONFIG_HANDOVER_RSSI;
+	coex_cfg_params.config_arg1 = config.wlan_low_rssi_threshold;
+
+	status = sme_send_coex_config_cmd(&coex_cfg_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send coex handover RSSI");
+		goto err;
+	}
+
+	coex_cfg_params.config_type = WMI_COEX_CONFIG_BTC_MODE;
+	coex_cfg_params.config_arg1 = config.btc_mode;
+
+	status = sme_send_coex_config_cmd(&coex_cfg_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send coex BTC mode");
+		goto err;
+	}
+
+	coex_cfg_params.config_type = WMI_COEX_CONFIG_ANTENNA_ISOLATION;
+	coex_cfg_params.config_arg1 = config.antenna_isolation;
+
+	status = sme_send_coex_config_cmd(&coex_cfg_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send coex antenna isolation");
+		goto err;
+	}
+
+	coex_cfg_params.config_type = WMI_COEX_CONFIG_BT_LOW_RSSI_THRESHOLD;
+	coex_cfg_params.config_arg1 = config.bt_low_rssi_threshold;
+
+	status = sme_send_coex_config_cmd(&coex_cfg_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send coex BT low RSSI threshold");
+		goto err;
+	}
+
+	coex_cfg_params.config_type = WMI_COEX_CONFIG_BT_INTERFERENCE_LEVEL;
+	coex_cfg_params.config_arg1 = config.bt_interference_low_ll;
+	coex_cfg_params.config_arg2 = config.bt_interference_low_ul;
+	coex_cfg_params.config_arg3 = config.bt_interference_medium_ll;
+	coex_cfg_params.config_arg4 = config.bt_interference_medium_ul;
+	coex_cfg_params.config_arg5 = config.bt_interference_high_ll;
+	coex_cfg_params.config_arg6 = config.bt_interference_high_ul;
+
+	status = sme_send_coex_config_cmd(&coex_cfg_params);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to send coex BT interference level");
+		goto err;
+	}
+	return 0;
+err:
+	return -EINVAL;
+}
+
+/**
  * hdd_set_fw_params() - Set parameters to firmware
  * @adapter: HDD adapter
  *
@@ -4701,6 +4803,13 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	}
 
 	hdd_set_fw_log_params(hdd_ctx, adapter);
+
+	ret = hdd_send_coex_config_params(hdd_ctx, adapter);
+	if (ret) {
+		hdd_warn("Error initializing coex config params");
+		goto error;
+	}
+
 	hdd_exit();
 
 	return 0;

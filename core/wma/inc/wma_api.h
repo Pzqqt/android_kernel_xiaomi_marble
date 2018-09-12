@@ -321,6 +321,18 @@ QDF_STATUS wma_set_sar_limit(WMA_HANDLE handle,
 		struct sar_limit_cmd_params *sar_limit_params);
 
 /**
+ * wma_send_coex_config_cmd() - Send coex config params
+ * @wma_handle: wma handle
+ * @coex_cfg_params: struct to coex cofig params
+ *
+ * This function sends WMI command to send coex cofig params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wma_send_coex_config_cmd(WMA_HANDLE wma_handle,
+				    struct coex_config_params *coex_cfg_params);
+
+/**
  * wma_set_qpower_config() - update qpower config in wma
  * @vdev_id:	the Id of the vdev to configure
  * @qpower:	new qpower value

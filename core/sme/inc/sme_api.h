@@ -1775,6 +1775,14 @@ QDF_STATUS sme_get_sar_power_limits(tHalHandle hal,
 QDF_STATUS sme_set_sar_power_limits(tHalHandle hal,
 		struct sar_limit_cmd_params *sar_limit_cmd);
 
+/**
+ * sme_send_coex_config_cmd() - Send COEX config params
+ * @coex_cfg_params: struct to coex config params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_send_coex_config_cmd(struct coex_config_params *coex_cfg_params);
+
 void sme_set_cc_src(tHalHandle hal_handle, enum country_src);
 
 
