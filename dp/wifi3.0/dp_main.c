@@ -5503,6 +5503,7 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.enqueue_fail);
 		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.desc_na.num);
 		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.res_full);
+		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.headroom_insufficient);
 		DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified);
 		DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified_raw);
 		DP_STATS_AGGR(pdev, vdev, tx_i.mesh.exception_fw);
@@ -5683,6 +5684,8 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 			pdev->stats.tx.dropped.fw_reason3);
 	DP_PRINT_STATS("	Aged Out from msdu/mpdu queues = %d",
 			pdev->stats.tx.dropped.age_out);
+	DP_PRINT_STATS("	headroom insufficient = %d",
+			pdev->stats.tx_i.dropped.headroom_insufficient);
 	DP_PRINT_STATS("	Multicast:");
 	DP_PRINT_STATS("	Packets: %u",
 		       pdev->stats.tx.mcast.num);

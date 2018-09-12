@@ -491,6 +491,8 @@ struct cdp_tx_ingress_stats {
 		uint32_t enqueue_fail;
 		uint32_t dma_error;
 		uint32_t res_full;
+		/* headroom insufficient */
+		uint32_t headroom_insufficient;
 	} dropped;
 
 	/* Mesh packets info */

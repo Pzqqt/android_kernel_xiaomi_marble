@@ -274,7 +274,12 @@ static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	htt_desc_size_aligned = (htt_desc_size + 7) & ~0x7;
 
 	if (vdev->mesh_vdev) {
-
+		if (qdf_unlikely(qdf_nbuf_headroom(nbuf) <
+					htt_desc_size_aligned)) {
+			DP_STATS_INC(vdev,
+				     tx_i.dropped.headroom_insufficient, 1);
+			return 0;
+		}
 		/* Fill and add HTT metaheader */
 		hdr = qdf_nbuf_push_head(nbuf, htt_desc_size_aligned);
 		if (hdr == NULL) {
@@ -665,6 +670,13 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	if (qdf_unlikely((msdu_info->exception_fw)) ||
 				(vdev->opmode == wlan_op_mode_ocb)) {
 		align_pad = ((unsigned long) qdf_nbuf_data(nbuf)) & 0x7;
+
+		if (qdf_unlikely(qdf_nbuf_headroom(nbuf) < align_pad)) {
+			DP_STATS_INC(vdev,
+				     tx_i.dropped.headroom_insufficient, 1);
+			goto failure;
+		}
+
 		if (qdf_nbuf_push_head(nbuf, align_pad) == NULL) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 					"qdf_nbuf_push_head failed");
