@@ -264,6 +264,7 @@ typedef  enum  {
     WMI_SERVICE_CFR_CAPTURE_SUPPORT=168, /* Support to capture uncompressed Channel Frequency Response (CFR) */
     WMI_SERVICE_CFR_CAPTURE_IND_MSG_TYPE_1=169, /* Message type HTT_PEER_CFR_CAPTURE_MSG_TYPE_1 in HTT_T2H_MSG_TYPE_CFR_DUMP_COMPL_IND */
     WMI_SERVICE_ESP_SUPPORT=170, /* Support for Estimated Service Params IE */
+    WMI_SERVICE_PEER_CHWIDTH_CHANGE = 171, /* Support for host to update/re-intersect the node capability */
 
     /******* ADD NEW SERVICES HERE *******/
 

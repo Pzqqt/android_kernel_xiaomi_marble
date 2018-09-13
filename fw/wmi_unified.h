@@ -1936,6 +1936,9 @@ typedef enum {
 /* Interested readers refer to Rx/Tx MCS Map definition as defined in
  802.11ac
  */
+#define WMI_VHT_MAX_MCS_EXT_SS_GET(vht_mcs_map, index) WMI_GET_BITS(vht_mcs_map, 16 + index, 1)
+#define WMI_VHT_MAX_MCS_EXT_SS_SET(vht_mcs_map, index, value) WMI_SET_BITS(vht_mcs_map, 16 + index, 1, value)
+
 #define WMI_VHT_MAX_MCS_4_SS_MASK(r,ss)      ((3 & (r)) << (((ss) - 1) << 1))
 #define WMI_VHT_MAX_SUPP_RATE_MASK           0x1fff0000
 #define WMI_VHT_MAX_SUPP_RATE_MASK_SHIFT     16
@@ -1946,6 +1949,25 @@ typedef enum {
 #define WMI_HE_CAP_TWT_REQUESTER_SUPPORT  0x00000004
 #define WMI_HE_FRAG_SUPPORT_MASK          0x00000018
 #define WMI_HE_FRAG_SUPPORT_SHIFT         3
+
+#define WMI_HE_CAP_1X_LTF_400NS_GI_SUPPORT      0x00000001
+#define WMI_HE_CAP_2X_LTF_400NS_GI_SUPPORT      0x00000002
+#define WMI_HE_CAP_2X_LTF_160_80_80_SUPPORT     0x00000004
+
+#define WMI_HE_CAP_1X_LTF_400NS_GI_SUPPORT_GET(he_cap_info_dword1) \
+    WMI_GET_BITS(he_cap_info_dword1, 0, 1)
+#define WMI_HE_CAP_1X_LTF_400NS_GI_SUPPORT_SET(he_cap_info_dword1, value) \
+    WMI_SET_BITS(he_cap_info_dword1, 0, 1, value)
+
+#define WMI_HE_CAP_2X_LTF_400NS_GI_SUPPORT_GET(he_cap_info_dword1) \
+    WMI_GET_BITS(he_cap_info_dword1, 1, 1)
+#define WMI_HE_CAP_2X_LTF_400NS_GI_SUPPORT_SET(he_cap_info_dword1, value) \
+    WMI_SET_BITS(he_cap_info_dword1, 1, 1, value)
+
+#define WMI_HE_CAP_2X_LTF_160_80_80_SUPPORT_GET(he_cap_info_dword1) \
+    WMI_GET_BITS(he_cap_info_dword1, 2, 1)
+#define WMI_HE_CAP_2X_LTF_160_80_80_SUPPORT_SET(he_cap_info_dword1, value) \
+    WMI_SET_BITS(he_cap_info_dword1, 2, 1, value)
 
 /* Interested readers refer to Rx/Tx MCS Map definition as defined in 802.11ax
  */
@@ -10448,6 +10470,15 @@ typedef struct {
 
     /* 2nd DWORD of 11ax MAC Capabilities */
     A_UINT32 peer_he_cap_info_ext;
+
+    /*
+     * bit 0     : Indicated support for RX 1xLTF + 0.4us
+     * bit 1     : Indicates support for RX 2xLTF + 0.4us
+     * bit 2     : Indicates support for 2xLTF in 160/80+80 MHz HE PPDU
+     * bit[31:3] : Reserved
+     * Refer to WMI_HE_CAP_xx_LTF_xxx_SUPPORT_GET/SET macros
+     */
+    A_UINT32 peer_he_cap_info_internal;
 
 /* Following this struct are the TLV's:
  *     A_UINT8 peer_legacy_rates[];
@@ -20103,7 +20134,8 @@ typedef struct {
      */
     A_UINT32 toeplitz_hash_ipv6_40;
 
-    /** pdev_id for identifying the MAC
+    /**
+     * @brief pdev_id - identifies the MAC
      * See macros starting with WMI_PDEV_ID_ for values.
      */
     A_UINT32 pdev_id;
@@ -21234,7 +21266,17 @@ typedef struct {
      * - 0 indicates support for VHT-MCS 0-7 for n spatial streams
      * - 1 indicates support for VHT-MCS 0-8 for n spatial streams
      * - 2 indicates support for VHT-MCS 0-9 for n spatial streams
-     * - 3 indicates that n spatial streams is not supported */
+     * - 3 indicates that n spatial streams is not supported
+     * - bit [15:0] Each NSS takes 2 bit.
+     * - bit [23:16] Indicates support for VHT-MCS 10 and 11 for
+     *   n spatial streams
+     *       - bit 16 - for NSS 1
+     *       - bit 17 - for NSS 2
+     *       - .
+     *       - .
+     *       - bit 23 - for NSS 8
+     *   Refer to the WMI_VHT_MAX_MCS_EXT_SS_GET/SET macros.
+     */
     A_UINT32 vht_supp_mcs_2G;
     /*HE capability info field of 802.11ax, WMI_HE_CAP defines */
     A_UINT32 he_cap_info_2G;
@@ -21262,11 +21304,21 @@ typedef struct {
     /* VHT capability info field of 802.11ac, WMI_VHT_CAP defines */
     A_UINT32 vht_cap_info_5G;
     /* VHT Supported MCS Set field Rx/Tx same
-    * The max VHT-MCS for n SS subfield (where n = 1,...,8) is encoded as follows
-    * - 0 indicates support for VHT-MCS 0-7 for n spatial streams
-    * - 1 indicates support for VHT-MCS 0-8 for n spatial streams
-    * - 2 indicates support for VHT-MCS 0-9 for n spatial streams
-    * - 3 indicates that n spatial streams is not supported */
+     * The max VHT-MCS for n SS subfield (where n = 1,...,8) is encoded as follows
+     * - 0 indicates support for VHT-MCS 0-7 for n spatial streams
+     * - 1 indicates support for VHT-MCS 0-8 for n spatial streams
+     * - 2 indicates support for VHT-MCS 0-9 for n spatial streams
+     * - 3 indicates that n spatial streams is not supported
+     * - bit [15:0] Each NSS takes 2 bit.
+     * - bit [23:16] Indicates support for VHT-MCS 10 and 11 for
+     *   n spatial streams
+     *       - bit 16 - for NSS 1
+     *       - bit 17 - for NSS 2
+     *       - .
+     *       - .
+     *       - bit 23 - for NSS 8
+     *   Refer to the WMI_VHT_MAX_MCS_EXT_SS_GET/SET macros.
+     */
     A_UINT32 vht_supp_mcs_5G;
     /*HE capability info field of 802.11ax, WMI_HE_CAP defines */
     A_UINT32 he_cap_info_5G;
@@ -21303,6 +21355,14 @@ typedef struct {
     /* 2nd DWORD of HE capability info field of 802.11ax, support Draft 3+ */
     A_UINT32 he_cap_info_2G_ext;
     A_UINT32 he_cap_info_5G_ext;
+    /*
+     * bit 0     : Indicated support for RX 1xLTF + 0.4us
+     * bit 1     : Indicates support for RX 2xLTF + 0.4us
+     * bit 2     : Indicates support for 2xLTF in 160/80+80 MHz HE PPDU
+     * bit[31:3] : Reserved
+     * Refer to WMI_HE_CAP_xx_LTF_xxx_SUPPORT_GET/SET macros
+     */
+    A_UINT32 he_cap_info_internal;
 } WMI_MAC_PHY_CAPABILITIES;
 
 typedef struct {
