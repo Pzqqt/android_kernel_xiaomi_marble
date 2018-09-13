@@ -1163,6 +1163,7 @@ typedef enum {
 
     /** WMI commands related to OBSS PD Spatial Reuse **/
     WMI_PDEV_OBSS_PD_SPATIAL_REUSE_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_SPATIAL_REUSE),
+    WMI_PDEV_OBSS_PD_SPATIAL_REUSE_SET_DEF_OBSS_THRESH_CMDID,
 } WMI_CMD_ID;
 
 typedef enum {
@@ -22292,6 +22293,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_SAR_LIMITS_CMDID);
         WMI_RETURN_STRING(WMI_SAR_GET_LIMITS_CMDID);
         WMI_RETURN_STRING(WMI_PEER_CHAN_WIDTH_SWITCH_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_OBSS_PD_SPATIAL_REUSE_SET_DEF_OBSS_THRESH_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -23519,6 +23521,35 @@ typedef struct {
     /** Vdev id*/
     A_UINT32 vdev_id;
 } wmi_obss_spatial_reuse_set_cmd_fixed_param;
+
+/*
+ * Below structure is related to WMI CMD that configures the default
+ * mimimum (OBSS_MIN) and maximum (OBSS_MAX) Other BSS levels (RSSI in dbm)
+ * for VDEV of a give type (STA or AP). These thresholds are configured
+ * within the Host and passed down to the FW. FW will use these
+ * default OBSS_MIN and OBSS_MAX values during roaming if the assoc response
+ * from the AP does not include spatial reuse parameter set Info Element.
+ */
+typedef struct {
+    /** TLV tag and len; tag equals
+    *   WMITLV_TAG_STRUC_wmi_obss_spatial_reuse_set_def_obss_thresh_cmd_fixed_param
+    */
+    A_UINT32 tlv_header;
+    /*
+     * In the below fields, "OBSS level" refers to the power of the
+     * signals received from "Other BSS".
+     * Spatial reuse will only be permitted if the Other BSS's signal power
+     * is witin the min to max range specified by the below fields.
+     */
+    /** Minimum OBSS level to use */
+    A_INT32 obss_min; /* RSSI in dBm */
+    /** Maximum OBSS level to use */
+    A_INT32 obss_max; /* RSSI in dBm */
+    /** Type of VDEV for which these threshold are applicable.
+     *  vdev_type should be one of WMI_VDEV_TYPE_STA or WMI_VDEV_TYPE_AP
+     */
+    A_UINT32 vdev_type;
+} wmi_obss_spatial_reuse_set_def_obss_thresh_cmd_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUCT_wmi_chan_width_peer_list */
