@@ -147,8 +147,6 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	if (soc->process_tx_status)
 		return;
 
-	DP_STATS_INC(peer, tx.transmit_type[ppdu->ppdu_type], 1);
-
 	if (ppdu->mu_group_id <= MAX_MU_GROUP_ID && ppdu->ppdu_type != SU_TX) {
 		if (unlikely(!(ppdu->mu_group_id & (MAX_MU_GROUP_ID - 1))))
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -158,7 +156,7 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 				     (ppdu->user_pos + 1));
 	}
 
-	if (ppdu->ppdu_type == MUMIMO_TX ||
+	if (ppdu->ppdu_type == MUOFDMA_TX ||
 	    ppdu->ppdu_type == MUMIMO_OFDMA_TX) {
 		DP_STATS_UPD(peer, tx.ru_tones, ppdu->ru_tones);
 		DP_STATS_UPD(peer, tx.ru_start, ppdu->ru_start);
@@ -184,7 +182,7 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		}
 	}
 
-	DP_STATS_INC(peer, tx.transmit_type[ppdu->ppdu_type], 1);
+	DP_STATS_INC(peer, tx.transmit_type[ppdu->ppdu_type], num_msdu);
 	DP_STATS_INC_PKT(peer, tx.comp_pkt,
 			num_msdu, (ppdu->success_bytes +
 				ppdu->retry_bytes + ppdu->failed_bytes));
