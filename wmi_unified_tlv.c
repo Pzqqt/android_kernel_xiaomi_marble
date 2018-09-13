@@ -143,23 +143,7 @@ static inline void copy_vdev_create_pdev_id(
 }
 #endif
 
-/**
- * wmi_mtrace() - Wrappper function for qdf_mtrace api
- * @message_id: 32-Bit Wmi message ID
- * @vdev_id: Vdev ID
- * @data: Actual message contents
- *
- * This function converts the 32-bit WMI message ID in 15-bit message ID
- * format for qdf_mtrace as in qdf_mtrace message there are only 15
- * bits reserved for message ID.
- * out of these 15-bits, 8-bits (From MSB) specifies the WMI_GRP_ID
- * and remaining 7-bits specifies the actual WMI command. With this
- * notation there can be maximum 256 groups and each group can have
- * max 128 commands can be supported.
- *
- * Return: None
- */
-static void wmi_mtrace(uint32_t message_id, uint16_t vdev_id, uint32_t data)
+void wmi_mtrace(uint32_t message_id, uint16_t vdev_id, uint32_t data)
 {
 	uint16_t mtrace_message_id;
 
@@ -169,6 +153,8 @@ static void wmi_mtrace(uint32_t message_id, uint16_t vdev_id, uint32_t data)
 	qdf_mtrace(QDF_MODULE_ID_WMI, QDF_MODULE_ID_TARGET,
 		   mtrace_message_id, vdev_id, data);
 }
+
+qdf_export_symbol(wmi_mtrace);
 
 /**
  * send_vdev_create_cmd_tlv() - send VDEV create command to fw
