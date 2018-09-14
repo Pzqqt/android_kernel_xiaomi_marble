@@ -26,6 +26,7 @@
 #include "cfg_mlme_chainmask.h"
 #include "cfg_mlme_edca_params.h"
 #include "cfg_mlme_generic.h"
+#include "cfg_mlme_acs.h"
 #include "cfg_mlme_ht_caps.h"
 #include "cfg_mlme_he_caps.h"
 #include "cfg_mlme_lfr.h"
@@ -46,6 +47,7 @@
 
 /* Please Maintain Alphabetic Order here */
 #define CFG_MLME_ALL \
+	CFG_ACS_ALL \
 	CFG_CHAINMASK_ALL \
 	CFG_EDCA_PARAMS_ALL \
 	CFG_FEATURE_FLAG_ALL \
@@ -54,18 +56,18 @@
 	CFG_HE_CAPS_ALL \
 	CFG_LFR_ALL \
 	CFG_MBO_ALL \
+	CFG_MLME_PRODUCT_DETAILS_ALL \
 	CFG_OBSS_HT40_ALL \
 	CFG_OCE_ALL \
 	CFG_QOS_ALL \
 	CFG_RATES_ALL \
 	CFG_SAP_ALL \
-	CFG_MLME_PRODUCT_DETAILS_ALL \
 	CFG_SAP_PROTECTION_ALL \
 	CFG_SCORING_ALL \
 	CFG_STA_ALL \
-	CFG_VHT_CAPS_ALL \
-	CFG_WEP_PARAMS_ALL \
 	CFG_THRESHOLD_ALL \
-	CFG_VHT_CAPS_ALL
+	CFG_VHT_CAPS_ALL \
+	CFG_VHT_CAPS_ALL \
+	CFG_WEP_PARAMS_ALL
 
 #endif /* __CFG_MLME_H */

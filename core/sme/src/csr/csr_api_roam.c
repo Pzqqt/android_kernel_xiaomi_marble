@@ -3075,8 +3075,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->sap.sap_channel_avoidance =
 			pParam->sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-		pMac->sap.acs_with_more_param =
-			pParam->acs_with_more_param;
 
 		pMac->f_prefer_non_dfs_on_radar =
 			pParam->f_prefer_non_dfs_on_radar;
@@ -3318,7 +3316,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	pParam->sap_channel_avoidance = pMac->sap.sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-	pParam->acs_with_more_param = pMac->sap.acs_with_more_param;
 	pParam->max_intf_count = pMac->sme.max_intf_count;
 	pParam->enableSelfRecovery = pMac->sme.enableSelfRecovery;
 	pParam->f_prefer_non_dfs_on_radar =

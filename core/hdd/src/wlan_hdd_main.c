@@ -143,6 +143,7 @@
 #include "wlan_tdls_cfg_api.h"
 #include <wlan_hdd_rssi_monitor.h>
 #include "wlan_mlme_ucfg_api.h"
+#include "cfg_mlme_acs.h"
 #include "wlan_mlme_public_struct.h"
 #include "wlan_fwol_ucfg_api.h"
 #ifdef CNSS_GENL
@@ -8561,6 +8562,10 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 	bool found = false;
 	uint8_t restart_chan;
 	bool value;
+	QDF_STATUS status;
+	bool is_acs_support_for_dfs_ltecoex = cfg_default(CFG_USER_ACS_DFS_LTE);
+	bool is_vendor_acs_support =
+		cfg_default(CFG_USER_AUTO_CHANNEL_SELECTION);
 
 	hdd_for_each_adapter(hdd_ctxt, adapter) {
 		if (!(adapter->device_mode == QDF_SAP_MODE &&
@@ -8598,8 +8603,19 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 			continue;
 		}
 
-		if (hdd_ctxt->config->vendor_acs_support &&
-		    hdd_ctxt->config->acs_support_for_dfs_ltecoex) {
+		status = ucfg_mlme_get_acs_support_for_dfs_ltecoex(
+					hdd_ctxt->psoc,
+					&is_acs_support_for_dfs_ltecoex);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("get_acs_support_for_dfs_ltecoex failed,set def");
+
+		status = ucfg_mlme_get_vendor_acs_support(
+					hdd_ctxt->psoc,
+					&is_vendor_acs_support);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("get_vendor_acs_support failed, set default");
+
+		if (is_vendor_acs_support && is_acs_support_for_dfs_ltecoex) {
 			hdd_update_acs_timer_reason(adapter,
 				QCA_WLAN_VENDOR_ACS_SELECT_REASON_LTE_COEX);
 			continue;

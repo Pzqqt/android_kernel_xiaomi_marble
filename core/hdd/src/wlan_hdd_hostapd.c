@@ -82,6 +82,7 @@
 #include <wlan_ipa_ucfg_api.h>
 #include <wlan_cp_stats_mc_ucfg_api.h>
 #include "wlan_mlme_ucfg_api.h"
+#include "cfg_ucfg_api.h"
 
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
 
@@ -4252,8 +4253,16 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 static int wlan_hdd_setup_driver_overrides(struct hdd_adapter *ap_adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
+	QDF_STATUS qdf_status;
+	bool is_vendor_acs_support =
+		cfg_default(CFG_USER_AUTO_CHANNEL_SELECTION);
 
-	if (!hdd_ctx->config->vendor_acs_support)
+	qdf_status = ucfg_mlme_get_vendor_acs_support(hdd_ctx->psoc,
+						      &is_vendor_acs_support);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		hdd_err("get_vendor_acs_support failed, set default");
+
+	if (!is_vendor_acs_support)
 		return wlan_hdd_sap_p2p_11ac_overrides(ap_adapter);
 	else
 		return 0;
@@ -4512,6 +4521,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	uint8_t ignore_cac = 0;
 	int value;
 	bool val;
+	uint32_t auto_channel_select_weight =
+		cfg_default(CFG_AUTO_CHANNEL_SELECT_WEIGHT);
 
 	hdd_enter();
 
@@ -4615,8 +4626,12 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	pConfig->beacon_int = pMgmt_frame->u.beacon.beacon_int;
 	pConfig->dfs_cac_offload = hdd_ctx->dfs_cac_offload;
 
-	pConfig->auto_channel_select_weight =
-			     iniConfig->auto_channel_select_weight;
+	status = ucfg_mlme_get_auto_channel_weight(hdd_ctx->psoc,
+						   &auto_channel_select_weight);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("ucfg_mlme_get_auto_channel_weight failed, set def");
+
+	pConfig->auto_channel_select_weight = auto_channel_select_weight;
 	pConfig->disableDFSChSwitch = iniConfig->disableDFSChSwitch;
 	ucfg_mlme_get_sap_chn_switch_bcn_count(hdd_ctx->psoc, &value);
 	pConfig->sap_chanswitch_beacon_cnt = value;

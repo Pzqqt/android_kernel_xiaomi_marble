@@ -127,7 +127,6 @@
 #include "wlan_crypto_global_api.h"
 #include "wlan_nl_to_crypto_params.h"
 #include "wlan_crypto_global_def.h"
-#include "cfg_mlme_threshold.h"
 #include "cfg_ucfg_api.h"
 
 #define g_mode_rates_size (12)
@@ -2195,6 +2194,8 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	eCsrPhyMode phy_mode;
 	enum qca_wlan_vendor_attr_external_acs_policy acs_policy;
 	uint32_t i;
+	QDF_STATUS qdf_status;
+	bool is_external_acs_policy = cfg_default(CFG_EXTERNAL_ACS_POLICY);
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
@@ -2300,8 +2301,12 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 				  vendor_weight_list[i]);
 	}
 
-	if (HDD_EXTERNAL_ACS_PCL_MANDATORY ==
-		hdd_ctx->config->external_acs_policy) {
+	qdf_status = ucfg_mlme_get_external_acs_policy(hdd_ctx->psoc,
+						       &is_external_acs_policy);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		hdd_err("get_external_acs_policy failed, set default");
+
+	if (is_external_acs_policy) {
 		acs_policy =
 			QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_POLICY_PCL_MANDATORY;
 	} else {
@@ -2413,6 +2418,8 @@ int hdd_start_vendor_acs(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int status;
+	QDF_STATUS qdf_status;
+	bool is_acs_support_for_dfs_ltecoex = cfg_default(CFG_USER_ACS_DFS_LTE);
 
 	status = hdd_create_acs_timer(adapter);
 	if (status != 0) {
@@ -2425,8 +2432,13 @@ int hdd_start_vendor_acs(struct hdd_adapter *adapter)
 		hdd_err("failed to update acs timer reason");
 		return status;
 	}
+	qdf_status = ucfg_mlme_get_acs_support_for_dfs_ltecoex(
+				hdd_ctx->psoc,
+				&is_acs_support_for_dfs_ltecoex);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		hdd_err("get_acs_support_for_dfs_ltecoex failed, set def");
 
-	if (hdd_ctx->config->acs_support_for_dfs_ltecoex)
+	if (is_acs_support_for_dfs_ltecoex)
 		status = qdf_status_to_os_return(wlan_sap_set_vendor_acs(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 				true));
@@ -2468,6 +2480,12 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	uint8_t conc_channel;
 	mac_handle_t mac_handle;
 	bool skip_etsi13_srd_chan = false;
+	uint32_t auto_channel_select_weight =
+		cfg_default(CFG_AUTO_CHANNEL_SELECT_WEIGHT);
+	bool is_vendor_acs_support =
+		cfg_default(CFG_USER_AUTO_CHANNEL_SELECTION);
+	bool is_external_acs_policy =
+		cfg_default(CFG_EXTERNAL_ACS_POLICY);
 
 	/* ***Note*** Donot set SME config related to ACS operation here because
 	 * ACS operation is not synchronouse and ACS for Second AP may come when
@@ -2727,9 +2745,16 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			  ch_width, ht_enabled, vht_enabled,
 			  sap_config->acs_cfg.start_ch,
 			  sap_config->acs_cfg.end_ch);
-	if (hdd_ctx->config->auto_channel_select_weight)
+
+	qdf_status =
+		ucfg_mlme_get_auto_channel_weight(hdd_ctx->psoc,
+						  &auto_channel_select_weight);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		hdd_err("get_auto_channel_weight failed");
+
+	if (auto_channel_select_weight)
 		sap_config->auto_channel_select_weight =
-		    hdd_ctx->config->auto_channel_select_weight;
+				auto_channel_select_weight;
 
 	sap_config->acs_cfg.is_ht_enabled = ht_enabled;
 	sap_config->acs_cfg.is_vht_enabled = vht_enabled;
@@ -2743,8 +2768,13 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 
 	conc_channel = policy_mgr_mode_specific_get_channel(hdd_ctx->psoc,
 							    PM_STA_MODE);
-	if (hdd_ctx->config->external_acs_policy ==
-	    HDD_EXTERNAL_ACS_PCL_MANDATORY) {
+
+	qdf_status = ucfg_mlme_get_external_acs_policy(hdd_ctx->psoc,
+						       &is_external_acs_policy);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		hdd_err("get_external_acs_policy failed");
+
+	if (is_external_acs_policy) {
 		if ((conc_channel >= WLAN_REG_CH_NUM(CHAN_ENUM_36) &&
 		     sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211A) ||
 		     (conc_channel <= WLAN_REG_CH_NUM(CHAN_ENUM_14) &&
@@ -2786,8 +2816,15 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		hdd_debug("ACS Pending for %s", adapter->dev->name);
 		ret = 0;
 	} else {
+		qdf_status =
+			ucfg_mlme_get_vendor_acs_support(
+					hdd_ctx->psoc,
+					&is_vendor_acs_support);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+			hdd_err("get_vendor_acs_support failed, set default");
+
 		/* Check if vendor specific acs is enabled */
-		if (hdd_ctx->config->vendor_acs_support)
+		if (is_vendor_acs_support)
 			ret = hdd_start_vendor_acs(adapter);
 		else
 			ret = wlan_hdd_cfg80211_start_acs(adapter);

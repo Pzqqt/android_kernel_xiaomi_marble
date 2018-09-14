@@ -6895,50 +6895,6 @@ enum hdd_link_speed_rpt_type {
 #endif
 
 /*
- * <ini>
- * gvendor_acs_support - vendor based channel selection manager
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * Enabling this parameter will force driver to use user application based
- * channel selection algo instead of driver based auto channel selection
- * logic.
- *
- * Supported Feature: ACS
- *
- * Usage: External/Internal
- *
- * </ini>
- */
-#define CFG_USER_AUTO_CHANNEL_SELECTION       "gvendor_acs_support"
-#define CFG_USER_AUTO_CHANNEL_SELECTION_DISABLE   (0)
-#define CFG_USER_AUTO_CHANNEL_SELECTION_ENABLE    (1)
-#define CFG_USER_AUTO_CHANNEL_SELECTION_DEFAULT   (0)
-
-/*
- * <ini>
- * gacs_support_for_dfs_lte_coex - acs support for lte coex and dfs event
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * Enabling this parameter will force driver to use user application based
- * channel selection algo for channel selection in case of dfs and lte
- * coex event.
- *
- * Supported Feature: ACS
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_USER_ACS_DFS_LTE           "gacs_support_for_dfs_lte_coex"
-#define CFG_USER_ACS_DFS_LTE_DISABLE   (0)
-#define CFG_USER_ACS_DFS_LTE_ENABLE    (1)
-#define CFG_USER_ACS_DFS_LTE_DEFAULT   (0)
-
-/*
  * Enable/Disable to initiate BUG report in case of fatal event
  * Default: Enable
  */
@@ -8316,58 +8272,6 @@ enum hdd_wext_control {
 #define CFG_ACTIVE_MC_BC_APF_MODE_MAX     (ACTIVE_APF_ENABLED)
 #define CFG_ACTIVE_MC_BC_APF_MODE_DEFAULT (ACTIVE_APF_DISABLED)
 
-/*
- * <ini>
- * acs_with_more_param- Enable acs calculation with more param.
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable acs calculation with more param.
- *
- * Related: NA
- *
- * Supported Feature: ACS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ACS_WITH_MORE_PARAM_NAME    "acs_with_more_param"
-#define CFG_ACS_WITH_MORE_PARAM_MIN     (0)
-#define CFG_ACS_WITH_MORE_PARAM_MAX     (1)
-#define CFG_ACS_WITH_MORE_PARAM_DEFAULT (0)
-
-/*
- * <ini>
- * AutoChannelSelectWeight - ACS channel weight
- * @Min: 0
- * @Max: 0xFFFFFFFF
- * @Default: 0x000000FF
- *
- * This ini is used to adjust weight of factors in
- * acs algorithm.
- *
- * Supported Feature: ACS
- *
- * Usage: Internal/External
- *
- * bits 0-3:   rssi weight
- * bits 4-7:   bss count weight
- * bits 8-11:  noise floor weight
- * bits 12-15: channel free weight
- * bits 16-19: tx power range weight
- * bits 20-23: tx power throughput weight
- * bits 24-31: reserved
- *
- * </ini>
- */
-#define CFG_AUTO_CHANNEL_SELECT_WEIGHT            "AutoChannelSelectWeight"
-#define CFG_AUTO_CHANNEL_SELECT_WEIGHT_MIN        (0)
-#define CFG_AUTO_CHANNEL_SELECT_WEIGHT_MAX        (0xFFFFFFFF)
-#define CFG_AUTO_CHANNEL_SELECT_WEIGHT_DEFAULT    (0x000000FF)
-
 #ifdef WLAN_FEATURE_11AX
 /* 11AX related INI configuration */
 /*
@@ -8747,46 +8651,6 @@ enum hdd_wext_control {
 #define CFG_MAWC_NLO_MAX_SCAN_INTERVAL_MIN      (1000)
 #define CFG_MAWC_NLO_MAX_SCAN_INTERVAL_MAX      (0xFFFFFFFF)
 #define CFG_MAWC_NLO_MAX_SCAN_INTERVAL_DEFAULT  (60000)
-
-
-/*
- * enum hdd_external_acs_policy - External ACS policy
- * @HDD_EXTERNAL_ACS_PCL_PREFERRED -Preferable for ACS to select a
- *	channel with non-zero pcl weight.
- * @HDD_EXTERNAL_ACS_PCL_MANDATORY -Mandatory for ACS to select a
- *	channel with non-zero pcl weight.
- *
- * enum hdd_external_acs_policy is used to select the ACS policy.
- *
- */
-enum hdd_external_acs_policy {
-	HDD_EXTERNAL_ACS_PCL_PREFERRED = 0,
-	HDD_EXTERNAL_ACS_PCL_MANDATORY = 1,
-};
-
-/*
- * <ini>
- * external_acs_policy - External ACS policy control
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * Values are per enum hdd_external_acs_policy.
- *
- * This ini is used to control the external ACS policy.
- *
- * Related: None
- *
- * Supported Feature: ACS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_EXTERNAL_ACS_POLICY         "acs_policy"
-#define CFG_EXTERNAL_ACS_POLICY_MIN     (HDD_EXTERNAL_ACS_PCL_PREFERRED)
-#define CFG_EXTERNAL_ACS_POLICY_MAX     (HDD_EXTERNAL_ACS_PCL_MANDATORY)
-#define CFG_EXTERNAL_ACS_POLICY_DEFAULT (HDD_EXTERNAL_ACS_PCL_PREFERRED)
 
 /*
  * <ini>
@@ -10282,8 +10146,6 @@ struct hdd_config {
 	uint8_t gDisableDfsJapanW53;
 	bool gEnableOverLapCh;
 	bool fRegChangeDefCountry;
-	bool acs_with_more_param;
-	uint32_t auto_channel_select_weight;
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	uint32_t TxFlowLowWaterMark;
 	uint32_t TxFlowHighWaterMarkOffset;
@@ -10479,8 +10341,6 @@ struct hdd_config {
 	uint8_t adapt_dwell_lpf_weight;
 	uint8_t adapt_dwell_passive_mon_intval;
 	uint8_t adapt_dwell_wifi_act_threshold;
-	bool vendor_acs_support;
-	bool acs_support_for_dfs_ltecoex;
 	bool bug_report_for_no_scan_results;
 	bool bug_on_reinit_failure;
 	uint32_t iface_change_wait_time;
@@ -10530,7 +10390,6 @@ struct hdd_config {
 	uint32_t mawc_nlo_exp_backoff_ratio;
 	uint32_t mawc_nlo_init_scan_interval;
 	uint32_t mawc_nlo_max_scan_interval;
-	enum hdd_external_acs_policy external_acs_policy;
 	/* threshold of packet drops at which FW initiates disconnect */
 	uint16_t pkt_err_disconn_th;
 	bool is_force_1x1;

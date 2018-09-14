@@ -178,6 +178,61 @@ QDF_STATUS wlan_mlme_set_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 				     ht_cap_info);
 
 /**
+ * wlan_mlme_get_acs_with_more_param() - Get the acs_with_more_param flag
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_acs_with_more_param(struct wlan_objmgr_psoc *psoc,
+					     bool *value);
+
+/**
+ * wlan_mlme_get_auto_channel_weight() - Get the auto channel weight
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_auto_channel_weight(struct wlan_objmgr_psoc *psoc,
+					     uint32_t *value);
+
+/**
+ * wlan_mlme_get_vendor_acs_support() - Get the vendor based channel selece
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+
+QDF_STATUS wlan_mlme_get_vendor_acs_support(struct wlan_objmgr_psoc *psoc,
+					    bool *value);
+
+/**
+ * wlan_mlme_get_acs_support_for_dfs_ltecoex() - Get the flag for
+ *						 acs support for dfs ltecoex
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_acs_support_for_dfs_ltecoex(struct wlan_objmgr_psoc *psoc,
+					  bool *value);
+
+/**
+ * wlan_mlme_get_external_acs_policy() - Get the flag for external acs policy
+ *
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_external_acs_policy(struct wlan_objmgr_psoc *psoc,
+				  bool *value);
+
+/**
  *
  * wlan_mlme_get_sap_inactivity_override() - Check if sap max inactivity
  * override flag is set.

@@ -1193,7 +1193,6 @@ typedef struct tagCsrConfigParam {
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	bool sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-	bool acs_with_more_param;
 	uint8_t f_prefer_non_dfs_on_radar;
 	bool is_ps_enabled;
 	uint32_t auto_bmps_timer_val;

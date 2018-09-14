@@ -2243,20 +2243,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_REG_CHANGE_DEF_COUNTRY_MIN,
 		     CFG_REG_CHANGE_DEF_COUNTRY_MAX),
 
-	REG_VARIABLE(CFG_ACS_WITH_MORE_PARAM_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, acs_with_more_param,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ACS_WITH_MORE_PARAM_DEFAULT,
-		     CFG_ACS_WITH_MORE_PARAM_MIN,
-		     CFG_ACS_WITH_MORE_PARAM_MAX),
-
-	REG_VARIABLE(CFG_AUTO_CHANNEL_SELECT_WEIGHT, WLAN_PARAM_HexInteger,
-		     struct hdd_config, auto_channel_select_weight,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_AUTO_CHANNEL_SELECT_WEIGHT_DEFAULT,
-		     CFG_AUTO_CHANNEL_SELECT_WEIGHT_MIN,
-		     CFG_AUTO_CHANNEL_SELECT_WEIGHT_MAX),
-
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	REG_VARIABLE(CFG_LL_TX_FLOW_LWM, WLAN_PARAM_Integer,
 		     struct hdd_config, TxFlowLowWaterMark,
@@ -3091,20 +3077,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_CREATE_BUG_REPORT_FOR_SCAN_DISABLE,
 		CFG_CREATE_BUG_REPORT_FOR_SCAN_ENABLE),
 
-	REG_VARIABLE(CFG_USER_AUTO_CHANNEL_SELECTION, WLAN_PARAM_Integer,
-		struct hdd_config, vendor_acs_support,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_USER_AUTO_CHANNEL_SELECTION_DEFAULT,
-		CFG_USER_AUTO_CHANNEL_SELECTION_DISABLE,
-		CFG_USER_AUTO_CHANNEL_SELECTION_ENABLE),
-
-	REG_VARIABLE(CFG_USER_ACS_DFS_LTE, WLAN_PARAM_Integer,
-		struct hdd_config, acs_support_for_dfs_ltecoex,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_USER_ACS_DFS_LTE_DEFAULT,
-		CFG_USER_ACS_DFS_LTE_DISABLE,
-		CFG_USER_ACS_DFS_LTE_ENABLE),
-
 #ifdef CONFIG_DP_TRACE
 	REG_VARIABLE(CFG_ENABLE_DP_TRACE, WLAN_PARAM_Integer,
 		struct hdd_config, enable_dp_trace,
@@ -3112,7 +3084,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_ENABLE_DP_TRACE_DEFAULT,
 		CFG_ENABLE_DP_TRACE_MIN,
 		CFG_ENABLE_DP_TRACE_MAX),
-
 
 	REG_VARIABLE_STRING(CFG_ENABLE_DP_TRACE_CONFIG, WLAN_PARAM_String,
 			struct hdd_config, dp_trace_config,
@@ -3466,14 +3437,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_MAWC_NLO_MAX_SCAN_INTERVAL_DEFAULT,
 		CFG_MAWC_NLO_MAX_SCAN_INTERVAL_MIN,
 		CFG_MAWC_NLO_MAX_SCAN_INTERVAL_MAX),
-
-
-	REG_VARIABLE(CFG_EXTERNAL_ACS_POLICY, WLAN_PARAM_Integer,
-		     struct hdd_config, external_acs_policy,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_EXTERNAL_ACS_POLICY_DEFAULT,
-		     CFG_EXTERNAL_ACS_POLICY_MIN,
-		     CFG_EXTERNAL_ACS_POLICY_MAX),
 
 	REG_VARIABLE(CFG_DROPPED_PKT_DISCONNECT_TH_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, pkt_err_disconn_th,
@@ -5746,8 +5709,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.sap_channel_avoidance =
 		hdd_ctx->config->sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-	smeConfig->csrConfig.acs_with_more_param =
-		hdd_ctx->config->acs_with_more_param;
 
 	smeConfig->csrConfig.f_prefer_non_dfs_on_radar =
 		hdd_ctx->config->prefer_non_dfs_on_radar;

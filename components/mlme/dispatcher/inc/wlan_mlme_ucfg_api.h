@@ -150,6 +150,91 @@ QDF_STATUS ucfg_mlme_set_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_get_acs_with_more_param() - Get the flag for acs with
+ *					 more param
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_acs_with_more_param(struct wlan_objmgr_psoc *psoc,
+					     bool *value)
+{
+	return wlan_mlme_get_acs_with_more_param(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_auto_channel_weight() - Get the auto channel select weight
+ *
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_auto_channel_weight(struct wlan_objmgr_psoc *psoc,
+					     uint32_t *value)
+{
+	return wlan_mlme_get_auto_channel_weight(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_vendor_acs_support() - Get the flag for
+ *					vendor acs support
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_vendor_acs_support(struct wlan_objmgr_psoc *psoc,
+					    bool *value)
+{
+	return wlan_mlme_get_vendor_acs_support(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_external_acs_policy() - Get flag for external control
+ *					 acs policy
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_external_acs_policy(struct wlan_objmgr_psoc *psoc,
+				  bool *value)
+{
+	return wlan_mlme_get_external_acs_policy(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_ht_cap_info() - Set the HT cap info config
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS
+ucfg_mlme_get_acs_support_for_dfs_ltecoex(struct wlan_objmgr_psoc *psoc,
+					  bool *value)
+{
+	return wlan_mlme_get_acs_support_for_dfs_ltecoex(psoc, value);
+}
+
+/**
  *
  * ucfg_mlme_get_sap_inactivity_override() - Check if sap max inactivity
  * override flag is set.
