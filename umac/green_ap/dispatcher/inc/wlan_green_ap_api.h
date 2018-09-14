@@ -92,6 +92,14 @@ QDF_STATUS wlan_green_ap_start(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS wlan_green_ap_stop(struct wlan_objmgr_pdev *pdev);
 
 /**
+ * wlan_green_ap_pdev_open() - open component and update config params
+ * @pdev: pdev pointer
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_green_ap_pdev_open(struct wlan_objmgr_pdev *pdev);
+
+/**
  * wlan_green_ap_add_sta() - On association
  * @pdev: pdev pointer
  *

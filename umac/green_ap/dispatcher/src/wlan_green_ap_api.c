@@ -22,6 +22,8 @@
 #include <wlan_green_ap_api.h>
 #include <../../core/src/wlan_green_ap_main_i.h>
 #include <wlan_objmgr_global_obj.h>
+#include "cfg_green_ap_params.h"
+#include "cfg_ucfg_api.h"
 
 QDF_STATUS wlan_green_ap_get_capab(
 			struct wlan_objmgr_pdev *pdev)
@@ -212,6 +214,47 @@ QDF_STATUS wlan_green_ap_deinit(void)
 	}
 
 	green_ap_info("Successfully unregistered create and destroy handlers with objmgr");
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_green_ap_pdev_open(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!pdev) {
+		green_ap_err("pdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	if (!psoc) {
+		green_ap_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	green_ap_ctx = wlan_objmgr_pdev_get_comp_private_obj(
+			pdev, WLAN_UMAC_COMP_GREEN_AP);
+	if (!green_ap_ctx) {
+		green_ap_err("green ap context obtained is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_spin_lock_bh(&green_ap_ctx->lock);
+	green_ap_ctx->ps_enable = cfg_get(psoc,
+					CFG_ENABLE_GREEN_AP_FEATURE);
+	green_ap_ctx->egap_params.host_enable_egap = cfg_get(psoc,
+					CFG_ENABLE_EGAP_FEATURE);
+	green_ap_ctx->egap_params.egap_inactivity_time = cfg_get(psoc,
+					CFG_EGAP_INACT_TIME_FEATURE);
+	green_ap_ctx->egap_params.egap_wait_time = cfg_get(psoc,
+					CFG_EGAP_WAIT_TIME_FEATURE);
+	green_ap_ctx->egap_params.egap_feature_flags = cfg_get(psoc,
+					CFG_EGAP_FLAGS_FEATURE);
+
+	qdf_spin_unlock_bh(&green_ap_ctx->lock);
+
 	return QDF_STATUS_SUCCESS;
 }
 

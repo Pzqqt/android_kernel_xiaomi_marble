@@ -29,31 +29,6 @@
 #include "wlan_utility.h"
 
 /**
- * struct green_ap_user_cfg - green ap user cfg
- * @host_enable_egap: HOST enhance green ap support
- * @egap_inactivity_time: inactivity time
- * @egap_wait_time: wait time
- * @egap_feature_flags: feature flags
- */
-struct green_ap_user_cfg {
-	bool host_enable_egap;
-	uint32_t egap_inactivity_time;
-	uint32_t egap_wait_time;
-	uint32_t egap_feature_flags;
-};
-
-/**
- * ucfg_green_ap_update_user_config() - Updates user cfg for green ap
- * @pdev: pdev pointer
- * @green_ap_cfg: pointer to green ap user cfg structure
- *
- * Return: Success or Failure
- */
-QDF_STATUS ucfg_green_ap_update_user_config(
-			struct wlan_objmgr_pdev *pdev,
-			struct green_ap_user_cfg *green_ap_cfg);
-
-/**
  * ucfg_green_ap_enable_egap() - Enable enhanced green ap
  * @pdev: pdev pointer
  *

@@ -845,12 +845,22 @@ static QDF_STATUS dispatcher_green_ap_init(void)
 	return wlan_green_ap_init();
 }
 
+static QDF_STATUS dispatcher_green_ap_pdev_open(
+				struct wlan_objmgr_pdev *pdev)
+{
+	return wlan_green_ap_pdev_open(pdev);
+}
 static QDF_STATUS dispatcher_green_ap_deinit(void)
 {
 	return wlan_green_ap_deinit();
 }
 #else
 static QDF_STATUS dispatcher_green_ap_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+static QDF_STATUS dispatcher_green_ap_pdev_open(
+				struct wlan_objmgr_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -1317,6 +1327,8 @@ QDF_STATUS dispatcher_pdev_open(struct wlan_objmgr_pdev *pdev)
 		goto spectral_pdev_open_fail;
 
 	if (QDF_STATUS_SUCCESS != wlan_mgmt_txrx_pdev_open(pdev))
+		goto out;
+	if (QDF_IS_STATUS_ERROR(dispatcher_green_ap_pdev_open(pdev)))
 		goto out;
 
 	return QDF_STATUS_SUCCESS;

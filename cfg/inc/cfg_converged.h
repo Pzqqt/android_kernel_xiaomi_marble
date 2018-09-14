@@ -26,11 +26,13 @@
 #include <wlan_scan_cfg.h>
 #include "cfg_dp.h"
 #include <wlan_extscan_cfg.h>
+#include "cfg_green_ap_params.h"
 
 #define CFG_CONVERGED_ALL \
 		CFG_SCAN_ALL \
 		CFG_DP \
-		CFG_EXTSCAN_ALL
+		CFG_EXTSCAN_ALL \
+		CFG_GREEN_AP_ALL
 
 #endif /* __CFG_CONVERGED_H */
 
