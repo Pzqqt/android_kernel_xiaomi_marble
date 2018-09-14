@@ -12731,24 +12731,24 @@ static int hdd_driver_load(void)
 
 	hdd_set_conparam(con_mode);
 
-	errno = wlan_hdd_register_driver();
-	if (errno) {
-		hdd_fln("Failed to register driver; errno:%d", errno);
-		goto wakelock_destroy;
-	}
-
 	errno = wlan_hdd_state_ctrl_param_create();
 	if (errno) {
 		hdd_fln("Failed to create ctrl param; errno:%d", errno);
-		goto unregister_driver;
+		goto wakelock_destroy;
+	}
+
+	errno = wlan_hdd_register_driver();
+	if (errno) {
+		hdd_fln("Failed to register driver; errno:%d", errno);
+		goto param_destroy;
 	}
 
 	pr_info("%s: driver loaded\n", WLAN_MODULE_NAME);
 
 	return 0;
 
-unregister_driver:
-	wlan_hdd_unregister_driver();
+param_destroy:
+	wlan_hdd_state_ctrl_param_destroy();
 wakelock_destroy:
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 comp_deinit:
@@ -12788,8 +12788,8 @@ static void hdd_driver_unload(void)
 	if (hdd_ctx)
 		qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
 
-	wlan_hdd_state_ctrl_param_destroy();
 	wlan_hdd_unregister_driver();
+	wlan_hdd_state_ctrl_param_destroy();
 	hdd_set_conparam(0);
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 	hdd_component_deinit();
