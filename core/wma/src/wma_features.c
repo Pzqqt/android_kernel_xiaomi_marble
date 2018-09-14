@@ -677,6 +677,11 @@ WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
 		return MODE_UNKNOWN;
 	}
 
+	if (chan_width >= CH_WIDTH_INVALID) {
+		WMA_LOGE("%s : Invalid channel width", __func__);
+		return MODE_UNKNOWN;
+	}
+
 	if (WLAN_REG_IS_24GHZ_CH(chan)) {
 		if (((CH_WIDTH_5MHZ == chan_width) ||
 		     (CH_WIDTH_10MHZ == chan_width)) &&

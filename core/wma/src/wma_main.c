@@ -3090,6 +3090,30 @@ static void wma_register_apf_events(tp_wma_handle wma_handle)
 #endif /* FEATURE_WLAN_APF */
 
 /**
+ * wma_get_phy_mode_cb() - Callback to get current PHY Mode.
+ * @chan: channel number
+ * @chan_width: maximum channel width possible
+ * @phy_mode: PHY Mode
+ *
+ * Return: None
+ */
+static void wma_get_phy_mode_cb(uint8_t chan, uint32_t chan_width,
+				uint32_t *phy_mode)
+{
+	uint32_t dot11_mode;
+	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!mac) {
+		wma_err("MAC context is NULL");
+		*phy_mode = MODE_UNKNOWN;
+		return;
+	}
+
+	wlan_cfg_get_int(mac, WNI_CFG_DOT11_MODE, &dot11_mode);
+	*phy_mode = wma_chan_phy_mode(chan, chan_width, dot11_mode);
+}
+
+/**
  * wma_open() - Allocate wma context and initialize it.
  * @cds_context:  cds context
  * @wma_tgt_cfg_cb: tgt config callback fun
@@ -3591,6 +3615,9 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 
 	wma_register_debug_callback();
+	wifi_pos_register_get_phy_mode_cb(wma_handle->psoc,
+					  wma_get_phy_mode_cb);
+
 	/* Register callback with PMO so PMO can update the vdev pause bitmap*/
 	pmo_register_pause_bitmap_notifier(wma_handle->psoc,
 		wma_vdev_update_pause_bitmap);
