@@ -103,6 +103,78 @@ void wlan_mlme_get_sap_inactivity_override(struct wlan_objmgr_psoc *psoc,
 	*val = mlme_obj->cfg.qos_mlme_params.sap_max_inactivity_override;
 }
 
+QDF_STATUS wlan_mlme_get_acs_with_more_param(struct wlan_objmgr_psoc *psoc,
+					     bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
+
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.acs.is_acs_with_more_param;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_auto_channel_weight(struct wlan_objmgr_psoc *psoc,
+					     uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
+
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.acs.auto_channel_select_weight;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_vendor_acs_support(struct wlan_objmgr_psoc *psoc,
+					    bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
+
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.acs.is_vendor_acs_support;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_get_acs_support_for_dfs_ltecoex(struct wlan_objmgr_psoc *psoc,
+					  bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
+
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.acs.is_acs_support_for_dfs_ltecoex;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_get_external_acs_policy(struct wlan_objmgr_psoc *psoc,
+				  bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
+
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.acs.is_external_acs_policy;
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS wlan_mlme_get_tx_chainmask_cck(struct wlan_objmgr_psoc *psoc,
 					  bool *value)
 {

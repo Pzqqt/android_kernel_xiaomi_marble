@@ -551,6 +551,22 @@ struct wlan_mlme_product_details_cfg {
 	char manufacture_product_version[WLAN_CFG_MFR_PRODUCT_VERSION_LEN + 1];
 };
 
+/*
+ * struct wlan_mlme_acs - All acs related cfg items
+ * @is_acs_with_more_param - to enable acs with more param
+ * @auto_channel_select_weight - to set acs channel weight
+ * @is_vendor_acs_support - enable application based channel selection
+ * @is_acs_support_for_dfs_ltecoex - enable channel for dfs and lte coex
+ * @is_external_acs_policy - control external policy
+ */
+struct wlan_mlme_acs {
+	bool is_acs_with_more_param;
+	uint32_t auto_channel_select_weight;
+	bool is_vendor_acs_support;
+	bool is_acs_support_for_dfs_ltecoex;
+	bool is_external_acs_policy;
+};
+
 /**
  * struct wlan_mlme_obss_ht40 - OBSS HT40 config items
  * @active_dwelltime:        obss active dwelltime
@@ -887,10 +903,13 @@ struct wlan_mlme_wep_cfg {
  * @he_caps: HE related cfg items
  * @lfr: LFR related CFG Items
  * @obss_ht40:obss ht40 CFG Items
- * @vht_cfg: VHT related CFG Items
+ * @mbo_cfg: Multiband Operation related CFG items
+ * @vht_caps: VHT related CFG Items
  * @rates: Rates related cfg items
  * @product_details: product details related CFG Items
  * @sap_protection_cfg: SAP erp protection related CFG items
+ * @acs: ACS related CFG items
+ * @sap_cfg: sap CFG items
  * @sta: sta CFG Items
  * @scoring: BSS Scoring related CFG Items
  * @threshold: threshold related cfg items
@@ -916,6 +935,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_scoring_cfg scoring;
 	struct wlan_mlme_oce oce;
 	struct wlan_mlme_threshold threshold;
+	struct wlan_mlme_acs acs;
 	struct wlan_mlme_feature_flag feature_flags;
 	struct wlan_mlme_wep_cfg wep_params;
 };
