@@ -40,7 +40,6 @@
 #include <wlan_policy_mgr_api.h>
 #include "wifi_pos_api.h"
 #include "wlan_hdd_green_ap.h"
-#include "wlan_hdd_green_ap_cfg.h"
 #include "wlan_hdd_twt.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
@@ -2857,8 +2856,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_TX_SCH_DELAY_DEFAULT,
 		     CFG_TX_SCH_DELAY_MIN,
 		     CFG_TX_SCH_DELAY_MAX),
-
-	HDD_GREEN_AP_REG_VARIABLES
 
 	REG_VARIABLE(CFG_ENABLE_UNIT_TEST_FRAMEWORK_NAME,
 		     WLAN_PARAM_Integer,

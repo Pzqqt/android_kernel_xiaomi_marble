@@ -57,17 +57,6 @@ void hdd_green_ap_del_sta(struct hdd_context *hdd_ctx);
 int hdd_green_ap_enable_egap(struct hdd_context *hdd_ctx);
 
 /**
- * hdd_green_ap_update_config() - Update Green AP component configuration
- * @hdd_ctx: Global HDD context
- *
- * This function will take the static Green AP configuration and apply it
- * to the Green AP component.
- *
- * Return: 0 on success, negative errno on any failure
- */
-int hdd_green_ap_update_config(struct hdd_context *hdd_ctx);
-
-/**
  * hdd_green_ap_start_state_mc() - to start green AP state mc based on
  *        present concurrency and state of green AP state machine.
  * @hdd_ctx: hdd context

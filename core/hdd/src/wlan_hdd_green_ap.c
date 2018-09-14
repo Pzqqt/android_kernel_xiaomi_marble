@@ -89,27 +89,6 @@ int hdd_green_ap_enable_egap(struct hdd_context *hdd_ctx)
 	return 0;
 }
 
-int hdd_green_ap_update_config(struct hdd_context *hdd_ctx)
-{
-	struct green_ap_user_cfg green_ap_cfg;
-	struct hdd_config *cfg = hdd_ctx->config;
-	QDF_STATUS status;
-
-	green_ap_cfg.host_enable_egap = cfg->enable_egap;
-	green_ap_cfg.egap_inactivity_time = cfg->egap_inact_time;
-	green_ap_cfg.egap_wait_time = cfg->egap_wait_time;
-	green_ap_cfg.egap_feature_flags = cfg->egap_feature_flag;
-
-	status = ucfg_green_ap_update_user_config(hdd_ctx->pdev,
-						  &green_ap_cfg);
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("failed to update green ap user configuration");
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
 int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 				enum QDF_OPMODE mode, bool is_session_start)
 {
@@ -118,6 +97,7 @@ int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 	uint8_t num_sap_sessions = 0, num_p2p_go_sessions = 0, ret = 0;
 	QDF_STATUS status;
 	bool bval = false;
+	uint8_t ps_enable;
 
 	cfg = hdd_ctx->config;
 	if (!cfg) {
@@ -131,9 +111,16 @@ int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 		return -EINVAL;
 	}
 
-	if (!bval || !cfg->enable_green_ap) {
-		hdd_debug("Green AP not enabled: enable2x2:%d, enable_green_ap:%d",
-			  bval, cfg->enable_green_ap);
+	if (!bval) {
+		hdd_debug(" 2x2 not enabled");
+	}
+
+	if (QDF_IS_STATUS_ERROR(ucfg_green_ap_get_ps_config(hdd_ctx->pdev,
+							     &ps_enable)))
+		return 0;
+
+	if (!ps_enable) {
+		hdd_debug("Green AP not enabled");
 		return 0;
 	}
 

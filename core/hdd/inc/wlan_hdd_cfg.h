@@ -38,7 +38,6 @@
 #include <wmi_unified.h>
 #include "wlan_pmo_hw_filter_public_struct.h"
 #include "wlan_action_oui_public_struct.h"
-#include "wlan_hdd_green_ap_cfg.h"
 #include "hdd_config.h"
 
 struct hdd_context;
@@ -7942,7 +7941,6 @@ struct hdd_config {
 	bool enable_bt_chain_separation;
 	uint8_t enable_tx_sch_delay;
 	uint32_t enable_secondary_rate;
-	HDD_GREEN_AP_CFG_FIELDS
 	bool is_unit_test_framework_enabled;
 	bool enable_ftopen;
 	bool enable_rtt_mac_randomization;

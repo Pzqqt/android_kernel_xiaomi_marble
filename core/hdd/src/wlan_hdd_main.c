@@ -152,6 +152,7 @@
 #include "wlan_reg_ucfg_api.h"
 #include "wlan_ocb_ucfg_api.h"
 #include <wlan_hdd_spectralscan.h>
+#include "wlan_green_ap_ucfg_api.h"
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
 #else
@@ -1736,8 +1737,6 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 				cds_get_context(QDF_MODULE_ID_TXRX));
 
 	hdd_objmgr_update_tgt_max_vdev_psoc(hdd_ctx, cfg->max_intf_count);
-
-	ret = hdd_green_ap_update_config(hdd_ctx);
 
 	ucfg_ipa_set_dp_handle(hdd_ctx->psoc,
 			       cds_get_context(QDF_MODULE_ID_SOC));
