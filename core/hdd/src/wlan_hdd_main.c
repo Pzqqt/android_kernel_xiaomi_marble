@@ -393,9 +393,9 @@ void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
  * post processing
  */
 #ifdef BUILD_TAG
-uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR "; " BUILD_TAG;
+uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR "; " BUILD_TAG;
 #else
-uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR;
+uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR;
 #endif
 
 /**
