@@ -290,7 +290,7 @@ static inline bool __qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
 	LINUX_VERSION_CODE  >= KERNEL_VERSION(4, 11, 0)
 #define __QDF_DECLARE_EWMA(name, _factor, _weight)
 
-#define __qdf_ewma_tx_lag struct ewma
+#define __qdf_ewma_tx_lag int
 #else
 #define __QDF_DECLARE_EWMA(name, _factor, _weight) \
 	DECLARE_EWMA(name, _factor, _weight)
