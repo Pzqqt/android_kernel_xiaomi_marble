@@ -133,7 +133,7 @@ static const struct osif_akm_type_crypto_mapping
 		.akm_type_crypto = WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192,
 	},
 #endif
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0)) || \
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)) || \
 				defined(FEATURE_WLAN_FILS)
 	{
 		.akm_suite = WLAN_AKM_SUITE_FILS_SHA256,
