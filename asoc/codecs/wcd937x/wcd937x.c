@@ -142,8 +142,8 @@ static int wcd937x_set_port_params(struct snd_soc_codec *codec, u8 slv_prt_type,
 			u8 *port_type, u8 path)
 {
 	int i, j;
-	u8 num_ports;
-	struct codec_port_info (*map)[MAX_PORT][MAX_CH_PER_PORT];
+	u8 num_ports = 0;
+	struct codec_port_info (*map)[MAX_PORT][MAX_CH_PER_PORT] = NULL;
 	struct wcd937x_priv *wcd937x = snd_soc_codec_get_drvdata(codec);
 
 	switch (path) {
@@ -186,8 +186,8 @@ static int wcd937x_parse_port_mapping(struct device *dev,
 	u32 slave_port_type, master_port_type;
 	u32 i, ch_iter = 0;
 	int ret = 0;
-	u8 *num_ports;
-	struct codec_port_info (*map)[MAX_PORT][MAX_CH_PER_PORT];
+	u8 *num_ports = NULL;
+	struct codec_port_info (*map)[MAX_PORT][MAX_CH_PER_PORT] = NULL;
 	struct wcd937x_priv *wcd937x = dev_get_drvdata(dev);
 
 	switch (path) {

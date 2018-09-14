@@ -183,6 +183,11 @@ static int tx_macro_mclk_enable(struct tx_macro_priv *tx_priv,
 	struct regmap *regmap = dev_get_regmap(tx_priv->dev->parent, NULL);
 	int ret = 0;
 
+	if (regmap == NULL) {
+		dev_err(tx_priv->dev, "%s: regmap is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	dev_dbg(tx_priv->dev, "%s: mclk_enable = %u,clk_users= %d\n",
 		__func__, mclk_enable, tx_priv->tx_mclk_users);
 
@@ -1318,6 +1323,11 @@ static int tx_macro_swrm_clock(void *handle, bool enable)
 	struct tx_macro_priv *tx_priv = (struct tx_macro_priv *) handle;
 	struct regmap *regmap = dev_get_regmap(tx_priv->dev->parent, NULL);
 	int ret = 0;
+
+	if (regmap == NULL) {
+		dev_err(tx_priv->dev, "%s: regmap is NULL\n", __func__);
+		return -EINVAL;
+	}
 
 	mutex_lock(&tx_priv->swr_clk_lock);
 
