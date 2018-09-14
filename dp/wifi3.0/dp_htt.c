@@ -102,7 +102,6 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 	if (!peer || !ppdu)
 		return;
 
-	dp_peer_stats_notify(peer);
 
 	ratekbps = dp_getrateindex(ppdu->gi,
 				   ppdu->mcs,
@@ -120,8 +119,13 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 	DP_STATS_UPD(peer, tx.rnd_avg_tx_rate, ppdu_tx_rate);
 
 	if (peer->vdev) {
-		peer->vdev->stats.tx.last_tx_rate = ratekbps;
-		peer->vdev->stats.tx.last_tx_rate_mcs = ppdu->mcs;
+		if (peer->bss_peer) {
+			peer->vdev->stats.tx.mcast_last_tx_rate = ratekbps;
+			peer->vdev->stats.tx.mcast_last_tx_rate_mcs = ppdu->mcs;
+		} else {
+			peer->vdev->stats.tx.last_tx_rate = ratekbps;
+			peer->vdev->stats.tx.last_tx_rate_mcs = ppdu->mcs;
+		}
 	}
 }
 
@@ -189,7 +193,7 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 			tx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < (MAX_MCS - 1)) && (preamble == DOT11_AX)));
 
-	dp_tx_rate_stats_update(peer, ppdu);
+	dp_peer_stats_notify(peer);
 
 	if (peer->stats.tx.ucast.num)
 		peer->stats.tx.last_per = ((peer->stats.tx.ucast.num -
@@ -2481,24 +2485,26 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 
 	for (i = 0; i < ppdu_desc->num_users; i++) {
 
-
 		ppdu_desc->num_mpdu += ppdu_desc->user[i].num_mpdu;
 		ppdu_desc->num_msdu += ppdu_desc->user[i].num_msdu;
 
+		peer = dp_peer_find_by_id(pdev->soc,
+					  ppdu_desc->user[i].peer_id);
+		/**
+		 * This check is to make sure peer is not deleted
+		 * after processing the TLVs.
+		 */
+		if (!peer)
+			continue;
+
 		if (ppdu_desc->user[i].tid < CDP_DATA_TID_MAX) {
-			peer = dp_peer_find_by_id(pdev->soc,
-					ppdu_desc->user[i].peer_id);
-			/**
-			 * This check is to make sure peer is not deleted
-			 * after processing the TLVs.
-			 */
-			if (!peer)
-				continue;
 
 			dp_tx_stats_update(pdev->soc, peer,
 					&ppdu_desc->user[i],
 					ppdu_desc->ack_rssi);
 		}
+
+		dp_tx_rate_stats_update(peer, &ppdu_desc->user[i]);
 	}
 
 	/*
