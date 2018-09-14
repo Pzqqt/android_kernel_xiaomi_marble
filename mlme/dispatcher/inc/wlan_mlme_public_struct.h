@@ -309,6 +309,29 @@ struct wlan_mlme_ht_caps {
 	struct mlme_ht_capabilities_info ht_cap_info;
 };
 
+/*
+ * struct wlan_mlme_wps_params - All wps based related cfg items
+ *
+ * @enable_wps - to enable wps
+ * @wps_state - current wps state
+ * @wps_version - wps version
+ * @wps_cfg_method - wps config method
+ * @wps_primary_device_category - wps primary device category
+ * @wps_primary_device_oui - primary device OUI
+ * @wps_device_sub_category - device sub category
+ * @wps_device_password_id - password id of device
+ */
+struct wlan_mlme_wps_params {
+	uint8_t enable_wps;
+	uint8_t wps_state;
+	uint8_t wps_version;
+	uint32_t wps_cfg_method;
+	uint32_t wps_primary_device_category;
+	uint32_t wps_primary_device_oui;
+	uint16_t wps_device_sub_category;
+	uint32_t wps_device_password_id;
+};
+
 /**
  * struct wlan_mlme_ - HT Capabilities related config items
  * @ht_cap_info: HT capabilities Info Structure
@@ -1213,6 +1236,7 @@ struct wlan_mlme_wep_cfg {
  * @feature_flags: Feature flag config items
  * @wep_params:  WEP related config items
  * @wmm_params: WMM related CFG & INI Items
+ * @wps_params: WPS related CFG itmes
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_chainmask chainmask_cfg;
@@ -1239,6 +1263,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_feature_flag feature_flags;
 	struct wlan_mlme_wep_cfg wep_params;
 	struct wlan_mlme_wmm_params wmm_params;
+	struct wlan_mlme_wps_params wps_params;
 };
 
 #endif

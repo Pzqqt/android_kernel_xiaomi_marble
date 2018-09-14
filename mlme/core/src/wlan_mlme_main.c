@@ -1246,6 +1246,23 @@ static void mlme_init_wmm_in_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_QOS_WMM_UAPSD_VO_SUS_INTV);
 }
 
+static void mlme_init_wps_params_cfg(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_mlme_wps_params *wps_params)
+{
+	wps_params->enable_wps = cfg_default(CFG_WPS_ENABLE);
+	wps_params->wps_cfg_method = cfg_default(CFG_WPS_CFG_METHOD);
+	wps_params->wps_device_password_id =
+				cfg_default(CFG_WPS_DEVICE_PASSWORD_ID);
+	wps_params->wps_device_sub_category =
+				cfg_default(CFG_WPS_DEVICE_SUB_CATEGORY);
+	wps_params->wps_primary_device_category =
+				cfg_default(CFG_WPS_PRIMARY_DEVICE_CATEGORY);
+	wps_params->wps_primary_device_oui =
+				cfg_default(CFG_WPS_PIMARY_DEVICE_OUI);
+	wps_params->wps_state = cfg_default(CFG_WPS_STATE);
+	wps_params->wps_version = cfg_default(CFG_WPS_VERSION);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -1282,6 +1299,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_threshold_cfg(psoc, &mlme_cfg->threshold);
 	mlme_init_oce_cfg(psoc, &mlme_cfg->oce);
 	mlme_init_wep_cfg(&mlme_cfg->wep_params);
+	mlme_init_wps_params_cfg(psoc, &mlme_cfg->wps_params);
 
 	return status;
 }
