@@ -232,7 +232,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 	tDot11fBeacon1 *bcn_1;
 	tDot11fBeacon2 *bcn_2;
 	uint32_t i, n_status, n_bytes;
-	uint32_t wps_ap_enable = 0, tmp;
+	bool wps_ap_enable = 0;
 	tDot11fIEWscProbeRes *wsc_prb_res;
 	uint8_t *extra_ie = NULL;
 	uint32_t extra_ie_len = 0;
@@ -489,12 +489,8 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 						&bcn_2->WscBeacon, session);
 		}
 	} else {
-		status = wlan_cfg_get_int(mac_ctx, WNI_CFG_WPS_ENABLE, &tmp);
-		if (QDF_IS_STATUS_ERROR(status))
-			pe_err("Failed to cfg get id %d", WNI_CFG_WPS_ENABLE);
-
-		wps_ap_enable = tmp & WNI_CFG_WPS_ENABLE_AP;
-
+		wps_ap_enable = mac_ctx->mlme_cfg->wps_params.enable_wps &
+					    WNI_CFG_WPS_ENABLE_AP;
 		if (wps_ap_enable)
 			populate_dot11f_wsc(mac_ctx, &bcn_2->WscBeacon);
 

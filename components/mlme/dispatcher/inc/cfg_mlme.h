@@ -22,7 +22,7 @@
 #include "cfg_define.h"
 #include "cfg_converged.h"
 #include "qdf_types.h"
-
+#include "cfg_mlme_wps_params.h"
 #include "cfg_mlme_chainmask.h"
 #include "cfg_mlme_edca_params.h"
 #include "cfg_mlme_generic.h"
@@ -73,6 +73,7 @@
 	CFG_THRESHOLD_ALL \
 	CFG_TIMEOUT_ALL \
 	CFG_VHT_CAPS_ALL \
-	CFG_WEP_PARAMS_ALL
+	CFG_WEP_PARAMS_ALL \
+	CFG_WPS_ALL
 
 #endif /* __CFG_MLME_H */

@@ -5163,9 +5163,7 @@ QDF_STATUS populate_dot11f_wsc(tpAniSirGlobal pMac,
 	pDot11f->Version.major = 0x01;
 	pDot11f->Version.minor = 0x00;
 
-	if (wlan_cfg_get_int(pMac, (uint16_t) WNI_CFG_WPS_STATE, &wpsState) !=
-	    QDF_STATUS_SUCCESS)
-		pe_err("Failed to cfg get id %d", WNI_CFG_WPS_STATE);
+	wpsState = pMac->mlme_cfg->wps_params.wps_state;
 
 	pDot11f->WPSState.present = 1;
 	pDot11f->WPSState.state = (uint8_t) wpsState;
@@ -5190,7 +5188,6 @@ QDF_STATUS populate_dot11f_wsc_registrar_info(tpAniSirGlobal pMac,
 					      tDot11fIEWscBeacon *pDot11f)
 {
 	const struct sLimWscIeInfo *const pWscIeInfo = &(pMac->lim.wscIeInfo);
-	uint32_t devicepasswdId;
 
 	pDot11f->APSetupLocked.present = 1;
 	pDot11f->APSetupLocked.fLocked = pWscIeInfo->apSetupLocked;
@@ -5198,14 +5195,9 @@ QDF_STATUS populate_dot11f_wsc_registrar_info(tpAniSirGlobal pMac,
 	pDot11f->SelectedRegistrar.present = 1;
 	pDot11f->SelectedRegistrar.selected = pWscIeInfo->selectedRegistrar;
 
-	if (wlan_cfg_get_int
-		    (pMac, (uint16_t) WNI_CFG_WPS_DEVICE_PASSWORD_ID,
-		    &devicepasswdId) != QDF_STATUS_SUCCESS)
-		pe_err("Failed to cfg get id %d",
-			WNI_CFG_WPS_DEVICE_PASSWORD_ID);
-
 	pDot11f->DevicePasswordID.present = 1;
-	pDot11f->DevicePasswordID.id = (uint16_t) devicepasswdId;
+	pDot11f->DevicePasswordID.id =
+		(uint16_t)pMac->mlme_cfg->wps_params.wps_device_password_id;
 
 	pDot11f->SelectedRegistrarConfigMethods.present = 1;
 	pDot11f->SelectedRegistrarConfigMethods.methods =
@@ -5493,23 +5485,17 @@ QDF_STATUS populate_dot11f_beacon_wpsi_es(tpAniSirGlobal pMac,
 QDF_STATUS populate_dot11f_wsc_in_probe_res(tpAniSirGlobal pMac,
 					    tDot11fIEWscProbeRes *pDot11f)
 {
-	uint32_t cfgMethods;
 	uint32_t cfgStrLen;
 	uint32_t val;
 	uint32_t wpsVersion, wpsState;
 
-	if (wlan_cfg_get_int(pMac, (uint16_t) WNI_CFG_WPS_VERSION, &wpsVersion) !=
-	    QDF_STATUS_SUCCESS)
-		pe_err("Failed to cfg get id %d", WNI_CFG_WPS_VERSION);
+	wpsVersion = pMac->mlme_cfg->wps_params.wps_version;
 
 	pDot11f->Version.present = 1;
 	pDot11f->Version.major = (uint8_t) ((wpsVersion & 0xF0) >> 4);
 	pDot11f->Version.minor = (uint8_t) (wpsVersion & 0x0F);
 
-	if (wlan_cfg_get_int(pMac, (uint16_t) WNI_CFG_WPS_STATE, &wpsState) !=
-	    QDF_STATUS_SUCCESS)
-		pe_err("Failed to cfg get id %d", WNI_CFG_WPS_STATE);
-
+	wpsState = pMac->mlme_cfg->wps_params.wps_state;
 	pDot11f->WPSState.present = 1;
 	pDot11f->WPSState.state = (uint8_t) wpsState;
 
@@ -5585,16 +5571,10 @@ QDF_STATUS populate_dot11f_wsc_in_probe_res(tpAniSirGlobal pMac,
 
 	pDot11f->PrimaryDeviceType.present = 1;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_WPS_PRIMARY_DEVICE_CATEGORY, &val) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("cfg get prim device category failed");
-	} else
-		pDot11f->PrimaryDeviceType.primary_category = (uint16_t) val;
+	pDot11f->PrimaryDeviceType.primary_category =
+	       (uint16_t)pMac->mlme_cfg->wps_params.wps_primary_device_category;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_WPS_PIMARY_DEVICE_OUI, &val) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("cfg get prim device OUI failed");
-	} else {
+		val = pMac->mlme_cfg->wps_params.wps_primary_device_oui;
 		*(pDot11f->PrimaryDeviceType.oui) =
 			(uint8_t) ((val >> 24) & 0xff);
 		*(pDot11f->PrimaryDeviceType.oui + 1) =
@@ -5603,13 +5583,10 @@ QDF_STATUS populate_dot11f_wsc_in_probe_res(tpAniSirGlobal pMac,
 			(uint8_t) ((val >> 8) & 0xff);
 		*(pDot11f->PrimaryDeviceType.oui + 3) =
 			(uint8_t) ((val & 0xff));
-	}
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_WPS_DEVICE_SUB_CATEGORY, &val) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("cfg get prim device sub category failed");
-	} else
-		pDot11f->PrimaryDeviceType.sub_category = (uint16_t) val;
+	pDot11f->PrimaryDeviceType.sub_category =
+	       (uint16_t)pMac->mlme_cfg->wps_params.wps_device_sub_category;
+
 
 	pDot11f->DeviceName.present = 1;
 	cfgStrLen = sizeof(pDot11f->DeviceName.text);
@@ -5623,16 +5600,10 @@ QDF_STATUS populate_dot11f_wsc_in_probe_res(tpAniSirGlobal pMac,
 			(uint8_t) (cfgStrLen & 0x000000FF);
 	}
 
-	if (wlan_cfg_get_int(pMac,
-			     WNI_CFG_WPS_CFG_METHOD,
-			     &cfgMethods) != QDF_STATUS_SUCCESS) {
-		pDot11f->ConfigMethods.present = 0;
-		pDot11f->ConfigMethods.methods = 0;
-	} else {
 		pDot11f->ConfigMethods.present = 1;
 		pDot11f->ConfigMethods.methods =
-			(uint16_t) (cfgMethods & 0x0000FFFF);
-	}
+			(uint16_t)(pMac->mlme_cfg->wps_params.wps_cfg_method &
+				   0x0000FFFF);
 
 	pDot11f->RFBands.present = 0;
 
@@ -5645,7 +5616,6 @@ populate_dot11f_wsc_registrar_info_in_probe_res(tpAniSirGlobal pMac,
 						tDot11fIEWscProbeRes *pDot11f)
 {
 	const struct sLimWscIeInfo *const pWscIeInfo = &(pMac->lim.wscIeInfo);
-	uint32_t devicepasswdId;
 
 	pDot11f->APSetupLocked.present = 1;
 	pDot11f->APSetupLocked.fLocked = pWscIeInfo->apSetupLocked;
@@ -5653,14 +5623,9 @@ populate_dot11f_wsc_registrar_info_in_probe_res(tpAniSirGlobal pMac,
 	pDot11f->SelectedRegistrar.present = 1;
 	pDot11f->SelectedRegistrar.selected = pWscIeInfo->selectedRegistrar;
 
-	if (wlan_cfg_get_int
-		    (pMac, (uint16_t) WNI_CFG_WPS_DEVICE_PASSWORD_ID,
-		    &devicepasswdId) != QDF_STATUS_SUCCESS)
-		pe_err("Failed to cfg get id %d",
-			WNI_CFG_WPS_DEVICE_PASSWORD_ID);
-
 	pDot11f->DevicePasswordID.present = 1;
-	pDot11f->DevicePasswordID.id = (uint16_t) devicepasswdId;
+	pDot11f->DevicePasswordID.id =
+		(uint16_t)pMac->mlme_cfg->wps_params.wps_device_password_id;
 
 	pDot11f->SelectedRegistrarConfigMethods.present = 1;
 	pDot11f->SelectedRegistrarConfigMethods.methods =

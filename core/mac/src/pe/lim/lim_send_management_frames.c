@@ -545,7 +545,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint32_t addn_ie_present = false;
 
 	uint16_t addn_ie_len = 0;
-	uint32_t wps_ap = 0, tmp;
+	bool wps_ap = 0;
 	uint8_t tx_flag = 0;
 	uint8_t *add_ie = NULL;
 	const uint8_t *p2p_ie = NULL;
@@ -615,12 +615,8 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 				&frm->WscProbeRes,
 				pe_session);
 	} else {
-		if (wlan_cfg_get_int(mac_ctx, (uint16_t) WNI_CFG_WPS_ENABLE,
-			&tmp) != QDF_STATUS_SUCCESS)
-			pe_err("Failed to cfg get id %d", WNI_CFG_WPS_ENABLE);
-
-		wps_ap = tmp & WNI_CFG_WPS_ENABLE_AP;
-
+		wps_ap = mac_ctx->mlme_cfg->wps_params.enable_wps &
+					    WNI_CFG_WPS_ENABLE_AP;
 		if (wps_ap)
 			populate_dot11f_wsc_in_probe_res(mac_ctx,
 				&frm->WscProbeRes);
