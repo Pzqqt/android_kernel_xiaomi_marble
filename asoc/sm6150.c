@@ -1250,8 +1250,10 @@ static int cdc_dma_rx_ch_get(struct snd_kcontrol *kcontrol,
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
 
-	if (ch_num < 0)
+	if (ch_num < 0) {
+		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
 		return ch_num;
+	}
 
 	pr_debug("%s: cdc_dma_rx_ch  = %d\n", __func__,
 		 cdc_dma_rx_cfg[ch_num].channels - 1);
@@ -1264,8 +1266,10 @@ static int cdc_dma_rx_ch_put(struct snd_kcontrol *kcontrol,
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
 
-	if (ch_num < 0)
+	if (ch_num < 0) {
+		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
 		return ch_num;
+	}
 
 	cdc_dma_rx_cfg[ch_num].channels = ucontrol->value.integer.value[0] + 1;
 
@@ -1278,6 +1282,11 @@ static int cdc_dma_rx_format_get(struct snd_kcontrol *kcontrol,
 				   struct snd_ctl_elem_value *ucontrol)
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
+
+	if (ch_num < 0) {
+		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
+		return ch_num;
+	}
 
 	switch (cdc_dma_rx_cfg[ch_num].bit_format) {
 	case SNDRV_PCM_FORMAT_S32_LE:
@@ -1306,6 +1315,11 @@ static int cdc_dma_rx_format_put(struct snd_kcontrol *kcontrol,
 {
 	int rc = 0;
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
+
+	if (ch_num < 0) {
+		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
+		return ch_num;
+	}
 
 	switch (ucontrol->value.integer.value[0]) {
 	case 3:
@@ -1437,8 +1451,10 @@ static int cdc_dma_rx_sample_rate_get(struct snd_kcontrol *kcontrol,
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
 
-	if (ch_num < 0)
+	if (ch_num < 0) {
+		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
 		return ch_num;
+	}
 
 	ucontrol->value.enumerated.item[0] =
 		cdc_dma_get_sample_rate_val(cdc_dma_rx_cfg[ch_num].sample_rate);
@@ -1453,8 +1469,10 @@ static int cdc_dma_rx_sample_rate_put(struct snd_kcontrol *kcontrol,
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
 
-	if (ch_num < 0)
+	if (ch_num < 0) {
+		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
 		return ch_num;
+	}
 
 	cdc_dma_rx_cfg[ch_num].sample_rate =
 		cdc_dma_get_sample_rate(ucontrol->value.enumerated.item[0]);
@@ -1471,6 +1489,11 @@ static int cdc_dma_tx_ch_get(struct snd_kcontrol *kcontrol,
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
 
+	if (ch_num < 0) {
+		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
+		return ch_num;
+	}
+
 	pr_debug("%s: cdc_dma_tx_ch  = %d\n", __func__,
 		 cdc_dma_tx_cfg[ch_num].channels);
 	ucontrol->value.integer.value[0] = cdc_dma_tx_cfg[ch_num].channels - 1;
@@ -1481,6 +1504,11 @@ static int cdc_dma_tx_ch_put(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
+
+	if (ch_num < 0) {
+		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
+		return ch_num;
+	}
 
 	cdc_dma_tx_cfg[ch_num].channels = ucontrol->value.integer.value[0] + 1;
 
@@ -1494,6 +1522,11 @@ static int cdc_dma_tx_sample_rate_get(struct snd_kcontrol *kcontrol,
 {
 	int sample_rate_val;
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
+
+	if (ch_num < 0) {
+		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
+		return ch_num;
+	}
 
 	switch (cdc_dma_tx_cfg[ch_num].sample_rate) {
 	case SAMPLING_RATE_384KHZ:
@@ -1551,6 +1584,11 @@ static int cdc_dma_tx_sample_rate_put(struct snd_kcontrol *kcontrol,
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
 
+	if (ch_num < 0) {
+		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
+		return ch_num;
+	}
+
 	switch (ucontrol->value.integer.value[0]) {
 	case 12:
 		cdc_dma_tx_cfg[ch_num].sample_rate = SAMPLING_RATE_384KHZ;
@@ -1607,6 +1645,11 @@ static int cdc_dma_tx_format_get(struct snd_kcontrol *kcontrol,
 {
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
 
+	if (ch_num < 0) {
+		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
+		return ch_num;
+	}
+
 	switch (cdc_dma_tx_cfg[ch_num].bit_format) {
 	case SNDRV_PCM_FORMAT_S32_LE:
 		ucontrol->value.integer.value[0] = 3;
@@ -1634,6 +1677,11 @@ static int cdc_dma_tx_format_put(struct snd_kcontrol *kcontrol,
 {
 	int rc = 0;
 	int ch_num = cdc_dma_get_port_idx(kcontrol);
+
+	if (ch_num < 0) {
+		pr_err("%s: ch_num: %d is invalid\n", __func__, ch_num);
+		return ch_num;
+	}
 
 	switch (ucontrol->value.integer.value[0]) {
 	case 3:
