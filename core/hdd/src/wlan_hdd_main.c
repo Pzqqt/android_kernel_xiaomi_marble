@@ -12675,76 +12675,100 @@ void hdd_component_pdev_close(struct wlan_objmgr_pdev *pdev)
 }
 
 /**
- * __hdd_module_init - Module init helper
+ * hdd_fln() - logging macro for before/after qdf logging is initialized
+ * @fmt: printk compatible format string
+ * @args: arguments to be logged
  *
- * Module init helper function used by both module and static driver.
+ * Note: To be used only in module insmod and rmmod code paths
  *
- * Return: 0 for success, errno on failure
+ * Return: None
  */
-static int __hdd_module_init(void)
+#define hdd_fln(fmt, args...) __hdd_fln(FL(fmt "\n"), ##args)
+#define __hdd_fln(fmt, args...) pr_err(fmt, ##args)
+
+/**
+ * hdd_driver_load() - Perform the driver-level load operation
+ *
+ * Note: this is used in both static and DLKM driver builds
+ *
+ * Return: Errno
+ */
+static int hdd_driver_load(void)
 {
 	QDF_STATUS status;
-	int ret = 0;
+	int errno;
 
 	pr_err("%s: Loading driver v%s (%s)\n",
 	       WLAN_MODULE_NAME,
 	       g_wlan_driver_version,
 	       TIMER_MANAGER_STR MEMORY_DEBUG_STR PANIC_ON_BUG_STR);
 
-	pld_init();
+	errno = pld_init();
+	if (errno) {
+		hdd_fln("Failed to init PLD; errno:%d", errno);
+		return errno;
+	}
 
-	ret = hdd_init();
-	if (ret) {
-		pr_err("hdd_init failed %x\n", ret);
-		goto err_hdd_init;
+	errno = hdd_init();
+	if (errno) {
+		hdd_fln("Failed to init HDD; errno:%d", errno);
+		goto pld_deinit;
 	}
 
 	status = hdd_component_init();
 	if (QDF_IS_STATUS_ERROR(status)) {
-		ret = qdf_status_to_os_return(status);
+		hdd_fln("Failed to init components; status:%u", status);
+		errno = qdf_status_to_os_return(status);
 		goto hdd_deinit;
 	}
 
-	qdf_wake_lock_create(&wlan_wake_lock, "wlan");
-
-	hdd_set_conparam((uint32_t) con_mode);
-
-	ret = wlan_hdd_register_driver();
-	if (ret) {
-		pr_err("%s: driver load failure, err %d\n", WLAN_MODULE_NAME,
-			ret);
-		goto out;
+	status = qdf_wake_lock_create(&wlan_wake_lock, "wlan");
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_fln("Failed to create wake lock; status:%u", status);
+		errno = qdf_status_to_os_return(status);
+		goto comp_deinit;
 	}
 
-	ret = wlan_hdd_state_ctrl_param_create();
-	if (ret) {
-		pr_err("wlan_hdd_state_create:%x\n", ret);
-		goto out;
+	hdd_set_conparam(con_mode);
+
+	errno = wlan_hdd_register_driver();
+	if (errno) {
+		hdd_fln("Failed to register driver; errno:%d", errno);
+		goto wakelock_destroy;
+	}
+
+	errno = wlan_hdd_state_ctrl_param_create();
+	if (errno) {
+		hdd_fln("Failed to create ctrl param; errno:%d", errno);
+		goto unregister_driver;
 	}
 
 	pr_info("%s: driver loaded\n", WLAN_MODULE_NAME);
 
 	return 0;
 
-out:
+unregister_driver:
+	wlan_hdd_unregister_driver();
+wakelock_destroy:
 	qdf_wake_lock_destroy(&wlan_wake_lock);
+comp_deinit:
 	hdd_component_deinit();
-
 hdd_deinit:
 	hdd_deinit();
-
-err_hdd_init:
+pld_deinit:
 	pld_deinit();
 
-	return ret;
+	return errno;
 }
 
 /**
- * __hdd_module_exit - Module exit helper
+ * hdd_driver_unload() - Performs the driver-level unload operation
  *
- * Module exit helper function used by both module and static driver.
+ * Note: this is used in both static and DLKM driver builds
+ *
+ * Return: None
  */
-static void __hdd_module_exit(void)
+static void hdd_driver_unload(void)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
@@ -12764,18 +12788,13 @@ static void __hdd_module_exit(void)
 	if (hdd_ctx)
 		qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
 
+	wlan_hdd_state_ctrl_param_destroy();
 	wlan_hdd_unregister_driver();
-
+	hdd_set_conparam(0);
 	qdf_wake_lock_destroy(&wlan_wake_lock);
-
 	hdd_component_deinit();
-
-	hdd_sysfs_destroy_version_interface();
-
 	hdd_deinit();
 	pld_deinit();
-
-	wlan_hdd_state_ctrl_param_destroy();
 }
 
 #ifndef MODULE
@@ -12798,14 +12817,12 @@ static ssize_t wlan_boot_cb(struct kobject *kobj,
 {
 
 	if (wlan_loader->loaded_state) {
-		pr_err("%s: wlan driver already initialized\n", __func__);
+		hdd_fln("wlan driver already initialized");
 		return -EALREADY;
 	}
 
-	if (__hdd_module_init()) {
-		pr_err("%s: wlan driver initialization failed\n", __func__);
+	if (hdd_driver_load())
 		return -EIO;
-	}
 
 	wlan_loader->loaded_state = MODULE_INITIALIZED;
 
@@ -12869,14 +12886,14 @@ static int wlan_init_sysfs(void)
 	wlan_loader->boot_wlan_obj = kobject_create_and_add("boot_wlan",
 							    kernel_kobj);
 	if (!wlan_loader->boot_wlan_obj) {
-		pr_err("%s: sysfs create and add failed\n", __func__);
+		hdd_fln("sysfs create and add failed");
 		goto error_return;
 	}
 
 	ret = sysfs_create_group(wlan_loader->boot_wlan_obj,
 				 wlan_loader->attr_group);
 	if (ret) {
-		pr_err("%s: sysfs create group failed %d\n", __func__, ret);
+		hdd_fln("sysfs create group failed; errno:%d", ret);
 		goto error_return;
 	}
 
@@ -12896,7 +12913,7 @@ error_return:
 static int wlan_deinit_sysfs(void)
 {
 	if (!wlan_loader) {
-		hdd_err("wlan loader context is Null!");
+		hdd_fln("wlan loader context is Null!");
 		return -EINVAL;
 	}
 
@@ -12908,7 +12925,7 @@ static int wlan_deinit_sysfs(void)
 
 #ifdef MODULE
 /**
- * __hdd_module_init - Module init helper
+ * hdd_module_init() - Module init helper
  *
  * Module init helper function used by both module and static driver.
  *
@@ -12916,10 +12933,8 @@ static int wlan_deinit_sysfs(void)
  */
 static int hdd_module_init(void)
 {
-	if (__hdd_module_init()) {
-		pr_err("%s: Failed to register handler\n", __func__);
+	if (hdd_driver_load())
 		return -EINVAL;
-	}
 
 	return 0;
 }
@@ -12930,7 +12945,7 @@ static int __init hdd_module_init(void)
 
 	ret = wlan_init_sysfs();
 	if (ret)
-		pr_err("Failed to create sysfs entry for loading wlan");
+		hdd_fln("Failed to create sysfs entry");
 
 	return ret;
 }
@@ -12947,15 +12962,17 @@ static int __init hdd_module_init(void)
  */
 static void __exit hdd_module_exit(void)
 {
-	__hdd_module_exit();
+	hdd_driver_unload();
 }
 #else
 static void __exit hdd_module_exit(void)
 {
-	__hdd_module_exit();
+	hdd_driver_unload();
 	wlan_deinit_sysfs();
 }
 #endif
+
+#undef hdd_fln
 
 static int fwpath_changed_handler(const char *kmessage,
 				  const struct kernel_param *kp)
@@ -13342,7 +13359,7 @@ enum QDF_GLOBAL_MODE hdd_get_conparam(void)
 	return (enum QDF_GLOBAL_MODE) curr_con_mode;
 }
 
-void hdd_set_conparam(uint32_t con_param)
+void hdd_set_conparam(int32_t con_param)
 {
 	curr_con_mode = con_param;
 }
