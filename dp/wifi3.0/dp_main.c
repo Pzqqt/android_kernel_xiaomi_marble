@@ -227,14 +227,21 @@ static const struct dp_rate_debug dp_rate_string[DOT11_MAX][MAX_MCS] = {
 };
 
 /**
- * @brief Cpu ring map types
+ * dp_cpu_ring_map_type - dp tx cpu ring map
+ * @DP_NSS_DEFAULT_MAP: Default mode with no NSS offloaded
+ * @DP_NSS_FIRST_RADIO_OFFLOADED_MAP: Only First Radio is offloaded
+ * @DP_NSS_SECOND_RADIO_OFFLOADED_MAP: Only second radio is offloaded
+ * @DP_NSS_DBDC_OFFLOADED_MAP: Both radios are offloaded
+ * @DP_NSS_DBTC_OFFLOADED_MAP: All three radios are offloaded
+ * @DP_NSS_CPU_RING_MAP_MAX: Max cpu ring map val
  */
 enum dp_cpu_ring_map_types {
-	DP_DEFAULT_MAP,
+	DP_NSS_DEFAULT_MAP,
 	DP_NSS_FIRST_RADIO_OFFLOADED_MAP,
 	DP_NSS_SECOND_RADIO_OFFLOADED_MAP,
-	DP_NSS_ALL_RADIO_OFFLOADED_MAP,
-	DP_CPU_RING_MAP_MAX
+	DP_NSS_DBDC_OFFLOADED_MAP,
+	DP_NSS_DBTC_OFFLOADED_MAP,
+	DP_NSS_CPU_RING_MAP_MAX
 };
 
 /**
@@ -242,19 +249,21 @@ enum dp_cpu_ring_map_types {
  */
 #ifdef CONFIG_WIN
 static uint8_t
-dp_cpu_ring_map[DP_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS] = {
+dp_cpu_ring_map[DP_NSS_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS] = {
 	{0x0, 0x1, 0x2, 0x0, 0x0, 0x1, 0x2, 0x0, 0x0, 0x1, 0x2},
 	{0x1, 0x2, 0x1, 0x2, 0x1, 0x2, 0x1, 0x2, 0x1, 0x2, 0x1},
 	{0x0, 0x2, 0x0, 0x2, 0x0, 0x2, 0x0, 0x2, 0x0, 0x2, 0x0},
-	{0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2}
+	{0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2},
+	{0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3}
 };
 #else
 static uint8_t
-dp_cpu_ring_map[DP_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS] = {
+dp_cpu_ring_map[DP_NSS_CPU_RING_MAP_MAX][WLAN_CFG_INT_NUM_CONTEXTS] = {
 	{0x0, 0x1, 0x2, 0x0, 0x0, 0x1, 0x2},
 	{0x1, 0x2, 0x1, 0x2, 0x1, 0x2, 0x1},
 	{0x0, 0x2, 0x0, 0x2, 0x0, 0x2, 0x0},
-	{0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2}
+	{0x2, 0x2, 0x2, 0x2, 0x2, 0x2, 0x2},
+	{0x3, 0x3, 0x3, 0x3, 0x3, 0x3, 0x3}
 };
 #endif
 
@@ -459,7 +468,7 @@ uint32_t dp_soc_get_mon_mask_for_interrupt_mode(struct dp_soc *soc, int intr_ctx
  * Return: pointer to dp_vdev
  */
 static
-struct dp_vdev * dp_get_dp_vdev_from_cdp_vdev(struct cdp_vdev *cdp_opaque_vdev)
+struct dp_vdev *dp_get_dp_vdev_from_cdp_vdev(struct cdp_vdev *cdp_opaque_vdev)
 {
 	return (struct dp_vdev *)cdp_opaque_vdev;
 }
@@ -2068,21 +2077,40 @@ static void dp_soc_reset_cpu_ring_map(struct dp_soc *soc)
 	int nss_config = wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx);
 
 	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
-		if (nss_config == 1) {
+		switch (nss_config) {
+		case dp_nss_cfg_first_radio:
 			/*
 			 * Setting Tx ring map for one nss offloaded radio
 			 */
 			soc->tx_ring_map[i] = dp_cpu_ring_map[DP_NSS_FIRST_RADIO_OFFLOADED_MAP][i];
-		} else if (nss_config == 2) {
+			break;
+
+		case dp_nss_cfg_second_radio:
 			/*
 			 * Setting Tx ring for two nss offloaded radios
 			 */
 			soc->tx_ring_map[i] = dp_cpu_ring_map[DP_NSS_SECOND_RADIO_OFFLOADED_MAP][i];
-		} else {
+			break;
+
+		case dp_nss_cfg_dbdc:
 			/*
-			 * Setting Tx ring map for all nss offloaded radios
+			 * Setting Tx ring map for 2 nss offloaded radios
 			 */
-			soc->tx_ring_map[i] = dp_cpu_ring_map[DP_NSS_ALL_RADIO_OFFLOADED_MAP][i];
+			soc->tx_ring_map[i] =
+				dp_cpu_ring_map[DP_NSS_DBDC_OFFLOADED_MAP][i];
+			break;
+
+		case dp_nss_cfg_dbtc:
+			/*
+			 * Setting Tx ring map for 3 nss offloaded radios
+			 */
+			soc->tx_ring_map[i] =
+				dp_cpu_ring_map[DP_NSS_DBTC_OFFLOADED_MAP][i];
+			break;
+
+		default:
+			dp_err("tx_ring_map failed due to invalid nss cfg");
+			break;
 		}
 	}
 }
@@ -2268,7 +2296,7 @@ static bool dp_reo_remap_config(struct dp_soc *soc,
 	uint8_t offload_radio = wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx);
 
 	switch (offload_radio) {
-	case 0:
+	case dp_nss_cfg_default:
 		*remap1 = ((0x1 << 0) | (0x2 << 3) | (0x3 << 6) |
 			(0x4 << 9) | (0x1 << 12) | (0x2 << 15) |
 			(0x3 << 18) | (0x4 << 21)) << 8;
@@ -2277,7 +2305,7 @@ static bool dp_reo_remap_config(struct dp_soc *soc,
 			(0x4 << 9) | (0x1 << 12) | (0x2 << 15) |
 			(0x3 << 18) | (0x4 << 21)) << 8;
 		break;
-	case 1:
+	case dp_nss_cfg_first_radio:
 		*remap1 = ((0x2 << 0) | (0x3 << 3) | (0x4 << 6) |
 			(0x2 << 9) | (0x3 << 12) | (0x4 << 15) |
 			(0x2 << 18) | (0x3 << 21)) << 8;
@@ -2287,7 +2315,7 @@ static bool dp_reo_remap_config(struct dp_soc *soc,
 			(0x4 << 18) | (0x2 << 21)) << 8;
 		break;
 
-	case 2:
+	case dp_nss_cfg_second_radio:
 		*remap1 = ((0x1 << 0) | (0x3 << 3) | (0x4 << 6) |
 			(0x1 << 9) | (0x3 << 12) | (0x4 << 15) |
 			(0x1 << 18) | (0x3 << 21)) << 8;
@@ -2297,8 +2325,9 @@ static bool dp_reo_remap_config(struct dp_soc *soc,
 			(0x4 << 18) | (0x1 << 21)) << 8;
 		break;
 
-	case 3:
-		/* return false if both radios are offloaded to NSS */
+	case dp_nss_cfg_dbdc:
+	case dp_nss_cfg_dbtc:
+		/* return false if both or all are offloaded to NSS */
 		return false;
 	}
 
@@ -2331,10 +2360,11 @@ static void dp_reo_frag_dst_set(struct dp_soc *soc, uint8_t *frag_dst_ring)
 	uint8_t offload_radio = wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx);
 
 	switch (offload_radio) {
-	case 0:
+	case dp_nss_cfg_default:
 		*frag_dst_ring = HAL_SRNG_REO_EXCEPTION;
 		break;
-	case 3:
+	case dp_nss_cfg_dbdc:
+	case dp_nss_cfg_dbtc:
 		*frag_dst_ring = HAL_SRNG_REO_ALTERNATE_SELECT;
 		break;
 	default:
@@ -3699,11 +3729,19 @@ static void dp_soc_set_nss_cfg_wifi3(struct cdp_soc_t *cdp_soc, int config)
 	/*
 	 * TODO: masked out based on the per offloaded radio
 	 */
-	if (config == dp_nss_cfg_dbdc) {
+	switch (config) {
+	case dp_nss_cfg_default:
+		break;
+	case dp_nss_cfg_dbdc:
+	case dp_nss_cfg_dbtc:
 		wlan_cfg_set_num_tx_desc_pool(wlan_cfg_ctx, 0);
 		wlan_cfg_set_num_tx_ext_desc_pool(wlan_cfg_ctx, 0);
 		wlan_cfg_set_num_tx_desc(wlan_cfg_ctx, 0);
 		wlan_cfg_set_num_tx_ext_desc(wlan_cfg_ctx, 0);
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid offload config %d", config);
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
@@ -8764,7 +8802,7 @@ static void dp_soc_set_txrx_ring_map(struct dp_soc *soc)
 {
 	uint32_t i;
 	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
-		soc->tx_ring_map[i] = dp_cpu_ring_map[DP_DEFAULT_MAP][i];
+		soc->tx_ring_map[i] = dp_cpu_ring_map[DP_NSS_DEFAULT_MAP][i];
 	}
 }
 

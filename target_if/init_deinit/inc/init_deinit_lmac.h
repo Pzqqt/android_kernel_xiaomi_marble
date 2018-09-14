@@ -223,4 +223,15 @@ void *lmac_get_pdev_feature_ptr(struct wlan_objmgr_pdev *pdev);
  */
 uint32_t lmac_get_num_radios(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * lmac_get_preferred_hw_mode() - get preferred hw mode
+ * @psoc: pointer to psoc
+ *
+ * API to get the preferred hw mode
+ *
+ * Return: preferred how mode
+ */
+enum wmi_host_hw_mode_config_type lmac_get_preferred_hw_mode(
+				struct wlan_objmgr_psoc *psoc);
+
 #endif /* _INIT_DEINIT_LMAC_H_ */

@@ -219,12 +219,15 @@ enum dp_ast_type {
  * @dp_nss_cfg_first_radio: First radio offloaded
  * @dp_nss_cfg_second_radio: Second radio offloaded
  * @dp_nss_cfg_dbdc: Dual radios offloaded
+ * @dp_nss_cfg_dbtc: Three radios offloaded
  */
 enum dp_nss_cfg {
-	dp_nss_cfg_default,
-	dp_nss_cfg_first_radio,
-	dp_nss_cfg_second_radio,
-	dp_nss_cfg_dbdc,
+	dp_nss_cfg_default = 0x0,
+	dp_nss_cfg_first_radio = 0x1,
+	dp_nss_cfg_second_radio = 0x2,
+	dp_nss_cfg_dbdc = 0x3,
+	dp_nss_cfg_dbtc = 0x7,
+	dp_nss_cfg_max
 };
 
 /**

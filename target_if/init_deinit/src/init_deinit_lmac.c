@@ -353,3 +353,23 @@ void *lmac_get_pdev_feature_ptr(struct wlan_objmgr_pdev *pdev)
 	return target_pdev_get_feature_ptr(tgt_hdl);
 }
 qdf_export_symbol(lmac_get_pdev_feature_ptr);
+
+enum wmi_host_hw_mode_config_type lmac_get_preferred_hw_mode(
+				struct wlan_objmgr_psoc *psoc)
+{
+	struct target_psoc_info *tgt_hdl;
+
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return WMI_HOST_HW_MODE_MAX;
+	}
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_hdl) {
+		target_if_err("target_psoc_info is null");
+		return WMI_HOST_HW_MODE_MAX;
+	}
+
+	return target_psoc_get_preferred_hw_mode(tgt_hdl);
+}
+
+qdf_export_symbol(lmac_get_preferred_hw_mode);
