@@ -272,7 +272,7 @@ static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
 
 	qdf_get_time_of_the_day_in_hr_min_sec_usec(time_buf, sizeof(time_buf));
 
-	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%.16s][%llu] %s ", radio,
+	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%.16s][0x%llx] %s ", radio,
 			((in_irq() ? "irq" : in_softirq() ?  "soft_irq" :
 			current->comm)),
 			ts, time_buf);
