@@ -61,6 +61,8 @@ void __qdf_trigger_self_recovery(const char *func, const uint32_t line)
 {
 	if (self_recovery_cb)
 		self_recovery_cb(QDF_REASON_UNSPECIFIED, func, line);
+	else
+		QDF_DEBUG_PANIC_FL(func, line, "");
 }
 
 qdf_export_symbol(__qdf_trigger_self_recovery);

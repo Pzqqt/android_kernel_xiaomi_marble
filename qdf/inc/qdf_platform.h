@@ -82,7 +82,11 @@ bool qdf_is_fw_down(void);
 void qdf_register_self_recovery_callback(qdf_self_recovery_callback callback);
 
 /**
- * qdf_trigger_self_recovery () - tirgger self recovery
+ * qdf_trigger_self_recovery () - trigger self recovery
+ *
+ * Call API only in case of fatal error,
+ * if self_recovery_cb callback is registered, injcets fw crash and recovers
+ * else raises QDF_BUG()
  *
  * Return: None
  */

@@ -28,9 +28,7 @@
 #include "wlan_objmgr_pdev_obj.h"
 #include "qdf_mc_timer.h"
 #include "wlan_utility.h"
-#ifdef CONFIG_MCL
 #include "qdf_platform.h"
-#endif
 
 QDF_STATUS
 wlan_serialization_put_back_to_global_list(qdf_list_t *queue,
@@ -153,17 +151,10 @@ static QDF_STATUS wlan_serialization_timer_destroy(
 	return status;
 }
 
-#ifdef CONFIG_MCL
 static void wlan_serialization_non_scan_timeout_action(void)
 {
 	qdf_trigger_self_recovery();
 }
-#else
-static void wlan_serialization_non_scan_timeout_action(void)
-{
-	QDF_BUG(0);
-}
-#endif
 
 /**
  * wlan_serialization_generic_timer_callback() - timer callback when timer fire

@@ -53,6 +53,7 @@ src/qdf_flex_mem.o \
 src/qdf_parse.o \
 src/qdf_str.o \
 src/qdf_types.o \
+src/qdf_platform.o \
 $(HOST_CMN_CONVG_NLINK)/src/wlan_nlink_srv.o \
 $(HOST_CMN_CONVG_SRC)/qal/linux/src/qal_devcfg.o \
 $(HOST_CMN_CONVG_SRC)/qal/linux/src/qal_vbus_dev.o \
