@@ -38,6 +38,24 @@
 /* forward declartion */
 struct regulatory_channel;
 
+#define REG_SET_CHANNEL_REG_POWER(reg_info_1, val) do { \
+	reg_info_1 &= 0xff00ffff;           \
+	reg_info_1 |= ((val & 0xff) << 16); \
+} while (0)
+
+/* max tx power is in 1 dBm units */
+#define REG_SET_CHANNEL_MAX_TX_POWER(reg_info_2, val) do { \
+	reg_info_2 &= 0xffff00ff;              \
+	reg_info_2 |= ((val & 0xff) << 8);     \
+} while (0)
+
+/* channel info consists of 6 bits of channel mode */
+
+#define REG_SET_CHANNEL_MODE(reg_channel, val) do { \
+	(reg_channel)->info &= 0xffffffc0;            \
+	(reg_channel)->info |= (val);                 \
+} while (0)
+
 /*
  * obj mgr api to iterate over vdevs does not provide a direct array or vdevs,
  * rather takes a callback that is called for every vdev. wifi pos needs to
@@ -183,15 +201,85 @@ static QDF_STATUS wifi_pos_process_get_cap_req(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void wifi_update_channel_bw_info(struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_pdev *pdev,
+					uint16_t chan,
+					struct wifi_pos_ch_info_rsp *chan_info)
+{
+	struct ch_params ch_params = {0};
+	uint16_t sec_ch_2g = 0;
+	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc =
+		wifi_pos_get_psoc_priv_obj(psoc);
+	uint32_t phy_mode;
+
+	if (!wifi_pos_psoc) {
+		wifi_pos_err("wifi_pos priv obj is null");
+		return;
+	}
+
+	/* Passing CH_WIDTH_MAX will give the max bandwidth supported */
+	ch_params.ch_width = CH_WIDTH_MAX;
+
+	wlan_reg_set_channel_params(pdev, chan, sec_ch_2g, &ch_params);
+	if (ch_params.center_freq_seg0)
+		chan_info->band_center_freq1 =
+			wlan_reg_get_channel_freq(pdev,
+						  ch_params.center_freq_seg0);
+
+	wifi_pos_psoc->wifi_pos_get_phy_mode(chan, ch_params.ch_width,
+					     &phy_mode);
+
+	REG_SET_CHANNEL_MODE(chan_info, phy_mode);
+}
+
+static void wifi_pos_get_reg_info(struct wlan_objmgr_pdev *pdev,
+				  uint32_t chan_num, uint32_t *reg_info_1,
+				  uint32_t *reg_info_2)
+{
+	uint32_t reg_power = wlan_reg_get_channel_reg_power(pdev, chan_num);
+
+	*reg_info_1 = 0;
+	*reg_info_2 = 0;
+
+	REG_SET_CHANNEL_REG_POWER(*reg_info_1, reg_power);
+	REG_SET_CHANNEL_MAX_TX_POWER(*reg_info_2, reg_power);
+}
+
+/**
+ * wifi_pos_get_valid_channels: Get the list of valid channels from the
+ * given channel list
+ * @channels: Channel list to be validated
+ * @num_ch: NUmber of channels in the channel list to be validated
+ * @valid_channel_list: Pointer to valid channel list
+ *
+ * Return: Number of valid channels in the given list
+ */
+
+static uint32_t wifi_pos_get_valid_channels(uint8_t *channels, uint32_t num_ch,
+					    uint8_t *valid_channel_list) {
+	uint32_t i, num_valid_channels = 0;
+
+	for (i = 0; i < num_ch; i++) {
+		if (INVALID_CHANNEL == reg_get_chan_enum(channels[i]))
+			continue;
+		valid_channel_list[num_valid_channels++] = channels[i];
+	}
+	return num_valid_channels;
+}
+
 static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 					struct wifi_pos_req_msg *req)
 {
 	uint8_t idx;
 	uint8_t *buf;
 	uint32_t len;
+	uint32_t reg_info_1;
+	uint32_t reg_info_2;
 	uint8_t *channels = req->buf;
 	struct wlan_objmgr_pdev *pdev;
 	uint32_t num_ch = req->buf_len;
+	uint8_t valid_channel_list[NUM_CHANNELS];
+	uint32_t num_valid_channels;
 	struct wifi_pos_ch_info_rsp *ch_info;
 	struct wifi_pos_psoc_priv_obj *wifi_pos_obj =
 					wifi_pos_get_psoc_priv_obj(psoc);
@@ -205,8 +293,15 @@ static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 		wifi_pos_err("pdev get API failed");
 		return QDF_STATUS_E_INVAL;
 	}
+	if (num_ch > NUM_CHANNELS) {
+		wifi_pos_err("Invalid number of channels");
+		return QDF_STATUS_E_INVAL;
+	}
+	num_valid_channels = wifi_pos_get_valid_channels(channels, num_ch,
+							 valid_channel_list);
 
-	len = sizeof(uint8_t) + sizeof(struct wifi_pos_ch_info_rsp) * num_ch;
+	len = sizeof(uint8_t) + sizeof(struct wifi_pos_ch_info_rsp) *
+			num_valid_channels;
 	buf = qdf_mem_malloc(len);
 	if (!buf) {
 		wifi_pos_alert("malloc failed");
@@ -214,21 +309,31 @@ static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	qdf_mem_zero(buf, len);
+
 	/* First byte of message body will have num of channels */
-	buf[0] = num_ch;
+	buf[0] = num_valid_channels;
 	ch_info = (struct wifi_pos_ch_info_rsp *)&buf[1];
-	for (idx = 0; idx < num_ch; idx++) {
-		ch_info[idx].chan_id = channels[idx];
+	for (idx = 0; idx < num_valid_channels; idx++) {
+		ch_info[idx].chan_id = valid_channel_list[idx];
+		wifi_pos_get_reg_info(pdev, ch_info[idx].chan_id,
+				      &reg_info_1, &reg_info_2);
 		ch_info[idx].reserved0 = 0;
-		ch_info[idx].mhz = wlan_reg_get_channel_freq(pdev,
-							channels[idx]);
+		ch_info[idx].mhz = wlan_reg_get_channel_freq(
+						pdev,
+						valid_channel_list[idx]);
 		ch_info[idx].band_center_freq1 = ch_info[idx].mhz;
 		ch_info[idx].band_center_freq2 = 0;
 		ch_info[idx].info = 0;
-		if (wlan_reg_is_dfs_ch(pdev, channels[idx]))
+		if (wlan_reg_is_dfs_ch(pdev, valid_channel_list[idx]))
 			WIFI_POS_SET_DFS(ch_info[idx].info);
-		ch_info[idx].reg_info_1 = 0;
-		ch_info[idx].reg_info_2 = 0;
+
+		wifi_update_channel_bw_info(psoc, pdev,
+					    ch_info[idx].chan_id,
+					    &ch_info[idx]);
+
+		ch_info[idx].reg_info_1 = reg_info_1;
+		ch_info[idx].reg_info_2 = reg_info_2;
 	}
 
 	wifi_pos_obj->wifi_pos_send_rsp(wifi_pos_obj->app_pid,

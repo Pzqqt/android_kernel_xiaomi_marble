@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -367,5 +367,18 @@ static inline QDF_STATUS wifi_pos_init_cir_cfr_rings(
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * wifi_pos_register_get_phy_mode_cb: API to register callback to get
+ * current PHY mode
+ * @psoc: pointer to psoc object
+ * @handler: callback to be registered
+ *
+ * Return: QDF_STATUS_SUCCESS in case of success, error codes in
+ * case of failure
+ */
+QDF_STATUS wifi_pos_register_get_phy_mode_cb(
+			struct wlan_objmgr_psoc *psoc,
+			void (*handler)(uint8_t, uint32_t, uint32_t *));
 
 #endif

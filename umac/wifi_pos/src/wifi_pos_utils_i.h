@@ -304,6 +304,7 @@ struct wifi_pos_psoc_priv_obj {
 	QDF_STATUS (*wifi_pos_req_handler)(struct wlan_objmgr_psoc *psoc,
 				    struct wifi_pos_req_msg *req);
 	void (*wifi_pos_send_rsp)(uint32_t, uint32_t, uint32_t, uint8_t *);
+	void (*wifi_pos_get_phy_mode)(uint8_t, uint32_t, uint32_t *);
 };
 
 /**
