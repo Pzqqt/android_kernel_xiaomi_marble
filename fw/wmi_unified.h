@@ -400,6 +400,8 @@ typedef enum {
     WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID,
     /* set a generic direct DMA ring config */
     WMI_PDEV_DMA_RING_CFG_REQ_CMDID,
+    /* enable/disable Action frame response as HE TB PPDU */
+    WMI_PDEV_HE_TB_ACTION_FRM_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -22294,6 +22296,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_SAR_GET_LIMITS_CMDID);
         WMI_RETURN_STRING(WMI_PEER_CHAN_WIDTH_SWITCH_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_OBSS_PD_SPATIAL_REUSE_SET_DEF_OBSS_THRESH_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_HE_TB_ACTION_FRM_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -23565,6 +23568,19 @@ typedef struct {
      * struct wmi_chan_width_peer_list chan_width_peer_info[num_peers];
      */
 } wmi_peer_chan_width_switch_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_he_tb_action_frm_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /* enable or disable HE TB Action frame */
+    A_UINT32 enable;
+    /* length of action frame body in bytes */
+    A_UINT32 data_len;
+/* This TLV is followed by another TLV of array of bytes
+ * A_UINT8 data[];
+ * This data array contains the action frame raw data
+ */
+} wmi_pdev_he_tb_action_frm_cmd_fixed_param;
 
 /* Default PE Duration subfield indicates the PE duration in units of 4 us */
 #define WMI_HEOPS_DEFPE_GET_D3(he_ops) WMI_GET_BITS(he_ops, 0, 3)
