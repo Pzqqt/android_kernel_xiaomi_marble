@@ -3528,6 +3528,7 @@ enum wmi_scan_completion_reason {
     WMI_SCAN_REASON_TIMEDOUT = 3,
     WMI_SCAN_REASON_INTERNAL_FAILURE = 4, /* This reason indication failures when performaing scan */
     WMI_SCAN_REASON_SUSPENDED = 5,
+    WMI_SCAN_REASON_DFS_VIOLATION = 6, /* Failure when tried to SCAN channel in NOL list */
     WMI_SCAN_REASON_MAX,
 };
 
@@ -5254,6 +5255,14 @@ typedef enum {
      * Non zero Value: PPDU duration in milliseconds
      */
     WMI_PDEV_PARAM_ESP_PPDU_DURATION,
+
+    /*
+     * Enable/Disable NOL(Non Occupancy list) in firmware
+     *   1- Use NOL in firmware
+     *   0- Don't use NOL in firmware
+     */
+    WMI_PDEV_PARAM_USE_NOL,
+
 } WMI_PDEV_PARAM;
 
 typedef struct {
@@ -9129,6 +9138,7 @@ typedef struct {
 #define WMI_VDEV_START_RESPONSE_STATUS_SUCCESS 0x0  /** VDEV succesfully started */
 #define WMI_VDEV_START_RESPONSE_INVALID_VDEVID  0x1  /** requested VDEV not found */
 #define WMI_VDEV_START_RESPONSE_NOT_SUPPORTED  0x2  /** unsupported VDEV combination */
+#define WMI_VDEV_START_RESPONSE_DFS_VIOLATION  0x3  /** DFS_VIOLATION since channel in the NOL is selected */
 
 /** Beacon processing related command and event structures */
 typedef struct {
