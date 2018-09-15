@@ -25,8 +25,42 @@
 #include <wlan_mlme_public_struct.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_cmn.h>
-
 #include "sme_api.h"
+
+/**
+ * wlan_mlme_get_cfg_str() - Copy the uint8_t array for a particular CFG
+ * @dst:       pointer to the destination buffer.
+ * @cfg_str:   pointer to the cfg string structure
+ * @len:       length to be copied
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS wlan_mlme_get_cfg_str(uint8_t *dst, struct mlme_cfg_str *cfg_str,
+				 qdf_size_t *len);
+
+/**
+ * wlan_mlme_set_cfg_str() - Set values for a particular CFG
+ * @src:            pointer to the source buffer.
+ * @dst_cfg_str:    pointer to the cfg string structure to be modified
+ * @len:            length to be written
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS wlan_mlme_set_cfg_str(uint8_t *src, struct mlme_cfg_str *dst_cfg_str,
+				 qdf_size_t len);
+
+/**
+ * wlan_mlme_get_edca_params() - get the EDCA parameters corresponding to the
+ * edca profile access category
+ * @edca_params:   pointer to mlme edca parameters structure
+ * @data:          data to which the parameter is to be copied
+ * @edca_ac:       edca ac type enum passed to get the cfg value
+ *
+ * Return QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
+ *
+ */
+QDF_STATUS wlan_mlme_get_edca_params(struct wlan_mlme_edca_params *edca_params,
+				     uint8_t *data, enum e_edca_type edca_ac);
 
 /**
  * wlan_mlme_get_ht_cap_info() - Get the HT cap info config
