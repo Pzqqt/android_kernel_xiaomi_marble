@@ -144,6 +144,142 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 	mlme_init_pmf_cfg(psoc, gen);
 }
 
+static void mlme_init_edca_ani_cfg(struct wlan_mlme_edca_params *edca_params)
+{
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACBK_LOCAL),
+			      edca_params->ani_acbk_l.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->ani_acbk_l.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACBE_LOCAL),
+			      edca_params->ani_acbe_l.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->ani_acbe_l.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACVI_LOCAL),
+			      edca_params->ani_acvi_l.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->ani_acvi_l.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACVO_LOCAL),
+			      edca_params->ani_acvo_l.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->ani_acvo_l.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACBK),
+			      edca_params->ani_acbk_b.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->ani_acbk_b.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACBE),
+			      edca_params->ani_acbe_b.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->ani_acbe_b.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACVI),
+			      edca_params->ani_acvi_b.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->ani_acvi_b.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ANI_ACVO),
+			      edca_params->ani_acvo_b.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->ani_acvo_b.len);
+}
+
+static void mlme_init_edca_wme_cfg(struct wlan_mlme_edca_params *edca_params)
+{
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACBK_LOCAL),
+			      edca_params->wme_acbk_l.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->wme_acbk_l.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACBE_LOCAL),
+			      edca_params->wme_acbe_l.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->wme_acbe_l.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACVI_LOCAL),
+			      edca_params->wme_acvi_l.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->wme_acvi_l.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACVO_LOCAL),
+			      edca_params->wme_acvo_l.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->wme_acvo_l.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACBK),
+			      edca_params->wme_acbk_b.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->wme_acbk_b.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACBE),
+			      edca_params->wme_acbe_b.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->wme_acbe_b.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACVI),
+			      edca_params->wme_acvi_b.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->wme_acvi_b.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_WME_ACVO),
+			      edca_params->wme_acvo_b.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->wme_acvo_b.len);
+}
+
+static void mlme_init_edca_etsi_cfg(struct wlan_mlme_edca_params *edca_params)
+{
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACBK_LOCAL),
+			      edca_params->etsi_acbk_l.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->etsi_acbk_l.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACBE_LOCAL),
+			      edca_params->etsi_acbe_l.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->etsi_acbe_l.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACVI_LOCAL),
+			      edca_params->etsi_acvi_l.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->etsi_acvi_l.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACVO_LOCAL),
+			      edca_params->etsi_acvo_l.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->etsi_acvo_l.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACBK),
+			      edca_params->etsi_acbk_b.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->etsi_acbk_b.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACBE),
+			      edca_params->etsi_acbe_b.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->etsi_acbe_b.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACVI),
+			      edca_params->etsi_acvi_b.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->etsi_acvi_b.len);
+
+	qdf_uint8_array_parse(cfg_default(CFG_EDCA_ETSI_ACVO),
+			      edca_params->etsi_acvo_b.data,
+			      CFG_EDCA_DATA_LEN,
+			      &edca_params->etsi_acvo_b.len);
+}
+
+static void mlme_init_edca_params(struct wlan_mlme_edca_params *edca_params)
+{
+	mlme_init_edca_ani_cfg(edca_params);
+	mlme_init_edca_wme_cfg(edca_params);
+	mlme_init_edca_etsi_cfg(edca_params);
+}
+
 static void mlme_init_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 				    struct wlan_mlme_ht_caps *ht_caps)
 {
@@ -732,6 +868,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 
 	mlme_cfg = &mlme_obj->cfg;
 	mlme_init_generic_cfg(psoc, &mlme_cfg->gen);
+	mlme_init_edca_params(&mlme_cfg->edca_params);
 	mlme_init_ht_cap_in_cfg(psoc, &mlme_cfg->ht_caps);
 	mlme_init_mbo_cfg(psoc, &mlme_cfg->mbo_cfg);
 	mlme_init_qos_cfg(psoc, &mlme_cfg->qos_mlme_params);

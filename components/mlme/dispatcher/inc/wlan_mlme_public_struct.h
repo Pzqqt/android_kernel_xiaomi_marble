@@ -28,6 +28,131 @@
 #define CFG_PMKID_MODES_OKC                        (0x1)
 #define CFG_PMKID_MODES_PMKSA_CACHING              (0x2)
 
+#define CFG_EDCA_DATA_LEN 17
+
+/**
+ * struct mlme_cfg_str - generic structure for all mlme CFG string items
+ *
+ * @len: length of the string
+ * @data: uint8_t array to store values
+ */
+struct mlme_cfg_str {
+	qdf_size_t len;
+	uint8_t data[CFG_EDCA_DATA_LEN];
+};
+
+/**
+ * enum e_edca_type - to index edca params for edca profile
+ *			 EDCA profile   AC   unicast/bcast
+ * @edca_ani_acbe_local:    ani          BE      unicast
+ * @edca_ani_acbk_local:    ani          BK      unicast
+ * @edca_ani_acvi_local:    ani          VI      unicast
+ * @edca_ani_acvo_local:    ani          VO      unicast
+ * @edca_ani_acbe_bcast:    ani          BE      bcast
+ * @edca_ani_acbk_bcast:    ani          BK      bcast
+ * @edca_ani_acvi_bcast:    ani          VI      bcast
+ * @edca_ani_acvo_bcast:    ani          VO      bcast
+ * @edca_wme_acbe_local:    wme          BE      unicast
+ * @edca_wme_acbk_local:    wme          BK      unicast
+ * @edca_wme_acvi_local:    wme          VI      unicast
+ * @edca_wme_acvo_local:    wme          VO      unicast
+ * @edca_wme_acbe_bcast:    wme          BE      bcast
+ * @edca_wme_acbk_bcast:    wme          BK      bcast
+ * @edca_wme_acvi_bcast:    wme          VI      bcast
+ * @edca_wme_acvo_bcast:    wme          VO      bcast
+ * @edca_etsi_acbe_local:   etsi         BE      unicast
+ * @edca_etsi_acbk_local:   etsi         BK      unicast
+ * @edca_etsi_acvi_local:   etsi         VI      unicast
+ * @edca_etsi_acvo_local:   etsi         VO      unicast
+ * @edca_etsi_acbe_bcast:   etsi         BE      bcast
+ * @edca_etsi_acbk_bcast:   etsi         BK      bcast
+ * @edca_etsi_acvi_bcast:   etsi         VI      bcast
+ * @edca_etsi_acvo_bcast:   etsi         VO      bcast
+ */
+enum e_edca_type {
+	edca_ani_acbe_local,
+	edca_ani_acbk_local,
+	edca_ani_acvi_local,
+	edca_ani_acvo_local,
+	edca_ani_acbe_bcast,
+	edca_ani_acbk_bcast,
+	edca_ani_acvi_bcast,
+	edca_ani_acvo_bcast,
+	edca_wme_acbe_local,
+	edca_wme_acbk_local,
+	edca_wme_acvi_local,
+	edca_wme_acvo_local,
+	edca_wme_acbe_bcast,
+	edca_wme_acbk_bcast,
+	edca_wme_acvi_bcast,
+	edca_wme_acvo_bcast,
+	edca_etsi_acbe_local,
+	edca_etsi_acbk_local,
+	edca_etsi_acvi_local,
+	edca_etsi_acvo_local,
+	edca_etsi_acbe_bcast,
+	edca_etsi_acbk_bcast,
+	edca_etsi_acvi_bcast,
+	edca_etsi_acvo_bcast
+};
+
+/**
+ * struct mlme_edca_params - EDCA pramaters related config items
+ *
+ * @ani_acbk_l: EDCA parameters for ANI local access category background
+ * @ani_acbe_l: EDCA parameters for ANI local access category best effort
+ * @ani_acvi_l: EDCA parameters for ANI local access category video
+ * @ani_acvo_l: EDCA parameters for ANI local access category voice
+ * @ani_acbk_b: EDCA parameters for ANI bcast access category background
+ * @ani_acbe_b: EDCA parameters for ANI bcast access category best effort
+ * @ani_acvi_b: EDCA parameters for ANI bcast access category video
+ * @ani_acvo_b: EDCA parameters for ANI bcast access category voice
+ * @wme_acbk_l: EDCA parameters for WME local access category background
+ * @wme_acbe_l: EDCA parameters for WME local access category best effort
+ * @wme_acvi_l: EDCA parameters for WME local access category video
+ * @wme_acvo_l: EDCA parameters for WME local access category voice
+ * @wme_acbk_b: EDCA parameters for WME bcast access category background
+ * @wme_acbe_b: EDCA parameters for WME bcast access category best effort
+ * @wme_acvi_b: EDCA parameters for WME bcast access category video
+ * @wme_acvo_b: EDCA parameters for WME bcast access category voice
+ * @etsi_acbk_l: EDCA parameters for ETSI local access category background
+ * @etsi_acbe_l: EDCA parameters for ETSI local access category best effort
+ * @etsi_acvi_l: EDCA parameters for ETSI local access category video
+ * @etsi_acvo_l: EDCA parameters for ETSI local access category voice
+ * @etsi_acbk_b: EDCA parameters for ETSI bcast access category background
+ * @etsi_acbe_b: EDCA parameters for ETSI bcast access category best effort
+ * @etsi_acvi_b: EDCA parameters for ETSI bcast access category video
+ * @etsi_acvo_b: EDCA parameters for ETSI bcast access category voice
+ */
+struct wlan_mlme_edca_params {
+	struct mlme_cfg_str ani_acbk_l;
+	struct mlme_cfg_str ani_acbe_l;
+	struct mlme_cfg_str ani_acvi_l;
+	struct mlme_cfg_str ani_acvo_l;
+	struct mlme_cfg_str ani_acbk_b;
+	struct mlme_cfg_str ani_acbe_b;
+	struct mlme_cfg_str ani_acvi_b;
+	struct mlme_cfg_str ani_acvo_b;
+
+	struct mlme_cfg_str wme_acbk_l;
+	struct mlme_cfg_str wme_acbe_l;
+	struct mlme_cfg_str wme_acvi_l;
+	struct mlme_cfg_str wme_acvo_l;
+	struct mlme_cfg_str wme_acbk_b;
+	struct mlme_cfg_str wme_acbe_b;
+	struct mlme_cfg_str wme_acvi_b;
+	struct mlme_cfg_str wme_acvo_b;
+
+	struct mlme_cfg_str etsi_acbk_l;
+	struct mlme_cfg_str etsi_acbe_l;
+	struct mlme_cfg_str etsi_acvi_l;
+	struct mlme_cfg_str etsi_acvo_l;
+	struct mlme_cfg_str etsi_acbk_b;
+	struct mlme_cfg_str etsi_acbe_b;
+	struct mlme_cfg_str etsi_acvi_b;
+	struct mlme_cfg_str etsi_acvo_b;
+};
+
 /**
  * struct mlme_ht_capabilities_info - HT Capabilities Info
  * @l_sig_tx_op_protection: L-SIG TXOP Protection Mechanism support
@@ -660,6 +785,7 @@ struct wlan_mlme_oce {
  * @scoring: BSS Scoring related CFG Items
  */
 struct wlan_mlme_cfg {
+	struct wlan_mlme_edca_params edca_params;
 	struct wlan_mlme_generic gen;
 	struct wlan_mlme_ht_caps ht_caps;
 	struct wlan_mlme_he_caps he_caps;
