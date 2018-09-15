@@ -28,17 +28,20 @@
 #define CFG_PMKID_MODES_OKC                        (0x1)
 #define CFG_PMKID_MODES_PMKSA_CACHING              (0x2)
 
-#define CFG_EDCA_DATA_LEN 17
+#define CFG_STR_DATA_LEN     17
+#define CFG_EDCA_DATA_LEN    17
 
 /**
  * struct mlme_cfg_str - generic structure for all mlme CFG string items
  *
- * @len: length of the string
+ * @max_len: maximum data length allowed
+ * @len: valid no. of elements of the data
  * @data: uint8_t array to store values
  */
 struct mlme_cfg_str {
+	qdf_size_t max_len;
 	qdf_size_t len;
-	uint8_t data[CFG_EDCA_DATA_LEN];
+	uint8_t data[CFG_STR_DATA_LEN];
 };
 
 /**
@@ -96,25 +99,37 @@ enum e_edca_type {
 	edca_etsi_acvo_bcast
 };
 
+#define CFG_EDCA_PROFILE_ACM_IDX      0
+#define CFG_EDCA_PROFILE_AIFSN_IDX    1
+#define CFG_EDCA_PROFILE_CWMINA_IDX   2
+#define CFG_EDCA_PROFILE_CWMAXA_IDX   4
+#define CFG_EDCA_PROFILE_TXOPA_IDX    6
+#define CFG_EDCA_PROFILE_CWMINB_IDX   7
+#define CFG_EDCA_PROFILE_CWMAXB_IDX   9
+#define CFG_EDCA_PROFILE_TXOPB_IDX    11
+#define CFG_EDCA_PROFILE_CWMING_IDX   12
+#define CFG_EDCA_PROFILE_CWMAXG_IDX   14
+#define CFG_EDCA_PROFILE_TXOPG_IDX    16
+
 /**
  * struct mlme_edca_params - EDCA pramaters related config items
  *
- * @ani_acbk_l: EDCA parameters for ANI local access category background
- * @ani_acbe_l: EDCA parameters for ANI local access category best effort
- * @ani_acvi_l: EDCA parameters for ANI local access category video
- * @ani_acvo_l: EDCA parameters for ANI local access category voice
- * @ani_acbk_b: EDCA parameters for ANI bcast access category background
- * @ani_acbe_b: EDCA parameters for ANI bcast access category best effort
- * @ani_acvi_b: EDCA parameters for ANI bcast access category video
- * @ani_acvo_b: EDCA parameters for ANI bcast access category voice
- * @wme_acbk_l: EDCA parameters for WME local access category background
- * @wme_acbe_l: EDCA parameters for WME local access category best effort
- * @wme_acvi_l: EDCA parameters for WME local access category video
- * @wme_acvo_l: EDCA parameters for WME local access category voice
- * @wme_acbk_b: EDCA parameters for WME bcast access category background
- * @wme_acbe_b: EDCA parameters for WME bcast access category best effort
- * @wme_acvi_b: EDCA parameters for WME bcast access category video
- * @wme_acvo_b: EDCA parameters for WME bcast access category voice
+ * @ani_acbk_l:  EDCA parameters for ANI local access category background
+ * @ani_acbe_l:  EDCA parameters for ANI local access category best effort
+ * @ani_acvi_l:  EDCA parameters for ANI local access category video
+ * @ani_acvo_l:  EDCA parameters for ANI local access category voice
+ * @ani_acbk_b:  EDCA parameters for ANI bcast access category background
+ * @ani_acbe_b:  EDCA parameters for ANI bcast access category best effort
+ * @ani_acvi_b:  EDCA parameters for ANI bcast access category video
+ * @ani_acvo_b:  EDCA parameters for ANI bcast access category voice
+ * @wme_acbk_l:  EDCA parameters for WME local access category background
+ * @wme_acbe_l:  EDCA parameters for WME local access category best effort
+ * @wme_acvi_l:  EDCA parameters for WME local access category video
+ * @wme_acvo_l:  EDCA parameters for WME local access category voice
+ * @wme_acbk_b:  EDCA parameters for WME bcast access category background
+ * @wme_acbe_b:  EDCA parameters for WME bcast access category best effort
+ * @wme_acvi_b:  EDCA parameters for WME bcast access category video
+ * @wme_acvo_b:  EDCA parameters for WME bcast access category voice
  * @etsi_acbk_l: EDCA parameters for ETSI local access category background
  * @etsi_acbe_l: EDCA parameters for ETSI local access category best effort
  * @etsi_acvi_l: EDCA parameters for ETSI local access category video

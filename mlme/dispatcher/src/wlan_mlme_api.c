@@ -25,6 +25,35 @@
 #include "wma_types.h"
 #include "wmi_unified.h"
 
+QDF_STATUS wlan_mlme_get_cfg_str(uint8_t *dst, struct mlme_cfg_str *cfg_str,
+				 qdf_size_t *len)
+{
+	if (*len < cfg_str->len) {
+		mlme_err("Invalid len %zd", *len);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*len = cfg_str->len;
+	qdf_mem_copy(dst, cfg_str->data, *len);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_set_cfg_str(uint8_t *src, struct mlme_cfg_str *dst_cfg_str,
+				 qdf_size_t len)
+{
+	if (len > dst_cfg_str->max_len) {
+		mlme_err("Invalid len %zd (>%zd)", len,
+			 dst_cfg_str->max_len);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	dst_cfg_str->len = len;
+	qdf_mem_copy(dst_cfg_str->data, src, len);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS wlan_mlme_get_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 				     struct mlme_ht_capabilities_info
 				     *ht_cap_info)
@@ -516,5 +545,137 @@ QDF_STATUS wlan_mlme_set_enable_bcast_probe_rsp(struct wlan_objmgr_psoc *psoc,
 	}
 
 	mlme_obj->cfg.oce.enable_bcast_probe_rsp = value;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_edca_params(struct wlan_mlme_edca_params *edca_params,
+				     uint8_t *data, enum e_edca_type edca_ac)
+{
+	qdf_size_t len;
+
+	switch (edca_ac) {
+	case edca_ani_acbe_local:
+		len = edca_params->ani_acbe_l.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->ani_acbe_l, &len);
+		break;
+
+	case edca_ani_acbk_local:
+		len = edca_params->ani_acbk_l.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->ani_acbk_l, &len);
+		break;
+
+	case edca_ani_acvi_local:
+		len = edca_params->ani_acvi_l.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->ani_acvi_l, &len);
+		break;
+
+	case edca_ani_acvo_local:
+		len = edca_params->ani_acvo_l.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->ani_acvo_l, &len);
+		break;
+
+	case edca_ani_acbk_bcast:
+		len = edca_params->ani_acbk_b.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->ani_acbk_b, &len);
+		break;
+
+	case edca_ani_acbe_bcast:
+		len = edca_params->ani_acbe_b.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->ani_acbe_b, &len);
+		break;
+
+	case edca_ani_acvi_bcast:
+		len = edca_params->ani_acvi_b.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->ani_acvi_b, &len);
+		break;
+
+	case edca_ani_acvo_bcast:
+		len = edca_params->ani_acvo_b.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->ani_acvo_b, &len);
+		break;
+
+	case edca_wme_acbe_local:
+		len = edca_params->wme_acbe_l.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->wme_acbe_l, &len);
+		break;
+
+	case edca_wme_acbk_local:
+		len = edca_params->wme_acbk_l.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->wme_acbk_l, &len);
+		break;
+
+	case edca_wme_acvi_local:
+		len = edca_params->wme_acvi_l.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->wme_acvi_l, &len);
+		break;
+
+	case edca_wme_acvo_local:
+		len = edca_params->wme_acvo_l.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->wme_acvo_l, &len);
+		break;
+
+	case edca_wme_acbe_bcast:
+		len = edca_params->wme_acbe_b.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->wme_acbe_b, &len);
+		break;
+
+	case edca_wme_acbk_bcast:
+		len = edca_params->wme_acbk_b.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->wme_acbk_b, &len);
+		break;
+
+	case edca_wme_acvi_bcast:
+		len = edca_params->wme_acvi_b.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->wme_acvi_b, &len);
+		break;
+
+	case edca_wme_acvo_bcast:
+		len = edca_params->wme_acvo_b.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->wme_acvo_b, &len);
+		break;
+
+	case edca_etsi_acbe_local:
+		len = edca_params->etsi_acbe_l.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->etsi_acbe_l, &len);
+		break;
+
+	case edca_etsi_acbk_local:
+		len = edca_params->etsi_acbk_l.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->etsi_acbk_l, &len);
+		break;
+
+	case edca_etsi_acvi_local:
+		len = edca_params->etsi_acvi_l.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->etsi_acvi_l, &len);
+		break;
+
+	case edca_etsi_acvo_local:
+		len = edca_params->etsi_acvo_l.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->etsi_acvo_l, &len);
+		break;
+
+	case edca_etsi_acbe_bcast:
+		len = edca_params->etsi_acbe_b.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->etsi_acbe_b, &len);
+		break;
+
+	case edca_etsi_acbk_bcast:
+		len = edca_params->etsi_acbk_b.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->etsi_acbk_b, &len);
+		break;
+
+	case edca_etsi_acvi_bcast:
+		len = edca_params->etsi_acvi_b.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->etsi_acvi_b, &len);
+		break;
+
+	case edca_etsi_acvo_bcast:
+		len = edca_params->etsi_acvo_b.len;
+		wlan_mlme_get_cfg_str(data, &edca_params->etsi_acvo_b, &len);
+		break;
+	default:
+		mlme_err("Invalid edca access category");
+		return QDF_STATUS_E_INVAL;
+	}
 	return QDF_STATUS_SUCCESS;
 }
