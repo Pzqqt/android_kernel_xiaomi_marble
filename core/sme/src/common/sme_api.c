@@ -12743,11 +12743,14 @@ QDF_STATUS sme_update_nss(tHalHandle h_hal, uint8_t nss)
 	uint32_t i;
 	struct mlme_ht_capabilities_info *ht_cap_info;
 	struct csr_roam_session *csr_session;
+	struct mlme_vht_capabilities_info vht_cap_info;
+
+	vht_cap_info = mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 
 	if (QDF_STATUS_SUCCESS == status) {
-		mac_ctx->roam.configParam.enable2x2 = (nss == 1) ? 0 : 1;
+		vht_cap_info.enable2x2 = (nss == 1) ? 0 : 1;
 
 		/* get the HT capability info*/
 		ht_cap_info = &mac_ctx->mlme_cfg->ht_caps.ht_cap_info;
@@ -12782,14 +12785,9 @@ void sme_update_user_configured_nss(tHalHandle hal, uint8_t nss)
 int sme_update_tx_bfee_supp(tHalHandle hal, uint8_t session_id,
 			    uint8_t cfg_val)
 {
-	QDF_STATUS status;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
-	status = sme_cfg_set_int(hal, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
-				 cfg_val);
-	if (status != QDF_STATUS_SUCCESS) {
-		sme_err("Failed to set SU BFEE CFG");
-		return -EFAULT;
-	}
+	mac_ctx->mlme_cfg->vht_caps.vht_cap_info.su_bformee = cfg_val;
 
 	return sme_update_he_tx_bfee_supp(hal, session_id, cfg_val);
 }
@@ -12798,7 +12796,6 @@ int sme_update_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 			    uint8_t usr_cfg_val, uint8_t nsts_val)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t nsts_set_val;
 
 	mac_ctx->usr_cfg_tx_bfee_nsts = usr_cfg_val;
@@ -12806,13 +12803,8 @@ int sme_update_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 		nsts_set_val = usr_cfg_val;
 	else
 		nsts_set_val = nsts_val;
-	status = sme_cfg_set_int(hal,
-				 WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
-				 nsts_set_val);
-	if (status != QDF_STATUS_SUCCESS) {
-		sme_err("Failed to set SU BFEE NSTS CFG");
-		return -EFAULT;
-	}
+		mac_ctx->mlme_cfg->vht_caps.vht_cap_info.tx_bfee_ant_supp
+			= nsts_set_val;
 
 	if (usr_cfg_val)
 		sme_set_he_tx_bf_cbf_rates(session_id);
@@ -12899,7 +12891,7 @@ int sme_update_he_mcs(tHalHandle hal, uint8_t session_id, uint16_t he_mcs)
 	case HE_80_MCS0_7:
 	case HE_80_MCS0_9:
 	case HE_80_MCS0_11:
-		if (mac_ctx->roam.configParam.enable2x2) {
+		if (mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable2x2) {
 			mcs_map = HE_SET_MCS_4_NSS(mcs_map, mcs_val, 1);
 			mcs_map = HE_SET_MCS_4_NSS(mcs_map, mcs_val, 2);
 		} else {

@@ -200,8 +200,6 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	int8_t *local_constraint, tpPESession session)
 {
 	tSirProbeRespBeacon *beacon_struct;
-	uint32_t enable_txbf_20mhz;
-	QDF_STATUS cfg_get_status = QDF_STATUS_E_FAILURE;
 	uint8_t ap_bcon_ch_width;
 	bool new_ch_width_dfn = false;
 	tDot11fIEVHTOperation *vht_op;
@@ -267,11 +265,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 
 	if (session->vhtCapabilityPresentInBeacon == 1 &&
 			!session->htSupportedChannelWidthSet) {
-		cfg_get_status = wlan_cfg_get_int(mac_ctx,
-				WNI_CFG_VHT_ENABLE_TXBF_20MHZ,
-				&enable_txbf_20mhz);
-		if ((QDF_IS_STATUS_SUCCESS(cfg_get_status)) &&
-				(false == enable_txbf_20mhz))
+		if (mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable_txbf_20mhz)
 			session->vht_config.su_beam_formee = 0;
 	} else if (session->vhtCapabilityPresentInBeacon &&
 			vht_op->chanWidth) {

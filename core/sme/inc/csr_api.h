@@ -1136,16 +1136,8 @@ typedef struct tagCsrConfigParam {
 	 * request from HDD
 	 */
 	bool fScanTwice;
-	uint32_t nVhtChannelWidth;
-	uint8_t enableTxBF;
-	bool enable_subfee_vendor_vhtie;
-	uint8_t enable_txbf_sap_mode;
-	uint8_t enable2x2;
 	bool enableVhtFor24GHz;
 	bool vendor_vht_sap;
-	uint8_t enableMuBformee;
-	uint8_t enableVhtpAid;
-	uint8_t enableVhtGid;
 	uint8_t enableAmpduPs;
 	uint8_t enableHtSmps;
 	uint8_t htSmps;
@@ -1165,7 +1157,6 @@ typedef struct tagCsrConfigParam {
 	uint8_t enable_tx_ldpc;
 	uint8_t enable_rx_ldpc;
 	uint8_t disable_high_ht_mcs_2x2;
-	bool enable_vht20_mcs9;
 	uint8_t max_amsdu_num;
 	uint32_t ho_delay_for_rx;
 	uint32_t min_delay_btw_roam_scans;

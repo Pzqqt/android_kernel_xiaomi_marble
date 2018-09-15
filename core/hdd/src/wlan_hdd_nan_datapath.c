@@ -37,6 +37,7 @@
 #include "wlan_nan_api.h"
 #include "nan_public_structs.h"
 #include "cfg_nan_api.h"
+#include "wlan_mlme_ucfg_api.h"
 
 /**
  * hdd_nan_datapath_target_config() - Configure NAN datapath features
@@ -401,6 +402,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	int32_t ret_val;
 	mac_handle_t mac_handle;
+	bool bval = false;
 
 	ret_val = hdd_vdev_create(adapter, hdd_sme_roam_callback, adapter);
 	if (ret_val) {
@@ -412,7 +414,12 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 
 	/* Configure self HT/VHT capabilities */
 	sme_set_curr_device_mode(mac_handle, adapter->device_mode);
-	sme_set_pdev_ht_vht_ies(mac_handle, hdd_ctx->config->enable2x2);
+
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable2x2");
+
+	sme_set_pdev_ht_vht_ies(mac_handle, bval);
 	sme_set_vdev_ies_per_band(mac_handle, adapter->session_id);
 
 	hdd_roam_profile_init(adapter);

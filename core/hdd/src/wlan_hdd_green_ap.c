@@ -27,6 +27,7 @@
 #include <wlan_hdd_main.h>
 #include <wlan_policy_mgr_api.h>
 #include <wlan_green_ap_ucfg_api.h>
+#include "wlan_mlme_ucfg_api.h"
 
 /**
  * hdd_green_ap_check_enable() - to check whether to enable green ap or not
@@ -115,6 +116,8 @@ int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 	struct hdd_config *cfg;
 	bool enable_green_ap = false;
 	uint8_t num_sap_sessions = 0, num_p2p_go_sessions = 0, ret = 0;
+	QDF_STATUS status;
+	bool bval = false;
 
 	cfg = hdd_ctx->config;
 	if (!cfg) {
@@ -122,9 +125,15 @@ int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 		return -EINVAL;
 	}
 
-	if (!cfg->enable2x2 || !cfg->enable_green_ap) {
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("unable to get vht_enable2x2");
+		return -EINVAL;
+	}
+
+	if (!bval || !cfg->enable_green_ap) {
 		hdd_debug("Green AP not enabled: enable2x2:%d, enable_green_ap:%d",
-			  cfg->enable2x2, cfg->enable_green_ap);
+			  bval, cfg->enable_green_ap);
 		return 0;
 	}
 

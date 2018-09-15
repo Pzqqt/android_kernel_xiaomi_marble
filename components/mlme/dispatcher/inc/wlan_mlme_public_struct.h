@@ -29,6 +29,16 @@
 #define CFG_PMKID_MODES_OKC                        (0x1)
 #define CFG_PMKID_MODES_PMKSA_CACHING              (0x2)
 
+#define CFG_VHT_BASIC_MCS_SET_STADEF    0xFFFE
+
+#define CFG_VHT_RX_MCS_MAP_STAMIN    0
+#define CFG_VHT_RX_MCS_MAP_STAMAX    65535
+#define CFG_VHT_RX_MCS_MAP_STADEF    65534
+
+#define CFG_VHT_TX_MCS_MAP_STAMIN    0
+#define CFG_VHT_TX_MCS_MAP_STAMAX    65535
+#define CFG_VHT_TX_MCS_MAP_STADEF    65534
+
 #define CFG_STR_DATA_LEN     17
 #define CFG_EDCA_DATA_LEN    17
 
@@ -312,6 +322,7 @@ struct wlan_mlme_mbo {
  * @tx_supp_data_rate: Tx highest supported data rate
  * @basic_mcs_set: Basic MCS set
  * @enable_txbf_20mhz: enable tx bf for 20mhz
+ * @enable_tx_su: enable VHT tx su beam former
  * @channel_width: Channel width capability for 11ac
  * @rx_mcs: VHT Rx MCS capability for 1x1 mode
  * @tx_mcs: VHT Tx MCS capability for 1x1 mode
@@ -328,6 +339,8 @@ struct wlan_mlme_mbo {
  * ie in 2.4 GHz band
  * @ampdu_len_exponent: To handle maximum receive AMPDU ampdu len exponent
  * @ampdu_len: To handle maximum receive AMPDU ampdu len
+ * @tx_bfee_sap: enable tx bfee SAp
+ * @subfee_vendor_vhtie: enable subfee vendor vht ie
  */
 struct mlme_vht_capabilities_info {
 	uint8_t supp_chan_width;
@@ -352,9 +365,10 @@ struct mlme_vht_capabilities_info {
 	uint32_t tx_supp_data_rate;
 	uint32_t basic_mcs_set;
 	bool enable_txbf_20mhz;
+	bool enable_tx_su;
 	uint8_t channel_width;
-	uint8_t rx_mcs;
-	uint8_t tx_mcs;
+	uint32_t rx_mcs;
+	uint32_t tx_mcs;
 	uint8_t rx_mcs2x2;
 	uint8_t tx_mcs2x2;
 	bool enable_vht20_mcs9;
@@ -366,6 +380,8 @@ struct mlme_vht_capabilities_info {
 	bool vendor_24ghz_band;
 	uint8_t ampdu_len_exponent;
 	uint8_t ampdu_len;
+	bool tx_bfee_sap;
+	bool vendor_vhtie;
 };
 
 /**

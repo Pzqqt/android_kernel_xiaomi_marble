@@ -1083,10 +1083,6 @@ populate_dot11f_vht_operation(tpAniSirGlobal pMac,
 			tDot11fIEVHTOperation *pDot11f);
 
 QDF_STATUS
-populate_dot11f_vht_ext_bss_load(tpAniSirGlobal pMac,
-				tDot11fIEVHTExtBssLoad *pDot11f);
-
-QDF_STATUS
 populate_dot11f_ext_cap(tpAniSirGlobal pMac, bool isVHTEnabled,
 			tDot11fIEExtCap *pDot11f, tpPESession psessionEntry);
 

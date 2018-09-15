@@ -499,7 +499,7 @@ static uint32_t csr_get_dot11_mode(tpAniSirGlobal mac_ctx,
 			dot11mode, ucfg_dot11_mode);
 
 	if (bss_desc->channelId <= 14 &&
-		false == mac_ctx->roam.configParam.enableVhtFor24GHz &&
+		false == mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
 		WNI_CFG_DOT11_MODE_11AC == dot11mode) {
 		/* Need to disable VHT operation in 2.4 GHz band */
 		dot11mode = WNI_CFG_DOT11_MODE_11N;

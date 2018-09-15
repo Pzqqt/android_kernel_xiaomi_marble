@@ -1197,7 +1197,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 			(pMac->roam.configParam.uCfgDot11Mode ==
 			 eCSR_CFG_DOT11_MODE_11AC_ONLY)) {
 		pChanList->vht_en = true;
-		if (pMac->roam.configParam.enableVhtFor24GHz)
+		if (pMac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band)
 			pChanList->vht_24_en = true;
 	}
 	if ((pMac->roam.configParam.uCfgDot11Mode ==
@@ -3011,20 +3011,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		/* Remove this code once SLM_Sessionization is supported */
 		/* BMPS_WORKAROUND_NOT_NEEDED */
 		pMac->roam.configParam.doBMPSWorkaround = 0;
-
-		pMac->roam.configParam.nVhtChannelWidth =
-			pParam->nVhtChannelWidth;
-		pMac->roam.configParam.enable_subfee_vendor_vhtie =
-					pParam->enable_subfee_vendor_vhtie;
-		pMac->roam.configParam.enable_txbf_sap_mode =
-			pParam->enable_txbf_sap_mode;
-		pMac->roam.configParam.enable_vht20_mcs9 =
-			pParam->enable_vht20_mcs9;
-		pMac->roam.configParam.enable2x2 = pParam->enable2x2;
-		pMac->roam.configParam.enableVhtFor24GHz =
-			pParam->enableVhtFor24GHz;
-		pMac->roam.configParam.enableVhtpAid = pParam->enableVhtpAid;
-		pMac->roam.configParam.enableVhtGid = pParam->enableVhtGid;
 		pMac->roam.configParam.enableHtSmps = pParam->enableHtSmps;
 		pMac->roam.configParam.htSmps = pParam->htSmps;
 		pMac->roam.configParam.send_smps_action =
@@ -3236,14 +3222,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	qdf_mem_copy(&pParam->neighborRoamConfig,
 		     &cfg_params->neighborRoamConfig,
 		     sizeof(tCsrNeighborRoamConfigParams));
-	pParam->nVhtChannelWidth = cfg_params->nVhtChannelWidth;
-	pParam->enable_subfee_vendor_vhtie =
-				cfg_params->enable_subfee_vendor_vhtie;
-	pParam->enable_txbf_sap_mode =
-		cfg_params->enable_txbf_sap_mode;
-	pParam->enable_vht20_mcs9 = cfg_params->enable_vht20_mcs9;
-	pParam->enableVhtFor24GHz = cfg_params->enableVhtFor24GHz;
-	pParam->enable2x2 = cfg_params->enable2x2;
 	pParam->isFastTransitionEnabled = cfg_params->isFastTransitionEnabled;
 	pParam->RoamRssiDiff = cfg_params->RoamRssiDiff;
 	pParam->nRoamPrefer5GHz = cfg_params->nRoamPrefer5GHz;
@@ -13106,7 +13084,7 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 			  enum band_info *band,
 			  uint8_t opr_ch)
 {
-	bool vht_24_ghz = mac_ctx->roam.configParam.enableVhtFor24GHz;
+	bool vht_24_ghz = mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band;
 
 	switch (mac_ctx->roam.configParam.uCfgDot11Mode) {
 	case eCSR_CFG_DOT11_MODE_11A:
@@ -13305,7 +13283,7 @@ enum csr_cfgdot11mode curr_mode = mac_ctx->roam.configParam.uCfgDot11Mode;
 	}
 
 	if (IS_24G_CH(opr_chn) &&
-	   (false == mac_ctx->roam.configParam.enableVhtFor24GHz) &&
+	   (false == mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band) &&
 	   (eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode ||
 	    eCSR_CFG_DOT11_MODE_11AC_ONLY == cfg_dot11_mode))
 		cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11N;
@@ -15303,6 +15281,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	struct vdev_type_nss *vdev_type_nss;
 	struct action_oui_search_attr vendor_ap_search_attr;
 	tDot11fIEVHTCaps *vht_caps = NULL;
+	bool bvalue = 0;
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -15414,7 +15393,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 							    pSession->bssParams.
 							    uCfgDot11Mode);
 		if (pBssDescription->channelId <= 14
-		    && false == pMac->roam.configParam.enableVhtFor24GHz
+		    && false == pMac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band
 		    && WNI_CFG_DOT11_MODE_11AC == ucDot11Mode) {
 			/* Need to disable VHT operation in 2.4 GHz band */
 			ucDot11Mode = WNI_CFG_DOT11_MODE_11N;
@@ -15440,7 +15419,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			pSession->vdev_nss = pSession->nss;
 		}
 
-		if (!pMac->roam.configParam.enable2x2)
+		if (!pMac->mlme_cfg->vht_caps.vht_cap_info.enable2x2)
 			pSession->nss = 1;
 
 		if (pSession->nss == 1)
@@ -15947,15 +15926,8 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 							       channelId);
 		}
 
-		if (wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
-				     &value) != QDF_STATUS_SUCCESS)
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				("Failed to get SU beamformee capability"));
-		if (wlan_cfg_get_int(pMac,
-				WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
-				&value1) != QDF_STATUS_SUCCESS)
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				("Failed to get CSN beamformee capability"));
+		value = pMac->mlme_cfg->vht_caps.vht_cap_info.su_bformee;
+		value1 = pMac->mlme_cfg->vht_caps.vht_cap_info.tx_bfee_ant_supp;
 
 		csr_join_req->vht_config.su_beam_formee = value;
 
@@ -15983,33 +15955,27 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		}
 		csr_join_req->vht_config.csnof_beamformer_antSup = txBFCsnValue;
 
-		if (wlan_cfg_get_int(pMac,
-		   WNI_CFG_VHT_SU_BEAMFORMER_CAP, &value)
-		   != QDF_STATUS_SUCCESS)
-			sme_err("Failed to get SU beamformer capability");
-
+		bvalue = pMac->mlme_cfg->vht_caps.vht_cap_info.su_bformer;
 		/*
 		 * Set SU Bformer only if SU Bformer is enabled in INI
 		 * and AP is SU Bformee capable
 		 */
-		if (value && !((IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
+		if (bvalue && !((IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
 		   pIes->VHTCaps.suBeamformeeCap) ||
 		   (IS_BSS_VHT_CAPABLE(
 		   pIes->vendor_vht_ie.VHTCaps)
 		   && pIes->vendor_vht_ie.VHTCaps.
 		   suBeamformeeCap)))
-			value = 0;
+			bvalue = 0;
 
-		csr_join_req->vht_config.su_beam_former = value;
+		csr_join_req->vht_config.su_beam_former = bvalue;
 
 		/* Set num soundingdim value to 0 if SU Bformer is disabled */
 		if (!csr_join_req->vht_config.su_beam_former)
 			csr_join_req->vht_config.num_soundingdim = 0;
 
-		if (wlan_cfg_get_int(pMac,
-		   WNI_CFG_VHT_MU_BEAMFORMEE_CAP, &value)
-		   != QDF_STATUS_SUCCESS)
-			sme_err("Failed to get CSN beamformee capability");
+		value =
+			pMac->mlme_cfg->vht_caps.vht_cap_info.enable_mu_bformee;
 		/*
 		 * Set MU Bformee only if SU Bformee is enabled and
 		 * MU Bformee is enabled in INI
@@ -16021,10 +15987,10 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			csr_join_req->vht_config.mu_beam_formee = 0;
 
 		csr_join_req->enableVhtpAid =
-			(uint8_t) pMac->roam.configParam.enableVhtpAid;
+			pMac->mlme_cfg->vht_caps.vht_cap_info.enable_gid;
 
 		csr_join_req->enableVhtGid =
-			(uint8_t) pMac->roam.configParam.enableVhtGid;
+			pMac->mlme_cfg->vht_caps.vht_cap_info.enable_gid;
 
 		csr_join_req->enableAmpduPs =
 			(uint8_t)pMac->mlme_cfg->feature_flags.enable_ampdu;
@@ -16820,18 +16786,11 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 		     &pSession->htConfig,
 		     sizeof(tSirHTConfig));
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_VHT_SU_BEAMFORMEE_CAP, &value)
-					!= QDF_STATUS_SUCCESS)
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			 "could not get SU beam formee capability");
+	value = pMac->mlme_cfg->vht_caps.vht_cap_info.su_bformee;
 	pMsg->vht_config.su_beam_formee =
 		(uint8_t)value &&
-		(uint8_t)pMac->roam.configParam.enable_txbf_sap_mode;
-	if (wlan_cfg_get_int(pMac,
-			WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
-			&value) != QDF_STATUS_SUCCESS)
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				("Failed to get CSN beamformee capability"));
+		(uint8_t)pMac->mlme_cfg->vht_caps.vht_cap_info.tx_bfee_sap;
+	value = pMac->mlme_cfg->vht_caps.vht_cap_info.tx_bfee_ant_supp;
 	pMsg->vht_config.csnof_beamformer_antSup = (uint8_t)value;
 	pMsg->vht_config.mu_beam_formee = 0;
 
@@ -17134,8 +17093,14 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status;
 	uint32_t existing_session_id;
 	struct mlme_ht_capabilities_info *ht_cap_info;
-	uint32_t nCfgValue;
 	struct csr_roam_session *session;
+	struct mlme_vht_capabilities_info vht_cap_info;
+
+	if (!(mac_ctx->mlme_cfg)) {
+		pe_err("invalid mlme cfg");
+		return QDF_STATUS_E_FAILURE;
+	}
+	vht_cap_info = mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
 
 	/* check to see if the mac address already belongs to a session */
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
@@ -17211,81 +17176,27 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 	}
 #endif /* FEATURE_WLAN_BTAMP_UT_RF */
 
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_MAX_MPDU_LENGTH, &nCfgValue);
-	session->vht_config.max_mpdu_len = nCfgValue;
+	session->vht_config.max_mpdu_len = vht_cap_info.ampdu_len;
+	session->vht_config.supported_channel_widthset =
+			vht_cap_info.supp_chan_width;
+	session->vht_config.ldpc_coding = vht_cap_info.ldpc_coding_cap;
+	session->vht_config.shortgi80 = vht_cap_info.short_gi_80mhz;
+	session->vht_config.shortgi160and80plus80 = vht_cap_info.short_gi_160mhz;
+	session->vht_config.tx_stbc = vht_cap_info.tx_stbc;
+	session->vht_config.rx_stbc = vht_cap_info.rx_stbc;
+	session->vht_config.su_beam_former = vht_cap_info.su_bformer;
+	session->vht_config.su_beam_formee = vht_cap_info.su_bformee;
+	session->vht_config.csnof_beamformer_antSup =
+		vht_cap_info.tx_bfee_ant_supp;
+	session->vht_config.num_soundingdim = vht_cap_info.num_soundingdim;
+	session->vht_config.mu_beam_former = vht_cap_info.mu_bformer;
+	session->vht_config.mu_beam_formee = vht_cap_info.enable_mu_bformee;
+	session->vht_config.vht_txops = vht_cap_info.txop_ps;
+	session->vht_config.htc_vhtcap = vht_cap_info.htc_vhtc;
+	session->vht_config.rx_antpattern = vht_cap_info.rx_antpattern;
+	session->vht_config.tx_antpattern = vht_cap_info.tx_antpattern;
 
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SUPPORTED_CHAN_WIDTH_SET,
-			 &nCfgValue);
-	session->vht_config.supported_channel_widthset = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_LDPC_CODING_CAP, &nCfgValue);
-	session->vht_config.ldpc_coding = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SHORT_GI_80MHZ, &nCfgValue);
-	session->vht_config.shortgi80 = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
-			 &nCfgValue);
-	session->vht_config.shortgi160and80plus80 = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TXSTBC, &nCfgValue);
-	session->vht_config.tx_stbc = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_RXSTBC, &nCfgValue);
-	session->vht_config.rx_stbc = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SU_BEAMFORMER_CAP, &nCfgValue);
-	session->vht_config.su_beam_former = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_SU_BEAMFORMEE_CAP, &nCfgValue);
-	session->vht_config.su_beam_formee = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
-			 &nCfgValue);
-	session->vht_config.csnof_beamformer_antSup = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS,
-			 &nCfgValue);
-	session->vht_config.num_soundingdim = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_MU_BEAMFORMER_CAP, &nCfgValue);
-	session->vht_config.mu_beam_former = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_MU_BEAMFORMEE_CAP, &nCfgValue);
-	session->vht_config.mu_beam_formee = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TXOP_PS, &nCfgValue);
-	session->vht_config.vht_txops = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_HTC_VHTC_CAP, &nCfgValue);
-	session->vht_config.htc_vhtcap = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_RX_ANT_PATTERN, &nCfgValue);
-	session->vht_config.rx_antpattern = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TX_ANT_PATTERN, &nCfgValue);
-	session->vht_config.tx_antpattern = nCfgValue;
-
-	nCfgValue = 0;
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_AMPDU_LEN_EXPONENT, &nCfgValue);
-	session->vht_config.max_ampdu_lenexp = nCfgValue;
+	session->vht_config.max_ampdu_lenexp = vht_cap_info.ampdu_len_exponent;
 
 	csr_update_session_he_cap(mac_ctx, session);
 
@@ -20697,7 +20608,7 @@ QDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
 	pMsg->dot11mode = csr_translate_to_wni_cfg_dot11_mode(pMac,
 					param.uCfgDot11Mode);
 	if (IS_24G_CH(pMsg->targetChannel) &&
-	   (false == pMac->roam.configParam.enableVhtFor24GHz) &&
+	   (false == pMac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band) &&
 	   (WNI_CFG_DOT11_MODE_11AC == pMsg->dot11mode ||
 	    WNI_CFG_DOT11_MODE_11AC_ONLY == pMsg->dot11mode))
 		pMsg->dot11mode = WNI_CFG_DOT11_MODE_11N;

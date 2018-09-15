@@ -36,6 +36,8 @@
 #include "wlan_hdd_debugfs_llstat.h"
 #include "wlan_reg_services_api.h"
 #include <wlan_cfg80211_mc_cp_stats.h>
+#include "wlan_mlme_ucfg_api.h"
+#include "wlan_mlme_ucfg_api.h"
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 #define HDD_INFO_SIGNAL                 STATION_INFO_SIGNAL
@@ -3945,7 +3947,7 @@ int wlan_hdd_get_station_remote(struct wiphy *wiphy,
  * @tx_nss: The TX NSS from fw stats
  *
  * Return: 0 for success
- */
+ nt wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,	int */
 static int hdd_report_max_rate(mac_handle_t mac_handle,
 			       struct hdd_config *config,
 			       struct station_info *sinfo,
@@ -3970,6 +3972,14 @@ static int hdd_report_max_rate(mac_handle_t mac_handle,
 	uint8_t max_mcs_idx = 0;
 	uint8_t rate_flag = 1;
 	int mode = 0, max_ht_idx;
+	QDF_STATUS stat = QDF_STATUS_E_FAILURE;
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	/* we do not want to necessarily report the current speed */
 	if (eHDD_LINK_SPEED_REPORT_MAX == config->reportMaxLinkSpeed) {
@@ -4076,9 +4086,10 @@ static int hdd_report_max_rate(mac_handle_t mac_handle,
 		/* VHT80 rate has separate rate table */
 		if (tx_rate_flags & (TX_RATE_VHT20 | TX_RATE_VHT40 |
 		    TX_RATE_VHT80)) {
-			sme_cfg_get_int(mac_handle,
-					WNI_CFG_VHT_TX_MCS_MAP,
-					&vht_mcs_map);
+		    stat = ucfg_mlme_cfg_get_vht_tx_mcs_map(hdd_ctx->psoc,
+							    &vht_mcs_map);
+			if (QDF_IS_STATUS_ERROR(stat))
+				hdd_err("failed to get tx_mcs_map");
 			vht_max_mcs = (enum data_rate_11ac_max_mcs)
 				(vht_mcs_map & DATA_RATE_11AC_MCS_MASK);
 			if (tx_rate_flags & TX_RATE_SGI)

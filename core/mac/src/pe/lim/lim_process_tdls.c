@@ -698,6 +698,9 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal pMac,
 {
 	uint8_t nss;
 	uint32_t val;
+	struct mlme_vht_capabilities_info vht_cap_info;
+
+	vht_cap_info = pMac->mlme_cfg->vht_caps.vht_cap_info;
 
 	if (IS_5G_CH(psessionEntry->currentOperChannel))
 		nss = pMac->vdev_type_nss_5g.tdls;
@@ -736,7 +739,7 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal pMac,
 	pe_debug("HT present: %hu, Chan Width: %hu",
 		htCap->present, htCap->supportedChannelWidthSet);
 	if (((psessionEntry->currentOperChannel <= SIR_11B_CHANNEL_END) &&
-	     pMac->roam.configParam.enableVhtFor24GHz) ||
+	     pMac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band) ||
 	    (psessionEntry->currentOperChannel >= SIR_11B_CHANNEL_END)) {
 		if (IS_DOT11_MODE_VHT(selfDot11Mode) &&
 		    IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
@@ -758,18 +761,12 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal pMac,
 			vhtCap->muBeamformeeCap = 0;
 			vhtCap->muBeamformerCap = 0;
 
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_RX_MCS_MAP, &val);
-			vhtCap->rxMCSMap = val;
-			wlan_cfg_get_int(pMac,
-				WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE,
-				&val);
-			vhtCap->rxHighSupDataRate = val;
-			wlan_cfg_get_int(pMac, WNI_CFG_VHT_TX_MCS_MAP, &val);
-			vhtCap->txMCSMap = val;
-			wlan_cfg_get_int(pMac,
-				WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE,
-				&val);
-			vhtCap->txSupDataRate = val;
+			vhtCap->rxMCSMap = vht_cap_info.rx_mcs_map;
+
+			vhtCap->rxHighSupDataRate =
+				vht_cap_info.rx_supp_data_rate;
+			vhtCap->txMCSMap = vht_cap_info.tx_mcs_map;
+			vhtCap->txSupDataRate = vht_cap_info.tx_supp_data_rate;
 			if (nss == NSS_1x1_MODE) {
 				vhtCap->txMCSMap |= DISABLE_NSS2_MCS;
 				vhtCap->rxMCSMap |= DISABLE_NSS2_MCS;
@@ -1006,7 +1003,7 @@ static void populate_dotf_tdls_vht_aid(tpAniSirGlobal pMac, uint32_t selfDot11Mo
 				       tpPESession psessionEntry)
 {
 	if (((psessionEntry->currentOperChannel <= SIR_11B_CHANNEL_END) &&
-	     pMac->roam.configParam.enableVhtFor24GHz) ||
+	     pMac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band) ||
 	    (psessionEntry->currentOperChannel >= SIR_11B_CHANNEL_END)) {
 		if (IS_DOT11_MODE_VHT(selfDot11Mode) &&
 		    IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {

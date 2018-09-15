@@ -231,7 +231,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	 * is false and dot11mode is 11ac set it to 11n.
 	 */
 	if (channel <= SIR_11B_CHANNEL_END &&
-	    (false == mac_ctx->roam.configParam.enableVhtFor24GHz) &&
+	    (false == mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band) &&
 	    (WNI_CFG_DOT11_MODE_11AC == dot11mode ||
 	     WNI_CFG_DOT11_MODE_11AC_ONLY == dot11mode))
 		dot11mode = WNI_CFG_DOT11_MODE_11N;
@@ -1856,7 +1856,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		frm->vendor_vht_ie.sub_type =
 			pe_session->vendor_specific_vht_ie_sub_type;
 		frm->vendor_vht_ie.VHTCaps.present = 1;
-		if (!mac_ctx->roam.configParam.enable_subfee_vendor_vhtie &&
+		if (!mac_ctx->mlme_cfg->vht_caps.vht_cap_info.vendor_vhtie &&
 		    pe_session->vht_config.su_beam_formee) {
 			pe_debug("Disable SU beamformee for vendor IE");
 			pe_session->vht_config.su_beam_formee = 0;

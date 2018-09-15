@@ -1336,45 +1336,23 @@ QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 				       tpPESession session_entry,
 				       uint8_t nss)
 {
-	uint32_t val;
 	uint32_t self_sta_dot11mode = 0;
 	uint16_t mcs_map_mask = MCSMAPMASK1x1;
 	uint16_t mcs_map_mask2x2 = 0;
+	struct mlme_vht_capabilities_info vht_cap_info;
 
 	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &self_sta_dot11mode);
 
 	if (!IS_DOT11_MODE_VHT(self_sta_dot11mode))
 		return QDF_STATUS_SUCCESS;
 
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_RX_MCS_MAP, &val) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve VHT RX MCS MAP");
-		goto error;
-	}
-	rates->vhtRxMCSMap = (uint16_t) val;
+	vht_cap_info = mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
 
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_VHT_TX_MCS_MAP, &val) !=
-		QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve VHT TX MCS MAP");
-		goto error;
-	}
-	rates->vhtTxMCSMap = (uint16_t) val;
-
-	if (wlan_cfg_get_int(mac_ctx,
-			WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE,
-			&val) != QDF_STATUS_SUCCESS) {
-		pe_err("couldn't retrieve VHT RX Supported data rate MAP");
-		goto error;
-	}
-	rates->vhtRxHighestDataRate = (uint16_t) val;
-
-	if (wlan_cfg_get_int(mac_ctx,
-			WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE,
-			&val) != QDF_STATUS_SUCCESS) {
-		pe_err("couldn't retrieve VHT RX Supported data rate MAP");
-		goto error;
-	}
-	rates->vhtTxHighestDataRate = (uint16_t) val;
+	rates->vhtRxMCSMap = (uint16_t)vht_cap_info.rx_mcs_map;
+	rates->vhtTxMCSMap = (uint16_t)vht_cap_info.tx_mcs_map;
+	rates->vhtRxHighestDataRate =
+			(uint16_t) vht_cap_info.rx_supp_data_rate;
+	rates->vhtTxHighestDataRate = (uint16_t)vht_cap_info.tx_supp_data_rate;
 
 	if (NSS_1x1_MODE == nss) {
 		rates->vhtRxMCSMap |= VHT_MCS_1x1;
@@ -1384,7 +1362,7 @@ QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 		rates->vhtRxHighestDataRate =
 			VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
 		if (session_entry && !session_entry->ch_width &&
-				!mac_ctx->roam.configParam.enable_vht20_mcs9 &&
+				!mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable_vht20_mcs9 &&
 				((rates->vhtRxMCSMap & VHT_1x1_MCS_MASK) ==
 				 VHT_1x1_MCS9_MAP)) {
 			DISABLE_VHT_MCS_9(rates->vhtRxMCSMap,
@@ -1394,7 +1372,7 @@ QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 		}
 	} else {
 		if (session_entry && !session_entry->ch_width &&
-				!mac_ctx->roam.configParam.enable_vht20_mcs9 &&
+				!mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable_vht20_mcs9 &&
 				((rates->vhtRxMCSMap & VHT_2x2_MCS_MASK) ==
 				 VHT_2x2_MCS9_MAP)) {
 			DISABLE_VHT_MCS_9(rates->vhtRxMCSMap,
@@ -1460,7 +1438,7 @@ QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 	}
 
 	pe_debug("enable2x2 - %d nss %d vhtRxMCSMap - %x vhtTxMCSMap - %x",
-		mac_ctx->roam.configParam.enable2x2, nss,
+		mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable2x2, nss,
 		rates->vhtRxMCSMap, rates->vhtTxMCSMap);
 
 	if (NULL != session_entry) {
@@ -1472,9 +1450,6 @@ QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 	}
 
 	return QDF_STATUS_SUCCESS;
-error:
-
-	return QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -2733,7 +2708,6 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 	tSirMacAddr staMac;
 	uint32_t listenInterval = WNI_CFG_LISTEN_INTERVAL_STADEF;
-	uint32_t ampduLenExponent = 0;
 	/*This self Sta dot 11 mode comes from the cfg and the expectation here is
 	 * that cfg carries the systemwide capability that device under
 	 * consideration can support. This capability gets plumbed into the cfg
@@ -2873,14 +2847,10 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 		pAddStaParams->enable_su_tx_bformer);
 
 	/* In 11ac mode, the hardware is capable of supporting 128K AMPDU size */
-	if (IS_DOT11_MODE_VHT(selfStaDot11Mode)) {
-		if (wlan_cfg_get_int
-			    (pMac, WNI_CFG_VHT_AMPDU_LEN_EXPONENT, &ampduLenExponent)
-		    != QDF_STATUS_SUCCESS) {
-			pe_err("Couldn't get WNI_CFG_VHT_AMPDU_LEN_EXPONENT");
-		}
-		pAddStaParams->maxAmpduSize = (uint8_t) ampduLenExponent;
-	}
+	if (IS_DOT11_MODE_VHT(selfStaDot11Mode))
+		pAddStaParams->maxAmpduSize =
+		pMac->mlme_cfg->vht_caps.vht_cap_info.ampdu_len_exponent;
+
 	pAddStaParams->vhtTxMUBformeeCapable =
 				psessionEntry->vht_config.mu_beam_formee;
 	pAddStaParams->enableVhtpAid = psessionEntry->enableVhtpAid;
@@ -3606,11 +3576,13 @@ QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	tpDphHashNode pStaDs = NULL;
 	uint8_t chanWidthSupp = 0;
 	bool is_vht_cap_in_vendor_ie = false;
-	uint32_t enableTxBF20MHz;
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	tDot11fIEVHTOperation *vht_oper = NULL;
 	tAddStaParams *sta_context;
 	uint32_t listen_interval = WNI_CFG_LISTEN_INTERVAL_STADEF;
+	struct mlme_vht_capabilities_info vht_cap_info;
+
+	vht_cap_info = pMac->mlme_cfg->vht_caps.vht_cap_info;
 
 	/* Package SIR_HAL_ADD_BSS_REQ message parameters */
 	pAddBssParams = qdf_mem_malloc(sizeof(tAddBssParams));
@@ -3907,11 +3879,7 @@ QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 					sta_context->enable_su_tx_bformer);
 		} else {
 			sta_context->ch_width =	CH_WIDTH_20MHZ;
-			if ((QDF_IS_STATUS_SUCCESS(
-				wlan_cfg_get_int(pMac,
-					WNI_CFG_VHT_ENABLE_TXBF_20MHZ,
-					&enableTxBF20MHz))) &&
-					(false == enableTxBF20MHz))
+			if (vht_cap_info.enable_txbf_20mhz)
 				sta_context->vhtTxBFCapable = 0;
 		}
 		pAddBssParams->staContext.mimoPS =

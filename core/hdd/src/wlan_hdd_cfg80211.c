@@ -2720,12 +2720,12 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	      (adapter->device_mode == QDF_P2P_GO_MODE &&
 	      !hdd_ctx->config->go_force_11n_for_11ac &&
 	      hdd_ctx->config->go_11ac_override))) {
-		hdd_debug("ACS Config override for 11AC, vhtChannelWidth %d",
-			  hdd_ctx->config->vhtChannelWidth);
 		vht_enabled = 1;
 		sap_config->acs_cfg.hw_mode = eCSR_DOT11_MODE_11ac;
-		sap_config->acs_cfg.ch_width =
-					hdd_ctx->config->vhtChannelWidth;
+		qdf_status =
+			ucfg_mlme_get_vht_channel_width(hdd_ctx->psoc,
+							&ch_width);
+		sap_config->acs_cfg.ch_width = ch_width;
 	}
 
 	/* No VHT80 in 2.4G so perform ACS accordingly */
@@ -6181,6 +6181,9 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	uint8_t tid = 0, ac;
 	uint16_t buff_size = 0;
 	mac_handle_t mac_handle;
+	QDF_STATUS status;
+	bool bval = false;
+	uint8_t value = 0;
 
 	hdd_enter_dev(dev);
 
@@ -6367,7 +6370,11 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 						adapter->session_id,
 						cfg_val, ac);
 		if (cfg_val) {
-			if (sme_config->csrConfig.enable2x2)
+			status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc,
+							     &bval);
+			if (!QDF_IS_STATUS_SUCCESS(status))
+				hdd_err("unable to get vht_enable2x2");
+			if (bval)
 				/*2x2 MCS 5 value*/
 				he_mcs_val = 0x45;
 			else
@@ -6415,9 +6422,14 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TX_BEAMFORMEE_NSTS]) {
 		cfg_val = nla_get_u8(tb[
 			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TX_BEAMFORMEE_NSTS]);
-		if (cfg_val > hdd_ctx->config->txBFCsnValue) {
+		status = ucfg_mlme_cfg_get_vht_tx_bfee_ant_supp(hdd_ctx->psoc,
+							 &value);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("unable to get tx_bfee_ant_supp");
+
+		if (cfg_val > value) {
 			hdd_err("NSTS %d not supported, supp_val %d", cfg_val,
-				hdd_ctx->config->txBFCsnValue);
+				value);
 			ret_val = -ENOTSUPP;
 			goto send_err;
 		}
@@ -6425,8 +6437,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		ret_val = sme_update_tx_bfee_nsts(hdd_ctx->mac_handle,
 						  adapter->session_id,
 						  cfg_val,
-						  hdd_ctx->config->txBFCsnValue
-						  );
+						  value);
 		if (ret_val)
 			sme_err("Failed to set Tx beamformee cap");
 
@@ -8775,6 +8786,8 @@ static void hdd_update_acs_sap_config(struct hdd_context *hdd_ctx,
 				     tsap_config_t *sap_config,
 				     struct hdd_vendor_chan_info *channel_list)
 {
+	uint8_t ch_width;
+	QDF_STATUS status;
 	sap_config->channel = channel_list->pri_ch;
 
 	sap_config->ch_params.center_freq_seg0 =
@@ -8784,15 +8797,19 @@ static void hdd_update_acs_sap_config(struct hdd_context *hdd_ctx,
 
 	sap_config->ch_params.sec_ch_offset = channel_list->ht_sec_ch;
 	sap_config->ch_params.ch_width = channel_list->chan_width;
-	if (sap_config->channel >= 36)
-		sap_config->ch_width_orig =
-				hdd_ctx->config->vhtChannelWidth;
-	else
+	if (sap_config->channel >= 36) {
+		status =
+			ucfg_mlme_get_vht_channel_width(hdd_ctx->psoc,
+							&ch_width);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("Failed to set channel_width");
+		sap_config->ch_width_orig = ch_width;
+	} else {
 		sap_config->ch_width_orig =
 			hdd_ctx->config->nChannelBondingMode24GHz ?
 			eHT_CHANNEL_WIDTH_40MHZ :
 			eHT_CHANNEL_WIDTH_20MHZ;
-
+	}
 	sap_config->acs_cfg.pri_ch = channel_list->pri_ch;
 	sap_config->acs_cfg.ch_width = channel_list->chan_width;
 	sap_config->acs_cfg.vht_seg0_center_ch =

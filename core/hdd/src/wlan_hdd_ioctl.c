@@ -2813,6 +2813,7 @@ int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int targetRate)
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_config *pConfig;
+	bool bval = false;
 
 	if (hdd_ctx == NULL) {
 		hdd_err("HDD context is null");
@@ -2828,7 +2829,14 @@ int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int targetRate)
 		return -EINVAL;
 	}
 	pConfig = hdd_ctx->config;
-	rateUpdate.nss = (pConfig->enable2x2 == 0) ? 0 : 1;
+
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("unable to get vht_enable2x2");
+		return -EINVAL;
+	}
+	rateUpdate.nss = (bval == 0) ? 0 : 1;
+
 	rateUpdate.dev_mode = adapter->device_mode;
 	rateUpdate.mcastDataRate24GHz = targetRate;
 	rateUpdate.mcastDataRate24GHzTxFlag = 1;
@@ -5159,7 +5167,7 @@ static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
 	enum tx_rate_info txFlags = 0;
 	tSirRateUpdateInd rateUpdateParams = {0};
 	int status;
-	struct hdd_config *pConfig = hdd_ctx->config;
+	bool bval = false;
 
 	if ((QDF_IBSS_MODE != adapter->device_mode) &&
 	    (QDF_SAP_MODE != adapter->device_mode)) {
@@ -5185,7 +5193,13 @@ static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
 	 * Fill the user specifieed RMC rate param
 	 * and the derived tx flags.
 	 */
-	rateUpdateParams.nss = (pConfig->enable2x2 == 0) ? 0 : 1;
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("unable to get vht_enable2x2");
+		ret = -EINVAL;
+		goto exit;
+	}
+	rateUpdateParams.nss = (bval == 0) ? 0 : 1;
 	rateUpdateParams.reliableMcastDataRate = uRate;
 	rateUpdateParams.reliableMcastDataRateTxFlag = txFlags;
 	rateUpdateParams.dev_mode = adapter->device_mode;
@@ -6525,13 +6539,20 @@ static int hdd_parse_setantennamode_command(const uint8_t *value)
  */
 static bool hdd_is_supported_chain_mask_2x2(struct hdd_context *hdd_ctx)
 {
-	/*
+	QDF_STATUS status;
+	bool bval = false;
+
+/*
 	 * Revisit and the update logic to determine the number
 	 * of TX/RX chains supported in the system when
 	 * antenna sharing per band chain mask support is
 	 * brought in
 	 */
-	return (hdd_ctx->config->enable2x2 == 0x01) ? true : false;
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable2x2");
+
+	return (bval == 0x01) ? true : false;
 }
 
 /**
@@ -6543,13 +6564,20 @@ static bool hdd_is_supported_chain_mask_2x2(struct hdd_context *hdd_ctx)
  */
 static bool hdd_is_supported_chain_mask_1x1(struct hdd_context *hdd_ctx)
 {
+	QDF_STATUS status;
+	bool bval = false;
+
 	/*
 	 * Revisit and update the logic to determine the number
 	 * of TX/RX chains supported in the system when
 	 * antenna sharing per band chain mask support is
 	 * brought in
 	 */
-	return (!hdd_ctx->config->enable2x2) ? true : false;
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable2x2");
+
+	return (!bval) ? true : false;
 }
 
 QDF_STATUS hdd_update_smps_antenna_mode(struct hdd_context *hdd_ctx, int mode)

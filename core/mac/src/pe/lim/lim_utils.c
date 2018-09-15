@@ -7955,7 +7955,7 @@ QDF_STATUS lim_populate_he_mcs_set(tpAniSirGlobal mac_ctx,
 	}
 
 	pe_debug("enable2x2 - %d nss %d",
-		mac_ctx->roam.configParam.enable2x2, nss);
+		mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable2x2, nss);
 	pe_debug("he_rx_lt_80 - 0x%x he_tx_lt_80 0x%x",
 		rates->rx_he_mcs_map_lt_80, rates->tx_he_mcs_map_lt_80);
 	pe_debug("he_rx_160 - 0x%x he_tx_160 0x%x",

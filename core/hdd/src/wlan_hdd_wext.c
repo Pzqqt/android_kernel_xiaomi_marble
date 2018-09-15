@@ -3441,13 +3441,12 @@ int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 		hdd_err("Failed to set HT capability info");
 		return -EIO;
 	}
-	status = sme_cfg_set_int(mac_handle, WNI_CFG_VHT_LDPC_CODING_CAP,
-				 value);
-	if (QDF_STATUS_SUCCESS != status) {
+	status =
+		ucfg_mlme_cfg_set_vht_ldpc_coding_cap(hdd_ctx->psoc, value);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to set VHT LDPC capability info");
 		return -EIO;
 	}
-
 	ret = sme_update_ht_config(mac_handle, adapter->session_id,
 				   WNI_CFG_HT_CAP_INFO_ADVANCE_CODING,
 				   value);
@@ -3682,7 +3681,7 @@ int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 	bool ch_bond24 = false, ch_bond5g = false;
 	tSmeConfigParams *sme_config;
 	uint32_t chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-	uint32_t vhtchanwidth;
+	uint8_t vhtchanwidth;
 	eCsrPhyMode phymode = -EIO, old_phymode;
 	enum hdd_dot11_mode hdd_dot11mode = phddctx->config->dot11Mode;
 	enum band_info curr_band = BAND_ALL;
@@ -3715,7 +3714,11 @@ int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 	else if (band_capability == BAND_5G)
 		band_5g = true;
 
-	vhtchanwidth = phddctx->config->vhtChannelWidth;
+	halStatus = ucfg_mlme_get_vht_channel_width(phddctx->psoc,
+						    &vhtchanwidth);
+	if (!QDF_IS_STATUS_SUCCESS(halStatus))
+		hdd_err("Failed to set channel_width");
+
 	hdd_debug("ch_bond24=%d ch_bond5g=%d band_24=%d band_5g=%d VHT_ch_width=%u",
 		ch_bond24, ch_bond5g, band_24, band_5g, vhtchanwidth);
 
@@ -3898,7 +3901,10 @@ int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 		vhtchanwidth = eHT_CHANNEL_WIDTH_80MHZ;
 		break;
 	default:
-		vhtchanwidth = phddctx->config->vhtChannelWidth;
+		halStatus = ucfg_mlme_get_vht_channel_width(phddctx->psoc,
+							    &vhtchanwidth);
+		if (!QDF_IS_STATUS_SUCCESS(halStatus))
+			hdd_err("Failed to set channel_width");
 		break;
 	}
 
@@ -3956,7 +3962,6 @@ int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 			sme_config->csrConfig.channelBondingMode24GHz = chwidth;
 			sme_config->csrConfig.channelBondingMode5GHz = chwidth;
 		}
-		sme_config->csrConfig.nVhtChannelWidth = vhtchanwidth;
 		sme_update_config(mac_handle, sme_config);
 
 		phddctx->config->dot11Mode = hdd_dot11mode;
@@ -3964,7 +3969,6 @@ int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 			sme_config->csrConfig.channelBondingMode24GHz;
 		phddctx->config->nChannelBondingMode5GHz =
 			sme_config->csrConfig.channelBondingMode5GHz;
-		phddctx->config->vhtChannelWidth = vhtchanwidth;
 		if (hdd_update_config_cfg(phddctx) == false) {
 			hdd_err("could not update config_dat");
 			retval = -EIO;
@@ -5510,6 +5514,8 @@ static int __iw_setnone_getint(struct net_device *dev,
 	int ret;
 	tSmeConfigParams *sme_config;
 	struct hdd_context *hdd_ctx;
+	QDF_STATUS status;
+	bool bval = false;
 
 	hdd_enter_dev(dev);
 
@@ -5569,7 +5575,10 @@ static int __iw_setnone_getint(struct net_device *dev,
 	case WE_GET_NSS:
 	{
 		sme_get_config_param(mac_handle, sme_config);
-		*value = (sme_config->csrConfig.enable2x2 == 0) ? 1 : 2;
+		status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("unable to get vht_enable2x2");
+		*value = (bval == 0) ? 1 : 2;
 		if (policy_mgr_is_current_hwmode_dbs(hdd_ctx->psoc))
 			*value = *value - 1;
 		hdd_debug("GET_NSS: Current NSS:%d", *value);
@@ -6201,6 +6210,8 @@ static int __iw_get_char_setnone(struct net_device *dev,
 	struct hdd_context *hdd_ctx;
 	mac_handle_t mac_handle;
 	int ret;
+	QDF_STATUS status;
+	uint8_t value;
 
 	hdd_enter_dev(dev);
 
@@ -6675,40 +6686,43 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			break;
 		case eCSR_DOT11_MODE_11ac:
 		case eCSR_DOT11_MODE_11ac_ONLY:
-			if (hddctx->config->vhtChannelWidth ==
-			    eHT_CHANNEL_WIDTH_20MHZ)
+			status =
+			   ucfg_mlme_get_vht_channel_width(hddctx->psoc,
+							   &value);
+			if (!QDF_IS_STATUS_SUCCESS(status))
+				hdd_err("Failed to set channel_width");
+			if (value == eHT_CHANNEL_WIDTH_20MHZ)
 				snprintf(extra, WE_MAX_STR_LEN,
 					 "11ACVHT20");
-			else if (hddctx->config->vhtChannelWidth ==
-				 eHT_CHANNEL_WIDTH_40MHZ)
+			else if (value == eHT_CHANNEL_WIDTH_40MHZ)
 				snprintf(extra, WE_MAX_STR_LEN,
 					 "11ACVHT40");
-			else if (hddctx->config->vhtChannelWidth ==
-				 eHT_CHANNEL_WIDTH_80MHZ)
+			else if (value == eHT_CHANNEL_WIDTH_80MHZ)
 				snprintf(extra, WE_MAX_STR_LEN,
 					 "11ACVHT80");
-			else if (hddctx->config->vhtChannelWidth ==
-				 eHT_CHANNEL_WIDTH_160MHZ)
+			else if (value == eHT_CHANNEL_WIDTH_160MHZ)
 				snprintf(extra, WE_MAX_STR_LEN,
 					 "11ACVHT160");
 			break;
 		case eCSR_DOT11_MODE_11ax:
 		case eCSR_DOT11_MODE_11ax_ONLY:
+			status =
+			ucfg_mlme_get_vht_channel_width(hddctx->psoc,
+							&value);
+			if (!QDF_IS_STATUS_SUCCESS(status))
+				hdd_err("Failed to set channel_width");
+
 			/* currently using vhtChannelWidth */
-			if (hddctx->config->vhtChannelWidth ==
-			    eHT_CHANNEL_WIDTH_20MHZ)
+			if (value == eHT_CHANNEL_WIDTH_20MHZ)
 				snprintf(extra, WE_MAX_STR_LEN,
 					 "11AX_HE_20");
-			else if (hddctx->config->vhtChannelWidth ==
-				 eHT_CHANNEL_WIDTH_40MHZ)
+			else if (value == eHT_CHANNEL_WIDTH_40MHZ)
 				snprintf(extra, WE_MAX_STR_LEN,
 					 "11AX_HE_40");
-			else if (hddctx->config->vhtChannelWidth ==
-				 eHT_CHANNEL_WIDTH_80MHZ)
+			else if (value == eHT_CHANNEL_WIDTH_80MHZ)
 				snprintf(extra, WE_MAX_STR_LEN,
 					 "11AX_HE_80");
-			else if (hddctx->config->vhtChannelWidth ==
-				 eHT_CHANNEL_WIDTH_160MHZ)
+			else if (value == eHT_CHANNEL_WIDTH_160MHZ)
 				snprintf(extra, WE_MAX_STR_LEN,
 					 "11AX_HE_160");
 			break;

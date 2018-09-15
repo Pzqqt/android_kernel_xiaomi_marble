@@ -1326,8 +1326,14 @@ static void hdd_update_vdev_nss(struct hdd_context *hdd_ctx)
 	struct hdd_config *cfg_ini = hdd_ctx->config;
 	uint8_t max_supp_nss = 1;
 	mac_handle_t mac_handle;
+	QDF_STATUS status;
+	bool bval;
 
-	if (cfg_ini->enable2x2 && !cds_is_sub_20_mhz_enabled())
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable2x2");
+
+	if (bval && !cds_is_sub_20_mhz_enabled())
 		max_supp_nss = 2;
 	hdd_debug("max nss %d vdev_type_nss_2g %x vdev_type_nss_5g %x",
 		  max_supp_nss, cfg_ini->vdev_type_nss_2g,
@@ -1353,22 +1359,27 @@ static void hdd_update_wiphy_vhtcap(struct hdd_context *hdd_ctx)
 {
 	struct ieee80211_supported_band *band_5g =
 		hdd_ctx->wiphy->bands[NL80211_BAND_5GHZ];
-	uint32_t val;
+	QDF_STATUS status;
+	uint8_t value = 0, value1 = 0;
 
 	if (!band_5g) {
 		hdd_debug("5GHz band disabled, skipping capability population");
 		return;
 	}
 
-	val = hdd_ctx->config->txBFCsnValue;
-	band_5g->vht_cap.cap |= (val << IEEE80211_VHT_CAP_BEAMFORMEE_STS_SHIFT);
+	status = ucfg_mlme_cfg_get_vht_tx_bfee_ant_supp(hdd_ctx->psoc,
+							&value);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get tx_bfee_ant_supp");
 
-	val = NUM_OF_SOUNDING_DIMENSIONS;
+	band_5g->vht_cap.cap |= (value << IEEE80211_VHT_CAP_BEAMFORMEE_STS_SHIFT);
+
+	value1 = NUM_OF_SOUNDING_DIMENSIONS;
 	band_5g->vht_cap.cap |=
-		(val << IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT);
+		(value1 << IEEE80211_VHT_CAP_SOUNDING_DIMENSIONS_SHIFT);
 
 	hdd_debug("Updated wiphy vhtcap:0x%x, CSNAntSupp:%d, NumSoundDim:%d",
-		  band_5g->vht_cap.cap, hdd_ctx->config->txBFCsnValue, val);
+		  band_5g->vht_cap.cap, value, value1);
 }
 
 /**
@@ -1401,10 +1412,10 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 {
 	QDF_STATUS status;
 	uint32_t value;
-	struct hdd_config *pconfig = hdd_ctx->config;
 	struct mlme_ht_capabilities_info ht_cap_info;
 	uint8_t mcs_set[SIZE_OF_SUPPORTED_MCS_SET];
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
+	bool b_enable1x1;
 
 	/* get the MPDU density */
 	status = sme_cfg_get_int(mac_handle, WNI_CFG_MPDU_DENSITY, &value);
@@ -1450,31 +1461,34 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 	hdd_ctx->num_rf_chains = cfg->num_rf_chains;
 	hdd_ctx->ht_tx_stbc_supported = cfg->ht_tx_stbc;
 
-	if (pconfig->enable2x2 && (cfg->num_rf_chains == 2)) {
-		pconfig->enable2x2 = 1;
-	} else {
-		pconfig->enable2x2 = 0;
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &b_enable1x1);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable2x2");
+
+	b_enable1x1 = b_enable1x1 && (cfg->num_rf_chains == 2);
+
+	status = ucfg_mlme_set_vht_enable2x2(hdd_ctx->psoc, b_enable1x1);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to set vht_enable2x2");
+
+	if (b_enable1x1 == false) {
 		ht_cap_info.tx_stbc = 0;
 
 		/* 1x1 */
 		/* Update Rx Highest Long GI data Rate */
-		if (sme_cfg_set_int(mac_handle,
-				    WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE,
-				    VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1)
-				== QDF_STATUS_E_FAILURE) {
-			hdd_err("Could not pass on WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE to CCM");
-		}
-
+		status = ucfg_mlme_cfg_set_vht_rx_supp_data_rate(
+				hdd_ctx->psoc,
+				VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("Failed to set rx_supp_data_rate");
 		/* Update Tx Highest Long GI data Rate */
-		if (sme_cfg_set_int
-			    (mac_handle,
-			     WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE,
-			     VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1) ==
-			    QDF_STATUS_E_FAILURE) {
-			hdd_err("VHT_TX_HIGHEST_SUPP_RATE_1_1 to CCM fail");
-		}
+		status = ucfg_mlme_cfg_set_vht_tx_supp_data_rate(
+				hdd_ctx->psoc,
+				VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("Failed to set tx_supp_data_rate");
 	}
-	if (!(cfg->ht_tx_stbc && pconfig->enable2x2))
+	if (!(cfg->ht_tx_stbc && b_enable1x1))
 		ht_cap_info.tx_stbc = 0;
 
 	status = ucfg_mlme_set_ht_cap_info(hdd_ctx->psoc, ht_cap_info);
@@ -1487,7 +1501,8 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 		hdd_debug("Read MCS rate set");
 		if (cfg->num_rf_chains > SIZE_OF_SUPPORTED_MCS_SET)
 			cfg->num_rf_chains = SIZE_OF_SUPPORTED_MCS_SET;
-		if (pconfig->enable2x2) {
+
+		if (b_enable1x1) {
 			for (value = 0; value < cfg->num_rf_chains; value++)
 				mcs_set[value] =
 					WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES;
@@ -1508,264 +1523,21 @@ static void hdd_update_tgt_vht_cap(struct hdd_context *hdd_ctx,
 				   struct wma_tgt_vht_cap *cfg)
 {
 	QDF_STATUS status;
-	uint32_t value = 0;
-	struct hdd_config *pconfig = hdd_ctx->config;
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 	struct ieee80211_supported_band *band_5g =
 		wiphy->bands[HDD_NL80211_BAND_5GHZ];
-	uint32_t temp = 0;
 	uint32_t ch_width = eHT_CHANNEL_WIDTH_80MHZ;
-	uint32_t hw_rx_ldpc_enabled;
 	struct wma_caps_per_phy caps_per_phy;
-	mac_handle_t mac_handle;
+	uint8_t val = 0;
 
 	if (!band_5g) {
 		hdd_debug("5GHz band disabled, skipping capability population");
 		return;
 	}
 
-	mac_handle = hdd_ctx->mac_handle;
-
-	/* Get the current MPDU length */
-	status =
-		sme_cfg_get_int(mac_handle, WNI_CFG_VHT_MAX_MPDU_LENGTH,
-				&value);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get MPDU LENGTH");
-		value = 0;
-	}
-
-	/*
-	 * VHT max MPDU length:
-	 * override if user configured value is too high
-	 * that the target cannot support
-	 */
-	if (value > cfg->vht_max_mpdu) {
-		status = sme_cfg_set_int(mac_handle,
-					 WNI_CFG_VHT_MAX_MPDU_LENGTH,
-					 cfg->vht_max_mpdu);
-
-		if (status == QDF_STATUS_E_FAILURE)
-			hdd_err("could not set VHT MAX MPDU LENGTH");
-	}
-
-	sme_cfg_get_int(mac_handle, WNI_CFG_VHT_BASIC_MCS_SET, &temp);
-	temp = (temp & VHT_MCS_1x1) | pconfig->vhtRxMCS;
-
-	if (pconfig->enable2x2)
-		temp = (temp & VHT_MCS_2x2) | (pconfig->vhtRxMCS2x2 << 2);
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_VHT_BASIC_MCS_SET, temp) ==
-				QDF_STATUS_E_FAILURE) {
-		hdd_err("Could not pass VHT_BASIC_MCS_SET to CCM");
-	}
-
-	sme_cfg_get_int(mac_handle, WNI_CFG_VHT_RX_MCS_MAP, &temp);
-	temp = (temp & VHT_MCS_1x1) | pconfig->vhtRxMCS;
-	if (pconfig->enable2x2)
-		temp = (temp & VHT_MCS_2x2) | (pconfig->vhtRxMCS2x2 << 2);
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_VHT_RX_MCS_MAP, temp) ==
-			QDF_STATUS_E_FAILURE) {
-		hdd_err("Could not pass WNI_CFG_VHT_RX_MCS_MAP to CCM");
-	}
-
-	sme_cfg_get_int(mac_handle, WNI_CFG_VHT_TX_MCS_MAP, &temp);
-	temp = (temp & VHT_MCS_1x1) | pconfig->vhtTxMCS;
-	if (pconfig->enable2x2)
-		temp = (temp & VHT_MCS_2x2) | (pconfig->vhtTxMCS2x2 << 2);
-
-	hdd_debug("vhtRxMCS2x2 - %x temp - %u enable2x2 %d",
-			pconfig->vhtRxMCS2x2, temp, pconfig->enable2x2);
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_VHT_TX_MCS_MAP, temp) ==
-			QDF_STATUS_E_FAILURE) {
-		hdd_err("Could not pass WNI_CFG_VHT_TX_MCS_MAP to CCM");
-	}
-	/* Get the current RX LDPC setting */
-	status = sme_cfg_get_int(mac_handle, WNI_CFG_VHT_LDPC_CODING_CAP,
-				 &value);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get VHT LDPC CODING CAP");
-		value = 0;
-	}
-
-	/* Set HW RX LDPC capability */
-	hw_rx_ldpc_enabled = !!cfg->vht_rx_ldpc;
-	if (hw_rx_ldpc_enabled != value) {
-		status = sme_cfg_set_int(mac_handle,
-					 WNI_CFG_VHT_LDPC_CODING_CAP,
-					 hw_rx_ldpc_enabled);
-
-		if (status == QDF_STATUS_E_FAILURE)
-			hdd_err("could not set VHT LDPC CODING CAP to CCM");
-	}
-
-	/* Get current GI 80 value */
-	status = sme_cfg_get_int(mac_handle, WNI_CFG_VHT_SHORT_GI_80MHZ,
-				 &value);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get SHORT GI 80MHZ");
-		value = 0;
-	}
-
-	/* set the Guard interval 80MHz */
-	if (value && !cfg->vht_short_gi_80) {
-		status = sme_cfg_set_int(mac_handle,
-					 WNI_CFG_VHT_SHORT_GI_80MHZ,
-					 cfg->vht_short_gi_80);
-
-		if (status == QDF_STATUS_E_FAILURE)
-			hdd_err("could not set SHORT GI 80MHZ to CCM");
-	}
-
-	/* Get VHT TX STBC cap */
-	status = sme_cfg_get_int(mac_handle, WNI_CFG_VHT_TXSTBC, &value);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get VHT TX STBC");
-		value = 0;
-	}
-
-	/* VHT TX STBC cap */
-	if (value && !cfg->vht_tx_stbc) {
-		status = sme_cfg_set_int(mac_handle, WNI_CFG_VHT_TXSTBC,
-					 cfg->vht_tx_stbc);
-
-		if (status == QDF_STATUS_E_FAILURE)
-			hdd_err("could not set the VHT TX STBC to CCM");
-	}
-
-	/* Get VHT RX STBC cap */
-	status = sme_cfg_get_int(mac_handle, WNI_CFG_VHT_RXSTBC, &value);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get VHT RX STBC");
-		value = 0;
-	}
-
-	/* VHT RX STBC cap */
-	if (value && !cfg->vht_rx_stbc) {
-		status = sme_cfg_set_int(mac_handle, WNI_CFG_VHT_RXSTBC,
-					 cfg->vht_rx_stbc);
-
-		if (status == QDF_STATUS_E_FAILURE)
-			hdd_err("could not set the VHT RX STBC to CCM");
-	}
-
-	/* Get VHT SU Beamformer cap */
-	status = sme_cfg_get_int(mac_handle, WNI_CFG_VHT_SU_BEAMFORMER_CAP,
-				 &value);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get VHT SU BEAMFORMER CAP");
-		value = 0;
-	}
-
-	/* set VHT SU Beamformer cap */
-	if (value && !cfg->vht_su_bformer) {
-		status = sme_cfg_set_int(mac_handle,
-					 WNI_CFG_VHT_SU_BEAMFORMER_CAP,
-					 cfg->vht_su_bformer);
-
-		if (status == QDF_STATUS_E_FAILURE)
-			hdd_err("could not set VHT SU BEAMFORMER CAP");
-	}
-
-	/* check and update SU BEAMFORMEE capabality */
-	if (pconfig->enableTxBF && !cfg->vht_su_bformee)
-		pconfig->enableTxBF = cfg->vht_su_bformee;
-
-	status = sme_cfg_set_int(mac_handle,
-				 WNI_CFG_VHT_SU_BEAMFORMEE_CAP,
-				 pconfig->enableTxBF);
-
-	if (status == QDF_STATUS_E_FAILURE)
-		hdd_err("could not set VHT SU BEAMFORMEE CAP");
-
-	/* Get VHT MU Beamformer cap */
-	status = sme_cfg_get_int(mac_handle, WNI_CFG_VHT_MU_BEAMFORMER_CAP,
-				 &value);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get VHT MU BEAMFORMER CAP");
-		value = 0;
-	}
-
-	/* set VHT MU Beamformer cap */
-	if (value && !cfg->vht_mu_bformer) {
-		status = sme_cfg_set_int(mac_handle,
-					 WNI_CFG_VHT_MU_BEAMFORMER_CAP,
-					 cfg->vht_mu_bformer);
-
-		if (status == QDF_STATUS_E_FAILURE)
-			hdd_err("could not set the VHT MU BEAMFORMER CAP to CCM");
-	}
-
-	/* Get VHT MU Beamformee cap */
-	status = sme_cfg_get_int(mac_handle, WNI_CFG_VHT_MU_BEAMFORMEE_CAP,
-				 &value);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get VHT MU BEAMFORMEE CAP");
-		value = 0;
-	}
-
-	/* set VHT MU Beamformee cap */
-	if (value && !cfg->vht_mu_bformee) {
-		status = sme_cfg_set_int(mac_handle,
-					 WNI_CFG_VHT_MU_BEAMFORMEE_CAP,
-					 cfg->vht_mu_bformee);
-
-		if (status == QDF_STATUS_E_FAILURE)
-			hdd_err("could not set VHT MU BEAMFORMER CAP");
-	}
-
-	/* Get VHT MAX AMPDU Len exp */
-	status = sme_cfg_get_int(mac_handle, WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
-				 &value);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get VHT AMPDU LEN");
-		value = 0;
-	}
-
-	/*
-	 * VHT max AMPDU len exp:
-	 * override if user configured value is too high
-	 * that the target cannot support.
-	 * Even though Rome publish ampdu_len=7, it can
-	 * only support 4 because of some h/w bug.
-	 */
-
-	if (value > cfg->vht_max_ampdu_len_exp) {
-		status = sme_cfg_set_int(mac_handle,
-					 WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
-					 cfg->vht_max_ampdu_len_exp);
-
-		if (status == QDF_STATUS_E_FAILURE)
-			hdd_err("could not set the VHT AMPDU LEN EXP");
-	}
-
-	/* Get VHT TXOP PS CAP */
-	status = sme_cfg_get_int(mac_handle, WNI_CFG_VHT_TXOP_PS, &value);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get VHT TXOP PS");
-		value = 0;
-	}
-
-	/* set VHT TXOP PS cap */
-	if (value && !cfg->vht_txop_ps) {
-		status = sme_cfg_set_int(mac_handle, WNI_CFG_VHT_TXOP_PS,
-					 cfg->vht_txop_ps);
-
-		if (status == QDF_STATUS_E_FAILURE)
-			hdd_err("could not set the VHT TXOP PS");
-	}
+	status = ucfg_mlme_update_vht_cap(hdd_ctx->psoc, cfg);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("could not update vht capabilities");
 
 	if (WMI_VHT_CAP_MAX_MPDU_LEN_11454 == cfg->vht_max_mpdu)
 		band_5g->vht_cap.cap |= IEEE80211_VHT_CAP_MAX_MPDU_LENGTH_11454;
@@ -1776,43 +1548,35 @@ static void hdd_update_tgt_vht_cap(struct hdd_context *hdd_ctx,
 
 
 	if (cfg->supp_chan_width & (1 << eHT_CHANNEL_WIDTH_80P80MHZ)) {
-		status = sme_cfg_set_int(mac_handle,
-				WNI_CFG_VHT_SUPPORTED_CHAN_WIDTH_SET,
+		status =
+			ucfg_mlme_cfg_set_vht_chan_width(hdd_ctx->psoc,
 				VHT_CAP_160_AND_80P80_SUPP);
-		if (status == QDF_STATUS_E_FAILURE)
+		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("could not set the VHT CAP 160");
 		band_5g->vht_cap.cap |=
 			IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ;
 		ch_width = eHT_CHANNEL_WIDTH_80P80MHZ;
 	} else if (cfg->supp_chan_width & (1 << eHT_CHANNEL_WIDTH_160MHZ)) {
-		status = sme_cfg_set_int(mac_handle,
-				WNI_CFG_VHT_SUPPORTED_CHAN_WIDTH_SET,
-				VHT_CAP_160_SUPP);
-		if (status == QDF_STATUS_E_FAILURE)
+		status =
+			ucfg_mlme_cfg_set_vht_chan_width(hdd_ctx->psoc,
+							 VHT_CAP_160_SUPP);
+		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("could not set the VHT CAP 160");
 		band_5g->vht_cap.cap |=
 			IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160MHZ;
 		ch_width = eHT_CHANNEL_WIDTH_160MHZ;
 	}
-	pconfig->vhtChannelWidth = QDF_MIN(pconfig->vhtChannelWidth,
-			ch_width);
-	/* Get the current GI 160 value */
-	status = sme_cfg_get_int(mac_handle,
-				WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
-				&value);
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get GI 80 & 160");
-		value = 0;
-	}
-	/* set the Guard interval 160MHz */
-	if (value && !cfg->vht_short_gi_160) {
-		status = sme_cfg_set_int(mac_handle,
-			WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
-			cfg->vht_short_gi_160);
 
-		if (status == QDF_STATUS_E_FAILURE)
-			hdd_err("failed to set SHORT GI 160MHZ");
-	}
+	status =
+		ucfg_mlme_cfg_get_vht_chan_width(hdd_ctx->psoc, &val);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("could not get channel_width");
+
+	val = QDF_MIN(val, ch_width);
+	status =
+		ucfg_mlme_cfg_set_vht_chan_width(hdd_ctx->psoc, val);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("could not set the channel width");
 
 	if (cfg->vht_rx_ldpc & WMI_VHT_CAP_RX_LDPC) {
 		band_5g->vht_cap.cap |= IEEE80211_VHT_CAP_RXLDPC;
@@ -1933,6 +1697,8 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	uint8_t antenna_mode;
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
+	bool bval = false;
+	uint8_t value = 0;
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
@@ -2099,7 +1865,11 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	hdd_debug("fine_time_meas_cap: 0x%x",
 		  hdd_ctx->config->fine_time_meas_cap);
 
-	antenna_mode = (hdd_ctx->config->enable2x2 == 0x01) ?
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable2x2");
+
+	antenna_mode = (bval == 0x01) ?
 			HDD_ANTENNA_MODE_2X2 : HDD_ANTENNA_MODE_1X1;
 	hdd_update_smps_antenna_mode(hdd_ctx, antenna_mode);
 	hdd_debug("Init current antenna mode: %d",
@@ -2108,21 +1878,28 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	hdd_ctx->rcpi_enabled = cfg->rcpi_enabled;
 	hdd_update_ra_rate_limit(hdd_ctx, cfg);
 
-	if ((hdd_ctx->config->txBFCsnValue >
+	status = ucfg_mlme_cfg_get_vht_tx_bfee_ant_supp(hdd_ctx->psoc,
+						&value);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		status = false;
+		hdd_err("set tx_bfee_ant_supp failed");
+	}
+
+	if ((value >
 	     WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF) &&
-	    !cfg->tx_bfee_8ss_enabled)
-		hdd_ctx->config->txBFCsnValue =
-			WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF;
+	    !cfg->tx_bfee_8ss_enabled) {
+		status =
+		  ucfg_mlme_cfg_set_vht_tx_bfee_ant_supp(hdd_ctx->psoc,
+			WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			status = false;
+			hdd_err("set tx_bfee_ant_supp failed");
+		}
+	}
 
 	mac_handle = hdd_ctx->mac_handle;
-	status = sme_cfg_set_int(mac_handle,
-				 WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
-				 hdd_ctx->config->txBFCsnValue);
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("fw update WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED to CFG fails");
 
-	hdd_debug("Target 8ss fw support %d txBFCsnValue %d",
-		  cfg->tx_bfee_8ss_enabled, hdd_ctx->config->txBFCsnValue);
+	hdd_debug("txBFCsnValue %d", value);
 
 	/*
 	 * Update txBFCsnValue and NumSoundingDim values to vhtcap in wiphy
@@ -4173,11 +3950,16 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	int ret_val;
 	mac_handle_t mac_handle;
+	bool bval = false;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	mac_handle = hdd_ctx->mac_handle;
 	sme_set_curr_device_mode(mac_handle, adapter->device_mode);
-	sme_set_pdev_ht_vht_ies(mac_handle, hdd_ctx->config->enable2x2);
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable2x2");
+	sme_set_pdev_ht_vht_ies(mac_handle, bval);
+
 	sme_set_vdev_ies_per_band(mac_handle, adapter->session_id);
 
 	hdd_roam_profile_init(adapter);
@@ -4493,9 +4275,14 @@ static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	struct wma_caps_per_phy non_dbs_phy_cap;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	bool bval = false;
+
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable2x2");
 
 	hdd_debug("enable2x2: %d, lte_coex: %d, disable_DBS: %d",
-		  hdd_ctx->config->enable2x2, hdd_ctx->lte_coex_ant_share,
+		  bval, hdd_ctx->lte_coex_ant_share,
 		  hdd_ctx->config->dual_mac_feature_disable);
 	hdd_debug("enable_bt_chain_separation %d",
 		  hdd_ctx->config->enable_bt_chain_separation);
@@ -4516,8 +4303,7 @@ static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 		return 0;
 	}
 
-	if (hdd_ctx->config->enable2x2 &&
-	    !hdd_ctx->config->enable_bt_chain_separation) {
+	if (bval && !hdd_ctx->config->enable_bt_chain_separation) {
 		hdd_debug("2x2 enabled. skip chain mask programming");
 		return 0;
 	}
@@ -4664,6 +4450,7 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	bool enable_dtim_1chrx;
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
+	bool bval = false;
 
 	hdd_enter_dev(adapter->dev);
 
@@ -4744,7 +4531,11 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 				 enable_dtim_1chrx);
 	}
 
-	if (hdd_ctx->config->enable2x2) {
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable2x2");
+
+	if (bval) {
 		hdd_debug("configuring 2x2 mode fw params");
 
 		ret = sme_set_cck_tx_fir_override(hdd_ctx->mac_handle,
@@ -10894,6 +10685,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	struct policy_mgr_dp_cbacks dp_cbs = {0};
 	bool value;
 	enum pmo_auto_pwr_detect_failure_mode auto_power_fail_mode;
+	bool bval = false;
 
 	mac_handle = hdd_ctx->mac_handle;
 
@@ -10951,7 +10743,11 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 		goto out;
 	}
 
-	if (!hdd_ctx->config->enable2x2) {
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable2x2");
+
+	if (!bval) {
 		if (num_11b_tx_chains > 1)
 			num_11b_tx_chains = 1;
 		if (num_11ag_tx_chains > 1)
@@ -13971,41 +13767,25 @@ uint32_t hdd_limit_max_per_index_score(uint32_t per_index_score)
 	return per_index_score;
 }
 
-/**
- * hdd_update_score_config - API to update candidate scoring related params
- * configuration parameters
- * @score_config: score config to update
- * @cfg: config params
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS
-hdd_update_score_config(struct scoring_config *score_config,
-			struct hdd_config *cfg)
+QDF_STATUS hdd_update_score_config(
+	struct scoring_config *score_config, struct hdd_context *hdd_ctx)
 {
-	struct hdd_context *hdd_ctx;
-	bool enable2x2 = false;
+	struct hdd_config *cfg = hdd_ctx->config;
 	QDF_STATUS status;
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("HDD context is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
+	bool bval = false;
 
 	sme_update_score_config(hdd_ctx->mac_handle, score_config);
 
 	score_config->cb_mode_24G = cfg->nChannelBondingMode24GHz;
 	score_config->cb_mode_5G = cfg->nChannelBondingMode5GHz;
 
-	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &enable2x2);
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("unable to get enable2x2");
-
+		hdd_err("unable to get vht_enable2x2");
 	score_config->vdev_nss_24g =
-			enable2x2 ? CFG_STA_NSS(cfg->vdev_type_nss_2g) : 1;
+		bval ? CFG_STA_NSS(cfg->vdev_type_nss_2g) : 1;
 	score_config->vdev_nss_5g =
-			enable2x2 ? CFG_STA_NSS(cfg->vdev_type_nss_5g) : 1;
+		bval ? CFG_STA_NSS(cfg->vdev_type_nss_5g) : 1;
 
 	if (cfg->dot11Mode == eHDD_DOT11_MODE_AUTO ||
 	    cfg->dot11Mode == eHDD_DOT11_MODE_11ax ||
@@ -14021,10 +13801,18 @@ hdd_update_score_config(struct scoring_config *score_config,
 	    cfg->dot11Mode == eHDD_DOT11_MODE_11n_ONLY)
 		score_config->ht_cap = 1;
 
-	if (score_config->vht_cap && cfg->enableVhtFor24GHzBand)
+	status = ucfg_mlme_get_vht_for_24ghz(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Failed to get vht_for_24ghz");
+	if (score_config->vht_cap && bval)
 		score_config->vht_24G_cap = 1;
 
-	if (cfg->enableTxBF)
+	status = ucfg_mlme_get_vht_enable_tx_bf(hdd_ctx->psoc,
+					&bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable_tx_bf");
+
+	if (bval)
 		score_config->beamformee_cap = 1;
 
 	return QDF_STATUS_SUCCESS;
@@ -14102,7 +13890,7 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	hdd_update_pno_config(&scan_cfg.pno_cfg, cfg);
 	hdd_update_ie_whitelist_attr(&scan_cfg.ie_whitelist, hdd_ctx);
 
-	status = hdd_update_score_config(&scan_cfg.score_config, cfg);
+	status = hdd_update_score_config(&scan_cfg.score_config, hdd_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to update scoring config");
 		return -EINVAL;

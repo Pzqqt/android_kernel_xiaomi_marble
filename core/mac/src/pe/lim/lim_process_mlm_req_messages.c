@@ -413,11 +413,8 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 	 * capabilities
 	 */
 	if (IS_DOT11_MODE_VHT(self_dot11mode)) {
-		val = 0;        /* Default 8K AMPDU size */
-		if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(mac_ctx,
-					WNI_CFG_VHT_AMPDU_LEN_EXPONENT, &val))
-			pe_err("Couldn't get WNI_CFG_VHT_AMPDU_LEN_EXPONENT");
-		sta_param->maxAmpduSize = (uint8_t) val;
+		sta_param->maxAmpduSize =
+		mac_ctx->mlme_cfg->vht_caps.vht_cap_info.ampdu_len_exponent;
 	}
 	sta_param->enableVhtpAid = session_entry->enableVhtpAid;
 	sta_param->enableAmpduPs = session_entry->enableAmpduPs;

@@ -800,20 +800,6 @@ static void lim_log_vht_operation(tpAniSirGlobal pMac,
 #endif /* DUMP_MGMT_CNTNTS */
 }
 
-static void lim_log_vht_ext_bss_load(tpAniSirGlobal pMac,
-				     tDot11fIEVHTExtBssLoad *pDot11f)
-{
-#ifdef DUMP_MGMT_CNTNTS
-	pe_debug("muMIMOCapStaCount: %d",
-		pDot11f->muMIMOCapStaCount);
-	pe_debug("ssUnderUtil: %d", pDot11f->ssUnderUtil);
-	pe_debug("FortyMHzUtil: %d", pDot11f->FortyMHzUtil);
-	pe_debug("EightyMHzUtil: %d", pDot11f->EightyMHzUtil);
-	pe_debug("OneSixtyMHzUtil: %d",
-		pDot11f->OneSixtyMHzUtil);
-#endif /* DUMP_MGMT_CNTNTS */
-}
-
 static void lim_log_operating_mode(tpAniSirGlobal pMac,
 				   tDot11fIEOperatingMode *pDot11f)
 {
@@ -852,17 +838,21 @@ QDF_STATUS
 populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 			 tpPESession psessionEntry, tDot11fIEVHTCaps *pDot11f)
 {
-	QDF_STATUS nStatus;
 	uint32_t nCfgValue = 0;
+	struct mlme_vht_capabilities_info vht_cap_info;
+
+	if (!(pMac->mlme_cfg)) {
+		pe_err("invalid mlme cfg");
+		return QDF_STATUS_E_FAILURE;
+	}
+	vht_cap_info = pMac->mlme_cfg->vht_caps.vht_cap_info;
 
 	pDot11f->present = 1;
 
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_MAX_MPDU_LENGTH, nCfgValue);
+	nCfgValue = vht_cap_info.ampdu_len;
 	pDot11f->maxMPDULen = (nCfgValue & 0x0003);
 
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_SUPPORTED_CHAN_WIDTH_SET,
-		    nCfgValue);
+	nCfgValue = vht_cap_info.supp_chan_width;
 	pDot11f->supportedChannelWidthSet = (nCfgValue & 0x0003);
 
 	nCfgValue = 0;
@@ -922,118 +912,71 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 		pDot11f->vhtLinkAdaptCap =
 				psessionEntry->vht_config.vht_link_adapt;
 	} else {
-		CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_LDPC_CODING_CAP,
-			    nCfgValue);
+		nCfgValue = vht_cap_info.ldpc_coding_cap;
 		pDot11f->ldpcCodingCap = (nCfgValue & 0x0001);
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_SHORT_GI_80MHZ,
-			    nCfgValue);
+		nCfgValue = vht_cap_info.short_gi_80mhz;
 		pDot11f->shortGI80MHz = (nCfgValue & 0x0001);
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac,
-			    WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
-			    nCfgValue);
+		nCfgValue = vht_cap_info.short_gi_160mhz;
 		pDot11f->shortGI160and80plus80MHz = (nCfgValue & 0x0001);
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_TXSTBC, nCfgValue);
+		nCfgValue = vht_cap_info.tx_stbc;
 		pDot11f->txSTBC = (nCfgValue & 0x0001);
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_RXSTBC, nCfgValue);
+		nCfgValue = vht_cap_info.rx_stbc;
 		pDot11f->rxSTBC = (nCfgValue & 0x0007);
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac,
-			    WNI_CFG_VHT_SU_BEAMFORMEE_CAP, nCfgValue);
+		nCfgValue = vht_cap_info.su_bformee;
 		pDot11f->suBeamformeeCap = (nCfgValue & 0x0001);
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac,
-			    WNI_CFG_VHT_MU_BEAMFORMEE_CAP, nCfgValue);
+		nCfgValue = vht_cap_info.enable_mu_bformee;
 		pDot11f->muBeamformeeCap = (nCfgValue & 0x0001);
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_SU_BEAMFORMER_CAP,
-				nCfgValue);
+		nCfgValue = vht_cap_info.su_bformer;
 		pDot11f->suBeamFormerCap = (nCfgValue & 0x0001);
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac,
-				WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
-				nCfgValue);
+		nCfgValue = vht_cap_info.tx_bfee_ant_supp;
 		pDot11f->csnofBeamformerAntSup = (nCfgValue & 0x0007);
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac,
-				WNI_CFG_VHT_TXOP_PS,
-				nCfgValue);
+		nCfgValue = vht_cap_info.txop_ps;
 		pDot11f->vhtTXOPPS = (nCfgValue & 0x0001);
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac,
-				WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS,
-				nCfgValue);
+		nCfgValue = vht_cap_info.num_soundingdim;
 		pDot11f->numSoundingDim = (nCfgValue & 0x0007);
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac,
-				WNI_CFG_VHT_HTC_VHTC_CAP,
-				nCfgValue);
+		nCfgValue = vht_cap_info.htc_vhtc;
 		pDot11f->htcVHTCap = (nCfgValue & 0x0001);
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac,
-				WNI_CFG_VHT_RX_ANT_PATTERN,
-				nCfgValue);
-		pDot11f->rxAntPattern = nCfgValue;
+		pDot11f->rxAntPattern = vht_cap_info.rx_antpattern;
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac,
-				WNI_CFG_VHT_TX_ANT_PATTERN,
-				nCfgValue);
-		pDot11f->txAntPattern = nCfgValue;
+		pDot11f->txAntPattern = vht_cap_info.tx_antpattern;
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac,
-				WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
-				nCfgValue);
+		nCfgValue = vht_cap_info.ampdu_len_exponent;
 		pDot11f->maxAMPDULenExp = (nCfgValue & 0x0007);
 
-		nCfgValue = 0;
-		CFG_GET_INT(nStatus, pMac,
-			WNI_CFG_VHT_LINK_ADAPTATION_CAP,
-			nCfgValue);
+		nCfgValue = vht_cap_info.link_adap_cap;
 		pDot11f->vhtLinkAdaptCap = (nCfgValue & 0x0003);
 
 	}
 
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_MU_BEAMFORMER_CAP, nCfgValue);
+	nCfgValue = vht_cap_info.mu_bformer;
 	pDot11f->muBeamformerCap = (nCfgValue & 0x0001);
 
 	pDot11f->reserved1 = 0;
 
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_RX_MCS_MAP, nCfgValue);
+	nCfgValue = vht_cap_info.rx_mcs_map;
 	pDot11f->rxMCSMap = (nCfgValue & 0x0000FFFF);
 
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE,
-		    nCfgValue);
+	nCfgValue = vht_cap_info.rx_supp_data_rate;
 	pDot11f->rxHighSupDataRate = (nCfgValue & 0x00001FFF);
 
 	pDot11f->reserved2 = 0;
 
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_TX_MCS_MAP, nCfgValue);
+	nCfgValue = vht_cap_info.tx_mcs_map;
 	pDot11f->txMCSMap = (nCfgValue & 0x0000FFFF);
 
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE,
-			nCfgValue);
+	nCfgValue = vht_cap_info.tx_supp_data_rate;
 	pDot11f->txSupDataRate = (nCfgValue & 0x00001FFF);
 
 	pDot11f->reserved3 = 0;
@@ -1046,7 +989,7 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 			pDot11f->rxHighSupDataRate =
 				VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
 			if (!psessionEntry->ch_width &&
-			    !pMac->roam.configParam.enable_vht20_mcs9 &&
+			    !pMac->mlme_cfg->vht_caps.vht_cap_info.enable_vht20_mcs9 &&
 			    ((pDot11f->txMCSMap & VHT_1x1_MCS_MASK) ==
 			     VHT_1x1_MCS9_MAP)) {
 				DISABLE_VHT_MCS_9(pDot11f->txMCSMap,
@@ -1056,7 +999,7 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 			}
 		} else {
 			if (!psessionEntry->ch_width &&
-			    !pMac->roam.configParam.enable_vht20_mcs9 &&
+			    !pMac->mlme_cfg->vht_caps.vht_cap_info.enable_vht20_mcs9 &&
 			    ((pDot11f->txMCSMap & VHT_2x2_MCS_MASK) ==
 			     VHT_2x2_MCS9_MAP)) {
 				DISABLE_VHT_MCS_9(pDot11f->txMCSMap,
@@ -1075,9 +1018,6 @@ populate_dot11f_vht_operation(tpAniSirGlobal pMac,
 			      tpPESession psessionEntry,
 			      tDot11fIEVHTOperation *pDot11f)
 {
-	QDF_STATUS nStatus;
-	uint32_t nCfgValue = 0;
-
 	pDot11f->present = 1;
 
 	if (psessionEntry->ch_width > CH_WIDTH_40MHZ) {
@@ -1096,48 +1036,13 @@ populate_dot11f_vht_operation(tpAniSirGlobal pMac,
 		pDot11f->chanCenterFreqSeg2 = 0;
 	}
 
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_BASIC_MCS_SET, nCfgValue);
-	pDot11f->basicMCSSet = (uint16_t) nCfgValue;
+	pDot11f->basicMCSSet =
+		(uint16_t)pMac->mlme_cfg->vht_caps.vht_cap_info.basic_mcs_set;
 
 	lim_log_vht_operation(pMac, pDot11f);
 
 	return QDF_STATUS_SUCCESS;
 
-}
-
-QDF_STATUS
-populate_dot11f_vht_ext_bss_load(tpAniSirGlobal pMac,
-				 tDot11fIEVHTExtBssLoad *pDot11f)
-{
-	QDF_STATUS nStatus;
-	uint32_t nCfgValue = 0;
-
-	pDot11f->present = 1;
-
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_MU_MIMO_CAP_STA_COUNT,
-		    nCfgValue);
-	pDot11f->muMIMOCapStaCount = (uint8_t) nCfgValue;
-
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_SS_UNDER_UTIL, nCfgValue);
-	pDot11f->ssUnderUtil = (uint8_t) nCfgValue;
-
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_40MHZ_UTILIZATION, nCfgValue);
-	pDot11f->FortyMHzUtil = (uint8_t) nCfgValue;
-
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_80MHZ_UTILIZATION, nCfgValue);
-	pDot11f->EightyMHzUtil = (uint8_t) nCfgValue;
-
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_160MHZ_UTILIZATION, nCfgValue);
-	pDot11f->EightyMHzUtil = (uint8_t) nCfgValue;
-
-	lim_log_vht_ext_bss_load(pMac, pDot11f);
-
-	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS

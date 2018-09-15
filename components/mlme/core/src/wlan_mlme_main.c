@@ -25,6 +25,8 @@
 #include "wlan_scan_public_structs.h"
 #include "cfg_mlme_threshold.h"
 
+#define NUM_OF_SOUNDING_DIMENSIONS     1 /*Nss - 1, (Nss = 2 for 2x2)*/
+
 struct wlan_mlme_psoc_obj *mlme_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -462,8 +464,6 @@ static void mlme_init_vht_cap_cfg(struct wlan_objmgr_psoc *psoc,
 {
 	vht_cap_info->supp_chan_width =
 			cfg_default(CFG_VHT_SUPP_CHAN_WIDTH);
-	vht_cap_info->tx_bfee_ant_supp =
-			cfg_default(CFG_VHT_BEAMFORMEE_ANT_SUPP);
 	vht_cap_info->num_soundingdim =
 			cfg_default(CFG_VHT_NUM_SOUNDING_DIMENSIONS);
 	vht_cap_info->htc_vhtc =
@@ -478,39 +478,47 @@ static void mlme_init_vht_cap_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_default(CFG_VHT_RX_SUPP_DATA_RATE);
 	vht_cap_info->tx_supp_data_rate =
 			cfg_default(CFG_VHT_TX_SUPP_DATA_RATE);
-	vht_cap_info->enable_txbf_20mhz =
-			cfg_default(CFG_VHT_ENABLE_TXBF_20MHZ);
+	vht_cap_info->txop_ps =
+			cfg_default(CFG_VHT_TXOP_PS);
+	vht_cap_info->rx_mcs_map =
+			WNI_CFG_VHT_RX_MCS_MAP_STADEF;
+	vht_cap_info->tx_mcs_map =
+			WNI_CFG_VHT_TX_MCS_MAP_STADEF;
+	vht_cap_info->basic_mcs_set =
+			CFG_VHT_BASIC_MCS_SET_STADEF;
+	vht_cap_info->su_bformer =
+			cfg_default(CFG_VHT_SU_BEAMFORMER_CAP);
 
+	vht_cap_info->tx_bfee_ant_supp =
+			cfg_get(psoc, CFG_VHT_BEAMFORMEE_ANT_SUPP);
+
+	vht_cap_info->enable_txbf_20mhz =
+			cfg_get(psoc, CFG_VHT_ENABLE_TXBF_20MHZ);
 	vht_cap_info->ampdu_len =
 			cfg_get(psoc, CFG_VHT_MPDU_LEN);
+
 	vht_cap_info->ldpc_coding_cap =
-			cfg_get(psoc, CFG_VHT_LDPC_CODING_CAP);
+			cfg_get(psoc, CFG_RX_LDPC_ENABLE);
 	vht_cap_info->short_gi_80mhz =
-			cfg_get(psoc, CFG_VHT_SHORT_GI_80MHZ);
+			cfg_get(psoc, CFG_SHORT_GI_40MHZ);
 	vht_cap_info->short_gi_160mhz =
-			cfg_get(psoc, CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ);
+			cfg_get(psoc, CFG_SHORT_GI_40MHZ);
 	vht_cap_info->tx_stbc =
-			cfg_get(psoc, CFG_VHT_TXSTBC);
+			cfg_get(psoc, CFG_TX_STBC_ENABLE);
 	vht_cap_info->rx_stbc =
-			cfg_get(psoc, CFG_VHT_RXSTBC);
-	vht_cap_info->su_bformer =
-			cfg_get(psoc, CFG_VHT_SU_BEAMFORMER_CAP);
-	vht_cap_info->su_bformee =
-			cfg_get(psoc, CFG_VHT_SU_BEAMFORMEE_CAP);
+			cfg_get(psoc, CFG_RX_STBC_ENABLE);
+
+	if (vht_cap_info->enable_txbf_20mhz)
+		vht_cap_info->su_bformee =
+				cfg_default(CFG_VHT_SU_BEAMFORMEE_CAP);
+
 	vht_cap_info->mu_bformer =
-			cfg_get(psoc, CFG_VHT_MU_BEAMFORMER_CAP);
+			cfg_default(CFG_VHT_MU_BEAMFORMER_CAP);
+
 	vht_cap_info->enable_mu_bformee =
 			cfg_get(psoc, CFG_VHT_ENABLE_MU_BFORMEE_CAP_FEATURE);
-	vht_cap_info->txop_ps =
-			cfg_get(psoc, CFG_VHT_TXOP_PS);
 	vht_cap_info->ampdu_len_exponent =
 			cfg_get(psoc, CFG_VHT_AMPDU_LEN_EXPONENT);
-	vht_cap_info->rx_mcs_map =
-			cfg_get(psoc, CFG_VHT_RX_MCS_MAP);
-	vht_cap_info->tx_mcs_map =
-			cfg_get(psoc, CFG_VHT_TX_MCS_MAP);
-	vht_cap_info->basic_mcs_set =
-			cfg_get(psoc, CFG_VHT_BASIC_MCS_SET);
 	vht_cap_info->channel_width =
 			cfg_get(psoc, CFG_VHT_CHANNEL_WIDTH);
 	vht_cap_info->rx_mcs =
@@ -533,6 +541,17 @@ static void mlme_init_vht_cap_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_ENABLE_VHT_FOR_24GHZ);
 	vht_cap_info->vendor_24ghz_band =
 			cfg_get(psoc, CFG_ENABLE_VENDOR_VHT_FOR_24GHZ);
+	vht_cap_info->tx_bfee_sap =
+			cfg_get(psoc, CFG_VHT_ENABLE_TXBF_SAP_MODE);
+	vht_cap_info->vendor_vhtie =
+			cfg_get(psoc, CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE);
+
+	if (vht_cap_info->enable2x2)
+	vht_cap_info->enable_tx_su =
+			cfg_get(psoc, CFG_VHT_ENABLE_TX_SU_BEAM_FORMER);
+
+	if (vht_cap_info->enable2x2 && vht_cap_info->enable_tx_su)
+		vht_cap_info->num_soundingdim = NUM_OF_SOUNDING_DIMENSIONS;
 }
 
 static void mlme_init_rates_in_cfg(struct wlan_objmgr_psoc *psoc,

@@ -3260,6 +3260,18 @@ void hdd_pld_ipa_uc_shutdown_pipes(void);
  * Return: per_index_score within the max limit
  */
 uint32_t hdd_limit_max_per_index_score(uint32_t per_index_score);
+
+/**
+ * hdd_update_score_config - API to update candidate scoring related params
+ * configuration parameters
+ * @score_config: score config to update
+ * @cfg: config params
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_update_score_config(
+	struct scoring_config *score_config, struct hdd_context *hdd_ctx);
+
 /**
  * hdd_get_stainfo() - get stainfo for the specified peer
  * @astainfo: array of the station info in which the sta info

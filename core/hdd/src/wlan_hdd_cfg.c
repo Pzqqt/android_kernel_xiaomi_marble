@@ -1688,20 +1688,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_FIRST_SCAN_2G_ONLY_MIN,
 		     CFG_ENABLE_FIRST_SCAN_2G_ONLY_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_RX_STBC, WLAN_PARAM_Integer,
-		     struct hdd_config, enableRxSTBC,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_RX_STBC_DEFAULT,
-		     CFG_ENABLE_RX_STBC_MIN,
-		     CFG_ENABLE_RX_STBC_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_TX_STBC, WLAN_PARAM_Integer,
-		     struct hdd_config, enableTxSTBC,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_TX_STBC_DEFAULT,
-		     CFG_ENABLE_TX_STBC_MIN,
-		     CFG_ENABLE_TX_STBC_MAX),
-
 	REG_VARIABLE(CFG_SCAN_AGING_PARAM_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, scanAgingTimeout,
 		     VAR_FLAGS_OPTIONAL,
@@ -1744,48 +1730,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_IBSS_ADHOC_CHANNEL_24GHZ_DEFAULT,
 		     CFG_IBSS_ADHOC_CHANNEL_24GHZ_MIN,
 		     CFG_IBSS_ADHOC_CHANNEL_24GHZ_MAX),
-
-	REG_VARIABLE(CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE, WLAN_PARAM_Integer,
-		     struct hdd_config, enableTxBF,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_DEFAULT,
-		     CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_MIN,
-		     CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_subfee_vendor_vhtie,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_DEFAULT,
-		     CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_MIN,
-		     CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_MAX),
-
-	REG_VARIABLE(CFG_VHT_ENABLE_TXBF_SAP_MODE, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_txbf_sap_mode,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_VHT_ENABLE_TXBF_SAP_MODE_DEFAULT,
-		     CFG_VHT_ENABLE_TXBF_SAP_MODE_MIN,
-		     CFG_VHT_ENABLE_TXBF_SAP_MODE_MAX),
-
-	REG_VARIABLE(CFG_VHT_ENABLE_TXBF_IN_20MHZ, WLAN_PARAM_Integer,
-		     struct hdd_config, enableTxBFin20MHz,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_VHT_ENABLE_TXBF_IN_20MHZ_DEFAULT,
-		     CFG_VHT_ENABLE_TXBF_IN_20MHZ_MIN,
-		     CFG_VHT_ENABLE_TXBF_IN_20MHZ_MAX),
-
-	REG_VARIABLE(CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED, WLAN_PARAM_Integer,
-		     struct hdd_config, txBFCsnValue,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_DEFAULT,
-		     CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_MIN,
-		     CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_MAX),
-
-	REG_VARIABLE(CFG_VHT_ENABLE_TX_SU_BEAM_FORMER, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_su_tx_bformer,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_VHT_ENABLE_TX_SU_BEAM_FORMER_DEFAULT,
-		     CFG_VHT_ENABLE_TX_SU_BEAM_FORMER_MIN,
-		     CFG_VHT_ENABLE_TX_SU_BEAM_FORMER_MAX),
 
 	REG_VARIABLE(CFG_DISABLE_LDPC_WITH_TXBF_AP, WLAN_PARAM_Integer,
 		     struct hdd_config, disableLDPCWithTxbfAP,
@@ -4385,137 +4329,6 @@ QDF_STATUS hdd_hex_string_to_u16_array(char *str,
 }
 
 /**
- * hdd_update_vht_cap_in_cfg() - to update VHT cap in global CFG
- * @hdd_ctx: pointer to hdd context
- *
- * This API will update the VHT config in CFG after taking intersection
- * of INI and firmware capabilities provided reading CFG
- *
- * Return: true or false
- */
-static bool hdd_update_vht_cap_in_cfg(struct hdd_context *hdd_ctx)
-{
-	bool status = true;
-	uint32_t val;
-	struct hdd_config *config = hdd_ctx->config;
-	mac_handle_t mac_handle = hdd_ctx->mac_handle;
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_VHT_ENABLE_TXBF_20MHZ,
-			    config->enableTxBFin20MHz) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't set value for WNI_CFG_VHT_ENABLE_TXBF_20MHZ");
-	}
-	/* Based on cfg.ini, update the Basic MCS set, RX/TX MCS map
-	 * in the cfg.dat. Valid values are 0(MCS0-7), 1(MCS0-8), 2(MCS0-9)
-	 * we update only the least significant 2 bits in the
-	 * corresponding fields.
-	 */
-	if ((config->dot11Mode == eHDD_DOT11_MODE_AUTO) ||
-	    (config->dot11Mode == eHDD_DOT11_MODE_11ac_ONLY) ||
-	    (config->dot11Mode == eHDD_DOT11_MODE_11ac)) {
-		/* Currently shortGI40Mhz is used for shortGI80Mhz and 160MHz*/
-		if (sme_cfg_set_int(mac_handle, WNI_CFG_VHT_SHORT_GI_80MHZ,
-			config->ShortGI40MhzEnable) == QDF_STATUS_E_FAILURE) {
-			status = false;
-			hdd_err("Couldn't pass WNI_VHT_SHORT_GI_80MHZ to CFG");
-		}
-
-		if (sme_cfg_set_int(mac_handle,
-			WNI_CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ,
-			config->ShortGI40MhzEnable) == QDF_STATUS_E_FAILURE) {
-			status = false;
-			hdd_err("Couldn't pass SHORT_GI_160MHZ to CFG");
-		}
-
-		/* Hardware is capable of doing
-		 * 128K AMPDU in 11AC mode
-		 */
-		if (sme_cfg_set_int(mac_handle,
-			     WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
-			     config->fVhtAmpduLenExponent) ==
-			    QDF_STATUS_E_FAILURE) {
-			status = false;
-			hdd_err("Couldn't pass on WNI_CFG_VHT_AMPDU_LEN_EXPONENT to CFG");
-		}
-		/* Change MU Bformee only when TxBF is enabled */
-		if (config->enableTxBF) {
-			sme_cfg_get_int(mac_handle,
-				WNI_CFG_VHT_MU_BEAMFORMEE_CAP, &val);
-
-			if (val != config->enableMuBformee) {
-				if (sme_cfg_set_int(mac_handle,
-					    WNI_CFG_VHT_MU_BEAMFORMEE_CAP,
-					    config->enableMuBformee
-					    ) == QDF_STATUS_E_FAILURE) {
-					status = false;
-					hdd_err("Couldn't pass on WNI_CFG_VHT_MU_BEAMFORMEE_CAP to CFG");
-				}
-			}
-		}
-		if (sme_cfg_set_int(mac_handle, WNI_CFG_VHT_MAX_MPDU_LENGTH,
-			    config->vhtMpduLen) == QDF_STATUS_E_FAILURE) {
-			status = false;
-			hdd_err("Couldn't pass on WNI_CFG_VHT_MAX_MPDU_LENGTH to CFG");
-		}
-
-		if (config->enable2x2 && config->enable_su_tx_bformer) {
-			if (sme_cfg_set_int(mac_handle,
-					WNI_CFG_VHT_SU_BEAMFORMER_CAP,
-					config->enable_su_tx_bformer) ==
-				QDF_STATUS_E_FAILURE) {
-				status = false;
-				hdd_err("set SU_BEAMFORMER_CAP to CFG failed");
-			}
-			if (sme_cfg_set_int(mac_handle,
-					WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS,
-					NUM_OF_SOUNDING_DIMENSIONS) ==
-				QDF_STATUS_E_FAILURE) {
-				status = false;
-				hdd_err("failed to set NUM_OF_SOUNDING_DIM");
-			}
-		}
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_VHT_RXSTBC,
-			    config->enableRxSTBC) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_VHT_RXSTBC to CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_VHT_TXSTBC,
-			    config->enableTxSTBC) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_VHT_TXSTBC to CFG");
-	}
-
-	/* first get HW RX LDPC capability */
-	if (sme_cfg_get_int(mac_handle, WNI_CFG_VHT_LDPC_CODING_CAP, &val) ==
-							QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Could not get WNI_CFG_VHT_LDPC_CODING_CAP");
-	}
-
-	/* enable RX LDPC only when both INI and HW are enabled */
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_VHT_LDPC_CODING_CAP,
-				config->enable_rx_ldpc && val) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_VHT_LDPC_CODING_CAP to CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle,
-		WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
-		config->txBFCsnValue) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED to CFG");
-	}
-	return status;
-
-}
-
-/**
  * hdd_update_config_cfg() - API to update INI setting based on hw/fw caps
  * @hdd_ctx: pointer to hdd_ctx
  *
@@ -4537,11 +4350,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 	 * During the initialization both 2G and 5G capabilities should be same.
 	 * So read 5G HT capablity and update 2G and 5G capablities.
 	 */
-
-	if (!hdd_update_vht_cap_in_cfg(hdd_ctx)) {
-		status = false;
-		hdd_err("Couldn't set VHT CAP in cfg");
-	}
 
 	if (0 != hdd_update_he_cap_in_cfg(hdd_ctx)) {
 		status = false;
@@ -4638,7 +4446,12 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->enableMCCAdaptiveScheduler;
 	user_cfg->max_concurrent_active_sessions =
 		hdd_ctx->config->gMaxConcurrentActiveSessions;
-	user_cfg->enable2x2 = hdd_ctx->config->enable2x2;
+
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc,
+					     &user_cfg->enable2x2);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable2x2");
+
 	user_cfg->mcc_to_scc_switch_mode =
 		hdd_ctx->config->WlanMccToSccSwitchMode;
 	user_cfg->sub_20_mhz_enabled = cds_is_sub_20_mhz_enabled();
@@ -4785,20 +4598,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	/* Remaining config params not obtained from registry
 	 * On RF EVB beacon using channel 1.
 	 */
-	smeConfig->csrConfig.nVhtChannelWidth = pConfig->vhtChannelWidth;
-	smeConfig->csrConfig.enableTxBF = pConfig->enableTxBF;
-	smeConfig->csrConfig.enable_subfee_vendor_vhtie =
-				pConfig->enable_subfee_vendor_vhtie;
-
-	smeConfig->csrConfig.enable_txbf_sap_mode =
-		pConfig->enable_txbf_sap_mode;
-	smeConfig->csrConfig.enable2x2 = pConfig->enable2x2;
-	smeConfig->csrConfig.enableVhtFor24GHz = pConfig->enableVhtFor24GHzBand;
-	smeConfig->csrConfig.vendor_vht_sap =
-		pConfig->enable_sap_vendor_vht;
-	smeConfig->csrConfig.enableMuBformee = pConfig->enableMuBformee;
-	smeConfig->csrConfig.enableVhtpAid = pConfig->enableVhtpAid;
-	smeConfig->csrConfig.enableVhtGid = pConfig->enableVhtGid;
 	smeConfig->csrConfig.enableHtSmps = pConfig->enableHtSmps;
 	smeConfig->csrConfig.htSmps = pConfig->htSmps;
 	/* This param cannot be configured from INI */
@@ -4910,7 +4709,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	smeConfig->csrConfig.enable_tx_ldpc = pConfig->enable_tx_ldpc;
 	smeConfig->csrConfig.enable_rx_ldpc = pConfig->enable_rx_ldpc;
-	smeConfig->csrConfig.enable_vht20_mcs9 = pConfig->enable_vht20_mcs9;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	smeConfig->csrConfig.cc_switch_mode = pConfig->WlanMccToSccSwitchMode;
 #endif
@@ -5146,17 +4944,16 @@ void hdd_get_pmkid_modes(struct hdd_context *hdd_ctx,
 QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_config *hdd_config = hdd_ctx->config;
-	uint32_t temp = 0;
 	uint32_t rx_supp_data_rate, tx_supp_data_rate;
 	bool status = true;
 	QDF_STATUS qdf_status;
 	struct mlme_ht_capabilities_info ht_cap_info;
 	uint8_t mcs_set[SIZE_OF_SUPPORTED_MCS_SET] = {0};
 	uint8_t mcs_set_temp[SIZE_OF_SUPPORTED_MCS_SET];
-	uint32_t val, val32;
+	uint32_t val;
 	uint8_t enable2x2;
 	mac_handle_t mac_handle;
+	bool bval = 0;
 
 	if ((nss == 2) && (hdd_ctx->num_rf_chains != 2)) {
 		hdd_err("No support for 2 spatial streams");
@@ -5165,7 +4962,11 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 
 	enable2x2 = (nss == 1) ? 0 : 1;
 
-	if (hdd_config->enable2x2 == enable2x2) {
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable2x2");
+
+	if (bval == enable2x2) {
 		hdd_debug("NSS same as requested");
 		return QDF_STATUS_SUCCESS;
 	}
@@ -5176,9 +4977,11 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	hdd_config->enable2x2 = enable2x2;
+	status = ucfg_mlme_set_vht_enable2x2(hdd_ctx->psoc, enable2x2);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable2x2");
 
-	if (!hdd_config->enable2x2) {
+	if (!enable2x2) {
 		/* 1x1 */
 		rx_supp_data_rate = VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
 		tx_supp_data_rate = VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
@@ -5189,19 +4992,20 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	}
 
 	/* Update Rx Highest Long GI data Rate */
-	if (sme_cfg_set_int(mac_handle,
-			    WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE,
-			    rx_supp_data_rate) == QDF_STATUS_E_FAILURE) {
+	qdf_status =
+		ucfg_mlme_cfg_set_vht_rx_supp_data_rate(hdd_ctx->psoc,
+							rx_supp_data_rate);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		hdd_err("Failed to set rx_supp_data_rate");
 		status = false;
-		hdd_err("Could not pass on WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE to CFG");
 	}
-
 	/* Update Tx Highest Long GI data Rate */
-	if (sme_cfg_set_int(mac_handle,
-			    WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE,
-			    tx_supp_data_rate) == QDF_STATUS_E_FAILURE) {
+	qdf_status =
+		ucfg_mlme_cfg_set_vht_tx_supp_data_rate(hdd_ctx->psoc,
+							tx_supp_data_rate);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		hdd_err("Failed to set tx_supp_data_rate");
 		status = false;
-		hdd_err("Could not pass on WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE to CFG");
 	}
 
 	qdf_status = ucfg_mlme_get_ht_cap_info(hdd_ctx->psoc, &ht_cap_info);
@@ -5210,12 +5014,15 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 		status = false;
 	}
 
-	if (!(hdd_ctx->ht_tx_stbc_supported && hdd_config->enable2x2)) {
+	if (!(hdd_ctx->ht_tx_stbc_supported && enable2x2)) {
 		ht_cap_info.tx_stbc = 0;
 	} else {
-		sme_cfg_get_int(mac_handle, WNI_CFG_VHT_TXSTBC, &val32);
-		hdd_debug("STBC %d", val32);
-		ht_cap_info.tx_stbc = val32;
+		qdf_status =
+			ucfg_mlme_cfg_get_vht_tx_stbc(hdd_ctx->psoc, &bval);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			hdd_err("Failed to get vht_tx_stbc");
+			ht_cap_info.tx_stbc = bval;
+		}
 	}
 
 	qdf_status = ucfg_mlme_set_ht_cap_info(hdd_ctx->psoc, ht_cap_info);
@@ -5224,43 +5031,10 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 		hdd_err("Could not set the HT_CAP_INFO");
 	}
 
-	sme_cfg_get_int(mac_handle, WNI_CFG_VHT_BASIC_MCS_SET, &temp);
-	temp = (temp & 0xFFFC) | hdd_config->vhtRxMCS;
-	if (hdd_config->enable2x2)
-		temp = (temp & 0xFFF3) | (hdd_config->vhtRxMCS2x2 << 2);
-	else
-		temp |= 0x000C;
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_VHT_BASIC_MCS_SET,
-			    temp) == QDF_STATUS_E_FAILURE) {
+	status = ucfg_mlme_update_nss_vht_cap(hdd_ctx->psoc);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		hdd_err("Failed to set update_nss_vht_cap");
 		status = false;
-		hdd_err("Could not pass on WNI_CFG_VHT_BASIC_MCS_SET to CFG");
-	}
-
-	sme_cfg_get_int(mac_handle, WNI_CFG_VHT_RX_MCS_MAP, &temp);
-	temp = (temp & 0xFFFC) | hdd_config->vhtRxMCS;
-	if (hdd_config->enable2x2)
-		temp = (temp & 0xFFF3) | (hdd_config->vhtRxMCS2x2 << 2);
-	else
-		temp |= 0x000C;
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_VHT_RX_MCS_MAP,
-			    temp) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Could not pass on WNI_CFG_VHT_RX_MCS_MAP to CFG");
-	}
-
-	sme_cfg_get_int(mac_handle, WNI_CFG_VHT_TX_MCS_MAP, &temp);
-	temp = (temp & 0xFFFC) | hdd_config->vhtTxMCS;
-	if (hdd_config->enable2x2)
-		temp = (temp & 0xFFF3) | (hdd_config->vhtTxMCS2x2 << 2);
-	else
-		temp |= 0x000C;
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_VHT_TX_MCS_MAP,
-			    temp) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Could not pass on WNI_CFG_VHT_TX_MCS_MAP to CFG");
 	}
 
 #define WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES 0xff
@@ -5269,7 +5043,7 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 			mcs_set_temp, &val);
 
 	mcs_set[0] = mcs_set_temp[0];
-	if (hdd_config->enable2x2)
+	if (enable2x2)
 		for (val = 0; val < nss; val++)
 			mcs_set[val] = WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES;
 

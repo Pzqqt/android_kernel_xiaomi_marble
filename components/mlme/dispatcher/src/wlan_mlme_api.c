@@ -1230,6 +1230,21 @@ wlan_mlme_cfg_set_vht_chan_width(struct wlan_objmgr_psoc *psoc, uint8_t value)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS
+wlan_mlme_cfg_get_vht_chan_width(struct wlan_objmgr_psoc *psoc, uint8_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.vht_caps.vht_cap_info.supp_chan_width;
+
+	return QDF_STATUS_SUCCESS;
+}
 
 QDF_STATUS
 wlan_mlme_cfg_set_vht_ldpc_coding_cap(struct wlan_objmgr_psoc *psoc,
@@ -1244,6 +1259,39 @@ wlan_mlme_cfg_set_vht_ldpc_coding_cap(struct wlan_objmgr_psoc *psoc,
 	}
 
 	mlme_obj->cfg.vht_caps.vht_cap_info.ldpc_coding_cap = value;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_cfg_set_short_gi_160_mhz(struct wlan_objmgr_psoc *psoc,
+				   bool value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_obj->cfg.vht_caps.vht_cap_info.short_gi_160mhz = value;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_cfg_get_short_gi_160_mhz(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.vht_caps.vht_cap_info.short_gi_160mhz;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1264,6 +1312,21 @@ wlan_mlme_cfg_get_vht_tx_stbc(struct wlan_objmgr_psoc *psoc, bool *value)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS
+wlan_mlme_cfg_get_vht_rx_stbc(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.vht_caps.vht_cap_info.rx_stbc;
+
+	return QDF_STATUS_SUCCESS;
+}
 
 QDF_STATUS
 wlan_mlme_cfg_set_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
@@ -1278,6 +1341,23 @@ wlan_mlme_cfg_set_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
 	}
 
 	mlme_obj->cfg.vht_caps.vht_cap_info.tx_bfee_ant_supp = value;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_cfg_get_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
+				       uint8_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.vht_caps.vht_cap_info.tx_bfee_ant_supp;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1414,6 +1494,38 @@ wlan_mlme_cfg_set_vht_basic_mcs_set(struct wlan_objmgr_psoc *psoc,
 	}
 
 	mlme_obj->cfg.vht_caps.vht_cap_info.basic_mcs_set = value;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_get_vht_enable_tx_bf(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.vht_caps.vht_cap_info.enable_txbf_20mhz;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_get_vht_enable_tx_su_beam(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.vht_caps.vht_cap_info.enable_tx_su;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1607,6 +1719,145 @@ wlan_mlme_get_vendor_vht_for_24ghz(struct wlan_objmgr_psoc *psoc, bool *value)
 	}
 
 	*value = mlme_obj->cfg.vht_caps.vht_cap_info.vendor_24ghz_band;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc,
+			       struct wma_tgt_vht_cap *cfg)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+	struct mlme_vht_capabilities_info vht_cap_info;
+	uint32_t value = 0;
+	bool hw_rx_ldpc_enabled;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vht_cap_info = mlme_obj->cfg.vht_caps.vht_cap_info;
+
+	/*
+	 * VHT max MPDU length:
+	 * override if user configured value is too high
+	 * that the target cannot support
+	 */
+	if (vht_cap_info.ampdu_len > cfg->vht_max_mpdu)
+		vht_cap_info.ampdu_len = cfg->vht_max_mpdu;
+
+	value = (CFG_VHT_BASIC_MCS_SET_STADEF & VHT_MCS_1x1) |
+		vht_cap_info.basic_mcs_set;
+	if (vht_cap_info.enable2x2)
+		value = (value & VHT_MCS_2x2) | (vht_cap_info.rx_mcs2x2 << 2);
+	vht_cap_info.basic_mcs_set = value;
+
+	value = (CFG_VHT_RX_MCS_MAP_STADEF & VHT_MCS_1x1) | vht_cap_info.rx_mcs;
+	if (vht_cap_info.enable2x2)
+		value = (value & VHT_MCS_2x2) | (vht_cap_info.rx_mcs2x2 << 2);
+	vht_cap_info.rx_mcs_map = value;
+
+	value = (CFG_VHT_TX_MCS_MAP_STADEF & VHT_MCS_1x1) | vht_cap_info.tx_mcs;
+	if (vht_cap_info.enable2x2)
+		value = (value & VHT_MCS_2x2) | (vht_cap_info.tx_mcs2x2 << 2);
+	vht_cap_info.tx_mcs_map = value;
+
+	 /* Set HW RX LDPC capability */
+	hw_rx_ldpc_enabled = !!cfg->vht_rx_ldpc;
+	if (hw_rx_ldpc_enabled != vht_cap_info.ldpc_coding_cap)
+		vht_cap_info.ldpc_coding_cap = hw_rx_ldpc_enabled;
+
+	/* set the Guard interval 80MHz */
+	if (vht_cap_info.short_gi_80mhz && !cfg->vht_short_gi_80)
+		vht_cap_info.short_gi_80mhz = cfg->vht_short_gi_80;
+
+	/* Set VHT TX STBC cap */
+	if (vht_cap_info.tx_stbc && !cfg->vht_tx_stbc)
+		vht_cap_info.tx_stbc = cfg->vht_tx_stbc;
+
+	/* Set VHT RX STBC cap */
+	if (vht_cap_info.rx_stbc && !cfg->vht_rx_stbc)
+		vht_cap_info.rx_stbc = cfg->vht_rx_stbc;
+
+	/* Set VHT SU Beamformer cap */
+	if (vht_cap_info.su_bformer && !cfg->vht_su_bformer)
+		vht_cap_info.su_bformer = cfg->vht_su_bformer;
+
+	/* check and update SU BEAMFORMEE capabality */
+	if (vht_cap_info.enable_txbf_20mhz && !cfg->vht_su_bformee)
+		vht_cap_info.su_bformee = cfg->vht_su_bformee;
+
+	/* Set VHT MU Beamformer cap */
+	if (vht_cap_info.mu_bformer && !cfg->vht_mu_bformer)
+		vht_cap_info.mu_bformer = cfg->vht_mu_bformer;
+
+	/* Set VHT MU Beamformee cap */
+	if (vht_cap_info.enable_mu_bformee && !cfg->vht_mu_bformee)
+		vht_cap_info.enable_mu_bformee = cfg->vht_mu_bformee;
+
+	/*
+	 * VHT max AMPDU len exp:
+	 * override if user configured value is too high
+	 * that the target cannot support.
+	 * Even though Rome publish ampdu_len=7, it can
+	 * only support 4 because of some h/w bug.
+	 */
+	if (vht_cap_info.ampdu_len_exponent > cfg->vht_max_ampdu_len_exp)
+		vht_cap_info.ampdu_len_exponent = cfg->vht_max_ampdu_len_exp;
+
+	/* Set VHT TXOP PS CAP */
+	if (vht_cap_info.txop_ps && !cfg->vht_txop_ps)
+		vht_cap_info.txop_ps = cfg->vht_txop_ps;
+
+	/* set the Guard interval 160MHz */
+	if (vht_cap_info.short_gi_160mhz && !cfg->vht_short_gi_160)
+		vht_cap_info.short_gi_160mhz = cfg->vht_short_gi_160;
+
+	return QDF_STATUS_SUCCESS;
+
+}
+
+QDF_STATUS mlme_update_nss_vht_cap(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+	struct mlme_vht_capabilities_info vht_cap_info;
+	uint32_t temp = 0;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vht_cap_info = mlme_obj->cfg.vht_caps.vht_cap_info;
+
+	temp = vht_cap_info.basic_mcs_set;
+	temp = (temp & 0xFFFC) | vht_cap_info.rx_mcs;
+	if (vht_cap_info.enable2x2)
+		temp = (temp & 0xFFF3) | (vht_cap_info.rx_mcs2x2 << 2);
+	else
+		temp |= 0x000C;
+
+	vht_cap_info.basic_mcs_set = temp;
+
+	temp = vht_cap_info.rx_mcs_map;
+	temp = (temp & 0xFFFC) | vht_cap_info.rx_mcs;
+	if (vht_cap_info.enable2x2)
+		temp = (temp & 0xFFF3) | (vht_cap_info.rx_mcs2x2 << 2);
+	else
+		temp |= 0x000C;
+
+	vht_cap_info.rx_mcs_map = temp;
+
+	temp = vht_cap_info.tx_mcs_map;
+	temp = (temp & 0xFFFC) | vht_cap_info.tx_mcs;
+	if (vht_cap_info.enable2x2)
+		temp = (temp & 0xFFF3) | (vht_cap_info.tx_mcs2x2 << 2);
+	else
+		temp |= 0x000C;
+
+	vht_cap_info.tx_mcs_map = temp;
 
 	return QDF_STATUS_SUCCESS;
 }

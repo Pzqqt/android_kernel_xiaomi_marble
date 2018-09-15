@@ -4185,6 +4185,8 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 {
 	tsap_config_t *sap_cfg = &ap_adapter->session.ap.sap_config;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
+	uint8_t ch_width;
+	QDF_STATUS status;
 
 	/* Fixed channel 11AC override:
 	 * 11AC override in qcacld is introduced for following reasons:
@@ -4218,8 +4220,12 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 			sap_cfg->SapHw_mode = eCSR_DOT11_MODE_11ac;
 
 		if (sap_cfg->channel >= 36) {
-			sap_cfg->ch_width_orig =
-					hdd_ctx->config->vhtChannelWidth;
+			status =
+			    ucfg_mlme_get_vht_channel_width(hdd_ctx->psoc,
+							    &ch_width);
+			if (!QDF_IS_STATUS_SUCCESS(status))
+				hdd_err("Failed to set channel_width");
+			sap_cfg->ch_width_orig = ch_width;
 		} else {
 			/*
 			 * Allow 40 Mhz in 2.4 Ghz only if indicated by
@@ -4557,6 +4563,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	bool val;
 	uint32_t auto_channel_select_weight =
 		cfg_default(CFG_AUTO_CHANNEL_SELECT_WEIGHT);
+	bool bval = false;
 
 	hdd_enter();
 
@@ -5008,8 +5015,11 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	if (!cds_is_sub_20_mhz_enabled())
 		wlan_hdd_set_sap_hwmode(adapter);
 
-	if (IS_24G_CH(pConfig->channel) &&
-	    hdd_ctx->config->enableVhtFor24GHzBand &&
+	status = ucfg_mlme_get_vht_for_24ghz(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		hdd_err("Failed to get vht_for_24ghz");
+
+	if (IS_24G_CH(pConfig->channel) && bval &&
 	    (pConfig->SapHw_mode == eCSR_DOT11_MODE_11n ||
 	    pConfig->SapHw_mode == eCSR_DOT11_MODE_11n_ONLY))
 		pConfig->SapHw_mode = eCSR_DOT11_MODE_11ac;

@@ -31,13 +31,38 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT SUPPORTED CHAN WIDTH SET")
 
-#define CFG_VHT_BEAMFORMEE_ANT_SUPP CFG_UINT( \
-		"tx_bfee_ant_supp", \
+/*
+ * <ini>
+ * gTxBFCsnValue - ini to set VHT/HE STS Caps field
+ * @Min: 0
+ * @Max: 7
+ * @Default: 7
+ *
+ * This ini is used to configure the STS capability shown in AC/AX mode
+ * MGMT frame IE, the final STS field shown in VHT/HE IE will be calculated
+ * by MIN of (INI set, target report value). Only if gTxBFEnable is enabled
+ * and SU/MU BEAMFORMEE Caps is shown, then STS Caps make sense.
+ *
+ * Related: gTxBFEnable.
+ *
+ * Supported Feature: STA/SAP
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_VHT_BEAMFORMEE_ANT_SUPP CFG_INI_UINT( \
+		"txBFCsnValue", \
 		0, \
-		8, \
-		8, \
+		7, \
+		7, \
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT BEAMFORMEE ANTENNA SUPPORTED CAP")
+
+#define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER CFG_INI_BOOL( \
+		"gEnableTxSUBeamformer", \
+		0, \
+		"vht tx su beam former")
 
 #define CFG_VHT_NUM_SOUNDING_DIMENSIONS CFG_UINT( \
 		"num_soundingdim", \
@@ -86,79 +111,30 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT TX SUPP DATA RATE")
 
-#define CFG_VHT_ENABLE_TXBF_20MHZ CFG_BOOL( \
-		"enable_txbf_20mhz", \
+#define CFG_VHT_ENABLE_TXBF_20MHZ CFG_INI_BOOL( \
+		"gTxBFEnable", \
 		0, \
 		"VHT ENABLE TXBF 20MHZ")
 
-#define CFG_VHT_LDPC_CODING_CAP CFG_INI_BOOL( \
-		"ldpc_coding_cap", \
-		0, \
-		"VHT LDPC CODING CAP")
-
-#define CFG_VHT_SHORT_GI_80MHZ CFG_INI_BOOL( \
-		"short_gi_80mhz", \
-		1, \
-		"VHT SHORT GI 80MHZ")
-
-#define CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ CFG_INI_BOOL( \
-		"short_gi_160mhz", \
-		0, \
-		"VHT SHORT GI 160 AND 80 PLUS 80MHZ")
-
-#define CFG_VHT_TXSTBC CFG_INI_BOOL( \
-		"tx_stbc", \
-		0, \
-		"VHT Tx STBC")
-
-#define CFG_VHT_RXSTBC CFG_INI_BOOL( \
-		"rx_stbc", \
-		1, \
-		"VHT Rx STBC")
-
-#define CFG_VHT_SU_BEAMFORMER_CAP CFG_INI_BOOL( \
+#define CFG_VHT_SU_BEAMFORMER_CAP CFG_BOOL( \
 		"su_bformer", \
 		0, \
 		"VHT SU BEAMFORMER CAP")
 
-#define CFG_VHT_SU_BEAMFORMEE_CAP CFG_INI_BOOL( \
+#define CFG_VHT_SU_BEAMFORMEE_CAP CFG_BOOL( \
 		"su_bformee", \
 		1, \
 		"VHT SU BEAMFORMEE CAP")
 
-#define CFG_VHT_MU_BEAMFORMER_CAP CFG_INI_BOOL( \
+#define CFG_VHT_MU_BEAMFORMER_CAP CFG_BOOL( \
 		"mu_bformer", \
 		0, \
 		"VHT MU BEAMFORMER CAP")
 
-#define CFG_VHT_TXOP_PS CFG_INI_BOOL( \
+#define CFG_VHT_TXOP_PS CFG_BOOL( \
 		"txop_ps", \
 		0, \
 		"VHT TXOP PS")
-
-#define CFG_VHT_RX_MCS_MAP CFG_INI_UINT( \
-		"rx_mcs_map", \
-		0, \
-		65535, \
-		65534, \
-		CFG_VALUE_OR_DEFAULT, \
-		"VHT RX MCS MAP")
-
-#define CFG_VHT_TX_MCS_MAP CFG_INI_UINT( \
-		"tx_mcs_map", \
-		0, \
-		65535, \
-		65534, \
-		CFG_VALUE_OR_DEFAULT, \
-		"VHT TX MCS MAP")
-
-#define CFG_VHT_BASIC_MCS_SET CFG_INI_UINT( \
-		"basic_mcs_set", \
-		0, \
-		65535, \
-		65534, \
-		CFG_VALUE_OR_DEFAULT, \
-		"VHT BASIC MCS SET")
 
 /*
  * <ini>
@@ -427,16 +403,44 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT MPDU Length")
 
+/*
+ * Enable / Disable Tx beamformee in SAP mode
+ * Default: Disable
+ */
+#define CFG_VHT_ENABLE_TXBF_SAP_MODE CFG_INI_BOOL( \
+			"gEnableTxBFeeSAP", \
+			0, \
+			"Enable tx bf sap mode")
+
+/*
+ * <ini>
+ * enable_subfee_vendor_vhtie - ini to enable/disable SU Bformee in vendor VHTIE
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable SU Bformee in vendor vht ie if gTxBFEnable
+ * is enabled. if gTxBFEnable is 0 this will not have any effect.
+ *
+ * Related: gTxBFEnable.
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE CFG_INI_BOOL( \
+			"enable_subfee_vendor_vhtie", \
+			0, \
+			"Enable subfee in vendor vht ie")
+
 #define CFG_VHT_CAPS_ALL \
 	CFG(CFG_VHT_SUPP_CHAN_WIDTH) \
-	CFG(CFG_VHT_LDPC_CODING_CAP) \
-	CFG(CFG_VHT_SHORT_GI_80MHZ) \
-	CFG(CFG_VHT_SHORT_GI_160_AND_80_PLUS_80MHZ) \
-	CFG(CFG_VHT_TXSTBC) \
-	CFG(CFG_VHT_RXSTBC) \
 	CFG(CFG_VHT_SU_BEAMFORMER_CAP) \
 	CFG(CFG_VHT_SU_BEAMFORMEE_CAP) \
 	CFG(CFG_VHT_BEAMFORMEE_ANT_SUPP) \
+	CFG(CFG_VHT_ENABLE_TX_SU_BEAM_FORMER) \
 	CFG(CFG_VHT_NUM_SOUNDING_DIMENSIONS) \
 	CFG(CFG_VHT_MU_BEAMFORMER_CAP) \
 	CFG(CFG_VHT_TXOP_PS) \
@@ -444,11 +448,8 @@
 	CFG(CFG_VHT_LINK_ADAPTATION_CAP) \
 	CFG(CFG_VHT_RX_ANT_PATTERN) \
 	CFG(CFG_VHT_TX_ANT_PATTERN) \
-	CFG(CFG_VHT_RX_MCS_MAP) \
-	CFG(CFG_VHT_TX_MCS_MAP) \
 	CFG(CFG_VHT_RX_SUPP_DATA_RATE) \
 	CFG(CFG_VHT_TX_SUPP_DATA_RATE) \
-	CFG(CFG_VHT_BASIC_MCS_SET) \
 	CFG(CFG_VHT_ENABLE_TXBF_20MHZ) \
 	CFG(CFG_VHT_CHANNEL_WIDTH) \
 	CFG(CFG_VHT_ENABLE_RX_MCS_8_9) \
@@ -463,6 +464,8 @@
 	CFG(CFG_ENABLE_VHT_FOR_24GHZ) \
 	CFG(CFG_ENABLE_VENDOR_VHT_FOR_24GHZ) \
 	CFG(CFG_VHT_AMPDU_LEN_EXPONENT) \
-	CFG(CFG_VHT_MPDU_LEN)
+	CFG(CFG_VHT_MPDU_LEN) \
+	CFG(CFG_VHT_ENABLE_TXBF_SAP_MODE) \
+	CFG(CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE)
 
 #endif /* __CFG_MLME_VHT_CAPS_H */

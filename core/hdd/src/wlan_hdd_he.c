@@ -56,8 +56,9 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	uint8_t chan_width;
 	QDF_STATUS status;
 	tDot11fIEhe_cap *he_cap = &cfg->he_cap;
-	struct hdd_config *config = hdd_ctx->config;
 	tDot11fIEhe_cap he_cap_ini = {0};
+	uint8_t value = 0;
+	bool bval;
 
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_CONTROL, he_cap->htc_he);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TWT_REQUESTOR,
@@ -135,7 +136,13 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 			   he_cap->midamble_tx_rx_max_nsts);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_LTF_NDP,
 			   he_cap->he_4x_ltf_3200_gi_ndp);
-	if (config->enableRxSTBC) {
+
+	status = ucfg_mlme_cfg_get_vht_rx_stbc(hdd_ctx->psoc,
+						     &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable_rx_su_beam");
+
+	if (bval) {
 		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_STBC_LT80,
 				   he_cap->rx_stbc_lt_80mhz);
 		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_STBC_GT80,
@@ -144,7 +151,13 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_STBC_LT80, 0);
 		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_STBC_GT80, 0);
 	}
-	if (config->enableTxSTBC) {
+
+	status = ucfg_mlme_cfg_get_vht_tx_stbc(hdd_ctx->psoc,
+					       &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable_tx_su_beam");
+
+	if (bval) {
 		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TX_STBC_LT80,
 				   he_cap->tx_stbc_lt_80mhz);
 		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TX_STBC_GT80,
@@ -159,7 +172,12 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_DCM_RX, he_cap->dcm_enc_rx);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MU_PPDU, he_cap->ul_he_mu);
 
-	if (config->enable_su_tx_bformer) {
+	status = ucfg_mlme_get_vht_enable_tx_su_beam(hdd_ctx->psoc,
+						     &bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable_tx_su_beam");
+
+	if (bval) {
 		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_SU_BEAMFORMER,
 				he_cap->su_beamformer);
 		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NUM_SOUND_LT80,
@@ -175,7 +193,11 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MU_BEAMFORMER, 0);
 	}
 
-	if (config->enableTxBF) {
+	status = ucfg_mlme_get_vht_enable_tx_bf(hdd_ctx->psoc,
+						&bval);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get vht_enable_tx_bf");
+	if (bval) {
 		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_SU_BEAMFORMEE,
 				he_cap->su_beamformee);
 		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_BFEE_STS_LT80,
@@ -259,7 +281,12 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	if (status == QDF_STATUS_E_FAILURE)
 		hdd_alert("could not set 5G HE PPET");
 
-	he_cap_ini.bfee_sts_lt_80 = config->txBFCsnValue;
+	status = ucfg_mlme_cfg_get_vht_tx_bfee_ant_supp(hdd_ctx->psoc,
+							&value);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get tx_bfee_ant_supp");
+
+	he_cap_ini.bfee_sts_lt_80 = value;
 	sme_update_tgt_he_cap(hdd_ctx->mac_handle, cfg, &he_cap_ini);
 }
 

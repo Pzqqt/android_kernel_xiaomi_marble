@@ -805,7 +805,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		pe_debug("persona - %d, nss - %d",
 				session->pePersona, session->vdev_nss);
 		session->nss = session->vdev_nss;
-		if (!mac_ctx->roam.configParam.enable2x2)
+		if (!mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable2x2)
 			session->nss = 1;
 		/*
 		 * Allocate memory for the array of

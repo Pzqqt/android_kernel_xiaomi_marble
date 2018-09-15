@@ -4468,78 +4468,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_MCC_ADATIVE_SCHEDULER_ENABLED_MAX              (1)
 #define CFG_ENABLE_MCC_ADATIVE_SCHEDULER_ENABLED_DEFAULT          (1)
 
-#define CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE         "gTxBFEnable"
-#define CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_MIN     (WNI_CFG_VHT_SU_BEAMFORMEE_CAP_STAMIN)
-#define CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_MAX     (WNI_CFG_VHT_SU_BEAMFORMEE_CAP_STAMAX)
-#define CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_DEFAULT (WNI_CFG_VHT_SU_BEAMFORMEE_CAP_STADEF)
-
-/*
- * <ini>
- * enable_subfee_vendor_vhtie - ini to enable/disable SU Bformee in vendor VHTIE
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable SU Bformee in vendor vht ie if gTxBFEnable
- * is enabled. if gTxBFEnable is 0 this will not have any effect.
- *
- * Related: gTxBFEnable.
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_NAME    "enable_subfee_vendor_vhtie"
-#define CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_MIN     (0)
-#define CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_MAX     (1)
-#define CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_DEFAULT (1)
-
-/*
- * Enable / Disable Tx beamformee in SAP mode
- * Default: Disable
- */
-#define CFG_VHT_ENABLE_TXBF_SAP_MODE         "gEnableTxBFeeSAP"
-#define CFG_VHT_ENABLE_TXBF_SAP_MODE_MIN     (0)
-#define CFG_VHT_ENABLE_TXBF_SAP_MODE_MAX     (1)
-#define CFG_VHT_ENABLE_TXBF_SAP_MODE_DEFAULT (0)
-
-/*
- * <ini>
- * gTxBFCsnValue - ini to set VHT/HE STS Caps field
- * @Min: 0
- * @Max: 7
- * @Default: 7
- *
- * This ini is used to configure the STS capability shown in AC/AX mode
- * MGMT frame IE, the final STS field shown in VHT/HE IE will be calculated
- * by MIN of (INI set, target report value). Only if gTxBFEnable is enabled
- * and SU/MU BEAMFORMEE Caps is shown, then STS Caps make sense.
- *
- * Related: gTxBFEnable.
- *
- * Supported Feature: STA/SAP
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED         "gTxBFCsnValue"
-#define CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_MIN     (WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_STAMIN)
-#define CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_MAX     (WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_STAMAX - 1)
-#define CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_DEFAULT (WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_STADEF - 1)
-
-#define CFG_VHT_ENABLE_TXBF_IN_20MHZ               "gEnableTxBFin20MHz"
-#define CFG_VHT_ENABLE_TXBF_IN_20MHZ_MIN           (0)
-#define CFG_VHT_ENABLE_TXBF_IN_20MHZ_MAX           (1)
-#define CFG_VHT_ENABLE_TXBF_IN_20MHZ_DEFAULT       (0)
-
-#define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER         "gEnableTxSUBeamformer"
-#define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER_MIN     (0)
-#define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER_MAX     (1)
-#define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER_DEFAULT (0)
-
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP             "gDisableLDPCWithTxbfAP"
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP_MIN         (0)
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP_MAX         (1)
@@ -8202,30 +8130,12 @@ struct hdd_config {
 	uint32_t bad_peer_tput_ieee80211ac;
 	uint32_t bad_peer_limit_ieee80211ac;
 #endif
-	uint8_t vhtChannelWidth;
-	uint8_t vhtRxMCS;
-	uint8_t vhtTxMCS;
-	bool enableTxBF;
-	bool enable_subfee_vendor_vhtie;
-	bool enable_txbf_sap_mode;
-	bool enable_vht20_mcs9;
-	uint8_t txBFCsnValue;
-	bool enable_su_tx_bformer;
-	uint8_t vhtRxMCS2x2;
-	uint8_t vhtTxMCS2x2;
-	bool enable2x2;
 	uint32_t vdev_type_nss_2g;
 	uint32_t vdev_type_nss_5g;
-	bool enableMuBformee;
-	bool enableVhtpAid;
-	bool enableVhtGid;
-	bool enableTxBFin20MHz;
 	uint8_t enableAmpduPs;
 	uint8_t enableHtSmps;
 	uint8_t htSmps;
 	bool enableFirstScan2GOnly;
-	bool enableRxSTBC;
-	bool enableTxSTBC;
 	uint8_t enable_tx_ldpc;
 	uint8_t enable_rx_ldpc;
 	bool prevent_link_down;
@@ -8234,8 +8144,6 @@ struct hdd_config {
 	uint8_t enableMCCAdaptiveScheduler;
 	bool enableSSR;
 	bool enable_data_stall_det;
-	bool enableVhtFor24GHzBand;
-	bool enable_sap_vendor_vht;
 	bool bFastRoamInConIniFeatureEnabled;
 	bool fEnableSNRMonitoring;
 	/*PNO related parameters */
@@ -8258,8 +8166,7 @@ struct hdd_config {
 	uint32_t ibssPs1RxChainInAtimEnable;
 
 	bool enable_ip_tcp_udp_checksum_offload;
-	uint8_t fVhtAmpduLenExponent;
-	uint32_t vhtMpduLen;
+	uint32_t IpaConfig;
 	bool IpaClkScalingEnable;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint32_t WlanMccToSccSwitchMode;
