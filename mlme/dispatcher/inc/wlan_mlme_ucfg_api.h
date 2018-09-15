@@ -1046,6 +1046,23 @@ QDF_STATUS ucfg_mlme_cfg_set_vht_chan_width(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_cfg_get_vht_chan_width() - gets vht supported channel width into
+ * cfg item
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+QDF_STATUS ucfg_mlme_cfg_get_vht_chan_width(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *value)
+{
+	return wlan_mlme_cfg_get_vht_chan_width(psoc, value);
+}
+
+/**
  * ucfg_mlme_cfg_set_vht_ldpc_coding_cap() - sets vht ldpc coding cap into
  * cfg item
  * @psoc: psoc context
@@ -1060,6 +1077,42 @@ ucfg_mlme_cfg_set_vht_ldpc_coding_cap(struct wlan_objmgr_psoc *psoc,
 				      bool value)
 {
 	return wlan_mlme_cfg_set_vht_ldpc_coding_cap(psoc, value);
+}
+
+/**
+ * ucfg_mlme_cfg_get_short_gi_160_mhz() - gets basic set SHORT GI 160MHZ from
+ * cfg item
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * ignore_peer_ht_opmode flag value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline QDF_STATUS
+ucfg_mlme_cfg_get_short_gi_160_mhz(struct wlan_objmgr_psoc *psoc,
+				   bool *value)
+{
+	return wlan_mlme_cfg_get_short_gi_160_mhz(psoc, value);
+}
+
+/**
+ * ucfg_mlme_cfg_set_short_gi_160_mhz() - sets basic set SHORT GI 160MHZ into
+ * cfg item
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * ignore_peer_ht_opmode flag value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline QDF_STATUS
+ucfg_mlme_cfg_set_short_gi_160_mhz(struct wlan_objmgr_psoc *psoc,
+				   bool value)
+{
+	return wlan_mlme_cfg_set_short_gi_160_mhz(psoc, value);
 }
 
 /**
@@ -1081,6 +1134,24 @@ ucfg_mlme_cfg_get_vht_tx_stbc(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_cfg_get_vht_rx_stbc() - gets vht tx stbc from
+ * cfg item
+ * @psoc: psoc context
+ * @value: pointer to get required data
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * ignore_peer_ht_opmode flag value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline QDF_STATUS
+ucfg_mlme_cfg_get_vht_rx_stbc(struct wlan_objmgr_psoc *psoc,
+			      bool *value)
+{
+	return wlan_mlme_cfg_get_vht_rx_stbc(psoc, value);
+}
+
+/**
  * ucfg_mlme_cfg_set_vht_tx_bfee_ant_supp() - sets vht Beamformee antenna
  * support cap into cfg item
  * @psoc: psoc context
@@ -1095,6 +1166,23 @@ ucfg_mlme_cfg_set_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
 				       uint8_t value)
 {
 	return wlan_mlme_cfg_set_vht_tx_bfee_ant_supp(psoc, value);
+}
+
+/**
+ * ucfg_mlme_cfg_get_vht_tx_bfee_ant_supp() - gets vht Beamformee antenna
+ * support cap into cfg item
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline QDF_STATUS
+ucfg_mlme_cfg_get_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
+				       uint8_t *value)
+{
+	return wlan_mlme_cfg_get_vht_tx_bfee_ant_supp(psoc, value);
 }
 
 /**
@@ -1235,6 +1323,40 @@ ucfg_mlme_cfg_set_vht_basic_mcs_set(struct wlan_objmgr_psoc *psoc,
 				    uint32_t value)
 {
 	return wlan_mlme_cfg_set_vht_basic_mcs_set(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_vht_enable_tx_bf() - gets enable TXBF for 20MHZ
+ * for 11ac
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * ignore_peer_ht_opmode flag value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_vht_enable_tx_bf(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	return wlan_mlme_get_vht_enable_tx_bf(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_vht_enable_tx_su_beam() - gets enable enable_tx_su_beam
+ * for 11ac
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * ignore_peer_ht_opmode flag value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_vht_enable_tx_su_beam(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	return wlan_mlme_get_vht_enable_tx_su_beam(psoc, value);
 }
 
 /**
@@ -1433,4 +1555,39 @@ ucfg_mlme_get_vendor_vht_for_24ghz(struct wlan_objmgr_psoc *psoc, bool *value)
 {
 	return wlan_mlme_get_vendor_vht_for_24ghz(psoc, value);
 }
+
+/**
+ * ucfg_mlme_update_vht_cap() - Update vht capabilities
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * ignore_peer_ht_opmode flag value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline QDF_STATUS
+ucfg_mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc,
+			 struct wma_tgt_vht_cap *cfg)
+{
+	return mlme_update_vht_cap(psoc, cfg);
+}
+
+/**
+ * ucfg_mlme_update_nss_vht_cap() -Update the number of spatial
+ * streams supported for vht
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * ignore_peer_ht_opmode flag value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline QDF_STATUS
+ucfg_mlme_update_nss_vht_cap(struct wlan_objmgr_psoc *psoc)
+{
+	return mlme_update_nss_vht_cap(psoc);
+}
+
 #endif /* _WLAN_MLME_UCFG_API_H_ */

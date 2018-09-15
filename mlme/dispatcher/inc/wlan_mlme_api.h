@@ -726,7 +726,18 @@ QDF_STATUS wlan_mlme_cfg_get_vht_chan_width(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlme_cfg_set_vht_chan_width(struct wlan_objmgr_psoc *psoc,
-				            uint8_t value);
+					    uint8_t value);
+
+/**
+ * wlan_mlme_cfg_get_vht_chan_width() - sets vht supported channel width into
+ * cfg item
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_cfg_get_vht_chan_width(struct wlan_objmgr_psoc *psoc,
+				            uint8_t *value);
 
 /**
  * wlan_mlme_cfg_get_vht_ldpc_coding_cap() - gets vht ldpc coding cap from
@@ -737,7 +748,7 @@ QDF_STATUS wlan_mlme_cfg_set_vht_chan_width(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlme_cfg_get_vht_ldpc_coding_cap(struct wlan_objmgr_psoc *psoc,
-					         bool *value);
+						 bool *value);
 
 /**
  * wlan_mlme_cfg_set_vht_ldpc_coding_cap() - sets vht ldpc coding cap into
@@ -773,26 +784,26 @@ QDF_STATUS wlan_mlme_cfg_set_vht_short_gi_80mhz(struct wlan_objmgr_psoc *psoc,
 					        bool value);
 
 /**
- * wlan_mlme_cfg_get_vht_short_gi_160mhz() - gets vht short gi 160MHz from
+ * wlan_mlme_cfg_get_short_gi_160_mhz() - gets vht short gi 160MHz from
  * cfg item
  * @psoc: psoc context
  * @value: pointer to get required data
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_get_vht_short_gi_160mhz(struct wlan_objmgr_psoc *psoc,
-					         bool *value);
+QDF_STATUS wlan_mlme_cfg_get_short_gi_160_mhz(struct wlan_objmgr_psoc *psoc,
+					      bool *value);
 
 /**
- * wlan_mlme_cfg_set_vht_short_gi_160mhz() - sets vht short gi 160MHz into
+ * wlan_mlme_cfg_set_short_gi_160_mhz() - sets vht short gi 160MHz into
  * cfg item
  * @psoc: psoc context
  * @value: data to be set
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_set_vht_short_gi_160mhz(struct wlan_objmgr_psoc *psoc,
-					         bool value);
+QDF_STATUS wlan_mlme_cfg_set_short_gi_160_mhz(struct wlan_objmgr_psoc *psoc,
+					      bool value);
 
 /**
  * wlan_mlme_cfg_get_vht_tx_stbc() - gets vht tx stbc from
@@ -803,6 +814,17 @@ QDF_STATUS wlan_mlme_cfg_set_vht_short_gi_160mhz(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlme_cfg_get_vht_tx_stbc(struct wlan_objmgr_psoc *psoc,
+				         bool *value);
+
+/**
+ * wlan_mlme_cfg_get_vht_rx_stbc() - gets vht rx stbc from
+ * cfg item
+ * @psoc: psoc context
+ * @value: pointer to get required data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_cfg_get_vht_rx_stbc(struct wlan_objmgr_psoc *psoc,
 				         bool *value);
 
 /**
@@ -872,7 +894,8 @@ QDF_STATUS wlan_mlme_cfg_set_vht_su_bformee(struct wlan_objmgr_psoc *psoc,
 				            bool value);
 
 /**
- * wlan_mlme_cfg_set_vht_tx_bfee_ant_supp() - sets vht Beamformee antenna support cap
+ * wlan_mlme_cfg_set_vht_tx_bfee_ant_supp() - sets vht Beamformee antenna
+ * support cap
  * into cfg item
  * @psoc: psoc context
  * @value: data to be set
@@ -881,6 +904,18 @@ QDF_STATUS wlan_mlme_cfg_set_vht_su_bformee(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_mlme_cfg_set_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
 					           uint8_t value);
+
+/**
+ * wlan_mlme_cfg_get_vht_tx_bfee_ant_supp() - sets vht Beamformee antenna
+ * support cap
+ * into cfg item
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_cfg_get_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
+						  uint8_t *value);
 
 /**
  * wlan_mlme_cfg_set_vht_num_sounding_dim() - sets vht no of sounding dimensions
@@ -1072,6 +1107,26 @@ QDF_STATUS wlan_mlme_cfg_set_vht_basic_mcs_set(struct wlan_objmgr_psoc *psoc,
 					       uint32_t value);
 
 /**
+ * wlan_mlme_get_vht_enable_tx_bf() - VHT Rx MCS capability for 1x1 mode
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_get_vht_enable_tx_bf(struct wlan_objmgr_psoc *psoc,
+					  bool *value);
+
+/**
+ * wlan_mlme_get_vht_enable_tx_su_beam() - VHT enable tx su beam
+ * @psoc: psoc context
+ * @value: data to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_get_vht_enable_tx_su_beam(struct wlan_objmgr_psoc *psoc,
+					bool *value);
+
+/**
  * wlan_mlme_get_vht_channel_width() - gets Channel width capability
  * for 11ac
  * @psoc: psoc context
@@ -1191,5 +1246,24 @@ QDF_STATUS wlan_mlme_get_vht_for_24ghz(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_mlme_get_vendor_vht_for_24ghz(struct wlan_objmgr_psoc *psoc,
 					      bool *value);
+
+/**
+ * mlme_update_vht_cap() - update vht capabilities
+ * @psoc: psoc context
+ * @cfg: data to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc,
+			       struct wma_tgt_vht_cap *cfg);
+
+/**
+ * mlme_update_nss_vht_cap() - Update the number of spatial
+ * streams supported for vht
+ * @psoc: psoc context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_update_nss_vht_cap(struct wlan_objmgr_psoc *psoc);
 
 #endif /* _WLAN_MLME_API_H_ */
