@@ -139,6 +139,14 @@ int hdd_nud_register_netevent_notifier(struct hdd_context *hdd_ctx);
  */
 void hdd_nud_unregister_netevent_notifier(struct hdd_context *hdd_ctx);
 
+/**
+ * hdd_nud_flush_work() - flush pending nud work
+ * @adapter: Pointer to hdd adapter
+ *
+ * Return: None
+ */
+void hdd_nud_flush_work(struct hdd_adapter *adapter);
+
 #else
 static inline void hdd_nud_set_gateway_addr(struct hdd_adapter *adapter,
 					    struct qdf_mac_addr gw_mac_addr)
@@ -175,6 +183,11 @@ hdd_nud_register_netevent_notifier(struct hdd_context *hdd_ctx)
 
 static inline void
 hdd_nud_unregister_netevent_notifier(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline void
+hdd_nud_flush_work(struct hdd_adapter *adapter)
 {
 }
 #endif /* WLAN_NUD_TRACKING */
