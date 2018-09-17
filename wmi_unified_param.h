@@ -5774,6 +5774,9 @@ typedef enum {
 	wmi_pdev_param_esp_indication_period,
 	wmi_pdev_param_antenna_gain_half_db,
 	wmi_pdev_param_ru26_allowed,
+	wmi_pdev_param_esp_ba_window,
+	wmi_pdev_param_esp_airtime_fraction,
+	wmi_pdev_param_esp_ppdu_duration,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
@@ -6066,6 +6069,7 @@ typedef enum {
 	wmi_service_smart_logging_support,
 #endif
 	wmi_service_infra_mbssid,
+	wmi_service_esp_support,
 	wmi_service_obss_spatial_reuse,
 	wmi_services_max,
 } wmi_conv_service_ids;
