@@ -26,6 +26,7 @@
 #define BOLERO_VERSION_1_1 0x0002
 #define BOLERO_VERSION_1_2 0x0003
 #define BOLERO_VERSION_ENTRY_SIZE 32
+#define BOLERO_CDC_STRING_LEN 80
 
 static struct snd_soc_codec_driver bolero;
 
@@ -118,6 +119,65 @@ err:
 	return ret;
 }
 
+static int bolero_cdc_update_wcd_event(void *handle, u16 event, u32 data)
+{
+	struct bolero_priv *priv = (struct bolero_priv *)handle;
+
+	if (!priv) {
+		pr_err("%s:Invalid bolero priv handle\n", __func__);
+		return -EINVAL;
+	}
+
+	switch (event) {
+	case WCD_BOLERO_EVT_RX_MUTE:
+		if (priv->macro_params[RX_MACRO].event_handler)
+			priv->macro_params[RX_MACRO].event_handler(priv->codec,
+				BOLERO_MACRO_EVT_RX_MUTE, data);
+		break;
+	case WCD_BOLERO_EVT_IMPED_TRUE:
+		if (priv->macro_params[RX_MACRO].event_handler)
+			priv->macro_params[RX_MACRO].event_handler(priv->codec,
+				BOLERO_MACRO_EVT_IMPED_TRUE, data);
+		break;
+	case WCD_BOLERO_EVT_IMPED_FALSE:
+		if (priv->macro_params[RX_MACRO].event_handler)
+			priv->macro_params[RX_MACRO].event_handler(priv->codec,
+				BOLERO_MACRO_EVT_IMPED_FALSE, data);
+		break;
+	default:
+		dev_err(priv->dev, "%s: Invalid event %d trigger from wcd\n",
+			__func__, event);
+		return -EINVAL;
+	}
+	return 0;
+}
+
+static int bolero_cdc_register_notifier(void *handle,
+					struct notifier_block *nblock,
+					bool enable)
+{
+	struct bolero_priv *priv = (struct bolero_priv *)handle;
+
+	if (!priv) {
+		pr_err("%s: bolero priv is null\n", __func__);
+		return -EINVAL;
+	}
+	if (enable)
+		return blocking_notifier_chain_register(&priv->notifier,
+							nblock);
+
+	return blocking_notifier_chain_unregister(&priv->notifier,
+						  nblock);
+}
+
+static void bolero_cdc_notifier_call(struct bolero_priv *priv,
+				     u32 data)
+{
+	dev_dbg(priv->dev, "%s: notifier call, data:%d\n", __func__, data);
+	blocking_notifier_call_chain(&priv->notifier,
+				     data, (void *)priv->wcd_dev);
+}
+
 static bool bolero_is_valid_macro_dev(struct device *dev)
 {
 	if (of_device_is_compatible(dev->parent->of_node, "qcom,bolero-codec"))
@@ -133,6 +193,46 @@ static bool bolero_is_valid_codec_dev(struct device *dev)
 
 	return false;
 }
+
+/**
+ * bolero_clear_amic_tx_hold - clears AMIC register on analog codec
+ *
+ * @dev: bolero device ptr.
+ *
+ */
+void bolero_clear_amic_tx_hold(struct device *dev, u16 adc_n)
+{
+	struct bolero_priv *priv;
+	u16 event;
+	u16 amic = 0;
+
+	if (!dev) {
+		pr_err("%s: dev is null\n", __func__);
+		return;
+	}
+
+	if (!bolero_is_valid_codec_dev(dev)) {
+		pr_err("%s: invalid codec\n", __func__);
+		return;
+	}
+	priv = dev_get_drvdata(dev);
+	if (!priv) {
+		dev_err(dev, "%s: priv is null\n", __func__);
+		return;
+	}
+	event = BOLERO_WCD_EVT_TX_CH_HOLD_CLEAR;
+	if (adc_n == BOLERO_ADC0)
+		amic = 0x1;
+	else if (adc_n == BOLERO_ADC2)
+		amic = 0x2;
+	else if (adc_n == BOLERO_ADC3)
+		amic = 0x3;
+	else
+		return;
+
+	bolero_cdc_notifier_call(priv, (amic << 0x10 | event));
+}
+EXPORT_SYMBOL(bolero_clear_amic_tx_hold);
 
 /**
  * bolero_get_device_ptr - Get child or macro device ptr
@@ -230,6 +330,7 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 	priv->macro_params[macro_id].num_dais = ops->num_dais;
 	priv->macro_params[macro_id].dai_ptr = ops->dai_ptr;
 	priv->macro_params[macro_id].mclk_fn = ops->mclk_fn;
+	priv->macro_params[macro_id].event_handler = ops->event_handler;
 	priv->macro_params[macro_id].dev = dev;
 	priv->current_mclk_mux_macro[macro_id] =
 				bolero_mclk_mux_tbl[macro_id][MCLK_MUX0];
@@ -237,7 +338,7 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 	priv->num_macros_registered++;
 	priv->macros_supported[macro_id] = true;
 
-	if (priv->num_macros_registered == priv->child_num) {
+	if (priv->num_macros_registered == priv->num_macros) {
 		ret = bolero_copy_dais_from_macro(priv);
 		if (ret < 0) {
 			dev_err(dev, "%s: copy_dais failed\n", __func__);
@@ -290,12 +391,13 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 	priv->macro_params[macro_id].num_dais = 0;
 	priv->macro_params[macro_id].dai_ptr = NULL;
 	priv->macro_params[macro_id].mclk_fn = NULL;
+	priv->macro_params[macro_id].event_handler = NULL;
 	priv->macro_params[macro_id].dev = NULL;
 	priv->num_dais -= priv->macro_params[macro_id].num_dais;
 	priv->num_macros_registered--;
 
 	/* UNREGISTER CODEC HERE */
-	if (priv->child_num - 1 == priv->num_macros_registered)
+	if (priv->num_macros - 1 == priv->num_macros_registered)
 		snd_soc_unregister_codec(dev->parent);
 }
 EXPORT_SYMBOL(bolero_unregister_macro);
@@ -555,7 +657,12 @@ static struct snd_soc_codec_driver bolero = {
 static void bolero_add_child_devices(struct work_struct *work)
 {
 	struct bolero_priv *priv;
-	int rc;
+	bool wcd937x_node = false;
+	struct platform_device *pdev;
+	struct device_node *node;
+	int ret = 0, count = 0;
+	struct wcd_ctrl_platform_data *platdata = NULL;
+	char plat_dev_name[BOLERO_CDC_STRING_LEN] = "";
 
 	priv = container_of(work, struct bolero_priv,
 			    bolero_add_child_devices_work);
@@ -569,12 +676,53 @@ static void bolero_add_child_devices(struct work_struct *work)
 			__func__);
 		return;
 	}
-	rc = of_platform_populate(priv->dev->of_node, NULL, NULL, priv->dev);
-	if (rc)
-		dev_err(priv->dev, "%s: failed to add child nodes, rc=%d\n",
-			__func__, rc);
-	else
-		dev_dbg(priv->dev, "%s: added child node\n", __func__);
+
+	platdata = &priv->plat_data;
+	priv->child_count = 0;
+
+	for_each_available_child_of_node(priv->dev->of_node, node) {
+		wcd937x_node = false;
+		if (strnstr(node->name, "wcd937x", strlen("wcd937x")) != NULL)
+			wcd937x_node = true;
+
+		strlcpy(plat_dev_name, node->name,
+				(BOLERO_CDC_STRING_LEN - 1));
+
+		pdev = platform_device_alloc(plat_dev_name, -1);
+		if (!pdev) {
+			dev_err(priv->dev, "%s: pdev memory alloc failed\n",
+				__func__);
+			ret = -ENOMEM;
+			goto err;
+		}
+		pdev->dev.parent = priv->dev;
+		pdev->dev.of_node = node;
+
+		if (wcd937x_node) {
+			priv->dev->platform_data = platdata;
+			priv->wcd_dev = &pdev->dev;
+		}
+
+		ret = platform_device_add(pdev);
+		if (ret) {
+			dev_err(&pdev->dev,
+				"%s: Cannot add platform device\n",
+				__func__);
+			platform_device_put(pdev);
+			goto fail_pdev_add;
+		}
+
+		if (priv->child_count < BOLERO_CDC_CHILD_DEVICES_MAX)
+			priv->pdev_child_devices[priv->child_count++] = pdev;
+		else
+			goto err;
+	}
+	return;
+fail_pdev_add:
+	for (count = 0; count < priv->child_count; count++)
+		platform_device_put(priv->pdev_child_devices[count]);
+err:
+	return;
 }
 
 static int bolero_probe(struct platform_device *pdev)
@@ -595,11 +743,11 @@ static int bolero_probe(struct platform_device *pdev)
 			__func__);
 		return ret;
 	}
-	priv->child_num = num_macros;
-	if (priv->child_num > MAX_MACRO) {
+	priv->num_macros = num_macros;
+	if (priv->num_macros > MAX_MACRO) {
 		dev_err(&pdev->dev,
-			"%s:child_num(%d) > MAX_MACRO(%d) than supported\n",
-			__func__, priv->child_num, MAX_MACRO);
+			"%s:num_macros(%d) > MAX_MACRO(%d) than supported\n",
+			__func__, priv->num_macros, MAX_MACRO);
 		return -EINVAL;
 	}
 	priv->va_without_decimation = of_property_read_bool(pdev->dev.of_node,
@@ -616,6 +764,10 @@ static int bolero_probe(struct platform_device *pdev)
 	}
 	priv->read_dev = __bolero_reg_read;
 	priv->write_dev = __bolero_reg_write;
+
+	priv->plat_data.handle = (void *) priv;
+	priv->plat_data.update_wcd_event = bolero_cdc_update_wcd_event;
+	priv->plat_data.register_notifier = bolero_cdc_register_notifier;
 
 	dev_set_drvdata(&pdev->dev, priv);
 	mutex_init(&priv->io_lock);

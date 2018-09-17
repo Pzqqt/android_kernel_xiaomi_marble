@@ -31,6 +31,20 @@ enum mclk_mux {
 	MCLK_MUX_MAX
 };
 
+enum {
+	BOLERO_ADC0 = 1,
+	BOLERO_ADC1,
+	BOLERO_ADC2,
+	BOLERO_ADC3,
+	BOLERO_ADC_MAX
+};
+
+enum {
+	BOLERO_MACRO_EVT_RX_MUTE = 1, /* for RX mute/unmute */
+	BOLERO_MACRO_EVT_IMPED_TRUE, /* for imped true */
+	BOLERO_MACRO_EVT_IMPED_FALSE, /* for imped false */
+};
+
 struct macro_ops {
 	int (*init)(struct snd_soc_codec *codec);
 	int (*exit)(struct snd_soc_codec *codec);
@@ -38,6 +52,8 @@ struct macro_ops {
 	struct device *dev;
 	struct snd_soc_dai_driver *dai_ptr;
 	int (*mclk_fn)(struct device *dev, bool enable);
+	int (*event_handler)(struct snd_soc_codec *codec, u16 event,
+			     u32 data);
 	char __iomem *io_base;
 };
 
@@ -52,6 +68,7 @@ int bolero_request_clock(struct device *dev, u16 macro_id,
 int bolero_info_create_codec_entry(
 		struct snd_info_entry *codec_root,
 		struct snd_soc_codec *codec);
+void bolero_clear_amic_tx_hold(struct device *dev, u16 adc_n);
 #else
 static inline int bolero_register_macro(struct device *dev,
 					u16 macro_id,
@@ -82,6 +99,10 @@ static int bolero_info_create_codec_entry(
 		struct snd_soc_codec *codec)
 {
 	return 0;
+}
+
+static inline void bolero_clear_amic_tx_hold(struct device *dev, u16 adc_n)
+{
 }
 #endif /* CONFIG_SND_SOC_BOLERO */
 #endif /* BOLERO_CDC_H */

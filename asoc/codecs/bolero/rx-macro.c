@@ -75,6 +75,107 @@ static const struct snd_kcontrol_new name##_mux = \
 #define RX_MACRO_RX_PATH_OFFSET 0x80
 #define RX_MACRO_COMP_OFFSET 0x40
 
+#define MAX_IMPED_PARAMS 6
+
+struct wcd_imped_val {
+	u32 imped_val;
+	u8 index;
+};
+
+static const struct wcd_imped_val imped_index[] = {
+	{4, 0},
+	{5, 1},
+	{6, 2},
+	{7, 3},
+	{8, 4},
+	{9, 5},
+	{10, 6},
+	{11, 7},
+	{12, 8},
+	{13, 9},
+};
+
+struct rx_macro_reg_mask_val {
+	u16 reg;
+	u8 mask;
+	u8 val;
+};
+
+static const struct rx_macro_reg_mask_val imped_table[][MAX_IMPED_PARAMS] = {
+	{
+		{BOLERO_CDC_RX_RX0_RX_VOL_CTL, 0xff, 0xf2},
+		{BOLERO_CDC_RX_RX0_RX_VOL_MIX_CTL, 0xff, 0xf2},
+		{BOLERO_CDC_RX_RX0_RX_PATH_SEC1, 0x01, 0x00},
+		{BOLERO_CDC_RX_RX1_RX_VOL_CTL, 0xff, 0xf2},
+		{BOLERO_CDC_RX_RX1_RX_VOL_MIX_CTL, 0xff, 0xf2},
+		{BOLERO_CDC_RX_RX1_RX_PATH_SEC1, 0x01, 0x00},
+	},
+	{
+		{BOLERO_CDC_RX_RX0_RX_VOL_CTL, 0xff, 0xf4},
+		{BOLERO_CDC_RX_RX0_RX_VOL_MIX_CTL, 0xff, 0xf4},
+		{BOLERO_CDC_RX_RX0_RX_PATH_SEC1, 0x01, 0x00},
+		{BOLERO_CDC_RX_RX1_RX_VOL_CTL, 0xff, 0xf4},
+		{BOLERO_CDC_RX_RX1_RX_VOL_MIX_CTL, 0xff, 0xf4},
+		{BOLERO_CDC_RX_RX1_RX_PATH_SEC1, 0x01, 0x00},
+	},
+	{
+		{BOLERO_CDC_RX_RX0_RX_VOL_CTL, 0xff, 0xf7},
+		{BOLERO_CDC_RX_RX0_RX_VOL_MIX_CTL, 0xff, 0xf7},
+		{BOLERO_CDC_RX_RX0_RX_PATH_SEC1, 0x01, 0x01},
+		{BOLERO_CDC_RX_RX1_RX_VOL_CTL, 0xff, 0xf7},
+		{BOLERO_CDC_RX_RX1_RX_VOL_MIX_CTL, 0xff, 0xf7},
+		{BOLERO_CDC_RX_RX1_RX_PATH_SEC1, 0x01, 0x01},
+	},
+	{
+		{BOLERO_CDC_RX_RX0_RX_VOL_CTL, 0xff, 0xf9},
+		{BOLERO_CDC_RX_RX0_RX_VOL_MIX_CTL, 0xff, 0xf9},
+		{BOLERO_CDC_RX_RX0_RX_PATH_SEC1, 0x01, 0x00},
+		{BOLERO_CDC_RX_RX1_RX_VOL_CTL, 0xff, 0xf9},
+		{BOLERO_CDC_RX_RX1_RX_VOL_MIX_CTL, 0xff, 0xf9},
+		{BOLERO_CDC_RX_RX1_RX_PATH_SEC1, 0x01, 0x00},
+	},
+	{
+		{BOLERO_CDC_RX_RX0_RX_VOL_CTL, 0xff, 0xfa},
+		{BOLERO_CDC_RX_RX0_RX_VOL_MIX_CTL, 0xff, 0xfa},
+		{BOLERO_CDC_RX_RX0_RX_PATH_SEC1, 0x01, 0x00},
+		{BOLERO_CDC_RX_RX1_RX_VOL_CTL, 0xff, 0xfa},
+		{BOLERO_CDC_RX_RX1_RX_VOL_MIX_CTL, 0xff, 0xfa},
+		{BOLERO_CDC_RX_RX1_RX_PATH_SEC1, 0x01, 0x00},
+	},
+	{
+		{BOLERO_CDC_RX_RX0_RX_VOL_CTL, 0xff, 0xfb},
+		{BOLERO_CDC_RX_RX0_RX_VOL_MIX_CTL, 0xff, 0xfb},
+		{BOLERO_CDC_RX_RX0_RX_PATH_SEC1, 0x01, 0x00},
+		{BOLERO_CDC_RX_RX1_RX_VOL_CTL, 0xff, 0xfb},
+		{BOLERO_CDC_RX_RX1_RX_VOL_MIX_CTL, 0xff, 0xfb},
+		{BOLERO_CDC_RX_RX1_RX_PATH_SEC1, 0x01, 0x00},
+	},
+	{
+		{BOLERO_CDC_RX_RX0_RX_VOL_CTL, 0xff, 0xfc},
+		{BOLERO_CDC_RX_RX0_RX_VOL_MIX_CTL, 0xff, 0xfc},
+		{BOLERO_CDC_RX_RX0_RX_PATH_SEC1, 0x01, 0x00},
+		{BOLERO_CDC_RX_RX1_RX_VOL_CTL, 0xff, 0xfc},
+		{BOLERO_CDC_RX_RX1_RX_VOL_MIX_CTL, 0xff, 0xfc},
+		{BOLERO_CDC_RX_RX1_RX_PATH_SEC1, 0x01, 0x00},
+	},
+	{
+		{BOLERO_CDC_RX_RX0_RX_VOL_CTL, 0xff, 0xfd},
+		{BOLERO_CDC_RX_RX0_RX_VOL_MIX_CTL, 0xff, 0xfd},
+		{BOLERO_CDC_RX_RX0_RX_PATH_SEC1, 0x01, 0x00},
+		{BOLERO_CDC_RX_RX1_RX_VOL_CTL, 0xff, 0xfd},
+		{BOLERO_CDC_RX_RX1_RX_VOL_MIX_CTL, 0xff, 0xfd},
+		{BOLERO_CDC_RX_RX1_RX_PATH_SEC1, 0x01, 0x00},
+	},
+	{
+		{BOLERO_CDC_RX_RX0_RX_VOL_CTL, 0xff, 0xfd},
+		{BOLERO_CDC_RX_RX0_RX_VOL_MIX_CTL, 0xff, 0xfd},
+		{BOLERO_CDC_RX_RX0_RX_PATH_SEC1, 0x01, 0x01},
+		{BOLERO_CDC_RX_RX1_RX_VOL_CTL, 0xff, 0xfd},
+		{BOLERO_CDC_RX_RX1_RX_VOL_MIX_CTL, 0xff, 0xfd},
+		{BOLERO_CDC_RX_RX1_RX_PATH_SEC1, 0x01, 0x01},
+	},
+};
+
 enum {
 	INTERP_HPHL,
 	INTERP_HPHR,
@@ -493,6 +594,80 @@ static struct snd_soc_dai_driver rx_macro_dai[] = {
 		.ops = &rx_macro_dai_ops,
 	},
 };
+
+static int get_impedance_index(int imped)
+{
+	int i = 0;
+
+	if (imped < imped_index[i].imped_val) {
+		pr_debug("%s, detected impedance is less than %d Ohm\n",
+			__func__, imped_index[i].imped_val);
+		i = 0;
+		goto ret;
+	}
+	if (imped >= imped_index[ARRAY_SIZE(imped_index) - 1].imped_val) {
+		pr_debug("%s, detected impedance is greater than %d Ohm\n",
+			__func__,
+			imped_index[ARRAY_SIZE(imped_index) - 1].imped_val);
+		i = ARRAY_SIZE(imped_index) - 1;
+		goto ret;
+	}
+	for (i = 0; i < ARRAY_SIZE(imped_index) - 1; i++) {
+		if (imped >= imped_index[i].imped_val &&
+			imped < imped_index[i + 1].imped_val)
+			break;
+	}
+ret:
+	pr_debug("%s: selected impedance index = %d\n",
+			__func__, imped_index[i].index);
+	return imped_index[i].index;
+}
+
+/*
+ * rx_macro_wcd_clsh_imped_config -
+ * This function updates HPHL and HPHR gain settings
+ * according to the impedance value.
+ *
+ * @codec: codec pointer handle
+ * @imped: impedance value of HPHL/R
+ * @reset: bool variable to reset registers when teardown
+ */
+static void rx_macro_wcd_clsh_imped_config(struct snd_soc_codec *codec,
+					   int imped, bool reset)
+{
+	int i;
+	int index = 0;
+	int table_size;
+
+	static const struct rx_macro_reg_mask_val
+				(*imped_table_ptr)[MAX_IMPED_PARAMS];
+
+	table_size = ARRAY_SIZE(imped_table);
+	imped_table_ptr = imped_table;
+	/* reset = 1, which means request is to reset the register values */
+	if (reset) {
+		for (i = 0; i < MAX_IMPED_PARAMS; i++)
+			snd_soc_update_bits(codec,
+				imped_table_ptr[index][i].reg,
+				imped_table_ptr[index][i].mask, 0);
+		return;
+	}
+	index = get_impedance_index(imped);
+	if (index >= (ARRAY_SIZE(imped_index) - 1)) {
+		pr_debug("%s, impedance not in range = %d\n", __func__, imped);
+		return;
+	}
+	if (index >= table_size) {
+		pr_debug("%s, impedance index not in range = %d\n", __func__,
+			index);
+		return;
+	}
+	for (i = 0; i < MAX_IMPED_PARAMS; i++)
+		snd_soc_update_bits(codec,
+				imped_table_ptr[index][i].reg,
+				imped_table_ptr[index][i].mask,
+				imped_table_ptr[index][i].val);
+}
 
 static bool rx_macro_get_data(struct snd_soc_codec *codec,
 			       struct device **rx_dev,
@@ -928,6 +1103,37 @@ static int rx_macro_mclk_ctrl(struct device *dev, bool enable)
 	return 0;
 }
 
+static int rx_macro_event_handler(struct snd_soc_codec *codec, u16 event,
+				  u32 data)
+{
+	u16 reg = 0, reg_mix = 0, rx_idx = 0, mute = 0x0;
+	struct device *rx_dev = NULL;
+	struct rx_macro_priv *rx_priv = NULL;
+
+	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
+	switch (event) {
+	case BOLERO_MACRO_EVT_RX_MUTE:
+		rx_idx = data >> 0x10;
+		mute = data & 0xffff;
+		reg = BOLERO_CDC_RX_RX0_RX_PATH_CTL + (rx_idx *
+					RX_MACRO_RX_PATH_OFFSET);
+		reg_mix = BOLERO_CDC_RX_RX0_RX_PATH_MIX_CTL + (rx_idx *
+					RX_MACRO_RX_PATH_OFFSET);
+		snd_soc_update_bits(codec, reg, 0x10, mute << 0x10);
+		snd_soc_update_bits(codec, reg_mix, 0x10, mute << 0x10);
+		break;
+	case BOLERO_MACRO_EVT_IMPED_TRUE:
+		rx_macro_wcd_clsh_imped_config(codec, data, true);
+		break;
+	case BOLERO_MACRO_EVT_IMPED_FALSE:
+		rx_macro_wcd_clsh_imped_config(codec, data, false);
+		break;
+	}
+	return 0;
+}
+
 static int rx_macro_find_playback_dai_id_for_port(int port_id,
 						  struct rx_macro_priv *rx_priv)
 {
@@ -1078,7 +1284,6 @@ static int rx_macro_enable_mix_path(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_write(codec, gain_reg,
 			snd_soc_read(codec, gain_reg));
-		snd_soc_update_bits(codec, mix_reg, 0x10, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/* Clk Disable */
@@ -1128,7 +1333,6 @@ static int rx_macro_enable_main_path(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_write(codec, gain_reg,
 			snd_soc_read(codec, gain_reg));
-		snd_soc_update_bits(codec, reg, 0x10, 0x00);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		rx_macro_enable_interp_clk(codec, event, w->shift);
@@ -2955,6 +3159,7 @@ static void rx_macro_init_ops(struct macro_ops *ops, char __iomem *rx_io_base)
 	ops->dai_ptr = rx_macro_dai;
 	ops->num_dais = ARRAY_SIZE(rx_macro_dai);
 	ops->mclk_fn = rx_macro_mclk_ctrl;
+	ops->event_handler = rx_macro_event_handler;
 }
 
 static int rx_macro_probe(struct platform_device *pdev)
