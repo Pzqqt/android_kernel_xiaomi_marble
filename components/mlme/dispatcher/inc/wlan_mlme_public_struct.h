@@ -377,6 +377,118 @@ struct wlan_mlme_lfr_cfg {
 };
 
 /**
+ * struct wlan_mlme_weight_config - weight params to
+ * calculate best candidate
+ *
+ * @rssi_weightage: RSSI weightage
+ * @ht_caps_weightage: HT caps weightage
+ * @vht_caps_weightage: VHT caps weightage
+ * @he_caps_weightage: HE caps weightage
+ * @chan_width_weightage: Channel width weightage
+ * @chan_band_weightage: Channel band weightage
+ * @nss_weightage: NSS weightage
+ * @beamforming_cap_weightage: Beamforming caps weightage
+ * @pcl_weightage: PCL weightage
+ * @channel_congestion_weightage: channel congestion weightage
+ * @oce_wan_weightage: OCE WAN metrics weightage
+ */
+struct  wlan_mlme_weight_config {
+	uint8_t rssi_weightage;
+	uint8_t ht_caps_weightage;
+	uint8_t vht_caps_weightage;
+	uint8_t he_caps_weightage;
+	uint8_t chan_width_weightage;
+	uint8_t chan_band_weightage;
+	uint8_t nss_weightage;
+	uint8_t beamforming_cap_weightage;
+	uint8_t pcl_weightage;
+	uint8_t channel_congestion_weightage;
+	uint8_t oce_wan_weightage;
+};
+
+/**
+ * struct wlan_mlme_rssi_cfg_score - RSSI params to
+ * calculate best candidate
+ *
+ * @best_rssi_threshold: Best RSSI threshold
+ * @good_rssi_threshold: Good RSSI threshold
+ * @bad_rssi_threshold: Bad RSSI threshold
+ * @good_rssi_pcnt: Good RSSI Percentage
+ * @bad_rssi_pcnt: Bad RSSI Percentage
+ * @good_rssi_bucket_size: Good RSSI Bucket Size
+ * @bad_rssi_bucket_size: Bad RSSI Bucket Size
+ * @rssi_pref_5g_rssi_thresh: Preffered 5G RSSI threshold
+ */
+struct wlan_mlme_rssi_cfg_score  {
+	uint32_t best_rssi_threshold;
+	uint32_t good_rssi_threshold;
+	uint32_t bad_rssi_threshold;
+	uint32_t good_rssi_pcnt;
+	uint32_t bad_rssi_pcnt;
+	uint32_t good_rssi_bucket_size;
+	uint32_t bad_rssi_bucket_size;
+	uint32_t rssi_pref_5g_rssi_thresh;
+};
+
+/**
+ * struct wlan_mlme_per_slot_scoring - define % score for differents slots
+ *				for a scoring param.
+ * num_slot: number of slots in which the param will be divided.
+ *           Max 15. index 0 is used for 'not_present. Num_slot will
+ *           equally divide 100. e.g, if num_slot = 4 slot 0 = 0-25%, slot
+ *           1 = 26-50% slot 2 = 51-75%, slot 3 = 76-100%
+ * score_pcnt3_to_0: Conatins score percentage for slot 0-3
+ *             BITS 0-7   :- the scoring pcnt when not present
+ *             BITS 8-15  :- SLOT_1
+ *             BITS 16-23 :- SLOT_2
+ *             BITS 24-31 :- SLOT_3
+ * score_pcnt7_to_4: Conatins score percentage for slot 4-7
+ *             BITS 0-7   :- SLOT_4
+ *             BITS 8-15  :- SLOT_5
+ *             BITS 16-23 :- SLOT_6
+ *             BITS 24-31 :- SLOT_7
+ * score_pcnt11_to_8: Conatins score percentage for slot 8-11
+ *             BITS 0-7   :- SLOT_8
+ *             BITS 8-15  :- SLOT_9
+ *             BITS 16-23 :- SLOT_10
+ *             BITS 24-31 :- SLOT_11
+ * score_pcnt15_to_12: Conatins score percentage for slot 12-15
+ *             BITS 0-7   :- SLOT_12
+ *             BITS 8-15  :- SLOT_13
+ *             BITS 16-23 :- SLOT_14
+ *             BITS 24-31 :- SLOT_15
+ */
+struct wlan_mlme_per_slot_scoring {
+	uint32_t num_slot;
+	uint32_t score_pcnt3_to_0;
+	uint32_t score_pcnt7_to_4;
+	uint32_t score_pcnt11_to_8;
+	uint32_t score_pcnt15_to_12;
+};
+
+/*
+ * struct wlan_mlme_score_config - MLME BSS Scoring related config
+ * @enable_scoring_for_roam: Enable/disable BSS Scoring for Roaming
+ * @weight_cfg: Various Weight related Scoring Configs
+ * @rssi_score: RSSI Scoring related thresholds/percentages config
+ * @esp_qbss_scoring: ESP QBSS Scoring configs
+ * @oce_wan_scoring: OCE WAN Scoring Configs
+ * @bandwidth_weight_per_index: Bandwidth weight per index for scoring logic
+ * @nss_weight_per_index: NSS weight per index for scoring logic
+ * @band_weight_per_index: Band weight per index for scoring logic
+ */
+struct wlan_mlme_scoring_cfg {
+	bool enable_scoring_for_roam;
+	struct wlan_mlme_weight_config weight_cfg;
+	struct wlan_mlme_rssi_cfg_score rssi_score;
+	struct wlan_mlme_per_slot_scoring esp_qbss_scoring;
+	struct wlan_mlme_per_slot_scoring oce_wan_scoring;
+	uint32_t bandwidth_weight_per_index;
+	uint32_t nss_weight_per_index;
+	uint32_t band_weight_per_index;
+};
+
+/**
  * struct wlan_mlme_cfg - MLME config items
  * @ht_cfg: HT related CFG Items
  * @lfr: LFR related CFG Items
@@ -385,6 +497,7 @@ struct wlan_mlme_lfr_cfg {
  * @rates: Rates related cfg items
  * @sap_protection_cfg: SAP erp protection related CFG items
  * @sta: sta CFG Items
+ * @scoring: BSS Scoring related CFG Items
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_ht_caps ht_caps;
@@ -398,6 +511,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_chainmask chainmask_cfg;
 	struct wlan_mlme_cfg_sap sap_cfg;
 	struct wlan_mlme_sta_cfg sta;
+	struct wlan_mlme_scoring_cfg scoring;
 };
 
 #endif
