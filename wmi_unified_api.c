@@ -7518,3 +7518,19 @@ wmi_extract_roam_scan_stats_res_evt(wmi_unified_t wmi, void *evt_buf,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef OBSS_PD
+QDF_STATUS
+wmi_unified_send_obss_spatial_reuse_set_cmd(void *wmi_hdl,
+				    struct wmi_host_obss_spatial_reuse_set_param
+				    *obss_spatial_reuse_param)
+{
+	wmi_unified_t wmi = (wmi_unified_t)wmi_hdl;
+
+	if (wmi->ops->send_obss_spatial_reuse_set)
+		return wmi->ops->send_obss_spatial_reuse_set(wmi,
+				obss_spatial_reuse_param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
