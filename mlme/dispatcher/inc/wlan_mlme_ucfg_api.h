@@ -333,4 +333,37 @@ ucfg_mlme_get_qcn_ie_support(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_get_tgt_gtx_usr_cfg(struct wlan_objmgr_psoc *psoc,
 			      uint32_t *val);
+
+/**
+ * ucfg_mlme_get_roaming_offload() - Get roaming offload setting
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to enable/disable roaming offload
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_roaming_offload(struct wlan_objmgr_psoc *psoc,
+			      bool *val);
+
+/**
+ * ucfg_mlme_set_roaming_offload() - Enable/disable roaming offload
+ * @psoc: pointer to psoc object
+ * @val:  enable/disable roaming offload
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_roaming_offload(struct wlan_objmgr_psoc *psoc,
+			      bool val);
+
+/**
+ * ucfg_mlme_get_first_scan_bucket_threshold() - Get first scan bucket thre
+ * @psoc: pointer to psoc object
+ * @val:  first scan bucket threshold
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_first_scan_bucket_threshold(struct wlan_objmgr_psoc *psoc,
+					  uint8_t *val);
 #endif /* _WLAN_MLME_UCFG_API_H_ */
