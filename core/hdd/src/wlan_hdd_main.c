@@ -393,9 +393,9 @@ void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
  * post processing
  */
 #ifdef BUILD_TAG
-uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR "; " BUILD_TAG;
+uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR PANIC_ON_BUG_STR "; " BUILD_TAG;
 #else
-uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR;
+uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR PANIC_ON_BUG_STR;
 #endif
 
 /**
@@ -12697,10 +12697,9 @@ static int hdd_driver_load(void)
 	QDF_STATUS status;
 	int errno;
 
-	pr_err("%s: Loading driver v%s (%s)\n",
+	pr_err("%s: Loading driver v%s\n",
 	       WLAN_MODULE_NAME,
-	       g_wlan_driver_version,
-	       TIMER_MANAGER_STR MEMORY_DEBUG_STR PANIC_ON_BUG_STR);
+	       g_wlan_driver_version);
 
 	errno = pld_init();
 	if (errno) {
