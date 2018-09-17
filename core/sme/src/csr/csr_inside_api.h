@@ -249,7 +249,7 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal pMac, uint32_t sessionId,
  *
  * Return: 0 for success, non zero for failure
  */
-QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal pMac, uint8_t vdev_id,
+QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal pMac, uint32_t vdev_id,
 				   uint32_t scan_id);
 QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal pMac,
 			uint8_t sessionId, eSmeCommandType commandType);

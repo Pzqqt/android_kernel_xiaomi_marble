@@ -1809,7 +1809,7 @@ void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,
 	} /* AllocateMemory */
 }
 
-QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal mac_ctx, uint8_t vdev_id,
+QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal mac_ctx, uint32_t vdev_id,
 				   uint32_t scan_id)
 {
 	struct scan_cancel_request *req;
