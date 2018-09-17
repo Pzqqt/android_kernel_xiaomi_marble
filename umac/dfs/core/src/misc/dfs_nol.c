@@ -475,6 +475,11 @@ void dfs_nol_update(struct wlan_dfs *dfs)
 	struct dfsreq_nolelem *dfs_nol;
 	int nlen;
 
+	if (!dfs->dfs_nol_count) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS_NOL, "dfs_nol_count is zero");
+		return;
+	}
+
 	/*
 	 * Allocate enough entries to store the NOL. At least on Linux
 	 * (don't ask why), if you allocate a 0 entry array, the
