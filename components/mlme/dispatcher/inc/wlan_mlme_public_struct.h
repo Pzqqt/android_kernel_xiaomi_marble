@@ -293,9 +293,93 @@ struct wlan_mlme_sta_cfg {
 	bool single_tid;
 };
 
+/*
+ * @mawc_roam_enabled:              Enable/Disable MAWC during roaming
+ * @enable_fast_roam_in_concurrency:Enable LFR roaming on STA during concurrency
+ * @lfr3_roaming_offload:           Enable/disable roam offload feature
+ * @early_stop_scan_enable:         Set early stop scan
+ * @lfr3_enable_subnet_detection:   Enable LFR3 subnet detection
+ * @enable_5g_band_pref:            Enable preference for 5G from INI
+ * @mawc_roam_traffic_threshold:    Configure traffic threshold
+ * @mawc_roam_ap_rssi_threshold:    Best AP RSSI threshold
+ * @mawc_roam_rssi_high_adjust:     Adjust MAWC roam high RSSI
+ * @mawc_roam_rssi_low_adjust:      Adjust MAWC roam low RSSI
+ * @roam_rssi_abs_threshold:        The min RSSI of the candidate AP
+ * @rssi_threshold_offset_5g:       Lookup threshold offset for 5G band
+ * @early_stop_scan_min_threshold:  Set early stop scan min
+ * @early_stop_scan_max_threshold:  Set early stop scan max
+ * @first_scan_bucket_threshold:    Set first scan bucket
+ * @roam_dense_traffic_threshold:   Dense traffic threshold
+ * @roam_dense_rssi_thre_offset:    Sets dense roam RSSI threshold diff
+ * @roam_dense_min_aps:             Sets minimum number of AP for dense roam
+ * @roam_bg_scan_bad_rssi_threshold:RSSI threshold for background roam
+ * @roam_bg_scan_client_bitmap:     Bitmap used to identify the scan clients
+ * @roam_bg_scan_bad_rssi_offset_2g:RSSI threshold offset for 2G to 5G roam
+ * @adaptive_roamscan_dwell_mode:   Sets dwell time adaptive mode
+ * @per_roam_enable:                To enabled/disable PER based roaming in FW
+ * @per_roam_config_high_rate_th:   Rate at which PER based roam will stop
+ * @per_roam_config_low_rate_th:    Rate at which PER based roam will start
+ * @per_roam_config_rate_th_percent:Percentage at which FW will issue roam scan
+ * @per_roam_rest_time:             FW will wait once it issues a roam scan.
+ * @per_roam_monitor_time:          Min time to be considered as valid scenario
+ * @per_roam_min_candidate_rssi:    Min roamable AP RSSI for candidate selection
+ * @lfr3_disallow_duration:         Disallow duration before roaming
+ * @lfr3_rssi_channel_penalization: RSSI penalization
+ * @lfr3_num_disallowed_aps:        Max number of AP's to maintain in LCA list
+ * @rssi_boost_threshold_5g:        Boost threshold above which 5 GHz is favored
+ * @rssi_boost_factor_5g:           Factor by which 5GHz RSSI is boosted
+ * @max_rssi_boost_5g:              Maximum boost that can be applied to 5G RSSI
+ * @rssi_penalize_threshold_5g:     Penalize thres above which 5G isn't favored
+ * @rssi_penalize_factor_5g:        Factor by which 5GHz RSSI is penalizeed
+ * @max_rssi_penalize_5g:           Max penalty that can be applied to 5G RSSI
+ * @max_num_pre_auth:               Configure max number of pre-auth
+ */
+struct wlan_mlme_lfr_cfg {
+	bool mawc_roam_enabled;
+	bool enable_fast_roam_in_concurrency;
+	bool lfr3_roaming_offload;
+	bool early_stop_scan_enable;
+	bool lfr3_enable_subnet_detection;
+	bool enable_5g_band_pref;
+	uint32_t mawc_roam_traffic_threshold;
+	uint32_t mawc_roam_ap_rssi_threshold;
+	uint32_t mawc_roam_rssi_high_adjust;
+	uint32_t mawc_roam_rssi_low_adjust;
+	uint32_t roam_rssi_abs_threshold;
+	uint8_t rssi_threshold_offset_5g;
+	uint8_t early_stop_scan_min_threshold;
+	uint8_t early_stop_scan_max_threshold;
+	uint8_t first_scan_bucket_threshold;
+	uint32_t roam_dense_traffic_threshold;
+	uint32_t roam_dense_rssi_thre_offset;
+	uint32_t roam_dense_min_aps;
+	uint32_t roam_bg_scan_bad_rssi_threshold;
+	uint32_t roam_bg_scan_client_bitmap;
+	uint32_t roam_bg_scan_bad_rssi_offset_2g;
+	uint32_t adaptive_roamscan_dwell_mode;
+	uint32_t per_roam_enable;
+	uint32_t per_roam_config_high_rate_th;
+	uint32_t per_roam_config_low_rate_th;
+	uint32_t per_roam_config_rate_th_percent;
+	uint32_t per_roam_rest_time;
+	uint32_t per_roam_monitor_time;
+	uint32_t per_roam_min_candidate_rssi;
+	uint32_t lfr3_disallow_duration;
+	uint32_t lfr3_rssi_channel_penalization;
+	uint32_t lfr3_num_disallowed_aps;
+	uint32_t rssi_boost_threshold_5g;
+	uint32_t rssi_boost_factor_5g;
+	uint32_t max_rssi_boost_5g;
+	uint32_t rssi_penalize_threshold_5g;
+	uint32_t rssi_penalize_factor_5g;
+	uint32_t max_rssi_penalize_5g;
+	uint32_t max_num_pre_auth;
+};
+
 /**
  * struct wlan_mlme_cfg - MLME config items
  * @ht_cfg: HT related CFG Items
+ * @lfr: LFR related CFG Items
  * @obss_ht40:obss ht40 CFG Items
  * @vht_cfg: VHT related CFG Items
  * @rates: Rates related cfg items
@@ -304,6 +388,7 @@ struct wlan_mlme_sta_cfg {
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_ht_caps ht_caps;
+	struct wlan_mlme_lfr_cfg lfr;
 	struct wlan_mlme_obss_ht40 obss_ht40;
 	struct wlan_mlme_mbo mbo_cfg;
 	struct wlan_mlme_vht_caps vht_caps;

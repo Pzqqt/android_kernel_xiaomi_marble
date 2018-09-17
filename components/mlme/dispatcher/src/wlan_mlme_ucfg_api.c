@@ -245,3 +245,57 @@ ucfg_mlme_get_tgt_gtx_usr_cfg(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+ucfg_mlme_get_roaming_offload(struct wlan_objmgr_psoc *psoc,
+			      bool *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_LFR3_ROAMING_OFFLOAD);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.lfr.lfr3_roaming_offload;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_roaming_offload(struct wlan_objmgr_psoc *psoc,
+			      bool val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_obj->cfg.lfr.lfr3_roaming_offload = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_first_scan_bucket_threshold(struct wlan_objmgr_psoc *psoc,
+					  uint8_t *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_LFR_FIRST_SCAN_BUCKET_THRESHOLD);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.lfr.first_scan_bucket_threshold;
+
+	return QDF_STATUS_SUCCESS;
+}
+

@@ -292,6 +292,89 @@ static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
 		(uint32_t)cfg_default(CFG_CURRENT_RSSI);
 }
 
+static void wlan_mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_mlme_lfr_cfg *lfr)
+{
+	lfr->mawc_roam_enabled =
+		cfg_get(psoc, CFG_LFR_MAWC_ROAM_ENABLED);
+	lfr->enable_fast_roam_in_concurrency =
+		cfg_get(psoc, CFG_LFR_ENABLE_FAST_ROAM_IN_CONCURRENCY);
+	lfr->lfr3_roaming_offload =
+		cfg_get(psoc, CFG_LFR3_ROAMING_OFFLOAD);
+	lfr->early_stop_scan_enable =
+		cfg_get(psoc, CFG_LFR_EARLY_STOP_SCAN_ENABLE);
+	lfr->lfr3_enable_subnet_detection =
+		cfg_get(psoc, CFG_LFR3_ENABLE_SUBNET_DETECTION);
+	lfr->enable_5g_band_pref =
+		cfg_get(psoc, CFG_LFR_ENABLE_5G_BAND_PREF);
+	lfr->mawc_roam_traffic_threshold =
+		cfg_get(psoc, CFG_LFR_MAWC_ROAM_TRAFFIC_THRESHOLD);
+	lfr->mawc_roam_ap_rssi_threshold =
+		cfg_get(psoc, CFG_LFR_MAWC_ROAM_AP_RSSI_THRESHOLD);
+	lfr->mawc_roam_rssi_high_adjust =
+		cfg_get(psoc, CFG_LFR_MAWC_ROAM_RSSI_HIGH_ADJUST);
+	lfr->mawc_roam_rssi_low_adjust =
+		cfg_get(psoc, CFG_LFR_MAWC_ROAM_RSSI_LOW_ADJUST);
+	lfr->roam_rssi_abs_threshold =
+		cfg_get(psoc, CFG_LFR_ROAM_RSSI_ABS_THRESHOLD);
+	lfr->rssi_threshold_offset_5g =
+		cfg_get(psoc, CFG_LFR_5G_RSSI_THRESHOLD_OFFSET);
+	lfr->early_stop_scan_min_threshold =
+		cfg_get(psoc, CFG_LFR_EARLY_STOP_SCAN_MIN_THRESHOLD);
+	lfr->early_stop_scan_max_threshold =
+		cfg_get(psoc, CFG_LFR_EARLY_STOP_SCAN_MAX_THRESHOLD);
+	lfr->first_scan_bucket_threshold =
+		cfg_get(psoc, CFG_LFR_FIRST_SCAN_BUCKET_THRESHOLD);
+	lfr->roam_dense_traffic_threshold =
+		cfg_get(psoc, CFG_LFR_ROAM_DENSE_TRAFFIC_THRESHOLD);
+	lfr->roam_dense_rssi_thre_offset =
+		cfg_get(psoc, CFG_LFR_ROAM_DENSE_RSSI_THRE_OFFSET);
+	lfr->roam_dense_min_aps =
+		cfg_get(psoc, CFG_LFR_ROAM_DENSE_MIN_APS);
+	lfr->roam_bg_scan_bad_rssi_threshold =
+		cfg_get(psoc, CFG_LFR_ROAM_BG_SCAN_BAD_RSSI_THRESHOLD);
+	lfr->roam_bg_scan_client_bitmap =
+		cfg_get(psoc, CFG_LFR_ROAM_BG_SCAN_CLIENT_BITMAP);
+	lfr->roam_bg_scan_bad_rssi_offset_2g =
+		cfg_get(psoc, CFG_LFR_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G);
+	lfr->adaptive_roamscan_dwell_mode =
+		cfg_get(psoc, CFG_LFR_ADAPTIVE_ROAMSCAN_DWELL_MODE);
+	lfr->per_roam_enable =
+		cfg_get(psoc, CFG_LFR_PER_ROAM_ENABLE);
+	lfr->per_roam_config_high_rate_th =
+		cfg_get(psoc, CFG_LFR_PER_ROAM_CONFIG_HIGH_RATE_TH);
+	lfr->per_roam_config_low_rate_th =
+		cfg_get(psoc, CFG_LFR_PER_ROAM_CONFIG_LOW_RATE_TH);
+	lfr->per_roam_config_rate_th_percent =
+		cfg_get(psoc, CFG_LFR_PER_ROAM_CONFIG_RATE_TH_PERCENT);
+	lfr->per_roam_rest_time =
+		cfg_get(psoc, CFG_LFR_PER_ROAM_REST_TIME);
+	lfr->per_roam_monitor_time =
+		cfg_get(psoc, CFG_LFR_PER_ROAM_MONITOR_TIME);
+	lfr->per_roam_min_candidate_rssi =
+		cfg_get(psoc, CFG_LFR_PER_ROAM_MIN_CANDIDATE_RSSI);
+	lfr->lfr3_disallow_duration =
+		cfg_get(psoc, CFG_LFR3_ROAM_DISALLOW_DURATION);
+	lfr->lfr3_rssi_channel_penalization =
+		cfg_get(psoc, CFG_LFR3_ROAM_RSSI_CHANNEL_PENALIZATION);
+	lfr->lfr3_num_disallowed_aps =
+		cfg_get(psoc, CFG_LFR3_ROAM_NUM_DISALLOWED_APS);
+	lfr->rssi_boost_threshold_5g =
+		cfg_get(psoc, CFG_LFR_5G_RSSI_BOOST_THRESHOLD);
+	lfr->rssi_boost_factor_5g =
+		cfg_get(psoc, CFG_LFR_5G_RSSI_BOOST_FACTOR);
+	lfr->max_rssi_boost_5g =
+		cfg_get(psoc, CFG_LFR_5G_MAX_RSSI_BOOST);
+	lfr->rssi_penalize_threshold_5g =
+		cfg_get(psoc, CFG_LFR_5G_RSSI_PENALIZE_THRESHOLD);
+	lfr->rssi_penalize_factor_5g =
+		cfg_get(psoc, CFG_LFR_5G_RSSI_PENALIZE_FACTOR);
+	lfr->max_rssi_penalize_5g =
+		cfg_get(psoc, CFG_LFR_5G_MAX_RSSI_PENALIZE);
+	lfr->max_num_pre_auth = (uint32_t)
+		cfg_default(CFG_LFR_MAX_NUM_PRE_AUTH);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -314,6 +397,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_update_sap_cfg(psoc, &mlme_cfg->sap_cfg);
 	mlme_init_obss_ht40_cfg(psoc, &mlme_cfg->obss_ht40);
 	mlme_init_sta_cfg(psoc, &mlme_cfg->sta);
+	wlan_mlme_init_lfr_cfg(psoc, &mlme_cfg->lfr);
 
 	return status;
 }

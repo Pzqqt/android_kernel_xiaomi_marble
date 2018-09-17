@@ -25,6 +25,7 @@
 
 #include "cfg_mlme_chainmask.h"
 #include "cfg_mlme_ht_caps.h"
+#include "cfg_mlme_lfr.h"
 #include "cfg_mlme_obss_ht40.h"
 #include "cfg_mlme_mbo.h"
 #include "cfg_mlme_vht_caps.h"
@@ -37,6 +38,7 @@
 #define CFG_MLME_ALL \
 	CFG_CHAINMASK_ALL \
 	CFG_HT_CAPS_ALL \
+	CFG_LFR_ALL \
 	CFG_OBSS_HT40_ALL \
 	CFG_MBO_ALL \
 	CFG_VHT_CAPS_ALL \
