@@ -129,6 +129,7 @@ struct swr_mstr_ctrl {
 			void *data), void *swr_handle, int type);
 	int irq;
 	int version;
+	int mclk_freq;
 	u32 num_dev;
 	int slave_status;
 	struct swrm_mports mport_cfg[SWR_MAX_MSTR_PORT_NUM];

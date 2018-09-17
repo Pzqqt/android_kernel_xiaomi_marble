@@ -956,7 +956,15 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 			n_col = SWR_MAX_COL;
 	}
 	/* Use default 50 * x, frame shape. Change based on mclk */
-	n_row = SWR_ROW_50;
+	if (swrm->mclk_freq == MCLK_FREQ_NATIVE) {
+		dev_dbg(swrm->dev, "setting 64 x %d frameshape\n",
+			n_col ? 16 : 2);
+		n_row = SWR_ROW_64;
+	} else {
+		dev_dbg(swrm->dev, "setting 50 x %d frameshape\n",
+			n_col ? 16 : 2);
+		n_row = SWR_ROW_50;
+	}
 	value = swr_master_read(swrm, SWRM_MCP_FRAME_CTRL_BANK_ADDR(bank));
 	value &= (~mask);
 	value |= ((n_row << SWRM_MCP_FRAME_CTRL_BANK_ROW_CTRL_SHFT) |
@@ -1630,6 +1638,7 @@ static int swrm_probe(struct platform_device *pdev)
 	swrm->slave_status = 0;
 	swrm->num_rx_chs = 0;
 	swrm->clk_ref_count = 0;
+	swrm->mclk_freq = MCLK_FREQ;
 	swrm->state = SWR_MSTR_RESUME;
 	init_completion(&swrm->reset);
 	init_completion(&swrm->broadcast);
@@ -1940,6 +1949,16 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 	mstr = &swrm->master;
 
 	switch (id) {
+	case SWR_CLK_FREQ:
+		if (!data) {
+			dev_err(swrm->dev, "%s: data is NULL\n", __func__);
+			ret = -EINVAL;
+		} else {
+			mutex_lock(&swrm->mlock);
+			swrm->mclk_freq = *(int *)data;
+			mutex_unlock(&swrm->mlock);
+		}
+		break;
 	case SWR_DEVICE_DOWN:
 		dev_dbg(swrm->dev, "%s: swr master down called\n", __func__);
 		mutex_lock(&swrm->mlock);

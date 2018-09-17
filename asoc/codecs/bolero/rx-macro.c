@@ -44,6 +44,11 @@
 		SNDRV_PCM_FMTBIT_S24_LE |\
 		SNDRV_PCM_FMTBIT_S24_3LE)
 
+#define SAMPLING_RATE_44P1KHZ   44100
+#define SAMPLING_RATE_88P2KHZ   88200
+#define SAMPLING_RATE_176P4KHZ  176400
+#define SAMPLING_RATE_352P8KHZ  352800
+
 #define RX_MACRO_MAX_OFFSET 0x1000
 
 #define RX_MACRO_MAX_DMA_CH_PER_PORT 2
@@ -311,10 +316,6 @@ static const char * const rx_int2_2_interp_mux_text[] = {
 static const char *const rx_macro_mux_text[] = {
 	"ZERO", "AIF1_PB", "AIF2_PB", "AIF3_PB", "AIF4_PB"
 };
-
-static const char *const rx_macro_native_text[] = {"OFF", "ON"};
-static const struct soc_enum rx_macro_native_enum =
-	SOC_ENUM_SINGLE_EXT(2, rx_macro_native_text);
 
 static const char *const rx_macro_ear_mode_text[] = {"OFF", "ON"};
 static const struct soc_enum rx_macro_ear_mode_enum =
@@ -642,16 +643,40 @@ static int rx_macro_set_mix_interpolator_rate(struct snd_soc_dai *dai,
 	return 0;
 }
 
+static bool rx_macro_is_fractional_sample_rate(u32 sample_rate)
+{
+	switch (sample_rate) {
+	case SAMPLING_RATE_44P1KHZ:
+	case SAMPLING_RATE_88P2KHZ:
+	case SAMPLING_RATE_176P4KHZ:
+	case SAMPLING_RATE_352P8KHZ:
+		return true;
+	default:
+		return false;
+	}
+	return false;
+}
+
 static int rx_macro_set_interpolator_rate(struct snd_soc_dai *dai,
 					  u32 sample_rate)
 {
 	struct snd_soc_codec *codec = dai->codec;
 	int rate_val = 0;
 	int i = 0, ret = 0;
+	struct device *rx_dev = NULL;
+	struct rx_macro_priv *rx_priv = NULL;
+
+	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
 
 	for (i = 0; i < ARRAY_SIZE(sr_val_tbl); i++) {
 		if (sample_rate == sr_val_tbl[i].sample_rate) {
 			rate_val = sr_val_tbl[i].rate_val;
+			if (rx_macro_is_fractional_sample_rate(sample_rate))
+				rx_priv->is_native_on = true;
+			else
+				rx_priv->is_native_on = false;
 			break;
 		}
 	}
@@ -748,7 +773,7 @@ static int rx_macro_mclk_enable(struct rx_macro_priv *rx_priv,
 	dev_dbg(rx_priv->dev, "%s: mclk_enable = %u, dapm = %d clk_users= %d\n",
 		__func__, mclk_enable, dapm, rx_priv->rx_mclk_users);
 
-	if(rx_priv->is_native_on)
+	if (rx_priv->is_native_on)
 		mclk_mux = MCLK_MUX1;
 	mutex_lock(&rx_priv->mclk_lock);
 	if (mclk_enable) {
@@ -809,6 +834,7 @@ static int rx_macro_mclk_event(struct snd_soc_dapm_widget *w,
 	int ret = 0;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
+	int mclk_freq = MCLK_FREQ;
 
 	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
@@ -820,13 +846,18 @@ static int rx_macro_mclk_event(struct snd_soc_dapm_widget *w,
 		if (rx_priv->swr_clk_users > 0) {
 			if ((rx_priv->mclk_mux == MCLK_MUX0 &&
 			     rx_priv->is_native_on) ||
-			     (rx_priv->mclk_mux == MCLK_MUX1 &&
+			    (rx_priv->mclk_mux == MCLK_MUX1 &&
 			     !rx_priv->is_native_on)) {
 				swrm_wcd_notify(
 				rx_priv->swr_ctrl_data[0].rx_swr_pdev,
 				SWR_DEVICE_DOWN, NULL);
 			}
 		}
+		if (rx_priv->is_native_on)
+			mclk_freq = MCLK_FREQ_NATIVE;
+		swrm_wcd_notify(
+			rx_priv->swr_ctrl_data[0].rx_swr_pdev,
+			SWR_CLK_FREQ, &mclk_freq);
 		ret = rx_macro_mclk_enable(rx_priv, 1, true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -1329,36 +1360,6 @@ static int rx_macro_mux_put(struct snd_kcontrol *kcontrol,
 	return 0;
 err:
 	return -EINVAL;
-}
-
-static int rx_macro_get_native(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct device *rx_dev = NULL;
-	struct rx_macro_priv *rx_priv = NULL;
-
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
-		return -EINVAL;
-
-	ucontrol->value.integer.value[0] =
-				(rx_priv->is_native_on == true ? 1 : 0);
-	return 0;
-}
-
-static int rx_macro_put_native(struct snd_kcontrol *kcontrol,
-			       struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct device *rx_dev = NULL;
-	struct rx_macro_priv *rx_priv = NULL;
-
-	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
-		return -EINVAL;
-
-	rx_priv->is_native_on =
-			(!ucontrol->value.integer.value[0] ? false : true);
-	return 0;
 }
 
 static int rx_macro_get_ear_mode(struct snd_kcontrol *kcontrol,
@@ -1876,9 +1877,6 @@ static const struct snd_kcontrol_new rx_macro_snd_controls[] = {
 		rx_macro_get_compander, rx_macro_set_compander),
 	SOC_SINGLE_EXT("RX_COMP2 Switch", SND_SOC_NOPM, RX_MACRO_COMP2, 1, 0,
 		rx_macro_get_compander, rx_macro_set_compander),
-
-	SOC_ENUM_EXT("RX_Native", rx_macro_native_enum, rx_macro_get_native,
-		rx_macro_put_native),
 
 	SOC_ENUM_EXT("RX_EAR Mode", rx_macro_ear_mode_enum,
 		rx_macro_get_ear_mode, rx_macro_put_ear_mode),
