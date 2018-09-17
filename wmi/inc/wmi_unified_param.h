@@ -6062,6 +6062,7 @@ typedef enum {
 	wmi_service_smart_logging_support,
 #endif
 	wmi_service_infra_mbssid,
+	wmi_service_obss_spatial_reuse,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -8409,6 +8410,23 @@ struct bcn_offload_control {
 	uint32_t vdev_id;
 	enum bcn_offload_control_param bcn_ctrl_op;
 };
+
+#ifdef OBSS_PD
+/**
+ * struct wmi_host_obss_spatial_reuse_set_param - OBSS_PD_SPATIAL Reuse
+ *                                                structure
+ * @enable: Enable/Disable Spatial Reuse
+ * @obss_min: Minimum OBSS level to use
+ * @obss_max: Maximum OBSS level to use
+ * @pdev_id: Pdev id
+ */
+struct wmi_host_obss_spatial_reuse_set_param {
+	uint32_t enable;
+	uint32_t obss_min;
+	uint32_t obss_max;
+	uint32_t vdev_id;
+};
+#endif
 
 /**
  * struct wds_entry - WDS entry structure
