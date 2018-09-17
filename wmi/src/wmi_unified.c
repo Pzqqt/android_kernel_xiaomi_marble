@@ -144,7 +144,7 @@ static QDF_STATUS wmi_ext_dbg_msg_event_record(struct wmi_unified *wmi_handle,
 	uint32_t id;
 
 	id = WMI_GET_FIELD(buf, WMI_CMD_HDR, COMMANDID);
-	if (id != wmi_diag_event_id)
+	if (id != wmi_handle->wmi_events[wmi_diag_event_id])
 		return wmi_ext_dbg_msg_record(wmi_handle, buf, len,
 					      WMI_MSG_TYPE_EVENT);
 
