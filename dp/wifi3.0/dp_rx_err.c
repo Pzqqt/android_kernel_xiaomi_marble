@@ -1191,7 +1191,7 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		 * save the wbm desc info in nbuf TLV. We will need this
 		 * info when we do the actual nbuf processing
 		 */
-		hal_rx_wbm_err_info_get(ring_desc, &wbm_err_info);
+		hal_rx_wbm_err_info_get(ring_desc, &wbm_err_info, hal_soc);
 		wbm_err_info.pool_id = rx_desc->pool_id;
 		hal_rx_wbm_err_info_set_in_tlv(qdf_nbuf_data(nbuf),
 								&wbm_err_info);

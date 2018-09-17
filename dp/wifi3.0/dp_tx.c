@@ -227,7 +227,8 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
 
 	if (HAL_TX_COMP_RELEASE_SOURCE_TQM ==
 				hal_tx_comp_get_buffer_source(&tx_desc->comp))
-		comp_status = hal_tx_comp_get_release_reason(&tx_desc->comp);
+		comp_status = hal_tx_comp_get_release_reason(&tx_desc->comp,
+							     soc->hal_soc);
 	else
 		comp_status = HAL_TX_COMP_RELEASE_REASON_FW;
 

@@ -285,9 +285,10 @@ struct hal_hw_txrx_ops {
 	void (*hal_tx_desc_set_lmac_id)(void *desc, uint8_t lmac_id);
 	 void (*hal_tx_desc_set_buf_addr)(void *desc, dma_addr_t paddr,
 			uint8_t pool_id, uint32_t desc_id, uint8_t type);
-	void (*hal_tx_comp_get_status)(void *desc, void *ts);
 	void (*hal_tx_desc_set_search_type)(void *desc, uint8_t search_type);
 	void (*hal_tx_desc_set_search_index)(void *desc, uint32_t search_index);
+	void (*hal_tx_comp_get_status)(void *desc, void *ts, void *hal);
+	uint8_t (*hal_tx_comp_get_release_reason)(void *hal_desc);
 
 	/* rx */
 	uint32_t (*hal_rx_msdu_start_nss_get)(uint8_t *);
@@ -309,6 +310,10 @@ struct hal_hw_txrx_ops {
 	uint32_t (*hal_rx_status_get_tlv_info)(void *rx_tlv_hdr,
 			void *ppdu_info,
 			void *hal);
+	void (*hal_rx_wbm_err_info_get)(void *wbm_desc,
+				void *wbm_er_info);
+	void (*hal_rx_dump_mpdu_start_tlv)(void *mpdustart,
+						uint8_t dbg_level);
 };
 
 /**

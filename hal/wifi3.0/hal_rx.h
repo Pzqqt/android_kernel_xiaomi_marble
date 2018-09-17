@@ -2317,10 +2317,6 @@ uint8_t hal_rx_ret_buf_manager_get(void *ring_desc)
  * RX WBM ERROR APIS
  ******************************************************************************/
 
-#define HAL_RX_WBM_ERR_SRC_GET(wbm_desc) (((*(((uint32_t *) wbm_desc)+ \
-		(WBM_RELEASE_RING_2_RELEASE_SOURCE_MODULE_OFFSET >> 2))) & \
-		WBM_RELEASE_RING_2_RELEASE_SOURCE_MODULE_MASK) >> \
-		WBM_RELEASE_RING_2_RELEASE_SOURCE_MODULE_LSB)
 
 #define HAL_RX_WBM_BUF_TYPE_GET(wbm_desc) (((*(((uint32_t *) wbm_desc)+ \
 		(WBM_RELEASE_RING_2_BUFFER_OR_DESC_TYPE_OFFSET >> 2))) & \
@@ -2341,15 +2337,6 @@ enum hal_rx_wbm_reo_push_reason {
 	HAL_RX_WBM_REO_PSH_RSN_ROUTE,
 };
 
-#define HAL_RX_WBM_REO_PUSH_REASON_GET(wbm_desc) (((*(((uint32_t *) wbm_desc)+ \
-		(WBM_RELEASE_RING_2_REO_PUSH_REASON_OFFSET >> 2))) & \
-		WBM_RELEASE_RING_2_REO_PUSH_REASON_MASK) >> \
-		WBM_RELEASE_RING_2_REO_PUSH_REASON_LSB)
-
-#define HAL_RX_WBM_REO_ERROR_CODE_GET(wbm_desc) (((*(((uint32_t *) wbm_desc)+ \
-		(WBM_RELEASE_RING_2_REO_ERROR_CODE_OFFSET >> 2))) & \
-		WBM_RELEASE_RING_2_REO_ERROR_CODE_MASK) >> \
-		WBM_RELEASE_RING_2_REO_ERROR_CODE_LSB)
 
 /**
  * enum hal_rx_wbm_rxdma_push_reason: Indicates why REO pushed the frame to
@@ -2365,17 +2352,6 @@ enum hal_rx_wbm_rxdma_push_reason {
 	HAL_RX_WBM_RXDMA_PSH_RSN_ROUTE,
 };
 
-#define HAL_RX_WBM_RXDMA_PUSH_REASON_GET(wbm_desc)	\
-	(((*(((uint32_t *) wbm_desc) +			\
-	(WBM_RELEASE_RING_2_RXDMA_PUSH_REASON_OFFSET >> 2))) & \
-	WBM_RELEASE_RING_2_RXDMA_PUSH_REASON_MASK) >>	\
-	WBM_RELEASE_RING_2_RXDMA_PUSH_REASON_LSB)
-
-#define HAL_RX_WBM_RXDMA_ERROR_CODE_GET(wbm_desc)	\
-	(((*(((uint32_t *) wbm_desc) +			\
-	(WBM_RELEASE_RING_2_RXDMA_ERROR_CODE_OFFSET >> 2))) & \
-	WBM_RELEASE_RING_2_RXDMA_ERROR_CODE_MASK) >>	\
-	WBM_RELEASE_RING_2_RXDMA_ERROR_CODE_LSB)
 
 #define HAL_RX_WBM_FIRST_MSDU_GET(wbm_desc)		\
 	(((*(((uint32_t *) wbm_desc) +			\
@@ -2510,193 +2486,13 @@ static inline void hal_rx_dump_rx_attention_tlv(struct rx_attention *rx_attn,
 
 }
 
-/**
- * hal_rx_dump_mpdu_start_tlv: dump RX mpdu_start TLV in structured
- *			       human readable format.
- * @ mpdu_start: pointer the rx_attention TLV in pkt.
- * @ dbg_level: log level.
- *
- * Return: void
- */
 static inline void hal_rx_dump_mpdu_start_tlv(struct rx_mpdu_start *mpdu_start,
-uint8_t dbg_level)
+					      uint8_t dbg_level,
+					      struct hal_soc *hal)
 {
-	struct	rx_mpdu_info *mpdu_info =
-		(struct rx_mpdu_info *) &mpdu_start->rx_mpdu_info_details;
-	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"rx_mpdu_start tlv - "
-			"rxpcu_mpdu_filter_in_category: %d "
-			"sw_frame_group_id: %d "
-			"ndp_frame: %d "
-			"phy_err: %d "
-			"phy_err_during_mpdu_header: %d "
-			"protocol_version_err: %d "
-			"ast_based_lookup_valid: %d "
-			"phy_ppdu_id: %d "
-			"ast_index: %d "
-			"sw_peer_id: %d "
-			"mpdu_frame_control_valid: %d "
-			"mpdu_duration_valid: %d "
-			"mac_addr_ad1_valid: %d "
-			"mac_addr_ad2_valid: %d "
-			"mac_addr_ad3_valid: %d "
-			"mac_addr_ad4_valid: %d "
-			"mpdu_sequence_control_valid: %d "
-			"mpdu_qos_control_valid: %d "
-			"mpdu_ht_control_valid: %d "
-			"frame_encryption_info_valid: %d "
-			"fr_ds: %d "
-			"to_ds: %d "
-			"encrypted: %d "
-			"mpdu_retry: %d "
-			"mpdu_sequence_number: %d "
-			"epd_en: %d "
-			"all_frames_shall_be_encrypted: %d "
-			"encrypt_type: %d "
-			"mesh_sta: %d "
-			"bssid_hit: %d "
-			"bssid_number: %d "
-			"tid: %d "
-			"pn_31_0: %d "
-			"pn_63_32: %d "
-			"pn_95_64: %d "
-			"pn_127_96: %d "
-			"peer_meta_data: %d "
-			"rxpt_classify_info.reo_destination_indication: %d "
-			"rxpt_classify_info.use_flow_id_toeplitz_clfy: %d "
-			"rx_reo_queue_desc_addr_31_0: %d "
-			"rx_reo_queue_desc_addr_39_32: %d "
-			"receive_queue_number: %d "
-			"pre_delim_err_warning: %d "
-			"first_delim_err: %d "
-			"key_id_octet: %d "
-			"new_peer_entry: %d "
-			"decrypt_needed: %d "
-			"decap_type: %d "
-			"rx_insert_vlan_c_tag_padding: %d "
-			"rx_insert_vlan_s_tag_padding: %d "
-			"strip_vlan_c_tag_decap: %d "
-			"strip_vlan_s_tag_decap: %d "
-			"pre_delim_count: %d "
-			"ampdu_flag: %d "
-			"bar_frame: %d "
-			"mpdu_length: %d "
-			"first_mpdu: %d "
-			"mcast_bcast: %d "
-			"ast_index_not_found: %d "
-			"ast_index_timeout: %d "
-			"power_mgmt: %d "
-			"non_qos: %d "
-			"null_data: %d "
-			"mgmt_type: %d "
-			"ctrl_type: %d "
-			"more_data: %d "
-			"eosp: %d "
-			"fragment_flag: %d "
-			"order: %d "
-			"u_apsd_trigger: %d "
-			"encrypt_required: %d "
-			"directed: %d "
-			"mpdu_frame_control_field: %d "
-			"mpdu_duration_field: %d "
-			"mac_addr_ad1_31_0: %d "
-			"mac_addr_ad1_47_32: %d "
-			"mac_addr_ad2_15_0: %d "
-			"mac_addr_ad2_47_16: %d "
-			"mac_addr_ad3_31_0: %d "
-			"mac_addr_ad3_47_32: %d "
-			"mpdu_sequence_control_field: %d "
-			"mac_addr_ad4_31_0: %d "
-			"mac_addr_ad4_47_32: %d "
-			"mpdu_qos_control_field: %d "
-			"mpdu_ht_control_field: %d ",
-			mpdu_info->rxpcu_mpdu_filter_in_category,
-			mpdu_info->sw_frame_group_id,
-			mpdu_info->ndp_frame,
-			mpdu_info->phy_err,
-			mpdu_info->phy_err_during_mpdu_header,
-			mpdu_info->protocol_version_err,
-			mpdu_info->ast_based_lookup_valid,
-			mpdu_info->phy_ppdu_id,
-			mpdu_info->ast_index,
-			mpdu_info->sw_peer_id,
-			mpdu_info->mpdu_frame_control_valid,
-			mpdu_info->mpdu_duration_valid,
-			mpdu_info->mac_addr_ad1_valid,
-			mpdu_info->mac_addr_ad2_valid,
-			mpdu_info->mac_addr_ad3_valid,
-			mpdu_info->mac_addr_ad4_valid,
-			mpdu_info->mpdu_sequence_control_valid,
-			mpdu_info->mpdu_qos_control_valid,
-			mpdu_info->mpdu_ht_control_valid,
-			mpdu_info->frame_encryption_info_valid,
-			mpdu_info->fr_ds,
-			mpdu_info->to_ds,
-			mpdu_info->encrypted,
-			mpdu_info->mpdu_retry,
-			mpdu_info->mpdu_sequence_number,
-			mpdu_info->epd_en,
-			mpdu_info->all_frames_shall_be_encrypted,
-			mpdu_info->encrypt_type,
-			mpdu_info->mesh_sta,
-			mpdu_info->bssid_hit,
-			mpdu_info->bssid_number,
-			mpdu_info->tid,
-			mpdu_info->pn_31_0,
-			mpdu_info->pn_63_32,
-			mpdu_info->pn_95_64,
-			mpdu_info->pn_127_96,
-			mpdu_info->peer_meta_data,
-			mpdu_info->rxpt_classify_info_details.reo_destination_indication,
-			mpdu_info->rxpt_classify_info_details.use_flow_id_toeplitz_clfy,
-			mpdu_info->rx_reo_queue_desc_addr_31_0,
-			mpdu_info->rx_reo_queue_desc_addr_39_32,
-			mpdu_info->receive_queue_number,
-			mpdu_info->pre_delim_err_warning,
-			mpdu_info->first_delim_err,
-			mpdu_info->key_id_octet,
-			mpdu_info->new_peer_entry,
-			mpdu_info->decrypt_needed,
-			mpdu_info->decap_type,
-			mpdu_info->rx_insert_vlan_c_tag_padding,
-			mpdu_info->rx_insert_vlan_s_tag_padding,
-			mpdu_info->strip_vlan_c_tag_decap,
-			mpdu_info->strip_vlan_s_tag_decap,
-			mpdu_info->pre_delim_count,
-			mpdu_info->ampdu_flag,
-			mpdu_info->bar_frame,
-			mpdu_info->mpdu_length,
-			mpdu_info->first_mpdu,
-			mpdu_info->mcast_bcast,
-			mpdu_info->ast_index_not_found,
-			mpdu_info->ast_index_timeout,
-			mpdu_info->power_mgmt,
-			mpdu_info->non_qos,
-			mpdu_info->null_data,
-			mpdu_info->mgmt_type,
-			mpdu_info->ctrl_type,
-			mpdu_info->more_data,
-			mpdu_info->eosp,
-			mpdu_info->fragment_flag,
-			mpdu_info->order,
-			mpdu_info->u_apsd_trigger,
-			mpdu_info->encrypt_required,
-			mpdu_info->directed,
-			mpdu_info->mpdu_frame_control_field,
-			mpdu_info->mpdu_duration_field,
-			mpdu_info->mac_addr_ad1_31_0,
-			mpdu_info->mac_addr_ad1_47_32,
-			mpdu_info->mac_addr_ad2_15_0,
-			mpdu_info->mac_addr_ad2_47_16,
-			mpdu_info->mac_addr_ad3_31_0,
-			mpdu_info->mac_addr_ad3_47_32,
-			mpdu_info->mpdu_sequence_control_field,
-			mpdu_info->mac_addr_ad4_31_0,
-			mpdu_info->mac_addr_ad4_47_32,
-			mpdu_info->mpdu_qos_control_field,
-			mpdu_info->mpdu_ht_control_field);
-}
 
+	hal->ops->hal_rx_dump_mpdu_start_tlv(mpdu_start, dbg_level);
+}
 /**
  * hal_rx_dump_msdu_end_tlv: dump RX msdu_end TLV in structured
  *			     human readable format.
@@ -3242,13 +3038,10 @@ uint8_t hal_rx_reo_ent_rxdma_error_code_get(void *reo_ent_desc)
  * Return: void
  */
 static inline void hal_rx_wbm_err_info_get(void *wbm_desc,
-				struct hal_wbm_err_desc_info *wbm_er_info)
+				struct hal_wbm_err_desc_info *wbm_er_info,
+				struct hal_soc *hal_soc)
 {
-	wbm_er_info->wbm_err_src = HAL_RX_WBM_ERR_SRC_GET(wbm_desc);
-	wbm_er_info->reo_psh_rsn = HAL_RX_WBM_REO_PUSH_REASON_GET(wbm_desc);
-	wbm_er_info->reo_err_code = HAL_RX_WBM_REO_ERROR_CODE_GET(wbm_desc);
-	wbm_er_info->rxdma_psh_rsn = HAL_RX_WBM_RXDMA_PUSH_REASON_GET(wbm_desc);
-	wbm_er_info->rxdma_err_code = HAL_RX_WBM_RXDMA_ERROR_CODE_GET(wbm_desc);
+	hal_soc->ops->hal_rx_wbm_err_info_get(wbm_desc, (void *)wbm_er_info);
 }
 
 /**
@@ -3396,7 +3189,7 @@ static inline void hal_rx_dump_pkt_tlvs(struct hal_soc *hal_soc,
 	struct rx_pkt_hdr_tlv    *pkt_hdr_tlv = &pkt_tlvs->pkt_hdr_tlv;
 
 	hal_rx_dump_rx_attention_tlv(rx_attn, dbg_level);
-	hal_rx_dump_mpdu_start_tlv(mpdu_start, dbg_level);
+	hal_rx_dump_mpdu_start_tlv(mpdu_start, dbg_level, hal_soc);
 	hal_rx_dump_msdu_start_tlv(hal_soc, msdu_start, dbg_level);
 	hal_rx_dump_mpdu_end_tlv(mpdu_end, dbg_level);
 	hal_rx_dump_msdu_end_tlv(hal_soc, msdu_end, dbg_level);

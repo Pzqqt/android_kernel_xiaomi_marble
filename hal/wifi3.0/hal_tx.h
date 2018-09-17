@@ -784,15 +784,13 @@ static inline uint32_t hal_tx_comp_get_buffer_type(void *hal_desc)
  *
  * Return: buffer type
  */
-static inline uint8_t hal_tx_comp_get_release_reason(void *hal_desc)
+static inline uint8_t hal_tx_comp_get_release_reason(void *hal_desc, void *hal)
 {
-	uint32_t comp_desc =
-		*(uint32_t *) (((uint8_t *) hal_desc) +
-			       WBM_RELEASE_RING_2_TQM_RELEASE_REASON_OFFSET);
+	struct hal_soc *hal_soc = hal;
 
-	return (comp_desc & WBM_RELEASE_RING_2_TQM_RELEASE_REASON_MASK) >>
-		WBM_RELEASE_RING_2_TQM_RELEASE_REASON_LSB;
+	return hal_soc->ops->hal_tx_comp_get_release_reason(hal_desc);
 }
+
 
 /**
  * hal_tx_comp_desc_sync() - collect hardware descriptor contents
@@ -968,7 +966,7 @@ static inline void hal_tx_comp_get_status(void *desc, void *ts, void *hal)
 {
 	struct hal_soc *hal_soc = hal;
 
-	hal_soc->ops->hal_tx_comp_get_status(desc, ts);
+	hal_soc->ops->hal_tx_comp_get_status(desc, ts, hal);
 }
 
 
