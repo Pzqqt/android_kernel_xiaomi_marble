@@ -996,6 +996,13 @@ static void proc_dnld_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam
 		       pHdr->controlSize, pHdr->iBufSize, pHdr->sBufSize,
 		       pMac->cfg.gCfgMaxSBufSize);
 
+	if (pHdr->sBufSize > (UINT_MAX -
+		(((CFG_PARAM_MAX_NUM + 3 * pMac->cfg.gCfgMaxIBufSize) << 2) +
+		sizeof(tCfgBinHdr)))) {
+		pe_warn("Invalid sBufSize coming from fw: %d", pHdr->sBufSize);
+		retVal = WNI_CFG_INVALID_LEN;
+		goto end;
+	}
 	expLen =
 		((CFG_PARAM_MAX_NUM + 3 * pMac->cfg.gCfgMaxIBufSize) << 2) +
 		pHdr->sBufSize + sizeof(tCfgBinHdr);
