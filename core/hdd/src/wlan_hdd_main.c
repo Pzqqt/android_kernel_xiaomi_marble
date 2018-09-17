@@ -12718,16 +12718,10 @@ static int hdd_driver_load(void)
 	       WLAN_MODULE_NAME,
 	       g_wlan_driver_version);
 
-	errno = pld_init();
-	if (errno) {
-		hdd_fln("Failed to init PLD; errno:%d", errno);
-		return errno;
-	}
-
 	errno = hdd_init();
 	if (errno) {
 		hdd_fln("Failed to init HDD; errno:%d", errno);
-		goto pld_deinit;
+		goto exit;
 	}
 
 	status = hdd_component_init();
@@ -12752,16 +12746,24 @@ static int hdd_driver_load(void)
 		goto wakelock_destroy;
 	}
 
+	errno = pld_init();
+	if (errno) {
+		hdd_fln("Failed to init PLD; errno:%d", errno);
+		goto param_destroy;
+	}
+
 	errno = wlan_hdd_register_driver();
 	if (errno) {
 		hdd_fln("Failed to register driver; errno:%d", errno);
-		goto param_destroy;
+		goto pld_deinit;
 	}
 
 	pr_info("%s: driver loaded\n", WLAN_MODULE_NAME);
 
 	return 0;
 
+pld_deinit:
+	pld_deinit();
 param_destroy:
 	wlan_hdd_state_ctrl_param_destroy();
 wakelock_destroy:
@@ -12770,9 +12772,8 @@ comp_deinit:
 	hdd_component_deinit();
 hdd_deinit:
 	hdd_deinit();
-pld_deinit:
-	pld_deinit();
 
+exit:
 	return errno;
 }
 
@@ -12804,12 +12805,12 @@ static void hdd_driver_unload(void)
 		qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
 
 	wlan_hdd_unregister_driver();
+	pld_deinit();
 	wlan_hdd_state_ctrl_param_destroy();
 	hdd_set_conparam(0);
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 	hdd_component_deinit();
 	hdd_deinit();
-	pld_deinit();
 }
 
 #ifndef MODULE
