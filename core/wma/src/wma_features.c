@@ -1124,6 +1124,7 @@ static QDF_STATUS wma_wow_set_wake_time(WMA_HANDLE wma_handle, uint8_t vdev_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 /**
  * wma_check_and_set_wake_timer(): checks all interfaces and if any interface
  * has install_key pending, sets timer pattern in fw to wake up host after
@@ -1187,6 +1188,7 @@ int wma_unified_csa_offload_enable(tp_wma_handle wma, uint8_t vdev_id)
 
 	return 0;
 }
+#endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #ifdef WLAN_FEATURE_NAN
 /**

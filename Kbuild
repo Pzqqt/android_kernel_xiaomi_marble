@@ -14,6 +14,7 @@ ifeq ($(KERNEL_BUILD), y)
 	WLAN_COMMON_ROOT := ../qca-wifi-host-cmn
 	WLAN_COMMON_INC := $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 endif
+
 WLAN_COMMON_ROOT ?= ../qca-wifi-host-cmn
 WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 
@@ -1051,6 +1052,7 @@ WMI_OBJS := $(WMI_OBJ_DIR)/wmi_unified.o \
 
 ifeq ($(CONFIG_POWER_MANAGEMENT_OFFLOAD), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_pmo_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_pmo_tlv.o
 endif
 
 ifeq ($(CONFIG_QCACLD_FEATURE_APF), y)
@@ -1076,9 +1078,39 @@ WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_twt_api.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_twt_tlv.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_ocb_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_ocb_tlv.o
+endif
+
 ifeq ($(CONFIG_FEATURE_WLAN_EXTSCAN), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_extscan_api.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_extscan_tlv.o
+endif
+
+ifeq ($(CONFIG_NAN_CONVERGENCE), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_nan_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_nan_tlv.o
+endif
+
+ifeq ($(CONFIG_CONVERGED_P2P_ENABLE), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_p2p_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_p2p_tlv.o
+endif
+
+ifeq ($(CONFIG_WMI_ROAM_SUPPORT), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_roam_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_roam_tlv.o
+endif
+
+ifeq ($(CONFIG_WMI_CONCURRENCY_SUPPORT), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_concurrency_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_concurrency_tlv.o
+endif
+
+ifeq ($(CONFIG_WMI_STA_SUPPORT), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_sta_api.o
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_sta_tlv.o
 endif
 
 ########### FWLOG ###########
@@ -2312,6 +2344,11 @@ cppflags-$(CONFIG_FEATURE_SAP_COND_CHAN_SWITCH) += -DFEATURE_SAP_COND_CHAN_SWITC
 ifeq ($(CONFIG_CONVERGED_P2P_ENABLE), y)
 cppflags-$(CONFIG_FEATURE_P2P_LISTEN_OFFLOAD) += -DFEATURE_P2P_LISTEN_OFFLOAD
 endif
+
+#Flags to enable/disable WMI APIs
+cppflags-$(CONFIG_WMI_ROAM_SUPPORT) += -DWMI_ROAM_SUPPORT
+cppflags-$(CONFIG_WMI_CONCURRENCY_SUPPORT) += -DWMI_CONCURRENCY_SUPPORT
+cppflags-$(CONFIG_WMI_STA_SUPPORT) += -DWMI_STA_SUPPORT
 
 # Dummy flag for WIN/MCL converged data path compilation
 cppflags-y += -DDP_PRINT_ENABLE=0

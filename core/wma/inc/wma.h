@@ -2554,6 +2554,7 @@ QDF_STATUS wma_get_chain_rssi(tp_wma_handle wma_handle,
 QDF_STATUS wma_config_bmiss_bcnt_params(uint32_t vdev_id, uint32_t first_cnt,
 		uint32_t final_cnt);
 
+#ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
 /**
  * wma_check_and_set_wake_timer(): checks all interfaces and if any interface
  * has install_key pending, sets timer pattern in fw to wake up host after
@@ -2563,6 +2564,7 @@ QDF_STATUS wma_config_bmiss_bcnt_params(uint32_t vdev_id, uint32_t first_cnt,
  * Return: None
  */
 void wma_check_and_set_wake_timer(uint32_t time);
+#endif
 
 /**
  * wma_rx_invalid_peer_ind(): the callback for DP to notify WMA layer
