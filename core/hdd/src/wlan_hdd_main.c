@@ -2938,6 +2938,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 			goto hdd_psoc_close;
 		}
 
+		hdd_ctx->mac_handle = cds_get_context(QDF_MODULE_ID_SME);
+
 		if (hdd_ctx->config->rx_thread_affinity_mask)
 			cds_set_rx_thread_cpu_mask(
 				hdd_ctx->config->rx_thread_affinity_mask);
@@ -2963,8 +2965,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		 * register HDD callbacks with UMAC's NAN componenet.
 		 */
 		hdd_nan_register_callbacks(hdd_ctx);
-
-		hdd_ctx->mac_handle = cds_get_context(QDF_MODULE_ID_SME);
 
 		status = cds_pre_enable();
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -13665,116 +13665,21 @@ uint32_t hdd_limit_max_per_index_score(uint32_t per_index_score)
  * @score_config: score config to update
  * @cfg: config params
  *
- * Return: 0 if success else err
+ * Return: QDF_STATUS
  */
-static void hdd_update_score_config(
-	struct scoring_config *score_config, struct hdd_config *cfg)
+static QDF_STATUS
+hdd_update_score_config(struct scoring_config *score_config,
+			struct hdd_config *cfg)
 {
-	int total_weight;
+	struct hdd_context *hdd_ctx;
 
-	score_config->weight_cfg.rssi_weightage = cfg->rssi_weightage;
-	score_config->weight_cfg.ht_caps_weightage = cfg->ht_caps_weightage;
-	score_config->weight_cfg.vht_caps_weightage =
-					cfg->vht_caps_weightage;
-	score_config->weight_cfg.he_caps_weightage =
-					cfg->he_caps_weightage;
-	score_config->weight_cfg.chan_width_weightage =
-		cfg->chan_width_weightage;
-	score_config->weight_cfg.chan_band_weightage =
-		cfg->chan_band_weightage;
-	score_config->weight_cfg.nss_weightage = cfg->nss_weightage;
-	score_config->weight_cfg.beamforming_cap_weightage =
-		cfg->beamforming_cap_weightage;
-	score_config->weight_cfg.pcl_weightage = cfg->pcl_weightage;
-	score_config->weight_cfg.channel_congestion_weightage =
-			cfg->channel_congestion_weightage;
-	score_config->weight_cfg.oce_wan_weightage = cfg->oce_wan_weightage;
-
-	total_weight = score_config->weight_cfg.rssi_weightage +
-		       score_config->weight_cfg.ht_caps_weightage +
-		       score_config->weight_cfg.vht_caps_weightage +
-		       score_config->weight_cfg.he_caps_weightage +
-		       score_config->weight_cfg.chan_width_weightage +
-		       score_config->weight_cfg.chan_band_weightage +
-		       score_config->weight_cfg.nss_weightage +
-		       score_config->weight_cfg.beamforming_cap_weightage +
-		       score_config->weight_cfg.pcl_weightage +
-		       score_config->weight_cfg.channel_congestion_weightage +
-		       score_config->weight_cfg.oce_wan_weightage;
-
-	if (total_weight > BEST_CANDIDATE_MAX_WEIGHT) {
-		hdd_err("total weight is greater than %d fallback to default values",
-			BEST_CANDIDATE_MAX_WEIGHT);
-
-		score_config->weight_cfg.rssi_weightage = RSSI_WEIGHTAGE;
-		score_config->weight_cfg.ht_caps_weightage =
-			HT_CAPABILITY_WEIGHTAGE;
-		score_config->weight_cfg.vht_caps_weightage = VHT_CAP_WEIGHTAGE;
-		score_config->weight_cfg.he_caps_weightage = HE_CAP_WEIGHTAGE;
-		score_config->weight_cfg.chan_width_weightage =
-			CHAN_WIDTH_WEIGHTAGE;
-		score_config->weight_cfg.chan_band_weightage =
-			CHAN_BAND_WEIGHTAGE;
-		score_config->weight_cfg.nss_weightage = NSS_WEIGHTAGE;
-		score_config->weight_cfg.beamforming_cap_weightage =
-			BEAMFORMING_CAP_WEIGHTAGE;
-		score_config->weight_cfg.pcl_weightage = PCL_WEIGHT;
-		score_config->weight_cfg.channel_congestion_weightage =
-			CHANNEL_CONGESTION_WEIGHTAGE;
-		score_config->weight_cfg.oce_wan_weightage = OCE_WAN_WEIGHTAGE;
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is NULL");
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	score_config->bandwidth_weight_per_index =
-		hdd_limit_max_per_index_score(
-			cfg->bandwidth_weight_per_index);
-	score_config->nss_weight_per_index =
-		hdd_limit_max_per_index_score(cfg->nss_weight_per_index);
-	score_config->band_weight_per_index =
-		hdd_limit_max_per_index_score(cfg->band_weight_per_index);
-
-	score_config->rssi_score.best_rssi_threshold =
-				cfg->best_rssi_threshold;
-	score_config->rssi_score.good_rssi_threshold =
-				cfg->good_rssi_threshold;
-	score_config->rssi_score.bad_rssi_threshold =
-				cfg->bad_rssi_threshold;
-	score_config->rssi_score.good_rssi_pcnt = cfg->good_rssi_pcnt;
-	score_config->rssi_score.bad_rssi_pcnt = cfg->bad_rssi_pcnt;
-	score_config->rssi_score.good_rssi_bucket_size =
-		cfg->good_rssi_bucket_size;
-	score_config->rssi_score.bad_rssi_bucket_size =
-		cfg->bad_rssi_bucket_size;
-	score_config->rssi_score.rssi_pref_5g_rssi_thresh =
-		cfg->rssi_pref_5g_rssi_thresh;
-
-	score_config->esp_qbss_scoring.num_slot = cfg->num_esp_qbss_slots;
-	score_config->esp_qbss_scoring.score_pcnt3_to_0 =
-		hdd_limit_max_per_index_score(
-			cfg->esp_qbss_score_slots3_to_0);
-	score_config->esp_qbss_scoring.score_pcnt7_to_4 =
-		hdd_limit_max_per_index_score(
-			cfg->esp_qbss_score_slots7_to_4);
-	score_config->esp_qbss_scoring.score_pcnt11_to_8 =
-		hdd_limit_max_per_index_score(
-			cfg->esp_qbss_score_slots11_to_8);
-	score_config->esp_qbss_scoring.score_pcnt15_to_12 =
-		hdd_limit_max_per_index_score(
-			cfg->esp_qbss_score_slots15_to_12);
-
-	score_config->oce_wan_scoring.num_slot = cfg->num_oce_wan_slots;
-	score_config->oce_wan_scoring.score_pcnt3_to_0 =
-		hdd_limit_max_per_index_score(
-			cfg->oce_wan_score_slots3_to_0);
-	score_config->oce_wan_scoring.score_pcnt7_to_4 =
-		hdd_limit_max_per_index_score(
-			cfg->oce_wan_score_slots7_to_4);
-	score_config->oce_wan_scoring.score_pcnt11_to_8 =
-		hdd_limit_max_per_index_score(
-			cfg->oce_wan_score_slots11_to_8);
-	score_config->oce_wan_scoring.score_pcnt15_to_12 =
-		hdd_limit_max_per_index_score(
-			cfg->oce_wan_score_slots15_to_12);
-
+	sme_update_score_config(hdd_ctx->mac_handle, score_config);
 
 	score_config->cb_mode_24G = cfg->nChannelBondingMode24GHz;
 	score_config->cb_mode_5G = cfg->nChannelBondingMode5GHz;
@@ -13800,6 +13705,7 @@ static void hdd_update_score_config(
 	if (cfg->enableTxBF)
 		score_config->beamformee_cap = 1;
 
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -13865,7 +13771,12 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 				cfg->sta_miracast_mcc_rest_time_val;
 	hdd_update_pno_config(&scan_cfg.pno_cfg, cfg);
 	hdd_update_ie_whitelist_attr(&scan_cfg.ie_whitelist, cfg);
-	hdd_update_score_config(&scan_cfg.score_config, cfg);
+
+	status = hdd_update_score_config(&scan_cfg.score_config, cfg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to update scoring config");
+		return -EINVAL;
+	}
 
 	status = ucfg_scan_update_user_config(psoc, &scan_cfg);
 	if (status != QDF_STATUS_SUCCESS) {

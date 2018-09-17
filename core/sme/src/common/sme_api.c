@@ -16284,3 +16284,81 @@ sme_get_roam_scan_stats(tHalHandle hal, roam_scan_stats_cb cb, void *context,
 
 	return status;
 }
+
+void sme_update_score_config(tHalHandle hal,
+			     struct scoring_config *score_config)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct wlan_mlme_scoring_cfg *mlme_scoring_cfg;
+
+	mlme_scoring_cfg = &mac_ctx->mlme_cfg->scoring;
+
+	score_config->weight_cfg.rssi_weightage =
+		mlme_scoring_cfg->weight_cfg.rssi_weightage;
+	score_config->weight_cfg.ht_caps_weightage =
+		mlme_scoring_cfg->weight_cfg.ht_caps_weightage;
+	score_config->weight_cfg.vht_caps_weightage =
+		mlme_scoring_cfg->weight_cfg.vht_caps_weightage;
+	score_config->weight_cfg.he_caps_weightage =
+		mlme_scoring_cfg->weight_cfg.he_caps_weightage;
+	score_config->weight_cfg.chan_width_weightage =
+		mlme_scoring_cfg->weight_cfg.chan_width_weightage;
+	score_config->weight_cfg.chan_band_weightage =
+		mlme_scoring_cfg->weight_cfg.chan_band_weightage;
+	score_config->weight_cfg.nss_weightage =
+		mlme_scoring_cfg->weight_cfg.nss_weightage;
+	score_config->weight_cfg.beamforming_cap_weightage =
+		mlme_scoring_cfg->weight_cfg.beamforming_cap_weightage;
+	score_config->weight_cfg.pcl_weightage =
+		mlme_scoring_cfg->weight_cfg.pcl_weightage;
+	score_config->weight_cfg.channel_congestion_weightage =
+		mlme_scoring_cfg->weight_cfg.channel_congestion_weightage;
+	score_config->weight_cfg.oce_wan_weightage =
+		mlme_scoring_cfg->weight_cfg.oce_wan_weightage;
+
+	score_config->bandwidth_weight_per_index =
+		mlme_scoring_cfg->bandwidth_weight_per_index;
+	score_config->nss_weight_per_index =
+		mlme_scoring_cfg->nss_weight_per_index;
+	score_config->band_weight_per_index =
+		mlme_scoring_cfg->band_weight_per_index;
+
+	score_config->rssi_score.best_rssi_threshold =
+		mlme_scoring_cfg->rssi_score.best_rssi_threshold;
+	score_config->rssi_score.good_rssi_threshold =
+		mlme_scoring_cfg->rssi_score.good_rssi_threshold;
+	score_config->rssi_score.bad_rssi_threshold =
+		mlme_scoring_cfg->rssi_score.bad_rssi_threshold;
+	score_config->rssi_score.good_rssi_pcnt =
+		mlme_scoring_cfg->rssi_score.good_rssi_pcnt;
+	score_config->rssi_score.bad_rssi_pcnt =
+		mlme_scoring_cfg->rssi_score.bad_rssi_pcnt;
+	score_config->rssi_score.good_rssi_bucket_size =
+		mlme_scoring_cfg->rssi_score.good_rssi_bucket_size;
+	score_config->rssi_score.bad_rssi_bucket_size =
+		mlme_scoring_cfg->rssi_score.bad_rssi_bucket_size;
+	score_config->rssi_score.rssi_pref_5g_rssi_thresh =
+		mlme_scoring_cfg->rssi_score.rssi_pref_5g_rssi_thresh;
+
+	score_config->esp_qbss_scoring.num_slot =
+		mlme_scoring_cfg->esp_qbss_scoring.num_slot;
+	score_config->esp_qbss_scoring.score_pcnt3_to_0 =
+		mlme_scoring_cfg->esp_qbss_scoring.score_pcnt3_to_0;
+	score_config->esp_qbss_scoring.score_pcnt7_to_4 =
+		mlme_scoring_cfg->esp_qbss_scoring.score_pcnt7_to_4;
+	score_config->esp_qbss_scoring.score_pcnt11_to_8 =
+		mlme_scoring_cfg->esp_qbss_scoring.score_pcnt11_to_8;
+	score_config->esp_qbss_scoring.score_pcnt15_to_12 =
+		mlme_scoring_cfg->esp_qbss_scoring.score_pcnt15_to_12;
+
+	score_config->oce_wan_scoring.num_slot =
+		mlme_scoring_cfg->oce_wan_scoring.num_slot;
+	score_config->oce_wan_scoring.score_pcnt3_to_0 =
+		mlme_scoring_cfg->oce_wan_scoring.score_pcnt3_to_0;
+	score_config->oce_wan_scoring.score_pcnt7_to_4 =
+		mlme_scoring_cfg->oce_wan_scoring.score_pcnt7_to_4;
+	score_config->oce_wan_scoring.score_pcnt11_to_8 =
+		mlme_scoring_cfg->oce_wan_scoring.score_pcnt11_to_8;
+	score_config->oce_wan_scoring.score_pcnt15_to_12 =
+		mlme_scoring_cfg->oce_wan_scoring.score_pcnt15_to_12;
+}

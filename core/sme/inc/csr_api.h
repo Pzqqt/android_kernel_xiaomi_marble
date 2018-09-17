@@ -1234,7 +1234,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t wlm_latency_flags[CSR_NUM_WLM_LATENCY_LEVEL];
 	uint16_t pkt_err_disconn_th;
 	bool is_force_1x1;
-	struct sir_score_config bss_score_params;
 	uint8_t oce_feature_bitmap;
 	uint32_t btm_offload_config;
 	uint32_t btm_solicited_timeout;

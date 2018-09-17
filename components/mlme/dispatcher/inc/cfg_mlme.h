@@ -34,6 +34,7 @@
 #include "cfg_mlme_sta.h"
 #include "cfg_sap_protection.h"
 #include "cfg_mlme_sap.h"
+#include "cfg_mlme_scoring.h"
 
 #define CFG_MLME_ALL \
 	CFG_CHAINMASK_ALL \
@@ -46,6 +47,7 @@
 	CFG_RATES_ALL \
 	CFG_SAP_PROTECTION_ALL \
 	CFG_SAP_ALL \
-	CFG_STA_ALL
+	CFG_STA_ALL \
+	CFG_SCORING_ALL
 
 #endif /* __CFG_MLME_H */

@@ -1747,27 +1747,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.nInitialDwellTime = 0;
 	pMac->roam.configParam.initial_scan_no_dfs_chnl = 0;
 	pMac->roam.configParam.csr_mawc_config.mawc_enabled = true;
-
-	qdf_mem_zero(&pMac->roam.configParam.bss_score_params,
-		     sizeof(struct sir_score_config));
-	pMac->roam.configParam.bss_score_params.weight_cfg.rssi_weightage =
-		RSSI_WEIGHTAGE;
-	pMac->roam.configParam.bss_score_params.weight_cfg.ht_caps_weightage =
-		HT_CAPABILITY_WEIGHTAGE;
-	pMac->roam.configParam.bss_score_params.weight_cfg.vht_caps_weightage =
-		VHT_CAP_WEIGHTAGE;
-	pMac->roam.configParam.bss_score_params.
-		weight_cfg.chan_width_weightage = CHAN_WIDTH_WEIGHTAGE;
-	pMac->roam.configParam.bss_score_params.
-		weight_cfg.chan_band_weightage = CHAN_BAND_WEIGHTAGE;
-	pMac->roam.configParam.bss_score_params.weight_cfg.nss_weightage =
-		NSS_WEIGHTAGE;
-	pMac->roam.configParam.bss_score_params.weight_cfg.
-		beamforming_cap_weightage = BEAMFORMING_CAP_WEIGHTAGE;
-	pMac->roam.configParam.bss_score_params.weight_cfg.pcl_weightage =
-		PCL_WEIGHT;
-	pMac->roam.configParam.bss_score_params.weight_cfg.
-		channel_congestion_weightage = CHANNEL_CONGESTION_WEIGHTAGE;
 }
 
 enum band_info csr_get_current_band(tHalHandle hHal)
@@ -3159,9 +3138,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.roam_force_rssi_trigger =
 			pParam->roam_force_rssi_trigger;
 
-		qdf_mem_copy(&pMac->roam.configParam.bss_score_params,
-			     &pParam->bss_score_params,
-			     sizeof(struct sir_score_config));
 		pMac->roam.configParam.btm_offload_config =
 						     pParam->btm_offload_config;
 		pMac->roam.configParam.btm_solicited_timeout =
@@ -3400,9 +3376,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->oce_feature_bitmap =
 		pMac->roam.configParam.oce_feature_bitmap;
 	pParam->roam_force_rssi_trigger = cfg_params->roam_force_rssi_trigger;
-	qdf_mem_copy(&pParam->bss_score_params,
-		     &pMac->roam.configParam.bss_score_params,
-		     sizeof(struct sir_score_config));
 	pParam->btm_offload_config = pMac->roam.configParam.btm_offload_config;
 	pParam->btm_solicited_timeout =
 		pMac->roam.configParam.btm_solicited_timeout;
@@ -19631,14 +19604,14 @@ static void csr_update_score_params(tpAniSirGlobal mac_ctx,
 {
 	struct scoring_param *req_score_params;
 	struct rssi_scoring *req_rssi_score;
-	struct sir_score_config *bss_score_params;
-	struct sir_weight_config *weight_config;
-	struct sir_rssi_cfg_score *rssi_score;
+	struct wlan_mlme_scoring_cfg *bss_score_params;
+	struct wlan_mlme_weight_config *weight_config;
+	struct wlan_mlme_rssi_cfg_score *rssi_score;
 
 	req_score_params = &req_buffer->score_params;
 	req_rssi_score = &req_score_params->rssi_scoring;
 
-	bss_score_params = &mac_ctx->roam.configParam.bss_score_params;
+	bss_score_params = &mac_ctx->mlme_cfg->scoring;
 	weight_config = &bss_score_params->weight_cfg;
 	rssi_score = &bss_score_params->rssi_score;
 

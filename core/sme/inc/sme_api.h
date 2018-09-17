@@ -2793,4 +2793,13 @@ QDF_STATUS
 sme_get_roam_scan_stats(tHalHandle hal, roam_scan_stats_cb cb, void *context,
 			uint32_t vdev_id);
 
+/**
+ * sme_update_score_config() - Update the Scoring Config from MLME
+ * @hal: Mac Handle
+ * @score_config: Pointer to the scoring config structure to be populated
+ *
+ * Return: None
+ */
+void sme_update_score_config(tHalHandle hal,
+			     struct scoring_config *score_config);
 #endif /* #if !defined( __SME_API_H ) */
