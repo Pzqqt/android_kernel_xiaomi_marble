@@ -23587,6 +23587,7 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_twt_responder] = WMI_SERVICE_AP_TWT;
 	wmi_service[wmi_service_listen_interval_offload_support] =
 			WMI_SERVICE_LISTEN_INTERVAL_OFFLOAD_SUPPORT;
+	wmi_service[wmi_service_esp_support] = WMI_SERVICE_ESP_SUPPORT;
 	wmi_service[wmi_service_obss_spatial_reuse] =
 			WMI_SERVICE_OBSS_SPATIAL_REUSE;
 
@@ -23833,6 +23834,11 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 		WMI_PDEV_PARAM_ANTENNA_GAIN_HALF_DB;
 	pdev_param[wmi_pdev_param_esp_indication_period] =
 				WMI_PDEV_PARAM_ESP_INDICATION_PERIOD;
+	pdev_param[wmi_pdev_param_esp_ba_window] = WMI_PDEV_PARAM_ESP_BA_WINDOW;
+	pdev_param[wmi_pdev_param_esp_airtime_fraction] =
+				WMI_PDEV_PARAM_ESP_AIRTIME_FRACTION;
+	pdev_param[wmi_pdev_param_esp_ppdu_duration] =
+				WMI_PDEV_PARAM_ESP_PPDU_DURATION;
 #ifdef WLAN_RU26_SUPPORT
 	pdev_param[wmi_pdev_param_ru26_allowed] = WMI_PDEV_PARAM_RU26_ALLOWED;
 #endif

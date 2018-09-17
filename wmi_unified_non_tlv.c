@@ -9398,6 +9398,9 @@ static void populate_pdev_param_non_tlv(uint32_t *pdev_param)
 		WMI_PDEV_PARAM_SOFT_TX_CHAIN_MASK;
 	pdev_param[wmi_pdev_param_esp_indication_period] =
 		WMI_PDEV_PARAM_ESP_INDICATION_PERIOD;
+	pdev_param[wmi_pdev_param_esp_ba_window] = WMI_UNAVAILABLE_PARAM;
+	pdev_param[wmi_pdev_param_esp_airtime_fraction] = WMI_UNAVAILABLE_PARAM;
+	pdev_param[wmi_pdev_param_esp_ppdu_duration] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_rfkill_enable] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_hw_rfkill_config] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_low_power_rf_enable] = WMI_UNAVAILABLE_PARAM;
