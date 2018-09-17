@@ -212,6 +212,42 @@ hal_rx_handle_other_tlvs(uint32_t tlv_tag, void *rx_tlv,
 			 ppdu_info->rx_status.he_data1 =
 				QDF_MON_STATUS_HE_SU_FORMAT_TYPE;
 		}
+
+		/* data1 */
+		ppdu_info->rx_status.he_data1 |=
+			QDF_MON_STATUS_HE_BSS_COLOR_KNOWN |
+			QDF_MON_STATUS_HE_DL_UL_KNOWN |
+			QDF_MON_STATUS_HE_DATA_BW_RU_KNOWN;
+
+		/* data2 */
+		ppdu_info->rx_status.he_data2 |=
+			QDF_MON_STATUS_TXOP_KNOWN;
+
+		/*data3*/
+		value = HAL_RX_GET(he_sig_a_mu_ul_info,
+				   HE_SIG_A_MU_UL_INFO_0, BSS_COLOR_ID);
+		ppdu_info->rx_status.he_data3 = value;
+		/* 1 for UL and 0 for DL */
+		value = 1;
+		value = value << QDF_MON_STATUS_DL_UL_SHIFT;
+		ppdu_info->rx_status.he_data3 |= value;
+
+		/*data4*/
+		value = HAL_RX_GET(he_sig_a_mu_ul_info, HE_SIG_A_MU_UL_INFO_0,
+				   SPATIAL_REUSE);
+		ppdu_info->rx_status.he_data4 = value;
+
+		/*data5*/
+		value = HAL_RX_GET(he_sig_a_mu_ul_info,
+				   HE_SIG_A_MU_UL_INFO_0, TRANSMIT_BW);
+		ppdu_info->rx_status.he_data5 = value;
+		ppdu_info->rx_status.bw = value;
+
+		/*data6*/
+		value = HAL_RX_GET(he_sig_a_mu_ul_info, HE_SIG_A_MU_UL_INFO_1,
+				   TXOP_DURATION);
+		value = value << QDF_MON_STATUS_TXOP_SHIFT;
+		ppdu_info->rx_status.he_data6 |= value;
 		return true;
 	}
 	default:
