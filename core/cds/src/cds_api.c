@@ -176,51 +176,31 @@ uint8_t cds_get_datapath_handles(void **soc, struct cdp_pdev **pdev,
 
 QDF_STATUS cds_init(void)
 {
-	QDF_STATUS ret;
-
-	ret = qdf_debugfs_init();
-	if (ret != QDF_STATUS_SUCCESS)
-		cds_err("Failed to init debugfs");
-
-	qdf_lock_stats_init();
-	qdf_mem_init();
-	qdf_mc_timer_manager_init();
-	qdf_event_list_init();
-	qdf_cpuhp_init();
-	qdf_register_self_recovery_callback(__cds_trigger_recovery);
-	qdf_register_fw_down_callback(cds_is_fw_down);
-	qdf_register_ssr_protect_callbacks(cds_ssr_protect,
-					   cds_ssr_unprotect);
+	QDF_STATUS status;
 
 	gp_cds_context = &g_cds_context;
 
-	gp_cds_context->qdf_ctx = &g_qdf_ctx;
-	qdf_mem_zero(&g_qdf_ctx, sizeof(g_qdf_ctx));
-
-	qdf_trace_spin_lock_init();
-	qdf_trace_init();
-
-	qdf_register_debugcb_init();
-
-	cds_ssr_protect_init();
-
-	ret = cds_recovery_work_init();
-	if (ret != QDF_STATUS_SUCCESS) {
-		cds_err("Failed to init recovery work");
+	status = cds_recovery_work_init();
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Failed to init recovery work; status:%u", status);
 		goto deinit;
 	}
 
+	cds_ssr_protect_init();
+
+	gp_cds_context->qdf_ctx = &g_qdf_ctx;
+
+	qdf_register_self_recovery_callback(__cds_trigger_recovery);
+	qdf_register_fw_down_callback(cds_is_fw_down);
+	qdf_register_ssr_protect_callbacks(cds_ssr_protect, cds_ssr_unprotect);
+
 	return QDF_STATUS_SUCCESS;
+
 deinit:
-	qdf_trace_deinit();
-	qdf_mc_timer_manager_exit();
-	qdf_mem_exit();
-	qdf_lock_stats_deinit();
-	qdf_debugfs_exit();
-	gp_cds_context->qdf_ctx = NULL;
 	gp_cds_context = NULL;
 	qdf_mem_zero(&g_cds_context, sizeof(g_cds_context));
-	return ret;
+
+	return status;
 }
 
 /**
@@ -230,23 +210,23 @@ deinit:
  */
 void cds_deinit(void)
 {
-	if (gp_cds_context == NULL)
+	QDF_BUG(gp_cds_context);
+	if (!gp_cds_context)
 		return;
 
-	cds_recovery_work_deinit();
-	qdf_trace_deinit();
-	qdf_cpuhp_deinit();
-	qdf_mc_timer_manager_exit();
-	qdf_mem_exit();
-	qdf_lock_stats_deinit();
-	qdf_debugfs_exit();
-	qdf_event_list_destroy();
+	qdf_register_ssr_protect_callbacks(NULL, NULL);
+	qdf_register_fw_down_callback(NULL);
+	qdf_register_self_recovery_callback(NULL);
 
 	gp_cds_context->qdf_ctx = NULL;
-	gp_cds_context = NULL;
+	qdf_mem_zero(&g_qdf_ctx, sizeof(g_qdf_ctx));
 
+	/* currently, no ssr_protect_deinit */
+
+	cds_recovery_work_deinit();
+
+	gp_cds_context = NULL;
 	qdf_mem_zero(&g_cds_context, sizeof(g_cds_context));
-	return;
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT

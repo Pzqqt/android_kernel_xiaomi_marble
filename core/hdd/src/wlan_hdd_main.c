@@ -12336,38 +12336,6 @@ const char *hdd_get_fwpath(void)
 	return fwpath.string;
 }
 
-static int hdd_qdf_print_init(void)
-{
-	int qdf_print_idx;
-	QDF_STATUS status;
-
-	status = qdf_print_setup();
-	if (status != QDF_STATUS_SUCCESS) {
-		pr_err("qdf_print_setup failed\n");
-		return -EINVAL;
-	}
-
-	qdf_print_idx = qdf_print_ctrl_register(cinfo, NULL, NULL, "MCL_WLAN");
-
-	if (qdf_print_idx < 0) {
-		pr_err("qdf_print_ctrl_register failed, ret = %d\n",
-		       qdf_print_idx);
-		return -EINVAL;
-	}
-
-	qdf_set_pidx(qdf_print_idx);
-
-	return 0;
-}
-
-static void hdd_qdf_print_deinit(void)
-{
-	int qdf_print_idx;
-
-	qdf_print_idx = qdf_get_pidx();
-	qdf_print_ctrl_cleanup(qdf_print_idx);
-}
-
 static inline int hdd_state_query_cb(void)
 {
 	return !!wlan_hdd_validate_context(cds_get_context(QDF_MODULE_ID_HDD));
@@ -12406,8 +12374,6 @@ int hdd_init(void)
 		QDF_TIMER_TYPE_SW);
 
 	hdd_trace_init();
-	hdd_qdf_print_init();
-
 	hdd_register_debug_callback();
 	wlan_roam_debug_init();
 
@@ -12425,7 +12391,6 @@ err_out:
 void hdd_deinit(void)
 {
 	wlan_roam_debug_deinit();
-	hdd_qdf_print_deinit();
 	qdf_timer_free(&hdd_drv_ops_inactivity_timer);
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
@@ -12690,17 +12655,105 @@ void hdd_component_pdev_close(struct wlan_objmgr_pdev *pdev)
 	ucfg_mlme_pdev_close(pdev);
 }
 
-/**
- * hdd_fln() - logging macro for before/after qdf logging is initialized
- * @fmt: printk compatible format string
- * @args: arguments to be logged
- *
- * Note: To be used only in module insmod and rmmod code paths
- *
- * Return: None
- */
-#define hdd_fln(fmt, args...) __hdd_fln(FL(fmt "\n"), ##args)
-#define __hdd_fln(fmt, args...) pr_err(fmt, ##args)
+static QDF_STATUS hdd_qdf_print_init(void)
+{
+	QDF_STATUS status;
+	int qdf_print_idx;
+
+	status = qdf_print_setup();
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pr_err("Failed qdf_print_setup; status:%u\n", status);
+		return status;
+	}
+
+	qdf_print_idx = qdf_print_ctrl_register(cinfo, NULL, NULL, "MCL_WLAN");
+	if (qdf_print_idx < 0) {
+		pr_err("Failed to register for qdf_print_ctrl\n");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_set_pidx(qdf_print_idx);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void hdd_qdf_print_deinit(void)
+{
+	int qdf_pidx = qdf_get_pidx();
+
+	qdf_set_pidx(-1);
+	qdf_print_ctrl_cleanup(qdf_pidx);
+
+	/* currently, no qdf print 'un-setup'*/
+}
+
+static QDF_STATUS hdd_qdf_init(void)
+{
+	QDF_STATUS status;
+
+	status = hdd_qdf_print_init();
+	if (QDF_IS_STATUS_ERROR(status))
+		goto exit;
+
+	status = qdf_debugfs_init();
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to init debugfs; status:%u", status);
+		goto print_deinit;
+	}
+
+	qdf_lock_stats_init();
+	qdf_mem_init();
+	qdf_mc_timer_manager_init();
+	qdf_event_list_init();
+
+	status = qdf_cpuhp_init();
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to init cpuhp; status:%u", status);
+		goto event_deinit;
+	}
+
+	status = qdf_trace_spin_lock_init();
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to init spinlock; status:%u", status);
+		goto cpuhp_deinit;
+	}
+
+	qdf_trace_init();
+	qdf_register_debugcb_init();
+
+	return QDF_STATUS_SUCCESS;
+
+cpuhp_deinit:
+	qdf_cpuhp_deinit();
+event_deinit:
+	qdf_event_list_destroy();
+	qdf_mc_timer_manager_exit();
+	qdf_mem_exit();
+	qdf_lock_stats_deinit();
+	qdf_debugfs_exit();
+print_deinit:
+	hdd_qdf_print_deinit();
+
+exit:
+	return status;
+}
+
+static void hdd_qdf_deinit(void)
+{
+	/* currently, no debugcb deinit */
+
+	qdf_trace_deinit();
+
+	/* currently, no trace spinlock deinit */
+
+	qdf_cpuhp_deinit();
+	qdf_event_list_destroy();
+	qdf_mc_timer_manager_exit();
+	qdf_mem_exit();
+	qdf_lock_stats_deinit();
+	qdf_debugfs_exit();
+	hdd_qdf_print_deinit();
+}
 
 /**
  * hdd_driver_load() - Perform the driver-level load operation
@@ -12718,22 +12771,28 @@ static int hdd_driver_load(void)
 	       WLAN_MODULE_NAME,
 	       g_wlan_driver_version);
 
+	status = hdd_qdf_init();
+	if (QDF_IS_STATUS_ERROR(status)) {
+		errno = qdf_status_to_os_return(status);
+		goto exit;
+	}
+
 	errno = hdd_init();
 	if (errno) {
-		hdd_fln("Failed to init HDD; errno:%d", errno);
-		goto exit;
+		hdd_err("Failed to init HDD; errno:%d", errno);
+		goto qdf_deinit;
 	}
 
 	status = hdd_component_init();
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_fln("Failed to init components; status:%u", status);
+		hdd_err("Failed to init components; status:%u", status);
 		errno = qdf_status_to_os_return(status);
 		goto hdd_deinit;
 	}
 
 	status = qdf_wake_lock_create(&wlan_wake_lock, "wlan");
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_fln("Failed to create wake lock; status:%u", status);
+		hdd_err("Failed to create wake lock; status:%u", status);
 		errno = qdf_status_to_os_return(status);
 		goto comp_deinit;
 	}
@@ -12742,23 +12801,23 @@ static int hdd_driver_load(void)
 
 	errno = wlan_hdd_state_ctrl_param_create();
 	if (errno) {
-		hdd_fln("Failed to create ctrl param; errno:%d", errno);
+		hdd_err("Failed to create ctrl param; errno:%d", errno);
 		goto wakelock_destroy;
 	}
 
 	errno = pld_init();
 	if (errno) {
-		hdd_fln("Failed to init PLD; errno:%d", errno);
+		hdd_err("Failed to init PLD; errno:%d", errno);
 		goto param_destroy;
 	}
 
 	errno = wlan_hdd_register_driver();
 	if (errno) {
-		hdd_fln("Failed to register driver; errno:%d", errno);
+		hdd_err("Failed to register driver; errno:%d", errno);
 		goto pld_deinit;
 	}
 
-	pr_info("%s: driver loaded\n", WLAN_MODULE_NAME);
+	hdd_debug("%s: driver loaded", WLAN_MODULE_NAME);
 
 	return 0;
 
@@ -12772,6 +12831,8 @@ comp_deinit:
 	hdd_component_deinit();
 hdd_deinit:
 	hdd_deinit();
+qdf_deinit:
+	hdd_qdf_deinit();
 
 exit:
 	return errno;
@@ -12811,6 +12872,7 @@ static void hdd_driver_unload(void)
 	qdf_wake_lock_destroy(&wlan_wake_lock);
 	hdd_component_deinit();
 	hdd_deinit();
+	hdd_qdf_deinit();
 }
 
 #ifndef MODULE
@@ -12833,7 +12895,7 @@ static ssize_t wlan_boot_cb(struct kobject *kobj,
 {
 
 	if (wlan_loader->loaded_state) {
-		hdd_fln("wlan driver already initialized");
+		hdd_err("wlan driver already initialized");
 		return -EALREADY;
 	}
 
@@ -12902,14 +12964,14 @@ static int wlan_init_sysfs(void)
 	wlan_loader->boot_wlan_obj = kobject_create_and_add("boot_wlan",
 							    kernel_kobj);
 	if (!wlan_loader->boot_wlan_obj) {
-		hdd_fln("sysfs create and add failed");
+		hdd_err("sysfs create and add failed");
 		goto error_return;
 	}
 
 	ret = sysfs_create_group(wlan_loader->boot_wlan_obj,
 				 wlan_loader->attr_group);
 	if (ret) {
-		hdd_fln("sysfs create group failed; errno:%d", ret);
+		hdd_err("sysfs create group failed; errno:%d", ret);
 		goto error_return;
 	}
 
@@ -12929,7 +12991,7 @@ error_return:
 static int wlan_deinit_sysfs(void)
 {
 	if (!wlan_loader) {
-		hdd_fln("wlan loader context is Null!");
+		hdd_err("wlan_loader is null");
 		return -EINVAL;
 	}
 
@@ -12961,7 +13023,7 @@ static int __init hdd_module_init(void)
 
 	ret = wlan_init_sysfs();
 	if (ret)
-		hdd_fln("Failed to create sysfs entry");
+		hdd_err("Failed to create sysfs entry");
 
 	return ret;
 }
@@ -12987,8 +13049,6 @@ static void __exit hdd_module_exit(void)
 	wlan_deinit_sysfs();
 }
 #endif
-
-#undef hdd_fln
 
 static int fwpath_changed_handler(const char *kmessage,
 				  const struct kernel_param *kp)
