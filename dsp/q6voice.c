@@ -72,6 +72,9 @@ static int voice_send_mvm_unmap_memory_physical_cmd(struct voice_data *v,
 static int voice_send_mvm_cal_network_cmd(struct voice_data *v);
 static int voice_send_mvm_media_type_cmd(struct voice_data *v);
 static int voice_send_mvm_cvd_version_cmd(struct voice_data *v);
+static int voice_send_mvm_event_class_cmd(struct voice_data *v,
+					   uint32_t event_id,
+					   uint32_t class_id);
 static int voice_send_cvs_data_exchange_mode_cmd(struct voice_data *v);
 static int voice_send_cvs_packet_exchange_config_cmd(struct voice_data *v);
 static int voice_set_packet_exchange_mode_and_config(uint32_t session_id,
@@ -764,6 +767,70 @@ done:
 	pr_debug("%s: CVD Version retrieved=%s\n",
 		 __func__, common.cvd_version);
 
+	return ret;
+}
+
+static int voice_send_mvm_event_class_cmd(struct voice_data *v,
+					   uint32_t event_id,
+					   uint32_t class_id)
+{
+	struct vss_inotify_cmd_event_class_t mvm_event;
+	int ret = 0;
+	void *apr_mvm = NULL;
+	u16 mvm_handle = 0;
+
+	if (v == NULL) {
+		pr_err("%s: v is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	apr_mvm = common.apr_q6_mvm;
+	if (!apr_mvm) {
+		pr_err("%s: apr_mvm is NULL.\n", __func__);
+		return -EINVAL;
+	}
+
+	memset(&mvm_event, 0, sizeof(mvm_event));
+	mvm_handle = voice_get_mvm_handle(v);
+	mvm_event.hdr.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
+						APR_HDR_LEN(APR_HDR_SIZE),
+						APR_PKT_VER);
+	mvm_event.hdr.pkt_size = APR_PKT_SIZE(APR_HDR_SIZE,
+				sizeof(mvm_event) - APR_HDR_SIZE);
+	mvm_event.hdr.src_port =
+				voice_get_idx_for_session(v->session_id);
+	mvm_event.hdr.dest_port = mvm_handle;
+	mvm_event.hdr.token = 0;
+	mvm_event.hdr.opcode = event_id;
+	mvm_event.class_id = class_id;
+
+	v->mvm_state = CMD_STATUS_FAIL;
+	v->async_err = 0;
+	ret = apr_send_pkt(apr_mvm, (uint32_t *) &mvm_event);
+	if (ret < 0) {
+		pr_err("%s: Error %d sending %x event\n", __func__, ret,
+			event_id);
+		goto fail;
+	}
+
+	ret = wait_event_timeout(v->mvm_wait,
+				(v->mvm_state == CMD_STATUS_SUCCESS),
+				 msecs_to_jiffies(TIMEOUT_MS));
+	if (!ret) {
+		pr_err("%s: wait_event timeout %d\n", __func__, ret);
+		ret = -ETIMEDOUT;
+		goto fail;
+	}
+	if (v->async_err > 0) {
+		pr_err("%s: DSP returned error[%s]\n",
+				__func__, adsp_err_get_err_str(
+				v->async_err));
+		ret = adsp_err_get_lnx_err_code(
+				v->async_err);
+		goto fail;
+	}
+	return 0;
+fail:
 	return ret;
 }
 
@@ -4243,6 +4310,23 @@ done:
 	return ret;
 }
 
+static void voice_mic_break_work_fn(struct work_struct *work)
+{
+	int ret = 0;
+	char event[25] = "";
+	struct voice_data *v = container_of(work, struct voice_data,
+						voice_mic_break_work);
+
+	snprintf(event, sizeof(event), "MIC_BREAK_STATUS=%s",
+			v->mic_break_status ? "TRUE" : "FALSE");
+
+	mutex_lock(&common.common_lock);
+	ret = q6core_send_uevent(common.uevent_data, event);
+	if (ret)
+		pr_err("%s: Send UEvent %s failed :%d\n", __func__, event, ret);
+	mutex_unlock(&common.common_lock);
+}
+
 static int voice_setup_vocproc(struct voice_data *v)
 {
 	struct module_instance_info mod_inst_info;
@@ -4340,6 +4424,11 @@ static int voice_setup_vocproc(struct voice_data *v)
 
 	if (v->hd_enable)
 		voice_send_hd_cmd(v, v->hd_enable);
+
+	if (common.mic_break_enable)
+		voice_send_mvm_event_class_cmd(v,
+			VSS_INOTIFY_CMD_LISTEN_FOR_EVENT_CLASS,
+			VSS_ICOMMON_EVENT_CLASS_VOICE_ACTIVITY_UPDATE);
 
 	rtac_add_voice(voice_get_cvs_handle(v),
 		voice_get_cvp_handle(v),
@@ -5033,6 +5122,11 @@ static int voice_destroy_vocproc(struct voice_data *v)
 
 	/* Unload topology modules */
 	voice_unload_topo_modules();
+
+	if (common.mic_break_enable)
+		voice_send_mvm_event_class_cmd(v,
+			VSS_INOTIFY_CMD_CANCEL_EVENT_CLASS,
+			VSS_ICOMMON_EVENT_CLASS_VOICE_ACTIVITY_UPDATE);
 
 	/* destrop cvp session */
 	cvp_destroy_session_cmd.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
@@ -6626,6 +6720,70 @@ uint8_t voc_get_route_flag(uint32_t session_id, uint8_t path_dir)
 EXPORT_SYMBOL(voc_get_route_flag);
 
 /**
+ * voc_get_mbd_enable -
+ *       Retrieve mic break detection enable state
+ *
+ * Returns true if mic break detection is enabled or false if disabled
+ */
+bool voc_get_mbd_enable(void)
+{
+	bool enable = false;
+
+	mutex_lock(&common.common_lock);
+	enable = common.mic_break_enable;
+	mutex_unlock(&common.common_lock);
+
+	return enable;
+}
+EXPORT_SYMBOL(voc_get_mbd_enable);
+
+/**
+ * voc_set_mbd_enable -
+ *       Set mic break detection enable state
+ *
+ * @enable: mic break detection state to set
+ *
+ * Returns 0
+ */
+uint8_t voc_set_mbd_enable(bool enable)
+{
+	struct voice_data *v = NULL;
+	struct voice_session_itr itr;
+	bool check_and_send_event = false;
+	uint32_t event_id = VSS_INOTIFY_CMD_LISTEN_FOR_EVENT_CLASS;
+	uint32_t class_id = VSS_ICOMMON_EVENT_CLASS_VOICE_ACTIVITY_UPDATE;
+
+	mutex_lock(&common.common_lock);
+	if (common.mic_break_enable != enable)
+		check_and_send_event = true;
+	common.mic_break_enable = enable;
+	mutex_unlock(&common.common_lock);
+
+	if (!check_and_send_event)
+		return 0;
+
+	if (!enable)
+		event_id = VSS_INOTIFY_CMD_CANCEL_EVENT_CLASS;
+
+	memset(&itr, 0, sizeof(itr));
+
+	voice_itr_init(&itr, ALL_SESSION_VSID);
+	while (voice_itr_get_next_session(&itr, &v)) {
+		if (v != NULL) {
+			mutex_lock(&v->lock);
+			if (is_voc_state_active(v->voc_state)) {
+				voice_send_mvm_event_class_cmd(v, event_id,
+								class_id);
+			}
+			mutex_unlock(&v->lock);
+		}
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(voc_set_mbd_enable);
+
+/**
  * voc_end_voice_call -
  *       command to end voice call
  *
@@ -7171,6 +7329,7 @@ static int32_t qdsp_mvm_callback(struct apr_client_data *data, void *priv)
 	uint32_t *ptr = NULL;
 	struct common_data *c = NULL;
 	struct voice_data *v = NULL;
+	struct vss_evt_voice_activity *voice_act_update = NULL;
 	int i = 0;
 	struct vss_iversion_rsp_get_t *version_rsp = NULL;
 
@@ -7276,6 +7435,8 @@ static int32_t qdsp_mvm_callback(struct apr_client_data *data, void *priv)
 			case VSS_IMVM_CMD_STANDBY_VOICE:
 			case VSS_IHDVOICE_CMD_ENABLE:
 			case VSS_IHDVOICE_CMD_DISABLE:
+			case VSS_INOTIFY_CMD_LISTEN_FOR_EVENT_CLASS:
+			case VSS_INOTIFY_CMD_CANCEL_EVENT_CLASS:
 				pr_debug("%s: cmd = 0x%x\n", __func__, ptr[0]);
 				v->mvm_state = CMD_STATUS_SUCCESS;
 				v->async_err = ptr[1];
@@ -7380,7 +7541,33 @@ static int32_t qdsp_mvm_callback(struct apr_client_data *data, void *priv)
 			v->mvm_state = CMD_STATUS_SUCCESS;
 			wake_up(&v->mvm_wait);
 		}
+	} else if (data->opcode == VSS_ICOMMON_EVT_VOICE_ACTIVITY_UPDATE) {
+		if (data->payload_size == sizeof(struct vss_evt_voice_activity)) {
+			voice_act_update =
+				(struct vss_evt_voice_activity *)
+				data->payload;
+
+			/* Drop notifications other than Mic Break */
+			if ((voice_act_update->activity
+				     != VSS_ICOMMON_VOICE_ACTIVITY_MIC_BREAK)
+				&& (voice_act_update->activity
+				     != VSS_ICOMMON_VOICE_ACITIVTY_MIC_UNBREAK))
+				return 0;
+
+			switch (voice_act_update->activity) {
+			case VSS_ICOMMON_VOICE_ACTIVITY_MIC_BREAK:
+				v->mic_break_status = true;
+				break;
+			case VSS_ICOMMON_VOICE_ACITIVTY_MIC_UNBREAK:
+				v->mic_break_status = false;
+				break;
+			}
+
+			if (c->mic_break_enable)
+				schedule_work(&(v->voice_mic_break_work));
+		}
 	}
+
 	return 0;
 }
 
@@ -9642,6 +9829,14 @@ done:
 	return ret;
 }
 
+static void voc_release_uevent_data(struct kobject *kobj)
+{
+	struct audio_uevent_data *data = container_of(kobj,
+						      struct audio_uevent_data,
+						      kobj);
+	kfree(data);
+}
+
 /**
  * is_voc_initialized:
  *
@@ -9694,6 +9889,18 @@ int __init voice_init(void)
 
 	mutex_init(&common.common_lock);
 
+	common.uevent_data = kzalloc(sizeof(*(common.uevent_data)), GFP_KERNEL);
+	if (!common.uevent_data)
+		return -ENOMEM;
+
+	/*
+	 * Set release function to cleanup memory related to kobject
+	 * before initializing the kobject.
+	 */
+	common.uevent_data->ktype.release = voc_release_uevent_data;
+	q6core_init_uevent_data(common.uevent_data, "q6voice_uevent");
+	common.mic_break_enable = false;
+
 	/* Initialize session id with vsid */
 	init_session_id();
 
@@ -9734,6 +9941,9 @@ int __init voice_init(void)
 
 		common.voice[i].voc_state = VOC_INIT;
 
+		INIT_WORK(&common.voice[i].voice_mic_break_work,
+				voice_mic_break_work_fn);
+
 		init_waitqueue_head(&common.voice[i].mvm_wait);
 		init_waitqueue_head(&common.voice[i].cvs_wait);
 		init_waitqueue_head(&common.voice[i].cvp_wait);
@@ -9754,6 +9964,7 @@ int __init voice_init(void)
 
 void voice_exit(void)
 {
+	q6core_destroy_uevent_data(common.uevent_data);
 	voice_delete_cal_data();
 	free_cal_map_table();
 }

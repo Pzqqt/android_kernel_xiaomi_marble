@@ -15,6 +15,7 @@
 #include <linux/msm_ion.h>
 #include <sound/voice_params.h>
 #include <dsp/rtac.h>
+#include <dsp/q6core.h>
 #include <ipc/apr.h>
 
 #define MAX_VOC_PKT_SIZE 642
@@ -494,6 +495,19 @@ struct vss_icommon_cmd_set_param {
 #define VSS_IHDVOICE_CMD_ENABLE				0x000130A2
 #define VSS_IHDVOICE_CMD_DISABLE			0x000130A3
 
+/* To listen for events from MVM module */
+#define VSS_INOTIFY_CMD_LISTEN_FOR_EVENT_CLASS		0x00012E56
+/* To cancel listening for events from MVM module */
+#define VSS_INOTIFY_CMD_CANCEL_EVENT_CLASS		0x00012E57
+/* To receive ongoing voice activity notification */
+#define VSS_ICOMMON_EVENT_CLASS_VOICE_ACTIVITY_UPDATE	0x000131EF
+/* Voice activity notification from MVM */
+#define VSS_ICOMMON_EVT_VOICE_ACTIVITY_UPDATE		0x000131F0
+/* Mic path is broken. */
+#define VSS_ICOMMON_VOICE_ACTIVITY_MIC_BREAK		0x000131F3
+/* Mic path is restored. */
+#define VSS_ICOMMON_VOICE_ACITIVTY_MIC_UNBREAK		0x000131F4
+
 enum msm_audio_voc_rate {
 		VOC_0_RATE, /* Blank frame */
 		VOC_8_RATE, /* 1/8 rate    */
@@ -717,6 +731,33 @@ struct vss_imvm_cmd_set_cal_media_type_t {
 struct vss_imemory_cmd_unmap_t {
 	struct apr_hdr hdr;
 	uint32_t mem_handle;
+} __packed;
+
+/*
+ * Payload structure for VSS_INOTIFY_CMD_LISTEN_FOR_EVENT_CLASS and
+ * VSS_INOTIFY_CMD_CANCEL_EVENT_CLASS commands.
+ */
+struct vss_inotify_cmd_event_class_t {
+	struct apr_hdr hdr;
+	/* Event class ID to listen for. */
+	uint32_t class_id;
+} __packed;
+
+/* Payload structure for the VSS_ICOMMOM_EVT_VOICE_ACTIVITY_UPDATE event. */
+struct vss_evt_voice_activity {
+	uint32_t activity;
+	/*
+	 * Specifies the voice acitivity.
+	 * @values
+	 *     #VSS_ICOMMON_VOICE_ACTIVITY_VPTX_MUTE
+	 *     #VSS_ICOMMON_VOICE_ACTIVITY_VPTX_UNMUTE
+	 *     #VSS_ICOMMON_VOICE_ACTIVITY_MIC_BREAK
+	 *     #VSS_ICOMMON_VOICE_ACITIVTY_MIC_UNBREAK
+	 *     #VSS_ICOMMON_VOICE_ACTIVITY_UI_STREAM_TX_MUTE
+	 *     #VSS_ICOMMON_VOICE_ACTIVITY_UI_STREAM_TX_UNMUTE
+	 *     #VSS_ICOMMON_VOICE_ACTIVITY_UI_VOCPROC_TX_MUTE
+	 *     #VSS_ICOMMON_VOICE_ACTIVITY_UI_VOCPROC_TX_UNMUTE
+	 */
 } __packed;
 
 /* TO CVS commands */
@@ -1854,6 +1895,9 @@ struct voice_data {
 	struct incall_music_info music_info;
 
 	struct voice_rec_route_state rec_route_state;
+
+	bool mic_break_status;
+	struct work_struct voice_mic_break_work;
 };
 
 #define MAX_VOC_SESSIONS 8
@@ -1907,6 +1951,8 @@ struct common_data {
 	struct shared_mem_info source_tracking_sh_mem;
 	struct vss_isourcetrack_activity_data_t sourceTrackingResponse;
 	bool sidetone_enable;
+	bool mic_break_enable;
+	struct audio_uevent_data *uevent_data;
 };
 
 struct voice_session_itr {
@@ -1998,6 +2044,8 @@ int voc_set_device_mute(uint32_t session_id, uint32_t dir, uint32_t mute,
 int voc_get_rx_device_mute(uint32_t session_id);
 int voc_set_route_flag(uint32_t session_id, uint8_t path_dir, uint8_t set);
 uint8_t voc_get_route_flag(uint32_t session_id, uint8_t path_dir);
+bool voc_get_mbd_enable(void);
+uint8_t voc_set_mbd_enable(bool enable);
 int voc_enable_dtmf_rx_detection(uint32_t session_id, uint32_t enable);
 void voc_disable_dtmf_det_on_active_sessions(void);
 int voc_alloc_cal_shared_memory(void);
