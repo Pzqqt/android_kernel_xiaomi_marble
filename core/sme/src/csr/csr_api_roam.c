@@ -1179,7 +1179,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 
 	csr_add_social_channels(pMac, pChanList, pScan, &num_channel);
 
-	if (pMac->roam.configParam.early_stop_scan_enable)
+	if (pMac->mlme_cfg->lfr.early_stop_scan_enable)
 		csr_roam_sort_channel_for_early_stop(pMac, pChanList,
 						     num_channel);
 	else
@@ -1711,7 +1711,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.neighborRoamConfig.nMaxNeighborRetries = 3;
 	pMac->roam.configParam.neighborRoamConfig.nNeighborLookupRssiThreshold =
 		120;
-	pMac->roam.configParam.neighborRoamConfig.rssi_thresh_offset_5g = 0;
 	pMac->roam.configParam.neighborRoamConfig.nOpportunisticThresholdDiff =
 		30;
 	pMac->roam.configParam.neighborRoamConfig.nRoamRescanRssiDiff = 5;
@@ -1748,15 +1747,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.nInitialDwellTime = 0;
 	pMac->roam.configParam.initial_scan_no_dfs_chnl = 0;
 	pMac->roam.configParam.csr_mawc_config.mawc_enabled = true;
-	pMac->roam.configParam.csr_mawc_config.mawc_roam_enabled = true;
-	pMac->roam.configParam.csr_mawc_config.mawc_roam_traffic_threshold =
-		MAWC_ROAM_TRAFFIC_THRESHOLD_DEFAULT;
-	pMac->roam.configParam.csr_mawc_config.mawc_roam_ap_rssi_threshold =
-		MAWC_ROAM_AP_RSSI_THRESHOLD_DEFAULT;
-	pMac->roam.configParam.csr_mawc_config.mawc_roam_rssi_high_adjust =
-		MAWC_ROAM_RSSI_HIGH_ADJUST_DEFAULT;
-	pMac->roam.configParam.csr_mawc_config.mawc_roam_rssi_low_adjust =
-		MAWC_ROAM_RSSI_LOW_ADJUST_DEFAULT;
 
 	qdf_mem_zero(&pMac->roam.configParam.bss_score_params,
 		     sizeof(struct sir_score_config));
@@ -2766,6 +2756,24 @@ void csr_set_11k_offload_config_param(struct csr_config *csr_config,
 		max_neighbor_report_req_cap;
 }
 
+static void
+csr_copy_mawc_config(tpAniSirGlobal pMac,
+		     struct mawc_params *mawc_config)
+{
+	mawc_config->mawc_enabled =
+		pMac->roam.configParam.csr_mawc_config.mawc_enabled;
+	mawc_config->mawc_roam_enabled =
+		pMac->mlme_cfg->lfr.mawc_roam_enabled;
+	mawc_config->mawc_roam_traffic_threshold =
+		pMac->mlme_cfg->lfr.mawc_roam_traffic_threshold;
+	mawc_config->mawc_roam_ap_rssi_threshold =
+		pMac->mlme_cfg->lfr.mawc_roam_ap_rssi_threshold;
+	mawc_config->mawc_roam_rssi_high_adjust =
+		pMac->mlme_cfg->lfr.mawc_roam_rssi_high_adjust;
+	mawc_config->mawc_roam_rssi_low_adjust =
+		pMac->mlme_cfg->lfr.mawc_roam_rssi_low_adjust;
+}
+
 QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 					   tCsrConfigParam *pParam)
 {
@@ -2891,10 +2899,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 				pParam->nScanResultAgeCount;
 		}
 
-		pMac->first_scan_bucket_threshold =
-			pParam->first_scan_bucket_threshold;
 		csr_assign_rssi_for_category(pMac,
-			pMac->first_scan_bucket_threshold,
+			pMac->mlme_cfg->lfr.first_scan_bucket_threshold,
 			pParam->bCatRssiOffset);
 		pMac->roam.configParam.fSupplicantCountryCodeHasPriority =
 			pParam->fSupplicantCountryCodeHasPriority;
@@ -2926,8 +2932,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.isFastTransitionEnabled =
 			pParam->isFastTransitionEnabled;
 		pMac->roam.configParam.RoamRssiDiff = pParam->RoamRssiDiff;
-		pMac->roam.configParam.rssi_abs_thresh =
-						pParam->rssi_abs_thresh;
 		pMac->roam.configParam.nRoamPrefer5GHz =
 			pParam->nRoamPrefer5GHz;
 		pMac->roam.configParam.nRoamIntraBand = pParam->nRoamIntraBand;
@@ -2942,9 +2946,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->bFastRoamInConIniFeatureEnabled;
 		pMac->roam.configParam.isFastRoamIniFeatureEnabled =
 			pParam->isFastRoamIniFeatureEnabled;
-		qdf_mem_copy(&pMac->roam.configParam.csr_mawc_config,
-				&pParam->csr_mawc_config,
-				sizeof(pParam->csr_mawc_config));
+		pMac->roam.configParam.csr_mawc_config.mawc_enabled =
+			pParam->csr_mawc_config.mawc_enabled;
 #ifdef FEATURE_WLAN_ESE
 		pMac->roam.configParam.isEseIniFeatureEnabled =
 			pParam->isEseIniFeatureEnabled;
@@ -2961,8 +2964,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		sme_debug("nNeighborLookupRssiThreshold: %d",
 			pMac->roam.configParam.neighborRoamConfig.
 			nNeighborLookupRssiThreshold);
-		sme_debug("rssi_thresh_offset_5g: %d",
-			pMac->roam.configParam.neighborRoamConfig.rssi_thresh_offset_5g);
 		sme_debug("nOpportunisticThresholdDiff: %d",
 			pMac->roam.configParam.neighborRoamConfig.
 			nOpportunisticThresholdDiff);
@@ -2975,9 +2976,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		sme_debug("nNeighborScanMaxChanTime: %d",
 			pMac->roam.configParam.neighborRoamConfig.
 			nNeighborScanMaxChanTime);
-		sme_debug("nMaxNeighborRetries: %d",
-			pMac->roam.configParam.neighborRoamConfig.
-			nMaxNeighborRetries);
 		sme_debug("nNeighborResultsRefreshPeriod: %d",
 			pMac->roam.configParam.neighborRoamConfig.
 			nNeighborResultsRefreshPeriod);
@@ -3069,10 +3067,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 #endif
 		pMac->roam.configParam.allowDFSChannelRoam =
 			pParam->allowDFSChannelRoam;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-		pMac->roam.configParam.isRoamOffloadEnabled =
-			pParam->isRoamOffloadEnabled;
-#endif
 		pMac->roam.configParam.obssEnabled = pParam->obssEnabled;
 		pMac->roam.configParam.vendor_vht_sap =
 			pParam->vendor_vht_sap;
@@ -3083,29 +3077,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.is_sta_connection_in_5gz_enabled =
 			pParam->is_sta_connection_in_5gz_enabled;
 
-		pMac->roam.configParam.early_stop_scan_enable =
-			pParam->early_stop_scan_enable;
-		pMac->roam.configParam.early_stop_scan_min_threshold =
-			pParam->early_stop_scan_min_threshold;
-		pMac->roam.configParam.early_stop_scan_max_threshold =
-			pParam->early_stop_scan_max_threshold;
 		pMac->isCoalesingInIBSSAllowed =
 			pParam->isCoalesingInIBSSAllowed;
-
-		pMac->roam.configParam.roam_params.dense_rssi_thresh_offset =
-			pParam->roam_dense_rssi_thresh_offset;
-		pMac->roam.configParam.roam_params.dense_min_aps_cnt =
-			pParam->roam_dense_min_aps;
-		pMac->roam.configParam.roam_params.traffic_threshold =
-			pParam->roam_dense_traffic_thresh;
-
-		pMac->roam.configParam.roam_params.bg_scan_bad_rssi_thresh =
-			pParam->roam_bg_scan_bad_rssi_thresh;
-		pMac->roam.configParam.roam_params.bg_scan_client_bitmap =
-			pParam->roam_bg_scan_client_bitmap;
-		pMac->roam.configParam.roam_params.
-			roam_bad_rssi_thresh_offset_2g =
-			pParam->roam_bad_rssi_thresh_offset_2g;
 
 		pMac->roam.configParam.enable_ftopen =
 			pParam->enable_ftopen;
@@ -3113,31 +3086,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->scan_adaptive_dwell_mode;
 		pMac->roam.configParam.scan_adaptive_dwell_mode_nc =
 			pParam->scan_adaptive_dwell_mode_nc;
-		pMac->roam.configParam.roamscan_adaptive_dwell_mode =
-			pParam->roamscan_adaptive_dwell_mode;
-
-		pMac->roam.configParam.per_roam_config.enable =
-			pParam->per_roam_config.enable;
-		pMac->roam.configParam.per_roam_config.tx_high_rate_thresh =
-			pParam->per_roam_config.tx_high_rate_thresh;
-		pMac->roam.configParam.per_roam_config.rx_high_rate_thresh =
-			pParam->per_roam_config.rx_high_rate_thresh;
-		pMac->roam.configParam.per_roam_config.tx_low_rate_thresh =
-			pParam->per_roam_config.tx_low_rate_thresh;
-		pMac->roam.configParam.per_roam_config.rx_low_rate_thresh =
-			pParam->per_roam_config.rx_low_rate_thresh;
-		pMac->roam.configParam.per_roam_config.tx_rate_thresh_percnt =
-			pParam->per_roam_config.tx_rate_thresh_percnt;
-		pMac->roam.configParam.per_roam_config.rx_rate_thresh_percnt =
-			pParam->per_roam_config.rx_rate_thresh_percnt;
-		pMac->roam.configParam.per_roam_config.per_rest_time =
-			pParam->per_roam_config.per_rest_time;
-		pMac->roam.configParam.per_roam_config.tx_per_mon_time =
-			pParam->per_roam_config.tx_per_mon_time;
-		pMac->roam.configParam.per_roam_config.rx_per_mon_time =
-			pParam->per_roam_config.rx_per_mon_time;
-		pMac->roam.configParam.per_roam_config.min_candidate_rssi =
-			pParam->per_roam_config.min_candidate_rssi;
 
 		pMac->fEnableDebugLog = pParam->fEnableDebugLog;
 
@@ -3168,12 +3116,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->dual_mac_feature_disable;
 		pMac->sta_sap_scc_on_dfs_chan =
 			pParam->sta_sap_scc_on_dfs_chan;
-		pMac->roam.configParam.early_stop_scan_enable =
-			pParam->early_stop_scan_enable;
-		pMac->roam.configParam.early_stop_scan_min_threshold =
-			pParam->early_stop_scan_min_threshold;
-		pMac->roam.configParam.early_stop_scan_max_threshold =
-			pParam->early_stop_scan_max_threshold;
 		pMac->roam.configParam.enable_edca_params =
 			pParam->enable_edca_params;
 		pMac->roam.configParam.edca_vo_cwmin = pParam->edca_vo_cwmin;
@@ -3204,12 +3146,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->enable_bcast_probe_rsp;
 		pMac->roam.configParam.is_fils_enabled =
 			pParam->is_fils_enabled;
-		pMac->roam.configParam.disallow_duration =
-			pParam->disallow_duration;
-		pMac->roam.configParam.rssi_channel_penalization =
-			pParam->rssi_channel_penalization;
-		pMac->roam.configParam.num_disallowed_aps =
-			pParam->num_disallowed_aps;
 		pMac->roam.configParam.wlm_latency_enable =
 			pParam->wlm_latency_enable;
 		pMac->roam.configParam.wlm_latency_level =
@@ -3343,7 +3279,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->enable2x2 = cfg_params->enable2x2;
 	pParam->isFastTransitionEnabled = cfg_params->isFastTransitionEnabled;
 	pParam->RoamRssiDiff = cfg_params->RoamRssiDiff;
-	pParam->rssi_abs_thresh = cfg_params->rssi_abs_thresh;
 	pParam->nRoamPrefer5GHz = cfg_params->nRoamPrefer5GHz;
 	pParam->nRoamIntraBand = cfg_params->nRoamIntraBand;
 	pParam->isWESModeEnabled = cfg_params->isWESModeEnabled;
@@ -3387,19 +3322,12 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->allowDFSChannelRoam = cfg_params->allowDFSChannelRoam;
 	pParam->nInitialDwellTime = cfg_params->nInitialDwellTime;
 	pParam->initial_scan_no_dfs_chnl = cfg_params->initial_scan_no_dfs_chnl;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	pParam->isRoamOffloadEnabled = cfg_params->isRoamOffloadEnabled;
-#endif
 	csr_set_channels(pMac, pParam);
 	pParam->obssEnabled = cfg_params->obssEnabled;
 	pParam->vendor_vht_sap =
 		pMac->roam.configParam.vendor_vht_sap;
-	pParam->roam_dense_rssi_thresh_offset =
-		cfg_params->roam_params.dense_rssi_thresh_offset;
 	pParam->roam_dense_min_aps =
 			cfg_params->roam_params.dense_min_aps_cnt;
-	pParam->roam_dense_traffic_thresh =
-			cfg_params->roam_params.traffic_threshold;
 
 	pParam->roam_bg_scan_bad_rssi_thresh =
 		cfg_params->roam_params.bg_scan_bad_rssi_thresh;
@@ -3413,38 +3341,12 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 			cfg_params->scan_adaptive_dwell_mode;
 	pParam->scan_adaptive_dwell_mode_nc =
 			cfg_params->scan_adaptive_dwell_mode_nc;
-	pParam->roamscan_adaptive_dwell_mode =
-			cfg_params->roamscan_adaptive_dwell_mode;
-
-	pParam->per_roam_config.enable = cfg_params->per_roam_config.enable;
-	pParam->per_roam_config.tx_high_rate_thresh =
-			cfg_params->per_roam_config.tx_high_rate_thresh;
-	pParam->per_roam_config.rx_high_rate_thresh =
-			cfg_params->per_roam_config.rx_high_rate_thresh;
-	pParam->per_roam_config.tx_low_rate_thresh =
-			cfg_params->per_roam_config.tx_low_rate_thresh;
-	pParam->per_roam_config.rx_low_rate_thresh =
-			cfg_params->per_roam_config.rx_low_rate_thresh;
-	pParam->per_roam_config.tx_rate_thresh_percnt =
-			cfg_params->per_roam_config.tx_rate_thresh_percnt;
-	pParam->per_roam_config.rx_rate_thresh_percnt =
-			cfg_params->per_roam_config.rx_rate_thresh_percnt;
-	pParam->per_roam_config.per_rest_time =
-			cfg_params->per_roam_config.per_rest_time;
-	pParam->per_roam_config.tx_per_mon_time =
-			cfg_params->per_roam_config.tx_per_mon_time;
-	pParam->per_roam_config.rx_per_mon_time =
-			cfg_params->per_roam_config.rx_per_mon_time;
-	pParam->per_roam_config.min_candidate_rssi =
-			cfg_params->per_roam_config.min_candidate_rssi;
 
 	pParam->conc_custom_rule1 = cfg_params->conc_custom_rule1;
 	pParam->conc_custom_rule2 = cfg_params->conc_custom_rule2;
 	pParam->is_sta_connection_in_5gz_enabled =
 		cfg_params->is_sta_connection_in_5gz_enabled;
 	pParam->max_scan_count = pMac->scan.max_scan_count;
-	pParam->first_scan_bucket_threshold =
-		pMac->first_scan_bucket_threshold;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	pParam->sap_channel_avoidance = pMac->sap.sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
@@ -3463,12 +3365,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->fEnableDebugLog = pMac->fEnableDebugLog;
 	pParam->f_sta_miracast_mcc_rest_time_val =
 		pMac->f_sta_miracast_mcc_rest_time_val;
-	pParam->early_stop_scan_enable =
-		pMac->roam.configParam.early_stop_scan_enable;
-	pParam->early_stop_scan_min_threshold =
-		pMac->roam.configParam.early_stop_scan_min_threshold;
-	pParam->early_stop_scan_max_threshold =
-		pMac->roam.configParam.early_stop_scan_max_threshold;
 	pParam->ignore_peer_ht_opmode =
 		pMac->roam.configParam.ignore_peer_ht_opmode;
 	pParam->enableHtSmps = pMac->roam.configParam.enableHtSmps;
@@ -3501,19 +3397,9 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.enable_bcast_probe_rsp;
 	pParam->is_fils_enabled =
 		pMac->roam.configParam.is_fils_enabled;
-	pParam->disallow_duration =
-		pMac->roam.configParam.disallow_duration;
-	pParam->rssi_channel_penalization =
-		pMac->roam.configParam.rssi_channel_penalization;
-	pParam->num_disallowed_aps =
-		pMac->roam.configParam.num_disallowed_aps;
 	pParam->oce_feature_bitmap =
 		pMac->roam.configParam.oce_feature_bitmap;
 	pParam->roam_force_rssi_trigger = cfg_params->roam_force_rssi_trigger;
-	qdf_mem_copy(&pParam->csr_mawc_config,
-		&pMac->roam.configParam.csr_mawc_config,
-		sizeof(pParam->csr_mawc_config));
-
 	qdf_mem_copy(&pParam->bss_score_params,
 		     &pMac->roam.configParam.bss_score_params,
 		     sizeof(struct sir_score_config));
@@ -18772,7 +18658,8 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 	req_buf->RoamRescanRssiDiff =
 		roam_info->cfgParams.nRoamRescanRssiDiff;
 	req_buf->RoamRssiDiff = mac_ctx->roam.configParam.RoamRssiDiff;
-	req_buf->rssi_abs_thresh = mac_ctx->roam.configParam.rssi_abs_thresh;
+	req_buf->rssi_abs_thresh =
+		mac_ctx->mlme_cfg->lfr.roam_rssi_abs_threshold;
 	req_buf->reason = reason;
 	req_buf->NeighborScanTimerPeriod =
 		roam_info->cfgParams.neighborScanPeriod;
@@ -18792,9 +18679,7 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		roam_info->cfgParams.nRoamBmissFinalBcnt;
 	req_buf->RoamBeaconRssiWeight =
 		roam_info->cfgParams.nRoamBeaconRssiWeight;
-	qdf_mem_copy(&req_buf->mawc_roam_params,
-		&mac_ctx->roam.configParam.csr_mawc_config,
-		sizeof(req_buf->mawc_roam_params));
+	csr_copy_mawc_config(mac_ctx, &req_buf->mawc_roam_params);
 	sme_debug("MAWC:global=%d,roam=%d,traffic=%d,ap_rssi=%d,high=%d,low=%d",
 			req_buf->mawc_roam_params.mawc_enabled,
 			req_buf->mawc_roam_params.mawc_roam_enabled,
@@ -18913,19 +18798,19 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 	req_buf->allowDFSChannelRoam =
 	mac_ctx->roam.configParam.allowDFSChannelRoam;
 	req_buf->early_stop_scan_enable =
-		mac_ctx->roam.configParam.early_stop_scan_enable;
+		mac_ctx->mlme_cfg->lfr.early_stop_scan_enable;
 	req_buf->early_stop_scan_min_threshold =
-		mac_ctx->roam.configParam.early_stop_scan_min_threshold;
+		mac_ctx->mlme_cfg->lfr.early_stop_scan_min_threshold;
 	req_buf->early_stop_scan_max_threshold =
-		mac_ctx->roam.configParam.early_stop_scan_max_threshold;
+		mac_ctx->mlme_cfg->lfr.early_stop_scan_max_threshold;
 	req_buf->roamscan_adaptive_dwell_mode =
-		mac_ctx->roam.configParam.roamscan_adaptive_dwell_mode;
+		mac_ctx->mlme_cfg->lfr.adaptive_roamscan_dwell_mode;
 	req_buf->lca_config_params.disallow_duration =
-		mac_ctx->roam.configParam.disallow_duration;
+		mac_ctx->mlme_cfg->lfr.lfr3_disallow_duration;
 	req_buf->lca_config_params.rssi_channel_penalization =
-		mac_ctx->roam.configParam.rssi_channel_penalization;
+		mac_ctx->mlme_cfg->lfr.lfr3_rssi_channel_penalization;
 	req_buf->lca_config_params.num_disallowed_aps =
-		mac_ctx->roam.configParam.num_disallowed_aps;
+		mac_ctx->mlme_cfg->lfr.lfr3_num_disallowed_aps;
 
 	/* For RSO Stop, we need to notify FW to deinit BTM */
 	if (command == ROAM_SCAN_OFFLOAD_STOP)
@@ -19501,27 +19386,27 @@ csr_create_per_roam_request(tpAniSirGlobal mac_ctx,
 	}
 	req_buf->vdev_id = session_id;
 	req_buf->per_config.enable =
-		mac_ctx->roam.configParam.per_roam_config.enable;
+		mac_ctx->mlme_cfg->lfr.per_roam_enable;
 	req_buf->per_config.tx_high_rate_thresh =
-		mac_ctx->roam.configParam.per_roam_config.tx_high_rate_thresh;
+		mac_ctx->mlme_cfg->lfr.per_roam_config_high_rate_th;
 	req_buf->per_config.rx_high_rate_thresh =
-		mac_ctx->roam.configParam.per_roam_config.rx_high_rate_thresh;
+		mac_ctx->mlme_cfg->lfr.per_roam_config_high_rate_th;
 	req_buf->per_config.tx_low_rate_thresh =
-		mac_ctx->roam.configParam.per_roam_config.tx_low_rate_thresh;
+		mac_ctx->mlme_cfg->lfr.per_roam_config_low_rate_th;
 	req_buf->per_config.rx_low_rate_thresh =
-		mac_ctx->roam.configParam.per_roam_config.rx_low_rate_thresh;
+		mac_ctx->mlme_cfg->lfr.per_roam_config_low_rate_th;
 	req_buf->per_config.per_rest_time =
-		mac_ctx->roam.configParam.per_roam_config.per_rest_time;
+		mac_ctx->mlme_cfg->lfr.per_roam_rest_time;
 	req_buf->per_config.tx_per_mon_time =
-		mac_ctx->roam.configParam.per_roam_config.tx_per_mon_time;
+		mac_ctx->mlme_cfg->lfr.per_roam_monitor_time;
 	req_buf->per_config.rx_per_mon_time =
-		mac_ctx->roam.configParam.per_roam_config.rx_per_mon_time;
+		mac_ctx->mlme_cfg->lfr.per_roam_monitor_time;
 	req_buf->per_config.tx_rate_thresh_percnt =
-		mac_ctx->roam.configParam.per_roam_config.tx_rate_thresh_percnt;
+		mac_ctx->mlme_cfg->lfr.per_roam_config_rate_th_percent;
 	req_buf->per_config.rx_rate_thresh_percnt =
-		mac_ctx->roam.configParam.per_roam_config.rx_rate_thresh_percnt;
+		mac_ctx->mlme_cfg->lfr.per_roam_config_rate_th_percent;
 	req_buf->per_config.min_candidate_rssi =
-		mac_ctx->roam.configParam.per_roam_config.min_candidate_rssi;
+		mac_ctx->mlme_cfg->lfr.per_roam_min_candidate_rssi;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		"PER based roaming configuaration enable: %d vdev: %d high_rate_thresh: %d low_rate_thresh: %d rate_thresh_percnt: %d per_rest_time: %d monitor_time: %d min cand rssi: %d",
@@ -19560,7 +19445,7 @@ csr_roam_offload_per_scan(tpAniSirGlobal mac_ctx, uint8_t session_id)
 	if (roam_info->last_sent_cmd == ROAM_SCAN_OFFLOAD_STOP)
 		return QDF_STATUS_SUCCESS;
 
-	if (!mac_ctx->roam.configParam.per_roam_config.enable) {
+	if (!mac_ctx->mlme_cfg->lfr.per_roam_enable) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			 "PER based roaming is disabled in configuration");
 		return QDF_STATUS_SUCCESS;
@@ -19981,6 +19866,31 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 	sme_debug("5g offset threshold: %d", req_buf->rssi_thresh_offset_5g);
 	qdf_mem_copy(roam_params_dst, roam_params_src,
 		sizeof(*roam_params_dst));
+	roam_params_dst->traffic_threshold =
+		mac_ctx->mlme_cfg->lfr.roam_dense_traffic_threshold;
+	roam_params_dst->dense_rssi_thresh_offset =
+		mac_ctx->mlme_cfg->lfr.roam_dense_rssi_thre_offset;
+	roam_params_dst->dense_min_aps_cnt =
+		mac_ctx->mlme_cfg->lfr.roam_dense_min_aps;
+	roam_params_dst->bg_scan_bad_rssi_thresh =
+		mac_ctx->mlme_cfg->lfr.roam_bg_scan_bad_rssi_threshold;
+	roam_params_dst->bg_scan_client_bitmap =
+		mac_ctx->mlme_cfg->lfr.roam_bg_scan_client_bitmap;
+	roam_params_dst->roam_bad_rssi_thresh_offset_2g =
+		mac_ctx->mlme_cfg->lfr.roam_bg_scan_bad_rssi_offset_2g;
+	roam_params_dst->raise_rssi_thresh_5g =
+		mac_ctx->mlme_cfg->lfr.rssi_boost_threshold_5g;
+	roam_params_dst->drop_rssi_thresh_5g =
+		mac_ctx->mlme_cfg->lfr.rssi_penalize_threshold_5g;
+	roam_params_dst->raise_factor_5g =
+		mac_ctx->mlme_cfg->lfr.rssi_boost_factor_5g;
+	roam_params_dst->drop_factor_5g =
+		mac_ctx->mlme_cfg->lfr.rssi_penalize_factor_5g;
+	roam_params_dst->max_raise_rssi_5g =
+		mac_ctx->mlme_cfg->lfr.max_rssi_boost_5g;
+	roam_params_dst->max_drop_rssi_5g =
+		mac_ctx->mlme_cfg->lfr.max_rssi_penalize_5g;
+
 	/*
 	 * rssi_diff which is updated via framework is equivalent to the
 	 * INI RoamRssiDiff parameter and hence should be updated.

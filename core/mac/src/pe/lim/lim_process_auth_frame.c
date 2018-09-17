@@ -456,10 +456,7 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 			return;
 		}
 	}
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_MAX_NUM_PRE_AUTH,
-				(uint32_t *) &maxnum_preauth) != QDF_STATUS_SUCCESS)
-		pe_warn("could not retrieve MaxNumPreAuth");
-
+	maxnum_preauth = mac_ctx->mlme_cfg->lfr.max_num_pre_auth;
 	if (mac_ctx->lim.gLimNumPreAuthContexts == maxnum_preauth &&
 			!lim_delete_open_auth_pre_auth_node(mac_ctx)) {
 		pe_err("Max no of preauth context reached");

@@ -1002,21 +1002,21 @@ QDF_STATUS sme_update_roam_params(tHalHandle hal,
 	roam_params_dst = &mac_ctx->roam.configParam.roam_params;
 	switch (update_param) {
 	case REASON_ROAM_EXT_SCAN_PARAMS_CHANGED:
-		roam_params_dst->raise_rssi_thresh_5g =
+		mac_ctx->mlme_cfg->lfr.rssi_boost_threshold_5g =
 			roam_params_src->raise_rssi_thresh_5g;
-		roam_params_dst->drop_rssi_thresh_5g =
+		mac_ctx->mlme_cfg->lfr.rssi_penalize_threshold_5g =
 			roam_params_src->drop_rssi_thresh_5g;
-		roam_params_dst->raise_factor_5g =
+		mac_ctx->mlme_cfg->lfr.rssi_boost_factor_5g =
 			roam_params_src->raise_factor_5g;
-		roam_params_dst->drop_factor_5g =
+		mac_ctx->mlme_cfg->lfr.rssi_penalize_factor_5g =
 			roam_params_src->drop_factor_5g;
-		roam_params_dst->max_raise_rssi_5g =
+		mac_ctx->mlme_cfg->lfr.max_rssi_boost_5g =
 			roam_params_src->max_raise_rssi_5g;
-		roam_params_dst->max_drop_rssi_5g =
+		mac_ctx->mlme_cfg->lfr.max_rssi_penalize_5g =
 			roam_params_src->max_drop_rssi_5g;
 		roam_params_dst->alert_rssi_threshold =
 			roam_params_src->alert_rssi_threshold;
-		roam_params_dst->is_5g_pref_enabled = true;
+		mac_ctx->mlme_cfg->lfr.enable_5g_band_pref = true;
 		break;
 	case REASON_ROAM_SET_SSID_ALLOWED:
 		qdf_mem_set(&roam_params_dst->ssid_allowed_list, 0,
@@ -12057,36 +12057,6 @@ QDF_STATUS sme_power_debug_stats_req(tHalHandle hal, void (*callback_fn)
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-/*
- * sme_update_roam_offload_enabled() - enable/disable roam offload feaure
- *  It is used at in the REG_DYNAMIC_VARIABLE macro definition of
- *
- * hHal - The handle returned by mac_open.
- * nRoamOffloadEnabled - The bool to update with
- * Return QDF_STATUS_SUCCESS - SME update config successfully.
- *	   Other status means SME is failed to update.
- */
-
-QDF_STATUS sme_update_roam_offload_enabled(tHalHandle hHal,
-					   bool nRoamOffloadEnabled)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: LFR3:gRoamOffloadEnabled is changed from %d to %d",
-			  __func__, pMac->roam.configParam.isRoamOffloadEnabled,
-			  nRoamOffloadEnabled);
-		pMac->roam.configParam.isRoamOffloadEnabled =
-			nRoamOffloadEnabled;
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-}
-
 /**
  * sme_update_roam_key_mgmt_offload_enabled() - enable/disable key mgmt offload
  * This is a synchronous call
@@ -14903,49 +14873,6 @@ bool sme_roam_is_ese_assoc(struct csr_roam_info *roam_info)
 	return roam_info->isESEAssoc;
 }
 #endif
-/**
- * sme_set_5g_band_pref(): If 5G preference is enabled,set boost/drop
- * params from ini.
- * @hal_handle: Handle returned by mac_open
- * @5g_pref_params: pref params from ini.
- *
- * Returns: None
- */
-void sme_set_5g_band_pref(tHalHandle hal_handle,
-			  struct sme_5g_band_pref_params *pref_params)
-{
-
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
-	struct roam_ext_params *roam_params;
-	QDF_STATUS status    = QDF_STATUS_SUCCESS;
-
-	if (!pref_params) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid 5G pref params!");
-		return;
-	}
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		roam_params = &mac_ctx->roam.configParam.roam_params;
-		roam_params->raise_rssi_thresh_5g =
-				pref_params->rssi_boost_threshold_5g;
-		roam_params->raise_factor_5g =
-				pref_params->rssi_boost_factor_5g;
-		roam_params->max_raise_rssi_5g =
-				pref_params->max_rssi_boost_5g;
-		roam_params->drop_rssi_thresh_5g =
-				pref_params->rssi_penalize_threshold_5g;
-		roam_params->drop_factor_5g =
-				pref_params->rssi_penalize_factor_5g;
-		roam_params->max_drop_rssi_5g =
-				pref_params->max_rssi_penalize_5g;
-
-		sme_release_global_lock(&mac_ctx->sme);
-	} else
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "Unable to acquire global sme lock");
-}
-
 
 bool sme_neighbor_roam_is11r_assoc(tHalHandle hal_ctx, uint8_t session_id)
 {

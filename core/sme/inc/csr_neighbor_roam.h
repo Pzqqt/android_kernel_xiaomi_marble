@@ -43,7 +43,6 @@ typedef enum {
 
 /* Parameters that are obtained from CFG */
 typedef struct sCsrNeighborRoamCfgParams {
-	uint8_t maxNeighborRetries;
 	uint32_t neighborScanPeriod;
 	uint32_t neighbor_scan_min_period;
 	tCsrChannelInfo channelInfo;

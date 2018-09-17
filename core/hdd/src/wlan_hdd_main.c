@@ -1192,6 +1192,24 @@ static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static void hdd_update_roam_offload(struct hdd_context *hdd_ctx,
+				    struct wma_tgt_services *cfg)
+{
+	bool roam_offload_enable;
+
+	ucfg_mlme_get_roaming_offload(hdd_ctx->hdd_psoc, &roam_offload_enable);
+	ucfg_mlme_set_roaming_offload(hdd_ctx->hdd_psoc,
+				      roam_offload_enable &
+				      cfg->en_roam_offload);
+}
+#else
+static inline void hdd_update_roam_offload(struct hdd_context *hdd_ctx,
+					   struct wma_tgt_services *cfg)
+{
+}
+#endif
+
 static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 				    struct wma_tgt_services *cfg)
 {
@@ -1245,9 +1263,7 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 	else
 		cfg_tdls_set_sleep_sta_enable(hdd_ctx->hdd_psoc, false);
 #endif
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	config->isRoamOffloadEnabled &= cfg->en_roam_offload;
-#endif
+	hdd_update_roam_offload(hdd_ctx, cfg);
 	config->sap_get_peer_info &= cfg->get_peer_info_enabled;
 	config->MAWCEnabled &= cfg->is_fw_mawc_capable;
 	hdd_update_tdls_config(hdd_ctx);
@@ -10413,7 +10429,6 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 {
 	tSirTxPowerLimit hddtxlimit;
 	QDF_STATUS status;
-	struct sme_5g_band_pref_params band_pref_params;
 	int ret;
 	mac_handle_t mac_handle;
 	struct hdd_config *cfg;
@@ -10502,22 +10517,6 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 			hdd_err("Failed to disable Chan Avoidance Indication");
 			goto deregister_cb;
 		}
-	}
-
-	if (hdd_ctx->config->enable_5g_band_pref) {
-		band_pref_params.rssi_boost_threshold_5g =
-				hdd_ctx->config->rssi_boost_threshold_5g;
-		band_pref_params.rssi_boost_factor_5g =
-				hdd_ctx->config->rssi_boost_factor_5g;
-		band_pref_params.max_rssi_boost_5g =
-				hdd_ctx->config->max_rssi_boost_5g;
-		band_pref_params.rssi_penalize_threshold_5g =
-				hdd_ctx->config->rssi_penalize_threshold_5g;
-		band_pref_params.rssi_penalize_factor_5g =
-				hdd_ctx->config->rssi_penalize_factor_5g;
-		band_pref_params.max_rssi_penalize_5g =
-				hdd_ctx->config->max_rssi_penalize_5g;
-		sme_set_5g_band_pref(mac_handle, &band_pref_params);
 	}
 
 	/* register P2P Listen Offload event callback */
@@ -13837,6 +13836,7 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	struct scan_user_cfg scan_cfg;
 	struct hdd_config *cfg = hdd_ctx->config;
 	QDF_STATUS status;
+	uint8_t scan_bucket_thre;
 
 	scan_cfg.active_dwell = cfg->nActiveMaxChnTime;
 	scan_cfg.passive_dwell = cfg->nPassiveMaxChnTime;
@@ -13850,7 +13850,9 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 		cfg->scanAgingTimeout * 1000;
 	scan_cfg.prefer_5ghz = cfg->nRoamPrefer5GHz;
 	scan_cfg.select_5ghz_margin = cfg->nSelect5GHzMargin;
-	scan_cfg.scan_bucket_threshold = cfg->first_scan_bucket_threshold;
+	ucfg_mlme_get_first_scan_bucket_threshold(hdd_ctx->hdd_psoc,
+						  &scan_bucket_thre);
+	scan_cfg.scan_bucket_threshold = (int32_t)scan_bucket_thre;
 	scan_cfg.rssi_cat_gap = cfg->nRssiCatGap;
 	scan_cfg.scan_dwell_time_mode = cfg->scan_adaptive_dwell_mode;
 	scan_cfg.is_snr_monitoring_enabled = cfg->fEnableSNRMonitoring;
@@ -13860,7 +13862,6 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	scan_cfg.enable_mac_spoofing = cfg->enable_mac_spoofing;
 	scan_cfg.sta_miracast_mcc_rest_time =
 				cfg->sta_miracast_mcc_rest_time_val;
-
 	hdd_update_pno_config(&scan_cfg.pno_cfg, cfg);
 	hdd_update_ie_whitelist_attr(&scan_cfg.ie_whitelist, cfg);
 	hdd_update_score_config(&scan_cfg.score_config, cfg);

@@ -247,9 +247,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 	}
 
 	/* Alloc and init table for the preAuth timer list */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_MAX_NUM_PRE_AUTH,
-			     &cfgValue) != QDF_STATUS_SUCCESS)
-		pe_err("could not retrieve mac preauth value");
+	cfgValue = pMac->mlme_cfg->lfr.max_num_pre_auth;
 	pMac->lim.gLimPreAuthTimerTable.numEntry = cfgValue;
 	pMac->lim.gLimPreAuthTimerTable.pTable =
 		qdf_mem_malloc(cfgValue * sizeof(tLimPreAuthNode *));

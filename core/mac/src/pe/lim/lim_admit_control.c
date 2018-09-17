@@ -897,7 +897,7 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
 	pAddTsParam->tsm_interval = tsm_interval;
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (pMac->roam.configParam.isRoamOffloadEnabled &&
+	if (pMac->mlme_cfg->lfr.lfr3_roaming_offload &&
 	    psessionEntry->is11Rconnection)
 		pAddTsParam->setRICparams = 1;
 #endif
@@ -968,7 +968,7 @@ lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
 			delts.tsinfo.traffic.userPrio;
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (pMac->roam.configParam.isRoamOffloadEnabled &&
+	if (pMac->mlme_cfg->lfr.lfr3_roaming_offload &&
 	    psessionEntry->is11Rconnection) {
 		qdf_mem_copy(&pDelTsParam->delTsInfo, &delts,
 			     sizeof(tSirDeltsReqInfo));

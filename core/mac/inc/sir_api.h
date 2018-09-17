@@ -2641,7 +2641,6 @@ typedef enum {
  * @rssi_diff:                  RSSI difference for the AP to be better over the
  *                              current AP to avoid ping pong effects
  * @good_rssi_roam:             Lazy Roam
- * @is_5g_pref_enabled:         5GHz BSSID preference feature enable/disable.
  * @bg_scan_bad_rssi_thresh:    Bad RSSI threshold to perform bg scan.
  * @bad_rssi_thresh_offset_2g:  Offset from Bad RSSI threshold for 2G to 5G Roam
  * @bg_scan_client_bitmap:      Bitmap to identify the client scans to snoop.
@@ -2668,7 +2667,6 @@ struct roam_ext_params {
 	int alert_rssi_threshold;
 	int rssi_diff;
 	int good_rssi_roam;
-	bool is_5g_pref_enabled;
 	int dense_rssi_thresh_offset;
 	int dense_min_aps_cnt;
 	int initial_dense_status;
@@ -2795,7 +2793,7 @@ struct lca_disallow_config_params {
 
 /**
  * struct mawc_params - Motion Aided Wireless Connectivity configuration
- * @MAWCEnabled: Global configuration for MAWC (Roaming/PNO/ExtScan)
+ * @mawc_enabled: Global configuration for MAWC (Roaming/PNO/ExtScan)
  * @mawc_roam_enabled: MAWC roaming enable/disable
  * @mawc_roam_traffic_threshold: Traffic threshold in kBps for MAWC roaming
  * @mawc_roam_ap_rssi_threshold: AP RSSI threshold for MAWC roaming

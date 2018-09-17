@@ -934,46 +934,6 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_LFR_MAWC_FEATURE_ENABLED_MAX,
 			     notify_is_mawc_ini_feature_enabled, 0),
 
-	REG_VARIABLE(CFG_MAWC_ROAM_ENABLED_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, mawc_roam_enabled,
-		     VAR_FLAGS_OPTIONAL |
-		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MAWC_ROAM_ENABLED_DEFAULT,
-		     CFG_MAWC_ROAM_ENABLED_MIN,
-		     CFG_MAWC_ROAM_ENABLED_MAX),
-
-	REG_VARIABLE(CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, mawc_roam_traffic_threshold,
-		     VAR_FLAGS_OPTIONAL |
-		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_DEFAULT,
-		     CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_MIN,
-		     CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_NAME,
-		     WLAN_PARAM_SignedInteger, struct hdd_config,
-		     mawc_roam_ap_rssi_threshold, VAR_FLAGS_OPTIONAL |
-		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_DEFAULT,
-		     CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_MIN,
-		     CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, mawc_roam_rssi_high_adjust,
-		     VAR_FLAGS_OPTIONAL |
-		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_DEFAULT,
-		     CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_MIN,
-		     CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_MAX),
-
-	REG_VARIABLE(CFG_MAWC_ROAM_RSSI_LOW_ADJUST_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, mawc_roam_rssi_low_adjust,
-		     VAR_FLAGS_OPTIONAL |
-		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MAWC_ROAM_RSSI_LOW_ADJUST_DEFAULT,
-		     CFG_MAWC_ROAM_RSSI_LOW_ADJUST_MIN,
-		     CFG_MAWC_ROAM_RSSI_LOW_ADJUST_MAX),
-
 	/* flag to turn ON/OFF 11r and ESE FastTransition */
 	REG_DYNAMIC_VARIABLE(CFG_FAST_TRANSITION_ENABLED_NAME,
 			     WLAN_PARAM_Integer,
@@ -996,13 +956,6 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_ROAM_RSSI_DIFF_MIN,
 			     CFG_ROAM_RSSI_DIFF_MAX,
 			     cb_notify_set_roam_rssi_diff, 0),
-
-	REG_VARIABLE(CFG_ROAM_RSSI_ABS_THRESHOLD_NAME, WLAN_PARAM_SignedInteger,
-		     struct hdd_config, rssi_abs_thresh,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ROAM_RSSI_ABS_THRESHOLD_DEFAULT,
-		     CFG_ROAM_RSSI_ABS_THRESHOLD_MIN,
-		     CFG_ROAM_RSSI_ABS_THRESHOLD_MAX),
 
 	REG_DYNAMIC_VARIABLE(CFG_ENABLE_WES_MODE_NAME, WLAN_PARAM_Integer,
 			     struct hdd_config, isWESModeEnabled,
@@ -1253,14 +1206,6 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MAX,
 			     cb_notify_set_neighbor_lookup_rssi_threshold, 0),
 
-	REG_VARIABLE(CFG_5G_RSSI_THRESHOLD_OFFSET_NAME,
-		     WLAN_PARAM_SignedInteger, struct hdd_config,
-		     rssi_thresh_offset_5g,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_5G_RSSI_THRESHOLD_OFFSET_DEFAULT,
-		     CFG_5G_RSSI_THRESHOLD_OFFSET_MIN,
-		     CFG_5G_RSSI_THRESHOLD_OFFSET_MAX),
-
 	REG_DYNAMIC_VARIABLE(CFG_OPPORTUNISTIC_SCAN_THRESHOLD_DIFF_NAME,
 			     WLAN_PARAM_Integer,
 			     struct hdd_config, nOpportunisticThresholdDiff,
@@ -1305,13 +1250,6 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MIN,
 			     CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MAX,
 			     cb_notify_set_neighbor_scan_max_chan_time, 0),
-
-	REG_VARIABLE(CFG_11R_NEIGHBOR_REQ_MAX_TRIES_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nMaxNeighborReqTries,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_11R_NEIGHBOR_REQ_MAX_TRIES_DEFAULT,
-		     CFG_11R_NEIGHBOR_REQ_MAX_TRIES_MIN,
-		     CFG_11R_NEIGHBOR_REQ_MAX_TRIES_MAX),
 
 	REG_DYNAMIC_VARIABLE(CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_NAME,
 			     WLAN_PARAM_Integer,
@@ -2679,14 +2617,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_PACKET_LOG_MAX),
 #endif
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	REG_VARIABLE(CFG_ROAMING_OFFLOAD_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, isRoamOffloadEnabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_ROAMING_OFFLOAD_DEFAULT,
-		     CFG_ROAMING_OFFLOAD_MIN,
-		     CFG_ROAMING_OFFLOAD_MAX),
-#endif
 #ifdef MSM_PLATFORM
 	REG_VARIABLE(CFG_BUS_BANDWIDTH_HIGH_THRESHOLD, WLAN_PARAM_Integer,
 		     struct hdd_config, busBandwidthHighThreshold,
@@ -3336,37 +3266,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_SELF_GEN_FRM_PWR_MIN,
 		     CFG_SELF_GEN_FRM_PWR_MAX),
 
-	REG_VARIABLE(CFG_EARLY_STOP_SCAN_ENABLE, WLAN_PARAM_Integer,
-		     struct hdd_config, early_stop_scan_enable,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_EARLY_STOP_SCAN_ENABLE_DEFAULT,
-		     CFG_EARLY_STOP_SCAN_ENABLE_MIN,
-		     CFG_EARLY_STOP_SCAN_ENABLE_MAX),
-
-	REG_VARIABLE(CFG_EARLY_STOP_SCAN_MIN_THRESHOLD,
-		     WLAN_PARAM_SignedInteger, struct hdd_config,
-		     early_stop_scan_min_threshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_DEFAULT,
-		     CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MIN,
-		     CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_EARLY_STOP_SCAN_MAX_THRESHOLD,
-		     WLAN_PARAM_SignedInteger, struct hdd_config,
-		     early_stop_scan_max_threshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_DEFAULT,
-		     CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MIN,
-		     CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_FIRST_SCAN_BUCKET_THRESHOLD_NAME,
-		     WLAN_PARAM_SignedInteger,
-		     struct hdd_config, first_scan_bucket_threshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_FIRST_SCAN_BUCKET_THRESHOLD_DEFAULT,
-		     CFG_FIRST_SCAN_BUCKET_THRESHOLD_MIN,
-		     CFG_FIRST_SCAN_BUCKET_THRESHOLD_MAX),
-
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 	REG_VARIABLE(CFG_ENABLE_LFR_SUBNET_DETECTION, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_lfr_subnet_detection,
@@ -3399,50 +3298,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_SET_TSF_PTP_OPT_MAX),
 #endif /* WLAN_FEATURE_TSF_PLUS */
 #endif
-
-	REG_VARIABLE(CFG_ROAM_DENSE_TRAFFIC_THRESHOLD, WLAN_PARAM_Integer,
-		struct hdd_config, roam_dense_traffic_thresh,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_DEFAULT,
-		CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_MIN,
-		CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_ROAM_DENSE_RSSI_THRE_OFFSET, WLAN_PARAM_Integer,
-		struct hdd_config, roam_dense_rssi_thresh_offset,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ROAM_DENSE_RSSI_THRE_OFFSET_DEFAULT,
-		CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MIN,
-		CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MAX),
-
-	REG_VARIABLE(CFG_ROAM_DENSE_MIN_APS, WLAN_PARAM_Integer,
-		struct hdd_config, roam_dense_min_aps,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ROAM_DENSE_MIN_APS_DEFAULT,
-		CFG_ROAM_DENSE_MIN_APS_MIN,
-		CFG_ROAM_DENSE_MIN_APS_MAX),
-
-	REG_VARIABLE(CFG_ROAM_BG_SCAN_BAD_RSSI_THRESHOLD_NAME,
-		WLAN_PARAM_SignedInteger, struct hdd_config,
-		roam_bg_scan_bad_rssi_thresh,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ROAM_BG_SCAN_BAD_RSSI_THRESHOLD_DEFAULT,
-		CFG_ROAM_BG_SCAN_BAD_RSSI_THRESHOLD_MIN,
-		CFG_ROAM_BG_SCAN_BAD_RSSI_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_ROAM_BG_SCAN_CLIENT_BITMAP_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, roam_bg_scan_client_bitmap,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ROAM_BG_SCAN_CLIENT_BITMAP_DEFAULT,
-		CFG_ROAM_BG_SCAN_CLIENT_BITMAP_MIN,
-		CFG_ROAM_BG_SCAN_CLIENT_BITMAP_MAX),
-
-	REG_VARIABLE(CFG_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G_NAME,
-		WLAN_PARAM_Integer, struct hdd_config,
-		roam_bad_rssi_thresh_offset_2g,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G_DEFAULT,
-		CFG_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G_MIN,
-		CFG_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G_MAX),
 
 	REG_VARIABLE(CFG_ROAM_HO_DELAY_FOR_RX_NAME,
 		WLAN_PARAM_Integer, struct hdd_config,
@@ -3653,13 +3508,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ADAPTIVE_SCAN_DWELL_MODE_NC_DEFAULT,
 		     CFG_ADAPTIVE_SCAN_DWELL_MODE_NC_MIN,
 		     CFG_ADAPTIVE_SCAN_DWELL_MODE_NC_MAX),
-
-	REG_VARIABLE(CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, roamscan_adaptive_dwell_mode,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_DEFAULT,
-		CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_MIN,
-		CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_MAX),
 
 	REG_VARIABLE(CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, extscan_adaptive_dwell_mode,
@@ -3891,55 +3739,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_RESTART_BEACONING_ON_CH_AVOID_DEFAULT,
 		CFG_RESTART_BEACONING_ON_CH_AVOID_MIN,
 		CFG_RESTART_BEACONING_ON_CH_AVOID_MAX),
-
-	REG_VARIABLE(CFG_PER_ROAM_ENABLE_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, is_per_roam_enabled,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_PER_ROAM_ENABLE_DEFAULT,
-		CFG_PER_ROAM_ENABLE_MIN,
-		CFG_PER_ROAM_ENABLE_MAX),
-
-	REG_VARIABLE(CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, per_roam_high_rate_threshold,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_DEFAULT,
-		CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_MIN,
-		CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_MAX),
-
-	REG_VARIABLE(CFG_PER_ROAM_CONFIG_LOW_RATE_TH_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, per_roam_low_rate_threshold,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_PER_ROAM_CONFIG_LOW_RATE_TH_DEFAULT,
-		CFG_PER_ROAM_CONFIG_LOW_RATE_TH_MIN,
-		CFG_PER_ROAM_CONFIG_LOW_RATE_TH_MAX),
-
-	REG_VARIABLE(CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_NAME,
-		WLAN_PARAM_Integer, struct hdd_config, per_roam_th_percent,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_DEFAULT,
-		CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_MIN,
-		CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_MAX),
-
-	REG_VARIABLE(CFG_PER_ROAM_REST_TIME_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, per_roam_rest_time,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_PER_ROAM_REST_TIME_DEFAULT,
-		CFG_PER_ROAM_REST_TIME_MIN,
-		CFG_PER_ROAM_REST_TIME_MAX),
-
-	REG_VARIABLE(CFG_PER_ROAM_MONITOR_TIME, WLAN_PARAM_Integer,
-		struct hdd_config, per_roam_mon_time,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_PER_ROAM_MONTIOR_TIME_DEFAULT,
-		CFG_PER_ROAM_MONITOR_TIME_MIN,
-		CFG_PER_ROAM_MONITOR_TIME_MAX),
-
-	REG_VARIABLE(CFG_PER_ROAM_MIN_CANDIDATE_RSSI, WLAN_PARAM_Integer,
-		struct hdd_config, min_candidate_rssi,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_PER_ROAM_MIN_CANDIDATE_RSSI_DEFAULT,
-		CFG_PER_ROAM_MIN_CANDIDATE_RSSI_MIN,
-		CFG_PER_ROAM_MIN_CANDIDATE_RSSI_MAX),
 
 	REG_VARIABLE(CFG_ACTIVE_UC_APF_MODE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, active_uc_apf_mode,
@@ -4188,28 +3987,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_ITO_REPEAT_COUNT_MIN,
 		CFG_ITO_REPEAT_COUNT_MAX),
 
-	REG_VARIABLE(CFG_ROAM_DISALLOW_DURATION_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, disallow_duration,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ROAM_DISALLOW_DURATION_DEFAULT,
-		CFG_ROAM_DISALLOW_DURATION_MIN,
-		CFG_ROAM_DISALLOW_DURATION_MAX),
-
-	REG_VARIABLE(CFG_ROAM_RSSI_CHANNEL_PENALIZATION_NAME,
-		WLAN_PARAM_Integer, struct hdd_config,
-		rssi_channel_penalization,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ROAM_RSSI_CHANNEL_PENALIZATION_DEFAULT,
-		CFG_ROAM_RSSI_CHANNEL_PENALIZATION_MIN,
-		CFG_ROAM_RSSI_CHANNEL_PENALIZATION_MAX),
-
-	REG_VARIABLE(CFG_ROAM_NUM_DISALLOWED_APS_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, num_disallowed_aps,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ROAM_NUM_DISALLOWED_APS_DEFAULT,
-		CFG_ROAM_NUM_DISALLOWED_APS_MIN,
-		CFG_ROAM_NUM_DISALLOWED_APS_MAX),
-
 	REG_VARIABLE(CFG_OCE_ENABLE_STA_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, oce_sta_enabled,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4230,55 +4007,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_11D_IN_WORLD_MODE_DEFAULT,
 		     CFG_ENABLE_11D_IN_WORLD_MODE_MIN,
 		     CFG_ENABLE_11D_IN_WORLD_MODE_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_5G_BAND_PREF_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, enable_5g_band_pref,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ENABLE_5G_BAND_PREF_DEFAULT,
-		CFG_ENABLE_5G_BAND_PREF_MIN,
-		CFG_ENABLE_5G_BAND_PREF_MAX),
-
-	REG_VARIABLE(CFG_5G_RSSI_BOOST_THRESHOLD_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, rssi_boost_threshold_5g,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_5G_RSSI_BOOST_THRESHOLD_DEFAULT,
-		CFG_5G_RSSI_BOOST_THRESHOLD_MIN,
-		CFG_5G_RSSI_BOOST_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_5G_RSSI_BOOST_FACTOR_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, rssi_boost_factor_5g,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_5G_RSSI_BOOST_FACTOR_DEFAULT,
-		CFG_5G_RSSI_BOOST_FACTOR_MIN,
-		CFG_5G_RSSI_BOOST_FACTOR_MAX),
-
-	REG_VARIABLE(CFG_5G_MAX_RSSI_BOOST_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, max_rssi_boost_5g,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_5G_MAX_RSSI_BOOST_DEFAULT,
-		CFG_5G_MAX_RSSI_BOOST_MIN,
-		CFG_5G_MAX_RSSI_BOOST_MAX),
-
-	REG_VARIABLE(CFG_5G_RSSI_PENALIZE_THRESHOLD_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, rssi_penalize_threshold_5g,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_5G_RSSI_PENALIZE_THRESHOLD_DEFAULT,
-		CFG_5G_RSSI_PENALIZE_THRESHOLD_MIN,
-		CFG_5G_RSSI_PENALIZE_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_5G_RSSI_PENALIZE_FACTOR_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, rssi_penalize_factor_5g,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_5G_RSSI_PENALIZE_FACTOR_DEFAULT,
-		CFG_5G_RSSI_PENALIZE_FACTOR_MIN,
-		CFG_5G_RSSI_PENALIZE_FACTOR_MAX),
-
-	REG_VARIABLE(CFG_5G_MAX_RSSI_PENALIZE_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, max_rssi_penalize_5g,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_5G_MAX_RSSI_PENALIZE_DEFAULT,
-		CFG_5G_MAX_RSSI_PENALIZE_MIN,
-		CFG_5G_MAX_RSSI_PENALIZE_MAX),
 
 	REG_VARIABLE(CFG_LPRx_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, enable_lprx,
@@ -6568,50 +6296,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 }
 
 /**
- * hdd_update_per_config_to_sme() -initializes the sme config for PER roam
- *
- * @hdd_ctx: the pointer to hdd context
- * @sme_config: sme configuation pointer
- *
- * Return: None
- */
-static void hdd_update_per_config_to_sme(struct hdd_context *hdd_ctx,
-					 tSmeConfigParams *sme_config)
-{
-	sme_config->csrConfig.per_roam_config.enable =
-			hdd_ctx->config->is_per_roam_enabled;
-
-	/* Assigning Tx and Rx for same value */
-	sme_config->csrConfig.per_roam_config.tx_high_rate_thresh =
-			hdd_ctx->config->per_roam_high_rate_threshold;
-	sme_config->csrConfig.per_roam_config.rx_high_rate_thresh =
-			hdd_ctx->config->per_roam_high_rate_threshold;
-
-	/* Assigning Tx and Rx for same value */
-	sme_config->csrConfig.per_roam_config.tx_low_rate_thresh =
-			hdd_ctx->config->per_roam_low_rate_threshold;
-	sme_config->csrConfig.per_roam_config.rx_low_rate_thresh =
-			hdd_ctx->config->per_roam_low_rate_threshold;
-
-	/* Assigning Tx and Rx for same value */
-	sme_config->csrConfig.per_roam_config.tx_rate_thresh_percnt =
-			hdd_ctx->config->per_roam_th_percent;
-	sme_config->csrConfig.per_roam_config.rx_rate_thresh_percnt =
-			hdd_ctx->config->per_roam_th_percent;
-
-	sme_config->csrConfig.per_roam_config.per_rest_time =
-			hdd_ctx->config->per_roam_rest_time;
-	sme_config->csrConfig.per_roam_config.tx_per_mon_time =
-			hdd_ctx->config->per_roam_mon_time;
-	sme_config->csrConfig.per_roam_config.rx_per_mon_time =
-			hdd_ctx->config->per_roam_mon_time;
-
-	/* Assigning minimum roamable AP RSSI for candidate selection */
-	sme_config->csrConfig.per_roam_config.min_candidate_rssi =
-			hdd_ctx->config->min_candidate_rssi;
-}
-
-/**
  * hdd_set_policy_mgr_user_cfg() -initializes the policy manager
  * configuration parameters
  *
@@ -6960,16 +6644,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		pConfig->isFastRoamIniFeatureEnabled;
 	smeConfig->csrConfig.csr_mawc_config.mawc_enabled =
 		pConfig->MAWCEnabled;
-	smeConfig->csrConfig.csr_mawc_config.mawc_roam_enabled =
-		pConfig->mawc_roam_enabled;
-	smeConfig->csrConfig.csr_mawc_config.mawc_roam_traffic_threshold =
-		pConfig->mawc_roam_traffic_threshold;
-	smeConfig->csrConfig.csr_mawc_config.mawc_roam_ap_rssi_threshold =
-		pConfig->mawc_roam_ap_rssi_threshold;
-	smeConfig->csrConfig.csr_mawc_config.mawc_roam_rssi_high_adjust =
-		pConfig->mawc_roam_rssi_high_adjust;
-	smeConfig->csrConfig.csr_mawc_config.mawc_roam_rssi_low_adjust =
-		pConfig->mawc_roam_rssi_low_adjust;
+
 #ifdef FEATURE_WLAN_ESE
 	smeConfig->csrConfig.isEseIniFeatureEnabled =
 		pConfig->isEseIniFeatureEnabled;
@@ -6979,7 +6654,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.isFastTransitionEnabled =
 		pConfig->isFastTransitionEnabled;
 	smeConfig->csrConfig.RoamRssiDiff = pConfig->RoamRssiDiff;
-	smeConfig->csrConfig.rssi_abs_thresh = pConfig->rssi_abs_thresh;
 	smeConfig->csrConfig.isWESModeEnabled = pConfig->isWESModeEnabled;
 	smeConfig->csrConfig.isRoamOffloadScanEnabled =
 		pConfig->isRoamOffloadScanEnabled;
@@ -7011,8 +6685,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.neighborRoamConfig.
 		neighbor_scan_min_timer_period =
 		pConfig->neighbor_scan_min_period;
-	smeConfig->csrConfig.neighborRoamConfig.nMaxNeighborRetries =
-		pConfig->nMaxNeighborReqTries;
 	smeConfig->csrConfig.neighborRoamConfig.nNeighborResultsRefreshPeriod =
 		pConfig->nNeighborResultsRefreshPeriod;
 	smeConfig->csrConfig.neighborRoamConfig.nEmptyScanRefreshPeriod =
@@ -7073,10 +6745,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	smeConfig->csrConfig.enableSelfRecovery =
 			hdd_ctx->config->enableSelfRecovery;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	smeConfig->csrConfig.isRoamOffloadEnabled =
-		hdd_ctx->config->isRoamOffloadEnabled;
-#endif
 	smeConfig->csrConfig.conc_custom_rule1 =
 		hdd_ctx->config->conc_custom_rule1;
 	smeConfig->csrConfig.conc_custom_rule2 =
@@ -7107,27 +6775,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.max_scan_count =
 			hdd_ctx->config->max_scan_count;
 
-	smeConfig->csrConfig.early_stop_scan_enable =
-		hdd_ctx->config->early_stop_scan_enable;
-	smeConfig->csrConfig.early_stop_scan_min_threshold =
-		hdd_ctx->config->early_stop_scan_min_threshold;
-	smeConfig->csrConfig.early_stop_scan_max_threshold =
-		hdd_ctx->config->early_stop_scan_max_threshold;
-	smeConfig->csrConfig.first_scan_bucket_threshold =
-		hdd_ctx->config->first_scan_bucket_threshold;
-
-	smeConfig->csrConfig.roam_dense_rssi_thresh_offset =
-			hdd_ctx->config->roam_dense_rssi_thresh_offset;
-	smeConfig->csrConfig.roam_dense_min_aps =
-			hdd_ctx->config->roam_dense_min_aps;
-	smeConfig->csrConfig.roam_dense_traffic_thresh =
-			hdd_ctx->config->roam_dense_traffic_thresh;
-	smeConfig->csrConfig.roam_bg_scan_bad_rssi_thresh =
-		hdd_ctx->config->roam_bg_scan_bad_rssi_thresh;
-	smeConfig->csrConfig.roam_bg_scan_client_bitmap =
-		hdd_ctx->config->roam_bg_scan_client_bitmap;
-	smeConfig->csrConfig.roam_bad_rssi_thresh_offset_2g =
-		hdd_ctx->config->roam_bad_rssi_thresh_offset_2g;
 	smeConfig->csrConfig.ho_delay_for_rx =
 		hdd_ctx->config->ho_delay_for_rx;
 	smeConfig->csrConfig.min_delay_btw_roam_scans =
@@ -7147,14 +6794,10 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->scan_adaptive_dwell_mode;
 	smeConfig->csrConfig.scan_adaptive_dwell_mode_nc =
 			hdd_ctx->config->scan_adaptive_dwell_mode_nc;
-	smeConfig->csrConfig.roamscan_adaptive_dwell_mode =
-			hdd_ctx->config->roamscan_adaptive_dwell_mode;
 	smeConfig->csrConfig.enable_ftopen =
 			hdd_ctx->config->enable_ftopen;
 	smeConfig->csrConfig.roam_force_rssi_trigger =
 			hdd_ctx->config->roam_force_rssi_trigger;
-
-	hdd_update_per_config_to_sme(hdd_ctx, smeConfig);
 
 	smeConfig->csrConfig.enable_edca_params =
 			pConfig->enable_edca_params;
@@ -7213,12 +6856,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	smeConfig->csrConfig.pkt_err_disconn_th =
 			hdd_ctx->config->pkt_err_disconn_th;
-	smeConfig->csrConfig.disallow_duration =
-			hdd_ctx->config->disallow_duration;
-	smeConfig->csrConfig.rssi_channel_penalization =
-			hdd_ctx->config->rssi_channel_penalization;
-	smeConfig->csrConfig.num_disallowed_aps =
-			hdd_ctx->config->num_disallowed_aps;
 
 	smeConfig->csrConfig.is_force_1x1 =
 			hdd_ctx->config->is_force_1x1;

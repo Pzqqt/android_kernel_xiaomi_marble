@@ -1175,10 +1175,7 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 						eSIR_MAC_SUCCESS_STATUS;
 		goto end;
 	} else {
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_MAX_NUM_PRE_AUTH,
-			(uint32_t *) &num_preauth_ctx) != QDF_STATUS_SUCCESS)
-			pe_warn("Could not retrieve NumPreAuthLimit from CFG");
-
+		num_preauth_ctx = mac_ctx->mlme_cfg->lfr.max_num_pre_auth;
 		if (mac_ctx->lim.gLimNumPreAuthContexts == num_preauth_ctx) {
 			pe_warn("Number of pre-auth reached max limit");
 			/* Return Auth confirm with reject code */

@@ -1186,9 +1186,6 @@ static QDF_STATUS csr_neighbor_roam_init11r_assoc_info(tpAniSirGlobal pMac)
 		pFTRoamInfo = &pNeighborRoamInfo->FTRoamInfo;
 
 		pNeighborRoamInfo->is11rAssoc = false;
-		pNeighborRoamInfo->cfgParams.maxNeighborRetries =
-			pMac->roam.configParam.neighborRoamConfig.
-			nMaxNeighborRetries;
 
 		pFTRoamInfo->neighborReportTimeout =
 			CSR_NEIGHBOR_ROAM_REPORT_QUERY_TIMEOUT;
@@ -1238,12 +1235,11 @@ QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId)
 	pNeighborRoamInfo->cfgParams.minChannelScanTime =
 		pMac->roam.configParam.neighborRoamConfig.
 		nNeighborScanMinChanTime;
-	pNeighborRoamInfo->cfgParams.maxNeighborRetries = 0;
 	pNeighborRoamInfo->cfgParams.neighborLookupThreshold =
 		pMac->roam.configParam.neighborRoamConfig.
 		nNeighborLookupRssiThreshold;
 	pNeighborRoamInfo->cfgParams.rssi_thresh_offset_5g =
-		pMac->roam.configParam.neighborRoamConfig.rssi_thresh_offset_5g;
+		pMac->mlme_cfg->lfr.rssi_threshold_offset_5g;
 	pNeighborRoamInfo->cfgParams.delay_before_vdev_stop =
 		pMac->roam.configParam.neighborRoamConfig.
 		delay_before_vdev_stop;

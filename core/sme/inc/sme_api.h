@@ -2072,17 +2072,6 @@ QDF_STATUS sme_get_peer_info_ext(tHalHandle hal,
 			void *pcontext));
 
 /**
- * sme_set_5g_band_pref() - sme api to set 5Ghz preference
- * @hal: hal handle for getting global mac struct
- * @pref_params: preference info request struct
- *
- * This function will set 5Ghz preference for STA connection
- *
- * Return: None
- */
-void sme_set_5g_band_pref(tHalHandle hal_handle,
-			  struct sme_5g_band_pref_params *pref_params);
-/**
  * sme_get_chain_rssi() - Get chain rssi
  * @hal: Global HAL handle
  * @input: get chain rssi req params

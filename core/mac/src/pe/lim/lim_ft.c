@@ -1054,8 +1054,8 @@ QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	}
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (!pMac->roam.configParam.isRoamOffloadEnabled ||
-	    (pMac->roam.configParam.isRoamOffloadEnabled &&
+	if (!pMac->mlme_cfg->lfr.lfr3_roaming_offload ||
+	    (pMac->mlme_cfg->lfr.lfr3_roaming_offload &&
 	     !psessionEntry->is11Rconnection))
 #endif
 	{

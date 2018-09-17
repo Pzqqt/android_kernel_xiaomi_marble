@@ -895,7 +895,6 @@ typedef struct sAniSirGlobal {
 	uint8_t user_configured_nss;
 	bool snr_monitor_enabled;
 	bool ignore_assoc_disallowed;
-	int8_t first_scan_bucket_threshold;
 	uint32_t peer_rssi;
 	uint32_t peer_txrate;
 	uint32_t peer_rxrate;

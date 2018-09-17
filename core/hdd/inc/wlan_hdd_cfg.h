@@ -891,114 +891,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gEnableEarlyStopScan - Set early stop scan
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to set early stop scan. Early stop
- * scan is a feature for roaming to stop the scans at
- * an early stage as soon as we find a better AP to roam.
- * This would make the roaming happen quickly.
- *
- * Related: None
- *
- * Supported Feature: LFR Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EARLY_STOP_SCAN_ENABLE           "gEnableEarlyStopScan"
-#define CFG_EARLY_STOP_SCAN_ENABLE_MIN       (0)
-#define CFG_EARLY_STOP_SCAN_ENABLE_MAX       (1)
-#define CFG_EARLY_STOP_SCAN_ENABLE_DEFAULT   (1)
-
-/*
- * <ini>
- * gEarlyStopScanMinThreshold - Set early stop scan min
- * threshold
- * @Min: -80
- * @Max: -70
- * @Default: -73
- *
- * This ini is used to set the early stop scan minimum
- * threshold. Early stop scan minimum threshold is the
- * minimum threshold to be considered for stopping the
- * scan. The algorithm starts with a scan on the greedy
- * channel list with the maximum threshold and steps down
- * the threshold by 20% for each further channel. It can
- * step down on each channel but cannot go lower than the
- * minimum threshold.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD           "gEarlyStopScanMinThreshold"
-#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MIN       (-80)
-#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MAX       (-70)
-#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_DEFAULT   (-73)
-
-/*
- * <ini>
- * gEarlyStopScanMaxThreshold - Set early stop scan max
- * threshold
- * @Min: -60
- * @Max: -40
- * @Default: -43
- *
- * This ini is used to set the the early stop scan maximum
- * threshold at which the candidate AP should be to be
- * qualified as a potential roam candidate and good enough
- * to stop the roaming scan.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD           "gEarlyStopScanMaxThreshold"
-#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MIN       (-60)
-#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MAX       (-40)
-#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_DEFAULT   (-43)
-
-/*
- * <ini>
- * gFirstScanBucketThreshold - Set first scan bucket
- * threshold
- * @Min: -50
- * @Max: -30
- * @Default: -30
- *
- * This ini will configure the first scan bucket
- * threshold to the mentioned value and all the AP's which
- * have RSSI under this threshold will fall under this
- * bucket. This configuration item used to tweak and
- * test the input for internal algorithm.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_FIRST_SCAN_BUCKET_THRESHOLD_NAME      "gFirstScanBucketThreshold"
-#define CFG_FIRST_SCAN_BUCKET_THRESHOLD_MIN       (-50)
-#define CFG_FIRST_SCAN_BUCKET_THRESHOLD_MAX       (-30)
-#define CFG_FIRST_SCAN_BUCKET_THRESHOLD_DEFAULT   (-30)
-
-/*
- * <ini>
  * gbug_report_for_scan_results - Enable bug report
  * @Min: 0
  * @Max: 1
@@ -1334,29 +1226,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * rssi_abs_thresh - The min RSSI of the candidate AP to consider roam
- * @Min: -96
- * @Max: 0
- * @Default: 0
- *
- * The RSSI value of the candidate AP should be higher than rssi_abs_thresh
- * to roam to the AP. 0 means no absolute minimum RSSI is required.
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ROAM_RSSI_ABS_THRESHOLD_NAME        "rssi_abs_thresh"
-#define CFG_ROAM_RSSI_ABS_THRESHOLD_MIN         (-96)
-#define CFG_ROAM_RSSI_ABS_THRESHOLD_MAX         (0)
-#define CFG_ROAM_RSSI_ABS_THRESHOLD_DEFAULT     (0)
-
-/*
- * <ini>
  * gRoamScanNProbes - Sets the number of probes to be sent for firmware roaming
  * @Min: 1
  * @Max: 10
@@ -1563,30 +1432,6 @@ enum hdd_dot11_mode {
 #define CFG_STRICT_5GHZ_PREF_BY_MARGIN_MAX             (60)
 #define CFG_STRICT_5GHZ_PREF_BY_MARGIN_DEFAULT         (0)
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-/*
- * <ini>
- * gRoamOffloadEnabled - enable/disable roam offload feature
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This INI is used to enable/disable roam offload feature
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ROAMING_OFFLOAD_NAME                "gRoamOffloadEnabled"
-#define CFG_ROAMING_OFFLOAD_MIN                 (0)
-#define CFG_ROAMING_OFFLOAD_MAX                 (1)
-#define CFG_ROAMING_OFFLOAD_DEFAULT             (1)
-#endif
-
 /*
  * <ini>
  * gRoamScanHiRssiMaxCount - Sets 5GHz maximum scan count
@@ -1708,30 +1553,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * groam_dense_rssi_thresh_offset - Sets dense roam RSSI threshold diff
- * @Min: 0
- * @Max: 20
- * @Default: 10
- *
- * This INI is used to set offset value from normal RSSI threshold to dense
- * RSSI threshold Fw will optimize roaming based on new RSSI threshold once
- * it detects dense enviournment.
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ROAM_DENSE_RSSI_THRE_OFFSET         "groam_dense_rssi_thresh_offset"
-#define CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MIN     (0)
-#define CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MAX     (20)
-#define CFG_ROAM_DENSE_RSSI_THRE_OFFSET_DEFAULT (10)
-
-/*
- * <ini>
  * enable_ftopen - enable/disable FT open feature
  * @Min: 0
  * @Max: 1
@@ -1751,90 +1572,6 @@ enum hdd_dot11_mode {
 #define CFG_ROAM_FT_OPEN_ENABLE_MIN                 (0)
 #define CFG_ROAM_FT_OPEN_ENABLE_MAX                 (1)
 #define CFG_ROAM_FT_OPEN_ENABLE_DEFAULT             (1)
-
-/*
- * <ini>
- * groam_dense_min_aps - Sets minimum number of AP for dense roam
- * @Min: 1
- * @Max: 5
- * @Default: 3
- *
- * Minimum number of APs required for dense roam. FW will consider
- * environment as dense once it detects #APs operating is more than
- * groam_dense_min_aps.
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ROAM_DENSE_MIN_APS         "groam_dense_min_aps"
-#define CFG_ROAM_DENSE_MIN_APS_MIN     (1)
-#define CFG_ROAM_DENSE_MIN_APS_MAX     (5)
-#define CFG_ROAM_DENSE_MIN_APS_DEFAULT (3)
-
-/*
- * <ini>
- * roam_bg_scan_bad_rssi_thresh - RSSI threshold for background roam
- * @Min: -96
- * @Max: 0
- * @Default: -76
- *
- * If the DUT is connected to an AP with weak signal, then the bad RSSI
- * threshold will be used as an opportunity to use the scan results
- * from other scan clients and try to roam if there is a better AP
- * available in the environment.
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ROAM_BG_SCAN_BAD_RSSI_THRESHOLD_NAME  "roam_bg_scan_bad_rssi_thresh"
-#define CFG_ROAM_BG_SCAN_BAD_RSSI_THRESHOLD_MIN     (-96)
-#define CFG_ROAM_BG_SCAN_BAD_RSSI_THRESHOLD_MAX     (0)
-#define CFG_ROAM_BG_SCAN_BAD_RSSI_THRESHOLD_DEFAULT (-76)
-
-/*
- * <ini>
- * roam_bg_scan_client_bitmap - Bitmap used to identify the scan clients
- * @Min: 0
- * @Max: 0x3FF
- * @Default: 0x
- *
- * This bitmap is used to define the client scans that need to be used
- * by the roaming module to perform a background roaming.
- * Currently supported bit positions are as follows:
- * Bit 0 is reserved in the firmware.
- * WMI_SCAN_CLIENT_NLO - 1
- * WMI_SCAN_CLIENT_EXTSCAN - 2
- * WMI_SCAN_CLIENT_ROAM - 3
- * WMI_SCAN_CLIENT_P2P - 4
- * WMI_SCAN_CLIENT_LPI - 5
- * WMI_SCAN_CLIENT_NAN - 6
- * WMI_SCAN_CLIENT_ANQP - 7
- * WMI_SCAN_CLIENT_OBSS - 8
- * WMI_SCAN_CLIENT_PLM - 9
- * WMI_SCAN_CLIENT_HOST - 10
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ROAM_BG_SCAN_CLIENT_BITMAP_NAME     "roam_bg_scan_client_bitmap"
-#define CFG_ROAM_BG_SCAN_CLIENT_BITMAP_MIN      (0)
-#define CFG_ROAM_BG_SCAN_CLIENT_BITMAP_MAX      (0x7FF)
-#define CFG_ROAM_BG_SCAN_CLIENT_BITMAP_DEFAULT  (0x424)
 
 /*
  * <ini>
@@ -1978,35 +1715,6 @@ enum hdd_dot11_mode {
 #define CFG_ROAM_FORCE_RSSI_TRIGGER_MIN     (0)
 #define CFG_ROAM_FORCE_RSSI_TRIGGER_MAX     (1)
 #define CFG_ROAM_FORCE_RSSI_TRIGGER_DEFAULT (1)
-
-/*
- * <ini>
- * roamscan_adaptive_dwell_mode - Sets dwell time adaptive mode
- * @Min: 0
- * @Max: 4
- * @Default: 1
- *
- * This parameter will set the algo used in dwell time optimization during
- * roam scan. see enum scan_dwelltime_adaptive_mode.
- * Acceptable values for this:
- * 0: Default (Use firmware default mode)
- * 1: Conservative optimization
- * 2: Moderate optimization
- * 3: Aggressive optimization
- * 4: Static
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_NAME    "roamscan_adaptive_dwell_mode"
-#define CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_MIN     (0)
-#define CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_MAX     (4)
-#define CFG_ADAPTIVE_ROAMSCAN_DWELL_MODE_DEFAULT (1)
 
 /*
  * Timer waiting for interface up from the upper layer. If
@@ -4002,119 +3710,6 @@ enum station_keepalive_method {
 #define CFG_LFR_MAWC_FEATURE_ENABLED_MAX                    (1)
 #define CFG_LFR_MAWC_FEATURE_ENABLED_DEFAULT                (0)
 
-/*
- * <ini>
- * mawc_roam_enabled - Enable/Disable MAWC during roaming
- * @Min: 0 - Disabled
- * @Max: 1 - Enabled
- * @Default: 0
- *
- * This ini is used to control MAWC during roaming.
- *
- * Related: MAWCEnabled.
- *
- * Supported Feature: MAWC Roaming
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_MAWC_ROAM_ENABLED_NAME            "mawc_roam_enabled"
-#define CFG_MAWC_ROAM_ENABLED_MIN             (0)
-#define CFG_MAWC_ROAM_ENABLED_MAX             (1)
-#define CFG_MAWC_ROAM_ENABLED_DEFAULT         (0)
-
-/*
- * <ini>
- * mawc_roam_traffic_threshold - Configure traffic threshold
- * @Min: 0
- * @Max: 0xFFFFFFFF
- * @Default: 300
- *
- * This ini is used to configure the data traffic load in kBps to
- * register CMC.
- *
- * Related: mawc_roam_enabled.
- *
- * Supported Feature: MAWC Roaming
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_NAME       "mawc_roam_traffic_threshold"
-#define CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_MIN        (0)
-#define CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_MAX        (0xFFFFFFFF)
-#define CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_DEFAULT    (300)
-
-/*
- * <ini>
- * mawc_roam_ap_rssi_threshold - Best AP RSSI threshold
- * @Min: -120
- * @Max: 0
- * @Default: -66
- *
- * This ini is used to specify the RSSI threshold to scan for the AP.
- *
- * Related: mawc_roam_enabled.
- *
- * Supported Feature: MAWC Roaming
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_NAME       "mawc_roam_ap_rssi_threshold"
-#define CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_MIN        (-120)
-#define CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_MAX        (0)
-#define CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_DEFAULT    (-66)
-
-/*
- * <ini>
- * mawc_roam_rssi_high_adjust - Adjust MAWC roam high RSSI
- * @Min: 3
- * @Max: 5
- * @Default: 5
- *
- * This ini is used for high RSSI threshold adjustment in stationary state
- * to suppress the scan.
- *
- * Related: mawc_roam_enabled.
- *
- * Supported Feature: MAWC Roaming
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_NAME        "mawc_roam_rssi_high_adjust"
-#define CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_MIN         (3)
-#define CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_MAX         (5)
-#define CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_DEFAULT     (5)
-
-/*
- * <ini>
- * mawc_roam_rssi_high_adjust - Adjust MAWC roam low RSSI
- * @Min: 3
- * @Max: 5
- * @Default: 5
- *
- * This ini is used for low RSSI threshold adjustment in stationary state
- * to suppress the scan.
- *
- * Related: mawc_roam_enabled.
- *
- * Supported Feature: MAWC Roaming
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_MAWC_ROAM_RSSI_LOW_ADJUST_NAME        "mawc_roam_rssi_low_adjust"
-#define CFG_MAWC_ROAM_RSSI_LOW_ADJUST_MIN         (3)
-#define CFG_MAWC_ROAM_RSSI_LOW_ADJUST_MAX         (5)
-#define CFG_MAWC_ROAM_RSSI_LOW_ADJUST_DEFAULT     (5)
-
 /*This parameter is used to set Wireless Extended Security Mode.*/
 #define CFG_ENABLE_WES_MODE_NAME                            "gWESModeEnabled"
 #define CFG_ENABLE_WES_MODE_NAME_MIN                        (0)
@@ -4206,39 +3801,6 @@ enum station_keepalive_method {
 #define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MIN       (10)
 #define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MAX       (120)
 #define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_DEFAULT   (78)
-
-/*
- * <ini>
- * lookup_threshold_5g_offset - Lookup Threshold offset for 5G band
- * @Min: -120
- * @Max: +120
- * @Default: 0
- *
- * This ini is  used to set the 5G band lookup threshold for roaming.
- * It depends on another INI which is gNeighborLookupThreshold.
- * gNeighborLookupThreshold is a legacy INI item which will be used to
- * set the RSSI lookup threshold for both 2G and 5G bands. If the
- * user wants to setup a different threshold for a 5G band, then user
- * can use this offset value which will be summed up to the value of
- * gNeighborLookupThreshold and used for 5G
- * e.g: gNeighborLookupThreshold = -76dBm
- *      lookup_threshold_5g_offset = 6dBm
- *      Then the 5G band will be configured to -76+6 = -70dBm
- * A default value of Zero to lookup_threshold_5g_offset will keep the
- * thresholds same for both 2G and 5G bands
- *
- * Related: gNeighborLookupThreshold
- *
- * Supported Feature: Roaming
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_5G_RSSI_THRESHOLD_OFFSET_NAME      "lookup_threshold_5g_offset"
-#define CFG_5G_RSSI_THRESHOLD_OFFSET_MIN       (-120)
-#define CFG_5G_RSSI_THRESHOLD_OFFSET_MAX       (120)
-#define CFG_5G_RSSI_THRESHOLD_OFFSET_DEFAULT   (0)
 
 #define CFG_DELAY_BEFORE_VDEV_STOP_NAME              "gDelayBeforeVdevStop"
 #define CFG_DELAY_BEFORE_VDEV_STOP_MIN               (2)
@@ -7734,16 +7296,6 @@ enum hdd_link_speed_rpt_type {
 #endif
 
 /*
- * Dense traffic threshold
- * traffic threshold required for dense roam scan
- * Measured in kbps
- */
-#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD         "gtraffic_threshold"
-#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_MIN     (0)
-#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_MAX     (0xffffffff)
-#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_DEFAULT (400)
-
-/*
  * <ini>
  * gvendor_acs_support - vendor based channel selection manager
  * @Min: 0
@@ -8957,37 +8509,6 @@ enum hdd_wext_control {
 
 /*
  * <ini>
- * gper_roam_mon_time - Minimum time required in seconds to
- * be considered as valid scenario for PER based roam
- * @Min: 5
- * @Max: 25
- * @Default: 25
- *
- * This ini is used to define minimum time in seconds for which DUT has
- * collected the PER stats before it can consider the stats hysteresis to be
- * valid for PER based scan.
- * DUT collects following information during this period:
- *     1. % of packets below gper_roam_low_rate_th
- *     2. # packets above gper_roam_high_rate_th
- * if DUT gets (1) greater than gper_roam_th_percent and (2) is zero during
- * this period, it triggers PER based roam scan.
- *
- * Related: gper_roam_enabled, gper_roam_high_rate_th, gper_roam_low_rate_th,
- *          gper_roam_th_percent, gper_roam_rest_time
- *
- * Supported Feature: LFR-3.0
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_PER_ROAM_MONITOR_TIME                "gper_roam_mon_time"
-#define CFG_PER_ROAM_MONITOR_TIME_MIN            (5)
-#define CFG_PER_ROAM_MONITOR_TIME_MAX            (25)
-#define CFG_PER_ROAM_MONTIOR_TIME_DEFAULT        (25)
-
-/*
- * <ini>
  * gPowerUsage - Preferred Power Usage
  * @Min: Min
  * @Max: Max
@@ -9007,32 +8528,6 @@ enum hdd_wext_control {
 #define CFG_POWER_USAGE_MIN                    "Min"
 #define CFG_POWER_USAGE_MAX                    "Max"
 #define CFG_POWER_USAGE_DEFAULT                "Mod"
-
-
-/*
- * <ini>
- * gper_min_rssi_threshold_for_roam -  Minimum roamable AP RSSI for
- * candidate selection for PER based roam
- * @Min: 0
- * @Max: 96
- * @Default: 83
- *
- * Minimum roamable AP RSSI for candidate selection for PER based roam
- *
- * Related: gper_roam_enabled, gper_roam_high_rate_th, gper_roam_low_rate_th,
- *          gper_roam_th_percent, gper_roam_rest_time
- *
- * Supported Feature: LFR-3.0
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_PER_ROAM_MIN_CANDIDATE_RSSI           "gper_min_rssi_threshold_for_roam"
-#define CFG_PER_ROAM_MIN_CANDIDATE_RSSI_MIN       (0)
-#define CFG_PER_ROAM_MIN_CANDIDATE_RSSI_MAX       (96)
-#define CFG_PER_ROAM_MIN_CANDIDATE_RSSI_DEFAULT   (83)
-
 
 /*
  * <ini>
@@ -9517,140 +9012,6 @@ enum hdd_wext_control {
 #define CFG_EXTWOW_TCP_RX_TIMEOUT_MAX              (0xffffffff)
 #define CFG_EXTWOW_TCP_RX_TIMEOUT_DEFAULT          (200)
 #endif
-
-/*
- * <ini>
- * gper_roam_enabled - To enabled/disable PER based roaming in FW
- * @Min: 0
- * @Max: 3
- * @Default: 0
- *
- * This ini is used to enable/disable Packet error based roaming, enabling this
- * will cause DUT to monitor Tx and Rx traffic and roam to a better candidate
- * if current is not good enough.
- *
- * Values supported:
- * 0: disabled
- * 1: enabled for Rx traffic
- * 2: enabled for Tx traffic
- * 3: enabled for Tx and Rx traffic
- *
- * Related: gper_roam_high_rate_th, gper_roam_low_rate_th,
- *          gper_roam_th_percent, gper_roam_rest_time
- *
- * Supported Feature: LFR-3.0
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_PER_ROAM_ENABLE_NAME           "gper_roam_enabled"
-#define CFG_PER_ROAM_ENABLE_MIN            (0)
-#define CFG_PER_ROAM_ENABLE_MAX            (3)
-#define CFG_PER_ROAM_ENABLE_DEFAULT        (3)
-
-/*
- * <ini>
- * gper_roam_high_rate_th - Rate at which PER based roam will stop
- * @Min: 1 Mbps
- * @Max: 0xffffffff
- * @Default: 40 Mbps
- *
- * This ini is used to define the data rate in mbps*10 at which FW will stop
- * monitoring the traffic for PER based roam.
- *
- * Related: gper_roam_enabled, gper_roam_low_rate_th,
- *          gper_roam_th_percent, gper_roam_rest_time
- *
- * Supported Feature: LFR-3.0
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_NAME    "gper_roam_high_rate_th"
-#define CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_MIN     (10)
-#define CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_MAX     (0xffffffff)
-#define CFG_PER_ROAM_CONFIG_HIGH_RATE_TH_DEFAULT (400)
-
-/*
- * <ini>
- * gper_roam_low_rate_th - Rate at which FW starts considering traffic for PER
- * based roam.
- *
- * @Min: 1 Mbps
- * @Max: 0xffffffff
- * @Default: 20 Mbps
- *
- * This ini is used to define the rate in mbps*10 at which FW starts considering
- * traffic for PER based roam, if gper_roam_th_percent of data is below this
- * rate, FW will issue a roam scan.
- *
- * Related: gper_roam_enabled, gper_roam_high_rate_th,
- *          gper_roam_th_percent, gper_roam_rest_time
- *
- * Supported Feature: LFR-3.0
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_PER_ROAM_CONFIG_LOW_RATE_TH_NAME    "gper_roam_low_rate_th"
-#define CFG_PER_ROAM_CONFIG_LOW_RATE_TH_MIN     (10)
-#define CFG_PER_ROAM_CONFIG_LOW_RATE_TH_MAX     (0xffffffff)
-#define CFG_PER_ROAM_CONFIG_LOW_RATE_TH_DEFAULT (200)
-
-/*
- * <ini>
- * gper_roam_th_percent - Percentage at which FW will issue a roam scan if
- * traffic is below gper_roam_low_rate_th rate.
- *
- * @Min: 10%
- * @Max: 100%
- * @Default: 60%
- *
- * This ini is used to define the percentage at which FW will issue a roam scan
- * if traffic is below gper_roam_low_rate_th rate.
- *
- * Related: gper_roam_enabled, gper_roam_high_rate_th,
- *          gper_roam_high_rate_th, gper_roam_rest_time
- *
- * Supported Feature: LFR-3.0
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_NAME      "gper_roam_th_percent"
-#define CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_MIN       (10)
-#define CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_MAX       (100)
-#define CFG_PER_ROAM_CONFIG_RATE_TH_PERCENT_DEFAULT   (60)
-
-/*
- * <ini>
- * gper_roam_rest_time - Time for which FW will wait once it issues a
- * roam scan.
- *
- * @Min: 10 seconds
- * @Max: 3600 seconds
- * @Default: 300 seconds
- *
- * This ini is used to define the time for which FW will wait once it issues a
- * PER based roam scan.
- *
- * Related: gper_roam_enabled, gper_roam_high_rate_th,
- *          gper_roam_high_rate_th, gper_roam_th_percent
- *
- * Supported Feature: LFR-3.0
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_PER_ROAM_REST_TIME_NAME     "gper_roam_rest_time"
-#define CFG_PER_ROAM_REST_TIME_MIN      (10)
-#define CFG_PER_ROAM_REST_TIME_MAX      (3600)
-#define CFG_PER_ROAM_REST_TIME_DEFAULT  (300)
 
 /*
  * <ini>
@@ -10593,70 +9954,6 @@ enum hdd_external_acs_policy {
 #define CFG_OCE_ENABLE_SAP_MIN     (0)
 #define CFG_OCE_ENABLE_SAP_MAX     (1)
 #define CFG_OCE_ENABLE_SAP_DEFAULT (1)
-
-/*
- * <ini>
- * groam_disallow_duration -disallow duration before roaming
- * @Min: 0
- * @Max: 3600
- * @Default: 30
- *
- * This ini is used to configure how long LCA[Last Connected AP] AP will
- * be disallowed before it can be a roaming candidate again, in units of
- * seconds.
- *
- * Related: LFR
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_ROAM_DISALLOW_DURATION_NAME    "groam_disallow_duration"
-#define CFG_ROAM_DISALLOW_DURATION_MIN     (0)
-#define CFG_ROAM_DISALLOW_DURATION_MAX     (3600)
-#define CFG_ROAM_DISALLOW_DURATION_DEFAULT (30)
-
-/*
- * <ini>
- * grssi_channel_penalization - RSSI penalization
- * @Min: 0
- * @Max: 15
- * @Default: 5
- *
- * This ini is used to configure RSSI that will be penalized if candidate(s)
- * are found to be in the same channel as disallowed AP's, in units of db.
- *
- * Related: LFR
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_ROAM_RSSI_CHANNEL_PENALIZATION_NAME    "grssi_channel_penalization"
-#define CFG_ROAM_RSSI_CHANNEL_PENALIZATION_MIN     (0)
-#define CFG_ROAM_RSSI_CHANNEL_PENALIZATION_MAX     (15)
-#define CFG_ROAM_RSSI_CHANNEL_PENALIZATION_DEFAULT (5)
-
-/*
- * <ini>
- * groam_num_disallowed_aps - Max number of AP's to maintain in LCA list
- * @Min: 0
- * @Max: 8
- * @Default: 3
- *
- * This ini is used to set the maximum number of AP's to be maintained
- * in LCA [Last Connected AP] list.
- *
- * Related: LFR
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_ROAM_NUM_DISALLOWED_APS_NAME    "groam_num_disallowed_aps"
-#define CFG_ROAM_NUM_DISALLOWED_APS_MIN     (0)
-#define CFG_ROAM_NUM_DISALLOWED_APS_MAX     (8)
-#define CFG_ROAM_NUM_DISALLOWED_APS_DEFAULT (3)
 
 /*
  * <ini>
@@ -12930,7 +12227,6 @@ struct hdd_config {
 	uint8_t neighborScanChanList[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 	uint16_t nNeighborScanMinChanTime;
 	uint16_t nNeighborScanMaxChanTime;
-	uint16_t nMaxNeighborReqTries;
 	uint16_t nNeighborResultsRefreshPeriod;
 	uint16_t nEmptyScanRefreshPeriod;
 	uint8_t nRoamBmissFirstBcnt;
@@ -12986,18 +12282,12 @@ struct hdd_config {
 	uint32_t InfraUapsdBkSuspIntv;
 	bool isFastRoamIniFeatureEnabled;
 	bool MAWCEnabled;
-	bool mawc_roam_enabled;
-	uint32_t mawc_roam_traffic_threshold;
-	int8_t mawc_roam_ap_rssi_threshold;
-	uint8_t mawc_roam_rssi_high_adjust;
-	uint8_t mawc_roam_rssi_low_adjust;
 #ifdef FEATURE_WLAN_ESE
 	uint32_t InfraInactivityInterval;
 	bool isEseIniFeatureEnabled;
 #endif
 	bool isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
-	int32_t rssi_abs_thresh;
 	bool isWESModeEnabled;
 	bool isRoamOffloadScanEnabled;
 	bool bImplicitQosEnabled;
@@ -13309,10 +12599,6 @@ struct hdd_config {
 	int32_t dfsRadarPriMultiplier;
 	uint8_t reorderOffloadSupport;
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	bool isRoamOffloadEnabled;
-#endif
-
 	uint32_t IpaUcTxBufCount;
 	uint32_t IpaUcTxBufSize;
 	uint32_t IpaUcRxIndRingCount;
@@ -13421,11 +12707,6 @@ struct hdd_config {
 	uint8_t tsf_ptp_options;
 #endif /* WLAN_FEATURE_TSF_PLUS */
 #endif
-	uint32_t roam_dense_traffic_thresh;
-	uint32_t roam_dense_rssi_thresh_offset;
-	uint32_t roam_dense_min_aps;
-	int8_t roam_bg_scan_bad_rssi_thresh;
-	uint8_t roam_bad_rssi_thresh_offset_2g;
 	uint32_t ho_delay_for_rx;
 	uint32_t min_delay_btw_roam_scans;
 	uint32_t roam_trigger_reason_bitmask;
@@ -13462,7 +12743,6 @@ struct hdd_config {
 	bool adaptive_dwell_mode_enabled;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;
-	enum scan_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
 	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
 	enum scan_dwelltime_adaptive_mode pnoscan_adaptive_dwell_mode;
 	enum scan_dwelltime_adaptive_mode global_adapt_dwelltime_mode;
@@ -13502,13 +12782,6 @@ struct hdd_config {
 	bool sap_internal_restart;
 	enum restart_beaconing_on_ch_avoid_rule
 		restart_beaconing_on_chan_avoid_event;
-	uint8_t is_per_roam_enabled;
-	uint32_t per_roam_high_rate_threshold;
-	uint32_t per_roam_low_rate_threshold;
-	uint32_t per_roam_th_percent;
-	uint32_t per_roam_rest_time;
-	uint32_t per_roam_mon_time;
-	uint32_t min_candidate_rssi;
 	enum active_apf_mode active_uc_apf_mode;
 	enum active_apf_mode active_mc_bc_apf_mode;
 	bool enable_bcast_probe_rsp;
@@ -13555,10 +12828,6 @@ struct hdd_config {
 	uint8_t max_mpdus_inampdu;
 	enum pmo_auto_pwr_detect_failure_mode auto_pwr_save_fail_mode;
 	uint8_t ito_repeat_count;
-	/* LCA(Last connected AP) disallow configs */
-	uint32_t disallow_duration;
-	uint32_t rssi_channel_penalization;
-	uint32_t num_disallowed_aps;
 	bool oce_sta_enabled;
 	bool oce_sap_enabled;
 	bool enable_11d_in_world_mode;

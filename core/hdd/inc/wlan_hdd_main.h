@@ -95,6 +95,7 @@
 #include "wlan_hdd_nud_tracking.h"
 #include "wlan_hdd_twt.h"
 #include "wma_sar_public_structs.h"
+#include "wlan_mlme_ucfg_api.h"
 
 /*
  * Preprocessor definitions and constants
@@ -2371,7 +2372,12 @@ int wlan_hdd_scan_abort(struct hdd_adapter *adapter);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static inline bool roaming_offload_enabled(struct hdd_context *hdd_ctx)
 {
-	return hdd_ctx->config->isRoamOffloadEnabled;
+	bool is_roam_offload;
+
+	ucfg_mlme_get_roaming_offload(hdd_ctx->hdd_psoc,
+				      &is_roam_offload);
+
+	return is_roam_offload;
 }
 #else
 static inline bool roaming_offload_enabled(struct hdd_context *hdd_ctx)

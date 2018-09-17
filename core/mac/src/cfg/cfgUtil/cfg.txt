@@ -872,14 +872,6 @@ LIM
 * Max number of Preauthentication
 *
 
-WNI_CFG_MAX_NUM_PRE_AUTH    I    4    8
-V    RW    NP  RESTART
-NONE
-0    256    64
-V    RW    NP  RESTART
-NONE
-0    256    64
-
 *
 * Preauthentication Cleanup Timeout (kilo usec)
 *

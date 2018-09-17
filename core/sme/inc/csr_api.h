@@ -1115,7 +1115,6 @@ typedef struct tagCsrConfigParam {
 	struct mawc_params csr_mawc_config;
 	uint8_t isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
-	int32_t rssi_abs_thresh;
 	bool isWESModeEnabled;
 	tCsrNeighborRoamConfigParams neighborRoamConfig;
 	/*
@@ -1181,18 +1180,12 @@ typedef struct tagCsrConfigParam {
 	uint8_t cc_switch_mode;
 #endif
 	uint8_t allowDFSChannelRoam;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	bool isRoamOffloadEnabled;
-#endif
 	bool obssEnabled;
 	uint8_t conc_custom_rule1;
 	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
 
 	uint8_t max_scan_count;
-	bool early_stop_scan_enable;
-	int8_t early_stop_scan_min_threshold;
-	int8_t early_stop_scan_max_threshold;
 	int8_t first_scan_bucket_threshold;
 	uint8_t fEnableDebugLog;
 	uint8_t max_intf_count;
@@ -1207,7 +1200,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t auto_bmps_timer_val;
 	uint32_t dual_mac_feature_disable;
 	uint32_t sta_sap_scc_on_dfs_chan;
-	uint32_t roam_dense_traffic_thresh;
 	uint32_t roam_dense_rssi_thresh_offset;
 	uint32_t roam_dense_min_aps;
 	int8_t roam_bg_scan_bad_rssi_thresh;
@@ -1230,9 +1222,7 @@ typedef struct tagCsrConfigParam {
 	bool enable_fatal_event;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;
-	enum scan_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
 	struct csr_sta_roam_policy_params sta_roam_policy_params;
-	struct wmi_per_roam_config per_roam_config;
 	bool enable_bcast_probe_rsp;
 	bool is_fils_enabled;
 #ifdef WLAN_FEATURE_11AX
@@ -1244,9 +1234,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t wlm_latency_flags[CSR_NUM_WLM_LATENCY_LEVEL];
 	uint16_t pkt_err_disconn_th;
 	bool is_force_1x1;
-	uint32_t disallow_duration;
-	uint32_t rssi_channel_penalization;
-	uint32_t num_disallowed_aps;
 	struct sir_score_config bss_score_params;
 	uint8_t oce_feature_bitmap;
 	uint32_t btm_offload_config;
@@ -1266,7 +1253,7 @@ typedef struct tagCsrUpdateConfigParam {
 } tCsrUpdateConfigParam;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define csr_roamIsRoamOffloadEnabled(pMac) \
-	(pMac->roam.configParam.isRoamOffloadEnabled)
+	(pMac->mlme_cfg->lfr.lfr3_roaming_offload)
 #define DEFAULT_REASSOC_FAILURE_TIMEOUT 1000
 #else
 #define csr_roamIsRoamOffloadEnabled(pMac)  false

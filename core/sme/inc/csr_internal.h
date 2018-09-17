@@ -65,11 +65,6 @@
 	( \
 	  (((pMac)->roam.configParam.nSelect5GHzMargin) ? true : false) \
 	)
-#define CSR_IS_SELECT_5G_PREFERRED(pMac) \
-	( \
-	  (((pMac)->roam.configParam.roam_params.is_5g_pref_enabled) ? \
-	   true : false) \
-	)
 #define CSR_IS_ROAM_PREFER_5GHZ(pMac)	\
 	( \
 	  (((pMac)->roam.configParam.nRoamPrefer5GHz) ? true : false) \
@@ -475,7 +470,6 @@ struct csr_config {
 #endif
 	uint8_t isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
-	int32_t rssi_abs_thresh;
 	bool nRoamPrefer5GHz;
 	bool nRoamIntraBand;
 	bool isWESModeEnabled;
@@ -534,9 +528,6 @@ struct csr_config {
 	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
 	struct roam_ext_params roam_params;
-	bool early_stop_scan_enable;
-	int8_t early_stop_scan_min_threshold;
-	int8_t early_stop_scan_max_threshold;
 	bool ignore_peer_ht_opmode;
 	bool enable_edca_params;
 	uint32_t edca_vo_cwmin;
@@ -555,9 +546,7 @@ struct csr_config {
 	bool vendor_vht_sap;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;
-	enum scan_dwelltime_adaptive_mode roamscan_adaptive_dwell_mode;
 	struct csr_sta_roam_policy_params sta_roam_policy;
-	struct wmi_per_roam_config per_roam_config;
 	bool enable_bcast_probe_rsp;
 	bool is_fils_enabled;
 #ifdef WLAN_FEATURE_11AX
@@ -566,9 +555,6 @@ struct csr_config {
 #endif
 	uint16_t pkt_err_disconn_th;
 	bool is_force_1x1;
-	uint32_t disallow_duration;
-	uint32_t rssi_channel_penalization;
-	uint32_t num_disallowed_aps;
 	uint16_t wlm_latency_enable;
 	uint16_t wlm_latency_level;
 	uint32_t wlm_latency_flags[CSR_NUM_WLM_LATENCY_LEVEL];
