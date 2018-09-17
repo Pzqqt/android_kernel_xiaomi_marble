@@ -2473,4 +2473,16 @@ QDF_STATUS wmi_extract_smartlog_ev
 void wmi_process_fw_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
 					    HTC_PACKET * htc_packet);
 
+#ifdef OBSS_PD
+/**
+ * wmi_extract_smartlog_ev() - extract smartlog event info from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param ev: Pointer to hold fatal events
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_send_obss_spatial_reuse_set_cmd(void *wmi_handle,
+	struct wmi_host_obss_spatial_reuse_set_param *obss_spatial_reuse_param);
+#endif /* OBSS_PD */
 #endif /* _WMI_UNIFIED_API_H_ */

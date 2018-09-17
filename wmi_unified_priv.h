@@ -1751,6 +1751,12 @@ QDF_STATUS (*extract_dfs_status_from_fw)(wmi_unified_t wmi_handle,
 					 void *evt_buf,
 					 uint32_t *dfs_status_check);
 #endif
+
+#ifdef OBSS_PD
+QDF_STATUS (*send_obss_spatial_reuse_set)(wmi_unified_t wmi_handle,
+		struct wmi_host_obss_spatial_reuse_set_param
+		*obss_spatial_reuse_param);
+#endif
 };
 
 /* Forward declartion for psoc*/
