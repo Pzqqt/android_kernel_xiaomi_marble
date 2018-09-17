@@ -11825,18 +11825,33 @@ static void wlan_hdd_cfg80211_add_connected_pno_support(struct wiphy *wiphy)
 static void hdd_config_sched_scan_plans_to_wiphy(struct wiphy *wiphy,
 						 struct hdd_config *config)
 {
+	struct wlan_objmgr_psoc *psoc;
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+
+	psoc = hdd_ctx->psoc;
+
+	if (!psoc) {
+		hdd_err("Invalid psoc");
+		return;
+	}
+
 	if (config->configPNOScanSupport) {
 		hdd_wiphy_set_max_sched_scans(wiphy, 1);
 		wiphy->max_sched_scan_ssids = SCAN_PNO_MAX_SUPP_NETWORKS;
 		wiphy->max_match_sets = SCAN_PNO_MAX_SUPP_NETWORKS;
 		wiphy->max_sched_scan_ie_len = SIR_MAC_MAX_IE_LENGTH;
 		wiphy->max_sched_scan_plans = SCAN_PNO_MAX_PLAN_REQUEST;
-		if (config->max_sched_scan_plan_interval)
-			wiphy->max_sched_scan_plan_interval =
-				config->max_sched_scan_plan_interval;
-		if (config->max_sched_scan_plan_iterations)
-			wiphy->max_sched_scan_plan_iterations =
-				config->max_sched_scan_plan_iterations;
+
+		/*
+		 * Exception: Using cfg_get() here because these two
+		 * schedule scan params are used only at this place
+		 * to copy to wiphy structure
+		 */
+		wiphy->max_sched_scan_plan_interval =
+			cfg_get(psoc, CFG_MAX_SCHED_SCAN_PLAN_INTERVAL);
+
+		wiphy->max_sched_scan_plan_iterations =
+			cfg_get(psoc, CFG_MAX_SCHED_SCAN_PLAN_ITERATIONS);
 	}
 }
 #else

@@ -7046,52 +7046,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * g_max_sched_scan_plan_int - pno sched max scan plan interval.
- * @Min: 1
- * @Max: 7200
- * @Default: 3600
- *
- * This ini is used to set max sched scan plan interval for pno scan
- * (value in seconds).
- *
- * Related: gPNOScanSupport
- *
- * Supported Feature: PNO scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_MAX_SCHED_SCAN_PLAN_INT_NAME       "g_max_sched_scan_plan_int"
-#define CFG_MAX_SCHED_SCAN_PLAN_INT_MIN        (1)
-#define CFG_MAX_SCHED_SCAN_PLAN_INT_MAX        (7200)
-#define CFG_MAX_SCHED_SCAN_PLAN_INT_DEFAULT    (3600)
-
-/*
- * <ini>
- * g_max_sched_scan_plan_iterations - pno sched max scan plan iterations.
- * @Min: 1
- * @Max: 100
- * @Default: 10
- *
- * This ini is used to set max sched scan plan iterations for pno scan
- * (value in seconds).
- *
- * Related: gPNOScanSupport
- *
- * Supported Feature: PNO scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_NAME   "g_max_sched_scan_plan_iterations"
-#define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_MIN     (1)
-#define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_MAX     (100)
-#define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_DEFAULT (10)
-
-/*
- * <ini>
  * gPowerUsage - Preferred Power Usage
  * @Min: Min
  * @Max: Max
@@ -9174,8 +9128,6 @@ struct hdd_config {
 	bool goptimize_chan_avoid_event;
 	bool fw_timeout_crash;
 	uint32_t rx_wakelock_timeout;
-	uint32_t max_sched_scan_plan_interval;
-	uint32_t max_sched_scan_plan_iterations;
 	bool sap_internal_restart;
 	enum restart_beaconing_on_ch_avoid_rule
 		restart_beaconing_on_chan_avoid_event;
