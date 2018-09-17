@@ -28,6 +28,28 @@
 #define P2P_MAX_NOA_DESC 4
 
 /**
+ * struct p2p_ps_params - P2P powersave related params
+ * @opp_ps: opportunistic power save
+ * @ctwindow: CT window
+ * @count: count
+ * @duration: duration
+ * @interval: interval
+ * @single_noa_duration: single shot noa duration
+ * @ps_selection: power save selection
+ * @session_id: session id
+ */
+struct p2p_ps_params {
+	uint8_t opp_ps;
+	uint32_t ctwindow;
+	uint8_t count;
+	uint32_t duration;
+	uint32_t interval;
+	uint32_t single_noa_duration;
+	uint8_t ps_selection;
+	uint8_t session_id;
+};
+
+/**
  * struct p2p_roc_req - P2P roc request
  * @vdev_id:     Vdev id on which this request has come
  * @chan:        Chan for which this RoC has been requested
