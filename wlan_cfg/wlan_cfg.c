@@ -107,6 +107,15 @@ static const int rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_RX_MON_RING_MASK_1,
 					WLAN_CFG_RX_MON_RING_MASK_2,
 					WLAN_CFG_RX_MON_RING_MASK_3};
+
+static const int host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					WLAN_CFG_HOST2RXDMA_RING_MASK_0,
+					0,
+					0,
+					0,
+					0,
+					0,
+					0};
 #else
 static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 						WLAN_CFG_TX_RING_MASK_0,
@@ -129,6 +138,11 @@ static const int rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_RX_MON_RING_MASK_1,
 					WLAN_CFG_RX_MON_RING_MASK_2};
 
+static const int host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					WLAN_CFG_HOST2RXDMA_RING_MASK_0,
+					WLAN_CFG_HOST2RXDMA_RING_MASK_1,
+					WLAN_CFG_HOST2RXDMA_RING_MASK_2,
+					WLAN_CFG_HOST2RXDMA_RING_MASK_3};
 #endif
 
 static const int rx_err_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
@@ -154,12 +168,6 @@ static const int rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_RXDMA2HOST_RING_MASK_1,
 					WLAN_CFG_RXDMA2HOST_RING_MASK_2,
 					WLAN_CFG_RXDMA2HOST_RING_MASK_3};
-
-static const int host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
-					WLAN_CFG_HOST2RXDMA_RING_MASK_0,
-					WLAN_CFG_HOST2RXDMA_RING_MASK_1,
-					WLAN_CFG_HOST2RXDMA_RING_MASK_2,
-					WLAN_CFG_HOST2RXDMA_RING_MASK_3};
 
 /**
  * struct wlan_cfg_dp_pdev_ctxt - Configuration parameters for pdev (radio)
