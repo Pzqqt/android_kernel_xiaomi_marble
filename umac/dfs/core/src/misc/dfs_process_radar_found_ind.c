@@ -492,6 +492,12 @@ int dfs_second_segment_radar_disable(struct wlan_dfs *dfs)
 	return 0;
 }
 
+static inline void dfs_reset_bangradar(struct wlan_dfs *dfs)
+{
+	dfs->dfs_bangradar  = 0;
+	dfs->dfs_second_segment_bangradar = 0;
+}
+
 QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 				 struct radar_found_info *radar_found)
 {
@@ -523,6 +529,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 			 dfs->dfs_curchan->dfs_ch_freq);
 
 	if (!dfs->dfs_use_nol) {
+		dfs_reset_bangradar(dfs);
 		dfs_send_csa_to_current_chan(dfs);
 		return QDF_STATUS_SUCCESS;
 	}
@@ -539,7 +546,8 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		dfs->dfs_enhanced_bangradar = 0;
 	}
 
-	if (dfs->dfs_use_nol_subchannel_marking)
+	if (dfs->dfs_use_nol_subchannel_marking &&
+	    !(dfs->dfs_bangradar || dfs->dfs_second_segment_bangradar))
 		num_channels = dfs_find_radar_affected_subchans(dfs,
 								radar_found,
 								channels);
@@ -548,6 +556,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 							radar_found->segment_id,
 							channels);
 
+	dfs_reset_bangradar(dfs);
 	status = dfs_radar_add_channel_list_to_nol(dfs, channels, num_channels);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		dfs_err(dfs, WLAN_DEBUG_DFS,

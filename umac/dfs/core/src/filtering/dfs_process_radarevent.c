@@ -594,7 +594,6 @@ static inline int dfs_handle_bangradar(
 		 * channel.
 		 */
 		*rs = &dfs->dfs_radar[dfs->dfs_curchan_radindex];
-		dfs->dfs_bangradar = 0; /* Reset */
 		dfs_debug(dfs, WLAN_DEBUG_DFS, "bangradar");
 		*retval = 1;
 		return 1;
@@ -615,7 +614,6 @@ static inline int dfs_handle_bangradar(
 			dfs_debug(dfs, WLAN_DEBUG_DFS,
 					"Do not process the second segment bangradar");
 		}
-		dfs->dfs_second_segment_bangradar = 0; /* Reset */
 		return 1;
 	}
 
