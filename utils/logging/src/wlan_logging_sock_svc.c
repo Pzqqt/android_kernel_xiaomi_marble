@@ -249,14 +249,23 @@ static int wlan_queue_logmsg_for_app(void)
 	return ret;
 }
 
+static const char *current_process_name(void)
+{
+	if (in_irq())
+		return "irq";
+
+	if (in_softirq())
+		return "soft_irq";
+
+	return current->comm;
+}
+
 #ifdef QCA_WIFI_3_0_ADRASTEA
 /**
- * wlan_add_user_log_radio_time_stamp() - add radio, firmware timestamp and
- * time stamp in log buffer
+ * wlan_add_user_log_time_stamp() - populate firmware and kernel timestamps
  * @tbuf: Pointer to time stamp buffer
  * @tbuf_sz: Time buffer size
  * @ts: Time stamp value
- * @radoi: the radio index
  *
  * For adrastea time stamp is QTIMER raw tick which will be used by cnss_diag
  * to convert it into user visible time stamp. In adrstea FW also uses QTIMER
@@ -271,59 +280,29 @@ static int wlan_queue_logmsg_for_app(void)
  * Return: number of characters written in target buffer not including
  *		trailing '/0'
  */
-static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
-					      uint64_t ts, int radio)
+static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
 {
-	int tlen;
 	char time_buf[20];
 
 	qdf_get_time_of_the_day_in_hr_min_sec_usec(time_buf, sizeof(time_buf));
 
-	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%.16s][0x%llx] %s ", radio,
-			((in_irq() ? "irq" : in_softirq() ?  "soft_irq" :
-			current->comm)),
-			ts, time_buf);
-	return tlen;
+	return scnprintf(tbuf, tbuf_sz, "[%.16s][0x%llx]%s",
+			 current_process_name(), ts, time_buf);
 }
 #else
-/**
- * wlan_add_user_log_radio_time_stamp() - add radio, firmware timestamp and
- * logcat timestamp in log buffer
- * @tbuf: Pointer to time stamp buffer
- * @tbuf_sz: Time buffer size
- * @ts: Time stamp value
- * @radio: the radio index
- *
- * For adrastea time stamp QTIMER raw tick which will be used by cnss_diag
- * to convert it into user visible time stamp
- *
- * Also add logcat timestamp so that driver logs and
- * logcat logs can be co-related
- *
- * For discrete solution e.g rome use system tick and convert it into
- * seconds.milli seconds
- *
- * Return: number of characters written in target buffer not including
- *		trailing '/0'
- */
-static int wlan_add_user_log_radio_time_stamp(char *tbuf, size_t tbuf_sz,
-					      uint64_t ts, int radio)
+static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
 {
-	int tlen;
 	uint32_t rem;
 	char time_buf[20];
 
 	qdf_get_time_of_the_day_in_hr_min_sec_usec(time_buf, sizeof(time_buf));
 
 	rem = do_div(ts, QDF_MC_TIMER_TO_SEC_UNIT);
-	tlen = scnprintf(tbuf, tbuf_sz, "R%d: [%.16s][%lu.%06lu] %s ", radio,
-			((in_irq() ? "irq" : in_softirq() ?  "soft_irq" :
-			current->comm)),
-			(unsigned long) ts,
-			(unsigned long)rem, time_buf);
-	return tlen;
+	return scnprintf(tbuf, tbuf_sz, "[%.16s][%lu.%06lu]%s",
+			 current_process_name(), (unsigned long)ts,
+			 (unsigned long)rem, time_buf);
 }
-#endif
+#endif /* QCA_WIFI_3_0_ADRASTEA */
 
 #ifdef CONFIG_MCL
 static inline void print_to_console(char *tbuf, char *to_be_sent)
@@ -334,10 +313,8 @@ static inline void print_to_console(char *tbuf, char *to_be_sent)
 #define print_to_console(str1, str2)
 #endif
 
-
 int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 {
-	/* Add the current time stamp */
 	char *ptr;
 	char tbuf[60];
 	int tlen;
@@ -346,27 +323,16 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	bool wake_up_thread = false;
 	unsigned long flags;
 	uint64_t ts;
-	int radio = 0;
 
-#ifdef CONFIG_MCL
-	radio = cds_get_radio_index();
-#endif
-
-	if ((radio == -EINVAL) || (!gwlan_logging.is_active)) {
-		/*
-		 * R%d: if the radio index is invalid, just post the message
-		 * to console.
-		 * Also the radio index shouldn't happen to be EINVAL, but if
-		 * that happen just print it, so that the logging would be
-		 * aware the cnss_logger is somehow failed.
-		 */
-		pr_info("R%d: %s\n", radio, to_be_sent);
+	/* if logging isn't up yet, just dump to dmesg */
+	if (!gwlan_logging.is_active) {
+		pr_info("%s\n", to_be_sent);
 		return 0;
 	}
 
+	/* Add the current time stamp */
 	ts = qdf_get_log_timestamp();
-	tlen = wlan_add_user_log_radio_time_stamp(tbuf, sizeof(tbuf), ts,
-						  radio);
+	tlen = wlan_add_user_log_time_stamp(tbuf, sizeof(tbuf), ts);
 
 	/* 1+1 indicate '\n'+'\0' */
 	total_log_len = length + tlen + 1 + 1;
@@ -415,9 +381,9 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	spin_unlock_irqrestore(&gwlan_logging.spin_lock, flags);
 
 	/* Wakeup logger thread */
-	if ((true == wake_up_thread)) {
-			set_bit(HOST_LOG_DRIVER_MSG, &gwlan_logging.eventFlag);
-			wake_up_interruptible(&gwlan_logging.wait_queue);
+	if (wake_up_thread) {
+		set_bit(HOST_LOG_DRIVER_MSG, &gwlan_logging.eventFlag);
+		wake_up_interruptible(&gwlan_logging.wait_queue);
 	}
 
 	if (gwlan_logging.log_to_console
