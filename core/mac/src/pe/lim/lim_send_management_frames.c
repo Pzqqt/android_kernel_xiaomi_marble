@@ -1663,6 +1663,8 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint32_t bcn_ie_len = 0;
 	uint32_t aes_block_size_len = 0;
 	enum rateid min_rid = RATEID_DEFAULT;
+	uint8_t *mbo_ie = NULL;
+	uint8_t mbo_ie_len = 0;
 
 	if (NULL == pe_session) {
 		pe_err("pe_session is NULL");
@@ -1971,6 +1973,37 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 
 	/*
+	 * MBO IE needs to be appendded at the end of the assoc request
+	 * frame and is not parsed and unpacked by the frame parser
+	 * as the supplicant can send multiple TLVs with same Attribute
+	 * in the MBO IE and the frame parser does not support multiple
+	 * TLVs with same attribute in a single IE.
+	 * Strip off the MBO IE from add_ie and append it at the end.
+	 */
+	if (wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_MBO_OUI,
+	    SIR_MAC_MBO_OUI_SIZE, add_ie, add_ie_len)) {
+		mbo_ie = qdf_mem_malloc(DOT11F_IE_MBO_IE_MAX_LEN + 2);
+		if (!mbo_ie) {
+			pe_err("Failed to allocate mbo_ie");
+			goto end;
+		}
+
+		qdf_status = lim_strip_ie(mac_ctx, add_ie, &add_ie_len,
+					  SIR_MAC_EID_VENDOR, ONE_BYTE,
+					  SIR_MAC_MBO_OUI,
+					  SIR_MAC_MBO_OUI_SIZE,
+					  mbo_ie, DOT11F_IE_MBO_IE_MAX_LEN);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			pe_err("Failed to strip MBO IE");
+			goto free_mbo_ie;
+		}
+
+		/* Include the EID and length fields */
+		mbo_ie_len = mbo_ie[1] + 2;
+		pe_debug("Stripped MBO IE of length %d", mbo_ie_len);
+	}
+
+	/*
 	 * Do unpack to populate the add_ie buffer to frm structure
 	 * before packing the frm structure. In this way, the IE ordering
 	 * which the latest 802.11 spec mandates is maintained.
@@ -1996,7 +2029,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 
 	bytes = payload + sizeof(tSirMacMgmtHdr) +
-			aes_block_size_len;
+			aes_block_size_len + mbo_ie_len;
 
 	qdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
 				(void **)&packet);
@@ -2035,6 +2068,11 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	} else if (DOT11F_WARNED(status)) {
 		pe_warn("Assoc request pack warning (0x%08x)", status);
 	}
+
+	/* Copy the MBO IE to the end of the frame */
+	qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
+		     mbo_ie, mbo_ie_len);
+	payload = payload + mbo_ie_len;
 
 	if (pe_session->assocReq != NULL) {
 		qdf_mem_free(pe_session->assocReq);
@@ -2102,6 +2140,10 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 				pe_session, SENT_FAIL, QDF_STATUS_E_FAILURE);
 		/* Pkt will be freed up by the callback */
 	}
+free_mbo_ie:
+	if (mbo_ie)
+		qdf_mem_free(mbo_ie);
+
 end:
 	/* Free up buffer allocated for mlm_assoc_req */
 	qdf_mem_free(mlm_assoc_req);
