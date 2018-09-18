@@ -50,6 +50,7 @@
 #define WSA_MACRO_MUX_CFG_OFFSET 0x8
 #define WSA_MACRO_MUX_CFG1_OFFSET 0x4
 #define WSA_MACRO_RX_COMP_OFFSET 0x40
+#define WSA_MACRO_RX_SOFTCLIP_OFFSET 0x40
 #define WSA_MACRO_RX_PATH_OFFSET 0x80
 #define WSA_MACRO_RX_PATH_CFG3_OFFSET 0x10
 #define WSA_MACRO_RX_PATH_DSMDEM_OFFSET 0x4C
@@ -80,6 +81,12 @@ enum {
 	WSA_MACRO_COMP1, /* SPK_L */
 	WSA_MACRO_COMP2, /* SPK_R */
 	WSA_MACRO_COMP_MAX
+};
+
+enum {
+	WSA_MACRO_SOFTCLIP0, /* RX0 */
+	WSA_MACRO_SOFTCLIP1, /* RX1 */
+	WSA_MACRO_SOFTCLIP_MAX
 };
 
 struct interp_sample_rate {
@@ -139,6 +146,12 @@ struct wsa_macro_swr_ctrl_platform_data {
 							  void *data),
 			  void *swrm_handle,
 			  int action);
+};
+
+struct wsa_macro_bcl_pmic_params {
+	u8 id;
+	u8 sid;
+	u8 ppid;
 };
 
 enum {
@@ -205,6 +218,9 @@ struct wsa_macro_priv {
 	int ear_spkr_gain;
 	int spkr_gain_offset;
 	int spkr_mode;
+	int is_softclip_on[WSA_MACRO_SOFTCLIP_MAX];
+	int softclip_clk_users[WSA_MACRO_SOFTCLIP_MAX];
+	struct wsa_macro_bcl_pmic_params bcl_pmic_params;
 };
 
 static int wsa_macro_config_ear_spkr_gain(struct snd_soc_codec *codec,
@@ -242,10 +258,24 @@ static const char * const wsa_macro_speaker_boost_stage_text[] = {
 	"NO_MAX_STATE", "MAX_STATE_1", "MAX_STATE_2"
 };
 
+static const char * const wsa_macro_vbat_bcl_gsm_mode_text[] = {
+	"OFF", "ON"
+};
+
+static const struct snd_kcontrol_new wsa_int0_vbat_mix_switch[] = {
+	SOC_DAPM_SINGLE("WSA RX0 VBAT Enable", SND_SOC_NOPM, 0, 1, 0)
+};
+
+static const struct snd_kcontrol_new wsa_int1_vbat_mix_switch[] = {
+	SOC_DAPM_SINGLE("WSA RX1 VBAT Enable", SND_SOC_NOPM, 0, 1, 0)
+};
+
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_macro_ear_spkr_pa_gain_enum,
 				wsa_macro_ear_spkr_pa_gain_text);
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_macro_spkr_boost_stage_enum,
 			wsa_macro_speaker_boost_stage_text);
+static SOC_ENUM_SINGLE_EXT_DECL(wsa_macro_vbat_bcl_gsm_mode_enum,
+			wsa_macro_vbat_bcl_gsm_mode_text);
 
 /* RX INT0 */
 static const struct soc_enum rx0_prim_inp0_chain_enum =
@@ -1095,6 +1125,82 @@ static int wsa_macro_config_compander(struct snd_soc_codec *codec,
 	return 0;
 }
 
+static void wsa_macro_enable_softclip_clk(struct snd_soc_codec *codec,
+					 struct wsa_macro_priv *wsa_priv,
+					 int path,
+					 bool enable)
+{
+	u16 softclip_clk_reg = BOLERO_CDC_WSA_SOFTCLIP0_CRC +
+			(path * WSA_MACRO_RX_SOFTCLIP_OFFSET);
+	u8 softclip_mux_mask = (1 << path);
+	u8 softclip_mux_value = (1 << path);
+
+	dev_dbg(codec->dev, "%s: path %d, enable %d\n",
+		__func__, path, enable);
+	if (enable) {
+		if (wsa_priv->softclip_clk_users[path] == 0) {
+			snd_soc_update_bits(codec,
+				softclip_clk_reg, 0x01, 0x01);
+			snd_soc_update_bits(codec,
+				BOLERO_CDC_WSA_RX_INP_MUX_SOFTCLIP_CFG0,
+				softclip_mux_mask, softclip_mux_value);
+		}
+		wsa_priv->softclip_clk_users[path]++;
+	} else {
+		wsa_priv->softclip_clk_users[path]--;
+		if (wsa_priv->softclip_clk_users[path] == 0) {
+			snd_soc_update_bits(codec,
+				softclip_clk_reg, 0x01, 0x00);
+			snd_soc_update_bits(codec,
+				BOLERO_CDC_WSA_RX_INP_MUX_SOFTCLIP_CFG0,
+				softclip_mux_mask, 0x00);
+		}
+	}
+}
+
+static int wsa_macro_config_softclip(struct snd_soc_codec *codec,
+				int path, int event)
+{
+	u16 softclip_ctrl_reg = 0;
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+	int softclip_path = 0;
+
+	if (!wsa_macro_get_data(codec, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	if (path == WSA_MACRO_COMP1)
+		softclip_path = WSA_MACRO_SOFTCLIP0;
+	else if (path == WSA_MACRO_COMP2)
+		softclip_path = WSA_MACRO_SOFTCLIP1;
+
+	dev_dbg(codec->dev, "%s: event %d path %d, enabled %d\n",
+		__func__, event, softclip_path,
+		wsa_priv->is_softclip_on[softclip_path]);
+
+	if (!wsa_priv->is_softclip_on[softclip_path])
+		return 0;
+
+	softclip_ctrl_reg = BOLERO_CDC_WSA_SOFTCLIP0_SOFTCLIP_CTRL +
+				(softclip_path * WSA_MACRO_RX_SOFTCLIP_OFFSET);
+
+	if (SND_SOC_DAPM_EVENT_ON(event)) {
+		/* Enable Softclip clock and mux */
+		wsa_macro_enable_softclip_clk(codec, wsa_priv, softclip_path,
+						true);
+		/* Enable Softclip control */
+		snd_soc_update_bits(codec, softclip_ctrl_reg, 0x01, 0x01);
+	}
+
+	if (SND_SOC_DAPM_EVENT_OFF(event)) {
+		snd_soc_update_bits(codec, softclip_ctrl_reg, 0x01, 0x00);
+		wsa_macro_enable_softclip_clk(codec, wsa_priv, softclip_path,
+						false);
+	}
+
+	return 0;
+}
+
 static int wsa_macro_interp_get_primary_reg(u16 reg, u16 *ind)
 {
 	u16 prim_int_reg = 0;
@@ -1204,6 +1310,7 @@ static int wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w,
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		wsa_macro_config_compander(codec, w->shift, event);
+		wsa_macro_config_softclip(codec, w->shift, event);
 		/* apply gain after int clk is enabled */
 		if ((wsa_priv->spkr_gain_offset ==
 			WSA_MACRO_GAIN_OFFSET_M1P5_DB) &&
@@ -1231,6 +1338,7 @@ static int wsa_macro_enable_interpolator(struct snd_soc_dapm_widget *w,
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		wsa_macro_config_compander(codec, w->shift, event);
+		wsa_macro_config_softclip(codec, w->shift, event);
 		wsa_macro_enable_prim_interpolator(codec, reg, event);
 		if ((wsa_priv->spkr_gain_offset ==
 			WSA_MACRO_GAIN_OFFSET_M1P5_DB) &&
@@ -1353,6 +1461,127 @@ static int wsa_macro_spk_boost_event(struct snd_soc_dapm_widget *w,
 		break;
 	}
 
+	return 0;
+}
+
+
+static int wsa_macro_enable_vbat(struct snd_soc_dapm_widget *w,
+				 struct snd_kcontrol *kcontrol,
+				 int event)
+{
+	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+	u16 vbat_path_cfg = 0;
+	int softclip_path = 0;
+
+	if (!wsa_macro_get_data(codec, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	dev_dbg(codec->dev, "%s %s %d\n", __func__, w->name, event);
+	if (!strcmp(w->name, "WSA_RX INT0 VBAT")) {
+		vbat_path_cfg = BOLERO_CDC_WSA_RX0_RX_PATH_CFG1;
+		softclip_path = WSA_MACRO_SOFTCLIP0;
+	} else if (!strcmp(w->name, "WSA_RX INT1 VBAT")) {
+		vbat_path_cfg = BOLERO_CDC_WSA_RX1_RX_PATH_CFG1;
+		softclip_path = WSA_MACRO_SOFTCLIP1;
+	}
+
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		/* Enable clock for VBAT block */
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_PATH_CTL, 0x10, 0x10);
+		/* Enable VBAT block */
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_CFG, 0x01, 0x01);
+		/* Update interpolator with 384K path */
+		snd_soc_update_bits(codec, vbat_path_cfg, 0x80, 0x80);
+		/* Use attenuation mode */
+		snd_soc_update_bits(codec, BOLERO_CDC_WSA_VBAT_BCL_VBAT_CFG,
+					0x02, 0x00);
+		/*
+		 * BCL block needs softclip clock and mux config to be enabled
+		 */
+		wsa_macro_enable_softclip_clk(codec, wsa_priv, softclip_path,
+					      true);
+		/* Enable VBAT at channel level */
+		snd_soc_update_bits(codec, vbat_path_cfg, 0x02, 0x02);
+		/* Set the ATTK1 gain */
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD1,
+			0xFF, 0xFF);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD2,
+			0xFF, 0x03);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD3,
+			0xFF, 0x00);
+		/* Set the ATTK2 gain */
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD4,
+			0xFF, 0xFF);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD5,
+			0xFF, 0x03);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD6,
+			0xFF, 0x00);
+		/* Set the ATTK3 gain */
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD7,
+			0xFF, 0xFF);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD8,
+			0xFF, 0x03);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD9,
+			0xFF, 0x00);
+		break;
+
+	case SND_SOC_DAPM_POST_PMD:
+		snd_soc_update_bits(codec, vbat_path_cfg, 0x80, 0x00);
+		snd_soc_update_bits(codec, BOLERO_CDC_WSA_VBAT_BCL_VBAT_CFG,
+					0x02, 0x02);
+		snd_soc_update_bits(codec, vbat_path_cfg, 0x02, 0x00);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD1,
+			0xFF, 0x00);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD2,
+			0xFF, 0x00);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD3,
+			0xFF, 0x00);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD4,
+			0xFF, 0x00);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD5,
+			0xFF, 0x00);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD6,
+			0xFF, 0x00);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD7,
+			0xFF, 0x00);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD8,
+			0xFF, 0x00);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_BCL_GAIN_UPD9,
+			0xFF, 0x00);
+		wsa_macro_enable_softclip_clk(codec, wsa_priv, softclip_path,
+					      false);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_CFG, 0x01, 0x00);
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_PATH_CTL, 0x10, 0x00);
+		break;
+	default:
+		dev_err(wsa_dev, "%s: Invalid event %d\n", __func__, event);
+		break;
+	}
 	return 0;
 }
 
@@ -1637,6 +1866,80 @@ static int wsa_macro_rx_mux_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int wsa_macro_vbat_bcl_gsm_mode_func_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+
+	ucontrol->value.integer.value[0] =
+	    ((snd_soc_read(codec, BOLERO_CDC_WSA_VBAT_BCL_VBAT_CFG) & 0x04) ?
+	    1 : 0);
+
+	dev_dbg(codec->dev, "%s: value: %lu\n", __func__,
+		ucontrol->value.integer.value[0]);
+
+	return 0;
+}
+
+static int wsa_macro_vbat_bcl_gsm_mode_func_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+
+	dev_dbg(codec->dev, "%s: value: %lu\n", __func__,
+		ucontrol->value.integer.value[0]);
+
+	/* Set Vbat register configuration for GSM mode bit based on value */
+	if (ucontrol->value.integer.value[0])
+		snd_soc_update_bits(codec, BOLERO_CDC_WSA_VBAT_BCL_VBAT_CFG,
+						0x04, 0x04);
+	else
+		snd_soc_update_bits(codec, BOLERO_CDC_WSA_VBAT_BCL_VBAT_CFG,
+						0x04, 0x00);
+
+	return 0;
+}
+
+static int wsa_macro_soft_clip_enable_get(struct snd_kcontrol *kcontrol,
+					  struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+	int path = ((struct soc_multi_mixer_control *)
+		    kcontrol->private_value)->shift;
+
+	if (!wsa_macro_get_data(codec, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	ucontrol->value.integer.value[0] = wsa_priv->is_softclip_on[path];
+
+	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
+		__func__, ucontrol->value.integer.value[0]);
+
+	return 0;
+}
+
+static int wsa_macro_soft_clip_enable_put(struct snd_kcontrol *kcontrol,
+					  struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+	int path = ((struct soc_multi_mixer_control *)
+		    kcontrol->private_value)->shift;
+
+	if (!wsa_macro_get_data(codec, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	wsa_priv->is_softclip_on[path] =  ucontrol->value.integer.value[0];
+
+	dev_dbg(codec->dev, "%s: soft clip enable for %d: %d\n", __func__,
+		path, wsa_priv->is_softclip_on[path]);
+
+	return 0;
+}
+
 static const struct snd_kcontrol_new wsa_macro_snd_controls[] = {
 	SOC_ENUM_EXT("EAR SPKR PA Gain", wsa_macro_ear_spkr_pa_gain_enum,
 		     wsa_macro_ear_spkr_pa_gain_get,
@@ -1649,6 +1952,17 @@ static const struct snd_kcontrol_new wsa_macro_snd_controls[] = {
 		wsa_macro_spkr_boost_stage_enum,
 		wsa_macro_spkr_right_boost_stage_get,
 		wsa_macro_spkr_right_boost_stage_put),
+	SOC_ENUM_EXT("GSM mode Enable", wsa_macro_vbat_bcl_gsm_mode_enum,
+		     wsa_macro_vbat_bcl_gsm_mode_func_get,
+		     wsa_macro_vbat_bcl_gsm_mode_func_put),
+	SOC_SINGLE_EXT("WSA_Softclip0 Enable", SND_SOC_NOPM,
+			WSA_MACRO_SOFTCLIP0, 1, 0,
+			wsa_macro_soft_clip_enable_get,
+			wsa_macro_soft_clip_enable_put),
+	SOC_SINGLE_EXT("WSA_Softclip1 Enable", SND_SOC_NOPM,
+			WSA_MACRO_SOFTCLIP1, 1, 0,
+			wsa_macro_soft_clip_enable_get,
+			wsa_macro_soft_clip_enable_put),
 	SOC_SINGLE_SX_TLV("WSA_RX0 Digital Volume",
 			  BOLERO_CDC_WSA_RX0_RX_VOL_CTL,
 			  0, -84, 40, digital_gain),
@@ -1862,6 +2176,17 @@ static const struct snd_soc_dapm_widget wsa_macro_dapm_widgets[] = {
 		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 		SND_SOC_DAPM_POST_PMD),
 
+	SND_SOC_DAPM_MIXER_E("WSA_RX INT0 VBAT", SND_SOC_NOPM,
+		0, 0, wsa_int0_vbat_mix_switch,
+		ARRAY_SIZE(wsa_int0_vbat_mix_switch),
+		wsa_macro_enable_vbat,
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MIXER_E("WSA_RX INT1 VBAT", SND_SOC_NOPM,
+		0, 0, wsa_int1_vbat_mix_switch,
+		ARRAY_SIZE(wsa_int1_vbat_mix_switch),
+		wsa_macro_enable_vbat,
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+
 	SND_SOC_DAPM_INPUT("VIINPUT_WSA"),
 
 	SND_SOC_DAPM_OUTPUT("WSA_SPK1 OUT"),
@@ -1939,6 +2264,10 @@ static const struct snd_soc_dapm_route wsa_audio_map[] = {
 	{"WSA_RX0 INT0 SIDETONE MIX", "SRC0", "WSA SRC0_INP"},
 	{"WSA_RX INT0 INTERP", NULL, "WSA_RX0 INT0 SIDETONE MIX"},
 	{"WSA_RX INT0 CHAIN", NULL, "WSA_RX INT0 INTERP"},
+
+	{"WSA_RX INT0 VBAT", "WSA RX0 VBAT Enable", "WSA_RX INT0 INTERP"},
+	{"WSA_RX INT0 CHAIN", NULL, "WSA_RX INT0 VBAT"},
+
 	{"WSA_SPK1 OUT", NULL, "WSA_RX INT0 CHAIN"},
 	{"WSA_SPK1 OUT", NULL, "WSA_MCLK"},
 
@@ -1974,6 +2303,10 @@ static const struct snd_soc_dapm_route wsa_audio_map[] = {
 
 	{"WSA_RX INT1 SEC MIX", NULL, "WSA_RX INT1 MIX"},
 	{"WSA_RX INT1 INTERP", NULL, "WSA_RX INT1 SEC MIX"},
+
+	{"WSA_RX INT1 VBAT", "WSA RX1 VBAT Enable", "WSA_RX INT1 INTERP"},
+	{"WSA_RX INT1 CHAIN", NULL, "WSA_RX INT1 VBAT"},
+
 	{"WSA_RX INT1 CHAIN", NULL, "WSA_RX INT1 INTERP"},
 	{"WSA_SPK2 OUT", NULL, "WSA_RX INT1 CHAIN"},
 	{"WSA_SPK2 OUT", NULL, "WSA_MCLK"},
@@ -2006,6 +2339,53 @@ static const struct wsa_macro_reg_mask_val wsa_macro_reg_init[] = {
 	{BOLERO_CDC_WSA_RX1_RX_PATH_MIX_CFG, 0x01, 0x01},
 };
 
+static void wsa_macro_init_bcl_pmic_reg(struct snd_soc_codec *codec)
+{
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+
+	if (!codec) {
+		pr_err("%s: NULL codec pointer!\n", __func__);
+		return;
+	}
+
+	if (!wsa_macro_get_data(codec, &wsa_dev, &wsa_priv, __func__))
+		return;
+
+	switch (wsa_priv->bcl_pmic_params.id) {
+	case 0:
+		/* Enable ID0 to listen to respective PMIC group interrupts */
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_DECODE_CTL1, 0x02, 0x02);
+		/* Update MC_SID0 */
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_DECODE_CFG1, 0x0F,
+			wsa_priv->bcl_pmic_params.sid);
+		/* Update MC_PPID0 */
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_DECODE_CFG2, 0xFF,
+			wsa_priv->bcl_pmic_params.ppid);
+		break;
+	case 1:
+		/* Enable ID1 to listen to respective PMIC group interrupts */
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_DECODE_CTL1, 0x01, 0x01);
+		/* Update MC_SID1 */
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_DECODE_CFG3, 0x0F,
+			wsa_priv->bcl_pmic_params.sid);
+		/* Update MC_PPID1 */
+		snd_soc_update_bits(codec,
+			BOLERO_CDC_WSA_VBAT_BCL_VBAT_DECODE_CFG4, 0xFF,
+			wsa_priv->bcl_pmic_params.ppid);
+		break;
+	default:
+		dev_err(wsa_dev, "%s: PMIC ID is invalid %d\n",
+		       __func__, wsa_priv->bcl_pmic_params.id);
+		break;
+	}
+}
+
 static void wsa_macro_init_reg(struct snd_soc_codec *codec)
 {
 	int i;
@@ -2015,6 +2395,8 @@ static void wsa_macro_init_reg(struct snd_soc_codec *codec)
 				wsa_macro_reg_init[i].reg,
 				wsa_macro_reg_init[i].mask,
 				wsa_macro_reg_init[i].val);
+
+	wsa_macro_init_bcl_pmic_reg(codec);
 }
 
 static int wsa_swrm_clock(void *handle, bool enable)
@@ -2245,6 +2627,7 @@ static int wsa_macro_probe(struct platform_device *pdev)
 	char __iomem *wsa_io_base;
 	int ret = 0;
 	struct clk *wsa_core_clk, *wsa_npl_clk;
+	u8 bcl_pmic_params[3];
 
 	wsa_priv = devm_kzalloc(&pdev->dev, sizeof(struct wsa_macro_priv),
 				GFP_KERNEL);
@@ -2300,6 +2683,19 @@ static int wsa_macro_probe(struct platform_device *pdev)
 		return ret;
 	}
 	wsa_priv->wsa_npl_clk = wsa_npl_clk;
+
+	ret = of_property_read_u8_array(pdev->dev.of_node,
+				"qcom,wsa-bcl-pmic-params", bcl_pmic_params,
+				sizeof(bcl_pmic_params));
+	if (ret) {
+		dev_dbg(&pdev->dev, "%s: could not find %s entry in dt\n",
+			__func__, "qcom,wsa-bcl-pmic-params");
+	} else {
+		wsa_priv->bcl_pmic_params.id = bcl_pmic_params[0];
+		wsa_priv->bcl_pmic_params.sid = bcl_pmic_params[1];
+		wsa_priv->bcl_pmic_params.ppid = bcl_pmic_params[2];
+	}
+
 	dev_set_drvdata(&pdev->dev, wsa_priv);
 	mutex_init(&wsa_priv->mclk_lock);
 	mutex_init(&wsa_priv->swr_clk_lock);
