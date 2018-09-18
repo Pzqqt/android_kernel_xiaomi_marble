@@ -398,6 +398,11 @@ static inline int hal_srng_access_start(void *hal_soc, void *hal_ring)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
 
+	if (qdf_unlikely(!hal_ring)) {
+		qdf_print("Error: Invalid hal_ring\n");
+		return -EINVAL;
+	}
+
 	SRNG_LOCK(&(srng->lock));
 
 	return hal_srng_access_start_unlocked(hal_soc, hal_ring);
@@ -800,6 +805,11 @@ static inline void hal_srng_access_end_unlocked(void *hal_soc, void *hal_ring)
 static inline void hal_srng_access_end(void *hal_soc, void *hal_ring)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+
+	if (qdf_unlikely(!hal_ring)) {
+		qdf_print("Error: Invalid hal_ring\n");
+		return;
+	}
 
 	hal_srng_access_end_unlocked(hal_soc, hal_ring);
 	SRNG_UNLOCK(&(srng->lock));
