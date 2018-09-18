@@ -564,7 +564,8 @@ tListElem *csr_nonscan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
 	sme_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
 	cmd.cmd_id = sme_cmd->cmd_id;
 	cmd.cmd_type = csr_get_cmd_type(sme_cmd);
-	cmd.vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
+	cmd.vdev = wlan_objmgr_get_vdev_by_id_from_psoc_no_state(
+				mac_ctx->psoc,
 				sme_cmd->sessionId, WLAN_LEGACY_SME_ID);
 	tcmd = wlan_serialization_get_pending_list_next_node_using_psoc(
 				mac_ctx->psoc, &cmd, false);
