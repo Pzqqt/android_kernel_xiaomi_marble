@@ -1848,17 +1848,16 @@ uint32_t reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 	for (count = 0; count < NUM_CHANNELS; count++)
 		if (chan_list[count].chan_num == chan_num) {
 			if (reg_chan_in_range(chan_list,
-						pdev_priv_obj->range_2g_low,
-						pdev_priv_obj->range_2g_high,
-						pdev_priv_obj->range_5g_low,
-						pdev_priv_obj->range_5g_high,
-						count)) {
+					      pdev_priv_obj->range_2g_low,
+					      pdev_priv_obj->range_2g_high,
+					      pdev_priv_obj->range_5g_low,
+					      pdev_priv_obj->range_5g_high,
+					      count)) {
 				return chan_list[count].center_freq;
 			}
 		}
 
-
-	reg_err("invalid channel %d", chan_num);
+	reg_debug_rl("invalid channel %d", chan_num);
 
 	return 0;
 }

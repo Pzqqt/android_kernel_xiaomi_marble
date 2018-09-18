@@ -1967,6 +1967,33 @@ static struct wmi_unified *wmi_get_pdev_ep(struct wmi_soc *soc,
 }
 
 /**
+ * wmi_mtrace_rx() - Wrappper function for qdf_mtrace api
+ * @message_id: 32-Bit Wmi message ID
+ * @vdev_id: Vdev ID
+ * @data: Actual message contents
+ *
+ * This function converts the 32-bit WMI message ID in 15-bit message ID
+ * format for qdf_mtrace as in qdf_mtrace message there are only 15
+ * bits reserved for message ID.
+ * out of these 15-bits, 8-bits (From LSB) specifies the WMI_GRP_ID
+ * and remaining 7-bits specifies the actual WMI command. With this
+ * notation there can be maximum 256 groups and each group can have
+ * max 128 commands can be supported.
+ *
+ * Return: None
+ */
+static void wmi_mtrace_rx(uint32_t message_id, uint16_t vdev_id, uint32_t data)
+{
+	uint16_t mtrace_message_id;
+
+	mtrace_message_id = QDF_WMI_MTRACE_CMD_ID(message_id) |
+		(QDF_WMI_MTRACE_GRP_ID(message_id) <<
+						QDF_WMI_MTRACE_CMD_NUM_BITS);
+	qdf_mtrace(QDF_MODULE_ID_WMI, QDF_MODULE_ID_WMA,
+		   mtrace_message_id, vdev_id, data);
+}
+
+/**
  * wmi_control_rx() - process fw events callbacks
  * @ctx: handle to wmi
  * @htc_packet: pointer to htc packet
@@ -2001,6 +2028,7 @@ static void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 		qdf_nbuf_free(evt_buf);
 		return;
 	}
+	wmi_mtrace_rx(id, 0xFF, idx);
 	qdf_spin_lock_bh(&soc->ctx_lock);
 	exec_ctx = wmi_handle->ctx[idx];
 	qdf_spin_unlock_bh(&soc->ctx_lock);
