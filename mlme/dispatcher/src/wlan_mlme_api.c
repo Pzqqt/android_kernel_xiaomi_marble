@@ -72,20 +72,6 @@ void wlan_mlme_get_sap_inactivity_override(struct wlan_objmgr_psoc *psoc,
 	*val = mlme_obj->cfg.qos_mlme_params.sap_max_inactivity_override;
 }
 
-QDF_STATUS wlan_mlme_get_ignore_peer_ht_mode(struct wlan_objmgr_psoc *psoc,
-					     bool *value)
-{
-	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
-
-	if (!mlme_obj) {
-		mlme_err("Failed to get MLME Obj");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	*value = mlme_obj->cfg.sap_protection_cfg.ignore_peer_ht_mode;
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS wlan_mlme_get_tx_chainmask_cck(struct wlan_objmgr_psoc *psoc,
 					  bool *value)
 {

@@ -169,24 +169,6 @@ void ucfg_mlme_get_sap_inactivity_override(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * ucfg_mlme_get_ignore_peer_ht_mode() - Get the ignore peer ht mode flag
- *
- * @psoc: pointer to psoc object
- * @value: Value that needs to be set
- *
- * Inline UCFG API to be used by HDD/OSIF callers to get the
- * ignore_peer_ht_opmode flag value
- *
- * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
- */
-static inline
-QDF_STATUS ucfg_mlme_get_ignore_peer_ht_mode(struct wlan_objmgr_psoc *psoc,
-					     bool *value)
-{
-	return wlan_mlme_get_ignore_peer_ht_mode(psoc, value);
-}
-
-/**
  * ucfg_mlme_get_tx_chainmask_1ss() - Get the tx_chainmask_1ss value
  *
  * @psoc: pointer to psoc object
