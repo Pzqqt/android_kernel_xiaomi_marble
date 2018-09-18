@@ -116,8 +116,8 @@ struct dp_ast_entry *dp_peer_ast_hash_find_by_pdevid(struct dp_soc *soc,
 						     uint8_t *ast_mac_addr,
 						     uint8_t pdev_id);
 
-struct dp_ast_entry *dp_peer_ast_hash_find(struct dp_soc *soc,
-						uint8_t *ast_mac_addr);
+struct dp_ast_entry *dp_peer_ast_hash_find_soc(struct dp_soc *soc,
+					       uint8_t *ast_mac_addr);
 
 struct dp_ast_entry *dp_peer_ast_list_find(struct dp_soc *soc,
 					   struct dp_peer *peer,

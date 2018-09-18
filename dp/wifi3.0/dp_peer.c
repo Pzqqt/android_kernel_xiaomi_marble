@@ -368,10 +368,7 @@ struct dp_ast_entry *dp_peer_ast_list_find(struct dp_soc *soc,
 
 /*
  * dp_peer_ast_hash_find_by_pdevid() - Find AST entry by MAC address
- *				       and pdev id
  * @soc: SoC handle
- * @ast_mac_addr: mac address
- * @pdev_id: pdev_id
  *
  * It assumes caller has taken the ast lock to protect the access to
  * AST hash table
@@ -402,7 +399,7 @@ struct dp_ast_entry *dp_peer_ast_hash_find_by_pdevid(struct dp_soc *soc,
 }
 
 /*
- * dp_peer_ast_hash_find() - Find AST entry by MAC address
+ * dp_peer_ast_hash_find_soc() - Find AST entry by MAC address
  * @soc: SoC handle
  *
  * It assumes caller has taken the ast lock to protect the access to
@@ -410,8 +407,8 @@ struct dp_ast_entry *dp_peer_ast_hash_find_by_pdevid(struct dp_soc *soc,
  *
  * Return: AST entry
  */
-struct dp_ast_entry *dp_peer_ast_hash_find(struct dp_soc *soc,
-						uint8_t *ast_mac_addr)
+struct dp_ast_entry *dp_peer_ast_hash_find_soc(struct dp_soc *soc,
+					       uint8_t *ast_mac_addr)
 {
 	union dp_align_mac_addr local_mac_addr_aligned, *mac_addr;
 	unsigned index;
@@ -550,7 +547,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 			return 0;
 		}
 	} else {
-		ast_entry = dp_peer_ast_hash_find(soc, mac_addr);
+		ast_entry = dp_peer_ast_hash_find_soc(soc, mac_addr);
 
 		if (ast_entry) {
 			if (ast_entry->type == CDP_TXRX_AST_TYPE_MEC) {
@@ -826,8 +823,15 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 	return 1;
 }
 
-struct dp_ast_entry *dp_peer_ast_hash_find(struct dp_soc *soc,
-						uint8_t *ast_mac_addr)
+struct dp_ast_entry *dp_peer_ast_hash_find_soc(struct dp_soc *soc,
+					       uint8_t *ast_mac_addr)
+{
+	return NULL;
+}
+
+struct dp_ast_entry *dp_peer_ast_hash_find_by_pdevid(struct dp_soc *soc,
+						     uint8_t *ast_mac_addr,
+						     uint8_t pdev_id)
 {
 	return NULL;
 }

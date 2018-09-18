@@ -105,9 +105,12 @@ struct cdp_cmn_ops {
 		(ol_txrx_soc_handle soc, struct cdp_peer *peer_hdl,
 		uint8_t *mac_addr, uint32_t flags);
 
-
-	void *(*txrx_peer_ast_hash_find)
+	void *(*txrx_peer_ast_hash_find_soc)
 		(ol_txrx_soc_handle soc, uint8_t *ast_mac_addr);
+
+	void *(*txrx_peer_ast_hash_find_by_pdevid)
+		(ol_txrx_soc_handle soc, uint8_t *ast_mac_addr,
+		 uint8_t pdev_id);
 
 	uint8_t (*txrx_peer_ast_get_pdev_id)
 		(ol_txrx_soc_handle soc, void *ast_hdl);
@@ -134,6 +137,12 @@ struct cdp_cmn_ops {
 #endif
 
 	enum cdp_txrx_ast_entry_type (*txrx_peer_ast_get_type)
+		(ol_txrx_soc_handle soc, void *ast_hdl);
+
+	struct cdp_peer* (*txrx_peer_ast_get_peer)
+		(ol_txrx_soc_handle soc, void *ast_hdl);
+
+	uint32_t (*txrx_peer_ast_get_nexthop_peer_id)
 		(ol_txrx_soc_handle soc, void *ast_hdl);
 
 	void (*txrx_peer_delete)(void *peer, uint32_t bitmap);

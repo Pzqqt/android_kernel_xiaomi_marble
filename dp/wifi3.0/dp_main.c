@@ -485,14 +485,16 @@ static int dp_peer_update_ast_wifi3(struct cdp_soc_t *soc_hdl,
 	int status = -1;
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_ast_entry  *ast_entry = NULL;
+	struct dp_peer *peer = (struct dp_peer *)peer_hdl;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
-	ast_entry = dp_peer_ast_hash_find(soc, wds_macaddr);
+	ast_entry = dp_peer_ast_hash_find_by_pdevid(soc, wds_macaddr,
+						    peer->vdev->pdev->pdev_id);
 
 	if (ast_entry) {
 		status = dp_peer_update_ast(soc,
-					    (struct dp_peer *)peer_hdl,
-					   ast_entry, flags);
+					    peer,
+					    ast_entry, flags);
 	}
 
 	qdf_spin_unlock_bh(&soc->ast_lock);
@@ -511,9 +513,11 @@ static void dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 	struct dp_ast_entry *ast_entry = NULL;
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
-	ast_entry = dp_peer_ast_hash_find(soc, wds_macaddr);
+	ast_entry = dp_peer_ast_hash_find_by_pdevid(soc, wds_macaddr,
+						    vdev->pdev->pdev_id);
 
 	if (ast_entry) {
 		if ((ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) &&
@@ -607,13 +611,27 @@ static void dp_wds_flush_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
 	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 
-static void *dp_peer_ast_hash_find_wifi3(struct cdp_soc_t *soc_hdl,
-						uint8_t *ast_mac_addr)
+static void *dp_peer_ast_hash_find_soc_wifi3(struct cdp_soc_t *soc_hdl,
+					     uint8_t *ast_mac_addr)
 {
 	struct dp_ast_entry *ast_entry;
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+
 	qdf_spin_lock_bh(&soc->ast_lock);
-	ast_entry = dp_peer_ast_hash_find(soc, ast_mac_addr);
+	ast_entry = dp_peer_ast_hash_find_soc(soc, ast_mac_addr);
+	qdf_spin_unlock_bh(&soc->ast_lock);
+	return (void *)ast_entry;
+}
+
+static void *dp_peer_ast_hash_find_by_pdevid_wifi3(struct cdp_soc_t *soc_hdl,
+						   uint8_t *ast_mac_addr,
+						   uint8_t pdev_id)
+{
+	struct dp_ast_entry *ast_entry;
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+
+	qdf_spin_lock_bh(&soc->ast_lock);
+	ast_entry = dp_peer_ast_hash_find_by_pdevid(soc, ast_mac_addr, pdev_id);
 	qdf_spin_unlock_bh(&soc->ast_lock);
 	return (void *)ast_entry;
 }
@@ -701,6 +719,19 @@ void dp_peer_ast_free_entry_wifi3(struct cdp_soc_t *soc_handle,
 }
 #endif
 
+static struct cdp_peer *dp_peer_ast_get_peer_wifi3(
+					struct cdp_soc_t *soc_hdl,
+					void *ast_entry_hdl)
+{
+	return (struct cdp_peer *)((struct dp_ast_entry *)ast_entry_hdl)->peer;
+}
+
+static uint32_t dp_peer_ast_get_nexhop_peer_id_wifi3(
+					struct cdp_soc_t *soc_hdl,
+					void *ast_entry_hdl)
+{
+	return ((struct dp_ast_entry *)ast_entry_hdl)->peer->peer_ids[0];
+}
 /**
  * dp_srng_find_ring_in_mask() - find which ext_group a ring belongs
  * @ring_num: ring num of the ring being queried
@@ -4016,7 +4047,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		 * MAC addresses, we could deduce it as a WDS entry
 		 */
 		qdf_spin_lock_bh(&soc->ast_lock);
-		ast_entry = dp_peer_ast_hash_find(soc, peer_mac_addr);
+		ast_entry = dp_peer_ast_hash_find_soc(soc, peer_mac_addr);
 		if (ast_entry)
 			dp_peer_del_ast(soc, ast_entry);
 		qdf_spin_unlock_bh(&soc->ast_lock);
@@ -7833,11 +7864,16 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_peer_add_ast = dp_peer_add_ast_wifi3,
 	.txrx_peer_del_ast = dp_peer_del_ast_wifi3,
 	.txrx_peer_update_ast = dp_peer_update_ast_wifi3,
-	.txrx_peer_ast_hash_find = dp_peer_ast_hash_find_wifi3,
+	.txrx_peer_ast_hash_find_soc = dp_peer_ast_hash_find_soc_wifi3,
+	.txrx_peer_ast_hash_find_by_pdevid =
+		dp_peer_ast_hash_find_by_pdevid_wifi3,
 	.txrx_peer_ast_get_pdev_id = dp_peer_ast_get_pdev_id_wifi3,
 	.txrx_peer_ast_get_next_hop = dp_peer_ast_get_next_hop_wifi3,
 	.txrx_peer_ast_set_type = dp_peer_ast_set_type_wifi3,
 	.txrx_peer_ast_get_type = dp_peer_ast_get_type_wifi3,
+	.txrx_peer_ast_get_peer = dp_peer_ast_get_peer_wifi3,
+	.txrx_peer_ast_get_nexthop_peer_id =
+		dp_peer_ast_get_nexhop_peer_id_wifi3,
 #if defined(FEATURE_AST) && defined(AST_HKV1_WORKAROUND)
 	.txrx_peer_ast_set_cp_ctx = dp_peer_ast_set_cp_ctx_wifi3,
 	.txrx_peer_ast_get_cp_ctx = dp_peer_ast_get_cp_ctx_wifi3,

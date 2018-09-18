@@ -310,7 +310,7 @@ static inline void cdp_peer_setup
 			peer);
 }
 
-static inline void *cdp_peer_ast_hash_find
+static inline void *cdp_peer_ast_hash_find_soc
 	(ol_txrx_soc_handle soc, uint8_t *ast_mac_addr)
 {
 	if (!soc || !soc->ops) {
@@ -321,11 +321,32 @@ static inline void *cdp_peer_ast_hash_find
 	}
 
 	if (!soc->ops->cmn_drv_ops ||
-	    !soc->ops->cmn_drv_ops->txrx_peer_ast_hash_find)
+	    !soc->ops->cmn_drv_ops->txrx_peer_ast_hash_find_soc)
 		return NULL;
 
-	return soc->ops->cmn_drv_ops->txrx_peer_ast_hash_find(soc,
-								ast_mac_addr);
+	return soc->ops->cmn_drv_ops->txrx_peer_ast_hash_find_soc(soc,
+								  ast_mac_addr);
+}
+
+static inline void *cdp_peer_ast_hash_find_by_pdevid
+	(ol_txrx_soc_handle soc, uint8_t *ast_mac_addr,
+	 uint8_t pdev_id)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_peer_ast_hash_find_by_pdevid)
+		return NULL;
+
+	return soc->ops->cmn_drv_ops->txrx_peer_ast_hash_find_by_pdevid
+					(soc,
+					 ast_mac_addr,
+					 pdev_id);
 }
 
 static inline int cdp_peer_add_ast
@@ -593,6 +614,42 @@ void cdp_peer_ast_free_entry(struct cdp_soc_t *soc,
 	soc->ops->cmn_drv_ops->txrx_peer_ast_free_entry(soc, ast_handle);
 }
 #endif
+
+static inline struct cdp_peer *cdp_peer_ast_get_peer
+	(ol_txrx_soc_handle soc, void *ast_handle)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_peer_ast_get_peer)
+		return NULL;
+
+	return soc->ops->cmn_drv_ops->txrx_peer_ast_get_peer(soc, ast_handle);
+}
+
+static inline uint32_t cdp_peer_ast_get_nexthop_peer_id
+	(ol_txrx_soc_handle soc, void *ast_handle)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return CDP_INVALID_PEER;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_peer_ast_get_nexthop_peer_id)
+		return CDP_INVALID_PEER;
+
+	return soc->ops->cmn_drv_ops->txrx_peer_ast_get_nexthop_peer_id
+					(soc,
+					 ast_handle);
+}
 
 static inline void cdp_peer_teardown
 	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev, void *peer)

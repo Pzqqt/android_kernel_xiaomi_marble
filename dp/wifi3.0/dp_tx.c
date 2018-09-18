@@ -1722,7 +1722,10 @@ static qdf_nbuf_t dp_tx_prepare_nawds(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	qdf_nbuf_t nbuf_copy;
 
 	qdf_spin_lock_bh(&(soc->ast_lock));
-	ast_entry = dp_peer_ast_hash_find(soc, (uint8_t *)(eh->ether_shost));
+	ast_entry = dp_peer_ast_hash_find_by_pdevid
+				(soc,
+				 (uint8_t *)(eh->ether_shost),
+				 vdev->pdev->pdev_id);
 
 	if (ast_entry)
 		sa_peer = ast_entry->peer;
@@ -2157,7 +2160,10 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 
 	qdf_spin_lock_bh(&(soc->ast_lock));
 
-	ast_entry = dp_peer_ast_hash_find(soc, (uint8_t *)(eh->ether_shost));
+	ast_entry = dp_peer_ast_hash_find_by_pdevid
+				(soc,
+				 (uint8_t *)(eh->ether_shost),
+				 vdev->pdev->pdev_id);
 
 	if (ast_entry)
 		sa_peer = ast_entry->peer;
