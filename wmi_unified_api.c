@@ -1727,6 +1727,9 @@ QDF_STATUS  wmi_unified_ipa_offload_control_cmd(void *wmi_hdl,
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
 	if (wmi_handle->ops->send_ipa_offload_control_cmd)
 		return wmi_handle->ops->send_ipa_offload_control_cmd(wmi_handle,
 			    ipa_offload);
