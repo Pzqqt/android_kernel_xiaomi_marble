@@ -17454,7 +17454,7 @@ QDF_STATUS csr_roam_close_session(tpAniSirGlobal mac_ctx,
 	struct csr_roam_session *session;
 
 	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
-		sme_err("session %d not found", session_id);
+		sme_debug("session %d not found", session_id);
 		return QDF_STATUS_E_INVAL;
 	}
 
