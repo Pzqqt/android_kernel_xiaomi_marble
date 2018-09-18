@@ -114,7 +114,7 @@ void policy_mgr_decr_session_set_pcl(struct wlan_objmgr_psoc *psoc,
 
 	qdf_status = policy_mgr_decr_active_session(psoc, mode, session_id);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		policy_mgr_err("Invalid active session");
+		policy_mgr_debug("Invalid active session");
 		return;
 	}
 
