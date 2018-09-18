@@ -93,6 +93,10 @@ void dp_peer_ast_unmap_handler(struct dp_soc *soc,
 int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 			struct dp_ast_entry *ast_entry,	uint32_t flags);
 
+struct dp_ast_entry *dp_peer_ast_hash_find_by_pdevid(struct dp_soc *soc,
+						     uint8_t *ast_mac_addr,
+						     uint8_t pdev_id);
+
 struct dp_ast_entry *dp_peer_ast_hash_find(struct dp_soc *soc,
 						uint8_t *ast_mac_addr);
 
