@@ -359,11 +359,16 @@ static int target_if_mc_cp_stats_stats_event_handler(ol_scn_t scn,
 		cp_stats_err("null psoc");
 		return -EINVAL;
 	}
-	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 
 	rx_ops = target_if_cp_stats_get_rx_ops(psoc);
 	if (!rx_ops || !rx_ops->process_stats_event) {
 		cp_stats_err("callback not registered");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		cp_stats_err("wmi_handle is null");
 		return -EINVAL;
 	}
 
@@ -377,6 +382,7 @@ static int target_if_mc_cp_stats_stats_event_handler(ol_scn_t scn,
 
 end:
 	target_if_cp_stats_free_stats_event(&ev);
+
 	return qdf_status_to_os_return(status);
 }
 
@@ -467,36 +473,47 @@ static void target_if_cp_stats_inc_wake_lock_stats(uint32_t reason,
 static QDF_STATUS
 target_if_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 {
-	QDF_STATUS status;
+	int ret_val;
+	struct wmi_unified *wmi_handle;
 
 	if (!psoc) {
 		cp_stats_err("PSOC is NULL!");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	status = wmi_unified_register_event_handler(
-			get_wmi_unified_hdl_from_psoc(psoc),
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		cp_stats_err("wmi_handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ret_val = wmi_unified_register_event_handler(
+			wmi_handle,
 			wmi_update_stats_event_id,
 			target_if_mc_cp_stats_stats_event_handler,
 			WMI_RX_WORK_CTX);
-	if (status) {
+	if (ret_val)
 		cp_stats_err("Failed to register stats event cb");
-		return status;
-	}
 
-	return QDF_STATUS_SUCCESS;
+	return qdf_status_from_os_return(ret_val);
 }
 
 static QDF_STATUS
 target_if_cp_stats_unregister_event_handler(struct wlan_objmgr_psoc *psoc)
 {
+	struct wmi_unified *wmi_handle;
+
 	if (!psoc) {
 		cp_stats_err("PSOC is NULL!");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wmi_unified_unregister_event_handler(
-			get_wmi_unified_hdl_from_psoc(psoc),
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		cp_stats_err("wmi_handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+	wmi_unified_unregister_event_handler(wmi_handle,
 					     wmi_update_stats_event_id);
 
 	return QDF_STATUS_SUCCESS;
@@ -518,6 +535,7 @@ static uint32_t get_stats_id(enum stats_req_type type)
 			WMI_REQUEST_PDEV_STAT |
 			WMI_REQUEST_RSSI_PER_CHAIN_STAT);
 	}
+
 	return 0;
 }
 
@@ -546,6 +564,7 @@ static QDF_STATUS target_if_cp_stats_send_stats_req(
 	param.stats_id = get_stats_id(type);
 	param.vdev_id = req->vdev_id;
 	param.pdev_id = req->pdev_id;
+
 	return wmi_unified_stats_request_send(wmi_handle, req->peer_mac_addr,
 					      &param);
 }
@@ -573,6 +592,7 @@ target_if_cp_stats_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	cp_stats_tx_ops->inc_wake_lock_stats =
 		target_if_cp_stats_inc_wake_lock_stats;
 	cp_stats_tx_ops->send_req_stats = target_if_cp_stats_send_stats_req;
+
 	return QDF_STATUS_SUCCESS;
 }
 
