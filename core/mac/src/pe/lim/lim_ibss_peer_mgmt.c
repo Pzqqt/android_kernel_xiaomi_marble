@@ -960,7 +960,7 @@ lim_ibss_sta_add(tpAniSirGlobal pMac, void *pBody, tpPESession psessionEntry)
 						      dphHashTable);
 			} else {
 				if (pMac->lim.gLimProtectionControl !=
-				    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
+				    MLME_FORCE_POLICY_PROTECTION_DISABLE)
 					lim_ibss_decide_protection(pMac, pStaDs,
 								   &beaconParams,
 								   psessionEntry);
@@ -1507,7 +1507,7 @@ lim_ibss_coalesce(tpAniSirGlobal pMac,
 			dph_lookup_hash_entry(pMac, pPeerNode->peerMacAddr, &peerIdx,
 					      &psessionEntry->dph.dphHashTable);
 		if (pMac->lim.gLimProtectionControl !=
-		    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
+		    MLME_FORCE_POLICY_PROTECTION_DISABLE)
 			lim_ibss_decide_protection(pMac, pStaDs, &beaconParams,
 						   psessionEntry);
 

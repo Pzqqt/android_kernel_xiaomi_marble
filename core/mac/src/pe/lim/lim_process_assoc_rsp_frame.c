@@ -1033,9 +1033,9 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		sta_ds->parsed_ies.vht_operation = beacon->VHTOperation;
 
 	if (mac_ctx->lim.gLimProtectionControl !=
-		WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
+	    MLME_FORCE_POLICY_PROTECTION_DISABLE)
 		lim_decide_sta_protection_on_assoc(mac_ctx, beacon,
-			session_entry);
+						   session_entry);
 
 	if (beacon->erpPresent) {
 		if (beacon->erpIEInfo.barkerPreambleMode)

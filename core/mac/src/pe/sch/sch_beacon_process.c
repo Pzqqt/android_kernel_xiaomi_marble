@@ -192,7 +192,7 @@ ap_beacon_process_24_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	 * already been set to legacy in the previous blocks.
 	 */
 	if ((eSIR_HT_OP_MODE_OVERLAP_LEGACY == bcn_struct->HTInfo.opMode) &&
-		!mac_ctx->roam.configParam.ignore_peer_ht_opmode) {
+		!mac_ctx->mlme_cfg->sap_protection_cfg.ignore_peer_ht_opmode) {
 		if (eSIR_HT_OP_MODE_OVERLAP_LEGACY == mac_ctx->lim.gHTOperMode
 		    || eSIR_HT_OP_MODE_MIXED == mac_ctx->lim.gHTOperMode)
 			return;
@@ -420,7 +420,7 @@ sch_bcn_process_sta(tpAniSirGlobal mac_ctx,
 	}
 
 	if (mac_ctx->lim.gLimProtectionControl !=
-			WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
+	    MLME_FORCE_POLICY_PROTECTION_DISABLE)
 		lim_decide_sta_protection(mac_ctx, bcn, beaconParams, session);
 
 	if (bcn->erpPresent) {
@@ -1052,7 +1052,7 @@ void sch_beacon_process_for_ap(tpAniSirGlobal mac_ctx,
 					bcn, &bcn_prm);
 
 	if ((ap_session->gLimProtectionControl !=
-	     WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE) &&
+	     MLME_FORCE_POLICY_PROTECTION_DISABLE) &&
 	    !ap_session->is_session_obss_offload_enabled)
 		ap_beacon_process(mac_ctx, rx_pkt_info,
 					bcn, &bcn_prm, ap_session);
@@ -1215,7 +1215,7 @@ void lim_enable_obss_detection_config(tpAniSirGlobal mac_ctx,
 	}
 
 	if (session->gLimProtectionControl ==
-	    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE) {
+	    MLME_FORCE_POLICY_PROTECTION_DISABLE) {
 		pe_err("protectiond disabled, force policy, session %d",
 		       session->smeSessionId);
 		return;
@@ -1347,7 +1347,7 @@ QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
 			cfg->obss_11b_sta_detect_mode =
 				OBSS_OFFLOAD_DETECTION_DISABLED;
 
-		if (mac_ctx->roam.configParam.ignore_peer_ht_opmode)
+		if (mac_ctx->mlme_cfg->sap_protection_cfg.ignore_peer_ht_opmode)
 			cfg->obss_ht_legacy_detect_mode =
 				OBSS_OFFLOAD_DETECTION_DISABLED;
 	}
@@ -1416,7 +1416,7 @@ QDF_STATUS lim_obss_send_detection_cfg(tpAniSirGlobal mac_ctx,
 	}
 
 	if (session->gLimProtectionControl ==
-	    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE) {
+	    MLME_FORCE_POLICY_PROTECTION_DISABLE) {
 		pe_debug("protectiond disabled, force from policy, session %d",
 		       session->smeSessionId);
 		/* Send success */

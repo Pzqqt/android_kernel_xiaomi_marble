@@ -39,12 +39,6 @@
 
 static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry);
 
-/** -------------------------------------------------------------
-   \fn lim_set_cfg_protection
-   \brief sets lim global cfg cache from the config.
-   \param      tpAniSirGlobal    pMac
-   \return      None
-   -------------------------------------------------------------*/
 void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry)
 {
 	uint32_t val = 0;
@@ -52,7 +46,7 @@ void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry)
 
 	if (pesessionEntry != NULL && LIM_IS_AP_ROLE(pesessionEntry)) {
 		if (pesessionEntry->gLimProtectionControl ==
-		    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
+		    MLME_FORCE_POLICY_PROTECTION_DISABLE)
 			qdf_mem_set((void *)&pesessionEntry->cfgProtection,
 				    sizeof(tCfgProtection), 0);
 		else {
@@ -74,28 +68,28 @@ void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry)
 
 
 		if (pMac->lim.gLimProtectionControl ==
-		    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
+		    MLME_FORCE_POLICY_PROTECTION_DISABLE)
 			qdf_mem_set((void *)&pMac->lim.cfgProtection,
 				    sizeof(tCfgProtection), 0);
 		else {
 			val = mlme_cfg->sap_protection_cfg.protection_enabled;
 
 			pMac->lim.cfgProtection.fromlla =
-				(val >> WNI_CFG_PROTECTION_ENABLED_FROM_llA) & 1;
+				(val >> MLME_PROTECTION_ENABLED_FROM_llA) & 1;
 			pMac->lim.cfgProtection.fromllb =
-				(val >> WNI_CFG_PROTECTION_ENABLED_FROM_llB) & 1;
+				(val >> MLME_PROTECTION_ENABLED_FROM_llB) & 1;
 			pMac->lim.cfgProtection.fromllg =
-				(val >> WNI_CFG_PROTECTION_ENABLED_FROM_llG) & 1;
+				(val >> MLME_PROTECTION_ENABLED_FROM_llG) & 1;
 			pMac->lim.cfgProtection.ht20 =
-				(val >> WNI_CFG_PROTECTION_ENABLED_HT_20) & 1;
+				(val >> MLME_PROTECTION_ENABLED_HT_20) & 1;
 			pMac->lim.cfgProtection.nonGf =
-				(val >> WNI_CFG_PROTECTION_ENABLED_NON_GF) & 1;
+				(val >> MLME_PROTECTION_ENABLED_NON_GF) & 1;
 			pMac->lim.cfgProtection.lsigTxop =
-				(val >> WNI_CFG_PROTECTION_ENABLED_LSIG_TXOP) & 1;
+				(val >> MLME_PROTECTION_ENABLED_LSIG_TXOP) & 1;
 			pMac->lim.cfgProtection.rifs =
-				(val >> WNI_CFG_PROTECTION_ENABLED_RIFS) & 1;
+				(val >> MLME_PROTECTION_ENABLED_RIFS) & 1;
 			pMac->lim.cfgProtection.obss =
-				(val >> WNI_CFG_PROTECTION_ENABLED_OBSS) & 1;
+				(val >> MLME_PROTECTION_ENABLED_OBSS) & 1;
 
 		}
 	}
@@ -181,10 +175,6 @@ void lim_handle_cf_gparam_update(tpAniSirGlobal pMac, uint32_t cfgId)
 							eLIM_ASSOC_FAIL_TIMER);
 		}
 
-		break;
-
-	case WNI_CFG_PROTECTION_ENABLED:
-		lim_set_cfg_protection(pMac, NULL);
 		break;
 
 	case WNI_CFG_MPDU_DENSITY:

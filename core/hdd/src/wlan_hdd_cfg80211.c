@@ -65,6 +65,7 @@
 #include "csr_api.h"
 #include "pld_common.h"
 #include "wmi_unified_param.h"
+#include "cfg_ucfg_api.h"
 
 #ifdef WLAN_UMAC_CONVERGENCE
 #include "wlan_cfg80211.h"
@@ -5750,14 +5751,10 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		request.vdev_id = adapter->session_id;
 		request.aggr_type = WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU;
 
-		if (request.tx_aggregation_size >=
-					CFG_TX_AGGREGATION_SIZE_MIN &&
-			request.tx_aggregation_size <=
-					CFG_TX_AGGREGATION_SIZE_MAX &&
-			request.rx_aggregation_size >=
-					CFG_RX_AGGREGATION_SIZE_MIN &&
-			request.rx_aggregation_size <=
-					CFG_RX_AGGREGATION_SIZE_MAX) {
+		if (cfg_in_range(CFG_TX_AGGREGATION_SIZE,
+				 request.tx_aggregation_size) &&
+		    cfg_in_range(CFG_RX_AGGREGATION_SIZE,
+				 request.rx_aggregation_size)) {
 			qdf_status = wma_set_tx_rx_aggregation_size(&request);
 			if (qdf_status != QDF_STATUS_SUCCESS) {
 				hdd_err("failed to set aggr sizes err %d",

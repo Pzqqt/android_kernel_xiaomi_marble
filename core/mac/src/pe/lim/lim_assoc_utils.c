@@ -3086,7 +3086,7 @@ lim_delete_dph_hash_entry(tpAniSirGlobal mac_ctx, tSirMacAddr sta_addr,
 	if (LIM_IS_AP_ROLE(session_entry) || LIM_IS_IBSS_ROLE(session_entry)) {
 		if (LIM_IS_AP_ROLE(session_entry)) {
 			if (session_entry->gLimProtectionControl !=
-				WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
+				MLME_FORCE_POLICY_PROTECTION_DISABLE)
 				lim_decide_ap_protection_on_delete(mac_ctx,
 					sta_ds, &beacon_params, session_entry);
 		}
@@ -4175,7 +4175,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t updateEnt
 			pBeaconStruct);
 
 	if (pMac->lim.gLimProtectionControl !=
-	    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
+	    MLME_FORCE_POLICY_PROTECTION_DISABLE)
 		lim_decide_sta_protection_on_assoc(pMac, pBeaconStruct,
 						   psessionEntry);
 	qdf_mem_copy(pAddBssParams->bssId, bssDescription->bssId,

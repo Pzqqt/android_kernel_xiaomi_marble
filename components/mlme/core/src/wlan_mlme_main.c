@@ -201,7 +201,7 @@ static void mlme_init_sap_protection_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_default(CFG_PROTECTION_ENABLED);
 	sap_protection_params->protection_force_policy =
 				cfg_default(CFG_FORCE_POLICY_PROTECTION);
-	sap_protection_params->ignore_peer_ht_mode =
+	sap_protection_params->ignore_peer_ht_opmode =
 				cfg_get(psoc, CFG_IGNORE_PEER_HT_MODE);
 }
 

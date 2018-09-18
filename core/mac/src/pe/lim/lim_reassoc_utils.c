@@ -176,7 +176,7 @@ void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal pMac,
 			lim_get_ielen_from_bss_description(bss_desc),
 			beacon_struct);
 		if (pMac->lim.gLimProtectionControl !=
-		    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
+		    MLME_FORCE_POLICY_PROTECTION_DISABLE)
 			lim_decide_sta_protection_on_assoc(pMac,
 				beacon_struct,
 				psessionEntry);
@@ -300,7 +300,7 @@ void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal pMac,
 						    bssDescription),
 					    pBeaconStruct);
 		if (pMac->lim.gLimProtectionControl !=
-		    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
+		    MLME_FORCE_POLICY_PROTECTION_DISABLE)
 			lim_decide_sta_protection_on_assoc(pMac,
 							   pBeaconStruct,
 							   psessionEntry);

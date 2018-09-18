@@ -3089,8 +3089,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->is_ps_enabled;
 		pMac->sme.ps_global_info.auto_bmps_timer_val =
 			pParam->auto_bmps_timer_val;
-		pMac->roam.configParam.ignore_peer_ht_opmode =
-			pParam->ignore_peer_ht_opmode;
 		pMac->dual_mac_feature_disable =
 			pParam->dual_mac_feature_disable;
 		pMac->sta_sap_scc_on_dfs_chan =
@@ -3341,8 +3339,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->fEnableDebugLog = pMac->fEnableDebugLog;
 	pParam->f_sta_miracast_mcc_rest_time_val =
 		pMac->f_sta_miracast_mcc_rest_time_val;
-	pParam->ignore_peer_ht_opmode =
-		pMac->roam.configParam.ignore_peer_ht_opmode;
 	pParam->enableHtSmps = pMac->roam.configParam.enableHtSmps;
 	pParam->htSmps = pMac->roam.configParam.htSmps;
 	pParam->send_smps_action = pMac->roam.configParam.send_smps_action;

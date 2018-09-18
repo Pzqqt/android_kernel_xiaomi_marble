@@ -436,6 +436,13 @@ void lim_handle_param_update(tpAniSirGlobal pMac, eUpdateIEsType cfgId);
 /* Function to apply CFG parameters before join/reassoc/start BSS */
 void lim_apply_configuration(tpAniSirGlobal, tpPESession);
 
+/**
+ * lim_set_cfg_protection() - sets lim global cfg cache from the config
+ * @pMac: global mac context
+ * @pesessionEntry: PE session
+ *
+ * Return none
+ */
 void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry);
 
 /* Function to Initialize MLM state machine on STA */

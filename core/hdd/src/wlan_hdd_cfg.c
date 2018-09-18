@@ -5994,7 +5994,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSmeConfigParams *smeConfig;
 	uint8_t rrm_capab_len, val;
-	bool ignore_peer_ht_mode;
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 
 	struct hdd_config *pConfig = hdd_ctx->config;
@@ -6262,13 +6261,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->min_delay_btw_roam_scans;
 	smeConfig->csrConfig.roam_trigger_reason_bitmask =
 		hdd_ctx->config->roam_trigger_reason_bitmask;
-	status = ucfg_mlme_get_ignore_peer_ht_mode(hdd_ctx->psoc,
-						   &ignore_peer_ht_mode);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("Get ignore_peer_ht_mode failed");
-		goto error;
-	}
-	smeConfig->csrConfig.ignore_peer_ht_opmode = ignore_peer_ht_mode;
 	smeConfig->csrConfig.enable_fatal_event =
 			pConfig->enable_fatal_event;
 	smeConfig->csrConfig.scan_adaptive_dwell_mode =
@@ -6372,7 +6364,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("sme_update_config() failure: %d", status);
 
-error:
 	qdf_mem_free(smeConfig);
 	return status;
 }

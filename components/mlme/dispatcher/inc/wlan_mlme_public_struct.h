@@ -184,33 +184,60 @@ struct wlan_mlme_rates {
 	uint8_t disable_high_ht_mcs_2x2;
 };
 
+
+/* Flags for gLimProtectionControl that is updated in pe session*/
+#define MLME_FORCE_POLICY_PROTECTION_DISABLE        0
+#define MLME_FORCE_POLICY_PROTECTION_CTS            1
+#define MLME_FORCE_POLICY_PROTECTION_RTS            2
+#define MLME_FORCE_POLICY_PROTECTION_DUAL_CTS       3
+#define MLME_FORCE_POLICY_PROTECTION_RTS_ALWAYS     4
+#define MLME_FORCE_POLICY_PROTECTION_AUTO           5
+
+/* protection_enabled bits*/
+#define MLME_PROTECTION_ENABLED_FROM_llA            0
+#define MLME_PROTECTION_ENABLED_FROM_llB            1
+#define MLME_PROTECTION_ENABLED_FROM_llG            2
+#define MLME_PROTECTION_ENABLED_HT_20               3
+#define MLME_PROTECTION_ENABLED_NON_GF              4
+#define MLME_PROTECTION_ENABLED_LSIG_TXOP           5
+#define MLME_PROTECTION_ENABLED_RIFS                6
+#define MLME_PROTECTION_ENABLED_OBSS                7
+#define MLME_PROTECTION_ENABLED_OLBC_FROM_llA       8
+#define MLME_PROTECTION_ENABLED_OLBC_FROM_llB       9
+#define MLME_PROTECTION_ENABLED_OLBC_FROM_llG       10
+#define MLME_PROTECTION_ENABLED_OLBC_HT20           11
+#define MLME_PROTECTION_ENABLED_OLBC_NON_GF         12
+#define MLME_PROTECTION_ENABLED_OLBC_LSIG_TXOP      13
+#define MLME_PROTECTION_ENABLED_OLBC_RIFS           14
+#define MLME_PROTECTION_ENABLED_OLBC_OBSS           15
+
 /*
  * struct wlan_mlme_sap_protection_cfg - SAP erp protection config items
  *
- * @protection_enabled - Force enable protection. static via cfg
- * @protection_force_policy - Protection force policy. Static via cfg
- * @ignore_peer_ht_mode - ignore the ht opmode of the peer. Dynamic via INI.
+ * @protection_enabled:        Force enable protection. static via cfg
+ * @protection_force_policy:   Protection force policy. Static via cfg
+ * @ignore_peer_ht_opmode:     Ignore the ht opmode of the peer. Dynamic via INI
  *
  */
 struct wlan_mlme_sap_protection {
 	uint32_t protection_enabled;
 	uint8_t protection_force_policy;
-	bool ignore_peer_ht_mode;
+	bool ignore_peer_ht_opmode;
 };
 
 /*
  * struct wlan_mlme_chainmask - All chainmask related cfg items
  *
- * @txchainmask1x1 - to set transmit chainmask
- * @rxchainmask1x1 - to set rx chainmask
- * @tx_chain_mask_cck - Used to enable/disable Cck ChainMask
- * @tx_chain_mask_1ss - Enables/disables tx chain Mask1ss
- * @num_11b_tx_chains - Number of Tx Chains in 11b mode
- * @num_11ag_tx_chains - Number of Tx Chains in 11ag mode
- * @tx_chain_mask_2g - tx chain mask for 2g
- * @rx_chain_mask_2g - rx chain mask for 2g
- * @tx_chain_mask_5g - tx chain mask for 5g
- * @rx_chain_mask_5g - rx chain mask for 5g
+ * @txchainmask1x1:     To set transmit chainmask
+ * @rxchainmask1x1:     To set rx chainmask
+ * @tx_chain_mask_cck:  Used to enable/disable Cck ChainMask
+ * @tx_chain_mask_1ss:  Enables/disables tx chain Mask1ss
+ * @num_11b_tx_chains:  Number of Tx Chains in 11b mode
+ * @num_11ag_tx_chains: Number of Tx Chains in 11ag mode
+ * @tx_chain_mask_2g:   Tx chain mask for 2g
+ * @rx_chain_mask_2g:   Tx chain mask for 2g
+ * @tx_chain_mask_5g:   Tx chain mask for 5g
+ * @rx_chain_mask_5g:   Rx chain mask for 5g
  */
 struct wlan_mlme_chainmask {
 	uint8_t txchainmask1x1;

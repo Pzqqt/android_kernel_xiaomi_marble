@@ -151,7 +151,7 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 			pBeaconStruct);
 
 	if (pMac->lim.gLimProtectionControl !=
-	    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
+	    MLME_FORCE_POLICY_PROTECTION_DISABLE)
 		lim_decide_sta_protection_on_assoc(pMac, pBeaconStruct,
 						   pftSessionEntry);
 
