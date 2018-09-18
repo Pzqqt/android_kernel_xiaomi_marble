@@ -2699,6 +2699,8 @@ static os_timer_func(dp_txrx_peer_find_inact_timeout_handler)
 
 	for (i = 0; i < soc->pdev_count; i++) {
 	pdev = soc->pdev_list[i];
+	if (!pdev)
+		continue;
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 		if (vdev->opmode != wlan_op_mode_ap)
