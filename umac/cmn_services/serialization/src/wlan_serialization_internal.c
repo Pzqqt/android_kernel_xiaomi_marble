@@ -243,9 +243,12 @@ wlan_serialization_activate_multiple_cmd(
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	pdev_queue = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_NON_SCAN];
-	active_queue = &pdev_queue->active_list;
 
+	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
+
+	active_queue = &pdev_queue->active_list;
 	qsize =  wlan_serialization_list_size(active_queue);
+
 	while (qsize--) {
 		peek_status = wlan_serialization_get_cmd_from_queue(
 				active_queue, &nnode);
@@ -264,6 +267,18 @@ wlan_serialization_activate_multiple_cmd(
 			continue;
 		}
 
+		qdf_atomic_clear_bit(CMD_MARKED_FOR_ACTIVATION,
+				     &active_cmd_list->cmd_in_use);
+
+		qdf_atomic_set_bit(CMD_IS_ACTIVE,
+				   &active_cmd_list->cmd_in_use);
+
+		vdev_id = wlan_vdev_get_id(active_cmd_list->cmd.vdev);
+		pdev_queue->vdev_active_cmd_bitmap |= (1 << vdev_id);
+
+		if (active_cmd_list->cmd.is_blocking)
+			pdev_queue->blocking_cmd_active = 1;
+
 		/*
 		 * Command is already pushed to active queue.
 		 * Now start the timer.
@@ -277,25 +292,19 @@ wlan_serialization_activate_multiple_cmd(
 			  active_cmd_list->cmd.cmd_id,
 			  "WLAN_SER_CB_ACTIVATE_CMD");
 
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
+
 		status = active_cmd_list->cmd.cmd_cb(&active_cmd_list->cmd,
 					    WLAN_SER_CB_ACTIVATE_CMD);
-
-		qdf_atomic_clear_bit(CMD_MARKED_FOR_ACTIVATION,
-				     &active_cmd_list->cmd_in_use);
-
-		qdf_atomic_set_bit(CMD_IS_ACTIVE,
-				   &active_cmd_list->cmd_in_use);
-
-		vdev_id = wlan_vdev_get_id(active_cmd_list->cmd.vdev);
-		pdev_queue->vdev_active_cmd_bitmap |= (1 << vdev_id);
-
-		if (active_cmd_list->cmd.is_blocking)
-			pdev_queue->blocking_cmd_active = 1;
 
 		if (QDF_IS_STATUS_ERROR(status))
 			wlan_serialization_dequeue_cmd(&active_cmd_list->cmd,
 						       true);
+
+		wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
 	}
+
+	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 	return status;
 }
 
