@@ -1232,6 +1232,8 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	hdd_reset_all_adapters(hdd_ctx);
 
+	ucfg_ipa_uc_ssr_cleanup(hdd_ctx->pdev);
+
 	/* Flush cached rx frame queue */
 	if (soc)
 		cdp_flush_cache_rx_queue(soc);

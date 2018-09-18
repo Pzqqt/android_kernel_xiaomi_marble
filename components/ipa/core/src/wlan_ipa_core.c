@@ -2981,3 +2981,26 @@ void wlan_ipa_cleanup_dev_iface(struct wlan_ipa_priv *ipa_ctx,
 	if (iface_ctx)
 		wlan_ipa_cleanup_iface(iface_ctx);
 }
+
+void wlan_ipa_uc_ssr_cleanup(struct wlan_ipa_priv *ipa_ctx)
+{
+	struct wlan_ipa_iface_context *iface;
+	int i;
+
+	ipa_info("enter");
+
+	for (i = 0; i < WLAN_IPA_MAX_IFACE; i++) {
+		iface = &ipa_ctx->iface_context[i];
+		if (iface->dev) {
+			if (iface->device_mode == QDF_SAP_MODE)
+				wlan_ipa_uc_send_evt(iface->dev,
+						     QDF_IPA_AP_DISCONNECT,
+						     iface->dev->dev_addr);
+			else if (iface->device_mode == QDF_STA_MODE)
+				wlan_ipa_uc_send_evt(iface->dev,
+						     QDF_IPA_STA_DISCONNECT,
+						     iface->dev->dev_addr);
+			wlan_ipa_cleanup_iface(iface);
+		}
+	}
+}
