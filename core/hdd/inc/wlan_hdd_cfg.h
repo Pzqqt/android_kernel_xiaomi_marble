@@ -102,7 +102,7 @@ struct hdd_context;
  * gEnableNUDTracking - Will enable or disable NUD tracking within driver
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to enable or disable NUD tracking within driver
  *
@@ -118,7 +118,7 @@ struct hdd_context;
 #define CFG_ENABLE_NUD_TRACKING_NAME            "gEnableNUDTracking"
 #define CFG_ENABLE_NUD_TRACKING_MIN             (0)
 #define CFG_ENABLE_NUD_TRACKING_MAX             (1)
-#define CFG_ENABLE_NUD_TRACKING_DEFAULT         (0)
+#define CFG_ENABLE_NUD_TRACKING_DEFAULT         (1)
 #endif
 
 /*
