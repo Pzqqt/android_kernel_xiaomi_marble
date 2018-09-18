@@ -398,8 +398,19 @@ static int wcd937x_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_update_bits(codec, WCD937X_HPH_NEW_INT_RDAC_HD2_CTL_L,
 				    0x0F, 0x02);
-		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_COMP_CTL_0,
-				    0x02, 0x02);
+		if (wcd937x->comp1_enable) {
+			snd_soc_update_bits(codec,
+					WCD937X_DIGITAL_CDC_COMP_CTL_0,
+					0x02, 0x02);
+			snd_soc_update_bits(codec,
+					WCD937X_HPH_L_EN, 0x20, 0x00);
+		} else {
+			snd_soc_update_bits(codec,
+					WCD937X_DIGITAL_CDC_COMP_CTL_0,
+					0x02, 0x00);
+			snd_soc_update_bits(codec,
+					WCD937X_HPH_L_EN, 0x20, 0x20);
+		}
 		usleep_range(5000, 5010);
 		snd_soc_update_bits(codec, WCD937X_HPH_NEW_INT_HPH_TIMER1,
 				    0x02, 0x00);
@@ -439,8 +450,19 @@ static int wcd937x_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_POST_PMU:
 		snd_soc_update_bits(codec, WCD937X_HPH_NEW_INT_RDAC_HD2_CTL_R,
 				    0x0F, 0x02);
-		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_COMP_CTL_0,
-				    0x01, 0x01);
+		if (wcd937x->comp2_enable) {
+			snd_soc_update_bits(codec,
+					WCD937X_DIGITAL_CDC_COMP_CTL_0,
+					0x01, 0x01);
+			snd_soc_update_bits(codec,
+					WCD937X_HPH_R_EN, 0x20, 0x00);
+		} else {
+			snd_soc_update_bits(codec,
+					WCD937X_DIGITAL_CDC_COMP_CTL_0,
+					0x01, 0x00);
+			snd_soc_update_bits(codec,
+					WCD937X_HPH_R_EN, 0x20, 0x20);
+		}
 		usleep_range(5000, 5010);
 		snd_soc_update_bits(codec, WCD937X_HPH_NEW_INT_HPH_TIMER1,
 				    0x02, 0x00);
@@ -677,6 +699,7 @@ static int wcd937x_enable_rx1(struct snd_soc_dapm_widget *w,
 {
 
 	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct wcd937x_priv *wcd937x = snd_soc_codec_get_drvdata(codec);
 
 	dev_dbg(codec->dev, "%s wname: %s event: %d\n", __func__,
 		w->name, event);
@@ -704,11 +727,13 @@ static int wcd937x_enable_rx1(struct snd_soc_dapm_widget *w,
 		usleep_range(500, 510);
 
 		wcd937x_rx_connect_port(codec, HPH_L, true);
-		wcd937x_rx_connect_port(codec, COMP_L, true);
+		if (wcd937x->comp1_enable)
+			wcd937x_rx_connect_port(codec, COMP_L, true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		wcd937x_rx_connect_port(codec, HPH_L, false);
-		wcd937x_rx_connect_port(codec, COMP_L, false);
+		if (wcd937x->comp1_enable)
+			wcd937x_rx_connect_port(codec, COMP_L, false);
 		wcd937x_rx_clk_disable(codec);
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_DIG_CLK_CTL,
 				    0x01, 0x00);
@@ -720,6 +745,7 @@ static int wcd937x_enable_rx2(struct snd_soc_dapm_widget *w,
 			      struct snd_kcontrol *kcontrol, int event)
 {
 	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct wcd937x_priv *wcd937x = snd_soc_codec_get_drvdata(codec);
 
 	dev_dbg(codec->dev, "%s wname: %s event: %d\n", __func__,
 		w->name, event);
@@ -745,11 +771,13 @@ static int wcd937x_enable_rx2(struct snd_soc_dapm_widget *w,
 		usleep_range(500, 510);
 
 		wcd937x_rx_connect_port(codec, HPH_R, true);
-		wcd937x_rx_connect_port(codec, COMP_R, true);
+		if (wcd937x->comp2_enable)
+			wcd937x_rx_connect_port(codec, COMP_R, true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		wcd937x_rx_connect_port(codec, HPH_R, false);
-		wcd937x_rx_connect_port(codec, COMP_R, false);
+		if (wcd937x->comp2_enable)
+			wcd937x_rx_connect_port(codec, COMP_R, false);
 		wcd937x_rx_clk_disable(codec);
 		snd_soc_update_bits(codec, WCD937X_DIGITAL_CDC_DIG_CLK_CTL,
 				    0x02, 0x00);
@@ -1223,6 +1251,42 @@ static int wcd937x_rx_hph_mode_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int wcd937x_get_compander(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct wcd937x_priv *wcd937x = snd_soc_codec_get_drvdata(codec);
+	bool hphr;
+	struct soc_multi_mixer_control *mc;
+
+	mc = (struct soc_multi_mixer_control *)(kcontrol->private_value);
+	hphr = mc->shift;
+
+	ucontrol->value.integer.value[0] = hphr ? wcd937x->comp2_enable :
+						wcd937x->comp1_enable;
+	return 0;
+}
+
+static int wcd937x_set_compander(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct wcd937x_priv *wcd937x = snd_soc_codec_get_drvdata(codec);
+	int value = ucontrol->value.integer.value[0];
+	bool hphr;
+	struct soc_multi_mixer_control *mc;
+
+	mc = (struct soc_multi_mixer_control *)(kcontrol->private_value);
+	hphr = mc->shift;
+	if (hphr)
+		wcd937x->comp2_enable = value;
+	else
+		wcd937x->comp1_enable = value;
+
+	return 0;
+}
+
 static const char * const rx_hph_mode_mux_text[] = {
 	"CLS_H_INVALID", "CLS_H_HIFI", "CLS_H_LP", "CLS_AB", "CLS_H_LOHIFI",
 	"CLS_H_ULP", "CLS_AB_HIFI",
@@ -1235,6 +1299,10 @@ static const struct soc_enum rx_hph_mode_mux_enum =
 static const struct snd_kcontrol_new wcd937x_snd_controls[] = {
 	SOC_ENUM_EXT("RX HPH Mode", rx_hph_mode_mux_enum,
 		wcd937x_rx_hph_mode_get, wcd937x_rx_hph_mode_put),
+	SOC_SINGLE_EXT("HPHL_COMP Switch", SND_SOC_NOPM, 0, 1, 0,
+		wcd937x_get_compander, wcd937x_set_compander),
+	SOC_SINGLE_EXT("HPHR_COMP Switch", SND_SOC_NOPM, 1, 1, 0,
+		wcd937x_get_compander, wcd937x_set_compander),
 
 	SOC_SINGLE_TLV("HPHL Volume", WCD937X_HPH_L_EN, 0, 20, 1, line_gain),
 	SOC_SINGLE_TLV("HPHR Volume", WCD937X_HPH_R_EN, 0, 20, 1, line_gain),
