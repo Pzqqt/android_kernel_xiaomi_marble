@@ -1120,6 +1120,31 @@ tpPESession pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
 }
 
 /**
+ * pe_find_session_by_scan_id() - looks up the PE session for given scan id
+ * @mac_ctx:   pointer to global adapter context
+ * @scan_id:   scan id
+ *
+ * looks up the PE session for given scan id
+ *
+ * Return: pe session entry for given scan id if found else NULL
+ */
+tpPESession pe_find_session_by_scan_id(tpAniSirGlobal mac_ctx,
+				       uint32_t scan_id)
+{
+	uint8_t i;
+
+	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
+		if ((mac_ctx->lim.gpSession[i].valid) &&
+		    (mac_ctx->lim.gpSession[i].ftPEContext.pFTPreAuthReq) &&
+		    (mac_ctx->lim.gpSession[i].ftPEContext.pFTPreAuthReq
+		     ->scan_id == scan_id)) {
+			return &mac_ctx->lim.gpSession[i];
+		}
+	}
+	return NULL;
+}
+
+/**
  * pe_get_active_session_count() - function to return active pe session count
  *
  * @mac_ctx: pointer to global mac structure

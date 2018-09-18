@@ -756,12 +756,21 @@ void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
 {
 	tpPESession session_entry;
 
-	if (event == SIR_SCAN_EVENT_COMPLETED) {
-		session_entry = pe_find_session_by_session_id(mac_ctx,
-			mac_ctx->lim.limTimers.gLimFTPreAuthRspTimer.sessionId);
+	session_entry = pe_find_session_by_scan_id(mac_ctx, scan_id);
+	/* Pre-auth request is sent */
+	if (session_entry) {
+		if ((event == SIR_SCAN_EVENT_FOREIGN_CHANNEL) &&
+		    (session_entry->ftPEContext.ftPreAuthStatus
+		     == QDF_STATUS_SUCCESS)) {
+			pe_err("Pre-auth is done, skip sending pre-auth req");
+			return;
+		}
 	} else {
+		/* For the first pre-auth request
+		 * need to get it by sme session id (vdev id)
+		 */
 		session_entry = pe_find_session_by_sme_session_id(mac_ctx,
-					session_id);
+								  session_id);
 	}
 
 	if (session_entry == NULL) {

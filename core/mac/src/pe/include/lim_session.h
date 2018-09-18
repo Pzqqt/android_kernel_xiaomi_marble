@@ -719,6 +719,19 @@ void pe_delete_session(tpAniSirGlobal pMac, tpPESession psessionEntry);
  */
 tpPESession pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
 					      uint8_t sme_session_id);
+
+/**
+ * pe_find_session_by_scan_id() - looks up the PE session for given scan id
+ * @mac_ctx:   pointer to global adapter context
+ * @scan_id:   scan id
+ *
+ * looks up the PE session for given scan id
+ *
+ * Return: pe session entry for given scan id if found else NULL
+ */
+tpPESession pe_find_session_by_scan_id(tpAniSirGlobal mac_ctx,
+				       uint32_t scan_id);
+
 uint8_t pe_get_active_session_count(tpAniSirGlobal mac_ctx);
 #ifdef WLAN_FEATURE_FILS_SK
 /**
