@@ -8465,15 +8465,17 @@ static QDF_STATUS extract_smartlog_event_non_tlv
 
 static bool is_management_record_non_tlv(uint32_t cmd_id)
 {
-	if ((cmd_id == WMI_BCN_TX_CMDID) ||
-		(cmd_id == WMI_PDEV_SEND_BCN_CMDID) ||
-		(cmd_id == WMI_MGMT_TX_CMDID) ||
-		(cmd_id == WMI_GPIO_OUTPUT_CMDID) ||
-		(cmd_id == WMI_HOST_SWBA_EVENTID)) {
+	switch (cmd_id) {
+	case WMI_BCN_TX_CMDID:
+	case WMI_MGMT_TX_CMDID:
+	case WMI_MGMT_RX_EVENTID:
+	case WMI_GPIO_OUTPUT_CMDID:
+	case WMI_HOST_SWBA_EVENTID:
+	case WMI_PDEV_SEND_BCN_CMDID:
 		return true;
+	default:
+		return false;
 	}
-
-	return false;
 }
 
 static bool is_diag_event_non_tlv(uint32_t event_id)
