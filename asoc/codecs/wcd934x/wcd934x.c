@@ -9977,6 +9977,12 @@ static int tavil_device_down(struct wcd9xxx *wcd9xxx)
 	int ret;
 
 	codec = (struct snd_soc_codec *)(wcd9xxx->ssr_priv);
+	if (!codec->component.card) {
+		dev_err(codec->dev, "%s: sound card is not enumerated.\n",
+			__func__);
+		return -EINVAL;
+	}
+
 	priv = snd_soc_codec_get_drvdata(codec);
 	for (count = 0; count < NUM_CODEC_DAIS; count++)
 		priv->dai[count].bus_down_in_recovery = true;
@@ -10027,6 +10033,11 @@ static int tavil_post_reset_cb(struct wcd9xxx *wcd9xxx)
 	struct wcd_mbhc *mbhc;
 
 	codec = (struct snd_soc_codec *)(wcd9xxx->ssr_priv);
+	if (!codec->component.card) {
+		dev_err(codec->dev, "%s: sound card is not enumerated.\n",
+			__func__);
+		return -EINVAL;
+	}
 	tavil = snd_soc_codec_get_drvdata(codec);
 	control = dev_get_drvdata(codec->dev->parent);
 
