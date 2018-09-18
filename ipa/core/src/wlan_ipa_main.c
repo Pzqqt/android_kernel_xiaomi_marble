@@ -576,3 +576,16 @@ void ipa_cleanup_dev_iface(struct wlan_objmgr_pdev *pdev,
 
 	return wlan_ipa_cleanup_dev_iface(ipa_obj, net_dev);
 }
+
+void ipa_uc_ssr_cleanup(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_ipa_priv *ipa_obj;
+
+	ipa_obj = ipa_pdev_get_priv_obj(pdev);
+	if (!ipa_obj) {
+		ipa_err("IPA object is NULL");
+		return;
+	}
+
+	return wlan_ipa_uc_ssr_cleanup(ipa_obj);
+}

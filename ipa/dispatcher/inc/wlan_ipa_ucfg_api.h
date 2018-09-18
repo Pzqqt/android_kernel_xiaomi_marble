@@ -312,6 +312,17 @@ QDF_STATUS ucfg_ipa_uc_disconnect_ap(struct wlan_objmgr_pdev *pdev,
  */
 void ucfg_ipa_cleanup_dev_iface(struct wlan_objmgr_pdev *pdev,
 				qdf_netdev_t net_dev);
+
+/**
+ * ucfg_ipa_uc_ssr_cleanup() - Handle IPA cleanup for SSR
+ * @pdev: pdev obj
+ *
+ * From hostside do cleanup such as deregister IPA interafces
+ * and send disconnect events so that it will be sync after SSR
+ *
+ * Return: None
+ */
+void ucfg_ipa_uc_ssr_cleanup(struct wlan_objmgr_pdev *pdev);
 #else
 
 static inline bool ucfg_ipa_is_present(void)
@@ -485,6 +496,11 @@ QDF_STATUS ucfg_ipa_uc_disconnect_ap(struct wlan_objmgr_pdev *pdev,
 static inline
 void ucfg_ipa_cleanup_dev_iface(struct wlan_objmgr_pdev *pdev,
 				qdf_netdev_t net_dev)
+{
+}
+
+static inline
+void ucfg_ipa_uc_ssr_cleanup(struct wlan_objmgr_pdev *pdev)
 {
 }
 #endif /* IPA_OFFLOAD */

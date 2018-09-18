@@ -642,5 +642,13 @@ QDF_STATUS wlan_ipa_uc_disconnect_ap(struct wlan_ipa_priv *ipa_ctx,
  */
 void wlan_ipa_cleanup_dev_iface(struct wlan_ipa_priv *ipa_ctx,
 				qdf_netdev_t net_dev);
+
+/**
+ * wlan_ipa_uc_ssr_cleanup() - handle IPA UC clean up during SSR
+ * @ipa_ctx: IPA context
+ *
+ * Return: None
+ */
+void wlan_ipa_uc_ssr_cleanup(struct wlan_ipa_priv *ipa_ctx);
 #endif /* IPA_OFFLOAD */
 #endif /* _WLAN_IPA_CORE_H_ */

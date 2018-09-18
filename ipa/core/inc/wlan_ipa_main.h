@@ -401,10 +401,17 @@ QDF_STATUS ipa_uc_disconnect_ap(struct wlan_objmgr_pdev *pdev,
  * @pdev: pdev obj
  * @net_dev: Interface net device
  *
- *
  * Return: None
  */
 void ipa_cleanup_dev_iface(struct wlan_objmgr_pdev *pdev,
 			   qdf_netdev_t net_dev);
+
+/**
+ * ipa_uc_ssr_cleanup() - handle IPA UC cleanup during SSR
+ * @pdev: pdev obj
+ *
+ * Return: None
+ */
+void ipa_uc_ssr_cleanup(struct wlan_objmgr_pdev *pdev);
 #endif /* IPA_OFFLOAD */
 #endif /* end  of _WLAN_IPA_MAIN_H_ */
