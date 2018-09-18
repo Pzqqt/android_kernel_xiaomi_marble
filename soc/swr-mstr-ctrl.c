@@ -1499,8 +1499,10 @@ static int swrm_event_notify(struct notifier_block *self,
 		schedule_work(&(swrm->dc_presence_work));
 		break;
 	case SWR_WAKE_IRQ_EVENT:
-		if (swrm->wakeup_req)
+		if (swrm->wakeup_req && !swrm->wakeup_triggered) {
+			swrm->wakeup_triggered = true;
 			schedule_work(&swrm->wakeup_work);
+		}
 		break;
 	default:
 		dev_err(swrm->dev, "%s: invalid event type: %lu\n",
@@ -1928,9 +1930,11 @@ static int swrm_runtime_suspend(struct device *dev)
 			swrm_cmd_fifo_wr_cmd(swrm, 0x2, 0xF, 0xF,
 					SWRS_SCP_CONTROL);
 			usleep_range(100, 105);
-			if (swrm->wakeup_req)
+			if (swrm->wakeup_req) {
 				msm_aud_evt_blocking_notifier_call_chain(
 					SWR_WAKE_IRQ_REGISTER, (void *)swrm);
+				swrm->wakeup_triggered = false;
+			}
 		}
 		swrm_clk_request(swrm, false);
 	}
