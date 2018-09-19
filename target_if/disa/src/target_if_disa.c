@@ -33,6 +33,7 @@ target_if_encrypt_decrypt_event_handler(ol_scn_t scn_handle, uint8_t *data,
 {
 	struct disa_encrypt_decrypt_resp_params resp;
 	struct wlan_objmgr_psoc *psoc;
+	wmi_unified_t wmi_handle;
 
 	if (data == NULL) {
 		target_if_err("%s: invalid pointer", __func__);
@@ -45,9 +46,14 @@ target_if_encrypt_decrypt_event_handler(ol_scn_t scn_handle, uint8_t *data,
 		return -EINVAL;
 	}
 
-	if (wmi_extract_encrypt_decrypt_resp_params(
-				get_wmi_unified_hdl_from_psoc(psoc),
-				data, &resp) != QDF_STATUS_SUCCESS) {
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return -EINVAL;
+	}
+
+	if (wmi_extract_encrypt_decrypt_resp_params(wmi_handle, data, &resp) !=
+						    QDF_STATUS_SUCCESS) {
 		target_if_err("Extraction of encrypt decrypt resp params failed");
 		return -EINVAL;
 	}
@@ -61,8 +67,15 @@ QDF_STATUS
 target_if_disa_register_ev_handlers(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
 
-	status = wmi_unified_register_event(get_wmi_unified_hdl_from_psoc(psoc),
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_register_event(wmi_handle,
 				wmi_vdev_encrypt_decrypt_data_rsp_event_id,
 				target_if_encrypt_decrypt_event_handler);
 	if (status) {
@@ -77,9 +90,15 @@ QDF_STATUS
 target_if_disa_unregister_ev_handlers(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
 
-	status = wmi_unified_unregister_event(
-				get_wmi_unified_hdl_from_psoc(psoc),
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_unregister_event(wmi_handle,
 				wmi_vdev_encrypt_decrypt_data_rsp_event_id);
 	if (status) {
 		target_if_err("Failed to unregister Scan match event cb");
@@ -93,8 +112,15 @@ QDF_STATUS
 target_if_disa_encrypt_decrypt_req(struct wlan_objmgr_psoc *psoc,
 		struct disa_encrypt_decrypt_req_params *req)
 {
-	return wmi_unified_encrypt_decrypt_send_cmd(
-			get_wmi_unified_hdl_from_psoc(psoc), req);
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_encrypt_decrypt_send_cmd(wmi_handle, req);
 }
 
 
