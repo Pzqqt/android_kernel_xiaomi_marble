@@ -50,8 +50,9 @@ struct wlan_mlme_psoc_obj {
  *
  * Return: QDF_STATUS status in case of success else return error
  */
-QDF_STATUS mlme_psoc_object_created_notification(
-		struct wlan_objmgr_psoc *psoc, void *arg);
+QDF_STATUS
+mlme_psoc_object_created_notification(struct wlan_objmgr_psoc *psoc,
+				      void *arg);
 
 /**
  * mlme_psoc_object_destroyed_notification(): mlme psoc delete handler
@@ -62,8 +63,9 @@ QDF_STATUS mlme_psoc_object_created_notification(
  *
  * Return: QDF_STATUS status in case of success else return error
  */
-QDF_STATUS mlme_psoc_object_destroyed_notification(
-		struct wlan_objmgr_psoc *psoc, void *arg);
+QDF_STATUS
+mlme_psoc_object_destroyed_notification(struct wlan_objmgr_psoc *psoc,
+					void *arg);
 
 /**
  * mlme_cfg_on_psoc_enable() - Populate MLME structure from CFG and INI

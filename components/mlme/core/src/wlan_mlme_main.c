@@ -34,8 +34,9 @@ struct wlan_mlme_psoc_obj *mlme_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
 	return mlme_obj;
 }
 
-QDF_STATUS mlme_psoc_object_created_notification(
-		struct wlan_objmgr_psoc *psoc, void *arg)
+QDF_STATUS
+mlme_psoc_object_created_notification(struct wlan_objmgr_psoc *psoc,
+				      void *arg)
 {
 	QDF_STATUS status;
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -58,8 +59,9 @@ QDF_STATUS mlme_psoc_object_created_notification(
 	return status;
 }
 
-QDF_STATUS mlme_psoc_object_destroyed_notification(
-		struct wlan_objmgr_psoc *psoc, void *arg)
+QDF_STATUS
+mlme_psoc_object_destroyed_notification(struct wlan_objmgr_psoc *psoc,
+					void *arg)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj = NULL;
 	QDF_STATUS status;
@@ -115,9 +117,8 @@ static void mlme_init_chainmask_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_RX_CHAIN_MASK_5G);
 }
 
-static void mlme_update_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
-				      struct mlme_ht_capabilities_info
-				      *ht_cap_info)
+static void mlme_init_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_mlme_ht_caps *ht_caps)
 {
 	union {
 		uint16_t val_16;
@@ -135,7 +136,7 @@ static void mlme_update_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 	u.default_ht_cap_info.short_gi_40_mhz =
 				cfg_get(psoc, CFG_SHORT_GI_40MHZ);
 
-	*ht_cap_info = u.default_ht_cap_info;
+	ht_caps->ht_cap_info = u.default_ht_cap_info;
 }
 
 static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
@@ -178,8 +179,8 @@ static void mlme_init_mbo_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_MBO_CAND_RSSI_BTC_THRESHOLD);
 }
 
-static void mlme_update_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
-				     struct wlan_mlme_rates *rates)
+static void mlme_init_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_mlme_rates *rates)
 {
 	rates->cfp_period = cfg_default(CFG_CFP_PERIOD);
 	rates->cfp_max_duration = cfg_default(CFG_CFP_MAX_DURATION);
@@ -192,9 +193,9 @@ static void mlme_update_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
 					 CFG_INI_DISABLE_HIGH_HT_RX_MCS_2x2);
 }
 
-static void mlme_update_sap_protection_cfg(struct wlan_objmgr_psoc *psoc,
-					   struct wlan_mlme_sap_protection
-					   *sap_protection_params)
+static void mlme_init_sap_protection_cfg(struct wlan_objmgr_psoc *psoc,
+					 struct wlan_mlme_sap_protection
+					 *sap_protection_params)
 {
 	sap_protection_params->protection_enabled =
 				cfg_default(CFG_PROTECTION_ENABLED);
@@ -204,8 +205,8 @@ static void mlme_update_sap_protection_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_IGNORE_PEER_HT_MODE);
 }
 
-static void mlme_update_sap_cfg(struct wlan_objmgr_psoc *psoc,
-				struct wlan_mlme_cfg_sap *sap_cfg)
+static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_cfg_sap *sap_cfg)
 {
 	sap_cfg->beacon_interval = cfg_get(psoc, CFG_BEACON_INTERVAL);
 	sap_cfg->dtim_interval = cfg_default(CFG_DTIM_PERIOD);
@@ -294,8 +295,8 @@ static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
 		(uint32_t)cfg_default(CFG_CURRENT_RSSI);
 }
 
-static void wlan_mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
-				   struct wlan_mlme_lfr_cfg *lfr)
+static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_lfr_cfg *lfr)
 {
 	lfr->mawc_roam_enabled =
 		cfg_get(psoc, CFG_LFR_MAWC_ROAM_ENABLED);
@@ -535,16 +536,16 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	}
 
 	mlme_cfg = &mlme_obj->cfg;
-	mlme_update_ht_cap_in_cfg(psoc, &mlme_cfg->ht_caps.ht_cap_info);
+	mlme_init_ht_cap_in_cfg(psoc, &mlme_cfg->ht_caps);
 	mlme_init_mbo_cfg(psoc, &mlme_cfg->mbo_cfg);
 	mlme_init_qos_cfg(psoc, &mlme_cfg->qos_mlme_params);
-	mlme_update_rates_in_cfg(psoc, &mlme_cfg->rates);
-	mlme_update_sap_protection_cfg(psoc, &mlme_cfg->sap_protection_cfg);
+	mlme_init_rates_in_cfg(psoc, &mlme_cfg->rates);
+	mlme_init_sap_protection_cfg(psoc, &mlme_cfg->sap_protection_cfg);
 	mlme_init_chainmask_cfg(psoc, &mlme_cfg->chainmask_cfg);
-	mlme_update_sap_cfg(psoc, &mlme_cfg->sap_cfg);
+	mlme_init_sap_cfg(psoc, &mlme_cfg->sap_cfg);
 	mlme_init_obss_ht40_cfg(psoc, &mlme_cfg->obss_ht40);
 	mlme_init_sta_cfg(psoc, &mlme_cfg->sta);
-	wlan_mlme_init_lfr_cfg(psoc, &mlme_cfg->lfr);
+	mlme_init_lfr_cfg(psoc, &mlme_cfg->lfr);
 	mlme_init_scoring_cfg(psoc, &mlme_cfg->scoring);
 
 	return status;
