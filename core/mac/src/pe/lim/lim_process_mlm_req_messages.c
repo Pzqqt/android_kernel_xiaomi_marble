@@ -22,7 +22,7 @@
 #include "sir_api.h"
 #include "sir_params.h"
 #include "cfg_api.h"
-
+#include "cfg_ucfg_api.h"
 #include "sch_api.h"
 #include "utils_api.h"
 #include "lim_utils.h"
@@ -2376,6 +2376,7 @@ void lim_process_auth_failure_timeout(tpAniSirGlobal mac_ctx)
 {
 	/* fetch the sessionEntry based on the sessionId */
 	tpPESession session;
+	uint32_t val;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
 	host_log_rssi_pkt_type *rssi_log = NULL;
 #endif
@@ -2410,11 +2411,18 @@ void lim_process_auth_failure_timeout(tpAniSirGlobal mac_ctx)
 		 * Failure timeout. Issue MLM auth confirm with timeout reason
 		 * code. Restore default failure timeout
 		 */
-		if (QDF_P2P_CLIENT_MODE == session->pePersona
-		    && session->defaultAuthFailureTimeout)
-			cfg_set_int(mac_ctx,
-				    WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
-				    session->defaultAuthFailureTimeout);
+		if (QDF_P2P_CLIENT_MODE == session->pePersona &&
+		    session->defaultAuthFailureTimeout) {
+			if (cfg_in_range(CFG_AUTH_FAILURE_TIMEOUT,
+					 session->defaultAuthFailureTimeout)) {
+				val = session->defaultAuthFailureTimeout;
+			} else {
+				val = cfg_default(CFG_AUTH_FAILURE_TIMEOUT);
+				session->defaultAuthFailureTimeout = val;
+			}
+			mac_ctx->mlme_cfg->timeouts.auth_failure_timeout = val;
+		}
+
 		lim_restore_from_auth_state(mac_ctx,
 				eSIR_SME_AUTH_TIMEOUT_RESULT_CODE,
 				eSIR_MAC_UNSPEC_FAILURE_REASON, session);

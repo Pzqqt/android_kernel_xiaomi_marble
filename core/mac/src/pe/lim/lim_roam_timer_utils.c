@@ -39,11 +39,8 @@ uint32_t lim_create_timers_host_roam(tpAniSirGlobal mac_ctx)
 {
 	uint32_t cfg_value;
 
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_REASSOCIATION_FAILURE_TIMEOUT,
-			     &cfg_value) != QDF_STATUS_SUCCESS)
-		pe_warn("could not retrieve ReassocFailureTimeout value");
-
-	cfg_value = SYS_MS_TO_TICKS(cfg_value);
+	cfg_value = SYS_MS_TO_TICKS(
+			mac_ctx->mlme_cfg->timeouts.reassoc_failure_timeout);
 	/* Create Association failure timer and activate it later */
 	if (tx_timer_create(mac_ctx,
 			&mac_ctx->lim.limTimers.gLimReassocFailureTimer,
@@ -111,12 +108,8 @@ void lim_deactivate_and_change_timer_host_roam(tpAniSirGlobal mac_ctx,
 				TX_SUCCESS)
 			pe_warn("unable to deactivate Reassoc fail timer");
 
-		if (wlan_cfg_get_int(mac_ctx,
-				WNI_CFG_REASSOCIATION_FAILURE_TIMEOUT,
-				&val) != QDF_STATUS_SUCCESS)
-			pe_warn("could not get ReassocFailureTimeout val");
-
-		val = SYS_MS_TO_TICKS(val);
+		val = SYS_MS_TO_TICKS(
+			mac_ctx->mlme_cfg->timeouts.reassoc_failure_timeout);
 		if (tx_timer_change
 			(&mac_ctx->lim.limTimers.gLimReassocFailureTimer, val,
 			 0) != TX_SUCCESS)

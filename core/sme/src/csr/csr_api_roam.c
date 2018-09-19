@@ -1336,8 +1336,14 @@ void csr_set_global_cfgs(tpAniSirGlobal pMac)
 			 pMac->roam.configParam.channelBondingMode5GHz))
 		pMac->mlme_cfg->feature_flags.channel_bonding_mode =
 				pMac->roam.configParam.channelBondingMode5GHz;
-	cfg_set_int(pMac, WNI_CFG_HEART_BEAT_THRESHOLD,
-			pMac->roam.configParam.HeartbeatThresh24);
+
+	if (cfg_in_range(CFG_HEART_BEAT_THRESHOLD,
+			 pMac->roam.configParam.HeartbeatThresh24))
+		pMac->mlme_cfg->timeouts.heart_beat_threshold =
+			pMac->roam.configParam.HeartbeatThresh24;
+	else
+		pMac->mlme_cfg->timeouts.heart_beat_threshold =
+			cfg_default(CFG_HEART_BEAT_THRESHOLD);
 
 	/* Update the operating mode to configured value during
 	 *  initialization, So that client can advertise full
@@ -2805,7 +2811,7 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.phyMode = pParam->phyMode;
 		pMac->roam.configParam.shortSlotTime = pParam->shortSlotTime;
 		pMac->roam.configParam.HeartbeatThresh24 =
-			pParam->HeartbeatThresh24;
+			pMac->mlme_cfg->timeouts.heart_beat_threshold;
 		pMac->roam.configParam.HeartbeatThresh50 =
 			pParam->HeartbeatThresh50;
 		pMac->roam.configParam.ProprietaryRatesEnabled =
@@ -3199,7 +3205,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 					cfg_params->channelBondingMode5GHz);
 	pParam->phyMode = cfg_params->phyMode;
 	pParam->shortSlotTime = cfg_params->shortSlotTime;
-	pParam->HeartbeatThresh24 = cfg_params->HeartbeatThresh24;
 	pParam->HeartbeatThresh50 = cfg_params->HeartbeatThresh50;
 	pParam->ProprietaryRatesEnabled = cfg_params->ProprietaryRatesEnabled;
 	pParam->AdHocChannel24 = cfg_params->AdHocChannel24;
@@ -12731,8 +12736,14 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 			 */
 			sme_debug("Enabling HB timer after WaitKey expiry nHBCount: %d)",
 				pMac->roam.configParam.HeartbeatThresh24);
-			cfg_set_int(pMac, WNI_CFG_HEART_BEAT_THRESHOLD,
-				pMac->roam.configParam.HeartbeatThresh24);
+			if (cfg_in_range(CFG_HEART_BEAT_THRESHOLD,
+					 pMac->roam.configParam.
+					 HeartbeatThresh24))
+				pMac->mlme_cfg->timeouts.heart_beat_threshold =
+				pMac->roam.configParam.HeartbeatThresh24;
+			else
+				pMac->mlme_cfg->timeouts.heart_beat_threshold =
+					cfg_default(CFG_HEART_BEAT_THRESHOLD);
 		}
 		sme_debug("SME pre-auth state timeout");
 
@@ -12815,7 +12826,7 @@ static QDF_STATUS csr_roam_start_wait_for_key_timer(
 			mac_trace_getcsr_roam_sub_state(
 				pMac->roam.curSubState[pMac->roam.
 					WaitForKeyTimerInfo.sessionId]));
-		cfg_set_int(pMac, WNI_CFG_HEART_BEAT_THRESHOLD, 0);
+		pMac->mlme_cfg->timeouts.heart_beat_threshold = 0;
 	}
 	sme_debug("csrScanStartWaitForKeyTimer");
 	status = qdf_mc_timer_start(&pMac->roam.hTimerWaitForKey,
@@ -12846,8 +12857,13 @@ QDF_STATUS csr_roam_stop_wait_for_key_timer(tpAniSirGlobal pMac)
 		 */
 		sme_debug("Enabling HB timer after WaitKey stop nHBCount: %d",
 			pMac->roam.configParam.HeartbeatThresh24);
-		cfg_set_int(pMac, WNI_CFG_HEART_BEAT_THRESHOLD,
-				pMac->roam.configParam.HeartbeatThresh24);
+		if (cfg_in_range(CFG_HEART_BEAT_THRESHOLD,
+				 pMac->roam.configParam.HeartbeatThresh24))
+			pMac->mlme_cfg->timeouts.heart_beat_threshold =
+				pMac->roam.configParam.HeartbeatThresh24;
+		else
+			pMac->mlme_cfg->timeouts.heart_beat_threshold =
+				cfg_default(CFG_HEART_BEAT_THRESHOLD);
 	}
 	return qdf_mc_timer_stop(&pMac->roam.hTimerWaitForKey);
 }
@@ -18211,16 +18227,8 @@ csr_update_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 			mac_ctx->roam.configParam.roam_trigger_reason_bitmask;
 	req_buf->roam_force_rssi_trigger =
 			mac_ctx->roam.configParam.roam_force_rssi_trigger;
-
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_REASSOCIATION_FAILURE_TIMEOUT,
-			     (uint32_t *) &req_buf->ReassocFailureTimeout)
-	    != QDF_STATUS_SUCCESS) {
-		sme_err(
-			"could not retrieve ReassocFailureTimeout value");
-		req_buf->ReassocFailureTimeout =
-			DEFAULT_REASSOC_FAILURE_TIMEOUT;
-	}
-
+	req_buf->ReassocFailureTimeout =
+		mac_ctx->mlme_cfg->timeouts.reassoc_failure_timeout;
 	csr_update_roam_scan_ese_params(req_buf, session);
 
 	req_buf->AcUapsd.acbe_uapsd = SIR_UAPSD_GET(ACBE, session->uapsd_mask);

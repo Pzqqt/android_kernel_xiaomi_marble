@@ -100,6 +100,7 @@
 #include "wlan_cp_stats_mc_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "cfg_mlme_sta.h"
+#include "wlan_mlme_public_struct.h"
 #include "cfg_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
 #include "cfg_ucfg_api.h"
@@ -4195,12 +4196,13 @@ static int __iw_setint_getnone(struct net_device *dev,
 		if (!mac_handle)
 			return -EINVAL;
 
-		if ((set_value < CFG_DATA_INACTIVITY_TIMEOUT_MIN) ||
-		    (set_value > CFG_DATA_INACTIVITY_TIMEOUT_MAX) ||
-		    (sme_cfg_set_int(mac_handle,
-				     WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT,
-				     set_value) == QDF_STATUS_E_FAILURE)) {
-			hdd_err("WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT failed");
+		if (cfg_in_range(CFG_PS_DATA_INACTIVITY_TIMEOUT, set_value)) {
+			tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+
+			mac_ctx->mlme_cfg->timeouts.ps_data_inactivity_timeout =
+				set_value;
+		} else {
+			hdd_err("Invalid inactivity timeout %d", set_value);
 			ret = -EINVAL;
 		}
 		break;

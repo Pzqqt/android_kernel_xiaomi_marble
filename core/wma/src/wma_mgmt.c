@@ -597,39 +597,6 @@ wma_get_go_probe_timeout(struct sAniSirGlobal *mac,
 #endif
 
 /**
- * wma_get_sap_probe_timeout() - get sap probe timeout
- * @mac: UMAC handler
- * @max_inactive_time: return max inactive time
- * @max_unresponsive_time: return max unresponsive time
- *
- * Return: none
- */
-static inline void
-wma_get_sap_probe_timeout(struct sAniSirGlobal *mac,
-			  uint32_t *max_inactive_time,
-			  uint32_t *max_unresponsive_time)
-{
-	uint32_t keep_alive;
-	QDF_STATUS status;
-
-	status = wlan_cfg_get_int(mac, WNI_CFG_AP_LINK_MONITOR_TIMEOUT,
-				  max_inactive_time);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGE("Failed to read sap monitor period");
-		*max_inactive_time = WMA_LINK_MONITOR_DEFAULT_TIME_SECS;
-	}
-
-	status = wlan_cfg_get_int(mac, WNI_CFG_AP_KEEP_ALIVE_TIMEOUT,
-				  &keep_alive);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGE("Failed to read sap keep alive");
-		keep_alive = WMA_KEEP_ALIVE_DEFAULT_TIME_SECS;
-	}
-
-	*max_unresponsive_time = *max_inactive_time + keep_alive;
-}
-
-/**
  * wma_get_link_probe_timeout() - get link timeout based on sub type
  * @mac: UMAC handler
  * @sub_type: vdev syb type
@@ -644,12 +611,15 @@ wma_get_link_probe_timeout(struct sAniSirGlobal *mac,
 			   uint32_t *max_inactive_time,
 			   uint32_t *max_unresponsive_time)
 {
-	if (sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO)
+	if (sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO) {
 		wma_get_go_probe_timeout(mac, max_inactive_time,
 					 max_unresponsive_time);
-	else
-		wma_get_sap_probe_timeout(mac, max_inactive_time,
-					  max_unresponsive_time);
+	} else {
+		*max_inactive_time =
+			mac->mlme_cfg->timeouts.ap_link_monitor_timeout;
+		*max_unresponsive_time = *max_inactive_time +
+			mac->mlme_cfg->timeouts.ap_keep_alive_timeout;
+	}
 }
 
 /**

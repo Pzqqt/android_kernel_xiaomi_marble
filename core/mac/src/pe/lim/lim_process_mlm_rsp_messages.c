@@ -351,12 +351,6 @@ static void lim_send_mlm_assoc_req(tpAniSirGlobal mac_ctx,
 	}
 	val = sizeof(tSirMacAddr);
 	sir_copy_mac_addr(assoc_req->peerMacAddr, session_entry->bssId);
-	if (wlan_cfg_get_int(mac_ctx,  WNI_CFG_ASSOCIATION_FAILURE_TIMEOUT,
-		(uint32_t *) &assoc_req->assocFailureTimeout)
-		!= QDF_STATUS_SUCCESS) {
-		/* Could not get AssocFailureTimeout value from CFG.*/
-		pe_err("could not retrieve AssocFailureTimeout value");
-	}
 
 	if (cfg_get_capability_info(mac_ctx, &caps, session_entry)
 			!= QDF_STATUS_SUCCESS)
@@ -546,12 +540,6 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		auth_req->authType = auth_mode;
 		/* Update PE session Id */
 		auth_req->sessionId = auth_cnf->sessionId;
-		if (wlan_cfg_get_int(mac_ctx,
-			WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
-			(uint32_t *) &auth_req->authFailureTimeout)
-			!= QDF_STATUS_SUCCESS) {
-			pe_err("Fail:retrieve AuthFailureTimeout");
-		}
 		lim_post_mlm_message(mac_ctx, LIM_MLM_AUTH_REQ,
 			(uint32_t *) auth_req);
 		return;
@@ -2353,12 +2341,6 @@ lim_process_sta_add_bss_rsp_pre_assoc(tpAniSirGlobal mac_ctx,
 			session_entry->bssId);
 
 		pMlmAuthReq->authType = authMode;
-		if (wlan_cfg_get_int(mac_ctx,
-			WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
-			(uint32_t *) &pMlmAuthReq->authFailureTimeout)
-			!= QDF_STATUS_SUCCESS) {
-			pe_warn("Fail: retrieve AuthFailureTimeout value");
-		}
 		session_entry->limMlmState = eLIM_MLM_JOINED_STATE;
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 			session_entry->peSessionId, eLIM_MLM_JOINED_STATE));

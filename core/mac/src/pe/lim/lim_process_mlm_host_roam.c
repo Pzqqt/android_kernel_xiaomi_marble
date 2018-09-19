@@ -625,18 +625,6 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	qdf_mem_copy(pMlmReassocReq->peerMacAddr,
 		     psessionEntry->bssId, sizeof(tSirMacAddr));
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_REASSOCIATION_FAILURE_TIMEOUT,
-			(uint32_t *) &pMlmReassocReq->reassocFailureTimeout)
-	    != QDF_STATUS_SUCCESS) {
-		/**
-		 * Could not get ReassocFailureTimeout value
-		 * from CFG. Log error.
-		 */
-		pe_err("could not retrieve ReassocFailureTimeout value");
-		qdf_mem_free(pMlmReassocReq);
-		return;
-	}
-
 	if (cfg_get_capability_info(pMac, &caps, psessionEntry) !=
 			QDF_STATUS_SUCCESS) {
 		/**

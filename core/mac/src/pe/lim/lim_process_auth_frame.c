@@ -33,7 +33,7 @@
 #include "wni_cfg.h"
 #include "ani_global.h"
 #include "cfg_api.h"
-
+#include "cfg_ucfg_api.h"
 #include "utils_api.h"
 #include "lim_utils.h"
 #include "lim_assoc_utils.h"
@@ -1176,10 +1176,18 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	/* Restore default failure timeout */
 	if (QDF_P2P_CLIENT_MODE == pe_session->pePersona &&
-			pe_session->defaultAuthFailureTimeout) {
+	    pe_session->defaultAuthFailureTimeout) {
 		pe_debug("Restore default failure timeout");
-		cfg_set_int(mac_ctx, WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
-				pe_session->defaultAuthFailureTimeout);
+		if (cfg_in_range(CFG_AUTH_FAILURE_TIMEOUT,
+				 pe_session->defaultAuthFailureTimeout)) {
+			mac_ctx->mlme_cfg->timeouts.auth_failure_timeout =
+				pe_session->defaultAuthFailureTimeout;
+		} else {
+			mac_ctx->mlme_cfg->timeouts.auth_failure_timeout =
+				cfg_default(CFG_AUTH_FAILURE_TIMEOUT);
+			pe_session->defaultAuthFailureTimeout =
+				cfg_default(CFG_AUTH_FAILURE_TIMEOUT);
+		}
 	}
 
 	rx_auth_frame = qdf_mem_malloc(sizeof(tSirMacAuthFrameBody));

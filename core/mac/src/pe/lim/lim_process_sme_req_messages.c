@@ -1964,11 +1964,6 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy(mlm_reassoc_req->peerMacAddr,
 		     session_entry->limReAssocbssId, sizeof(tSirMacAddr));
 
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_REASSOCIATION_FAILURE_TIMEOUT,
-			(uint32_t *)&mlm_reassoc_req->reassocFailureTimeout) !=
-			QDF_STATUS_SUCCESS)
-		pe_err("could not retrieve ReassocFailureTimeout value");
-
 	if (cfg_get_capability_info(mac_ctx, &caps, session_entry) !=
 			QDF_STATUS_SUCCESS)
 		pe_err("could not retrieve Capabilities value");
@@ -3443,12 +3438,8 @@ static void __lim_process_sme_addts_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	/* start a timer to wait for the response */
 	if (pSirAddts->timeout)
 		timeout = pSirAddts->timeout;
-	else if (wlan_cfg_get_int(pMac, WNI_CFG_ADDTS_RSP_TIMEOUT, &timeout) !=
-		 QDF_STATUS_SUCCESS) {
-		pe_debug("Unable to get Cfg param %d (Addts Rsp Timeout)",
-			WNI_CFG_ADDTS_RSP_TIMEOUT);
-		goto send_failure_addts_rsp;
-	}
+	else
+		timeout = pMac->mlme_cfg->timeouts.addts_rsp_timeout;
 
 	timeout = SYS_MS_TO_TICKS(timeout);
 	if (tx_timer_change(&pMac->lim.limTimers.gLimAddtsRspTimer, timeout, 0)

@@ -842,9 +842,31 @@ struct wlan_mlme_threshold {
 /*
  * struct wlan_mlme_timeout - mlme timeout related config items
  * @join_failure_timeout: join failure timeout
+ * @auth_failure_timeout: authenticate failure timeout
+ * @auth_rsp_timeout: authenticate response timeout
+ * @assoc_failure_timeout: assoc failure timeout
+ * @reassoc_failure_timeout: re-assoc failure timeout
+ * @probe_after_hb_fail_timeout: Probe after HB fail timeout
+ * @olbc_detect_timeout: OLBC detect timeout
+ * @addts_rsp_timeout: ADDTS rsp timeout value
+ * @heart_beat_threshold: Heart beat threshold
+ * @ap_keep_alive_timeout: AP keep alive timeout value
+ * @ap_link_monitor_timeout: AP link monitor timeout value
+ * @ps_data_inactivity_timeout: PS data inactivity timeout
  */
 struct wlan_mlme_timeout {
 	uint32_t join_failure_timeout;
+	uint32_t auth_failure_timeout;
+	uint32_t auth_rsp_timeout;
+	uint32_t assoc_failure_timeout;
+	uint32_t reassoc_failure_timeout;
+	uint32_t probe_after_hb_fail_timeout;
+	uint32_t olbc_detect_timeout;
+	uint32_t addts_rsp_timeout;
+	uint32_t heart_beat_threshold;
+	uint32_t ap_keep_alive_timeout;
+	uint32_t ap_link_monitor_timeout;
+	uint32_t ps_data_inactivity_timeout;
 };
 
 /**

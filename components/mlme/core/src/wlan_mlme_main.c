@@ -321,8 +321,30 @@ static void mlme_init_edca_params(struct wlan_mlme_edca_params *edca_params)
 static void mlme_init_timeout_cfg(struct wlan_objmgr_psoc *psoc,
 				  struct wlan_mlme_timeout *timeouts)
 {
-	timeouts->join_failure_timeout = cfg_get(psoc,
-						 CFG_JOIN_FAILURE_TIMEOUT);
+	timeouts->join_failure_timeout =
+			cfg_get(psoc, CFG_JOIN_FAILURE_TIMEOUT);
+	timeouts->auth_failure_timeout =
+			cfg_get(psoc, CFG_AUTH_FAILURE_TIMEOUT);
+	timeouts->auth_rsp_timeout =
+			cfg_get(psoc, CFG_AUTH_RSP_TIMEOUT);
+	timeouts->assoc_failure_timeout =
+			cfg_get(psoc, CFG_ASSOC_FAILURE_TIMEOUT);
+	timeouts->reassoc_failure_timeout =
+			cfg_get(psoc, CFG_REASSOC_FAILURE_TIMEOUT);
+	timeouts->probe_after_hb_fail_timeout =
+			cfg_get(psoc, CFG_PROBE_AFTER_HB_FAIL_TIMEOUT);
+	timeouts->olbc_detect_timeout =
+			cfg_get(psoc, CFG_OLBC_DETECT_TIMEOUT);
+	timeouts->addts_rsp_timeout =
+			cfg_get(psoc, CFG_ADDTS_RSP_TIMEOUT);
+	timeouts->heart_beat_threshold =
+			cfg_get(psoc, CFG_HEART_BEAT_THRESHOLD);
+	timeouts->ap_keep_alive_timeout =
+			cfg_get(psoc, CFG_AP_KEEP_ALIVE_TIMEOUT);
+	timeouts->ap_link_monitor_timeout =
+			cfg_get(psoc, CFG_AP_LINK_MONITOR_TIMEOUT);
+	timeouts->ps_data_inactivity_timeout =
+			cfg_get(psoc, CFG_PS_DATA_INACTIVITY_TIMEOUT);
 }
 
 static void mlme_init_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,

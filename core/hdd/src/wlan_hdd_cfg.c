@@ -411,13 +411,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_COUNTRY_CODE_PRIORITY_MIN,
 		     CFG_COUNTRY_CODE_PRIORITY_MAX),
 
-	REG_VARIABLE(CFG_HEARTBEAT_THRESH_24_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, HeartbeatThresh24,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_HEARTBEAT_THRESH_24_DEFAULT,
-		     CFG_HEARTBEAT_THRESH_24_MIN,
-		     CFG_HEARTBEAT_THRESH_24_MAX),
-
 	REG_VARIABLE_STRING(CFG_POWER_USAGE_NAME, WLAN_PARAM_String,
 			    struct hdd_config, PowerUsageControl,
 			    VAR_FLAGS_OPTIONAL,
@@ -614,20 +607,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_MIN,
 		     CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_MAX),
 
-	REG_VARIABLE(CFG_AP_KEEP_ALIVE_PERIOD_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, apKeepAlivePeriod,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_AP_KEEP_ALIVE_PERIOD_DEFAULT,
-		     CFG_AP_KEEP_ALIVE_PERIOD_MIN,
-		     CFG_AP_KEEP_ALIVE_PERIOD_MAX),
-
-	REG_VARIABLE(CFG_AP_LINK_MONITOR_PERIOD_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, apLinkMonitorPeriod,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_AP_LINK_MONITOR_PERIOD_DEFAULT,
-		     CFG_AP_LINK_MONITOR_PERIOD_MIN,
-		     CFG_AP_LINK_MONITOR_PERIOD_MAX),
-
 	REG_VARIABLE(CFG_DISABLE_PACKET_FILTER, WLAN_PARAM_Integer,
 		     struct hdd_config, disablePacketFilter,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -760,13 +739,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_FW_MCC_BCAST_PROB_RESP_DEFAULT,
 		CFG_FW_MCC_BCAST_PROB_RESP_MIN,
 		CFG_FW_MCC_BCAST_PROB_RESP_MAX),
-
-	REG_VARIABLE(CFG_DATA_INACTIVITY_TIMEOUT_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nDataInactivityTimeout,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_DATA_INACTIVITY_TIMEOUT_DEFAULT,
-		     CFG_DATA_INACTIVITY_TIMEOUT_MIN,
-		     CFG_DATA_INACTIVITY_TIMEOUT_MAX),
 
 	REG_VARIABLE(CFG_WOW_DATA_INACTIVITY_TIMEOUT_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, wow_data_inactivity_timeout,
@@ -5304,29 +5276,11 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME to CFG");
 	}
 
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT,
-		    config->nDataInactivityTimeout) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT to CFG");
-	}
-
 	if (sme_cfg_set_int(mac_handle,
 		WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT,
 		config->wow_data_inactivity_timeout) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Fail to pass WNI_CFG_PS_WOW_DATA_INACTIVITY_TO CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_AP_KEEP_ALIVE_TIMEOUT,
-		    config->apKeepAlivePeriod) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_AP_KEEP_ALIVE_TIMEOUT to CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_AP_LINK_MONITOR_TIMEOUT,
-		    config->apLinkMonitorPeriod) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_AP_LINK_MONITOR_TIMEOUT to CFG");
 	}
 
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_11D_ENABLED,
@@ -5340,12 +5294,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 			QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Failure: Couldn't set value for WNI_CFG_DFS_MASTER_ENABLED");
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_HEART_BEAT_THRESHOLD,
-		    config->HeartbeatThresh24) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_HEART_BEAT_THRESHOLD to CFG");
 	}
 
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
@@ -5488,7 +5436,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	 */
 	smeConfig->csrConfig.shortSlotTime = pConfig->ShortSlotTimeEnabled;
 	smeConfig->csrConfig.Is11dSupportEnabled = pConfig->Is11dSupportEnabled;
-	smeConfig->csrConfig.HeartbeatThresh24 = pConfig->HeartbeatThresh24;
 
 	smeConfig->csrConfig.phyMode =
 		hdd_cfg_xlate_to_csr_phy_mode(pConfig->dot11Mode);

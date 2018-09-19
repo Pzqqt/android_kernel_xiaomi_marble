@@ -129,11 +129,8 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal pMac)
 		return false;
 	}
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_ASSOCIATION_FAILURE_TIMEOUT,
-			     &cfgValue) != QDF_STATUS_SUCCESS)
-		pe_err("could not retrieve AssocFailureTimeout value");
-
-	cfgValue = SYS_MS_TO_TICKS(cfgValue);
+	cfgValue = SYS_MS_TO_TICKS(
+			pMac->mlme_cfg->timeouts.assoc_failure_timeout);
 	/* Create Association failure timer and activate it later */
 	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimAssocFailureTimer,
 			    "ASSOC FAILURE TIMEOUT",
@@ -143,11 +140,7 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal pMac)
 		return false;
 	}
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_ADDTS_RSP_TIMEOUT, &cfgValue)
-			     != QDF_STATUS_SUCCESS)
-		pe_err("Fail to get WNI_CFG_ADDTS_RSP_TIMEOUT");
-
-	cfgValue = SYS_MS_TO_TICKS(cfgValue);
+	cfgValue = SYS_MS_TO_TICKS(pMac->mlme_cfg->timeouts.addts_rsp_timeout);
 
 	/* Create Addts response timer and activate it later */
 	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimAddtsRspTimer,
@@ -159,11 +152,8 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal pMac)
 		return false;
 	}
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
-			     &cfgValue) != QDF_STATUS_SUCCESS)
-		pe_err("could not retrieve AuthFailureTimeout value");
-
-	cfgValue = SYS_MS_TO_TICKS(cfgValue);
+	cfgValue = SYS_MS_TO_TICKS(
+			pMac->mlme_cfg->timeouts.auth_failure_timeout);
 	/* Create Auth failure timer and activate it later */
 	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimAuthFailureTimer,
 			    "AUTH FAILURE TIMEOUT",
@@ -174,12 +164,9 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal pMac)
 		return false;
 	}
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_PROBE_AFTER_HB_FAIL_TIMEOUT,
-			     &cfgValue) != QDF_STATUS_SUCCESS)
-		pe_err("could not retrieve PROBE_AFTER_HB_FAIL_TIMEOUT value");
-
 	/* Change timer to reactivate it in future */
-	cfgValue = SYS_MS_TO_TICKS(cfgValue);
+	cfgValue = SYS_MS_TO_TICKS(
+		pMac->mlme_cfg->timeouts.probe_after_hb_fail_timeout);
 	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimProbeAfterHBTimer,
 			    "Probe after Heartbeat TIMEOUT",
 			    lim_timer_handler,
@@ -269,11 +256,8 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 	lim_init_pre_auth_timer_table(pMac, &pMac->lim.gLimPreAuthTimerTable);
 	pe_debug("alloc and init table for preAuth timers");
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_OLBC_DETECT_TIMEOUT,
-			     &cfgValue) != QDF_STATUS_SUCCESS)
-		pe_err("could not retrieve OLBD detect timeout value");
-
-	cfgValue = SYS_MS_TO_TICKS(cfgValue);
+	cfgValue = SYS_MS_TO_TICKS(
+			pMac->mlme_cfg->timeouts.olbc_detect_timeout);
 	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimUpdateOlbcCacheTimer,
 			    "OLBC UPDATE CACHE TIMEOUT",
 			    lim_update_olbc_cache_timer_handler,
@@ -637,15 +621,8 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 			pe_err("Unable to deactivate auth failure timer");
 		}
 		/* Change timer to reactivate it in future */
-		if (wlan_cfg_get_int(pMac, WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
-				     &val) != QDF_STATUS_SUCCESS) {
-			/**
-			 * Could not get AuthFailureTimeout value
-			 * from CFG. Log error.
-			 */
-			pe_err("could not retrieve AuthFailureTimeout value");
-		}
-		val = SYS_MS_TO_TICKS(val);
+		val = SYS_MS_TO_TICKS(
+				pMac->mlme_cfg->timeouts.auth_failure_timeout);
 
 		if (tx_timer_change(&pMac->lim.limTimers.gLimAuthFailureTimer,
 				    val, 0) != TX_SUCCESS) {
@@ -693,15 +670,8 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 			pe_err("unable to deactivate Association failure timer");
 		}
 		/* Change timer to reactivate it in future */
-		if (wlan_cfg_get_int(pMac, WNI_CFG_ASSOCIATION_FAILURE_TIMEOUT,
-				     &val) != QDF_STATUS_SUCCESS) {
-			/**
-			 * Could not get AssocFailureTimeout value
-			 * from CFG. Log error.
-			 */
-			pe_err("could not retrieve AssocFailureTimeout value");
-		}
-		val = SYS_MS_TO_TICKS(val);
+		val = SYS_MS_TO_TICKS(
+				pMac->mlme_cfg->timeouts.assoc_failure_timeout);
 
 		if (tx_timer_change(&pMac->lim.limTimers.gLimAssocFailureTimer,
 				    val, 0) != TX_SUCCESS) {
@@ -723,16 +693,9 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 			pe_debug("Deactivated probe after hb timer");
 		}
 
-		if (wlan_cfg_get_int(pMac, WNI_CFG_PROBE_AFTER_HB_FAIL_TIMEOUT,
-				     &val) != QDF_STATUS_SUCCESS) {
-			/**
-			 * Could not get PROBE_AFTER_HB_FAILURE
-			 * value from CFG. Log error.
-			 */
-			pe_err("could not retrieve PROBE_AFTER_HB_FAIL_TIMEOUT value");
-		}
 		/* Change timer to reactivate it in future */
-		val = SYS_MS_TO_TICKS(val);
+		val = SYS_MS_TO_TICKS(
+			pMac->mlme_cfg->timeouts.probe_after_hb_fail_timeout);
 
 		if (tx_timer_change(&pMac->lim.limTimers.gLimProbeAfterHBTimer,
 				    val, 0) != TX_SUCCESS) {
@@ -914,18 +877,8 @@ lim_deactivate_and_change_per_sta_id_timer(tpAniSirGlobal pMac, uint32_t timerId
 			pe_err("unable to deactivate auth response timer");
 		}
 		/* Change timer to reactivate it in future */
-
-		if (wlan_cfg_get_int
-			    (pMac, WNI_CFG_AUTHENTICATE_RSP_TIMEOUT,
-			    &val) != QDF_STATUS_SUCCESS) {
-			/**
-			 * Could not get auth rsp timeout value
-			 * from CFG. Log error.
-			 */
-			pe_err("could not retrieve auth response timeout value");
-		}
-
-		val = SYS_MS_TO_TICKS(val);
+		val = SYS_MS_TO_TICKS(
+				pMac->mlme_cfg->timeouts.auth_rsp_timeout);
 
 		if (tx_timer_change(&pAuthNode->timer, val, 0) !=
 		    TX_SUCCESS) {

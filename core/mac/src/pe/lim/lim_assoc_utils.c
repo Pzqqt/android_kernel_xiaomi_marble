@@ -35,6 +35,7 @@
 
 #include "wni_cfg.h"
 #include "cfg_api.h"
+#include "cfg_ucfg_api.h"
 
 #include "sch_api.h"
 #include "utils_api.h"
@@ -3159,7 +3160,7 @@ lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
 {
 	tSirMacSSid current_ssid;
 	tLimMlmJoinCnf mlm_join_cnf;
-	uint32_t val = 0;
+	uint32_t val;
 	uint32_t *noa_duration_from_beacon = NULL;
 	uint32_t *noa2_duration_from_beacon = NULL;
 	uint32_t noa;
@@ -3231,14 +3232,14 @@ lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
 				MAX_NOA_PERIOD_IN_MICROSECS : noa;
 		noa = noa / 1000; /* Convert to ms */
 
-		if (wlan_cfg_get_int(mac_ctx,
-			WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT, &val) ==
-			 QDF_STATUS_SUCCESS) {
-			session_entry->defaultAuthFailureTimeout = val;
-			cfg_set_int(mac_ctx,
-				WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
-				val + noa);
-		}
+		session_entry->defaultAuthFailureTimeout =
+			mac_ctx->mlme_cfg->timeouts.auth_failure_timeout;
+		val = mac_ctx->mlme_cfg->timeouts.auth_failure_timeout + noa;
+		if (cfg_in_range(CFG_AUTH_FAILURE_TIMEOUT, val))
+			mac_ctx->mlme_cfg->timeouts.auth_failure_timeout = val;
+		else
+			mac_ctx->mlme_cfg->timeouts.auth_failure_timeout =
+				cfg_default(CFG_AUTH_FAILURE_TIMEOUT);
 	} else {
 		session_entry->defaultAuthFailureTimeout = 0;
 	}
@@ -4688,14 +4689,7 @@ void lim_init_pre_auth_timer_table(tpAniSirGlobal pMac,
 	tLimPreAuthNode **pAuthNode = pPreAuthTimerTable->pTable;
 
 	/* Get AUTH_RSP Timers value */
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_AUTHENTICATE_RSP_TIMEOUT,
-			     &cfgValue) != QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve AUTH_RSP timeout value");
-		return;
-	}
-
-	cfgValue = SYS_MS_TO_TICKS(cfgValue);
+	cfgValue = SYS_MS_TO_TICKS(pMac->mlme_cfg->timeouts.auth_rsp_timeout);
 	for (authNodeIdx = 0; authNodeIdx < pPreAuthTimerTable->numEntry;
 	     authNodeIdx++) {
 		if (tx_timer_create(pMac, &(pAuthNode[authNodeIdx]->timer),

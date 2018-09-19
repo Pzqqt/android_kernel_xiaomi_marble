@@ -570,14 +570,7 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	/* Set Tx/Rx Data InActivity Timeout   */
-	if (wlan_cfg_get_int(mac, WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT,
-			     &cfg_data_val) != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT");
-		cfg_data_val = POWERSAVE_DEFAULT_INACTIVITY_TIME;
-	}
-	inactivity_time = (uint32_t) cfg_data_val;
+	inactivity_time = mac->mlme_cfg->timeouts.ps_data_inactivity_timeout;
 
 	if (enable) {
 		/* override normal configuration and force station asleep */

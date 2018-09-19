@@ -306,14 +306,7 @@ static QDF_STATUS __lim_init_config(tpAniSirGlobal pMac)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* WNI_CFG_HEART_BEAT_THRESHOLD */
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HEART_BEAT_THRESHOLD, &val1) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve WNI_CFG_HEART_BEAT_THRESHOLD CFG");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (!val1) {
+	if (!pMac->mlme_cfg->timeouts.heart_beat_threshold) {
 		pMac->sys.gSysEnableLinkMonitorMode = 0;
 	} else {
 		/* No need to activate the timer during init time. */

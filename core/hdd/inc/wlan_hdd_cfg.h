@@ -184,11 +184,6 @@ struct hdd_context;
 #define CFG_COUNTRY_CODE_PRIORITY_MAX          (1)
 #define CFG_COUNTRY_CODE_PRIORITY_DEFAULT      (0)
 
-#define CFG_HEARTBEAT_THRESH_24_NAME           "gHeartbeat24"
-#define CFG_HEARTBEAT_THRESH_24_MIN            WNI_CFG_HEART_BEAT_THRESHOLD_STAMIN
-#define CFG_HEARTBEAT_THRESH_24_MAX            WNI_CFG_HEART_BEAT_THRESHOLD_STAMAX
-#define CFG_HEARTBEAT_THRESH_24_DEFAULT        WNI_CFG_HEART_BEAT_THRESHOLD_STADEF
-
 /*
  * <ini>
  * gMaxRxAmpduFactor - Provide the maximum ampdu factor.
@@ -2396,50 +2391,6 @@ enum hdd_dot11_mode {
 #define CFG_AP_STA_SECURITY_SEPERATION_MAX     (1)
 #define CFG_AP_STA_SECURITY_SEPERATION_DEFAULT (0)
 
-/*
- * <ini>
- * gApKeepAlivePeriod - AP keep alive period
- * @Min: 1
- * @Max: 65535
- * @Default: 20
- *
- * This ini is used to set keep alive period of AP
- *
- * Related: None.
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_AP_KEEP_ALIVE_PERIOD_NAME          "gApKeepAlivePeriod"
-#define CFG_AP_KEEP_ALIVE_PERIOD_MIN           WNI_CFG_AP_KEEP_ALIVE_TIMEOUT_STAMIN
-#define CFG_AP_KEEP_ALIVE_PERIOD_MAX           WNI_CFG_AP_KEEP_ALIVE_TIMEOUT_STAMAX
-#define CFG_AP_KEEP_ALIVE_PERIOD_DEFAULT       WNI_CFG_AP_KEEP_ALIVE_TIMEOUT_STADEF
-
-/*
- * <ini>
- * gApLinkMonitorPeriod - AP keep alive period
- * @Min: 3
- * @Max: 50
- * @Default: 10
- *
- * This ini is used to configure AP link monitor timeout value
- *
- * Related: None.
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_AP_LINK_MONITOR_PERIOD_NAME          "gApLinkMonitorPeriod"
-#define CFG_AP_LINK_MONITOR_PERIOD_MIN           (3)
-#define CFG_AP_LINK_MONITOR_PERIOD_MAX           (50)
-#define CFG_AP_LINK_MONITOR_PERIOD_DEFAULT       (10)
-
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 #define CFG_WLAN_AUTO_SHUTDOWN              "gWlanAutoShutdown"
 #define CFG_WLAN_AUTO_SHUTDOWN_MIN          (0)
@@ -2747,27 +2698,6 @@ enum hdd_dot11_mode {
 #define CFG_FW_MCC_BCAST_PROB_RESP_MIN         (0)
 #define CFG_FW_MCC_BCAST_PROB_RESP_MAX         (1)
 #define CFG_FW_MCC_BCAST_PROB_RESP_DEFAULT     (0)
-
-/*
- * <ini>
- * gDataInactivityTimeout - Data activity timeout for non wow mode.
- * @Min: 1
- * @Max: 255
- * @Default: 200
- *
- * This ini is used to set data inactivity timeout in non wow mode.
- *
- * Supported Feature: inactivity timeout in non wow mode
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_DATA_INACTIVITY_TIMEOUT_NAME       "gDataInactivityTimeout"
-#define CFG_DATA_INACTIVITY_TIMEOUT_MIN        (1)
-#define CFG_DATA_INACTIVITY_TIMEOUT_MAX        (255)
-#define CFG_DATA_INACTIVITY_TIMEOUT_DEFAULT    (200)
 
 /*
  * <ini>
@@ -9814,7 +9744,6 @@ struct hdd_config {
 	bool Is11dSupportEnabled;
 	bool Is11hSupportEnabled;
 	bool fSupplicantCountryCodeHasPriority;
-	uint32_t HeartbeatThresh24;
 	char PowerUsageControl[4];
 	bool fIsImpsEnabled;
 	bool is_ps_enabled;
@@ -9842,9 +9771,7 @@ struct hdd_config {
 	uint16_t apProtection;
 	bool apOBSSProtEnabled;
 	bool apDisableIntraBssFwd;
-	uint32_t apKeepAlivePeriod;
 	enum station_keepalive_method sta_keepalive_method;
-	uint32_t apLinkMonitorPeriod;
 	uint8_t nTxPowerCap;    /* In dBm */
 	bool allow_tpc_from_ap;
 	uint8_t disablePacketFilter;
@@ -9911,7 +9838,6 @@ struct hdd_config {
 
 	bool mcc_rts_cts_prot_enable;
 	bool mcc_bcast_prob_resp_enable;
-	uint8_t nDataInactivityTimeout;
 	uint8_t wow_data_inactivity_timeout;
 
 	/* WMM QoS Configuration */

@@ -223,7 +223,6 @@ typedef struct sLimMlmJoinCnf {
 
 typedef struct sLimMlmAssocReq {
 	tSirMacAddr peerMacAddr;
-	uint32_t assocFailureTimeout;
 	uint16_t capabilityInfo;
 	tSirMacListenInterval listenInterval;
 	uint8_t sessionId;
@@ -276,7 +275,6 @@ typedef struct sLimMlmAssocInd {
 
 typedef struct sLimMlmReassocReq {
 	tSirMacAddr peerMacAddr;
-	uint32_t reassocFailureTimeout;
 	uint16_t capabilityInfo;
 	tSirMacListenInterval listenInterval;
 	uint8_t sessionId;

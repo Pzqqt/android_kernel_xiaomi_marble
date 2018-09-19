@@ -198,7 +198,6 @@ typedef enum eLimDot11hChanSwStates {
 typedef struct sLimMlmAuthReq {
 	tSirMacAddr peerMacAddr;
 	tAniAuthType authType;
-	uint32_t authFailureTimeout;
 	uint8_t sessionId;
 } tLimMlmAuthReq, *tpLimMlmAuthReq;
 
