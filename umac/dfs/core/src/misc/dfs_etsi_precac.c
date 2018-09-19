@@ -60,7 +60,7 @@ int dfs_is_subchan_in_etsi_precac_done_list(struct wlan_dfs *dfs,
 				   pe_list, tmp_precac_entry) {
 			diff_ms = qdf_system_ticks_to_msecs(qdf_system_ticks() -
 					precac_entry->etsi_caclst_ticks);
-			if (channel == precac_entry->freq &&
+			if (channel == precac_entry->ieee &&
 			    diff_ms < ETSI_CAC_TIME_OUT_MS) {
 				found = 1;
 				break;
@@ -117,7 +117,7 @@ void dfs_mark_etsi_precac_dfs(struct wlan_dfs *dfs, uint8_t *channels,
 	for (i = 0; i < num_channels; i++) {
 		TAILQ_FOREACH_SAFE(precac_entry, &dfs->dfs_etsiprecac_done_list,
 				   pe_list, tmp_precac_entry) {
-			if (channels[i] != precac_entry->freq)
+			if (channels[i] != precac_entry->ieee)
 				continue;
 
 		TAILQ_REMOVE(&dfs->dfs_etsiprecac_done_list,
@@ -135,6 +135,7 @@ void dfs_init_etsi_precac_list(struct wlan_dfs *dfs)
 	uint8_t found;
 	struct dfs_etsi_precac_entry *tmp_precac_entry;
 	int nchans = 0;
+	struct dfs_channel *chan_list = NULL;
 
 	/*
 	 * We need to prepare list of unique VHT20 center frequencies.
@@ -147,32 +148,30 @@ void dfs_init_etsi_precac_list(struct wlan_dfs *dfs)
 	TAILQ_INIT(&dfs->dfs_etsiprecac_done_list);
 	TAILQ_INIT(&dfs->dfs_etsiprecac_required_list);
 
-	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
+	nchans = dfs_get_num_chans();
+
+	chan_list = qdf_mem_malloc(nchans * sizeof(*chan_list));
+	if (!chan_list)
+		return;
+
+	utils_dfs_get_chan_list(dfs->dfs_pdev_obj, (void *)chan_list, &nchans);
+	if (!nchans) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "zero channels");
+		qdf_mem_free(chan_list);
+		return;
+	}
 
 	PRECAC_LIST_LOCK(dfs);
-	/* Fill the  precac-required-list with unique elements */
 	for (i = 0; i < nchans; i++) {
-		struct dfs_channel *ichan = NULL, lc;
-
-		ichan = &lc;
-		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
-					     &ichan->dfs_ch_freq,
-					     &ichan->dfs_ch_flags,
-					     &ichan->dfs_ch_flagext,
-					     &ichan->dfs_ch_ieee,
-					     &ichan->dfs_ch_vhtop_ch_freq_seg1,
-					     &ichan->dfs_ch_vhtop_ch_freq_seg2,
-					     i);
-
-		if (!WLAN_IS_CHAN_DFS(ichan))
+		if (!WLAN_IS_CHAN_DFS(&chan_list[i]))
 			continue;
 
 		found = 0;
 		TAILQ_FOREACH(tmp_precac_entry,
 			      &dfs->dfs_etsiprecac_required_list,
 			      pe_list) {
-			if (tmp_precac_entry->freq ==
-			   ichan->dfs_ch_vhtop_ch_freq_seg1) {
+			if (tmp_precac_entry->ieee ==
+					chan_list[i].dfs_ch_ieee) {
 				found = 1;
 				break;
 			}
@@ -187,8 +186,7 @@ void dfs_init_etsi_precac_list(struct wlan_dfs *dfs)
 					"etsi precac entry alloc fail");
 				continue;
 			}
-			etsi_precac_entry->freq =
-				ichan->dfs_ch_vhtop_ch_freq_seg1;
+			etsi_precac_entry->ieee = chan_list[i].dfs_ch_ieee;
 			etsi_precac_entry->dfs = dfs;
 			TAILQ_INSERT_TAIL(&dfs->dfs_etsiprecac_required_list,
 					  etsi_precac_entry, pe_list);
@@ -201,8 +199,9 @@ void dfs_init_etsi_precac_list(struct wlan_dfs *dfs)
 	TAILQ_FOREACH(tmp_precac_entry,
 		      &dfs->dfs_etsiprecac_required_list,
 			pe_list)
-	dfs_info(dfs, WLAN_DEBUG_DFS, "freq=%u",
-		 tmp_precac_entry->freq);
+	dfs_info(dfs, WLAN_DEBUG_DFS, "ieee=%u", tmp_precac_entry->ieee);
+
+	qdf_mem_free(chan_list);
 }
 
 void dfs_deinit_etsi_precac_list(struct wlan_dfs *dfs)
@@ -265,8 +264,7 @@ void dfs_print_etsi_precaclists(struct wlan_dfs *dfs)
 		      &dfs->dfs_etsiprecac_required_list,
 			pe_list) {
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			 "freq=%u ",
-				tmp_precac_entry->freq);
+			 "ieee=%u ", tmp_precac_entry->ieee);
 	}
 
 	/* Print the ETSI Pre-CAC done List */
@@ -280,9 +278,8 @@ void dfs_print_etsi_precaclists(struct wlan_dfs *dfs)
 					tmp_precac_entry->etsi_caclst_ticks);
 
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			 "freq=%u added at (msec): %lu",
-				tmp_precac_entry->freq,
-				time_added);
+			 "ieee=%u added at (msec): %lu", tmp_precac_entry->ieee,
+			 time_added);
 	}
 	PRECAC_LIST_UNLOCK(dfs);
 }
@@ -312,7 +309,7 @@ int dfs_add_chan_to_etsi_done_list(struct wlan_dfs *dfs, uint8_t channel)
 	TAILQ_FOREACH_SAFE(precac_entry,
 			   &dfs->dfs_etsiprecac_required_list,
 			   pe_list, tmp_precac_entry) {
-		if (channel == precac_entry->freq) {
+		if (channel == precac_entry->ieee) {
 			TAILQ_REMOVE(&dfs->dfs_etsiprecac_required_list,
 				     precac_entry, pe_list);
 			TAILQ_INSERT_TAIL(&dfs->dfs_etsiprecac_done_list,

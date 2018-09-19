@@ -526,21 +526,15 @@ static void utils_dfs_get_max_sup_width(struct wlan_objmgr_pdev *pdev,
 	return;
 }
 
-/**
- * utils_dfs_get_chan_list() - Get channel list from regdb based on current
- *                             operating channel.
- * @pdev: Pointer to DFS pdev object.
- * @chan_list: Pointer to current channel list
- * @num_chan: number of channels in the current channel list.
- */
 #ifndef QCA_DFS_USE_POLICY_MANAGER
-static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
-	struct dfs_channel *chan_list, uint32_t *num_chan)
+void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
+			     void *clist, uint32_t *num_chan)
 {
 	int i = 0, j = 0;
 	enum channel_state state;
 	struct regulatory_channel *cur_chan_list;
 	struct wlan_dfs *dfs;
+	struct dfs_channel *chan_list = (struct dfs_channel *)clist;
 
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
 	if (!dfs)
@@ -617,7 +611,7 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 
-	utils_dfs_get_chan_list(pdev, tmp_chan_list, num_chan);
+	utils_dfs_get_chan_list(pdev, (void *)tmp_chan_list, num_chan);
 
 	chan_num = dfs->dfs_curchan->dfs_ch_ieee;
 	center_freq = dfs->dfs_curchan->dfs_ch_freq;
@@ -658,8 +652,8 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 
 #else
 
-static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
-	struct dfs_channel *chan_list, uint32_t *num_chan)
+void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
+			     void *clist, uint32_t *num_chan)
 {
 	uint8_t pcl_ch[QDF_MAX_NUM_CHAN] = {0};
 	uint8_t weight_list[QDF_MAX_NUM_CHAN] = {0};
@@ -668,6 +662,7 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	int i;
 	struct wlan_objmgr_psoc *psoc;
 	uint32_t conn_count = 0;
+	struct dfs_channel *chan_list = (struct dfs_channel *)clist;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc) {
@@ -714,7 +709,7 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 	struct dfs_channel *chan_list, uint32_t *num_chan)
 {
-	utils_dfs_get_chan_list(pdev, chan_list, num_chan);
+	utils_dfs_get_chan_list(pdev, (void *)chan_list, num_chan);
 }
 #endif
 
@@ -1088,3 +1083,8 @@ QDF_STATUS utils_dfs_is_spoof_check_failed(struct wlan_objmgr_pdev *pdev,
 
 qdf_export_symbol(utils_dfs_is_spoof_check_failed);
 #endif
+
+int dfs_get_num_chans(void)
+{
+	return NUM_CHANNELS;
+}

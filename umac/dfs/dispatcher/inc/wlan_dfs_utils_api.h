@@ -623,4 +623,21 @@ QDF_STATUS utils_dfs_is_spoof_check_failed(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * dfs_get_num_chans() - Get the number of channels supported by the regulatory.
+ *
+ * Return: Number of supported channels.
+ */
+int dfs_get_num_chans(void);
+
+/**
+ * utils_dfs_get_chan_list() - Get channel list from regdb.
+ * @pdev: Pointer to DFS pdev object.
+ * @clist: Pointer to current channel list
+ * @num_chan: number of channels in the current channel list.
+ */
+void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
+			     void *clist,
+			     uint32_t *num_chan);
 #endif /* _WLAN_DFS_UTILS_API_H_ */
