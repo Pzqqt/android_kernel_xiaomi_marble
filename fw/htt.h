@@ -171,9 +171,10 @@
  * 3.54 Define mcast and mcast_valid flags within htt_tx_wbm_transmit_status
  * 3.55 Add initiator / responder flags to RX_DELBA indication
  * 3.56 Fix HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE bit-mask defs
+ * 3.57 Add support for in-band data within HTT_T2H_MSG_TYPE_CFR_DUMP_COMPL_IND
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 56
+#define HTT_CURRENT_VERSION_MINOR 57
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -10756,8 +10757,12 @@ typedef enum {
     /* This message type is currently used for the below purpose:
      *
      * - capture_method = WMI_PEER_CFR_CAPTURE_METHOD_NULL_FRAME in the
-     *   wmi_peer_cfr_capture_cmd. The associated memory region gets allocated
-     *   through WMI_CHANNEL_CAPTURE_HOST_MEM_REQ_ID
+     *   wmi_peer_cfr_capture_cmd.
+     *   If payload_present bit is set to 0 then the associated memory region
+     *   gets allocated through WMI_CHANNEL_CAPTURE_HOST_MEM_REQ_ID.
+     *   If payload_present bit is set to 1 then CFR dump is part of the HTT
+     *   message; the CFR dump will be present at the end of the message,
+     *   after the chan_phy_mode.
      */
     HTT_PEER_CFR_CAPTURE_MSG_TYPE_1  = 0x1,
 
@@ -10781,10 +10786,10 @@ typedef enum {
  *
  * **************************************************************************
  *
- *          |31                           16|15                   |7        0|
+ *          |31                           16|15                 |8|7        0|
  *          |----------------------------------------------------------------|
- * header:  |                           reserved                  | msg_type |
- * word 0   |                                                     |          |
+ * header:  |                           reserved                |P| msg_type |
+ * word 0   |                                                   | |          |
  *          |----------------------------------------------------------------|
  * payload: |                      cfr_capture_msg_type                      |
  * word 1   |                                                                |
@@ -10823,6 +10828,7 @@ typedef enum {
  * word 12  |                                                                |
  *          |----------------------------------------------------------------|
  * where,
+ * P       - payload present bit (payload_present explained below)
  * req_id  - memory request id (mem_req_id explained below)
  * S       - status field (status explained below)
  * capbw   - capture bandwidth (capture_bw explained below)
@@ -10841,8 +10847,15 @@ typedef enum {
  *   Bits 7:0
  *   Purpose: Identifies this as CFR TX completion indication
  *   Value: HTT_T2H_MSG_TYPE_CFR_DUMP_COMPL_IND
+ * - payload_present
+ *   Bit 8
+ *   Purpose: Identifies how CFR data is sent to host
+ *   Value: 0 - If CFR Payload is written to host memory
+ *          1 - If CFR Payload is sent as part of HTT message
+ *              (This is the requirement for SDIO/USB where it is
+ *               not possible to write CFR data to host memory)
  * - reserved
- *   Bits 31:8
+ *   Bits 31:9
  *   Purpose: Reserved
  *   Value: 0
  *
@@ -10861,7 +10874,8 @@ typedef enum {
  *   Bits 6:0
  *   Purpose: Contain the mem request id of the region where the CFR capture
  *       has been stored - of type WMI_HOST_MEM_REQ_ID
- *   Value: WMI_CHANNEL_CAPTURE_HOST_MEM_REQ_ID
+ *   Value: WMI_CHANNEL_CAPTURE_HOST_MEM_REQ_ID (if payload_present is 1,
+            this value is invalid)
  * - status
  *   Bit 7
  *   Purpose: Boolean value carrying the status of the CFR capture of the peer
@@ -10989,6 +11003,22 @@ PREPACK struct htt_cfr_dump_compl_ind {
          */
     };
 } POSTPACK;
+
+/*
+ * Get / set macros for the bit fields within WORD-1 of htt_cfr_dump_compl_ind,
+ * msg_type = HTT_PEER_CFR_CAPTURE_MSG_TYPE_1
+ */
+#define HTT_T2H_CFR_DUMP_PAYLOAD_PRESENT_ID_M      0x00000100
+#define HTT_T2H_CFR_DUMP_PAYLOAD_PRESENT_ID_S      8
+
+#define HTT_T2H_CFR_DUMP_PAYLOAD_PRESENT_ID_SET(word, value) \
+  do { \
+         HTT_CHECK_SET_VAL(HTT_T2H_CFR_DUMP_PAYLOAD_PRESENT_ID, value); \
+         (word)  |= (value) << HTT_T2H_CFR_DUMP_PAYLOAD_PRESENT_ID_S;   \
+     } while(0)
+#define HTT_T2H_CFR_DUMP_PAYLOAD_PRESENT_ID_GET(word) \
+       (((word) & HTT_T2H_CFR_DUMP_PAYLOAD_PRESENT_ID_M) >> \
+           HTT_T2H_CFR_DUMP_PAYLOAD_PRESENT_ID_S)
 
 /*
  * Get / set macros for the bit fields within WORD-2 of htt_cfr_dump_compl_ind,
