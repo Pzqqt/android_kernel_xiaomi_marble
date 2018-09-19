@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,6 +64,7 @@ QDF_STATUS wlan_mlme_get_edca_params(struct wlan_mlme_edca_params *edca_params,
 
 /*
  * mlme_get_wep_key() - get the wep key to process during auth frame
+ * @vdev: VDEV object for which the wep key is being requested
  * @wep_params: cfg wep parameters structure
  * @wep_key_id: default key number
  * @default_key: default key to be copied
@@ -71,7 +72,8 @@ QDF_STATUS wlan_mlme_get_edca_params(struct wlan_mlme_edca_params *edca_params,
  *
  * Return QDF_STATUS
  */
-QDF_STATUS mlme_get_wep_key(struct wlan_mlme_wep_cfg *wep_params,
+QDF_STATUS mlme_get_wep_key(struct wlan_objmgr_vdev *vdev,
+			    struct wlan_mlme_wep_cfg *wep_params,
 			    enum wep_key_id wep_keyid, uint8_t *default_key,
 			    qdf_size_t *key_len);
 
