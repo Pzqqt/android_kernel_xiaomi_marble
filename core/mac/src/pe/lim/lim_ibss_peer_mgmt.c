@@ -30,6 +30,7 @@
 #include "lim_session.h"
 #include "lim_ibss_peer_mgmt.h"
 #include "lim_types.h"
+#include "wlan_mlme_api.h"
 
 /**
  * ibss_peer_find
@@ -482,7 +483,7 @@ static void ibss_bss_add(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	tpSirMacMgmtHdr pHdr = (tpSirMacMgmtHdr) pMac->lim.ibssInfo.pHdr;
 	tpSchBeaconStruct pBeacon =
 		(tpSchBeaconStruct) pMac->lim.ibssInfo.pBeacon;
-	uint8_t numExtRates = 0;
+	qdf_size_t num_ext_rates = 0;
 
 	if ((pHdr == NULL) || (pBeacon == NULL)) {
 		pe_err("Unable to add BSS (no cached BSS info)");
@@ -525,10 +526,11 @@ static void ibss_bss_add(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	 */
 
 	if (pBeacon->extendedRatesPresent)
-		numExtRates = pBeacon->extendedRates.numRates;
-	if (cfg_set_str(pMac, WNI_CFG_EXTENDED_OPERATIONAL_RATE_SET,
-			(uint8_t *) &pBeacon->extendedRates.rate,
-			numExtRates) != QDF_STATUS_SUCCESS) {
+		num_ext_rates = pBeacon->extendedRates.numRates;
+	if (wlan_mlme_set_cfg_str(
+		(uint8_t *)&pBeacon->extendedRates.rate,
+		&pMac->mlme_cfg->rates.ext_opr_rate_set,
+		num_ext_rates) != QDF_STATUS_SUCCESS) {
 		pe_err("could not update ExtendedOperRateset at CFG");
 		return;
 	}

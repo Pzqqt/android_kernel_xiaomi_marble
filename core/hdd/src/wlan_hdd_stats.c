@@ -3959,12 +3959,12 @@ static int hdd_report_max_rate(mac_handle_t mac_handle,
 	uint16_t max_rate = 0;
 	uint32_t vht_mcs_map;
 	uint16_t current_rate = 0;
-	uint8_t or_leng = CSR_DOT11_SUPPORTED_RATES_MAX;
+	qdf_size_t or_leng = CSR_DOT11_SUPPORTED_RATES_MAX;
 	uint8_t operational_rates[CSR_DOT11_SUPPORTED_RATES_MAX];
 	uint8_t extended_rates[CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX];
-	uint32_t er_leng = CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX;
+	qdf_size_t er_leng = CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX;
 	uint8_t mcs_rates[SIZE_OF_BASIC_MCS_SET];
-	uint32_t mcs_leng = SIZE_OF_BASIC_MCS_SET;
+	qdf_size_t mcs_leng = SIZE_OF_BASIC_MCS_SET;
 	struct index_vht_data_rate_type *supported_vht_mcs_rate;
 	struct index_data_rate_type *supported_mcs_rate;
 	enum data_rate_11ac_max_mcs vht_max_mcs;
@@ -4011,10 +4011,8 @@ static int hdd_report_max_rate(mac_handle_t mac_handle,
 	max_rate = 0;
 
 	/* Get Basic Rate Set */
-	if (0 != sme_cfg_get_str(mac_handle,
-				 WNI_CFG_OPERATIONAL_RATE_SET,
-				 operational_rates,
-				 (uint32_t *)&or_leng)) {
+	if (0 != ucfg_mlme_get_opr_rate_set(hdd_ctx->psoc,
+					    operational_rates, &or_leng)) {
 		hdd_err("cfg get returned failure");
 		/*To keep GUI happy */
 		return 0;
@@ -4037,9 +4035,9 @@ static int hdd_report_max_rate(mac_handle_t mac_handle,
 	}
 
 	/* Get Extended Rate Set */
-	if (0 != sme_cfg_get_str(mac_handle,
-				 WNI_CFG_EXTENDED_OPERATIONAL_RATE_SET,
-				 extended_rates, &er_leng)) {
+	if (0 != ucfg_mlme_get_ext_opr_rate_set(hdd_ctx->psoc,
+						extended_rates,
+						&er_leng)) {
 		hdd_err("cfg get returned failure");
 		/*To keep GUI happy */
 		return 0;
@@ -4062,9 +4060,9 @@ static int hdd_report_max_rate(mac_handle_t mac_handle,
 	 * actual speed
 	 */
 	if ((3 != rssidx) && !(tx_rate_flags & TX_RATE_LEGACY)) {
-		if (0 != sme_cfg_get_str(mac_handle,
-					 WNI_CFG_CURRENT_MCS_SET, mcs_rates,
-					 &mcs_leng)) {
+		if (0 != ucfg_mlme_get_current_mcs_set(hdd_ctx->psoc,
+						       mcs_rates,
+						       &mcs_leng)) {
 			hdd_err("cfg get returned failure");
 			/*To keep GUI happy */
 			return 0;

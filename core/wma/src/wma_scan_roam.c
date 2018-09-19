@@ -69,6 +69,7 @@
 #include <wlan_scan_public_structs.h>
 #include <wlan_scan_ucfg_api.h>
 #include "wma_nan_datapath.h"
+#include "wlan_mlme_api.h"
 
 #define WMA_MCC_MIRACAST_REST_TIME 400
 #define WMA_SCAN_ID_MASK 0x0fff
@@ -2671,6 +2672,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 					roam_offload_params,
 					tSirRoamOffloadScanReq *roam_req)
 {
+	qdf_size_t val_len;
 	struct sAniSirGlobal *pMac = NULL;
 	tSirMacCapabilityInfo selfCaps;
 	uint32_t val = 0;
@@ -2772,12 +2774,12 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	nCfgValue8 = (uint8_t) nCfgValue;
 	roam_offload_params->ampdu_param = (nCfgValue8) & 0xFF;
 
-	val = ROAM_OFFLOAD_NUM_MCS_SET;
-	if (wlan_cfg_get_str(pMac, WNI_CFG_SUPPORTED_MCS_SET,
-			     (uint8_t *) roam_offload_params->mcsset,
-			     &val) != QDF_STATUS_SUCCESS) {
+	val_len = ROAM_OFFLOAD_NUM_MCS_SET;
+	if (wlan_mlme_get_cfg_str((uint8_t *)roam_offload_params->mcsset,
+				  &pMac->mlme_cfg->rates.supported_mcs_set,
+				  &val_len) != QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_SUPPORTED_MCS_SET");
+			  "Failed to get CFG_SUPPORTED_MCS_SET");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (wlan_cfg_get_int(pMac, WNI_CFG_EXT_HT_CAP_INFO, &nCfgValue) !=

@@ -5090,13 +5090,13 @@ static void csr_set_cfg_rate_set(tpAniSirGlobal pMac, eCsrPhyMode phyMode,
 	enum csr_cfgdot11mode cfgDot11Mode;
 	/* leave enough room for the max number of rates */
 	uint8_t OperationalRates[CSR_DOT11_SUPPORTED_RATES_MAX];
-	uint32_t OperationalRatesLength = 0;
+	qdf_size_t OperationalRatesLength = 0;
 	/* leave enough room for the max number of rates */
 	uint8_t ExtendedOperationalRates
 				[CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX];
-	uint32_t ExtendedOperationalRatesLength = 0;
+	qdf_size_t ExtendedOperationalRatesLength = 0;
 	uint8_t MCSRateIdxSet[SIZE_OF_SUPPORTED_MCS_SET];
-	uint32_t MCSRateLength = 0;
+	qdf_size_t MCSRateLength = 0;
 
 	QDF_ASSERT(pIes != NULL);
 	if (NULL != pIes) {
@@ -5168,13 +5168,15 @@ static void csr_set_cfg_rate_set(tpAniSirGlobal pMac, eCsrPhyMode phyMode,
 			}
 		}
 		/* Set the operational rate set CFG variables... */
-		cfg_set_str(pMac, WNI_CFG_OPERATIONAL_RATE_SET,
-				OperationalRates, OperationalRatesLength);
-		cfg_set_str(pMac, WNI_CFG_EXTENDED_OPERATIONAL_RATE_SET,
-				ExtendedOperationalRates,
-				ExtendedOperationalRatesLength);
-		cfg_set_str(pMac, WNI_CFG_CURRENT_MCS_SET, MCSRateIdxSet,
-				MCSRateLength);
+		wlan_mlme_set_cfg_str(OperationalRates,
+				      &pMac->mlme_cfg->rates.opr_rate_set,
+				      OperationalRatesLength);
+		wlan_mlme_set_cfg_str(ExtendedOperationalRates,
+				      &pMac->mlme_cfg->rates.ext_opr_rate_set,
+				      ExtendedOperationalRatesLength);
+		wlan_mlme_set_cfg_str(MCSRateIdxSet,
+				      &pMac->mlme_cfg->rates.current_mcs_set,
+				      MCSRateLength);
 	} /* Parsing BSSDesc */
 	else
 		sme_err("failed to parse BssDesc");
@@ -5203,11 +5205,11 @@ static void csr_set_cfg_rate_set_from_profile(tpAniSirGlobal pMac,
 	enum band_info eBand;
 	/* leave enough room for the max number of rates */
 	uint8_t OperationalRates[CSR_DOT11_SUPPORTED_RATES_MAX];
-	uint32_t OperationalRatesLength = 0;
+	qdf_size_t OperationalRatesLength = 0;
 	/* leave enough room for the max number of rates */
 	uint8_t ExtendedOperationalRates
 				[CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX];
-	uint32_t ExtendedOperationalRatesLength = 0;
+	qdf_size_t ExtendedOperationalRatesLength = 0;
 	uint8_t operationChannel = 0;
 
 	if (pProfile->ChannelInfo.ChannelList)
@@ -5263,11 +5265,12 @@ static void csr_set_cfg_rate_set_from_profile(tpAniSirGlobal pMac,
 	}
 
 	/* Set the operational rate set CFG variables... */
-	cfg_set_str(pMac, WNI_CFG_OPERATIONAL_RATE_SET, OperationalRates,
-			OperationalRatesLength);
-	cfg_set_str(pMac, WNI_CFG_EXTENDED_OPERATIONAL_RATE_SET,
-			ExtendedOperationalRates,
-			ExtendedOperationalRatesLength);
+	wlan_mlme_set_cfg_str(OperationalRates,
+			      &pMac->mlme_cfg->rates.opr_rate_set,
+			      OperationalRatesLength);
+	wlan_mlme_set_cfg_str(ExtendedOperationalRates,
+			      &pMac->mlme_cfg->rates.ext_opr_rate_set,
+			      ExtendedOperationalRatesLength);
 }
 
 static void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac,

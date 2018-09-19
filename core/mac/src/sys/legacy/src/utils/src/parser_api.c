@@ -45,6 +45,7 @@
 #include "wifi_pos_api.h"
 #include "wlan_mlme_public_struct.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "wlan_mlme_api.h"
 
 #define RSN_OUI_SIZE 4
 /* ////////////////////////////////////////////////////////////////////// */
@@ -528,8 +529,8 @@ populate_dot11f_ext_supp_rates(tpAniSirGlobal pMac, uint8_t nChannelNum,
 			       tDot11fIEExtSuppRates *pDot11f,
 			       tpPESession psessionEntry)
 {
-	QDF_STATUS nSirStatus;
-	uint32_t nRates = 0;
+	QDF_STATUS nsir_status;
+	qdf_size_t nRates = 0;
 	uint8_t rates[SIR_MAC_RATESET_EID_MAX];
 
 	/* Use the ext rates present in session entry whenever nChannelNum is set to OPERATIONAL
@@ -545,9 +546,16 @@ populate_dot11f_ext_supp_rates(tpAniSirGlobal pMac, uint8_t nChannelNum,
 			pe_err("no session context exists while populating Operational Rate Set");
 		}
 	} else if (HIGHEST_24GHZ_CHANNEL_NUM >= nChannelNum) {
-		CFG_GET_STR(nSirStatus, pMac,
-			    WNI_CFG_EXTENDED_OPERATIONAL_RATE_SET, rates,
-			    nRates, WNI_CFG_EXTENDED_OPERATIONAL_RATE_SET_LEN);
+		nRates = pMac->mlme_cfg->rates.ext_opr_rate_set.len;
+		nsir_status = wlan_mlme_get_cfg_str(
+			rates,
+			&pMac->mlme_cfg->rates.ext_opr_rate_set, &nRates);
+		if (QDF_IS_STATUS_ERROR(nsir_status)) {
+			nRates = 0;
+			pe_err("Failed to retrieve nItem from CFG status: %d",
+			       (nsir_status));
+			return nsir_status;
+		}
 	}
 
 	if (0 != nRates) {
@@ -565,8 +573,8 @@ populate_dot11f_ext_supp_rates1(tpAniSirGlobal pMac,
 				uint8_t nChannelNum,
 				tDot11fIEExtSuppRates *pDot11f)
 {
-	uint32_t nRates;
-	QDF_STATUS nSirStatus;
+	qdf_size_t nRates;
+	QDF_STATUS nsir_status;
 	uint8_t rates[SIR_MAC_MAX_NUMBER_OF_RATES];
 
 	if (14 < nChannelNum) {
@@ -576,8 +584,16 @@ populate_dot11f_ext_supp_rates1(tpAniSirGlobal pMac,
 	/* N.B. I have *no* idea why we're calling 'wlan_cfg_get_str' with an argument */
 	/* of WNI_CFG_SUPPORTED_RATES_11A here, but that's what was done */
 	/* previously & I'm afraid to change it! */
-	CFG_GET_STR(nSirStatus, pMac, WNI_CFG_SUPPORTED_RATES_11A,
-		    rates, nRates, SIR_MAC_MAX_NUMBER_OF_RATES);
+	nRates = SIR_MAC_MAX_NUMBER_OF_RATES;
+	nsir_status = wlan_mlme_get_cfg_str(
+				rates,
+				&pMac->mlme_cfg->rates.supported_11a,
+				&nRates);
+	if (QDF_IS_STATUS_ERROR(nsir_status)) {
+		pe_err("Failed to retrieve nItem from CFG status: %d",
+		       (nsir_status));
+		return nsir_status;
+	}
 
 	if (0 != nRates) {
 		pDot11f->num_rates = (uint8_t) nRates;
@@ -592,8 +608,9 @@ QDF_STATUS
 populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 			tpPESession psessionEntry, tDot11fIEHTCaps *pDot11f)
 {
-	uint32_t nCfgValue, nCfgLen;
+	uint32_t nCfgValue;
 	uint8_t nCfgValue8;
+	qdf_size_t ncfglen;
 	QDF_STATUS nSirStatus;
 	tSirMacHTParametersInfo *pHTParametersInfo;
 	uint8_t disable_high_ht_mcs_2x2 = 0;
@@ -651,9 +668,16 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 	pDot11f->mpduDensity = pHTParametersInfo->mpduDensity;
 	pDot11f->reserved1 = pHTParametersInfo->reserved;
 
-	CFG_GET_STR(nSirStatus, pMac, WNI_CFG_SUPPORTED_MCS_SET,
-		    pDot11f->supportedMCSSet, nCfgLen,
-		    SIZE_OF_SUPPORTED_MCS_SET);
+	ncfglen = SIZE_OF_SUPPORTED_MCS_SET;
+	nSirStatus = wlan_mlme_get_cfg_str(
+		pDot11f->supportedMCSSet,
+		&pMac->mlme_cfg->rates.supported_mcs_set,
+		&ncfglen);
+	if (QDF_IS_STATUS_ERROR(nSirStatus)) {
+		pe_err("Failed to retrieve nItem from CFG status: %d",
+		       (nSirStatus));
+			return nSirStatus;
+	}
 
 	if (psessionEntry) {
 		disable_high_ht_mcs_2x2 =
@@ -1131,7 +1155,8 @@ QDF_STATUS
 populate_dot11f_ht_info(tpAniSirGlobal pMac,
 			tDot11fIEHTInfo *pDot11f, tpPESession psessionEntry)
 {
-	uint32_t nCfgValue, nCfgLen;
+	uint32_t nCfgValue;
+	qdf_size_t ncfglen;
 	uint8_t htInfoField1;
 	uint16_t htInfoField2;
 	QDF_STATUS nSirStatus;
@@ -1233,8 +1258,15 @@ populate_dot11f_ht_info(tpAniSirGlobal pMac,
 	pDot11f->pcoActive = uHTInfoField.infoField3.pcoActive;
 	pDot11f->pcoPhase = uHTInfoField.infoField3.pcoPhase;
 	pDot11f->reserved2 = uHTInfoField.infoField3.reserved;
-	CFG_GET_STR(nSirStatus, pMac, WNI_CFG_BASIC_MCS_SET,
-		    pDot11f->basicMCSSet, nCfgLen, SIZE_OF_BASIC_MCS_SET);
+	ncfglen = SIZE_OF_BASIC_MCS_SET;
+	nSirStatus = wlan_mlme_get_cfg_str(pDot11f->basicMCSSet,
+					   &pMac->mlme_cfg->rates.basic_mcs_set,
+					   &ncfglen);
+	if (QDF_IS_STATUS_ERROR(nSirStatus)) {
+		pe_err("Failed to retrieve nItem from CFG status: %d",
+		       (nSirStatus));
+		return nSirStatus;
+	}
 
 	pDot11f->present = 1;
 
@@ -1546,8 +1578,8 @@ populate_dot11f_supp_rates(tpAniSirGlobal pMac,
 			   uint8_t nChannelNum,
 			   tDot11fIESuppRates *pDot11f, tpPESession psessionEntry)
 {
-	QDF_STATUS nSirStatus;
-	uint32_t nRates;
+	QDF_STATUS nsir_status;
+	qdf_size_t nRates;
 	uint8_t rates[SIR_MAC_MAX_NUMBER_OF_RATES];
 
 	/* Use the operational rates present in session entry whenever nChannelNum is set to OPERATIONAL
@@ -1556,7 +1588,7 @@ populate_dot11f_supp_rates(tpAniSirGlobal pMac,
 	 */
 	if (POPULATE_DOT11F_RATES_OPERATIONAL == nChannelNum) {
 #if 0
-		CFG_GET_STR(nSirStatus, pMac, WNI_CFG_OPERATIONAL_RATE_SET,
+		CFG_GET_STR(nsir_status, pMac, WNI_CFG_OPERATIONAL_RATE_SET,
 			    rates, nRates, SIR_MAC_MAX_NUMBER_OF_RATES);
 #endif /* TO SUPPORT BT-AMP */
 		if (psessionEntry != NULL) {
@@ -1568,11 +1600,27 @@ populate_dot11f_supp_rates(tpAniSirGlobal pMac,
 			nRates = 0;
 		}
 	} else if (14 >= nChannelNum) {
-		CFG_GET_STR(nSirStatus, pMac, WNI_CFG_SUPPORTED_RATES_11B,
-			    rates, nRates, SIR_MAC_MAX_NUMBER_OF_RATES);
+		nRates = SIR_MAC_MAX_NUMBER_OF_RATES;
+		nsir_status = wlan_mlme_get_cfg_str(
+					rates,
+					&pMac->mlme_cfg->rates.supported_11b,
+					&nRates);
+		if (QDF_IS_STATUS_ERROR(nsir_status)) {
+			pe_err("Failed to retrieve nItem from CFG status: %d",
+			       (nsir_status));
+			return nsir_status;
+		}
 	} else {
-		CFG_GET_STR(nSirStatus, pMac, WNI_CFG_SUPPORTED_RATES_11A,
-			    rates, nRates, SIR_MAC_MAX_NUMBER_OF_RATES);
+		nRates = SIR_MAC_MAX_NUMBER_OF_RATES;
+		nsir_status = wlan_mlme_get_cfg_str(
+					rates,
+					&pMac->mlme_cfg->rates.supported_11a,
+					&nRates);
+		if (QDF_IS_STATUS_ERROR(nsir_status)) {
+			pe_err("Failed to retrieve nItem from CFG status: %d",
+			       (nsir_status));
+			return nsir_status;
+		}
 	}
 
 	if (0 != nRates) {
@@ -1610,8 +1658,9 @@ populate_dot11f_rates_tdls(tpAniSirGlobal p_mac,
 {
 	tSirMacRateSet temp_rateset;
 	tSirMacRateSet temp_rateset2;
-	uint32_t val, i;
+	uint32_t i;
 	uint32_t self_dot11mode = 0;
+	qdf_size_t num_rates;
 
 	wlan_cfg_get_int(p_mac, WNI_CFG_DOT11_MODE, &self_dot11mode);
 
@@ -1632,20 +1681,22 @@ populate_dot11f_rates_tdls(tpAniSirGlobal p_mac,
 	    (self_dot11mode == WNI_CFG_DOT11_MODE_11N) ||
 	    (self_dot11mode == WNI_CFG_DOT11_MODE_11G) ||
 	    (self_dot11mode == WNI_CFG_DOT11_MODE_11B))) {
-		val = WNI_CFG_SUPPORTED_RATES_11B_LEN;
-		wlan_cfg_get_str(p_mac, WNI_CFG_SUPPORTED_RATES_11B,
-				(uint8_t *)&temp_rateset.rate, &val);
-		temp_rateset.numRates = (uint8_t) val;
+		num_rates = p_mac->mlme_cfg->rates.supported_11b.len;
+		wlan_mlme_get_cfg_str((uint8_t *)&temp_rateset.rate,
+				      &p_mac->mlme_cfg->rates.supported_11b,
+				      &num_rates);
+		temp_rateset.numRates = (uint8_t)num_rates;
 	} else {
 	    temp_rateset.numRates = 0;
 	}
 
 	/* Include 11a rates when the device configured in non-11b mode */
 	if (!IS_DOT11_MODE_11B(self_dot11mode)) {
-		val = WNI_CFG_SUPPORTED_RATES_11A_LEN;
-		wlan_cfg_get_str(p_mac, WNI_CFG_SUPPORTED_RATES_11A,
-			(uint8_t *)&temp_rateset2.rate, &val);
-		temp_rateset2.numRates = (uint8_t) val;
+		num_rates = p_mac->mlme_cfg->rates.supported_11a.len;
+		wlan_mlme_get_cfg_str((uint8_t *)&temp_rateset2.rate,
+				      &p_mac->mlme_cfg->rates.supported_11a,
+				      &num_rates);
+		temp_rateset2.numRates = (uint8_t)num_rates;
 	} else {
 		temp_rateset2.numRates = 0;
 	}

@@ -72,6 +72,7 @@
 #include "wlan_reg_services_api.h"
 #include "wlan_tdls_tgt_api.h"
 #include "wlan_mlme_public_struct.h"
+#include "wlan_mlme_api.h"
 
 /* define NO_PAD_TDLS_MIN_8023_SIZE to NOT padding: See CR#447630
    There was IOT issue with cisco 1252 open mode, where it pads
@@ -697,7 +698,7 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal pMac,
 					    tpPESession psessionEntry)
 {
 	uint8_t nss;
-	uint32_t val;
+	qdf_size_t val_len;
 	struct mlme_vht_capabilities_info vht_cap_info;
 
 	vht_cap_info = pMac->mlme_cfg->vht_caps.vht_cap_info;
@@ -711,9 +712,10 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal pMac,
 	if (IS_DOT11_MODE_HT(selfDot11Mode)) {
 		/* Include HT Capability IE */
 		populate_dot11f_ht_caps(pMac, NULL, htCap);
-		val = SIZE_OF_SUPPORTED_MCS_SET;
-		wlan_cfg_get_str(pMac, WNI_CFG_SUPPORTED_MCS_SET,
-				&htCap->supportedMCSSet[0], &val);
+		val_len = SIZE_OF_SUPPORTED_MCS_SET;
+		wlan_mlme_get_cfg_str(&htCap->supportedMCSSet[0],
+				      &pMac->mlme_cfg->rates.supported_mcs_set,
+				      &val_len);
 		if (NSS_1x1_MODE == nss)
 			htCap->supportedMCSSet[1] = 0;
 		/*
@@ -2256,6 +2258,7 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 	uint8_t a_rateindex = 0;
 	uint8_t b_rateindex = 0;
 	uint8_t nss;
+	qdf_size_t val_len;
 
 	is_a_rate = 0;
 	temp_rate_set2.numRates = 0;
@@ -2263,24 +2266,28 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 	lim_get_phy_mode(mac_ctx, &phymode, NULL);
 
 	/* get own rate set */
-	val = WNI_CFG_OPERATIONAL_RATE_SET_LEN;
-	if (wlan_cfg_get_str(mac_ctx, WNI_CFG_OPERATIONAL_RATE_SET,
-			     (uint8_t *) &temp_rate_set.rate,
-			     &val) != QDF_STATUS_SUCCESS) {
+	val_len = mac_ctx->mlme_cfg->rates.opr_rate_set.len;
+	if (wlan_mlme_get_cfg_str((uint8_t *)&temp_rate_set.rate,
+				  &mac_ctx->mlme_cfg->rates.opr_rate_set,
+				  &val_len) != QDF_STATUS_SUCCESS) {
 		/* Could not get rateset from CFG. Log error. */
 		pe_err("could not retrieve rateset");
-		val = 0;
+		val_len = 0;
 	}
-	temp_rate_set.numRates = val;
+	temp_rate_set.numRates = val_len;
 
 	if (phymode == WNI_CFG_PHY_MODE_11G) {
 		/* get own extended rate set */
-		val = WNI_CFG_EXTENDED_OPERATIONAL_RATE_SET_LEN;
-		if (wlan_cfg_get_str(mac_ctx,
-				     WNI_CFG_EXTENDED_OPERATIONAL_RATE_SET,
-				     (uint8_t *) &temp_rate_set2.rate,
-				     &val) != QDF_STATUS_SUCCESS)
-			temp_rate_set2.numRates = val;
+		val_len = mac_ctx->mlme_cfg->rates.ext_opr_rate_set.len;
+		if (wlan_mlme_get_cfg_str(
+			(uint8_t *)&temp_rate_set2.rate,
+			&mac_ctx->mlme_cfg->rates.ext_opr_rate_set,
+			&val_len) != QDF_STATUS_SUCCESS) {
+			/* Could not get rateset from CFG. Log error. */
+			pe_err("could not retrieve extrateset");
+			val_len = 0;
+		}
+			temp_rate_set2.numRates = val_len;
 	}
 
 	if ((temp_rate_set.numRates + temp_rate_set2.numRates) > 12) {
@@ -2379,9 +2386,11 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 	    (stads->mlmStaContext.htCapability))
 #endif
 	{
-		val = SIZE_OF_SUPPORTED_MCS_SET;
-		if (wlan_cfg_get_str(mac_ctx, WNI_CFG_SUPPORTED_MCS_SET,
-				     mcsSet, &val) != QDF_STATUS_SUCCESS) {
+		val_len = SIZE_OF_SUPPORTED_MCS_SET;
+		if (wlan_mlme_get_cfg_str(
+			mcsSet,
+			&mac_ctx->mlme_cfg->rates.supported_mcs_set,
+			&val_len) != QDF_STATUS_SUCCESS) {
 			/* Could not get rateset from CFG. Log error. */
 			pe_err("could not retrieve supportedMCSSet");
 			return QDF_STATUS_E_FAILURE;
@@ -2389,7 +2398,7 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 
 		if (NSS_1x1_MODE == nss)
 			mcsSet[1] = 0;
-		for (i = 0; i < val; i++)
+		for (i = 0; i < val_len; i++)
 			stads->supportedRates.supportedMCSSet[i] =
 				mcsSet[i] & supp_mcs_set[i];
 

@@ -4947,10 +4947,10 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	uint32_t rx_supp_data_rate, tx_supp_data_rate;
 	bool status = true;
 	QDF_STATUS qdf_status;
+	qdf_size_t val_len;
 	struct mlme_ht_capabilities_info ht_cap_info;
 	uint8_t mcs_set[SIZE_OF_SUPPORTED_MCS_SET] = {0};
 	uint8_t mcs_set_temp[SIZE_OF_SUPPORTED_MCS_SET];
-	uint32_t val;
 	uint8_t enable2x2;
 	mac_handle_t mac_handle;
 	bool bval = 0;
@@ -5038,21 +5038,26 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	}
 
 #define WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES 0xff
-	val = SIZE_OF_SUPPORTED_MCS_SET;
-	sme_cfg_get_str(mac_handle, WNI_CFG_SUPPORTED_MCS_SET,
-			mcs_set_temp, &val);
-
-	mcs_set[0] = mcs_set_temp[0];
-	if (enable2x2)
-		for (val = 0; val < nss; val++)
-			mcs_set[val] = WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES;
-
-	if (sme_cfg_set_str(mac_handle, WNI_CFG_SUPPORTED_MCS_SET,
-			    mcs_set,
-			    SIZE_OF_SUPPORTED_MCS_SET) ==
-				QDF_STATUS_E_FAILURE) {
+	val_len = SIZE_OF_SUPPORTED_MCS_SET;
+	qdf_status = ucfg_mlme_get_supported_mcs_set(hdd_ctx->psoc,
+						     mcs_set_temp,
+						     &val_len);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		mcs_set[0] = mcs_set_temp[0];
+		if (enable2x2)
+			for (val_len = 0; val_len < nss; val_len++)
+				mcs_set[val_len] =
+				WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES;
+		if (ucfg_mlme_set_supported_mcs_set(
+			hdd_ctx->psoc, mcs_set,
+			(qdf_size_t)SIZE_OF_SUPPORTED_MCS_SET) ==
+			QDF_STATUS_E_FAILURE) {
+			status = false;
+			hdd_err("Could not pass on MCS SET to CFG");
+		}
+	} else {
 		status = false;
-		hdd_err("Could not pass on MCS SET to CFG");
+		hdd_err("Could not get MCS SET from CFG");
 	}
 	sme_update_he_cap_nss(mac_handle, adapter->session_id, nss);
 #undef WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES

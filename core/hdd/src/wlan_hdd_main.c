@@ -1411,6 +1411,7 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 				  struct wma_tgt_ht_cap *cfg)
 {
 	QDF_STATUS status;
+	qdf_size_t value_len;
 	uint32_t value;
 	struct mlme_ht_capabilities_info ht_cap_info;
 	uint8_t mcs_set[SIZE_OF_SUPPORTED_MCS_SET];
@@ -1495,9 +1496,10 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("could not set HT capability to CCM");
 #define WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES 0xff
-	value = SIZE_OF_SUPPORTED_MCS_SET;
-	if (sme_cfg_get_str(mac_handle, WNI_CFG_SUPPORTED_MCS_SET, mcs_set,
-			    &value) == QDF_STATUS_SUCCESS) {
+	value_len = SIZE_OF_SUPPORTED_MCS_SET;
+	if (ucfg_mlme_get_supported_mcs_set(
+				hdd_ctx->psoc, mcs_set,
+				&value_len) == QDF_STATUS_SUCCESS) {
 		hdd_debug("Read MCS rate set");
 		if (cfg->num_rf_chains > SIZE_OF_SUPPORTED_MCS_SET)
 			cfg->num_rf_chains = SIZE_OF_SUPPORTED_MCS_SET;
@@ -1507,12 +1509,11 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 				mcs_set[value] =
 					WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES;
 
-			status =
-				sme_cfg_set_str(mac_handle,
-						WNI_CFG_SUPPORTED_MCS_SET,
-						mcs_set,
-						SIZE_OF_SUPPORTED_MCS_SET);
-			if (status == QDF_STATUS_E_FAILURE)
+			status = ucfg_mlme_set_supported_mcs_set(
+					hdd_ctx->psoc,
+					mcs_set,
+					(qdf_size_t)SIZE_OF_SUPPORTED_MCS_SET);
+			if (QDF_IS_STATUS_ERROR(status))
 				hdd_err("could not set MCS SET to CCM");
 		}
 	}

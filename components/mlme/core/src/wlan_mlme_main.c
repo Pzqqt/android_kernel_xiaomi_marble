@@ -559,13 +559,43 @@ static void mlme_init_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
 {
 	rates->cfp_period = cfg_default(CFG_CFP_PERIOD);
 	rates->cfp_max_duration = cfg_default(CFG_CFP_MAX_DURATION);
-	rates->max_htmcs_txdata = cfg_get(psoc, CFG_INI_MAX_HT_MCS_FOR_TX_DATA);
+	rates->max_htmcs_txdata = cfg_get(psoc, CFG_MAX_HT_MCS_FOR_TX_DATA);
 	rates->disable_abg_rate_txdata = cfg_get(psoc,
-					CFG_INI_DISABLE_ABG_RATE_FOR_TX_DATA);
+					CFG_DISABLE_ABG_RATE_FOR_TX_DATA);
 	rates->sap_max_mcs_txdata = cfg_get(psoc,
-					CFG_INI_SAP_MAX_MCS_FOR_TX_DATA);
+					CFG_SAP_MAX_MCS_FOR_TX_DATA);
 	rates->disable_high_ht_mcs_2x2 = cfg_get(psoc,
-					 CFG_INI_DISABLE_HIGH_HT_RX_MCS_2x2);
+					 CFG_DISABLE_HIGH_HT_RX_MCS_2x2);
+
+	rates->supported_11b.max_len = CFG_SUPPORTED_RATES_11B_LEN;
+	qdf_uint8_array_parse(cfg_default(CFG_SUPPORTED_RATES_11B),
+			      rates->supported_11b.data,
+			      sizeof(rates->supported_11b.data),
+			      &rates->supported_11b.len);
+	rates->supported_11a.max_len = CFG_SUPPORTED_RATES_11A_LEN;
+	qdf_uint8_array_parse(cfg_default(CFG_SUPPORTED_RATES_11A),
+			      rates->supported_11a.data,
+			      sizeof(rates->supported_11a.data),
+			      &rates->supported_11a.len);
+	rates->opr_rate_set.max_len = CFG_OPERATIONAL_RATE_SET_LEN;
+	rates->opr_rate_set.len = 0;
+	rates->ext_opr_rate_set.max_len = CFG_EXTENDED_OPERATIONAL_RATE_SET_LEN;
+	rates->ext_opr_rate_set.len = 0;
+	rates->supported_mcs_set.max_len = CFG_SUPPORTED_MCS_SET_LEN;
+	qdf_uint8_array_parse(cfg_default(CFG_SUPPORTED_MCS_SET),
+			      rates->supported_mcs_set.data,
+			      sizeof(rates->supported_mcs_set.data),
+			      &rates->supported_mcs_set.len);
+	rates->basic_mcs_set.max_len = CFG_BASIC_MCS_SET_LEN;
+	qdf_uint8_array_parse(cfg_default(CFG_BASIC_MCS_SET),
+			      rates->basic_mcs_set.data,
+			      sizeof(rates->basic_mcs_set.data),
+			      &rates->basic_mcs_set.len);
+	rates->current_mcs_set.max_len = CFG_CURRENT_MCS_SET_LEN;
+	qdf_uint8_array_parse(cfg_default(CFG_CURRENT_MCS_SET),
+			      rates->current_mcs_set.data,
+			      sizeof(rates->current_mcs_set.data),
+			      &rates->current_mcs_set.len);
 }
 
 static void mlme_init_dfs_cfg(struct wlan_objmgr_psoc *psoc,

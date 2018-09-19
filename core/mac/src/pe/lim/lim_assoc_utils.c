@@ -54,6 +54,7 @@
 #include "wma_types.h"
 #include "lim_types.h"
 #include "wlan_utility.h"
+#include "wlan_mlme_api.h"
 
 #ifdef FEATURE_WLAN_TDLS
 #define IS_TDLS_PEER(type)  ((type) == STA_ENTRY_TDLS_PEER)
@@ -259,15 +260,15 @@ lim_check_rx_basic_rates(tpAniSirGlobal pMac, tSirMacRateSet rxRateSet,
 uint8_t lim_check_mcs_set(tpAniSirGlobal pMac, uint8_t *supportedMCSSet)
 {
 	uint8_t basicMCSSet[SIZE_OF_BASIC_MCS_SET] = { 0 };
-	uint32_t cfgLen = 0;
+	qdf_size_t cfg_len = 0;
 	uint8_t i;
 	uint8_t validBytes;
 	uint8_t lastByteMCSMask = 0x1f;
 
-	cfgLen = WNI_CFG_BASIC_MCS_SET_LEN;
-	if (wlan_cfg_get_str(pMac, WNI_CFG_BASIC_MCS_SET,
-			     (uint8_t *) basicMCSSet,
-			     (uint32_t *) &cfgLen) != QDF_STATUS_SUCCESS) {
+	cfg_len = pMac->mlme_cfg->rates.basic_mcs_set.len;
+	if (wlan_mlme_get_cfg_str((uint8_t *)basicMCSSet,
+				  &pMac->mlme_cfg->rates.basic_mcs_set,
+				  &cfg_len) != QDF_STATUS_SUCCESS) {
 		/* / Could not get Basic MCS rateset from CFG. Log error. */
 		pe_err("could not retrieve Basic MCS rateset");
 		return false;
@@ -1488,6 +1489,7 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 	uint32_t self_sta_dot11mode = 0;
 	uint8_t a_rate_index = 0;
 	uint8_t b_rate_index = 0;
+	qdf_size_t val_len;
 
 	is_arate = 0;
 
@@ -1504,20 +1506,22 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 	    (self_sta_dot11mode == WNI_CFG_DOT11_MODE_11N) ||
 	    (self_sta_dot11mode == WNI_CFG_DOT11_MODE_11G) ||
 	    (self_sta_dot11mode == WNI_CFG_DOT11_MODE_11B)) {
-		val = WNI_CFG_SUPPORTED_RATES_11B_LEN;
-		wlan_cfg_get_str(mac_ctx, WNI_CFG_SUPPORTED_RATES_11B,
-				 (uint8_t *) &temp_rate_set.rate, &val);
-		temp_rate_set.numRates = (uint8_t) val;
+		val_len = mac_ctx->mlme_cfg->rates.supported_11b.len;
+		wlan_mlme_get_cfg_str((uint8_t *)&temp_rate_set.rate,
+				      &mac_ctx->mlme_cfg->rates.supported_11b,
+				      &val_len);
+		temp_rate_set.numRates = (uint8_t)val_len;
 	} else {
 		temp_rate_set.numRates = 0;
 	}
 
 	/* Include 11a rates when the device configured in non-11b mode */
 	if (!IS_DOT11_MODE_11B(self_sta_dot11mode)) {
-		val = WNI_CFG_SUPPORTED_RATES_11A_LEN;
-		wlan_cfg_get_str(mac_ctx, WNI_CFG_SUPPORTED_RATES_11A,
-				 (uint8_t *) &temp_rate_set2.rate, &val);
-		temp_rate_set2.numRates = (uint8_t) val;
+		val_len = mac_ctx->mlme_cfg->rates.supported_11a.len;
+		wlan_mlme_get_cfg_str((uint8_t *)&temp_rate_set2.rate,
+				      &mac_ctx->mlme_cfg->rates.supported_11a,
+				      &val_len);
+		temp_rate_set2.numRates = (uint8_t)val_len;
 	} else {
 		temp_rate_set2.numRates = 0;
 	}
@@ -1566,10 +1570,11 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 	}
 
 	if (IS_DOT11_MODE_HT(self_sta_dot11mode)) {
-		val = SIZE_OF_SUPPORTED_MCS_SET;
-		if (wlan_cfg_get_str(mac_ctx, WNI_CFG_SUPPORTED_MCS_SET,
-				     rates->supportedMCSSet,
-				     &val) != QDF_STATUS_SUCCESS) {
+		val_len = SIZE_OF_SUPPORTED_MCS_SET;
+		if (wlan_mlme_get_cfg_str(
+			rates->supportedMCSSet,
+			&mac_ctx->mlme_cfg->rates.supported_mcs_set,
+			&val_len) != QDF_STATUS_SUCCESS) {
 			pe_err("could not retrieve supportedMCSSet");
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -1629,6 +1634,7 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 	tSirMacRateSet tempRateSet;
 	tSirMacRateSet tempRateSet2;
 	uint32_t i, j, val, min, isArate = 0;
+	qdf_size_t val_len;
 
 	/* copy operational rate set from psessionEntry */
 	if (psessionEntry->rateSet.numRates <= SIR_MAC_RATESET_EID_MAX) {
@@ -1721,10 +1727,11 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 	}
 
 	if (IS_DOT11_MODE_HT(psessionEntry->dot11mode)) {
-		val = SIZE_OF_SUPPORTED_MCS_SET;
-		if (wlan_cfg_get_str(pMac, WNI_CFG_SUPPORTED_MCS_SET,
-				     pRates->supportedMCSSet,
-				     &val) != QDF_STATUS_SUCCESS) {
+		val_len = SIZE_OF_SUPPORTED_MCS_SET;
+		if (wlan_mlme_get_cfg_str(
+			pRates->supportedMCSSet,
+			&pMac->mlme_cfg->rates.supported_mcs_set,
+			&val_len) != QDF_STATUS_SUCCESS) {
 			pe_err("could not retrieve supportedMCSSet");
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -1819,6 +1826,7 @@ QDF_STATUS lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 	tpSirSupportedRates rates;
 	uint8_t a_rate_index = 0;
 	uint8_t b_rate_index = 0;
+	qdf_size_t val_len;
 
 	is_arate = 0;
 
@@ -1969,9 +1977,11 @@ QDF_STATUS lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 		(sta_ds->mlmStaContext.htCapability))
 #endif
 	{
-		val = SIZE_OF_SUPPORTED_MCS_SET;
-		if (wlan_cfg_get_str(mac_ctx, WNI_CFG_SUPPORTED_MCS_SET,
-				     mcs_set, &val) != QDF_STATUS_SUCCESS) {
+		val_len = SIZE_OF_SUPPORTED_MCS_SET;
+		if (wlan_mlme_get_cfg_str(
+			mcs_set,
+			&mac_ctx->mlme_cfg->rates.supported_mcs_set,
+			&val_len) != QDF_STATUS_SUCCESS) {
 			pe_err("could not retrieve supportedMCSet");
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -1979,7 +1989,7 @@ QDF_STATUS lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 		if (session_entry->nss == NSS_1x1_MODE)
 			mcs_set[1] = 0;
 
-		for (i = 0; i < val; i++)
+		for (i = 0; i < val_len; i++)
 			sta_ds->supportedRates.supportedMCSSet[i] =
 				mcs_set[i] & supported_mcs_set[i];
 
