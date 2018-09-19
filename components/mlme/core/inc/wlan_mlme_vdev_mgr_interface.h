@@ -59,22 +59,22 @@ QDF_STATUS mlme_register_vdev_mgr_ops(void *mlme);
 QDF_STATUS mlme_unregister_vdev_mgr_ops(struct vdev_mlme_obj *vdev_mlme);
 
 /**
- * ap_mlme_set_chan_switch_in_progress() - set mlme priv restart in progress
+ * mlme_set_chan_switch_in_progress() - set mlme priv restart in progress
  * @vdev: vdev pointer
  * @val: value to be set
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS ap_mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
+QDF_STATUS mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
 					       bool val);
 
 /**
- * ap_mlme_get_chan_switch_in_progress() - get mlme priv restart in progress
+ * mlme_is_chan_switch_in_progress() - get mlme priv restart in progress
  * @vdev: vdev pointer
  *
  * Return: value of mlme priv restart in progress
  */
-bool ap_mlme_get_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev);
+bool mlme_is_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev);
 
 /**
  * ap_mlme_set_hidden_ssid_restart_in_progress() - set mlme priv hidden ssid
@@ -89,31 +89,31 @@ ap_mlme_set_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev,
 					    bool val);
 
 /**
- * ap_mlme_get_hidden_ssid_restart_in_progress() - get mlme priv hidden ssid
+ * ap_mlme_is_hidden_ssid_restart_in_progress() - get mlme priv hidden ssid
  * restart in progress
  * @vdev: vdev pointer
  *
  * Return: value of mlme priv hidden ssid restart in progress
  */
-bool ap_mlme_get_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev);
+bool ap_mlme_is_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev);
 
 /**
- * ap_mlme_set_vdev_start_failed() - set mlme priv vdev restart fail flag
+ * mlme_set_vdev_start_failed() - set mlme priv vdev restart fail flag
  * @vdev: vdev pointer
  * @val: value to be set
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
-ap_mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val);
+mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val);
 
 /**
- * ap_mlme_get_vdev_start_failed() - get mlme priv vdev restart fail flag
+ * mlme_get_vdev_start_failed() - get mlme priv vdev restart fail flag
  * @vdev: vdev pointer
  *
  * Return: value of mlme priv vdev restart fail flag
  */
-bool ap_mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev);
+bool mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev);
 
 #endif
 #endif

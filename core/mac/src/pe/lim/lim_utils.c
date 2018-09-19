@@ -8537,7 +8537,7 @@ QDF_STATUS lim_ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (ap_mlme_get_hidden_ssid_restart_in_progress(vdev_mlme->vdev))
+	if (ap_mlme_is_hidden_ssid_restart_in_progress(vdev_mlme->vdev))
 		lim_send_vdev_restart(session->mac_ctx, session,
 				      session->smeSessionId);
 	else
@@ -8585,7 +8585,7 @@ void lim_send_start_bss_confirm(tpAniSirGlobal mac_ctx,
 			pe_err("session is NULL");
 			return;
 		}
-		ap_mlme_set_vdev_start_failed(session->vdev, true);
+		mlme_set_vdev_start_failed(session->vdev, true);
 		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
 					      WLAN_VDEV_SM_EV_START_REQ_FAIL,
 					      sizeof(*start_cnf), start_cnf);

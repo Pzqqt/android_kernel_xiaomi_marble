@@ -1217,22 +1217,21 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	}
 	qdf_mc_timer_stop(&req_msg->event_timeout);
 
-	if ((qdf_atomic_read(&iface->vdev_restart_params.
-			     hidden_ssid_restart_in_progress)) &&
+	if (wma_get_hidden_ssid_restart_in_progress(iface) &&
 	    wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id) &&
 	    (req_msg->msg_type == WMA_HIDDEN_SSID_VDEV_RESTART)) {
 		tpHalHiddenSsidVdevRestart hidden_ssid_restart =
 			(tpHalHiddenSsidVdevRestart)req_msg->user_data;
 		WMA_LOGE("%s: vdev restart event recevied for hidden ssid set using IOCTL",
 			__func__);
-		qdf_atomic_set(&iface->vdev_restart_params.
-			       hidden_ssid_restart_in_progress, 0);
 #ifdef CONFIG_VDEV_SM
 		wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
 					      WLAN_VDEV_SM_EV_RESTART_RESP,
 					      sizeof(*hidden_ssid_restart),
 					      hidden_ssid_restart);
 #else
+		qdf_atomic_set(&iface->vdev_restart_params.
+			       hidden_ssid_restart_in_progress, 0);
 		wma_send_msg(wma, WMA_HIDDEN_SSID_RESTART_RSP,
 				(void *)hidden_ssid_restart, 0);
 #endif
@@ -1265,10 +1264,12 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		}
 		params->smpsMode = host_map_smps_mode(resp_event->smps_mode);
 		params->status = resp_event->status;
+#ifndef CONFIG_VDEV_SM
 		if (wma->interfaces[resp_event->vdev_id].is_channel_switch) {
 			wma->interfaces[resp_event->vdev_id].is_channel_switch =
 				false;
 		}
+#endif
 		if (((resp_event->resp_type == WMI_VDEV_RESTART_RESP_EVENT) &&
 			((iface->type == WMI_VDEV_TYPE_STA) ||
 				(iface->type == WMI_VDEV_TYPE_MONITOR))) ||
@@ -3556,13 +3557,24 @@ void wma_vdev_resp_timer(void *data)
 			wma_trigger_recovery_assert_on_fw_timeout(
 				WMA_CHNL_SWITCH_REQ);
 		} else {
+#ifdef CONFIG_VDEV_SM
+			struct wma_txrx_node *iface =
+					&wma->interfaces[tgt_req->vdev_id];
+
+			wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+						   WLAN_VDEV_SM_EV_RESTART_RESP,
+						   sizeof(*params), params);
+#else
 			wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
 				    (void *)params, 0);
+#endif
 		}
+#ifndef CONFIG_VDEV_SM
 		if (wma->interfaces[tgt_req->vdev_id].is_channel_switch) {
 			wma->interfaces[tgt_req->vdev_id].is_channel_switch =
 				false;
 		}
+#endif
 	} else if (tgt_req->msg_type == WMA_DELETE_BSS_REQ) {
 		tpDeleteBssParams params =
 			(tpDeleteBssParams) tgt_req->user_data;
@@ -3716,16 +3728,17 @@ void wma_vdev_resp_timer(void *data)
 #endif
 		wma_ocb_set_config_resp(wma, QDF_STATUS_E_TIMEOUT);
 	} else if (tgt_req->msg_type == WMA_HIDDEN_SSID_VDEV_RESTART) {
-		if ((qdf_atomic_read(
-		    &wma->interfaces[tgt_req->vdev_id].vdev_restart_params.
-					hidden_ssid_restart_in_progress)) &&
+		if (wma_get_hidden_ssid_restart_in_progress(
+		    &wma->interfaces[tgt_req->vdev_id]) &&
 		    wma_is_vdev_in_ap_mode(wma, tgt_req->vdev_id)) {
 
 			WMA_LOGE("Hidden ssid vdev restart Timed Out; vdev_id: %d, type = %d",
 				 tgt_req->vdev_id, tgt_req->type);
+#ifndef CONFIG_VDEV_SM
 			qdf_atomic_set(&wma->interfaces[tgt_req->vdev_id].
 				       vdev_restart_params.
 				       hidden_ssid_restart_in_progress, 0);
+#endif
 			qdf_mem_free(tgt_req->user_data);
 		}
 	} else if (tgt_req->msg_type == WMA_SET_LINK_STATE) {

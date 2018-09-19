@@ -5066,7 +5066,7 @@ static void lim_process_sme_channel_change_request(tpAniSirGlobal mac_ctx,
 			sizeof(session_entry->extRateSet));
 
 #ifdef CONFIG_VDEV_SM
-	ap_mlme_set_chan_switch_in_progress(session_entry->vdev, true);
+	mlme_set_chan_switch_in_progress(session_entry->vdev, true);
 	if (wlan_vdev_mlme_get_state(session_entry->vdev) ==
 	    WLAN_VDEV_S_DFS_CAC_WAIT)
 		wlan_vdev_mlme_sm_deliver_evt(session_entry->vdev,

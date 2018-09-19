@@ -4798,6 +4798,13 @@ QDF_STATUS wma_get_roam_scan_stats(WMA_HANDLE handle,
 }
 
 #ifdef CONFIG_VDEV_SM
+bool wma_get_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface)
+{
+	if (!iface)
+		return false;
+
+	return ap_mlme_is_hidden_ssid_restart_in_progress(iface->vdev);
+}
 
 static QDF_STATUS
 wma_ap_vdev_send_start_resp(tp_wma_handle wma, tpAddBssParams add_bss)
@@ -4816,11 +4823,11 @@ QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_vdev *vdev = vdev_mlme->vdev;
 
-	if (ap_mlme_get_chan_switch_in_progress(vdev)) {
+	if (mlme_is_chan_switch_in_progress(vdev)) {
 		wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
 					   data, 0);
-		ap_mlme_set_chan_switch_in_progress(vdev, false);
-	} else if (ap_mlme_get_hidden_ssid_restart_in_progress(vdev)) {
+		mlme_set_chan_switch_in_progress(vdev, false);
+	} else if (ap_mlme_is_hidden_ssid_restart_in_progress(vdev)) {
 		wma_send_msg(wma, WMA_HIDDEN_SSID_RESTART_RSP, data, 0);
 		ap_mlme_set_hidden_ssid_restart_in_progress(vdev, false);
 	} else {
@@ -4853,10 +4860,10 @@ wma_ap_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!ap_mlme_get_vdev_start_failed(vdev_mlme->vdev))
+	if (!mlme_get_vdev_start_failed(vdev_mlme->vdev))
 		wma_send_del_bss_response(wma, (struct wma_target_req *)data);
 	else
-		ap_mlme_set_vdev_start_failed(vdev_mlme->vdev, false);
+		mlme_set_vdev_start_failed(vdev_mlme->vdev, false);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4875,4 +4882,16 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 	return wma_ap_vdev_send_start_resp(wma, bss_params);
 }
 
+#else
+bool wma_get_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface)
+{
+	if (!iface)
+		return false;
+
+	if (qdf_atomic_read(
+		&iface->vdev_restart_params.hidden_ssid_restart_in_progress))
+		return true;
+
+	return false;
+}
 #endif

@@ -3102,7 +3102,9 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	 */
 	if ((wma_is_vdev_in_ap_mode(wma, req.vdev_id) == true) ||
 	    (params->restart_on_chan_switch == true)) {
+#ifndef CONFIG_VDEV_SM
 		wma->interfaces[req.vdev_id].is_channel_switch = true;
+#endif
 		req.hidden_ssid = intr[vdev_id].vdev_restart_params.ssidHidden;
 	}
 
@@ -3142,7 +3144,9 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	    wma_is_vdev_up(vdev_id)) {
 		WMA_LOGD("%s: setting channel switch to true for vdev_id:%d",
 			 __func__, req.vdev_id);
+#ifndef CONFIG_VDEV_SM
 		wma->interfaces[req.vdev_id].is_channel_switch = true;
+#endif
 	}
 
 	msg = wma_fill_vdev_req(wma, req.vdev_id, WMA_CHNL_SWITCH_REQ,
@@ -3154,8 +3158,14 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		status = QDF_STATUS_E_NOMEM;
 		goto send_resp;
 	}
+#ifdef CONFIG_VDEV_SM
+	status = wma_vdev_start(wma, &req,
+				mlme_is_chan_switch_in_progress(
+				wma->interfaces[req.vdev_id].vdev));
+#else
 	status = wma_vdev_start(wma, &req,
 			wma->interfaces[req.vdev_id].is_channel_switch);
+#endif
 	if (status != QDF_STATUS_SUCCESS) {
 		wma_remove_vdev_req(wma, req.vdev_id,
 				    WMA_TARGET_REQ_TYPE_VDEV_START);

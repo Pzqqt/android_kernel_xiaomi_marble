@@ -761,7 +761,9 @@ typedef struct {
 	A_UINT32 requestor_id;
 	A_UINT32 disable_hw_ack;
 	wmi_channel chan;
+#ifndef CONFIG_VDEV_SM
 	qdf_atomic_t hidden_ssid_restart_in_progress;
+#endif
 	uint8_t ssidHidden;
 } vdev_restart_params_t;
 
@@ -890,7 +892,9 @@ struct wma_txrx_node {
 	qdf_atomic_t bss_status;
 	uint8_t rate_flags;
 	uint8_t nss;
+#ifndef CONFIG_VDEV_SM
 	bool is_channel_switch;
+#endif
 	uint16_t pause_bitmap;
 	int8_t tx_power;
 	int8_t max_tx_power;

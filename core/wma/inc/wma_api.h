@@ -409,6 +409,16 @@ void wma_wmi_stop(void);
  */
 uint8_t wma_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
 			uint8_t *nss, uint8_t *mcs_rate_flag);
+
+/**
+ * wma_get_hidden_ssid_restart_in_progress() - check if hidden ssid restart is
+ * in progress
+ * @iface: iface pointer
+ *
+ * Return: true if hidden ssid restart is in progress else false
+ */
+bool wma_get_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface);
+
 #ifdef CONFIG_VDEV_SM
 
 /**
