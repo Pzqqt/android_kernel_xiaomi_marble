@@ -492,7 +492,7 @@ static QDF_STATUS ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 						data_len, data);
 }
 
-QDF_STATUS ap_mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
+QDF_STATUS mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
 					       bool val)
 {
 	struct vdev_mlme_obj *vdev_mlme;
@@ -511,7 +511,7 @@ QDF_STATUS ap_mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-bool ap_mlme_get_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev)
+bool mlme_is_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev)
 {
 	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
@@ -547,7 +547,7 @@ ap_mlme_set_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-bool ap_mlme_get_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev)
+bool ap_mlme_is_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev)
 {
 	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
@@ -564,7 +564,7 @@ bool ap_mlme_get_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev)
 }
 
 QDF_STATUS
-ap_mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val)
+mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val)
 {
 	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
@@ -582,7 +582,7 @@ ap_mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val)
 	return QDF_STATUS_SUCCESS;
 }
 
-bool ap_mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev)
+bool mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev)
 {
 	struct vdev_mlme_obj *vdev_mlme;
 	struct mlme_legacy_priv *mlme_priv;
@@ -598,14 +598,15 @@ bool ap_mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev)
 	return mlme_priv->vdev_start_failed;
 }
 
+
 /**
- * ap_mlme_vdev_legacy_hdl_create () - Create sap mlme legacy priv object
+ * mlme_legacy_hdl_create () - Create mlme legacy priv object
  * @vdev_mlme: vdev mlme object
  *
  * Return: QDF_STATUS
  */
 static
-QDF_STATUS ap_mlme_vdev_legacy_hdl_create(struct vdev_mlme_obj *vdev_mlme)
+QDF_STATUS mlme_legacy_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 {
 	vdev_mlme->legacy_vdev_ptr =
 		qdf_mem_malloc(sizeof(struct mlme_legacy_priv));
@@ -618,13 +619,13 @@ QDF_STATUS ap_mlme_vdev_legacy_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 }
 
 /**
- * ap_mlme_vdev_legacy_hdl_destroy () - Destroy sap mlme legacy priv object
+ * mlme_legacy_hdl_destroy () - Destroy mlme legacy priv object
  * @vdev_mlme: vdev mlme object
  *
  * Return: QDF_STATUS
  */
 static
-QDF_STATUS ap_mlme_vdev_legacy_hdl_destroy(struct vdev_mlme_obj *vdev_mlme)
+QDF_STATUS mlme_legacy_hdl_destroy(struct vdev_mlme_obj *vdev_mlme)
 {
 	qdf_mem_free(vdev_mlme->legacy_vdev_ptr);
 	vdev_mlme->legacy_vdev_ptr = NULL;
@@ -696,6 +697,8 @@ static struct vdev_mlme_ops sta_mlme_ops = {
 	.mlme_vdev_stop_continue = sta_mlme_vdev_stop_continue,
 	.mlme_vdev_down_send = sta_mlme_vdev_down_send,
 	.mlme_vdev_notify_down_complete = sta_vdev_notify_down_complete,
+	.mlme_vdev_legacy_hdl_create = mlme_legacy_hdl_create,
+	.mlme_vdev_legacy_hdl_destroy = mlme_legacy_hdl_destroy,
 };
 
 /**
@@ -745,6 +748,6 @@ static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_stop_continue = ap_mlme_vdev_stop_continue,
 	.mlme_vdev_down_send = ap_mlme_vdev_down_send,
 	.mlme_vdev_notify_down_complete = ap_vdev_notify_down_complete,
-	.mlme_vdev_legacy_hdl_create = ap_mlme_vdev_legacy_hdl_create,
-	.mlme_vdev_legacy_hdl_destroy = ap_mlme_vdev_legacy_hdl_destroy,
+	.mlme_vdev_legacy_hdl_create = mlme_legacy_hdl_create,
+	.mlme_vdev_legacy_hdl_destroy = mlme_legacy_hdl_destroy,
 };
