@@ -33,6 +33,7 @@ QDF_STATUS target_if_pmo_send_lphb_enable(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int status = 0;
 	wmi_hb_set_enable_cmd_fixed_param hb_enable_fp;
+	wmi_unified_t wmi_handle;
 
 	if (ts_lphb_enable == NULL) {
 		target_if_err("LPHB Enable configuration is NULL");
@@ -55,9 +56,14 @@ QDF_STATUS target_if_pmo_send_lphb_enable(struct wlan_objmgr_psoc *psoc,
 	hb_enable_fp.item = ts_lphb_enable->item;
 	hb_enable_fp.session = ts_lphb_enable->session;
 
-	status = wmi_unified_lphb_config_hbenable_cmd(
-			get_wmi_unified_hdl_from_psoc(psoc),
-			&hb_enable_fp);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_lphb_config_hbenable_cmd(wmi_handle,
+						      &hb_enable_fp);
 	if (status != EOK) {
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
@@ -74,6 +80,7 @@ QDF_STATUS target_if_pmo_send_lphb_tcp_params(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int status = 0;
 	wmi_hb_set_tcp_params_cmd_fixed_param hb_tcp_params_fp = {0};
+	wmi_unified_t wmi_handle;
 
 	if (ts_lphb_tcp_param == NULL) {
 		target_if_err("TCP params LPHB configuration is NULL");
@@ -103,9 +110,14 @@ QDF_STATUS target_if_pmo_send_lphb_tcp_params(struct wlan_objmgr_psoc *psoc,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(ts_lphb_tcp_param->gateway_mac.bytes,
 				   &hb_tcp_params_fp.gateway_mac);
 
-	status = wmi_unified_lphb_config_tcp_params_cmd(
-			get_wmi_unified_hdl_from_psoc(psoc),
-			&hb_tcp_params_fp);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_lphb_config_tcp_params_cmd(wmi_handle,
+							&hb_tcp_params_fp);
 	if (status != EOK) {
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
@@ -122,6 +134,7 @@ QDF_STATUS target_if_pmo_send_lphb_tcp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int status = 0;
 	wmi_hb_set_tcp_pkt_filter_cmd_fixed_param hb_tcp_filter_fp = {0};
+	wmi_unified_t wmi_handle;
 
 	if (ts_lphb_tcp_filter == NULL) {
 		target_if_err("TCP PKT FILTER LPHB configuration is NULL");
@@ -145,9 +158,14 @@ QDF_STATUS target_if_pmo_send_lphb_tcp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	       (void *)&ts_lphb_tcp_filter->filter,
 	       WMI_WLAN_HB_MAX_FILTER_SIZE);
 
-	status = wmi_unified_lphb_config_tcp_pkt_filter_cmd(
-			get_wmi_unified_hdl_from_psoc(psoc),
-			&hb_tcp_filter_fp);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_lphb_config_tcp_pkt_filter_cmd(wmi_handle,
+							    &hb_tcp_filter_fp);
 	if (status != EOK) {
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
@@ -164,6 +182,7 @@ QDF_STATUS target_if_pmo_send_lphb_udp_params(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int status = 0;
 	wmi_hb_set_udp_params_cmd_fixed_param hb_udp_params_fp = {0};
+	wmi_unified_t wmi_handle;
 
 	if (ts_lphb_udp_param == NULL) {
 		target_if_err("UDP param for LPHB configuration is NULL");
@@ -191,9 +210,14 @@ QDF_STATUS target_if_pmo_send_lphb_udp_params(struct wlan_objmgr_psoc *psoc,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(ts_lphb_udp_param->gateway_mac.bytes,
 				   &hb_udp_params_fp.gateway_mac);
 
-	status = wmi_unified_lphb_config_udp_params_cmd(
-			get_wmi_unified_hdl_from_psoc(psoc),
-			&hb_udp_params_fp);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_lphb_config_udp_params_cmd(wmi_handle,
+							&hb_udp_params_fp);
 	if (status != EOK) {
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
@@ -217,6 +241,7 @@ QDF_STATUS target_if_pmo_send_lphb_udp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int status = 0;
 	wmi_hb_set_udp_pkt_filter_cmd_fixed_param hb_udp_filter_fp = {0};
+	wmi_unified_t wmi_handle;
 
 	if (ts_lphb_udp_filter == NULL) {
 		target_if_err("LPHB UDP packet filter configuration is NULL");
@@ -240,9 +265,14 @@ QDF_STATUS target_if_pmo_send_lphb_udp_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	       (void *)&ts_lphb_udp_filter->filter,
 	       WMI_WLAN_HB_MAX_FILTER_SIZE);
 
-	status = wmi_unified_lphb_config_udp_pkt_filter_cmd(
-			get_wmi_unified_hdl_from_psoc(psoc),
-			&hb_udp_filter_fp);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_lphb_config_udp_pkt_filter_cmd(wmi_handle,
+							    &hb_udp_filter_fp);
 	if (status != EOK) {
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
