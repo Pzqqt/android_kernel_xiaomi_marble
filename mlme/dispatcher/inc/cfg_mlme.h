@@ -36,18 +36,19 @@
 #include "cfg_mlme_sap.h"
 #include "cfg_mlme_scoring.h"
 
+/* Please Maintain Alphabetic Order here */
 #define CFG_MLME_ALL \
 	CFG_CHAINMASK_ALL \
 	CFG_HT_CAPS_ALL \
 	CFG_LFR_ALL \
-	CFG_OBSS_HT40_ALL \
 	CFG_MBO_ALL \
-	CFG_VHT_CAPS_ALL \
+	CFG_OBSS_HT40_ALL \
 	CFG_QOS_ALL \
 	CFG_RATES_ALL \
-	CFG_SAP_PROTECTION_ALL \
 	CFG_SAP_ALL \
+	CFG_SAP_PROTECTION_ALL \
+	CFG_SCORING_ALL \
 	CFG_STA_ALL \
-	CFG_SCORING_ALL
+	CFG_VHT_CAPS_ALL
 
 #endif /* __CFG_MLME_H */
