@@ -2927,6 +2927,44 @@ sme_get_sta_cxn_info(mac_handle_t mac_handle, uint32_t session_id,
 }
 #endif
 
+#ifdef FEATURE_WLAN_ESE
+/**
+ * sme_add_key_btk() - Add BTK key
+ * @mac_handle: MAC handle
+ * @session_id: SME session identifier
+ * @key: key material
+ * @key_len: length of the key
+ *
+ * Return: 0 on success and negative value for failure
+ */
+int sme_add_key_btk(mac_handle_t mac_handle, uint8_t session_id,
+		    const uint8_t *key, const int key_len);
+/**
+ * sme_add_key_krk() - Add KRK key
+ * @mac_handle: MAC handle
+ * @session_id: SME session identifier
+ * @key: key material
+ * @key_len: length of the key
+ *
+ * Return: 0 on success and negative value for failure
+ */
+int sme_add_key_krk(mac_handle_t mac_handle, uint8_t session_id,
+		    const uint8_t *key, const int key_len);
+
+#else
+static inline int sme_add_key_btk(mac_handle_t mac_handle, uint8_t session_id,
+				  const uint8_t *key, const int key_len)
+{
+	return 0;
+}
+
+static inline int sme_add_key_krk(mac_handle_t mac_handle, uint8_t session_id,
+				  const uint8_t *key, const int key_len)
+{
+	return 0;
+}
+#endif
+
 /**
  * sme_find_session_by_bssid() - checks whether has session
  * with given bssid

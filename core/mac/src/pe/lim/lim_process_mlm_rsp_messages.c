@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2808,6 +2808,7 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 	struct pe_session *session_entry;
 	uint16_t key_len;
 	uint16_t result_status;
+	tSetStaKeyParams *set_key_params;
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
 	qdf_mem_set((void *)&mlm_set_key_cnf, sizeof(tLimMlmSetKeysCnf), 0);
@@ -2815,8 +2816,9 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 		pe_err("msg bodyptr is NULL");
 		return;
 	}
-	session_id = ((tpSetStaKeyParams) msg->bodyptr)->sessionId;
-	sme_session_id = ((tpSetBssKeyParams) msg->bodyptr)->smesessionId;
+	set_key_params = msg->bodyptr;
+	session_id = set_key_params->sessionId;
+	sme_session_id = set_key_params->smesessionId;
 	session_entry = pe_find_session_by_session_id(mac_ctx, session_id);
 	if (session_entry == NULL) {
 		pe_err("session does not exist for given session_id");
@@ -2828,17 +2830,21 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 					     sme_session_id, 0);
 		return;
 	}
-	if (eLIM_MLM_WT_SET_STA_KEY_STATE != session_entry->limMlmState) {
-		pe_err("Received unexpected [Mesg Id - %d] in state %X",
-			msg->type, session_entry->limMlmState);
-		resp_reqd = 0;
-	} else {
-		mlm_set_key_cnf.resultCode =
-			(uint16_t)(((tpSetStaKeyParams) msg->bodyptr)->status);
+	result_status = set_key_params->status;
+	if (!lim_is_set_key_req_converged()) {
+		if (eLIM_MLM_WT_SET_STA_KEY_STATE !=
+				session_entry->limMlmState) {
+			pe_err("Received unexpected [Mesg Id - %d] in state %X",
+			       msg->type, session_entry->limMlmState);
+			resp_reqd = 0;
+		} else {
+			mlm_set_key_cnf.resultCode = result_status;
+		}
+		/* Restore MLME state */
+		session_entry->limMlmState = session_entry->limPrevMlmState;
 	}
 
-	result_status = (uint16_t)(((tpSetStaKeyParams) msg->bodyptr)->status);
-	key_len = ((tpSetStaKeyParams)msg->bodyptr)->key[0].keyLength;
+	key_len = set_key_params->key[0].keyLength;
 
 	if (result_status == eSIR_SME_SUCCESS && key_len)
 		mlm_set_key_cnf.key_len_nonzero = true;
@@ -2846,10 +2852,6 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 		mlm_set_key_cnf.key_len_nonzero = false;
 
 
-	qdf_mem_free(msg->bodyptr);
-	msg->bodyptr = NULL;
-	/* Restore MLME state */
-	session_entry->limMlmState = session_entry->limPrevMlmState;
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 		session_entry->peSessionId, session_entry->limMlmState));
 	if (resp_reqd) {
@@ -2865,11 +2867,17 @@ void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 			 */
 			qdf_mem_free(mac_ctx->lim.gpLimMlmSetKeysReq);
 			mac_ctx->lim.gpLimMlmSetKeysReq = NULL;
+		} else {
+			lim_copy_set_key_req_mac_addr(
+					&mlm_set_key_cnf.peer_macaddr,
+					&set_key_params->macaddr);
 		}
 		mlm_set_key_cnf.sessionId = session_id;
 		lim_post_sme_message(mac_ctx, LIM_MLM_SETKEYS_CNF,
 			(uint32_t *) &mlm_set_key_cnf);
 	}
+	qdf_mem_free(msg->bodyptr);
+	msg->bodyptr = NULL;
 }
 
 /**
@@ -2932,20 +2940,18 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 	else
 		set_key_cnf.key_len_nonzero = false;
 
-	/* Validate MLME state */
-	if (eLIM_MLM_WT_SET_BSS_KEY_STATE != session_entry->limMlmState &&
-		eLIM_MLM_WT_SET_STA_BCASTKEY_STATE !=
-			session_entry->limMlmState) {
-		pe_err("Received unexpected [Mesg Id - %d] in state %X",
-			msg->type, session_entry->limMlmState);
-	} else {
-		set_key_cnf.resultCode = result_status;
+	if (!lim_is_set_key_req_converged()) {
+		if (eLIM_MLM_WT_SET_BSS_KEY_STATE !=
+				session_entry->limMlmState &&
+				eLIM_MLM_WT_SET_STA_BCASTKEY_STATE !=
+				session_entry->limMlmState) {
+			pe_err("Received unexpected [Mesg Id - %d] in state %X",
+			       msg->type, session_entry->limMlmState);
+		} else {
+			set_key_cnf.resultCode = result_status;
+		}
+		session_entry->limMlmState = session_entry->limPrevMlmState;
 	}
-
-	qdf_mem_free(msg->bodyptr);
-	msg->bodyptr = NULL;
-	/* Restore MLME state */
-	session_entry->limMlmState = session_entry->limPrevMlmState;
 
 	MTRACE(mac_trace
 		(mac_ctx, TRACE_CODE_MLM_STATE, session_entry->peSessionId,
@@ -2964,7 +2970,14 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 		 */
 		qdf_mem_free(mac_ctx->lim.gpLimMlmSetKeysReq);
 		mac_ctx->lim.gpLimMlmSetKeysReq = NULL;
+	} else {
+		lim_copy_set_key_req_mac_addr(
+				&set_key_cnf.peer_macaddr,
+				&((tpSetStaKeyParams)msg->bodyptr)->macaddr);
 	}
+	qdf_mem_free(msg->bodyptr);
+	msg->bodyptr = NULL;
+
 	lim_post_sme_message(mac_ctx, LIM_MLM_SETKEYS_CNF,
 		(uint32_t *) &set_key_cnf);
 }

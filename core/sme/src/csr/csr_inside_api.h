@@ -246,15 +246,17 @@ QDF_STATUS csr_roam_issue_reassoc(struct mac_context *mac, uint32_t sessionId,
 				  bool fImediate);
 void csr_roam_complete(struct mac_context *mac, enum csr_roamcomplete_result Result,
 		       void *Context, uint8_t session_id);
-QDF_STATUS csr_roam_issue_set_context_req(struct mac_context *mac,
-					uint32_t sessionId,
-					  eCsrEncryptionType EncryptType,
-					  tSirBssDescription *pBssDescription,
-					  tSirMacAddr *bssId, bool addKey,
-					  bool fUnicast,
-					  tAniKeyDirection aniKeyDirection,
-					  uint8_t keyId, uint16_t keyLength,
-					  uint8_t *pKey, uint8_t paeRole);
+QDF_STATUS
+csr_roam_issue_set_context_req_helper(struct mac_context *mac,
+				      uint32_t session_id,
+				      eCsrEncryptionType encr_type,
+				      tSirBssDescription *bss_descr,
+				      tSirMacAddr *bssid, bool addkey,
+				      bool unicast,
+				      tAniKeyDirection key_direction,
+				      uint8_t key_id, uint16_t key_length,
+				      uint8_t *key, uint8_t pae_role);
+
 QDF_STATUS csr_roam_process_disassoc_deauth(struct mac_context *mac,
 						tSmeCmd *pCommand,
 					    bool fDisassoc, bool fMICFailure);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,7 @@
 #include "wmi_unified.h"
 #include "wma.h"
 #include "wma_internal.h"
+#include "wlan_crypto_global_api.h"
 
 QDF_STATUS wlan_mlme_get_cfg_str(uint8_t *dst, struct mlme_cfg_str *cfg_str,
 				 qdf_size_t *len)
@@ -2140,7 +2141,36 @@ QDF_STATUS wlan_mlme_get_edca_params(struct wlan_mlme_edca_params *edca_params,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS mlme_get_wep_key(struct wlan_mlme_wep_cfg *wep_params,
+#ifdef CRYPTO_SET_KEY_CONVERGED
+QDF_STATUS mlme_get_wep_key(struct wlan_objmgr_vdev *vdev,
+			    struct wlan_mlme_wep_cfg *wep_params,
+			    enum wep_key_id wep_keyid, uint8_t *default_key,
+			    qdf_size_t *key_len)
+{
+	struct wlan_crypto_key *crypto_key = NULL;
+
+	if (wep_keyid >= WLAN_CRYPTO_MAXKEYIDX) {
+		mlme_err("Incorrect wep key index %d", wep_keyid);
+		return QDF_STATUS_E_INVAL;
+	}
+	crypto_key = wlan_crypto_get_key(vdev, wep_keyid);
+	if (crypto_key == NULL) {
+		mlme_err("Crypto KEY not present");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (crypto_key->keylen > WLAN_CRYPTO_KEY_WEP104_LEN) {
+		mlme_err("Key too large to hold");
+		return QDF_STATUS_E_INVAL;
+	}
+	*key_len = crypto_key->keylen;
+	qdf_mem_copy(default_key, &crypto_key->keyval, crypto_key->keylen);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+QDF_STATUS mlme_get_wep_key(struct wlan_objmgr_vdev *vdev,
+			    struct wlan_mlme_wep_cfg *wep_params,
 			    enum wep_key_id wep_keyid, uint8_t *default_key,
 			    qdf_size_t *key_len)
 {
@@ -2176,6 +2206,7 @@ QDF_STATUS mlme_get_wep_key(struct wlan_mlme_wep_cfg *wep_params,
 	mlme_debug("key_id:%d key_len:%zd", wep_keyid, *key_len);
 	return QDF_STATUS_SUCCESS;
 }
+#endif /* CRYPTO_SET_KEY_CONVERGED */
 
 QDF_STATUS mlme_set_wep_key(struct wlan_mlme_wep_cfg *wep_params,
 			    enum wep_key_id wep_keyid, uint8_t *key_to_set,

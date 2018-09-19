@@ -78,6 +78,7 @@
 #include <wlan_pmo_ucfg_api.h>
 #include "wlan_lmac_if_api.h"
 #include <wlan_cp_stats_mc_ucfg_api.h>
+#include <wlan_crypto_global_api.h>
 
 struct wma_search_rate {
 	int32_t rate;
@@ -2367,6 +2368,29 @@ static void wma_update_tx_send_params(struct tx_send_params *tx_param,
 		     tx_param->preamble_type);
 }
 
+#ifdef CRYPTO_SET_KEY_CONVERGED
+uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len)
+{
+	struct wlan_crypto_key *crypto_key;
+
+	crypto_key = wlan_crypto_get_key(iface->vdev, WMA_IGTK_KEY_INDEX_4);
+	if (!crypto_key) {
+		wma_err("IGTK not found");
+		*key_len = 0;
+		return NULL;
+	}
+	*key_len = crypto_key->keylen;
+
+	return &crypto_key->keyval[0];
+}
+#else
+uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len)
+{
+	*key_len = iface->key.key_length;
+	return iface->key.key;
+}
+#endif
+
 QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 eFrameType frmType, eFrameTxDir txDir, uint8_t tid,
 			 wma_tx_dwnld_comp_callback tx_frm_download_comp_cb,
@@ -2403,6 +2427,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	void *mac_addr;
 	bool is_5g = false;
 	uint8_t pdev_id;
+	uint8_t *igtk;
+	uint16_t key_len;
 
 	if (NULL == wma_handle) {
 		WMA_LOGE("wma_handle is NULL");
@@ -2530,13 +2556,18 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			qdf_mem_copy(pFrame, wh, sizeof(*wh));
 			qdf_mem_copy(pFrame + sizeof(*wh),
 				     pData + sizeof(*wh), frmLen - sizeof(*wh));
-			if (!cds_attach_mmie(iface->key.key,
+			igtk = wma_get_igtk(iface, &key_len);
+			if (!igtk) {
+				wma_alert("IGTK not present");
+				cds_packet_free((void *)tx_frame);
+				goto error;
+			}
+			if (!cds_attach_mmie(igtk,
 					     iface->key.key_id[0].ipn,
 					     WMA_IGTK_KEY_INDEX_4,
 					     pFrame,
 					     pFrame + newFrmLen, newFrmLen)) {
-				WMA_LOGP("%s: Failed to attach MMIE at the end of frame",
-					 __func__);
+				wma_alert("Failed to attach MMIE");
 				/* Free the original packet memory */
 				cds_packet_free((void *)tx_frame);
 				goto error;

@@ -735,13 +735,42 @@ void wma_update_rts_params(tp_wma_handle wma, uint32_t value);
 
 void wma_update_frag_params(tp_wma_handle wma, uint32_t value);
 
-void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info);
-
 void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 				      uint8_t vdev_id,
 				      int8_t peer_num_delta);
 
+#ifdef CRYPTO_SET_KEY_CONVERGED
+static inline void wma_set_stakey(tp_wma_handle wma_handle,
+				  tpSetStaKeyParams key_info)
+{
+}
+
+static inline void wma_set_bsskey(tp_wma_handle wma_handle,
+				  tpSetBssKeyParams key_info)
+{
+}
+#else
+/**
+ * wma_set_stakey() - set encryption key
+ * @wma_handle: wma handle
+ * @key_info: station key info
+ *
+ * This function sets encryption key for WEP/WPA/WPA2
+ * encryption mode in firmware and send response to upper layer.
+ *
+ * Return: none
+ */
 void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info);
+
+/**
+ * wma_set_bsskey() - set encryption key to fw.
+ * @wma_handle: wma handle
+ * @key_info: key info
+ *
+ * Return: none
+ */
+void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info);
+#endif
 
 QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 						    tEdcaParams *edca_params);

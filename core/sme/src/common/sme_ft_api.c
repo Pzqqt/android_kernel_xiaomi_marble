@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -305,6 +305,46 @@ void sme_set_ftptk_state(mac_handle_t mac_handle, uint32_t sessionId,
 		return;
 	}
 	pSession->ftSmeContext.setFTPTKState = state;
+}
+
+QDF_STATUS sme_check_ft_status(mac_handle_t mac_handle, uint32_t session_id)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac, session_id);
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (!session) {
+		sme_err("pSession is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (!(QDF_IS_STATUS_SUCCESS(status)))
+		return QDF_STATUS_E_FAILURE;
+
+	sme_debug("FT update key is received in state %d",
+		  session->ftSmeContext.FTState);
+
+	/* Global Station FT State */
+	switch (session->ftSmeContext.FTState) {
+	case eFT_SET_KEY_WAIT:
+		if (sme_get_ft_pre_auth_state(mac_handle, session_id) == true) {
+			sme_set_ft_pre_auth_state(mac_handle, session_id,
+						  false);
+			session->ftSmeContext.FTState = eFT_START_READY;
+			sme_debug("state changed to %d status %d",
+				  session->ftSmeContext.FTState, status);
+			sme_release_global_lock(&mac->sme);
+			return QDF_STATUS_SUCCESS;
+		}
+	default:
+		sme_debug("Unhandled state:%d", session->ftSmeContext.FTState);
+		status = QDF_STATUS_E_FAILURE;
+		break;
+	}
+	sme_release_global_lock(&mac->sme);
+
+	return status;
 }
 
 QDF_STATUS sme_ft_update_key(mac_handle_t mac_handle, uint32_t sessionId,

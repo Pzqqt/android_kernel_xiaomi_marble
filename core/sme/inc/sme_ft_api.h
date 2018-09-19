@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013-2016, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016, 2018, 2019 The Linux Foundation.
+ * All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,6 +87,14 @@ void sme_get_ft_pre_auth_response(mac_handle_t mac_handle, uint32_t sessionId,
 void sme_get_rici_es(mac_handle_t mac_handle, uint32_t sessionId,
 		     uint8_t *ric_ies,
 		     uint32_t ric_ies_ip_len, uint32_t *ric_ies_length);
+/**
+ * sme_check_ft_status() - Check for key wait status in FT mode
+ * @mac_handle: MAC handle
+ * @session_id: vdev identifier
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_check_ft_status(mac_handle_t mac_handle, uint32_t session_id);
 void sme_preauth_reassoc_intvl_timer_callback(void *context);
 void sme_set_ft_pre_auth_state(mac_handle_t mac_handle, uint32_t sessionId,
 			       bool state);

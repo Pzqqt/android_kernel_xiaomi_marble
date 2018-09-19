@@ -77,6 +77,8 @@
 #include "cfg_mlme_sta.h"
 #include "wlan_mlme_api.h"
 #include "wmi_unified_bcn_api.h"
+#include <wlan_crypto_global_api.h>
+
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
  * @wma: wma handle
@@ -1729,12 +1731,14 @@ void wma_update_frag_params(tp_wma_handle wma, uint32_t value)
 	}
 }
 
+#ifndef CRYPTO_SET_KEY_CONVERGED
 /**
  * wma_read_cfg_wepkey() - fill key_info for WEP key
  * @wma_handle: wma handle
  * @key_info: key_info ptr
  * @def_key_idx: default key index
  * @num_keys: number of keys
+ * @vdev: vdev pointer
  *
  * This function reads WEP keys from cfg and fills
  * up key_info.
@@ -1743,7 +1747,8 @@ void wma_update_frag_params(tp_wma_handle wma, uint32_t value)
  */
 static void wma_read_cfg_wepkey(tp_wma_handle wma_handle,
 				tSirKeys *key_info, uint32_t *def_key_idx,
-				uint8_t *num_keys)
+				uint8_t *num_keys,
+				struct wlan_objmgr_vdev *vdev)
 {
 	QDF_STATUS status;
 	qdf_size_t val = SIR_MAC_KEY_LENGTH;
@@ -1756,7 +1761,7 @@ static void wma_read_cfg_wepkey(tp_wma_handle wma_handle,
 	*def_key_idx = mac_ctx->mlme_cfg->wep_params.wep_default_key_id;
 
 	for (i = 0, j = 0; i < SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS; i++) {
-		status = mlme_get_wep_key(&mac_ctx->mlme_cfg->wep_params,
+		status = mlme_get_wep_key(vdev, &mac_ctx->mlme_cfg->wep_params,
 					  (MLME_WEP_DEFAULT_KEY_1 +
 					  i), key_info[j].key, &val);
 		if (QDF_IS_STATUS_ERROR(status)) {
@@ -1769,6 +1774,7 @@ static void wma_read_cfg_wepkey(tp_wma_handle wma_handle,
 	}
 	*num_keys = j;
 }
+#endif
 
 #ifdef FEATURE_WLAN_WAPI
 #define WPI_IV_LEN 16
@@ -1851,6 +1857,7 @@ static inline void wma_fill_in_wapi_key_params(
 #endif
 #endif
 
+#ifndef CRYPTO_SET_KEY_CONVERGED
 /**
  * wma_skip_bip_key_set() - skip the BIP key step or not
  * @wma_handle: wma handle
@@ -1935,12 +1942,7 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 #endif
 	params.key_txmic_len = 0;
 	params.key_rxmic_len = 0;
-	params.key_rsc_counter = qdf_mem_malloc(sizeof(uint64_t));
-	if (!params.key_rsc_counter) {
-		WMA_LOGE(FL("can't allocate memory for key_rsc_counter"));
-		return QDF_STATUS_E_NOMEM;
-	}
-	qdf_mem_copy(params.key_rsc_counter,
+	qdf_mem_copy(&params.key_rsc_ctr,
 		     &key_params->key_rsc[0], sizeof(uint64_t));
 	params.key_flags = 0;
 	if (key_params->unicast)
@@ -2063,7 +2065,7 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 	WMA_LOGD("unicast %d peer_mac %pM def_key_idx %d",
 		 key_params->unicast, key_params->peer_mac,
 		 key_params->def_key_idx);
-	WMA_LOGD("keyrsc param %llu", *(params.key_rsc_counter));
+	WMA_LOGD("keyrsc param %llu", params.key_rsc_ctr);
 
 	/*
 	 * To prevent from any replay-attack, PN number provided by
@@ -2112,17 +2114,113 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		iface->is_waiting_for_key = false;
 
 end:
-	qdf_mem_free(params.key_rsc_counter);
 	return status;
+}
+#endif
+
+#ifdef QCA_IBSS_SUPPORT
+/**
+ * wma_calc_ibss_heart_beat_timer() - calculate IBSS heart beat timer
+ * @peer_num: number of peers
+ *
+ * Return: heart beat timer value
+ */
+static uint16_t wma_calc_ibss_heart_beat_timer(int16_t peer_num)
+{
+	/* heart beat timer value look-up table */
+	/* entry index : (the number of currently connected peers) - 1
+	 * entry value : the heart time threshold value in seconds for
+	 * detecting ibss peer departure
+	 */
+	static const uint16_t heart_beat_timer[MAX_PEERS] = {
+		4, 4, 4, 4, 4, 4, 4, 4,
+		8, 8, 8, 8, 8, 8, 8, 8,
+		12, 12, 12, 12, 12, 12, 12, 12,
+		16, 16, 16, 16, 16, 16, 16, 16
+	};
+
+	if (peer_num < 1 || peer_num > MAX_PEERS)
+		return 0;
+
+	return heart_beat_timer[peer_num - 1];
 }
 
 /**
- * wma_set_bsskey() - set encryption key to fw.
- * @wma_handle: wma handle
- * @key_info: key info
+ * wma_adjust_ibss_heart_beat_timer() - set ibss heart beat timer in fw.
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ * @peer_num_delta: peer number delta value
  *
  * Return: none
  */
+void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
+				      uint8_t vdev_id,
+				      int8_t peer_num_delta)
+{
+	struct cdp_vdev *vdev;
+	int16_t new_peer_num;
+	uint16_t new_timer_value_sec;
+	uint32_t new_timer_value_ms;
+	QDF_STATUS status;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (peer_num_delta != 1 && peer_num_delta != -1) {
+		WMA_LOGE("Invalid peer_num_delta value %d", peer_num_delta);
+		return;
+	}
+
+	vdev = wma_find_vdev_by_id(wma, vdev_id);
+	if (!vdev) {
+		WMA_LOGE("vdev not found : vdev_id %d", vdev_id);
+		return;
+	}
+
+	/* adjust peer numbers */
+	new_peer_num = cdp_peer_update_ibss_add_peer_num_of_vdev(soc, vdev,
+								 peer_num_delta
+								 );
+	if (OL_TXRX_INVALID_NUM_PEERS == new_peer_num) {
+		WMA_LOGE("new peer num %d out of valid boundary", new_peer_num);
+		return;
+	}
+
+	/* reset timer value if all peers departed */
+	if (new_peer_num == 0) {
+		cdp_set_ibss_vdev_heart_beat_timer(soc, vdev, 0);
+		return;
+	}
+
+	/* calculate new timer value */
+	new_timer_value_sec = wma_calc_ibss_heart_beat_timer(new_peer_num);
+	if (new_timer_value_sec == 0) {
+		WMA_LOGE("timer value %d is invalid for peer number %d",
+			 new_timer_value_sec, new_peer_num);
+		return;
+	}
+	if (new_timer_value_sec ==
+	    cdp_set_ibss_vdev_heart_beat_timer(soc, vdev,
+					       new_timer_value_sec)) {
+		WMA_LOGD("timer value %d stays same, no need to notify target",
+			 new_timer_value_sec);
+		return;
+	}
+
+	new_timer_value_ms = ((uint32_t)new_timer_value_sec) * 1000;
+
+	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+				    WMI_VDEV_PARAM_IBSS_MAX_BCN_LOST_MS,
+				    new_timer_value_ms);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("Failed to set IBSS link monitoring timer value");
+		return;
+	}
+
+	WMA_LOGD("Set IBSS link monitor timer: peer_num = %d timer_value = %d",
+		 new_peer_num, new_timer_value_ms);
+}
+#endif /* QCA_IBSS_SUPPORT */
+
+#ifndef CRYPTO_SET_KEY_CONVERGED
 void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 {
 	struct wma_set_key_params key_params;
@@ -2133,6 +2231,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	struct cdp_vdev *txrx_vdev;
 	uint8_t *mac_addr;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct wlan_objmgr_vdev *vdev;
 
 	WMA_LOGD("BSS key setup");
 	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
@@ -2184,8 +2283,13 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	if (key_info->numKeys == 0 &&
 	    (key_info->encType == eSIR_ED_WEP40 ||
 	     key_info->encType == eSIR_ED_WEP104)) {
+		vdev =
+		wlan_objmgr_get_vdev_by_id_from_psoc(wma_handle->psoc,
+						     key_info->smesessionId,
+						     WLAN_LEGACY_WMA_ID);
 		wma_read_cfg_wepkey(wma_handle, key_info->key,
-				    &def_key_idx, &key_info->numKeys);
+				    &def_key_idx, &key_info->numKeys, vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 	} else if ((key_info->encType == eSIR_ED_WEP40) ||
 		   (key_info->encType == eSIR_ED_WEP104)) {
 		struct wma_txrx_node *intf =
@@ -2246,108 +2350,6 @@ out:
 				   (void *)key_info, 0);
 }
 
-#ifdef QCA_IBSS_SUPPORT
-/**
- * wma_calc_ibss_heart_beat_timer() - calculate IBSS heart beat timer
- * @peer_num: number of peers
- *
- * Return: heart beat timer value
- */
-static uint16_t wma_calc_ibss_heart_beat_timer(int16_t peer_num)
-{
-	/* heart beat timer value look-up table */
-	/* entry index : (the number of currently connected peers) - 1
-	 * entry value : the heart time threshold value in seconds for
-	 * detecting ibss peer departure
-	 */
-	static const uint16_t heart_beat_timer[MAX_PEERS] = {
-		4, 4, 4, 4, 4, 4, 4, 4,
-		8, 8, 8, 8, 8, 8, 8, 8,
-		12, 12, 12, 12, 12, 12, 12, 12,
-		16, 16, 16, 16, 16, 16, 16, 16
-	};
-
-	if (peer_num < 1 || peer_num > MAX_PEERS)
-		return 0;
-
-	return heart_beat_timer[peer_num - 1];
-
-}
-
-/**
- * wma_adjust_ibss_heart_beat_timer() - set ibss heart beat timer in fw.
- * @wma: wma handle
- * @vdev_id: vdev id
- * @peer_num_delta: peer number delta value
- *
- * Return: none
- */
-void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
-				      uint8_t vdev_id,
-				      int8_t peer_num_delta)
-{
-	struct cdp_vdev *vdev;
-	int16_t new_peer_num;
-	uint16_t new_timer_value_sec;
-	uint32_t new_timer_value_ms;
-	QDF_STATUS status;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-
-	if (peer_num_delta != 1 && peer_num_delta != -1) {
-		WMA_LOGE("Invalid peer_num_delta value %d", peer_num_delta);
-		return;
-	}
-
-	vdev = wma_find_vdev_by_id(wma, vdev_id);
-	if (!vdev) {
-		WMA_LOGE("vdev not found : vdev_id %d", vdev_id);
-		return;
-	}
-
-	/* adjust peer numbers */
-	new_peer_num = cdp_peer_update_ibss_add_peer_num_of_vdev(soc,
-					vdev, peer_num_delta);
-	if (OL_TXRX_INVALID_NUM_PEERS == new_peer_num) {
-		WMA_LOGE("new peer num %d out of valid boundary", new_peer_num);
-		return;
-	}
-
-	/* reset timer value if all peers departed */
-	if (new_peer_num == 0) {
-		cdp_set_ibss_vdev_heart_beat_timer(soc, vdev, 0);
-		return;
-	}
-
-	/* calculate new timer value */
-	new_timer_value_sec = wma_calc_ibss_heart_beat_timer(new_peer_num);
-	if (new_timer_value_sec == 0) {
-		WMA_LOGE("timer value %d is invalid for peer number %d",
-			 new_timer_value_sec, new_peer_num);
-		return;
-	}
-	if (new_timer_value_sec ==
-	    cdp_set_ibss_vdev_heart_beat_timer(soc,
-						vdev, new_timer_value_sec)) {
-		WMA_LOGD("timer value %d stays same, no need to notify target",
-			 new_timer_value_sec);
-		return;
-	}
-
-	new_timer_value_ms = ((uint32_t) new_timer_value_sec) * 1000;
-
-	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
-					 WMI_VDEV_PARAM_IBSS_MAX_BCN_LOST_MS,
-					 new_timer_value_ms);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		WMA_LOGE("Failed to set IBSS link monitoring timer value");
-		return;
-	}
-
-	WMA_LOGD("Set IBSS link monitor timer: peer_num = %d timer_value = %d",
-		 new_peer_num, new_timer_value_ms);
-}
-
-#endif /* QCA_IBSS_SUPPORT */
 /**
  * wma_set_ibsskey_helper() - cached IBSS key in wma handle
  * @wma_handle: wma handle
@@ -2367,6 +2369,7 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	struct cdp_vdev *txrx_vdev;
 	int opmode;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct wlan_objmgr_vdev *vdev;
 
 	WMA_LOGD("BSS key setup for peer");
 	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
@@ -2391,8 +2394,13 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	if (key_info->numKeys == 0 &&
 	    (key_info->encType == eSIR_ED_WEP40 ||
 	     key_info->encType == eSIR_ED_WEP104)) {
+		vdev =
+		wlan_objmgr_get_vdev_by_id_from_psoc(wma_handle->psoc,
+						     key_info->smesessionId,
+						     WLAN_LEGACY_WMA_ID);
 		wma_read_cfg_wepkey(wma_handle, key_info->key,
-				    &def_key_idx, &key_info->numKeys);
+				    &def_key_idx, &key_info->numKeys, vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 	} else if ((key_info->encType == eSIR_ED_WEP40) ||
 		(key_info->encType == eSIR_ED_WEP104)) {
 		struct wma_txrx_node *intf =
@@ -2434,16 +2442,6 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	}
 }
 
-/**
- * wma_set_stakey() - set encryption key
- * @wma_handle: wma handle
- * @key_info: station key info
- *
- * This function sets encryption key for WEP/WPA/WPA2
- * encryption mode in firmware and send response to upper layer.
- *
- * Return: none
- */
 void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 {
 	int32_t i;
@@ -2456,6 +2454,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	uint32_t def_key_idx = 0;
 	int opmode;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct wlan_objmgr_vdev *vdev;
 
 	WMA_LOGD("STA key setup");
 
@@ -2488,8 +2487,13 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	    (key_info->encType == eSIR_ED_WEP40 ||
 	     key_info->encType == eSIR_ED_WEP104) &&
 	    opmode != wlan_op_mode_ap) {
+		vdev =
+		wlan_objmgr_get_vdev_by_id_from_psoc(wma_handle->psoc,
+						     key_info->smesessionId,
+						     WLAN_LEGACY_WMA_ID);
 		wma_read_cfg_wepkey(wma_handle, key_info->key,
-				    &def_key_idx, &num_keys);
+				    &def_key_idx, &num_keys, vdev);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 		key_info->defWEPIdx = def_key_idx;
 	} else {
 		num_keys = SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS;
@@ -2568,6 +2572,7 @@ out:
 		wma_send_msg_high_priority(wma_handle, WMA_SET_STAKEY_RSP,
 					   (void *)key_info, 0);
 }
+#endif
 
 /**
  * wma_process_update_edca_param_req() - update EDCA params
@@ -3729,6 +3734,8 @@ int wma_process_bip(tp_wma_handle wma_handle,
 	uint16_t mmie_size;
 	uint16_t key_id;
 	uint8_t *efrm;
+	uint8_t *igtk;
+	uint16_t key_len;
 
 	efrm = qdf_nbuf_data(wbuf) + qdf_nbuf_len(wbuf);
 
@@ -3756,6 +3763,7 @@ int wma_process_bip(tp_wma_handle wma_handle,
 
 	WMA_LOGD(FL("key_cipher %d key_id %d"), iface->key.key_cipher, key_id);
 
+	igtk = wma_get_igtk(iface, &key_len);
 	switch (iface->key.key_cipher) {
 	case WMI_CIPHER_AES_CMAC:
 		if (wmi_service_enabled(wma_handle->wmi_handle,
@@ -3767,9 +3775,10 @@ int wma_process_bip(tp_wma_handle wma_handle,
 			 */
 			qdf_nbuf_trim_tail(wbuf, cds_get_mmie_size());
 		} else {
-			if (cds_is_mmie_valid(iface->key.key,
-			   iface->key.key_id[key_id - WMA_IGTK_KEY_INDEX_4].ipn,
-			   (uint8_t *) wh, efrm)) {
+			if (cds_is_mmie_valid(igtk, iface->key.key_id[
+					      key_id -
+					      WMA_IGTK_KEY_INDEX_4].ipn,
+					      (uint8_t *)wh, efrm)) {
 				WMA_LOGD(FL("Protected BC/MC frame MMIE validation successful"));
 				/* Remove MMIE */
 				qdf_nbuf_trim_tail(wbuf, cds_get_mmie_size());
@@ -3791,9 +3800,9 @@ int wma_process_bip(tp_wma_handle wma_handle,
 			WMA_LOGD(FL("Trim GMAC MMIE"));
 			qdf_nbuf_trim_tail(wbuf, cds_get_gmac_mmie_size());
 		} else {
-			if (cds_is_gmac_mmie_valid(iface->key.key,
+			if (cds_is_gmac_mmie_valid(igtk,
 			   iface->key.key_id[key_id - WMA_IGTK_KEY_INDEX_4].ipn,
-			   (uint8_t *) wh, efrm, iface->key.key_length)) {
+			   (uint8_t *) wh, efrm, key_len)) {
 				WMA_LOGD(FL("Protected BC/MC frame GMAC MMIE validation successful"));
 				/* Remove MMIE */
 				qdf_nbuf_trim_tail(wbuf,

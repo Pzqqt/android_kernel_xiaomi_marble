@@ -349,6 +349,7 @@ typedef struct {
  * @status: status
  * @sessionId: session id
  * @sendRsp: send response
+ * @macaddr: MAC address of the peer
  *
  * This is used by PE to configure the key information on a given station.
  * When the secType is WEP40 or WEP104, the defWEPIdx is used to locate
@@ -366,6 +367,7 @@ typedef struct {
 	QDF_STATUS status;
 	uint8_t sessionId;
 	uint8_t sendRsp;
+	struct qdf_mac_addr macaddr;
 } tSetStaKeyParams, *tpSetStaKeyParams;
 
 /**
@@ -660,6 +662,7 @@ typedef struct sSendProbeRespParams {
  * @smesessionId: sme session id
  * @status: return status of command
  * @sessionId: PE session id
+ * @macaddr: MAC address of the peer
  */
 typedef struct {
 	uint8_t bssIdx;
@@ -670,6 +673,7 @@ typedef struct {
 	uint8_t smesessionId;
 	QDF_STATUS status;
 	uint8_t sessionId;
+	struct qdf_mac_addr macaddr;
 } tSetBssKeyParams, *tpSetBssKeyParams;
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -64,6 +64,8 @@
 #include "wlan_hdd_scan.h"
 
 #include "wlan_hdd_nud_tracking.h"
+#include <wlan_cfg80211_crypto.h>
+#include <wlan_crypto_global_api.h>
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
 #define HDD_RSN_OUI_SIZE 4
@@ -3772,6 +3774,40 @@ hdd_roam_mic_error_indication_handler(struct hdd_adapter *adapter,
 				     GFP_KERNEL);
 }
 
+#ifdef CRYPTO_SET_KEY_CONVERGED
+static QDF_STATUS wlan_hdd_set_key_helper(struct hdd_adapter *adapter,
+					  uint32_t *roam_id)
+{
+	int ret;
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return QDF_STATUS_E_FAILURE;
+	ret = wlan_cfg80211_crypto_add_key(vdev, true, 0);
+	hdd_objmgr_put_vdev(adapter);
+	if (ret != 0) {
+		hdd_err("crypto add key fail, status: %d", ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS wlan_hdd_set_key_helper(struct hdd_adapter *adapter,
+					  uint32_t *roam_id)
+{
+	struct hdd_station_ctx *sta_ctx =
+		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	return sme_roam_set_key(hdd_ctx->mac_handle,
+				adapter->session_id,
+				&sta_ctx->ibss_enc_key,
+				roam_id);
+}
+#endif
+
 /**
  * roam_roam_connect_status_update_handler() - IBSS connect status update
  * @adapter: pointer to adapter
@@ -3792,6 +3828,7 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 					eCsrRoamResult roamResult)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct wlan_objmgr_vdev *vdev;
 	QDF_STATUS qdf_status;
 
 	switch (roamResult) {
@@ -3853,18 +3890,18 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 				eSIR_TX_RX;
 			qdf_copy_macaddr(&sta_ctx->ibss_enc_key.peerMac,
 					 &roam_info->peerMac);
+			vdev = hdd_objmgr_get_vdev(adapter);
+			if (!vdev)
+				return QDF_STATUS_E_FAILURE;
+			wlan_crypto_update_set_key_peer(vdev, true, 0,
+							&roam_info->peerMac);
+			hdd_objmgr_put_vdev(adapter);
 
 			hdd_debug("New peer joined set PTK encType=%d",
 				 encr_type);
-
-			qdf_status =
-				sme_roam_set_key(hdd_ctx->mac_handle,
-						 adapter->session_id,
-						 &sta_ctx->ibss_enc_key,
-						 &roamId);
-
+			qdf_status = wlan_hdd_set_key_helper(adapter, &roamId);
 			if (QDF_STATUS_SUCCESS != qdf_status) {
-				hdd_err("sme_roam_set_key failed, status: %d",
+				hdd_err("sme set_key fail status: %d",
 					qdf_status);
 				return QDF_STATUS_E_FAILURE;
 			}

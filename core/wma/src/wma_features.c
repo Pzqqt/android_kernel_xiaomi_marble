@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -68,6 +68,7 @@
 #ifdef WLAN_FEATURE_NAN
 #include "target_if_nan.h"
 #endif
+#include <wlan_crypto_global_api.h>
 
 #ifndef ARRAY_LENGTH
 #define ARRAY_LENGTH(a)         (sizeof(a) / sizeof((a)[0]))
@@ -5630,6 +5631,99 @@ int wma_vdev_obss_detection_info_handler(void *handle, uint8_t *event,
 
 	return 0;
 }
+
+#ifdef CRYPTO_SET_KEY_CONVERGED
+static void wma_send_set_key_rsp(uint8_t session_id, bool pairwise,
+				 uint8_t key_index)
+{
+	tSetStaKeyParams *key_info_uc;
+	tSetBssKeyParams *key_info_mc;
+	struct wlan_crypto_key *crypto_key;
+	struct wlan_objmgr_vdev *vdev;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma) {
+		wma_err("WMA context does not exist");
+		return;
+	}
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc,
+						    session_id,
+						    WLAN_LEGACY_WMA_ID);
+	if (!vdev) {
+		wma_err("VDEV object not found");
+		return;
+	}
+	crypto_key = wlan_crypto_get_key(vdev, key_index);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+	if (!crypto_key) {
+		wma_err("crypto_key not found");
+		return;
+	}
+
+	if (pairwise) {
+		key_info_uc = qdf_mem_malloc(sizeof(*key_info_uc));
+		if (!key_info_uc)
+			return;
+		key_info_uc->sessionId = session_id;
+		key_info_uc->smesessionId = session_id;
+		key_info_uc->status = QDF_STATUS_SUCCESS;
+		key_info_uc->key[0].keyLength = crypto_key->keylen;
+		qdf_mem_copy(&key_info_uc->macaddr, &crypto_key->macaddr,
+			     QDF_MAC_ADDR_SIZE);
+		wma_send_msg_high_priority(wma, WMA_SET_STAKEY_RSP,
+					   key_info_uc, 0);
+	} else {
+		key_info_mc = qdf_mem_malloc(sizeof(*key_info_mc));
+		if (!key_info_mc)
+			return;
+		key_info_mc->sessionId = session_id;
+		key_info_mc->smesessionId = session_id;
+		key_info_mc->status = QDF_STATUS_SUCCESS;
+		key_info_mc->key[0].keyLength = crypto_key->keylen;
+		qdf_mem_copy(&key_info_mc->macaddr, &crypto_key->macaddr,
+			     QDF_MAC_ADDR_SIZE);
+		wma_send_msg_high_priority(wma, WMA_SET_BSSKEY_RSP,
+					   key_info_mc, 0);
+	}
+}
+
+static void wma_reset_ipn(struct wma_txrx_node *iface, uint8_t key_index)
+{
+	if (key_index == WMA_IGTK_KEY_INDEX_4 ||
+	    key_index == WMA_IGTK_KEY_INDEX_5)
+		qdf_mem_zero(iface->key.key_id[key_index -
+				WMA_IGTK_KEY_INDEX_4].ipn,
+				CMAC_IPN_LEN);
+}
+
+void wma_update_set_key(uint8_t session_id, bool pairwise,
+			uint8_t key_index,
+			enum wlan_crypto_cipher_type cipher_type)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct wma_txrx_node *iface;
+
+	if (!wma) {
+		wma_err("Invalid WMA context");
+		return;
+	}
+	iface = &wma->interfaces[session_id];
+	wma_reset_ipn(iface, key_index);
+	if (iface && pairwise)
+		iface->ucast_key_cipher =
+			wlan_crypto_cipher_to_wmi_cipher(cipher_type);
+	if (!pairwise && iface) {
+		/* Its GTK release the wake lock */
+		wma_debug("Release set key wake lock");
+		wma_release_wakelock(&iface->vdev_set_key_wakelock);
+	}
+	if (iface)
+		iface->is_waiting_for_key = false;
+
+	wma_send_set_key_rsp(session_id, pairwise, key_index);
+}
+#endif /* CRYPTO_SET_KEY_CONVERGED */
 
 int wma_vdev_bss_color_collision_info_handler(void *handle,
 					      uint8_t *event,

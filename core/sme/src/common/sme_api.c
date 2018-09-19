@@ -6242,6 +6242,63 @@ QDF_STATUS sme_config_fast_roaming(mac_handle_t mac_handle, uint8_t session_id,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_WLAN_ESE
+int sme_add_key_krk(mac_handle_t mac_handle, uint8_t session_id,
+		    const uint8_t *key, const int key_len)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+
+	if (key_len < SIR_KRK_KEY_LEN) {
+		sme_warn("Invalid KRK keylength [= %d]", key_len);
+		return -EINVAL;
+	}
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("incorrect session/vdev ID");
+		return -EINVAL;
+	}
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	qdf_mem_copy(session->eseCckmInfo.krk, key, SIR_KRK_KEY_LEN);
+	session->eseCckmInfo.reassoc_req_num = 1;
+	session->eseCckmInfo.krk_plumbed = true;
+
+	return 0;
+}
+
+int sme_add_key_btk(mac_handle_t mac_handle, uint8_t session_id,
+		    const uint8_t *key, const int key_len)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct csr_roam_session *session;
+
+	if (key_len < SIR_BTK_KEY_LEN) {
+		sme_warn("Invalid BTK keylength [= %d]", key_len);
+		return -EINVAL;
+	}
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("incorrect session/vdev ID");
+		return -EINVAL;
+	}
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	qdf_mem_copy(session->eseCckmInfo.btk, key, SIR_BTK_KEY_LEN);
+	/*
+	 * KRK and BTK are updated by upper layer back to back. Send
+	 * updated KRK and BTK together to FW here.
+	 */
+	csr_roam_offload_scan(mac_ctx, session_id,
+			      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+			      REASON_ROAM_PSK_PMK_CHANGED);
+
+	return 0;
+}
+#endif
+
 /**
  * sme_stop_roaming() - Stop roaming for a given sessionId
  *  This is a synchronous call

@@ -2579,4 +2579,28 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh);
  */
 struct wlan_objmgr_psoc *wma_get_psoc_from_scn_handle(void *scn_handle);
 
+#ifdef CRYPTO_SET_KEY_CONVERGED
+/**
+ * wma_update_set_key() - Update WMA layer for set key
+ * @session_id: vdev session identifier
+ * @pairwise: denotes if it is pairwise or group key
+ * @key_index: Key Index
+ * @cipher_type: cipher type being used for the encryption/decryption
+ *
+ * Return: None
+ */
+void wma_update_set_key(uint8_t session_id, bool pairwise,
+			uint8_t key_index,
+			enum wlan_crypto_cipher_type cipher_type);
+#endif
+
+/**
+ * wma_get_igtk() - Get the IGTK that was stored in the session earlier
+ * @iface: Interface for which the key is being requested
+ * @key_len: key length
+ *
+ * Return: Pointer to the key
+ */
+uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len);
+
 #endif

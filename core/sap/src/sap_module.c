@@ -50,44 +50,13 @@
 #include "wlan_reg_services_api.h"
 #include <wlan_dfs_utils_api.h>
 #include <wlan_reg_ucfg_api.h>
+#include <wlan_cfg80211_crypto.h>
+#include <wlan_crypto_global_api.h>
 
-/*----------------------------------------------------------------------------
- * Preprocessor Definitions and Constants
- * -------------------------------------------------------------------------*/
 #define SAP_DEBUG
-
-/*----------------------------------------------------------------------------
- * Type Declarations
- * -------------------------------------------------------------------------*/
-
-/*----------------------------------------------------------------------------
- * Global Data Definitions
- * -------------------------------------------------------------------------*/
-
-/*----------------------------------------------------------------------------
- *  External declarations for global context
- * -------------------------------------------------------------------------*/
-/*  No!  Get this from CDS. */
-/*  The main per-Physical Link (per WLAN association) context. */
 static struct sap_context *gp_sap_ctx[SAP_MAX_NUM_SESSION];
 static qdf_atomic_t sap_ctx_ref_count[SAP_MAX_NUM_SESSION];
-
-/*----------------------------------------------------------------------------
- * Static Variable Definitions
- * -------------------------------------------------------------------------*/
 static qdf_mutex_t sap_context_lock;
-
-/*----------------------------------------------------------------------------
- * Static Function Declarations and Definitions
- * -------------------------------------------------------------------------*/
-
-/*----------------------------------------------------------------------------
- * Externalized Function Definitions
- * -------------------------------------------------------------------------*/
-
-/*----------------------------------------------------------------------------
- * Function Declarations and Documentation
- * -------------------------------------------------------------------------*/
 
 /**
  * wlansap_global_init() - Initialize SAP globals
@@ -1401,18 +1370,27 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlansap_set_key_sta(struct sap_context *sap_ctx,
-			       tCsrRoamSetKey *key_info)
+#ifdef CRYPTO_SET_KEY_CONVERGED
+static QDF_STATUS wlan_sap_set_key_helper(struct sap_context *sap_ctx,
+					  tCsrRoamSetKey *set_key_info)
+{
+	struct wlan_crypto_key *crypto_key;
+
+	crypto_key = wlan_crypto_get_key(sap_ctx->vdev, 0);
+	if (!crypto_key) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				"Crypto KEY is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return ucfg_crypto_set_key_req(sap_ctx->vdev, crypto_key, true);
+}
+#else
+static QDF_STATUS wlan_sap_set_key_helper(struct sap_context *sap_ctx,
+					  tCsrRoamSetKey *set_key_info)
 {
 	uint32_t roam_id = INVALID_ROAM_ID;
 	struct mac_context *mac;
-
-	if (!sap_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer",
-			  __func__);
-		return QDF_STATUS_E_FAULT;
-	}
 
 	mac = sap_get_mac_context();
 	if (!mac) {
@@ -1421,7 +1399,27 @@ QDF_STATUS wlansap_set_key_sta(struct sap_context *sap_ctx,
 	}
 
 	return sme_roam_set_key(MAC_HANDLE(mac), sap_ctx->sessionId,
-				key_info, &roam_id);
+				set_key_info, &roam_id);
+}
+#endif
+
+QDF_STATUS wlansap_set_key_sta(struct sap_context *sap_ctx,
+			       tCsrRoamSetKey *set_key_info)
+{
+	QDF_STATUS qdf_status;
+
+	if (!sap_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer",
+			  __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	qdf_status = wlan_sap_set_key_helper(sap_ctx, set_key_info);
+	if (qdf_status != QDF_STATUS_SUCCESS)
+		qdf_status = QDF_STATUS_E_FAULT;
+
+	return qdf_status;
 }
 
 QDF_STATUS wlan_sap_getstation_ie_information(struct sap_context *sap_ctx,

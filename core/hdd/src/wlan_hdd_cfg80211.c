@@ -133,6 +133,7 @@
 #include "wlan_hdd_object_manager.h"
 #include "nan_ucfg_api.h"
 #include "wlan_fwol_ucfg_api.h"
+#include "wlan_cfg80211_crypto.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -13380,7 +13381,7 @@ void wlan_hdd_cfg80211_deregister_frames(struct hdd_adapter *adapter)
 				  WNM_NOTIFICATION_FRAME_SIZE);
 }
 
-#ifdef FEATURE_WLAN_WAPI
+#if defined(FEATURE_WLAN_WAPI) && !defined(CRYPTO_SET_KEY_CONVERGED)
 static void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter,
 					   uint8_t key_index,
 					   const uint8_t *mac_addr,
@@ -14069,6 +14070,215 @@ static int wlan_hdd_change_station(struct wiphy *wiphy,
 	return ret;
 }
 
+#ifdef CRYPTO_SET_KEY_CONVERGED
+#ifdef FEATURE_WLAN_ESE
+static bool hdd_is_krk_enc_type(uint32_t cipher_type)
+{
+	if (cipher_type == WLAN_CIPHER_SUITE_KRK)
+		return true;
+
+	return false;
+}
+#else
+static bool hdd_is_krk_enc_type(uint32_t cipher_type)
+{
+	return false;
+}
+#endif
+
+#if defined(FEATURE_WLAN_ESE) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
+static bool hdd_is_btk_enc_type(uint32_t cipher_type)
+{
+	if (cipher_type == WLAN_CIPHER_SUITE_BTK)
+		return true;
+
+	return false;
+}
+#else
+static bool hdd_is_btk_enc_type(uint32_t cipher_type)
+{
+	return false;
+}
+#endif
+#endif
+
+#ifdef CRYPTO_SET_KEY_CONVERGED
+static int wlan_hdd_add_key_ibss(struct hdd_adapter *adapter,
+				 bool pairwise, u8 key_index,
+				 const u8 *mac_addr, struct key_params *params,
+				 bool *key_already_installed)
+{
+	struct wlan_objmgr_vdev *vdev;
+	int errno;
+
+	if (pairwise)
+		return 0;
+	/* if a key is already installed, block all subsequent ones */
+	if (adapter->session.station.ibss_enc_key_installed) {
+		hdd_debug("IBSS key installed already");
+		*key_already_installed = true;
+		return 0;
+	}
+	/*Set the group key */
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+	errno = wlan_cfg80211_crypto_add_key(vdev, pairwise, key_index);
+	if (errno) {
+		hdd_err("add_ibss_key failed, errno: %d", errno);
+		hdd_objmgr_put_vdev(adapter);
+		return errno;
+	}
+	/* Save the keys here and call set_key for setting
+	 * the PTK after peer joins the IBSS network
+	 */
+	wlan_cfg80211_store_key(vdev, key_index, true, mac_addr, params);
+	hdd_objmgr_put_vdev(adapter);
+	adapter->session.station.ibss_enc_key_installed = 1;
+
+	return 0;
+}
+
+static int wlan_hdd_add_key_sap(struct hdd_adapter *adapter,
+				bool pairwise, u8 key_index)
+{
+	struct wlan_objmgr_vdev *vdev;
+	int errno = 0;
+	struct hdd_hostapd_state *hostapd_state =
+		WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+	if (hostapd_state->bss_state == BSS_START)
+		errno = wlan_cfg80211_crypto_add_key(vdev, pairwise, key_index);
+	hdd_objmgr_put_vdev(adapter);
+
+	return errno;
+}
+
+static int wlan_hdd_add_key_sta(struct hdd_adapter *adapter,
+				bool pairwise, u8 key_index,
+				mac_handle_t mac_handle, bool *ft_mode)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct hdd_station_ctx *sta_ctx =
+		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	int errno;
+	QDF_STATUS status;
+
+	if (!pairwise) {
+		/* set group key */
+		if (sta_ctx->roam_info.defer_key_complete) {
+			hdd_debug("Perform Set key Complete");
+			hdd_perform_roam_set_key_complete(adapter);
+		}
+	}
+	/* The supplicant may attempt to set the PTK once
+	 * pre-authentication is done. Save the key in the
+	 * UMAC and include it in the ADD BSS request
+	 */
+	status = sme_check_ft_status(mac_handle, adapter->session_id);
+	if (status == QDF_STATUS_SUCCESS) {
+		*ft_mode = true;
+		return 0;
+	}
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+	errno = wlan_cfg80211_crypto_add_key(vdev, pairwise, key_index);
+	hdd_objmgr_put_vdev(adapter);
+	if (!errno && adapter->send_mode_change) {
+		wlan_hdd_send_mode_change_event();
+		adapter->send_mode_change = false;
+	}
+
+	return errno;
+}
+
+static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
+				       struct net_device *ndev,
+				       u8 key_index, bool pairwise,
+				       const u8 *mac_addr,
+				       struct key_params *params)
+{
+	struct hdd_context *hdd_ctx;
+	mac_handle_t mac_handle;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
+	struct wlan_objmgr_vdev *vdev;
+	bool key_already_installed = false, ft_mode = false;
+	enum wlan_crypto_cipher_type cipher;
+	int errno;
+
+	hdd_enter();
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EINVAL;
+	}
+
+	if (wlan_hdd_validate_session_id(adapter->session_id))
+		return -EINVAL;
+
+	qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_CFG80211_ADD_KEY,
+		  adapter->session_id, params->key_len);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
+
+	hdd_debug("converged Device_mode %s(%d)",
+		  qdf_opmode_str(adapter->device_mode),
+		  adapter->device_mode);
+	 mac_handle = hdd_ctx->mac_handle;
+
+	if (hdd_is_btk_enc_type(params->cipher))
+		return sme_add_key_btk(mac_handle, adapter->session_id,
+				       params->key, params->key_len);
+	if (hdd_is_krk_enc_type(params->cipher))
+		return sme_add_key_krk(mac_handle, adapter->session_id,
+				       params->key, params->key_len);
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+	errno = wlan_cfg80211_store_key(vdev, key_index, pairwise, mac_addr,
+					params);
+	hdd_objmgr_put_vdev(adapter);
+	if (errno)
+		return errno;
+	switch (adapter->device_mode) {
+	case QDF_IBSS_MODE:
+		errno = wlan_hdd_add_key_ibss(adapter, pairwise, key_index,
+					      mac_addr, params,
+					      &key_already_installed);
+		if (key_already_installed)
+			return 0;
+		break;
+	case QDF_SAP_MODE:
+	case QDF_P2P_GO_MODE:
+		errno = wlan_hdd_add_key_sap(adapter, pairwise, key_index);
+		break;
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+		wlan_hdd_add_key_sta(adapter, pairwise, key_index,
+				     mac_handle, &ft_mode);
+		if (ft_mode)
+			return 0;
+		break;
+	default:
+		break;
+	}
+	if (!errno) {
+		cipher = osif_nl_to_crypto_cipher_type(params->cipher);
+		wma_update_set_key(adapter->session_id, pairwise, key_index,
+				   cipher);
+	}
+	hdd_exit();
+
+	return errno;
+}
+#else /* !CRYPTO_SET_KEY_CONVERGED */
 /*
  * FUNCTION: __wlan_hdd_cfg80211_add_key
  * This function is used to initialize the key information
@@ -14081,9 +14291,9 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	tCsrRoamSetKey setKey;
-	int status;
+	int errno;
 	uint32_t roamId = INVALID_ROAM_ID;
-	QDF_STATUS qdf_ret_status;
+	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
 	mac_handle_t mac_handle;
 
@@ -14097,14 +14307,13 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_ADD_KEY,
-			 adapter->session_id, params->key_len));
+	qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_CFG80211_ADD_KEY,
+		  adapter->session_id, params->key_len);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	status = wlan_hdd_validate_context(hdd_ctx);
+	errno = wlan_hdd_validate_context(hdd_ctx);
 
-	if (0 != status)
-		return status;
+	if (errno)
+		return errno;
 
 	hdd_debug("Device_mode %s(%d)",
 		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
@@ -14268,7 +14477,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			     &setKey, sizeof(tCsrRoamSetKey));
 
 		adapter->session.station.ibss_enc_key_installed = 1;
-		return status;
+		return qdf_status_to_os_return(status);
 	}
 	if ((adapter->device_mode == QDF_SAP_MODE) ||
 	    (adapter->device_mode == QDF_P2P_GO_MODE)) {
@@ -14326,19 +14535,20 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		 * pre-authentication is done. Save the key in the
 		 * UMAC and include it in the ADD BSS request
 		 */
-		qdf_ret_status = sme_ft_update_key(mac_handle,
-						   adapter->session_id, &setKey);
-		if (qdf_ret_status == QDF_STATUS_FT_PREAUTH_KEY_SUCCESS) {
+		status = sme_ft_update_key(mac_handle,
+					   adapter->session_id, &setKey);
+		if (status == QDF_STATUS_FT_PREAUTH_KEY_SUCCESS) {
 			hdd_debug("Update PreAuth Key success");
 			return 0;
-		} else if (qdf_ret_status == QDF_STATUS_FT_PREAUTH_KEY_FAILED) {
+		} else if (status == QDF_STATUS_FT_PREAUTH_KEY_FAILED) {
 			hdd_err("Update PreAuth Key failed");
 			return -EINVAL;
 		}
 
 		/* issue set key request to SME */
 		status = sme_roam_set_key(mac_handle,
-					  adapter->session_id, &setKey, &roamId);
+					  adapter->session_id, &setKey,
+					  &roamId);
 
 		if (0 != status) {
 			hdd_err("sme_roam_set_key failed, status: %d", status);
@@ -14385,6 +14595,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	hdd_exit();
 	return 0;
 }
+#endif /* CRYPTO_SET_KEY_CONVERGED */
 
 static int wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 				     struct net_device *ndev,
@@ -14487,9 +14698,8 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 		break;
 	}
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_GET_KEY,
-			 adapter->session_id, params.cipher));
+	qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_CFG80211_GET_KEY,
+		  adapter->session_id, params.cipher);
 
 	params.key_len = roam_profile->Keys.KeyLength[key_index];
 	params.seq_len = 0;
@@ -14577,6 +14787,7 @@ static int wlan_hdd_cfg80211_del_key(struct wiphy *wiphy,
 	return ret;
 }
 
+#ifndef CRYPTO_SET_KEY_CONVERGED
 #ifdef FEATURE_WLAN_WAPI
 static bool hdd_is_wapi_enc_type(eCsrEncryptionType ucEncryptionType)
 {
@@ -14591,7 +14802,72 @@ static bool hdd_is_wapi_enc_type(eCsrEncryptionType ucEncryptionType)
 	return false;
 }
 #endif
+#endif
 
+#ifdef CRYPTO_SET_KEY_CONVERGED
+static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
+					       struct net_device *ndev,
+					       u8 key_index,
+					       bool unicast, bool multicast)
+{
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
+	struct hdd_context *hdd_ctx;
+	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BCAST_INIT;
+	struct hdd_station_ctx *sta_ctx;
+	struct wlan_crypto_key *crypto_key;
+	int ret;
+	QDF_STATUS status;
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EINVAL;
+	}
+
+	if (wlan_hdd_validate_session_id(adapter->session_id))
+		return -EINVAL;
+
+	qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_CFG80211_SET_DEFAULT_KEY,
+		  adapter->session_id, key_index);
+
+	hdd_debug("Device_mode %s(%d) key_index = %d",
+		  qdf_opmode_str(adapter->device_mode),
+		  adapter->device_mode, key_index);
+
+	if (CSR_MAX_NUM_KEY <= key_index) {
+		hdd_err("Invalid key index: %d", key_index);
+		return -EINVAL;
+	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+
+	if (0 != ret)
+		return ret;
+	crypto_key = wlan_crypto_get_key(adapter->vdev, key_index);
+	hdd_debug("unicast %d, cipher %d", unicast, crypto_key->cipher_type);
+	if (crypto_key->cipher_type != WLAN_CRYPTO_CIPHER_WEP)
+		return 0;
+	sta_ctx =  WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (unicast)
+		status =
+		wlan_cfg80211_set_default_key(adapter->vdev, key_index,
+					      &sta_ctx->conn_info.bssId);
+	else
+		status = wlan_cfg80211_set_default_key(adapter->vdev, key_index,
+						       &bssid);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("ret fail status %d", ret);
+		return -EINVAL;
+	}
+	if ((adapter->device_mode == QDF_STA_MODE) ||
+	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
+		ret = wlan_cfg80211_crypto_add_key(adapter->vdev, unicast,
+						   key_index);
+	}
+
+	return ret;
+}
+#else
 /*
  * FUNCTION: __wlan_hdd_cfg80211_set_default_key
  * This function is used to set the default tx key index
@@ -14616,9 +14892,8 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_SET_DEFAULT_KEY,
-			 adapter->session_id, key_index));
+	qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_CFG80211_SET_DEFAULT_KEY,
+		  adapter->session_id, key_index);
 
 	hdd_debug("Device_mode %s(%d) key_index = %d",
 		  qdf_opmode_str(adapter->device_mode),
@@ -14744,6 +15019,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	hdd_exit();
 	return status;
 }
+#endif
 
 static int wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 					     struct net_device *ndev,

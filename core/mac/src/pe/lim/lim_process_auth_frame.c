@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -757,7 +757,8 @@ static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 			qdf_mem_copy(defaultkey, key_ptr->key,
 					key_ptr->keyLength);
 		} else {
-			qdf_status = mlme_get_wep_key(wep_params,
+			qdf_status = mlme_get_wep_key(pe_session->vdev,
+						      wep_params,
 						      (MLME_WEP_DEFAULT_KEY_1 +
 						       key_id), defaultkey,
 						      &val);
@@ -1363,7 +1364,8 @@ lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 					key_ptr->keyLength);
 			val = key_ptr->keyLength;
 		} else {
-			qdf_status = mlme_get_wep_key(wep_params,
+			qdf_status = mlme_get_wep_key(pe_session->vdev,
+						      wep_params,
 						      (MLME_WEP_DEFAULT_KEY_1 +
 						      key_id), defaultkey,
 						      &val);
