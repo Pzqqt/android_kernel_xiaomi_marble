@@ -23,6 +23,14 @@
 #ifndef __CFG_MLME_RATES_H
 #define __CFG_MLME_RATES_H
 
+#define CFG_SUPPORTED_RATES_11B_LEN    4
+#define CFG_SUPPORTED_RATES_11A_LEN    8
+#define CFG_OPERATIONAL_RATE_SET_LEN    12
+#define CFG_EXTENDED_OPERATIONAL_RATE_SET_LEN    8
+#define CFG_SUPPORTED_MCS_SET_LEN    16
+#define CFG_BASIC_MCS_SET_LEN    16
+#define CFG_CURRENT_MCS_SET_LEN    16
+
 /*
  * <ini>
  * gMaxHTMCSForTxData - max HT mcs for TX
@@ -40,7 +48,7 @@
  *
  * </ini>
  */
-#define CFG_INI_MAX_HT_MCS_FOR_TX_DATA CFG_INI_UINT( \
+#define CFG_MAX_HT_MCS_FOR_TX_DATA CFG_INI_UINT( \
 		"gMaxHTMCSForTxData", \
 		0, \
 		0x17f, \
@@ -61,7 +69,7 @@
  *
  * </ini>
  */
-#define CFG_INI_DISABLE_ABG_RATE_FOR_TX_DATA CFG_INI_BOOL( \
+#define CFG_DISABLE_ABG_RATE_FOR_TX_DATA CFG_INI_BOOL( \
 		"gDisableABGRateForTxData", \
 		0, \
 		"Disable ABG RATE for TX Data")
@@ -78,7 +86,7 @@
  *
  * </ini>
  */
-#define CFG_INI_SAP_MAX_MCS_FOR_TX_DATA CFG_INI_UINT( \
+#define CFG_SAP_MAX_MCS_FOR_TX_DATA CFG_INI_UINT( \
 		"gSapMaxMCSForTxData", \
 		0, \
 		383, \
@@ -111,7 +119,7 @@
  *
  * Usage: External
  */
-#define CFG_INI_DISABLE_HIGH_HT_RX_MCS_2x2 CFG_INI_UINT( \
+#define CFG_DISABLE_HIGH_HT_RX_MCS_2x2 CFG_INI_UINT( \
 		"disable_high_ht_mcs_2x2", \
 		0, \
 		8, \
@@ -134,13 +142,95 @@
 		30000, \
 		CFG_VALUE_OR_DEFAULT, \
 		"CFP Max Duration")
+/*
+ * <cfg>
+ * supported_rates_11b - supported rates for 11b
+ * @Min: 0 minimum length of supported rates
+ * @Max: default data length of supported rates in string format
+ * @Default: 2, 4, 11, 22
+ */
+#define CFG_SUPPORTED_RATES_11B_DATA "2, 4, 11, 22"
+#define CFG_SUPPORTED_RATES_11B CFG_STRING( \
+		"supported_rates_11b", \
+		0, \
+		sizeof(CFG_SUPPORTED_RATES_11B_DATA) - 1, \
+		CFG_SUPPORTED_RATES_11B_DATA, \
+		"Supported rates for 11B")
+
+/*
+ * <cfg>
+ * supported_rates_11a - supported rates for 11a
+ * @Min: 0 minimum length of supported rates
+ * @Max: default data length of supported rates in string format
+ * @Default: 12, 18, 24, 36, 48, 72, 96, 108
+ */
+#define CFG_SUPPORTED_RATES_11A_DATA "12, 18, 24, 36, 48, 72, 96, 108"
+#define CFG_SUPPORTED_RATES_11A CFG_STRING( \
+		"supported_rates_11a", \
+		0, \
+		sizeof(CFG_SUPPORTED_RATES_11A_DATA) - 1, \
+		CFG_SUPPORTED_RATES_11A_DATA, \
+		"Supported rates for 11A")
+
+/*
+ * <cfg>
+ * supported_mcs_set - supported MCS set data
+ * @Min: 0 minimum length of supported MCS set
+ * @Max: default data length of supported mcs set in string format
+ * @Default: 0xff, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+ * 0x0, 0x0, 0x0
+ */
+#define CFG_SUPPORTED_MCS_SET_DATA "0xff, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0"
+#define CFG_SUPPORTED_MCS_SET CFG_STRING( \
+		"supported_mcs_set", \
+		0, \
+		sizeof(CFG_SUPPORTED_MCS_SET_DATA) - 1, \
+		CFG_SUPPORTED_MCS_SET_DATA, \
+		"supported MCS set")
+
+/*
+ * <cfg>
+ * basic_mcs_set - basic MCS set data
+ * @Min: 0 minimum length of basic MCS set
+ * @Max: default data length of basic mcs set in string format
+ * @Default: 0x00, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+ * 0x0, 0x0, 0x0
+ */
+#define CFG_BASIC_MCS_SET_DATA "0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0"
+#define CFG_BASIC_MCS_SET CFG_STRING( \
+		"basic_mcs_set", \
+		0, \
+		sizeof(CFG_BASIC_MCS_SET_DATA) - 1, \
+		CFG_BASIC_MCS_SET_DATA, \
+		"basic MCS set")
+
+/*
+ * <cfg>
+ * current_mcs_set - current MCS set data
+ * @Min: 0 minimum length of current MCS set
+ * @Max: default data length of current mcs set in string format
+ * @Default: 0x00, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+ * 0x0, 0x0, 0x0
+ */
+#define CFG_CURRENT_MCS_SET_DATA "0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0"
+#define CFG_CURRENT_MCS_SET CFG_STRING( \
+		"current_mcs_set", \
+		0, \
+		sizeof(CFG_CURRENT_MCS_SET_DATA) - 1, \
+		CFG_CURRENT_MCS_SET_DATA, \
+		"current MCS set")
 
 #define CFG_RATES_ALL \
-	CFG(CFG_INI_MAX_HT_MCS_FOR_TX_DATA) \
-	CFG(CFG_INI_DISABLE_ABG_RATE_FOR_TX_DATA) \
-	CFG(CFG_INI_SAP_MAX_MCS_FOR_TX_DATA) \
-	CFG(CFG_INI_DISABLE_HIGH_HT_RX_MCS_2x2) \
+	CFG(CFG_MAX_HT_MCS_FOR_TX_DATA) \
+	CFG(CFG_DISABLE_ABG_RATE_FOR_TX_DATA) \
+	CFG(CFG_SAP_MAX_MCS_FOR_TX_DATA) \
+	CFG(CFG_DISABLE_HIGH_HT_RX_MCS_2x2) \
 	CFG(CFG_CFP_PERIOD) \
-	CFG(CFG_CFP_MAX_DURATION)
+	CFG(CFG_CFP_MAX_DURATION) \
+	CFG(CFG_SUPPORTED_RATES_11B) \
+	CFG(CFG_SUPPORTED_RATES_11A) \
+	CFG(CFG_SUPPORTED_MCS_SET) \
+	CFG(CFG_BASIC_MCS_SET) \
+	CFG(CFG_CURRENT_MCS_SET)
 
 #endif /* __CFG_MLME_RATES_H */

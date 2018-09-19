@@ -1590,4 +1590,58 @@ ucfg_mlme_update_nss_vht_cap(struct wlan_objmgr_psoc *psoc)
 	return mlme_update_nss_vht_cap(psoc);
 }
 
+/**
+ * ucfg_mlme_get_opr_rate_set() - Get operational rate set
+ * @psoc: pointer to psoc object
+ * @buf: buffer to get rates set
+ * @len: length of the buffer
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_opr_rate_set(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
+			   qdf_size_t *len);
+
+/**
+ * ucfg_mlme_get_ext_opr_rate_set() - Get operational rate set
+ * @psoc: pointer to psoc object
+ * @buf: buffer to get rates set
+ * @len: length of the buffer
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_ext_opr_rate_set(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
+			       qdf_size_t *len);
+
+/**
+ * ucfg_mlme_get_supported_mcs_set() - Get Supported MCS set
+ * @psoc: pointer to psoc object
+ * @buf:  caller buffer to copy mcs set info
+ * @len: length of the buffer
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_supported_mcs_set(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
+				qdf_size_t *len);
+
+/**
+ * ucfg_mlme_set_supported_mcs_set() - Get Supported MCS set
+ * @psoc: pointer to psoc object
+ * @buf: caller buffer having mcs set info
+ * @len: length of the buffer
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_supported_mcs_set(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
+				qdf_size_t len);
+
+/**
+ * ucfg_mlme_get_current_mcs_set() - Get current MCS set
+ * @psoc: pointer to psoc object
+ * @buf:  caller buffer to copy mcs set info
+ * @len: length of the buffer
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_current_mcs_set(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
+			      qdf_size_t *len);
 #endif /* _WLAN_MLME_UCFG_API_H_ */
