@@ -164,12 +164,12 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd)
 		  cmd->is_high_priority,
 		  cmd->is_blocking);
 
-	wlan_serialization_acquire_lock(pdev_queue);
+	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
 
 	active_queue = wlan_serialization_is_active_cmd_allowed(cmd);
 
 	if (wlan_serialization_is_cmd_present_queue(cmd, active_queue)) {
-		wlan_serialization_release_lock(pdev_queue);
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 		ser_err("duplicate command, can't enqueue");
 		goto error;
 	}
@@ -177,7 +177,7 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd)
 	if (wlan_serialization_remove_front(
 				&pdev_queue->cmd_pool_list,
 				&nnode) != QDF_STATUS_SUCCESS) {
-		wlan_serialization_release_lock(pdev_queue);
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 		ser_err("Failed to get cmd buffer from global pool");
 		goto error;
 	}
@@ -216,7 +216,7 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd)
 				   &cmd_list->cmd_in_use);
 	}
 
-	wlan_serialization_release_lock(pdev_queue);
+	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
 	if (WLAN_SER_CMD_ACTIVE == status)
 		wlan_serialization_activate_cmd(cmd_list,
@@ -463,7 +463,7 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 		  cmd->is_high_priority,
 		  cmd->is_blocking);
 
-	wlan_serialization_acquire_lock(pdev_queue);
+	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
 
 	if (cmd->cmd_type < WLAN_SER_CMD_NONSCAN)
 		qdf_status = wlan_ser_remove_scan_cmd(
@@ -474,7 +474,7 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 	}
 
 	if (qdf_status != QDF_STATUS_SUCCESS) {
-		wlan_serialization_release_lock(pdev_queue);
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 		status = WLAN_SER_CMD_NOT_FOUND;
 		goto error;
 	}
@@ -520,7 +520,7 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 			blocking_cmd_waiting);
 	}
 
-	wlan_serialization_release_lock(pdev_queue);
+	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
 	/* Call cmd cb for remove request*/
 	if (cmd_bkup.cmd_cb) {
@@ -674,6 +674,8 @@ wlan_serialization_find_and_stop_timer(struct wlan_objmgr_psoc *psoc,
 	 * be unique and For non-scan command, there should be only one active
 	 * command per pdev
 	 */
+	wlan_serialization_acquire_lock(&psoc_ser_obj->timer_lock);
+
 	for (i = 0; psoc_ser_obj->max_active_cmds > i; i++) {
 		ser_timer = &psoc_ser_obj->timers[i];
 		if (!(ser_timer->cmd) ||
@@ -681,14 +683,21 @@ wlan_serialization_find_and_stop_timer(struct wlan_objmgr_psoc *psoc,
 		    (ser_timer->cmd->cmd_type != cmd->cmd_type) ||
 		    (ser_timer->cmd->vdev != cmd->vdev))
 			continue;
-		status = wlan_serialization_stop_timer(ser_timer);
-		ser_debug("\n Stopping timer for cmd type:%d, id: %d",
-			  cmd->cmd_type, cmd->cmd_id);
+
+		status = QDF_STATUS_SUCCESS;
 		break;
 	}
 
-	if (QDF_STATUS_SUCCESS != status)
+	wlan_serialization_release_lock(&psoc_ser_obj->timer_lock);
+
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		status = wlan_serialization_stop_timer(ser_timer);
+		ser_debug("\n Stopping timer for cmd type:%d, id: %d",
+			  cmd->cmd_type, cmd->cmd_id);
+	} else {
 		ser_err("Can't find timer for cmd_type[%d]", cmd->cmd_type);
+	}
+
 
 error:
 exit:
@@ -721,6 +730,8 @@ wlan_serialization_find_and_start_timer(struct wlan_objmgr_psoc *psoc,
 
 	psoc_ser_obj = wlan_serialization_get_psoc_obj(psoc);
 
+	wlan_serialization_acquire_lock(&psoc_ser_obj->timer_lock);
+
 	for (i = 0; psoc_ser_obj->max_active_cmds > i; i++) {
 		/* Keep trying timer */
 		ser_timer = &psoc_ser_obj->timers[i];
@@ -729,22 +740,26 @@ wlan_serialization_find_and_start_timer(struct wlan_objmgr_psoc *psoc,
 
 		/* Remember timer is pointing to command */
 		ser_timer->cmd = cmd;
+		status = QDF_STATUS_SUCCESS;
+		break;
+	}
+
+	wlan_serialization_release_lock(&psoc_ser_obj->timer_lock);
+
+	if (QDF_IS_STATUS_SUCCESS(status)) {
 		qdf_timer_init(NULL,
 			       &ser_timer->timer,
 			       wlan_serialization_timer_handler,
 			       ser_timer,
 			       QDF_TIMER_TYPE_SW);
 			       qdf_timer_mod(&ser_timer->timer,
-					     cmd->cmd_timeout_duration);
+			       cmd->cmd_timeout_duration);
 
 		ser_debug("starting timer for cmd: type[%d] id[%d] high_priority[%d] blocking[%d]",
 			  cmd->cmd_type,
 			  cmd->cmd_id,
 			  cmd->is_high_priority,
 			  cmd->is_blocking);
-
-		status = QDF_STATUS_SUCCESS;
-		break;
 	}
 
 error:

@@ -520,6 +520,7 @@ QDF_STATUS wlan_serialization_psoc_close(struct wlan_objmgr_psoc *psoc)
 	ser_soc_obj->timers = NULL;
 	ser_soc_obj->max_active_cmds = 0;
 
+	wlan_serialization_destroy_lock(&ser_soc_obj->timer_lock);
 error:
 	ser_exit();
 	return status;
@@ -550,6 +551,7 @@ QDF_STATUS wlan_serialization_psoc_open(struct wlan_objmgr_psoc *psoc)
 		goto error;
 	}
 
+	wlan_serialization_create_lock(&ser_soc_obj->timer_lock);
 	status = QDF_STATUS_SUCCESS;
 
 error:
@@ -708,7 +710,7 @@ static QDF_STATUS wlan_serialization_pdev_create_handler(
 	for (index = 0; index < SER_PDEV_QUEUE_COMP_MAX; index++) {
 		pdev_queue = &ser_pdev_obj->pdev_q[index];
 
-		qdf_spinlock_create(&pdev_queue->pdev_queue_lock);
+		wlan_serialization_create_lock(&pdev_queue->pdev_queue_lock);
 
 		switch (index) {
 		case SER_PDEV_QUEUE_COMP_SCAN:
@@ -825,7 +827,7 @@ static QDF_STATUS wlan_serialization_pdev_destroy_handler(
 		wlan_serialization_destroy_pdev_list(pdev_queue);
 		wlan_serialization_destroy_cmd_pool(pdev_queue);
 
-		qdf_spinlock_destroy(&pdev_queue->pdev_queue_lock);
+		wlan_serialization_destroy_lock(&pdev_queue->pdev_queue_lock);
 	}
 
 	qdf_mem_free(ser_pdev_obj);

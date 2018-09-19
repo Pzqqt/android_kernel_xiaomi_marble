@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -165,6 +165,7 @@
 #define AR6320V2_CPU_INTR_ADDRESS                         0x0010
 #define AR6320V2_SOC_LF_TIMER_CONTROL0_ADDRESS            0x00000050
 #define AR6320V2_SOC_LF_TIMER_CONTROL0_ENABLE_MASK        0x00000004
+#define AR6320V2_SOC_LF_TIMER_STATUS0_ADDRESS             0x00000054
 #define AR6320V2_SOC_RESET_CONTROL_ADDRESS                0x00000000
 #define AR6320V2_SOC_RESET_CONTROL_CPU_WARM_RST_MASK      0x00000040
 #define AR6320V2_CORE_CTRL_ADDRESS                        0x0000
@@ -645,6 +646,8 @@ struct targetdef_s ar6320v2_targetdef = {
 		AR6320V2_SOC_LF_TIMER_CONTROL0_ADDRESS,
 	.d_SOC_LF_TIMER_CONTROL0_ENABLE_MASK =
 		AR6320V2_SOC_LF_TIMER_CONTROL0_ENABLE_MASK,
+	.d_SOC_LF_TIMER_STATUS0_ADDRESS =
+		AR6320V2_SOC_LF_TIMER_STATUS0_ADDRESS,
 	/* chip id start */
 	.d_SOC_CHIP_ID_ADDRESS = AR6320V2_SOC_CHIP_ID_ADDRESS,
 	.d_SOC_CHIP_ID_VERSION_MASK = AR6320V2_SOC_CHIP_ID_VERSION_MASK,

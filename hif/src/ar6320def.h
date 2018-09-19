@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -204,6 +204,7 @@
 #define AR6320_CPU_INTR_ADDRESS                         0x0010
 #define AR6320_SOC_LF_TIMER_CONTROL0_ADDRESS            0x00000050
 #define AR6320_SOC_LF_TIMER_CONTROL0_ENABLE_MASK        0x00000004
+#define AR6320_SOC_LF_TIMER_STATUS0_ADDRESS             0x00000054
 #define AR6320_SOC_RESET_CONTROL_ADDRESS                0x00000000
 #define AR6320_SOC_RESET_CONTROL_CPU_WARM_RST_MASK      0x00000040
 #define AR6320_CORE_CTRL_ADDRESS                        0x0000
@@ -599,6 +600,8 @@ struct targetdef_s ar6320_targetdef = {
 		AR6320_SOC_LF_TIMER_CONTROL0_ADDRESS,
 	.d_SOC_LF_TIMER_CONTROL0_ENABLE_MASK =
 		AR6320_SOC_LF_TIMER_CONTROL0_ENABLE_MASK,
+	.d_SOC_LF_TIMER_STATUS0_ADDRESS =
+		AR6320_SOC_LF_TIMER_STATUS0_ADDRESS,
 
 	.d_WLAN_DEBUG_INPUT_SEL_OFFSET = AR6320_WLAN_DEBUG_INPUT_SEL_OFFSET,
 	.d_WLAN_DEBUG_INPUT_SEL_SRC_MSB = AR6320_WLAN_DEBUG_INPUT_SEL_SRC_MSB,

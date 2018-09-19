@@ -238,6 +238,7 @@ static QDF_STATUS send_twt_resume_dialog_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->peer_macaddr, &cmd->peer_macaddr);
 	cmd->dialog_id = params->dialog_id;
 	cmd->sp_offset_us = params->sp_offset_us;
+	cmd->next_twt_size = params->next_twt_size;
 
 	status = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
 						WMI_TWT_RESUME_DIALOG_CMDID);

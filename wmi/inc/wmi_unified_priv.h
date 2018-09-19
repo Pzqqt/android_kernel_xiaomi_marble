@@ -1874,6 +1874,24 @@ struct wmi_soc {
 	uint32_t soc_idx;
 };
 
+/**
+ * wmi_mtrace() - Wrappper function for qdf_mtrace api
+ * @message_id: 32-Bit Wmi message ID
+ * @vdev_id: Vdev ID
+ * @data: Actual message contents
+ *
+ * This function converts the 32-bit WMI message ID in 15-bit message ID
+ * format for qdf_mtrace as in qdf_mtrace message there are only 15
+ * bits reserved for message ID.
+ * out of these 15-bits, 8-bits (From MSB) specifies the WMI_GRP_ID
+ * and remaining 7-bits specifies the actual WMI command. With this
+ * notation there can be maximum 256 groups and each group can have
+ * max 128 commands can be supported.
+ *
+ * Return: None
+ */
+void wmi_mtrace(uint32_t message_id, uint16_t vdev_id, uint32_t data);
+
 void wmi_unified_register_module(enum wmi_target_type target_type,
 			void (*wmi_attach)(wmi_unified_t wmi_handle));
 void wmi_tlv_init(void);

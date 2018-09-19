@@ -3532,6 +3532,30 @@ end:
 }
 
 /**
+ * hif_trigger_timer_irq() : Triggers interrupt on LF_Timer 0
+ * @scn: hif control structure
+ *
+ * Sets IRQ bit in LF Timer Status Address to awake peregrine/swift
+ * stuck at a polling loop in pcie_address_config in FW
+ *
+ * Return: none
+ */
+static void hif_trigger_timer_irq(struct hif_softc *scn)
+{
+	int tmp;
+	/* Trigger IRQ on Peregrine/Swift by setting
+	 * IRQ Bit of LF_TIMER 0
+	 */
+	tmp = hif_read32_mb(scn, scn->mem + (RTC_SOC_BASE_ADDRESS +
+						SOC_LF_TIMER_STATUS0_ADDRESS));
+	/* Set Raw IRQ Bit */
+	tmp |= 1;
+	/* SOC_LF_TIMER_STATUS0 */
+	hif_write32_mb(scn, scn->mem + (RTC_SOC_BASE_ADDRESS +
+		       SOC_LF_TIMER_STATUS0_ADDRESS), tmp);
+}
+
+/**
  * hif_target_sync() : ensure the target is ready
  * @scn: hif control structure
  *
@@ -3560,7 +3584,9 @@ static void hif_target_sync(struct hif_softc *scn)
 	if (HAS_FW_INDICATOR) {
 		int wait_limit = 500;
 		int fw_ind = 0;
-
+		int retry_count = 0;
+		uint32_t target_type = scn->target_info.target_type;
+fw_retry:
 		HIF_TRACE("%s: Loop checking FW signal", __func__);
 		while (1) {
 			fw_ind = hif_read32_mb(scn, scn->mem +
@@ -3578,12 +3604,20 @@ static void hif_target_sync(struct hif_softc *scn)
 
 			qdf_mdelay(10);
 		}
-		if (wait_limit < 0)
+		if (wait_limit < 0) {
+			if (target_type == TARGET_TYPE_AR9888 &&
+			    retry_count++ < 2) {
+				hif_trigger_timer_irq(scn);
+				wait_limit = 500;
+				goto fw_retry;
+			}
 			HIF_TRACE("%s: FW signal timed out",
 					__func__);
-		else
+			qdf_assert_always(0);
+		} else {
 			HIF_TRACE("%s: Got FW signal, retries = %x",
 					__func__, 500-wait_limit);
+		}
 	}
 	hif_write32_mb(scn, scn->mem + PCIE_LOCAL_BASE_ADDRESS +
 			PCIE_SOC_WAKE_ADDRESS, PCIE_SOC_WAKE_RESET);

@@ -2379,6 +2379,13 @@ uint8_t *wlan_crypto_build_wpaie(struct wlan_objmgr_vdev *vdev,
 		selcnt[0]++;
 		WPA_ADD_KEYMGMT_TO_SUITE(frm, WLAN_CRYPTO_KEY_MGMT_NONE);
 	}
+
+	/* optional capabilities */
+	if (crypto_params->rsn_caps != 0 &&
+	    crypto_params->rsn_caps != WLAN_CRYPTO_RSN_CAP_PREAUTH) {
+		WLAN_CRYPTO_ADDSHORT(frm, crypto_params->rsn_caps);
+	}
+
 	/* calculate element length */
 	iebuf[1] = frm - iebuf - 2;
 

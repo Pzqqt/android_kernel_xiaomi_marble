@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -81,6 +81,10 @@ struct targetdef_s;
 #if !defined(SOC_LF_TIMER_CONTROL0_ADDRESS)
 #define SOC_LF_TIMER_CONTROL0_ADDRESS        ATH_UNSUPPORTED_REG_OFFSET
 #define SOC_LF_TIMER_CONTROL0_ENABLE_MASK        ATH_UNSUPPORTED_REG_OFFSET
+#endif
+
+#if !defined(SOC_LF_TIMER_STATUS0_ADDRESS)
+#define SOC_LF_TIMER_STATUS0_ADDRESS        ATH_UNSUPPORTED_REG_OFFSET
 #endif
 
 #if !defined(SOC_RESET_CONTROL_ADDRESS)
@@ -290,6 +294,7 @@ static struct targetdef_s my_target_def = {
 	.d_SOC_LF_TIMER_CONTROL0_ADDRESS = SOC_LF_TIMER_CONTROL0_ADDRESS,
 	.d_SOC_LF_TIMER_CONTROL0_ENABLE_MASK
 		= SOC_LF_TIMER_CONTROL0_ENABLE_MASK,
+	.d_SOC_LF_TIMER_STATUS0_ADDRESS = SOC_LF_TIMER_STATUS0_ADDRESS,
 	.d_SI_CONFIG_ERR_INT_MASK = SI_CONFIG_ERR_INT_MASK,
 	.d_SI_CONFIG_ERR_INT_LSB = SI_CONFIG_ERR_INT_LSB,
 	.d_GPIO_ENABLE_W1TS_LOW_ADDRESS = GPIO_ENABLE_W1TS_LOW_ADDRESS,

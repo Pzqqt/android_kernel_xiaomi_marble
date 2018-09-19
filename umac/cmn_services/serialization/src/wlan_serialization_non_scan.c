@@ -498,7 +498,7 @@ wlan_ser_cancel_non_scan_cmd(
 	else
 		ser_debug("Can't find psoc");
 
-	wlan_serialization_acquire_lock(pdev_q);
+	wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
 
 	qsize = wlan_serialization_list_size(pdev_queue);
 	while (!wlan_serialization_list_empty(pdev_queue) && qsize--) {
@@ -554,7 +554,8 @@ wlan_ser_cancel_non_scan_cmd(
 			 */
 			if (qdf_atomic_test_bit(CMD_MARKED_FOR_ACTIVATION,
 						&cmd_list->cmd_in_use)) {
-				wlan_serialization_release_lock(pdev_q);
+				wlan_serialization_release_lock(
+						&pdev_q->pdev_queue_lock);
 				status = WLAN_SER_CMD_MARKED_FOR_ACTIVATION;
 				goto error;
 			}
@@ -607,7 +608,7 @@ wlan_ser_cancel_non_scan_cmd(
 		}
 		nnode = pnode;
 
-		wlan_serialization_release_lock(pdev_q);
+		wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
 		/*
 		 * call pending cmd's callback to notify that
 		 * it is being removed
@@ -626,7 +627,7 @@ wlan_ser_cancel_non_scan_cmd(
 					WLAN_SER_CB_RELEASE_MEM_CMD);
 		}
 
-		wlan_serialization_acquire_lock(pdev_q);
+		wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
 
 		if (!is_active_queue)
 			status = WLAN_SER_CMD_IN_PENDING_LIST;
@@ -635,7 +636,7 @@ wlan_ser_cancel_non_scan_cmd(
 			break;
 	}
 
-	wlan_serialization_release_lock(pdev_q);
+	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
 
 error:
 	ser_exit();

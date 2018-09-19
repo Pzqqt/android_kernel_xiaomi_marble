@@ -1115,7 +1115,7 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	DP_TX_TID_OVERRIDE(msdu_info, nbuf);
 
-	if (vdev->dscp_tid_map_id <= 1)
+	if (pdev->soc && vdev->dscp_tid_map_id < pdev->soc->num_hw_dscp_tid_map)
 		return;
 
 	/* for mesh packets don't do any classification */
@@ -3200,6 +3200,8 @@ QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
  */
 void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
 {
+	struct dp_soc *soc = vdev->pdev->soc;
+
 	/*
 	 * Enable both AddrY (SA based search) and AddrX (Da based search)
 	 * for TDLS link
@@ -3220,7 +3222,11 @@ void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
 	else
 		vdev->hal_desc_addr_search_flags = HAL_TX_DESC_ADDRX_EN;
 
-	if (vdev->opmode == wlan_op_mode_sta)
+	/* Set search type only when peer map v2 messaging is enabled
+	 * as we will have the search index (AST hash) only when v2 is
+	 * enabled
+	 */
+	if (soc->is_peer_map_unmap_v2 && vdev->opmode == wlan_op_mode_sta)
 		vdev->search_type = HAL_TX_ADDR_INDEX_SEARCH;
 	else
 		vdev->search_type = HAL_TX_ADDR_SEARCH_DEFAULT;

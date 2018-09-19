@@ -784,6 +784,7 @@ struct wlan_ser_psoc_obj {
 	wlan_serialization_apply_rules_cb apply_rules_cb[WLAN_SER_CMD_MAX];
 	struct wlan_serialization_timer *timers;
 	uint8_t max_active_cmds;
+	qdf_spinlock_t timer_lock;
 };
 
 /**
@@ -1202,42 +1203,38 @@ QDF_STATUS wlan_serialization_peek_next(
 
 /**
  * wlan_serialization_acquire_lock() - Acquire lock to the given queue
- * @pdev_queue: Pointer to the pdev queue
+ * @lock: Pointer to the lock
  *
  * Return: QDF_STATUS success or failure
  */
 QDF_STATUS
-wlan_serialization_acquire_lock(
-		struct wlan_serialization_pdev_queue *pdev_queue);
+wlan_serialization_acquire_lock(qdf_spinlock_t *lock);
 
 /**
  * wlan_serialization_release_lock() - Release lock to the given queue
- * @pdev_queue: Pointer to the pdev queue
+ * @lock: Pointer to the lock
  *
  * Return: QDF_STATUS success or failure
  */
 QDF_STATUS
-wlan_serialization_release_lock(
-		struct wlan_serialization_pdev_queue *pdev_queue);
+wlan_serialization_release_lock(qdf_spinlock_t *lock);
 
 /**
  * wlan_serialization_create_lock() - Init the lock to the given queue
- * @pdev_queue: Pointer to the pdev queue
+ * @lock: Pointer to the lock
  *
  * Return: QDF_STATUS success or failure
  */
 QDF_STATUS
-wlan_serialization_create_lock(
-		struct wlan_serialization_pdev_queue *pdev_queue);
+wlan_serialization_create_lock(qdf_spinlock_t *lock);
 
 /**
  * wlan_serialization_destroy_lock() - Deinit the lock to the given queue
- * @pdev_queue: Pointer to the pdev queue
+ * @lock: Pointer to the lock
  *
  * Return: QDF_STATUS success or failure
  */
 QDF_STATUS
-wlan_serialization_destroy_lock(
-		struct wlan_serialization_pdev_queue *pdev_queue);
+wlan_serialization_destroy_lock(qdf_spinlock_t *lock);
 #endif
 #endif

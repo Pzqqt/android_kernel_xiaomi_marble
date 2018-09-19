@@ -517,7 +517,8 @@ static void dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
 
 	if (ast_entry) {
 		if ((ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) &&
-		    (ast_entry->type != CDP_TXRX_AST_TYPE_SELF)) {
+			(ast_entry->type != CDP_TXRX_AST_TYPE_SELF) &&
+			(ast_entry->type != CDP_TXRX_AST_TYPE_STA_BSS)) {
 			ast_entry->is_active = TRUE;
 		}
 	}
@@ -550,9 +551,11 @@ static void dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl,
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
 					if ((ase->type ==
-					     CDP_TXRX_AST_TYPE_STATIC) ||
-					    (ase->type ==
-					     CDP_TXRX_AST_TYPE_SELF))
+						CDP_TXRX_AST_TYPE_STATIC) ||
+						(ase->type ==
+						CDP_TXRX_AST_TYPE_SELF) ||
+						(ase->type ==
+						CDP_TXRX_AST_TYPE_STA_BSS))
 						continue;
 					ase->is_active = TRUE;
 				}
@@ -588,9 +591,11 @@ static void dp_wds_flush_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
 			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
 					if ((ase->type ==
-					     CDP_TXRX_AST_TYPE_STATIC) ||
-					    (ase->type ==
-					     CDP_TXRX_AST_TYPE_SELF))
+						CDP_TXRX_AST_TYPE_STATIC) ||
+						(ase->type ==
+						 CDP_TXRX_AST_TYPE_SELF) ||
+						(ase->type ==
+						 CDP_TXRX_AST_TYPE_STA_BSS))
 						continue;
 					dp_peer_del_ast(soc, ase);
 				}
@@ -867,7 +872,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 	struct dp_peer *peer;
 	struct dp_ast_entry *ase, *tmp_ase;
 	char type[CDP_TXRX_AST_TYPE_MAX][10] = {
-			"NONE", "STATIC", "SELF", "WDS", "MEC", "HMWDS"};
+			"NONE", "STATIC", "SELF", "WDS", "MEC", "HMWDS", "BSS"};
 
 	DP_PRINT_STATS("AST Stats:");
 	DP_PRINT_STATS("	Entries Added   = %d", soc->stats.ast.added);
@@ -2618,14 +2623,21 @@ static inline void
 dp_dscp_tid_map_setup(struct dp_pdev *pdev)
 {
 	uint8_t map_id;
+	struct dp_soc *soc = pdev->soc;
+
+	if (!soc)
+		return;
+
 	for (map_id = 0; map_id < DP_MAX_TID_MAPS; map_id++) {
-		qdf_mem_copy(pdev->dscp_tid_map[map_id], default_dscp_tid_map,
-				sizeof(default_dscp_tid_map));
+		qdf_mem_copy(pdev->dscp_tid_map[map_id],
+			     default_dscp_tid_map,
+			     sizeof(default_dscp_tid_map));
 	}
-	for (map_id = 0; map_id < HAL_MAX_HW_DSCP_TID_MAPS; map_id++) {
-		hal_tx_set_dscp_tid_map(pdev->soc->hal_soc,
-				pdev->dscp_tid_map[map_id],
-				map_id);
+
+	for (map_id = 0; map_id < soc->num_hw_dscp_tid_map; map_id++) {
+		hal_tx_set_dscp_tid_map(soc->hal_soc,
+					default_dscp_tid_map,
+					map_id);
 	}
 }
 
@@ -6716,7 +6728,8 @@ dp_enable_enhanced_stats(struct cdp_pdev *pdev_handle)
 
 	pdev->enhanced_stats_en = 1;
 
-	if (!pdev->mcopy_mode && !pdev->neighbour_peers_added)
+	if (!pdev->mcopy_mode && !pdev->neighbour_peers_added &&
+	    !pdev->monitor_vdev)
 		dp_ppdu_ring_cfg(pdev);
 
 	if (is_ppdu_txrx_capture_enabled(pdev) && !pdev->bpr_enable) {
@@ -6752,7 +6765,8 @@ dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
 					  pdev->pdev_id);
 	}
 
-	if (!pdev->mcopy_mode && !pdev->neighbour_peers_added)
+	if (!pdev->mcopy_mode && !pdev->neighbour_peers_added &&
+	    !pdev->monitor_vdev)
 		dp_ppdu_ring_reset(pdev);
 }
 
@@ -7043,11 +7057,17 @@ static void dp_set_pdev_dscp_tid_map_wifi3(struct cdp_pdev *pdev_handle,
 {
 	uint8_t dscp;
 	struct dp_pdev *pdev = (struct dp_pdev *) pdev_handle;
+	struct dp_soc *soc = pdev->soc;
+
+	if (!soc)
+		return;
+
 	dscp = (tos >> DP_IP_DSCP_SHIFT) & DP_IP_DSCP_MASK;
 	pdev->dscp_tid_map[map_id][dscp] = tid;
-	if (map_id < HAL_MAX_HW_DSCP_TID_MAPS)
-		hal_tx_update_dscp_tid(pdev->soc->hal_soc, tid,
-			map_id, dscp);
+
+	if (map_id < soc->num_hw_dscp_tid_map)
+		hal_tx_update_dscp_tid(soc->hal_soc, tid,
+				       map_id, dscp);
 	return;
 }
 
@@ -8193,6 +8213,8 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 	soc->hal_soc = hif_get_hal_handle(hif_handle);
 	soc->htt_handle = htt_soc_attach(soc, ctrl_psoc, htc_handle,
 		soc->hal_soc, qdf_osdev);
+	soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_MAPS;
+
 	if (!soc->htt_handle) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("HTT attach failed"));
@@ -8232,6 +8254,7 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, false);
 		soc->hw_nac_monitor_support = 1;
 		soc->ast_override_support = 1;
+		soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_V2_MAPS;
 		break;
 	default:
 		qdf_print("%s: Unknown tgt type %d\n", __func__, target_type);
