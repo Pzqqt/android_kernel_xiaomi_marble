@@ -490,10 +490,15 @@ uint32_t g_wmi_mgmt_command_tx_cmp_buf_idx = 0;
 struct wmi_command_debug
 wmi_mgmt_command_tx_cmp_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
 
-/* wmi_mgmt events when processed */
-uint32_t g_wmi_mgmt_event_buf_idx = 0;
+/* wmi_mgmt events when received */
+uint32_t g_wmi_mgmt_rx_event_buf_idx = 0;
 struct wmi_event_debug
-wmi_mgmt_event_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
+wmi_mgmt_rx_event_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
+
+/* wmi_diag events when received */
+uint32_t g_wmi_diag_rx_event_buf_idx = 0;
+struct wmi_event_debug
+wmi_diag_rx_event_log_buffer[WMI_DIAG_RX_EVENT_DEBUG_MAX_ENTRY];
 #endif
 
 #define WMI_MGMT_COMMAND_RECORD(h, a, b) {                              \
@@ -543,7 +548,7 @@ wmi_mgmt_event_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
 	h->log_info.wmi_mgmt_command_tx_cmp_log_buf_info.length++;	\
 }
 
-#define WMI_MGMT_EVENT_RECORD(h, a, b) {				\
+#define WMI_MGMT_RX_EVENT_RECORD(h, a, b) do {				\
 	if (wmi_mgmt_log_max_entry <=					\
 		*(h->log_info.wmi_mgmt_event_log_buf_info.p_buf_tail_idx))\
 		*(h->log_info.wmi_mgmt_event_log_buf_info.p_buf_tail_idx) = 0;\
@@ -559,11 +564,30 @@ wmi_mgmt_event_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
 			time = qdf_get_log_timestamp();			\
 	(*(h->log_info.wmi_mgmt_event_log_buf_info.p_buf_tail_idx))++;	\
 	h->log_info.wmi_mgmt_event_log_buf_info.length++;		\
-}
+} while (0);
+
+#define WMI_DIAG_RX_EVENT_RECORD(h, a, b) do {                             \
+	if (wmi_mgmt_log_max_entry <=                                   \
+		*(h->log_info.wmi_diag_event_log_buf_info.p_buf_tail_idx))\
+		*(h->log_info.wmi_diag_event_log_buf_info.p_buf_tail_idx) = 0;\
+	((struct wmi_event_debug *)h->log_info.wmi_diag_event_log_buf_info.buf)\
+		[*(h->log_info.wmi_diag_event_log_buf_info.p_buf_tail_idx)]\
+					.event = a;                     \
+	qdf_mem_copy(((struct wmi_event_debug *)h->log_info.            \
+				wmi_diag_event_log_buf_info.buf)        \
+		[*(h->log_info.wmi_diag_event_log_buf_info.p_buf_tail_idx)].\
+			data, b, wmi_record_max_length);                \
+	((struct wmi_event_debug *)h->log_info.wmi_diag_event_log_buf_info.buf)\
+		[*(h->log_info.wmi_diag_event_log_buf_info.p_buf_tail_idx)].\
+			time = qdf_get_log_timestamp();                 \
+	(*(h->log_info.wmi_diag_event_log_buf_info.p_buf_tail_idx))++;  \
+	h->log_info.wmi_diag_event_log_buf_info.length++;               \
+} while (0);
 
 /* These are defined to made it as module param, which can be configured */
 uint32_t wmi_log_max_entry = WMI_EVENT_DEBUG_MAX_ENTRY;
 uint32_t wmi_mgmt_log_max_entry = WMI_MGMT_EVENT_DEBUG_MAX_ENTRY;
+uint32_t wmi_diag_log_max_entry = WMI_DIAG_RX_EVENT_DEBUG_MAX_ENTRY;
 uint32_t wmi_record_max_length = WMI_EVENT_DEBUG_ENTRY_MAX_LENGTH;
 uint32_t wmi_display_size = 100;
 
@@ -592,6 +616,8 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 		&wmi_handle->log_info.wmi_mgmt_command_tx_cmp_log_buf_info;
 	struct wmi_log_buf_t *mgmt_event_log_buf =
 			&wmi_handle->log_info.wmi_mgmt_event_log_buf_info;
+	struct wmi_log_buf_t *diag_event_log_buf =
+			&wmi_handle->log_info.wmi_diag_event_log_buf_info;
 
 	/* WMI commands */
 	cmd_log_buf->length = 0;
@@ -636,12 +662,19 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 		&g_wmi_mgmt_command_tx_cmp_buf_idx;
 	mgmt_cmd_tx_cmp_log_buf->size = WMI_MGMT_EVENT_DEBUG_MAX_ENTRY;
 
-	/* WMI Management events when processed*/
+	/* WMI Management events when received */
 	mgmt_event_log_buf->length = 0;
 	mgmt_event_log_buf->buf_tail_idx = 0;
-	mgmt_event_log_buf->buf = wmi_mgmt_event_log_buffer;
-	mgmt_event_log_buf->p_buf_tail_idx = &g_wmi_mgmt_event_buf_idx;
+	mgmt_event_log_buf->buf = wmi_mgmt_rx_event_log_buffer;
+	mgmt_event_log_buf->p_buf_tail_idx = &g_wmi_mgmt_rx_event_buf_idx;
 	mgmt_event_log_buf->size = WMI_MGMT_EVENT_DEBUG_MAX_ENTRY;
+
+	/* WMI diag events when received */
+	diag_event_log_buf->length = 0;
+	diag_event_log_buf->buf_tail_idx = 0;
+	diag_event_log_buf->buf = wmi_diag_rx_event_log_buffer;
+	diag_event_log_buf->p_buf_tail_idx = &g_wmi_diag_rx_event_buf_idx;
+	diag_event_log_buf->size = WMI_DIAG_RX_EVENT_DEBUG_MAX_ENTRY;
 
 	qdf_spinlock_create(&wmi_handle->log_info.wmi_record_lock);
 	wmi_handle->log_info.wmi_logging_enable = 1;
@@ -667,6 +700,8 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 		&wmi_handle->log_info.wmi_mgmt_command_tx_cmp_log_buf_info;
 	struct wmi_log_buf_t *mgmt_event_log_buf =
 			&wmi_handle->log_info.wmi_mgmt_event_log_buf_info;
+	struct wmi_log_buf_t *diag_event_log_buf =
+			&wmi_handle->log_info.wmi_diag_event_log_buf_info;
 
 	wmi_handle->log_info.wmi_logging_enable = 0;
 
@@ -752,7 +787,7 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 	mgmt_cmd_tx_cmp_log_buf->p_buf_tail_idx =
 		&mgmt_cmd_tx_cmp_log_buf->buf_tail_idx;
 
-	/* WMI Management events when processed*/
+	/* WMI Management events when received */
 	mgmt_event_log_buf->length = 0;
 	mgmt_event_log_buf->buf_tail_idx = 0;
 
@@ -766,6 +801,21 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 		return QDF_STATUS_E_NOMEM;
 	}
 	mgmt_event_log_buf->p_buf_tail_idx = &mgmt_event_log_buf->buf_tail_idx;
+
+	/* WMI diag events when received */
+	diag_event_log_buf->length = 0;
+	diag_event_log_buf->buf_tail_idx = 0;
+
+	diag_event_log_buf->buf = (struct wmi_event_debug *) qdf_mem_malloc(
+		wmi_diag_log_max_entry *
+		sizeof(struct wmi_event_debug));
+	diag_event_log_buf->size = wmi_diag_log_max_entry;
+
+	if (!diag_event_log_buf->buf) {
+		qdf_print("no memory for WMI diag event log buffer..\n");
+		return QDF_STATUS_E_NOMEM;
+	}
+	diag_event_log_buf->p_buf_tail_idx = &diag_event_log_buf->buf_tail_idx;
 
 	qdf_spinlock_create(&wmi_handle->log_info.wmi_record_lock);
 	wmi_handle->log_info.wmi_logging_enable = 1;
@@ -803,6 +853,9 @@ static inline void wmi_log_buffer_free(struct wmi_unified *wmi_handle)
 	if (wmi_handle->log_info.wmi_mgmt_event_log_buf_info.buf)
 		qdf_mem_free(
 			wmi_handle->log_info.wmi_mgmt_event_log_buf_info.buf);
+	if (wmi_handle->log_info.wmi_diag_event_log_buf_info.buf)
+		qdf_mem_free(
+			wmi_handle->log_info.wmi_diag_event_log_buf_info.buf);
 	wmi_handle->log_info.wmi_logging_enable = 0;
 	qdf_spinlock_destroy(&wmi_handle->log_info.wmi_record_lock);
 }
@@ -2061,8 +2114,18 @@ static void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 
 		qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
 		/* Exclude 4 bytes of TLV header */
-		WMI_RX_EVENT_RECORD(wmi_handle, id, data +
-				wmi_handle->log_info.buf_offset_event);
+		if (wmi_handle->ops->is_diag_event(id)) {
+			WMI_DIAG_RX_EVENT_RECORD(wmi_handle, id,
+				((uint8_t *) data +
+				wmi_handle->log_info.buf_offset_event));
+		} else if (wmi_handle->ops->is_management_record(id)) {
+			WMI_MGMT_RX_EVENT_RECORD(wmi_handle, id,
+				((uint8_t *) data +
+				wmi_handle->log_info.buf_offset_event));
+		} else {
+			WMI_RX_EVENT_RECORD(wmi_handle, id, ((uint8_t *) data +
+				wmi_handle->log_info.buf_offset_event));
+		}
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 	}
 #endif
@@ -2150,12 +2213,19 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 	if (wmi_handle->log_info.wmi_logging_enable) {
 		qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
 		/* Exclude 4 bytes of TLV header */
-		if (wmi_handle->ops->is_management_record(id)) {
-			WMI_MGMT_EVENT_RECORD(wmi_handle, id, data
-				+ wmi_handle->log_info.buf_offset_event);
+		if (wmi_handle->ops->is_diag_event(id)) {
+			/*
+			 * skip diag event logging in WMI event buffer
+			 * as its already logged in WMI RX event buffer
+			 */
+		} else if (wmi_handle->ops->is_management_record(id)) {
+			/*
+			 * skip wmi mgmt event logging in WMI event buffer
+			 * as its already logged in WMI RX event buffer
+			 */
 		} else {
-			WMI_EVENT_RECORD(wmi_handle, id, data +
-					wmi_handle->log_info.buf_offset_event);
+			WMI_EVENT_RECORD(wmi_handle, id, ((uint8_t *) data +
+					wmi_handle->log_info.buf_offset_event));
 		}
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 	}

@@ -20375,6 +20375,14 @@ static bool is_management_record_tlv(uint32_t cmd_id)
 	return false;
 }
 
+static bool is_diag_event_tlv(uint32_t event_id)
+{
+	if (WMI_DIAG_EVENTID == event_id)
+		return true;
+
+	return false;
+}
+
 static uint16_t wmi_tag_vdev_set_cmd(wmi_unified_t wmi_hdl, wmi_buf_t buf)
 {
 	wmi_vdev_set_param_cmd_fixed_param *set_cmd;
@@ -22958,6 +22966,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_peer_delete_response_event =
 				extract_peer_delete_response_event_tlv,
 	.is_management_record = is_management_record_tlv,
+	.is_diag_event = is_diag_event_tlv,
 	.extract_pdev_csa_switch_count_status =
 				extract_pdev_csa_switch_count_status_tlv,
 	.extract_pdev_tpc_ev_param = extract_pdev_tpc_ev_param_tlv,
