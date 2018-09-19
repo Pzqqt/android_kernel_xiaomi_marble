@@ -1287,7 +1287,7 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 			policy_mgr_convert_device_mode_to_qdf_type(mode),
 			session_id);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		policy_mgr_err("No connection with mode:%d vdev_id:%d",
+		policy_mgr_debug("No connection with mode:%d vdev_id:%d",
 			policy_mgr_convert_device_mode_to_qdf_type(mode),
 			session_id);
 		return qdf_status;
@@ -2238,8 +2238,8 @@ enum policy_mgr_con_mode policy_mgr_convert_device_mode_to_qdf_type(
 		mode = PM_IBSS_MODE;
 		break;
 	default:
-		policy_mgr_err("Unsupported mode (%d)",
-			device_mode);
+		policy_mgr_debug("Unsupported mode (%d)",
+				 device_mode);
 	}
 
 	return mode;
@@ -2267,8 +2267,8 @@ enum QDF_OPMODE policy_mgr_get_qdf_mode_from_pm(
 		mode = QDF_IBSS_MODE;
 		break;
 	default:
-		policy_mgr_err("Unsupported policy mgr mode (%d)",
-			       device_mode);
+		policy_mgr_debug("Unsupported policy mgr mode (%d)",
+				 device_mode);
 	}
 	return mode;
 }
