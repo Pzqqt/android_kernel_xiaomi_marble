@@ -2897,7 +2897,31 @@ int hdd_start_station_adapter(struct hdd_adapter *adapter);
 int hdd_start_ap_adapter(struct hdd_adapter *adapter);
 int hdd_configure_cds(struct hdd_context *hdd_ctx);
 int hdd_set_fw_params(struct hdd_adapter *adapter);
+
+/**
+ * hdd_wlan_start_modules() - Single driver state machine for starting modules
+ * @hdd_ctx: HDD context
+ * @reinit: flag to indicate from SSR or normal path
+ *
+ * This function maintains the driver state machine it will be invoked from
+ * startup, reinit and change interface. Depending on the driver state shall
+ * perform the opening of the modules.
+ *
+ * Return: Errno
+ */
 int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit);
+
+/**
+ * hdd_wlan_stop_modules - Single driver state machine for stoping modules
+ * @hdd_ctx: HDD context
+ * @ftm_mode: ftm mode
+ *
+ * This function maintains the driver state machine it will be invoked from
+ * exit, shutdown and con_mode change handler. Depending on the driver state
+ * shall perform the stopping/closing of the modules.
+ *
+ * Return: Errno
+ */
 int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode);
 
 /**
@@ -2915,6 +2939,16 @@ void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx);
  * Return: None
  */
 void hdd_psoc_idle_timer_stop(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_psoc_idle_restart() - restart a previously shutdown idle psoc, if needed
+ * @hdd_ctx: the hdd context which should be restarted
+ *
+ * This API does nothing if the given psoc is already active.
+ *
+ * Return: Errno
+ */
+int hdd_psoc_idle_restart(struct hdd_context *hdd_ctx);
 
 int hdd_start_adapter(struct hdd_adapter *adapter);
 void hdd_populate_random_mac_addr(struct hdd_context *hdd_ctx, uint32_t num);

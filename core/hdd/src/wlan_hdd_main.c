@@ -2080,7 +2080,7 @@ static int __hdd_mon_open(struct net_device *dev)
 	hdd_mon_mode_ether_setup(dev);
 
 	if (con_mode == QDF_GLOBAL_MONITOR_MODE) {
-		ret = hdd_wlan_start_modules(hdd_ctx, false);
+		ret = hdd_psoc_idle_restart(hdd_ctx);
 		if (ret) {
 			hdd_err("Failed to start WLAN modules return");
 			return ret;
@@ -2631,17 +2631,6 @@ static int hdd_update_country_code(struct hdd_context *hdd_ctx)
 	return hdd_reg_set_country(hdd_ctx, country_code);
 }
 
-/**
- * hdd_wlan_start_modules() - Single driver state machine for starting modules
- * @hdd_ctx: HDD context
- * @reinit: flag to indicate from SSR or normal path
- *
- * This function maintains the driver state machine it will be invoked from
- * startup, reinit and change interface. Depending on the driver state shall
- * perform the opening of the modules.
- *
- * Return: 0 for success; non-zero for failure
- */
 int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 {
 	int ret = 0;
@@ -2990,13 +2979,11 @@ static int __hdd_open(struct net_device *dev)
 		goto err_hdd_hdd_init_deinit_lock;
 	}
 
-
-	ret = hdd_wlan_start_modules(hdd_ctx, false);
+	ret = hdd_psoc_idle_restart(hdd_ctx);
 	if (ret) {
 		hdd_err("Failed to start WLAN modules return");
 		goto err_hdd_hdd_init_deinit_lock;
 	}
-
 
 	if (!test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
 		ret = hdd_start_adapter(adapter);
@@ -3135,7 +3122,6 @@ static int __hdd_stop(struct net_device *dev)
 
 	/* DeInit the adapter. This ensures datapath cleanup as well */
 	hdd_deinit_adapter(hdd_ctx, adapter, true);
-
 
 	/*
 	 * Upon wifi turn off, DUT has to flush the scan results so if
@@ -8904,29 +8890,73 @@ void hdd_psoc_idle_timer_stop(struct hdd_context *hdd_ctx)
 }
 
 /**
- * hdd_iface_change_callback() - Function invoked when stop modules expires
- * @priv: pointer to hdd context
+ * hdd_psoc_idle_shutdown() - perform an idle shutdown on the given psoc
+ * @hdd_ctx: the hdd context which should be shutdown
  *
- * This function is invoked when the timer waiting for the interface change
- * expires, it shall cut-down the power to wlan and stop all the modules.
+ * When no interfaces are "up" on a psoc, an idle shutdown timer is started.
+ * If no interfaces are brought up before the timer expires, we do an
+ * "idle shutdown," cutting power to the physical SoC to save power. This is
+ * done completely transparently from the perspective of userspace.
  *
- * Return: void
+ * Return: None
  */
-static void hdd_iface_change_callback(void *priv)
+static void hdd_psoc_idle_shutdown(struct hdd_context *hdd_ctx)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *) priv;
-	int ret;
-	int status = wlan_hdd_validate_context(hdd_ctx);
-
-	if (status)
-		return;
+	struct hdd_psoc *hdd_psoc = hdd_ctx->hdd_psoc;
+	QDF_STATUS status;
 
 	hdd_enter();
-	hdd_debug("Interface change timer expired close the modules!");
-	ret = hdd_wlan_stop_modules(hdd_ctx, false);
-	if (ret)
-		hdd_err("Failed to stop modules");
+
+	status = dsc_psoc_trans_start(hdd_psoc->dsc_psoc, "idle shutdown");
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_info("psoc busy, abort idle shutdown; status:%u", status);
+		return;
+	}
+
+	QDF_BUG(!hdd_wlan_stop_modules(hdd_ctx, false));
+
+	hdd_psoc->state = psoc_state_idle;
+	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
+
 	hdd_exit();
+}
+
+int hdd_psoc_idle_restart(struct hdd_context *hdd_ctx)
+{
+	struct hdd_psoc *hdd_psoc = hdd_ctx->hdd_psoc;
+	QDF_STATUS status;
+	int errno;
+
+	status = dsc_psoc_trans_start_wait(hdd_psoc->dsc_psoc, "idle restart");
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_info("unable to start 'idle restart'; status:%u", status);
+		return qdf_status_to_os_return(status);
+	}
+
+	errno = hdd_wlan_start_modules(hdd_ctx, false);
+	if (!errno)
+		hdd_psoc->state = psoc_state_active;
+
+	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
+
+	return errno;
+}
+
+/**
+ * hdd_psoc_idle_timeout_callback() - Handler for psoc idle timeout
+ * @priv: pointer to hdd context
+ *
+ * Return: None
+ */
+static void hdd_psoc_idle_timeout_callback(void *priv)
+{
+	struct hdd_context *hdd_ctx = priv;
+
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	hdd_debug("Psoc idle timeout elapsed; starting psoc shutdown");
+	hdd_psoc_idle_shutdown(hdd_ctx);
 }
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
@@ -9042,7 +9072,7 @@ struct hdd_context *hdd_context_create(struct device *dev)
 	}
 
 	qdf_create_delayed_work(&hdd_ctx->psoc_idle_timeout_work,
-				hdd_iface_change_callback,
+				hdd_psoc_idle_timeout_callback,
 				hdd_ctx);
 
 	mutex_init(&hdd_ctx->iface_change_lock);
@@ -10870,17 +10900,6 @@ static void hdd_deregister_policy_manager_callback(
 }
 #endif
 
-/**
- * hdd_wlan_stop_modules - Single driver state machine for stoping modules
- * @hdd_ctx: HDD context
- * @ftm_mode: ftm mode
- *
- * This function maintains the driver state machine it will be invoked from
- * exit, shutdown and con_mode change handler. Depending on the driver state
- * shall perform the stopping/closing of the modules.
- *
- * Return: 0 for success; non-zero for failure
- */
 int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 {
 	void *hif_ctx;

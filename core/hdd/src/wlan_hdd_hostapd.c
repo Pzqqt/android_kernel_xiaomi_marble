@@ -421,11 +421,9 @@ static int __hdd_hostapd_open(struct net_device *dev)
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
 		return ret;
-	/*
-	 * Check statemachine state and also stop iface change timer if running
-	 */
-	ret = hdd_wlan_start_modules(hdd_ctx, false);
 
+	/* ensure the physical soc is up */
+	ret = hdd_psoc_idle_restart(hdd_ctx);
 	if (ret) {
 		hdd_err("Failed to start WLAN modules return");
 		return ret;

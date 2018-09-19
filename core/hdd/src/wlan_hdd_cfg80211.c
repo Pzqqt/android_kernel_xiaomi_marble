@@ -13190,9 +13190,9 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		  qdf_opmode_str(adapter->device_mode),
 		  qdf_opmode_str(new_mode));
 
-	errno = hdd_wlan_start_modules(hdd_ctx, false);
+	errno = hdd_psoc_idle_restart(hdd_ctx);
 	if (errno) {
-		hdd_err("Failed to start modules; errno:%d", errno);
+		hdd_err("Failed to restart psoc; errno:%d", errno);
 		return -EINVAL;
 	}
 
