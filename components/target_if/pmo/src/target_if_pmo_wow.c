@@ -33,6 +33,7 @@ QDF_STATUS target_if_pmo_enable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
 	uint8_t vdev_id;
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
 
 	if (!vdev) {
 		target_if_err("vdev ptr passed is NULL");
@@ -46,9 +47,14 @@ QDF_STATUS target_if_pmo_enable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_add_wow_wakeup_event_cmd(
-			get_wmi_unified_hdl_from_psoc(psoc),
-			vdev_id, bitmap, true);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_add_wow_wakeup_event_cmd(wmi_handle, vdev_id,
+						      bitmap, true);
 	if (status)
 		target_if_err("Failed to config wow wakeup event");
 
@@ -61,6 +67,7 @@ QDF_STATUS target_if_pmo_disable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
 	uint8_t vdev_id;
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
 
 	if (!vdev) {
 		target_if_err("vdev ptr passed is NULL");
@@ -74,9 +81,14 @@ QDF_STATUS target_if_pmo_disable_wow_wakeup_event(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_add_wow_wakeup_event_cmd(
-			get_wmi_unified_hdl_from_psoc(psoc),
-			vdev_id, bitmap, false);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_add_wow_wakeup_event_cmd(wmi_handle, vdev_id,
+						      bitmap, false);
 	if (status)
 		target_if_err("Failed to config wow wakeup event");
 
@@ -92,6 +104,7 @@ QDF_STATUS target_if_pmo_send_wow_patterns_to_fw(struct wlan_objmgr_vdev *vdev,
 	uint8_t vdev_id;
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
 
 	if (!vdev) {
 		target_if_err("vdev ptr passed is NULL");
@@ -105,11 +118,16 @@ QDF_STATUS target_if_pmo_send_wow_patterns_to_fw(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_wow_patterns_to_fw_cmd(
-				get_wmi_unified_hdl_from_psoc(psoc),
-				vdev_id, ptrn_id, ptrn,
-				ptrn_len, ptrn_offset, mask,
-				mask_len, user, 0);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_wow_patterns_to_fw_cmd(wmi_handle,
+						    vdev_id, ptrn_id, ptrn,
+						    ptrn_len, ptrn_offset,
+						    mask, mask_len, user, 0);
 
 	return status;
 }
@@ -120,6 +138,7 @@ QDF_STATUS target_if_pmo_del_wow_patterns_to_fw(struct wlan_objmgr_vdev *vdev,
 	uint8_t vdev_id;
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
 
 	if (!vdev) {
 		target_if_err("vdev ptr passed is NULL");
@@ -133,9 +152,14 @@ QDF_STATUS target_if_pmo_del_wow_patterns_to_fw(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_wow_delete_pattern_cmd(
-				get_wmi_unified_hdl_from_psoc(psoc), ptrn_id,
-				vdev_id);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_wow_delete_pattern_cmd(wmi_handle, ptrn_id,
+						    vdev_id);
 
 	return status;
 }

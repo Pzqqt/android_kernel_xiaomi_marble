@@ -36,6 +36,7 @@ QDF_STATUS target_if_pmo_send_vdev_update_param_req(
 	uint8_t vdev_id;
 	struct wlan_objmgr_psoc *psoc;
 	struct vdev_set_params param = {0};
+	wmi_unified_t wmi_handle;
 
 	if (!vdev) {
 		target_if_err("vdev ptr passed is NULL");
@@ -61,13 +62,18 @@ QDF_STATUS target_if_pmo_send_vdev_update_param_req(
 		return QDF_STATUS_E_INVAL;
 	}
 
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	param.if_id = vdev_id;
 	param.param_id = param_id;
 	param.param_value = param_value;
 	target_if_debug("set vdev param vdev_id: %d value: %d for param_id: %d",
 			vdev_id, param_value, param_id);
-	return wmi_unified_vdev_set_param_send(
-			get_wmi_unified_hdl_from_psoc(psoc), &param);
+	return wmi_unified_vdev_set_param_send(wmi_handle, &param);
 }
 
 QDF_STATUS target_if_pmo_send_vdev_ps_param_req(
@@ -79,6 +85,7 @@ QDF_STATUS target_if_pmo_send_vdev_ps_param_req(
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
 	struct sta_ps_params sta_ps_param = {0};
+	wmi_unified_t wmi_handle;
 
 	if (!vdev) {
 		target_if_err("vdev ptr passed is NULL");
@@ -107,100 +114,191 @@ QDF_STATUS target_if_pmo_send_vdev_ps_param_req(
 	target_if_debug("set vdev param vdev_id: %d value: %d for param_id: %d",
 			vdev_id, param_value, param_id);
 
-	status = wmi_unified_sta_ps_cmd_send(
-			get_wmi_unified_hdl_from_psoc(psoc), &sta_ps_param);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_sta_ps_cmd_send(wmi_handle, &sta_ps_param);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
 	return status;
-
 }
 
 void target_if_pmo_psoc_update_bus_suspend(struct wlan_objmgr_psoc *psoc,
 		uint8_t value)
 {
-	wmi_set_is_wow_bus_suspended(
-			get_wmi_unified_hdl_from_psoc(psoc), value);
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return;
+	}
+
+	wmi_set_is_wow_bus_suspended(wmi_handle, value);
 }
 
 int target_if_pmo_psoc_get_host_credits(struct wlan_objmgr_psoc *psoc)
 {
-	return wmi_get_host_credits(get_wmi_unified_hdl_from_psoc(psoc));
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return 0;
+	}
+
+	return wmi_get_host_credits(wmi_handle);
 }
 
 int target_if_pmo_psoc_get_pending_cmnds(struct wlan_objmgr_psoc *psoc)
 {
-	return wmi_get_pending_cmds(get_wmi_unified_hdl_from_psoc(psoc));
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return 0;
+	}
+
+	return wmi_get_pending_cmds(wmi_handle);
 }
 
 void target_if_pmo_update_target_suspend_flag(struct wlan_objmgr_psoc *psoc,
 		uint8_t value)
 {
-	wmi_set_target_suspend(get_wmi_unified_hdl_from_psoc(psoc), value);
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return;
+	}
+
+	wmi_set_target_suspend(wmi_handle, value);
 }
 
 QDF_STATUS target_if_pmo_psoc_send_wow_enable_req(
 		struct wlan_objmgr_psoc *psoc,
 		struct pmo_wow_cmd_params *param)
 {
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	wma_check_and_set_wake_timer(SIR_INSTALL_KEY_TIMEOUT_MS);
-	return wmi_unified_wow_enable_send(get_wmi_unified_hdl_from_psoc(psoc),
-			(struct wow_cmd_params *)param,
-			TGT_WILDCARD_PDEV_ID);
+	return wmi_unified_wow_enable_send(wmi_handle,
+					   (struct wow_cmd_params *)param,
+					   TGT_WILDCARD_PDEV_ID);
 }
 
 QDF_STATUS target_if_pmo_psoc_send_suspend_req(
 		struct wlan_objmgr_psoc *psoc,
 		struct pmo_suspend_params *param)
 {
-	return wmi_unified_suspend_send(get_wmi_unified_hdl_from_psoc(psoc),
-			(struct suspend_params *) param,
-			TGT_WILDCARD_PDEV_ID);
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_suspend_send(wmi_handle,
+					(struct suspend_params *) param,
+					TGT_WILDCARD_PDEV_ID);
 }
 
 void target_if_pmo_set_runtime_pm_in_progress(struct wlan_objmgr_psoc *psoc,
 					      bool value)
 {
-	return wmi_set_runtime_pm_inprogress(
-			get_wmi_unified_hdl_from_psoc(psoc), value);
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return;
+	}
+
+	return wmi_set_runtime_pm_inprogress(wmi_handle, value);
 }
 
 bool target_if_pmo_get_runtime_pm_in_progress(
 		struct wlan_objmgr_psoc *psoc)
 {
-	return wmi_get_runtime_pm_inprogress(
-			get_wmi_unified_hdl_from_psoc(psoc));
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return false;
+	}
+
+	return wmi_get_runtime_pm_inprogress(wmi_handle);
 }
 
 QDF_STATUS target_if_pmo_psoc_send_host_wakeup_ind(
 		struct wlan_objmgr_psoc *psoc)
 {
-	return wmi_unified_host_wakeup_ind_to_fw_cmd(
-			get_wmi_unified_hdl_from_psoc(psoc));
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_host_wakeup_ind_to_fw_cmd(wmi_handle);
 }
 
 QDF_STATUS target_if_pmo_psoc_send_target_resume_req(
 		struct wlan_objmgr_psoc *psoc)
 {
-	return wmi_unified_resume_send(get_wmi_unified_hdl_from_psoc(psoc),
-					TGT_WILDCARD_PDEV_ID);
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_resume_send(wmi_handle, TGT_WILDCARD_PDEV_ID);
 }
 
 #ifdef FEATURE_WLAN_D0WOW
 QDF_STATUS target_if_pmo_psoc_send_d0wow_enable_req(
 		struct wlan_objmgr_psoc *psoc)
 {
-	return wmi_unified_d0wow_enable_send(
-			get_wmi_unified_hdl_from_psoc(psoc),
-			TGT_WILDCARD_PDEV_ID);
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_d0wow_enable_send(wmi_handle, TGT_WILDCARD_PDEV_ID);
 }
 
 QDF_STATUS target_if_pmo_psoc_send_d0wow_disable_req(
 		struct wlan_objmgr_psoc *psoc)
 {
-	return wmi_unified_d0wow_disable_send(
-			get_wmi_unified_hdl_from_psoc(psoc),
-			TGT_WILDCARD_PDEV_ID);
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_d0wow_disable_send(wmi_handle, TGT_WILDCARD_PDEV_ID);
 }
 #else
 QDF_STATUS target_if_pmo_psoc_send_d0wow_enable_req(

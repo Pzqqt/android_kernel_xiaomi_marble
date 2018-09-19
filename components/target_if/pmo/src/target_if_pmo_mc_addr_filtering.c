@@ -34,6 +34,7 @@ QDF_STATUS target_if_pmo_set_mc_filter_req(
 	uint8_t vdev_id;
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
 
 	if (!vdev) {
 		target_if_err("vdev ptr passed is NULL");
@@ -47,10 +48,14 @@ QDF_STATUS target_if_pmo_set_mc_filter_req(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_add_clear_mcbc_filter_cmd(
-			get_wmi_unified_hdl_from_psoc(psoc),
-			vdev_id,
-			multicast_addr, false);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_add_clear_mcbc_filter_cmd(wmi_handle, vdev_id,
+						       multicast_addr, false);
 	if (status)
 		target_if_err("Failed to send add/clear mcbc filter cmd");
 
@@ -64,6 +69,7 @@ QDF_STATUS target_if_pmo_clear_mc_filter_req(
 	uint8_t vdev_id;
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
 
 	if (!vdev) {
 		target_if_err("vdev ptr passed is NULL");
@@ -77,10 +83,14 @@ QDF_STATUS target_if_pmo_clear_mc_filter_req(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_add_clear_mcbc_filter_cmd(
-			get_wmi_unified_hdl_from_psoc(psoc),
-			vdev_id,
-			multicast_addr, true);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_add_clear_mcbc_filter_cmd(wmi_handle, vdev_id,
+						       multicast_addr, true);
 	if (status)
 		target_if_err("Failed to send add/clear mcbc filter cmd");
 
@@ -93,8 +103,13 @@ bool target_if_pmo_get_multiple_mc_filter_support(
 {
 	wmi_unified_t wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return false;
+	}
+
 	return wmi_service_enabled(wmi_handle,
-				      wmi_service_multiple_mcast_filter_set);
+				   wmi_service_multiple_mcast_filter_set);
 }
 
 QDF_STATUS target_if_pmo_set_multiple_mc_filter_req(
@@ -105,6 +120,7 @@ QDF_STATUS target_if_pmo_set_multiple_mc_filter_req(
 	struct wlan_objmgr_psoc *psoc;
 	struct pmo_mcast_filter_params filter_params;
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
 
 	if (!vdev) {
 		target_if_err("vdev ptr passed is NULL");
@@ -125,10 +141,15 @@ QDF_STATUS target_if_pmo_set_multiple_mc_filter_req(
 	/* add one/multiple mc list */
 	filter_params.action = 1;
 
-	status = wmi_unified_multiple_add_clear_mcbc_filter_cmd(
-			get_wmi_unified_hdl_from_psoc(psoc),
-			vdev_id,
-			&filter_params);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_multiple_add_clear_mcbc_filter_cmd(wmi_handle,
+								vdev_id,
+								&filter_params);
 	if (status)
 		target_if_err("Failed to send add/clear mcbc filter cmd");
 
@@ -143,6 +164,7 @@ QDF_STATUS target_if_pmo_clear_multiple_mc_filter_req(
 	struct wlan_objmgr_psoc *psoc;
 	struct pmo_mcast_filter_params filter_params;
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
 
 	if (!vdev) {
 		target_if_err("vdev ptr passed is NULL");
@@ -163,10 +185,15 @@ QDF_STATUS target_if_pmo_clear_multiple_mc_filter_req(
 	/* delete one/multiple mc list */
 	filter_params.action = 0;
 
-	status = wmi_unified_multiple_add_clear_mcbc_filter_cmd(
-			get_wmi_unified_hdl_from_psoc(psoc),
-			vdev_id,
-			&filter_params);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_multiple_add_clear_mcbc_filter_cmd(wmi_handle,
+								vdev_id,
+								&filter_params);
 	if (status)
 		target_if_err("Failed to send add/clear mcbc filter cmd");
 

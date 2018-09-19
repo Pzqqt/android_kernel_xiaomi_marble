@@ -31,15 +31,20 @@ QDF_STATUS target_if_pmo_conf_hw_filter(struct wlan_objmgr_psoc *psoc,
 					struct pmo_hw_filter_params *req)
 {
 	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
 
 	if (!psoc) {
 		target_if_err("psoc is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wmi_unified_conf_hw_filter_cmd(
-		get_wmi_unified_hdl_from_psoc(psoc),
-		req);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_conf_hw_filter_cmd(wmi_handle, req);
 
 	if (QDF_IS_STATUS_ERROR(status))
 		target_if_err("Failed to configure HW Filter");
