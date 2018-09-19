@@ -10240,6 +10240,11 @@ typedef struct {
  * This parameter controls the UL OFDMA and UL MU-MIMO peer fixed rate.
  */
 #define WMI_PEER_PARAM_UL_FIXED_RATE                    0x1b
+/** send specific OMI to peer via QoS-null frame
+ * param_value = follow 11ax spec definition
+ *               bit0:VHT(1), bit1:HE(1), bit2-31:A-Control
+ */
+#define WMI_PEER_RARAM_XMIT_OMI                         0x1c
 
 /** mimo ps values for the parameter WMI_PEER_MIMO_PS_STATE  */
 #define WMI_PEER_MIMO_PS_NONE                          0x0
