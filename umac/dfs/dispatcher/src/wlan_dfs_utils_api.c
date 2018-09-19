@@ -848,7 +848,7 @@ void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 	struct wlan_dfs *dfs;
 	struct wlan_objmgr_psoc *psoc;
 	qdf_device_t qdf_dev;
-	struct dfs_nol_info dfs_nolinfo;
+	struct dfs_nol_info *dfs_nolinfo;
 	int len;
 
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
@@ -865,16 +865,23 @@ void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 		return;
 	}
 
-	qdf_mem_zero(&dfs_nolinfo, sizeof(dfs_nolinfo));
-	len = pld_wlan_get_dfs_nol(qdf_dev->dev, (void *)&dfs_nolinfo,
-			(uint16_t)sizeof(dfs_nolinfo));
+	dfs_nolinfo = qdf_mem_malloc(sizeof(*dfs_nolinfo));
+	if (!dfs_nolinfo) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs_nolinfo alloc fail");
+		return;
+	}
+
+	qdf_mem_zero(dfs_nolinfo, sizeof(*dfs_nolinfo));
+	len = pld_wlan_get_dfs_nol(qdf_dev->dev, (void *)dfs_nolinfo,
+				   (uint16_t)sizeof(*dfs_nolinfo));
 	if (len > 0) {
-		dfs_set_nol(dfs, dfs_nolinfo.dfs_nol, dfs_nolinfo.num_chans);
+		dfs_set_nol(dfs, dfs_nolinfo->dfs_nol, dfs_nolinfo->num_chans);
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "nol channels in pld");
 		DFS_PRINT_NOL_LOCKED(dfs);
 	} else {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "no nol in pld");
 	}
+	qdf_mem_free(dfs_nolinfo);
 }
 #endif
 qdf_export_symbol(utils_dfs_init_nol);
@@ -886,7 +893,7 @@ void utils_dfs_save_nol(struct wlan_objmgr_pdev *pdev)
 #else
 void utils_dfs_save_nol(struct wlan_objmgr_pdev *pdev)
 {
-	struct dfs_nol_info dfs_nolinfo;
+	struct dfs_nol_info *dfs_nolinfo;
 	struct wlan_dfs *dfs = NULL;
 	struct wlan_objmgr_psoc *psoc;
 	qdf_device_t qdf_dev;
@@ -910,18 +917,25 @@ void utils_dfs_save_nol(struct wlan_objmgr_pdev *pdev)
 		return;
 	}
 
-	qdf_mem_zero(&dfs_nolinfo, sizeof(dfs_nolinfo));
-	DFS_GET_NOL_LOCKED(dfs, dfs_nolinfo.dfs_nol, &num_chans);
+	dfs_nolinfo = qdf_mem_malloc(sizeof(*dfs_nolinfo));
+	if (!dfs_nolinfo) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs_nolinfo alloc fail");
+		return;
+	}
+
+	qdf_mem_zero(dfs_nolinfo, sizeof(*dfs_nolinfo));
+	DFS_GET_NOL_LOCKED(dfs, dfs_nolinfo->dfs_nol, &num_chans);
 	if (num_chans > 0) {
 
 		if (num_chans > DFS_MAX_NOL_CHANNEL)
-			dfs_nolinfo.num_chans = DFS_MAX_NOL_CHANNEL;
+			dfs_nolinfo->num_chans = DFS_MAX_NOL_CHANNEL;
 		else
-			dfs_nolinfo.num_chans = num_chans;
+			dfs_nolinfo->num_chans = num_chans;
 
-		pld_wlan_set_dfs_nol(qdf_dev->dev, (void *)&dfs_nolinfo,
-				(uint16_t)sizeof(dfs_nolinfo));
+		pld_wlan_set_dfs_nol(qdf_dev->dev, (void *)dfs_nolinfo,
+				     (uint16_t)sizeof(*dfs_nolinfo));
 	}
+	qdf_mem_free(dfs_nolinfo);
 }
 #endif
 qdf_export_symbol(utils_dfs_save_nol);
