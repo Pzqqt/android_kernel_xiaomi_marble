@@ -2139,6 +2139,7 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 	uint8_t i, nw_type_11b = 0;
 	tLimIbssPeerNode *peer_node; /* for IBSS mode */
 	const uint8_t *p2p_ie = NULL;
+	tDot11fIEVHTCaps vht_caps;
 
 	sir_copy_mac_addr(sta_mac, session_entry->selfMacAddr);
 
@@ -2384,9 +2385,14 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 				     sizeof(add_sta_params->ht_caps));
 		}
 
-		if (assoc_req && add_sta_params->vhtCapable)
+		if (assoc_req && add_sta_params->vhtCapable) {
+			if (assoc_req->vendor_vht_ie.VHTCaps.present)
+				vht_caps = assoc_req->vendor_vht_ie.VHTCaps;
+			else
+				vht_caps = assoc_req->VHTCaps;
 			add_sta_params->vht_caps =
-				 lim_populate_vht_caps(assoc_req->VHTCaps);
+				lim_populate_vht_caps(vht_caps);
+		}
 
 		lim_add_he_cap(add_sta_params, assoc_req);
 
