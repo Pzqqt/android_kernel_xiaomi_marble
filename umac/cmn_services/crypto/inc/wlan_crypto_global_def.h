@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,11 +27,14 @@
 #ifdef WLAN_CRYPTO_SUPPORT_FILS
 #include "wlan_crypto_fils_def.h"
 #endif
+#include <wlan_objmgr_cmn.h>
 
 #define WLAN_CRYPTO_TID_SIZE         (17)
+#define WLAN_CRYPTO_RSC_SIZE         (16)
 #define WLAN_CRYPTO_KEYBUF_SIZE      (32)
 #define WLAN_CRYPTO_MICBUF_SIZE      (16)
 #define WLAN_CRYPTO_MIC_LEN          (8)
+#define WLAN_CRYPTO_IV_SIZE          (16)
 #define WLAN_CRYPTO_MIC256_LEN       (16)
 #define WLAN_CRYPTO_TXMIC_OFFSET     (0)
 #define WLAN_CRYPTO_RXMIC_OFFSET     (WLAN_CRYPTO_TXMIC_OFFSET + \
@@ -53,6 +56,14 @@
 /* 128 bit wep key len */
 #define WLAN_CRYPTO_KEY_WEP128_LEN   (16)
 
+#define WLAN_CRYPTO_KEY_TKIP_LEN     (32)
+#define WLAN_CRYPTO_KEY_CCMP_LEN     (16)
+#define WLAN_CRYPTO_KEY_CCMP_256_LEN (32)
+#define WLAN_CRYPTO_KEY_GCMP_LEN     (16)
+#define WLAN_CRYPTO_KEY_GCMP_256_LEN (32)
+#define WLAN_CRYPTO_KEY_WAPI_LEN     (32)
+#define WLAN_CRYPTO_KEY_GMAC_LEN     (16)
+#define WLAN_CRYPTO_KEY_GMAC_256_LEN (32)
 #define WLAN_CRYPTO_WPI_SMS4_IVLEN   (16)
 #define WLAN_CRYPTO_WPI_SMS4_KIDLEN  (1)
 #define WLAN_CRYPTO_WPI_SMS4_PADLEN  (1)
@@ -113,6 +124,7 @@ typedef enum wlan_crypto_cipher_type {
 	WLAN_CRYPTO_CIPHER_WEP_104         = 16,
 	WLAN_CRYPTO_CIPHER_NONE            = 17,
 	WLAN_CRYPTO_CIPHER_MAX             = WLAN_CRYPTO_CIPHER_NONE,
+	WLAN_CRYPTO_CIPHER_INVALID,
 } wlan_crypto_cipher_type;
 
 /* Auth types */
@@ -188,6 +200,11 @@ typedef enum wlan_crypto_key_mgmt {
 	WLAN_CRYPTO_KEY_MGMT_MAX                   = WLAN_CRYPTO_KEY_MGMT_DPP,
 } wlan_crypto_key_mgmt;
 
+enum wlan_crypto_key_type {
+	WLAN_CRYPTO_KEY_TYPE_UNICAST,
+	WLAN_CRYPTO_KEY_TYPE_GROUP,
+};
+
 /**
  * struct wlan_crypto_params - holds crypto params
  * @authmodeset:        authentication mode
@@ -226,6 +243,8 @@ typedef enum wlan_crypto_param_type {
  * @valid:          is key valid or not
  * @flags:          key flags
  * @keyix:          key id
+ * @cipher_type:    cipher type being used for this key
+ * @mac_addr:       MAC address of the peer
  * @cipher_table:   table which stores cipher related info
  * @private:        private pointer to save cipher context
  * @keylock:        spin lock
@@ -245,6 +264,8 @@ struct wlan_crypto_key {
 	bool        valid;
 	uint16_t    flags;
 	uint16_t    keyix;
+	enum wlan_crypto_cipher_type cipher_type;
+	uint8_t     macaddr[QDF_MAC_ADDR_SIZE];
 	void        *cipher_table;
 	void        *private;
 	qdf_spinlock_t	keylock;
@@ -303,22 +324,25 @@ struct wlan_crypto_req_key {
  * @setkey:  function pointer to setkey in hw
  * @delkey: function pointer to delkey in hw
  * @defaultkey: function pointer to set default key
+ * @set_key: converged function pointer to set key in hw
  */
 
 struct wlan_lmac_if_crypto_tx_ops {
-	QDF_STATUS(*allockey)(struct wlan_objmgr_vdev *vdev,
-				struct wlan_crypto_key *key,
-				uint8_t *macaddr, uint32_t key_type);
-	QDF_STATUS(*setkey)(struct wlan_objmgr_vdev *vdev,
-				struct wlan_crypto_key *key,
-				uint8_t *macaddr, uint32_t key_type);
-	QDF_STATUS(*delkey)(struct wlan_objmgr_vdev *vdev,
-				struct wlan_crypto_key *key,
-				uint8_t *macaddr, uint32_t key_type);
-	QDF_STATUS(*defaultkey)(struct wlan_objmgr_vdev *vdev,
-					uint8_t keyix, uint8_t *macaddr);
+	QDF_STATUS (*allockey)(struct wlan_objmgr_vdev *vdev,
+			       struct wlan_crypto_key *key,
+			       uint8_t *macaddr, uint32_t key_type);
+	QDF_STATUS (*setkey)(struct wlan_objmgr_vdev *vdev,
+			     struct wlan_crypto_key *key,
+			     uint8_t *macaddr, uint32_t key_type);
+	QDF_STATUS (*delkey)(struct wlan_objmgr_vdev *vdev,
+			     struct wlan_crypto_key *key,
+			     uint8_t *macaddr, uint32_t key_type);
+	QDF_STATUS (*defaultkey)(struct wlan_objmgr_vdev *vdev,
+				 uint8_t keyix, uint8_t *macaddr);
+	QDF_STATUS (*set_key)(struct wlan_objmgr_vdev *vdev,
+			      struct wlan_crypto_key *key,
+			      enum wlan_crypto_key_type key_type);
 };
-
 
 /**
  * struct wlan_lmac_if_crypto_rx_ops - structure of crypto rx  function

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -52,6 +52,16 @@ int osif_nl_to_crypto_akm_type(u32 key_mgmt);
  * set the crypto cipher type for corresponding cipher type received
  * from NL.
  *
- * Return: crypto cipher type, negative value for failure
+ * Return: crypto cipher type
  */
-int osif_nl_to_crypto_cipher_type(u32 cipher);
+enum wlan_crypto_cipher_type osif_nl_to_crypto_cipher_type(u32 cipher);
+
+/**
+ * osif_nl_to_crypto_cipher_len() - return the cipher length
+ * @cipher: NL cipher type
+ *
+ * Check the cipher type and return the corresponding length
+ *
+ * Return: crypto cipher length, negative value for failure
+ */
+int osif_nl_to_crypto_cipher_len(u32 cipher);

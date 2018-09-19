@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,9 +35,7 @@
 #include "wlan_crypto_def_i.h"
 #include "wlan_crypto_param_handling_i.h"
 #include "wlan_crypto_obj_mgr_i.h"
-
 #include <qdf_module.h>
-
 
 const struct wlan_crypto_cipher *wlan_crypto_cipher_ops[WLAN_CRYPTO_CIPHER_MAX];
 
@@ -954,6 +952,32 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CRYPTO_SET_KEY_CONVERGED
+static QDF_STATUS wlan_crypto_set_default_key(struct wlan_objmgr_vdev *vdev,
+					      uint8_t key_idx, uint8_t *macaddr)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS wlan_crypto_set_default_key(struct wlan_objmgr_vdev *vdev,
+					      uint8_t key_idx, uint8_t *macaddr)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		crypto_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	if (WLAN_CRYPTO_TX_OPS_DEFAULTKEY(psoc)) {
+		WLAN_CRYPTO_TX_OPS_DEFAULTKEY(psoc)(vdev, key_idx,
+						    macaddr);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * wlan_crypto_default_key - called by ucfg to set default tx key
  * @vdev: vdev
@@ -1035,10 +1059,9 @@ QDF_STATUS wlan_crypto_default_key(struct wlan_objmgr_vdev *vdev,
 	if (!key->valid)
 		return QDF_STATUS_E_INVAL;
 
-	if (WLAN_CRYPTO_TX_OPS_DEFAULTKEY(psoc)) {
-		WLAN_CRYPTO_TX_OPS_DEFAULTKEY(psoc)(vdev, key_idx,
-						macaddr);
-	}
+	if (wlan_crypto_set_default_key(vdev, key_idx, macaddr) !=
+			QDF_STATUS_SUCCESS)
+		return QDF_STATUS_E_INVAL;
 	crypto_priv->def_tx_keyid = key_idx;
 
 	return QDF_STATUS_SUCCESS;
@@ -3682,3 +3705,146 @@ QDF_STATUS wlan_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
 
 	return send_fail ? QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
 }
+
+int8_t wlan_crypto_get_default_key_idx(struct wlan_objmgr_vdev *vdev, bool igtk)
+{
+	struct wlan_crypto_comp_priv *crypto_priv;
+
+	crypto_priv = wlan_get_vdev_crypto_obj(vdev);
+	if (!crypto_priv) {
+		crypto_err("crypto_priv NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (igtk)
+		return crypto_priv->def_igtk_tx_keyid;
+	else
+		return crypto_priv->def_tx_keyid;
+}
+
+enum wlan_crypto_cipher_type
+wlan_crypto_get_cipher(struct wlan_objmgr_vdev *vdev,
+		       bool pairwise, uint8_t key_index)
+{
+	struct wlan_crypto_key *crypto_key;
+
+	crypto_key = wlan_crypto_get_key(vdev, key_index);
+
+	if (crypto_key)
+		return crypto_key->cipher_type;
+	else
+		return WLAN_CRYPTO_CIPHER_INVALID;
+}
+
+#ifdef CRYPTO_SET_KEY_CONVERGED
+QDF_STATUS wlan_crypto_validate_key_params(enum wlan_crypto_cipher_type cipher,
+					   uint8_t key_index, uint8_t key_len,
+					   uint8_t seq_len)
+{
+	if (key_index >= (WLAN_CRYPTO_MAXKEYIDX + WLAN_CRYPTO_MAXIGTKKEYIDX)) {
+		crypto_err("Invalid Key index %d", key_index);
+		return QDF_STATUS_E_INVAL;
+	}
+	if (cipher == WLAN_CRYPTO_CIPHER_INVALID) {
+		crypto_err("Invalid Cipher %d", cipher);
+		return QDF_STATUS_E_INVAL;
+	}
+	if ((!(cipher == WLAN_CRYPTO_CIPHER_AES_CMAC ||
+	       cipher == WLAN_CRYPTO_CIPHER_AES_CMAC_256 ||
+	       cipher == WLAN_CRYPTO_CIPHER_AES_GMAC ||
+	       cipher == WLAN_CRYPTO_CIPHER_AES_GMAC_256)) &&
+	    (key_index >= WLAN_CRYPTO_MAXKEYIDX)) {
+		crypto_err("Invalid key index %d for cipher %d",
+			   key_index, cipher);
+		return QDF_STATUS_E_INVAL;
+	}
+	if (key_len > (WLAN_CRYPTO_KEYBUF_SIZE + WLAN_CRYPTO_MICBUF_SIZE)) {
+		crypto_err("Invalid key length %d", key_len);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (seq_len > WLAN_CRYPTO_RSC_SIZE) {
+		crypto_err("Invalid seq length %d", seq_len);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	crypto_debug("key: idx:%d, len:%d, seq len:%d",
+		     key_index, key_len, seq_len);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_crypto_save_key(struct wlan_objmgr_vdev *vdev,
+				uint8_t key_index,
+				struct wlan_crypto_key *crypto_key)
+{
+	struct wlan_crypto_comp_priv *crypto_priv;
+
+	crypto_priv = wlan_get_vdev_crypto_obj(vdev);
+	if (!crypto_priv) {
+		crypto_err("crypto_priv NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (key_index >= (WLAN_CRYPTO_MAXKEYIDX + WLAN_CRYPTO_MAXIGTKKEYIDX)) {
+		crypto_err("Invalid Key index %d", key_index);
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (key_index < WLAN_CRYPTO_MAXKEYIDX)
+		crypto_priv->key[key_index] = crypto_key;
+	else
+		crypto_priv->igtk_key[key_index - WLAN_CRYPTO_MAXKEYIDX] =
+			crypto_key;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+struct wlan_crypto_key *wlan_crypto_get_key(struct wlan_objmgr_vdev *vdev,
+					    uint8_t key_index)
+{
+	struct wlan_crypto_comp_priv *crypto_priv;
+
+	crypto_priv = wlan_get_vdev_crypto_obj(vdev);
+	if (!crypto_priv) {
+		crypto_err("crypto_priv NULL");
+		return NULL;
+	}
+	if (key_index >= (WLAN_CRYPTO_MAXKEYIDX + WLAN_CRYPTO_MAXIGTKKEYIDX)) {
+		crypto_err("Invalid Key index %d", key_index);
+		return NULL;
+	}
+	if (key_index < WLAN_CRYPTO_MAXKEYIDX)
+		return crypto_priv->key[key_index];
+
+	return crypto_priv->igtk_key[key_index - WLAN_CRYPTO_MAXKEYIDX];
+}
+
+QDF_STATUS wlan_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_crypto_key *req,
+				   bool pairwise)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (psoc && WLAN_CRYPTO_TX_OPS_SET_KEY(psoc))
+		WLAN_CRYPTO_TX_OPS_SET_KEY(psoc)(vdev, req, pairwise);
+	else
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void wlan_crypto_update_set_key_peer(struct wlan_objmgr_vdev *vdev,
+				     bool pairwise, uint8_t key_index,
+				     struct qdf_mac_addr *peer_mac)
+{
+	struct wlan_crypto_key *crypto_key;
+
+	crypto_key = wlan_crypto_get_key(vdev, key_index);
+	if (!crypto_key) {
+		crypto_err("crypto_key not present for key_idx %d", key_index);
+		return;
+	}
+
+	qdf_mem_copy(crypto_key->macaddr, peer_mac, QDF_MAC_ADDR_SIZE);
+}
+#endif

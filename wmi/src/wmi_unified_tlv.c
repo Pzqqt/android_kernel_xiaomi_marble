@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3996,9 +3996,8 @@ static QDF_STATUS send_setup_install_key_cmd_tlv(wmi_unified_t wmi_handle,
 	key_data = (uint8_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
 	qdf_mem_copy((void *)key_data,
 		     (const void *)key_params->key_data, key_params->key_len);
-	if (key_params->key_rsc_counter)
-	    qdf_mem_copy(&cmd->key_rsc_counter, key_params->key_rsc_counter,
-			 sizeof(wmi_key_seq_counter));
+	qdf_mem_copy(&cmd->key_rsc_counter, &key_params->key_rsc_ctr,
+		     sizeof(wmi_key_seq_counter));
 	cmd->key_len = key_params->key_len;
 
 	wmi_mtrace(WMI_VDEV_INSTALL_KEY_CMDID, cmd->vdev_id, 0);
@@ -4646,7 +4645,6 @@ static QDF_STATUS send_process_ll_stats_clear_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGD("Clear Stat Mask : %d", cmd->stats_clear_req_mask);
 	/* WMI_LOGD("Peer MAC Addr   : %pM",
 		 cmd->peer_macaddr); */
-
 	wmi_mtrace(WMI_CLEAR_LINK_STATS_CMDID, cmd->vdev_id, 0);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_CLEAR_LINK_STATS_CMDID);

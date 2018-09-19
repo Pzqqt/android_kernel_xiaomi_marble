@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -169,6 +169,8 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 		(psoc->soc_cb.tx_ops.crypto_tx_ops.delkey)
 #define WLAN_CRYPTO_TX_OPS_DEFAULTKEY(psoc) \
 		(psoc->soc_cb.tx_ops.crypto_tx_ops.defaultkey)
+#define WLAN_CRYPTO_TX_OPS_SET_KEY(psoc) \
+		((psoc)->soc_cb.tx_ops.crypto_tx_ops.set_key)
 
 /* unalligned little endian access */
 #ifndef LE_READ_2

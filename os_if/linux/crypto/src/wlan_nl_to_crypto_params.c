@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -55,12 +55,14 @@ struct osif_akm_type_crypto_mapping {
  *                                    to internal crypto cipher type
  * @cipher_suite: NL cipher type
  * @cipher_crypto: cipher crypto type
+ * @cipher_len: Length of the cipher
  *
  * mapping cipher type received from NL to internal crypto cipher type
  */
 struct osif_cipher_crypto_mapping {
 	u32 cipher_suite;
 	wlan_crypto_cipher_type cipher_crypto;
+	u32 cipher_len;
 };
 
 /**
@@ -160,57 +162,70 @@ static const struct osif_cipher_crypto_mapping
 	{
 		.cipher_suite = IW_AUTH_CIPHER_NONE,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_NONE,
+		.cipher_len = 0,
 	},
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_WEP40,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_WEP_40,
+		.cipher_len = WLAN_CRYPTO_KEY_WEP40_LEN,
 	},
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_TKIP,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_TKIP,
+		.cipher_len = WLAN_CRYPTO_KEY_TKIP_LEN,
 	},
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_CCMP,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_AES_CCM,
+		.cipher_len = WLAN_CRYPTO_KEY_CCMP_LEN,
 	},
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_WEP104,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_WEP_104,
+		.cipher_len = WLAN_CRYPTO_KEY_WEP104_LEN,
 	},
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_GCMP,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_AES_GCM,
+		.cipher_len = WLAN_CRYPTO_KEY_GCMP_LEN,
 	},
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_GCMP_256,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_AES_GCM_256,
+		.cipher_len = WLAN_CRYPTO_KEY_GCMP_256_LEN,
 	},
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_CCMP_256,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_AES_CCM_256,
+		.cipher_len = WLAN_CRYPTO_KEY_CCMP_256_LEN,
 	},
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_AES_CMAC,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_AES_CMAC,
+		.cipher_len = WLAN_CRYPTO_KEY_CCMP_LEN,
 	},
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_BIP_GMAC_128,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_AES_GMAC,
+		.cipher_len = WLAN_CRYPTO_KEY_GMAC_LEN,
 	},
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_BIP_GMAC_256,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_AES_GMAC_256,
+		.cipher_len = WLAN_CRYPTO_KEY_GMAC_256_LEN,
 	},
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_BIP_CMAC_256,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_AES_CMAC_256,
+		.cipher_len = WLAN_CRYPTO_KEY_CCMP_256_LEN,
 	},
 #endif
 #ifdef FEATURE_WLAN_WAPI
 	{
 		.cipher_suite = WLAN_CIPHER_SUITE_SMS4,
 		.cipher_crypto = WLAN_CRYPTO_CIPHER_WAPI_SMS4,
+		.cipher_len = WLAN_CRYPTO_KEY_WAPI_LEN,
 	},
 #endif
 };
@@ -257,13 +272,13 @@ int osif_nl_to_crypto_akm_type(u32 key_mgmt)
 	return crypto_akm_type;
 }
 
-int osif_nl_to_crypto_cipher_type(u32 cipher)
+enum wlan_crypto_cipher_type osif_nl_to_crypto_cipher_type(u32 cipher)
 {
 	uint8_t index;
 	bool cipher_crypto_exist = false;
 	wlan_crypto_cipher_type crypto_cipher_type = WLAN_CRYPTO_CIPHER_NONE;
 
-	for (index = 0; index < QDF_ARRAY_SIZE(osif_auth_type_crypto_mapping);
+	for (index = 0; index < QDF_ARRAY_SIZE(osif_cipher_crypto_mapping);
 	     index++) {
 		if (osif_cipher_crypto_mapping[index].cipher_suite == cipher) {
 			crypto_cipher_type = osif_cipher_crypto_mapping[index].
@@ -275,10 +290,24 @@ int osif_nl_to_crypto_cipher_type(u32 cipher)
 	if (!cipher_crypto_exist) {
 		QDF_TRACE_ERROR(QDF_MODULE_ID_OS_IF, "Unknown type: %d",
 				cipher);
-		return -EINVAL;
+		return WLAN_CRYPTO_CIPHER_INVALID;
 	}
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_OS_IF, "Cipher suite, NL: %d, crypto: %d",
 			cipher, crypto_cipher_type);
 
 	return crypto_cipher_type;
 }
+
+int osif_nl_to_crypto_cipher_len(u32 cipher)
+{
+	uint8_t index;
+
+	for (index = 0; index < QDF_ARRAY_SIZE(osif_cipher_crypto_mapping);
+	     index++) {
+		if (osif_cipher_crypto_mapping[index].cipher_suite == cipher)
+			return osif_cipher_crypto_mapping[index].cipher_len;
+	}
+
+	return -EINVAL;
+}
+

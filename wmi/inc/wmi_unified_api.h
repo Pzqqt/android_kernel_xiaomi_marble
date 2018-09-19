@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1682,4 +1682,24 @@ QDF_STATUS wmi_unified_send_obss_color_collision_cfg_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_extract_obss_color_collision_info(void *wmi_hdl,
 		uint8_t *data, struct wmi_obss_color_collision_info *info);
 
+#ifdef CRYPTO_SET_KEY_CONVERGED
+/**
+ * wlan_crypto_cipher_to_wmi_cipher() - Convert crypto cipher to WMI cipher
+ * @crypto_cipher: cipher type in crypto format
+ *
+ * Return: cipher type in WMI cipher type
+ */
+uint8_t wlan_crypto_cipher_to_wmi_cipher(
+		enum wlan_crypto_cipher_type crypto_cipher);
+
+/**
+ * wlan_crypto_cipher_to_cdp_sec_type() - Convert crypto cipher to CDP type
+ * @crypto_cipher: cipher type in crypto format
+ *
+ * Return: security type in cdp_sec_type data format type
+ */
+enum cdp_sec_type wlan_crypto_cipher_to_cdp_sec_type(
+		enum wlan_crypto_cipher_type crypto_cipher);
+
+#endif
 #endif /* _WMI_UNIFIED_API_H_ */

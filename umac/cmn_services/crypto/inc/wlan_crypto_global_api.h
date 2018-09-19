@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,7 +23,6 @@
 #define _WLAN_CRYPTO_GLOBAL_API_H_
 
 #include "wlan_crypto_global_def.h"
-
 /**
  * wlan_crypto_set_vdev_param - called by ucfg to set crypto param
  * @vdev: vdev
@@ -678,5 +677,127 @@ static inline int omac1_aes_256(const uint8_t *key, const uint8_t *data,
 	return 0;
 }
 #endif
+
+/**
+ * ucfg_crypto_set_key_req() - Set key request to UCFG
+ * @vdev: vdev object
+ * @req: key request information
+ * @pairwise: indicates the type of key to be set, unicast or group key
+ *
+ * Return: None
+ */
+QDF_STATUS ucfg_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_crypto_key *req, bool pairwise);
+
+/**
+ * wlan_crypto_get_default_key_idx() - Get the default key index
+ * @vdev: vdev object
+ * @igtk: denotes if the request is for igtk key type or not
+ *
+ * Return: Index of the requested key
+ */
+int8_t wlan_crypto_get_default_key_idx(struct wlan_objmgr_vdev *vdev,
+				       bool igtk);
+
+/**
+ * wlan_crypto_get_cipher() - Get the cipher type for the vdev
+ * @vdev: vdev object
+ * @pairwise: denotes if the request is for pairwise cipher or not
+ * @key_index: Index of the key whose cipher type has to be returned
+ *
+ * Return: enum wlan_crypto_cipher_type
+ */
+enum wlan_crypto_cipher_type
+wlan_crypto_get_cipher(struct wlan_objmgr_vdev *vdev,
+		       bool pairwise, uint8_t key_index);
+
+#ifdef CRYPTO_SET_KEY_CONVERGED
+/**
+ * wlan_crypto_update_set_key_peer() - Update the peer for set key
+ * @vdev: vdev object
+ * @pairwise: denotes if the request is for pairwise cipher or not
+ * @key_index: Index of the key whose peer has to be set
+ * @peer_mac: MAC address of the peer
+ *
+ * Return: None
+ */
+void wlan_crypto_update_set_key_peer(struct wlan_objmgr_vdev *vdev,
+				     bool pairwise, uint8_t key_index,
+				     struct qdf_mac_addr *peer_mac);
+
+/**
+ * wlan_crypto_validate_key_params() - validates key parameters
+ * @cipher: cipher type
+ * @key_index: the index of the key
+ * @key_len: key length
+ * @seq_len: sequence counter length
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_crypto_validate_key_params(enum wlan_crypto_cipher_type cipher,
+					   uint8_t key_index, uint8_t key_len,
+					   uint8_t seq_len);
+
+/**
+ * wlan_crypto_save_key() - Allocate memory for storing key
+ * @vdev: vdev object
+ * @key_index: the index of the key that needs to be allocated
+ * @crypto_key: Pointer to crypto key
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_crypto_save_key(struct wlan_objmgr_vdev *vdev,
+				uint8_t key_index,
+				struct wlan_crypto_key *crypto_key);
+
+/**
+ * wlan_crypto_get_key() - Get the stored key information
+ * @vdev: vdev object
+ * @key_index: the index of the key that needs to be retrieved
+ *
+ * Return: Key material
+ */
+struct wlan_crypto_key *wlan_crypto_get_key(struct wlan_objmgr_vdev *vdev,
+					    uint8_t key_index);
+
+/**
+ * wlan_crypto_set_key_req() - Set key request
+ * @vdev: vdev object
+ * @req: key request information
+ * @pairwise: indicates the type of key to be set, unicast or group key
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wlan_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
+				   struct wlan_crypto_key *req, bool pairwise);
+#else
+static inline void wlan_crypto_update_set_key_peer(
+						struct wlan_objmgr_vdev *vdev,
+						bool pairwise,
+						uint8_t key_index,
+						struct qdf_mac_addr *peer_mac)
+{
+}
+
+static inline QDF_STATUS
+wlan_crypto_save_key(struct wlan_objmgr_vdev *vdev, uint8_t key_index,
+		     struct wlan_crypto_key *crypto_key)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline struct wlan_crypto_key *
+wlan_crypto_get_key(struct wlan_objmgr_vdev *vdev, uint8_t key_index)
+{
+	return NULL;
+}
+
+static inline QDF_STATUS wlan_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
+						 struct wlan_crypto_key *req,
+						 bool pairwise)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* CRYPTO_SET_KEY_CONVERGED */
 
 #endif /* end of _WLAN_CRYPTO_GLOBAL_API_H_ */

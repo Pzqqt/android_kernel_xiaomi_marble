@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,6 +19,7 @@
 #include "wmi_unified_priv.h"
 #include "wmi_unified_param.h"
 #include "qdf_module.h"
+#include "cdp_txrx_cmn_struct.h"
 
 static const wmi_host_channel_width mode_to_width[WMI_HOST_MODE_MAX] = {
 	[WMI_HOST_MODE_11A]           = WMI_HOST_CHAN_WIDTH_20,
@@ -4465,6 +4466,63 @@ wmi_unified_send_roam_scan_stats_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef CRYPTO_SET_KEY_CONVERGED
+uint8_t wlan_crypto_cipher_to_wmi_cipher(
+		enum wlan_crypto_cipher_type crypto_cipher)
+{
+	switch (crypto_cipher) {
+	case WLAN_CRYPTO_CIPHER_NONE:
+		return WMI_CIPHER_NONE;
+	case WLAN_CRYPTO_CIPHER_WEP:
+		return WMI_CIPHER_WEP;
+	case WLAN_CRYPTO_CIPHER_TKIP:
+		return WMI_CIPHER_TKIP;
+	case WLAN_CRYPTO_CIPHER_WAPI_SMS4:
+	case WLAN_CRYPTO_CIPHER_WAPI_GCM4:
+		return WMI_CIPHER_WAPI;
+	case WLAN_CRYPTO_CIPHER_AES_CCM:
+	case WLAN_CRYPTO_CIPHER_AES_CCM_256:
+		return WMI_CIPHER_AES_CCM;
+	case WLAN_CRYPTO_CIPHER_AES_CMAC:
+		return WMI_CIPHER_AES_CMAC;
+	case WLAN_CRYPTO_CIPHER_AES_GMAC:
+	case WLAN_CRYPTO_CIPHER_AES_GMAC_256:
+		return WMI_CIPHER_AES_GMAC;
+	case WLAN_CRYPTO_CIPHER_AES_GCM:
+	case WLAN_CRYPTO_CIPHER_AES_GCM_256:
+		return WMI_CIPHER_AES_GCM;
+	default:
+		return 0;
+	}
+}
+
+enum cdp_sec_type wlan_crypto_cipher_to_cdp_sec_type(
+		enum wlan_crypto_cipher_type crypto_cipher)
+{
+	switch (crypto_cipher) {
+	case WLAN_CRYPTO_CIPHER_NONE:
+		return cdp_sec_type_none;
+	case WLAN_CRYPTO_CIPHER_WEP:
+		return cdp_sec_type_wep104;
+	case WLAN_CRYPTO_CIPHER_TKIP:
+		return cdp_sec_type_tkip;
+	case WLAN_CRYPTO_CIPHER_WAPI_SMS4:
+	case WLAN_CRYPTO_CIPHER_WAPI_GCM4:
+		return cdp_sec_type_wapi;
+	case WLAN_CRYPTO_CIPHER_AES_CCM:
+		return cdp_sec_type_aes_ccmp;
+	case WLAN_CRYPTO_CIPHER_AES_CCM_256:
+		return cdp_sec_type_aes_ccmp_256;
+	case WLAN_CRYPTO_CIPHER_AES_GCM:
+		return cdp_sec_type_aes_gcmp;
+	case WLAN_CRYPTO_CIPHER_AES_GCM_256:
+		return cdp_sec_type_aes_gcmp_256;
+	default:
+		return cdp_sec_type_none;
+	}
+}
+#endif /* CRYPTO_SET_KEY_CONVERGED */
 
 QDF_STATUS
 wmi_extract_roam_scan_stats_res_evt(wmi_unified_t wmi, void *evt_buf,
