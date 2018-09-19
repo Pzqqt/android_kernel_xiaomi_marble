@@ -5874,6 +5874,7 @@ typedef enum {
     WMI_REQUEST_PEER_EXTD_STAT      = 0x0400,
     WMI_REQUEST_BCN_STAT            = 0x0800,
     WMI_REQUEST_BCN_STAT_RESET      = 0x1000,
+    WMI_REQUEST_PEER_EXTD2_STAT     = 0x2000,
 } wmi_stats_id;
 
 /*
@@ -6491,6 +6492,8 @@ typedef struct {
     A_UINT32 num_bcn_stats;
     /** number of extended peer stats event structures (wmi_peer_extd_stats) */
     A_UINT32 num_peer_extd_stats;
+    /** number of extd2 peer stats event structures (wmi_peer_extd2_stats) */
+    A_UINT32 num_peer_extd2_stats;
 
 /* This TLV is followed by another TLV of array of bytes
  *   A_UINT8 data[];
@@ -7175,6 +7178,26 @@ typedef struct {
     A_UINT32 rx_mc_bc_cnt; /* 1 in the MSB of rx_mc_bc_cnt represents a valid data */
     A_UINT32 reserved[3]; /** for future use - add new peer stats here */
 } wmi_peer_extd_stats;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_extd2_stats */
+    /** peer MAC address */
+    wmi_mac_addr peer_macaddr;
+    /*
+     * The following rx_bytes field (lower/upper pair) counts only the
+     * MSDU bytes (after 802.11 decap, if applicable), and thus doesn't
+     * count the 802.11 header, unlike the wmi_peer_extd_stats.peer_rx_bytes
+     * and wmi_peer_stats_info.rx_bytes fields.
+     */
+    /** Lower 32 bits of the rx_bytes (size of MSDUs) excluding dot11 header from this peer */
+    A_UINT32 rx_bytes_l32;
+    /** Upper 32 bits of the rx_bytes (size of MSDUs) excluding dot11 header from this peer */
+    A_UINT32 rx_bytes_u32;
+    /** Number of MPDUS received with FCS error from this peer */
+    A_UINT32 rx_fcs_err;
+    /** Number of MPDUs(both data and non data) received from this peer */
+    A_UINT32 rx_mpdus;
+} wmi_peer_extd2_stats;
 
 typedef struct {
     /** Primary channel freq of the channel for which stats are sent */
