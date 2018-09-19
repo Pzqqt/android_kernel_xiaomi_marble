@@ -8476,6 +8476,14 @@ static bool is_management_record_non_tlv(uint32_t cmd_id)
 	return false;
 }
 
+static bool is_diag_event_non_tlv(uint32_t event_id)
+{
+	if (WMI_DEBUG_MESG_EVENTID == event_id)
+		return true;
+
+	return false;
+}
+
 /**
  * wmi_set_htc_tx_tag_non_tlv() - set HTC TX tag for WMI commands
  * @wmi_handle: WMI handle
@@ -8868,6 +8876,7 @@ struct wmi_ops non_tlv_ops =  {
 	.extract_pdev_utf_event = extract_pdev_utf_event_non_tlv,
 	.wmi_set_htc_tx_tag = wmi_set_htc_tx_tag_non_tlv,
 	.is_management_record = is_management_record_non_tlv,
+	.is_diag_event = is_diag_event_non_tlv,
 	.send_dfs_phyerr_offload_en_cmd =
 		send_dfs_phyerr_offload_en_cmd_non_tlv,
 	.send_dfs_phyerr_offload_dis_cmd =

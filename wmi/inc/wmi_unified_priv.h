@@ -104,6 +104,10 @@ struct wmi_ext_dbg_msg {
 #ifndef WMI_MGMT_EVENT_DEBUG_MAX_ENTRY
 #define WMI_MGMT_EVENT_DEBUG_MAX_ENTRY (256)
 #endif
+/* wmi diag rx events max buffer */
+#ifndef WMI_DIAG_RX_EVENT_DEBUG_MAX_ENTRY
+#define WMI_DIAG_RX_EVENT_DEBUG_MAX_ENTRY (256)
+#endif
 
 #define wmi_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_WMI, ## params)
 #define wmi_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_WMI, ## params)
@@ -199,12 +203,11 @@ struct wmi_log_buf_t {
  * @wmi_mgmt_command_tx_cmp_log_buf_info - Buffer info for WMI Management
  * Command Tx completion log
  * @wmi_mgmt_event_log_buf_info - Buffer info for WMI Management event log
+ * @wmi_diag_event_log_buf_info - Buffer info for WMI diag event log
  * @wmi_record_lock - Lock WMI recording
  * @wmi_logging_enable - Enable/Disable state for WMI logging
  * @buf_offset_command - Offset from where WMI command data should be logged
  * @buf_offset_event - Offset from where WMI event data should be logged
- * @is_management_record - Function refernce to check if command/event is
- *  management record
  * @wmi_id_to_name - Function refernce to API to convert Command id to
  * string name
  * @wmi_log_debugfs_dir - refernce to debugfs directory
@@ -219,6 +222,7 @@ struct wmi_debug_log_info {
 	struct wmi_log_buf_t wmi_mgmt_command_log_buf_info;
 	struct wmi_log_buf_t wmi_mgmt_command_tx_cmp_log_buf_info;
 	struct wmi_log_buf_t wmi_mgmt_event_log_buf_info;
+	struct wmi_log_buf_t wmi_diag_event_log_buf_info;
 
 	qdf_spinlock_t wmi_record_lock;
 	bool wmi_logging_enable;
@@ -1558,6 +1562,7 @@ QDF_STATUS (*extract_peer_delete_response_event)(
 			struct wmi_host_peer_delete_response_event *param);
 
 bool (*is_management_record)(uint32_t cmd_id);
+bool (*is_diag_event)(uint32_t event_id);
 uint8_t *(*wmi_id_to_name)(uint32_t cmd_id);
 QDF_STATUS (*send_dfs_phyerr_offload_en_cmd)(wmi_unified_t wmi_handle,
 		uint32_t pdev_id);
