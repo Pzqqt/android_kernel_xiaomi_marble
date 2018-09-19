@@ -20915,6 +20915,10 @@ static QDF_STATUS extract_reg_ch_avoid_event_tlv(
 		WMI_LOGE("Invalid channel avoid indication buffer");
 		return QDF_STATUS_E_INVAL;
 	}
+	if (param_buf->num_avd_freq_range < afr_fixed_param->num_freq_ranges) {
+		WMI_LOGE(FL("no.of freq ranges exceeded the limit"));
+		return QDF_STATUS_E_INVAL;
+	}
 	num_freq_ranges = (afr_fixed_param->num_freq_ranges >
 			CH_AVOID_MAX_RANGE) ? CH_AVOID_MAX_RANGE :
 			afr_fixed_param->num_freq_ranges;
