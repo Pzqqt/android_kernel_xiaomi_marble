@@ -1503,6 +1503,10 @@ QDF_STATUS (*extract_bcnflt_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS (*extract_peer_extd_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 		 uint32_t index, wmi_host_peer_extd_stats *peer_extd_stats);
 
+QDF_STATUS (*extract_peer_retry_stats)(wmi_unified_t wmi_handle, void *evt_buf,
+	    uint32_t index,
+	    struct wmi_host_peer_retry_stats *peer_retry_stats);
+
 QDF_STATUS (*extract_chan_stats)(wmi_unified_t wmi_handle, void *evt_buf,
 			 uint32_t index, wmi_host_chan_stats *chan_stats);
 

@@ -1201,6 +1201,18 @@ QDF_STATUS wmi_extract_bcn_stats(void *wmi_hdl, void *evt_buf,
 QDF_STATUS wmi_extract_vdev_nac_rssi_stats(void *wmi_hdl, void *evt_buf,
 		struct wmi_host_vdev_nac_rssi_event *vdev_nac_rssi_stats);
 
+/**
+ * wmi_extract_peer_retry_stats() - extract peer retry stats from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @index: Index into peer retry stats
+ * @peer_retry_stats: Pointer to hold  peer retry stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_peer_retry_stats(void *wmi_hdl, void *evt_buf,
+	uint32_t index, struct wmi_host_peer_retry_stats *peer_retry_stats);
+
 QDF_STATUS wmi_unified_send_power_dbg_cmd(void *wmi_hdl,
 				struct wmi_power_dbg_params *param);
 

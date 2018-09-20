@@ -959,6 +959,7 @@ typedef enum {
 	WMI_HOST_REQUEST_NAC_RSSI =  0x200,
 	WMI_HOST_REQUEST_BCN_STAT =  0x800,
 	WMI_HOST_REQUEST_BCN_STAT_RESET =  0x1000,
+	WMI_HOST_REQUEST_PEER_RETRY_STAT = 0x2000,
 } wmi_host_stats_id;
 
 typedef struct {
@@ -4464,6 +4465,25 @@ struct wmi_host_vdev_nac_rssi_event {
 	uint32_t rssi_seq_num;
 };
 
+/**
+ * structure wmi_host_peer_retry_stats - peer retry stats
+ * @peer_macaddr: peer macaddr
+ * @retry_counter_wraparnd_ind: wraparound counter indication
+ * @msdu_success: successfully transmitted msdus
+ * @msdu_retried: Retried msdus
+ * @msdu_mul_retried: msdus retried for more than once
+ * @msdu_failed: msdus failed
+ * @reserved: for furure extensions
+ */
+struct wmi_host_peer_retry_stats {
+	wmi_host_mac_addr peer_macaddr;
+	uint32_t retry_counter_wraparnd_ind;
+	uint32_t msdus_success;
+	uint32_t msdus_retried;
+	uint32_t msdus_mul_retried;
+	uint32_t msdus_failed;
+	uint32_t reserved[4];
+};
 
 /**
  * struct wmi_host_per_chain_rssi_stats - VDEV nac rssi stats
@@ -4888,6 +4908,7 @@ typedef enum {
 	wmi_pdev_param_esp_airtime_fraction,
 	wmi_pdev_param_esp_ppdu_duration,
 	wmi_pdev_param_use_nol,
+	wmi_pdev_param_enable_peer_retry_stats,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
