@@ -226,6 +226,9 @@ struct cdp_pkt_type {
  * @is_tx_badcipher: tx failed 'cuz key type
  * @ampdu_cnt: completion of aggregation
  * @non_ampdu_cnt: tx completion not aggregated
+ * @failed_retry_count: packets failed due to retry above 802.11 retry limit
+ * @retry_count: packets successfully send after one or more retry
+ * @multiple_retry_count: packets successfully sent after more than one retry
  */
 struct cdp_tx_stats {
 	struct cdp_pkt_info comp_pkt;
@@ -299,6 +302,9 @@ struct cdp_tx_stats {
 	/*add for peer and upadted from ppdu*/
 	uint32_t ampdu_cnt;
 	uint32_t non_ampdu_cnt;
+	uint32_t failed_retry_count;
+	uint32_t retry_count;
+	uint32_t multiple_retry_count;
 };
 
 /* struct cdp_rx_stats - rx Level Stats
@@ -1507,6 +1513,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_VIDEO_STATS_FC = 394,
 	OL_ATH_PARAM_VIDEO_DELAY_STATS_FC = 395,
 #endif
+	OL_ATH_PARAM_ENABLE_PEER_RETRY_STATS = 396,
 };
 
 /* Enumeration of PDEV Configuration parameter */

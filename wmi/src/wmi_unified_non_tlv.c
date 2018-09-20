@@ -1533,6 +1533,8 @@ static uint32_t get_stats_id_non_tlv(wmi_host_stats_id host_stats_id)
 		stats_id |= WMI_REQUEST_PEER_EXTD_STAT;
 	if (host_stats_id & WMI_HOST_REQUEST_NAC_RSSI)
 		stats_id |= WMI_REQUEST_NAC_RSSI_STAT;
+	if (host_stats_id & WMI_HOST_REQUEST_PEER_RETRY_STAT)
+		stats_id |= WMI_REQUEST_PEER_RETRY_STAT;
 
 	return stats_id;
 }
@@ -7933,42 +7935,21 @@ static QDF_STATUS extract_all_stats_counts_non_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_stats_event *ev = (wmi_stats_event *) evt_buf;
 	wmi_stats_id stats_id = ev->stats_id;
-	wmi_host_stats_id nac_rssi_ev = 0;
 
-	if (stats_id & WMI_REQUEST_NAC_RSSI_STAT) {
-		nac_rssi_ev = WMI_HOST_REQUEST_NAC_RSSI;
-		stats_id &= ~WMI_REQUEST_NAC_RSSI_STAT;
-	}
-
-	switch (stats_id) {
-	case WMI_REQUEST_PEER_STAT:
+	if (stats_id & WMI_REQUEST_PEER_STAT)
 		stats_param->stats_id |= WMI_HOST_REQUEST_PEER_STAT;
-		break;
-
-	case WMI_REQUEST_AP_STAT:
+	if (stats_id & WMI_REQUEST_AP_STAT)
 		stats_param->stats_id |= WMI_HOST_REQUEST_AP_STAT;
-		break;
-
-	case WMI_REQUEST_INST_STAT:
+	if (stats_id & WMI_REQUEST_INST_STAT)
 		stats_param->stats_id |= WMI_HOST_REQUEST_INST_STAT;
-		break;
-
-	case WMI_REQUEST_PEER_EXTD_STAT:
+	if (stats_id & WMI_REQUEST_PEER_EXTD_STAT)
 		stats_param->stats_id |= WMI_HOST_REQUEST_PEER_EXTD_STAT;
-		break;
-
-	case WMI_REQUEST_VDEV_EXTD_STAT:
+	if (stats_id & WMI_REQUEST_VDEV_EXTD_STAT)
 		stats_param->stats_id |= WMI_HOST_REQUEST_VDEV_EXTD_STAT;
-		break;
-
-	case WMI_REQUEST_PDEV_EXT2_STAT:
-		stats_param->stats_id |= nac_rssi_ev;
-		break;
-	default:
-		stats_param->stats_id = 0;
-		break;
-
-	}
+	if (stats_id & (WMI_REQUEST_PDEV_EXT2_STAT | WMI_REQUEST_NAC_RSSI_STAT))
+		stats_param->stats_id |= WMI_HOST_REQUEST_NAC_RSSI;
+	if (stats_id & WMI_REQUEST_PEER_RETRY_STAT)
+		stats_param->stats_id |= WMI_HOST_REQUEST_PEER_RETRY_STAT;
 
 	stats_param->num_pdev_stats = ev->num_pdev_stats;
 	stats_param->num_pdev_ext_stats = ev->num_pdev_ext_stats;
@@ -8251,6 +8232,69 @@ static QDF_STATUS extract_peer_extd_stats_non_tlv(wmi_unified_t wmi_handle,
 
 			OS_MEMCPY(peer_extd_stats, ev,
 				sizeof(wmi_host_peer_extd_stats));
+		}
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_peer_retry_stats_non_tlv() - extract peer retry stats from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @index: Index into extended peer stats
+ * @peer_retry_stats: Pointer to hold  peer retry stats
+ *
+ * Return: 0 for success or error code
+ */
+#define OFFSET 65535
+static QDF_STATUS extract_peer_retry_stats_non_tlv(wmi_unified_t wmi_handle,
+	void *evt_buf, uint32_t index,
+	struct wmi_host_peer_retry_stats *peer_retry_stats)
+{
+	uint32_t wrap;
+	uint8_t *pdata = ((wmi_stats_event *)evt_buf)->data;
+
+	if (WMI_REQUEST_PEER_RETRY_STAT &
+		((wmi_stats_event *)evt_buf)->stats_id) {
+		if (index < ((wmi_stats_event *)evt_buf)->num_peer_stats) {
+			wmi_peer_retry_stats *ev = (wmi_peer_retry_stats *)
+			((pdata) +
+			((((wmi_stats_event *)evt_buf)->num_pdev_stats) *
+				sizeof(wmi_pdev_stats)) +
+			((((wmi_stats_event *)evt_buf)->num_pdev_ext_stats) *
+				sizeof(wmi_pdev_ext_stats)) +
+			((((wmi_stats_event *)evt_buf)->num_vdev_stats) *
+				sizeof(wmi_vdev_stats)) +
+			((((wmi_stats_event *)evt_buf)->num_peer_stats) *
+				sizeof(wmi_peer_stats)) +
+			((WMI_REQUEST_PEER_EXTD_STAT &
+			((wmi_stats_event *)evt_buf)->stats_id) ?
+			((((wmi_stats_event *)evt_buf)->num_peer_stats) *
+				sizeof(wmi_peer_extd_stats)) : 0) +
+			((WMI_REQUEST_VDEV_EXTD_STAT &
+			((wmi_stats_event *)evt_buf)->stats_id) ?
+			((((wmi_stats_event *)evt_buf)->num_vdev_stats) *
+				sizeof(wmi_vdev_extd_stats)) : 0) +
+			((((wmi_stats_event *)evt_buf)->num_pdev_stats) *
+				(sizeof(wmi_pdev_ext2_stats))) +
+			((WMI_REQUEST_NAC_RSSI_STAT &
+			((wmi_stats_event *)evt_buf)->stats_id) ?
+			((((wmi_stats_event *)evt_buf)->num_pdev_stats) *
+				sizeof(wmi_vdev_nac_rssi_event)) : 0) +
+			(index * sizeof(wmi_peer_retry_stats)));
+
+			OS_MEMCPY(peer_retry_stats, ev,
+				  sizeof(wmi_peer_retry_stats));
+			/*Add offset if wraparound of counter has occurred */
+			wrap = peer_retry_stats->retry_counter_wraparnd_ind;
+			if (IS_MSDU_RETRY_WRAPAROUND(wrap))
+				peer_retry_stats->msdus_retried += OFFSET;
+			if (IS_MSDU_SUCCESS_WRAPAROUND(wrap))
+				peer_retry_stats->msdus_success += OFFSET;
+			if (IS_MSDU_MUL_RETRY_WRAPAROUND(wrap))
+				peer_retry_stats->msdus_mul_retried += OFFSET;
+			if (IS_MSDU_FAIL_WRAPAROUND(wrap))
+				peer_retry_stats->msdus_failed += OFFSET;
 		}
 	}
 	return QDF_STATUS_SUCCESS;
@@ -9034,6 +9078,7 @@ struct wmi_ops non_tlv_ops =  {
 	.extract_peer_stats = extract_peer_stats_non_tlv,
 	.extract_bcnflt_stats = extract_bcnflt_stats_non_tlv,
 	.extract_peer_extd_stats = extract_peer_extd_stats_non_tlv,
+	.extract_peer_retry_stats = extract_peer_retry_stats_non_tlv,
 	.extract_chan_stats = extract_chan_stats_non_tlv,
 	.extract_thermal_stats = extract_thermal_stats_non_tlv,
 	.extract_thermal_level_stats = extract_thermal_level_stats_non_tlv,
@@ -9632,6 +9677,8 @@ static void populate_pdev_param_non_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_tx_chain_mask_1ss] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_antenna_gain_half_db] =
 		WMI_PDEV_PARAM_ANTENNA_GAIN_HALF_DB;
+	pdev_param[wmi_pdev_param_enable_peer_retry_stats] =
+		WMI_PDEV_PARAM_ENABLE_PEER_RETRY_STATS;
 }
 
 /**
