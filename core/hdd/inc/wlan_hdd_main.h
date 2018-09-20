@@ -2150,6 +2150,20 @@ struct hdd_adapter *hdd_get_adapter_by_vdev(struct hdd_context *hdd_ctx,
 struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
 					  tSirMacAddr macAddr);
 
+/*
+ * hdd_get_adapter_by_rand_macaddr() - find Random mac adapter
+ * @hdd_ctx: hdd context
+ * @mac_addr: random mac addr
+ *
+ * Find the Adapter based on random mac addr. Adapter's vdev
+ * have active random mac list.
+ *
+ * Return: adapter ptr or null
+ */
+struct hdd_adapter *
+hdd_get_adapter_by_rand_macaddr(struct hdd_context *hdd_ctx,
+				tSirMacAddr mac_addr);
+
 int hdd_vdev_create(struct hdd_adapter *adapter,
 		    csr_roam_complete_cb callback, void *ctx);
 int hdd_vdev_destroy(struct hdd_adapter *adapter);

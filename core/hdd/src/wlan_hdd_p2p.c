@@ -902,6 +902,7 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 	uint8_t type = 0;
 	uint8_t subType = 0;
 	struct hdd_context *hdd_ctx;
+	uint8_t *dest_addr;
 
 	hdd_debug("Frame Type = %d Frame Length = %d",
 		frameType, frm_len);
@@ -930,10 +931,11 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 	    (subType != SIR_MAC_MGMT_PROBE_REQ) &&
 	    !qdf_is_macaddr_broadcast(
 	     (struct qdf_mac_addr *)&pb_frames[WLAN_HDD_80211_FRM_DA_OFFSET])) {
-		adapter =
-			hdd_get_adapter_by_macaddr(hdd_ctx,
-						   &pb_frames
-						   [WLAN_HDD_80211_FRM_DA_OFFSET]);
+		dest_addr = &pb_frames[WLAN_HDD_80211_FRM_DA_OFFSET];
+		adapter = hdd_get_adapter_by_macaddr(hdd_ctx, dest_addr);
+		if (!adapter)
+			adapter = hdd_get_adapter_by_rand_macaddr(hdd_ctx,
+								  dest_addr);
 		if (NULL == adapter) {
 			/*
 			 * Under assumtion that we don't receive any action
@@ -941,19 +943,16 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 			 * we are dropping action frame
 			 */
 			hdd_err("adapter for action frame is NULL Macaddr = "
-				  MAC_ADDRESS_STR,
-				  MAC_ADDR_ARRAY(&pb_frames
-						 [WLAN_HDD_80211_FRM_DA_OFFSET]));
+				MAC_ADDRESS_STR, MAC_ADDR_ARRAY(dest_addr));
 			hdd_debug("Frame Type = %d Frame Length = %d subType = %d",
-				frameType, frm_len, subType);
+				  frameType, frm_len, subType);
 			/*
 			 * We will receive broadcast management frames
 			 * in OCB mode
 			 */
 			adapter = hdd_get_adapter(hdd_ctx, QDF_OCB_MODE);
 			if (NULL == adapter || !qdf_is_macaddr_broadcast(
-				(struct qdf_mac_addr *)&pb_frames
-				[WLAN_HDD_80211_FRM_DA_OFFSET])) {
+			    (struct qdf_mac_addr *)dest_addr)) {
 				/*
 				 * Under assumtion that we don't
 				 * receive any action frame with BCST

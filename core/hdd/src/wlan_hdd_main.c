@@ -155,6 +155,8 @@
 #include "wlan_ocb_ucfg_api.h"
 #include <wlan_hdd_spectralscan.h>
 #include "wlan_green_ap_ucfg_api.h"
+#include <wlan_p2p_ucfg_api.h>
+
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
 #else
@@ -6292,6 +6294,23 @@ QDF_STATUS hdd_add_adapter_front(struct hdd_context *hdd_ctx,
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
 
 	return status;
+}
+
+struct hdd_adapter *hdd_get_adapter_by_rand_macaddr(
+	struct hdd_context *hdd_ctx, tSirMacAddr mac_addr)
+{
+	struct hdd_adapter *adapter;
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if ((adapter->device_mode == QDF_STA_MODE ||
+		     adapter->device_mode == QDF_P2P_CLIENT_MODE ||
+		     adapter->device_mode == QDF_P2P_DEVICE_MODE) &&
+		    ucfg_p2p_check_random_mac(hdd_ctx->psoc,
+					      adapter->session_id, mac_addr))
+			return adapter;
+	}
+
+	return NULL;
 }
 
 struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
