@@ -101,7 +101,7 @@ void wcd_disable_irq(struct wcd_irq_info *irq_info, int irq)
 	if (!irq_info)
 		pr_err("%s: Null IRQ handle\n", __func__);
 	else
-		disable_irq(wcd_map_irq(irq_info, irq));
+		disable_irq_nosync(wcd_map_irq(irq_info, irq));
 }
 EXPORT_SYMBOL(wcd_disable_irq);
 
