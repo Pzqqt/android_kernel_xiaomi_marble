@@ -201,17 +201,17 @@ static int audio_aio_pause(struct q6audio_aio  *audio)
 	if (audio->enabled) {
 		rc = q6asm_cmd(audio->ac, CMD_PAUSE);
 		if (rc < 0)
-			pr_err("%s[%pK]: pause cmd failed rc=%d\n",
+			pr_err_ratelimited("%s[%pK]: pause cmd failed rc=%d\n",
 				__func__, audio, rc);
 
 		if (rc == 0) {
 			/* Send suspend only if pause was successful */
 			rc = q6asm_cmd(audio->ac, CMD_SUSPEND);
 			if (rc < 0)
-				pr_err("%s[%pK]: suspend cmd failed rc=%d\n",
+				pr_err_ratelimited("%s[%pK]: suspend cmd failed rc=%d\n",
 					__func__, audio, rc);
 		} else
-			pr_err("%s[%pK]: not sending suspend since pause failed\n",
+			pr_err_ratelimited("%s[%pK]: not sending suspend since pause failed\n",
 				__func__, audio);
 
 	} else
@@ -230,7 +230,7 @@ static int audio_aio_flush(struct q6audio_aio  *audio)
 		if (!(audio->drv_status & ADRV_STATUS_PAUSE)) {
 			rc = audio_aio_pause(audio);
 			if (rc < 0)
-				pr_err("%s[%pK}: pause cmd failed rc=%d\n",
+				pr_err_ratelimited("%s[%pK}: pause cmd failed rc=%d\n",
 					__func__, audio,
 					rc);
 			else
@@ -238,13 +238,13 @@ static int audio_aio_flush(struct q6audio_aio  *audio)
 		}
 		rc = q6asm_cmd(audio->ac, CMD_FLUSH);
 		if (rc < 0)
-			pr_err("%s[%pK]: flush cmd failed rc=%d\n",
+			pr_err_ratelimited("%s[%pK]: flush cmd failed rc=%d\n",
 				__func__, audio, rc);
 		/* Not in stop state, reenable the stream */
 		if (audio->stopped == 0) {
 			rc = audio_aio_enable(audio);
 			if (rc)
-				pr_err("%s[%pK]:audio re-enable failed\n",
+				pr_err_ratelimited("%s[%pK]:audio re-enable failed\n",
 					__func__, audio);
 			else {
 				audio->enabled = 1;
@@ -268,7 +268,7 @@ static int audio_aio_outport_flush(struct q6audio_aio *audio)
 
 	rc = q6asm_cmd(audio->ac, CMD_OUT_FLUSH);
 	if (rc < 0)
-		pr_err("%s[%pK}: output port flush cmd failed rc=%d\n",
+		pr_err_ratelimited("%s[%pK}: output port flush cmd failed rc=%d\n",
 			__func__, audio, rc);
 	return rc;
 }
@@ -402,7 +402,7 @@ int audio_aio_disable(struct q6audio_aio *audio)
 		/* Close the session */
 		rc = q6asm_cmd(audio->ac, CMD_CLOSE);
 		if (rc < 0)
-			pr_err("%s[%pK]:Failed to close the session rc=%d\n",
+			pr_err_ratelimited("%s[%pK]:Failed to close the session rc=%d\n",
 				__func__, audio, rc);
 		audio->stopped = 1;
 		wake_up(&audio->write_wait);
@@ -676,7 +676,7 @@ int audio_aio_fsync(struct file *file, loff_t start, loff_t end, int datasync)
 	pr_debug("%s[%pK]: EOS cmd sent to DSP\n", __func__, audio);
 
 	if (rc < 0)
-		pr_err("%s[%pK]: q6asm_cmd failed, rc = %d",
+		pr_err_ratelimited("%s[%pK]: q6asm_cmd failed, rc = %d",
 			__func__, audio, rc);
 
 	pr_debug("%s[%pK]: wait for RENDERED_EOS from DSP\n"
@@ -1409,7 +1409,7 @@ static long audio_aio_shared_ioctl(struct file *file, unsigned int cmd,
 		mutex_lock(&audio->read_lock);
 		rc = audio_aio_outport_flush(audio);
 		if (rc < 0) {
-			pr_err("%s[%pK]: AUDIO_OUTPORT_FLUSH failed\n",
+			pr_err_ratelimited("%s[%pK]: AUDIO_OUTPORT_FLUSH failed\n",
 				__func__, audio);
 			rc = -EINTR;
 		}
@@ -1423,7 +1423,7 @@ static long audio_aio_shared_ioctl(struct file *file, unsigned int cmd,
 		audio->stopped = 1;
 		rc = audio_aio_flush(audio);
 		if (rc < 0) {
-			pr_err("%s[%pK]:Audio Stop procedure failed rc=%d\n",
+			pr_err_ratelimited("%s[%pK]:Audio Stop procedure failed rc=%d\n",
 				__func__, audio, rc);
 			mutex_unlock(&audio->lock);
 			break;
@@ -1444,7 +1444,7 @@ static long audio_aio_shared_ioctl(struct file *file, unsigned int cmd,
 		if (arg == 1) {
 			rc = audio_aio_pause(audio);
 			if (rc < 0) {
-				pr_err("%s[%pK]: pause FAILED rc=%d\n",
+				pr_err_ratelimited("%s[%pK]: pause FAILED rc=%d\n",
 					__func__, audio, rc);
 				mutex_unlock(&audio->lock);
 				break;
@@ -1454,7 +1454,7 @@ static long audio_aio_shared_ioctl(struct file *file, unsigned int cmd,
 			if (audio->drv_status & ADRV_STATUS_PAUSE) {
 				rc = audio_aio_enable(audio);
 				if (rc)
-					pr_err("%s[%pK]: audio enable failed\n",
+					pr_err_ratelimited("%s[%pK]: audio enable failed\n",
 					__func__, audio);
 				else {
 					audio->drv_status &= ~ADRV_STATUS_PAUSE;
@@ -1481,7 +1481,7 @@ static long audio_aio_shared_ioctl(struct file *file, unsigned int cmd,
 		/* Flush input / Output buffer in software*/
 		audio_aio_ioport_reset(audio);
 		if (rc < 0) {
-			pr_err("%s[%pK]:AUDIO_FLUSH interrupted\n",
+			pr_err_ratelimited("%s[%pK]:AUDIO_FLUSH interrupted\n",
 				__func__, audio);
 			rc = -EINTR;
 		} else {
@@ -1501,7 +1501,7 @@ static long audio_aio_shared_ioctl(struct file *file, unsigned int cmd,
 		mutex_lock(&audio->lock);
 		if (copy_to_user((void *)arg, &audio->ac->session,
 			sizeof(u16))) {
-			pr_err("%s: copy_to_user for AUDIO_GET_SESSION_ID failed\n",
+			pr_err_ratelimited("%s: copy_to_user for AUDIO_GET_SESSION_ID failed\n",
 				__func__);
 			rc = -EFAULT;
 		}
@@ -1511,7 +1511,7 @@ static long audio_aio_shared_ioctl(struct file *file, unsigned int cmd,
 	case AUDIO_PM_AWAKE: {
 		if ((audio->audio_ws_mgr ==  NULL) ||
 				(audio->miscdevice == NULL)) {
-			pr_err("%s[%pK]: invalid ws_mgr or miscdevice",
+			pr_err_ratelimited("%s[%pK]: invalid ws_mgr or miscdevice",
 					__func__, audio);
 			rc = -EACCES;
 			break;
@@ -1531,7 +1531,7 @@ static long audio_aio_shared_ioctl(struct file *file, unsigned int cmd,
 	case AUDIO_PM_RELAX: {
 		if ((audio->audio_ws_mgr ==  NULL) ||
 				(audio->miscdevice == NULL)) {
-			pr_err("%s[%pK]: invalid ws_mgr or miscdevice",
+			pr_err_ratelimited("%s[%pK]: invalid ws_mgr or miscdevice",
 					__func__, audio);
 			rc = -EACCES;
 			break;
