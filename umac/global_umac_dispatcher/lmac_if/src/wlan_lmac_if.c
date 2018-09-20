@@ -298,12 +298,16 @@ static void wlan_lmac_if_umac_rx_ops_register_p2p(
 {
 	rx_ops->p2p.lo_ev_handler = tgt_p2p_lo_event_cb;
 	rx_ops->p2p.noa_ev_handler = tgt_p2p_noa_event_cb;
+	rx_ops->p2p.add_mac_addr_filter_evt_handler =
+		tgt_p2p_add_mac_addr_status_event_cb;
 }
 #else
 static void wlan_lmac_if_umac_rx_ops_register_p2p(
 				struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	rx_ops->p2p.noa_ev_handler = tgt_p2p_noa_event_cb;
+	rx_ops->p2p.add_mac_addr_filter_evt_handler =
+		tgt_p2p_add_mac_addr_status_event_cb;
 }
 #endif
 #else

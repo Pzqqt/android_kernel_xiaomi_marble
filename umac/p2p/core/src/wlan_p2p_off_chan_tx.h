@@ -59,6 +59,8 @@
 #define P2P_GET_TYPE_FRM_FC(__fc__)         (((__fc__) & 0x0F) >> 2)
 #define P2P_GET_SUBTYPE_FRM_FC(__fc__)      (((__fc__) & 0xF0) >> 4)
 
+#define WLAN_WAIT_TIME_SET_RND 100
+
 struct p2p_soc_priv_obj;
 struct cancel_roc_context;
 struct p2p_tx_conf_event;
@@ -172,11 +174,53 @@ struct tx_action_context {
 	bool off_chan;
 	bool no_cck;
 	bool no_ack;
+	bool rand_mac_tx;
 	uint32_t duration;
 	qdf_mc_timer_t tx_timer;
 	struct p2p_frame_info frame_info;
 	qdf_nbuf_t nbuf;
 };
+
+/**
+ * p2p_rand_mac_tx_done() - process random mac mgmt tx done
+ * @soc: soc
+ * @tx_ctx: tx context
+ *
+ * This function will remove the random mac addr filter reference.
+ *
+ * Return: void
+ */
+void
+p2p_rand_mac_tx_done(struct wlan_objmgr_psoc *soc,
+		     struct tx_action_context *tx_ctx);
+
+/**
+ * p2p_clear_mac_filter() - send clear mac addr filter cmd
+ * @soc: soc
+ * @vdev_id: vdev id
+ * @mac: mac addr
+ * @freq: freq
+ *
+ * This function send clear random mac addr filter command to p2p component
+ * msg core
+ *
+ * Return: QDF_STATUS_SUCCESS - if sent successfully.
+ *         otherwise: failed.
+ */
+QDF_STATUS
+p2p_clear_mac_filter(struct wlan_objmgr_psoc *soc, uint32_t vdev_id,
+		     uint8_t *mac, uint32_t freq);
+
+/**
+ * p2p_is_vdev_support_rand_mac() - check vdev type support random mac mgmt
+ *    tx or not
+ * @vdev: vdev object
+ *
+ * Return: true: support random mac mgmt tx
+ *         false: not support random mac mgmt tx.
+ */
+bool
+p2p_is_vdev_support_rand_mac(struct wlan_objmgr_vdev *vdev);
 
 /**
  * p2p_dump_tx_queue() - dump tx queue
@@ -284,5 +328,112 @@ QDF_STATUS p2p_process_rx_mgmt(
  */
 struct tx_action_context *p2p_find_tx_ctx_by_nbuf(
 	struct p2p_soc_priv_obj *p2p_soc_obj, void *nbuf);
+
+#define P2P_80211_FRM_SA_OFFSET 10
+
+/**
+ * p2p_del_random_mac() - del mac fitler from given vdev rand mac list
+ * @soc: soc object
+ * @vdev_id: vdev id
+ * @rnd_cookie: random mac mgmt tx cookie
+ * @duration: timeout value to flush the addr in target.
+ *
+ * This function will del the mac addr filter from vdev random mac addr list.
+ * If there is no reference to mac addr, it will set a clear timer to flush it
+ * in target finally.
+ *
+ * Return: QDF_STATUS_SUCCESS - del successfully.
+ *             other : failed to del the mac address entry.
+ */
+QDF_STATUS
+p2p_del_random_mac(struct wlan_objmgr_psoc *soc, uint32_t vdev_id,
+		   uint64_t rnd_cookie, uint32_t duration);
+
+/**
+ * p2p_check_random_mac() - check random mac addr or not
+ * @soc: soc context
+ * @vdev_id: vdev id
+ * @random_mac_addr: mac addr to be checked
+ *
+ * This function check the input addr is random mac addr or not for vdev.
+ *
+ * Return: true if addr is random mac address else false.
+ */
+bool p2p_check_random_mac(struct wlan_objmgr_psoc *soc, uint32_t vdev_id,
+			  uint8_t *random_mac_addr);
+
+/**
+ * p2p_process_set_rand_mac() - process the set random mac command
+ * @set_filter_req: request data
+ *
+ * This function will process the set mac addr filter command.
+ *
+ * Return: QDF_STATUS_SUCCESS: if process successfully
+ *             other: failed.
+ */
+QDF_STATUS p2p_process_set_rand_mac(
+		struct p2p_set_mac_filter_req *set_filter_req);
+
+/**
+ * p2p_process_set_rand_mac_rsp() - process the set random mac response
+ * @resp: response date
+ *
+ * This function will process the set mac addr filter event.
+ *
+ * Return: QDF_STATUS_SUCCESS: if process successfully
+ *             other: failed.
+ */
+QDF_STATUS p2p_process_set_rand_mac_rsp(struct p2p_mac_filter_rsp *resp);
+
+/**
+ * p2p_del_all_rand_mac_vdev() - del all random mac filter in vdev
+ * @vdev: vdev object
+ *
+ * This function will del all random mac filter in vdev
+ *
+ * Return: void
+ */
+void p2p_del_all_rand_mac_vdev(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * p2p_del_all_rand_mac_soc() - del all random mac filter in soc
+ * @soc: soc object
+ *
+ * This function will del all random mac filter in all vdev of soc
+ *
+ * Return: void
+ */
+void p2p_del_all_rand_mac_soc(struct wlan_objmgr_psoc *soc);
+
+/**
+ * p2p_rand_mac_tx() - handle random mac mgmt tx
+ * @tx_action: tx action context
+ *
+ * This function will check whether need to set random mac tx filter for a
+ * given mgmt tx request and do the mac addr filter process as needed.
+ *
+ * Return: void
+ */
+void p2p_rand_mac_tx(struct  tx_action_context *tx_action);
+
+/**
+ * p2p_init_random_mac_vdev() - Init random mac data for vdev
+ * @p2p_vdev_obj: p2p vdev private object
+ *
+ * This function will init the per vdev random mac data structure.
+ *
+ * Return: void
+ */
+void p2p_init_random_mac_vdev(struct p2p_vdev_priv_obj *p2p_vdev_obj);
+
+/**
+ * p2p_deinit_random_mac_vdev() - Init random mac data for vdev
+ * @p2p_vdev_obj: p2p vdev private object
+ *
+ * This function will deinit the per vdev random mac data structure.
+ *
+ * Return: void
+ */
+void p2p_deinit_random_mac_vdev(struct p2p_vdev_priv_obj *p2p_vdev_obj);
 
 #endif /* _WLAN_P2P_OFF_CHAN_TX_H_ */

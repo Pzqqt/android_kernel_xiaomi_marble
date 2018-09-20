@@ -56,6 +56,29 @@ QDF_STATUS wmi_extract_p2p_noa_ev_param(void *wmi_hdl,
 					void *evt_buf,
 					struct p2p_noa_info *param);
 
+/**
+ * wmi_send_set_mac_addr_rx_filter_cmd() - set mac addr rx filter cmd
+ * @wmi_hdl: wmi handle
+ * @param: Pointer to set mac filter struct
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_send_set_mac_addr_rx_filter_cmd(void *wmi_hdl,
+				    struct p2p_set_mac_filter *param);
+
+/**
+ * wmi_extract_mac_addr_rx_filter_evt_param() - extract mac addr rx filter evt
+ * @wmi_hdl: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @param: Pointer to extracted evt info
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_extract_mac_addr_rx_filter_evt_param(void *wmi_hdl, void *evt_buf,
+					 struct p2p_set_mac_filter_evt *param);
+
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * wmi_unified_p2p_lo_start_cmd() - send p2p lo start request to fw

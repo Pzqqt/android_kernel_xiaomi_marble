@@ -368,6 +368,87 @@ QDF_STATUS target_if_p2p_set_noa(struct wlan_objmgr_psoc *psoc,
 	return wmi_unified_vdev_set_param_send(wmi_handle, &param);
 }
 
+static int target_p2p_mac_rx_filter_event_handler(ol_scn_t scn, uint8_t *data,
+						  uint32_t datalen)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
+	struct p2p_set_mac_filter_evt event_info;
+	struct wlan_lmac_if_p2p_rx_ops *p2p_rx_ops;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (!scn || !data) {
+		target_if_err("scn: 0x%pK, data: 0x%pK", scn, data);
+		return -EINVAL;
+	}
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("null psoc");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("null wmi handle");
+		return -EINVAL;
+	}
+
+	if (wmi_extract_mac_addr_rx_filter_evt_param(wmi_handle, data,
+						     &event_info)) {
+		target_if_err("failed to extract wmi p2p noa event");
+		return -EINVAL;
+	}
+	target_if_debug("vdev_id %d status %d", event_info.vdev_id,
+			event_info.status);
+	p2p_rx_ops = target_if_psoc_get_p2p_rx_ops(psoc);
+	if (p2p_rx_ops && p2p_rx_ops->add_mac_addr_filter_evt_handler)
+		status = p2p_rx_ops->add_mac_addr_filter_evt_handler(
+					psoc, &event_info);
+	else
+		target_if_debug("no add mac addr filter event handler");
+
+	return qdf_status_to_os_return(status);
+}
+
+static QDF_STATUS target_if_p2p_register_macaddr_rx_filter_evt_handler(
+		struct wlan_objmgr_psoc *psoc, bool reg)
+{
+	int status;
+	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
+
+	target_if_debug("psoc:%pK, register %d mac addr rx evt", psoc, reg);
+
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+	if (reg)
+		status = wmi_unified_register_event(
+				wmi_handle,
+				wmi_vdev_add_macaddr_rx_filter_event_id,
+				target_p2p_mac_rx_filter_event_handler);
+	else
+		status = wmi_unified_unregister_event(
+				wmi_handle,
+				wmi_vdev_add_macaddr_rx_filter_event_id);
+
+	return status == 0 ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+}
+
+static QDF_STATUS target_if_p2p_set_mac_addr_rx_filter_cmd(
+	struct wlan_objmgr_psoc *psoc, struct p2p_set_mac_filter *param)
+{
+	wmi_unified_t wmi_handle = lmac_get_wmi_unified_hdl(psoc);
+
+	if (!wmi_handle) {
+		target_if_err("Invalid wmi handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_send_set_mac_addr_rx_filter_cmd(wmi_handle, param);
+}
+
 void target_if_p2p_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	struct wlan_lmac_if_p2p_tx_ops *p2p_tx_ops;
@@ -384,6 +465,10 @@ void target_if_p2p_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 			target_if_p2p_register_noa_event_handler;
 	p2p_tx_ops->unreg_noa_ev_handler =
 			target_if_p2p_unregister_noa_event_handler;
+	p2p_tx_ops->reg_mac_addr_rx_filter_handler =
+		target_if_p2p_register_macaddr_rx_filter_evt_handler;
+	p2p_tx_ops->set_mac_addr_rx_filter_cmd =
+		target_if_p2p_set_mac_addr_rx_filter_cmd;
 	/* register P2P listen offload callbacks */
 	target_if_p2p_lo_register_tx_ops(p2p_tx_ops);
 }

@@ -201,6 +201,7 @@ struct wlan_lmac_if_scan_rx_ops {
 /* forward declarations for p2p tx ops */
 struct p2p_ps_config;
 struct p2p_lo_start;
+struct p2p_set_mac_filter;
 
 /**
  * struct wlan_lmac_if_p2p_tx_ops - structure of tx function pointers
@@ -213,6 +214,9 @@ struct p2p_lo_start;
  * @reg_noa_ev_handler:  function pointer to register noa event handler
  * @unreg_lo_ev_handler: function pointer to unregister lo event handler
  * @unreg_noa_ev_handler:function pointer to unregister noa event handler
+ * @reg_mac_addr_rx_filter_handler: function pointer to register/unregister
+ *    set mac addr status event callback.
+ * @set_mac_addr_rx_filter_cmd: function pointer to set mac addr rx filter
  */
 struct wlan_lmac_if_p2p_tx_ops {
 	QDF_STATUS (*set_ps)(struct wlan_objmgr_psoc *psoc,
@@ -233,6 +237,11 @@ struct wlan_lmac_if_p2p_tx_ops {
 					 void *arg);
 	QDF_STATUS (*unreg_noa_ev_handler)(struct wlan_objmgr_psoc *psoc,
 			void *arg);
+	QDF_STATUS (*reg_mac_addr_rx_filter_handler)(
+			struct wlan_objmgr_psoc *psoc, bool reg);
+	QDF_STATUS (*set_mac_addr_rx_filter_cmd)(
+			struct wlan_objmgr_psoc *psoc,
+			struct p2p_set_mac_filter *param);
 };
 #endif
 
@@ -829,12 +838,15 @@ struct wlan_lmac_if_reg_rx_ops {
 /* forward declarations for p2p rx ops */
 struct p2p_noa_info;
 struct p2p_lo_event;
+struct p2p_set_mac_filter_evt;
 
 /**
  * struct wlan_lmac_if_p2p_rx_ops - structure of rx function pointers
  * for P2P component
  * @lo_ev_handler:    function pointer to give listen offload event
  * @noa_ev_handler:   function pointer to give noa event
+ * @add_mac_addr_filter_evt_handler: function pointer to process add mac addr
+ *    rx filter event
  */
 struct wlan_lmac_if_p2p_rx_ops {
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD
@@ -843,6 +855,10 @@ struct wlan_lmac_if_p2p_rx_ops {
 #endif
 	QDF_STATUS (*noa_ev_handler)(struct wlan_objmgr_psoc *psoc,
 		struct p2p_noa_info *event_info);
+	QDF_STATUS (*add_mac_addr_filter_evt_handler)(
+		struct wlan_objmgr_psoc *psoc,
+		struct p2p_set_mac_filter_evt *event_info);
+
 };
 #endif
 

@@ -34,6 +34,7 @@
 #define P2P_NOA_ATTR_IND 0x1090
 #define P2P_MODULE_NAME  "P2P"
 #define P2P_INVALID_VDEV_ID 0xFFFFFFFF
+#define MAX_RANDOM_MAC_ADDRS 4
 
 #define p2p_debug(params ...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_P2P, params)
@@ -73,6 +74,7 @@ struct tx_action_context;
  * @P2P_MGMT_TX_CANCEL:     Cancel tx action frame request
  * @P2P_CLEANUP_ROC:        Cleanup roc queue
  * @P2P_CLEANUP_TX:         Cleanup tx mgmt queue
+ * @P2P_SET_RANDOM_MAC: Set Random MAC addr filter request
  */
 enum p2p_cmd_type {
 	P2P_ROC_REQ = 0,
@@ -81,6 +83,7 @@ enum p2p_cmd_type {
 	P2P_MGMT_TX_CANCEL,
 	P2P_CLEANUP_ROC,
 	P2P_CLEANUP_TX,
+	P2P_SET_RANDOM_MAC,
 };
 
 /**
@@ -90,6 +93,7 @@ enum p2p_cmd_type {
  * @P2P_EVENT_RX_MGMT:           P2P rx mgmt frame
  * @P2P_EVENT_LO_STOPPED:        P2P listen offload stopped event
  * @P2P_EVENT_NOA:               P2P noa event
+ * @P2P_EVENT_ADD_MAC_RSP: Set Random MAC addr event
  */
 enum p2p_event_type {
 	P2P_EVENT_SCAN_EVENT = 0,
@@ -97,6 +101,7 @@ enum p2p_event_type {
 	P2P_EVENT_RX_MGMT,
 	P2P_EVENT_LO_STOPPED,
 	P2P_EVENT_NOA,
+	P2P_EVENT_ADD_MAC_RSP,
 };
 
 /**
@@ -139,6 +144,18 @@ struct p2p_lo_stop_event {
 struct p2p_noa_event {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct p2p_noa_info *noa_info;
+};
+
+/**
+ * struct p2p_mac_filter_rsp - p2p set mac filter respone
+ * @p2p_soc_obj: p2p soc private object
+ * @vdev_id: vdev id
+ * @status: successfully(1) or not (0)
+ */
+struct p2p_mac_filter_rsp {
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	uint32_t vdev_id;
+	uint32_t status;
 };
 
 #ifdef WLAN_FEATURE_P2P_DEBUG
@@ -225,17 +242,91 @@ struct p2p_soc_priv_obj {
 };
 
 /**
+ * struct action_frame_cookie - Action frame cookie item in cookie list
+ * @cookie_node: qdf_list_node
+ * @cookie: Cookie value
+ */
+struct action_frame_cookie {
+	qdf_list_node_t cookie_node;
+	uint64_t cookie;
+};
+
+/**
+ * struct action_frame_random_mac - Action Frame random mac addr &
+ * related attrs
+ * @p2p_vdev_obj: p2p vdev private obj ptr
+ * @in_use: Checks whether random mac is in use
+ * @addr: Contains random mac addr
+ * @freq: Channel frequency
+ * @clear_timer: timer to clear random mac filter
+ * @cookie_list: List of cookies tied with random mac
+ */
+struct action_frame_random_mac {
+	struct p2p_vdev_priv_obj *p2p_vdev_obj;
+	bool in_use;
+	uint8_t addr[QDF_MAC_ADDR_SIZE];
+	uint32_t freq;
+	qdf_mc_timer_t clear_timer;
+	qdf_list_t cookie_list;
+};
+
+/**
+ * p2p_request_mgr_callback_t() - callback to process set mac filter result
+ * @result: bool
+ * @context: callback context.
+ *
+ * Return: void
+ */
+typedef void (*p2p_request_mgr_callback_t)(bool result, void *context);
+
+/**
+ * struct random_mac_priv - request private data struct
+ * @result: result of request.
+ */
+struct random_mac_priv {
+	bool result;
+};
+
+/**
+ * struct p2p_set_mac_filter_req - set mac addr filter cmd data structure
+ * @soc: soc object
+ * @vdev_id: vdev id
+ * @mac: mac address to be set
+ * @freq: frequency
+ * @set: set or clear
+ * @cb: callback func to be called when the request completion
+ * @req_cookie: cookie to be used when request completed
+ */
+struct p2p_set_mac_filter_req {
+	struct wlan_objmgr_psoc *soc;
+	uint32_t vdev_id;
+	uint8_t mac[QDF_MAC_ADDR_SIZE];
+	uint32_t freq;
+	bool set;
+	p2p_request_mgr_callback_t cb;
+	void *req_cookie;
+};
+
+/**
  * struct p2p_vdev_priv_obj - Per vdev p2p private object
  * @vdev:               Pointer to vdev context
  * @noa_info:           NoA information
  * @noa_status:         NoA status i.e. Enabled / Disabled (TRUE/FALSE)
  * @non_p2p_peer_count: Number of legacy stations connected to this GO
+ * @random_mac_lock:    lock for random_mac list
+ * @random_mac:         active random mac filter lists
+ * @pending_req:        pending set mac filter request.
  */
 struct p2p_vdev_priv_obj {
 	struct   wlan_objmgr_vdev *vdev;
 	struct   p2p_noa_info *noa_info;
 	bool     noa_status;
 	uint16_t non_p2p_peer_count;
+
+	/* random address management for management action frames */
+	qdf_spinlock_t random_mac_lock;
+	struct action_frame_random_mac random_mac[MAX_RANDOM_MAC_ADDRS];
+	struct p2p_set_mac_filter_req pending_req;
 };
 
 /**

@@ -257,6 +257,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 /**
  * ucfg_p2p_mgmt_tx_cancel() - Cancel mgmt frame tx request
  * @soc: soc context
+ * @vdev: vdev object
  * @cookie: Find out the mgmt tx request by cookie
  *
  * This function delivers cancel mgmt frame tx request request to P2P
@@ -265,7 +266,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS ucfg_p2p_mgmt_tx_cancel(struct wlan_objmgr_psoc *soc,
-	uint64_t cookie);
+	struct wlan_objmgr_vdev *vdev, uint64_t cookie);
 
 /**
  * ucfg_p2p_set_ps() - P2P set power save
@@ -330,6 +331,19 @@ void p2p_peer_authorized(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr);
  */
 QDF_STATUS ucfg_p2p_set_noa(struct wlan_objmgr_psoc *soc,
 	uint32_t vdev_id, bool disable_noa);
+
+/**
+ * ucfg_p2p_check_random_mac() - check random mac addr or not
+ * @soc: soc context
+ * @vdev_id: vdev id
+ * @random_mac_addr: mac addr to be checked
+ *
+ * This function check the input addr is random mac addr or not for vdev.
+ *
+ * Return: true if addr is random mac address else false.
+ */
+bool ucfg_p2p_check_random_mac(struct wlan_objmgr_psoc *soc, uint32_t vdev_id,
+			       uint8_t *random_mac_addr);
 
 /**
  * ucfg_p2p_register_callbacks() - register p2p callbacks
