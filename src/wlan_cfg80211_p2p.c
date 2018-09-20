@@ -495,5 +495,5 @@ int wlan_cfg80211_mgmt_tx_cancel(struct wlan_objmgr_vdev *vdev,
 	}
 
 	return qdf_status_to_os_return(
-		ucfg_p2p_mgmt_tx_cancel(psoc, cookie));
+		ucfg_p2p_mgmt_tx_cancel(psoc, vdev, cookie));
 }
