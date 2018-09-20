@@ -248,35 +248,47 @@ static int swrm_ahb_write(struct swr_mstr_ctrl *swrm,
 					u16 reg, u32 *value)
 {
 	u32 temp = (u32)(*value);
-	int ret;
+	int ret = 0;
+
+	mutex_lock(&swrm->devlock);
+	if (!swrm->dev_up)
+		goto err;
 
 	ret = swrm_clk_request(swrm, TRUE);
-
-	if (ret)
-		return -EINVAL;
-
+	if (ret) {
+		dev_err_ratelimited(swrm->dev, "%s: clock request failed\n",
+				    __func__);
+		goto err;
+	}
 	iowrite32(temp, swrm->swrm_dig_base + reg);
-
 	swrm_clk_request(swrm, FALSE);
-
-	return 0;
+err:
+	mutex_unlock(&swrm->devlock);
+	return ret;
 }
 
 static int swrm_ahb_read(struct swr_mstr_ctrl *swrm,
 					u16 reg, u32 *value)
 {
 	u32 temp = 0;
-	int ret;
+	int ret = 0;
+
+	mutex_lock(&swrm->devlock);
+	if (!swrm->dev_up)
+		goto err;
 
 	ret = swrm_clk_request(swrm, TRUE);
-
-	if (ret)
-		return -EINVAL;
-
+	if (ret) {
+		dev_err_ratelimited(swrm->dev, "%s: clock request failed\n",
+				    __func__);
+		goto err;
+	}
 	temp = ioread32(swrm->swrm_dig_base + reg);
 	*value = temp;
 	swrm_clk_request(swrm, FALSE);
-	return 0;
+err:
+	mutex_unlock(&swrm->devlock);
+	return ret;
 }
 
 static u32 swr_master_read(struct swr_mstr_ctrl *swrm, unsigned int reg_addr)
@@ -501,6 +513,13 @@ static int swrm_read(struct swr_master *master, u8 dev_num, u16 reg_addr,
 		dev_err(&master->dev, "%s: swrm is NULL\n", __func__);
 		return -EINVAL;
 	}
+	mutex_lock(&swrm->devlock);
+	if (!swrm->dev_up) {
+		mutex_unlock(&swrm->devlock);
+		return 0;
+	}
+	mutex_unlock(&swrm->devlock);
+
 	pm_runtime_get_sync(swrm->dev);
 	if (dev_num)
 		ret = swrm_cmd_fifo_rd_cmd(swrm, &val, dev_num, 0, reg_addr,
@@ -527,6 +546,12 @@ static int swrm_write(struct swr_master *master, u8 dev_num, u16 reg_addr,
 		dev_err(&master->dev, "%s: swrm is NULL\n", __func__);
 		return -EINVAL;
 	}
+	mutex_lock(&swrm->devlock);
+	if (!swrm->dev_up) {
+		mutex_unlock(&swrm->devlock);
+		return 0;
+	}
+	mutex_unlock(&swrm->devlock);
 
 	pm_runtime_get_sync(swrm->dev);
 	if (dev_num)
@@ -554,6 +579,12 @@ static int swrm_bulk_write(struct swr_master *master, u8 dev_num, void *reg,
 	}
 	if (len <= 0)
 		return -EINVAL;
+	mutex_lock(&swrm->devlock);
+	if (!swrm->dev_up) {
+		mutex_unlock(&swrm->devlock);
+		return 0;
+	}
+	mutex_unlock(&swrm->devlock);
 
 	pm_runtime_get_sync(swrm->dev);
 	if (dev_num) {
@@ -1641,6 +1672,7 @@ static int swrm_probe(struct platform_device *pdev)
 	swrm->num_rx_chs = 0;
 	swrm->clk_ref_count = 0;
 	swrm->mclk_freq = MCLK_FREQ;
+	swrm->dev_up = true;
 	swrm->state = SWR_MSTR_RESUME;
 	init_completion(&swrm->reset);
 	init_completion(&swrm->broadcast);
@@ -1648,6 +1680,7 @@ static int swrm_probe(struct platform_device *pdev)
 	mutex_init(&swrm->reslock);
 	mutex_init(&swrm->force_down_lock);
 	mutex_init(&swrm->iolock);
+	mutex_init(&swrm->devlock);
 
 	for (i = 0 ; i < SWR_MSTR_PORT_LEN; i++)
 		INIT_LIST_HEAD(&swrm->mport_cfg[i].port_req_list);
@@ -1918,11 +1951,16 @@ static int swrm_device_down(struct device *dev)
 	mutex_lock(&swrm->force_down_lock);
 	swrm->state = SWR_MSTR_SSR;
 	mutex_unlock(&swrm->force_down_lock);
-	/* Use pm runtime function to tear down */
-	ret = pm_runtime_put_sync_suspend(dev);
-	pm_runtime_get_noresume(dev);
+	if (!pm_runtime_enabled(dev) || !pm_runtime_suspended(dev)) {
+		ret = swrm_runtime_suspend(dev);
+		if (!ret) {
+			pm_runtime_disable(dev);
+			pm_runtime_set_suspended(dev);
+			pm_runtime_enable(dev);
+		}
+	}
 
-	return ret;
+	return 0;
 }
 
 /**
@@ -1960,6 +1998,16 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 			swrm->mclk_freq = *(int *)data;
 			mutex_unlock(&swrm->mlock);
 		}
+		break;
+	case SWR_DEVICE_SSR_DOWN:
+		mutex_lock(&swrm->devlock);
+		swrm->dev_up = false;
+		mutex_unlock(&swrm->devlock);
+		break;
+	case SWR_DEVICE_SSR_UP:
+		mutex_lock(&swrm->devlock);
+		swrm->dev_up = true;
+		mutex_unlock(&swrm->devlock);
 		break;
 	case SWR_DEVICE_DOWN:
 		dev_dbg(swrm->dev, "%s: swr master down called\n", __func__);

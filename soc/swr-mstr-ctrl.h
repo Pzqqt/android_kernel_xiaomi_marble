@@ -113,6 +113,7 @@ struct swr_mstr_ctrl {
 	struct completion reset;
 	struct completion broadcast;
 	struct mutex iolock;
+	struct mutex devlock;
 	struct mutex mlock;
 	struct mutex reslock;
 	u32 swrm_base_reg;
@@ -149,6 +150,8 @@ struct swr_mstr_ctrl {
 	u32 clk_stop_mode0_supp;
 	struct work_struct wakeup_work;
 	u32 wakeup_req;
+
+	bool dev_up;
 };
 
 #endif /* _SWR_WCD_CTRL_H */

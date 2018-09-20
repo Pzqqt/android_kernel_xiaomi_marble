@@ -24,6 +24,8 @@ enum {
 	SWR_SUBSYS_RESTART,
 	SWR_SET_NUM_RX_CH,
 	SWR_CLK_FREQ,
+	SWR_DEVICE_SSR_DOWN,
+	SWR_DEVICE_SSR_UP,
 };
 
 struct swr_mstr_port {
