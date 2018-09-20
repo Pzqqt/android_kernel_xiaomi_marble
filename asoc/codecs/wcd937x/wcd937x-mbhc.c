@@ -415,8 +415,10 @@ static inline void wcd937x_mbhc_get_result_params(struct wcd937x_priv *wcd937x,
 ramp_down:
 	i = 0;
 	while (x1) {
-		regmap_bulk_read(wcd937x->regmap,
-				 WCD937X_ANA_MBHC_RESULT_1, (u8 *)&val, 2);
+		regmap_read(wcd937x->regmap, WCD937X_ANA_MBHC_RESULT_1, &val);
+		regmap_read(wcd937x->regmap, WCD937X_ANA_MBHC_RESULT_2, &val1);
+		val = val << 0x8;
+		val |= val1;
 		x1 = WCD937X_MBHC_GET_X1(val);
 		i++;
 		if (i == WCD937X_ZDET_NUM_MEASUREMENTS)
@@ -974,7 +976,7 @@ int wcd937x_mbhc_post_ssr_init(struct wcd937x_mbhc *mbhc,
 
 	wcd_mbhc_deinit(wcd_mbhc);
 	ret = wcd_mbhc_init(wcd_mbhc, codec, &mbhc_cb, &intr_ids,
-			    wcd_mbhc_registers, false);
+			    wcd_mbhc_registers, WCD937X_ZDET_SUPPORTED);
 	if (ret) {
 		dev_err(codec->dev, "%s: mbhc initialization failed\n",
 			__func__);
@@ -1026,7 +1028,7 @@ int wcd937x_mbhc_init(struct wcd937x_mbhc **mbhc, struct snd_soc_codec *codec,
 
 	ret = wcd_mbhc_init(wcd_mbhc, codec, &mbhc_cb,
 				&intr_ids, wcd_mbhc_registers,
-				false);
+				WCD937X_ZDET_SUPPORTED);
 	if (ret) {
 		dev_err(codec->dev, "%s: mbhc initialization failed\n",
 			__func__);
