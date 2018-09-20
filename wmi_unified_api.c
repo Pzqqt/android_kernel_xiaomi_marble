@@ -3598,6 +3598,18 @@ QDF_STATUS wmi_extract_peer_extd_stats(void *wmi_hdl, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_extract_peer_retry_stats(void *wmi_hdl, void *evt_buf,
+	uint32_t index, struct wmi_host_peer_retry_stats *peer_retry_stats)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->extract_peer_retry_stats)
+		return wmi_handle->ops->extract_peer_retry_stats(wmi_handle,
+			evt_buf, index, peer_retry_stats);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 /**
  * wmi_extract_rtt_error_report_ev() - extract rtt error report from event
  * @wmi_handle: wmi handle
