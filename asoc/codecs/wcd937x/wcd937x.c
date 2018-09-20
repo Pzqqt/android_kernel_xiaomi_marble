@@ -81,6 +81,9 @@ static struct regmap_irq_chip wcd937x_regmap_irq_chip = {
 	.num_regs = 3,
 	.status_base = WCD937X_DIGITAL_INTR_STATUS_0,
 	.mask_base = WCD937X_DIGITAL_INTR_MASK_0,
+	.ack_base = WCD937X_DIGITAL_INTR_CLEAR_0,
+	.use_ack = 1,
+	.clear_ack = 1,
 	.type_base = WCD937X_DIGITAL_INTR_LEVEL_0,
 	.runtime_pm = false,
 	.handle_post_irq = wcd937x_handle_post_irq,
@@ -89,35 +92,14 @@ static struct regmap_irq_chip wcd937x_regmap_irq_chip = {
 static int wcd937x_handle_post_irq(void *data)
 {
 	struct wcd937x_priv *wcd937x = data;
-	int val = 0;
-	struct wcd937x_pdata *pdata = NULL;
+	u32 status1 = 0, status2 = 0, status3 = 0;
 
-	pdata = dev_get_platdata(wcd937x->dev);
+	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_0, &status1);
+	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_1, &status2);
+	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_2, &status3);
 
-	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_0, &val);
-	dev_dbg(wcd937x->dev, "%s Clear OCP interupts\n", __func__);
-	regmap_write(wcd937x->regmap,
-			   WCD937X_DIGITAL_INTR_CLEAR_0, 0xFF);
-	regmap_write(wcd937x->regmap,
-			   WCD937X_DIGITAL_INTR_CLEAR_0, 0x0);
-	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_1, &val);
-	dev_dbg(wcd937x->dev, "%s Clear SCD interupts\n", __func__);
-	regmap_write(wcd937x->regmap,
-			   WCD937X_DIGITAL_INTR_CLEAR_1, 0xFF);
-	regmap_write(wcd937x->regmap,
-			   WCD937X_DIGITAL_INTR_CLEAR_1, 0x0);
-
-	regmap_write(wcd937x->regmap,
-			   WCD937X_DIGITAL_INTR_CLEAR_2, 0xFF);
-	regmap_write(wcd937x->regmap,
-			   WCD937X_DIGITAL_INTR_CLEAR_2, 0x0);
-
-	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_0, &val);
-	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_1, &val);
-	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_STATUS_2, &val);
-	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_CLEAR_0, &val);
-	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_CLEAR_1, &val);
-	regmap_read(wcd937x->regmap, WCD937X_DIGITAL_INTR_CLEAR_2, &val);
+	wcd937x->tx_swr_dev->slave_irq_pending =
+			((status1 || status2 || status3) ? true : false);
 
 	return IRQ_HANDLED;
 }
