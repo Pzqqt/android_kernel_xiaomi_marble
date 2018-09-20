@@ -1439,6 +1439,13 @@ QDF_STATUS (*extract_p2p_lo_stop_ev_param)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*extract_p2p_noa_ev_param)(wmi_unified_t wmi_handle,
 	void *evt_buf, struct p2p_noa_info *param);
+
+QDF_STATUS (*set_mac_addr_rx_filter)(wmi_unified_t wmi_handle,
+				     struct p2p_set_mac_filter *param);
+QDF_STATUS
+(*extract_mac_addr_rx_filter_evt_param)(wmi_unified_t wmi_handle,
+					void *evt_buf,
+					struct p2p_set_mac_filter_evt *param);
 #endif
 
 QDF_STATUS (*extract_peer_sta_ps_statechange_ev)(wmi_unified_t wmi_handle,

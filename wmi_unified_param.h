@@ -4622,6 +4622,7 @@ typedef enum {
 	wmi_p2p_disc_event_id,
 	wmi_p2p_noa_event_id,
 	wmi_p2p_lo_stop_event_id,
+	wmi_vdev_add_macaddr_rx_filter_event_id,
 	wmi_pdev_resume_event_id,
 	wmi_d0_wow_disable_ack_event_id,
 	wmi_wow_initial_wakeup_event_id,
