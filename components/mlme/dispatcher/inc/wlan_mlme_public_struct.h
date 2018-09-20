@@ -809,8 +809,35 @@ struct wlan_mlme_oce {
 	uint8_t feature_bitmap;
 };
 
+#define MLME_WEP_MAX_KEY_LEN (13)
+
+/**
+ * struct wlan_mlme_wep_cfg - WEP related configs
+ * @is_privacy_enabled:     Flag to check if encryption is enabled
+ * @is_shared_key_auth:     Flag to check if the auth type is shared key
+ * @is_auth_open_system:    Flag to check if the auth type is open
+ * @auth_type:              Authentication type value
+ * @wep_default_key_id:     Default WEP key id
+ * @wep_default_key_1:      WEP encryption key 1
+ * @wep_default_key_2:      WEP encryption key 2
+ * @wep_default_key_3:      WEP encryption key 3
+ * @wep_default_key_4:      WEP encryption key 4
+ */
+struct wlan_mlme_wep_cfg {
+	bool is_privacy_enabled;
+	bool is_shared_key_auth;
+	bool is_auth_open_system;
+	uint8_t auth_type;
+	uint8_t wep_default_key_id;
+	struct mlme_cfg_str wep_default_key_1;
+	struct mlme_cfg_str wep_default_key_2;
+	struct mlme_cfg_str wep_default_key_3;
+	struct mlme_cfg_str wep_default_key_4;
+};
+
 /**
  * struct wlan_mlme_cfg - MLME config items
+ * @chainmask_cfg: VHT chainmask related cfg items
  * @ht_cfg: HT related CFG Items
  * @he_caps: HE related cfg items
  * @lfr: LFR related CFG Items
@@ -821,8 +848,10 @@ struct wlan_mlme_oce {
  * @sta: sta CFG Items
  * @scoring: BSS Scoring related CFG Items
  * @feature_flags: Feature flag config items
+ * @wep_params:  WEP related config items
  */
 struct wlan_mlme_cfg {
+	struct wlan_mlme_chainmask chainmask_cfg;
 	struct wlan_mlme_edca_params edca_params;
 	struct wlan_mlme_generic gen;
 	struct wlan_mlme_ht_caps ht_caps;
@@ -834,12 +863,12 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_qos qos_mlme_params;
 	struct wlan_mlme_rates rates;
 	struct wlan_mlme_sap_protection sap_protection_cfg;
-	struct wlan_mlme_chainmask chainmask_cfg;
 	struct wlan_mlme_cfg_sap sap_cfg;
 	struct wlan_mlme_sta_cfg sta;
 	struct wlan_mlme_scoring_cfg scoring;
 	struct wlan_mlme_oce oce;
 	struct wlan_mlme_feature_flag feature_flags;
+	struct wlan_mlme_wep_cfg wep_params;
 };
 
 #endif

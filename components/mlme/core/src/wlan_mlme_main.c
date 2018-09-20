@@ -908,6 +908,39 @@ static void mlme_init_oce_cfg(struct wlan_objmgr_psoc *psoc,
 	oce->feature_bitmap = val;
 }
 
+static void mlme_init_wep_keys(struct wlan_mlme_wep_cfg *wep_params)
+{
+	/* initialize the default key values to zero */
+	wep_params->wep_default_key_1.len = MLME_WEP_MAX_KEY_LEN;
+	wep_params->wep_default_key_1.max_len = MLME_WEP_MAX_KEY_LEN;
+	qdf_mem_zero(wep_params->wep_default_key_1.data, MLME_WEP_MAX_KEY_LEN);
+
+	wep_params->wep_default_key_2.len = MLME_WEP_MAX_KEY_LEN;
+	wep_params->wep_default_key_2.max_len = MLME_WEP_MAX_KEY_LEN;
+	qdf_mem_zero(wep_params->wep_default_key_2.data, MLME_WEP_MAX_KEY_LEN);
+
+	wep_params->wep_default_key_3.len = MLME_WEP_MAX_KEY_LEN;
+	wep_params->wep_default_key_3.max_len = MLME_WEP_MAX_KEY_LEN;
+	qdf_mem_zero(wep_params->wep_default_key_3.data, MLME_WEP_MAX_KEY_LEN);
+
+	wep_params->wep_default_key_4.len = MLME_WEP_MAX_KEY_LEN;
+	wep_params->wep_default_key_4.max_len = MLME_WEP_MAX_KEY_LEN;
+	qdf_mem_zero(wep_params->wep_default_key_4.data, MLME_WEP_MAX_KEY_LEN);
+}
+
+static void mlme_init_wep_cfg(struct wlan_mlme_wep_cfg *wep_params)
+{
+	wep_params->is_privacy_enabled = cfg_default(CFG_PRIVACY_ENABLED);
+	wep_params->auth_type = cfg_default(CFG_AUTHENTICATION_TYPE);
+	wep_params->is_shared_key_auth =
+			cfg_default(CFG_SHARED_KEY_AUTH_ENABLE);
+	wep_params->is_auth_open_system =
+			cfg_default(CFG_OPEN_SYSTEM_AUTH_ENABLE);
+
+	wep_params->wep_default_key_id = cfg_default(CFG_WEP_DEFAULT_KEYID);
+	mlme_init_wep_keys(wep_params);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -937,6 +970,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_feature_flag_in_cfg(psoc, &mlme_cfg->feature_flags);
 	mlme_init_scoring_cfg(psoc, &mlme_cfg->scoring);
 	mlme_init_oce_cfg(psoc, &mlme_cfg->oce);
+	mlme_init_wep_cfg(&mlme_cfg->wep_params);
 
 	return status;
 }

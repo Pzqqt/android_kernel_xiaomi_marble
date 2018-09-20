@@ -40,6 +40,7 @@
 #include "cfg_mlme_scoring.h"
 #include "cfg_mlme_oce.h"
 #include "cfg_mlme_feature_flag.h"
+#include "cfg_mlme_wep_params.h"
 
 /* Please Maintain Alphabetic Order here */
 #define CFG_MLME_ALL \
@@ -60,5 +61,6 @@
 	CFG_SCORING_ALL \
 	CFG_STA_ALL \
 	CFG_VHT_CAPS_ALL \
+	CFG_WEP_PARAMS_ALL
 
 #endif /* __CFG_MLME_H */
