@@ -208,6 +208,7 @@ struct swr_device {
 	unsigned long    addr;
 	u8 group_id;
 	struct irq_domain *slave_irq;
+	bool slave_irq_pending;
 };
 
 static inline struct swr_device *to_swr_device(struct device *dev)

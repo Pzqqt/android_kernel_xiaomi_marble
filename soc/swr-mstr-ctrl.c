@@ -1237,20 +1237,26 @@ static irqreturn_t swr_mstr_interrupt(int irq, void *dev)
 						spurious interrupt\n");
 				return ret;
 			}
-			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
-				if (swr_dev->dev_num != devnum)
-					continue;
-				if (swr_dev->slave_irq)
-					handle_nested_irq(
-						irq_find_mapping(
-						swr_dev->slave_irq, 0));
-			}
 			swrm_cmd_fifo_rd_cmd(swrm, &temp, devnum, 0x0,
 						SWRS_SCP_INT_STATUS_CLEAR_1, 1);
 			swrm_cmd_fifo_wr_cmd(swrm, 0x4, devnum, 0x0,
 						SWRS_SCP_INT_STATUS_CLEAR_1);
 			swrm_cmd_fifo_wr_cmd(swrm, 0x0, devnum, 0x0,
 						SWRS_SCP_INT_STATUS_CLEAR_1);
+
+
+			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
+				if (swr_dev->dev_num != devnum)
+					continue;
+				if (swr_dev->slave_irq) {
+					do {
+						handle_nested_irq(
+							irq_find_mapping(
+							swr_dev->slave_irq, 0));
+					} while (swr_dev->slave_irq_pending);
+				}
+
+			}
 			break;
 		case SWRM_INTERRUPT_STATUS_NEW_SLAVE_ATTACHED:
 			dev_dbg(swrm->dev, "SWR new slave attached\n");
@@ -1465,9 +1471,9 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	reg[len] = SWRM_MCP_BUS_CTRL_ADDR;
 	value[len++] = 0x2;
 
-	/* Set IRQ to PULSE */
+	/* Set IRQ to LEVEL */
 	reg[len] = SWRM_COMP_CFG_ADDR;
-	value[len++] = 0x03;
+	value[len++] = 0x01;
 
 	reg[len] = SWRM_INTERRUPT_CLEAR;
 	value[len++] = 0xFFFFFFFF;
@@ -1722,7 +1728,7 @@ static int swrm_probe(struct platform_device *pdev)
 
 		ret = request_threaded_irq(swrm->irq, NULL,
 					   swr_mstr_interrupt,
-					   IRQF_TRIGGER_RISING | IRQF_ONESHOT,
+					   IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
 					   "swr_master_irq", swrm);
 		if (ret) {
 			dev_err(swrm->dev, "%s: Failed to request irq %d\n",
