@@ -1817,6 +1817,12 @@ QDF_STATUS (*send_obss_spatial_reuse_set)(wmi_unified_t wmi_handle,
 		struct wmi_host_obss_spatial_reuse_set_param
 		*obss_spatial_reuse_param);
 #endif
+
+QDF_STATUS
+(*extract_ctl_failsafe_check_ev_param)(
+		wmi_unified_t wmi_handle,
+		void *evt_buf,
+		struct wmi_host_pdev_ctl_failsafe_event *param);
 };
 
 /* Forward declartion for psoc*/

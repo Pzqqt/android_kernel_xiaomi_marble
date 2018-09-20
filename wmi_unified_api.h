@@ -1548,6 +1548,21 @@ QDF_STATUS wmi_extract_smartlog_ev
 void wmi_process_fw_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
 					    HTC_PACKET * htc_packet);
 
+/**
+ * wmi_extract_ctl_failsafe_check_ev_param() - extract ctl failsafe
+ * status from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param ev: Pointer to hold ctl status
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_extract_ctl_failsafe_check_ev_param(void *wmi_hdl,
+					void *evt_buf,
+					struct wmi_host_pdev_ctl_failsafe_event
+					*param);
+
 #ifdef OBSS_PD
 /**
  * wmi_extract_smartlog_ev() - extract smartlog event info from event

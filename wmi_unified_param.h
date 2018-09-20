@@ -4715,6 +4715,7 @@ typedef enum {
 #endif /* OL_ATH_SMART_LOGGING */
 	wmi_wlan_sar2_result_event_id,
 	wmi_esp_estimate_event_id,
+	wmi_pdev_ctl_failsafe_check_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -6608,6 +6609,14 @@ typedef struct {
 	uint32_t rx_bss_cycle_count_high;
 	uint32_t reserved;
 } wmi_host_pdev_bss_chan_info_event;
+
+/**
+ * struct wmi_host_pdev_ctl_failsafe_event
+ * @ctl_failsafe_status: Indicate if Failsafe value is imposed on CTL
+ */
+struct wmi_host_pdev_ctl_failsafe_event {
+	uint32_t ctl_failsafe_status;
+};
 
 #define WMI_HOST_INST_STATS_INVALID_RSSI 0
 /**
