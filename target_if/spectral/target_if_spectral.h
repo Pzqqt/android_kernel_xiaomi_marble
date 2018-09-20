@@ -399,6 +399,22 @@ enum spectral_gen {
 	SPECTRAL_GEN3,
 };
 
+/**
+ * enum spectral_fftbin_size_war - spectral fft bin size war
+ * @SPECTRAL_FFTBIN_SIZE_NO_WAR : No WAR applicable for Spectral FFT bin size
+ * @SPECTRAL_FFTBIN_SIZE_2BYTE_TO_1BYTE : Spectral FFT bin size: Retain only
+ *                                        least significant byte from 2 byte
+ *                                        FFT bin transferred by HW
+ * @SPECTRAL_FFTBIN_SIZE_4BYTE_TO_1BYTE : Spectral FFT bin size: Retain only
+ *                                        least significant byte from 4 byte
+ *                                        FFT bin transferred by HW
+ */
+enum spectral_fftbin_size_war {
+	SPECTRAL_FFTBIN_SIZE_NO_WAR = 0,
+	SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE = 1,
+	SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE = 2,
+};
+
 #if ATH_PERF_PWR_OFFLOAD
 /**
  * enum target_if_spectral_info - Enumerations for specifying which spectral
@@ -876,7 +892,7 @@ struct target_if_spectral {
 	struct spectral_nl_cb nl_cb;
 	bool use_nl_bcast;
 	int (*send_phy_data)(struct wlan_objmgr_pdev *pdev);
-	u_int8_t                               fftbin_size_war;
+	enum spectral_fftbin_size_war          fftbin_size_war;
 	u_int8_t                               inband_fftbin_size_adj;
 	u_int8_t                               null_fftbin_adj;
 	enum spectral_160mhz_report_delivery_state state_160mhz_delivery;

@@ -44,7 +44,8 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 	struct spectral_classifier_params *cp = NULL;
 	struct spectral_classifier_params *pcp = NULL;
 	struct target_if_spectral_ops *p_sops = NULL;
-	uint32_t *binptr = NULL;
+	uint32_t *binptr_32 = NULL;
+	uint16_t *binptr_16 = NULL;
 	int idx = 0;
 	struct spectral_samp_data *samp_data;
 	static int samp_msg_index;
@@ -119,10 +120,16 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		qdf_mem_copy(cp, pcp,
 			     sizeof(struct spectral_classifier_params));
 
-		if (spectral->fftbin_size_war) {
-			binptr = (uint32_t *)bin_pwr_data;
+		if (spectral->fftbin_size_war ==
+				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
+			binptr_32 = (uint32_t *)bin_pwr_data;
 			for (idx = 0; idx < params->pwr_count; idx++)
-				samp_data->bin_pwr[idx] = *(binptr++);
+				samp_data->bin_pwr[idx] = *(binptr_32++);
+		} else if (spectral->fftbin_size_war ==
+				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
+			binptr_16 = (uint16_t *)bin_pwr_data;
+			for (idx = 0; idx < params->pwr_count; idx++)
+				samp_data->bin_pwr[idx] = *(binptr_16++);
 		} else {
 			SPECTRAL_MESSAGE_COPY_CHAR_ARRAY(
 					&samp_data->bin_pwr[0], bin_pwr_data,
@@ -163,10 +170,16 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		    params->pwr_count_sec80;
 
 		bin_pwr_data = params->bin_pwr_data_sec80;
-		if (spectral->fftbin_size_war) {
-			binptr = (uint32_t *)bin_pwr_data;
+		if (spectral->fftbin_size_war ==
+				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
+			binptr_32 = (uint32_t *)bin_pwr_data;
 			for (idx = 0; idx < params->pwr_count_sec80; idx++)
-				samp_data->bin_pwr_sec80[idx] = *(binptr++);
+				samp_data->bin_pwr_sec80[idx] = *(binptr_32++);
+		} else if (spectral->fftbin_size_war ==
+				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
+			binptr_16 = (uint16_t *)bin_pwr_data;
+			for (idx = 0; idx < params->pwr_count_sec80; idx++)
+				samp_data->bin_pwr_sec80[idx] = *(binptr_16++);
 		} else {
 			SPECTRAL_MESSAGE_COPY_CHAR_ARRAY(
 					&samp_data->bin_pwr_sec80[0],

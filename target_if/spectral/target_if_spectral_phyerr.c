@@ -1195,9 +1195,21 @@ target_if_dump_fft_report_gen3(struct target_if_spectral *spectral,
 		/* fft_bin_len_adj is intentionally left at 0. */
 		fft_bin_len_to_dump = 0;
 	} else {
-		if (spectral->fftbin_size_war)
+		/*
+		 * Divide fft bin length by appropriate factor depending
+		 * on the value of fftbin_size_war.
+		 */
+		if (spectral->fftbin_size_war ==
+				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE)
 			fft_bin_len_adj = fft_bin_len >> 2;
-		else
+		else if (spectral->fftbin_size_war ==
+				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
+			/* Ideally we should be dividing fft bin length by 2.
+			 * Due to a HW bug, actual length is two times the
+			 * expected length.
+			 */
+			fft_bin_len_adj = fft_bin_len >> 2;
+		} else
 			fft_bin_len_adj = fft_bin_len;
 
 		if ((spectral->params.ss_rpt_mode == 2) &&
@@ -1522,12 +1534,20 @@ target_if_consume_spectral_report_gen3(
 			fft_bin_len = (fft_hdr_length - 16);
 
 			/*
-			 * Divide fft bin length by 4 if fftbin_size_war is
-			 * enabled.
+			 * Divide fft bin length by appropriate factor depending
+			 * on the value of fftbin_size_war.
 			 */
-			if (spectral->fftbin_size_war)
+			if (spectral->fftbin_size_war ==
+					SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE)
 				fft_bin_len >>= 2;
-
+			else if (spectral->fftbin_size_war ==
+				 SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
+				/* Ideally we should be dividing fft bin length
+				 * by 2. Due to a HW bug, actual length is two
+				 * times the expected length.
+				 */
+				fft_bin_len >>= 2;
+			}
 			if ((spectral->params.ss_rpt_mode == 2) &&
 			    spectral->inband_fftbin_size_adj) {
 				fft_bin_len >>= 1;
@@ -1649,11 +1669,20 @@ target_if_consume_spectral_report_gen3(
 			fft_bin_len = (fft_hdr_length - 16);
 
 			/*
-			 * Divide fft bin length by 4 if fftbin_size_war is
-			 * enabled.
+			 * Divide fft bin length by appropriate factor depending
+			 * on the value of fftbin_size_war.
 			 */
-			if (spectral->fftbin_size_war)
+			if (spectral->fftbin_size_war ==
+					SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE)
 				fft_bin_len >>= 2;
+			else if (spectral->fftbin_size_war ==
+				 SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
+				/* Ideally we should be dividing fft bin length
+				 * by 2. Due to a HW bug, actual length is two
+				 * times the expected length.
+				 */
+				fft_bin_len >>= 2;
+			}
 
 			if ((spectral->params.ss_rpt_mode == 2) &&
 			    spectral->inband_fftbin_size_adj) {
