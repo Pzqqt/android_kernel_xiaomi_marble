@@ -540,9 +540,14 @@ static int hdd_soc_recovery_reinit(struct device *dev,
 				   const struct hif_bus_id *bid,
 				   enum qdf_bus_type bus_type)
 {
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_psoc *hdd_psoc = hdd_ctx->hdd_psoc;
 	int errno;
 
 	hdd_info("re-probing driver");
+
+	/* SSR transition is initiated at the beginning of soc shutdown */
+	dsc_psoc_assert_trans_protected(hdd_psoc->dsc_psoc);
 
 	hdd_soc_load_lock(dev, eHDD_DRV_OP_REINIT);
 	cds_set_driver_in_bad_state(false);
@@ -561,6 +566,8 @@ static int hdd_soc_recovery_reinit(struct device *dev,
 	cds_set_recovery_in_progress(false);
 
 	hdd_soc_load_unlock(dev);
+
+	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
 
 	return 0;
 
@@ -714,6 +721,8 @@ static void hdd_psoc_shutdown_notify(struct hdd_context *hdd_ctx)
 static void hdd_soc_recovery_shutdown(void)
 {
 	struct hdd_context *hdd_ctx;
+	struct hdd_psoc *hdd_psoc;
+	QDF_STATUS status;
 	void *hif_ctx;
 
 	/* recovery starts via firmware down indication; ensure we got one */
@@ -728,21 +737,34 @@ static void hdd_soc_recovery_shutdown(void)
 	/* cancel/flush any pending/active idle shutdown work */
 	hdd_psoc_idle_timer_stop(hdd_ctx);
 
+	hdd_psoc = hdd_ctx->hdd_psoc;
+	status = dsc_psoc_trans_start_wait(hdd_psoc->dsc_psoc, "ssr");
+	if (QDF_IS_STATUS_ERROR(status)) {
+		/* If SSR races with e.g. Remove, aborting SSR is expected */
+		hdd_info("Aborting SSR; status:%u", status);
+		return;
+	}
+
+	dsc_psoc_wait_for_ops(hdd_psoc->dsc_psoc);
+
+	mutex_lock(&hdd_init_deinit_lock);
+	hdd_start_driver_ops_timer(eHDD_DRV_OP_SHUTDOWN);
+
 	/* nothing to do if the soc is already unloaded */
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
 		hdd_info("Driver modules are already closed");
-		return;
+		goto unlock;
 	}
 
 	if (cds_is_load_or_unload_in_progress()) {
 		hdd_info("Load/unload in progress, ignore SSR shutdown");
-		return;
+		goto unlock;
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
 		hdd_err("Failed to get HIF context, ignore SSR shutdown");
-		return;
+		goto unlock;
 	}
 
 	/* mask the host controller interrupts */
@@ -760,6 +782,19 @@ static void hdd_soc_recovery_shutdown(void)
 		hif_disable_isr(hif_ctx);
 		hdd_wlan_shutdown();
 	}
+
+	hdd_stop_driver_ops_timer();
+	mutex_unlock(&hdd_init_deinit_lock);
+
+	/* SSR transition is concluded at the end of soc re-init */
+
+	return;
+
+unlock:
+	hdd_stop_driver_ops_timer();
+	mutex_unlock(&hdd_init_deinit_lock);
+
+	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
 }
 
 /**
@@ -1470,13 +1505,7 @@ static void wlan_hdd_pld_shutdown(struct device *dev,
 {
 	hdd_enter();
 
-	mutex_lock(&hdd_init_deinit_lock);
-	hdd_start_driver_ops_timer(eHDD_DRV_OP_SHUTDOWN);
-
 	hdd_soc_recovery_shutdown();
-
-	hdd_stop_driver_ops_timer();
-	mutex_unlock(&hdd_init_deinit_lock);
 
 	hdd_exit();
 }
