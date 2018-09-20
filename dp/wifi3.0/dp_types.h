@@ -907,24 +907,6 @@ struct dp_soc {
 	qdf_list_t reo_desc_freelist;
 	qdf_spinlock_t reo_desc_freelist_lock;
 
-#ifdef QCA_SUPPORT_SON
-	/* The timer to check station's inactivity status */
-	os_timer_t pdev_bs_inact_timer;
-	/* The current inactivity count reload value
-	   based on overload condition */
-	u_int16_t pdev_bs_inact_reload;
-
-	/* The inactivity timer value when not overloaded */
-	u_int16_t pdev_bs_inact_normal;
-
-	/* The inactivity timer value when overloaded */
-	u_int16_t pdev_bs_inact_overload;
-
-	/* The inactivity timer check interval */
-	u_int16_t pdev_bs_inact_interval;
-	/* Inactivity timer */
-#endif /* QCA_SUPPORT_SON */
-
 	/* htt stats */
 	struct htt_t2h_stats htt_stats;
 

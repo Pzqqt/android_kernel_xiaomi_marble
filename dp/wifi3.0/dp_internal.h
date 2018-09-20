@@ -701,15 +701,6 @@ void dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle,
 	 uint32_t *rx_pn);
 
 void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
-void dp_mark_peer_inact(void *peer_handle, bool inactive);
-bool dp_set_inact_params(struct cdp_pdev *pdev_handle,
-		 u_int16_t inact_check_interval,
-		 u_int16_t inact_normal, u_int16_t inact_overload);
-bool dp_start_inact_timer(struct cdp_pdev *pdev_handle, bool enable);
-void dp_set_overload(struct cdp_pdev *pdev_handle, bool overload);
-bool dp_peer_is_inact(void *peer_handle);
-void dp_init_inact_timer(struct dp_soc *soc);
-void dp_free_inact_timer(struct dp_soc *soc);
 void dp_set_michael_key(struct cdp_peer *peer_handle,
 			bool is_unicast, uint32_t *key);
 

@@ -482,52 +482,6 @@ struct cdp_ctrl_ops {
 		(*txrx_peer_authorize)(struct cdp_peer *peer,
 				u_int32_t authorize);
 
-	bool
-		(*txrx_set_inact_params)(struct cdp_pdev *pdev,
-				u_int16_t inact_check_interval,
-				u_int16_t inact_normal,
-				u_int16_t inact_overload);
-	bool
-		(*txrx_start_inact_timer)(
-				struct cdp_pdev *pdev,
-				bool enable);
-
-
-	/**
-	 * @brief Set the overload status of the radio
-	 * @details
-	 *  Set the overload status of the radio, updating the inactivity
-	 *  threshold and inactivity count for each node.
-	 *
-	 * @param pdev - the data physical device object
-	 * @param overload - whether the radio is overloaded or not
-	 */
-	void (*txrx_set_overload)(
-			struct cdp_pdev *pdev,
-			bool overload);
-	/**
-	 * @brief Check the inactivity status of the peer/node
-	 *
-	 * @param peer - pointer to the node's object
-	 * @return true if the node is inactive; otherwise return false
-	 */
-	bool
-		(*txrx_peer_is_inact)(void *peer);
-
-	/**
-	 * @brief Mark inactivity status of the peer/node
-	 * @details
-	 *  If it becomes active, reset inactivity count to reload value;
-	 *  if the inactivity status changed, notify umac band steering.
-	 *
-	 * @param peer - pointer to the node's object
-	 * @param inactive - whether the node is inactive or not
-	 */
-	void (*txrx_mark_peer_inact)(
-			void *peer,
-			bool inactive);
-
-
 	/* Should be ol_txrx_ctrl_api.h */
 	void (*txrx_set_mesh_mode)(struct cdp_vdev *vdev, u_int32_t val);
 
