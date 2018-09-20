@@ -148,6 +148,30 @@ struct p2p_mgmt_tx {
 };
 
 /**
+ * struct p2p_set_mac_filter
+ * @vdev_id: Vdev id
+ * @mac: mac addr
+ * @freq: frequency
+ * @set: set or clear
+ */
+struct p2p_set_mac_filter {
+	uint32_t vdev_id;
+	uint8_t mac[QDF_MAC_ADDR_SIZE];
+	uint32_t freq;
+	bool set;
+};
+
+/**
+ * struct p2p_set_mac_filter_evt
+ * @vdev_id: Vdev id
+ * @status: target reported result of set mac addr filter
+ */
+struct p2p_set_mac_filter_evt {
+	uint32_t vdev_id;
+	uint32_t status;
+};
+
+/**
  * struct p2p_ps_config
  * @vdev_id:               Vdev id
  * @opp_ps:                Opportunistic power save
