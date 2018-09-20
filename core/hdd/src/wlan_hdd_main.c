@@ -10981,6 +10981,10 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	sme_cli_set_command(0, (int)WMI_PDEV_PARAM_ABG_MODE_TX_CHAIN_NUM,
 			    num_abg_tx_chains, PDEV_CMD);
 
+	if (!ucfg_reg_is_regdb_offloaded(hdd_ctx->psoc))
+		ucfg_reg_program_default_cc(hdd_ctx->pdev,
+					    hdd_ctx->reg.reg_domain);
+
 	ret = hdd_pre_enable_configure(hdd_ctx);
 	if (ret) {
 		hdd_err("Failed to pre-configure cds");
