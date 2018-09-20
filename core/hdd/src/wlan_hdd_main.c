@@ -13493,24 +13493,45 @@ unlock:
 
 static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
 {
-	int ret;
+	struct hdd_driver *hdd_driver = hdd_driver_get();
 	struct hdd_context *hdd_ctx;
+	QDF_STATUS status;
+	int errno;
+
+	hdd_enter();
+
+	status = dsc_driver_trans_start_wait(hdd_driver->dsc_driver,
+					     "mode change");
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to start 'mode change'; status:%u", status);
+		errno = qdf_status_to_os_return(status);
+		goto exit;
+	}
+
+	dsc_driver_wait_for_ops(hdd_driver->dsc_driver);
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret)
-		return ret;
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		goto trans_stop;
 
 	if (!cds_wait_for_external_threads_completion(__func__)) {
 		hdd_warn("External threads are still active, can not change mode");
-		return -EAGAIN;
+		errno = -EAGAIN;
+		goto trans_stop;
 	}
 
 	cds_ssr_protect(__func__);
-	ret = __con_mode_handler(kmessage, kp, hdd_ctx);
+	errno = __con_mode_handler(kmessage, kp, hdd_ctx);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+trans_stop:
+	dsc_driver_trans_stop(hdd_driver->dsc_driver);
+
+exit:
+	hdd_exit();
+
+	return errno;
 }
 
 static int con_mode_handler_ftm(const char *kmessage,
