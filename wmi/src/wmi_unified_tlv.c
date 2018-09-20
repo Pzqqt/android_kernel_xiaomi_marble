@@ -17495,15 +17495,6 @@ static QDF_STATUS extract_ndp_end_ind_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	(*rsp)->vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(
-			wmi_handle->soc->wmi_psoc, QDF_NDI_MODE, WLAN_NAN_ID);
-	if (!(*rsp)->vdev) {
-		WMI_LOGE("vdev is null");
-		qdf_mem_free(*rsp);
-		*rsp = NULL;
-		return QDF_STATUS_E_INVAL;
-	}
-
 	(*rsp)->num_ndp_ids = event->num_ndp_end_indication_list;
 	for (i = 0; i < (*rsp)->num_ndp_ids; i++) {
 		WMI_MAC_ADDR_TO_CHAR_ARRAY(&ind[i].peer_ndi_mac_addr,

@@ -1496,17 +1496,19 @@ static void os_if_ndp_end_ind_handler(struct wlan_objmgr_vdev *vdev,
 			continue;
 		}
 
-		idx = cb_obj.get_peer_idx(wlan_vdev_get_id(vdev),
+		idx = cb_obj.get_peer_idx(wlan_vdev_get_id(vdev_itr),
 				&end_ind->ndp_map[i].peer_ndi_mac_addr);
 		if (idx < 0) {
 			cfg80211_err("can't find addr: %pM in sta_ctx.",
 				&end_ind->ndp_map[i].peer_ndi_mac_addr);
+			wlan_objmgr_vdev_release_ref(vdev_itr, WLAN_NAN_ID);
 			continue;
 		}
 		/* save the value of active sessions on each peer */
-		ucfg_nan_set_active_ndp_sessions(vdev,
+		ucfg_nan_set_active_ndp_sessions(vdev_itr,
 				end_ind->ndp_map[i].num_active_ndp_sessions,
 				idx);
+		wlan_objmgr_vdev_release_ref(vdev_itr, WLAN_NAN_ID);
 	}
 
 	data_len = osif_ndp_get_ndp_end_ind_len(end_ind);
