@@ -3006,6 +3006,30 @@ wmi_send_reset_peer_mumimo_tx_count_cmd(void *wmi_hdl, uint32_t value)
 
 /* Extract - APIs */
 /**
+ * wmi_extract_ctl_failsafe_check_ev_param() - extract ctl data
+ * from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold ctl data
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_extract_ctl_failsafe_check_ev_param(void *wmi_hdl,
+					void *evt_buf,
+					struct wmi_host_pdev_ctl_failsafe_event
+					*param)
+{
+	wmi_unified_t wmi = (wmi_unified_t)wmi_hdl;
+
+	if (wmi->ops->extract_ctl_failsafe_check_ev_param)
+		return wmi->ops->extract_ctl_failsafe_check_ev_param(
+			wmi, evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_extract_fips_event_data() - extract fips event data
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer

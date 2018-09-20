@@ -6769,6 +6769,28 @@ static QDF_STATUS extract_pdev_caldata_version_check_ev_param_non_tlv(
 }
 
 /**
+ * extract_ctl_failsafe_check_ev_param_non_tlv() - extract ctl data from
+ * event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold peer ctl data
+ *
+ * Return: QDF_STATUS_SUCCESS for success
+ */
+static QDF_STATUS extract_ctl_failsafe_check_ev_param_non_tlv(
+			wmi_unified_t wmi_handle,
+			void *evt_buf,
+			struct wmi_host_pdev_ctl_failsafe_event *param)
+{
+	wmi_pdev_ctl_failsafe_event *event =
+			(wmi_pdev_ctl_failsafe_event *)evt_buf;
+
+	param->ctl_failsafe_status = event->ctl_FailsafeStatus;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_pdev_tpc_config_ev_param_non_tlv() - extract pdev tpc configuration
  * param from event
  * @wmi_handle: wmi handle
@@ -8983,6 +9005,8 @@ struct wmi_ops non_tlv_ops =  {
 #endif
 	.extract_esp_estimation_ev_param =
 				extract_esp_estimation_ev_param_non_tlv,
+	.extract_ctl_failsafe_check_ev_param =
+			extract_ctl_failsafe_check_ev_param_non_tlv,
 };
 
 /**
@@ -9290,6 +9314,8 @@ static void populate_non_tlv_events_id(uint32_t *event_ids)
 #endif
 	event_ids[wmi_esp_estimate_event_id] =
 					WMI_ESP_ESTIMATE_EVENTID;
+	event_ids[wmi_pdev_ctl_failsafe_check_event_id] =
+					WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID;
 }
 
 /**

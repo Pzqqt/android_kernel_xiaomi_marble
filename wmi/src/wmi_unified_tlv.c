@@ -7583,6 +7583,35 @@ static QDF_STATUS extract_cca_stats_tlv(wmi_unified_t wmi_handle,
 #endif /* QCA_SUPPORT_CP_STATS */
 
 /**
+ * extract_ctl_failsafe_check_ev_param_tlv() - extract ctl data from
+ * event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold peer ctl data
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_ctl_failsafe_check_ev_param_tlv(
+			wmi_unified_t wmi_handle,
+			void *evt_buf,
+			struct wmi_host_pdev_ctl_failsafe_event *param)
+{
+	WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_ctl_failsafe_check_fixed_param *fix_param;
+
+	param_buf = (WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("Invalid ctl_failsafe event buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	fix_param = param_buf->fixed_param;
+	param->ctl_failsafe_status = fix_param->ctl_FailsafeStatus;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * save_service_bitmap_tlv() - save service bitmap
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
@@ -11107,6 +11136,8 @@ struct wmi_ops tlv_ops =  {
 	.send_obss_spatial_reuse_set = send_obss_spatial_reuse_set_cmd_tlv,
 #endif
 	.extract_offload_bcn_tx_status_evt = extract_offload_bcn_tx_status_evt,
+	.extract_ctl_failsafe_check_ev_param =
+		extract_ctl_failsafe_check_ev_param_tlv,
 };
 
 /**
@@ -11406,6 +11437,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 #ifdef AST_HKV1_WORKAROUND
 	event_ids[wmi_wds_peer_event_id] = WMI_WDS_PEER_EVENTID;
 #endif
+	event_ids[wmi_pdev_ctl_failsafe_check_event_id] =
+		WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID;
 }
 
 /**
