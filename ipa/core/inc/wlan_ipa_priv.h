@@ -70,7 +70,7 @@
 
 #define WLAN_IPA_MAX_PENDING_EVENT_COUNT    20
 
-#define IPA_WLAN_RX_SOFTIRQ_THRESH 16
+#define IPA_WLAN_RX_SOFTIRQ_THRESH 32
 
 /**
  * enum - IPA UC operation message
