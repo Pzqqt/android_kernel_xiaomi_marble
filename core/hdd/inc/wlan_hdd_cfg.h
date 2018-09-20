@@ -10125,7 +10125,7 @@ enum hdd_external_acs_policy {
 #define CFG_ENABLE_FILS_DISCOVERY_SAP_NAME    "oce_enable_fils_discovery_sap"
 #define CFG_ENABLE_FILS_DISCOVERY_SAP_MIN     (0)
 #define CFG_ENABLE_FILS_DISCOVERY_SAP_MAX     (1)
-#define CFG_ENABLE_FILS_DISCOVERY_SAP_DEFAULT (0)
+#define CFG_ENABLE_FILS_DISCOVERY_SAP_DEFAULT (1)
 
 /*
  * <ini>
