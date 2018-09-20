@@ -56,6 +56,8 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 
 	cdp_rx_ppdu->first_data_seq_ctrl =
 		ppdu_info->rx_status.first_data_seq_ctrl;
+	cdp_rx_ppdu->frame_ctrl =
+		ppdu_info->rx_status.frame_control;
 	cdp_rx_ppdu->ppdu_id = ppdu_info->com_info.ppdu_id;
 	cdp_rx_ppdu->length = ppdu_info->rx_status.ppdu_len;
 	cdp_rx_ppdu->duration = ppdu_info->rx_status.duration;

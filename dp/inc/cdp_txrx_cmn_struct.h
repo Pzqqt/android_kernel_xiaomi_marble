@@ -1197,6 +1197,7 @@ struct cdp_tx_completion_msdu {
  * @length: PPDU length
  * @channel: Channel informartion
  * @lsig_A: L-SIG in 802.11 PHY header
+ * @frame_ctrl: frame control field
  */
 struct cdp_rx_indication_ppdu {
 	uint32_t ppdu_id;
@@ -1243,7 +1244,7 @@ struct cdp_rx_indication_ppdu {
 	uint32_t rx_byte_count;
 	uint8_t rx_ratecode;
 	uint8_t fcs_error_mpdus;
-
+	uint16_t frame_ctrl;
 };
 
 /**

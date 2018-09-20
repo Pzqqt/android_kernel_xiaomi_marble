@@ -191,7 +191,8 @@
  * @he_sig_b_common_RU[4]: HE (11ax) common RU assignment index
  * @rssi_comb: Combined RSSI
  * @duration: 802.11 Duration
- * @first_data_seq_ctrl: Sequence ctrl field of first data frame
+ * @frame_control_info_valid: field indicates if fc value is valid
+ * @frame_control: frame control field
  * @ast_index: AST table hash index
  * @tid: QoS traffic tid number
  * @rs_fcs_err: FCS error flag
@@ -218,6 +219,8 @@
  * function.
  * @device_id: Device ID coming from sub-system (PCI, AHB etc..)
  * @chan_noise_floor: Channel Noise Floor for the pdev
+ * @data_sequence_control_info_valid: field to indicate validity of seq control
+ * @first_data_seq_ctrl: Sequence ctrl field of first data frame
  */
 struct mon_rx_status {
 	uint64_t tsft;
@@ -263,7 +266,7 @@ struct mon_rx_status {
 	uint8_t  reception_type;
 	uint16_t duration;
 	uint8_t frame_control_info_valid;
-	int16_t first_data_seq_ctrl;
+	uint16_t frame_control;
 	uint32_t ast_index;
 	uint32_t tid;
 	uint8_t  rs_fcs_err;
@@ -290,6 +293,8 @@ struct mon_rx_status {
 	uint32_t device_id;
 	int16_t chan_noise_floor;
 	uint8_t monitor_direct_used;
+	uint8_t data_sequence_control_info_valid;
+	uint16_t first_data_seq_ctrl;
 };
 
 /**

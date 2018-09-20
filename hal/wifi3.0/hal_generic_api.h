@@ -324,11 +324,20 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 
 		ppdu_info->rx_status.frame_control_info_valid =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
-					DATA_SEQUENCE_CONTROL_INFO_VALID);
+					FRAME_CONTROL_INFO_VALID);
+
+		if (ppdu_info->rx_status.frame_control_info_valid)
+			ppdu_info->rx_status.frame_control =
+				 HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_4,
+					    FRAME_CONTROL_FIELD);
+
+		ppdu_info->rx_status.data_sequence_control_info_valid =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
+				   DATA_SEQUENCE_CONTROL_INFO_VALID);
 
 		seq = HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_5,
-					FIRST_DATA_SEQ_CTRL);
-		if (ppdu_info->rx_status.frame_control_info_valid)
+				 FIRST_DATA_SEQ_CTRL);
+		if (ppdu_info->rx_status.data_sequence_control_info_valid)
 			ppdu_info->rx_status.first_data_seq_ctrl = seq;
 
 		ppdu_info->rx_status.preamble_type =
