@@ -1507,13 +1507,8 @@ QDF_STATUS sme_set_tsfcb(tHalHandle hHal,
 
 QDF_STATUS sme_reset_tsfcb(tHalHandle h_hal);
 
-#ifdef WLAN_FEATURE_TSF
+#if defined(WLAN_FEATURE_TSF) && !defined(WLAN_FEATURE_TSF_PLUS_NOIRQ)
 QDF_STATUS sme_set_tsf_gpio(tHalHandle h_hal, uint32_t pinvalue);
-#else
-static inline QDF_STATUS sme_set_tsf_gpio(tHalHandle h_hal, uint32_t pinvalue)
-{
-	return QDF_STATUS_E_FAILURE;
-}
 #endif
 
 QDF_STATUS sme_update_mimo_power_save(tHalHandle hHal,

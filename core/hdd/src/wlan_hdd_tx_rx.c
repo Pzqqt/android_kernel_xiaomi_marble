@@ -1810,7 +1810,7 @@ static inline void hdd_tsf_timestamp_rx(struct hdd_context *hdd_ctx,
 					qdf_nbuf_t netbuf,
 					uint64_t target_time)
 {
-	if (!HDD_TSF_IS_RX_SET(hdd_ctx))
+	if (!hdd_tsf_is_rx_set(hdd_ctx))
 		return;
 
 	hdd_rx_timestamp(netbuf, target_time);

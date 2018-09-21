@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -19,8 +19,7 @@
 #if !defined WLAN_HDD_TSF_H
 #define WLAN_HDD_TSF_H
 #include "wlan_hdd_cfg.h"
-
-struct hdd_context;
+#include "wlan_hdd_main.h"
 
 /**
  * enum hdd_tsf_get_state - status of get tsf action
@@ -125,6 +124,7 @@ int wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 					int data_len);
 
 int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf);
+
 #else
 static inline void wlan_hdd_tsf_init(struct hdd_context *hdd_ctx)
 {
@@ -161,39 +161,52 @@ static inline int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 #endif
 
 #if defined(WLAN_FEATURE_TSF_PLUS) && defined(WLAN_FEATURE_TSF)
-#define HDD_TSF_IS_PTP_ENABLED(hdd) \
-({ \
-	struct hdd_context *hdd_ctx = (hdd); \
-	hdd_ctx && hdd_ctx->config && hdd_ctx->config->tsf_ptp_options; \
-})
+/**
+ * hdd_tsf_is_ptp_enabled() - check ini configuration
+ * @hdd: pointer to hdd context
+ *
+ * This function checks tsf configuration for ptp
+ *
+ * Return: true on enable, false on disable
+ */
+bool hdd_tsf_is_ptp_enabled(struct hdd_context *hdd);
+/**
+ * hdd_tsf_is_tx_set() - check ini configuration
+ * @hdd: pointer to hdd context
+ *
+ * This function checks tsf configuration for ptp on tx
+ *
+ * Return: true on enable, false on disable
+ */
 
-#define HDD_TSF_IS_TX_SET(hdd) \
-({ \
-	struct hdd_context *hdd_ctx = (hdd); \
-	hdd_ctx && hdd_ctx->config && \
-	(hdd_ctx->config->tsf_ptp_options & CFG_SET_TSF_PTP_OPT_TX); \
-})
-
-#define HDD_TSF_IS_RX_SET(hdd) \
-({ \
-	struct hdd_context *hdd_ctx = (hdd); \
-	hdd_ctx && hdd_ctx->config && \
-	(hdd_ctx->config->tsf_ptp_options & CFG_SET_TSF_PTP_OPT_RX); \
-})
-
-#define HDD_TSF_IS_RAW_SET(hdd) \
-({ \
-	struct hdd_context *hdd_ctx = (hdd); \
-	hdd_ctx && hdd_ctx->config && \
-	(hdd_ctx->config->tsf_ptp_options & CFG_SET_TSF_PTP_OPT_RAW); \
-})
-
-#define HDD_TSF_IS_DBG_FS_SET(hdd) \
-({ \
-	struct hdd_context *hdd_ctx = (hdd); \
-	hdd_ctx && hdd_ctx->config && \
-	(hdd_ctx->config->tsf_ptp_options & CFG_SET_TSF_DBG_FS); \
-})
+bool hdd_tsf_is_tx_set(struct hdd_context *hdd);
+/**
+ * hdd_tsf_is_rx_set() - check ini configuration
+ * @hdd: pointer to hdd context
+ *
+ * This function checks tsf configuration for ptp on rx
+ *
+ * Return: true on enable, false on disable
+ */
+bool hdd_tsf_is_rx_set(struct hdd_context *hdd);
+/**
+ * hdd_tsf_is_raw_set() - check ini configuration
+ * @hdd: pointer to hdd context
+ *
+ * This function checks tsf configuration for ptp on raw
+ *
+ * Return: true on enable, false on disable
+ */
+bool hdd_tsf_is_raw_set(struct hdd_context *hdd);
+/**
+ * hdd_tsf_is_dbg_fs_set() - check ini configuration
+ * @hdd: pointer to hdd context
+ *
+ * This function checks tsf configuration for ptp on dbg fs
+ *
+ * Return: true on enable, false on disable
+ */
+bool hdd_tsf_is_dbg_fs_set(struct hdd_context *hdd);
 
 /**
  * hdd_start_tsf_sync() - start tsf sync
@@ -255,6 +268,17 @@ int hdd_tx_timestamp(qdf_nbuf_t netbuf, uint64_t target_time);
  * Return: Describe the execute result of this routine
  */
 int hdd_rx_timestamp(qdf_nbuf_t netbuf, uint64_t target_time);
+/**
+ * hdd_capture_req_timer_expired_handler() - capture req timer handler
+ * @arg: pointer to a adapter
+ *
+ * This function set a timeout handler for TSF capture timer.
+ *
+ * Return: none
+ */
+
+void hdd_capture_req_timer_expired_handler(void *arg);
+
 #else
 static inline int hdd_start_tsf_sync(struct hdd_adapter *adapter)
 {
@@ -284,6 +308,11 @@ static inline
 int hdd_rx_timestamp(qdf_nbuf_t netbuf, uint64_t target_time)
 {
 	return -ENOTSUPP;
+}
+
+static inline
+void hdd_capture_req_timer_expired_handler(void *arg)
+{
 }
 #endif
 

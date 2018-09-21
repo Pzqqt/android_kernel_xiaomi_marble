@@ -2209,9 +2209,11 @@ cppflags-$(CONFIG_ATH_PCIE_ACCESS_DEBUG) += -DCONFIG_ATH_PCIE_ACCESS_DEBUG
 # Enable feature support for Linux version QCMBR
 cppflags-$(CONFIG_LINUX_QCMBR) += -DLINUX_QCMBR
 
-# Enable featue sync tsf between multi devices
+# Enable feature sync tsf between multi devices
 cppflags-$(CONFIG_WLAN_SYNC_TSF) += -DWLAN_FEATURE_TSF
 cppflags-$(CONFIG_WLAN_SYNC_TSF_PLUS) += -DWLAN_FEATURE_TSF_PLUS
+# Enable feature sync tsf for chips based on Adrastea arch
+cppflags-$(CONFIG_WLAN_SYNC_TSF_PLUS_NOIRQ) += -DWLAN_FEATURE_TSF_PLUS_NOIRQ
 
 cppflags-$(CONFIG_ATH_PROCFS_DIAG_SUPPORT) += -DCONFIG_ATH_PROCFS_DIAG_SUPPORT
 

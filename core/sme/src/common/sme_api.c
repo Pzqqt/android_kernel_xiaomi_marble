@@ -5499,9 +5499,9 @@ QDF_STATUS sme_reset_tsfcb(tHalHandle h_hal)
 	return status;
 }
 
-#ifdef WLAN_FEATURE_TSF
+#if defined(WLAN_FEATURE_TSF) && !defined(WLAN_FEATURE_TSF_PLUS_NOIRQ)
 /*
- * sme_set_tsf_gpio() - set gpio pin that be toggled when capture tef
+ * sme_set_tsf_gpio() - set gpio pin that be toggled when capture tsf
  * @h_hal: Handler return by mac_open
  * @pinvalue: gpio pin id
  *

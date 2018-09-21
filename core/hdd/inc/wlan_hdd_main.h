@@ -1359,6 +1359,7 @@ struct hdd_adapter {
 	/* tsf value received from firmware */
 	uint64_t cur_target_time;
 	uint64_t tsf_sync_soc_timer;
+	qdf_mc_timer_t host_capture_req_timer;
 #ifdef WLAN_FEATURE_TSF_PLUS
 	/* spin lock for read/write timestamps */
 	qdf_spinlock_t host_target_sync_lock;

@@ -80,6 +80,11 @@ ifeq ($(CONFIG_ARCH_MSM8917), y)
 	endif
 endif
 
+ifeq ($(CONFIG_ARCH_QCS405), y)
+	CONFIG_WLAN_SYNC_TSF_PLUS := y
+	CONFIG_WLAN_SYNC_TSF_PLUS_NOIRQ := y
+endif
+
 #Flag to enable Legacy Fast Roaming2(LFR2)
 CONFIG_QCACLD_WLAN_LFR2 := y
 #Flag to enable Legacy Fast Roaming3(LFR3)
