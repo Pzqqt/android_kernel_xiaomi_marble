@@ -4569,7 +4569,7 @@ struct wmi_host_per_chain_rssi_stats {
  */
 typedef struct {
 	wmi_host_mac_addr peer_macaddr;
-	uint32_t  peer_rssi;
+	int8_t  peer_rssi;
 	uint32_t  peer_rssi_seq_num;
 	uint32_t  peer_tx_rate;
 	uint32_t  peer_rx_rate;
@@ -5274,6 +5274,7 @@ typedef enum {
 	wmi_service_nan_sap_support,
 	wmi_service_ndi_sap_support,
 	wmi_service_nan_disable_support,
+	wmi_service_hw_db2dbm_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
