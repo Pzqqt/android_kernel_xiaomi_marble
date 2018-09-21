@@ -1043,6 +1043,9 @@ struct dp_pdev {
 	/* PDEV Id */
 	int pdev_id;
 
+	/* LMAC Id */
+	int lmac_id;
+
 	/* TXRX SOC handle */
 	struct dp_soc *soc;
 

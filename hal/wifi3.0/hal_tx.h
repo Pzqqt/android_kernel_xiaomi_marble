@@ -461,7 +461,7 @@ static inline void hal_tx_desc_sync(void *hal_tx_desc_cached,
 				    void *hw_desc)
 {
 	qdf_mem_copy((hw_desc + sizeof(struct tlv_32_hdr)),
-			hal_tx_desc_cached, 20);
+			hal_tx_desc_cached, HAL_TX_DESC_LEN_BYTES);
 }
 
 /*---------------------------------------------------------------------------

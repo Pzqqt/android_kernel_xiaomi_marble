@@ -892,6 +892,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 							" is_active = %d"
 							" is_bss = %d"
 							" ast_idx = %d"
+							" ast_hash = %d"
 							" pdev_id = %d"
 							" vdev_id = %d",
 							++num_entries,
@@ -902,6 +903,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 							ase->is_active,
 							ase->is_bss,
 							ase->ast_idx,
+							ase->ast_hash_value,
 							ase->pdev_id,
 							ase->vdev_id);
 				}
@@ -2951,6 +2953,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	pdev->soc = soc;
 	pdev->ctrl_pdev = ctrl_pdev;
 	pdev->pdev_id = pdev_id;
+	pdev->lmac_id = wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, pdev_id);
 	soc->pdev_list[pdev_id] = pdev;
 	soc->pdev_count++;
 
