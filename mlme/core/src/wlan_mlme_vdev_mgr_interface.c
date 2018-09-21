@@ -97,7 +97,8 @@ static QDF_STATUS sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 					   uint16_t event_data_len,
 					   void *event_data)
 {
-	return QDF_STATUS_SUCCESS;
+	return lim_sta_mlme_vdev_start_send(vdev_mlme, event_data_len,
+					    event_data);
 }
 
 /**
@@ -118,24 +119,7 @@ static QDF_STATUS sta_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 }
 
 /**
- * sta_mlme_vdev_start_continue() - MLME vdev restart send
- * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
- *
- * This function is called to initiate actions of VDEV.start
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS sta_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
-					       uint16_t event_data_len,
-					       void *event_data)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * sta_mlme_vdev_start_continue() - MLME vdev start callback
+ * sta_mlme_vdev_start_connection() - MLME vdev start callback
  * @vdev_mlme: vdev mlme object
  * @event_data_len: event data length
  * @event_data: event data
@@ -289,7 +273,7 @@ static QDF_STATUS ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 }
 
 /**
- * ap_mlme_vdev_start_continue () - vdev start rsp calback
+ * mlme_start_continue () - vdev start rsp calback
  * @vdev_mlme: vdev mlme object
  * @data_len: event data length
  * @data: event data
@@ -298,10 +282,10 @@ static QDF_STATUS ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
-					      uint16_t data_len, void *data)
+static QDF_STATUS vdevmgr_mlme_start_continue(struct vdev_mlme_obj *vdev_mlme,
+				      uint16_t data_len, void *data)
 {
-	return wma_ap_mlme_vdev_start_continue(vdev_mlme, data_len, data);
+	return wma_mlme_vdev_start_continue(vdev_mlme, data_len, data);
 }
 
 /**
@@ -688,7 +672,7 @@ static QDF_STATUS ap_vdev_dfs_cac_timer_stop(struct vdev_mlme_obj *vdev_mlme,
 static struct vdev_mlme_ops sta_mlme_ops = {
 	.mlme_vdev_start_send = sta_mlme_vdev_start_send,
 	.mlme_vdev_restart_send = sta_mlme_vdev_restart_send,
-	.mlme_vdev_start_continue = sta_mlme_vdev_start_continue,
+	.mlme_vdev_start_continue = vdevmgr_mlme_start_continue,
 	.mlme_vdev_sta_conn_start = sta_mlme_vdev_start_connection,
 	.mlme_vdev_up_send = sta_mlme_vdev_up_send,
 	.mlme_vdev_notify_up_complete = sta_mlme_vdev_notify_up_complete,
@@ -737,7 +721,7 @@ static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_start_send = ap_mlme_vdev_start_send,
 	.mlme_vdev_restart_send = ap_mlme_vdev_restart_send,
 	.mlme_vdev_stop_start_send = ap_mlme_vdev_stop_start_send,
-	.mlme_vdev_start_continue = ap_mlme_vdev_start_continue,
+	.mlme_vdev_start_continue = vdevmgr_mlme_start_continue,
 	.mlme_vdev_start_req_failed = ap_mlme_vdev_start_req_failed,
 	.mlme_vdev_up_send = ap_mlme_vdev_up_send,
 	.mlme_vdev_notify_up_complete = ap_mlme_vdev_notify_up_complete,
