@@ -1117,4 +1117,32 @@ void lim_send_csa_restart_req(tpAniSirGlobal mac_ctx, uint8_t vdev_id);
 void lim_process_mlm_start_req(tpAniSirGlobal mac_ctx,
 					  tLimMlmStartReq *mlm_start_req);
 
+/**
+ * lim_process_mlm_join_req() - process mlm join request.
+ *
+ * @mac_ctx:    Pointer to Global MAC structure
+ * @msg:        Pointer to the MLM message buffer
+ *
+ * This function is called to process MLM_JOIN_REQ message
+ * from SME. It does following:
+ * 1) Initialize LIM, HAL, DPH
+ * 2) Configure the BSS for which the JOIN REQ was received
+ *   a) Send WMA_ADD_BSS_REQ to HAL -
+ *   This will identify the BSS that we are interested in
+ *   --AND--
+ *   Add a STA entry for the AP (in a STA context)
+ *   b) Wait for WMA_ADD_BSS_RSP
+ *   c) Send WMA_ADD_STA_REQ to HAL
+ *   This will add the "local STA" entry to the STA table
+ * 3) Continue as before, i.e,
+ *   a) Send a PROBE REQ
+ *   b) Wait for PROBE RSP/BEACON containing the SSID that
+ *   we are interested in
+ *   c) Then start an AUTH seq
+ *   d) Followed by the ASSOC seq
+ *
+ * @Return: None
+ */
+void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx,
+			      tLimMlmJoinReq *mlm_join_req);
 #endif /* __LIM_TYPES_H */

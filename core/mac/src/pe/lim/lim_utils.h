@@ -1510,6 +1510,21 @@ void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session);
  */
 QDF_STATUS lim_ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *event);
+
+/**
+ * lim_sta_mlme_vdev_start_send() - Invokes VDEV start operation
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes VDEV start operation
+ *
+ * Return: SUCCESS on successful completion of start operation
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS lim_sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
+					uint16_t data_len, void *data);
+
 /*
  * lim_ap_mlme_vdev_update_beacon() - Updates beacon
  * @vdev_mlme_obj:  VDEV MLME comp object

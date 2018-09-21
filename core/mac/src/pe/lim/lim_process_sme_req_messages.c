@@ -1205,6 +1205,33 @@ static inline void lim_update_sae_config(tpPESession session,
 {}
 #endif
 
+/**
+ * lim_send_join_req() - send vdev start request
+ *@session: pe session
+ *@mlm_join_req: join req
+ *
+ * Return: QDF_STATUS
+ */
+
+#ifdef CONFIG_VDEV_SM
+static QDF_STATUS lim_send_join_req(tpPESession session,
+				    tLimMlmJoinReq *mlm_join_req)
+{
+	return wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					     WLAN_VDEV_SM_EV_START,
+					     sizeof(*mlm_join_req),
+					     mlm_join_req);
+}
+#else
+static QDF_STATUS lim_send_join_req(tpPESession session,
+				    tLimMlmJoinReq *mlm_join_req)
+{
+	lim_process_mlm_join_req(session->mac_ctx, mlm_join_req);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 
 /**
  * __lim_process_sme_join_req() - process SME_JOIN_REQ message
@@ -1686,8 +1713,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		session->isOSENConnection = sme_join_req->isOSENConnection;
 
 		/* Issue LIM_MLM_JOIN_REQ to MLM */
-		lim_post_mlm_message(mac_ctx, LIM_MLM_JOIN_REQ,
-				     (uint32_t *) mlm_join_req);
+		lim_send_join_req(session, mlm_join_req);
 		return;
 
 	} else {

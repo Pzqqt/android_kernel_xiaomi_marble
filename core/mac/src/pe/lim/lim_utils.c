@@ -8414,6 +8414,23 @@ void lim_process_ap_ecsa_timeout(void *data)
 }
 
 #ifdef CONFIG_VDEV_SM
+QDF_STATUS lim_sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
+					uint16_t data_len, void *data)
+{
+	tpAniSirGlobal mac_ctx;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		pe_err("mac_ctx is NULL");
+		if (data)
+			qdf_mem_free(data);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	lim_process_mlm_join_req(mac_ctx, (tLimMlmJoinReq *)data);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session)
 {

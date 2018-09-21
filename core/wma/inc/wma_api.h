@@ -444,8 +444,22 @@ bool wma_get_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface);
  * Return: SUCCESS on successful completion of start response operation
  *         FAILURE, if it fails due to any
  */
-QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
+QDF_STATUS wma_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 					   uint16_t data_len, void *data);
+
+/**
+ * wma_sta_vdev_up_send - Send VDEV UP command
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes VDEV UP Command
+ *
+ * Return: SUCCESS on successful completion of start response operation
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
+				 uint16_t data_len, void *data);
 
 /**
  * wma_ap_mlme_vdev_stop_continue - VDEV stop response handling

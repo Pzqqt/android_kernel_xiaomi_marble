@@ -4798,6 +4798,20 @@ QDF_STATUS wma_get_roam_scan_stats(WMA_HANDLE handle,
 }
 
 #ifdef CONFIG_VDEV_SM
+
+QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
+				uint16_t data_len, void *data)
+{
+	struct vdev_up_params *param;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	param = (struct vdev_up_params *)data;
+	wma_send_vdev_up_to_fw(wma, param,
+			       wma->interfaces[param->vdev_id].bssid);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 bool wma_get_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface)
 {
 	if (!iface)
@@ -4806,8 +4820,8 @@ bool wma_get_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface)
 	return ap_mlme_is_hidden_ssid_restart_in_progress(iface->vdev);
 }
 
-static QDF_STATUS
-wma_ap_vdev_send_start_resp(tp_wma_handle wma, tpAddBssParams add_bss)
+static QDF_STATUS wma_vdev_send_start_resp(tp_wma_handle wma,
+					   tpAddBssParams add_bss)
 {
 	WMA_LOGD(FL("Sending add bss rsp to umac(vdev %d status %d)"),
 		 add_bss->bssIdx, add_bss->status);
@@ -4816,8 +4830,8 @@ wma_ap_vdev_send_start_resp(tp_wma_handle wma, tpAddBssParams add_bss)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
-					   uint16_t data_len, void *data)
+QDF_STATUS wma_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
+					uint16_t data_len, void *data)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -4831,7 +4845,7 @@ QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 		wma_send_msg(wma, WMA_HIDDEN_SSID_RESTART_RSP, data, 0);
 		ap_mlme_set_hidden_ssid_restart_in_progress(vdev, false);
 	} else {
-		status = wma_ap_vdev_send_start_resp(wma, (tpAddBssParams)data);
+		status = wma_vdev_send_start_resp(wma, (tpAddBssParams)data);
 	}
 
 	return status;
@@ -4879,7 +4893,7 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 		WMA_LOGE(FL("Failed to send vdev stop for vdev id %d"),
 			 bss_params->bssIdx);
 
-	return wma_ap_vdev_send_start_resp(wma, bss_params);
+	return wma_vdev_send_start_resp(wma, bss_params);
 }
 
 #else

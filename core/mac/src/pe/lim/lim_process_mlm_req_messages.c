@@ -41,7 +41,6 @@
 #include "lim_process_fils.h"
 #include "wlan_mlme_public_struct.h"
 
-static void lim_process_mlm_join_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_auth_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_assoc_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_disassoc_req(tpAniSirGlobal, uint32_t *);
@@ -117,9 +116,6 @@ void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx,
 				  struct scheduler_msg *msg)
 {
 	switch (msg->type) {
-	case LIM_MLM_JOIN_REQ:
-		lim_process_mlm_join_req(mac_ctx, msg->bodyptr);
-		break;
 	case LIM_MLM_AUTH_REQ:
 		lim_process_mlm_auth_req(mac_ctx, msg->bodyptr);
 		break;
@@ -852,7 +848,7 @@ error:
  * lim_process_mlm_join_req() - process mlm join request.
  *
  * @mac_ctx:    Pointer to Global MAC structure
- * @msg:        Pointer to the MLM message buffer
+ * @mlm_join_req:        Pointer to the mlme join request
  *
  * This function is called to process MLM_JOIN_REQ message
  * from SME. It does following:
@@ -874,13 +870,14 @@ error:
  *
  * @Return: None
  */
-static void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
+void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx,
+			      tLimMlmJoinReq *mlm_join_req)
 {
 	tLimMlmJoinCnf mlmjoin_cnf;
 	uint8_t sessionid;
 	tpPESession session;
 
-	sessionid = ((tpLimMlmJoinReq) msg)->sessionId;
+	sessionid = mlm_join_req->sessionId;
 
 	session = pe_find_session_by_session_id(mac_ctx, sessionid);
 	if (NULL == session) {
@@ -892,12 +889,12 @@ static void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	     ((session->limMlmState == eLIM_MLM_IDLE_STATE) ||
 	     (session->limMlmState == eLIM_MLM_JOINED_STATE)) &&
 	     (SIR_MAC_GET_ESS
-		(((tpLimMlmJoinReq) msg)->bssDescription.capabilityInfo) !=
-		SIR_MAC_GET_IBSS(((tpLimMlmJoinReq) msg)->bssDescription.
+		(mlm_join_req->bssDescription.capabilityInfo) !=
+		SIR_MAC_GET_IBSS(mlm_join_req->bssDescription.
 			capabilityInfo))) {
 		/* Hold onto Join request parameters */
 
-		session->pLimMlmJoinReq = (tpLimMlmJoinReq) msg;
+		session->pLimMlmJoinReq = mlm_join_req;
 		if (is_lim_session_off_channel(mac_ctx, sessionid)) {
 			pe_debug("SessionId:%d LimSession is on OffChannel",
 				sessionid);
@@ -933,7 +930,7 @@ static void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	}
 
 error:
-	qdf_mem_free(msg);
+	qdf_mem_free(mlm_join_req);
 	if (session != NULL)
 		session->pLimMlmJoinReq = NULL;
 	mlmjoin_cnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;

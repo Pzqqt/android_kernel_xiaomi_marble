@@ -1126,7 +1126,9 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 #endif
-
+#ifdef CONFIG_VDEV_SM
+	enum wlan_vdev_sm_evt  event;
+#endif
 	if (!psoc) {
 		WMA_LOGE("%s: psoc is NULL", __func__);
 		return -EINVAL;
@@ -1317,8 +1319,12 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			}
 		}
 #ifdef CONFIG_VDEV_SM
+		if (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id))
+			event = WLAN_VDEV_SM_EV_RESTART_RESP;
+		else
+			event = WLAN_VDEV_SM_EV_START_RESP;
 		wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
-					      WLAN_VDEV_SM_EV_RESTART_RESP,
+					      event,
 					      sizeof(*params), params);
 #else
 		wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
@@ -5166,8 +5172,14 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 
 	param.vdev_id = params->smesessionId;
 	param.assoc_id = params->assocId;
-	if (wma_send_vdev_up_to_fw(wma, &param, params->bssId) !=
-	    QDF_STATUS_SUCCESS) {
+#ifdef CONFIG_VDEV_SM
+	status = wlan_vdev_mlme_sm_deliver_evt(wma->interfaces[param.vdev_id].vdev,
+					       WLAN_VDEV_SM_EV_START_SUCCESS,
+					       sizeof(param), (void *)&param);
+#else
+	status = wma_send_vdev_up_to_fw(wma, &param, params->bssId);
+#endif
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("%s: Failed to send vdev up cmd: vdev %d bssid %pM",
 			 __func__, params->smesessionId, params->bssId);
 		policy_mgr_set_do_hw_mode_change_flag(
