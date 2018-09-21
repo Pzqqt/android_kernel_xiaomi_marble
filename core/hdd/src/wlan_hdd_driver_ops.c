@@ -365,6 +365,18 @@ static void hdd_soc_load_unlock(struct device *dev)
 	mutex_unlock(&hdd_init_deinit_lock);
 }
 
+/**
+ * hdd_soc_probe() - perform SoC probe
+ * @dev: kernel device being probed
+ * @bdev: bus device structure
+ * @bid: bus identifier for shared busses
+ * @bus_type: underlying bus type
+ *
+ * A SoC probe indicates new SoC hardware has become available and needs to be
+ * initialized.
+ *
+ * Return: Errno
+ */
 static int hdd_soc_probe(struct device *dev,
 			 void *bdev,
 			 const struct hif_bus_id *bid,
@@ -408,9 +420,27 @@ unlock:
 	return check_for_probe_defer(errno);
 }
 
-static int hdd_soc_reinit(struct device *dev, void *bdev,
-			  const struct hif_bus_id *bid,
-			  enum qdf_bus_type bus_type)
+/**
+ * hdd_soc_recovery_reinit() - perform PDR/SSR SoC reinit
+ * @dev: the kernel device being re-initialized
+ * @bdev: bus device structure
+ * @bid: bus identifier for shared busses
+ * @bus_type: underlying bus type
+ *
+ * When communication with firmware breaks down, a SoC recovery process kicks in
+ * with two phases: shutdown and reinit.
+ *
+ * SSR reinit is similar to a 'probe' but happens in response to an SSR
+ * shutdown. The idea is to re-initialize the SoC to as close to its old,
+ * pre-communications-breakdown configuration as possible. This is completely
+ * transparent from a userspace point of view.
+ *
+ * Return: Errno
+ */
+static int hdd_soc_recovery_reinit(struct device *dev,
+				   void *bdev,
+				   const struct hif_bus_id *bid,
+				   enum qdf_bus_type bus_type)
 {
 	int errno;
 
@@ -450,37 +480,15 @@ unlock:
 }
 
 /**
- * wlan_hdd_probe() - handles probe request
+ * hdd_soc_remove() - perform SoC remove
+ * @dev: the kernel device being removed
  *
- * This function is called to probe the wlan driver
- *
- * @dev: wlan device structure
- * @bdev: bus device structure
- * @bid: bus identifier for shared busses
- * @bus_type: underlying bus type
- * @reinit: true if we are reinitiallizing the driver after a subsystem restart
- *
- * Return: 0 on successful probe
- */
-static int wlan_hdd_probe(struct device *dev, void *bdev,
-			  const struct hif_bus_id *bid,
-			  enum qdf_bus_type bus_type, bool reinit)
-{
-	if (reinit)
-		return hdd_soc_reinit(dev, bdev, bid, bus_type);
-	else
-		return hdd_soc_probe(dev, bdev, bid, bus_type);
-}
-
-/**
- * wlan_hdd_remove() - wlan_hdd_remove
- *
- * This function is called by the platform driver to remove the
- * driver
+ * A SoC remove indicates the attached SoC hardware is about to go away and
+ * needs to be cleaned up.
  *
  * Return: void
  */
-static void wlan_hdd_remove(struct device *dev)
+static void hdd_soc_remove(struct device *dev)
 {
 	pr_info("%s: Removing driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
@@ -554,28 +562,35 @@ static void hdd_send_hang_reason(void)
 }
 
 /**
- * wlan_hdd_shutdown() - wlan_hdd_shutdown
+ * hdd_soc_recovery_shutdown() - perform PDR/SSR SoC shutdown
  *
- * This is routine is called by platform driver to shutdown the
- * driver
+ * When communication with firmware breaks down, a SoC recovery process kicks in
+ * with two phases: shutdown and reinit.
+ *
+ * SSR shutdown is similar to a 'remove' but without communication with
+ * firmware. The idea is to retain as much SoC configuration as possible, so it
+ * can be re-initialized to the same state after a reset. This is completely
+ * transparent from a userspace point of view.
  *
  * Return: void
  */
-static void wlan_hdd_shutdown(void)
+static void hdd_soc_recovery_shutdown(void)
 {
-	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-
-	if (!hif_ctx) {
-		hdd_err("Failed to get HIF context, ignore SSR shutdown");
-		return;
-	}
-	/* mask the host controller interrupts */
-	hif_mask_interrupt_call(hif_ctx);
+	void *hif_ctx;
 
 	if (cds_is_load_or_unload_in_progress()) {
 		hdd_err("Load/unload in progress, ignore SSR shutdown");
 		return;
 	}
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (!hif_ctx) {
+		hdd_err("Failed to get HIF context, ignore SSR shutdown");
+		return;
+	}
+
+	/* mask the host controller interrupts */
+	hif_mask_interrupt_call(hif_ctx);
 
 	/*
 	 * Force Complete all the wait events before shutdown.
@@ -1271,56 +1286,56 @@ static int wlan_hdd_runtime_resume(struct device *dev)
  * Return: 0 on success
  */
 static int wlan_hdd_pld_probe(struct device *dev,
-		   enum pld_bus_type pld_bus_type,
-		   void *bdev, void *id)
+			      enum pld_bus_type pld_bus_type,
+			      void *bdev,
+			      void *id)
 {
-	enum qdf_bus_type bus_type;
+	enum qdf_bus_type bus_type = to_bus_type(pld_bus_type);
 
-	bus_type = to_bus_type(pld_bus_type);
 	if (bus_type == QDF_BUS_TYPE_NONE) {
-		hdd_err("Invalid bus type %d->%d",
-			pld_bus_type, bus_type);
+		hdd_err("Invalid bus type %d->%d", pld_bus_type, bus_type);
 		return -EINVAL;
 	}
 
-	return wlan_hdd_probe(dev, bdev, id, bus_type, false);
+	return hdd_soc_probe(dev, bdev, id, bus_type);
 }
 
 /**
  * wlan_hdd_pld_remove() - remove function registered to PLD
- * @dev: device
+ * @dev: device to remove
  * @pld_bus_type: PLD bus type
  *
  * Return: void
  */
-static void wlan_hdd_pld_remove(struct device *dev,
-		     enum pld_bus_type bus_type)
+static void wlan_hdd_pld_remove(struct device *dev, enum pld_bus_type bus_type)
 {
 	hdd_enter();
 
-	wlan_hdd_remove(dev);
+	hdd_soc_remove(dev);
 
 	hdd_exit();
 }
 
 /**
  * wlan_hdd_pld_shutdown() - shutdown function registered to PLD
- * @dev: device
+ * @dev: device to shutdown
  * @pld_bus_type: PLD bus type
  *
  * Return: void
  */
 static void wlan_hdd_pld_shutdown(struct device *dev,
-		       enum pld_bus_type bus_type)
+				  enum pld_bus_type bus_type)
 {
 	hdd_enter();
+
 	mutex_lock(&hdd_init_deinit_lock);
 	hdd_start_driver_ops_timer(eHDD_DRV_OP_SHUTDOWN);
 
-	wlan_hdd_shutdown();
+	hdd_soc_recovery_shutdown();
 
 	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
+
 	hdd_exit();
 }
 
@@ -1334,19 +1349,18 @@ static void wlan_hdd_pld_shutdown(struct device *dev,
  * Return: 0 on success
  */
 static int wlan_hdd_pld_reinit(struct device *dev,
-		    enum pld_bus_type pld_bus_type,
-		    void *bdev, void *id)
+			       enum pld_bus_type pld_bus_type,
+			       void *bdev,
+			       void *id)
 {
-	enum qdf_bus_type bus_type;
+	enum qdf_bus_type bus_type = to_bus_type(pld_bus_type);
 
-	bus_type = to_bus_type(pld_bus_type);
 	if (bus_type == QDF_BUS_TYPE_NONE) {
-		hdd_err("Invalid bus type %d->%d",
-			pld_bus_type, bus_type);
+		hdd_err("Invalid bus type %d->%d", pld_bus_type, bus_type);
 		return -EINVAL;
 	}
 
-	return wlan_hdd_probe(dev, bdev, id, bus_type, true);
+	return hdd_soc_recovery_reinit(dev, bdev, id, bus_type);
 }
 
 /**
