@@ -1131,6 +1131,19 @@ static void mlme_init_wmm_in_cfg(struct wlan_objmgr_psoc *psoc,
 	wmm_params->max_sp_length = cfg_default(CFG_MAX_SP_LENGTH);
 	wmm_params->wsm_enabled = cfg_default(CFG_WSM_ENABLED);
 	wmm_params->edca_profile = cfg_default(CFG_EDCA_PROFILE);
+
+	wmm_params->ac_vo.dir_ac_vo = cfg_get(psoc, CFG_QOS_WMM_DIR_AC_VO);
+	wmm_params->ac_vo.nom_msdu_size_ac_vo =
+			cfg_get(psoc, CFG_QOS_WMM_NOM_MSDU_SIZE_AC_VO);
+	wmm_params->ac_vo.mean_data_rate_ac_vo =
+			cfg_get(psoc, CFG_QOS_WMM_MEAN_DATA_RATE_AC_VO);
+	wmm_params->ac_vo.min_phy_rate_ac_vo =
+			cfg_get(psoc, CFG_QOS_WMM_MIN_PHY_RATE_AC_VO);
+	wmm_params->ac_vo.sba_ac_vo = cfg_get(psoc, CFG_QOS_WMM_SBA_AC_VO);
+	wmm_params->ac_vo.uapsd_vo_srv_intv =
+			cfg_get(psoc, CFG_QOS_WMM_UAPSD_VO_SRV_INTV);
+	wmm_params->ac_vo.uapsd_vo_sus_intv =
+			cfg_get(psoc, CFG_QOS_WMM_UAPSD_VO_SUS_INTV);
 }
 
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
