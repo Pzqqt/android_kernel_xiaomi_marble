@@ -307,10 +307,10 @@ static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	if (LIM_IS_AP_ROLE(psessionEntry) ||
 		LIM_IS_IBSS_ROLE(psessionEntry)) {
 		enabled = pMac->mlme_cfg->wmm_params.wme_enabled;
-		psessionEntry->limWmeEnabled = (enabled) ? 1 : 0;
+		psessionEntry->limWmeEnabled = enabled;
 	}
 	enabled = pMac->mlme_cfg->wmm_params.wsm_enabled;
-	psessionEntry->limWsmEnabled = (enabled) ? 1 : 0;
+	psessionEntry->limWsmEnabled = enabled;
 
 	if ((!psessionEntry->limWmeEnabled) && (psessionEntry->limWsmEnabled)) {
 		pe_err("Can't enable WSM without WME");
@@ -319,7 +319,7 @@ static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	/* In STA , this parameter is filled during the join request */
 	if (LIM_IS_AP_ROLE(psessionEntry) || LIM_IS_IBSS_ROLE(psessionEntry)) {
 		enabled = pMac->mlme_cfg->wmm_params.qos_enabled;
-		psessionEntry->limQosEnabled = (enabled) ? 1 : 0;
+		psessionEntry->limQosEnabled = enabled;
 	}
 	psessionEntry->limHcfEnabled = pMac->mlme_cfg->feature_flags.enable_hcf;
 

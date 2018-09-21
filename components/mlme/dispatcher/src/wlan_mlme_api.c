@@ -349,6 +349,7 @@ wlan_mlme_get_model_number(struct wlan_objmgr_psoc *psoc,
 	*plen = qdf_str_lcopy(pbuf,
 			      mlme_obj->cfg.product_details.model_number,
 			      *plen);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -363,7 +364,6 @@ wlan_mlme_get_model_name(struct wlan_objmgr_psoc *psoc,
 		mlme_err("Failed to get MLME Obj");
 		return QDF_STATUS_E_FAILURE;
 	}
-
 	*plen = qdf_str_lcopy(pbuf,
 			      mlme_obj->cfg.product_details.model_name,
 			      *plen);
@@ -403,6 +403,117 @@ wlan_mlme_get_manufacture_product_name(struct wlan_objmgr_psoc *psoc,
 	*plen = qdf_str_lcopy(pbuf,
 			mlme_obj->cfg.product_details.manufacture_product_name,
 			*plen);
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_wmm_dir_ac_vo(struct wlan_objmgr_psoc *psoc,
+				       uint8_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*value = mlme_obj->cfg.wmm_params.ac_vo.dir_ac_vo;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+QDF_STATUS wlan_mlme_get_wmm_nom_msdu_size_ac_vo(struct wlan_objmgr_psoc *psoc,
+						 uint16_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.wmm_params.ac_vo.nom_msdu_size_ac_vo;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+wlan_mlme_get_wmm_mean_data_rate_ac_vo(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("failed to get mlme obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.wmm_params.ac_vo.mean_data_rate_ac_vo;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_wmm_min_phy_rate_ac_vo(struct wlan_objmgr_psoc *psoc,
+						uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("failed to get mlme obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.wmm_params.ac_vo.min_phy_rate_ac_vo;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_wmm_sba_ac_vo(struct wlan_objmgr_psoc *psoc,
+				       uint16_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.wmm_params.ac_vo.sba_ac_vo;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_wmm_uapsd_vo_srv_intv(struct wlan_objmgr_psoc *psoc,
+					       uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.wmm_params.ac_vo.uapsd_vo_srv_intv;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_wmm_uapsd_vo_sus_intv(struct wlan_objmgr_psoc *psoc,
+					       uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.wmm_params.ac_vo.uapsd_vo_sus_intv;
+
 	return QDF_STATUS_SUCCESS;
 }
 

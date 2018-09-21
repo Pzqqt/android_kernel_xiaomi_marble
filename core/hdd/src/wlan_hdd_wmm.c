@@ -53,6 +53,7 @@
 #include <wlan_hdd_softap_tx_rx.h>
 #include <cds_sched.h>
 #include "sme_api.h"
+#include "wlan_mlme_ucfg_api.h"
 
 #define WLAN_HDD_MAX_DSCP 0x3f
 
@@ -1015,6 +1016,12 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	struct sme_qos_wmmtspecinfo qosInfo;
 	struct hdd_context *hdd_ctx;
 	mac_handle_t mac_handle;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t dir_ac = 0;
+	uint16_t nom_msdu_size_ac = 0;
+	uint32_t rate_ac = 0;
+	uint16_t sba_ac = 0;
+	uint32_t uapsd_value = 0;
 
 	hdd_debug("Entered, context %pK", pQosContext);
 
@@ -1059,22 +1066,64 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 				((WLAN_HDD_GET_CTX(adapter))->config->
 				 UapsdMask & SME_QOS_UAPSD_VO) ? 1 : 0;
 		}
-		qosInfo.ts_info.direction =
-			(WLAN_HDD_GET_CTX(adapter))->config->InfraDirAcVo;
+		status = ucfg_mlme_get_wmm_dir_ac_vo(hdd_ctx->psoc,
+						     &dir_ac);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get infra_dir_ac_vo failed");
+			return;
+		}
+		qosInfo.ts_info.direction = dir_ac;
+
 		qosInfo.ts_info.tid = 255;
-		qosInfo.mean_data_rate =
-			(WLAN_HDD_GET_CTX(adapter))->config->
-			InfraMeanDataRateAcVo;
-		qosInfo.min_phy_rate =
-			(WLAN_HDD_GET_CTX(adapter))->config->InfraMinPhyRateAcVo;
-		qosInfo.min_service_interval =
-			(WLAN_HDD_GET_CTX(adapter))->config->InfraUapsdVoSrvIntv;
-		qosInfo.nominal_msdu_size =
-			(WLAN_HDD_GET_CTX(adapter))->config->InfraNomMsduSizeAcVo;
-		qosInfo.surplus_bw_allowance =
-			(WLAN_HDD_GET_CTX(adapter))->config->InfraSbaAcVo;
-		qosInfo.suspension_interval =
-			(WLAN_HDD_GET_CTX(adapter))->config->InfraUapsdVoSuspIntv;
+
+		status = ucfg_mlme_get_wmm_uapsd_vo_srv_intv(hdd_ctx->psoc,
+							     &uapsd_value);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Get uapsd_srv_intv failed");
+			return;
+		}
+		qosInfo.min_service_interval = uapsd_value;
+
+		status = ucfg_mlme_get_wmm_uapsd_vo_sus_intv(hdd_ctx->psoc,
+							     &uapsd_value);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Get uapsd_vo_sus_intv failed");
+			return;
+		}
+		qosInfo.suspension_interval = uapsd_value;
+
+		status = ucfg_mlme_get_wmm_mean_data_rate_ac_vo(hdd_ctx->psoc,
+								&rate_ac);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Get mean_data_rate_ac_vo failed");
+			return;
+		}
+		qosInfo.mean_data_rate = rate_ac;
+
+		status = ucfg_mlme_get_wmm_min_phy_rate_ac_vo(hdd_ctx->psoc,
+							      &rate_ac);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Get min_phy_rate_ac_vo failed");
+			return;
+		}
+		qosInfo.min_phy_rate = rate_ac;
+
+		status = ucfg_mlme_get_wmm_nom_msdu_size_ac_vo(hdd_ctx->psoc,
+							     &nom_msdu_size_ac);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Get nom_msdu_size_ac_vo failed");
+			return;
+		}
+		qosInfo.nominal_msdu_size = nom_msdu_size_ac;
+
+		status = ucfg_mlme_get_wmm_sba_ac_vo(hdd_ctx->psoc,
+						     &sba_ac);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get sba_ac_vo failed");
+			return;
+		}
+		qosInfo.surplus_bw_allowance = sba_ac;
+
 		break;
 	case SME_AC_VI:
 		qosInfo.ts_info.up = SME_QOS_WMM_UP_VI;
@@ -1818,6 +1867,8 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 {
 	uint8_t uapsdMask;
 	QDF_STATUS status;
+	uint32_t srv_value = 0;
+	uint32_t sus_value = 0;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* when we associate we need to notify TL if it needs to
@@ -1847,15 +1898,26 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 	hdd_debug("U-APSD mask is 0x%02x", (int)uapsdMask);
 
 	if (uapsdMask & HDD_AC_VO) {
-		status =
-			sme_enable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR
-							    (adapter))->conn_info.staId[0],
-						   SME_AC_VO, 7, 7,
-						   hdd_ctx->config->InfraUapsdVoSrvIntv,
-						   hdd_ctx->config->InfraUapsdVoSuspIntv,
-						   SME_QOS_WMM_TS_DIR_BOTH, 1,
-						   adapter->session_id,
-						   hdd_ctx->config->DelayedTriggerFrmInt);
+		status = ucfg_mlme_get_wmm_uapsd_vo_srv_intv(hdd_ctx->psoc,
+							     &srv_value);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Get uapsd_srv_intv failed");
+			return QDF_STATUS_SUCCESS;
+		}
+		status = ucfg_mlme_get_wmm_uapsd_vo_sus_intv(hdd_ctx->psoc,
+							     &sus_value);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Get uapsd_vo_sus_intv failed");
+			return QDF_STATUS_SUCCESS;
+		}
+
+		status = sme_enable_uapsd_for_ac(
+				(WLAN_HDD_GET_STATION_CTX_PTR(
+				adapter))->conn_info.staId[0],
+				SME_AC_VO, 7, 7, srv_value, sus_value,
+				SME_QOS_WMM_TS_DIR_BOTH, 1,
+				adapter->session_id,
+				hdd_ctx->config->DelayedTriggerFrmInt);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
@@ -2020,6 +2082,9 @@ QDF_STATUS hdd_wmm_get_uapsd_mask(struct hdd_adapter *adapter,
 				  uint8_t *pUapsdMask)
 {
 	uint8_t uapsdMask;
+	QDF_STATUS status;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint32_t uapsd_value = 0;
 
 	if (HDD_WMM_USER_MODE_NO_QOS ==
 	    (WLAN_HDD_GET_CTX(adapter))->config->WmmMode) {
@@ -2030,10 +2095,15 @@ QDF_STATUS hdd_wmm_get_uapsd_mask(struct hdd_adapter *adapter,
 		uapsdMask = (WLAN_HDD_GET_CTX(adapter))->config->UapsdMask;
 
 		/* disable UAPSD for any ACs with a 0 Service Interval */
-		if ((WLAN_HDD_GET_CTX(adapter))->config->
-		    InfraUapsdVoSrvIntv == 0) {
-			uapsdMask &= ~HDD_AC_VO;
+		status = ucfg_mlme_get_wmm_uapsd_vo_srv_intv(hdd_ctx->psoc,
+							     &uapsd_value);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("Get uapsd_srv_intv failed");
+			return QDF_STATUS_E_FAILURE;
 		}
+
+		if (uapsd_value == 0)
+			uapsdMask &= ~HDD_AC_VO;
 
 		if ((WLAN_HDD_GET_CTX(adapter))->config->
 		    InfraUapsdViSrvIntv == 0) {
