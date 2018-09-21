@@ -21,6 +21,7 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/types.h>
+#include <soc/snd_event.h>
 #include <dsp/audio_notifier.h>
 
 #include "core.h"
@@ -59,6 +60,7 @@
 #define LPI_GPIO_FUNC_FUNC5			"func5"
 
 static bool lpi_dev_up;
+static struct device *lpi_dev;
 
 /* The index of each function in lpi_gpio_functions[] array */
 enum lpi_gpio_func_index {
@@ -384,12 +386,14 @@ static int lpi_notifier_service_cb(struct notifier_block *this,
 			initial_boot = false;
 			break;
 		}
+		snd_event_notify(lpi_dev, SND_EVENT_DOWN);
 		lpi_dev_up = false;
 		break;
 	case AUDIO_NOTIFIER_SERVICE_UP:
 		if (initial_boot)
 			initial_boot = false;
 		lpi_dev_up = true;
+		snd_event_notify(lpi_dev, SND_EVENT_UP);
 		break;
 	default:
 		break;
@@ -400,6 +404,15 @@ static int lpi_notifier_service_cb(struct notifier_block *this,
 static struct notifier_block service_nb = {
 	.notifier_call  = lpi_notifier_service_cb,
 	.priority = -INT_MAX,
+};
+
+static void lpi_pinctrl_ssr_disable(struct device *dev, void *data)
+{
+	lpi_dev_up = false;
+}
+
+static const struct snd_event_ops lpi_pinctrl_ssr_ops = {
+	.disable = lpi_pinctrl_ssr_disable,
 };
 
 #ifdef CONFIG_DEBUG_FS
@@ -576,6 +589,7 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 		goto err_range;
 	}
 
+	lpi_dev = &pdev->dev;
 	lpi_dev_up = true;
 	ret = audio_notifier_register("lpi_tlmm", AUDIO_NOTIFIER_ADSP_DOMAIN,
 				      &service_nb);
@@ -585,8 +599,19 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 		goto err_range;
 	}
 
+	ret = snd_event_client_register(dev, &lpi_pinctrl_ssr_ops, NULL);
+	if (!ret) {
+		snd_event_notify(dev, SND_EVENT_UP);
+	} else {
+		dev_err(dev, "%s: snd_event registration failed, ret [%d]\n",
+			__func__, ret);
+		goto err_snd_evt;
+	}
+
 	return 0;
 
+err_snd_evt:
+	audio_notifier_deregister("lpi_tlmm");
 err_range:
 	gpiochip_remove(&state->chip);
 err_chip:
@@ -597,6 +622,7 @@ static int lpi_pinctrl_remove(struct platform_device *pdev)
 {
 	struct lpi_gpio_state *state = platform_get_drvdata(pdev);
 
+	snd_event_client_deregister(&pdev->dev);
 	audio_notifier_deregister("lpi_tlmm");
 	gpiochip_remove(&state->chip);
 	return 0;
