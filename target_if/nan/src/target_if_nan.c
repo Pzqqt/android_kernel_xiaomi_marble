@@ -685,6 +685,10 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 	int ret;
 	wmi_unified_t handle = get_wmi_unified_hdl_from_psoc(psoc);
 
+	if (!handle) {
+		target_if_err("handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
 	ret = wmi_unified_register_event_handler(handle,
 		wmi_ndp_initiator_rsp_event_id,
 		target_if_ndp_initiator_rsp_handler,
