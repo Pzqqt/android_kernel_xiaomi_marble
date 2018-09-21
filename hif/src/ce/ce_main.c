@@ -1045,7 +1045,7 @@ static struct CE_ring_state *ce_alloc_ring_state(struct CE_state *CE_state,
 	    QDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s: ring has no DMA mem",
 				__func__);
-		qdf_mem_free(ptr);
+		qdf_mem_free(ce_ring);
 		return NULL;
 	}
 	ce_ring->base_addr_CE_space_unaligned = base_addr;
