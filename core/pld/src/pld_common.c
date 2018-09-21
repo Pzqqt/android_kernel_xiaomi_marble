@@ -1482,7 +1482,7 @@ int pld_is_qmi_disable(struct device *dev)
  *
  *  Return: 1 FW is down
  *          0 FW is not down
- *          Non zero failure code for errors
+ *          Always return 0 for unsupported bus type
  */
 int pld_is_fw_down(struct device *dev)
 {
@@ -1492,6 +1492,10 @@ int pld_is_fw_down(struct device *dev)
 	switch (type) {
 	case PLD_BUS_TYPE_SNOC:
 		ret = pld_snoc_is_fw_down(dev);
+		break;
+	case PLD_BUS_TYPE_PCIE:
+	case PLD_BUS_TYPE_SDIO:
+	case PLD_BUS_TYPE_USB:
 		break;
 	default:
 		pr_err("Invalid device type %d\n", type);
