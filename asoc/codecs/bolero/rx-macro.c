@@ -1130,6 +1130,19 @@ static int rx_macro_event_handler(struct snd_soc_codec *codec, u16 event,
 	case BOLERO_MACRO_EVT_IMPED_FALSE:
 		rx_macro_wcd_clsh_imped_config(codec, data, false);
 		break;
+	case BOLERO_MACRO_EVT_SSR_DOWN:
+		swrm_wcd_notify(
+			rx_priv->swr_ctrl_data[0].rx_swr_pdev,
+			SWR_DEVICE_SSR_DOWN, NULL);
+		swrm_wcd_notify(
+			rx_priv->swr_ctrl_data[0].rx_swr_pdev,
+			SWR_DEVICE_DOWN, NULL);
+		break;
+	case BOLERO_MACRO_EVT_SSR_UP:
+		swrm_wcd_notify(
+			rx_priv->swr_ctrl_data[0].rx_swr_pdev,
+			SWR_DEVICE_SSR_UP, NULL);
+		break;
 	}
 	return 0;
 }
