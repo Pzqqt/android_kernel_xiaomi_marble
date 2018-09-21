@@ -9,6 +9,7 @@
  * This software may be distributed under the terms of the BSD license.
  * See README for more details.
  */
+
 #include <qdf_types.h>
 #include <qdf_mem.h>
 #include <qdf_util.h>
@@ -45,8 +46,7 @@ static void aes_ccm_auth_start(void *aes, size_t M, size_t L,
 	wlan_crypto_aes_encrypt(aes, b, x); /* X_1 = E(K, B_0) */
 
 	if (!aad_len) {
-		qdf_print("%s[%d] aad length should be non zero",
-			  __func__, __LINE__);
+		crypto_err("aad length should be non zero");
 		return;
 	}
 

@@ -91,7 +91,7 @@ uint8_t *wlan_crypto_ccmp_decrypt(const uint8_t *tk,
 
 	plain = qdf_mem_malloc(data_len + AES_BLOCK_SIZE);
 	if (plain == NULL) {
-		qdf_print("%s[%d] mem alloc failed", __func__, __LINE__);
+		crypto_err("mem alloc failed");
 		return NULL;
 	}
 
@@ -151,7 +151,7 @@ uint8_t *wlan_crypto_ccmp_encrypt(const uint8_t *tk, uint8_t *frame,
 	crypt = qdf_mem_malloc(hdrlen + CCMP_IV_SIZE + plen
 				+ WLAN_CRYPTO_MIC_LEN + AES_BLOCK_SIZE);
 	if (crypt == NULL) {
-		qdf_print("%s[%d] mem alloc failed", __func__, __LINE__);
+		crypto_err("mem alloc failed");
 		return NULL;
 	}
 
@@ -196,7 +196,7 @@ uint8_t *wlan_crypto_ccmp_256_decrypt(const uint8_t *tk,
 
 	plain = qdf_mem_malloc(data_len + AES_BLOCK_SIZE);
 	if (plain == NULL) {
-		qdf_print("%s[%d] mem alloc failed", __func__, __LINE__);
+		crypto_err("mem alloc failed");
 		return NULL;
 	}
 
@@ -245,7 +245,7 @@ uint8_t *wlan_crypto_ccmp_256_encrypt(const uint8_t *tk, uint8_t *frame,
 	crypt = qdf_mem_malloc(hdrlen + CCMP_IV_SIZE + plen
 				+ WLAN_CRYPTO_MIC256_LEN + AES_BLOCK_SIZE);
 	if (crypt == NULL) {
-		qdf_print("%s[%d] mem alloc failed", __func__, __LINE__);
+		crypto_err("mem alloc failed");
 		return NULL;
 	}
 
