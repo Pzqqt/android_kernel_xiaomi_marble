@@ -23,6 +23,9 @@
 #include "__wlan_dsc.h"
 #include "wlan_dsc.h"
 
+#define __dsc_driver_lock(psoc) __dsc_lock((psoc)->driver)
+#define __dsc_driver_unlock(psoc) __dsc_unlock((psoc)->driver)
+
 static QDF_STATUS
 __dsc_psoc_create(struct dsc_driver *driver, struct dsc_psoc **out_psoc)
 {
@@ -47,9 +50,9 @@ __dsc_psoc_create(struct dsc_driver *driver, struct dsc_psoc **out_psoc)
 	__dsc_ops_init(&psoc->ops);
 
 	/* attach */
-	__dsc_lock();
+	__dsc_driver_lock(psoc);
 	qdf_list_insert_back(&driver->psocs, &psoc->node);
-	__dsc_unlock();
+	__dsc_driver_unlock(psoc);
 
 	*out_psoc = psoc;
 
@@ -89,9 +92,9 @@ static void __dsc_psoc_destroy(struct dsc_psoc **out_psoc)
 		;
 
 	/* detach */
-	__dsc_lock();
+	__dsc_driver_lock(psoc);
 	qdf_list_remove_node(&psoc->driver->psocs, &psoc->node);
-	__dsc_unlock();
+	__dsc_driver_unlock(psoc);
 
 	/* de-init */
 	__dsc_ops_deinit(&psoc->ops);
@@ -163,9 +166,9 @@ __dsc_psoc_trans_start(struct dsc_psoc *psoc, const char *desc)
 	if (!dsc_assert(desc))
 		return QDF_STATUS_E_INVAL;
 
-	__dsc_lock();
+	__dsc_driver_lock(psoc);
 	status = __dsc_psoc_trans_start_nolock(psoc, desc);
-	__dsc_unlock();
+	__dsc_driver_unlock(psoc);
 
 	return status;
 }
@@ -193,17 +196,17 @@ __dsc_psoc_trans_start_wait(struct dsc_psoc *psoc, const char *desc)
 	if (!dsc_assert(desc))
 		return QDF_STATUS_E_INVAL;
 
-	__dsc_lock();
+	__dsc_driver_lock(psoc);
 
 	status = __dsc_psoc_trans_start_nolock(psoc, desc);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		__dsc_unlock();
+		__dsc_driver_unlock(psoc);
 		return QDF_STATUS_SUCCESS;
 	}
 
 	__dsc_trans_queue(&psoc->trans, &tran, desc);
 
-	__dsc_unlock();
+	__dsc_driver_unlock(psoc);
 
 	return __dsc_tran_wait(&tran);
 }
@@ -247,18 +250,18 @@ static void __dsc_psoc_trans_stop(struct dsc_psoc *psoc)
 void dsc_psoc_trans_stop(struct dsc_psoc *psoc)
 {
 	dsc_enter();
-	__dsc_lock();
+	__dsc_driver_lock(psoc);
 	__dsc_psoc_trans_stop(psoc);
-	__dsc_unlock();
+	__dsc_driver_unlock(psoc);
 	dsc_exit();
 }
 
 void dsc_psoc_trans_assert(struct dsc_psoc *psoc)
 {
 	dsc_enter();
-	__dsc_lock();
+	__dsc_driver_lock(psoc);
 	dsc_assert(psoc->trans.active_desc);
-	__dsc_unlock();
+	__dsc_driver_unlock(psoc);
 	dsc_exit();
 }
 
@@ -293,9 +296,9 @@ QDF_STATUS _dsc_psoc_op_start(struct dsc_psoc *psoc, const char *func)
 	QDF_STATUS status;
 
 	dsc_enter_str(func);
-	__dsc_lock();
+	__dsc_driver_lock(psoc);
 	status = __dsc_psoc_op_start(psoc, func);
-	__dsc_unlock();
+	__dsc_driver_unlock(psoc);
 	dsc_exit_status(status);
 
 	return status;
@@ -316,9 +319,9 @@ static void __dsc_psoc_op_stop(struct dsc_psoc *psoc, const char *func)
 void _dsc_psoc_op_stop(struct dsc_psoc *psoc, const char *func)
 {
 	dsc_enter_str(func);
-	__dsc_lock();
+	__dsc_driver_lock(psoc);
 	__dsc_psoc_op_stop(psoc, func);
-	__dsc_unlock();
+	__dsc_driver_unlock(psoc);
 	dsc_exit();
 }
 
@@ -330,7 +333,7 @@ static void __dsc_psoc_wait_for_ops(struct dsc_psoc *psoc)
 	if (!dsc_assert(psoc))
 		return;
 
-	__dsc_lock();
+	__dsc_driver_lock(psoc);
 
 	/* flushing without preventing new ops is almost certainly a bug */
 	dsc_assert(!__dsc_psoc_can_op(psoc));
@@ -339,7 +342,7 @@ static void __dsc_psoc_wait_for_ops(struct dsc_psoc *psoc)
 	if (wait)
 		qdf_event_reset(&psoc->ops.event);
 
-	__dsc_unlock();
+	__dsc_driver_unlock(psoc);
 
 	if (wait)
 		qdf_wait_single_event(&psoc->ops.event, 0);
