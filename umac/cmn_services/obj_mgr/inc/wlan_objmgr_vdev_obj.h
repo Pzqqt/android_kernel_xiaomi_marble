@@ -257,7 +257,7 @@ struct wlan_channel {
 	int8_t       ch_maxpower;
 	uint8_t      ch_freq_seg1;
 	uint8_t      ch_freq_seg2;
-	enum wlan_phy_ch_width ch_width;
+	enum phy_ch_width ch_width;
 	enum wlan_phymode ch_phymode;
 };
 

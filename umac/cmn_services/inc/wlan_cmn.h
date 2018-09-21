@@ -371,27 +371,27 @@ enum wlan_phymode {
 #define WLAN_PHYMODE_MAX      (WLAN_PHYMODE_11AXA_HE80_80 + 1)
 
 /**
- * enum wlan_phy_ch_width - channel width
- * @WLAN_CH_WIDTH_20MHZ: 20 mhz width
- * @WLAN_CH_WIDTH_40MHZ: 40 mhz width
- * @WLAN_CH_WIDTH_80MHZ: 80 mhz width
- * @WLAN_CH_WIDTH_160MHZ: 160 mhz width
- * @WLAN_CH_WIDTH_80P80HZ: 80+80 mhz width
- * @WLAN_CH_WIDTH_5MHZ: 5 mhz width
- * @WLAN_CH_WIDTH_10MHZ: 10 mhz width
- * @WLAN_CH_WIDTH_INVALID: invalid width
- * @WLAN_CH_WIDTH_MAX: max possible width
+ * enum phy_ch_width - channel width
+ * @CH_WIDTH_20MHZ: 20 mhz width
+ * @CH_WIDTH_40MHZ: 40 mhz width
+ * @CH_WIDTH_80MHZ: 80 mhz width
+ * @CH_WIDTH_160MHZ: 160 mhz width
+ * @CH_WIDTH_80P80HZ: 80+80 mhz width
+ * @CH_WIDTH_5MHZ: 5 mhz width
+ * @CH_WIDTH_10MHZ: 10 mhz width
+ * @CH_WIDTH_INVALID: invalid width
+ * @CH_WIDTH_MAX: max possible width
  */
-enum wlan_phy_ch_width {
-	WLAN_CH_WIDTH_20MHZ = 0,
-	WLAN_CH_WIDTH_40MHZ,
-	WLAN_CH_WIDTH_80MHZ,
-	WLAN_CH_WIDTH_160MHZ,
-	WLAN_CH_WIDTH_80P80MHZ,
-	WLAN_CH_WIDTH_5MHZ,
-	WLAN_CH_WIDTH_10MHZ,
-	WLAN_CH_WIDTH_INVALID,
-	WLAN_CH_WIDTH_MAX
+enum phy_ch_width {
+	CH_WIDTH_20MHZ = 0,
+	CH_WIDTH_40MHZ,
+	CH_WIDTH_80MHZ,
+	CH_WIDTH_160MHZ,
+	CH_WIDTH_80P80MHZ,
+	CH_WIDTH_5MHZ,
+	CH_WIDTH_10MHZ,
+	CH_WIDTH_INVALID,
+	CH_WIDTH_MAX
 };
 
 /**

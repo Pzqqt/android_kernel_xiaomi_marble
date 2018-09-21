@@ -25,6 +25,7 @@
 #define __REG_SERVICES_PUBLIC_STRUCT_H_
 
 #include "../../core/src/reg_db.h"
+#include "wlan_cmn.h"
 
 #define REG_SBS_SEPARATION_THRESHOLD 100
 #define REG_MAX_CHANNELS_PER_OPERATING_CLASS  25
@@ -508,31 +509,6 @@ typedef enum {
 	REGDOMAIN_WORLD,
 	REGDOMAIN_COUNT
 } v_REGDOMAIN_t;
-
-
-/**
- * enum phy_ch_width - channel width
- * @CH_WIDTH_20MHZ: 20 mhz width
- * @CH_WIDTH_40MHZ: 40 mhz width
- * @CH_WIDTH_80MHZ: 80 mhz width
- * @CH_WIDTH_160MHZ: 160 mhz width
- * @CH_WIDTH_80P80HZ: 80+80 mhz width
- * @CH_WIDTH_5MHZ: 5 mhz width
- * @CH_WIDTH_10MHZ: 10 mhz width
- * @CH_WIDTH_INVALID: invalid width
- * @CH_WIDTH_MAX: max possible width
- */
-enum phy_ch_width {
-	CH_WIDTH_20MHZ = 0,
-	CH_WIDTH_40MHZ,
-	CH_WIDTH_80MHZ,
-	CH_WIDTH_160MHZ,
-	CH_WIDTH_80P80MHZ,
-	CH_WIDTH_5MHZ,
-	CH_WIDTH_10MHZ,
-	CH_WIDTH_INVALID,
-	CH_WIDTH_MAX
-};
 
 /**
  * struct ch_params
