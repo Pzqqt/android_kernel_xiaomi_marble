@@ -44,6 +44,7 @@ static void hal_tx_desc_set_dscp_tid_table_id_8074v2(void *desc, uint8_t id)
 
 #define DSCP_TID_TABLE_SIZE 24
 #define NUM_WORDS_PER_DSCP_TID_TABLE (DSCP_TID_TABLE_SIZE / 4)
+#define HAL_TX_NUM_DSCP_REGISTER_SIZE 32
 /**
  * hal_tx_set_dscp_tid_map_8074v2() - Configure default DSCP to TID map table
  * @soc: HAL SoC context
@@ -125,29 +126,77 @@ static void hal_tx_set_dscp_tid_map_8074v2(void *hal_soc, uint8_t *map,
  *
  * Return: void
  */
-
 static void hal_tx_update_dscp_tid_8074v2(void *hal_soc, uint8_t tid,
 					uint8_t id, uint8_t dscp)
 {
-	int index;
-	uint32_t addr;
-	uint32_t value;
+	uint32_t addr, addr1, cmn_reg_addr;
+	uint32_t start_value = 0, end_value = 0;
 	uint32_t regval;
 	struct hal_soc *soc = (struct hal_soc *)hal_soc;
+	uint8_t end_bits = 0;
+	uint8_t start_bits = 0;
+	uint32_t start_index, end_index;
+
+	cmn_reg_addr = HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_ADDR(
+					SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET);
 
 	addr = HWIO_TCL_R0_DSCP_TID_MAP_n_ADDR(
-			SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET, id);
+				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET,
+				id * NUM_WORDS_PER_DSCP_TID_TABLE);
 
-	index = dscp % HAL_TX_NUM_DSCP_PER_REGISTER;
-	addr += 4 * (dscp / HAL_TX_NUM_DSCP_PER_REGISTER);
-	value = tid << (HAL_TX_BITS_PER_TID * index);
+	start_index = dscp * HAL_TX_BITS_PER_TID;
+	end_index = (start_index + (HAL_TX_BITS_PER_TID - 1))
+		    % HAL_TX_NUM_DSCP_REGISTER_SIZE;
+	start_index = start_index % HAL_TX_NUM_DSCP_REGISTER_SIZE;
+	addr += (4 * ((dscp * HAL_TX_BITS_PER_TID) /
+			HAL_TX_NUM_DSCP_REGISTER_SIZE));
+
+	if (end_index < start_index) {
+		end_bits = end_index + 1;
+		start_bits = HAL_TX_BITS_PER_TID - end_bits;
+		start_value = tid << start_index;
+		end_value = tid >> start_bits;
+		addr1 = addr + 4;
+	} else {
+		start_bits = HAL_TX_BITS_PER_TID - end_bits;
+		start_value = tid << start_index;
+		addr1 = 0;
+	}
+
+	/* Enable read/write access */
+	regval = HAL_REG_READ(soc, cmn_reg_addr);
+	regval |=
+	(1 << HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_DSCP_TID_MAP_PROGRAM_EN_SHFT);
+
+	HAL_REG_WRITE(soc, cmn_reg_addr, regval);
 
 	regval = HAL_REG_READ(soc, addr);
-	regval &= ~(HAL_TX_TID_BITS_MASK << (HAL_TX_BITS_PER_TID * index));
-	regval |= value;
+
+	if (end_index < start_index)
+		regval &= (~0) >> start_bits;
+	else
+		regval &= ~(7 << start_index);
+
+	regval |= start_value;
 
 	HAL_REG_WRITE(soc, addr, (regval & HWIO_TCL_R0_DSCP_TID_MAP_n_RMSK));
+
+	if (addr1) {
+		regval = HAL_REG_READ(soc, addr1);
+		regval &= (~0) << end_bits;
+		regval |= end_value;
+
+		HAL_REG_WRITE(soc, addr1, (regval &
+			     HWIO_TCL_R0_DSCP_TID_MAP_n_RMSK));
+	}
+
+	/* Diasble read/write access */
+	regval = HAL_REG_READ(soc, cmn_reg_addr);
+	regval &=
+	~(HWIO_TCL_R0_CONS_RING_CMN_CTRL_REG_DSCP_TID_MAP_PROGRAM_EN_BMSK);
+	HAL_REG_WRITE(soc, cmn_reg_addr, regval);
 }
+
 /**
  * hal_tx_desc_set_lmac_id - Set the lmac_id value
  * @desc: Handle to Tx Descriptor
