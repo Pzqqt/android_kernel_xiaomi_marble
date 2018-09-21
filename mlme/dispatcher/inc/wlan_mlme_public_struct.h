@@ -166,6 +166,108 @@ struct wlan_mlme_qos {
 	bool sap_max_inactivity_override;
 };
 
+#define MLME_HE_PPET_LEN 25
+/**
+ * struct wlan_mlme_he_caps - HE Capabilities related config items
+ */
+struct wlan_mlme_he_caps {
+	uint8_t he_control;
+	uint8_t he_twt_requestor;
+	uint8_t he_twt_responder;
+	uint8_t he_twt_fragmentation;
+	uint8_t he_max_frag_msdu;
+	uint8_t he_min_frag_size;
+	uint8_t he_trig_pad;
+	uint8_t he_mtid_aggr_rx;
+	uint8_t he_link_adaptation;
+	uint8_t he_all_ack;
+	uint8_t he_trigd_rsp_scheduling;
+	uint8_t he_buffer_status_rpt;
+	uint8_t he_bcast_twt;
+	uint8_t he_ba_32bit;
+	uint8_t he_mu_cascading;
+	uint8_t he_multi_tid;
+	uint8_t he_dl_mu_ba;
+	uint8_t he_omi;
+	uint8_t he_ofdma_ra;
+	uint8_t he_max_ampdu_len;
+	uint8_t he_amsdu_frag;
+	uint8_t he_flex_twt_sched;
+	uint8_t he_rx_ctrl;
+	uint8_t he_bsrp_ampdu_aggr;
+	uint8_t he_qtp;
+	uint8_t he_a_bqr;
+	uint8_t he_sr_responder;
+	uint8_t he_ndp_feedback_supp;
+	uint8_t he_ops_supp;
+	uint8_t he_amsdu_in_ampdu;
+	uint8_t he_chan_width;
+	uint8_t he_mtid_aggr_tx;
+	uint8_t he_sub_ch_sel_tx;
+	uint8_t he_ul_2x996_ru;
+	uint8_t he_om_ctrl_ul_mu_dis_rx;
+	uint8_t he_rx_pream_punc;
+	uint8_t he_class_of_device;
+	uint8_t he_ldpc;
+	uint8_t he_ltf_ppdu;
+	uint8_t he_midamble_rx_nsts;
+	uint8_t he_ltf_ndp;
+	uint8_t he_tx_stbc_lt80;
+	uint8_t he_rx_stbc_lt80;
+	uint8_t he_doppler;
+	uint8_t he_ul_mumimo;
+	uint8_t he_dcm_tx;
+	uint8_t he_dcm_rx;
+	uint8_t he_mu_ppdu;
+	uint8_t he_su_beamformer;
+	uint8_t he_su_beamformee;
+	uint8_t he_mu_beamformer;
+	uint8_t he_bfee_sts_lt80;
+	uint8_t he_bfee_sts_gt80;
+	uint8_t he_num_sound_lt80;
+	uint8_t he_num_sound_gt80;
+	uint8_t he_su_feed_tone16;
+	uint8_t he_mu_feed_tone16;
+	uint8_t he_codebook_su;
+	uint8_t he_codebook_mu;
+	uint8_t he_bfrm_feed;
+	uint8_t he_er_su_ppdu;
+	uint8_t he_dl_part_bw;
+	uint8_t he_ppet_present;
+	uint8_t he_srp;
+	uint8_t he_power_boost;
+	uint8_t he_4x_ltf_gi;
+	uint8_t he_max_nc;
+	uint8_t he_rx_stbc_gt80;
+	uint8_t he_tx_stbc_gt80;
+	uint8_t he_er_4x_ltf_gi;
+	uint8_t he_ppdu_20_in_40mhz_2g;
+	uint8_t he_ppdu_20_in_160_80p80mhz;
+	uint8_t he_ppdu_80_in_160_80p80mhz;
+	uint8_t he_er_1x_he_ltf_gi;
+	uint8_t he_midamble_rx_1x_he_ltf;
+	uint8_t he_dcm_max_bw;
+	uint8_t he_longer_16_sigb_ofdm_sym;
+	uint8_t he_non_trig_cqi_feedback;
+	uint8_t he_tx_1024_qam_lt_242_ru;
+	uint8_t he_rx_1024_qam_lt_242_ru;
+	uint8_t he_rx_full_bw_mu_cmpr_sigb;
+	uint8_t he_rx_full_bw_mu_non_cmpr_sigb;
+	uint32_t he_rx_mcs_map_lt_80;
+	uint32_t he_tx_mcs_map_lt_80;
+	uint32_t he_rx_mcs_map_160;
+	uint32_t he_tx_mcs_map_160;
+	uint32_t he_rx_mcs_map_80_80;
+	uint32_t he_tx_mcs_map_80_80;
+	uint8_t he_ppet_2g[MLME_HE_PPET_LEN];
+	uint8_t he_ppet_5g[MLME_HE_PPET_LEN];
+	uint32_t he_ops_basic_mcs_nss;
+	uint8_t he_twt_dynamic_fragmentation;
+	uint8_t enable_ul_mimo;
+	uint8_t enable_ul_ofdm;
+	uint32_t he_sta_obsspd;
+};
+
 /**
  * struct wlan_mlme_rates - RATES related config items
  * @cfpPeriod: cfp period info
@@ -518,6 +620,7 @@ struct wlan_mlme_scoring_cfg {
 /**
  * struct wlan_mlme_cfg - MLME config items
  * @ht_cfg: HT related CFG Items
+ * @he_caps: HE related cfg items
  * @lfr: LFR related CFG Items
  * @obss_ht40:obss ht40 CFG Items
  * @vht_cfg: VHT related CFG Items
@@ -528,6 +631,7 @@ struct wlan_mlme_scoring_cfg {
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_ht_caps ht_caps;
+	struct wlan_mlme_he_caps he_caps;
 	struct wlan_mlme_lfr_cfg lfr;
 	struct wlan_mlme_obss_ht40 obss_ht40;
 	struct wlan_mlme_mbo mbo_cfg;
