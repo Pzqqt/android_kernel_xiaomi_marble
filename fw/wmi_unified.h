@@ -21005,6 +21005,11 @@ typedef enum wmi_coex_config_type {
                                                  arg4 medium - upper limit
                                                  arg5 high - lower limit
                                                  arg6 high - upper limit */
+    WMI_COEX_CONFIG_WLAN_OVER_ZBLOW        = 28, /* config to boost WiFi traffic over 15.4 Low prio traffic */
+    WMI_COEX_CONFIG_WLAN_MGMT_OVER_BT_A2DP = 29, /* config to raise WLAN priority higher than BT in coex scenario of SAP + BT or 15.4 */
+    WMI_COEX_CONFIG_WLAN_CONN_OVER_LE      = 30, /* config to elevate Wifi priority over BLE during WLAN association */
+    WMI_COEX_CONFIG_LE_OVER_WLAN_TRAFFIC   = 31, /* config to elevate BLE traffic over WiFi traffic */
+    WMI_COEX_CONFIG_THREE_WAY_COEX_RESET   = 32, /* config to reset the weights to default  */
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
