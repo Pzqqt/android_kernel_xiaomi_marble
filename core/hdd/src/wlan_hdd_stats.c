@@ -4279,7 +4279,6 @@ static void hdd_report_actual_rate(uint8_t rate_flags, uint16_t my_rate,
 		}
 
 		if (rate_flags & TX_RATE_SGI) {
-			rate->flags |= RATE_INFO_FLAGS_MCS;
 			rate->flags |= RATE_INFO_FLAGS_SHORT_GI;
 		}
 
@@ -4480,6 +4479,7 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 		  (int)rx_rate_flags);
 	hdd_debug("MCS Index: TX: %d, RX: %d", (int)tx_mcs_index,
 		  (int)rx_mcs_index);
+	hdd_debug("NSS: TX: %d, RX: %d", (int)tx_nss, (int)rx_nss);
 
 	/* assume basic BW. anything else will override this later */
 	hdd_set_rate_bw(&sinfo->txrate, HDD_RATE_BW_20);
