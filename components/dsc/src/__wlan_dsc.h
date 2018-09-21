@@ -160,18 +160,20 @@ struct dsc_vdev {
 	qdf_list_for_each(&(psoc_ptr)->vdevs, vdev_cursor, node)
 
 /**
- * __dsc_lock() - grab the dsc global lock
+ * __dsc_lock() - grab the dsc driver lock
+ * @driver: the driver to lock
  *
  * Return: None
  */
-void __dsc_lock(void);
+void __dsc_lock(struct dsc_driver *driver);
 
 /**
- * __dsc_unlock() - release the dsc global lock
+ * __dsc_unlock() - release the dsc driver lock
+ * @driver: the driver to unlock
  *
  * Return: None
  */
-void __dsc_unlock(void);
+void __dsc_unlock(struct dsc_driver *driver);
 
 /**
  * __dsc_ops_init() - initialize @ops
