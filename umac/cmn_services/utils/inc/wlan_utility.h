@@ -28,6 +28,12 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 
+#define TGT_INVALID_SNR         (0)
+#define TGT_MAX_SNR             (TGT_NOISE_FLOOR_DBM * (-1))
+#define TGT_NOISE_FLOOR_DBM     (-96)
+#define TGT_IS_VALID_SNR(x)     ((x) >= 0 && (x) < TGT_MAX_SNR)
+#define TGT_IS_VALID_RSSI(x)    ((x) != 0xFF)
+
 /**
  * struct wlan_find_vdev_filter - find vdev filter object. this can be extended
  * @ifname:           interface name of vdev
@@ -260,5 +266,23 @@ QDF_STATUS wlan_pdev_chan_change_pending_vdevs(struct wlan_objmgr_pdev *pdev,
  * Return : SUCCESS, if it matches, otherwise FAILURE
  */
 QDF_STATUS wlan_chan_eq(struct wlan_channel *chan1, struct wlan_channel *chan2);
+
+/**
+ * wlan_util_stats_get_rssi() - API to get rssi in dbm
+ * @db2dbm_enabled: If db2dbm capability is enabled
+ * @bcn_snr: beacon snr
+ * @dat_snr: data snr
+ * @rssi: rssi
+ *
+ * This function gets the rssi based on db2dbm support. If this feature is
+ * present in hw then it means firmware directly sends rssi and no converstion
+ * is required. If this capablity is not present then host needs to convert
+ * snr to rssi
+ *
+ * Return: None
+ */
+void
+wlan_util_stats_get_rssi(bool db2dbm_enabled, int32_t bcn_snr, int32_t dat_snr,
+			 int8_t *rssi);
 
 #endif /* _WLAN_UTILITY_H_ */

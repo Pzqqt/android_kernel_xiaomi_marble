@@ -985,6 +985,7 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	struct scan_cache_entry *scan_entry;
 	struct qbss_load_ie *qbss_load;
 	struct scan_cache_node *scan_node;
+	uint8_t i;
 
 	scan_entry = qdf_mem_malloc_atomic(sizeof(*scan_entry));
 	if (!scan_entry) {
@@ -1020,8 +1021,21 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	scan_entry->tsf_delta = rx_param->tsf_delta;
 
 	/* Copy per chain rssi to scan entry */
-	qdf_mem_copy(scan_entry->per_chain_snr, rx_param->rssi_ctl,
+	qdf_mem_copy(scan_entry->per_chain_rssi, rx_param->rssi_ctl,
 		     WLAN_MGMT_TXRX_HOST_MAX_ANTENNA);
+
+	if (!wlan_psoc_nif_fw_ext_cap_get(wlan_pdev_get_psoc(pdev),
+					  WLAN_SOC_CEXT_HW_DB2DBM)) {
+		for (i = 0; i < WLAN_MGMT_TXRX_HOST_MAX_ANTENNA; i++) {
+			if (scan_entry->per_chain_rssi[i] !=
+			    WLAN_INVALID_PER_CHAIN_SNR)
+				scan_entry->per_chain_rssi[i] +=
+						WLAN_NOISE_FLOOR_DBM_DEFAULT;
+			else
+				scan_entry->per_chain_rssi[i] =
+						WLAN_INVALID_PER_CHAIN_RSSI;
+		}
+	}
 
 	/* store jiffies */
 	scan_entry->rrm_parent_tsf = (uint32_t)qdf_system_ticks();

@@ -495,4 +495,7 @@ void init_deinit_prepare_send_init_cmd(
 	/* Set Max scans allowed */
 	target_if_scan_set_max_active_scans(psoc,
 					    WLAN_MAX_ACTIVE_SCANS_ALLOWED);
+
+	if (wmi_service_enabled(wmi_handle, wmi_service_hw_db2dbm_support))
+		wlan_psoc_nif_fw_ext_cap_set(psoc, WLAN_SOC_CEXT_HW_DB2DBM);
 }

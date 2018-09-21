@@ -652,7 +652,8 @@ enum mgmt_frame_type {
 };
 
 #define WLAN_MGMT_TXRX_HOST_MAX_ANTENNA          4
-#define WLAN_INVALID_PER_CHAIN_RSSI             0x80
+#define WLAN_INVALID_PER_CHAIN_RSSI             0xFF
+#define WLAN_INVALID_PER_CHAIN_SNR              0x80
 #define WLAN_NOISE_FLOOR_DBM_DEFAULT            -96
 /**
  * struct mgmt_rx_event_params - host mgmt header params

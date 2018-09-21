@@ -33,11 +33,7 @@
 #include <wlan_osif_priv.h>
 #include <wlan_cp_stats_utils_api.h>
 #include <wlan_cp_stats_mc_tgt_api.h>
-
-#define TGT_INVALID_SNR         (0)
-#define TGT_NOISE_FLOOR_DBM     (-96)
-#define TGT_MAX_SNR             (TGT_NOISE_FLOOR_DBM * (-1))
-#define TGT_IS_VALID_SNR(x)     ((x) >= 0 && (x) < TGT_MAX_SNR)
+#include "../../../umac/cmn_services/utils/inc/wlan_utility.h"
 
 static void target_if_cp_stats_free_stats_event(struct stats_event *ev)
 {
@@ -99,6 +95,7 @@ static QDF_STATUS target_if_cp_stats_extract_peer_stats(
 	uint32_t i;
 	QDF_STATUS status;
 	wmi_host_peer_stats peer_stats;
+	bool db2dbm_enabled;
 
 	ev->num_peer_stats = stats_param->num_peer_stats;
 	if (!ev->num_peer_stats)
@@ -111,6 +108,8 @@ static QDF_STATUS target_if_cp_stats_extract_peer_stats(
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	db2dbm_enabled = wmi_service_enabled(wmi_hdl,
+					     wmi_service_hw_db2dbm_support);
 	for (i = 0; i < ev->num_peer_stats; i++) {
 		status = wmi_extract_peer_stats(wmi_hdl, data, i, &peer_stats);
 		if (QDF_IS_STATUS_ERROR(status)) {
@@ -121,8 +120,11 @@ static QDF_STATUS target_if_cp_stats_extract_peer_stats(
 						ev->peer_stats[i].peer_macaddr);
 		ev->peer_stats[i].tx_rate = peer_stats.peer_tx_rate;
 		ev->peer_stats[i].rx_rate = peer_stats.peer_rx_rate;
-		ev->peer_stats[i].peer_rssi = peer_stats.peer_rssi +
-						TGT_NOISE_FLOOR_DBM;
+		if (db2dbm_enabled)
+			ev->peer_stats[i].peer_rssi = peer_stats.peer_rssi;
+		else
+			ev->peer_stats[i].peer_rssi = peer_stats.peer_rssi +
+							TGT_NOISE_FLOOR_DBM;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -164,6 +166,7 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_summary_stats(
 	QDF_STATUS status;
 	int32_t bcn_snr, dat_snr;
 	wmi_host_vdev_stats vdev_stats;
+	bool db2dbm_enabled;
 
 	ev->num_summary_stats = stats_param->num_vdev_stats;
 	if (!ev->num_summary_stats)
@@ -177,6 +180,8 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_summary_stats(
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	db2dbm_enabled = wmi_service_enabled(wmi_hdl,
+					     wmi_service_hw_db2dbm_support);
 	for (i = 0; i < ev->num_summary_stats; i++) {
 		status = wmi_extract_vdev_stats(wmi_hdl, data, i, &vdev_stats);
 		if (QDF_IS_STATUS_ERROR(status))
@@ -208,18 +213,11 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_summary_stats(
 		ev->vdev_summary_stats[i].stats.rts_fail_cnt =
 						vdev_stats.rts_fail_cnt;
 		/* Update SNR and RSSI in SummaryStats */
-		if (TGT_IS_VALID_SNR(bcn_snr)) {
-			ev->vdev_summary_stats[i].stats.snr = bcn_snr;
-			ev->vdev_summary_stats[i].stats.rssi =
-						bcn_snr + TGT_NOISE_FLOOR_DBM;
-		} else if (TGT_IS_VALID_SNR(dat_snr)) {
-			ev->vdev_summary_stats[i].stats.snr = dat_snr;
-			ev->vdev_summary_stats[i].stats.rssi =
-						dat_snr + TGT_NOISE_FLOOR_DBM;
-		} else {
-			ev->vdev_summary_stats[i].stats.snr = TGT_INVALID_SNR;
-			ev->vdev_summary_stats[i].stats.rssi = 0;
-		}
+		wlan_util_stats_get_rssi(db2dbm_enabled, bcn_snr, dat_snr,
+					 &ev->vdev_summary_stats[i].stats.rssi);
+		ev->vdev_summary_stats[i].stats.snr =
+				ev->vdev_summary_stats[i].stats.rssi -
+				TGT_NOISE_FLOOR_DBM;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -235,6 +233,7 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_chain_rssi_stats(
 	QDF_STATUS status;
 	int32_t bcn_snr, dat_snr;
 	struct wmi_host_per_chain_rssi_stats rssi_stats;
+	bool db2dbm_enabled;
 
 	ev->num_chain_rssi_stats = stats_param->num_rssi_stats;
 	if (!ev->num_chain_rssi_stats)
@@ -246,7 +245,8 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_chain_rssi_stats(
 		cp_stats_err("malloc failed");
 		return QDF_STATUS_E_NOMEM;
 	}
-
+	db2dbm_enabled = wmi_service_enabled(wmi_hdl,
+					     wmi_service_hw_db2dbm_support);
 	for (i = 0; i < ev->num_chain_rssi_stats; i++) {
 		status = wmi_extract_per_chain_rssi_stats(wmi_hdl, data, i,
 							  &rssi_stats);
@@ -258,27 +258,15 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_chain_rssi_stats(
 			bcn_snr = rssi_stats.rssi_avg_beacon[j];
 			cp_stats_err("Chain %d SNR bcn: %d data: %d", j,
 				     bcn_snr, dat_snr);
-			if (TGT_IS_VALID_SNR(bcn_snr))
-				ev->vdev_chain_rssi[i].chain_rssi[j] = bcn_snr;
-			else if (TGT_IS_VALID_SNR(dat_snr))
-				ev->vdev_chain_rssi[i].chain_rssi[j] = dat_snr;
-			else
-				/*
-				 * Firmware sends invalid snr till it sees
-				 * Beacon/Data after connection since after
-				 * vdev up fw resets the snr to invalid. In this
-				 * duartion Host will return an invalid rssi
-				 * value.
-				 */
-				ev->vdev_chain_rssi[i].chain_rssi[j] =
-							TGT_INVALID_SNR;
 			/*
 			 * Get the absolute rssi value from the current rssi
 			 * value the snr value is hardcoded into 0 in the
 			 * qcacld-new/CORE stack
 			 */
-			ev->vdev_chain_rssi[i].chain_rssi[j] +=
-							TGT_NOISE_FLOOR_DBM;
+			wlan_util_stats_get_rssi(db2dbm_enabled, bcn_snr,
+						 dat_snr,
+						 &ev->vdev_chain_rssi[i].
+						 chain_rssi[j]);
 		}
 	}
 

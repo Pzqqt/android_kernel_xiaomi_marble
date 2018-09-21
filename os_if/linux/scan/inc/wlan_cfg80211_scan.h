@@ -138,7 +138,7 @@ struct scan_params {
  * @frame_len: frame length
  * @rssi: signal strength in mBm (100*dBm)
  * @boottime_ns: timestamp (CLOCK_BOOTTIME) when the information was received.
- * @per_chain_snr: per chain snr received
+ * @per_chain_rssi: per chain rssi received
  */
 struct wlan_cfg80211_inform_bss {
 	struct ieee80211_channel *chan;
@@ -146,7 +146,7 @@ struct wlan_cfg80211_inform_bss {
 	size_t frame_len;
 	int rssi;
 	uint64_t boottime_ns;
-	uint8_t per_chain_snr[WLAN_MGMT_TXRX_HOST_MAX_ANTENNA];
+	uint8_t per_chain_rssi[WLAN_MGMT_TXRX_HOST_MAX_ANTENNA];
 };
 
 

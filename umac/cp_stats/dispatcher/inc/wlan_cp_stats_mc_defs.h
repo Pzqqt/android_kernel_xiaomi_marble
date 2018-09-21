@@ -204,7 +204,7 @@ struct pdev_mc_cp_stats {
  */
 struct summary_stats {
 	uint32_t snr;
-	uint32_t rssi;
+	int8_t rssi;
 	uint32_t retry_cnt[4];
 	uint32_t multiple_retry_cnt[4];
 	uint32_t tx_frm_cnt[4];
@@ -244,7 +244,7 @@ struct vdev_mc_cp_stats {
 struct peer_mc_cp_stats {
 	uint32_t tx_rate;
 	uint32_t rx_rate;
-	uint32_t peer_rssi;
+	int8_t peer_rssi;
 	uint8_t peer_macaddr[WLAN_MACADDR_LEN];
 };
 

@@ -463,3 +463,29 @@ QDF_STATUS wlan_util_pdev_vdevs_deschan_match(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
+
+void
+wlan_util_stats_get_rssi(bool db2dbm_enabled, int32_t bcn_snr, int32_t dat_snr,
+			 int8_t *rssi)
+{
+	uint32_t snr;
+
+	if (db2dbm_enabled) {
+		if (TGT_IS_VALID_RSSI(bcn_snr))
+			*rssi = bcn_snr;
+		else if (TGT_IS_VALID_RSSI(dat_snr))
+			*rssi = dat_snr;
+		else
+			*rssi = TGT_NOISE_FLOOR_DBM;
+	} else {
+		if (TGT_IS_VALID_SNR(bcn_snr))
+			snr = bcn_snr;
+		else if (TGT_IS_VALID_SNR(dat_snr))
+			snr = dat_snr;
+		else
+			snr = TGT_INVALID_SNR;
+
+		/* Get the absolute rssi value from the current rssi value */
+		*rssi = snr + TGT_NOISE_FLOOR_DBM;
+	}
+}

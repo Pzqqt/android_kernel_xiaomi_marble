@@ -125,6 +125,8 @@
 #define WLAN_SOC_CEXT_TWT_REQUESTER    0x00002000
 	/* TWT Responder capable */
 #define WLAN_SOC_CEXT_TWT_RESPONDER    0x00004000
+	/* HW DB2DBM CAPABLE */
+#define WLAN_SOC_CEXT_HW_DB2DBM        0x00008000
 
 /* feature_flags */
 	/* CONF: ATH FF enabled */

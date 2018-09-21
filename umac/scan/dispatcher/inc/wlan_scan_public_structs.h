@@ -296,7 +296,7 @@ struct security_info {
  * @tsf_delta: TSF delta
  * @bss_score: bss score calculated on basis of RSSI/caps etc.
  * @neg_sec_info: negotiated security info
- * @per_chain_snr: per chain SNR value received.
+ * @per_chain_rssi: per chain RSSI value received.
  * boottime_ns: boottime in ns.
  * @rrm_parent_tsf: RRM parent tsf
  * @mlme_info: Mlme info, this will be updated by MLME for the scan entry
@@ -334,7 +334,7 @@ struct scan_cache_entry {
 	uint32_t tsf_delta;
 	uint32_t bss_score;
 	struct security_info neg_sec_info;
-	uint8_t per_chain_snr[WLAN_MGMT_TXRX_HOST_MAX_ANTENNA];
+	uint8_t per_chain_rssi[WLAN_MGMT_TXRX_HOST_MAX_ANTENNA];
 	uint64_t boottime_ns;
 	uint32_t rrm_parent_tsf;
 	struct element_info alt_wcn_ie;

@@ -1648,12 +1648,10 @@ static void wlan_fill_per_chain_rssi(struct cfg80211_inform_bss *data,
 		return;
 	}
 	for (i = 0; i < WLAN_MGMT_TXRX_HOST_MAX_ANTENNA; i++) {
-		if (!bss->per_chain_snr[i] ||
-		    (bss->per_chain_snr[i] == WLAN_INVALID_PER_CHAIN_RSSI))
+		if (!bss->per_chain_rssi[i] ||
+		    (bss->per_chain_rssi[i] == WLAN_INVALID_PER_CHAIN_RSSI))
 			continue;
-		/* Add noise margin to SNR to convert it to RSSI */
-		data->chain_signal[i] = bss->per_chain_snr[i] +
-					WLAN_NOISE_FLOOR_DBM_DEFAULT;
+		data->chain_signal[i] = bss->per_chain_rssi[i];
 		data->chains |= BIT(i);
 	}
 }
@@ -1760,7 +1758,7 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 
 	bss_data.boottime_ns = scan_params->boottime_ns;
 
-	qdf_mem_copy(bss_data.per_chain_snr, scan_params->per_chain_snr,
+	qdf_mem_copy(bss_data.per_chain_rssi, scan_params->per_chain_rssi,
 		     WLAN_MGMT_TXRX_HOST_MAX_ANTENNA);
 
 	cfg80211_debug("BSSID: %pM Channel:%d RSSI:%d", bss_data.mgmt->bssid,
