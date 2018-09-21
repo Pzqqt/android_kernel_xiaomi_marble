@@ -450,8 +450,10 @@ static bool wcd937x_volatile_register(struct device *dev, unsigned int reg)
 {
 	if(reg <= WCD937X_BASE_ADDRESS)
 		return 0;
-	return (wcd937x_reg_access[WCD937X_REG(reg)] & RD_REG)
-		& ~(wcd937x_reg_access[WCD937X_REG(reg)] & WR_REG);
+	if ((wcd937x_reg_access[WCD937X_REG(reg)] & RD_REG)
+		&& !(wcd937x_reg_access[WCD937X_REG(reg)] & WR_REG))
+		return true;
+	return false;
 }
 
 struct regmap_config wcd937x_regmap_config = {

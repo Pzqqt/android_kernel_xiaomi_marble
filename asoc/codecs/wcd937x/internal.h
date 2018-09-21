@@ -123,6 +123,8 @@ enum {
 
 enum {
 	BOLERO_WCD_EVT_TX_CH_HOLD_CLEAR = 1,
+	BOLERO_WCD_EVT_SSR_DOWN,
+	BOLERO_WCD_EVT_SSR_UP,
 };
 
 enum {

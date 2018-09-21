@@ -48,6 +48,8 @@ static const DECLARE_TLV_DB_SCALE(line_gain, 0, 7, 1);
 static const DECLARE_TLV_DB_SCALE(analog_gain, 0, 25, 1);
 
 static int wcd937x_handle_post_irq(void *data);
+static int wcd937x_reset(struct device *dev);
+static int wcd937x_reset_low(struct device *dev);
 
 static const struct regmap_irq wcd937x_irqs[WCD937X_NUM_IRQS] = {
 	REGMAP_IRQ_REG(WCD937X_IRQ_MBHC_BUTTON_PRESS_DET, 0, 0x01),
@@ -1216,6 +1218,23 @@ int wcd937x_micbias_control(struct snd_soc_codec *codec,
 }
 EXPORT_SYMBOL(wcd937x_micbias_control);
 
+static int wcd937x_get_logical_addr(struct swr_device *swr_dev)
+{
+	int ret = 0;
+	uint8_t devnum = 0;
+
+	ret = swr_get_logical_dev_num(swr_dev, swr_dev->addr, &devnum);
+	if (ret) {
+		dev_err(&swr_dev->dev,
+			"%s get devnum %d for dev addr %lx failed\n",
+			__func__, devnum, swr_dev->addr);
+		swr_remove_device(swr_dev);
+		return ret;
+	}
+	swr_dev->dev_num = devnum;
+	return 0;
+}
+
 static int wcd937x_event_notify(struct notifier_block *block,
 				unsigned long val,
 				void *data)
@@ -1223,8 +1242,10 @@ static int wcd937x_event_notify(struct notifier_block *block,
 	u16 event = (val & 0xffff);
 	u16 amic = (val >> 0x10);
 	u16 mask = 0x40, reg = 0x0;
+	int ret = 0;
 	struct wcd937x_priv *wcd937x = dev_get_drvdata((struct device *)data);
 	struct snd_soc_codec *codec = wcd937x->codec;
+	struct wcd_mbhc *mbhc;
 
 	switch (event) {
 	case BOLERO_WCD_EVT_TX_CH_HOLD_CLEAR:
@@ -1237,6 +1258,25 @@ static int wcd937x_event_notify(struct notifier_block *block,
 		if (amic == 0x2)
 			mask = 0x20;
 		snd_soc_update_bits(codec, reg, mask, 0x00);
+		break;
+	case BOLERO_WCD_EVT_SSR_DOWN:
+		wcd937x_reset_low(wcd937x->dev);
+		break;
+	case BOLERO_WCD_EVT_SSR_UP:
+		wcd937x_reset(wcd937x->dev);
+		wcd937x_get_logical_addr(wcd937x->tx_swr_dev);
+		wcd937x_get_logical_addr(wcd937x->rx_swr_dev);
+		regcache_mark_dirty(wcd937x->regmap);
+		regcache_sync(wcd937x->regmap);
+		/* Initialize MBHC module */
+		mbhc = &wcd937x->mbhc->wcd_mbhc;
+		ret = wcd937x_mbhc_post_ssr_init(wcd937x->mbhc, codec);
+		if (ret) {
+			dev_err(codec->dev, "%s: mbhc initialization failed\n",
+				__func__);
+		} else {
+			wcd937x_mbhc_hs_detect(codec, mbhc->mbhc_cfg);
+		}
 		break;
 	default:
 		dev_err(codec->dev, "%s: invalid event %d\n", __func__, event);
@@ -1923,7 +1963,7 @@ static struct snd_soc_codec_driver soc_codec_dev_wcd937x = {
 	},
 };
 
-int wcd937x_reset(struct device *dev)
+static int wcd937x_reset(struct device *dev)
 {
 	struct wcd937x_priv *wcd937x = NULL;
 	int rc = 0;
@@ -2024,6 +2064,36 @@ static void wcd937x_dt_parse_micbias_info(struct device *dev,
 		dev_info(dev, "%s: Micbias3 DT property not found\n",
 			__func__);
 	}
+}
+
+static int wcd937x_reset_low(struct device *dev)
+{
+	struct wcd937x_priv *wcd937x = NULL;
+	int rc = 0;
+
+	if (!dev)
+		return -ENODEV;
+
+	wcd937x = dev_get_drvdata(dev);
+	if (!wcd937x)
+		return -EINVAL;
+
+	if (!wcd937x->rst_np) {
+		dev_err(dev, "%s: reset gpio device node not specified\n",
+				__func__);
+		return -EINVAL;
+	}
+
+	rc = msm_cdc_pinctrl_select_sleep_state(wcd937x->rst_np);
+	if (rc) {
+		dev_err(dev, "%s: wcd sleep state request fail!\n",
+				__func__);
+		return rc;
+	}
+	/* 20ms sleep required after pulling the reset gpio to LOW */
+	usleep_range(20, 30);
+
+	return rc;
 }
 
 struct wcd937x_pdata *wcd937x_populate_dt_data(struct device *dev)
