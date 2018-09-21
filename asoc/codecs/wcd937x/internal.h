@@ -58,6 +58,8 @@ struct wcd937x_priv {
 	struct wcd937x_mbhc *mbhc;
 
 	u32 hph_mode;
+	bool comp1_enable;
+	bool comp2_enable;
 
 	struct irq_domain *virq;
 	struct wcd_irq_info irq_info;
