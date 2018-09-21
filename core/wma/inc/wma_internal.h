@@ -54,6 +54,8 @@
  */
 #define WMA_TGT_NOISE_FLOOR_DBM (-96)
 #define WMA_TGT_MAX_SNR         (WMA_TGT_NOISE_FLOOR_DBM * (-1))
+#define WMA_INVALID_PER_CHAIN_SNR  (0x80)
+#define WMA_INVALID_PER_CHAIN_RSSI (0xFF)
 
 /*
  * Make sure that link monitor and keep alive

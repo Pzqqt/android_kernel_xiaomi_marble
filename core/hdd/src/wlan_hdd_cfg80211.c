@@ -14774,7 +14774,7 @@ wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
 
 	/* Set all per chain rssi as invalid */
 	for (i = 0; i < WLAN_MGMT_TXRX_HOST_MAX_ANTENNA; i++)
-		bss_data.per_chain_snr[i] = WLAN_INVALID_PER_CHAIN_RSSI;
+		bss_data.per_chain_rssi[i] = WLAN_INVALID_PER_CHAIN_RSSI;
 
 	hdd_debug("BSSID: " MAC_ADDRESS_STR " Channel:%d RSSI:%d TSF %u",
 	       MAC_ADDR_ARRAY(bss_data.mgmt->bssid), bss_data.chan->center_freq,

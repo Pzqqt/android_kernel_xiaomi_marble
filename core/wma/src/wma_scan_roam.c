@@ -220,9 +220,14 @@ QDF_STATUS wma_roam_scan_mawc_params(tp_wma_handle wma_handle,
 		roam_req->mawc_roam_params.mawc_roam_enabled;
 	params->traffic_load_threshold =
 		roam_req->mawc_roam_params.mawc_roam_traffic_threshold;
-	params->best_ap_rssi_threshold =
-		roam_req->mawc_roam_params.mawc_roam_ap_rssi_threshold -
-		WMA_NOISE_FLOOR_DBM_DEFAULT;
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_hw_db2dbm_support))
+		params->best_ap_rssi_threshold =
+			roam_req->mawc_roam_params.mawc_roam_ap_rssi_threshold;
+	else
+		params->best_ap_rssi_threshold =
+			roam_req->mawc_roam_params.mawc_roam_ap_rssi_threshold -
+			WMA_NOISE_FLOOR_DBM_DEFAULT;
 	params->rssi_stationary_high_adjust =
 		roam_req->mawc_roam_params.mawc_roam_rssi_high_adjust;
 	params->rssi_stationary_low_adjust =
@@ -435,10 +440,19 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	uint32_t hirssi_scan_max_count;
 	uint32_t hirssi_scan_delta;
 	int32_t hirssi_upper_bound;
+	bool db2dbm_enabled;
 
 	/* Send rssi threshold */
 	roam_params = &roam_req->roam_params;
-	rssi_thresh = roam_req->LookupThreshold - WMA_NOISE_FLOOR_DBM_DEFAULT;
+	db2dbm_enabled = wmi_service_enabled(wma_handle->wmi_handle,
+					     wmi_service_hw_db2dbm_support);
+	if (db2dbm_enabled) {
+		rssi_thresh = roam_req->LookupThreshold;
+	} else {
+		rssi_thresh = roam_req->LookupThreshold -
+					WMA_NOISE_FLOOR_DBM_DEFAULT;
+		rssi_thresh &= 0x000000ff;
+	}
 	rssi_thresh_diff = roam_req->OpportunisticScanThresholdDiff;
 	hirssi_scan_max_count = roam_req->hi_rssi_scan_max_count;
 	hirssi_scan_delta = roam_req->hi_rssi_scan_rssi_delta;
@@ -447,7 +461,7 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 
 	/* fill in threshold values */
 	params.session_id = roam_req->sessionId;
-	params.rssi_thresh = rssi_thresh & 0x000000ff;
+	params.rssi_thresh = rssi_thresh;
 	params.rssi_thresh_diff = rssi_thresh_diff & 0x000000ff;
 	params.hi_rssi_scan_max_count = hirssi_scan_max_count;
 	params.hi_rssi_scan_rssi_delta = hirssi_scan_delta;
@@ -459,8 +473,14 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	params.traffic_threshold =
 			roam_params->traffic_threshold;
 	params.initial_dense_status = roam_params->initial_dense_status;
-	params.bg_scan_bad_rssi_thresh = roam_params->bg_scan_bad_rssi_thresh -
-		WMA_NOISE_FLOOR_DBM_DEFAULT;
+	if (db2dbm_enabled)
+		params.bg_scan_bad_rssi_thresh =
+					   roam_params->bg_scan_bad_rssi_thresh;
+	else
+		params.bg_scan_bad_rssi_thresh =
+					  roam_params->bg_scan_bad_rssi_thresh -
+					  WMA_NOISE_FLOOR_DBM_DEFAULT;
+
 	params.bg_scan_client_bitmap = roam_params->bg_scan_client_bitmap;
 	params.roam_bad_rssi_thresh_offset_2g =
 				roam_params->roam_bad_rssi_thresh_offset_2g;
@@ -474,18 +494,37 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	 * Penalty/Boost threshold beyond the noise floor. If that is the case,
 	 * then suppress the penalty/boost threshold to the noise floor.
 	 */
-	if (roam_params->raise_rssi_thresh_5g < WMA_NOISE_FLOOR_DBM_DEFAULT)
-		params.penalty_threshold_5g = 0;
-	else
-		params.boost_threshold_5g =
-			(roam_params->raise_rssi_thresh_5g -
-			 WMA_NOISE_FLOOR_DBM_DEFAULT) & 0x000000ff;
-	if (roam_params->drop_rssi_thresh_5g < WMA_NOISE_FLOOR_DBM_DEFAULT)
-		params.penalty_threshold_5g = 0;
-	else
-		params.penalty_threshold_5g =
-			(roam_params->drop_rssi_thresh_5g -
-			 WMA_NOISE_FLOOR_DBM_DEFAULT) & 0x000000ff;
+	if (roam_params->raise_rssi_thresh_5g < WMA_NOISE_FLOOR_DBM_DEFAULT) {
+		if (db2dbm_enabled) {
+			params.penalty_threshold_5g = WMA_RSSI_MIN_VALUE;
+			params.boost_threshold_5g = WMA_RSSI_MAX_VALUE;
+		} else {
+			params.penalty_threshold_5g = 0;
+		}
+	} else {
+		if (db2dbm_enabled)
+			params.boost_threshold_5g =
+				roam_params->raise_rssi_thresh_5g;
+		else
+			params.boost_threshold_5g =
+				(roam_params->raise_rssi_thresh_5g -
+				 WMA_NOISE_FLOOR_DBM_DEFAULT) & 0x000000ff;
+	}
+	if (roam_params->drop_rssi_thresh_5g < WMA_NOISE_FLOOR_DBM_DEFAULT) {
+		if (db2dbm_enabled)
+			params.penalty_threshold_5g = WMA_RSSI_MIN_VALUE;
+		else
+			params.penalty_threshold_5g = 0;
+
+	} else {
+		if (db2dbm_enabled)
+			params.penalty_threshold_5g =
+				  roam_params->drop_rssi_thresh_5g;
+		else
+			params.penalty_threshold_5g =
+				     (roam_params->drop_rssi_thresh_5g -
+				      WMA_NOISE_FLOOR_DBM_DEFAULT) & 0x000000ff;
+	}
 	params.raise_factor_5g = roam_params->raise_factor_5g;
 	params.drop_factor_5g = roam_params->drop_factor_5g;
 	params.max_raise_rssi_5g = roam_params->max_raise_rssi_5g;
@@ -495,22 +534,41 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 		good_rssi_threshold = WMA_NOISE_FLOOR_DBM_DEFAULT;
 	else
 		good_rssi_threshold = 0;
-	params.good_rssi_threshold =
-	    (good_rssi_threshold - WMA_NOISE_FLOOR_DBM_DEFAULT) & 0x000000ff;
+
+	if (db2dbm_enabled)
+		params.good_rssi_threshold = good_rssi_threshold;
+	else
+		params.good_rssi_threshold = (good_rssi_threshold -
+					      WMA_NOISE_FLOOR_DBM_DEFAULT) &
+					      0x000000ff;
 
 	WMA_LOGD("WMA --> good_rssi_threshold=%d",
 		 params.good_rssi_threshold);
 
 	if (roam_req->early_stop_scan_enable) {
-		params.roam_earlystop_thres_min =
-			roam_req->early_stop_scan_min_threshold -
-			WMA_NOISE_FLOOR_DBM_DEFAULT;
-		params.roam_earlystop_thres_max =
-			roam_req->early_stop_scan_max_threshold -
-			WMA_NOISE_FLOOR_DBM_DEFAULT;
+		if (db2dbm_enabled) {
+			params.roam_earlystop_thres_min =
+				roam_req->early_stop_scan_min_threshold;
+			params.roam_earlystop_thres_max =
+				roam_req->early_stop_scan_max_threshold;
+		} else {
+			params.roam_earlystop_thres_min =
+				roam_req->early_stop_scan_min_threshold -
+				WMA_NOISE_FLOOR_DBM_DEFAULT;
+			params.roam_earlystop_thres_max =
+				roam_req->early_stop_scan_max_threshold -
+				WMA_NOISE_FLOOR_DBM_DEFAULT;
+		}
 	} else {
-		params.roam_earlystop_thres_min = 0;
-		params.roam_earlystop_thres_max = 0;
+		if (db2dbm_enabled) {
+			params.roam_earlystop_thres_min =
+						    WMA_RSSI_MIN_VALUE;
+			params.roam_earlystop_thres_max =
+						    WMA_RSSI_MIN_VALUE;
+		} else {
+			params.roam_earlystop_thres_min = 0;
+			params.roam_earlystop_thres_max = 0;
+		}
 	}
 	params.rssi_thresh_offset_5g =
 		roam_req->rssi_thresh_offset_5g;
@@ -821,9 +879,7 @@ static void wma_roam_scan_fill_ap_profile(tSirRoamOffloadScanReq *roam_req,
 			profile->rsn_mcastcipherset;
 		profile->rssi_threshold = roam_req->RoamRssiDiff;
 		if (roam_req->rssi_abs_thresh)
-			profile->rssi_abs_thresh =
-				roam_req->rssi_abs_thresh -
-						WMA_NOISE_FLOOR_DBM_DEFAULT;
+			profile->rssi_abs_thresh = roam_req->rssi_abs_thresh;
 #ifdef WLAN_FEATURE_11W
 		if (roam_req->ConnectedNetwork.mfp_enabled)
 			profile->flags |= WMI_AP_PROFILE_FLAG_PMF;
@@ -1131,6 +1187,10 @@ static QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
 
 	ap_profile.vdev_id = roam_req->sessionId;
 	wma_roam_scan_fill_ap_profile(roam_req, &ap_profile.profile);
+	if (!wmi_service_enabled(wma_handle->wmi_handle,
+				 wmi_service_hw_db2dbm_support))
+		ap_profile.profile.rssi_abs_thresh -=
+						WMA_NOISE_FLOOR_DBM_DEFAULT;
 	ap_profile.param = roam_req->score_params;
 	return wmi_unified_send_roam_scan_offload_ap_cmd(wma_handle->wmi_handle,
 							 &ap_profile);
@@ -2828,9 +2888,10 @@ int wma_rssi_breached_event_handler(void *handle,
 	wmi_rssi_breach_event_fixed_param  *event;
 	struct rssi_breach_event  rssi;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (!mac) {
-		WMA_LOGE("%s: Invalid mac context", __func__);
+	if (!mac || !wma) {
+		WMA_LOGE("%s: Invalid mac/wma context", __func__);
 		return -EINVAL;
 	}
 	if (!mac->sme.rssi_threshold_breached_cb) {
@@ -2846,7 +2907,11 @@ int wma_rssi_breached_event_handler(void *handle,
 
 	rssi.request_id = event->request_id;
 	rssi.session_id = event->vdev_id;
-	rssi.curr_rssi = event->rssi + WMA_TGT_NOISE_FLOOR_DBM;
+	if (wmi_service_enabled(wma->wmi_handle,
+				wmi_service_hw_db2dbm_support))
+		rssi.curr_rssi = event->rssi;
+	else
+		rssi.curr_rssi = event->rssi + WMA_TGT_NOISE_FLOOR_DBM;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->bssid, rssi.curr_bssid.bytes);
 
 	WMA_LOGD("%s: req_id: %u vdev_id: %d curr_rssi: %d", __func__,

@@ -5548,11 +5548,12 @@ int wma_pdev_div_info_evt_handler(void *handle, u_int8_t *event_buf,
 	struct chain_rssi_result chain_rssi_result;
 	u_int32_t i;
 	u_int8_t macaddr[IEEE80211_ADDR_LEN];
+	tp_wma_handle wma = (tp_wma_handle)handle;
 
 	struct mac_context *pmac = (struct mac_context *)cds_get_context(
 					QDF_MODULE_ID_PE);
-	if (!pmac) {
-		WMA_LOGE(FL("Invalid pmac"));
+	if (!pmac || !wma) {
+		WMA_LOGE(FL("Invalid pmac or wma"));
 		return -EINVAL;
 	}
 
@@ -5588,7 +5589,16 @@ int wma_pdev_div_info_evt_handler(void *handle, u_int8_t *event_buf,
 	for (i = 0; i < event->num_chains_valid; i++) {
 		WMA_LOGD(FL("chain_rssi: %d, ant_id: %d"),
 			 event->chain_rssi[i], event->ant_id[i]);
-		chain_rssi_result.chain_rssi[i] += WMA_TGT_NOISE_FLOOR_DBM;
+		if (!wmi_service_enabled(wma->wmi_handle,
+					 wmi_service_hw_db2dbm_support)) {
+			if (chain_rssi_result.chain_rssi[i] !=
+			    WMA_INVALID_PER_CHAIN_SNR)
+				chain_rssi_result.chain_rssi[i] +=
+							WMA_TGT_NOISE_FLOOR_DBM;
+			else
+				chain_rssi_result.chain_rssi[i] =
+						WMA_INVALID_PER_CHAIN_RSSI;
+		}
 	}
 
 	qdf_mem_copy(chain_rssi_result.ant_id, event->ant_id,

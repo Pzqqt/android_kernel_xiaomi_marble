@@ -2077,6 +2077,12 @@ int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 	WMI_PEER_INFO_EVENTID_param_tlvs *param_tlvs;
 	wmi_peer_info_event_fixed_param *fix_param;
 	uint8_t peer_mac[IEEE80211_ADDR_LEN];
+	tp_wma_handle wma = (tp_wma_handle)handle;
+
+	if (!wma) {
+		WMA_LOGE("Invalid wma");
+		return 0;
+	}
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (NULL == pdev) {
@@ -2118,7 +2124,13 @@ int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 		qdf_mem_copy(pSmeRsp->mac_addr, peer_mac,
 			sizeof(pSmeRsp->mac_addr));
 		pSmeRsp->mcsIndex = 0;
-		pSmeRsp->rssi = peer_info->rssi + WMA_TGT_NOISE_FLOOR_DBM;
+		if (wmi_service_enabled(wma->wmi_handle,
+					wmi_service_hw_db2dbm_support))
+			pSmeRsp->rssi = peer_info->rssi;
+		else
+			pSmeRsp->rssi = peer_info->rssi +
+						WMA_TGT_NOISE_FLOOR_DBM;
+
 		pSmeRsp->txRate = peer_info->data_rate;
 		pSmeRsp->txRateFlags = 0;
 

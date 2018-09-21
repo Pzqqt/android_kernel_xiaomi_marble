@@ -2448,10 +2448,10 @@ static void wma_vdev_stats_lost_link_helper(tp_wma_handle wma,
 					    wmi_vdev_stats *vdev_stats)
 {
 	struct wma_txrx_node *node;
-	int32_t rssi;
+	int8_t rssi;
 	struct wma_target_req *req_msg;
 	static const uint8_t zero_mac[QDF_MAC_ADDR_SIZE] = {0};
-	int32_t bcn_snr, dat_snr;
+	bool db2dbm_enabled;
 
 	if (vdev_stats->vdev_id >= wma->max_bssid) {
 		WMA_LOGE("%s: Invalid vdev_id %hu",
@@ -2459,6 +2459,8 @@ static void wma_vdev_stats_lost_link_helper(tp_wma_handle wma,
 		return;
 	}
 
+	db2dbm_enabled = wlan_psoc_nif_fw_ext_cap_get(wma->psoc,
+						      WLAN_SOC_CEXT_HW_DB2DBM);
 	node = &wma->interfaces[vdev_stats->vdev_id];
 	if (wma_is_vdev_up(vdev_stats->vdev_id) &&
 	    !qdf_mem_cmp(node->bssid, zero_mac, QDF_MAC_ADDR_SIZE)) {
@@ -2469,20 +2471,16 @@ static void wma_vdev_stats_lost_link_helper(tp_wma_handle wma,
 			WMA_LOGD(FL("cannot find DELETE_BSS request message"));
 			return;
 		}
-		bcn_snr = vdev_stats->vdev_snr.bcn_snr;
-		dat_snr = vdev_stats->vdev_snr.dat_snr;
+
 		WMA_LOGD(FL("get vdev id %d, beancon snr %d, data snr %d"),
-			vdev_stats->vdev_id, bcn_snr, dat_snr);
+			vdev_stats->vdev_id, vdev_stats->vdev_snr.bcn_snr,
+			vdev_stats->vdev_snr.dat_snr);
 
-		if (WMA_TGT_IS_VALID_SNR(bcn_snr))
-			rssi = bcn_snr;
-		else if (WMA_TGT_IS_VALID_SNR(dat_snr))
-			rssi = dat_snr;
-		else
-			rssi = WMA_TGT_INVALID_SNR;
+		wlan_util_stats_get_rssi(db2dbm_enabled,
+					 vdev_stats->vdev_snr.bcn_snr,
+					 vdev_stats->vdev_snr.dat_snr,
+					 &rssi);
 
-		/* Get the absolute rssi value from the current rssi value */
-		rssi = rssi + WMA_TGT_NOISE_FLOOR_DBM;
 		wma_lost_link_info_handler(wma, vdev_stats->vdev_id, rssi);
 	}
 }
@@ -2502,11 +2500,12 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 	uint8_t *stats_buf;
 	struct wma_txrx_node *node;
 	uint8_t i;
-	int32_t rssi = 0;
+	int8_t rssi = 0;
 	QDF_STATUS qdf_status;
 	tAniGetRssiReq *pGetRssiReq = (tAniGetRssiReq *) wma->pGetRssiReq;
 	struct scheduler_msg sme_msg = { 0 };
 	int32_t bcn_snr, dat_snr;
+	bool db2dbm_enabled;
 
 	if (vdev_stats->vdev_id >= wma->max_bssid) {
 		WMA_LOGE("%s: Invalid vdev_id %hu",
@@ -2519,6 +2518,8 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 	WMA_LOGD("vdev id %d beancon snr %d data snr %d",
 		 vdev_stats->vdev_id, bcn_snr, dat_snr);
 
+	db2dbm_enabled = wlan_psoc_nif_fw_ext_cap_get(wma->psoc,
+						      WLAN_SOC_CEXT_HW_DB2DBM);
 	node = &wma->interfaces[vdev_stats->vdev_id];
 	stats_rsp_params = node->stats_rsp;
 	if (stats_rsp_params) {
@@ -2545,38 +2546,17 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 			summary_stats->rts_succ_cnt = vdev_stats->rts_succ_cnt;
 			summary_stats->rts_fail_cnt = vdev_stats->rts_fail_cnt;
 			/* Update SNR and RSSI in SummaryStats */
-			if (WMA_TGT_IS_VALID_SNR(bcn_snr)) {
-				summary_stats->snr = bcn_snr;
-				summary_stats->rssi =
-					bcn_snr + WMA_TGT_NOISE_FLOOR_DBM;
-			} else if (WMA_TGT_IS_VALID_SNR(dat_snr)) {
-				summary_stats->snr = dat_snr;
-				summary_stats->rssi =
-					dat_snr + WMA_TGT_NOISE_FLOOR_DBM;
-			} else {
-				summary_stats->snr = WMA_TGT_INVALID_SNR;
-				summary_stats->rssi = 0;
-			}
+			wlan_util_stats_get_rssi(db2dbm_enabled,
+						 bcn_snr, dat_snr,
+						 &summary_stats->rssi);
+			summary_stats->snr = summary_stats->rssi -
+							WMA_TGT_NOISE_FLOOR_DBM;
 		}
 	}
 
 	if (pGetRssiReq && pGetRssiReq->sessionId == vdev_stats->vdev_id) {
-		if (WMA_TGT_IS_VALID_SNR(bcn_snr)) {
-			rssi = bcn_snr;
-			rssi = rssi + WMA_TGT_NOISE_FLOOR_DBM;
-		} else if (WMA_TGT_IS_VALID_SNR(dat_snr)) {
-			rssi = dat_snr;
-			rssi = rssi + WMA_TGT_NOISE_FLOOR_DBM;
-		} else {
-			/*
-			 * Firmware sends invalid snr till it sees
-			 * Beacon/Data after connection since after
-			 * vdev up fw resets the snr to invalid.
-			 * In this duartion Host will return the last know
-			 * rssi during connection.
-			 */
-			WMA_LOGE("Invalid SNR from firmware");
-		}
+		wlan_util_stats_get_rssi(db2dbm_enabled, bcn_snr, dat_snr,
+					 &rssi);
 
 		WMA_LOGD("Average Rssi = %d, vdev id= %d", rssi,
 			 pGetRssiReq->sessionId);
@@ -2760,31 +2740,19 @@ static void wma_update_per_chain_rssi_stats(tp_wma_handle wma,
 {
 	int i;
 	int32_t bcn_snr, dat_snr;
+	bool db2dbm_enabled;
 
+	db2dbm_enabled = wlan_psoc_nif_fw_ext_cap_get(wma->psoc,
+						      WLAN_SOC_CEXT_HW_DB2DBM);
 	for (i = 0; i < NUM_CHAINS_MAX; i++) {
 		bcn_snr = rssi_stats->rssi_avg_beacon[i];
 		dat_snr = rssi_stats->rssi_avg_data[i];
 		WMA_LOGD("chain %d beacon snr %d data snr %d",
 			i, bcn_snr, dat_snr);
-		if (WMA_TGT_IS_VALID_SNR(bcn_snr))
-			rssi_per_chain_stats->rssi[i] = bcn_snr;
-		else if (WMA_TGT_IS_VALID_SNR(dat_snr))
-			rssi_per_chain_stats->rssi[i] = dat_snr;
-		else
-			/*
-			 * Firmware sends invalid snr till it sees
-			 * Beacon/Data after connection since after
-			 * vdev up fw resets the snr to invalid.
-			 * In this duartion Host will return an invalid rssi
-			 * value.
-			 */
-			rssi_per_chain_stats->rssi[i] = WMA_TGT_INVALID_SNR;
 
-		/*
-		 * Get the absolute rssi value from the current rssi value the
-		 * sinr value is hardcoded into 0 in the qcacld-new/CORE stack
-		 */
-		rssi_per_chain_stats->rssi[i] += WMA_TGT_NOISE_FLOOR_DBM;
+		wlan_util_stats_get_rssi(db2dbm_enabled, bcn_snr, dat_snr,
+					 &rssi_per_chain_stats->rssi[i]);
+
 		WMI_MAC_ADDR_TO_CHAR_ARRAY(&(rssi_stats->peer_macaddr),
 			rssi_per_chain_stats->peer_mac_addr);
 	}

@@ -477,13 +477,17 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 	qdf_mem_copy(del_sta_ctx->bssId, wma->interfaces[vdev_id].addr,
 		     IEEE80211_ADDR_LEN);
 	del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_KEEP_ALIVE;
-	del_sta_ctx->rssi = kickout_event->rssi + WMA_TGT_NOISE_FLOOR_DBM;
+	if (wmi_service_enabled(wma->wmi_handle,
+				wmi_service_hw_db2dbm_support))
+		del_sta_ctx->rssi = kickout_event->rssi;
+	else
+		del_sta_ctx->rssi = kickout_event->rssi +
+					WMA_TGT_NOISE_FLOOR_DBM;
 	wma_sta_kickout_event(HOST_STA_KICKOUT_REASON_KEEP_ALIVE,
 							vdev_id, macaddr);
 	wma_send_msg(wma, SIR_LIM_DELETE_STA_CONTEXT_IND, (void *)del_sta_ctx,
 		     0);
-	wma_lost_link_info_handler(wma, vdev_id, kickout_event->rssi +
-						 WMA_TGT_NOISE_FLOOR_DBM);
+	wma_lost_link_info_handler(wma, vdev_id, del_sta_ctx->rssi);
 exit_handler:
 	WMA_LOGD("%s: Exit", __func__);
 	return 0;
@@ -3109,8 +3113,10 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 	beacon_miss_ind->bssIdx = vdev_id;
 
 	wma_send_msg(wma, WMA_MISSED_BEACON_IND, (void *)beacon_miss_ind, 0);
-	wma_lost_link_info_handler(wma, vdev_id, rssi +
-						 WMA_TGT_NOISE_FLOOR_DBM);
+	if (!wmi_service_enabled(wma->wmi_handle,
+				 wmi_service_hw_db2dbm_support))
+		rssi += WMA_TGT_NOISE_FLOOR_DBM;
+	wma_lost_link_info_handler(wma, vdev_id, rssi);
 }
 
 /**
