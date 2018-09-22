@@ -6026,7 +6026,7 @@ populate_dot11f_timing_advert_frame(tpAniSirGlobal mac_ctx,
 	QDF_STATUS nSirStatus;
 
 	/* Capabilities */
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_PRIVACY_ENABLED, &val);
+	val = mac_ctx->mlme_cfg->wep_params.is_privacy_enabled;
 	if (val)
 		frame->Capabilities.privacy = 1;
 

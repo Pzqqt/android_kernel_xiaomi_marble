@@ -43,7 +43,7 @@
 #include "lim_sme_req_utils.h"
 
 /**
- * lim_is_rs_nie_valid_in_sme_req_message()
+ * lim_is_rsn_ie_valid_in_sme_req_message()
  *
  * @mac_ctx   Pointer to Global MAC structure
  * @rsn_ie    Pointer to received RSN IE
@@ -54,17 +54,15 @@
  * Return: true when RSN IE is valid, false otherwise
  *
  */
-
 static uint8_t
-lim_is_rsn_ie_valid_in_sme_req_message(tpAniSirGlobal mac_ctx, tpSirRSNie rsn_ie)
+lim_is_rsn_ie_valid_in_sme_req_message(tpAniSirGlobal mac_ctx,
+				       tpSirRSNie rsn_ie)
 {
-	uint8_t start = 0;
-	uint32_t privacy, val;
+	uint8_t start = 0, privacy;
+	uint32_t val;
 	int len;
 
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_PRIVACY_ENABLED,
-			     &privacy) != QDF_STATUS_SUCCESS)
-		pe_warn("Unable to retrieve POI from CFG");
+	privacy = mac_ctx->mlme_cfg->wep_params.is_privacy_enabled;
 
 	val = mac_ctx->mlme_cfg->feature_flags.enable_rsn;
 	if (rsn_ie->length && (!privacy || !val)) {
@@ -222,11 +220,10 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal mac_ctx,
 {
 	uint32_t ret;
 	uint8_t wpa_idx = 0;
-	uint32_t privacy, val;
+	uint32_t val;
+	bool privacy;
 
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_PRIVACY_ENABLED,
-			     &privacy) != QDF_STATUS_SUCCESS)
-		pe_warn("Unable to retrieve POI from CFG");
+	privacy = mac_ctx->mlme_cfg->wep_params.is_privacy_enabled;
 
 	val = mac_ctx->mlme_cfg->feature_flags.enable_rsn;
 	if (rsn_ie->length && (!privacy || !val)) {
@@ -711,13 +708,11 @@ lim_is_sme_set_context_req_valid(tpAniSirGlobal pMac,
 		valid = false;
 		goto end;
 	} else if (pSetContextReq->keyMaterial.edType > eSIR_ED_NONE) {
-		uint32_t poi;
+		bool privacy;
 
-		if (wlan_cfg_get_int(pMac, WNI_CFG_PRIVACY_ENABLED,
-				     &poi) != QDF_STATUS_SUCCESS)
-			pe_warn("Unable to retrieve POI from CFG");
+		privacy = pMac->mlme_cfg->wep_params.is_privacy_enabled;
 
-		if (!poi) {
+		if (!privacy) {
 			/**
 			 * Privacy is not enabled
 			 * In order to allow mixed mode for Guest access

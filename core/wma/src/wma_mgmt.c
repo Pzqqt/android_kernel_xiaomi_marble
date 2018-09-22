@@ -75,6 +75,7 @@
 #include "wlan_p2p_cfg_api.h"
 #include "cfg_ucfg_api.h"
 #include "cfg_mlme_sta.h"
+#include "wlan_mlme_api.h"
 
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
@@ -1746,19 +1747,18 @@ static void wma_read_cfg_wepkey(tp_wma_handle wma_handle,
 	QDF_STATUS status;
 	uint32_t val = SIR_MAC_KEY_LENGTH;
 	uint8_t i, j;
+	tpAniSirGlobal mac_ctx = wma_handle->mac_context;
 
 	WMA_LOGD("Reading WEP keys from cfg");
+
 	/* NOTE:def_key_idx is initialized to 0 by the caller */
-	status = wlan_cfg_get_int(wma_handle->mac_context,
-				  WNI_CFG_WEP_DEFAULT_KEYID, def_key_idx);
-	if (status != QDF_STATUS_SUCCESS)
-		WMA_LOGE("Unable to read default id, defaulting to 0");
+	*def_key_idx = mac_ctx->mlme_cfg->wep_params.wep_default_key_id;
 
 	for (i = 0, j = 0; i < SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS; i++) {
-		status = wlan_cfg_get_str(wma_handle->mac_context,
-					  (uint16_t) WNI_CFG_WEP_DEFAULT_KEY_1 +
-					  i, key_info[j].key, &val);
-		if (status != QDF_STATUS_SUCCESS) {
+		status = mlme_get_wep_key(&mac_ctx->mlme_cfg->wep_params,
+					  (MLME_WEP_DEFAULT_KEY_1 +
+					  i), key_info[j].key, val);
+		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("WEP key is not configured at :%d", i);
 		} else {
 			key_info[j].keyId = i;

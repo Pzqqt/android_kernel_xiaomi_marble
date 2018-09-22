@@ -703,11 +703,7 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 		val = sessionEntry->privacy;
 	} else {
 		/* PRIVACY bit */
-		if (wlan_cfg_get_int(pMac, WNI_CFG_PRIVACY_ENABLED, &val) !=
-							QDF_STATUS_SUCCESS) {
-			pe_err("cfg get WNI_CFG_PRIVACY_ENABLED failed");
-			return QDF_STATUS_E_FAILURE;
-		}
+		val = pMac->mlme_cfg->wep_params.is_privacy_enabled;
 	}
 	if (val)
 		pCapInfo->privacy = 1;

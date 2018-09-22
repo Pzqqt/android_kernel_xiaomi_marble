@@ -74,7 +74,8 @@ uint8_t
 lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
 			   tpPESession psessionEntry)
 {
-	uint32_t algoEnable, privacyOptImp;
+	bool algoEnable, privacyOptImp;
+	struct wlan_mlme_wep_cfg *wep_params = &pMac->mlme_cfg->wep_params;
 
 	if (authType == eSIR_OPEN_SYSTEM) {
 
@@ -86,13 +87,9 @@ lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
 				return false;
 		}
 
-		if (wlan_cfg_get_int(pMac, WNI_CFG_OPEN_SYSTEM_AUTH_ENABLE,
-				     &algoEnable) != QDF_STATUS_SUCCESS) {
-			pe_err("could not retrieve AuthAlgo1 Enable value");
+		algoEnable = wep_params->is_auth_open_system;
+		return algoEnable > 0 ? true : false;
 
-			return false;
-		} else
-			return algoEnable > 0 ? true : false;
 	} else {
 
 		if (LIM_IS_AP_ROLE(psessionEntry)) {
@@ -102,26 +99,15 @@ lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
 			else
 				algoEnable = false;
 
-		} else
-
-		if (wlan_cfg_get_int
-			    (pMac, WNI_CFG_SHARED_KEY_AUTH_ENABLE,
-			    &algoEnable) != QDF_STATUS_SUCCESS) {
-			pe_err("could not retrieve AuthAlgo2 Enable value");
-
-			return false;
+		} else {
+			algoEnable = wep_params->is_shared_key_auth;
 		}
 
-		if (LIM_IS_AP_ROLE(psessionEntry)) {
+		if (LIM_IS_AP_ROLE(psessionEntry))
 			privacyOptImp = psessionEntry->privacy;
-		} else
+		else
+			privacyOptImp = wep_params->is_privacy_enabled;
 
-		if (wlan_cfg_get_int(pMac, WNI_CFG_PRIVACY_ENABLED,
-				     &privacyOptImp) != QDF_STATUS_SUCCESS) {
-			pe_err("could not retrieve PrivacyOptImplemented value");
-
-			return false;
-		}
 		return algoEnable && privacyOptImp;
 	}
 } /****** end lim_is_auth_algo_supported() ******/

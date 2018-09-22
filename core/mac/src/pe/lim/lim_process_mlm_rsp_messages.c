@@ -512,14 +512,10 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	 * Failure case handle:
 	 * Process AUTH confirm from MLM
 	 */
-	if (session_entry->limSmeState == eLIM_SME_WT_AUTH_STATE) {
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_AUTHENTICATION_TYPE,
-			(uint32_t *) &auth_type) !=  QDF_STATUS_SUCCESS) {
-			pe_err("Fail to retrieve AuthType value");
-		}
-	} else {
+	if (session_entry->limSmeState == eLIM_SME_WT_AUTH_STATE)
+		auth_type = mac_ctx->mlme_cfg->wep_params.auth_type;
+	else
 		auth_type = mac_ctx->lim.gLimPreAuthType;
-	}
 
 	if ((auth_type == eSIR_AUTO_SWITCH) &&
 		(auth_cnf->authType == eSIR_SHARED_KEY) &&
@@ -2338,10 +2334,8 @@ lim_process_sta_add_bss_rsp_pre_assoc(tpAniSirGlobal mac_ctx,
 		/* STA Index(genr by HAL) for the BSS entry is stored here */
 		pStaDs->staIndex = pAddBssParams->staContext.staIdx;
 		/* Trigger Authentication with AP */
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_AUTHENTICATION_TYPE,
-			(uint32_t *) &cfgAuthType) != QDF_STATUS_SUCCESS) {
-			pe_warn("could not retrieve AuthType");
-		}
+		cfgAuthType = mac_ctx->mlme_cfg->wep_params.auth_type;
+
 		/* Try shared Authentication first */
 		if (cfgAuthType == eSIR_AUTO_SWITCH)
 			authMode = eSIR_SHARED_KEY;

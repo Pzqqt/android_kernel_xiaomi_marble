@@ -43,6 +43,7 @@
 #include "cds_utils.h"
 #include "lim_send_messages.h"
 #include "lim_process_fils.h"
+#include "wlan_mlme_api.h"
 
 /**
  * is_auth_valid
@@ -107,9 +108,9 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 	pe_debug("=======> eSIR_SHARED_KEY");
 	if (LIM_IS_AP_ROLE(pe_session))
 		val = pe_session->privacy;
-	else if (wlan_cfg_get_int(mac_ctx,
-			WNI_CFG_PRIVACY_ENABLED, &val) != QDF_STATUS_SUCCESS)
-		pe_warn("couldnt retrieve Privacy option");
+	else
+		val = mac_ctx->mlme_cfg->wep_params.is_privacy_enabled;
+
 	cfg_privacy_opt_imp = (uint8_t) val;
 	if (!cfg_privacy_opt_imp) {
 		pe_err("rx Auth frame for unsupported auth algorithm %d "
@@ -567,6 +568,8 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 	uint8_t defaultkey[SIR_MAC_KEY_LENGTH];
 	struct tLimPreAuthNode *auth_node;
 	uint8_t *encr_auth_frame;
+	struct wlan_mlme_wep_cfg *wep_params = &mac_ctx->mlme_cfg->wep_params;
+	QDF_STATUS qdf_status;
 
 	/* AuthFrame 2 */
 	if (pe_session->limMlmState != eLIM_MLM_WT_AUTH_FRAME2_STATE) {
@@ -713,12 +716,10 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 	} else {
 		/* Shared key authentication */
 		if (LIM_IS_AP_ROLE(pe_session))
-			val = pe_session->privacy;
-		else if (wlan_cfg_get_int(mac_ctx,
-					WNI_CFG_PRIVACY_ENABLED,
-					&val) != QDF_STATUS_SUCCESS)
-			pe_warn("couldnt retrieve Privacy option");
-		cfg_privacy_opt_imp = (uint8_t) val;
+			cfg_privacy_opt_imp = pe_session->privacy;
+		else
+			cfg_privacy_opt_imp = wep_params->is_privacy_enabled;
+
 		if (!cfg_privacy_opt_imp) {
 			/*
 			 * Requesting STA does not have WEP implemented.
@@ -746,21 +747,21 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 			pe_err("rx auth frm with invalid challenge txtie");
 			return;
 		}
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_WEP_DEFAULT_KEYID,
-					&val) != QDF_STATUS_SUCCESS)
-			pe_warn("could not retrieve Default key_id");
-		key_id = (uint8_t) val;
+
+		key_id = mac_ctx->mlme_cfg->wep_params.wep_default_key_id;
 		val = SIR_MAC_KEY_LENGTH;
 		if (LIM_IS_AP_ROLE(pe_session)) {
 			tpSirKeys key_ptr =
 				&pe_session->WEPKeyMaterial[key_id].key[0];
 			qdf_mem_copy(defaultkey, key_ptr->key,
 					key_ptr->keyLength);
-		} else if (wlan_cfg_get_str(mac_ctx,
-				(uint16_t)(WNI_CFG_WEP_DEFAULT_KEY_1 + key_id),
-				defaultkey, &val) != QDF_STATUS_SUCCESS) {
-			/* Couldnt get Default key from CFG. */
-			pe_warn("cant retrieve Defaultkey");
+		} else {
+			qdf_status = mlme_get_wep_key(wep_params,
+						      (MLME_WEP_DEFAULT_KEY_1 +
+						      key_id), defaultkey, val);
+			if (QDF_IS_STATUS_ERROR(qdf_status))
+				pe_warn("cant retrieve Defaultkey");
+
 			auth_frame->authAlgoNumber =
 				rx_auth_frm_body->authAlgoNumber;
 			auth_frame->authTransactionSeqNumber =
@@ -1123,6 +1124,8 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	tSirMacAuthFrameBody *rx_auth_frm_body, *rx_auth_frame, *auth_frame;
 	tpSirMacMgmtHdr mac_hdr;
 	struct tLimPreAuthNode *auth_node;
+	struct wlan_mlme_wep_cfg *wep_params = &mac_ctx->mlme_cfg->wep_params;
+	QDF_STATUS qdf_status;
 
 	/* Get pointer to Authentication frame header and body */
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
@@ -1254,18 +1257,15 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGE);
 			goto free;
 		}
-		if (LIM_IS_AP_ROLE(pe_session)) {
-			val = pe_session->privacy;
-		} else if (wlan_cfg_get_int(mac_ctx, WNI_CFG_PRIVACY_ENABLED,
-					&val) != QDF_STATUS_SUCCESS) {
-			/*
-			 * Accept Authentication frame only if Privacy is
-			 * implemented, if Could not get Privacy option
-			 * from CFG then Log fatal error
-			 */
-			pe_warn("could not retrieve Privacy option");
-		}
-		cfg_privacy_opt_imp = (uint8_t) val;
+
+		/*
+		 * Accept Authentication frame only if Privacy is
+		 * implemented
+		 */
+		if (LIM_IS_AP_ROLE(pe_session))
+			cfg_privacy_opt_imp = pe_session->privacy;
+		else
+			cfg_privacy_opt_imp = wep_params->is_privacy_enabled;
 
 		if (!cfg_privacy_opt_imp) {
 			pe_err("received Authentication frame3 from peer that while privacy option is turned OFF "
@@ -1355,10 +1355,12 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			qdf_mem_copy(defaultkey, key_ptr->key,
 					key_ptr->keyLength);
 			val = key_ptr->keyLength;
-		} else if (wlan_cfg_get_str(mac_ctx,
-				(uint16_t) (WNI_CFG_WEP_DEFAULT_KEY_1 + key_id),
-				defaultkey, &val) != QDF_STATUS_SUCCESS) {
-			pe_warn("could not retrieve Default key");
+		} else {
+			qdf_status = mlme_get_wep_key(wep_params,
+						      (MLME_WEP_DEFAULT_KEY_1 +
+						      key_id), defaultkey, val);
+			if (QDF_IS_STATUS_ERROR(qdf_status))
+				pe_warn("could not retrieve Default key");
 
 			/*
 			 * Send Authentication frame
@@ -1404,17 +1406,16 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			pe_err("failed to convert Auth Frame to structure or Auth is not valid");
 			goto free;
 		}
-	} else if ((auth_alg ==
-		    eSIR_AUTH_TYPE_SAE) && (LIM_IS_STA_ROLE(pe_session))) {
-		lim_process_sae_auth_frame(mac_ctx,
-					rx_pkt_info, pe_session);
+	} else if ((auth_alg == eSIR_AUTH_TYPE_SAE) &&
+		   (LIM_IS_STA_ROLE(pe_session))) {
+		lim_process_sae_auth_frame(mac_ctx, rx_pkt_info, pe_session);
 		goto free;
 	} else if ((sir_convert_auth_frame2_struct(mac_ctx, body_ptr,
 				frame_len, rx_auth_frame) != QDF_STATUS_SUCCESS)
 				|| (!is_auth_valid(mac_ctx, rx_auth_frame,
 						pe_session))) {
-			pe_err("failed to convert Auth Frame to structure or Auth is not valid");
-			goto free;
+		pe_err("failed to convert Auth Frame to structure or Auth is not valid");
+		goto free;
 	}
 
 	rx_auth_frm_body = rx_auth_frame;

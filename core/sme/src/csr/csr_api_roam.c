@@ -56,9 +56,9 @@
 #include <wlan_action_oui_ucfg_api.h>
 #include "wlan_mlme_api.h"
 #include <wlan_utility.h>
-#include "wlan_mlme_public_struct.h"
 #include "cfg_mlme.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_mlme_api.h"
 
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
@@ -4819,20 +4819,22 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 	 * CFG based on the advertised privacy setting from the AP for WPA
 	 * associations. See note below in this function...
 	 */
-	uint32_t PrivacyEnabled = 0, RsnEnabled = 0, WepDefaultKeyId = 0;
+	uint32_t privacy_enabled = 0, RsnEnabled = 0, wep_default_key_id = 0;
 	uint32_t WepKeyLength = WNI_CFG_WEP_KEY_LENGTH_5;
 	uint32_t Key0Length = 0, Key1Length = 0, Key2Length = 0, Key3Length = 0;
 
 	/* Reserve for the biggest key */
-	uint8_t Key0[WNI_CFG_WEP_DEFAULT_KEY_1_LEN];
-	uint8_t Key1[WNI_CFG_WEP_DEFAULT_KEY_2_LEN];
-	uint8_t Key2[WNI_CFG_WEP_DEFAULT_KEY_3_LEN];
-	uint8_t Key3[WNI_CFG_WEP_DEFAULT_KEY_4_LEN];
+	uint8_t Key0[MLME_WEP_MAX_KEY_LEN];
+	uint8_t Key1[MLME_WEP_MAX_KEY_LEN];
+	uint8_t Key2[MLME_WEP_MAX_KEY_LEN];
+	uint8_t Key3[MLME_WEP_MAX_KEY_LEN];
+
+	struct wlan_mlme_wep_cfg *wep_params = &pMac->mlme_cfg->wep_params;
 
 	switch (pProfile->negotiatedUCEncryptionType) {
 	case eCSR_ENCRYPT_TYPE_NONE:
 		/* for NO encryption, turn off Privacy and Rsn. */
-		PrivacyEnabled = 0;
+		privacy_enabled = 0;
 		RsnEnabled = 0;
 		/* clear out the WEP keys that may be hanging around. */
 		Key0Length = 0;
@@ -4845,10 +4847,10 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 	case eCSR_ENCRYPT_TYPE_WEP40:
 
 		/* Privacy is ON.  NO RSN for Wep40 static key. */
-		PrivacyEnabled = 1;
+		privacy_enabled = 1;
 		RsnEnabled = 0;
 		/* Set the Wep default key ID. */
-		WepDefaultKeyId = pProfile->Keys.defaultIndex;
+		wep_default_key_id = pProfile->Keys.defaultIndex;
 		/* Wep key size if 5 bytes (40 bits). */
 		WepKeyLength = WNI_CFG_WEP_KEY_LENGTH_5;
 		/*
@@ -4896,10 +4898,10 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 	case eCSR_ENCRYPT_TYPE_WEP104:
 
 		/* Privacy is ON.  NO RSN for Wep40 static key. */
-		PrivacyEnabled = 1;
+		privacy_enabled = 1;
 		RsnEnabled = 0;
 		/* Set the Wep default key ID. */
-		WepDefaultKeyId = pProfile->Keys.defaultIndex;
+		wep_default_key_id = pProfile->Keys.defaultIndex;
 		/* Wep key size if 13 bytes (104 bits). */
 		WepKeyLength = WNI_CFG_WEP_KEY_LENGTH_13;
 		/*
@@ -4956,7 +4958,7 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 		 * (setting of the privacy CFG based on the advertised
 		 *  privacy setting from AP for WPA/WAPI associations).
 		 */
-		PrivacyEnabled = (0 != fPrivacy);
+		privacy_enabled = (0 != fPrivacy);
 		/* turn on RSN enabled for WPA associations */
 		RsnEnabled = 1;
 		/* clear static WEP keys that may be hanging around. */
@@ -4966,18 +4968,18 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 		Key3Length = 0;
 		break;
 	default:
-		PrivacyEnabled = 0;
+		privacy_enabled = 0;
 		RsnEnabled = 0;
 		break;
 	}
 
-	cfg_set_int(pMac, WNI_CFG_PRIVACY_ENABLED, PrivacyEnabled);
+	pMac->mlme_cfg->wep_params.is_privacy_enabled = privacy_enabled;
 	pMac->mlme_cfg->feature_flags.enable_rsn = RsnEnabled;
-	cfg_set_str(pMac, WNI_CFG_WEP_DEFAULT_KEY_1, Key0, Key0Length);
-	cfg_set_str(pMac, WNI_CFG_WEP_DEFAULT_KEY_2, Key1, Key1Length);
-	cfg_set_str(pMac, WNI_CFG_WEP_DEFAULT_KEY_3, Key2, Key2Length);
-	cfg_set_str(pMac, WNI_CFG_WEP_DEFAULT_KEY_4, Key3, Key3Length);
-	cfg_set_int(pMac, WNI_CFG_WEP_DEFAULT_KEYID, WepDefaultKeyId);
+	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_1, Key0, Key0Length);
+	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_2, Key1, Key1Length);
+	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_3, Key2, Key2Length);
+	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_4, Key3, Key3Length);
+	pMac->mlme_cfg->wep_params.wep_default_key_id = wep_default_key_id;
 }
 
 static void csr_set_cfg_ssid(tpAniSirGlobal pMac, tSirMacSSid *pSSID)
@@ -5365,7 +5367,8 @@ QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 	csr_set_cfg_ssid(pMac, &pBssConfig->SSID);
 
 	/* Auth type */
-	cfg_set_int(pMac, WNI_CFG_AUTHENTICATION_TYPE, pBssConfig->authType);
+	pMac->mlme_cfg->wep_params.auth_type = pBssConfig->authType;
+
 	/* encryption type */
 	csr_set_cfg_privacy(pMac, pProfile, (bool) pBssConfig->BssCap.privacy);
 	/* short slot time */
@@ -10886,6 +10889,7 @@ QDF_STATUS csr_roam_send_set_key_cmd(tpAniSirGlobal mac_ctx,
 						set_key_cmd->encType);
 	bool unicast = (set_key_cmd->peermac.bytes[0] == 0xFF) ? false : true;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+	struct wlan_mlme_wep_cfg *wep_params = &mac_ctx->mlme_cfg->wep_params;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	WLAN_HOST_DIAG_EVENT_DEF(setKeyEvent,
@@ -10923,13 +10927,8 @@ QDF_STATUS csr_roam_send_set_key_cmd(tpAniSirGlobal mac_ctx,
 			     session->connectedProfile.bssid.bytes,
 			     QDF_MAC_ADDR_SIZE);
 		if (CSR_IS_ENC_TYPE_STATIC(set_key_cmd->encType)) {
-			uint32_t defKeyId;
 			/* It has to be static WEP here */
-			if (QDF_IS_STATUS_SUCCESS(wlan_cfg_get_int(mac_ctx,
-					WNI_CFG_WEP_DEFAULT_KEYID,
-					&defKeyId))) {
-				setKeyEvent.keyId = (uint8_t) defKeyId;
-			}
+			setKeyEvent.keyId = wep_params->wep_default_key_id;
 		} else {
 			setKeyEvent.keyId = set_key_cmd->keyId;
 		}
