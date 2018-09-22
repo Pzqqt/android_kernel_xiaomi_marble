@@ -843,6 +843,20 @@ struct wlan_mlme_oce {
 #define MLME_WEP_MAX_KEY_LEN (13)
 
 /**
+ * enum wep_key_id  - values passed to get/set wep default keys
+ * @MLME_WEP_DEFAULT_KEY_1: wep default key 1
+ * @MLME_WEP_DEFAULT_KEY_2: wep default key 2
+ * @MLME_WEP_DEFAULT_KEY_3: wep default key 3
+ * @MLME_WEP_DEFAULT_KEY_4: wep default key 4
+ */
+enum wep_key_id {
+	MLME_WEP_DEFAULT_KEY_1 = 0,
+	MLME_WEP_DEFAULT_KEY_2,
+	MLME_WEP_DEFAULT_KEY_3,
+	MLME_WEP_DEFAULT_KEY_4
+};
+
+/**
  * struct wlan_mlme_wep_cfg - WEP related configs
  * @is_privacy_enabled:     Flag to check if encryption is enabled
  * @is_shared_key_auth:     Flag to check if the auth type is shared key

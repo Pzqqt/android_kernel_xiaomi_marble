@@ -62,6 +62,29 @@ QDF_STATUS wlan_mlme_set_cfg_str(uint8_t *src, struct mlme_cfg_str *dst_cfg_str,
 QDF_STATUS wlan_mlme_get_edca_params(struct wlan_mlme_edca_params *edca_params,
 				     uint8_t *data, enum e_edca_type edca_ac);
 
+/*
+ * mlme_get_wep_key() - get the wep key to process during auth frame
+ * @wep_params: cfg wep parameters structure
+ * @wep_key_id: default key number
+ * @default_key: default key to be copied
+ * @key_len: length of the key to copy
+ *
+ * Return QDF_STATUS
+ */
+QDF_STATUS mlme_get_wep_key(struct wlan_mlme_wep_cfg *wep_params,
+			    enum wep_key_id wep_keyid, uint8_t *default_key,
+			    qdf_size_t key_len);
+
+/**
+ * mlme_set_wep_key() - set the wep keys during auth
+ * @wep_params: cfg wep parametrs structure
+ * @wep_key_id: default key number that needs to be copied
+ * @key_to_set: destination buffer to be copied
+ * @len:        size to be copied
+ */
+QDF_STATUS mlme_set_wep_key(struct wlan_mlme_wep_cfg *wep_params,
+			    enum wep_key_id wep_keyid, uint8_t *key_to_set,
+			    qdf_size_t len);
 /**
  * wlan_mlme_get_ht_cap_info() - Get the HT cap info config
  * @psoc: pointer to psoc object
