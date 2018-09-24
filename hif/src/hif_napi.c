@@ -279,7 +279,7 @@ void hif_napi_rx_offld_flush_cb_register(struct hif_opaque_softc *hif_hdl,
 		if (ce_state && (ce_state->htt_rx_data)) {
 			napii = napid->napis[i];
 			napii->offld_flush_cb = offld_flush_handler;
-			HIF_DBG("Registering offload for ce_id %d NAPI callback for %d flush_cb %p\n",
+			HIF_DBG("Registering offload for ce_id %d NAPI callback for %d flush_cb %pK\n",
 				i, napii->id, napii->offld_flush_cb);
 		}
 	}
