@@ -258,10 +258,12 @@ void ucfg_reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 /**
  * ucfg_reg_get_regd_rules() - provides the reg domain rules info pointer
  * @pdev: pdev ptr
+ * @reg_rules: regulatory rules
  *
- * Return: reg_rule_info pointer
+ * Return: QDF_STATUS
  */
-struct reg_rule_info *ucfg_reg_get_regd_rules(struct wlan_objmgr_pdev *pdev);
+QDF_STATUS ucfg_reg_get_regd_rules(struct wlan_objmgr_pdev *pdev,
+				   struct reg_rule_info *reg_rules);
 
 /**
  * ucfg_reg_register_chan_change_callback () - add chan change cbk

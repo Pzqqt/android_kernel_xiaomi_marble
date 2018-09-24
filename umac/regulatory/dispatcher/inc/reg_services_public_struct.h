@@ -783,13 +783,13 @@ struct cur_regulatory_info {
  * @alpha2: alpha2 of reg rules
  * @dfs_region: dfs region
  * @num_of_reg_rules: number of reg rules
- * @reg_rules_ptr: regulatory rules pointer
+ * @reg_rules: regulatory rules array
  */
 struct reg_rule_info {
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
 	enum dfs_reg dfs_region;
 	uint8_t num_of_reg_rules;
-	struct cur_reg_rule *reg_rules_ptr;
+	struct cur_reg_rule reg_rules[MAX_REG_RULES];
 };
 
 /**

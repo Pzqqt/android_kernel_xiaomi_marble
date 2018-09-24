@@ -2882,8 +2882,6 @@ static QDF_STATUS reg_sched_11d_msg(struct wlan_objmgr_psoc *psoc)
 
 void reg_reset_reg_rules(struct reg_rule_info *reg_rules)
 {
-	if (reg_rules->reg_rules_ptr)
-		qdf_mem_free(reg_rules->reg_rules_ptr);
 	qdf_mem_zero(reg_rules, sizeof(*reg_rules));
 }
 
@@ -2894,28 +2892,29 @@ static void reg_save_reg_rules_to_pdev(struct reg_rule_info *psoc_reg_rules,
 	uint32_t reg_rule_len;
 	struct reg_rule_info *pdev_reg_rules;
 
+	qdf_spin_lock_bh(&pdev_priv_obj->reg_rules_lock);
+
 	pdev_reg_rules = &pdev_priv_obj->reg_rules;
 	reg_reset_reg_rules(pdev_reg_rules);
+
 	pdev_reg_rules->num_of_reg_rules = psoc_reg_rules->num_of_reg_rules;
 	if (!pdev_reg_rules->num_of_reg_rules) {
-		reg_debug("no reg rules in psoc");
+		qdf_spin_unlock_bh(&pdev_priv_obj->reg_rules_lock);
+		reg_err("no reg rules in psoc");
 		return;
 	}
+
 	reg_rule_len = pdev_reg_rules->num_of_reg_rules *
 		       sizeof(struct cur_reg_rule);
-	pdev_reg_rules->reg_rules_ptr = qdf_mem_malloc(reg_rule_len);
-	if (!pdev_reg_rules->reg_rules_ptr) {
-		reg_err("mem alloc failed for pdev reg rules");
-		return;
-	}
-	qdf_mem_copy(pdev_reg_rules->reg_rules_ptr,
-		     psoc_reg_rules->reg_rules_ptr,
+	qdf_mem_copy(pdev_reg_rules->reg_rules,
+		     psoc_reg_rules->reg_rules,
 		     reg_rule_len);
+
 	qdf_mem_copy(pdev_reg_rules->alpha2, pdev_priv_obj->current_country,
 		     REG_ALPHA2_LEN + 1);
 	pdev_reg_rules->dfs_region = pdev_priv_obj->dfs_region;
-	reg_debug("num pdev reg rules saved %d",
-		  pdev_reg_rules->num_of_reg_rules);
+
+	qdf_spin_unlock_bh(&pdev_priv_obj->reg_rules_lock);
 }
 
 static void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
@@ -3113,24 +3112,21 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 	reg_reset_reg_rules(reg_rules);
 
 	reg_rules->num_of_reg_rules = num_5g_reg_rules + num_2g_reg_rules;
+	if (reg_rules->num_of_reg_rules > MAX_REG_RULES) {
+		reg_err("number of reg rules exceeds limit");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (reg_rules->num_of_reg_rules) {
-		reg_rules->reg_rules_ptr =
-			qdf_mem_malloc(reg_rules->num_of_reg_rules *
-					sizeof(struct cur_reg_rule));
-		if (!reg_rules->reg_rules_ptr) {
-			reg_err("mem alloc failed for reg_rules");
-		} else {
-			if (num_2g_reg_rules)
-				qdf_mem_copy(reg_rules->reg_rules_ptr,
-					     reg_rule_2g, num_2g_reg_rules *
-					     sizeof(struct cur_reg_rule));
-			if (num_5g_reg_rules)
-				qdf_mem_copy(reg_rules->reg_rules_ptr +
-					     num_2g_reg_rules, reg_rule_5g,
-					     num_5g_reg_rules *
-					     sizeof(struct cur_reg_rule));
-		}
+		if (num_2g_reg_rules)
+			qdf_mem_copy(reg_rules->reg_rules,
+				     reg_rule_2g, num_2g_reg_rules *
+				     sizeof(struct cur_reg_rule));
+		if (num_5g_reg_rules)
+			qdf_mem_copy(reg_rules->reg_rules +
+				     num_2g_reg_rules, reg_rule_5g,
+				     num_5g_reg_rules *
+				     sizeof(struct cur_reg_rule));
 	}
 
 	if (num_5g_reg_rules != 0)
@@ -3628,6 +3624,8 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 		psoc_priv_obj->indoor_chan_enabled;
 	pdev_priv_obj->en_chan_144 = true;
 
+	qdf_spinlock_create(&pdev_priv_obj->reg_rules_lock);
+
 	reg_cap_ptr = psoc_priv_obj->reg_cap;
 	pdev_priv_obj->force_ssc_disable_indoor_channel =
 		psoc_priv_obj->force_ssc_disable_indoor_channel;
@@ -3718,7 +3716,12 @@ QDF_STATUS wlan_regulatory_pdev_obj_destroyed_notification(
 
 	reg_debug("reg pdev obj deleted with status %d", status);
 
+	qdf_spin_lock_bh(&pdev_priv_obj->reg_rules_lock);
 	reg_reset_reg_rules(&pdev_priv_obj->reg_rules);
+	qdf_spin_unlock_bh(&pdev_priv_obj->reg_rules_lock);
+
+	qdf_spinlock_destroy(&pdev_priv_obj->reg_rules_lock);
+
 	qdf_mem_free(pdev_priv_obj);
 
 	return status;
@@ -4246,22 +4249,28 @@ QDF_STATUS reg_program_default_cc(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
-struct reg_rule_info *reg_get_regd_rules(struct wlan_objmgr_pdev *pdev)
+QDF_STATUS reg_get_regd_rules(struct wlan_objmgr_pdev *pdev,
+			      struct reg_rule_info *reg_rules)
 {
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 
 	if (!pdev) {
 		reg_err("pdev is NULL");
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 	}
-	pdev_priv_obj = reg_get_pdev_obj(pdev);
 
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
 	if (!pdev_priv_obj) {
 		reg_err("pdev priv obj is NULL");
-		return NULL;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return &pdev_priv_obj->reg_rules;
+	qdf_spin_lock_bh(&pdev_priv_obj->reg_rules_lock);
+	qdf_mem_copy(reg_rules, &pdev_priv_obj->reg_rules,
+		     sizeof(struct reg_rule_info));
+	qdf_spin_unlock_bh(&pdev_priv_obj->reg_rules_lock);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS reg_program_chan_list(struct wlan_objmgr_pdev *pdev,

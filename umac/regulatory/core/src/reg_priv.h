@@ -134,6 +134,7 @@ struct wlan_regulatory_pdev_priv_obj {
 	bool force_ssc_disable_indoor_channel;
 	bool sap_state;
 	struct reg_rule_info reg_rules;
+	qdf_spinlock_t reg_rules_lock;
 };
 
 #endif

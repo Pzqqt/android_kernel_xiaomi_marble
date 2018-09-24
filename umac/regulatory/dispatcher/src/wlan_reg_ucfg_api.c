@@ -82,9 +82,10 @@ void ucfg_reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 	reg_program_mas_chan_list(psoc, reg_channels, alpha2, dfs_region);
 }
 
-struct reg_rule_info *ucfg_reg_get_regd_rules(struct wlan_objmgr_pdev *pdev)
+QDF_STATUS ucfg_reg_get_regd_rules(struct wlan_objmgr_pdev *pdev,
+				   struct reg_rule_info *reg_rules)
 {
-	return reg_get_regd_rules(pdev);
+	return reg_get_regd_rules(pdev, reg_rules);
 }
 
 QDF_STATUS ucfg_reg_program_default_cc(struct wlan_objmgr_pdev *pdev,
