@@ -1885,6 +1885,19 @@ static int wcd937x_soc_codec_probe(struct snd_soc_codec *codec)
 		pr_err("%s: mbhc initialization failed\n", __func__);
 		goto err_hwdep;
 	}
+	snd_soc_dapm_ignore_suspend(dapm, "AMIC1");
+	snd_soc_dapm_ignore_suspend(dapm, "AMIC2");
+	snd_soc_dapm_ignore_suspend(dapm, "AMIC3");
+	snd_soc_dapm_ignore_suspend(dapm, "IN1_HPHL");
+	snd_soc_dapm_ignore_suspend(dapm, "IN2_HPHR");
+	snd_soc_dapm_ignore_suspend(dapm, "IN3_AUX");
+	snd_soc_dapm_ignore_suspend(dapm, "ADC1_OUTPUT");
+	snd_soc_dapm_ignore_suspend(dapm, "ADC2_OUTPUT");
+	snd_soc_dapm_ignore_suspend(dapm, "EAR");
+	snd_soc_dapm_ignore_suspend(dapm, "AUX");
+	snd_soc_dapm_ignore_suspend(dapm, "HPHL");
+	snd_soc_dapm_ignore_suspend(dapm, "HPHR");
+	snd_soc_dapm_sync(dapm);
 
 	wcd937x_init_reg(codec);
 
@@ -1903,6 +1916,14 @@ static int wcd937x_soc_codec_probe(struct snd_soc_codec *codec)
 				__func__);
 			goto err_hwdep;
 		}
+		snd_soc_dapm_ignore_suspend(dapm, "AMIC4");
+		snd_soc_dapm_ignore_suspend(dapm, "DMIC1_OUTPUT");
+		snd_soc_dapm_ignore_suspend(dapm, "DMIC2_OUTPUT");
+		snd_soc_dapm_ignore_suspend(dapm, "DMIC3_OUTPUT");
+		snd_soc_dapm_ignore_suspend(dapm, "DMIC4_OUTPUT");
+		snd_soc_dapm_ignore_suspend(dapm, "DMIC5_OUTPUT");
+		snd_soc_dapm_ignore_suspend(dapm, "DMIC6_OUTPUT");
+		snd_soc_dapm_ignore_suspend(dapm, "ADC3_OUTPUT");
 		snd_soc_dapm_sync(dapm);
 	}
 	wcd937x->version = WCD937X_VERSION_1_0;

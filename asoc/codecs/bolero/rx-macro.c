@@ -3027,6 +3027,19 @@ static int rx_macro_init(struct snd_soc_codec *codec)
 		dev_err(rx_dev, "%s: failed to add snd_ctls\n", __func__);
 		return ret;
 	}
+	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF1 Playback");
+	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF2 Playback");
+	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF3 Playback");
+	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF4 Playback");
+	snd_soc_dapm_ignore_suspend(dapm, "HPHL_OUT");
+	snd_soc_dapm_ignore_suspend(dapm, "HPHR_OUT");
+	snd_soc_dapm_ignore_suspend(dapm, "AUX_OUT");
+	snd_soc_dapm_ignore_suspend(dapm, "RX_TX DEC0_INP");
+	snd_soc_dapm_ignore_suspend(dapm, "RX_TX DEC1_INP");
+	snd_soc_dapm_ignore_suspend(dapm, "RX_TX DEC2_INP");
+	snd_soc_dapm_ignore_suspend(dapm, "RX_TX DEC3_INP");
+	snd_soc_dapm_sync(dapm);
+
 	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_DSM_CTL, 0x01, 0x01);
 	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX1_RX_PATH_DSM_CTL, 0x01, 0x01);
 	snd_soc_update_bits(codec, BOLERO_CDC_RX_RX2_RX_PATH_DSM_CTL, 0x01, 0x01);
