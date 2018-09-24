@@ -869,7 +869,7 @@ void wma_print_he_mac_cap_w2(uint32_t mac_cap)
 		 WMI_HECAP_MAC_MTID_TX_GET(mac_cap));
 	WMA_LOGD("\tSub Ch selective Tx support: 0x%01x",
 		 WMI_HECAP_MAC_SUBCHANSELTX_GET(mac_cap));
-	WMA_LOGD("\tUL 2×996 tone RU: 0x%01x",
+	WMA_LOGD("\tUL 2x996 tone RU: 0x%01x",
 		 WMI_HECAP_MAC_UL2X996RU_GET(mac_cap));
 	WMA_LOGD("\tOM ctrl UL MU data disable Rx: 0x%01x",
 		 WMI_HECAP_MAC_OMCULMUDDIS_GET(mac_cap));
