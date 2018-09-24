@@ -12006,6 +12006,19 @@ static void wlan_hdd_copy_srd_ch(char *ch_ptr, int ch_arr_len)
 {
 }
 
+/**
+ * wlan_hdd_populate_srd_chan_info() - Populate SRD chan info in hdd context
+ * @hdd_ctx: pointer to hdd context
+ * @index: SRD channel beginning index in chan_info of @hdd_ctx
+ *
+ * Return: Number of SRD channels populated
+ */
+static uint32_t
+wlan_hdd_populate_srd_chan_info(struct hdd_context *hdd_ctx, uint32_t index)
+{
+	return 0;
+}
+
 #else
 
 static void wlan_hdd_get_num_dsrc_ch_and_len(struct hdd_config *hdd_cfg,
@@ -12032,6 +12045,29 @@ static void wlan_hdd_copy_srd_ch(char *ch_ptr, int ch_arr_len)
 		return;
 	qdf_mem_copy(ch_ptr, &hdd_etsi13_srd_ch[0], ch_arr_len);
 }
+
+/**
+ * wlan_hdd_populate_srd_chan_info() - Populate SRD chan info in hdd context
+ * @hdd_ctx: pointer to hdd context
+ * @index: SRD channel beginning index in chan_info of @hdd_ctx
+ *
+ * Return: Number of SRD channels populated
+ */
+static uint32_t
+wlan_hdd_populate_srd_chan_info(struct hdd_context *hdd_ctx, uint32_t index)
+{
+	uint32_t num_srd_ch, i;
+	struct scan_chan_info *chan_info;
+
+	num_srd_ch = QDF_ARRAY_SIZE(hdd_etsi13_srd_ch);
+	chan_info = hdd_ctx->chan_info;
+
+	for (i = 0; i < num_srd_ch; i++)
+		chan_info[index + i].freq = hdd_etsi13_srd_ch[i].center_freq;
+
+	return num_srd_ch;
+}
+
 #endif
 
 /*
@@ -19546,7 +19582,7 @@ static void wlan_hdd_chan_info_cb(struct scan_chan_info *info)
  */
 void wlan_hdd_init_chan_info(struct hdd_context *hdd_ctx)
 {
-	uint8_t num_2g, num_5g, index = 0;
+	uint32_t num_2g, num_5g, index = 0;
 	mac_handle_t mac_handle;
 
 	hdd_ctx->chan_info = NULL;
@@ -19578,6 +19614,10 @@ void wlan_hdd_init_chan_info(struct hdd_context *hdd_ctx)
 		hdd_ctx->chan_info[index].freq =
 			hdd_channels_5_ghz[index - num_2g].center_freq;
 	}
+
+	index = num_2g + num_5g;
+	index = wlan_hdd_populate_srd_chan_info(hdd_ctx, index);
+
 	mac_handle = hdd_ctx->mac_handle;
 	sme_set_chan_info_callback(mac_handle,
 				   &wlan_hdd_chan_info_cb);
