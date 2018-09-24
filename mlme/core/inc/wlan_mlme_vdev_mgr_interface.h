@@ -115,5 +115,14 @@ mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val);
  */
 bool mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev);
 
+/**
+ * mlme_is_vdev_in_beaconning_mode() - check if vdev is beaconing mode
+ * @vdev_opmode: vdev opmode
+ *
+ * To check if vdev is operating in beaconing mode or not.
+ *
+ * Return: true or false
+ */
+bool mlme_is_vdev_in_beaconning_mode(enum QDF_OPMODE vdev_opmode);
 #endif
 #endif
