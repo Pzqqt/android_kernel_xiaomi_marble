@@ -10010,9 +10010,13 @@ static int tavil_device_down(struct wcd9xxx *wcd9xxx)
 					(&priv->mbhc->wcd_mbhc, false);
 	}
 
-	if (priv->swr.ctrl_data)
+	if (priv->swr.ctrl_data) {
+		if (is_snd_event_fwk_enabled())
+			swrm_wcd_notify(priv->swr.ctrl_data[0].swr_pdev,
+				SWR_DEVICE_SSR_DOWN, NULL);
 		swrm_wcd_notify(priv->swr.ctrl_data[0].swr_pdev,
 				SWR_DEVICE_DOWN, NULL);
+	}
 	tavil_dsd_reset(priv->dsd_config);
 	if (!is_snd_event_fwk_enabled())
 		snd_soc_card_change_online_state(codec->component.card, 0);
@@ -10110,6 +10114,9 @@ static int tavil_post_reset_cb(struct wcd9xxx *wcd9xxx)
 		goto done;
 	}
 
+	if (tavil->swr.ctrl_data && is_snd_event_fwk_enabled())
+		swrm_wcd_notify(tavil->swr.ctrl_data[0].swr_pdev,
+				SWR_DEVICE_SSR_UP, NULL);
 	tavil_set_spkr_mode(codec, tavil->swr.spkr_mode);
 	/*
 	 * Once the codec initialization is completed, the svs vote
