@@ -15990,6 +15990,13 @@ static bool sme_get_status_for_candidate(tHalHandle hal,
 	return false;
 }
 
+bool sme_is_conn_state_connected(mac_handle_t hal, uint8_t session_id)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	return csr_is_conn_state_connected(mac_ctx, session_id);
+}
+
 /**
  * wlan_hdd_get_bss_transition_status() - get bss transition status all cadidates
  * @adapter : Pointer to adapter
