@@ -7539,3 +7539,19 @@ wmi_unified_send_obss_spatial_reuse_set_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
+
+QDF_STATUS wmi_convert_pdev_id_host_to_target(void *wmi_hdl,
+					      uint32_t host_pdev_id,
+					      uint32_t *target_pdev_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->convert_pdev_id_host_to_target) {
+		*target_pdev_id =
+			wmi_handle->ops->convert_pdev_id_host_to_target(
+					host_pdev_id);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
