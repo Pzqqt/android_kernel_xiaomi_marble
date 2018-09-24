@@ -44,7 +44,6 @@
 static void lim_process_mlm_auth_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_assoc_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_disassoc_req(tpAniSirGlobal, uint32_t *);
-static void lim_process_mlm_deauth_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_set_keys_req(tpAniSirGlobal, uint32_t *);
 
 /* MLM Timeout event handler templates */
@@ -127,9 +126,6 @@ void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx,
 		break;
 	case LIM_MLM_DISASSOC_REQ:
 		lim_process_mlm_disassoc_req(mac_ctx, msg->bodyptr);
-		break;
-	case LIM_MLM_DEAUTH_REQ:
-		lim_process_mlm_deauth_req(mac_ctx, msg->bodyptr);
 		break;
 	case LIM_MLM_SETKEYS_REQ:
 		lim_process_mlm_set_keys_req(mac_ctx, msg->bodyptr);
@@ -1991,8 +1987,7 @@ void lim_process_deauth_ack_timeout(tpAniSirGlobal mac_ctx)
  *
  * @Return: None
  */
-static void
-lim_process_mlm_deauth_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
+void lim_process_mlm_deauth_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 {
 	tLimMlmDeauthReq *mlm_deauth_req;
 	tpPESession session;

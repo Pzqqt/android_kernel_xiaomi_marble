@@ -4830,8 +4830,19 @@ static QDF_STATUS wma_vdev_send_start_resp(tp_wma_handle wma,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wma_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
-					uint16_t data_len, void *data)
+QDF_STATUS wma_sta_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
+					    uint16_t data_len, void *data)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
+				   data, 0);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
+					   uint16_t data_len, void *data)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -4851,8 +4862,8 @@ QDF_STATUS wma_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 	return status;
 }
 
-QDF_STATUS wma_ap_mlme_vdev_stop_continue(struct vdev_mlme_obj *vdev_mlme,
-					  uint16_t data_len, void *data)
+QDF_STATUS wma_mlme_vdev_stop_continue(struct vdev_mlme_obj *vdev_mlme,
+				       uint16_t data_len, void *data)
 {
 	return __wma_vdev_stop_resp_handler(
 			(wmi_vdev_stopped_event_fixed_param *)data);
@@ -4895,7 +4906,6 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 
 	return wma_vdev_send_start_resp(wma, bss_params);
 }
-
 #else
 bool wma_get_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface)
 {

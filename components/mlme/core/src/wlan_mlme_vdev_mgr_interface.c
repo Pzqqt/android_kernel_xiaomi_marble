@@ -22,19 +22,12 @@
 #include "wlan_mlme_vdev_mgr_interface.h"
 #include "lim_utils.h"
 #include "wma_api.h"
+#include "lim_types.h"
 
 static struct vdev_mlme_ops sta_mlme_ops;
 static struct vdev_mlme_ops ap_mlme_ops;
 
-/**
- * mlme_is_vdev_in_beaconning_mode() - check if vdev is beaconing mode
- * @vdev_opmode: vdev opmode
- *
- * This function is called to register vdev manager operations
- *
- * Return: QDF_STATUS
- */
-static inline bool mlme_is_vdev_in_beaconning_mode(enum QDF_OPMODE vdev_opmode)
+bool mlme_is_vdev_in_beaconning_mode(enum QDF_OPMODE vdev_opmode)
 {
 	switch (vdev_opmode) {
 	case QDF_SAP_MODE:
@@ -99,6 +92,22 @@ static QDF_STATUS sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 {
 	return lim_sta_mlme_vdev_start_send(vdev_mlme, event_data_len,
 					    event_data);
+}
+
+/**
+ * sta_mlme_start_continue() - vdev start rsp calback
+ * @vdev_mlme: vdev mlme object
+ * @data_len: event data length
+ * @data: event data
+ *
+ * This function is called to handle the VDEV START/RESTART calback
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS sta_mlme_start_continue(struct vdev_mlme_obj *vdev_mlme,
+					  uint16_t data_len, void *data)
+{
+	return wma_sta_mlme_vdev_start_continue(vdev_mlme, data_len, data);
 }
 
 /**
@@ -184,7 +193,8 @@ static QDF_STATUS sta_mlme_vdev_disconnect_bss(struct vdev_mlme_obj *vdev_mlme,
 					       uint16_t event_data_len,
 					       void *event_data)
 {
-	return QDF_STATUS_SUCCESS;
+	return lim_sta_mlme_vdev_disconnect_bss(vdev_mlme, event_data_len,
+						event_data);
 }
 
 /**
@@ -198,14 +208,14 @@ static QDF_STATUS sta_mlme_vdev_disconnect_bss(struct vdev_mlme_obj *vdev_mlme,
  * Return: QDF_STATUS
  */
 static QDF_STATUS sta_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
-					  uint16_t event_data_len,
-					  void *event_data)
+					  uint16_t data_len,
+					  void *data)
 {
-	return QDF_STATUS_SUCCESS;
+	return lim_sta_mlme_vdev_stop_send(vdev_mlme, data_len, data);
 }
 
 /**
- * sta_mlme_vdev_stop_continue() - MLME vdev stop send callback
+ * vdevmgr_mlme_stop_continue() - MLME vdev stop send callback
  * @vdev_mlme: vdev mlme object
  * @event_data_len: event data length
  * @event_data: event data
@@ -215,48 +225,14 @@ static QDF_STATUS sta_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sta_mlme_vdev_stop_continue(struct vdev_mlme_obj *vdev_mlme,
-					      uint16_t event_data_len,
-					      void *event_data)
+static QDF_STATUS vdevmgr_mlme_stop_continue(struct vdev_mlme_obj *vdev_mlme,
+					     uint16_t data_len,
+					     void *data)
 {
-	return QDF_STATUS_SUCCESS;
+	return wma_mlme_vdev_stop_continue(vdev_mlme, data_len, data);
 }
 
 /**
- * sta_mlme_vdev_down_send() - MLME vdev down send callback
- * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
- *
- * This function is to send the vdev down to firmware
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS sta_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
-					  uint16_t event_data_len,
-					  void *event_data)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * sta_vdev_notify_down_complete() - MLME vdev down complete callback
- * @vdev_mlme: vdev mlme object
- * @event_data_len: event data length
- * @event_data: event data
- *
- * This function is called on moving vdev state to down.
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS sta_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
-						 uint16_t event_data_len,
-						 void *event_data)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
- /**
  * ap_mlme_vdev_start_send () - send vdev start req
  * @vdev_mlme: vdev mlme object
  * @data_len: event data length
@@ -273,7 +249,7 @@ static QDF_STATUS ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 }
 
 /**
- * mlme_start_continue () - vdev start rsp calback
+ * ap_start_continue () - vdev start rsp calback
  * @vdev_mlme: vdev mlme object
  * @data_len: event data length
  * @data: event data
@@ -282,10 +258,10 @@ static QDF_STATUS ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS vdevmgr_mlme_start_continue(struct vdev_mlme_obj *vdev_mlme,
-				      uint16_t data_len, void *data)
+static QDF_STATUS ap_mlme_start_continue(struct vdev_mlme_obj *vdev_mlme,
+					 uint16_t data_len, void *data)
 {
-	return wma_mlme_vdev_start_continue(vdev_mlme, data_len, data);
+	return wma_ap_mlme_vdev_start_continue(vdev_mlme, data_len, data);
 }
 
 /**
@@ -379,22 +355,6 @@ static QDF_STATUS ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 }
 
 /**
- * ap_mlme_vdev_stop_continue() - callback to handle stop vdev resp
- * @vdev_mlme: vdev mlme object
- * @data_len: event data length
- * @data: event data
- *
- * This function is called to handle stop vdev resp
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS ap_mlme_vdev_stop_continue(struct vdev_mlme_obj *vdev_mlme,
-					     uint16_t data_len, void *data)
-{
-	return wma_ap_mlme_vdev_stop_continue(vdev_mlme, data_len, data);
-}
-
-/**
  * ap_mlme_vdev_down_send() - callback to send vdev down req
  * @vdev_mlme: vdev mlme object
  * @data_len: event data length
@@ -404,13 +364,13 @@ static QDF_STATUS ap_mlme_vdev_stop_continue(struct vdev_mlme_obj *vdev_mlme,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
-					 uint16_t data_len, void *data)
+static QDF_STATUS vdevmgr_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
+					      uint16_t data_len, void *data)
 {
 	return wma_ap_mlme_vdev_down_send(vdev_mlme, data_len, data);
 }
 /**
- * ap_vdev_notify_down_complete() - callback to indicate vdev down is completed
+ * vdevmgr_notify_down_complete() - callback to indicate vdev down is completed
  * @vdev_mlme: vdev mlme object
  * @data_len: event data length
  * @data: event data
@@ -419,7 +379,7 @@ static QDF_STATUS ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS ap_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
+static QDF_STATUS vdevmgr_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 					       uint16_t data_len, void *data)
 {
 	return wma_ap_mlme_vdev_notify_down_complete(vdev_mlme, data_len, data);
@@ -672,15 +632,15 @@ static QDF_STATUS ap_vdev_dfs_cac_timer_stop(struct vdev_mlme_obj *vdev_mlme,
 static struct vdev_mlme_ops sta_mlme_ops = {
 	.mlme_vdev_start_send = sta_mlme_vdev_start_send,
 	.mlme_vdev_restart_send = sta_mlme_vdev_restart_send,
-	.mlme_vdev_start_continue = vdevmgr_mlme_start_continue,
+	.mlme_vdev_start_continue = sta_mlme_start_continue,
 	.mlme_vdev_sta_conn_start = sta_mlme_vdev_start_connection,
 	.mlme_vdev_up_send = sta_mlme_vdev_up_send,
 	.mlme_vdev_notify_up_complete = sta_mlme_vdev_notify_up_complete,
 	.mlme_vdev_disconnect_peers = sta_mlme_vdev_disconnect_bss,
 	.mlme_vdev_stop_send = sta_mlme_vdev_stop_send,
-	.mlme_vdev_stop_continue = sta_mlme_vdev_stop_continue,
-	.mlme_vdev_down_send = sta_mlme_vdev_down_send,
-	.mlme_vdev_notify_down_complete = sta_vdev_notify_down_complete,
+	.mlme_vdev_stop_continue = vdevmgr_mlme_stop_continue,
+	.mlme_vdev_down_send = vdevmgr_mlme_vdev_down_send,
+	.mlme_vdev_notify_down_complete = vdevmgr_notify_down_complete,
 	.mlme_vdev_legacy_hdl_create = mlme_legacy_hdl_create,
 	.mlme_vdev_legacy_hdl_destroy = mlme_legacy_hdl_destroy,
 };
@@ -721,7 +681,7 @@ static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_start_send = ap_mlme_vdev_start_send,
 	.mlme_vdev_restart_send = ap_mlme_vdev_restart_send,
 	.mlme_vdev_stop_start_send = ap_mlme_vdev_stop_start_send,
-	.mlme_vdev_start_continue = vdevmgr_mlme_start_continue,
+	.mlme_vdev_start_continue = ap_mlme_start_continue,
 	.mlme_vdev_start_req_failed = ap_mlme_vdev_start_req_failed,
 	.mlme_vdev_up_send = ap_mlme_vdev_up_send,
 	.mlme_vdev_notify_up_complete = ap_mlme_vdev_notify_up_complete,
@@ -729,9 +689,9 @@ static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_disconnect_peers = ap_mlme_vdev_disconnect_peers,
 	.mlme_vdev_dfs_cac_timer_stop = ap_vdev_dfs_cac_timer_stop,
 	.mlme_vdev_stop_send = ap_mlme_vdev_stop_send,
-	.mlme_vdev_stop_continue = ap_mlme_vdev_stop_continue,
-	.mlme_vdev_down_send = ap_mlme_vdev_down_send,
-	.mlme_vdev_notify_down_complete = ap_vdev_notify_down_complete,
+	.mlme_vdev_stop_continue = vdevmgr_mlme_stop_continue,
+	.mlme_vdev_down_send = vdevmgr_mlme_vdev_down_send,
+	.mlme_vdev_notify_down_complete = vdevmgr_notify_down_complete,
 	.mlme_vdev_legacy_hdl_create = mlme_legacy_hdl_create,
 	.mlme_vdev_legacy_hdl_destroy = mlme_legacy_hdl_destroy,
 };

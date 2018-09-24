@@ -8432,6 +8432,12 @@ QDF_STATUS lim_sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS lim_sta_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
+				       uint16_t data_len, void *data)
+{
+	return lim_sta_send_del_bss((tpPESession)data);
+}
+
 void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session)
 {
 	if (wlan_vdev_mlme_get_state(session->vdev) ==

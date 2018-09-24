@@ -1895,6 +1895,9 @@ void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac,
 	tSirResultCodes statusCode = eSIR_SME_SUCCESS;
 	tpDeleteStaParams pDelStaParams = (tpDeleteStaParams) limMsgQ->bodyptr;
 	tpDphHashNode pStaDs = NULL;
+#ifdef CONFIG_VDEV_SM
+	QDF_STATUS status;
+#endif
 
 	if (NULL == pDelStaParams) {
 		pe_err("Encountered NULL Pointer");
@@ -1938,9 +1941,22 @@ void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac,
 		qdf_mem_free(pDelStaParams);
 		limMsgQ->bodyptr = NULL;
 	}
+#ifdef CONFIG_VDEV_SM
+	status =
+	    wlan_vdev_mlme_sm_deliver_evt(psessionEntry->vdev,
+					  WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE,
+					  sizeof(*psessionEntry),
+					  psessionEntry);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("failed to post WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE for vdevid %d",
+		       psessionEntry->smeSessionId);
+	}
+#else
 	/* Proceed to do DelBSS even if DelSta resulted in failure */
 	statusCode = (tSirResultCodes)lim_del_bss(pMac, pStaDs, 0,
 			psessionEntry);
+#endif
+
 	return;
 end:
 	if (0 != limMsgQ->bodyptr) {

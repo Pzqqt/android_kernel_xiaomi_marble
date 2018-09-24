@@ -1145,4 +1145,33 @@ void lim_process_mlm_start_req(tpAniSirGlobal mac_ctx,
  */
 void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx,
 			      tLimMlmJoinReq *mlm_join_req);
+
+/*
+ * lim_process_mlm_deauth_req() - This function is called to process
+ * MLM_DEAUTH_REQ message from SME
+ *
+ * @mac_ctx:      Pointer to Global MAC structure
+ * @msg_buf:      A pointer to the MLM message buffer
+ *
+ * This function is called to process MLM_DEAUTH_REQ message from SME
+ *
+ * @Return: None
+ */
+void lim_process_mlm_deauth_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf);
+
+#ifdef CONFIG_VDEV_SM
+/**
+ * lim_sta_mlme_vdev_disconnect_bss() - Disconnect from BSS
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes BSS disconnection
+ *
+ * Return: SUCCESS on successful completion of disconnection
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS lim_sta_mlme_vdev_disconnect_bss(struct vdev_mlme_obj *vdev_mlme,
+					    uint16_t data_len, void *data);
+#endif
 #endif /* __LIM_TYPES_H */

@@ -49,10 +49,7 @@
 #include "sir_mac_prot_def.h"
 #include "rrm_api.h"
 #include "nan_datapath.h"
-
 #include "sap_api.h"
-
-
 #include <lim_ft.h>
 #include "cds_regdomain.h"
 #include "lim_process_fils.h"
@@ -2294,7 +2291,7 @@ sendDisassoc:
    \return none
    \sa
    ----------------------------------------------------------------- */
-static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
+void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
 	tSirSmeDisassocCnf smeDisassocCnf;
 	uint16_t aid;
@@ -2627,9 +2624,8 @@ static void __lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 
 	/* Update PE session Id */
 	mlm_deauth_req->sessionId = session_id;
+	lim_process_mlm_deauth_req(mac_ctx, (uint32_t *)mlm_deauth_req);
 
-	lim_post_mlm_message(mac_ctx, LIM_MLM_DEAUTH_REQ,
-			(uint32_t *)mlm_deauth_req);
 	return;
 
 send_deauth:
@@ -2971,6 +2967,27 @@ void lim_delete_all_peers(tpPESession session)
 
 }
 
+QDF_STATUS lim_sta_send_del_bss(tpPESession session)
+{
+	tpAniSirGlobal mac_ctx = session->mac_ctx;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	tpDphHashNode sta_ds = NULL;
+
+	sta_ds = dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
+				    &session->dph.dphHashTable);
+	if (!sta_ds) {
+		pe_err("DPH Entry for STA is missing, failed to send delbss");
+		goto end;
+	}
+
+	status = lim_del_bss(mac_ctx, sta_ds, 0, session);
+	if (QDF_IS_STATUS_ERROR(status))
+		pe_err("delBss failed for bss %d", session->bssIdx);
+
+end:
+	return status;
+}
+
 QDF_STATUS lim_send_vdev_stop(tpPESession session)
 {
 	tpAniSirGlobal mac_ctx = session->mac_ctx;
@@ -3023,7 +3040,6 @@ static void lim_delete_peers_and_send_vdev_stop(tpPESession session)
 	lim_send_vdev_stop(session);
 }
 #endif
-
 
 static void
 __lim_handle_sme_stop_bss_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
@@ -4683,6 +4699,129 @@ static void lim_process_sme_update_access_policy_vendor_ie(
 	pe_session_entry->access_policy = update_vendor_ie->access_policy;
 }
 
+#ifdef CONFIG_VDEV_SM
+QDF_STATUS lim_sta_mlme_vdev_disconnect_bss(struct vdev_mlme_obj *vdev_mlme,
+					    uint16_t data_len, void *data)
+{
+	tpAniSirGlobal mac_ctx;
+	struct scheduler_msg *msg = (struct scheduler_msg *)data;
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		pe_err("mac_ctx is NULL");
+		if (data)
+			qdf_mem_free(data);
+		return QDF_STATUS_E_INVAL;
+	}
+	pe_debug("VDEV Manager disconnect bss callback type:(%d)", msg->type);
+
+	switch (msg->type) {
+	case eWNI_SME_DEAUTH_REQ:
+		__lim_process_sme_deauth_req(mac_ctx,
+					     (uint32_t *)msg->bodyptr);
+		break;
+	case eWNI_SME_DISASSOC_CNF:
+	case eWNI_SME_DEAUTH_CNF:
+		__lim_process_sme_disassoc_cnf(mac_ctx,
+					       (uint32_t *)msg->bodyptr);
+		break;
+	case eWNI_SME_DISASSOC_REQ:
+		__lim_process_sme_disassoc_req(mac_ctx,
+					       (uint32_t *)msg->bodyptr);
+		break;
+	default:
+		pe_debug("Wrong message type received %d", msg->type);
+	}
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+static void lim_process_sme_disassoc_cnf(tpAniSirGlobal mac_ctx,
+					 struct scheduler_msg *msg)
+{
+#ifdef CONFIG_VDEV_SM
+	tSirSmeDisassocCnf sme_disassoc_cnf;
+	tpPESession session;
+	uint8_t session_id;
+	QDF_STATUS status;
+
+	qdf_mem_copy(&sme_disassoc_cnf, msg->bodyptr,
+		     sizeof(struct sSirSmeDisassocCnf));
+
+	session = pe_find_session_by_bssid(mac_ctx,
+					   sme_disassoc_cnf.bssid.bytes,
+					   &session_id);
+
+	if (LIM_IS_STA_ROLE(session)) {
+		status = wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+						       WLAN_VDEV_SM_EV_DOWN,
+						       sizeof(*msg),
+						       msg);
+	} else {
+		__lim_process_sme_disassoc_cnf(mac_ctx,
+					       (uint32_t *)msg->bodyptr);
+	}
+#else
+	__lim_process_sme_disassoc_cnf(mac_ctx, (uint32_t *)msg->bodyptr);
+#endif
+}
+
+static void lim_process_sme_disassoc_req(tpAniSirGlobal mac_ctx,
+					 struct scheduler_msg *msg)
+{
+#ifdef CONFIG_VDEV_SM
+	tSirSmeDisassocReq disassoc_req;
+	tpPESession session;
+	uint8_t session_id;
+	QDF_STATUS status;
+
+	qdf_mem_copy(&disassoc_req, msg->bodyptr, sizeof(tSirSmeDisassocReq));
+
+	session = pe_find_session_by_bssid(mac_ctx,
+					   disassoc_req.bssid.bytes,
+					   &session_id);
+	if (LIM_IS_STA_ROLE(session)) {
+		status = wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+						       WLAN_VDEV_SM_EV_DOWN,
+						       sizeof(*msg),
+						       msg);
+	} else {
+		__lim_process_sme_disassoc_req(mac_ctx,
+					       (uint32_t *)msg->bodyptr);
+	}
+#else
+	__lim_process_sme_disassoc_req(mac_ctx, (uint32_t *)msg->bodyptr);
+#endif
+}
+
+static void lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
+				       struct scheduler_msg *msg)
+{
+#ifdef CONFIG_VDEV_SM
+	tSirSmeDeauthReq sme_deauth_req;
+	tpPESession session;
+	uint8_t session_id;
+	QDF_STATUS status;
+
+	qdf_mem_copy(&sme_deauth_req, msg->bodyptr, sizeof(tSirSmeDeauthReq));
+
+	session = pe_find_session_by_bssid(mac_ctx,
+					   sme_deauth_req.bssid.bytes,
+					   &session_id);
+	if (LIM_IS_STA_ROLE(session)) {
+		status = wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+						       WLAN_VDEV_SM_EV_DOWN,
+						       sizeof(*msg),
+						       msg);
+	} else {
+		__lim_process_sme_deauth_req(mac_ctx,
+					     (uint32_t *)msg->bodyptr);
+	}
+#else
+	__lim_process_sme_deauth_req(mac_ctx, (uint32_t *)msg->bodyptr);
+#endif
+}
+
 /**
  * lim_process_sme_req_messages()
  *
@@ -4738,16 +4877,16 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 		break;
 
 	case eWNI_SME_DISASSOC_REQ:
-		__lim_process_sme_disassoc_req(pMac, pMsgBuf);
+		lim_process_sme_disassoc_req(pMac, pMsg);
 		break;
 
 	case eWNI_SME_DISASSOC_CNF:
 	case eWNI_SME_DEAUTH_CNF:
-		__lim_process_sme_disassoc_cnf(pMac, pMsgBuf);
+		lim_process_sme_disassoc_cnf(pMac, pMsg);
 		break;
 
 	case eWNI_SME_DEAUTH_REQ:
-		__lim_process_sme_deauth_req(pMac, pMsgBuf);
+		lim_process_sme_deauth_req(pMac, pMsg);
 		break;
 
 	case eWNI_SME_SEND_DISASSOC_FRAME:

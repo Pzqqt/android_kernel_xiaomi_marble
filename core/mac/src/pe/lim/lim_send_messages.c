@@ -258,9 +258,7 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_FAILURE;
 	}
 	pSessionEntry->ch_switch_in_progress = true;
-#ifdef CONFIG_VDEV_SM
-	mlme_set_chan_switch_in_progress(pSessionEntry->vdev, true);
-#endif
+
 	return QDF_STATUS_SUCCESS;
 }
 

@@ -5173,7 +5173,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	param.vdev_id = params->smesessionId;
 	param.assoc_id = params->assocId;
 #ifdef CONFIG_VDEV_SM
-	status = wlan_vdev_mlme_sm_deliver_evt(wma->interfaces[param.vdev_id].vdev,
+	status = wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
 					       WLAN_VDEV_SM_EV_START_SUCCESS,
 					       sizeof(param), (void *)&param);
 #else

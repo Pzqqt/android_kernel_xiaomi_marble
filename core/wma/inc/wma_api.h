@@ -434,6 +434,20 @@ bool wma_get_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface);
 #ifdef CONFIG_VDEV_SM
 
 /**
+ * wma_sta_mlme_vdev_start_continue - VDEV start response handling
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes VDEV start response actions
+ *
+ * Return: SUCCESS on successful completion of start response operation
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS wma_sta_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
+					    uint16_t data_len, void *data);
+
+/**
  * wma_ap_mlme_vdev_start_continue - VDEV start response handling
  * @vdev_mlme_obj:  VDEV MLME comp object
  * @data_len: data size
@@ -444,7 +458,7 @@ bool wma_get_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface);
  * Return: SUCCESS on successful completion of start response operation
  *         FAILURE, if it fails due to any
  */
-QDF_STATUS wma_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
+QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 					   uint16_t data_len, void *data);
 
 /**
@@ -459,10 +473,10 @@ QDF_STATUS wma_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
  *         FAILURE, if it fails due to any
  */
 QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
-				 uint16_t data_len, void *data);
+				uint16_t data_len, void *data);
 
 /**
- * wma_ap_mlme_vdev_stop_continue - VDEV stop response handling
+ * wma_mlme_vdev_stop_continue - VDEV stop response handling
  * @vdev_mlme_obj:  VDEV MLME comp object
  * @data_len: data size
  * @data: event data
@@ -472,8 +486,8 @@ QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
  * Return: SUCCESS on successful completion of stop response operation
  *         FAILURE, if it fails due to any
  */
-QDF_STATUS wma_ap_mlme_vdev_stop_continue(struct vdev_mlme_obj *vdev_mlme,
-					  uint16_t data_len, void *data);
+QDF_STATUS wma_mlme_vdev_stop_continue(struct vdev_mlme_obj *vdev_mlme,
+				       uint16_t data_len, void *data);
 
 /**
  * wma_ap_mlme_vdev_down_send - VDEV down operation
@@ -520,6 +534,19 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 					    enum vdev_cmd_type type,
 					    uint16_t data_len, void *data);
 
-#endif
+/**
+ * wma_sta_mlme_vdev_down_send - VDEV down operation
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes VDEV down operation
+ *
+ * Return: SUCCESS on successful completion of VDEV down operation
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS wma_sta_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
+				       uint16_t data_len, void *data);
 
+#endif
 #endif
