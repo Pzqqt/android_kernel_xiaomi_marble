@@ -198,6 +198,7 @@ QDF_STATUS target_process_bang_radar_cmd(
 	struct wmi_unit_test_cmd wmi_utest;
 	int i;
 	wmi_unified_t wmi_handle;
+	uint32_t target_pdev_id = 0;
 
 	if (!pdev) {
 		target_if_err("null pdev");
@@ -220,8 +221,14 @@ QDF_STATUS target_process_bang_radar_cmd(
 	 * Host to Target  conversion for pdev id required
 	 * before we send a wmi unit test command
 	 */
-	wmi_utest.args[IDX_PDEV_ID] = wmi_handle->ops->
-		convert_pdev_id_host_to_target(pdev->pdev_objmgr.wlan_pdev_id);
+	if (wmi_convert_pdev_id_host_to_target(
+				wmi_handle, pdev->pdev_objmgr.wlan_pdev_id,
+				&target_pdev_id) != QDF_STATUS_SUCCESS) {
+		target_if_err("failed to convert host pdev id to target");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wmi_utest.args[IDX_PDEV_ID] = target_pdev_id;
 
 	status = wmi_unified_unit_test_cmd(wmi_handle, &wmi_utest);
 	if (QDF_IS_STATUS_ERROR(status))

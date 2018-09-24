@@ -71,5 +71,5 @@ QDF_STATUS wmi_extract_wlan_radar_event_info(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-#endif
 qdf_export_symbol(wmi_extract_dfs_radar_detection_event);
+#endif

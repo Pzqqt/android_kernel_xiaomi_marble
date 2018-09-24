@@ -2487,4 +2487,18 @@ void wmi_process_fw_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
 QDF_STATUS wmi_unified_send_obss_spatial_reuse_set_cmd(void *wmi_handle,
 	struct wmi_host_obss_spatial_reuse_set_param *obss_spatial_reuse_param);
 #endif /* OBSS_PD */
+
+/**
+ * wmi_convert_pdev_id_host_to_target() - Convert pdev_id from host to target
+ * defines. For legacy there is not conversion required. Just return pdev_id as
+ * it is.
+ * @wmi_hdl: wmi handle
+ * @host_pdev_id: host pdev_id to be converted.
+ * @target_pdev_id: Output target pdev id.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wmi_convert_pdev_id_host_to_target(void *wmi_hdl,
+					      uint32_t host_pdev_id,
+					      uint32_t *target_pdev_id);
 #endif /* _WMI_UNIFIED_API_H_ */
