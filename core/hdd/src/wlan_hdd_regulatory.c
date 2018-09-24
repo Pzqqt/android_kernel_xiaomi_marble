@@ -1232,32 +1232,35 @@ void hdd_send_wiphy_regd_sync_event(struct hdd_context *hdd_ctx)
 {
 	struct ieee80211_regdomain *regd;
 	struct ieee80211_reg_rule *regd_rules;
+	struct reg_rule_info reg_rules_struct;
 	struct reg_rule_info *reg_rules;
+	QDF_STATUS  status;
 	uint8_t i;
 
 	if (!hdd_ctx) {
 		hdd_err("hdd_ctx is NULL");
 		return;
 	}
-	reg_rules = ucfg_reg_get_regd_rules(hdd_ctx->pdev);
-	if (!reg_rules) {
-		hdd_err("reg_rules is NULL");
+
+	status = ucfg_reg_get_regd_rules(hdd_ctx->pdev, &reg_rules_struct);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("could not get reg rules");
 		return;
 	}
+
+	reg_rules = &reg_rules_struct;
 	if (!reg_rules->num_of_reg_rules) {
 		hdd_err("no reg rules %d", reg_rules->num_of_reg_rules);
 		return;
 	}
-	if (!reg_rules->reg_rules_ptr) {
-		hdd_err("reg_rules_ptr is NULL");
-		return;
-	}
+
 	regd = qdf_mem_malloc((reg_rules->num_of_reg_rules *
 				sizeof(*regd_rules) + sizeof(*regd)));
 	if (!regd) {
 		hdd_err("mem alloc failed for reg rules");
 		return;
 	}
+
 	regd->n_reg_rules = reg_rules->num_of_reg_rules;
 	qdf_mem_copy(regd->alpha2, reg_rules->alpha2, REG_ALPHA2_LEN + 1);
 	regd->dfs_region =
@@ -1267,16 +1270,16 @@ void hdd_send_wiphy_regd_sync_event(struct hdd_context *hdd_ctx)
 	hdd_debug("start freq\tend freq\t@ max_bw\tant_gain\tpwr\tflags");
 	for (i = 0; i < reg_rules->num_of_reg_rules; i++) {
 		regd_rules[i].freq_range.start_freq_khz =
-			reg_rules->reg_rules_ptr[i].start_freq * 1000;
+			reg_rules->reg_rules[i].start_freq * 1000;
 		regd_rules[i].freq_range.end_freq_khz =
-			reg_rules->reg_rules_ptr[i].end_freq * 1000;
+			reg_rules->reg_rules[i].end_freq * 1000;
 		regd_rules[i].freq_range.max_bandwidth_khz =
-			reg_rules->reg_rules_ptr[i].max_bw * 1000;
+			reg_rules->reg_rules[i].max_bw * 1000;
 		regd_rules[i].power_rule.max_antenna_gain =
-			reg_rules->reg_rules_ptr[i].ant_gain * 100;
+			reg_rules->reg_rules[i].ant_gain * 100;
 		regd_rules[i].power_rule.max_eirp =
-			reg_rules->reg_rules_ptr[i].reg_power * 100;
-		map_nl_reg_rule_flags(reg_rules->reg_rules_ptr[i].flags,
+			reg_rules->reg_rules[i].reg_power * 100;
+		map_nl_reg_rule_flags(reg_rules->reg_rules[i].flags,
 				      &regd_rules[i].flags);
 		hdd_debug("%d KHz\t%d KHz\t@ %d KHz\t%d\t\t%d\t%d",
 			  regd_rules[i].freq_range.start_freq_khz,
