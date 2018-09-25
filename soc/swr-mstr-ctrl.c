@@ -1273,6 +1273,12 @@ static irqreturn_t swr_mstr_interrupt(int irq, void *dev)
 			case SWR_ATTACHED_OK:
 				dev_dbg(swrm->dev, "device %d got attached\n",
 					devnum);
+				/* enable host irq from slave device*/
+				swrm_cmd_fifo_wr_cmd(swrm, 0xFF, devnum, 0x0,
+					SWRS_SCP_INT_STATUS_CLEAR_1);
+				swrm_cmd_fifo_wr_cmd(swrm, 0x4, devnum, 0x0,
+					SWRS_SCP_INT_STATUS_MASK_1);
+
 				break;
 			case SWR_ALERT:
 				dev_dbg(swrm->dev,
@@ -1409,11 +1415,6 @@ static int swrm_get_logical_dev_num(struct swr_master *mstr, u64 dev_id,
 					dev_dbg(swrm->dev,
 						"%s: devnum %d is assigned for dev addr %lx\n",
 						__func__, i, swr_dev->addr);
-					swrm_cmd_fifo_wr_cmd(swrm, 0xFF, i, 0xF,
-						SWRS_SCP_INT_STATUS_CLEAR_1);
-					swrm_cmd_fifo_wr_cmd(swrm, 0x4, i, 0xF,
-						SWRS_SCP_INT_STATUS_MASK_1);
-
 				}
 			}
 		}
@@ -1477,7 +1478,7 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	value[len++] = 0x1FFFD;
 
 	reg[len] = SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN;
-	value[len++] = 0x1;
+	value[len++] = 0x1FFFD;
 
 	swr_master_bulk_write(swrm, reg, value, len);
 
