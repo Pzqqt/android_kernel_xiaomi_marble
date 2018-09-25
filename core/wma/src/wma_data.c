@@ -2382,6 +2382,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	int32_t status;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int32_t is_high_latency;
+	bool is_wmi_mgmt_tx = false;
 	struct cdp_vdev *txrx_vdev;
 	enum frame_index tx_frm_index = GENERIC_NODOWNLD_NOACK_COMP_INDEX;
 	tpSirMacFrameCtl pFc = (tpSirMacFrameCtl) (qdf_nbuf_data(tx_frame));
@@ -2682,9 +2683,11 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		return QDF_STATUS_E_FAILURE;
 	}
 	is_high_latency = cdp_cfg_is_high_latency(soc, ctrl_pdev);
+	is_wmi_mgmt_tx = wmi_service_enabled(wma_handle->wmi_handle,
+					     wmi_service_mgmt_tx_wmi);
 
 	downld_comp_required = tx_frm_download_comp_cb && is_high_latency &&
-					tx_frm_ota_comp_cb;
+				(!is_wmi_mgmt_tx) && tx_frm_ota_comp_cb;
 
 	/* Fill the frame index to send */
 	if (pFc->type == SIR_MAC_MGMT_FRAME) {
