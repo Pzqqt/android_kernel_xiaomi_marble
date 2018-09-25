@@ -1571,6 +1571,7 @@ static void wlan_hdd_pld_uevent(struct device *dev,
 	hdd_enter();
 	hdd_info("pld event %d", uevent->uevent);
 
+	wma_wmi_stop();
 	wlan_hdd_set_the_pld_uevent(uevent);
 	mutex_lock(&hdd_init_deinit_lock);
 	wlan_hdd_handle_the_pld_uevent(uevent);

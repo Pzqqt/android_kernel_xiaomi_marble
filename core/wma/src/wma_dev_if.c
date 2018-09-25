@@ -1735,11 +1735,6 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 	target_resource_config *wlan_res_cfg;
 	struct wlan_objmgr_peer *obj_peer = NULL;
 
-	if (!cds_is_target_ready()) {
-		WMA_LOGE(FL("target not ready, drop the request"));
-		return QDF_STATUS_E_BUSY;
-	}
-
 	if (!psoc) {
 		WMA_LOGE("%s: psoc is NULL", __func__);
 		return QDF_STATUS_E_INVAL;
