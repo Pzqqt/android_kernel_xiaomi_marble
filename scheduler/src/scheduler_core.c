@@ -32,22 +32,48 @@ DEFINE_QDF_FLEX_MEM_POOL(sched_pool, sizeof(struct scheduler_msg),
 
 #ifdef WLAN_SCHED_HISTORY_SIZE
 
+/**
+ * struct sched_history_item - metrics for a scheduler message
+ * @callback: the message's execution callback
+ * @type_id: the message's type_id
+ * @queue_id: Id of the queue the message was added to
+ * @queue_start_us: timestamp when the message was queued in microseconds
+ * @queue_duration_us: duration the message was queued in microseconds
+ * @queue_depth: depth of the queue when the message was queued
+ * @run_start_us: timesatmp when the message started execution in microseconds
+ * @run_duration_us: duration the message was executed in microseconds
+ */
 struct sched_history_item {
 	void *callback;
 	uint32_t type_id;
-	uint64_t start_us;
-	uint64_t duration_us;
+	QDF_MODULE_ID queue_id;
+	uint64_t queue_start_us;
+	uint32_t queue_duration_us;
+	uint32_t queue_depth;
+	uint64_t run_start_us;
+	uint32_t run_duration_us;
 };
 
 static struct sched_history_item sched_history[WLAN_SCHED_HISTORY_SIZE];
 static uint32_t sched_history_index;
 
+static void sched_history_queue(struct scheduler_mq_type *queue,
+				struct scheduler_msg *msg)
+{
+	msg->queue_id = queue->qid;
+	msg->queue_depth = qdf_list_size(&queue->mq_list);
+	msg->queued_at_us = qdf_get_log_timestamp_usecs();
+}
+
 static void sched_history_start(struct scheduler_msg *msg)
 {
+	uint64_t started_at_us = qdf_get_log_timestamp_usecs();
 	struct sched_history_item hist = {
 		.callback = msg->callback,
 		.type_id = msg->type,
-		.start_us = qdf_get_log_timestamp_usecs(),
+		.queue_start_us = msg->queued_at_us,
+		.queue_duration_us = started_at_us - msg->queued_at_us,
+		.run_start_us = started_at_us,
 	};
 
 	sched_history[sched_history_index] = hist;
@@ -56,8 +82,9 @@ static void sched_history_start(struct scheduler_msg *msg)
 static void sched_history_stop(void)
 {
 	struct sched_history_item *hist = &sched_history[sched_history_index];
+	uint64_t stopped_at_us = qdf_get_log_timestamp_usecs();
 
-	hist->duration_us = qdf_get_log_timestamp_usecs() - hist->start_us;
+	hist->run_duration_us = stopped_at_us - hist->run_start_us;
 
 	sched_history_index++;
 	sched_history_index %= WLAN_SCHED_HISTORY_SIZE;
@@ -65,6 +92,8 @@ static void sched_history_stop(void)
 
 #else /* WLAN_SCHED_HISTORY_SIZE */
 
+static inline void sched_history_queue(struct scheduler_mq_type *queue,
+				       struct scheduler_msg *msg) { }
 static inline void sched_history_start(struct scheduler_msg *msg) { }
 static inline void sched_history_stop(void) { }
 
@@ -176,6 +205,7 @@ void scheduler_mq_put(struct scheduler_mq_type *msg_q,
 		      struct scheduler_msg *msg)
 {
 	qdf_spin_lock_irqsave(&msg_q->mq_lock);
+	sched_history_queue(msg_q, msg);
 	qdf_list_insert_back(&msg_q->mq_list, &msg->node);
 	qdf_spin_unlock_irqrestore(&msg_q->mq_lock);
 }
@@ -184,6 +214,7 @@ void scheduler_mq_put_front(struct scheduler_mq_type *msg_q,
 			    struct scheduler_msg *msg)
 {
 	qdf_spin_lock_irqsave(&msg_q->mq_lock);
+	sched_history_queue(msg_q, msg);
 	qdf_list_insert_front(&msg_q->mq_list, &msg->node);
 	qdf_spin_unlock_irqrestore(&msg_q->mq_lock);
 }

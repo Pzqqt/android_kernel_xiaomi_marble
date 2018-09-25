@@ -73,6 +73,9 @@ typedef enum {
  *   callback in message body pointer for those messages which have taken ref
  *   count for above mentioned common objects.
  * @node: list node for queue membership
+ * @queue_id: Id of the queue the message was added to
+ * @queue_depth: depth of the queue when the message was queued
+ * @queued_at_us: timestamp when the message was queued in microseconds
  */
 struct scheduler_msg {
 	uint16_t type;
@@ -82,6 +85,11 @@ struct scheduler_msg {
 	void *callback;
 	void *flush_callback;
 	qdf_list_node_t node;
+#ifdef WLAN_SCHED_HISTORY_SIZE
+	QDF_MODULE_ID queue_id;
+	uint32_t queue_depth;
+	uint64_t queued_at_us;
+#endif /* WLAN_SCHED_HISTORY_SIZE */
 };
 
 typedef QDF_STATUS (*scheduler_msg_process_fn_t) (struct scheduler_msg  *msg);
