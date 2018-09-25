@@ -12540,6 +12540,12 @@ static QDF_STATUS extract_gtk_rsp_event_tlv(wmi_unified_t wmi_handle,
 
 	fixed_param = (WMI_GTK_OFFLOAD_STATUS_EVENT_fixed_param *)
 		param_buf->fixed_param;
+
+	if (fixed_param->vdev_id >= WLAN_UMAC_PSOC_MAX_VDEVS) {
+		wmi_err_rl("Invalid vdev_id %u", fixed_param->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	gtk_rsp_param->vdev_id = fixed_param->vdev_id;
 	gtk_rsp_param->status_flag = QDF_STATUS_SUCCESS;
 	gtk_rsp_param->refresh_cnt = fixed_param->refresh_cnt;
