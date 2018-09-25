@@ -843,7 +843,8 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 						port_req->dev_num, 0x00,
 						SWRS_DP_BLOCK_CONTROL_1(slv_id));
 			}
-			if (mport->blk_pack_mode != SWR_INVALID_PARAM) {
+			if (mport->blk_pack_mode != SWR_INVALID_PARAM
+					&& swrm->master_id != MASTER_ID_WSA) {
 				reg[len] = SWRM_CMD_FIFO_WR_CMD;
 				val[len++] =
 					SWR_REG_VAL_PACK(mport->blk_pack_mode,
@@ -871,8 +872,10 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 		}
 		value = ((mport->req_ch)
 				<< SWRM_DP_PORT_CTRL_EN_CHAN_SHFT);
-		value |= ((mport->offset2)
-				<< SWRM_DP_PORT_CTRL_OFFSET2_SHFT);
+
+		if (mport->offset2 != SWR_INVALID_PARAM)
+			value |= ((mport->offset2)
+					<< SWRM_DP_PORT_CTRL_OFFSET2_SHFT);
 		value |= ((mport->offset1)
 				<< SWRM_DP_PORT_CTRL_OFFSET1_SHFT);
 		value |= mport->sinterval;
