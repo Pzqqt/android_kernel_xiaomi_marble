@@ -908,6 +908,10 @@ struct mac_context {
 	struct mgmt_beacon_probe_filter bcn_filter;
 	tSirMacEdcaParamRecord usr_mu_edca_params[MAX_NUM_AC];
 	bool usr_cfg_mu_edca_params;
+	bool he_om_ctrl_cfg_bw_set;
+	uint8_t he_om_ctrl_cfg_bw;
+	bool he_om_ctrl_cfg_nss_set;
+	uint8_t he_om_ctrl_cfg_nss;
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_cap_2g;
 	tDot11fIEhe_cap he_cap_5g;

@@ -2611,6 +2611,22 @@ int sme_update_he_trigger_frm_mac_pad(mac_handle_t hal, uint8_t session_id,
  */
 int sme_update_he_om_ctrl_supp(mac_handle_t hal, uint8_t session_id,
 			       uint8_t cfg_val);
+
+#define NUM_OM_CTRL_UPDATE_CFG_PARAMS 7
+#define OM_CTRL_CMD_MAC_BITS31 1
+#define OM_CTRL_CMD_MAC_BITS47 2
+#define OM_CTRL_CMD_RX_NSS 3
+#define OM_CTRL_CMD_BW 4
+#define OM_CTRL_CMD_ULMU 5
+#define OM_CTRL_CMD_TX_NSS 6
+int sme_send_he_om_ctrl_bw_update(mac_handle_t hal, uint8_t session_id,
+				  uint8_t cfg_val);
+
+int sme_send_he_om_ctrl_nss_update(mac_handle_t hal, uint8_t session_id,
+				   uint8_t cfg_val);
+
+void sme_reset_he_om_ctrl(mac_handle_t hal);
+
 /**
  * sme_set_usr_cfg_mu_edca() - sets the user cfg MU EDCA params flag
  * @hal: Pointer to HAL
@@ -2713,6 +2729,24 @@ static inline int sme_update_he_om_ctrl_supp(mac_handle_t hal,
 					     uint8_t cfg_val)
 {
 	return 0;
+}
+
+static inline int sme_send_he_om_ctrl_bw_update(mac_handle_t hal,
+						uint8_t session_id,
+						uint8_t cfg_val)
+{
+	return 0;
+}
+
+static inline int sme_send_he_om_ctrl_nss_update(mac_handle_t hal,
+						 uint8_t session_id,
+						 uint8_t cfg_val)
+{
+	return 0;
+}
+
+static inline void sme_reset_he_om_ctrl(mac_handle_t hal)
+{
 }
 
 static inline void sme_set_usr_cfg_mu_edca(mac_handle_t hal, bool val)

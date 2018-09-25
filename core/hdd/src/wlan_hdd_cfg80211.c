@@ -5165,6 +5165,12 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OM_CTRL_SUPP] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OM_CTRL_BW] = {
+			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OM_CTRL_NSS] = {
+			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_CLEAR_HE_OM_CTRL_CONFIG] = {
+			.type = NLA_FLAG},
 };
 
 /**
@@ -6190,6 +6196,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	bool bval = false;
 	uint8_t value = 0;
 	uint8_t wmm_mode = 0;
+	uint32_t cmd_id;
 
 	hdd_enter_dev(dev);
 
@@ -6511,6 +6518,24 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 						     adapter->session_id,
 						     cfg_val);
 	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OM_CTRL_BW;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u8(tb[cmd_id]);
+		ret_val = sme_send_he_om_ctrl_bw_update(hdd_ctx->mac_handle,
+							adapter->session_id,
+							cfg_val);
+	}
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OM_CTRL_NSS;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u8(tb[cmd_id]);
+		ret_val = sme_send_he_om_ctrl_nss_update(hdd_ctx->mac_handle,
+							 adapter->session_id,
+							 cfg_val);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_CLEAR_HE_OM_CTRL_CONFIG])
+		sme_reset_he_om_ctrl(hdd_ctx->mac_handle);
 
 	if (update_sme_cfg)
 		sme_update_config(mac_handle, sme_config);

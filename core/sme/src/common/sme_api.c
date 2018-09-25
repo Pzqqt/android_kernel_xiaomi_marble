@@ -12771,6 +12771,118 @@ int sme_update_he_om_ctrl_supp(mac_handle_t hal, uint8_t session_id,
 				 cfg_val);
 }
 
+int sme_send_he_om_ctrl_bw_update(mac_handle_t hal, uint8_t session_id,
+				  uint8_t cfg_val)
+{
+	uint32_t om_ctrl_cmd[NUM_OM_CTRL_UPDATE_CFG_PARAMS] = {0};
+	QDF_STATUS status;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	if (!session) {
+		sme_err("Session does not exist, Session_id: %d", session_id);
+		return -EINVAL;
+	}
+	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
+		sme_info("STA is not connected, Session_id: %d", session_id);
+		return -EINVAL;
+	}
+	if (cfg_val > session->connectedProfile.vht_channel_width) {
+		sme_info("OM ctrl BW %d is greater than connected BW %d",
+			  cfg_val, session->connectedProfile.vht_channel_width);
+		return -EINVAL;
+	}
+	mac_ctx->he_om_ctrl_cfg_bw_set = true;
+	mac_ctx->he_om_ctrl_cfg_bw = cfg_val;
+	om_ctrl_cmd[0] = 1;
+	qdf_mem_copy((void *)&om_ctrl_cmd[OM_CTRL_CMD_MAC_BITS31],
+		     (void *)session->connectedProfile.bssid.bytes,
+		     sizeof(uint32_t));
+	qdf_mem_copy((void *)&om_ctrl_cmd[OM_CTRL_CMD_MAC_BITS47],
+		     (void *)&session->connectedProfile.bssid.bytes[4],
+		     sizeof(uint16_t));
+	if (mac_ctx->he_om_ctrl_cfg_nss_set) {
+		om_ctrl_cmd[OM_CTRL_CMD_RX_NSS] =
+			mac_ctx->he_om_ctrl_cfg_nss - 1;
+		om_ctrl_cmd[OM_CTRL_CMD_TX_NSS] =
+			mac_ctx->he_om_ctrl_cfg_nss - 1;
+	} else {
+		om_ctrl_cmd[OM_CTRL_CMD_RX_NSS] = session->nss - 1;
+		om_ctrl_cmd[OM_CTRL_CMD_TX_NSS] = session->nss - 1;
+	}
+	om_ctrl_cmd[OM_CTRL_CMD_BW] = cfg_val;
+	om_ctrl_cmd[OM_CTRL_CMD_ULMU] = 1;
+	status = wma_form_unit_test_cmd_and_send(session_id, 13, 7,
+						 om_ctrl_cmd);
+	if (QDF_STATUS_SUCCESS != status) {
+		sme_err("send_unit_test_cmd returned %d", status);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+int sme_send_he_om_ctrl_nss_update(mac_handle_t hal, uint8_t session_id,
+				  uint8_t cfg_val)
+{
+	uint32_t om_ctrl_cmd[NUM_OM_CTRL_UPDATE_CFG_PARAMS] = {0};
+	QDF_STATUS status;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	if (!session) {
+		sme_err("Session does not exist, Session_id: %d", session_id);
+		return -EINVAL;
+	}
+	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
+		sme_info("STA not in connected state Session_id: %d",
+			 session_id);
+		return -EINVAL;
+	}
+	if (cfg_val > session->nss) {
+		sme_info("OM ctrl Nss %d is greater than connected Nss %d",
+			 cfg_val, session->nss);
+		return -EINVAL;
+	}
+	mac_ctx->he_om_ctrl_cfg_nss_set = true;
+	mac_ctx->he_om_ctrl_cfg_nss = cfg_val;
+	om_ctrl_cmd[0] = 1;
+	qdf_mem_copy((void *)&om_ctrl_cmd[OM_CTRL_CMD_MAC_BITS31],
+		     (void *)session->connectedProfile.bssid.bytes,
+		     sizeof(uint32_t));
+	qdf_mem_copy((void *)&om_ctrl_cmd[OM_CTRL_CMD_MAC_BITS47],
+		     (void *)&session->connectedProfile.bssid.bytes[4],
+		     sizeof(uint16_t));
+
+	if (mac_ctx->he_om_ctrl_cfg_bw_set)
+		om_ctrl_cmd[OM_CTRL_CMD_BW] = mac_ctx->he_om_ctrl_cfg_bw;
+	else
+		om_ctrl_cmd[OM_CTRL_CMD_BW] =
+			session->connectedProfile.vht_channel_width;
+
+	om_ctrl_cmd[OM_CTRL_CMD_RX_NSS] = cfg_val - 1;
+	om_ctrl_cmd[OM_CTRL_CMD_TX_NSS] = cfg_val - 1;
+	om_ctrl_cmd[OM_CTRL_CMD_ULMU] = 1;
+	status = wma_form_unit_test_cmd_and_send(session_id, 13, 7,
+						 om_ctrl_cmd);
+	if (QDF_STATUS_SUCCESS != status) {
+		sme_err("send_unit_test_cmd returned %d", status);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+void sme_reset_he_om_ctrl(mac_handle_t hal)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	mac_ctx->he_om_ctrl_cfg_bw_set = false;
+	mac_ctx->he_om_ctrl_cfg_nss_set = false;
+	mac_ctx->he_om_ctrl_cfg_bw = 0;
+	mac_ctx->he_om_ctrl_cfg_nss = 0;
+}
+
 int sme_update_he_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 			       uint8_t cfg_val)
 {
