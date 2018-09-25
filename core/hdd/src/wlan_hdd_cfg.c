@@ -45,6 +45,8 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
 #include "wlan_fwol_ucfg_api.h"
+#include "cfg_ucfg_api.h"
+#include "hdd_dp_cfg.h"
 
 static void
 cb_notify_set_roam_prefer5_g_hz(struct hdd_context *hdd_ctx,
@@ -1998,68 +2000,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_REG_CHANGE_DEF_COUNTRY_DEFAULT,
 		     CFG_REG_CHANGE_DEF_COUNTRY_MIN,
 		     CFG_REG_CHANGE_DEF_COUNTRY_MAX),
-
-#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-	REG_VARIABLE(CFG_LL_TX_FLOW_LWM, WLAN_PARAM_Integer,
-		     struct hdd_config, TxFlowLowWaterMark,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LL_TX_FLOW_LWM_DEFAULT,
-		     CFG_LL_TX_FLOW_LWM_MIN,
-		     CFG_LL_TX_FLOW_LWM_MAX),
-	REG_VARIABLE(CFG_LL_TX_FLOW_HWM_OFFSET, WLAN_PARAM_Integer,
-		     struct hdd_config, TxFlowHighWaterMarkOffset,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LL_TX_FLOW_HWM_OFFSET_DEFAULT,
-		     CFG_LL_TX_FLOW_HWM_OFFSET_MIN,
-		     CFG_LL_TX_FLOW_HWM_OFFSET_MAX),
-	REG_VARIABLE(CFG_LL_TX_FLOW_MAX_Q_DEPTH, WLAN_PARAM_Integer,
-		     struct hdd_config, TxFlowMaxQueueDepth,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LL_TX_FLOW_MAX_Q_DEPTH_DEFAULT,
-		     CFG_LL_TX_FLOW_MAX_Q_DEPTH_MIN,
-		     CFG_LL_TX_FLOW_MAX_Q_DEPTH_MAX),
-	REG_VARIABLE(CFG_LL_TX_LBW_FLOW_LWM, WLAN_PARAM_Integer,
-		     struct hdd_config, TxLbwFlowLowWaterMark,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LL_TX_LBW_FLOW_LWM_DEFAULT,
-		     CFG_LL_TX_LBW_FLOW_LWM_MIN,
-		     CFG_LL_TX_LBW_FLOW_LWM_MAX),
-
-	REG_VARIABLE(CFG_LL_TX_LBW_FLOW_HWM_OFFSET, WLAN_PARAM_Integer,
-		     struct hdd_config, TxLbwFlowHighWaterMarkOffset,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LL_TX_LBW_FLOW_HWM_OFFSET_DEFAULT,
-		     CFG_LL_TX_LBW_FLOW_HWM_OFFSET_MIN,
-		     CFG_LL_TX_LBW_FLOW_HWM_OFFSET_MAX),
-
-	REG_VARIABLE(CFG_LL_TX_LBW_FLOW_MAX_Q_DEPTH, WLAN_PARAM_Integer,
-		     struct hdd_config, TxLbwFlowMaxQueueDepth,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LL_TX_LBW_FLOW_MAX_Q_DEPTH_DEFAULT,
-		     CFG_LL_TX_LBW_FLOW_MAX_Q_DEPTH_MIN,
-		     CFG_LL_TX_LBW_FLOW_MAX_Q_DEPTH_MAX),
-
-	REG_VARIABLE(CFG_LL_TX_HBW_FLOW_LWM, WLAN_PARAM_Integer,
-		     struct hdd_config, TxHbwFlowLowWaterMark,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LL_TX_HBW_FLOW_LWM_DEFAULT,
-		     CFG_LL_TX_HBW_FLOW_LWM_MIN,
-		     CFG_LL_TX_HBW_FLOW_LWM_MAX),
-
-	REG_VARIABLE(CFG_LL_TX_HBW_FLOW_HWM_OFFSET, WLAN_PARAM_Integer,
-		     struct hdd_config, TxHbwFlowHighWaterMarkOffset,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LL_TX_HBW_FLOW_HWM_OFFSET_DEFAULT,
-		     CFG_LL_TX_HBW_FLOW_HWM_OFFSET_MIN,
-		     CFG_LL_TX_HBW_FLOW_HWM_OFFSET_MAX),
-
-	REG_VARIABLE(CFG_LL_TX_HBW_FLOW_MAX_Q_DEPTH, WLAN_PARAM_Integer,
-		     struct hdd_config, TxHbwFlowMaxQueueDepth,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_LL_TX_HBW_FLOW_MAX_Q_DEPTH_DEFAULT,
-		     CFG_LL_TX_HBW_FLOW_MAX_Q_DEPTH_MIN,
-		     CFG_LL_TX_HBW_FLOW_MAX_Q_DEPTH_MAX),
-#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 
 	REG_VARIABLE(CFG_LL_TX_FLOW_STOP_QUEUE_TH, WLAN_PARAM_Integer,
@@ -2100,82 +2040,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ADVERTISE_CONCURRENT_OPERATION_MAX),
 
 #ifdef MSM_PLATFORM
-	REG_VARIABLE(CFG_BUS_BANDWIDTH_HIGH_THRESHOLD, WLAN_PARAM_Integer,
-		     struct hdd_config, busBandwidthHighThreshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BUS_BANDWIDTH_HIGH_THRESHOLD_DEFAULT,
-		     CFG_BUS_BANDWIDTH_HIGH_THRESHOLD_MIN,
-		     CFG_BUS_BANDWIDTH_HIGH_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_BUS_BANDWIDTH_MEDIUM_THRESHOLD, WLAN_PARAM_Integer,
-		     struct hdd_config, busBandwidthMediumThreshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BUS_BANDWIDTH_MEDIUM_THRESHOLD_DEFAULT,
-		     CFG_BUS_BANDWIDTH_MEDIUM_THRESHOLD_MIN,
-		     CFG_BUS_BANDWIDTH_MEDIUM_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_BUS_BANDWIDTH_LOW_THRESHOLD, WLAN_PARAM_Integer,
-		     struct hdd_config, busBandwidthLowThreshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BUS_BANDWIDTH_LOW_THRESHOLD_DEFAULT,
-		     CFG_BUS_BANDWIDTH_LOW_THRESHOLD_MIN,
-		     CFG_BUS_BANDWIDTH_LOW_THRESHOLD_MAX),
-
-	REG_VARIABLE(CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL, WLAN_PARAM_Integer,
-		     struct hdd_config, busBandwidthComputeInterval,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_DEFAULT,
-		     CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_MIN,
-		     CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_TCP_LIMIT_OUTPUT, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_tcp_limit_output,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_TCP_LIMIT_OUTPUT_DEFAULT,
-		     CFG_ENABLE_TCP_LIMIT_OUTPUT_MIN,
-		     CFG_ENABLE_TCP_LIMIT_OUTPUT_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_TCP_ADV_WIN_SCALE, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_tcp_adv_win_scale,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_TCP_ADV_WIN_SCALE_DEFAULT,
-		     CFG_ENABLE_TCP_ADV_WIN_SCALE_MIN,
-		     CFG_ENABLE_TCP_ADV_WIN_SCALE_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_TCP_DELACK, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_tcp_delack,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_TCP_DELACK_DEFAULT,
-		     CFG_ENABLE_TCP_DELACK_MIN,
-		     CFG_ENABLE_TCP_DELACK_MAX),
-
-	REG_VARIABLE(CFG_TCP_DELACK_THRESHOLD_HIGH, WLAN_PARAM_Integer,
-		     struct hdd_config, tcpDelackThresholdHigh,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TCP_DELACK_THRESHOLD_HIGH_DEFAULT,
-		     CFG_TCP_DELACK_THRESHOLD_HIGH_MIN,
-		     CFG_TCP_DELACK_THRESHOLD_HIGH_MAX),
-
-	REG_VARIABLE(CFG_TCP_DELACK_THRESHOLD_LOW, WLAN_PARAM_Integer,
-		     struct hdd_config, tcpDelackThresholdLow,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TCP_DELACK_THRESHOLD_LOW_DEFAULT,
-		     CFG_TCP_DELACK_THRESHOLD_LOW_MIN,
-		     CFG_TCP_DELACK_THRESHOLD_LOW_MAX),
-
-	REG_VARIABLE(CFG_TCP_DELACK_TIMER_COUNT, WLAN_PARAM_Integer,
-		     struct hdd_config, tcp_delack_timer_count,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TCP_DELACK_TIMER_COUNT_DEFAULT,
-		     CFG_TCP_DELACK_TIMER_COUNT_MIN,
-		     CFG_TCP_DELACK_TIMER_COUNT_MAX),
-
-	REG_VARIABLE(CFG_TCP_TX_HIGH_TPUT_THRESHOLD_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, tcp_tx_high_tput_thres,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TCP_TX_HIGH_TPUT_THRESHOLD_DEFAULT,
-		     CFG_TCP_TX_HIGH_TPUT_THRESHOLD_MIN,
-		     CFG_TCP_TX_HIGH_TPUT_THRESHOLD_MAX),
 	REG_VARIABLE(CFG_PERIODIC_STATS_DISPLAY_TIME_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, periodic_stats_disp_time,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2786,13 +2650,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_ADAPT_DWELL_WIFI_THRESH_MIN,
 		CFG_ADAPT_DWELL_WIFI_THRESH_MAX),
 
-	REG_VARIABLE(CFG_RX_MODE_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, rx_mode,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_RX_MODE_DEFAULT,
-		CFG_RX_MODE_MIN,
-		CFG_RX_MODE_MAX),
-
 	REG_VARIABLE(CFG_NUM_DP_RX_THREADS_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, num_dp_rx_threads,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2813,26 +2670,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_CE_SERVICE_MAX_RX_IND_FLUSH_DEFAULT,
 		CFG_CE_SERVICE_MAX_RX_IND_FLUSH_MIN,
 		CFG_CE_SERVICE_MAX_RX_IND_FLUSH_MAX),
-
-	REG_VARIABLE(CFG_NAPI_CE_CPU_MASK_NAME, WLAN_PARAM_HexInteger,
-		struct hdd_config, napi_cpu_affinity_mask,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_NAPI_CE_CPU_MASK_DEFAULT,
-		CFG_NAPI_CE_CPU_MASK_MIN,
-		CFG_NAPI_CE_CPU_MASK_MAX),
-
-	REG_VARIABLE(CFG_RX_THREAD_CPU_MASK_NAME, WLAN_PARAM_HexInteger,
-		struct hdd_config, rx_thread_affinity_mask,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_RX_THREAD_CPU_MASK_DEFAULT,
-		CFG_RX_THREAD_CPU_MASK_MIN,
-		CFG_RX_THREAD_CPU_MASK_MAX),
-
-	REG_VARIABLE_STRING(CFG_RPS_RX_QUEUE_CPU_MAP_LIST_NAME,
-				 WLAN_PARAM_String,
-				 struct hdd_config, cpu_map_list,
-				 VAR_FLAGS_OPTIONAL,
-				 (void *)CFG_RPS_RX_QUEUE_CPU_MAP_LIST_DEFAULT),
 
 	REG_VARIABLE(CFG_INDOOR_CHANNEL_SUPPORT_NAME,
 		     WLAN_PARAM_Integer,
@@ -3015,13 +2852,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_FORCE_1X1_DEFAULT,
 		CFG_FORCE_1X1_MIN,
 		CFG_FORCE_1X1_MAX),
-
-	REG_VARIABLE(CFG_TX_ORPHAN_ENABLE_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, tx_orphan_enable,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_TX_ORPHAN_ENABLE_DEFAULT,
-		CFG_TX_ORPHAN_ENABLE_MIN,
-		CFG_TX_ORPHAN_ENABLE_MAX),
 
 	REG_VARIABLE(CFG_ITO_REPEAT_COUNT_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, ito_repeat_count,
@@ -4262,45 +4092,6 @@ static void hdd_override_all_ps(struct hdd_context *hdd_ctx)
 }
 
 /**
- * hdd_set_rx_mode_value() - set rx_mode values
- * @hdd_ctx: hdd context
- *
- * Return: none
- */
-static void hdd_set_rx_mode_value(struct hdd_context *hdd_ctx)
-{
-	/* RPS has higher priority than dynamic RPS when both bits are set */
-	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RPS &&
-	    hdd_ctx->config->rx_mode & CFG_ENABLE_DYNAMIC_RPS)
-		hdd_ctx->config->rx_mode &= ~CFG_ENABLE_DYNAMIC_RPS;
-
-	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RX_THREAD &&
-		 hdd_ctx->config->rx_mode & CFG_ENABLE_RPS) {
-		hdd_warn("rx_mode wrong configuration. Make it default");
-		hdd_ctx->config->rx_mode = CFG_RX_MODE_DEFAULT;
-	}
-
-	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RX_THREAD)
-		hdd_ctx->enable_rxthread = true;
-	else if (hdd_ctx->config->rx_mode & CFG_ENABLE_DP_RX_THREADS)
-		hdd_ctx->enable_dp_rx_threads = true;
-
-	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RPS)
-		hdd_ctx->rps = true;
-
-	if (hdd_ctx->config->rx_mode & CFG_ENABLE_NAPI)
-		hdd_ctx->napi_enable = true;
-
-	if (hdd_ctx->config->rx_mode & CFG_ENABLE_DYNAMIC_RPS)
-		hdd_ctx->dynamic_rps = true;
-
-	hdd_info("rx_mode:%u dp_rx_threads:%u rx_thread:%u napi:%u rps:%u dynamic rps %u",
-		 hdd_ctx->config->rx_mode, hdd_ctx->enable_dp_rx_threads,
-		 hdd_ctx->enable_rxthread, hdd_ctx->napi_enable,
-		 hdd_ctx->rps, hdd_ctx->dynamic_rps);
-}
-
-/**
  * hdd_parse_config_ini() - parse the ini configuration file
  * @hdd_ctx: the pointer to hdd context
  *
@@ -4410,7 +4201,6 @@ QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx)
 
 	/* Loop through the registry table and apply all these configs */
 	qdf_status = hdd_apply_cfg_ini(hdd_ctx, cfg_ini_table, i);
-	hdd_set_rx_mode_value(hdd_ctx);
 	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
 		hdd_override_all_ps(hdd_ctx);
 

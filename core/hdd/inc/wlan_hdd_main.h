@@ -1411,7 +1411,7 @@ struct hdd_adapter {
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL || QCA_HL_NETDEV_FLOW_CONTROL */
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	unsigned int tx_flow_low_watermark;
-	unsigned int tx_flow_high_watermark_offset;
+	unsigned int tx_flow_hi_watermark_offset;
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 	bool offloads_configured;
@@ -2321,7 +2321,7 @@ int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx);
 void hdd_bus_bandwidth_deinit(struct hdd_context *hdd_ctx);
 
 #define GET_CUR_RX_LVL(config) ((config)->cur_rx_level)
-#define GET_BW_COMPUTE_INTV(config) ((config)->busBandwidthComputeInterval)
+#define GET_BW_COMPUTE_INTV(config) ((config)->bus_bw_compute_interval)
 
 #else
 

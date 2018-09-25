@@ -385,7 +385,7 @@ int hdd_napi_apply_throughput_policy(struct hdd_context *hddctx,
 		return rc;
 	}
 
-	if (packets > hddctx->config->busBandwidthHighThreshold)
+	if (packets > hddctx->config->bus_bw_high_threshold)
 		req_state = QCA_NAPI_TPUT_HI;
 	else
 		req_state = QCA_NAPI_TPUT_LO;

@@ -338,4 +338,14 @@ hdd_skb_nontso_linearize(struct sk_buff *skb)
 }
 #endif
 
+/**
+ * hdd_dp_cfg_update() - update hdd config for HDD DP INIs
+ * @psoc: Pointer to psoc obj
+ * @hdd_ctx: Pointer to hdd context
+ *
+ * Return: None
+ */
+void hdd_dp_cfg_update(struct wlan_objmgr_psoc *psoc,
+		       struct hdd_context *hdd_ctx);
+
 #endif /* end #if !defined(WLAN_HDD_TX_RX_H) */

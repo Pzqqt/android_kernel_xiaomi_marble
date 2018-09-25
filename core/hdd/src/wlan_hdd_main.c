@@ -2691,9 +2691,9 @@ static void hdd_update_ipa_component_config(struct hdd_context *hdd_ctx)
 	ipa_cfg.ipa_config = cfg->IpaConfig;
 	ipa_cfg.desc_size = cfg->IpaDescSize;
 	ipa_cfg.txbuf_count = cfg->IpaUcTxBufCount;
-	ipa_cfg.bus_bw_high = cfg->busBandwidthHighThreshold;
-	ipa_cfg.bus_bw_medium = cfg->busBandwidthMediumThreshold;
-	ipa_cfg.bus_bw_low = cfg->busBandwidthLowThreshold;
+	ipa_cfg.bus_bw_high = cfg->bus_bw_high_threshold;
+	ipa_cfg.bus_bw_medium = cfg->bus_bw_medium_threshold;
+	ipa_cfg.bus_bw_low = cfg->bus_bw_low_threshold;
 	ipa_cfg.ipa_bw_high = cfg->IpaHighBandwidthMbps;
 	ipa_cfg.ipa_bw_medium = cfg->IpaMediumBandwidthMbps;
 	ipa_cfg.ipa_bw_low = cfg->IpaLowBandwidthMbps;
@@ -7494,7 +7494,7 @@ static void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
 	if (data_in_interval)
 		data_in_time_period = data_in_interval;
 
-	if (counter * hdd_ctx->config->busBandwidthComputeInterval >=
+	if (counter * hdd_ctx->config->bus_bw_compute_interval >=
 		hdd_ctx->config->periodic_stats_disp_time * 1000) {
 		if (data_in_time_period) {
 			wlan_hdd_display_txrx_stats(hdd_ctx);
@@ -7559,11 +7559,11 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	bool rxthread_high_tput_req = false;
 	bool dptrace_high_tput_req;
 
-	if (total_pkts > hdd_ctx->config->busBandwidthHighThreshold)
+	if (total_pkts > hdd_ctx->config->bus_bw_high_threshold)
 		next_vote_level = PLD_BUS_WIDTH_HIGH;
-	else if (total_pkts > hdd_ctx->config->busBandwidthMediumThreshold)
+	else if (total_pkts > hdd_ctx->config->bus_bw_medium_threshold)
 		next_vote_level = PLD_BUS_WIDTH_MEDIUM;
-	else if (total_pkts > hdd_ctx->config->busBandwidthLowThreshold)
+	else if (total_pkts > hdd_ctx->config->bus_bw_low_threshold)
 		next_vote_level = PLD_BUS_WIDTH_LOW;
 	else
 		next_vote_level = PLD_BUS_WIDTH_NONE;
@@ -7599,7 +7599,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 							 tx_packets,
 							 rx_packets);
 
-		if (rx_packets < hdd_ctx->config->busBandwidthLowThreshold)
+		if (rx_packets < hdd_ctx->config->bus_bw_low_threshold)
 			hdd_disable_rx_ol_for_low_tput(hdd_ctx, true);
 		else
 			hdd_disable_rx_ol_for_low_tput(hdd_ctx, false);
@@ -7631,7 +7631,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	 * 3)For UDP cases
 	 */
 	if (avg_no_rx_offload_pkts >
-			hdd_ctx->config->busBandwidthHighThreshold)
+			hdd_ctx->config->bus_bw_high_threshold)
 		rxthread_high_tput_req = true;
 	else
 		rxthread_high_tput_req = false;
@@ -7641,7 +7641,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			 rxthread_high_tput_req);
 
 	/* fine-tuning parameters for RX Flows */
-	if (avg_rx > hdd_ctx->config->tcpDelackThresholdHigh) {
+	if (avg_rx > hdd_ctx->config->tcp_delack_thres_high) {
 		if ((hdd_ctx->cur_rx_level != WLAN_SVC_TP_HIGH) &&
 		   (++hdd_ctx->rx_high_ind_cnt == delack_timer_cnt)) {
 			next_rx_level = WLAN_SVC_TP_HIGH;
@@ -7822,7 +7822,7 @@ restart_timer:
 	qdf_spinlock_acquire(&hdd_ctx->bus_bw_timer_lock);
 	if (hdd_ctx->bus_bw_timer_running)
 		qdf_timer_mod(&hdd_ctx->bus_bw_timer,
-				hdd_ctx->config->busBandwidthComputeInterval);
+			      hdd_ctx->config->bus_bw_compute_interval);
 	qdf_spinlock_release(&hdd_ctx->bus_bw_timer_lock);
 }
 
@@ -7956,16 +7956,16 @@ void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 
 #ifdef MSM_PLATFORM
 	hdd_nofl_info("BW compute Interval: %dms",
-		      hdd_ctx->config->busBandwidthComputeInterval);
+		      hdd_ctx->config->bus_bw_compute_interval);
 	hdd_nofl_info("BW High TH: %d BW Med TH: %d BW Low TH: %d",
-		      hdd_ctx->config->busBandwidthHighThreshold,
-		      hdd_ctx->config->busBandwidthMediumThreshold,
-		      hdd_ctx->config->busBandwidthLowThreshold);
+		      hdd_ctx->config->bus_bw_high_threshold,
+		      hdd_ctx->config->bus_bw_medium_threshold,
+		      hdd_ctx->config->bus_bw_low_threshold);
 	hdd_nofl_info("Enable TCP DEL ACK: %d",
 		      hdd_ctx->en_tcp_delack_no_lro);
 	hdd_nofl_info("TCP DEL High TH: %d TCP DEL Low TH: %d",
-		      hdd_ctx->config->tcpDelackThresholdHigh,
-		      hdd_ctx->config->tcpDelackThresholdLow);
+		      hdd_ctx->config->tcp_delack_thres_high,
+		      hdd_ctx->config->tcp_delack_thres_low);
 	hdd_nofl_info("TCP TX HIGH TP TH: %d (Use to set tcp_output_bytes_limit)",
 		      hdd_ctx->config->tcp_tx_high_tput_thres);
 #endif
@@ -9210,6 +9210,7 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	hdd_init_wlan_auto_shutdown(config, psoc);
 	hdd_init_wlan_logging_params(config, psoc);
 	hdd_init_packet_log(config, psoc);
+	hdd_dp_cfg_update(psoc, hdd_ctx);
 }
 
 /**
@@ -12266,7 +12267,7 @@ static void __hdd_bus_bw_compute_timer_start(struct hdd_context *hdd_ctx)
 	qdf_spinlock_acquire(&hdd_ctx->bus_bw_timer_lock);
 	hdd_ctx->bus_bw_timer_running = true;
 	qdf_timer_start(&hdd_ctx->bus_bw_timer,
-			hdd_ctx->config->busBandwidthComputeInterval);
+			hdd_ctx->config->bus_bw_compute_interval);
 	qdf_spinlock_release(&hdd_ctx->bus_bw_timer_lock);
 }
 

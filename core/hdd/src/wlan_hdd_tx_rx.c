@@ -60,6 +60,7 @@
 
 #include "wlan_hdd_nud_tracking.h"
 #include "dp_txrx.h"
+#include "cfg_ucfg_api.h"
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /*
@@ -363,10 +364,10 @@ void hdd_get_tx_resource(struct hdd_adapter *adapter,
 	if (false ==
 	    cdp_fc_get_tx_resource(cds_get_context(QDF_MODULE_ID_SOC), STAId,
 				   adapter->tx_flow_low_watermark,
-				   adapter->tx_flow_high_watermark_offset)) {
+				   adapter->tx_flow_hi_watermark_offset)) {
 		hdd_debug("Disabling queues lwm %d hwm offset %d",
 			 adapter->tx_flow_low_watermark,
-			 adapter->tx_flow_high_watermark_offset);
+			 adapter->tx_flow_hi_watermark_offset);
 		wlan_hdd_netif_queue_control(adapter, WLAN_STOP_ALL_NETIF_QUEUE,
 					     WLAN_DATA_FLOW_CONTROL);
 		if ((adapter->tx_flow_timer_initialized == true) &&
@@ -2596,3 +2597,159 @@ void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx)
 				    &rx_tp_data, sizeof(rx_tp_data));
 }
 #endif /* MSM_PLATFORM */
+
+#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
+/**
+ * hdd_ini_tx_flow_control() - Initialize INIs concerned about tx flow control
+ * @config: pointer to hdd config
+ * @psoc: pointer to psoc obj
+ *
+ * Return: none
+ */
+static void hdd_ini_tx_flow_control(struct hdd_config *config,
+				    struct wlan_objmgr_psoc *psoc)
+{
+	config->tx_flow_low_watermark =
+		cfg_get(psoc, CFG_DP_LL_TX_FLOW_LWM);
+	config->tx_flow_hi_watermark_offset =
+		cfg_get(psoc, CFG_DP_LL_TX_FLOW_HWM_OFFSET);
+	config->tx_flow_max_queue_depth =
+		cfg_get(psoc, CFG_DP_LL_TX_FLOW_MAX_Q_DEPTH);
+	config->tx_lbw_flow_low_watermark =
+		cfg_get(psoc, CFG_DP_LL_TX_LBW_FLOW_LWM);
+	config->tx_lbw_flow_hi_watermark_offset =
+		cfg_get(psoc, CFG_DP_LL_TX_LBW_FLOW_HWM_OFFSET);
+	config->tx_lbw_flow_max_queue_depth =
+		cfg_get(psoc, CFG_DP_LL_TX_LBW_FLOW_MAX_Q_DEPTH);
+	config->tx_hbw_flow_low_watermark =
+		cfg_get(psoc, CFG_DP_LL_TX_HBW_FLOW_LWM);
+	config->tx_hbw_flow_hi_watermark_offset =
+		cfg_get(psoc, CFG_DP_LL_TX_HBW_FLOW_HWM_OFFSET);
+	config->tx_hbw_flow_max_queue_depth =
+		cfg_get(psoc, CFG_DP_LL_TX_HBW_FLOW_MAX_Q_DEPTH);
+}
+#else
+static void hdd_ini_tx_flow_control(struct hdd_config *config,
+				    struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
+#ifdef MSM_PLATFORM
+/**
+ * hdd_ini_tx_flow_control() - Initialize INIs concerned about bus bandwidth
+ * @config: pointer to hdd config
+ * @psoc: pointer to psoc obj
+ *
+ * Return: none
+ */
+static void hdd_ini_bus_bandwidth(struct hdd_config *config,
+				  struct wlan_objmgr_psoc *psoc)
+{
+	config->bus_bw_high_threshold =
+		cfg_get(psoc, CFG_DP_BUS_BANDWIDTH_HIGH_THRESHOLD);
+	config->bus_bw_medium_threshold =
+		cfg_get(psoc, CFG_DP_BUS_BANDWIDTH_MEDIUM_THRESHOLD);
+	config->bus_bw_low_threshold =
+		cfg_get(psoc, CFG_DP_BUS_BANDWIDTH_LOW_THRESHOLD);
+	config->bus_bw_compute_interval =
+		cfg_get(psoc, CFG_DP_BUS_BANDWIDTH_COMPUTE_INTERVAL);
+}
+
+/**
+ * hdd_ini_tx_flow_control() - Initialize INIs concerned about tcp settings
+ * @config: pointer to hdd config
+ * @psoc: pointer to psoc obj
+ *
+ * Return: none
+ */
+static void hdd_ini_tcp_settings(struct hdd_config *config,
+				 struct wlan_objmgr_psoc *psoc)
+{
+	config->enable_tcp_limit_output =
+		cfg_get(psoc, CFG_DP_ENABLE_TCP_LIMIT_OUTPUT);
+	config->enable_tcp_adv_win_scale =
+		cfg_get(psoc, CFG_DP_ENABLE_TCP_ADV_WIN_SCALE);
+	config->enable_tcp_delack =
+		cfg_get(psoc, CFG_DP_ENABLE_TCP_DELACK);
+	config->tcp_delack_thres_high =
+		cfg_get(psoc, CFG_DP_TCP_DELACK_THRESHOLD_HIGH);
+	config->tcp_delack_thres_low =
+		cfg_get(psoc, CFG_DP_TCP_DELACK_THRESHOLD_LOW);
+	config->tcp_delack_timer_count =
+		cfg_get(psoc, CFG_DP_TCP_DELACK_TIMER_COUNT);
+	config->tcp_tx_high_tput_thres =
+		cfg_get(psoc, CFG_DP_TCP_TX_HIGH_TPUT_THRESHOLD);
+}
+#else
+static void hdd_ini_bus_bandwidth(struct hdd_config *config,
+				  struct wlan_objmgr_psoc *psoc)
+{
+}
+
+static void hdd_ini_tcp_settings(struct hdd_config *config,
+				 struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
+/**
+ * hdd_set_rx_mode_value() - set rx_mode values
+ * @hdd_ctx: hdd context
+ *
+ * Return: none
+ */
+static void hdd_set_rx_mode_value(struct hdd_context *hdd_ctx)
+{
+	uint32_t rx_mode = hdd_ctx->config->rx_mode;
+
+	/* RPS has higher priority than dynamic RPS when both bits are set */
+	if (rx_mode & CFG_ENABLE_RPS && rx_mode & CFG_ENABLE_DYNAMIC_RPS)
+		rx_mode &= ~CFG_ENABLE_DYNAMIC_RPS;
+
+	if (rx_mode & CFG_ENABLE_RX_THREAD && rx_mode & CFG_ENABLE_RPS) {
+		hdd_warn("rx_mode wrong configuration. Make it default");
+		rx_mode = CFG_RX_MODE_DEFAULT;
+	}
+
+	if (rx_mode & CFG_ENABLE_RX_THREAD)
+		hdd_ctx->enable_rxthread = true;
+	else if (rx_mode & CFG_ENABLE_DP_RX_THREADS)
+		hdd_ctx->enable_dp_rx_threads = true;
+
+	if (rx_mode & CFG_ENABLE_RPS)
+		hdd_ctx->rps = true;
+
+	if (rx_mode & CFG_ENABLE_NAPI)
+		hdd_ctx->napi_enable = true;
+
+	if (rx_mode & CFG_ENABLE_DYNAMIC_RPS)
+		hdd_ctx->dynamic_rps = true;
+
+	hdd_debug("rx_mode:%u dp_rx_threads:%u rx_thread:%u napi:%u rps:%u dynamic rps %u",
+		  rx_mode, hdd_ctx->enable_dp_rx_threads,
+		  hdd_ctx->enable_rxthread, hdd_ctx->napi_enable,
+		  hdd_ctx->rps, hdd_ctx->dynamic_rps);
+}
+
+void hdd_dp_cfg_update(struct wlan_objmgr_psoc *psoc,
+		       struct hdd_context *hdd_ctx)
+{
+	struct hdd_config *config;
+	qdf_size_t cpu_map_list_len;
+
+	config = hdd_ctx->config;
+	hdd_ini_tx_flow_control(config, psoc);
+	hdd_ini_bus_bandwidth(config, psoc);
+	hdd_ini_tcp_settings(config, psoc);
+	config->napi_cpu_affinity_mask =
+		cfg_get(psoc, CFG_DP_NAPI_CE_CPU_MASK);
+	config->rx_thread_affinity_mask =
+		cfg_get(psoc, CFG_DP_RX_THREAD_CPU_MASK);
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_DP_RPS_RX_QUEUE_CPU_MAP_LIST),
+			      config->cpu_map_list,
+			      sizeof(config->cpu_map_list), &cpu_map_list_len);
+	config->tx_orphan_enable = cfg_get(psoc, CFG_DP_TX_ORPHAN_ENABLE);
+	config->rx_mode = cfg_get(psoc, CFG_DP_RX_MODE);
+	hdd_set_rx_mode_value(hdd_ctx);
+}

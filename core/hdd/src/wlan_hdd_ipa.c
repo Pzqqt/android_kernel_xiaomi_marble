@@ -148,25 +148,26 @@ void hdd_ipa_set_tx_flow_info(void)
 				if (ucfg_ipa_uc_is_enabled() &&
 				    (QDF_SAP_MODE == adapter->device_mode)) {
 					adapter->tx_flow_low_watermark =
-					hdd_ctx->config->TxFlowLowWaterMark +
+					hdd_ctx->config->tx_flow_low_watermark +
 					WLAN_TFC_IPAUC_TX_DESC_RESERVE;
 				} else {
 					adapter->tx_flow_low_watermark =
 						hdd_ctx->config->
-							TxFlowLowWaterMark;
+							tx_flow_low_watermark;
 				}
-				adapter->tx_flow_high_watermark_offset =
-				   hdd_ctx->config->TxFlowHighWaterMarkOffset;
+				adapter->tx_flow_hi_watermark_offset =
+				   hdd_ctx->config->tx_flow_hi_watermark_offset;
 				cdp_fc_ll_set_tx_pause_q_depth(soc,
-					adapter->session_id,
-					hdd_ctx->config->TxFlowMaxQueueDepth);
+						adapter->session_id,
+						hdd_ctx->config->
+						tx_flow_max_queue_depth);
 				hdd_info("MODE %d,CH %d,LWM %d,HWM %d,TXQDEP %d",
 				    adapter->device_mode,
 				    targetChannel,
 				    adapter->tx_flow_low_watermark,
 				    adapter->tx_flow_low_watermark +
-				    adapter->tx_flow_high_watermark_offset,
-				    hdd_ctx->config->TxFlowMaxQueueDepth);
+				    adapter->tx_flow_hi_watermark_offset,
+				    hdd_ctx->config->tx_flow_max_queue_depth);
 				preAdapterChannel = targetChannel;
 				preAdapterContext = adapter;
 			} else {
@@ -181,11 +182,11 @@ void hdd_ipa_set_tx_flow_info(void)
 					/* Current adapter */
 					adapter->tx_flow_low_watermark = 0;
 					adapter->
-					tx_flow_high_watermark_offset = 0;
+					tx_flow_hi_watermark_offset = 0;
 					cdp_fc_ll_set_tx_pause_q_depth(soc,
 						adapter->session_id,
 						hdd_ctx->config->
-						TxHbwFlowMaxQueueDepth);
+						tx_hbw_flow_max_queue_depth);
 					hdd_info("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
 					       hdd_device_mode_to_string(
 							adapter->device_mode),
@@ -194,9 +195,9 @@ void hdd_ipa_set_tx_flow_info(void)
 					       adapter->tx_flow_low_watermark,
 					       adapter->tx_flow_low_watermark +
 					       adapter->
-					       tx_flow_high_watermark_offset,
+					       tx_flow_hi_watermark_offset,
 					       hdd_ctx->config->
-					       TxHbwFlowMaxQueueDepth);
+					       tx_hbw_flow_max_queue_depth);
 
 					if (!preAdapterContext) {
 						hdd_err("SCC: Previous adapter context NULL");
@@ -207,11 +208,11 @@ void hdd_ipa_set_tx_flow_info(void)
 					preAdapterContext->
 					tx_flow_low_watermark = 0;
 					preAdapterContext->
-					tx_flow_high_watermark_offset = 0;
+					tx_flow_hi_watermark_offset = 0;
 					cdp_fc_ll_set_tx_pause_q_depth(soc,
 						preAdapterContext->session_id,
 						hdd_ctx->config->
-						TxHbwFlowMaxQueueDepth);
+						tx_hbw_flow_max_queue_depth);
 					hdd_info("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
 					       hdd_device_mode_to_string(
 						preAdapterContext->device_mode
@@ -223,9 +224,9 @@ void hdd_ipa_set_tx_flow_info(void)
 					       preAdapterContext->
 					       tx_flow_low_watermark +
 					       preAdapterContext->
-					       tx_flow_high_watermark_offset,
+					       tx_flow_hi_watermark_offset,
 					       hdd_ctx->config->
-					       TxHbwFlowMaxQueueDepth);
+					       tx_hbw_flow_max_queue_depth);
 				}
 				/*
 				 * MCC, each adapter will have dedicated
@@ -253,15 +254,15 @@ void hdd_ipa_set_tx_flow_info(void)
 					}
 					adapter5->tx_flow_low_watermark =
 						hdd_ctx->config->
-						TxHbwFlowLowWaterMark;
+						tx_hbw_flow_low_watermark;
 					adapter5->
-					tx_flow_high_watermark_offset =
+					tx_flow_hi_watermark_offset =
 						hdd_ctx->config->
-						TxHbwFlowHighWaterMarkOffset;
+						tx_hbw_flow_hi_watermark_offset;
 					cdp_fc_ll_set_tx_pause_q_depth(soc,
 						adapter5->session_id,
 						hdd_ctx->config->
-						TxHbwFlowMaxQueueDepth);
+						tx_hbw_flow_max_queue_depth);
 					hdd_info("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
 					    hdd_device_mode_to_string(
 						    adapter5->device_mode),
@@ -271,9 +272,9 @@ void hdd_ipa_set_tx_flow_info(void)
 					    adapter5->
 					    tx_flow_low_watermark +
 					    adapter5->
-					    tx_flow_high_watermark_offset,
+					    tx_flow_hi_watermark_offset,
 					    hdd_ctx->config->
-					    TxHbwFlowMaxQueueDepth);
+					    tx_hbw_flow_max_queue_depth);
 
 					if (!adapter2_4) {
 						hdd_err("MCC: 2.4GHz adapter context NULL");
@@ -281,15 +282,15 @@ void hdd_ipa_set_tx_flow_info(void)
 					}
 					adapter2_4->tx_flow_low_watermark =
 						hdd_ctx->config->
-						TxLbwFlowLowWaterMark;
+						tx_lbw_flow_low_watermark;
 					adapter2_4->
-					tx_flow_high_watermark_offset =
+					tx_flow_hi_watermark_offset =
 						hdd_ctx->config->
-						TxLbwFlowHighWaterMarkOffset;
+						tx_lbw_flow_hi_watermark_offset;
 					cdp_fc_ll_set_tx_pause_q_depth(soc,
 						adapter2_4->session_id,
 						hdd_ctx->config->
-						TxLbwFlowMaxQueueDepth);
+						tx_lbw_flow_max_queue_depth);
 					hdd_info("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
 						hdd_device_mode_to_string(
 						    adapter2_4->device_mode),
@@ -300,9 +301,9 @@ void hdd_ipa_set_tx_flow_info(void)
 						adapter2_4->
 						tx_flow_low_watermark +
 						adapter2_4->
-						tx_flow_high_watermark_offset,
+						tx_flow_hi_watermark_offset,
 						hdd_ctx->config->
-						TxLbwFlowMaxQueueDepth);
+						tx_lbw_flow_max_queue_depth);
 
 				}
 			}
