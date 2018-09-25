@@ -34,6 +34,27 @@
 #include "wlan_pmo_hw_filter_public_struct.h"
 
 #ifdef WLAN_POWER_MANAGEMENT_OFFLOAD
+
+/**
+ * ucfg_pmo_psoc_open() - pmo psoc object open
+ * @psoc: objmgr vdev
+ *.
+ * This function used to open pmo psoc object by user space
+ *
+ * Return: true in case success else false
+ */
+QDF_STATUS ucfg_pmo_psoc_open(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_psoc_open() - pmo psoc object close
+ * @psoc: objmgr vdev
+ *.
+ * This function used to close pmo psoc object by user space
+ *
+ * Return: true in case success else false
+ */
+QDF_STATUS ucfg_pmo_psoc_close(struct wlan_objmgr_psoc *psoc);
+
 /**
  * ucfg_pmo_get_apf_instruction_size() - get the current APF instruction size
  * @psoc: the psoc to query
@@ -109,6 +130,120 @@ QDF_STATUS ucfg_pmo_update_psoc_config(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS ucfg_pmo_psoc_set_caps(struct wlan_objmgr_psoc *psoc,
 				  struct pmo_device_caps *caps);
+
+/**
+ * ucfg_pmo_is_arp_offload_enabled() - Get arp offload enable or not
+ * @psoc: pointer to psoc object
+ *
+ * Return: arp offload enable or not
+ */
+bool
+ucfg_pmo_is_arp_offload_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_set_arp_offload_enabled() - Set arp offload enable or not
+ * @psoc: pointer to psoc object
+ * @val:  enable/disable arp offload
+ *
+ * Return: None
+ */
+void
+ucfg_pmo_set_arp_offload_enabled(struct wlan_objmgr_psoc *psoc,
+				 bool val);
+
+/**
+ * ucfg_pmo_is_ssdp_enabled() - Get ssdp enable or not
+ * @psoc: pointer to psoc object
+ *
+ * Return: enable/disable ssdp
+ */
+bool
+ucfg_pmo_is_ssdp_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_is_ns_offloaded() - Get ns offload support or not
+ * @psoc: pointer to psoc object
+ *
+ * Return: ns offload or not
+ */
+bool
+ucfg_pmo_is_ns_offloaded(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_get_sta_dynamic_dtim() - Get dynamic dtim
+ * @psoc: pointer to psoc object
+ *
+ * Return: dynamic dtim
+ */
+uint8_t
+ucfg_pmo_get_sta_dynamic_dtim(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_get_sta_mod_dtim() - Get modulated dtim
+ * @psoc: pointer to psoc object
+ *
+ * Return: modulated dtim
+ */
+uint8_t
+ucfg_pmo_get_sta_mod_dtim(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_set_sta_mod_dtim() - Set modulated dtim
+ * @psoc: pointer to psoc object
+ * @val:  modulated dtim
+ *
+ * Return: None
+ */
+void
+ucfg_pmo_set_sta_mod_dtim(struct wlan_objmgr_psoc *psoc,
+			  uint8_t val);
+
+/**
+ * ucfg_pmo_is_mc_addr_list_enabled() - Get multicast address list enable or not
+ * @psoc: pointer to psoc object
+ *
+ * Return: multicast address list enable or not
+ */
+bool
+ucfg_pmo_is_mc_addr_list_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_get_power_save_mode() - Get power save mode
+ * @psoc: pointer to psoc object
+ *
+ * Return: power save mode
+ */
+enum powersave_mode
+ucfg_pmo_get_power_save_mode(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_set_power_save_mode() - Set power save mode
+ * @psoc: pointer to psoc object
+ * @val:  power save mode
+ *
+ * Return: None
+ */
+void
+ucfg_pmo_set_power_save_mode(struct wlan_objmgr_psoc *psoc,
+			     enum powersave_mode val);
+
+/**
+ * ucfg_pmo_get_max_ps_poll() - Get max power save poll
+ * @psoc: pointer to psoc object
+ *
+ * Return: power save poll
+ */
+uint8_t
+ucfg_pmo_get_max_ps_poll(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_power_save_offload_enabled() - Get power save offload enabled type
+ * @psoc: pointer to psoc object
+ *
+ * Return: power save offload enabled type
+ */
+uint8_t
+ucfg_pmo_power_save_offload_enabled(struct wlan_objmgr_psoc *psoc);
 
 /**
  * pmo_ucfg_enable_wakeup_event() -  enable wow wakeup events
@@ -394,6 +529,13 @@ QDF_STATUS pmo_ucfg_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS pmo_ucfg_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
+/**
+ * ucfg_pmo_get_pkt_filter_bitmap() - get default packet filters bitmap
+ * @psoc: the psoc to query
+ *
+ * Return: retrieve packet filter bitmap configuration
+ */
+uint8_t ucfg_pmo_get_pkt_filter_bitmap(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_pmo_get_num_packet_filters() - get the number of packet filters
@@ -427,6 +569,12 @@ QDF_STATUS pmo_ucfg_clear_pkt_filter(struct wlan_objmgr_psoc *psoc,
 	struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_param,
 	uint8_t vdev_id);
 #else
+static inline uint8_t
+ucfg_pmo_get_pkt_filter_bitmap(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
 static inline uint32_t
 ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc)
 {
@@ -451,6 +599,44 @@ pmo_ucfg_clear_pkt_filter(
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * ucfg_pmo_get_wow_enable() - Get wow enable type
+ * @psoc: pointer to psoc object
+ *
+ * Return: wow enable type
+ */
+enum pmo_wow_enable_type
+ucfg_pmo_get_wow_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_set_wow_enable() - Set wow enable type
+ * @psoc: pointer to psoc object
+ * @val: wow enalbe value
+ *
+ * Return: None
+ */
+void
+ucfg_pmo_set_wow_enable(struct wlan_objmgr_psoc *psoc,
+			enum pmo_wow_enable_type val);
+
+/**
+ * ucfg_pmo_is_wowlan_deauth_enabled() - Get wowlan deauth enable
+ * @psoc: pointer to psoc object
+ *
+ * Return: wowlan deauth enable or not
+ */
+bool
+ucfg_pmo_is_wowlan_deauth_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_is_wowlan_disassoc_enabled() - Get wowlan disassoc enable
+ * @psoc: pointer to psoc object
+ *
+ * Return: wowlan disassoc enable
+ */
+bool
+ucfg_pmo_is_wowlan_disassoc_enabled(struct wlan_objmgr_psoc *psoc);
 
 /**
  * pmo_ucfg_get_gtk_rsp(): API to send gtk response request to fwr
@@ -705,9 +891,112 @@ QDF_STATUS pmo_ucfg_config_listen_interval(struct wlan_objmgr_vdev *vdev,
  */
 QDF_STATUS pmo_ucfg_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
 				       uint32_t mod_dtim);
+
+#ifdef WLAN_FEATURE_WOW_PULSE
+/**
+ * ucfg_pmo_is_wow_pulse_enabled() - to get wow pulse enable configuration
+ * @psoc: objmgr psoc handle
+ *
+ * Return: wow pulse enable configuration
+ */
+bool ucfg_pmo_is_wow_pulse_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_get_wow_pulse_pin() - to get wow pulse pin configuration
+ * @psoc: objmgr psoc handle
+ *
+ * Return: wow pulse pin configuration
+ */
+uint8_t ucfg_pmo_get_wow_pulse_pin(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_get_wow_pulse_interval_high() - to get wow pulse interval high
+ * @psoc: objmgr psoc handle
+ *
+ * Return: wow pulse interval high configuration
+ */
+uint16_t ucfg_pmo_get_wow_pulse_interval_high(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_get_wow_pulse_interval_low() - to get wow pulse interval low
+ * @psoc: objmgr psoc handle
+ *
+ * Return: wow pulse interval high configuration
+ */
+uint16_t ucfg_pmo_get_wow_pulse_interval_low(struct wlan_objmgr_psoc *psoc);
+#else
+static inline bool
+ucfg_pmo_is_wow_pulse_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline uint8_t
+ucfg_pmo_get_wow_pulse_pin(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint16_t
+ucfg_pmo_get_wow_pulse_interval_high(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+#endif
+
+/**
+ * ucfg_pmo_is_active_mode_offloaded() - get active mode offload configuration
+ * @psoc: objmgr psoc handle
+ *
+ * Return: retrieve active mode offload configuration
+ */
+bool ucfg_pmo_is_active_mode_offloaded(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_get_auto_power_fail_mode() - to get auto power save failure mode
+ * @psoc: objmgr psoc handle
+ *
+ * Return: auto power save failure mode configuration
+ */
+enum pmo_auto_pwr_detect_failure_mode
+ucfg_pmo_get_auto_power_fail_mode(struct wlan_objmgr_psoc *psoc);
+
+#ifdef FEATURE_WLAN_APF
+/**
+ * ucfg_pmo_is_apf_enabled() - to get apf configuration
+ * @psoc: objmgr psoc handle
+ *
+ * Return: true if enabled, it is intersection of ini and target cap
+ */
+bool ucfg_pmo_is_apf_enabled(struct wlan_objmgr_psoc *psoc);
+#else
+static inline bool ucfg_pmo_is_apf_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+#endif
+
 #else /* WLAN_POWER_MANAGEMENT_OFFLOAD */
+static inline QDF_STATUS
+ucfg_pmo_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_pmo_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 static inline uint32_t
 ucfg_pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint8_t
+ucfg_pmo_get_pkt_filter_bitmap(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
 }
@@ -1167,6 +1456,301 @@ pmo_ucfg_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+static inline bool
+ucfg_pmo_is_arp_offload_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline void
+ucfg_pmo_set_arp_offload_enabled(struct wlan_objmgr_psoc *psoc,
+				 bool val)
+{
+}
+
+static inline bool
+ucfg_pmo_is_wow_pulse_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline uint8_t
+ucfg_pmo_get_wow_pulse_pin(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint16_t
+ucfg_pmo_get_wow_pulse_interval_high(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint16_t
+ucfg_pmo_get_wow_pulse_interval_low(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline bool
+ucfg_pmo_is_active_mode_offloaded(struct wlan_objmgr_psoc *psoc)
+{
+	return true;
+}
+
+static inline enum pmo_auto_pwr_detect_failure_mode
+ucfg_pmo_get_auto_power_fail_mode(struct wlan_objmgr_psoc *psoc)
+{
+	return PMO_FW_TO_CRASH_ON_PWR_FAILURE;
+}
+
+static inline bool ucfg_pmo_is_apf_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline bool ucfg_pmo_is_ssdp_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline bool ucfg_pmo_is_ns_offloaded(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline uint8_t
+ucfg_pmo_get_sta_dynamic_dtim(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint8_t
+ucfg_pmo_get_sta_mod_dtim(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline void
+ucfg_pmo_set_sta_mod_dtim(struct wlan_objmgr_psoc *psoc,
+			  uint8_t val)
+{
+}
+
+static inline bool
+ucfg_pmo_is_mc_addr_list_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline enum powersave_mode
+ucfg_pmo_get_power_save_mode(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline void
+ucfg_pmo_set_power_save_mode(struct wlan_objmgr_psoc *psoc,
+			     enum powersave_mode val)
+{
+}
+
+static inline uint8_t
+ucfg_pmo_get_max_ps_poll(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint8_t
+ucfg_pmo_power_save_offload_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
+#ifdef WLAN_FEATURE_EXTWOW_SUPPORT
+/**
+ * ucfg_pmo_extwow_is_goto_suspend_enabled() - Get extwow goto suspend enable
+ * @psoc: pointer to psoc object
+ *
+ * Return: extend wow goto suspend enable or not
+ */
+bool
+ucfg_pmo_extwow_is_goto_suspend_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_extwow_app1_wakeup_pin_num() - Get wakeup1 PIN number
+ * @psoc: pointer to psoc object
+ *
+ * Return: wakeup1 PIN number
+ */
+uint8_t
+ucfg_pmo_extwow_app1_wakeup_pin_num(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_extwow_app2_wakeup_pin_num() - Get wakeup2 PIN number
+ * @psoc: pointer to psoc object
+ *
+ * Return: wakeup2 PIN number
+ */
+uint8_t
+ucfg_pmo_extwow_app2_wakeup_pin_num(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_extwow_app2_init_ping_interval() - Get keep alive init ping interval
+ * @psoc: pointer to psoc object
+ *
+ * Return: keep alive init ping interval
+ */
+uint32_t
+ucfg_pmo_extwow_app2_init_ping_interval(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_extwow_app2_min_ping_interval() - Get keep alive min ping interval
+ * @psoc: pointer to psoc object
+ *
+ * Return: keep alive min ping interval
+ */
+uint32_t
+ucfg_pmo_extwow_app2_min_ping_interval(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_extwow_app2_max_ping_interval() - Get keep alive max ping interval
+ * @psoc: pointer to psoc object
+ *
+ * Return: keep alive max ping interval
+ */
+uint32_t
+ucfg_pmo_extwow_app2_max_ping_interval(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_extwow_app2_inc_ping_interval() - Get keep alive inc ping interval
+ * @psoc: pointer to psoc object
+ *
+ * Return: keep alive inc ping interval
+ */
+uint32_t
+ucfg_pmo_extwow_app2_inc_ping_interval(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_extwow_app2_tcp_src_port() - Get TCP source port
+ * @psoc: pointer to psoc object
+ *
+ * Return: TCP source port
+ */
+uint16_t
+ucfg_pmo_extwow_app2_tcp_src_port(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_extwow_app2_tcp_dst_port() - Get TCP Destination port
+ * @psoc: pointer to psoc object
+ *
+ * Return: TCP Destination port
+ */
+uint16_t
+ucfg_pmo_extwow_app2_tcp_dst_port(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_extwow_app2_tcp_tx_timeout() - Get TCP Tx timeout
+ * @psoc: pointer to psoc object
+ *
+ * Return: TCP Tx timeout
+ */
+uint32_t
+ucfg_pmo_extwow_app2_tcp_tx_timeout(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_extwow_app2_tcp_rx_timeout() - to get extwow tcp rx timeout
+ * @psoc: objmgr psoc handle
+ *
+ * Return: retrieve extwow app2 tcp rx timeout configuration
+ */
+uint32_t
+ucfg_pmo_extwow_app2_tcp_rx_timeout(struct wlan_objmgr_psoc *psoc);
+
+#else
+static inline bool
+ucfg_pmo_extwow_is_goto_suspend_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
+static inline uint32_t
+ucfg_pmo_extwow_app1_wakeup_pin_num(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint32_t
+ucfg_pmo_extwow_app2_wakeup_pin_num(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint32_t
+ucfg_pmo_extwow_app2_init_ping_interval(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint32_t
+ucfg_pmo_extwow_app2_min_ping_interval(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint32_t
+ucfg_pmo_extwow_app2_max_ping_interval(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint32_t
+ucfg_pmo_extwow_app2_inc_ping_interval(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint16_t
+ucfg_pmo_extwow_app2_tcp_src_port(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint16_t
+ucfg_pmo_extwow_app2_tcp_dst_port(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint32_t
+ucfg_pmo_extwow_app2_tcp_tx_timeout(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline uint32_t
+ucfg_pmo_extwow_app2_tcp_rx_timeout(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+#endif
+
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * ucfg_pmo_get_runtime_pm_delay() - Get runtime pm's inactivity timer
+ * @psoc: pointer to psoc object
+ *
+ * Return: runtime pm's inactivity timer
+ */
+uint32_t
+ucfg_pmo_get_runtime_pm_delay(struct wlan_objmgr_psoc *psoc);
+#else
+static inline uint32_t
+ucfg_pmo_get_runtime_pm_delay(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+#endif /* FEATURE_RUNTIME_PM */
 #endif /* end  of _WLAN_PMO_UCFG_API_H_ */

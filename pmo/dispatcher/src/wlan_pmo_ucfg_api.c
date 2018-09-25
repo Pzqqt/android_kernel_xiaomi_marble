@@ -31,6 +31,18 @@
 #include "wlan_pmo_suspend_resume.h"
 #include "wlan_pmo_pkt_filter.h"
 #include "wlan_pmo_hw_filter.h"
+#include "wlan_pmo_cfg.h"
+#include "cfg_ucfg_api.h"
+
+QDF_STATUS ucfg_pmo_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return pmo_psoc_open(psoc);
+}
+
+QDF_STATUS ucfg_pmo_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return pmo_psoc_close(psoc);
+}
 
 uint32_t ucfg_pmo_get_apf_instruction_size(struct wlan_objmgr_psoc *psoc)
 {
@@ -250,6 +262,13 @@ QDF_STATUS pmo_ucfg_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 }
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
+uint8_t ucfg_pmo_get_pkt_filter_bitmap(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.packet_filters_bitmap;
+}
+
 uint32_t ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_BUG(psoc);
@@ -440,3 +459,304 @@ QDF_STATUS pmo_ucfg_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
 	return pmo_core_config_modulated_dtim(vdev, mod_dtim);
 }
 
+enum pmo_wow_enable_type
+ucfg_pmo_get_wow_enable(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.wow_enable;
+}
+
+void
+ucfg_pmo_set_wow_enable(struct wlan_objmgr_psoc *psoc,
+			enum pmo_wow_enable_type val)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	pmo_psoc_ctx->psoc_cfg.wow_enable = val;
+}
+
+bool
+ucfg_pmo_is_wowlan_deauth_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.wowlan_deauth_enable;
+}
+
+bool
+ucfg_pmo_is_wowlan_disassoc_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.wowlan_disassoc_enable;
+}
+
+bool
+ucfg_pmo_is_arp_offload_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.arp_offload_enable;
+}
+
+void
+ucfg_pmo_set_arp_offload_enabled(struct wlan_objmgr_psoc *psoc,
+				 bool val)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	pmo_psoc_ctx->psoc_cfg.arp_offload_enable = val;
+}
+
+enum pmo_auto_pwr_detect_failure_mode
+ucfg_pmo_get_auto_power_fail_mode(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.auto_power_save_fail_mode;
+}
+
+#ifdef WLAN_FEATURE_WOW_PULSE
+bool ucfg_pmo_is_wow_pulse_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.is_wow_pulse_supported;
+}
+
+uint8_t ucfg_pmo_get_wow_pulse_pin(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.wow_pulse_pin;
+}
+
+uint16_t ucfg_pmo_get_wow_pulse_interval_high(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.wow_pulse_interval_high;
+}
+
+uint16_t ucfg_pmo_get_wow_pulse_interval_low(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.wow_pulse_interval_low;
+}
+#endif
+
+bool ucfg_pmo_is_active_mode_offloaded(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.active_mode_offload;
+}
+
+#ifdef FEATURE_WLAN_APF
+bool ucfg_pmo_is_apf_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_intersect_apf(pmo_psoc_ctx);
+}
+#endif
+
+bool
+ucfg_pmo_is_ssdp_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.ssdp;
+}
+
+#ifdef FEATURE_RUNTIME_PM
+uint32_t
+ucfg_pmo_get_runtime_pm_delay(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.runtime_pm_delay;
+}
+#endif /* FEATURE_RUNTIME_PM */
+
+bool
+ucfg_pmo_is_ns_offloaded(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.ns_offload_enable_static;
+}
+
+uint8_t
+ucfg_pmo_get_sta_dynamic_dtim(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.sta_dynamic_dtim;
+}
+
+uint8_t
+ucfg_pmo_get_sta_mod_dtim(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.sta_dynamic_dtim;
+}
+
+void
+ucfg_pmo_set_sta_mod_dtim(struct wlan_objmgr_psoc *psoc,
+			  uint8_t val)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	pmo_psoc_ctx->psoc_cfg.sta_dynamic_dtim = val;
+}
+
+bool
+ucfg_pmo_is_mc_addr_list_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.enable_mc_list;
+}
+
+enum powersave_mode
+ucfg_pmo_get_power_save_mode(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.power_save_mode;
+}
+
+void
+ucfg_pmo_set_power_save_mode(struct wlan_objmgr_psoc *psoc,
+			     enum powersave_mode val)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	pmo_psoc_ctx->psoc_cfg.power_save_mode = val;
+}
+
+uint8_t
+ucfg_pmo_get_max_ps_poll(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.max_ps_poll;
+}
+
+uint8_t
+ucfg_pmo_power_save_offload_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	uint8_t powersave_offload_enabled;
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	if (!pmo_psoc_ctx->psoc_cfg.max_ps_poll ||
+	    !pmo_psoc_ctx->psoc_cfg.power_save_mode)
+		powersave_offload_enabled =
+			pmo_psoc_ctx->psoc_cfg.power_save_mode;
+	else if ((pmo_psoc_ctx->psoc_cfg.power_save_mode ==
+		  PS_QPOWER_NODEEPSLEEP) ||
+		 (pmo_psoc_ctx->psoc_cfg.power_save_mode ==
+		  PS_LEGACY_NODEEPSLEEP))
+		powersave_offload_enabled = PS_LEGACY_NODEEPSLEEP;
+	else
+		powersave_offload_enabled = PS_LEGACY_DEEPSLEEP;
+
+	pmo_debug("powersave offload enabled type:%d",
+		  powersave_offload_enabled);
+
+	return powersave_offload_enabled;
+}
+
+#ifdef WLAN_FEATURE_EXTWOW_SUPPORT
+bool
+ucfg_pmo_extwow_is_goto_suspend_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.extwow_goto_suspend;
+}
+
+uint8_t
+ucfg_pmo_extwow_app1_wakeup_pin_num(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.extwow_app1_wakeup_pin_num;
+}
+
+uint8_t
+ucfg_pmo_extwow_app2_wakeup_pin_num(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.extwow_app2_wakeup_pin_num;
+}
+
+uint32_t
+ucfg_pmo_extwow_app2_init_ping_interval(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.extwow_app2_init_ping_interval;
+}
+
+uint32_t
+ucfg_pmo_extwow_app2_min_ping_interval(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.extwow_app2_min_ping_interval;
+}
+
+uint32_t
+ucfg_pmo_extwow_app2_max_ping_interval(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.extwow_app2_max_ping_interval;
+}
+
+uint32_t
+ucfg_pmo_extwow_app2_inc_ping_interval(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.extwow_app2_inc_ping_interval;
+}
+
+uint16_t
+ucfg_pmo_extwow_app2_tcp_src_port(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.extwow_app2_tcp_src_port;
+}
+
+uint16_t
+ucfg_pmo_extwow_app2_tcp_dst_port(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.extwow_app2_tcp_dst_port;
+}
+
+uint32_t
+ucfg_pmo_extwow_app2_tcp_tx_timeout(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.extwow_app2_tcp_tx_timeout;
+}
+
+uint32_t
+ucfg_pmo_extwow_app2_tcp_rx_timeout(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.extwow_app2_tcp_rx_timeout;
+}
+#endif

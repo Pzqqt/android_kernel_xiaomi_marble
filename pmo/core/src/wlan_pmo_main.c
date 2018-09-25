@@ -22,6 +22,8 @@
 
 #include "wlan_pmo_main.h"
 #include "wlan_pmo_obj_mgmt_public_struct.h"
+#include "wlan_pmo_cfg.h"
+#include "cfg_ucfg_api.h"
 
 static struct wlan_pmo_ctx *gp_pmo_ctx;
 
@@ -61,6 +63,138 @@ void pmo_free_ctx(void)
 struct wlan_pmo_ctx *pmo_get_context(void)
 {
 	return gp_pmo_ctx;
+}
+
+#ifdef WLAN_FEATURE_EXTWOW_SUPPORT
+static void wlan_extwow_init_cfg(struct wlan_objmgr_psoc *psoc,
+				 struct pmo_psoc_cfg *psoc_cfg)
+{
+	psoc_cfg->extwow_goto_suspend =
+			cfg_get(psoc, CFG_EXTWOW_GOTO_SUSPEND);
+	psoc_cfg->extwow_app1_wakeup_pin_num =
+			cfg_get(psoc, CFG_EXTWOW_APP1_WAKE_PIN_NUMBER);
+	psoc_cfg->extwow_app2_wakeup_pin_num =
+			cfg_get(psoc, CFG_EXTWOW_APP2_WAKE_PIN_NUMBER);
+	psoc_cfg->extwow_app2_init_ping_interval =
+			cfg_get(psoc, CFG_EXTWOW_KA_INIT_PING_INTERVAL);
+	psoc_cfg->extwow_app2_min_ping_interval =
+			cfg_get(psoc, CFG_EXTWOW_KA_MIN_PING_INTERVAL);
+	psoc_cfg->extwow_app2_max_ping_interval =
+			cfg_get(psoc, CFG_EXTWOW_KA_MAX_PING_INTERVAL);
+	psoc_cfg->extwow_app2_inc_ping_interval =
+			cfg_get(psoc, CFG_EXTWOW_KA_INC_PING_INTERVAL);
+	psoc_cfg->extwow_app2_tcp_src_port =
+			cfg_get(psoc, CFG_EXTWOW_TCP_SRC_PORT);
+	psoc_cfg->extwow_app2_tcp_dst_port =
+			cfg_get(psoc, CFG_EXTWOW_TCP_DST_PORT);
+	psoc_cfg->extwow_app2_tcp_tx_timeout =
+			cfg_get(psoc, CFG_EXTWOW_TCP_TX_TIMEOUT);
+	psoc_cfg->extwow_app2_tcp_rx_timeout =
+			cfg_get(psoc, CFG_EXTWOW_TCP_RX_TIMEOUT);
+}
+#else
+static void wlan_extwow_init_cfg(struct wlan_objmgr_psoc *psoc,
+				 struct pmo_psoc_cfg *psoc_cfg)
+{
+}
+#endif
+
+#ifdef WLAN_FEATURE_WOW_PULSE
+static void wlan_pmo_wow_pulse_init_cfg(struct wlan_objmgr_psoc *psoc,
+					struct pmo_psoc_cfg *psoc_cfg)
+{
+	psoc_cfg->is_wow_pulse_supported =
+			cfg_get(psoc, CFG_PMO_WOW_PULSE_ENABLE);
+	psoc_cfg->wow_pulse_pin = cfg_get(psoc, CFG_PMO_WOW_PULSE_PIN);
+	psoc_cfg->wow_pulse_interval_high =
+			cfg_get(psoc, CFG_PMO_WOW_PULSE_HIGH);
+	psoc_cfg->wow_pulse_interval_low =
+			cfg_get(psoc, CFG_PMO_WOW_PULSE_LOW);
+}
+#else
+static void wlan_pmo_wow_pulse_init_cfg(struct wlan_objmgr_psoc *psoc,
+					struct pmo_psoc_cfg *psoc_cfg)
+{
+}
+#endif
+
+#ifdef WLAN_FEATURE_PACKET_FILTERING
+static void wlan_pmo_pkt_filter_init_cfg(struct wlan_objmgr_psoc *psoc,
+					 struct pmo_psoc_cfg *psoc_cfg)
+{
+	psoc_cfg->packet_filters_bitmap = cfg_get(psoc, CFG_PMO_PKT_FILTER);
+}
+#else
+static void wlan_pmo_pkt_filter_init_cfg(struct wlan_objmgr_psoc *psoc,
+					 struct pmo_psoc_cfg *psoc_cfg)
+{
+}
+#endif
+
+#ifdef FEATURE_RUNTIME_PM
+static void wlan_pmo_runtime_pm_init_cfg(struct wlan_objmgr_psoc *psoc,
+					 struct pmo_psoc_cfg *psoc_cfg)
+{
+	psoc_cfg->runtime_pm_delay = cfg_get(psoc, CFG_PMO_RUNTIME_PM_DELAY);
+}
+#else
+static void wlan_pmo_runtime_pm_init_cfg(struct wlan_objmgr_psoc *psoc,
+					 struct pmo_psoc_cfg *psoc_cfg)
+{
+}
+#endif
+
+static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct pmo_psoc_cfg *psoc_cfg)
+{
+	psoc_cfg->arp_offload_enable =
+			cfg_get(psoc, CFG_PMO_ENABLE_HOST_ARPOFFLOAD);
+	psoc_cfg->hw_filter_mode_bitmap = cfg_get(psoc, CFG_PMO_HW_FILTER_MODE);
+	psoc_cfg->ssdp = cfg_get(psoc, CFG_PMO_ENABLE_HOST_SSDP);
+	psoc_cfg->ns_offload_enable_static =
+			cfg_get(psoc, CFG_PMO_ENABLE_HOST_NSOFFLOAD);
+	psoc_cfg->ns_offload_enable_dynamic =
+			cfg_get(psoc, CFG_PMO_ENABLE_HOST_NSOFFLOAD);
+	psoc_cfg->sta_dynamic_dtim = cfg_get(psoc, CFG_PMO_ENABLE_DYNAMIC_DTIM);
+	psoc_cfg->sta_mod_dtim = cfg_get(psoc, CFG_PMO_ENABLE_MODULATED_DTIM);
+	psoc_cfg->enable_mc_list = cfg_get(psoc, CFG_PMO_MC_ADDR_LIST_ENABLE);
+	psoc_cfg->power_save_mode = cfg_get(psoc, CFG_PMO_POWERSAVE_OFFLOAD);
+	psoc_cfg->max_ps_poll = cfg_get(psoc, CFG_PMO_MAX_PS_POLL);
+
+	psoc_cfg->wow_enable = cfg_get(psoc, CFG_PMO_WOW_ENABLE);
+	psoc_cfg->wowlan_deauth_enable =
+			cfg_get(psoc, CFG_PMO_WOWLAN_DEAUTH_ENABLE);
+	psoc_cfg->wowlan_disassoc_enable =
+			cfg_get(psoc, CFG_PMO_WOWLAN_DISASSOC_ENABLE);
+
+	wlan_extwow_init_cfg(psoc, psoc_cfg);
+	psoc_cfg->apf_enable = cfg_get(psoc, CFG_PMO_APF_ENABLE);
+	psoc_cfg->active_mode_offload = cfg_get(psoc, CFG_PMO_ACTIVE_MODE);
+	wlan_pmo_wow_pulse_init_cfg(psoc, psoc_cfg);
+	wlan_pmo_pkt_filter_init_cfg(psoc, psoc_cfg);
+	wlan_pmo_runtime_pm_init_cfg(psoc, psoc_cfg);
+	psoc_cfg->auto_power_save_fail_mode =
+			cfg_get(psoc, CFG_PMO_PWR_FAILURE);
+}
+
+QDF_STATUS pmo_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx;
+
+	if (!psoc) {
+		pmo_err("null psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+	wlan_pmo_init_cfg(psoc, &pmo_psoc_ctx->psoc_cfg);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS pmo_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
 }
 
 bool pmo_is_vdev_in_beaconning_mode(enum QDF_OPMODE vdev_opmode)

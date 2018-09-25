@@ -86,6 +86,26 @@ void pmo_free_ctx(void);
 struct wlan_pmo_ctx *pmo_get_context(void);
 
 /**
+ * pmo_psoc_open() - pmo psoc object open
+ * @psoc: objmgr vdev
+ *.
+ * This function used to open pmo psoc object
+ *
+ * Return: Success or failure
+ */
+QDF_STATUS pmo_psoc_open(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * pmo_psoc_close() - pmo psoc object close
+ * @psoc: objmgr vdev
+ *.
+ * This function used to close pmo psoc object
+ *
+ * Return: Success or failure
+ */
+QDF_STATUS pmo_psoc_close(struct wlan_objmgr_psoc *psoc);
+
+/**
  * pmo_get_vdev_bss_peer_mac_addr() - API to get bss peer mac address
  * @vdev: objmgr vdev
  * @bss_peer_mac_address: bss peer mac address
