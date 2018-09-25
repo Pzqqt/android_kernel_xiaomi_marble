@@ -260,7 +260,7 @@
  * gEnableEarlyStopScan - Set early stop scan
  * @Min: 0
  * @Max: 1
- * @Default: 1
+ * @Default: 0
  *
  * This ini is used to set early stop scan. Early stop
  * scan is a feature for roaming to stop the scans at
@@ -277,7 +277,7 @@
  */
 #define CFG_LFR_EARLY_STOP_SCAN_ENABLE CFG_INI_BOOL( \
 	"gEnableEarlyStopScan", \
-	1, \
+	0, \
 	"Set early stop scan")
 
 /*
