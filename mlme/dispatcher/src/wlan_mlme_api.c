@@ -454,6 +454,354 @@ QDF_STATUS wlan_mlme_get_tx_chainmask_1ss(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11AX
+QDF_STATUS wlan_mlme_cfg_get_he_ul_mumimo(struct wlan_objmgr_psoc *psoc,
+					  uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+			return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.he_caps.dot11_he_cap.ul_mu;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_cfg_set_he_ul_mumimo(struct wlan_objmgr_psoc *psoc,
+					  uint32_t value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!cfg_in_range(CFG_HE_UL_MUMIMO, value)) {
+		mlme_debug("Failed to set CFG_HE_UL_MUMIMO with %d", value);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_obj->cfg.he_caps.dot11_he_cap.ul_mu = value;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_cfg_get_enable_ul_mimo(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+			return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.he_caps.enable_ul_mimo;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_cfg_get_enable_ul_ofdm(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+			return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.he_caps.enable_ul_ofdm;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
+					  struct wma_tgt_cfg *wma_cfg)
+{
+	uint8_t chan_width;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tDot11fIEhe_cap *he_cap = &wma_cfg->he_cap;
+	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
+	uint8_t value;
+
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_obj->cfg.he_caps.dot11_he_cap.present = 1;
+	mlme_obj->cfg.he_caps.dot11_he_cap.htc_he = he_cap->htc_he;
+
+	mlme_obj->cfg.he_caps.dot11_he_cap.twt_request =
+				he_cap->twt_request;
+	mlme_obj->cfg.he_caps.dot11_he_cap.twt_responder =
+				he_cap->twt_responder;
+
+	value = QDF_MIN(
+			he_cap->fragmentation,
+			mlme_obj->cfg.he_caps.he_dynamic_fragmentation);
+
+	if (cfg_in_range(CFG_HE_FRAGMENTATION, value))
+		mlme_obj->cfg.he_caps.dot11_he_cap.fragmentation = value;
+
+	if (cfg_in_range(CFG_HE_MAX_FRAG_MSDU,
+			 he_cap->max_num_frag_msdu_amsdu_exp))
+		mlme_obj->cfg.he_caps.dot11_he_cap.max_num_frag_msdu_amsdu_exp =
+					he_cap->max_num_frag_msdu_amsdu_exp;
+	if (cfg_in_range(CFG_HE_MIN_FRAG_SIZE, he_cap->min_frag_size))
+		mlme_obj->cfg.he_caps.dot11_he_cap.min_frag_size =
+					he_cap->min_frag_size;
+	if (cfg_in_range(CFG_HE_TRIG_PAD, he_cap->trigger_frm_mac_pad))
+		mlme_obj->cfg.he_caps.dot11_he_cap.trigger_frm_mac_pad =
+				he_cap->trigger_frm_mac_pad;
+	if (cfg_in_range(CFG_HE_MTID_AGGR_RX, he_cap->multi_tid_aggr_rx_supp))
+		mlme_obj->cfg.he_caps.dot11_he_cap.multi_tid_aggr_rx_supp =
+					he_cap->multi_tid_aggr_rx_supp;
+	if (cfg_in_range(CFG_HE_MTID_AGGR_TX, he_cap->multi_tid_aggr_tx_supp))
+		mlme_obj->cfg.he_caps.dot11_he_cap.multi_tid_aggr_tx_supp =
+					he_cap->multi_tid_aggr_tx_supp;
+	if (cfg_in_range(CFG_HE_LINK_ADAPTATION, he_cap->he_link_adaptation))
+		mlme_obj->cfg.he_caps.dot11_he_cap.he_link_adaptation =
+					he_cap->he_link_adaptation;
+	mlme_obj->cfg.he_caps.dot11_he_cap.all_ack = he_cap->all_ack;
+	mlme_obj->cfg.he_caps.dot11_he_cap.trigd_rsp_sched =
+					he_cap->trigd_rsp_sched;
+	mlme_obj->cfg.he_caps.dot11_he_cap.a_bsr = he_cap->a_bsr;
+	mlme_obj->cfg.he_caps.dot11_he_cap.broadcast_twt =
+					he_cap->broadcast_twt;
+	mlme_obj->cfg.he_caps.dot11_he_cap.ba_32bit_bitmap =
+					he_cap->ba_32bit_bitmap;
+	mlme_obj->cfg.he_caps.dot11_he_cap.mu_cascade = he_cap->mu_cascade;
+	mlme_obj->cfg.he_caps.dot11_he_cap.ack_enabled_multitid =
+					he_cap->ack_enabled_multitid;
+	mlme_obj->cfg.he_caps.dot11_he_cap.omi_a_ctrl = he_cap->omi_a_ctrl;
+	mlme_obj->cfg.he_caps.dot11_he_cap.ofdma_ra = he_cap->ofdma_ra;
+	if (cfg_in_range(CFG_HE_MAX_AMPDU_LEN, he_cap->max_ampdu_len_exp_ext))
+		mlme_obj->cfg.he_caps.dot11_he_cap.max_ampdu_len_exp_ext =
+					he_cap->max_ampdu_len_exp_ext;
+	mlme_obj->cfg.he_caps.dot11_he_cap.amsdu_frag = he_cap->amsdu_frag;
+	mlme_obj->cfg.he_caps.dot11_he_cap.flex_twt_sched =
+					he_cap->flex_twt_sched;
+	mlme_obj->cfg.he_caps.dot11_he_cap.rx_ctrl_frame =
+					he_cap->rx_ctrl_frame;
+	mlme_obj->cfg.he_caps.dot11_he_cap.bsrp_ampdu_aggr =
+					he_cap->bsrp_ampdu_aggr;
+	mlme_obj->cfg.he_caps.dot11_he_cap.qtp = he_cap->qtp;
+	mlme_obj->cfg.he_caps.dot11_he_cap.a_bqr = he_cap->a_bqr;
+	mlme_obj->cfg.he_caps.dot11_he_cap.spatial_reuse_param_rspder =
+					he_cap->spatial_reuse_param_rspder;
+	mlme_obj->cfg.he_caps.dot11_he_cap.ndp_feedback_supp =
+					he_cap->ndp_feedback_supp;
+	mlme_obj->cfg.he_caps.dot11_he_cap.ops_supp = he_cap->ops_supp;
+	mlme_obj->cfg.he_caps.dot11_he_cap.amsdu_in_ampdu =
+					he_cap->amsdu_in_ampdu;
+	mlme_obj->cfg.he_caps.dot11_he_cap.he_sub_ch_sel_tx_supp =
+					he_cap->he_sub_ch_sel_tx_supp;
+	mlme_obj->cfg.he_caps.dot11_he_cap.ul_2x996_tone_ru_supp =
+					he_cap->ul_2x996_tone_ru_supp;
+	mlme_obj->cfg.he_caps.dot11_he_cap.om_ctrl_ul_mu_data_dis_rx =
+					he_cap->om_ctrl_ul_mu_data_dis_rx;
+
+	chan_width = HE_CH_WIDTH_COMBINE(he_cap->chan_width_0,
+					 he_cap->chan_width_1,
+					 he_cap->chan_width_2,
+					 he_cap->chan_width_3,
+					 he_cap->chan_width_4,
+					 he_cap->chan_width_5,
+					 he_cap->chan_width_6);
+	if (cfg_in_range(CFG_HE_CHAN_WIDTH, chan_width)) {
+		mlme_obj->cfg.he_caps.dot11_he_cap.chan_width_0 =
+						he_cap->chan_width_0;
+		mlme_obj->cfg.he_caps.dot11_he_cap.chan_width_1 =
+						he_cap->chan_width_1;
+		mlme_obj->cfg.he_caps.dot11_he_cap.chan_width_2 =
+						he_cap->chan_width_2;
+		mlme_obj->cfg.he_caps.dot11_he_cap.chan_width_3 =
+						he_cap->chan_width_3;
+		mlme_obj->cfg.he_caps.dot11_he_cap.chan_width_4 =
+						he_cap->chan_width_4;
+		mlme_obj->cfg.he_caps.dot11_he_cap.chan_width_5 =
+						he_cap->chan_width_5;
+		mlme_obj->cfg.he_caps.dot11_he_cap.chan_width_6 =
+						he_cap->chan_width_6;
+	}
+	if (cfg_in_range(CFG_HE_RX_PREAM_PUNC, he_cap->rx_pream_puncturing))
+		mlme_obj->cfg.he_caps.dot11_he_cap.rx_pream_puncturing =
+				he_cap->rx_pream_puncturing;
+	mlme_obj->cfg.he_caps.dot11_he_cap.device_class = he_cap->device_class;
+	mlme_obj->cfg.he_caps.dot11_he_cap.ldpc_coding = he_cap->ldpc_coding;
+	if (cfg_in_range(CFG_HE_LTF_PPDU, he_cap->he_1x_ltf_800_gi_ppdu))
+		mlme_obj->cfg.he_caps.dot11_he_cap.he_1x_ltf_800_gi_ppdu =
+					he_cap->he_1x_ltf_800_gi_ppdu;
+	if (cfg_in_range(CFG_HE_MIDAMBLE_RX_MAX_NSTS,
+			 he_cap->midamble_tx_rx_max_nsts))
+		mlme_obj->cfg.he_caps.dot11_he_cap.midamble_tx_rx_max_nsts =
+					he_cap->midamble_tx_rx_max_nsts;
+	mlme_obj->cfg.he_caps.dot11_he_cap.he_4x_ltf_3200_gi_ndp =
+					he_cap->he_4x_ltf_3200_gi_ndp;
+	if (mlme_obj->cfg.vht_caps.vht_cap_info.rx_stbc) {
+		mlme_obj->cfg.he_caps.dot11_he_cap.rx_stbc_lt_80mhz =
+					he_cap->rx_stbc_lt_80mhz;
+		mlme_obj->cfg.he_caps.dot11_he_cap.rx_stbc_gt_80mhz =
+					he_cap->rx_stbc_gt_80mhz;
+	} else {
+		mlme_obj->cfg.he_caps.dot11_he_cap.rx_stbc_lt_80mhz = 0;
+		mlme_obj->cfg.he_caps.dot11_he_cap.rx_stbc_gt_80mhz = 0;
+	}
+	if (mlme_obj->cfg.vht_caps.vht_cap_info.tx_stbc) {
+		mlme_obj->cfg.he_caps.dot11_he_cap.tx_stbc_lt_80mhz =
+					he_cap->tx_stbc_lt_80mhz;
+		mlme_obj->cfg.he_caps.dot11_he_cap.tx_stbc_gt_80mhz =
+					he_cap->tx_stbc_gt_80mhz;
+	} else {
+		mlme_obj->cfg.he_caps.dot11_he_cap.tx_stbc_lt_80mhz = 0;
+		mlme_obj->cfg.he_caps.dot11_he_cap.tx_stbc_gt_80mhz = 0;
+	}
+
+	if (cfg_in_range(CFG_HE_DOPPLER, he_cap->doppler))
+		mlme_obj->cfg.he_caps.dot11_he_cap.doppler = he_cap->doppler;
+	if (cfg_in_range(CFG_HE_UL_MUMIMO, he_cap->ul_mu))
+		mlme_obj->cfg.he_caps.dot11_he_cap.ul_mu = he_cap->ul_mu;
+	if (cfg_in_range(CFG_HE_DCM_TX, he_cap->dcm_enc_tx))
+		mlme_obj->cfg.he_caps.dot11_he_cap.dcm_enc_tx =
+						he_cap->dcm_enc_tx;
+	if (cfg_in_range(CFG_HE_DCM_RX, he_cap->dcm_enc_rx))
+		mlme_obj->cfg.he_caps.dot11_he_cap.dcm_enc_rx =
+						he_cap->dcm_enc_rx;
+	mlme_obj->cfg.he_caps.dot11_he_cap.ul_he_mu = he_cap->ul_he_mu;
+	if (mlme_obj->cfg.vht_caps.vht_cap_info.su_bformer) {
+		mlme_obj->cfg.he_caps.dot11_he_cap.su_beamformer =
+					he_cap->su_beamformer;
+		if (cfg_in_range(CFG_HE_NUM_SOUND_LT80,
+				 he_cap->num_sounding_lt_80))
+			mlme_obj->cfg.he_caps.dot11_he_cap.num_sounding_lt_80 =
+						he_cap->num_sounding_lt_80;
+		if (cfg_in_range(CFG_HE_NUM_SOUND_GT80,
+				 he_cap->num_sounding_gt_80))
+			mlme_obj->cfg.he_caps.dot11_he_cap.num_sounding_gt_80 =
+						he_cap->num_sounding_gt_80;
+		mlme_obj->cfg.he_caps.dot11_he_cap.mu_beamformer =
+					he_cap->mu_beamformer;
+
+	} else {
+		mlme_obj->cfg.he_caps.dot11_he_cap.su_beamformer = 0;
+		mlme_obj->cfg.he_caps.dot11_he_cap.num_sounding_lt_80 = 0;
+		mlme_obj->cfg.he_caps.dot11_he_cap.num_sounding_gt_80 = 0;
+		mlme_obj->cfg.he_caps.dot11_he_cap.mu_beamformer = 0;
+	}
+
+	if (mlme_obj->cfg.vht_caps.vht_cap_info.su_bformee) {
+		mlme_obj->cfg.he_caps.dot11_he_cap.su_beamformee =
+					he_cap->su_beamformee;
+		if (cfg_in_range(CFG_HE_BFEE_STS_LT80, he_cap->bfee_sts_lt_80))
+			mlme_obj->cfg.he_caps.dot11_he_cap.bfee_sts_lt_80 =
+						he_cap->bfee_sts_lt_80;
+		if (cfg_in_range(CFG_HE_BFEE_STS_GT80, he_cap->bfee_sts_gt_80))
+			mlme_obj->cfg.he_caps.dot11_he_cap.bfee_sts_gt_80 =
+						he_cap->bfee_sts_gt_80;
+
+	} else {
+		mlme_obj->cfg.he_caps.dot11_he_cap.su_beamformee = 0;
+		mlme_obj->cfg.he_caps.dot11_he_cap.bfee_sts_lt_80 = 0;
+		mlme_obj->cfg.he_caps.dot11_he_cap.bfee_sts_gt_80 = 0;
+	}
+	mlme_obj->cfg.he_caps.dot11_he_cap.su_feedback_tone16 =
+					he_cap->su_feedback_tone16;
+	mlme_obj->cfg.he_caps.dot11_he_cap.mu_feedback_tone16 =
+					he_cap->mu_feedback_tone16;
+	mlme_obj->cfg.he_caps.dot11_he_cap.codebook_su = he_cap->codebook_su;
+	mlme_obj->cfg.he_caps.dot11_he_cap.codebook_mu = he_cap->codebook_mu;
+	if (cfg_in_range(CFG_HE_BFRM_FEED, he_cap->beamforming_feedback))
+		mlme_obj->cfg.he_caps.dot11_he_cap.beamforming_feedback =
+					he_cap->beamforming_feedback;
+	mlme_obj->cfg.he_caps.dot11_he_cap.he_er_su_ppdu =
+					he_cap->he_er_su_ppdu;
+	mlme_obj->cfg.he_caps.dot11_he_cap.dl_mu_mimo_part_bw =
+					he_cap->dl_mu_mimo_part_bw;
+	mlme_obj->cfg.he_caps.dot11_he_cap.ppet_present = he_cap->ppet_present;
+	mlme_obj->cfg.he_caps.dot11_he_cap.srp = he_cap->srp;
+	mlme_obj->cfg.he_caps.dot11_he_cap.power_boost = he_cap->power_boost;
+	mlme_obj->cfg.he_caps.dot11_he_cap.he_ltf_800_gi_4x =
+					he_cap->he_ltf_800_gi_4x;
+	if (cfg_in_range(CFG_HE_MAX_NC, he_cap->max_nc))
+		mlme_obj->cfg.he_caps.dot11_he_cap.max_nc = he_cap->max_nc;
+	mlme_obj->cfg.he_caps.dot11_he_cap.er_he_ltf_800_gi_4x =
+					he_cap->er_he_ltf_800_gi_4x;
+	mlme_obj->cfg.he_caps.dot11_he_cap.he_ppdu_20_in_40Mhz_2G =
+					he_cap->he_ppdu_20_in_40Mhz_2G;
+	mlme_obj->cfg.he_caps.dot11_he_cap.he_ppdu_20_in_160_80p80Mhz =
+					he_cap->he_ppdu_20_in_160_80p80Mhz;
+	mlme_obj->cfg.he_caps.dot11_he_cap.he_ppdu_80_in_160_80p80Mhz =
+					he_cap->he_ppdu_80_in_160_80p80Mhz;
+	mlme_obj->cfg.he_caps.dot11_he_cap.er_1x_he_ltf_gi =
+					he_cap->er_1x_he_ltf_gi;
+	mlme_obj->cfg.he_caps.dot11_he_cap.midamble_tx_rx_1x_he_ltf =
+					he_cap->midamble_tx_rx_1x_he_ltf;
+	if (cfg_in_range(CFG_HE_DCM_MAX_BW, he_cap->dcm_max_bw))
+		mlme_obj->cfg.he_caps.dot11_he_cap.dcm_max_bw =
+					he_cap->dcm_max_bw;
+	mlme_obj->cfg.he_caps.dot11_he_cap.longer_than_16_he_sigb_ofdm_sym =
+					he_cap->longer_than_16_he_sigb_ofdm_sym;
+	mlme_obj->cfg.he_caps.dot11_he_cap.tx_1024_qam_lt_242_tone_ru =
+					he_cap->tx_1024_qam_lt_242_tone_ru;
+	mlme_obj->cfg.he_caps.dot11_he_cap.rx_1024_qam_lt_242_tone_ru =
+					he_cap->rx_1024_qam_lt_242_tone_ru;
+	mlme_obj->cfg.he_caps.dot11_he_cap.non_trig_cqi_feedback =
+					he_cap->non_trig_cqi_feedback;
+	mlme_obj->cfg.he_caps.dot11_he_cap.rx_full_bw_su_he_mu_compress_sigb =
+				he_cap->rx_full_bw_su_he_mu_compress_sigb;
+	mlme_obj->cfg.he_caps.dot11_he_cap.rx_full_bw_su_he_mu_non_cmpr_sigb =
+				he_cap->rx_full_bw_su_he_mu_non_cmpr_sigb;
+
+	if (cfg_in_range(CFG_HE_RX_MCS_MAP_LT_80, he_cap->rx_he_mcs_map_lt_80))
+		mlme_obj->cfg.he_caps.dot11_he_cap.rx_he_mcs_map_lt_80 =
+			he_cap->rx_he_mcs_map_lt_80;
+	if (cfg_in_range(CFG_HE_TX_MCS_MAP_LT_80, he_cap->tx_he_mcs_map_lt_80))
+		mlme_obj->cfg.he_caps.dot11_he_cap.tx_he_mcs_map_lt_80 =
+			he_cap->tx_he_mcs_map_lt_80;
+	if (cfg_in_range(CFG_HE_RX_MCS_MAP_160,
+			 *((uint16_t *)he_cap->rx_he_mcs_map_160)))
+		qdf_mem_copy(mlme_obj->cfg.he_caps.dot11_he_cap.
+			     rx_he_mcs_map_160,
+			     he_cap->rx_he_mcs_map_160, sizeof(uint16_t));
+
+	if (cfg_in_range(CFG_HE_TX_MCS_MAP_160,
+			 *((uint16_t *)he_cap->tx_he_mcs_map_160)))
+		qdf_mem_copy(mlme_obj->cfg.he_caps.dot11_he_cap.
+			     tx_he_mcs_map_160,
+			     he_cap->tx_he_mcs_map_160, sizeof(uint16_t));
+
+	if (cfg_in_range(CFG_HE_RX_MCS_MAP_80_80,
+			 *((uint16_t *)he_cap->rx_he_mcs_map_80_80)))
+		qdf_mem_copy(mlme_obj->cfg.he_caps.dot11_he_cap.
+			     rx_he_mcs_map_80_80,
+			     he_cap->rx_he_mcs_map_80_80, sizeof(uint16_t));
+
+	if (cfg_in_range(CFG_HE_TX_MCS_MAP_80_80,
+			 *((uint16_t *)he_cap->tx_he_mcs_map_80_80)))
+		qdf_mem_copy(mlme_obj->cfg.he_caps.dot11_he_cap.
+			     tx_he_mcs_map_80_80,
+			     he_cap->tx_he_mcs_map_80_80, sizeof(uint16_t));
+
+	qdf_mem_copy(mlme_obj->cfg.he_caps.he_ppet_2g, wma_cfg->ppet_2g,
+		     HE_MAX_PPET_SIZE);
+
+	qdf_mem_copy(mlme_obj->cfg.he_caps.he_ppet_5g, wma_cfg->ppet_5g,
+		     HE_MAX_PPET_SIZE);
+
+	return status;
+}
+#endif
+
 QDF_STATUS wlan_mlme_get_num_11b_tx_chains(struct wlan_objmgr_psoc *psoc,
 					   uint16_t *value)
 {

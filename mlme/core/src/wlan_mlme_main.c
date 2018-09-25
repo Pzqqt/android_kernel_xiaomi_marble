@@ -876,112 +876,168 @@ static void mlme_init_sap_protection_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_IGNORE_PEER_HT_MODE);
 }
 
+#ifdef WLAN_FEATURE_11AX
 static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
-				    struct wlan_mlme_he_caps *he_caps)
+				    struct wlan_mlme_cfg *mlme_cfg)
 {
-	he_caps->he_control = cfg_default(CFG_HE_CONTROL);
-	he_caps->he_twt_requestor = cfg_default(CFG_HE_TWT_REQUESTOR);
-	he_caps->he_twt_responder = cfg_default(CFG_HE_TWT_RESPONDER);
-	he_caps->he_twt_fragmentation = cfg_default(CFG_HE_TWT_FRAGMENTATION);
-	he_caps->he_max_frag_msdu = cfg_default(CFG_HE_MAX_FRAG_MSDU);
-	he_caps->he_min_frag_size = cfg_default(CFG_HE_MIN_FRAG_SIZE);
-	he_caps->he_trig_pad = cfg_default(CFG_HE_TRIG_PAD);
-	he_caps->he_mtid_aggr_rx = cfg_default(CFG_HE_MTID_AGGR_RX);
-	he_caps->he_link_adaptation = cfg_default(CFG_HE_LINK_ADAPTATION);
-	he_caps->he_all_ack = cfg_default(CFG_HE_ALL_ACK);
-	he_caps->he_trigd_rsp_scheduling =
+	uint32_t chan_width;
+	uint16_t value = 0;
+	struct wlan_mlme_he_caps *he_caps = &mlme_cfg->he_caps;
+
+	he_caps->dot11_he_cap.htc_he = cfg_default(CFG_HE_CONTROL);
+	he_caps->dot11_he_cap.twt_request = cfg_default(CFG_HE_TWT_REQUESTOR);
+	he_caps->dot11_he_cap.twt_responder = cfg_default(CFG_HE_TWT_RESPONDER);
+	he_caps->dot11_he_cap.fragmentation =
+			cfg_default(CFG_HE_FRAGMENTATION);
+	he_caps->dot11_he_cap.max_num_frag_msdu_amsdu_exp =
+			cfg_default(CFG_HE_MAX_FRAG_MSDU);
+	he_caps->dot11_he_cap.min_frag_size = cfg_default(CFG_HE_MIN_FRAG_SIZE);
+	he_caps->dot11_he_cap.trigger_frm_mac_pad =
+		cfg_default(CFG_HE_TRIG_PAD);
+	he_caps->dot11_he_cap.multi_tid_aggr_rx_supp =
+		cfg_default(CFG_HE_MTID_AGGR_RX);
+	he_caps->dot11_he_cap.he_link_adaptation =
+		cfg_default(CFG_HE_LINK_ADAPTATION);
+	he_caps->dot11_he_cap.all_ack = cfg_default(CFG_HE_ALL_ACK);
+	he_caps->dot11_he_cap.trigd_rsp_sched =
 			cfg_default(CFG_HE_TRIGD_RSP_SCHEDULING);
-	he_caps->he_buffer_status_rpt = cfg_default(CFG_HE_BUFFER_STATUS_RPT);
-	he_caps->he_bcast_twt = cfg_default(CFG_HE_BCAST_TWT);
-	he_caps->he_ba_32bit = cfg_default(CFG_HE_BA_32BIT);
-	he_caps->he_mu_cascading = cfg_default(CFG_HE_MU_CASCADING);
-	he_caps->he_multi_tid = cfg_default(CFG_HE_MULTI_TID);
-	he_caps->he_dl_mu_ba = cfg_default(CFG_HE_DL_MU_BA);
-	he_caps->he_omi = cfg_default(CFG_HE_OMI);
-	he_caps->he_ofdma_ra = cfg_default(CFG_HE_OFDMA_RA);
-	he_caps->he_max_ampdu_len = cfg_default(CFG_HE_MAX_AMPDU_LEN);
-	he_caps->he_amsdu_frag = cfg_default(CFG_HE_AMSDU_FRAG);
-	he_caps->he_flex_twt_sched = cfg_default(CFG_HE_FLEX_TWT_SCHED);
-	he_caps->he_rx_ctrl = cfg_default(CFG_HE_RX_CTRL);
-	he_caps->he_bsrp_ampdu_aggr = cfg_default(CFG_HE_BSRP_AMPDU_AGGR);
-	he_caps->he_qtp = cfg_default(CFG_HE_QTP);
-	he_caps->he_a_bqr = cfg_default(CFG_HE_A_BQR);
-	he_caps->he_sr_responder = cfg_default(CFG_HE_SR_RESPONDER);
-	he_caps->he_ndp_feedback_supp = cfg_default(CFG_HE_NDP_FEEDBACK_SUPP);
-	he_caps->he_ops_supp = cfg_default(CFG_HE_OPS_SUPP);
-	he_caps->he_amsdu_in_ampdu = cfg_default(CFG_HE_AMSDU_IN_AMPDU);
-	he_caps->he_chan_width = cfg_default(CFG_HE_CHAN_WIDTH);
-	he_caps->he_mtid_aggr_tx = cfg_default(CFG_HE_MTID_AGGR_TX);
-	he_caps->he_sub_ch_sel_tx = cfg_default(CFG_HE_SUB_CH_SEL_TX);
-	he_caps->he_ul_2x996_ru = cfg_default(CFG_HE_UL_2X996_RU);
-	he_caps->he_om_ctrl_ul_mu_dis_rx =
-				cfg_default(CFG_HE_OM_CTRL_UL_MU_DIS_RX);
-	he_caps->he_rx_pream_punc = cfg_default(CFG_HE_RX_PREAM_PUNC);
-	he_caps->he_class_of_device = cfg_default(CFG_HE_CLASS_OF_DEVICE);
-	he_caps->he_ldpc = cfg_default(CFG_HE_LDPC);
-	he_caps->he_ltf_ppdu = cfg_default(CFG_HE_LTF_PPDU);
-	he_caps->he_midamble_rx_nsts = cfg_default(CFG_HE_MIDAMBLE_RX_MAX_NSTS);
-	he_caps->he_ltf_ndp = cfg_default(CFG_HE_LTF_NDP);
-	he_caps->he_tx_stbc_lt80 = cfg_default(CFG_HE_TX_STBC_LT80);
-	he_caps->he_rx_stbc_lt80 = cfg_default(CFG_HE_RX_STBC_LT80);
-	he_caps->he_doppler = cfg_default(CFG_HE_DOPPLER);
-	he_caps->he_ul_mumimo = cfg_default(CFG_HE_UL_MUMIMO);
-	he_caps->he_dcm_tx = cfg_default(CFG_HE_DCM_TX);
-	he_caps->he_dcm_rx = cfg_default(CFG_HE_DCM_RX);
-	he_caps->he_mu_ppdu = cfg_default(CFG_HE_MU_PPDU);
-	he_caps->he_su_beamformer = cfg_default(CFG_HE_SU_BEAMFORMER);
-	he_caps->he_su_beamformee = cfg_default(CFG_HE_SU_BEAMFORMEE);
-	he_caps->he_mu_beamformer = cfg_default(CFG_HE_MU_BEAMFORMER);
-	he_caps->he_bfee_sts_lt80 = cfg_default(CFG_HE_BFEE_STS_LT80);
-	he_caps->he_bfee_sts_gt80 = cfg_default(CFG_HE_BFEE_STS_GT80);
-	he_caps->he_num_sound_lt80 = cfg_default(CFG_HE_NUM_SOUND_LT80);
-	he_caps->he_num_sound_gt80 = cfg_default(CFG_HE_NUM_SOUND_GT80);
-	he_caps->he_su_feed_tone16 = cfg_default(CFG_HE_SU_FEED_TONE16);
-	he_caps->he_mu_feed_tone16 = cfg_default(CFG_HE_MU_FEED_TONE16);
-	he_caps->he_codebook_su = cfg_default(CFG_HE_CODEBOOK_SU);
-	he_caps->he_codebook_mu = cfg_default(CFG_HE_CODEBOOK_MU);
-	he_caps->he_bfrm_feed = cfg_default(CFG_HE_BFRM_FEED);
-	he_caps->he_er_su_ppdu = cfg_default(CFG_HE_ER_SU_PPDU);
-	he_caps->he_dl_part_bw = cfg_default(CFG_HE_DL_PART_BW);
-	he_caps->he_ppet_present = cfg_default(CFG_HE_PPET_PRESENT);
-	he_caps->he_srp = cfg_default(CFG_HE_SRP);
-	he_caps->he_power_boost = cfg_default(CFG_HE_POWER_BOOST);
-	he_caps->he_4x_ltf_gi = cfg_default(CFG_HE_4x_LTF_GI);
-	he_caps->he_max_nc = cfg_default(CFG_HE_MAX_NC);
-	he_caps->he_tx_stbc_gt80 = cfg_default(CFG_HE_TX_STBC_GT80);
-	he_caps->he_rx_stbc_gt80 = cfg_default(CFG_HE_RX_STBC_GT80);
-	he_caps->he_er_4x_ltf_gi = cfg_default(CFG_HE_ER_4x_LTF_GI);
-	he_caps->he_ppdu_20_in_40mhz_2g =
+	he_caps->dot11_he_cap.a_bsr = cfg_default(CFG_HE_BUFFER_STATUS_RPT);
+	he_caps->dot11_he_cap.broadcast_twt = cfg_default(CFG_HE_BCAST_TWT);
+	he_caps->dot11_he_cap.ba_32bit_bitmap = cfg_default(CFG_HE_BA_32BIT);
+	he_caps->dot11_he_cap.mu_cascade = cfg_default(CFG_HE_MU_CASCADING);
+	he_caps->dot11_he_cap.ack_enabled_multitid =
+			cfg_default(CFG_HE_MULTI_TID);
+	he_caps->dot11_he_cap.omi_a_ctrl = cfg_default(CFG_HE_OMI);
+	he_caps->dot11_he_cap.ofdma_ra = cfg_default(CFG_HE_OFDMA_RA);
+	he_caps->dot11_he_cap.max_ampdu_len_exp_ext =
+			cfg_default(CFG_HE_MAX_AMPDU_LEN);
+	he_caps->dot11_he_cap.amsdu_frag = cfg_default(CFG_HE_AMSDU_FRAG);
+	he_caps->dot11_he_cap.flex_twt_sched =
+			cfg_default(CFG_HE_FLEX_TWT_SCHED);
+	he_caps->dot11_he_cap.rx_ctrl_frame = cfg_default(CFG_HE_RX_CTRL);
+	he_caps->dot11_he_cap.bsrp_ampdu_aggr =
+			cfg_default(CFG_HE_BSRP_AMPDU_AGGR);
+	he_caps->dot11_he_cap.qtp = cfg_default(CFG_HE_QTP);
+	he_caps->dot11_he_cap.a_bqr = cfg_default(CFG_HE_A_BQR);
+	he_caps->dot11_he_cap.spatial_reuse_param_rspder =
+			cfg_default(CFG_HE_SR_RESPONDER);
+	he_caps->dot11_he_cap.ndp_feedback_supp =
+			cfg_default(CFG_HE_NDP_FEEDBACK_SUPP);
+	he_caps->dot11_he_cap.ops_supp = cfg_default(CFG_HE_OPS_SUPP);
+	he_caps->dot11_he_cap.amsdu_in_ampdu =
+			cfg_default(CFG_HE_AMSDU_IN_AMPDU);
+
+	chan_width = cfg_default(CFG_HE_CHAN_WIDTH);
+	he_caps->dot11_he_cap.chan_width_0 = HE_CH_WIDTH_GET_BIT(chan_width, 0);
+	he_caps->dot11_he_cap.chan_width_1 = HE_CH_WIDTH_GET_BIT(chan_width, 1);
+	he_caps->dot11_he_cap.chan_width_2 = HE_CH_WIDTH_GET_BIT(chan_width, 2);
+	he_caps->dot11_he_cap.chan_width_3 = HE_CH_WIDTH_GET_BIT(chan_width, 3);
+	he_caps->dot11_he_cap.chan_width_4 = HE_CH_WIDTH_GET_BIT(chan_width, 4);
+	he_caps->dot11_he_cap.chan_width_5 = HE_CH_WIDTH_GET_BIT(chan_width, 5);
+	he_caps->dot11_he_cap.chan_width_6 = HE_CH_WIDTH_GET_BIT(chan_width, 6);
+
+	he_caps->dot11_he_cap.multi_tid_aggr_tx_supp =
+			cfg_default(CFG_HE_MTID_AGGR_TX);
+	he_caps->dot11_he_cap.he_sub_ch_sel_tx_supp =
+			cfg_default(CFG_HE_SUB_CH_SEL_TX);
+	he_caps->dot11_he_cap.ul_2x996_tone_ru_supp =
+			cfg_default(CFG_HE_UL_2X996_RU);
+	he_caps->dot11_he_cap.om_ctrl_ul_mu_data_dis_rx =
+			cfg_default(CFG_HE_OM_CTRL_UL_MU_DIS_RX);
+	he_caps->dot11_he_cap.rx_pream_puncturing =
+			cfg_default(CFG_HE_RX_PREAM_PUNC);
+	he_caps->dot11_he_cap.device_class =
+			cfg_default(CFG_HE_CLASS_OF_DEVICE);
+	he_caps->dot11_he_cap.ldpc_coding = cfg_default(CFG_HE_LDPC);
+	he_caps->dot11_he_cap.he_1x_ltf_800_gi_ppdu =
+			cfg_default(CFG_HE_LTF_PPDU);
+	he_caps->dot11_he_cap.midamble_tx_rx_max_nsts =
+			cfg_default(CFG_HE_MIDAMBLE_RX_MAX_NSTS);
+	he_caps->dot11_he_cap.he_4x_ltf_3200_gi_ndp =
+			cfg_default(CFG_HE_LTF_NDP);
+	he_caps->dot11_he_cap.tx_stbc_lt_80mhz =
+			cfg_default(CFG_HE_TX_STBC_LT80);
+	he_caps->dot11_he_cap.rx_stbc_lt_80mhz =
+			cfg_default(CFG_HE_RX_STBC_LT80);
+	he_caps->dot11_he_cap.doppler = cfg_default(CFG_HE_DOPPLER);
+	he_caps->dot11_he_cap.ul_mu = cfg_default(CFG_HE_UL_MUMIMO);
+	he_caps->dot11_he_cap.dcm_enc_tx = cfg_default(CFG_HE_DCM_TX);
+	he_caps->dot11_he_cap.dcm_enc_rx = cfg_default(CFG_HE_DCM_RX);
+	he_caps->dot11_he_cap.ul_he_mu = cfg_default(CFG_HE_MU_PPDU);
+	he_caps->dot11_he_cap.su_beamformer = cfg_default(CFG_HE_SU_BEAMFORMER);
+	he_caps->dot11_he_cap.su_beamformee = cfg_default(CFG_HE_SU_BEAMFORMEE);
+	he_caps->dot11_he_cap.mu_beamformer = cfg_default(CFG_HE_MU_BEAMFORMER);
+	he_caps->dot11_he_cap.bfee_sts_lt_80 =
+			cfg_default(CFG_HE_BFEE_STS_LT80);
+	he_caps->dot11_he_cap.bfee_sts_gt_80 =
+			cfg_default(CFG_HE_BFEE_STS_GT80);
+	he_caps->dot11_he_cap.num_sounding_lt_80 =
+			cfg_default(CFG_HE_NUM_SOUND_LT80);
+	he_caps->dot11_he_cap.num_sounding_gt_80 =
+			cfg_default(CFG_HE_NUM_SOUND_GT80);
+	he_caps->dot11_he_cap.su_feedback_tone16 =
+			cfg_default(CFG_HE_SU_FEED_TONE16);
+	he_caps->dot11_he_cap.mu_feedback_tone16 =
+			cfg_default(CFG_HE_MU_FEED_TONE16);
+	he_caps->dot11_he_cap.codebook_su = cfg_default(CFG_HE_CODEBOOK_SU);
+	he_caps->dot11_he_cap.codebook_mu = cfg_default(CFG_HE_CODEBOOK_MU);
+	he_caps->dot11_he_cap.beamforming_feedback =
+			cfg_default(CFG_HE_BFRM_FEED);
+	he_caps->dot11_he_cap.he_er_su_ppdu = cfg_default(CFG_HE_ER_SU_PPDU);
+	he_caps->dot11_he_cap.dl_mu_mimo_part_bw =
+			cfg_default(CFG_HE_DL_PART_BW);
+	he_caps->dot11_he_cap.ppet_present = cfg_default(CFG_HE_PPET_PRESENT);
+	he_caps->dot11_he_cap.srp = cfg_default(CFG_HE_SRP);
+	he_caps->dot11_he_cap.power_boost = cfg_default(CFG_HE_POWER_BOOST);
+	he_caps->dot11_he_cap.he_ltf_800_gi_4x = cfg_default(CFG_HE_4x_LTF_GI);
+	he_caps->dot11_he_cap.max_nc = cfg_default(CFG_HE_MAX_NC);
+	he_caps->dot11_he_cap.tx_stbc_gt_80mhz =
+			cfg_default(CFG_HE_TX_STBC_GT80);
+	he_caps->dot11_he_cap.rx_stbc_gt_80mhz =
+			cfg_default(CFG_HE_RX_STBC_GT80);
+	he_caps->dot11_he_cap.er_he_ltf_800_gi_4x =
+			cfg_default(CFG_HE_ER_4x_LTF_GI);
+	he_caps->dot11_he_cap.he_ppdu_20_in_40Mhz_2G =
 			cfg_default(CFG_HE_PPDU_20_IN_40MHZ_2G);
-	he_caps->he_ppdu_20_in_160_80p80mhz =
+	he_caps->dot11_he_cap.he_ppdu_20_in_160_80p80Mhz =
 			cfg_default(CFG_HE_PPDU_20_IN_160_80P80MHZ);
-	he_caps->he_ppdu_80_in_160_80p80mhz =
+	he_caps->dot11_he_cap.he_ppdu_80_in_160_80p80Mhz =
 			cfg_default(CFG_HE_PPDU_80_IN_160_80P80MHZ);
-		he_caps->he_er_1x_he_ltf_gi =
+		he_caps->dot11_he_cap.er_1x_he_ltf_gi =
 			cfg_default(CFG_HE_ER_1X_HE_LTF_GI);
-	he_caps->he_midamble_rx_1x_he_ltf =
-			cfg_default(CFG_HE_MIDAMBLE_RX_1X_HE_LTF);
-	he_caps->he_dcm_max_bw = cfg_default(CFG_HE_DCM_MAX_BW);
-	he_caps->he_longer_16_sigb_ofdm_sym =
+	he_caps->dot11_he_cap.midamble_tx_rx_1x_he_ltf =
+			cfg_default(CFG_HE_MIDAMBLE_TXRX_1X_HE_LTF);
+	he_caps->dot11_he_cap.dcm_max_bw = cfg_default(CFG_HE_DCM_MAX_BW);
+	he_caps->dot11_he_cap.longer_than_16_he_sigb_ofdm_sym =
 			cfg_default(CFG_HE_LONGER_16_SIGB_OFDM_SYM);
-	he_caps->he_non_trig_cqi_feedback =
+	he_caps->dot11_he_cap.non_trig_cqi_feedback =
 			cfg_default(CFG_HE_NON_TRIG_CQI_FEEDBACK);
-	he_caps->he_tx_1024_qam_lt_242_ru =
+	he_caps->dot11_he_cap.tx_1024_qam_lt_242_tone_ru =
 			cfg_default(CFG_HE_TX_1024_QAM_LT_242_RU);
-	he_caps->he_rx_1024_qam_lt_242_ru =
+	he_caps->dot11_he_cap.rx_1024_qam_lt_242_tone_ru =
 			cfg_default(CFG_HE_RX_1024_QAM_LT_242_RU);
-	he_caps->he_rx_full_bw_mu_cmpr_sigb =
+	he_caps->dot11_he_cap.rx_full_bw_su_he_mu_compress_sigb =
 			cfg_default(CFG_HE_RX_FULL_BW_MU_CMPR_SIGB);
-	he_caps->he_rx_full_bw_mu_non_cmpr_sigb =
+	he_caps->dot11_he_cap.rx_full_bw_su_he_mu_non_cmpr_sigb =
 			cfg_default(CFG_HE_RX_FULL_BW_MU_NON_CMPR_SIGB);
-	he_caps->he_rx_mcs_map_lt_80 = cfg_default(CFG_HE_RX_MCS_MAP_LT_80);
-	he_caps->he_tx_mcs_map_lt_80 = cfg_default(CFG_HE_TX_MCS_MAP_LT_80);
-	he_caps->he_rx_mcs_map_160 = cfg_default(CFG_HE_RX_MCS_MAP_160);
-	he_caps->he_tx_mcs_map_160 = cfg_default(CFG_HE_TX_MCS_MAP_160);
-	he_caps->he_rx_mcs_map_80_80 = cfg_default(CFG_HE_RX_MCS_MAP_80_80);
-	he_caps->he_tx_mcs_map_80_80 = cfg_default(CFG_HE_TX_MCS_MAP_80_80);
+	he_caps->dot11_he_cap.rx_he_mcs_map_lt_80 =
+			cfg_default(CFG_HE_RX_MCS_MAP_LT_80);
+	he_caps->dot11_he_cap.tx_he_mcs_map_lt_80 =
+			cfg_default(CFG_HE_TX_MCS_MAP_LT_80);
+	value = cfg_default(CFG_HE_RX_MCS_MAP_160);
+	qdf_mem_copy(he_caps->dot11_he_cap.rx_he_mcs_map_160, &value,
+		     sizeof(uint16_t));
+	value = cfg_default(CFG_HE_TX_MCS_MAP_160);
+	qdf_mem_copy(he_caps->dot11_he_cap.tx_he_mcs_map_160, &value,
+		     sizeof(uint16_t));
+	value = cfg_default(CFG_HE_RX_MCS_MAP_80_80);
+	qdf_mem_copy(he_caps->dot11_he_cap.rx_he_mcs_map_80_80, &value,
+		     sizeof(uint16_t));
+	value = cfg_default(CFG_HE_TX_MCS_MAP_80_80);
+	qdf_mem_copy(he_caps->dot11_he_cap.tx_he_mcs_map_80_80, &value,
+		     sizeof(uint16_t));
 	he_caps->he_ops_basic_mcs_nss = cfg_default(CFG_HE_OPS_BASIC_MCS_NSS);
-	he_caps->he_twt_dynamic_fragmentation =
+	he_caps->he_dynamic_fragmentation =
 			cfg_get(psoc, CFG_HE_DYNAMIC_FRAGMENTATION);
 	he_caps->enable_ul_mimo =
 			cfg_get(psoc, CFG_ENABLE_UL_MIMO);
@@ -992,6 +1048,12 @@ static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_zero(he_caps->he_ppet_2g, MLME_HE_PPET_LEN);
 	qdf_mem_zero(he_caps->he_ppet_5g, MLME_HE_PPET_LEN);
 }
+#else
+static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
+				    struct wlan_mlme_cfg *mlme_cfg)
+{
+}
+#endif
 
 static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_cfg_sap *sap_cfg)
@@ -1597,8 +1659,8 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_vht_cap_cfg(psoc, &mlme_cfg->vht_caps.vht_cap_info);
 	mlme_init_chainmask_cfg(psoc, &mlme_cfg->chainmask_cfg);
 	mlme_init_sap_cfg(psoc, &mlme_cfg->sap_cfg);
-	mlme_init_he_cap_in_cfg(psoc, &mlme_cfg->he_caps);
 	mlme_init_nss_chains(psoc, &mlme_cfg->nss_chains_ini_cfg);
+	mlme_init_he_cap_in_cfg(psoc, mlme_cfg);
 	mlme_init_obss_ht40_cfg(psoc, &mlme_cfg->obss_ht40);
 	mlme_init_product_details_cfg(&mlme_cfg->product_details);
 	mlme_init_sta_cfg(psoc, &mlme_cfg->sta);
