@@ -1783,8 +1783,11 @@ void mlme_vdev_sm_history_print(struct vdev_mlme_obj *vdev_mlme)
 QDF_STATUS mlme_vdev_sm_create(struct vdev_mlme_obj *vdev_mlme)
 {
 	struct wlan_sm *sm;
+	uint8_t name[WLAN_SM_ENGINE_MAX_NAME];
 
-	sm = wlan_sm_create("VDEV MLME", vdev_mlme,
+	snprintf(name, sizeof(name), "VDEV%d-MLME",
+		 wlan_vdev_get_id(vdev_mlme->vdev));
+	sm = wlan_sm_create(name, vdev_mlme,
 			    WLAN_VDEV_S_INIT,
 			    sm_info,
 			    QDF_ARRAY_SIZE(sm_info),
@@ -1806,8 +1809,12 @@ QDF_STATUS mlme_vdev_sm_create(struct vdev_mlme_obj *vdev_mlme)
 QDF_STATUS mlme_vdev_sm_create(struct vdev_mlme_obj *vdev_mlme)
 {
 	struct wlan_sm *sm;
+	uint8_t name[WLAN_SM_ENGINE_MAX_NAME];
 
-	sm = wlan_sm_create("VDEV MLME", vdev_mlme, 0, NULL, 0, NULL, 0);
+	snprintf(name, sizeof(name), "VDEV%d-MLME",
+		 wlan_vdev_get_id(vdev_mlme->vdev));
+
+	sm = wlan_sm_create(name, vdev_mlme, 0, NULL, 0, NULL, 0);
 	if (!sm) {
 		mlme_err("VDEV MLME SM allocation failed");
 		return QDF_STATUS_E_FAILURE;
