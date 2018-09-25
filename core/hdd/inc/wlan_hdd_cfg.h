@@ -39,6 +39,7 @@
 #include "wlan_pmo_hw_filter_public_struct.h"
 #include "wlan_action_oui_public_struct.h"
 #include "wlan_hdd_green_ap_cfg.h"
+#include "hdd_config.h"
 
 struct hdd_context;
 
@@ -1641,16 +1642,6 @@ enum hdd_dot11_mode {
 #define CFG_ROAM_FORCE_RSSI_TRIGGER_DEFAULT (1)
 
 /*
- * Timer waiting for interface up from the upper layer. If
- * this timer expires all the cds modules shall be closed.
- * Time Units: ms
- */
-#define CFG_INTERFACE_CHANGE_WAIT_NAME    "gInterfaceChangeWait"
-#define CFG_INTERFACE_CHANGE_WAIT_MIN     (10)
-#define CFG_INTERFACE_CHANGE_WAIT_MAX     (500000)
-#define CFG_INTERFACE_CHANGE_WAIT_DEFAULT (10000)
-
-/*
  * <ini>
  * gShortPreamble - Set Short Preamble
  * @Min: 0
@@ -2366,13 +2357,6 @@ enum hdd_dot11_mode {
 #define CFG_AP_STA_SECURITY_SEPERATION_MIN     (0)
 #define CFG_AP_STA_SECURITY_SEPERATION_MAX     (1)
 #define CFG_AP_STA_SECURITY_SEPERATION_DEFAULT (0)
-
-#ifdef FEATURE_WLAN_AUTO_SHUTDOWN
-#define CFG_WLAN_AUTO_SHUTDOWN              "gWlanAutoShutdown"
-#define CFG_WLAN_AUTO_SHUTDOWN_MIN          (0)
-#define CFG_WLAN_AUTO_SHUTDOWN_MAX          (86400)   /* Max 1 day timeout */
-#define CFG_WLAN_AUTO_SHUTDOWN_DEFAULT      (0)
-#endif
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 /*
@@ -3564,29 +3548,6 @@ enum station_keepalive_method {
 #define CFG_ENABLE_DFS_CHNL_SCAN_MAX               (1)
 #define CFG_ENABLE_DFS_CHNL_SCAN_DEFAULT           (1)
 
-/*
- * <ini>
- * gEnableDumpCollect - It will use for collect the dumps
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to set collect default dump
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_RAMDUMP_COLLECTION              "gEnableDumpCollect"
-#define CFG_ENABLE_RAMDUMP_COLLECTION_MIN          (0)
-#define CFG_ENABLE_RAMDUMP_COLLECTION_MAX          (1)
-#define CFG_ENABLE_RAMDUMP_COLLECTION_DEFAULT      (1)
-
 enum hdd_link_speed_rpt_type {
 	eHDD_LINK_SPEED_REPORT_ACTUAL = 0,
 	eHDD_LINK_SPEED_REPORT_MAX = 1,
@@ -3977,17 +3938,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_OVERLAP_CH_MIN           (0)
 #define CFG_ENABLE_OVERLAP_CH_MAX           (1)
 #define CFG_ENABLE_OVERLAP_CH_DEFAULT       (0)
-
-#ifndef REMOVE_PKT_LOG
-#define CFG_ENABLE_PACKET_LOG            "gEnablePacketLog"
-#define CFG_ENABLE_PACKET_LOG_MIN        (0)
-#define CFG_ENABLE_PACKET_LOG_MAX        (1)
-#ifdef FEATURE_PKTLOG
-#define CFG_ENABLE_PACKET_LOG_DEFAULT    (1)
-#else
-#define CFG_ENABLE_PACKET_LOG_DEFAULT    (0)
-#endif
-#endif
 
 /* For valid values of log levels check enum DBGLOG_LOG_LVL and
  * for valid values of module ids check enum WLAN_MODULE_ID.
@@ -4731,25 +4681,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_IPA_LOW_BANDWIDTH_MBPS_MIN           (0)
 #define CFG_IPA_LOW_BANDWIDTH_MBPS_MAX           (100)
 #define CFG_IPA_LOW_BANDWIDTH_MBPS_DEFAULT       (100)
-
-/*
- * Firmware uart print
- */
-#define CFG_ENABLE_FW_UART_PRINT_NAME             "gEnablefwprint"
-#define CFG_ENABLE_FW_UART_PRINT_DISABLE          (0)
-#define CFG_ENABLE_FW_UART_PRINT_ENABLE           (1)
-#define CFG_ENABLE_FW_UART_PRINT_DEFAULT          (CFG_ENABLE_FW_UART_PRINT_DISABLE)
-
-/*
- * Firmware log
- */
-#define CFG_ENABLE_FW_LOG_NAME                   "gEnablefwlog"
-#define CFG_ENABLE_FW_LOG_DISABLE                (0)
-#define CFG_ENABLE_FW_LOG_WMI                    (1)
-#define CFG_ENABLE_FW_LOG_DIAG                   (2)
-#define CFG_ENABLE_FW_LOG_MIN                    (CFG_ENABLE_FW_LOG_DISABLE)
-#define CFG_ENABLE_FW_LOG_MAX                    (CFG_ENABLE_FW_LOG_DIAG)
-#define CFG_ENABLE_FW_LOG_DEFAULT                (CFG_ENABLE_FW_LOG_WMI)
 
 /* SAR Thermal limit values for 2g and 5g */
 
@@ -5495,20 +5426,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_IPA_UC_TX_PARTITION_BASE_MAX           (9000)
 #define CFG_IPA_UC_TX_PARTITION_BASE_DEFAULT       (3000)
 
-#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
-/* Enable WLAN Logging to app space */
-#define CFG_WLAN_LOGGING_SUPPORT_NAME               "wlanLoggingEnable"
-#define CFG_WLAN_LOGGING_SUPPORT_ENABLE             (1)
-#define CFG_WLAN_LOGGING_SUPPORT_DISABLE            (0)
-#define CFG_WLAN_LOGGING_SUPPORT_DEFAULT            (1)
-
-/* Enable forwarding the driver logs to kmsg console */
-#define CFG_WLAN_LOGGING_CONSOLE_SUPPORT_NAME    "wlanLoggingToConsole"
-#define CFG_WLAN_LOGGING_CONSOLE_SUPPORT_ENABLE  (1)
-#define CFG_WLAN_LOGGING_CONSOLE_SUPPORT_DISABLE (0)
-#define CFG_WLAN_LOGGING_CONSOLE_SUPPORT_DEFAULT (1)
-#endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
-
 #define CFG_ENABLE_SELF_RECOVERY_NAME              "gEnableSelfRecovery"
 #define CFG_ENABLE_SELF_RECOVERY_MIN               (0)
 #define CFG_ENABLE_SELF_RECOVERY_MAX               (1)
@@ -5715,16 +5632,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MIN       (0)
 #define CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MAX       (1)
 #define CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_DEFAULT   (0)
-
-#define CFG_MULTICAST_HOST_FW_MSGS          "gMulticastHostFwMsgs"
-#define CFG_MULTICAST_HOST_FW_MSGS_MIN      (0)
-#define CFG_MULTICAST_HOST_FW_MSGS_MAX      (1)
-#if defined(MDM_PLATFORM) && !defined(FEATURE_MULTICAST_HOST_FW_MSGS)
-#define CFG_MULTICAST_HOST_FW_MSGS_DEFAULT  (0)
-#else
-#define CFG_MULTICAST_HOST_FW_MSGS_DEFAULT  (1)
-#endif
-
 
 /*
  * <ini>
@@ -6623,32 +6530,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * g_bug_on_reinit_failure  - Enable/Disable bug on reinit
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to debug ssr reinit failure issues by raising vos bug so
- * dumps can be collected.
- * g_bug_on_reinit_failure = 0 wlan driver will only recover after driver
- * unload and load
- * g_bug_on_reinit_failure = 1 raise vos bug to collect dumps
- *
- * Related: gEnableSSR
- *
- * Supported Feature: SSR
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_BUG_ON_REINIT_FAILURE_NAME     "g_bug_on_reinit_failure"
-#define CFG_BUG_ON_REINIT_FAILURE_MIN      (0)
-#define CFG_BUG_ON_REINIT_FAILURE_MAX      (1)
-#define CFG_BUG_ON_REINIT_FAILURE_DEFAULT  (1)
-
-/*
- * <ini>
  * gSub20ChannelWidth - Control sub 20 channel width (5/10 Mhz)
  * @Min: 0
  * @Max: 2
@@ -7209,56 +7090,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_MAX     (100)
 #define CFG_MAX_SCHED_SCAN_PLAN_ITRNS_DEFAULT (10)
 
-/**
- * enum hdd_wext_control - knob for wireless extensions
- * @hdd_wext_disabled - interface is completely disabled. An access
- *      control error log will be generated for each attempted use.
- * @hdd_wext_deprecated - interface is available but should not be
- *      used. An access control warning log will be generated for each
- *      use.
- * @hdd_wext_enabled - interface is available without restriction. No
- *      access control logs will be generated.
- *
- * enum hdd_wext_control is used to enable coarse grained control on
- * wireless extensions ioctls. This control is used by configuration
- * item private_wext_control.
- *
- */
-enum hdd_wext_control {
-	hdd_wext_disabled = 0,
-	hdd_wext_deprecated = 1,
-	hdd_wext_enabled = 2,
-};
-
-/*
- * <ini>
- * private_wext_control - Private wireless extensions control
- * @Min: 0
- * @Max: 2
- * @Default: 1
- *
- * Values are per enum hdd_wext_control.
- *
- * This ini is used to control access to private wireless extensions
- * ioctls SIOCIWFIRSTPRIV (0x8BE0) thru SIOCIWLASTPRIV (0x8BFF). The
- * functionality provided by some of these ioctls has been superceeded
- * by cfg80211 (either standard commands or vendor commands), but many
- * of the private ioctls do not have a cfg80211-based equivalent, so
- * by default support for these ioctls is deprecated.
- *
- * Related: None
- *
- * Supported Feature: All
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_PRIVATE_WEXT_CONTROL_NAME           "private_wext_control"
-#define CFG_PRIVATE_WEXT_CONTROL_MIN            (hdd_wext_disabled)
-#define CFG_PRIVATE_WEXT_CONTROL_MAX            (hdd_wext_enabled)
-#define CFG_PRIVATE_WEXT_CONTROL_DEFAULT        (hdd_wext_deprecated)
-
 /*
  * <ini>
  * gPowerUsage - Preferred Power Usage
@@ -7639,36 +7470,6 @@ enum hdd_wext_control {
 #define CFG_TWT_CONGESTION_TIMEOUT_DEFAULT (100)
 
 #endif /* WLAN_SUPPORT_TWT */
-
-/*
- * <ini>
- * gTimerMultiplier - Scale QDF timers by this value
- * @Min: 1
- * @Max: 0xFFFFFFFF
- * @Default: 1 (100 for emulation)
- *
- * To assist in debugging emulation setups, scale QDF timers by this factor.
- *
- * @E.g.
- *	# QDF timers expire in real time
- *	gTimerMultiplier=1
- *	# QDF timers expire after 100 times real time
- *	gTimerMultiplier=100
- *
- * Related: N/A
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_TIMER_MULTIPLIER_NAME	"gTimerMultiplier"
-#define CFG_TIMER_MULTIPLIER_MIN	(1)
-#define CFG_TIMER_MULTIPLIER_MAX	(0xFFFFFFFF)
-#ifdef QCA_WIFI_NAPIER_EMULATION
-#define CFG_TIMER_MULTIPLIER_DEFAULT	(100)
-#else
-#define CFG_TIMER_MULTIPLIER_DEFAULT	(1)
-#endif
 
 /*
  * For vendor specific IE, Probe Req OUI types and sub types which are
@@ -9175,8 +8976,6 @@ struct hdd_config {
 	uint32_t ibssPs1RxChainInAtimEnable;
 
 	bool enable_ip_tcp_udp_checksum_offload;
-	bool enablefwprint;
-	uint8_t enable_fw_log;
 	uint8_t fVhtAmpduLenExponent;
 	uint32_t vhtMpduLen;
 	uint32_t IpaConfig;
@@ -9187,9 +8986,6 @@ struct hdd_config {
 	uint32_t IpaLowBandwidthMbps;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint32_t WlanMccToSccSwitchMode;
-#endif
-#ifdef FEATURE_WLAN_AUTO_SHUTDOWN
-	uint32_t WlanAutoShutdown;
 #endif
 	uint8_t disableDFSChSwitch;
 	uint8_t enableDFSMasterCap;
@@ -9218,10 +9014,6 @@ struct hdd_config {
 	bool advertiseConcurrentOperation;
 
 	uint8_t allowDFSChannelRoam;
-
-#ifndef REMOVE_PKT_LOG
-	bool enablePacketLog;
-#endif
 
 #ifdef MSM_PLATFORM
 	uint32_t busBandwidthHighThreshold;
@@ -9253,11 +9045,6 @@ struct hdd_config {
 	uint32_t IpaUcTxBufSize;
 	uint32_t IpaUcRxIndRingCount;
 	uint32_t IpaUcTxPartitionBase;
-#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
-	/* WLAN Logging */
-	bool wlan_logging_enable;
-	bool wlan_logging_to_console;
-#endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
 
 	bool enableSelfRecovery;
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
@@ -9275,7 +9062,6 @@ struct hdd_config {
 	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
 	uint32_t sta_miracast_mcc_rest_time_val;
-	bool is_ramdump_enabled;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	bool sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
@@ -9283,7 +9069,6 @@ struct hdd_config {
 	uint8_t go_11ac_override;
 	uint8_t sap_dot11mc;
 	uint8_t prefer_non_dfs_on_radar;
-	uint8_t multicast_host_fw_msgs;
 	uint8_t conc_system_pref;
 	uint32_t dbs_selection_policy;
 	uint32_t vdev_priority_list;
@@ -9376,8 +9161,6 @@ struct hdd_config {
 	uint8_t adapt_dwell_passive_mon_intval;
 	uint8_t adapt_dwell_wifi_act_threshold;
 	bool bug_report_for_no_scan_results;
-	bool bug_on_reinit_failure;
-	uint32_t iface_change_wait_time;
 	/* parameter to control GTX */
 	enum cfg_sub_20_channel_width enable_sub_20_channel_width;
 	bool indoor_channel_support;
@@ -9393,7 +9176,6 @@ struct hdd_config {
 	uint32_t rx_wakelock_timeout;
 	uint32_t max_sched_scan_plan_interval;
 	uint32_t max_sched_scan_plan_iterations;
-	enum hdd_wext_control private_wext_control;
 	bool sap_internal_restart;
 	enum restart_beaconing_on_ch_avoid_rule
 		restart_beaconing_on_chan_avoid_event;
@@ -9416,7 +9198,6 @@ struct hdd_config {
 	uint32_t no_of_probe_req_ouis;
 	uint32_t probe_req_voui[MAX_PROBE_REQ_OUIS];
 
-	uint32_t timer_multiplier;
 	uint8_t scan_backoff_multiplier;
 	bool mawc_nlo_enabled;
 	uint32_t mawc_nlo_exp_backoff_ratio;
@@ -9483,6 +9264,30 @@ struct hdd_config {
 	bool enable_rtt_mac_randomization;
 	bool roam_force_rssi_trigger;
 	bool enable_change_channel_bandwidth;
+
+	/* HDD converged ini items are listed below this*/
+	bool bug_on_reinit_failure;
+	bool is_ramdump_enabled;
+	uint32_t iface_change_wait_time;
+	uint8_t multicast_host_fw_msgs;
+	enum hdd_wext_control private_wext_control;
+	uint32_t timer_multiplier;
+	bool enablefwprint;
+	uint8_t enable_fw_log;
+
+#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
+	/* WLAN Logging */
+	bool wlan_logging_enable;
+	bool wlan_logging_to_console;
+#endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
+
+#ifdef FEATURE_WLAN_AUTO_SHUTDOWN
+	uint32_t wlan_auto_shutdown;
+#endif
+
+#ifndef REMOVE_PKT_LOG
+	bool enable_packet_log;
+#endif
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

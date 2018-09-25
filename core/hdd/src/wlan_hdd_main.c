@@ -9178,6 +9178,91 @@ static void hdd_set_wlan_logging(struct hdd_context *hdd_ctx)
 { }
 #endif
 
+#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
+static void hdd_init_wlan_logging_params(struct hdd_config *config,
+					 struct wlan_objmgr_psoc *psoc)
+{
+	config->wlan_logging_enable = cfg_get(psoc, CFG_WLAN_LOGGING_SUPPORT);
+
+	config->wlan_logging_to_console =
+			cfg_get(psoc, CFG_WLAN_LOGGING_CONSOLE_SUPPORT);
+}
+#else
+static void hdd_init_wlan_logging_params(struct hdd_config *config,
+					 struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
+#ifdef FEATURE_WLAN_AUTO_SHUTDOWN
+static void hdd_init_wlan_auto_shutdown(struct hdd_config *config,
+					struct wlan_objmgr_psoc *psoc)
+{
+	config->wlan_auto_shutdown = cfg_get(psoc, CFG_WLAN_AUTO_SHUTDOWN);
+}
+#else
+static void hdd_init_wlan_auto_shutdown(struct hdd_config *config,
+					struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
+#ifndef REMOVE_PKT_LOG
+static void hdd_init_packet_log(struct hdd_config *config,
+				struct wlan_objmgr_psoc *psoc)
+{
+	config->enable_packet_log = cfg_get(psoc, CFG_ENABLE_PACKET_LOG);
+}
+#else
+static void hdd_init_packet_log(struct hdd_config *config,
+				struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
+/**
+ * hdd_cfg_params_init() - Initialize hdd params in hdd_config strucuture
+ * @hdd_ctx - Pointer to HDD context
+ *
+ * Return: None
+ */
+static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
+{
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
+	struct hdd_config *config = hdd_ctx->config;
+
+	if (!psoc) {
+		hdd_err("Invalid psoc");
+		return;
+	}
+
+	if (!config) {
+		hdd_err("Invalid hdd config");
+		return;
+	}
+
+	config->bug_on_reinit_failure = cfg_get(psoc,
+						CFG_BUG_ON_REINIT_FAILURE);
+
+	config->is_ramdump_enabled = cfg_get(psoc,
+					     CFG_ENABLE_RAMDUMP_COLLECTION);
+
+	config->iface_change_wait_time = cfg_get(psoc,
+						 CFG_INTERFACE_CHANGE_WAIT);
+
+	config->multicast_host_fw_msgs = cfg_get(psoc,
+						 CFG_MULTICAST_HOST_FW_MSGS);
+
+	config->private_wext_control = cfg_get(psoc, CFG_PRIVATE_WEXT_CONTROL);
+	config->timer_multiplier = cfg_get(psoc, CFG_TIMER_MULTIPLIER);
+	config->enablefwprint = cfg_get(psoc, CFG_ENABLE_FW_UART_PRINT);
+	config->enable_fw_log = cfg_get(psoc, CFG_ENABLE_FW_LOG);
+
+	hdd_init_wlan_auto_shutdown(config, psoc);
+	hdd_init_wlan_logging_params(config, psoc);
+	hdd_init_packet_log(config, psoc);
+}
+
 /**
  * hdd_context_create() - Allocate and inialize HDD context.
  * @dev:	Device Pointer to the underlying device
@@ -9233,10 +9318,11 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 
 	ret = hdd_objmgr_create_and_store_psoc(hdd_ctx, DEFAULT_PSOC_ID);
 	if (ret) {
-		hdd_err("Psoc creation fails!");
-		QDF_BUG(0);
+		QDF_DEBUG_PANIC("Psoc creation fails!");
 		goto err_free_config;
 	}
+
+	hdd_cfg_params_init(hdd_ctx);
 
 	ie_whitelist_attrs_init(hdd_ctx);
 
@@ -10583,7 +10669,7 @@ static int hdd_set_auto_shutdown_cb(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 
-	if (!hdd_ctx->config->WlanAutoShutdown)
+	if (!hdd_ctx->config->wlan_auto_shutdown)
 		return 0;
 
 	status = sme_set_auto_shutdown_cb(hdd_ctx->mac_handle,
@@ -12105,7 +12191,7 @@ void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
 	if (!mac_handle)
 		return;
 
-	if (hdd_ctx->config->WlanAutoShutdown == 0)
+	if (hdd_ctx->config->wlan_auto_shutdown == 0)
 		return;
 
 	if (enable == false) {
@@ -12146,12 +12232,12 @@ void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
 	}
 
 	if (sme_set_auto_shutdown_timer(mac_handle,
-					hdd_ctx->config->WlanAutoShutdown)
+					hdd_ctx->config->wlan_auto_shutdown)
 	    != QDF_STATUS_SUCCESS)
 		hdd_err("Failed to start wlan auto shutdown timer");
 	else
 		hdd_info("Auto Shutdown timer for %d seconds enabled",
-			 hdd_ctx->config->WlanAutoShutdown);
+			 hdd_ctx->config->wlan_auto_shutdown);
 }
 #endif
 

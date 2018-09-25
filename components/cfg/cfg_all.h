@@ -40,11 +40,13 @@
 #endif
 
 #include "wlan_pmo_cfg.h"
+#include "hdd_config.h"
 
 /* Maintain Alphabetic order here while adding components */
 #define CFG_ALL \
 	CFG_CONVERGED_ALL \
 	CFG_FWOL_ALL \
+	CFG_HDD_ALL \
 	CFG_MLME_ALL \
 	CFG_NAN_ALL \
 	CFG_P2P_ALL \

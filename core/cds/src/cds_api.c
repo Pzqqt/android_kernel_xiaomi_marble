@@ -1688,7 +1688,7 @@ bool cds_is_packet_log_enabled(void)
 		cds_alert("Hdd Context is Null");
 		return false;
 	}
-	return hdd_ctx->config->enablePacketLog;
+	return hdd_ctx->config->enable_packet_log;
 }
 #endif
 

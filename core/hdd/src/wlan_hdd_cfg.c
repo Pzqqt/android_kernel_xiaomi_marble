@@ -1033,14 +1033,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MIN,
 		     CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MAX),
 #endif
-#ifdef FEATURE_WLAN_AUTO_SHUTDOWN
-	REG_VARIABLE(CFG_WLAN_AUTO_SHUTDOWN, WLAN_PARAM_Integer,
-		     struct hdd_config, WlanAutoShutdown,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_WLAN_AUTO_SHUTDOWN_DEFAULT,
-		     CFG_WLAN_AUTO_SHUTDOWN_MIN,
-		     CFG_WLAN_AUTO_SHUTDOWN_MAX),
-#endif
 	REG_VARIABLE(CFG_RRM_ENABLE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fRrmEnable,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1876,20 +1868,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_IP_TCP_UDP_CHKSUM_OFFLOAD_DISABLE,
 		     CFG_ENABLE_IP_TCP_UDP_CHKSUM_OFFLOAD_ENABLE),
 
-	REG_VARIABLE(CFG_ENABLE_FW_UART_PRINT_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enablefwprint,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_FW_UART_PRINT_DEFAULT,
-		     CFG_ENABLE_FW_UART_PRINT_DISABLE,
-		     CFG_ENABLE_FW_UART_PRINT_ENABLE),
-
-	REG_VARIABLE(CFG_ENABLE_FW_LOG_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_fw_log,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_FW_LOG_DEFAULT,
-		     CFG_ENABLE_FW_LOG_DISABLE,
-		     CFG_ENABLE_FW_LOG_MAX),
-
 #ifdef IPA_OFFLOAD
 	REG_VARIABLE(CFG_IPA_OFFLOAD_CONFIG_NAME, WLAN_PARAM_HexInteger,
 		     struct hdd_config, IpaConfig,
@@ -2128,15 +2106,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ADVERTISE_CONCURRENT_OPERATION_MIN,
 		     CFG_ADVERTISE_CONCURRENT_OPERATION_MAX),
 
-#ifndef REMOVE_PKT_LOG
-	REG_VARIABLE(CFG_ENABLE_PACKET_LOG, WLAN_PARAM_Integer,
-		     struct hdd_config, enablePacketLog,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_PACKET_LOG_DEFAULT,
-		     CFG_ENABLE_PACKET_LOG_MIN,
-		     CFG_ENABLE_PACKET_LOG_MAX),
-#endif
-
 #ifdef MSM_PLATFORM
 	REG_VARIABLE(CFG_BUS_BANDWIDTH_HIGH_THRESHOLD, WLAN_PARAM_Integer,
 		     struct hdd_config, busBandwidthHighThreshold,
@@ -2287,22 +2256,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_IPA_UC_TX_PARTITION_BASE_DEFAULT,
 		     CFG_IPA_UC_TX_PARTITION_BASE_MIN,
 		     CFG_IPA_UC_TX_PARTITION_BASE_MAX),
-#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
-	REG_VARIABLE(CFG_WLAN_LOGGING_SUPPORT_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, wlan_logging_enable,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_WLAN_LOGGING_SUPPORT_DEFAULT,
-		     CFG_WLAN_LOGGING_SUPPORT_DISABLE,
-		     CFG_WLAN_LOGGING_SUPPORT_ENABLE),
-
-	REG_VARIABLE(CFG_WLAN_LOGGING_CONSOLE_SUPPORT_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, wlan_logging_to_console,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_WLAN_LOGGING_CONSOLE_SUPPORT_DEFAULT,
-		     CFG_WLAN_LOGGING_CONSOLE_SUPPORT_DISABLE,
-		     CFG_WLAN_LOGGING_CONSOLE_SUPPORT_ENABLE),
-#endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
 
 	REG_VARIABLE(CFG_ENABLE_SELF_RECOVERY_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enableSelfRecovery,
@@ -2393,13 +2346,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_GO_11AC_OVERRIDE_MIN,
 		     CFG_GO_11AC_OVERRIDE_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_RAMDUMP_COLLECTION, WLAN_PARAM_Integer,
-		     struct hdd_config, is_ramdump_enabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_RAMDUMP_COLLECTION_DEFAULT,
-		     CFG_ENABLE_RAMDUMP_COLLECTION_MIN,
-		     CFG_ENABLE_RAMDUMP_COLLECTION_MAX),
-
 	REG_VARIABLE(CFG_SAP_DOT11MC_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, sap_dot11mc,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2413,13 +2359,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_DEFAULT,
 		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MIN,
 		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MAX),
-
-	REG_VARIABLE(CFG_MULTICAST_HOST_FW_MSGS, WLAN_PARAM_Integer,
-		     struct hdd_config, multicast_host_fw_msgs,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MULTICAST_HOST_FW_MSGS_DEFAULT,
-		     CFG_MULTICAST_HOST_FW_MSGS_MIN,
-		     CFG_MULTICAST_HOST_FW_MSGS_MAX),
 
 	REG_VARIABLE(CFG_CONC_SYSTEM_PREF, WLAN_PARAM_Integer,
 		   struct hdd_config, conc_system_pref,
@@ -2926,14 +2865,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_SAP_TX_LEAKAGE_THRESHOLD_MIN,
 		CFG_SAP_TX_LEAKAGE_THRESHOLD_MAX),
 
-	REG_VARIABLE(CFG_BUG_ON_REINIT_FAILURE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, bug_on_reinit_failure,
-		     VAR_FLAGS_OPTIONAL |
-		     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BUG_ON_REINIT_FAILURE_DEFAULT,
-		     CFG_BUG_ON_REINIT_FAILURE_MIN,
-		     CFG_BUG_ON_REINIT_FAILURE_MAX),
-
 	REG_VARIABLE(CFG_SAP_FORCE_11N_FOR_11AC_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, sap_force_11n_for_11ac,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2947,13 +2878,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_GO_FORCE_11N_FOR_11AC_DEFAULT,
 		     CFG_GO_FORCE_11N_FOR_11AC_MIN,
 		     CFG_GO_FORCE_11N_FOR_11AC_MAX),
-
-	REG_VARIABLE(CFG_INTERFACE_CHANGE_WAIT_NAME, WLAN_PARAM_Integer,
-			struct hdd_config, iface_change_wait_time,
-			VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-			CFG_INTERFACE_CHANGE_WAIT_DEFAULT,
-			CFG_INTERFACE_CHANGE_WAIT_MIN,
-			CFG_INTERFACE_CHANGE_WAIT_MAX),
 
 	REG_VARIABLE(CFG_FILTER_MULTICAST_REPLAY_NAME,
 		WLAN_PARAM_Integer,
@@ -2996,13 +2920,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_MAX_SCHED_SCAN_PLAN_ITRNS_DEFAULT,
 		CFG_MAX_SCHED_SCAN_PLAN_ITRNS_MIN,
 		CFG_MAX_SCHED_SCAN_PLAN_ITRNS_MAX),
-
-	REG_VARIABLE(CFG_PRIVATE_WEXT_CONTROL_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, private_wext_control,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PRIVATE_WEXT_CONTROL_DEFAULT,
-		     CFG_PRIVATE_WEXT_CONTROL_MIN,
-		     CFG_PRIVATE_WEXT_CONTROL_MAX),
 
 	REG_VARIABLE(CFG_RESTART_BEACONING_ON_CH_AVOID_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, restart_beaconing_on_chan_avoid_event,
@@ -3069,13 +2986,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_TWT_CONGESTION_TIMEOUT_MIN,
 		     CFG_TWT_CONGESTION_TIMEOUT_MAX),
 #endif
-
-	REG_VARIABLE(CFG_TIMER_MULTIPLIER_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, timer_multiplier,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TIMER_MULTIPLIER_DEFAULT,
-		     CFG_TIMER_MULTIPLIER_MIN,
-		     CFG_TIMER_MULTIPLIER_MAX),
 
 	REG_VARIABLE_STRING(CFG_PROBE_REQ_OUI_NAME, WLAN_PARAM_String,
 			    struct hdd_config, probe_req_ouis,
@@ -4342,7 +4252,7 @@ static void hdd_disable_runtime_pm(struct hdd_config *cfg_ini)
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 static void hdd_disable_auto_shutdown(struct hdd_config *cfg_ini)
 {
-	cfg_ini->WlanAutoShutdown = 0;
+	cfg_ini->wlan_auto_shutdown = 0;
 }
 #else
 static void hdd_disable_auto_shutdown(struct hdd_config *cfg_ini)
