@@ -38,13 +38,13 @@
 				0, \
 				"HE Twt Responder")
 
-#define CFG_HE_TWT_FRAGMENTATION CFG_UINT( \
-				"he_twt_fragmentation", \
+#define CFG_HE_FRAGMENTATION CFG_UINT( \
+				"he_fragmentation", \
 				0, \
 				3, \
 				0, \
 				CFG_VALUE_OR_DEFAULT, \
-				"HE Twt Fragmentation")
+				"HE Fragmentation")
 
 #define CFG_HE_MAX_FRAG_MSDU CFG_UINT( \
 				"he_max_frag_msdu", \
@@ -120,11 +120,6 @@
 				"he_multi_tid", \
 				0, \
 				"HE Multi Tid")
-
-#define CFG_HE_DL_MU_BA CFG_BOOL( \
-				"he_dl_mu_ba", \
-				0, \
-				"HE Dl_Mu_Ba")
 
 #define CFG_HE_OMI CFG_BOOL( \
 				"he_omi", \
@@ -462,10 +457,10 @@
 				0, \
 				"He Er 1x He Ltf Gi")
 
-#define CFG_HE_MIDAMBLE_RX_1X_HE_LTF CFG_BOOL( \
-				"he_midamble_rx_1x_he_ltf", \
+#define CFG_HE_MIDAMBLE_TXRX_1X_HE_LTF CFG_BOOL( \
+				"he_midamble_txrx_1x_he_ltf", \
 				0, \
-				"He Midamble Rx 1x He Ltf")
+				"He Midamble Tx Rx 1x He Ltf")
 
 #define CFG_HE_DCM_MAX_BW CFG_UINT( \
 				"he_dcm_max_bw", \
@@ -561,6 +556,7 @@
 				CFG_VALUE_OR_DEFAULT, \
 				"He Ops Basic Mcs NSS")
 
+/* 11AX related INI configuration */
 /*
  * <ini>
  * he_dynamic_frag_support - configure dynamic fragmentation
@@ -584,7 +580,8 @@
 				3, \
 				0, \
 				CFG_VALUE_OR_DEFAULT, \
-				"HE Dynamic Twt Fragmentation")
+				"HE Dynamic Fragmentation")
+
 
 /*
  * <ini>
@@ -666,7 +663,7 @@
 	CFG(CFG_HE_CONTROL) \
 	CFG(CFG_HE_TWT_REQUESTOR) \
 	CFG(CFG_HE_TWT_RESPONDER) \
-	CFG(CFG_HE_TWT_FRAGMENTATION) \
+	CFG(CFG_HE_FRAGMENTATION) \
 	CFG(CFG_HE_MAX_FRAG_MSDU) \
 	CFG(CFG_HE_MIN_FRAG_SIZE) \
 	CFG(CFG_HE_TRIG_PAD) \
@@ -679,7 +676,6 @@
 	CFG(CFG_HE_BA_32BIT) \
 	CFG(CFG_HE_MU_CASCADING) \
 	CFG(CFG_HE_MULTI_TID) \
-	CFG(CFG_HE_DL_MU_BA) \
 	CFG(CFG_HE_OMI) \
 	CFG(CFG_HE_OFDMA_RA) \
 	CFG(CFG_HE_MAX_AMPDU_LEN) \
@@ -737,7 +733,7 @@
 	CFG(CFG_HE_PPDU_20_IN_160_80P80MHZ) \
 	CFG(CFG_HE_PPDU_80_IN_160_80P80MHZ) \
 	CFG(CFG_HE_ER_1X_HE_LTF_GI) \
-	CFG(CFG_HE_MIDAMBLE_RX_1X_HE_LTF) \
+	CFG(CFG_HE_MIDAMBLE_TXRX_1X_HE_LTF) \
 	CFG(CFG_HE_DCM_MAX_BW) \
 	CFG(CFG_HE_LONGER_16_SIGB_OFDM_SYM) \
 	CFG(CFG_HE_NON_TRIG_CQI_FEEDBACK) \

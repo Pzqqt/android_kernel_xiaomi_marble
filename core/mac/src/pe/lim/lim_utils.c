@@ -7024,9 +7024,8 @@ void lim_decide_he_op(tpAniSirGlobal mac_ctx, tpAddBssParams add_bss,
 	he_ops->partial_bss_col = he_ops_from_ie->partial_bss_col;
 	he_ops->bss_col_disabled = he_ops_from_ie->bss_col_disabled;
 
-	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(mac_ctx,
-			WNI_CFG_HE_OPS_BASIC_MCS_NSS, &val))
-		val = WNI_CFG_HE_OPS_BASIC_MCS_NSS_DEF;
+	val = mac_ctx->mlme_cfg->he_caps.he_ops_basic_mcs_nss;
+
 	*((uint16_t *)he_ops->basic_mcs_nss) = (uint16_t)val;
 
 	qdf_mem_copy(&session->he_op, he_ops, sizeof(*he_ops));
@@ -7488,22 +7487,14 @@ QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 static QDF_STATUS lim_populate_he_mcs_per_bw(tpAniSirGlobal mac_ctx,
 				uint16_t *self_rx, uint16_t *self_tx,
 				uint16_t peer_rx, uint16_t peer_tx, uint8_t nss,
-				uint32_t cfg_rx_param, uint32_t cfg_tx_param)
+				uint16_t rx_mcs, uint16_t tx_mcs)
 {
-	uint32_t val;
 
 	pe_debug("peer rates: rx_mcs - 0x%04x tx_mcs - 0x%04x",
 		 peer_rx, peer_tx);
-	if (wlan_cfg_get_int(mac_ctx, cfg_rx_param, &val) != QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve HE_MCS");
-		return QDF_STATUS_E_FAILURE;
-	}
-	*self_rx = (uint16_t) val;
-	if (wlan_cfg_get_int(mac_ctx, cfg_tx_param, &val) != QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve HE_MCS");
-		return QDF_STATUS_E_FAILURE;
-	}
-	*self_tx = (uint16_t) val;
+
+	*self_rx = rx_mcs;
+	*self_tx = tx_mcs;
 
 	*self_rx = HE_INTERSECT_MCS(*self_rx, peer_tx);
 	*self_tx = HE_INTERSECT_MCS(*self_tx, peer_rx);
@@ -7566,17 +7557,24 @@ QDF_STATUS lim_populate_he_mcs_set(tpAniSirGlobal mac_ctx,
 		&rates->rx_he_mcs_map_lt_80, &rates->tx_he_mcs_map_lt_80,
 		peer_he_caps->rx_he_mcs_map_lt_80,
 		peer_he_caps->tx_he_mcs_map_lt_80, nss,
-		WNI_CFG_HE_RX_MCS_MAP_LT_80, WNI_CFG_HE_TX_MCS_MAP_LT_80);
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_he_mcs_map_lt_80,
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_he_mcs_map_lt_80);
 	lim_populate_he_mcs_per_bw(mac_ctx,
 		&rates->rx_he_mcs_map_160, &rates->tx_he_mcs_map_160,
 		*((uint16_t *)peer_he_caps->rx_he_mcs_map_160),
 		*((uint16_t *)peer_he_caps->tx_he_mcs_map_160), nss,
-		WNI_CFG_HE_RX_MCS_MAP_160, WNI_CFG_HE_TX_MCS_MAP_160);
+		*((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+		rx_he_mcs_map_160),
+		*((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+		tx_he_mcs_map_160));
 	lim_populate_he_mcs_per_bw(mac_ctx,
 		&rates->rx_he_mcs_map_80_80, &rates->tx_he_mcs_map_80_80,
 		*((uint16_t *)peer_he_caps->rx_he_mcs_map_80_80),
 		*((uint16_t *)peer_he_caps->tx_he_mcs_map_80_80), nss,
-		WNI_CFG_HE_RX_MCS_MAP_80_80, WNI_CFG_HE_TX_MCS_MAP_80_80);
+		*((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+		rx_he_mcs_map_80_80),
+		*((uint16_t *)mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+		tx_he_mcs_map_80_80));
 	if (!support_2x2) {
 		/* disable 2 and higher NSS MCS sets */
 		rates->rx_he_mcs_map_lt_80 |= HE_MCS_INV_MSK_4_NSS(1);

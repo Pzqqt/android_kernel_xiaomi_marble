@@ -5920,240 +5920,28 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 {
 	uint8_t *ppet;
 	uint32_t value = 0;
-	QDF_STATUS status;
 
 	he_cap->present = 1;
 
 	if (!session) {
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_CONTROL, value);
-		he_cap->htc_he = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TWT_REQUESTOR, value);
-		he_cap->twt_request = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TWT_RESPONDER, value);
-		he_cap->twt_responder = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_FRAGMENTATION, value);
-		he_cap->fragmentation = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MAX_FRAG_MSDU, value);
-		he_cap->max_num_frag_msdu_amsdu_exp = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MIN_FRAG_SIZE, value);
-		he_cap->min_frag_size = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TRIG_PAD, value);
-		he_cap->trigger_frm_mac_pad = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MTID_AGGR_RX, value);
-		he_cap->multi_tid_aggr_rx_supp = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LINK_ADAPTATION, value);
-		he_cap->he_link_adaptation = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_ALL_ACK, value);
-		he_cap->all_ack = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TRIGD_RSP_SCHEDULING,
-			    value);
-		he_cap->trigd_rsp_sched = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BUFFER_STATUS_RPT,
-			    value);
-		he_cap->a_bsr = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BCAST_TWT, value);
-		he_cap->broadcast_twt = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BA_32BIT, value);
-		he_cap->ba_32bit_bitmap = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MU_CASCADING, value);
-		he_cap->mu_cascade = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MULTI_TID, value);
-		he_cap->ack_enabled_multitid = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_OMI, value);
-		he_cap->omi_a_ctrl = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_OFDMA_RA, value);
-		he_cap->ofdma_ra = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MAX_AMPDU_LEN, value);
-		he_cap->max_ampdu_len_exp_ext = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_AMSDU_FRAG, value);
-		he_cap->amsdu_frag = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_FLEX_TWT_SCHED, value);
-		he_cap->flex_twt_sched = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_RX_CTRL, value);
-		he_cap->rx_ctrl_frame = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BSRP_AMPDU_AGGR, value);
-		he_cap->bsrp_ampdu_aggr = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_QTP, value);
-		he_cap->qtp = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_A_BQR, value);
-		he_cap->a_bqr = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_SR_RESPONDER, value);
-		he_cap->spatial_reuse_param_rspder = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NDP_FEEDBACK_SUPP,
-					     value);
-		he_cap->ndp_feedback_supp = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_OPS_SUPP, value);
-		he_cap->ops_supp = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_AMSDU_IN_AMPDU, value);
-		he_cap->amsdu_in_ampdu = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_SUB_CH_SEL_TX, value);
-		he_cap->he_sub_ch_sel_tx_supp = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_UL_2X996_RU, value);
-		he_cap->ul_2x996_tone_ru_supp = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_OM_CTRL_UL_MU_DIS_RX,
-			    value);
-		he_cap->om_ctrl_ul_mu_data_dis_rx = value;
-
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_CHAN_WIDTH, value);
-		he_cap->chan_width_0 = HE_CH_WIDTH_GET_BIT(value, 0);
-		he_cap->chan_width_1 = HE_CH_WIDTH_GET_BIT(value, 1);
-		he_cap->chan_width_2 = HE_CH_WIDTH_GET_BIT(value, 2);
-		he_cap->chan_width_3 = HE_CH_WIDTH_GET_BIT(value, 3);
-		he_cap->chan_width_4 = HE_CH_WIDTH_GET_BIT(value, 4);
-		he_cap->chan_width_5 = HE_CH_WIDTH_GET_BIT(value, 5);
-		he_cap->chan_width_6 = HE_CH_WIDTH_GET_BIT(value, 6);
-
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_RX_PREAM_PUNC, value);
-		he_cap->rx_pream_puncturing = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_CLASS_OF_DEVICE, value);
-		he_cap->device_class = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LDPC, value);
-		he_cap->ldpc_coding = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LTF_PPDU, value);
-		he_cap->he_1x_ltf_800_gi_ppdu = value;
-		CFG_GET_INT(status, mac_ctx,
-			    WNI_CFG_HE_MIDAMBLE_RX_MAX_NSTS, value);
-		he_cap->midamble_tx_rx_max_nsts = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LTF_NDP, value);
-		he_cap->he_4x_ltf_3200_gi_ndp = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TX_STBC_LT80, value);
-		he_cap->tx_stbc_lt_80mhz = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_RX_STBC_LT80, value);
-		he_cap->rx_stbc_lt_80mhz = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DOPPLER, value);
-		he_cap->doppler = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_UL_MUMIMO, value);
-		he_cap->ul_mu = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DCM_TX, value);
-		he_cap->dcm_enc_tx = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DCM_RX, value);
-		he_cap->dcm_enc_rx = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MU_PPDU, value);
-		he_cap->ul_he_mu = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_SU_BEAMFORMER, value);
-		he_cap->su_beamformer = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_SU_BEAMFORMEE, value);
-		he_cap->su_beamformee = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MU_BEAMFORMER, value);
-		he_cap->mu_beamformer = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BFEE_STS_LT80, value);
-		he_cap->bfee_sts_lt_80 = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BFEE_STS_GT80, value);
-		he_cap->bfee_sts_gt_80 = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NUM_SOUND_LT80, value);
-		he_cap->num_sounding_lt_80 = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NUM_SOUND_GT80, value);
-		he_cap->num_sounding_gt_80 = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_SU_FEED_TONE16, value);
-		he_cap->su_feedback_tone16 = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MU_FEED_TONE16, value);
-		he_cap->mu_feedback_tone16 = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_CODEBOOK_SU, value);
-		he_cap->codebook_su = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_CODEBOOK_MU, value);
-		he_cap->codebook_mu = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BFRM_FEED, value);
-		he_cap->beamforming_feedback = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_ER_SU_PPDU, value);
-		he_cap->he_er_su_ppdu = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DL_PART_BW, value);
-		he_cap->dl_mu_mimo_part_bw = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_PPET_PRESENT, value);
-		he_cap->ppet_present = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_SRP, value);
-		he_cap->srp = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_POWER_BOOST, value);
-		he_cap->power_boost = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_4x_LTF_GI, value);
-		he_cap->he_ltf_800_gi_4x = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MAX_NC, value);
-		he_cap->max_nc = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TX_STBC_GT80, value);
-		he_cap->tx_stbc_gt_80mhz = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_RX_STBC_GT80, value);
-		he_cap->rx_stbc_gt_80mhz = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_ER_4x_LTF_GI, value);
-		he_cap->er_he_ltf_800_gi_4x = value;
-		CFG_GET_INT(status, mac_ctx,
-			    WNI_CFG_HE_PPDU_20_IN_40MHZ_2G, value);
-		he_cap->he_ppdu_20_in_40Mhz_2G = value;
-		CFG_GET_INT(status, mac_ctx,
-			    WNI_CFG_HE_PPDU_20_IN_160_80P80MHZ, value);
-		he_cap->he_ppdu_20_in_160_80p80Mhz = value;
-		CFG_GET_INT(status, mac_ctx,
-			    WNI_CFG_HE_PPDU_80_IN_160_80P80MHZ, value);
-		he_cap->he_ppdu_80_in_160_80p80Mhz = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_ER_1X_HE_LTF_GI, value);
-		he_cap->er_1x_he_ltf_gi = value;
-		CFG_GET_INT(status, mac_ctx,
-			    WNI_CFG_HE_MIDAMBLE_TXRX_1X_HE_LTF, value);
-		he_cap->midamble_tx_rx_1x_he_ltf = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DCM_MAX_BW, value);
-		he_cap->dcm_max_bw = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LONGER_16_SIGB_OFDM_SYM,
-			    value);
-		he_cap->longer_than_16_he_sigb_ofdm_sym = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TX_1024_QAM_LT_242_RU,
-			    value);
-		he_cap->tx_1024_qam_lt_242_tone_ru = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_RX_1024_QAM_LT_242_RU,
-			    value);
-		he_cap->rx_1024_qam_lt_242_tone_ru = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NON_TRIG_CQI_FEEDBACK,
-			    value);
-		he_cap->non_trig_cqi_feedback = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_RX_FULL_BW_MU_CMPR_SIGB,
-			    value);
-		he_cap->rx_full_bw_su_he_mu_compress_sigb = value;
-		CFG_GET_INT(status, mac_ctx,
-			    WNI_CFG_HE_RX_FULL_BW_MU_NON_CMPR_SIGB,
-			    value);
-		he_cap->rx_full_bw_su_he_mu_non_cmpr_sigb = value;
-		CFG_GET_INT(status, mac_ctx,
-			WNI_CFG_HE_RX_MCS_MAP_LT_80, value);
-		he_cap->rx_he_mcs_map_lt_80 = value;
-		CFG_GET_INT(status, mac_ctx,
-			WNI_CFG_HE_TX_MCS_MAP_LT_80, value);
-		he_cap->tx_he_mcs_map_lt_80 = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_RX_MCS_MAP_160, value);
-		*((uint16_t *)he_cap->rx_he_mcs_map_160) = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TX_MCS_MAP_160, value);
-		*((uint16_t *)he_cap->tx_he_mcs_map_160) = value;
-		CFG_GET_INT(status, mac_ctx,
-			WNI_CFG_HE_RX_MCS_MAP_80_80, value);
-		*((uint16_t *)he_cap->rx_he_mcs_map_80_80) = value;
-		CFG_GET_INT(status, mac_ctx,
-			WNI_CFG_HE_TX_MCS_MAP_80_80, value);
-		*((uint16_t *)he_cap->tx_he_mcs_map_80_80) = value;
-
-		if (he_cap->ppet_present) {
-			value = WNI_CFG_HE_PPET_LEN;
-			/* if session less then take 5g cap */
-			CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET_5G,
-				    he_cap->ppet.ppe_threshold.ppe_th,
-				    value, value);
-			ppet = he_cap->ppet.ppe_threshold.ppe_th;
-			he_cap->ppet.ppe_threshold.num_ppe_th =
-						lim_truncate_ppet(ppet, value);
-		} else {
-			he_cap->ppet.ppe_threshold.num_ppe_th = 0;
-		}
-
+		qdf_mem_copy(he_cap, &mac_ctx->mlme_cfg->he_caps.dot11_he_cap,
+			     sizeof(tDot11fIEhe_cap));
 		return QDF_STATUS_SUCCESS;
 	}
-
+	/** TODO: String items needs attention. **/
 	qdf_mem_copy(he_cap, &session->he_config, sizeof(*he_cap));
 	if (he_cap->ppet_present) {
 		value = WNI_CFG_HE_PPET_LEN;
 		/* if session is present, populate PPET based on band */
 		if (IS_5G_CH(session->currentOperChannel))
-			CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET_5G,
-				    he_cap->ppet.ppe_threshold.ppe_th,
-				    value, value);
+		qdf_mem_copy(he_cap->ppet.ppe_threshold.ppe_th,
+			     mac_ctx->mlme_cfg->he_caps.he_ppet_5g,
+			     value);
 		else
-			CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET_2G,
-				    he_cap->ppet.ppe_threshold.ppe_th,
-				    value, value);
+		qdf_mem_copy(he_cap->ppet.ppe_threshold.ppe_th,
+			     mac_ctx->mlme_cfg->he_caps.he_ppet_2g,
+			     value);
+
 		ppet = he_cap->ppet.ppe_threshold.ppe_th;
 		he_cap->ppet.ppe_threshold.num_ppe_th =
 						lim_truncate_ppet(ppet, value);

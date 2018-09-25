@@ -27,6 +27,8 @@
 #include "wlan_hdd_he.h"
 #include "wma_he.h"
 #include "wlan_utility.h"
+#include "wlan_mlme_ucfg_api.h"
+
 
 /**
  * hdd_he_set_wni_cfg() - Update WNI CFG
@@ -60,6 +62,7 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	uint8_t value = 0;
 	bool bval;
 
+	ucfg_mlme_update_tgt_he_cap(hdd_ctx->psoc, cfg);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_CONTROL, he_cap->htc_he);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TWT_REQUESTOR,
 			   he_cap->twt_request);
@@ -300,20 +303,15 @@ void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
 
 int hdd_update_he_cap_in_cfg(struct hdd_context *hdd_ctx)
 {
-	uint32_t val, val1 = 0;
+	uint32_t val;
+	uint32_t val1 = 0;
 	QDF_STATUS status;
 	int ret;
-	struct hdd_config *config = hdd_ctx->config;
+	uint8_t enable_ul_ofdma, enable_ul_mimo;
 
-	ret = hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_STA_OBSSPD,
-				 config->he_sta_obsspd);
-	if (ret)
-		return ret;
-
-	status = sme_cfg_get_int(hdd_ctx->mac_handle,
-				 WNI_CFG_HE_UL_MUMIMO, &val);
+	status = ucfg_mlme_cfg_get_he_ul_mumimo(hdd_ctx->psoc, &val);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("could not get WNI_CFG_HE_UL_MUMIMO");
+		hdd_err("could not get CFG_HE_UL_MUMIMO");
 		return qdf_status_to_os_return(status);
 	}
 
@@ -321,13 +319,21 @@ int hdd_update_he_cap_in_cfg(struct hdd_context *hdd_ctx)
 	 * Bit 1 - corresponds to UL MIMO
 	 * Bit 2 - corresponds to UL OFDMA
 	 */
+	ret = ucfg_mlme_cfg_get_enable_ul_mimo(hdd_ctx->psoc,
+					       &enable_ul_mimo);
+	if (ret)
+		return ret;
+	ret = ucfg_mlme_cfg_get_enable_ul_ofdm(hdd_ctx->psoc,
+					       &enable_ul_ofdma);
+	if (ret)
+		return ret;
 	if (val & 0x1)
-		val1 = config->enable_ul_mimo & 0x1;
+		val1 = enable_ul_mimo & 0x1;
 
 	if ((val >> 1) & 0x1)
-		val1 |= ((config->enable_ul_ofdma & 0x1) << 1);
+		val1 |= ((enable_ul_ofdma & 0x1) << 1);
 
-	ret = hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_UL_MUMIMO, val1);
+	ret = ucfg_mlme_cfg_set_he_ul_mumimo(hdd_ctx->psoc, val1);
 
 	return ret;
 }

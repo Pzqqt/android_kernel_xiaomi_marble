@@ -28,6 +28,7 @@
 #include <wlan_cmn.h>
 #include <wlan_mlme_api.h>
 #include <wlan_mlme_main.h>
+#include "wma_tgt_cfg.h"
 
 /**
  * ucfg_mlme_init() - initialize mlme_ctx context.
@@ -2212,6 +2213,82 @@ ucfg_mlme_get_wmm_mode(struct wlan_objmgr_psoc *psoc, uint8_t *value)
 {
 	return wlan_mlme_get_wmm_mode(psoc, value);
 }
+
+#ifdef WLAN_FEATURE_11AX
+/**
+ * ucfg_mlme_update_tgt_he_cap() - Update tgt he cap in mlme component
+ *
+ * @psoc: pointer to psoc object
+ * @cfg: pointer to config params from target
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to update
+ * he caps in mlme.
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+QDF_STATUS ucfg_mlme_update_tgt_he_cap(struct wlan_objmgr_psoc *psoc,
+				       struct wma_tgt_cfg *cfg)
+{
+	return mlme_update_tgt_he_caps_in_cfg(psoc, cfg);
+}
+
+/**
+ * ucfg_mlme_cfg_get_he_ul_mumimo() - Get the HE Ul Mumio
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_cfg_get_he_ul_mumimo(struct wlan_objmgr_psoc *psoc,
+					  uint32_t *value)
+{
+	return wlan_mlme_cfg_get_he_ul_mumimo(psoc, value);
+}
+
+/**
+ * ucfg_mlme_cfg_set_he_ul_mumimo() - Set the HE Ul Mumio
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_cfg_set_he_ul_mumimo(struct wlan_objmgr_psoc *psoc,
+					  uint32_t value)
+{
+	return wlan_mlme_cfg_set_he_ul_mumimo(psoc, value);
+}
+
+/**
+ * ucfg_mlme_cfg_get_enable_ul_mimo() - Get the HE Ul mimo
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_cfg_get_enable_ul_mimo(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *value)
+{
+	return wlan_mlme_cfg_get_enable_ul_mimo(psoc, value);
+}
+
+/**
+ * ucfg_mlme_cfg_get_enable_ul_ofdm() - Get enable ul ofdm
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_cfg_get_enable_ul_ofdm(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *value)
+{
+	return wlan_mlme_cfg_get_enable_ul_ofdm(psoc, value);
+}
+#endif
 
 /**
  * ucfg_mlme_get_80211e_is_enabled() - Enable 802.11e feature

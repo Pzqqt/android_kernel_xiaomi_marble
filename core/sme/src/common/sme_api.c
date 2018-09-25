@@ -61,6 +61,7 @@
 #include <wlan_spectral_utils_api.h>
 #include "wlan_mlme_public_struct.h"
 #include "wlan_mlme_main.h"
+#include "cfg_ucfg_api.h"
 
 static tSelfRecoveryStats g_self_recovery_stats;
 
@@ -13011,9 +13012,12 @@ void sme_update_he_cap_nss(mac_handle_t hal, uint8_t session_id,
 		sme_err("invalid Nss value %d", nss);
 	}
 	csr_session = CSR_GET_SESSION(mac_ctx, session_id);
-	sme_cfg_get_int(hal, WNI_CFG_HE_RX_MCS_MAP_LT_80, &rx_mcs_map);
-	sme_cfg_get_int(hal, WNI_CFG_HE_TX_MCS_MAP_LT_80, &tx_mcs_map);
+	rx_mcs_map =
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_he_mcs_map_lt_80;
+	tx_mcs_map =
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_he_mcs_map_lt_80;
 	mcs_map = rx_mcs_map & 0x3;
+
 	if (nss == 1) {
 		tx_mcs_map = HE_SET_MCS_4_NSS(tx_mcs_map, HE_MCS_DISABLE, 2);
 		rx_mcs_map = HE_SET_MCS_4_NSS(rx_mcs_map, HE_MCS_DISABLE, 2);
@@ -13023,8 +13027,12 @@ void sme_update_he_cap_nss(mac_handle_t hal, uint8_t session_id,
 	}
 	sme_info("new HE Nss MCS MAP: Rx 0x%0X, Tx: 0x%0X",
 			rx_mcs_map, tx_mcs_map);
-	sme_cfg_set_int(hal, WNI_CFG_HE_RX_MCS_MAP_LT_80, rx_mcs_map);
-	sme_cfg_set_int(hal, WNI_CFG_HE_TX_MCS_MAP_LT_80, tx_mcs_map);
+	if (cfg_in_range(CFG_HE_RX_MCS_MAP_LT_80, rx_mcs_map))
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_he_mcs_map_lt_80 =
+		rx_mcs_map;
+	if (cfg_in_range(CFG_HE_TX_MCS_MAP_LT_80, tx_mcs_map))
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_he_mcs_map_lt_80 =
+		tx_mcs_map;
 	csr_update_session_he_cap(mac_ctx, csr_session);
 
 }
@@ -13035,8 +13043,6 @@ int sme_update_he_mcs(mac_handle_t hal, uint8_t session_id, uint16_t he_mcs)
 	struct csr_roam_session *csr_session;
 	uint16_t mcs_val = 0;
 	uint16_t mcs_map = HE_MCS_ALL_DISABLED;
-	uint32_t wni_cfg_tx_param = 0;
-	uint32_t wni_cfg_rx_param = 0;
 
 	csr_session = CSR_GET_SESSION(mac_ctx, session_id);
 	if (!csr_session) {
@@ -13059,24 +13065,40 @@ int sme_update_he_mcs(mac_handle_t hal, uint8_t session_id, uint16_t he_mcs)
 		} else {
 			mcs_map = HE_SET_MCS_4_NSS(mcs_map, mcs_val, 1);
 		}
-		wni_cfg_tx_param = WNI_CFG_HE_TX_MCS_MAP_LT_80;
-		wni_cfg_rx_param = WNI_CFG_HE_RX_MCS_MAP_LT_80;
+		if (cfg_in_range(CFG_HE_TX_MCS_MAP_LT_80, mcs_map))
+			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+			tx_he_mcs_map_lt_80 = mcs_map;
+		if (cfg_in_range(CFG_HE_RX_MCS_MAP_LT_80, mcs_map))
+			mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+			rx_he_mcs_map_lt_80 = mcs_map;
 		break;
 
 	case HE_160_MCS0_7:
 	case HE_160_MCS0_9:
 	case HE_160_MCS0_11:
 		mcs_map = HE_SET_MCS_4_NSS(mcs_map, mcs_val, 1);
-		wni_cfg_tx_param = WNI_CFG_HE_TX_MCS_MAP_160;
-		wni_cfg_rx_param = WNI_CFG_HE_RX_MCS_MAP_160;
+		if (cfg_in_range(CFG_HE_TX_MCS_MAP_160, mcs_map))
+			qdf_mem_copy(mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+				     tx_he_mcs_map_160, &mcs_map,
+				     sizeof(uint16_t));
+		if (cfg_in_range(CFG_HE_RX_MCS_MAP_160, mcs_map))
+			qdf_mem_copy(mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+				     rx_he_mcs_map_160, &mcs_map,
+				     sizeof(uint16_t));
 		break;
 
 	case HE_80p80_MCS0_7:
 	case HE_80p80_MCS0_9:
 	case HE_80p80_MCS0_11:
 		mcs_map = HE_SET_MCS_4_NSS(mcs_map, mcs_val, 1);
-		wni_cfg_tx_param = WNI_CFG_HE_TX_MCS_MAP_80_80;
-		wni_cfg_rx_param = WNI_CFG_HE_RX_MCS_MAP_80_80;
+		if (cfg_in_range(CFG_HE_TX_MCS_MAP_80_80, mcs_map))
+			qdf_mem_copy(mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+				     tx_he_mcs_map_80_80, &mcs_map,
+				     sizeof(uint16_t));
+		if (cfg_in_range(CFG_HE_RX_MCS_MAP_80_80, mcs_map))
+			qdf_mem_copy(mac_ctx->mlme_cfg->he_caps.dot11_he_cap.
+				     rx_he_mcs_map_80_80, &mcs_map,
+				     sizeof(uint16_t));
 		break;
 
 	default:
@@ -13084,8 +13106,6 @@ int sme_update_he_mcs(mac_handle_t hal, uint8_t session_id, uint16_t he_mcs)
 		return -EINVAL;
 	}
 	sme_info("new HE MCS 0x%0x", mcs_map);
-	sme_cfg_set_int(hal, wni_cfg_tx_param, mcs_map);
-	sme_cfg_set_int(hal, wni_cfg_rx_param, mcs_map);
 	csr_update_session_he_cap(mac_ctx, csr_session);
 
 	return 0;
@@ -13153,15 +13173,45 @@ void sme_set_he_mu_edca_def_cfg(mac_handle_t hal)
 int sme_update_he_tx_bfee_supp(mac_handle_t hal, uint8_t session_id,
 			       uint8_t cfg_val)
 {
-	return sme_update_he_cap(hal, session_id, WNI_CFG_HE_SU_BEAMFORMEE,
-				 cfg_val);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	if (!session) {
+		sme_err("No session for id %d", session_id);
+		return -EINVAL;
+	}
+	if (cfg_val <= 1)
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.su_beamformee = cfg_val;
+	else
+		return -EINVAL;
+
+	csr_update_session_he_cap(mac_ctx, session);
+	return 0;
 }
 
 int sme_update_he_trigger_frm_mac_pad(mac_handle_t hal, uint8_t session_id,
 				      uint8_t cfg_val)
 {
-	return sme_update_he_cap(hal, session_id, WNI_CFG_HE_TRIG_PAD,
-				 cfg_val);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	if (!session) {
+		sme_err("No session for id %d", session_id);
+		return -EINVAL;
+	}
+	if (cfg_in_range(CFG_HE_TRIG_PAD, cfg_val))
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.trigger_frm_mac_pad =
+		cfg_val;
+	else
+		return -EINVAL;
+
+	csr_update_session_he_cap(mac_ctx, session);
+	return 0;
+
 }
 
 int sme_update_he_om_ctrl_supp(mac_handle_t hal, uint8_t session_id,
@@ -13286,8 +13336,23 @@ void sme_reset_he_om_ctrl(mac_handle_t hal)
 int sme_update_he_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 			       uint8_t cfg_val)
 {
-	return sme_update_he_cap(hal, session_id, WNI_CFG_HE_BFEE_STS_LT80,
-				 cfg_val);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	if (!session) {
+		sme_err("No session for id %d", session_id);
+		return -EINVAL;
+	}
+	if (cfg_in_range(CFG_HE_BFEE_STS_LT80, cfg_val))
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.bfee_sts_lt_80 =
+		cfg_val;
+	else
+		return -EINVAL;
+
+	csr_update_session_he_cap(mac_ctx, session);
+	return 0;
 }
 
 void sme_set_he_tx_bf_cbf_rates(uint8_t session_id)
@@ -13328,47 +13393,100 @@ void sme_config_su_ppdu_queue(uint8_t session_id, bool enable)
 
 int sme_update_he_tx_stbc_cap(mac_handle_t hal, uint8_t session_id, int value)
 {
-	int ret;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *session;
 	uint32_t he_cap_val = 0;
 
 	he_cap_val = value ? 1 : 0;
+	session = CSR_GET_SESSION(mac_ctx, session_id);
 
-	ret = sme_update_he_cap(hal, session_id,
-			 WNI_CFG_HE_TX_STBC_LT80, he_cap_val);
-	if (ret)
-		return ret;
-
-	return sme_update_he_cap(hal, session_id,
-			 WNI_CFG_HE_TX_STBC_GT80, he_cap_val);
+	if (!session) {
+		sme_err("No session for id %d", session_id);
+		return -EINVAL;
+	}
+	if (he_cap_val <= 1)
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_stbc_lt_80mhz =
+		he_cap_val;
+	else
+		return -EINVAL;
+	if (he_cap_val <= 1)
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.tx_stbc_gt_80mhz =
+		he_cap_val;
+	else
+		return -EINVAL;
+	csr_update_session_he_cap(mac_ctx, session);
+	return 0;
 }
 
 int sme_update_he_rx_stbc_cap(mac_handle_t hal, uint8_t session_id, int value)
 {
-	int ret;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *session;
 	uint32_t he_cap_val = 0;
 
 	he_cap_val = value ? 1 : 0;
+	session = CSR_GET_SESSION(mac_ctx, session_id);
 
-	ret = sme_update_he_cap(hal, session_id,
-			 WNI_CFG_HE_RX_STBC_LT80, he_cap_val);
-	if (ret)
-		return ret;
-
-	return sme_update_he_cap(hal, session_id,
-			 WNI_CFG_HE_RX_STBC_GT80, he_cap_val);
+	if (!session) {
+		sme_err("No session for id %d", session_id);
+		return -EINVAL;
+	}
+	if (he_cap_val <= 1)
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_stbc_lt_80mhz =
+		he_cap_val;
+	else
+		return -EINVAL;
+	if (he_cap_val <= 1)
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.rx_stbc_gt_80mhz =
+		he_cap_val;
+	else
+		return -EINVAL;
+	csr_update_session_he_cap(mac_ctx, session);
+	return 0;
 }
 
 int sme_update_he_frag_supp(mac_handle_t hal, uint8_t session_id,
 		uint16_t he_frag)
 {
-	return sme_update_he_cap(hal, session_id,
-			 WNI_CFG_HE_FRAGMENTATION, he_frag);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	if (!session) {
+		sme_err("No session for id %d", session_id);
+		return -EINVAL;
+	}
+	if (cfg_in_range(CFG_HE_FRAGMENTATION, he_frag))
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.fragmentation = he_frag;
+	else
+		return -EINVAL;
+
+	csr_update_session_he_cap(mac_ctx, session);
+	return 0;
+
 }
 
 int sme_update_he_ldpc_supp(mac_handle_t hal, uint8_t session_id,
 			    uint16_t he_ldpc)
 {
-	return sme_update_he_cap(hal, session_id, WNI_CFG_HE_LDPC, he_ldpc);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	if (!session) {
+		sme_err("No session for id %d", session_id);
+		return -EINVAL;
+	}
+	if (he_ldpc <= 1)
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.ldpc_coding = he_ldpc;
+	else
+		return -EINVAL;
+
+	csr_update_session_he_cap(mac_ctx, session);
+	return 0;
+
 }
 #endif
 

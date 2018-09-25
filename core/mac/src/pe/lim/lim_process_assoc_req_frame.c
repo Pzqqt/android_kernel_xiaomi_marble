@@ -551,7 +551,6 @@ static bool lim_check_11ax_basic_mcs(tpAniSirGlobal mac_ctx,
 				     tpSirAssocReq assoc_req,
 				     uint8_t sub_type)
 {
-	uint32_t val;
 	uint16_t basic_mcs, sta_mcs, rx_mcs, tx_mcs, final_mcs;
 
 	if (LIM_IS_AP_ROLE(session) &&
@@ -559,10 +558,8 @@ static bool lim_check_11ax_basic_mcs(tpAniSirGlobal mac_ctx,
 		rx_mcs = assoc_req->he_cap.rx_he_mcs_map_lt_80;
 		tx_mcs = assoc_req->he_cap.tx_he_mcs_map_lt_80;
 		sta_mcs = HE_INTERSECT_MCS(rx_mcs, tx_mcs);
-		if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(mac_ctx,
-				WNI_CFG_HE_OPS_BASIC_MCS_NSS, &val))
-			val = WNI_CFG_HE_OPS_BASIC_MCS_NSS_DEF;
-		basic_mcs = (uint16_t)val;
+		basic_mcs =
+		(uint16_t)mac_ctx->mlme_cfg->he_caps.he_ops_basic_mcs_nss;
 		final_mcs = HE_INTERSECT_MCS(sta_mcs, basic_mcs);
 		if (final_mcs != basic_mcs) {
 			lim_send_assoc_rsp_mgmt_frame(mac_ctx,
@@ -574,6 +571,7 @@ static bool lim_check_11ax_basic_mcs(tpAniSirGlobal mac_ctx,
 	}
 	return true;
 }
+
 #else
 static bool lim_chk_11ax_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			      tpPESession session, tpSirAssocReq assoc_req,

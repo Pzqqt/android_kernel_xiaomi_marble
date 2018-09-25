@@ -659,6 +659,62 @@ QDF_STATUS wlan_mlme_get_oce_sta_enabled_info(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_mlme_get_oce_sap_enabled_info(struct wlan_objmgr_psoc *psoc,
 					      bool *value);
 
+#ifdef WLAN_FEATURE_11AX
+/**
+ * wlan_mlme_cfg_get_he_ul_mumimo() - Get the HE Ul Mumio
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_cfg_get_he_ul_mumimo(struct wlan_objmgr_psoc *psoc,
+					  uint32_t *value);
+
+/**
+ * wlan_mlme_cfg_set_he_ul_mumimo() - Set the HE Ul Mumio
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_cfg_set_he_ul_mumimo(struct wlan_objmgr_psoc *psoc,
+					  uint32_t value);
+
+/**
+ * wlan_mlme_cfg_get_enable_ul_mimo() - Get the HE Ul mimo
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_cfg_get_enable_ul_mimo(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *value);
+
+/**
+ * wlan_mlme_cfg_get_enable_ul_ofdm() - Get enable ul ofdm
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_cfg_get_enable_ul_ofdm(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *value);
+
+/**
+ * mlme_update_tgt_he_caps_in_cfg() - Update tgt he cap in mlme component
+ *
+ * @psoc: pointer to psoc object
+ * @cfg: pointer to config params from target
+ *
+ * This api to be used by callers to update
+ * he caps in mlme.
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
+					  struct wma_tgt_cfg *cfg);
+#endif
+
 /**
  * wlan_mlme_get_rts_threshold() - Get the RTS threshold config
  * @psoc: pointer to psoc object
