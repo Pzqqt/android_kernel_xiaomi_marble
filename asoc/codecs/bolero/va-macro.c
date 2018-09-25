@@ -143,6 +143,11 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 	struct regmap *regmap = dev_get_regmap(va_priv->dev->parent, NULL);
 	int ret = 0;
 
+	if (regmap == NULL) {
+		dev_err(va_priv->dev, "%s: regmap is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	dev_dbg(va_priv->dev, "%s: mclk_enable = %u, dapm = %d clk_users= %d\n",
 		__func__, mclk_enable, dapm, va_priv->va_mclk_users);
 

@@ -787,6 +787,11 @@ static int rx_macro_mclk_enable(struct rx_macro_priv *rx_priv,
 	struct regmap *regmap = dev_get_regmap(rx_priv->dev->parent, NULL);
 	int ret = 0, mclk_mux = MCLK_MUX0;
 
+	if (regmap == NULL) {
+		dev_err(rx_priv->dev, "%s: regmap is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	dev_dbg(rx_priv->dev, "%s: mclk_enable = %u, dapm = %d clk_users= %d\n",
 		__func__, mclk_enable, dapm, rx_priv->rx_mclk_users);
 
@@ -1824,6 +1829,11 @@ static void rx_macro_restore_iir_coeff(struct rx_macro_priv *rx_priv, int iir_id
 	u16 reg_add = 0, coeff_idx = 0, idx = 0;
 	struct regmap *regmap = dev_get_regmap(rx_priv->dev->parent, NULL);
 
+	if (regmap == NULL) {
+		dev_err(rx_priv->dev, "%s: regmap is NULL\n", __func__);
+		return;
+	}
+
 	regmap_write(regmap,
 		(BOLERO_CDC_RX_SIDETONE_IIR0_IIR_COEF_B1_CTL + 0x80 * iir_idx),
 		(band_idx * BAND_MAX * sizeof(uint32_t)) & 0x7F);
@@ -2653,6 +2663,11 @@ static int rx_swrm_clock(void *handle, bool enable)
 	struct rx_macro_priv *rx_priv = (struct rx_macro_priv *) handle;
 	struct regmap *regmap = dev_get_regmap(rx_priv->dev->parent, NULL);
 	int ret = 0;
+
+	if (regmap == NULL) {
+		dev_err(rx_priv->dev, "%s: regmap is NULL\n", __func__);
+		return -EINVAL;
+	}
 
 	mutex_lock(&rx_priv->swr_clk_lock);
 
