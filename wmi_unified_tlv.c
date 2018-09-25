@@ -19403,6 +19403,13 @@ static QDF_STATUS extract_comb_phyerr_tlv(wmi_unified_t wmi_handle,
 	phyerr->tsf64 = pe_hdr->tsf_l32;
 	phyerr->tsf64 |= (((uint64_t)pe_hdr->tsf_u32) << 32);
 	phyerr->bufp = param_tlvs->bufp;
+
+	if (pe_hdr->buf_len > param_tlvs->num_bufp) {
+		WMI_LOGD("Invalid buf_len %d, num_bufp %d",
+			 pe_hdr->buf_len, param_tlvs->num_bufp);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	phyerr->buf_len = pe_hdr->buf_len;
 	phyerr->phy_err_mask0 = pe_hdr->rsPhyErrMask0;
 	phyerr->phy_err_mask1 = pe_hdr->rsPhyErrMask1;
