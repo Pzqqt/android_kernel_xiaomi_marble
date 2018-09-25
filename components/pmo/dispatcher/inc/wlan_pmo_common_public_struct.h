@@ -183,6 +183,40 @@ enum pmo_wow_interface_pause {
 	PMO_WOW_INTERFACE_PAUSE_COUNT
 };
 
+/**
+ * enum wow_enable_type - used to enable/disable WoW.
+ * @PMO_WOW_DISABLE_BOTH: Disable both magic pattern match and pattern
+ *  byte match.
+ * @PMO_WOW_ENABLE_MAGIC_PATTERN: Enable magic pattern match on all interfaces.
+ * @PMO_WOW_ENABLE_PATTERN_BYTE: Enable pattern byte match on all interfaces.
+ * @PMO_WOW_ENABLE_BOTH: Enable both magic patter and pattern byte match on
+ *  all interfaces.
+ */
+enum pmo_wow_enable_type {
+	PMO_WOW_DISABLE_BOTH = 0,
+	PMO_WOW_ENABLE_MAGIC_PATTERN,
+	PMO_WOW_ENABLE_PATTERN_BYTE,
+	PMO_WOW_ENABLE_BOTH
+};
+
+/**
+ * enum powersave_qpower_mode: powersave_mode
+ * @PS_NOT_SUPPORTED: Power save is not supported
+ * @PS_LEGACY_NODEEPSLEEP: Legacy power save enabled and deep sleep disabled
+ * @PS_QPOWER_NODEEPSLEEP: QPOWER enabled and deep sleep disabled
+ * @PS_LEGACY_DEEPSLEEP: Legacy power save enabled and deep sleep enabled
+ * @PS_QPOWER_DEEPSLEEP: QPOWER enabled and deep sleep enabled
+ * @PS_DUTY_CYCLING_QPOWER: QPOWER enabled in duty cycling mode
+ */
+enum powersave_mode {
+	PS_NOT_SUPPORTED = 0,
+	PS_LEGACY_NODEEPSLEEP = 1,
+	PS_QPOWER_NODEEPSLEEP = 2,
+	PS_LEGACY_DEEPSLEEP = 3,
+	PS_QPOWER_DEEPSLEEP = 4,
+	PS_DUTY_CYCLING_QPOWER = 5
+};
+
 #define PMO_TARGET_SUSPEND_TIMEOUT   6000
 #define PMO_WAKE_LOCK_TIMEOUT        1000
 #define PMO_RESUME_TIMEOUT           6000
@@ -279,15 +313,36 @@ enum pmo_auto_pwr_detect_failure_mode {
  * @disassoc_enable:  true when wake up on disassoc is enabled else false
  * @bmiss_enable: true when wake up on bmiss is enabled else false
  * @lpass_enable: true when lpass is enabled else false
+ * @max_ps:poll: max power save poll
  * @sta_dynamic_dtim: station dynamic DTIM value
  * @sta_mod_dtim: station modulated DTIM value
  * @sta_max_li_mod_dtim: station max listen interval DTIM value
+ * @wow_enable: enable wow with majic pattern match or pattern byte match
  * @power_save_mode: power save mode for psoc
+ * @runtime_pm_delay: set runtime pm's inactivity timer
+ * @extwow_goto_suspend: true when extended WoW enabled else false
+ * @extwow_app1_wakeup_pin_num: set wakeup1 PIN number
+ * @extwow_app2_wakeup_pin_num: set wakeup2 PIN number
+ * @extwow_app2_init_ping_interval: set keep alive init ping interval
+ * @extwow_app2_min_ping_interval: set keep alive minimum ping interval
+ * @extwow_app2_max_ping_interval: set keep alive maximum ping interval
+ * @extwow_app2_inc_ping_interval: set keep alive increment ping interval
+ * @extwow_app2_tcp_src_port: set TCP source port
+ * @extwow_app2_tcp_dst_port: set TCP dest port
+ * @extwow_app2_tcp_tx_timeout: set TCP TX timeout
+ * @extwow_app2_tcp_rx_timeout: set TCP RX timeout
  * @auto_power_save_fail_mode: auto detect power save failure
+ * @is_wow_pulse_supported: true when wow pulse feature is enabled else false
+ * @wow_pulse_pin: GPIO pin of wow pulse feature
+ * @wow_pulse_interval_high: The interval of high level in the pulse
+ * @wow_pulse_interval_low: The interval of low level in the pulse
+ * @packet_filters_bitmap: Packet filter bitmap configuration
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
+#ifdef FEATURE_WLAN_APF
 	bool apf_enable;
+#endif
 	bool arp_offload_enable;
 	enum pmo_hw_filter_mode hw_filter_mode_bitmap;
 	bool ns_offload_enable_static;
@@ -305,11 +360,40 @@ struct pmo_psoc_cfg {
 	bool disassoc_enable;
 	bool bmiss_enable;
 	bool lpass_enable;
+	bool wowlan_deauth_enable;
+	bool wowlan_disassoc_enable;
+	uint8_t max_ps_poll;
 	uint8_t sta_dynamic_dtim;
 	uint8_t sta_mod_dtim;
 	uint8_t sta_max_li_mod_dtim;
-	uint8_t power_save_mode;
+	enum pmo_wow_enable_type wow_enable;
+	enum powersave_mode power_save_mode;
+#ifdef FEATURE_RUNTIME_PM
+	uint32_t runtime_pm_delay;
+#endif
+#ifdef WLAN_FEATURE_EXTWOW_SUPPORT
+	bool extwow_goto_suspend;
+	uint8_t extwow_app1_wakeup_pin_num;
+	uint8_t extwow_app2_wakeup_pin_num;
+	uint32_t extwow_app2_init_ping_interval;
+	uint32_t extwow_app2_min_ping_interval;
+	uint32_t extwow_app2_max_ping_interval;
+	uint32_t extwow_app2_inc_ping_interval;
+	uint16_t extwow_app2_tcp_src_port;
+	uint16_t extwow_app2_tcp_dst_port;
+	uint32_t extwow_app2_tcp_tx_timeout;
+	uint32_t extwow_app2_tcp_rx_timeout;
+#endif
 	enum pmo_auto_pwr_detect_failure_mode auto_power_save_fail_mode;
+#ifdef WLAN_FEATURE_WOW_PULSE
+	bool is_wow_pulse_supported;
+	uint8_t wow_pulse_pin;
+	uint16_t wow_pulse_interval_high;
+	uint16_t wow_pulse_interval_low;
+#endif
+#ifdef WLAN_FEATURE_PACKET_FILTERING
+	uint8_t packet_filters_bitmap;
+#endif
 };
 
 /**
