@@ -402,7 +402,6 @@ QDF_STATUS ucfg_p2p_mgmt_tx_cancel(struct wlan_objmgr_psoc *soc,
 		p2p_debug("invalid id");
 		return QDF_STATUS_E_INVAL;
 	}
-	qdf_idr_remove(&p2p_soc_obj->p2p_idr, (int32_t)cookie);
 
 	cancel_tx = qdf_mem_malloc(sizeof(*cancel_tx));
 	if (!cancel_tx) {
