@@ -180,7 +180,7 @@ static int msm_dai_q6_ext_disp_drift_get(struct snd_kcontrol *kcontrol,
 	struct msm_dai_q6_hdmi_dai_data *dai_data = dev_get_drvdata(dai->dev);
 
 	if (!test_bit(STATUS_PORT_STARTED, dai_data->status_mask)) {
-		pr_err("%s:  afe port not started. status_mask = %ld\n",
+		pr_debug("%s:  afe port not started. status_mask = %ld\n",
 			__func__, *dai_data->status_mask);
 		goto done;
 	}

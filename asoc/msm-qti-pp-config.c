@@ -1259,7 +1259,7 @@ int msm_adsp_stream_callback_get(struct snd_kcontrol *kcontrol,
 	kctl_prtd = (struct dsp_stream_callback_prtd *)
 			kcontrol->private_data;
 	if (kctl_prtd == NULL) {
-		pr_err("%s: ASM Stream PP event queue is not initialized.\n",
+		pr_debug("%s: ASM Stream PP event queue is not initialized.\n",
 			__func__);
 		ret = -EINVAL;
 		goto done;
