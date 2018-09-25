@@ -118,6 +118,8 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_tx_desc_set_lmac_id_8074v2,
 	hal_tx_desc_set_buf_addr_generic,
 	hal_tx_comp_get_status_generic,
+	hal_tx_desc_set_search_type_generic,
+	hal_tx_desc_set_search_index_generic,
 
 	/* rx */
 	hal_rx_msdu_start_nss_get_8074v2,
@@ -134,8 +136,6 @@ struct hal_hw_txrx_ops qca8074v2_hal_hw_txrx_ops = {
 	hal_rx_link_desc_msdu0_ptr_generic,
 	hal_reo_status_get_header_generic,
 	hal_rx_status_get_tlv_info_generic,
-	hal_tx_desc_set_search_type_generic,
-	hal_tx_desc_set_search_index_generic,
 };
 
 struct hal_hw_srng_config hw_srng_table_8074v2[] = {
