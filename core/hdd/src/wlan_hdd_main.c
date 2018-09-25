@@ -9197,6 +9197,13 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 		hdd_err("Failed to parse cfg %s; status:%d\n",
 			WLAN_INI_FILE, status);
 
+	ret = hdd_objmgr_create_and_store_psoc(hdd_ctx, DEFAULT_PSOC_ID);
+	if (ret) {
+		hdd_err("Psoc creation fails!");
+		QDF_BUG(0);
+		goto err_free_config;
+	}
+
 	ie_whitelist_attrs_init(hdd_ctx);
 
 	hdd_debug("setting timer multiplier: %u",
@@ -9214,7 +9221,7 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 	ret = hdd_context_init(hdd_ctx);
 
 	if (ret)
-		goto err_free_config;
+		goto err_hdd_objmgr_destroy;
 
 	/* Uses to enabled logging after SSR */
 	hdd_ctx->fw_log_settings.enable = hdd_ctx->config->enable_fw_log;
@@ -9248,6 +9255,9 @@ err_deinit_txrx_histogram:
 
 err_deinit_hdd_context:
 	hdd_context_deinit(hdd_ctx);
+
+err_hdd_objmgr_destroy:
+	hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
 
 err_free_config:
 	qdf_mem_free(hdd_ctx->config);
@@ -11405,7 +11415,6 @@ int hdd_wlan_startup(struct device *dev)
 {
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
-	struct wlan_objmgr_psoc *psoc;
 	int ret;
 	bool rtnl_held;
 	mac_handle_t mac_handle;
@@ -11417,16 +11426,7 @@ int hdd_wlan_startup(struct device *dev)
 	if (IS_ERR(hdd_ctx))
 		return PTR_ERR(hdd_ctx);
 
-	ret = hdd_objmgr_create_and_store_psoc(hdd_ctx,
-					   DEFAULT_PSOC_ID);
-	if (ret) {
-		hdd_err("Psoc creation fails!");
-		QDF_BUG(0);
-		goto err_hdd_free_context;
-	}
-
 	hdd_action_oui_config(hdd_ctx);
-	psoc = hdd_ctx->psoc;
 
 	qdf_nbuf_init_replenish_timer();
 
@@ -11557,8 +11557,6 @@ err_memdump_deinit:
 
 	osif_request_manager_deinit();
 	hdd_exit_netlink_services(hdd_ctx);
-
-	hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
 
 err_hdd_free_context:
 	if (cds_is_fw_down())
