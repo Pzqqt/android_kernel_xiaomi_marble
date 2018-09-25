@@ -11582,6 +11582,10 @@ typedef struct {
     A_UINT32 rssi;
     /** roam notification */
     A_UINT32 notif;
+    /** roam notification param
+     *  Refer to WMI_ROAM_NOTIF_ defs to interpret the notif_params value.
+     */
+    A_UINT32 notif_params;
 } wmi_roam_event_fixed_param;
 
 
@@ -11653,6 +11657,7 @@ typedef enum
 #define WMI_ROAM_NOTIF_SCAN_MODE_FAIL    0x5 /** indicate that roaming scan mode is failed due to internal roaming state */
 #define WMI_ROAM_NOTIF_DISCONNECT        0x6 /** indicate that roaming not allowed due BTM req */
 #define WMI_ROAM_NOTIF_SUBNET_CHANGED    0x7 /** indicate that subnet has changed */
+#define WMI_ROAM_NOTIF_SCAN_START        0x8 /** indicate roam scan start, notif_params to be sent as WMI_ROAM_TRIGGER_REASON_ID */
 
 /**whenever RIC request information change, host driver should pass all ric related information to firmware (now only support tsepc)
 * Once, 11r roaming happens, firmware can generate RIC request in reassoc request based on these informations
