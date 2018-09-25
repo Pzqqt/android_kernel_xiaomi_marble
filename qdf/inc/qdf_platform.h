@@ -130,4 +130,29 @@ void qdf_register_module_state_query_callback(
  * Return: true if in transition else false
  */
 bool qdf_is_module_state_transitioning(void);
+
+/**
+ * qdf_is_recovering_callback() - callback to get driver recovering in progress
+ * or not
+ *
+ * Return: true if driver is doing recovering else false
+ */
+typedef bool (*qdf_is_recovering_callback)(void);
+
+/**
+ * qdf_register_recovering_state_query_callback() - register recover status
+ * query callback
+ *
+ * Return: none
+ */
+void qdf_register_recovering_state_query_callback(
+	qdf_is_recovering_callback is_recovering);
+
+/**
+ * qdf_is_recovering() - get driver recovering in progress status
+ * or not
+ *
+ * Return: true if driver is doing recovering else false
+ */
+bool qdf_is_recovering(void);
 #endif /*_QDF_PLATFORM_H*/

@@ -29,6 +29,7 @@ static qdf_ssr_callback                     ssr_protect_cb;
 static qdf_ssr_callback                     ssr_unprotect_cb;
 static qdf_is_module_state_transitioning_cb module_state_transitioning_cb;
 static qdf_is_fw_down_callback		    is_fw_down_cb;
+static qdf_is_recovering_callback           is_recovering_cb;
 
 void qdf_register_fw_down_callback(qdf_is_fw_down_callback is_fw_down)
 {
@@ -108,3 +109,18 @@ bool qdf_is_module_state_transitioning(void)
 }
 
 qdf_export_symbol(qdf_is_module_state_transitioning);
+
+void qdf_register_recovering_state_query_callback(
+			qdf_is_recovering_callback is_recovering)
+{
+	is_recovering_cb = is_recovering;
+}
+
+bool qdf_is_recovering(void)
+{
+	if (is_recovering_cb)
+		return is_recovering_cb();
+	return false;
+}
+
+qdf_export_symbol(qdf_is_recovering);

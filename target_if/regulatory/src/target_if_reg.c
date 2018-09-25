@@ -112,7 +112,7 @@ static int tgt_reg_chan_list_update_handler(ol_scn_t handle,
 
 	TARGET_IF_ENTER();
 
-	if (qdf_is_fw_down()) {
+	if (qdf_is_recovering()) {
 		target_if_debug("ignore chan list update evt in ssr");
 		return 0;
 	}
