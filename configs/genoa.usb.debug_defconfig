@@ -37,4 +37,7 @@ CONFIG_WLAN_OBJMGR_DEBUG:= y
 CONFIG_FEATURE_UNIT_TEST_SUSPEND := y
 CONFIG_LEAK_DETECTION := y
 endif
+
+# Genoa features vs Rome
+CONFIG_HTT_PADDR64 := y
 ###################################

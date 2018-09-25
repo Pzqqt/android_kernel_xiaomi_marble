@@ -47,4 +47,7 @@ CONFIG_CFG_NUM_RX_IND_RECORD := 1024
 ifeq ($(CONFIG_FEATURE_ROAM_DEBUG), y)
 CONFIG_CFG_NUM_ROAM_DEBUG_RECORD := 64
 endif
+
+# Genoa features vs Rome
+CONFIG_HTT_PADDR64 := y
 ###################################
