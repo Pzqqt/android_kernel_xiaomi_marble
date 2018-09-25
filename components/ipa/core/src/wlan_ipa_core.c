@@ -205,8 +205,13 @@ static void wlan_ipa_send_pkt_to_tl(
 		qdf_ipa_rx_data_t *ipa_tx_desc)
 {
 	struct wlan_ipa_priv *ipa_ctx = iface_context->ipa_ctx;
+	struct wlan_objmgr_pdev *pdev = ipa_ctx->pdev;
+	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+	qdf_device_t osdev = wlan_psoc_get_qdf_dev(psoc);
 	qdf_nbuf_t skb;
 	struct wlan_ipa_tx_desc *tx_desc;
+	qdf_dma_addr_t paddr;
+	QDF_STATUS status;
 
 	qdf_spin_lock_bh(&iface_context->interface_lock);
 	/*
@@ -223,6 +228,14 @@ static void wlan_ipa_send_pkt_to_tl(
 			return;
 		}
 	}
+
+	if (!osdev) {
+		ipa_free_skb(ipa_tx_desc);
+		iface_context->stats.num_tx_drop++;
+		qdf_spin_unlock_bh(&iface_context->interface_lock);
+		wlan_ipa_wdi_rm_try_release(ipa_ctx);
+		return;
+	}
 	qdf_spin_unlock_bh(&iface_context->interface_lock);
 
 	skb = QDF_IPA_RX_DATA_SKB(ipa_tx_desc);
@@ -231,15 +244,33 @@ static void wlan_ipa_send_pkt_to_tl(
 
 	/* Store IPA Tx buffer ownership into SKB CB */
 	qdf_nbuf_ipa_owned_set(skb);
+
+	if (qdf_mem_smmu_s1_enabled(osdev)) {
+		status = qdf_nbuf_map(osdev, skb, QDF_DMA_TO_DEVICE);
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			paddr = qdf_nbuf_get_frag_paddr(skb, 0);
+		} else {
+			ipa_free_skb(ipa_tx_desc);
+			qdf_spin_lock_bh(&iface_context->interface_lock);
+			iface_context->stats.num_tx_drop++;
+			qdf_spin_unlock_bh(&iface_context->interface_lock);
+			wlan_ipa_wdi_rm_try_release(ipa_ctx);
+			return;
+		}
+	} else {
+		paddr = QDF_IPA_RX_DATA_DMA_ADDR(ipa_tx_desc);
+	}
+
 	if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config)) {
 		qdf_nbuf_mapped_paddr_set(skb,
-					  QDF_IPA_RX_DATA_DMA_ADDR(ipa_tx_desc)
-					  + WLAN_IPA_WLAN_FRAG_HEADER
-					  + WLAN_IPA_WLAN_IPA_HEADER);
+					  paddr +
+					  WLAN_IPA_WLAN_FRAG_HEADER +
+					  WLAN_IPA_WLAN_IPA_HEADER);
 		QDF_IPA_RX_DATA_SKB_LEN(ipa_tx_desc) -=
 			WLAN_IPA_WLAN_FRAG_HEADER + WLAN_IPA_WLAN_IPA_HEADER;
-	} else
-		qdf_nbuf_mapped_paddr_set(skb, ipa_tx_desc->dma_addr);
+	} else {
+		qdf_nbuf_mapped_paddr_set(skb, paddr);
+	}
 
 	qdf_spin_lock_bh(&ipa_ctx->q_lock);
 	/* get free Tx desc and assign ipa_tx_desc pointer */
