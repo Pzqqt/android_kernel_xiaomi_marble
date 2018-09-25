@@ -50,6 +50,10 @@
 #include "wlan_policy_mgr_public_struct.h"
 #endif
 
+#ifdef FEATURE_WLAN_TDLS
+#include "wlan_tdls_public_structs.h"
+#endif
+
 /* HTC service ids for WMI for multi-radio */
 static const uint32_t multi_svc_ids[] = {WMI_CONTROL_SVC,
 				WMI_CONTROL_SVC_WMAC1,
@@ -10240,6 +10244,40 @@ static QDF_STATUS send_regdomain_info_to_fw_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_WLAN_TDLS
+/**
+ * tdls_get_wmi_offchannel_mode - Get WMI tdls off channel mode
+ * @tdls_sw_mode: tdls_sw_mode
+ *
+ * This function returns wmi tdls offchannel mode
+ *
+ * Return: enum value of wmi tdls offchannel mode
+ */
+static uint8_t tdls_get_wmi_offchannel_mode(uint8_t tdls_sw_mode)
+{
+	uint8_t off_chan_mode;
+
+	switch (tdls_sw_mode) {
+	case ENABLE_CHANSWITCH:
+		off_chan_mode = WMI_TDLS_ENABLE_OFFCHANNEL;
+		break;
+
+	case DISABLE_CHANSWITCH:
+		off_chan_mode = WMI_TDLS_DISABLE_OFFCHANNEL;
+		break;
+
+	default:
+		WMI_LOGD(FL("unknown tdls_sw_mode %d"), tdls_sw_mode);
+		off_chan_mode = WMI_TDLS_DISABLE_OFFCHANNEL;
+	}
+	return off_chan_mode;
+}
+#else
+static uint8_t tdls_get_wmi_offchannel_mode(uint8_t tdls_sw_mode)
+{
+	return WMI_TDLS_DISABLE_OFFCHANNEL;
+}
+#endif
 
 /**
  * send_set_tdls_offchan_mode_cmd_tlv() - set tdls off channel mode
@@ -10272,7 +10310,8 @@ static QDF_STATUS send_set_tdls_offchan_mode_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(chan_switch_params->peer_mac_addr,
 				&cmd->peer_macaddr);
 	cmd->vdev_id = chan_switch_params->vdev_id;
-	cmd->offchan_mode = chan_switch_params->tdls_sw_mode;
+	cmd->offchan_mode =
+		tdls_get_wmi_offchannel_mode(chan_switch_params->tdls_sw_mode);
 	cmd->is_peer_responder = chan_switch_params->is_responder;
 	cmd->offchan_num = chan_switch_params->tdls_off_ch;
 	cmd->offchan_bw_bitmap = chan_switch_params->tdls_off_ch_bw_offset;
