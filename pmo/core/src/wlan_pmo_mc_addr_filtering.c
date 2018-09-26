@@ -435,7 +435,7 @@ static QDF_STATUS pmo_core_handle_enable_mc_list_trigger(
 			enum pmo_offload_trigger trigger)
 {
 	struct pmo_vdev_priv_obj *vdev_ctx;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct pmo_mc_addr_list *op_mc_list_req;
 
 	pmo_enter();
@@ -454,7 +454,6 @@ static QDF_STATUS pmo_core_handle_enable_mc_list_trigger(
 		if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is disabled, skip in mode %d",
 				  trigger);
-			status = QDF_STATUS_SUCCESS;
 			goto free_req;
 		}
 		status = pmo_core_do_enable_mc_addr_list(vdev, vdev_ctx,
@@ -464,7 +463,6 @@ static QDF_STATUS pmo_core_handle_enable_mc_list_trigger(
 		if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is enabled, skip in mode %d",
 				  trigger);
-			status = QDF_STATUS_SUCCESS;
 			goto free_req;
 		}
 		status = pmo_core_do_enable_mc_addr_list(vdev, vdev_ctx,
@@ -538,7 +536,7 @@ static QDF_STATUS pmo_core_handle_disable_mc_list_trigger(
 			struct wlan_objmgr_vdev *vdev,
 			enum pmo_offload_trigger trigger)
 {
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 	struct pmo_mc_addr_list *op_mc_list_req;
 
@@ -557,21 +555,19 @@ static QDF_STATUS pmo_core_handle_disable_mc_list_trigger(
 		if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is disabled, skip in mode %d",
 				  trigger);
-			status = QDF_STATUS_E_INVAL;
 			goto free_req;
 		}
 		status = pmo_core_do_disable_mc_addr_list(vdev, vdev_ctx,
-				op_mc_list_req);
+							  op_mc_list_req);
 		break;
 	case pmo_apps_resume:
 		if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is enabled, skip in mode %d",
 				  trigger);
-			status = QDF_STATUS_E_INVAL;
 			goto free_req;
 		}
 		status = pmo_core_do_disable_mc_addr_list(vdev, vdev_ctx,
-				op_mc_list_req);
+							  op_mc_list_req);
 		break;
 	default:
 		status = QDF_STATUS_E_INVAL;
@@ -595,9 +591,10 @@ QDF_STATUS pmo_core_disable_mc_addr_filtering_in_fwr(
 	struct wlan_objmgr_vdev *vdev;
 
 	pmo_enter();
+
 	if (!psoc) {
 		pmo_err("psoc is NULL");
-		status = QDF_STATUS_E_NULL_VALUE;
+		status = QDF_STATUS_E_INVAL;
 		goto out;
 	}
 

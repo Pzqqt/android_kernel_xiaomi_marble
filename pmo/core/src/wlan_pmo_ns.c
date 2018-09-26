@@ -162,8 +162,7 @@ static QDF_STATUS pmo_core_do_enable_ns_offload(struct wlan_objmgr_vdev *vdev,
 	case pmo_ns_offload_dynamic_update:
 		if (!psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is disabled, skip in mode:%d",
-				trigger);
-			status = QDF_STATUS_SUCCESS;
+				  trigger);
 			goto out;
 		}
 		/* enable arp when active offload is true (ipv6 notifier) */
@@ -172,8 +171,7 @@ static QDF_STATUS pmo_core_do_enable_ns_offload(struct wlan_objmgr_vdev *vdev,
 	case pmo_apps_suspend:
 		if (psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is enabled, skip in mode: %d",
-				trigger);
-			status = QDF_STATUS_SUCCESS;
+				  trigger);
 			goto out;
 		}
 		/* enable arp when active offload is false (apps suspend) */
@@ -205,8 +203,7 @@ static QDF_STATUS pmo_core_do_disable_ns_offload(struct wlan_objmgr_vdev *vdev,
 	case pmo_ns_offload_dynamic_update:
 		if (!psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is disabled, skip in mode:%d",
-				trigger);
-			status = QDF_STATUS_E_INVAL;
+				  trigger);
 			goto out;
 		}
 		/* config ns when active offload is enable */
@@ -215,8 +212,7 @@ static QDF_STATUS pmo_core_do_disable_ns_offload(struct wlan_objmgr_vdev *vdev,
 	case pmo_apps_resume:
 		if (psoc_ctx->psoc_cfg.active_mode_offload) {
 			pmo_debug("active offload is enabled, skip in mode: %d",
-				trigger);
-			status = QDF_STATUS_E_INVAL;
+				  trigger);
 			goto out;
 		}
 		/* config arp/ns when active offload is disable */
@@ -378,7 +374,6 @@ QDF_STATUS pmo_core_enable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 
 	if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.ns_offload_enable_dynamic) {
 		pmo_debug("ns offload dynamically disable");
-		status = QDF_STATUS_E_INVAL;
 		goto dec_ref;
 	}
 
@@ -439,7 +434,6 @@ QDF_STATUS pmo_core_disable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 
 	if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.ns_offload_enable_dynamic) {
 		pmo_debug("ns offload dynamically disable");
-		status = QDF_STATUS_E_INVAL;
 		goto dec_ref;
 	}
 
