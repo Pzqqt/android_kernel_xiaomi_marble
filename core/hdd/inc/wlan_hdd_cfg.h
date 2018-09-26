@@ -3707,29 +3707,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gEnableDFSMasterCap - Enable DFS master capability
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable the DFS master capability.
- * Disabling it will cause driver to not advertise the spectrum
- * management capability
- * Related: NA.
- *
- * Supported Feature: DFS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_DFS_MASTER_CAPABILITY               "gEnableDFSMasterCap"
-#define CFG_ENABLE_DFS_MASTER_CAPABILITY_MIN           (0)
-#define CFG_ENABLE_DFS_MASTER_CAPABILITY_MAX           (1)
-#define CFG_ENABLE_DFS_MASTER_CAPABILITY_DEFAULT       (0)
-
-/*
- * <ini>
  * gSapPreferredChanLocation - Restrict channel switches between ondoor and
  * outdoor.
  * @Min: 0
@@ -8942,7 +8919,6 @@ struct hdd_config {
 	uint32_t WlanMccToSccSwitchMode;
 #endif
 	uint8_t disableDFSChSwitch;
-	uint8_t enableDFSMasterCap;
 	uint32_t TxPower2g;
 	uint32_t TxPower5g;
 	bool fDfsPhyerrFilterOffload;

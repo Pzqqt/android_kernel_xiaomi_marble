@@ -420,6 +420,7 @@ __wlan_hdd_cfg80211_conditional_chan_switch(struct wiphy *wiphy,
 	uint32_t freq_len, i;
 	uint32_t *freq;
 	uint8_t chans[QDF_MAX_NUM_CHAN] = {0};
+	bool is_dfs_mode_enabled = false;
 
 	hdd_enter_dev(dev);
 
@@ -427,7 +428,13 @@ __wlan_hdd_cfg80211_conditional_chan_switch(struct wiphy *wiphy,
 	if (ret)
 		return ret;
 
-	if (!hdd_ctx->config->enableDFSMasterCap) {
+	if (QDF_STATUS_SUCCESS != ucfg_mlme_get_dfs_master_capability(
+				hdd_ctx->psoc, &is_dfs_mode_enabled)) {
+		hdd_err("Failed to get dfs master capability");
+		return -EINVAL;
+	}
+
+	if (!is_dfs_mode_enabled) {
 		hdd_err("DFS master capability is not present in the driver");
 		return -EINVAL;
 	}

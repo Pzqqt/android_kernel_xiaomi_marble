@@ -2000,9 +2000,12 @@ static int __iw_get_channel_list(struct net_device *dev,
 	if (hostapd_adapter->device_mode == QDF_STA_MODE &&
 	    hdd_ctx->config->enableDFSChnlScan) {
 		is_dfs_mode_enabled = true;
-	} else if (hostapd_adapter->device_mode == QDF_SAP_MODE &&
-		   hdd_ctx->config->enableDFSMasterCap) {
-		is_dfs_mode_enabled = true;
+	} else if (hostapd_adapter->device_mode == QDF_SAP_MODE) {
+		if (QDF_STATUS_SUCCESS != ucfg_mlme_get_dfs_master_capability(
+				hdd_ctx->psoc, &is_dfs_mode_enabled)) {
+			hdd_err("Fail to get dfs master mode capability");
+			return -EINVAL;
+		}
 	}
 
 	hdd_debug("curBand = %d, StartChannel = %hu, EndChannel = %hu is_dfs_mode_enabled  = %d ",

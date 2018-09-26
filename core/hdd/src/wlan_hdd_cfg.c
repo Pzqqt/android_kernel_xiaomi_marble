@@ -1661,13 +1661,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_DISABLE_DFS_CH_SWITCH_MIN,
 		     CFG_DISABLE_DFS_CH_SWITCH_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_DFS_MASTER_CAPABILITY, WLAN_PARAM_Integer,
-		     struct hdd_config, enableDFSMasterCap,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_DFS_MASTER_CAPABILITY_DEFAULT,
-		     CFG_ENABLE_DFS_MASTER_CAPABILITY_MIN,
-		     CFG_ENABLE_DFS_MASTER_CAPABILITY_MAX),
-
 	REG_DYNAMIC_VARIABLE(CFG_SAP_PREFERRED_CHANNEL_LOCATION,
 			     WLAN_PARAM_Integer,
 			     struct hdd_config, gSapPreferredChanLocation,
@@ -4855,13 +4848,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		     config->Is11dSupportEnabled) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_11D_ENABLED to CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_DFS_MASTER_ENABLED,
-			    config->enableDFSMasterCap) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Failure: Couldn't set value for WNI_CFG_DFS_MASTER_ENABLED");
 	}
 
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,

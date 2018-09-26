@@ -589,7 +589,6 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 #ifdef FEATURE_WLAN_CH_AVOID
 	uint16_t i;
 #endif
-	uint32_t dfs_master_cap_enabled;
 	bool include_dfs_ch = true;
 	uint8_t chan_num;
 	bool sta_sap_scc_on_dfs_chan =
@@ -622,9 +621,7 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 	if (sap_ctx->dfs_ch_disable == true)
 		include_dfs_ch = false;
 #endif
-	sme_cfg_get_int(halHandle, WNI_CFG_DFS_MASTER_ENABLED,
-			&dfs_master_cap_enabled);
-	if (dfs_master_cap_enabled == 0 ||
+	if (!pMac->mlme_cfg->dfs_cfg.dfs_master_capable ||
 	    ACS_DFS_MODE_DISABLE == sap_ctx->dfs_mode)
 		include_dfs_ch = false;
 
@@ -2559,7 +2556,6 @@ static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
 {
 	enum channel_state ch_type;
 	uint8_t i, first_safe_ch_in_range = SAP_CHANNEL_NOT_SELECTED;
-	uint32_t dfs_master_cap_enabled;
 	uint32_t start_ch_num = sap_ctx->acs_cfg->start_ch;
 	uint32_t end_ch_num = sap_ctx->acs_cfg->end_ch;
 	tpAniSirGlobal mac_ctx = NULL;
@@ -2568,12 +2564,6 @@ static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("start - end: %d - %d"), start_ch_num, end_ch_num);
-
-	sme_cfg_get_int(hal, WNI_CFG_DFS_MASTER_ENABLED,
-				&dfs_master_cap_enabled);
-
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		"%s: dfs_master %x", __func__, dfs_master_cap_enabled);
 
 	/* get a channel in PCL and within the range */
 	for (i = 0; i < sap_ctx->acs_cfg->pcl_ch_count; i++) {
@@ -2599,8 +2589,8 @@ static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
 		if ((ch_type == CHANNEL_STATE_DISABLE) ||
 			(ch_type == CHANNEL_STATE_INVALID))
 			continue;
-		if ((!dfs_master_cap_enabled) &&
-			(CHANNEL_STATE_DFS == ch_type)) {
+		if ((!mac_ctx->mlme_cfg->dfs_cfg.dfs_master_capable) &&
+		    (CHANNEL_STATE_DFS == ch_type)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				"%s: DFS master mode disabled. Skip DFS channel %d",
 				__func__, safe_channels[i].channelNumber);

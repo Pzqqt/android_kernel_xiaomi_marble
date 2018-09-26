@@ -1036,15 +1036,10 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			if (session->lim11hEnable &&
 				(eSIR_INFRA_AP_MODE ==
 					mlm_start_req->bssType)) {
-				qdf_status =
-					wlan_cfg_get_int(mac_ctx,
-						WNI_CFG_DFS_MASTER_ENABLED,
-						&val);
-				session->lim11hEnable = val;
+				session->lim11hEnable =
+					mac_ctx->mlme_cfg->
+					dfs_cfg.dfs_master_capable;
 			}
-			if (QDF_IS_STATUS_ERROR(qdf_status))
-				/* Failed get CFG WNI_CFG_DFS_MASTER_ENABLED */
-				pe_err("Get Fail, CFG DFS ENABLE");
 		}
 
 		if (!session->lim11hEnable) {

@@ -12313,9 +12313,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 				ARRAY_SIZE(wlan_hdd_cfg80211_vendor_events);
 	}
 
-	if (pCfg->enableDFSMasterCap)
-		wlan_hdd_cfg80211_set_dfs_offload_feature(wiphy);
-
 #ifdef QCA_HT_2040_COEX
 	wiphy->features |= NL80211_FEATURE_AP_MODE_CHAN_WIDTH_CHANGE;
 #endif
@@ -12484,6 +12481,7 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 {
 	int value;
 	bool fils_enabled;
+	bool dfs_master_capable = true;
 	QDF_STATUS status;
 
 	ucfg_mlme_get_sap_max_peers(hdd_ctx->psoc, &value);
@@ -12498,6 +12496,11 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 		hdd_err("could not get fils enabled info");
 	if (fils_enabled)
 		wlan_hdd_cfg80211_set_wiphy_fils_feature(hdd_ctx->wiphy);
+
+	status = ucfg_mlme_get_dfs_master_capability(hdd_ctx->psoc,
+						     &dfs_master_capable);
+	if (QDF_IS_STATUS_SUCCESS(status) && dfs_master_capable)
+		wlan_hdd_cfg80211_set_dfs_offload_feature(hdd_ctx->wiphy);
 }
 
 /**
