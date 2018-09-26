@@ -2506,8 +2506,11 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 
 #ifdef CONFIG_VDEV_SM
 		if (msg == eSAP_HDD_STOP_INFRA_BSS &&
-		    wlan_vdev_mlme_get_state(sap_ctx->vdev) ==
-		    WLAN_VDEV_S_DFS_CAC_WAIT) {
+		    ((wlan_vdev_mlme_get_state(sap_ctx->vdev) ==
+		      WLAN_VDEV_S_DFS_CAC_WAIT) ||
+		     (wlan_vdev_mlme_get_substate(sap_ctx->vdev) ==
+		      WLAN_VDEV_SS_START_RESTART_PROGRESS))) {
+
 			/* Transition from SAP_STARTING to SAP_STOPPING */
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				  FL("In cac wait state from state %s => %s"),
