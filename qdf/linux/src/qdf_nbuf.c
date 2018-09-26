@@ -2519,6 +2519,29 @@ void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 }
 qdf_export_symbol(qdf_net_buf_debug_add_node);
 
+void qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, uint8_t *file_name,
+				   uint32_t line_num)
+{
+	uint32_t i;
+	unsigned long irq_flag;
+	QDF_NBUF_TRACK *p_node;
+
+	i = qdf_net_buf_debug_hash(net_buf);
+	spin_lock_irqsave(&g_qdf_net_buf_track_lock[i], irq_flag);
+
+	p_node = qdf_net_buf_debug_look_up(net_buf);
+
+	if (p_node) {
+		qdf_str_lcopy(p_node->file_name, kbasename(file_name),
+			      QDF_MEM_FILE_NAME_SIZE);
+		p_node->line_num = line_num;
+	}
+
+	spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
+}
+
+qdf_export_symbol(qdf_net_buf_debug_update_node);
+
 /**
  * qdf_net_buf_debug_delete_node() - remove skb from debug hash table
  *

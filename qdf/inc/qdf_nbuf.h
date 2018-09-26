@@ -1222,6 +1222,13 @@ void qdf_net_buf_debug_exit(void);
 void qdf_net_buf_debug_clean(void);
 void qdf_net_buf_debug_add_node(qdf_nbuf_t net_buf, size_t size,
 			uint8_t *file_name, uint32_t line_num);
+/**
+ * qdf_net_buf_debug_update_node() - update nbuf in debug hash table
+ *
+ * Return: none
+ */
+void qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, uint8_t *file_name,
+				   uint32_t line_num);
 void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf);
 
 /**
@@ -1324,6 +1331,12 @@ static inline void qdf_net_buf_debug_acquire_skb(qdf_nbuf_t net_buf,
 }
 
 static inline void qdf_net_buf_debug_release_skb(qdf_nbuf_t net_buf)
+{
+}
+
+static inline void
+qdf_net_buf_debug_update_node(qdf_nbuf_t net_buf, uint8_t *file_name,
+			      uint32_t line_num)
 {
 }
 
