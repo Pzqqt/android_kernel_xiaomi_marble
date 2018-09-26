@@ -41,6 +41,7 @@
 #include "wifi_pos_api.h"
 #include "wlan_hdd_green_ap.h"
 #include "wlan_hdd_twt.h"
+#include "wlan_policy_mgr_ucfg.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
 #include "wlan_fwol_ucfg_api.h"
@@ -1026,14 +1027,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_QOS_IMPLICIT_SETUP_ENABLED_MIN,
 		     CFG_QOS_IMPLICIT_SETUP_ENABLED_MAX),
 
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	REG_VARIABLE(CFG_WLAN_MCC_TO_SCC_SWITCH_MODE, WLAN_PARAM_Integer,
-		     struct hdd_config, WlanMccToSccSwitchMode,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_DEFAULT,
-		     CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MIN,
-		     CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MAX),
-#endif
 	REG_VARIABLE(CFG_RRM_ENABLE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fRrmEnable,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4288,8 +4281,6 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("unable to get vht_enable2x2");
 
-	user_cfg->mcc_to_scc_switch_mode =
-		hdd_ctx->config->WlanMccToSccSwitchMode;
 	user_cfg->sub_20_mhz_enabled = cds_is_sub_20_mhz_enabled();
 	user_cfg->is_sta_sap_scc_allowed_on_dfs_chan =
 		hdd_ctx->config->sta_sap_scc_on_dfs_chan;
@@ -4346,6 +4337,23 @@ void hdd_update_11k_offload_params(struct hdd_config *config,
 		config->neighbor_report_offload_cache_timeout;
 	csr_config->neighbor_report_offload.max_neighbor_report_req_cap =
 		config->neighbor_report_offload_max_req_cap;
+}
+
+static
+QDF_STATUS hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
+						tSmeConfigParams *sme_cfg)
+{
+	uint8_t mcc_to_scc_switch = 0;
+
+	if (QDF_STATUS_SUCCESS !=
+	    ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
+					       &mcc_to_scc_switch)) {
+		hdd_err("can't get mcc to scc switch");
+		return QDF_STATUS_E_FAILURE;
+	}
+	sme_cfg->csrConfig.cc_switch_mode = mcc_to_scc_switch;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -4545,9 +4553,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	smeConfig->csrConfig.enable_tx_ldpc = pConfig->enable_tx_ldpc;
 	smeConfig->csrConfig.enable_rx_ldpc = pConfig->enable_rx_ldpc;
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	smeConfig->csrConfig.cc_switch_mode = pConfig->WlanMccToSccSwitchMode;
-#endif
 
 	smeConfig->csrConfig.max_amsdu_num = pConfig->max_amsdu_num;
 
@@ -4634,7 +4639,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->btm_max_attempt_cnt;
 	smeConfig->csrConfig.btm_sticky_time =
 			hdd_ctx->config->btm_sticky_time;
-
+	hdd_set_sme_cfgs_related_to_plcy_mgr(hdd_ctx, smeConfig);
 	hdd_update_11k_offload_params(hdd_ctx->config,
 					&smeConfig->csrConfig);
 

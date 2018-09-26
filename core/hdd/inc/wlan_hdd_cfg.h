@@ -2328,40 +2328,6 @@ enum hdd_dot11_mode {
 #define CFG_AP_STA_SECURITY_SEPERATION_MAX     (1)
 #define CFG_AP_STA_SECURITY_SEPERATION_DEFAULT (0)
 
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-/*
- * <ini>
- * gWlanMccToSccSwitchMode - Control SAP channel.
- * @Min: 0
- * @Max: 5
- * @Default: 0
- *
- * This ini is used to override SAP channel.
- * If gWlanMccToSccSwitchMode = 0: disabled.
- * If gWlanMccToSccSwitchMode = 1: Enable switch.
- * If gWlainMccToSccSwitchMode = 2: Force switch with SAP restart.
- * If gWlainMccToSccSwitchMode = 3: Force switch without SAP restart.
- * If gWlainMccToSccSwitchMode = 4: Switch using
- *		fav channel(s)without SAP restart.
- * If gWlainMccToSccSwitchMode = 5: Force switch without SAP restart.MCC allowed
- *					in exceptional cases.
- * If gWlainMccToSccSwitchMode = 6: Force Switch without SAP restart only in
-					user preffered band.
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE          "gWlanMccToSccSwitchMode"
-#define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MIN      (QDF_MCC_TO_SCC_SWITCH_DISABLE)
-#define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MAX \
-		   (QDF_MCC_TO_SCC_SWITCH_MAX - 1)
-#define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_DEFAULT  (QDF_MCC_TO_SCC_SWITCH_DISABLE)
-#endif
-
 #define CFG_DISABLE_PACKET_FILTER		"gDisablePacketFilter"
 #define CFG_DISABLE_PACKET_FILTER_MIN		(0)
 #define CFG_DISABLE_PACKET_FILTER_MAX		(1)
@@ -7730,9 +7696,6 @@ struct hdd_config {
 	bool enable_ip_tcp_udp_checksum_offload;
 	uint32_t IpaConfig;
 	bool IpaClkScalingEnable;
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	uint32_t WlanMccToSccSwitchMode;
-#endif
 	uint8_t disableDFSChSwitch;
 	uint32_t TxPower2g;
 	uint32_t TxPower5g;

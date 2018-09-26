@@ -77,6 +77,7 @@
 #include "wlan_utility.h"
 #include <wlan_p2p_ucfg_api.h>
 #include "sir_api.h"
+#include "wlan_policy_mgr_ucfg.h"
 #include "sme_api.h"
 #include "wlan_hdd_regulatory.h"
 #include <wlan_ipa_ucfg_api.h>
@@ -2855,6 +2856,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *hdd_sta_ctx;
 	struct hdd_adapter *sta_adapter;
+	uint8_t mcc_to_scc_switch = 0;
 	struct hdd_adapter *ap_adapter = wlan_hdd_get_adapter_from_vdev(
 					psoc, vdev_id);
 	if (!ap_adapter) {
@@ -2907,6 +2909,8 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 			goto sap_restart;
 		}
 	}
+	ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
+					   &mcc_to_scc_switch);
 	/*
 	 * Check if STA's channel is DFS or passive or part of LTE avoided
 	 * channel list. In that case move SAP to other band if DBS is
@@ -2916,7 +2920,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	intf_ch = wlansap_check_cc_intf(hdd_ap_ctx->sap_context);
 	hdd_info("intf_ch: %d", intf_ch);
 	if (QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION !=
-		hdd_ctx->config->WlanMccToSccSwitchMode) {
+		mcc_to_scc_switch) {
 		if (QDF_IS_STATUS_ERROR(
 			policy_mgr_valid_sap_conc_channel_check(
 				hdd_ctx->psoc,
@@ -4560,6 +4564,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	int32_t i;
 	struct hdd_config *iniConfig;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t mcc_to_scc_switch = 0;
 	tSmeConfigParams *sme_config;
 	bool MFPCapable = false;
 	bool MFPRequired = false;
@@ -4696,9 +4701,11 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	ucfg_mlme_get_sap_chan_switch_rate_enabled(hdd_ctx->psoc, &val);
 	pConfig->chan_switch_hostapd_rate_enabled = val;
 
-	if (iniConfig->WlanMccToSccSwitchMode !=
-			QDF_MCC_TO_SCC_SWITCH_DISABLE) {
-		pConfig->chan_switch_hostapd_rate_enabled = false;
+	if (QDF_STATUS_SUCCESS ==
+	    ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
+					       &mcc_to_scc_switch)) {
+		if (mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE)
+			pConfig->chan_switch_hostapd_rate_enabled = false;
 	}
 	pConfig->enOverLapCh = iniConfig->gEnableOverLapCh;
 
@@ -4778,8 +4785,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		}
 
 		if (iniConfig->ignoreCAC ||
-		    ((iniConfig->WlanMccToSccSwitchMode !=
-		    QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
+		    ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
 		    iniConfig->sta_sap_scc_on_dfs_chan))
 			ignore_cac = 1;
 
@@ -4981,7 +4987,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	if ((0 == hdd_ctx->config->conc_custom_rule1) ||
 		(hdd_ctx->config->conc_custom_rule1 &&
 		QDF_SAP_MODE == adapter->device_mode))
-		pConfig->cc_switch_mode = iniConfig->WlanMccToSccSwitchMode;
+		pConfig->cc_switch_mode = mcc_to_scc_switch;
 #endif
 
 	if (!(ssid && qdf_str_len(PRE_CAC_SSID) == ssid_len &&

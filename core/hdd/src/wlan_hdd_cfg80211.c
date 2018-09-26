@@ -118,6 +118,7 @@
 #include <wlan_hdd_active_tos.h>
 #include <wlan_hdd_sar_limits.h>
 #include <wlan_hdd_ota_test.h>
+#include "wlan_policy_mgr_ucfg.h"
 #include "wlan_mlme_public_struct.h"
 #include "wlan_extscan_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
@@ -1746,6 +1747,7 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx;
 	tsap_config_t *sap_config;
 	tpWLAN_SAPEventCB acs_event_callback;
+	uint8_t mcc_to_scc_switch = 0;
 	int status;
 
 	if (!adapter) {
@@ -1766,12 +1768,14 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 		sap_config->channel = hdd_ctx->acs_policy.acs_channel;
 	else
 		sap_config->channel = AUTO_CHANNEL_SELECT;
+	ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
+					   &mcc_to_scc_switch);
 	/*
 	 * No DFS SCC is allowed in Auto use case. Hence not
 	 * calling DFS override
 	 */
 	if (QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION !=
-	    hdd_ctx->config->WlanMccToSccSwitchMode) {
+	    mcc_to_scc_switch) {
 		status = wlan_hdd_sap_cfg_dfs_override(adapter);
 		if (status < 0)
 			return status;
