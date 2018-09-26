@@ -39,6 +39,8 @@
 #define CFG_NAN_ALL
 #endif
 
+#include "wlan_pmo_cfg.h"
+
 /* Maintain Alphabetic order here while adding components */
 #define CFG_ALL \
 	CFG_CONVERGED_ALL \
@@ -46,4 +48,5 @@
 	CFG_MLME_ALL \
 	CFG_NAN_ALL \
 	CFG_P2P_ALL \
+	CFG_PMO_ALL \
 	CFG_TDLS_ALL
