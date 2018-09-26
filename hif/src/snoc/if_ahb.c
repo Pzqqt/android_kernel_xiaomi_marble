@@ -42,7 +42,7 @@
 #endif
 
 #define HIF_IC_CE0_IRQ_OFFSET 4
-#define HIF_IC_MAX_IRQ 54
+#define HIF_IC_MAX_IRQ 52
 
 static uint8_t ic_irqnum[HIF_IC_MAX_IRQ];
 /* integrated chip irq names */
@@ -63,8 +63,6 @@ const char *ic_irqname[HIF_IC_MAX_IRQ] = {
 "ce9",
 "ce10",
 "ce11",
-"ce12",
-"ce13",
 "host2wbm-desc-feed",
 "host2reo-re-injection",
 "host2reo-command",

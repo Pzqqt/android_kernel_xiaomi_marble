@@ -71,7 +71,7 @@ typedef void *hif_handle_t;
  * defining irq nubers that can be used by external modules like datapath
  */
 enum hif_ic_irq {
-	host2wbm_desc_feed = 18,
+	host2wbm_desc_feed = 16,
 	host2reo_re_injection,
 	host2reo_command,
 	host2rxdma_monitor_ring3,
