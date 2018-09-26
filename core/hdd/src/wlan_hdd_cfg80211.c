@@ -5171,6 +5171,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_CLEAR_HE_OM_CTRL_CONFIG] = {
 			.type = NLA_FLAG},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TX_SUPPDU] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -6536,6 +6538,16 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_CLEAR_HE_OM_CTRL_CONFIG])
 		sme_reset_he_om_ctrl(hdd_ctx->mac_handle);
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TX_SUPPDU;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u8(tb[cmd_id]);
+		hdd_debug("Configure Tx SU PPDU enable %d", cfg_val);
+		if (cfg_val)
+			sme_config_su_ppdu_queue(adapter->session_id, true);
+		else
+			sme_config_su_ppdu_queue(adapter->session_id, false);
+	}
 
 	if (update_sme_cfg)
 		sme_update_config(mac_handle, sme_config);

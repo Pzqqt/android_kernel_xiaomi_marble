@@ -12907,6 +12907,25 @@ void sme_set_he_tx_bf_cbf_rates(uint8_t session_id)
 		sme_err("send_unit_test_cmd returned %d", status);
 }
 
+void sme_config_su_ppdu_queue(uint8_t session_id, bool enable)
+{
+	uint32_t su_ppdu_enable[] = {69, 1, 1, 1};
+	uint32_t su_ppdu_disable[] = {69, 1, 1, 0};
+	QDF_STATUS status;
+
+	if (enable) {
+		sme_debug("Send Tx SU PPDU queue ENABLE cmd to FW");
+		status = wma_form_unit_test_cmd_and_send(session_id, 0x48, 4,
+							 su_ppdu_enable);
+	} else {
+		sme_debug("Send Tx SU PPDU queue DISABLE cmd to FW");
+		status = wma_form_unit_test_cmd_and_send(session_id, 0x48, 4,
+							 su_ppdu_disable);
+	}
+	if (QDF_STATUS_SUCCESS != status)
+		sme_err("send_unit_test_cmd returned %d", status);
+}
+
 int sme_update_he_tx_stbc_cap(tHalHandle hal, uint8_t session_id, int value)
 {
 	int ret;

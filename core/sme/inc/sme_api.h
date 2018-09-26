@@ -2581,6 +2581,15 @@ int sme_update_he_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 void sme_set_he_tx_bf_cbf_rates(uint8_t session_id);
 
 /**
+ * sme_config_su_ppdu_queue() - Configures SU PPDU queue enable/disable in FW
+ * @session_id: SME session id
+ * @enable: Enable/Disable config
+ *
+ * Return: None
+ */
+void sme_config_su_ppdu_queue(uint8_t session_id, bool enable);
+
+/**
  * sme_update_he_mcs() - sets the HE MCS based on user request
  * @hal: Pointer to HAL
  * @session_id: SME session id
@@ -2789,6 +2798,10 @@ static inline int sme_update_he_tx_bfee_nsts(mac_handle_t hal, uint8_t session_i
 }
 
 static inline void sme_set_he_tx_bf_cbf_rates(uint8_t session_id)
+{
+}
+
+static inline void sme_config_su_ppdu_queue(uint8_t session_id, bool enable)
 {
 }
 #endif
