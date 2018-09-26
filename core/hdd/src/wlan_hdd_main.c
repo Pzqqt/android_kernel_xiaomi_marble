@@ -3913,7 +3913,8 @@ static QDF_STATUS hdd_register_interface(struct hdd_adapter *adapter, bool rtnl_
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS hdd_sme_open_session_callback(uint8_t session_id)
+QDF_STATUS hdd_sme_open_session_callback(uint8_t session_id,
+					 QDF_STATUS qdf_status)
 {
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
@@ -3929,7 +3930,10 @@ QDF_STATUS hdd_sme_open_session_callback(uint8_t session_id)
 		hdd_err("NULL adapter for %d", session_id);
 		return QDF_STATUS_E_INVAL;
 	}
-	set_bit(SME_SESSION_OPENED, &adapter->event_flags);
+
+	if (qdf_status == QDF_STATUS_SUCCESS)
+		set_bit(SME_SESSION_OPENED, &adapter->event_flags);
+
 	qdf_event_set(&adapter->qdf_session_open_event);
 	hdd_debug("session %d opened", adapter->session_id);
 
@@ -4150,6 +4154,12 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 		errno = -ETIMEDOUT;
 		set_bit(SME_SESSION_OPENED, &adapter->event_flags);
 		goto hdd_vdev_destroy_procedure;
+	}
+
+	if (!test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
+		hdd_err("Session failed to open due to vdev create failure");
+		errno = -EINVAL;
+		goto objmgr_vdev_destroy_procedure;
 	}
 
 	/* firmware ready for component communication, raise vdev_ready event */

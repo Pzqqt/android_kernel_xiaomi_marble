@@ -2742,7 +2742,8 @@ static inline int wlan_hdd_nl_init(struct hdd_context *hdd_ctx)
 	return nl_srv_init(hdd_ctx->wiphy);
 }
 #endif
-QDF_STATUS hdd_sme_open_session_callback(uint8_t session_id);
+QDF_STATUS hdd_sme_open_session_callback(uint8_t session_id,
+					 QDF_STATUS qdf_status);
 QDF_STATUS hdd_sme_close_session_callback(uint8_t session_id);
 
 int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,

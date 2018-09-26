@@ -4071,7 +4071,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 				  uint32_t roamId,
 				  eRoamCmdStatus u1, eCsrRoamResult u2)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS ret, status = QDF_STATUS_SUCCESS;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 
 	WLAN_HOST_DIAG_EVENT_DEF(connectionStatus,
@@ -4147,10 +4147,12 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 		   && (u2 == eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS)) {
 		pSession->connectedProfile.operationChannel =
 			roam_info->channelChangeRespEvent->newChannelNumber;
-	} else if ((u1 == eCSR_ROAM_SESSION_OPENED) &&
-			(u2 == eCSR_ROAM_RESULT_NONE)) {
+	} else if (u1 == eCSR_ROAM_SESSION_OPENED) {
+		ret = (u2 == eCSR_ROAM_RESULT_SUCCESS) ?
+		      QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+
 		if (pSession->session_open_cb)
-			pSession->session_open_cb(sessionId);
+			pSession->session_open_cb(sessionId, ret);
 		else
 			sme_err("session_open_cb is not registered");
 	}
@@ -16943,16 +16945,23 @@ QDF_STATUS csr_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 }
 
 static QDF_STATUS csr_roam_session_opened(tpAniSirGlobal pMac,
+					  QDF_STATUS qdf_status,
 					  uint32_t sessionId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct csr_roam_info roamInfo;
+	struct csr_roam_info roam_info;
 
-	qdf_mem_set(&roamInfo, sizeof(struct csr_roam_info), 0);
-	status = csr_roam_call_callback(pMac, sessionId, &roamInfo, 0,
-					eCSR_ROAM_SESSION_OPENED,
-					eCSR_ROAM_RESULT_NONE);
+	qdf_mem_set(&roam_info, sizeof(struct csr_roam_info), 0);
 
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		status = csr_roam_call_callback(pMac, sessionId, &roam_info, 0,
+						eCSR_ROAM_SESSION_OPENED,
+						eCSR_ROAM_RESULT_FAILURE);
+	} else {
+		status = csr_roam_call_callback(pMac, sessionId, &roam_info, 0,
+						eCSR_ROAM_SESSION_OPENED,
+						eCSR_ROAM_RESULT_SUCCESS);
+	}
 	return status;
 }
 
@@ -16969,26 +16978,31 @@ QDF_STATUS csr_process_add_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 	rsp = (struct add_sta_self_params *) pMsg;
 	sme_debug("Add Sta self rsp status = %d", rsp->status);
 
-	if (QDF_STATUS_SUCCESS == rsp->status &&
-		(WMI_VDEV_TYPE_STA == rsp->type ||
-		(WMI_VDEV_TYPE_AP == rsp->type &&
-		 WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE == rsp->sub_type))) {
-		sme_debug("send SET IE msg to PE");
-		msg = qdf_mem_malloc(sizeof(*msg));
-		if (NULL == msg) {
-			sme_err("Memory allocation failed");
-			return QDF_STATUS_E_NOMEM;
-		}
+	if (QDF_IS_STATUS_SUCCESS(rsp->status)) {
+		if ((WMI_VDEV_TYPE_STA == rsp->type ||
+		    (WMI_VDEV_TYPE_AP == rsp->type &&
+		     WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE == rsp->sub_type))) {
+			sme_debug("send SET IE msg to PE");
+			msg = qdf_mem_malloc(sizeof(*msg));
+			if (NULL == msg) {
+				sme_err("Memory allocation failed");
+				return QDF_STATUS_E_NOMEM;
+			}
 
-		msg->msg_type = eWNI_SME_SET_IE_REQ;
-		msg->session_id = rsp->session_id;
-		msg->length = sizeof(*msg);
-		status = umac_send_mb_message_to_mac(msg);
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			sme_err("Failed to send down the set IE req ");
+			msg->msg_type = eWNI_SME_SET_IE_REQ;
+			msg->session_id = rsp->session_id;
+			msg->length = sizeof(*msg);
+			status = umac_send_mb_message_to_mac(msg);
+			if (!QDF_IS_STATUS_SUCCESS(status))
+				sme_err("Failed to send down the set IE req ");
+		}
 	}
 
-	csr_roam_session_opened(pMac, rsp->session_id);
+	csr_roam_session_opened(pMac, rsp->status, rsp->session_id);
+
+	if (QDF_IS_STATUS_ERROR(rsp->status))
+		csr_cleanup_session(pMac, rsp->session_id);
+
 	return QDF_STATUS_SUCCESS;
 }
 
