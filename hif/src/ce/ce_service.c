@@ -359,6 +359,7 @@ ce_send(struct CE_handle *copyeng,
 
 	return status;
 }
+qdf_export_symbol(ce_send);
 
 unsigned int ce_sendlist_sizeof(void)
 {
@@ -887,6 +888,7 @@ ce_recv_buf_enqueue(struct CE_handle *copyeng,
 	return hif_state->ce_services->ce_recv_buf_enqueue(copyeng,
 			per_recv_context, buffer);
 }
+qdf_export_symbol(ce_recv_buf_enqueue);
 
 void
 ce_send_watermarks_set(struct CE_handle *copyeng,
@@ -1043,6 +1045,7 @@ ce_cancel_send_next(struct CE_handle *copyeng,
 		(copyeng, per_CE_contextp, per_transfer_contextp,
 		 bufferp, nbytesp, transfer_idp, toeplitz_hash_result);
 }
+qdf_export_symbol(ce_cancel_send_next);
 
 int
 ce_completed_send_next(struct CE_handle *copyeng,
@@ -1765,6 +1768,7 @@ ce_send_cb_register(struct CE_handle *copyeng,
 	hif_state->ce_services->ce_per_engine_handler_adjust(CE_state,
 							disable_interrupts);
 }
+qdf_export_symbol(ce_send_cb_register);
 
 /**
  * ce_recv_cb_register(): register completion handler
@@ -1802,6 +1806,7 @@ ce_recv_cb_register(struct CE_handle *copyeng,
 	hif_state->ce_services->ce_per_engine_handler_adjust(CE_state,
 							disable_interrupts);
 }
+qdf_export_symbol(ce_recv_cb_register);
 
 /**
  * ce_watermark_cb_register(): register completion handler

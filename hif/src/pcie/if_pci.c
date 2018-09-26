@@ -2000,7 +2000,6 @@ int hif_pci_bus_configure(struct hif_softc *hif_sc)
 
 		HIF_INFO_MED("%s: hif_set_hia done", __func__);
 
-		hif_register_bmi_callbacks(hif_sc);
 	}
 
 	if (((hif_sc->target_info.target_type == TARGET_TYPE_QCA8074) ||
