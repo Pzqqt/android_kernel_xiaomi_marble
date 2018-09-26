@@ -52,12 +52,16 @@ enum {
 	ENC_FMT_NONE,
 	DEC_FMT_NONE = ENC_FMT_NONE,
 	ENC_FMT_SBC = ASM_MEDIA_FMT_SBC,
+	DEC_FMT_SBC = ASM_MEDIA_FMT_SBC,
 	ENC_FMT_AAC_V2 = ASM_MEDIA_FMT_AAC_V2,
+	DEC_FMT_AAC_V2 = ASM_MEDIA_FMT_AAC_V2,
 	ENC_FMT_APTX = ASM_MEDIA_FMT_APTX,
 	ENC_FMT_APTX_HD = ASM_MEDIA_FMT_APTX_HD,
 	ENC_FMT_CELT = ASM_MEDIA_FMT_CELT,
 	ENC_FMT_LDAC = ASM_MEDIA_FMT_LDAC,
 	ENC_FMT_APTX_ADAPTIVE = ASM_MEDIA_FMT_APTX_ADAPTIVE,
+	DEC_FMT_APTX_ADAPTIVE = ASM_MEDIA_FMT_APTX_ADAPTIVE,
+	DEC_FMT_MP3 = ASM_MEDIA_FMT_MP3,
 };
 
 enum {
@@ -203,8 +207,10 @@ struct msm_dai_q6_dai_data {
 	u32 channels;
 	u32 bitwidth;
 	u32 cal_mode;
-	u32 afe_in_channels;
-	u16 afe_in_bitformat;
+	u32 afe_rx_in_channels;
+	u16 afe_rx_in_bitformat;
+	u32 afe_tx_out_channels;
+	u16 afe_tx_out_bitformat;
 	struct afe_enc_config enc_config;
 	struct afe_dec_config dec_config;
 	union afe_port_config port_config;
@@ -2049,7 +2055,7 @@ static int msm_dai_q6_prepare(struct snd_pcm_substream *substream,
 		if (dai_data->enc_config.format != ENC_FMT_NONE) {
 			int bitwidth = 0;
 
-			switch (dai_data->afe_in_bitformat) {
+			switch (dai_data->afe_rx_in_bitformat) {
 			case SNDRV_PCM_FORMAT_S32_LE:
 				bitwidth = 32;
 				break;
@@ -2065,26 +2071,41 @@ static int msm_dai_q6_prepare(struct snd_pcm_substream *substream,
 				 __func__, dai_data->enc_config.format);
 			rc = afe_port_start_v2(dai->id, &dai_data->port_config,
 					       dai_data->rate,
-					       dai_data->afe_in_channels,
+					       dai_data->afe_rx_in_channels,
 					       bitwidth,
 					       &dai_data->enc_config, NULL);
 			if (rc < 0)
 				pr_err("%s: afe_port_start_v2 failed error: %d\n",
 					__func__, rc);
 		} else if (dai_data->dec_config.format != DEC_FMT_NONE) {
+			int bitwidth = 0;
+
 			/*
-			 * A dummy Tx session is established in LPASS to
-			 * get the link statistics from BTSoC.
-			 * Depacketizer extracts the bit rate levels and
-			 * transmits them to the encoder on the Rx path.
-			 * Since this is a dummy decoder - channels, bit
-			 * width are sent as 0 and encoder config is NULL.
-			 * This could be updated in the future if there is
-			 * a complete Tx path set up that uses this decoder.
+			 * If bitwidth is not configured set default value to
+			 * zero, so that decoder port config uses slim device
+			 * bit width value in afe decoder config.
 			 */
+			switch (dai_data->afe_tx_out_bitformat) {
+			case SNDRV_PCM_FORMAT_S32_LE:
+				bitwidth = 32;
+				break;
+			case SNDRV_PCM_FORMAT_S24_LE:
+				bitwidth = 24;
+				break;
+			case SNDRV_PCM_FORMAT_S16_LE:
+				bitwidth = 16;
+				break;
+			default:
+				bitwidth = 0;
+				break;
+			}
+			pr_debug("%s: calling AFE_PORT_START_V2 with dec format: %d\n",
+				 __func__, dai_data->dec_config.format);
 			rc = afe_port_start_v2(dai->id, &dai_data->port_config,
-					       dai_data->rate, 0, 0, NULL,
-					       &dai_data->dec_config);
+					       dai_data->rate,
+					       dai_data->afe_tx_out_channels,
+					       bitwidth,
+					       NULL, &dai_data->dec_config);
 			if (rc < 0) {
 				pr_err("%s: fail to open AFE port 0x%x\n",
 					__func__, dai->id);
@@ -2902,17 +2923,17 @@ static int msm_dai_q6_afe_enc_cfg_put(struct snd_kcontrol *kcontrol,
 	return ret;
 }
 
-static const char *const afe_input_chs_text[] = {"Zero", "One", "Two"};
+static const char *const afe_chs_text[] = {"Zero", "One", "Two"};
 
-static const struct soc_enum afe_input_chs_enum[] = {
-	SOC_ENUM_SINGLE_EXT(3, afe_input_chs_text),
+static const struct soc_enum afe_chs_enum[] = {
+	SOC_ENUM_SINGLE_EXT(3, afe_chs_text),
 };
 
-static const char *const afe_input_bit_format_text[] = {"S16_LE", "S24_LE",
+static const char *const afe_bit_format_text[] = {"S16_LE", "S24_LE",
 							"S32_LE"};
 
-static const struct soc_enum afe_input_bit_format_enum[] = {
-	SOC_ENUM_SINGLE_EXT(3, afe_input_bit_format_text),
+static const struct soc_enum afe_bit_format_enum[] = {
+	SOC_ENUM_SINGLE_EXT(3, afe_bit_format_text),
 };
 
 static int msm_dai_q6_afe_input_channel_get(struct snd_kcontrol *kcontrol,
@@ -2921,9 +2942,9 @@ static int msm_dai_q6_afe_input_channel_get(struct snd_kcontrol *kcontrol,
 	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
 
 	if (dai_data) {
-		ucontrol->value.integer.value[0] = dai_data->afe_in_channels;
+		ucontrol->value.integer.value[0] = dai_data->afe_rx_in_channels;
 		pr_debug("%s:afe input channel = %d\n",
-			  __func__, dai_data->afe_in_channels);
+			  __func__, dai_data->afe_rx_in_channels);
 	}
 
 	return 0;
@@ -2935,9 +2956,9 @@ static int msm_dai_q6_afe_input_channel_put(struct snd_kcontrol *kcontrol,
 	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
 
 	if (dai_data) {
-		dai_data->afe_in_channels = ucontrol->value.integer.value[0];
+		dai_data->afe_rx_in_channels = ucontrol->value.integer.value[0];
 		pr_debug("%s: updating afe input channel : %d\n",
-			__func__, dai_data->afe_in_channels);
+			__func__, dai_data->afe_rx_in_channels);
 	}
 
 	return 0;
@@ -2954,7 +2975,7 @@ static int msm_dai_q6_afe_input_bit_format_get(
 		return -EINVAL;
 	}
 
-	switch (dai_data->afe_in_bitformat) {
+	switch (dai_data->afe_rx_in_bitformat) {
 	case SNDRV_PCM_FORMAT_S32_LE:
 		ucontrol->value.integer.value[0] = 2;
 		break;
@@ -2984,19 +3005,104 @@ static int msm_dai_q6_afe_input_bit_format_put(
 	}
 	switch (ucontrol->value.integer.value[0]) {
 	case 2:
-		dai_data->afe_in_bitformat = SNDRV_PCM_FORMAT_S32_LE;
+		dai_data->afe_rx_in_bitformat = SNDRV_PCM_FORMAT_S32_LE;
 		break;
 	case 1:
-		dai_data->afe_in_bitformat = SNDRV_PCM_FORMAT_S24_LE;
+		dai_data->afe_rx_in_bitformat = SNDRV_PCM_FORMAT_S24_LE;
 		break;
 	case 0:
 	default:
-		dai_data->afe_in_bitformat = SNDRV_PCM_FORMAT_S16_LE;
+		dai_data->afe_rx_in_bitformat = SNDRV_PCM_FORMAT_S16_LE;
 		break;
 	}
 	pr_debug("%s: updating afe input bit format : %d\n",
-		__func__, dai_data->afe_in_bitformat);
+		__func__, dai_data->afe_rx_in_bitformat);
 
+	return 0;
+}
+
+static int msm_dai_q6_afe_output_bit_format_get(
+			struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+
+	switch (dai_data->afe_tx_out_bitformat) {
+	case SNDRV_PCM_FORMAT_S32_LE:
+		ucontrol->value.integer.value[0] = 2;
+		break;
+	case SNDRV_PCM_FORMAT_S24_LE:
+		ucontrol->value.integer.value[0] = 1;
+		break;
+	case SNDRV_PCM_FORMAT_S16_LE:
+	default:
+		ucontrol->value.integer.value[0] = 0;
+		break;
+	}
+	pr_debug("%s: afe output bit format : %ld\n",
+		  __func__, ucontrol->value.integer.value[0]);
+
+	return 0;
+}
+
+static int msm_dai_q6_afe_output_bit_format_put(
+			struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+	switch (ucontrol->value.integer.value[0]) {
+	case 2:
+		dai_data->afe_tx_out_bitformat = SNDRV_PCM_FORMAT_S32_LE;
+		break;
+	case 1:
+		dai_data->afe_tx_out_bitformat = SNDRV_PCM_FORMAT_S24_LE;
+		break;
+	case 0:
+	default:
+		dai_data->afe_tx_out_bitformat = SNDRV_PCM_FORMAT_S16_LE;
+		break;
+	}
+	pr_debug("%s: updating afe output bit format : %d\n",
+		__func__, dai_data->afe_tx_out_bitformat);
+
+	return 0;
+}
+
+static int msm_dai_q6_afe_output_channel_get(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	if (dai_data) {
+		ucontrol->value.integer.value[0] =
+			dai_data->afe_tx_out_channels;
+		pr_debug("%s:afe output channel = %d\n",
+			  __func__, dai_data->afe_tx_out_channels);
+	}
+	return 0;
+}
+
+static int msm_dai_q6_afe_output_channel_put(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	if (dai_data) {
+		dai_data->afe_tx_out_channels =
+			ucontrol->value.integer.value[0];
+		pr_debug("%s: updating afe output channel : %d\n",
+			__func__, dai_data->afe_tx_out_channels);
+	}
 	return 0;
 }
 
@@ -3041,10 +3147,10 @@ static const struct snd_kcontrol_new afe_enc_config_controls[] = {
 		.get = msm_dai_q6_afe_enc_cfg_get,
 		.put = msm_dai_q6_afe_enc_cfg_put,
 	},
-	SOC_ENUM_EXT("AFE Input Channels", afe_input_chs_enum[0],
+	SOC_ENUM_EXT("AFE Input Channels", afe_chs_enum[0],
 		     msm_dai_q6_afe_input_channel_get,
 		     msm_dai_q6_afe_input_channel_put),
-	SOC_ENUM_EXT("AFE Input Bit Format", afe_input_bit_format_enum[0],
+	SOC_ENUM_EXT("AFE Input Bit Format", afe_bit_format_enum[0],
 		     msm_dai_q6_afe_input_bit_format_get,
 		     msm_dai_q6_afe_input_bit_format_put),
 	SOC_SINGLE_EXT("AFE Scrambler Mode",
@@ -3066,7 +3172,7 @@ static int msm_dai_q6_afe_dec_cfg_get(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
 	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
-	int format_size = 0;
+	u32 format_size = 0;
 
 	if (!dai_data) {
 		pr_err("%s: Invalid dai data\n", __func__);
@@ -3077,10 +3183,25 @@ static int msm_dai_q6_afe_dec_cfg_get(struct snd_kcontrol *kcontrol,
 	memcpy(ucontrol->value.bytes.data,
 		&dai_data->dec_config.format,
 		format_size);
-	memcpy(ucontrol->value.bytes.data + format_size,
-		&dai_data->dec_config.abr_dec_cfg,
-		sizeof(struct afe_abr_dec_cfg_t));
+	switch (dai_data->dec_config.format) {
+	case DEC_FMT_AAC_V2:
+		memcpy(ucontrol->value.bytes.data + format_size,
+			&dai_data->dec_config.data,
+			sizeof(struct asm_aac_dec_cfg_v2_t));
+		break;
+	case DEC_FMT_SBC:
+	case DEC_FMT_MP3:
+		/* No decoder specific data available */
+		break;
+	default:
+		pr_debug("%s: Default decoder config for %d format: Expect abr_dec_cfg\n",
+				__func__, dai_data->dec_config.format);
+		memcpy(ucontrol->value.bytes.data + format_size,
+			&dai_data->dec_config.abr_dec_cfg,
+			sizeof(struct afe_abr_dec_cfg_t));
 
+		break;
+	}
 	return 0;
 }
 
@@ -3088,7 +3209,7 @@ static int msm_dai_q6_afe_dec_cfg_put(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_value *ucontrol)
 {
 	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
-	int format_size = 0;
+	u32 format_size = 0;
 
 	if (!dai_data) {
 		pr_err("%s: Invalid dai data\n", __func__);
@@ -3101,10 +3222,26 @@ static int msm_dai_q6_afe_dec_cfg_put(struct snd_kcontrol *kcontrol,
 	memcpy(&dai_data->dec_config.format,
 		ucontrol->value.bytes.data,
 		format_size);
-	memcpy(&dai_data->dec_config.abr_dec_cfg,
-		ucontrol->value.bytes.data + format_size,
-		sizeof(struct afe_abr_dec_cfg_t));
-
+	pr_debug("%s: Received decoder config for %d format\n",
+			__func__, dai_data->dec_config.format);
+	switch (dai_data->dec_config.format) {
+	case DEC_FMT_AAC_V2:
+		memcpy(&dai_data->dec_config.data,
+			ucontrol->value.bytes.data + format_size,
+			sizeof(struct asm_aac_dec_cfg_v2_t));
+		break;
+	case DEC_FMT_SBC:
+	case DEC_FMT_MP3:
+		/* No decoder specific data available */
+		break;
+	default:
+		pr_debug("%s: Default decoder config for %d format: Expect abr_dec_cfg\n",
+				__func__, dai_data->dec_config.format);
+		memcpy(&dai_data->dec_config.abr_dec_cfg,
+			ucontrol->value.bytes.data + format_size,
+			sizeof(struct afe_abr_dec_cfg_t));
+		break;
+	}
 	return 0;
 }
 
@@ -3118,6 +3255,21 @@ static const struct snd_kcontrol_new afe_dec_config_controls[] = {
 		.get = msm_dai_q6_afe_dec_cfg_get,
 		.put = msm_dai_q6_afe_dec_cfg_put,
 	},
+	{
+		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
+			   SNDRV_CTL_ELEM_ACCESS_INACTIVE),
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+		.name = "SLIM_9_TX Decoder Config",
+		.info = msm_dai_q6_afe_dec_cfg_info,
+		.get = msm_dai_q6_afe_dec_cfg_get,
+		.put = msm_dai_q6_afe_dec_cfg_put,
+	},
+	SOC_ENUM_EXT("AFE Output Channels", afe_chs_enum[0],
+		     msm_dai_q6_afe_output_channel_get,
+		     msm_dai_q6_afe_output_channel_put),
+	SOC_ENUM_EXT("AFE Output Bit Format", afe_bit_format_enum[0],
+		     msm_dai_q6_afe_output_bit_format_get,
+		     msm_dai_q6_afe_output_bit_format_put),
 };
 
 static int msm_dai_q6_slim_rx_drift_info(struct snd_kcontrol *kcontrol,
@@ -3294,6 +3446,17 @@ static int msm_dai_q6_dai_probe(struct snd_soc_dai *dai)
 	case SLIMBUS_7_TX:
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				 snd_ctl_new1(&afe_dec_config_controls[0],
+				 dai_data));
+		break;
+	case SLIMBUS_9_TX:
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				 snd_ctl_new1(&afe_dec_config_controls[1],
+				 dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				 snd_ctl_new1(&afe_dec_config_controls[2],
+				 dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				 snd_ctl_new1(&afe_dec_config_controls[3],
 				 dai_data));
 		break;
 	case RT_PROXY_DAI_001_RX:
@@ -4284,7 +4447,8 @@ static struct snd_soc_dai_driver msm_dai_q6_slimbus_tx_dai[] = {
 			.stream_name = "Slimbus9 Capture",
 			.aif_name = "SLIMBUS_9_TX",
 			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
-			SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_96000 |
+			SNDRV_PCM_RATE_44100 | SNDRV_PCM_RATE_48000 |
+			SNDRV_PCM_RATE_88200 | SNDRV_PCM_RATE_96000 |
 			SNDRV_PCM_RATE_192000,
 			.formats = SNDRV_PCM_FMTBIT_S16_LE |
 				   SNDRV_PCM_FMTBIT_S24_LE |
