@@ -1181,7 +1181,13 @@ static int audio_aio_buf_add_shared(struct q6audio_aio *audio, u32 dir,
 			kfree(buf_node);
 			return -EINVAL;
 		}
-		extract_meta_out_info(audio, buf_node, 1);
+		ret = extract_meta_out_info(audio, buf_node, 1);
+		if (ret) {
+			pr_debug("%s: extract meta failed with %d\n",
+				  __func__, ret);
+			kfree(buf_node);
+			return ret;
+		}
 		/* Not a EOS buffer */
 		if (!(buf_node->meta_info.meta_in.nflags & AUDIO_DEC_EOS_SET)) {
 			spin_lock_irqsave(&audio->dsp_lock, flags);
@@ -1683,7 +1689,7 @@ static long audio_aio_ioctl(struct file *file, unsigned int cmd,
 	case AUDIO_SET_CONFIG: {
 		struct msm_audio_config config;
 
-		pr_err("%s[%pK]:AUDIO_SET_CONFIG\n", __func__, audio);
+		pr_debug("%s[%pK]:AUDIO_SET_CONFIG\n", __func__, audio);
 		mutex_lock(&audio->lock);
 		if (copy_from_user(&config, (void *)arg, sizeof(config))) {
 			pr_err(
@@ -2010,7 +2016,7 @@ static long audio_aio_compat_ioctl(struct file *file, unsigned int cmd,
 			mutex_unlock(&audio->lock);
 			break;
 		}
-		pr_err("%s[%pK]:AUDIO_SET_CONFIG\n", __func__, audio);
+		pr_debug("%s[%pK]:AUDIO_SET_CONFIG\n", __func__, audio);
 		if (copy_from_user(&config_32, (void *)arg,
 					sizeof(config_32))) {
 			pr_err("%s: copy_from_user for AUDIO_SET_CONFIG_32 failed\n",
