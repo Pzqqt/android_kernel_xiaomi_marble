@@ -1866,6 +1866,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		 * in another place
 		 */
 		ap_ctx->bss_stop_reason = BSS_STOP_REASON_INVALID;
+		ap_ctx->ap_active = false;
 		goto stopbss;
 
 	case eSAP_DFS_CAC_START:
@@ -2556,8 +2557,10 @@ stopbss:
 		 * not be touched since they are now subject to being deleted
 		 * by another thread
 		 */
-		if (eSAP_STOP_BSS_EVENT == sapEvent)
+		if (eSAP_STOP_BSS_EVENT == sapEvent) {
 			qdf_event_set(&hostapd_state->qdf_stop_bss_event);
+			hdd_bus_bw_compute_timer_try_stop(hdd_ctx);
+		}
 
 		hdd_ipa_set_tx_flow_info();
 	}
