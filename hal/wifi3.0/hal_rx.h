@@ -3083,7 +3083,7 @@ int hal_rx_chain_msdu_links(struct hal_soc *hal_soc, qdf_nbuf_t msdu,
 		prev_msdu_link_ptr->
 			next_msdu_link_desc_addr_info.buffer_addr_39_32
 			= ((msdu_link_ptr_info->msdu_link_buf_info.paddr
-						>> 32) &&
+						>> 32) &
 				BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_MASK);
 		prev_msdu_link_ptr->
 			next_msdu_link_desc_addr_info.sw_buffer_cookie =
