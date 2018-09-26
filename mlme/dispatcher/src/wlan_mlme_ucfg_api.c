@@ -122,6 +122,24 @@ ucfg_mlme_get_sta_keep_alive_period(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
+ucfg_mlme_get_dfs_master_capability(struct wlan_objmgr_psoc *psoc,
+				    bool *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_ENABLE_DFS_MASTER_CAPABILITY);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.dfs_cfg.dfs_master_capable;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 ucfg_mlme_get_pmkid_modes(struct wlan_objmgr_psoc *psoc,
 			  uint32_t *val)
 {

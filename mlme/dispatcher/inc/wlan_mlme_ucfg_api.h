@@ -524,6 +524,17 @@ QDF_STATUS
 ucfg_mlme_get_sta_keep_alive_period(struct wlan_objmgr_psoc *psoc,
 				    uint32_t *val);
 
+/*
+ * ucfg_mlme_get_dfs_master_capability() - Get the dfs master capability
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_dfs_master_capability(struct wlan_objmgr_psoc *psoc,
+				    bool *val);
+
 /**
  * ucfg_mlme_get_pmkid_modes() - Get PMKID modes
  * @psoc: pointer to psoc object

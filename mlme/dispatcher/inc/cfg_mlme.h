@@ -31,6 +31,7 @@
 #include "cfg_mlme_he_caps.h"
 #include "cfg_mlme_lfr.h"
 #include "cfg_mlme_obss_ht40.h"
+#include "cfg_mlme_dfs.h"
 #include "cfg_mlme_mbo.h"
 #include "cfg_mlme_vht_caps.h"
 #include "cfg_qos.h"
@@ -51,6 +52,7 @@
 #define CFG_MLME_ALL \
 	CFG_ACS_ALL \
 	CFG_CHAINMASK_ALL \
+	CFG_DFS_ALL \
 	CFG_EDCA_PARAMS_ALL \
 	CFG_FEATURE_FLAG_ALL \
 	CFG_GENERIC_ALL \

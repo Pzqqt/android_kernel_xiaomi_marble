@@ -549,6 +549,13 @@ static void mlme_init_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
 					 CFG_INI_DISABLE_HIGH_HT_RX_MCS_2x2);
 }
 
+static void mlme_init_dfs_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_dfs_cfg *dfs_cfg)
+{
+	dfs_cfg->dfs_master_capable = cfg_get(psoc,
+					      CFG_ENABLE_DFS_MASTER_CAPABILITY);
+}
+
 static void mlme_init_feature_flag_in_cfg(
 				struct wlan_objmgr_psoc *psoc,
 				struct wlan_mlme_feature_flag *feature_flags)
@@ -1169,6 +1176,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_mbo_cfg(psoc, &mlme_cfg->mbo_cfg);
 	mlme_init_qos_cfg(psoc, &mlme_cfg->qos_mlme_params);
 	mlme_init_rates_in_cfg(psoc, &mlme_cfg->rates);
+	mlme_init_dfs_cfg(psoc, &mlme_cfg->dfs_cfg);
 	mlme_init_sap_protection_cfg(psoc, &mlme_cfg->sap_protection_cfg);
 	mlme_init_vht_cap_cfg(psoc, &mlme_cfg->vht_caps.vht_cap_info);
 	mlme_init_chainmask_cfg(psoc, &mlme_cfg->chainmask_cfg);

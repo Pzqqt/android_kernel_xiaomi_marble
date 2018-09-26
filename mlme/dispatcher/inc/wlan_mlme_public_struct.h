@@ -267,6 +267,14 @@ struct wlan_mlme_cfg_sap {
 };
 
 /**
+ * struct wlan_mlme_dfs_cfg - DFS Capabilities related config items
+ * @dfs_master_capable: Is DFS master mode support enabled
+ */
+struct wlan_mlme_dfs_cfg {
+	bool dfs_master_capable;
+};
+
+/**
  * struct wlan_mlme_mbo - Multiband Operation related ini configs
  * @mbo_candidate_rssi_thres:
  * @mbo_current_rssi_thres:
@@ -1096,6 +1104,7 @@ struct wlan_mlme_wep_cfg {
  * @qos_mlme_params: QOS CFG Items
  * @rates: Rates related cfg items
  * @product_details: product details related CFG Items
+ * @dfs_cfg: DFS related CFG Items
  * @sap_protection_cfg: SAP erp protection related CFG items
  * @sap_cfg: sap CFG items
  * @sta: sta CFG Items
@@ -1121,6 +1130,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_qos qos_mlme_params;
 	struct wlan_mlme_rates rates;
 	struct wlan_mlme_product_details_cfg product_details;
+	struct wlan_mlme_dfs_cfg dfs_cfg;
 	struct wlan_mlme_sap_protection sap_protection_cfg;
 	struct wlan_mlme_cfg_sap sap_cfg;
 	struct wlan_mlme_sta_cfg sta;
