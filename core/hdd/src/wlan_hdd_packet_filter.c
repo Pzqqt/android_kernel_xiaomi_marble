@@ -42,7 +42,7 @@ int hdd_enable_default_pkt_filters(struct hdd_adapter *adapter)
 		return 0;
 	}
 
-	filters = hdd_ctx->config->packet_filters_bitmap;
+	filters = ucfg_pmo_get_pkt_filter_bitmap(hdd_ctx->psoc);
 
 	while (filters != 0) {
 		if (filters & 0x1) {
@@ -79,7 +79,7 @@ int hdd_disable_default_pkt_filters(struct hdd_adapter *adapter)
 		return 0;
 	}
 
-	filters = hdd_ctx->config->packet_filters_bitmap;
+	filters = ucfg_pmo_get_pkt_filter_bitmap(hdd_ctx->psoc);
 
 	while (filters != 0) {
 		if (filters & 0x1) {

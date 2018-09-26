@@ -52,6 +52,7 @@
 #include "ol_fw.h"
 
 #include "wma_internal.h"
+#include "wlan_pmo_ucfg_api.h"
 
 /**
  * wma_unified_modem_power_state() - set modem power state to fw
@@ -583,28 +584,20 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 		rx_wake_policy = WMI_STA_PS_RX_WAKE_POLICY_POLL_UAPSD;
 		tx_wake_threshold = WMI_STA_PS_TX_WAKE_THRESHOLD_NEVER;
 
-		if (wlan_cfg_get_int(mac, WNI_CFG_MAX_PS_POLL,
-				     &cfg_data_val) != QDF_STATUS_SUCCESS) {
-			QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-				  "Failed to get value for WNI_CFG_MAX_PS_POLL");
-		}
-		if (cfg_data_val)
-			pspoll_count = (uint32_t) cfg_data_val;
+		if (ucfg_pmo_get_max_ps_poll(mac->psoc))
+			pspoll_count =
+				(uint32_t)ucfg_pmo_get_max_ps_poll(mac->psoc);
 		else
 			pspoll_count = WMA_DEFAULT_MAX_PSPOLL_BEFORE_WAKE;
 
 		psmode = WMI_STA_PS_MODE_ENABLED;
 	} else {
 		/* Ps Poll Wake Policy */
-		if (wlan_cfg_get_int(mac, WNI_CFG_MAX_PS_POLL,
-				     &cfg_data_val) != QDF_STATUS_SUCCESS) {
-			QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-				  "Failed to get value for WNI_CFG_MAX_PS_POLL");
-		}
-		if (cfg_data_val) {
+		if (ucfg_pmo_get_max_ps_poll(mac->psoc)) {
 			/* Ps Poll is enabled */
 			rx_wake_policy = WMI_STA_PS_RX_WAKE_POLICY_POLL_UAPSD;
-			pspoll_count = (uint32_t) cfg_data_val;
+			pspoll_count =
+				(uint32_t)ucfg_pmo_get_max_ps_poll(mac->psoc);
 			tx_wake_threshold = WMI_STA_PS_TX_WAKE_THRESHOLD_NEVER;
 		} else {
 			rx_wake_policy = WMI_STA_PS_RX_WAKE_POLICY_WAKE;

@@ -121,6 +121,8 @@
 #include "wlan_mlme_public_struct.h"
 #include "wlan_extscan_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "wlan_pmo_cfg.h"
+#include "cfg_ucfg_api.h"
 
 #include "wlan_crypto_global_api.h"
 #include "wlan_nl_to_crypto_params.h"
@@ -5554,7 +5556,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		override_li = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LISTEN_INTERVAL]);
 
-		if (override_li > CFG_ENABLE_DYNAMIC_DTIM_MAX) {
+		if (override_li > cfg_max(CFG_PMO_ENABLE_DYNAMIC_DTIM)) {
 			hdd_err_rl("Invalid value for listen interval - %d",
 				   override_li);
 			return -EINVAL;
@@ -7167,12 +7169,13 @@ __wlan_hdd_cfg80211_set_ns_offload(struct wiphy *wiphy,
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status)
 		return status;
-	if (!hdd_ctx->config->fhostNSOffload) {
+
+	if (!ucfg_pmo_is_ns_offloaded(hdd_ctx->psoc)) {
 		hdd_err("ND Offload not supported");
 		return -EINVAL;
 	}
 
-	if (!hdd_ctx->config->active_mode_offload) {
+	if (!ucfg_pmo_is_active_mode_offloaded(hdd_ctx->psoc)) {
 		hdd_warn("Active mode offload is disabled");
 		return -EINVAL;
 	}

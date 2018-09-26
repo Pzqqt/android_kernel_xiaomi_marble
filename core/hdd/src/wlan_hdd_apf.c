@@ -637,7 +637,7 @@ __wlan_hdd_cfg80211_apf_offload(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (!hdd_ctx->apf_supported) {
+	if (!ucfg_pmo_is_apf_enabled(hdd_ctx->psoc)) {
 		hdd_err("APF is not supported or disabled through INI");
 		return -ENOTSUPP;
 	}

@@ -61,7 +61,7 @@ wlan_hdd_mc_addr_list_info_debugfs(struct hdd_context *hdd_ctx,
 	struct pmo_mc_addr_list mc_addr_list = {0};
 	QDF_STATUS status;
 
-	if (!hdd_ctx->config->fEnableMCAddrList) {
+	if (!ucfg_pmo_is_mc_addr_list_enabled(hdd_ctx->psoc)) {
 		ret = scnprintf(buf, buf_avail_len,
 				"\nMC addr ini is disabled\n");
 		if (ret > 0)

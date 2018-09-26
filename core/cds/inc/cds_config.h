@@ -60,15 +60,9 @@ enum active_apf_mode {
  * struct cds_config_info - Place Holder for cds configuration
  * @max_station: Max station supported
  * @max_bssid: Max Bssid Supported
- * @powersave_offload_enabled: Indicate if powersave offload is enabled
  * @sta_maxlimod_dtim: station max listen interval
- * @sta_mod_dtim: station mode DTIM
- * @sta_dynamic_dtim: station dynamic DTIM
  * @driver_type: Enumeration of Driver Type whether FTM or Mission mode
- * @wow_enable: Indicate whether wow is enabled or not
  * currently rest of bits are not used
- * @ssdp: Indicate ssdp is enabled or not
- * @enable_mc_list : To Check if Multicast list filtering is enabled in FW
  * @dfs_phyerr_filter_offload: DFS Phyerror Filtering offload status from ini
  * Indicates whether support is enabled or not
  * @ap_disable_intrabss_fwd: pass intra-bss-fwd info to txrx module
@@ -94,7 +88,6 @@ enum active_apf_mode {
  * @num_dp_rx_threads: number of dp rx threads to be configured
  * @enable_dp_rx_threads: enable dp rx threads
  * @is_lpass_enabled: Indicate whether LPASS is enabled or not
- * @bool apf_packet_filter_enable; Indicate apf filter enabled or not
  * @tx_chain_mask_cck: Tx chain mask enabled or not
  * @self_gen_frm_pwr: Self gen from power
  * @sub_20_channel_width: Sub 20 MHz ch width, ini intersected with fw cap
@@ -104,7 +97,6 @@ enum active_apf_mode {
  *	mode for uc packets
  * @active_mc_bc_apf_mode: Setting that determines how APF is applied in
  *	active mode for MC/BC packets
- * @auto_power_save_fail_mode: auto detect power save failure mode
  * @ito_repeat_count: Indicates ito repeated count
  * @force_target_assert_enabled: Indicate whether target assert enabled or not
  * @bandcapability: Configured band by user
@@ -117,14 +109,8 @@ enum active_apf_mode {
 struct cds_config_info {
 	uint16_t max_station;
 	uint16_t max_bssid;
-	uint8_t powersave_offload_enabled;
 	uint8_t sta_maxlimod_dtim;
-	uint8_t sta_mod_dtim;
-	uint8_t sta_dynamic_dtim;
 	enum qdf_driver_type driver_type;
-	uint8_t wow_enable;
-	bool ssdp;
-	bool enable_mc_list;
 	uint8_t dfs_phyerr_filter_offload;
 	uint8_t ap_disable_intrabss_fwd;
 	uint8_t ap_maxoffload_peers;
@@ -153,7 +139,6 @@ struct cds_config_info {
 #ifdef WLAN_FEATURE_LPSS
 	bool is_lpass_enabled;
 #endif
-	bool apf_packet_filter_enable;
 	uint16_t self_gen_frm_pwr;
 	enum cfg_sub_20_channel_width sub_20_channel_width;
 	bool flow_steering_enabled;
@@ -163,7 +148,6 @@ struct cds_config_info {
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
 	enum active_apf_mode active_uc_apf_mode;
 	enum active_apf_mode active_mc_bc_apf_mode;
-	enum pmo_auto_pwr_detect_failure_mode auto_power_save_fail_mode;
 	uint8_t ito_repeat_count;
 	bool force_target_assert_enabled;
 	uint8_t bandcapability;

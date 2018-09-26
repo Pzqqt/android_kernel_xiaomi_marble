@@ -104,6 +104,8 @@
 #include "wlan_mlme_public_struct.h"
 #include "cfg_ucfg_api.h"
 #include "cfg_mlme_threshold.h"
+#include "wlan_pmo_cfg.h"
+#include "wlan_pmo_ucfg_api.h"
 
 #define HDD_FINISH_ULA_TIME_OUT         800
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
@@ -5198,14 +5200,14 @@ static int __iw_setint_getnone(struct net_device *dev,
 		ret = hdd_handle_pdev_reset(adapter, set_value);
 		break;
 	case WE_SET_MODULATED_DTIM:
-		if ((set_value < CFG_ENABLE_MODULATED_DTIM_MIN) ||
-				(set_value > CFG_ENABLE_MODULATED_DTIM_MAX)) {
+		if ((set_value < cfg_max(CFG_PMO_ENABLE_MODULATED_DTIM)) ||
+		    (set_value > cfg_max(CFG_PMO_ENABLE_MODULATED_DTIM))) {
 			hdd_err("Invalid gEnableModuleDTIM value %d",
 				set_value);
 			return -EINVAL;
 		}
 
-		hdd_ctx->config->enableModulatedDTIM = set_value;
+		ucfg_pmo_set_sta_mod_dtim(hdd_ctx->psoc, set_value);
 		break;
 	default:
 		hdd_debug("Invalid sub command %d", sub_cmd);

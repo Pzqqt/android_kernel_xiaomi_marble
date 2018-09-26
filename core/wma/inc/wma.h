@@ -693,7 +693,6 @@ struct wma_version_info {
  * @wow_enable_cmd_sent: is wow enable command sent to fw
  * @deauth_enable: is deauth wakeup enable/disable
  * @disassoc_enable: is disassoc wakeup enable/disable
- * @bmiss_enable: is bmiss wakeup enable/disable
  * @gtk_pdev_enable: is GTK based wakeup enable/disable
  * @gtk_err_enable: is GTK error wakeup enable/disable
  * @lphb_cache: lphb cache
@@ -707,7 +706,6 @@ struct wma_wow {
 	bool wow_enable_cmd_sent;
 	bool deauth_enable;
 	bool disassoc_enable;
-	bool bmiss_enable;
 	bool gtk_err_enable[WMA_MAX_SUPPORTED_BSS];
 };
 
@@ -1110,8 +1108,6 @@ struct wma_valid_channels {
  * @pe_roam_synch_cb: pe callback for firmware Roam Sync events
  * @wmi_cmd_rsp_wake_lock: wmi command response wake lock
  * @wmi_cmd_rsp_runtime_lock: wmi command response bus lock
- * @apf_enabled: Is APF enabled in firmware?
- * @apf_packet_filter_enable: Is APF filter enabled om host?
  * @active_uc_apf_mode: Setting that determines how APF is applied in
  *   active mode for uc packets
  * @active_mc_bc_apf_mode: Setting that determines how APF is applied in
@@ -1261,8 +1257,6 @@ typedef struct {
 		enum sir_roam_op_code reason);
 	qdf_wake_lock_t wmi_cmd_rsp_wake_lock;
 	qdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
-	bool apf_enabled;
-	bool apf_packet_filter_enable;
 	enum active_apf_mode active_uc_apf_mode;
 	enum active_apf_mode active_mc_bc_apf_mode;
 	struct wma_ini_config ini_config;

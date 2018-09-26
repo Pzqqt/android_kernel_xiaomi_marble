@@ -3138,6 +3138,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	bool val = 0;
 	void *cds_context;
 	target_resource_config *wlan_res_cfg;
+	enum pmo_wow_enable_type wow_enable;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -3292,10 +3293,9 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	wma_handle->max_station = cds_cfg->max_station;
 	wma_handle->max_bssid = cds_cfg->max_bssid;
-	wma_handle->ssdp = cds_cfg->ssdp;
-	wma_handle->enable_mc_list = cds_cfg->enable_mc_list;
-	wma_handle->apf_packet_filter_enable =
-		cds_cfg->apf_packet_filter_enable;
+	wma_handle->ssdp = ucfg_pmo_is_ssdp_enabled(wma_handle->psoc);
+	wma_handle->enable_mc_list =
+		ucfg_pmo_is_mc_addr_list_enabled(wma_handle->psoc);
 	wma_handle->active_uc_apf_mode = cds_cfg->active_uc_apf_mode;
 	wma_handle->active_mc_bc_apf_mode = cds_cfg->active_mc_bc_apf_mode;
 	wma_handle->link_stats_results = NULL;
@@ -3506,10 +3506,12 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	 * 3 - Legacy Powersave + Deepsleep Enabled
 	 * 4 - QPower + Deepsleep Enabled
 	 */
-	wma_handle->powersave_mode = cds_cfg->powersave_offload_enabled;
+	wma_handle->powersave_mode =
+			ucfg_pmo_power_save_offload_enabled(wma_handle->psoc);
 	wma_handle->staMaxLIModDtim = cds_cfg->sta_maxlimod_dtim;
-	wma_handle->staModDtim = cds_cfg->sta_mod_dtim;
-	wma_handle->staDynamicDtim = cds_cfg->sta_dynamic_dtim;
+	wma_handle->staModDtim = ucfg_pmo_get_sta_mod_dtim(wma_handle->psoc);
+	wma_handle->staDynamicDtim =
+			ucfg_pmo_get_sta_dynamic_dtim(wma_handle->psoc);
 
 	/*
 	 * Value of cds_cfg->wow_enable can be,
@@ -3519,10 +3521,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	 * 3 - Enable both magic patter and pattern byte match on
 	 *     all interfaces.
 	 */
+	wow_enable = ucfg_pmo_get_wow_enable(wma_handle->psoc);
 	wma_handle->wow.magic_ptrn_enable =
-		(cds_cfg->wow_enable & 0x01) ? true : false;
+		(wow_enable & 0x01) ? true : false;
 	wma_handle->ptrn_match_enable_all_vdev =
-		(cds_cfg->wow_enable & 0x02) ? true : false;
+		(wow_enable & 0x02) ? true : false;
 
 	/* register for install key completion event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -3599,7 +3602,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_handle->bandcapability = cds_cfg->bandcapability;
 
 	/* Register PWR_SAVE_FAIL event only in case of recovery(1) */
-	if (cds_cfg->auto_power_save_fail_mode ==
+	if (ucfg_pmo_get_auto_power_fail_mode(wma_handle->psoc) ==
 	    PMO_FW_TO_SEND_WOW_IND_ON_PWR_FAILURE) {
 		wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			wmi_pdev_chip_pwr_save_failure_detect_event_id,
@@ -5557,7 +5560,6 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	tgt_cfg.lpss_support = wma_handle->lpss_support;
 #endif /* WLAN_FEATURE_LPSS */
 	tgt_cfg.ap_arpns_support = wma_handle->ap_arpns_support;
-	tgt_cfg.apf_enabled = wma_handle->apf_enabled;
 	tgt_cfg.dfs_cac_offload = wma_handle->is_dfs_offloaded;
 	tgt_cfg.rcpi_enabled = wma_handle->rcpi_enabled;
 	wma_update_ra_rate_limit(wma_handle, &tgt_cfg);
@@ -5651,11 +5653,11 @@ static void wma_init_scan_fw_mode_config(struct wlan_objmgr_psoc *psoc,
 #ifdef FEATURE_WLAN_RA_FILTERING
 static void wma_update_ra_limit(tp_wma_handle wma_handle)
 {
-	if (wma_handle->apf_enabled)
+	if (ucfg_pmo_is_apf_enabled(wma_handle->psoc))
 		wma_handle->IsRArateLimitEnabled = false;
 }
 #else
-static void wma_update_ra__limit(tp_wma_handle handle)
+static void wma_update_ra_limit(tp_wma_handle handle)
 {
 }
 #endif
@@ -5885,8 +5887,6 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	wma_handle->ap_arpns_support =
 		wmi_service_enabled(wmi_handle, wmi_service_ap_arpns_offload);
 
-	wma_handle->apf_enabled = (wma_handle->apf_packet_filter_enable &&
-		wmi_service_enabled(wmi_handle, wmi_service_apf_offload));
 	wma_update_ra_limit(wma_handle);
 
 	if (wmi_service_enabled(wmi_handle, wmi_service_csa_offload)) {

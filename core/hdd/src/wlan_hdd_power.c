@@ -802,9 +802,8 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 		hdd_debug("invoking sme_dhcp_done_ind");
 		sme_dhcp_done_ind(hdd_ctx->mac_handle, adapter->session_id);
 
-		if (!hdd_ctx->config->fhostArpOffload) {
-			hdd_debug("Offload not enabled ARPOffload=%d",
-				  hdd_ctx->config->fhostArpOffload);
+		if (!ucfg_pmo_is_arp_offload_enabled(hdd_ctx->psoc)) {
+			hdd_debug("Offload not enabled");
 			goto exit;
 		}
 
@@ -2131,7 +2130,7 @@ int hdd_set_qpower_config(struct hdd_context *hddctx,
 {
 	QDF_STATUS status;
 
-	if (!hddctx->config->enablePowersaveOffload) {
+	if (!ucfg_pmo_get_power_save_mode(hddctx->psoc)) {
 		hdd_err("qpower is disabled in configuration");
 		return -EINVAL;
 	}
@@ -2148,7 +2147,7 @@ int hdd_set_qpower_config(struct hdd_context *hddctx,
 		return -EINVAL;
 	}
 
-	if (hddctx->config->nMaxPsPoll) {
+	if (ucfg_pmo_get_max_ps_poll(hddctx->psoc)) {
 		if ((qpower == PS_QPOWER_NODEEPSLEEP) ||
 				(qpower == PS_LEGACY_NODEEPSLEEP))
 			qpower = PS_LEGACY_NODEEPSLEEP;

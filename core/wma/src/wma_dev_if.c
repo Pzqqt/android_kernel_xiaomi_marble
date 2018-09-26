@@ -2419,23 +2419,11 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	wma_handle->interfaces[vdev_id].ptrn_match_enable =
 		wma_handle->ptrn_match_enable_all_vdev ? true : false;
 
-	if (wlan_cfg_get_int(mac, WNI_CFG_WOWLAN_DEAUTH_ENABLE, &cfg_val)
-	    != QDF_STATUS_SUCCESS)
-		wma_handle->wow.deauth_enable = true;
-	else
-		wma_handle->wow.deauth_enable = cfg_val ? true : false;
+	wma_handle->wow.deauth_enable =
+		ucfg_pmo_is_wowlan_deauth_enabled(wma_handle->psoc);
 
-	if (wlan_cfg_get_int(mac, WNI_CFG_WOWLAN_DISASSOC_ENABLE, &cfg_val)
-	    != QDF_STATUS_SUCCESS)
-		wma_handle->wow.disassoc_enable = true;
-	else
-		wma_handle->wow.disassoc_enable = cfg_val ? true : false;
-
-	if (wlan_cfg_get_int(mac, WNI_CFG_WOWLAN_MAX_MISSED_BEACON, &cfg_val)
-	    != QDF_STATUS_SUCCESS)
-		wma_handle->wow.bmiss_enable = true;
-	else
-		wma_handle->wow.bmiss_enable = cfg_val ? true : false;
+	wma_handle->wow.disassoc_enable =
+		ucfg_pmo_is_wowlan_disassoc_enabled(wma_handle->psoc);
 
 	qdf_mem_copy(wma_handle->interfaces[vdev_id].addr,
 		     self_sta_req->self_mac_addr,

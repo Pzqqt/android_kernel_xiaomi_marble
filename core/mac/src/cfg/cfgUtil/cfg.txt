@@ -2638,20 +2638,6 @@ NONE
 #ENUM ENABLE  1
 #ENUM DISABLE 0
 
-
-* *********************************************************
-*
-* Power Save Configuration
-*
-WNI_CFG_MAX_PS_POLL    I    4    5
-V    RW    NP
-LIM
-0     255     0
-NV    RW    NP
-LIM
-0     255     0
-
-
 WNI_CFG_NUM_BEACON_PER_RSSI_AVERAGE    I    4    5
 V    RW    NP
 LIM
@@ -2734,28 +2720,6 @@ NONE
 NV    RW    NP
 NONE
 0     1     0
-
-
-WNI_CFG_WOWLAN_MAX_MISSED_BEACON   I    4    5
-V    RW    NP
-NONE
-0    65535    40
-NV    RW    NP
-NONE
-0    65535    40
-
-*
-* Timeout value in units of us. It requests
-* hardware to unconditionally wake up after
-* it has stayed in WoWLAN mode for some time.
-*
-WNI_CFG_WOWLAN_MAX_SLEEP_PERIOD   I    4    5
-V    RW    NP
-NONE
-0    65535    65535
-NV    RW    NP
-NONE
-0    65535    65535
 
 
 *
@@ -3641,19 +3605,6 @@ HAL
 V    RW    NP
 HAL
 1    65535    20
-
-*
-* MC Addr List power control will be enabled if value is set to 1
-*
-*
-*
-WNI_CFG_ENABLE_MC_ADDR_LIST  I   4   0
-V    RW    NP
-HAL
-0    1     0
-V    RW    NP
-HAL
-0    1     0
 
 *
 * UC Filter will be enabled if value is set to 1

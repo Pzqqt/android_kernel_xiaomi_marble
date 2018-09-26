@@ -1840,7 +1840,7 @@ static int hdd_enable_ext_wow(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	if (hdd_ctx->config->extWowGotoSuspend) {
+	if (ucfg_pmo_extwow_is_goto_suspend_enabled(hdd_ctx->psoc)) {
 		hdd_info("Received ready to ExtWoW. Going to suspend");
 
 		rc = wlan_hdd_cfg80211_suspend_wlan(hdd_ctx->wiphy, NULL);
@@ -1857,6 +1857,7 @@ static int hdd_enable_ext_wow(struct hdd_adapter *adapter,
 			goto exit;
 		}
 	}
+
 exit:
 	osif_request_put(request);
 	return rc;
@@ -1868,6 +1869,7 @@ static int hdd_enable_ext_wow_parser(struct hdd_adapter *adapter, int vdev_id,
 	tSirExtWoWParams params;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int rc;
+	uint8_t pin1, pin2;
 
 	rc = wlan_hdd_validate_context(hdd_ctx);
 	if (rc)
@@ -1896,9 +1898,9 @@ static int hdd_enable_ext_wow_parser(struct hdd_adapter *adapter, int vdev_id,
 	}
 
 	params.vdev_id = vdev_id;
-	params.wakeup_pin_num = hdd_ctx->config->extWowApp1WakeupPinNumber |
-				(hdd_ctx->config->extWowApp2WakeupPinNumber
-					<< 8);
+	pin1 = ucfg_pmo_extwow_app1_wakeup_pin_num(hdd_ctx->psoc);
+	pin2 = ucfg_pmo_extwow_app2_wakeup_pin_num(hdd_ctx->psoc);
+	params.wakeup_pin_num = pin1 | (pin2 << 8);
 
 	return hdd_enable_ext_wow(adapter, &params);
 }
@@ -2028,33 +2030,38 @@ static int hdd_set_app_type2_parser(struct hdd_adapter *adapter,
 	qdf_mem_copy(params.rc4_key, rc4_key, params.rc4_key_len);
 
 	params.vdev_id = adapter->session_id;
-	params.tcp_src_port = (params.tcp_src_port != 0) ?
-		params.tcp_src_port : hdd_ctx->config->extWowApp2TcpSrcPort;
-	params.tcp_dst_port = (params.tcp_dst_port != 0) ?
-		params.tcp_dst_port : hdd_ctx->config->extWowApp2TcpDstPort;
-	params.keepalive_init = (params.keepalive_init != 0) ?
-		params.keepalive_init : hdd_ctx->config->
-						extWowApp2KAInitPingInterval;
-	params.keepalive_min =
-		(params.keepalive_min != 0) ?
-			params.keepalive_min :
-			hdd_ctx->config->extWowApp2KAMinPingInterval;
-	params.keepalive_max =
-		(params.keepalive_max != 0) ?
-			params.keepalive_max :
-			hdd_ctx->config->extWowApp2KAMaxPingInterval;
-	params.keepalive_inc =
-		(params.keepalive_inc != 0) ?
-			params.keepalive_inc :
-			hdd_ctx->config->extWowApp2KAIncPingInterval;
-	params.tcp_tx_timeout_val =
-		(params.tcp_tx_timeout_val != 0) ?
-			params.tcp_tx_timeout_val :
-			hdd_ctx->config->extWowApp2TcpTxTimeout;
-	params.tcp_rx_timeout_val =
-		(params.tcp_rx_timeout_val != 0) ?
-			params.tcp_rx_timeout_val :
-			hdd_ctx->config->extWowApp2TcpRxTimeout;
+
+	if (!params.tcp_src_port)
+		params.tcp_src_port =
+		  ucfg_pmo_extwow_app2_tcp_src_port(hdd_ctx->psoc);
+
+	if (!params.tcp_dst_port)
+		params.tcp_dst_port =
+		  ucfg_pmo_extwow_app2_tcp_dst_port(hdd_ctx->psoc);
+
+	if (!params.keepalive_init)
+		params.keepalive_init =
+		  ucfg_pmo_extwow_app2_init_ping_interval(hdd_ctx->psoc);
+
+	if (!params.keepalive_min)
+		params.keepalive_min =
+		  ucfg_pmo_extwow_app2_min_ping_interval(hdd_ctx->psoc);
+
+	if (!params.keepalive_max)
+		params.keepalive_max =
+		  ucfg_pmo_extwow_app2_max_ping_interval(hdd_ctx->psoc);
+
+	if (!params.keepalive_inc)
+		params.keepalive_inc =
+		  ucfg_pmo_extwow_app2_inc_ping_interval(hdd_ctx->psoc);
+
+	if (!params.tcp_tx_timeout_val)
+		params.tcp_tx_timeout_val =
+		  ucfg_pmo_extwow_app2_tcp_tx_timeout(hdd_ctx->psoc);
+
+	if (!params.tcp_rx_timeout_val)
+		params.tcp_rx_timeout_val =
+		  ucfg_pmo_extwow_app2_tcp_rx_timeout(hdd_ctx->psoc);
 
 	hdd_debug("%pM %.16s %u %u %u %u %u %u %u %u %u %u %u %u %u",
 		  gateway_mac, rc4_key, params.ip_id,
@@ -6301,7 +6308,7 @@ static int hdd_set_rx_filter(struct hdd_adapter *adapter, bool action,
 		return -EINVAL;
 	}
 
-	if (!hdd_ctx->config->fEnableMCAddrList) {
+	if (!ucfg_pmo_is_mc_addr_list_enabled(hdd_ctx->psoc)) {
 		hdd_warn("mc addr ini is disabled");
 		return -EINVAL;
 	}

@@ -198,7 +198,6 @@ struct wma_tgt_cfg {
 #endif
 	uint8_t ap_arpns_support;
 	uint32_t fine_time_measurement_cap;
-	bool apf_enabled;
 #ifdef FEATURE_WLAN_RA_FILTERING
 	bool is_ra_rate_limit_enabled;
 #endif

@@ -3753,21 +3753,6 @@ enum station_keepalive_method {
 #define CFG_AP_DATA_AVAIL_POLL_PERIOD_MAX       (WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD_STAMAX)
 #define CFG_AP_DATA_AVAIL_POLL_PERIOD_DEFAULT   (WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD_STADEF)
 
-#define CFG_ENABLE_HOST_ARPOFFLOAD_NAME         "hostArpOffload"
-#define CFG_ENABLE_HOST_ARPOFFLOAD_MIN          (0)
-#define CFG_ENABLE_HOST_ARPOFFLOAD_MAX          (1)
-#define CFG_ENABLE_HOST_ARPOFFLOAD_DEFAULT      (1)
-
-#define CFG_ENABLE_HOST_SSDP_NAME              "ssdp"
-#define CFG_ENABLE_HOST_SSDP_MIN               (0)
-#define CFG_ENABLE_HOST_SSDP_MAX               (1)
-#define CFG_ENABLE_HOST_SSDP_DEFAULT           (1)
-
-#define CFG_ENABLE_HOST_NSOFFLOAD_NAME         "hostNSOffload"
-#define CFG_ENABLE_HOST_NSOFFLOAD_MIN          (0)
-#define CFG_ENABLE_HOST_NSOFFLOAD_MAX          (1)
-#define CFG_ENABLE_HOST_NSOFFLOAD_DEFAULT      (1)
-
 /*
  * <ini>
  * gHwFilterMode - configure hardware filter for DTIM mode
@@ -4676,18 +4661,6 @@ enum hdd_link_speed_rpt_type {
 #define HDD_MULTICAST_FILTER_LIST_CLEAR                        0x05
 
 /*
- * Enable Dynamic DTIM
- * Options
- * 0 -Disable DynamicDTIM
- * 1 to 5 - SLM will switch to DTIM specified here when host suspends and
- *          switch DTIM1 when host resumes
- */
-#define CFG_ENABLE_DYNAMIC_DTIM_NAME            "gEnableDynamicDTIM"
-#define CFG_ENABLE_DYNAMIC_DTIM_MIN        (0)
-#define CFG_ENABLE_DYNAMIC_DTIM_MAX        (9)
-#define CFG_ENABLE_DYNAMIC_DTIM_DEFAULT    (0)
-
-/*
  * <ini>
  * gConfigVCmodeBitmap - Bitmap for operating voltage corner mode
  * @Min: 0x00000000
@@ -5010,15 +4983,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_THROTTLE_DUTY_CYCLE_LEVEL3_MIN     (0)
 #define CFG_THROTTLE_DUTY_CYCLE_LEVEL3_MAX     (100)
 #define CFG_THROTTLE_DUTY_CYCLE_LEVEL3_DEFAULT (94)
-
-/*
- * Enable/Disable Modulated DTIM feature
- * Default: Disable
- */
-#define CFG_ENABLE_MODULATED_DTIM_NAME       "gEnableModulatedDTIM"
-#define CFG_ENABLE_MODULATED_DTIM_MIN        (0)
-#define CFG_ENABLE_MODULATED_DTIM_MAX        (5)
-#define CFG_ENABLE_MODULATED_DTIM_DEFAULT    (0)
 
 /*
  * <ini>
@@ -5823,25 +5787,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_MEMORY_DEBUG_DEFAULT          (1)
 #endif
 
-/*
- * <ini>
- * g_auto_detect_power_failure_mode - auto detect power save failure mode
- * @Min: PMO_FW_TO_CRASH_ON_PWR_FAILURE
- * @Max: PMO_AUTO_PWR_FAILURE_DETECT_DISABLE
- * @Default: PMO_FW_TO_CRASH_ON_PWR_FAILURE
- *
- * This ini specifies the behavior of FW in case of
- * CHIP_POWER_SAVE_FAIL_DETECTED event
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_AUTO_DETECT_POWER_FAIL_MODE_NAME    "g_auto_detect_power_failure_mode"
-#define CFG_AUTO_DETECT_POWER_FAIL_MODE_DEFAULT (PMO_FW_TO_CRASH_ON_PWR_FAILURE)
-#define CFG_AUTO_DETECT_POWER_FAIL_MODE_MIN     (PMO_FW_TO_CRASH_ON_PWR_FAILURE)
-#define CFG_AUTO_DETECT_POWER_FAIL_MODE_MAX \
-					(PMO_AUTO_PWR_FAILURE_DETECT_DISABLE)
 /*
  * <ini>
  * gMaxAmsduNum - Max number of MSDU's in aggregate
@@ -6661,38 +6606,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_MAX_MSDUS_PER_RXIND_MIN           (4)
 #define CFG_MAX_MSDUS_PER_RXIND_MAX           (32)
 #define CFG_MAX_MSDUS_PER_RXIND_DEFAULT       (32)
-/*
- * In static display use case when APPS is in stand alone power save mode enable
- * active offload mode which helps FW to filter out MC/BC data packets to avoid
- * APPS wake up and save more power.
- *
- * By default enable active mode offload as it helps to save more power in
- * static display usecase(APPS stand alone power collapse).
- *
- * If active mode offload(gActiveModeOffload=1) is enabled then all applicable
- * data offload/filtering is enabled immediately in FW once config is available
- * in WLAN driver and FW caches this configuration across suspend/resume
- *
- * If active mode offload is disabled(gActiveModeOffload=0) then all applicable
- * data offload/filtering is enabled during cfg80211 suspend and disabled
- * during cfg80211 resume
- *
- * Active mode offload feature is bydefault enabled for all targets
- */
-
-#define CFG_ACTIVE_MODE_OFFLOAD            "gActiveModeOffload"
-#define CFG_ACTIVE_MODE_OFFLOAD_MIN        (0)
-#define CFG_ACTIVE_MODE_OFFLOAD_MAX        (1)
-#define CFG_ACTIVE_MODE_OFFLOAD_DEFAULT    (1)
-
-/*
- * 0: Disable APF packet filter
- * 1: Enable APF packet filter
- */
-#define CFG_APF_PACKET_FILTER_OFFLOAD           "gBpfFilterEnable"
-#define CFG_APF_PACKET_FILTER_OFFLOAD_MIN       (0)
-#define CFG_APF_PACKET_FILTER_OFFLOAD_MAX       (1)
-#define CFG_APF_PACKET_FILTER_OFFLOAD_DEFAULT   (1)
 
 /*
  * <ini>
@@ -7766,47 +7679,6 @@ enum hdd_link_speed_rpt_type {
  */
 #define CFG_RPS_RX_QUEUE_CPU_MAP_LIST_LEN 30
 
-#ifdef WLAN_FEATURE_WOW_PULSE
-/*
- * Enable/Disable  WOW PULSE feature
- * Set the wakeup pulse which FW use to wake up HOST
- * Default : Disable
- */
-#define CFG_WOW_PULSE_SUPPORT_NAME     "gwow_pulse_support"
-#define CFG_WOW_PULSE_SUPPORT_MIN      (0)
-#define CFG_WOW_PULSE_SUPPORT_MAX      (1)
-#define CFG_WOW_PULSE_SUPPORT_DEFAULT  (CFG_WOW_PULSE_SUPPORT_MIN)
-
-/*
- * GPIO PIN for Pulse
- * Which PIN to send the Pulse
- */
-#define CFG_WOW_PULSE_PIN_NAME         "gwow_pulse_pin"
-#define CFG_WOW_PULSE_PIN_MIN          (CFG_SET_TSF_GPIO_PIN_MIN)
-#define CFG_WOW_PULSE_PIN_MAX          (CFG_SET_TSF_GPIO_PIN_MAX)
-#define CFG_WOW_PULSE_PIN_DEFAULT      (35)
-
-/*
- * Pulse interval low
- * The interval of low level in the pulse
- * The value which defined by customer should between 160 and 480
- */
-#define CFG_WOW_PULSE_INTERVAL_LOW_NAME     "gwow_pulse_interval_low"
-#define CFG_WOW_PULSE_INTERVAL_LOW_MIN      (160)
-#define CFG_WOW_PULSE_INTERVAL_LOW_MAX      (480)
-#define CFG_WOW_PULSE_INTERVAL_LOW_DEFAULT  (180)
-
-/*
- * Pulse interval high
- * The interval of high level in the pulse
- * The value which defined by customer should between 20 and 40
- */
-#define CFG_WOW_PULSE_INTERVAL_HIGH_NAME    "gwow_pulse_interval_high"
-#define CFG_WOW_PULSE_INTERVAL_HIGH_MIN     (20)
-#define CFG_WOW_PULSE_INTERVAL_HIGH_MAX     (40)
-#define CFG_WOW_PULSE_INTERVAL_HIGH_DEFAULT (20)
-#endif
-
 /*
  * Support to start sap in indoor channel
  * Customer can config this item to enable/disable sap in indoor channel
@@ -8369,329 +8241,6 @@ enum hdd_wext_control {
 #define CFG_ENABLE_RUNTIME_PM_MIN              (0)
 #define CFG_ENABLE_RUNTIME_PM_MAX              (1)
 #define CFG_ENABLE_RUNTIME_PM_DEFAULT          (0)
-
-/*
- * <ini>
- * gRuntimePMDelay - Set runtime pm's inactivity timer
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set runtime pm's inactivity timer value.
- * the wlan driver will wait for this number of milliseconds of
- * inactivity before performing a runtime suspend.
- *
- * Related: gRuntimePM
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_RUNTIME_PM_DELAY_NAME               "gRuntimePMDelay"
-#define CFG_RUNTIME_PM_DELAY_MIN                (100)
-#define CFG_RUNTIME_PM_DELAY_MAX                (10000)
-#define CFG_RUNTIME_PM_DELAY_DEFAULT            (500)
-#endif
-
-/*
- * <ini>
- * gEnablePowerSaveOffload - Enable Power Save Offload
- * @Min: 0
- * @Max: 5
- * @Default: 0
- *
- * This ini is used to set Power Save Offload configuration:
- * Current values of gEnablePowerSaveOffload:
- * 0 -> Power save offload is disabled
- * 1 -> Legacy Power save enabled + Deep sleep Disabled
- * 2 -> QPower enabled + Deep sleep Disabled
- * 3 -> Legacy Power save enabled + Deep sleep Enabled
- * 4 -> QPower enabled + Deep sleep Enabled
- * 5 -> Duty cycling QPower enabled
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_POWERSAVE_OFFLOAD_NAME                "gEnablePowerSaveOffload"
-#define CFG_POWERSAVE_OFFLOAD_MIN                 (0)
-#define CFG_POWERSAVE_OFFLOAD_MAX                 (PS_DUTY_CYCLING_QPOWER)
-#define CFG_POWERSAVE_OFFLOAD_DEFAULT             (CFG_POWERSAVE_OFFLOAD_MIN)
-
-/*
- * <ini>
- * gEnableWoW - Enable/Disable WoW
- * @Min: 0
- * @Max: 3
- * @Default: 3
- *
- * This ini is used to enable/disable WoW. Configurations are as follows:
- * 0 - Disable both magic pattern match and pattern byte match.
- * 1 - Enable magic pattern match on all interfaces.
- * 2 - Enable pattern byte match on all interfaces.
- * 3 - Enable both magic patter and pattern byte match on all interfaces.
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_WOW_STATUS_NAME                    "gEnableWoW"
-#define CFG_WOW_ENABLE_MIN                     (0)
-#define CFG_WOW_ENABLE_MAX                     (3)
-#define CFG_WOW_STATUS_DEFAULT                 (3)
-
-#ifdef WLAN_FEATURE_EXTWOW_SUPPORT
-/*
- * <ini>
- * gExtWoWgotoSuspend - Enable/Disable Extended WoW
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable Extended WoW.
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EXTWOW_GO_TO_SUSPEND               "gExtWoWgotoSuspend"
-#define CFG_EXTWOW_GO_TO_SUSPEND_MIN           (0)
-#define CFG_EXTWOW_GO_TO_SUSPEND_MAX           (1)
-#define CFG_EXTWOW_GO_TO_SUSPEND_DEFAULT       (1)
-
-/*
- * <ini>
- * gExtWowApp1WakeupPinNumber - Set wakeup1 PIN number
- * @Min: 0
- * @Max: 255
- * @Default: 12
- *
- * This ini is used to set EXT WOW APP1 wakeup PIN number
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EXTWOW_APP1_WAKE_PIN_NUMBER            "gExtWowApp1WakeupPinNumber"
-#define CFG_EXTWOW_APP1_WAKE_PIN_NUMBER_MIN        (0)
-#define CFG_EXTWOW_APP1_WAKE_PIN_NUMBER_MAX        (255)
-#define CFG_EXTWOW_APP1_WAKE_PIN_NUMBER_DEFAULT    (12)
-
-/*
- * <ini>
- * gExtWowApp2WakeupPinNumber - Set wakeup2 PIN number
- * @Min: 0
- * @Max: 255
- * @Default: 16
- *
- * This ini is used to set EXT WOW APP2 wakeup PIN number
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EXTWOW_APP2_WAKE_PIN_NUMBER            "gExtWowApp2WakeupPinNumber"
-#define CFG_EXTWOW_APP2_WAKE_PIN_NUMBER_MIN        (0)
-#define CFG_EXTWOW_APP2_WAKE_PIN_NUMBER_MAX        (255)
-#define CFG_EXTWOW_APP2_WAKE_PIN_NUMBER_DEFAULT    (16)
-
-/*
- * <ini>
- * gExtWoWApp2KAInitPingInterval - Set Keep Alive Init Ping Interval
- * @Min: 0
- * @Max: 0xffffffff
- * @Default: 240
- *
- * This ini is used to set Keep Alive Init Ping Interval for EXT WOW
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EXTWOW_KA_INIT_PING_INTERVAL           "gExtWoWApp2KAInitPingInterval"
-#define CFG_EXTWOW_KA_INIT_PING_INTERVAL_MIN       (0)
-#define CFG_EXTWOW_KA_INIT_PING_INTERVAL_MAX       (0xffffffff)
-#define CFG_EXTWOW_KA_INIT_PING_INTERVAL_DEFAULT   (240)
-
-/*
- * <ini>
- * gExtWoWApp2KAMinPingInterval - Set Keep Alive Minimum Ping Interval
- * @Min: 0
- * @Max: 0xffffffff
- * @Default: 240
- *
- * This ini is used to set Keep Alive Minimum Ping Interval for EXT WOW
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EXTWOW_KA_MIN_PING_INTERVAL            "gExtWoWApp2KAMinPingInterval"
-#define CFG_EXTWOW_KA_MIN_PING_INTERVAL_MIN        (0)
-#define CFG_EXTWOW_KA_MIN_PING_INTERVAL_MAX        (0xffffffff)
-#define CFG_EXTWOW_KA_MIN_PING_INTERVAL_DEFAULT    (240)
-
-/*
- * <ini>
- * gExtWoWApp2KAMaxPingInterval - Set Keep Alive Maximum Ping Interval
- * @Min: 0
- * @Max: 0xffffffff
- * @Default: 1280
- *
- * This ini is used to set Keep Alive Maximum Ping Interval for EXT WOW
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EXTWOW_KA_MAX_PING_INTERVAL            "gExtWoWApp2KAMaxPingInterval"
-#define CFG_EXTWOW_KA_MAX_PING_INTERVAL_MIN        (0)
-#define CFG_EXTWOW_KA_MAX_PING_INTERVAL_MAX        (0xffffffff)
-#define CFG_EXTWOW_KA_MAX_PING_INTERVAL_DEFAULT    (1280)
-
-/*
- * <ini>
- * gExtWoWApp2KAIncPingInterval - Set Keep Alive increment of Ping Interval
- * @Min: 0
- * @Max: 0xffffffff
- * @Default: 4
- *
- * This ini is used to set Keep Alive increment of Ping Interval for EXT WOW
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EXTWOW_KA_INC_PING_INTERVAL            "gExtWoWApp2KAIncPingInterval"
-#define CFG_EXTWOW_KA_INC_PING_INTERVAL_MIN        (0)
-#define CFG_EXTWOW_KA_INC_PING_INTERVAL_MAX        (0xffffffff)
-#define CFG_EXTWOW_KA_INC_PING_INTERVAL_DEFAULT    (4)
-
-/*
- * <ini>
- * gExtWoWApp2KAIncPingInterval - Set TCP source port
- * @Min: 0
- * @Max: 65535
- * @Default: 5000
- *
- * This ini is used to set TCP source port when EXT WOW is enabled
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EXTWOW_TCP_SRC_PORT                    "gExtWoWApp2TcpSrcPort"
-#define CFG_EXTWOW_TCP_SRC_PORT_MIN                (0)
-#define CFG_EXTWOW_TCP_SRC_PORT_MAX                (65535)
-#define CFG_EXTWOW_TCP_SRC_PORT_DEFAULT            (5000)
-
-/*
- * <ini>
- * gExtWoWApp2TcpDstPort - Set TCP Destination port
- * @Min: 0
- * @Max: 65535
- * @Default: 5001
- *
- * This ini is used to set TCP Destination port when EXT WOW is enabled
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EXTWOW_TCP_DST_PORT                    "gExtWoWApp2TcpDstPort"
-#define CFG_EXTWOW_TCP_DST_PORT_MIN                (0)
-#define CFG_EXTWOW_TCP_DST_PORT_MAX                (65535)
-#define CFG_EXTWOW_TCP_DST_PORT_DEFAULT            (5001)
-
-/*
- * <ini>
- * gExtWoWApp2TcpTxTimeout - Set TCP tx timeout
- * @Min: 0
- * @Max: 0xffffffff
- * @Default: 200
- *
- * This ini is used to set TCP Tx timeout when EXT WOW is enabled
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EXTWOW_TCP_TX_TIMEOUT                  "gExtWoWApp2TcpTxTimeout"
-#define CFG_EXTWOW_TCP_TX_TIMEOUT_MIN              (0)
-#define CFG_EXTWOW_TCP_TX_TIMEOUT_MAX              (0xffffffff)
-#define CFG_EXTWOW_TCP_TX_TIMEOUT_DEFAULT          (200)
-
-/*
- * <ini>
- * gExtWoWApp2TcpRxTimeout - Set TCP rx timeout
- * @Min: 0
- * @Max: 0xffffffff
- * @Default: 200
- *
- * This ini is used to set TCP Rx timeout when EXT WOW is enabled
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_EXTWOW_TCP_RX_TIMEOUT                  "gExtWoWApp2TcpRxTimeout"
-#define CFG_EXTWOW_TCP_RX_TIMEOUT_MIN              (0)
-#define CFG_EXTWOW_TCP_RX_TIMEOUT_MAX              (0xffffffff)
-#define CFG_EXTWOW_TCP_RX_TIMEOUT_DEFAULT          (200)
 #endif
 
 /**
@@ -10493,8 +10042,6 @@ struct hdd_config {
 	/* In units of milliseconds */
 	uint32_t       idle_time_conc;
 
-	uint8_t nMaxPsPoll;
-
 	uint8_t nRssiFilterPeriod;
 	uint8_t fMaxLIModulatedDTIM;
 
@@ -10559,16 +10106,8 @@ struct hdd_config {
 
 	char enableConcurrentSTA[CFG_CONCURRENT_IFACE_MAX_LEN];
 
-	/* Control for Replay counetr. value 1 means
-	 * single replay counter for all TID
-	 */
-	bool fhostArpOffload;
-	enum pmo_hw_filter_mode hw_filter_mode_bitmap;
-	bool ssdp;
-
 #ifdef FEATURE_RUNTIME_PM
 	bool runtime_pm;
-	uint32_t runtime_pm_delay;
 #endif
 
 #ifdef FEATURE_WLAN_RA_FILTERING
@@ -10578,7 +10117,6 @@ struct hdd_config {
 #ifdef FEATURE_WLAN_SCAN_PNO
 	bool PnoOffload;
 #endif
-	bool fhostNSOffload;
 	bool burstSizeDefinition;
 	uint8_t tsInfoAckPolicy;
 
@@ -10617,7 +10155,6 @@ struct hdd_config {
 	uint8_t enableBypass11d;
 	uint8_t enableDFSChnlScan;
 	uint8_t enable_dfs_pno_chnl_scan;
-	uint8_t enableDynamicDTIM;
 	uint8_t ShortGI40MhzEnable;
 	enum hdd_link_speed_rpt_type reportMaxLinkSpeed;
 	int32_t linkSpeedRssiHigh;
@@ -10683,8 +10220,6 @@ struct hdd_config {
 	uint8_t enableAmpduPs;
 	uint8_t enableHtSmps;
 	uint8_t htSmps;
-	uint8_t enableModulatedDTIM;
-	uint32_t fEnableMCAddrList;
 	bool enableFirstScan2GOnly;
 	bool enableRxSTBC;
 	bool enableTxSTBC;
@@ -10721,7 +10256,6 @@ struct hdd_config {
 	uint32_t ibssPs1RxChainInAtimEnable;
 
 	bool enable_ip_tcp_udp_checksum_offload;
-	uint8_t enablePowersaveOffload;
 	bool enablefwprint;
 	uint8_t enable_fw_log;
 	uint8_t fVhtAmpduLenExponent;
@@ -10738,7 +10272,6 @@ struct hdd_config {
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	uint32_t WlanAutoShutdown;
 #endif
-	uint8_t wowEnable;
 	uint8_t disableDFSChSwitch;
 	uint8_t enableDFSMasterCap;
 	uint32_t TxPower2g;
@@ -10831,19 +10364,6 @@ struct hdd_config {
 
 	bool enable_sap_suspend;
 
-#ifdef WLAN_FEATURE_EXTWOW_SUPPORT
-	uint8_t extWowGotoSuspend;
-	uint8_t extWowApp1WakeupPinNumber;
-	uint8_t extWowApp2WakeupPinNumber;
-	uint32_t extWowApp2KAInitPingInterval;
-	uint32_t extWowApp2KAMinPingInterval;
-	uint32_t extWowApp2KAMaxPingInterval;
-	uint32_t extWowApp2KAIncPingInterval;
-	uint16_t extWowApp2TcpSrcPort;
-	uint16_t extWowApp2TcpDstPort;
-	uint32_t extWowApp2TcpTxTimeout;
-	uint32_t extWowApp2TcpRxTimeout;
-#endif
 	bool gEnableDeauthToDisassocMap;
 #ifdef DHCP_SERVER_OFFLOAD
 	bool enableDHCPServerOffload;
@@ -10872,8 +10392,6 @@ struct hdd_config {
 	bool gro_enable;
 	bool flow_steering_enable;
 	uint8_t max_msdus_per_rxinorderind;
-	bool active_mode_offload;
-	bool apf_packet_filter_enable;
 	/* parameter for defer timer for enabling TDLS on p2p listen */
 	uint32_t fine_time_meas_cap;
 	uint8_t max_scan_count;
@@ -10981,12 +10499,6 @@ struct hdd_config {
 	uint32_t rx_wakelock_timeout;
 	uint32_t max_sched_scan_plan_interval;
 	uint32_t max_sched_scan_plan_iterations;
-#ifdef WLAN_FEATURE_WOW_PULSE
-	bool wow_pulse_support;
-	uint8_t wow_pulse_pin;
-	uint16_t wow_pulse_interval_high;
-	uint16_t wow_pulse_interval_low;
-#endif
 	enum hdd_wext_control private_wext_control;
 	bool sap_internal_restart;
 	enum restart_beaconing_on_ch_avoid_rule
@@ -11024,7 +10536,6 @@ struct hdd_config {
 	bool is_force_1x1;
 	uint8_t enable_rts_sifsbursting;
 	uint8_t max_mpdus_inampdu;
-	enum pmo_auto_pwr_detect_failure_mode auto_pwr_save_fail_mode;
 	uint8_t ito_repeat_count;
 	bool enable_11d_in_world_mode;
 	/* 5G preference parameters for boosting RSSI */
@@ -11049,9 +10560,6 @@ struct hdd_config {
 	uint32_t wlm_latency_flags_moderate;
 	uint32_t wlm_latency_flags_low;
 	uint32_t wlm_latency_flags_ultralow;
-#ifdef WLAN_FEATURE_PACKET_FILTERING
-	uint8_t packet_filters_bitmap;
-#endif
 	uint8_t enable_phy_reg_retention;
 	uint8_t dfs_beacon_tx_enhanced;
 	uint32_t btm_offload_config;

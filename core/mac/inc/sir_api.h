@@ -5654,23 +5654,6 @@ enum powersave_qpower_mode {
 	QPOWER_DUTY_CYCLING = 2
 };
 
-/**
- * enum powersave_qpower_mode: powersave_mode
- * @PS_NOT_SUPPORTED: Power save is not supported
- * @PS_LEGACY_NODEEPSLEEP: Legacy power save enabled and deep sleep disabled
- * @PS_QPOWER_NODEEPSLEEP: QPOWER enabled and deep sleep disabled
- * @PS_LEGACY_DEEPSLEEP: Legacy power save enabled and deep sleep enabled
- * @PS_QPOWER_DEEPSLEEP: QPOWER enabled and deep sleep enabled
- * @PS_DUTY_CYCLING_QPOWER: QPOWER enabled in duty cycling mode
- */
-enum powersave_mode {
-	PS_NOT_SUPPORTED = 0,
-	PS_LEGACY_NODEEPSLEEP = 1,
-	PS_QPOWER_NODEEPSLEEP = 2,
-	PS_LEGACY_DEEPSLEEP = 3,
-	PS_QPOWER_DEEPSLEEP = 4,
-	PS_DUTY_CYCLING_QPOWER = 5
-};
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 /**
  * struct gateway_param_update_req - gateway parameter update request

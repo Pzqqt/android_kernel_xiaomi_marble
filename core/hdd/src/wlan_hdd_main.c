@@ -1248,6 +1248,7 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 				    struct wma_tgt_services *cfg)
 {
 	struct hdd_config *config = hdd_ctx->config;
+	bool arp_offload_enable;
 #ifdef FEATURE_WLAN_TDLS
 	bool tdls_support;
 	bool tdls_off_channel;
@@ -1269,8 +1270,10 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 		config->dot11Mode = eHDD_DOT11_MODE_AUTO;
 
 	/* ARP offload: override user setting if invalid  */
-	config->fhostArpOffload &= cfg->arp_offload;
-
+	arp_offload_enable =
+			ucfg_pmo_is_arp_offload_enabled(hdd_ctx->psoc);
+	ucfg_pmo_set_arp_offload_enabled(hdd_ctx->psoc,
+					 arp_offload_enable & cfg->arp_offload);
 #ifdef FEATURE_WLAN_SCAN_PNO
 	/* PNO offload */
 	hdd_debug("PNO Capability in f/w = %d", cfg->pno_offload);
@@ -1892,29 +1895,6 @@ static int hdd_generate_macaddr_auto(struct hdd_context *hdd_ctx)
 	return 0;
 }
 
-#ifdef FEATURE_WLAN_APF
-/**
- * hdd_update_apf_support() - Update APF supported flag in hdd context
- * @hdd_ctx: Pointer to hdd_ctx
- * @cfg: target configuration
- *
- * Update the APF support flag in HDD Context using INI and target config.
- *
- * Return: None
- */
-static void hdd_update_apf_support(struct hdd_context *hdd_ctx,
-				   struct wma_tgt_cfg *cfg)
-{
-	hdd_ctx->apf_supported = (cfg->apf_enabled &&
-				  hdd_ctx->config->apf_packet_filter_enable);
-}
-#else
-static void hdd_update_apf_support(struct hdd_context *hdd_ctx,
-				   struct wma_tgt_cfg *cfg)
-{
-}
-#endif
-
 /**
  * hdd_update_ra_rate_limit() - Update RA rate limit from target
  *  configuration to cfg_ini in HDD
@@ -2128,10 +2108,7 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("fw update WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED to CFG fails");
 
-	hdd_update_apf_support(hdd_ctx, cfg);
-
-	hdd_debug("Target APF %d Host APF %d 8ss fw support %d txBFCsnValue %d",
-		  cfg->apf_enabled, hdd_ctx->config->apf_packet_filter_enable,
+	hdd_debug("Target 8ss fw support %d txBFCsnValue %d",
 		  cfg->tx_bfee_8ss_enabled, hdd_ctx->config->txBFCsnValue);
 
 	/*
@@ -8241,24 +8218,25 @@ static void hdd_init_offloaded_packets_ctx(struct hdd_context *hdd_ctx)
  */
 static int wlan_hdd_set_wow_pulse(struct hdd_context *phddctx, bool enable)
 {
-	struct hdd_config *pcfg_ini = phddctx->config;
 	struct wow_pulse_mode wow_pulse_set_info;
 	QDF_STATUS status;
 
 	hdd_debug("wow pulse enable flag is %d", enable);
 
-	if (false == phddctx->config->wow_pulse_support)
+	if (!ucfg_pmo_is_wow_pulse_enabled(phddctx->psoc))
 		return 0;
 
 	/* prepare the request to send to SME */
 	if (enable == true) {
 		wow_pulse_set_info.wow_pulse_enable = true;
 		wow_pulse_set_info.wow_pulse_pin =
-				pcfg_ini->wow_pulse_pin;
-		wow_pulse_set_info.wow_pulse_interval_low =
-				pcfg_ini->wow_pulse_interval_low;
+			ucfg_pmo_get_wow_pulse_pin(phddctx->psoc);
+
 		wow_pulse_set_info.wow_pulse_interval_high =
-				pcfg_ini->wow_pulse_interval_high;
+		    ucfg_pmo_get_wow_pulse_interval_high(phddctx->psoc);
+
+		wow_pulse_set_info.wow_pulse_interval_low =
+		    ucfg_pmo_get_wow_pulse_interval_low(phddctx->psoc);
 	} else {
 		wow_pulse_set_info.wow_pulse_enable = false;
 		wow_pulse_set_info.wow_pulse_pin = 0;
@@ -9236,10 +9214,6 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 		  hdd_ctx->config->timer_multiplier);
 	qdf_timer_set_multiplier(hdd_ctx->config->timer_multiplier);
 
-
-	if (hdd_ctx->config->fhostNSOffload)
-		hdd_ctx->ns_offload_enable = true;
-
 	cds_set_fatal_event(hdd_ctx->config->enable_fatal_event);
 
 	hdd_override_ini_config(hdd_ctx);
@@ -9633,27 +9607,7 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	}
 
 	cds_cfg->driver_type = QDF_DRIVER_TYPE_PRODUCTION;
-	if (!hdd_ctx->config->nMaxPsPoll ||
-			!hdd_ctx->config->enablePowersaveOffload) {
-		cds_cfg->powersave_offload_enabled =
-			hdd_ctx->config->enablePowersaveOffload;
-	} else {
-		if ((hdd_ctx->config->enablePowersaveOffload ==
-				PS_QPOWER_NODEEPSLEEP) ||
-				(hdd_ctx->config->enablePowersaveOffload ==
-				 PS_LEGACY_NODEEPSLEEP))
-			cds_cfg->powersave_offload_enabled =
-				PS_LEGACY_NODEEPSLEEP;
-		else
-			cds_cfg->powersave_offload_enabled =
-				PS_LEGACY_DEEPSLEEP;
-		hdd_info("Qpower disabled in cds config, %d",
-				cds_cfg->powersave_offload_enabled);
-	}
-	cds_cfg->sta_dynamic_dtim = hdd_ctx->config->enableDynamicDTIM;
-	cds_cfg->sta_mod_dtim = hdd_ctx->config->enableModulatedDTIM;
 	cds_cfg->sta_maxlimod_dtim = hdd_ctx->config->fMaxLIModulatedDTIM;
-	cds_cfg->wow_enable = hdd_ctx->config->wowEnable;
 
 	/*
 	 * Copy the DFS Phyerr Filtering Offload status.
@@ -9662,13 +9616,9 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	 */
 	cds_cfg->dfs_phyerr_filter_offload =
 		hdd_ctx->config->fDfsPhyerrFilterOffload;
-	if (hdd_ctx->config->ssdp)
-		cds_cfg->ssdp = hdd_ctx->config->ssdp;
 
 	cds_cfg->force_target_assert_enabled =
 		hdd_ctx->config->crash_inject_enabled;
-
-	cds_cfg->enable_mc_list = hdd_ctx->config->fEnableMCAddrList;
 
 	ucfg_mlme_get_sap_max_offload_peers(hdd_ctx->psoc, &value);
 	cds_cfg->ap_maxoffload_peers = value;
@@ -9727,8 +9677,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->enable_rxthread = hdd_ctx->enable_rxthread;
 	cds_cfg->ce_classify_enabled =
 		hdd_ctx->config->ce_classify_enabled;
-	cds_cfg->apf_packet_filter_enable =
-		hdd_ctx->config->apf_packet_filter_enable;
 	cds_cfg->self_gen_frm_pwr = hdd_ctx->config->self_gen_frm_pwr;
 	ucfg_mlme_get_sap_max_peers(hdd_ctx->psoc, &value);
 	cds_cfg->max_station = value;
@@ -9740,8 +9688,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->fw_timeout_crash = hdd_ctx->config->fw_timeout_crash;
 	cds_cfg->active_uc_apf_mode = hdd_ctx->config->active_uc_apf_mode;
 	cds_cfg->active_mc_bc_apf_mode = hdd_ctx->config->active_mc_bc_apf_mode;
-	cds_cfg->auto_power_save_fail_mode =
-		hdd_ctx->config->auto_pwr_save_fail_mode;
 
 	cds_cfg->ito_repeat_count = hdd_ctx->config->ito_repeat_count;
 	cds_cfg->bandcapability = hdd_ctx->config->nBandCapability;
@@ -10879,6 +10825,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	uint16_t num_11ag_tx_chains = 0;
 	struct policy_mgr_dp_cbacks dp_cbs = {0};
 	bool value;
+	enum pmo_auto_pwr_detect_failure_mode auto_power_fail_mode;
 
 	mac_handle = hdd_ctx->mac_handle;
 
@@ -11008,8 +10955,11 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 
 	sme_cli_set_command(0, WMI_PDEV_PARAM_GCMP_SUPPORT_ENABLE,
 			    hdd_ctx->config->gcmp_enabled, PDEV_CMD);
+
+	auto_power_fail_mode =
+		ucfg_pmo_get_auto_power_fail_mode(hdd_ctx->psoc);
 	sme_cli_set_command(0, WMI_PDEV_AUTO_DETECT_POWER_FAILURE,
-			    hdd_ctx->config->auto_pwr_save_fail_mode, PDEV_CMD);
+			    auto_power_fail_mode, PDEV_CMD);
 
 
 	if (hdd_ctx->config->enable_phy_reg_retention)
@@ -12785,17 +12735,24 @@ QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc)
 
 	status = ucfg_fwol_psoc_open(psoc);
 	if (QDF_IS_STATUS_ERROR(status))
-		goto err;
+		goto err_fwol;
+
+	status = ucfg_pmo_psoc_open(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto err_pmo;
 
 	return status;
 
-err:
+err_pmo:
+	ucfg_fwol_psoc_close(psoc);
+err_fwol:
 	ucfg_mlme_psoc_close(psoc);
 	return status;
 }
 
 void hdd_component_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+	ucfg_pmo_psoc_close(psoc);
 	ucfg_fwol_psoc_close(psoc);
 	ucfg_mlme_psoc_close(psoc);
 }
@@ -13675,7 +13632,8 @@ static void hdd_populate_runtime_cfg(struct hdd_context *hdd_ctx,
 				     struct hif_config_info *cfg)
 {
 	cfg->enable_runtime_pm = hdd_ctx->config->runtime_pm;
-	cfg->runtime_pm_delay = hdd_ctx->config->runtime_pm_delay;
+	cfg->runtime_pm_delay =
+		ucfg_pmo_get_runtime_pm_delay(hdd_ctx->psoc);
 }
 #else
 static void hdd_populate_runtime_cfg(struct hdd_context *hdd_ctx,
@@ -13753,6 +13711,9 @@ int hdd_update_config(struct hdd_context *hdd_ctx)
 {
 	int ret;
 
+	if (ucfg_pmo_is_ns_offloaded(hdd_ctx->psoc))
+		hdd_ctx->ns_offload_enable = true;
+
 	hdd_update_ol_config(hdd_ctx);
 	hdd_update_hif_config(hdd_ctx);
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
@@ -13799,6 +13760,9 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 {
 	struct pmo_psoc_cfg psoc_cfg;
 	QDF_STATUS status;
+	enum pmo_wow_enable_type wow_enable;
+
+	ucfg_pmo_get_psoc_config(hdd_ctx->psoc, &psoc_cfg);
 
 	/*
 	 * Value of hdd_ctx->wowEnable can be,
@@ -13808,27 +13772,14 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 	 * 3 - Enable both magic patter and pattern byte match on
 	 *     all interfaces.
 	 */
-	psoc_cfg.magic_ptrn_enable =
-		(hdd_ctx->config->wowEnable & 0x01) ? true : false;
+	wow_enable = ucfg_pmo_get_wow_enable(hdd_ctx->psoc);
+	psoc_cfg.magic_ptrn_enable = (wow_enable & 0x01) ? true : false;
 	psoc_cfg.ptrn_match_enable_all_vdev =
-		(hdd_ctx->config->wowEnable & 0x02) ? true : false;
-	psoc_cfg.apf_enable = hdd_ctx->config->apf_packet_filter_enable;
-	psoc_cfg.arp_offload_enable = hdd_ctx->config->fhostArpOffload;
-	psoc_cfg.hw_filter_mode_bitmap = hdd_ctx->config->hw_filter_mode_bitmap;
-	psoc_cfg.ns_offload_enable_dynamic = hdd_ctx->config->fhostNSOffload;
-	psoc_cfg.ns_offload_enable_static = hdd_ctx->config->fhostNSOffload;
+				(wow_enable & 0x02) ? true : false;
 	psoc_cfg.packet_filter_enabled = !hdd_ctx->config->disablePacketFilter;
-	psoc_cfg.ssdp = hdd_ctx->config->ssdp;
-	psoc_cfg.enable_mc_list = hdd_ctx->config->fEnableMCAddrList;
-	psoc_cfg.active_mode_offload = hdd_ctx->config->active_mode_offload;
 	psoc_cfg.ap_arpns_support = hdd_ctx->ap_arpns_support;
 	psoc_cfg.d0_wow_supported = wma_d0_wow_is_supported();
-	psoc_cfg.sta_dynamic_dtim = hdd_ctx->config->enableDynamicDTIM;
-	psoc_cfg.sta_mod_dtim = hdd_ctx->config->enableModulatedDTIM;
 	psoc_cfg.sta_max_li_mod_dtim = hdd_ctx->config->fMaxLIModulatedDTIM;
-	psoc_cfg.power_save_mode = hdd_ctx->config->enablePowersaveOffload;
-	psoc_cfg.auto_power_save_fail_mode =
-		hdd_ctx->config->auto_pwr_save_fail_mode;
 
 	hdd_ra_populate_pmo_config(&psoc_cfg, hdd_ctx);
 	hdd_lpass_populate_pmo_config(&psoc_cfg, hdd_ctx);
