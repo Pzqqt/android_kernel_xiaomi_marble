@@ -766,6 +766,10 @@ QDF_STATUS target_if_nan_deregister_events(struct wlan_objmgr_psoc *psoc)
 	int ret, status = 0;
 	wmi_unified_t handle = get_wmi_unified_hdl_from_psoc(psoc);
 
+	if (!handle) {
+		target_if_err("handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
 	ret = wmi_unified_unregister_event_handler(handle,
 				wmi_ndl_schedule_update_event_id);
 	if (ret) {
