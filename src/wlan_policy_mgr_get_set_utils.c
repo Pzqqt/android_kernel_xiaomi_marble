@@ -3094,13 +3094,13 @@ bool policy_mgr_is_force_scc(struct wlan_objmgr_psoc *psoc)
 		return 0;
 	}
 
-	return ((pm_ctx->user_cfg.mcc_to_scc_switch_mode ==
+	return ((pm_ctx->cfg.mcc_to_scc_switch ==
 		QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION) ||
-		(pm_ctx->user_cfg.mcc_to_scc_switch_mode ==
+		(pm_ctx->cfg.mcc_to_scc_switch ==
 		QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) ||
-		(pm_ctx->user_cfg.mcc_to_scc_switch_mode ==
+		(pm_ctx->cfg.mcc_to_scc_switch ==
 		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) ||
-		(pm_ctx->user_cfg.mcc_to_scc_switch_mode ==
+		(pm_ctx->cfg.mcc_to_scc_switch ==
 		QDF_MCC_TO_SCC_WITH_PREFERRED_BAND));
 }
 

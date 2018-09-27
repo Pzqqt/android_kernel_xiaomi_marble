@@ -1057,7 +1057,6 @@ enum policy_mgr_pri_id {
  *                              connections
  * @conc_system_pref: System preference for PCL table
  * @enable2x2: 2x2 chain mask user config
- * @mcc_to_scc_switch_mode: Control SAP channel in concurrency
  * @sub_20_mhz_enabled: Is 5 or 10 Mhz enabled
  * @dbs_selection_policy: band preference or Vdev preference
  *      bit[0] = 0: 5G 2x2 preferred to select 2x2 5G + 1x1 2G DBS mode.
@@ -1076,7 +1075,6 @@ struct policy_mgr_user_cfg {
 	uint8_t max_concurrent_active_sessions;
 	uint8_t conc_system_pref;
 	bool enable2x2;
-	uint32_t mcc_to_scc_switch_mode;
 	bool sub_20_mhz_enabled;
 	bool is_sta_sap_scc_allowed_on_dfs_chan;
 	uint32_t channel_select_logic_conc;

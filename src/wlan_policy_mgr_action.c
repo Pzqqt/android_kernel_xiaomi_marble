@@ -1321,7 +1321,7 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 		goto end;
 	}
 	mcc_to_scc_switch =
-		policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(psoc);
+		policy_mgr_get_mcc_to_scc_switch_mode(psoc);
 
 	policy_mgr_info("Concurrent open sessions running: %d",
 		policy_mgr_concurrent_open_sessions_running(psoc));
@@ -1556,7 +1556,7 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 	}
 
 	mcc_to_scc_switch =
-		policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(psoc);
+		policy_mgr_get_mcc_to_scc_switch_mode(psoc);
 	policy_mgr_info("MCC to SCC switch: %d chan: %d",
 			mcc_to_scc_switch, operating_channel[0]);
 

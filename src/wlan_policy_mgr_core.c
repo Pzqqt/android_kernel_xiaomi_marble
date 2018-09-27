@@ -155,7 +155,7 @@ bool policy_mgr_is_dual_mac_disabled_in_ini(
 	return is_disabled;
 }
 
-uint32_t policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(
+uint32_t policy_mgr_get_mcc_to_scc_switch_mode(
 	struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -166,7 +166,7 @@ uint32_t policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(
 		return 0;
 	}
 
-	return pm_ctx->user_cfg.mcc_to_scc_switch_mode;
+	return pm_ctx->cfg.mcc_to_scc_switch;
 }
 
 /**
@@ -2402,7 +2402,7 @@ bool policy_mgr_allow_new_home_channel(struct wlan_objmgr_psoc *psoc,
 		return false;
 	}
 	mcc_to_scc_switch =
-		policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(psoc);
+		policy_mgr_get_mcc_to_scc_switch_mode(psoc);
 
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	if (num_connections == 2) {
