@@ -1055,27 +1055,13 @@ enum policy_mgr_pri_id {
  * @enable_mcc_adaptive_scheduler: Enable MCC adaptive scheduler
  * @enable2x2: 2x2 chain mask user config
  * @sub_20_mhz_enabled: Is 5 or 10 Mhz enabled
- * @dbs_selection_policy: band preference or Vdev preference
- *      bit[0] = 0: 5G 2x2 preferred to select 2x2 5G + 1x1 2G DBS mode.
- *      bit[0] = 1: 2G 2x2 preferred to select 2x2 2G + 1x1 5G DBS mode.
- *      bit[1] = 1: vdev priority enabled.
- *      bit[1] = 0: vdev priority disabled.
- * @vdev_priority_list: vdev priority list
- *      bit[0-3]: pri_id (policy_mgr_pri_id) of highest priority
- *      bit[4-7]: pri_id (policy_mgr_pri_id) of second priority
- *      bit[8-11]: pri_id (policy_mgr_pri_id) of third priority
- *      bit[12-15]: pri_id (policy_mgr_pri_id) of fourth priority
- *      example: 0x4321 - CLI < GO < SAP < STA
  */
 struct policy_mgr_user_cfg {
 	uint8_t enable_mcc_adaptive_scheduler;
 	bool enable2x2;
 	bool sub_20_mhz_enabled;
 	bool is_sta_sap_scc_allowed_on_dfs_chan;
-	uint32_t channel_select_logic_conc;
 	uint32_t sta_sap_scc_on_lte_coex_chan;
-	uint32_t dbs_selection_policy;
-	uint32_t vdev_priority_list;
 };
 
 /**

@@ -392,6 +392,7 @@ bool policy_mgr_is_dbs_allowed_for_concurrency(
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	uint32_t count, dbs_for_sta_sta, dbs_for_sta_p2p;
 	bool ret = true;
+	uint32_t ch_sel_plcy;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -404,10 +405,9 @@ bool policy_mgr_is_dbs_allowed_for_concurrency(
 	if (count != 1 || new_conn_mode == QDF_MAX_NO_OF_MODE)
 		return ret;
 
-	dbs_for_sta_sta = PM_CHANNEL_SELECT_LOGIC_STA_STA_GET(pm_ctx->user_cfg.
-						channel_select_logic_conc);
-	dbs_for_sta_p2p = PM_CHANNEL_SELECT_LOGIC_STA_P2P_GET(pm_ctx->user_cfg.
-						channel_select_logic_conc);
+	ch_sel_plcy = pm_ctx->cfg.chnl_select_plcy;
+	dbs_for_sta_sta = PM_CHANNEL_SELECT_LOGIC_STA_STA_GET(ch_sel_plcy);
+	dbs_for_sta_p2p = PM_CHANNEL_SELECT_LOGIC_STA_P2P_GET(ch_sel_plcy);
 
 	switch (pm_conc_connection_list[0].mode) {
 	case PM_STA_MODE:
@@ -592,12 +592,12 @@ policy_mgr_get_preferred_dbs_action_table(
 		policy_mgr_debug("target only supports DBS1!");
 		goto DONE;
 	}
-	if (PM_GET_BAND_PREFERRED(pm_ctx->user_cfg.dbs_selection_policy) == 1)
+	if (PM_GET_BAND_PREFERRED(pm_ctx->cfg.dbs_selection_plcy) == 1)
 		band_pref_5g = false;
 
 	if (PM_GET_VDEV_PRIORITY_ENABLED(
-	    pm_ctx->user_cfg.dbs_selection_policy) == 1 &&
-	    pm_ctx->user_cfg.vdev_priority_list)
+	    pm_ctx->cfg.dbs_selection_plcy) == 1 &&
+	    pm_ctx->cfg.vdev_priority_list)
 		vdev_priority_enabled = true;
 
 	if (!vdev_priority_enabled)
@@ -619,7 +619,7 @@ policy_mgr_get_preferred_dbs_action_table(
 					 vdev_id, new_conn_op_mode, channel,
 					 reason);
 	}
-	vdev_pri_list = pm_ctx->user_cfg.vdev_priority_list;
+	vdev_pri_list = pm_ctx->cfg.vdev_priority_list;
 	while (vdev_pri_list) {
 		vdev_pri_id = vdev_pri_list & 0xF;
 		pri_conn_mode = policy_mgr_pri_id_to_con_mode(vdev_pri_id);

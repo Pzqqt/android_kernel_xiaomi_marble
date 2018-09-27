@@ -136,14 +136,14 @@ QDF_STATUS policy_mgr_get_conc_rule2(struct wlan_objmgr_psoc *psoc,
 /**
  * policy_mgr_get_dbs_selection_plcy() - DBS HW mode selection setting
  * @psoc: pointer to psoc
- * @dbs_selection_policy: value to be filled
+ * @dbs_selection_plcy: value to be filled
  *
  * This API is used to find out DBS HW mode preference.
  *
  * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
  */
 QDF_STATUS policy_mgr_get_dbs_selection_plcy(struct wlan_objmgr_psoc *psoc,
-						uint32_t *dbs_selection_policy);
+						uint32_t *dbs_selection_plcy);
 /**
  * policy_mgr_get_vdev_priority_list() - to get vdev priority list
  * @psoc: pointer to psoc
