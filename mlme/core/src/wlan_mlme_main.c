@@ -188,6 +188,7 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_OPTIMIZE_CA_EVENT);
 	gen->fw_timeout_crash =
 		cfg_get(psoc, CFG_CRASH_FW_TIMEOUT);
+	gen->debug_packet_log = cfg_get(psoc, CFG_ENABLE_DEBUG_PACKET_LOG);
 	mlme_init_pmf_cfg(psoc, gen);
 	mlme_init_lpass_support_cfg(psoc, gen);
 }

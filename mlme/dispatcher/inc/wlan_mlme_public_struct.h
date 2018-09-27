@@ -628,6 +628,7 @@ struct wlan_mlme_chainmask {
  * @fatal_event_trigger: Enable/Disable Fatal Events Trigger
  * @optimize_ca_event: Enable/Disable Optimization of CA events
  * @fw_timeout_crash: Enable/Disable FW Timeout Crash *
+ * @debug_packet_log: Debug packet log flags
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -649,6 +650,7 @@ struct wlan_mlme_generic {
 	bool fatal_event_trigger;
 	bool optimize_ca_event;
 	bool fw_timeout_crash;
+	uint8_t debug_packet_log;
 };
 
 /*

@@ -443,7 +443,37 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"ITO Repeat Count")
 
+/*
+ * <ini>
+ * gEnableDebugLog - Enable/Disable the Connection related logs
+ * @Min: 0
+ * @Max: 0xFF
+ * @Default: 0x0F
+ *
+ * This ini is used to enable/disable the connection related logs
+ * 0x1 - Enable mgmt pkt logs (excpet probe req/rsp, beacons).
+ * 0x2 - Enable EAPOL pkt logs.
+ * 0x4 - Enable DHCP pkt logs.
+ * 0x8 - Enable mgmt action frames logs.
+ * 0x0 - Disable all the above connection related logs.
+ * The default value of 0x0F will enable all the above logs
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_DEBUG_PACKET_LOG CFG_INI_UINT( \
+				"gEnableDebugLog", \
+				0, 0xFF, 0x0F, \
+				CFG_VALUE_OR_DEFAULT, \
+				"Enable debug log")
+
 #define CFG_GENERIC_ALL \
+	CFG(CFG_ENABLE_DEBUG_PACKET_LOG) \
 	CFG(CFG_PMF_SA_QUERY_MAX_RETRIES) \
 	CFG(CFG_PMF_SA_QUERY_RETRY_INTERVAL) \
 	CFG(CFG_RTT3_ENABLE) \
