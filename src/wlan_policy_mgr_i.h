@@ -223,6 +223,7 @@ struct sta_ap_intf_check_work_ctx {
  * @dbs_selection_plcy: DBS selection policy for concurrency
  * @vdev_priority_list: Priority list for various vdevs
  * @chnl_select_plcy: Channel selection policy
+ * @enable_mcc_adaptive_sch: Enable/Disable MCC adaptive scheduler
  */
 struct policy_mgr_cfg {
 	uint8_t mcc_to_scc_switch;
@@ -230,6 +231,7 @@ struct policy_mgr_cfg {
 	uint8_t max_conc_cxns;
 	uint8_t conc_rule1;
 	uint8_t conc_rule2;
+	uint8_t enable_mcc_adaptive_sch;
 	uint32_t dbs_selection_plcy;
 	uint32_t vdev_priority_list;
 	uint32_t chnl_select_plcy;

@@ -40,6 +40,8 @@ static QDF_STATUS policy_mgr_init_cfg(struct wlan_objmgr_psoc *psoc)
 	cfg->dbs_selection_plcy = cfg_get(psoc, CFG_DBS_SELECTION_PLCY);
 	cfg->vdev_priority_list = cfg_get(psoc, CFG_VDEV_CUSTOM_PRIORITY_LIST);
 	cfg->chnl_select_plcy = cfg_get(psoc, CFG_CHNL_SELECT_LOGIC_CONC);
+	cfg->enable_mcc_adaptive_sch =
+		cfg_get(psoc, CFG_ENABLE_MCC_ADATIVE_SCH_ENABLED_NAME);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -126,4 +128,11 @@ QDF_STATUS ucfg_policy_mgr_get_chnl_select_plcy(struct wlan_objmgr_psoc *psoc,
 						uint32_t *chnl_select_plcy)
 {
 	return policy_mgr_get_chnl_select_plcy(psoc, chnl_select_plcy);
+}
+
+
+QDF_STATUS ucfg_policy_mgr_get_mcc_adaptive_sch(struct wlan_objmgr_psoc *psoc,
+						uint8_t *mcc_adaptive_sch)
+{
+	return policy_mgr_get_mcc_adaptive_sch(psoc, mcc_adaptive_sch);
 }

@@ -1052,12 +1052,10 @@ enum policy_mgr_pri_id {
 
 /**
  * struct policy_mgr_user_cfg - Policy manager user config variables
- * @enable_mcc_adaptive_scheduler: Enable MCC adaptive scheduler
  * @enable2x2: 2x2 chain mask user config
  * @sub_20_mhz_enabled: Is 5 or 10 Mhz enabled
  */
 struct policy_mgr_user_cfg {
-	uint8_t enable_mcc_adaptive_scheduler;
 	bool enable2x2;
 	bool sub_20_mhz_enabled;
 	bool is_sta_sap_scc_allowed_on_dfs_chan;
