@@ -128,22 +128,6 @@ void deinit_tasklet_workers(struct hif_opaque_softc *scn)
 	work_initialized = false;
 }
 
-#ifdef HIF_CONFIG_SLUB_DEBUG_ON
-/**
- * ce_schedule_tasklet() - schedule ce tasklet
- * @tasklet_entry: struct ce_tasklet_entry
- *
- * Return: N/A
- */
-static inline void ce_schedule_tasklet(struct ce_tasklet_entry *tasklet_entry)
-{
-	if (work_initialized && (tasklet_entry->ce_id < CE_ID_MAX))
-		schedule_work(&tasklet_workers[tasklet_entry->ce_id].work);
-	else
-		HIF_ERROR("%s: work_initialized = %d, ce_id = %d",
-			__func__, work_initialized, tasklet_entry->ce_id);
-}
-#else
 /**
  * ce_schedule_tasklet() - schedule ce tasklet
  * @tasklet_entry: struct ce_tasklet_entry
@@ -154,7 +138,6 @@ static inline void ce_schedule_tasklet(struct ce_tasklet_entry *tasklet_entry)
 {
 	tasklet_schedule(&tasklet_entry->intr_tq);
 }
-#endif
 
 /**
  * ce_tasklet() - ce_tasklet
