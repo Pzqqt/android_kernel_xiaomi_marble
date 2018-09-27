@@ -1025,6 +1025,10 @@ QDF_STATUS tgt_mgmt_txrx_tx_completion_handler(
 		mgmt_txrx_err("Mgmt txrx context empty for pdev %pK", pdev);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+	if (desc_id >= MGMT_DESC_POOL_MAX) {
+		mgmt_txrx_err("desc_id:%u is out of bounds", desc_id);
+		return QDF_STATUS_E_INVAL;
+	}
 	mgmt_desc = &mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool[desc_id];
 	if (!mgmt_desc) {
 		mgmt_txrx_err("Mgmt desc empty for id %d pdev %pK ",
