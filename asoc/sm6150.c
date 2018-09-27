@@ -7752,7 +7752,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 			dev_dbg(dev, "%s: No DT match Ext Disp interface\n",
 				__func__);
 		} else {
-			if (auxpcm_audio_intf) {
+			if (ext_disp_audio_intf) {
 				memcpy(msm_sm6150_dai_links + total_links,
 					ext_disp_be_dai_link,
 					sizeof(ext_disp_be_dai_link));
