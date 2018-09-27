@@ -2867,6 +2867,15 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		goto fail0;
 	}
 
+	pdev->invalid_peer = qdf_mem_malloc(sizeof(struct dp_peer));
+
+	if (!pdev->invalid_peer) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid peer memory allocation failed"));
+		qdf_mem_free(pdev);
+		goto fail0;
+	}
+
 	soc_cfg_ctx = soc->wlan_cfg_ctx;
 	pdev->wlan_cfg_ctx = wlan_cfg_pdev_attach(soc->ctrl_psoc);
 
@@ -2874,6 +2883,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("pdev cfg_attach failed"));
 
+		qdf_mem_free(pdev->invalid_peer);
 		qdf_mem_free(pdev);
 		goto fail0;
 	}
@@ -3217,6 +3227,7 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 	soc->pdev_list[pdev->pdev_id] = NULL;
 	soc->pdev_count--;
 	wlan_cfg_pdev_detach(pdev->wlan_cfg_ctx);
+	qdf_mem_free(pdev->invalid_peer);
 	qdf_mem_free(pdev->dp_txrx_handle);
 	qdf_mem_free(pdev);
 }
@@ -5302,6 +5313,9 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 	qdf_mem_set(&(pdev->stats.tx), sizeof(pdev->stats.tx), 0x0);
 	qdf_mem_set(&(pdev->stats.rx), sizeof(pdev->stats.rx), 0x0);
 	qdf_mem_set(&(pdev->stats.tx_i), sizeof(pdev->stats.tx_i), 0x0);
+
+	if (pdev->mcopy_mode)
+		DP_UPDATE_STATS(pdev, pdev->invalid_peer);
 
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {

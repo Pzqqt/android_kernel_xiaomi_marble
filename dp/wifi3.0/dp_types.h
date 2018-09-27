@@ -1287,6 +1287,8 @@ struct dp_pdev {
 	struct cdp_tx_sojourn_stats sojourn_stats;
 	qdf_nbuf_t sojourn_buf;
 
+	/* peer pointer for collecting invalid peer stats */
+	struct dp_peer *invalid_peer;
 };
 
 struct dp_peer;

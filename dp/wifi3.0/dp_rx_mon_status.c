@@ -164,23 +164,29 @@ static inline void dp_rx_rate_stats_update(struct dp_peer *peer,
 		peer->vdev->stats.rx.last_rx_rate = ratekbps;
 }
 
-static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
-		struct cdp_rx_indication_ppdu *ppdu)
+static void dp_rx_stats_update(struct dp_pdev *pdev, struct dp_peer *peer,
+			       struct cdp_rx_indication_ppdu *ppdu)
 {
-	struct dp_pdev *pdev = NULL;
+	struct dp_soc *soc = NULL;
 	uint8_t mcs, preamble, ac = 0;
 	uint16_t num_msdu;
+	bool is_invalid_peer = false;
 
 	mcs = ppdu->u.mcs;
 	preamble = ppdu->u.preamble;
 	num_msdu = ppdu->num_msdu;
 
-	if (!peer)
+	if (pdev)
+		soc = pdev->soc;
+	else
 		return;
 
-	pdev = peer->vdev->pdev;
+	if (!peer) {
+		is_invalid_peer = true;
+		peer = pdev->invalid_peer;
+	}
 
-	if (soc->process_rx_status)
+	if (!soc || soc->process_rx_status)
 		return;
 
 	DP_STATS_UPD(peer, rx.rssi, ppdu->rssi);
@@ -236,6 +242,9 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		DP_STATS_INC(peer, rx.wme_ac_type[ac], num_msdu);
 	dp_peer_stats_notify(peer);
 	DP_STATS_UPD(peer, rx.last_rssi, ppdu->rssi);
+
+	if (is_invalid_peer)
+		return;
 
 	dp_rx_rate_stats_update(peer, ppdu);
 
@@ -407,17 +416,17 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 		qdf_nbuf_put_tail(ppdu_nbuf,
 				sizeof(struct cdp_rx_indication_ppdu));
 		cdp_rx_ppdu = (struct cdp_rx_indication_ppdu *)ppdu_nbuf->data;
-
+		peer = dp_peer_find_by_id(soc, cdp_rx_ppdu->peer_id);
 		if (cdp_rx_ppdu->peer_id != HTT_INVALID_PEER) {
-			peer = dp_peer_find_by_id(soc, cdp_rx_ppdu->peer_id);
 			if (peer) {
-				dp_rx_stats_update(soc, peer, cdp_rx_ppdu);
+				dp_rx_stats_update(pdev, peer, cdp_rx_ppdu);
 				dp_wdi_event_handler(WDI_EVENT_RX_PPDU_DESC,
 					soc, ppdu_nbuf, cdp_rx_ppdu->peer_id,
 					WDI_NO_VAL, pdev->pdev_id);
 				dp_peer_unref_del_find_by_id(peer);
 			}
 		} else if (pdev->mcopy_mode) {
+			dp_rx_stats_update(pdev, peer, cdp_rx_ppdu);
 			dp_wdi_event_handler(WDI_EVENT_RX_PPDU_DESC, soc,
 					ppdu_nbuf, HTT_INVALID_PEER,
 					WDI_NO_VAL, pdev->pdev_id);
