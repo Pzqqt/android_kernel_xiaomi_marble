@@ -1499,9 +1499,9 @@ QDF_STATUS policy_mgr_incr_connection_count(
 	}
 
 	conn_index = policy_mgr_get_connection_count(psoc);
-	if (pm_ctx->user_cfg.max_concurrent_active_sessions < conn_index) {
+	if (pm_ctx->cfg.max_conc_cxns < conn_index) {
 		policy_mgr_err("exceeded max connection limit %d",
-			pm_ctx->user_cfg.max_concurrent_active_sessions);
+			pm_ctx->cfg.max_conc_cxns);
 		return status;
 	}
 	if (pm_ctx->wma_cbacks.wma_get_connection_info) {
@@ -1730,8 +1730,7 @@ bool policy_mgr_max_concurrent_connections_reached(
 		for (i = 0; i < QDF_MAX_NO_OF_MODE; i++)
 			j += pm_ctx->no_of_active_sessions[i];
 		return j >
-			(pm_ctx->user_cfg.
-			 max_concurrent_active_sessions - 1);
+			(pm_ctx->cfg.max_conc_cxns - 1);
 	}
 
 	return false;
@@ -1800,7 +1799,7 @@ bool policy_mgr_is_concurrency_allowed(struct wlan_objmgr_psoc *psoc,
 
 	if (policy_mgr_max_concurrent_connections_reached(psoc)) {
 		policy_mgr_err("Reached max concurrent connections: %d",
-			pm_ctx->user_cfg.max_concurrent_active_sessions);
+			       pm_ctx->cfg.max_conc_cxns);
 		goto done;
 	}
 
