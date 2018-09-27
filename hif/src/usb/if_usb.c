@@ -510,7 +510,32 @@ void hif_usb_get_hw_info(struct hif_softc *hif_ctx)
 	hif_usb_reg_tbl_attach(hif_ctx);
 }
 
+#if defined(CONFIG_PLD_USB_CNSS) && !defined(CONFIG_BYPASS_QMI)
+/**
+ * hif_bus_configure() - configure the bus
+ * @scn: pointer to the hif context.
+ *
+ * return: 0 for success. nonzero for failure.
+ */
+int hif_usb_bus_configure(struct hif_softc *scn)
+{
+	struct pld_wlan_enable_cfg cfg;
+	enum pld_driver_mode mode;
+	uint32_t con_mode = hif_get_conparam(scn);
 
+	if (QDF_GLOBAL_FTM_MODE == con_mode)
+		mode = PLD_FTM;
+	else if (QDF_GLOBAL_COLDBOOT_CALIB_MODE == con_mode)
+		mode = PLD_COLDBOOT_CALIBRATION;
+	else if (QDF_IS_EPPING_ENABLED(con_mode))
+		mode = PLD_EPPING;
+	else
+		mode = PLD_MISSION;
+
+	return pld_wlan_enable(scn->qdf_dev->dev, &cfg,
+			       mode, QWLAN_VERSIONSTR);
+}
+#else
 /**
  * hif_bus_configure() - configure the bus
  * @scn: pointer to the hif context.
@@ -521,6 +546,7 @@ int hif_usb_bus_configure(struct hif_softc *scn)
 {
 	return 0;
 }
+#endif
 
 /**
  * hif_usb_irq_enable() - hif_usb_irq_enable
