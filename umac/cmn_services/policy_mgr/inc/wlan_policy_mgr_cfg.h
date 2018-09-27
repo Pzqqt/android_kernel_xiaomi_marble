@@ -242,6 +242,28 @@
 					0, 1, 0, \
 					CFG_VALUE_OR_DEFAULT, \
 					"Enable custom concurrency rule 2")
+/*
+ * <ini>
+ * gEnableMCCAdaptiveScheduler - MCC Adaptive Scheduler feature.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable MCC Adaptive Scheduler feature.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_MCC_ADATIVE_SCH_ENABLED_NAME CFG_INI_UINT(\
+					"gEnableMCCAdaptiveScheduler", \
+					0, 1, 1, \
+					CFG_VALUE_OR_DEFAULT, \
+					"Enable/Disable MCC Adaptive Scheduler")
 
 #define CFG_POLICY_MGR_ALL \
 		CFG(CFG_MCC_TO_SCC_SWITCH) \
@@ -251,5 +273,6 @@
 		CFG(CFG_VDEV_CUSTOM_PRIORITY_LIST) \
 		CFG(CFG_CHNL_SELECT_LOGIC_CONC) \
 		CFG(CFG_ENABLE_CONC_RULE1) \
-		CFG(CFG_ENABLE_CONC_RULE2)
+		CFG(CFG_ENABLE_CONC_RULE2) \
+		CFG(CFG_ENABLE_MCC_ADATIVE_SCH_ENABLED_NAME)
 #endif

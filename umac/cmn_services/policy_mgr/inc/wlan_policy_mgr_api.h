@@ -167,6 +167,18 @@ QDF_STATUS policy_mgr_get_vdev_priority_list(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_get_chnl_select_plcy(struct wlan_objmgr_psoc *psoc,
 						uint32_t *chnl_select_plcy);
+
+/**
+ * policy_mgr_get_mcc_adaptive_sch() - to get mcc adaptive scheduler
+ * @psoc: pointer to psoc
+ * @enable_mcc_adaptive_sch: value to be filled
+ *
+ * This API is used to find out if mcc adaptive scheduler enabled or disabled
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_get_mcc_adaptive_sch(struct wlan_objmgr_psoc *psoc,
+					   uint8_t *enable_mcc_adaptive_sch);
 /**
  * policy_mgr_set_concurrency_mode() - To set concurrency mode
  * @psoc: PSOC object data
@@ -2126,19 +2138,6 @@ enum policy_mgr_hw_mode_change policy_mgr_get_hw_mode_change_from_hw_mode_index(
  * Return: True if master DBS control is enabled
  */
 bool policy_mgr_is_scan_simultaneous_capable(struct wlan_objmgr_psoc *psoc);
-
-/**
- * policy_mgr_is_mcc_adaptive_scheduler_enabled() - Function to
- * gets the policy manager mcc adaptive scheduler enabled
- * @psoc: PSOC object information
- *
- * This function gets the value mcc adaptive scheduler
- *
- * Return: true if MCC adaptive scheduler is set else false
- *
- */
-bool policy_mgr_is_mcc_adaptive_scheduler_enabled(
-	struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_set_user_cfg() - Function to set user cfg variables
