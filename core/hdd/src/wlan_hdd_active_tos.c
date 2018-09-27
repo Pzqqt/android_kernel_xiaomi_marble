@@ -29,6 +29,7 @@
 #include <linux/etherdevice.h>
 #include <linux/if_ether.h>
 #include <wlan_hdd_active_tos.h>
+#include "wlan_policy_mgr_ucfg.h"
 
 /**
  * tos - Type of service requested by the application
@@ -93,12 +94,15 @@ hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter,
 	uint32_t max_off_chan_time = 0;
 	QDF_STATUS status;
 	int ret;
+	uint8_t def_sys_pref = 0;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 
 	if (ret < 0)
 		return ret;
+	ucfg_policy_mgr_get_sys_pref(hdd_ctx->psoc,
+				     &def_sys_pref);
 
 	ac_bit = limit_off_chan_tbl[tos][HDD_AC_BIT_INDX];
 
@@ -122,12 +126,12 @@ hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter,
 			/*ignore this command if only BE/BK is active */
 			is_tos_active = false;
 			policy_mgr_set_cur_conc_system_pref(hdd_ctx->psoc,
-					hdd_ctx->config->conc_system_pref);
+							    def_sys_pref);
 		}
 	} else {
 		/* No active tos */
 		policy_mgr_set_cur_conc_system_pref(hdd_ctx->psoc,
-				hdd_ctx->config->conc_system_pref);
+						    def_sys_pref);
 	}
 
 	status = sme_send_limit_off_channel_params(hdd_ctx->mac_handle,

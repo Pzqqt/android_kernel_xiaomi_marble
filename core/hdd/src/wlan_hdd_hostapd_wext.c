@@ -35,6 +35,7 @@
 #include "wma_api.h"
 #endif
 #include "wlan_hdd_power.h"
+#include "wlan_policy_mgr_ucfg.h"
 #include <cdp_txrx_stats.h>
 #include "wlan_dfs_utils_api.h"
 #include <wlan_ipa_ucfg_api.h>
@@ -519,16 +520,12 @@ static __iw_softap_setparam(struct net_device *dev,
 			ret = -EINVAL;
 		}
 		break;
+
 	case QCSAP_PARAM_CONC_SYSTEM_PREF:
 		hdd_debug("New preference: %d", set_value);
-		if (!((set_value >= CFG_CONC_SYSTEM_PREF_MIN) &&
-				(set_value <= CFG_CONC_SYSTEM_PREF_MAX))) {
-			hdd_err("Invalid system preference: %d", set_value);
-			return -EINVAL;
-		}
-		/* hdd_ctx, hdd_ctx->config are already checked for null */
-		hdd_ctx->config->conc_system_pref = set_value;
+		ucfg_policy_mgr_set_sys_pref(hdd_ctx->psoc, set_value);
 		break;
+
 	case QCSAP_PARAM_MAX_ASSOC:
 		if (WNI_CFG_ASSOC_STA_LIMIT_STAMIN > set_value) {
 			hdd_err("Invalid setMaxAssoc value %d",

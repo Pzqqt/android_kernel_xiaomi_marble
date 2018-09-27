@@ -2095,13 +2095,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MIN,
 		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MAX),
 
-	REG_VARIABLE(CFG_CONC_SYSTEM_PREF, WLAN_PARAM_Integer,
-		   struct hdd_config, conc_system_pref,
-		   VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		   CFG_CONC_SYSTEM_PREF_DEFAULT,
-		   CFG_CONC_SYSTEM_PREF_MIN,
-		   CFG_CONC_SYSTEM_PREF_MAX),
-
 	REG_VARIABLE(CFG_DBS_SELECTION_POLICY, WLAN_PARAM_Integer,
 		     struct hdd_config, dbs_selection_policy,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4270,7 +4263,6 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	user_cfg->conc_system_pref = hdd_ctx->config->conc_system_pref;
 	user_cfg->enable_mcc_adaptive_scheduler =
 		hdd_ctx->config->enableMCCAdaptiveScheduler;
 	user_cfg->max_concurrent_active_sessions =

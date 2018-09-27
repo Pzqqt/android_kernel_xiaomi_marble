@@ -32,6 +32,7 @@
 #include "wma_types.h"
 #include "wma.h"
 #include "wma_api.h"
+#include "wlan_policy_mgr_ucfg.h"
 
 #define NUMBER_OF_SCENARIO 300
 #define MAX_ALLOWED_CHAR_IN_REPORT 50
@@ -174,9 +175,13 @@ void fill_report(struct hdd_context *hdd_ctx, char *title,
 {
 	int i;
 	char buf[4] = {0};
+	uint8_t sys_pref = 0;
 
 	if (report_idx >= NUMBER_OF_SCENARIO)
 		return;
+
+	ucfg_policy_mgr_get_sys_pref(hdd_ctx->psoc, &sys_pref);
+
 	snprintf(report[report_idx].title,
 		2 * MAX_ALLOWED_CHAR_IN_REPORT, "pcl for[%s] pcl_type[%s]",
 		title, pcl_type_to_string(pcl_type));
@@ -215,7 +220,7 @@ void fill_report(struct hdd_context *hdd_ctx, char *title,
 		? "enable" : "disable");
 	snprintf(report[report_idx].system_conf,
 		MAX_ALLOWED_CHAR_IN_REPORT, "%s",
-		system_config_to_string(hdd_ctx->config->conc_system_pref));
+		system_config_to_string(sys_pref));
 	snprintf(report[report_idx].result_code,
 		MAX_ALLOWED_CHAR_IN_REPORT, "%s",
 		status ? "PASS" : "FAIL");
@@ -617,8 +622,6 @@ static void wlan_hdd_map_subtypes_hdd_wma(enum policy_mgr_con_mode *dst,
 void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 {
 	enum policy_mgr_con_mode sub_type;
-	enum policy_mgr_conc_priority_mode system_pref =
-			hdd_ctx->config->conc_system_pref;
 	uint8_t pcl[QDF_MAX_NUM_CHAN] = {0},
 		weight_list[QDF_MAX_NUM_CHAN] = {0};
 	uint32_t pcl_len = 0;
@@ -627,6 +630,9 @@ void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 	char reason[20] = {0};
 	QDF_STATUS ret;
 	struct policy_mgr_sme_cbacks sme_cbacks;
+	uint8_t system_pref = 0;
+
+	ucfg_policy_mgr_get_sys_pref(hdd_ctx->psoc, &system_pref);
 
 	sme_cbacks.sme_get_valid_channels = sme_get_valid_channels;
 	sme_cbacks.sme_get_nss_for_vdev = sme_get_vdev_type_nss;
@@ -675,14 +681,15 @@ void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 	uint32_t pcl_len = 0;
 	enum policy_mgr_chain_mode chain_mask = first_chain_mask;
 	enum policy_mgr_con_mode sub_type, next_sub_type, dummy_type;
-	enum policy_mgr_conc_priority_mode system_pref =
-			hdd_ctx->config->conc_system_pref;
 	enum policy_mgr_pcl_type pcl_type;
 	enum policy_mgr_one_connection_mode second_index;
 	char reason[20] = {0};
 	bool status = false;
 	QDF_STATUS ret;
 	struct policy_mgr_sme_cbacks sme_cbacks;
+	uint8_t system_pref = 0;
+
+	ucfg_policy_mgr_get_sys_pref(hdd_ctx->psoc, &system_pref);
 
 	for (sub_type = PM_STA_MODE;
 		sub_type < PM_MAX_NUM_OF_MODE; sub_type++) {
@@ -762,14 +769,15 @@ void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 	enum policy_mgr_chain_mode chain_mask_2;
 	enum policy_mgr_con_mode sub_type_1, sub_type_2, next_sub_type;
 	enum policy_mgr_con_mode dummy_type_1, dummy_type_2;
-	enum policy_mgr_conc_priority_mode system_pref =
-			hdd_ctx->config->conc_system_pref;
 	enum policy_mgr_pcl_type pcl_type;
 	enum policy_mgr_two_connection_mode third_index;
 	char reason[20] = {0};
 	bool status = false;
 	QDF_STATUS ret;
 	struct policy_mgr_sme_cbacks sme_cbacks;
+	uint8_t system_pref = 0;
+
+	ucfg_policy_mgr_get_sys_pref(hdd_ctx->psoc, &system_pref);
 
 	/* let's set the chain_mask, mac_ids*/
 	if (chain_mask == POLICY_MGR_TWO_TWO) {

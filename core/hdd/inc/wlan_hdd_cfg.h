@@ -4987,30 +4987,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gSystemPref - Configure wlan system preference for PCL.
- * @Min: 0
- * @Max: 2
- * @Default: 0
- *
- * This ini is used to configure wlan system preference option to help
- * policy manager decide on Preferred Channel List for a new connection.
- * For possible values refer to enum hdd_conc_priority_mode
- *
- * Related: None.
- *
- * Supported Feature: DBS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_CONC_SYSTEM_PREF               "gSystemPref"
-#define CFG_CONC_SYSTEM_PREF_MIN           (0)
-#define CFG_CONC_SYSTEM_PREF_MAX           (2)
-#define CFG_CONC_SYSTEM_PREF_DEFAULT       (0)
-
-/*
- * <ini>
  * dbs_selection_policy - Configure dbs selection policy.
  * @Min: 0
  * @Max: 3
@@ -7748,7 +7724,6 @@ struct hdd_config {
 	uint8_t sap_11ac_override;
 	uint8_t go_11ac_override;
 	uint8_t prefer_non_dfs_on_radar;
-	uint8_t conc_system_pref;
 	uint32_t dbs_selection_policy;
 	uint32_t vdev_priority_list;
 	bool tso_enable;

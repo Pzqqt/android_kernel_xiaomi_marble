@@ -102,6 +102,7 @@
 #include "cfg_mlme_sta.h"
 #include "wlan_mlme_public_struct.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_policy_mgr_ucfg.h"
 #include "wlan_mlme_public_struct.h"
 #include "cfg_ucfg_api.h"
 #include "cfg_mlme_threshold.h"
@@ -5183,19 +5184,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 	}
 	case WE_SET_CONC_SYSTEM_PREF:
-	{
 		hdd_debug("New preference: %d", set_value);
-		if (!((set_value >= CFG_CONC_SYSTEM_PREF_MIN) &&
-				(set_value <= CFG_CONC_SYSTEM_PREF_MAX))) {
-			hdd_err("Invalid system preference %d", set_value);
-			ret = -EINVAL;
-			break;
-		}
-
-		/* hdd_ctx, hdd_ctx->config are already checked for null */
-		hdd_ctx->config->conc_system_pref = set_value;
+		ucfg_policy_mgr_set_sys_pref(hdd_ctx->psoc, set_value);
 		break;
-	}
 	case WE_SET_11AX_RATE:
 		ret = hdd_set_11ax_rate(adapter, set_value, NULL);
 		break;
@@ -6968,7 +6959,8 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 		if (apps_args[1] >= PM_THROUGHPUT &&
 			apps_args[1] <= PM_LATENCY) {
 			pr_info("setting system pref to [%d]\n", apps_args[1]);
-			hdd_ctx->config->conc_system_pref = apps_args[1];
+			ucfg_policy_mgr_set_sys_pref(hdd_ctx->psoc,
+						     apps_args[1]);
 		}
 	}
 	break;

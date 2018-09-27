@@ -147,6 +147,7 @@
 #include "cfg_mlme_acs.h"
 #include "wlan_mlme_public_struct.h"
 #include "wlan_fwol_ucfg_api.h"
+#include "wlan_policy_mgr_ucfg.h"
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
 #endif
@@ -2718,7 +2719,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("Failed to Open CDS; status: %d", status);
 			ret = qdf_status_to_os_return(status);
-			goto hdd_psoc_close;
+			goto psoc_close;
 		}
 
 		hdd_ctx->mac_handle = cds_get_context(QDF_MODULE_ID_SME);
@@ -2816,7 +2817,7 @@ close:
 
 	cds_close(hdd_ctx->psoc);
 
-hdd_psoc_close:
+psoc_close:
 	hdd_component_psoc_close(hdd_ctx->psoc);
 	cds_deinit_ini_config();
 
@@ -14426,15 +14427,17 @@ int hdd_reset_limit_off_chan(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx;
 	int ret;
 	QDF_STATUS status;
+	uint8_t sys_pref = 0;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret < 0)
 		return ret;
 
+	ucfg_policy_mgr_get_sys_pref(hdd_ctx->psoc,
+				     &sys_pref);
 	/* set the system preferece to default */
-	policy_mgr_set_cur_conc_system_pref(hdd_ctx->psoc,
-			hdd_ctx->config->conc_system_pref);
+	policy_mgr_set_cur_conc_system_pref(hdd_ctx->psoc, sys_pref);
 
 	/* clear the bitmap */
 	adapter->active_ac = 0;
