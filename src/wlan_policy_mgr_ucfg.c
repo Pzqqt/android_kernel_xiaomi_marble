@@ -86,6 +86,12 @@ QDF_STATUS ucfg_policy_mgr_get_sys_pref(struct wlan_objmgr_psoc *psoc,
 	return policy_mgr_get_sys_pref(psoc, sys_pref);
 }
 
+QDF_STATUS ucfg_policy_mgr_set_sys_pref(struct wlan_objmgr_psoc *psoc,
+					uint8_t sys_pref)
+{
+	return policy_mgr_set_sys_pref(psoc, sys_pref);
+}
+
 QDF_STATUS ucfg_policy_mgr_get_max_conc_cxns(struct wlan_objmgr_psoc *psoc,
 						uint8_t *max_conc_cxns)
 {

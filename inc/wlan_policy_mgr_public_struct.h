@@ -1055,7 +1055,6 @@ enum policy_mgr_pri_id {
  * @enable_mcc_adaptive_scheduler: Enable MCC adaptive scheduler
  * @max_concurrent_active_sessions: User allowed maximum active
  *                              connections
- * @conc_system_pref: System preference for PCL table
  * @enable2x2: 2x2 chain mask user config
  * @sub_20_mhz_enabled: Is 5 or 10 Mhz enabled
  * @dbs_selection_policy: band preference or Vdev preference
@@ -1073,7 +1072,6 @@ enum policy_mgr_pri_id {
 struct policy_mgr_user_cfg {
 	uint8_t enable_mcc_adaptive_scheduler;
 	uint8_t max_concurrent_active_sessions;
-	uint8_t conc_system_pref;
 	bool enable2x2;
 	bool sub_20_mhz_enabled;
 	bool is_sta_sap_scc_allowed_on_dfs_chan;

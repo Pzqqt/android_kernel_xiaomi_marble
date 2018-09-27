@@ -66,6 +66,21 @@ QDF_STATUS policy_mgr_get_sys_pref(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS policy_mgr_set_sys_pref(struct wlan_objmgr_psoc *psoc,
+				   uint8_t sys_pref)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	pm_ctx->cfg.sys_pref = sys_pref;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS policy_mgr_get_max_conc_cxns(struct wlan_objmgr_psoc *psoc,
 						uint8_t *max_conc_cxns)
 {
@@ -2102,7 +2117,7 @@ QDF_STATUS policy_mgr_set_user_cfg(struct wlan_objmgr_psoc *psoc,
 			 user_cfg->dbs_selection_policy);
 	policy_mgr_debug("vdev_priority_list 0x%x",
 			 user_cfg->vdev_priority_list);
-	pm_ctx->cur_conc_system_pref = pm_ctx->user_cfg.conc_system_pref;
+	pm_ctx->cur_conc_system_pref = pm_ctx->cfg.sys_pref;
 
 	return QDF_STATUS_SUCCESS;
 }

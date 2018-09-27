@@ -74,6 +74,18 @@ QDF_STATUS ucfg_policy_mgr_get_mcc_scc_switch(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS ucfg_policy_mgr_get_sys_pref(struct wlan_objmgr_psoc *psoc,
 					uint8_t *sys_pref);
 /**
+ * ucfg_policy_mgr_set_sys_pref() - to set system preference
+ * @psoc: pointer to psoc
+ * @sys_pref: value to be applied as new INI setting
+ *
+ * This API is meant to override original INI setting for system pref
+ * with new value which is used by policy manager to provide PCL
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS ucfg_policy_mgr_set_sys_pref(struct wlan_objmgr_psoc *psoc,
+					uint8_t sys_pref);
+/**
  * ucfg_policy_mgr_get_max_conc_cxns() - to get max num of conc connections
  * @psoc: pointer to psoc
  * @max_conc_cxns: value to be filled
