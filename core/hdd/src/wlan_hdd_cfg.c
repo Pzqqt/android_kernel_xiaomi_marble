@@ -1701,14 +1701,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_RX_LDPC_MIN,
 		     CFG_ENABLE_RX_LDPC_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_MCC_ADATIVE_SCHEDULER_ENABLED_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, enableMCCAdaptiveScheduler,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_MCC_ADATIVE_SCHEDULER_ENABLED_DEFAULT,
-		     CFG_ENABLE_MCC_ADATIVE_SCHEDULER_ENABLED_MIN,
-		     CFG_ENABLE_MCC_ADATIVE_SCHEDULER_ENABLED_MAX),
-
 	REG_VARIABLE(CFG_IBSS_ADHOC_CHANNEL_5GHZ_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, AdHocChannel5G,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4125,6 +4117,7 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 	bool status = true;
 	struct hdd_config *config = hdd_ctx->config;
 	mac_handle_t mac_handle;
+	uint8_t mcc_adaptive_sch = 0;
 
 	/*
 	 * During the initialization both 2G and 5G capabilities should be same.
@@ -4179,12 +4172,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_11D_ENABLED to CFG");
 	}
 
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
-		    config->enableMCCAdaptiveScheduler) ==
-		    QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED to CFG");
-	}
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_DISABLE_LDPC_WITH_TXBF_AP,
 		    config->disableLDPCWithTxbfAP) == QDF_STATUS_E_FAILURE) {
 		status = false;
@@ -4198,6 +4185,13 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_IBSS_ATIM_WIN_SIZE to CFG");
 	}
 
+	ucfg_policy_mgr_get_mcc_adaptive_sch(hdd_ctx->psoc,
+					     &mcc_adaptive_sch);
+	if (sme_cfg_set_int(mac_handle, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
+			    mcc_adaptive_sch) == QDF_STATUS_E_FAILURE) {
+		status = false;
+		hdd_err("Couldn't pass on WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED to CFG");
+	}
 	return status;
 }
 
@@ -4220,9 +4214,6 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("unable to allocate user_cfg");
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	user_cfg->enable_mcc_adaptive_scheduler =
-		hdd_ctx->config->enableMCCAdaptiveScheduler;
 
 	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc,
 					     &user_cfg->enable2x2);

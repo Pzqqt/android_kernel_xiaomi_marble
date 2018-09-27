@@ -48,6 +48,7 @@
 #include "wlan_p2p_ucfg_api.h"
 #include "wlan_cfg80211_p2p.h"
 #include "wlan_p2p_cfg_api.h"
+#include "wlan_policy_mgr_ucfg.h"
 
 /* Ms to Time Unit Micro Sec */
 #define MS_TO_TU_MUS(x)   ((x) * 1024)
@@ -1087,6 +1088,7 @@ static int32_t wlan_hdd_update_mcc_adaptive_scheduler(
 		struct hdd_adapter *adapter, bool is_enable)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t enable_mcc_adaptive_sch = 0;
 
 	if (hdd_ctx == NULL) {
 		hdd_err("HDD context is null");
@@ -1094,8 +1096,9 @@ static int32_t wlan_hdd_update_mcc_adaptive_scheduler(
 	}
 
 	hdd_info("enable/disable MAS :%d", is_enable);
-	if (hdd_ctx->config &&
-	    hdd_ctx->config->enableMCCAdaptiveScheduler) {
+	ucfg_policy_mgr_get_mcc_adaptive_sch(hdd_ctx->psoc,
+					     &enable_mcc_adaptive_sch);
+	if (enable_mcc_adaptive_sch) {
 		/* Todo check where to set the MCC apative SCHED for read */
 
 		if (QDF_STATUS_SUCCESS != sme_set_mas(is_enable)) {

@@ -4388,27 +4388,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_RX_LDPC_MAX                   (1)
 #define CFG_ENABLE_RX_LDPC_DEFAULT               (0)
 
-/*
- * <ini>
- * gEnableMCCAdaptiveScheduler - MCC Adaptive Scheduler feature.
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable MCC Adaptive Scheduler feature.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_MCC_ADATIVE_SCHEDULER_ENABLED_NAME             "gEnableMCCAdaptiveScheduler"
-#define CFG_ENABLE_MCC_ADATIVE_SCHEDULER_ENABLED_MIN              (0)
-#define CFG_ENABLE_MCC_ADATIVE_SCHEDULER_ENABLED_MAX              (1)
-#define CFG_ENABLE_MCC_ADATIVE_SCHEDULER_ENABLED_DEFAULT          (1)
 
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP             "gDisableLDPCWithTxbfAP"
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP_MIN         (0)
@@ -7481,7 +7460,6 @@ struct hdd_config {
 	bool prevent_link_down;
 	uint8_t scanAgingTimeout;
 	uint8_t disableLDPCWithTxbfAP;
-	uint8_t enableMCCAdaptiveScheduler;
 	bool enableSSR;
 	bool enable_data_stall_det;
 	bool bFastRoamInConIniFeatureEnabled;
