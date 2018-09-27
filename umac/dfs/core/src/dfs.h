@@ -616,8 +616,8 @@ struct dfs_filter {
 } qdf_packed;
 
 /**
- * struct dfs_filtertype - DFS Filter type.
- * @ft_filterdur[]:    Filter array.
+ * struct dfs_filtertype - Structure of DFS Filter type.
+ * @ft_filters[]:      Array of ptrs storing addresses for struct of dfs_filter.
  * @ft_filterdur:      Duration of pulse which specifies filter type.
  * @ft_numfilters:     Num filters of this type.
  * @ft_last_ts:        Last timestamp this filtertype was used (in usecs).
@@ -631,7 +631,7 @@ struct dfs_filter {
  *                     lower than in non TURBO mode. This will offset that diff.
  */
 struct dfs_filtertype {
-	struct dfs_filter ft_filters[DFS_MAX_NUM_RADAR_FILTERS];
+	struct dfs_filter *ft_filters[DFS_MAX_NUM_RADAR_FILTERS];
 	uint32_t  ft_filterdur;
 	uint32_t  ft_numfilters;
 	uint64_t  ft_last_ts;

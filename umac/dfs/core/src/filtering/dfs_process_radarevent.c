@@ -397,7 +397,7 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
 
 	for (p = 0, *found = 0; (p < ft->ft_numfilters) &&
 			(!(*found)) && !(*false_radar_found); p++) {
-		rf = &(ft->ft_filters[p]);
+		rf = ft->ft_filters[p];
 		if ((re->re_dur >= rf->rf_mindur) &&
 				(re->re_dur <= rf->rf_maxdur)) {
 			/* The above check is probably not necessary. */

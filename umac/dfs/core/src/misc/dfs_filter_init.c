@@ -135,9 +135,51 @@ static void dfs_main_task_timer_init(struct wlan_dfs *dfs)
 			QDF_TIMER_TYPE_WAKE_APPS);
 }
 
+/**
+ * dfs_free_filter() - free memory allocated for dfs ft_filters
+ * @radarf: pointer holding ft_filters.
+ *
+ * Return: None
+ */
+static void dfs_free_filter(struct dfs_filtertype *radarf)
+{
+	uint8_t i;
+
+	for (i = 0; i < DFS_MAX_NUM_RADAR_FILTERS; i++) {
+		if (radarf->ft_filters[i]) {
+			qdf_mem_free(radarf->ft_filters[i]);
+			radarf->ft_filters[i] = NULL;
+		}
+	}
+}
+
+/**
+ * dfs_alloc_mem_filter() - allocate memory for dfs ft_filters
+ * @radarf: pointer holding ft_filters.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS dfs_alloc_mem_filter(struct dfs_filtertype *radarf)
+{
+	uint8_t i;
+
+	for (i = 0; i < DFS_MAX_NUM_RADAR_FILTERS; i++) {
+		radarf->ft_filters[i] = qdf_mem_malloc(sizeof(struct
+							      dfs_filter));
+		if (!radarf->ft_filters[i]) {
+			/* Free all the filter if malloc failed */
+			dfs_free_filter(radarf);
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 int dfs_main_attach(struct wlan_dfs *dfs)
 {
 	int i, n;
+	QDF_STATUS status;
 	struct wlan_dfs_radar_tab_info radar_info;
 
 	if (!dfs) {
@@ -210,7 +252,14 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 					"cannot allocate memory for radar filter types");
 			goto bad1;
 		}
-		qdf_mem_zero(dfs->dfs_radarf[n], sizeof(struct dfs_filtertype));
+		qdf_mem_zero(dfs->dfs_radarf[n],
+			     sizeof(struct dfs_filtertype));
+		status = dfs_alloc_mem_filter(dfs->dfs_radarf[n]);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				  "mem alloc for dfs_filter failed");
+			goto bad1;
+		}
 	}
 
 	/* Allocate memory for radar table. */
@@ -267,6 +316,7 @@ bad2:
 bad1:
 	for (n = 0; n < DFS_MAX_RADAR_TYPES; n++) {
 		if (dfs->dfs_radarf[n] != NULL) {
+			dfs_free_filter(dfs->dfs_radarf[n]);
 			qdf_mem_free(dfs->dfs_radarf[n]);
 			dfs->dfs_radarf[n] = NULL;
 		}
@@ -325,6 +375,7 @@ void dfs_main_detach(struct wlan_dfs *dfs)
 
 	for (n = 0; n < DFS_MAX_RADAR_TYPES; n++) {
 		if (dfs->dfs_radarf[n] != NULL) {
+			dfs_free_filter(dfs->dfs_radarf[n]);
 			qdf_mem_free(dfs->dfs_radarf[n]);
 			dfs->dfs_radarf[n] = NULL;
 		}

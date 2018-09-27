@@ -38,7 +38,7 @@ static inline void dfs_reset_filtertype(
 	struct dfs_delayline *dl;
 
 	for (j = 0; j < ft->ft_numfilters; j++) {
-		rf = &(ft->ft_filters[j]);
+		rf = ft->ft_filters[j];
 		dl = &(rf->rf_dl);
 		if (dl != NULL) {
 			qdf_mem_zero(dl, sizeof(*dl));
@@ -106,7 +106,7 @@ void dfs_reset_filter_delaylines(struct dfs_filtertype *dft)
 	int i;
 
 	for (i = 0; i < DFS_MAX_NUM_RADAR_FILTERS; i++) {
-		df = &dft->ft_filters[i];
+		df = dft->ft_filters[i];
 		dfs_reset_delayline(&(df->rf_dl));
 	}
 }
@@ -296,7 +296,7 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 				goto bad4;
 		}
 
-		rf = &(ft->ft_filters[ft->ft_numfilters++]);
+		rf = ft->ft_filters[ft->ft_numfilters++];
 		dfs_reset_delayline(&rf->rf_dl);
 		numpulses = dfs_radars[p].rp_numpulses;
 

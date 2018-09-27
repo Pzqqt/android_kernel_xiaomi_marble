@@ -61,7 +61,7 @@ static void dfs_print_filtertype(
 	struct dfs_filter *rf;
 
 	for (j = 0; j < ft->ft_numfilters; j++) {
-		rf = &(ft->ft_filters[j]);
+		rf = ft->ft_filters[j];
 		dfs_debug(dfs, WLAN_DEBUG_DFS2,
 				"filter[%d] filterID = %d rf_numpulses=%u; rf->rf_minpri=%u; rf->rf_maxpri=%u; rf->rf_threshold=%u; rf->rf_filterlen=%u; rf->rf_mindur=%u; rf->rf_maxdur=%u",
 				j, rf->rf_pulseid, rf->rf_numpulses,
