@@ -859,6 +859,33 @@ exit:
 	return ret;
 }
 
+static int wsa_macro_event_handler(struct snd_soc_codec *codec, u16 event,
+				   u32 data)
+{
+	struct device *wsa_dev = NULL;
+	struct wsa_macro_priv *wsa_priv = NULL;
+
+	if (!wsa_macro_get_data(codec, &wsa_dev, &wsa_priv, __func__))
+		return -EINVAL;
+
+	switch (event) {
+	case BOLERO_MACRO_EVT_SSR_DOWN:
+		swrm_wcd_notify(
+			wsa_priv->swr_ctrl_data[0].wsa_swr_pdev,
+			SWR_DEVICE_SSR_DOWN, NULL);
+		swrm_wcd_notify(
+			wsa_priv->swr_ctrl_data[0].wsa_swr_pdev,
+			SWR_DEVICE_DOWN, NULL);
+		break;
+	case BOLERO_MACRO_EVT_SSR_UP:
+		swrm_wcd_notify(
+			wsa_priv->swr_ctrl_data[0].wsa_swr_pdev,
+			SWR_DEVICE_SSR_UP, NULL);
+		break;
+	}
+	return 0;
+}
+
 static int wsa_macro_enable_vi_feedback(struct snd_soc_dapm_widget *w,
 					struct snd_kcontrol *kcontrol,
 					int event)
@@ -2617,6 +2644,7 @@ static void wsa_macro_init_ops(struct macro_ops *ops,
 	ops->dai_ptr = wsa_macro_dai;
 	ops->num_dais = ARRAY_SIZE(wsa_macro_dai);
 	ops->mclk_fn = wsa_macro_mclk_ctrl;
+	ops->event_handler = wsa_macro_event_handler;
 }
 
 static int wsa_macro_probe(struct platform_device *pdev)

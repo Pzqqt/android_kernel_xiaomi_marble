@@ -43,6 +43,9 @@ enum {
 	BOLERO_MACRO_EVT_RX_MUTE = 1, /* for RX mute/unmute */
 	BOLERO_MACRO_EVT_IMPED_TRUE, /* for imped true */
 	BOLERO_MACRO_EVT_IMPED_FALSE, /* for imped false */
+	BOLERO_MACRO_EVT_SSR_DOWN,
+	BOLERO_MACRO_EVT_SSR_UP,
+	BOLERO_MACRO_EVT_WAIT_VA_CLK_RESET
 };
 
 struct macro_ops {

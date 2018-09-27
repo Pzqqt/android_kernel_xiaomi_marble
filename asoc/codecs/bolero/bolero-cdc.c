@@ -18,7 +18,7 @@
 #include <linux/printk.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
-
+#include <soc/snd_event.h>
 #include "bolero-cdc.h"
 #include "internal.h"
 
@@ -62,6 +62,11 @@ static int __bolero_reg_read(struct bolero_priv *priv,
 	u16 current_mclk_mux_macro;
 
 	mutex_lock(&priv->clk_lock);
+	if (!priv->dev_up) {
+		dev_dbg_ratelimited(priv->dev,
+			"%s: SSR in progress, exit\n", __func__);
+		goto err;
+	}
 	current_mclk_mux_macro =
 		priv->current_mclk_mux_macro[macro_id];
 	if (!priv->macro_params[current_mclk_mux_macro].mclk_fn) {
@@ -94,6 +99,11 @@ static int __bolero_reg_write(struct bolero_priv *priv,
 	u16 current_mclk_mux_macro;
 
 	mutex_lock(&priv->clk_lock);
+	if (!priv->dev_up) {
+		dev_dbg_ratelimited(priv->dev,
+			"%s: SSR in progress, exit\n", __func__);
+		goto err;
+	}
 	current_mclk_mux_macro =
 		priv->current_mclk_mux_macro[macro_id];
 	if (!priv->macro_params[current_mclk_mux_macro].mclk_fn) {
@@ -529,8 +539,62 @@ static ssize_t bolero_version_read(struct snd_info_entry *entry,
 	return simple_read_from_buffer(buf, count, &pos, buffer, len);
 }
 
+static int bolero_ssr_enable(struct device *dev, void *data)
+{
+	struct bolero_priv *priv = data;
+	int macro_idx;
+
+	if (priv->initial_boot) {
+		priv->initial_boot = false;
+		return 0;
+	}
+
+	if (priv->macro_params[VA_MACRO].event_handler)
+		priv->macro_params[VA_MACRO].event_handler(priv->codec,
+			BOLERO_MACRO_EVT_WAIT_VA_CLK_RESET, 0x0);
+
+	regcache_cache_only(priv->regmap, false);
+	/* call ssr event for supported macros */
+	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
+		if (!priv->macro_params[macro_idx].event_handler)
+			continue;
+		priv->macro_params[macro_idx].event_handler(priv->codec,
+			BOLERO_MACRO_EVT_SSR_UP, 0x0);
+	}
+	mutex_lock(&priv->clk_lock);
+	priv->dev_up = true;
+	mutex_unlock(&priv->clk_lock);
+	bolero_cdc_notifier_call(priv, BOLERO_WCD_EVT_SSR_UP);
+	return 0;
+}
+
+static void bolero_ssr_disable(struct device *dev, void *data)
+{
+	struct bolero_priv *priv = data;
+	int macro_idx;
+
+	regcache_cache_only(priv->regmap, true);
+
+	mutex_lock(&priv->clk_lock);
+	priv->dev_up = false;
+	mutex_unlock(&priv->clk_lock);
+	/* call ssr event for supported macros */
+	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
+		if (!priv->macro_params[macro_idx].event_handler)
+			continue;
+		priv->macro_params[macro_idx].event_handler(priv->codec,
+			BOLERO_MACRO_EVT_SSR_DOWN, 0x0);
+	}
+	bolero_cdc_notifier_call(priv, BOLERO_WCD_EVT_SSR_DOWN);
+}
+
 static struct snd_info_entry_ops bolero_info_ops = {
 	.read = bolero_version_read,
+};
+
+static const struct snd_event_ops bolero_ssr_ops = {
+	.enable = bolero_ssr_enable,
+	.disable = bolero_ssr_disable,
 };
 
 /*
@@ -623,6 +687,16 @@ static int bolero_soc_codec_probe(struct snd_soc_codec *codec)
 	else if (priv->num_macros_registered > 2)
 		priv->version = BOLERO_VERSION_1_2;
 
+	ret = snd_event_client_register(priv->dev, &bolero_ssr_ops, priv);
+	if (!ret) {
+		snd_event_notify(priv->dev, SND_EVENT_UP);
+	} else {
+		dev_err(codec->dev,
+			"%s: Registration with SND event FWK failed ret = %d\n",
+			__func__, ret);
+		goto err;
+	}
+
 	dev_dbg(codec->dev, "%s: bolero soc codec probe success\n", __func__);
 err:
 	return ret;
@@ -633,6 +707,7 @@ static int bolero_soc_codec_remove(struct snd_soc_codec *codec)
 	struct bolero_priv *priv = dev_get_drvdata(codec->dev);
 	int macro_idx;
 
+	snd_event_client_deregister(priv->dev);
 	/* call exit for supported macros */
 	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++)
 		if (priv->macro_params[macro_idx].exit)
@@ -756,6 +831,8 @@ static int bolero_probe(struct platform_device *pdev)
 		bolero_reg_access[VA_MACRO] = bolero_va_top_reg_access;
 
 	priv->dev = &pdev->dev;
+	priv->dev_up = true;
+	priv->initial_boot = true;
 	priv->regmap = bolero_regmap_init(priv->dev,
 					  &bolero_regmap_config);
 	if (IS_ERR_OR_NULL((void *)(priv->regmap))) {

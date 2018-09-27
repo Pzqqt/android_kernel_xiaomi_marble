@@ -20,6 +20,8 @@
 /* from bolero to WCD events */
 enum {
 	BOLERO_WCD_EVT_TX_CH_HOLD_CLEAR = 1,
+	BOLERO_WCD_EVT_SSR_DOWN,
+	BOLERO_WCD_EVT_SSR_UP,
 };
 
 enum {
@@ -52,6 +54,8 @@ struct bolero_priv {
 	struct mutex clk_lock;
 	bool va_without_decimation;
 	bool macros_supported[MAX_MACRO];
+	bool dev_up;
+	bool initial_boot;
 	struct macro_ops macro_params[MAX_MACRO];
 	struct snd_soc_dai_driver *bolero_dais;
 	u16 num_dais;

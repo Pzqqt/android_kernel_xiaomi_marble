@@ -46,6 +46,7 @@
 #define VA_MACRO_TX_DMIC_CLK_DIV_SHFT 0x01
 
 #define BOLERO_CDC_VA_TX_UNMUTE_DELAY_MS	40
+#define MAX_RETRY_ATTEMPTS 50
 
 static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 1, 0);
 static int va_tx_unmute_delay = BOLERO_CDC_VA_TX_UNMUTE_DELAY_MS;
@@ -178,8 +179,7 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 				0x02, 0x02);
 		}
 	} else {
-		va_priv->va_mclk_users--;
-		if (va_priv->va_mclk_users == 0) {
+		if (va_priv->va_mclk_users == 1) {
 			regmap_update_bits(regmap,
 				BOLERO_CDC_VA_TOP_CSR_TOP_CFG0,
 				0x02, 0x00);
@@ -192,10 +192,45 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 			bolero_request_clock(va_priv->dev,
 					VA_MACRO, MCLK_MUX0, false);
 		}
+		va_priv->va_mclk_users--;
 	}
 exit:
 	mutex_unlock(&va_priv->mclk_lock);
 	return ret;
+}
+
+static int va_macro_event_handler(struct snd_soc_codec *codec, u16 event,
+				  u32 data)
+{
+	struct device *va_dev = NULL;
+	struct va_macro_priv *va_priv = NULL;
+	int retry_cnt = MAX_RETRY_ATTEMPTS;
+
+	if (!va_macro_get_data(codec, &va_dev, &va_priv, __func__))
+		return -EINVAL;
+
+	switch (event) {
+	case BOLERO_MACRO_EVT_WAIT_VA_CLK_RESET:
+		while ((va_priv->va_mclk_users != 0) && (retry_cnt != 0)) {
+			dev_dbg(va_dev, "%s:retry_cnt: %d\n",
+				__func__, retry_cnt);
+			/*
+			 * loop and check every 20ms for va_mclk user count
+			 * to get reset to 0 which ensures userspace teardown
+			 * is done and SSR powerup seq can proceed.
+			 */
+			msleep(20);
+			retry_cnt--;
+		}
+		if (retry_cnt == 0)
+			dev_err(va_dev,
+				"%s: va_mclk_users is non-zero still, audio SSR fail!!\n",
+				__func__);
+		break;
+	default:
+		break;
+	}
+	return 0;
 }
 
 static int va_macro_mclk_event(struct snd_soc_dapm_widget *w,
@@ -1054,13 +1089,13 @@ static const struct snd_soc_dapm_widget va_macro_dapm_widgets[] = {
 			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 			   SND_SOC_DAPM_PRE_PMD | SND_SOC_DAPM_POST_PMD),
 
-	SND_SOC_DAPM_SUPPLY_S("VA_MCLK", 0, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY_S("VA_MCLK", -1, SND_SOC_NOPM, 0, 0,
 			      va_macro_mclk_event,
 			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
 
 static const struct snd_soc_dapm_widget va_macro_wod_dapm_widgets[] = {
-	SND_SOC_DAPM_SUPPLY_S("VA_MCLK", 0, SND_SOC_NOPM, 0, 0,
+	SND_SOC_DAPM_SUPPLY_S("VA_MCLK", -1, SND_SOC_NOPM, 0, 0,
 			      va_macro_mclk_event,
 			      SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 };
@@ -1465,6 +1500,7 @@ static void va_macro_init_ops(struct macro_ops *ops,
 	ops->exit = va_macro_deinit;
 	ops->io_base = va_io_base;
 	ops->mclk_fn = va_macro_mclk_ctrl;
+	ops->event_handler = va_macro_event_handler;
 }
 
 static int va_macro_probe(struct platform_device *pdev)

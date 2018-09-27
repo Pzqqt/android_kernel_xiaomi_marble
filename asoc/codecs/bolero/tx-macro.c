@@ -19,6 +19,7 @@
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 #include <sound/tlv.h>
+#include <soc/swr-wcd.h>
 #include "bolero-cdc.h"
 #include "bolero-cdc-registers.h"
 #include "../msm-cdc-pinctrl.h"
@@ -301,6 +302,33 @@ static int tx_macro_mclk_ctrl(struct device *dev, bool enable)
 
 exit:
 	return ret;
+}
+
+static int tx_macro_event_handler(struct snd_soc_codec *codec, u16 event,
+				  u32 data)
+{
+	struct device *tx_dev = NULL;
+	struct tx_macro_priv *tx_priv = NULL;
+
+	if (!tx_macro_get_data(codec, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	switch (event) {
+	case BOLERO_MACRO_EVT_SSR_DOWN:
+		swrm_wcd_notify(
+			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+			SWR_DEVICE_SSR_DOWN, NULL);
+		swrm_wcd_notify(
+			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+			SWR_DEVICE_DOWN, NULL);
+		break;
+	case BOLERO_MACRO_EVT_SSR_UP:
+		swrm_wcd_notify(
+			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+			SWR_DEVICE_SSR_UP, NULL);
+		break;
+	}
+	return 0;
 }
 
 static void tx_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
@@ -1640,6 +1668,7 @@ static void tx_macro_init_ops(struct macro_ops *ops,
 	ops->dai_ptr = tx_macro_dai;
 	ops->num_dais = ARRAY_SIZE(tx_macro_dai);
 	ops->mclk_fn = tx_macro_mclk_ctrl;
+	ops->event_handler = tx_macro_event_handler;
 }
 
 static int tx_macro_probe(struct platform_device *pdev)

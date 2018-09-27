@@ -85,6 +85,21 @@ static const struct component_ops wcd937x_slave_comp_ops = {
 	.unbind = wcd937x_slave_unbind,
 };
 
+static int wcd937x_swr_up(struct swr_device *pdev)
+{
+	return 0;
+}
+
+static int wcd937x_swr_down(struct swr_device *pdev)
+{
+	return 0;
+}
+
+static int wcd937x_swr_reset(struct swr_device *pdev)
+{
+	return 0;
+}
+
 static int wcd937x_swr_probe(struct swr_device *pdev)
 {
 	return component_add(&pdev->dev, &wcd937x_slave_comp_ops);
@@ -105,6 +120,9 @@ static struct swr_driver wcd937x_slave_driver = {
 	.probe = wcd937x_swr_probe,
 	.remove = wcd937x_swr_remove,
 	.id_table = wcd937x_swr_id,
+	.device_up = wcd937x_swr_up,
+	.device_down = wcd937x_swr_down,
+	.reset_device = wcd937x_swr_reset,
 };
 
 static int __init wcd937x_slave_init(void)
