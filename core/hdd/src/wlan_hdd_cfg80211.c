@@ -19588,12 +19588,13 @@ static void wlan_hdd_chan_info_cb(struct scan_chan_info *info)
 		if (chan[idx].freq == info->freq) {
 			hdd_update_chan_info(hdd_ctx, &chan[idx], info,
 				info->cmd_flag);
-			hdd_info("cmd:%d freq:%u nf:%d cc:%u rcc:%u clk:%u cmd:%d tfc:%d index:%d",
-				chan[idx].cmd_flag, chan[idx].freq,
-				chan[idx].noise_floor,
-				chan[idx].cycle_count, chan[idx].rx_clear_count,
-				chan[idx].clock_freq, chan[idx].cmd_flag,
-				chan[idx].tx_frame_count, idx);
+			hdd_debug("cmd:%d freq:%u nf:%d cc:%u rcc:%u clk:%u cmd:%d tfc:%d index:%d",
+				  chan[idx].cmd_flag, chan[idx].freq,
+				  chan[idx].noise_floor,
+				  chan[idx].cycle_count,
+				  chan[idx].rx_clear_count,
+				  chan[idx].clock_freq, chan[idx].cmd_flag,
+				  chan[idx].tx_frame_count, idx);
 			if (chan[idx].freq == 0)
 				break;
 
