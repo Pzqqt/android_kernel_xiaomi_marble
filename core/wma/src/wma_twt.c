@@ -63,6 +63,10 @@ int wma_twt_en_complete_event_handler(void *handle,
 		WMA_LOGE("Invalid wmi handle for TWT complete");
 		return status;
 	}
+	if (!mac) {
+		WMA_LOGE("Invalid MAC context");
+		return status;
+	}
 	if (wmi_handle->ops->extract_twt_enable_comp_event)
 		status = wmi_handle->ops->extract_twt_enable_comp_event(
 								wmi_handle,
