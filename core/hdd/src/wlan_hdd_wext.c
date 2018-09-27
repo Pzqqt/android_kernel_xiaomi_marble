@@ -5061,13 +5061,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 	}
 	case WE_SET_DEBUG_LOG:
 	{
-		struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
 		if (!mac_handle)
 			return -EINVAL;
 
-
-		hdd_ctx->config->gEnableDebugLog = set_value;
 		sme_update_connect_debug(mac_handle, set_value);
 		break;
 	}

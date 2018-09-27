@@ -1182,7 +1182,6 @@ typedef struct tagCsrConfigParam {
 
 	uint8_t max_scan_count;
 	int8_t first_scan_bucket_threshold;
-	uint8_t fEnableDebugLog;
 	uint8_t max_intf_count;
 	bool enableSelfRecovery;
 	uint32_t f_sta_miracast_mcc_rest_time_val;

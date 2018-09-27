@@ -2006,13 +2006,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_SET_TXPOWER_LIMIT5G_MIN,
 		     CFG_SET_TXPOWER_LIMIT5G_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_DEBUG_CONNECT_ISSUE, WLAN_PARAM_Integer,
-		     struct hdd_config, gEnableDebugLog,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_DEBUG_CONNECT_ISSUE_DEFAULT,
-		     CFG_ENABLE_DEBUG_CONNECT_ISSUE_MIN,
-		     CFG_ENABLE_DEBUG_CONNECT_ISSUE_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_NAME,
 		     WLAN_PARAM_Integer,
 		     struct hdd_config, fDfsPhyerrFilterOffload,
@@ -5307,8 +5300,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	/* Update maximum interfaces information */
 	smeConfig->csrConfig.max_intf_count = hdd_ctx->max_intf_count;
-
-	smeConfig->csrConfig.fEnableDebugLog = hdd_ctx->config->gEnableDebugLog;
 
 	smeConfig->csrConfig.enableSelfRecovery =
 			hdd_ctx->config->enableSelfRecovery;

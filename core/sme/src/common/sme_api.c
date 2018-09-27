@@ -10676,7 +10676,7 @@ QDF_STATUS sme_update_connect_debug(tHalHandle hHal, uint32_t set_value)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
-	pMac->fEnableDebugLog = set_value;
+	pMac->mlme_cfg->gen.debug_packet_log = set_value;
 	return status;
 }
 

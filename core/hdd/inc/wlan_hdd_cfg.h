@@ -4751,35 +4751,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_FW_LOG_MAX                    (CFG_ENABLE_FW_LOG_DIAG)
 #define CFG_ENABLE_FW_LOG_DEFAULT                (CFG_ENABLE_FW_LOG_WMI)
 
-/*
- * <ini>
- * gEnableDebugLog - Enable/Disable the Connection related logs
- * @Min: 0
- * @Max: 0xFF
- * @Default: 0x0F
- *
- * This ini is used to enable/disable the connection related logs
- * 0x1 - Enable mgmt pkt logs (excpet probe req/rsp, beacons).
- * 0x2 - Enable EAPOL pkt logs.
- * 0x4 - Enable DHCP pkt logs.
- * 0x8 - Enable mgmt action frames logs.
- * 0x0 - Disable all the above connection related logs.
- * The default value of 0x0F will enable all the above logs
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_DEBUG_CONNECT_ISSUE             "gEnableDebugLog"
-#define CFG_ENABLE_DEBUG_CONNECT_ISSUE_MIN         (0)
-#define CFG_ENABLE_DEBUG_CONNECT_ISSUE_MAX         (0xFF)
-#define CFG_ENABLE_DEBUG_CONNECT_ISSUE_DEFAULT     (0x0F)
-
 /* SAR Thermal limit values for 2g and 5g */
 
 #define CFG_SET_TXPOWER_LIMIT2G_NAME               "TxPower2g"
@@ -9224,7 +9195,6 @@ struct hdd_config {
 	uint8_t enableDFSMasterCap;
 	uint32_t TxPower2g;
 	uint32_t TxPower5g;
-	uint32_t gEnableDebugLog;
 	bool fDfsPhyerrFilterOffload;
 	uint8_t gSapPreferredChanLocation;
 	uint8_t gDisableDfsJapanW53;

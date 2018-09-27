@@ -3068,8 +3068,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.scan_adaptive_dwell_mode_nc =
 			pParam->scan_adaptive_dwell_mode_nc;
 
-		pMac->fEnableDebugLog = pParam->fEnableDebugLog;
-
 		/* update interface configuration */
 		pMac->sme.max_intf_count = pParam->max_intf_count;
 
@@ -3329,7 +3327,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->is_ps_enabled = pMac->sme.ps_global_info.ps_enabled;
 	pParam->auto_bmps_timer_val =
 		pMac->sme.ps_global_info.auto_bmps_timer_val;
-	pParam->fEnableDebugLog = pMac->fEnableDebugLog;
 	pParam->f_sta_miracast_mcc_rest_time_val =
 		pMac->f_sta_miracast_mcc_rest_time_val;
 	pParam->enableHtSmps = pMac->roam.configParam.enableHtSmps;
