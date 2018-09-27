@@ -6,7 +6,10 @@
 
 #define __MFD_WCD9XXX_PDATA_H__
 
+#if IS_ENABLED(CONFIG_WCD9XXX_CODEC_CORE)
 #include <linux/slimbus/slimbus.h>
+#endif
+
 #include "msm-cdc-supply.h"
 
 #define MICBIAS_EXT_BYP_CAP 0x00
@@ -177,7 +180,9 @@ struct wcd9xxx_pdata {
 	struct device_node *micb_en_ctl;
 	struct device_node *wcd_rst_np;
 	struct wcd9xxx_amic amic_settings;
+#if IS_ENABLED(CONFIG_WCD9XXX_CODEC_CORE)
 	struct slim_device slimbus_slave_device;
+#endif
 	struct wcd9xxx_micbias_setting micbias;
 	struct wcd9xxx_ocp_setting ocp;
 	struct cdc_regulator *regulator;
