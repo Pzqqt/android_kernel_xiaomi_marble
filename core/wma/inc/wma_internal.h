@@ -1269,6 +1269,9 @@ int wma_rssi_breached_event_handler(void *handle,
 }
 #endif /* FEATURE_RSSI_MONITOR */
 
+QDF_STATUS wma_process_cfg_action_frm_tb_ppdu(tp_wma_handle wma,
+				   struct cfg_action_frm_tb_ppdu *cfg_info);
+
 QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 				   struct vdev_ie_info *ie_info);
 int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,

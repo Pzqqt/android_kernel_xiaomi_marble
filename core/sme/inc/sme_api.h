@@ -2814,6 +2814,16 @@ int sme_send_he_om_ctrl_nss_update(mac_handle_t mac_handle, uint8_t session_id,
 void sme_reset_he_om_ctrl(mac_handle_t mac_handle);
 
 /**
+ * sme_config_action_tx_in_tb_ppdu() - Sends action frame in TB PPDU cfg to FW
+ * @mac_handle: Pointer to MAC handle
+ * @session_id: SME session id
+ * @cfg_val: configuration setting value
+ *
+ * Return: 0 on success else err code
+ */
+int sme_config_action_tx_in_tb_ppdu(mac_handle_t mac_handle, uint8_t session_id,
+				    uint8_t cfg_val);
+/**
  * sme_set_usr_cfg_mu_edca() - sets the user cfg MU EDCA params flag
  * @mac_handle: Opaque handle to the global MAC context
  * @val: value to be set
@@ -2937,6 +2947,13 @@ static inline int sme_send_he_om_ctrl_nss_update(mac_handle_t mac_handle,
 
 static inline void sme_reset_he_om_ctrl(mac_handle_t mac_handle)
 {
+}
+
+static inline int sme_config_action_tx_in_tb_ppdu(mac_handle_t mac_handle,
+						  uint8_t session_id,
+						  uint8_t cfg_val)
+{
+	return 0;
 }
 
 static inline void sme_set_usr_cfg_mu_edca(mac_handle_t mac_handle, bool val)

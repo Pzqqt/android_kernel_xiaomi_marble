@@ -8476,6 +8476,10 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 			(struct vdev_ie_info *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+	case WMA_CFG_VENDOR_ACTION_TB_PPDU:
+		wma_process_cfg_action_frm_tb_ppdu(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
 	case SIR_HAL_SOC_ANTENNA_MODE_REQ:
 		wma_send_pdev_set_antenna_mode(wma_handle,
 			(struct sir_antenna_mode_param *)msg->bodyptr);

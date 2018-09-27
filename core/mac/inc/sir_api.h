@@ -5190,6 +5190,22 @@ typedef void (*hw_mode_transition_cb)(uint32_t old_hw_mode_index,
 typedef void (*antenna_mode_cb)(uint32_t status, void *context);
 
 /**
+ * struct cfg_action_frm_tb_ppdu - action frame TB PPDU cfg
+ * @vdev_id - vdev id
+ * @cfg - enable/disable
+ * @frm_len - frame length
+ * @data - frame data
+ *
+ * This structure is used to cfg action frame tb ppdu.
+ */
+struct cfg_action_frm_tb_ppdu {
+	uint8_t vdev_id;
+	uint8_t cfg;
+	uint8_t frm_len;
+	uint8_t *data;
+};
+
+/**
  * struct sir_nss_update_request
  * @msgType: nss update msg type
  * @msgLen: length of the msg

@@ -13330,6 +13330,43 @@ void sme_reset_he_om_ctrl(mac_handle_t mac_handle)
 	mac_ctx->he_om_ctrl_cfg_nss = 0;
 }
 
+int sme_config_action_tx_in_tb_ppdu(mac_handle_t mac_handle, uint8_t session_id,
+				    uint8_t cfg_val)
+{
+	QDF_STATUS status;
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct scheduler_msg msg = {0};
+	struct sir_cfg_action_frm_tb_ppdu *cfg_msg;
+
+	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
+		sme_info("STA not in connected state Session_id: %d",
+			 session_id);
+		return -EINVAL;
+	}
+
+	cfg_msg = qdf_mem_malloc(sizeof(*cfg_msg));
+
+	if (!cfg_msg)
+		return -EIO;
+
+	cfg_msg->type = WNI_SME_CFG_ACTION_FRM_HE_TB_PPDU;
+	cfg_msg->session_id = session_id;
+	cfg_msg->cfg = cfg_val;
+
+	msg.bodyptr = cfg_msg;
+	msg.type = WNI_SME_CFG_ACTION_FRM_HE_TB_PPDU;
+	status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_PE, &msg);
+	if (QDF_STATUS_SUCCESS != status) {
+		sme_err("Failed to send CFG_ACTION_FRAME_IN_TB_PPDU to PE %d",
+			status);
+		qdf_mem_free(cfg_msg);
+		return -EIO;
+	}
+
+	return 0;
+}
+
 int sme_update_he_tx_bfee_nsts(mac_handle_t mac_handle, uint8_t session_id,
 			       uint8_t cfg_val)
 {

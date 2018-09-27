@@ -6274,6 +6274,90 @@ void lim_merge_extcap_struct(tDot11fIEExtCap *dst,
 }
 
 /**
+ * lim_send_action_frm_tb_ppdu_cfg_flush_cb() - flush TB PPDU cfg msg
+ * @msg: Message pointer
+ *
+ * Flushes the send action frame in HE TB PPDU configuration message.
+ *
+ * Return: None
+ */
+static void lim_send_action_frm_tb_ppdu_cfg_flush_cb(struct scheduler_msg *msg)
+{
+	if (msg->bodyptr) {
+		qdf_mem_free(msg->bodyptr);
+		msg->bodyptr = NULL;
+	}
+}
+
+/**
+ * lim_send_action_frm_tb_ppdu_cfg() - sets action frame in TB PPDU cfg to FW
+ * @mac_ctx: global MAC context
+ * @session_id: SME session id
+ * @cfg: config setting
+ *
+ * Preapres the vendor action frame and send action frame in HE TB PPDU
+ * configuration to FW.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_send_action_frm_tb_ppdu_cfg(struct mac_context *mac_ctx,
+					   uint32_t session_id,
+					   uint8_t cfg)
+{
+	tDot11fvendor_action_frame *frm;
+	uint8_t frm_len = sizeof(*frm);
+	tpPESession session;
+	struct cfg_action_frm_tb_ppdu *cfg_msg;
+	struct scheduler_msg msg = {0};
+	uint8_t *data_buf;
+
+	session = pe_find_session_by_sme_session_id(mac_ctx, session_id);
+
+	if (!session) {
+		pe_err("pe session does not exist for sme session id %d",
+		       session_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	data_buf = qdf_mem_malloc(frm_len + sizeof(*cfg_msg));
+	if (!data_buf)
+		return QDF_STATUS_E_FAILURE;
+
+	cfg_msg = (struct cfg_action_frm_tb_ppdu *)data_buf;
+
+	frm = (tDot11fvendor_action_frame *)(data_buf + sizeof(*cfg_msg));
+
+	frm->Category.category = SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY;
+
+	frm->vendor_oui.oui_data[0] = 0x00;
+	frm->vendor_oui.oui_data[1] = 0xA0;
+	frm->vendor_oui.oui_data[2] = 0xC6;
+
+	frm->vendor_action_subtype.subtype = 0xFF;
+
+	cfg_msg->vdev_id = session_id;
+	cfg_msg->cfg = cfg;
+	cfg_msg->frm_len = frm_len;
+	cfg_msg->data = (uint8_t *)frm;
+
+	msg.type = WMA_CFG_VENDOR_ACTION_TB_PPDU;
+	msg.bodyptr = cfg_msg;
+	msg.reserved = 0;
+	msg.flush_callback = lim_send_action_frm_tb_ppdu_cfg_flush_cb;
+
+	if (QDF_STATUS_SUCCESS !=
+		scheduler_post_message(QDF_MODULE_ID_PE,
+				       QDF_MODULE_ID_WMA,
+				       QDF_MODULE_ID_WMA, &msg)) {
+		pe_err("Not able to post WMA_SET_IE_INFO to WDA");
+		qdf_mem_free(data_buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * lim_get_80Mhz_center_channel - finds 80 Mhz center channel
  *
  * @primary_channel:   Primary channel for given 80 MHz band

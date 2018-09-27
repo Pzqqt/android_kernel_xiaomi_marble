@@ -4303,6 +4303,34 @@ end_tdls_peer_state:
 }
 #endif /* FEATURE_WLAN_TDLS */
 
+/*
+ * wma_process_cfg_action_frm_tb_ppdu() - action frame TB PPDU cfg to firmware
+ * @wma:                Pointer to WMA handle
+ * @cfg_info:       Pointer for cfg info
+ *
+ * Return: QDF_STATUS_SUCCESS for success otherwise failure
+ *
+ */
+QDF_STATUS wma_process_cfg_action_frm_tb_ppdu(tp_wma_handle wma,
+				   struct cfg_action_frm_tb_ppdu *cfg_info)
+{
+	struct cfg_action_frm_tb_ppdu_param cmd = {0};
+
+	if (!wma) {
+		WMA_LOGE(FL("WMA pointer is NULL"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd.frm_len = cfg_info->frm_len;
+	cmd.cfg = cfg_info->cfg;
+	cmd.data = cfg_info->data;
+
+	WMA_LOGD(FL("cfg: %d, frm_len: %d"),
+		 cfg_info->cfg, cfg_info->frm_len);
+
+	return wmi_unified_cfg_action_frm_tb_ppdu_cmd(wma->wmi_handle, &cmd);
+}
+
 
 /*
  * wma_process_set_ie_info() - Function to send IE info to firmware

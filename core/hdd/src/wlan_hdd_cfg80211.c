@@ -5184,6 +5184,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_FLAG},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TX_SUPPDU] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_ACTION_TX_TB_PPDU] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -6562,6 +6564,14 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 			sme_config_su_ppdu_queue(adapter->session_id, true);
 		else
 			sme_config_su_ppdu_queue(adapter->session_id, false);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_ACTION_TX_TB_PPDU;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u8(tb[cmd_id]);
+		hdd_debug("Configure Action frame Tx in TB PPDU %d", cfg_val);
+		sme_config_action_tx_in_tb_ppdu(hdd_ctx->mac_handle,
+						adapter->session_id, cfg_val);
 	}
 
 	if (update_sme_cfg)

@@ -3809,6 +3809,19 @@ static void lim_process_sme_update_mu_edca_params(tpAniSirGlobal mac_ctx,
 		pe_err("Self entry missing in Hash Table");
 }
 
+static void
+lim_process_sme_cfg_action_frm_in_tb_ppdu(struct mac_context *mac_ctx,
+					  struct  sir_cfg_action_frm_tb_ppdu
+					  *msg)
+{
+	if (!msg) {
+		pe_err("Buffer is NULL");
+		return;
+	}
+
+	lim_send_action_frm_tb_ppdu_cfg(mac_ctx, msg->session_id, msg->cfg);
+}
+
 static void lim_process_sme_update_config(tpAniSirGlobal mac_ctx,
 					  struct update_config *msg)
 {
@@ -5111,6 +5124,10 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 		break;
 	case WNI_SME_UPDATE_MU_EDCA_PARAMS:
 		lim_process_sme_update_mu_edca_params(pMac, pMsg->bodyval);
+		break;
+	case WNI_SME_CFG_ACTION_FRM_HE_TB_PPDU:
+		lim_process_sme_cfg_action_frm_in_tb_ppdu(pMac,
+				(struct  sir_cfg_action_frm_tb_ppdu *)pMsgBuf);
 		break;
 	default:
 		qdf_mem_free((void *)pMsg->bodyptr);

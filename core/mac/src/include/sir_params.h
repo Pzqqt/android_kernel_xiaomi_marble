@@ -205,6 +205,18 @@ struct sir_mgmt_msg {
 	uint8_t *data;
 };
 
+/**
+ * struct sir_cfg_action_frm_tb_ppdu - cfg to set action frame in he tb ppdu
+ * @type: Message type
+ * @session_id: session id
+ * @cfg: enable/disable cfg
+ */
+struct sir_cfg_action_frm_tb_ppdu {
+	uint16_t type;
+	uint8_t session_id;
+	uint8_t cfg;
+};
+
 /* ******************************************* *
 *                                             *
 *         SIRIUS MESSAGE TYPES                *
@@ -682,7 +694,7 @@ struct sir_mgmt_msg {
 #define SIR_HAL_GET_ROAM_SCAN_STATS         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 399)
 #define SIR_HAL_SEND_AP_VDEV_UP             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 400)
 #define SIR_HAL_SEND_BCN_RSP                (SIR_HAL_ITC_MSG_TYPES_BEGIN + 401)
-
+#define SIR_HAL_CFG_VENDOR_ACTION_TB_PPDU   (SIR_HAL_ITC_MSG_TYPES_BEGIN + 402)
 #define SIR_HAL_MSG_TYPES_END               (SIR_HAL_MSG_TYPES_BEGIN + 0x1FF)
 
 /* CFG message types */

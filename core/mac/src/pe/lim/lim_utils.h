@@ -750,6 +750,21 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx, uint32_t session_id,
 QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 				 tpPESession session, uint8_t vdev_id);
 
+/**
+ * lim_send_action_frm_tb_ppdu_cfg() - sets action frame in TB PPDU cfg to FW
+ * @mac_ctx: global MAC context
+ * @session_id: SME session id
+ * @cfg: config setting
+ *
+ * Preapres the vendor action frame and send action frame in HE TB PPDU
+ * configuration to FW.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_send_action_frm_tb_ppdu_cfg(struct mac_context *mac_ctx,
+					   uint32_t session_id,
+					   uint8_t cfg);
+
 QDF_STATUS lim_strip_extcap_ie(tpAniSirGlobal mac_ctx, uint8_t *addn_ie,
 			  uint16_t *addn_ielen, uint8_t *extracted_extcap);
 void lim_update_extcap_struct(tpAniSirGlobal mac_ctx, uint8_t *buf,
