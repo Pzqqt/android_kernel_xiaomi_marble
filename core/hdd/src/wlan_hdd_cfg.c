@@ -1957,13 +1957,6 @@ struct reg_table_entry g_registry_table[] = {
 			    VAR_FLAGS_NONE,
 			    (void *)CFG_ENABLE_CONCURRENT_STA_DEFAULT),
 
-	REG_VARIABLE(CFG_MAX_CONCURRENT_CONNECTIONS_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, gMaxConcurrentActiveSessions,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MAX_CONCURRENT_CONNECTIONS_DEFAULT,
-		     CFG_MAX_CONCURRENT_CONNECTIONS_MIN,
-		     CFG_MAX_CONCURRENT_CONNECTIONS_MAX),
-
 	REG_VARIABLE(CFG_IGNORE_CAC_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, ignoreCAC,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4265,8 +4258,6 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 
 	user_cfg->enable_mcc_adaptive_scheduler =
 		hdd_ctx->config->enableMCCAdaptiveScheduler;
-	user_cfg->max_concurrent_active_sessions =
-		hdd_ctx->config->gMaxConcurrentActiveSessions;
 
 	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc,
 					     &user_cfg->enable2x2);

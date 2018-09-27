@@ -4701,28 +4701,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gMaxConcurrentActiveSessions - Maximum number of concurrent connections.
- * @Min: 1
- * @Max: 4
- * @Default: 3
- *
- * This ini is used to configure the maximum number of concurrent connections.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_MAX_CONCURRENT_CONNECTIONS_NAME        "gMaxConcurrentActiveSessions"
-#define CFG_MAX_CONCURRENT_CONNECTIONS_DEFAULT     (3)
-#define CFG_MAX_CONCURRENT_CONNECTIONS_MIN         (1)
-#define CFG_MAX_CONCURRENT_CONNECTIONS_MAX         (4)
-
-/*
- * <ini>
  * gIgnoreCAC - Used to ignore CAC
  * @Min: 0
  * @Max: 1
@@ -7689,8 +7667,6 @@ struct hdd_config {
 	uint8_t allowDFSChannelRoam;
 
 	uint8_t enableFwModuleLogLevel[FW_MODULE_LOG_LEVEL_STRING_LENGTH];
-
-	uint8_t gMaxConcurrentActiveSessions;
 
 	uint8_t ignoreCAC;
 
