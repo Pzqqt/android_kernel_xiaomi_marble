@@ -4799,56 +4799,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_DHCP_SERVER_IP_DEFAULT  ""
 #endif /* DHCP_SERVER_OFFLOAD */
 
-/*
- * <ini>
- * gEnableCustomConcRule1 - Enable custom concurrency rule1.
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable custom concurrency rule1.
- * If SAP comes up first and STA comes up later then SAP needs to follow STA's
- * channel.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_CUSTOM_CONC_RULE1_NAME         "gEnableCustomConcRule1"
-#define CFG_ENABLE_CUSTOM_CONC_RULE1_NAME_MIN     (0)
-#define CFG_ENABLE_CUSTOM_CONC_RULE1_NAME_MAX     (1)
-#define CFG_ENABLE_CUSTOM_CONC_RULE1_NAME_DEFAULT (0)
-
-/*
- * <ini>
- * gEnableCustomConcRule2 - Enable custom concurrency rule2.
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable custom concurrency rule2.
- * If P2PGO comes up first and STA comes up later then P2PGO need to follow
- * STA's channel in 5Ghz. In following if condition we are just adding sanity
- * check to make sure that by this time P2PGO's channel is same as STA's
- * channel.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_CUSTOM_CONC_RULE2_NAME         "gEnableCustomConcRule2"
-#define CFG_ENABLE_CUSTOM_CONC_RULE2_NAME_MIN     (0)
-#define CFG_ENABLE_CUSTOM_CONC_RULE2_NAME_MAX     (1)
-#define CFG_ENABLE_CUSTOM_CONC_RULE2_NAME_DEFAULT (0)
-
 #define CFG_ENABLE_STA_CONNECTION_IN_5GHZ         "gEnableStaConnectionIn5Ghz"
 #define CFG_ENABLE_STA_CONNECTION_IN_5GHZ_MIN     (0)
 #define CFG_ENABLE_STA_CONNECTION_IN_5GHZ_MAX     (1)
@@ -7690,8 +7640,6 @@ struct hdd_config {
 	uint8_t dhcpServerIP[IPADDR_STRING_LENGTH];
 #endif /* DHCP_SERVER_OFFLOAD */
 	bool enable_mac_spoofing;
-	uint8_t conc_custom_rule1;
-	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
 	uint32_t sta_miracast_mcc_rest_time_val;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE

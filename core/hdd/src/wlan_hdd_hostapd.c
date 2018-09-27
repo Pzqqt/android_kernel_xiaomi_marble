@@ -2698,6 +2698,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	struct hdd_context *hdd_ctx = NULL;
 	struct hdd_adapter *sta_adapter;
 	struct hdd_station_ctx *sta_ctx;
+	uint8_t conc_rule1 = 0;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -2712,13 +2713,14 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	}
 
 	sta_adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
+	ucfg_policy_mgr_get_conc_rule1(hdd_ctx->psoc, &conc_rule1);
 	/*
 	 * conc_custom_rule1:
 	 * Force SCC for SAP + STA
 	 * if STA is already connected then we shouldn't allow
 	 * channel switch in SAP interface.
 	 */
-	if (sta_adapter && hdd_ctx->config->conc_custom_rule1) {
+	if (sta_adapter && conc_rule1) {
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(sta_adapter);
 		if (hdd_conn_is_connected(sta_ctx)) {
 			hdd_err("Channel switch not allowed after STA connection with conc_custom_rule1 enabled");
@@ -4564,7 +4566,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	int32_t i;
 	struct hdd_config *iniConfig;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	uint8_t mcc_to_scc_switch = 0;
+	uint8_t mcc_to_scc_switch = 0, conc_rule1 = 0;
 	tSmeConfigParams *sme_config;
 	bool MFPCapable = false;
 	bool MFPRequired = false;
@@ -4977,6 +4979,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	pConfig->SapMacaddr_acl = eSAP_ACCEPT_UNLESS_DENIED;
 	pConfig->num_accept_mac = 0;
 	pConfig->num_deny_mac = 0;
+	ucfg_policy_mgr_get_conc_rule1(hdd_ctx->psoc, &conc_rule1);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	/*
 	 * We don't want P2PGO to follow STA's channel
@@ -4984,9 +4987,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	 * Later if we decide to make p2pgo follow STA's
 	 * channel then remove this check.
 	 */
-	if ((0 == hdd_ctx->config->conc_custom_rule1) ||
-		(hdd_ctx->config->conc_custom_rule1 &&
-		QDF_SAP_MODE == adapter->device_mode))
+	if ((0 == conc_rule1) ||
+	    (conc_rule1 && (QDF_SAP_MODE == adapter->device_mode)))
 		pConfig->cc_switch_mode = mcc_to_scc_switch;
 #endif
 
@@ -5306,6 +5308,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	struct hdd_beacon_data *old;
 	int ret;
 	mac_handle_t mac_handle;
+	uint8_t conc_rule1 = 0;
 
 	hdd_enter();
 
@@ -5361,13 +5364,13 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		wlan_hdd_del_station(adapter);
 
 	cds_flush_work(&adapter->sap_stop_bss_work);
+	ucfg_policy_mgr_get_conc_rule1(hdd_ctx->psoc, &conc_rule1);
 	/*
 	 * When ever stop ap adapter gets called, we need to check
 	 * whether any restart AP work is pending. If any restart is pending
 	 * then lets finish it and go ahead from there.
 	 */
-	if (hdd_ctx->config->conc_custom_rule1 &&
-	    (QDF_SAP_MODE == adapter->device_mode)) {
+	if (conc_rule1 && (QDF_SAP_MODE == adapter->device_mode)) {
 		cds_flush_work(&hdd_ctx->sap_start_work);
 		hdd_debug("Canceled the pending restart work");
 		qdf_spin_lock(&hdd_ctx->sap_update_info_lock);
