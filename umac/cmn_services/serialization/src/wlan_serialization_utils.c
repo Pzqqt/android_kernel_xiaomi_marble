@@ -1213,7 +1213,7 @@ static void wlan_serialization_release_pdev_list_cmds(
 
 	while (!wlan_serialization_list_empty(&pdev_queue->active_list)) {
 		wlan_serialization_remove_front(
-				&pdev_queue->pending_list, &node);
+				&pdev_queue->active_list, &node);
 		wlan_serialization_insert_back(
 				&pdev_queue->cmd_pool_list, node);
 	}
