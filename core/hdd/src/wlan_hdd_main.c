@@ -2110,7 +2110,7 @@ wlan_hdd_update_dbs_scan_and_fw_mode_config(void)
 {
 	struct policy_mgr_dual_mac_config cfg = {0};
 	QDF_STATUS status;
-	uint32_t channel_select_logic_conc;
+	uint32_t channel_select_logic_conc = 0;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (!hdd_ctx) {
@@ -2125,9 +2125,8 @@ wlan_hdd_update_dbs_scan_and_fw_mode_config(void)
 	cfg.scan_config = 0;
 	cfg.fw_mode_config = 0;
 	cfg.set_dual_mac_cb = policy_mgr_soc_set_dual_mac_cfg_cb;
-
-	channel_select_logic_conc = hdd_ctx->config->
-						channel_select_logic_conc;
+	ucfg_policy_mgr_get_chnl_select_plcy(hdd_ctx->psoc,
+					     &channel_select_logic_conc);
 
 	if (hdd_ctx->config->dual_mac_feature_disable !=
 	    DISABLE_DBS_CXN_AND_SCAN) {

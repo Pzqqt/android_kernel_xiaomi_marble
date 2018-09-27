@@ -2074,20 +2074,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MIN,
 		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MAX),
 
-	REG_VARIABLE(CFG_DBS_SELECTION_POLICY, WLAN_PARAM_Integer,
-		     struct hdd_config, dbs_selection_policy,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_DBS_SELECTION_POLICY_DEFAULT,
-		     CFG_DBS_SELECTION_POLICY_MIN,
-		     CFG_DBS_SELECTION_POLICY_MAX),
-
-	REG_VARIABLE(CFG_VDEV_PRIORITY_LIST, WLAN_PARAM_Integer,
-		     struct hdd_config, vdev_priority_list,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_VDEV_PRIORITY_LIST_DEFAULT,
-		     CFG_VDEV_PRIORITY_LIST_MIN,
-		     CFG_VDEV_PRIORITY_LIST_MAX),
-
 	REG_VARIABLE(CFG_TSO_ENABLED_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, tso_enable,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2806,13 +2792,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_DTIM_SELECTION_DIVERSITY_DEFAULT,
 		     CFG_DTIM_SELECTION_DIVERSITY_MIN,
 		     CFG_DTIM_SELECTION_DIVERSITY_MAX),
-
-	REG_VARIABLE(CFG_CHANNEL_SELECT_LOGIC_CONC_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, channel_select_logic_conc,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_CHANNEL_SELECT_LOGIC_CONC_DEFAULT,
-		     CFG_CHANNEL_SELECT_LOGIC_CONC_MIN,
-		     CFG_CHANNEL_SELECT_LOGIC_CONC_MAX),
 
 	REG_VARIABLE(CFG_TX_SCH_DELAY_NAME,
 		     WLAN_PARAM_Integer,
@@ -4253,12 +4232,8 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 	user_cfg->sub_20_mhz_enabled = cds_is_sub_20_mhz_enabled();
 	user_cfg->is_sta_sap_scc_allowed_on_dfs_chan =
 		hdd_ctx->config->sta_sap_scc_on_dfs_chan;
-	user_cfg->channel_select_logic_conc =
-		hdd_ctx->config->channel_select_logic_conc;
 	user_cfg->sta_sap_scc_on_lte_coex_chan =
 		hdd_ctx->config->sta_sap_scc_on_lte_coex_chan;
-	user_cfg->dbs_selection_policy = hdd_ctx->config->dbs_selection_policy;
-	user_cfg->vdev_priority_list = hdd_ctx->config->vdev_priority_list;
 	status = policy_mgr_set_user_cfg(hdd_ctx->psoc, user_cfg);
 	qdf_mem_free(user_cfg);
 
