@@ -1613,6 +1613,30 @@ QDF_STATUS wmi_unified_send_regdomain_info_to_fw_cmd(void *wmi_hdl,
 }
 
 /**
+ * wmi_unified_cfg_action_frm_tb_ppdu_cmd()-send action frame TB PPDU cfg to FW
+ * @wmi_handle:    Pointer to WMi handle
+ * @cfg_info:      Pointer to cfg msg
+ *
+ * This function sends action frame TB PPDU cfg to firmware
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ *
+ */
+QDF_STATUS
+wmi_unified_cfg_action_frm_tb_ppdu_cmd(void *wmi_hdl,
+				       struct cfg_action_frm_tb_ppdu_param
+				       *cfg_info)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_cfg_action_frm_tb_ppdu_cmd)
+		return wmi_handle->ops->send_cfg_action_frm_tb_ppdu_cmd(
+						wmi_handle, cfg_info);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_unified_save_fw_version_cmd() - save fw version
  * @wmi_handle:      pointer to wmi handle
  * @res_cfg:         resource config
