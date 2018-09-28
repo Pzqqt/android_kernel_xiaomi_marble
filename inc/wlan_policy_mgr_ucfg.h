@@ -164,4 +164,18 @@ QDF_STATUS ucfg_policy_mgr_get_chnl_select_plcy(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_policy_mgr_get_mcc_adaptive_sch(struct wlan_objmgr_psoc *psoc,
 				     uint8_t *enable_mcc_adaptive_sch);
+
+/**
+ * ucfg_policy_mgr_get_sta_cxn_5g_band() - to get STA's connection in 5G config
+ *
+ * @psoc: pointer to psoc
+ * @enable_sta_cxn_5g_band: value to be filled
+ *
+ * This API is used to find out if STA connection in 5G band is allowed or
+ * disallowed.
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS ucfg_policy_mgr_get_sta_cxn_5g_band(struct wlan_objmgr_psoc *psoc,
+					       uint8_t *enable_sta_cxn_5g_band);
 #endif //__WLAN_POLICY_MGR_UCFG

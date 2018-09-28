@@ -187,6 +187,21 @@ QDF_STATUS policy_mgr_get_mcc_adaptive_sch(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS policy_mgr_get_sta_cxn_5g_band(struct wlan_objmgr_psoc *psoc,
+					  uint8_t *enable_sta_cxn_5g_band)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*enable_sta_cxn_5g_band = pm_ctx->cfg.enable_sta_cxn_5g_band;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void policy_mgr_update_new_hw_mode_index(struct wlan_objmgr_psoc *psoc,
 		uint32_t new_hw_mode_index)
 {
