@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,13 +25,7 @@
  * to the Linux Foundation.
  */
 
-/*
- *  Shared USB definitions
- *
- *
- *
- *
- */
+/* USB definitions shared between host and target */
 
 #ifndef __A_USB_DEFS_H__
 #define __A_USB_DEFS_H__
@@ -41,18 +35,31 @@
 #endif
 
 /* USB endpoint definitions */
+#ifdef PLATFORM_GENOA
+
+#define USB_EP_ADDR_APP_CTRL_IN          0x88
+#define USB_EP_ADDR_APP_DATA_IN          0x89
+#define USB_EP_ADDR_APP_QMI_IN           0x8A
+#define USB_EP_ADDR_APP_DIAG_IN          0x8B
+
+#define USB_EP_ADDR_APP_CTRL_OUT         0x08
+#define USB_EP_ADDR_APP_DATA_OUT         0x09
+#define USB_EP_ADDR_APP_QMI_OUT          0x0A
+#define USB_EP_ADDR_APP_DIAG_OUT         0x0B
+
+#else /* PLATFORM_GENOA */
 
 #define USB_EP_ADDR_APP_CTRL_IN          0x81
 #define USB_EP_ADDR_APP_DATA_IN          0x82
 #define USB_EP_ADDR_APP_DATA2_IN         0x83
 #define USB_EP_ADDR_APP_INT_IN           0x84
 
-
-
 #define USB_EP_ADDR_APP_CTRL_OUT         0x01
 #define USB_EP_ADDR_APP_DATA_LP_OUT      0x02
 #define USB_EP_ADDR_APP_DATA_MP_OUT      0x03
 #define USB_EP_ADDR_APP_DATA_HP_OUT      0x04
+
+#endif /* PLATFORM_GENOA */
 
 #define USB_CONTROL_REQ_SEND_BMI_CMD        1
 #define USB_CONTROL_REQ_RECV_BMI_RESP       2
