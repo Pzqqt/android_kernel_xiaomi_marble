@@ -950,6 +950,9 @@ QDF_STATUS (*send_regdomain_info_to_fw_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_process_fw_mem_dump_cmd)(wmi_unified_t wmi_handle,
 					struct fw_dump_req_param *mem_dump_req);
 
+QDF_STATUS (*send_cfg_action_frm_tb_ppdu_cmd)(wmi_unified_t wmi_handle,
+				struct cfg_action_frm_tb_ppdu_param *cfg_info);
+
 QDF_STATUS (*save_fw_version_cmd)(wmi_unified_t wmi_handle, void *evt_buf);
 
 QDF_STATUS (*check_and_update_fw_version_cmd)(wmi_unified_t wmi_hdl, void *ev);

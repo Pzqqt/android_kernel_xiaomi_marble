@@ -2584,6 +2584,18 @@ struct rcv_pkt_filter_config {
 	struct rcv_pkt_filter_params paramsData[WMI_MAX_NUM_TESTS_PER_FILTER];
 };
 
+/**
+ * struct cfg_action_frm_tb_ppdu_param - action frm in TB PPDU cfg
+ * @cfg - enable/disable
+ * @frm_len - length of the frame
+ * @data - data pointer
+ */
+struct cfg_action_frm_tb_ppdu_param {
+	uint32_t cfg;
+	uint32_t frm_len;
+	uint8_t *data;
+};
+
 #define WMI_MAX_NUM_FW_SEGMENTS 4
 
 /**
