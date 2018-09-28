@@ -4648,39 +4648,43 @@ static void dp_reset_and_release_peer_mem(struct dp_soc *soc,
 	qdf_mem_free(peer);
 }
 
-static void dp_delete_pending_vdev(struct dp_pdev *pdev, uint32_t vdev_id)
+/**
+ * dp_delete_pending_vdev() - check and process vdev delete
+ * @pdev: DP specific pdev pointer
+ * @vdev: DP specific vdev pointer
+ * @vdev_id: vdev id corresponding to vdev
+ *
+ * This API does following:
+ * 1) It releases tx flow pools buffers as vdev is
+ *    going down and no peers are associated.
+ * 2) It also detaches vdev before cleaning vdev (struct dp_vdev) memory
+ */
+static void dp_delete_pending_vdev(struct dp_pdev *pdev, struct dp_vdev *vdev,
+				   uint8_t vdev_id)
 {
-	struct dp_vdev *vdev = NULL;
 	ol_txrx_vdev_delete_cb vdev_delete_cb = NULL;
 	void *vdev_delete_context = NULL;
 
-	qdf_spin_lock_bh(&pdev->vdev_list_lock);
-	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-		if (vdev->vdev_id == vdev_id)
-			break;
-	}
-	if (!vdev) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "vdev is NULL");
-	} else if (vdev->delete.pending) {
-		vdev_delete_cb = vdev->delete.callback;
-		vdev_delete_context = vdev->delete.context;
+	vdev_delete_cb = vdev->delete.callback;
+	vdev_delete_context = vdev->delete.context;
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("deleting vdev object %pK (%pM)- its last peer is done"),
-			  vdev, vdev->mac_addr.raw);
-		/* all peers are gone, go ahead and delete it */
-		dp_tx_flow_pool_unmap_handler(pdev, vdev_id,
-				FLOW_TYPE_VDEV, vdev_id);
-		dp_tx_vdev_detach(vdev);
-		TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("deleting vdev object %pK (%pM)"),
-			  vdev, vdev->mac_addr.raw);
-		qdf_mem_free(vdev);
-		vdev = NULL;
-	}
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+		  FL("deleting vdev object %pK (%pM)- its last peer is done"),
+		  vdev, vdev->mac_addr.raw);
+	/* all peers are gone, go ahead and delete it */
+	dp_tx_flow_pool_unmap_handler(pdev, vdev_id,
+			FLOW_TYPE_VDEV, vdev_id);
+	dp_tx_vdev_detach(vdev);
+
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
+	TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+		  FL("deleting vdev object %pK (%pM)"),
+		  vdev, vdev->mac_addr.raw);
+	qdf_mem_free(vdev);
+	vdev = NULL;
 
 	if (vdev_delete_cb)
 		vdev_delete_cb(vdev_delete_context);
@@ -4701,6 +4705,7 @@ void dp_peer_unref_delete(void *peer_handle)
 	int found = 0;
 	uint16_t peer_id;
 	uint16_t vdev_id;
+	bool delete_vdev;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: peer %pK ref_cnt(before decrement): %d\n", __func__,
@@ -4763,6 +4768,11 @@ void dp_peer_unref_delete(void *peer_handle)
 		/* check whether the parent vdev has no peers left */
 		if (TAILQ_EMPTY(&vdev->peer_list)) {
 			/*
+			 * capture vdev delete pending flag's status
+			 * while holding peer_ref_mutex lock
+			 */
+			delete_vdev = vdev->delete.pending;
+			/*
 			 * Now that there are no references to the peer, we can
 			 * release the peer reference lock.
 			 */
@@ -4771,7 +4781,8 @@ void dp_peer_unref_delete(void *peer_handle)
 			 * Check if the parent vdev was waiting for its peers
 			 * to be deleted, in order for it to be deleted too.
 			 */
-			dp_delete_pending_vdev(pdev, vdev_id);
+			if (delete_vdev)
+				dp_delete_pending_vdev(pdev, vdev, vdev_id);
 		} else {
 			qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 		}
