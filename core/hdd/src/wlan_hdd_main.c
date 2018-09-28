@@ -9090,57 +9090,6 @@ list_destroy:
 }
 
 /**
- * ie_whitelist_attrs_init() - initialize ie whitelisting attributes
- * @hdd_ctx: pointer to hdd context
- *
- * Return: status of initialization
- *         0 - success
- *         negative value - failure
- */
-static int ie_whitelist_attrs_init(struct hdd_context *hdd_ctx)
-{
-	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
-	int ret;
-	QDF_STATUS status;
-	bool is_ie_whitelist_enable = false;
-
-	if (!psoc) {
-		hdd_err("HDD psoc got NULL");
-		return -EINVAL;
-	}
-
-	status = ucfg_fwol_get_ie_whitelist(psoc, &is_ie_whitelist_enable);
-	if (QDF_IS_STATUS_ERROR(status))
-		return qdf_status_to_os_return(status);
-
-	if (!is_ie_whitelist_enable)
-		return 0;
-
-	if (!hdd_validate_prb_req_ie_bitmap(hdd_ctx)) {
-		hdd_err("invalid ie bitmap and ouis: disable ie whitelisting");
-		status = ucfg_fwol_set_ie_whitelist(psoc, false);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			hdd_err("Could not set IE whitelist param");
-			return qdf_status_to_os_return(status);
-		}
-		return -EINVAL;
-	}
-
-	/* parse ini string probe req oui */
-	ret = hdd_parse_probe_req_ouis(hdd_ctx);
-	if (ret) {
-		hdd_err("parsing error: disable ie whitelisting");
-		status = ucfg_fwol_set_ie_whitelist(psoc, false);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			hdd_err("Could not set IE whitelist param");
-			return qdf_status_to_os_return(status);
-		}
-	}
-
-	return ret;
-}
-
-/**
  * hdd_iface_change_callback() - Function invoked when stop modules expires
  * @priv: pointer to hdd context
  *
@@ -9323,8 +9272,6 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 	}
 
 	hdd_cfg_params_init(hdd_ctx);
-
-	ie_whitelist_attrs_init(hdd_ctx);
 
 	hdd_debug("setting timer multiplier: %u",
 		  hdd_ctx->config->timer_multiplier);
@@ -14026,7 +13973,6 @@ void hdd_update_ie_whitelist_attr(struct probe_req_whitelist_attr *ie_whitelist,
 {
 	struct wlan_fwol_ie_whitelist whitelist = {0};
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
-	struct hdd_config *cfg = hdd_ctx->config;
 	QDF_STATUS status;
 	bool is_ie_whitelist_enable = false;
 	uint8_t i = 0;
@@ -14056,9 +14002,9 @@ void hdd_update_ie_whitelist_attr(struct probe_req_whitelist_attr *ie_whitelist,
 	ie_whitelist->ie_bitmap[6] = whitelist.ie_bitmap_6;
 	ie_whitelist->ie_bitmap[7] = whitelist.ie_bitmap_7;
 
-	ie_whitelist->num_vendor_oui = cfg->no_of_probe_req_ouis;
+	ie_whitelist->num_vendor_oui = whitelist.no_of_probe_req_ouis;
 	for (i = 0; i < ie_whitelist->num_vendor_oui; i++)
-		ie_whitelist->voui[i] = cfg->probe_req_voui[i];
+		ie_whitelist->voui[i] = whitelist.probe_req_voui[i];
 }
 
 uint32_t hdd_limit_max_per_index_score(uint32_t per_index_score)

@@ -76,6 +76,99 @@ fwol_init_thermal_temp_in_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_THERMAL_TEMP_MAX_LEVEL3);
 }
 
+/**
+ * fwol_parse_probe_req_ouis - form ouis from ini gProbeReqOUIs
+ * @psoc: Pointer to struct wlan_objmgr_psoc context
+ * @whitelist: Pointer to struct wlan_fwol_ie_whitelist
+ *
+ * This function parses the ini string gProbeReqOUIs which needs be to in the
+ * following format:
+ * "<8 characters of [0-9] or [A-F]>space<8 characters from [0-9] etc.,"
+ * example: "AABBCCDD 1122EEFF"
+ * and the logic counts the number of OUIS and allocates the memory
+ * for every valid OUI and is stored in struct hdd_context
+ *
+ * Return: None
+ */
+static void fwol_parse_probe_req_ouis(struct wlan_objmgr_psoc *psoc,
+				      struct wlan_fwol_ie_whitelist *whitelist)
+{
+	uint8_t probe_req_ouis[MAX_PRB_REQ_VENDOR_OUI_INI_LEN] = {0};
+	uint32_t *voui = whitelist->probe_req_voui;
+	char *str;
+	uint8_t *token;
+	uint32_t oui_indx = 0;
+	int ret;
+	uint32_t hex_value;
+
+	qdf_str_lcopy(probe_req_ouis, cfg_get(psoc, CFG_PROBE_REQ_OUI),
+		      MAX_PRB_REQ_VENDOR_OUI_INI_LEN);
+	str = probe_req_ouis;
+	whitelist->no_of_probe_req_ouis = 0;
+
+	if (!qdf_str_len(str)) {
+		fwol_info("NO OUIs to parse");
+		return;
+	}
+
+	token = strsep(&str, " ");
+	while (token) {
+		if (qdf_str_len(token) != 8)
+			goto next_token;
+
+		ret = qdf_kstrtouint(token, 16, &hex_value);
+		if (ret)
+			goto next_token;
+
+		voui[oui_indx++] = cpu_to_be32(hex_value);
+		if (oui_indx >= MAX_PROBE_REQ_OUIS)
+			break;
+next_token:
+		token = strsep(&str, " ");
+	}
+
+	if (!oui_indx) {
+		whitelist->ie_whitelist = false;
+		return;
+	}
+
+	whitelist->no_of_probe_req_ouis = oui_indx;
+}
+
+/**
+ * fwol_validate_ie_bitmaps() - Validate all IE whitelist bitmap param values
+ * @psoc: Pointer to struct wlan_objmgr_psoc
+ * @whitelist: Pointer to struct wlan_fwol_ie_whitelist
+ *
+ * Return: True if all bitmap values are valid, else false
+ */
+static bool fwol_validate_ie_bitmaps(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_fwol_ie_whitelist *whitelist)
+{
+	if (!(whitelist->ie_bitmap_0 && whitelist->ie_bitmap_1 &&
+	      whitelist->ie_bitmap_2 && whitelist->ie_bitmap_3 &&
+	      whitelist->ie_bitmap_4 && whitelist->ie_bitmap_5 &&
+	      whitelist->ie_bitmap_6 && whitelist->ie_bitmap_7))
+		return false;
+
+	/*
+	 * check whether vendor oui IE is set and OUIs are present, each OUI
+	 * is entered in the form of string of 8 characters from ini, therefore,
+	 * for atleast one OUI, minimum length is 8 and hence this string length
+	 * is checked for minimum of 8
+	 */
+	if ((whitelist->ie_bitmap_6 & VENDOR_SPECIFIC_IE_BITMAP) &&
+	    (qdf_str_len(cfg_get(psoc, CFG_PROBE_REQ_OUI)) < 8))
+		return false;
+
+	/* check whether vendor oui IE is not set but OUIs are present */
+	if (!(whitelist->ie_bitmap_6 & VENDOR_SPECIFIC_IE_BITMAP) &&
+	    (qdf_str_len(cfg_get(psoc, CFG_PROBE_REQ_OUI)) > 0))
+		return false;
+
+	return true;
+}
+
 static void
 fwol_init_ie_whiltelist_in_cfg(struct wlan_objmgr_psoc *psoc,
 			       struct wlan_fwol_ie_whitelist *whitelist)
@@ -89,6 +182,9 @@ fwol_init_ie_whiltelist_in_cfg(struct wlan_objmgr_psoc *psoc,
 	whitelist->ie_bitmap_5 = cfg_get(psoc, CFG_PROBE_REQ_IE_BIT_MAP5);
 	whitelist->ie_bitmap_6 = cfg_get(psoc, CFG_PROBE_REQ_IE_BIT_MAP6);
 	whitelist->ie_bitmap_7 = cfg_get(psoc, CFG_PROBE_REQ_IE_BIT_MAP7);
+	if (!fwol_validate_ie_bitmaps(psoc, whitelist))
+		whitelist->ie_whitelist = false;
+	fwol_parse_probe_req_ouis(psoc, whitelist);
 }
 
 /**

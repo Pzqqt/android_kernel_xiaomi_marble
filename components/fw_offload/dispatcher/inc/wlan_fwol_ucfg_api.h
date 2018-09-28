@@ -110,14 +110,6 @@ QDF_STATUS
 ucfg_fwol_set_ie_whitelist(struct wlan_objmgr_psoc *psoc, bool ie_whitelist);
 
 /**
- * ucfg_validate_ie_bitmaps() - Validate all IE whitelist bitmap param values
- * @psoc: Pointer to psoc object
- *
- * Return: True if all bitmap values are valid, else false
- */
-bool ucfg_validate_ie_bitmaps(struct wlan_objmgr_psoc *psoc);
-
-/**
  * ucfg_fwol_get_all_whitelist_params() - Get all IE whitelist param values
  * @psoc: Pointer to psoc object
  * @whitelist: Pointer to struct wlan_fwol_ie_whitelist

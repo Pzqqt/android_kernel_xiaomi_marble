@@ -274,6 +274,38 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"IE Bitmap 7")
 
+#define MAX_PRB_REQ_VENDOR_OUI_INI_LEN 160
+#define VENDOR_SPECIFIC_IE_BITMAP 0x20000000
+/*
+ * For vendor specific IE, Probe Req OUI types and sub types which are
+ * to be white listed are specified in gProbeReqOUIs in the following
+ * example format - gProbeReqOUIs=AABBCCDD EEFF1122
+ */
+
+/*
+ * <ini>
+ * gProbeReqOUIs - Used to specify vendor specific OUIs
+ * @Default: Empty string
+ *
+ * This ini is used to include the specified OUIs in vendor specific IE
+ * of probe request.
+ *
+ * Related: Need to enable g_enable_probereq_whitelist_ies and
+ * vendor specific IE should be set in g_probe_req_ie_bitmap_6.
+ *
+ * Supported Feature: Probe request ie whitelisting
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_PROBE_REQ_OUI CFG_INI_STRING( \
+			"gProbeReqOUIs", \
+			0, \
+			MAX_PRB_REQ_VENDOR_OUI_INI_LEN, \
+			"", \
+			"Probe Req OUIs")
+
 #define CFG_IE_WHITELIST \
 	CFG(CFG_PROBE_REQ_IE_WHITELIST) \
 	CFG(CFG_PROBE_REQ_IE_BIT_MAP0) \
@@ -283,6 +315,7 @@
 	CFG(CFG_PROBE_REQ_IE_BIT_MAP4) \
 	CFG(CFG_PROBE_REQ_IE_BIT_MAP5) \
 	CFG(CFG_PROBE_REQ_IE_BIT_MAP6) \
-	CFG(CFG_PROBE_REQ_IE_BIT_MAP7)
+	CFG(CFG_PROBE_REQ_IE_BIT_MAP7) \
+	CFG(CFG_PROBE_REQ_OUI)
 
 #endif

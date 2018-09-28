@@ -62,9 +62,6 @@ struct hdd_context;
 /* Number of items that can be configured */
 #define MAX_CFG_INI_ITEMS   1024
 
-#define MAX_PRB_REQ_VENDOR_OUI_INI_LEN 160
-#define VENDOR_SPECIFIC_IE_BITMAP 0x20000000
-
 #define CFG_CONCURRENT_IFACE_MAX_LEN 16
 
 #define CFG_TX_AGGREGATION_SIZE_MIN  0
@@ -7403,33 +7400,6 @@ enum hdd_link_speed_rpt_type {
 #endif /* WLAN_SUPPORT_TWT */
 
 /*
- * For vendor specific IE, Probe Req OUI types and sub types which are
- * to be white listed are specified in gProbeReqOUIs in the following
- * example format - gProbeReqOUIs=AABBCCDD EEFF1122
- */
-
-/*
- * <ini>
- * gProbeReqOUIs - Used to specify vendor specific OUIs
- * @Default: Empty string
- *
- * This ini is used to include the specified OUIs in vendor specific IE
- * of probe request.
- *
- * Related: Need to enable g_enable_probereq_whitelist_ies and
- * vendor specific IE should be set in g_probe_req_ie_bitmap_6.
- *
- * Supported Feature: Probe request ie whitelisting
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_PROBE_REQ_OUI_NAME    "gProbeReqOUIs"
-#define CFG_PROBE_REQ_OUI_DEFAULT ""
-/* End of probe request IE whitelisting feature ini params */
-
-/*
  * <ini>
  * gScanBackoffMultiplier - For NLO/PNO, multiply fast scan period by this every
  *	max cycles
@@ -9121,11 +9091,6 @@ struct hdd_config {
 #endif
 	bool tx_orphan_enable;
 
-	/* Probe Request multiple vendor OUIs */
-	uint8_t probe_req_ouis[MAX_PRB_REQ_VENDOR_OUI_INI_LEN];
-	uint32_t no_of_probe_req_ouis;
-	uint32_t probe_req_voui[MAX_PROBE_REQ_OUIS];
-
 	uint8_t scan_backoff_multiplier;
 	bool mawc_nlo_enabled;
 	uint32_t mawc_nlo_exp_backoff_ratio;
@@ -9328,36 +9293,6 @@ eCsrRoamWmmUserModeType hdd_to_csr_wmm_mode(enum hdd_wmm_user_mode mode);
 
 /* Function declarations and documenation */
 QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx);
-
-/**
- * hdd_validate_prb_req_ie_bitmap - validates user input for ie bit map
- * @hdd_ctx: the pointer to hdd context
- *
- * This function checks whether user has entered valid probe request
- * ie bitmap and also verifies vendor ouis if vendor specific ie is set
- *
- * Return: status of verification
- *         true - valid input
- *         false - invalid input
- */
-bool hdd_validate_prb_req_ie_bitmap(struct hdd_context *hdd_ctx);
-
-/**
- * hdd_parse_probe_req_ouis - form ouis from ini gProbeReqOUIs
- * @hdd_ctx: the pointer to hdd context
- *
- * This function parses the ini string gProbeReqOUIs which needs be to in the
- * following format:
- * "<8 characters of [0-9] or [A-F]>space<8 characters from [0-9] etc.,"
- * example: "AABBCCDD 1122EEFF"
- * and the logic counts the number of OUIS and allocates the memory
- * for every valid OUI and is stored in struct hdd_context
- *
- * Return: status of parsing
- *         0 - success
- *         negative value - failure
- */
-int hdd_parse_probe_req_ouis(struct hdd_context *hdd_ctx);
 
 QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx);

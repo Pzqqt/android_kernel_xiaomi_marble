@@ -2967,11 +2967,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_TWT_CONGESTION_TIMEOUT_MAX),
 #endif
 
-	REG_VARIABLE_STRING(CFG_PROBE_REQ_OUI_NAME, WLAN_PARAM_String,
-			    struct hdd_config, probe_req_ouis,
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_PROBE_REQ_OUI_DEFAULT),
-
 	REG_VARIABLE(CFG_SCAN_BACKOFF_MULTIPLIER_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, scan_backoff_multiplier,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5387,87 +5382,6 @@ void hdd_get_pmkid_modes(struct hdd_context *hdd_ctx,
 			       CFG_PMKID_MODES_OKC) ? 1 : 0;
 	pmkid_modes->fw_pmksa_cache = (cur_pmkid_modes &
 				       CFG_PMKID_MODES_PMKSA_CACHING) ? 1 : 0;
-}
-
-bool hdd_validate_prb_req_ie_bitmap(struct hdd_context *hdd_ctx)
-{
-	struct wlan_fwol_ie_whitelist whitelist = {0};
-	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
-	QDF_STATUS status;
-
-	if (!psoc) {
-		hdd_err("HDD psoc got NULL");
-		return false;
-	}
-
-	if (!ucfg_validate_ie_bitmaps(psoc))
-		return false;
-
-	status = ucfg_fwol_get_all_whitelist_params(psoc, &whitelist);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Could not get IE bitmap 6");
-		return false;
-	}
-
-	/*
-	 * check whether vendor oui IE is set and OUIs are present, each OUI
-	 * is entered in the form of string of 8 characters from ini, therefore,
-	 * for atleast one OUI, minimum length is 8 and hence this string length
-	 * is checked for minimum of 8
-	 */
-	if ((whitelist.ie_bitmap_6 & VENDOR_SPECIFIC_IE_BITMAP) &&
-	    (strlen(hdd_ctx->config->probe_req_ouis) < 8))
-		return false;
-
-	/* check whether vendor oui IE is not set but OUIs are present */
-	if (!(whitelist.ie_bitmap_6 & VENDOR_SPECIFIC_IE_BITMAP) &&
-	    (strlen(hdd_ctx->config->probe_req_ouis) > 0))
-		return false;
-
-	return true;
-}
-
-int hdd_parse_probe_req_ouis(struct hdd_context *hdd_ctx)
-{
-	uint32_t *voui = hdd_ctx->config->probe_req_voui;
-	char *str;
-	uint8_t *token;
-	uint32_t oui_indx = 0;
-	int ret;
-	uint32_t hex_value;
-
-	str = (char *)(hdd_ctx->config->probe_req_ouis);
-	str[MAX_PRB_REQ_VENDOR_OUI_INI_LEN - 1] = '\0';
-	hdd_ctx->config->no_of_probe_req_ouis = 0;
-
-	if (!strlen(str)) {
-		hdd_info("NO OUIS to parse");
-		return 0;
-	}
-
-	token = strsep(&str, " ");
-	while (token) {
-		if (strlen(token) != 8)
-			goto next_token;
-
-		ret = kstrtouint(token, 16, &hex_value);
-		if (ret)
-			goto next_token;
-
-		voui[oui_indx++] = cpu_to_be32(hex_value);
-		if (oui_indx >= MAX_PROBE_REQ_OUIS)
-			break;
-
-next_token:
-		token = strsep(&str, " ");
-	}
-
-	if (!oui_indx)
-		return -EINVAL;
-
-	hdd_ctx->config->no_of_probe_req_ouis = oui_indx;
-
-	return 0;
 }
 
 /**

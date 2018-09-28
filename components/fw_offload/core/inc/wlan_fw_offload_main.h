@@ -27,6 +27,8 @@
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_cmn.h>
 
+#include "cfg_ie_whitelist.h"
+
 #define fwol_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_FWOL, params)
 #define fwol_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_FWOL, params)
 #define fwol_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_FWOL, params)
@@ -63,14 +65,14 @@ struct wlan_fwol_coex_config {
 
 /*
  * struct wlan_fwol_thermal_temp - Thermal temperature config items
- * thermal_temp_min_level0: Thermal temperature minimum level 0
- * thermal_temp_max_level0: Thermal temperature maximum level 0
- * thermal_temp_min_level1: Thermal temperature minimum level 1
- * thermal_temp_max_level1: Thermal temperature maximum level 1
- * thermal_temp_min_level2: Thermal temperature minimum level 2
- * thermal_temp_max_level2: Thermal temperature maximum level 2
- * thermal_temp_min_level3: Thermal temperature minimum level 3
- * thermal_temp_max_level3: Thermal temperature maximum level 3
+ * @thermal_temp_min_level0: Thermal temperature minimum level 0
+ * @thermal_temp_max_level0: Thermal temperature maximum level 0
+ * @thermal_temp_min_level1: Thermal temperature minimum level 1
+ * @thermal_temp_max_level1: Thermal temperature maximum level 1
+ * @thermal_temp_min_level2: Thermal temperature minimum level 2
+ * @thermal_temp_max_level2: Thermal temperature maximum level 2
+ * @thermal_temp_min_level3: Thermal temperature minimum level 3
+ * @thermal_temp_max_level3: Thermal temperature maximum level 3
  */
 struct wlan_fwol_thermal_temp {
 	uint16_t thermal_temp_min_level0;
@@ -85,15 +87,17 @@ struct wlan_fwol_thermal_temp {
 
 /**
  * struct wlan_fwol_ie_whitelist - Probe request IE whitelist config items
- * ie_whitelist: IE whitelist flag
- * ie_bitmap_0: IE bitmap 0
- * ie_bitmap_1: IE bitmap 1
- * ie_bitmap_2: IE bitmap 2
- * ie_bitmap_3: IE bitmap 3
- * ie_bitmap_4: IE bitmap 4
- * ie_bitmap_5: IE bitmap 5
- * ie_bitmap_6: IE bitmap 6
- * ie_bitmap_7: IE bitmap 7
+ * @ie_whitelist: IE whitelist flag
+ * @ie_bitmap_0: IE bitmap 0
+ * @ie_bitmap_1: IE bitmap 1
+ * @ie_bitmap_2: IE bitmap 2
+ * @ie_bitmap_3: IE bitmap 3
+ * @ie_bitmap_4: IE bitmap 4
+ * @ie_bitmap_5: IE bitmap 5
+ * @ie_bitmap_6: IE bitmap 6
+ * @ie_bitmap_7: IE bitmap 7
+ * @no_of_probe_req_ouis: Total number of ouis present in probe req
+ * @probe_req_voui: Stores oui values after parsing probe req ouis
  */
 struct wlan_fwol_ie_whitelist {
 	bool ie_whitelist;
@@ -105,6 +109,8 @@ struct wlan_fwol_ie_whitelist {
 	uint32_t ie_bitmap_5;
 	uint32_t ie_bitmap_6;
 	uint32_t ie_bitmap_7;
+	uint32_t no_of_probe_req_ouis;
+	uint32_t probe_req_voui[MAX_PROBE_REQ_OUIS];
 };
 
 /**
