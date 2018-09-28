@@ -199,13 +199,13 @@ static inline void dp_tx_me_exit(struct dp_pdev *pdev)
 QDF_STATUS
 dp_get_completion_indication_for_stack(struct dp_soc *soc,
 				       struct dp_pdev *pdev,
-				       struct dp_peer *peer, uint16_t peer_id,
-				       uint32_t ppdu_id, uint8_t first_msdu,
-				       uint8_t last_msdu, qdf_nbuf_t netbuf);
+				       struct dp_peer *peer,
+				       struct hal_tx_completion_status *ts,
+				       qdf_nbuf_t netbuf);
 
 void  dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
-					uint16_t peer_id, uint32_t ppdu_id,
-					qdf_nbuf_t netbuf);
+		uint16_t peer_id, uint32_t ppdu_id,
+		qdf_nbuf_t netbuf);
 #endif
 
 void  dp_iterate_update_peer_list(void *pdev_hdl);

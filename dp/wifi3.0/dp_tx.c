@@ -2316,24 +2316,24 @@ static void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
  * @soc : dp_soc handle
  * @pdev: dp_pdev handle
  * @peer: dp peer handle
- * @peer_id: peer_id of the peer for which completion came
- * @ppdu_id: ppdu_id
- * @first_msdu: first msdu
- * @last_msdu: last msdu
+ * @ts: transmit completion status structure
  * @netbuf: Buffer pointer for free
  *
  * This function is used for indication whether buffer needs to be
- * send to stack for free or not
+ * sent to stack for freeing or not
 */
 QDF_STATUS
 dp_get_completion_indication_for_stack(struct dp_soc *soc,
 				       struct dp_pdev *pdev,
-				       struct dp_peer *peer, uint16_t peer_id,
-				       uint32_t ppdu_id, uint8_t first_msdu,
-				       uint8_t last_msdu, qdf_nbuf_t netbuf)
+				       struct dp_peer *peer,
+				       struct hal_tx_completion_status *ts,
+				       qdf_nbuf_t netbuf)
 {
 	struct tx_capture_hdr *ppdu_hdr;
-	struct ether_header *eh;
+	uint16_t peer_id = ts->peer_id;
+	uint32_t ppdu_id = ts->ppdu_id;
+	uint8_t first_msdu = ts->first_msdu;
+	uint8_t last_msdu = ts->last_msdu;
 
 	if (qdf_unlikely(!pdev->tx_sniffer_enable && !pdev->mcopy_mode))
 		return QDF_STATUS_E_NOSUPPORT;
@@ -2346,15 +2346,13 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 
 	if (pdev->mcopy_mode) {
 		if ((pdev->m_copy_id.tx_ppdu_id == ppdu_id) &&
-			(pdev->m_copy_id.tx_peer_id == peer_id)) {
+				(pdev->m_copy_id.tx_peer_id == peer_id)) {
 			return QDF_STATUS_E_INVAL;
 		}
 
 		pdev->m_copy_id.tx_ppdu_id = ppdu_id;
 		pdev->m_copy_id.tx_peer_id = peer_id;
 	}
-
-	eh = (struct ether_header *)qdf_nbuf_data(netbuf);
 
 	if (!qdf_nbuf_push_head(netbuf, sizeof(struct tx_capture_hdr))) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -2365,13 +2363,8 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,
 	ppdu_hdr = (struct tx_capture_hdr *)qdf_nbuf_data(netbuf);
 	qdf_mem_copy(ppdu_hdr->ta, peer->vdev->mac_addr.raw,
 		     IEEE80211_ADDR_LEN);
-	if (peer->bss_peer) {
-		qdf_mem_copy(ppdu_hdr->ra, eh->ether_dhost, IEEE80211_ADDR_LEN);
-	} else {
-		qdf_mem_copy(ppdu_hdr->ra, peer->mac_addr.raw,
-			     IEEE80211_ADDR_LEN);
-	}
-
+	qdf_mem_copy(ppdu_hdr->ra, peer->mac_addr.raw,
+		     IEEE80211_ADDR_LEN);
 	ppdu_hdr->ppdu_id = ppdu_id;
 	ppdu_hdr->peer_id = peer_id;
 	ppdu_hdr->first_msdu = first_msdu;
@@ -2404,16 +2397,16 @@ void  dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
 static QDF_STATUS
 dp_get_completion_indication_for_stack(struct dp_soc *soc,
 				       struct dp_pdev *pdev,
-				       struct dp_peer *peer, uint16_t peer_id,
-				       uint32_t ppdu_id, uint8_t first_msdu,
-				       uint8_t last_msdu, qdf_nbuf_t netbuf)
+				       struct dp_peer *peer,
+				       struct hal_tx_completion_status *ts,
+				       qdf_nbuf_t netbuf)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
 
 static void
 dp_send_completion_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
-		      uint16_t peer_id, uint32_t ppdu_id, qdf_nbuf_t netbuf)
+	uint16_t peer_id, uint32_t ppdu_id, qdf_nbuf_t netbuf)
 {
 }
 #endif
@@ -2513,64 +2506,6 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 }
 #endif
 
-/**
- * dp_tx_process_htt_completion() - Tx HTT Completion Indication Handler
- * @tx_desc: software descriptor head pointer
- * @status : Tx completion status from HTT descriptor
- *
- * This function will process HTT Tx indication messages from Target
- *
- * Return: none
- */
-static
-void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
-{
-	uint8_t tx_status;
-	struct dp_pdev *pdev;
-	struct dp_vdev *vdev;
-	struct dp_soc *soc;
-	uint32_t *htt_status_word = (uint32_t *) status;
-
-	qdf_assert(tx_desc->pdev);
-
-	pdev = tx_desc->pdev;
-	vdev = tx_desc->vdev;
-	soc = pdev->soc;
-
-	tx_status = HTT_TX_WBM_COMPLETION_V2_TX_STATUS_GET(htt_status_word[0]);
-
-	switch (tx_status) {
-	case HTT_TX_FW2WBM_TX_STATUS_OK:
-	case HTT_TX_FW2WBM_TX_STATUS_DROP:
-	case HTT_TX_FW2WBM_TX_STATUS_TTL:
-	{
-		dp_tx_comp_free_buf(soc, tx_desc);
-		dp_tx_desc_release(tx_desc, tx_desc->pool_id);
-		break;
-	}
-	case HTT_TX_FW2WBM_TX_STATUS_REINJECT:
-	{
-		dp_tx_reinject_handler(tx_desc, status);
-		break;
-	}
-	case HTT_TX_FW2WBM_TX_STATUS_INSPECT:
-	{
-		dp_tx_inspect_handler(tx_desc, status);
-		break;
-	}
-	case HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY:
-	{
-		dp_tx_mec_handler(vdev, status);
-		break;
-	}
-	default:
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				"%s Invalid HTT tx_status %d",
-				__func__, tx_status);
-		break;
-	}
-}
-
 #ifdef MESH_MODE_SUPPORT
 /**
  * dp_tx_comp_fill_tx_completion_stats() - Fill per packet Tx completion stats
@@ -2619,12 +2554,12 @@ void dp_tx_comp_fill_tx_completion_stats(struct dp_tx_desc_s *tx_desc,
  * dp_tx_update_peer_stats() - Update peer stats from Tx completion indications
  * @peer: Handle to DP peer
  * @ts: pointer to HAL Tx completion stats
- * @length: MSDU length
  *
  * Return: None
  */
-static void dp_tx_update_peer_stats(struct dp_peer *peer,
-		struct hal_tx_completion_status *ts, uint32_t length)
+static inline void
+dp_tx_update_peer_stats(struct dp_peer *peer,
+			struct hal_tx_completion_status *ts)
 {
 	struct dp_pdev *pdev = peer->vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
@@ -2635,17 +2570,6 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 
 	if (!ts->release_src == HAL_TX_COMP_RELEASE_SOURCE_TQM)
 		return;
-
-	if (peer->bss_peer) {
-		DP_STATS_INC_PKT(peer, tx.mcast, 1, length);
-	} else {
-		DP_STATS_INC_PKT(peer, tx.ucast, 1, length);
-	}
-
-	DP_STATS_INC_PKT(peer, tx.comp_pkt, 1, length);
-
-	DP_STATS_INCC_PKT(peer, tx.tx_success, 1, length,
-			  (ts->status == HAL_TX_TQM_RR_FRAME_ACKED));
 
 	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
 		     (ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
@@ -2676,6 +2600,10 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 	DP_STATS_INCC(peer, tx.amsdu_cnt, 1, ts->msdu_part_of_amsdu);
 	DP_STATS_INCC(peer, tx.non_amsdu_cnt, 1, !ts->msdu_part_of_amsdu);
 
+	/*
+	 * Following Rate Statistics are updated from HTT PPDU events from FW.
+	 * Return from here if HTT PPDU events are enabled.
+	 */
 	if (!(soc->process_tx_status))
 		return;
 
@@ -2699,6 +2627,7 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 			((mcs >= (MAX_MCS - 1)) && (pkt_type == DOT11_AX)));
 	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
 			((mcs < (MAX_MCS - 1)) && (pkt_type == DOT11_AX)));
+
 	DP_STATS_INC(peer, tx.sgi_count[ts->sgi], 1);
 	DP_STATS_INC(peer, tx.bw[ts->bw], 1);
 	DP_STATS_UPD(peer, tx.last_ack_rssi, ts->ack_frame_rssi);
@@ -2862,18 +2791,51 @@ static inline void dp_tx_sojourn_stats_process(struct dp_pdev *pdev,
 #endif
 
 /**
+ * dp_tx_comp_process_desc() - Process tx descriptor and free associated nbuf
+ * @soc: DP Soc handle
+ * @tx_desc: software Tx descriptor
+ * @ts : Tx completion status from HAL/HTT descriptor
+ *
+ * Return: none
+ */
+static inline void
+dp_tx_comp_process_desc(struct dp_soc *soc,
+			struct dp_tx_desc_s *desc,
+			struct hal_tx_completion_status *ts,
+			struct dp_peer *peer)
+{
+	/*
+	 * m_copy/tx_capture modes are not supported for
+	 * scatter gather packets
+	 */
+	if (!(desc->msdu_ext_desc) &&
+	    (dp_get_completion_indication_for_stack(soc, desc->pdev,
+						    peer, ts, desc->nbuf)
+			== QDF_STATUS_SUCCESS)) {
+		qdf_nbuf_unmap(soc->osdev, desc->nbuf,
+			       QDF_DMA_TO_DEVICE);
+
+		dp_send_completion_to_stack(soc, desc->pdev, ts->peer_id,
+					    ts->ppdu_id, desc->nbuf);
+	} else {
+		dp_tx_comp_free_buf(soc, desc);
+	}
+}
+
+/**
  * dp_tx_comp_process_tx_status() - Parse and Dump Tx completion status info
  * @tx_desc: software descriptor head pointer
- * @length: packet length
+ * @ts: Tx completion status
  * @peer: peer handle
  *
  * Return: none
  */
 static inline
 void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
-				  uint32_t length, struct dp_peer *peer)
+				  struct hal_tx_completion_status *ts,
+				  struct dp_peer *peer)
 {
-	struct hal_tx_completion_status ts = {0};
+	uint32_t length;
 	struct dp_soc *soc = NULL;
 	struct dp_vdev *vdev = tx_desc->vdev;
 	struct ether_header *eh =
@@ -2884,8 +2846,6 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 				"invalid vdev");
 		goto out;
 	}
-
-	hal_tx_comp_get_status(&tx_desc->comp, &ts, vdev->pdev->soc->hal_soc);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				"-------------------- \n"
@@ -2908,25 +2868,26 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 				"ppdu_id = %d \n"
 				"transmit_cnt = %d \n"
 				"tid = %d \n"
-				"peer_id = %d ",
-				ts.ack_frame_rssi, ts.first_msdu, ts.last_msdu,
-				ts.msdu_part_of_amsdu, ts.valid, ts.bw,
-				ts.pkt_type, ts.stbc, ts.ldpc, ts.sgi,
-				ts.mcs, ts.ofdma, ts.tones_in_ru, ts.tsf,
-				ts.ppdu_id, ts.transmit_cnt, ts.tid,
-				ts.peer_id);
+				"peer_id = %d\n",
+				ts->ack_frame_rssi, ts->first_msdu,
+				ts->last_msdu, ts->msdu_part_of_amsdu,
+				ts->valid, ts->bw, ts->pkt_type, ts->stbc,
+				ts->ldpc, ts->sgi, ts->mcs, ts->ofdma,
+				ts->tones_in_ru, ts->tsf, ts->ppdu_id,
+				ts->transmit_cnt, ts->tid, ts->peer_id);
 
 	soc = vdev->pdev->soc;
 
 	/* Update SoC level stats */
 	DP_STATS_INCC(soc, tx.dropped_fw_removed, 1,
-			(ts.status == HAL_TX_TQM_RR_REM_CMD_REM));
+			(ts->status == HAL_TX_TQM_RR_REM_CMD_REM));
 
-	/* Update per-packet stats */
+	/* Update per-packet stats for mesh mode */
 	if (qdf_unlikely(vdev->mesh_vdev) &&
 			!(tx_desc->flags & DP_TX_DESC_FLAG_TO_FW))
-		dp_tx_comp_fill_tx_completion_stats(tx_desc, &ts);
+		dp_tx_comp_fill_tx_completion_stats(tx_desc, ts);
 
+	length = qdf_nbuf_len(tx_desc->nbuf);
 	/* Update peer level stats */
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
@@ -2935,23 +2896,30 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 		goto out;
 	}
 
-	if (qdf_likely(peer->vdev->tx_encap_type ==
-				htt_cmn_pkt_type_ethernet)) {
-		if (peer->bss_peer && IEEE80211_IS_BROADCAST(eh->ether_dhost))
-			DP_STATS_INC_PKT(peer, tx.bcast, 1, length);
+	if (qdf_likely(!peer->bss_peer)) {
+		DP_STATS_INC_PKT(peer, tx.ucast, 1, length);
+
+		if (ts->status == HAL_TX_TQM_RR_FRAME_ACKED)
+			DP_STATS_INC_PKT(peer, tx.tx_success, 1, length);
+	} else {
+		if (ts->status != HAL_TX_TQM_RR_REM_CMD_REM) {
+			DP_STATS_INC_PKT(peer, tx.mcast, 1, length);
+
+			if ((peer->vdev->tx_encap_type ==
+				htt_cmn_pkt_type_ethernet) &&
+				IEEE80211_IS_BROADCAST(eh->ether_dhost)) {
+				DP_STATS_INC_PKT(peer, tx.bcast, 1, length);
+			}
+		}
 	}
 
-	dp_tx_sojourn_stats_process(vdev->pdev, ts.tid,
-				    tx_desc->timestamp,
-				    ts.ppdu_id);
-
-	dp_tx_update_peer_stats(peer, &ts, length);
+	dp_tx_update_peer_stats(peer, ts);
 
 out:
 	return;
 }
 /**
- * dp_tx_comp_process_desc() - Tx complete software descriptor handler
+ * dp_tx_comp_process_desc_list() - Tx complete software descriptor handler
  * @soc: core txrx main context
  * @comp_head: software descriptor head pointer
  *
@@ -2960,13 +2928,13 @@ out:
  *
  * Return: none
  */
-static void dp_tx_comp_process_desc(struct dp_soc *soc,
-		struct dp_tx_desc_s *comp_head)
+static void
+dp_tx_comp_process_desc_list(struct dp_soc *soc,
+			     struct dp_tx_desc_s *comp_head)
 {
 	struct dp_tx_desc_s *desc;
 	struct dp_tx_desc_s *next;
 	struct hal_tx_completion_status ts = {0};
-	uint32_t length;
 	struct dp_peer *peer;
 
 	DP_HIST_INIT();
@@ -2975,37 +2943,8 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 	while (desc) {
 		hal_tx_comp_get_status(&desc->comp, &ts, soc->hal_soc);
 		peer = dp_peer_find_by_id(soc, ts.peer_id);
-		length = qdf_nbuf_len(desc->nbuf);
-
-		/* check tx completion notification */
-		if (QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_NOTIFY_COMP(desc->nbuf))
-			dp_tx_notify_completion(soc, desc, desc->nbuf);
-
-		dp_tx_comp_process_tx_status(desc, length, peer);
-
-		DPTRACE(qdf_dp_trace_ptr
-				(desc->nbuf,
-				 QDF_DP_TRACE_LI_DP_FREE_PACKET_PTR_RECORD,
-				 QDF_TRACE_DEFAULT_PDEV_ID,
-				 qdf_nbuf_data_addr(desc->nbuf),
-				 sizeof(qdf_nbuf_data(desc->nbuf)),
-				 desc->id, ts.status)
-			);
-
-		/*currently m_copy/tx_capture is not supported for scatter gather packets*/
-		if (!(desc->msdu_ext_desc) &&
-		    (dp_get_completion_indication_for_stack(soc, desc->pdev,
-					peer, ts.peer_id, ts.ppdu_id,
-					ts.first_msdu, ts.last_msdu,
-					desc->nbuf) == QDF_STATUS_SUCCESS)) {
-			qdf_nbuf_unmap(soc->osdev, desc->nbuf,
-				       QDF_DMA_TO_DEVICE);
-
-			dp_send_completion_to_stack(soc, desc->pdev, ts.peer_id,
-						    ts.ppdu_id, desc->nbuf);
-		} else {
-			dp_tx_comp_free_buf(soc, desc);
-		}
+		dp_tx_comp_process_tx_status(desc, &ts, peer);
+		dp_tx_comp_process_desc(soc, desc, &ts, peer);
 
 		if (peer)
 			dp_peer_unref_del_find_by_id(peer);
@@ -3019,6 +2958,93 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 	}
 
 	DP_TX_HIST_STATS_PER_PDEV();
+}
+
+/**
+ * dp_tx_process_htt_completion() - Tx HTT Completion Indication Handler
+ * @tx_desc: software descriptor head pointer
+ * @status : Tx completion status from HTT descriptor
+ *
+ * This function will process HTT Tx indication messages from Target
+ *
+ * Return: none
+ */
+static
+void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
+{
+	uint8_t tx_status;
+	struct dp_pdev *pdev;
+	struct dp_vdev *vdev;
+	struct dp_soc *soc;
+	struct hal_tx_completion_status ts = {0};
+	uint32_t *htt_desc = (uint32_t *)status;
+	struct dp_peer *peer;
+
+	qdf_assert(tx_desc->pdev);
+
+	pdev = tx_desc->pdev;
+	vdev = tx_desc->vdev;
+	soc = pdev->soc;
+
+	tx_status = HTT_TX_WBM_COMPLETION_V2_TX_STATUS_GET(htt_desc[0]);
+
+	switch (tx_status) {
+	case HTT_TX_FW2WBM_TX_STATUS_OK:
+	case HTT_TX_FW2WBM_TX_STATUS_DROP:
+	case HTT_TX_FW2WBM_TX_STATUS_TTL:
+	{
+		if (HTT_TX_WBM_COMPLETION_V2_VALID_GET(htt_desc[2])) {
+			ts.peer_id =
+				HTT_TX_WBM_COMPLETION_V2_SW_PEER_ID_GET(
+						htt_desc[2]);
+			ts.tid =
+				HTT_TX_WBM_COMPLETION_V2_TID_NUM_GET(
+						htt_desc[2]);
+		} else {
+			ts.peer_id = HTT_INVALID_PEER;
+			ts.tid = HTT_INVALID_TID;
+		}
+		ts.ppdu_id =
+			HTT_TX_WBM_COMPLETION_V2_SCH_CMD_ID_GET(
+					htt_desc[1]);
+		ts.ack_frame_rssi =
+			HTT_TX_WBM_COMPLETION_V2_ACK_FRAME_RSSI_GET(
+					htt_desc[1]);
+
+		ts.first_msdu = 1;
+		ts.last_msdu = 1;
+
+		if (tx_status != HTT_TX_FW2WBM_TX_STATUS_OK)
+			ts.status = HAL_TX_TQM_RR_REM_CMD_REM;
+
+		peer = dp_peer_find_by_id(soc, ts.peer_id);
+		dp_tx_comp_process_tx_status(tx_desc, &ts, peer);
+		dp_tx_comp_process_desc(soc, tx_desc, &ts, peer);
+		dp_tx_desc_release(tx_desc, tx_desc->pool_id);
+
+		break;
+	}
+	case HTT_TX_FW2WBM_TX_STATUS_REINJECT:
+	{
+		dp_tx_reinject_handler(tx_desc, status);
+		break;
+	}
+	case HTT_TX_FW2WBM_TX_STATUS_INSPECT:
+	{
+		dp_tx_inspect_handler(tx_desc, status);
+		break;
+	}
+	case HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY:
+	{
+		dp_tx_mec_handler(vdev, status);
+		break;
+	}
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s Invalid HTT tx_status %d\n",
+			  __func__, tx_status);
+		break;
+	}
 }
 
 /**
@@ -3135,6 +3161,8 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 		}
 
 		num_processed += !(count & DP_TX_NAPI_BUDGET_DIV_MASK);
+		/* Decrement PM usage count if the packet has been sent.*/
+		hif_pm_runtime_put(soc->hif_handle);
 
 		/*
 		 * Processed packet count is more than given quota
@@ -3150,7 +3178,7 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 
 	/* Process the reaped descriptors */
 	if (head_desc)
-		dp_tx_comp_process_desc(soc, head_desc);
+		dp_tx_comp_process_desc_list(soc, head_desc);
 
 	return num_processed;
 }
