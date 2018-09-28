@@ -106,6 +106,16 @@ QDF_STATUS reg_get_channel_list_with_power(struct wlan_objmgr_pdev *pdev,
 enum channel_state reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
 					 uint32_t ch);
 
+/**
+ * reg_chan_has_dfs_attribute() - check channel has dfs attribue or not
+ * @ch: channel number.
+ *
+ * This API get chan initial dfs attribue flag from regdomain
+ *
+ * Return: true if chan is dfs, otherwise false
+ */
+bool reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint32_t ch);
+
 enum channel_state reg_get_5g_bonded_channel_state(struct wlan_objmgr_pdev
 						   *pdev,
 						   uint8_t ch,

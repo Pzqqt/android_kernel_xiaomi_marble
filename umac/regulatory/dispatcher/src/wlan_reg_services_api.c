@@ -85,6 +85,12 @@ enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
 	return reg_get_channel_state(pdev, ch);
 }
 
+bool
+wlan_reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint32_t ch)
+{
+	return reg_chan_has_dfs_attribute(pdev, ch);
+}
+
 /**
  * wlan_reg_get_5g_bonded_channel_state() - Get 5G bonded channel state
  * @ch: channel number.

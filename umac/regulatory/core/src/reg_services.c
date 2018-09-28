@@ -892,6 +892,29 @@ enum channel_state reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
 	return pdev_priv_obj->cur_chan_list[ch_idx].state;
 }
 
+bool reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint32_t ch)
+{
+	enum channel_enum ch_idx;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+
+	ch_idx = reg_get_chan_enum(ch);
+
+	if (ch_idx == INVALID_CHANNEL)
+		return false;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg obj is NULL");
+		return false;
+	}
+	if (pdev_priv_obj->cur_chan_list[ch_idx].chan_flags &
+	    REGULATORY_CHAN_RADAR)
+		return true;
+
+	return false;
+}
+
 /**
  * reg_get_5g_bonded_chan_array() - get ptr to bonded channel
  * @oper_ch: operating channel number
