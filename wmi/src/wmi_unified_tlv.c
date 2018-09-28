@@ -6376,6 +6376,64 @@ static inline void copy_fw_abi_version_tlv(wmi_unified_t wmi_handle,
 			sizeof(wmi_abi_version));
 }
 
+/*
+ * send_cfg_action_frm_tb_ppdu_cmd_tlv() - send action frame tb ppdu cfg to FW
+ * @wmi_handle:    Pointer to WMi handle
+ * @ie_data:       Pointer for ie data
+ *
+ * This function sends action frame tb ppdu cfg to FW
+ *
+ * Return: QDF_STATUS_SUCCESS for success otherwise failure
+ *
+ */
+static QDF_STATUS send_cfg_action_frm_tb_ppdu_cmd_tlv(wmi_unified_t wmi_handle,
+				struct cfg_action_frm_tb_ppdu_param *cfg_msg)
+{
+	wmi_pdev_he_tb_action_frm_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	uint32_t len, frm_len_aligned;
+	QDF_STATUS ret;
+
+	frm_len_aligned = roundup(cfg_msg->frm_len, sizeof(uint32_t));
+	/* Allocate memory for the WMI command */
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE + frm_len_aligned;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE(FL("wmi_buf_alloc failed"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = wmi_buf_data(buf);
+	qdf_mem_zero(buf_ptr, len);
+
+	/* Populate the WMI command */
+	cmd = (wmi_pdev_he_tb_action_frm_cmd_fixed_param *)buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_pdev_he_tb_action_frm_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+				wmi_pdev_he_tb_action_frm_cmd_fixed_param));
+	cmd->enable = cfg_msg->cfg;
+	cmd->data_len = cfg_msg->frm_len;
+
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, frm_len_aligned);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	qdf_mem_copy(buf_ptr, cfg_msg->data, cmd->data_len);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_PDEV_HE_TB_ACTION_FRM_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE(FL("HE TB action frame cmnd send fail, ret %d"), ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
 static QDF_STATUS save_fw_version_cmd_tlv(wmi_unified_t wmi_handle, void *evt_buf)
 {
 	WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf;
@@ -11123,6 +11181,7 @@ struct wmi_ops tlv_ops =  {
 	.send_pdev_set_regdomain_cmd =
 				send_pdev_set_regdomain_cmd_tlv,
 	.send_regdomain_info_to_fw_cmd = send_regdomain_info_to_fw_cmd_tlv,
+	.send_cfg_action_frm_tb_ppdu_cmd = send_cfg_action_frm_tb_ppdu_cmd_tlv,
 	.save_fw_version_cmd = save_fw_version_cmd_tlv,
 	.check_and_update_fw_version =
 		 check_and_update_fw_version_cmd_tlv,

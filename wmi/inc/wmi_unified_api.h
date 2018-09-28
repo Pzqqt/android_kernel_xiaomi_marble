@@ -752,6 +752,9 @@ QDF_STATUS wmi_unified_send_regdomain_info_to_fw_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_process_fw_mem_dump_cmd(void *wmi_hdl,
 					struct fw_dump_req_param *mem_dump_req);
 
+QDF_STATUS wmi_unified_cfg_action_frm_tb_ppdu_cmd(void *wmi_hdl,
+				struct cfg_action_frm_tb_ppdu_param *cfg_info);
+
 QDF_STATUS wmi_unified_save_fw_version_cmd(void *wmi_hdl,
 		void *evt_buf);
 
