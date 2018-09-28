@@ -79,6 +79,8 @@ int q6audio_get_port_index(u16 port_id)
 	case SLIMBUS_7_TX: return IDX_SLIMBUS_7_TX;
 	case SLIMBUS_8_RX: return IDX_SLIMBUS_8_RX;
 	case SLIMBUS_8_TX: return IDX_SLIMBUS_8_TX;
+	case SLIMBUS_9_RX: return IDX_SLIMBUS_9_RX;
+	case SLIMBUS_9_TX: return IDX_SLIMBUS_9_TX;
 	case INT_BT_SCO_RX: return IDX_INT_BT_SCO_RX;
 	case INT_BT_SCO_TX: return IDX_INT_BT_SCO_TX;
 	case INT_BT_A2DP_RX: return IDX_INT_BT_A2DP_RX;
@@ -415,6 +417,8 @@ int q6audio_get_port_id(u16 port_id)
 	case SLIMBUS_7_TX: return AFE_PORT_ID_SLIMBUS_MULTI_CHAN_7_TX;
 	case SLIMBUS_8_RX: return AFE_PORT_ID_SLIMBUS_MULTI_CHAN_8_RX;
 	case SLIMBUS_8_TX: return AFE_PORT_ID_SLIMBUS_MULTI_CHAN_8_TX;
+	case SLIMBUS_9_RX: return AFE_PORT_ID_SLIMBUS_MULTI_CHAN_9_RX;
+	case SLIMBUS_9_TX: return AFE_PORT_ID_SLIMBUS_MULTI_CHAN_9_TX;
 	case INT_BT_SCO_RX: return AFE_PORT_ID_INTERNAL_BT_SCO_RX;
 	case INT_BT_SCO_TX: return AFE_PORT_ID_INTERNAL_BT_SCO_TX;
 	case INT_BT_A2DP_RX: return AFE_PORT_ID_INTERNAL_BT_A2DP_RX;
@@ -925,6 +929,8 @@ int q6audio_validate_port(u16 port_id)
 	case SLIMBUS_7_TX:
 	case SLIMBUS_8_RX:
 	case SLIMBUS_8_TX:
+	case SLIMBUS_9_RX:
+	case SLIMBUS_9_TX:
 	case INT_BT_SCO_RX:
 	case INT_BT_SCO_TX:
 	case INT_BT_A2DP_RX:

@@ -839,6 +839,8 @@ int afe_sizeof_cfg_cmd(u16 port_id)
 	case SLIMBUS_7_TX:
 	case SLIMBUS_8_RX:
 	case SLIMBUS_8_TX:
+	case SLIMBUS_9_RX:
+	case SLIMBUS_9_TX:
 		ret_size = SIZEOF_CFG_CMD(afe_param_id_slimbus_cfg);
 		break;
 	case VOICE_PLAYBACK_TX:
@@ -4041,6 +4043,8 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 	case SLIMBUS_7_TX:
 	case SLIMBUS_8_RX:
 	case SLIMBUS_8_TX:
+	case SLIMBUS_9_RX:
+	case SLIMBUS_9_TX:
 		cfg_type = AFE_PARAM_ID_SLIMBUS_CONFIG;
 		break;
 	case AFE_PORT_ID_USB_RX:
@@ -4288,6 +4292,8 @@ int afe_get_port_index(u16 port_id)
 	case SLIMBUS_7_TX: return IDX_SLIMBUS_7_TX;
 	case SLIMBUS_8_RX: return IDX_SLIMBUS_8_RX;
 	case SLIMBUS_8_TX: return IDX_SLIMBUS_8_TX;
+	case SLIMBUS_9_RX: return IDX_SLIMBUS_9_RX;
+	case SLIMBUS_9_TX: return IDX_SLIMBUS_9_TX;
 	case AFE_PORT_ID_USB_RX: return IDX_AFE_PORT_ID_USB_RX;
 	case AFE_PORT_ID_USB_TX: return IDX_AFE_PORT_ID_USB_TX;
 	case AFE_PORT_ID_PRIMARY_MI2S_RX:
@@ -4685,6 +4691,8 @@ int afe_open(u16 port_id,
 	case SLIMBUS_7_TX:
 	case SLIMBUS_8_RX:
 	case SLIMBUS_8_TX:
+	case SLIMBUS_9_RX:
+	case SLIMBUS_9_TX:
 		cfg_type = AFE_PARAM_ID_SLIMBUS_CONFIG;
 		break;
 	case AFE_PORT_ID_USB_RX:
@@ -6557,6 +6565,8 @@ int afe_validate_port(u16 port_id)
 	case SLIMBUS_7_TX:
 	case SLIMBUS_8_RX:
 	case SLIMBUS_8_TX:
+	case SLIMBUS_9_RX:
+	case SLIMBUS_9_TX:
 	case AFE_PORT_ID_USB_RX:
 	case AFE_PORT_ID_USB_TX:
 	case AFE_PORT_ID_PRIMARY_MI2S_RX:
