@@ -19,6 +19,7 @@
 #include <linux/platform_device.h>
 #include <linux/delay.h>
 #include <linux/kthread.h>
+#include <linux/bitops.h>
 #include <linux/clk.h>
 #include <linux/pm_runtime.h>
 #include <linux/of.h>
@@ -57,6 +58,11 @@ enum {
 	MASTER_ID_WSA = 1,
 	MASTER_ID_RX,
 	MASTER_ID_TX
+};
+
+enum {
+	ENABLE_PENDING,
+	DISABLE_PENDING
 };
 #define TRUE 1
 #define FALSE 0
@@ -955,18 +961,28 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 	bank = get_inactive_bank_num(swrm);
 
 	if (enable) {
+		if (!test_bit(ENABLE_PENDING, &swrm->port_req_pending)) {
+			dev_dbg(swrm->dev, "%s:No pending connect port req\n",
+				__func__);
+			goto exit;
+		}
+		clear_bit(ENABLE_PENDING, &swrm->port_req_pending);
 		ret = swrm_get_port_config(swrm);
 		if (ret) {
 			/* cannot accommodate ports */
 			swrm_cleanup_disabled_port_reqs(master);
-			pm_runtime_mark_last_busy(swrm->dev);
-			pm_runtime_put_autosuspend(swrm->dev);
 			mutex_unlock(&swrm->mlock);
 			return -EINVAL;
 		}
 		/* apply the new port config*/
 		swrm_apply_port_config(master);
 	} else {
+		if (!test_bit(DISABLE_PENDING, &swrm->port_req_pending)) {
+			dev_dbg(swrm->dev, "%s:No pending disconn port req\n",
+				__func__);
+			goto exit;
+		}
+		clear_bit(DISABLE_PENDING, &swrm->port_req_pending);
 		swrm_disable_ports(master, bank);
 	}
 	dev_dbg(swrm->dev, "%s: enable: %d, cfg_devs: %d\n",
@@ -1019,6 +1035,7 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 		pm_runtime_mark_last_busy(swrm->dev);
 		pm_runtime_put_autosuspend(swrm->dev);
 	}
+exit:
 	mutex_unlock(&swrm->mlock);
 return 0;
 }
@@ -1095,6 +1112,7 @@ static int swrm_connect_port(struct swr_master *master,
 		master->port_en_mask |= (1 << mstr_port_id);
 	}
 	master->num_port += portinfo->num_port;
+	set_bit(ENABLE_PENDING, &swrm->port_req_pending);
 	swr_port_response(master, portinfo->tid);
 
 	mutex_unlock(&swrm->mlock);
@@ -1155,6 +1173,7 @@ static int swrm_disconnect_port(struct swr_master *master,
 		mport->req_ch &= ~mstr_ch_mask;
 	}
 	master->num_port -= portinfo->num_port;
+	set_bit(DISABLE_PENDING, &swrm->port_req_pending);
 	swr_port_response(master, portinfo->tid);
 	mutex_unlock(&swrm->mlock);
 
