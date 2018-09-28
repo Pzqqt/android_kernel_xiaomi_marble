@@ -20366,13 +20366,15 @@ static QDF_STATUS extract_peer_delete_response_event_tlv(wmi_unified_t wmi_hdl,
 
 static bool is_management_record_tlv(uint32_t cmd_id)
 {
-	if ((cmd_id == WMI_MGMT_TX_COMPLETION_EVENTID) ||
-			(cmd_id == WMI_MGMT_TX_SEND_CMDID) ||
-			(cmd_id == WMI_OFFCHAN_DATA_TX_SEND_CMDID)) {
+	switch (cmd_id) {
+	case WMI_MGMT_TX_SEND_CMDID:
+	case WMI_MGMT_TX_COMPLETION_EVENTID:
+	case WMI_OFFCHAN_DATA_TX_SEND_CMDID:
+	case WMI_MGMT_RX_EVENTID:
 		return true;
+	default:
+		return false;
 	}
-
-	return false;
 }
 
 static bool is_diag_event_tlv(uint32_t event_id)
