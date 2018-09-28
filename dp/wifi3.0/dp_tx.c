@@ -2470,7 +2470,6 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 	struct dp_soc *soc;
 	uint32_t flags = IEEE80211_NODE_F_WDS_HM;
 	struct dp_peer *peer;
-	uint8_t mac_addr[DP_MAC_ADDR_LEN], i;
 
 	if (!vdev->wds_enabled)
 		return;
@@ -2494,14 +2493,13 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 			"%s Tx MEC Handler",
 			__func__);
 
-	for (i = 0; i < DP_MAC_ADDR_LEN; i++)
-		mac_addr[(DP_MAC_ADDR_LEN - 1) - i] =
-					status[(DP_MAC_ADDR_LEN - 2) + i];
-
-	if (qdf_mem_cmp(mac_addr, vdev->mac_addr.raw, DP_MAC_ADDR_LEN))
+	/* note: mac address is in (status + sizeof(uint32_t)) */
+	if (qdf_mem_cmp((status + sizeof(uint32_t)),
+			vdev->mac_addr.raw,
+			DP_MAC_ADDR_LEN))
 		dp_peer_add_ast(soc,
 				peer,
-				mac_addr,
+				(status + sizeof(uint32_t)),
 				CDP_TXRX_AST_TYPE_MEC,
 				flags);
 }
@@ -2980,12 +2978,14 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	struct hal_tx_completion_status ts = {0};
 	uint32_t *htt_desc = (uint32_t *)status;
 	struct dp_peer *peer;
+	qdf_nbuf_t nbuf;
 
 	qdf_assert(tx_desc->pdev);
 
 	pdev = tx_desc->pdev;
 	vdev = tx_desc->vdev;
 	soc = pdev->soc;
+	nbuf = tx_desc->nbuf;
 
 	tx_status = HTT_TX_WBM_COMPLETION_V2_TX_STATUS_GET(htt_desc[0]);
 
@@ -3037,6 +3037,9 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	}
 	case HTT_TX_FW2WBM_TX_STATUS_MEC_NOTIFY:
 	{
+		qdf_mem_copy(((uint8_t *)&htt_desc[1]),
+			     &nbuf->data[DP_MAC_ADDR_LEN],
+			     DP_MAC_ADDR_LEN);
 		dp_tx_mec_handler(vdev, status);
 		break;
 	}
