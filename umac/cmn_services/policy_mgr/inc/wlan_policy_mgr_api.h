@@ -65,6 +65,97 @@ typedef const enum policy_mgr_conc_next_action
 	 PM_FW_MODE_STA_P2P_BIT_POS)
 
 /**
+ * policy_mgr_get_mcc_scc_switch() - To mcc to scc switch setting from INI
+ * @psoc: pointer to psoc
+ * @mcc_scc_switch: value to be filled
+ *
+ * This API pulls mcc to scc switch setting which is given as part of INI and
+ * stored in policy manager's CFGs.
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_get_mcc_scc_switch(struct wlan_objmgr_psoc *psoc,
+					      uint8_t *mcc_scc_switch);
+/**
+ * policy_mgr_get_sys_pref() - to get system preference
+ * @psoc: pointer to psoc
+ * @sys_pref: value to be filled
+ *
+ * This API pulls the system preference for policy manager to provide
+ * PCL
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_get_sys_pref(struct wlan_objmgr_psoc *psoc,
+					uint8_t *sys_pref);
+/**
+ * policy_mgr_get_max_conc_cxns() - to get max num of conc connections
+ * @psoc: pointer to psoc
+ * @max_conc_cxns: value to be filled
+ *
+ * This API pulls max number of active connections which can be allowed
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_get_max_conc_cxns(struct wlan_objmgr_psoc *psoc,
+						uint8_t *max_conc_cxns);
+/**
+ * policy_mgr_get_conc_rule1() - to find out if conc rule1 is enabled
+ * @psoc: pointer to psoc
+ * @conc_rule1: value to be filled
+ *
+ * This API is used to find out if conc rule-1 is enabled by user
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_get_conc_rule1(struct wlan_objmgr_psoc *psoc,
+						uint8_t *conc_rule1);
+/**
+ * policy_mgr_get_conc_rule2() - to find out if conc rule2 is enabled
+ * @psoc: pointer to psoc
+ * @conc_rule2: value to be filled
+ *
+ * This API is used to find out if conc rule-2 is enabled by user
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_get_conc_rule2(struct wlan_objmgr_psoc *psoc,
+						uint8_t *conc_rule2);
+/**
+ * policy_mgr_get_dbs_selection_plcy() - DBS HW mode selection setting
+ * @psoc: pointer to psoc
+ * @dbs_selection_policy: value to be filled
+ *
+ * This API is used to find out DBS HW mode preference.
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_get_dbs_selection_plcy(struct wlan_objmgr_psoc *psoc,
+						uint32_t *dbs_selection_policy);
+/**
+ * policy_mgr_get_vdev_priority_list() - to get vdev priority list
+ * @psoc: pointer to psoc
+ * @vdev_priority_list: value to be filled
+ *
+ * This API is used to find out vdev_priority_list setting
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_get_vdev_priority_list(struct wlan_objmgr_psoc *psoc,
+						uint32_t *vdev_priority_list);
+/**
+ * policy_mgr_get_chnl_select_plcy() - to get channel selection policy
+ * @psoc: pointer to psoc
+ * @chnl_select_plcy: value to be filled
+ *
+ * This API is used to find out which channel selection policy has been
+ * configured
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_get_chnl_select_plcy(struct wlan_objmgr_psoc *psoc,
+						uint32_t *chnl_select_plcy);
+/**
  * policy_mgr_set_concurrency_mode() - To set concurrency mode
  * @psoc: PSOC object data
  * @mode: device mode
