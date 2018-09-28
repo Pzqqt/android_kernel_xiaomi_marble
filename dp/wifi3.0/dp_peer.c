@@ -339,6 +339,41 @@ static inline void dp_peer_ast_hash_remove(struct dp_soc *soc,
 }
 
 /*
+ * dp_peer_ast_hash_find_by_pdevid() - Find AST entry by MAC address
+ *				       and pdev id
+ * @soc: SoC handle
+ * @ast_mac_addr: mac address
+ * @pdev_id: pdev_id
+ *
+ * It assumes caller has taken the ast lock to protect the access to
+ * AST hash table
+ *
+ * Return: AST entry
+ */
+struct dp_ast_entry *dp_peer_ast_hash_find_by_pdevid(struct dp_soc *soc,
+						     uint8_t *ast_mac_addr,
+						     uint8_t pdev_id)
+{
+	union dp_align_mac_addr local_mac_addr_aligned, *mac_addr;
+	uint32_t index;
+	struct dp_ast_entry *ase;
+
+	qdf_mem_copy(&local_mac_addr_aligned.raw[0],
+		     ast_mac_addr, DP_MAC_ADDR_LEN);
+	mac_addr = &local_mac_addr_aligned;
+
+	index = dp_peer_ast_hash_index(soc, mac_addr);
+	TAILQ_FOREACH(ase, &soc->ast_hash.bins[index], hash_list_elem) {
+		if ((pdev_id == ase->pdev_id) &&
+		    !dp_peer_find_mac_addr_cmp(mac_addr, &ase->mac_addr)) {
+			return ase;
+		}
+	}
+
+	return NULL;
+}
+
+/*
  * dp_peer_ast_hash_find() - Find AST entry by MAC address
  * @soc: SoC handle
  *
@@ -447,6 +482,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 {
 	struct dp_ast_entry *ast_entry;
 	struct dp_vdev *vdev = peer->vdev;
+	struct dp_pdev *pdev = NULL;
 	uint8_t next_node_mac[6];
 	int  ret = -1;
 
@@ -457,6 +493,8 @@ int dp_peer_add_ast(struct dp_soc *soc,
 		return ret;
 	}
 
+	pdev = vdev->pdev;
+
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		"%s: peer %pK mac %02x:%02x:%02x:%02x:%02x:%02x",
 		__func__, peer, mac_addr[0], mac_addr[1], mac_addr[2],
@@ -464,35 +502,50 @@ int dp_peer_add_ast(struct dp_soc *soc,
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 
-	/* If AST entry already exists , just return from here */
-	ast_entry = dp_peer_ast_hash_find(soc, mac_addr);
-
-	if (ast_entry) {
-		if (ast_entry->type == CDP_TXRX_AST_TYPE_MEC) {
-			ast_entry->is_active = TRUE;
+	/* If AST entry already exists , just return from here
+	 * ast entry with same mac address can exist on different radios
+	 * if ast_override support is enabled use search by pdev in this
+	 * case
+	 */
+	if (soc->ast_override_support) {
+		ast_entry = dp_peer_ast_hash_find_by_pdevid(soc, mac_addr,
+							    pdev->pdev_id);
+		if (ast_entry) {
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			return 0;
 		}
+	} else {
+		ast_entry = dp_peer_ast_hash_find(soc, mac_addr);
 
-		/*
-		 * WAR for HK 1.x AST issue
-		 * If an AST entry with same mac address already exists and is
-		 * mapped to a different radio, and if the current radio is
-		 * primary radio , delete the existing AST entry and return.
-		 *
-		 * New AST entry will be created again on next SA_invalid
-		 * frame
-		 */
-		if ((ast_entry->pdev_id != vdev->pdev->pdev_id) &&
-		    vdev->pdev->is_primary) {
-			qdf_print("Deleting ast_pdev=%d pdev=%d addr=%pM\n",
-				  ast_entry->pdev_id,
-				  vdev->pdev->pdev_id, mac_addr);
-			dp_peer_del_ast(soc, ast_entry);
+		if (ast_entry) {
+			if (ast_entry->type == CDP_TXRX_AST_TYPE_MEC) {
+				ast_entry->is_active = TRUE;
+				qdf_spin_unlock_bh(&soc->ast_lock);
+				return 0;
+			}
+
+			/*
+			 * WAR for HK 1.x AST issue
+			 * If an AST entry with same mac address already
+			 * exists and is mapped to a different radio, and
+			 * if the current radio is  primary radio , delete
+			 * the existing AST entry and return.
+			 *
+			 * New AST entry will be created again on next
+			 * SA_invalid frame
+			 */
+			if ((ast_entry->pdev_id != vdev->pdev->pdev_id) &&
+			    vdev->pdev->is_primary) {
+				QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+					  "Deleting ast_pdev=%d pdev=%d addr=%pM\n",
+					  ast_entry->pdev_id,
+					  vdev->pdev->pdev_id, mac_addr);
+				dp_peer_del_ast(soc, ast_entry);
+			}
+
+			qdf_spin_unlock_bh(&soc->ast_lock);
+			return 0;
 		}
-
-		qdf_spin_unlock_bh(&soc->ast_lock);
-		return 0;
 	}
 
 	ast_entry = (struct dp_ast_entry *)

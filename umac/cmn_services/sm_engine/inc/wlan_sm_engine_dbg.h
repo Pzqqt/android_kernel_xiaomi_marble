@@ -39,6 +39,17 @@
 #define sm_engine_debug(params...) \
 		QDF_TRACE_DEBUG(QDF_MODULE_ID_SM_ENGINE, params)
 
+#define sm_engine_nofl_alert(params...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_SM_ENGINE, params)
+#define sm_engine_nofl_err(params...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_SM_ENGINE, params)
+#define sm_engine_nofl_warn(params...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_SM_ENGINE, params)
+#define sm_engine_nofl_info(params...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_SM_ENGINE, params)
+#define sm_engine_nofl_debug(params...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_SM_ENGINE, params)
+
 #define WLAN_SM_ENGINE_HISTORY_SIZE  50
 struct wlan_sm;
 /**
