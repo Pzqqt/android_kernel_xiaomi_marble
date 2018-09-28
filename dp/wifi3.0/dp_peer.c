@@ -2400,6 +2400,8 @@ dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 	 * all security types and last pn for WAPI) once REO command API
 	 * is available
 	 */
+
+	dp_peer_unref_del_find_by_id(peer);
 }
 
 #ifndef CONFIG_WIN
@@ -2768,6 +2770,7 @@ uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_handle;
 	struct dp_peer *peer;
+	uint8_t vdev_id;
 
 	peer = dp_peer_find_by_id(soc, peer_id);
 
@@ -2781,7 +2784,11 @@ uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
 	}
 
 	qdf_mem_copy(peer_mac, peer->mac_addr.raw, 6);
-	return peer->vdev->vdev_id;
+	vdev_id = peer->vdev->vdev_id;
+
+	dp_peer_unref_del_find_by_id(peer);
+
+	return vdev_id;
 }
 
 /**
@@ -2849,4 +2856,21 @@ void dp_set_michael_key(struct cdp_peer *peer_handle,
 
 	qdf_mem_copy(&peer->security[sec_index].michael_key[0],
 		     key, IEEE80211_WEP_MICLEN);
+}
+
+bool dp_peer_find_by_id_valid(struct dp_soc *soc, uint16_t peer_id)
+{
+	struct dp_peer *peer = dp_peer_find_by_id(soc, peer_id);
+
+	if (peer) {
+		/*
+		 * Decrement the peer ref which is taken as part of
+		 * dp_peer_find_by_id if PEER_LOCK_REF_PROTECT is enabled
+		 */
+		dp_peer_unref_del_find_by_id(peer);
+
+		return true;
+	}
+
+	return false;
 }
