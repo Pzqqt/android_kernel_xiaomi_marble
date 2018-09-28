@@ -1785,8 +1785,8 @@ QDF_STATUS mlme_vdev_sm_create(struct vdev_mlme_obj *vdev_mlme)
 	struct wlan_sm *sm;
 	uint8_t name[WLAN_SM_ENGINE_MAX_NAME];
 
-	snprintf(name, sizeof(name), "VDEV%d-MLME",
-		 wlan_vdev_get_id(vdev_mlme->vdev));
+	qdf_snprintf(name, sizeof(name), "VDEV%d-MLME",
+		     wlan_vdev_get_id(vdev_mlme->vdev));
 	sm = wlan_sm_create(name, vdev_mlme,
 			    WLAN_VDEV_S_INIT,
 			    sm_info,
@@ -1811,8 +1811,8 @@ QDF_STATUS mlme_vdev_sm_create(struct vdev_mlme_obj *vdev_mlme)
 	struct wlan_sm *sm;
 	uint8_t name[WLAN_SM_ENGINE_MAX_NAME];
 
-	snprintf(name, sizeof(name), "VDEV%d-MLME",
-		 wlan_vdev_get_id(vdev_mlme->vdev));
+	qdf_snprintf(name, sizeof(name), "VDEV%d-MLME",
+		     wlan_vdev_get_id(vdev_mlme->vdev));
 
 	sm = wlan_sm_create(name, vdev_mlme, 0, NULL, 0, NULL, 0);
 	if (!sm) {

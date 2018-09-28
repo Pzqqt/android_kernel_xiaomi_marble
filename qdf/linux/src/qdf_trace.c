@@ -298,11 +298,7 @@ qdf_export_symbol(qdf_trace_get_level);
  */
 void qdf_snprintf(char *str_buffer, unsigned int size, char *str_format, ...)
 {
-	va_list val;
-
-	va_start(val, str_format);
-	snprintf(str_buffer, size, str_format, val);
-	va_end(val);
+	snprintf(str_buffer, size, str_format);
 }
 qdf_export_symbol(qdf_snprintf);
 
