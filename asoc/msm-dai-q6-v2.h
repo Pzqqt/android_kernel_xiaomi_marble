@@ -18,6 +18,11 @@
 #define MSM_MI2S_SD1 (1 << 1)
 #define MSM_MI2S_SD2 (1 << 2)
 #define MSM_MI2S_SD3 (1 << 3)
+#define MSM_MI2S_SD4 (1 << 4)
+#define MSM_MI2S_SD5 (1 << 5)
+#define MSM_MI2S_SD6 (1 << 6)
+#define MSM_MI2S_SD7 (1 << 7)
+
 #define MSM_MI2S_CAP_RX 0
 #define MSM_MI2S_CAP_TX 1
 

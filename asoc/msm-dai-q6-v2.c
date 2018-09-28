@@ -2095,7 +2095,7 @@ static int msm_dai_q6_cdc_hw_params(struct snd_pcm_hw_params *params,
 	return 0;
 }
 
-static u8 num_of_bits_set(u8 sd_line_mask)
+static u16 num_of_bits_set(u16 sd_line_mask)
 {
 	u8 num_bits_set = 0;
 
@@ -4644,11 +4644,68 @@ static int msm_dai_q6_mi2s_hw_params(struct snd_pcm_substream *substream,
 
 	dai_data->channels = params_channels(params);
 	switch (dai_data->channels) {
+	case 15:
+	case 16:
+		switch (mi2s_dai_config->pdata_mi2s_lines) {
+		case AFE_PORT_I2S_16CHS:
+			dai_data->port_config.i2s.channel_mode
+				= AFE_PORT_I2S_16CHS;
+			break;
+		default:
+			goto error_invalid_data;
+		};
+		break;
+	case 13:
+	case 14:
+		switch (mi2s_dai_config->pdata_mi2s_lines) {
+		case AFE_PORT_I2S_14CHS:
+		case AFE_PORT_I2S_16CHS:
+			dai_data->port_config.i2s.channel_mode
+				= AFE_PORT_I2S_14CHS;
+			break;
+		default:
+			goto error_invalid_data;
+		};
+		break;
+	case 11:
+	case 12:
+		switch (mi2s_dai_config->pdata_mi2s_lines) {
+		case AFE_PORT_I2S_12CHS:
+		case AFE_PORT_I2S_14CHS:
+		case AFE_PORT_I2S_16CHS:
+			dai_data->port_config.i2s.channel_mode
+				= AFE_PORT_I2S_12CHS;
+			break;
+		default:
+			goto error_invalid_data;
+		};
+		break;
+	case 9:
+	case 10:
+		switch (mi2s_dai_config->pdata_mi2s_lines) {
+		case AFE_PORT_I2S_10CHS:
+		case AFE_PORT_I2S_12CHS:
+		case AFE_PORT_I2S_14CHS:
+		case AFE_PORT_I2S_16CHS:
+			dai_data->port_config.i2s.channel_mode
+				= AFE_PORT_I2S_10CHS;
+			break;
+		default:
+			goto error_invalid_data;
+		};
+		break;
 	case 8:
 	case 7:
 		if (mi2s_dai_config->pdata_mi2s_lines < AFE_PORT_I2S_8CHS)
 			goto error_invalid_data;
-		dai_data->port_config.i2s.channel_mode = AFE_PORT_I2S_8CHS;
+		else
+			if (mi2s_dai_config->pdata_mi2s_lines
+					== AFE_PORT_I2S_8CHS_2)
+				dai_data->port_config.i2s.channel_mode =
+						AFE_PORT_I2S_8CHS_2;
+			else
+				dai_data->port_config.i2s.channel_mode =
+						AFE_PORT_I2S_8CHS;
 		break;
 	case 6:
 	case 5:
@@ -4658,14 +4715,33 @@ static int msm_dai_q6_mi2s_hw_params(struct snd_pcm_substream *substream,
 		break;
 	case 4:
 	case 3:
-		if (mi2s_dai_config->pdata_mi2s_lines < AFE_PORT_I2S_QUAD01)
+		switch (mi2s_dai_config->pdata_mi2s_lines) {
+		case AFE_PORT_I2S_SD0:
+		case AFE_PORT_I2S_SD1:
+		case AFE_PORT_I2S_SD2:
+		case AFE_PORT_I2S_SD3:
+		case AFE_PORT_I2S_SD4:
+		case AFE_PORT_I2S_SD5:
+		case AFE_PORT_I2S_SD6:
+		case AFE_PORT_I2S_SD7:
 			goto error_invalid_data;
-		if (mi2s_dai_config->pdata_mi2s_lines == AFE_PORT_I2S_QUAD23)
+			break;
+		case AFE_PORT_I2S_QUAD01:
+		case AFE_PORT_I2S_QUAD23:
+		case AFE_PORT_I2S_QUAD45:
+		case AFE_PORT_I2S_QUAD67:
 			dai_data->port_config.i2s.channel_mode =
 				mi2s_dai_config->pdata_mi2s_lines;
-		else
+			break;
+		case AFE_PORT_I2S_8CHS_2:
+			dai_data->port_config.i2s.channel_mode =
+					AFE_PORT_I2S_QUAD45;
+			break;
+		default:
 			dai_data->port_config.i2s.channel_mode =
 					AFE_PORT_I2S_QUAD01;
+			break;
+		};
 		break;
 	case 2:
 	case 1:
@@ -4676,12 +4752,20 @@ static int msm_dai_q6_mi2s_hw_params(struct snd_pcm_substream *substream,
 		case AFE_PORT_I2S_SD1:
 		case AFE_PORT_I2S_SD2:
 		case AFE_PORT_I2S_SD3:
+		case AFE_PORT_I2S_SD4:
+		case AFE_PORT_I2S_SD5:
+		case AFE_PORT_I2S_SD6:
+		case AFE_PORT_I2S_SD7:
 			dai_data->port_config.i2s.channel_mode =
 				mi2s_dai_config->pdata_mi2s_lines;
 			break;
 		case AFE_PORT_I2S_QUAD01:
 		case AFE_PORT_I2S_6CHS:
 		case AFE_PORT_I2S_8CHS:
+		case AFE_PORT_I2S_10CHS:
+		case AFE_PORT_I2S_12CHS:
+		case AFE_PORT_I2S_14CHS:
+		case AFE_PORT_I2S_16CHS:
 			if (dai_data->vi_feed_mono == SPKR_1)
 				dai_data->port_config.i2s.channel_mode =
 							AFE_PORT_I2S_SD0;
@@ -4692,6 +4776,14 @@ static int msm_dai_q6_mi2s_hw_params(struct snd_pcm_substream *substream,
 		case AFE_PORT_I2S_QUAD23:
 			dai_data->port_config.i2s.channel_mode =
 						AFE_PORT_I2S_SD2;
+			break;
+		case AFE_PORT_I2S_QUAD45:
+			dai_data->port_config.i2s.channel_mode =
+						AFE_PORT_I2S_SD4;
+			break;
+		case AFE_PORT_I2S_QUAD67:
+			dai_data->port_config.i2s.channel_mode =
+						AFE_PORT_I2S_SD6;
 			break;
 		}
 		if (dai_data->channels == 2)
@@ -4864,15 +4956,17 @@ static struct snd_soc_dai_driver msm_dai_q6_mi2s_dai[] = {
 			.stream_name = "Primary MI2S Playback",
 			.aif_name = "PRI_MI2S_RX",
 			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_11025 |
-				 SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_22050 |
-				 SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |
-				 SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_96000 |
-				 SNDRV_PCM_RATE_192000,
+				SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_22050 |
+				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_44100 |
+				SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_88200 |
+				SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_176400 |
+				SNDRV_PCM_RATE_192000 | SNDRV_PCM_RATE_352800 |
+				SNDRV_PCM_RATE_384000,
 			.formats = SNDRV_PCM_FMTBIT_S16_LE |
 				SNDRV_PCM_FMTBIT_S24_LE |
 				SNDRV_PCM_FMTBIT_S24_3LE,
 			.rate_min =     8000,
-			.rate_max =     192000,
+			.rate_max =     384000,
 		},
 		.capture = {
 			.stream_name = "Primary MI2S Capture",
@@ -5257,6 +5351,18 @@ static int msm_dai_q6_mi2s_get_lineconfig(u16 sd_lines, u16 *config_ptr,
 		case MSM_MI2S_SD3:
 			*config_ptr = AFE_PORT_I2S_SD3;
 			break;
+		case MSM_MI2S_SD4:
+			*config_ptr = AFE_PORT_I2S_SD4;
+			break;
+		case MSM_MI2S_SD5:
+			*config_ptr = AFE_PORT_I2S_SD5;
+			break;
+		case MSM_MI2S_SD6:
+			*config_ptr = AFE_PORT_I2S_SD6;
+			break;
+		case MSM_MI2S_SD7:
+			*config_ptr = AFE_PORT_I2S_SD7;
+			break;
 		default:
 			pr_err("%s: invalid SD lines %d\n",
 				   __func__, sd_lines);
@@ -5270,6 +5376,12 @@ static int msm_dai_q6_mi2s_get_lineconfig(u16 sd_lines, u16 *config_ptr,
 			break;
 		case MSM_MI2S_SD2 | MSM_MI2S_SD3:
 			*config_ptr = AFE_PORT_I2S_QUAD23;
+			break;
+		case MSM_MI2S_SD4 | MSM_MI2S_SD5:
+			*config_ptr = AFE_PORT_I2S_QUAD45;
+			break;
+		case MSM_MI2S_SD6 | MSM_MI2S_SD7:
+			*config_ptr = AFE_PORT_I2S_QUAD67;
 			break;
 		default:
 			pr_err("%s: invalid SD lines %d\n",
@@ -5292,6 +5404,57 @@ static int msm_dai_q6_mi2s_get_lineconfig(u16 sd_lines, u16 *config_ptr,
 		switch (sd_lines) {
 		case MSM_MI2S_SD0 | MSM_MI2S_SD1 | MSM_MI2S_SD2 | MSM_MI2S_SD3:
 			*config_ptr = AFE_PORT_I2S_8CHS;
+			break;
+		case MSM_MI2S_SD4 | MSM_MI2S_SD5 | MSM_MI2S_SD6 | MSM_MI2S_SD7:
+			*config_ptr = AFE_PORT_I2S_8CHS_2;
+			break;
+		default:
+			pr_err("%s: invalid SD lines %d\n",
+				   __func__, sd_lines);
+			goto error_invalid_data;
+		}
+		break;
+	case 5:
+		switch (sd_lines) {
+		case MSM_MI2S_SD0 | MSM_MI2S_SD1 | MSM_MI2S_SD2
+		   | MSM_MI2S_SD3 | MSM_MI2S_SD4:
+			*config_ptr = AFE_PORT_I2S_10CHS;
+			break;
+		default:
+			pr_err("%s: invalid SD lines %d\n",
+				   __func__, sd_lines);
+			goto error_invalid_data;
+		}
+		break;
+	case 6:
+		switch (sd_lines) {
+		case MSM_MI2S_SD0 | MSM_MI2S_SD1 | MSM_MI2S_SD2
+		   | MSM_MI2S_SD3 | MSM_MI2S_SD4 | MSM_MI2S_SD5:
+			*config_ptr = AFE_PORT_I2S_12CHS;
+			break;
+		default:
+			pr_err("%s: invalid SD lines %d\n",
+				   __func__, sd_lines);
+			goto error_invalid_data;
+		}
+		break;
+	case 7:
+		switch (sd_lines) {
+		case MSM_MI2S_SD0 | MSM_MI2S_SD1 | MSM_MI2S_SD2 | MSM_MI2S_SD3
+		   | MSM_MI2S_SD4 | MSM_MI2S_SD5 | MSM_MI2S_SD6:
+			*config_ptr = AFE_PORT_I2S_14CHS;
+			break;
+		default:
+			pr_err("%s: invalid SD lines %d\n",
+				   __func__, sd_lines);
+			goto error_invalid_data;
+		}
+		break;
+	case 8:
+		switch (sd_lines) {
+		case MSM_MI2S_SD0 | MSM_MI2S_SD1 | MSM_MI2S_SD2 | MSM_MI2S_SD3
+		   | MSM_MI2S_SD4 | MSM_MI2S_SD5 | MSM_MI2S_SD6 | MSM_MI2S_SD7:
+			*config_ptr = AFE_PORT_I2S_16CHS;
 			break;
 		default:
 			pr_err("%s: invalid SD lines %d\n",
