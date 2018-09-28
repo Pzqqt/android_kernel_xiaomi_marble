@@ -214,6 +214,28 @@ struct sta_ap_intf_check_work_ctx {
 };
 
 /**
+ * struct policy_mgr_cfg - all the policy manager owned configs
+ * @mcc_to_scc_switch: switch to indicate MCC to SCC config
+ * @sys_pref: system's preference while selecting PCLs
+ * @max_conc_cxns: Max allowed concurrenct active connections
+ * @conc_rule1: concurrency rule1
+ * @conc_rule2: concurrency rule2
+ * @dbs_selection_plcy: DBS selection policy for concurrency
+ * @vdev_priority_list: Priority list for various vdevs
+ * @chnl_select_plcy: Channel selection policy
+ */
+struct policy_mgr_cfg {
+	uint8_t mcc_to_scc_switch;
+	uint8_t sys_pref;
+	uint8_t max_conc_cxns;
+	uint8_t conc_rule1;
+	uint8_t conc_rule2;
+	uint32_t dbs_selection_plcy;
+	uint32_t vdev_priority_list;
+	uint32_t chnl_select_plcy;
+};
+
+/**
  * struct policy_mgr_psoc_priv_obj - Policy manager private data
  * @psoc: pointer to PSOC object information
  * @pdev: pointer to PDEV object information
@@ -298,6 +320,7 @@ struct policy_mgr_psoc_priv_obj {
 	qdf_event_t channel_switch_complete_evt;
 	send_mode_change_event_cb mode_change_cb;
 	uint32_t user_config_sap_channel;
+	struct policy_mgr_cfg cfg;
 };
 
 /**
