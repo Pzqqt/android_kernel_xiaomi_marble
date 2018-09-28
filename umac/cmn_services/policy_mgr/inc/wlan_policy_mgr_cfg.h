@@ -265,6 +265,29 @@
 					CFG_VALUE_OR_DEFAULT, \
 					"Enable/Disable MCC Adaptive Scheduler")
 
+/*
+ * <ini>
+ * gEnableStaConnectionIn5Ghz - To enable/disable STA connection in 5G
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable STA connection in 5G band
+ *
+ * Related: STA
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_STA_CONNECTION_IN_5GHZ CFG_INI_UINT(\
+					"gEnableStaConnectionIn5Ghz", \
+					0, 1, 1, \
+					CFG_VALUE_OR_DEFAULT, \
+					"Enable/Disable STA connection in 5G")
+
 #define CFG_POLICY_MGR_ALL \
 		CFG(CFG_MCC_TO_SCC_SWITCH) \
 		CFG(CFG_CONC_SYS_PREF) \
@@ -274,5 +297,6 @@
 		CFG(CFG_CHNL_SELECT_LOGIC_CONC) \
 		CFG(CFG_ENABLE_CONC_RULE1) \
 		CFG(CFG_ENABLE_CONC_RULE2) \
-		CFG(CFG_ENABLE_MCC_ADATIVE_SCH_ENABLED_NAME)
+		CFG(CFG_ENABLE_MCC_ADATIVE_SCH_ENABLED_NAME)\
+		CFG(CFG_ENABLE_STA_CONNECTION_IN_5GHZ)
 #endif

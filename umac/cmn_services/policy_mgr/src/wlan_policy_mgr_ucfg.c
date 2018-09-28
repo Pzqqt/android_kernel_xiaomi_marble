@@ -42,6 +42,8 @@ static QDF_STATUS policy_mgr_init_cfg(struct wlan_objmgr_psoc *psoc)
 	cfg->chnl_select_plcy = cfg_get(psoc, CFG_CHNL_SELECT_LOGIC_CONC);
 	cfg->enable_mcc_adaptive_sch =
 		cfg_get(psoc, CFG_ENABLE_MCC_ADATIVE_SCH_ENABLED_NAME);
+	cfg->enable_sta_cxn_5g_band =
+		cfg_get(psoc, CFG_ENABLE_STA_CONNECTION_IN_5GHZ);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -135,4 +137,10 @@ QDF_STATUS ucfg_policy_mgr_get_mcc_adaptive_sch(struct wlan_objmgr_psoc *psoc,
 						uint8_t *mcc_adaptive_sch)
 {
 	return policy_mgr_get_mcc_adaptive_sch(psoc, mcc_adaptive_sch);
+}
+
+QDF_STATUS ucfg_policy_mgr_get_sta_cxn_5g_band(struct wlan_objmgr_psoc *psoc,
+					       uint8_t *enable_sta_cxn_5g_band)
+{
+	return policy_mgr_get_sta_cxn_5g_band(psoc, enable_sta_cxn_5g_band);
 }
