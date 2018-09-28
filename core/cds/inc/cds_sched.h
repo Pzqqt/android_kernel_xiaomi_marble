@@ -493,4 +493,14 @@ void cds_shutdown_notifier_purge(void);
  * shutdown.
  */
 void cds_shutdown_notifier_call(void);
+
+/**
+ * cds_resume_rx_thread() - resume rx thread by completing its resume event
+ *
+ * Resume RX thread by completing RX thread resume event
+ *
+ * Return: None
+ */
+void cds_resume_rx_thread(void);
+
 #endif /* #if !defined __CDS_SCHED_H */

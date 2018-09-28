@@ -1105,3 +1105,16 @@ int cds_get_gfp_flags(void)
 
 	return flags;
 }
+
+void cds_resume_rx_thread(void)
+{
+	p_cds_sched_context cds_sched_context = NULL;
+
+	cds_sched_context = get_cds_sched_ctxt();
+	if (NULL == cds_sched_context) {
+		cds_err("cds_sched_context is NULL");
+		return;
+	}
+
+	complete(&cds_sched_context->ol_resume_rx_event);
+}
