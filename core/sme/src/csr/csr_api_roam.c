@@ -17329,6 +17329,13 @@ QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal mac_ctx,
 	sme_debug("Del Sta rsp status = %d", rsp->status);
 	/* This session is done. */
 	csr_cleanup_session(mac_ctx, sessionId);
+
+	/* Remove this command out of the non scan active list */
+	if (csr_nonscan_active_ll_remove_entry(mac_ctx, entry,
+					       LL_ACCESS_LOCK)) {
+		csr_release_command(mac_ctx, sme_command);
+	}
+
 	if (rsp->sme_callback) {
 		status = sme_release_global_lock(&mac_ctx->sme);
 		if (!QDF_IS_STATUS_SUCCESS(status))
@@ -17341,12 +17348,6 @@ QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal mac_ctx,
 				return status;
 			}
 		}
-	}
-
-	/* Remove this command out of the non scan active list */
-	if (csr_nonscan_active_ll_remove_entry(mac_ctx, entry,
-					       LL_ACCESS_LOCK)) {
-		csr_release_command(mac_ctx, sme_command);
 	}
 
 	return QDF_STATUS_SUCCESS;
