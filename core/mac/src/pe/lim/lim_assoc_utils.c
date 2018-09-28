@@ -3666,8 +3666,12 @@ QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	pAddBssParams->dot11_mode = psessionEntry->dot11mode;
 	pe_debug("dot11_mode: %d", pAddBssParams->dot11_mode);
 
-	/* Use the advertised capabilities from the received beacon/PR */
+	if (IS_DOT11_MODE_HT(psessionEntry->dot11mode))
+		chanWidthSupp = lim_get_ht_capability(pMac,
+						eHT_SUPPORTED_CHANNEL_WIDTH_SET,
+						psessionEntry);
 
+	/* Use the advertised capabilities from the received beacon/PR */
 	if (IS_DOT11_MODE_HT(psessionEntry->dot11mode)
 	    && (pAssocRsp->HTCaps.present)) {
 		pAddBssParams->htCapable = pAssocRsp->HTCaps.present;
@@ -3677,10 +3681,7 @@ QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				(tSirMacHTOperatingMode) pAssocRsp->HTInfo.opMode;
 			pAddBssParams->dualCTSProtection =
 				(uint8_t) pAssocRsp->HTInfo.dualCTSProtection;
-			chanWidthSupp =
-				lim_get_ht_capability(pMac,
-						      eHT_SUPPORTED_CHANNEL_WIDTH_SET,
-						      psessionEntry);
+
 			if ((pAssocRsp->HTCaps.supportedChannelWidthSet)
 			    && (chanWidthSupp)) {
 				pAddBssParams->ch_width = (uint8_t)
@@ -3850,37 +3851,30 @@ QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			lim_update_he_stbc_capable(&pAddBssParams->staContext);
 		}
 
-		if ((pAssocRsp->HTCaps.supportedChannelWidthSet) &&
-				(chanWidthSupp)) {
-			pAddBssParams->staContext.ch_width = (uint8_t)
-				pAssocRsp->HTInfo.recommendedTxWidthSet;
-			if (pAssocRsp->VHTCaps.present)
-				vht_oper = &pAssocRsp->VHTOperation;
-			else if (pAssocRsp->vendor_vht_ie.VHTCaps.present) {
-				vht_oper = &pAssocRsp->
-						vendor_vht_ie.VHTOperation;
-				pe_debug("VHT Op IE is in vendor Specific IE");
-			}
-			/*
-			 * in limExtractApCapability function intersection of FW
-			 * advertised channel width and AP advertised channel
-			 * width has been taken into account for calculating
-			 * psessionEntry->ch_width
-			 */
+		/*
+		 * in limExtractApCapability function intersection of FW
+		 * advertised channel width and AP advertised channel
+		 * width has been taken into account for calculating
+		 * psessionEntry->ch_width
+		 */
+		if (chanWidthSupp &&
+		    ((pAssocRsp->HTCaps.supportedChannelWidthSet) ||
+		    (pBeaconStruct->HTCaps.supportedChannelWidthSet))) {
 			pAddBssParams->staContext.ch_width =
 					psessionEntry->ch_width;
-
-			pe_debug("StaCtx: vhtCap %d ChBW %d TxBF %d",
-					pAddBssParams->staContext.vhtCapable,
-					pAddBssParams->staContext.ch_width,
-					sta_context->vhtTxBFCapable);
-			pe_debug("StaContext su_tx_bfer %d",
-					sta_context->enable_su_tx_bformer);
 		} else {
 			sta_context->ch_width =	CH_WIDTH_20MHZ;
 			if (vht_cap_info.enable_txbf_20mhz)
 				sta_context->vhtTxBFCapable = 0;
 		}
+
+		pe_debug("StaCtx: vhtCap %d ChBW %d TxBF %d",
+			 pAddBssParams->staContext.vhtCapable,
+			 pAddBssParams->staContext.ch_width,
+			 sta_context->vhtTxBFCapable);
+		pe_debug("StaContext su_tx_bfer %d",
+			 sta_context->enable_su_tx_bformer);
+
 		pAddBssParams->staContext.mimoPS =
 			(tSirMacHTMIMOPowerSaveState)
 			pAssocRsp->HTCaps.mimoPowerSave;
