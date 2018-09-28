@@ -629,8 +629,18 @@ wlan_ser_cancel_non_scan_cmd(
 
 		wlan_serialization_acquire_lock(&pdev_q->pdev_queue_lock);
 
-		if (!is_active_queue)
+		if (is_active_queue) {
+			if (cmd_bkup.is_blocking)
+				pdev_q->blocking_cmd_active = 0;
+			pdev_q->vdev_active_cmd_bitmap &=
+				 ~(1 << wlan_vdev_get_id(cmd_bkup.vdev));
+		} else {
+			if (cmd_bkup.is_blocking)
+				pdev_q->blocking_cmd_waiting--;
+
 			status = WLAN_SER_CMD_IN_PENDING_LIST;
+		}
+
 
 		if (!vdev && !pdev)
 			break;

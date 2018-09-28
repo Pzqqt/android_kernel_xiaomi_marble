@@ -386,11 +386,8 @@ void wlan_serialization_purge_cmd_list(
 		bool purge_nonscan_pending_queue,
 		bool purge_all_queues)
 {
-	struct wlan_serialization_timer *ser_timer;
-	struct wlan_ser_psoc_obj *psoc_ser_obj;
 	struct wlan_ser_pdev_obj *ser_pdev_obj;
 	struct wlan_objmgr_pdev *pdev = NULL;
-	uint32_t i = 0;
 
 	if (!psoc) {
 		ser_err("Invalid psoc");
@@ -401,45 +398,13 @@ void wlan_serialization_purge_cmd_list(
 		ser_err("Invalid ser_pdev_obj");
 		return;
 	}
-	psoc_ser_obj = wlan_serialization_get_psoc_obj(psoc);
-	if (!psoc_ser_obj) {
-		ser_err("Invalid psoc_ser_obj");
-		return;
-	}
+
 	pdev = wlan_serialization_get_first_pdev(psoc);
 	if (!pdev) {
 		ser_err("Invalid pdev");
 		return;
 	}
-	for (i = 0; psoc_ser_obj->max_active_cmds > i; i++) {
-		ser_timer = &psoc_ser_obj->timers[i];
-		if (!ser_timer->cmd)
-			continue;
-		if (vdev && (vdev != ser_timer->cmd->vdev))
-			continue;
-		/*
-		 * if request is to purge active scan then don't de-activate
-		 * non-scan cmds. If request is to purge all queues then
-		 * de-activate all the timers.
-		 */
-		if (!purge_all_queues && purge_scan_active_queue &&
-		    (ser_timer->cmd->cmd_type >= WLAN_SER_CMD_NONSCAN))
-			continue;
-		/*
-		 * if request is to purge active nonscan then don't de-activate
-		 * scan cmds. If request is to purge all queues then
-		 * de-activate all the timers.
-		 */
-		if (!purge_all_queues && purge_nonscan_active_queue &&
-		    (ser_timer->cmd->cmd_type < WLAN_SER_CMD_NONSCAN))
-			continue;
 
-		if (QDF_STATUS_SUCCESS !=
-				wlan_serialization_find_and_stop_timer(
-							psoc,
-							ser_timer->cmd))
-			ser_err("some error in stopping timer");
-	}
 	if (purge_all_queues || purge_scan_active_queue) {
 		wlan_ser_cancel_scan_cmd(ser_pdev_obj,
 					 pdev,
