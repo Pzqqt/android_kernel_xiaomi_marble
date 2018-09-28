@@ -116,6 +116,7 @@ static void scheduler_mq_deinit(struct scheduler_mq_type *msg_q)
 }
 
 static qdf_atomic_t __sched_queue_depth;
+static qdf_atomic_t __sched_dup_fail_count;
 
 static QDF_STATUS scheduler_all_queues_init(struct scheduler_ctx *sched_ctx)
 {
@@ -247,10 +248,15 @@ struct scheduler_msg *scheduler_core_msg_dup(struct scheduler_msg *msg)
 
 	qdf_mem_copy(dup, msg, sizeof(*dup));
 
+	qdf_atomic_set(&__sched_dup_fail_count, 0);
+
 	return dup;
 
 buffer_full:
-	QDF_DEBUG_PANIC("Scheduler buffer is full");
+	if (qdf_atomic_inc_return(&__sched_dup_fail_count) >
+	    SCHEDULER_WRAPPER_MAX_FAIL_COUNT)
+		QDF_DEBUG_PANIC("Scheduler buffer is full");
+
 
 dec_queue_count:
 	qdf_atomic_dec(&__sched_queue_depth);
