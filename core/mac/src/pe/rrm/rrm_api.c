@@ -959,6 +959,12 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 				bss_desc_count++;
 				pe_debug("No remaining IEs");
 			}
+
+			if (curr_req->request.Beacon.
+			    last_beacon_report_indication) {
+				pe_debug("Setting last beacon report support");
+				beacon_report->last_bcn_report_ind_support = 1;
+			}
 		}
 
 		pe_debug("Total reports filled %d", i);
