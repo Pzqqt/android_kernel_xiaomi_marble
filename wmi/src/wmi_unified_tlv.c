@@ -19085,6 +19085,12 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 	    WMITLV_GET_TLVLEN(rssi_event->tlv_header))
 		return QDF_STATUS_SUCCESS;
 
+	if (rssi_event->num_per_chain_rssi_stats >=
+	    WMITLV_GET_TLVLEN(rssi_event->tlv_header)) {
+		WMI_LOGE("num_per_chain_rssi_stats:%u is out of bounds",
+			 rssi_event->num_per_chain_rssi_stats);
+		return QDF_STATUS_E_INVAL;
+	}
 	stats_param->num_rssi_stats = rssi_event->num_per_chain_rssi_stats;
 
 	return QDF_STATUS_SUCCESS;
