@@ -777,7 +777,6 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 	tpAniSirGlobal mac_ctx = NULL;
 	uint8_t intf;
 	bool sta_sap_scc_on_dfs_chan;
-	enum channel_state chan_state;
 
 	if (QDF_IS_STATUS_ERROR(wlansap_context_get(ctx)))
 		return QDF_STATUS_E_FAILURE;
@@ -897,12 +896,12 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 			goto EXIT;
 		}
 
-		chan_state = wlan_reg_get_channel_state(
-				mac_ctx->pdev, sap_ctx->channel);
-		if (chan_state != CHANNEL_STATE_DFS)  {
+		if (!sap_chan_bond_dfs_sub_chan(
+			sap_ctx, sap_ctx->channel,
+			PHY_CHANNEL_BONDING_STATE_MAX))  {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-				  "Ignore Radar event for sap ch %d state %d",
-				  sap_ctx->channel, chan_state);
+				  "Ignore Radar event for sap ch %d",
+				  sap_ctx->channel);
 			goto EXIT;
 		}
 

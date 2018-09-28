@@ -511,6 +511,21 @@ uint8_t sap_channel_in_acs_channel_list(uint8_t channel_num,
 					tSapChSelSpectInfo *spect_info_params);
 
 /**
+ * sap_chan_bond_dfs_sub_chan - check bonded channel includes dfs sub chan
+ * @sap_context: Handle to SAP context.
+ * @channel_number: chan whose bonded chan will be checked
+ * @bond_state: The channel bonding mode of the passed channel.
+ *
+ * This function checks if a given bonded channel includes dfs sub chan.
+ *
+ * Return: true if at least one dfs sub chan is bonded, otherwise false
+ */
+bool
+sap_chan_bond_dfs_sub_chan(struct sap_context *sap_context,
+			   uint8_t channel_number,
+			   ePhyChanBondState bond_state);
+
+/**
  * sap_acquire_vdev_ref() - Increment reference count for vdev object
  * @mac: mac handle
  * @sap_ctx: to store vdev object pointer

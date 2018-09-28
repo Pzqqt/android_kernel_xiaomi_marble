@@ -741,6 +741,56 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 	return false;
 }
 
+bool
+sap_chan_bond_dfs_sub_chan(struct sap_context *sap_context,
+			   uint8_t channel_number,
+			   ePhyChanBondState bond_state)
+{
+	int i;
+	tHalHandle h_hal = CDS_GET_HAL_CB();
+	tpAniSirGlobal mac_ctx;
+	uint8_t channels[MAX_BONDED_CHANNELS];
+	uint8_t num_channels;
+	struct wlan_objmgr_pdev *pdev;
+
+	if (!h_hal) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("invalid h_hal"));
+		return false;
+	}
+	mac_ctx = PMAC_STRUCT(h_hal);
+	pdev = mac_ctx->pdev;
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("null pdev"));
+		return false;
+	}
+
+	if (wlan_reg_chan_has_dfs_attribute(pdev, channel_number))
+		return true;
+
+	/* get the bonded channels */
+	if (channel_number == sap_context->channel && bond_state >=
+						PHY_CHANNEL_BONDING_STATE_MAX)
+		num_channels = sap_ch_params_to_bonding_channels(
+					&sap_context->ch_params, channels);
+	else
+		num_channels = sap_get_bonding_channels(
+					sap_context, channel_number, channels,
+					MAX_BONDED_CHANNELS, bond_state);
+
+	for (i = 0; i < num_channels; i++) {
+		if (wlan_reg_chan_has_dfs_attribute(pdev, channels[i])) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+				  FL("sub ch num=%d is dfs in %d"),
+				  channels[i], channel_number);
+			return true;
+		}
+	}
+
+	return false;
+}
+
 uint8_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg)
 {
 	uint8_t channel;
