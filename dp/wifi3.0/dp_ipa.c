@@ -45,37 +45,19 @@
 static void dp_tx_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 	int idx;
-	uint32_t ring_base_align = 8;
-	/*
-	 * Uncomment when dp_ops_cfg.cfg_attach is implemented
-	 * unsigned int uc_tx_buf_sz =
-	 *		dp_cfg_ipa_uc_tx_buf_size(pdev->osif_pdev);
-	 */
-	unsigned int uc_tx_buf_sz = CFG_IPA_UC_TX_BUF_SIZE_DEFAULT;
-	unsigned int alloc_size = uc_tx_buf_sz + ring_base_align - 1;
 
 	for (idx = 0; idx < soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
 		if (soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[idx]) {
-			qdf_mem_free_consistent(
-				soc->osdev, soc->osdev->dev,
-				alloc_size,
-				soc->ipa_uc_tx_rsc.
-					tx_buf_pool_vaddr_unaligned[idx],
-				soc->ipa_uc_tx_rsc.
-					tx_buf_pool_paddr_unaligned[idx],
-				0);
+			qdf_nbuf_free((qdf_nbuf_t)
+				      (soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[idx]));
 
 			soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[idx] =
 							(void *)NULL;
-			soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned[idx] =
-							(qdf_dma_addr_t)NULL;
 		}
 	}
 
 	qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned);
 	soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned = NULL;
-	qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned);
-	soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned = NULL;
 }
 
 /**
@@ -117,9 +99,6 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 	uint32_t tx_buffer_count;
 	uint32_t ring_base_align = 8;
-	void *buffer_vaddr_unaligned;
-	void *buffer_vaddr;
-	qdf_dma_addr_t buffer_paddr_unaligned;
 	qdf_dma_addr_t buffer_paddr;
 	struct hal_srng *wbm_srng =
 			soc->tx_comp_ring[IPA_TX_COMP_RING_IDX].hal_srng;
@@ -128,6 +107,7 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	uint32_t paddr_hi;
 	void *ring_entry;
 	int num_entries;
+	qdf_nbuf_t nbuf;
 	int retval = QDF_STATUS_SUCCESS;
 	/*
 	 * Uncomment when dp_ops_cfg.cfg_attach is implemented
@@ -154,17 +134,6 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 		return -ENOMEM;
 	}
 
-	soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned =
-		qdf_mem_malloc(num_entries *
-		sizeof(*soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned));
-	if (!soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: IPA WBM Ring Tx buf pool paddr alloc fail",
-			  __func__);
-		qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned);
-		return -ENOMEM;
-	}
-
 	hal_srng_access_start(soc->hal_soc, (void *)wbm_srng);
 
 	/*
@@ -175,9 +144,8 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	 */
 	for (tx_buffer_count = 0;
 		tx_buffer_count < num_entries - 1; tx_buffer_count++) {
-		buffer_vaddr_unaligned = qdf_mem_alloc_consistent(soc->osdev,
-			soc->osdev->dev, alloc_size, &buffer_paddr_unaligned);
-		if (!buffer_vaddr_unaligned)
+		nbuf = qdf_nbuf_alloc(soc->osdev, alloc_size, 0, 256, FALSE);
+		if (!nbuf)
 			break;
 
 		ring_entry = hal_srng_dst_get_next_hp(soc->hal_soc,
@@ -186,27 +154,23 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				  "%s: Failed to get WBM ring entry",
 				  __func__);
-			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-				alloc_size, buffer_vaddr_unaligned,
-				buffer_paddr_unaligned, 0);
+			qdf_nbuf_free(nbuf);
 			break;
 		}
 
-		buffer_vaddr = (void *)qdf_align((unsigned long)
-			buffer_vaddr_unaligned, ring_base_align);
-		buffer_paddr = buffer_paddr_unaligned +
-			((unsigned long)(buffer_vaddr) -
-			 (unsigned long)buffer_vaddr_unaligned);
+		qdf_nbuf_map_single(soc->osdev, nbuf,
+				    QDF_DMA_BIDIRECTIONAL);
+		buffer_paddr = qdf_nbuf_get_frag_paddr(nbuf, 0);
 
 		paddr_lo = ((u64)buffer_paddr & 0x00000000ffffffff);
 		paddr_hi = ((u64)buffer_paddr & 0x0000001f00000000) >> 32;
-		HAL_WBM_PADDR_LO_SET(ring_entry, paddr_lo);
-		HAL_WBM_PADDR_HI_SET(ring_entry, paddr_hi);
+		HAL_RXDMA_PADDR_LO_SET(ring_entry, paddr_lo);
+		HAL_RXDMA_PADDR_HI_SET(ring_entry, paddr_hi);
+		HAL_RXDMA_MANAGER_SET(ring_entry, (IPA_TCL_DATA_RING_IDX +
+				      HAL_WBM_SW0_BM_ID));
 
 		soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[tx_buffer_count]
-			= buffer_vaddr_unaligned;
-		soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned[tx_buffer_count]
-			= buffer_paddr_unaligned;
+			= (void *)nbuf;
 	}
 
 	hal_srng_access_end(soc->hal_soc, wbm_srng);
@@ -223,8 +187,6 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 			  __func__);
 		qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned);
 		soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned = NULL;
-		qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned);
-		soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned = NULL;
 		retval = -ENOMEM;
 	}
 

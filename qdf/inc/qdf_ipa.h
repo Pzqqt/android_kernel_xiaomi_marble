@@ -34,6 +34,7 @@
  * @QDF_SWITCH_TO_MCC: WLAN interfaces in mcc mode
  * @QDF_WDI_ENABLE: WDI enable complete
  * @QDF_WDI_DISABLE: WDI teardown
+ * @QDF_FWR_SSR_BEFORE_SHUTDOWN: WLAN FW recovery
  * @QDF_IPA_WLAN_EVENT_MAX: Max value for the enum
  */
 typedef enum {
@@ -48,6 +49,7 @@ typedef enum {
 	QDF_SWITCH_TO_MCC,
 	QDF_WDI_ENABLE,
 	QDF_WDI_DISABLE,
+	QDF_FWR_SSR_BEFORE_SHUTDOWN,
 	QDF_IPA_WLAN_EVENT_MAX
 } qdf_ipa_wlan_event;
 

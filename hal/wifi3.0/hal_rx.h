@@ -196,26 +196,6 @@ enum hal_rx_ret_buf_manager {
 		BUFFER_ADDR_INFO_1_SW_BUFFER_COOKIE_MASK)
 
 /*
- * macro to set the LSW of the nbuf data physical address
- * to the WBM ring entry
- */
-#define HAL_WBM_PADDR_LO_SET(buff_addr_info, paddr_lo) \
-		((*(((unsigned int *) buff_addr_info) + \
-		(BUFFER_ADDR_INFO_0_BUFFER_ADDR_31_0_OFFSET >> 2))) = \
-		(paddr_lo << BUFFER_ADDR_INFO_0_BUFFER_ADDR_31_0_LSB) & \
-		BUFFER_ADDR_INFO_0_BUFFER_ADDR_31_0_MASK)
-
-/*
- * macro to set the LSB of MSW of the nbuf data physical address
- * to the WBM ring entry
- */
-#define HAL_WBM_PADDR_HI_SET(buff_addr_info, paddr_hi) \
-		((*(((unsigned int *) buff_addr_info) + \
-		(BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_OFFSET >> 2))) = \
-		(paddr_hi << BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_LSB) & \
-		BUFFER_ADDR_INFO_1_BUFFER_ADDR_39_32_MASK)
-
-/*
  * macro to set the manager into the rxdma ring entry
  */
 #define HAL_RXDMA_MANAGER_SET(buff_addr_info, manager) \
