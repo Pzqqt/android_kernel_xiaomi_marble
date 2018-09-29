@@ -368,6 +368,33 @@ static struct afe_clk_set tdm_clk_set = {
 	0,
 };
 
+static int msm_dai_q6_get_tdm_clk_ref(u16 id)
+{
+	switch (id) {
+	case IDX_GROUP_PRIMARY_TDM_RX:
+	case IDX_GROUP_PRIMARY_TDM_TX:
+		return atomic_read(&tdm_group_ref[IDX_GROUP_PRIMARY_TDM_RX]) +
+			atomic_read(&tdm_group_ref[IDX_GROUP_PRIMARY_TDM_TX]);
+	case IDX_GROUP_SECONDARY_TDM_RX:
+	case IDX_GROUP_SECONDARY_TDM_TX:
+		return atomic_read(&tdm_group_ref[IDX_GROUP_SECONDARY_TDM_RX]) +
+			atomic_read(&tdm_group_ref[IDX_GROUP_SECONDARY_TDM_TX]);
+	case IDX_GROUP_TERTIARY_TDM_RX:
+	case IDX_GROUP_TERTIARY_TDM_TX:
+		return atomic_read(&tdm_group_ref[IDX_GROUP_TERTIARY_TDM_RX]) +
+			atomic_read(&tdm_group_ref[IDX_GROUP_TERTIARY_TDM_TX]);
+	case IDX_GROUP_QUATERNARY_TDM_RX:
+	case IDX_GROUP_QUATERNARY_TDM_TX:
+		return atomic_read(&tdm_group_ref[IDX_GROUP_QUATERNARY_TDM_RX]) +
+			atomic_read(&tdm_group_ref[IDX_GROUP_QUATERNARY_TDM_TX]);
+	case IDX_GROUP_QUINARY_TDM_RX:
+	case IDX_GROUP_QUINARY_TDM_TX:
+		return atomic_read(&tdm_group_ref[IDX_GROUP_QUINARY_TDM_RX]) +
+			atomic_read(&tdm_group_ref[IDX_GROUP_QUINARY_TDM_TX]);
+	default: return -EINVAL;
+	}
+}
+
 int msm_dai_q6_get_group_idx(u16 id)
 {
 	switch (id) {
@@ -7344,6 +7371,9 @@ static int msm_dai_q6_dai_tdm_remove(struct snd_soc_dai *dai)
 				dev_err(dai->dev, "fail to disable AFE group 0x%x\n",
 					group_id);
 			}
+		}
+
+		if (msm_dai_q6_get_tdm_clk_ref(group_idx) == 0) {
 			rc = msm_dai_q6_tdm_set_clk(tdm_dai_data,
 				dai->id, false);
 			if (rc < 0) {
@@ -7862,17 +7892,11 @@ static int msm_dai_q6_tdm_prepare(struct snd_pcm_substream *substream,
 			if (rc)
 				dev_err(dai->dev, "%s: afe send island mode failed %d\n",
 					__func__, rc);
-
 		}
 
-		/* PORT START should be set if prepare called
-		 * in active state.
-		 */
-		if (atomic_read(group_ref) == 0) {
-			/* TX and RX share the same clk.
-			 * AFE clk is enabled per group to simplify the logic.
-			 * DSP will monitor the clk count.
-			 */
+		if (msm_dai_q6_get_tdm_clk_ref(group_idx) == 0) {
+			/* TX and RX share the same clk. So enable the clk
+			 * per TDM interface. */
 			rc = msm_dai_q6_tdm_set_clk(dai_data,
 				dai->id, true);
 			if (rc < 0) {
@@ -7880,7 +7904,12 @@ static int msm_dai_q6_tdm_prepare(struct snd_pcm_substream *substream,
 					__func__, dai->id);
 				goto rtn;
 			}
+		}
 
+		/* PORT START should be set if prepare called
+		 * in active state.
+		 */
+		if (atomic_read(group_ref) == 0) {
 			/*
 			 * if only one port, don't do group enable as there
 			 * is no group need for only one port
@@ -7903,6 +7932,8 @@ static int msm_dai_q6_tdm_prepare(struct snd_pcm_substream *substream,
 			if (atomic_read(group_ref) == 0) {
 				afe_port_group_enable(group_id,
 					NULL, false);
+			}
+			if (msm_dai_q6_get_tdm_clk_ref(group_idx) == 0) {
 				msm_dai_q6_tdm_set_clk(dai_data,
 					dai->id, false);
 			}
@@ -7962,6 +7993,9 @@ static void msm_dai_q6_tdm_shutdown(struct snd_pcm_substream *substream,
 				dev_err(dai->dev, "%s: fail to disable AFE group 0x%x\n",
 					__func__, group_id);
 			}
+		}
+
+		if (msm_dai_q6_get_tdm_clk_ref(group_idx) == 0) {
 			rc = msm_dai_q6_tdm_set_clk(dai_data,
 				dai->id, false);
 			if (rc < 0) {
