@@ -4778,11 +4778,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_DHCP_SERVER_IP_DEFAULT  ""
 #endif /* DHCP_SERVER_OFFLOAD */
 
-#define CFG_ENABLE_STA_CONNECTION_IN_5GHZ         "gEnableStaConnectionIn5Ghz"
-#define CFG_ENABLE_STA_CONNECTION_IN_5GHZ_MIN     (0)
-#define CFG_ENABLE_STA_CONNECTION_IN_5GHZ_MAX     (1)
-#define CFG_ENABLE_STA_CONNECTION_IN_5GHZ_DEFAULT (1)
-
 #define CFG_ENABLE_MAC_ADDR_SPOOFING                "gEnableMacAddrSpoof"
 #define CFG_ENABLE_MAC_ADDR_SPOOFING_MIN            (0)
 #define CFG_ENABLE_MAC_ADDR_SPOOFING_MAX            (1)
@@ -7526,7 +7521,6 @@ struct hdd_config {
 	uint8_t dhcpServerIP[IPADDR_STRING_LENGTH];
 #endif /* DHCP_SERVER_OFFLOAD */
 	bool enable_mac_spoofing;
-	uint8_t is_sta_connection_in_5gz_enabled;
 	uint32_t sta_miracast_mcc_rest_time_val;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	bool sap_channel_avoidance;

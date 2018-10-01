@@ -2018,13 +2018,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_MAC_ADDR_SPOOFING_MIN,
 		     CFG_ENABLE_MAC_ADDR_SPOOFING_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_STA_CONNECTION_IN_5GHZ,  WLAN_PARAM_Integer,
-		     struct hdd_config, is_sta_connection_in_5gz_enabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_ENABLE_STA_CONNECTION_IN_5GHZ_DEFAULT,
-		     CFG_ENABLE_STA_CONNECTION_IN_5GHZ_MIN,
-		     CFG_ENABLE_STA_CONNECTION_IN_5GHZ_MAX),
-
 	REG_VARIABLE(CFG_STA_MIRACAST_MCC_REST_TIME_VAL, WLAN_PARAM_Integer,
 		     struct hdd_config, sta_miracast_mcc_rest_time_val,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -4279,8 +4272,7 @@ QDF_STATUS hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
 						tSmeConfigParams *sme_cfg)
 {
 	uint8_t mcc_to_scc_switch = 0;
-	uint8_t conc_rule1 = 0;
-	uint8_t conc_rule2 = 0;
+	uint8_t conc_rule1 = 0, conc_rule2 = 0, sta_cxn_5g = 0;
 
 	if (QDF_STATUS_SUCCESS !=
 	    ucfg_policy_mgr_get_mcc_scc_switch(hdd_ctx->psoc,
@@ -4305,6 +4297,14 @@ QDF_STATUS hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 	sme_cfg->csrConfig.conc_custom_rule2 = conc_rule2;
+
+	if (QDF_STATUS_SUCCESS !=
+	    ucfg_policy_mgr_get_sta_cxn_5g_band(hdd_ctx->psoc,
+						&sta_cxn_5g)) {
+		hdd_err("can't get conc rule2");
+		return QDF_STATUS_E_FAILURE;
+	}
+	sme_cfg->csrConfig.is_sta_connection_in_5gz_enabled = sta_cxn_5g;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4516,9 +4516,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	/* Update maximum interfaces information */
 	smeConfig->csrConfig.max_intf_count = hdd_ctx->max_intf_count;
-
-	smeConfig->csrConfig.is_sta_connection_in_5gz_enabled =
-		hdd_ctx->config->is_sta_connection_in_5gz_enabled;
 
 	smeConfig->csrConfig.f_sta_miracast_mcc_rest_time_val =
 		hdd_ctx->config->sta_miracast_mcc_rest_time_val;
