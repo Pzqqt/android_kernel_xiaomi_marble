@@ -65,7 +65,6 @@ int ol_txrx_peer_get_ref(struct ol_txrx_peer_t *peer,
 			  enum peer_debug_id_type dbg_id)
 {
 	int refs_dbg_id;
-	bool ref_silent = false;
 
 	if (!peer) {
 		ol_txrx_err("peer is null for ID %d", dbg_id);
@@ -77,17 +76,9 @@ int ol_txrx_peer_get_ref(struct ol_txrx_peer_t *peer,
 		return -EINVAL;
 	}
 
-	if (dbg_id == PEER_DEBUG_ID_OL_RX_THREAD)
-		ref_silent = true;
-
 	qdf_atomic_inc(&peer->ref_cnt);
 	qdf_atomic_inc(&peer->access_list[dbg_id]);
 	refs_dbg_id = qdf_atomic_read(&peer->access_list[dbg_id]);
-
-	if (!ref_silent)
-		ol_txrx_info_high("[%d][%d] peer %pK ref_cnt -> %d",
-				dbg_id, refs_dbg_id,
-				peer, qdf_atomic_read(&peer->ref_cnt));
 
 	return refs_dbg_id;
 }
