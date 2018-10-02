@@ -382,7 +382,7 @@ static QDF_STATUS vdevmgr_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 static QDF_STATUS vdevmgr_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
 					       uint16_t data_len, void *data)
 {
-	return wma_ap_mlme_vdev_notify_down_complete(vdev_mlme, data_len, data);
+	return wma_mlme_vdev_notify_down_complete(vdev_mlme, data_len, data);
 }
 
 /**
@@ -505,6 +505,40 @@ bool ap_mlme_is_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev)
 	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
 
 	return mlme_priv->hidden_ssid_restart_in_progress;
+}
+
+QDF_STATUS mlme_set_connection_fail(struct wlan_objmgr_vdev *vdev, bool val)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+
+	mlme_priv->connection_fail = val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool mlme_is_connection_fail(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return false;
+	}
+
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+
+	return mlme_priv->connection_fail;
 }
 
 QDF_STATUS

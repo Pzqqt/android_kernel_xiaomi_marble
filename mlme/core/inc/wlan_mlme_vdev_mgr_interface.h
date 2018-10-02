@@ -32,11 +32,13 @@
  * @hidden_ssid_restart_in_progress: flag to indicate hidden ssid restart is
  *                                   in progress
  * @vdev_start_failed: flag to indicate that vdev start failed.
+ * @connection_fail: flag to indicate connection failed
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
 	bool hidden_ssid_restart_in_progress;
 	bool vdev_start_failed;
+	bool connection_fail;
 };
 
 /**
@@ -106,6 +108,24 @@ bool ap_mlme_is_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev);
  */
 QDF_STATUS
 mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val);
+
+/**
+ * mlme_is_connection_fail() - get connection fail flag
+ * @vdev: vdev pointer
+ *
+ * Return: value of vdev connection failure flag
+ */
+bool mlme_is_connection_fail(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_set_connection_fail() - set connection failure flag
+ * @vdev: vdev pointer
+ * @val: value to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+mlme_set_connection_fail(struct wlan_objmgr_vdev *vdev, bool val);
 
 /**
  * mlme_get_vdev_start_failed() - get mlme priv vdev restart fail flag
