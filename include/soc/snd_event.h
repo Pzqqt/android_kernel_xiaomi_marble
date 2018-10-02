@@ -38,39 +38,39 @@ inline bool is_snd_event_fwk_enabled(void)
 	return 1;
 }
 #else
-int snd_event_client_register(struct device *dev,
+static inline int snd_event_client_register(struct device *dev,
 			      const struct snd_event_ops *snd_ev_ops,
 			      void *data)
 {
 	return 0;
 }
-int snd_event_client_deregister(struct device *dev)
+static inline int snd_event_client_deregister(struct device *dev)
 {
 	return 0;
 }
-int snd_event_master_register(struct device *dev,
+static inline int snd_event_master_register(struct device *dev,
 			      const struct snd_event_ops *ops,
 			      struct snd_event_clients *clients,
 			      void *data)
 {
 	return 0;
 }
-int snd_event_master_deregister(struct device *dev)
+static inline int snd_event_master_deregister(struct device *dev)
 {
 	return 0;
 }
-int snd_event_notify(struct device *dev, unsigned int state)
+static inline int snd_event_notify(struct device *dev, unsigned int state)
 {
 	return 0;
 }
 
-void snd_event_mstr_add_client(struct snd_event_clients **snd_clients,
+static inline void snd_event_mstr_add_client(struct snd_event_clients **snd_clients,
 			    int (*compare)(struct device *, void *),
 			    void *data)
 {
 	return;
 }
-inline bool is_snd_event_fwk_enabled(void)
+static inline bool is_snd_event_fwk_enabled(void)
 {
 	return 0;
 }
