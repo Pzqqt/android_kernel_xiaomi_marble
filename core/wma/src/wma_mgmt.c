@@ -4144,7 +4144,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 
 	status = mgmt_txrx_rx_handler(psoc, wbuf, mgmt_rx_params);
 	if (status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: Failed to process mgmt rx frame", __func__);
+		wma_err_rl("Failed to process mgmt rx frame");
 		qdf_mem_free(mgmt_rx_params);
 		return -EINVAL;
 	}
