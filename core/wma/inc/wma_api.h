@@ -504,7 +504,7 @@ QDF_STATUS wma_ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 				      uint16_t data_len, void *data);
 
 /**
- * wma_ap_mlme_vdev_notify_down_complete - VDEV init state transition
+ * wma_mlme_vdev_notify_down_complete - VDEV init state transition
  * notification
  * @vdev_mlme_obj:  VDEV MLME comp object
  * @data_len: data size
@@ -516,8 +516,8 @@ QDF_STATUS wma_ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
  *         FAILURE, if it fails due to any
  */
 QDF_STATUS
-wma_ap_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
-				      uint16_t data_len, void *data);
+wma_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
+				   uint16_t data_len, void *data);
 
 /**
  * wma_ap_mlme_vdev_stop_start_send - handle vdev stop during start req

@@ -2026,6 +2026,13 @@ wma_check_and_find_mcc_ap(tp_wma_handle wma, uint8_t vdev_id)
 {}
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
+void wma_send_set_link_response(tp_wma_handle wma, struct wma_target_req *req)
+{
+	tpLinkStateParams params = (tpLinkStateParams) req->user_data;
+
+	wma_send_msg(wma, WMA_SET_LINK_STATE_RSP, (void *)params, 0);
+}
+
 void wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req)
 {
 	struct wma_txrx_node *iface;
@@ -2248,12 +2255,18 @@ __wma_vdev_stop_resp_handler(wmi_vdev_stopped_event_fixed_param *resp_event)
 				}
 			}
 		}
+#ifdef CONFIG_VDEV_SM
+		wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+					      WLAN_VDEV_SM_EV_MLME_DOWN_REQ,
+					      sizeof(*req_msg), req_msg);
+#else
 		if (wma_send_vdev_down_to_fw(wma, req_msg->vdev_id) !=
 		    QDF_STATUS_SUCCESS) {
 			WMA_LOGE("Failed to send vdev down cmd: vdev %d",
 				req_msg->vdev_id);
 		}
-		wma_send_msg(wma, WMA_SET_LINK_STATE_RSP, (void *)params, 0);
+		wma_send_set_link_response(wma, req_msg);
+#endif
 	}
 
 free_req_msg:
@@ -3207,14 +3220,21 @@ int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 				data->generate_rsp);
 		qdf_mem_free(data);
 	} else if (req_msg->type == WMA_SET_LINK_PEER_RSP) {
-		tpLinkStateParams params =
-			(tpLinkStateParams) req_msg->user_data;
+#ifdef CONFIG_VDEV_SM
+		struct wma_txrx_node *iface =
+					&wma->interfaces[req_msg->vdev_id];
+
+		wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+					      WLAN_VDEV_SM_EV_MLME_DOWN_REQ,
+					      sizeof(*req_msg), req_msg);
+#else
 		if (wma_send_vdev_down_to_fw(wma, req_msg->vdev_id) !=
 		    QDF_STATUS_SUCCESS) {
 			WMA_LOGE("Failed to send vdev down cmd: vdev %d",
 					req_msg->vdev_id);
 		}
-		wma_send_msg(wma, WMA_SET_LINK_STATE_RSP, (void *)params, 0);
+		wma_send_set_link_response(wma, req_msg);
+#endif
 	} else if (req_msg->type == WMA_DELETE_PEER_RSP) {
 #ifdef CONFIG_VDEV_SM
 		struct wma_txrx_node *iface =

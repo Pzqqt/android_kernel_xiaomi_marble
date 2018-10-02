@@ -4880,13 +4880,18 @@ QDF_STATUS wma_ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 }
 
 QDF_STATUS
-wma_ap_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
-				      uint16_t data_len, void *data)
+wma_mlme_vdev_notify_down_complete(struct vdev_mlme_obj *vdev_mlme,
+				   uint16_t data_len, void *data)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct wma_target_req *req = (struct wma_target_req *)data;
 
 	if (!mlme_get_vdev_start_failed(vdev_mlme->vdev))
-		wma_send_del_bss_response(wma, (struct wma_target_req *)data);
+		if (req->msg_type == WMA_SET_LINK_STATE ||
+			req->type == WMA_SET_LINK_PEER_RSP)
+			wma_send_set_link_response(wma, req);
+		else
+			wma_send_del_bss_response(wma, req);
 	else
 		mlme_set_vdev_start_failed(vdev_mlme->vdev, false);
 

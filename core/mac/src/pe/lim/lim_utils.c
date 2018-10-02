@@ -8435,7 +8435,24 @@ QDF_STATUS lim_sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS lim_sta_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data)
 {
-	return lim_sta_send_del_bss((tpPESession)data);
+	QDF_STATUS status;
+	bool connection_fail;
+
+	if (!data) {
+		pe_err("event_data is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	connection_fail = mlme_is_connection_fail(vdev_mlme->vdev);
+	pe_info("Send vdev stop, connection_fail %d", connection_fail);
+	if (connection_fail) {
+		status = lim_sta_send_down_link((join_params *)data);
+		mlme_set_connection_fail(vdev_mlme->vdev, false);
+	} else {
+		status = lim_sta_send_del_bss((tpPESession)data);
+	}
+
+	return status;
 }
 
 void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session)

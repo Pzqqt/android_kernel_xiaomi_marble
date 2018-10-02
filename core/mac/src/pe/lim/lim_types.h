@@ -775,6 +775,7 @@ void lim_covert_channel_scan_type(tpAniSirGlobal pMac, uint8_t channelNum,
 void lim_set_dfs_channel_list(tpAniSirGlobal pMac, uint8_t channelNum,
 			      tSirDFSChannelList *dfsChannelList);
 void limContinueChannelLearn(tpAniSirGlobal);
+QDF_STATUS lim_sta_send_down_link(join_params *param);
 
 #ifdef WLAN_FEATURE_11W
 /* 11w send SA query request action frame */

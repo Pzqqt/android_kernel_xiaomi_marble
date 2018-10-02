@@ -550,6 +550,15 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 void wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req);
 
 /**
+ * wma_send_set_link_response() - send set link response
+ * @wma: wma handle
+ * @req: target request
+ *
+ * Return: none
+ */
+void wma_send_set_link_response(tp_wma_handle wma, struct wma_target_req *req);
+
+/**
  * __wma_vdev_stop_resp_handler() - vdev stop response handler
  * @handle: wma handle
  * @cmd_param_info: event buffer

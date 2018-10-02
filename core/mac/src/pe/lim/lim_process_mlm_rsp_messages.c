@@ -1277,6 +1277,96 @@ static void lim_join_result_callback(tpAniSirGlobal mac, void *param,
 	qdf_mem_free(link_state_params);
 }
 
+#ifdef CONFIG_VDEV_SM
+QDF_STATUS lim_sta_send_down_link(join_params *param)
+{
+	tpPESession session;
+	tpAniSirGlobal mac_ctx;
+	tpDphHashNode sta_ds = NULL;
+
+	if (!param) {
+		pe_err("param is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac_ctx) {
+		pe_err("Mac context is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	session = pe_find_session_by_session_id(mac_ctx, param->pe_session_id);
+	if (!session) {
+		pe_err("session is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	sta_ds = dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
+				    &session->dph.dphHashTable);
+	if (sta_ds) {
+		sta_ds->mlmStaContext.disassocReason =
+			eSIR_MAC_UNSPEC_FAILURE_REASON;
+		sta_ds->mlmStaContext.cleanupTrigger =
+			eLIM_JOIN_FAILURE;
+		sta_ds->mlmStaContext.resultCode = param->result_code;
+		sta_ds->mlmStaContext.protStatusCode = param->prot_status_code;
+		/*
+		 * FIX_ME: at the end of lim_cleanup_rx_path,
+		 * make sure PE is sending eWNI_SME_JOIN_RSP
+		 * to SME
+		 */
+		lim_cleanup_rx_path(mac_ctx, sta_ds, session);
+		qdf_mem_free(session->pLimJoinReq);
+		session->pLimJoinReq = NULL;
+		/* Cleanup if add bss failed */
+		if (session->add_bss_failed) {
+			dph_delete_hash_entry(mac_ctx,
+				 sta_ds->staAddr, sta_ds->assocId,
+				 &session->dph.dphHashTable);
+			goto error;
+		}
+		return QDF_STATUS_SUCCESS;
+	}
+	qdf_mem_free(session->pLimJoinReq);
+	session->pLimJoinReq = NULL;
+
+error:
+	/*
+	 * Delete the session if JOIN failure occurred.
+	 * if the peer is not created, then there is no
+	 * need to send down the set link state which will
+	 * try to delete the peer. Instead a join response
+	 * failure should be sent to the upper layers.
+	 */
+	if (param->result_code != eSIR_SME_PEER_CREATE_FAILED) {
+		join_params *link_state_arg;
+
+		link_state_arg = qdf_mem_malloc(sizeof(*link_state_arg));
+		if (link_state_arg) {
+			link_state_arg->result_code = param->result_code;
+			link_state_arg->prot_status_code =
+							param->prot_status_code;
+			link_state_arg->pe_session_id = session->peSessionId;
+		}
+		if (lim_set_link_state(mac_ctx, eSIR_LINK_DOWN_STATE,
+				       session->bssId,
+				       session->selfMacAddr,
+				       lim_join_result_callback,
+				       link_state_arg) != QDF_STATUS_SUCCESS) {
+			qdf_mem_free(link_state_arg);
+			pe_err("Failed to set the LinkState");
+		}
+		return QDF_STATUS_SUCCESS;
+	}
+
+
+	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP,
+				      param->result_code,
+				      param->prot_status_code,
+				      session, session->smeSessionId,
+				      session->transactionId);
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * lim_handle_sme_join_result() - Handles sme join result
  * @mac_ctx:  Pointer to Global MAC structure
@@ -1291,6 +1381,35 @@ static void lim_join_result_callback(tpAniSirGlobal mac, void *param,
  *
  * Return: None
  */
+void lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
+	tSirResultCodes result_code, uint16_t prot_status_code,
+	tpPESession session)
+{
+	join_params param;
+	QDF_STATUS status;
+
+	if (!session) {
+		pe_err("session is NULL");
+		return;
+	}
+	if (result_code == eSIR_SME_SUCCESS)
+		return lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP,
+						     result_code,
+						     prot_status_code, session,
+						     session->smeSessionId,
+						     session->transactionId);
+
+	param.result_code = result_code;
+	param.prot_status_code = prot_status_code;
+	param.pe_session_id = session->peSessionId;
+
+	mlme_set_connection_fail(session->vdev, true);
+	status = wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					       WLAN_VDEV_SM_EV_CONNECTION_FAIL,
+					       sizeof(param), &param);
+	return;
+}
+#else
 void lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
 	tSirResultCodes result_code, uint16_t prot_status_code,
 	tpPESession session_entry)
@@ -1356,10 +1475,11 @@ error:
 			param->prot_status_code = prot_status_code;
 			param->pe_session_id = session_entry->peSessionId;
 		}
-		if (lim_set_link_state
-			(mac_ctx, eSIR_LINK_DOWN_STATE, session_entry->bssId,
-			 session_entry->selfMacAddr, lim_join_result_callback,
-			 param) != QDF_STATUS_SUCCESS) {
+		if (lim_set_link_state(mac_ctx, eSIR_LINK_DOWN_STATE,
+				       session_entry->bssId,
+				       session_entry->selfMacAddr,
+				       lim_join_result_callback,
+				       param) != QDF_STATUS_SUCCESS) {
 			qdf_mem_free(param);
 			pe_err("Failed to set the LinkState");
 		}
@@ -1369,6 +1489,8 @@ error:
 	lim_send_sme_join_reassoc_rsp(mac_ctx, eWNI_SME_JOIN_RSP, result_code,
 		prot_status_code, session_entry, sme_session_id, sme_trans_id);
 }
+#endif
+
 
 /**
  * lim_process_mlm_add_sta_rsp()
