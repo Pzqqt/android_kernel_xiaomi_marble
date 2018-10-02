@@ -335,7 +335,7 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 		return ret_val;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hdd_err("Command not allowed in FTM mode");
+		hdd_err_rl("Command not allowed in FTM mode");
 		return -EPERM;
 	}
 
