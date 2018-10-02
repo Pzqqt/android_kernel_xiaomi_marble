@@ -935,8 +935,8 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 
 	frm_type = mgmt_txrx_get_frm_type(mgmt_subtype, mpdu_data_ptr);
 	if (frm_type == MGMT_FRM_UNSPECIFIED) {
-		mgmt_txrx_err("Unspecified mgmt frame type fc: %x %x",
-			      wh->i_fc[0], wh->i_fc[1]);
+		mgmt_txrx_err_rl("Unspecified mgmt frame type fc: %x %x",
+				 wh->i_fc[0], wh->i_fc[1]);
 		qdf_nbuf_free(buf);
 		status = QDF_STATUS_E_FAILURE;
 		goto dec_peer_ref_cnt;

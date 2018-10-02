@@ -48,6 +48,8 @@
 	QDF_TRACE_INFO(QDF_MODULE_ID_MGMT_TXRX, params)
 #define mgmt_txrx_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_MGMT_TXRX, params)
+#define mgmt_txrx_err_rl(params...) \
+	QDF_TRACE_ERROR_RL(QDF_MODULE_ID_MGMT_TXRX, params)
 
 #define mgmttxrx_nofl_alert(params...) \
 	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_MGMT_TXRX, params)
