@@ -2606,6 +2606,11 @@ bool cds_is_fw_down(void)
 	qdf_device_t qdf_ctx;
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	if (!qdf_ctx) {
+		cds_err("cds context is invalid");
+		return false;
+	}
+
 	return pld_is_fw_down(qdf_ctx->dev);
 }
 
