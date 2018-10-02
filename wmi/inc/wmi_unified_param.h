@@ -6067,6 +6067,8 @@ typedef struct {
 	uint32_t twt_ap_pdev_count;
 	uint32_t twt_ap_sta_count;
 	uint32_t max_bssid_indicator;
+	uint32_t eapol_minrate_set:1,
+		 eapol_minrate_ac_set:2;
 } target_resource_config;
 
 /**

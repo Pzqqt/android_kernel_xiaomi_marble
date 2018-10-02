@@ -263,6 +263,9 @@ struct target_ops {
 	void (*smart_log_enable)
 		(struct wlan_objmgr_psoc *psoc,
 		 struct target_psoc_info *tgt_info, uint8_t *event);
+	void (*eapol_minrate_enable)
+		(struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info, uint8_t *event);
 };
 
 
@@ -1594,6 +1597,24 @@ static inline void target_if_mesh_support_enable(struct wlan_objmgr_psoc *psoc,
 	if ((tgt_hdl->tif_ops) &&
 		(tgt_hdl->tif_ops->mesh_support_enable))
 		tgt_hdl->tif_ops->mesh_support_enable(psoc, tgt_hdl, evt_buf);
+}
+
+/**
+ * target_if_eapol_minrate_enable - Enable EAPOL Minrate in Tunnel Mode
+ * @psoc: psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ * @evt_buf: Event buffer received from FW
+ *
+ * API to enable eapol minrate
+ *
+ * Return: none
+ */
+static inline void target_if_eapol_minrate_enable(struct wlan_objmgr_psoc *psoc,
+			struct target_psoc_info *tgt_hdl, uint8_t *evt_buf)
+{
+	if ((tgt_hdl->tif_ops) &&
+	    (tgt_hdl->tif_ops->eapol_minrate_enable))
+		tgt_hdl->tif_ops->eapol_minrate_enable(psoc, tgt_hdl, evt_buf);
 }
 
 /**

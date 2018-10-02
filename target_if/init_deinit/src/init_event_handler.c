@@ -117,6 +117,8 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 
 	target_if_mesh_support_enable(psoc, tgt_hdl, event);
 
+	target_if_eapol_minrate_enable(psoc, tgt_hdl, event);
+
 	target_if_smart_antenna_enable(psoc, tgt_hdl, event);
 
 	target_if_peer_cfg_enable(psoc, tgt_hdl, event);

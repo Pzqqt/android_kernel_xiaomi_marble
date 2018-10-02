@@ -11118,6 +11118,17 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 			resource_cfg->flag1, 1);
 	if (tgt_res_cfg->cce_disable)
 		WMI_RSRC_CFG_FLAG_TCL_CCE_DISABLE_SET(resource_cfg->flag1, 1);
+	if (tgt_res_cfg->eapol_minrate_set) {
+		WMI_RSRC_CFG_FLAG_EAPOL_REKEY_MINRATE_SUPPORT_ENABLE_SET(
+			resource_cfg->flag1, 1);
+		if (tgt_res_cfg->eapol_minrate_ac_set != 3) {
+			WMI_RSRC_CFG_FLAG_EAPOL_AC_OVERRIDE_VALID_SET(
+				resource_cfg->flag1, 1);
+			WMI_RSRC_CFG_FLAG_EAPOL_AC_OVERRIDE_SET(
+				resource_cfg->flag1,
+				tgt_res_cfg->eapol_minrate_ac_set);
+		}
+	}
 
 	wmi_copy_twt_resource_config(resource_cfg, tgt_res_cfg);
 	resource_cfg->peer_map_unmap_v2_support =
