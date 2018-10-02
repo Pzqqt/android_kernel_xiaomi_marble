@@ -31,7 +31,9 @@
 #include <osif_rawmode_sim.h>
 #endif /*CONFIG_WIN*/
 #include <reg_services_public_struct.h>
+#ifdef DIRECT_BUF_RX_ENABLE
 #include <target_if_direct_buf_rx_api.h>
+#endif
 extern int spectral_debug_level;
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE

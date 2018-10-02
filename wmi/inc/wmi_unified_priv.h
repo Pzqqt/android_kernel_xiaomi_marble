@@ -52,6 +52,18 @@
 #include "wmi_unified_twt_param.h"
 #endif
 
+#ifdef WMI_SMART_ANT_SUPPORT
+#include "wmi_unified_smart_ant_param.h"
+#endif
+
+#ifdef WMI_DBR_SUPPORT
+#include "wmi_unified_dbr_param.h"
+#endif
+
+#ifdef WMI_ATF_SUPPORT
+#include "wmi_unified_atf_param.h"
+#endif
+
 #define WMI_UNIFIED_MAX_EVENT 0x100
 
 #ifdef WMI_EXT_DBG
@@ -728,9 +740,6 @@ QDF_STATUS (*send_oem_dma_cfg_cmd)(wmi_unified_t wmi_handle,
 				   wmi_oem_dma_ring_cfg_req_fixed_param *cfg);
 #endif
 
-QDF_STATUS (*send_dbr_cfg_cmd)(wmi_unified_t wmi_handle,
-				   struct direct_buf_rx_cfg_req *cfg);
-
 QDF_STATUS (*send_start_oem_data_cmd)(wmi_unified_t wmi_handle,
 			  uint32_t data_len,
 			  uint8_t *data);
@@ -896,8 +905,10 @@ QDF_STATUS (*extract_apf_read_memory_resp_event)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_pdev_get_tpc_config_cmd)(wmi_unified_t wmi_handle,
 		uint32_t param);
 
+#ifdef WMI_ATF_SUPPORT
 QDF_STATUS (*send_set_bwf_cmd)(wmi_unified_t wmi_handle,
 		struct set_bwf_params *param);
+#endif
 
 QDF_STATUS (*send_pdev_fips_cmd)(wmi_unified_t wmi_handle,
 		struct fips_params *param);
@@ -923,9 +934,6 @@ QDF_STATUS (*send_wmm_update_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_process_update_edca_param_cmd)(wmi_unified_t wmi_handle,
 		uint8_t vdev_id, bool mu_edca_param,
 		struct wmi_host_wme_vparams wmm_vparams[WMI_MAX_NUM_AC]);
-
-QDF_STATUS (*send_set_ant_switch_tbl_cmd)(wmi_unified_t wmi_handle,
-		struct ant_switch_tbl_params *param);
 
 QDF_STATUS (*send_set_ratepwr_table_cmd)(wmi_unified_t wmi_handle,
 		struct ratepwr_table_params *param);
@@ -979,6 +987,10 @@ QDF_STATUS (*send_phyerr_enable_cmd)(wmi_unified_t wmi_handle);
 
 QDF_STATUS (*send_phyerr_disable_cmd)(wmi_unified_t wmi_handle);
 
+#ifdef WMI_SMART_ANT_SUPPORT
+QDF_STATUS (*send_set_ant_switch_tbl_cmd)(wmi_unified_t wmi_handle,
+		struct ant_switch_tbl_params *param);
+
 QDF_STATUS (*send_smart_ant_enable_cmd)(wmi_unified_t wmi_handle,
 		struct smart_ant_enable_params *param);
 
@@ -996,6 +1008,7 @@ QDF_STATUS (*send_smart_ant_set_training_info_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_smart_ant_set_node_config_cmd)(wmi_unified_t wmi_handle,
 		uint8_t macaddr[IEEE80211_ADDR_LEN],
 		struct smart_ant_node_config_params *param);
+#endif
 
 QDF_STATUS (*send_smart_ant_enable_tx_feedback_cmd)(wmi_unified_t wmi_handle,
 		struct smart_ant_enable_tx_feedback_params *param);
@@ -1530,6 +1543,10 @@ QDF_STATUS (*extract_sar_cap_service_ready_ext)(
 		uint8_t *evt_buf,
 		struct wlan_psoc_host_service_ext_param *ext_param);
 
+#ifdef WMI_DBR_SUPPORT
+QDF_STATUS (*send_dbr_cfg_cmd)(wmi_unified_t wmi_handle,
+				   struct direct_buf_rx_cfg_req *cfg);
+
 QDF_STATUS (*extract_dbr_buf_release_fixed)(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf,
@@ -1544,6 +1561,7 @@ QDF_STATUS (*extract_dbr_buf_metadata)(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf, uint8_t idx,
 			struct direct_buf_rx_metadata *param);
+#endif
 
 QDF_STATUS (*extract_pdev_utf_event)(wmi_unified_t wmi_hdl,
 				     uint8_t *evt_buf,
@@ -1922,6 +1940,38 @@ void wmi_non_tlv_attach(wmi_unified_t wmi_handle);
 void wmi_extscan_attach_tlv(struct wmi_unified *wmi_handle);
 #else
 static inline void wmi_extscan_attach_tlv(struct wmi_unified *wmi_handle)
+{
+}
+#endif
+
+#ifdef WMI_SMART_ANT_SUPPORT
+void wmi_smart_ant_attach_tlv(struct wmi_unified *wmi_handle);
+#else
+static inline void wmi_smart_ant_attach_tlv(struct wmi_unified *wmi_handle)
+{
+}
+#endif
+
+#ifdef WMI_DBR_SUPPORT
+void wmi_dbr_attach_tlv(struct wmi_unified *wmi_handle);
+#else
+static inline void wmi_dbr_attach_tlv(struct wmi_unified *wmi_handle)
+{
+}
+#endif
+
+#ifdef WMI_ATF_SUPPORT
+void wmi_atf_attach_tlv(struct wmi_unified *wmi_handle);
+#else
+static inline void wmi_atf_attach_tlv(struct wmi_unified *wmi_handle)
+{
+}
+#endif
+
+#ifdef WMI_AP_SUPPORT
+void wmi_ap_attach_tlv(struct wmi_unified *wmi_handle);
+#else
+static inline void wmi_ap_attach_tlv(struct wmi_unified *wmi_handle)
 {
 }
 #endif

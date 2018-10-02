@@ -17,7 +17,6 @@
  */
 
 #include "target_if.h"
-#include "wmi_unified_api.h"
 #include "wlan_lmac_if_def.h"
 #include "target_if_direct_buf_rx_main.h"
 #include <target_if_direct_buf_rx_api.h>

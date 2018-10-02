@@ -21,6 +21,7 @@
 
 #include "qdf_nbuf.h"
 #include "qdf_atomic.h"
+#include "wmi_unified_api.h"
 
 #define direct_buf_rx_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_DIRECT_BUF_RX, params)
