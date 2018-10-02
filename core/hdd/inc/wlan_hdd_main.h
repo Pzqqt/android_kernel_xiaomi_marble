@@ -2119,10 +2119,28 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
 				     const char *name, tSirMacAddr macAddr,
 				     unsigned char name_assign_type,
 				     bool rtnl_held);
-QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx,
-			     struct hdd_adapter *adapter,
-			     bool rtnl_held);
-QDF_STATUS hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held);
+
+/**
+ * hdd_close_adapter() - remove and free @adapter from the adapter list
+ * @hdd_ctx: The Hdd context containing the adapter list
+ * @adapter: the adapter to remove and free
+ * @rtnl_held: if the caller is already holding the RTNL lock
+ *
+ * Return: None
+ */
+void hdd_close_adapter(struct hdd_context *hdd_ctx,
+		       struct hdd_adapter *adapter,
+		       bool rtnl_held);
+
+/**
+ * hdd_close_all_adapters() - remove and free all adapters from the adapter list
+ * @hdd_ctx: The Hdd context containing the adapter list
+ * @rtnl_held: if the caller is already holding the RTNL lock
+ *
+ * Return: None
+ */
+void hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held);
+
 QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx);
 void hdd_deinit_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held);
 QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx);
