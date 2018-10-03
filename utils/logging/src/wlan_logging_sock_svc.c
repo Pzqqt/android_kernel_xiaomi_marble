@@ -50,12 +50,6 @@
 
 #define MAX_NUM_PKT_LOG 32
 
-#define ALLOWED_LOG_LEVELS_TO_CONSOLE(level) \
-	((QDF_TRACE_LEVEL_FATAL == (level)) || \
-	 (QDF_TRACE_LEVEL_ERROR == (level)) || \
-	 (QDF_TRACE_LEVEL_WARN == (level)) || \
-	 (QDF_TRACE_LEVEL_INFO == (level)))
-
 /**
  * struct tx_status - tx status
  * @tx_status_ok: successfully sent + acked
@@ -305,12 +299,33 @@ static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
 #endif /* QCA_WIFI_3_0_ADRASTEA */
 
 #ifdef CONFIG_MCL
-static inline void print_to_console(char *tbuf, char *to_be_sent)
+static inline void
+log_to_console(QDF_TRACE_LEVEL level, const char *timestamp, const char *msg)
 {
-	pr_info("%s %s\n", tbuf, to_be_sent);
+	switch (level) {
+	case QDF_TRACE_LEVEL_FATAL:
+		pr_alert("%s %s\n", timestamp, msg);
+		break;
+	case QDF_TRACE_LEVEL_ERROR:
+		pr_err("%s %s\n", timestamp, msg);
+		break;
+	case QDF_TRACE_LEVEL_WARN:
+		pr_warn("%s %s\n", timestamp, msg);
+		break;
+	case QDF_TRACE_LEVEL_INFO:
+		pr_info("%s %s\n", timestamp, msg);
+		break;
+	case QDF_TRACE_LEVEL_INFO_HIGH:
+	case QDF_TRACE_LEVEL_INFO_MED:
+	case QDF_TRACE_LEVEL_INFO_LOW:
+	case QDF_TRACE_LEVEL_DEBUG:
+	default:
+		/* these levels should not be logged to console */
+		break;
+	}
 }
 #else
-#define print_to_console(str1, str2)
+#define log_to_console(level, timestamp, msg)
 #endif
 
 int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
@@ -324,15 +339,15 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	unsigned long flags;
 	uint64_t ts;
 
-	/* if logging isn't up yet, just dump to dmesg */
-	if (!gwlan_logging.is_active) {
-		pr_info("%s\n", to_be_sent);
-		return 0;
-	}
-
 	/* Add the current time stamp */
 	ts = qdf_get_log_timestamp();
 	tlen = wlan_add_user_log_time_stamp(tbuf, sizeof(tbuf), ts);
+
+	/* if logging isn't up yet, just dump to dmesg */
+	if (!gwlan_logging.is_active) {
+		log_to_console(log_level, tbuf, to_be_sent);
+		return 0;
+	}
 
 	/* 1+1 indicate '\n'+'\0' */
 	total_log_len = length + tlen + 1 + 1;
@@ -386,10 +401,8 @@ int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 		wake_up_interruptible(&gwlan_logging.wait_queue);
 	}
 
-	if (gwlan_logging.log_to_console
-	    && ALLOWED_LOG_LEVELS_TO_CONSOLE(log_level)) {
-		print_to_console(tbuf, to_be_sent);
-	}
+	if (gwlan_logging.log_to_console)
+		log_to_console(log_level, tbuf, to_be_sent);
 
 	return 0;
 }
