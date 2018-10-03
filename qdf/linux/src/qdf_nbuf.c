@@ -375,8 +375,8 @@ realloc:
 	skb = pld_nbuf_pre_alloc(size);
 
 	if (!skb) {
-		qdf_nofl_err("NBUF alloc failed %zuB @ %s:%d",
-			     size, func, line);
+		qdf_rl_nofl_err("NBUF alloc failed %zuB @ %s:%d",
+				size, func, line);
 		return NULL;
 	}
 
