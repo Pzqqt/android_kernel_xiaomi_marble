@@ -180,7 +180,7 @@ cdp_peer_remove_for_vdev_no_lock(ol_txrx_soc_handle soc,
  */
 static inline void
 *cdp_peer_get_ref_by_addr(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-			  u8 *peer_addr, u8 *peer_id,
+			  uint8_t *peer_addr, uint8_t *peer_id,
 			  enum peer_debug_id_type debug_id)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {

@@ -162,8 +162,8 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 				    QDF_DMA_BIDIRECTIONAL);
 		buffer_paddr = qdf_nbuf_get_frag_paddr(nbuf, 0);
 
-		paddr_lo = ((u64)buffer_paddr & 0x00000000ffffffff);
-		paddr_hi = ((u64)buffer_paddr & 0x0000001f00000000) >> 32;
+		paddr_lo = ((uint64_t)buffer_paddr & 0x00000000ffffffff);
+		paddr_hi = ((uint64_t)buffer_paddr & 0x0000001f00000000) >> 32;
 		HAL_RXDMA_PADDR_LO_SET(ring_entry, paddr_lo);
 		HAL_RXDMA_PADDR_HI_SET(ring_entry, paddr_hi);
 		HAL_RXDMA_MANAGER_SET(ring_entry, (IPA_TCL_DATA_RING_IDX +

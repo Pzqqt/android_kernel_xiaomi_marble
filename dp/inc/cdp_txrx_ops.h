@@ -985,8 +985,8 @@ struct cdp_lflowctl_ops {
 #ifdef QCA_HL_NETDEV_FLOW_CONTROL
 	int (*register_tx_flow_control)(struct cdp_soc_t *soc,
 					tx_pause_callback flowcontrol);
-	int (*set_vdev_tx_desc_limit)(u8 vdev_id, u8 chan);
-	int (*set_vdev_os_queue_status)(u8 vdev_id,
+	int (*set_vdev_tx_desc_limit)(uint8_t vdev_id, uint8_t chan);
+	int (*set_vdev_os_queue_status)(uint8_t vdev_id,
 					enum netif_action_type action);
 #else
 	int (*register_tx_flow_control)(uint8_t vdev_id,
@@ -1116,7 +1116,7 @@ struct cdp_peer_ops {
 			enum ol_txrx_peer_state sta_state,
 			bool roam_synch_in_progress);
 	void * (*peer_get_ref_by_addr)(struct cdp_pdev *pdev,
-				       u8 *peer_addr, uint8_t *peer_id,
+				       uint8_t *peer_addr, uint8_t *peer_id,
 				       enum peer_debug_id_type debug_id);
 	void (*peer_release_ref)(void *peer, enum peer_debug_id_type debug_id);
 	void * (*find_peer_by_addr)(struct cdp_pdev *pdev,

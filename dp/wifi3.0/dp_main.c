@@ -7936,8 +7936,9 @@ static struct cdp_cfg_ops dp_ops_cfg = {
  * Return: peer instance pointer
  */
 static inline void *
-dp_peer_get_ref_find_by_addr(struct cdp_pdev *dev, u8 *peer_mac_addr,
-			     u8 *local_id, enum peer_debug_id_type debug_id)
+dp_peer_get_ref_find_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
+			     uint8_t *local_id,
+			     enum peer_debug_id_type debug_id)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)dev;
 	struct dp_peer *peer;
