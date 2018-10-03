@@ -367,8 +367,6 @@ int hdd_inspect_dhcp_packet(struct hdd_adapter *adapter,
 	struct hdd_station_info *hdd_sta_info;
 	int errno = 0;
 
-	hdd_debug("sta_id=%d, dir=%d", sta_id, dir);
-
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
 		hdd_err("Invalid sta id: %d", sta_id);
 		return -EINVAL;
