@@ -24,6 +24,7 @@
 #define _WLAN_MLME_STRUCT_H_
 
 #include <wlan_cmn.h>
+#include <reg_services_public_struct.h>
 
 #define CFG_PMKID_MODES_OKC                        (0x1)
 #define CFG_PMKID_MODES_PMKSA_CACHING              (0x2)
@@ -608,15 +609,46 @@ struct wlan_mlme_chainmask {
 
 /* struct wlan_mlme_generic - Generic CFG config items
  *
- * @rtt3_enabled:  RTT3 enable or disable info
+ * @band_capability: HW Band Capability - Both or 2.4G only or 5G only
+ * @band: Current Band - Internal variable, initialized to INI and updated later
+ * @select_5ghz_margin: RSSI margin to select 5Ghz over 2.4 Ghz
+ * @sub_20_chan_width: Sub 20Mhz Channel Width
+ * @ito_repeat_count: ITO Repeat Count
  * @pmf_sa_query_max_retries: PMF query max retries for SAP
  * @pmf_sa_query_retry_interval: PMF query retry interval for SAP
- *
+ * @dropped_pkt_disconnect_thresh: Threshold for dropped pkts before disconnect
+ * @rtt3_enabled: RTT3 enable or disable info
+ * @prevent_link_down: Enable/Disable prevention of link down
+ * @memory_deep_sleep: Enable/Disable memory deep sleep
+ * @cck_tx_fir_override: Enable/Disable CCK Tx FIR Override
+ * @crash_inject: Enable/Disable Crash Inject
+ * @lpass_support: Enable/Disable LPASS Support
+ * @self_recovery: Enable/Disable Self Recovery
+ * @sap_dot11mc: Enable/Disable SAP 802.11mc support
+ * @fatal_event_trigger: Enable/Disable Fatal Events Trigger
+ * @optimize_ca_event: Enable/Disable Optimization of CA events
+ * @fw_timeout_crash: Enable/Disable FW Timeout Crash *
  */
 struct wlan_mlme_generic {
-	bool rtt3_enabled;
+	enum band_info band_capability;
+	enum band_info band;
+	uint8_t select_5ghz_margin;
+	uint8_t sub_20_chan_width;
+	uint8_t ito_repeat_count;
 	uint8_t pmf_sa_query_max_retries;
 	uint16_t pmf_sa_query_retry_interval;
+	uint16_t dropped_pkt_disconnect_thresh;
+	bool rtt3_enabled;
+	bool prevent_link_down;
+	bool memory_deep_sleep;
+	bool cck_tx_fir_override;
+	bool crash_inject;
+	bool lpass_support;
+	bool self_recovery;
+	bool sap_dot11mc;
+	bool fatal_event_trigger;
+	bool optimize_ca_event;
+	bool fw_timeout_crash;
 };
 
 /*

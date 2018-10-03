@@ -4800,7 +4800,7 @@ enum hdd_link_speed_rpt_type {
  * This INI item is used to control subsystem restart(SSR) test framework
  * Set it's value to 1 to enable APPS trigerred SSR testing
  */
-#define CFG_ENABLE_CRASH_INJECT         "gEnableForceTargetAssert"
+#define CFG_ENABLE_CRASH_INJECT_NAME    "gEnableForceTargetAssert"
 #define CFG_ENABLE_CRASH_INJECT_MIN     (0)
 #define CFG_ENABLE_CRASH_INJECT_MAX     (1)
 #define CFG_ENABLE_CRASH_INJECT_DEFAULT (0)
@@ -5873,13 +5873,13 @@ enum hdd_link_speed_rpt_type {
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
 
 #ifdef WLAN_FEATURE_LPSS
-#define CFG_ENABLE_LPASS_SUPPORT                          "gEnableLpassSupport"
+#define CFG_ENABLE_LPASS_SUPPORT_NAME                     "gEnableLpassSupport"
 #define CFG_ENABLE_LPASS_SUPPORT_DEFAULT                  (0)
 #define CFG_ENABLE_LPASS_SUPPORT_MIN                      (0)
 #define CFG_ENABLE_LPASS_SUPPORT_MAX                      (1)
 #endif
 
-#define CFG_ENABLE_SELF_RECOVERY                   "gEnableSelfRecovery"
+#define CFG_ENABLE_SELF_RECOVERY_NAME              "gEnableSelfRecovery"
 #define CFG_ENABLE_SELF_RECOVERY_MIN               (0)
 #define CFG_ENABLE_SELF_RECOVERY_MAX               (1)
 #define CFG_ENABLE_SELF_RECOVERY_DEFAULT           (0)
@@ -6086,7 +6086,7 @@ enum hdd_link_speed_rpt_type {
 #define CFG_GO_11AC_OVERRIDE_MAX              (1)
 #define CFG_GO_11AC_OVERRIDE_DEFAULT          (1)
 
-#define CFG_SAP_DOT11MC               "gSapDot11mc"
+#define CFG_SAP_DOT11MC_NAME          "gSapDot11mc"
 #define CFG_SAP_DOT11MC_MIN           (0)
 #define CFG_SAP_DOT11MC_MAX           (1)
 #define CFG_SAP_DOT11MC_DEFAULT       (0)
@@ -6551,7 +6551,7 @@ enum hdd_link_speed_rpt_type {
  * Enable/Disable to initiate BUG report in case of fatal event
  * Default: Enable
  */
-#define CFG_ENABLE_FATAL_EVENT_TRIGGER                 "gEnableFatalEvent"
+#define CFG_ENABLE_FATAL_EVENT_TRIGGER_NAME            "gEnableFatalEvent"
 #define CFG_ENABLE_FATAL_EVENT_TRIGGER_MIN             (0)
 #define CFG_ENABLE_FATAL_EVENT_TRIGGER_MAX             (1)
 #define CFG_ENABLE_FATAL_EVENT_TRIGGER_DEFAULT         (1)
