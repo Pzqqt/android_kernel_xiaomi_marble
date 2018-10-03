@@ -535,8 +535,7 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 				wmi_service_sync_delete_cmds)) {
 		sta_self_wmi_rsp =
 			qdf_mem_malloc(sizeof(struct del_sta_self_rsp_params));
-		if (sta_self_wmi_rsp == NULL) {
-			WMA_LOGE(FL("Failed to allocate memory"));
+		if (!sta_self_wmi_rsp) {
 			qdf_status = QDF_STATUS_E_NOMEM;
 			goto error;
 		}
@@ -992,16 +991,12 @@ static void wma_vdev_start_rsp(tp_wma_handle wma,
 
 		bcn = wma->interfaces[resp_event->vdev_id].beacon;
 		if (!bcn) {
-			WMA_LOGE("%s: Failed alloc memory for beacon struct",
-				 __func__);
 			add_bss->status = QDF_STATUS_E_NOMEM;
 			goto send_fail_resp;
 		}
 		bcn->buf = qdf_nbuf_alloc(NULL, SIR_MAX_BEACON_SIZE, 0,
 					  sizeof(uint32_t), 0);
 		if (!bcn->buf) {
-			WMA_LOGE("%s: No memory allocated for beacon buffer",
-				 __func__);
 			qdf_mem_free(bcn);
 			add_bss->status = QDF_STATUS_E_FAILURE;
 			goto send_fail_resp;
@@ -3408,9 +3403,7 @@ void wma_hold_req_timer(void *data)
 
 		WMA_LOGE(FL("set hw mode req timed out"));
 
-		if (!params)
-			WMA_LOGE("%s: Memory allocation failed", __func__);
-		else {
+		if (params) {
 			params->status = SET_HW_MODE_STATUS_ECANCELED;
 			params->cfgd_hw_mode_index = 0;
 			params->num_vdev_mac_entries = 0;
@@ -3449,11 +3442,8 @@ struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 	QDF_STATUS status;
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		WMA_LOGE(FL("Failed to allocate memory for msg %d vdev %d"),
-			 msg_type, vdev_id);
+	if (!req)
 		return NULL;
-	}
 
 	WMA_LOGD(FL("vdev_id %d msg %d type %d"), vdev_id, msg_type, type);
 	qdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
@@ -3800,11 +3790,8 @@ struct wma_target_req *wma_fill_vdev_req(tp_wma_handle wma,
 	QDF_STATUS status;
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		WMA_LOGE("%s: Failed to allocate memory for msg %d vdev %d",
-			 __func__, msg_type, vdev_id);
+	if (!req)
 		return NULL;
-	}
 
 	WMA_LOGD("%s: vdev_id %d msg %d", __func__, vdev_id, msg_type);
 	qdf_spin_lock_bh(&wma->vdev_respq_lock);
@@ -4277,10 +4264,9 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		if (iface->addBssStaContext)
 			qdf_mem_free(iface->addBssStaContext);
 		iface->addBssStaContext = qdf_mem_malloc(sizeof(tAddStaParams));
-		if (!iface->addBssStaContext) {
-			WMA_LOGE("%s Failed to allocat memory", __func__);
+		if (!iface->addBssStaContext)
 			goto send_fail_resp;
-		}
+
 		qdf_mem_copy(iface->addBssStaContext, &add_bss->staContext,
 			     sizeof(tAddStaParams));
 
@@ -4291,11 +4277,9 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		if (add_bss->extSetStaKeyParamValid) {
 			iface->staKeyParams =
 				qdf_mem_malloc(sizeof(tSetStaKeyParams));
-			if (!iface->staKeyParams) {
-				WMA_LOGE("%s Failed to allocat memory",
-					 __func__);
+			if (!iface->staKeyParams)
 				goto send_fail_resp;
-			}
+
 			qdf_mem_copy(iface->staKeyParams,
 				     &add_bss->extSetStaKeyParam,
 				     sizeof(tSetStaKeyParams));
@@ -4886,9 +4870,6 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 
 		peerStateParams = qdf_mem_malloc(sizeof(tTdlsPeerStateParams));
 		if (!peerStateParams) {
-			WMA_LOGE
-				("%s: Failed to allocate memory for peerStateParams for %pM",
-				__func__, add_sta->staMac);
 			add_sta->status = QDF_STATUS_E_NOMEM;
 			goto send_rsp;
 		}
@@ -5371,8 +5352,6 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 
 	peerStateParams = qdf_mem_malloc(sizeof(tTdlsPeerStateParams));
 	if (!peerStateParams) {
-		WMA_LOGE("%s: Failed to allocate memory for peerStateParams for: %pM",
-			__func__, del_sta->staMac);
 		del_sta->status = QDF_STATUS_E_NOMEM;
 		goto send_del_rsp;
 	}
@@ -6024,11 +6003,8 @@ int wma_fill_beacon_interval_reset_req(tp_wma_handle wma, uint8_t vdev_id,
 	struct wma_beacon_interval_reset_req *req;
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		WMA_LOGE("%s: Failed to allocate memory for beacon_interval_reset_req vdev %d",
-			__func__, vdev_id);
+	if (!req)
 		return -ENOMEM;
-	}
 
 	WMA_LOGD("%s: vdev_id %d ", __func__, vdev_id);
 	req->vdev_id = vdev_id;

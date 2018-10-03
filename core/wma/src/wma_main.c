@@ -562,10 +562,8 @@ int wma_cli_set2_command(int vdev_id, int param_id, int sval1,
 	wma_cli_set_cmd_t *iwcmd;
 
 	iwcmd = qdf_mem_malloc(sizeof(*iwcmd));
-	if (!iwcmd) {
-		WMA_LOGE("%s: Failed alloc memory for iwcmd", __func__);
+	if (!iwcmd)
 		return -ENOMEM;
-	}
 
 	qdf_mem_zero(iwcmd, sizeof(*iwcmd));
 	iwcmd->param_value = sval1;
@@ -624,10 +622,9 @@ QDF_STATUS wma_form_unit_test_cmd_and_send(uint32_t vdev_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 	unit_test_args = qdf_mem_malloc(sizeof(*unit_test_args));
-	if (NULL == unit_test_args) {
-		WMA_LOGE(FL("qdf_mem_malloc failed for unit_test_args"));
+	if (!unit_test_args)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	unit_test_args->vdev_id = vdev_id;
 	unit_test_args->module_id = module_id;
 	unit_test_args->num_args = arg_count;
@@ -1722,7 +1719,6 @@ static int wma_process_fw_event_mc_thread_ctx(void *ctx, void *ev)
 
 	params_buf = qdf_mem_malloc(sizeof(wma_process_fw_event_params));
 	if (!params_buf) {
-		WMA_LOGE("%s: Failed alloc memory for params_buf", __func__);
 		qdf_nbuf_free(ev);
 		return -ENOMEM;
 	}
@@ -3220,7 +3216,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	 */
 	params = qdf_mem_malloc(sizeof(*params) + sizeof(struct wmi_rx_ops));
 	if (!params) {
-		WMA_LOGE("%s: failed to allocate attach params", __func__);
 		qdf_status = QDF_STATUS_E_NOMEM;
 		goto err_wma_handle;
 	}
@@ -3311,7 +3306,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_handle->interfaces = qdf_mem_malloc(sizeof(struct wma_txrx_node) *
 						wma_handle->max_bssid);
 	if (!wma_handle->interfaces) {
-		WMA_LOGE("%s: failed to allocate interface table", __func__);
 		qdf_status = QDF_STATUS_E_NOMEM;
 		goto err_scn_context;
 	}
@@ -3892,7 +3886,6 @@ static int wma_pdev_set_hw_mode_resp_evt_handler(void *handle,
 
 	hw_mode_resp = qdf_mem_malloc(sizeof(*hw_mode_resp));
 	if (!hw_mode_resp) {
-		WMA_LOGE("%s: Memory allocation failed", __func__);
 		/* Since this memory allocation itself failed, we cannot
 		 * send fail response back to LIM here
 		 */
@@ -4108,10 +4101,8 @@ static int wma_pdev_hw_mode_transition_evt_handler(void *handle,
 	}
 
 	hw_mode_trans_ind = qdf_mem_malloc(sizeof(*hw_mode_trans_ind));
-	if (!hw_mode_trans_ind) {
-		WMA_LOGE("%s: Memory allocation failed", __func__);
+	if (!hw_mode_trans_ind)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	wmi_event = param_buf->fixed_param;
 	vdev_mac_entry =
@@ -4164,13 +4155,11 @@ static int wma_pdev_set_dual_mode_config_resp_evt_handler(void *handle,
 	}
 	wma_release_wakelock(&wma->wmi_cmd_rsp_wake_lock);
 	dual_mac_cfg_resp = qdf_mem_malloc(sizeof(*dual_mac_cfg_resp));
-	if (!dual_mac_cfg_resp) {
-		WMA_LOGE("%s: Memory allocation failed", __func__);
+	if (!dual_mac_cfg_resp)
 		/* Since the mem alloc failed, we cannot send resp to LIM.
 		 * So, returning from here.
 		 */
 		return QDF_STATUS_E_NULL_VALUE;
-	}
 
 	param_buf = (WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID_param_tlvs *)
 		event;
@@ -5794,13 +5783,13 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 
 	wma_handle->num_dbs_hw_modes = ev->num_dbs_hw_modes;
 	ev_wlan_dbs_hw_mode_list = param_buf->wlan_dbs_hw_mode_list;
+
+	/* Continuing with the rest of the processing,
+	 * even if memory allocation fails
+	 */
 	wma_handle->hw_mode.hw_mode_list =
 		qdf_mem_malloc(sizeof(*wma_handle->hw_mode.hw_mode_list) *
 				wma_handle->num_dbs_hw_modes);
-	if (!wma_handle->hw_mode.hw_mode_list) {
-		WMA_LOGE("%s: Memory allocation failed for DBS", __func__);
-		/* Continuing with the rest of the processing */
-	}
 
 	if (wma_handle->hw_mode.hw_mode_list)
 		qdf_mem_copy(wma_handle->hw_mode.hw_mode_list,
@@ -6477,10 +6466,8 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle,
 	wma_handle->hw_mode.hw_mode_list =
 		qdf_mem_malloc(sizeof(*wma_handle->hw_mode.hw_mode_list) *
 			       num_hw_modes);
-	if (!wma_handle->hw_mode.hw_mode_list) {
-		WMA_LOGE("%s: Memory allocation failed for DBS", __func__);
+	if (!wma_handle->hw_mode.hw_mode_list)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	WMA_LOGD("%s: Updated HW mode list: Num modes:%d",
 		 __func__, num_hw_modes);
@@ -7327,10 +7314,8 @@ static QDF_STATUS wma_send_wow_pulse_cmd(tp_wma_handle wma_handle,
 
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("wmi_buf_alloc failed");
+	if (!buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	cmd = (WMI_WOW_HOSTWAKEUP_GPIO_CMD_FIXED_PARAM *)wmi_buf_data(buf);
 	qdf_mem_zero(cmd, len);
@@ -7348,7 +7333,6 @@ static QDF_STATUS wma_send_wow_pulse_cmd(tp_wma_handle wma_handle,
 
 	if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 		WMI_WOW_HOSTWAKEUP_GPIO_PIN_PATTERN_CONFIG_CMDID)) {
-		WMA_LOGE("Failed to send send wow pulse");
 		wmi_buf_free(buf);
 		status = QDF_STATUS_E_FAILURE;
 	}
@@ -7393,10 +7377,8 @@ static QDF_STATUS wma_process_power_debug_stats_req(tp_wma_handle wma_handle)
 
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
+	if (!buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	buf_ptr = (u_int8_t *) wmi_buf_data(buf);
 	cmd = (wmi_pdev_get_chip_power_stats_cmd_fixed_param *) buf_ptr;
@@ -7412,8 +7394,6 @@ static QDF_STATUS wma_process_power_debug_stats_req(tp_wma_handle wma_handle)
 	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 			WMI_PDEV_GET_CHIP_POWER_STATS_CMDID);
 	if (ret) {
-		WMA_LOGE("%s: Failed to send power debug stats request",
-				__func__);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -7561,11 +7541,9 @@ QDF_STATUS wma_set_rx_reorder_timeout_val(tp_wma_handle wma_handle,
 	}
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-
-	if (!buf) {
-		WMA_LOGE(FL("Failed allocate wmi buffer"));
+	if (!buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	cmd = (wmi_pdev_set_reorder_timeout_val_cmd_fixed_param *)
 		wmi_buf_data(buf);
 
@@ -7583,7 +7561,6 @@ QDF_STATUS wma_set_rx_reorder_timeout_val(tp_wma_handle wma_handle,
 	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 			WMI_PDEV_SET_REORDER_TIMEOUT_VAL_CMDID);
 	if (ret) {
-		WMA_LOGE(FL("Failed to send aggregation timeout"));
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -7612,11 +7589,8 @@ QDF_STATUS wma_set_rx_blocksize(tp_wma_handle wma_handle,
 
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-
-	if (!buf) {
-		WMA_LOGE(FL("Failed allocate wmi buffer"));
+	if (!buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	buf_ptr = (u_int8_t *) wmi_buf_data(buf);
 	cmd = (wmi_peer_set_rx_blocksize_cmd_fixed_param *) buf_ptr;
@@ -7636,7 +7610,6 @@ QDF_STATUS wma_set_rx_blocksize(tp_wma_handle wma_handle,
 	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 			WMI_PEER_SET_RX_BLOCKSIZE_CMDID);
 	if (ret) {
-		WMA_LOGE(FL("Failed to send aggregation size command"));
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -7658,10 +7631,8 @@ QDF_STATUS wma_get_chain_rssi(tp_wma_handle wma_handle,
 	}
 
 	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!wmi_buf) {
-		WMA_LOGE(FL("wmi_buf_alloc failed"));
+	if (!wmi_buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	buf_ptr = (u_int8_t *)wmi_buf_data(wmi_buf);
 
@@ -7676,7 +7647,6 @@ QDF_STATUS wma_get_chain_rssi(tp_wma_handle wma_handle,
 
 	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
 				 WMI_PDEV_DIV_GET_RSSI_ANTID_CMDID)) {
-		WMA_LOGE(FL("failed to send get chain rssi command"));
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -7699,10 +7669,8 @@ static QDF_STATUS wma_roam_scan_send_hlp(tp_wma_handle wma_handle,
 	QDF_STATUS status;
 
 	params = qdf_mem_malloc(sizeof(*params));
-	if (!params) {
-		WMA_LOGE("%s : Memory allocation failed", __func__);
+	if (!params)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	params->vdev_id = req->vdev_id;
 	params->hlp_ie_len = req->hlp_ie_len;
@@ -8763,10 +8731,9 @@ QDF_STATUS wma_send_pdev_set_hw_mode_cmd(tp_wma_handle wma_handle,
 	return QDF_STATUS_SUCCESS;
 fail:
 	param = qdf_mem_malloc(sizeof(*param));
-	if (!param) {
-		WMA_LOGE("%s: Memory allocation failed", __func__);
+	if (!param)
 		return QDF_STATUS_E_NULL_VALUE;
-	}
+
 	param->status = SET_HW_MODE_STATUS_ECANCELED;
 	param->cfgd_hw_mode_index = 0;
 	param->num_vdev_mac_entries = 0;
@@ -8856,7 +8823,6 @@ QDF_STATUS wma_send_pdev_set_antenna_mode(tp_wma_handle wma_handle,
 
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
 		status = QDF_STATUS_E_NOMEM;
 		goto resp;
 	}
@@ -8878,8 +8844,6 @@ QDF_STATUS wma_send_pdev_set_antenna_mode(tp_wma_handle wma_handle,
 
 	if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 				 WMI_PDEV_SET_ANTENNA_MODE_CMDID)) {
-		WMA_LOGE("%s: Failed to send WMI_PDEV_SET_ANTENNA_MODE_CMDID",
-				__func__);
 		wmi_buf_free(buf);
 		status = QDF_STATUS_E_FAILURE;
 		goto resp;
@@ -8888,10 +8852,9 @@ QDF_STATUS wma_send_pdev_set_antenna_mode(tp_wma_handle wma_handle,
 
 resp:
 	param = qdf_mem_malloc(sizeof(*param));
-	if (!param) {
-		WMA_LOGE("%s: Memory allocation failed", __func__);
+	if (!param)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	param->status = (status) ?
 		SET_ANTENNA_MODE_STATUS_ECANCELED :
 		SET_ANTENNA_MODE_STATUS_OK;
@@ -8931,10 +8894,8 @@ int wma_lro_init(struct cdp_lro_hash_config *lro_config)
 	struct cdp_lro_hash_config *iwcmd;
 
 	iwcmd = qdf_mem_malloc(sizeof(*iwcmd));
-	if (!iwcmd) {
-		WMA_LOGE("memory allocation for WMA_LRO_CONFIG_CMD failed!");
+	if (!iwcmd)
 		return -ENOMEM;
-	}
 
 	*iwcmd = *lro_config;
 

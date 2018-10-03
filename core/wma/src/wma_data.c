@@ -2093,11 +2093,8 @@ int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 	WMA_LOGE("%s: num_peers %d", __func__, num_peers);
 
 	pRsp = qdf_mem_malloc(sizeof(tSirIbssGetPeerInfoRspParams));
-	if (NULL == pRsp) {
-		WMA_LOGE("%s: could not allocate memory for ibss peer info rsp len %zu",
-			__func__, sizeof(tSirIbssGetPeerInfoRspParams));
+	if (!pRsp)
 		return 0;
-	}
 
 	/*sanity check */
 	if (!(num_peers) || (num_peers > 32) ||
@@ -2901,10 +2898,8 @@ void ol_rx_aggregation_hole(uint32_t hole_info)
 	alloc_len = sizeof(*rx_aggr_hole_event) +
 		sizeof(rx_aggr_hole_event->hole_info_array[0]);
 	rx_aggr_hole_event = qdf_mem_malloc(alloc_len);
-	if (NULL == rx_aggr_hole_event) {
-		WMA_LOGE("%s: Memory allocation failure", __func__);
+	if (!rx_aggr_hole_event)
 		return;
-	}
 
 	rx_aggr_hole_event->hole_cnt = 1;
 	rx_aggr_hole_event->hole_info_array[0] = hole_info;
@@ -2970,11 +2965,8 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 		return;
 	eth_hdr = (struct ether_header *)qdf_nbuf_data(rx_frame);
 	mic_err_ind = qdf_mem_malloc(sizeof(*mic_err_ind));
-	if (!mic_err_ind) {
-		WMA_LOGE("%s: Failed to allocate memory for MIC indication message",
-			__func__);
+	if (!mic_err_ind)
 		return;
-	}
 
 	mic_err_ind->messageType = eWNI_SME_MIC_FAILURE_IND;
 	mic_err_ind->length = sizeof(*mic_err_ind);
@@ -3118,11 +3110,8 @@ wma_indicate_err(
 		}
 
 		mic_err_ind = qdf_mem_malloc(sizeof(*mic_err_ind));
-		if (!mic_err_ind) {
-			WMA_LOGE("%s: MIC indication mem alloc failed",
-					 __func__);
+		if (!mic_err_ind)
 			return;
-		}
 
 		qdf_mem_set((void *) mic_err_ind, 0,
 			 sizeof(*mic_err_ind));
@@ -3210,12 +3199,9 @@ uint8_t wma_rx_invalid_peer_ind(uint8_t vdev_id, void *wh)
 	struct ieee80211_frame *wh_l = (struct ieee80211_frame *)wh;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	rx_inv_msg = (struct ol_rx_inv_peer_params *)
-		qdf_mem_malloc(sizeof(struct ol_rx_inv_peer_params));
-	if (NULL == rx_inv_msg) {
-		WMA_LOGE("%s: mem alloc failed for rx_data_msg", __func__);
+	rx_inv_msg = qdf_mem_malloc(sizeof(struct ol_rx_inv_peer_params));
+	if (!rx_inv_msg)
 		return -ENOMEM;
-	}
 
 	rx_inv_msg->vdev_id = vdev_id;
 	qdf_mem_copy(rx_inv_msg->ra, wh_l->i_addr1, OL_TXRX_MAC_ADDR_LEN);

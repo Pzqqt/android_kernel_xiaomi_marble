@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -55,11 +55,9 @@ void wma_set_dbs_capability_ut(uint32_t dbs)
 		wma->hw_mode.hw_mode_list =
 			qdf_mem_malloc(sizeof(*wma->hw_mode.hw_mode_list) *
 					wma->num_dbs_hw_modes);
-		if (!wma->hw_mode.hw_mode_list) {
-			WMA_LOGE("%s: Memory allocation failed for UT-DBS",
-					__func__);
+		if (!wma->hw_mode.hw_mode_list)
 			return;
-		}
+
 		wma->hw_mode.hw_mode_list[0] = 0x0000;
 	}
 

@@ -4117,8 +4117,6 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 							RESERVE_BYTES,
 							4), 0, 4, false);
 	if (!wbuf) {
-		WMA_LOGE("%s: Failed to allocate wbuf for mgmt rx len(%u)",
-			    __func__, mgmt_rx_params->buf_len);
 		qdf_mem_free(mgmt_rx_params);
 		return -ENOMEM;
 	}

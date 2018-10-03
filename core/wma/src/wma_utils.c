@@ -348,10 +348,9 @@ void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
 	    (WMI_VDEV_TYPE_STA == wma->interfaces[vdev_id].type) &&
 	    (0 == wma->interfaces[vdev_id].sub_type)) {
 		lost_link_info = qdf_mem_malloc(sizeof(*lost_link_info));
-		if (NULL == lost_link_info) {
-			WMA_LOGE("%s: failed to allocate memory", __func__);
+		if (!lost_link_info)
 			return;
-		}
+
 		lost_link_info->vdev_id = vdev_id;
 		lost_link_info->rssi = rssi;
 		sme_msg.type = eWNI_SME_LOST_LINK_INFO_IND;
@@ -464,11 +463,9 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 			stats_ext_info->data_len, param_buf->num_data);
 		return -EINVAL;
 	}
-	stats_ext_event = (tSirStatsExtEvent *) qdf_mem_malloc(alloc_len);
-	if (NULL == stats_ext_event) {
-		WMA_LOGE("%s: Memory allocation failure", __func__);
+	stats_ext_event = qdf_mem_malloc(alloc_len);
+	if (!stats_ext_event)
 		return -ENOMEM;
-	}
 
 	buf_ptr += sizeof(wmi_stats_ext_event_fixed_param) + WMI_TLV_HDR_SIZE;
 
@@ -799,14 +796,12 @@ static tSirLLStatsResults *wma_get_ll_stats_ext_buf(uint32_t *len,
 		return NULL;
 	}
 
-	buf = (tSirLLStatsResults *)qdf_mem_malloc(buf_len);
-	if (buf == NULL) {
-		WMA_LOGE("%s: Cannot allocate link layer stats.", __func__);
-		buf_len = 0;
-		return NULL;
-	}
+	buf = qdf_mem_malloc(buf_len);
+	if (!buf)
+		*len = 0;
+	else
+		*len = buf_len;
 
-	*len = buf_len;
 	return buf;
 }
 
@@ -1343,11 +1338,8 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 		(total_num_rates * rate_stats_size);
 
 	link_stats_results = qdf_mem_malloc(link_stats_results_size);
-	if (NULL == link_stats_results) {
-		WMA_LOGD("%s: could not allocate mem for stats results-len %zu",
-			 __func__, link_stats_results_size);
+	if (!link_stats_results)
 		return -ENOMEM;
-	}
 
 	qdf_mem_zero(link_stats_results, link_stats_results_size);
 
@@ -1556,8 +1548,6 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 				sizeof(uint32_t) *
 				rs_results->total_num_tx_power_levels);
 		if (!rs_results->tx_time_per_power_level) {
-			WMA_LOGA("%s: Mem alloc fail for tx power level stats",
-				 __func__);
 			/* In error case, atleast send the radio stats without
 			 * tx_power_level stats */
 			rs_results->total_num_tx_power_levels = 0;
@@ -1691,11 +1681,8 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	if (!wma_handle->link_stats_results) {
 		wma_handle->link_stats_results = qdf_mem_malloc(
 						link_stats_results_size);
-		if (NULL == wma_handle->link_stats_results) {
-			WMA_LOGD("%s: could not allocate mem for stats results-len %zu",
-				 __func__, link_stats_results_size);
+		if (!wma_handle->link_stats_results)
 			return -ENOMEM;
-		}
 	}
 	link_stats_results = wma_handle->link_stats_results;
 	if (link_stats_results->num_radio == 0) {
@@ -1772,12 +1759,10 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	rs_results->on_time_host_scan = radio_stats->on_time_host_scan;
 	rs_results->on_time_lpi_scan = radio_stats->on_time_lpi_scan;
 	if (rs_results->numChannels) {
-		rs_results->channels = (tSirWifiChannelStats *) qdf_mem_malloc(
+		rs_results->channels = qdf_mem_malloc(
 					radio_stats->num_channels *
 					chan_stats_size);
-		if (rs_results->channels == NULL) {
-			WMA_LOGD("%s: could not allocate mem for channel stats (size=%zu)",
-				 __func__, radio_stats->num_channels * chan_stats_size);
+		if (!rs_results->channels) {
 			wma_unified_radio_tx_mem_free(handle);
 			return -ENOMEM;
 		}
@@ -1871,10 +1856,8 @@ static int wma_peer_ps_evt_handler(void *handle, u_int8_t *event,
 			sizeof(tSirWifiPeerStat) +
 			sizeof(tSirWifiPeerInfo);
 	link_stats_results = qdf_mem_malloc(result_len);
-	if (link_stats_results == NULL) {
-		WMA_LOGE("%s: Cannot allocate link layer stats.", __func__);
+	if (!link_stats_results)
 		return -EINVAL;
-	}
 
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_param->peer_macaddr, &mac_address[0]);
 	WMA_LOGD("Peer power state change event from FW");
@@ -2168,11 +2151,8 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	link_stats_results_size = sizeof(*link_stats_results) +	link_stats_size;
 
 	link_stats_results = qdf_mem_malloc(link_stats_results_size);
-	if (!link_stats_results) {
-		WMA_LOGD("%s: could not allocate mem for stats results-len %zu",
-			 __func__, link_stats_results_size);
+	if (!link_stats_results)
 		return -ENOMEM;
-	}
 
 	qdf_mem_zero(link_stats_results, link_stats_results_size);
 
@@ -2266,10 +2246,8 @@ void wma_config_stats_ext_threshold(tp_wma_handle wma,
 	      sizeof(wmi_rx_stats_thresh) +
 	      5 * WMI_TLV_HDR_SIZE;
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
+	if (!buf)
 		return;
-	}
 
 	buf_ptr = (u_int8_t *)wmi_buf_data(buf);
 	tag = WMITLV_TAG_STRUC_wmi_pdev_set_stats_threshold_cmd_fixed_param;
@@ -2382,10 +2360,8 @@ void wma_config_stats_ext_threshold(tp_wma_handle wma,
 		 WMI_PDEV_SET_STATS_THRESHOLD_CMDID, len);
 	if (EOK != wmi_unified_cmd_send(wma->wmi_handle,
 					buf, len,
-					WMI_PDEV_SET_STATS_THRESHOLD_CMDID)) {
-		WMA_LOGE("Failed to send WMI_PDEV_SET_STATS_THRESHOLD_CMDID");
+					WMI_PDEV_SET_STATS_THRESHOLD_CMDID))
 		wmi_buf_free(buf);
-	}
 }
 
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
@@ -2927,10 +2903,8 @@ int wma_rso_cmd_status_event_handler(wmi_roam_event_fixed_param *wmi_event)
 	QDF_STATUS qdf_status;
 
 	rso_status = qdf_mem_malloc(sizeof(*rso_status));
-	if (!rso_status) {
-		WMA_LOGE("%s: malloc fails for rso cmd status", __func__);
+	if (!rso_status)
 		return -ENOMEM;
-	}
 
 	rso_status->vdev_id = wmi_event->vdev_id;
 	if (WMI_ROAM_NOTIF_SCAN_MODE_SUCCESS == wmi_event->notif)
@@ -2992,10 +2966,9 @@ static void wma_handle_sta_peer_info(uint32_t num_peer_stats,
 		}
 		peer_info = qdf_mem_malloc(sizeof(*peer_info) +
 				sizeof(peer_info->info[0]));
-		if (NULL == peer_info) {
-			WMA_LOGE("%s: Memory allocation failed.", __func__);
+		if (!peer_info)
 			return;
-		}
+
 		if (i < num_peer_stats) {
 			peer_info->count = 1;
 			WMI_MAC_ADDR_TO_CHAR_ARRAY(&(peer_stats->peer_macaddr),
@@ -3016,10 +2989,9 @@ static void wma_handle_sta_peer_info(uint32_t num_peer_stats,
 	} else {
 		peer_info = qdf_mem_malloc(sizeof(*peer_info) +
 				num_peer_stats * sizeof(peer_info->info[0]));
-		if (NULL == peer_info) {
-			WMA_LOGE("%s: Memory allocation failed.", __func__);
+		if (!peer_info)
 			return;
-		}
+
 		peer_info->count = num_peer_stats;
 
 		for (i = 0; i < num_peer_stats; i++) {
@@ -3303,10 +3275,9 @@ static QDF_STATUS wma_peer_info_ext_rsp(tp_wma_handle wma, u_int8_t *buf)
 	if (wma->get_one_peer_info) {
 		resp = qdf_mem_malloc(sizeof(struct sir_peer_info_ext_resp) +
 				sizeof(resp->info[0]));
-		if (!resp) {
-			WMA_LOGE(FL("resp allocation failed."));
+		if (!resp)
 			return QDF_STATUS_E_NOMEM;
-		}
+
 		resp->count = 0;
 		peer_info = &resp->info[0];
 		for (i = 0; i < event->num_peers; i++) {
@@ -3326,10 +3297,9 @@ static QDF_STATUS wma_peer_info_ext_rsp(tp_wma_handle wma, u_int8_t *buf)
 	} else {
 		resp = qdf_mem_malloc(sizeof(struct sir_peer_info_ext_resp) +
 				event->num_peers * sizeof(resp->info[0]));
-		if (!resp) {
-			WMA_LOGE(FL("resp allocation failed."));
+		if (!resp)
 			return QDF_STATUS_E_NOMEM;
-		}
+
 		resp->count = event->num_peers;
 		for (i = 0; i < event->num_peers; i++) {
 			peer_info = &resp->info[j];
@@ -3442,10 +3412,8 @@ int wma_peer_info_event_handler(void *handle, u_int8_t *cmd_param_info,
 	buf_size = sizeof(wmi_peer_stats_info_event_fixed_param) +
 		sizeof(wmi_peer_stats_info) * event->num_peers;
 	buf = qdf_mem_malloc(buf_size);
-	if (!buf) {
-		WMA_LOGE("%s: Failed alloc memory for buf", __func__);
+	if (!buf)
 		return -ENOMEM;
-	}
 
 	qdf_mem_copy(buf, param_buf->fixed_param,
 			sizeof(wmi_peer_stats_info_event_fixed_param));
@@ -3469,7 +3437,6 @@ int wma_peer_info_event_handler(void *handle, u_int8_t *cmd_param_info,
  */
 QDF_STATUS wma_send_link_speed(uint32_t link_speed)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac_ctx;
 	tSirLinkSpeedInfo *ls_ind;
 
@@ -3479,21 +3446,19 @@ QDF_STATUS wma_send_link_speed(uint32_t link_speed)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ls_ind = (tSirLinkSpeedInfo *)qdf_mem_malloc(sizeof(tSirLinkSpeedInfo));
-	if (!ls_ind) {
-		WMA_LOGE("%s: Memory allocation failed.", __func__);
-		qdf_status = QDF_STATUS_E_NOMEM;
-	} else {
-		ls_ind->estLinkSpeed = link_speed;
-		if (mac_ctx->sme.pLinkSpeedIndCb)
-			mac_ctx->sme.pLinkSpeedIndCb(ls_ind,
-					mac_ctx->sme.pLinkSpeedCbContext);
-		else
-			WMA_LOGD("%s: pLinkSpeedIndCb is null", __func__);
-		qdf_mem_free(ls_ind);
+	ls_ind = qdf_mem_malloc(sizeof(tSirLinkSpeedInfo));
+	if (!ls_ind)
+		return QDF_STATUS_E_NOMEM;
 
-	}
-	return qdf_status;
+	ls_ind->estLinkSpeed = link_speed;
+	if (mac_ctx->sme.pLinkSpeedIndCb)
+		mac_ctx->sme.pLinkSpeedIndCb(ls_ind,
+				mac_ctx->sme.pLinkSpeedCbContext);
+	else
+		WMA_LOGD("%s: pLinkSpeedIndCb is null", __func__);
+	qdf_mem_free(ls_ind);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3914,7 +3879,6 @@ static tAniGetPEStatsRsp *wma_get_stats_rsp_buf
 
 	stats_rsp_params = qdf_mem_malloc(len);
 	if (!stats_rsp_params) {
-		WMA_LOGE("memory allocation failed for tAniGetPEStatsRsp");
 		QDF_ASSERT(0);
 		return NULL;
 	}
@@ -4067,10 +4031,8 @@ void *wma_get_beacon_buffer_by_vdev_id(uint8_t vdev_id, uint32_t *buffer_size)
 
 	buf_size = qdf_nbuf_len(beacon->buf);
 	buf = qdf_mem_malloc(buf_size);
-
 	if (!buf) {
 		qdf_spin_unlock_bh(&beacon->lock);
-		WMA_LOGE("%s: alloc failed for beacon buf", __func__);
 		return NULL;
 	}
 
@@ -4472,10 +4434,8 @@ QDF_STATUS wma_get_rcpi_req(WMA_HANDLE handle,
 	}
 
 	node_rcpi_req = qdf_mem_malloc(sizeof(*node_rcpi_req));
-	if (!node_rcpi_req) {
-		WMA_LOGE("Failed to allocate memory for rcpi_request");
+	if (!node_rcpi_req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	*node_rcpi_req = *rcpi_request;
 	iface->rcpi_req = node_rcpi_req;
@@ -4788,10 +4748,8 @@ QDF_STATUS wma_get_roam_scan_stats(WMA_HANDLE handle,
 	}
 
 	node_req = qdf_mem_malloc(sizeof(*node_req));
-	if (!node_req) {
-		WMA_LOGE("Failed to allocate memory for roam scan stats req");
+	if (!node_req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	*node_req = *req;
 	iface->roam_scan_stats_req = node_req;

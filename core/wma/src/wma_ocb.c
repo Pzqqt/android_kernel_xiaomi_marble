@@ -253,10 +253,8 @@ int wma_ocb_set_config(tp_wma_handle wma_handle, struct sir_ocb_config *config)
 				config->dcc_ndl_active_state_list_len;
 	tconfig.dcc_ndl_active_state_list = config->dcc_ndl_active_state_list;
 	ch_mhz = qdf_mem_malloc(sizeof(uint32_t)*config->channel_count);
-	if (ch_mhz == NULL) {
-		WMA_LOGE(FL("Memory allocation failed"));
+	if (!ch_mhz)
 		return -ENOMEM;
-	}
 
 	for (i = 0; i < config->channel_count; i++)
 		ch_mhz[i] = wma_ocb_freq_to_mode(config->channels[i].chan_freq);
@@ -435,8 +433,9 @@ static int wma_ocb_get_tsf_timer_resp_event_handler(void *handle,
 
 	/* Allocate and populate the response */
 	response = qdf_mem_malloc(sizeof(*response));
-	if (response == NULL)
+	if (!response)
 		return -ENOMEM;
+
 	response->vdev_id = fix_param->vdev_id;
 	response->timer_high = fix_param->tsf_timer_high;
 	response->timer_low = fix_param->tsf_timer_low;
@@ -517,7 +516,7 @@ static int wma_dcc_get_stats_resp_event_handler(void *handle,
 	}
 	response = qdf_mem_malloc(sizeof(*response) + fix_param->num_channels *
 		sizeof(wmi_dcc_ndl_stats_per_channel));
-	if (response == NULL)
+	if (!response)
 		return -ENOMEM;
 
 	response->vdev_id = fix_param->vdev_id;
@@ -616,10 +615,9 @@ static int wma_dcc_update_ndl_resp_event_handler(void *handle,
 	fix_param = param_tlvs->fixed_param;
 	/* Allocate and populate the response */
 	resp = qdf_mem_malloc(sizeof(*resp));
-	if (!resp) {
-		WMA_LOGE(FL("Error allocating memory for the response."));
+	if (!resp)
 		return -ENOMEM;
-	}
+
 	resp->vdev_id = fix_param->vdev_id;
 	resp->status = fix_param->status;
 
@@ -667,8 +665,9 @@ static int wma_dcc_stats_event_handler(void *handle, uint8_t *event_buf,
 	}
 	response = qdf_mem_malloc(sizeof(*response) +
 	    fix_param->num_channels * sizeof(wmi_dcc_ndl_stats_per_channel));
-	if (response == NULL)
+	if (!response)
 		return -ENOMEM;
+
 	response->vdev_id = fix_param->vdev_id;
 	response->num_channels = fix_param->num_channels;
 	response->channel_stats_array_len =

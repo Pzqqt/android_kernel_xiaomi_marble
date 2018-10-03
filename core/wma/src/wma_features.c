@@ -186,12 +186,9 @@ static int wma_wake_reason_auto_shutdown(void)
 	QDF_STATUS qdf_status;
 	struct scheduler_msg sme_msg = { 0 };
 
-	auto_sh_evt = (tSirAutoShutdownEvtParams *)
-		      qdf_mem_malloc(sizeof(tSirAutoShutdownEvtParams));
-	if (!auto_sh_evt) {
-		WMA_LOGE(FL("No Mem"));
+	auto_sh_evt = qdf_mem_malloc(sizeof(tSirAutoShutdownEvtParams));
+	if (!auto_sh_evt)
 		return -ENOMEM;
-	}
 
 	auto_sh_evt->shutdown_reason =
 		WMI_HOST_AUTO_SHUTDOWN_REASON_TIMER_EXPIRY;
@@ -255,7 +252,6 @@ QDF_STATUS wma_send_snr_request(tp_wma_handle wma_handle,
 	if (pGetRssiReq) {
 		pRssiBkUp = qdf_mem_malloc(sizeof(tAniGetRssiReq));
 		if (!pRssiBkUp) {
-			WMA_LOGE("Failed to alloc memory for tAniGetRssiReq");
 			wma_handle->pGetRssiReq = NULL;
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -304,10 +300,8 @@ QDF_STATUS wma_get_snr(tAniGetSnrReq *psnr_req)
 	}
 
 	psnr_req_bkp = qdf_mem_malloc(sizeof(tAniGetSnrReq));
-	if (!psnr_req_bkp) {
-		WMA_LOGE("Failed to allocate memory for tAniGetSnrReq");
+	if (!psnr_req_bkp)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_mem_set(psnr_req_bkp, sizeof(tAniGetSnrReq), 0);
 	psnr_req_bkp->staId = psnr_req->staId;
@@ -382,10 +376,8 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
 		return -EINVAL;
 	}
 	ptsf = qdf_mem_malloc(sizeof(*ptsf));
-	if (NULL == ptsf) {
-		WMA_LOGE("%s: failed to allocate tsf data structure", __func__);
+	if (!ptsf)
 		return -ENOMEM;
-	}
 
 	param_buf = (WMI_VDEV_TSF_REPORT_EVENTID_param_tlvs *)data;
 	tsf_event = param_buf->fixed_param;
@@ -396,9 +388,8 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
 	ptsf->soc_timer_low = tsf_event->qtimer_low;
 	ptsf->soc_timer_high = tsf_event->qtimer_high;
 
-	WMA_LOGD("%s: receive WMI_VDEV_TSF_REPORT_EVENTID ", __func__);
-	WMA_LOGD("%s: vdev_id = %u,tsf_low =%u, tsf_high = %u", __func__,
-	ptsf->vdev_id, ptsf->tsf_low, ptsf->tsf_high);
+	wma_nofl_debug("receive WMI_VDEV_TSF_REPORT_EVENTID on %d, tsf: %d %d",
+		       ptsf->vdev_id, ptsf->tsf_low, ptsf->tsf_high);
 
 	tsf_msg.type = eWNI_SME_TSF_EVENT;
 	tsf_msg.bodyptr = ptsf;
@@ -437,11 +428,8 @@ QDF_STATUS wma_capture_tsf(tp_wma_handle wma_handle, uint32_t vdev_id)
 	int len = sizeof(*cmd);
 
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGP("%s: failed to allocate memory for cap tsf cmd",
-			 __func__);
+	if (!buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	cmd = (wmi_vdev_tsf_tstamp_action_cmd_fixed_param *) wmi_buf_data(buf);
 	cmd->vdev_id = vdev_id;
@@ -457,7 +445,6 @@ QDF_STATUS wma_capture_tsf(tp_wma_handle wma_handle, uint32_t vdev_id)
 	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 				   WMI_VDEV_TSF_TSTAMP_ACTION_CMDID);
 	if (ret != EOK) {
-		WMA_LOGE("wmi_unified_cmd_send returned Error %d", status);
 		status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
@@ -487,11 +474,8 @@ QDF_STATUS wma_reset_tsf_gpio(tp_wma_handle wma_handle, uint32_t vdev_id)
 	uint8_t *buf_ptr;
 
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGP("%s: failed to allocate memory for reset tsf gpio",
-			 __func__);
+	if (!buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
 	cmd = (wmi_vdev_tsf_tstamp_action_cmd_fixed_param *) buf_ptr;
@@ -510,7 +494,6 @@ QDF_STATUS wma_reset_tsf_gpio(tp_wma_handle wma_handle, uint32_t vdev_id)
 				   WMI_VDEV_TSF_TSTAMP_ACTION_CMDID);
 
 	if (ret != EOK) {
-		WMA_LOGE("wmi_unified_cmd_send returned Error %d", status);
 		status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
@@ -571,11 +554,8 @@ QDF_STATUS wma_set_wisa_params(tp_wma_handle wma_handle,
 	int ret, len = sizeof(*cmd);
 
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGP("%s: failed to allocate memory for WISA params",
-			 __func__);
+	if (!buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	cmd = (wmi_vdev_wisa_cmd_fixed_param *) wmi_buf_data(buf);
 	cmd->wisa_mode = wisa->mode;
@@ -589,7 +569,6 @@ QDF_STATUS wma_set_wisa_params(tp_wma_handle wma_handle,
 	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 				   WMI_VDEV_WISA_CMDID);
 	if (ret != EOK) {
-		WMA_LOGE("wmi_unified_cmd_send returned Error %d", status);
 		status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
@@ -852,10 +831,9 @@ QDF_STATUS wma_get_peer_info(WMA_HANDLE handle,
 
 	len  = sizeof(wmi_request_stats_cmd_fixed_param);
 	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!wmi_buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+	if (!wmi_buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	buf_ptr = (uint8_t *)wmi_buf_data(wmi_buf);
 
 	cmd = (wmi_request_stats_cmd_fixed_param *)buf_ptr;
@@ -871,7 +849,6 @@ QDF_STATUS wma_get_peer_info(WMA_HANDLE handle,
 
 	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
 				WMI_REQUEST_STATS_CMDID)) {
-		WMA_LOGE("Failed to send host stats request to fw");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -901,10 +878,9 @@ QDF_STATUS wma_get_peer_info_ext(WMA_HANDLE handle,
 
 	len  = sizeof(wmi_request_peer_stats_info_cmd_fixed_param);
 	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!wmi_buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+	if (!wmi_buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	buf_ptr = (uint8_t *)wmi_buf_data(wmi_buf);
 
 	cmd = (wmi_request_peer_stats_info_cmd_fixed_param *)buf_ptr;
@@ -921,7 +897,6 @@ QDF_STATUS wma_get_peer_info_ext(WMA_HANDLE handle,
 
 	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
 				WMI_REQUEST_PEER_STATS_INFO_CMDID)) {
-		WMA_LOGE("Failed to send peer stats request to fw");
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -976,10 +951,8 @@ QDF_STATUS wma_add_beacon_filter(WMA_HANDLE handle,
 	iface->beacon_filter_enabled = true;
 
 	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!wmi_buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+	if (!wmi_buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	buf = (u_int8_t *) wmi_buf_data(wmi_buf);
 
@@ -1005,8 +978,6 @@ QDF_STATUS wma_add_beacon_filter(WMA_HANDLE handle,
 	ret = wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
 			WMI_ADD_BCN_FILTER_CMDID);
 	if (ret) {
-		WMA_LOGE("Failed to send wmi add beacon filter = %d",
-				ret);
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1037,10 +1008,9 @@ QDF_STATUS wma_remove_beacon_filter(WMA_HANDLE handle,
 	}
 
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+	if (!buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	cmd = (wmi_rmv_bcn_filter_cmd_fixed_param *)wmi_buf_data(buf);
 	cmd->vdev_id = filter_params->vdev_id;
 
@@ -1052,8 +1022,6 @@ QDF_STATUS wma_remove_beacon_filter(WMA_HANDLE handle,
 	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 			WMI_RMV_BCN_FILTER_CMDID);
 	if (ret) {
-		WMA_LOGE("Failed to send wmi remove beacon filter = %d",
-				ret);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1269,11 +1237,9 @@ int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
 			nan_rsp_event_hdr->data_len, param_buf->num_data);
 		return -EINVAL;
 	}
-	nan_rsp_event = (tSirNanEvent *) qdf_mem_malloc(alloc_len);
-	if (NULL == nan_rsp_event) {
-		WMA_LOGE("%s: Memory allocation failure", __func__);
+	nan_rsp_event = qdf_mem_malloc(alloc_len);
+	if (!nan_rsp_event)
 		return -ENOMEM;
-	}
 
 	nan_rsp_event->event_data_len = nan_rsp_event_hdr->data_len;
 	qdf_mem_copy(nan_rsp_event->event_data, buf_ptr +
@@ -1343,10 +1309,8 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 	}
 
 	csa_offload_event = qdf_mem_malloc(sizeof(*csa_offload_event));
-	if (!csa_offload_event) {
-		WMA_LOGE("QDF MEM Alloc Failed for csa_offload_event");
+	if (!csa_offload_event)
 		return -EINVAL;
-	}
 
 	if (wma->interfaces[vdev_id].roaming_in_progress ||
 		wma->interfaces[vdev_id].roam_synch_in_progress) {
@@ -1456,15 +1420,13 @@ int wma_oem_data_response_handler(void *handle,
 	}
 
 	oem_rsp = qdf_mem_malloc(sizeof(*oem_rsp));
-	if (!oem_rsp) {
-		WMA_LOGE(FL("Failed to alloc oem_data_rsp"));
+	if (!oem_rsp)
 		return -ENOMEM;
-	}
+
 	oem_rsp->rsp_len = datalen;
 	if (oem_rsp->rsp_len) {
 		oem_rsp->data = qdf_mem_malloc(oem_rsp->rsp_len);
 		if (!oem_rsp->data) {
-			WMA_LOGE(FL("malloc failed for data"));
 			qdf_mem_free(oem_rsp);
 			return -ENOMEM;
 		}
@@ -2913,12 +2875,10 @@ static int wma_wake_event_piggybacked(
 		 * programmed. So do not check for cookie.
 		 */
 		WMA_LOGE("WOW_REASON_TIMER_INTR_RECV received, indicating key exchange did not finish. Initiate disconnect");
-		del_sta_ctx = (tpDeleteStaContext) qdf_mem_malloc(
-							sizeof(*del_sta_ctx));
-		if (!del_sta_ctx) {
-			WMA_LOGE("%s: mem alloc failed ", __func__);
+		del_sta_ctx = qdf_mem_malloc(sizeof(*del_sta_ctx));
+		if (!del_sta_ctx)
 			break;
-		}
+
 		del_sta_ctx->is_tdls = false;
 		del_sta_ctx->vdev_id = event_param->fixed_param->vdev_id;
 		del_sta_ctx->staId = peer_id;
@@ -3245,9 +3205,7 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 		&packet_loss_count, tid);
 
 	pTsmRspParams = qdf_mem_malloc(sizeof(*pTsmRspParams));
-	if (NULL == pTsmRspParams) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: QDF MEM Alloc Failure", __func__);
+	if (!pTsmRspParams) {
 		QDF_ASSERT(0);
 		qdf_mem_free(pTsmStatsMsg);
 		return QDF_STATUS_E_NOMEM;
@@ -3390,10 +3348,8 @@ QDF_STATUS wma_process_get_peer_info_req
 
 	len = sizeof(wmi_peer_info_req_cmd_fixed_param);
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s %d: No WMI resource!", __func__, __LINE__);
+	if (!buf)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	p = (uint8_t *) wmi_buf_data(buf);
 	qdf_mem_zero(p, len);
@@ -3483,10 +3439,8 @@ QDF_STATUS wma_process_rmc_enable_ind(tp_wma_handle wma)
 
 	len = sizeof(wmi_rmc_set_mode_cmd_fixed_param);
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s %d: No WMI resource!", __func__, __LINE__);
+	if (!buf)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	p = (uint8_t *) wmi_buf_data(buf);
 	qdf_mem_zero(p, len);
@@ -3535,10 +3489,8 @@ QDF_STATUS wma_process_rmc_disable_ind(tp_wma_handle wma)
 
 	len = sizeof(wmi_rmc_set_mode_cmd_fixed_param);
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s %d: No WMI resource!", __func__, __LINE__);
+	if (!buf)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	p = (uint8_t *) wmi_buf_data(buf);
 	qdf_mem_zero(p, len);
@@ -3594,10 +3546,8 @@ QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma)
 
 	len = sizeof(wmi_rmc_set_action_period_cmd_fixed_param);
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s %d: No WMI resource!", __func__, __LINE__);
+	if (!buf)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	p = (uint8_t *) wmi_buf_data(buf);
 	qdf_mem_zero(p, len);
@@ -3648,13 +3598,8 @@ QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 	}
 
 	params_ptr = qdf_mem_malloc(sizeof(*params_ptr));
-
-	if (!params_ptr) {
-		WMA_LOGE(
-			"%s: unable to allocate memory for periodic_tx_pattern",
-			 __func__);
+	if (!params_ptr)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	if (!wma_find_vdev_by_addr(wma_handle,
 				   pAddPeriodicTxPtrnParams->mac_address.bytes,
@@ -3737,11 +3682,8 @@ QDF_STATUS wma_stats_ext_req(void *wma_ptr, tpStatsExtRequest preq)
 
 	params_len = sizeof(*params) + preq->request_data_len;
 	params = qdf_mem_malloc(params_len);
-
-	if (params == NULL) {
-		WMA_LOGE(FL("memory allocation failed"));
+	if (!params)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	params->vdev_id = preq->vdev_id;
 	params->request_data_len = preq->request_data_len;
@@ -3775,12 +3717,9 @@ static void wma_send_status_of_ext_wow(tp_wma_handle wma, bool status)
 	WMA_LOGD("Posting ready to suspend indication to umac");
 
 	len = sizeof(tSirReadyToExtWoWInd);
-	ready_to_extwow = (tSirReadyToExtWoWInd *) qdf_mem_malloc(len);
-
-	if (NULL == ready_to_extwow) {
-		WMA_LOGE("%s: Memory allocation failure", __func__);
+	ready_to_extwow = qdf_mem_malloc(len);
+	if (!ready_to_extwow)
 		return;
-	}
 
 	ready_to_extwow->mesgType = eWNI_SME_READY_TO_EXTWOW_IND;
 	ready_to_extwow->mesgLen = len;
@@ -3973,11 +3912,8 @@ QDF_STATUS wma_nan_req(void *wma_ptr, tpNanRequest nan_req)
 
 	params_len = sizeof(*params) + nan_req->request_data_len;
 	params = qdf_mem_malloc(params_len);
-
-	if (params == NULL) {
-		WMA_LOGE(FL("memory allocation failed"));
+	if (!params)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	params->request_data_len = nan_req->request_data_len;
 	if (params->request_data_len > 0)
@@ -4287,8 +4223,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 	if (peerStateParams->peerCap.peerChanLen) {
 		ch_mhz = qdf_mem_malloc(sizeof(uint32_t) *
 				peerStateParams->peerCap.peerChanLen);
-		if (ch_mhz == NULL) {
-			WMA_LOGE("%s: memory allocation failed", __func__);
+		if (!ch_mhz) {
 			ret = -ENOMEM;
 			goto end_tdls_peer_state;
 		}
@@ -4441,11 +4376,8 @@ int wma_get_apf_caps_event_handler(void *handle, u_int8_t *cmd_param_info,
 	param_buf = (WMI_BPF_CAPABILIY_INFO_EVENTID_param_tlvs *)cmd_param_info;
 	event = param_buf->fixed_param;
 	apf_get_offload = qdf_mem_malloc(sizeof(*apf_get_offload));
-
-	if (!apf_get_offload) {
-		WMA_LOGP("%s: Memory allocation failed.", __func__);
+	if (!apf_get_offload)
 		return -ENOMEM;
-	}
 
 	apf_get_offload->apf_version = event->bpf_version;
 	apf_get_offload->max_apf_filters = event->max_bpf_filters;
@@ -4482,10 +4414,8 @@ QDF_STATUS wma_get_apf_capabilities(tp_wma_handle wma)
 
 	len = sizeof(*cmd);
 	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!wmi_buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+	if (!wmi_buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	buf_ptr = (u_int8_t *) wmi_buf_data(wmi_buf);
 	cmd = (wmi_bpf_get_capability_cmd_fixed_param *) buf_ptr;
@@ -4496,7 +4426,6 @@ QDF_STATUS wma_get_apf_capabilities(tp_wma_handle wma)
 
 	if (wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
 				 WMI_BPF_GET_CAPABILITY_CMDID)) {
-		WMA_LOGE(FL("Failed to send APF capability command"));
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4548,10 +4477,8 @@ QDF_STATUS wma_set_apf_instructions(tp_wma_handle wma,
 
 	len += sizeof(*cmd);
 	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!wmi_buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+	if (!wmi_buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	buf_ptr = (u_int8_t *) wmi_buf_data(wmi_buf);
 	cmd = (wmi_bpf_set_vdev_instructions_cmd_fixed_param *) buf_ptr;
@@ -4577,7 +4504,6 @@ QDF_STATUS wma_set_apf_instructions(tp_wma_handle wma,
 
 	if (wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
 				 WMI_BPF_SET_VDEV_INSTRUCTIONS_CMDID)) {
-		WMA_LOGE(FL("Failed to send config apf instructions command"));
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4753,11 +4679,8 @@ QDF_STATUS wma_set_tx_rx_aggregation_size(
 
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-
-	if (!buf) {
-		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
+	if (!buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	buf_ptr = (u_int8_t *) wmi_buf_data(buf);
 	cmd = (wmi_vdev_set_custom_aggr_size_cmd_fixed_param *) buf_ptr;
@@ -4783,8 +4706,6 @@ QDF_STATUS wma_set_tx_rx_aggregation_size(
 	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 				WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID);
 	if (ret) {
-		WMA_LOGE("%s: Failed to send aggregation size command",
-				__func__);
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4827,11 +4748,8 @@ QDF_STATUS wma_set_tx_rx_aggregation_size_per_ac(
 
 		len = sizeof(*cmd);
 		buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-
-		if (!buf) {
-			WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
+		if (!buf)
 			return QDF_STATUS_E_NOMEM;
-		}
 
 		buf_ptr = (u_int8_t *)wmi_buf_data(buf);
 		cmd = (wmi_vdev_set_custom_aggr_size_cmd_fixed_param *)buf_ptr;
@@ -4862,8 +4780,6 @@ QDF_STATUS wma_set_tx_rx_aggregation_size_per_ac(
 		ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 					WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID);
 		if (ret) {
-			WMA_LOGE("%s: Failed to send aggregation size command",
-				 __func__);
 			wmi_buf_free(buf);
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -4911,11 +4827,8 @@ QDF_STATUS wma_set_sw_retry_threshold(
 
 		len = sizeof(*cmd);
 		buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-
-		if (!buf) {
-			WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
+		if (!buf)
 			return QDF_STATUS_E_NOMEM;
-		}
 
 		buf_ptr = (u_int8_t *)wmi_buf_data(buf);
 		cmd =
@@ -4938,8 +4851,6 @@ QDF_STATUS wma_set_sw_retry_threshold(
 		ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 					   WMI_VDEV_SET_CUSTOM_SW_RETRY_TH_CMDID);
 		if (ret) {
-			WMA_LOGE("%s: Failed to send retry threshold command",
-				 __func__);
 			wmi_buf_free(buf);
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -4981,11 +4892,8 @@ QDF_STATUS wma_p2p_lo_start(struct sir_p2p_lo_start *params)
 			probe_resp_len_aligned;
 
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGP("%s: failed to allocate memory for p2p lo start",
-			 __func__);
+	if (!buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	cmd = (wmi_p2p_lo_start_cmd_fixed_param *)wmi_buf_data(buf);
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -5022,12 +4930,11 @@ QDF_STATUS wma_p2p_lo_start(struct sir_p2p_lo_start *params)
 	ret = wmi_unified_cmd_send(wma->wmi_handle,
 				   buf, len,
 				   WMI_P2P_LISTEN_OFFLOAD_START_CMDID);
-	if (ret) {
-		WMA_LOGE("Failed to send p2p lo start: %d", ret);
+	if (ret)
 		wmi_buf_free(buf);
-	}
+	else
+		WMA_LOGI("%s: Successfully sent WMI_P2P_LO_START", __func__);
 
-	WMA_LOGI("%s: Successfully sent WMI_P2P_LO_START", __func__);
 	wma->interfaces[params->vdev_id].p2p_lo_in_progress = true;
 
 	return ret;
@@ -5056,11 +4963,9 @@ QDF_STATUS wma_p2p_lo_stop(u_int32_t vdev_id)
 
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGP("%s: failed to allocate memory for p2p lo stop",
-			 __func__);
+	if (!buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	cmd = (wmi_p2p_lo_stop_cmd_fixed_param *)wmi_buf_data(buf);
 
 	WMITLV_SET_HDR(&cmd->tlv_header,
@@ -5075,12 +4980,10 @@ QDF_STATUS wma_p2p_lo_stop(u_int32_t vdev_id)
 	ret = wmi_unified_cmd_send(wma->wmi_handle,
 				   buf, len,
 				   WMI_P2P_LISTEN_OFFLOAD_STOP_CMDID);
-	if (ret) {
-		WMA_LOGE("Failed to send p2p lo stop: %d", ret);
+	if (ret)
 		wmi_buf_free(buf);
-	}
-
-	WMA_LOGI("%s: Successfully sent WMI_P2P_LO_STOP", __func__);
+	else
+		WMA_LOGI("%s: Successfully sent WMI_P2P_LO_STOP", __func__);
 	wma->interfaces[vdev_id].p2p_lo_in_progress = false;
 
 	return ret;
@@ -5130,10 +5033,9 @@ int wma_p2p_lo_event_handler(void *handle, uint8_t *event_buf,
 		return -EINVAL;
 	}
 	event = qdf_mem_malloc(sizeof(*event));
-	if (event == NULL) {
-		WMA_LOGE("Event allocation failed");
+	if (!event)
 		return -ENOMEM;
-	}
+
 	event->vdev_id = fix_param->vdev_id;
 	event->reason_code = fix_param->reason;
 
@@ -5256,10 +5158,9 @@ QDF_STATUS wma_enable_disable_caevent_ind(tp_wma_handle wma, uint8_t val)
 
 	len = sizeof(*cmd);
 	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!wmi_buf) {
-		WMA_LOGE(FL("wmi_buf_alloc failed"));
+	if (!wmi_buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
 	cmd = (WMI_CHAN_AVOID_RPT_ALLOW_CMD_fixed_param *) buf_ptr;
 	WMITLV_SET_HDR(&cmd->tlv_header,
@@ -5269,7 +5170,6 @@ QDF_STATUS wma_enable_disable_caevent_ind(tp_wma_handle wma, uint8_t val)
 	cmd->rpt_allow = val;
 	if (wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
 				WMI_CHAN_AVOID_RPT_ALLOW_CMDID)) {
-		WMA_LOGE(FL("Failed to send enable/disable CA event command"));
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5303,10 +5203,8 @@ static int wma_sar_event_handler(void *handle, uint8_t *evt_buf, uint32_t len)
 	}
 
 	event = qdf_mem_malloc(sizeof(*event));
-	if (!event) {
-		WMA_LOGE(FL("failed to malloc sar_limit_event"));
+	if (!event)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	status = wmi_unified_extract_sar_limit_event(wmi_handle,
 						     evt_buf, event);
@@ -5546,11 +5444,9 @@ int wma_unified_power_debug_stats_event_handler(void *handle,
 		(sizeof(uint32_t) * param_buf->num_debug_register);
 	power_stats_len = stats_registers_len + sizeof(*power_stats_results);
 	power_stats_results = qdf_mem_malloc(power_stats_len);
-	if (!power_stats_results) {
-		WMA_LOGD("%s: could not allocate mem for power stats results",
-				__func__);
+	if (!power_stats_results)
 		return -ENOMEM;
-	}
+
 	WMA_LOGD("Cumulative sleep time %d cumulative total on time %d deep sleep enter counter %d last deep sleep enter tstamp ts %d debug registers fmt %d num debug register %d",
 			param_buf->cumulative_sleep_time_ms,
 			param_buf->cumulative_total_on_time_ms,
@@ -5643,12 +5539,10 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 			return -EINVAL;
 		}
 		event = param_buf->fixed_param;
-		channel_status =
-			qdf_mem_malloc(sizeof(*channel_status));
-		if (!channel_status) {
-			WMA_LOGE(FL("Mem alloc fail"));
+		channel_status = qdf_mem_malloc(sizeof(*channel_status));
+		if (!channel_status)
 			return -ENOMEM;
-		}
+
 		WMA_LOGD(FL("freq=%d nf=%d rxcnt=%u cyccnt=%u tx_r=%d tx_t=%d"),
 			 event->freq,
 			 event->noise_floor,
@@ -5723,10 +5617,8 @@ int wma_rx_aggr_failure_event_handler(void *handle, u_int8_t *event_buf,
 		(rx_aggr_failure_info->num_failure_info)*
 		sizeof(rx_aggr_hole_event->hole_info_array[0]);
 	rx_aggr_hole_event = qdf_mem_malloc(alloc_len);
-	if (NULL == rx_aggr_hole_event) {
-		WMA_LOGE("%s: Memory allocation failure", __func__);
+	if (!rx_aggr_hole_event)
 		return -ENOMEM;
-	}
 
 	rx_aggr_hole_event->hole_cnt = rx_aggr_failure_info->num_failure_info;
 	if (rx_aggr_hole_event->hole_cnt > param_buf->num_failure_info) {
@@ -5863,10 +5755,8 @@ int wma_vdev_obss_detection_info_handler(void *handle, uint8_t *event,
 	}
 
 	obss_detection = qdf_mem_malloc(sizeof(*obss_detection));
-	if (!obss_detection) {
-		WMA_LOGE("%s: Failed to malloc", __func__);
+	if (!obss_detection)
 		return -ENOMEM;
-	}
 
 	status = wmi_unified_extract_obss_detection_info(wma->wmi_handle,
 							 event, obss_detection);
@@ -5903,10 +5793,8 @@ int wma_vdev_bss_color_collision_info_handler(void *handle,
 	}
 
 	obss_color_info = qdf_mem_malloc(sizeof(*obss_color_info));
-	if (!obss_color_info) {
-		WMA_LOGE("%s: Failed to malloc", __func__);
+	if (!obss_color_info)
 		return -ENOMEM;
-	}
 
 	status = wmi_unified_extract_obss_color_collision_info(wma->wmi_handle,
 							       event,

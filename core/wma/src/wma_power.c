@@ -70,10 +70,9 @@ wma_unified_modem_power_state(wmi_unified_t wmi_handle, uint32_t param_value)
 	uint16_t len = sizeof(*cmd);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
+	if (!buf)
 		return -ENOMEM;
-	}
+
 	cmd = (wmi_modem_power_state_cmd_param *) wmi_buf_data(buf);
 	WMITLV_SET_HDR(&cmd->tlv_header,
 		       WMITLV_TAG_STRUC_wmi_modem_power_state_cmd_param,
@@ -84,10 +83,9 @@ wma_unified_modem_power_state(wmi_unified_t wmi_handle, uint32_t param_value)
 		 param_value);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				     WMI_MODEM_POWER_STATE_CMDID);
-	if (ret != EOK) {
-		WMA_LOGE("Failed to send notify cmd ret = %d", ret);
+	if (ret != EOK)
 		wmi_buf_free(buf);
-	}
+
 	return ret;
 }
 
@@ -1427,13 +1425,10 @@ void wma_update_noa(struct beacon_info *beacon,
 void wma_update_probe_resp_noa(tp_wma_handle wma_handle,
 			       struct p2p_sub_element_noa *noa_ie)
 {
-	tSirP2PNoaAttr *noa_attr =
-		(tSirP2PNoaAttr *) qdf_mem_malloc(sizeof(tSirP2PNoaAttr));
+	tSirP2PNoaAttr *noa_attr = qdf_mem_malloc(sizeof(tSirP2PNoaAttr));
 	WMA_LOGD("Received update NoA event");
-	if (!noa_attr) {
-		WMA_LOGE("Failed to allocate memory for tSirP2PNoaAttr");
+	if (!noa_attr)
 		return;
-	}
 
 	qdf_mem_zero(noa_attr, sizeof(tSirP2PNoaAttr));
 
