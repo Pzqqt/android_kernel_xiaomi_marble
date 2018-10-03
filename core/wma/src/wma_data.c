@@ -2805,7 +2805,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	 */
 	if (status) {
 	/* Call Download Cb so that umac can free the buffer */
-		u32 rem;
+		uint32_t rem;
 
 		if (tx_frm_download_comp_cb)
 			tx_frm_download_comp_cb(wma_handle->mac_context,

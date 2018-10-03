@@ -1717,7 +1717,7 @@ static struct wlan_objmgr_peer *wma_create_objmgr_peer(tp_wma_handle wma,
  */
 QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 			  struct cdp_vdev *vdev,
-			  u8 peer_addr[IEEE80211_ADDR_LEN],
+			  uint8_t peer_addr[IEEE80211_ADDR_LEN],
 			  uint32_t peer_type, uint8_t vdev_id,
 			  bool roam_synch_in_progress)
 {
@@ -2275,7 +2275,7 @@ free_req_msg:
 }
 
 int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
-			       u32 len)
+			       uint32_t len)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	WMI_VDEV_STOPPED_EVENTID_param_tlvs *param_buf;

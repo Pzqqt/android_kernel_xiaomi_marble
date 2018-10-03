@@ -317,7 +317,8 @@ void wma_sta_kickout_event(uint32_t kickout_reason, uint8_t vdev_id,
  *
  * Return: 0 for success or error code
  */
-int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
+int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
+				       uint32_t len)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	WMI_PEER_STA_KICKOUT_EVENTID_param_tlvs *param_buf = NULL;
@@ -2657,7 +2658,7 @@ static QDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	len = *(u32 *) &bcn_info->beacon[0];
+	len = *(uint32_t *) &bcn_info->beacon[0];
 	if (len > SIR_MAX_BEACON_SIZE - sizeof(uint32_t)) {
 		WMA_LOGE("%s: Received beacon len %u exceeding max limit %lu",
 			 __func__, len, SIR_MAX_BEACON_SIZE - sizeof(uint32_t));

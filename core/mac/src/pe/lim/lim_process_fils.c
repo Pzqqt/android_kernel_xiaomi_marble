@@ -1535,16 +1535,17 @@ static QDF_STATUS find_ie_data_after_fils_session_ie(tpAniSirGlobal mac_ctx,
  *
  * Return: zero on success, error otherwise
  */
-static int fils_aead_encrypt(const u8 *kek, unsigned int kek_len,
-			     const u8 *own_mac, const u8 *bssid,
-			     const u8 *snonce, const u8 *anonce,
-			     const u8 *data, size_t data_len, u8 *plain_text,
-			     size_t plain_text_len, u8 *out)
+static int fils_aead_encrypt(const uint8_t *kek, unsigned int kek_len,
+			     const uint8_t *own_mac, const uint8_t *bssid,
+			     const uint8_t *snonce, const uint8_t *anonce,
+			     const uint8_t *data, size_t data_len,
+			     uint8_t *plain_text, size_t plain_text_len,
+			     uint8_t *out)
 {
-	u8 v[AES_BLOCK_SIZE];
-	const u8 *aad[6];
+	uint8_t v[AES_BLOCK_SIZE];
+	const uint8_t *aad[6];
 	size_t aad_len[6];
-	u8 *buf;
+	uint8_t *buf;
 	int ret;
 
 	/* SIV Encrypt/Decrypt takes input key of length 256, 384 or 512 bits */
@@ -1682,18 +1683,19 @@ QDF_STATUS aead_encrypt_assoc_req(tpAniSirGlobal mac_ctx,
  *
  * Return: zero on success, error otherwise
  */
-static int fils_aead_decrypt(const u8 *kek, unsigned int kek_len,
-			     const u8 *own_mac, const u8 *bssid,
-			     const u8 *snonce, const u8 *anonce,
-			     const u8 *data, size_t data_len, u8 *ciphered_text,
-			     size_t ciphered_text_len, u8 *plain_text)
+static int fils_aead_decrypt(const uint8_t *kek, unsigned int kek_len,
+			     const uint8_t *own_mac, const uint8_t *bssid,
+			     const uint8_t *snonce, const uint8_t *anonce,
+			     const uint8_t *data, size_t data_len,
+			     uint8_t *ciphered_text, size_t ciphered_text_len,
+			     uint8_t *plain_text)
 {
-	const u8 *aad[6];
+	const uint8_t *aad[6];
 	size_t aad_len[6];
-	u8 *buf;
+	uint8_t *buf;
 	size_t buf_len;
-	u8 v[AES_BLOCK_SIZE];
-	u8 siv[AES_BLOCK_SIZE];
+	uint8_t v[AES_BLOCK_SIZE];
+	uint8_t siv[AES_BLOCK_SIZE];
 	int ret;
 
 	/* SIV Encrypt/Decrypt takes input key of length 256, 384 or 512 bits */

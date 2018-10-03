@@ -565,7 +565,7 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 
 QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 			  struct cdp_vdev *vdev,
-			  u8 peer_addr[IEEE80211_ADDR_LEN],
+			  uint8_t peer_addr[IEEE80211_ADDR_LEN],
 			  uint32_t peer_type, uint8_t vdev_id,
 			  bool roam_synch_in_progress);
 
@@ -607,7 +607,7 @@ __wma_vdev_stop_resp_handler(wmi_vdev_stopped_event_fixed_param *resp_event);
  * Return: 0 for success or error code
  */
 int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
-				      u32 len);
+				      uint32_t len);
 
 struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 				struct add_sta_self_params *self_sta_req,
@@ -655,7 +655,8 @@ uint32_t wma_get_bcn_rate_code(uint16_t rate);
 
 int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len);
 
-int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len);
+int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
+				       uint32_t len);
 
 int wma_unified_bcntx_status_event_handler(void *handle,
 					   uint8_t *cmd_param_info,

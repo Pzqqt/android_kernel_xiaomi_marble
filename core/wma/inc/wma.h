@@ -337,16 +337,16 @@ enum ds_mode {
 /* Macros for handling unaligned memory accesses */
 #define P2PIE_PUT_LE16(a, val)		\
 	do {			\
-		(a)[1] = ((u16) (val)) >> 8;	\
-		(a)[0] = ((u16) (val)) & 0xff;	\
+		(a)[1] = ((uint16_t) (val)) >> 8;	\
+		(a)[0] = ((uint16_t) (val)) & 0xff;	\
 	} while (0)
 
 #define P2PIE_PUT_LE32(a, val)			\
 	do {				\
-		(a)[3] = (u8) ((((u32) (val)) >> 24) & 0xff);	\
-		(a)[2] = (u8) ((((u32) (val)) >> 16) & 0xff);	\
-		(a)[1] = (u8) ((((u32) (val)) >> 8) & 0xff);	\
-		(a)[0] = (u8) (((u32) (val)) & 0xff);	    \
+		(a)[3] = (uint8_t) ((((uint32_t) (val)) >> 24) & 0xff);	\
+		(a)[2] = (uint8_t) ((((uint32_t) (val)) >> 16) & 0xff);	\
+		(a)[1] = (uint8_t) ((((uint32_t) (val)) >> 8) & 0xff);	\
+		(a)[0] = (uint8_t) (((uint32_t) (val)) & 0xff);	    \
 	} while (0)
 
 
@@ -1930,7 +1930,7 @@ void wma_remove_peer(tp_wma_handle wma, u_int8_t *bssid,
 			bool roam_synch_in_progress);
 
 QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
-			    struct cdp_vdev *vdev, u8 peer_addr[6],
+			    struct cdp_vdev *vdev, uint8_t peer_addr[6],
 			   u_int32_t peer_type, u_int8_t vdev_id,
 			   bool roam_synch_in_progress);
 
@@ -1945,8 +1945,8 @@ QDF_STATUS wma_get_cca_stats(tp_wma_handle wma_handle,
 				uint8_t vdev_id);
 
 struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);
-WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
-				u8 dot11_mode);
+WLAN_PHY_MODE wma_chan_phy_mode(uint8_t chan, enum phy_ch_width chan_width,
+				uint8_t dot11_mode);
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 QDF_STATUS wma_start_oem_data_req(tp_wma_handle wma_handle,

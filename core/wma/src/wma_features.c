@@ -644,8 +644,8 @@ QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE handle,
  *
  * Return: return WLAN_PHY_MODE
  */
-WLAN_PHY_MODE wma_chan_phy_mode(u8 chan, enum phy_ch_width chan_width,
-				u8 dot11_mode)
+WLAN_PHY_MODE wma_chan_phy_mode(uint8_t chan, enum phy_ch_width chan_width,
+				uint8_t dot11_mode)
 {
 	WLAN_PHY_MODE phymode = MODE_UNKNOWN;
 	uint16_t bw_val = wlan_reg_get_bw_value(chan_width);
@@ -1518,7 +1518,7 @@ QDF_STATUS wma_pktlog_wmi_send_cmd(WMA_HANDLE handle,
  *
  * Return: reason code in string format
  */
-static const u8 *wma_wow_wake_reason_str(A_INT32 wake_reason)
+static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 {
 	switch (wake_reason) {
 	case WOW_REASON_UNSPECIFIED:
