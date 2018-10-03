@@ -347,23 +347,23 @@ QDF_STATUS
 populate_dot11f_country(tpAniSirGlobal mac,
 			tDot11fIECountry *pDot11f, struct pe_session *psessionEntry)
 {
-	uint32_t len, maxlen;
-	uint16_t item;
-	QDF_STATUS nSirStatus;
+	uint32_t len;
 	enum band_info rfBand;
 	uint8_t temp[CFG_MAX_STR_LEN], code[3];
 
 	if (psessionEntry->lim11dEnabled) {
 		lim_get_rf_band_new(mac, &rfBand, psessionEntry);
 		if (rfBand == BAND_5G) {
-			item = WNI_CFG_MAX_TX_POWER_5;
-			maxlen = WNI_CFG_MAX_TX_POWER_5_LEN;
+			len = mac->mlme_cfg->power.max_tx_power_5.len;
+			qdf_mem_copy(temp,
+				     mac->mlme_cfg->power.max_tx_power_5.data,
+				     len);
 		} else {
-			item = WNI_CFG_MAX_TX_POWER_2_4;
-			maxlen = WNI_CFG_MAX_TX_POWER_2_4_LEN;
+			len = mac->mlme_cfg->power.max_tx_power_24.len;
+			qdf_mem_copy(temp,
+				     mac->mlme_cfg->power.max_tx_power_24.data,
+				     len);
 		}
-
-		CFG_GET_STR(nSirStatus, mac, item, temp, len, maxlen);
 
 		if (3 > len) {
 			/* no limit on tx power, cannot include the IE because at least */
@@ -5845,9 +5845,7 @@ populate_dot11f_timing_advert_frame(tpAniSirGlobal mac_ctx,
 				    tDot11fTimingAdvertisementFrame *frame)
 {
 	uint32_t val, len;
-	uint16_t item;
 	uint8_t temp[CFG_MAX_STR_LEN], code[3];
-	QDF_STATUS nSirStatus;
 
 	/* Capabilities */
 	val = mac_ctx->mlme_cfg->wep_params.is_privacy_enabled;
@@ -5875,9 +5873,8 @@ populate_dot11f_timing_advert_frame(tpAniSirGlobal mac_ctx,
 		(uint16_t)((val >> WNI_CFG_BLOCK_ACK_ENABLED_IMMEDIATE) & 1);
 
 	/* Country */
-	item = WNI_CFG_MAX_TX_POWER_5;
-	CFG_GET_STR(nSirStatus, mac_ctx, item, temp, len,
-		WNI_CFG_MAX_TX_POWER_5_LEN);
+	len = mac_ctx->mlme_cfg->power.max_tx_power_5.len;
+	qdf_mem_copy(temp, mac_ctx->mlme_cfg->power.max_tx_power_5.data, len);
 	wlan_reg_read_current_country(mac_ctx->psoc, code);
 	qdf_mem_copy(&frame->Country, code, 2);
 	if (len > MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE)
@@ -5896,7 +5893,7 @@ populate_dot11f_timing_advert_frame(tpAniSirGlobal mac_ctx,
 	frame->TimeAdvertisement.present = 1;
 	frame->TimeAdvertisement.timing_capabilities = 1;
 
-	return nSirStatus;
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef WLAN_FEATURE_11AX

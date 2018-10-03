@@ -85,6 +85,25 @@ QDF_STATUS mlme_get_wep_key(struct wlan_mlme_wep_cfg *wep_params,
 QDF_STATUS mlme_set_wep_key(struct wlan_mlme_wep_cfg *wep_params,
 			    enum wep_key_id wep_keyid, uint8_t *key_to_set,
 			    qdf_size_t len);
+
+/**
+ * wlan_mlme_get_tx_power() - Get the max tx power in particular band
+ * @psoc: pointer to psoc object
+ * @band: 2ghz/5ghz band
+ *
+ * Return: value of tx power in the respective band
+ */
+uint8_t wlan_mlme_get_tx_power(struct wlan_objmgr_psoc *psoc,
+			       enum band_info band);
+
+/**
+ * wlan_mlme_get_power_usage() - Get the power usage info
+ * @psoc: pointer to psoc object
+ *
+ * Return: pointer to character array of power usage
+ */
+char *wlan_mlme_get_power_usage(struct wlan_objmgr_psoc *psoc);
+
 /**
  * wlan_mlme_get_ht_cap_info() - Get the HT cap info config
  * @psoc: pointer to psoc object

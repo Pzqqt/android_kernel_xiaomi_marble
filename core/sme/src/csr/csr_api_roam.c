@@ -12931,7 +12931,6 @@ QDF_STATUS csr_get_cfg_valid_channels(tpAniSirGlobal mac, uint8_t *pChannels,
 int8_t csr_get_cfg_max_tx_power(tpAniSirGlobal mac, uint8_t channel)
 {
 	uint32_t cfgLength = 0;
-	uint16_t cfgId = 0;
 	int8_t maxTxPwr = 0;
 	uint8_t *pCountryInfo = NULL;
 	uint8_t count = 0;
@@ -12939,11 +12938,10 @@ int8_t csr_get_cfg_max_tx_power(tpAniSirGlobal mac, uint8_t channel)
 	uint8_t maxChannels;
 
 	if (WLAN_REG_IS_5GHZ_CH(channel)) {
-		cfgId = WNI_CFG_MAX_TX_POWER_5;
-		cfgLength = WNI_CFG_MAX_TX_POWER_5_LEN;
+		cfgLength = mac->mlme_cfg->power.max_tx_power_5.len;
 	} else if (WLAN_REG_IS_24GHZ_CH(channel)) {
-		cfgId = WNI_CFG_MAX_TX_POWER_2_4;
-		cfgLength = WNI_CFG_MAX_TX_POWER_2_4_LEN;
+		cfgLength = mac->mlme_cfg->power.max_tx_power_24.len;
+
 	} else
 		return maxTxPwr;
 
@@ -12951,10 +12949,16 @@ int8_t csr_get_cfg_max_tx_power(tpAniSirGlobal mac, uint8_t channel)
 	if (!pCountryInfo)
 		goto error;
 
-	if (wlan_cfg_get_str(mac, cfgId, (uint8_t *)pCountryInfo,
-			&cfgLength) != QDF_STATUS_SUCCESS) {
-		goto error;
+	if (WLAN_REG_IS_5GHZ_CH(channel)) {
+		qdf_mem_copy(pCountryInfo,
+			     mac->mlme_cfg->power.max_tx_power_5.data,
+			     cfgLength);
+	} else if (WLAN_REG_IS_24GHZ_CH(channel)) {
+		qdf_mem_copy(pCountryInfo,
+			     mac->mlme_cfg->power.max_tx_power_24.data,
+			     cfgLength);
 	}
+
 	/* Identify the channel and maxtxpower */
 	while (count <= (cfgLength - (sizeof(tSirMacChanInfo)))) {
 		firstChannel = pCountryInfo[count++];

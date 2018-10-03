@@ -10755,8 +10755,8 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	} else if (cds_is_packet_log_enabled())
 		hdd_pktlog_enable_disable(hdd_ctx, true, 0, 0);
 
-	hddtxlimit.txPower2g = hdd_ctx->config->TxPower2g;
-	hddtxlimit.txPower5g = hdd_ctx->config->TxPower5g;
+	hddtxlimit.txPower2g = ucfg_get_tx_power(hdd_ctx->psoc, BAND_2G);
+	hddtxlimit.txPower5g = ucfg_get_tx_power(hdd_ctx->psoc, BAND_5G);
 	status = sme_txpower_limit(mac_handle, &hddtxlimit);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Error setting txlimit in sme: %d", status);

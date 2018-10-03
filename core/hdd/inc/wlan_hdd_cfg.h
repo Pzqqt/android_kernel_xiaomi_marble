@@ -2836,18 +2836,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_SNR_MONITORING_MAX               (1)
 #define CFG_ENABLE_SNR_MONITORING_DEFAULT           (0)
 
-/* SAR Thermal limit values for 2g and 5g */
-
-#define CFG_SET_TXPOWER_LIMIT2G_NAME               "TxPower2g"
-#define CFG_SET_TXPOWER_LIMIT2G_MIN                (0)
-#define CFG_SET_TXPOWER_LIMIT2G_MAX                (30)
-#define CFG_SET_TXPOWER_LIMIT2G_DEFAULT            (30)
-
-#define CFG_SET_TXPOWER_LIMIT5G_NAME               "TxPower5g"
-#define CFG_SET_TXPOWER_LIMIT5G_MIN                (0)
-#define CFG_SET_TXPOWER_LIMIT5G_MAX                (30)
-#define CFG_SET_TXPOWER_LIMIT5G_DEFAULT            (30)
-
 #ifdef FEATURE_WLAN_RA_FILTERING
 #define CFG_RA_RATE_LIMIT_INTERVAL_NAME            "gRArateLimitInterval"
 #define CFG_RA_RATE_LIMIT_INTERVAL_MIN             (60)
@@ -3638,28 +3626,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_5G_MAX_RSSI_PENALIZE_MIN             (0)
 #define CFG_5G_MAX_RSSI_PENALIZE_MAX             (20)
 #define CFG_5G_MAX_RSSI_PENALIZE_DEFAULT         (10)
-
-/*
- * <ini>
- * gPowerUsage - Preferred Power Usage
- * @Min: Min
- * @Max: Max
- * @Default: Mod
- *
- * This ini is used to set the preferred power usage
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_POWER_USAGE_NAME                   "gPowerUsage"
-#define CFG_POWER_USAGE_MIN                    "Min"
-#define CFG_POWER_USAGE_MAX                    "Max"
-#define CFG_POWER_USAGE_DEFAULT                "Mod"
 
 /*
  * <ini>
@@ -5129,6 +5095,7 @@ struct hdd_config {
 	bool Is11dSupportEnabled;
 	bool Is11hSupportEnabled;
 	char PowerUsageControl[4];
+	bool fSupplicantCountryCodeHasPriority;
 	bool fIsImpsEnabled;
 	bool is_ps_enabled;
 	uint32_t auto_bmps_timer_val;
@@ -5275,8 +5242,6 @@ struct hdd_config {
 	uint32_t IpaConfig;
 	bool IpaClkScalingEnable;
 	uint8_t disableDFSChSwitch;
-	uint32_t TxPower2g;
-	uint32_t TxPower5g;
 	bool fDfsPhyerrFilterOffload;
 	uint8_t gDisableDfsJapanW53;
 	bool gEnableOverLapCh;

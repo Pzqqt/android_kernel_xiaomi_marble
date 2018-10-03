@@ -78,10 +78,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_11H_SUPPORT_ENABLED_MIN,
 		     CFG_11H_SUPPORT_ENABLED_MAX),
 
-	REG_VARIABLE_STRING(CFG_POWER_USAGE_NAME, WLAN_PARAM_String,
-			    struct hdd_config, PowerUsageControl,
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_POWER_USAGE_DEFAULT),
 
 	REG_VARIABLE(CFG_ENABLE_IMPS_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fIsImpsEnabled,
@@ -643,20 +639,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_DEFAULT,
 		     CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MIN,
 		     CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MAX),
-
-	REG_VARIABLE(CFG_SET_TXPOWER_LIMIT2G_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, TxPower2g,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_SET_TXPOWER_LIMIT2G_DEFAULT,
-		     CFG_SET_TXPOWER_LIMIT2G_MIN,
-		     CFG_SET_TXPOWER_LIMIT2G_MAX),
-
-	REG_VARIABLE(CFG_SET_TXPOWER_LIMIT5G_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, TxPower5g,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_SET_TXPOWER_LIMIT5G_DEFAULT,
-		     CFG_SET_TXPOWER_LIMIT5G_MIN,
-		     CFG_SET_TXPOWER_LIMIT5G_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_NAME,
 		     WLAN_PARAM_Integer,
@@ -2157,9 +2139,9 @@ static void hdd_set_power_save_offload_config(struct hdd_context *hdd_ctx)
 	struct hdd_config *pConfig = hdd_ctx->config;
 	uint32_t listenInterval = 0;
 
-	if (strcmp(pConfig->PowerUsageControl, "Min") == 0)
+	if (strcmp(ucfg_mlme_get_power_usage(hdd_ctx->psoc), "Min") == 0)
 		listenInterval = pConfig->nBmpsMinListenInterval;
-	else if (strcmp(pConfig->PowerUsageControl, "Max") == 0)
+	else if (strcmp(ucfg_mlme_get_power_usage(hdd_ctx->psoc), "Max") == 0)
 		listenInterval = pConfig->nBmpsMaxListenInterval;
 
 	/*

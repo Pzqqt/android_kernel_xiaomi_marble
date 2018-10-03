@@ -554,62 +554,59 @@ QDF_STATUS wlan_cfg_get_str_len(tpAniSirGlobal mac, uint16_t cfgId,
 
 /**
  * cfg_get_dot11d_transmit_power() - regulatory max transmit power
- * @mac: pointer to mac data
- * @cfgId: configuration ID
- * @cfgLength: configuration length
+ * @pMac: pointer to mac data
  * @channel: channel number
  *
  * Return:  int8_t - power
  */
 static int8_t
-cfg_get_dot11d_transmit_power(tpAniSirGlobal mac, uint16_t cfgId,
-			      uint32_t cfgLength, uint8_t channel)
+cfg_get_dot11d_transmit_power(tpAniSirGlobal pMac, uint8_t channel)
 {
-	uint8_t *pCountryInfo = NULL;
+	uint32_t cfg_length = 0;
+	int8_t max_tx_pwr = 0;
+	uint8_t *country_info = NULL;
 	uint8_t count = 0;
-	int8_t maxTxPwr = WMA_MAX_TXPOWER_INVALID;
+	uint8_t first_channel;
+	uint8_t maxChannels;
 
-	/* At least one element is present */
-	if (cfgLength < sizeof(tSirMacChanInfo)) {
-		pe_err("Invalid CFGLENGTH: %d while getting 11d txpower",
-			       cfgLength);
+	if (WLAN_REG_IS_5GHZ_CH(channel))
+		cfg_length = pMac->mlme_cfg->power.max_tx_power_5.len;
+	else if (WLAN_REG_IS_24GHZ_CH(channel))
+		cfg_length = pMac->mlme_cfg->power.max_tx_power_24.len;
+	else
+		return max_tx_pwr;
+
+	country_info = qdf_mem_malloc(cfg_length);
+	if (!country_info)
 		goto error;
+
+	if (WLAN_REG_IS_5GHZ_CH(channel)) {
+		qdf_mem_copy(country_info,
+			     pMac->mlme_cfg->power.max_tx_power_5.data,
+			     cfg_length);
+	} else if (WLAN_REG_IS_24GHZ_CH(channel)) {
+		qdf_mem_copy(country_info,
+			     pMac->mlme_cfg->power.max_tx_power_24.data,
+			     cfg_length);
 	}
 
-	pCountryInfo = qdf_mem_malloc(cfgLength);
-	if (!pCountryInfo)
-		goto error;
-
-	/* The CSR will always update this CFG. The contents will be from country IE if regulatory domain
-	 * is enabled on AP else will contain EEPROM contents
-	 */
-	if (wlan_cfg_get_str(mac, cfgId, pCountryInfo, &cfgLength) !=
-							QDF_STATUS_SUCCESS) {
-		qdf_mem_free(pCountryInfo);
-		pCountryInfo = NULL;
-
-		pe_warn("Failed to retrieve 11d configuration parameters while retrieving 11d tuples");
-		goto error;
-	}
 	/* Identify the channel and maxtxpower */
-	while (count <= (cfgLength - (sizeof(tSirMacChanInfo)))) {
-		uint8_t firstChannel, maxChannels;
+	while (count <= (cfg_length - (sizeof(tSirMacChanInfo)))) {
+		first_channel = country_info[count++];
+		maxChannels = country_info[count++];
+		max_tx_pwr = country_info[count++];
 
-		firstChannel = pCountryInfo[count++];
-		maxChannels = pCountryInfo[count++];
-		maxTxPwr = pCountryInfo[count++];
-
-		if ((channel >= firstChannel) &&
-		    (channel < (firstChannel + maxChannels))) {
+		if ((channel >= first_channel) &&
+		    (channel < (first_channel + maxChannels))) {
 			break;
 		}
 	}
 
 error:
-	if (NULL != pCountryInfo)
-		qdf_mem_free(pCountryInfo);
+	if (country_info)
+		qdf_mem_free(country_info);
 
-	return maxTxPwr;
+	return max_tx_pwr;
 }
 
 /**----------------------------------------------------------------------
@@ -624,40 +621,7 @@ error:
 int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal mac,
 					     uint8_t channel)
 {
-	uint32_t cfgLength = 0;
-	uint16_t cfgId = 0;
-	int8_t maxTxPwr;
-	eRfBandMode rfBand = eRF_BAND_UNKNOWN;
-
-	if ((channel >= SIR_11A_CHANNEL_BEGIN) &&
-	    (channel <= SIR_11A_CHANNEL_END))
-		rfBand = eRF_BAND_5_GHZ;
-	else
-		rfBand = eRF_BAND_2_4_GHZ;
-
-	/* Get the max transmit power for current channel for the current regulatory domain */
-	switch (rfBand) {
-	case eRF_BAND_2_4_GHZ:
-		cfgId = WNI_CFG_MAX_TX_POWER_2_4;
-		cfgLength = WNI_CFG_MAX_TX_POWER_2_4_LEN;
-		pe_debug("HAL: Reading CFG for 2.4 GHz channels to get regulatory max tx power");
-		break;
-
-	case eRF_BAND_5_GHZ:
-		cfgId = WNI_CFG_MAX_TX_POWER_5;
-		cfgLength = WNI_CFG_MAX_TX_POWER_5_LEN;
-		pe_debug("HAL: Reading CFG for 5.0 GHz channels to get regulatory max tx power");
-		break;
-
-	case eRF_BAND_UNKNOWN:
-	default:
-		pe_warn("HAL: Invalid current working band for the device");
-		return WMA_MAX_TXPOWER_INVALID;         /* Its return, not break. */
-	}
-
-	maxTxPwr = cfg_get_dot11d_transmit_power(mac, cfgId, cfgLength, channel);
-
-	return maxTxPwr;
+	return cfg_get_dot11d_transmit_power(mac, channel);
 }
 
 /* --------------------------------------------------------------------- */

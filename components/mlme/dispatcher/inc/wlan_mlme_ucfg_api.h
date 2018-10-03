@@ -118,6 +118,31 @@ static inline QDF_STATUS ucfg_mlme_pdev_close(struct wlan_objmgr_pdev *pdev)
 #endif
 
 /**
+ * wlan_mlme_get_power_usage() - Get the power usage info
+ * @psoc: pointer to psoc object
+ *
+ * Return: pointer to character array of power usage
+ */
+static inline
+char *ucfg_mlme_get_power_usage(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_mlme_get_power_usage(psoc);
+}
+
+/**
+ * ucfg_get_tx_power() - Get the max tx power in particular band
+ * @psoc: pointer to psoc object
+ * @band: 2ghz/5ghz band
+ *
+ * Return: value of tx power in the respective band
+ */
+static inline
+uint8_t ucfg_get_tx_power(struct wlan_objmgr_psoc *psoc, uint8_t band)
+{
+	return wlan_mlme_get_tx_power(psoc, band);
+}
+
+/**
  * ucfg_mlme_get_ht_cap_info() - Get the HT cap info config
  * @psoc: pointer to psoc object
  * @value: pointer to the value which will be filled for the caller

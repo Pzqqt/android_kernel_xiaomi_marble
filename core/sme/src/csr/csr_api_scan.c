@@ -657,9 +657,9 @@ void csr_apply_power2_current(tpAniSirGlobal mac)
 {
 	sme_debug("Updating Cfg with power settings");
 	csr_save_tx_power_to_cfg(mac, &mac->scan.channelPowerInfoList24,
-				 WNI_CFG_MAX_TX_POWER_2_4);
+				 BAND_2G);
 	csr_save_tx_power_to_cfg(mac, &mac->scan.channelPowerInfoList5G,
-				 WNI_CFG_MAX_TX_POWER_5);
+				 BAND_5G);
 }
 
 void csr_apply_channel_power_info_to_fw(tpAniSirGlobal mac_ctx,
@@ -1609,23 +1609,24 @@ static void csr_set_cfg_valid_channel_list(tpAniSirGlobal mac,
 /*
  * The Tx power limits are saved in the cfg for future usage.
  */
-static void csr_save_tx_power_to_cfg(tpAniSirGlobal mac, tDblLinkList *pList,
-			      uint32_t cfgId)
+static void csr_save_tx_power_to_cfg(tpAniSirGlobal pMac,
+				     tDblLinkList *pList,
+				     enum band_info band)
 {
 	tListElem *pEntry;
 	uint32_t cbLen = 0, dataLen, tmp_len;
 	struct csr_channel_powerinfo *ch_set;
 	uint32_t idx;
 	tSirMacChanInfo *ch_pwr_set;
-	uint8_t *pBuf = NULL;
+	uint8_t *p_buf = NULL;
 
 	/* allocate maximum space for all channels */
 	dataLen = WNI_CFG_VALID_CHANNEL_LIST_LEN * sizeof(tSirMacChanInfo);
-	pBuf = qdf_mem_malloc(dataLen);
-	if (pBuf == NULL)
+	p_buf = qdf_mem_malloc(dataLen);
+	if (!p_buf)
 		return;
 
-	ch_pwr_set = (tSirMacChanInfo *) (pBuf);
+	ch_pwr_set = (tSirMacChanInfo *)(p_buf);
 	pEntry = csr_ll_peek_head(pList, LL_ACCESS_LOCK);
 	/*
 	 * write the tuples (startChan, numChan, txPower) for each channel found
@@ -1666,7 +1667,7 @@ static void csr_save_tx_power_to_cfg(tpAniSirGlobal mac, tDblLinkList *pList,
 				ch_pwr_set->numChannels = 1;
 				ch_pwr_set->maxTxPower =
 					QDF_MIN(ch_set->txPower,
-					mac->roam.configParam.nTxPowerCap);
+					pMac->roam.configParam.nTxPowerCap);
 				sme_debug(
 					"Setting Max Transmit Power %d",
 					ch_pwr_set->maxTxPower);
@@ -1688,20 +1689,25 @@ static void csr_save_tx_power_to_cfg(tpAniSirGlobal mac, tDblLinkList *pList,
 				ch_pwr_set->firstChanNum);
 			ch_pwr_set->numChannels = ch_set->numChannels;
 			ch_pwr_set->maxTxPower = QDF_MIN(ch_set->txPower,
-					mac->roam.configParam.nTxPowerCap);
+					pMac->roam.configParam.nTxPowerCap);
 			sme_debug(
 				"Setting Max Tx Power %d, nTxPower %d",
 				ch_pwr_set->maxTxPower,
-				mac->roam.configParam.nTxPowerCap);
+				pMac->roam.configParam.nTxPowerCap);
 			cbLen += sizeof(tSirMacChanInfo);
 			ch_pwr_set++;
 		}
 		pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_LOCK);
 	}
-	if (cbLen)
-		cfg_set_str(mac, cfgId, (uint8_t *) pBuf, cbLen);
-
-	qdf_mem_free(pBuf);
+	if (band == BAND_2G)
+		qdf_mem_copy(pMac->mlme_cfg->power.max_tx_power_24.data,
+			     (uint8_t *)p_buf,
+			     pMac->mlme_cfg->power.max_tx_power_24.len);
+	if (band == BAND_5G)
+		qdf_mem_copy(pMac->mlme_cfg->power.max_tx_power_5.data,
+			     (uint8_t *)p_buf,
+			     pMac->mlme_cfg->power.max_tx_power_5.len);
+	qdf_mem_free(p_buf);
 }
 
 static void csr_set_cfg_country_code(tpAniSirGlobal mac, uint8_t *countryCode)
