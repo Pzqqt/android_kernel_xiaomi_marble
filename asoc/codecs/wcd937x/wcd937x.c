@@ -560,6 +560,9 @@ static int wcd937x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMU:
 		snd_soc_update_bits(codec, WCD937X_ANA_HPH, 0x10, 0x10);
 		usleep_range(100, 110);
+		ret = swr_slvdev_datapath_control(wcd937x->rx_swr_dev,
+					    wcd937x->rx_swr_dev->dev_num,
+					    true);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		usleep_range(7000, 7010);
@@ -567,9 +570,6 @@ static int wcd937x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 				    0x02, 0x02);
 		snd_soc_update_bits(codec, WCD937X_ANA_RX_SUPPLIES,
 				    0x02, 0x02);
-		ret = swr_slvdev_datapath_control(wcd937x->rx_swr_dev,
-					    wcd937x->rx_swr_dev->dev_num,
-					    true);
 		if (wcd937x->update_wcd_event)
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
@@ -607,6 +607,9 @@ static int wcd937x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMU:
 		snd_soc_update_bits(codec, WCD937X_ANA_HPH, 0x20, 0x20);
 		usleep_range(100, 110);
+		ret = swr_slvdev_datapath_control(wcd937x->rx_swr_dev,
+				    wcd937x->rx_swr_dev->dev_num,
+				    true);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		usleep_range(7000, 7010);
@@ -614,9 +617,6 @@ static int wcd937x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 				    0x02, 0x02);
 		snd_soc_update_bits(codec, WCD937X_ANA_RX_SUPPLIES,
 				    0x02, 0x02);
-		ret = swr_slvdev_datapath_control(wcd937x->rx_swr_dev,
-				    wcd937x->rx_swr_dev->dev_num,
-				    true);
 		if (wcd937x->update_wcd_event)
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
@@ -660,14 +660,14 @@ static int wcd937x_codec_enable_aux_pa(struct snd_soc_dapm_widget *w,
 		usleep_range(500, 510);
 		snd_soc_update_bits(codec, WCD937X_CLASSH_MODE_2, 0xFF, 0x3A);
 		usleep_range(500, 510);
+		ret = swr_slvdev_datapath_control(wcd937x->rx_swr_dev,
+			    wcd937x->rx_swr_dev->dev_num,
+			    true);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		usleep_range(1000, 1010);
 		snd_soc_update_bits(codec, WCD937X_ANA_RX_SUPPLIES,
 				    0x20, 0x20);
-		ret = swr_slvdev_datapath_control(wcd937x->rx_swr_dev,
-			    wcd937x->rx_swr_dev->dev_num,
-			    true);
 		if (wcd937x->update_wcd_event)
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
@@ -705,14 +705,14 @@ static int wcd937x_codec_enable_ear_pa(struct snd_soc_dapm_widget *w,
 		usleep_range(500, 510);
 		snd_soc_update_bits(codec, WCD937X_CLASSH_MODE_2, 0xFF, 0x3A);
 		usleep_range(500, 510);
+		ret = swr_slvdev_datapath_control(wcd937x->rx_swr_dev,
+			    wcd937x->rx_swr_dev->dev_num,
+			    true);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		usleep_range(6000, 6010);
 		snd_soc_update_bits(codec, WCD937X_ANA_RX_SUPPLIES,
 				    0x02, 0x02);
-		ret = swr_slvdev_datapath_control(wcd937x->rx_swr_dev,
-			    wcd937x->rx_swr_dev->dev_num,
-			    true);
 		if (wcd937x->update_wcd_event)
 			wcd937x->update_wcd_event(wcd937x->handle,
 						WCD_BOLERO_EVT_RX_MUTE,
