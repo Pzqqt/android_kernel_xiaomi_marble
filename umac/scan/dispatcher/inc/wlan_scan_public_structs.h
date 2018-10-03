@@ -475,7 +475,8 @@ struct scoring_config {
 	uint32_t band_weight_per_index;
 	uint8_t cb_mode_24G;
 	uint8_t cb_mode_5G;
-	uint8_t nss;
+	uint8_t vdev_nss_24g;
+	uint8_t vdev_nss_5g;
 	uint8_t ht_cap:1,
 		vht_cap:1,
 		he_cap:1,

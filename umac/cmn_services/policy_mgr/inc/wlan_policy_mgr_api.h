@@ -126,6 +126,20 @@ uint8_t policy_mgr_search_and_check_for_session_conc(
 		uint8_t session_id, void *roam_profile);
 
 /**
+ * policy_mgr_is_chnl_in_diff_band() - to check that given channel
+ * is in diff band from existing channel or not
+ * @psoc: pointer to psoc
+ * @channel: given channel
+ *
+ * This API will check that if the passed channel is in diff band than the
+ * already existing connections or not.
+ *
+ * Return: true if channel is in diff band
+ */
+bool policy_mgr_is_chnl_in_diff_band(struct wlan_objmgr_psoc *psoc,
+					    uint8_t channel);
+
+/**
  * policy_mgr_check_for_session_conc() - Check if concurrency is
  * allowed for a session
  * @psoc: PSOC object information

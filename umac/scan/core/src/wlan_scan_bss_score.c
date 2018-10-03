@@ -25,6 +25,7 @@
 #ifdef WLAN_POLICY_MGR_ENABLE
 #include "wlan_policy_mgr_api.h"
 #endif
+#include "wlan_reg_services_api.h"
 
 #define SCM_20MHZ_BW_INDEX                  0
 #define SCM_40MHZ_BW_INDEX                  1
@@ -549,13 +550,11 @@ static int32_t scm_calculate_congestion_score(
  */
 static int32_t scm_calculate_nss_score(struct wlan_objmgr_psoc *psoc,
 	struct scoring_config *score_config, uint8_t ap_nss,
-	uint8_t prorated_pct)
+	uint8_t prorated_pct, uint32_t sta_nss)
 {
 	uint8_t nss;
 	uint8_t score_pct;
-	uint8_t sta_nss;
 
-	sta_nss = score_config->nss;
 	nss = ap_nss;
 	if (sta_nss < nss)
 		nss = sta_nss;
@@ -629,6 +628,40 @@ static int32_t scm_calculate_oce_wan_score(
 			&score_params->oce_wan_scoring);
 }
 
+#ifdef WLAN_POLICY_MGR_ENABLE
+
+static uint32_t scm_get_sta_nss(struct wlan_objmgr_psoc *psoc,
+			uint8_t bss_channel,
+			uint8_t vdev_nss_2g,
+			uint8_t vdev_nss_5g)
+{
+	/*
+	 * If station support nss as 2*2 but AP support NSS as 1*1,
+	 * this AP will be given half weight compare to AP which are having
+	 * NSS as 2*2.
+	 */
+
+	if (policy_mgr_is_chnl_in_diff_band(psoc, bss_channel) &&
+	    policy_mgr_is_hw_dbs_capable(psoc) &&
+	    !(policy_mgr_is_hw_dbs_2x2_capable(psoc)))
+		return 1;
+
+	return (WLAN_REG_IS_24GHZ_CH(bss_channel) ?
+		vdev_nss_2g :
+		vdev_nss_5g);
+}
+#else
+static uint32_t scm_get_sta_nss(struct wlan_objmgr_psoc *psoc,
+			uint8_t bss_channel,
+			uint8_t vdev_nss_2g,
+			uint8_t vdev_nss_5g)
+{
+	return (WLAN_REG_IS_24GHZ_CH(bss_channel) ?
+		vdev_nss_2g :
+		vdev_nss_5g);
+}
+#endif
+
 int scm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 		struct scan_default_params *params,
 		struct scan_cache_entry *entry,
@@ -656,6 +689,7 @@ int scm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	struct scoring_config *score_config;
 	struct weight_config *weight_config;
 	struct wlan_scan_obj *scan_obj;
+	uint32_t sta_nss;
 
 	scan_obj = wlan_psoc_get_scan_obj(psoc);
 	if (!scan_obj) {
@@ -747,13 +781,17 @@ int scm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	congestion_score = scm_calculate_congestion_score(entry, score_config);
 	score += congestion_score;
 
+	sta_nss = scm_get_sta_nss(psoc, entry->channel.chan_idx,
+				  score_config->vdev_nss_24g,
+				  score_config->vdev_nss_5g);
+
 	/*
 	 * If station support nss as 2*2 but AP support NSS as 1*1,
 	 * this AP will be given half weight compare to AP which are having
 	 * NSS as 2*2.
 	 */
 	nss_score = scm_calculate_nss_score(psoc, score_config, entry->nss,
-					    prorated_pcnt);
+					    prorated_pcnt, sta_nss);
 	score += nss_score;
 
 	oce_wan_score = scm_calculate_oce_wan_score(entry, score_config);
@@ -763,7 +801,7 @@ int scm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 		  score_config->ht_cap, score_config->vht_cap,
 		  score_config->he_cap,  score_config->vht_24G_cap,
 		  score_config->beamformee_cap, score_config->cb_mode_24G,
-		  score_config->cb_mode_5G, score_config->nss);
+		  score_config->cb_mode_5G, sta_nss);
 
 	scm_debug("Candidate (BSSID: %pM Chan %d) Cap:: rssi=%d HT=%d VHT=%d HE %d su beamformer %d phymode=%d  air time fraction %d qbss load %d NSS %d",
 		  entry->bssid.bytes, entry->channel.chan_idx,
