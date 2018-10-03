@@ -252,43 +252,63 @@ static void __dsc_driver_trans_stop(struct dsc_driver *driver)
 	if (!dsc_assert(driver))
 		return;
 
+	__dsc_lock(driver);
+
 	dsc_assert(driver->trans.active_desc);
 	driver->trans.active_desc = NULL;
-
 	__dsc_driver_trigger_trans(driver);
+
+	__dsc_unlock(driver);
 }
 
 void dsc_driver_trans_stop(struct dsc_driver *driver)
 {
 	dsc_enter();
-	__dsc_lock(driver);
 	__dsc_driver_trans_stop(driver);
-	__dsc_unlock(driver);
 	dsc_exit();
+}
+
+static void __dsc_driver_trans_assert(struct dsc_driver *driver)
+{
+	if (!dsc_assert(driver))
+		return;
+
+	__dsc_lock(driver);
+	dsc_assert(driver->trans.active_desc);
+	__dsc_unlock(driver);
 }
 
 void dsc_driver_trans_assert(struct dsc_driver *driver)
 {
 	dsc_enter();
-	__dsc_lock(driver);
-	dsc_assert(driver->trans.active_desc);
-	__dsc_unlock(driver);
+	__dsc_driver_trans_assert(driver);
 	dsc_exit();
 }
 
 static QDF_STATUS
 __dsc_driver_op_start(struct dsc_driver *driver, const char *func)
 {
+	QDF_STATUS status;
+
 	if (!dsc_assert(driver))
 		return QDF_STATUS_E_INVAL;
 
 	if (!dsc_assert(func))
 		return QDF_STATUS_E_INVAL;
 
-	if (!__dsc_driver_can_op(driver))
-		return QDF_STATUS_E_AGAIN;
+	__dsc_lock(driver);
 
-	return __dsc_ops_insert(&driver->ops, func);
+	if (!__dsc_driver_can_op(driver)) {
+		status = QDF_STATUS_E_AGAIN;
+		goto unlock;
+	}
+
+	status = __dsc_ops_insert(&driver->ops, func);
+
+unlock:
+	__dsc_unlock(driver);
+
+	return status;
 }
 
 QDF_STATUS _dsc_driver_op_start(struct dsc_driver *driver, const char *func)
@@ -296,9 +316,7 @@ QDF_STATUS _dsc_driver_op_start(struct dsc_driver *driver, const char *func)
 	QDF_STATUS status;
 
 	dsc_enter_str(func);
-	__dsc_lock(driver);
 	status = __dsc_driver_op_start(driver, func);
-	__dsc_unlock(driver);
 	dsc_exit_status(status);
 
 	return status;
@@ -312,16 +330,16 @@ static void __dsc_driver_op_stop(struct dsc_driver *driver, const char *func)
 	if (!dsc_assert(func))
 		return;
 
+	__dsc_lock(driver);
 	if (__dsc_ops_remove(&driver->ops, func))
 		qdf_event_set(&driver->ops.event);
+	__dsc_unlock(driver);
 }
 
 void _dsc_driver_op_stop(struct dsc_driver *driver, const char *func)
 {
 	dsc_enter_str(func);
-	__dsc_lock(driver);
 	__dsc_driver_op_stop(driver, func);
-	__dsc_unlock(driver);
 	dsc_exit();
 }
 
