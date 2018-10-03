@@ -979,17 +979,19 @@ int tdls_set_tdls_secoffchanneloffset(struct tdls_soc_priv_obj *tdls_soc,
 
 	switch (offchanoffset) {
 	case TDLS_SEC_OFFCHAN_OFFSET_0:
-		tdls_soc->tdls_channel_offset = (1 << BW_20_OFFSET_BIT);
+		tdls_soc->tdls_channel_offset = BW20;
 		break;
 	case TDLS_SEC_OFFCHAN_OFFSET_40PLUS:
+		tdls_soc->tdls_channel_offset = BW40_LOW_PRIMARY;
+		break;
 	case TDLS_SEC_OFFCHAN_OFFSET_40MINUS:
-		tdls_soc->tdls_channel_offset = (1 << BW_40_OFFSET_BIT);
+		tdls_soc->tdls_channel_offset = BW40_LOW_PRIMARY;
 		break;
 	case TDLS_SEC_OFFCHAN_OFFSET_80:
-		tdls_soc->tdls_channel_offset = (1 << BW_80_OFFSET_BIT);
+		tdls_soc->tdls_channel_offset = BW80;
 		break;
 	case TDLS_SEC_OFFCHAN_OFFSET_160:
-		tdls_soc->tdls_channel_offset = (1 << BW_160_OFFSET_BIT);
+		tdls_soc->tdls_channel_offset = BWALL;
 		break;
 	default:
 		tdls_err("Invalid tdls secondary off channel offset %d",

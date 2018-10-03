@@ -1140,7 +1140,7 @@ struct tdls_set_offchanmode {
  */
 struct tdls_set_secoffchanneloffset {
 	struct wlan_objmgr_vdev *vdev;
-	uint8_t offchan_offset;
+	int offchan_offset;
 	tdls_offchan_parms_callback callback;
 };
 
