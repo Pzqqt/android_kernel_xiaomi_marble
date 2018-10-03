@@ -14034,6 +14034,8 @@ hdd_update_score_config(struct scoring_config *score_config,
 			struct hdd_config *cfg)
 {
 	struct hdd_context *hdd_ctx;
+	bool enable2x2 = false;
+	QDF_STATUS status;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -14045,7 +14047,15 @@ hdd_update_score_config(struct scoring_config *score_config,
 
 	score_config->cb_mode_24G = cfg->nChannelBondingMode24GHz;
 	score_config->cb_mode_5G = cfg->nChannelBondingMode5GHz;
-	score_config->nss = cfg->enable2x2 ? 2 : 1;
+
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &enable2x2);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get enable2x2");
+
+	score_config->vdev_nss_24g =
+			enable2x2 ? CFG_STA_NSS(cfg->vdev_type_nss_2g) : 1;
+	score_config->vdev_nss_5g =
+			enable2x2 ? CFG_STA_NSS(cfg->vdev_type_nss_5g) : 1;
 
 	if (cfg->dot11Mode == eHDD_DOT11_MODE_AUTO ||
 	    cfg->dot11Mode == eHDD_DOT11_MODE_11ax ||
