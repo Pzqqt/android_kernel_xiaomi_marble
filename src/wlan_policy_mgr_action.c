@@ -444,7 +444,7 @@ bool policy_mgr_is_dbs_allowed_for_concurrency(
 	return ret;
 }
 
-static bool policy_mgr_is_chnl_in_diff_band(struct wlan_objmgr_psoc *psoc,
+bool policy_mgr_is_chnl_in_diff_band(struct wlan_objmgr_psoc *psoc,
 					    uint8_t channel)
 {
 	uint8_t i, pm_chnl;
