@@ -1081,11 +1081,8 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 #endif
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("Failed to allocate memory"));
+	if (!req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(mac_ctx->pdev);
 	self_mac = sap_context->self_mac_addr;
@@ -2961,11 +2958,9 @@ sapconvert_to_csr_profile(tsap_config_t *pconfig_params, eCsrRoamBssType bssType
 	if (pconfig_params->RSNWPAReqIELength) {
 		profile->pRSNReqIE =
 			qdf_mem_malloc(pconfig_params->RSNWPAReqIELength);
-		if (NULL == profile->pRSNReqIE) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				  " %s Fail to alloc memory", __func__);
+		if (!profile->pRSNReqIE)
 			return eSAP_STATUS_FAILURE;
-		}
+
 		qdf_mem_copy(profile->pRSNReqIE, pconfig_params->RSNWPAReqIE,
 			     pconfig_params->RSNWPAReqIELength);
 		profile->nRSNReqIELength = pconfig_params->RSNWPAReqIELength;
@@ -3346,11 +3341,8 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 	}
 
 	/* Allocate the max number of channel supported */
-	list = (uint8_t *) qdf_mem_malloc(NUM_5GHZ_CHANNELS +
-						NUM_24GHZ_CHANNELS);
-	if (NULL == list) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("Unable to allocate channel list"));
+	list = qdf_mem_malloc(NUM_5GHZ_CHANNELS + NUM_24GHZ_CHANNELS);
+	if (!list) {
 		*num_ch = 0;
 		*ch_list = NULL;
 		return QDF_STATUS_E_NOMEM;

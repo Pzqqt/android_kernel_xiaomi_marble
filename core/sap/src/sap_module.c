@@ -254,12 +254,8 @@ struct sap_context *sap_create_ctx(void)
 
 	/* dynamically allocate the sapContext */
 	sap_ctx = qdf_mem_malloc(sizeof(*sap_ctx));
-
-	if (NULL == sap_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from p_cds_gctx", __func__);
+	if (!sap_ctx)
 		return NULL;
-	}
 
 	/* Clean up SAP control block, initialize all values */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, FL("Enter"));
@@ -2165,12 +2161,9 @@ wlansap_update_sap_config_add_ie(tsap_config_t *pConfig,
 		if (additionIELength > 0) {
 			bufferLength = additionIELength;
 			pBuffer = qdf_mem_malloc(bufferLength);
-			if (NULL == pBuffer) {
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					  QDF_TRACE_LEVEL_ERROR,
-					  FL("Could not allocate the buffer "));
+			if (!pBuffer)
 				return QDF_STATUS_E_NOMEM;
-			}
+
 			qdf_mem_copy(pBuffer, pAdditionIEBuffer, bufferLength);
 			bufferValid = true;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,

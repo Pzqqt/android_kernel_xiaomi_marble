@@ -601,16 +601,10 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 		pMac->scan.base_channels.numChannels;
 
 	/* Allocate memory for weight computation of 2.4GHz */
-	pSpectCh =
-		(tSapSpectChInfo *)qdf_mem_malloc(
-					(pSpectInfoParams->numSpectChans) *
-					sizeof(*pSpectCh));
-
-	if (pSpectCh == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "In %s, QDF_MALLOC_ERR", __func__);
+	pSpectCh = qdf_mem_malloc((pSpectInfoParams->numSpectChans) *
+			sizeof(*pSpectCh));
+	if (!pSpectCh)
 		return false;
-	}
 
 	/* Initialize the pointers in the DfsParams to the allocated memory */
 	pSpectInfoParams->pSpectCh = pSpectCh;
@@ -1545,9 +1539,9 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 		pSpectInfoParams->numSpectChans;
 
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
-	if (NULL == pBeaconStruct) {
+	if (!pBeaconStruct)
 		return;
-	}
+
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "In %s, Computing spectral weight", __func__);
 
@@ -1883,11 +1877,9 @@ static void sap_sort_chl_weight_ht80(tSapChSelSpectInfo *pSpectInfoParams)
 	chan_bonding_bitmap *channel_bitmap;
 
 	channel_bitmap = qdf_mem_malloc(sizeof(chan_bonding_bitmap));
-	if (NULL == channel_bitmap) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Failed to allocate memory", __func__);
+	if (!channel_bitmap)
 		return;
-	}
+
 	pSpectInfo = pSpectInfoParams->pSpectCh;
 	/* for each HT80 channel, calculate the combined weight of the
 	   four 20MHz weight */
