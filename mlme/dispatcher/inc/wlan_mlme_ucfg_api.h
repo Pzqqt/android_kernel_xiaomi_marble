@@ -150,6 +150,34 @@ QDF_STATUS ucfg_mlme_set_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_get_band_capability() - Get the Band capability config
+ * @psoc: pointer to psoc object
+ * @band_capability: Pointer to the variable from caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_band_capability(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *band_capability)
+{
+	return wlan_mlme_get_band_capability(psoc, band_capability);
+}
+
+/**
+ * ucfg_mlme_set_band_capability() - Set the Band capability config
+ * @psoc: pointer to psoc object
+ * @band_capability: Value to be set from the caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_band_capability(struct wlan_objmgr_psoc *psoc,
+					 uint8_t band_capability)
+{
+	return wlan_mlme_set_band_capability(psoc, band_capability);
+}
+
+/**
  * ucfg_mlme_get_acs_with_more_param() - Get the flag for acs with
  *					 more param
  * @psoc: pointer to psoc object

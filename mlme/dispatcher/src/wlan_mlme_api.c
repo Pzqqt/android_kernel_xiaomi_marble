@@ -90,6 +90,39 @@ QDF_STATUS wlan_mlme_set_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wlan_mlme_get_band_capability(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *band_capability)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*band_capability = mlme_obj->cfg.gen.band_capability;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_set_band_capability(struct wlan_objmgr_psoc *psoc,
+					 uint8_t band_capability)
+
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_obj->cfg.gen.band_capability = band_capability;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wlan_mlme_get_sap_inactivity_override(struct wlan_objmgr_psoc *psoc,
 					   bool *val)
 {
