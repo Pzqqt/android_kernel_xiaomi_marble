@@ -337,6 +337,12 @@ void wma_lost_link_info_handler(tp_wma_handle wma, uint32_t vdev_id,
 	QDF_STATUS qdf_status;
 	struct scheduler_msg sme_msg = {0};
 
+	if (vdev_id >= wma->max_bssid) {
+		WMA_LOGE("%s: received invalid vdev_id %d",
+			 __func__, vdev_id);
+		return;
+	}
+
 	/* report lost link information only for STA mode */
 	if (wma_is_vdev_up(vdev_id) &&
 	    (WMI_VDEV_TYPE_STA == wma->interfaces[vdev_id].type) &&
