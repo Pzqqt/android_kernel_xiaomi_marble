@@ -89,6 +89,8 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 	int i;
 	uint32_t chan_id;
 	struct svc_channel_info *chan_info;
+	bool lpass_support;
+	QDF_STATUS status;
 
 	if (!data) {
 		hdd_err("invalid data pointer");
@@ -109,7 +111,14 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 		return -EINVAL;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (hdd_ctx->lpss_support && hdd_ctx->config->enable_lpass_support)
+
+	status = ucfg_mlme_get_lpass_support(hdd_ctx->psoc, &lpass_support);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get LPASS support config");
+		return -EIO;
+	}
+
+	if (hdd_ctx->lpss_support && lpass_support)
 		data->lpss_support = 1;
 	else
 		data->lpss_support = 0;
@@ -301,7 +310,14 @@ void hdd_lpass_target_config(struct hdd_context *hdd_ctx,
 void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
 				   struct hdd_context *hdd_ctx)
 {
-	cds_config->is_lpass_enabled = hdd_ctx->config->enable_lpass_support;
+	bool lpass_support = false;
+	QDF_STATUS status;
+
+	status = ucfg_mlme_get_lpass_support(hdd_ctx->psoc, &lpass_support);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to get LPASS support config");
+
+	cds_config->is_lpass_enabled = lpass_support;
 }
 
 /*
@@ -311,7 +327,14 @@ void hdd_lpass_populate_cds_config(struct cds_config_info *cds_config,
 void hdd_lpass_populate_pmo_config(struct pmo_psoc_cfg *pmo_config,
 				   struct hdd_context *hdd_ctx)
 {
-	pmo_config->lpass_enable = hdd_ctx->config->enable_lpass_support;
+	bool lpass_support = false;
+	QDF_STATUS status;
+
+	status = ucfg_mlme_get_lpass_support(hdd_ctx->psoc, &lpass_support);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to get LPASS support config");
+
+	pmo_config->lpass_enable = lpass_support;
 }
 
 /*
@@ -404,5 +427,12 @@ void hdd_lpass_notify_stop(struct hdd_context *hdd_ctx)
  */
 bool hdd_lpass_is_supported(struct hdd_context *hdd_ctx)
 {
-	return hdd_ctx->config->enable_lpass_support;
+	bool lpass_support = false;
+	QDF_STATUS status;
+
+	status = ucfg_mlme_get_lpass_support(hdd_ctx->psoc, &lpass_support);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to get LPASS support config");
+
+	return lpass_support;
 }

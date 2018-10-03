@@ -178,6 +178,62 @@ QDF_STATUS ucfg_mlme_set_band_capability(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_get_prevent_link_down_cfg() - Get the prevent link down config
+ * @psoc: pointer to psoc object
+ * @prevent_link_down: Pointer to the variable from caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_prevent_link_down_cfg(struct wlan_objmgr_psoc *psoc,
+					       bool *prevent_link_down)
+{
+	return wlan_mlme_get_prevent_link_down_cfg(psoc, prevent_link_down);
+}
+
+/**
+ * ucfg_mlme_get_select_5ghz_margin_cfg() - Get the select 5Ghz margin config
+ * @psoc: pointer to psoc object
+ * @select_5ghz_margin: Pointer to the variable from caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_select_5ghz_margin_cfg(struct wlan_objmgr_psoc *psoc,
+						uint8_t *select_5ghz_margin)
+{
+	return wlan_mlme_get_select_5ghz_margin_cfg(psoc, select_5ghz_margin);
+}
+
+/**
+ * ucfg_mlme_get_crash_inject_cfg() - Get the crash inject config
+ * @psoc: pointer to psoc object
+ * @crash_inject: Pointer to the variable from caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_crash_inject_cfg(struct wlan_objmgr_psoc *psoc,
+					  bool *crash_inject)
+{
+	return wlan_mlme_get_crash_inject_cfg(psoc, crash_inject);
+}
+
+/**
+ * ucfg_mlme_get_lpass_support() - Get the LPASS Support config
+ * @psoc: pointer to psoc object
+ * @lpass_support: Pointer to the variable from caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_lpass_support(struct wlan_objmgr_psoc *psoc,
+				       bool *lpass_support)
+{
+	return wlan_mlme_get_lpass_support(psoc, lpass_support);
+}
+
+/**
  * ucfg_mlme_get_acs_with_more_param() - Get the flag for acs with
  *					 more param
  * @psoc: pointer to psoc object

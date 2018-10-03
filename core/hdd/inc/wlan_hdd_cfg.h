@@ -1358,30 +1358,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gSelect5GHzMargin - Sets RSSI preference for 5GHz over 2.4GHz AP.
- * @Min: 0
- * @Max: 60
- * @Default: 0
- *
- * Prefer connecting to 5G AP even if its RSSI is lower by gSelect5GHzMargin
- * dBm than 2.4G AP. This feature requires the dependent cfg.ini
- * "gRoamPrefer5GHz" set to 1
- *
- * Related: gRoamPrefer5GHz
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_STRICT_5GHZ_PREF_BY_MARGIN                 "gSelect5GHzMargin"
-#define CFG_STRICT_5GHZ_PREF_BY_MARGIN_MIN             (0)
-#define CFG_STRICT_5GHZ_PREF_BY_MARGIN_MAX             (60)
-#define CFG_STRICT_5GHZ_PREF_BY_MARGIN_DEFAULT         (0)
-
-/*
- * <ini>
  * gRoamScanHiRssiMaxCount - Sets 5GHz maximum scan count
  * @Min: 0
  * @Max: 10
@@ -4002,36 +3978,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_OVERLAP_CH_MAX           (1)
 #define CFG_ENABLE_OVERLAP_CH_DEFAULT       (0)
 
-#define CFG_ENABLE_MEMORY_DEEP_SLEEP          "gEnableMemDeepSleep"
-#define CFG_ENABLE_MEMORY_DEEP_SLEEP_MIN      (0)
-#define CFG_ENABLE_MEMORY_DEEP_SLEEP_MAX      (1)
-#define CFG_ENABLE_MEMORY_DEEP_SLEEP_DEFAULT  (1)
-
-/*
- * <ini>
- *
- * gEnableCckTxFirOverride - Enable/disable CCK TxFIR Override
- * @Min: 0 (disabled)
- * @Max: 1 (enabled)
- * @Default: 0 (disabled)
- *
- * When operating in an 802.11b mode, this configuration item forces a 2x2 radio
- * configuration into 1x for Tx and 2x for Rx (ie 1x2) for regulatory compliance
- * reasons.
- *
- * Related: enable2x2
- *
- * Supported Feature: 802.11b, 2x2
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_CCK_TX_FIR_OVERRIDE_NAME     "gEnableCckTxFirOverride"
-#define CFG_ENABLE_CCK_TX_FIR_OVERRIDE_MIN      (0)
-#define CFG_ENABLE_CCK_TX_FIR_OVERRIDE_MAX      (1)
-#define CFG_ENABLE_CCK_TX_FIR_OVERRIDE_DEFAULT  (0)
-
 #ifndef REMOVE_PKT_LOG
 #define CFG_ENABLE_PACKET_LOG            "gEnablePacketLog"
 #define CFG_ENABLE_PACKET_LOG_MIN        (0)
@@ -4529,42 +4475,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_TX_STBC_MIN                   (0)
 #define CFG_ENABLE_TX_STBC_MAX                   (1)
 #define CFG_ENABLE_TX_STBC_DEFAULT               (0)
-
-/*
- * <ini>
- * gPreventLinkDown - Enable to prevent bus link from going down
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * Enable to prevent bus link from going down. Useful for platforms that do not
- * (yet) support link down suspend cases.
- *
- * Related: N/A
- *
- * Supported Feature: Suspend/Resume
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_PREVENT_LINK_DOWN_NAME		"gPreventLinkDown"
-#define CFG_PREVENT_LINK_DOWN_MIN		(0)
-#define CFG_PREVENT_LINK_DOWN_MAX		(1)
-#if defined(QCA_WIFI_NAPIER_EMULATION) || defined(QCA_WIFI_QCA6290)
-#define CFG_PREVENT_LINK_DOWN_DEFAULT		(1)
-#else
-#define CFG_PREVENT_LINK_DOWN_DEFAULT		(0)
-#endif /* QCA_WIFI_NAPIER_EMULATION */
-
-/*
- * This INI item is used to control subsystem restart(SSR) test framework
- * Set it's value to 1 to enable APPS trigerred SSR testing
- */
-#define CFG_ENABLE_CRASH_INJECT_NAME    "gEnableForceTargetAssert"
-#define CFG_ENABLE_CRASH_INJECT_MIN     (0)
-#define CFG_ENABLE_CRASH_INJECT_MAX     (1)
-#define CFG_ENABLE_CRASH_INJECT_DEFAULT (0)
 
 /*
  * <ini>
@@ -5627,13 +5537,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_WLAN_LOGGING_CONSOLE_SUPPORT_DISABLE (0)
 #define CFG_WLAN_LOGGING_CONSOLE_SUPPORT_DEFAULT (1)
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
-
-#ifdef WLAN_FEATURE_LPSS
-#define CFG_ENABLE_LPASS_SUPPORT_NAME                     "gEnableLpassSupport"
-#define CFG_ENABLE_LPASS_SUPPORT_DEFAULT                  (0)
-#define CFG_ENABLE_LPASS_SUPPORT_MIN                      (0)
-#define CFG_ENABLE_LPASS_SUPPORT_MAX                      (1)
-#endif
 
 #define CFG_ENABLE_SELF_RECOVERY_NAME              "gEnableSelfRecovery"
 #define CFG_ENABLE_SELF_RECOVERY_MIN               (0)
@@ -9288,7 +9191,6 @@ struct hdd_config {
 	uint32_t pno_slow_scan_multiplier;
 #endif
 	uint8_t max_amsdu_num;
-	uint8_t nSelect5GHzMargin;
 	uint8_t isCoalesingInIBSSAllowed;
 
 	/* IBSS Power Save related parameters */
@@ -9344,8 +9246,6 @@ struct hdd_config {
 	uint32_t TxFlowStartQueueOffset;
 #endif
 	bool advertiseConcurrentOperation;
-	bool enableMemDeepSleep;
-	bool enable_cck_tx_fir_override;
 
 	uint8_t allowDFSChannelRoam;
 
@@ -9374,9 +9274,6 @@ struct hdd_config {
 
 	uint8_t ignoreCAC;
 
-	/* Flag to indicate crash inject enabled or not */
-	bool crash_inject_enabled;
-
 	bool enable_sap_mandatory_chan_list;
 
 	int32_t dfsRadarPriMultiplier;
@@ -9392,9 +9289,6 @@ struct hdd_config {
 	bool wlan_logging_to_console;
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
 
-#ifdef WLAN_FEATURE_LPSS
-	bool enable_lpass_support;
-#endif
 	bool enableSelfRecovery;
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
 	uint8_t SapSccChanAvoidance;

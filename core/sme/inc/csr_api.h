@@ -1167,7 +1167,6 @@ typedef struct tagCsrConfigParam {
 	uint8_t disable_high_ht_mcs_2x2;
 	bool enable_vht20_mcs9;
 	uint8_t max_amsdu_num;
-	uint8_t nSelect5GHzMargin;
 	uint32_t ho_delay_for_rx;
 	uint32_t min_delay_btw_roam_scans;
 	uint32_t roam_trigger_reason_bitmask;

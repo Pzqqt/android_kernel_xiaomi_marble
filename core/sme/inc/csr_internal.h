@@ -404,10 +404,8 @@ struct csr_config {
 	uint32_t channelBondingMode5GHz;
 	eCsrPhyMode phyMode;
 	enum csr_cfgdot11mode uCfgDot11Mode;
-	enum band_info eBand;
 	uint32_t HeartbeatThresh50;
 	uint32_t HeartbeatThresh24;
-	enum band_info bandCapability;        /* indicate hw capability */
 	eCsrRoamWmmUserModeType WMMSupportMode;
 	bool Is11eSupportEnabled;
 	bool Is11dSupportEnabled;
@@ -508,7 +506,6 @@ struct csr_config {
 	 */
 	bool enableHeartBeatOffload;
 	uint8_t max_amsdu_num;
-	uint8_t nSelect5GHzMargin;
 	uint32_t ho_delay_for_rx;
 	uint32_t min_delay_btw_roam_scans;
 	uint32_t roam_trigger_reason_bitmask;
@@ -1042,27 +1039,27 @@ struct csr_roamstruct {
  * the 2.4 GHz band, meaning. it is NOT operating in the 5.0 GHz band.
  */
 #define CSR_IS_24_BAND_ONLY(pMac) \
-	(BAND_2G == (pMac)->roam.configParam.eBand)
+	(BAND_2G == (pMac)->mlme_cfg->gen.band)
 
 #define CSR_IS_5G_BAND_ONLY(pMac) \
-	(BAND_5G == (pMac)->roam.configParam.eBand)
+	(BAND_5G == (pMac)->mlme_cfg->gen.band)
 
 #define CSR_IS_RADIO_DUAL_BAND(pMac) \
-	(BAND_ALL == (pMac)->roam.configParam.bandCapability)
+	(BAND_ALL == (pMac)->mlme_cfg->gen.band_capability)
 
 #define CSR_IS_RADIO_BG_ONLY(pMac) \
-	(BAND_2G == (pMac)->roam.configParam.bandCapability)
+	(BAND_2G == (pMac)->mlme_cfg->gen.band_capability)
 
 /*
  * this function returns true if the NIC is operating exclusively in the 5.0 GHz
  * band, meaning. it is NOT operating in the 2.4 GHz band
  */
 #define CSR_IS_RADIO_A_ONLY(pMac) \
-	(BAND_5G == (pMac)->roam.configParam.bandCapability)
+	(BAND_5G == (pMac)->mlme_cfg->gen.band_capability)
 /* this function returns true if the NIC is operating in both bands. */
 #define CSR_IS_OPEARTING_DUAL_BAND(pMac) \
-	((BAND_ALL == (pMac)->roam.configParam.bandCapability) && \
-		(BAND_ALL == (pMac)->roam.configParam.eBand))
+	((BAND_ALL == (pMac)->mlme_cfg->gen.band_capability) && \
+		(BAND_ALL == (pMac)->mlme_cfg->gen.band))
 /*
  * this function returns true if the NIC can operate in the 5.0 GHz band
  * (could operate in the 2.4 GHz band also)

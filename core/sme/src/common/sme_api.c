@@ -15709,6 +15709,25 @@ int sme_cli_set_command(int vdev_id, int param_id, int sval, int vpdev)
 	return wma_cli_set_command(vdev_id, param_id, sval, vpdev);
 }
 
+int sme_set_enable_mem_deep_sleep(mac_handle_t mac_handle, int vdev_id)
+{
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
+
+	return wma_cli_set_command(vdev_id, WMI_PDEV_PARAM_HYST_EN,
+				   mac_ctx->mlme_cfg->gen.memory_deep_sleep,
+				   PDEV_CMD);
+}
+
+int sme_set_cck_tx_fir_override(mac_handle_t mac_handle, int vdev_id)
+{
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
+
+	return wma_cli_set_command(vdev_id,
+				   WMI_PDEV_PARAM_ENABLE_CCK_TXFIR_OVERRIDE,
+				   mac_ctx->mlme_cfg->gen.cck_tx_fir_override,
+				   PDEV_CMD);
+}
+
 QDF_STATUS sme_set_bt_activity_info_cb(mac_handle_t mac_handle,
 				       bt_activity_info_cb cb)
 {

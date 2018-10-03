@@ -123,6 +123,70 @@ QDF_STATUS wlan_mlme_set_band_capability(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wlan_mlme_get_prevent_link_down_cfg(struct wlan_objmgr_psoc *psoc,
+					       bool *prevent_link_down)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*prevent_link_down = mlme_obj->cfg.gen.prevent_link_down;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_select_5ghz_margin_cfg(struct wlan_objmgr_psoc *psoc,
+						uint8_t *select_5ghz_margin)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*select_5ghz_margin = mlme_obj->cfg.gen.select_5ghz_margin;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_crash_inject_cfg(struct wlan_objmgr_psoc *psoc,
+					  bool *crash_inject)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*crash_inject = mlme_obj->cfg.gen.crash_inject;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_lpass_support(struct wlan_objmgr_psoc *psoc,
+				       bool *lpass_support)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*lpass_support = mlme_obj->cfg.gen.lpass_support;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wlan_mlme_get_sap_inactivity_override(struct wlan_objmgr_psoc *psoc,
 					   bool *val)
 {

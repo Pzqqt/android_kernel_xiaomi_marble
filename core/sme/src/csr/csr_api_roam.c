@@ -1663,7 +1663,7 @@ void csr_assign_rssi_for_category(tpAniSirGlobal pMac, int8_t bestApRssi,
 			pMac->roam.configParam.RSSICat[CSR_NUM_RSSI_CAT - i -
 						       1] =
 				(int)bestApRssi -
-				pMac->roam.configParam.nSelect5GHzMargin -
+				pMac->mlme_cfg->gen.select_5ghz_margin -
 				(int)(i * catOffset);
 		}
 	}
@@ -3035,8 +3035,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 					pParam->disable_high_ht_mcs_2x2;
 		pMac->roam.configParam.max_amsdu_num =
 			pParam->max_amsdu_num;
-		pMac->roam.configParam.nSelect5GHzMargin =
-			pParam->nSelect5GHzMargin;
 		pMac->roam.configParam.ho_delay_for_rx =
 			pParam->ho_delay_for_rx;
 		pMac->roam.configParam.min_delay_btw_roam_scans =
@@ -3284,7 +3282,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->wep_tkip_in_he = cfg_params->wep_tkip_in_he;
 	pParam->disable_high_ht_mcs_2x2 = cfg_params->disable_high_ht_mcs_2x2;
 	pParam->max_amsdu_num = cfg_params->max_amsdu_num;
-	pParam->nSelect5GHzMargin = cfg_params->nSelect5GHzMargin;
 	pParam->ho_delay_for_rx = cfg_params->ho_delay_for_rx;
 	pParam->min_delay_btw_roam_scans = cfg_params->min_delay_btw_roam_scans;
 	pParam->roam_trigger_reason_bitmask =
@@ -18218,7 +18215,7 @@ csr_update_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		     req_buf->R0KH_ID_Length);
 	req_buf->Prefer5GHz = mac_ctx->roam.configParam.nRoamPrefer5GHz;
 	req_buf->RoamRssiCatGap = mac_ctx->roam.configParam.bCatRssiOffset;
-	req_buf->Select5GHzMargin = mac_ctx->roam.configParam.nSelect5GHzMargin;
+	req_buf->Select5GHzMargin = mac_ctx->mlme_cfg->gen.select_5ghz_margin;
 	req_buf->ho_delay_for_rx = mac_ctx->roam.configParam.ho_delay_for_rx;
 	req_buf->min_delay_btw_roam_scans =
 			mac_ctx->roam.configParam.min_delay_btw_roam_scans;

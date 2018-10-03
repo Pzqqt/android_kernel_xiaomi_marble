@@ -1715,13 +1715,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_TX_STBC_MIN,
 		     CFG_ENABLE_TX_STBC_MAX),
 
-	REG_VARIABLE(CFG_PREVENT_LINK_DOWN_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, prevent_link_down,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PREVENT_LINK_DOWN_DEFAULT,
-		     CFG_PREVENT_LINK_DOWN_MIN,
-		     CFG_PREVENT_LINK_DOWN_MAX),
-
 	REG_VARIABLE(CFG_SCAN_AGING_PARAM_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, scanAgingTimeout,
 		     VAR_FLAGS_OPTIONAL,
@@ -1875,13 +1868,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_MAX_AMSDU_NUM_DEFAULT,
 		     CFG_MAX_AMSDU_NUM_MIN,
 		     CFG_MAX_AMSDU_NUM_MAX),
-
-	REG_VARIABLE(CFG_STRICT_5GHZ_PREF_BY_MARGIN, WLAN_PARAM_Integer,
-		     struct hdd_config, nSelect5GHzMargin,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_STRICT_5GHZ_PREF_BY_MARGIN_DEFAULT,
-		     CFG_STRICT_5GHZ_PREF_BY_MARGIN_MIN,
-		     CFG_STRICT_5GHZ_PREF_BY_MARGIN_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_IP_TCP_UDP_CHKSUM_OFFLOAD, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_ip_tcp_udp_checksum_offload,
@@ -2149,20 +2135,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ADVERTISE_CONCURRENT_OPERATION_MIN,
 		     CFG_ADVERTISE_CONCURRENT_OPERATION_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_MEMORY_DEEP_SLEEP, WLAN_PARAM_Integer,
-		     struct hdd_config, enableMemDeepSleep,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_MEMORY_DEEP_SLEEP_DEFAULT,
-		     CFG_ENABLE_MEMORY_DEEP_SLEEP_MIN,
-		     CFG_ENABLE_MEMORY_DEEP_SLEEP_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_CCK_TX_FIR_OVERRIDE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_cck_tx_fir_override,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_CCK_TX_FIR_OVERRIDE_DEFAULT,
-		     CFG_ENABLE_CCK_TX_FIR_OVERRIDE_MIN,
-		     CFG_ENABLE_CCK_TX_FIR_OVERRIDE_MAX),
-
 #ifndef REMOVE_PKT_LOG
 	REG_VARIABLE(CFG_ENABLE_PACKET_LOG, WLAN_PARAM_Integer,
 		     struct hdd_config, enablePacketLog,
@@ -2274,13 +2246,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_MAX_CONCURRENT_CONNECTIONS_MIN,
 		     CFG_MAX_CONCURRENT_CONNECTIONS_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_CRASH_INJECT_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, crash_inject_enabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_CRASH_INJECT_DEFAULT,
-		     CFG_ENABLE_CRASH_INJECT_MIN,
-		     CFG_ENABLE_CRASH_INJECT_MAX),
-
 	REG_VARIABLE(CFG_IGNORE_CAC_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, ignoreCAC,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2345,15 +2310,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_WLAN_LOGGING_CONSOLE_SUPPORT_DISABLE,
 		     CFG_WLAN_LOGGING_CONSOLE_SUPPORT_ENABLE),
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
-
-#ifdef WLAN_FEATURE_LPSS
-	REG_VARIABLE(CFG_ENABLE_LPASS_SUPPORT_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_lpass_support,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_LPASS_SUPPORT_DEFAULT,
-		     CFG_ENABLE_LPASS_SUPPORT_MIN,
-		     CFG_ENABLE_LPASS_SUPPORT_MAX),
-#endif
 
 	REG_VARIABLE(CFG_ENABLE_SELF_RECOVERY_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enableSelfRecovery,
@@ -5343,7 +5299,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 #endif
 
 	smeConfig->csrConfig.max_amsdu_num = pConfig->max_amsdu_num;
-	smeConfig->csrConfig.nSelect5GHzMargin = pConfig->nSelect5GHzMargin;
 
 	smeConfig->csrConfig.isCoalesingInIBSSAllowed =
 		hdd_ctx->config->isCoalesingInIBSSAllowed;

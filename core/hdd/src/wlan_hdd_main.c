@@ -4777,10 +4777,8 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	if (hdd_ctx->config->enable2x2) {
 		hdd_debug("configuring 2x2 mode fw params");
 
-		ret = sme_cli_set_command(adapter->session_id,
-				       WMI_PDEV_PARAM_ENABLE_CCK_TXFIR_OVERRIDE,
-				    hdd_ctx->config->enable_cck_tx_fir_override,
-					  PDEV_CMD);
+		ret = sme_set_cck_tx_fir_override(hdd_ctx->mac_handle,
+						  adapter->session_id);
 		if (ret) {
 			hdd_err("WMI_PDEV_PARAM_ENABLE_CCK_TXFIR_OVERRIDE set failed %d",
 				ret);
@@ -4817,10 +4815,8 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 			goto error;
 	}
 
-	ret = sme_cli_set_command(adapter->session_id,
-				  WMI_PDEV_PARAM_HYST_EN,
-				  hdd_ctx->config->enableMemDeepSleep,
-				  PDEV_CMD);
+	ret = sme_set_enable_mem_deep_sleep(hdd_ctx->mac_handle,
+					    adapter->session_id);
 	if (ret) {
 		hdd_err("WMI_PDEV_PARAM_HYST_EN set failed %d", ret);
 		goto error;
@@ -9663,6 +9659,7 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	struct cds_config_info *cds_cfg;
 	int value;
 	uint8_t band_capability;
+	bool crash_inject;
 	QDF_STATUS status;
 
 	cds_cfg = (struct cds_config_info *)qdf_mem_malloc(sizeof(*cds_cfg));
@@ -9682,8 +9679,13 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->dfs_phyerr_filter_offload =
 		hdd_ctx->config->fDfsPhyerrFilterOffload;
 
-	cds_cfg->force_target_assert_enabled =
-		hdd_ctx->config->crash_inject_enabled;
+	status = ucfg_mlme_get_crash_inject_cfg(hdd_ctx->psoc, &crash_inject);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get crash inject ini config");
+		goto exit;
+	}
+
+	cds_cfg->force_target_assert_enabled = crash_inject;
 
 	ucfg_mlme_get_sap_max_offload_peers(hdd_ctx->psoc, &value);
 	cds_cfg->ap_maxoffload_peers = value;
@@ -13772,15 +13774,22 @@ static void hdd_update_hif_config(struct hdd_context *hdd_ctx)
 {
 	struct hif_opaque_softc *scn = cds_get_context(QDF_MODULE_ID_HIF);
 	struct hif_config_info cfg;
+	bool prevent_link_down = false;
+	QDF_STATUS status;
 
 	if (!scn)
 		return;
+
+	status = ucfg_mlme_get_prevent_link_down_cfg(hdd_ctx->psoc,
+						     &prevent_link_down);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to get prevent_link_down config");
 
 	cfg.enable_self_recovery = hdd_ctx->config->enableSelfRecovery;
 	hdd_populate_runtime_cfg(hdd_ctx, &cfg);
 	hif_init_ini_config(scn, &cfg);
 
-	if (hdd_ctx->config->prevent_link_down)
+	if (prevent_link_down)
 		hif_vote_link_up(scn);
 }
 
@@ -14083,6 +14092,14 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	struct hdd_config *cfg = hdd_ctx->config;
 	QDF_STATUS status;
 	uint8_t scan_bucket_thre;
+	uint8_t select_5ghz_margin;
+
+	status = ucfg_mlme_get_select_5ghz_margin_cfg(hdd_ctx->psoc,
+						      &select_5ghz_margin);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get select_5ghz_margin");
+		return -EIO;
+	}
 
 	scan_cfg.active_dwell = cfg->nActiveMaxChnTime;
 	scan_cfg.passive_dwell = cfg->nPassiveMaxChnTime;
@@ -14095,7 +14112,7 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	scan_cfg.scan_cache_aging_time =
 		cfg->scanAgingTimeout * 1000;
 	scan_cfg.prefer_5ghz = cfg->nRoamPrefer5GHz;
-	scan_cfg.select_5ghz_margin = cfg->nSelect5GHzMargin;
+	scan_cfg.select_5ghz_margin = select_5ghz_margin;
 	ucfg_mlme_get_first_scan_bucket_threshold(hdd_ctx->psoc,
 						  &scan_bucket_thre);
 	scan_cfg.scan_bucket_threshold = (int32_t)scan_bucket_thre;

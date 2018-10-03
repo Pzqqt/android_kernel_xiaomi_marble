@@ -2024,6 +2024,24 @@ QDF_STATUS sme_set_bt_activity_info_cb(mac_handle_t mac_handle,
 				       bt_activity_info_cb cb);
 
 /**
+ * sme_set_enable_mem_deep_sleep - set the mem deep sleep config to FW
+ * @mac_handle: handle returned by mac_open
+ * @vdev_id: vdev id
+ *
+ * Return: 0 for success else failure code
+ */
+int sme_set_enable_mem_deep_sleep(mac_handle_t mac_handle, int vdev_id);
+
+/**
+ * sme_set_cck_tx_fir_override - set the CCK TX FIR Override to FW
+ * @mac_handle: handle returned by mac_open
+ * @vdev_id: vdev id
+ *
+ * Return: 0 for success else failure code
+ */
+int sme_set_cck_tx_fir_override(mac_handle_t mac_handle, int vdev_id);
+
+/**
  * sme_set_smps_cfg() - set SMPS config params
  * @vdev_id: virtual device for the command
  * @param_id: parameter id
