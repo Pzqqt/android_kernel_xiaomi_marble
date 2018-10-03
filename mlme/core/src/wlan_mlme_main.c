@@ -139,11 +139,56 @@ static void mlme_init_pmf_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif /*WLAN_FEATURE_11W*/
 
+#ifdef WLAN_FEATURE_LPSS
+static inline void
+mlme_init_lpass_support_cfg(struct wlan_objmgr_psoc *psoc,
+			    struct wlan_mlme_generic *gen)
+{
+	gen->lpass_support = cfg_get(psoc, CFG_ENABLE_LPASS_SUPPORT);
+}
+#else
+static inline void
+mlme_init_lpass_support_cfg(struct wlan_objmgr_psoc *psoc,
+			    struct wlan_mlme_generic *gen)
+{
+	gen->lpass_support = cfg_default(CFG_ENABLE_LPASS_SUPPORT);
+}
+#endif
+
 static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 				  struct wlan_mlme_generic *gen)
 {
 	gen->rtt3_enabled = cfg_default(CFG_RTT3_ENABLE);
+	gen->band_capability =
+		cfg_get(psoc, CFG_BAND_CAPABILITY);
+	gen->select_5ghz_margin =
+		cfg_get(psoc, CFG_SELECT_5GHZ_MARGIN);
+	gen->sub_20_chan_width =
+		cfg_get(psoc, CFG_SUB_20_CHANNEL_WIDTH);
+	gen->ito_repeat_count =
+		cfg_get(psoc, CFG_ITO_REPEAT_COUNT);
+	gen->dropped_pkt_disconnect_thresh =
+		cfg_get(psoc, CFG_DROPPED_PKT_DISCONNECT_THRESHOLD);
+	gen->prevent_link_down =
+		cfg_get(psoc, CFG_PREVENT_LINK_DOWN);
+	gen->memory_deep_sleep =
+		cfg_get(psoc, CFG_ENABLE_MEM_DEEP_SLEEP);
+	gen->cck_tx_fir_override =
+		cfg_get(psoc, CFG_ENABLE_CCK_TX_FIR_OVERRIDE);
+	gen->crash_inject =
+		cfg_get(psoc, CFG_ENABLE_CRASH_INJECT);
+	gen->self_recovery =
+		cfg_get(psoc, CFG_ENABLE_SELF_RECOVERY);
+	gen->sap_dot11mc =
+		cfg_get(psoc, CFG_SAP_DOT11MC);
+	gen->fatal_event_trigger =
+		cfg_get(psoc, CFG_ENABLE_FATAL_EVENT_TRIGGER);
+	gen->optimize_ca_event =
+		cfg_get(psoc, CFG_OPTIMIZE_CA_EVENT);
+	gen->fw_timeout_crash =
+		cfg_get(psoc, CFG_CRASH_FW_TIMEOUT);
 	mlme_init_pmf_cfg(psoc, gen);
+	mlme_init_lpass_support_cfg(psoc, gen);
 }
 
 static void mlme_init_edca_ani_cfg(struct wlan_mlme_edca_params *edca_params)
