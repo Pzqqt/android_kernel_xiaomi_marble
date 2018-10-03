@@ -865,9 +865,6 @@ free:
 void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
 					qdf_nbuf_t mpdu, bool mpdu_done)
 {
-	/* To avoid compiler warning */
-	mpdu_done = mpdu_done;
-
 	/* Process the nbuf */
 	dp_rx_process_invalid_peer(soc, mpdu);
 }
@@ -1195,23 +1192,23 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	DP_STATS_INC(peer, rx.wme_ac_type[TID_TO_WME_AC(tid)], 1);
 	DP_STATS_INC(peer, rx.reception_type[reception_type], 1);
 
-	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
 		      ((mcs >= MAX_MCS_11A) && (pkt_type == DOT11_A)));
 	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[mcs], 1,
 		      ((mcs <= MAX_MCS_11A) && (pkt_type == DOT11_A)));
-	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
 		      ((mcs >= MAX_MCS_11B) && (pkt_type == DOT11_B)));
 	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[mcs], 1,
 		      ((mcs <= MAX_MCS_11B) && (pkt_type == DOT11_B)));
-	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
 		      ((mcs >= MAX_MCS_11A) && (pkt_type == DOT11_N)));
 	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[mcs], 1,
 		      ((mcs <= MAX_MCS_11A) && (pkt_type == DOT11_N)));
-	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
 		      ((mcs >= MAX_MCS_11AC) && (pkt_type == DOT11_AC)));
 	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[mcs], 1,
 		      ((mcs <= MAX_MCS_11AC) && (pkt_type == DOT11_AC)));
-	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
 		      ((mcs >= MAX_MCS) && (pkt_type == DOT11_AX)));
 	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[mcs], 1,
 		      ((mcs <= MAX_MCS) && (pkt_type == DOT11_AX)));

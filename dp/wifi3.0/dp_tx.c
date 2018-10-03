@@ -2573,8 +2573,10 @@ dp_tx_update_peer_stats(struct dp_peer *peer,
 	mcs = ts->mcs;
 	pkt_type = ts->pkt_type;
 
-	if (!ts->release_src == HAL_TX_COMP_RELEASE_SOURCE_TQM)
+	if (ts->release_src != HAL_TX_COMP_RELEASE_SOURCE_TQM) {
+		dp_err("Release source is not from TQM");
 		return;
+	}
 
 	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
 		     (ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
@@ -2597,8 +2599,10 @@ dp_tx_update_peer_stats(struct dp_peer *peer,
 	DP_STATS_INCC(peer, tx.dropped.fw_reason3, 1,
 		     (ts->status == HAL_TX_TQM_RR_FW_REASON3));
 
-	if (!ts->status == HAL_TX_TQM_RR_FRAME_ACKED)
+	if (ts->status != HAL_TX_TQM_RR_FRAME_ACKED) {
+		dp_err("Tx completion has no valid acknowledgment");
 		return;
+	}
 
 	DP_STATS_INCC(peer, tx.ofdma, 1, ts->ofdma);
 

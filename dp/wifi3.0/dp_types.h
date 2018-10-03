@@ -1507,7 +1507,7 @@ struct dp_peer {
 	/* TBD: No transmit TID state required? */
 
 	struct {
-		enum htt_sec_type sec_type;
+		enum cdp_sec_type sec_type;
 		u_int32_t michael_key[2]; /* relevant for TKIP */
 	} security[2]; /* 0 -> multicast, 1 -> unicast */
 

@@ -1156,10 +1156,10 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 			index, peer->security[index].sec_type);
 
 	switch (peer->security[index].sec_type) {
-	case htt_sec_type_tkip:
+	case cdp_sec_type_tkip:
 		tkip_demic = 1;
 
-	case htt_sec_type_tkip_nomic:
+	case cdp_sec_type_tkip_nomic:
 		while (cur) {
 			tmp_next = qdf_nbuf_next(cur);
 			if (dp_rx_defrag_tkip_decap(cur, hdr_space)) {
@@ -1177,7 +1177,7 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 		hdr_space += dp_f_tkip.ic_header;
 		break;
 
-	case htt_sec_type_aes_ccmp:
+	case cdp_sec_type_aes_ccmp:
 		while (cur) {
 			tmp_next = qdf_nbuf_next(cur);
 			if (dp_rx_defrag_ccmp_demic(cur, hdr_space)) {
@@ -1203,9 +1203,9 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 		hdr_space += dp_f_ccmp.ic_header;
 		break;
 
-	case htt_sec_type_wep40:
-	case htt_sec_type_wep104:
-	case htt_sec_type_wep128:
+	case cdp_sec_type_wep40:
+	case cdp_sec_type_wep104:
+	case cdp_sec_type_wep128:
 		while (cur) {
 			tmp_next = qdf_nbuf_next(cur);
 			if (dp_rx_defrag_wep_decap(cur, hdr_space)) {

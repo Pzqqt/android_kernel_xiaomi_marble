@@ -5021,9 +5021,8 @@ static void dp_get_peer_mac_from_peer_id(struct cdp_pdev *pdev_handle,
 	if (pdev && peer_mac) {
 		peer = dp_peer_find_by_id(pdev->soc, (uint16_t)peer_id);
 		if (peer) {
-			if (peer->mac_addr.raw)
-				qdf_mem_copy(peer_mac, peer->mac_addr.raw,
-					     DP_MAC_ADDR_LEN);
+			qdf_mem_copy(peer_mac, peer->mac_addr.raw,
+				     DP_MAC_ADDR_LEN);
 			dp_peer_unref_del_find_by_id(peer);
 		}
 	}
@@ -7140,7 +7139,7 @@ dp_txrx_stats_publish(struct cdp_pdev *pdev_handle, void *buf)
 	struct cdp_txrx_stats_req req = {0,};
 
 	dp_aggregate_pdev_stats(pdev);
-	req.stats = HTT_DBG_EXT_STATS_PDEV_TX;
+	req.stats = (enum cdp_stats)HTT_DBG_EXT_STATS_PDEV_TX;
 	req.cookie_val = 1;
 	dp_h2t_ext_stats_msg_send(pdev, req.stats, req.param0,
 				req.param1, req.param2, req.param3, 0,
@@ -7148,7 +7147,7 @@ dp_txrx_stats_publish(struct cdp_pdev *pdev_handle, void *buf)
 
 	msleep(DP_MAX_SLEEP_TIME);
 
-	req.stats = HTT_DBG_EXT_STATS_PDEV_RX;
+	req.stats = (enum cdp_stats)HTT_DBG_EXT_STATS_PDEV_RX;
 	req.cookie_val = 1;
 	dp_h2t_ext_stats_msg_send(pdev, req.stats, req.param0,
 				req.param1, req.param2, req.param3, 0,

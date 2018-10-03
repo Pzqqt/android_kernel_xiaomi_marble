@@ -2394,7 +2394,7 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 
 void
 dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
-	enum htt_sec_type sec_type, int is_unicast, u_int32_t *michael_key,
+	enum cdp_sec_type sec_type, int is_unicast, u_int32_t *michael_key,
 	u_int32_t *rx_pn)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_handle;
@@ -2434,7 +2434,7 @@ dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 #endif
 
 #ifdef notyet /* TODO: Check if this is required for wifi3.0 */
-	if (sec_type != htt_sec_type_wapi) {
+	if (sec_type != cdp_sec_type_wapi) {
 		qdf_mem_set(peer->tids_last_pn_valid, _EXT_TIDS, 0x00);
 	} else {
 		for (i = 0; i < DP_MAX_TIDS; i++) {

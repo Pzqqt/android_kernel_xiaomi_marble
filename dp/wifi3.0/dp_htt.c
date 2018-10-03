@@ -2981,7 +2981,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	case HTT_T2H_MSG_TYPE_SEC_IND:
 		{
 			u_int16_t peer_id;
-			enum htt_sec_type sec_type;
+			enum cdp_sec_type sec_type;
 			int is_unicast;
 
 			peer_id = HTT_SEC_IND_PEER_ID_GET(*msg_word);
@@ -3178,7 +3178,7 @@ dp_htt_h2t_full(void *context, HTC_PACKET *pkt)
 static QDF_STATUS
 dp_htt_hif_t2h_hp_callback (void *context, qdf_nbuf_t nbuf, uint8_t pipe_id)
 {
-	A_STATUS rc = QDF_STATUS_SUCCESS;
+	QDF_STATUS rc = QDF_STATUS_SUCCESS;
 	HTC_PACKET htc_pkt;
 
 	qdf_assert_always(pipe_id == DP_HTT_T2H_HP_PIPE);
