@@ -358,6 +358,9 @@ static inline QDF_STATUS wlan_ipa_wdi_init(struct wlan_ipa_priv *ipa_ctx)
 
 	ipa_ctx->uc_loaded = false;
 
+	qdf_mem_zero(&in, sizeof(in));
+	qdf_mem_zero(&out, sizeof(out));
+
 	QDF_IPA_WDI_INIT_IN_PARAMS_WDI_VERSION(&in) = ipa_ctx->wdi_version;
 	QDF_IPA_WDI_INIT_IN_PARAMS_NOTIFY(&in) = wlan_ipa_uc_loaded_uc_cb;
 	QDF_IPA_WDI_INIT_IN_PARAMS_PRIV(&in) = ipa_ctx;
