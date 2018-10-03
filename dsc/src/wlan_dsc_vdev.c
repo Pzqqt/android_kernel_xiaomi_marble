@@ -212,42 +212,62 @@ static void __dsc_vdev_trans_stop(struct dsc_vdev *vdev)
 	if (!dsc_assert(vdev))
 		return;
 
+	__dsc_driver_lock(vdev);
+
 	dsc_assert(vdev->trans.active_desc);
 	vdev->trans.active_desc = NULL;
-
 	__dsc_vdev_trigger_trans(vdev);
+
+	__dsc_driver_unlock(vdev);
 }
 
 void dsc_vdev_trans_stop(struct dsc_vdev *vdev)
 {
 	dsc_enter();
-	__dsc_driver_lock(vdev);
 	__dsc_vdev_trans_stop(vdev);
-	__dsc_driver_unlock(vdev);
 	dsc_exit();
+}
+
+static void __dsc_vdev_trans_assert(struct dsc_vdev *vdev)
+{
+	if (!dsc_assert(vdev))
+		return;
+
+	__dsc_driver_lock(vdev);
+	dsc_assert(vdev->trans.active_desc);
+	__dsc_driver_unlock(vdev);
 }
 
 void dsc_vdev_trans_assert(struct dsc_vdev *vdev)
 {
 	dsc_enter();
-	__dsc_driver_lock(vdev);
-	dsc_assert(vdev->trans.active_desc);
-	__dsc_driver_unlock(vdev);
+	__dsc_vdev_trans_assert(vdev);
 	dsc_exit();
 }
 
 static QDF_STATUS __dsc_vdev_op_start(struct dsc_vdev *vdev, const char *func)
 {
+	QDF_STATUS status;
+
 	if (!dsc_assert(vdev))
 		return QDF_STATUS_E_INVAL;
 
 	if (!dsc_assert(func))
 		return QDF_STATUS_E_INVAL;
 
-	if (!__dsc_vdev_can_op(vdev))
-		return QDF_STATUS_E_AGAIN;
+	__dsc_driver_lock(vdev);
 
-	return __dsc_ops_insert(&vdev->ops, func);
+	if (!__dsc_vdev_can_op(vdev)) {
+		status = QDF_STATUS_E_AGAIN;
+		goto unlock;
+	}
+
+	status = __dsc_ops_insert(&vdev->ops, func);
+
+unlock:
+	__dsc_driver_unlock(vdev);
+
+	return status;
 }
 
 QDF_STATUS _dsc_vdev_op_start(struct dsc_vdev *vdev, const char *func)
@@ -255,9 +275,7 @@ QDF_STATUS _dsc_vdev_op_start(struct dsc_vdev *vdev, const char *func)
 	QDF_STATUS status;
 
 	dsc_enter_str(func);
-	__dsc_driver_lock(vdev);
 	status = __dsc_vdev_op_start(vdev, func);
-	__dsc_driver_unlock(vdev);
 	dsc_exit_status(status);
 
 	return status;
@@ -271,16 +289,16 @@ static void __dsc_vdev_op_stop(struct dsc_vdev *vdev, const char *func)
 	if (!dsc_assert(func))
 		return;
 
+	__dsc_driver_lock(vdev);
 	if (__dsc_ops_remove(&vdev->ops, func))
 		qdf_event_set(&vdev->ops.event);
+	__dsc_driver_unlock(vdev);
 }
 
 void _dsc_vdev_op_stop(struct dsc_vdev *vdev, const char *func)
 {
 	dsc_enter_str(func);
-	__dsc_driver_lock(vdev);
 	__dsc_vdev_op_stop(vdev, func);
-	__dsc_driver_unlock(vdev);
 	dsc_exit();
 }
 
