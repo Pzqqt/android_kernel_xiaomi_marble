@@ -43,6 +43,9 @@
 
 #define CFG_STR_DATA_LEN     17
 #define CFG_EDCA_DATA_LEN    17
+#define CFG_MAX_TX_POWER_2_4_LEN    128
+#define CFG_MAX_TX_POWER_5_LEN      128
+#define CFG_POWER_USAGE_MAX_LEN      4
 
 #define CFG_VALID_CHANNEL_LIST_LEN 100
 #define CFG_VALID_CHANNEL_LIST_STRING_LEN (CFG_VALID_CHANNEL_LIST_LEN * 4)
@@ -1490,6 +1493,55 @@ struct wlan_mlme_threshold {
 	uint32_t frag_threshold;
 };
 
+/* struct mlme_max_tx_power_24 - power related items
+ * @max_len: max length of string
+ * @len: actual len of string
+ * @data: Data in string format
+ */
+struct mlme_max_tx_power_24 {
+	qdf_size_t max_len;
+	qdf_size_t len;
+	uint8_t data[CFG_MAX_TX_POWER_2_4_LEN];
+};
+
+/* struct mlme_max_tx_power_5 - power related items
+ * @max_len: max length of string
+ * @len: actual len of string
+ * @data: Data in string format
+ */
+struct mlme_max_tx_power_5 {
+	qdf_size_t max_len;
+	qdf_size_t len;
+	uint8_t data[CFG_MAX_TX_POWER_5_LEN];
+};
+
+/* struct mlme_power_usage - power related items
+ * @max_len: max length of string
+ * @len: actual len of string
+ * @data: Data in string format
+ */
+struct mlme_power_usage {
+	qdf_size_t max_len;
+	qdf_size_t len;
+	char data[CFG_POWER_USAGE_MAX_LEN];
+};
+
+/*
+ * struct wlan_mlme_power - power related config items
+ * @max_tx_power_24: max power Tx for 2.4 ghz
+ * @max_tx_power_5: max power Tx for 5 ghz
+ * @power_usage: power usage mode, min, max, mod
+ * @tx_power_2g: limit tx power in 2.4 ghz
+ * @tx_power_5g: limit tx power in 5 ghz
+ */
+struct wlan_mlme_power {
+	struct mlme_max_tx_power_24 max_tx_power_24;
+	struct mlme_max_tx_power_5 max_tx_power_5;
+	struct mlme_power_usage power_usage;
+	uint8_t tx_power_2g;
+	uint8_t tx_power_5g;
+};
+
 /*
  * struct wlan_mlme_timeout - mlme timeout related config items
  * @join_failure_timeout: join failure timeout
@@ -1602,6 +1654,7 @@ struct wlan_mlme_wep_cfg {
  * @threshold: threshold related cfg items
  * @timeouts: mlme timeout related CFG items
  * @twt_cfg: TWT CFG Items
+ * @wlan_mlme_power: power related items
  * @acs: ACS related CFG items
  * @feature_flags: Feature flag config items
  * @wep_params:  WEP related config items
@@ -1633,6 +1686,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_threshold threshold;
 	struct wlan_mlme_timeout timeouts;
 	struct wlan_mlme_cfg_twt twt_cfg;
+	struct wlan_mlme_power power;
 	struct wlan_mlme_acs acs;
 	struct wlan_mlme_feature_flag feature_flags;
 	struct wlan_mlme_wep_cfg wep_params;

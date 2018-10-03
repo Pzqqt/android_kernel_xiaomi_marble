@@ -1420,6 +1420,29 @@ mlme_limit_max_per_index_score(uint32_t per_index_score)
 	return per_index_score;
 }
 
+static void mlme_init_power_cfg(struct wlan_objmgr_psoc *psoc,
+				struct wlan_mlme_power *power)
+{
+	power->tx_power_2g = cfg_get(psoc, CFG_SET_TXPOWER_LIMIT2G);
+	power->tx_power_5g = cfg_get(psoc, CFG_SET_TXPOWER_LIMIT5G);
+
+	power->max_tx_power_24.max_len = CFG_MAX_TX_POWER_2_4_LEN;
+	qdf_uint8_array_parse(cfg_default(CFG_MAX_TX_POWER_2_4),
+			      power->max_tx_power_24.data,
+			      sizeof(power->max_tx_power_24.data),
+			      &power->max_tx_power_24.len);
+
+	power->max_tx_power_5.max_len = CFG_MAX_TX_POWER_5_LEN;
+	qdf_uint8_array_parse(cfg_default(CFG_MAX_TX_POWER_5),
+			      power->max_tx_power_5.data,
+			      sizeof(power->max_tx_power_5.data),
+			      &power->max_tx_power_5.len);
+
+	power->power_usage.max_len = CFG_POWER_USAGE_MAX_LEN;
+	power->power_usage.len = CFG_POWER_USAGE_MAX_LEN;
+	qdf_mem_copy(power->power_usage.data, cfg_get(psoc, CFG_POWER_USAGE),
+		     power->power_usage.len);
+}
 static void mlme_init_scoring_cfg(struct wlan_objmgr_psoc *psoc,
 				  struct wlan_mlme_scoring_cfg *scoring_cfg)
 {
@@ -1818,6 +1841,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_scoring_cfg(psoc, &mlme_cfg->scoring);
 	mlme_init_threshold_cfg(psoc, &mlme_cfg->threshold);
 	mlme_init_acs_cfg(psoc, &mlme_cfg->acs);
+	mlme_init_power_cfg(psoc, &mlme_cfg->power);
 	mlme_init_oce_cfg(psoc, &mlme_cfg->oce);
 	mlme_init_wep_cfg(&mlme_cfg->wep_params);
 	mlme_init_wps_params_cfg(psoc, &mlme_cfg->wps_params);

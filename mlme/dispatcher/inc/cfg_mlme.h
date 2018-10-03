@@ -27,6 +27,7 @@
 #include "cfg_mlme_edca_params.h"
 #include "cfg_mlme_generic.h"
 #include "cfg_mlme_acs.h"
+#include "cfg_mlme_power.h"
 #include "cfg_mlme_ht_caps.h"
 #include "cfg_mlme_he_caps.h"
 #include "cfg_mlme_lfr.h"
@@ -62,6 +63,7 @@
 	CFG_HE_CAPS_ALL \
 	CFG_LFR_ALL \
 	CFG_MBO_ALL \
+	CFG_MLME_POWER_ALL \
 	CFG_MLME_PRODUCT_DETAILS_ALL \
 	CFG_NSS_CHAINS_ALL \
 	CFG_OBSS_HT40_ALL \

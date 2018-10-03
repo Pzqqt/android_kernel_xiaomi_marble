@@ -56,6 +56,41 @@ QDF_STATUS wlan_mlme_set_cfg_str(uint8_t *src, struct mlme_cfg_str *dst_cfg_str,
 	return QDF_STATUS_SUCCESS;
 }
 
+uint8_t wlan_mlme_get_tx_power(struct wlan_objmgr_psoc *psoc,
+			       enum band_info band)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return 0;
+	}
+
+	switch (band) {
+	case BAND_2G:
+		return mlme_obj->cfg.power.tx_power_2g;
+	case BAND_5G:
+		return mlme_obj->cfg.power.tx_power_5g;
+	default:
+		break;
+	}
+	return 0;
+}
+
+char *wlan_mlme_get_power_usage(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return NULL;
+	}
+
+	return mlme_obj->cfg.power.power_usage.data;
+}
+
 QDF_STATUS wlan_mlme_get_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 				     struct mlme_ht_capabilities_info
 				     *ht_cap_info)

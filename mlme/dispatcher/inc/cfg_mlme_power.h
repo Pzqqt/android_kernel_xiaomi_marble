@@ -1,0 +1,120 @@
+/*
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/**
+ * DOC: This file contains centralized definitions of converged configuration.
+ */
+
+#ifndef __CFG_MLME_POWER_H
+#define __CFG_MLME_POWER_H
+
+/*
+ * <cfg>
+ * max_tx_power_24 - max tx power allowed for 2.4 ghz
+ * @Min: 0 minimum length of tx power
+ * @Max: default data length of tx power in string format
+ * @Default: 1, 14, 20
+ */
+#define CFG_MAX_TX_POWER_2_4_DATA "1, 14, 20"
+#define CFG_MAX_TX_POWER_2_4 CFG_STRING( \
+		"max_tx_power_24", \
+		0, \
+		sizeof(CFG_MAX_TX_POWER_2_4_DATA) - 1, \
+		CFG_MAX_TX_POWER_2_4_DATA, \
+		"max tx power 24")
+
+/*
+ * <cfg>
+ * max_tx_power_5 - max tx power allowed for 5 ghz
+ * @Min: 0 minimum length of tx power
+ * @Max: default data length of tx power in string format
+ * @Default: 36, 126, 20
+ */
+#define CFG_MAX_TX_POWER_5_DATA "36, 126, 20"
+#define CFG_MAX_TX_POWER_5 CFG_STRING( \
+		"max_tx_power_5", \
+		0, \
+		sizeof(CFG_MAX_TX_POWER_5_DATA) - 1, \
+		CFG_MAX_TX_POWER_5_DATA, \
+		"max tx power 5")
+
+/*
+ * <ini>
+ * gPowerUsage - power usage name
+ * @Min: "Min" - minimum power usage
+ * @Max: "Max" - maximum power usage
+ * @Default: "Mod"
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_POWER_USAGE CFG_INI_STRING( \
+		"gPowerUsage", \
+		0, \
+		3, \
+		"Mod", \
+		"power usage")
+/*
+ * <ini>
+ * TxPower2g - Limit power in case of 2.4ghz
+ * @Min: 0
+ * @Max: 30
+ * @Default: 30
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_SET_TXPOWER_LIMIT2G CFG_INI_UINT( \
+			"TxPower2g", \
+			0, \
+			30, \
+			30, \
+			CFG_VALUE_OR_DEFAULT, \
+			"power limit 2g")
+/*
+ * <ini>
+ * TxPower5g - Limit power in case of 5ghz
+ * @Min: 0
+ * @Max: 30
+ * @Default: 30
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_SET_TXPOWER_LIMIT5G CFG_INI_UINT( \
+			"TxPower5g", \
+			0, \
+			30, \
+			30, \
+			CFG_VALUE_OR_DEFAULT, \
+			"power limit 5g")
+
+#define CFG_MLME_POWER_ALL \
+	CFG(CFG_MAX_TX_POWER_2_4) \
+	CFG(CFG_MAX_TX_POWER_5) \
+	CFG(CFG_POWER_USAGE) \
+	CFG(CFG_SET_TXPOWER_LIMIT2G) \
+	CFG(CFG_SET_TXPOWER_LIMIT5G)
+
+#endif /* __CFG_MLME_POWER_H */
