@@ -878,7 +878,7 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 						       &tdlsDisRsp.SuppChannels,
 						       &tdlsDisRsp.
 						       SuppOperatingClasses);
-		if (pMac->roam.configParam.bandCapability != BAND_2G) {
+		if (pMac->mlme_cfg->gen.band_capability != BAND_2G) {
 			tdlsDisRsp.ht2040_bss_coexistence.present = 1;
 			tdlsDisRsp.ht2040_bss_coexistence.info_request = 1;
 		}
@@ -1243,7 +1243,7 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 						     &tdlsSetupReq.SuppChannels,
 						     &tdlsSetupReq.
 						     SuppOperatingClasses);
-		if (pMac->roam.configParam.bandCapability != BAND_2G) {
+		if (pMac->mlme_cfg->gen.band_capability != BAND_2G) {
 			tdlsSetupReq.ht2040_bss_coexistence.present = 1;
 			tdlsSetupReq.ht2040_bss_coexistence.info_request = 1;
 		}
@@ -1694,7 +1694,7 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 						    &tdlsSetupRsp.SuppChannels,
 						    &tdlsSetupRsp.
 						    SuppOperatingClasses);
-		if (pMac->roam.configParam.bandCapability != BAND_2G) {
+		if (pMac->mlme_cfg->gen.band_capability != BAND_2G) {
 			tdlsSetupRsp.ht2040_bss_coexistence.present = 1;
 			tdlsSetupRsp.ht2040_bss_coexistence.info_request = 1;
 		}

@@ -1928,7 +1928,7 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 {
 	int ret;
 	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
-	uint8_t temp_band_cap;
+	uint8_t temp_band_cap, band_capability;
 	struct cds_config_info *cds_cfg = cds_get_ini_config();
 	uint8_t antenna_mode;
 	QDF_STATUS status;
@@ -1992,10 +1992,16 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 		}
 	}
 
-	/* first store the INI band capability */
-	temp_band_cap = hdd_ctx->config->nBandCapability;
+	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get MLME band capability");
+		return;
+	}
 
-	hdd_ctx->config->nBandCapability = cfg->band_cap;
+	/* first store the INI band capability */
+	temp_band_cap = band_capability;
+
+	band_capability = cfg->band_cap;
 	hdd_ctx->is_fils_roaming_supported =
 			cfg->services.is_fils_roaming_supported;
 
@@ -2006,17 +2012,22 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	 * now overwrite the target band capability with INI
 	 * setting if INI setting is a subset
 	 */
-
-	if ((hdd_ctx->config->nBandCapability == BAND_ALL) &&
+	if ((band_capability == BAND_ALL) &&
 	    (temp_band_cap != BAND_ALL))
-		hdd_ctx->config->nBandCapability = temp_band_cap;
-	else if ((hdd_ctx->config->nBandCapability != BAND_ALL) &&
+		band_capability = temp_band_cap;
+	else if ((band_capability != BAND_ALL) &&
 		 (temp_band_cap != BAND_ALL) &&
-		 (hdd_ctx->config->nBandCapability != temp_band_cap)) {
+		 (band_capability != temp_band_cap)) {
 		hdd_warn("ini BandCapability not supported by the target");
 	}
 
-	hdd_ctx->curr_band = hdd_ctx->config->nBandCapability;
+	status = ucfg_mlme_set_band_capability(hdd_ctx->psoc, band_capability);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to set MLME Band Capability");
+		return;
+	}
+
+	hdd_ctx->curr_band = band_capability;
 
 	if (!cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		hdd_ctx->reg.reg_domain = cfg->reg_domain;
@@ -9651,6 +9662,8 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 {
 	struct cds_config_info *cds_cfg;
 	int value;
+	uint8_t band_capability;
+	QDF_STATUS status;
 
 	cds_cfg = (struct cds_config_info *)qdf_mem_malloc(sizeof(*cds_cfg));
 	if (!cds_cfg) {
@@ -9742,7 +9755,12 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->active_mc_bc_apf_mode = hdd_ctx->config->active_mc_bc_apf_mode;
 
 	cds_cfg->ito_repeat_count = hdd_ctx->config->ito_repeat_count;
-	cds_cfg->bandcapability = hdd_ctx->config->nBandCapability;
+
+	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto exit;
+
+	cds_cfg->bandcapability = band_capability;
 	cds_cfg->delay_before_vdev_stop =
 		hdd_ctx->config->delay_before_vdev_stop;
 	cds_cfg->num_vdevs = hdd_ctx->config->num_vdevs;
@@ -9769,6 +9787,12 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc_user_config *user_config;
 	bool skip_dfs_in_p2p_search = false;
+	uint8_t band_capability;
+	QDF_STATUS status;
+
+	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EIO;
 
 	user_config = qdf_mem_malloc(sizeof(*user_config));
 	if (user_config == NULL) {
@@ -9790,7 +9814,7 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 	cfg_p2p_get_skip_dfs_channel_p2p_search(hdd_ctx->psoc,
 						&skip_dfs_in_p2p_search);
 	user_config->skip_dfs_chnl_in_p2p_search = skip_dfs_in_p2p_search;
-	user_config->band_capability = hdd_ctx->config->nBandCapability;
+	user_config->band_capability = band_capability;
 	wlan_objmgr_psoc_set_user_config(hdd_ctx->psoc, user_config);
 
 	qdf_mem_free(user_config);

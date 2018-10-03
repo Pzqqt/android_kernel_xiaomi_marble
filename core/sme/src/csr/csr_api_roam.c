@@ -1680,7 +1680,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 		WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
 
 	pMac->roam.configParam.phyMode = eCSR_DOT11_MODE_AUTO;
-	pMac->roam.configParam.eBand = BAND_ALL;
 	pMac->roam.configParam.uCfgDot11Mode = eCSR_CFG_DOT11_MODE_AUTO;
 	pMac->roam.configParam.HeartbeatThresh24 = 40;
 	pMac->roam.configParam.HeartbeatThresh50 = 40;
@@ -1760,7 +1759,7 @@ enum band_info csr_get_current_band(tHalHandle hHal)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
-	return pMac->roam.configParam.bandCapability;
+	return pMac->mlme_cfg->gen.band_capability;
 }
 
 /* This function flushes the roam scan cache */
@@ -2277,8 +2276,8 @@ QDF_STATUS csr_set_band(tHalHandle hHal, uint8_t sessionId,
 	}
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "Band changed to %u (0 - ALL, 1 - 2.4 GHZ, 2 - 5GHZ)", eBand);
-	pMac->roam.configParam.eBand = eBand;
-	pMac->roam.configParam.bandCapability = eBand;
+	pMac->mlme_cfg->gen.band_capability = eBand;
+	pMac->mlme_cfg->gen.band = eBand;
 
 	status = csr_get_channel_and_power_list(pMac);
 	if (QDF_STATUS_SUCCESS == status)
@@ -2778,8 +2777,12 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->Is11eSupportEnabled;
 		pMac->roam.configParam.Is11dSupportEnabled =
 			pParam->Is11dSupportEnabled;
-		pMac->roam.configParam.Is11hSupportEnabled =
-			pParam->Is11hSupportEnabled;
+
+		if (pMac->mlme_cfg->gen.band_capability == BAND_2G)
+			pMac->roam.configParam.Is11hSupportEnabled = 0;
+		else
+			pMac->roam.configParam.Is11hSupportEnabled =
+				pParam->Is11hSupportEnabled;
 
 		pMac->roam.configParam.fenableMCCMode = pParam->fEnableMCCMode;
 		pMac->roam.configParam.mcc_rts_cts_prot_enable =
@@ -2818,7 +2821,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->ProprietaryRatesEnabled;
 		pMac->roam.configParam.AdHocChannel24 = pParam->AdHocChannel24;
 		pMac->roam.configParam.AdHocChannel5G = pParam->AdHocChannel5G;
-		pMac->roam.configParam.bandCapability = pParam->bandCapability;
 		pMac->roam.configParam.wep_tkip_in_he = pParam->wep_tkip_in_he;
 		pMac->roam.configParam.neighborRoamConfig.
 			delay_before_vdev_stop =
@@ -2867,7 +2869,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->min_rest_time_conc;
 		pMac->roam.configParam.idle_time_conc = pParam->idle_time_conc;
 
-		pMac->roam.configParam.eBand = pParam->eBand;
 		pMac->roam.configParam.uCfgDot11Mode =
 			csr_get_cfg_dot11_mode_from_csr_phy_mode(NULL,
 							pMac->roam.configParam.
@@ -3209,7 +3210,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->ProprietaryRatesEnabled = cfg_params->ProprietaryRatesEnabled;
 	pParam->AdHocChannel24 = cfg_params->AdHocChannel24;
 	pParam->AdHocChannel5G = cfg_params->AdHocChannel5G;
-	pParam->bandCapability = cfg_params->bandCapability;
 	pParam->nActiveMaxChnTime = cfg_params->nActiveMaxChnTime;
 	pParam->nPassiveMaxChnTime = cfg_params->nPassiveMaxChnTime;
 	pParam->nActiveMaxChnTimeConc = cfg_params->nActiveMaxChnTimeConc;
@@ -3219,7 +3219,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->nRestTimeConc = cfg_params->nRestTimeConc;
 	pParam->min_rest_time_conc = cfg_params->min_rest_time_conc;
 	pParam->idle_time_conc = cfg_params->idle_time_conc;
-	pParam->eBand = cfg_params->eBand;
 	pParam->nScanResultAgeCount = cfg_params->agingCount;
 	pParam->bCatRssiOffset = cfg_params->bCatRssiOffset;
 	pParam->fSupplicantCountryCodeHasPriority =
@@ -3464,7 +3463,7 @@ QDF_STATUS csr_set_phy_mode(tHalHandle hHal, uint32_t phyMode,
 	/* Done validating */
 	status = QDF_STATUS_SUCCESS;
 	/* Now we need to check whether a restart is needed. */
-	if (eBand != pMac->roam.configParam.eBand) {
+	if (eBand != pMac->mlme_cfg->gen.band) {
 		fRestartNeeded = true;
 		goto end;
 	}
@@ -3474,7 +3473,7 @@ QDF_STATUS csr_set_phy_mode(tHalHandle hHal, uint32_t phyMode,
 	}
 end:
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		pMac->roam.configParam.eBand = eBand;
+		pMac->mlme_cfg->gen.band = eBand;
 		pMac->roam.configParam.phyMode = newPhyMode;
 		if (pfRestartNeeded)
 			*pfRestartNeeded = fRestartNeeded;
@@ -4709,7 +4708,7 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	    pProfile->EncryptionType.encryptionType[0])
 		pBssConfig->BssCap.privacy = 1;
 
-	pBssConfig->eBand = pMac->roam.configParam.eBand;
+	pBssConfig->eBand = pMac->mlme_cfg->gen.band;
 	/* phymode */
 	if (pProfile->ChannelInfo.ChannelList)
 		operationChannel = pProfile->ChannelInfo.ChannelList[0];
@@ -13209,7 +13208,7 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 		 * to determine the Mode setting.
 		 */
 		if (eCSR_OPERATING_CHANNEL_AUTO == opr_ch) {
-			*band = mac_ctx->roam.configParam.eBand;
+			*band = mac_ctx->mlme_cfg->gen.band;
 			if (BAND_2G == *band) {
 				/*
 				 * See reason in else if ( WLAN_REG_IS_24GHZ_CH
@@ -13294,7 +13293,7 @@ enum csr_cfgdot11mode curr_mode = mac_ctx->roam.configParam.uCfgDot11Mode;
 		/* dot11 mode is set, lets pick the band */
 		if (eCSR_OPERATING_CHANNEL_AUTO == opr_chn) {
 			/* channel is Auto also. */
-			band = mac_ctx->roam.configParam.eBand;
+			band = mac_ctx->mlme_cfg->gen.band;
 			if (BAND_ALL == band) {
 				/* prefer 5GHz */
 				band = BAND_5G;
@@ -18299,7 +18298,7 @@ csr_fetch_ch_lst_from_ini(tpAniSirGlobal mac_ctx,
 	 * The INI channels need to be filtered with respect to the current band
 	 * that is supported.
 	 */
-	band = mac_ctx->roam.configParam.bandCapability;
+	band = mac_ctx->mlme_cfg->gen.band_capability;
 	if ((BAND_2G != band) && (BAND_5G != band)
 	    && (BAND_ALL != band)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,

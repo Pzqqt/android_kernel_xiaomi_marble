@@ -1299,13 +1299,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_MIN,
 		     CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_MAX),
 
-	REG_VARIABLE(CFG_BAND_CAPABILITY_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nBandCapability,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BAND_CAPABILITY_DEFAULT,
-		     CFG_BAND_CAPABILITY_MIN,
-		     CFG_BAND_CAPABILITY_MAX),
-
 /* CFG_QDF_TRACE_ENABLE Parameters */
 	REG_VARIABLE(CFG_QDF_TRACE_ENABLE_WDI_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, qdf_trace_enable_wdi,
@@ -5241,14 +5234,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.AdHocChannel24 = pConfig->AdHocChannel24G;
 	smeConfig->csrConfig.ProprietaryRatesEnabled = 0;
 	smeConfig->csrConfig.HeartbeatThresh50 = 40;
-	smeConfig->csrConfig.bandCapability = pConfig->nBandCapability;
-	if (pConfig->nBandCapability == BAND_2G) {
-		smeConfig->csrConfig.Is11hSupportEnabled = 0;
-	} else {
-		smeConfig->csrConfig.Is11hSupportEnabled =
-			pConfig->Is11hSupportEnabled;
-	}
-	smeConfig->csrConfig.eBand = pConfig->nBandCapability;
+	smeConfig->csrConfig.Is11hSupportEnabled = pConfig->Is11hSupportEnabled;
 	smeConfig->csrConfig.nTxPowerCap = pConfig->nTxPowerCap;
 	smeConfig->csrConfig.allow_tpc_from_ap = pConfig->allow_tpc_from_ap;
 	smeConfig->csrConfig.fEnableBypass11d = pConfig->enableBypass11d;

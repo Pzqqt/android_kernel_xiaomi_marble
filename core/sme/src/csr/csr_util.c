@@ -1793,7 +1793,7 @@ uint32_t csr_translate_to_wni_cfg_dot11_mode(tpAniSirGlobal pMac,
 		break;
 	default:
 		sme_warn("doesn't expect %d as csrDo11Mode", csrDot11Mode);
-		if (BAND_2G == pMac->roam.configParam.eBand)
+		if (BAND_2G == pMac->mlme_cfg->gen.band)
 			ret = WNI_CFG_DOT11_MODE_11G;
 		else
 			ret = WNI_CFG_DOT11_MODE_11A;
@@ -2162,7 +2162,7 @@ enum csr_cfgdot11mode csr_find_best_phy_mode(tpAniSirGlobal pMac,
 			uint32_t phyMode)
 {
 	enum csr_cfgdot11mode cfgDot11ModeToUse;
-	enum band_info eBand = pMac->roam.configParam.eBand;
+	enum band_info eBand = pMac->mlme_cfg->gen.band;
 
 	if ((0 == phyMode) ||
 	    (eCSR_DOT11_MODE_AUTO & phyMode) ||

@@ -207,6 +207,13 @@ void hdd_reset_global_reg_params(void)
 static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 				    struct reg_config_vars *config_vars)
 {
+	uint8_t band_capability = 0;
+	QDF_STATUS status;
+
+	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to get MLME band cap, defaulting to BAND_ALL");
+
 	config_vars->enable_11d_support = hdd_ctx->config->Is11dSupportEnabled;
 	config_vars->scan_11d_interval = hdd_ctx->config->scan_11d_interval;
 	config_vars->userspace_ctry_priority =
@@ -216,7 +223,7 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 		hdd_ctx->config->indoor_channel_support;
 	config_vars->force_ssc_disable_indoor_channel =
 		hdd_ctx->config->force_ssc_disable_indoor_channel;
-	config_vars->band_capability = hdd_ctx->config->nBandCapability;
+	config_vars->band_capability = band_capability;
 	config_vars->restart_beaconing = hdd_ctx->config->
 		restart_beaconing_on_chan_avoid_event;
 	config_vars->enable_srd_chan_in_master_mode =
@@ -709,6 +716,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	enum band_info currBand;
 	enum band_info connectedBand;
 	long lrc;
+	uint8_t band_capability;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -729,18 +737,22 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 
 	hdd_debug("change band to %u", band);
 
-	if ((band == BAND_2G && hdd_ctx->config->nBandCapability == 2) ||
-	    (band == BAND_5G && hdd_ctx->config->nBandCapability == 1) ||
-	    (band == BAND_ALL && hdd_ctx->config->nBandCapability != 0)) {
+	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EIO;
+
+	if ((band == BAND_2G && band_capability == 2) ||
+	    (band == BAND_5G && band_capability == 1) ||
+	    (band == BAND_ALL && band_capability != 0)) {
 		hdd_err("band value %u violate INI settings %u",
-			  band, hdd_ctx->config->nBandCapability);
+			  band, band_capability);
 		return -EIO;
 	}
 
 	if (band == BAND_ALL) {
 		hdd_debug("Auto band received. Setting band same as ini value %d",
-			hdd_ctx->config->nBandCapability);
-		band = hdd_ctx->config->nBandCapability;
+			band_capability);
+		band = band_capability;
 	}
 
 	if (ucfg_reg_get_curr_band(hdd_ctx->pdev, &currBand) !=

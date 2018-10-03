@@ -1538,9 +1538,9 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			break;
 		case WMI_PDEV_PARAM_TXPOWER_LIMIT2G:
 			wma->pdevconfig.txpow2g = privcmd->param_value;
-			if ((pMac->roam.configParam.bandCapability ==
+			if ((pMac->mlme_cfg->gen.band_capability ==
 			     BAND_ALL) ||
-			    (pMac->roam.configParam.bandCapability ==
+			    (pMac->mlme_cfg->gen.band_capability ==
 			     BAND_2G)) {
 				if (cfg_set_int(pMac,
 						WNI_CFG_CURRENT_TX_POWER_LEVEL,
@@ -1554,9 +1554,9 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			break;
 		case WMI_PDEV_PARAM_TXPOWER_LIMIT5G:
 			wma->pdevconfig.txpow5g = privcmd->param_value;
-			if ((pMac->roam.configParam.bandCapability ==
+			if ((pMac->mlme_cfg->gen.band_capability ==
 			     BAND_ALL) ||
-			    (pMac->roam.configParam.bandCapability ==
+			    (pMac->mlme_cfg->gen.band_capability ==
 			     BAND_5G)) {
 				if (cfg_set_int(pMac,
 						WNI_CFG_CURRENT_TX_POWER_LEVEL,

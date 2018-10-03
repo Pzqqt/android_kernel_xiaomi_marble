@@ -3562,30 +3562,6 @@ enum station_keepalive_method {
 #define CFG_HW_FILTER_MODE_BITMAP_MAX		(3)
 #define CFG_HW_FILTER_MODE_BITMAP_DEFAULT	(1)
 
-/*
- * <ini>
- * BandCapability - Preferred band (0: Both,  1: 2.4G only,  2: 5G only)
- * @Min: 0
- * @Max: 2
- * @Default: 0
- *
- * This ini is used to set default band capability
- * (0: Both, 1: 2.4G only, 2: 5G only)
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_BAND_CAPABILITY_NAME          "BandCapability"
-#define CFG_BAND_CAPABILITY_MIN           (0)
-#define CFG_BAND_CAPABILITY_MAX           (2)
-#define CFG_BAND_CAPABILITY_DEFAULT       (0)
-
 #define CFG_ENABLE_BYPASS_11D_NAME                 "gEnableBypass11d"
 #define CFG_ENABLE_BYPASS_11D_MIN                  (0)
 #define CFG_ENABLE_BYPASS_11D_MAX                  (1)
@@ -9193,8 +9169,6 @@ struct hdd_config {
 	uint8_t tsInfoAckPolicy;
 
 	bool AddTSWhenACMIsOff;
-
-	uint8_t nBandCapability;
 
 /* QDF Trace Control*/
 	uint16_t qdf_trace_enable_wdi;

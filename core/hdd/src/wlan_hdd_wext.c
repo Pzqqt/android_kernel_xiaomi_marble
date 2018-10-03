@@ -3687,6 +3687,8 @@ int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 	enum hdd_dot11_mode hdd_dot11mode = phddctx->config->dot11Mode;
 	enum band_info curr_band = BAND_ALL;
 	int retval = 0;
+	uint8_t band_capability;
+	QDF_STATUS status;
 
 	old_phymode = sme_get_phy_mode(mac_handle);
 
@@ -3700,11 +3702,17 @@ int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 						   nChannelBondingMode5GHz))
 		ch_bond5g = true;
 
-	if (phddctx->config->nBandCapability == BAND_ALL)
+	status = wlan_mlme_get_band_capability(phddctx->psoc, &band_capability);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get MLME Band capability");
+		return -EIO;
+	}
+
+	if (band_capability == BAND_ALL)
 		band_24 = band_5g = true;
-	else if (phddctx->config->nBandCapability == BAND_2G)
+	else if (band_capability == BAND_2G)
 		band_24 = true;
-	else if (phddctx->config->nBandCapability == BAND_5G)
+	else if (band_capability == BAND_5G)
 		band_5g = true;
 
 	vhtchanwidth = phddctx->config->vhtChannelWidth;
@@ -3928,8 +3936,13 @@ int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 			}
 		}
 #endif
-		sme_config->csrConfig.eBand = curr_band;
-		sme_config->csrConfig.bandCapability = curr_band;
+		status = ucfg_mlme_set_band_capability(phddctx->psoc,
+						       curr_band);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("failed to set MLME band capability");
+			goto free;
+		}
+
 		if (curr_band == BAND_2G)
 			sme_config->csrConfig.Is11hSupportEnabled = 0;
 		else

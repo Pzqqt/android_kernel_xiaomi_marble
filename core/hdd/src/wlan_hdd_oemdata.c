@@ -58,6 +58,7 @@ static int populate_oem_data_cap(struct hdd_adapter *adapter,
 	struct hdd_config *config;
 	uint32_t num_chan;
 	uint8_t *chan_list;
+	uint8_t band_capability;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	config = hdd_ctx->config;
@@ -65,6 +66,13 @@ static int populate_oem_data_cap(struct hdd_adapter *adapter,
 		hdd_err("HDD configuration is null");
 		return -EINVAL;
 	}
+
+	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get MLME band capability");
+		return -EIO;
+	}
+
 	chan_list = qdf_mem_malloc(sizeof(uint8_t) * OEM_CAP_MAX_NUM_CHANNELS);
 	if (NULL == chan_list) {
 		hdd_err("Memory allocation failed");
@@ -87,7 +95,7 @@ static int populate_oem_data_cap(struct hdd_adapter *adapter,
 	data_cap->curr_dwell_time_max =
 		sme_get_neighbor_scan_max_chan_time(hdd_ctx->mac_handle,
 						    adapter->session_id);
-	data_cap->supported_bands = config->nBandCapability;
+	data_cap->supported_bands = band_capability;
 
 	/* request for max num of channels */
 	num_chan = OEM_CAP_MAX_NUM_CHANNELS;

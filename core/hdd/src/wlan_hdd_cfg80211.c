@@ -12119,7 +12119,6 @@ wlan_hdd_populate_srd_chan_info(struct hdd_context *hdd_ctx, uint32_t index)
 int wlan_hdd_cfg80211_init(struct device *dev,
 			   struct wiphy *wiphy, struct hdd_config *pCfg)
 {
-	int i, j;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	int len_5g_ch = 0, num_ch, ch_arr_size;
 	int num_dsrc_ch, len_dsrc_ch, num_srd_ch, len_srd_ch;
@@ -12258,37 +12257,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 					     len_5g_ch, len_srd_ch);
 	}
 
-	for (i = 0; i < HDD_NUM_NL80211_BANDS; i++) {
-
-		if (NULL == wiphy->bands[i])
-			continue;
-
-		for (j = 0; j < wiphy->bands[i]->n_channels; j++) {
-			struct ieee80211_supported_band *band = wiphy->bands[i];
-
-			if (HDD_NL80211_BAND_2GHZ == i &&
-				BAND_5G == pCfg->nBandCapability) {
-				/* 5G only */
-#ifdef WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
-				/* Enable social channels for P2P */
-				if (WLAN_HDD_IS_SOCIAL_CHANNEL
-					    (band->channels[j].center_freq))
-					band->channels[j].flags &=
-						~IEEE80211_CHAN_DISABLED;
-				else
-#endif
-				band->channels[j].flags |=
-					IEEE80211_CHAN_DISABLED;
-				continue;
-			} else if (HDD_NL80211_BAND_5GHZ == i &&
-					BAND_2G == pCfg->nBandCapability) {
-				/* 2G only */
-				band->channels[j].flags |=
-					IEEE80211_CHAN_DISABLED;
-				continue;
-			}
-		}
-	}
 	/*Initialise the supported cipher suite details */
 	if (pCfg->gcmp_enabled) {
 		cipher_suites = qdf_mem_malloc(sizeof(hdd_cipher_suites) +
@@ -12437,6 +12405,60 @@ static void wlan_hdd_update_ht_cap(struct hdd_context *hdd_ctx)
 		wlan_hdd_band_5_ghz.ht_cap.cap &= ~IEEE80211_HT_CAP_SGI_40;
 }
 
+/**
+ * wlan_hdd_update_band_cap_in_wiphy() - update channel flags based on band cap
+ * @hdd_ctx: HDD context
+ *
+ * This function updates the channel flags based on the band capability set
+ * in the MLME CFG
+ *
+ * Return: void
+ */
+static void wlan_hdd_update_band_cap_in_wiphy(struct hdd_context *hdd_ctx)
+{
+	int i, j;
+	uint8_t band_capability;
+	QDF_STATUS status;
+	struct ieee80211_supported_band *band;
+
+	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get MLME Band Capability");
+		return;
+	}
+
+	for (i = 0; i < HDD_NUM_NL80211_BANDS; i++) {
+		if (NULL == hdd_ctx->wiphy->bands[i])
+			continue;
+
+		for (j = 0; j < hdd_ctx->wiphy->bands[i]->n_channels; j++) {
+			band = hdd_ctx->wiphy->bands[i];
+
+			if (HDD_NL80211_BAND_2GHZ == i &&
+			    BAND_5G == band_capability) {
+				/* 5G only */
+#ifdef WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
+				/* Enable social channels for P2P */
+				if (WLAN_HDD_IS_SOCIAL_CHANNEL
+				    (band->channels[j].center_freq))
+					band->channels[j].flags &=
+						~IEEE80211_CHAN_DISABLED;
+				else
+#endif
+				band->channels[j].flags |=
+					IEEE80211_CHAN_DISABLED;
+				continue;
+			} else if (HDD_NL80211_BAND_5GHZ == i &&
+				   BAND_2G == band_capability) {
+				/* 2G only */
+				band->channels[j].flags |=
+					IEEE80211_CHAN_DISABLED;
+				continue;
+			}
+		}
+	}
+}
+
 /*
  * In this function, wiphy structure is updated after QDF
  * initialization. In wlan_hdd_cfg80211_init, only the
@@ -12452,6 +12474,7 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 	ucfg_mlme_get_sap_max_peers(hdd_ctx->psoc, &value);
 	hdd_ctx->wiphy->max_ap_assoc_sta = value;
 	wlan_hdd_update_ht_cap(hdd_ctx);
+	wlan_hdd_update_band_cap_in_wiphy(hdd_ctx);
 
 	fils_enabled = 0;
 	status = ucfg_mlme_get_fils_enabled_info(hdd_ctx->psoc,

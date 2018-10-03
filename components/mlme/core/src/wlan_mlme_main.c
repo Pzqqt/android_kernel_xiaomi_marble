@@ -161,6 +161,7 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 	gen->rtt3_enabled = cfg_default(CFG_RTT3_ENABLE);
 	gen->band_capability =
 		cfg_get(psoc, CFG_BAND_CAPABILITY);
+	gen->band = gen->band_capability;
 	gen->select_5ghz_margin =
 		cfg_get(psoc, CFG_SELECT_5GHZ_MARGIN);
 	gen->sub_20_chan_width =

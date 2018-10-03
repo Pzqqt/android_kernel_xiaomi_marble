@@ -1046,9 +1046,7 @@ typedef struct tagCsrConfigParam {
 	uint32_t channelBondingMode24GHz;
 	uint32_t channelBondingMode5GHz;
 	eCsrPhyMode phyMode;
-	enum band_info eBand;
 	uint32_t HeartbeatThresh50;
-	enum band_info bandCapability;     /* indicate hw capability */
 	eCsrRoamWmmUserModeType WMMSupportMode;
 	bool Is11eSupportEnabled;
 	bool Is11dSupportEnabled;
