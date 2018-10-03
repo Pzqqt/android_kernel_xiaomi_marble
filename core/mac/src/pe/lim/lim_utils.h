@@ -1366,6 +1366,16 @@ void lim_send_dfs_chan_sw_ie_update(tpAniSirGlobal mac_ctx,
 void lim_process_ap_ecsa_timeout(void *session);
 
 /**
+ * lim_send_stop_bss_failure_resp() -send failure delete bss resp to sme
+ * @mac_ctx: mac ctx
+ * @session: session pointer
+ *
+ * Return None
+ */
+void lim_send_stop_bss_failure_resp(tpAniSirGlobal mac_ctx,
+				    tpPESession session);
+
+/**
  * lim_delete_all_peers() -delete all connected peers
  * @session: session pointer
  *

@@ -8471,17 +8471,40 @@ void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session)
 QDF_STATUS lim_ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data)
 {
+	tpPESession session;
+	tSirResultCodes ret;
+	tpLimMlmStartReq start_req = (tLimMlmStartReq *)data;
 	tpAniSirGlobal mac_ctx;
+
+	if (!data) {
+		pe_err("data is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac_ctx) {
 		pe_err("mac_ctx is NULL");
-		if (data)
-			qdf_mem_free(data);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	lim_process_mlm_start_req(mac_ctx, (tLimMlmStartReq *)data);
+	session = pe_find_session_by_session_id(mac_ctx,
+						start_req->sessionId);
+	if (!session) {
+		pe_err("session is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (LIM_IS_IBSS_ROLE(session) &&
+	    session->mac_ctx->lim.gLimIbssCoalescingHappened) {
+		ibss_bss_add(session->mac_ctx, session);
+		ret = lim_mlm_add_bss(session->mac_ctx, start_req, session);
+		if (ret != eSIR_SME_SUCCESS) {
+			pe_err("AddBss failure");
+			return QDF_STATUS_E_INVAL;
+		}
+	} else {
+		lim_process_mlm_start_req(session->mac_ctx, start_req);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -8546,7 +8569,17 @@ QDF_STATUS lim_ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS lim_ap_mlme_vdev_disconnect_peers(struct vdev_mlme_obj *vdev_mlme,
 					     uint16_t data_len, void *data)
 {
-	lim_delete_all_peers((tpPESession)data);
+	tpPESession session = (tpPESession)data;
+
+	if (!data) {
+		pe_err("data is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (LIM_IS_IBSS_ROLE(session))
+		lim_ibss_delete_all_peers(session->mac_ctx, session);
+	else
+		lim_delete_all_peers(session);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -8554,7 +8587,21 @@ QDF_STATUS lim_ap_mlme_vdev_disconnect_peers(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS lim_ap_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 				      uint16_t data_len, void *data)
 {
-	return lim_send_vdev_stop((tpPESession)data);
+	tpPESession session = (tpPESession)data;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!data) {
+		pe_err("data is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (LIM_IS_IBSS_ROLE(session) &&
+	    session->mac_ctx->lim.gLimIbssCoalescingHappened)
+		ibss_bss_delete(session->mac_ctx, session);
+	else
+		status =  lim_send_vdev_stop(session);
+
+	return status;
 }
 
 QDF_STATUS lim_ap_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,

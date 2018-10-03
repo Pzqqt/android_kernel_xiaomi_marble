@@ -1065,6 +1065,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		qdf_status = lim_send_start_vdev_req(session, mlm_start_req);
 		if (QDF_IS_STATUS_ERROR(qdf_status))
 			goto free;
+		qdf_mem_free(mlm_start_req);
 		return;
 	} else {
 
@@ -2892,15 +2893,8 @@ static void __lim_counter_measures(tpAniSirGlobal pMac, tpPESession psessionEntr
 					     mac, psessionEntry, false);
 };
 
-/**
- * lim_send_stop_bss_failure_resp() -send failure delete bss resp to sme
- * @mac_ctx: mac ctx
- * @session: session pointer
- *
- * Return None
- */
-static void lim_send_stop_bss_failure_resp(tpAniSirGlobal mac_ctx,
-					   tpPESession session)
+void lim_send_stop_bss_failure_resp(tpAniSirGlobal mac_ctx,
+				    tpPESession session)
 {
 	session->limSmeState = session->limPrevSmeState;
 

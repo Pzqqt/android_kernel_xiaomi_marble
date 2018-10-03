@@ -676,9 +676,6 @@ end:
 	/* Update PE session Id */
 	mlm_start_cnf.sessionId = mlm_start_req->sessionId;
 
-	/* Free up buffer allocated for LimMlmScanReq */
-	qdf_mem_free(mlm_start_req);
-
 	/*
 	 * Respond immediately to LIM, only if MLME has not been
 	 * successfully able to send WMA_ADD_BSS_REQ to HAL.

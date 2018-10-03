@@ -30,6 +30,33 @@
 #include "sir_common.h"
 #include "lim_utils.h"
 
+/**
+ * ibss_bss_delete()- start the ibss
+ * @mac_ctx: Pointer to Global MAC structure
+ * @session: pe session
+ *
+ * Return: None
+ */
+void ibss_bss_add(tpAniSirGlobal mac_ctx, tpPESession session);
+
+/**
+ * ibss_bss_delete()- delete the current BSS
+ * @mac_ctx: Pointer to Global MAC structure
+ * @session: pe session
+ *
+ * Return: None
+ */
+void ibss_bss_delete(tpAniSirGlobal mac_ctx, tpPESession session);
+
+/**
+ * lim_ibss_delete_all_peers: delete all IBSS peers.
+ * @mac_ctx: Pointer to Global MAC structure
+ * @session: pe session
+ *
+ * Return: None
+ */
+void lim_ibss_delete_all_peers(tpAniSirGlobal mac_ctx, tpPESession session);
+
 void lim_ibss_init(tpAniSirGlobal);
 void lim_ibss_delete(tpAniSirGlobal, tpPESession psessionEntry);
 QDF_STATUS lim_ibss_coalesce(tpAniSirGlobal, tpSirMacMgmtHdr,

@@ -476,7 +476,7 @@ ibss_status_chg_notify(tpAniSirGlobal pMac, tSirMacAddr peerAddr,
 	}
 }
 
-static void ibss_bss_add(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void ibss_bss_add(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 	tLimMlmStartReq mlmStartReq;
 	uint32_t cfg;
@@ -569,11 +569,17 @@ static void ibss_bss_add(tpAniSirGlobal pMac, tpPESession psessionEntry)
 		     psessionEntry->pLimStartBssReq->ssId.length + 1);
 
 	pe_debug("invoking ADD_BSS as part of coalescing!");
+#ifdef CONFIG_VDEV_SM
+	wlan_vdev_mlme_sm_deliver_evt(psessionEntry->vdev,
+				      WLAN_VDEV_SM_EV_START,
+				      sizeof(mlmStartReq), &mlmStartReq);
+#else
 	if (lim_mlm_add_bss(pMac, &mlmStartReq, psessionEntry) !=
 	    eSIR_SME_SUCCESS) {
 		pe_err("AddBss failure");
 		return;
 	}
+#endif
 	/* Update fields in Beacon */
 	if (sch_set_fixed_beacon_fields(pMac, psessionEntry) != QDF_STATUS_SUCCESS) {
 		pe_err("Unable to set fixed Beacon fields");
@@ -582,21 +588,19 @@ static void ibss_bss_add(tpAniSirGlobal pMac, tpPESession psessionEntry)
 
 }
 
-/* delete the current BSS */
-static void ibss_bss_delete(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void ibss_bss_delete(tpAniSirGlobal mac_ctx, tpPESession session)
 {
 	QDF_STATUS status;
 
 	pe_debug("Initiating IBSS Delete BSS");
-	if (psessionEntry->limMlmState != eLIM_MLM_BSS_STARTED_STATE) {
+	if (session->limMlmState != eLIM_MLM_BSS_STARTED_STATE) {
 		pe_warn("Incorrect LIM MLM state for delBss: %d",
-			psessionEntry->limMlmState);
+			session->limMlmState);
 		return;
 	}
-	status = lim_del_bss(pMac, NULL, psessionEntry->bssIdx, psessionEntry);
-	if (status != QDF_STATUS_SUCCESS)
-		pe_err("delBss failed for bss: %d",
-			       psessionEntry->bssIdx);
+	status = lim_del_bss(mac_ctx, NULL, session->bssIdx, session);
+	if (QDF_IS_STATUS_ERROR(status))
+		pe_err("delBss failed for bss: %d", session->bssIdx);
 }
 
 /**
@@ -641,13 +645,15 @@ void lim_ibss_init(tpAniSirGlobal pMac)
  * @param  pMac - Pointer to Global MAC structure
  * @return None
  */
-
-static void lim_ibss_delete_all_peers(tpAniSirGlobal pMac,
-				      tpPESession psessionEntry)
+void lim_ibss_delete_all_peers(tpAniSirGlobal pMac,
+			       tpPESession psessionEntry)
 {
 	tLimIbssPeerNode *pCurrNode, *pTempNode;
 	tpDphHashNode pStaDs;
 	uint16_t peerIdx;
+#ifdef CONFIG_VDEV_SM
+	QDF_STATUS status;
+#endif
 
 	pCurrNode = pTempNode = pMac->lim.gLimIbssPeerList;
 
@@ -669,6 +675,7 @@ static void lim_ibss_delete_all_peers(tpAniSirGlobal pMac,
 					       pStaDs->staIndex,
 					       eWNI_SME_IBSS_PEER_DEPARTED_IND,
 					       psessionEntry->smeSessionId);
+			lim_del_sta(pMac, pStaDs, false, psessionEntry);
 			lim_release_peer_idx(pMac, peerIdx, psessionEntry);
 			dph_delete_hash_entry(pMac, pStaDs->staAddr, peerIdx,
 					      &psessionEntry->dph.dphHashTable);
@@ -700,7 +707,18 @@ static void lim_ibss_delete_all_peers(tpAniSirGlobal pMac,
 
 	pMac->lim.gLimNumIbssPeers = 0;
 	pMac->lim.gLimIbssPeerList = NULL;
-
+#ifdef CONFIG_VDEV_SM
+	status =
+	   wlan_vdev_mlme_sm_deliver_evt(psessionEntry->vdev,
+					 WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE,
+					 sizeof(*psessionEntry), psessionEntry);
+	if (!pMac->lim.gLimIbssCoalescingHappened &&
+	    QDF_IS_STATUS_ERROR(status)) {
+		pe_err("failed to post WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE for vdevid %d",
+		       psessionEntry->smeSessionId);
+		lim_send_stop_bss_failure_resp(pMac, psessionEntry);
+	}
+#endif
 }
 
 /**
@@ -714,7 +732,9 @@ static void lim_ibss_delete_all_peers(tpAniSirGlobal pMac,
 
 void lim_ibss_delete(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
+#ifndef CONFIG_VDEV_SM
 	lim_ibss_delete_all_peers(pMac, psessionEntry);
+#endif
 	ibss_coalesce_free(pMac);
 }
 
@@ -1227,12 +1247,13 @@ void lim_ibss_del_bss_rsp_when_coalescing(tpAniSirGlobal pMac, void *msg,
 			pDelBss->status, pDelBss->bssIdx);
 		goto end;
 	}
+
+#ifndef CONFIG_VDEV_SM
 	/* Delete peer entries. */
 	lim_ibss_delete_all_peers(pMac, psessionEntry);
-
+#endif
 	/* add the new bss */
 	ibss_bss_add(pMac, psessionEntry);
-
 end:
 	if (pDelBss != NULL)
 		qdf_mem_free(pDelBss);
@@ -1271,7 +1292,7 @@ void lim_ibss_add_bss_rsp_when_coalescing(tpAniSirGlobal pMac, void *msg,
 					  infoLen, pSessionEntry->smeSessionId);
 	{
 		/* Configure beacon and send beacons to HAL */
-		lim_send_beacon_ind(pMac, pSessionEntry);
+		lim_send_beacon(pMac, pSessionEntry);
 	}
 
 end:
@@ -1430,7 +1451,14 @@ lim_ibss_coalesce(tpAniSirGlobal pMac,
 		ibss_coalesce_save(pMac, pHdr, pBeacon);
 		pe_debug("IBSS Coalescing happened Delete BSSID :" MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(currentBssId));
+#ifdef CONFIG_VDEV_SM
+		wlan_vdev_mlme_sm_deliver_evt(psessionEntry->vdev,
+					      WLAN_VDEV_SM_EV_DOWN,
+					      sizeof(*psessionEntry),
+					      psessionEntry);
+#else
 		ibss_bss_delete(pMac, psessionEntry);
+#endif
 		return QDF_STATUS_SUCCESS;
 	} else {
 		if (qdf_mem_cmp
