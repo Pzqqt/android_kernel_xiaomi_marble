@@ -321,7 +321,6 @@ QDF_STATUS tgt_scan_bcn_probe_rx_callback(struct wlan_objmgr_psoc *psoc,
 		return status;
 
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_SCAN_ID);
-	scm_err("failed to post to QDF_MODULE_ID_SCAN");
 
 free:
 	if (bcn && bcn->rx_data)
