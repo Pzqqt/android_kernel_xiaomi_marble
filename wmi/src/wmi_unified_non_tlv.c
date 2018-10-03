@@ -1658,6 +1658,59 @@ static QDF_STATUS send_beacon_send_cmd_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_bcn_offload_control_cmd_non_tlv - send beacon ofload control cmd to fw
+ * @wmi_handle: wmi handle
+ * @bcn_ctrl_param: pointer to bcn_offload_control param
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+send_bcn_offload_control_cmd_non_tlv(
+		wmi_unified_t wmi_handle,
+		struct bcn_offload_control *bcn_ctrl_param)
+{
+	wmi_buf_t buf;
+	wmi_bcn_offload_ctrl_cmd_fixed_param *cmd;
+	QDF_STATUS ret;
+	uint32_t len;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_err("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_bcn_offload_ctrl_cmd_fixed_param *)wmi_buf_data(buf);
+	cmd->vdev_id = bcn_ctrl_param->vdev_id;
+	switch (bcn_ctrl_param->bcn_ctrl_op) {
+	case BCN_OFFLD_CTRL_TX_DISABLE:
+		cmd->bcn_ctrl_op = WMI_BEACON_CTRL_TX_DISABLE;
+		break;
+	case BCN_OFFLD_CTRL_TX_ENABLE:
+		cmd->bcn_ctrl_op = WMI_BEACON_CTRL_TX_ENABLE;
+		break;
+	default:
+		WMI_LOGE("WMI_BCN_OFFLOAD_CTRL_CMDID unknown CTRL Operation %d",
+			 bcn_ctrl_param->bcn_ctrl_op);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_debug("WMI_BCN_OFFLOAD_CTRL_CMDID with CTRL Operation %d vdev:%d",
+		  bcn_ctrl_param->bcn_ctrl_op, cmd->vdev_id);
+	ret = wmi_unified_cmd_send(
+			wmi_handle, buf, len, WMI_BCN_OFFLOAD_CTRL_CMDID);
+
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		qdf_err("WMI_BCN_OFFLOAD_CTRL_CMDID returned Error %d", ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
  *  send_peer_assoc_cmd_non_tlv() - WMI peer assoc function
  *
  *  @param wmi_handle	  : handle to WMI.
@@ -8675,6 +8728,7 @@ struct wmi_ops non_tlv_ops =  {
 	.send_packet_log_enable_cmd = send_packet_log_enable_cmd_non_tlv,
 	.send_packet_log_disable_cmd = send_packet_log_disable_cmd_non_tlv,
 	.send_beacon_send_cmd = send_beacon_send_cmd_non_tlv,
+	.send_bcn_offload_control_cmd = send_bcn_offload_control_cmd_non_tlv,
 	.send_peer_assoc_cmd = send_peer_assoc_cmd_non_tlv,
 	.send_scan_start_cmd = send_scan_start_cmd_non_tlv,
 	.send_scan_stop_cmd = send_scan_stop_cmd_non_tlv,
