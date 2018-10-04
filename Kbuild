@@ -984,6 +984,7 @@ UMAC_POLICY_MGR_OBJS := $(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_action.o \
 	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_core.o \
 	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_get_set_utils.o \
 	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_init_deinit.o \
+	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_ucfg.o \
 	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_pcl.o \
 
 ###### UMAC TDLS ########

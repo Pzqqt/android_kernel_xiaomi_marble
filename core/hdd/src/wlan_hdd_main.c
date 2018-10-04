@@ -48,6 +48,7 @@
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_stats.h"
 #include "wlan_hdd_scan.h"
+#include "wlan_policy_mgr_ucfg.h"
 #include <wlan_osif_request_manager.h>
 #ifdef CONFIG_LEAK_DETECTION
 #include "qdf_debug_domain.h"
@@ -12650,17 +12651,25 @@ QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto err_pmo;
 
+	status = ucfg_policy_mgr_psoc_open(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto err_plcy_mgr;
+
 	return status;
 
+err_plcy_mgr:
+	ucfg_pmo_psoc_close(psoc);
 err_pmo:
 	ucfg_fwol_psoc_close(psoc);
 err_fwol:
 	ucfg_mlme_psoc_close(psoc);
+
 	return status;
 }
 
 void hdd_component_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+	ucfg_policy_mgr_psoc_close(psoc);
 	ucfg_pmo_psoc_close(psoc);
 	ucfg_fwol_psoc_close(psoc);
 	ucfg_mlme_psoc_close(psoc);

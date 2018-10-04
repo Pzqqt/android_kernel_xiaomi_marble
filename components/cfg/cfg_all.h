@@ -16,6 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "wlan_policy_mgr_cfg.h"
 #include "cfg_define.h"
 #include "cfg_converged.h"
 #include "cfg_mlme.h"
@@ -48,6 +49,7 @@
 #define CFG_ALL \
 	CFG_CONVERGED_ALL \
 	CFG_FWOL_ALL \
+	CFG_POLICY_MGR_ALL \
 	CFG_HDD_ALL \
 	CFG_HDD_DP_ALL \
 	CFG_IPA \
