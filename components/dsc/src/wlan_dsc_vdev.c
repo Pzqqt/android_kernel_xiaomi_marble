@@ -172,17 +172,23 @@ __dsc_vdev_trans_start_wait(struct dsc_vdev *vdev, const char *desc)
 
 	__dsc_driver_lock(vdev);
 
+	/* try to start without waiting */
 	status = __dsc_vdev_trans_start_nolock(vdev, desc);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		__dsc_driver_unlock(vdev);
-		return QDF_STATUS_SUCCESS;
-	}
+	if (QDF_IS_STATUS_SUCCESS(status))
+		goto unlock;
 
-	__dsc_trans_queue(&vdev->trans, &tran, desc);
+	status = __dsc_trans_queue(&vdev->trans, &tran, desc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto unlock;
 
 	__dsc_driver_unlock(vdev);
 
 	return __dsc_tran_wait(&tran);
+
+unlock:
+	__dsc_driver_unlock(vdev);
+
+	return status;
 }
 
 QDF_STATUS dsc_vdev_trans_start_wait(struct dsc_vdev *vdev, const char *desc)
