@@ -26,6 +26,7 @@
 #include "qdf_event.h"
 #include "qdf_list.h"
 #include "qdf_trace.h"
+#include "qdf_timer.h"
 #include "qdf_types.h"
 #include "wlan_dsc.h"
 
@@ -55,6 +56,7 @@ static inline bool __dsc_assert(const bool cond, const char *cond_str,
 
 #ifdef WLAN_DSC_DEBUG
 #define DSC_TRANS_TIMEOUT 120000 /* 2 minutes */
+#define DSC_OP_TIMEOUT_MS	(1 * 60 * 1000) /* 1 minute */
 #else
 #define DSC_TRANS_TIMEOUT 0 /* no timeout */
 #endif
@@ -63,10 +65,12 @@ static inline bool __dsc_assert(const bool cond, const char *cond_str,
 /**
  * struct dsc_op - list node for operation tracking information
  * @node: list node
+ * @timeout_timer: a timer used to detect operation timeouts
  * @func: name of the function the operation was started from
  */
 struct dsc_op {
 	qdf_list_node_t node;
+	qdf_timer_t timeout_timer;
 	const char *func;
 };
 #endif /* WLAN_DSC_DEBUG */

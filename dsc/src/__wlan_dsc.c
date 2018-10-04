@@ -20,9 +20,18 @@
 #include "qdf_mem.h"
 #include "qdf_status.h"
 #include "qdf_str.h"
+#include "qdf_timer.h"
 #include "__wlan_dsc.h"
 
 #ifdef WLAN_DSC_DEBUG
+static void __dsc_dbg_op_timeout(void *opaque_op)
+{
+	struct dsc_op *op = opaque_op;
+
+	QDF_DEBUG_PANIC("Operation '%s' exceeded %ums",
+			op->func, DSC_OP_TIMEOUT_MS);
+}
+
 /**
  * __dsc_dbg_ops_init() - initialize debug ops data structures
  * @ops: the ops container to initialize
@@ -54,17 +63,29 @@ static inline void __dsc_dbg_ops_deinit(struct dsc_ops *ops)
  */
 static QDF_STATUS __dsc_dbg_ops_insert(struct dsc_ops *ops, const char *func)
 {
+	QDF_STATUS status;
 	struct dsc_op *op;
 
 	op = qdf_mem_malloc(sizeof(*op));
 	if (!op)
 		return QDF_STATUS_E_NOMEM;
 
+	status = qdf_timer_init(NULL, &op->timeout_timer, __dsc_dbg_op_timeout,
+				op, QDF_TIMER_TYPE_SW);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto free_op;
+
 	op->func = func;
 
+	qdf_timer_start(&op->timeout_timer, DSC_OP_TIMEOUT_MS);
 	qdf_list_insert_back(&ops->list, &op->node);
 
 	return QDF_STATUS_SUCCESS;
+
+free_op:
+	qdf_mem_free(op);
+
+	return status;
 }
 
 /**
@@ -86,6 +107,8 @@ static void __dsc_dbg_ops_remove(struct dsc_ops *ops, const char *func)
 		/* this is safe because we cease iteration */
 		qdf_list_remove_node(&ops->list, &op->node);
 
+		qdf_timer_stop(&op->timeout_timer);
+		qdf_timer_free(&op->timeout_timer);
 		qdf_mem_free(op);
 
 		return;
