@@ -77,9 +77,9 @@ endif
 endif
 
 ifeq ($(PRODUCT_VENDOR_MOVE_ENABLED),true)
-$(shell ln -sf /persist/wlan_mac.bin $(TARGET_OUT_VENDOR)/firmware/wlan/qca_cld/wlan_mac.bin)
+$(shell ln -sf /mnt/vendor/persist/wlan_mac.bin $(TARGET_OUT_VENDOR)/firmware/wlan/qca_cld/wlan_mac.bin)
 else
-$(shell ln -sf /persist/wlan_mac.bin $(TARGET_OUT_ETC)/firmware/wlan/qca_cld/wlan_mac.bin)
+$(shell ln -sf /mnt/vendor/persist/wlan_mac.bin $(TARGET_OUT_ETC)/firmware/wlan/qca_cld/wlan_mac.bin)
 endif
 endif # DLKM check
 endif # supported target check
