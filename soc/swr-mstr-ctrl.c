@@ -232,11 +232,9 @@ static int swrm_clk_request(struct swr_mstr_ctrl *swrm, bool enable)
 		swrm->clk_ref_count++;
 		if (swrm->clk_ref_count == 1) {
 			swrm->clk(swrm->handle, true);
-			swrm->state = SWR_MSTR_UP;
 		}
 	} else if (--swrm->clk_ref_count == 0) {
 		swrm->clk(swrm->handle, false);
-		swrm->state = SWR_MSTR_DOWN;
 	} else if (swrm->clk_ref_count < 0) {
 		pr_err("%s: swrm clk count mismatch\n", __func__);
 		swrm->clk_ref_count = 0;
@@ -1045,6 +1043,13 @@ static int swrm_connect_port(struct swr_master *master,
 	}
 
 	mutex_lock(&swrm->mlock);
+	mutex_lock(&swrm->devlock);
+	if (!swrm->dev_up) {
+		mutex_unlock(&swrm->devlock);
+		mutex_unlock(&swrm->mlock);
+		return -EINVAL;
+	}
+	mutex_unlock(&swrm->devlock);
 	if (!swrm_is_port_en(master))
 		pm_runtime_get_sync(swrm->dev);
 
@@ -1347,6 +1352,13 @@ static void swrm_wakeup_work(struct work_struct *work)
 		pr_err("%s: swrm or dev is null\n", __func__);
 		return;
 	}
+
+	mutex_lock(&swrm->devlock);
+	if (!swrm->dev_up) {
+		mutex_unlock(&swrm->devlock);
+		return;
+	}
+	mutex_unlock(&swrm->devlock);
 	pm_runtime_get_sync(swrm->dev);
 	pm_runtime_mark_last_busy(swrm->dev);
 	pm_runtime_put_autosuspend(swrm->dev);
@@ -1381,6 +1393,14 @@ static int swrm_get_logical_dev_num(struct swr_master *mstr, u64 dev_id,
 		num_dev = swrm->num_dev;
 	else
 		num_dev = mstr->num_dev;
+
+	mutex_lock(&swrm->devlock);
+	if (!swrm->dev_up) {
+		mutex_unlock(&swrm->devlock);
+		return ret;
+	}
+	mutex_unlock(&swrm->devlock);
+
 	pm_runtime_get_sync(swrm->dev);
 	for (i = 1; i < (num_dev + 1); i++) {
 		id = ((u64)(swr_master_read(swrm,
@@ -1669,7 +1689,7 @@ static int swrm_probe(struct platform_device *pdev)
 	swrm->clk_ref_count = 0;
 	swrm->mclk_freq = MCLK_FREQ;
 	swrm->dev_up = true;
-	swrm->state = SWR_MSTR_RESUME;
+	swrm->state = SWR_MSTR_UP;
 	init_completion(&swrm->reset);
 	init_completion(&swrm->broadcast);
 	mutex_init(&swrm->mlock);
@@ -1828,7 +1848,6 @@ static int swrm_clk_pause(struct swr_mstr_ctrl *swrm)
 	val = swr_master_read(swrm, SWRM_MCP_CFG_ADDR);
 	val |= SWRM_MCP_CFG_BUS_CLK_PAUSE_BMSK;
 	swr_master_write(swrm, SWRM_MCP_CFG_ADDR, val);
-	swrm->state = SWR_MSTR_PAUSE;
 
 	return 0;
 }
@@ -1845,18 +1864,17 @@ static int swrm_runtime_resume(struct device *dev)
 	dev_dbg(dev, "%s: pm_runtime: resume, state:%d\n",
 		__func__, swrm->state);
 	mutex_lock(&swrm->reslock);
-	if ((swrm->state == SWR_MSTR_PAUSE) ||
-	    (swrm->state == SWR_MSTR_DOWN)) {
+
+	if ((swrm->state == SWR_MSTR_DOWN) ||
+	    (swrm->state == SWR_MSTR_SSR && swrm->dev_up)) {
 		if (swrm->clk_stop_mode0_supp && swrm->wakeup_req) {
 			msm_aud_evt_blocking_notifier_call_chain(
 				SWR_WAKE_IRQ_DEREGISTER, (void *)swrm);
 		}
 
-		if (swrm->state == SWR_MSTR_DOWN) {
-			if (swrm_clk_request(swrm, true))
-				goto exit;
-		}
-		if (!swrm->clk_stop_mode0_supp) {
+		if (swrm_clk_request(swrm, true))
+			goto exit;
+		if (!swrm->clk_stop_mode0_supp || swrm->state == SWR_MSTR_SSR) {
 			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
 				ret = swr_device_up(swr_dev);
 				if (ret) {
@@ -1870,11 +1888,15 @@ static int swrm_runtime_resume(struct device *dev)
 			swr_master_write(swrm, SWRM_COMP_SW_RESET, 0x01);
 			swr_master_write(swrm, SWRM_COMP_SW_RESET, 0x01);
 			swrm_master_init(swrm);
+			swrm_cmd_fifo_wr_cmd(swrm, 0x4, 0xF, 0x0,
+						SWRS_SCP_INT_STATUS_MASK_1);
+
 		} else {
 			/*wake up from clock stop*/
 			swr_master_write(swrm, SWRM_MCP_BUS_CTRL_ADDR, 0x2);
 			usleep_range(100, 105);
 		}
+		swrm->state = SWR_MSTR_UP;
 	}
 exit:
 	pm_runtime_set_autosuspend_delay(&pdev->dev, auto_suspend_timer);
@@ -1897,8 +1919,7 @@ static int swrm_runtime_suspend(struct device *dev)
 	mutex_lock(&swrm->force_down_lock);
 	current_state = swrm->state;
 	mutex_unlock(&swrm->force_down_lock);
-	if ((current_state == SWR_MSTR_RESUME) ||
-	    (current_state == SWR_MSTR_UP) ||
+	if ((current_state == SWR_MSTR_UP) ||
 	    (current_state == SWR_MSTR_SSR)) {
 
 		if ((current_state != SWR_MSTR_SSR) &&
@@ -1907,7 +1928,7 @@ static int swrm_runtime_suspend(struct device *dev)
 			ret = -EBUSY;
 			goto exit;
 		}
-		if (!swrm->clk_stop_mode0_supp) {
+		if (!swrm->clk_stop_mode0_supp || swrm->state == SWR_MSTR_SSR) {
 			swrm_clk_pause(swrm);
 			swr_master_write(swrm, SWRM_COMP_CFG_ADDR, 0x00);
 			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
@@ -1930,6 +1951,9 @@ static int swrm_runtime_suspend(struct device *dev)
 		}
 		swrm_clk_request(swrm, false);
 	}
+	/* Retain  SSR state until resume */
+	if (current_state != SWR_MSTR_SSR)
+		swrm->state = SWR_MSTR_DOWN;
 exit:
 	mutex_unlock(&swrm->reslock);
 	return ret;
@@ -1999,6 +2023,9 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 		mutex_lock(&swrm->devlock);
 		swrm->dev_up = false;
 		mutex_unlock(&swrm->devlock);
+		mutex_lock(&swrm->reslock);
+		swrm->state = SWR_MSTR_SSR;
+		mutex_unlock(&swrm->reslock);
 		break;
 	case SWR_DEVICE_SSR_UP:
 		mutex_lock(&swrm->devlock);
@@ -2008,8 +2035,7 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 	case SWR_DEVICE_DOWN:
 		dev_dbg(swrm->dev, "%s: swr master down called\n", __func__);
 		mutex_lock(&swrm->mlock);
-		if ((swrm->state == SWR_MSTR_PAUSE) ||
-		    (swrm->state == SWR_MSTR_DOWN))
+		if (swrm->state == SWR_MSTR_DOWN)
 			dev_dbg(swrm->dev, "%s:SWR master is already Down:%d\n",
 				__func__, swrm->state);
 		else
@@ -2020,8 +2046,7 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 		dev_dbg(swrm->dev, "%s: swr master up called\n", __func__);
 		mutex_lock(&swrm->mlock);
 		mutex_lock(&swrm->reslock);
-		if ((swrm->state == SWR_MSTR_RESUME) ||
-		    (swrm->state == SWR_MSTR_UP)) {
+		if (swrm->state == SWR_MSTR_UP) {
 			dev_dbg(swrm->dev, "%s: SWR master is already UP: %d\n",
 				__func__, swrm->state);
 			list_for_each_entry(swr_dev, &mstr->devices, dev_list)
