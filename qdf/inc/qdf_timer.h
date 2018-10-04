@@ -43,13 +43,13 @@ typedef __qdf_timer_t qdf_timer_t;
  * Timer type QDF_TIMER_TYPE_WAKE_APPS means its a non-deferrable timer which
  * will cause CPU wake up on expiry
  *
- * Return: none
+ * Return: QDF_STATUS
  */
-static inline void qdf_timer_init(qdf_handle_t hdl, qdf_timer_t *timer,
-				  qdf_timer_func_t func, void *arg,
-				  QDF_TIMER_TYPE type)
+static inline QDF_STATUS
+qdf_timer_init(qdf_handle_t hdl, qdf_timer_t *timer, qdf_timer_func_t func,
+	       void *arg, QDF_TIMER_TYPE type)
 {
-	__qdf_timer_init(hdl, timer, func, arg, type);
+	return __qdf_timer_init(timer, func, arg, type);
 }
 
 /**

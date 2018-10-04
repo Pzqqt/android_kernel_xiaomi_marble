@@ -45,7 +45,6 @@ typedef void (*__qdf_dummy_timer_func_t)(unsigned long arg);
 
 /**
  * __qdf_timer_init() - initialize a softirq timer
- * @hdl: OS handle
  * @timer: Pointer to timer object
  * @func: Function pointer
  * @arg: Argument
@@ -58,28 +57,24 @@ typedef void (*__qdf_dummy_timer_func_t)(unsigned long arg);
  *
  * Return: QDF_STATUS
  */
-static inline QDF_STATUS __qdf_timer_init(qdf_handle_t hdl,
-					  struct timer_list *timer,
+static inline QDF_STATUS __qdf_timer_init(struct timer_list *timer,
 					  qdf_timer_func_t func, void *arg,
 					  QDF_TIMER_TYPE type)
 {
+	bool is_on_stack = object_is_on_stack(timer);
+	__qdf_dummy_timer_func_t callback = (__qdf_dummy_timer_func_t)func;
+	unsigned long ctx = (unsigned long)arg;
+
 	if (type == QDF_TIMER_TYPE_SW) {
-		if (object_is_on_stack(timer))
-			setup_deferrable_timer_on_stack(
-			    timer, (__qdf_dummy_timer_func_t)func,
-			    (unsigned long)arg);
+		if (is_on_stack)
+			setup_deferrable_timer_on_stack(timer, callback, ctx);
 		else
-			setup_deferrable_timer(timer,
-					       (__qdf_dummy_timer_func_t)func,
-					       (unsigned long)arg);
+			setup_deferrable_timer(timer, callback, ctx);
 	} else {
-		if (object_is_on_stack(timer))
-			setup_timer_on_stack(timer,
-					     (__qdf_dummy_timer_func_t)func,
-					     (unsigned long)arg);
+		if (is_on_stack)
+			setup_timer_on_stack(timer, callback, ctx);
 		else
-			setup_timer(timer, (__qdf_dummy_timer_func_t)func,
-				    (unsigned long)arg);
+			setup_timer(timer, callback, ctx);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -88,32 +83,26 @@ static inline QDF_STATUS __qdf_timer_init(qdf_handle_t hdl,
 /**
  * __qdf_timer_start() - start a qdf softirq timer
  * @timer: Pointer to timer object
- * @delay: Delay in milli seconds
+ * @delay: Delay in milliseconds
  *
- * Return: QDF_STATUS
+ * Return: None
  */
-static inline QDF_STATUS __qdf_timer_start(struct timer_list *timer,
-					   uint32_t delay)
+static inline void __qdf_timer_start(struct timer_list *timer, uint32_t delay)
 {
 	timer->expires = jiffies + msecs_to_jiffies(delay);
 	add_timer(timer);
-
-	return QDF_STATUS_SUCCESS;
 }
 
 /**
  * __qdf_timer_mod() - modify a timer
  * @timer: Pointer to timer object
- * @delay: Delay in milli seconds
+ * @delay: Delay in milliseconds
  *
- * Return: QDF_STATUS
+ * Return: None
  */
-static inline QDF_STATUS __qdf_timer_mod(struct timer_list *timer,
-					 uint32_t delay)
+static inline void __qdf_timer_mod(struct timer_list *timer, uint32_t delay)
 {
 	mod_timer(timer, jiffies + msecs_to_jiffies(delay));
-
-	return QDF_STATUS_SUCCESS;
 }
 
 /**
