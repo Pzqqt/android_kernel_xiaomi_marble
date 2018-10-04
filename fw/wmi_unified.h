@@ -256,6 +256,7 @@ typedef enum {
     WMI_GRP_MOTION_DET,     /* 0x3f */
     WMI_GRP_SPATIAL_REUSE,  /* 0x40 */
     WMI_GRP_ESP,            /* 0x41 Estimate Service Parameters (802.11mc) */
+    WMI_GRP_HPCS_PULSE,     /* 0x42 */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -1166,6 +1167,9 @@ typedef enum {
     /** WMI commands related to OBSS PD Spatial Reuse **/
     WMI_PDEV_OBSS_PD_SPATIAL_REUSE_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_SPATIAL_REUSE),
     WMI_PDEV_OBSS_PD_SPATIAL_REUSE_SET_DEF_OBSS_THRESH_CMDID,
+
+    /** WMI commands related to High Precision Clock Synchronization feature **/
+    WMI_HPCS_PULSE_START_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_HPCS_PULSE),
 } WMI_CMD_ID;
 
 typedef enum {
@@ -22345,6 +22349,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PEER_CHAN_WIDTH_SWITCH_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_OBSS_PD_SPATIAL_REUSE_SET_DEF_OBSS_THRESH_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_HE_TB_ACTION_FRM_CMDID);
+        WMI_RETURN_STRING(WMI_HPCS_PULSE_START_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -23629,6 +23634,22 @@ typedef struct {
  * This data array contains the action frame raw data
  */
 } wmi_pdev_he_tb_action_frm_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_hpcs_pulse_start_cmd_fixed_param */
+    A_UINT32 tlv_header;            /** TLV Header */
+    A_UINT32 vdev_id;               /** Vdev ID */
+    A_UINT32 start;                 /** Start/Stop */
+    A_UINT32 sync_time;             /** Lower 32-bit of the TSF at which the
+                                     * pulse should be synced. */
+    A_UINT32 pulse_interval;        /** Periodicity of pulses in micro seconds */
+    A_UINT32 active_sync_period;    /** Number of beacons to sync before generating
+                                     * pulse in units of beacon interval.
+                                     * Valid for clock slaves only. */
+    A_UINT32 gpio_pin;              /** GPIO Pin number to be used */
+    A_UINT32 pulse_width;           /** Duration of pulse in micro seconds */
+} wmi_hpcs_pulse_start_cmd_fixed_param;
 
 /* Default PE Duration subfield indicates the PE duration in units of 4 us */
 #define WMI_HEOPS_DEFPE_GET_D3(he_ops) WMI_GET_BITS(he_ops, 0, 3)
