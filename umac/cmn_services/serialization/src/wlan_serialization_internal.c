@@ -179,6 +179,7 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd)
 				&nnode) != QDF_STATUS_SUCCESS) {
 		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 		ser_err("Failed to get cmd buffer from global pool");
+		status = WLAN_SER_CMD_DENIED_LIST_FULL;
 		goto error;
 	}
 

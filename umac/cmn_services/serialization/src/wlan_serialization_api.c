@@ -876,12 +876,13 @@ wlan_serialization_get_scan_cmd_using_scan_id(
 		uint8_t vdev_id, uint16_t scan_id,
 		uint8_t is_scan_cmd_from_active_queue)
 {
-	uint32_t qlen;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_ser_pdev_obj *ser_pdev_obj;
-	struct wlan_serialization_command *cmd = NULL;
-	qdf_list_node_t *nnode = NULL;
+	struct wlan_serialization_command cmd = {0};
+	struct wlan_serialization_command *pcmd = NULL;
+	struct wlan_serialization_command_list *cmd_list;
+	qdf_list_node_t *node = NULL;
 	qdf_list_t *queue;
 	struct wlan_serialization_pdev_queue *pdev_q;
 
@@ -917,18 +918,21 @@ wlan_serialization_get_scan_cmd_using_scan_id(
 	else
 		queue = &pdev_q->pending_list;
 
-	qlen = wlan_serialization_list_size(queue);
+	cmd.cmd_type = WLAN_SER_CMD_SCAN;
+	cmd.cmd_id = scan_id;
+	cmd.vdev = vdev;
 
-	while (qlen--) {
-		if (QDF_IS_STATUS_ERROR(wlan_serialization_get_cmd_from_queue(
-					queue, &nnode))) {
-			ser_debug("Node not found");
-			break;
-		}
-		if (wlan_ser_match_cmd_scan_id(nnode, &cmd, scan_id,
-					       vdev)) {
-			break;
-		}
+	node = wlan_serialization_find_cmd(
+			queue, WLAN_SER_MATCH_CMD_ID_VDEV,
+			&cmd, 0, NULL, vdev,  WLAN_SER_PDEV_NODE);
+
+	if (node) {
+		cmd_list = qdf_container_of(
+				node,
+				struct wlan_serialization_command_list,
+				pdev_node);
+
+		pcmd = &cmd_list->cmd;
 	}
 
 	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
@@ -936,7 +940,7 @@ wlan_serialization_get_scan_cmd_using_scan_id(
 release_vdev_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
 error:
-	return cmd;
+	return pcmd;
 }
 
 void *wlan_serialization_get_active_cmd(
