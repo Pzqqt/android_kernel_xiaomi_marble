@@ -1301,7 +1301,7 @@ static int msm_pcm_volume_ctl_get(struct snd_kcontrol *kcontrol,
 		return -ENODEV;
 	}
 	if (!substream->runtime) {
-		pr_err("%s substream runtime not found\n", __func__);
+		pr_debug("%s substream runtime not found\n", __func__);
 		return 0;
 	}
 	prtd = substream->runtime->private_data;
@@ -1388,7 +1388,7 @@ static int msm_pcm_compress_ctl_get(struct snd_kcontrol *kcontrol,
 		return -EINVAL;
 	}
 	if (!substream->runtime) {
-		pr_err("%s substream runtime not found\n", __func__);
+		pr_debug("%s substream runtime not found\n", __func__);
 		return 0;
 	}
 	prtd = substream->runtime->private_data;

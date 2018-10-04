@@ -3284,7 +3284,7 @@ static int msm_compr_audio_effects_config_get(struct snd_kcontrol *kcontrol,
 	cstream = pdata->cstream[fe_id];
 	audio_effects = pdata->audio_effects[fe_id];
 	if (!cstream || !audio_effects) {
-		pr_err("%s: stream or effects inactive\n", __func__);
+		pr_debug("%s: stream or effects inactive\n", __func__);
 		return -EINVAL;
 	}
 	prtd = cstream->runtime->private_data;
