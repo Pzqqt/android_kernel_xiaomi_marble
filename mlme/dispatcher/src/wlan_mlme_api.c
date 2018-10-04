@@ -123,8 +123,8 @@ QDF_STATUS wlan_mlme_set_band_capability(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_mlme_get_prevent_link_down_cfg(struct wlan_objmgr_psoc *psoc,
-					       bool *prevent_link_down)
+QDF_STATUS wlan_mlme_get_prevent_link_down(struct wlan_objmgr_psoc *psoc,
+					   bool *prevent_link_down)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -139,8 +139,8 @@ QDF_STATUS wlan_mlme_get_prevent_link_down_cfg(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_mlme_get_select_5ghz_margin_cfg(struct wlan_objmgr_psoc *psoc,
-						uint8_t *select_5ghz_margin)
+QDF_STATUS wlan_mlme_get_select_5ghz_margin(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *select_5ghz_margin)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -155,8 +155,8 @@ QDF_STATUS wlan_mlme_get_select_5ghz_margin_cfg(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_mlme_get_crash_inject_cfg(struct wlan_objmgr_psoc *psoc,
-					  bool *crash_inject)
+QDF_STATUS wlan_mlme_get_crash_inject(struct wlan_objmgr_psoc *psoc,
+				      bool *crash_inject)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -183,6 +183,70 @@ QDF_STATUS wlan_mlme_get_lpass_support(struct wlan_objmgr_psoc *psoc,
 	}
 
 	*lpass_support = mlme_obj->cfg.gen.lpass_support;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_self_recovery(struct wlan_objmgr_psoc *psoc,
+				       bool *self_recovery)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*self_recovery = mlme_obj->cfg.gen.self_recovery;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_sub_20_chan_width(struct wlan_objmgr_psoc *psoc,
+					   uint8_t *sub_20_chan_width)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*sub_20_chan_width = mlme_obj->cfg.gen.sub_20_chan_width;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_fw_timeout_crash(struct wlan_objmgr_psoc *psoc,
+					  bool *fw_timeout_crash)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*fw_timeout_crash = mlme_obj->cfg.gen.fw_timeout_crash;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_ito_repeat_count(struct wlan_objmgr_psoc *psoc,
+					  uint8_t *ito_repeat_count)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*ito_repeat_count = mlme_obj->cfg.gen.ito_repeat_count;
 
 	return QDF_STATUS_SUCCESS;
 }
