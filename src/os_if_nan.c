@@ -672,7 +672,7 @@ static int os_if_nan_process_ndp_end_req(struct wlan_objmgr_psoc *psoc,
 		return -EINVAL;
 	}
 	qdf_mem_copy(req.ndp_ids,
-		     tb[QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY],
+		     nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY]),
 		     req.num_ndp_instances * sizeof(uint32_t));
 
 	cfg80211_debug("sending ndp_end_req to SME, transaction_id: %d",
