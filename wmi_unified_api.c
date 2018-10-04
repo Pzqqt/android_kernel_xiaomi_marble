@@ -6165,6 +6165,20 @@ wmi_extract_roam_scan_stats_res_evt(wmi_unified_t wmi, void *evt_buf,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS
+wmi_extract_offload_bcn_tx_status_evt(void *wmi_hdl, void *evt_buf,
+					uint32_t *vdev_id,
+					uint32_t *tx_status) {
+	wmi_unified_t wmi = (wmi_unified_t)wmi_hdl;
+
+	if (wmi->ops->extract_offload_bcn_tx_status_evt)
+		return wmi->ops->extract_offload_bcn_tx_status_evt(wmi,
+								   evt_buf,
+								   vdev_id, tx_status);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 #ifdef OBSS_PD
 QDF_STATUS
 wmi_unified_send_obss_spatial_reuse_set_cmd(void *wmi_hdl,

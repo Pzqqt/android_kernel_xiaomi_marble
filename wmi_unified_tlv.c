@@ -18940,6 +18940,35 @@ extract_roam_scan_stats_res_evt_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 }
 
 /**
+ * extract_offload_bcn_tx_status_evt() - Extract beacon-tx status event
+ * @wmi_handle: wmi handle
+ * @evt_buf:   pointer to event buffer
+ * @vdev_id:   output pointer to hold vdev id
+ * @tx_status: output pointer to hold the tx_status
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS extract_offload_bcn_tx_status_evt(wmi_unified_t wmi_handle,
+							void *evt_buf,
+							uint32_t *vdev_id,
+							uint32_t *tx_status) {
+	WMI_OFFLOAD_BCN_TX_STATUS_EVENTID_param_tlvs *param_buf;
+	wmi_offload_bcn_tx_status_event_fixed_param *bcn_tx_status_event;
+
+	param_buf = (WMI_OFFLOAD_BCN_TX_STATUS_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("Invalid offload bcn tx status event buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	bcn_tx_status_event = param_buf->fixed_param;
+	*vdev_id   = bcn_tx_status_event->vdev_id;
+	*tx_status = bcn_tx_status_event->tx_status;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_offload_11k_cmd_tlv() - send wmi cmd with 11k offload params
  * @wmi_handle: wmi handler
  * @params: pointer to 11k offload params
@@ -19214,6 +19243,13 @@ static QDF_STATUS send_obss_color_collision_cfg_cmd_tlv(
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	WMI_LOGD("%s: evt_type: %d vdev id: %d current_bss_color: %d\n"
+		"detection_period_ms: %d scan_period_ms: %d\n"
+		"free_slot_expiry_timer_ms: %d",
+		__func__, cmd->evt_type, cmd->vdev_id, cmd->current_bss_color,
+		cmd->detection_period_ms, cmd->scan_period_ms,
+		cmd->free_slot_expiry_time_ms);
+
 	wmi_mtrace(WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID)) {
@@ -19254,9 +19290,10 @@ static QDF_STATUS extract_obss_color_collision_info_tlv(uint8_t *evt_buf,
 
 	fix_param = param_buf->fixed_param;
 	info->vdev_id = fix_param->vdev_id;
-	info->obss_color_bitmap_bit0to31 = fix_param->bss_color_bitmap_bit0to31;
+	info->obss_color_bitmap_bit0to31  =
+					fix_param->bss_color_bitmap_bit0to31;
 	info->obss_color_bitmap_bit32to63 =
-		fix_param->bss_color_bitmap_bit32to63;
+					fix_param->bss_color_bitmap_bit32to63;
 
 	switch (fix_param->evt_type) {
 	case WMI_BSS_COLOR_COLLISION_DISABLE:
@@ -19859,6 +19896,7 @@ struct wmi_ops tlv_ops =  {
 #ifdef OBSS_PD
 	.send_obss_spatial_reuse_set = send_obss_spatial_reuse_set_cmd_tlv,
 #endif
+	.extract_offload_bcn_tx_status_evt = extract_offload_bcn_tx_status_evt,
 };
 
 /**
