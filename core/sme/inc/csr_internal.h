@@ -528,7 +528,6 @@ struct csr_config {
 	uint32_t edca_vi_aifs;
 	uint32_t edca_bk_aifs;
 	uint32_t edca_be_aifs;
-	bool enable_fatal_event;
 	bool vendor_vht_sap;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;
@@ -539,7 +538,6 @@ struct csr_config {
 	bool enable_ul_ofdma;
 	bool enable_ul_mimo;
 #endif
-	uint16_t pkt_err_disconn_th;
 	bool is_force_1x1;
 	uint16_t wlm_latency_enable;
 	uint16_t wlm_latency_level;

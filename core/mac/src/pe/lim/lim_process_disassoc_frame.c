@@ -155,14 +155,14 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_DISASSOC_FRAME_EVENT,
 		psessionEntry, 0, reasonCode);
 
-	if (pMac->roam.configParam.enable_fatal_event &&
-		(reasonCode != eSIR_MAC_UNSPEC_FAILURE_REASON &&
-		reasonCode != eSIR_MAC_DEAUTH_LEAVING_BSS_REASON &&
-		reasonCode != eSIR_MAC_DISASSOC_LEAVING_BSS_REASON)) {
+	if (pMac->mlme_cfg->gen.fatal_event_trigger &&
+	    (reasonCode != eSIR_MAC_UNSPEC_FAILURE_REASON &&
+	    reasonCode != eSIR_MAC_DEAUTH_LEAVING_BSS_REASON &&
+	    reasonCode != eSIR_MAC_DISASSOC_LEAVING_BSS_REASON)) {
 		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
-				WLAN_LOG_INDICATOR_HOST_DRIVER,
-				WLAN_LOG_REASON_DISCONNECT,
-				false, false);
+			       WLAN_LOG_INDICATOR_HOST_DRIVER,
+			       WLAN_LOG_REASON_DISCONNECT,
+			       false, false);
 	}
 	/**
 	 * Extract 'associated' context for STA, if any.

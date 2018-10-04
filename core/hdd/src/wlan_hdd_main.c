@@ -1696,6 +1696,7 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	uint8_t temp_band_cap, band_capability;
 	struct cds_config_info *cds_cfg = cds_get_ini_config();
 	uint8_t antenna_mode;
+	uint8_t sub_20_chan_width;
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
 	bool bval = false;
@@ -1747,15 +1748,21 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	ucfg_ipa_reg_send_to_nw_cb(hdd_ctx->pdev,
 				   hdd_ipa_send_skb_to_network);
 
+	status = ucfg_mlme_get_sub_20_chan_width(hdd_ctx->psoc,
+						 &sub_20_chan_width);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get sub_20_chan_width config");
+		return;
+	}
+
 	if (cds_cfg) {
-		if (hdd_ctx->config->enable_sub_20_channel_width !=
-			WLAN_SUB_20_CH_WIDTH_NONE && !cfg->sub_20_support) {
+		if (sub_20_chan_width !=
+		    WLAN_SUB_20_CH_WIDTH_NONE && !cfg->sub_20_support) {
 			hdd_err("User requested sub 20 MHz channel width but unsupported by FW.");
 			cds_cfg->sub_20_channel_width =
 				WLAN_SUB_20_CH_WIDTH_NONE;
 		} else {
-			cds_cfg->sub_20_channel_width =
-				hdd_ctx->config->enable_sub_20_channel_width;
+			cds_cfg->sub_20_channel_width = sub_20_chan_width;
 		}
 	}
 
@@ -9034,7 +9041,8 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 		  hdd_ctx->config->timer_multiplier);
 	qdf_timer_set_multiplier(hdd_ctx->config->timer_multiplier);
 
-	cds_set_fatal_event(hdd_ctx->config->enable_fatal_event);
+	cds_set_fatal_event(cfg_get(hdd_ctx->psoc,
+				    CFG_ENABLE_FATAL_EVENT_TRIGGER));
 
 	hdd_override_ini_config(hdd_ctx);
 
@@ -9427,7 +9435,10 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	struct cds_config_info *cds_cfg;
 	int value;
 	uint8_t band_capability;
+	uint8_t ito_repeat_count;
 	bool crash_inject;
+	bool self_recovery;
+	bool fw_timeout_crash;
 	QDF_STATUS status;
 
 	cds_cfg = (struct cds_config_info *)qdf_mem_malloc(sizeof(*cds_cfg));
@@ -9447,9 +9458,29 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->dfs_phyerr_filter_offload =
 		hdd_ctx->config->fDfsPhyerrFilterOffload;
 
-	status = ucfg_mlme_get_crash_inject_cfg(hdd_ctx->psoc, &crash_inject);
+	status = ucfg_mlme_get_crash_inject(hdd_ctx->psoc, &crash_inject);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to get crash inject ini config");
+		goto exit;
+	}
+
+	status = ucfg_mlme_get_self_recovery(hdd_ctx->psoc, &self_recovery);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get self recovery ini config");
+		goto exit;
+	}
+
+	status = ucfg_mlme_get_fw_timeout_crash(hdd_ctx->psoc,
+						&fw_timeout_crash);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get fw timeout crash ini config");
+		goto exit;
+	}
+
+	status = ucfg_mlme_get_ito_repeat_count(hdd_ctx->psoc,
+						&ito_repeat_count);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get ITO repeat count ini config");
 		goto exit;
 	}
 
@@ -9504,12 +9535,12 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->flow_steering_enabled = hdd_ctx->config->flow_steering_enable;
 	cds_cfg->max_msdus_per_rxinorderind =
 		hdd_ctx->config->max_msdus_per_rxinorderind;
-	cds_cfg->self_recovery_enabled = hdd_ctx->config->enableSelfRecovery;
-	cds_cfg->fw_timeout_crash = hdd_ctx->config->fw_timeout_crash;
+	cds_cfg->self_recovery_enabled = self_recovery;
+	cds_cfg->fw_timeout_crash = fw_timeout_crash;
 	cds_cfg->active_uc_apf_mode = hdd_ctx->config->active_uc_apf_mode;
 	cds_cfg->active_mc_bc_apf_mode = hdd_ctx->config->active_mc_bc_apf_mode;
 
-	cds_cfg->ito_repeat_count = hdd_ctx->config->ito_repeat_count;
+	cds_cfg->ito_repeat_count = ito_repeat_count;
 
 	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -9564,8 +9595,6 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->Is11dSupportEnabled;
 	user_config->is_11h_support_enabled =
 		hdd_ctx->config->Is11hSupportEnabled;
-	user_config->optimize_chan_avoid_event =
-		hdd_ctx->config->goptimize_chan_avoid_event;
 	cfg_p2p_get_skip_dfs_channel_p2p_search(hdd_ctx->psoc,
 						&skip_dfs_in_p2p_search);
 	user_config->skip_dfs_chnl_in_p2p_search = skip_dfs_in_p2p_search;
@@ -10507,13 +10536,10 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 		return ret;
 	}
 
-	if (hdd_ctx->config->goptimize_chan_avoid_event) {
-		status = sme_enable_disable_chanavoidind_event(
-							mac_handle, 0);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			hdd_err("Failed to disable Chan Avoidance Indication");
-			goto deregister_cb;
-		}
+	status = sme_enable_disable_chanavoidind_event(mac_handle, 0);
+	if (QDF_IS_STATUS_ERROR(status) && (status != QDF_STATUS_E_NOSUPPORT)) {
+		hdd_err("Failed to disable Chan Avoidance Indication");
+		goto deregister_cb;
 	}
 
 	/* register P2P Listen Offload event callback */
@@ -13491,11 +13517,17 @@ static void hdd_update_ol_config(struct hdd_context *hdd_ctx)
 {
 	struct ol_config_info cfg;
 	struct ol_context *ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
+	bool self_recovery = false;
+	QDF_STATUS status;
 
 	if (!ol_ctx)
 		return;
 
-	cfg.enable_self_recovery = hdd_ctx->config->enableSelfRecovery;
+	status = ucfg_mlme_get_self_recovery(hdd_ctx->psoc, &self_recovery);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to get self recovery ini config");
+
+	cfg.enable_self_recovery = self_recovery;
 	cfg.enable_uart_print = hdd_ctx->config->enablefwprint;
 	cfg.enable_fw_log = hdd_ctx->config->enable_fw_log;
 	cfg.enable_ramdump_collection = hdd_ctx->config->is_ramdump_enabled;
@@ -13537,17 +13569,22 @@ static void hdd_update_hif_config(struct hdd_context *hdd_ctx)
 	struct hif_opaque_softc *scn = cds_get_context(QDF_MODULE_ID_HIF);
 	struct hif_config_info cfg;
 	bool prevent_link_down = false;
+	bool self_recovery = false;
 	QDF_STATUS status;
 
 	if (!scn)
 		return;
 
-	status = ucfg_mlme_get_prevent_link_down_cfg(hdd_ctx->psoc,
-						     &prevent_link_down);
+	status = ucfg_mlme_get_prevent_link_down(hdd_ctx->psoc,
+						 &prevent_link_down);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to get prevent_link_down config");
 
-	cfg.enable_self_recovery = hdd_ctx->config->enableSelfRecovery;
+	status = ucfg_mlme_get_self_recovery(hdd_ctx->psoc, &self_recovery);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to get self recovery ini config");
+
+	cfg.enable_self_recovery = self_recovery;
 	hdd_populate_runtime_cfg(hdd_ctx, &cfg);
 	hif_init_ini_config(scn, &cfg);
 
@@ -13857,8 +13894,8 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	uint8_t scan_bucket_thre;
 	uint8_t select_5ghz_margin;
 
-	status = ucfg_mlme_get_select_5ghz_margin_cfg(hdd_ctx->psoc,
-						      &select_5ghz_margin);
+	status = ucfg_mlme_get_select_5ghz_margin(hdd_ctx->psoc,
+						  &select_5ghz_margin);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to get select_5ghz_margin");
 		return -EIO;
@@ -13973,11 +14010,6 @@ int hdd_enable_disable_ca_event(struct hdd_context *hdd_ctx, uint8_t set_value)
 
 	if (0 != wlan_hdd_validate_context(hdd_ctx))
 		return -EAGAIN;
-
-	if (!hdd_ctx->config->goptimize_chan_avoid_event) {
-		hdd_warn("goptimize_chan_avoid_event ini param disabled");
-		return -EINVAL;
-	}
 
 	status = sme_enable_disable_chanavoidind_event(hdd_ctx->mac_handle,
 						       set_value);

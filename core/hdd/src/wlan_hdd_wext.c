@@ -8953,7 +8953,7 @@ int hdd_crash_inject(struct hdd_adapter *adapter, uint32_t v1, uint32_t v2)
 	       v1, v2);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	status = ucfg_mlme_get_crash_inject_cfg(hdd_ctx->psoc, &crash_inject);
+	status = ucfg_mlme_get_crash_inject(hdd_ctx->psoc, &crash_inject);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to get crash inject ini config");
 		return 0;

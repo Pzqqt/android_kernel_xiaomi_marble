@@ -2766,8 +2766,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 	int i;
 
 	if (pParam) {
-		pMac->roam.configParam.pkt_err_disconn_th =
-			pParam->pkt_err_disconn_th;
 		pMac->roam.configParam.is_force_1x1 =
 			pParam->is_force_1x1;
 		pMac->roam.configParam.WMMSupportMode = pParam->WMMSupportMode;
@@ -3057,8 +3055,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		/* update interface configuration */
 		pMac->sme.max_intf_count = pParam->max_intf_count;
 
-		pMac->sme.enableSelfRecovery = pParam->enableSelfRecovery;
-
 		pMac->f_sta_miracast_mcc_rest_time_val =
 			pParam->f_sta_miracast_mcc_rest_time_val;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
@@ -3094,8 +3090,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.edca_bk_aifs = pParam->edca_bk_aifs;
 		pMac->roam.configParam.edca_be_aifs = pParam->edca_be_aifs;
 
-		pMac->roam.configParam.enable_fatal_event =
-			pParam->enable_fatal_event;
 		pMac->roam.configParam.sta_roam_policy.dfs_mode =
 			pParam->sta_roam_policy_params.dfs_mode;
 		pMac->roam.configParam.sta_roam_policy.skip_unsafe_channels =
@@ -3176,7 +3170,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	if (!pParam)
 		return QDF_STATUS_E_INVAL;
 
-	pParam->pkt_err_disconn_th = cfg_params->pkt_err_disconn_th;
 	pParam->is_force_1x1 = cfg_params->is_force_1x1;
 	pParam->WMMSupportMode = cfg_params->WMMSupportMode;
 	pParam->Is11eSupportEnabled = cfg_params->Is11eSupportEnabled;
@@ -3295,7 +3288,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->sap_channel_avoidance = pMac->sap.sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	pParam->max_intf_count = pMac->sme.max_intf_count;
-	pParam->enableSelfRecovery = pMac->sme.enableSelfRecovery;
 	pParam->f_prefer_non_dfs_on_radar =
 		pMac->f_prefer_non_dfs_on_radar;
 	pParam->dual_mac_feature_disable =
@@ -3327,8 +3319,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->edca_vi_aifs = pMac->roam.configParam.edca_vi_aifs;
 	pParam->edca_bk_aifs = pMac->roam.configParam.edca_bk_aifs;
 	pParam->edca_be_aifs = pMac->roam.configParam.edca_be_aifs;
-	pParam->enable_fatal_event =
-		pMac->roam.configParam.enable_fatal_event;
 	pParam->sta_roam_policy_params.dfs_mode =
 		pMac->roam.configParam.sta_roam_policy.dfs_mode;
 	pParam->sta_roam_policy_params.skip_unsafe_channels =
@@ -8193,7 +8183,6 @@ QDF_STATUS csr_roam_copy_profile(tpAniSirGlobal pMac,
 	pDstProfile->cfg_protection = pSrcProfile->cfg_protection;
 	pDstProfile->wps_state = pSrcProfile->wps_state;
 	pDstProfile->ieee80211d = pSrcProfile->ieee80211d;
-	pDstProfile->sap_dot11mc = pSrcProfile->sap_dot11mc;
 	pDstProfile->supplicant_disabled_roaming =
 		pSrcProfile->supplicant_disabled_roaming;
 	qdf_mem_copy(&pDstProfile->Keys, &pSrcProfile->Keys,
@@ -14202,7 +14191,14 @@ QDF_STATUS csr_roam_issue_start_bss(tpAniSirGlobal pMac, uint32_t sessionId,
 		pParam->addIeParams.probeRespBCNData_buff =
 			pProfile->addIeParams.probeRespBCNData_buff;
 	}
-	pParam->sap_dot11mc = pProfile->sap_dot11mc;
+
+	if (pProfile->csrPersona == QDF_SAP_MODE)
+		pParam->sap_dot11mc = pMac->mlme_cfg->gen.sap_dot11mc;
+	else
+		pParam->sap_dot11mc = 1;
+
+	sme_debug("11MC Support Enabled : %d", pParam->sap_dot11mc);
+
 	pParam->cac_duration_ms = pProfile->cac_duration_ms;
 	pParam->dfs_regdomain = pProfile->dfs_regdomain;
 	pParam->beacon_tx_rate = pProfile->beacon_tx_rate;
@@ -17066,7 +17062,7 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 	add_sta_self_req->fils_max_chan_guard_time =
 				pMac->mlme_cfg->sta.fils_max_chan_guard_time;
 	add_sta_self_req->pkt_err_disconn_th =
-			pMac->roam.configParam.pkt_err_disconn_th;
+			pMac->mlme_cfg->gen.dropped_pkt_disconnect_thresh;
 	add_sta_self_req->oce_feature_bitmap =
 			pMac->mlme_cfg->oce.feature_bitmap;
 
@@ -20965,7 +20961,7 @@ void csr_process_ho_fail_ind(tpAniSirGlobal mac_ctx, void *pMsgBuf)
 		  "LFR3:Issue Disconnect on session %d", sessionId);
 	csr_roam_disconnect(mac_ctx, sessionId,
 			eCSR_DISCONNECT_REASON_ROAM_HO_FAIL);
-	if (mac_ctx->roam.configParam.enable_fatal_event)
+	if (mac_ctx->mlme_cfg->gen.fatal_event_trigger)
 		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
 				WLAN_LOG_INDICATOR_HOST_DRIVER,
 				WLAN_LOG_REASON_ROAM_HO_FAILURE,

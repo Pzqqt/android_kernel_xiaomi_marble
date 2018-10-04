@@ -4186,6 +4186,7 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 	tsap_config_t *sap_cfg = &ap_adapter->session.ap.sap_config;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 	uint8_t ch_width;
+	uint8_t sub_20_chan_width;
 	QDF_STATUS status;
 
 	/* Fixed channel 11AC override:
@@ -4201,18 +4202,25 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 	 * not allow 11AC rates or more than 20 MHz channel width when
 	 * enable_sub_20_channel_width is non zero
 	 */
-	if (!hdd_ctx->config->enable_sub_20_channel_width &&
-			(sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11n ||
-			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac ||
-			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY ||
-			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ax ||
-			sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ax_ONLY) &&
-			((ap_adapter->device_mode == QDF_SAP_MODE &&
-			!hdd_ctx->config->sap_force_11n_for_11ac &&
-			hdd_ctx->config->sap_11ac_override) ||
-			(ap_adapter->device_mode == QDF_P2P_GO_MODE &&
-			!hdd_ctx->config->go_force_11n_for_11ac &&
-			hdd_ctx->config->go_11ac_override))) {
+	status = ucfg_mlme_get_sub_20_chan_width(hdd_ctx->psoc,
+						 &sub_20_chan_width);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get sub_20_chan_width config");
+		return -EIO;
+	}
+
+	if (!sub_20_chan_width &&
+	    (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11n ||
+	    sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac ||
+	    sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY ||
+	    sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ax ||
+	    sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ax_ONLY) &&
+	    ((ap_adapter->device_mode == QDF_SAP_MODE &&
+	    !hdd_ctx->config->sap_force_11n_for_11ac &&
+	    hdd_ctx->config->sap_11ac_override) ||
+	    (ap_adapter->device_mode == QDF_P2P_GO_MODE &&
+	    !hdd_ctx->config->go_force_11n_for_11ac &&
+	    hdd_ctx->config->go_11ac_override))) {
 		hdd_debug("** Driver force 11AC override for SAP/Go **");
 
 		/* 11n only shall not be overridden since it may be on purpose*/
@@ -5085,15 +5093,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	pConfig->UapsdEnable = iniConfig->apUapsdEnabled;
 	/* Enable OBSS protection */
 	pConfig->obssProtEnabled = iniConfig->apOBSSProtEnabled;
-
-	if (adapter->device_mode == QDF_SAP_MODE)
-		pConfig->sap_dot11mc =
-		    (WLAN_HDD_GET_CTX(adapter))->config->sap_dot11mc;
-	else /* for P2P-Go case */
-		pConfig->sap_dot11mc = 1;
-
-	hdd_debug("11MC Support Enabled : %d\n",
-		pConfig->sap_dot11mc);
 
 #ifdef WLAN_FEATURE_11W
 	pConfig->mfpCapable = MFPCapable;

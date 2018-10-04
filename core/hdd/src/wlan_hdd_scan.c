@@ -455,6 +455,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	enum scan_reject_states curr_reason;
 	static uint32_t scan_ebusy_cnt;
 	struct scan_params params = {0};
+	bool self_recovery;
+	QDF_STATUS qdf_status;
 
 	hdd_enter();
 
@@ -481,6 +483,12 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 	if (!sme_is_session_id_valid(hdd_ctx->mac_handle, adapter->session_id))
 		return -EINVAL;
+
+	qdf_status = ucfg_mlme_get_self_recovery(hdd_ctx->psoc, &self_recovery);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		hdd_err("Failed to get self recovery ini config");
+		return -EIO;
+	}
 
 	if ((eConnectionState_Associated ==
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
@@ -574,12 +582,12 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 					jiffies);
 				hdd_ctx->last_scan_reject_timestamp = 0;
 				hdd_ctx->scan_reject_cnt = 0;
-				if (hdd_ctx->config->enable_fatal_event) {
+				if (cds_is_fatal_event_enabled()) {
 					cds_flush_logs(WLAN_LOG_TYPE_FATAL,
 					   WLAN_LOG_INDICATOR_HOST_DRIVER,
 					   WLAN_LOG_REASON_SCAN_NOT_ALLOWED,
 					   false,
-					   hdd_ctx->config->enableSelfRecovery);
+					   self_recovery);
 				} else {
 					hdd_err("Triggering SSR due to scan stuck");
 					cds_trigger_recovery(SCAN_FAILURE);

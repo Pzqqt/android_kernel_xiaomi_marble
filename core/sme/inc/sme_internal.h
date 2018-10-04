@@ -306,7 +306,6 @@ typedef struct tagSmeStruct {
 #ifdef WLAN_FEATURE_NAN
 	nan_callback nan_callback;
 #endif
-	bool enableSelfRecovery;
 	csr_link_status_callback link_status_callback;
 	void *link_status_context;
 	int (*get_tsf_cb)(void *pcb_cxt, struct stsf *ptsf);

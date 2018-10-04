@@ -439,12 +439,12 @@ tSmeCmd *sme_get_command_buffer(tpAniSirGlobal pMac)
 		}
 		csr_nonscan_pending_ll_unlock(pMac);
 
-		if (pMac->roam.configParam.enable_fatal_event)
+		if (pMac->mlme_cfg->gen.fatal_event_trigger)
 			cds_flush_logs(WLAN_LOG_TYPE_FATAL,
 				WLAN_LOG_INDICATOR_HOST_DRIVER,
 				WLAN_LOG_REASON_SME_OUT_OF_CMD_BUF,
 				false,
-				pMac->sme.enableSelfRecovery ? true : false);
+				pMac->mlme_cfg->gen.self_recovery);
 		else
 			cds_trigger_recovery(QDF_GET_MSG_BUFF_FAILURE);
 	}
@@ -14708,6 +14708,11 @@ QDF_STATUS sme_enable_disable_chanavoidind_event(tHalHandle hal,
 	QDF_STATUS status;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct scheduler_msg msg = {0};
+
+	if (!mac_ctx->mlme_cfg->gen.optimize_ca_event) {
+		sme_err("optimize_ca_event not enabled in ini");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
 
 	sme_debug("set_value: %d", set_value);
 	status = sme_acquire_global_lock(&mac_ctx->sme);

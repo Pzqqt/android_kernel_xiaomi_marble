@@ -3036,7 +3036,6 @@ sapconvert_to_csr_profile(tsap_config_t *pconfig_params, eCsrRoamBssType bssType
 		profile->addIeParams.probeRespBCNDataLen = 0;
 		profile->addIeParams.probeRespBCNData_buff = NULL;
 	}
-	profile->sap_dot11mc = pconfig_params->sap_dot11mc;
 
 	if (pconfig_params->supported_rates.numRates) {
 		qdf_mem_copy(profile->supported_rates.rate,

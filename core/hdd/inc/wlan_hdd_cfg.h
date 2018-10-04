@@ -1284,29 +1284,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gDroppedPktDisconnectTh - Sets dropped packet threshold in firmware
- * @Min: 0
- * @Max: 512
- * @Default: 512
- *
- * This INI is the packet drop threshold will trigger disconnect from remote
- * peer.
- *
- * Related: None
- *
- * Supported Feature: connection
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_DROPPED_PKT_DISCONNECT_TH_NAME      "gDroppedPktDisconnectTh"
-#define CFG_DROPPED_PKT_DISCONNECT_TH_MIN       (0)
-#define CFG_DROPPED_PKT_DISCONNECT_TH_MAX       (65535)
-#define CFG_DROPPED_PKT_DISCONNECT_TH_DEFAULT   (512)
-
-/*
- * <ini>
  * gForce1x1Exception - force 1x1 when connecting to certain peer
  * @Min: 0
  * @Max: 1
@@ -4846,11 +4823,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_IPA_UC_TX_PARTITION_BASE_MAX           (9000)
 #define CFG_IPA_UC_TX_PARTITION_BASE_DEFAULT       (3000)
 
-#define CFG_ENABLE_SELF_RECOVERY_NAME              "gEnableSelfRecovery"
-#define CFG_ENABLE_SELF_RECOVERY_MIN               (0)
-#define CFG_ENABLE_SELF_RECOVERY_MAX               (1)
-#define CFG_ENABLE_SELF_RECOVERY_DEFAULT           (0)
-
 #define CFG_ENABLE_SAP_SUSPEND                     "gEnableSapSuspend"
 #define CFG_ENABLE_SAP_SUSPEND_MIN                 (0)
 #define CFG_ENABLE_SAP_SUSPEND_MAX                 (1)
@@ -5042,11 +5014,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_GO_11AC_OVERRIDE_MIN              (0)
 #define CFG_GO_11AC_OVERRIDE_MAX              (1)
 #define CFG_GO_11AC_OVERRIDE_DEFAULT          (1)
-
-#define CFG_SAP_DOT11MC_NAME          "gSapDot11mc"
-#define CFG_SAP_DOT11MC_MIN           (0)
-#define CFG_SAP_DOT11MC_MAX           (1)
-#define CFG_SAP_DOT11MC_DEFAULT       (0)
 
 #define CFG_ENABLE_NON_DFS_CHAN_ON_RADAR           "gPreferNonDfsChanOnRadar"
 #define CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MIN       (0)
@@ -5463,15 +5430,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_SET_TSF_DBG_FS                        (0x8)
 #define CFG_SET_TSF_PTP_OPT_DEFAULT               (0xf)
 #endif
-
-/*
- * Enable/Disable to initiate BUG report in case of fatal event
- * Default: Enable
- */
-#define CFG_ENABLE_FATAL_EVENT_TRIGGER_NAME            "gEnableFatalEvent"
-#define CFG_ENABLE_FATAL_EVENT_TRIGGER_MIN             (0)
-#define CFG_ENABLE_FATAL_EVENT_TRIGGER_MAX             (1)
-#define CFG_ENABLE_FATAL_EVENT_TRIGGER_DEFAULT         (1)
 
 /*
  * <ini>
@@ -5950,31 +5908,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gSub20ChannelWidth - Control sub 20 channel width (5/10 Mhz)
- * @Min: 0
- * @Max: 2
- * @Default: 0
- *
- * This ini is used to set the sub 20 channel width.
- * gSub20ChannelWidth=0: indicates do not use Sub 20 MHz bandwidth
- * gSub20ChannelWidth=1: Bring up SAP/STA in 5 MHz bandwidth
- * gSub20ChannelWidth=2: Bring up SAP/STA in 10 MHz bandwidth
- *
- * Related: None
- *
- * Supported Feature: 5/10 Mhz channel width support
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_SUB_20_CHANNEL_WIDTH_NAME              "gSub20ChannelWidth"
-#define CFG_SUB_20_CHANNEL_WIDTH_MIN               (WLAN_SUB_20_CH_WIDTH_NONE)
-#define CFG_SUB_20_CHANNEL_WIDTH_MAX               (WLAN_SUB_20_CH_WIDTH_10)
-#define CFG_SUB_20_CHANNEL_WIDTH_DEFAULT           (WLAN_SUB_20_CH_WIDTH_NONE)
-
-/*
- * <ini>
  * restart_beaconing_on_chan_avoid_event - control the beaconing entity to move
  * away from active LTE channels
  * @Min: 0
@@ -6135,37 +6068,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_FILTER_MULTICAST_REPLAY_MIN      (0)
 #define CFG_FILTER_MULTICAST_REPLAY_MAX      (1)
 #define CFG_FILTER_MULTICAST_REPLAY_DEFAULT  (1)
-
-/* Optimize channel avoidance indication coming from firmware */
-#define CFG_OPTIMIZE_CA_EVENT_NAME       "goptimize_chan_avoid_event"
-#define CFG_OPTIMIZE_CA_EVENT_DISABLE    (0)
-#define CFG_OPTIMIZE_CA_EVENT_ENABLE     (1)
-#define CFG_OPTIMIZE_CA_EVENT_DEFAULT    (0)
-
-/*
- * <ini>
- * fw_timeout_crash - Enable/Disable BUG ON
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to Trigger host crash when firmware fails to send the
- * response to host
- * fw_timeout_crash = 0 Disabled
- * fw_timeout_crash = 1 Trigger host crash
- *
- * Related: None
- *
- * Supported Feature: SSR
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_CRASH_FW_TIMEOUT_NAME       "fw_timeout_crash"
-#define CFG_CRASH_FW_TIMEOUT_DISABLE    (0)
-#define CFG_CRASH_FW_TIMEOUT_ENABLE     (1)
-#define CFG_CRASH_FW_TIMEOUT_DEFAULT    (1)
 
 /*
  * <ini>
@@ -6843,24 +6745,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_MAWC_NLO_MAX_SCAN_INTERVAL_MIN      (1000)
 #define CFG_MAWC_NLO_MAX_SCAN_INTERVAL_MAX      (0xFFFFFFFF)
 #define CFG_MAWC_NLO_MAX_SCAN_INTERVAL_DEFAULT  (60000)
-
-/*
- * <ini>
- * gItoRepeatCount - sets ito repeated count
- * @Min: 0
- * @Max: 5
- * @Default: 0
- *
- * This ini sets the ito count in FW
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ITO_REPEAT_COUNT_NAME "gItoRepeatCount"
-#define CFG_ITO_REPEAT_COUNT_MIN        (0)
-#define CFG_ITO_REPEAT_COUNT_MAX        (5)
-#define CFG_ITO_REPEAT_COUNT_DEFAULT    (0)
 
 /*
  * <ini>
@@ -8202,7 +8086,6 @@ struct hdd_config {
 	uint32_t IpaUcRxIndRingCount;
 	uint32_t IpaUcTxPartitionBase;
 
-	bool enableSelfRecovery;
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
 	uint8_t SapSccChanAvoidance;
 #endif /* FEATURE_WLAN_FORCE_SAP_SCC */
@@ -8223,7 +8106,6 @@ struct hdd_config {
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	uint8_t sap_11ac_override;
 	uint8_t go_11ac_override;
-	uint8_t sap_dot11mc;
 	uint8_t prefer_non_dfs_on_radar;
 	uint8_t conc_system_pref;
 	uint32_t dbs_selection_policy;
@@ -8296,7 +8178,6 @@ struct hdd_config {
 	/* Tuning TX sched parameters for BK (skip credit limit credit disc) */
 	uint8_t  tx_sched_wrr_bk[TX_SCHED_WRR_PARAM_STRING_LENGTH];
 
-	bool enable_fatal_event;
 	bool apf_enabled;
 #ifdef CONFIG_DP_TRACE
 	bool enable_dp_trace;
@@ -8312,8 +8193,6 @@ struct hdd_config {
 	uint8_t adapt_dwell_passive_mon_intval;
 	uint8_t adapt_dwell_wifi_act_threshold;
 	bool bug_report_for_no_scan_results;
-	/* parameter to control GTX */
-	enum cfg_sub_20_channel_width enable_sub_20_channel_width;
 	bool indoor_channel_support;
 	/* control marking indoor channel passive to disable */
 	bool force_ssc_disable_indoor_channel;
@@ -8322,8 +8201,6 @@ struct hdd_config {
 	bool go_force_11n_for_11ac;
 	uint16_t sap_tx_leakage_threshold;
 	bool multicast_replay_filter;
-	bool goptimize_chan_avoid_event;
-	bool fw_timeout_crash;
 	uint32_t rx_wakelock_timeout;
 	bool sap_internal_restart;
 	enum restart_beaconing_on_ch_avoid_rule
@@ -8347,11 +8224,8 @@ struct hdd_config {
 	uint32_t mawc_nlo_exp_backoff_ratio;
 	uint32_t mawc_nlo_init_scan_interval;
 	uint32_t mawc_nlo_max_scan_interval;
-	/* threshold of packet drops at which FW initiates disconnect */
-	uint16_t pkt_err_disconn_th;
 	bool is_force_1x1;
 	enum pmo_auto_pwr_detect_failure_mode auto_pwr_save_fail_mode;
-	uint8_t ito_repeat_count;
 	bool enable_11d_in_world_mode;
 	/* 5G preference parameters for boosting RSSI */
 	bool                        enable_5g_band_pref;

@@ -2014,13 +2014,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_IPA_UC_TX_PARTITION_BASE_MIN,
 		     CFG_IPA_UC_TX_PARTITION_BASE_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_SELF_RECOVERY_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enableSelfRecovery,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_SELF_RECOVERY_DEFAULT,
-		     CFG_ENABLE_SELF_RECOVERY_MIN,
-		     CFG_ENABLE_SELF_RECOVERY_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_SAP_SUSPEND, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_sap_suspend,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2102,13 +2095,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_GO_11AC_OVERRIDE_DEFAULT,
 		     CFG_GO_11AC_OVERRIDE_MIN,
 		     CFG_GO_11AC_OVERRIDE_MAX),
-
-	REG_VARIABLE(CFG_SAP_DOT11MC_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, sap_dot11mc,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_SAP_DOT11MC_DEFAULT,
-		     CFG_SAP_DOT11MC_MIN,
-		     CFG_SAP_DOT11MC_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_NON_DFS_CHAN_ON_RADAR, WLAN_PARAM_Integer,
 		     struct hdd_config, prefer_non_dfs_on_radar,
@@ -2330,14 +2316,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_ROAM_SCAN_TRIGGER_REASON_BITMASK_MIN,
 		CFG_ROAM_SCAN_TRIGGER_REASON_BITMASK_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_FATAL_EVENT_TRIGGER_NAME, WLAN_PARAM_Integer,
-			struct hdd_config, enable_fatal_event,
-			VAR_FLAGS_OPTIONAL |
-			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			CFG_ENABLE_FATAL_EVENT_TRIGGER_DEFAULT,
-			CFG_ENABLE_FATAL_EVENT_TRIGGER_MIN,
-			CFG_ENABLE_FATAL_EVENT_TRIGGER_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_EDCA_INI_NAME, WLAN_PARAM_Integer,
 			struct hdd_config, enable_edca_params,
 			VAR_FLAGS_OPTIONAL |
@@ -2529,13 +2507,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_ADAPT_DWELL_LPF_WEIGHT_MIN,
 		CFG_ADAPT_DWELL_LPF_WEIGHT_MAX),
 
-	REG_VARIABLE(CFG_SUB_20_CHANNEL_WIDTH_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_sub_20_channel_width,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_SUB_20_CHANNEL_WIDTH_DEFAULT,
-		     CFG_SUB_20_CHANNEL_WIDTH_MIN,
-		     CFG_SUB_20_CHANNEL_WIDTH_MAX),
-
 	REG_VARIABLE(CFG_ADAPT_DWELL_PASMON_INTVAL_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, adapt_dwell_passive_mon_intval,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2617,20 +2588,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_FILTER_MULTICAST_REPLAY_MIN,
 		CFG_FILTER_MULTICAST_REPLAY_MAX),
 
-	REG_VARIABLE(CFG_OPTIMIZE_CA_EVENT_NAME, WLAN_PARAM_Integer,
-			struct hdd_config, goptimize_chan_avoid_event,
-			VAR_FLAGS_OPTIONAL |
-			VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			CFG_OPTIMIZE_CA_EVENT_DEFAULT,
-			CFG_OPTIMIZE_CA_EVENT_DISABLE,
-			CFG_OPTIMIZE_CA_EVENT_ENABLE),
-
-	REG_VARIABLE(CFG_CRASH_FW_TIMEOUT_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, fw_timeout_crash,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_CRASH_FW_TIMEOUT_DEFAULT,
-		CFG_CRASH_FW_TIMEOUT_DISABLE,
-		CFG_CRASH_FW_TIMEOUT_ENABLE),
 	REG_VARIABLE(CFG_RX_WAKELOCK_TIMEOUT_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, rx_wakelock_timeout,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2739,26 +2696,12 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_MAWC_NLO_MAX_SCAN_INTERVAL_MIN,
 		CFG_MAWC_NLO_MAX_SCAN_INTERVAL_MAX),
 
-	REG_VARIABLE(CFG_DROPPED_PKT_DISCONNECT_TH_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, pkt_err_disconn_th,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_DROPPED_PKT_DISCONNECT_TH_DEFAULT,
-		CFG_DROPPED_PKT_DISCONNECT_TH_MIN,
-		CFG_DROPPED_PKT_DISCONNECT_TH_MAX),
-
 	REG_VARIABLE(CFG_FORCE_1X1_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, is_force_1x1,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		CFG_FORCE_1X1_DEFAULT,
 		CFG_FORCE_1X1_MIN,
 		CFG_FORCE_1X1_MAX),
-
-	REG_VARIABLE(CFG_ITO_REPEAT_COUNT_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, ito_repeat_count,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ITO_REPEAT_COUNT_DEFAULT,
-		CFG_ITO_REPEAT_COUNT_MIN,
-		CFG_ITO_REPEAT_COUNT_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_11D_IN_WORLD_MODE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_11d_in_world_mode,
@@ -4723,8 +4666,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	/* Update maximum interfaces information */
 	smeConfig->csrConfig.max_intf_count = hdd_ctx->max_intf_count;
 
-	smeConfig->csrConfig.enableSelfRecovery =
-			hdd_ctx->config->enableSelfRecovery;
 	smeConfig->csrConfig.conc_custom_rule1 =
 		hdd_ctx->config->conc_custom_rule1;
 	smeConfig->csrConfig.conc_custom_rule2 =
@@ -4759,8 +4700,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->min_delay_btw_roam_scans;
 	smeConfig->csrConfig.roam_trigger_reason_bitmask =
 		hdd_ctx->config->roam_trigger_reason_bitmask;
-	smeConfig->csrConfig.enable_fatal_event =
-			pConfig->enable_fatal_event;
 	smeConfig->csrConfig.scan_adaptive_dwell_mode =
 			hdd_ctx->config->scan_adaptive_dwell_mode;
 	smeConfig->csrConfig.scan_adaptive_dwell_mode_nc =
@@ -4819,9 +4758,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->wlm_latency_flags_low;
 	smeConfig->csrConfig.wlm_latency_flags[3] =
 			hdd_ctx->config->wlm_latency_flags_ultralow;
-
-	smeConfig->csrConfig.pkt_err_disconn_th =
-			hdd_ctx->config->pkt_err_disconn_th;
 
 	smeConfig->csrConfig.is_force_1x1 =
 			hdd_ctx->config->is_force_1x1;

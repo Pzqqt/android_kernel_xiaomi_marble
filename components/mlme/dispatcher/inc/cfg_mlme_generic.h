@@ -400,7 +400,7 @@
  * <ini>
  * gDroppedPktDisconnectTh - Sets dropped packet threshold in firmware
  * @Min: 0
- * @Max: 512
+ * @Max: 65535
  * @Default: 512
  *
  * This INI is the packet drop threshold will trigger disconnect from remote

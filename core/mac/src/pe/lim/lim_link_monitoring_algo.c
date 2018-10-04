@@ -327,7 +327,7 @@ lim_trigger_sta_deletion(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 	mlm_disassoc_ind.sessionId = session_entry->peSessionId;
 	lim_post_sme_message(mac_ctx, LIM_MLM_DISASSOC_IND,
 			(uint32_t *) &mlm_disassoc_ind);
-	if (mac_ctx->roam.configParam.enable_fatal_event)
+	if (mac_ctx->mlme_cfg->gen.fatal_event_trigger)
 		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
 				WLAN_LOG_INDICATOR_HOST_DRIVER,
 				WLAN_LOG_REASON_HB_FAILURE,
@@ -429,7 +429,7 @@ lim_tear_down_link_with_ap(tpAniSirGlobal pMac, uint8_t sessionId,
 		if (LIM_IS_STA_ROLE(psessionEntry))
 			lim_post_sme_message(pMac, LIM_MLM_DEAUTH_IND,
 				     (uint32_t *) &mlmDeauthInd);
-		if (pMac->roam.configParam.enable_fatal_event)
+		if (pMac->mlme_cfg->gen.fatal_event_trigger)
 			cds_flush_logs(WLAN_LOG_TYPE_FATAL,
 					WLAN_LOG_INDICATOR_HOST_DRIVER,
 					WLAN_LOG_REASON_HB_FAILURE,

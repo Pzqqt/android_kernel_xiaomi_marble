@@ -883,7 +883,6 @@ struct csr_roam_profile {
 	uint8_t disableDFSChSwitch;
 	/* addIe params */
 	tSirAddIeParams addIeParams;
-	uint8_t sap_dot11mc;
 	uint16_t beacon_tx_rate;
 	tSirMacRateSet  supported_rates;
 	tSirMacRateSet  extended_rates;
@@ -1174,7 +1173,6 @@ typedef struct tagCsrConfigParam {
 	uint8_t max_scan_count;
 	int8_t first_scan_bucket_threshold;
 	uint8_t max_intf_count;
-	bool enableSelfRecovery;
 	uint32_t f_sta_miracast_mcc_rest_time_val;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	bool sap_channel_avoidance;
@@ -1202,7 +1200,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t edca_vi_aifs;
 	uint32_t edca_bk_aifs;
 	uint32_t edca_be_aifs;
-	bool enable_fatal_event;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;
 	struct csr_sta_roam_policy_params sta_roam_policy_params;
@@ -1215,7 +1212,6 @@ typedef struct tagCsrConfigParam {
 	uint16_t wlm_latency_enable;
 	uint16_t wlm_latency_level;
 	uint32_t wlm_latency_flags[CSR_NUM_WLM_LATENCY_LEVEL];
-	uint16_t pkt_err_disconn_th;
 	bool is_force_1x1;
 	uint8_t oce_feature_bitmap;
 	uint32_t btm_offload_config;
