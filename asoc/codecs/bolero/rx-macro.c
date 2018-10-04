@@ -970,11 +970,11 @@ static int rx_macro_mclk_enable(struct rx_macro_priv *rx_priv,
 	dev_dbg(rx_priv->dev, "%s: mclk_enable = %u, dapm = %d clk_users= %d\n",
 		__func__, mclk_enable, dapm, rx_priv->rx_mclk_users);
 
-	if (rx_priv->is_native_on)
-		mclk_mux = MCLK_MUX1;
 	mutex_lock(&rx_priv->mclk_lock);
 	if (mclk_enable) {
 		if (rx_priv->rx_mclk_users == 0) {
+			if (rx_priv->is_native_on)
+				mclk_mux = MCLK_MUX1;
 			ret = bolero_request_clock(rx_priv->dev,
 					RX_MACRO, mclk_mux, true);
 			if (ret < 0) {
@@ -1014,6 +1014,7 @@ static int rx_macro_mclk_enable(struct rx_macro_priv *rx_priv,
 			regmap_update_bits(regmap,
 				BOLERO_CDC_RX_CLK_RST_CTRL_MCLK_CONTROL,
 				0x01, 0x00);
+			mclk_mux = rx_priv->mclk_mux;
 			bolero_request_clock(rx_priv->dev,
 					RX_MACRO, mclk_mux, false);
 			rx_priv->mclk_mux = MCLK_MUX0;
