@@ -3053,7 +3053,8 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		WMA_LOGE("Failed to get value for WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED, leaving unchanged");
 	}
 
-	if (self_sta_req->type == WMI_VDEV_TYPE_STA) {
+	if ((self_sta_req->type == WMI_VDEV_TYPE_STA) &&
+	    (ucfg_pmo_is_apf_enabled(wma_handle->psoc))) {
 		ret = wma_config_active_apf_mode(wma_handle,
 						 self_sta_req->session_id);
 		if (QDF_IS_STATUS_ERROR(ret))
