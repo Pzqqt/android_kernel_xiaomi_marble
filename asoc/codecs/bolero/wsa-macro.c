@@ -2511,6 +2511,17 @@ static int wsa_macro_init(struct snd_soc_codec *codec)
 		dev_err(wsa_dev, "%s: Failed to add snd_ctls\n", __func__);
 		return ret;
 	}
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_AIF1 Playback");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_AIF_MIX1 Playback");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_AIF_VI Capture");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_AIF_ECHO Capture");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK1 OUT");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_SPK2 OUT");
+	snd_soc_dapm_ignore_suspend(dapm, "VIINPUT_WSA");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA SRC0_INP");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_TX DEC0_INP");
+	snd_soc_dapm_ignore_suspend(dapm, "WSA_TX DEC1_INP");
+	snd_soc_dapm_sync(dapm);
 
 	wsa_priv->codec = codec;
 	wsa_priv->spkr_gain_offset = WSA_MACRO_GAIN_OFFSET_0_DB;

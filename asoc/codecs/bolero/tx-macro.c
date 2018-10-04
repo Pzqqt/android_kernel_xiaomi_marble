@@ -1521,6 +1521,23 @@ static int tx_macro_init(struct snd_soc_codec *codec)
 		dev_err(tx_dev, "%s: Failed to add snd_ctls\n", __func__);
 		return ret;
 	}
+
+	snd_soc_dapm_ignore_suspend(dapm, "TX_AIF1 Capture");
+	snd_soc_dapm_ignore_suspend(dapm, "TX_AIF2 Capture");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC0");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC1");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC2");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC3");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC0");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC1");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC2");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC3");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC4");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC5");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC6");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC7");
+	snd_soc_dapm_sync(dapm);
+
 	for (i = 0; i < NUM_DECIMATORS; i++) {
 		tx_priv->tx_hpf_work[i].tx_priv = tx_priv;
 		tx_priv->tx_hpf_work[i].decimator = i;

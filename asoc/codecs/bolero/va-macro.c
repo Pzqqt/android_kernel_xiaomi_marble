@@ -1454,6 +1454,22 @@ static int va_macro_init(struct snd_soc_codec *codec)
 		return ret;
 	}
 
+	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF1 Capture");
+	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF2 Capture");
+	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC0");
+	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC1");
+	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC2");
+	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC3");
+	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC0");
+	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC1");
+	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC2");
+	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC3");
+	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC4");
+	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC5");
+	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC6");
+	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_MIC7");
+	snd_soc_dapm_sync(dapm);
+
 	for (i = 0; i < VA_MACRO_NUM_DECIMATORS; i++) {
 		va_priv->va_hpf_work[i].va_priv = va_priv;
 		va_priv->va_hpf_work[i].decimator = i;
