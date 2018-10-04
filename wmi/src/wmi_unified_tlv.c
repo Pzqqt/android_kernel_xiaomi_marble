@@ -15445,6 +15445,21 @@ static QDF_STATUS extract_ndp_sch_update_tlv(wmi_unified_t wmi_handle,
 		 fixed_params->flags, fixed_params->num_channels,
 		 fixed_params->num_ndp_instances);
 
+	if (fixed_params->num_channels > event->num_ndl_channel_list ||
+	    fixed_params->num_channels > event->num_nss_list) {
+		WMI_LOGE(FL("Channel count %d greater than NDP Ch list TLV len (%d) or NSS list TLV len (%d)"),
+			 fixed_params->num_channels,
+			 event->num_ndl_channel_list,
+			 event->num_nss_list);
+		return QDF_STATUS_E_INVAL;
+	}
+	if (fixed_params->num_ndp_instances > event->num_ndp_instance_list) {
+		WMI_LOGE(FL("NDP Instance count %d greater than NDP Instancei TLV len %d"),
+			 fixed_params->num_ndp_instances,
+			 event->num_ndp_instance_list);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	ind->vdev =
 		wlan_objmgr_get_vdev_by_id_from_psoc(wmi_handle->soc->wmi_psoc,
 						     fixed_params->vdev_id,
@@ -15473,6 +15488,7 @@ static QDF_STATUS extract_ndp_sch_update_tlv(wmi_unified_t wmi_handle,
 		WMI_LOGE(FL("too many channels"));
 		ind->num_channels = NAN_CH_INFO_MAX_CHANNELS;
 	}
+
 	for (i = 0; i < ind->num_channels; i++) {
 		ind->ch[i].channel = event->ndl_channel_list[i].mhz;
 		ind->ch[i].nss = event->nss_list[i];
