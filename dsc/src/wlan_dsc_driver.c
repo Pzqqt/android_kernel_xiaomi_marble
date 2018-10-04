@@ -193,17 +193,23 @@ __dsc_driver_trans_start_wait(struct dsc_driver *driver, const char *desc)
 
 	__dsc_lock(driver);
 
+	/* try to start without waiting */
 	status = __dsc_driver_trans_start_nolock(driver, desc);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		__dsc_unlock(driver);
-		return QDF_STATUS_SUCCESS;
-	}
+	if (QDF_IS_STATUS_SUCCESS(status))
+		goto unlock;
 
-	__dsc_trans_queue(&driver->trans, &tran, desc);
+	status = __dsc_trans_queue(&driver->trans, &tran, desc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto unlock;
 
 	__dsc_unlock(driver);
 
 	return __dsc_tran_wait(&tran);
+
+unlock:
+	__dsc_unlock(driver);
+
+	return status;
 }
 
 QDF_STATUS

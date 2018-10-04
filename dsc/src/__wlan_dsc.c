@@ -170,6 +170,57 @@ bool __dsc_ops_remove(struct dsc_ops *ops, const char *func)
 	return ops->count == 0;
 }
 
+#ifdef WLAN_DSC_DEBUG
+static void __dsc_dbg_tran_wait_timeout(void *opaque_tran)
+{
+	struct dsc_tran *tran = opaque_tran;
+
+	QDF_DEBUG_PANIC("Transition '%s' waited more than %ums",
+			tran->desc, DSC_TRANS_WAIT_TIMEOUT_MS);
+}
+
+/**
+ * __dsc_dbg_tran_wait_timeout_start() - start a timeout timer for @tran
+ * @tran: the transition to start a timeout timer for
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS __dsc_dbg_tran_wait_timeout_start(struct dsc_tran *tran)
+{
+	QDF_STATUS status;
+
+	status = qdf_timer_init(NULL, &tran->timeout_timer,
+				__dsc_dbg_tran_wait_timeout, tran,
+				QDF_TIMER_TYPE_SW);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	qdf_timer_start(&tran->timeout_timer, DSC_TRANS_WAIT_TIMEOUT_MS);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * __dsc_dbg_tran_wait_timeout_stop() - stop the timeout timer for @tran
+ * @tran: the transition to stop the timeout timer for
+ *
+ * Return: None
+ */
+static void __dsc_dbg_tran_wait_timeout_stop(struct dsc_tran *tran)
+{
+	qdf_timer_stop(&tran->timeout_timer);
+	qdf_timer_free(&tran->timeout_timer);
+}
+#else
+static inline QDF_STATUS
+__dsc_dbg_tran_wait_timeout_start(struct dsc_tran *tran)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void __dsc_dbg_tran_wait_timeout_stop(struct dsc_tran *tran) { }
+#endif /* WLAN_DSC_DEBUG */
+
 void __dsc_trans_init(struct dsc_trans *trans)
 {
 	trans->active_desc = NULL;
@@ -182,13 +233,27 @@ void __dsc_trans_deinit(struct dsc_trans *trans)
 	trans->active_desc = NULL;
 }
 
-void __dsc_trans_queue(struct dsc_trans *trans, struct dsc_tran *tran,
-		       const char *desc)
+QDF_STATUS __dsc_trans_queue(struct dsc_trans *trans, struct dsc_tran *tran,
+			     const char *desc)
 {
+	QDF_STATUS status;
+
 	tran->abort = false;
 	tran->desc = desc;
 	qdf_event_create(&tran->event);
+
+	status = __dsc_dbg_tran_wait_timeout_start(tran);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto event_destroy;
+
 	qdf_list_insert_back(&trans->queue, &tran->node);
+
+	return QDF_STATUS_SUCCESS;
+
+event_destroy:
+	qdf_event_destroy(&tran->event);
+
+	return status;
 }
 
 /**
@@ -201,12 +266,16 @@ static struct dsc_tran *__dsc_trans_dequeue(struct dsc_trans *trans)
 {
 	QDF_STATUS status;
 	qdf_list_node_t *node;
+	struct dsc_tran *tran;
 
 	status = qdf_list_remove_front(&trans->queue, &node);
 	if (QDF_IS_STATUS_ERROR(status))
 		return NULL;
 
-	return qdf_container_of(node, struct dsc_tran, node);
+	tran = qdf_container_of(node, struct dsc_tran, node);
+	__dsc_dbg_tran_wait_timeout_stop(tran);
+
+	return tran;
 }
 
 bool __dsc_trans_abort(struct dsc_trans *trans)
@@ -256,7 +325,7 @@ QDF_STATUS __dsc_tran_wait(struct dsc_tran *tran)
 {
 	QDF_STATUS status;
 
-	status = qdf_wait_single_event(&tran->event, DSC_TRANS_TIMEOUT);
+	status = qdf_wait_single_event(&tran->event, 0);
 	qdf_event_destroy(&tran->event);
 
 	if (QDF_IS_STATUS_ERROR(status))

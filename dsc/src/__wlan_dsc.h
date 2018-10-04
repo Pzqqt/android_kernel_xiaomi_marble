@@ -55,13 +55,9 @@ static inline bool __dsc_assert(const bool cond, const char *cond_str,
 #define dsc_assert_success(status) dsc_assert(QDF_IS_STATUS_SUCCESS(status))
 
 #ifdef WLAN_DSC_DEBUG
-#define DSC_TRANS_TIMEOUT 120000 /* 2 minutes */
-#define DSC_OP_TIMEOUT_MS	(1 * 60 * 1000) /* 1 minute */
-#else
-#define DSC_TRANS_TIMEOUT 0 /* no timeout */
-#endif
+#define DSC_OP_TIMEOUT_MS		(1 * 60 * 1000) /* 1 minute */
+#define DSC_TRANS_WAIT_TIMEOUT_MS	(2 * 60 * 1000) /* 2 minutes */
 
-#ifdef WLAN_DSC_DEBUG
 /**
  * struct dsc_op - list node for operation tracking information
  * @node: list node
@@ -90,17 +86,21 @@ struct dsc_ops {
 };
 
 /**
- * struct dsc_pending_trans - representation of a pending transition
+ * struct dsc_tran - representation of a pending transition
  * @abort: used to indicate if the transition stopped waiting due to an abort
  * @desc: unique description of the transition
  * @node: list node
  * @event: event used to wait in *_start_trans_wait() APIs
+ * @timeout_timer: a timer used to detect transition wait timeouts
  */
 struct dsc_tran {
 	bool abort;
 	const char *desc;
 	qdf_list_node_t node;
 	qdf_event_t event;
+#ifdef WLAN_DSC_DEBUG
+	qdf_timer_t timeout_timer;
+#endif
 };
 
 /**
@@ -235,10 +235,10 @@ void __dsc_trans_deinit(struct dsc_trans *trans);
  * @tran: the transition to enqueue
  * @desc: unique description of the transition being queued
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-void __dsc_trans_queue(struct dsc_trans *trans, struct dsc_tran *tran,
-		       const char *desc);
+QDF_STATUS __dsc_trans_queue(struct dsc_trans *trans, struct dsc_tran *tran,
+			     const char *desc);
 
 /**
  * __dsc_tran_wait() - block until @tran completes
