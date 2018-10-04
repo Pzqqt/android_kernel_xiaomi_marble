@@ -315,8 +315,10 @@ enum __qdf_net_wireless_evcode {
 #define __qdf_vsnprint            vsnprintf
 #define __qdf_toupper            toupper
 #define qdf_kstrtoint            __qdf_kstrtoint
+#define qdf_kstrtouint            __qdf_kstrtouint
 
 #define __qdf_kstrtoint          kstrtoint
+#define __qdf_kstrtouint          kstrtouint
 
 #define __QDF_DMA_BIDIRECTIONAL  DMA_BIDIRECTIONAL
 #define __QDF_DMA_TO_DEVICE      DMA_TO_DEVICE

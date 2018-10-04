@@ -664,6 +664,7 @@ void qdf_vtrace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 #define qdf_snprint   __qdf_snprint
 
 #define qdf_kstrtoint __qdf_kstrtoint
+#define qdf_kstrtouint __qdf_kstrtouint
 
 #ifdef WLAN_OPEN_P2P_INTERFACE
 /* This should match with WLAN_MAX_INTERFACES */
