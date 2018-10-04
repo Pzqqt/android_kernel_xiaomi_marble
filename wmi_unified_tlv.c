@@ -15242,6 +15242,14 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 			 __func__, fixed_params->ndp_app_info_len);
 		return QDF_STATUS_E_INVAL;
 	}
+	if (fixed_params->num_ndp_channels > event->num_ndp_channel_list ||
+	    fixed_params->num_ndp_channels > event->num_nss_list) {
+		WMI_LOGE(FL("NDP Ch count %d greater than NDP Ch TLV len (%d) or NSS TLV len (%d)"),
+			 fixed_params->num_ndp_channels,
+			 event->num_ndp_channel_list,
+			 event->num_nss_list);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	rsp->vdev =
 		wlan_objmgr_get_vdev_by_id_from_psoc(wmi_handle->soc->wmi_psoc,
