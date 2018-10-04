@@ -2066,6 +2066,19 @@ QDF_STATUS
 wmi_extract_roam_scan_stats_res_evt(wmi_unified_t wmi, void *evt_buf,
 				    uint32_t *vdev_id,
 				    struct wmi_roam_scan_stats_res **res_param);
+
+/**
+ * wmi_extract_offload_bcn_tx_status_evt() - API to extract bcn tx status event
+ * @wmi: wmi handle
+ * @evt_buf: pointer to the event buffer
+ * @vdev_id: output pointer to hold vdev id
+ * @tx_status: output pointer to hold bcn tx status
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_extract_offload_bcn_tx_status_evt(void *wmi_hdl, void *evt_buf,
+				      uint32_t *vdev_id, uint32_t *tx_status);
 /**
  * wmi_unified_offload_11k_cmd() - send 11k offload command
  * @wmi_hdl: wmi handle

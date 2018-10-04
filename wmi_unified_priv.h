@@ -1694,6 +1694,10 @@ QDF_STATUS
 				   void *evt_buf,
 				   uint32_t *vdev_id,
 				   struct wmi_roam_scan_stats_res **res_param);
+QDF_STATUS
+(*extract_offload_bcn_tx_status_evt)(wmi_unified_t wmi_handle,
+				     void *evt_buf, uint32_t *vdev_id,
+				     uint32_t *tx_status);
 
 QDF_STATUS (*send_offload_11k_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_11k_offload_params *params);
