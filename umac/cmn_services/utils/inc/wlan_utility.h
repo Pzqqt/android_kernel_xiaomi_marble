@@ -1,19 +1,17 @@
 /*
  * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /**
@@ -184,23 +182,24 @@ struct wlan_objmgr_vdev *wlan_util_get_vdev_by_ifname(
  */
 uint8_t *wlan_util_vdev_get_if_name(struct wlan_objmgr_vdev *vdev);
 
-/*
+/**
  * wlan_util_is_vdev_active() - Check for vdev active
  * @pdev: pdev pointer
  * @dbg_id: debug id for ref counting
  *
- * @Return: QDF_STATUS_SUCCESS in case of vdev active
+ * Return: QDF_STATUS_SUCCESS in case of vdev active
+ *          QDF_STATUS_E_INVAL, if dev is not active
  */
 QDF_STATUS wlan_util_is_vdev_active(struct wlan_objmgr_pdev *pdev,
 				    wlan_objmgr_ref_dbgid dbg_id);
 
-/*
+/**
  * wlan_vdev_is_up() - Check for vdev is in UP state
  * @vdev: vdev pointer
  *
- * @Return: true in case of vdev is in UP state
+ * Return: QDF_STATUS_SUCCESS, if vdev is in up, otherwise QDF_STATUS_E_FAILURE
  */
-bool wlan_vdev_is_up(struct wlan_objmgr_vdev *vdev);
+QDF_STATUS wlan_vdev_is_up(struct wlan_objmgr_vdev *vdev);
 
 /**
  * wlan_util_pdev_vdevs_deschan_match() - function to check des channel matches
@@ -211,7 +210,7 @@ bool wlan_vdev_is_up(struct wlan_objmgr_vdev *vdev);
  *
  * This function checks the vdev desired channel with other vdev channels
  *
- * Return : SUCCESS, if it matches, otherwise FAILURE
+ * Return: QDF_STATUS_SUCCESS, if it matches, otherwise QDF_STATUS_E_FAILURE
  */
 QDF_STATUS wlan_util_pdev_vdevs_deschan_match(struct wlan_objmgr_pdev *pdev,
 					      struct wlan_objmgr_vdev *vdev,
@@ -225,9 +224,9 @@ QDF_STATUS wlan_util_pdev_vdevs_deschan_match(struct wlan_objmgr_pdev *pdev,
  *
  * This function set/reset given index bit
  *
- * Return : void
+ * Return: void
  */
-void wlan_util_change_map_index(uint32_t *map, uint8_t id, uint8_t set);
+void wlan_util_change_map_index(unsigned long *map, uint8_t id, uint8_t set);
 
 /**
  * wlan_util_map_index_is_set() - function to check whether given index bit is
@@ -237,9 +236,9 @@ void wlan_util_change_map_index(uint32_t *map, uint8_t id, uint8_t set);
  *
  * This function checks the given index bit is set
  *
- * Return : true, if bit is set, otherwise false
+ * Return: true, if bit is set, otherwise false
  */
-bool wlan_util_map_index_is_set(uint32_t *map, uint8_t id);
+bool wlan_util_map_index_is_set(unsigned long *map, uint8_t id);
 
 /**
  * wlan_pdev_chan_change_pending_vdevs() - function to test/set channel change
@@ -250,10 +249,11 @@ bool wlan_util_map_index_is_set(uint32_t *map, uint8_t id);
  *
  * This function test/set channel change pending flag
  *
- * Return : SUCCESS, if it iterates through all vdevs, otherwise FAILURE
+ * Return: QDF_STATUS_SUCCESS, if it iterates through all vdevs,
+ *         otherwise QDF_STATUS_E_FAILURE
  */
 QDF_STATUS wlan_pdev_chan_change_pending_vdevs(struct wlan_objmgr_pdev *pdev,
-					       uint32_t *vdev_id_map,
+					       unsigned long *vdev_id_map,
 					       wlan_objmgr_ref_dbgid dbg_id);
 
 /**
@@ -263,9 +263,32 @@ QDF_STATUS wlan_pdev_chan_change_pending_vdevs(struct wlan_objmgr_pdev *pdev,
  *
  * This function checks the chan1 and chan2 are same
  *
- * Return : SUCCESS, if it matches, otherwise FAILURE
+ * Return: QDF_STATUS_SUCCESS, if it matches, otherwise QDF_STATUS_E_FAILURE
  */
 QDF_STATUS wlan_chan_eq(struct wlan_channel *chan1, struct wlan_channel *chan2);
+
+/**
+ * wlan_chan_copy() - function to copy channel
+ * @tgt:  target channel object
+ * @src:  src achannel object
+ *
+ * This function copies channel data from src to tgt
+ *
+ * Return: void
+ */
+void wlan_chan_copy(struct wlan_channel *tgt, struct wlan_channel *src);
+
+/**
+ * wlan_vdev_get_active_channel() - derives the vdev operating channel
+ * @vdev:  VDEV object
+ *
+ * This function checks vdev state and return the channel pointer accordingly
+ *
+ * Return: active channel, if vdev chan config is valid
+ *         NULL, if VDEV is in INIT or STOP state
+ */
+struct wlan_channel *wlan_vdev_get_active_channel
+				(struct wlan_objmgr_vdev *vdev);
 
 /**
  * wlan_util_stats_get_rssi() - API to get rssi in dbm
@@ -286,6 +309,20 @@ wlan_util_stats_get_rssi(bool db2dbm_enabled, int32_t bcn_snr, int32_t dat_snr,
 			 int8_t *rssi);
 
 /**
+ * wlan_util_is_pdev_restart_progress() - Check if any vdev is in restart state
+ * @pdev: pdev pointer
+ * @dbg_id: module id
+ *
+ * Iterates through all vdevs, checks if any VDEV is in RESTART_PROGRESS
+ * substate
+ *
+ * Return: QDF_STATUS_SUCCESS,if any vdev is in RESTART_PROGRESS substate
+ *         otherwise QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS wlan_util_is_pdev_restart_progress(struct wlan_objmgr_pdev *pdev,
+					      wlan_objmgr_ref_dbgid dbg_id);
+
+/**
  * wlan_util_is_pdev_scan_allowed() - Check for vdev is allowed to scan
  * @pdev: pdev pointer
  * @dbg_id: module id
@@ -297,5 +334,4 @@ wlan_util_stats_get_rssi(bool db2dbm_enabled, int32_t bcn_snr, int32_t dat_snr,
  */
 QDF_STATUS wlan_util_is_pdev_scan_allowed(struct wlan_objmgr_pdev *pdev,
 					  wlan_objmgr_ref_dbgid dbg_id);
-
 #endif /* _WLAN_UTILITY_H_ */

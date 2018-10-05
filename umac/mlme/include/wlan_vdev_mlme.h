@@ -1,19 +1,17 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /**
@@ -57,7 +55,7 @@ enum vdev_cmd_type {
 };
 
 /**
- * struct vdev_mlme_ops - VDEV MLME operation callbacks strucutre
+ * struct vdev_mlme_ops - VDEV MLME operation callbacks structure
  * @mlme_vdev_validate_basic_params:    callback to validate VDEV basic params
  * @mlme_vdev_reset_proto_params:       callback to Reset protocol params
  * @mlme_vdev_start_send:               callback to initiate actions of VDEV
@@ -85,14 +83,6 @@ enum vdev_cmd_type {
  *                                      peer delete completion
  * @mlme_vdev_down_send:                callback to initiate actions of VDEV
  *                                      MLME down operation
- * @mlme_vdev_ext_hdl_create:           callback to invoke creation of legacy
- *                                      vdev object
- * @mlme_vdev_ext_hdl_post_create:      callback to invoke post creation actions
- *                                      of legacy vdev object
- * @mlme_vdev_ext_hdl_destroy:          callback to invoke destroy of legacy
- *                                      vdev object
- * @mlme_vdev_enqueue_exp_cmd:          callback to enqueue exception command
- *                                      required by serialization
  */
 struct vdev_mlme_ops {
 	QDF_STATUS (*mlme_vdev_validate_basic_params)(
@@ -151,16 +141,6 @@ struct vdev_mlme_ops {
 	QDF_STATUS (*mlme_vdev_notify_down_complete)(
 				struct vdev_mlme_obj *vdev_mlme,
 				uint16_t event_data_len, void *event_data);
-	QDF_STATUS (*mlme_vdev_ext_hdl_create)(
-				struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_ext_hdl_post_create)(
-				struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_ext_hdl_destroy)(
-				struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_enqueue_exp_cmd)(
-				struct vdev_mlme_obj *vdev_mlme,
-				uint8_t cmd_type);
-
 };
 
 /**
@@ -414,7 +394,8 @@ static inline QDF_STATUS mlme_vdev_up_send(
  */
 static inline
 QDF_STATUS mlme_vdev_notify_up_complete(struct vdev_mlme_obj *vdev_mlme,
-				uint16_t event_data_len, void *event_data)
+					uint16_t event_data_len,
+					void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
@@ -619,91 +600,6 @@ static inline QDF_STATUS mlme_vdev_notify_down_complete(
 		ret = vdev_mlme->ops->mlme_vdev_notify_down_complete(
 					vdev_mlme, event_data_len, event_data);
 
-	return ret;
-}
-
-/**
- * mlme_vdev_ext_hdl_create - VDEV legacy pointer allocation
- * @vdev_mlme_obj:  VDEV MLME comp object
- *
- * API invokes legacy pointer allocation and initialization
- *
- * Return: SUCCESS on successful creation of legacy handle
- *         FAILURE, if it fails due to any
- */
-static inline QDF_STATUS mlme_vdev_ext_hdl_create(
-			      struct vdev_mlme_obj *vdev_mlme)
-{
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-
-	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_ext_hdl_create)
-		ret = vdev_mlme->ops->mlme_vdev_ext_hdl_create(vdev_mlme);
-
-	return ret;
-}
-
-/**
- * mlme_vdev_ext_hdl_post_create - VDEV post legacy pointer allocation
- * @vdev_mlme_obj:  VDEV MLME comp object
- *
- * API invokes post legacy pointer allocation operation
- *
- * Return: SUCCESS on successful creation of legacy handle
- *         FAILURE, if it fails due to any
- */
-static inline QDF_STATUS mlme_vdev_ext_hdl_post_create(
-				struct vdev_mlme_obj *vdev_mlme)
-{
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-
-	if ((vdev_mlme->ops) &&
-	    vdev_mlme->ops->mlme_vdev_ext_hdl_post_create)
-		ret = vdev_mlme->ops->mlme_vdev_ext_hdl_post_create(
-								vdev_mlme);
-
-	return ret;
-}
-
-/**
- * mlme_vdev_ext_hdl_destroy - VDEV legacy pointer free
- * @vdev_mlme_obj:  VDEV MLME comp object
- *
- * API invokes legacy pointer free
- *
- * Return: SUCCESS on successful free of legacy handle
- *         FAILURE, if it fails due to any
- */
-static inline QDF_STATUS mlme_vdev_ext_hdl_destroy(
-			      struct vdev_mlme_obj *vdev_mlme)
-{
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-
-	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_ext_hdl_destroy)
-		ret = vdev_mlme->ops->mlme_vdev_ext_hdl_destroy(vdev_mlme);
-
-	return ret;
-}
-
-/**
- * mlme_vdev_enqueue_exp_ser_cmd - Enqueue exception serialization cmd
- * @vdev_mlme_obj:  VDEV MLME comp object
- * @cmd_type: Serialization command type
- *
- * API to enqueue the exception serialization command, used by
- * mlme-serialization wrapper layer
- *
- * Return: SUCCESS on successful enqueuing the command
- *         Else FAILURE
- */
-static inline QDF_STATUS
-mlme_vdev_enqueue_exp_ser_cmd(struct vdev_mlme_obj *vdev_mlme,
-			      uint8_t cmd_type)
-{
-	QDF_STATUS ret = QDF_STATUS_SUCCESS;
-
-	if (vdev_mlme->ops && vdev_mlme->ops->mlme_vdev_enqueue_exp_cmd)
-		ret = vdev_mlme->ops->mlme_vdev_enqueue_exp_cmd(vdev_mlme,
-								cmd_type);
 	return ret;
 }
 

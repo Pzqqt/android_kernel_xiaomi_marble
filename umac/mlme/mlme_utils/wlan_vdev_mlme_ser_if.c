@@ -1,19 +1,17 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /**
@@ -29,7 +27,7 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_cmn.h>
 #include <wlan_mlme_dbg.h>
-#include <include/wlan_vdev_mlme.h>
+#include <include/wlan_mlme_cmn.h>
 #include <wlan_vdev_mlme_api.h>
 #include <wlan_vdev_mlme_ser_if.h>
 
@@ -149,8 +147,7 @@ wlan_vdev_mlme_ser_connect(struct wlan_serialization_command *cmd)
 			WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD_TYPE);
 
 	if (wlan_serialization_is_cmd_present_in_active_queue(NULL, cmd)) {
-		vdev_mlme = wlan_objmgr_vdev_get_comp_private_obj(
-				cmd->vdev, WLAN_UMAC_COMP_MLME);
+		vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(cmd->vdev);
 		if (mlme_vdev_enqueue_exp_ser_cmd(vdev_mlme,
 					WLAN_SER_CMD_VDEV_DISCONNECT)) {
 			mlme_err("Unable to add the exception cmd request");

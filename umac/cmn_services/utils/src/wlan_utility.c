@@ -1,19 +1,17 @@
 /*
  * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /**
@@ -272,14 +270,9 @@ static void wlan_vdev_active(struct wlan_objmgr_pdev *pdev, void *object,
 	wlan_vdev_obj_unlock(vdev);
 }
 
-bool wlan_vdev_is_up(struct wlan_objmgr_vdev *vdev)
+QDF_STATUS wlan_vdev_is_up(struct wlan_objmgr_vdev *vdev)
 {
-	bool ret_val = false;
-
-	if (wlan_vdev_allow_connect_n_tx(vdev) == QDF_STATUS_SUCCESS)
-		ret_val = true;
-
-	return ret_val;
+	return wlan_vdev_allow_connect_n_tx(vdev);
 }
 
 qdf_export_symbol(wlan_vdev_is_up);
@@ -298,17 +291,17 @@ static void wlan_vdev_active(struct wlan_objmgr_pdev *pdev, void *object,
 	wlan_vdev_obj_unlock(vdev);
 }
 
-bool wlan_vdev_is_up(struct wlan_objmgr_vdev *vdev)
+QDF_STATUS wlan_vdev_is_up(struct wlan_objmgr_vdev *vdev)
 {
-	bool ret_val = false;
+	QDF_STATUS is_up = QDF_STATUS_E_FAILURE;
 
 	wlan_vdev_obj_lock(vdev);
 	if (wlan_vdev_mlme_get_state(vdev) == WLAN_VDEV_S_RUN)
-		ret_val = true;
+		is_up = QDF_STATUS_SUCCESS;
 
 	wlan_vdev_obj_unlock(vdev);
 
-	return ret_val;
+	return is_up;
 }
 
 qdf_export_symbol(wlan_vdev_is_up);
@@ -332,51 +325,24 @@ QDF_STATUS wlan_util_is_vdev_active(struct wlan_objmgr_pdev *pdev,
 }
 
 #ifdef CMN_VDEV_MLME_SM_ENABLE
-void wlan_util_change_map_index(uint32_t *map, uint8_t id, uint8_t set)
+void wlan_util_change_map_index(unsigned long *map, uint8_t id, uint8_t set)
 {
-	uint8_t map_index = 0;
-	uint8_t map_entry_size = 32;
-	uint8_t adjust_index = 0;
-
-	/*
-	 * Derive map_index and adjust_index to find actual DWORD
-	 * the id map is present
-	 */
-	while ((id - adjust_index) >= map_entry_size) {
-		map_index++;
-		adjust_index = map_index * map_entry_size;
-	}
 	if (set)
-		map[map_index] |= (1 << (id - adjust_index));
+		qdf_set_bit(id, map);
 	else
-		map[map_index] &= ~(1 << (id - adjust_index));
+		qdf_clear_bit(id, map);
 }
 
-bool wlan_util_map_index_is_set(uint32_t *map, uint8_t id)
+bool wlan_util_map_index_is_set(unsigned long *map, uint8_t id)
 {
-	uint8_t map_index = 0;
-	uint8_t map_entry_size = 32;
-	uint8_t adjust_index = 0;
-
-	/*
-	 * Derive map_index and adjust_index to find actual DWORD
-	 * the id map is present
-	 */
-	while ((id - adjust_index) >= map_entry_size) {
-		map_index++;
-		adjust_index = map_index * map_entry_size;
-	}
-	if (map[map_index] & (1 << (id - adjust_index)))
-		return true;
-
-	return false;
+	return qdf_test_bit(id, map);
 }
 
 static void wlan_vdev_chan_change_pending(struct wlan_objmgr_pdev *pdev,
 					  void *object, void *arg)
 {
 	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
-	uint32_t *vdev_id_map = (uint32_t *)arg;
+	unsigned long *vdev_id_map = (unsigned long *)arg;
 	uint8_t id = 0;
 	struct wlan_objmgr_psoc *psoc;
 
@@ -388,8 +354,10 @@ static void wlan_vdev_chan_change_pending(struct wlan_objmgr_pdev *pdev,
 	if (wlan_vdev_chan_config_valid(vdev) == QDF_STATUS_SUCCESS) {
 		id = wlan_vdev_get_id(vdev);
 		/* Invalid vdev id */
-		if (id >= wlan_psoc_get_max_vdev_count(psoc))
+		if (id >= wlan_psoc_get_max_vdev_count(psoc)) {
+			wlan_vdev_obj_unlock(vdev);
 			return;
+		}
 
 		wlan_util_change_map_index(vdev_id_map, id, 1);
 	}
@@ -398,7 +366,7 @@ static void wlan_vdev_chan_change_pending(struct wlan_objmgr_pdev *pdev,
 }
 
 QDF_STATUS wlan_pdev_chan_change_pending_vdevs(struct wlan_objmgr_pdev *pdev,
-					       uint32_t *vdev_id_map,
+					       unsigned long *vdev_id_map,
 					       wlan_objmgr_ref_dbgid dbg_id)
 {
 	if (!pdev)
@@ -419,23 +387,85 @@ QDF_STATUS wlan_chan_eq(struct wlan_channel *chan1, struct wlan_channel *chan2)
 	return QDF_STATUS_E_FAILURE;
 }
 
-static void wlan_pdev_chan_match(struct wlan_objmgr_pdev *pdev,	void *object,
+void wlan_chan_copy(struct wlan_channel *tgt, struct wlan_channel *src)
+{
+	qdf_mem_copy(tgt, src, sizeof(struct wlan_channel));
+}
+
+struct wlan_channel *wlan_vdev_get_active_channel(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_channel *comp_vdev_chan = NULL;
+
+	if (wlan_vdev_chan_config_valid(vdev) == QDF_STATUS_SUCCESS) {
+		/* compare with BSS channel, when vdev is active, since desired
+		 * channel gets update, if channel is triggered in another path
+		 */
+		if (wlan_vdev_mlme_is_active(vdev) == QDF_STATUS_SUCCESS)
+			comp_vdev_chan = wlan_vdev_mlme_get_bss_chan(vdev);
+		else
+			comp_vdev_chan = wlan_vdev_mlme_get_des_chan(vdev);
+	}
+
+	return comp_vdev_chan;
+}
+
+static void wlan_pdev_chan_match(struct wlan_objmgr_pdev *pdev, void *object,
 				 void *arg)
 {
 	struct wlan_objmgr_vdev *comp_vdev = (struct wlan_objmgr_vdev *)object;
 	struct wlan_vdev_ch_check_filter *ch_filter = arg;
+	struct wlan_channel *vdev_chan;
+	struct wlan_channel *iter_vdev_chan;
 
 	if (ch_filter->flag)
+		return;
+
+	if (comp_vdev == ch_filter->vdev)
 		return;
 
 	wlan_vdev_obj_lock(comp_vdev);
 	wlan_vdev_obj_lock(ch_filter->vdev);
 
-	if (wlan_vdev_chan_config_valid(ch_filter->vdev) == QDF_STATUS_SUCCESS)
-		if (wlan_chan_eq(wlan_vdev_mlme_get_des_chan(comp_vdev),
-				 wlan_vdev_mlme_get_des_chan(ch_filter->vdev))
-				 != QDF_STATUS_SUCCESS)
-			ch_filter->flag = 1;
+	vdev_chan = wlan_vdev_get_active_channel(comp_vdev);
+	if (vdev_chan) {
+		iter_vdev_chan = wlan_vdev_mlme_get_des_chan(
+							ch_filter->vdev);
+		if (wlan_chan_eq(vdev_chan, iter_vdev_chan)
+						!= QDF_STATUS_SUCCESS) {
+			if (!((vdev_chan->ch_ieee == iter_vdev_chan->ch_ieee) &&
+			      (vdev_chan->ch_freq_seg2 ==
+						iter_vdev_chan->ch_freq_seg2) &&
+			      (vdev_chan->ch_phymode ==
+						iter_vdev_chan->ch_phymode)))
+				ch_filter->flag = 1;
+
+			qdf_err("Chan match failed");
+			qdf_err("==> iter vdev id: %d: ieee %d, freq %d",
+				wlan_vdev_get_id(comp_vdev), vdev_chan->ch_ieee,
+				vdev_chan->ch_freq);
+			qdf_err("flags %016llx, flags ext: %08x, max pwr %d",
+				vdev_chan->ch_flags, vdev_chan->ch_flagext,
+				vdev_chan->ch_maxpower);
+			qdf_err(" seg1 %d seg2 %d chwidth %d, ch_phymode %d",
+				vdev_chan->ch_freq_seg1,
+				vdev_chan->ch_freq_seg2,
+				vdev_chan->ch_width, vdev_chan->ch_phymode);
+
+			qdf_err("==> base vdev id: %d: ieee %d, freq %d",
+				wlan_vdev_get_id(ch_filter->vdev),
+				iter_vdev_chan->ch_ieee,
+				iter_vdev_chan->ch_freq);
+			qdf_err("flags %016llx, flags ext: %08x, max pwr %d",
+				iter_vdev_chan->ch_flags,
+				iter_vdev_chan->ch_flagext,
+				iter_vdev_chan->ch_maxpower);
+			qdf_err(" seg1 %d seg2 %d chwidth %d, ch_phymode %d",
+				iter_vdev_chan->ch_freq_seg1,
+				iter_vdev_chan->ch_freq_seg2,
+				iter_vdev_chan->ch_width,
+				iter_vdev_chan->ch_phymode);
+		}
+	}
 
 	wlan_vdev_obj_unlock(ch_filter->vdev);
 	wlan_vdev_obj_unlock(comp_vdev);
@@ -450,17 +480,55 @@ QDF_STATUS wlan_util_pdev_vdevs_deschan_match(struct wlan_objmgr_pdev *pdev,
 	if (!pdev)
 		return QDF_STATUS_E_INVAL;
 
-	ch_filter.flag = 0;
-	ch_filter.vdev = vdev;
-
-	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
-					  wlan_pdev_chan_match, &ch_filter, 0,
-					  dbg_id);
-
-	if (ch_filter.flag == 0)
+	if (wlan_pdev_nif_feat_cap_get(pdev, WLAN_PDEV_F_CHAN_CONCURRENCY))
 		return QDF_STATUS_SUCCESS;
 
+	if (wlan_objmgr_vdev_try_get_ref(vdev, dbg_id) == QDF_STATUS_SUCCESS) {
+		ch_filter.flag = 0;
+		ch_filter.vdev = vdev;
+
+		wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
+						  wlan_pdev_chan_match,
+						  &ch_filter, 0, dbg_id);
+
+		wlan_objmgr_vdev_release_ref(vdev, dbg_id);
+
+		if (ch_filter.flag == 0)
+			return QDF_STATUS_SUCCESS;
+	}
+
 	return QDF_STATUS_E_FAILURE;
+}
+
+static void wlan_vdev_restart_progress(struct wlan_objmgr_pdev *pdev,
+				       void *object, void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
+	uint8_t *flag = (uint8_t *)arg;
+
+	wlan_vdev_obj_lock(vdev);
+	if (wlan_vdev_is_restart_progress(vdev) == QDF_STATUS_SUCCESS)
+		*flag = 1;
+
+	wlan_vdev_obj_unlock(vdev);
+}
+
+QDF_STATUS wlan_util_is_pdev_restart_progress(struct wlan_objmgr_pdev *pdev,
+					      wlan_objmgr_ref_dbgid dbg_id)
+{
+	uint8_t flag = 0;
+
+	if (!pdev)
+		return QDF_STATUS_E_INVAL;
+
+	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
+					  wlan_vdev_restart_progress,
+					  &flag, 0, dbg_id);
+
+	if (flag == 1)
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_INVAL;
 }
 
 static void wlan_vdev_scan_allowed(struct wlan_objmgr_pdev *pdev, void *object,

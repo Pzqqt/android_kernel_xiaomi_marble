@@ -1,19 +1,17 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /**
@@ -168,6 +166,9 @@ static bool mlme_vdev_state_init_event(void *ctx, uint16_t event,
 			mlme_err(
 			"failed to validate vdev init params to move to START state");
 			status = true;
+			mlme_vdev_notify_down_complete(vdev_mlme,
+						       event_data_len,
+						       event_data);
 		}
 		break;
 
@@ -439,7 +440,7 @@ static bool mlme_vdev_state_up_event(void *ctx, uint16_t event,
 		status = true;
 		break;
 
-	case WLAN_VDEV_SM_EV_SUPSEND_RESTART:
+	case WLAN_VDEV_SM_EV_SUSPEND_RESTART:
 	case WLAN_VDEV_SM_EV_HOST_RESTART:
 	case WLAN_VDEV_SM_EV_CSA_RESTART:
 		/* These events are not supported in STA mode */
@@ -559,7 +560,7 @@ static bool mlme_vdev_state_suspend_event(void *ctx, uint16_t event,
 		status = true;
 		break;
 
-	case WLAN_VDEV_SM_EV_SUPSEND_RESTART:
+	case WLAN_VDEV_SM_EV_SUSPEND_RESTART:
 		mlme_vdev_sm_transition_to(vdev_mlme,
 					  WLAN_VDEV_SS_SUSPEND_SUSPEND_RESTART);
 		mlme_vdev_sm_deliver_event(vdev_mlme, event,
@@ -1186,7 +1187,7 @@ static bool mlme_vdev_subst_suspend_suspend_restart_event(void *ctx,
 	bool status;
 
 	switch (event) {
-	case WLAN_VDEV_SM_EV_SUPSEND_RESTART:
+	case WLAN_VDEV_SM_EV_SUSPEND_RESTART:
 		mlme_vdev_disconnect_peers(vdev_mlme,
 					   event_data_len, event_data);
 		status = true;
@@ -1592,34 +1593,34 @@ static bool mlme_vdev_subst_stop_down_progress_event(void *ctx,
 
 
 static const char *vdev_sm_event_names[] = {
-	"VDEV_SM_EV_START",
-	"VDEV_SM_EV_START_REQ",
-	"VDEV_SM_EV_RESTART_REQ",
-	"VDEV_SM_EV_START_RESP",
-	"VDEV_SM_EV_RESTART_RESP",
-	"VDEV_SM_EV_START_REQ_FAIL",
-	"VDEV_SM_EV_RESTART_REQ_FAIL",
-	"VDEV_SM_EV_START_SUCCESS",
-	"VDEV_SM_EV_CONN_PROGRESS",
-	"VDEV_SM_EV_STA_CONN_START",
-	"VDEV_SM_EV_DFS_CAC_WAIT",
-	"VDEV_SM_EV_DFS_CAC_COMPLETED",
-	"VDEV_SM_EV_DOWN",
-	"VDEV_SM_EV_CONNECTION_FAIL",
-	"VDEV_SM_EV_STOP_RESP",
-	"VDEV_SM_EV_STOP_FAIL",
-	"VDEV_SM_EV_DOWN_FAIL",
-	"VDEV_SM_EV_DISCONNECT_COMPLETE",
-	"VDEV_SM_EV_SUPSEND_RESTART",
-	"VDEV_SM_EV_HOST_RESTART",
-	"VDEV_SM_EV_UP_HOST_RESTART",
-	"VDEV_SM_EV_FW_VDEV_RESTART",
-	"VDEV_SM_EV_UP_FAIL",
-	"VDEV_SM_EV_RADAR_DETECTED",
-	"VDEV_SM_EV_CSA_RESTART",
-	"VDEV_SM_EV_CSA_COMPLETE",
-	"VDEV_SM_EV_MLME_DOWN_REQ",
-	"VDEV_SM_EV_DOWN_COMPLETE",
+	"EV_START",
+	"EV_START_REQ",
+	"EV_RESTART_REQ",
+	"EV_START_RESP",
+	"EV_RESTART_RESP",
+	"EV_START_REQ_FAIL",
+	"EV_RESTART_REQ_FAIL",
+	"EV_START_SUCCESS",
+	"EV_CONN_PROGRESS",
+	"EV_STA_CONN_START",
+	"EV_DFS_CAC_WAIT",
+	"EV_DFS_CAC_COMPLETED",
+	"EV_DOWN",
+	"EV_CONNECTION_FAIL",
+	"EV_STOP_RESP",
+	"EV_STOP_FAIL",
+	"EV_DOWN_FAIL",
+	"EV_DISCONNECT_COMPLETE",
+	"EV_SUSPEND_RESTART",
+	"EV_HOST_RESTART",
+	"EV_UP_HOST_RESTART",
+	"EV_FW_VDEV_RESTART",
+	"EV_UP_FAIL",
+	"EV_RADAR_DETECTED",
+	"EV_CSA_RESTART",
+	"EV_CSA_COMPLETE",
+	"EV_MLME_DOWN_REQ",
+	"EV_DOWN_COMPLETE",
 };
 
 struct wlan_sm_state_info sm_info[] = {

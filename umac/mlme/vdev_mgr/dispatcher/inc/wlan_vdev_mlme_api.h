@@ -1,19 +1,17 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /**
@@ -125,6 +123,17 @@ QDF_STATUS wlan_vdev_mlme_is_active(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS wlan_vdev_chan_config_valid(struct wlan_objmgr_vdev *vdev);
 
 /**
+ * wlan_vdev_mlme_is_csa_restart() - Checks whether VDEV MLME SM is in CSA
+ * @vdev: Object manager VDEV object
+ *
+ * API to checks the VDEV MLME SM state for CSA_RESTART substate
+ *
+ * Return: SUCCESS: if it is in CSA_RESTART sub state
+ *         FAILURE: otherwise failure
+ */
+QDF_STATUS wlan_vdev_mlme_is_csa_restart(struct wlan_objmgr_vdev *vdev);
+
+/**
  * wlan_vdev_is_going_down() - Checks whether VDEV is being brought down
  * @vdev: Object manager VDEV object
  *
@@ -134,6 +143,28 @@ QDF_STATUS wlan_vdev_chan_config_valid(struct wlan_objmgr_vdev *vdev);
  *         FAILURE: otherwise failure
  */
 QDF_STATUS wlan_vdev_is_going_down(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_vdev_is_restart_progress() - Checks VDEV restart is in progress
+ * @vdev: Object manager VDEV object
+ *
+ * API to check whether restarts is in progress
+ *
+ * Return: SUCCESS: if restart is in progress
+ *         FAILURE: otherwise failure
+ */
+QDF_STATUS wlan_vdev_is_restart_progress(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_vdev_is_dfs_cac_wait() - Checks VDEV is in cac wait state
+ * @vdev: Object manager VDEV object
+ *
+ * API to check whether state is cac wait state
+ *
+ * Return: SUCCESS: if state is cac wait state
+ *         FAILURE: otherwise failure
+ */
+QDF_STATUS wlan_vdev_is_dfs_cac_wait(struct wlan_objmgr_vdev *vdev);
 
 /**
  * wlan_vdev_mlme_cmd_lock - Acquire lock for command queuing atomicity

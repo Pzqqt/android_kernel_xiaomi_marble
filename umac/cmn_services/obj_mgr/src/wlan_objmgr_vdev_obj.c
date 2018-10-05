@@ -1,19 +1,18 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
  */
  /**
   * DOC: Public APIs to perform operations on Global objects
@@ -145,20 +144,14 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 	}
 	vdev->obj_state = WLAN_OBJ_STATE_ALLOCATED;
 
-	vdev->vdev_mlme.bss_chan = (struct wlan_channel *)qdf_mem_malloc(
-			sizeof(struct wlan_channel));
-	if (vdev->vdev_mlme.bss_chan == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_MLME, QDF_TRACE_LEVEL_ERROR,
-				"%s:bss_chan is NULL", __func__);
+	vdev->vdev_mlme.bss_chan = qdf_mem_malloc(sizeof(struct wlan_channel));
+	if (!vdev->vdev_mlme.bss_chan) {
 		qdf_mem_free(vdev);
 		return NULL;
 	}
 
-	vdev->vdev_mlme.des_chan = (struct wlan_channel *)qdf_mem_malloc(
-			sizeof(struct wlan_channel));
-	if (vdev->vdev_mlme.des_chan == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_MLME, QDF_TRACE_LEVEL_ERROR,
-				"%s:des_chan is NULL", __func__);
+	vdev->vdev_mlme.des_chan = qdf_mem_malloc(sizeof(struct wlan_channel));
+	if (!vdev->vdev_mlme.des_chan) {
 		qdf_mem_free(vdev->vdev_mlme.bss_chan);
 		qdf_mem_free(vdev);
 		return NULL;

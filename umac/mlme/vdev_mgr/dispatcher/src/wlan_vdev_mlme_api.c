@@ -1,19 +1,17 @@
 /*
  * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
- * Permission to use, copy, modify, and/or distribute this software for
- * any purpose with or without fee is hereby granted, provided that the
- * above copyright notice and this permission notice appear in all
- * copies.
+ * Permission to use, copy, modify, and/or distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
  *
- * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
- * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
- * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
- * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
- * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
- * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
- * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
- * PERFORMANCE OF THIS SOFTWARE.
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 /**
@@ -163,6 +161,22 @@ QDF_STATUS wlan_vdev_chan_config_valid(struct wlan_objmgr_vdev *vdev)
 	return QDF_STATUS_E_FAILURE;
 }
 
+qdf_export_symbol(wlan_vdev_chan_config_valid);
+
+QDF_STATUS wlan_vdev_mlme_is_csa_restart(struct wlan_objmgr_vdev *vdev)
+{
+	enum wlan_vdev_state state;
+	enum wlan_vdev_state substate;
+
+	state = wlan_vdev_mlme_get_state(vdev);
+	substate = wlan_vdev_mlme_get_substate(vdev);
+	if ((state == WLAN_VDEV_S_SUSPEND) &&
+	    (substate == WLAN_VDEV_SS_SUSPEND_CSA_RESTART))
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wlan_vdev_is_going_down(struct wlan_objmgr_vdev *vdev)
 {
 	enum wlan_vdev_state state;
@@ -173,6 +187,28 @@ QDF_STATUS wlan_vdev_is_going_down(struct wlan_objmgr_vdev *vdev)
 	if ((state == WLAN_VDEV_S_STOP) ||
 	    ((state == WLAN_VDEV_S_SUSPEND) &&
 	     (substate == WLAN_VDEV_SS_SUSPEND_SUSPEND_DOWN)))
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wlan_vdev_is_restart_progress(struct wlan_objmgr_vdev *vdev)
+{
+	enum wlan_vdev_state state;
+	enum wlan_vdev_state substate;
+
+	state = wlan_vdev_mlme_get_state(vdev);
+	substate = wlan_vdev_mlme_get_substate(vdev);
+	if ((state == WLAN_VDEV_S_START) &&
+	    (substate == WLAN_VDEV_SS_START_RESTART_PROGRESS))
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wlan_vdev_is_dfs_cac_wait(struct wlan_objmgr_vdev *vdev)
+{
+	if (wlan_vdev_mlme_get_state(vdev) == WLAN_VDEV_S_DFS_CAC_WAIT)
 		return QDF_STATUS_SUCCESS;
 
 	return QDF_STATUS_E_FAILURE;
@@ -215,5 +251,4 @@ QDF_STATUS wlan_vdev_mlme_is_scan_allowed(struct wlan_objmgr_vdev *vdev)
 
 	return QDF_STATUS_E_FAILURE;
 }
-
 #endif
