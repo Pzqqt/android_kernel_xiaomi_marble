@@ -17371,7 +17371,7 @@ csr_issue_del_sta_for_session_req(tpAniSirGlobal mac_ctx, uint32_t session_id,
 		sme_command->u.delStaSessionCmd.context = context;
 		qdf_mem_copy(sme_command->u.delStaSessionCmd.selfMacAddr,
 			     session_mac_addr, sizeof(tSirMacAddr));
-		status = csr_queue_sme_command(mac_ctx, sme_command, true);
+		status = csr_queue_sme_command(mac_ctx, sme_command, false);
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			sme_err("fail to send message status = %d", status);
 	}
