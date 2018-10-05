@@ -2631,12 +2631,6 @@ int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 	}
 
 	if (synch_frame_event->reassoc_rsp_len) {
-		if (!iface->roam_synch_frame_ind.bcn_probe_rsp ||
-		    !iface->roam_synch_frame_ind.reassoc_req) {
-			WMA_LOGE("failed: No probe or reassoc rsp");
-			wma_free_roam_synch_frame_ind(iface);
-			return status;
-		}
 		iface->roam_synch_frame_ind.reassoc_rsp_len =
 				synch_frame_event->reassoc_rsp_len;
 
