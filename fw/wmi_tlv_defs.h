@@ -934,6 +934,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_he_tb_action_frm_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_extd2_stats,
     WMITLV_TAG_STRUC_wmi_hpcs_pulse_start_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_ctl_failsafe_check_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1527,6 +1528,7 @@ typedef enum {
     OP(WMI_MOTION_DET_HOST_EVENTID) \
     OP(WMI_MOTION_DET_BASE_LINE_HOST_EVENTID) \
     OP(WMI_ESP_ESTIMATE_EVENTID) \
+    OP(WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5034,6 +5036,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_DMA_RING_CFG_RSP_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_dma_buf_release_spectral_meta_data, meta_data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID);
 
+/* ctl failsafe check event */
+#define WMITLV_TABLE_WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_ctl_failsafe_check_fixed_param, wmi_pdev_ctl_failsafe_check_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID);
 
 /* UNIT-TEST Event */
 #define WMITLV_TABLE_WMI_UNIT_TEST_EVENTID(id,op,buf,len) \

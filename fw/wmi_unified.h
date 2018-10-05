@@ -1261,6 +1261,9 @@ typedef enum {
 
     WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID,
 
+    /** WMI Event to deliver CTL Failsafe application */
+    WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID,
+
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -23280,8 +23283,7 @@ typedef enum {
     AGC_GAIN_RSSI_CORR_BASED = 1,
 } WMI_SPECTRAL_SCALING_FORMULA_ID;
 
-typedef struct
-{
+typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_spectral_bin_scaling_params */
     A_UINT32 pdev_id;   /* ID of pdev to which the scaling parameters are to be applied */
     WMI_SPECTRAL_SCALING_FORMULA_ID formula_id; /* Represets the formula to be used */
@@ -23290,6 +23292,12 @@ typedef struct
     A_UINT32 rssi_thr; /* RSSI threshold to be used to adjust the inband power of the given spectral report */
     A_UINT32 default_agc_max_gain;/* DEFAULT AGC MAX GAIN used. Fetched from register RXTD_RADAR_SBS_CTRL_1_L bits20:13 */
 } wmi_spectral_bin_scaling_params;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_ctl_failsafe_event_params */
+    A_UINT32 pdev_id;   /* ID of pdev to which ctl failsafe status is sent */
+    A_UINT32 ctl_FailsafeStatus; /* To indicate if Failsafe value is imposed on CTL. 0- Success, 1- Failsafe imposed */
+} wmi_pdev_ctl_failsafe_check_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header;  /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_runtime_dpd_recal_cmd_fixed_param  */
