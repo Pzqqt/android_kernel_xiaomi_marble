@@ -173,15 +173,18 @@ dp_get_vdev_from_soc_vdev_id_wifi3(struct dp_soc *soc,
 
 	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
 		pdev = soc->pdev_list[i];
+		qdf_spin_lock_bh(&pdev->vdev_list_lock);
 		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 			if (vdev->vdev_id == vdev_id) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_INFO,
 					FL("Found vdev 0x%pK on pdev %d"),
 					vdev, i);
+				qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 				return vdev;
 			}
 		}
+		qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	}
 	return NULL;
 

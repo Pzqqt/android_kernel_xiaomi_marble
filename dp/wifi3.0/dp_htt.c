@@ -1885,6 +1885,8 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 		vdev =
 		       dp_get_vdev_from_soc_vdev_id_wifi3(pdev->soc,
 							  ppdu_desc->vdev_id);
+		if (!vdev)
+			return;
 		qdf_mem_copy(ppdu_user_desc->mac_addr, vdev->mac_addr.raw,
 			     DP_MAC_ADDR_LEN);
 	} else {
