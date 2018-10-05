@@ -42,7 +42,6 @@
 
 #define SEQ_WCSS_WCMN_OFFSET     SEQ_WCSS_TOP_CMN_OFFSET                                      
 #define SEQ_WCSS_PMM_OFFSET      SEQ_WCSS_PMM_TOP_OFFSET  
-#define SEQ_WMAC_TOP_REG_MAC_RXDMA1_REG_OFFSET  SEQ_WMAC_TOP_REG_MAC_RXDMA_REG_OFFSET
 
 /* -----------------------------------------------------------------------
 ** Macros

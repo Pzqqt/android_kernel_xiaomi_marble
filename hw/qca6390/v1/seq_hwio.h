@@ -16,6 +16,24 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+/*********************************************************************************
+ *
+ * DESCRIPTION
+ * - This is an extension of standard msmhwio.h to support relative addressing
+ *   scheme used in SCALe auto-generated sequences.
+ * - The objective of this new addressing scheme is enable the same C function
+ *   definition to be applicable to multiple baseances of the same block.
+ * - Such code reuse is not feasible with the standard HWIO macros that use a
+ *   absolute addressing scheme.
+ * - Compared to the standard HWIO macros, the new macros defined here take an
+ *   additional parameter 'baseance offset'.  So are the C functions generated
+ *   by SCALe Autoseq from .seq inputs.
+ * - As such, macros defined in this file must be used with 'seq_msmhwiobase.h',
+ *   'seq_msmhwioreg.h', and the C codes generated from SCALe Autoseq.
+ * - Macros defined in this file leverage the lower-level macros from the
+ *   standard 'msmhwio.h', and the two sets of macros are compatible.
+********************************************************************************/
+
 #ifndef __SEQ_H__
 #define __SEQ_H__
 
