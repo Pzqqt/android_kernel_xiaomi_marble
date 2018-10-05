@@ -241,27 +241,36 @@ static void __dsc_psoc_trans_stop(struct dsc_psoc *psoc)
 	if (!dsc_assert(psoc))
 		return;
 
+	__dsc_driver_lock(psoc);
+
 	dsc_assert(psoc->trans.active_desc);
 	psoc->trans.active_desc = NULL;
-
 	__dsc_psoc_trigger_trans(psoc);
+
+	__dsc_driver_unlock(psoc);
 }
 
 void dsc_psoc_trans_stop(struct dsc_psoc *psoc)
 {
 	dsc_enter();
-	__dsc_driver_lock(psoc);
 	__dsc_psoc_trans_stop(psoc);
-	__dsc_driver_unlock(psoc);
 	dsc_exit();
+}
+
+static void __dsc_psoc_trans_assert(struct dsc_psoc *psoc)
+{
+	if (!dsc_assert(psoc))
+		return;
+
+	__dsc_driver_lock(psoc);
+	dsc_assert(psoc->trans.active_desc);
+	__dsc_driver_unlock(psoc);
 }
 
 void dsc_psoc_trans_assert(struct dsc_psoc *psoc)
 {
 	dsc_enter();
-	__dsc_driver_lock(psoc);
-	dsc_assert(psoc->trans.active_desc);
-	__dsc_driver_unlock(psoc);
+	__dsc_psoc_trans_assert(psoc);
 	dsc_exit();
 }
 
@@ -279,16 +288,27 @@ bool __dsc_psoc_trans_trigger_checked(struct dsc_psoc *psoc)
 
 static QDF_STATUS __dsc_psoc_op_start(struct dsc_psoc *psoc, const char *func)
 {
+	QDF_STATUS status;
+
 	if (!dsc_assert(psoc))
 		return QDF_STATUS_E_INVAL;
 
 	if (!dsc_assert(func))
 		return QDF_STATUS_E_INVAL;
 
-	if (!__dsc_psoc_can_op(psoc))
-		return QDF_STATUS_E_AGAIN;
+	__dsc_driver_lock(psoc);
 
-	return __dsc_ops_insert(&psoc->ops, func);
+	if (!__dsc_psoc_can_op(psoc)) {
+		status = QDF_STATUS_E_AGAIN;
+		goto unlock;
+	}
+
+	status = __dsc_ops_insert(&psoc->ops, func);
+
+unlock:
+	__dsc_driver_unlock(psoc);
+
+	return status;
 }
 
 QDF_STATUS _dsc_psoc_op_start(struct dsc_psoc *psoc, const char *func)
@@ -296,9 +316,7 @@ QDF_STATUS _dsc_psoc_op_start(struct dsc_psoc *psoc, const char *func)
 	QDF_STATUS status;
 
 	dsc_enter_str(func);
-	__dsc_driver_lock(psoc);
 	status = __dsc_psoc_op_start(psoc, func);
-	__dsc_driver_unlock(psoc);
 	dsc_exit_status(status);
 
 	return status;
@@ -312,16 +330,16 @@ static void __dsc_psoc_op_stop(struct dsc_psoc *psoc, const char *func)
 	if (!dsc_assert(func))
 		return;
 
+	__dsc_driver_lock(psoc);
 	if (__dsc_ops_remove(&psoc->ops, func))
 		qdf_event_set(&psoc->ops.event);
+	__dsc_driver_unlock(psoc);
 }
 
 void _dsc_psoc_op_stop(struct dsc_psoc *psoc, const char *func)
 {
 	dsc_enter_str(func);
-	__dsc_driver_lock(psoc);
 	__dsc_psoc_op_stop(psoc, func);
-	__dsc_driver_unlock(psoc);
 	dsc_exit();
 }
 
