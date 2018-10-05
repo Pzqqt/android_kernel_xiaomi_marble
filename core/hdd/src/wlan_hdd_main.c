@@ -5121,72 +5121,50 @@ err_free_netdev:
 	return NULL;
 }
 
-QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
-			     bool rtnl_held)
+static void __hdd_close_adapter(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
+				bool rtnl_held)
+{
+	qdf_list_destroy(&adapter->blocked_scan_request_q);
+	qdf_mutex_destroy(&adapter->blocked_scan_request_q_lock);
+	policy_mgr_clear_concurrency_mode(hdd_ctx->psoc, adapter->device_mode);
+
+	hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
+
+	if (hdd_ctx->current_intf_count != 0)
+		hdd_ctx->current_intf_count--;
+}
+
+void hdd_close_adapter(struct hdd_context *hdd_ctx,
+		       struct hdd_adapter *adapter,
+		       bool rtnl_held)
 {
 	/*
-	 * Here we are stopping global bus_bw timer & work per adapter.
-	 *
-	 * The reason is to fix one race condition between
-	 * bus bandwidth work and cleaning up an adapter.
-	 * Under some conditions, it is possible for the bus bandwidth
-	 * work to access a particularly destroyed adapter, leading to
-	 * use-after-free.
+	 * Stop the global bus bandwidth timer while touching the adapter list
+	 * to avoid bad memory access by the timer handler.
 	 */
 	hdd_bus_bw_compute_timer_stop(hdd_ctx);
 
-	qdf_list_destroy(&adapter->blocked_scan_request_q);
-	qdf_mutex_destroy(&adapter->blocked_scan_request_q_lock);
-
-	/* cleanup adapter */
-	policy_mgr_clear_concurrency_mode(hdd_ctx->psoc,
-					  adapter->device_mode);
 	hdd_remove_adapter(hdd_ctx, adapter);
-	hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
+	__hdd_close_adapter(hdd_ctx, adapter, rtnl_held);
 
 	/* conditionally restart the bw timer */
 	hdd_bus_bw_compute_timer_try_start(hdd_ctx);
-
-	/* Adapter removed. Decrement vdev count */
-	if (hdd_ctx->current_intf_count != 0)
-		hdd_ctx->current_intf_count--;
-
-	/* Fw will take care incase of concurrency */
-	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * hdd_close_all_adapters - Close all open adapters
- * @hdd_ctx:	Hdd context
- * rtnl_held:	True if RTNL lock held
- *
- * Close all open adapters.
- *
- * Return: QDF status code
- */
-QDF_STATUS hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
+void hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
 	struct hdd_adapter *adapter;
-	QDF_STATUS status;
 
 	hdd_enter();
 
-	do {
-		status = hdd_remove_front_adapter(hdd_ctx, &adapter);
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			wlan_hdd_release_intf_addr(hdd_ctx,
-						   adapter->mac_addr.bytes);
-			hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
-
-			/* Adapter removed. Decrement vdev count */
-			if (hdd_ctx->current_intf_count != 0)
-				hdd_ctx->current_intf_count--;
-		}
-	} while (QDF_IS_STATUS_SUCCESS(status));
+	while (QDF_IS_STATUS_SUCCESS(hdd_remove_front_adapter(hdd_ctx,
+							      &adapter))) {
+		wlan_hdd_release_intf_addr(hdd_ctx, adapter->mac_addr.bytes);
+		__hdd_close_adapter(hdd_ctx, adapter, rtnl_held);
+	}
 
 	hdd_exit();
-
-	return QDF_STATUS_SUCCESS;
 }
 
 void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter)
