@@ -1275,7 +1275,7 @@ static void __hdd_tx_timeout(struct net_device *dev)
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "Data stall due to continuous TX timeouts");
 		adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
-		if (hdd_ctx->config->enable_data_stall_det)
+		if (cdp_cfg_get(soc, cfg_dp_enable_data_stall))
 			cdp_post_data_stall_event(soc,
 					  DATA_STALL_LOG_INDICATOR_HOST_DRIVER,
 					  DATA_STALL_LOG_HOST_STA_TX_TIMEOUT,
@@ -1530,13 +1530,18 @@ static bool hdd_is_rx_wake_lock_needed(struct sk_buff *skb)
  */
 static void hdd_resolve_rx_ol_mode(struct hdd_context *hdd_ctx)
 {
-	if (!(hdd_ctx->config->lro_enable ^
-	    hdd_ctx->config->gro_enable)) {
-		hdd_ctx->config->lro_enable && hdd_ctx->config->gro_enable ?
+	void *soc;
+
+	soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (!(cdp_cfg_get(soc, cfg_dp_lro_enable) ^
+	    cdp_cfg_get(soc, cfg_dp_gro_enable))) {
+		cdp_cfg_get(soc, cfg_dp_lro_enable) &&
+			cdp_cfg_get(soc, cfg_dp_gro_enable) ?
 		hdd_err("Can't enable both LRO and GRO, disabling Rx offload") :
 		hdd_debug("LRO and GRO both are disabled");
 		hdd_ctx->ol_enable = 0;
-	} else if (hdd_ctx->config->lro_enable) {
+	} else if (cdp_cfg_get(soc, cfg_dp_lro_enable)) {
 		hdd_debug("Rx offload LRO is enabled");
 		hdd_ctx->ol_enable = CFG_LRO_ENABLED;
 	} else {

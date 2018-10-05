@@ -3540,7 +3540,9 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
 	QDF_STATUS qdf_status;
+	void *soc;
 
+	soc = cds_get_context(QDF_MODULE_ID_SOC);
 	/* cfg80211 initialization and registration */
 	dev = alloc_netdev_mq(sizeof(*adapter), name,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)) || defined(WITH_BACKPORTS)
@@ -3586,7 +3588,8 @@ hdd_alloc_station_adapter(struct hdd_context *hdd_ctx, tSirMacAddr mac_addr,
 	qdf_mem_copy(adapter->mac_addr.bytes, mac_addr, sizeof(tSirMacAddr));
 	dev->watchdog_timeo = HDD_TX_TIMEOUT;
 
-	if (hdd_ctx->config->enable_ip_tcp_udp_checksum_offload)
+	if (cdp_cfg_get(soc,
+			cfg_dp_enable_ip_tcp_udp_checksum_offload))
 		dev->features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
 	dev->features |= NETIF_F_RXCSUM;
 
@@ -4013,8 +4016,9 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	 * during that time, then as part of SSR init, do not enable
 	 * the LRO again. Keep the LRO state same as before SSR.
 	 */
-	if (hdd_ctx->config->lro_enable &&
-	    !(qdf_atomic_read(&hdd_ctx->vendor_disable_lro_flag)))
+	if (cdp_cfg_get(cds_get_context(QDF_MODULE_ID_SOC),
+			cfg_dp_lro_enable) &&
+			!(qdf_atomic_read(&hdd_ctx->vendor_disable_lro_flag)))
 		adapter->dev->features |= NETIF_F_LRO;
 
 	/* rcpi info initialization */
@@ -8043,6 +8047,7 @@ static inline int wlan_hdd_set_wow_pulse(struct hdd_context *phddctx, bool enabl
 #endif
 
 #ifdef WLAN_FEATURE_FASTPATH
+
 /**
  * hdd_enable_fastpath() - Enable fastpath if enabled in config INI
  * @hdd_cfg: hdd config
@@ -8050,10 +8055,10 @@ static inline int wlan_hdd_set_wow_pulse(struct hdd_context *phddctx, bool enabl
  *
  * Return: none
  */
-void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
-				void *context)
+void hdd_enable_fastpath(struct hdd_context *hdd_ctx,
+			 void *context)
 {
-	if (hdd_cfg->fastpath_enable)
+	if (cfg_get(hdd_ctx->psoc, CFG_DP_ENABLE_FASTPATH))
 		hif_enable_fastpath(context);
 }
 #endif
@@ -9435,37 +9440,13 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 
 	/* IPA micro controller data path offload resource config item */
 	cds_cfg->uc_offload_enabled = ucfg_ipa_uc_is_enabled();
-	cds_cfg->uc_txbuf_size = hdd_ctx->config->IpaUcTxBufSize;
-	if (!is_power_of_2(hdd_ctx->config->IpaUcRxIndRingCount)) {
-		/* IpaUcRxIndRingCount should be power of 2 */
-		hdd_debug("Round down IpaUcRxIndRingCount %d to nearest power of 2",
-			hdd_ctx->config->IpaUcRxIndRingCount);
-		hdd_ctx->config->IpaUcRxIndRingCount =
-			rounddown_pow_of_two(
-				hdd_ctx->config->IpaUcRxIndRingCount);
-		if (!hdd_ctx->config->IpaUcRxIndRingCount) {
-			hdd_err("Failed to round down IpaUcRxIndRingCount");
-			goto exit;
-		}
-		hdd_debug("IpaUcRxIndRingCount rounded down to %d",
-			hdd_ctx->config->IpaUcRxIndRingCount);
-	}
-	cds_cfg->uc_rxind_ringcount =
-		hdd_ctx->config->IpaUcRxIndRingCount;
-	cds_cfg->uc_tx_partition_base =
-				hdd_ctx->config->IpaUcTxPartitionBase;
 	cds_cfg->max_scan = hdd_ctx->config->max_scan_count;
 
-	cds_cfg->ip_tcp_udp_checksum_offload =
-		hdd_ctx->config->enable_ip_tcp_udp_checksum_offload;
 	cds_cfg->enable_rxthread = hdd_ctx->enable_rxthread;
-	cds_cfg->ce_classify_enabled =
-		hdd_ctx->config->ce_classify_enabled;
 	cds_cfg->self_gen_frm_pwr = hdd_ctx->config->self_gen_frm_pwr;
 	ucfg_mlme_get_sap_max_peers(hdd_ctx->psoc, &value);
 	cds_cfg->max_station = value;
 	cds_cfg->sub_20_channel_width = WLAN_SUB_20_CH_WIDTH_NONE;
-	cds_cfg->flow_steering_enabled = hdd_ctx->config->flow_steering_enable;
 	cds_cfg->max_msdus_per_rxinorderind =
 		hdd_ctx->config->max_msdus_per_rxinorderind;
 	cds_cfg->self_recovery_enabled = self_recovery;
@@ -10418,7 +10399,8 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 
 	/* Send Enable/Disable data stall detection cmd to FW */
 	sme_cli_set_command(0, WMI_PDEV_PARAM_DATA_STALL_DETECT_ENABLE,
-	hdd_ctx->config->enable_data_stall_det, PDEV_CMD);
+	cdp_cfg_get(cds_get_context(QDF_MODULE_ID_SOC),
+		    cfg_dp_enable_data_stall), PDEV_CMD);
 
 	ucfg_mlme_get_go_cts2self_for_sta(hdd_ctx->psoc, &b_cts2self);
 	if (b_cts2self)
@@ -13567,24 +13549,25 @@ static int hdd_update_dp_config(struct hdd_context *hdd_ctx)
 {
 	struct cdp_config_params params;
 	QDF_STATUS status;
+	void *soc;
 
-	params.tso_enable = hdd_ctx->config->tso_enable;
-	params.lro_enable = hdd_ctx->config->lro_enable;
+	soc = cds_get_context(QDF_MODULE_ID_SOC);
+	params.tso_enable = cfg_get(hdd_ctx->psoc, CFG_DP_TSO);
+	params.lro_enable = cfg_get(hdd_ctx->psoc, CFG_DP_LRO);
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 	params.tx_flow_stop_queue_threshold =
 			hdd_ctx->config->TxFlowStopQueueThreshold;
 	params.tx_flow_start_queue_offset =
 			hdd_ctx->config->TxFlowStartQueueOffset;
 #endif
-	params.flow_steering_enable = hdd_ctx->config->flow_steering_enable;
+	params.flow_steering_enable =
+		cfg_get(hdd_ctx->psoc, CFG_DP_FLOW_STEERING_ENABLED);
 	params.napi_enable = hdd_ctx->napi_enable;
 	params.tcp_udp_checksumoffload =
-			hdd_ctx->config->enable_ip_tcp_udp_checksum_offload;
-	params.ipa_enable = ucfg_ipa_is_enabled();
+			cfg_get(hdd_ctx->psoc,
+				CFG_DP_TCP_UDP_CKSUM_OFFLOAD);
 
-	status = cdp_update_config_parameters(
-					cds_get_context(QDF_MODULE_ID_SOC),
-					&params);
+	status = cdp_update_config_parameters(soc, &params);
 	if (status) {
 		hdd_err("Failed to attach config parameters");
 		return status;

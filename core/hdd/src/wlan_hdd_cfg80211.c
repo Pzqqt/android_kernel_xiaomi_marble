@@ -126,6 +126,7 @@
 #include "wlan_crypto_global_api.h"
 #include "wlan_nl_to_crypto_params.h"
 #include "wlan_crypto_global_def.h"
+#include "cdp_txrx_cfg.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -10645,7 +10646,7 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 	pkt_type_bitmap = adapter->pkt_type_bitmap;
 
 	/* send NUD failure event only when ARP tracking is enabled. */
-	if (hdd_ctx->config->enable_data_stall_det &&
+	if (cdp_cfg_get(soc, cfg_dp_enable_data_stall) &&
 	    (pkt_type_bitmap & CONNECTIVITY_CHECK_SET_ARP))
 		cdp_post_data_stall_event(soc,
 				      DATA_STALL_LOG_INDICATOR_FRAMEWORK,

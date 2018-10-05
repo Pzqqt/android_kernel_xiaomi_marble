@@ -752,6 +752,27 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"Control to decide rx mode for packet procesing")
 
+#define CFG_DP_CE_SERVICE_MAX_RX_IND_FLUSH \
+		CFG_INI_UINT("ce_service_max_rx_ind_flush", \
+		1, 32, 32, \
+		CFG_VALUE_OR_DEFAULT, "Ctrl to set ce service max rx ind flsh")
+
+#define CFG_DP_CE_SERVICE_MAX_YIELD_TIME \
+		CFG_INI_UINT("ce_service_max_yield_time", \
+		500, 10000, 10000, \
+		CFG_VALUE_OR_DEFAULT, "Ctrl to set ce service max yield time")
+
+#ifdef WLAN_FEATURE_FASTPATH
+#define CFG_DP_ENABLE_FASTPATH \
+		CFG_INI_BOOL("gEnableFastPath", \
+		false, "Ctrl to enable fastpath feature")
+
+#define CFG_DP_ENABLE_FASTPATH_ALL \
+	CFG(CFG_DP_ENABLE_FASTPATH)
+#else
+#define CFG_DP_ENABLE_FASTPATH_ALL
+#endif
+
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 #define CFG_HDD_DP_LEGACY_TX_FLOW \
 	CFG(CFG_DP_LL_TX_FLOW_LWM) \
@@ -789,7 +810,10 @@
 	CFG(CFG_DP_RX_THREAD_CPU_MASK) \
 	CFG(CFG_DP_RPS_RX_QUEUE_CPU_MAP_LIST) \
 	CFG(CFG_DP_TX_ORPHAN_ENABLE) \
-	CFG(CFG_DP_RX_MODE)
+	CFG(CFG_DP_RX_MODE) \
+	CFG(CFG_DP_CE_SERVICE_MAX_RX_IND_FLUSH) \
+	CFG(CFG_DP_CE_SERVICE_MAX_YIELD_TIME) \
+	CFG_DP_ENABLE_FASTPATH_ALL
 #define CFG_HDD_DP_ALL \
 	CFG_HDD_DP \
 	CFG_HDD_DP_MSM_PLATFORM \

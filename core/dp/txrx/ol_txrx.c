@@ -79,6 +79,8 @@
 #include <htt_internal.h>
 #include <ol_txrx_ipa.h>
 #include "wlan_roam_debug.h"
+#include "cfg_ucfg_api.h"
+
 
 #define DPT_DEBUGFS_PERMS	(QDF_FILE_USR_READ |	\
 				QDF_FILE_USR_WRITE |	\
@@ -5311,6 +5313,73 @@ ol_txrx_wrapper_set_flow_control_parameters(struct cdp_cfg *cfg_pdev,
 		(struct txrx_pdev_cfg_param_t *)cfg_param);
 }
 
+/**
+ * ol_txrx_get_cfg() - get ini/cgf values in legacy dp
+ * @soc: soc context
+ * @cfg_param: cfg parameters
+ *
+ * Return: none
+ */
+static uint32_t ol_txrx_get_cfg(void *soc, enum cdp_dp_cfg cfg)
+{
+	struct txrx_pdev_cfg_t *cfg_ctx;
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	uint32_t value = 0;
+
+	cfg_ctx = (struct txrx_pdev_cfg_t *)(pdev->ctrl_pdev);
+	switch (cfg) {
+	case cfg_dp_enable_data_stall:
+		value = cfg_ctx->enable_data_stall_detection;
+		break;
+	case cfg_dp_enable_ip_tcp_udp_checksum_offload:
+		value = cfg_ctx->ip_tcp_udp_checksum_offload;
+		break;
+	case cfg_dp_tso_enable:
+		value = cfg_ctx->tso_enable;
+		break;
+	case cfg_dp_lro_enable:
+		value = cfg_ctx->lro_enable;
+		break;
+	case cfg_dp_gro_enable:
+		value = cfg_ctx->gro_enable;
+		break;
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+	case cfg_dp_tx_flow_start_queue_offset:
+		value = cfg_ctx->tx_flow_start_queue_offset;
+		break;
+	case cfg_dp_tx_flow_stop_queue_threshold:
+		value = cfg_ctx->tx_flow_stop_queue_th;
+		break;
+#endif
+	case cfg_dp_ipa_uc_tx_buf_size:
+		value = cfg_ctx->uc_tx_buffer_size;
+		break;
+	case cfg_dp_ipa_uc_tx_partition_base:
+		value = cfg_ctx->uc_tx_partition_base;
+		break;
+	case cfg_dp_ipa_uc_rx_ind_ring_count:
+		value = cfg_ctx->uc_rx_indication_ring_count;
+		break;
+	case cfg_dp_enable_flow_steering:
+		value = cfg_ctx->enable_flow_steering;
+		break;
+	case cfg_dp_reorder_offload_supported:
+		value = cfg_ctx->is_full_reorder_offload;
+		break;
+	case cfg_dp_ce_classify_enable:
+		value = cfg_ctx->ce_classify_enabled;
+		break;
+	case cfg_dp_disable_intra_bss_fwd:
+		value = cfg_ctx->disable_intra_bss_fwd;
+		break;
+	default:
+		value =  0;
+		break;
+	}
+
+	return value;
+}
+
 #ifdef WDI_EVENT_ENABLE
 void *ol_get_pldev(struct cdp_pdev *txrx_pdev)
 {
@@ -5348,6 +5417,7 @@ static struct cdp_cmn_ops ol_ops_cmn = {
 	.flush_cache_rx_queue = ol_txrx_flush_cache_rx_queue,
 	.txrx_fw_stats_get = ol_txrx_fw_stats_get,
 	.display_stats = ol_txrx_display_stats,
+	.txrx_get_cfg = ol_txrx_get_cfg,
 	/* TODO: Add other functions */
 };
 
@@ -5603,5 +5673,3 @@ struct cdp_soc_t *ol_txrx_soc_attach(void *scn_handle,
 	soc->ops = &ol_txrx_ops;
 	return soc;
 }
-
-

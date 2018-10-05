@@ -3810,24 +3810,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_SSR_MAX                  (1)
 #define CFG_ENABLE_SSR_DEFAULT              (1)
 
-/**
- * <ini>
- * gEnableDataStallDetection - Enable/Disable Data stall detection
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable data stall detection
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_DATA_STALL_DETECTION           "gEnableDataStallDetection"
-#define CFG_ENABLE_DATA_STALL_DETECTION_MIN       (0)
-#define CFG_ENABLE_DATA_STALL_DETECTION_MAX       (1)
-#define CFG_ENABLE_DATA_STALL_DETECTION_DEFAULT   (1)
-
 /*
  * <ini>
  * gEnableOverLapCh - Enables Overlap Channel. If set, allow overlapping
@@ -4417,55 +4399,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_SNR_MONITORING_MAX               (1)
 #define CFG_ENABLE_SNR_MONITORING_DEFAULT           (0)
 
-/*
- * <ini>
- * gEnableIpTcpUdpChecksumOffload - It enables IP, TCP and UDP checksum
- * offload in hardware
- * @Min: 0
- * @Max: 1
- * @Default: DEF
- *
- * This ini is used to enable IP, TCP and UDP checksum offload in hardware
- * and also advertise same to network stack
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_IP_TCP_UDP_CHKSUM_OFFLOAD            "gEnableIpTcpUdpChecksumOffload"
-#define CFG_ENABLE_IP_TCP_UDP_CHKSUM_OFFLOAD_DISABLE    (0)
-#define CFG_ENABLE_IP_TCP_UDP_CHKSUM_OFFLOAD_ENABLE     (1)
-#define CFG_ENABLE_IP_TCP_UDP_CHKSUM_OFFLOAD_DEFAULT    (CFG_ENABLE_IP_TCP_UDP_CHKSUM_OFFLOAD_ENABLE)
-
-#ifdef WLAN_FEATURE_FASTPATH
-
-/*
- * <ini>
- * gEnableFastPath - Control to enable fastpath feature
- *
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable fastpath feature
- *
- * Supported Feature: Wlan Fastpath Feature
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_ENABLE_FASTPATH                      "gEnableFastPath"
-#define CFG_ENABLE_FASTPATH_MIN                  (0)
-#define CFG_ENABLE_FASTPATH_MAX                  (1)
-#define CFG_ENABLE_FASTPATH_DEFAULT              (CFG_ENABLE_FASTPATH_MIN)
-#endif /* WLAN_FEATURE_FASTPATH */
-
 /* SAR Thermal limit values for 2g and 5g */
 
 #define CFG_SET_TXPOWER_LIMIT2G_NAME               "TxPower2g"
@@ -4729,22 +4662,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_REORDER_OFFLOAD_SUPPORT_MAX     (1)
 #define CFG_REORDER_OFFLOAD_SUPPORT_DEFAULT (1)
 
-#define CFG_IPA_UC_TX_BUF_SIZE_NAME                "IpaUcTxBufSize"
-#define CFG_IPA_UC_TX_BUF_SIZE_MIN                (0)
-#define CFG_IPA_UC_TX_BUF_SIZE_MAX                (4096)
-#define CFG_IPA_UC_TX_BUF_SIZE_DEFAULT            (2048)
-
-/* IpaUcRxIndRingCount should be power of 2 */
-#define CFG_IPA_UC_RX_IND_RING_COUNT_NAME          "IpaUcRxIndRingCount"
-#define CFG_IPA_UC_RX_IND_RING_COUNT_MIN           (0)
-#define CFG_IPA_UC_RX_IND_RING_COUNT_MAX           (2048)
-#define CFG_IPA_UC_RX_IND_RING_COUNT_DEFAULT       (1024)
-
-#define CFG_IPA_UC_TX_PARTITION_BASE_NAME          "IpaUcTxPartitionBase"
-#define CFG_IPA_UC_TX_PARTITION_BASE_MIN           (0)
-#define CFG_IPA_UC_TX_PARTITION_BASE_MAX           (9000)
-#define CFG_IPA_UC_TX_PARTITION_BASE_DEFAULT       (3000)
-
 #define CFG_ENABLE_SAP_SUSPEND                     "gEnableSapSuspend"
 #define CFG_ENABLE_SAP_SUSPEND_MIN                 (0)
 #define CFG_ENABLE_SAP_SUSPEND_MAX                 (1)
@@ -4889,79 +4806,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * TSOEnable - Control to enable tso feature
- *
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable TSO feature
- *
- * Supported Feature: TSO Feature
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_TSO_ENABLED_NAME           "TSOEnable"
-#define CFG_TSO_ENABLED_MIN            (0)
-#define CFG_TSO_ENABLED_MAX            (1)
-#define CFG_TSO_ENABLED_DEFAULT        (0)
-
-/*
- * <ini>
- * LROEnable - Control to enable lro feature
- *
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable LRO feature
- *
- * Supported Feature: LRO
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_LRO_ENABLED_NAME           "LROEnable"
-#define CFG_LRO_ENABLED_MIN            (0)
-#define CFG_LRO_ENABLED_MAX            (1)
-#define CFG_LRO_ENABLED_DEFAULT        (0)
-
-/*
- * <ini>
- * GROEnable - Control to enable gro feature
- *
- * @Disable: 0
- * @Enable: 1
- * @Default: 0
- *
- * This ini is used to enable GRO feature
- *
- * Supported Feature: GRO
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_GRO_ENABLED_NAME           "GROEnable"
-#define CFG_GRO_ENABLED_MIN            (0)
-#define CFG_GRO_ENABLED_MAX            (1)
-#define CFG_GRO_ENABLED_DEFAULT        (0)
-
-/*
- * Enable Rx traffic flow steering to enable Rx interrupts on multiple CEs based
- * on the flows. Different CEs<==>different IRQs<==>probably different CPUs.
- * Parallel Rx paths.
- * 1 - enable  0 - disable
- */
-#define CFG_FLOW_STEERING_ENABLED_NAME        "gEnableFlowSteering"
-#define CFG_FLOW_STEERING_ENABLED_MIN         (0)
-#define CFG_FLOW_STEERING_ENABLED_MAX         (1)
-#define CFG_FLOW_STEERING_ENABLED_DEFAULT     (0)
-
-/*
  * Max number of MSDUs per HTT RX IN ORDER INDICATION msg.
  * Note that this has a direct impact on the size of source CE rings.
  * It is possible to go below 8, but would require testing; so we are
@@ -5036,11 +4880,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_DEF (0)
 #define CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_MIN (0)
 #define CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_MAX (1)
-
-#define CFG_CE_CLASSIFY_ENABLE_NAME	"gCEClassifyEnable"
-#define CFG_CE_CLASSIFY_ENABLE_MIN	(0)
-#define CFG_CE_CLASSIFY_ENABLE_MAX	(1)
-#define CFG_CE_CLASSIFY_ENABLE_DEFAULT	(1)
 
 /*
  *
@@ -5409,48 +5248,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_NUM_DP_RX_THREADS_MIN      (1)
 #define CFG_NUM_DP_RX_THREADS_MAX      (4)
 #define CFG_NUM_DP_RX_THREADS_DEFAULT  (1)
-
-/*
- * <ini>
- * ce_service_max_yield_time - Control to set ce service max yield time (in us)
- *
- * @Min: 500
- * @Max: 10000
- * @Default: 10000
- *
- * This ini is used to set ce service max yield time (in us)
- *
- * Supported Feature: NAPI
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_CE_SERVICE_MAX_YIELD_TIME_NAME     "ce_service_max_yield_time"
-#define CFG_CE_SERVICE_MAX_YIELD_TIME_MIN      (500)
-#define CFG_CE_SERVICE_MAX_YIELD_TIME_MAX      (10000)
-#define CFG_CE_SERVICE_MAX_YIELD_TIME_DEFAULT  (10000)
-
-/*
- * <ini>
- * ce_service_max_rx_ind_flush - Control to set ce service max rx ind flush
- *
- * @Min: 1
- * @Max: 32
- * @Default: 1
- *
- * This ini is used to set ce service max rx ind flush
- *
- * Supported Feature: NAPI
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_CE_SERVICE_MAX_RX_IND_FLUSH_NAME     "ce_service_max_rx_ind_flush"
-#define CFG_CE_SERVICE_MAX_RX_IND_FLUSH_MIN      (1)
-#define CFG_CE_SERVICE_MAX_RX_IND_FLUSH_MAX      (32)
-#define CFG_CE_SERVICE_MAX_RX_IND_FLUSH_DEFAULT  (32)
 
 /*
  * Support to start sap in indoor channel
@@ -7456,7 +7253,6 @@ struct hdd_config {
 	uint8_t scanAgingTimeout;
 	uint8_t disableLDPCWithTxbfAP;
 	bool enableSSR;
-	bool enable_data_stall_det;
 	bool bFastRoamInConIniFeatureEnabled;
 	bool fEnableSNRMonitoring;
 	/*PNO related parameters */
@@ -7477,8 +7273,6 @@ struct hdd_config {
 	uint32_t ibssTxSpEndInactivityTime;
 	uint32_t ibssPsWarmupTime;
 	uint32_t ibssPs1RxChainInAtimEnable;
-
-	bool enable_ip_tcp_udp_checksum_offload;
 	uint32_t IpaConfig;
 	bool IpaClkScalingEnable;
 	uint8_t disableDFSChSwitch;
@@ -7506,10 +7300,6 @@ struct hdd_config {
 	int32_t dfsRadarPriMultiplier;
 	uint8_t reorderOffloadSupport;
 
-	uint32_t IpaUcTxBufSize;
-	uint32_t IpaUcRxIndRingCount;
-	uint32_t IpaUcTxPartitionBase;
-
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
 	uint8_t SapSccChanAvoidance;
 #endif /* FEATURE_WLAN_FORCE_SAP_SCC */
@@ -7528,22 +7318,12 @@ struct hdd_config {
 	uint8_t sap_11ac_override;
 	uint8_t go_11ac_override;
 	uint8_t prefer_non_dfs_on_radar;
-	bool tso_enable;
-	bool lro_enable;
-	bool gro_enable;
-	bool flow_steering_enable;
 	uint8_t max_msdus_per_rxinorderind;
 	/* parameter for defer timer for enabling TDLS on p2p listen */
 	uint32_t fine_time_meas_cap;
 	uint8_t max_scan_count;
-#ifdef WLAN_FEATURE_FASTPATH
-	bool fastpath_enable;
-#endif
 	bool etsi13_srd_chan_in_master_mode;
 	uint8_t num_dp_rx_threads;
-	uint32_t ce_service_max_yield_time;
-	uint8_t ce_service_max_rx_ind_flush;
-	bool ce_classify_enabled;
 	uint32_t dual_mac_feature_disable;
 	uint8_t dbs_scan_selection[CFG_DBS_SCAN_PARAM_LENGTH];
 	uint32_t sta_sap_scc_on_dfs_chan;

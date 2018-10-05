@@ -97,6 +97,18 @@ struct txrx_pdev_cfg_t {
 	 */
 	u8 credit_update_enabled;
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
+	bool gro_enable;
+	bool tso_enable;
+	bool lro_enable;
+	bool enable_data_stall_detection;
+	bool enable_flow_steering;
+	bool disable_intra_bss_fwd;
+	/* IPA Micro controller data path offload TX buffer size */
+	uint32_t uc_tx_buffer_size;
+	/* IPA Micro controller data path offload RX indication ring count */
+	uint32_t uc_rx_indication_ring_count;
+	/* IPA Micro controller data path offload TX partition base */
+	uint32_t uc_tx_partition_base;
 };
 
 /**

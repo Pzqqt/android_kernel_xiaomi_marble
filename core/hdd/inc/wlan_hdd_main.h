@@ -2722,8 +2722,10 @@ int hdd_process_pktlog_command(struct hdd_context *hdd_ctx,
 static inline void hdd_set_tso_flags(struct hdd_context *hdd_ctx,
 	 struct net_device *wlan_dev)
 {
-	if (hdd_ctx->config->tso_enable &&
-	    hdd_ctx->config->enable_ip_tcp_udp_checksum_offload) {
+	if (cdp_cfg_get(cds_get_context(QDF_MODULE_ID_SOC),
+			cfg_dp_tso_enable) &&
+			cdp_cfg_get(cds_get_context(QDF_MODULE_ID_SOC),
+				    cfg_dp_enable_ip_tcp_udp_checksum_offload)){
 	    /*
 	     * We want to enable TSO only if IP/UDP/TCP TX checksum flag is
 	     * enabled.
@@ -2850,10 +2852,10 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			tSirResultCodes timeout_reason);
 
 #ifdef WLAN_FEATURE_FASTPATH
-void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
+void hdd_enable_fastpath(struct hdd_context *hdd_ctx,
 			 void *context);
 #else
-static inline void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
+static inline void hdd_enable_fastpath(struct hdd_context *hdd_ctx,
 				       void *context)
 {
 }

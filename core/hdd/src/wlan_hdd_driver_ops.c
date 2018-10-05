@@ -40,6 +40,7 @@
 #include "wlan_hdd_driver_ops.h"
 #include "wlan_ipa_ucfg_api.h"
 #include "wlan_hdd_debugfs.h"
+#include "cfg_ucfg_api.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -262,10 +263,12 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 	}
 
 	hif_set_ce_service_max_yield_time(hif_ctx,
-				hdd_ctx->config->ce_service_max_yield_time);
+				cfg_get(hdd_ctx->psoc,
+					CFG_DP_CE_SERVICE_MAX_YIELD_TIME));
 	ucfg_pmo_psoc_set_hif_handle(hdd_ctx->psoc, hif_ctx);
 	hif_set_ce_service_max_rx_ind_flush(hif_ctx,
-				hdd_ctx->config->ce_service_max_rx_ind_flush);
+				cfg_get(hdd_ctx->psoc,
+					CFG_DP_CE_SERVICE_MAX_RX_IND_FLUSH));
 	return 0;
 
 err_hif_close:

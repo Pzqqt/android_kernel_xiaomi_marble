@@ -3219,7 +3219,8 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 	dev->mtu = HDD_DEFAULT_MTU;
 	dev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
 
-	if (hdd_ctx->config->enable_ip_tcp_udp_checksum_offload)
+	if (cdp_cfg_get(cds_get_context(QDF_MODULE_ID_SOC),
+			cfg_dp_enable_ip_tcp_udp_checksum_offload))
 		dev->features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
 	dev->features |= NETIF_F_RXCSUM;
 

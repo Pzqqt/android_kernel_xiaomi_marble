@@ -69,6 +69,7 @@
 #include <target_if_dp.h>
 #endif
 #include "wlan_mlme_ucfg_api.h"
+#include "cfg_ucfg_api.h"
 
 /* Preprocessor Definitions and Constants */
 
@@ -295,16 +296,17 @@ cds_cfg_update_ac_specs_params(struct txrx_pdev_cfg_param_t *olcfg,
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 static inline void
-cds_cdp_set_flow_control_params(struct cds_config_info *cds_cfg,
+cds_cdp_set_flow_control_params(struct wlan_objmgr_psoc *psoc,
 				struct txrx_pdev_cfg_param_t *cdp_cfg)
 {
-	cdp_cfg->tx_flow_stop_queue_th = cds_cfg->tx_flow_stop_queue_th;
+	cdp_cfg->tx_flow_stop_queue_th =
+		cfg_get(psoc, CFG_DP_TX_FLOW_STOP_QUEUE_TH);
 	cdp_cfg->tx_flow_start_queue_offset =
-				 cds_cfg->tx_flow_start_queue_offset;
+		cfg_get(psoc, CFG_DP_TX_FLOW_START_QUEUE_OFFSET);
 }
 #else
 static inline void
-cds_cdp_set_flow_control_params(struct cds_config_info *cds_cfg,
+cds_cdp_set_flow_control_params(struct wlan_objmgr_psoc *psoc,
 				struct txrx_pdev_cfg_param_t *cdp_cfg)
 {}
 #endif
@@ -315,23 +317,41 @@ cds_cdp_set_flow_control_params(struct cds_config_info *cds_cfg,
  *
  * Return: none
  */
-static void cds_cdp_cfg_attach(struct cds_config_info *cds_cfg)
+static void cds_cdp_cfg_attach(struct wlan_objmgr_psoc *psoc)
 {
 	struct txrx_pdev_cfg_param_t cdp_cfg = {0};
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct hdd_context *hdd_ctx = gp_cds_context->hdd_context;
 
-	cdp_cfg.is_full_reorder_offload = cds_cfg->reorder_offload;
-	cdp_cfg.is_uc_offload_enabled = cds_cfg->uc_offload_enabled;
-	cdp_cfg.uc_tx_buffer_count = ucfg_ipa_get_tx_buf_count();
-	cdp_cfg.uc_tx_buffer_size = cds_cfg->uc_txbuf_size;
-	cdp_cfg.uc_rx_indication_ring_count = cds_cfg->uc_rxind_ringcount;
-	cdp_cfg.uc_tx_partition_base = cds_cfg->uc_tx_partition_base;
-	cdp_cfg.enable_rxthread = cds_cfg->enable_rxthread;
+	cdp_cfg.is_full_reorder_offload =
+		cfg_get(psoc, CFG_DP_REORDER_OFFLOAD_SUPPORT);
+	cdp_cfg.is_uc_offload_enabled = ucfg_ipa_uc_is_enabled();
+	cdp_cfg.uc_tx_buffer_count = cfg_get(psoc, CFG_DP_IPA_UC_TX_BUF_COUNT);
+	cdp_cfg.uc_tx_buffer_size =
+			cfg_get(psoc, CFG_DP_IPA_UC_TX_BUF_SIZE);
+	cdp_cfg.uc_rx_indication_ring_count =
+		cfg_get(psoc, CFG_DP_IPA_UC_RX_IND_RING_COUNT);
+	cdp_cfg.uc_tx_partition_base =
+		cfg_get(psoc, CFG_DP_IPA_UC_TX_PARTITION_BASE);
+	cdp_cfg.enable_rxthread = hdd_ctx->enable_rxthread;
 	cdp_cfg.ip_tcp_udp_checksum_offload =
-			cds_cfg->ip_tcp_udp_checksum_offload;
-	cdp_cfg.ce_classify_enabled = cds_cfg->ce_classify_enabled;
+		cfg_get(psoc, CFG_DP_TCP_UDP_CKSUM_OFFLOAD);
+	cdp_cfg.ce_classify_enabled =
+		cfg_get(psoc, CFG_DP_CE_CLASSIFY_ENABLE);
+	cdp_cfg.tso_enable = cfg_get(psoc, CFG_DP_TSO);
+	cdp_cfg.lro_enable = cfg_get(psoc, CFG_DP_LRO);
+	cdp_cfg.enable_data_stall_detection =
+		cfg_get(psoc, CFG_DP_ENABLE_DATA_STALL_DETECTION);
+	cdp_cfg.tso_enable = cfg_get(psoc, CFG_DP_TSO);
+	cdp_cfg.lro_enable = cfg_get(psoc, CFG_DP_LRO);
+	cdp_cfg.gro_enable = cfg_get(psoc, CFG_DP_GRO);
+	cdp_cfg.enable_flow_steering =
+		cfg_get(psoc, CFG_DP_FLOW_STEERING_ENABLED);
+	cdp_cfg.disable_intra_bss_fwd =
+		cfg_get(psoc, CFG_DP_AP_STA_SECURITY_SEPERATION);
+	cdp_cfg.ce_classify_enabled =
+		cfg_get(psoc, CFG_DP_CE_CLASSIFY_ENABLE);
 
-	cds_cfg_update_ac_specs_params(&cdp_cfg, cds_cfg);
 	gp_cds_context->cfg_ctx = cdp_cfg_attach(soc, gp_cds_context->qdf_ctx,
 					(void *)(&cdp_cfg));
 	if (!gp_cds_context->cfg_ctx) {
@@ -341,15 +361,16 @@ static void cds_cdp_cfg_attach(struct cds_config_info *cds_cfg)
 
 	/* Configure Receive flow steering */
 	cdp_cfg_set_flow_steering(soc, gp_cds_context->cfg_ctx,
-				 cds_cfg->flow_steering_enabled);
+				  cfg_get(psoc, CFG_DP_FLOW_STEERING_ENABLED));
 
-	cds_cdp_set_flow_control_params(cds_cfg, &cdp_cfg);
+	cds_cdp_set_flow_control_params(psoc, &cdp_cfg);
 	cdp_cfg_set_flow_control_parameters(soc, gp_cds_context->cfg_ctx,
 					    (void *)&cdp_cfg);
 
 	/* adjust the cfg_ctx default value based on setting */
 	cdp_cfg_set_rx_fwd_disabled(soc, gp_cds_context->cfg_ctx,
-		(uint8_t) cds_cfg->ap_disable_intrabss_fwd);
+				    cfg_get(psoc,
+					    CFG_DP_AP_STA_SECURITY_SEPERATION));
 
 	/*
 	 * adjust the packet log enable default value
@@ -521,7 +542,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		goto err_sched_close;
 	}
 
-	hdd_enable_fastpath(hdd_ctx->config, scn);
+	hdd_enable_fastpath(hdd_ctx, scn);
 
 	/* Initialize BMI and Download firmware */
 	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
@@ -622,8 +643,9 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	ucfg_ocb_update_dp_handle(psoc, gp_cds_context->dp_soc);
 
 	cds_set_ac_specs_params(cds_cfg);
-
-	cds_cdp_cfg_attach(cds_cfg);
+	cds_cfg_update_ac_specs_params((struct txrx_pdev_cfg_param_t *)
+				       gp_cds_context->cfg_ctx, cds_cfg);
+	cds_cdp_cfg_attach(psoc);
 
 	bmi_target_ready(scn, gp_cds_context->cfg_ctx);
 
