@@ -3598,6 +3598,8 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 
 	pdev->num_tx_allowed = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
 
+	dp_init_tso_stats(pdev);
+
 	if (dp_htt_ppdu_stats_attach(pdev) != QDF_STATUS_SUCCESS)
 		goto fail1;
 
@@ -8328,7 +8330,7 @@ static QDF_STATUS dp_txrx_dump_stats(void *psoc, uint16_t value,
 		break;
 
 	case CDP_TXRX_TSO_STATS:
-		/* TODO: NOT IMPLEMENTED */
+		dp_print_tso_stats(soc, level);
 		break;
 
 	case CDP_DUMP_TX_FLOW_POOL_INFO:
@@ -8351,6 +8353,38 @@ static QDF_STATUS dp_txrx_dump_stats(void *psoc, uint16_t value,
 
 	return status;
 
+}
+
+/**
+ * dp_txrx_clear_dump_stats() - clear dumpStats
+ * @soc- soc handle
+ * @value - stats option
+ *
+ * Return: 0 - Success, non-zero - failure
+ */
+static
+QDF_STATUS dp_txrx_clear_dump_stats(struct cdp_soc *psoc, uint8_t value)
+{
+	struct dp_soc *soc =
+		(struct dp_soc *)psoc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!soc) {
+		dp_err("%s: soc is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	switch (value) {
+	case CDP_TXRX_TSO_STATS:
+		dp_txrx_clear_tso_stats(soc);
+		break;
+
+	default:
+		status = QDF_STATUS_E_INVAL;
+		break;
+	}
+
+	return status;
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
@@ -9531,7 +9565,7 @@ static struct cdp_ocb_ops dp_ops_ocb = {
 };
 
 static struct cdp_mob_stats_ops dp_ops_mob_stats = {
-	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
+	.clear_stats = dp_txrx_clear_dump_stats,
 };
 
 /*

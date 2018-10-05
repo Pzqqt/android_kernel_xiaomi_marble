@@ -315,7 +315,6 @@ while (0)
 		} \
 	}  while (0)
 
-
 #else
 #define DP_HIST_INIT()
 #define DP_HIST_PACKET_COUNT_INC(_pdev_id)
@@ -323,7 +322,134 @@ while (0)
 #define DP_RX_HISTOGRAM_UPDATE(_pdev, _p_cntrs)
 #define DP_RX_HIST_STATS_PER_PDEV()
 #define DP_TX_HIST_STATS_PER_PDEV()
-#endif
+#endif /* DISABLE_DP_STATS */
+
+#ifdef FEATURE_TSO_STATS
+/**
+ * dp_init_tso_stats() - Clear tso stats
+ * @pdev: pdev handle
+ *
+ * Return: None
+ */
+static inline
+void dp_init_tso_stats(struct dp_pdev *pdev)
+{
+	if (pdev) {
+		qdf_mem_zero(&((pdev)->stats.tso_stats),
+			     sizeof((pdev)->stats.tso_stats));
+		qdf_atomic_init(&pdev->tso_idx);
+	}
+}
+
+/**
+ * dp_stats_tso_segment_histogram_update() - TSO Segment Histogram
+ * @pdev: pdev handle
+ * @_p_cntrs: number of tso segments for a tso packet
+ *
+ * Return: None
+ */
+void dp_stats_tso_segment_histogram_update(struct dp_pdev *pdev,
+					   uint8_t _p_cntrs);
+
+/**
+ * dp_tso_segment_update() - Collect tso segment information
+ * @pdev: pdev handle
+ * @stats_idx: tso packet number
+ * @idx: tso segment number
+ * @seg: tso segment
+ *
+ * Return: None
+ */
+void dp_tso_segment_update(struct dp_pdev *pdev,
+			   uint32_t stats_idx,
+			   uint8_t idx,
+			   struct qdf_tso_seg_t seg);
+
+/**
+ * dp_tso_packet_update() - TSO Packet information
+ * @pdev: pdev handle
+ * @stats_idx: tso packet number
+ * @msdu: nbuf handle
+ * @num_segs: tso segments
+ *
+ * Return: None
+ */
+void dp_tso_packet_update(struct dp_pdev *pdev, uint32_t stats_idx,
+			  qdf_nbuf_t msdu, uint16_t num_segs);
+
+/**
+ * dp_tso_segment_stats_update() - TSO Segment stats
+ * @pdev: pdev handle
+ * @stats_seg: tso segment list
+ * @stats_idx: tso packet number
+ *
+ * Return: None
+ */
+void dp_tso_segment_stats_update(struct dp_pdev *pdev,
+				 struct qdf_tso_seg_elem_t *stats_seg,
+				 uint32_t stats_idx);
+
+/**
+ * dp_print_tso_stats() - dump tso statistics
+ * @soc:soc handle
+ * @level: verbosity level
+ *
+ * Return: None
+ */
+void dp_print_tso_stats(struct dp_soc *soc,
+			enum qdf_stats_verbosity_level level);
+
+/**
+ * dp_txrx_clear_tso_stats() - clear tso stats
+ * @soc: soc handle
+ *
+ * Return: None
+ */
+void dp_txrx_clear_tso_stats(struct dp_soc *soc);
+#else
+static inline
+void dp_init_tso_stats(struct dp_pdev *pdev)
+{
+}
+
+static inline
+void dp_stats_tso_segment_histogram_update(struct dp_pdev *pdev,
+					   uint8_t _p_cntrs)
+{
+}
+
+static inline
+void dp_tso_segment_update(struct dp_pdev *pdev,
+			   uint32_t stats_idx,
+			   uint32_t idx,
+			   struct qdf_tso_seg_t seg)
+{
+}
+
+static inline
+void dp_tso_packet_update(struct dp_pdev *pdev, uint32_t stats_idx,
+			  qdf_nbuf_t msdu, uint16_t num_segs)
+{
+}
+
+static inline
+void dp_tso_segment_stats_update(struct dp_pdev *pdev,
+				 struct qdf_tso_seg_elem_t *stats_seg,
+				 uint32_t stats_idx)
+{
+}
+
+static inline
+void dp_print_tso_stats(struct dp_soc *soc,
+			enum qdf_stats_verbosity_level level)
+{
+}
+
+static inline
+void dp_txrx_clear_tso_stats(struct dp_soc *soc)
+{
+}
+#endif /* FEATURE_TSO_STATS */
 
 #define DP_HTT_T2H_HP_PIPE 5
 static inline void dp_update_pdev_stats(struct dp_pdev *tgtobj,
@@ -478,9 +604,6 @@ static inline void dp_update_pdev_ingress_stats(struct dp_pdev *tgtobj,
 	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.inspect_pkts);
 	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.raw.raw_pkt);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.raw.dma_map_error);
-	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.tso.tso_pkt);
-	DP_STATS_AGGR(tgtobj, srcobj, tx_i.tso.dropped_host.num);
-	DP_STATS_AGGR(tgtobj, srcobj, tx_i.tso.dropped_target);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.sg.dropped_host.num);
 	DP_STATS_AGGR(tgtobj, srcobj, tx_i.sg.dropped_target);
 	DP_STATS_AGGR_PKT(tgtobj, srcobj, tx_i.sg.sg_pkt);
@@ -511,8 +634,6 @@ static inline void dp_update_pdev_ingress_stats(struct dp_pdev *tgtobj,
 		tgtobj->stats.tx_i.dropped.desc_na.num +
 		tgtobj->stats.tx_i.dropped.res_full;
 
-	tgtobj->stats.tx_i.tso.num_seg =
-		srcobj->stats.tx_i.tso.num_seg;
 }
 
 static inline void dp_update_vdev_stats(struct cdp_vdev_stats *tgtobj,

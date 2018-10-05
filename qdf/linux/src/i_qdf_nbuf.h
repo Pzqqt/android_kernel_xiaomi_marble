@@ -1453,9 +1453,23 @@ void __qdf_nbuf_unmap_tso_segment(qdf_device_t osdev,
 			  bool is_last_seg);
 
 #ifdef FEATURE_TSO
+/**
+ * __qdf_nbuf_get_tcp_payload_len() - function to return the tcp
+ *                                    payload len
+ * @skb: buffer
+ *
+ * Return: size
+ */
+size_t __qdf_nbuf_get_tcp_payload_len(struct sk_buff *skb);
 uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb);
 
 #else
+static inline
+size_t __qdf_nbuf_get_tcp_payload_len(struct sk_buff *skb)
+{
+	return 0;
+}
+
 static inline uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb)
 {
 	return 0;

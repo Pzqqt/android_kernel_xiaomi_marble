@@ -1700,6 +1700,11 @@ struct dp_pdev {
 	 */
 	struct dp_rx_fst *rx_fst;
 #endif /* WLAN_SUPPORT_RX_FLOW_TAG */
+
+#ifdef FEATURE_TSO_STATS
+	/* TSO Id to index into TSO packet information */
+	qdf_atomic_t tso_idx;
+#endif /* FEATURE_TSO_STATS */
 };
 
 struct dp_peer;

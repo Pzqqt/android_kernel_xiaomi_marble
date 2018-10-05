@@ -3149,6 +3149,17 @@ static inline void qdf_nbuf_unmap_tso_segment(qdf_device_t osdev,
 }
 
 /**
+ * qdf_nbuf_get_tcp_payload_len() - function to return the tso payload len
+ * @nbuf: network buffer
+ *
+ * Return: size of the tso packet
+ */
+static inline size_t qdf_nbuf_get_tcp_payload_len(qdf_nbuf_t nbuf)
+{
+	return __qdf_nbuf_get_tcp_payload_len(nbuf);
+}
+
+/**
  * qdf_nbuf_get_tso_num_seg() - function to calculate the number
  * of TCP segments within the TSO jumbo packet
  * @nbuf:   TSO jumbo network buffer to be segmented

@@ -1165,7 +1165,8 @@ struct cdp_peer_ops {
  * @stats:
  */
 struct cdp_mob_stats_ops {
-	void (*clear_stats)(uint16_t bitmap);
+	QDF_STATUS
+		(*clear_stats)(struct cdp_soc *soc, uint8_t bitmap);
 	int (*stats)(uint8_t vdev_id, char *buffer, unsigned buf_len);
 };
 

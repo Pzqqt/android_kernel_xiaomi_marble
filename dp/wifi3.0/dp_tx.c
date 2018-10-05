@@ -215,6 +215,7 @@ static void dp_tx_tso_desc_release(struct dp_soc *soc,
 			dp_tso_num_seg_free(soc, tx_desc->pool_id,
 					    tx_desc->tso_num_desc);
 			tx_desc->tso_num_desc = NULL;
+			DP_STATS_INC(tx_desc->pdev, tso_stats.tso_comp, 1);
 		}
 
 		/* Add the tso segment into the free list*/
@@ -497,6 +498,28 @@ static void dp_tx_unmap_tso_seg_list(
 	}
 }
 
+#ifdef FEATURE_TSO_STATS
+/**
+ * dp_tso_get_stats_idx: Retrieve the tso packet id
+ * @pdev - pdev handle
+ *
+ * Return: id
+ */
+static uint32_t dp_tso_get_stats_idx(struct dp_pdev *pdev)
+{
+	uint32_t stats_idx;
+
+	stats_idx = (((uint32_t)qdf_atomic_inc_return(&pdev->tso_idx))
+						% CDP_MAX_TSO_PACKETS);
+	return stats_idx;
+}
+#else
+static int dp_tso_get_stats_idx(struct dp_pdev *pdev)
+{
+	return 0;
+}
+#endif /* FEATURE_TSO_STATS */
+
 /**
  * dp_tx_free_remaining_tso_desc() - do dma unmap for tso segments if any,
  *				     free the tso segments descriptor and
@@ -542,9 +565,9 @@ static QDF_STATUS dp_tx_prepare_tso(struct dp_vdev *vdev,
 	struct qdf_tso_seg_elem_t *tso_seg;
 	int num_seg = qdf_nbuf_get_tso_num_seg(msdu);
 	struct dp_soc *soc = vdev->pdev->soc;
+	struct dp_pdev *pdev = vdev->pdev;
 	struct qdf_tso_info_t *tso_info;
 	struct qdf_tso_num_seg_elem_t *tso_num_seg;
-
 	tso_info = &msdu_info->u.tso_info;
 	tso_info->curr_seg = NULL;
 	tso_info->tso_seg_list = NULL;
@@ -605,6 +628,12 @@ static QDF_STATUS dp_tx_prepare_tso(struct dp_vdev *vdev,
 
 	tso_info->curr_seg = tso_info->tso_seg_list;
 
+	tso_info->msdu_stats_idx = dp_tso_get_stats_idx(pdev);
+	dp_tso_packet_update(pdev, tso_info->msdu_stats_idx,
+			     msdu, msdu_info->num_seg);
+	dp_tso_segment_stats_update(pdev, tso_info->tso_seg_list,
+				    tso_info->msdu_stats_idx);
+	dp_stats_tso_segment_histogram_update(pdev, msdu_info->num_seg);
 	return QDF_STATUS_SUCCESS;
 }
 #else
@@ -2244,11 +2273,11 @@ qdf_nbuf_t dp_tx_send(struct cdp_vdev *vap_dev, qdf_nbuf_t nbuf)
 	 */
 	if (qdf_nbuf_is_tso(nbuf)) {
 		dp_verbose_debug("TSO frame %pK", vdev);
-		DP_STATS_INC_PKT(vdev, tx_i.tso.tso_pkt, 1,
-				qdf_nbuf_len(nbuf));
+		DP_STATS_INC_PKT(vdev->pdev, tso_stats.num_tso_pkts, 1,
+				 qdf_nbuf_len(nbuf));
 
 		if (dp_tx_prepare_tso(vdev, nbuf, &msdu_info)) {
-			DP_STATS_INC_PKT(vdev, tx_i.tso.dropped_host, 1,
+			DP_STATS_INC_PKT(vdev->pdev, tso_stats.dropped_host, 1,
 					 qdf_nbuf_len(nbuf));
 			return nbuf;
 		}

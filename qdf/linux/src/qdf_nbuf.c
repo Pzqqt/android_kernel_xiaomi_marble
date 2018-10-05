@@ -3138,6 +3138,19 @@ last_seg_free_first_frag:
 }
 qdf_export_symbol(__qdf_nbuf_unmap_tso_segment);
 
+size_t __qdf_nbuf_get_tcp_payload_len(struct sk_buff *skb)
+{
+	size_t packet_len;
+
+	packet_len = skb->len -
+		((skb_transport_header(skb) - skb_mac_header(skb)) +
+		 tcp_hdrlen(skb));
+
+	return packet_len;
+}
+
+qdf_export_symbol(__qdf_nbuf_get_tcp_payload_len);
+
 /**
  * __qdf_nbuf_get_tso_num_seg() - function to divide a TSO nbuf
  * into segments

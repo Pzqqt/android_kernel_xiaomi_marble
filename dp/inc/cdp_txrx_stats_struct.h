@@ -23,6 +23,11 @@
  */
 #ifndef _CDP_TXRX_STATS_STRUCT_H_
 #define _CDP_TXRX_STATS_STRUCT_H_
+
+#ifdef FEATURE_TSO_STATS
+#include <qdf_types.h>
+#endif /* FEATURE_TSO_STATS */
+
 #define TXRX_STATS_LEVEL_OFF   0
 #define TXRX_STATS_LEVEL_BASIC 1
 #define TXRX_STATS_LEVEL_FULL  2
@@ -170,6 +175,15 @@ enum cdp_ru_index {
 	RU_484_INDEX,
 	RU_996_INDEX,
 };
+
+#ifdef FEATURE_TSO_STATS
+/* Number of TSO Packet Statistics captured */
+#define CDP_MAX_TSO_PACKETS 5
+/* Information for Number of Segments for a TSO Packet captured */
+#define CDP_MAX_TSO_SEGMENTS 2
+/* Information for Number of Fragments for a TSO Segment captured */
+#define CDP_MAX_TSO_FRAGMENTS 6
+#endif /* FEATURE_TSO_STATS */
 
 /* Different Packet Types */
 enum cdp_packet_type {
@@ -442,6 +456,68 @@ struct cdp_tx_pkt_info {
 	uint32_t num_msdu;
 	uint32_t num_mpdu;
 	uint32_t mpdu_tried;
+};
+
+#ifdef FEATURE_TSO_STATS
+/**
+ * struct cdp_tso_seg_histogram - Segment histogram for TCP Packets
+ * @segs_1: packets with single segments
+ * @segs_2_5: packets with 2-5 segments
+ * @segs_6_10: packets with 6-10 segments
+ * @segs_11_15: packets with 11-15 segments
+ * @segs_16_20: packets with 16-20 segments
+ * @segs_20_plus: packets with 20 plus segments
+ */
+struct cdp_tso_seg_histogram {
+	uint64_t segs_1;
+	uint64_t segs_2_5;
+	uint64_t segs_6_10;
+	uint64_t segs_11_15;
+	uint64_t segs_16_20;
+	uint64_t segs_20_plus;
+};
+
+/**
+ * struct cdp_tso_packet_info - Stats for TSO segments within a TSO packet
+ * @tso_seg: TSO Segment information
+ * @num_seg: Number of segments
+ * @tso_packet_len: Size of the tso packet
+ * @tso_seg_idx: segment number
+ */
+struct cdp_tso_packet_info {
+	struct qdf_tso_seg_t tso_seg[CDP_MAX_TSO_SEGMENTS];
+	uint8_t num_seg;
+	size_t tso_packet_len;
+	uint32_t tso_seg_idx;
+};
+
+/**
+ * struct cdp_tso_info - stats for tso packets
+ * @tso_packet_info: TSO packet information
+ */
+struct cdp_tso_info {
+	struct cdp_tso_packet_info tso_packet_info[CDP_MAX_TSO_PACKETS];
+};
+#endif /* FEATURE_TSO_STATS */
+
+/**
+ * struct cdp_tso_stats -  TSO stats information
+ * @num_tso_pkts: Total number of TSO Packets
+ * @tso_comp: Total tso packet completions
+ * @dropped_host: TSO packets dropped by host
+ * @dropped_target: TSO packets_dropped by target
+ * @tso_info: Per TSO packet counters
+ * @seg_histogram: TSO histogram stats
+ */
+struct cdp_tso_stats {
+	struct cdp_pkt_info num_tso_pkts;
+	uint32_t tso_comp;
+	struct cdp_pkt_info dropped_host;
+	uint32_t dropped_target;
+#ifdef FEATURE_TSO_STATS
+	struct cdp_tso_info tso_info;
+	struct cdp_tso_seg_histogram seg_histogram;
+#endif /* FEATURE_TSO_STATS */
 };
 
 /* struct cdp_tx_stats - tx stats
@@ -771,15 +847,6 @@ struct cdp_tx_ingress_stats {
 		uint32_t invalid_raw_pkt_datatype;
 	} raw;
 
-	/* TSO packets info */
-	struct {
-		uint32_t num_seg;
-		struct cdp_pkt_info tso_pkt;
-		struct cdp_pkt_info non_tso_pkts;
-		struct cdp_pkt_info  dropped_host;
-		uint32_t dropped_target;
-	} tso;
-
 	/* Scatter Gather packet info */
 	struct {
 		struct cdp_pkt_info sg_pkt;
@@ -821,17 +888,20 @@ struct cdp_tx_ingress_stats {
 	uint32_t cce_classified;
 	uint32_t cce_classified_raw;
 	struct cdp_pkt_info sniffer_rcvd;
+	struct cdp_tso_stats tso_stats;
 };
 
 /* struct cdp_vdev_stats - vdev stats structure
  * @tx_i: ingress tx stats
  * @tx: cdp tx stats
  * @rx: cdp rx stats
+ * @tso_stats: tso stats
  */
 struct cdp_vdev_stats {
 	struct cdp_tx_ingress_stats tx_i;
 	struct cdp_tx_stats tx;
 	struct cdp_rx_stats rx;
+	struct cdp_tso_stats tso_stats;
 };
 
 /* struct cdp_peer_stats - peer stats structure
@@ -1381,6 +1451,8 @@ struct cdp_pdev_stats {
 		uint32_t data_rx_ppdu;
 		uint32_t data_users[OFDMA_NUM_USERS];
 	} ul_ofdma;
+
+	struct cdp_tso_stats tso_stats;
 };
 
 #ifdef QCA_ENH_V3_STATS_SUPPORT

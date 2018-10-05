@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017,2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,22 +25,23 @@
 #define _CDP_TXRX_STATS_H_
 #include <cdp_txrx_ops.h>
 
-static inline void
-cdp_clear_stats(ol_txrx_soc_handle soc, uint16_t bitmap)
+static inline QDF_STATUS
+cdp_clear_stats(ol_txrx_soc_handle soc, uint8_t bitmap)
 {
 
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Invalid Instance", __func__);
 		QDF_BUG(0);
-		return;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!soc->ops->mob_stats_ops ||
 	    !soc->ops->mob_stats_ops->clear_stats)
-		return;
+		return QDF_STATUS_E_INVAL;
 
-	soc->ops->mob_stats_ops->clear_stats(bitmap);
+	return soc->ops->mob_stats_ops->clear_stats((struct cdp_soc *)soc,
+						    bitmap);
 }
 
 static inline int

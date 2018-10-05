@@ -4624,6 +4624,62 @@ dp_print_ring_stat_from_hal(struct dp_soc *soc,  struct dp_srng *srng,
 	}
 }
 
+#ifdef FEATURE_TSO_STATS
+/**
+ * dp_print_tso_seg_stats - tso segment stats
+ * @pdev: pdev handle
+ * @id: tso packet id
+ *
+ * Return: None
+ */
+static void dp_print_tso_seg_stats(struct dp_pdev *pdev, uint32_t id)
+{
+	uint8_t num_seg;
+	uint32_t segid;
+
+	/* TSO LEVEL 2 - SEGMENT INFO */
+	num_seg = pdev->stats.tso_stats.tso_info.tso_packet_info[id].num_seg;
+	for (segid = 0; segid < CDP_MAX_TSO_SEGMENTS && segid < num_seg; segid++) {
+		DP_PRINT_STATS(
+			  "Segment id:[%u] fragments: %u | Segment Length %u | TCP Seq no.: %u | ip_id: %u",
+			  segid,
+			  pdev->stats.tso_stats.tso_info.tso_packet_info[id]
+			  .tso_seg[segid].num_frags,
+			  pdev->stats.tso_stats.tso_info.tso_packet_info[id]
+			  .tso_seg[segid].total_len,
+			  pdev->stats.tso_stats.tso_info.tso_packet_info[id]
+			  .tso_seg[segid].tso_flags.tcp_seq_num,
+			  pdev->stats.tso_stats.tso_info.tso_packet_info[id]
+			  .tso_seg[segid].tso_flags.ip_id);
+		DP_PRINT_STATS(
+			  "fin: %u syn: %u rst: %u psh: %u ack: %u urg: %u ece: %u cwr: %u ns: %u",
+			  pdev->stats.tso_stats.tso_info.tso_packet_info[id]
+			  .tso_seg[segid].tso_flags.fin,
+			  pdev->stats.tso_stats.tso_info.tso_packet_info[id]
+			  .tso_seg[segid].tso_flags.syn,
+			  pdev->stats.tso_stats.tso_info.tso_packet_info[id]
+			  .tso_seg[segid].tso_flags.rst,
+			  pdev->stats.tso_stats.tso_info.tso_packet_info[id]
+			  .tso_seg[segid].tso_flags.psh,
+			  pdev->stats.tso_stats.tso_info.tso_packet_info[id]
+			  .tso_seg[segid].tso_flags.ack,
+			  pdev->stats.tso_stats.tso_info.tso_packet_info[id]
+			  .tso_seg[segid].tso_flags.urg,
+			  pdev->stats.tso_stats.tso_info.tso_packet_info[id]
+			  .tso_seg[segid].tso_flags.ece,
+			  pdev->stats.tso_stats.tso_info.tso_packet_info[id]
+			  .tso_seg[segid].tso_flags.cwr,
+			  pdev->stats.tso_stats.tso_info.tso_packet_info[id]
+			  .tso_seg[segid].tso_flags.ns);
+	}
+}
+#else
+static inline
+void dp_print_tso_seg_stats(struct dp_pdev *pdev, uint32_t id)
+{
+}
+#endif /* FEATURE_TSO_STATS */
+
 /**
  * dp_print_mon_ring_stats_from_hal() - Print stat for monitor rings based
  *					on target
@@ -5369,15 +5425,6 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 		       pdev->stats.tx_i.sg.dropped_host.num);
 	DP_PRINT_STATS("	Dropped By Target = %d",
 		       pdev->stats.tx_i.sg.dropped_target);
-	DP_PRINT_STATS("TSO:");
-	DP_PRINT_STATS("	Number of Segments = %d",
-		       pdev->stats.tx_i.tso.num_seg);
-	DP_PRINT_STATS("	Packets = %d",
-		       pdev->stats.tx_i.tso.tso_pkt.num);
-	DP_PRINT_STATS("	Bytes = %llu",
-		       pdev->stats.tx_i.tso.tso_pkt.bytes);
-	DP_PRINT_STATS("	Dropped By Host = %d",
-		       pdev->stats.tx_i.tso.dropped_host.num);
 	DP_PRINT_STATS("Mcast Enhancement:");
 	DP_PRINT_STATS("	Packets = %d",
 		       pdev->stats.tx_i.mcast_en.mcast_pkt.num);
@@ -5712,3 +5759,161 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("REO Error(0-14):%s", reo_error);
 }
 
+#ifdef FEATURE_TSO_STATS
+void dp_print_tso_stats(struct dp_soc *soc,
+			enum qdf_stats_verbosity_level level)
+{
+	uint8_t loop_pdev;
+	uint32_t id;
+	struct dp_pdev *pdev;
+
+	for (loop_pdev = 0; loop_pdev < soc->pdev_count; loop_pdev++) {
+		pdev = soc->pdev_list[loop_pdev];
+		DP_PRINT_STATS("TSO Statistics\n");
+		DP_PRINT_STATS(
+			  "From stack: %d | Successful completions: %d | TSO Packets: %d | TSO Completions: %d",
+			  pdev->stats.tx_i.rcvd.num,
+			  pdev->stats.tx.tx_success.num,
+			  pdev->stats.tso_stats.num_tso_pkts.num,
+			  pdev->stats.tso_stats.tso_comp);
+
+		for (id = 0; id < CDP_MAX_TSO_PACKETS; id++) {
+			/* TSO LEVEL 1 - PACKET INFO */
+			DP_PRINT_STATS(
+				  "Packet_Id:[%u]: Packet Length %lu | No. of segments: %u",
+				  id,
+				  pdev->stats.tso_stats.tso_info
+				  .tso_packet_info[id].tso_packet_len,
+				  pdev->stats.tso_stats.tso_info
+				  .tso_packet_info[id].num_seg);
+			/* TSO LEVEL 2 */
+			if (level == QDF_STATS_VERBOSITY_LEVEL_HIGH)
+				dp_print_tso_seg_stats(pdev, id);
+		}
+
+		DP_PRINT_STATS(
+			  "TSO Histogram: Single: %llu | 2-5 segs: %llu | 6-10: %llu segs | 11-15 segs: %llu | 16-20 segs: %llu | 20+ segs: %llu",
+			  pdev->stats.tso_stats.seg_histogram.segs_1,
+			  pdev->stats.tso_stats.seg_histogram.segs_2_5,
+			  pdev->stats.tso_stats.seg_histogram.segs_6_10,
+			  pdev->stats.tso_stats.seg_histogram.segs_11_15,
+			  pdev->stats.tso_stats.seg_histogram.segs_16_20,
+			  pdev->stats.tso_stats.seg_histogram.segs_20_plus);
+	}
+}
+
+void dp_stats_tso_segment_histogram_update(struct dp_pdev *pdev,
+					   uint8_t _p_cntrs)
+{
+	if (_p_cntrs == 1) {
+		DP_STATS_INC(pdev,
+			     tso_stats.seg_histogram.segs_1, 1);
+	} else if (_p_cntrs >= 2 && _p_cntrs <= 5) {
+		DP_STATS_INC(pdev,
+			     tso_stats.seg_histogram.segs_2_5, 1);
+	} else if (_p_cntrs > 5 && _p_cntrs <= 10) {
+		DP_STATS_INC(pdev,
+			     tso_stats.seg_histogram.segs_6_10, 1);
+	} else if (_p_cntrs > 10 && _p_cntrs <= 15) {
+		DP_STATS_INC(pdev,
+			     tso_stats.seg_histogram.segs_11_15, 1);
+	} else if (_p_cntrs > 15 && _p_cntrs <= 20) {
+		DP_STATS_INC(pdev,
+			     tso_stats.seg_histogram.segs_16_20, 1);
+	} else if (_p_cntrs > 20) {
+		DP_STATS_INC(pdev,
+			     tso_stats.seg_histogram.segs_20_plus, 1);
+	}
+}
+
+void dp_tso_segment_update(struct dp_pdev *pdev,
+			   uint32_t stats_idx,
+			   uint8_t idx,
+			   struct qdf_tso_seg_t seg)
+{
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].num_frags,
+		     seg.num_frags);
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].total_len,
+		     seg.total_len);
+
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].tso_flags.tso_enable,
+		     seg.tso_flags.tso_enable);
+
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].tso_flags.fin,
+		     seg.tso_flags.fin);
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].tso_flags.syn,
+		     seg.tso_flags.syn);
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].tso_flags.rst,
+		     seg.tso_flags.rst);
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].tso_flags.psh,
+		     seg.tso_flags.psh);
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].tso_flags.ack,
+		     seg.tso_flags.ack);
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].tso_flags.urg,
+		     seg.tso_flags.urg);
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].tso_flags.ece,
+		     seg.tso_flags.ece);
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].tso_flags.cwr,
+		     seg.tso_flags.cwr);
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].tso_flags.ns,
+		     seg.tso_flags.ns);
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].tso_flags.tcp_seq_num,
+		     seg.tso_flags.tcp_seq_num);
+	DP_STATS_UPD(pdev, tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_seg[idx].tso_flags.ip_id,
+		     seg.tso_flags.ip_id);
+}
+
+void dp_tso_packet_update(struct dp_pdev *pdev, uint32_t stats_idx,
+			  qdf_nbuf_t msdu, uint16_t num_segs)
+{
+	DP_STATS_UPD(pdev,
+		     tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .num_seg,
+		     num_segs);
+
+	DP_STATS_UPD(pdev,
+		     tso_stats.tso_info.tso_packet_info[stats_idx]
+		     .tso_packet_len,
+		     qdf_nbuf_get_tcp_payload_len(msdu));
+}
+
+void dp_tso_segment_stats_update(struct dp_pdev *pdev,
+				 struct qdf_tso_seg_elem_t *stats_seg,
+				 uint32_t stats_idx)
+{
+	uint8_t tso_seg_idx = 0;
+
+	while (stats_seg  && (tso_seg_idx < CDP_MAX_TSO_SEGMENTS)) {
+		dp_tso_segment_update(pdev, stats_idx,
+				      tso_seg_idx,
+				      stats_seg->seg);
+		++tso_seg_idx;
+		stats_seg = stats_seg->next;
+	}
+}
+
+void dp_txrx_clear_tso_stats(struct dp_soc *soc)
+{
+	uint8_t loop_pdev;
+	struct dp_pdev *pdev;
+
+	for (loop_pdev = 0; loop_pdev < soc->pdev_count; loop_pdev++) {
+		pdev = soc->pdev_list[loop_pdev];
+		dp_init_tso_stats(pdev);
+	}
+}
+#endif /* FEATURE_TSO_STATS */
