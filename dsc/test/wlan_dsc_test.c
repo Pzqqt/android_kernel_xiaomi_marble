@@ -24,14 +24,16 @@
 #include "wlan_dsc.h"
 #include "wlan_dsc_test.h"
 
-#define dsc_driver_trans_start(driver) dsc_driver_trans_start(driver, "")
-#define dsc_psoc_trans_start(psoc) dsc_psoc_trans_start(psoc, "")
-#define dsc_vdev_trans_start(vdev) dsc_vdev_trans_start(vdev, "")
+#define dsc_driver_trans_start(driver) dsc_driver_trans_start(driver, __func__)
+#define dsc_psoc_trans_start(psoc) dsc_psoc_trans_start(psoc, __func__)
+#define dsc_vdev_trans_start(vdev) dsc_vdev_trans_start(vdev, __func__)
 
 #define dsc_driver_trans_start_wait(driver) \
 	dsc_driver_trans_start_wait(driver, "")
-#define dsc_psoc_trans_start_wait(psoc) dsc_psoc_trans_start_wait(psoc, "")
-#define dsc_vdev_trans_start_wait(vdev) dsc_vdev_trans_start_wait(vdev, "")
+#define dsc_psoc_trans_start_wait(psoc) \
+	dsc_psoc_trans_start_wait(psoc, __func__)
+#define dsc_vdev_trans_start_wait(vdev) \
+	dsc_vdev_trans_start_wait(vdev, __func__)
 
 static struct dsc_psoc *nth_psoc(struct dsc_driver *driver, int n)
 {

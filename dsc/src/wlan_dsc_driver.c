@@ -145,9 +145,7 @@ __dsc_driver_trans_start_nolock(struct dsc_driver *driver, const char *desc)
 	if (!__dsc_driver_can_trans(driver))
 		return QDF_STATUS_E_AGAIN;
 
-	driver->trans.active_desc = desc;
-
-	return QDF_STATUS_SUCCESS;
+	return __dsc_trans_start(&driver->trans, desc);
 }
 
 static QDF_STATUS
@@ -260,8 +258,7 @@ static void __dsc_driver_trans_stop(struct dsc_driver *driver)
 
 	__dsc_lock(driver);
 
-	dsc_assert(driver->trans.active_desc);
-	driver->trans.active_desc = NULL;
+	__dsc_trans_stop(&driver->trans);
 	__dsc_driver_trigger_trans(driver);
 
 	__dsc_unlock(driver);
@@ -280,7 +277,7 @@ static void __dsc_driver_trans_assert(struct dsc_driver *driver)
 		return;
 
 	__dsc_lock(driver);
-	dsc_assert(driver->trans.active_desc);
+	dsc_assert(__dsc_trans_active(&driver->trans));
 	__dsc_unlock(driver);
 }
 

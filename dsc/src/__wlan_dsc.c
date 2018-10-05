@@ -171,6 +171,47 @@ bool __dsc_ops_remove(struct dsc_ops *ops, const char *func)
 }
 
 #ifdef WLAN_DSC_DEBUG
+static void __dsc_dbg_trans_timeout(void *opaque_trans)
+{
+	struct dsc_trans *trans = opaque_trans;
+
+	QDF_DEBUG_PANIC("Transition '%s' exceeded %ums",
+			trans->active_desc, DSC_TRANS_TIMEOUT_MS);
+}
+
+/**
+ * __dsc_dbg_trans_timeout_start() - start a timeout timer for @trans
+ * @trans: the active transition to start a timeout timer for
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS __dsc_dbg_trans_timeout_start(struct dsc_trans *trans)
+{
+	QDF_STATUS status;
+
+	status = qdf_timer_init(NULL, &trans->timeout_timer,
+				__dsc_dbg_trans_timeout, trans,
+				QDF_TIMER_TYPE_SW);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	qdf_timer_start(&trans->timeout_timer, DSC_TRANS_TIMEOUT_MS);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * __dsc_dbg_trans_timeout_stop() - stop the timeout timer for @trans
+ * @trans: the active transition to stop the timeout timer for
+ *
+ * Return: None
+ */
+static void __dsc_dbg_trans_timeout_stop(struct dsc_trans *trans)
+{
+	qdf_timer_stop(&trans->timeout_timer);
+	qdf_timer_free(&trans->timeout_timer);
+}
+
 static void __dsc_dbg_tran_wait_timeout(void *opaque_tran)
 {
 	struct dsc_tran *tran = opaque_tran;
@@ -181,7 +222,7 @@ static void __dsc_dbg_tran_wait_timeout(void *opaque_tran)
 
 /**
  * __dsc_dbg_tran_wait_timeout_start() - start a timeout timer for @tran
- * @tran: the transition to start a timeout timer for
+ * @tran: the pending transition to start a timeout timer for
  *
  * Return: QDF_STATUS
  */
@@ -202,7 +243,7 @@ static QDF_STATUS __dsc_dbg_tran_wait_timeout_start(struct dsc_tran *tran)
 
 /**
  * __dsc_dbg_tran_wait_timeout_stop() - stop the timeout timer for @tran
- * @tran: the transition to stop the timeout timer for
+ * @tran: the pending transition to stop the timeout timer for
  *
  * Return: None
  */
@@ -212,6 +253,13 @@ static void __dsc_dbg_tran_wait_timeout_stop(struct dsc_tran *tran)
 	qdf_timer_free(&tran->timeout_timer);
 }
 #else
+static inline QDF_STATUS __dsc_dbg_trans_timeout_start(struct dsc_trans *trans)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void __dsc_dbg_trans_timeout_stop(struct dsc_trans *trans) { }
+
 static inline QDF_STATUS
 __dsc_dbg_tran_wait_timeout_start(struct dsc_tran *tran)
 {
@@ -231,6 +279,27 @@ void __dsc_trans_deinit(struct dsc_trans *trans)
 {
 	qdf_list_destroy(&trans->queue);
 	trans->active_desc = NULL;
+}
+
+QDF_STATUS __dsc_trans_start(struct dsc_trans *trans, const char *desc)
+{
+	QDF_STATUS status;
+
+	status = __dsc_dbg_trans_timeout_start(trans);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	dsc_assert(!trans->active_desc);
+	trans->active_desc = desc;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void __dsc_trans_stop(struct dsc_trans *trans)
+{
+	dsc_assert(trans->active_desc);
+	trans->active_desc = NULL;
+	__dsc_dbg_trans_timeout_stop(trans);
 }
 
 QDF_STATUS __dsc_trans_queue(struct dsc_trans *trans, struct dsc_tran *tran,
@@ -300,7 +369,7 @@ bool __dsc_trans_trigger(struct dsc_trans *trans)
 	if (!tran)
 		return false;
 
-	trans->active_desc = tran->desc;
+	__dsc_trans_start(trans, tran->desc);
 	qdf_event_set(&tran->event);
 
 	return true;
