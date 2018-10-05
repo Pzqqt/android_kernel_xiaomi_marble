@@ -13194,6 +13194,7 @@ static void hdd_stop_present_mode(struct hdd_context *hdd_ctx,
 		hdd_abort_mac_scan_all_adapters(hdd_ctx);
 		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, NULL);
 		hdd_stop_all_adapters(hdd_ctx);
+		hdd_deinit_all_adapters(hdd_ctx, false);
 
 		break;
 	default:
@@ -13212,7 +13213,6 @@ static void hdd_cleanup_present_mode(struct hdd_context *hdd_ctx,
 	case QDF_GLOBAL_MISSION_MODE:
 	case QDF_GLOBAL_MONITOR_MODE:
 	case QDF_GLOBAL_FTM_MODE:
-		hdd_deinit_all_adapters(hdd_ctx, false);
 		hdd_close_all_adapters(hdd_ctx, false);
 		break;
 	case QDF_GLOBAL_EPPING_MODE:
