@@ -432,6 +432,13 @@ void wlan_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev, uint8_t *ch_list,
 	reg_update_nol_ch(pdev, ch_list, num_ch, nol_ch);
 }
 
+void wlan_reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
+				    uint8_t *ch_list, uint8_t num_ch,
+				    bool nol_history_ch)
+{
+	reg_update_nol_history_ch(pdev, ch_list, num_ch, nol_history_ch);
+}
+
 bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev,
 			uint32_t chan)
 {

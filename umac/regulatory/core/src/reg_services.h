@@ -660,4 +660,19 @@ bool reg_chan_in_range(struct regulatory_channel *chan_list,
 		uint32_t high_freq_5g,
 		enum channel_enum ch_enum);
 
+/**
+ * reg_update_nol_history_ch() - Set nol-history flag for the channels in the
+ * list.
+ *
+ * @pdev: Pdev ptr.
+ * @ch_list: Input channel list.
+ * @num_ch: Number of channels.
+ * @nol_history_ch: NOL-History flag.
+ *
+ * Return: void
+ */
+void reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
+			       uint8_t *chan_list,
+			       uint8_t num_chan,
+			       bool nol_history_chan);
 #endif

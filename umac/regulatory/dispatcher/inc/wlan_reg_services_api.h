@@ -554,4 +554,20 @@ wlan_reg_get_tx_ops(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS wlan_reg_get_curr_regdomain(struct wlan_objmgr_pdev *pdev,
 		struct cur_regdmn_info *cur_regdmn);
+
+/**
+ * wlan_reg_update_nol_history_ch() - Set nol-history flag for the channels in
+ * the list.
+ *
+ * @pdev: Pdev ptr
+ * @ch_list: Input channel list.
+ * @num_ch: Number of channels.
+ * @nol_history_ch: Nol history value.
+ *
+ * Return: void
+ */
+void wlan_reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
+				    uint8_t *ch_list,
+				    uint8_t num_ch,
+				    bool nol_history_ch);
 #endif

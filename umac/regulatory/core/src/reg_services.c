@@ -3993,6 +3993,45 @@ void reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 }
 
+void reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
+			       uint8_t *chan_list,
+			       uint8_t num_chan,
+			       bool nol_history_chan)
+{
+	enum channel_enum chan_enum;
+	struct regulatory_channel *mas_chan_list;
+	struct regulatory_channel *cur_chan_list;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	uint16_t i;
+
+	if (!num_chan || !chan_list) {
+		reg_err("chan_list or num_ch is NULL");
+		return;
+	}
+
+	pdev_priv_obj = wlan_objmgr_pdev_get_comp_private_obj(
+			pdev, WLAN_UMAC_COMP_REGULATORY);
+
+	if (!pdev_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return;
+	}
+
+	mas_chan_list = pdev_priv_obj->mas_chan_list;
+	cur_chan_list = pdev_priv_obj->cur_chan_list;
+
+	for (i = 0; i < num_chan; i++) {
+		chan_enum = reg_get_chan_enum(chan_list[i]);
+		if (chan_enum == INVALID_CHANNEL) {
+			reg_err("Invalid ch in nol list, chan %d",
+				chan_list[i]);
+			continue;
+		}
+		mas_chan_list[chan_enum].nol_history = nol_history_chan;
+		cur_chan_list[chan_enum].nol_history = nol_history_chan;
+	}
+}
+
 static void reg_change_pdev_for_config(struct wlan_objmgr_psoc *psoc,
 				       void *object, void *arg)
 {

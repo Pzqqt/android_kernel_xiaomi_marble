@@ -629,6 +629,7 @@ enum country_src {
  * @min_bw: min bandwidth
  * @max_bw: max bandwidth
  * @nol_chan: whether channel is nol
+ * @nol_history: Set NOL-History when STA vap detects RADAR.
  */
 struct regulatory_channel {
 	uint32_t center_freq;
@@ -640,6 +641,7 @@ struct regulatory_channel {
 	uint16_t max_bw;
 	uint8_t ant_gain;
 	bool nol_chan;
+	bool nol_history;
 };
 
 
