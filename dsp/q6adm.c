@@ -2935,10 +2935,6 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 			open_v8.endpoint_id_2 = 0xFFFF;
 			open_v8.endpoint_id_3 = 0xFFFF;
 
-			if (this_adm.ec_ref_rx && (path != 1)) {
-				open_v8.endpoint_id_2 = this_adm.ec_ref_rx;
-				this_adm.ec_ref_rx = -1;
-			}
 
 			open_v8.topology_id = topology;
 			open_v8.reserved = 0;
@@ -2966,8 +2962,11 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 				+ ep1_payload_size;
 			atomic_set(&this_adm.copp.stat[port_idx][copp_idx], -1);
 
-			if ((this_adm.num_ec_ref_rx_chans != 0) && (path != 1)
+			if ((this_adm.num_ec_ref_rx_chans != 0)
+				&& (path != ADM_PATH_PLAYBACK)
 				&& (open_v8.endpoint_id_2 != 0xFFFF)) {
+				open_v8.endpoint_id_2 = this_adm.ec_ref_rx;
+				this_adm.ec_ref_rx = -1;
 				ep2_payload.dev_num_channel =
 					this_adm.num_ec_ref_rx_chans;
 				this_adm.num_ec_ref_rx_chans = 0;
@@ -3004,18 +3003,23 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 				param_size += ep2_payload_size;
 			}
 
+			open_v8.hdr.pkt_size = param_size;
 			adm_params = kzalloc(param_size, GFP_KERNEL);
 			if (!adm_params)
 				return -ENOMEM;
-			open_v8.hdr.pkt_size = param_size;
 			memcpy(adm_params, &open_v8, sizeof(open_v8));
 			memcpy(adm_params + sizeof(open_v8),
 					(void *)&ep1_payload,
 					ep1_payload_size);
-			memcpy(adm_params + sizeof(open_v8)
-					+ ep1_payload_size,
-					(void *)&ep2_payload,
-					ep2_payload_size);
+
+			if ((this_adm.num_ec_ref_rx_chans != 0)
+				&& (path != ADM_PATH_PLAYBACK)
+				&& (open_v8.endpoint_id_2 != 0xFFFF)) {
+				memcpy(adm_params + sizeof(open_v8)
+						+ ep1_payload_size,
+						(void *)&ep2_payload,
+						ep2_payload_size);
+			}
 
 			ret = apr_send_pkt(this_adm.apr,
 					(uint32_t *)adm_params);
