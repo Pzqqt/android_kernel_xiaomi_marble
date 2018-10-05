@@ -2047,4 +2047,26 @@ static inline void cdp_get_ba_timeout(ol_txrx_soc_handle soc,
 
 	soc->ops->cmn_drv_ops->txrx_get_ba_aging_timeout(soc, ac, value);
 }
+
+/**
+ * cdp_cfg_get() - get cfg for dp enum
+ *
+ * @soc: pointer to the soc
+ * @cfg: cfg enum
+ *
+ * Return - cfg value
+ */
+static inline uint32_t cdp_cfg_get(ol_txrx_soc_handle soc, enum cdp_dp_cfg cfg)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		return 0;
+	}
+
+	if (!soc->ops->cmn_drv_ops || !soc->ops->cmn_drv_ops->txrx_get_cfg)
+		return 0;
+
+	return soc->ops->cmn_drv_ops->txrx_get_cfg(soc, cfg);
+}
 #endif /* _CDP_TXRX_CMN_H_ */

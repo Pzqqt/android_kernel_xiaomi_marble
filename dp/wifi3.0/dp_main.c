@@ -7904,6 +7904,50 @@ static void dp_pdev_set_ctrl_pdev(struct cdp_pdev *dp_pdev,
 	pdev->ctrl_pdev = ctrl_pdev;
 }
 
+/*
+ * dp_get_cfg() - get dp cfg
+ * @soc: cdp soc handle
+ * @cfg: cfg enum
+ *
+ * Return: cfg value
+ */
+static uint32_t dp_get_cfg(void *soc, enum cdp_dp_cfg cfg)
+{
+	struct dp_soc *dpsoc = (struct dp_soc *)soc;
+	uint32_t value = 0;
+
+	switch (cfg) {
+	case cfg_dp_enable_data_stall:
+		value = dpsoc->wlan_cfg_ctx->enable_data_stall_detection;
+		break;
+	case cfg_dp_enable_ip_tcp_udp_checksum_offload:
+		value = dpsoc->wlan_cfg_ctx->tcp_udp_checksumoffload;
+		break;
+	case cfg_dp_tso_enable:
+		value = dpsoc->wlan_cfg_ctx->tso_enabled;
+		break;
+	case cfg_dp_lro_enable:
+		value = dpsoc->wlan_cfg_ctx->lro_enabled;
+		break;
+	case cfg_dp_gro_enable:
+		value = dpsoc->wlan_cfg_ctx->gro_enabled;
+		break;
+	case cfg_dp_tx_flow_start_queue_offset:
+		value = dpsoc->wlan_cfg_ctx->tx_flow_start_queue_offset;
+		break;
+	case cfg_dp_tx_flow_stop_queue_threshold:
+		value = dpsoc->wlan_cfg_ctx->tx_flow_stop_queue_threshold;
+		break;
+	case cfg_dp_disable_intra_bss_fwd:
+		value = dpsoc->wlan_cfg_ctx->disable_intra_bss_fwd;
+		break;
+	default:
+		value =  0;
+	}
+
+	return value;
+}
+
 static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
@@ -7987,6 +8031,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 					dp_get_os_rx_handles_from_vdev_wifi3,
 	.delba_tx_completion = dp_delba_tx_completion_wifi3,
 	.get_dp_capabilities = dp_get_cfg_capabilities,
+	.txrx_get_cfg = dp_get_cfg,
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {

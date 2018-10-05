@@ -294,6 +294,12 @@ struct txrx_pdev_cfg_param_t {
 #endif
 
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
+	bool gro_enable;
+	bool tso_enable;
+	bool lro_enable;
+	bool enable_data_stall_detection;
+	bool enable_flow_steering;
+	bool disable_intra_bss_fwd;
 };
 
 #ifdef IPA_OFFLOAD

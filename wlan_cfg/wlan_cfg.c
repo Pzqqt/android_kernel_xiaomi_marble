@@ -310,12 +310,18 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void *psoc)
 					     CFG_DP_REO_CMD_RING);
 	wlan_cfg_ctx->reo_status_ring = cfg_get(psoc,
 						CFG_DP_REO_STATUS_RING);
-
 	wlan_cfg_ctx->rxdma_refill_ring = cfg_get(psoc,
 						  CFG_DP_RXDMA_REFILL_RING);
-
 	wlan_cfg_ctx->rxdma_err_dst_ring = cfg_get(psoc,
 						   CFG_DP_RXDMA_ERR_DST_RING);
+	wlan_cfg_ctx->enable_data_stall_detection =
+		cfg_get(psoc, CFG_DP_ENABLE_DATA_STALL_DETECTION);
+	wlan_cfg_ctx->tx_flow_start_queue_offset =
+		cfg_get(psoc, CFG_DP_TX_FLOW_START_QUEUE_OFFSET);
+	wlan_cfg_ctx->tx_flow_stop_queue_threshold =
+		cfg_get(psoc, CFG_DP_TX_FLOW_STOP_QUEUE_TH);
+	wlan_cfg_ctx->disable_intra_bss_fwd =
+		cfg_get(psoc, CFG_DP_AP_STA_SECURITY_SEPERATION);
 
 	return wlan_cfg_ctx;
 }

@@ -1349,4 +1349,24 @@ struct cdp_monitor_filter {
 	uint16_t mo_ctrl;
 	uint16_t mo_data;
 };
+
+/**
+ * cdp_dp_cfg - dp ini config enum
+ */
+enum cdp_dp_cfg {
+	cfg_dp_enable_data_stall,
+	cfg_dp_enable_ip_tcp_udp_checksum_offload,
+	cfg_dp_tso_enable,
+	cfg_dp_lro_enable,
+	cfg_dp_gro_enable,
+	cfg_dp_tx_flow_start_queue_offset,
+	cfg_dp_tx_flow_stop_queue_threshold,
+	cfg_dp_ipa_uc_tx_buf_size,
+	cfg_dp_ipa_uc_tx_partition_base,
+	cfg_dp_ipa_uc_rx_ind_ring_count,
+	cfg_dp_enable_flow_steering,
+	cfg_dp_reorder_offload_supported,
+	cfg_dp_ce_classify_enable,
+	cfg_dp_disable_intra_bss_fwd,
+};
 #endif

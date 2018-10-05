@@ -177,10 +177,8 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool tcp_udp_checksumoffload;
 	bool defrag_timeout_check;
 	int nss_cfg;
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
 	uint32_t tx_flow_stop_queue_threshold;
 	uint32_t tx_flow_start_queue_offset;
-#endif
 	int rx_defrag_min_timeout;
 	int reo_dst_ring_size;
 	int wbm_release_ring;
@@ -195,6 +193,8 @@ struct wlan_cfg_dp_soc_ctxt {
 	int rxdma_refill_ring;
 	int rxdma_err_dst_ring;
 	bool raw_mode_war;
+	bool enable_data_stall_detection;
+	bool disable_intra_bss_fwd;
 };
 
 /**

@@ -182,6 +182,8 @@ struct cdp_cmn_ops {
 	void (*txrx_set_privacy_filters)
 		(struct cdp_vdev *vdev, void *filter, uint32_t num);
 
+	uint32_t (*txrx_get_cfg)(void *soc, enum cdp_dp_cfg cfg);
+
 	/********************************************************************
 	 * Data Interface (B Interface)
 	 ********************************************************************/
