@@ -95,11 +95,14 @@ QDF_STATUS wbuff_module_deregister(struct wbuff_mod_handle *hdl);
  * wbuff_buff_get() - return buffer to the requester
  * @handle: wbuff_handle corresponding to the module
  * @len: length of buffer requested
+ * file_name: file from which buffer is requested
+ * line_num: line number in the file
  *
  * Return: Network buffer if success
  *         NULL if failure
  */
-qdf_nbuf_t wbuff_buff_get(struct wbuff_mod_handle *hdl, uint32_t len);
+qdf_nbuf_t wbuff_buff_get(struct wbuff_mod_handle *hdl, uint32_t len,
+			  uint8_t *file_name, uint32_t line_num);
 
 /**
  * wbuff_buff_put() - put the buffer back to wbuff pool
@@ -136,7 +139,8 @@ static inline QDF_STATUS wbuff_module_deregister(struct wbuff_mod_handle *hdl)
 }
 
 static inline qdf_nbuf_t
-wbuff_buff_get(struct wbuff_mod_handle *hdl, uint32_t len)
+wbuff_buff_get(struct wbuff_mod_handle *hdl, uint32_t len, int8_t *file_name,
+	       uint32_t line_num)
 {
 	return NULL;
 }

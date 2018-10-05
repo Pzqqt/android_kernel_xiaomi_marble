@@ -296,7 +296,8 @@ QDF_STATUS wbuff_module_deregister(struct wbuff_mod_handle *hdl)
 	return QDF_STATUS_SUCCESS;
 }
 
-qdf_nbuf_t wbuff_buff_get(struct wbuff_mod_handle *hdl, uint32_t len)
+qdf_nbuf_t wbuff_buff_get(struct wbuff_mod_handle *hdl, uint32_t len,
+			  uint8_t *file_name, uint32_t line_num)
 {
 	struct wbuff_handle *handle;
 	struct wbuff_module *mod = NULL;
@@ -321,8 +322,10 @@ qdf_nbuf_t wbuff_buff_get(struct wbuff_mod_handle *hdl, uint32_t len)
 		mod->pending_returns++;
 	}
 	qdf_spin_unlock_bh(&mod->lock);
-	if (buf)
+	if (buf) {
 		qdf_nbuf_set_next(buf, NULL);
+		qdf_net_buf_debug_update_node(buf, file_name, line_num);
+	}
 
 	return buf;
 }
