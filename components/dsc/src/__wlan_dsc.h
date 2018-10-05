@@ -56,6 +56,7 @@ static inline bool __dsc_assert(const bool cond, const char *cond_str,
 
 #ifdef WLAN_DSC_DEBUG
 #define DSC_OP_TIMEOUT_MS		(1 * 60 * 1000) /* 1 minute */
+#define DSC_TRANS_TIMEOUT_MS		(1 * 60 * 1000) /* 1 minute */
 #define DSC_TRANS_WAIT_TIMEOUT_MS	(2 * 60 * 1000) /* 2 minutes */
 
 /**
@@ -107,10 +108,14 @@ struct dsc_tran {
  * struct dsc_trans - transition information container
  * @active_desc: unique description of the current transition in progress
  * @queue: queue of pending transitions
+ * @timeout_timer: a timer used to detect transition timeouts
  */
 struct dsc_trans {
 	const char *active_desc;
 	qdf_list_t queue;
+#ifdef WLAN_DSC_DEBUG
+	qdf_timer_t timeout_timer;
+#endif
 };
 
 /**
@@ -228,6 +233,23 @@ void __dsc_trans_init(struct dsc_trans *trans);
  * Return: None
  */
 void __dsc_trans_deinit(struct dsc_trans *trans);
+
+/**
+ * __dsc_trans_start() - set the active transition on @trans
+ * @trans: the transition container used to track the new active transition
+ * @desc: unique description of the transition being started
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS __dsc_trans_start(struct dsc_trans *trans, const char *desc);
+
+/**
+ * __dsc_trans_stop() - unset the active transition on @trans
+ * @trans: the transition container currently tracking the active transition
+ *
+ * Return: None
+ */
+void __dsc_trans_stop(struct dsc_trans *trans);
 
 /**
  * __dsc_trans_queue() - queue @tran at the back of @trans

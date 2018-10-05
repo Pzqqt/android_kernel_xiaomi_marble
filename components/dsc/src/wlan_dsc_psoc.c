@@ -150,9 +150,7 @@ __dsc_psoc_trans_start_nolock(struct dsc_psoc *psoc, const char *desc)
 	if (!__dsc_psoc_can_trans(psoc))
 		return QDF_STATUS_E_AGAIN;
 
-	psoc->trans.active_desc = desc;
-
-	return QDF_STATUS_SUCCESS;
+	return __dsc_trans_start(&psoc->trans, desc);
 }
 
 static QDF_STATUS
@@ -249,8 +247,7 @@ static void __dsc_psoc_trans_stop(struct dsc_psoc *psoc)
 
 	__dsc_driver_lock(psoc);
 
-	dsc_assert(psoc->trans.active_desc);
-	psoc->trans.active_desc = NULL;
+	__dsc_trans_stop(&psoc->trans);
 	__dsc_psoc_trigger_trans(psoc);
 
 	__dsc_driver_unlock(psoc);
@@ -269,7 +266,7 @@ static void __dsc_psoc_trans_assert(struct dsc_psoc *psoc)
 		return;
 
 	__dsc_driver_lock(psoc);
-	dsc_assert(psoc->trans.active_desc);
+	dsc_assert(__dsc_trans_active(&psoc->trans));
 	__dsc_driver_unlock(psoc);
 }
 

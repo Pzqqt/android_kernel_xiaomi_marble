@@ -124,9 +124,7 @@ __dsc_vdev_trans_start_nolock(struct dsc_vdev *vdev, const char *desc)
 	if (!__dsc_vdev_can_trans(vdev))
 		return QDF_STATUS_E_AGAIN;
 
-	vdev->trans.active_desc = desc;
-
-	return QDF_STATUS_SUCCESS;
+	return __dsc_trans_start(&vdev->trans, desc);
 }
 
 static QDF_STATUS
@@ -220,8 +218,7 @@ static void __dsc_vdev_trans_stop(struct dsc_vdev *vdev)
 
 	__dsc_driver_lock(vdev);
 
-	dsc_assert(vdev->trans.active_desc);
-	vdev->trans.active_desc = NULL;
+	__dsc_trans_stop(&vdev->trans);
 	__dsc_vdev_trigger_trans(vdev);
 
 	__dsc_driver_unlock(vdev);
@@ -240,7 +237,7 @@ static void __dsc_vdev_trans_assert(struct dsc_vdev *vdev)
 		return;
 
 	__dsc_driver_lock(vdev);
-	dsc_assert(vdev->trans.active_desc);
+	dsc_assert(__dsc_trans_active(&vdev->trans));
 	__dsc_driver_unlock(vdev);
 }
 
