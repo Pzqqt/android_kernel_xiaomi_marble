@@ -1393,8 +1393,6 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 		sme_set_cc_src(hdd_ctx->mac_handle, cc_src);
 	} else {
 		hdd_ctx->reg_offload = false;
-		ucfg_reg_program_default_cc(hdd_ctx->pdev,
-					    hdd_ctx->reg.reg_domain);
 	}
 
 	return 0;
