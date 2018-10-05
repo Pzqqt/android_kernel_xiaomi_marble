@@ -1525,7 +1525,8 @@ wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint32_t len, uint8_t *file_name,
 		return NULL;
 	}
 
-	wmi_buf = wbuff_buff_get(wmi_handle->wbuff_handle, len);
+	wmi_buf = wbuff_buff_get(wmi_handle->wbuff_handle, len, file_name,
+				 line_num);
 	if (!wmi_buf)
 		wmi_buf = qdf_nbuf_alloc_debug(NULL,
 					       roundup(len + WMI_MIN_HEAD_ROOM,
@@ -1567,7 +1568,8 @@ wmi_buf_t wmi_buf_alloc_fl(wmi_unified_t wmi_handle, uint32_t len,
 		return NULL;
 	}
 
-	wmi_buf = wbuff_buff_get(wmi_handle->wbuff_handle, len);
+	wmi_buf = wbuff_buff_get(wmi_handle->wbuff_handle, len, __FILE__,
+				 __LINE__);
 	if (!wmi_buf)
 		wmi_buf = qdf_nbuf_alloc_fl(NULL, roundup(len +
 				WMI_MIN_HEAD_ROOM, 4), WMI_MIN_HEAD_ROOM, 4,
