@@ -564,6 +564,64 @@ free_nbuf:
 	return;
 }
 
+#ifdef QCA_WIFI_QCA6390
+/**
+ * dp_rx_null_q_handle_invalid_peer_id_exception() - to find exception
+ * @soc: pointer to dp_soc struct
+ * @pool_id: Pool id to find dp_pdev
+ * @rx_tlv_hdr: TLV header of received packet
+ * @nbuf: SKB
+ *
+ * In certain types of packets if peer_id is not correct then
+ * driver may not be able find. Try finding peer by addr_2 of
+ * received MPDU. If you find the peer then most likely sw_peer_id &
+ * ast_idx is corrupted.
+ *
+ * Return: True if you find the peer by addr_2 of received MPDU else false
+ */
+static bool
+dp_rx_null_q_handle_invalid_peer_id_exception(struct dp_soc *soc,
+					      uint8_t pool_id,
+					      uint8_t *rx_tlv_hdr,
+					      qdf_nbuf_t nbuf)
+{
+	uint8_t local_id;
+	struct dp_peer *peer = NULL;
+	uint8_t *rx_pkt_hdr = hal_rx_pkt_hdr_get(rx_tlv_hdr);
+	struct dp_pdev *pdev = soc->pdev_list[pool_id];
+	struct ieee80211_frame *wh = (struct ieee80211_frame *)rx_pkt_hdr;
+
+	/*
+	 * WAR- In certain types of packets if peer_id is not correct then
+	 * driver may not be able find. Try finding peer by addr_2 of
+	 * received MPDU
+	 */
+	if (wh)
+		peer = dp_find_peer_by_addr((struct cdp_pdev *)pdev,
+					    wh->i_addr2, &local_id);
+	if (peer) {
+		dp_err("MPDU sw_peer_id & ast_idx is corrupted");
+		hal_rx_dump_pkt_tlvs(soc->hal_soc, rx_tlv_hdr,
+				     QDF_TRACE_LEVEL_INFO);
+		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer_id,
+				 1, qdf_nbuf_len(nbuf));
+		qdf_nbuf_free(nbuf);
+
+		return true;
+	}
+	return false;
+}
+#else
+static inline bool
+dp_rx_null_q_handle_invalid_peer_id_exception(struct dp_soc *soc,
+					      uint8_t pool_id,
+					      uint8_t *rx_tlv_hdr,
+					      qdf_nbuf_t nbuf)
+{
+	return false;
+}
+#endif
+
 /**
  * dp_rx_null_q_desc_handle() - Function to handle NULL Queue
  *                              descriptor violation on either a
@@ -604,14 +662,14 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
 	pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
 
-	QDF_TRACE_ERROR_RL(QDF_MODULE_ID_DP,
-			   "Len %d Extn list %pK ",
-			   (uint32_t)qdf_nbuf_len(nbuf),
-			   qdf_nbuf_get_ext_list(nbuf));
 	/* Set length in nbuf */
 	if (!qdf_nbuf_get_ext_list(nbuf))
 		qdf_nbuf_set_pktlen(nbuf, pkt_len);
 
+	QDF_TRACE_ERROR_RL(QDF_MODULE_ID_DP,
+			   "Len %d Extn list %pK ",
+			   (uint32_t)qdf_nbuf_len(nbuf),
+			   qdf_nbuf_get_ext_list(nbuf));
 	/*
 	 * Check if DMA completed -- msdu_done is the last bit
 	 * to be written
@@ -625,6 +683,11 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 				     QDF_TRACE_LEVEL_INFO);
 		qdf_assert(0);
 	}
+
+	if (!peer &&
+	    dp_rx_null_q_handle_invalid_peer_id_exception(soc, pool_id,
+							  rx_tlv_hdr, nbuf))
+		return;
 
 	if (!peer) {
 		bool mpdu_done = false;

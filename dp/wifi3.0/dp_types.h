@@ -609,6 +609,8 @@ struct dp_soc_stats {
 			uint32_t invalid_pdev;
 			/* Invalid PEER Error count */
 			struct cdp_pkt_info rx_invalid_peer;
+			/* Invalid PEER ID count */
+			struct cdp_pkt_info rx_invalid_peer_id;
 			/* HAL ring access Fail error count */
 			uint32_t hal_ring_access_fail;
 			/* RX DMA error count */

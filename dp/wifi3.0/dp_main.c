@@ -8506,6 +8506,9 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->stats.rx.err.mic_err);
 		DP_TRACE_STATS(INFO_HIGH, "Invalid peer on rx path: %u",
 			       pdev->soc->stats.rx.err.rx_invalid_peer.num);
+		DP_TRACE_STATS(INFO_HIGH, "sw_peer_id invalid %u",
+			       pdev->soc->stats.rx.err.rx_invalid_peer_id.num);
+
 
 		DP_TRACE_STATS(INFO_HIGH, "Reo Statistics");
 		DP_TRACE_STATS(INFO_HIGH, "rbm error: %u msdus",
