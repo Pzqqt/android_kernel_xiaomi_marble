@@ -1133,22 +1133,63 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 				((WLAN_HDD_GET_CTX(adapter))->config->
 				 UapsdMask & SME_QOS_UAPSD_VI) ? 1 : 0;
 		}
-		qosInfo.ts_info.direction =
-			(WLAN_HDD_GET_CTX(adapter))->config->InfraDirAcVi;
+		status = ucfg_mlme_get_wmm_dir_ac_vi(
+			hdd_ctx->psoc, &dir_ac);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get infra_dir_ac_vi failed");
+			return;
+		}
+		qosInfo.ts_info.direction = dir_ac;
+
 		qosInfo.ts_info.tid = 255;
-		qosInfo.mean_data_rate =
-			(WLAN_HDD_GET_CTX(adapter))->config->
-			InfraMeanDataRateAcVi;
-		qosInfo.min_phy_rate =
-			(WLAN_HDD_GET_CTX(adapter))->config->InfraMinPhyRateAcVi;
-		qosInfo.min_service_interval =
-			(WLAN_HDD_GET_CTX(adapter))->config->InfraUapsdViSrvIntv;
-		qosInfo.nominal_msdu_size =
-			(WLAN_HDD_GET_CTX(adapter))->config->InfraNomMsduSizeAcVi;
-		qosInfo.surplus_bw_allowance =
-			(WLAN_HDD_GET_CTX(adapter))->config->InfraSbaAcVi;
-		qosInfo.suspension_interval =
-			(WLAN_HDD_GET_CTX(adapter))->config->InfraUapsdViSuspIntv;
+		status = ucfg_mlme_get_wmm_uapsd_vi_srv_intv(
+			hdd_ctx->psoc, &uapsd_value);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get uapsd_vi_srv_intv failed");
+			return;
+		}
+		qosInfo.min_service_interval = uapsd_value;
+
+		status = ucfg_mlme_get_wmm_uapsd_vi_sus_intv(
+			hdd_ctx->psoc, &uapsd_value);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get uapsd_vi_sus_intv failed");
+			return;
+		}
+		qosInfo.suspension_interval = uapsd_value;
+
+		status = ucfg_mlme_get_wmm_mean_data_rate_ac_vi(
+			hdd_ctx->psoc, &rate_ac);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get mean_data_rate_ac_vi failed");
+			return;
+		}
+		qosInfo.mean_data_rate = rate_ac;
+
+		status = ucfg_mlme_get_wmm_min_phy_rate_ac_vi(
+			hdd_ctx->psoc, &rate_ac);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get min_phy_rate_ac_vi failed");
+			return;
+		}
+		qosInfo.min_phy_rate = rate_ac;
+
+		status = ucfg_mlme_get_wmm_nom_msdu_size_ac_vi(
+			hdd_ctx->psoc, &nom_msdu_size_ac);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get nom_msdu_size_ac_vi failed");
+			return;
+		}
+		qosInfo.nominal_msdu_size = nom_msdu_size_ac;
+
+		status = ucfg_mlme_get_wmm_sba_ac_vi(
+			hdd_ctx->psoc, &sba_ac);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get sba_ac_vi failed");
+			return;
+		}
+		qosInfo.surplus_bw_allowance = sba_ac;
+
 		break;
 	default:
 	case SME_AC_BE:
@@ -1923,15 +1964,26 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 	}
 
 	if (uapsdMask & HDD_AC_VI) {
-		status =
-			sme_enable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR
-							    (adapter))->conn_info.staId[0],
-						   SME_AC_VI, 5, 5,
-						   hdd_ctx->config->InfraUapsdViSrvIntv,
-						   hdd_ctx->config->InfraUapsdViSuspIntv,
-						   SME_QOS_WMM_TS_DIR_BOTH, 1,
-						   adapter->session_id,
-						   hdd_ctx->config->DelayedTriggerFrmInt);
+		status = ucfg_mlme_get_wmm_uapsd_vi_srv_intv(
+			hdd_ctx->psoc, &srv_value);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get uapsd_vi_srv_intv failed");
+			return QDF_STATUS_SUCCESS;
+		}
+		status = ucfg_mlme_get_wmm_uapsd_vi_sus_intv(
+			hdd_ctx->psoc, &sus_value);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get uapsd_vi_sus_intv failed");
+			return QDF_STATUS_SUCCESS;
+		}
+
+		status = sme_enable_uapsd_for_ac(
+				(WLAN_HDD_GET_STATION_CTX_PTR(
+				adapter))->conn_info.staId[0],
+				SME_AC_VI, 5, 5, srv_value, sus_value,
+				SME_QOS_WMM_TS_DIR_BOTH, 1,
+				adapter->session_id,
+				hdd_ctx->config->DelayedTriggerFrmInt);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
@@ -2105,8 +2157,13 @@ QDF_STATUS hdd_wmm_get_uapsd_mask(struct hdd_adapter *adapter,
 		if (uapsd_value == 0)
 			uapsdMask &= ~HDD_AC_VO;
 
-		if ((WLAN_HDD_GET_CTX(adapter))->config->
-		    InfraUapsdViSrvIntv == 0) {
+		status = ucfg_mlme_get_wmm_uapsd_vi_srv_intv(
+			hdd_ctx->psoc, &uapsd_value);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Get uapsd_vi_srv_intv failed");
+			return QDF_STATUS_E_FAILURE;
+		}
+		if (uapsd_value == 0) {
 			uapsdMask &= ~HDD_AC_VI;
 		}
 

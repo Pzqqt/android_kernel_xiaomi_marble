@@ -639,6 +639,89 @@ QDF_STATUS wlan_mlme_set_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
 					   bool value);
 
 /**
+ * wlan_mlme_get_wmm_dir_ac_vi() - Get TSPEC direction
+ * for VI
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_wmm_dir_ac_vi(struct wlan_objmgr_psoc *psoc,
+			    uint8_t *value);
+
+/**
+ * wlan_mlme_get_wmm_nom_msdu_size_ac_vi() - Get normal
+ * MSDU size for VI
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_wmm_nom_msdu_size_ac_vi(struct wlan_objmgr_psoc *psoc,
+				      uint16_t *value);
+
+/**
+ * wlan_mlme_get_wmm_mean_data_rate_ac_vi() - mean data
+ * rate for VI
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_wmm_mean_data_rate_ac_vi(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *value);
+
+/**
+ * wlan_mlme_get_wmm_min_phy_rate_ac_vi() - min PHY
+ * rate for VI
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_wmm_min_phy_rate_ac_vi(struct wlan_objmgr_psoc *psoc,
+				     uint32_t *value);
+
+/**
+ * wlan_mlme_get_wmm_sba_ac_vi() - surplus bandwidth
+ * allowance for VI
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_wmm_sba_ac_vi(struct wlan_objmgr_psoc *psoc, uint16_t *value);
+
+/**
+ * wlan_mlme_get_wmm_uapsd_vi_srv_intv() - Get Uapsd service
+ * interval for video
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_wmm_uapsd_vi_srv_intv(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *value);
+
+/**
+ * wlan_mlme_get_wmm_uapsd_vi_sus_intv() - Get Uapsd suspension
+ * interval for video
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+wlan_mlme_get_wmm_uapsd_vi_sus_intv(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *value);
+
+/**
  * wlan_mlme_get_wmm_dir_ac_vo() - Get TSPEC direction
  * for VO
  * @psoc: pointer to psoc object
@@ -726,6 +809,7 @@ wlan_mlme_get_wmm_uapsd_vo_srv_intv(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 wlan_mlme_get_wmm_uapsd_vo_sus_intv(struct wlan_objmgr_psoc *psoc,
 				    uint32_t *value);
+
 /**
  * wlan_mlme_cfg_get_vht_max_mpdu_len() - gets vht max mpdu length from cfg item
  * @psoc: psoc context

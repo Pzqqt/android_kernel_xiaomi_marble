@@ -2743,50 +2743,6 @@ enum station_keepalive_method {
 
 /*
  * <ini>
- * InfraUapsdViSrvIntv - Set Uapsd service interval for video
- * @Min: 0
- * @Max: 4294967295UL
- * @Default: 300
- *
- * This ini is used to set Uapsd service interval for video.
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SRV_INTV_NAME         "InfraUapsdViSrvIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SRV_INTV_MIN           (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SRV_INTV_MAX           (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SRV_INTV_DEFAULT       (300)
-
-/*
- * <ini>
- * InfraUapsdViSuspIntv - Set Uapsd suspension interval for video
- * @Min: 0
- * @Max: 4294967295UL
- * @Default: 2000
- *
- * This ini is used to set Uapsd suspension interval for video
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SUS_INTV_NAME         "InfraUapsdViSuspIntv"
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SUS_INTV_MIN           (0)
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SUS_INTV_MAX           (4294967295UL)
-#define CFG_QOS_WMM_INFRA_UAPSD_VI_SUS_INTV_DEFAULT       (2000)
-
-/*
- * <ini>
  * InfraUapsdBeSrvIntv - Set Uapsd service interval for BE
  * @Min: 0
  * @Max: 4294967295UL
@@ -2872,117 +2828,6 @@ enum station_keepalive_method {
 #define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_MIN           (0)
 #define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_MAX           (4294967295UL)
 #define CFG_QOS_WMM_INFRA_UAPSD_BK_SUS_INTV_DEFAULT       (2000)
-
- /* default TSPEC parameters for AC_VI */
-/*
- * <ini>
- * InfraDirAcVi - Set TSPEC direction for VI
- * @Min: 0
- * @Max: 3
- * @Default: 3
- *
- * This ini is used to set TSPEC direction for VI
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_DIR_AC_VI_NAME   "InfraDirAcVi"
-#define CFG_QOS_WMM_INFRA_DIR_AC_VI_MIN     (0)
-#define CFG_QOS_WMM_INFRA_DIR_AC_VI_MAX     (3)
-#define CFG_QOS_WMM_INFRA_DIR_AC_VI_DEFAULT (3) /*WLAN_QCT_CUST_WMM_TSDIR_BOTH*/
-
-/*
- * <ini>
- * InfraNomMsduSizeAcVi - Set normal MSDU size for VI
- * @Min: 0x0
- * @Max: 0xFFFF
- * @Default: 0x85DC
- *
- * This ini is used to set normal MSDU size for VI
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VI_NAME      "InfraNomMsduSizeAcVi"
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VI_MIN        (0x0)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VI_MAX        (0xFFFF)
-#define CFG_QOS_WMM_INFRA_NOM_MSDU_SIZE_AC_VI_DEFAULT    (0x85DC)
-
-/*
- * <ini>
- * InfraMeanDataRateAcVi - Set mean data rate for VI
- * @Min: 0x0
- * @Max: 0xFFFFFFFF
- * @Default: 0x57E40
- *
- * This ini is used to set mean data rate for VI
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VI_NAME    "InfraMeanDataRateAcVi"
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VI_MIN      (0x0)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VI_MAX      (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MEAN_DATA_RATE_AC_VI_DEFAULT  (0x57E40)
-
-/*
- * <ini>
- * iInfraMinPhyRateAcVi - Set min PHY rate for VI
- * @Min: 0x0
- * @Max: 0xFFFFFFFF
- * @Default: 0x5B8D80
- *
- * This ini is used to set min PHY rate for VI
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VI_NAME        "InfraMinPhyRateAcVi"
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VI_MIN          (0x0)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VI_MAX          (0xFFFFFFFF)
-#define CFG_QOS_WMM_INFRA_MIN_PHY_RATE_AC_VI_DEFAULT      (0x5B8D80)
-
-/*
- * <ini>
- * InfraSbaAcVi - Set surplus bandwidth allowance for VI
- * @Min: 0x2001
- * @Max: 0xFFFF
- * @Default: 0x2001
- *
- * This ini is used to set surplus bandwidth allowance for VI
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
- #define CFG_QOS_WMM_INFRA_SBA_AC_VI_NAME                   "InfraSbaAcVi"
- #define CFG_QOS_WMM_INFRA_SBA_AC_VI_MIN                     (0x2001)
- #define CFG_QOS_WMM_INFRA_SBA_AC_VI_MAX                     (0xFFFF)
- #define CFG_QOS_WMM_INFRA_SBA_AC_VI_DEFAULT                 (0x2001)
 
  /* default TSPEC parameters for AC_BE*/
 /*
@@ -7108,8 +6953,6 @@ struct hdd_config {
 	enum hdd_wmm_user_mode WmmMode;
 	bool b80211eIsEnabled;
 	uint8_t UapsdMask;      /* what ACs to setup U-APSD for at assoc */
-	uint32_t InfraUapsdViSrvIntv;
-	uint32_t InfraUapsdViSuspIntv;
 	uint32_t InfraUapsdBeSrvIntv;
 	uint32_t InfraUapsdBeSuspIntv;
 	uint32_t InfraUapsdBkSrvIntv;
@@ -7125,13 +6968,6 @@ struct hdd_config {
 	bool isWESModeEnabled;
 	bool isRoamOffloadScanEnabled;
 	bool bImplicitQosEnabled;
-
-	/* default TSPEC parameters for AC_VI */
-	enum sme_qos_wmm_dir_type InfraDirAcVi;
-	uint16_t InfraNomMsduSizeAcVi;
-	uint32_t InfraMeanDataRateAcVi;
-	uint32_t InfraMinPhyRateAcVi;
-	uint16_t InfraSbaAcVi;
 
 	/* default TSPEC parameters for AC_BE */
 	enum sme_qos_wmm_dir_type InfraDirAcBe;

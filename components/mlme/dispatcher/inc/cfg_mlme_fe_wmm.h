@@ -179,6 +179,131 @@
 		0x2001, \
 		CFG_VALUE_OR_DEFAULT, \
 		"surplus bandwidth allowance for VO")
+/*
+ * <ini>
+ * InfraDirAcVi - Set TSPEC direction for VI
+ * @Min: 0
+ * @Max: 3
+ * @Default: 3
+ *
+ * This ini is used to set TSPEC direction for VI
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_DIR_AC_VI CFG_INI_UINT( \
+		"InfraDirAcVi", \
+		0, \
+		3, \
+		3, \
+		CFG_VALUE_OR_DEFAULT, \
+		"TSPEC direction for VI")
+
+/*
+ * <ini>
+ * InfraNomMsduSizeAcVi - Set normal MSDU size for VI
+ * @Min: 0x0
+ * @Max: 0xFFFF
+ * @Default: 0x85DC
+ *
+ * This ini is used to set normal MSDU size for VI
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_NOM_MSDU_SIZE_AC_VI CFG_INI_UINT( \
+		"InfraNomMsduSizeAcVi", \
+		0x0, \
+		0xFFFF, \
+		0x85DC, \
+		CFG_VALUE_OR_DEFAULT, \
+		"MSDU size for VI")
+
+/*
+ * <ini>
+ * InfraMeanDataRateAcVi - Set mean data rate for VI
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x57E40
+ *
+ * This ini is used to set mean data rate for VI
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_MEAN_DATA_RATE_AC_VI CFG_INI_UINT( \
+		"InfraMeanDataRateAcVi", \
+		0x0, \
+		0xFFFFFFFF, \
+		0x57E40, \
+		CFG_VALUE_OR_DEFAULT, \
+		"data rate for VI")
+
+/*
+ * <ini>
+ * iInfraMinPhyRateAcVi - Set min PHY rate for VI
+ * @Min: 0x0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x5B8D80
+ *
+ * This ini is used to set min PHY rate for VI
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_MIN_PHY_RATE_AC_VI CFG_INI_UINT( \
+		"InfraMinPhyRateAcVi", \
+		0x0, \
+		0xFFFFFFFF, \
+		0x5B8D80, \
+		CFG_VALUE_OR_DEFAULT, \
+		"min PHY rate for VI")
+
+/*
+ * <ini>
+ * InfraSbaAcVi - Set surplus bandwidth allowance for VI
+ * @Min: 0x2001
+ * @Max: 0xFFFF
+ * @Default: 0x2001
+ *
+ * This ini is used to set surplus bandwidth allowance for VI
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_QOS_WMM_SBA_AC_VI CFG_INI_UINT( \
+		"InfraSbaAcVi", \
+		0x2001, \
+		0xFFFF, \
+		0x2001, \
+		CFG_VALUE_OR_DEFAULT, \
+		"surplus bandwidth allowance for VI")
 
 /*
  * <ini>
@@ -230,6 +355,57 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"Infra uapsd vo sus intv")
 
+/*
+ * <ini>
+ * InfraUapsdViSrvIntv - Set Uapsd service interval for video
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 300
+ *
+ * This ini is used to set Uapsd service interval for video.
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_QOS_WMM_UAPSD_VI_SRV_INTV CFG_INI_UINT( \
+		"InfraUapsdViSrvIntv", \
+		0, \
+		4294967295UL, \
+		300, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Infra uapsd vi srv intv")
+
+/*
+ * <ini>
+ * InfraUapsdViSuspIntv - Set Uapsd suspension interval for video
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 2000
+ *
+ * This ini is used to set Uapsd suspension interval for video
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_UAPSD_VI_SUS_INTV CFG_INI_UINT( \
+		"InfraUapsdViSuspIntv", \
+		0, \
+		4294967295UL, \
+		2000, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Infra uapsd vi sus intv")
+
 #define CFG_WMM_PARAMS_ALL \
 	CFG(CFG_QOS_ENABLED) \
 	CFG(CFG_WME_ENABLED) \
@@ -242,6 +418,13 @@
 	CFG(CFG_QOS_WMM_MIN_PHY_RATE_AC_VO) \
 	CFG(CFG_QOS_WMM_SBA_AC_VO) \
 	CFG(CFG_QOS_WMM_UAPSD_VO_SRV_INTV) \
-	CFG(CFG_QOS_WMM_UAPSD_VO_SUS_INTV)
+	CFG(CFG_QOS_WMM_UAPSD_VO_SUS_INTV) \
+	CFG(CFG_QOS_WMM_DIR_AC_VI) \
+	CFG(CFG_QOS_WMM_NOM_MSDU_SIZE_AC_VI) \
+	CFG(CFG_QOS_WMM_MEAN_DATA_RATE_AC_VI) \
+	CFG(CFG_QOS_WMM_MIN_PHY_RATE_AC_VI) \
+	CFG(CFG_QOS_WMM_SBA_AC_VI) \
+	CFG(CFG_QOS_WMM_UAPSD_VI_SRV_INTV) \
+	CFG(CFG_QOS_WMM_UAPSD_VI_SUS_INTV)
 
 #endif /* __CFG_MLME_FE_WMM_H */
