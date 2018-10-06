@@ -1019,12 +1019,34 @@ struct wlan_mlme_wmm_ac_vo {
 };
 
 /**
+ * struct wlan_mlme_wmm_ac_vi - Default TSPEC parameters
+ * for AC_VI
+ * @dir_ac_vi: TSPEC direction for VI
+ * @nom_msdu_size_ac_vi: normal MSDU size for VI
+ * @mean_data_rate_ac_vi: mean data rate for VI
+ * @min_phy_rate_ac_vi: min PHY rate for VI
+ * @sba_ac_vi: surplus bandwidth allowance for VI
+ * @uapsd_vo_srv_intv: Uapsd service interval for VI
+ * @uapsd_vo_sus_intv: Uapsd suspension interval for VI
+ */
+struct wlan_mlme_wmm_ac_vi {
+	uint8_t dir_ac_vi;
+	uint16_t nom_msdu_size_ac_vi;
+	uint32_t mean_data_rate_ac_vi;
+	uint32_t min_phy_rate_ac_vi;
+	uint16_t sba_ac_vi;
+	uint32_t uapsd_vi_srv_intv;
+	uint32_t uapsd_vi_sus_intv;
+};
+
+/**
  * struct wlan_mlme_wmm_params - WMM CFG Items
  * @qos_enabled: AP is enabled with 11E
  * @wme_enabled: AP is enabled with WMM
  * @max_sp_length: Maximum SP Length
  * @wsm_enabled: AP is enabled with WSM
  * @ac_vo: Default TSPEC parameters for AC_VO
+ * @ac_vi: Default TSPEC parameters for AC_VI
  */
 struct wlan_mlme_wmm_params {
 	bool qos_enabled;
@@ -1033,6 +1055,7 @@ struct wlan_mlme_wmm_params {
 	bool wsm_enabled;
 	uint32_t edca_profile;
 	struct wlan_mlme_wmm_ac_vo ac_vo;
+	struct wlan_mlme_wmm_ac_vi ac_vi;
 };
 
 /**

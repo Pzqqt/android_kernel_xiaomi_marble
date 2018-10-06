@@ -1263,6 +1263,22 @@ static void mlme_init_wmm_in_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_QOS_WMM_UAPSD_VO_SRV_INTV);
 	wmm_params->ac_vo.uapsd_vo_sus_intv =
 			cfg_get(psoc, CFG_QOS_WMM_UAPSD_VO_SUS_INTV);
+
+	wmm_params->ac_vi.dir_ac_vi =
+		cfg_get(psoc, CFG_QOS_WMM_DIR_AC_VI);
+	wmm_params->ac_vi.nom_msdu_size_ac_vi =
+		cfg_get(psoc, CFG_QOS_WMM_NOM_MSDU_SIZE_AC_VI);
+	wmm_params->ac_vi.mean_data_rate_ac_vi =
+		cfg_get(psoc, CFG_QOS_WMM_MEAN_DATA_RATE_AC_VI);
+	wmm_params->ac_vi.min_phy_rate_ac_vi =
+		cfg_get(psoc, CFG_QOS_WMM_MIN_PHY_RATE_AC_VI);
+	wmm_params->ac_vi.sba_ac_vi =
+		cfg_get(psoc, CFG_QOS_WMM_SBA_AC_VI);
+	wmm_params->ac_vi.uapsd_vi_srv_intv =
+		cfg_get(psoc, CFG_QOS_WMM_UAPSD_VI_SRV_INTV);
+	wmm_params->ac_vi.uapsd_vi_sus_intv =
+		cfg_get(psoc, CFG_QOS_WMM_UAPSD_VI_SUS_INTV);
+
 }
 
 static void mlme_init_wps_params_cfg(struct wlan_objmgr_psoc *psoc,
