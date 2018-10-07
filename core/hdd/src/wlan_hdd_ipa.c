@@ -401,7 +401,8 @@ void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb, qdf_netdev_t dev)
 		return;
 	}
 
-	if (adapter->device_mode == QDF_SAP_MODE) {
+	if ((adapter->device_mode == QDF_SAP_MODE) &&
+	    (qdf_nbuf_is_ipv4_dhcp_pkt(skb) == true)) {
 		/* Send DHCP Indication to FW */
 		struct qdf_mac_addr *src_mac =
 			(struct qdf_mac_addr *)(skb->data +
