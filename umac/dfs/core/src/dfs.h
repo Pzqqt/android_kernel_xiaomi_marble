@@ -2430,6 +2430,18 @@ void dfs_nol_free_list(struct wlan_dfs *dfs);
 int dfs_second_segment_radar_disable(struct wlan_dfs *dfs);
 
 /**
+ * dfs_check_for_cac_start() - Check for DFS CAC start conditions.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @continue_current_cac: If AP can start CAC then this variable indicates
+ * whether to continue with the current CAC or restart the CAC. This variable
+ * is valid only if this function returns true.
+ *
+ * Return: true if AP can start or continue the current CAC, else false.
+ */
+bool dfs_check_for_cac_start(struct wlan_dfs *dfs,
+			     bool *continue_current_cac);
+
+/**
  * dfs_task_testtimer_reset() - stop dfs test timer.
  * @dfs: Pointer to wlan_dfs structure.
  */

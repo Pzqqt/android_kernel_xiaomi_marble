@@ -326,3 +326,109 @@ void dfs_clear_cac_started_chan(struct wlan_dfs *dfs)
 	qdf_mem_zero(&dfs->dfs_cac_started_chan,
 		     sizeof(dfs->dfs_cac_started_chan));
 }
+
+bool dfs_check_for_cac_start(struct wlan_dfs *dfs,
+			     bool *continue_current_cac)
+{
+	if (!WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(dfs->dfs_curchan)) {
+		/* Consider a case where AP was up in a DFS channel and in CAC
+		 * period (DFS-WAIT state) and the workque to initiate CAC is
+		 * scheduled. At this time, real radar/spoof radar pulses from
+		 * bottom-half/tasklet context are received which is given
+		 * higher priority than Workque context. Due to radar, channel
+		 * change happened, AP switched to non-DFS channel and curchan
+		 * is non-DFS. The scheduled workque gets executed now, starts
+		 * a CAC on non-DFS curchan(curchan has changed from DFS to
+		 * non-DFS work queue func not aware of this !!). Though the
+		 * vap state machine moves the state of the vap from DFS-WAIT
+		 * to RUN state as curchan is non-DFS, the cac timer is not
+		 * cancelled. CAC timer on non-DFS channel runs and it expires.
+		 * So cancelling CAC here if chan is not DFS to avoid this
+		 * unexpected run and expiry of CAC.
+		 */
+		dfs_cac_stop(dfs);
+		dfs_mlme_proc_cac(dfs->dfs_pdev_obj, 0);
+
+		/* Clear the old dfs cac started channel if the current channel
+		 * is NON-DFS.
+		 * For example: AP sets the cac started channel as 100. It does
+		 * cac on channel 100 and starts beaconing. User changes the AP
+		 * channel to 36 and after sometime if user changes the channel
+		 * back to 100, AP does  not do the CAC since user channel and
+		 * cac started channel is same.
+		 */
+		dfs_clear_cac_started_chan(dfs);
+		dfs_debug(dfs, WLAN_DEBUG_DFS, "Skip CAC on NON-DFS chan");
+		return false;
+	}
+
+	if (dfs->dfs_ignore_dfs || dfs->dfs_cac_valid || dfs->dfs_ignore_cac) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			  "Skip CAC, ignore_dfs = %d cac_valid = %d ignore_cac = %d",
+			  dfs->dfs_ignore_dfs, dfs->dfs_cac_valid,
+			  dfs->dfs_ignore_cac);
+		return false;
+	}
+
+	if (dfs_is_etsi_precac_done(dfs)) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			  "ETSI PRE-CAC alreay done on this channel %d",
+			  dfs->dfs_curchan->dfs_ch_ieee);
+		return false;
+	}
+
+	/* If the channel has completed PRE-CAC then CAC can be skipped here. */
+	if (dfs_is_precac_done(dfs, dfs->dfs_curchan)) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			  "PRE-CAC alreay done on this channel %d",
+			  dfs->dfs_curchan->dfs_ch_ieee);
+		return false;
+	}
+
+	if (dfs_is_ap_cac_timer_running(dfs)) {
+		/* Check if we should continue the existing CAC or
+		 * cancel the existing CAC.
+		 * For example: - if an existing VAP(0) is already in
+		 * DFS wait state (which means the radio(wifi) is
+		 * running the CAC) and it is in channel A and another
+		 * VAP(1) comes up in the same channel then instead of
+		 * cancelling the CAC we can let the CAC continue.
+		 */
+		if (dfs_is_curchan_subset_of_cac_started_chan(dfs)) {
+			*continue_current_cac = true;
+		} else {
+			/* New CAC is needed, cancel the running CAC
+			 * timer.
+			 * 1) When AP is in DFS_WAIT state and it is in
+			 *    channel A and user restarts the AP vap in
+			 *    channel B, then cancel the running CAC in
+			 *    channel A and start new CAC in channel B.
+			 *
+			 * 2) When AP detects the RADAR during CAC in
+			 *    channel A, it cancels the running CAC and
+			 *    tries to find channel B with the reduced
+			 *    bandwidth with of channel A.
+			 *    In this case, since the CAC is aborted by
+			 *    the RADAR, AP should start the CAC again.
+			 */
+			dfs_cancel_cac_timer(dfs);
+		}
+	} else { /* CAC timer is not running. */
+		if (dfs_is_curchan_subset_of_cac_started_chan(dfs)) {
+			/* AP bandwidth reduce case:
+			 * When AP detects the RADAR in in-service monitoring
+			 * mode in channel A, it cancels the running CAC and
+			 * tries to find the channel B with the reduced
+			 * bandwidth of channel A.
+			 * If the new channel B is subset of the channel A
+			 * then AP skips the CAC.
+			 */
+			if (!dfs->dfs_cac_aborted) {
+				dfs_debug(dfs, WLAN_DEBUG_DFS, "Skip CAC");
+				return false;
+			}
+		}
+	}
+
+	return true;
+}

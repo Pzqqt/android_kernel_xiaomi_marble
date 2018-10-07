@@ -159,39 +159,6 @@ QDF_STATUS utils_dfs_precac_decide_pref_chan(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
-QDF_STATUS utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
-		bool *is_precac_done)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (!dfs)
-		return  QDF_STATUS_E_FAILURE;
-
-	*is_precac_done = dfs_is_precac_done(dfs, dfs->dfs_curchan);
-
-	return QDF_STATUS_SUCCESS;
-}
-qdf_export_symbol(utils_dfs_is_precac_done);
-
-#ifdef QCA_SUPPORT_ETSI_PRECAC_DFS
-QDF_STATUS utils_dfs_is_etsi_precac_done(struct wlan_objmgr_pdev *pdev,
-					 bool *is_etsi_precac_done)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (!dfs)
-		return  QDF_STATUS_E_FAILURE;
-
-	*is_etsi_precac_done = dfs_is_etsi_precac_done(dfs);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-qdf_export_symbol(utils_dfs_is_etsi_precac_done);
-#endif
-
 QDF_STATUS utils_dfs_cancel_cac_timer(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
@@ -233,6 +200,18 @@ QDF_STATUS utils_dfs_cac_stop(struct wlan_objmgr_pdev *pdev)
 }
 qdf_export_symbol(utils_dfs_cac_stop);
 
+bool utils_dfs_check_for_cac_start(struct wlan_objmgr_pdev *pdev,
+				   bool *continue_current_cac)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs)
+		return false;
+
+	return dfs_check_for_cac_start(dfs, continue_current_cac);
+}
+
 QDF_STATUS utils_dfs_stacac_stop(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
@@ -246,40 +225,6 @@ QDF_STATUS utils_dfs_stacac_stop(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 qdf_export_symbol(utils_dfs_stacac_stop);
-
-bool utils_dfs_is_curchan_subset_of_cac_started_chan(
-		struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (!dfs)
-		return false;
-
-	return dfs_is_curchan_subset_of_cac_started_chan(dfs);
-}
-
-bool utils_dfs_is_cac_aborted(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (!dfs)
-		return false;
-
-	return dfs->dfs_cac_aborted;
-}
-
-void utils_dfs_clear_cac_started_chan(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (!dfs)
-		return;
-
-	dfs_clear_cac_started_chan(dfs);
-}
 
 QDF_STATUS utils_dfs_get_usenol(struct wlan_objmgr_pdev *pdev, uint16_t *usenol)
 {
@@ -411,60 +356,6 @@ QDF_STATUS utils_dfs_second_segment_radar_disable(struct wlan_objmgr_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;
 }
-
-QDF_STATUS utils_dfs_is_ignore_dfs(struct wlan_objmgr_pdev *pdev,
-		bool *ignore_dfs)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (!dfs)
-		return  QDF_STATUS_E_FAILURE;
-
-	*ignore_dfs = dfs->dfs_ignore_dfs;
-
-	return QDF_STATUS_SUCCESS;
-}
-qdf_export_symbol(utils_dfs_is_ignore_dfs);
-
-QDF_STATUS utils_dfs_is_cac_valid(struct wlan_objmgr_pdev *pdev,
-		bool *is_cac_valid)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (!dfs)
-		return  QDF_STATUS_E_FAILURE;
-
-	*is_cac_valid = dfs->dfs_cac_valid;
-
-	return QDF_STATUS_SUCCESS;
-}
-qdf_export_symbol(utils_dfs_is_cac_valid);
-
-QDF_STATUS utils_dfs_is_ignore_cac(struct wlan_objmgr_pdev *pdev,
-		bool *ignore_cac)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (!dfs)
-		return  QDF_STATUS_E_FAILURE;
-
-	*ignore_cac = dfs->dfs_ignore_cac;
-
-	/*
-	 * This is needed as, if after channel bandwidth reduction, channel
-	 * change occurs using dothchanswitch or chan commands, resetting.
-	 * dfs->dfs_ignore_cac will make sure we not skip CAC on the new channel
-	 */
-
-	if (dfs->dfs_bw_reduced)
-		dfs->dfs_ignore_cac = 0;
-
-	return QDF_STATUS_SUCCESS;
-}
-qdf_export_symbol(utils_dfs_is_ignore_cac);
 
 QDF_STATUS utils_dfs_set_cac_timer_running(struct wlan_objmgr_pdev *pdev,
 		int val)

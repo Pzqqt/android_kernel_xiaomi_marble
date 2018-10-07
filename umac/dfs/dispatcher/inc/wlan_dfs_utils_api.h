@@ -160,16 +160,6 @@ QDF_STATUS utils_dfs_cancel_precac_timer(struct wlan_objmgr_pdev *pdev);
  */
 QDF_STATUS utils_dfs_start_precac_timer(struct wlan_objmgr_pdev *pdev);
 
-/**
- * utils_dfs_is_precac_done() - Is precac done.
- * @pdev: Pointer to DFS pdev object.
- *
- * wrapper function for dfs_is_precac_done(). this
- * function called from outside of dfs component.
- */
-QDF_STATUS utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
-		bool *is_precac_done);
-
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
 /**
  * utils_dfs_precac_decide_pref_chan() - Choose preferred channel
@@ -185,25 +175,6 @@ QDF_STATUS utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS utils_dfs_precac_decide_pref_chan(struct wlan_objmgr_pdev *pdev,
 					     uint8_t *ch_ieee);
-#endif
-
-/**
- * utils_dfs_is_esti_precac_done() - Is ETSI precac done.
- * @pdev: Pointer to DFS pdev object.
- *
- * wrapper function for dfs_is_etsi_precac_done(). This
- * function called from outside of dfs component.
- */
-#ifdef QCA_SUPPORT_ETSI_PRECAC_DFS
-QDF_STATUS utils_dfs_is_etsi_precac_done(struct wlan_objmgr_pdev *pdev,
-					 bool *is_etsi_precac_done);
-#else
-static inline QDF_STATUS utils_dfs_is_etsi_precac_done(
-		struct wlan_objmgr_pdev *pdev,
-		bool *is_etsi_precac_done)
-{
-	return QDF_STATUS_SUCCESS;
-}
 #endif
 
 /**
@@ -241,34 +212,6 @@ QDF_STATUS utils_dfs_cac_stop(struct wlan_objmgr_pdev *pdev);
  * function called from outside of dfs component.
  */
 QDF_STATUS utils_dfs_stacac_stop(struct wlan_objmgr_pdev *pdev);
-
-/**
- * utils_dfs_is_curchan_subset_of_cac_started_chan() - Check if the dfs current
- * channel is subset of cac started channel.
- * @pdev: Pointer to DFS pdev object.
- *
- * wrapper function for dfs_is_curchan_subset_of_cac_started_chan(). this
- * function called from outside of dfs component.
- *
- * Return: true if current channel is same or subset of  cac started channel,
- * else false.
- */
-bool utils_dfs_is_curchan_subset_of_cac_started_chan(
-		struct wlan_objmgr_pdev *pdev);
-
-/**
- * utils_dfs_is_cac_aborted() - Check if previous CAC was aborted.
- * @pdev: Pointer to DFS pdev object.
- *
- * Return: true if previous CAC was aborted, else false.
- */
-bool utils_dfs_is_cac_aborted(struct wlan_objmgr_pdev *pdev);
-
-/**
- * utils_dfs_clear_cac_started_chan() - Clear dfs cac started channel.
- * @pdev: Pointer to DFS pdev object.
- */
-void utils_dfs_clear_cac_started_chan(struct wlan_objmgr_pdev *pdev);
 
 /**
  * utils_dfs_get_usenol() - Returns use_nol flag.
@@ -365,30 +308,6 @@ QDF_STATUS utils_dfs_nol_update(struct wlan_objmgr_pdev *pdev);
  */
 QDF_STATUS utils_dfs_second_segment_radar_disable(
 		struct wlan_objmgr_pdev *pdev);
-
-/**
- * utils_dfs_is_ignore_dfs() - Get Ignore DFS value.
- * @pdev: Pointer to DFS pdev object.
- * @ignore_dfs: Fill ignore_dfs value in this variable.
- */
-QDF_STATUS utils_dfs_is_ignore_dfs(struct wlan_objmgr_pdev *pdev,
-		bool *ignore_dfs);
-
-/**
- * utils_dfs_is_cac_valid() - Gets the value of is_cac_valid.
- * @pdev: Pointer to DFS pdev object.
- * @is_cac_valid: Fill is_cac_valid in this variable.
- */
-QDF_STATUS utils_dfs_is_cac_valid(struct wlan_objmgr_pdev *pdev,
-		bool *is_cac_valid);
-
-/**
- * utils_dfs_is_ignore_cac() - Gets the value of is_ignore_cac.
- * @pdev: Pointer to DFS pdev object.
- * @ignore_cac: Fill ignore_cac value in this variable.
- */
-QDF_STATUS utils_dfs_is_ignore_cac(struct wlan_objmgr_pdev *pdev,
-		bool *ignore_cac);
 
 /**
  * utils_dfs_set_cac_timer_running() - Sets the cac timer running.
@@ -640,4 +559,16 @@ int dfs_get_num_chans(void);
 void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 			     void *clist,
 			     uint32_t *num_chan);
+
+/**
+ * utils_dfs_check_for_cac_start() - Check for DFS CAC start conditions.
+ * @pdev: pdev ptr
+ * @continue_current_cac: If AP can start CAC then this variable indicates
+ * whether to continue with the current CAC or restart the CAC. This variable
+ * is valid only if this function returns true.
+ *
+ * Return: true if AP can start or continue the current CAC, else false.
+ */
+bool utils_dfs_check_for_cac_start(struct wlan_objmgr_pdev *pdev,
+				   bool *continue_current_cac);
 #endif /* _WLAN_DFS_UTILS_API_H_ */
