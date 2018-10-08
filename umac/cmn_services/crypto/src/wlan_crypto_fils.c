@@ -143,14 +143,12 @@ fils_parse_ie(qdf_nbuf_t wbuf, uint8_t hdrlen, uint8_t **cap_info,
 				pktlen_left, elem_id);
 				crypto_err("len:%dextid:%d", len, *frm);
 				return QDF_STATUS_E_INVAL;
-		}
-
-		if (*frm == WLAN_ELEMID_EXT_FILS_SESSION) {
-			fils_found = 1;
-			break;
 			}
-		frm++;
-		pktlen_left--;
+
+			if (*frm == WLAN_ELEMID_EXT_FILS_SESSION) {
+				fils_found = 1;
+				break;
+			}
 		}
 
 		if (len > pktlen_left) {
