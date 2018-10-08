@@ -139,8 +139,13 @@ static struct reg_default ep92_reg_defaults[] = {
  * GC = General Control
  * AI = Audio Info
  */
-#define EP92_GI_ADO_CHF_MASK     0x01
-#define EP92_GI_CEC_ECF_MASK     0x02
+#define EP92_GI_ADO_CHF_MASK        0x01
+#define EP92_GI_CEC_ECF_MASK        0x02
+#define EP92_GI_TX_HOT_PLUG_SHIFT   7
+#define EP92_GI_TX_HOT_PLUG_MASK    0x80
+#define EP92_GI_VIDEO_LATENCY_SHIFT 0
+#define EP92_GI_VIDEO_LATENCY_MASK  0xff
+
 #define EP92_GC_POWER_SHIFT      7
 #define EP92_GC_POWER_MASK       0x80
 #define EP92_GC_AUDIO_PATH_SHIFT 5
@@ -149,10 +154,19 @@ static struct reg_default ep92_reg_defaults[] = {
 #define EP92_GC_CEC_MUTE_MASK    0x02
 #define EP92_GC_ARC_EN_SHIFT     0
 #define EP92_GC_ARC_EN_MASK      0x01
+#define EP92_GC_ARC_DIS_SHIFT    6
+#define EP92_GC_ARC_DIS_MASK     0x40
 #define EP92_GC_RX_SEL_SHIFT     0
 #define EP92_GC_RX_SEL_MASK      0x07
 #define EP92_GC_CEC_VOLUME_SHIFT 0
 #define EP92_GC_CEC_VOLUME_MASK  0xff
+#define EP92_GC_LINK_ON0_SHIFT   0
+#define EP92_GC_LINK_ON0_MASK    0x01
+#define EP92_GC_LINK_ON1_SHIFT   1
+#define EP92_GC_LINK_ON1_MASK    0x02
+#define EP92_GC_LINK_ON2_SHIFT   2
+#define EP92_GC_LINK_ON2_MASK    0x04
+
 #define EP92_AI_MCLK_ON_SHIFT    6
 #define EP92_AI_MCLK_ON_MASK     0x40
 #define EP92_AI_AVMUTE_SHIFT     5
