@@ -1042,6 +1042,7 @@ enum scan_event_type {
  * @SCAN_REASON_RUN_FAILED: run failed
  * @SCAN_REASON_TERMINATION_FUNCTION: termination function
  * @SCAN_REASON_MAX_OFFCHAN_RETRIES: max retries exceeded thresold
+ * @SCAN_REASON_DFS_VIOLATION: Scan start failure due to DFS violation.
  * @SCAN_REASON_MAX: invalid completion reason marker
  */
 enum scan_completion_reason {
@@ -1055,6 +1056,7 @@ enum scan_completion_reason {
 	SCAN_REASON_RUN_FAILED,
 	SCAN_REASON_TERMINATION_FUNCTION,
 	SCAN_REASON_MAX_OFFCHAN_RETRIES,
+	SCAN_REASON_DFS_VIOLATION,
 	SCAN_REASON_MAX,
 };
 
