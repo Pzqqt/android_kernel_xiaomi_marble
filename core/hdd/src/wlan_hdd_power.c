@@ -1789,8 +1789,10 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	if (hdd_ctx->enable_dp_rx_threads)
 		dp_txrx_suspend(cds_get_context(QDF_MODULE_ID_SOC));
 
-	if (hdd_suspend_wlan() < 0)
+	if (hdd_suspend_wlan() < 0) {
+		hdd_err("Failed to suspend WLAN");
 		goto resume_all;
+	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SUSPEND_WLAN,
@@ -1803,6 +1805,11 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	return 0;
 
 resume_all:
+	/* Resume tlshim Rx thread */
+	if (hdd_ctx->is_ol_rx_thread_suspended) {
+		cds_resume_rx_thread();
+		hdd_ctx->is_ol_rx_thread_suspended = false;
+	}
 	scheduler_resume();
 	hdd_ctx->is_scheduler_suspended = false;
 resume_tx:

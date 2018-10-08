@@ -106,7 +106,7 @@ typedef struct _cds_sched_context {
 	/* Completion object to suspend OL rx thread */
 	struct completion ol_suspend_rx_event;
 
-	/* Completion objext to resume OL rx thread */
+	/* Completion object to resume OL rx thread */
 	struct completion ol_resume_rx_event;
 
 	/* Completion object for OL Rxthread shutdown */
