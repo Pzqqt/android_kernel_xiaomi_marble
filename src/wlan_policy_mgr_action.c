@@ -1334,10 +1334,13 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 					&vdev_id[cc_count],
 					PM_SAP_MODE);
 	policy_mgr_debug("Number of concurrent SAP: %d", cc_count);
-	cc_count = cc_count + policy_mgr_get_mode_specific_conn_info(psoc,
-						&operating_channel[cc_count],
-						&vdev_id[cc_count],
-						PM_P2P_GO_MODE);
+	if (cc_count < MAX_NUMBER_OF_CONC_CONNECTIONS)
+		cc_count = cc_count +
+				policy_mgr_get_mode_specific_conn_info
+					(psoc,
+					&operating_channel[cc_count],
+					&vdev_id[cc_count],
+					PM_P2P_GO_MODE);
 	policy_mgr_debug("Number of beaconing entities (SAP + GO):%d",
 							cc_count);
 	if (!cc_count) {
@@ -1357,16 +1360,18 @@ static void __policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 		policy_mgr_err("SAP restart get channel callback in NULL");
 		goto end;
 	}
-	for (i = 0; i < cc_count; i++) {
-		status = pm_ctx->hdd_cbacks.
-			wlan_hdd_get_channel_for_sap_restart(psoc,
+	if (cc_count < MAX_NUMBER_OF_CONC_CONNECTIONS)
+		for (i = 0; i < cc_count; i++) {
+			status = pm_ctx->hdd_cbacks.
+				wlan_hdd_get_channel_for_sap_restart
+					(psoc,
 					vdev_id[i], &channel, &sec_ch);
-		if (status == QDF_STATUS_SUCCESS) {
-			policy_mgr_info("SAP restarts due to MCC->SCC switch, old chan :%d new chan: %d"
+			if (status == QDF_STATUS_SUCCESS) {
+				policy_mgr_info("SAP restarts due to MCC->SCC switch, old chan :%d new chan: %d"
 					, operating_channel[i], channel);
-			break;
+				break;
+			}
 		}
-	}
 	if (status != QDF_STATUS_SUCCESS)
 		policy_mgr_err("Failed to switch SAP channel");
 end:
