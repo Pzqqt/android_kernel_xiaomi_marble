@@ -1522,7 +1522,7 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	value[len++] = 0x1FFFD;
 
 	reg[len] = SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN;
-	value[len++] = 0x1FFFD;
+	value[len++] = 0x1FDFD;
 
 	swr_master_bulk_write(swrm, reg, value, len);
 
