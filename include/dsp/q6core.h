@@ -208,4 +208,17 @@ int32_t core_get_license_status(uint32_t module_id);
 
 int32_t q6core_load_unload_topo_modules(uint32_t topology_id,
 			bool preload_type);
+
+#if IS_ENABLED(CONFIG_USE_Q6_32CH_SUPPORT)
+static inline bool q6core_use_Q6_32ch_support(void)
+{
+	return true;
+}
+#else
+static inline bool q6core_use_Q6_32ch_support(void)
+{
+	return false;
+}
+#endif
+
 #endif /* __Q6CORE_H__ */
