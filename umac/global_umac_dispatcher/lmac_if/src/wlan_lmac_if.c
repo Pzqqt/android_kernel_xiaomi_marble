@@ -373,6 +373,8 @@ wlan_lmac_if_umac_dfs_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 		ucfg_dfs_get_override_status_timeout;
 	dfs_rx_ops->dfs_reset_spoof_test =
 		tgt_dfs_reset_spoof_test;
+	dfs_rx_ops->dfs_is_disable_radar_marking_set =
+		utils_dfs_get_disable_radar_marking;
 
 	register_precac_auto_chan_rx_ops(dfs_rx_ops);
 

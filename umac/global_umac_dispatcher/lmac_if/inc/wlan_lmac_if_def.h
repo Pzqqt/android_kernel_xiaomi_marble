@@ -587,6 +587,7 @@ struct wlan_lmac_if_reg_tx_ops {
  * @dfs_host_dfs_check_support:         To check Host DFS confirmation feature
  *                                      support.
  * @dfs_send_avg_radar_params_to_fw:    Send average radar parameters to FW.
+ * @dfs_send_usenol_pdev_param:         Send usenol pdev param to FW.
  */
 
 struct wlan_lmac_if_dfs_tx_ops {
@@ -631,6 +632,8 @@ struct wlan_lmac_if_dfs_tx_ops {
 	QDF_STATUS (*dfs_send_avg_radar_params_to_fw)(
 			struct wlan_objmgr_pdev *pdev,
 			struct dfs_radar_found_params *params);
+	QDF_STATUS (*dfs_send_usenol_pdev_param)(struct wlan_objmgr_pdev *pdev,
+						 bool usenol);
 };
 
 /**
@@ -1084,6 +1087,7 @@ struct wlan_lmac_if_nan_rx_ops {
  * @dfs_get_override_status_timeout:  Get the value of host dfs status wait
  *                                    timeout.
  * @dfs_reset_spoof_test:             Checks if radar detection is enabled.
+ * @dfs_is_disable_radar_marking_set: Check if dis_radar_marking param is set.
  */
 struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_get_radars)(struct wlan_objmgr_pdev *pdev);
@@ -1170,6 +1174,9 @@ struct wlan_lmac_if_dfs_rx_ops {
 			struct wlan_objmgr_pdev *pdev,
 			int *status_timeout);
 	QDF_STATUS (*dfs_reset_spoof_test)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*dfs_is_disable_radar_marking_set)(struct wlan_objmgr_pdev
+						 *pdev,
+						 bool *disable_radar_marking);
 };
 
 struct wlan_lmac_if_mlme_rx_ops {
