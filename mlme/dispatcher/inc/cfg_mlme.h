@@ -33,6 +33,7 @@
 #include "cfg_mlme_obss_ht40.h"
 #include "cfg_mlme_dfs.h"
 #include "cfg_mlme_mbo.h"
+#include "cfg_mlme_nss_chains.h"
 #include "cfg_mlme_vht_caps.h"
 #include "cfg_qos.h"
 #include "cfg_mlme_timeout.h"
@@ -61,6 +62,7 @@
 	CFG_LFR_ALL \
 	CFG_MBO_ALL \
 	CFG_MLME_PRODUCT_DETAILS_ALL \
+	CFG_NSS_CHAINS_ALL \
 	CFG_OBSS_HT40_ALL \
 	CFG_OCE_ALL \
 	CFG_QOS_ALL \

@@ -1026,6 +1026,45 @@ enum dot11p_mode {
 };
 
 /**
+ * enum nss_chains_band_info - Band info for dynamic nss, chains change feature
+ * @BAND_2GHZ: 2.4Ghz band
+ * @BAND_5GHZ: 5Ghz band
+ * @BAND_MAX: Max bands supported
+ */
+enum nss_chains_band_info {
+	BAND_2GHZ = 0,
+	BAND_5GHZ,
+	BAND_MAX,
+};
+
+#define MAX_VDEV_NSS                2
+#define MAX_VDEV_CHAINS             2
+
+/**
+ * struct wlan_mlme_nss_chains -     MLME vdev config of nss, and chains
+ * @num_tx_chains:                   tx chains of vdev config
+ * @num_rx_chains:                   rx chains of vdev config
+ * @tx_nss:                          tx nss of vdev config
+ * @rx_nss:                          rx nss of vdev config
+ * @num_tx_chains_11b:               number of tx chains in 11b mode
+ * @num_tx_chains_11g:               number of tx chains in 11g mode
+ * @num_tx_chains_11a:               number of tx chains in 11a mode
+ * @disable_rx_mrc:                  disable 2 rx chains, in rx nss 1 mode
+ * @disable_tx_mrc:                  disable 2 tx chains, in tx nss 1 mode
+ */
+struct wlan_mlme_nss_chains {
+	uint32_t num_tx_chains[BAND_MAX];
+	uint32_t num_rx_chains[BAND_MAX];
+	uint32_t tx_nss[BAND_MAX];
+	uint32_t rx_nss[BAND_MAX];
+	uint32_t num_tx_chains_11b;
+	uint32_t num_tx_chains_11g;
+	uint32_t num_tx_chains_11a;
+	bool disable_rx_mrc[BAND_MAX];
+	bool disable_tx_mrc[BAND_MAX];
+};
+
+/**
  * struct wlan_mlme_sta_cfg - MLME STA configuration items
  * @sta_keep_alive_period:          Sends NULL frame to AP period
  * @tgt_gtx_usr_cfg:                Target gtx user config
@@ -1498,6 +1537,7 @@ struct wlan_mlme_wep_cfg {
  * @dfs_cfg: DFS related CFG Items
  * @sap_protection_cfg: SAP erp protection related CFG items
  * @sap_cfg: sap CFG items
+ * @nss_chains_ini_cfg: Per vdev nss, chains related CFG items
  * @sta: sta CFG Items
  * @scoring: BSS Scoring related CFG Items
  * @oce: OCE related CFG items
@@ -1525,6 +1565,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_dfs_cfg dfs_cfg;
 	struct wlan_mlme_sap_protection sap_protection_cfg;
 	struct wlan_mlme_cfg_sap sap_cfg;
+	struct wlan_mlme_nss_chains nss_chains_ini_cfg;
 	struct wlan_mlme_sta_cfg sta;
 	struct wlan_mlme_scoring_cfg scoring;
 	struct wlan_mlme_oce oce;
