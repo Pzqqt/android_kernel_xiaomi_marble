@@ -364,6 +364,28 @@
 #define HOST_DFS_STATUS_WAIT_TIMER_MS 200
 #endif
 
+/*
+ * USENOL_DISABLE_NOL_HOST_AND_FW : Do not add radar hit channel to NOL
+ * in host and FW. Enable CSA on the same channel.
+ */
+#define USENOL_DISABLE_NOL_HOST_AND_FW 0
+/*
+ * USENOL_ENABLE_NOL_HOST_AND_FW : Add the radar hit channel to NOL in
+ * host and FW (in case of FO). NOL timer cannot be configured by the user
+ * as FW does not allow manipulating NOL timeout. If noltimeout is configured,
+ * (say 1 min) FW will not be intimated about the configuration and hence NOL
+ * timer may elapse at different instances in host (after 1 min) and FW (after
+ * default 30 min) which could lead to DFS Violation if host tries to come up
+ * on the channel after host NOL timeout (of 1 min) as the FW would still
+ * have the channel in NOL list.
+ */
+#define USENOL_ENABLE_NOL_HOST_AND_FW 1
+/*
+ * USENOL_ENABLE_NOL_HOST_DISABLE_NOL_FW : Add the radar hit channel to NOL
+ * in host. NOL timer can be configured by user. NOL in FW (for FO) is disabled.
+ */
+#define USENOL_ENABLE_NOL_HOST_DISABLE_NOL_FW 2
+
 /**
  * struct dfs_pulseparams - DFS pulse param structure.
  * @p_time:        Time for start of pulse in usecs.
@@ -979,6 +1001,7 @@ struct dfs_event_log {
  * @dfs_bw_reduced:                  DFS bandwidth reduced channel bit.
  * @dfs_freq_offset:                 Frequency offset where radar was found.
  * @dfs_cac_aborted:                 DFS cac is aborted.
+ * @dfs_disable_radar_marking:       To mark or unmark NOL chan as radar hit.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1071,7 +1094,9 @@ struct wlan_dfs {
 	os_timer_t     dfs_precac_timer;
 	int            dfs_precac_timeout_override;
 	uint8_t        dfs_num_precac_freqs;
-
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+	uint8_t        dfs_disable_radar_marking;
+#endif
 	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_required_list;
 	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_done_list;
 	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_nol_list;
@@ -2472,4 +2497,27 @@ void dfs_task_testtimer_detach(struct wlan_dfs *dfs);
  * @dfs: Pointer to wlan_dfs structure.
  */
 void dfs_timer_detach(struct wlan_dfs *dfs);
+
+/**
+ * dfs_is_disable_radar_marking_set() - Check if radar marking is set on
+ * NOL chan.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+int dfs_is_disable_radar_marking_set(struct wlan_dfs *dfs,
+				     bool *disable_radar_marking);
+#else
+static inline int dfs_is_disable_radar_marking_set(struct wlan_dfs *dfs,
+						   bool *disable_radar_marking)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+/**
+ * dfs_get_disable_radar_marking() - Get the value of disable radar marking.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+bool dfs_get_disable_radar_marking(struct wlan_dfs *dfs);
+#endif
 #endif  /* _DFS_H_ */

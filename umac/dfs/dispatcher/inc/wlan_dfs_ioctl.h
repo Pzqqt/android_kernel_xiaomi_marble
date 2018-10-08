@@ -52,13 +52,15 @@
 #define DFS_SHOW_PRECAC_LISTS    24
 #define DFS_RESET_PRECAC_LISTS   25
 #define DFS_BANGRADAR_ENH        26
+#define DFS_SET_DISABLE_RADAR_MARKING 27
+#define DFS_GET_DISABLE_RADAR_MARKING 28
 
 /*
  * Spectral IOCTLs use DFS_LAST_IOCTL as the base.
  * This must always be the last IOCTL in DFS and have
  * the highest value.
  */
-#define DFS_LAST_IOCTL 27
+#define DFS_LAST_IOCTL 29
 
 #ifndef DFS_CHAN_MAX
 #define DFS_CHAN_MAX 1023

@@ -402,4 +402,22 @@ QDF_STATUS tgt_dfs_reset_spoof_test(struct wlan_objmgr_pdev *pdev)
  * Return: true if the pdev supports 5GHz, else false.
  */
 bool tgt_dfs_is_pdev_5ghz(struct wlan_objmgr_pdev *pdev);
+/**
+ * tgt_dfs_send_usenol_pdev_param() - Send usenol pdev param to FW.
+ * @pdev: Pointer to pdev object.
+ * @usenol: Value of usenol
+ *
+ * Return: QDF_STATUS
+ */
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+QDF_STATUS tgt_dfs_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
+					  bool usenol);
+#else
+static inline
+QDF_STATUS tgt_dfs_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
+					  bool usenol)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif /* _WLAN_DFS_TGT_API_H_ */

@@ -979,3 +979,26 @@ int dfs_get_num_chans(void)
 {
 	return NUM_CHANNELS;
 }
+
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+QDF_STATUS utils_dfs_get_disable_radar_marking(struct wlan_objmgr_pdev *pdev,
+					       bool *disable_radar_marking)
+{
+	struct wlan_dfs *dfs;
+
+	if (!tgt_dfs_is_pdev_5ghz(pdev))
+		return QDF_STATUS_SUCCESS;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is null");
+		return  QDF_STATUS_E_FAILURE;
+	}
+
+	*disable_radar_marking = dfs_get_disable_radar_marking(dfs);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+qdf_export_symbol(utils_dfs_get_disable_radar_marking);
+#endif

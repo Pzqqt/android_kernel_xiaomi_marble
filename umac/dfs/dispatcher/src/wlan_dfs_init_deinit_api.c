@@ -34,6 +34,8 @@
 #include "a_types.h"
 #include "wlan_serialization_api.h"
 #include <qdf_trace.h>
+#include "wlan_scan_ucfg_api.h"
+#include "wlan_dfs_mlme_api.h"
 
 struct dfs_to_mlme global_dfs_to_mlme;
 
@@ -102,6 +104,10 @@ void register_dfs_callbacks(void)
 		mlme_dfs_restart_vaps_with_non_dfs_chan;
 	tmp_dfs_to_mlme->mlme_check_allowed_prim_chanlist =
 		mlme_dfs_check_allowed_prim_chanlist;
+	tmp_dfs_to_mlme->mlme_update_scan_channel_list =
+		mlme_dfs_update_scan_channel_list;
+	tmp_dfs_to_mlme->mlme_bringdown_vaps =
+		mlme_dfs_bringdown_vaps;
 
 	/*
 	 * Register precac auto channel switch feature related callbacks

@@ -571,4 +571,22 @@ void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
  */
 bool utils_dfs_check_for_cac_start(struct wlan_objmgr_pdev *pdev,
 				   bool *continue_current_cac);
+
+/**
+ * utils_dfs_get_disable_radar_marking - Retrieve the value of disable radar
+ * marking.
+ * @pdev: Pointer to DFS pdev object.
+ * @dis_radar_marking: pointer to retrieve the value of disable_radar_marking.
+ */
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+QDF_STATUS utils_dfs_get_disable_radar_marking(struct wlan_objmgr_pdev *pdev,
+					       bool *disable_radar_marking);
+#else
+static inline
+QDF_STATUS utils_dfs_get_disable_radar_marking(struct wlan_objmgr_pdev *pdev,
+					       bool *disable_radar_marking)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif /* _WLAN_DFS_UTILS_API_H_ */

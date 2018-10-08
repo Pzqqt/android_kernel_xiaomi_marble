@@ -33,6 +33,9 @@
 #include "../dfs_etsi_precac.h"
 #include "../dfs_partial_offload_radar.h"
 
+/* Disable NOL in FW. */
+#define DISABLE_NOL_FW 0
+
 #ifndef WLAN_DFS_STATIC_MEM_ALLOC
 /*
  * dfs_alloc_wlan_dfs() - allocate wlan_dfs buffer
@@ -274,6 +277,35 @@ void dfs_destroy_object(struct wlan_dfs *dfs)
 }
 #endif
 
+/* dfs_set_disable_radar_marking()- Set the flag to mark/unmark a radar flag
+ * on NOL channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @disable_radar_marking: Flag to enable/disable marking channel as radar.
+ */
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+static void dfs_set_disable_radar_marking(struct wlan_dfs *dfs,
+					  bool disable_radar_marking)
+{
+	dfs->dfs_disable_radar_marking = disable_radar_marking;
+}
+#else
+static inline void dfs_set_disable_radar_marking(struct wlan_dfs *dfs,
+						 bool disable_radar_marking)
+{
+}
+#endif
+
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+bool dfs_get_disable_radar_marking(struct wlan_dfs *dfs)
+{
+	return dfs->dfs_disable_radar_marking;
+}
+#else
+static inline bool dfs_get_disable_radar_marking(struct wlan_dfs *dfs)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 int dfs_control(struct wlan_dfs *dfs,
 		u_int id,
 		void *indata,
@@ -290,6 +322,7 @@ int dfs_control(struct wlan_dfs *dfs,
 	uint32_t *data = NULL;
 	int i;
 	struct dfs_emulate_bang_radar_test_cmd dfs_unit_test;
+	int usenol_pdev_param;
 
 	qdf_mem_zero(&dfs_unit_test, sizeof(dfs_unit_test));
 
@@ -574,6 +607,36 @@ int dfs_control(struct wlan_dfs *dfs,
 			break;
 		}
 		dfs->dfs_use_nol = *(uint32_t *)indata;
+		usenol_pdev_param = dfs->dfs_use_nol;
+		if (dfs->dfs_is_offload_enabled) {
+			if (dfs->dfs_use_nol ==
+				USENOL_ENABLE_NOL_HOST_DISABLE_NOL_FW)
+				usenol_pdev_param = DISABLE_NOL_FW;
+			tgt_dfs_send_usenol_pdev_param(dfs->dfs_pdev_obj,
+						       usenol_pdev_param);
+		}
+		break;
+	case DFS_SET_DISABLE_RADAR_MARKING:
+		if (dfs->dfs_is_offload_enabled &&
+		    (utils_get_dfsdomain(dfs->dfs_pdev_obj) ==
+			 DFS_FCC_DOMAIN)) {
+			if (insize < sizeof(uint32_t) || !indata) {
+				error = -EINVAL;
+				break;
+			}
+			dfs_set_disable_radar_marking(dfs, *(uint8_t *)indata);
+		}
+		break;
+	case DFS_GET_DISABLE_RADAR_MARKING:
+		if (!outdata || !outsize || *outsize < sizeof(uint8_t)) {
+			error = -EINVAL;
+			break;
+		}
+		if (dfs->dfs_is_offload_enabled) {
+			*outsize = sizeof(uint8_t);
+			*((uint8_t *)outdata) =
+				dfs_get_disable_radar_marking(dfs);
+		}
 		break;
 	case DFS_GET_NOL:
 		if (!outdata || !outsize ||
@@ -605,12 +668,12 @@ int dfs_control(struct wlan_dfs *dfs,
 		dfs_print_nolhistory(dfs);
 		break;
 	case DFS_BANGRADAR:
+		dfs->dfs_bangradar = 1;
 		if (dfs->dfs_is_offload_enabled) {
 			error = dfs_fill_emulate_bang_radar_test(dfs,
 					SEG_ID_PRIMARY,
 					&dfs_unit_test);
 		} else {
-			dfs->dfs_bangradar = 1;
 			error = dfs_start_host_based_bangradar(dfs);
 		}
 		break;

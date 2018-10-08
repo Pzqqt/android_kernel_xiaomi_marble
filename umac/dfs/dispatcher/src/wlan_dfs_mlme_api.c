@@ -26,6 +26,7 @@
 #include "wlan_objmgr_pdev_obj.h"
 #include "../../core/src/dfs.h"
 #include "scheduler_api.h"
+#include <wlan_reg_ucfg_api.h>
 #ifdef QCA_MCL_DFS_SUPPORT
 #include "wni_api.h"
 #endif
@@ -321,5 +322,19 @@ bool dfs_mlme_check_allowed_prim_chanlist(struct wlan_objmgr_pdev *pdev,
 
 	return global_dfs_to_mlme.mlme_check_allowed_prim_chanlist(pdev,
 								   chan_num);
+}
+
+#endif
+
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+void dfs_mlme_handle_dfs_scan_violation(struct wlan_objmgr_pdev *pdev)
+{
+	bool dfs_enable = 0;
+
+	/*Disable all DFS channels in master channel list and ic channel list */
+	ucfg_reg_enable_dfs_channels(pdev, dfs_enable);
+
+	/* send the updated channel list to FW */
+	global_dfs_to_mlme.mlme_update_scan_channel_list(pdev);
 }
 #endif

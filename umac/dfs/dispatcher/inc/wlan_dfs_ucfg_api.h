@@ -59,6 +59,8 @@
  * @mlme_check_allowed_prim_chanlist:  Check whether the given channel is
  *                                     present in the primary allowed channel
  *                                     list or not.
+ * @mlme_update_scan_channel_list:     Update the scan channel list sent to FW.
+ * @mlme_bringdown_vaps:               Bringdown vaps if no chans is present.
  */
 struct dfs_to_mlme {
 	QDF_STATUS (*pdev_component_obj_attach)(struct wlan_objmgr_pdev *pdev,
@@ -141,6 +143,10 @@ struct dfs_to_mlme {
 			(struct wlan_objmgr_pdev *pdev, int no_chans_avail);
 	bool (*mlme_check_allowed_prim_chanlist)
 			(struct wlan_objmgr_pdev *pdev, uint32_t chan_num);
+	QDF_STATUS (*mlme_update_scan_channel_list)
+			(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*mlme_bringdown_vaps)
+			(struct wlan_objmgr_pdev *pdev);
 };
 
 extern struct dfs_to_mlme global_dfs_to_mlme;

@@ -267,4 +267,18 @@ bool dfs_mlme_check_allowed_prim_chanlist(struct wlan_objmgr_pdev *pdev,
 	return true;
 }
 #endif
+
+/**
+ * dfs_mlme_handle_dfs_scan_violation() - Handle scan start failure
+ * due to DFS violation (presence of NOL channel in scan channel list).
+ * @pdev: Pointer to pdev object.
+ */
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+void dfs_mlme_handle_dfs_scan_violation(struct wlan_objmgr_pdev *pdev);
+#else
+static inline
+void dfs_mlme_handle_dfs_scan_violation(struct wlan_objmgr_pdev *pdev)
+{
+}
+#endif
 #endif /* _WLAN_DFS_MLME_API_H_ */

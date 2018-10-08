@@ -584,3 +584,29 @@ QDF_STATUS tgt_dfs_reset_spoof_test(struct wlan_objmgr_pdev *pdev)
 
 qdf_export_symbol(tgt_dfs_reset_spoof_test);
 #endif
+
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+QDF_STATUS tgt_dfs_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
+					  bool usenol)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS, "psoc is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_tx_ops = wlan_psoc_get_dfs_txops(psoc);
+	if (dfs_tx_ops && dfs_tx_ops->dfs_send_usenol_pdev_param)
+		return dfs_tx_ops->dfs_send_usenol_pdev_param(pdev, usenol);
+
+	dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+		"dfs_tx_ops=%pK", dfs_tx_ops);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+qdf_export_symbol(tgt_dfs_send_usenol_pdev_param);
+#endif
