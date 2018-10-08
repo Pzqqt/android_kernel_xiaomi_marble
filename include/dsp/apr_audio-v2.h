@@ -1085,7 +1085,9 @@ struct adm_cmd_connect_afe_port_v5 {
 #define SLIMBUS_7_TX		0x400f
 #define SLIMBUS_8_RX		0x4010
 #define SLIMBUS_8_TX		0x4011
-#define SLIMBUS_PORT_LAST	SLIMBUS_8_TX
+#define SLIMBUS_9_RX		0x4012
+#define SLIMBUS_9_TX		0x4013
+#define SLIMBUS_PORT_LAST	SLIMBUS_9_TX
 #define INT_BT_SCO_RX 0x3000
 #define INT_BT_SCO_TX 0x3001
 #define INT_BT_A2DP_RX 0x3002
@@ -1284,6 +1286,10 @@ struct adm_cmd_connect_afe_port_v5 {
 #define AFE_PORT_ID_SLIMBUS_MULTI_CHAN_8_RX      0x4010
 /* SLIMbus Tx port on channel 8. */
 #define AFE_PORT_ID_SLIMBUS_MULTI_CHAN_8_TX      0x4011
+/* SLIMbus Rx port on channel 9. */
+#define AFE_PORT_ID_SLIMBUS_MULTI_CHAN_9_RX      0x4012
+/* SLIMbus Tx port on channel 9. */
+#define AFE_PORT_ID_SLIMBUS_MULTI_CHAN_9_TX      0x4013
 /* AFE Rx port for audio over Display port */
 #define AFE_PORT_ID_HDMI_OVER_DP_RX              0x6020
 /*USB AFE port */
