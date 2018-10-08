@@ -60,5 +60,23 @@ static QDF_STATUS target_process_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
+/**
+ * target_send_usenol_pdev_param - send usenol pdev param to FW.
+ * @pdev: Pointer to pdev object.
+ * @usenol: Value of user configured usenol.
+ *
+ * Return: QDF_STATUS
+ */
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+QDF_STATUS target_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
+					 bool usenol);
+#else
+static inline QDF_STATUS
+target_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
+			      bool usenol)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif /* _TARGET_IF_DFS_FULL_OFFLOAD_H_ */
 

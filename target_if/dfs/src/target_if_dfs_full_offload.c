@@ -243,3 +243,28 @@ static QDF_STATUS target_process_bang_radar_cmd(
 	    return QDF_STATUS_SUCCESS;
 }
 #endif
+
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+QDF_STATUS target_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
+					 bool usenol)
+{
+	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
+
+	if (!pdev) {
+		target_if_err("null pdev");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_pdev(pdev);
+	if (!wmi_handle) {
+		target_if_err("null wmi_handle");
+		return QDF_STATUS_E_FAILURE;
+	}
+	status = wmi_send_usenol_pdev_param(wmi_handle, usenol, pdev);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		target_if_err("dfs: usenol_pdev_param send failed %d", status);
+	return status;
+}
+#endif

@@ -378,5 +378,7 @@ QDF_STATUS target_if_register_dfs_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		&target_if_dfs_send_avg_params_to_fw;
 	dfs_tx_ops->dfs_is_tgt_offload = &target_if_dfs_offload;
 
+	dfs_tx_ops->dfs_send_usenol_pdev_param =
+		&target_send_usenol_pdev_param;
 	return QDF_STATUS_SUCCESS;
 }
