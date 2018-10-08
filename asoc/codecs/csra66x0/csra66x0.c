@@ -214,6 +214,9 @@ static bool csra66x0_volatile_register(struct device *dev, unsigned int reg)
 {
 	switch (reg) {
 	case CSRA66X0_CHIP_ID_FA:
+	case CSRA66X0_ROM_VER_FA:
+	case CSRA66X0_CHIP_REV_0_FA:
+	case CSRA66X0_CHIP_REV_1_FA:
 	case CSRA66X0_TEMP_READ0_FA:
 	case CSRA66X0_TEMP_READ1_FA:
 	case CSRA66X0_MISC_CONTROL_STATUS_1_FA:
@@ -265,6 +268,20 @@ struct csra66x0_priv {
 	struct dentry *debugfs_file_wo;
 	struct dentry *debugfs_file_ro;
 #endif /* CONFIG_DEBUG_FS */
+};
+
+struct csra66x0_cluster_device {
+	struct csra66x0_priv *csra66x0_ptr;
+	const char *csra66x0_prefix;
+};
+
+struct csra66x0_cluster_device csra_clust_dev_tbl[] = {
+	{NULL, "CSRA_12"},
+	{NULL, "CSRA_34"},
+	{NULL, "CSRA_56"},
+	{NULL, "CSRA_78"},
+	{NULL, "CSRA_9A"},
+	{NULL, "CSRA_BC"}
 };
 
 #if IS_ENABLED(CONFIG_DEBUG_FS)
@@ -515,9 +532,12 @@ static const struct snd_soc_dapm_route csra66x0_dapm_routes[] = {
 	{"SPKR", NULL, "POWER"},
 };
 
-static int csra66x0_init(struct snd_soc_codec *codec,
-			struct csra66x0_priv *csra66x0)
+static int csra66x0_init(struct csra66x0_priv *csra66x0)
 {
+	struct snd_soc_codec  *codec = csra66x0->codec;
+
+	dev_dbg(codec->dev, "%s: initialize %s\n",
+		__func__, codec->component.name);
 	/* config */
 	snd_soc_write(codec, CSRA66X0_CHIP_STATE_CTRL_FA, CONFIG_STATE);
 	/* settle time in HW is min. 500ms before proceeding */
@@ -565,35 +585,106 @@ static int csra66x0_init(struct snd_soc_codec *codec,
 	return 0;
 }
 
+static int csra66x0_reset(struct csra66x0_priv *csra66x0)
+{
+	struct snd_soc_codec  *codec = csra66x0->codec;
+	u16 val;
+
+	val = snd_soc_read(codec, CSRA66X0_FAULT_STATUS_FA);
+	if (val & FAULT_STATUS_INTERNAL)
+		dev_dbg(codec->dev, "%s: FAULT_STATUS_INTERNAL 0x%X\n",
+			__func__, val);
+	if (val & FAULT_STATUS_OTP_INTEGRITY)
+		dev_dbg(codec->dev, "%s: FAULT_STATUS_OTP_INTEGRITY 0x%X\n",
+			__func__, val);
+	if (val & FAULT_STATUS_PADS2)
+		dev_dbg(codec->dev, "%s: FAULT_STATUS_PADS2 0x%X\n",
+			__func__, val);
+	if (val & FAULT_STATUS_SMPS)
+		dev_dbg(codec->dev, "%s: FAULT_STATUS_SMPS 0x%X\n",
+			__func__, val);
+	if (val & FAULT_STATUS_TEMP)
+		dev_dbg(codec->dev, "%s: FAULT_STATUS_TEMP 0x%X\n",
+			__func__, val);
+	if (val & FAULT_STATUS_PROTECT)
+		dev_dbg(codec->dev, "%s: FAULT_STATUS_PROTECT 0x%X\n",
+			__func__, val);
+
+	dev_dbg(codec->dev, "%s: reset %s\n",
+		__func__, codec->component.name);
+	/* clear fault state and re-init */
+	snd_soc_write(codec, CSRA66X0_FAULT_STATUS_FA, 0x00);
+	snd_soc_write(codec, CSRA66X0_IRQ_OUTPUT_STATUS_FA, 0x00);
+	/* apply reset to CSRA66X0 */
+	val = snd_soc_read(codec, CSRA66X0_MISC_CONTROL_STATUS_1_FA);
+	snd_soc_write(codec, CSRA66X0_MISC_CONTROL_STATUS_1_FA, val | 0x08);
+	/* wait 500ms after reset to recover CSRA66X0 */
+	msleep(500);
+	return 0;
+}
+
+static int csra66x0_msconfig(struct csra66x0_priv *csra66x0)
+{
+	struct snd_soc_codec  *codec = csra66x0->codec;
+
+	dev_dbg(codec->dev, "%s: configure %s\n",
+		__func__, codec->component.name);
+	/* config */
+	snd_soc_write(codec, CSRA66X0_CHIP_STATE_CTRL_FA,
+		CONFIG_STATE);
+	/* settle time in HW is min. 500ms before proceeding */
+	msleep(500);
+	snd_soc_write(codec, CSRA66X0_PIO7_SELECT, 0x04);
+	snd_soc_write(codec, CSRA66X0_PIO8_SELECT, 0x04);
+	if (csra66x0->is_master) {
+		/* Master specific config */
+		snd_soc_write(codec, CSRA66X0_PIO_PULL_EN0, 0xFF);
+		snd_soc_write(codec, CSRA66X0_PIO_PULL_DIR0, 0x80);
+		snd_soc_write(codec, CSRA66X0_PIO_PULL_EN1, 0x01);
+		snd_soc_write(codec, CSRA66X0_PIO_PULL_DIR1, 0x01);
+	} else {
+		/* Slave specific config */
+		snd_soc_write(codec, CSRA66X0_PIO_PULL_EN0, 0x7F);
+		snd_soc_write(codec, CSRA66X0_PIO_PULL_EN1, 0x00);
+	}
+	snd_soc_write(codec, CSRA66X0_DCA_CTRL, 0x05);
+	return 0;
+}
+
 static int csra66x0_soc_probe(struct snd_soc_codec *codec)
 {
 	struct csra66x0_priv *csra66x0 = snd_soc_codec_get_drvdata(codec);
 	struct snd_soc_dapm_context *dapm;
 	char name[50];
+	unsigned int i, max_num_cluster_devices;
 
+	csra66x0->codec = codec;
 	if (csra66x0->in_cluster) {
 		dapm = snd_soc_codec_get_dapm(codec);
 		dev_dbg(codec->dev, "%s: assign prefix %s to codec device %s\n",
 			__func__, codec->component.name_prefix,
 			codec->component.name);
-		snd_soc_write(codec, CSRA66X0_CHIP_STATE_CTRL_FA,
-			CONFIG_STATE);
-		/* settle time in HW is min. 500ms before proceeding */
-		msleep(500);
-		snd_soc_write(codec, CSRA66X0_PIO7_SELECT, 0x04);
-		snd_soc_write(codec, CSRA66X0_PIO8_SELECT, 0x04);
-		if (csra66x0->is_master) {
-			/* Master specific config */
-			snd_soc_write(codec, CSRA66X0_PIO_PULL_EN0, 0xFF);
-			snd_soc_write(codec, CSRA66X0_PIO_PULL_DIR0, 0x80);
-			snd_soc_write(codec, CSRA66X0_PIO_PULL_EN1, 0x01);
-			snd_soc_write(codec, CSRA66X0_PIO_PULL_DIR1, 0x01);
-		} else {
-			/* Slave specific config */
-			snd_soc_write(codec, CSRA66X0_PIO_PULL_EN0, 0x7F);
-			snd_soc_write(codec, CSRA66X0_PIO_PULL_EN1, 0x00);
+
+		/* add device to cluster table */
+		max_num_cluster_devices = sizeof(csra_clust_dev_tbl)/
+			sizeof(csra_clust_dev_tbl[0]);
+		for (i = 0; i < max_num_cluster_devices; i++) {
+			if (!strncmp(codec->component.name_prefix,
+				  csra_clust_dev_tbl[i].csra66x0_prefix,
+				  strlen(
+				  csra_clust_dev_tbl[i].csra66x0_prefix))) {
+				csra_clust_dev_tbl[i].csra66x0_ptr = csra66x0;
+				break;
+			}
+			if (i == max_num_cluster_devices-1)
+				dev_warn(codec->dev,
+					"%s: Unknown prefix %s of cluster device %s\n",
+					__func__, codec->component.name_prefix,
+					codec->component.name);
 		}
-		snd_soc_write(codec, CSRA66X0_DCA_CTRL, 0x05);
+
+		/* master slave config */
+		csra66x0_msconfig(csra66x0);
 		if (dapm->component) {
 			strlcpy(name, dapm->component->name_prefix,
 				sizeof(name));
@@ -606,10 +697,8 @@ static int csra66x0_soc_probe(struct snd_soc_codec *codec)
 		}
 	}
 
-	csra66x0->codec = codec;
-
-	/* common configuration */
-	csra66x0_init(codec, csra66x0);
+	/* common initialization */
+	csra66x0_init(csra66x0);
 	return 0;
 }
 
@@ -679,66 +768,56 @@ static irqreturn_t csra66x0_irq(int irq, void *data)
 	struct csra66x0_priv *csra66x0 = (struct csra66x0_priv *) data;
 	struct snd_soc_codec  *codec = csra66x0->codec;
 	u16    val;
+	unsigned int i, max_num_cluster_devices;
 
 	/* Treat interrupt before codec is initialized as spurious */
 	if (codec == NULL)
 		return IRQ_NONE;
 
-	dev_dbg(codec->dev, "%s: csra66x0_interrupt\n", __func__);
+	dev_dbg(codec->dev, "%s: csra66x0_interrupt triggered by %s\n",
+		__func__, codec->component.name);
 
 	/* fault  indication */
 	val = snd_soc_read(codec, CSRA66X0_IRQ_OUTPUT_STATUS_FA) & 0x1;
-	if (val) {
-		val = snd_soc_read(codec, CSRA66X0_FAULT_STATUS_FA);
-		if (val & FAULT_STATUS_INTERNAL)
-			dev_dbg(codec->dev, "%s: FAULT_STATUS_INTERNAL 0x%X\n",
-				__func__, val);
-		if (val & FAULT_STATUS_OTP_INTEGRITY)
-			dev_dbg(codec->dev, "%s: FAULT_STATUS_OTP_INTEGRITY 0x%X\n",
-				__func__, val);
-		if (val & FAULT_STATUS_PADS2)
-			dev_dbg(codec->dev, "%s: FAULT_STATUS_PADS2 0x%X\n",
-				__func__, val);
-		if (val & FAULT_STATUS_SMPS)
-			dev_dbg(codec->dev, "%s: FAULT_STATUS_SMPS 0x%X\n",
-				__func__, val);
-		if (val & FAULT_STATUS_TEMP)
-			dev_dbg(codec->dev, "%s: FAULT_STATUS_TEMP 0x%X\n",
-				__func__, val);
-		if (val & FAULT_STATUS_PROTECT)
-			dev_dbg(codec->dev, "%s: FAULT_STATUS_PROTECT 0x%X\n",
-				__func__, val);
+	if (!val)
+		return IRQ_HANDLED;
 
-		/* clear fault state and re-init */
-		snd_soc_write(codec, CSRA66X0_FAULT_STATUS_FA, 0x00);
-		snd_soc_write(codec, CSRA66X0_IRQ_OUTPUT_STATUS_FA, 0x00);
-		/* apply reset to CSRA66X0 */
-		val = snd_soc_read(codec, CSRA66X0_MISC_CONTROL_STATUS_1_FA);
-		snd_soc_write(codec, CSRA66X0_MISC_CONTROL_STATUS_1_FA, val | 0x08);
-		/* wait 2s after reset to recover CSRA66X0 */
-		msleep(2000);
-		/* re-init */
-		snd_soc_write(codec, CSRA66X0_CHIP_STATE_CTRL_FA,
-			CONFIG_STATE);
-		/* settle time in HW is min. 500ms before proceeding */
-		msleep(500);
-		snd_soc_write(codec, CSRA66X0_PIO7_SELECT, 0x04);
-		snd_soc_write(codec, CSRA66X0_PIO8_SELECT, 0x04);
-		if (csra66x0->is_master) {
-			/* Master specific config */
-			snd_soc_write(codec, CSRA66X0_PIO_PULL_EN0, 0xFF);
-			snd_soc_write(codec, CSRA66X0_PIO_PULL_DIR0, 0x80);
-			snd_soc_write(codec, CSRA66X0_PIO_PULL_EN1, 0x01);
-			snd_soc_write(codec, CSRA66X0_PIO_PULL_DIR1, 0x01);
-		} else {
-			/* Slave specific config */
-			snd_soc_write(codec, CSRA66X0_PIO_PULL_EN0, 0x7F);
-			snd_soc_write(codec, CSRA66X0_PIO_PULL_EN1, 0x00);
+	if (csra66x0->in_cluster) {
+		/* reset all slave codecs */
+		max_num_cluster_devices =
+			sizeof(csra_clust_dev_tbl) /
+			sizeof(csra_clust_dev_tbl[0]);
+		for (i = 0; i < max_num_cluster_devices; i++) {
+			if (i >= codec->component.card->num_aux_devs)
+				break;
+			if (csra_clust_dev_tbl[i].csra66x0_ptr == NULL)
+				continue;
+			if (csra_clust_dev_tbl[i].csra66x0_ptr->is_master)
+				continue;
+			csra66x0_reset(csra_clust_dev_tbl[i].csra66x0_ptr);
 		}
-		snd_soc_write(codec, CSRA66X0_DCA_CTRL, 0x05);
-		csra66x0_init(codec, csra66x0);
+		/* reset all master codecs */
+		for (i = 0; i < max_num_cluster_devices; i++) {
+			if (i >= codec->component.card->num_aux_devs)
+				break;
+			if (csra_clust_dev_tbl[i].csra66x0_ptr == NULL)
+				continue;
+			if (csra_clust_dev_tbl[i].csra66x0_ptr->is_master)
+				csra66x0_reset(
+					csra_clust_dev_tbl[i].csra66x0_ptr);
+		}
+		/* recover all codecs */
+		for (i = 0; i < max_num_cluster_devices; i++) {
+			if (i >= codec->component.card->num_aux_devs)
+				break;
+			if (csra_clust_dev_tbl[i].csra66x0_ptr == NULL)
+				continue;
+			csra66x0_msconfig(csra_clust_dev_tbl[i].csra66x0_ptr);
+			csra66x0_init(csra_clust_dev_tbl[i].csra66x0_ptr);
+		}
 	} else {
-		return IRQ_NONE;
+		csra66x0_reset(csra66x0);
+		csra66x0_init(csra66x0);
 	}
 	return IRQ_HANDLED;
 };
@@ -791,7 +870,8 @@ static int csra66x0_i2c_probe(struct i2c_client *client_i2c,
 			&csra66x0->is_master);
 		if (ret) {
 			dev_info(&client_i2c->dev,
-			"%s: qcom,csra-cluster-master property not defined in DT\n", __func__);
+			"%s: qcom,csra-cluster-master property not defined in DT, slave assumed\n",
+			__func__);
 			csra66x0->is_master = 0;
 		}
 
