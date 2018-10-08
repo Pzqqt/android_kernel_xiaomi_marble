@@ -581,6 +581,11 @@ int wifi_pos_oem_rsp_handler(struct wlan_objmgr_psoc *psoc,
 		return -EINVAL;
 	}
 
+	if (!wifi_pos_send_rsp) {
+		wifi_pos_err("invalid response handler");
+		return -EINVAL;
+	}
+
 	wifi_pos_debug("oem data rsp, len: %d to pid: %d", len, app_pid);
 
 	if (oem_rsp->rsp_len_2 + oem_rsp->dma_len) {
