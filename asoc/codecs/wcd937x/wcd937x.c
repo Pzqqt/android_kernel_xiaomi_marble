@@ -1374,6 +1374,60 @@ static int wcd937x_set_compander(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int wcd937x_codec_enable_vdd_buck(struct snd_soc_dapm_widget *w,
+					 struct snd_kcontrol *kcontrol,
+					 int event)
+{
+	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+	struct wcd937x_priv *wcd937x = snd_soc_codec_get_drvdata(codec);
+	struct wcd937x_pdata *pdata = NULL;
+	int ret = 0;
+
+	pdata = dev_get_platdata(wcd937x->dev);
+
+	if (!pdata) {
+		dev_err(codec->dev, "%s: pdata is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	dev_dbg(codec->dev, "%s wname: %s event: %d\n", __func__,
+		w->name, event);
+
+	switch (event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		ret = msm_cdc_enable_ondemand_supply(wcd937x->dev,
+						wcd937x->supplies,
+						pdata->regulator,
+						pdata->num_supplies,
+						"cdc-vdd-buck");
+		if (ret == -EINVAL) {
+			dev_err(codec->dev, "%s: vdd buck is not enabled\n",
+				__func__);
+			return ret;
+		}
+		/*
+		 * 200us sleep is required after LDO15 is enabled as per
+		 * HW requirement
+		 */
+		usleep_range(200, 250);
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		ret = msm_cdc_disable_ondemand_supply(wcd937x->dev,
+						wcd937x->supplies,
+						pdata->regulator,
+						pdata->num_supplies,
+						"cdc-vdd-buck");
+		if (ret == -EINVAL) {
+			dev_err(codec->dev, "%s: vdd buck is not enabled\n",
+				__func__);
+			return ret;
+		}
+
+		break;
+	}
+	return 0;
+}
+
 static const char * const rx_hph_mode_mux_text[] = {
 	"CLS_H_INVALID", "CLS_H_HIFI", "CLS_H_LP", "CLS_AB", "CLS_H_LOHIFI",
 	"CLS_H_ULP", "CLS_AB_HIFI",
@@ -1525,6 +1579,10 @@ static const struct snd_soc_dapm_widget wcd937x_dapm_widgets[] = {
 				wcd937x_codec_enable_micbias,
 				SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMU |
 				SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_SUPPLY("VDD_BUCK", SND_SOC_NOPM, 0, 0,
+			     wcd937x_codec_enable_vdd_buck,
+			     SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
 
 	/*rx widgets*/
 	SND_SOC_DAPM_PGA_E("EAR PGA", WCD937X_ANA_EAR, 7, 0, NULL, 0,
@@ -1709,6 +1767,10 @@ static const struct snd_soc_dapm_route wcd937x_audio_map[] = {
 	{"EAR PGA", NULL, "EAR_RDAC"},
 	{"EAR", NULL, "EAR PGA"},
 
+	{"EAR", NULL, "VDD_BUCK"},
+	{"HPHR", NULL, "VDD_BUCK"},
+	{"HPHL", NULL, "VDD_BUCK"},
+	{"AUX", NULL, "VDD_BUCK"},
 };
 
 static const struct snd_soc_dapm_route wcd9375_audio_map[] = {
