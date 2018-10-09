@@ -23,15 +23,8 @@
 #ifndef _NAN_UCFG_API_H_
 #define _NAN_UCFG_API_H_
 
-#include "qdf_types.h"
-#include "qdf_status.h"
 #include "wlan_objmgr_cmn.h"
-
-struct nan_callbacks;
-struct wlan_objmgr_vdev;
-struct wlan_objmgr_psoc;
-struct wlan_objmgr_vdev;
-struct nan_callbacks;
+#include "nan_public_structs.h"
 
 /**
  * ucfg_nan_set_ndi_state: set ndi state
@@ -235,5 +228,40 @@ int ucfg_nan_register_lim_callbacks(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
 				  struct nan_callbacks *cb_obj);
 
-#endif /* _NAN_UCFG_API_H_ */
+/**
+ * ucfg_nan_discovery_req: ucfg API for NAN Discovery related requests
+ * @in_req: NAN request
+ * @req_type: Request type
+ *
+ * Return: status of operation
+ */
+static inline QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type)
+{
+	return QDF_STATUS_SUCCESS;
+}
 
+/**
+ * ucfg_is_nan_dbs_supported() - ucfg API to query NAN DBS support
+ * @psoc: pointer to psoc object
+ *
+ * This function returns NAN DBS support status
+ *
+ * Return: True if NAN DBS is supported, False otherwise
+ */
+static inline bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc)
+{
+	return true;
+}
+
+/**
+ * ucfg_is_nan_enable_allowed() - ucfg API to query if NAN Discovery is
+ * allowed
+ * @psoc: pointer to psoc object
+ *
+ * Return: True if NAN Discovery enable is allowed, False otherwise
+ */
+static inline bool ucfg_is_nan_enable_allowed(struct wlan_objmgr_psoc *psoc)
+{
+	return true;
+}
+#endif /* _NAN_UCFG_API_H_ */

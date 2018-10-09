@@ -1189,14 +1189,12 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 			QCA_NL80211_VENDOR_SUBCMD_AVOID_FREQUENCY
 	},
 
-#ifdef WLAN_FEATURE_NAN
 	[QCA_NL80211_VENDOR_SUBCMD_NAN_INDEX] = {
 		.vendor_id =
 			QCA_NL80211_VENDOR_ID,
 		.subcmd =
 			QCA_NL80211_VENDOR_SUBCMD_NAN
 	},
-#endif
 
 #ifdef WLAN_FEATURE_STATS_EXT
 	[QCA_NL80211_VENDOR_SUBCMD_STATS_EXT_INDEX] = {
@@ -1452,12 +1450,10 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 	},
 #endif /*FEATURE_LFR_SUBNET_DETECTION */
 
-#ifdef WLAN_FEATURE_NAN_DATAPATH
 	[QCA_NL80211_VENDOR_SUBCMD_NDP_INDEX] = {
 		.vendor_id = QCA_NL80211_VENDOR_ID,
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_NDP
 	},
-#endif /* WLAN_FEATURE_NAN_DATAPATH */
 
 	[QCA_NL80211_VENDOR_SUBCMD_P2P_LO_EVENT_INDEX] = {
 		.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -1491,6 +1487,10 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 		.vendor_id = QCA_NL80211_VENDOR_ID,
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_THROUGHPUT_CHANGE_EVENT,
 	 },
+	[QCA_NL80211_VENDOR_SUBCMD_NAN_EXT_INDEX] = {
+		.vendor_id = QCA_NL80211_VENDOR_ID,
+		.subcmd = QCA_NL80211_VENDOR_SUBCMD_NAN_EXT
+	},
 #ifdef WLAN_UMAC_CONVERGENCE
 	COMMON_VENDOR_EVENTS
 #endif
@@ -11421,16 +11421,6 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.doit = is_driver_dfs_capable
 	},
 
-#ifdef WLAN_FEATURE_NAN
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_NAN,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			 WIPHY_VENDOR_CMD_NEED_NETDEV | WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_nan_request
-	},
-#endif
-
 #ifdef WLAN_FEATURE_STATS_EXT
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -11920,16 +11910,6 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	FEATURE_P2P_LISTEN_OFFLOAD_VENDOR_COMMANDS
 
 	FEATURE_SAP_COND_CHAN_SWITCH_VENDOR_COMMANDS
-#ifdef WLAN_FEATURE_NAN_DATAPATH
-	{
-		.info.vendor_id = QCA_NL80211_VENDOR_ID,
-		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_NDP,
-		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
-			WIPHY_VENDOR_CMD_NEED_NETDEV |
-			WIPHY_VENDOR_CMD_NEED_RUNNING,
-		.doit = wlan_hdd_cfg80211_process_ndp_cmd
-	},
-#endif
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GET_WAKE_REASON_STATS,
@@ -12052,7 +12032,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	},
 
 	FEATURE_ACTIVE_TOS_VENDOR_COMMANDS
-
+	FEATURE_NAN_VENDOR_COMMANDS
 };
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)

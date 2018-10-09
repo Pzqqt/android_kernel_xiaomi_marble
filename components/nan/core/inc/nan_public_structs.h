@@ -43,6 +43,18 @@ struct wlan_objmgr_vdev;
 #define NAN_CH_INFO_MAX_CHANNELS 4
 
 /**
+ * enum nan_discovery_msg_type - NAN msg type
+ * @NAN_GENERIC_REQ: Type for all the NAN requests other than enable/disable
+ * @NAN_ENABLE_REQ: Request type for enabling the NAN Discovery
+ * @NAN_DISABLE_REQ: Request type for disabling the NAN Discovery
+ */
+enum nan_discovery_msg_type {
+	NAN_GENERIC_REQ = 0,
+	NAN_ENABLE_REQ  = 1,
+	NAN_DISABLE_REQ = 2,
+};
+
+/**
  * enum nan_datapath_msg_type - NDP msg type
  * @NAN_DATAPATH_INF_CREATE_REQ: ndi create request
  * @NAN_DATAPATH_INF_CREATE_RSP: ndi create response
@@ -458,6 +470,58 @@ struct nan_datapath_end_req {
 	uint32_t transaction_id;
 	uint32_t num_ndp_instances;
 	uint32_t ndp_ids[NDP_NUM_INSTANCE_ID];
+};
+
+/**
+ * struct nan_msg_params - NAN request params
+ * @request_data_len: request data length
+ * @request_data: request data
+ */
+struct nan_msg_params {
+	uint16_t request_data_len;
+	/* Variable length, do not add anything after this */
+	uint8_t request_data[];
+};
+
+/**
+ * struct nan_generic_req - A NAN request for the Target
+ * @psoc: Pointer to the psoc object
+ * @params: NAN request structure containing message fr the Target
+ */
+struct nan_generic_req {
+	struct wlan_objmgr_psoc *psoc;
+	/* Variable length, do not add anything after this */
+	struct nan_msg_params params;
+};
+
+/**
+ * struct nan_disable_req - NAN request to disable NAN Discovery
+ * @psoc: Pointer to the psoc object
+ * @disable_2g_discovery: Flag for disabling Discovery in 2G band
+ * @disable_5g_discovery: Flag for disabling Discovery in 5G band
+ * @params: NAN request structure containing message for the target
+ */
+struct nan_disable_req {
+	struct wlan_objmgr_psoc *psoc;
+	bool disable_2g_discovery;
+	bool disable_5g_discovery;
+	/* Variable length, do not add anything after this */
+	struct nan_msg_params params;
+};
+
+/**
+ * struct nan_enable_req - NAN request to enable NAN Discovery
+ * @psoc: Pointer to the psoc object
+ * @social_chan_2g: Social channel in 2G band for the NAN Discovery
+ * @social_chan_5g: Social channel in 5G band for the NAN Discovery
+ * @params: NAN request structure containing message for the target
+ */
+struct nan_enable_req {
+	struct wlan_objmgr_psoc *psoc;
+	uint8_t social_chan_2g;
+	uint8_t social_chan_5g;
+	/* Variable length, do not add anything after this */
+	struct nan_msg_params params;
 };
 
 /**

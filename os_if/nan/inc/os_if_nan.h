@@ -24,13 +24,9 @@
 #define _OS_IF_NAN_H_
 
 #include "qdf_types.h"
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #include "nan_public_structs.h"
 #include "nan_ucfg_api.h"
-
-struct wlan_objmgr_psoc;
-struct wlan_objmgr_vdev;
-
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
 
 /**
  * os_if_nan_process_ndp_cmd: os_if api to handle nan request message
@@ -150,6 +146,16 @@ static inline QDF_STATUS os_if_nan_set_ndp_delete_transaction_id(
 	return ucfg_nan_set_ndp_delete_transaction_id(vdev, val);
 }
 
+/**
+ * os_if_process_nan_req: os_if api to handle nan request message
+ * @psoc: pointer to psoc object
+ * @data: request data. contains vendor cmd tlvs
+ * @data_len: length of data
+ *
+ * Return: status of operation
+ */
+int os_if_process_nan_req(struct wlan_objmgr_psoc *psoc,
+			  const void *data, int data_len);
 #else
 
 static inline void os_if_nan_post_ndi_create_rsp(struct wlan_objmgr_psoc *psoc,

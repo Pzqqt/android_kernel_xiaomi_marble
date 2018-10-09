@@ -26,7 +26,6 @@
 #include "os_if_nan.h"
 #include "wlan_nan_api.h"
 #include "nan_ucfg_api.h"
-#include "nan_public_structs.h"
 #include "wlan_osif_priv.h"
 #include <net/cfg80211.h>
 #include "wlan_cfg80211.h"
@@ -35,6 +34,30 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_objmgr_peer_obj.h"
 #include "wlan_utility.h"
+#include "wlan_osif_request_manager.h"
+
+#define NAN_CMD_MAX_SIZE 300
+
+/* NLA policy */
+static const struct nla_policy
+nan_attr_policy[QCA_WLAN_VENDOR_ATTR_NAN_PARAMS_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA] = {
+						.type = NLA_BINARY,
+						.len = NAN_CMD_MAX_SIZE
+	},
+	[QCA_WLAN_VENDOR_ATTR_NAN_SUBCMD_TYPE] = {
+						.type = NLA_U32,
+						.len = sizeof(uint32_t)
+	},
+	[QCA_WLAN_VENDOR_ATTR_NAN_DISC_24GHZ_BAND_FREQ] = {
+						.type = NLA_U32,
+						.len = sizeof(uint32_t)
+	},
+	[QCA_WLAN_VENDOR_ATTR_NAN_DISC_5GHZ_BAND_FREQ] = {
+						.type = NLA_U32,
+						.len = sizeof(uint32_t)
+	},
+};
 
 /* NLA policy */
 static const struct nla_policy
@@ -2167,4 +2190,157 @@ void os_if_nan_ndi_session_end(struct wlan_objmgr_vdev *vdev)
 	return;
 failure:
 	kfree_skb(vendor_event);
+}
+
+static int os_if_nan_generic_req(struct wlan_objmgr_psoc *psoc,
+				 struct nlattr **tb)
+{
+	struct nan_generic_req *nan_req;
+	uint32_t buf_len;
+	QDF_STATUS status;
+
+	buf_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA]);
+
+	nan_req = qdf_mem_malloc(sizeof(*nan_req) +  buf_len);
+	if (!nan_req) {
+		cfg80211_err("Request allocation failure");
+		return -ENOMEM;
+	}
+
+	nan_req->psoc = psoc;
+	nan_req->params.request_data_len = buf_len;
+	nla_memcpy(nan_req->params.request_data,
+		   tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA], buf_len);
+
+	cfg80211_debug("sending NAN Req");
+	status = ucfg_nan_discovery_req(nan_req, NAN_GENERIC_REQ);
+
+	if (QDF_IS_STATUS_SUCCESS(status))
+		cfg80211_err("Successfully sent a NAN request");
+	else
+		cfg80211_err("Unable to send a NAN request");
+
+	qdf_mem_free(nan_req);
+	return qdf_status_to_os_return(status);
+}
+
+static int os_if_process_nan_disable_req(struct wlan_objmgr_psoc *psoc,
+					 struct nlattr **tb)
+{
+	struct nan_disable_req *nan_req;
+	uint32_t buf_len;
+	QDF_STATUS status;
+
+	buf_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA]);
+
+	nan_req = qdf_mem_malloc(sizeof(*nan_req) +  buf_len);
+	if (!nan_req) {
+		cfg80211_err("Request allocation failure");
+		return -ENOMEM;
+	}
+
+	nan_req->psoc = psoc;
+	nan_req->params.request_data_len = buf_len;
+	nla_memcpy(nan_req->params.request_data,
+		   tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA], buf_len);
+
+	cfg80211_debug("sending NAN Disable Req");
+	status = ucfg_nan_discovery_req(nan_req, NAN_DISABLE_REQ);
+
+	if (QDF_IS_STATUS_SUCCESS(status))
+		cfg80211_err("Successfully sent NAN Disable request");
+	else
+		cfg80211_err("Unable to disable NAN Discovery");
+
+	qdf_mem_free(nan_req);
+	return qdf_status_to_os_return(status);
+}
+
+static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
+					struct nlattr **tb)
+{
+	uint32_t chan_freq_2g, chan_freq_5g = 0;
+	uint32_t buf_len;
+	QDF_STATUS status;
+	struct nan_enable_req *nan_req;
+
+	if (!ucfg_is_nan_enable_allowed(psoc)) {
+		cfg80211_err("NAN Enable not allowed at this moment");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_NAN_DISC_24GHZ_BAND_FREQ]) {
+		cfg80211_err("NAN Social channel for 2.4Gz is unavailable!");
+		return -EINVAL;
+	}
+	chan_freq_2g =
+		nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NAN_DISC_24GHZ_BAND_FREQ]);
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_NAN_DISC_5GHZ_BAND_FREQ])
+		chan_freq_5g =
+			nla_get_u32(tb[
+				QCA_WLAN_VENDOR_ATTR_NAN_DISC_5GHZ_BAND_FREQ]);
+
+	buf_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA]);
+
+	nan_req = qdf_mem_malloc(sizeof(*nan_req) + buf_len);
+
+	if (!nan_req) {
+		cfg80211_err("Request allocation failure");
+		return -ENOMEM;
+	}
+	nan_req->social_chan_2g = wlan_freq_to_chan(chan_freq_2g);
+	nan_req->social_chan_5g = wlan_freq_to_chan(chan_freq_5g);
+	nan_req->psoc = psoc;
+	nan_req->params.request_data_len = buf_len;
+
+	nla_memcpy(nan_req->params.request_data,
+		   tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA], buf_len);
+
+	cfg80211_debug("Sending NAN Enable Req");
+	status = ucfg_nan_discovery_req(nan_req, NAN_ENABLE_REQ);
+
+	if (QDF_IS_STATUS_SUCCESS(status))
+		cfg80211_err("Successfully sent NAN Enable");
+	else
+		cfg80211_err("Unable to enable NAN Discovery");
+
+	qdf_mem_free(nan_req);
+	return qdf_status_to_os_return(status);
+}
+
+int os_if_process_nan_req(struct wlan_objmgr_psoc *psoc,
+			  const void *data, int data_len)
+{
+	uint32_t nan_subcmd;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_NAN_PARAMS_MAX + 1];
+
+	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_NAN_PARAMS_MAX,
+				    data, data_len, nan_attr_policy)) {
+		cfg80211_err("Invalid NAN vendor command attributes");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA]) {
+		cfg80211_err("NAN cmd data missing!");
+		return -EINVAL;
+	}
+
+	if (!ucfg_is_nan_dbs_supported(psoc))
+		return os_if_nan_generic_req(psoc, tb);
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_NAN_SUBCMD_TYPE])
+		return os_if_nan_generic_req(psoc, tb);
+
+	nan_subcmd = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NAN_SUBCMD_TYPE]);
+
+	switch (nan_subcmd) {
+	case QCA_WLAN_NAN_EXT_SUBCMD_TYPE_ENABLE_REQ:
+		return os_if_process_nan_enable_req(psoc, tb);
+	case QCA_WLAN_NAN_EXT_SUBCMD_TYPE_DISABLE_REQ:
+		return os_if_process_nan_disable_req(psoc, tb);
+	default:
+		cfg80211_err("Unrecognized NAN subcmd type(%d)", nan_subcmd);
+		return -EINVAL;
+	}
 }

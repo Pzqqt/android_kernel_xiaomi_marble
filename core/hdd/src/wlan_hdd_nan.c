@@ -34,6 +34,22 @@
 #include <wlan_hdd_dsc.h>
 #include <qca_vendor.h>
 #include "cfg_nan_api.h"
+#include "os_if_nan.h"
+
+/**
+ * wlan_hdd_nan_is_supported() - HDD NAN support query function
+ * @hdd_ctx: Pointer to hdd context
+ *
+ * This function is called to determine if NAN is supported by the
+ * driver and by the firmware.
+ *
+ * Return: true if NAN is supported by the driver and firmware
+ */
+bool wlan_hdd_nan_is_supported(struct hdd_context *hdd_ctx)
+{
+	return cfg_nan_get_enable(hdd_ctx->psoc) &&
+		sme_is_feature_supported_by_fw(NAN);
+}
 
 /**
  * __wlan_hdd_cfg80211_nan_request() - cfg80211 NAN request handler
@@ -85,18 +101,6 @@ static int __wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 	return ret_val;
 }
 
-/**
- * wlan_hdd_cfg80211_nan_request() - handle NAN request
- * @wiphy:   pointer to wireless wiphy structure.
- * @wdev:    pointer to wireless_dev structure.
- * @data:    Pointer to the data to be passed via vendor interface
- * @data_len:Length of the data to be passed
- *
- * This function is called by userspace to send a NAN request to
- * firmware.  This is an SSR-protected wrapper function.
- *
- * Return: 0 on success, negative errno on failure
- */
 int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 				  struct wireless_dev *wdev,
 				  const void *data,
@@ -156,16 +160,56 @@ void wlan_hdd_cfg80211_nan_callback(hdd_handle_t hdd_handle, tSirNanEvent *msg)
 }
 
 /**
- * wlan_hdd_nan_is_supported() - HDD NAN support query function
- * @hdd_ctx: Pointer to hdd context
+ * __wlan_hdd_cfg80211_nan_ext_request() - cfg80211 NAN extended request handler
+ * @wiphy: driver's wiphy struct
+ * @wdev: wireless device to which the request is targeted
+ * @data: actual request data (netlink-encapsulated)
+ * @data_len: length of @data
  *
- * This function is called to determine if NAN is supported by the
- * driver and by the firmware.
+ * Handles NAN Extended vendor commands, sends the command to NAN component
+ * which parses and forwards the NAN requests.
  *
- * Return: true if NAN is supported by the driver and firmware
+ * Return: 0 on success, negative errno on failure
  */
-bool wlan_hdd_nan_is_supported(struct hdd_context *hdd_ctx)
+static int __wlan_hdd_cfg80211_nan_ext_request(struct wiphy *wiphy,
+					       struct wireless_dev *wdev,
+					       const void *data,
+					       int data_len)
 {
-	return cfg_nan_get_enable(hdd_ctx->psoc) &&
-		sme_is_feature_supported_by_fw(NAN);
+	int ret_val;
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+
+	hdd_enter_dev(wdev->netdev);
+
+	ret_val = wlan_hdd_validate_context(hdd_ctx);
+	if (ret_val)
+		return ret_val;
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err_rl("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	if (!wlan_hdd_nan_is_supported(hdd_ctx)) {
+		hdd_err_rl("NAN is not supported");
+		return -EPERM;
+	}
+
+	return os_if_process_nan_req(hdd_ctx->psoc,
+					 data, data_len);
+}
+
+int wlan_hdd_cfg80211_nan_ext_request(struct wiphy *wiphy,
+				      struct wireless_dev *wdev,
+				      const void *data,
+				      int data_len)
+
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_nan_ext_request(wiphy, wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
 }
