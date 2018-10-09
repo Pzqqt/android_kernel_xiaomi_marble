@@ -354,6 +354,10 @@ dp_rx_da_learn(struct dp_soc *soc,
 	       struct dp_peer *ta_peer,
 	       qdf_nbuf_t nbuf)
 {
+	/* For HKv2 DA port learing is not needed */
+	if (qdf_likely(soc->ast_override_support))
+		return;
+
 	if (ta_peer && (ta_peer->vdev->opmode != wlan_op_mode_ap))
 		return;
 
