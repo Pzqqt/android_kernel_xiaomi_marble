@@ -17,10 +17,10 @@
 
 #include "../dfs.h"
 #include "../dfs_zero_cac.h"
+#include "../dfs_filter_init.h"
 #include "wlan_dfs_mlme_api.h"
 #include "wlan_dfs_lmac_api.h"
 #include "../dfs_partial_offload_radar.h"
-#include "../dfs_direct_attach_radar.h"
 #include "../dfs_internal.h"
 
 void dfs_get_radars(struct wlan_dfs *dfs)

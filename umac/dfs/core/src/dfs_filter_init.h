@@ -88,4 +88,12 @@ static inline void dfs_main_timer_detach(struct wlan_dfs *dfs)
 }
 #endif
 
+#if defined(WLAN_DFS_DIRECT_ATTACH)
+void dfs_get_da_radars(struct wlan_dfs *dfs);
+#else
+static inline void dfs_get_da_radars(struct wlan_dfs *dfs)
+{
+}
+#endif
+
 #endif /* _DFS_FILTER_INIT_H_ */
