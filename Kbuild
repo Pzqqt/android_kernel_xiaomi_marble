@@ -13,16 +13,21 @@ ifeq ($(KERNEL_BUILD), y)
 	WLAN_ROOT := drivers/staging/qcacld-3.0
 	WLAN_COMMON_ROOT := ../qca-wifi-host-cmn
 	WLAN_COMMON_INC := $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
+	WLAN_FW_API := $(WLAN_ROOT)/../fw-api/
+	WLAN_PROFILE := default
 endif
 
 WLAN_COMMON_ROOT ?= ../qca-wifi-host-cmn
 WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
+WLAN_FW_API ?= $(WLAN_ROOT)/../fw-api/
+WLAN_PROFILE ?= default
+CONFIG_QCA_CLD_WLAN_PROFILE ?= $(WLAN_PROFILE)
 
-CONFIG_QCA_CLD_WLAN_PROFILE ?= default
 ifeq ($(KERNEL_BUILD), n)
 ifneq ($(ANDROID_BUILD_TOP),)
       override WLAN_ROOT := $(ANDROID_BUILD_TOP)/$(WLAN_ROOT)
       override WLAN_COMMON_INC := $(ANDROID_BUILD_TOP)/$(WLAN_COMMON_INC)
+      override WLAN_FW_API := $(ANDROID_BUILD_TOP)/$(WLAN_FW_API)
 endif
 endif
 
@@ -1652,18 +1657,18 @@ ifeq ($(CONFIG_HIF_USB), y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_usb.o
 endif
 
-TARGET_INC := 	-I$(WLAN_ROOT)/../fw-api/fw
+TARGET_INC := 	-I$(WLAN_FW_API)/fw
 
 ifeq ($(CONFIG_CNSS_QCA6290), y)
 ifeq ($(CONFIG_QCA6290_11AX), y)
-TARGET_INC +=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/11ax/v2
+TARGET_INC +=	-I$(WLAN_FW_API)/hw/qca6290/11ax/v2
 else
-TARGET_INC +=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/v2
+TARGET_INC +=	-I$(WLAN_FW_API)/hw/qca6290/v2
 endif
 endif
 
 ifeq ($(CONFIG_CNSS_QCA6390), y)
-TARGET_INC +=	-I$(WLAN_ROOT)/../fw-api/hw/qca6390/v1
+TARGET_INC +=	-I$(WLAN_FW_API)/hw/qca6390/v1
 endif
 
 LINUX_INC :=	-Iinclude
