@@ -4533,12 +4533,23 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 				  pProfile, &cfgDot11Mode, pIes)) {
 		pBssConfig->uCfgDot11Mode = cfgDot11Mode;
 	} else {
+		/*
+		 * No matching phy mode found, force to 11b/g based on INI for
+		 * 2.4Ghz and to 11a mode for 5Ghz
+		 */
 		sme_warn("Can not find match phy mode");
-		/* force it */
-		if (BAND_2G == pBssConfig->eBand)
-			pBssConfig->uCfgDot11Mode = eCSR_CFG_DOT11_MODE_11G;
-		else
+		if (BAND_2G == pBssConfig->eBand) {
+			if (pMac->roam.configParam.phyMode &
+			    (eCSR_DOT11_MODE_11b | eCSR_DOT11_MODE_11b_ONLY)) {
+				pBssConfig->uCfgDot11Mode =
+						eCSR_CFG_DOT11_MODE_11B;
+			} else {
+				pBssConfig->uCfgDot11Mode =
+						eCSR_CFG_DOT11_MODE_11G;
+			}
+		} else {
 			pBssConfig->uCfgDot11Mode = eCSR_CFG_DOT11_MODE_11A;
+		}
 	}
 
 	sme_debug("phyMode=%d, uCfgDot11Mode=%d negotiatedAuthType %d",
