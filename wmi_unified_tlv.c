@@ -15229,8 +15229,6 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 	}
 
 	WMI_LOGD("ndp_cfg - %d bytes", fixed_params->ndp_cfg_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
-		&event->ndp_cfg, fixed_params->ndp_cfg_len);
 
 	if (fixed_params->ndp_app_info_len > event->num_ndp_app_info) {
 		WMI_LOGE("FW message ndp app info length %d more than TLV hdr %d",
@@ -15241,8 +15239,6 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 
 	WMI_LOGD("ndp_app_info - %d bytes",
 			fixed_params->ndp_app_info_len);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
-		&event->ndp_app_info, fixed_params->ndp_app_info_len);
 
 	if (fixed_params->ndp_cfg_len >
 			(WMI_SVC_MSG_MAX_SIZE - sizeof(*fixed_params))) {
