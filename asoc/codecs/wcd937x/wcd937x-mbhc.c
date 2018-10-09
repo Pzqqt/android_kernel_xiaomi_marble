@@ -976,6 +976,8 @@ int wcd937x_mbhc_post_ssr_init(struct wcd937x_mbhc *mbhc,
 
 	wcd937x_mbhc_hs_detect_exit(codec);
 	wcd_mbhc_deinit(wcd_mbhc);
+	snd_soc_update_bits(codec, WCD937X_ANA_MBHC_MECH,
+				0x20, 0x20);
 	ret = wcd_mbhc_init(wcd_mbhc, codec, &mbhc_cb, &intr_ids,
 			    wcd_mbhc_registers, WCD937X_ZDET_SUPPORTED);
 	if (ret) {
