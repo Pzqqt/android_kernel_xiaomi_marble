@@ -408,7 +408,8 @@ uint8_t dfs_get_bonding_channels_without_seg_info(struct dfs_channel *chan,
 	return nchannels;
 }
 
-uint8_t dfs_get_bonding_channels(struct dfs_channel *curchan,
+uint8_t dfs_get_bonding_channels(struct wlan_dfs *dfs,
+				 struct dfs_channel *curchan,
 				 uint32_t segment_id,
 				 uint8_t *channels)
 {
@@ -417,8 +418,16 @@ uint8_t dfs_get_bonding_channels(struct dfs_channel *curchan,
 
 	if (!segment_id)
 		center_chan = curchan->dfs_ch_vhtop_ch_freq_seg1;
-	else
-		center_chan = curchan->dfs_ch_vhtop_ch_freq_seg2;
+	else {
+		/* When precac is running "dfs_ch_vhtop_ch_freq_seg2" is
+		 * zero and "dfs_precac_secondary_freq" holds the secondary
+		 * frequency.
+		 */
+		if (dfs_is_precac_timer_running(dfs))
+			center_chan = dfs->dfs_precac_secondary_freq;
+		else
+			center_chan = curchan->dfs_ch_vhtop_ch_freq_seg2;
+	}
 
 	if (WLAN_IS_CHAN_MODE_20(curchan)) {
 		nchannels = 1;
@@ -518,6 +527,17 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	/* For Full Offload, FW sends segment id,freq_offset and chirp
+	 * information and gets assigned when there is radar detect. In
+	 * case of radartool bangradar enhanced command and real radar
+	 * for DA and PO, we assign these information here.
+	 */
+	if (!(dfs->dfs_is_offload_enabled && dfs->dfs_radar_found_for_fo)) {
+		radar_found->segment_id = dfs->dfs_seg_id;
+		radar_found->freq_offset = dfs->dfs_freq_offset;
+		radar_found->is_chirp = dfs->dfs_is_chirp;
+	}
+
 	if (radar_found->segment_id == SEG_ID_SECONDARY)
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 			 "Radar found on second segment VHT80 freq=%d MHz",
@@ -534,25 +554,14 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	/* For Full Offload, FW sends segment id,freq_offset and
-	 * is chirp information and gets assigned when there is radar detect.
-	 * In case of radartool bangradar enhanced command and real radar
-	 * for FO and PO, we assign these information here.
-	 */
-	if (!dfs->dfs_is_offload_enabled || dfs->dfs_enhanced_bangradar) {
-		radar_found->segment_id = dfs->dfs_seg_id;
-		radar_found->freq_offset = dfs->dfs_freq_offset;
-		radar_found->is_chirp = dfs->dfs_is_chirp;
-		dfs->dfs_enhanced_bangradar = 0;
-	}
-
 	if (dfs->dfs_use_nol_subchannel_marking &&
 	    !(dfs->dfs_bangradar || dfs->dfs_second_segment_bangradar))
 		num_channels = dfs_find_radar_affected_subchans(dfs,
 								radar_found,
 								channels);
 	else
-		num_channels = dfs_get_bonding_channels(dfs->dfs_curchan,
+		num_channels = dfs_get_bonding_channels(dfs,
+							dfs->dfs_curchan,
 							radar_found->segment_id,
 							channels);
 

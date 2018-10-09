@@ -355,7 +355,6 @@ int dfs_control(struct wlan_dfs *dfs,
 			dfs->dfs_is_chirp = bangradar_enh_params->is_chirp;
 			dfs->dfs_freq_offset =
 					      bangradar_enh_params->freq_offset;
-			dfs->dfs_enhanced_bangradar = 1;
 
 			if (dfs->dfs_is_offload_enabled) {
 				error = dfs_fill_emulate_bang_radar_test

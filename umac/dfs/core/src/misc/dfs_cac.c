@@ -253,7 +253,8 @@ void dfs_stacac_stop(struct wlan_dfs *dfs)
 		 dfs->dfs_curchan->dfs_ch_freq, phyerr);
 }
 
-bool dfs_is_subset_channel(struct dfs_channel *old_chan,
+bool dfs_is_subset_channel(struct wlan_dfs *dfs,
+			   struct dfs_channel *old_chan,
 			   struct dfs_channel *new_chan)
 {
 	uint8_t old_subchans[NUM_CHANNELS_160MHZ];
@@ -267,7 +268,8 @@ bool dfs_is_subset_channel(struct dfs_channel *old_chan,
 	    WLAN_IS_CHAN_11AC_VHT80_80(old_chan)) {
 		/* If primary segment is NON-DFS */
 		if (!WLAN_IS_CHAN_DFS(old_chan))
-			old_n_chans = dfs_get_bonding_channels(old_chan,
+			old_n_chans = dfs_get_bonding_channels(dfs,
+							       old_chan,
 							       SEG_ID_SECONDARY,
 							       old_subchans);
 		else
@@ -283,7 +285,7 @@ bool dfs_is_subset_channel(struct dfs_channel *old_chan,
 		/* If primary segment is NON-DFS */
 		if (WLAN_IS_CHAN_DFS(new_chan))
 			new_n_chans = dfs_get_bonding_channels(
-					new_chan, SEG_ID_SECONDARY,
+					dfs, new_chan, SEG_ID_SECONDARY,
 					new_subchans);
 		else
 			new_n_chans = dfs_get_bonding_channels_without_seg_info(
@@ -317,7 +319,7 @@ bool dfs_is_subset_channel(struct dfs_channel *old_chan,
 
 bool dfs_is_curchan_subset_of_cac_started_chan(struct wlan_dfs *dfs)
 {
-	return dfs_is_subset_channel(&dfs->dfs_cac_started_chan,
+	return dfs_is_subset_channel(dfs, &dfs->dfs_cac_started_chan,
 				     dfs->dfs_curchan);
 }
 

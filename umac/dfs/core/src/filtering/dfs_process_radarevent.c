@@ -1291,6 +1291,7 @@ void dfs_radarfound_action_generic(struct wlan_dfs *dfs, uint8_t seg_id)
 
 	qdf_mem_zero(radar_found, sizeof(*radar_found));
 	radar_found->segment_id = seg_id;
+	dfs->dfs_seg_id = seg_id;
 	radar_found->pdev_id =
 		wlan_objmgr_pdev_get_pdev_id(dfs->dfs_pdev_obj);
 

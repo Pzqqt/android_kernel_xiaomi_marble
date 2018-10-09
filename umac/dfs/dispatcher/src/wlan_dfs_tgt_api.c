@@ -373,19 +373,24 @@ QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
 				     struct radar_found_info *radar_found)
 {
 	struct wlan_dfs *dfs;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (!pdev) {
 		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS, "null pdev");
-		return QDF_STATUS_E_FAILURE;
+		return status;
 	}
 
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
 	if (!dfs) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is null");
-		return QDF_STATUS_E_FAILURE;
+		return status;
 	}
 
-	return dfs_process_radar_ind(dfs, radar_found);
+	dfs->dfs_radar_found_for_fo = 1;
+	status = dfs_process_radar_ind(dfs, radar_found);
+	dfs->dfs_radar_found_for_fo = 0;
+
+	return status;
 }
 qdf_export_symbol(tgt_dfs_process_radar_ind);
 

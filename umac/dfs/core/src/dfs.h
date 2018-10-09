@@ -890,6 +890,8 @@ struct dfs_event_log {
  * @dfs_second_segment_bangradar:    Bangaradar on second segment of
  *                                   VHT80_80/160.
  * @is_radar_found_on_secondary_seg: Radar on second segment.
+ * @dfs_radar_found_for_fo:          Radar found event for FO(Full Offload) is
+ *                                   received.
  * @is_radar_during_precac:          Radar found during precac.
  * @dfs_precac_lock:                 Lock to protect precac lists.
  * @dfs_precac_enable:               Enable the precac.
@@ -976,7 +978,6 @@ struct dfs_event_log {
  * @dfs_is_chirp:                    Radar Chirp in pulse present or not.
  * @dfs_bw_reduced:                  DFS bandwidth reduced channel bit.
  * @dfs_freq_offset:                 Frequency offset where radar was found.
- * @dfs_enhanced_bangradar:          DFS enhance bagradar bit for Full offload.
  * @dfs_cac_aborted:                 DFS cac is aborted.
  */
 struct wlan_dfs {
@@ -1021,6 +1022,7 @@ struct wlan_dfs {
 	uint8_t        dfs_bangradar;
 	bool           dfs_second_segment_bangradar;
 	bool           is_radar_found_on_secondary_seg;
+	bool           dfs_radar_found_for_fo;
 	bool           is_radar_during_precac;
 	qdf_spinlock_t dfs_precac_lock;
 	bool           dfs_precac_enable;
@@ -1106,7 +1108,6 @@ struct wlan_dfs {
 	uint8_t        dfs_is_chirp;
 	uint8_t        dfs_bw_reduced;
 	int32_t        dfs_freq_offset;
-	uint8_t        dfs_enhanced_bangradar;
 	bool           dfs_cac_aborted;
 };
 
@@ -1865,13 +1866,15 @@ void dfs_start_cac_timer(struct wlan_dfs *dfs);
 
 /**
  * dfs_is_subset_channel() - Check if the new_chan is subset of the old_chan.
+ * @dfs: Pointer to wlan_dfs structure.
  * @old_chan: Pointer to old channel.
  * @new_chan: Pointer to new channel.
  *
  * Return: true if the new channel is subset of or same as the old channel,
  * else false.
  */
-bool dfs_is_subset_channel(struct dfs_channel *old_chan,
+bool dfs_is_subset_channel(struct wlan_dfs *dfs,
+			   struct dfs_channel *old_chan,
 			   struct dfs_channel *new_chan);
 
 /**
