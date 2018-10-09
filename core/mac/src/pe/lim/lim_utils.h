@@ -1514,6 +1514,14 @@ void lim_rx_invalid_peer_process(tpAniSirGlobal mac_ctx,
  */
 void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session);
 
+/**
+ * lim_ndi_mlme_vdev_up_transition() - Send event to transistion NDI VDEV to UP
+ * @session: session pointer
+ *
+ * Return: None
+ */
+void lim_ndi_mlme_vdev_up_transition(tpPESession session);
+
 #ifdef CONFIG_VDEV_SM
 /**
  * lim_sta_mlme_vdev_stop_send() - send VDEV stop

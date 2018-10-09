@@ -8442,6 +8442,16 @@ void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session)
 					      sizeof(*session), session);
 }
 
+void lim_ndi_mlme_vdev_up_transition(tpPESession session)
+{
+	if (!LIM_IS_NDI_ROLE(session))
+		return;
+
+	wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+				      WLAN_VDEV_SM_EV_START_SUCCESS,
+				      sizeof(*session), session);
+}
+
 QDF_STATUS lim_ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data)
 {
@@ -8509,6 +8519,8 @@ QDF_STATUS lim_ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_INVAL;
 	}
 	session = (tpPESession)data;
+	if (LIM_IS_NDI_ROLE(session))
+		return QDF_STATUS_SUCCESS;
 
 	if (op == BEACON_INIT)
 		lim_send_beacon_ind(session->mac_ctx, session);
@@ -8529,6 +8541,9 @@ QDF_STATUS lim_ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 		pe_err("session is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
+	if (LIM_IS_NDI_ROLE(session))
+		return QDF_STATUS_SUCCESS;
+
 
 	msg.type = SIR_HAL_SEND_AP_VDEV_UP;
 	msg.bodyval = session->smeSessionId;
@@ -8655,5 +8670,9 @@ void lim_send_start_bss_confirm(tpAniSirGlobal mac_ctx,
 void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session)
 {
 	lim_send_beacon_ind(mac_ctx, session);
+}
+
+void lim_ndi_mlme_vdev_up_transition(tpPESession session)
+{
 }
 #endif

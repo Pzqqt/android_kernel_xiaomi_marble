@@ -213,13 +213,13 @@ void lim_process_mlm_start_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		(((tLimMlmStartCnf *) pMsgBuf)->resultCode ==
 						eSIR_SME_SUCCESS)) {
 		channelId = psessionEntry->pLimStartBssReq->channelId;
+		lim_ndi_mlme_vdev_up_transition(psessionEntry);
 
 		/* We should start beacon transmission only if the channel
 		 * on which we are operating is non-DFS until the channel
 		 * availability check is done. The PE will receive an explicit
 		 * request from upper layers to start the beacon transmission
 		 */
-
 		if (!(LIM_IS_IBSS_ROLE(psessionEntry) ||
 			(LIM_IS_AP_ROLE(psessionEntry))))
 				return;
