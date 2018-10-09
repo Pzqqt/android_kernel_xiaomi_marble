@@ -150,8 +150,8 @@ struct swr_mstr_ctrl {
 	u32 clk_stop_mode0_supp;
 	struct work_struct wakeup_work;
 	u32 wakeup_req;
-
 	bool dev_up;
+	bool wakeup_triggered;
 };
 
 #endif /* _SWR_WCD_CTRL_H */
