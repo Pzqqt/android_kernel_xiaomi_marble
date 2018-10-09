@@ -12803,8 +12803,9 @@ int sme_update_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 		nsts_set_val = usr_cfg_val;
 	else
 		nsts_set_val = nsts_val;
-		mac_ctx->mlme_cfg->vht_caps.vht_cap_info.tx_bfee_ant_supp
-			= nsts_set_val;
+
+	mac_ctx->mlme_cfg->vht_caps.vht_cap_info.tx_bfee_ant_supp =
+		nsts_set_val;
 
 	if (usr_cfg_val)
 		sme_set_he_tx_bf_cbf_rates(session_id);
