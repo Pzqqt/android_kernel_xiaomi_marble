@@ -3044,9 +3044,9 @@ void wma_wmi_stop(void)
 	tp_wma_handle wma_handle;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	if (wma_handle == NULL) {
+	if ((!wma_handle) || (!wma_handle->wmi_handle)) {
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_INFO,
-			  "wma_handle is NULL\n");
+			  "wma_handle or wmi_handle is NULL\n");
 		return;
 	}
 	wmi_stop(wma_handle->wmi_handle);
