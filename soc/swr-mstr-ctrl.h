@@ -135,6 +135,7 @@ struct swr_mstr_ctrl {
 	int slave_status;
 	struct swrm_mports mport_cfg[SWR_MAX_MSTR_PORT_NUM];
 	struct list_head port_req_list;
+	unsigned long port_req_pending;
 	int state;
 	struct platform_device *pdev;
 	int num_rx_chs;
