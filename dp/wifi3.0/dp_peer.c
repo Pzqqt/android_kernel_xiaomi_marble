@@ -1955,6 +1955,10 @@ void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
  *                                64 window size is received.
  *                                This is done as a WAR since HW can
  *                                have only one setting per peer (64 or 256).
+ *                                For HKv2, we use per tid buffersize setting
+ *                                for 0 to per_tid_basize_max_tid. For tid
+ *                                more than per_tid_basize_max_tid we use HKv1
+ *                                method.
  * @peer: Datapath peer
  *
  * Return: void
@@ -1965,7 +1969,8 @@ static void dp_teardown_256_ba_sessions(struct dp_peer *peer)
 	int tid;
 	struct dp_rx_tid *rx_tid = NULL;
 
-	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
+	tid = peer->vdev->pdev->soc->per_tid_basize_max_tid;
+	for (; tid < DP_MAX_TIDS; tid++) {
 		rx_tid = &peer->rx_tid[tid];
 		qdf_spin_lock_bh(&rx_tid->tid_lock);
 
@@ -2123,22 +2128,27 @@ static void dp_check_ba_buffersize(struct dp_peer *peer,
 	struct dp_rx_tid *rx_tid = NULL;
 
 	rx_tid = &peer->rx_tid[tid];
-
-	if (peer->active_ba_session_cnt == 0) {
+	if (peer->vdev->pdev->soc->per_tid_basize_max_tid &&
+	    tid < peer->vdev->pdev->soc->per_tid_basize_max_tid) {
 		rx_tid->ba_win_size = buffersize;
+		return;
 	} else {
-		if (peer->hw_buffer_size == 64) {
-			if (buffersize <= 64)
-				rx_tid->ba_win_size = buffersize;
-			else
-				rx_tid->ba_win_size = peer->hw_buffer_size;
-		} else if (peer->hw_buffer_size == 256) {
-			if (buffersize > 64) {
-				rx_tid->ba_win_size = buffersize;
-			} else {
-				rx_tid->ba_win_size = buffersize;
-				peer->hw_buffer_size = 64;
-				peer->kill_256_sessions = 1;
+		if (peer->active_ba_session_cnt == 0) {
+			rx_tid->ba_win_size = buffersize;
+		} else {
+			if (peer->hw_buffer_size == 64) {
+				if (buffersize <= 64)
+					rx_tid->ba_win_size = buffersize;
+				else
+					rx_tid->ba_win_size = peer->hw_buffer_size;
+			} else if (peer->hw_buffer_size == 256) {
+				if (buffersize > 64) {
+					rx_tid->ba_win_size = buffersize;
+				} else {
+					rx_tid->ba_win_size = buffersize;
+					peer->hw_buffer_size = 64;
+					peer->kill_256_sessions = 1;
+				}
 			}
 		}
 	}
@@ -2190,17 +2200,16 @@ int dp_addba_requestprocess_wifi3(void *peer_handle,
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 		return QDF_STATUS_E_FAILURE;
 	}
-
 	dp_check_ba_buffersize(peer, tid, buffersize);
 
-	if (dp_rx_tid_setup_wifi3(peer, tid, buffersize, startseqnum)) {
+	if (dp_rx_tid_setup_wifi3(peer, tid,
+	    rx_tid->ba_win_size, startseqnum)) {
 		rx_tid->ba_status = DP_RX_BA_INACTIVE;
 		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 		return QDF_STATUS_E_FAILURE;
 	}
 	rx_tid->ba_status = DP_RX_BA_IN_PROGRESS;
 
-	rx_tid->ba_win_size = buffersize;
 	rx_tid->dialogtoken = dialogtoken;
 	rx_tid->startseqnum = startseqnum;
 

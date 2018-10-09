@@ -953,6 +953,8 @@ struct dp_soc {
 	uint8_t hw_nac_monitor_support;
 	/* Flag to indicate if HTT v2 is enabled*/
 	bool is_peer_map_unmap_v2;
+	/* Per peer per Tid ba window size support */
+	uint8_t per_tid_basize_max_tid;
 };
 
 #ifdef IPA_OFFLOAD

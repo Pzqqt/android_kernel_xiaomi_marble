@@ -8891,6 +8891,7 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, false);
 		soc->hw_nac_monitor_support = 1;
 		soc->ast_override_support = 1;
+		soc->per_tid_basize_max_tid = 8;
 		soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_V2_MAPS;
 		break;
 	default:
