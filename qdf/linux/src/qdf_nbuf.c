@@ -536,6 +536,7 @@ qdf_export_symbol(__qdf_nbuf_free);
 #ifdef NBUF_MEMORY_DEBUG
 enum qdf_nbuf_event_type {
 	QDF_NBUF_ALLOC,
+	QDF_NBUF_ALLOC_FAILURE,
 	QDF_NBUF_FREE,
 	QDF_NBUF_MAP,
 	QDF_NBUF_UNMAP,
@@ -2667,6 +2668,8 @@ qdf_nbuf_t qdf_nbuf_alloc_debug(qdf_device_t osdev, qdf_size_t size,
 	if (qdf_likely(nbuf)) {
 		qdf_net_buf_debug_add_node(nbuf, size, file, line);
 		qdf_nbuf_history_add(nbuf, file, line, QDF_NBUF_ALLOC);
+	} else {
+		qdf_nbuf_history_add(nbuf, file, line, QDF_NBUF_ALLOC_FAILURE);
 	}
 
 	return nbuf;
