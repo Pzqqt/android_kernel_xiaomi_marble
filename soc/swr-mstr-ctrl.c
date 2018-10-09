@@ -1976,13 +1976,15 @@ static int swrm_runtime_suspend(struct device *dev)
 			swrm_cmd_fifo_wr_cmd(swrm, 0x2, 0xF, 0xF,
 					SWRS_SCP_CONTROL);
 			usleep_range(100, 105);
-			if (swrm->wakeup_req) {
-				msm_aud_evt_blocking_notifier_call_chain(
-					SWR_WAKE_IRQ_REGISTER, (void *)swrm);
-				swrm->wakeup_triggered = false;
-			}
 		}
 		swrm_clk_request(swrm, false);
+
+		if (swrm->clk_stop_mode0_supp && swrm->wakeup_req) {
+			msm_aud_evt_blocking_notifier_call_chain(
+				SWR_WAKE_IRQ_REGISTER, (void *)swrm);
+			swrm->wakeup_triggered = false;
+		}
+
 	}
 	/* Retain  SSR state until resume */
 	if (current_state != SWR_MSTR_SSR)
