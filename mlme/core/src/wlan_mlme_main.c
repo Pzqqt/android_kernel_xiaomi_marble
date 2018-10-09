@@ -527,9 +527,9 @@ static void mlme_init_vht_cap_cfg(struct wlan_objmgr_psoc *psoc,
 	vht_cap_info->txop_ps =
 			cfg_default(CFG_VHT_TXOP_PS);
 	vht_cap_info->rx_mcs_map =
-			WNI_CFG_VHT_RX_MCS_MAP_STADEF;
+			CFG_VHT_RX_MCS_MAP_STADEF;
 	vht_cap_info->tx_mcs_map =
-			WNI_CFG_VHT_TX_MCS_MAP_STADEF;
+			CFG_VHT_TX_MCS_MAP_STADEF;
 	vht_cap_info->basic_mcs_set =
 			CFG_VHT_BASIC_MCS_SET_STADEF;
 	vht_cap_info->su_bformer =
@@ -539,7 +539,7 @@ static void mlme_init_vht_cap_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_VHT_BEAMFORMEE_ANT_SUPP);
 
 	vht_cap_info->enable_txbf_20mhz =
-			cfg_get(psoc, CFG_VHT_ENABLE_TXBF_20MHZ);
+			cfg_get(psoc, CFG_VHT_ENABLE_TXBF_IN_20MHZ);
 	vht_cap_info->ampdu_len =
 			cfg_get(psoc, CFG_VHT_MPDU_LEN);
 
@@ -593,10 +593,10 @@ static void mlme_init_vht_cap_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE);
 
 	if (vht_cap_info->enable2x2)
-	vht_cap_info->enable_tx_su =
+		vht_cap_info->su_bfer =
 			cfg_get(psoc, CFG_VHT_ENABLE_TX_SU_BEAM_FORMER);
 
-	if (vht_cap_info->enable2x2 && vht_cap_info->enable_tx_su)
+	if (vht_cap_info->enable2x2 && vht_cap_info->su_bfer)
 		vht_cap_info->num_soundingdim = NUM_OF_SOUNDING_DIMENSIONS;
 }
 

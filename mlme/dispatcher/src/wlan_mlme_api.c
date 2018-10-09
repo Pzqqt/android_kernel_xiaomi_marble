@@ -1579,7 +1579,7 @@ wlan_mlme_get_vht_enable_tx_bf(struct wlan_objmgr_psoc *psoc, bool *value)
 }
 
 QDF_STATUS
-wlan_mlme_get_vht_enable_tx_su_beam(struct wlan_objmgr_psoc *psoc, bool *value)
+wlan_mlme_get_vht_tx_su_beamformer(struct wlan_objmgr_psoc *psoc, bool *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1589,7 +1589,7 @@ wlan_mlme_get_vht_enable_tx_su_beam(struct wlan_objmgr_psoc *psoc, bool *value)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	*value = mlme_obj->cfg.vht_caps.vht_cap_info.enable_tx_su;
+	*value = mlme_obj->cfg.vht_caps.vht_cap_info.su_bfer;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1817,13 +1817,15 @@ QDF_STATUS mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc,
 		value = (value & VHT_MCS_2x2) | (vht_cap_info->rx_mcs2x2 << 2);
 	vht_cap_info->basic_mcs_set = value;
 
-	value = (CFG_VHT_RX_MCS_MAP_STADEF & VHT_MCS_1x1) | vht_cap_info->rx_mcs;
+	value = (CFG_VHT_RX_MCS_MAP_STADEF & VHT_MCS_1x1) |
+		 vht_cap_info->rx_mcs;
 
 	if (vht_cap_info->enable2x2)
 		value = (value & VHT_MCS_2x2) | (vht_cap_info->rx_mcs2x2 << 2);
 	vht_cap_info->rx_mcs_map = value;
 
-	value = (CFG_VHT_TX_MCS_MAP_STADEF & VHT_MCS_1x1) | vht_cap_info->tx_mcs;
+	value = (CFG_VHT_TX_MCS_MAP_STADEF & VHT_MCS_1x1) |
+		 vht_cap_info->tx_mcs;
 	if (vht_cap_info->enable2x2)
 		value = (value & VHT_MCS_2x2) | (vht_cap_info->tx_mcs2x2 << 2);
 	vht_cap_info->tx_mcs_map = value;
@@ -1880,7 +1882,6 @@ QDF_STATUS mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc,
 		vht_cap_info->short_gi_160mhz = cfg->vht_short_gi_160;
 
 	return QDF_STATUS_SUCCESS;
-
 }
 
 QDF_STATUS mlme_update_nss_vht_cap(struct wlan_objmgr_psoc *psoc)

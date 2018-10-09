@@ -777,7 +777,7 @@ QDF_STATUS wlan_mlme_cfg_set_vht_chan_width(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlme_cfg_get_vht_chan_width(struct wlan_objmgr_psoc *psoc,
-				            uint8_t *value);
+					    uint8_t *value);
 
 /**
  * wlan_mlme_cfg_get_vht_ldpc_coding_cap() - gets vht ldpc coding cap from
@@ -946,9 +946,9 @@ QDF_STATUS wlan_mlme_cfg_set_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
 					           uint8_t value);
 
 /**
- * wlan_mlme_cfg_get_vht_tx_bfee_ant_supp() - sets vht Beamformee antenna
- * support cap
- * into cfg item
+ * wlan_mlme_cfg_get_vht_tx_bfee_ant_supp() - Gets vht Beamformee antenna
+ * support cap into cfg item
+ *
  * @psoc: psoc context
  * @value: data to be set
  *
@@ -1147,7 +1147,7 @@ QDF_STATUS wlan_mlme_cfg_set_vht_basic_mcs_set(struct wlan_objmgr_psoc *psoc,
 					       uint32_t value);
 
 /**
- * wlan_mlme_get_vht_enable_tx_bf() - VHT Rx MCS capability for 1x1 mode
+ * wlan_mlme_get_vht_enable_tx_bf() - Get vht enable tx bf
  * @psoc: psoc context
  * @value: data to be set
  *
@@ -1157,14 +1157,14 @@ QDF_STATUS wlan_mlme_get_vht_enable_tx_bf(struct wlan_objmgr_psoc *psoc,
 					  bool *value);
 
 /**
- * wlan_mlme_get_vht_enable_tx_su_beam() - VHT enable tx su beam
+ * wlan_mlme_get_vht_tx_su_beamformer() - VHT enable tx su beamformer
  * @psoc: psoc context
  * @value: data to be set
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_get_vht_enable_tx_su_beam(struct wlan_objmgr_psoc *psoc,
-					bool *value);
+QDF_STATUS wlan_mlme_get_vht_tx_su_beamformer(struct wlan_objmgr_psoc *psoc,
+					      bool *value);
 
 /**
  * wlan_mlme_get_vht_channel_width() - gets Channel width capability
