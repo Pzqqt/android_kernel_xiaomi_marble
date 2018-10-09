@@ -18,11 +18,11 @@
  */
 
 #include "spectral_cmn_api_i.h"
-#include "spectral_da_api_i.h"
 #include "spectral_ol_api_i.h"
 #include <qdf_mem.h>
 #include <qdf_types.h>
 #ifdef CONFIG_WIN
+#include "spectral_da_api_i.h"
 #include <osif_private.h>
 #include <wlan_mlme_dispatcher.h>
 #endif /*CONFIG_WIN*/
