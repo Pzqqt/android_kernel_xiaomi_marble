@@ -2974,6 +2974,11 @@ static int __tavil_codec_enable_swr(struct snd_soc_dapm_widget *w, int event)
 			tavil->swr.rx_8_count++;
 		ch_cnt = !!(tavil->swr.rx_7_count) + tavil->swr.rx_8_count;
 
+		if (wcd9xxx_get_current_power_state(tavil->wcd9xxx,
+						WCD9XXX_DIG_CORE_REGION_1)
+					!= WCD_REGION_POWER_COLLAPSE_REMOVE)
+			goto done;
+
 		swrm_wcd_notify(tavil->swr.ctrl_data[0].swr_pdev,
 				SWR_DEVICE_UP, NULL);
 		swrm_wcd_notify(tavil->swr.ctrl_data[0].swr_pdev,
@@ -2994,6 +2999,7 @@ static int __tavil_codec_enable_swr(struct snd_soc_dapm_widget *w, int event)
 
 		break;
 	}
+done:
 	dev_dbg(tavil->dev, "%s: %s: current swr ch cnt: %d\n",
 		__func__, w->name, ch_cnt);
 
