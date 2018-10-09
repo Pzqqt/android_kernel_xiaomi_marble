@@ -1649,6 +1649,19 @@ void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal mac_ctx,
 		mlm_assoc_cnf.resultCode = (tSirResultCodes) eSIR_SME_SUCCESS;
 		lim_send_obss_color_collision_cfg(mac_ctx, session_entry,
 					OBSS_COLOR_COLLISION_DETECTION);
+		if (lim_is_session_he_capable(session_entry)) {
+			if (mac_ctx->usr_cfg_mu_edca_params) {
+				pe_debug("Send user cfg MU EDCA params to FW");
+				lim_send_edca_params(mac_ctx,
+					     mac_ctx->usr_mu_edca_params,
+					     sta_ds->bssId, true);
+			} else if (session_entry->mu_edca_present) {
+				pe_debug("Send MU EDCA params to FW");
+				lim_send_edca_params(mac_ctx,
+					session_entry->ap_mu_edca_params,
+					sta_ds->bssId, true);
+			}
+		}
 	} else {
 		pe_err("ADD_STA failed!");
 		if (session_entry->limSmeState == eLIM_SME_WT_REASSOC_STATE)
