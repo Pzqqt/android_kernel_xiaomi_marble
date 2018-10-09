@@ -1350,7 +1350,7 @@ QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 	rates->vhtRxMCSMap = (uint16_t)vht_cap_info.rx_mcs_map;
 	rates->vhtTxMCSMap = (uint16_t)vht_cap_info.tx_mcs_map;
 	rates->vhtRxHighestDataRate =
-			(uint16_t) vht_cap_info.rx_supp_data_rate;
+			(uint16_t)vht_cap_info.rx_supp_data_rate;
 	rates->vhtTxHighestDataRate = (uint16_t)vht_cap_info.tx_supp_data_rate;
 
 	if (NSS_1x1_MODE == nss) {
@@ -1361,8 +1361,8 @@ QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 		rates->vhtRxHighestDataRate =
 			VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
 		if (session_entry && !session_entry->ch_width &&
-				!mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable_vht20_mcs9 &&
-				((rates->vhtRxMCSMap & VHT_1x1_MCS_MASK) ==
+		    !vht_cap_info.enable_vht20_mcs9 &&
+		    ((rates->vhtRxMCSMap & VHT_1x1_MCS_MASK) ==
 				 VHT_1x1_MCS9_MAP)) {
 			DISABLE_VHT_MCS_9(rates->vhtRxMCSMap,
 					NSS_1x1_MODE);

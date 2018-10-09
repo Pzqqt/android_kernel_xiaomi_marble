@@ -1013,7 +1013,7 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 			pDot11f->rxHighSupDataRate =
 				VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
 			if (!psessionEntry->ch_width &&
-			    !pMac->mlme_cfg->vht_caps.vht_cap_info.enable_vht20_mcs9 &&
+			    !vht_cap_info.enable_vht20_mcs9 &&
 			    ((pDot11f->txMCSMap & VHT_1x1_MCS_MASK) ==
 			     VHT_1x1_MCS9_MAP)) {
 				DISABLE_VHT_MCS_9(pDot11f->txMCSMap,
@@ -1023,7 +1023,7 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 			}
 		} else {
 			if (!psessionEntry->ch_width &&
-			    !pMac->mlme_cfg->vht_caps.vht_cap_info.enable_vht20_mcs9 &&
+			    !vht_cap_info.enable_vht20_mcs9 &&
 			    ((pDot11f->txMCSMap & VHT_2x2_MCS_MASK) ==
 			     VHT_2x2_MCS9_MAP)) {
 				DISABLE_VHT_MCS_9(pDot11f->txMCSMap,

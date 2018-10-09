@@ -59,6 +59,21 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT BEAMFORMEE ANTENNA SUPPORTED CAP")
 
+/*
+ * <ini>
+ * gEnableTxSUBeamformer - Enables TX Su beam former
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AC
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
 #define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER CFG_INI_BOOL( \
 		"gEnableTxSUBeamformer", \
 		0, \
@@ -111,8 +126,43 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT TX SUPP DATA RATE")
 
-#define CFG_VHT_ENABLE_TXBF_20MHZ CFG_INI_BOOL( \
+/*
+ * <ini>
+ * gTxBFEnable - Enables SU beamformee caps
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AC
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_VHT_SU_BEAMFORMEE_CAP CFG_INI_BOOL( \
 		"gTxBFEnable", \
+		1, \
+		"VHT SU BEAMFORMEE CAPABILITY")
+
+/*
+ * <ini>
+ * gEnableTxBFin20MHz - Enables TXBF in 20mhz
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AC
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_VHT_ENABLE_TXBF_IN_20MHZ CFG_INI_BOOL( \
+		"gEnableTxBFin20MHz", \
 		0, \
 		"VHT ENABLE TXBF 20MHZ")
 
@@ -120,11 +170,6 @@
 		"su_bformer", \
 		0, \
 		"VHT SU BEAMFORMER CAP")
-
-#define CFG_VHT_SU_BEAMFORMEE_CAP CFG_BOOL( \
-		"su_bformee", \
-		1, \
-		"VHT SU BEAMFORMEE CAP")
 
 #define CFG_VHT_MU_BEAMFORMER_CAP CFG_BOOL( \
 		"mu_bformer", \
@@ -349,17 +394,61 @@
 		0, \
 		"VHT Enable MU Beamformee")
 
+/*
+ * <ini>
+ * gEnablePAID - Enables VHT paid feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AC
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
 #define CFG_VHT_ENABLE_PAID_FEATURE CFG_INI_BOOL( \
 		"gEnablePAID", \
 		0, \
 		"VHT Enable PAID")
 
+/*
+ * <ini>
+ * gEnableGID - Enables VHT gid feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AC
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
 #define CFG_VHT_ENABLE_GID_FEATURE CFG_INI_BOOL( \
 		"gEnableGID", \
 		0, \
 		"VHT Enable GID")
 
-/* Parameter to control VHT support in 2.4 GHz band */
+/*
+ * <ini>
+ * gEnableVhtFor24GHzBand - Enable VHT for 2.4GHZ in SAP mode
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AC
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
 #define CFG_ENABLE_VHT_FOR_24GHZ CFG_INI_BOOL( \
 		"gEnableVhtFor24GHzBand", \
 		0, \
@@ -386,7 +475,21 @@
 		1, \
 		"VHT Enable Vendor for 24GHz")
 
-/* Macro to handle maximum receive AMPDU size configuration */
+/*
+ * <ini>
+ * gVhtAmpduLenExponent - maximum receive AMPDU size configuration
+ * @Min: 0
+ * @Max: 7
+ * @Default: 3
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AC
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
 #define CFG_VHT_AMPDU_LEN_EXPONENT CFG_INI_UINT( \
 		"gVhtAmpduLenExponent", \
 		0, \
@@ -395,6 +498,21 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT AMPDU Len in Exponent")
 
+/*
+ * <ini>
+ * gVhtMpduLen - VHT MPDU length
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AC
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
 #define CFG_VHT_MPDU_LEN CFG_INI_UINT( \
 		"gVhtMpduLen", \
 		0, \
@@ -404,8 +522,19 @@
 		"VHT MPDU Length")
 
 /*
- * Enable / Disable Tx beamformee in SAP mode
- * Default: Disable
+ * <ini>
+ * gEnableTxBFeeSAP - Enable / Disable Tx beamformee in SAP mode
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AC
+ *
+ * Usage: External
+ *
+ * </ini>
  */
 #define CFG_VHT_ENABLE_TXBF_SAP_MODE CFG_INI_BOOL( \
 			"gEnableTxBFeeSAP", \
@@ -450,7 +579,7 @@
 	CFG(CFG_VHT_TX_ANT_PATTERN) \
 	CFG(CFG_VHT_RX_SUPP_DATA_RATE) \
 	CFG(CFG_VHT_TX_SUPP_DATA_RATE) \
-	CFG(CFG_VHT_ENABLE_TXBF_20MHZ) \
+	CFG(CFG_VHT_ENABLE_TXBF_IN_20MHZ) \
 	CFG(CFG_VHT_CHANNEL_WIDTH) \
 	CFG(CFG_VHT_ENABLE_RX_MCS_8_9) \
 	CFG(CFG_VHT_ENABLE_TX_MCS_8_9) \

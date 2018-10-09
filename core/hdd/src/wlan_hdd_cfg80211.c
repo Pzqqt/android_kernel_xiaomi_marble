@@ -6429,7 +6429,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		cfg_val = nla_get_u8(tb[
 			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TX_BEAMFORMEE_NSTS]);
 		status = ucfg_mlme_cfg_get_vht_tx_bfee_ant_supp(hdd_ctx->psoc,
-							 &value);
+								&value);
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			hdd_err("unable to get tx_bfee_ant_supp");
 

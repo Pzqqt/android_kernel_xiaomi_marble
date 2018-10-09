@@ -32,12 +32,12 @@
 #define CFG_VHT_BASIC_MCS_SET_STADEF    0xFFFE
 
 #define CFG_VHT_RX_MCS_MAP_STAMIN    0
-#define CFG_VHT_RX_MCS_MAP_STAMAX    65535
-#define CFG_VHT_RX_MCS_MAP_STADEF    65534
+#define CFG_VHT_RX_MCS_MAP_STAMAX    0xFFFF
+#define CFG_VHT_RX_MCS_MAP_STADEF    0xFFFE
 
 #define CFG_VHT_TX_MCS_MAP_STAMIN    0
-#define CFG_VHT_TX_MCS_MAP_STAMAX    65535
-#define CFG_VHT_TX_MCS_MAP_STADEF    65534
+#define CFG_VHT_TX_MCS_MAP_STAMAX    0xFFFF
+#define CFG_VHT_TX_MCS_MAP_STADEF    0xFFFE
 
 #define CFG_STR_DATA_LEN     17
 #define CFG_EDCA_DATA_LEN    17
@@ -408,7 +408,7 @@ struct wlan_mlme_mbo {
  * @tx_supp_data_rate: Tx highest supported data rate
  * @basic_mcs_set: Basic MCS set
  * @enable_txbf_20mhz: enable tx bf for 20mhz
- * @enable_tx_su: enable VHT tx su beam former
+ * @su_bfer: enable VHT tx su beam former
  * @channel_width: Channel width capability for 11ac
  * @rx_mcs: VHT Rx MCS capability for 1x1 mode
  * @tx_mcs: VHT Tx MCS capability for 1x1 mode
@@ -451,7 +451,7 @@ struct mlme_vht_capabilities_info {
 	uint32_t tx_supp_data_rate;
 	uint32_t basic_mcs_set;
 	bool enable_txbf_20mhz;
-	bool enable_tx_su;
+	bool su_bfer;
 	uint8_t channel_width;
 	uint32_t rx_mcs;
 	uint32_t tx_mcs;

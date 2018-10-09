@@ -144,8 +144,6 @@
 #include "wlan_tdls_cfg_api.h"
 #include <wlan_hdd_rssi_monitor.h>
 #include "wlan_mlme_ucfg_api.h"
-#include "cfg_mlme_acs.h"
-#include "wlan_mlme_public_struct.h"
 #include "wlan_fwol_ucfg_api.h"
 #include "wlan_policy_mgr_ucfg.h"
 #ifdef CNSS_GENL
@@ -1390,7 +1388,8 @@ static void hdd_update_wiphy_vhtcap(struct hdd_context *hdd_ctx)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("unable to get tx_bfee_ant_supp");
 
-	band_5g->vht_cap.cap |= (value << IEEE80211_VHT_CAP_BEAMFORMEE_STS_SHIFT);
+	band_5g->vht_cap.cap |=
+			(value << IEEE80211_VHT_CAP_BEAMFORMEE_STS_SHIFT);
 
 	value1 = NUM_OF_SOUNDING_DIMENSIONS;
 	band_5g->vht_cap.cap |=
@@ -1490,7 +1489,7 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("unable to set vht_enable2x2");
 
-	if (b_enable1x1 == false) {
+	if (!b_enable1x1) {
 		ht_cap_info.tx_stbc = 0;
 
 		/* 1x1 */
@@ -1567,18 +1566,16 @@ static void hdd_update_tgt_vht_cap(struct hdd_context *hdd_ctx,
 
 
 	if (cfg->supp_chan_width & (1 << eHT_CHANNEL_WIDTH_80P80MHZ)) {
-		status =
-			ucfg_mlme_cfg_set_vht_chan_width(hdd_ctx->psoc,
-				VHT_CAP_160_AND_80P80_SUPP);
+		status = ucfg_mlme_set_vht_ch_width(hdd_ctx->psoc,
+						    VHT_CAP_160_AND_80P80_SUPP);
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("could not set the VHT CAP 160");
 		band_5g->vht_cap.cap |=
 			IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ;
 		ch_width = eHT_CHANNEL_WIDTH_80P80MHZ;
 	} else if (cfg->supp_chan_width & (1 << eHT_CHANNEL_WIDTH_160MHZ)) {
-		status =
-			ucfg_mlme_cfg_set_vht_chan_width(hdd_ctx->psoc,
-							 VHT_CAP_160_SUPP);
+		status = ucfg_mlme_set_vht_ch_width(hdd_ctx->psoc,
+						    VHT_CAP_160_SUPP);
 		if (QDF_IS_STATUS_ERROR(status))
 			hdd_err("could not set the VHT CAP 160");
 		band_5g->vht_cap.cap |=
@@ -1592,8 +1589,7 @@ static void hdd_update_tgt_vht_cap(struct hdd_context *hdd_ctx,
 		hdd_err("could not get channel_width");
 
 	val = QDF_MIN(val, ch_width);
-	status =
-		ucfg_mlme_cfg_set_vht_chan_width(hdd_ctx->psoc, val);
+	status = ucfg_mlme_set_vht_ch_width(hdd_ctx->psoc, val);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("could not set the channel width");
 
@@ -1903,7 +1899,7 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	hdd_update_ra_rate_limit(hdd_ctx, cfg);
 
 	status = ucfg_mlme_cfg_get_vht_tx_bfee_ant_supp(hdd_ctx->psoc,
-						&value);
+							&value);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		status = false;
 		hdd_err("set tx_bfee_ant_supp failed");

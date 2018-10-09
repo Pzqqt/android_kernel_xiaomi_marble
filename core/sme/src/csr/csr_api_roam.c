@@ -13170,8 +13170,8 @@ enum csr_cfgdot11mode curr_mode = mac_ctx->roam.configParam.uCfgDot11Mode;
 	}
 
 	if (IS_24G_CH(opr_chn) &&
-	   (false == mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band) &&
-	   (eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode ||
+	    !mac_ctx->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
+	    (eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode ||
 	    eCSR_CFG_DOT11_MODE_11AC_ONLY == cfg_dot11_mode))
 		cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 	/*
@@ -15278,9 +15278,9 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			csr_translate_to_wni_cfg_dot11_mode(pMac,
 							    pSession->bssParams.
 							    uCfgDot11Mode);
-		if (pBssDescription->channelId <= 14
-		    && false == pMac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band
-		    && WNI_CFG_DOT11_MODE_11AC == ucDot11Mode) {
+		if (pBssDescription->channelId <= 14 &&
+		    !pMac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
+		    WNI_CFG_DOT11_MODE_11AC == ucDot11Mode) {
 			/* Need to disable VHT operation in 2.4 GHz band */
 			ucDot11Mode = WNI_CFG_DOT11_MODE_11N;
 		}
@@ -15847,11 +15847,9 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		 * and AP is SU Bformee capable
 		 */
 		if (bvalue && !((IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
-		   pIes->VHTCaps.suBeamformeeCap) ||
-		   (IS_BSS_VHT_CAPABLE(
-		   pIes->vendor_vht_ie.VHTCaps)
-		   && pIes->vendor_vht_ie.VHTCaps.
-		   suBeamformeeCap)))
+		    pIes->VHTCaps.suBeamformeeCap) ||
+		    (IS_BSS_VHT_CAPABLE(pIes->vendor_vht_ie.VHTCaps) &&
+		     pIes->vendor_vht_ie.VHTCaps.suBeamformeeCap)))
 			bvalue = 0;
 
 		csr_join_req->vht_config.su_beam_former = bvalue;
@@ -17071,7 +17069,8 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 			vht_cap_info.supp_chan_width;
 	session->vht_config.ldpc_coding = vht_cap_info.ldpc_coding_cap;
 	session->vht_config.shortgi80 = vht_cap_info.short_gi_80mhz;
-	session->vht_config.shortgi160and80plus80 = vht_cap_info.short_gi_160mhz;
+	session->vht_config.shortgi160and80plus80 =
+			vht_cap_info.short_gi_160mhz;
 	session->vht_config.tx_stbc = vht_cap_info.tx_stbc;
 	session->vht_config.rx_stbc = vht_cap_info.rx_stbc;
 	session->vht_config.su_beam_former = vht_cap_info.su_bformer;
@@ -20523,8 +20522,8 @@ QDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
 	pMsg->dot11mode = csr_translate_to_wni_cfg_dot11_mode(pMac,
 					param.uCfgDot11Mode);
 	if (IS_24G_CH(pMsg->targetChannel) &&
-	   (false == pMac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band) &&
-	   (WNI_CFG_DOT11_MODE_11AC == pMsg->dot11mode ||
+	    !pMac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
+	    (WNI_CFG_DOT11_MODE_11AC == pMsg->dot11mode ||
 	    WNI_CFG_DOT11_MODE_11AC_ONLY == pMsg->dot11mode))
 		pMsg->dot11mode = WNI_CFG_DOT11_MODE_11N;
 	pMsg->nw_type = param.sirNwType;

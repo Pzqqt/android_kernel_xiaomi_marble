@@ -1068,7 +1068,6 @@ QDF_STATUS ucfg_mlme_set_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
 
 /**
  * ucfg_mlme_set_enable_bcast_probe_rsp() - Set enable bcast probe resp info
- *
  * @psoc: pointer to psoc object
  * @value: value that needs to be set from the caller
  *
@@ -1085,8 +1084,7 @@ QDF_STATUS ucfg_mlme_set_enable_bcast_probe_rsp(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * ucfg_mlme_cfg_set_vht_chan_width() - sets vht supported channel width into
- * cfg item
+ * ucfg_mlme_set_vht_ch_width() - set the vht supported channel width cfg
  * @psoc: psoc context
  * @value: data to be set
  *
@@ -1095,8 +1093,8 @@ QDF_STATUS ucfg_mlme_set_enable_bcast_probe_rsp(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
  */
 static inline
-QDF_STATUS ucfg_mlme_cfg_set_vht_chan_width(struct wlan_objmgr_psoc *psoc,
-					    uint8_t value)
+QDF_STATUS ucfg_mlme_set_vht_ch_width(struct wlan_objmgr_psoc *psoc,
+				      uint8_t value)
 {
 	return wlan_mlme_cfg_set_vht_chan_width(psoc, value);
 }
@@ -1136,8 +1134,7 @@ ucfg_mlme_cfg_set_vht_ldpc_coding_cap(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * ucfg_mlme_cfg_get_short_gi_160_mhz() - gets basic set SHORT GI 160MHZ from
- * cfg item
+ * ucfg_mlme_cfg_get_short_gi_160_mhz() - Get SHORT GI 160MHZ from cfg item
  * @psoc: psoc context
  * @value: data to be set
  *
@@ -1190,7 +1187,7 @@ ucfg_mlme_cfg_get_vht_tx_stbc(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
- * ucfg_mlme_cfg_get_vht_rx_stbc() - gets vht tx stbc from
+ * ucfg_mlme_cfg_get_vht_rx_stbc() - gets vht rx stbc from
  * cfg item
  * @psoc: psoc context
  * @value: pointer to get required data
@@ -1399,7 +1396,7 @@ ucfg_mlme_get_vht_enable_tx_bf(struct wlan_objmgr_psoc *psoc, bool *value)
 }
 
 /**
- * ucfg_mlme_get_vht_enable_tx_su_beam() - gets enable enable_tx_su_beam
+ * ucfg_mlme_get_vht_tx_su_beamformer() - gets enable tx_su_beamformer
  * for 11ac
  * @psoc: psoc context
  * @value: data to be set
@@ -1410,9 +1407,9 @@ ucfg_mlme_get_vht_enable_tx_bf(struct wlan_objmgr_psoc *psoc, bool *value)
  * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
  */
 static inline QDF_STATUS
-ucfg_mlme_get_vht_enable_tx_su_beam(struct wlan_objmgr_psoc *psoc, bool *value)
+ucfg_mlme_get_vht_tx_su_beamformer(struct wlan_objmgr_psoc *psoc, bool *value)
 {
-	return wlan_mlme_get_vht_enable_tx_su_beam(psoc, value);
+	return wlan_mlme_get_vht_tx_su_beamformer(psoc, value);
 }
 
 /**

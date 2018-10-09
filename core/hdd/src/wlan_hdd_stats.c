@@ -3947,7 +3947,7 @@ int wlan_hdd_get_station_remote(struct wiphy *wiphy,
  * @tx_nss: The TX NSS from fw stats
  *
  * Return: 0 for success
- nt wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,	int */
+ */
 static int hdd_report_max_rate(mac_handle_t mac_handle,
 			       struct hdd_config *config,
 			       struct station_info *sinfo,
@@ -4084,8 +4084,8 @@ static int hdd_report_max_rate(mac_handle_t mac_handle,
 		/* VHT80 rate has separate rate table */
 		if (tx_rate_flags & (TX_RATE_VHT20 | TX_RATE_VHT40 |
 		    TX_RATE_VHT80)) {
-		    stat = ucfg_mlme_cfg_get_vht_tx_mcs_map(hdd_ctx->psoc,
-							    &vht_mcs_map);
+			stat = ucfg_mlme_cfg_get_vht_tx_mcs_map(hdd_ctx->psoc,
+								&vht_mcs_map);
 			if (QDF_IS_STATUS_ERROR(stat))
 				hdd_err("failed to get tx_mcs_map");
 			vht_max_mcs = (enum data_rate_11ac_max_mcs)

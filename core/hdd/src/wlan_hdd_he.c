@@ -137,9 +137,8 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_LTF_NDP,
 			   he_cap->he_4x_ltf_3200_gi_ndp);
 
-	status = ucfg_mlme_cfg_get_vht_rx_stbc(hdd_ctx->psoc,
-						     &bval);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	status = ucfg_mlme_cfg_get_vht_rx_stbc(hdd_ctx->psoc, &bval);
+	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("unable to get vht_enable_rx_su_beam");
 
 	if (bval) {
@@ -172,8 +171,7 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_DCM_RX, he_cap->dcm_enc_rx);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MU_PPDU, he_cap->ul_he_mu);
 
-	status = ucfg_mlme_get_vht_enable_tx_su_beam(hdd_ctx->psoc,
-						     &bval);
+	status = ucfg_mlme_get_vht_tx_su_beamformer(hdd_ctx->psoc, &bval);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("unable to get vht_enable_tx_su_beam");
 
@@ -193,8 +191,7 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MU_BEAMFORMER, 0);
 	}
 
-	status = ucfg_mlme_get_vht_enable_tx_bf(hdd_ctx->psoc,
-						&bval);
+	status = ucfg_mlme_get_vht_enable_tx_bf(hdd_ctx->psoc, &bval);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("unable to get vht_enable_tx_bf");
 	if (bval) {
