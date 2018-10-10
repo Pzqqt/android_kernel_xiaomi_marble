@@ -262,6 +262,15 @@ bool hif_ce_service_should_yield(struct hif_softc *scn,
 				 struct CE_state *ce_state)
 {
 	bool yield =  hif_max_num_receives_reached(scn, ce_state->receive_count);
+
+	/* Setting receive_count to MAX_NUM_OF_RECEIVES when this count goes
+	 * beyond MAX_NUM_OF_RECEIVES for NAPI backet calulation issue. This
+	 * can happen in fast path handling as processing is happenning in
+	 * batches.
+	 */
+	if (yield)
+		ce_state->receive_count = MAX_NUM_OF_RECEIVES;
+
 	return yield;
 }
 #else
@@ -283,6 +292,14 @@ bool hif_ce_service_should_yield(struct hif_softc *scn,
 	if (!time_limit_reached)
 		rxpkt_thresh_reached = hif_max_num_receives_reached
 					(scn, ce_state->receive_count);
+
+	/* Setting receive_count to MAX_NUM_OF_RECEIVES when this count goes
+	 * beyond MAX_NUM_OF_RECEIVES for NAPI backet calulation issue. This
+	 * can happen in fast path handling as processing is happenning in
+	 * batches.
+	 */
+	if (rxpkt_thresh_reached)
+		ce_state->receive_count = MAX_NUM_OF_RECEIVES;
 
 	yield =  time_limit_reached || rxpkt_thresh_reached;
 
