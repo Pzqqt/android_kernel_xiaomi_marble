@@ -110,8 +110,10 @@ struct swr_mstr_ctrl {
 	struct resource *supplies;
 	struct clk *mclk;
 	int clk_ref_count;
+	struct completion clk_off_complete;
 	struct completion reset;
 	struct completion broadcast;
+	struct mutex clklock;
 	struct mutex iolock;
 	struct mutex devlock;
 	struct mutex mlock;
