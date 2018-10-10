@@ -1781,7 +1781,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 			clear_bit(RX_SUSPEND_EVENT,
 				  &cds_sched_context->ol_rx_event_flag);
 			hdd_err("Failed to stop tl_shim rx thread");
-			goto resume_all;
+			goto resume_ol_rx;
 		}
 		hdd_ctx->is_ol_rx_thread_suspended = true;
 	}
@@ -1791,7 +1791,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 
 	if (hdd_suspend_wlan() < 0) {
 		hdd_err("Failed to suspend WLAN");
-		goto resume_all;
+		goto resume_dp_thread;
 	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
@@ -1804,7 +1804,11 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	hdd_exit();
 	return 0;
 
-resume_all:
+resume_dp_thread:
+	if (hdd_ctx->enable_dp_rx_threads)
+		dp_txrx_resume(cds_get_context(QDF_MODULE_ID_SOC));
+
+resume_ol_rx:
 	/* Resume tlshim Rx thread */
 	if (hdd_ctx->is_ol_rx_thread_suspended) {
 		cds_resume_rx_thread();
