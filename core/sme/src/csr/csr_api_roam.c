@@ -20407,6 +20407,7 @@ QDF_STATUS csr_queue_sme_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd,
 {
 	struct wlan_serialization_command cmd;
 	struct wlan_objmgr_vdev *vdev = NULL;
+	enum wlan_serialization_status ser_cmd_status;
 	QDF_STATUS status;
 
 	if (!SME_IS_START(mac_ctx)) {
@@ -20426,19 +20427,35 @@ QDF_STATUS csr_queue_sme_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd,
 	qdf_mem_zero(&cmd, sizeof(struct wlan_serialization_command));
 	status = csr_set_serialization_params_to_cmd(mac_ctx, sme_cmd,
 					&cmd, high_priority);
-	if (QDF_STATUS_SUCCESS == status) {
-		vdev = cmd.vdev;
-		if (WLAN_SER_CMD_DENIED_UNSPECIFIED ==
-				wlan_serialization_request(&cmd))
-			status = QDF_STATUS_E_FAILURE;
-		if (vdev)
-			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-		if (status == QDF_STATUS_E_FAILURE)
-			goto error;
-	} else {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("failed to set ser params");
 		goto error;
 	}
+
+	vdev = cmd.vdev;
+	ser_cmd_status = wlan_serialization_request(&cmd);
+	sme_debug("wlan_serialization_request status:%d", ser_cmd_status);
+
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+	switch (ser_cmd_status) {
+	case WLAN_SER_CMD_PENDING:
+	case WLAN_SER_CMD_ACTIVE:
+		/* Command posted to active/pending list */
+		status = QDF_STATUS_SUCCESS;
+		break;
+	case WLAN_SER_CMD_DENIED_LIST_FULL:
+	case WLAN_SER_CMD_DENIED_RULES_FAILED:
+	case WLAN_SER_CMD_DENIED_UNSPECIFIED:
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
+	default:
+		QDF_ASSERT(0);
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
 	return status;
 
 error:
