@@ -1954,14 +1954,14 @@ int wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
  * @wiphy: Pointer to wiphy
  * @wdev: Pointer to network device
  * @type: TX power setting type
- * @dbm: TX power in dbm
+ * @mbm: TX power in mBm
  *
  * Return: 0 for success, non-zero for failure
  */
 static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 					   struct wireless_dev *wdev,
 					   enum nl80211_tx_power_setting type,
-					   int dbm)
+					   int mbm)
 {
 	struct hdd_context *hdd_ctx = (struct hdd_context *) wiphy_priv(wiphy);
 	mac_handle_t mac_handle;
@@ -1969,6 +1969,7 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 	struct qdf_mac_addr selfMac = QDF_MAC_ADDR_BCAST_INIT;
 	QDF_STATUS status;
 	int errno;
+	int dbm;
 
 	hdd_enter();
 
@@ -1986,6 +1987,16 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 		return errno;
 
 	mac_handle = hdd_ctx->mac_handle;
+
+	dbm = MBM_TO_DBM(mbm);
+
+	/*
+	 * the original implementation of this function expected power
+	 * values in dBm instead of mBm. If the conversion from mBm to
+	 * dBm is zero, then assume dBm was passed.
+	 */
+	if (!dbm)
+		dbm = mbm;
 
 	status = sme_cfg_set_int(mac_handle, WNI_CFG_CURRENT_TX_POWER_LEVEL,
 				 dbm);
@@ -2026,14 +2037,14 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 				  struct wireless_dev *wdev,
 				  enum nl80211_tx_power_setting type,
-				  int dbm)
+				  int mbm)
 {
 	int ret;
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_set_txpower(wiphy,
 					      wdev,
-					      type, dbm);
+					      type, mbm);
 	cds_ssr_unprotect(__func__);
 
 	return ret;
