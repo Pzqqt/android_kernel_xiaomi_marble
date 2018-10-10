@@ -3395,10 +3395,8 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	}
 
 	mc_list_request = qdf_mem_malloc(sizeof(*mc_list_request));
-	if (!mc_list_request) {
-		hdd_err("Cannot allocate mc_list_request");
+	if (!mc_list_request)
 		goto out;
-	}
 
 	/* Delete already configured multicast address list */
 	if (adapter->mc_addr_list.mc_cnt > 0) {
@@ -7682,10 +7680,8 @@ static int wlan_hdd_init_tx_rx_histogram(struct hdd_context *hdd_ctx)
 {
 	hdd_ctx->hdd_txrx_hist = qdf_mem_malloc(
 		(sizeof(struct hdd_tx_rx_histogram) * NUM_TX_RX_HISTOGRAM));
-	if (hdd_ctx->hdd_txrx_hist == NULL) {
-		hdd_err("Failed malloc for hdd_txrx_hist");
+	if (!hdd_ctx->hdd_txrx_hist)
 		return -ENOMEM;
-	}
 	return 0;
 }
 
@@ -7810,10 +7806,8 @@ hdd_display_netif_queue_history_compact(struct hdd_context *hdd_ctx)
 
 	comb_log_str_size = (ADAP_NETIFQ_LOG_LEN * CSR_ROAM_SESSION_MAX) + 1;
 	comb_log_str = qdf_mem_malloc(comb_log_str_size);
-	if (!comb_log_str) {
-		hdd_err("failed to alloc comb_log_str");
+	if (!comb_log_str)
 		return;
-	}
 
 	bytes_written = 0;
 
@@ -8516,11 +8510,8 @@ int hdd_clone_local_unsafe_chan(struct hdd_context *hdd_ctx,
 	if (chan_count) {
 		size = chan_count * sizeof(hdd_ctx->unsafe_channel_list[0]);
 		unsafe_list = qdf_mem_malloc(size);
-		if (!unsafe_list) {
-			hdd_err("No memory for unsafe chan list size%d",
-				size);
+		if (!unsafe_list)
 			return -ENOMEM;
-		}
 		qdf_mem_copy(unsafe_list, hdd_ctx->unsafe_channel_list, size);
 	} else {
 		unsafe_list = NULL;
@@ -9018,8 +9009,7 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 	hdd_ctx->last_scan_reject_session_id = 0xFF;
 
 	hdd_ctx->config = qdf_mem_malloc(sizeof(struct hdd_config));
-	if (hdd_ctx->config == NULL) {
-		hdd_err("Failed to alloc memory for HDD config!");
+	if (!hdd_ctx->config) {
 		ret = -ENOMEM;
 		goto err_free_hdd_context;
 	}
@@ -9378,11 +9368,9 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	bool fw_timeout_crash;
 	QDF_STATUS status;
 
-	cds_cfg = (struct cds_config_info *)qdf_mem_malloc(sizeof(*cds_cfg));
-	if (!cds_cfg) {
-		hdd_err("failed to allocate cds config");
+	cds_cfg = qdf_mem_malloc(sizeof(*cds_cfg));
+	if (!cds_cfg)
 		return -ENOMEM;
-	}
 
 	cds_cfg->driver_type = QDF_DRIVER_TYPE_PRODUCTION;
 	cds_cfg->sta_maxlimod_dtim = hdd_ctx->config->fMaxLIModulatedDTIM;
@@ -9518,10 +9506,8 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 		return -EIO;
 
 	user_config = qdf_mem_malloc(sizeof(*user_config));
-	if (user_config == NULL) {
-		hdd_alert("Failed to alloc memory for user_config!");
+	if (!user_config)
 		return -ENOMEM;
-	}
 
 	user_config->dot11_mode = hdd_ctx->config->dot11Mode;
 	user_config->dual_mac_feature_disable =

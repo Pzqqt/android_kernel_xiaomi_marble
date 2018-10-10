@@ -1074,10 +1074,9 @@ hdd_send_ft_assoc_response(struct net_device *dev,
 
 	/* We need to send the IEs to the supplicant. */
 	buff = qdf_mem_malloc(IW_GENERIC_IE_MAX);
-	if (buff == NULL) {
-		hdd_err("unable to allocate memory");
+	if (!buff)
 		return;
-	}
+
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth. */
 	len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
 	wrqu.data.length = len;
@@ -1159,10 +1158,8 @@ static void hdd_send_ft_event(struct hdd_adapter *adapter)
 #else
 	/* We need to send the IEs to the supplicant */
 	buff = qdf_mem_malloc(IW_CUSTOM_MAX);
-	if (buff == NULL) {
-		hdd_err("unable to allocate memory");
+	if (!buff)
 		return;
-	}
 
 	/* Sme needs to send the RIC IEs first */
 	str_len = strlcpy(buff, "RIC=", IW_CUSTOM_MAX);
@@ -1274,10 +1271,8 @@ hdd_send_update_beacon_ies_event(struct hdd_adapter *adapter,
 
 	/* We need to send the IEs to the supplicant. */
 	buff = qdf_mem_malloc(IW_CUSTOM_MAX);
-	if (buff == NULL) {
-		hdd_err("unable to allocate memory");
+	if (!buff)
 		return;
-	}
 
 	strLen = strlcpy(buff, "BEACONIEs=", IW_CUSTOM_MAX);
 	currentLen = strLen + 1;
@@ -3838,10 +3833,9 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 		}
 		sta_ctx->ibss_sta_generation++;
 		stainfo = qdf_mem_malloc(sizeof(*stainfo));
-		if (stainfo == NULL) {
-			hdd_err("memory allocation for station_info failed");
+		if (!stainfo)
 			return QDF_STATUS_E_NOMEM;
-		}
+
 		stainfo->filled = 0;
 		stainfo->generation = sta_ctx->ibss_sta_generation;
 

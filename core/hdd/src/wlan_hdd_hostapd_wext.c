@@ -1780,10 +1780,8 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 
 	/* allocate local buffer to build the response */
 	buf = qdf_mem_malloc(wrqu->data.length);
-	if (!buf) {
-		hdd_err("failed to allocate response buffer");
+	if (!buf)
 		return -ENOMEM;
-	}
 
 	/* start indexing beyond where the record count will be written */
 	maclist_index = sizeof(maclist_index);

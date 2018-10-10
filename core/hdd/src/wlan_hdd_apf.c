@@ -235,10 +235,8 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 	}
 
 	apf_set_offload = qdf_mem_malloc(sizeof(*apf_set_offload));
-	if (!apf_set_offload) {
-		hdd_err("qdf_mem_malloc failed for apf_set_offload");
+	if (!apf_set_offload)
 		return -ENOMEM;
-	}
 
 	/* Parse and fetch apf packet size */
 	if (!tb[APF_PACKET_SIZE]) {
@@ -264,7 +262,6 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 	apf_set_offload->program = qdf_mem_malloc(sizeof(uint8_t) * prog_len);
 
 	if (!apf_set_offload->program) {
-		hdd_err("qdf_mem_malloc failed for apf offload program");
 		ret = -ENOMEM;
 		goto fail;
 	}
@@ -402,10 +399,8 @@ hdd_apf_write_memory(struct hdd_adapter *adapter, struct nlattr **tb)
 
 	write_mem_params.buf = qdf_mem_malloc(sizeof(uint8_t)
 						* write_mem_params.length);
-	if (write_mem_params.buf == NULL) {
-		hdd_err("failed to alloc mem for apf write mem operation");
+	if (!write_mem_params.buf)
 		return -EINVAL;
-	}
 	nla_memcpy(write_mem_params.buf, tb[APF_PROGRAM],
 		   write_mem_params.length);
 
@@ -537,10 +532,8 @@ static int hdd_apf_read_memory(struct hdd_adapter *adapter, struct nlattr **tb)
 		return -EINVAL;
 	}
 	bufptr = qdf_mem_malloc(read_mem_params.length);
-	if (bufptr == NULL) {
-		hdd_err("alloc failed for cumulative event buffer");
+	if (!bufptr)
 		return -ENOMEM;
-	}
 
 	qdf_event_reset(&context->qdf_apf_event);
 	context->offset = read_mem_params.addr_offset;

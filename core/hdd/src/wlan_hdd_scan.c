@@ -397,10 +397,8 @@ wlan_hdd_enqueue_blocked_scan_request(struct net_device *dev,
 		qdf_mem_malloc(sizeof(*blocked_scan_req));
 	int ret = 0;
 
-	if (!blocked_scan_req) {
-		hdd_err("Failed to allocate scan_req");
+	if (!blocked_scan_req)
 		return -EINVAL;
-	}
 
 	blocked_scan_req->dev = dev;
 	blocked_scan_req->scan_request = request;

@@ -316,7 +316,6 @@ static int wlan_hdd_llstats_alloc_buf(void)
 	ll_stats.result = qdf_mem_malloc(DEBUGFS_LLSTATS_BUF_SIZE);
 	if (!ll_stats.result) {
 		mutex_unlock(&llstats_mutex);
-		hdd_err("LL Stats buffer allocation failed");
 		return -EINVAL;
 	}
 	mutex_unlock(&llstats_mutex);

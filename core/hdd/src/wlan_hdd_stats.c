@@ -5056,10 +5056,8 @@ static int __wlan_hdd_get_rcpi(struct hdd_adapter *adapter,
 		return 0;
 
 	rcpi_req = qdf_mem_malloc(sizeof(*rcpi_req));
-	if (!rcpi_req) {
-		hdd_err("unable to allocate memory for RCPI req");
+	if (!rcpi_req)
 		return -EINVAL;
-	}
 
 	request = osif_request_alloc(&params);
 	if (!request) {

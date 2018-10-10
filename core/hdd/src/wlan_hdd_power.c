@@ -368,10 +368,8 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
 	}
 
 	ns_req = qdf_mem_malloc(sizeof(*ns_req));
-	if (!ns_req) {
-		hdd_err("fail to allocate ns_req");
+	if (!ns_req)
 		goto out;
-	}
 
 	ns_req->psoc = psoc;
 	ns_req->vdev_id = adapter->session_id;
@@ -872,10 +870,8 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 	hdd_enter();
 
 	arp_req = qdf_mem_malloc(sizeof(*arp_req));
-	if (!arp_req) {
-		hdd_err("cannot allocate arp_req");
+	if (!arp_req)
 		goto out;
-	}
 
 	arp_req->psoc = psoc;
 	arp_req->vdev_id = adapter->session_id;

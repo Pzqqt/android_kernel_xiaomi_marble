@@ -1621,10 +1621,8 @@ int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter)
 		sap_config->acs_cfg.ch_list = qdf_mem_malloc(
 					sizeof(uint8_t) *
 					con_sap_config->acs_cfg.ch_list_count);
-		if (!sap_config->acs_cfg.ch_list) {
-			hdd_err("ACS config alloc fail");
+		if (!sap_config->acs_cfg.ch_list)
 			return -ENOMEM;
-		}
 
 		qdf_mem_copy(sap_config->acs_cfg.ch_list,
 					con_sap_config->acs_cfg.ch_list,
@@ -2269,10 +2267,8 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	sap_config->channel_info = qdf_mem_malloc(
 					sizeof(struct hdd_channel_info) *
 					channel_count);
-	if (!sap_config->channel_info) {
-		hdd_err("memory allocation failed");
+	if (!sap_config->channel_info)
 		return -ENOMEM;
-	}
 
 	hdd_update_reg_chan_info(adapter, channel_count, channel_list);
 	hdd_get_freq_list(channel_list, freq_list, channel_count);
@@ -2405,10 +2401,9 @@ static int hdd_create_acs_timer(struct hdd_adapter *adapter)
 
 	hdd_debug("Starting vendor app based ACS");
 	timer_context = qdf_mem_malloc(sizeof(*timer_context));
-	if (!timer_context) {
-		hdd_err("Could not allocate for timer_context");
+	if (!timer_context)
 		return -ENOMEM;
-	}
+
 	timer_context->adapter = adapter;
 
 	set_bit(VENDOR_ACS_RESPONSE_PENDING, &adapter->event_flags);
@@ -2644,7 +2639,6 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 					sizeof(uint8_t) *
 					sap_config->acs_cfg.ch_list_count);
 			if (!sap_config->acs_cfg.ch_list) {
-				hdd_err("ACS config alloc fail");
 				ret = -ENOMEM;
 				goto out;
 			}
@@ -2662,7 +2656,6 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			sap_config->acs_cfg.ch_list = qdf_mem_malloc(
 				sap_config->acs_cfg.ch_list_count);
 			if (!sap_config->acs_cfg.ch_list) {
-				hdd_err("ACS config alloc fail");
 				ret = -ENOMEM;
 				goto out;
 			}
@@ -3254,10 +3247,8 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
-	if (!pReqMsg) {
-		hdd_err("qdf_mem_malloc failed");
+	if (!pReqMsg)
 		return -ENOMEM;
-	}
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_SET_SCANNING_MAC_OUI]) {
 		hdd_err("attr mac oui failed");
@@ -4002,10 +3993,8 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	}
 
 	roam_params = qdf_mem_malloc(sizeof(*roam_params));
-	if (!roam_params) {
-		hdd_err("failed to allocate memory");
+	if (!roam_params)
 		return -ENOMEM;
-	}
 
 	ret = hdd_set_ext_roam_params(hdd_ctx, data, data_len,
 				      adapter->session_id, roam_params);
@@ -4806,10 +4795,8 @@ void wlan_hdd_save_gtk_offload_params(struct hdd_adapter *adapter,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	gtk_req = qdf_mem_malloc(sizeof(*gtk_req));
-	if (!gtk_req) {
-		hdd_err("cannot allocate gtk_req");
+	if (!gtk_req)
 		return;
-	}
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	if (kck_ptr)
@@ -6208,10 +6195,9 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	hdd_enter_dev(dev);
 
 	sme_config = qdf_mem_malloc(sizeof(*sme_config));
-	if (!sme_config) {
-		hdd_err("mem alloc failed for sme_config");
+	if (!sme_config)
 		return -ENOMEM;
-	}
+
 	mac_handle = hdd_ctx->mac_handle;
 	sme_get_config_param(mac_handle, sme_config);
 
@@ -6924,10 +6910,8 @@ wlan_hdd_add_tx_ptrn(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 	}
 
 	add_req = qdf_mem_malloc(sizeof(*add_req));
-	if (!add_req) {
-		hdd_err("memory allocation failed");
+	if (!add_req)
 		return -ENOMEM;
-	}
 
 	/* Parse and fetch request Id */
 	if (!tb[PARAM_REQUEST_ID]) {
@@ -7073,10 +7057,8 @@ wlan_hdd_del_tx_ptrn(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 	}
 
 	del_req = qdf_mem_malloc(sizeof(*del_req));
-	if (!del_req) {
-		hdd_err("memory allocation failed");
+	if (!del_req)
 		return -ENOMEM;
-	}
 
 	qdf_copy_macaddr(&del_req->mac_address, &adapter->mac_addr);
 	hdd_debug(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(del_req->mac_address.bytes));
@@ -8965,10 +8947,8 @@ static int hdd_parse_vendor_acs_chan_config(struct hdd_vendor_chan_info
 
 	channel_list = qdf_mem_malloc(sizeof(struct hdd_vendor_chan_info) *
 					(*channel_cnt));
-	if (NULL == channel_list) {
-		hdd_err("Could not allocate for channel_list");
+	if (!channel_list)
 		return -ENOMEM;
-	}
 
 	i = 0;
 	nla_for_each_nested(curr_attr, tb[SET_CHAN_CHAN_LIST], rem) {
@@ -10350,10 +10330,8 @@ static int hdd_populate_dns_stats_info(struct hdd_adapter *adapter,
 	uint8_t *dns_query;
 
 	dns_query = qdf_mem_malloc(adapter->track_dns_domain_len + 1);
-	if (!dns_query) {
-		hdd_err("mem alloc fail");
+	if (!dns_query)
 		return -EINVAL;
-	}
 
 	qdf_mem_copy(dns_query, adapter->dns_payload,
 		     adapter->track_dns_domain_len);
@@ -12270,10 +12248,8 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	wiphy->bands[HDD_NL80211_BAND_2GHZ] = &wlan_hdd_band_2_4_ghz;
 	wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels =
 		qdf_mem_malloc(sizeof(hdd_channels_2_4_ghz));
-	if (wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels == NULL) {
-		hdd_err("Not enough memory to allocate channels");
+	if (!wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels)
 		return -ENOMEM;
-	}
 	qdf_mem_copy(wiphy->bands[HDD_NL80211_BAND_2GHZ]->channels,
 			&hdd_channels_2_4_ghz[0],
 			sizeof(hdd_channels_2_4_ghz));
@@ -12313,10 +12289,8 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	if (pCfg->gcmp_enabled) {
 		cipher_suites = qdf_mem_malloc(sizeof(hdd_cipher_suites) +
 					       sizeof(hdd_gcmp_cipher_suits));
-		if (cipher_suites == NULL) {
-			hdd_err("Not enough memory for cipher suites");
+		if (!cipher_suites)
 			return -ENOMEM;
-		}
 		wiphy->n_cipher_suites = QDF_ARRAY_SIZE(hdd_cipher_suites) +
 			 QDF_ARRAY_SIZE(hdd_gcmp_cipher_suits);
 		qdf_mem_copy(cipher_suites, &hdd_cipher_suites,
@@ -12326,10 +12300,8 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 			     sizeof(hdd_gcmp_cipher_suits));
 	} else {
 		cipher_suites = qdf_mem_malloc(sizeof(hdd_cipher_suites));
-		if (cipher_suites == NULL) {
-			hdd_err("Not enough memory for cipher suites");
+		if (!cipher_suites)
 			return -ENOMEM;
-		}
 		wiphy->n_cipher_suites = QDF_ARRAY_SIZE(hdd_cipher_suites);
 		qdf_mem_copy(cipher_suites, &hdd_cipher_suites,
 			     sizeof(hdd_cipher_suites));
@@ -12894,10 +12866,8 @@ static void wlan_hdd_set_dhcp_server_offload(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 
 	pDhcpSrvInfo = qdf_mem_malloc(sizeof(*pDhcpSrvInfo));
-	if (NULL == pDhcpSrvInfo) {
-		hdd_err("could not allocate tDhcpSrvOffloadInfo!");
+	if (!pDhcpSrvInfo)
 		return;
-	}
 	pDhcpSrvInfo->vdev_id = adapter->session_id;
 	pDhcpSrvInfo->dhcpSrvOffloadEnabled = true;
 
@@ -14250,10 +14220,8 @@ wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
 	bss_data.frame_len = ie_length + offsetof(struct ieee80211_mgmt,
 						  u.probe_resp.variable);
 	bss_data.mgmt = qdf_mem_malloc(bss_data.frame_len);
-	if (!bss_data.mgmt) {
-		hdd_err("memory allocation failed");
+	if (!bss_data.mgmt)
 		return NULL;
-	}
 
 	memcpy(bss_data.mgmt->bssid, bss_desc->bssId, ETH_ALEN);
 
@@ -15050,7 +15018,6 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 
 		sme_config = qdf_mem_malloc(sizeof(*sme_config));
 		if (!sme_config) {
-			hdd_err("unable to allocate sme_config");
 			hdd_conn_set_connection_state(adapter,
 					eConnectionState_NotConnected);
 			status = -ENOMEM;
@@ -15314,10 +15281,8 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 	roam_profile->fils_con_info =
 		qdf_mem_malloc(sizeof(*roam_profile->fils_con_info));
 
-	if (!roam_profile->fils_con_info) {
-		hdd_err("failed to allocate memory");
+	if (!roam_profile->fils_con_info)
 		return -EINVAL;
-	}
 	/*
 	 * The initial connection for FILS may happen with an OPEN
 	 * auth type. Hence we need to allow the connection to go
@@ -15735,10 +15700,8 @@ static void wlan_hdd_save_hlp_ie(struct csr_roam_profile *roam_profile,
 		roam_profile->hlp_ie =
 				qdf_mem_malloc(FILS_MAX_HLP_DATA_LEN);
 		hlp_ie = roam_profile->hlp_ie;
-		if (!hlp_ie) {
-			hdd_err("HLP IE mem alloc fails");
+		if (!hlp_ie)
 			return;
-		}
 	}
 
 	qdf_mem_copy(hlp_ie + roam_profile->hlp_ie_len, gen_ie, len);
@@ -18660,7 +18623,6 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 
 	gtk_req = qdf_mem_malloc(sizeof(*gtk_req));
 	if (!gtk_req) {
-		hdd_err("cannot allocate gtk_req");
 		result = -ENOMEM;
 		goto out;
 	}
@@ -18981,10 +18943,8 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 
 		hb_params = (struct pmo_lphb_req *)qdf_mem_malloc(
 				sizeof(*hb_params));
-		if (NULL == hb_params) {
-			hdd_err("Request Buffer Alloc Fail");
+		if (!hb_params)
 			return -ENOMEM;
-		}
 
 		qdf_mem_zero(hb_params, sizeof(*hb_params));
 		qdf_mem_copy(hb_params, buf, buf_len);
@@ -19681,10 +19641,8 @@ void wlan_hdd_init_chan_info(struct hdd_context *hdd_ctx)
 	hdd_ctx->chan_info =
 		qdf_mem_malloc(sizeof(struct scan_chan_info)
 					* QDF_MAX_NUM_CHAN);
-	if (hdd_ctx->chan_info == NULL) {
-		hdd_err("Failed to malloc for chan info");
+	if (!hdd_ctx->chan_info)
 		return;
-	}
 	mutex_init(&hdd_ctx->chan_info_lock);
 
 	num_2g = QDF_ARRAY_SIZE(hdd_channels_2_4_ghz);
