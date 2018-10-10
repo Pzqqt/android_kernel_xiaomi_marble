@@ -239,6 +239,9 @@
 #define SRNG_SRC_REG_READ(_srng, _reg) \
 	SRNG_REG_READ(_srng, _reg, SRC)
 
+#define SRNG_DST_REG_READ(_srng, _reg) \
+	SRNG_REG_READ(_srng, _reg, DST)
+
 #define _SRNG_FM(_reg_fld) _reg_fld ## _BMSK
 #define _SRNG_FS(_reg_fld) _reg_fld ## _SHFT
 

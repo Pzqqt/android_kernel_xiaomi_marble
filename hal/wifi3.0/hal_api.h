@@ -22,7 +22,6 @@
 #include "qdf_types.h"
 #include "qdf_util.h"
 #include "hal_internal.h"
-
 #define MAX_UNWINDOWED_ADDRESS 0x80000
 #ifdef QCA_WIFI_QCA6390
 #define WINDOW_ENABLE_BIT 0x40000000
@@ -178,6 +177,27 @@ static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 
 	return ret;
 }
+
+/**
+ * hal_read_address_32_mb() - Read 32-bit value from the register
+ * @soc: soc handle
+ * @addr: register address to read
+ *
+ * Return: 32-bit value
+ */
+static inline uint32_t hal_read_address_32_mb(struct hal_soc *soc,
+					      void __iomem *addr)
+{
+	uint32_t offset;
+	uint32_t ret;
+
+	if (!soc->use_register_windowing)
+		return qdf_ioread32(addr);
+
+	offset = addr - soc->dev_base_addr;
+	ret = hal_read32_mb(soc, offset);
+	return ret;
+}
 #else
 static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 {
@@ -206,6 +226,20 @@ static inline uint32_t hal_read32_mb(struct hal_soc *hal_soc, uint32_t offset)
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Wake up release failed\n", __func__);
 
+	return ret;
+}
+
+static inline uint32_t hal_read_address_32_mb(struct hal_soc *soc,
+					      void __iomem *addr)
+{
+	uint32_t offset;
+	uint32_t ret;
+
+	if (!soc->use_register_windowing)
+		return qdf_ioread32(addr);
+
+	offset = addr - soc->dev_base_addr;
+	ret = hal_read32_mb(soc, offset);
 	return ret;
 }
 #endif
@@ -749,7 +783,7 @@ static inline uint32_t hal_srng_src_done_val(void *hal_soc, void *hal_ring)
 }
 
 /**
- * hal_api_get_tphp - Get head and tail pointer location for any ring
+ * hal_get_sw_hptp - Get SW head and tail pointer location for any ring
  * @hal_soc: Opaque HAL SOC handle
  * @hal_ring: Source ring pointer
  * @tailp: Tail Pointer
@@ -757,8 +791,8 @@ static inline uint32_t hal_srng_src_done_val(void *hal_soc, void *hal_ring)
  *
  * Return: Update tail pointer and head pointer in arguments.
  */
-static inline void hal_api_get_tphp(void *hal_soc, void *hal_ring,
-	uint32_t *tailp, uint32_t *headp)
+static inline void hal_get_sw_hptp(void *hal_soc, void *hal_ring,
+				   uint32_t *tailp, uint32_t *headp)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
 
@@ -1240,6 +1274,23 @@ static inline void hal_srng_src_hw_init(struct hal_soc *hal,
 	struct hal_srng *srng)
 {
 	hal->ops->hal_srng_src_hw_init(hal, srng);
+}
+
+/**
+ * hal_get_hw_hptp()  - Get HW head and tail pointer value for any ring
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring: Source ring pointer
+ * @headp: Head Pointer
+ * @tailp: Tail Pointer
+ * @ring_type: Ring
+ *
+ * Return: Update tail pointer and head pointer in arguments.
+ */
+static inline void hal_get_hw_hptp(struct hal_soc *hal, void *hal_ring,
+				   uint32_t *headp, uint32_t *tailp,
+				   uint8_t ring_type)
+{
+	hal->ops->hal_get_hw_hptp(hal, hal_ring, headp, tailp, ring_type);
 }
 
 /**

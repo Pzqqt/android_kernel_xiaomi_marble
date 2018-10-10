@@ -275,6 +275,9 @@ struct hal_hw_txrx_ops {
 		struct hal_srng *srng);
 	void (*hal_srng_src_hw_init)(void *hal,
 	struct hal_srng *srng);
+	void (*hal_get_hw_hptp)(struct hal_soc *hal, void *hal_ring,
+				uint32_t *headp, uint32_t *tailp,
+				uint8_t ring_type);
 	void (*hal_reo_setup)(void *hal_soc, void *reoparams);
 	void (*hal_setup_link_idle_list)(void *hal_soc,
 	qdf_dma_addr_t scatter_bufs_base_paddr[],

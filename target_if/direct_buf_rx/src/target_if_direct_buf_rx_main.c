@@ -1080,7 +1080,7 @@ QDF_STATUS target_if_direct_buf_rx_print_ring_stat(
 		mod_param = &dbr_pdev_obj->dbr_mod_param[mod_idx];
 		dbr_ring_cfg = mod_param->dbr_ring_cfg;
 		srng = dbr_ring_cfg->srng;
-		hal_api_get_tphp(hal_soc, srng, &tp, &hp);
+		hal_get_sw_hptp(hal_soc, srng, &tp, &hp);
 		direct_buf_rx_err("|%11d|%14s|%10x|%10x|",
 				  mod_idx,
 				  g_dbr_module_name[mod_idx].module_name_str,

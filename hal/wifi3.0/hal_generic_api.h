@@ -1382,6 +1382,47 @@ static void hal_reo_setup_generic(void *hal_soc,
 }
 
 /**
+ * hal_get_hw_hptp_generic()  - Get HW head and tail pointer value for any ring
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring: Source ring pointer
+ * @headp: Head Pointer
+ * @tailp: Tail Pointer
+ * @ring: Ring type
+ *
+ * Return: Update tail pointer and head pointer in arguments.
+ */
+static inline
+void hal_get_hw_hptp_generic(struct hal_soc *soc, void *hal_ring,
+			     uint32_t *headp, uint32_t *tailp,
+			     uint8_t ring)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	struct hal_hw_srng_config *ring_config;
+	enum hal_ring_type ring_type = (enum hal_ring_type)ring;
+
+	if (!soc  || !srng) {
+		QDF_TRACE(QDF_MODULE_ID_HAL, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Context is Null", __func__);
+		return;
+	}
+
+	ring_config = HAL_SRNG_CONFIG(soc, ring_type);
+	if (!ring_config->lmac_ring) {
+		if (srng->ring_dir == HAL_SRNG_SRC_RING) {
+			*headp =
+			   (SRNG_SRC_REG_READ(srng, HP)) / srng->entry_size;
+			*tailp =
+			   (SRNG_SRC_REG_READ(srng, TP)) / srng->entry_size;
+		} else {
+			*headp =
+			   (SRNG_DST_REG_READ(srng, HP)) / srng->entry_size;
+			*tailp =
+			   (SRNG_DST_REG_READ(srng, TP)) / srng->entry_size;
+		}
+	}
+}
+
+/**
  * hal_srng_src_hw_init - Private function to initialize SRNG
  * source ring HW
  * @hal_soc: HAL SOC handle

@@ -615,8 +615,8 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 
 			if (status != QDF_STATUS_SUCCESS) {
 				uint32_t hp, tp;
-				hal_api_get_tphp(hal_soc, mon_status_srng,
-					&tp, &hp);
+				hal_get_sw_hptp(hal_soc, mon_status_srng,
+						&tp, &hp);
 				QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_ERROR,
 				"[%s][%d] status not done - hp:%u, tp:%u",

@@ -5977,27 +5977,88 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 			reo_error);
 }
 
+/**
+ * dp_srng_get_str_from_ring_type() - Return string name for a ring
+ * @ring_type: Ring
+ *
+ * Return: char const pointer
+ */
+static inline const
+char *dp_srng_get_str_from_hal_ring_type(enum hal_ring_type ring_type)
+{
+	switch (ring_type) {
+	case REO_DST:
+		return "Reo_dst";
+	case REO_EXCEPTION:
+		return "Reo_exception";
+	case REO_CMD:
+		return "Reo_cmd";
+	case REO_REINJECT:
+		return "Reo_reinject";
+	case REO_STATUS:
+		return "Reo_status";
+	case WBM2SW_RELEASE:
+		return "wbm2sw_release";
+	case TCL_DATA:
+		return "tcl_data";
+	case TCL_CMD:
+		return "tcl_cmd";
+	case TCL_STATUS:
+		return "tcl_status";
+	case SW2WBM_RELEASE:
+		return "sw2wbm_release";
+	case RXDMA_BUF:
+		return "Rxdma_buf";
+	case RXDMA_DST:
+		return "Rxdma_dst";
+	case RXDMA_MONITOR_BUF:
+		return "Rxdma_monitor_buf";
+	case RXDMA_MONITOR_DESC:
+		return "Rxdma_monitor_desc";
+	case RXDMA_MONITOR_STATUS:
+		return "Rxdma_monitor_status";
+	default:
+		dp_err("Invalid ring type");
+		break;
+	}
+	return "Invalid";
+}
 
 /**
  * dp_print_ring_stat_from_hal(): Print hal level ring stats
  * @soc: DP_SOC handle
  * @srng: DP_SRNG handle
  * @ring_name: SRNG name
+ * @ring_type: srng src/dst ring
  *
  * Return: void
  */
 static void
 dp_print_ring_stat_from_hal(struct dp_soc *soc,  struct dp_srng *srng,
-	char *ring_name)
+			    enum hal_ring_type ring_type)
 {
 	uint32_t tailp;
 	uint32_t headp;
+	int32_t hw_headp = -1;
+	int32_t hw_tailp = -1;
+	const char *ring_name;
+	struct hal_soc *hal_soc = (struct hal_soc *)soc->hal_soc;
 
 	if (soc && srng && srng->hal_srng) {
-		hal_api_get_tphp(soc->hal_soc, srng->hal_srng, &tailp, &headp);
-		DP_PRINT_STATS("%s : Head pointer = %d  Tail Pointer = %d",
+		ring_name = dp_srng_get_str_from_hal_ring_type(ring_type);
+
+		hal_get_sw_hptp(soc->hal_soc, srng->hal_srng, &tailp, &headp);
+
+		DP_PRINT_STATS("%s:SW:Head pointer = %d Tail Pointer = %d\n",
 			       ring_name, headp, tailp);
+
+		hal_get_hw_hptp(hal_soc, srng->hal_srng, &hw_headp,
+				&hw_tailp, ring_type);
+
+		DP_PRINT_STATS("%s:HW:Head pointer = %d Tail Pointer = %d\n",
+			       ring_name, hw_headp, hw_tailp);
 	}
+
 }
 
 /**
@@ -6014,18 +6075,18 @@ void dp_print_mon_ring_stat_from_hal(struct dp_pdev *pdev, uint8_t mac_id)
 	if (pdev->soc->wlan_cfg_ctx->rxdma1_enable) {
 		dp_print_ring_stat_from_hal(pdev->soc,
 					    &pdev->rxdma_mon_buf_ring[mac_id],
-					    "Rxdma Mon Buf Ring");
+					    RXDMA_MONITOR_BUF);
 		dp_print_ring_stat_from_hal(pdev->soc,
 					    &pdev->rxdma_mon_dst_ring[mac_id],
-					    "Rxdma Mon Dst Ring");
+					    RXDMA_MONITOR_DST);
 		dp_print_ring_stat_from_hal(pdev->soc,
 					    &pdev->rxdma_mon_desc_ring[mac_id],
-					    "Rxdma mon desc Ring");
+					    RXDMA_MONITOR_DESC);
 	}
 
 	dp_print_ring_stat_from_hal(pdev->soc,
 				    &pdev->rxdma_mon_status_ring[mac_id],
-				    "Rxdma Mon Status Ring");
+				    RXDMA_MONITOR_STATUS);
 }
 
 /**
@@ -6038,77 +6099,67 @@ static inline void
 dp_print_ring_stats(struct dp_pdev *pdev)
 {
 	uint32_t i;
-	char ring_name[STR_MAXLEN + 1];
 	int mac_id;
 
 	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->soc->reo_exception_ring,
-			"Reo Exception Ring");
+				    &pdev->soc->reo_exception_ring,
+				    REO_EXCEPTION);
 	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->soc->reo_reinject_ring,
-			"Reo Inject Ring");
+				    &pdev->soc->reo_reinject_ring,
+				    REO_REINJECT);
 	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->soc->reo_cmd_ring,
-			"Reo Command Ring");
+				    &pdev->soc->reo_cmd_ring,
+				    REO_CMD);
 	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->soc->reo_status_ring,
-			"Reo Status Ring");
+				    &pdev->soc->reo_status_ring,
+				    REO_STATUS);
 	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->soc->rx_rel_ring,
-			"Rx Release ring");
+				    &pdev->soc->rx_rel_ring,
+				    WBM2SW_RELEASE);
 	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->soc->tcl_cmd_ring,
-			"Tcl command Ring");
+				    &pdev->soc->tcl_cmd_ring,
+				    TCL_CMD);
 	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->soc->tcl_status_ring,
-			"Tcl Status Ring");
+				    &pdev->soc->tcl_status_ring,
+				    TCL_STATUS);
 	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->soc->wbm_desc_rel_ring,
-			"Wbm Desc Rel Ring");
-	for (i = 0; i < MAX_REO_DEST_RINGS; i++) {
-		snprintf(ring_name, STR_MAXLEN, "Reo Dest Ring %d", i);
+				    &pdev->soc->wbm_desc_rel_ring,
+				    SW2WBM_RELEASE);
+	for (i = 0; i < MAX_REO_DEST_RINGS; i++)
 		dp_print_ring_stat_from_hal(pdev->soc,
-				&pdev->soc->reo_dest_ring[i],
-				ring_name);
-	}
+					    &pdev->soc->reo_dest_ring[i],
+					    REO_DST);
 
-	for (i = 0; i < pdev->soc->num_tcl_data_rings; i++) {
-		snprintf(ring_name, STR_MAXLEN, "Tcl Data Ring %d", i);
+	for (i = 0; i < pdev->soc->num_tcl_data_rings; i++)
 		dp_print_ring_stat_from_hal(pdev->soc,
-				&pdev->soc->tcl_data_ring[i],
-				ring_name);
-	}
-	for (i = 0; i < MAX_TCL_DATA_RINGS; i++) {
-		snprintf(ring_name, STR_MAXLEN, "Tx Comp Ring %d", i);
+					    &pdev->soc->tcl_data_ring[i],
+					    TCL_DATA);
+	for (i = 0; i < MAX_TCL_DATA_RINGS; i++)
 		dp_print_ring_stat_from_hal(pdev->soc,
-				&pdev->soc->tx_comp_ring[i],
-				ring_name);
-	}
-	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->rx_refill_buf_ring,
-			"Rx Refill Buf Ring");
+					    &pdev->soc->tx_comp_ring[i],
+					    WBM2SW_RELEASE);
 
 	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->rx_refill_buf_ring2,
-			"Second Rx Refill Buf Ring");
+				    &pdev->rx_refill_buf_ring,
+				    RXDMA_BUF);
 
-	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+	dp_print_ring_stat_from_hal(pdev->soc,
+				    &pdev->rx_refill_buf_ring2,
+				    RXDMA_BUF);
+
+	for (i = 0; i < MAX_RX_MAC_RINGS; i++)
+		dp_print_ring_stat_from_hal(pdev->soc,
+					    &pdev->rx_mac_buf_ring[i],
+					    RXDMA_BUF);
+
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++)
 		dp_print_mon_ring_stat_from_hal(pdev, mac_id);
-	}
 
-	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++) {
-		snprintf(ring_name, STR_MAXLEN, "Rxdma err dst ring %d", i);
+	for (i = 0; i < NUM_RXDMA_RINGS_PER_PDEV; i++)
 		dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->rxdma_err_dst_ring[i],
-			ring_name);
-	}
+					    &pdev->rxdma_err_dst_ring[i],
+					    RXDMA_DST);
 
-	for (i = 0; i < MAX_RX_MAC_RINGS; i++) {
-		snprintf(ring_name, STR_MAXLEN, "Rx mac buf ring %d", i);
-		dp_print_ring_stat_from_hal(pdev->soc,
-				&pdev->rx_mac_buf_ring[i],
-				ring_name);
-	}
 }
 
 /**

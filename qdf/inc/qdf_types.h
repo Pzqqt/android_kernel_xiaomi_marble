@@ -332,6 +332,7 @@ typedef void (*qdf_timer_func_t)(void *);
  * @QDF_MODULE_ID_EPPING: EPPING module ID
  * @QDF_MODULE_ID_QVIT: QVIT module ID
  * @QDF_MODULE_ID_DP: Data-path module ID
+ * @QDF_MODULE_ID_HAL: Hal abstraction module ID
  * @QDF_MODULE_ID_SOC: SOC module ID
  * @QDF_MODULE_ID_OS_IF: OS-interface module ID
  * @QDF_MODULE_ID_TARGET_IF: targer interface module ID
@@ -436,6 +437,7 @@ typedef enum {
 	QDF_MODULE_ID_EPPING,
 	QDF_MODULE_ID_QVIT,
 	QDF_MODULE_ID_DP,
+	QDF_MODULE_ID_HAL,
 	QDF_MODULE_ID_SOC,
 	QDF_MODULE_ID_OS_IF,
 	QDF_MODULE_ID_TARGET_IF,
