@@ -123,6 +123,58 @@ enum e_edca_type {
 #define CFG_EDCA_PROFILE_TXOPG_IDX    16
 
 /**
+ * struct mlme_edca_ac_vo - cwmin, cwmax and  aifs value for edca_ac_vo
+ *
+ * @vo_cwmin: cwmin value for voice
+ * @vo_cwmax: cwmax value for voice
+ * @vo_aifs: aifs value for voice
+ */
+struct mlme_edca_ac_vo {
+	uint32_t vo_cwmin;
+	uint32_t vo_cwmax;
+	uint32_t vo_aifs;
+};
+
+/**
+ * struct mlme_edca_ac_vi - cwmin, cwmax and  aifs value for edca_ac_vi
+ *
+ * @vi_cwmin: cwmin value for video
+ * @vi_cwmax: cwmax value for video
+ * @vi_aifs: aifs value for video
+ */
+struct mlme_edca_ac_vi {
+	uint32_t vi_cwmin;
+	uint32_t vi_cwmax;
+	uint32_t vi_aifs;
+};
+
+/**
+ * struct mlme_edca_ac_bk - cwmin, cwmax and  aifs value for edca_ac_bk
+ *
+ * @bk_cwmin: cwmin value for background
+ * @bk_cwmax: cwmax value for background
+ * @bk_aifs: aifs value for background
+ */
+struct mlme_edca_ac_bk {
+	uint32_t bk_cwmin;
+	uint32_t bk_cwmax;
+	uint32_t bk_aifs;
+};
+
+/**
+ * struct mlme_edca_ac_be - cwmin, cwmax and  aifs value for edca_ac_be
+ *
+ * @be_cwmin: cwmin value for best effort
+ * @be_cwmax: cwmax value for best effort
+ * @be_aifs: aifs value for best effort
+ */
+struct mlme_edca_ac_be {
+	uint32_t be_cwmin;
+	uint32_t be_cwmax;
+	uint32_t be_aifs;
+};
+
+/**
  * struct mlme_edca_params - EDCA pramaters related config items
  *
  * @ani_acbk_l:  EDCA parameters for ANI local access category background
@@ -149,6 +201,11 @@ enum e_edca_type {
  * @etsi_acbe_b: EDCA parameters for ETSI bcast access category best effort
  * @etsi_acvi_b: EDCA parameters for ETSI bcast access category video
  * @etsi_acvo_b: EDCA parameters for ETSI bcast access category voice
+ * @enable_edca_params: Enable edca parameter
+ * @mlme_edca_ac_vo: value for edca_ac_vo
+ * @mlme_edca_ac_vi: value for edca_ac_vi
+ * @mlme_edca_ac_bk: value for edca_ac_bk
+ * @mlme_edca_ac_be: value for edca_ac_be
  */
 struct wlan_mlme_edca_params {
 	struct mlme_cfg_str ani_acbk_l;
@@ -177,6 +234,12 @@ struct wlan_mlme_edca_params {
 	struct mlme_cfg_str etsi_acbe_b;
 	struct mlme_cfg_str etsi_acvi_b;
 	struct mlme_cfg_str etsi_acvo_b;
+
+	bool enable_edca_params;
+	struct mlme_edca_ac_vo edca_ac_vo;
+	struct mlme_edca_ac_vi edca_ac_vi;
+	struct mlme_edca_ac_bk edca_ac_bk;
+	struct mlme_edca_ac_be edca_ac_be;
 };
 
 #define WLAN_CFG_MFR_NAME_LEN (63)
