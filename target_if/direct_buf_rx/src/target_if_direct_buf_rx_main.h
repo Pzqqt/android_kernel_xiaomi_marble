@@ -28,7 +28,7 @@ struct direct_buf_rx_data;
 
 #define DBR_RING_BASE_ALIGN 8
 #define DBR_EVENT_TIMEOUT_IN_MS 1
-#define DBR_NUM_RESP_PER_EVENT 1
+#define DBR_NUM_RESP_PER_EVENT 2
 
 /**
  * enum DBR_MODULE - Enum containing the modules supporting direct buf rx
