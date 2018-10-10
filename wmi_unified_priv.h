@@ -220,8 +220,6 @@ struct wmi_log_buf_t {
  * @wmi_diag_event_log_buf_info - Buffer info for WMI diag event log
  * @wmi_record_lock - Lock WMI recording
  * @wmi_logging_enable - Enable/Disable state for WMI logging
- * @buf_offset_command - Offset from where WMI command data should be logged
- * @buf_offset_event - Offset from where WMI event data should be logged
  * @wmi_id_to_name - Function refernce to API to convert Command id to
  * string name
  * @wmi_log_debugfs_dir - refernce to debugfs directory
@@ -240,8 +238,6 @@ struct wmi_debug_log_info {
 
 	qdf_spinlock_t wmi_record_lock;
 	bool wmi_logging_enable;
-	uint32_t buf_offset_command;
-	uint32_t buf_offset_event;
 	struct dentry *wmi_log_debugfs_dir;
 };
 
@@ -1941,6 +1937,10 @@ struct wmi_soc {
 	uint32_t services[wmi_services_max];
 	uint16_t wmi_max_cmds;
 	uint32_t soc_idx;
+#ifdef WMI_INTERFACE_EVENT_LOGGING
+	uint32_t buf_offset_command;
+	uint32_t buf_offset_event;
+#endif /*WMI_INTERFACE_EVENT_LOGGING */
 };
 
 /**
