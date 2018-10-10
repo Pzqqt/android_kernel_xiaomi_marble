@@ -9624,6 +9624,25 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 
 	reg_info->num_2g_reg_rules = chan_list_event_hdr->num_2g_reg_rules;
 	reg_info->num_5g_reg_rules = chan_list_event_hdr->num_5g_reg_rules;
+	num_2g_reg_rules = reg_info->num_2g_reg_rules;
+	num_5g_reg_rules = reg_info->num_5g_reg_rules;
+	if ((num_2g_reg_rules > MAX_REG_RULES) ||
+	    (num_5g_reg_rules > MAX_REG_RULES) ||
+	    (num_2g_reg_rules + num_5g_reg_rules > MAX_REG_RULES) ||
+	    (num_2g_reg_rules + num_5g_reg_rules !=
+	     param_buf->num_reg_rule_array)) {
+		wmi_err_rl("Invalid num_2g_reg_rules: %u, num_5g_reg_rules: %u",
+			   num_2g_reg_rules, num_5g_reg_rules);
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (param_buf->num_reg_rule_array >
+		(WMI_SVC_MSG_MAX_SIZE - sizeof(*chan_list_event_hdr)) /
+		sizeof(*wmi_reg_rule)) {
+		wmi_err_rl("Invalid num_reg_rule_array: %u",
+			   param_buf->num_reg_rule_array);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	qdf_mem_copy(reg_info->alpha2, &(chan_list_event_hdr->alpha2),
 		     REG_ALPHA2_LEN);
 	reg_info->dfs_region = chan_list_event_hdr->dfs_region;
@@ -9655,9 +9674,6 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 	reg_info->max_bw_2g = chan_list_event_hdr->max_bw_2g;
 	reg_info->min_bw_5g = chan_list_event_hdr->min_bw_5g;
 	reg_info->max_bw_5g = chan_list_event_hdr->max_bw_5g;
-
-	num_2g_reg_rules = reg_info->num_2g_reg_rules;
-	num_5g_reg_rules = reg_info->num_5g_reg_rules;
 
 	WMI_LOGD("%s:cc %s dsf %d BW: min_2g %d max_2g %d min_5g %d max_5g %d",
 			__func__, reg_info->alpha2, reg_info->dfs_region,
