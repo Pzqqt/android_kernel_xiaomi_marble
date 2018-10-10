@@ -185,10 +185,9 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 	do {
 		length = sizeof(tSirBeaconReportXmitInd);
 		beacon_rep = qdf_mem_malloc(length);
-		if (NULL == beacon_rep) {
-			sme_err("Unable to allocate memory for beacon report");
+		if (!beacon_rep)
 			return QDF_STATUS_E_NOMEM;
-		}
+
 		beacon_rep->messageType = eWNI_SME_BEACON_REPORT_RESP_XMIT_IND;
 		beacon_rep->length = length;
 		beacon_rep->uDialogToken = rrm_ctx->token;
@@ -431,12 +430,9 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	filter.BSSIDs.bssid = (struct qdf_mac_addr *)&rrm_ctx->bssId;
 
 	if (rrm_ctx->ssId.length) {
-		filter.SSIDs.SSIDList =
-			(tCsrSSIDInfo *) qdf_mem_malloc(sizeof(tCsrSSIDInfo));
-		if (filter.SSIDs.SSIDList == NULL) {
-			sme_err("qdf_mem_malloc failed");
+		filter.SSIDs.SSIDList = qdf_mem_malloc(sizeof(tCsrSSIDInfo));
+		if (!filter.SSIDs.SSIDList)
 			return QDF_STATUS_E_NOMEM;
-		}
 
 		filter.SSIDs.SSIDList->SSID.length =
 			rrm_ctx->ssId.length;
@@ -523,14 +519,12 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	scanresults_arr = qdf_mem_malloc(num_scan_results *
 					 sizeof(next_result));
 	if (!scanresults_arr) {
-		sme_err("Failed to allocate scanresults_arr");
 		status = QDF_STATUS_E_NOMEM;
 		goto rrm_send_scan_results_done;
 	}
 
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
-	if (NULL == roam_info) {
-		sme_err("malloc failed");
+	if (!roam_info) {
 		status = QDF_STATUS_E_NOMEM;
 		goto rrm_send_scan_results_done;
 	}
@@ -760,10 +754,9 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 		uint32_t chan_num;
 
 		req = qdf_mem_malloc(sizeof(*req));
-		if (!req) {
-			sme_debug("Failed to allocate memory");
+		if (!req)
 			return QDF_STATUS_E_NOMEM;
-		}
+
 		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
 						mac_ctx->psoc,
 						session_id,
@@ -937,10 +930,9 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
 		/* Add all the channel in the regulatory domain. */
 		wlan_cfg_get_str_len(pMac, WNI_CFG_VALID_CHANNEL_LIST, &len);
 		pSmeRrmContext->channelList.ChannelList = qdf_mem_malloc(len);
-		if (pSmeRrmContext->channelList.ChannelList == NULL) {
-			sme_err("qdf_mem_malloc failed");
+		if (!pSmeRrmContext->channelList.ChannelList)
 			return QDF_STATUS_E_NOMEM;
-		}
+
 		csr_get_cfg_valid_channels(pMac, pSmeRrmContext->channelList.
 					ChannelList, &len);
 		pSmeRrmContext->channelList.numOfChannels = (uint8_t) len;
@@ -958,10 +950,8 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
 		len += pBeaconReq->channelList.numChannels;
 
 		pSmeRrmContext->channelList.ChannelList = qdf_mem_malloc(len);
-		if (pSmeRrmContext->channelList.ChannelList == NULL) {
-			sme_err("qdf_mem_malloc failed");
+		if (!pSmeRrmContext->channelList.ChannelList)
 			return QDF_STATUS_E_NOMEM;
-		}
 
 		if (pBeaconReq->channelInfo.channelNum != 255) {
 			if (csr_roam_is_channel_valid
@@ -1056,10 +1046,8 @@ QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t
 	}
 
 	pMsg = qdf_mem_malloc(sizeof(tSirNeighborReportReqInd));
-	if (NULL == pMsg) {
-		sme_err("Unable to allocate memory for Neighbor request");
+	if (!pMsg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	rrm_ll_purge_neighbor_cache(pMac,
 			    &pMac->rrm.rrmSmeContext.neighborReportCache);
@@ -1287,8 +1275,7 @@ static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac,
 	for (i = 0; i < pNeighborRpt->numNeighborReports; i++) {
 		pNeighborReportDesc =
 			qdf_mem_malloc(sizeof(tRrmNeighborReportDesc));
-		if (NULL == pNeighborReportDesc) {
-			sme_err("Failed to alloc memory for RRM report desc");
+		if (!pNeighborReportDesc) {
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
 
@@ -1296,8 +1283,7 @@ static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac,
 
 		pNeighborReportDesc->pNeighborBssDescription =
 			qdf_mem_malloc(sizeof(tSirNeighborBssDescription));
-		if (NULL == pNeighborReportDesc->pNeighborBssDescription) {
-			sme_err("Failed to alloc mem for RRM BSS Description");
+		if (!pNeighborReportDesc->pNeighborBssDescription) {
 			qdf_mem_free(pNeighborReportDesc);
 			status = QDF_STATUS_E_NOMEM;
 			goto end;

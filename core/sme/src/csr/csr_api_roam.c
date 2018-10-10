@@ -188,10 +188,8 @@ static QDF_STATUS csr_sae_callback(tpAniSirGlobal mac_ctx,
 		return QDF_STATUS_E_INVAL;
 
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
-	if (!roam_info) {
-		sme_err("qdf_mem_malloc failed for SAE");
+	if (!roam_info)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	roam_info->sae_info = sae_info;
 
@@ -520,13 +518,10 @@ static QDF_STATUS csr_roam_init_globals(tpAniSirGlobal pMac)
 		   * sizeof(struct csr_roam_session);
 
 	csr_roam_roam_session = qdf_mem_malloc(buf_size);
-
 	if (csr_roam_roam_session) {
 		pMac->roam.roamSession = csr_roam_roam_session;
 		status = QDF_STATUS_SUCCESS;
 	} else {
-		sme_err("%s: Failed to allocate %d bytes",
-			__func__, buf_size);
 		status = QDF_STATUS_E_NOMEM;
 	}
 
@@ -767,12 +762,9 @@ static void csr_roam_arrange_ch_list(tpAniSirGlobal mac_ctx,
 	if (!prefer_5g)
 		return;
 
-	tmp_list = (tSirUpdateChanParam *)
-		qdf_mem_malloc(sizeof(tSirUpdateChanParam) * num_channel);
-	if (tmp_list == NULL) {
-		sme_err("Memory allocation failed");
+	tmp_list = qdf_mem_malloc(sizeof(tSirUpdateChanParam) * num_channel);
+	if (!tmp_list)
 		return;
-	}
 
 	/* Fist copy Non-DFS 5g channels */
 	for (i = 0; i < num_channel; i++) {
@@ -855,11 +847,8 @@ static void csr_roam_sort_channel_for_early_stop(tpAniSirGlobal mac_ctx,
 		(sizeof(tSirUpdateChanParam) * num_channel);
 	chan_list_greedy = qdf_mem_malloc(buf_size);
 	chan_list_non_greedy = qdf_mem_malloc(buf_size);
-	if (!chan_list_greedy || !chan_list_non_greedy) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to allocate memory for tSirUpdateChanList");
-		return;
-	}
+	if (!chan_list_greedy || !chan_list_non_greedy)
+		goto scan_list_sort_error;
 	/*
 	 * fixed_greedy_chan_list is an evaluated channel list based on most of
 	 * the enterprise wifi deployments and the order of the channels
@@ -1073,12 +1062,9 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 		 (sizeof(tSirUpdateChanParam) * (numChan));
 
 	csr_init_operating_classes((tHalHandle) pMac);
-	pChanList = (tSirUpdateChanList *) qdf_mem_malloc(bufLen);
-	if (!pChanList) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to allocate memory for tSirUpdateChanList");
+	pChanList = qdf_mem_malloc(bufLen);
+	if (!pChanList)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	for (i = 0; i < pScan->base_channels.numChannels; i++) {
 		struct csr_sta_roam_policy_params *roam_policy =
@@ -1800,8 +1786,7 @@ QDF_STATUS csr_create_bg_scan_roam_channel_list(tpAniSirGlobal pMac,
 		qdf_mem_malloc(pNeighborRoamInfo->cfgParams.channelInfo.
 			       numOfChannels);
 
-	if (NULL == pNeighborRoamInfo->cfgParams.channelInfo.ChannelList) {
-		sme_err("Memory Allocation for CFG Channel List failed");
+	if (!pNeighborRoamInfo->cfgParams.channelInfo.ChannelList) {
 		pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels = 0;
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -1924,9 +1909,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 		}
 		currChannelListInfo->ChannelList
 			= qdf_mem_malloc(outNumChannels * sizeof(uint8_t));
-		if (NULL == currChannelListInfo->ChannelList) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
-				  "Failed to allocate memory for roam scan channel list");
+		if (!currChannelListInfo->ChannelList) {
 			currChannelListInfo->numOfChannels = 0;
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -5901,10 +5884,9 @@ static enum csr_join_state csr_roam_join_next_bss(tpAniSirGlobal mac_ctx,
 	}
 
 	roam_info = qdf_mem_malloc(sizeof(*roam_info));
-	if (!roam_info) {
-		sme_err("failed to allocate memory");
+	if (!roam_info)
 		return eCsrStopRoaming;
-	}
+
 	qdf_mem_copy(&roam_info->bssid, &session->joinFailStatusCode.bssId,
 			sizeof(tSirMacAddr));
 	/*
@@ -6722,12 +6704,8 @@ static void csr_roam_synch_clean_up(tpAniSirGlobal mac, uint8_t session_id)
 
 	roam_offload_failed = qdf_mem_malloc(
 				sizeof(struct roam_offload_synch_fail));
-	if (NULL == roam_offload_failed) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: unable to allocate memory for roam synch fail",
-			  __func__);
+	if (!roam_offload_failed)
 		return;
-	}
 
 	roam_offload_failed->session_id = session_id;
 	msg.type     = WMA_ROAM_OFFLOAD_SYNCH_FAIL;
@@ -7245,7 +7223,6 @@ static QDF_STATUS populate_fils_params_join_rsp(tpAniSirGlobal mac_ctx,
 
 	roam_info->fils_join_rsp = qdf_mem_malloc(sizeof(*fils_join_rsp));
 	if (!roam_info->fils_join_rsp) {
-		sme_err("fils_join_rsp malloc fails!");
 		status = QDF_STATUS_E_FAILURE;
 		goto free_fils_join_rsp;
 	}
@@ -7255,7 +7232,6 @@ static QDF_STATUS populate_fils_params_join_rsp(tpAniSirGlobal mac_ctx,
 	if (!roam_fils_info->fils_pmk) {
 		qdf_mem_free(roam_info->fils_join_rsp);
 		roam_info->fils_join_rsp = NULL;
-		sme_err("fils_pmk malloc fails!");
 		status = QDF_STATUS_E_FAILURE;
 		goto free_fils_join_rsp;
 	}
@@ -7978,10 +7954,8 @@ static void update_profile_fils_info(struct csr_roam_profile *des_profile,
 
 	des_profile->fils_con_info =
 		qdf_mem_malloc(sizeof(struct cds_fils_connection_info));
-	if (!des_profile->fils_con_info) {
-		sme_err("failed to allocate memory");
+	if (!des_profile->fils_con_info)
 		return;
-	}
 
 	qdf_mem_copy(des_profile->fils_con_info,
 			src_profile->fils_con_info,
@@ -7989,10 +7963,8 @@ static void update_profile_fils_info(struct csr_roam_profile *des_profile,
 
 	des_profile->hlp_ie =
 		qdf_mem_malloc(src_profile->hlp_ie_len);
-	if (!des_profile->hlp_ie) {
-		sme_err("failed to allocate memory for hlp ie");
+	if (!des_profile->hlp_ie)
 		return;
-	}
 
 	qdf_mem_copy(des_profile->hlp_ie, src_profile->hlp_ie,
 		     src_profile->hlp_ie_len);
@@ -8220,11 +8192,8 @@ QDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac,
 	qdf_mem_set(pDstProfile, sizeof(struct csr_roam_profile), 0);
 
 	pDstProfile->BSSIDs.bssid = qdf_mem_malloc(sizeof(struct qdf_mac_addr));
-	if (NULL == pDstProfile->BSSIDs.bssid) {
+	if (!pDstProfile->BSSIDs.bssid) {
 		status = QDF_STATUS_E_NOMEM;
-		sme_err("failed to allocate memory for BSSID "
-			MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(pSrcProfile->bssid.bytes));
 		goto end;
 	}
 	pDstProfile->BSSIDs.numOfBSSIDs = 1;
@@ -8233,11 +8202,8 @@ QDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac,
 	if (pSrcProfile->SSID.length > 0) {
 		pDstProfile->SSIDs.SSIDList =
 			qdf_mem_malloc(sizeof(tCsrSSIDInfo));
-		if (NULL == pDstProfile->SSIDs.SSIDList) {
+		if (!pDstProfile->SSIDs.SSIDList) {
 			status = QDF_STATUS_E_NOMEM;
-			sme_err("failed to allocate memory for SSID "
-				MAC_ADDRESS_STR,
-				MAC_ADDR_ARRAY(pSrcProfile->bssid.bytes));
 			goto end;
 		}
 		pDstProfile->SSIDs.numOfSSIDs = 1;
@@ -8251,9 +8217,8 @@ QDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac,
 	if (pSrcProfile->nAddIEAssocLength) {
 		pDstProfile->pAddIEAssoc =
 			qdf_mem_malloc(pSrcProfile->nAddIEAssocLength);
-		if (NULL == pDstProfile->pAddIEAssoc) {
+		if (!pDstProfile->pAddIEAssoc) {
 			status = QDF_STATUS_E_NOMEM;
-			sme_err("failed to allocate mem for additional ie");
 			goto end;
 		}
 		pDstProfile->nAddIEAssocLength = pSrcProfile->nAddIEAssocLength;
@@ -8539,10 +8504,8 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 	}
 
 	first_ap_profile = qdf_mem_malloc(sizeof(*first_ap_profile));
-	if (NULL == first_ap_profile) {
-		sme_err("malloc fails for first_ap_profile");
+	if (!first_ap_profile)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	/* Initialize the count before proceeding with the Join requests */
 	pSession->join_bssid_count = 0;
@@ -9238,14 +9201,9 @@ QDF_STATUS csr_roam_save_connected_information(tpAniSirGlobal pMac,
 		if (pProfile->nAddIEAssocLength) {
 			pConnectProfile->pAddIEAssoc =
 				qdf_mem_malloc(pProfile->nAddIEAssocLength);
-			if (NULL == pConnectProfile->pAddIEAssoc)
-				status = QDF_STATUS_E_NOMEM;
-			else
-				status = QDF_STATUS_SUCCESS;
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				sme_err("Failed to allocate memory for IE");
+			if (!pConnectProfile->pAddIEAssoc)
 				return QDF_STATUS_E_FAILURE;
-			}
+
 			pConnectProfile->nAddIEAssocLength =
 				pProfile->nAddIEAssocLength;
 			qdf_mem_copy(pConnectProfile->pAddIEAssoc,
@@ -10032,10 +9990,9 @@ csr_check_profile_in_scan_cache(tpAniSirGlobal mac_ctx,
 {
 	QDF_STATUS status;
 	*scan_filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
-	if (NULL == *scan_filter) {
-		sme_err("alloc for ScanFilter failed");
+	if (!*scan_filter)
 		return false;
-	}
+
 	(*scan_filter)->scan_filter_for_roam = 1;
 	status = csr_roam_prepare_filter_from_profile(mac_ctx,
 			&neighbor_roam_info->csrNeighborRoamProfile,
@@ -10088,11 +10045,8 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 	}
 
 	roamInfo = qdf_mem_malloc(sizeof(*roamInfo));
-
-	if (!roamInfo) {
-		sme_err("failed to allocate memory");
+	if (!roamInfo)
 		return;
-	}
 
 	if (CSR_IS_ROAM_SUBSTATE_DISASSOC_NO_JOIN(pMac, sessionId)) {
 		sme_debug("***eCsrNothingToJoin***");
@@ -10168,7 +10122,6 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 			qdf_mem_free(roamInfo);
 			return;
 		} else {
-			sme_err("pCurRoamProfile memory alloc failed");
 			QDF_ASSERT(0);
 			csr_dequeue_command(pMac);
 		}
@@ -10342,10 +10295,8 @@ void csr_roaming_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 		pIbssPeerInd = (tSmeIbssPeerInd *) pSmeRsp;
 		sme_err("Peer departed ntf from LIM in joining state");
 		roam_info = qdf_mem_malloc(sizeof(*roam_info));
-		if (!roam_info) {
-			sme_err("failed to allocate memory for roam_info");
+		if (!roam_info)
 			break;
-		}
 
 		roam_info->staId = (uint8_t) pIbssPeerInd->staId;
 		qdf_copy_macaddr(&roam_info->peerMac, &pIbssPeerInd->peer_addr);
@@ -10933,10 +10884,8 @@ csr_create_fils_realm_hash(struct cds_fils_connection_info *fils_con_info,
 		return false;
 
 	hash = qdf_mem_malloc(SHA256_DIGEST_SIZE);
-	if (!hash) {
-		sme_err("malloc fails in fils realm");
+	if (!hash)
 		return false;
-	}
 
 	data[0] = fils_con_info->realm;
 	qdf_get_hash(SHA256_CRYPTO_TYPE, 1, data,
@@ -11435,10 +11384,8 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	tSmeCmd *cmd;
 
 	cmd = qdf_mem_malloc(sizeof(*cmd));
-	if (NULL == cmd) {
-		sme_err("memory allocation failed for size: %zu", sizeof(*cmd));
+	if (!cmd)
 		return;
-	}
 
 	/*
 	 * Check if AP dis-associated us because of MIC failure. If so,
@@ -12301,10 +12248,9 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 
 				msg = qdf_mem_malloc(sizeof(
 					struct sme_obss_ht40_scanind_msg));
-				if (NULL == msg) {
-					sme_err("Malloc failed");
+				if (!msg)
 					return;
-				}
+
 				msg->msg_type = eWNI_SME_HT40_OBSS_SCAN_IND;
 				msg->length =
 				      sizeof(struct sme_obss_ht40_scanind_msg);
@@ -13007,10 +12953,8 @@ QDF_STATUS csr_process_del_sta_session_command(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status;
 
 	del_sta_self_req = qdf_mem_malloc(sizeof(struct del_sta_self_params));
-	if (NULL == del_sta_self_req) {
-		sme_err(" mem alloc failed for tDelStaSelfParams");
+	if (!del_sta_self_req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_mem_copy(del_sta_self_req->self_mac_addr,
 		     sme_command->u.delStaSessionCmd.selfMacAddr,
@@ -13341,7 +13285,6 @@ int8_t csr_get_cfg_max_tx_power(tpAniSirGlobal pMac, uint8_t channel)
 	uint16_t cfgId = 0;
 	int8_t maxTxPwr = 0;
 	uint8_t *pCountryInfo = NULL;
-	QDF_STATUS status;
 	uint8_t count = 0;
 	uint8_t firstChannel;
 	uint8_t maxChannels;
@@ -13356,16 +13299,9 @@ int8_t csr_get_cfg_max_tx_power(tpAniSirGlobal pMac, uint8_t channel)
 		return maxTxPwr;
 
 	pCountryInfo = qdf_mem_malloc(cfgLength);
-	if (NULL == pCountryInfo)
-		status = QDF_STATUS_E_NOMEM;
-	else
-		status = QDF_STATUS_SUCCESS;
-	if (status != QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			 "%s: failed to allocate memory, status = %d",
-			  __func__, status);
+	if (!pCountryInfo)
 		goto error;
-	}
+
 	if (wlan_cfg_get_str(pMac, cfgId, (uint8_t *)pCountryInfo,
 			&cfgLength) != QDF_STATUS_SUCCESS) {
 		goto error;
@@ -16903,10 +16839,8 @@ QDF_STATUS csr_process_add_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 		     WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE == rsp->sub_type))) {
 			sme_debug("send SET IE msg to PE");
 			msg = qdf_mem_malloc(sizeof(*msg));
-			if (NULL == msg) {
-				sme_err("Memory allocation failed");
+			if (!msg)
 				return QDF_STATUS_E_NOMEM;
-			}
 
 			msg->msg_type = eWNI_SME_SET_IE_REQ;
 			msg->session_id = rsp->session_id;
@@ -16993,10 +16927,8 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 	struct scheduler_msg msg = {0};
 
 	add_sta_self_req = qdf_mem_malloc(sizeof(struct add_sta_self_params));
-	if (NULL == add_sta_self_req) {
-		sme_err("Unable to allocate memory for tAddSelfStaParams");
+	if (!add_sta_self_req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	if (!(pMac->mlme_cfg)) {
 		pe_err("Mlme cfg NULL");
@@ -17509,10 +17441,9 @@ QDF_STATUS csr_send_mb_stats_req_msg(tpAniSirGlobal pMac, uint32_t statsMask,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	pMsg = qdf_mem_malloc(sizeof(tAniGetPEStatsReq));
-	if (NULL == pMsg) {
-		sme_err("Failed to allocate mem for stats req ");
+	if (!pMsg)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	/* need to initiate a stats request to PE */
 	pMsg->msgType = eWNI_SME_GET_STATISTICS_REQ;
 	pMsg->msgLen = (uint16_t) sizeof(tAniGetPEStatsReq);
@@ -17765,10 +17696,8 @@ struct csr_statsclient_reqinfo *csr_roam_insert_entry_into_list(
 								true)) {
 
 	pNewStaEntry = qdf_mem_malloc(sizeof(struct csr_statsclient_reqinfo));
-		if (NULL == pNewStaEntry) {
-			sme_err("couldn't allocate memory for the entry");
+		if (!pNewStaEntry)
 			return NULL;
-		}
 
 		pNewStaEntry->callback = pStaEntry->callback;
 		pNewStaEntry->pContext = pStaEntry->pContext;
@@ -17843,11 +17772,9 @@ QDF_STATUS csr_get_snr(tpAniSirGlobal pMac,
 	uint32_t sessionId = CSR_SESSION_ID_INVALID;
 	tAniGetSnrReq *pMsg;
 
-	pMsg = (tAniGetSnrReq *) qdf_mem_malloc(sizeof(tAniGetSnrReq));
-	if (NULL == pMsg) {
-		sme_err("failed to allocate mem for req");
+	pMsg = qdf_mem_malloc(sizeof(tAniGetSnrReq));
+	if (!pMsg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	status = csr_roam_get_session_id_from_bssid(pMac, &bssId, &sessionId);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -18466,11 +18393,9 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 #endif /* FEATURE_WLAN_ESE */
 
 	req_buf = qdf_mem_malloc(sizeof(tSirRoamOffloadScanReq));
-	if (NULL == req_buf) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			 "Mem alloc for roam scan offload req failed");
+	if (!req_buf)
 		return NULL;
-	}
+
 	req_buf->Command = command;
 	/*
 	 * If command is STOP, then pass down ScanOffloadEnabled as Zero. This
@@ -18831,10 +18756,8 @@ QDF_STATUS csr_invoke_neighbor_report_request(uint8_t session_id,
 	}
 
 	invoke_params = qdf_mem_malloc(sizeof(*invoke_params));
-	if (!invoke_params) {
-		sme_err("Memory allocation failure");
+	if (!invoke_params)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	invoke_params->vdev_id = session_id;
 	invoke_params->send_resp_to_host = send_resp_to_host;
@@ -19246,11 +19169,9 @@ csr_create_per_roam_request(tpAniSirGlobal mac_ctx,
 	struct wmi_per_roam_config_req *req_buf = NULL;
 
 	req_buf = qdf_mem_malloc(sizeof(struct wmi_per_roam_config_req));
-	if (!req_buf) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			 "Mem alloc for per roam req failed");
+	if (!req_buf)
 		return NULL;
-	}
+
 	req_buf->vdev_id = session_id;
 	req_buf->per_config.enable =
 		mac_ctx->mlme_cfg->lfr.per_roam_enable;
@@ -20456,10 +20377,8 @@ QDF_STATUS csr_roam_update_config(tpAniSirGlobal mac_ctx, uint8_t session_id,
 	}
 
 	msg = qdf_mem_malloc(sizeof(*msg));
-	if (NULL == msg) {
-		sme_err("malloc failed");
+	if (!msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	msg->messageType = eWNI_SME_UPDATE_CONFIG;
 	msg->sme_session_id = session_id;
@@ -20649,7 +20568,6 @@ QDF_STATUS csr_roam_start_beacon_req(tpAniSirGlobal pMac,
 	tSirStartBeaconIndication *pMsg;
 
 	pMsg = qdf_mem_malloc(sizeof(tSirStartBeaconIndication));
-
 	if (!pMsg)
 		return QDF_STATUS_E_NOMEM;
 
@@ -20684,15 +20602,11 @@ csr_roam_modify_add_ies(tpAniSirGlobal pMac,
 
 	/* following buffer will be freed by consumer (PE) */
 	pLocalBuffer = qdf_mem_malloc(pModifyIE->ieBufferlength);
-
-	if (NULL == pLocalBuffer) {
-		sme_err("Memory Allocation Failure!!!");
+	if (!pLocalBuffer)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	pModifyAddIEInd = qdf_mem_malloc(sizeof(tSirModifyIEsInd));
-	if (NULL == pModifyAddIEInd) {
-		sme_err("Memory Allocation Failure!!!");
+	if (!pModifyAddIEInd) {
 		qdf_mem_free(pLocalBuffer);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -20752,8 +20666,7 @@ csr_roam_update_add_ies(tpAniSirGlobal pMac,
 	if (pUpdateIE->ieBufferlength != 0) {
 		/* Following buffer will be freed by consumer (PE) */
 		pLocalBuffer = qdf_mem_malloc(pUpdateIE->ieBufferlength);
-		if (NULL == pLocalBuffer) {
-			sme_err("Memory Allocation Failure!!!");
+		if (!pLocalBuffer) {
 			return QDF_STATUS_E_NOMEM;
 		}
 		qdf_mem_copy(pLocalBuffer, pUpdateIE->pAdditionIEBuffer,
@@ -20761,11 +20674,8 @@ csr_roam_update_add_ies(tpAniSirGlobal pMac,
 	}
 
 	pUpdateAddIEs = qdf_mem_malloc(sizeof(tSirUpdateIEsInd));
-	if (NULL == pUpdateAddIEs) {
-		sme_err("Memory Allocation Failure!!!");
-		if (pLocalBuffer != NULL)
-			qdf_mem_free(pLocalBuffer);
-
+	if (!pUpdateAddIEs) {
+		qdf_mem_free(pLocalBuffer);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -21367,13 +21277,11 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 
 	len = sizeof(*cmd);
 	cmd = qdf_mem_malloc(len);
-	if (!cmd) {
-		sme_err("Memory allocation failed");
+	if (!cmd)
 		/* Probably the fail response will also fail during malloc.
 		 * Still proceeding to send response!
 		 */
 		goto fail;
-	}
 
 	/* For hidden SSID case, if there is any scan command pending
 	 * it needs to be cleared before issuing set HW mode
@@ -21442,11 +21350,9 @@ fail:
 	if (cmd)
 		qdf_mem_free(cmd);
 	param = qdf_mem_malloc(sizeof(*param));
-	if (!param) {
-		sme_err(
-			"Malloc fail: Fail to send response to SME");
+	if (!param)
 		return;
-	}
+
 	sme_err("Sending set HW fail response to SME");
 	param->status = SET_HW_MODE_STATUS_ECANCELED;
 	param->cfgd_hw_mode_index = 0;
@@ -21485,13 +21391,11 @@ void csr_process_set_dual_mac_config(tpAniSirGlobal mac, tSmeCmd *command)
 
 	len = sizeof(*cmd);
 	cmd = qdf_mem_malloc(len);
-	if (!cmd) {
-		sme_err("Memory allocation failed");
+	if (!cmd)
 		/* Probably the fail response will also fail during malloc.
 		 * Still proceeding to send response!
 		 */
 		goto fail;
-	}
 
 	cmd->message_type = eWNI_SME_SET_DUAL_MAC_CFG_REQ;
 	cmd->length = len;
@@ -21518,11 +21422,9 @@ void csr_process_set_dual_mac_config(tpAniSirGlobal mac, tSmeCmd *command)
 	return;
 fail:
 	param = qdf_mem_malloc(sizeof(*param));
-	if (!param) {
-		sme_err(
-			"Malloc fail: Fail to send response to SME");
+	if (!param)
 		return;
-	}
+
 	sme_err("Sending set dual mac fail response to SME");
 	param->status = SET_HW_MODE_STATUS_ECANCELED;
 	msg.type = eWNI_SME_SET_DUAL_MAC_CFG_RESP;
@@ -21560,10 +21462,8 @@ void csr_process_set_antenna_mode(tpAniSirGlobal mac, tSmeCmd *command)
 
 	len = sizeof(*cmd);
 	cmd = qdf_mem_malloc(len);
-	if (!cmd) {
-		sme_err("Memory allocation failed");
+	if (!cmd)
 		goto fail;
-	}
 
 	cmd->message_type = eWNI_SME_SET_ANTENNA_MODE_REQ;
 	cmd->length = len;
@@ -21587,11 +21487,9 @@ void csr_process_set_antenna_mode(tpAniSirGlobal mac, tSmeCmd *command)
 	return;
 fail:
 	param = qdf_mem_malloc(sizeof(*param));
-	if (!param) {
-		sme_err(
-			"Malloc fail: Fail to send response to SME");
+	if (!param)
 		return;
-	}
+
 	sme_err("Sending set dual mac fail response to SME");
 	param->status = SET_ANTENNA_MODE_STATUS_ECANCELED;
 	msg.type = eWNI_SME_SET_ANTENNA_MODE_RESP;
@@ -21628,13 +21526,11 @@ void csr_process_nss_update_req(tpAniSirGlobal mac, tSmeCmd *command)
 
 	len = sizeof(*msg);
 	msg = qdf_mem_malloc(len);
-	if (!msg) {
-		sme_err("Memory allocation failed");
+	if (!msg)
 		/* Probably the fail response is also fail during malloc.
 		 * Still proceeding to send response!
 		 */
 		goto fail;
-	}
 
 	msg->msgType = eWNI_SME_NSS_UPDATE_REQ;
 	msg->msgLen = sizeof(*msg);
@@ -21652,11 +21548,9 @@ void csr_process_nss_update_req(tpAniSirGlobal mac, tSmeCmd *command)
 	return;
 fail:
 	param = qdf_mem_malloc(sizeof(*param));
-	if (!param) {
-		sme_err(
-			"Malloc fail: Fail to send response to SME");
+	if (!param)
 		return;
-	}
+
 	sme_err("Sending nss update fail response to SME");
 	param->tx_status = QDF_STATUS_E_FAILURE;
 	param->session_id = command->u.nss_update_cmd.session_id;
@@ -21694,10 +21588,8 @@ static void csr_copy_fils_join_rsp_roam_info(struct csr_roam_info *roam_info,
 	struct fils_join_rsp_params *roam_fils_info;
 
 	roam_info->fils_join_rsp = qdf_mem_malloc(sizeof(*roam_fils_info));
-	if (!roam_info->fils_join_rsp) {
-		sme_err("fils_join_rsp malloc fails!");
+	if (!roam_info->fils_join_rsp)
 		return;
-	}
 
 	roam_fils_info = roam_info->fils_join_rsp;
 	cds_copy_hlp_info(&roam_synch_data->dst_mac,
@@ -21836,9 +21728,7 @@ static QDF_STATUS csr_process_roam_sync_callback(tpAniSirGlobal mac_ctx,
 	ps_global_info->remain_in_power_active_till_dhcp = false;
 	session->connectState = eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED;
 	roam_info = qdf_mem_malloc(sizeof(struct csr_roam_info));
-	if (NULL == roam_info) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			FL("LFR3: Mem Alloc failed for roam info"));
+	if (!roam_info) {
 		session->roam_synch_in_progress = false;
 		qdf_mem_free(ies_local);
 		return QDF_STATUS_E_NOMEM;
@@ -21939,8 +21829,7 @@ static QDF_STATUS csr_process_roam_sync_callback(tpAniSirGlobal mac_ctx,
 		SIR_MAC_HDR_LEN_3A;
 	roam_info->pbFrames = qdf_mem_malloc(roam_info->nBeaconLength +
 		roam_info->nAssocReqLength + roam_info->nAssocRspLength);
-	if (NULL == roam_info->pbFrames) {
-		sme_err("no memory available");
+	if (!roam_info->pbFrames) {
 		session->roam_synch_in_progress = false;
 		if (roam_info)
 			qdf_mem_free(roam_info);

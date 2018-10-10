@@ -103,9 +103,7 @@ void csr_neighbor_roam_send_lfr_metric_event(
 	struct csr_roam_info *roam_info;
 
 	roam_info = qdf_mem_malloc(sizeof(struct csr_roam_info));
-	if (NULL == roam_info) {
-		sme_err("Memory allocation failed!");
-	} else {
+	if (roam_info) {
 		qdf_mem_copy((void *)roam_info->bssid.bytes,
 			     (void *)bssid, sizeof(struct qdf_mac_addr));
 		csr_roam_call_callback(mac_ctx, session_id, roam_info, 0,
@@ -374,10 +372,8 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 		pScanFilter->BSSIDs.bssid =
 			qdf_mem_malloc(sizeof(tSirMacAddr) *
 				       pScanFilter->BSSIDs.numOfBSSIDs);
-		if (NULL == pScanFilter->BSSIDs.bssid) {
-			sme_err("Scan Filter BSSID mem alloc failed");
+		if (!pScanFilter->BSSIDs.bssid)
 			return QDF_STATUS_E_NOMEM;
-		}
 
 		/* Populate the BSSID from handoff info received from HDD */
 		for (i = 0; i < pScanFilter->BSSIDs.numOfBSSIDs; i++) {
@@ -394,10 +390,9 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 		pScanFilter->SSIDs.SSIDList =
 			qdf_mem_malloc(sizeof(tCsrSSIDInfo) *
 				pScanFilter->SSIDs.numOfSSIDs);
-		if (NULL == pScanFilter->SSIDs.SSIDList) {
-			sme_err("Scan Filter SSID mem alloc failed");
+		if (!pScanFilter->SSIDs.SSIDList)
 			return QDF_STATUS_E_NOMEM;
-		}
+
 		for (i = 0; i < roam_params->num_ssid_allowed_list; i++) {
 			pScanFilter->SSIDs.SSIDList[i].handoffPermitted = 1;
 			pScanFilter->SSIDs.SSIDList[i].ssidHidden = 0;
@@ -413,10 +408,9 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 		pScanFilter->SSIDs.numOfSSIDs = 1;
 		pScanFilter->SSIDs.SSIDList =
 			qdf_mem_malloc(sizeof(tCsrSSIDInfo));
-		if (NULL == pScanFilter->SSIDs.SSIDList) {
-			sme_err("Scan Filter SSID mem alloc failed");
+		if (!pScanFilter->SSIDs.SSIDList)
 			return QDF_STATUS_E_NOMEM;
-		}
+
 		pScanFilter->SSIDs.SSIDList->handoffPermitted = 1;
 		pScanFilter->SSIDs.SSIDList->ssidHidden = 0;
 		pScanFilter->SSIDs.SSIDList->SSID.length =
@@ -453,8 +447,7 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 		pScanFilter->ChannelInfo.numOfChannels = num_ch;
 		pScanFilter->ChannelInfo.ChannelList =
 			qdf_mem_malloc(num_ch * sizeof(uint8_t));
-		if (NULL == pScanFilter->ChannelInfo.ChannelList) {
-			sme_err("Scan Filter Ch list mem alloc failed");
+		if (!pScanFilter->ChannelInfo.ChannelList) {
 			qdf_mem_free(pScanFilter->SSIDs.SSIDList);
 			pScanFilter->SSIDs.SSIDList = NULL;
 			return QDF_STATUS_E_NOMEM;
@@ -1277,11 +1270,9 @@ QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId)
 		pNeighborRoamInfo->cfgParams.channelInfo.ChannelList =
 		qdf_mem_malloc(pMac->roam.configParam.neighborRoamConfig.
 				neighborScanChanList.numChannels);
-		if (NULL ==
-			pNeighborRoamInfo->cfgParams.channelInfo.ChannelList) {
-			sme_err("Memory Allocation for CFG Channel List failed");
+		if (!pNeighborRoamInfo->cfgParams.channelInfo.ChannelList)
 			return QDF_STATUS_E_NOMEM;
-		}
+
 	} else {
 		pNeighborRoamInfo->cfgParams.channelInfo.ChannelList = NULL;
 	}
@@ -1491,10 +1482,9 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 
 	roam_id = GET_NEXT_ROAM_ID(&mac_ctx->roam);
 	profile = qdf_mem_malloc(sizeof(struct csr_roam_profile));
-	if (NULL == profile) {
-		sme_err("Memory alloc failed");
+	if (!profile)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	status =
 		csr_roam_copy_profile(mac_ctx, profile,
 				      session->pCurRoamProfile);
@@ -1508,8 +1498,7 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 		profile->BSSIDs.bssid =
 			qdf_mem_malloc(sizeof(tSirMacAddr) *
 				profile->BSSIDs.numOfBSSIDs);
-		if (NULL == profile->BSSIDs.bssid) {
-			sme_err("mem alloc failed for BSSID");
+		if (!profile->BSSIDs.bssid) {
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
 		}
@@ -1527,8 +1516,7 @@ static QDF_STATUS csr_neighbor_roam_process_handoff_req(
 			qdf_mem_malloc(sizeof(*profile->
 				ChannelInfo.ChannelList) *
 				profile->ChannelInfo.numOfChannels);
-		if (NULL == profile->ChannelInfo.ChannelList) {
-			sme_err("mem alloc failed for ChannelList");
+		if (!profile->ChannelInfo.ChannelList) {
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
 		}

@@ -149,10 +149,9 @@ static QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
 	enum ps_state ps_state;
 
 	enable_ps_req_params =  qdf_mem_malloc(sizeof(*enable_ps_req_params));
-	if (NULL == enable_ps_req_params) {
-		sme_err("Memory allocation failed for enable_ps_req_params");
+	if (!enable_ps_req_params)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	if (ps_param->uapsd_per_ac_bit_mask) {
 		enable_ps_req_params->psSetting = eSIR_ADDON_ENABLE_UAPSD;
 		sme_ps_fill_uapsd_req_params(mac_ctx,
@@ -189,10 +188,8 @@ static QDF_STATUS sme_ps_disable_ps_req_params(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	disable_ps_req_params = qdf_mem_malloc(sizeof(*disable_ps_req_params));
-	if (NULL == disable_ps_req_params) {
-		sme_err("Memory allocation failed for sDisablePsParams");
+	if (!disable_ps_req_params)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	disable_ps_req_params->psSetting = eSIR_ADDON_NOTHING;
 	disable_ps_req_params->sessionid = session_id;
@@ -223,10 +220,8 @@ static QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 
 	enable_uapsd_req_params =
 		qdf_mem_malloc(sizeof(*enable_uapsd_req_params));
-	if (NULL == enable_uapsd_req_params) {
-		sme_err("Memory allocation failed for enable_uapsd_req_params");
+	if (!enable_uapsd_req_params)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	sme_ps_fill_uapsd_req_params(mac_ctx,
 			&enable_uapsd_req_params->uapsdParams,
@@ -265,10 +260,8 @@ static QDF_STATUS sme_ps_disable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 	}
 	disable_uapsd_req_params =
 		qdf_mem_malloc(sizeof(*disable_uapsd_req_params));
-	if (NULL == disable_uapsd_req_params) {
-		sme_err("Mem alloc failed for disable_uapsd_req_params");
+	if (!disable_uapsd_req_params)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	disable_uapsd_req_params->sessionid = session_id;
 	status = sme_post_ps_msg_to_wma(WMA_DISABLE_UAPSD_REQ,
@@ -433,10 +426,8 @@ QDF_STATUS sme_ps_timer_flush_sync(tHalHandle hal, uint8_t session_id)
 	}
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		sme_err("out of memory");
+	if (!req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	if (ps_parm->uapsd_per_ac_bit_mask) {
 		req->psSetting = eSIR_ADDON_ENABLE_UAPSD;
@@ -637,11 +628,8 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 	}
 
 	request_buf = qdf_mem_malloc(sizeof(tSirHostOffloadReq));
-	if (NULL == request_buf) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-		   FL("Not able to allocate memory for host offload request"));
+	if (!request_buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_copy_macaddr(&request->bssid, &session->connectedProfile.bssid);
 
@@ -692,11 +680,9 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 	qdf_copy_macaddr(&request->bssid, &session->connectedProfile.bssid);
 
 	request_buf = qdf_mem_malloc(sizeof(*request_buf));
-	if (NULL == request_buf) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"Not able to allocate memory for NS offload request");
+	if (!request_buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	*request_buf = *request;
 
 	msg.type = WMA_SET_NS_OFFLOAD;

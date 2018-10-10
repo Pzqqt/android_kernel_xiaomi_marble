@@ -524,21 +524,16 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(tpAniSirGlobal mac_ctx,
 	}
 
 	auth_req_len = sizeof(tSirFTPreAuthReq);
-	preauth_req = (tpSirFTPreAuthReq) qdf_mem_malloc(auth_req_len);
-	if (NULL == preauth_req) {
-		sme_err("Memory allocation for FT Preauth request failed");
+	preauth_req = qdf_mem_malloc(auth_req_len);
+	if (!preauth_req)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	/* Save the SME Session ID. We need it while processing preauth resp */
 	csr_session->ftSmeContext.smeSessionId = session_id;
-
-	preauth_req->pbssDescription =
-		(tpSirBssDescription) qdf_mem_malloc(sizeof(bss_desc->length)
+	preauth_req->pbssDescription = qdf_mem_malloc(sizeof(bss_desc->length)
 				+ bss_desc->length);
-	if (NULL == preauth_req->pbssDescription) {
-		sme_err("Memory allocation for FT Preauth request failed");
+	if (!preauth_req->pbssDescription)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	preauth_req->messageType = eWNI_SME_FT_PRE_AUTH_REQ;
 
@@ -694,10 +689,9 @@ void csr_roam_ft_pre_auth_rsp_processor(tpAniSirGlobal mac_ctx,
 
 		csr_session->ftSmeContext.reassoc_ft_ies =
 			qdf_mem_malloc(ft_ies_length);
-		if (NULL == csr_session->ftSmeContext.reassoc_ft_ies) {
-			sme_err("Memory allocation failed for ft_ies");
+		if (!csr_session->ftSmeContext.reassoc_ft_ies)
 			return;
-		}
+
 		/* Copy the RIC IEs to reassoc IEs */
 		qdf_mem_copy(((uint8_t *) csr_session->ftSmeContext.
 					reassoc_ft_ies),

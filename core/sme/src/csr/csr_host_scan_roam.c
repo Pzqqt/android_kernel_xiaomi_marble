@@ -323,10 +323,9 @@ void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 			/* Finished all checks, now add it to candidate list */
 			bss_info =
 				qdf_mem_malloc(sizeof(tCsrNeighborRoamBSSInfo));
-			if (NULL == bss_info) {
-				sme_err("Memory alloc fail");
+			if (!bss_info)
 				continue;
-			}
+
 			bss_info->pBssDescription =
 				qdf_mem_malloc(descr->length +
 					sizeof(descr->length));
@@ -334,7 +333,6 @@ void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 				qdf_mem_copy(bss_info->pBssDescription, descr,
 					descr->length + sizeof(descr->length));
 			} else {
-				sme_err("Memory alloc fail");
 				qdf_mem_free(bss_info);
 				continue;
 			}

@@ -35,11 +35,9 @@ void sme_ft_open(tHalHandle hHal, uint32_t sessionId)
 
 		pSession->ftSmeContext.pUsrCtx =
 			qdf_mem_malloc(sizeof(tFTRoamCallbackUsrCtx));
-
-		if (NULL == pSession->ftSmeContext.pUsrCtx) {
-			sme_err("Memory allocation failure");
+		if (!pSession->ftSmeContext.pUsrCtx)
 			return;
-		}
+
 		pSession->ftSmeContext.pUsrCtx->pMac = pMac;
 		pSession->ftSmeContext.pUsrCtx->sessionId = sessionId;
 
@@ -155,8 +153,7 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
 		/* Save the FT IEs */
 		session->ftSmeContext.auth_ft_ies =
 					qdf_mem_malloc(ft_ies_length);
-		if (NULL == session->ftSmeContext.auth_ft_ies) {
-			sme_err("Mem alloc failed for auth_ft_ies");
+		if (!session->ftSmeContext.auth_ft_ies) {
 			sme_release_global_lock(&mac_ctx->sme);
 			return;
 		}
@@ -201,8 +198,7 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
 		/* Save the FT IEs */
 		session->ftSmeContext.reassoc_ft_ies =
 					qdf_mem_malloc(ft_ies_length);
-		if (NULL == session->ftSmeContext.reassoc_ft_ies) {
-			sme_err("Mem alloc fail for reassoc_ft_ie");
+		if (!session->ftSmeContext.reassoc_ft_ies) {
 			sme_release_global_lock(&mac_ctx->sme);
 			return;
 		}
@@ -253,7 +249,7 @@ QDF_STATUS sme_ft_send_update_key_ind(tpAniSirGlobal mac, uint32_t session_id,
 	msglen  = sizeof(tSirFTUpdateKeyInfo);
 
 	msg = qdf_mem_malloc(msglen);
-	if (NULL == msg)
+	if (!msg)
 		return QDF_STATUS_E_NOMEM;
 
 	msg->messageType = eWNI_SME_FT_UPDATE_KEY;

@@ -1205,13 +1205,9 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 			/* we received an expected "good" status */
 			/* create an entry in the flow list */
 			pentry = qdf_mem_malloc(sizeof(*pentry));
-			if (!pentry) {
-				QDF_TRACE(QDF_MODULE_ID_SME,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: %d: couldn't allocate memory for the new entry in the Flow List",
-					__func__,  __LINE__);
+			if (!pentry)
 				return SME_QOS_STATUS_SETUP_FAILURE_RSP;
-			}
+
 			pentry->ac_type = ac;
 			pentry->HDDcontext = HDDcontext;
 			pentry->QoSCallback = QoSCallback;
@@ -1553,16 +1549,10 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 			status)) {
 			/* we received an expected "good" status */
 			/* create an entry in the flow list */
-			pentry =
-				(struct sme_qos_flowinfoentry *)
-				qdf_mem_malloc(sizeof(*pentry));
-			if (!pentry) {
-				QDF_TRACE(QDF_MODULE_ID_SME,
-					  QDF_TRACE_LEVEL_ERROR,
-					  "%s: %d: couldn't allocate memory for the new entry in the Flow List",
-					__func__,  __LINE__);
+			pentry = qdf_mem_malloc(sizeof(*pentry));
+			if (!pentry)
 				return SME_QOS_STATUS_SETUP_FAILURE_RSP;
-			}
+
 			pentry->ac_type = ac;
 			pentry->HDDcontext = HDDcontext;
 			pentry->QoSCallback = QoSCallback;
@@ -1825,14 +1815,10 @@ static enum sme_qos_statustype sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 		 * Flow List Once we have decided on OTA exchange needed or
 		 * not we can delete the original one from the List
 		 */
-		pNewEntry = (struct sme_qos_flowinfoentry *) qdf_mem_malloc(
-							sizeof(*pNewEntry));
-		if (!pNewEntry) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: %d: couldn't allocate memory for the new  entry in the Flow List",
-				__func__, __LINE__);
+		pNewEntry = qdf_mem_malloc(sizeof(*pNewEntry));
+		if (!pNewEntry)
 			return SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP;
-		}
+
 		pNewEntry->ac_type = ac;
 		pNewEntry->sessionId = sessionId;
 		pNewEntry->HDDcontext = flow_info->HDDcontext;
@@ -3495,14 +3481,9 @@ static QDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t
 
 	session = &sme_qos_cb.sessionInfo[session_id];
 
-	aggr_req = (tSirAggrQosReq *) qdf_mem_malloc(sizeof(tSirAggrQosReq));
-
-	if (!aggr_req) {
-		/* err msg */
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("couldn't allocate memory for the msg buffer"));
+	aggr_req = qdf_mem_malloc(sizeof(tSirAggrQosReq));
+	if (!aggr_req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	aggr_req->messageType = eWNI_SME_FT_AGGR_QOS_REQ;
 	aggr_req->length = sizeof(tSirAggrQosReq);
@@ -3942,14 +3923,10 @@ static QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal pMac,
 	}
 
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
-	pMsg = (tSirAddtsReq *) qdf_mem_malloc(sizeof(tSirAddtsReq));
-	if (!pMsg) {
-		/* err msg */
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: %d: couldn't allocate memory for the msg buffer",
-			  __func__, __LINE__);
+	pMsg = qdf_mem_malloc(sizeof(tSirAddtsReq));
+	if (!pMsg)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	pMsg->messageType = eWNI_SME_ADDTS_REQ;
 	pMsg->length = sizeof(tSirAddtsReq);
 	pMsg->sessionId = sessionId;
@@ -4056,14 +4033,10 @@ static QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal pMac,
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: invoked on session %d for AC %d",
 		  __func__, __LINE__, sessionId, ac);
-	pMsg = (tSirDeltsReq *) qdf_mem_malloc(sizeof(tSirDeltsReq));
-	if (!pMsg) {
-		/* err msg */
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: %d: couldn't allocate memory for the msg buffer",
-			  __func__, __LINE__);
+	pMsg = qdf_mem_malloc(sizeof(tSirDeltsReq));
+	if (!pMsg)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	/* get pointer to the TSPEC being deleted */
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	pACInfo = &pSession->ac_info[ac];
@@ -6287,15 +6260,10 @@ static QDF_STATUS sme_qos_buffer_cmd(struct sme_qos_cmdinfo *pcmd,
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: Invoked", __func__, __LINE__);
-	pentry = (struct sme_qos_cmdinfoentry *) qdf_mem_malloc(sizeof(
-					struct sme_qos_cmdinfoentry));
-	if (!pentry) {
-		/* err msg */
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: %d: Memory allocation failure",
-			  __func__, __LINE__);
+	pentry = qdf_mem_malloc(sizeof(struct sme_qos_cmdinfoentry));
+	if (!pentry)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	/* copy the entire CmdInfo */
 	pentry->cmdInfo = *pcmd;
 
@@ -6495,13 +6463,10 @@ static QDF_STATUS sme_qos_save_assoc_info(struct sme_qos_sessioninfo *pSession,
 	bssLen = pAssoc_info->pBssDesc->length +
 		 sizeof(pAssoc_info->pBssDesc->length);
 	/* save the bss Descriptor */
-	pBssDesc = (tSirBssDescription *) qdf_mem_malloc(bssLen);
-	if (!pBssDesc) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: %d: couldn't allocate memory for the bss Descriptor",
-			  __func__, __LINE__);
+	pBssDesc = qdf_mem_malloc(bssLen);
+	if (!pBssDesc)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	qdf_mem_copy(pBssDesc, pAssoc_info->pBssDesc, bssLen);
 	pSession->assocInfo.pBssDesc = pBssDesc;
 	/* save the apsd info from assoc */

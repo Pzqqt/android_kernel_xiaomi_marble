@@ -296,7 +296,7 @@ static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac)
 	/* following pointer contains array of pointers for tSmeCmd* */
 	sme_cmd_ptr_ary_sz = sizeof(void *) * pMac->sme.totalSmeCmd;
 	pMac->sme.pSmeCmdBufAddr = qdf_mem_malloc(sme_cmd_ptr_ary_sz);
-	if (NULL == pMac->sme.pSmeCmdBufAddr) {
+	if (!pMac->sme.pSmeCmdBufAddr) {
 		status = QDF_STATUS_E_NOMEM;
 		goto end;
 	}
@@ -1162,10 +1162,9 @@ QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal)
 	do {
 
 		msg = qdf_mem_malloc(sizeof(*msg));
-		if (!msg) {
-			sme_err("Memory allocation failed! for msg");
+		if (!msg)
 			return QDF_STATUS_E_NOMEM;
-		}
+
 		msg->messageType = eWNI_SME_SYS_READY_IND;
 		msg->length = sizeof(*msg);
 		msg->csr_roam_synch_cb = csr_roam_synch_callback;
@@ -1381,12 +1380,10 @@ QDF_STATUS sme_update_new_channel_event(tHalHandle hal, uint8_t session_id)
 	eCsrRoamResult roamResult;
 
 	roamInfo = qdf_mem_malloc(sizeof(*roamInfo));
-	if (!roamInfo) {
-		sme_err("mem alloc failed for roam info");
+	if (!roamInfo)
 		return QDF_STATUS_E_FAILURE;
-	}
-	roamInfo->dfs_event.sessionId = session_id;
 
+	roamInfo->dfs_event.sessionId = session_id;
 	roamStatus = eCSR_ROAM_CHANNEL_COMPLETE_IND;
 	roamResult = eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -1672,10 +1669,8 @@ QDF_STATUS sme_set_ese_beacon_request(tHalHandle hHal, const uint8_t sessionId,
 
 	/* Prepare the request to send to SME. */
 	pSmeBcnReportReq = qdf_mem_malloc(sizeof(tSirBeaconReportReqInd));
-	if (NULL == pSmeBcnReportReq) {
-		sme_err("Memory Allocation Failure!!! ESE  BcnReq Ind to SME");
+	if (!pSmeBcnReportReq)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	pSmeRrmContext->eseBcnReqInProgress = true;
 
@@ -2684,11 +2679,9 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 		return QDF_STATUS_E_FAILURE;
 	}
 	scan_filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
-	if (NULL == scan_filter) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				FL("scan_filter mem alloc failed"));
+	if (!scan_filter)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	qdf_mem_set(&first_ap_profile, sizeof(tSirBssDescription), 0);
 	if (NULL == profile) {
 		scan_filter->EncryptionType.numEntries = 1;
@@ -3046,11 +3039,8 @@ QDF_STATUS sme_get_channel_bonding_mode5_g(tHalHandle hHal, uint32_t *mode)
 	}
 
 	smeConfig = qdf_mem_malloc(sizeof(*smeConfig));
-	if (!smeConfig) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"%s: failed to alloc smeConfig", __func__);
+	if (!smeConfig)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	if (sme_get_config_param(hHal, smeConfig) != QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -3085,11 +3075,8 @@ QDF_STATUS sme_get_channel_bonding_mode24_g(tHalHandle hHal, uint32_t *mode)
 	}
 
 	smeConfig = qdf_mem_malloc(sizeof(*smeConfig));
-	if (!smeConfig) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"%s: failed to alloc smeConfig", __func__);
+	if (!smeConfig)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	if (sme_get_config_param(hHal, smeConfig) != QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -4092,10 +4079,8 @@ QDF_STATUS sme_roam_set_default_key_index(tHalHandle hal, uint8_t session_id,
 	struct wep_update_default_key_idx *update_key;
 
 	update_key = qdf_mem_malloc(sizeof(*update_key));
-	if (!update_key) {
-		sme_err("Failed to allocate memory for update key");
+	if (!update_key)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	update_key->session_id = session_id;
 	update_key->default_idx = default_idx;
@@ -4229,7 +4214,6 @@ QDF_STATUS sme_get_link_status(mac_handle_t mac_handle,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		msg = qdf_mem_malloc(sizeof(*msg));
 		if (!msg) {
-			sme_err("Malloc failure");
 			sme_release_global_lock(&mac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -4339,8 +4323,7 @@ QDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		pMsg = qdf_mem_malloc(sizeof(tAniGenericChangeCountryCodeReq));
-
-		if (NULL == pMsg) {
+		if (!pMsg) {
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -4402,11 +4385,8 @@ QDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 		}
 		pSession->dhcp_done = false;
 
-		pMsg = (tAniDHCPInd *) qdf_mem_malloc(sizeof(tAniDHCPInd));
-		if (NULL == pMsg) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Not able to allocate memory for dhcp start",
-				  __func__);
+		pMsg = qdf_mem_malloc(sizeof(tAniDHCPInd));
+		if (!pMsg) {
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -4471,11 +4451,8 @@ QDF_STATUS sme_dhcp_stop_ind(tHalHandle hHal,
 		}
 		pSession->dhcp_done = true;
 
-		pMsg = (tAniDHCPInd *) qdf_mem_malloc(sizeof(tAniDHCPInd));
-		if (NULL == pMsg) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Not able to allocate memory for dhcp stop",
-				  __func__);
+		pMsg = qdf_mem_malloc(sizeof(tAniDHCPInd));
+		if (!pMsg) {
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -4528,11 +4505,8 @@ QDF_STATUS sme_tx_fail_monitor_start_stop_ind(tHalHandle hHal, uint8_t
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
-		pMsg = (tAniTXFailMonitorInd *)
-		       qdf_mem_malloc(sizeof(tAniTXFailMonitorInd));
-		if (NULL == pMsg) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Failed to allocate memory", __func__);
+		pMsg = qdf_mem_malloc(sizeof(tAniTXFailMonitorInd));
+		if (!pMsg) {
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -4745,17 +4719,13 @@ QDF_STATUS sme_oem_data_req(tHalHandle hal, struct oem_data_req *hdd_oem_req)
 	}
 
 	oem_data_req = qdf_mem_malloc(sizeof(*oem_data_req));
-	if (!oem_data_req) {
-		sme_err("mem alloc failed");
+	if (!oem_data_req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	oem_data_req->data_len = hdd_oem_req->data_len;
 	oem_data_req->data = qdf_mem_malloc(oem_data_req->data_len);
-	if (!oem_data_req->data) {
-		sme_err("mem alloc failed");
+	if (!oem_data_req->data)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_mem_copy(oem_data_req->data, hdd_oem_req->data,
 		     oem_data_req->data_len);
@@ -4926,11 +4896,8 @@ QDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t session_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 	request_buf = qdf_mem_malloc(sizeof(tSirKeepAliveReq));
-	if (NULL == request_buf) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"Not able to allocate memory for keep alive request");
+	if (!request_buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_copy_macaddr(&request->bssid, &pSession->connectedProfile.bssid);
 	qdf_mem_copy(request_buf, request, sizeof(tSirKeepAliveReq));
@@ -5013,8 +4980,7 @@ QDF_STATUS sme_register_mgmt_frame_ind_callback(tHalHandle hal,
 	if (QDF_STATUS_SUCCESS ==
 			sme_acquire_global_lock(&mac_ctx->sme)) {
 		msg = qdf_mem_malloc(sizeof(*msg));
-		if (NULL == msg) {
-			sme_err("Not able to allocate memory");
+		if (!msg) {
 			sme_release_global_lock(&mac_ctx->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -5765,12 +5731,8 @@ QDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 	}
 
 	request_buf = qdf_mem_malloc(sizeof(tSirRcvFltMcAddrList));
-	if (NULL == request_buf) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate memory for 8023 Multicast List request",
-			  __func__);
+	if (!request_buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	if (!csr_is_conn_state_connected_infra(pMac, sessionId) &&
 			!csr_is_ndi_started(pMac, sessionId)) {
@@ -5894,12 +5856,8 @@ QDF_STATUS sme_set_max_tx_power_per_band(enum band_info band, int8_t dB)
 
 	pMaxTxPowerPerBandParams =
 		qdf_mem_malloc(sizeof(tMaxTxPowerPerBandParams));
-	if (NULL == pMaxTxPowerPerBandParams) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s:Not able to allocate memory for pMaxTxPowerPerBandParams",
-			  __func__);
+	if (!pMaxTxPowerPerBandParams)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	pMaxTxPowerPerBandParams->power = dB;
 	pMaxTxPowerPerBandParams->bandInfo = band;
@@ -5943,12 +5901,8 @@ QDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct qdf_mac_addr pBssid,
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_SET_MAXTXPOW, NO_SESSION, 0));
 	pMaxTxParams = qdf_mem_malloc(sizeof(tMaxTxPowerParams));
-	if (NULL == pMaxTxParams) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate memory for pMaxTxParams",
-			  __func__);
+	if (!pMaxTxParams)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_copy_macaddr(&pMaxTxParams->bssId, &pBssid);
 	qdf_copy_macaddr(&pMaxTxParams->selfStaMacAddr, &pSelfMacAddress);
@@ -5985,11 +5939,8 @@ QDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr)
 	tSirMacAddr *pBaseMacAddr;
 
 	pBaseMacAddr = qdf_mem_malloc(sizeof(tSirMacAddr));
-	if (NULL == pBaseMacAddr) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("Not able to allocate memory for pBaseMacAddr"));
+	if (!pBaseMacAddr)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_mem_copy(*pBaseMacAddr, customMacAddr, sizeof(tSirMacAddr));
 
@@ -6040,12 +5991,8 @@ QDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
 	}
 
 	pTxParams = qdf_mem_malloc(sizeof(tMaxTxPowerParams));
-	if (NULL == pTxParams) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate memory for pTxParams",
-			  __func__);
+	if (!pTxParams)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_copy_macaddr(&pTxParams->bssId, &pBSSId);
 	pTxParams->power = power;       /* unit is dBm */
@@ -6552,10 +6499,9 @@ void sme_send_hlp_ie_info(tHalHandle hal, uint8_t session_id,
 	}
 
 	params = qdf_mem_malloc(sizeof(*params));
-	if (!params) {
-		sme_err("Mem alloc for HLP IE fails");
+	if (!params)
 		return;
-	}
+
 	if ((profile->hlp_ie_len +
 	     SIR_IPV4_ADDR_LEN) > FILS_MAX_HLP_DATA_LEN) {
 		sme_err("HLP IE len exceeds %d",
@@ -6924,10 +6870,8 @@ QDF_STATUS sme_stop_roaming(tHalHandle hal, uint8_t session_id, uint8_t reason)
 		return QDF_STATUS_SUCCESS;
 	}
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		sme_err("failed to allocated memory");
+	if (!req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	req->Command = ROAM_SCAN_OFFLOAD_STOP;
 	if ((reason == eCsrForcedDisassoc) || reason == ecsr_driver_disabled)
@@ -8205,9 +8149,7 @@ QDF_STATUS sme_get_peer_stats(tpAniSirGlobal mac,
 	}
 	/* serialize the req through MC thread */
 	message.bodyptr = qdf_mem_malloc(sizeof(req));
-	if (NULL == message.bodyptr) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Memory allocation failed.", __func__);
+	if (!message.bodyptr) {
 		sme_release_global_lock(&mac->sme);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -8253,9 +8195,7 @@ QDF_STATUS sme_get_peer_info(tHalHandle hal, struct sir_peer_info_req req,
 
 		/* serialize the req through MC thread */
 		message.bodyptr = qdf_mem_malloc(sizeof(req));
-		if (NULL == message.bodyptr) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"%s: Memory allocation failed.", __func__);
+		if (!message.bodyptr) {
 			sme_release_global_lock(&mac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -8304,9 +8244,7 @@ QDF_STATUS sme_get_peer_info_ext(tHalHandle hal,
 		/* serialize the req through MC thread */
 		message.bodyptr =
 			qdf_mem_malloc(sizeof(struct sir_peer_info_ext_req));
-		if (NULL == message.bodyptr) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"%s: Memory allocation failed.", __func__);
+		if (!message.bodyptr) {
 			sme_release_global_lock(&mac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -8431,10 +8369,8 @@ sme_add_periodic_tx_ptrn(tHalHandle hal,
 	SME_ENTER();
 
 	req_msg = qdf_mem_malloc(sizeof(*req_msg));
-	if (!req_msg) {
-		sme_err("memory allocation failed");
+	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	*req_msg = *addPeriodicTxPtrnParams;
 
@@ -8482,10 +8418,8 @@ sme_del_periodic_tx_ptrn(tHalHandle hal,
 	SME_ENTER();
 
 	req_msg = qdf_mem_malloc(sizeof(*req_msg));
-	if (!req_msg) {
-		sme_err("memory allocation failed");
+	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	*req_msg = *delPeriodicTxPtrnParams;
 
@@ -8647,10 +8581,7 @@ QDF_STATUS sme_request_ibss_peer_info(tHalHandle hHal, void *pUserData,
 
 		pIbssInfoReqParams = (tSirIbssGetPeerInfoReqParams *)
 			qdf_mem_malloc(sizeof(tSirIbssGetPeerInfoReqParams));
-		if (NULL == pIbssInfoReqParams) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Not able to allocate memory for dhcp start",
-				  __func__);
+		if (!pIbssInfoReqParams) {
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -8914,8 +8845,6 @@ QDF_STATUS sme_ocb_set_utc_time(tHalHandle hHal, struct sir_ocb_utc *utc)
 
 	sme_utc = qdf_mem_malloc(sizeof(*sme_utc));
 	if (!sme_utc) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("Malloc failed"));
 		status = QDF_STATUS_E_NOMEM;
 		goto end;
 	}
@@ -8964,8 +8893,6 @@ QDF_STATUS sme_ocb_start_timing_advert(tHalHandle hHal,
 	buf = qdf_mem_malloc(sizeof(*sme_timing_advert) +
 			     timing_advert->template_length);
 	if (!buf) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("Not able to allocate memory for start TA"));
 		status = QDF_STATUS_E_NOMEM;
 		goto end;
 	}
@@ -9016,8 +8943,6 @@ QDF_STATUS sme_ocb_stop_timing_advert(tHalHandle hHal,
 
 	sme_timing_advert = qdf_mem_malloc(sizeof(*timing_advert));
 	if (!sme_timing_advert) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("Not able to allocate memory for stop TA"));
 		status = QDF_STATUS_E_NOMEM;
 		goto end;
 	}
@@ -9204,8 +9129,6 @@ QDF_STATUS sme_dcc_clear_stats(tHalHandle hHal, uint32_t vdev_id,
 
 	request = qdf_mem_malloc(sizeof(struct sir_dcc_clear_stats));
 	if (!request) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("Not able to allocate memory"));
 		status = QDF_STATUS_E_NOMEM;
 		goto end;
 	}
@@ -9260,8 +9183,6 @@ QDF_STATUS sme_dcc_update_ndl(tHalHandle hHal, void *context,
 				  request->dcc_ndl_chan_list_len +
 				  request->dcc_ndl_active_state_list_len);
 	if (!msg_body) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("Failed to allocate memory"));
 		status = QDF_STATUS_E_NOMEM;
 		goto end;
 	}
@@ -9401,12 +9322,8 @@ QDF_STATUS sme_notify_modem_power_state(tHalHandle hHal, uint32_t value)
 		return QDF_STATUS_E_FAILURE;
 
 	request_buf = qdf_mem_malloc(sizeof(tSirModemPowerStateInd));
-	if (NULL == request_buf) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate memory for MODEM POWER STATE IND",
-			  __func__);
+	if (!request_buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	request_buf->param = value;
 
@@ -9441,12 +9358,8 @@ QDF_STATUS sme_notify_ht2040_mode(tHalHandle hHal, uint16_t staId,
 		return QDF_STATUS_E_FAILURE;
 
 	pHtOpMode = qdf_mem_malloc(sizeof(tUpdateVHTOpMode));
-	if (NULL == pHtOpMode) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate memory for setting OP mode",
-			  __func__);
+	if (!pHtOpMode)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	switch (channel_type) {
 	case eHT_CHAN_HT20:
@@ -9651,10 +9564,9 @@ int sme_set_addba_accept(tHalHandle hal, uint8_t session_id, int value)
 	QDF_STATUS status;
 
 	addba_accept = qdf_mem_malloc(sizeof(*addba_accept));
-	if (!addba_accept) {
-		sme_err("mem alloc failed for addba_accept");
+	if (!addba_accept)
 		return -EIO;
-	}
+
 	addba_accept->session_id = session_id;
 	addba_accept->addba_accept = value;
 	qdf_mem_zero(&msg, sizeof(msg));
@@ -9709,10 +9621,9 @@ int sme_send_addba_req(tHalHandle hal, uint8_t session_id, uint8_t tid,
 		return -EINVAL;
 	}
 	send_ba_req = qdf_mem_malloc(sizeof(*send_ba_req));
-	if (!send_ba_req) {
-		sme_err("mem alloc failed");
+	if (!send_ba_req)
 		return -EIO;
-	}
+
 	qdf_mem_copy(send_ba_req->mac_addr,
 			csr_session->connectedProfile.bssid.bytes,
 			QDF_MAC_ADDR_SIZE);
@@ -9868,11 +9779,9 @@ QDF_STATUS sme_send_rate_update_ind(tHalHandle hHal,
 	struct scheduler_msg msg = {0};
 	tSirRateUpdateInd *rate_upd = qdf_mem_malloc(sizeof(tSirRateUpdateInd));
 
-	if (rate_upd == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "Rate update struct alloc failed");
+	if (!rate_upd)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	*rate_upd = *rateUpdateParams;
 
 	if (rate_upd->mcastDataRate24GHz == HT20_SHORT_GI_MCS7_RATE)
@@ -9970,11 +9879,9 @@ QDF_STATUS sme_update_short_retry_limit_threshold(tHalHandle hal_handle,
 	struct scheduler_msg msg = {0};
 
 	srl = qdf_mem_malloc(sizeof(*srl));
-	if (NULL == srl) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"%s: fail to alloc short retry limit", __func__);
+	if (!srl)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	sme_debug("session_id %d short retry limit count: %d",
 		short_retry_limit_th->session_id,
 		short_retry_limit_th->short_retry_limit);
@@ -10018,11 +9925,9 @@ QDF_STATUS sme_update_long_retry_limit_threshold(tHalHandle hal_handle,
 	struct scheduler_msg msg = {0};
 
 	lrl = qdf_mem_malloc(sizeof(*lrl));
-	if (NULL == lrl) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-		"%s: fail to alloc long retry limit", __func__);
+	if (!lrl)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	sme_debug("session_id %d long retry limit count: %d",
 		long_retry_limit_th->session_id,
 		long_retry_limit_th->long_retry_limit);
@@ -10070,11 +9975,9 @@ QDF_STATUS sme_update_sta_inactivity_timeout(tHalHandle hal_handle,
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	inactivity_time = qdf_mem_malloc(sizeof(*inactivity_time));
-	if (NULL == inactivity_time) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"%s: fail to alloc inactivity_time", __func__);
+	if (!inactivity_time)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("sta_inactivity_timeout: %d"),
 			sta_inactivity_timer->sta_inactivity_timeout);
@@ -10175,10 +10078,8 @@ QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_val)
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
-		auto_sh_cmd = (tSirAutoShutdownCmdParams *)
-			      qdf_mem_malloc(sizeof(tSirAutoShutdownCmdParams));
-		if (auto_sh_cmd == NULL) {
-			sme_err("Request Buffer Alloc Fail");
+		auto_sh_cmd = qdf_mem_malloc(sizeof(tSirAutoShutdownCmdParams));
+		if (!auto_sh_cmd) {
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -10227,10 +10128,8 @@ QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal)
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
-		cauReq = (tSirChAvoidUpdateReq *)
-			 qdf_mem_malloc(sizeof(tSirChAvoidUpdateReq));
-		if (NULL == cauReq) {
-			sme_err("Request Buffer Alloc Fail");
+		cauReq = qdf_mem_malloc(sizeof(tSirChAvoidUpdateReq));
+		if (!cauReq) {
 			sme_release_global_lock(&pMac->sme);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -10278,12 +10177,15 @@ QDF_STATUS sme_set_miracast(tHalHandle hal, uint8_t filter_type)
 	uint32_t *val;
 	tpAniSirGlobal mac_ptr = PMAC_STRUCT(hal);
 
-	val = qdf_mem_malloc(sizeof(*val));
-	if (NULL == val || NULL == mac_ptr) {
+	if (!mac_ptr) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"%s: Invalid pointer", __func__);
-		return QDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_INVAL;
 	}
+
+	val = qdf_mem_malloc(sizeof(*val));
+	if (!val)
+		return QDF_STATUS_E_NOMEM;
 
 	*val = filter_type;
 
@@ -10323,11 +10225,8 @@ QDF_STATUS sme_set_mas(uint32_t val)
 	uint32_t *ptr_val;
 
 	ptr_val = qdf_mem_malloc(sizeof(*ptr_val));
-	if (NULL == ptr_val) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"%s: could not allocate ptr_val", __func__);
+	if (!ptr_val)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	*ptr_val = val;
 
@@ -10394,11 +10293,9 @@ static QDF_STATUS sme_process_channel_change_resp(tpAniSirGlobal pMac,
 	uint32_t SessionId = pChnlParams->peSessionId;
 
 	proam_info.channelChangeRespEvent =
-		(tSirChanChangeResponse *)
 		qdf_mem_malloc(sizeof(tSirChanChangeResponse));
-	if (NULL == proam_info.channelChangeRespEvent) {
+	if (!proam_info.channelChangeRespEvent) {
 		status = QDF_STATUS_E_NOMEM;
-		sme_err("Channel Change Event Allocation Failed: %d\n", status);
 		return status;
 	}
 	if (msg_type == eWNI_SME_CHANNEL_CHANGE_RSP) {
@@ -10516,12 +10413,9 @@ QDF_STATUS sme_init_thermal_info(tHalHandle hHal, tSmeThermalParams
 	struct scheduler_msg msg = {0};
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
-	pWmaParam = (t_thermal_mgmt *) qdf_mem_malloc(sizeof(t_thermal_mgmt));
-	if (NULL == pWmaParam) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: could not allocate tThermalMgmt", __func__);
+	pWmaParam = qdf_mem_malloc(sizeof(t_thermal_mgmt));
+	if (!pWmaParam)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	pWmaParam->thermalMgmtEnabled = thermalParam.smeThermalMgmtEnabled;
 	pWmaParam->throttlePeriod = thermalParam.smeThrottlePeriod;
@@ -10643,12 +10537,8 @@ QDF_STATUS sme_txpower_limit(tHalHandle hHal, tSirTxPowerLimit *psmetx)
 	tSirTxPowerLimit *tx_power_limit;
 
 	tx_power_limit = qdf_mem_malloc(sizeof(*tx_power_limit));
-	if (!tx_power_limit) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Memory allocation for TxPowerLimit failed!",
-			  __func__);
+	if (!tx_power_limit)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	*tx_power_limit = *psmetx;
 
@@ -10778,8 +10668,7 @@ QDF_STATUS sme_stats_ext_request(uint8_t session_id, tpStatsExtRequestReq input)
 
 	data_len = sizeof(tStatsExtRequest) + input->request_data_len;
 	data = qdf_mem_malloc(data_len);
-
-	if (data == NULL)
+	if (!data)
 		return QDF_STATUS_E_NOMEM;
 
 	data->vdev_id = session_id;
@@ -11292,10 +11181,9 @@ sme_set_bss_hotlist(mac_handle_t mac_handle,
 
 	/* per contract must make a copy of the params when messaging */
 	bodyptr = qdf_mem_malloc(sizeof(*bodyptr));
-	if (!bodyptr) {
-		sme_err("buffer allocation failure");
+	if (!bodyptr)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	*bodyptr = *params;
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -11329,10 +11217,9 @@ sme_reset_bss_hotlist(mac_handle_t mac_handle,
 
 	/* per contract must make a copy of the params when messaging */
 	bodyptr = qdf_mem_malloc(sizeof(*bodyptr));
-	if (!bodyptr) {
-		sme_err("buffer allocation failure");
+	if (!bodyptr)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	*bodyptr = *params;
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -11366,10 +11253,9 @@ sme_set_significant_change(mac_handle_t mac_handle,
 
 	/* per contract must make a copy of the params when messaging */
 	bodyptr = qdf_mem_malloc(sizeof(*bodyptr));
-	if (!bodyptr) {
-		sme_err("buffer allocation failure");
+	if (!bodyptr)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	*bodyptr = *params;
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -11401,10 +11287,9 @@ sme_reset_significant_change(mac_handle_t mac_handle,
 
 	/* per contract must make a copy of the params when messaging */
 	bodyptr = qdf_mem_malloc(sizeof(*bodyptr));
-	if (!bodyptr) {
-		sme_err("buffer allocation failure");
+	if (!bodyptr)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	*bodyptr = *params;
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -11488,10 +11373,8 @@ QDF_STATUS sme_set_epno_list(tHalHandle hal,
 		(input->num_networks * sizeof(struct wifi_epno_network));
 
 	req_msg = qdf_mem_malloc(len);
-	if (!req_msg) {
-		sme_err("qdf_mem_malloc failed");
+	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	req_msg->num_networks = input->num_networks;
 	req_msg->request_id = input->request_id;
@@ -11567,10 +11450,8 @@ QDF_STATUS sme_set_passpoint_list(tHalHandle hal,
 	len = sizeof(*req_msg) +
 		(input->num_networks * sizeof(struct wifi_passpoint_network));
 	req_msg = qdf_mem_malloc(len);
-	if (!req_msg) {
-		sme_err("qdf_mem_malloc failed");
+	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	req_msg->num_networks = input->num_networks;
 	req_msg->request_id = input->request_id;
@@ -11630,10 +11511,8 @@ QDF_STATUS sme_reset_passpoint_list(tHalHandle hal,
 
 	SME_ENTER();
 	req_msg = qdf_mem_malloc(sizeof(*req_msg));
-	if (!req_msg) {
-		sme_err("qdf_mem_malloc failed");
+	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	req_msg->request_id = input->request_id;
 	req_msg->session_id = input->session_id;
@@ -11746,13 +11625,8 @@ QDF_STATUS sme_ll_stats_clear_req(tHalHandle hHal,
 	}
 
 	clear_stats_req = qdf_mem_malloc(sizeof(*clear_stats_req));
-
-	if (!clear_stats_req) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate memory for WMA_LL_STATS_CLEAR_REQ",
-			  __func__);
+	if (!clear_stats_req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	*clear_stats_req = *pclearStatsReq;
 
@@ -11809,13 +11683,8 @@ QDF_STATUS sme_ll_stats_set_req(tHalHandle hHal, tSirLLStatsSetReq
 		  psetStatsReq->aggressiveStatisticsGathering);
 
 	set_stats_req = qdf_mem_malloc(sizeof(*set_stats_req));
-
-	if (!set_stats_req) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate memory for WMA_LL_STATS_SET_REQ",
-			  __func__);
+	if (!set_stats_req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	*set_stats_req = *psetStatsReq;
 
@@ -11857,11 +11726,8 @@ QDF_STATUS sme_ll_stats_get_req(mac_handle_t mac_handle,
 	tSirLLStatsGetReq *ll_stats_get_req;
 
 	ll_stats_get_req = qdf_mem_malloc(sizeof(*ll_stats_get_req));
-
-	if (!ll_stats_get_req) {
-		sme_err("Unable to allocate memory for WMA_LL_STATS_GET_REQ");
+	if (!ll_stats_get_req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	*ll_stats_get_req = *get_stats_req;
 
@@ -11992,11 +11858,9 @@ QDF_STATUS sme_ll_stats_set_thresh(tHalHandle hal,
 	mac = PMAC_STRUCT(hal);
 
 	thresh = qdf_mem_malloc(sizeof(*thresh));
-	if (!thresh) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Fail to alloc mem", __func__);
+	if (!thresh)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	*thresh = *threshold;
 
 	status = sme_acquire_global_lock(&mac->sme);
@@ -12205,13 +12069,8 @@ QDF_STATUS sme_set_dhcp_srv_offload(tHalHandle hHal,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	pSmeDhcpSrvInfo = qdf_mem_malloc(sizeof(*pSmeDhcpSrvInfo));
-
-	if (!pSmeDhcpSrvInfo) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate memory for WMA_SET_DHCP_SERVER_OFFLOAD_CMD",
-			  __func__);
+	if (!pSmeDhcpSrvInfo)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	*pSmeDhcpSrvInfo = *pDhcpSrvInfo;
 
@@ -12268,11 +12127,8 @@ QDF_STATUS sme_set_led_flashing(tHalHandle hHal, uint8_t type,
 	struct flashing_req_params *ledflashing;
 
 	ledflashing = qdf_mem_malloc(sizeof(*ledflashing));
-	if (!ledflashing) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"Not able to allocate memory for WMA_LED_TIMING_REQ");
+	if (!ledflashing)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	ledflashing->req_id = 0;
 	ledflashing->pattern_id = type;
@@ -12407,13 +12263,8 @@ QDF_STATUS sme_configure_stats_avg_factor(tHalHandle hal, uint8_t session_id,
 	struct sir_stats_avg_factor *stats_factor;
 
 	stats_factor = qdf_mem_malloc(sizeof(*stats_factor));
-
-	if (!stats_factor) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate memory for SIR_HAL_CONFIG_STATS_FACTOR",
-			  __func__);
+	if (!stats_factor)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	status = sme_acquire_global_lock(&mac->sme);
 
@@ -12466,13 +12317,8 @@ QDF_STATUS sme_configure_guard_time(tHalHandle hal, uint8_t session_id,
 	struct sir_guard_time_request *g_time;
 
 	g_time = qdf_mem_malloc(sizeof(*g_time));
-
-	if (!g_time) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate memory for SIR_HAL_CONFIG_GUARD_TIME",
-			  __func__);
+	if (!g_time)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	status = sme_acquire_global_lock(&mac->sme);
 
@@ -12527,10 +12373,8 @@ QDF_STATUS sme_wifi_start_logger(tHalHandle hal,
 
 	len = sizeof(*req_msg);
 	req_msg = qdf_mem_malloc(len);
-	if (!req_msg) {
-		sme_err("qdf_mem_malloc failed");
+	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	req_msg->verbose_level = start_log.verbose_level;
 	req_msg->is_iwpriv_command = start_log.is_iwpriv_command;
@@ -13184,10 +13028,8 @@ QDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
 
 	SME_ENTER();
 	req_msg = qdf_mem_malloc(sizeof(*req_msg));
-	if (!req_msg) {
-		sme_err("memory allocation failed");
+	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	*req_msg = *input;
 
@@ -13292,10 +13134,8 @@ QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list *msg)
 	}
 
 	req_msg = qdf_mem_malloc(sizeof(*req_msg));
-	if (!req_msg) {
-		sme_err("qdf_mem_malloc failed");
+	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	req_msg->band = BAND_ALL;
 	if (CSR_IS_ROAM_INTRA_BAND_ENABLED(mac)) {
@@ -13514,11 +13354,8 @@ QDF_STATUS sme_gateway_param_update(tHalHandle Hal,
 	struct gateway_param_update_req *request_buf;
 
 	request_buf = qdf_mem_malloc(sizeof(*request_buf));
-	if (NULL == request_buf) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"Not able to allocate memory for gw param update request");
+	if (!request_buf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	*request_buf = *gw_params;
 
@@ -13975,11 +13812,8 @@ QDF_STATUS sme_add_beacon_filter(tHalHandle hal,
 	}
 
 	filter_param = qdf_mem_malloc(sizeof(*filter_param));
-	if (NULL == filter_param) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"%s: fail to alloc filter_param", __func__);
+	if (!filter_param)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	filter_param->vdev_id = session_id;
 
@@ -14022,11 +13856,8 @@ QDF_STATUS sme_remove_beacon_filter(tHalHandle hal, uint32_t session_id)
 	}
 
 	filter_param = qdf_mem_malloc(sizeof(*filter_param));
-	if (NULL == filter_param) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"%s: fail to alloc filter_param", __func__);
+	if (!filter_param)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	filter_param->vdev_id = session_id;
 
@@ -14067,13 +13898,7 @@ void sme_send_disassoc_req_frame(tHalHandle hal, uint8_t session_id,
 	A_UINT16 tmp;
 
 	msg = qdf_mem_malloc(sizeof(struct sme_send_disassoc_frm_req));
-
-	if (NULL == msg)
-		qdf_status = QDF_STATUS_E_FAILURE;
-	else
-		qdf_status = QDF_STATUS_SUCCESS;
-
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+	if (!msg)
 		return;
 
 	msg->msg_type = (uint16_t) eWNI_SME_SEND_DISASSOC_FRAME;
@@ -14156,12 +13981,8 @@ QDF_STATUS sme_set_apf_instructions(tHalHandle hal,
 
 	set_offload = qdf_mem_malloc(sizeof(*set_offload) +
 					req->current_length);
-
-	if (NULL == set_offload) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("Failed to alloc set_offload"));
+	if (!set_offload)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	set_offload->session_id = req->session_id;
 	set_offload->filter_id = req->filter_id;
@@ -14288,7 +14109,7 @@ QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, tSirMacAddr bss_id,
 	struct sir_create_session *msg;
 
 	msg = qdf_mem_malloc(sizeof(*msg));
-	if (NULL != msg) {
+	if (!msg) {
 		msg->type = eWNI_SME_MON_INIT_SESSION;
 		msg->vdev_id = vdev_id;
 		msg->msg_len = sizeof(*msg);
@@ -14327,11 +14148,8 @@ QDF_STATUS sme_set_adaptive_dwelltime_config(tHalHandle hal,
 	struct adaptive_dwelltime_params *dwelltime_params;
 
 	dwelltime_params = qdf_mem_malloc(sizeof(*dwelltime_params));
-	if (NULL == dwelltime_params) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"%s: fail to alloc dwelltime_params", __func__);
+	if (!dwelltime_params)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	dwelltime_params->is_enabled = params->is_enabled;
 	dwelltime_params->dwelltime_mode = params->dwelltime_mode;
@@ -14366,10 +14184,8 @@ void sme_set_vdev_ies_per_band(tHalHandle hal, uint8_t vdev_id)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	p_msg = qdf_mem_malloc(sizeof(*p_msg));
-	if (NULL == p_msg) {
-		sme_err("mem alloc failed for sme msg");
+	if (!p_msg)
 		return;
-	}
 
 	p_msg->vdev_id = vdev_id;
 	p_msg->msg_type = eWNI_SME_SET_VDEV_IES_PER_BAND;
@@ -14411,8 +14227,7 @@ void sme_set_pdev_ht_vht_ies(tHalHandle hal, bool enable2x2)
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_STATUS_SUCCESS == status) {
 		ht_vht_cfg = qdf_mem_malloc(sizeof(*ht_vht_cfg));
-		if (NULL == ht_vht_cfg) {
-			sme_err("mem alloc failed for ht_vht_cfg");
+		if (!ht_vht_cfg) {
 			sme_release_global_lock(&mac_ctx->sme);
 			return;
 		}
@@ -14503,10 +14318,9 @@ QDF_STATUS sme_set_he_bss_color(tHalHandle hal, uint8_t session_id,
 	}
 	len = sizeof(*bss_color_msg);
 	bss_color_msg = qdf_mem_malloc(len);
-	if (!bss_color_msg) {
-		sme_err("mem alloc failed");
+	if (!bss_color_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	bss_color_msg->message_type = eWNI_SME_SET_HE_BSS_COLOR;
 	bss_color_msg->length = len;
 	bss_color_msg->session_id = session_id;
@@ -14578,11 +14392,9 @@ QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
 	}
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (NULL == req) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: fail to alloc mac_pwr_dbg_args", __func__);
+	if (!req)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	req->module_id = dbg_args->module_id;
 	req->pdev_id = dbg_args->pdev_id;
 	req->num_args = dbg_args->num_args;
@@ -14659,11 +14471,9 @@ QDF_STATUS sme_update_sta_roam_policy(tHalHandle hal_handle,
 	}
 
 	sme_config = qdf_mem_malloc(sizeof(*sme_config));
-	if (!sme_config) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("failed to allocate memory for sme_config"));
+	if (!sme_config)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	qdf_mem_zero(sme_config, sizeof(*sme_config));
 	sme_get_config_param(hal_handle, sme_config);
 
@@ -14868,11 +14678,9 @@ QDF_STATUS sme_update_tx_fail_cnt_threshold(tHalHandle hal_handle,
 	struct scheduler_msg msg = {0};
 
 	tx_fail_cnt = qdf_mem_malloc(sizeof(*tx_fail_cnt));
-	if (NULL == tx_fail_cnt) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"%s: fail to alloc filter_param", __func__);
+	if (!tx_fail_cnt)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	sme_debug("session_id: %d tx_fail_count: %d",
 		  session_id, tx_fail_count);
 	tx_fail_cnt->session_id = session_id;
@@ -14945,11 +14753,8 @@ QDF_STATUS sme_set_wow_pulse(struct wow_pulse_mode *wow_pulse_set_info)
 	}
 
 	wow_pulse_set_cmd = qdf_mem_malloc(sizeof(*wow_pulse_set_cmd));
-	if (NULL == wow_pulse_set_cmd) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"%s: fail to alloc wow_pulse_set_cmd", __func__);
+	if (!wow_pulse_set_cmd)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	*wow_pulse_set_cmd = *wow_pulse_set_info;
 
@@ -15031,8 +14836,7 @@ QDF_STATUS sme_get_rssi_snr_by_bssid(tHalHandle hal,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
 	scan_filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
-	if (NULL == scan_filter) {
-		sme_err("memory allocation failed");
+	if (!scan_filter) {
 		status = QDF_STATUS_E_NOMEM;
 		goto free_scan_flter;
 	}
@@ -15048,8 +14852,7 @@ QDF_STATUS sme_get_rssi_snr_by_bssid(tHalHandle hal,
 	if (NULL == scan_filter->BSSIDs.bssid) {
 		scan_filter->BSSIDs.bssid =
 			qdf_mem_malloc(sizeof(struct qdf_mac_addr));
-		if (scan_filter->BSSIDs.bssid == NULL) {
-			sme_err("malloc failed");
+		if (!scan_filter->BSSIDs.bssid) {
 			status = QDF_STATUS_E_NOMEM;
 			goto free_scan_flter;
 		}
@@ -15108,8 +14911,7 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, struct csr_roam_profile *profile,
 	uint32_t ie_len;
 
 	scan_filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
-	if (NULL == scan_filter) {
-		sme_err("memory allocation failed");
+	if (!scan_filter) {
 		status = QDF_STATUS_E_NOMEM;
 		goto free_scan_flter;
 	}
@@ -15125,8 +14927,7 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, struct csr_roam_profile *profile,
 	if (NULL == scan_filter->BSSIDs.bssid) {
 		scan_filter->BSSIDs.bssid =
 			qdf_mem_malloc(sizeof(struct qdf_mac_addr));
-		if (scan_filter->BSSIDs.bssid == NULL) {
-			sme_err("malloc failed");
+		if (!scan_filter->BSSIDs.bssid) {
 			status = QDF_STATUS_E_NOMEM;
 			goto free_scan_flter;
 		}
@@ -15169,8 +14970,7 @@ QDF_STATUS sme_get_beacon_frm(tHalHandle hal, struct csr_roam_profile *profile,
 	/* include mac header and fixed params along with IEs in frame */
 	*frame_len = SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET + ie_len;
 	*frame_buf = qdf_mem_malloc(*frame_len);
-	if (NULL == *frame_buf) {
-		sme_err("memory allocation failed");
+	if (!*frame_buf) {
 		status = QDF_STATUS_E_NOMEM;
 		goto free_scan_flter;
 	}
@@ -15218,10 +15018,9 @@ QDF_STATUS sme_fast_reassoc(tHalHandle hal, struct csr_roam_profile *profile,
 		return QDF_STATUS_E_FAILURE;
 	}
 	fastreassoc = qdf_mem_malloc(sizeof(*fastreassoc));
-	if (NULL == fastreassoc) {
-		sme_err("qdf_mem_malloc failed for fastreassoc");
+	if (!fastreassoc)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	/* if both are same then set the flag */
 	if (!qdf_mem_cmp(connected_bssid, bssid, ETH_ALEN)) {
 		fastreassoc->is_same_bssid = true;
@@ -15286,10 +15085,8 @@ QDF_STATUS sme_set_del_pmkid_cache(tHalHandle hal, uint8_t session_id,
 	struct scheduler_msg msg;
 
 	pmk_cache = qdf_mem_malloc(sizeof(*pmk_cache));
-	if (!pmk_cache) {
-		sme_err("Memory allocation failure");
+	if (!pmk_cache)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_mem_set(pmk_cache, sizeof(*pmk_cache), 0);
 
@@ -15358,10 +15155,8 @@ QDF_STATUS sme_set_nud_debug_stats(tHalHandle hal,
 	struct scheduler_msg msg;
 
 	arp_set_param = qdf_mem_malloc(sizeof(*arp_set_param));
-	if (arp_set_param == NULL) {
-		sme_err("Memory allocation failure");
+	if (!arp_set_param)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_mem_copy(arp_set_param, set_stats_param, sizeof(*arp_set_param));
 
@@ -15396,10 +15191,8 @@ QDF_STATUS sme_get_nud_debug_stats(tHalHandle hal,
 	struct scheduler_msg msg;
 
 	arp_get_param = qdf_mem_malloc(sizeof(*arp_get_param));
-	if (arp_get_param == NULL) {
-		sme_err("Memory allocation failure");
+	if (!arp_get_param)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_mem_copy(arp_get_param, get_stats_param, sizeof(*arp_get_param));
 
@@ -15476,10 +15269,8 @@ QDF_STATUS sme_set_dbs_scan_selection_config(tHalHandle hal,
 	}
 
 	dbs_scan_params = qdf_mem_malloc(sizeof(*dbs_scan_params));
-	if (!dbs_scan_params) {
-		sme_err("fail to alloc dbs_scan_params");
+	if (!dbs_scan_params)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	dbs_scan_params->num_clients = params->num_clients;
 	dbs_scan_params->pdev_id = params->pdev_id;
@@ -15510,12 +15301,9 @@ QDF_STATUS sme_get_rcpi(tHalHandle hal, struct sme_rcpi_req *rcpi)
 	struct sme_rcpi_req *rcpi_req;
 
 	rcpi_req = qdf_mem_malloc(sizeof(*rcpi_req));
-	if (rcpi_req == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate memory for rcpi req",
-			  __func__);
+	if (!rcpi_req)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	qdf_mem_copy(rcpi_req, rcpi, sizeof(*rcpi_req));
 
 	status = sme_acquire_global_lock(&pMac->sme);
@@ -15664,10 +15452,8 @@ QDF_STATUS sme_ipa_uc_stat_request(tHalHandle hal, uint32_t vdev_id,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	iwcmd = qdf_mem_malloc(sizeof(*iwcmd));
-	if (!iwcmd) {
-		sme_err("Failed alloc memory for iwcmd");
+	if (!iwcmd)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_mem_zero(iwcmd, sizeof(*iwcmd));
 	iwcmd->param_sec_value = 0;
@@ -15872,10 +15658,8 @@ QDF_STATUS sme_send_limit_off_channel_params(tHalHandle hal, uint8_t vdev_id,
 	struct scheduler_msg msg = {0};
 
 	cmd = qdf_mem_malloc(sizeof(*cmd));
-	if (!cmd) {
-		sme_err("qdf_mem_malloc failed for limit off channel");
+	if (!cmd)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	cmd->vdev_id = vdev_id;
 	cmd->is_tos_active = is_tos_active;
@@ -16037,14 +15821,11 @@ int sme_get_bss_transition_status(tHalHandle hal,
 	}
 
 	conn_res = qdf_mem_malloc(sizeof(tCsrScanResultInfo));
-	if (!conn_res) {
-		sme_err("Failed to allocate memory for conn_res");
+	if (!conn_res)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	res = qdf_mem_malloc(sizeof(tCsrScanResultInfo));
 	if (!res) {
-		sme_err("Failed to allocate memory for conn_res");
 		status = QDF_STATUS_E_NOMEM;
 		goto free;
 	}
@@ -16217,7 +15998,6 @@ QDF_STATUS sme_handle_sae_msg(tHalHandle hal, uint8_t session_id,
 		sae_msg = qdf_mem_malloc(sizeof(*sae_msg));
 		if (!sae_msg) {
 			qdf_status = QDF_STATUS_E_NOMEM;
-			sme_err("SAE: memory allocation failed");
 		} else {
 			sae_msg->message_type = eWNI_SME_SEND_SAE_MSG;
 			sae_msg->length = sizeof(*sae_msg);
@@ -16322,10 +16102,8 @@ sme_get_roam_scan_stats(tHalHandle hal, roam_scan_stats_cb cb, void *context,
 	struct sir_roam_scan_stats *req;
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		sme_err("Failed allocate memory for roam scan stats req");
+	if (!req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	req->vdev_id = vdev_id;
 	req->cb = cb;

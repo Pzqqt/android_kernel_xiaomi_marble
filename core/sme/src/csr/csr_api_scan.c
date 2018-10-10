@@ -300,10 +300,8 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac_ctx,
 	}
 
 	roam_info = qdf_mem_malloc(sizeof(struct csr_roam_info));
-	if (!roam_info) {
-		sme_err("Failed to allocate memory for roam_info");
+	if (!roam_info)
 		goto roam_completion;
-	}
 
 	if (session->scan_info.roambssentry) {
 		scan_result = GET_BASE_ADDR(session->scan_info.roambssentry,
@@ -430,11 +428,9 @@ static void csr_scan_add_result(tpAniSirGlobal mac_ctx,
 
 	buf = qdf_nbuf_alloc(NULL, qdf_roundup(buf_len, 4),
 				0, 4, false);
-	if (!buf) {
-		sme_err("Failed to allocate wbuf for mgmt rx len (%u)",
-			buf_len);
+	if (!buf)
 		return;
-	}
+
 	qdf_nbuf_put_tail(buf, buf_len);
 	qdf_nbuf_set_protocol(buf, ETH_P_CONTROL);
 
@@ -500,10 +496,8 @@ static bool csr_scan_save_bss_description(tpAniSirGlobal pMac,
 	cbAllocated = sizeof(struct tag_csrscan_result) + cbBSSDesc;
 
 	pCsrBssDescription = qdf_mem_malloc(cbAllocated);
-	if (!pCsrBssDescription) {
-		sme_err(" Failed to allocate memory for pCsrBssDescription");
+	if (!pCsrBssDescription)
 		return false;
-	}
 
 	pCsrBssDescription->AgingCount =
 		(int32_t) pMac->roam.configParam.agingCount;
@@ -1203,10 +1197,8 @@ static QDF_STATUS csr_save_profile(tpAniSirGlobal mac_ctx,
 		sizeof(scan_result->Result.BssDescriptor.length);
 
 	temp = qdf_mem_malloc(sizeof(struct tag_csrscan_result) + bss_len);
-	if (!temp) {
-		sme_err("bss mem fail");
+	if (!temp)
 		goto error;
-	}
 
 	temp->AgingCount = scan_result->AgingCount;
 	temp->preferValue = scan_result->preferValue;
@@ -1494,11 +1486,8 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	session->scan_info.scan_reason = eCsrScanForSsid;
 	session->scan_info.roam_id = roam_id;
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("Failed to allocate memory"));
+	if (!req)
 		goto error;
-	}
 
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_psoc(mac_ctx->psoc,
 				pdev_id,
@@ -1817,10 +1806,8 @@ QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal mac_ctx, uint32_t vdev_id,
 	struct wlan_objmgr_vdev *vdev;
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		sme_err("Failed to allocate memory");
+	if (!req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	/* Get NL global context from objmgr*/
 	if (vdev_id == INVAL_VDEV_ID)
@@ -1944,10 +1931,9 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_FAILURE;
 	}
 	pNewBssDescriptor = qdf_mem_malloc(size);
-	if (NULL == pNewBssDescriptor) {
-		sme_err("memory allocation failed");
+	if (pNewBssDescriptor)
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	qdf_mem_copy(pNewBssDescriptor, pSession->pConnectBssDesc, size);
 	/* change the BSSID & channel as passed */
 	qdf_mem_copy(pNewBssDescriptor->bssId, bssid.bytes,
@@ -2005,11 +1991,8 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 		(SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET);
 	scan_res_ptr = qdf_mem_malloc(sizeof(struct tag_csrscan_result) +
 				length);
-	if (scan_res_ptr == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				" fail to allocate memory for frame");
+	if (!scan_res_ptr)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_mem_copy(&scan_res_ptr->Result.BssDescriptor,
 			bss_desc_ptr,
@@ -2660,11 +2643,8 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(tpAniSirGlobal mac_ctx,
 			   ieFields[0]) + ie_len);
 	alloc_len = sizeof(struct tag_csrscan_result) + bss_len;
 	bss = qdf_mem_malloc(alloc_len);
-
-	if (!bss) {
-		sme_err("could not allocate bss");
+	if (!bss)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	bss->AgingCount =
 		(int32_t) mac_ctx->roam.configParam.agingCount;
@@ -2966,7 +2946,6 @@ QDF_STATUS csr_scan_get_result(tpAniSirGlobal mac_ctx,
 
 	ret_list = qdf_mem_malloc(sizeof(struct scan_result_list));
 	if (!ret_list) {
-		sme_err("pRetList is NULL");
 		status = QDF_STATUS_E_NOMEM;
 		goto error;
 	}
@@ -3018,14 +2997,11 @@ QDF_STATUS csr_scan_get_result_for_bssid(tpAniSirGlobal mac_ctx,
 	}
 
 	scan_filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
-	if (!scan_filter) {
-		sme_err("Failed to allocated memory for scan_filter");
+	if (!scan_filter)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	scan_filter->BSSIDs.bssid = qdf_mem_malloc(sizeof(*bssid));
 	if (!scan_filter->BSSIDs.bssid) {
-		sme_err("Failed to allocate memory for BSSIDs");
 		status = QDF_STATUS_E_FAILURE;
 		goto free_filter;
 	}
