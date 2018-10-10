@@ -2646,11 +2646,12 @@ dp_tx_update_peer_stats(struct dp_peer *peer,
 	DP_STATS_INCC(peer, tx.ldpc, 1, ts->ldpc);
 	DP_STATS_INCC(peer, tx.retries, 1, ts->transmit_cnt > 1);
 
-	if (soc->cdp_soc.ol_ops->update_dp_stats) {
-		soc->cdp_soc.ol_ops->update_dp_stats(pdev->ctrl_pdev,
-				&peer->stats, ts->peer_id,
-				UPDATE_PEER_STATS);
-	}
+#if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
+	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, pdev->soc,
+			     &peer->stats, ts->peer_id,
+			     UPDATE_PEER_STATS, pdev->pdev_id);
+#endif
+
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2

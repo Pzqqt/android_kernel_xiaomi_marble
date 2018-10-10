@@ -200,12 +200,11 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 					peer->stats.tx.tx_success.num) * 100) /
 					peer->stats.tx.ucast.num;
 
-	if (soc->cdp_soc.ol_ops->update_dp_stats) {
-		soc->cdp_soc.ol_ops->update_dp_stats(pdev->ctrl_pdev,
-				&peer->stats, ppdu->peer_id,
-				UPDATE_PEER_STATS);
-
-	}
+#if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
+	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, pdev->soc,
+			     &peer->stats, ppdu->peer_id,
+			     UPDATE_PEER_STATS, pdev->pdev_id);
+#endif
 }
 #endif
 

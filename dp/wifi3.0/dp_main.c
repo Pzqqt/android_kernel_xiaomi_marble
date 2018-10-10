@@ -5470,17 +5470,17 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev,
 			     struct cdp_vdev_stats *vdev_stats)
 {
 	struct dp_peer *peer = NULL;
-	struct dp_soc *soc = vdev->pdev->soc;
 
 	qdf_mem_copy(vdev_stats, &vdev->stats, sizeof(vdev->stats));
 
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem)
 		dp_update_vdev_stats(vdev_stats, peer);
 
-	if (soc->cdp_soc.ol_ops->update_dp_stats)
-		soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->ctrl_pdev,
-			&vdev->stats, (uint16_t) vdev->vdev_id,
-			UPDATE_VDEV_STATS);
+#if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
+	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
+			     vdev_stats, vdev->vdev_id,
+			     UPDATE_VDEV_STATS, vdev->pdev->pdev_id);
+#endif
 
 }
 
@@ -5493,7 +5493,6 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev,
 static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 {
 	struct dp_vdev *vdev = NULL;
-	struct dp_soc *soc = pdev->soc;
 	struct cdp_vdev_stats *vdev_stats =
 			qdf_mem_malloc(sizeof(struct cdp_vdev_stats));
 
@@ -5564,9 +5563,10 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	qdf_mem_free(vdev_stats);
 
-	if (soc->cdp_soc.ol_ops->update_dp_stats)
-		soc->cdp_soc.ol_ops->update_dp_stats(pdev->ctrl_pdev,
-				&pdev->stats, pdev->pdev_id, UPDATE_PDEV_STATS);
+#if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
+	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, pdev->soc, &pdev->stats,
+			     pdev->pdev_id, UPDATE_PDEV_STATS, pdev->pdev_id);
+#endif
 
 }
 
@@ -6127,7 +6127,6 @@ static inline void
 dp_txrx_host_stats_clr(struct dp_vdev *vdev)
 {
 	struct dp_peer *peer = NULL;
-	struct dp_soc *soc = (struct dp_soc *)vdev->pdev->soc;
 
 	DP_STATS_CLR(vdev->pdev);
 	DP_STATS_CLR(vdev->pdev->soc);
@@ -6137,20 +6136,18 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev)
 			return;
 		DP_STATS_CLR(peer);
 
-		if (soc->cdp_soc.ol_ops->update_dp_stats) {
-			soc->cdp_soc.ol_ops->update_dp_stats(
-					vdev->pdev->ctrl_pdev,
-					&peer->stats,
-					peer->peer_ids[0],
-					UPDATE_PEER_STATS);
-		}
-
+#if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
+		dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
+				     &peer->stats,  peer->peer_ids[0],
+				     UPDATE_PEER_STATS, vdev->pdev->pdev_id);
+#endif
 	}
 
-	if (soc->cdp_soc.ol_ops->update_dp_stats)
-		soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->ctrl_pdev,
-				&vdev->stats, (uint16_t)vdev->vdev_id,
-				UPDATE_VDEV_STATS);
+#if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
+	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
+			     &vdev->stats,  vdev->vdev_id,
+			     UPDATE_VDEV_STATS, vdev->pdev->pdev_id);
+#endif
 }
 
 /**
@@ -7312,6 +7309,21 @@ static void dp_set_vdev_dscp_tid_map_wifi3(struct cdp_vdev *vdev_handle,
 	return;
 }
 
+/* dp_txrx_get_pdev_stats - Returns cdp_pdev_stats
+ * @peer_handle: DP pdev handle
+ *
+ * return : cdp_pdev_stats pointer
+ */
+static struct cdp_pdev_stats*
+dp_txrx_get_pdev_stats(struct cdp_pdev *pdev_handle)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	dp_aggregate_pdev_stats(pdev);
+
+	return &pdev->stats;
+}
+
 /* dp_txrx_get_peer_stats - will return cdp_peer_stats
  * @peer_handle: DP_PEER handle
  *
@@ -8353,6 +8365,7 @@ static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.txrx_get_vdev_stats  = dp_txrx_get_vdev_stats,
 	.txrx_get_peer_stats = dp_txrx_get_peer_stats,
 	.txrx_reset_peer_stats = dp_txrx_reset_peer_stats,
+	.txrx_get_pdev_stats = dp_txrx_get_pdev_stats,
 	/* TODO */
 };
 

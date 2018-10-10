@@ -591,6 +591,57 @@ cdp_get_vdev_extd_stats(ol_txrx_soc_handle soc,
 }
 
 /**
+ * @brief Call to get cdp_pdev_stats
+ *
+ * @param pdev - dp pdev object
+ * @return - cdp_pdev_stats
+ */
+static inline struct cdp_pdev_stats*
+cdp_host_get_pdev_stats(ol_txrx_soc_handle soc,
+			struct cdp_pdev *pdev)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->txrx_get_pdev_stats)
+		return 0;
+
+	return soc->ops->host_stats_ops->txrx_get_pdev_stats(pdev);
+}
+
+/**
+ * @brief Call to get radio stats
+ *
+ * @param pdev - dp pdev object
+ * @param scn_stats_user - stats buffer
+ * @return - int
+ */
+static inline int
+cdp_host_get_radio_stats(ol_txrx_soc_handle soc,
+			 struct cdp_pdev *pdev,
+			 void *buf)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->host_stats_ops ||
+	    !soc->ops->host_stats_ops->txrx_get_radio_stats)
+		return 0;
+
+	return soc->ops->host_stats_ops->txrx_get_radio_stats(pdev,
+							      buf);
+}
+
+/**
  * @brief Parse the stats header and get the payload from the message.
  *
  * @param pdev - the physical device object
