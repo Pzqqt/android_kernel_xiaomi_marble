@@ -267,14 +267,11 @@ dp_tx_desc_alloc(struct dp_soc *soc, uint8_t desc_pool_id)
 					qdf_get_system_timestamp();
 				soc->pause_cb(desc_pool_id,
 					      act, WLAN_DATA_FLOW_CONTROL);
-				qdf_spin_unlock_bh(&pool->flow_pool_lock);
-			} else {
-				qdf_spin_unlock_bh(&pool->flow_pool_lock);
 			}
 		} else {
 			pool->pkt_drop_no_desc++;
-			qdf_spin_unlock_bh(&pool->flow_pool_lock);
 		}
+		qdf_spin_unlock_bh(&pool->flow_pool_lock);
 	} else {
 		soc->pool_stats.pkt_drop_no_pool++;
 	}
