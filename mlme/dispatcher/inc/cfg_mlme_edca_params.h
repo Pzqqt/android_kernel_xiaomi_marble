@@ -263,6 +263,352 @@
 		STR_EDCA_ETSI_ACVO, \
 		"EDCA ETSI ACVO BROADCAST")
 
+/*
+ * <ini>
+ * gEnableEdcaParams - Enable edca parameter
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used if gEnableEdcaParams is set to 1, params gEdcaVoCwmin,
+ * gEdcaViCwmin, gEdcaBkCwmin, gEdcaBeCwmin, gEdcaVoCwmax,
+ * gEdcaViCwmax, gEdcaBkCwmax, gEdcaBeCwmax, gEdcaVoAifs,
+ * gEdcaViAifs, gEdcaBkAifs and gEdcaBeAifs values are used
+ * to overwrite the values received from AP
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_ENABLE_PARAM CFG_INI_BOOL( \
+		"gEnableEdcaParams", \
+		0, \
+		"Enable edca parameter")
+
+/*
+ * <ini>
+ * gEdcaVoCwmin - Set Cwmin value for EDCA_AC_VO
+ * @Min: 0
+ * @Max: 0x15
+ * @Default: 2
+ *
+ * This ini is used to set default Cwmin value for EDCA_AC_VO
+ * Cwmin value for EDCA_AC_VO. CWVomin = 2^gEdcaVoCwmin -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin etc
+ * are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_VO_CWMIN CFG_INI_UINT( \
+		"gEdcaVoCwmin", \
+		0x0, \
+		15, \
+		2, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Cwmin value for EDCA_AC_VO")
+
+/*
+ * <ini>
+ * gEdcaVoCwmax - Set Cwmax value for EDCA_AC_VO
+ * @Min: 0
+ * @Max: 15
+ * @Default: 3
+ *
+ * This ini is used to set default Cwmax value for EDCA_AC_VO
+ * Cwmax value for EDCA_AC_VO. CWVomax = 2^gEdcaVoCwmax -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_VO_CWMAX CFG_INI_UINT( \
+		"gEdcaVoCwmax", \
+		0x0, \
+		15, \
+		3, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Cwmax value for EDCA_AC_VO")
+
+/*
+ * <ini>
+ * gEdcaVoAifs - Set Aifs value for EDCA_AC_VO
+ * @Min: 0
+ * @Max: 15
+ * @Default: 2
+ *
+ * This ini is used to set default Aifs value for EDCA_AC_VO
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_VO_AIFS CFG_INI_UINT( \
+		"gEdcaVoAifs", \
+		0x0, \
+		15, \
+		2, \
+		CFG_VALUE_OR_DEFAULT, \
+		"default Aifs value for EDCA_AC_VO")
+
+/*
+ * <ini>
+ * gEdcaViCwmin - Set Cwmin value for EDCA_AC_VI
+ * @Min: 0x0
+ * @Max: 15
+ * @Default: 3
+ *
+ * This ini is used to set default value for EDCA_AC_VI
+ * Cwmin value for EDCA_AC_VI. CWVimin = 2^gEdcaViCwmin -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_VI_CWMIN CFG_INI_UINT( \
+		"gEdcaViCwmin", \
+		0x0, \
+		15, \
+		3, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Cwmin value for EDCA_AC_VI")
+
+/*
+ * <ini>
+ * gEdcaViCwmax - Set Cwmax value for EDCA_AC_VI
+ * @Min: 0
+ * @Max: 15
+ * @Default: 4
+ *
+ * This ini is used to set default Cwmax value for EDCA_AC_VI
+ * Cwmax value for EDCA_AC_VI. CWVimax = 2^gEdcaViCwmax -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_VI_CWMAX CFG_INI_UINT( \
+		"gEdcaViCwmax", \
+		0x0, \
+		15, \
+		4, \
+		CFG_VALUE_OR_DEFAULT, \
+		"cwmax value for EDCA_AC_VI")
+
+/*
+ * <ini>
+ * gEdcaViAifs - Set Aifs value for EDCA_AC_VI
+ * @Min: 0
+ * @Max: 15
+ * @Default: 2
+ *
+ * This ini is used to set default Aifs value for EDCA_AC_VI
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_VI_AIFS CFG_INI_UINT( \
+		"gEdcaViAifs", \
+		0x0, \
+		15, \
+		2, \
+		CFG_VALUE_OR_DEFAULT, \
+		"default Aifs value for EDCA_AC_VI")
+
+/*
+ * <ini>
+ * gEdcaBkCwmin - Set Cwmin value for EDCA_AC_BK
+ * @Min: 0x0
+ * @Max: 15
+ * @Default: 4
+ *
+ * This ini is used to set default Cwmin value for EDCA_AC_BK
+ * Cwmin value for EDCA_AC_BK. CWBkmin = 2^gEdcaBkCwmin -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ * </ini>
+ */
+#define CFG_EDCA_BK_CWMIN CFG_INI_UINT( \
+		"gEdcaBkCwmin", \
+		0x0, \
+		15, \
+		4, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Cwmin value for EDCA_AC_BK")
+
+/*
+ * <ini>
+ * gEdcaBkCwmax - Set Cwmax value for EDCA_AC_BK
+ * @Min: 0
+ * @Max: 15
+ * @Default: 10
+ *
+ * This ini is used to set default Cwmax value for EDCA_AC_BK
+ * Cwmax value for EDCA_AC_BK. CWBkmax = 2^gEdcaBkCwmax -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_BK_CWMAX CFG_INI_UINT( \
+		"gEdcaBkCwmax", \
+		0, \
+		15, \
+		10, \
+		CFG_VALUE_OR_DEFAULT, \
+		"cwmax value for EDCA_AC_BK")
+
+/*
+ * <ini>
+ * gEdcaBkAifs - Set Aifs value for EDCA_AC_BK
+ * @Min: 0
+ * @Max: 15
+ * @Default: 7
+ *
+ * This ini is used to set default Aifs value for EDCA_AC_BK
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_BK_AIFS CFG_INI_UINT( \
+		"gEdcaBkAifs", \
+		0, \
+		15, \
+		7, \
+		CFG_VALUE_OR_DEFAULT, \
+		"default Aifs value for EDCA_AC_BK")
+
+/*
+ * <ini>
+ * gEdcaBeCwmin - Set Cwmin value for EDCA_AC_BE
+ * @Min: 0x0
+ * @Max: 15
+ * @Default: 4
+ *
+ * This ini is used to set default Cwmin value for EDCA_AC_BE
+ * Cwmin value for EDCA_AC_BE. CWBemin = 2^gEdcaBeCwmin
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_BE_CWMIN CFG_INI_UINT( \
+		"gEdcaBeCwmin", \
+		0x0, \
+		15, \
+		4, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Cwmin value for EDCA_AC_BE")
+
+/*
+ * <ini>
+ * gEdcaBeCwmax - Set Cwmax value for EDCA_AC_BE
+ * @Min: 0
+ * @Max: 15
+ * @Default: 10
+ *
+ * This ini is used to set default Cwmax value for EDCA_AC_BE
+ * Cwmax value for EDCA_AC_BE. CWBemax = 2^gEdcaBeCwmax -1
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_EDCA_BE_CWMAX CFG_INI_UINT( \
+		"gEdcaBeCwmax", \
+		0, \
+		15, \
+		10, \
+		CFG_VALUE_OR_DEFAULT, \
+		"cwmax value for EDCA_AC_BE")
+
+/*
+ * <ini>
+ * gEdcaBeAifs - Set Aifs value for EDCA_AC_BE
+ * @Min: 0
+ * @Max: 15
+ * @Default: 3
+ *
+ * This ini is used to set default Aifs value for EDCA_AC_BE
+ *
+ * Related: If gEnableEdcaParams is set to 1, params gEdcaVoCwmin
+ * etc are aplicable
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_EDCA_BE_AIFS CFG_INI_UINT( \
+		"gEdcaBeAifs", \
+		0, \
+		15, \
+		3, \
+		CFG_VALUE_OR_DEFAULT, \
+		"default Aifs value for EDCA_AC_BE")
+
 #define CFG_EDCA_PARAMS_ALL \
 	CFG(CFG_EDCA_ANI_ACBK_LOCAL) \
 	CFG(CFG_EDCA_ANI_ACBE_LOCAL) \
@@ -287,6 +633,19 @@
 	CFG(CFG_EDCA_ETSI_ACBK) \
 	CFG(CFG_EDCA_ETSI_ACBE) \
 	CFG(CFG_EDCA_ETSI_ACVI) \
-	CFG(CFG_EDCA_ETSI_ACVO)
+	CFG(CFG_EDCA_ETSI_ACVO) \
+	CFG(CFG_EDCA_ENABLE_PARAM) \
+	CFG(CFG_EDCA_VO_CWMIN) \
+	CFG(CFG_EDCA_VO_CWMAX) \
+	CFG(CFG_EDCA_VO_AIFS) \
+	CFG(CFG_EDCA_VI_CWMIN) \
+	CFG(CFG_EDCA_VI_CWMAX) \
+	CFG(CFG_EDCA_VI_AIFS) \
+	CFG(CFG_EDCA_BK_CWMIN) \
+	CFG(CFG_EDCA_BK_CWMAX) \
+	CFG(CFG_EDCA_BK_AIFS) \
+	CFG(CFG_EDCA_BE_CWMIN) \
+	CFG(CFG_EDCA_BE_CWMAX) \
+	CFG(CFG_EDCA_BE_AIFS)
 
 #endif  /* __CFG_MLME_EDCA__PARAM_H */

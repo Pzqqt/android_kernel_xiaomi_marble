@@ -360,11 +360,49 @@ static void mlme_init_edca_etsi_cfg(struct wlan_mlme_edca_params *edca_params)
 			      &edca_params->etsi_acvo_b.len);
 }
 
-static void mlme_init_edca_params(struct wlan_mlme_edca_params *edca_params)
+static void
+mlme_init_qos_edca_params(struct wlan_objmgr_psoc *psoc,
+			  struct wlan_mlme_edca_params *edca_params)
+{
+	edca_params->enable_edca_params =
+			cfg_get(psoc, CFG_EDCA_ENABLE_PARAM);
+
+	edca_params->edca_ac_vo.vo_cwmin =
+			cfg_get(psoc, CFG_EDCA_VO_CWMIN);
+	edca_params->edca_ac_vo.vo_cwmax =
+			cfg_get(psoc, CFG_EDCA_VO_CWMAX);
+	edca_params->edca_ac_vo.vo_aifs =
+			cfg_get(psoc, CFG_EDCA_VO_AIFS);
+
+	edca_params->edca_ac_vi.vi_cwmin =
+			cfg_get(psoc, CFG_EDCA_VI_CWMIN);
+	edca_params->edca_ac_vi.vi_cwmax =
+			cfg_get(psoc, CFG_EDCA_VI_CWMAX);
+	edca_params->edca_ac_vi.vi_aifs =
+			cfg_get(psoc, CFG_EDCA_VI_AIFS);
+
+	edca_params->edca_ac_bk.bk_cwmin =
+			cfg_get(psoc, CFG_EDCA_BK_CWMIN);
+	edca_params->edca_ac_bk.bk_cwmax =
+			cfg_get(psoc, CFG_EDCA_BK_CWMAX);
+	edca_params->edca_ac_bk.bk_aifs =
+			cfg_get(psoc, CFG_EDCA_BK_AIFS);
+
+	edca_params->edca_ac_be.be_cwmin =
+			cfg_get(psoc, CFG_EDCA_BE_CWMIN);
+	edca_params->edca_ac_be.be_cwmax =
+			cfg_get(psoc, CFG_EDCA_BE_CWMAX);
+	edca_params->edca_ac_be.be_aifs =
+			cfg_get(psoc, CFG_EDCA_BE_AIFS);
+}
+
+static void mlme_init_edca_params(struct wlan_objmgr_psoc *psoc,
+				  struct wlan_mlme_edca_params *edca_params)
 {
 	mlme_init_edca_ani_cfg(edca_params);
 	mlme_init_edca_wme_cfg(edca_params);
 	mlme_init_edca_etsi_cfg(edca_params);
+	mlme_init_qos_edca_params(psoc, edca_params);
 }
 
 static void mlme_init_timeout_cfg(struct wlan_objmgr_psoc *psoc,
@@ -1222,8 +1260,8 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 
 	mlme_cfg = &mlme_obj->cfg;
 	mlme_init_generic_cfg(psoc, &mlme_cfg->gen);
-	mlme_init_edca_params(&mlme_cfg->edca_params);
 	mlme_init_timeout_cfg(psoc, &mlme_cfg->timeouts);
+	mlme_init_edca_params(psoc, &mlme_cfg->edca_params);
 	mlme_init_ht_cap_in_cfg(psoc, &mlme_cfg->ht_caps);
 	mlme_init_wmm_in_cfg(psoc, &mlme_cfg->wmm_params);
 	mlme_init_mbo_cfg(psoc, &mlme_cfg->mbo_cfg);
