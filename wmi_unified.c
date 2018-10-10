@@ -1739,7 +1739,7 @@ QDF_STATUS wmi_unified_cmd_send_fl(wmi_unified_t wmi_handle, wmi_buf_t buf,
 		if (wmi_handle->ops->is_management_record(cmd_id) == false) {
 			WMI_COMMAND_RECORD(wmi_handle, cmd_id,
 					qdf_nbuf_data(buf) +
-			 wmi_handle->log_info.buf_offset_command);
+			 wmi_handle->soc->buf_offset_command);
 		}
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 	}
@@ -2119,14 +2119,14 @@ static void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 		if (wmi_handle->ops->is_diag_event(id)) {
 			WMI_DIAG_RX_EVENT_RECORD(wmi_handle, id,
 				((uint8_t *) data +
-				wmi_handle->log_info.buf_offset_event));
+				wmi_handle->soc->buf_offset_event));
 		} else if (wmi_handle->ops->is_management_record(id)) {
 			WMI_MGMT_RX_EVENT_RECORD(wmi_handle, id,
 				((uint8_t *) data +
-				wmi_handle->log_info.buf_offset_event));
+				wmi_handle->soc->buf_offset_event));
 		} else {
 			WMI_RX_EVENT_RECORD(wmi_handle, id, ((uint8_t *) data +
-				wmi_handle->log_info.buf_offset_event));
+				wmi_handle->soc->buf_offset_event));
 		}
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 	}
@@ -2227,7 +2227,7 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 			 */
 		} else {
 			WMI_EVENT_RECORD(wmi_handle, id, ((uint8_t *) data +
-					wmi_handle->log_info.buf_offset_event));
+					wmi_handle->soc->buf_offset_event));
 		}
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 	}
@@ -2741,11 +2741,11 @@ static void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 	if (wmi_handle->ops->is_management_record(cmd_id)) {
 		WMI_MGMT_COMMAND_TX_CMP_RECORD(wmi_handle, cmd_id,
 			qdf_nbuf_data(wmi_cmd_buf) +
-			wmi_handle->log_info.buf_offset_command);
+			wmi_handle->soc->buf_offset_command);
 	} else {
 		WMI_COMMAND_TX_CMP_RECORD(wmi_handle, cmd_id,
 			qdf_nbuf_data(wmi_cmd_buf) +
-			wmi_handle->log_info.buf_offset_command);
+			wmi_handle->soc->buf_offset_command);
 	}
 
 	qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
