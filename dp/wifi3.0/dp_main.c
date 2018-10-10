@@ -3977,6 +3977,25 @@ static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
 }
 #endif
 
+#if defined(FEATURE_AST) && !defined(AST_HKV1_WORKAROUND)
+static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
+					       uint8_t *peer_mac_addr)
+{
+	struct dp_ast_entry *ast_entry;
+
+	qdf_spin_lock_bh(&soc->ast_lock);
+	ast_entry = dp_peer_ast_hash_find_soc(soc, peer_mac_addr);
+	if (ast_entry && ast_entry->next_hop)
+		dp_peer_del_ast(soc, ast_entry);
+	qdf_spin_unlock_bh(&soc->ast_lock);
+}
+#else
+static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
+					       uint8_t *peer_mac_addr)
+{
+}
+#endif
+
 /*
  * dp_peer_create_wifi3() - attach txrx peer
  * @txrx_vdev: Datapath VDEV handle
@@ -3992,7 +4011,6 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev;
 	struct dp_soc *soc;
-	struct dp_ast_entry *ast_entry;
 	enum cdp_txrx_ast_entry_type ast_type = CDP_TXRX_AST_TYPE_STATIC;
 
 	/* preconditions */
@@ -4046,11 +4064,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		 * If an AST entry exists, but no peer entry exists with a given
 		 * MAC addresses, we could deduce it as a WDS entry
 		 */
-		qdf_spin_lock_bh(&soc->ast_lock);
-		ast_entry = dp_peer_ast_hash_find_soc(soc, peer_mac_addr);
-		if (ast_entry)
-			dp_peer_del_ast(soc, ast_entry);
-		qdf_spin_unlock_bh(&soc->ast_lock);
+		dp_peer_ast_handle_roam_del(soc, peer_mac_addr);
 	}
 
 #ifdef notyet
