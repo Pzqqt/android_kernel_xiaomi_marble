@@ -75,6 +75,7 @@ static void dp_ppdu_ring_cfg(struct dp_pdev *pdev);
 #define DP_MCS_LENGTH (6*MAX_MCS)
 #define DP_NSS_LENGTH (6*SS_COUNT)
 #define DP_RXDMA_ERR_LENGTH (6*HAL_RXDMA_ERR_MAX)
+#define DP_MAX_INT_CONTEXTS_STRING_LENGTH (6 * WLAN_CFG_INT_NUM_CONTEXTS)
 #define DP_REO_ERR_LENGTH (6*HAL_REO_ERR_MAX)
 #define DP_MAX_MCS_STRING_LEN 30
 #define DP_CURR_FW_STATS_AVAIL 19
@@ -298,6 +299,8 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 	{TXRX_FW_STATS_INVALID, TXRX_SRNG_PTR_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_RX_MON_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_REO_QUEUE_STATS},
+	{TXRX_FW_STATS_INVALID, TXRX_SOC_CFG_PARAMS},
+	{TXRX_FW_STATS_INVALID, TXRX_PDEV_CFG_PARAMS},
 };
 
 /* MCL specific functions */
@@ -6513,6 +6516,250 @@ dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 }
 
 /**
+ * dp_print_soc_cfg_params()- Dump soc wlan config parameters
+ * @soc_handle: Soc handle
+ *
+ * Return: void
+ */
+static void
+dp_print_soc_cfg_params(struct dp_soc *soc)
+{
+	struct wlan_cfg_dp_soc_ctxt *soc_cfg_ctx;
+	uint8_t index = 0, i = 0;
+	char ring_mask[DP_MAX_INT_CONTEXTS_STRING_LENGTH];
+	int num_of_int_contexts;
+
+	if (!soc) {
+		dp_err("Context is null");
+		return;
+	}
+
+	soc_cfg_ctx = soc->wlan_cfg_ctx;
+
+	if (!soc_cfg_ctx) {
+		dp_err("Context is null");
+		return;
+	}
+
+	num_of_int_contexts =
+			wlan_cfg_get_num_contexts(soc_cfg_ctx);
+
+	DP_TRACE_STATS(DEBUG, "No. of interrupt contexts: %u",
+		       soc_cfg_ctx->num_int_ctxts);
+	DP_TRACE_STATS(DEBUG, "Max clients: %u",
+		       soc_cfg_ctx->max_clients);
+	DP_TRACE_STATS(DEBUG, "Max alloc size: %u ",
+		       soc_cfg_ctx->max_alloc_size);
+	DP_TRACE_STATS(DEBUG, "Per pdev tx ring: %u ",
+		       soc_cfg_ctx->per_pdev_tx_ring);
+	DP_TRACE_STATS(DEBUG, "Num tcl data rings: %u ",
+		       soc_cfg_ctx->num_tcl_data_rings);
+	DP_TRACE_STATS(DEBUG, "Per pdev rx ring: %u ",
+		       soc_cfg_ctx->per_pdev_rx_ring);
+	DP_TRACE_STATS(DEBUG, "Per pdev lmac ring: %u ",
+		       soc_cfg_ctx->per_pdev_lmac_ring);
+	DP_TRACE_STATS(DEBUG, "Num of reo dest rings: %u ",
+		       soc_cfg_ctx->num_reo_dest_rings);
+	DP_TRACE_STATS(DEBUG, "Num tx desc pool: %u ",
+		       soc_cfg_ctx->num_tx_desc_pool);
+	DP_TRACE_STATS(DEBUG, "Num tx ext desc pool: %u ",
+		       soc_cfg_ctx->num_tx_ext_desc_pool);
+	DP_TRACE_STATS(DEBUG, "Num tx desc: %u ",
+		       soc_cfg_ctx->num_tx_desc);
+	DP_TRACE_STATS(DEBUG, "Num tx ext desc: %u ",
+		       soc_cfg_ctx->num_tx_ext_desc);
+	DP_TRACE_STATS(DEBUG, "Htt packet type: %u ",
+		       soc_cfg_ctx->htt_packet_type);
+	DP_TRACE_STATS(DEBUG, "Max peer_ids: %u ",
+		       soc_cfg_ctx->max_peer_id);
+	DP_TRACE_STATS(DEBUG, "Tx ring size: %u ",
+		       soc_cfg_ctx->tx_ring_size);
+	DP_TRACE_STATS(DEBUG, "Tx comp ring size: %u ",
+		       soc_cfg_ctx->tx_comp_ring_size);
+	DP_TRACE_STATS(DEBUG, "Tx comp ring size nss: %u ",
+		       soc_cfg_ctx->tx_comp_ring_size_nss);
+	DP_TRACE_STATS(DEBUG, "Int batch threshold tx: %u ",
+		       soc_cfg_ctx->int_batch_threshold_tx);
+	DP_TRACE_STATS(DEBUG, "Int timer threshold tx: %u ",
+		       soc_cfg_ctx->int_timer_threshold_tx);
+	DP_TRACE_STATS(DEBUG, "Int batch threshold rx: %u ",
+		       soc_cfg_ctx->int_batch_threshold_rx);
+	DP_TRACE_STATS(DEBUG, "Int timer threshold rx: %u ",
+		       soc_cfg_ctx->int_timer_threshold_rx);
+	DP_TRACE_STATS(DEBUG, "Int batch threshold other: %u ",
+		       soc_cfg_ctx->int_batch_threshold_other);
+	DP_TRACE_STATS(DEBUG, "Int timer threshold other: %u ",
+		       soc_cfg_ctx->int_timer_threshold_other);
+
+	for (i = 0; i < num_of_int_contexts; i++) {
+		index += qdf_snprint(&ring_mask[index],
+				     DP_MAX_INT_CONTEXTS_STRING_LENGTH - index,
+				     " %d",
+				     soc_cfg_ctx->int_tx_ring_mask[i]);
+	}
+
+	DP_TRACE_STATS(DEBUG, "Tx ring mask (0-%d):%s",
+		       num_of_int_contexts, ring_mask);
+
+	index = 0;
+	for (i = 0; i < num_of_int_contexts; i++) {
+		index += qdf_snprint(&ring_mask[index],
+				     DP_MAX_INT_CONTEXTS_STRING_LENGTH - index,
+				     " %d",
+				     soc_cfg_ctx->int_rx_ring_mask[i]);
+	}
+
+	DP_TRACE_STATS(DEBUG, "Rx ring mask (0-%d):%s",
+		       num_of_int_contexts, ring_mask);
+
+	index = 0;
+	for (i = 0; i < num_of_int_contexts; i++) {
+		index += qdf_snprint(&ring_mask[index],
+				     DP_MAX_INT_CONTEXTS_STRING_LENGTH - index,
+				     " %d",
+				     soc_cfg_ctx->int_rx_mon_ring_mask[i]);
+	}
+
+	DP_TRACE_STATS(DEBUG, "Rx mon ring mask (0-%d):%s",
+		       num_of_int_contexts, ring_mask);
+
+	index = 0;
+	for (i = 0; i < num_of_int_contexts; i++) {
+		index += qdf_snprint(&ring_mask[index],
+				     DP_MAX_INT_CONTEXTS_STRING_LENGTH - index,
+				     " %d",
+				     soc_cfg_ctx->int_rx_err_ring_mask[i]);
+	}
+
+	DP_TRACE_STATS(DEBUG, "Rx err ring mask (0-%d):%s",
+		       num_of_int_contexts, ring_mask);
+
+	index = 0;
+	for (i = 0; i < num_of_int_contexts; i++) {
+		index += qdf_snprint(&ring_mask[index],
+				     DP_MAX_INT_CONTEXTS_STRING_LENGTH - index,
+				     " %d",
+				     soc_cfg_ctx->int_rx_wbm_rel_ring_mask[i]);
+	}
+
+	DP_TRACE_STATS(DEBUG, "Rx wbm rel ring mask (0-%d):%s",
+		       num_of_int_contexts, ring_mask);
+
+	index = 0;
+	for (i = 0; i < num_of_int_contexts; i++) {
+		index += qdf_snprint(&ring_mask[index],
+				     DP_MAX_INT_CONTEXTS_STRING_LENGTH - index,
+				     " %d",
+				     soc_cfg_ctx->int_reo_status_ring_mask[i]);
+	}
+
+	DP_TRACE_STATS(DEBUG, "Reo ring mask (0-%d):%s",
+		       num_of_int_contexts, ring_mask);
+
+	index = 0;
+	for (i = 0; i < num_of_int_contexts; i++) {
+		index += qdf_snprint(&ring_mask[index],
+				     DP_MAX_INT_CONTEXTS_STRING_LENGTH - index,
+				     " %d",
+				     soc_cfg_ctx->int_rxdma2host_ring_mask[i]);
+	}
+
+	DP_TRACE_STATS(DEBUG, "Rxdma2host ring mask (0-%d):%s",
+		       num_of_int_contexts, ring_mask);
+
+	index = 0;
+	for (i = 0; i < num_of_int_contexts; i++) {
+		index += qdf_snprint(&ring_mask[index],
+				     DP_MAX_INT_CONTEXTS_STRING_LENGTH - index,
+				     " %d",
+				     soc_cfg_ctx->int_host2rxdma_ring_mask[i]);
+	}
+
+	DP_TRACE_STATS(DEBUG, "Host2rxdma ring mask (0-%d):%s",
+		       num_of_int_contexts, ring_mask);
+
+	DP_TRACE_STATS(DEBUG, "Rx hash: %u ",
+		       soc_cfg_ctx->rx_hash);
+	DP_TRACE_STATS(DEBUG, "Tso enabled: %u ",
+		       soc_cfg_ctx->tso_enabled);
+	DP_TRACE_STATS(DEBUG, "Lro enabled: %u ",
+		       soc_cfg_ctx->lro_enabled);
+	DP_TRACE_STATS(DEBUG, "Sg enabled: %u ",
+		       soc_cfg_ctx->sg_enabled);
+	DP_TRACE_STATS(DEBUG, "Gro enabled: %u ",
+		       soc_cfg_ctx->gro_enabled);
+	DP_TRACE_STATS(DEBUG, "rawmode enabled: %u ",
+		       soc_cfg_ctx->rawmode_enabled);
+	DP_TRACE_STATS(DEBUG, "peer flow ctrl enabled: %u ",
+		       soc_cfg_ctx->peer_flow_ctrl_enabled);
+	DP_TRACE_STATS(DEBUG, "napi enabled: %u ",
+		       soc_cfg_ctx->napi_enabled);
+	DP_TRACE_STATS(DEBUG, "Tcp Udp checksum offload: %u ",
+		       soc_cfg_ctx->tcp_udp_checksumoffload);
+	DP_TRACE_STATS(DEBUG, "Defrag timeout check: %u ",
+		       soc_cfg_ctx->defrag_timeout_check);
+	DP_TRACE_STATS(DEBUG, "Rx defrag min timeout: %u ",
+		       soc_cfg_ctx->rx_defrag_min_timeout);
+	DP_TRACE_STATS(DEBUG, "WBM release ring: %u ",
+		       soc_cfg_ctx->wbm_release_ring);
+	DP_TRACE_STATS(DEBUG, "TCL CMD ring: %u ",
+		       soc_cfg_ctx->tcl_cmd_ring);
+	DP_TRACE_STATS(DEBUG, "TCL Status ring: %u ",
+		       soc_cfg_ctx->tcl_status_ring);
+	DP_TRACE_STATS(DEBUG, "REO Reinject ring: %u ",
+		       soc_cfg_ctx->reo_reinject_ring);
+	DP_TRACE_STATS(DEBUG, "RX release ring: %u ",
+		       soc_cfg_ctx->rx_release_ring);
+	DP_TRACE_STATS(DEBUG, "REO Exception ring: %u ",
+		       soc_cfg_ctx->reo_exception_ring);
+	DP_TRACE_STATS(DEBUG, "REO CMD ring: %u ",
+		       soc_cfg_ctx->reo_cmd_ring);
+	DP_TRACE_STATS(DEBUG, "REO STATUS ring: %u ",
+		       soc_cfg_ctx->reo_status_ring);
+	DP_TRACE_STATS(DEBUG, "RXDMA refill ring: %u ",
+		       soc_cfg_ctx->rxdma_refill_ring);
+	DP_TRACE_STATS(DEBUG, "RXDMA err dst ring: %u ",
+		       soc_cfg_ctx->rxdma_err_dst_ring);
+}
+
+/**
+ * dp_print_vdev_cfg_params() - Print the pdev cfg parameters
+ * @pdev_handle: DP pdev handle
+ *
+ * Return - void
+ */
+static void
+dp_print_pdev_cfg_params(struct dp_pdev *pdev)
+{
+	struct wlan_cfg_dp_pdev_ctxt *pdev_cfg_ctx;
+
+	if (!pdev) {
+		dp_err("Context is null");
+		return;
+	}
+
+	pdev_cfg_ctx = pdev->wlan_cfg_ctx;
+
+	if (!pdev_cfg_ctx) {
+		dp_err("Context is null");
+		return;
+	}
+
+	DP_TRACE_STATS(DEBUG, "Rx dma buf ring size: %d ",
+		       pdev_cfg_ctx->rx_dma_buf_ring_size);
+	DP_TRACE_STATS(DEBUG, "DMA Mon buf ring size: %d ",
+		       pdev_cfg_ctx->dma_mon_buf_ring_size);
+	DP_TRACE_STATS(DEBUG, "DMA Mon dest ring size: %d ",
+		       pdev_cfg_ctx->dma_mon_dest_ring_size);
+	DP_TRACE_STATS(DEBUG, "DMA Mon status ring size: %d ",
+		       pdev_cfg_ctx->dma_mon_status_ring_size);
+	DP_TRACE_STATS(DEBUG, "Rxdma monitor desc ring: %d",
+		       pdev_cfg_ctx->rxdma_monitor_desc_ring);
+	DP_TRACE_STATS(DEBUG, "Num mac rings: %d ",
+		       pdev_cfg_ctx->num_mac_rings);
+}
+
+/**
  * dp_txrx_stats_help() - Helper function for Txrx_Stats
  *
  * Return: None
@@ -6548,21 +6795,14 @@ static void dp_txrx_stats_help(void)
 	dp_info(" 26 -- Host SRNG PTR Statistics");
 	dp_info(" 27 -- Host Mon Statistics");
 	dp_info(" 28 -- Host REO Queue Statistics");
+	dp_info(" 29 -- Host Soc cfg param Statistics");
+	dp_info(" 30 -- Host pdev cfg param Statistics");
 }
 
 /**
  * dp_print_host_stats()- Function to print the stats aggregated at host
  * @vdev_handle: DP_VDEV handle
  * @type: host stats type
- *
- * Available Stat types
- * TXRX_CLEAR_STATS  : Clear the stats
- * TXRX_RX_RATE_STATS: Print Rx Rate Info
- * TXRX_TX_RATE_STATS: Print Tx Rate Info
- * TXRX_TX_HOST_STATS: Print Tx Stats
- * TXRX_RX_HOST_STATS: Print Rx Stats
- * TXRX_AST_STATS: Print AST Stats
- * TXRX_SRNG_PTR_STATS: Print SRNG ring pointer stats
  *
  * Return: 0 on success, print error message in case of failure
  */
@@ -6607,6 +6847,12 @@ dp_print_host_stats(struct cdp_vdev *vdev_handle,
 		break;
 	case TXRX_REO_QUEUE_STATS:
 		dp_get_host_peer_stats((struct cdp_pdev *)pdev, req->peer_addr);
+		break;
+	case TXRX_SOC_CFG_PARAMS:
+		dp_print_soc_cfg_params(pdev->soc);
+		break;
+	case TXRX_PDEV_CFG_PARAMS:
+		dp_print_pdev_cfg_params(pdev);
 		break;
 	default:
 		dp_info("Wrong Input For TxRx Host Stats");

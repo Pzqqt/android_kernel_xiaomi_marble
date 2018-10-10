@@ -191,24 +191,6 @@ static const int reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_REO_STATUS_RING_MASK_3};
 
 /**
- * struct wlan_cfg_dp_pdev_ctxt - Configuration parameters for pdev (radio)
- * @rx_dma_buf_ring_size - Size of RxDMA buffer ring
- * @dma_mon_buf_ring_size - Size of RxDMA Monitor buffer ring
- * @dma_mon_dest_ring_size - Size of RxDMA Monitor Destination ring
- * @dma_mon_status_ring_size - Size of RxDMA Monitor Status ring
- * @rxdma_monitor_desc_ring - rxdma monitor desc ring size
- */
-struct wlan_cfg_dp_pdev_ctxt {
-	int rx_dma_buf_ring_size;
-	int dma_mon_buf_ring_size;
-	int dma_mon_dest_ring_size;
-	int dma_mon_status_ring_size;
-	int rxdma_monitor_desc_ring;
-	int num_mac_rings;
-	int nss_enabled;
-};
-
-/**
  * wlan_cfg_soc_attach() - Allocate and prepare SoC configuration
  * @psoc - Object manager psoc
  * Return: wlan_cfg_ctx - Handle to Configuration context

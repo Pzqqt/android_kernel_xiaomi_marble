@@ -189,7 +189,9 @@ enum htt_cmn_dbg_stats_type {
  * @TXRX_SRNG_PTR_STATS: Print SRNG pointer stats
  * @TXRX_RX_MON_STATS: Print monitor mode stats
  * @TXRX_REO_QUEUE_STATS: Print Per peer REO Queue Stats
-*/
+ * @TXRX_SOC_CFG_PARAMS: Print soc cfg params info
+ * @TXRX_PDEV_CFG_PARAMS: Print pdev cfg params info
+ */
 enum cdp_host_txrx_stats {
 	TXRX_HOST_STATS_INVALID  = -1,
 	TXRX_CLEAR_STATS     = 0,
@@ -201,6 +203,8 @@ enum cdp_host_txrx_stats {
 	TXRX_SRNG_PTR_STATS  = 6,
 	TXRX_RX_MON_STATS    = 7,
 	TXRX_REO_QUEUE_STATS = 8,
+	TXRX_SOC_CFG_PARAMS   = 9,
+	TXRX_PDEV_CFG_PARAMS  = 10,
 	TXRX_HOST_STATS_MAX,
 };
 
@@ -902,9 +906,39 @@ struct data_stall_event_info {
 typedef void (*data_stall_detect_cb)(struct data_stall_event_info *);
 
 /*
- * cdp_stats - options for host and firmware
+ * enum cdp_stats - options for host and firmware
  * statistics
-*/
+ * @CDP_TXRX_STATS_1: HTT Pdev tx stats
+ * @CDP_TXRX_STATS_2: HTT Pdev rx stats
+ * @CDP_TXRX_STATS_3: HTT Pdev Tx HW Queue stats
+ * @CDP_TXRX_STATS_4: HTT Pdev Tx HW Sched stats
+ * @CDP_TXRX_STATS_5: HTT Pdev error stats
+ * @CDP_TXRX_STATS_6: HTT TQM stats
+ * @CDP_TXRX_STATS_7: HTT TQM CMDQ stats
+ * @CDP_TXRX_STATS_8: HTT Tx_de_cmn thread stats
+ * @CDP_TXRX_STATS_9: HTT Pdev Tx rate stats
+ * @CDP_TXRX_STATS_10: HTT Pdev Rx rate stats
+ * @CDP_TXRX_STATS_11: HTT Peer stats
+ * @CDP_TXRX_STATS_12: HTT Tx Self Gen Info
+ * @CDP_TXRX_STATS_13: HTT Tx MU HWQ stats
+ * @CDP_TXRX_STATS_14: HTT Ring interface info stats
+ * @CDP_TXRX_STATS_15: HTT SRNG info stats
+ * @CDP_TXRX_STATS_16: HTT SFM info stats
+ * @CDP_TXRX_STATS_17: HTT Pdev tx mu mimo sched info
+ * @CDP_TXRX_STATS_18: HTT Peer list details
+ * @CDP_TXRX_STATS_19: Reserved
+ * @CDP_TXRX_STATS_20: Reset Host stats
+ * @CDP_TXRX_STATS_21: Host Rx rate stats
+ * @CDP_TXRX_STATS_22: Host Tx rate stats
+ * @CDP_TXRX_STATS_23: Host Tx stats
+ * @CDP_TXRX_STATS_24: Host Rx stats
+ * @CDP_TXRX_STATS_25: Host Ast stats
+ * @CDP_TXRX_STATS_26: Host Head/Tail Pointer stats
+ * @CDP_TXRX_STATS_27: Host Monitor mode stats
+ * @CDP_TXRX_STATS_28: Host Peer entry stats
+ * @CDP_TXRX_STATS_29: Host Soc config params info
+ * @CDP_TXRX_STATS_30: Host Pdev config params info
+ */
 enum cdp_stats {
 	CDP_TXRX_STATS_0  = 0,
 	CDP_TXRX_STATS_1,
@@ -935,6 +969,8 @@ enum cdp_stats {
 	CDP_TXRX_STATS_26,
 	CDP_TXRX_STATS_27,
 	CDP_TXRX_STATS_28,
+	CDP_TXRX_STATS_29,
+	CDP_TXRX_STATS_30,
 	CDP_TXRX_STATS_HTT_MAX = 256,
 	CDP_TXRX_MAX_STATS = 265,
 };
