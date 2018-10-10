@@ -9679,8 +9679,8 @@ void wmi_non_tlv_attach(struct wmi_unified *wmi_handle)
 	populate_vdev_param_non_tlv(wmi_handle->vdev_param);
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
-	wmi_handle->log_info.buf_offset_command = 0;
-	wmi_handle->log_info.buf_offset_event = 0;
+	wmi_handle->soc->buf_offset_command = 0;
+	wmi_handle->soc->buf_offset_event = 0;
 	/*(uint8 *)(*wmi_id_to_name)(uint32_t cmd_id);*/
 #endif
 #else
