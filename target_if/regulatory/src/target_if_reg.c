@@ -109,6 +109,7 @@ static int tgt_reg_chan_list_update_handler(ol_scn_t handle,
 	struct cur_regulatory_info *reg_info;
 	QDF_STATUS status;
 	struct wmi_unified *wmi_handle;
+	int ret_val = 0;
 
 	TARGET_IF_ENTER();
 
@@ -129,27 +130,31 @@ static int tgt_reg_chan_list_update_handler(ol_scn_t handle,
 		return -EINVAL;
 	}
 
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("invalid wmi handle");
+		return -EINVAL;
+	}
+
 	reg_info = qdf_mem_malloc(sizeof(*reg_info));
 	if (!reg_info) {
 		target_if_err("memory allocation failed");
 		return -ENOMEM;
 	}
 
-	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
-	if (!wmi_handle) {
-		target_if_err("Invalid WMI handle");
-		return -EINVAL;
-	}
-
 	if (wmi_extract_reg_chan_list_update_event(wmi_handle,
 						   event_buf, reg_info, len)
 	    != QDF_STATUS_SUCCESS) {
-
 		target_if_err("Extraction of channel list event failed");
-		qdf_mem_free(reg_info->reg_rules_2g_ptr);
-		qdf_mem_free(reg_info->reg_rules_5g_ptr);
-		qdf_mem_free(reg_info);
-		return -EFAULT;
+		ret_val = -EFAULT;
+		goto clean;
+	}
+
+	if (reg_info->phy_id >= PSOC_MAX_PHY_REG_CAP) {
+		target_if_err_rl("phy_id %d is out of bounds",
+				 reg_info->phy_id);
+		ret_val = -EFAULT;
+		goto clean;
 	}
 
 	reg_info->psoc = psoc;
@@ -157,19 +162,17 @@ static int tgt_reg_chan_list_update_handler(ol_scn_t handle,
 	status = reg_rx_ops->master_list_handler(reg_info);
 	if (status != QDF_STATUS_SUCCESS) {
 		target_if_err("Failed to process master channel list handler");
-		qdf_mem_free(reg_info->reg_rules_2g_ptr);
-		qdf_mem_free(reg_info->reg_rules_5g_ptr);
-		qdf_mem_free(reg_info);
-		return -EFAULT;
+		ret_val = -EFAULT;
 	}
 
+clean:
 	qdf_mem_free(reg_info->reg_rules_2g_ptr);
 	qdf_mem_free(reg_info->reg_rules_5g_ptr);
 	qdf_mem_free(reg_info);
 
-	target_if_debug("processed regulatory channel list");
+	target_if_debug("processed reg channel list ret_val %d", ret_val);
 
-	return 0;
+	return ret_val;
 }
 
 static int tgt_reg_11d_new_cc_handler(ol_scn_t handle,
