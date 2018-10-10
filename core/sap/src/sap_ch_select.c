@@ -831,8 +831,6 @@ static uint32_t sap_weight_channel_noise_floor(struct sap_context *sap_ctx,
 
 	if (noise_floor_weight > softap_nf_weight_local)
 		noise_floor_weight = softap_nf_weight_local;
-	else if (noise_floor_weight < 0)
-		noise_floor_weight = 0;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "In %s, nf=%d, nfwc=%d, nfwl=%d, nfw=%d",
