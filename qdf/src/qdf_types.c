@@ -23,6 +23,44 @@
 #include "qdf_trace.h"
 #include "qdf_types.h"
 
+const char *qdf_opmode_str(const enum QDF_OPMODE opmode)
+{
+	switch (opmode) {
+	case QDF_STA_MODE:
+		return "STA";
+	case QDF_SAP_MODE:
+		return "SAP";
+	case QDF_P2P_CLIENT_MODE:
+		return "P2P Client";
+	case QDF_P2P_GO_MODE:
+		return "P2P GO";
+	case QDF_FTM_MODE:
+		return "FTM";
+	case QDF_IBSS_MODE:
+		return "IBSS";
+	case QDF_MONITOR_MODE:
+		return "Monitor";
+	case QDF_P2P_DEVICE_MODE:
+		return "P2P Device";
+	case QDF_OCB_MODE:
+		return "OCB";
+	case QDF_EPPING_MODE:
+		return "EPPing";
+	case QDF_QVIT_MODE:
+		return "QVIT";
+	case QDF_NDI_MODE:
+		return "NDI";
+	case QDF_WDS_MODE:
+		return "WDS";
+	case QDF_BTAMP_MODE:
+		return "BTAMP";
+	case QDF_AHDEMO_MODE:
+		return "AHDEMO";
+	default:
+		return "Invalid operating mode";
+	}
+}
+
 static QDF_STATUS qdf_consume_char(const char **str, char c)
 {
 	if ((*str)[0] != c)

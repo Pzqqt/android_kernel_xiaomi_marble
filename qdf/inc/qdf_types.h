@@ -553,8 +553,19 @@ enum QDF_OPMODE {
 	QDF_WDS_MODE,
 	QDF_BTAMP_MODE,
 	QDF_AHDEMO_MODE,
+
+	/* Add new OP Modes to qdf_opmode_str as well */
+
 	QDF_MAX_NO_OF_MODE
 };
+
+/**
+ * qdf_opmode_str() - Return a human readable string representation of @opmode
+ * @opmode: The opmode to convert
+ *
+ * Return: string representation of @opmode
+ */
+const char *qdf_opmode_str(const enum QDF_OPMODE opmode);
 
 /**
  * enum QDF_GLOBAL_MODE - global mode when driver is loaded.
