@@ -244,15 +244,14 @@ static inline void policy_mgr_change_sap_channel_with_csa(
 #endif
 
 /**
- * policy_mgr_pdev_set_pcl() - SET PCL channel list and send to firmware
+ * policy_mgr_set_pcl_for_existing_combo() - SET PCL for existing combo
  * @psoc: PSOC object information
- * @mode:	Adapter mode
+ * @mode: Adapter mode
  *
  * Return: None
  */
-void policy_mgr_pdev_set_pcl(struct wlan_objmgr_psoc *psoc,
-			     enum QDF_OPMODE mode);
-
+void policy_mgr_set_pcl_for_existing_combo(struct wlan_objmgr_psoc *psoc,
+					   enum policy_mgr_con_mode mode);
 /**
  * policy_mgr_incr_active_session() - increments the number of active sessions
  * @psoc: PSOC object information
