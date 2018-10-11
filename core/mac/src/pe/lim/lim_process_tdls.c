@@ -3193,6 +3193,9 @@ QDF_STATUS lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 	tgt_tdls_peers_deleted_notification(mac_ctx->psoc,
 					    session_entry->smeSessionId);
 
+	tgt_tdls_delete_all_peers_indication(mac_ctx->psoc,
+					     session_entry->smeSessionId);
+
 	pe_debug("Exit");
 	return QDF_STATUS_SUCCESS;
 }
