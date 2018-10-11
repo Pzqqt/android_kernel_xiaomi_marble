@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -180,7 +180,9 @@ struct wcd9xxx_pdata {
 	int num_irqs;
 	int reset_gpio;
 	bool has_buck_vsel_gpio;
+	bool has_micb_supply_en_gpio;
 	struct device_node *buck_vsel_ctl_np;
+	struct device_node *micb_en_ctl;
 	struct device_node *wcd_rst_np;
 	struct wcd9xxx_amic amic_settings;
 	struct slim_device slimbus_slave_device;

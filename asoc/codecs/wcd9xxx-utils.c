@@ -365,6 +365,19 @@ struct wcd9xxx_pdata *wcd9xxx_populate_dt_data(struct device *dev)
 		}
 	}
 
+	pdata->has_micb_supply_en_gpio = of_property_read_bool(dev->of_node,
+					   "qcom,has-micbias-supply-en-gpio");
+	if (pdata->has_micb_supply_en_gpio) {
+		pdata->micb_en_ctl = of_parse_phandle(dev->of_node,
+				"qcom,micbias-supply-en-gpio-node", 0);
+		if (!pdata->micb_en_ctl) {
+			dev_err(dev, "%s No entry for %s property in node %s\n",
+				__func__, "qcom,micbias-supply-en-gpio-node",
+				dev->of_node->full_name);
+			goto err_parse_dt_prop;
+		}
+	}
+
 	if (!(wcd9xxx_read_of_property_u32(dev, "qcom,cdc-mclk-clk-rate",
 					   &prop_val)))
 		pdata->mclk_rate = prop_val;

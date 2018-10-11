@@ -1289,6 +1289,9 @@ static int wcd9xxx_slim_probe(struct slim_device *slim)
 	if (pdata->has_buck_vsel_gpio)
 		msm_cdc_pinctrl_select_active_state(pdata->buck_vsel_ctl_np);
 
+	if (pdata->has_micb_supply_en_gpio)
+		msm_cdc_pinctrl_select_active_state(pdata->micb_en_ctl);
+
 	device_id = slim_get_device_id(slim);
 	if (!device_id) {
 		dev_err(&slim->dev, "%s: Error, no device id\n", __func__);
