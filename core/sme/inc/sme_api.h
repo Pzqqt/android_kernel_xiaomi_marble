@@ -101,6 +101,10 @@
 
 #define SME_ACTIVE_LIST_CMD_TIMEOUT_VALUE (30*1000)
 #define SME_CMD_TIMEOUT_VALUE (SME_ACTIVE_LIST_CMD_TIMEOUT_VALUE + 1000)
+
+/* SME timeout for Start/Stop BSS commands is set to 10 secs */
+#define SME_START_STOP_BSS_CMD_TIMEOUT (10 * 1000)
+#define SME_CMD_START_STOP_BSS_TIMEOUT (SME_START_STOP_BSS_CMD_TIMEOUT + 1000)
 /*--------------------------------------------------------------------------
   Type declarations
   ------------------------------------------------------------------------*/

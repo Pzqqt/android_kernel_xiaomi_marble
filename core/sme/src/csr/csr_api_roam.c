@@ -20395,7 +20395,18 @@ QDF_STATUS csr_set_serialization_params_to_cmd(tpAniSirGlobal mac_ctx,
 		return status;
 	}
 	cmd->umac_cmd = sme_cmd;
-	cmd->cmd_timeout_duration = SME_DEFAULT_CMD_TIMEOUT;
+
+	/*
+	 * For START BSS and STOP BSS commands for SAP, the command timeout
+	 * is set to 10 seconds. For all other commands its 30 seconds
+	 */
+	if ((cmd->vdev->vdev_mlme.vdev_opmode == QDF_SAP_MODE) &&
+	    ((cmd->cmd_type == WLAN_SER_CMD_HDD_ISSUED) ||
+	    (cmd->cmd_type == WLAN_SER_CMD_VDEV_STOP_BSS)))
+		cmd->cmd_timeout_duration = SME_START_STOP_BSS_CMD_TIMEOUT;
+	else
+		cmd->cmd_timeout_duration = SME_DEFAULT_CMD_TIMEOUT;
+
 	cmd->cmd_cb = sme_ser_cmd_callback;
 	cmd->is_high_priority = high_priority;
 	cmd->is_blocking = true;
