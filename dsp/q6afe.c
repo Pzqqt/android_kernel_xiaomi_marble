@@ -3790,6 +3790,9 @@ static int q6afe_send_enc_config(u16 port_id,
 	if (format == ASM_MEDIA_FMT_LDAC)
 		media_type.sample_rate =
 			cfg->ldac_config.custom_config.sample_rate;
+	else if (format == ASM_MEDIA_FMT_APTX_ADAPTIVE)
+		media_type.sample_rate =
+			cfg->aptx_ad_config.custom_cfg.sample_rate;
 	else
 		media_type.sample_rate =
 			afe_config.slim_sch.sample_rate;
