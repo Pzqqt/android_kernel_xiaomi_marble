@@ -19907,7 +19907,7 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		roam_info->b_roam_scan_offload_started = true;
 	else if (ROAM_SCAN_OFFLOAD_STOP == command)
 		roam_info->b_roam_scan_offload_started = false;
-	policy_mgr_pdev_set_pcl(mac_ctx->psoc, QDF_STA_MODE);
+	policy_mgr_set_pcl_for_existing_combo(mac_ctx->psoc, PM_STA_MODE);
 
 	if (!QDF_IS_STATUS_SUCCESS(
 		csr_roam_send_rso_cmd(mac_ctx, session_id, req_buf))) {
@@ -19915,7 +19915,8 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 			  "%s: Not able to post message to PE",
 			  __func__);
 		roam_info->b_roam_scan_offload_started = prev_roaming_state;
-		policy_mgr_pdev_set_pcl(mac_ctx->psoc, QDF_STA_MODE);
+		policy_mgr_set_pcl_for_existing_combo(mac_ctx->psoc,
+						      PM_STA_MODE);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* update the last sent cmd */
