@@ -97,10 +97,8 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		return;
 
 	frm = qdf_mem_malloc(sizeof(*frm));
-	if (!frm) {
-		pe_err("mem alloc failed");
+	if (!frm)
 		goto err;
-	}
 
 	add_ie_len = pe_session->pLimReAssocReq->addIEAssoc.length;
 	add_ie = pe_session->pLimReAssocReq->addIEAssoc.addIEdata;
@@ -387,9 +385,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 
 	pe_session->assocReq = qdf_mem_malloc(payload);
-	if (NULL == pe_session->assocReq) {
-		pe_err("Failed to alloc memory");
-	} else {
+	if (pe_session->assocReq) {
 		/*
 		 * Store the Assoc request. This is sent to csr/hdd in
 		 * join cnf response.
@@ -429,8 +425,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 	if (ft_ies_length) {
 		pe_session->assocReq = qdf_mem_malloc(ft_ies_length);
-		if (NULL == pe_session->assocReq) {
-			pe_err("Failed to alloc memory for FT IEs");
+		if (!pe_session->assocReq) {
 			pe_session->assocReqLen = 0;
 		} else {
 			/*
@@ -572,10 +567,8 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 		return;
 
 	frm = qdf_mem_malloc(sizeof(*frm));
-	if (!frm) {
-		pe_err("mem alloc failed");
+	if (!frm)
 		goto err;
-	}
 	nAddIELen = psessionEntry->pLimReAssocReq->addIEAssoc.length;
 	pAddIE = psessionEntry->pLimReAssocReq->addIEAssoc.addIEdata;
 
@@ -763,9 +756,7 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	}
 
 	psessionEntry->assocReq = qdf_mem_malloc(nPayload);
-	if (NULL == psessionEntry->assocReq) {
-		pe_err("Unable to allocate mem for assoc req");
-	} else {
+	if (psessionEntry->assocReq) {
 		/* Store the Assocrequest. It is sent to csr in joincnfrsp */
 		qdf_mem_copy(psessionEntry->assocReq,
 			     pFrame + sizeof(tSirMacMgmtHdr), nPayload);

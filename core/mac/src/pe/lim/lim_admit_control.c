@@ -853,10 +853,8 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
 	}
 
 	pAddTsParam = qdf_mem_malloc(sizeof(tAddTsParams));
-	if (NULL == pAddTsParam) {
-		pe_err("AllocateMemory() failed");
+	if (!pAddTsParam)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	pAddTsParam->staIdx = staIdx;
 	pAddTsParam->tspecIdx = tspecIdx;
@@ -913,10 +911,8 @@ lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
 	tpPESession psessionEntry = NULL;
 
 	pDelTsParam = qdf_mem_malloc(sizeof(tDelTsParams));
-	if (NULL == pDelTsParam) {
-		pe_err("AllocateMemory() failed");
+	if (!pDelTsParam)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	msg.type = WMA_DEL_TS_REQ;
 	msg.bodyptr = pDelTsParam;

@@ -143,13 +143,8 @@ static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 	len = sizeof(*req_msg);
 
 	req_msg = qdf_mem_malloc(len);
-	if (!req_msg) {
-		pe_err("qdf_mem_malloc failed");
-		/* Free the active command list
-		 * Probably the malloc is going to fail there as well?!
-		 */
+	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	req_msg->hw_mode_index = buf->set_hw.hw_mode_index;
 	req_msg->reason = buf->set_hw.reason;
@@ -171,10 +166,8 @@ static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 	return status;
 fail:
 	param = qdf_mem_malloc(sizeof(*param));
-	if (!param) {
-		pe_err("HW mode resp failed");
+	if (!param)
 		return QDF_STATUS_E_FAILURE;
-	}
 	param->status = SET_HW_MODE_STATUS_ECANCELED;
 	param->cfgd_hw_mode_index = 0;
 	param->num_vdev_mac_entries = 0;
@@ -215,13 +208,8 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 	len = sizeof(*req_msg);
 
 	req_msg = qdf_mem_malloc(len);
-	if (!req_msg) {
-		pe_err("qdf_mem_malloc failed");
-		/* Free the active command list
-		 * Probably the malloc is going to fail there as well?!
-		 */
+	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	req_msg->scan_config = buf->set_dual_mac.scan_config;
 	req_msg->fw_mode_config = buf->set_dual_mac.fw_mode_config;
@@ -244,10 +232,8 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 	return status;
 fail:
 	param = qdf_mem_malloc(sizeof(*param));
-	if (!param) {
-		pe_err("Dual mac config resp failed");
+	if (!param)
 		return QDF_STATUS_E_FAILURE;
-	}
 	param->status = SET_HW_MODE_STATUS_ECANCELED;
 	resp_msg.type = eWNI_SME_SET_DUAL_MAC_CFG_RESP;
 	resp_msg.bodyptr = param;
@@ -284,10 +270,8 @@ static QDF_STATUS lim_process_set_antenna_mode_req(tpAniSirGlobal mac,
 	}
 
 	req_msg = qdf_mem_malloc(sizeof(*req_msg));
-	if (!req_msg) {
-		pe_err("qdf_mem_malloc failed");
+	if (!req_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	req_msg->num_rx_chains = buf->set_antenna_mode.num_rx_chains;
 	req_msg->num_tx_chains = buf->set_antenna_mode.num_tx_chains;
@@ -310,10 +294,8 @@ static QDF_STATUS lim_process_set_antenna_mode_req(tpAniSirGlobal mac,
 	return status;
 fail:
 	param = qdf_mem_malloc(sizeof(*param));
-	if (!param) {
-		pe_err("antenna mode resp failed");
+	if (!param)
 		return QDF_STATUS_E_NOMEM;
-	}
 	param->status = SET_ANTENNA_MODE_STATUS_ECANCELED;
 	resp_msg.type = eWNI_SME_SET_ANTENNA_MODE_RESP;
 	resp_msg.bodyptr = param;
@@ -604,9 +586,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	pe_debug("Received START_BSS_REQ");
 	size = sizeof(tSirSmeStartBssReq);
 	sme_start_bss_req = qdf_mem_malloc(size);
-	if (NULL == sme_start_bss_req) {
-		pe_err("Allocate Memory fail for LimStartBssReq");
-		/* Send failure response to host */
+	if (!sme_start_bss_req) {
 		ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 		goto free;
 	}
@@ -815,8 +795,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->parsedAssocReq =
 				qdf_mem_malloc(session->dph.dphHashTable.
 						size * sizeof(tpSirAssocReq));
-			if (NULL == session->parsedAssocReq) {
-				pe_warn("AllocateMemory() failed");
+			if (!session->parsedAssocReq) {
 				ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 				goto free;
 			}
@@ -904,8 +883,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		}
 		/* Prepare and Issue LIM_MLM_START_REQ to MLM */
 		mlm_start_req = qdf_mem_malloc(sizeof(tLimMlmStartReq));
-		if (NULL == mlm_start_req) {
-			pe_err("Allocate Memory failed for mlmStartReq");
+		if (!mlm_start_req) {
 			ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 			goto free;
 		}
@@ -1279,8 +1257,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				msg_buf);
 
 		sme_join_req = qdf_mem_malloc(n_size);
-		if (NULL == sme_join_req) {
-			pe_err("AllocateMemory failed for sme_join_req");
+		if (!sme_join_req) {
 			ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 			goto end;
 		}
@@ -1569,8 +1546,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		val = sizeof(tLimMlmJoinReq) +
 			session->pLimJoinReq->bssDescription.length + 2;
 		mlm_join_req = qdf_mem_malloc(val);
-		if (NULL == mlm_join_req) {
-			pe_err("AllocateMemory failed for mlmJoinReq");
+		if (!mlm_join_req) {
 			ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 			goto end;
 		}
@@ -1780,9 +1756,7 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 
 	size = __lim_get_sme_join_req_size_for_alloc((uint8_t *)msg_buf);
 	reassoc_req = qdf_mem_malloc(size);
-	if (NULL == reassoc_req) {
-		pe_err("call to AllocateMemory failed for reassoc_req");
-
+	if (!reassoc_req) {
 		ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 		goto end;
 	}
@@ -1950,9 +1924,7 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 	}
 
 	mlm_reassoc_req = qdf_mem_malloc(sizeof(tLimMlmReassocReq));
-	if (NULL == mlm_reassoc_req) {
-		pe_err("call to AllocateMemory failed for mlmReassocReq");
-
+	if (!mlm_reassoc_req) {
 		ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
 		goto end;
 	}
@@ -2228,10 +2200,8 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 			disassocTrigger, reasonCode);
 
 	pMlmDisassocReq = qdf_mem_malloc(sizeof(tLimMlmDisassocReq));
-	if (NULL == pMlmDisassocReq) {
-		pe_err("call to AllocateMemory failed for mlmDisassocReq");
+	if (!pMlmDisassocReq)
 		return;
-	}
 
 	qdf_copy_macaddr(&pMlmDisassocReq->peer_macaddr,
 			 &smeDisassocReq.peer_macaddr);
@@ -2588,8 +2558,7 @@ static void __lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 
 	/* Trigger Deauthentication frame to peer MAC entity */
 	mlm_deauth_req = qdf_mem_malloc(sizeof(tLimMlmDeauthReq));
-	if (NULL == mlm_deauth_req) {
-		pe_err("call to AllocateMemory failed for mlmDeauthReq");
+	if (!mlm_deauth_req) {
 		if (mac_ctx->lim.gLimRspReqd) {
 			mac_ctx->lim.gLimRspReqd = false;
 			ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
@@ -2645,10 +2614,8 @@ __lim_process_sme_set_context_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	}
 
 	set_context_req = qdf_mem_malloc(sizeof(struct sSirSmeSetContextReq));
-	if (NULL == set_context_req) {
-		pe_err("call to AllocateMemory failed for set_context_req");
+	if (!set_context_req)
 		return;
-	}
 	qdf_mem_copy(set_context_req, msg_buf,
 			sizeof(struct sSirSmeSetContextReq));
 	sme_session_id = set_context_req->sessionId;
@@ -2692,10 +2659,8 @@ __lim_process_sme_set_context_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	    (session_entry->limSmeState == eLIM_SME_NORMAL_STATE))) {
 		/* Trigger MLM_SETKEYS_REQ */
 		mlm_set_key_req = qdf_mem_malloc(sizeof(tLimMlmSetKeysReq));
-		if (NULL == mlm_set_key_req) {
-			pe_err("mem alloc failed for mlmSetKeysReq");
+		if (!mlm_set_key_req)
 			goto end;
-		}
 		mlm_set_key_req->edType = set_context_req->keyMaterial.edType;
 		mlm_set_key_req->numKeys =
 			set_context_req->keyMaterial.numKeys;
@@ -3798,10 +3763,8 @@ lim_send_vdev_restart(tpAniSirGlobal pMac,
 
 	pHalHiddenSsidVdevRestart =
 		qdf_mem_malloc(sizeof(tHalHiddenSsidVdevRestart));
-	if (NULL == pHalHiddenSsidVdevRestart) {
-		pe_err("Unable to allocate memory");
+	if (!pHalHiddenSsidVdevRestart)
 		return;
-	}
 
 	pHalHiddenSsidVdevRestart->ssidHidden = psessionEntry->ssidHidden;
 	pHalHiddenSsidVdevRestart->sessionId = sessionId;
@@ -3841,7 +3804,6 @@ static void __lim_process_roam_scan_offload_req(tpAniSirGlobal mac_ctx,
 
 	local_ie_buf = qdf_mem_malloc(MAX_DEFAULT_SCAN_IE_LEN);
 	if (!local_ie_buf) {
-		pe_err("Mem Alloc failed for local_ie_buf");
 		qdf_mem_free(req_buffer);
 		return;
 	}
@@ -4085,10 +4047,8 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
 
 		if (pStaDs->valid && pStaDs->htSupportedChannelWidthSet) {
 			pHtOpMode = qdf_mem_malloc(sizeof(tUpdateVHTOpMode));
-			if (NULL == pHtOpMode) {
-				pe_err("Not able to allocate memory for setting OP mode");
+			if (!pHtOpMode)
 				return;
-			}
 			pHtOpMode->opMode =
 				(psessionEntry->htSecondaryChannelOffset ==
 				 PHY_SINGLE_CHANNEL_CENTERED) ?
@@ -4182,11 +4142,8 @@ lim_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 	}
 
 	pMaxTxParams = qdf_mem_malloc(sizeof(tMaxTxPowerParams));
-	if (NULL == pMaxTxParams) {
-		pe_err("Unable to allocate memory for pMaxTxParams");
+	if (!pMaxTxParams)
 		return QDF_STATUS_E_NOMEM;
-
-	}
 	pMaxTxParams->power = txPower;
 	qdf_mem_copy(pMaxTxParams->bssId.bytes, pSessionEntry->bssId,
 		     QDF_MAC_ADDR_SIZE);
@@ -4434,19 +4391,16 @@ static void lim_set_pdev_ht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 
 	for (i = 1; i <= nss; i++) {
 		ie_params = qdf_mem_malloc(sizeof(*ie_params));
-		if (NULL == ie_params) {
-			pe_err("mem alloc failed");
+		if (!ie_params)
 			return;
-		}
 		ie_params->nss = i;
 		ie_params->pdev_id = pdev_id;
 		ie_params->ie_type = DOT11_HT_IE;
 		/* 2 for IE len and EID */
 		ie_params->ie_len = 2 + sizeof(tHtCaps);
 		ie_params->ie_ptr = qdf_mem_malloc(ie_params->ie_len);
-		if (NULL == ie_params->ie_ptr) {
+		if (!ie_params->ie_ptr) {
 			qdf_mem_free(ie_params);
-			pe_err("mem alloc failed");
 			return;
 		}
 		*ie_params->ie_ptr = SIR_MAC_HT_CAPABILITIES_EID;
@@ -4506,10 +4460,8 @@ static void lim_set_pdev_vht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 
 	for (i = 1; i <= nss; i++) {
 		ie_params = qdf_mem_malloc(sizeof(*ie_params));
-		if (NULL == ie_params) {
-			pe_err("mem alloc failed");
+		if (!ie_params)
 			return;
-		}
 		ie_params->nss = i;
 		ie_params->pdev_id = pdev_id;
 		ie_params->ie_type = DOT11_VHT_IE;
@@ -4517,9 +4469,8 @@ static void lim_set_pdev_vht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 		ie_params->ie_len = 2 + sizeof(tSirMacVHTCapabilityInfo) +
 			sizeof(tSirVhtMcsInfo);
 		ie_params->ie_ptr = qdf_mem_malloc(ie_params->ie_len);
-		if (NULL == ie_params->ie_ptr) {
+		if (!ie_params->ie_ptr) {
 			qdf_mem_free(ie_params);
-			pe_err("mem alloc failed");
 			return;
 		}
 		*ie_params->ie_ptr = SIR_MAC_VHT_CAPABILITIES_EID;
@@ -4660,11 +4611,8 @@ static void lim_process_sme_update_access_policy_vendor_ie(
 
 	num_bytes = update_vendor_ie->ie[1] + 2;
 	pe_session_entry->access_policy_vendor_ie = qdf_mem_malloc(num_bytes);
-
-	if (!pe_session_entry->access_policy_vendor_ie) {
-		pe_err("Failed to allocate memory for vendor ie");
+	if (!pe_session_entry->access_policy_vendor_ie)
 		return;
-	}
 	qdf_mem_copy(pe_session_entry->access_policy_vendor_ie,
 		&update_vendor_ie->ie[0], num_bytes);
 
@@ -5259,11 +5207,8 @@ lim_start_bss_update_add_ie_buffer(tpAniSirGlobal pMac,
 		*pDstDataLen = srcDataLen;
 
 		*pDstData_buff = qdf_mem_malloc(*pDstDataLen);
-
-		if (NULL == *pDstData_buff) {
-			pe_err("AllocateMemory failed for pDstData_buff");
+		if (!*pDstData_buff)
 			return;
-		}
 		qdf_mem_copy(*pDstData_buff, pSrcData_buff, *pDstDataLen);
 	} else {
 		*pDstData_buff = NULL;
@@ -5311,9 +5256,7 @@ lim_update_add_ie_buffer(tpAniSirGlobal pMac,
 		qdf_mem_free(*pDstData_buff);
 		/* allocate a new */
 		*pDstData_buff = qdf_mem_malloc(*pDstDataLen);
-
-		if (NULL == *pDstData_buff) {
-			pe_err("Memory allocation failed");
+		if (!*pDstData_buff) {
 			*pDstDataLen = 0;
 			return;
 		}
@@ -5385,10 +5328,8 @@ lim_update_ibss_prop_add_ies(tpAniSirGlobal pMac, uint8_t **pDstData_buff,
 
 		new_length = pModifyIE->ieBufferlength + *pDstDataLen;
 		new_ptr = qdf_mem_malloc(new_length);
-		if (NULL == new_ptr) {
-			pe_err("Memory allocation failed");
+		if (!new_ptr)
 			return false;
-		}
 		qdf_mem_copy(new_ptr, *pDstData_buff, *pDstDataLen);
 		qdf_mem_copy(&new_ptr[*pDstDataLen], pModifyIE->pIEBuffer,
 				pModifyIE->ieBufferlength);
@@ -5573,10 +5514,8 @@ static void lim_process_update_add_ies(tpAniSirGlobal mac_ctx,
 			new_length = update_ie->ieBufferlength +
 				addn_ie->probeRespDataLen;
 			new_ptr = qdf_mem_malloc(new_length);
-			if (NULL == new_ptr) {
-				pe_err("Memory allocation failed");
+			if (!new_ptr)
 				goto end;
-			}
 			/* append buffer to end of local buffers */
 			qdf_mem_copy(new_ptr, addn_ie->probeRespData_buff,
 					addn_ie->probeRespDataLen);
@@ -6223,10 +6162,8 @@ void lim_send_obss_color_collision_cfg(tpAniSirGlobal mac_ctx,
 	}
 
 	cfg_param = qdf_mem_malloc(sizeof(*cfg_param));
-	if (!cfg_param) {
-		pe_err("Failed to allocate memory");
+	if (!cfg_param)
 		return;
-	}
 
 	pe_debug("%d: sending event:%d", session->smeSessionId, event_type);
 	qdf_mem_zero(cfg_param, sizeof(*cfg_param));

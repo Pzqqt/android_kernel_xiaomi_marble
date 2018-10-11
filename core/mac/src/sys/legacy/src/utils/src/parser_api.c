@@ -2341,10 +2341,8 @@ QDF_STATUS sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 	qdf_mem_set((uint8_t *) pProbeResp, sizeof(tSirProbeRespBeacon), 0);
 
 	pr = qdf_mem_malloc(sizeof(tDot11fProbeResponse));
-	if (NULL == pr) {
-		pe_err("Failed to allocate memory");
+	if (!pr)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	/* delegate to the framesc-generated code, */
 	status = dot11f_unpack_probe_response(pMac, pFrame, nFrame, pr, false);
@@ -2617,10 +2615,8 @@ sir_convert_assoc_req_frame2_struct(tpAniSirGlobal pMac,
 	uint32_t status;
 
 	ar = qdf_mem_malloc(sizeof(tDot11fAssocRequest));
-	if (NULL == ar) {
-		pe_err("Failed to allocate memory");
+	if (!ar)
 		return QDF_STATUS_E_NOMEM;
-	}
 	/* Zero-init our [out] parameter, */
 	qdf_mem_set((uint8_t *) pAssocReq, sizeof(tSirAssocReq), 0);
 
@@ -2917,10 +2913,8 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 	uint8_t cnt = 0;
 
 	ar = qdf_mem_malloc(sizeof(*ar));
-	if (!ar) {
-		pe_err("Assoc rsp mem alloc fails");
+	if (!ar)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	/* decrypt the cipher text using AEAD decryption */
 	if (lim_is_fils_connection(session_entry)) {
@@ -3165,10 +3159,8 @@ sir_convert_reassoc_req_frame2_struct(tpAniSirGlobal pMac,
 	uint32_t status;
 
 	ar = qdf_mem_malloc(sizeof(*ar));
-	if (!ar) {
-		pe_err("mem alloc failed");
+	if (!ar)
 		return QDF_STATUS_E_NOMEM;
-	}
 	/* Zero-init our [out] parameter, */
 	qdf_mem_set((uint8_t *) pAssocReq, sizeof(tSirAssocReq), 0);
 
@@ -3353,10 +3345,8 @@ sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
 	qdf_mem_set((uint8_t *) &eseBcnReportMandatoryIe,
 		    sizeof(eseBcnReportMandatoryIe), 0);
 	pBies = qdf_mem_malloc(sizeof(tDot11fBeaconIEs));
-	if (NULL == pBies) {
-		pe_err("Failed to allocate memory");
+	if (!pBies)
 		return QDF_STATUS_E_NOMEM;
-	}
 	qdf_mem_zero(pBies, sizeof(tDot11fBeaconIEs));
 	/* delegate to the framesc-generated code, */
 	status = dot11f_unpack_beacon_i_es(pMac, pPayload, nPayload,
@@ -3437,8 +3427,7 @@ sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
 	}
 
 	*outIeBuf = qdf_mem_malloc(numBytes);
-	if (NULL == *outIeBuf) {
-		pe_err("Memory Allocation failure");
+	if (!*outIeBuf) {
 		qdf_mem_free(pBies);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -3648,10 +3637,8 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 	qdf_mem_set((uint8_t *) pBeaconStruct, sizeof(tSirProbeRespBeacon), 0);
 
 	pBies = qdf_mem_malloc(sizeof(tDot11fBeaconIEs));
-	if (NULL == pBies) {
-		pe_err("Failed to allocate memory");
+	if (!pBies)
 		return QDF_STATUS_E_NOMEM;
-	}
 	qdf_mem_zero(pBies, sizeof(tDot11fBeaconIEs));
 	/* delegate to the framesc-generated code, */
 	status = dot11f_unpack_beacon_i_es(pMac, pPayload, nPayload,
@@ -3966,10 +3953,8 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 	qdf_mem_set((uint8_t *) pBeaconStruct, sizeof(tSirProbeRespBeacon), 0);
 
 	pBeacon = qdf_mem_malloc(sizeof(tDot11fBeacon));
-	if (NULL == pBeacon) {
-		pe_err("Failed to allocate memory");
+	if (!pBeacon)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	/* get the MAC address out of the BD, */
 	qdf_mem_copy(pBeaconStruct->bssid, pHdr->sa, 6);

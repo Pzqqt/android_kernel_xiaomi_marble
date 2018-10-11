@@ -457,11 +457,8 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 
 	/* Package WMA_ADD_BSS_REQ message parameters */
 	addbss_param = qdf_mem_malloc(sizeof(tAddBssParams));
-	if (NULL == addbss_param) {
-		pe_err("Unable to allocate memory during ADD_BSS");
-		/* Respond to SME with LIM_MLM_START_CNF */
+	if (!addbss_param)
 		return eSIR_SME_RESOURCES_UNAVAILABLE;
-	}
 
 	/* Fill in tAddBssParams members */
 	qdf_mem_copy(addbss_param->bssId, mlm_start_req->bssId,
@@ -802,12 +799,10 @@ lim_process_mlm_post_join_suspend_link(tpAniSirGlobal mac_ctx,
 		lnk_state);
 
 	pe_session_param = qdf_mem_malloc(sizeof(struct session_params));
-	if (pe_session_param) {
-		pe_session_param->session_id = session->peSessionId;
-	} else {
-		pe_err("insufficient memory");
+	if (!pe_session_param)
 		goto error;
-	}
+
+	pe_session_param->session_id = session->peSessionId;
 	if (lim_set_link_state(mac_ctx, lnk_state,
 			session->pLimMlmJoinReq->bssDescription.bssId,
 			session->selfMacAddr,
@@ -1031,10 +1026,8 @@ static QDF_STATUS lim_process_mlm_auth_req_sae(tpAniSirGlobal mac_ctx,
 	struct scheduler_msg msg = {0};
 
 	sae_info = qdf_mem_malloc(sizeof(*sae_info));
-	if (sae_info == NULL) {
-		pe_err("Memory allocation failed");
+	if (!sae_info)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	sae_info->msg_type = eWNI_SME_TRIGGER_SAE;
 	sae_info->msg_len = sizeof(*sae_info);
@@ -1429,8 +1422,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 			 */
 			sme_disassoc_rsp =
 				qdf_mem_malloc(sizeof(tSirSmeDisassocRsp));
-			if (NULL == sme_disassoc_rsp) {
-				pe_err("memory allocation failed for disassoc rsp");
+			if (!sme_disassoc_rsp) {
 				qdf_mem_free(mlm_disassocreq);
 				return;
 			}
@@ -1780,8 +1772,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 				 */
 				sme_deauth_rsp =
 				    qdf_mem_malloc(sizeof(tSirSmeDeauthRsp));
-				if (NULL == sme_deauth_rsp) {
-					pe_err("memory allocation failed for deauth rsp");
+				if (!sme_deauth_rsp) {
 					qdf_mem_free(mlm_deauth_req);
 					return;
 				}

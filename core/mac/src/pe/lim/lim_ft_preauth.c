@@ -597,9 +597,8 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
 	struct scheduler_msg mmh_msg = {0};
 	uint16_t rsp_len = sizeof(tSirFTPreAuthRsp);
 
-	ft_pre_auth_rsp = (tpSirFTPreAuthRsp) qdf_mem_malloc(rsp_len);
-	if (NULL == ft_pre_auth_rsp) {
-		pe_err("Failed to allocate memory");
+	ft_pre_auth_rsp = qdf_mem_malloc(rsp_len);
+	if (!ft_pre_auth_rsp) {
 		QDF_ASSERT(ft_pre_auth_rsp != NULL);
 		return;
 	}
@@ -685,11 +684,8 @@ QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 	session_id = session_entry->smeSessionId;
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
-			  FL("Failed to allocate memory"));
+	if (!req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_mem_zero(req, sizeof(*req));
 

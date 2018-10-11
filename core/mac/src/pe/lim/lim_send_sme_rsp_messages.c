@@ -88,11 +88,8 @@ lim_send_sme_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 		lim_msg_str(msg_type), lim_result_code_str(result_code));
 
 	sme_rsp = qdf_mem_malloc(sizeof(tSirSmeRsp));
-	if (NULL == sme_rsp) {
-		/* Buffer not available. Log error */
-		pe_err("call to AllocateMemory failed for eWNI_SME_*_RSP");
+	if (!sme_rsp)
 		return;
-	}
 
 	sme_rsp->messageType = msg_type;
 	sme_rsp->length = sizeof(tSirSmeRsp);
@@ -146,10 +143,8 @@ lim_send_sme_roc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 		scan_id);
 
 	sme_rsp = qdf_mem_malloc(sizeof(struct sir_roc_rsp));
-	if (NULL == sme_rsp) {
-		pe_err("call to AllocateMemory failed for eWNI_SME_*_RSP");
+	if (!sme_rsp)
 		return;
-	}
 
 	sme_rsp->message_type = msg_type;
 	sme_rsp->length = sizeof(struct sir_roc_rsp);
@@ -499,10 +494,8 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 	if (session_entry == NULL) {
 		rsp_len = sizeof(tSirSmeJoinRsp);
 		sme_join_rsp = qdf_mem_malloc(rsp_len);
-		if (NULL == sme_join_rsp) {
-			pe_err("Mem Alloc fail - JOIN/REASSOC_RSP");
+		if (!sme_join_rsp)
 			return;
-		}
 
 		sme_join_rsp->beaconLength = 0;
 		sme_join_rsp->assocReqLength = 0;
@@ -516,10 +509,8 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 #endif
 			sizeof(tSirSmeJoinRsp) - sizeof(uint8_t);
 		sme_join_rsp = qdf_mem_malloc(rsp_len);
-		if (NULL == sme_join_rsp) {
-			pe_err("MemAlloc fail - JOIN/REASSOC_RSP");
+		if (!sme_join_rsp)
 			return;
-		}
 
 		if (lim_is_fils_connection(session_entry)) {
 			sme_join_rsp->is_fils_connection = true;
@@ -629,11 +620,8 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 
 	if (psessionEntry == NULL) {
 		pSirSmeRsp = qdf_mem_malloc(size);
-		if (NULL == pSirSmeRsp) {
-			/* / Buffer not available. Log error */
-			pe_err("call to AllocateMemory failed for eWNI_SME_START_BSS_RSP");
+		if (!pSirSmeRsp)
 			return;
-		}
 	} else {
 		/* subtract size of beaconLength + Mac Hdr + Fixed Fields before SSID */
 		ieOffset = sizeof(tAniBeaconStruct) + SIR_MAC_B_PR_SSID_OFFSET;
@@ -643,11 +631,8 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 		size += ieLen;
 
 		pSirSmeRsp = qdf_mem_malloc(size);
-		if (NULL == pSirSmeRsp) {
-			/* / Buffer not available. Log error */
-			pe_err("call to AllocateMemory failed for eWNI_SME_START_BSS_RSP");
+		if (!pSirSmeRsp)
 			return;
-		}
 		size = sizeof(tSirSmeStartBssRsp);
 		if (resultCode == eSIR_SME_SUCCESS) {
 
@@ -861,9 +846,7 @@ lim_send_sme_disassoc_ntf(tpAniSirGlobal pMac,
 		 */
 
 		pSirSmeDisassocRsp = qdf_mem_malloc(sizeof(tSirSmeDisassocRsp));
-		if (NULL == pSirSmeDisassocRsp) {
-			/* Log error */
-			pe_err("Memory allocation failed");
+		if (!pSirSmeDisassocRsp) {
 			failure = true;
 			goto error;
 		}
@@ -917,9 +900,7 @@ lim_send_sme_disassoc_ntf(tpAniSirGlobal pMac,
 		 * loss of link with peer entity.
 		 */
 		pSirSmeDisassocInd = qdf_mem_malloc(sizeof(tSirSmeDisassocInd));
-		if (NULL == pSirSmeDisassocInd) {
-			/* Log error */
-			pe_err("Memory allocation failed");
+		if (!pSirSmeDisassocInd) {
 			failure = true;
 			goto error;
 		}
@@ -981,10 +962,8 @@ lim_send_sme_disassoc_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	tSirSmeDisassocInd *pSirSmeDisassocInd;
 
 	pSirSmeDisassocInd = qdf_mem_malloc(sizeof(tSirSmeDisassocInd));
-	if (NULL == pSirSmeDisassocInd) {
-		pe_err("AllocateMemory failed for eWNI_SME_DISASSOC_IND");
+	if (!pSirSmeDisassocInd)
 		return;
-	}
 
 	pSirSmeDisassocInd->messageType = eWNI_SME_DISASSOC_IND;
 	pSirSmeDisassocInd->length = sizeof(tSirSmeDisassocInd);
@@ -1037,10 +1016,8 @@ lim_send_sme_deauth_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	tSirSmeDeauthInd *pSirSmeDeauthInd;
 
 	pSirSmeDeauthInd = qdf_mem_malloc(sizeof(tSirSmeDeauthInd));
-	if (NULL == pSirSmeDeauthInd) {
-		pe_err("AllocateMemory failed for eWNI_SME_DEAUTH_IND");
+	if (!pSirSmeDeauthInd)
 		return;
-	}
 
 	pSirSmeDeauthInd->messageType = eWNI_SME_DEAUTH_IND;
 	pSirSmeDeauthInd->length = sizeof(tSirSmeDeauthInd);
@@ -1149,10 +1126,8 @@ lim_send_sme_mgmt_tx_completion(tpAniSirGlobal pMac,
 
 	pSirMgmtTxCompletionInd =
 		qdf_mem_malloc(sizeof(tSirMgmtTxCompletionInd));
-	if (NULL == pSirMgmtTxCompletionInd) {
-		pe_err("AllocateMemory failed for eWNI_SME_MGMT_FRM_TX_COMPLETION_IND");
+	if (!pSirMgmtTxCompletionInd)
 		return;
-	}
 	/* messageType */
 	pSirMgmtTxCompletionInd->messageType =
 		eWNI_SME_MGMT_FRM_TX_COMPLETION_IND;
@@ -1186,10 +1161,8 @@ QDF_STATUS lim_prepare_disconnect_done_ind(tpAniSirGlobal mac_ctx,
 	struct sir_sme_discon_done_ind *sir_sme_dis_ind;
 
 	sir_sme_dis_ind = qdf_mem_malloc(sizeof(*sir_sme_dis_ind));
-	if (!sir_sme_dis_ind) {
-		pe_err("Failed to allocate memory");
+	if (!sir_sme_dis_ind)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	pe_debug("Prepare eWNI_SME_DISCONNECT_DONE_IND withretCode: %d",
 		 reason_code);
@@ -1265,11 +1238,8 @@ lim_send_sme_deauth_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 		 * deauthentication.
 		 */
 		pSirSmeDeauthRsp = qdf_mem_malloc(sizeof(tSirSmeDeauthRsp));
-		if (NULL == pSirSmeDeauthRsp) {
-			/* Log error */
-			pe_err("call to AllocateMemory failed for eWNI_SME_DEAUTH_RSP");
+		if (!pSirSmeDeauthRsp)
 			return;
-		}
 		pe_debug("send eWNI_SME_DEAUTH_RSP with retCode: %d for" MAC_ADDRESS_STR,
 			reasonCode, MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDeauthRsp->messageType = eWNI_SME_DEAUTH_RSP;
@@ -1306,11 +1276,8 @@ lim_send_sme_deauth_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 		 * loss of link with peer entity.
 		 */
 		pSirSmeDeauthInd = qdf_mem_malloc(sizeof(tSirSmeDeauthInd));
-		if (NULL == pSirSmeDeauthInd) {
-			/* Log error */
-			pe_err("call to AllocateMemory failed for eWNI_SME_DEAUTH_Ind");
+		if (!pSirSmeDeauthInd)
 			return;
-		}
 		pe_debug("send eWNI_SME_DEAUTH_IND with retCode: %d for " MAC_ADDRESS_STR,
 			reasonCode, MAC_ADDR_ARRAY(peerMacAddr));
 		pSirSmeDeauthInd->messageType = eWNI_SME_DEAUTH_IND;
@@ -1381,10 +1348,8 @@ lim_send_sme_wm_status_change_ntf(tpAniSirGlobal mac_ctx,
 	uint32_t max_info_len;
 
 	wm_status_change_ntf = qdf_mem_malloc(sizeof(tSirSmeWmStatusChangeNtf));
-	if (NULL == wm_status_change_ntf) {
-		pe_err("Mem Alloc failed - eWNI_SME_WM_STATUS_CHANGE_NTF");
+	if (!wm_status_change_ntf)
 		return;
-	}
 
 	msg.type = eWNI_SME_WM_STATUS_CHANGE_NTF;
 	msg.bodyval = 0;
@@ -1466,11 +1431,8 @@ lim_send_sme_set_context_rsp(tpAniSirGlobal pMac,
 	tSirSmeSetContextRsp *pSirSmeSetContextRsp;
 
 	pSirSmeSetContextRsp = qdf_mem_malloc(sizeof(tSirSmeSetContextRsp));
-	if (NULL == pSirSmeSetContextRsp) {
-		/* Log error */
-		pe_err("call to AllocateMemory failed for SmeSetContextRsp");
+	if (!pSirSmeSetContextRsp)
 		return;
-	}
 
 	pSirSmeSetContextRsp->messageType = eWNI_SME_SETCONTEXT_RSP;
 	pSirSmeSetContextRsp->length = sizeof(tSirSmeSetContextRsp);
@@ -1523,10 +1485,8 @@ lim_send_sme_addts_rsp(tpAniSirGlobal pMac, uint8_t rspReqd, uint32_t status,
 		return;
 
 	rsp = qdf_mem_malloc(sizeof(tSirAddtsRsp));
-	if (NULL == rsp) {
-		pe_err("AllocateMemory failed for ADDTS_RSP");
+	if (!rsp)
 		return;
-	}
 
 	rsp->messageType = eWNI_SME_ADDTS_RSP;
 	rsp->rc = status;
@@ -1571,11 +1531,8 @@ lim_send_sme_delts_rsp(tpAniSirGlobal pMac, tpSirDeltsReq delts, uint32_t status
 		return;
 
 	rsp = qdf_mem_malloc(sizeof(tSirDeltsRsp));
-	if (NULL == rsp) {
-		/* Log error */
-		pe_err("AllocateMemory failed for DELTS_RSP");
+	if (!rsp)
 		return;
-	}
 
 	if (psessionEntry != NULL) {
 
@@ -1621,11 +1578,8 @@ lim_send_sme_delts_ind(tpAniSirGlobal pMac, tpSirDeltsReqInfo delts, uint16_t ai
 		aid, delts->tsinfo.traffic.tsid, delts->tsinfo.traffic.userPrio);
 
 	rsp = qdf_mem_malloc(sizeof(tSirDeltsRsp));
-	if (NULL == rsp) {
-		/* Log error */
-		pe_err("AllocateMemory failed for DELTS_IND");
+	if (!rsp)
 		return;
-	}
 
 	rsp->messageType = eWNI_SME_DELTS_IND;
 	rsp->rc = QDF_STATUS_SUCCESS;
@@ -1773,10 +1727,8 @@ lim_send_sme_ibss_peer_ind(tpAniSirGlobal pMac,
 	tSmeIbssPeerInd *pNewPeerInd;
 
 	pNewPeerInd = qdf_mem_malloc(sizeof(tSmeIbssPeerInd) + beaconLen);
-	if (NULL == pNewPeerInd) {
-		pe_err("Failed to allocate memory");
+	if (!pNewPeerInd)
 		return;
-	}
 
 	qdf_mem_copy((uint8_t *) pNewPeerInd->peer_addr.bytes,
 		     peerMacAddr, QDF_MAC_ADDR_SIZE);
@@ -1964,10 +1916,8 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 	}
 
 	csa_offload_ind = qdf_mem_malloc(sizeof(tSmeCsaOffloadInd));
-	if (NULL == csa_offload_ind) {
-		pe_err("memalloc fail eWNI_SME_CSA_OFFLOAD_EVENT");
+	if (!csa_offload_ind)
 		goto err;
-	}
 
 	session_entry =
 		pe_find_session_by_bssid(mac_ctx,
@@ -2280,10 +2230,8 @@ void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMa
 	tSmeMaxAssocInd *pSmeMaxAssocInd;
 
 	pSmeMaxAssocInd = qdf_mem_malloc(sizeof(tSmeMaxAssocInd));
-	if (NULL == pSmeMaxAssocInd) {
-		pe_err("Failed to allocate memory");
+	if (!pSmeMaxAssocInd)
 		return;
-	}
 	qdf_mem_copy((uint8_t *) pSmeMaxAssocInd->peer_mac.bytes,
 		     (uint8_t *) peerMacAddr, QDF_MAC_ADDR_SIZE);
 	pSmeMaxAssocInd->mesgType = eWNI_SME_MAX_ASSOC_EXCEEDED;
@@ -2324,12 +2272,9 @@ lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal pMac,
 	enum phy_ch_width ch_width;
 	uint8_t ch_center_freq_seg1;
 
-	pSmeSwithChnlParams = (tSwitchChannelParams *)
-			      qdf_mem_malloc(sizeof(tSwitchChannelParams));
-	if (NULL == pSmeSwithChnlParams) {
-		pe_err("AllocateMemory failed for pSmeSwithChnlParams");
+	pSmeSwithChnlParams = qdf_mem_malloc(sizeof(tSwitchChannelParams));
+	if (!pSmeSwithChnlParams)
 		return;
-	}
 
 	qdf_mem_copy(pSmeSwithChnlParams, pChnlParams,
 		     sizeof(tSwitchChannelParams));
@@ -2491,12 +2436,9 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal mac_ctx, uint16_t msgType,
 	if (session->gLimOperatingMode.present) {
 		/* Done with nss update, send response back to SME */
 		session->gLimOperatingMode.present = 0;
-		bcn_tx_comp_rsp = (struct sir_beacon_tx_complete_rsp *)
-				  qdf_mem_malloc(sizeof(*bcn_tx_comp_rsp));
-		if (NULL == bcn_tx_comp_rsp) {
-			pe_err("AllocateMemory failed for bcn_tx_comp_rsp");
+		bcn_tx_comp_rsp = qdf_mem_malloc(sizeof(*bcn_tx_comp_rsp));
+		if (!bcn_tx_comp_rsp)
 			return;
-		}
 		bcn_tx_comp_rsp->session_id = session->smeSessionId;
 		bcn_tx_comp_rsp->tx_status = QDF_STATUS_SUCCESS;
 		msg.type = eWNI_SME_NSS_UPDATE_RSP;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -76,10 +76,9 @@ cfg_send_host_msg(tpAniSirGlobal pMac, uint16_t msgType, uint32_t msgLen,
 		return;
 	}
 	pMsg = qdf_mem_malloc(msgLen);
-	if (NULL == pMsg) {
-		pe_err("Memory allocation failure!");
+	if (!pMsg)
 		return;
-	}
+
 	/* Fill in message details */
 	mmhMsg.type = msgType;
 	mmhMsg.bodyptr = pMsg;

@@ -1935,10 +1935,8 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	}
 	/* Allocate memory for the Assoc Request frame */
 	assoc_req = qdf_mem_malloc(sizeof(*assoc_req));
-	if (NULL == assoc_req) {
-		pe_err("Allocate Memory failed in assoc_req");
+	if (!assoc_req)
 		return;
-	}
 
 	/* Parse Assoc Request frame */
 	if (false == lim_chk_assoc_req_parse_error(mac_ctx, hdr, session,
@@ -1946,11 +1944,8 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		goto error;
 
 	assoc_req->assocReqFrame = qdf_mem_malloc(frame_len);
-	if (NULL == assoc_req->assocReqFrame) {
-		pe_err("Memory alloc failed for the assoc req, len: %d",
-			frame_len);
+	if (!assoc_req->assocReqFrame)
 		goto error;
-	}
 
 	qdf_mem_copy((uint8_t *) assoc_req->assocReqFrame,
 		(uint8_t *) frm_body, frame_len);
@@ -2327,10 +2322,9 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 		temp = sizeof(tLimMlmAssocInd);
 
 		assoc_ind = qdf_mem_malloc(temp);
-		if (NULL == assoc_ind) {
+		if (!assoc_ind) {
 			lim_release_peer_idx(mac_ctx, sta_ds->assocId,
 				session_entry);
-			pe_err("AllocateMemory failed for assoc_ind");
 			return;
 		}
 		qdf_mem_copy((uint8_t *) assoc_ind->peerMacAddr,

@@ -145,11 +145,8 @@ rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 		return QDF_STATUS_E_FAILURE;
 	}
 	pMaxTxParams = qdf_mem_malloc(sizeof(tMaxTxPowerParams));
-	if (NULL == pMaxTxParams) {
-		pe_err("Unable to allocate memory for pMaxTxParams");
+	if (!pMaxTxParams)
 		return QDF_STATUS_E_NOMEM;
-
-	}
 	/* Allocated memory for pMaxTxParams...will be freed in other module */
 	pMaxTxParams->power = txPower;
 	qdf_mem_copy(pMaxTxParams->bssId.bytes, pSessionEntry->bssId,
@@ -356,10 +353,8 @@ rrm_process_neighbor_report_response(tpAniSirGlobal pMac,
 
 	/* Prepare the request to send to SME. */
 	pSmeNeighborRpt = qdf_mem_malloc(length);
-	if (NULL == pSmeNeighborRpt) {
-		pe_err("Unable to allocate memory");
+	if (!pSmeNeighborRpt)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	/* Allocated memory for pSmeNeighborRpt...will be freed by other module */
 
@@ -579,10 +574,8 @@ rrm_process_beacon_report_req(tpAniSirGlobal pMac,
 			qdf_mem_malloc(sizeof(uint8_t) *
 				       pBeaconReq->measurement_request.Beacon.
 				       RequestedInfo.num_requested_eids);
-		if (NULL == pCurrentReq->request.Beacon.reqIes.pElementIds) {
-			pe_err("Unable to allocate memory for request IEs buffer");
+		if (!pCurrentReq->request.Beacon.reqIes.pElementIds)
 			return eRRM_FAILURE;
-		}
 		pCurrentReq->request.Beacon.reqIes.num =
 			pBeaconReq->measurement_request.Beacon.RequestedInfo.
 			num_requested_eids;
@@ -603,11 +596,8 @@ rrm_process_beacon_report_req(tpAniSirGlobal pMac,
 	}
 	/* Prepare the request to send to SME. */
 	pSmeBcnReportReq = qdf_mem_malloc(sizeof(tSirBeaconReportReqInd));
-	if (NULL == pSmeBcnReportReq) {
-		pe_err("Unable to allocate memory during Beacon Report Req Ind to SME");
+	if (!pSmeBcnReportReq)
 		return eRRM_FAILURE;
-
-	}
 
 	/* Allocated memory for pSmeBcnReportReq....will be freed by other modulea */
 	qdf_mem_copy(pSmeBcnReportReq->bssId, pSessionEntry->bssId,
@@ -806,9 +796,7 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
 
 		report = qdf_mem_malloc(beacon_xmit_ind->numBssDesc *
 			 sizeof(*report));
-
-		if (NULL == report) {
-			pe_err("RRM Report is NULL, allocation failed");
+		if (!report) {
 			status = QDF_STATUS_E_NOMEM;
 			goto end;
 		}
@@ -955,10 +943,8 @@ static void rrm_process_beacon_request_failure(tpAniSirGlobal pMac,
 	tpRRMReq pCurrentReq = pMac->rrm.rrmPEContext.pCurrentReq;
 
 	pReport = qdf_mem_malloc(sizeof(tSirMacRadioMeasureReport));
-	if (NULL == pReport) {
-		pe_err("Unable to allocate memory during RRM Req processing");
+	if (!pReport)
 		return;
-	}
 	pReport->token = pCurrentReq->token;
 	pReport->type = SIR_MAC_RRM_BEACON_TYPE;
 
@@ -1022,10 +1008,8 @@ QDF_STATUS rrm_process_beacon_req(tpAniSirGlobal mac_ctx, tSirMacAddr peer,
 			 */
 			*radiomes_report = qdf_mem_malloc(sizeof(*report) *
 				(rrm_req->num_MeasurementRequest - index));
-			if (NULL == *radiomes_report) {
-				pe_err("Unable to allocate memory during RRM Req processing");
+			if (!*radiomes_report)
 				return QDF_STATUS_E_NOMEM;
-			}
 			pe_debug("rrm beacon type refused of %d report in beacon table",
 				*num_report);
 		}
@@ -1038,8 +1022,7 @@ QDF_STATUS rrm_process_beacon_req(tpAniSirGlobal mac_ctx, tSirMacAddr peer,
 		return QDF_STATUS_SUCCESS;
 	} else {
 		curr_req = qdf_mem_malloc(sizeof(*curr_req));
-		if (NULL == curr_req) {
-			pe_err("Unable to allocate memory during RRM Req processing");
+		if (!curr_req) {
 				qdf_mem_free(*radiomes_report);
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -1085,10 +1068,8 @@ QDF_STATUS update_rrm_report(tpAniSirGlobal mac_ctx,
 		 */
 		report = qdf_mem_malloc(sizeof(*report) *
 			 (rrm_req->num_MeasurementRequest - index));
-		if (NULL == report) {
-			pe_err("Unable to allocate memory during RRM Req processing");
+		if (!report)
 			return QDF_STATUS_E_NOMEM;
-		}
 		pe_debug("rrm beacon type incapable of %d report",
 			*num_report);
 	}
@@ -1127,10 +1108,8 @@ rrm_process_radio_measurement_request(tpAniSirGlobal mac_ctx,
 
 	if (!rrm_req->num_MeasurementRequest) {
 		report = qdf_mem_malloc(sizeof(tSirMacRadioMeasureReport));
-		if (NULL == report) {
-			pe_err("Unable to allocate memory during RRM Req processing");
+		if (!report)
 			return QDF_STATUS_E_NOMEM;
-		}
 		pe_err("No requestIes in the measurement request, sending incapable report");
 		report->incapable = 1;
 		num_report = 1;
@@ -1149,10 +1128,8 @@ rrm_process_radio_measurement_request(tpAniSirGlobal mac_ctx,
 		 * Not supporting repetitions.
 		 */
 		report = qdf_mem_malloc(sizeof(tSirMacRadioMeasureReport));
-		if (NULL == report) {
-			pe_err("Unable to allocate memory during RRM Req processing");
+		if (!report)
 			return QDF_STATUS_E_NOMEM;
-		}
 		report->incapable = 1;
 		report->type = rrm_req->MeasurementRequest[0].measurement_type;
 		num_report = 1;

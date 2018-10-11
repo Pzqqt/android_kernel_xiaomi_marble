@@ -797,10 +797,8 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 			rx_auth_frm_body->length);
 		encr_auth_frame = qdf_mem_malloc(rx_auth_frm_body->length +
 						 LIM_ENCR_AUTH_INFO_LEN);
-		if (!encr_auth_frame) {
-			pe_err("failed to allocate memory");
+		if (!encr_auth_frame)
 			return;
-		}
 		lim_encrypt_auth_frame(mac_ctx, key_id,
 				defaultkey, plainbody,
 				encr_auth_frame, key_length);
@@ -1191,22 +1189,17 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	}
 
 	rx_auth_frame = qdf_mem_malloc(sizeof(tSirMacAuthFrameBody));
-	if (!rx_auth_frame) {
-		pe_err("failed to allocate memory");
+	if (!rx_auth_frame)
 		return;
-	}
 
 	auth_frame = qdf_mem_malloc(sizeof(tSirMacAuthFrameBody));
-	if (!auth_frame) {
-		pe_err("failed to allocate memory");
+	if (!auth_frame)
 		goto free;
-	}
 
 	plainbody = qdf_mem_malloc(LIM_ENCR_AUTH_BODY_LEN);
-	if (!plainbody) {
-		pe_err("failed to allocate memory for plainbody");
+	if (!plainbody)
 		goto free;
-	}
+
 	qdf_mem_zero(plainbody, LIM_ENCR_AUTH_BODY_LEN);
 
 	/*

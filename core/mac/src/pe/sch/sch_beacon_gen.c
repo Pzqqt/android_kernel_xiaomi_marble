@@ -248,21 +248,17 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 	bool extcap_present = true, addnie_present = false;
 
 	bcn_1 = qdf_mem_malloc(sizeof(tDot11fBeacon1));
-	if (NULL == bcn_1) {
-		pe_err("Failed to allocate memory");
+	if (!bcn_1)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	bcn_2 = qdf_mem_malloc(sizeof(tDot11fBeacon2));
-	if (NULL == bcn_2) {
-		pe_err("Failed to allocate memory");
+	if (!bcn_2) {
 		qdf_mem_free(bcn_1);
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	wsc_prb_res = qdf_mem_malloc(sizeof(tDot11fIEWscProbeRes));
-	if (NULL == wsc_prb_res) {
-		pe_err("Failed to allocate memory");
+	if (!wsc_prb_res) {
 		qdf_mem_free(bcn_1);
 		qdf_mem_free(bcn_2);
 		return QDF_STATUS_E_NOMEM;
@@ -553,7 +549,6 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 		addn_ielen = session->addIeParams.probeRespBCNDataLen;
 		addn_ie = qdf_mem_malloc(addn_ielen);
 		if (!addn_ie) {
-			pe_err("addn_ie malloc failed");
 			qdf_mem_free(bcn_1);
 			qdf_mem_free(bcn_2);
 			qdf_mem_free(wsc_prb_res);

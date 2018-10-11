@@ -219,10 +219,8 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
 
 	if (!pbc) {
 		pbc = qdf_mem_malloc(sizeof(tSirWPSPBCSession));
-		if (NULL == pbc) {
-			pe_err("memory allocate failed!");
+		if (!pbc)
 			return;
-		}
 		qdf_mem_copy((uint8_t *) pbc->addr.bytes, (uint8_t *) addr,
 			     QDF_MAC_ADDR_SIZE);
 
@@ -634,11 +632,8 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 	struct scheduler_msg msgQ = {0};
 
 	pSirSmeProbeReqInd = qdf_mem_malloc(sizeof(tSirSmeProbeReqInd));
-	if (NULL == pSirSmeProbeReqInd) {
-		/* Log error */
-		pe_err("call to AllocateMemory failed for eWNI_SME_PROBE_REQ_IND");
+	if (!pSirSmeProbeReqInd)
 		return;
-	}
 
 	msgQ.type = eWNI_SME_WPS_PBC_PROBE_REQ_IND;
 	msgQ.bodyval = 0;

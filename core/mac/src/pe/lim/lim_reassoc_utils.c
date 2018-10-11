@@ -129,8 +129,7 @@ void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal pMac,
 		tpSchBeaconStruct beacon_struct;
 
 		beacon_struct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
-		if (NULL == beacon_struct) {
-			pe_err("beaconStruct alloc failed");
+		if (!beacon_struct) {
 			mlmReassocCnf.resultCode =
 					eSIR_SME_RESOURCES_UNAVAILABLE;
 			mlmReassocCnf.protStatusCode =
@@ -261,8 +260,7 @@ void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal pMac,
 
 		pBeaconStruct =
 			qdf_mem_malloc(sizeof(tSchBeaconStruct));
-		if (NULL == pBeaconStruct) {
-			pe_err("Unable to allocate memory");
+		if (!pBeaconStruct) {
 			mlmReassocCnf.resultCode =
 				eSIR_SME_RESOURCES_UNAVAILABLE;
 			mlmReassocCnf.protStatusCode =

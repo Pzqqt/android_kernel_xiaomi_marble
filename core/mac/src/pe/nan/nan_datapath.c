@@ -196,10 +196,8 @@ static void lim_ndp_delete_peers(tpAniSirGlobal mac_ctx,
 	bool found;
 
 	deleted_peers = qdf_mem_malloc(num_peers * sizeof(*deleted_peers));
-	if (!deleted_peers) {
-		pe_err("Memory allocation failed");
+	if (!deleted_peers)
 		return;
-	}
 
 	for (i = 0; i < num_peers; i++) {
 		pe_info("ndp_map[%d]: MAC: " MAC_ADDRESS_STR " num_active %d",
@@ -471,7 +469,6 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 
 	new_peer_ind = qdf_mem_malloc(sizeof(*new_peer_ind));
 	if (!new_peer_ind) {
-		pe_err("Failed to allocate memory");
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
 		return QDF_STATUS_E_NOMEM;
 	}

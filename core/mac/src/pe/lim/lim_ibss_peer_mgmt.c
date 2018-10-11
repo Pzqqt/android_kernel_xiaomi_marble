@@ -378,13 +378,11 @@ ibss_coalesce_save(tpAniSirGlobal pMac,
 	ibss_coalesce_free(pMac);
 
 	pMac->lim.ibssInfo.pHdr = qdf_mem_malloc(sizeof(*pHdr));
-	if (NULL == pMac->lim.ibssInfo.pHdr) {
-		pe_err("ibbs-save: Failed malloc pHdr");
+	if (!pMac->lim.ibssInfo.pHdr)
 		return;
-	}
+
 	pMac->lim.ibssInfo.pBeacon = qdf_mem_malloc(sizeof(*pBeacon));
-	if (NULL == pMac->lim.ibssInfo.pBeacon) {
-		pe_err("ibbs-save: Failed malloc pBeacon");
+	if (!pMac->lim.ibssInfo.pBeacon) {
 		ibss_coalesce_free(pMac);
 		return;
 	}
@@ -1494,11 +1492,8 @@ lim_ibss_coalesce(tpAniSirGlobal pMac,
 			sizeof(tLimIbssPeerNode) + ieLen - sizeof(uint32_t);
 
 		pPeerNode = qdf_mem_malloc((uint16_t) frameLen);
-		if (NULL == pPeerNode) {
-			pe_err("alloc fail %d bytes storing IBSS peer info",
-				frameLen);
+		if (!pPeerNode)
 			return QDF_STATUS_E_NOMEM;
-		}
 
 		pPeerNode->beacon = NULL;
 		pPeerNode->beaconLen = 0;
@@ -1506,9 +1501,7 @@ lim_ibss_coalesce(tpAniSirGlobal pMac,
 		ibss_peer_collect(pMac, pBeacon, pHdr, pPeerNode,
 				  psessionEntry);
 		pPeerNode->beacon = qdf_mem_malloc(ieLen);
-		if (NULL == pPeerNode->beacon) {
-			pe_err("Unable to allocate memory to store beacon");
-		} else {
+		if (pPeerNode->beacon) {
 			qdf_mem_copy(pPeerNode->beacon, pIEs, ieLen);
 			pPeerNode->beaconLen = (uint16_t) ieLen;
 		}

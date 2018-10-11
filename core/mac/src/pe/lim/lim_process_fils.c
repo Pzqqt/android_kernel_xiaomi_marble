@@ -355,10 +355,9 @@ static uint32_t lim_process_fils_eap_tlv(tpPESession pe_session,
 		switch (tlv->type) {
 		case SIR_FILS_EAP_TLV_KEYNAME_NAI:
 			auth_info->keyname = qdf_mem_malloc(tlv->length);
-			if (!auth_info->keyname) {
-				pe_err("failed to alloc memory");
+			if (!auth_info->keyname)
 				return 0;
-			}
+
 			qdf_mem_copy(auth_info->keyname,
 				     tlv->data, tlv->length);
 			auth_info->keylength = tlv->length;
@@ -379,10 +378,9 @@ static uint32_t lim_process_fils_eap_tlv(tpPESession pe_session,
 			break;
 		case SIR_FILS_EAP_TLV_DOMAIN_NAME:
 			auth_info->domain_name = qdf_mem_malloc(tlv->length);
-			if (!auth_info->domain_name) {
-				pe_err("failed to alloc memory");
+			if (!auth_info->domain_name)
 				return 0;
-			}
+
 			qdf_mem_copy(auth_info->domain_name,
 				     tlv->data, tlv->length);
 			auth_info->domain_len = tlv->length;
@@ -552,10 +550,8 @@ static void lim_get_keys(tpPESession pe_session)
 
 	data_len = 2 * SIR_FILS_NONCE_LENGTH + 2 * QDF_MAC_ADDR_SIZE;
 	data = qdf_mem_malloc(data_len);
-	if (!data) {
-		pe_err("failed to alloc memory");
+	if (!data)
 		return;
-	}
 
 	/* Update data */
 	buf = data;
@@ -636,10 +632,8 @@ static void lim_generate_pmk(tpPESession pe_session)
 		qdf_mem_free(fils_info->fils_pmk);
 
 	fils_info->fils_pmk = qdf_mem_malloc(fils_info->fils_pmk_len);
-	if (!fils_info->fils_pmk) {
-		pe_err("failed to alloc memory");
+	if (!fils_info->fils_pmk)
 		return;
-	}
 
 	addr[0] = fils_info->fils_rmsk;
 	len[0] = fils_info->fils_rmsk_len;
@@ -670,10 +664,8 @@ static void lim_generate_rmsk_data(tpPESession pe_session)
 	auth_info = &(pe_session->fils_info->auth_info);
 	fils_info->fils_rmsk_len = fils_info->fils_rrk_len;
 	fils_info->fils_rmsk = qdf_mem_malloc(fils_info->fils_rrk_len);
-	if (!fils_info->fils_rmsk) {
-		pe_err("failed to alloc memory");
+	if (!fils_info->fils_rmsk)
 		return;
-	}
 
 	/*
 	 * Sequence number sent in EAP-INIT packet,
@@ -890,10 +882,9 @@ static int lim_create_fils_wrapper_data(struct pe_fils_session *fils_info)
 		sizeof(uint8_t) + lim_get_auth_tag_len(HMAC_SHA256_128);
 
 	fils_info->fils_erp_reauth_pkt = qdf_mem_malloc(buf_len);
-	if (!fils_info->fils_erp_reauth_pkt) {
-		pe_err("failed to allocate memory");
+	if (!fils_info->fils_erp_reauth_pkt)
 		return -EINVAL;
-	}
+
 	buf = fils_info->fils_erp_reauth_pkt;
 	*buf = 5;
 	buf++;
@@ -944,7 +935,6 @@ static int lim_create_fils_wrapper_data(struct pe_fils_session *fils_info)
 	if (!fils_info->fils_rik) {
 		qdf_mem_free(fils_info->fils_erp_reauth_pkt);
 		fils_info->fils_erp_reauth_pkt = NULL;
-		pe_err("failed to alloc memory");
 		return -EINVAL;
 	}
 	status = lim_create_fils_rik(fils_info->fils_rrk,
@@ -1155,17 +1145,15 @@ void lim_update_fils_config(tpPESession session,
 	}
 	csr_fils_info->keyname_nai_data =
 		qdf_mem_malloc(fils_config_info->key_nai_length);
-	if (!csr_fils_info->keyname_nai_data) {
-		pe_err("failed to alloc memory");
+	if (!csr_fils_info->keyname_nai_data)
 		return;
-	}
+
 	qdf_mem_copy(csr_fils_info->keyname_nai_data,
 			fils_config_info->keyname_nai,
 			fils_config_info->key_nai_length);
 	csr_fils_info->fils_rrk =
 		qdf_mem_malloc(fils_config_info->r_rk_length);
 	if (!csr_fils_info->fils_rrk) {
-		pe_err("failed to alloc memory");
 		qdf_mem_free(csr_fils_info->keyname_nai_data);
 		return;
 	}
@@ -1189,7 +1177,6 @@ void lim_update_fils_config(tpPESession session,
 		if (!csr_fils_info->fils_pmk) {
 			qdf_mem_free(csr_fils_info->keyname_nai_data);
 			qdf_mem_free(csr_fils_info->fils_rrk);
-			pe_err("failed to alloc memory");
 			return;
 		}
 		qdf_mem_copy(csr_fils_info->fils_pmk, fils_config_info->pmk,
@@ -1274,7 +1261,6 @@ void populate_fils_connect_params(tpAniSirGlobal mac_ctx,
 
 	sme_join_rsp->fils_join_rsp = qdf_mem_malloc(sizeof(*fils_join_rsp));
 	if (!sme_join_rsp->fils_join_rsp) {
-		pe_err("fils_join_rsp malloc fails!");
 		pe_delete_fils_info(session);
 		return;
 	}
@@ -1282,7 +1268,6 @@ void populate_fils_connect_params(tpAniSirGlobal mac_ctx,
 	fils_join_rsp = sme_join_rsp->fils_join_rsp;
 	fils_join_rsp->fils_pmk = qdf_mem_malloc(fils_info->fils_pmk_len);
 	if (!fils_join_rsp->fils_pmk) {
-		pe_err("fils_pmk malloc fails!");
 		qdf_mem_free(fils_join_rsp);
 		pe_delete_fils_info(session);
 		return;
@@ -1581,11 +1566,8 @@ static int fils_aead_encrypt(const u8 *kek, unsigned int kek_len,
 
 	if (plain_text == out) {
 		buf = qdf_mem_malloc(plain_text_len);
-		if (buf == NULL) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  FL("Failed to allocate memory"));
+		if (!buf)
 			return -ENOMEM;
-		}
 		qdf_mem_copy(buf, plain_text, plain_text_len);
 	} else {
 		buf = plain_text;
@@ -1740,11 +1722,8 @@ static int fils_aead_decrypt(const u8 *kek, unsigned int kek_len,
 	if (ciphered_text == plain_text) {
 		/* in place decryption */
 		buf = qdf_mem_malloc(buf_len);
-		if (buf == NULL) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  FL("Failed to allocate memory"));
+		if (!buf)
 			return -ENOMEM;
-		}
 		qdf_mem_copy(buf, ciphered_text + AES_BLOCK_SIZE, buf_len);
 	} else {
 		buf = ciphered_text + AES_BLOCK_SIZE;

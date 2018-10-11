@@ -238,17 +238,14 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 	pMac->lim.gLimPreAuthTimerTable.pTable =
 		qdf_mem_malloc(cfgValue * sizeof(tLimPreAuthNode *));
 
-	if (pMac->lim.gLimPreAuthTimerTable.pTable == NULL) {
-		pe_err("AllocateMemory failed!");
+	if (!pMac->lim.gLimPreAuthTimerTable.pTable)
 		goto err_timer;
-	}
 
 	for (i = 0; i < cfgValue; i++) {
 		pMac->lim.gLimPreAuthTimerTable.pTable[i] =
 					qdf_mem_malloc(sizeof(tLimPreAuthNode));
 		if (pMac->lim.gLimPreAuthTimerTable.pTable[i] == NULL) {
 			pMac->lim.gLimPreAuthTimerTable.numEntry = 0;
-			pe_err("AllocateMemory failed!");
 			goto err_timer;
 		}
 	}

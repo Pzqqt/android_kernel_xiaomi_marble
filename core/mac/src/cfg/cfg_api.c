@@ -138,10 +138,9 @@ QDF_STATUS cfg_init(tpAniSirGlobal pMac)
 	}
 	/* at this point pMac->cfg.gCfgSBuf starts */
 	pMac->cfg.gCfgSBuf = qdf_mem_malloc(combined_buff_size);
-	if (NULL == pMac->cfg.gCfgSBuf) {
-		pe_err("Failed to allocate memory for cfg array");
+	if (!pMac->cfg.gCfgSBuf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	/* at offset max_s_count, pMac->cfg.gCfgIBuf starts */
 	pMac->cfg.gCfgIBuf = (uint32_t *)&pMac->cfg.gCfgSBuf[max_s_count];
 	/* after max_i_count integers, pMac->cfg.gCfgIBufMin starts */
@@ -578,10 +577,9 @@ cfg_get_dot11d_transmit_power(tpAniSirGlobal pMac, uint16_t cfgId,
 	}
 
 	pCountryInfo = qdf_mem_malloc(cfgLength);
-	if (NULL == pCountryInfo) {
-		pe_err(" failed to allocate memory");
+	if (!pCountryInfo)
 		goto error;
-	}
+
 	/* The CSR will always update this CFG. The contents will be from country IE if regulatory domain
 	 * is enabled on AP else will contain EEPROM contents
 	 */

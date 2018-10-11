@@ -2685,10 +2685,8 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 	mmhMsg.type = eWNI_SME_TDLS_ADD_STA_RSP;
 
 	addStaRsp = qdf_mem_malloc(sizeof(tSirTdlsAddStaRsp));
-	if (NULL == addStaRsp) {
-		pe_err("Failed to allocate memory");
+	if (!addStaRsp)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	addStaRsp->sessionId = sessionId;
 	addStaRsp->statusCode = status;
@@ -2786,12 +2784,8 @@ lim_send_tdls_comp_mgmt_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 		lim_msg_str(msg_type), lim_result_code_str(result_code));
 
 	sme_rsp = qdf_mem_malloc(sizeof(tSirSmeRsp));
-	if (NULL == sme_rsp) {
-		/* Buffer not available. Log error */
-		QDF_TRACE(QDF_MODULE_ID_PE, LOGP,
-			FL("call to AllocateMemory failed for eWNI_SME_*_RSP"));
+	if (!sme_rsp)
 		return;
-	}
 
 	sme_rsp->messageType = msg_type;
 	sme_rsp->length = sizeof(tSirSmeRsp);
@@ -2956,10 +2950,8 @@ static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 	mmhMsg.type = eWNI_SME_TDLS_DEL_STA_RSP;
 
 	pDelSta = qdf_mem_malloc(sizeof(tSirTdlsDelStaRsp));
-	if (NULL == pDelSta) {
-		pe_err("Failed to allocate memory");
+	if (!pDelSta)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	pDelSta->sessionId = sessionId;
 	pDelSta->statusCode = status;

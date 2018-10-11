@@ -209,10 +209,8 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	struct s_ext_cap *ext_cap;
 
 	beacon_struct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
-	if (NULL == beacon_struct) {
-		pe_err("Unable to allocate memory");
+	if (!beacon_struct)
 		return;
-	}
 
 	*qos_cap = 0;
 	*prop_cap = 0;

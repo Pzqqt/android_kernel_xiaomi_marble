@@ -159,13 +159,8 @@ static void lim_process_dual_mac_cfg_resp(tpAniSirGlobal mac, void *body)
 	len = sizeof(*param);
 
 	param = qdf_mem_malloc(len);
-	if (!param) {
-		pe_err("Fail to allocate memory");
-		/* Memory allocation for param failed.
-		 * Cannot send fail status back to SME
-		 */
+	if (!param)
 		return;
-	}
 
 	if (fail_resp) {
 		pe_err("Send fail status to SME");
@@ -213,13 +208,8 @@ static void lim_process_set_hw_mode_resp(tpAniSirGlobal mac, void *body)
 	len = sizeof(*param);
 
 	param = qdf_mem_malloc(len);
-	if (!param) {
-		pe_err("Fail to allocate memory");
-		/* Memory allocation for param failed.
-		 * Cannot send fail status back to SME
-		 */
+	if (!param)
 		return;
-	}
 
 	if (fail_resp) {
 		pe_err("Send fail status to SME");
@@ -279,13 +269,8 @@ static void lim_process_set_antenna_resp(tpAniSirGlobal mac, void *body)
 	}
 
 	param = qdf_mem_malloc(sizeof(*param));
-	if (!param) {
-		pe_err("Fail to allocate memory");
-		/* Memory allocation for param failed.
-		 * Cannot send fail status back to SME
-		 */
+	if (!param)
 		return;
-	}
 
 	if (fail_resp) {
 		pe_err("Send fail status to SME");
@@ -332,10 +317,8 @@ static void lim_process_set_default_scan_ie_request(tpAniSirGlobal mac_ctx,
 	local_ie_len = set_ie_params->ie_len;
 
 	local_ie_buf = qdf_mem_malloc(MAX_DEFAULT_SCAN_IE_LEN);
-	if (!local_ie_buf) {
-		pe_err("Scan IE Update fails due to malloc failure");
+	if (!local_ie_buf)
 		return;
-	}
 
 	if (lim_update_ext_cap_ie(mac_ctx,
 			(uint8_t *)set_ie_params->ie_data,
@@ -345,10 +328,9 @@ static void lim_process_set_default_scan_ie_request(tpAniSirGlobal mac_ctx,
 	}
 
 	wma_ie_params = qdf_mem_malloc(sizeof(*wma_ie_params) + local_ie_len);
-	if (!wma_ie_params) {
-		pe_err("fail to alloc wma_ie_params");
+	if (!wma_ie_params)
 		goto scan_ie_send_fail;
-	}
+
 	wma_ie_params->vdev_id = set_ie_params->session_id;
 	wma_ie_params->ie_id = DEFAULT_SCAN_IE_ID;
 	wma_ie_params->length = local_ie_len;
@@ -394,10 +376,8 @@ static void lim_process_hw_mode_trans_ind(tpAniSirGlobal mac, void *body)
 	len = sizeof(*param);
 
 	param = qdf_mem_malloc(len);
-	if (!param) {
-		pe_err("Fail to allocate memory");
+	if (!param)
 		return;
-	}
 
 	param->old_hw_mode_index = ind->old_hw_mode_index;
 	param->new_hw_mode_index = ind->new_hw_mode_index;
@@ -535,10 +515,9 @@ __lim_pno_match_fwd_bcn_probepsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 		ie_len;
 
 	result = qdf_mem_malloc(len);
-	if (NULL == result) {
-		pe_err("Memory allocation failed");
+	if (!result)
 		return;
-	}
+
 	hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 
@@ -589,10 +568,9 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	tSirBssDescription *bssdescr;
 
 	result = qdf_mem_malloc(sizeof(*result) + ie_len);
-	if (NULL == result) {
-		pe_err("Memory allocation failed");
+	if (!result)
 		return;
-	}
+
 	hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 
@@ -621,12 +599,10 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 			body + SIR_MAC_B_PR_SSID_OFFSET, ie_len);
 
 	frame_len = sizeof(*bssdescr) + ie_len - sizeof(bssdescr->ieFields[1]);
-	bssdescr = (tSirBssDescription *) qdf_mem_malloc(frame_len);
+	bssdescr = qdf_mem_malloc(frame_len);
 
-	if (NULL == bssdescr) {
-		pe_err("qdf_mem_malloc(length=%d) failed", frame_len);
+	if (!bssdescr)
 		return;
-	}
 
 	qdf_mem_zero(bssdescr, frame_len);
 
@@ -657,10 +633,8 @@ __lim_process_ext_scan_beacon_probe_rsp(tpAniSirGlobal pmac,
 	}
 
 	frame = qdf_mem_malloc(sizeof(*frame));
-	if (NULL == frame) {
-		pe_err("Memory allocation failed");
+	if (!frame)
 		return;
-	}
 
 	if (sub_type == SIR_MAC_MGMT_BEACON) {
 		pe_debug("Beacon due to ExtScan/epno");
@@ -795,10 +769,8 @@ static QDF_STATUS lim_allocate_and_get_bcn(
 	cds_pkt_t *pkt_l = NULL;
 
 	pkt_l = qdf_mem_malloc(sizeof(cds_pkt_t));
-	if (!pkt_l) {
-		pe_err("Failed to allocate pkt");
+	if (!pkt_l)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	status = wma_ds_peek_rx_packet_info(
 		pkt_l, (void *)&rx_pkt_info_l, false);
@@ -808,10 +780,8 @@ static QDF_STATUS lim_allocate_and_get_bcn(
 	}
 
 	bcn_l = qdf_mem_malloc(sizeof(tSchBeaconStruct));
-	if (!bcn_l) {
-		pe_err("Failed to allocate bcn struct");
+	if (!bcn_l)
 		goto free;
-	}
 
 	lim_fill_sap_bcn_pkt_meta(scan_entry, pkt_l);
 
@@ -1420,10 +1390,8 @@ void lim_process_abort_scan_ind(tpAniSirGlobal mac_ctx,
 	}
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		pe_debug("failed to alloc scan cancel request");
+	if (!req)
 		goto fail;
-	}
 
 	req->vdev = vdev;
 	req->cancel_req.requester = scan_requestor_id;

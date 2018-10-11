@@ -413,8 +413,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 			/* Take a copy of reassoc request for retrying */
 			pMac->lim.pSessionEntry->pLimMlmReassocRetryReq =
 				qdf_mem_malloc(sizeof(tLimMlmReassocReq));
-			if (NULL ==
-				pMac->lim.pSessionEntry->pLimMlmReassocRetryReq)
+			if (!pMac->lim.pSessionEntry->pLimMlmReassocRetryReq)
 				goto end;
 			qdf_mem_copy(pMac->lim.pSessionEntry->
 					pLimMlmReassocRetryReq,
@@ -450,10 +449,8 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 			psessionEntry);
 
 	pAddStaParams = qdf_mem_malloc(sizeof(tAddStaParams));
-	if (NULL == pAddStaParams) {
-		pe_err("Unable to allocate memory during ADD_STA");
+	if (!pAddStaParams)
 		goto end;
-	}
 
 	/* / Add STA context at MAC HW (BMU, RHP & TFP) */
 	qdf_mem_copy((uint8_t *) pAddStaParams->staMac,
@@ -617,10 +614,8 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 		return;
 	}
 	pMlmReassocReq = qdf_mem_malloc(sizeof(tLimMlmReassocReq));
-	if (NULL == pMlmReassocReq) {
-		pe_err("call to AllocateMemory failed for mlmReassocReq");
+	if (!pMlmReassocReq)
 		return;
-	}
 
 	qdf_mem_copy(pMlmReassocReq->peerMacAddr,
 		     psessionEntry->bssId, sizeof(tSirMacAddr));

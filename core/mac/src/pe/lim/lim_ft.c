@@ -134,15 +134,13 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 	}
 
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
-	if (NULL == pBeaconStruct) {
-		pe_err("Unable to allocate memory for creating ADD_BSS");
+	if (!pBeaconStruct)
 		return;
-	}
+
 	/* Package SIR_HAL_ADD_BSS_REQ message parameters */
 	pAddBssParams = qdf_mem_malloc(sizeof(tAddBssParams));
-	if (NULL == pAddBssParams) {
+	if (!pAddBssParams) {
 		qdf_mem_free(pBeaconStruct);
-		pe_err("Unable to allocate memory for creating ADD_BSS");
 		return;
 	}
 
@@ -533,9 +531,8 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	ePhyChanBondState cbEnabledMode;
 
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
-	if (NULL == pBeaconStruct) {
+	if (!pBeaconStruct)
 		return;
-	}
 
 	/* Retrieve the session that was already created and update the entry */
 	pftSessionEntry->limWmeEnabled = psessionEntry->limWmeEnabled;
@@ -837,10 +834,9 @@ lim_ft_send_aggr_qos_rsp(tpAniSirGlobal pMac, uint8_t rspReqd,
 		return;
 	}
 	rsp = qdf_mem_malloc(sizeof(tSirAggrQosRsp));
-	if (NULL == rsp) {
-		pe_err("AllocateMemory failed for tSirAggrQosRsp");
+	if (!rsp)
 		return;
-	}
+
 	rsp->messageType = eWNI_SME_FT_AGGR_QOS_RSP;
 	rsp->sessionId = smesessionId;
 	rsp->length = sizeof(*rsp);
@@ -938,10 +934,8 @@ QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	int i;
 
 	pAggrAddTsParam = qdf_mem_malloc(sizeof(tAggrAddTsParams));
-	if (NULL == pAggrAddTsParam) {
-		pe_err("AllocateMemory() failed");
+	if (!pAggrAddTsParam)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	psessionEntry = pe_find_session_by_bssid(pMac, aggrQosReq->bssid.bytes,
 						 &sessionId);

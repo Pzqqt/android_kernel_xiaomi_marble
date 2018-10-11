@@ -188,10 +188,8 @@ lim_check_rx_basic_rates(tpAniSirGlobal pMac, tSirMacRateSet rxRateSet,
 	uint8_t i, j, k, match;
 
 	pRateSet = qdf_mem_malloc(sizeof(tSirMacRateSet));
-	if (NULL == pRateSet) {
-		pe_err("call to AllocateMemory failed for RATESET");
+	if (!pRateSet)
 		return false;
-	}
 
 	/* Copy operational rate set from session Entry */
 	qdf_mem_copy(pRateSet->rate, (psessionEntry->rateSet.rate),
@@ -2125,10 +2123,8 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 		GET_LIM_SYSTEM_ROLE(session_entry));
 
 	add_sta_params = qdf_mem_malloc(sizeof(tAddStaParams));
-	if (NULL == add_sta_params) {
-		pe_err("Unable to allocate memory during ADD_STA");
+	if (!add_sta_params)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	if (LIM_IS_AP_ROLE(session_entry) || LIM_IS_IBSS_ROLE(session_entry) ||
 		LIM_IS_NDI_ROLE(session_entry))
@@ -2571,10 +2567,8 @@ lim_del_sta(tpAniSirGlobal pMac,
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 
 	pDelStaParams = qdf_mem_malloc(sizeof(tDeleteStaParams));
-	if (NULL == pDelStaParams) {
-		pe_err("Unable to allocate memory during ADD_STA");
+	if (!pDelStaParams)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	/*
 	 * 2G-AS platform: SAP associates with HT (11n)clients as 2x1 in 2G and
@@ -2739,10 +2733,8 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	sir_copy_mac_addr(staMac, psessionEntry->selfMacAddr);
 	pe_debug(MAC_ADDRESS_STR ": ", MAC_ADDR_ARRAY(staMac));
 	pAddStaParams = qdf_mem_malloc(sizeof(tAddStaParams));
-	if (NULL == pAddStaParams) {
-		pe_err("Unable to allocate memory during ADD_STA");
+	if (!pAddStaParams)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	/* / Add STA context at MAC HW (BMU, RHP & TFP) */
 	qdf_mem_copy((uint8_t *) pAddStaParams->staMac,
@@ -3379,10 +3371,8 @@ lim_del_bss(tpAniSirGlobal pMac, tpDphHashNode pStaDs, uint16_t bssIdx,
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 
 	pDelBssParams = qdf_mem_malloc(sizeof(tDeleteBssParams));
-	if (NULL == pDelBssParams) {
-		pe_err("Unable to allocate memory during ADD_BSS");
+	if (!pDelBssParams)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	pDelBssParams->sessionId = psessionEntry->peSessionId; /* update PE session Id */
 
@@ -3596,8 +3586,7 @@ QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 
 	/* Package SIR_HAL_ADD_BSS_REQ message parameters */
 	pAddBssParams = qdf_mem_malloc(sizeof(tAddBssParams));
-	if (NULL == pAddBssParams) {
-		pe_err("Unable to allocate memory during ADD_BSS");
+	if (!pAddBssParams) {
 		retCode = QDF_STATUS_E_NOMEM;
 		goto returnFailure;
 	}
@@ -4133,15 +4122,12 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t updateEnt
 		&psessionEntry->pLimJoinReq->bssDescription;
 
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
-	if (NULL == pBeaconStruct) {
-		pe_err("Unable to allocate memory during ADD_BSS");
+	if (!pBeaconStruct)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	/* Package SIR_HAL_ADD_BSS_REQ message parameters */
 	pAddBssParams = qdf_mem_malloc(sizeof(tAddBssParams));
-	if (NULL == pAddBssParams) {
-		pe_err("Unable to allocate memory during ADD_BSS");
+	if (!pAddBssParams) {
 		retCode = QDF_STATUS_E_NOMEM;
 		goto returnFailure;
 	}
@@ -4824,10 +4810,8 @@ void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameT
 	length = sizeof(tSirSmeUnprotMgmtFrameInd) + frameLen;
 
 	pSirSmeMgmtFrame = qdf_mem_malloc(length);
-	if (NULL == pSirSmeMgmtFrame) {
-		pe_err("Memory allocation failed");
+	if (!pSirSmeMgmtFrame)
 		return;
-	}
 
 	pSirSmeMgmtFrame->sessionId = sessionId;
 	pSirSmeMgmtFrame->frameType = frameType;
@@ -4865,10 +4849,8 @@ void lim_send_sme_tsm_ie_ind(tpAniSirGlobal pMac, tpPESession psessionEntry,
 		return;
 
 	pSirSmeTsmIeInd = qdf_mem_malloc(sizeof(tSirSmeTsmIEInd));
-	if (NULL == pSirSmeTsmIeInd) {
-		pe_err("AllocateMemory failed for tSirSmeTsmIEInd");
+	if (!pSirSmeTsmIeInd)
 		return;
-	}
 
 	pSirSmeTsmIeInd->sessionId = psessionEntry->smeSessionId;
 	pSirSmeTsmIeInd->tsmIe.tsid = tid;

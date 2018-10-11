@@ -480,10 +480,8 @@ static QDF_STATUS lim_get_addn_ie_for_probe_resp(tpAniSirGlobal pMac,
 		}
 
 		tempbuf = qdf_mem_malloc(left);
-		if (NULL == tempbuf) {
-			pe_err("Unable to allocate memory to store addn IE");
+		if (!tempbuf)
 			return QDF_STATUS_E_NOMEM;
-		}
 
 		while (left >= 2) {
 			elem_id = ptr[0];
@@ -580,10 +578,8 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 	sme_sessionid = pe_session->smeSessionId;
 	frm = qdf_mem_malloc(sizeof(tDot11fProbeResponse));
-	if (NULL == frm) {
-		pe_err("Unable to allocate memory");
+	if (!frm)
 		return;
-	}
 
 	/*
 	 * Fill out 'frm', after which we'll just hand the struct off to
@@ -720,10 +716,8 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 		add_ie = qdf_mem_malloc(
 				pe_session->addIeParams.probeRespDataLen);
-		if (NULL == add_ie) {
-			pe_err("add_ie allocation failed");
+		if (!add_ie)
 			goto err_ret;
-		}
 
 		qdf_mem_copy(add_ie,
 			     pe_session->addIeParams.probeRespData_buff,
@@ -1672,8 +1666,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	add_ie = pe_session->pLimJoinReq->addIEAssoc.addIEdata;
 
 	frm = qdf_mem_malloc(sizeof(tDot11fAssocRequest));
-	if (NULL == frm) {
-		pe_err("Unable to allocate memory");
+	if (!frm) {
 		qdf_mem_free(mlm_assoc_req);
 		return;
 	}
@@ -1971,10 +1964,8 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	if (wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_MBO_OUI,
 	    SIR_MAC_MBO_OUI_SIZE, add_ie, add_ie_len)) {
 		mbo_ie = qdf_mem_malloc(DOT11F_IE_MBO_IE_MAX_LEN + 2);
-		if (!mbo_ie) {
-			pe_err("Failed to allocate mbo_ie");
+		if (!mbo_ie)
 			goto end;
-		}
 
 		qdf_status = lim_strip_ie(mac_ctx, add_ie, &add_ie_len,
 					  SIR_MAC_EID_VENDOR, ONE_BYTE,
@@ -2079,9 +2070,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 
 	pe_session->assocReq = qdf_mem_malloc(payload);
-	if (NULL == pe_session->assocReq) {
-		pe_err("Unable to allocate memory");
-	} else {
+	if (pe_session->assocReq) {
 		/*
 		 * Store the Assoc request. This is sent to csr/hdd in
 		 * join cnf response.
@@ -4372,10 +4361,8 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 
 	tDot11fRadioMeasurementReport *frm =
 		qdf_mem_malloc(sizeof(tDot11fRadioMeasurementReport));
-	if (!frm) {
-		pe_err("Not enough memory to allocate tDot11fRadioMeasurementReport");
+	if (!frm)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	if (psessionEntry == NULL) {
 		pe_err("(psession == NULL) in Request to send Beacon Report action frame");

@@ -48,13 +48,10 @@ QDF_STATUS pe_allocate_dph_node_array_buffer(void)
 	buf_size = SIR_MAX_SUPPORTED_BSS * (SIR_SAP_MAX_NUM_PEERS + 1)
 		   * sizeof(struct sDphHashNode);
 	g_dph_node_array = qdf_mem_malloc(buf_size);
-
-	if (!g_dph_node_array) {
-		pe_err("%s: Failed to allocate %d bytes", __func__, buf_size);
+	if (!g_dph_node_array)
 		return QDF_STATUS_E_NOMEM;
-	} else {
-		return QDF_STATUS_SUCCESS;
-	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 void pe_free_dph_node_array_buffer(void)
@@ -363,11 +360,8 @@ static void pe_init_fils_info(tpPESession session)
 	}
 	session->fils_info = qdf_mem_malloc(sizeof(struct pe_fils_session));
 	fils_info = session->fils_info;
-	if (!fils_info) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			  FL("fils info not found"));
+	if (!fils_info)
 		return;
-	}
 	fils_info->keyname_nai_data = NULL;
 	fils_info->fils_erp_reauth_pkt = NULL;
 	fils_info->fils_rrk = NULL;
@@ -591,10 +585,8 @@ tpPESession pe_create_session(tpAniSirGlobal pMac,
 	/* Allocate space for Station Table for this session. */
 	session_ptr->dph.dphHashTable.pHashTable =
 		qdf_mem_malloc(sizeof(tpDphHashNode) * (numSta + 1));
-	if (NULL == session_ptr->dph.dphHashTable.pHashTable) {
-		pe_err("memory allocate failed!");
+	if (!session_ptr->dph.dphHashTable.pHashTable)
 		return NULL;
-	}
 
 	session_ptr->dph.dphHashTable.pDphNodeArray =
 					pe_get_session_dph_node_array(i);
@@ -603,10 +595,8 @@ tpPESession pe_create_session(tpAniSirGlobal pMac,
 	session_ptr->gpLimPeerIdxpool = qdf_mem_malloc(
 		sizeof(*(session_ptr->gpLimPeerIdxpool)) *
 		lim_get_peer_idxpool_size(numSta, bssType));
-	if (!session_ptr->gpLimPeerIdxpool) {
-		pe_err("memory allocate failed!");
+	if (!session_ptr->gpLimPeerIdxpool)
 		goto free_dp_hash_table;
-	}
 
 	session_ptr->freePeerIdxHead = 0;
 	session_ptr->freePeerIdxTail = 0;
@@ -660,7 +650,6 @@ tpPESession pe_create_session(tpAniSirGlobal pMac,
 		if ((NULL == session_ptr->pSchProbeRspTemplate)
 		    || (NULL == session_ptr->pSchBeaconFrameBegin)
 		    || (NULL == session_ptr->pSchBeaconFrameEnd)) {
-			pe_err("memory allocate failed!");
 			goto free_session_attrs;
 		}
 	}

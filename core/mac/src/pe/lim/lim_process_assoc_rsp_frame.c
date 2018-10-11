@@ -304,14 +304,12 @@ static void lim_update_ric_data(tpAniSirGlobal mac_ctx,
 		if (session_entry->RICDataLen) {
 			session_entry->ricData =
 				qdf_mem_malloc(session_entry->RICDataLen);
-			if (NULL == session_entry->ricData) {
-				pe_err("No memory for RIC data");
+			if (!session_entry->ricData)
 				session_entry->RICDataLen = 0;
-			} else {
+			else
 				qdf_mem_copy(session_entry->ricData,
 					&assoc_rsp->RICData[0],
 					session_entry->RICDataLen);
-			}
 		} else {
 			pe_err("RIC data not present");
 		}
@@ -350,14 +348,12 @@ static void lim_update_ese_tspec(tpAniSirGlobal mac_ctx,
 		if (session_entry->tspecLen) {
 			session_entry->tspecIes =
 				qdf_mem_malloc(session_entry->tspecLen);
-			if (NULL == session_entry->tspecIes) {
-				pe_err("Tspec IE:Fail to allocate memory");
+			if (!session_entry->tspecIes)
 				session_entry->tspecLen = 0;
-			} else {
+			else
 				qdf_mem_copy(session_entry->tspecIes,
 						&assoc_rsp->TSPECInfo[0],
 						session_entry->tspecLen);
-			}
 		} else {
 			pe_err("TSPEC has Zero length");
 		}
@@ -535,10 +531,8 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		MAC_ADDR_ARRAY(hdr->sa));
 
 	beacon = qdf_mem_malloc(sizeof(tSchBeaconStruct));
-	if (NULL == beacon) {
-		pe_err("Unable to allocate memory");
+	if (!beacon)
 		return;
-	}
 
 	if (LIM_IS_AP_ROLE(session_entry)) {
 		/*
@@ -611,8 +605,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	}
 
 	assoc_rsp = qdf_mem_malloc(sizeof(*assoc_rsp));
-	if (NULL == assoc_rsp) {
-		pe_err("Allocate Memory failed in AssocRsp");
+	if (!assoc_rsp) {
 		qdf_mem_free(beacon);
 		return;
 	}
@@ -648,10 +641,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 
 	if (frame_len) {
 		session_entry->assocRsp = qdf_mem_malloc(frame_len);
-		if (NULL == session_entry->assocRsp) {
-			pe_err("Unable to allocate memory for assoc res,len: %d",
-				 frame_len);
-		} else {
+		if (session_entry->assocRsp) {
 			/*
 			 * Store the Assoc response. This is sent
 			 * to csr/hdd in join cnf response.

@@ -1441,10 +1441,8 @@ QDF_STATUS lim_obss_send_detection_cfg(tpAniSirGlobal mac_ctx,
 	    || force) {
 		struct scheduler_msg msg = {0};
 		req_param = qdf_mem_malloc(sizeof(*req_param));
-		if (!req_param) {
-			pe_err("Failed to allocate memory");
+		if (!req_param)
 			return QDF_STATUS_E_NOMEM;
-		}
 		qdf_mem_copy(&session->obss_offload_cfg, &obss_cfg,
 				sizeof(obss_cfg));
 		req_param->vdev_id = session->smeSessionId;

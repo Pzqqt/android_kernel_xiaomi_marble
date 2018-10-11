@@ -2564,10 +2564,8 @@ void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
 
 	mmhMsg.type = eWNI_SME_SWITCH_CHL_IND;
 	pSirSmeSwitchChInd = qdf_mem_malloc(sizeof(tSirSmeSwitchChannelInd));
-	if (NULL == pSirSmeSwitchChInd) {
-		pe_err("Failed to allocate buffer for buffer descriptor");
+	if (!pSirSmeSwitchChInd)
 		return;
-	}
 
 	pSirSmeSwitchChInd->messageType = eWNI_SME_SWITCH_CHL_IND;
 	pSirSmeSwitchChInd->length = sizeof(tSirSmeSwitchChannelInd);
@@ -4649,10 +4647,8 @@ void lim_register_hal_ind_call_back(tpAniSirGlobal pMac)
 	tpHalIndCB pHalCB;
 
 	pHalCB = qdf_mem_malloc(sizeof(tHalIndCB));
-	if (NULL == pHalCB) {
-		pe_err("AllocateMemory() failed");
+	if (!pHalCB)
 		return;
-	}
 
 	pHalCB->pHalIndCB = lim_process_hal_ind_messages;
 
@@ -4718,10 +4714,8 @@ void lim_process_del_ts_ind(tpAniSirGlobal pMac, struct scheduler_msg *limMsg)
 	}
 
 	pDelTsReq = qdf_mem_malloc(sizeof(tSirDeltsReq));
-	if (NULL == pDelTsReq) {
-		pe_err("AllocateMemory() failed");
+	if (!pDelTsReq)
 		goto error1;
-	}
 
 	if (pSta->wmeEnabled)
 		qdf_mem_copy(&(pDelTsReq->req.tspec), &(pTspecInfo->tspec),
@@ -4748,10 +4742,8 @@ void lim_process_del_ts_ind(tpAniSirGlobal pMac, struct scheduler_msg *limMsg)
 
 	/* prepare and send an sme indication to HDD */
 	pDelTsReqInfo = qdf_mem_malloc(sizeof(tSirDeltsReqInfo));
-	if (NULL == pDelTsReqInfo) {
-		pe_err("AllocateMemory() failed");
+	if (!pDelTsReqInfo)
 		goto error3;
-	}
 
 	if (pSta->wmeEnabled)
 		qdf_mem_copy(&(pDelTsReqInfo->tspec), &(pTspecInfo->tspec),
@@ -4804,10 +4796,8 @@ lim_post_sm_state_update(tpAniSirGlobal pMac,
 
 	/* Allocate for WMA_SET_MIMOPS_REQ */
 	pMIMO_PSParams = qdf_mem_malloc(sizeof(tSetMIMOPS));
-	if (NULL == pMIMO_PSParams) {
-		pe_err(" AllocateMemory failed");
+	if (!pMIMO_PSParams)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	pMIMO_PSParams->htMIMOPSState = state;
 	pMIMO_PSParams->staIdx = staIdx;
@@ -5060,10 +5050,8 @@ void lim_frame_transmission_control(tpAniSirGlobal pMac, tLimQuietTxMode type,
 	nBytes = (uint8_t) HALMSG_NUMBYTES_STATION_BITMAP(pMac->lim.maxStation);
 
 	pTxCtrlMsg = qdf_mem_malloc(sizeof(*pTxCtrlMsg) + nBytes);
-	if (NULL == pTxCtrlMsg) {
-		pe_err("AllocateMemory() failed");
+	if (!pTxCtrlMsg)
 		return;
-	}
 
 	status = __lim_fill_tx_control_params(pMac, pTxCtrlMsg, type, mode);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -6335,10 +6323,8 @@ static QDF_STATUS lim_send_ie(tpAniSirGlobal mac_ctx, uint32_t sme_session_id,
 
 	/* Allocate memory for the WMI request */
 	ie_msg = qdf_mem_malloc(sizeof(*ie_msg) + len);
-	if (!ie_msg) {
-		pe_err("Failed to allocate memory");
+	if (!ie_msg)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	ie_msg->vdev_id = sme_session_id;
 	ie_msg->ie_id = eid;
@@ -6514,10 +6500,8 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 
 	/* Allocate memory for the WMI request, and copy the parameter */
 	vdev_ie = qdf_mem_malloc(sizeof(*vdev_ie) + num_bytes);
-	if (!vdev_ie) {
-		pe_err("Failed to allocate memory");
+	if (!vdev_ie)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	vdev_ie->vdev_id = session_id;
 	vdev_ie->ie_id = DOT11F_EID_EXTCAP;
@@ -6578,10 +6562,8 @@ QDF_STATUS lim_strip_ie(tpAniSirGlobal mac_ctx,
 	}
 
 	tempbuf = qdf_mem_malloc(left);
-	if (NULL == tempbuf) {
-		pe_err("Unable to allocate memory");
+	if (!tempbuf)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	while (left >= 2) {
 		elem_id  = ptr[0];
@@ -7084,10 +7066,8 @@ void lim_send_set_dtim_period(tpAniSirGlobal mac_ctx, uint8_t dtim_period,
 		return;
 	}
 	dtim_params = qdf_mem_malloc(sizeof(*dtim_params));
-	if (!dtim_params) {
-		pe_err("Unable to allocate memory");
+	if (!dtim_params)
 		return;
-	}
 	dtim_params->dtim_period = dtim_period;
 	dtim_params->session_id = session->smeSessionId;
 	msg.type = WMA_SET_DTIM_PERIOD;
@@ -8035,10 +8015,8 @@ void lim_assoc_rej_add_to_rssi_based_reject_list(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	entry = qdf_mem_malloc(sizeof(*entry));
-	if (!entry) {
-		pe_err("malloc failed for bssid entry");
+	if (!entry)
 		return;
-	}
 
 	pe_debug("%pM: assoc resp rssi %d, delta rssi %d retry delay %d sec and list size %d",
 		bssid, rssi, rssi_assoc_rej->delta_rssi,
@@ -8281,10 +8259,8 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal mac_ctx, uint8_t frame_type,
 	length = sizeof(tSirSmeMgmtFrameInd) + frame_len;
 
 	sme_mgmt_frame = qdf_mem_malloc(length);
-	if (!sme_mgmt_frame) {
-		pe_err("AllocateMemory failed for eWNI_SME_LISTEN_RSP");
+	if (!sme_mgmt_frame)
 		return;
-	}
 
 	if (qdf_is_macaddr_broadcast(
 		(struct qdf_mac_addr *)(frame + 4)) &&
@@ -8392,10 +8368,8 @@ void lim_process_ap_ecsa_timeout(void *data)
 		session->dfsIncludeChanWrapperIe = false;
 
 		chan_switch_tx_rsp = qdf_mem_malloc(length);
-		if (!chan_switch_tx_rsp) {
-			pe_err("AllocateMemory failed for tSirSmeCSAIeTxCompleteRsp");
+		if (!chan_switch_tx_rsp)
 			return;
-		}
 
 		chan_switch_tx_rsp->sessionId = session->smeSessionId;
 		chan_switch_tx_rsp->chanSwIeTxStatus = QDF_STATUS_SUCCESS;

@@ -65,11 +65,8 @@ QDF_STATUS lim_send_cf_params(tpAniSirGlobal pMac, uint8_t bssIdx,
 	struct scheduler_msg msgQ = {0};
 
 	pCFParams = qdf_mem_malloc(sizeof(tUpdateCFParams));
-	if (NULL == pCFParams) {
-		pe_err("Unable to allocate memory during Update CF Params");
-		retCode = QDF_STATUS_E_NOMEM;
-		goto returnFailure;
-	}
+	if (!pCFParams)
+		return QDF_STATUS_E_NOMEM;
 	pCFParams->cfpCount = cfpCount;
 	pCFParams->cfpPeriod = cfpPeriod;
 	pCFParams->bssIdx = bssIdx;
@@ -86,7 +83,6 @@ QDF_STATUS lim_send_cf_params(tpAniSirGlobal pMac, uint8_t bssIdx,
 		pe_err("Posting WMA_UPDATE_CF_IND failed, reason=%X",
 			retCode);
 	}
-returnFailure:
 	return retCode;
 }
 
@@ -111,10 +107,8 @@ QDF_STATUS lim_send_beacon_params(tpAniSirGlobal pMac,
 	struct scheduler_msg msgQ = {0};
 
 	pBcnParams = qdf_mem_malloc(sizeof(*pBcnParams));
-	if (NULL == pBcnParams) {
-		pe_err("Unable to allocate memory during Update Beacon Params");
+	if (!pBcnParams)
 		return QDF_STATUS_E_NOMEM;
-	}
 	qdf_mem_copy((uint8_t *) pBcnParams, pUpdatedBcnParams,
 		     sizeof(*pBcnParams));
 	msgQ.type = WMA_UPDATE_BEACON_IND;
@@ -186,10 +180,8 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_FAILURE;
 	}
 	pChnlParams = qdf_mem_malloc(sizeof(tSwitchChannelParams));
-	if (NULL == pChnlParams) {
-		pe_err("Unable to allocate memory for Switch Ch Params");
+	if (!pChnlParams)
 		return QDF_STATUS_E_NOMEM;
-	}
 	pChnlParams->channelNumber = chnlNumber;
 	pChnlParams->ch_center_freq_seg0 = ch_center_freq_seg0;
 	pChnlParams->ch_center_freq_seg1 = ch_center_freq_seg1;
@@ -292,11 +284,8 @@ QDF_STATUS lim_send_edca_params(tpAniSirGlobal pMac,
 	struct scheduler_msg msgQ = {0};
 
 	pEdcaParams = qdf_mem_malloc(sizeof(tEdcaParams));
-	if (NULL == pEdcaParams) {
-		pe_err("Unable to allocate memory during Update EDCA Params");
-		retCode = QDF_STATUS_E_NOMEM;
-		return retCode;
-	}
+	if (!pEdcaParams)
+		return QDF_STATUS_E_NOMEM;
 	pEdcaParams->bssIdx = bssIdx;
 	pEdcaParams->acbe = pUpdatedEdcaParams[EDCA_AC_BE];
 	pEdcaParams->acbk = pUpdatedEdcaParams[EDCA_AC_BK];
@@ -451,11 +440,8 @@ QDF_STATUS lim_set_link_state(tpAniSirGlobal pMac, tSirLinkState state,
 	tpLinkStateParams pLinkStateParams = NULL;
 	/* Allocate memory. */
 	pLinkStateParams = qdf_mem_malloc(sizeof(tLinkStateParams));
-	if (NULL == pLinkStateParams) {
-		pe_err("Unable to allocate memory while sending Set Link State");
-		retCode = QDF_STATUS_E_NOMEM;
-		return retCode;
-	}
+	if (!pLinkStateParams)
+		return QDF_STATUS_E_NOMEM;
 	pLinkStateParams->state = state;
 	pLinkStateParams->callback = callback;
 	pLinkStateParams->callbackArg = callbackArg;
@@ -490,11 +476,8 @@ extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal pMac, tSirLinkState
 	tpLinkStateParams pLinkStateParams = NULL;
 	/* Allocate memory. */
 	pLinkStateParams = qdf_mem_malloc(sizeof(tLinkStateParams));
-	if (NULL == pLinkStateParams) {
-		pe_err("Unable to allocate memory while sending Set Link State");
-		retCode = QDF_STATUS_E_NOMEM;
-		return retCode;
-	}
+	if (!pLinkStateParams)
+		return QDF_STATUS_E_NOMEM;
 	pLinkStateParams->state = state;
 	/* Copy Mac address */
 	sir_copy_mac_addr(pLinkStateParams->bssid, bssId);
@@ -531,10 +514,8 @@ QDF_STATUS lim_send_mode_update(tpAniSirGlobal pMac,
 	struct scheduler_msg msgQ = {0};
 
 	pVhtOpMode = qdf_mem_malloc(sizeof(tUpdateVHTOpMode));
-	if (NULL == pVhtOpMode) {
-		pe_err("Unable to allocate memory during Update Op Mode");
+	if (!pVhtOpMode)
 		return QDF_STATUS_E_NOMEM;
-	}
 	qdf_mem_copy((uint8_t *) pVhtOpMode, pTempParam,
 		     sizeof(tUpdateVHTOpMode));
 	msgQ.type = WMA_UPDATE_OP_MODE;
@@ -568,10 +549,8 @@ QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal pMac,
 	struct scheduler_msg msgQ = {0};
 
 	pRxNss = qdf_mem_malloc(sizeof(tUpdateRxNss));
-	if (NULL == pRxNss) {
-		pe_err("Unable to allocate memory during Update Rx Nss");
+	if (!pRxNss)
 		return QDF_STATUS_E_NOMEM;
-	}
 	qdf_mem_copy((uint8_t *) pRxNss, pTempParam, sizeof(tUpdateRxNss));
 	msgQ.type = WMA_UPDATE_RX_NSS;
 	msgQ.reserved = 0;
@@ -603,10 +582,8 @@ QDF_STATUS lim_set_membership(tpAniSirGlobal pMac,
 	struct scheduler_msg msgQ = {0};
 
 	pMembership = qdf_mem_malloc(sizeof(tUpdateMembership));
-	if (NULL == pMembership) {
-		pe_err("Unable to allocate memory during Update Membership Mode");
+	if (!pMembership)
 		return QDF_STATUS_E_NOMEM;
-	}
 	qdf_mem_copy((uint8_t *) pMembership, pTempParam,
 		     sizeof(tUpdateMembership));
 
@@ -640,10 +617,8 @@ QDF_STATUS lim_set_user_pos(tpAniSirGlobal pMac,
 	struct scheduler_msg msgQ = {0};
 
 	pUserPos = qdf_mem_malloc(sizeof(tUpdateUserPos));
-	if (NULL == pUserPos) {
-		pe_err("Unable to allocate memory during Update User Position");
+	if (!pUserPos)
 		return QDF_STATUS_E_NOMEM;
-	}
 	qdf_mem_copy((uint8_t *) pUserPos, pTempParam, sizeof(tUpdateUserPos));
 
 	msgQ.type = WMA_UPDATE_USERPOS;
@@ -689,9 +664,8 @@ QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal pMac,
 
 	pExcludeUnencryptParam =
 		qdf_mem_malloc(sizeof(tSirWlanExcludeUnencryptParam));
-	if (NULL == pExcludeUnencryptParam) {
+	if (!pExcludeUnencryptParam)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	pExcludeUnencryptParam->excludeUnencrypt = excludeUnenc;
 	qdf_mem_copy(pExcludeUnencryptParam->bssid.bytes, psessionEntry->bssId,
@@ -734,11 +708,8 @@ QDF_STATUS lim_send_ht40_obss_scanind(tpAniSirGlobal mac_ctx,
 	uint8_t channel24gnum, count;
 
 	ht40_obss_scanind = qdf_mem_malloc(sizeof(struct obss_ht40_scanind));
-	if (NULL == ht40_obss_scanind) {
-		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
-			"Memory allocation failed");
+	if (!ht40_obss_scanind)
 		return QDF_STATUS_E_FAILURE;
-	}
 	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 		"OBSS Scan Indication bssIdx- %d staId %d",
 		session->bssIdx, session->staId);

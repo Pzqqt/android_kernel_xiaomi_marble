@@ -227,10 +227,8 @@ static void __lim_process_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 		return;
 
 	chnl_switch_frame = qdf_mem_malloc(sizeof(*chnl_switch_frame));
-	if (NULL == chnl_switch_frame) {
-		pe_err("AllocateMemory failed");
+	if (!chnl_switch_frame)
 		return;
-	}
 
 	/* Unpack channel switch frame */
 	status = dot11f_unpack_channel_switch(mac_ctx, body_ptr, frame_len,
@@ -361,10 +359,8 @@ lim_process_ext_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 
 	ext_channel_switch_frame =
 		 qdf_mem_malloc(sizeof(*ext_channel_switch_frame));
-	if (NULL == ext_channel_switch_frame) {
-		pe_err("AllocateMemory failed");
+	if (!ext_channel_switch_frame)
 		return;
-	}
 
 	/* Unpack channel switch frame */
 	status = dot11f_unpack_ext_channel_switch_action_frame(mac_ctx,
@@ -408,10 +404,8 @@ lim_process_ext_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 		struct scheduler_msg mmh_msg = {0};
 
 		ext_cng_chan_ind = qdf_mem_malloc(sizeof(*ext_cng_chan_ind));
-		if (NULL == ext_cng_chan_ind) {
-			pe_err("AllocateMemory failed for ext_cng_chan_ind");
+		if (!ext_cng_chan_ind)
 			return;
-		}
 
 		ext_cng_chan_ind->session_id =
 					session_entry->smeSessionId;
@@ -461,10 +455,9 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 
 	pe_debug("Received Operating Mode action frame");
 	operating_mode_frm = qdf_mem_malloc(sizeof(*operating_mode_frm));
-	if (NULL == operating_mode_frm) {
-		pe_err("AllocateMemory failed");
+	if (!operating_mode_frm)
 		return;
-	}
+
 	/* Unpack channel switch frame */
 	status = dot11f_unpack_operating_mode(mac_ctx, body_ptr, frame_len,
 			operating_mode_frm, false);
@@ -603,10 +596,8 @@ static void __lim_process_gid_management_action_frame(tpAniSirGlobal mac_ctx,
 
 	pe_debug("Received GID Management action frame");
 	gid_mgmt_frame = qdf_mem_malloc(sizeof(*gid_mgmt_frame));
-	if (NULL == gid_mgmt_frame) {
-		pe_err("AllocateMemory failed");
+	if (!gid_mgmt_frame)
 		return;
-	}
 
 	/* Unpack Gid Management Action frame */
 	status = dot11f_unpack_vht_gid_management_action_frame(mac_ctx,
@@ -1149,10 +1140,8 @@ __lim_process_measurement_request_frame(tpAniSirGlobal pMac,
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 
 	pMeasReqFrame = qdf_mem_malloc(sizeof(tSirMacMeasReqActionFrame));
-	if (NULL == pMeasReqFrame) {
-		pe_err("AllocateMemory failed");
+	if (!pMeasReqFrame)
 		return;
-	}
 
 	if (sir_convert_meas_req_frame2_struct(pMac, pBody, pMeasReqFrame, frameLen)
 	    != QDF_STATUS_SUCCESS) {
@@ -1193,10 +1182,9 @@ __lim_process_tpc_request_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	pe_debug("****LIM: Processing TPC Request from peer ****");
 
 	pTpcReqFrame = qdf_mem_malloc(sizeof(tSirMacTpcReqActionFrame));
-	if (NULL == pTpcReqFrame) {
-		pe_err("AllocateMemory failed");
+	if (!pTpcReqFrame)
 		return;
-	}
+
 	if (sir_convert_tpc_req_frame2_struct(pMac, pBody, pTpcReqFrame, frameLen) !=
 	    QDF_STATUS_SUCCESS) {
 		pe_warn("Rcv invalid TPC Req Action Frame");
@@ -1318,10 +1306,8 @@ __lim_process_radio_measure_request(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo));
 
 	frm = qdf_mem_malloc(sizeof(*frm));
-	if (frm == NULL) {
-		pe_err("Failed to alloc memory for tDot11fRadioMeasurementRequest");
+	if (!frm)
 		return;
-	}
 
 	/**Unpack the received frame */
 	nStatus = dot11f_unpack_radio_measurement_request(pMac, pBody,
@@ -1398,10 +1384,8 @@ __lim_process_neighbor_report(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 
 	pFrm = qdf_mem_malloc(sizeof(tDot11fNeighborReportResponse));
-	if (NULL == pFrm) {
-		pe_err("Unable to allocate memory");
+	if (!pFrm)
 		return;
-	}
 
 	if (psessionEntry == NULL) {
 		qdf_mem_free(pFrm);
@@ -1678,10 +1662,8 @@ static void lim_process_addba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			   body_ptr, frame_len);
 
 	addba_req = qdf_mem_malloc(sizeof(*addba_req));
-	if (NULL == addba_req) {
-		pe_err("memory allocation failed");
+	if (!addba_req)
 		return;
-	}
 
 	/* Unpack ADDBA request frame */
 	status = dot11f_unpack_addba_req(mac_ctx, body_ptr, frame_len,
@@ -1762,10 +1744,8 @@ static void lim_process_delba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			   body_ptr, frame_len);
 
 	delba_req = qdf_mem_malloc(sizeof(*delba_req));
-	if (NULL == delba_req) {
-		pe_err("memory allocation failed");
+	if (!delba_req)
 		return;
-	}
 
 	/* Unpack DELBA request frame */
 	status = dot11f_unpack_delba_req(mac_ctx, body_ptr, frame_len,

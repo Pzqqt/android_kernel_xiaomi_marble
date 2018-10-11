@@ -860,16 +860,14 @@ QDF_STATUS pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 
 	pMac->lim.limTimers.gpLimCnfWaitTimer =
 		qdf_mem_malloc(sizeof(TX_TIMER) * (pMac->lim.maxStation + 1));
-	if (NULL == pMac->lim.limTimers.gpLimCnfWaitTimer) {
-		pe_err("gpLimCnfWaitTimer memory allocate failed!");
+	if (!pMac->lim.limTimers.gpLimCnfWaitTimer) {
 		status = QDF_STATUS_E_NOMEM;
 		goto pe_open_timer_fail;
 	}
 
 	pMac->lim.gpSession =
 		qdf_mem_malloc(sizeof(tPESession) * pMac->lim.maxBssId);
-	if (NULL == pMac->lim.gpSession) {
-		pe_err("gpSession memory allocate failed!");
+	if (!pMac->lim.gpSession) {
 		status = QDF_STATUS_E_NOMEM;
 		goto pe_open_psession_fail;
 	}
@@ -1307,7 +1305,6 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 
 	pVosPkt = qdf_mem_malloc(sizeof(*pVosPkt));
 	if (!pVosPkt) {
-		pe_err("Failed to allocate rx packet");
 		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -2072,12 +2069,9 @@ lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 	bcn_proberesp_ptr = (uint8_t *)roam_offload_synch_ind_ptr +
 		roam_offload_synch_ind_ptr->beaconProbeRespOffset;
 	mac_hdr = (tpSirMacMgmtHdr)bcn_proberesp_ptr;
-	parsed_frm_ptr =
-	(tpSirProbeRespBeacon) qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
-	if (NULL == parsed_frm_ptr) {
-		pe_err("fail to allocate memory for frame");
+	parsed_frm_ptr = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
+	if (!parsed_frm_ptr)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	if (roam_offload_synch_ind_ptr->beaconProbeRespLength <=
 			SIR_MAC_HDR_LEN_3A) {
@@ -2411,8 +2405,7 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	mac_ctx->roam.reassocRespLen = roam_sync_ind_ptr->reassocRespLength;
 	mac_ctx->roam.pReassocResp =
 		qdf_mem_malloc(mac_ctx->roam.reassocRespLen);
-	if (NULL == mac_ctx->roam.pReassocResp) {
-		pe_err("LFR3:assoc resp mem alloc failed");
+	if (!mac_ctx->roam.pReassocResp) {
 		ft_session_ptr->bRoamSynchInProgress = false;
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -2449,8 +2442,7 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 #endif
 
 	roam_sync_ind_ptr->join_rsp = qdf_mem_malloc(join_rsp_len);
-	if (NULL == roam_sync_ind_ptr->join_rsp) {
-		pe_err("LFR3:mem alloc failed");
+	if (!roam_sync_ind_ptr->join_rsp) {
 		ft_session_ptr->bRoamSynchInProgress = false;
 		if (mac_ctx->roam.pReassocResp)
 			qdf_mem_free(mac_ctx->roam.pReassocResp);
@@ -2680,10 +2672,8 @@ void lim_update_lost_link_info(tpAniSirGlobal mac, tpPESession session,
 		return;
 
 	lost_link_info = qdf_mem_malloc(sizeof(*lost_link_info));
-	if (NULL == lost_link_info) {
-		pe_err("lost_link_info allocation failure");
+	if (!lost_link_info)
 		return;
-	}
 
 	lost_link_info->vdev_id = session->smeSessionId;
 	lost_link_info->rssi = rssi;
