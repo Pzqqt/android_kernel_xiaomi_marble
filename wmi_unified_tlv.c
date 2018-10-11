@@ -17854,6 +17854,7 @@ static QDF_STATUS extract_reg_11d_new_country_event_tlv(
 
 	qdf_mem_copy(reg_11d_country->alpha2,
 			&reg_11d_country_event->new_alpha2, REG_ALPHA2_LEN);
+	reg_11d_country->alpha2[REG_ALPHA2_LEN] = '\0';
 
 	WMI_LOGD("processed 11d country event, new cc %s",
 			reg_11d_country->alpha2);
