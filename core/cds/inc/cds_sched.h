@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -260,6 +260,15 @@ void cds_drop_rxpkt_by_staid(p_cds_sched_context pSchedContext, uint16_t staId);
 void cds_indicate_rxpkt(p_cds_sched_context pSchedContext,
 			struct cds_ol_rx_pkt *pkt);
 
+/**
+ * cds_close_rx_thread() - close the Rx thread
+ *
+ * This api closes the Rx thread:
+ *
+ * Return: qdf status
+ */
+QDF_STATUS cds_close_rx_thread(void);
+
 /*---------------------------------------------------------------------------
    \brief cds_alloc_ol_rx_pkt() - API to return next available cds message
    The \a cds_alloc_ol_rx_pkt() returns next available cds message buffer
@@ -329,6 +338,19 @@ static inline
 void cds_indicate_rxpkt(p_cds_sched_context pSchedContext,
 			struct cds_ol_rx_pkt *pkt)
 {
+}
+
+/**
+ * cds_close_rx_thread() - close the Rx thread
+ *
+ * This api closes the Rx thread:
+ *
+ * Return: qdf status
+ */
+static inline
+QDF_STATUS cds_close_rx_thread(void)
+{
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1052,6 +1052,7 @@ QDF_STATUS cds_post_disable(void)
 	struct hif_opaque_softc *hif_ctx;
 	struct cdp_pdev *txrx_pdev;
 	struct scheduler_ctx *sched_ctx;
+	QDF_STATUS qdf_status;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma_handle) {
@@ -1094,6 +1095,12 @@ QDF_STATUS cds_post_disable(void)
 	if (gp_cds_context->htc_ctx) {
 		wma_wmi_stop();
 		htc_stop(gp_cds_context->htc_ctx);
+	}
+
+	qdf_status = cds_close_rx_thread();
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		cds_err("Failed to close RX thread!");
+		return QDF_STATUS_E_INVAL;
 	}
 
 	cdp_pdev_pre_detach(cds_get_context(QDF_MODULE_ID_SOC),

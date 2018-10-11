@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -609,6 +609,38 @@ cds_indicate_rxpkt(p_cds_sched_context pSchedContext,
 }
 
 /**
+ * cds_close_rx_thread() - close the Rx thread
+ *
+ * This api closes the Rx thread:
+ *
+ * Return: qdf status
+ */
+QDF_STATUS cds_close_rx_thread(void)
+{
+	cds_debug("invoked");
+
+	if (!gp_cds_sched_context) {
+		cds_err("gp_cds_sched_context == NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!gp_cds_sched_context->ol_rx_thread)
+		return QDF_STATUS_SUCCESS;
+
+	/* Shut down Tlshim Rx thread */
+	set_bit(RX_SHUTDOWN_EVENT, &gp_cds_sched_context->ol_rx_event_flag);
+	set_bit(RX_POST_EVENT, &gp_cds_sched_context->ol_rx_event_flag);
+	wake_up_interruptible(&gp_cds_sched_context->ol_rx_wait_queue);
+	wait_for_completion(&gp_cds_sched_context->ol_rx_shutdown);
+	gp_cds_sched_context->ol_rx_thread = NULL;
+	cds_drop_rxpkt_by_staid(gp_cds_sched_context, WLAN_MAX_STA_COUNT);
+	cds_free_ol_rx_pkt_freeq(gp_cds_sched_context);
+	qdf_cpuhp_unregister(&gp_cds_sched_context->cpuhp_event_handle);
+
+	return QDF_STATUS_SUCCESS;
+} /* cds_close_rx_thread */
+
+/**
  * cds_drop_rxpkt_by_staid() - api to drop pending rx packets for a sta
  * @pSchedContext: Pointer to the global CDS Sched Context
  * @staId: Station Id
@@ -791,20 +823,7 @@ QDF_STATUS cds_sched_close(void)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-#ifdef QCA_CONFIG_SMP
-	if (!gp_cds_sched_context->ol_rx_thread)
-		return QDF_STATUS_SUCCESS;
-
-	/* Shut down Tlshim Rx thread */
-	set_bit(RX_SHUTDOWN_EVENT, &gp_cds_sched_context->ol_rx_event_flag);
-	set_bit(RX_POST_EVENT, &gp_cds_sched_context->ol_rx_event_flag);
-	wake_up_interruptible(&gp_cds_sched_context->ol_rx_wait_queue);
-	wait_for_completion(&gp_cds_sched_context->ol_rx_shutdown);
-	gp_cds_sched_context->ol_rx_thread = NULL;
-	cds_drop_rxpkt_by_staid(gp_cds_sched_context, WLAN_MAX_STA_COUNT);
-	cds_free_ol_rx_pkt_freeq(gp_cds_sched_context);
-	qdf_cpuhp_unregister(&gp_cds_sched_context->cpuhp_event_handle);
-#endif
+	cds_close_rx_thread();
 	gp_cds_sched_context = NULL;
 	return QDF_STATUS_SUCCESS;
 } /* cds_sched_close() */
