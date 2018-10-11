@@ -3839,6 +3839,7 @@ struct afe_id_aptx_adaptive_enc_init
 	uint32_t  max_sink_modeB;
 	uint32_t  min_sink_modeC;
 	uint32_t  max_sink_modeC;
+	uint32_t  mode;
 } __attribute__ ((packed));
 
 /*
