@@ -725,4 +725,15 @@ void tdls_scan_serialization_comp_info_cb(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS tdls_set_offchan_mode(struct wlan_objmgr_psoc *psoc,
 				     struct tdls_channel_switch_params *param);
 
+/**
+ * tdls_delete_all_peers_indication() - update tdls status info
+ * @delete_peers_ind: Delete peers indication params
+ *
+ * Notify tdls component to cleanup all peers
+ *
+ * Return: QDF_STATUS.
+ */
+
+QDF_STATUS tdls_delete_all_peers_indication(
+		struct tdls_delete_all_peers_params *delete_peers_ind);
 #endif

@@ -358,6 +358,106 @@ static void tdls_get_all_peers_from_list(
 	qdf_mem_free(get_tdls_peers);
 }
 
+/**
+ * tdls_process_reset_all_peers() - Reset all tdls peers
+ * @delete_all_peers_ind: Delete all peers indication
+ *
+ * This function is called to reset all tdls peers and
+ * notify upper layers of teardown inidcation
+ *
+ * Return: QDF_STATUS
+ */
+
+static QDF_STATUS tdls_process_reset_all_peers(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint8_t staidx;
+	struct tdls_peer *curr_peer = NULL;
+	struct tdls_vdev_priv_obj *tdls_vdev;
+	struct tdls_soc_priv_obj *tdls_soc;
+	uint8_t reset_session_id;
+
+	status = tdls_get_vdev_objects(vdev, &tdls_vdev, &tdls_soc);
+	if (QDF_STATUS_SUCCESS != status) {
+		tdls_err("tdls objects are NULL ");
+		return status;
+	}
+
+	if (!tdls_soc->connected_peer_count) {
+		tdls_debug("No tdls connected peers");
+		return status;
+	}
+
+	reset_session_id = tdls_vdev->session_id;
+	for (staidx = 0; staidx < tdls_soc->max_num_tdls_sta;
+							staidx++) {
+		if (tdls_soc->tdls_conn_info[staidx].sta_id
+						== INVALID_TDLS_PEER_ID)
+			continue;
+		if (tdls_soc->tdls_conn_info[staidx].session_id !=
+		    reset_session_id)
+			continue;
+
+		curr_peer =
+		tdls_find_all_peer(tdls_soc,
+				   tdls_soc->tdls_conn_info[staidx].
+				   peer_mac.bytes);
+		if (!curr_peer)
+			continue;
+
+		tdls_notice("indicate TDLS teardown (staId %d)",
+			    curr_peer->sta_id);
+
+		/* Indicate teardown to supplicant */
+		tdls_indicate_teardown(tdls_vdev,
+				       curr_peer,
+				       TDLS_TEARDOWN_PEER_UNSPEC_REASON);
+
+		tdls_reset_peer(tdls_vdev, curr_peer->peer_mac.bytes);
+
+		if (tdls_soc->tdls_dereg_peer)
+			tdls_soc->tdls_dereg_peer(
+					tdls_soc->tdls_peer_context,
+					wlan_vdev_get_id(vdev),
+					curr_peer->sta_id);
+		tdls_decrement_peer_count(tdls_soc);
+		tdls_soc->tdls_conn_info[staidx].sta_id = INVALID_TDLS_PEER_ID;
+		tdls_soc->tdls_conn_info[staidx].session_id = 255;
+
+		qdf_mem_zero(&tdls_soc->tdls_conn_info[staidx].peer_mac,
+			     sizeof(struct qdf_mac_addr));
+	}
+	return status;
+}
+
+/**
+ * tdls_reset_all_peers() - Reset all tdls peers
+ * @delete_all_peers_ind: Delete all peers indication
+ *
+ * This function is called to reset all tdls peers and
+ * notify upper layers of teardown inidcation
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS tdls_reset_all_peers(
+		struct tdls_delete_all_peers_params *delete_all_peers_ind)
+{
+	QDF_STATUS status;
+
+	if (!delete_all_peers_ind || !delete_all_peers_ind->vdev) {
+		tdls_err("invalid param");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = tdls_process_reset_all_peers(delete_all_peers_ind->vdev);
+
+	if (delete_all_peers_ind->callback)
+		delete_all_peers_ind->callback(delete_all_peers_ind->vdev);
+
+	qdf_mem_free(delete_all_peers_ind);
+	return status;
+}
+
 QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -434,6 +534,9 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 		break;
 	case TDLS_CMD_SET_SECOFFCHANOFFSET:
 		tdls_process_set_secoffchanneloffset(msg->bodyptr);
+		break;
+	case TDLS_DELETE_ALL_PEERS_INDICATION:
+		tdls_reset_all_peers(msg->bodyptr);
 		break;
 	default:
 		break;
@@ -1149,6 +1252,37 @@ QDF_STATUS tdls_peers_deleted_notification(
 					QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		qdf_mem_free(notify);
+		tdls_alert("message post failed ");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS tdls_delete_all_peers_indication(
+		struct tdls_delete_all_peers_params *delete_peers_ind)
+{
+	struct scheduler_msg msg = {0, };
+	struct tdls_delete_all_peers_params *indication;
+	QDF_STATUS status;
+
+	indication = qdf_mem_malloc(sizeof(*indication));
+	if (!indication) {
+		tdls_err("memory allocation failed !!!");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	*indication = *delete_peers_ind;
+
+	msg.bodyptr = indication;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_DELETE_ALL_PEERS_INDICATION;
+
+	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_OS_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(indication);
 		tdls_alert("message post failed ");
 		return QDF_STATUS_E_FAILURE;
 	}

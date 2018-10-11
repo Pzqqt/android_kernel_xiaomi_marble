@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -157,5 +157,17 @@ QDF_STATUS tgt_tdls_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
  */
 void tgt_tdls_peers_deleted_notification(struct wlan_objmgr_psoc *psoc,
 					 uint32_t session_id);
+
+/**
+ * tgt_tdls_delete_all_peers_indication()- Indication to tdls component
+ * @psoc: soc object
+ * @session_id: session id
+ *
+ * This function called from legacy lim to tdls component to delete tdls peers.
+ *
+ * Return: None
+ */
+void tgt_tdls_delete_all_peers_indication(struct wlan_objmgr_psoc *psoc,
+					  uint32_t session_id);
 
 #endif
