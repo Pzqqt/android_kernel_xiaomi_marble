@@ -573,6 +573,9 @@ QDF_STATUS sme_ser_cmd_callback(void *buf,
 		break;
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
 		sme_debug("WLAN_SER_CB_RELEASE_MEM_CMD callback");
+		if (cmd->vdev)
+			wlan_objmgr_vdev_release_ref(cmd->vdev,
+						     WLAN_LEGACY_SME_ID);
 		sme_cmd = cmd->umac_cmd;
 		csr_release_command_buffer(mac_ctx, sme_cmd);
 		break;

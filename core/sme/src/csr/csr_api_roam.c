@@ -20437,9 +20437,6 @@ QDF_STATUS csr_queue_sme_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd,
 	ser_cmd_status = wlan_serialization_request(&cmd);
 	sme_debug("wlan_serialization_request status:%d", ser_cmd_status);
 
-	if (vdev)
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
-
 	switch (ser_cmd_status) {
 	case WLAN_SER_CMD_PENDING:
 	case WLAN_SER_CMD_ACTIVE:
@@ -20460,7 +20457,11 @@ QDF_STATUS csr_queue_sme_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd,
 	return status;
 
 error:
+	if (vdev)
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
 	csr_release_command_buffer(mac_ctx, sme_cmd);
+
 	return QDF_STATUS_E_FAILURE;
 }
 
