@@ -3280,7 +3280,7 @@ void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
 	 * for TDLS link
 	 *
 	 * Enable AddrY (SA based search) only for non-WDS STA and
-	 * ProxySTA VAP modes.
+	 * ProxySTA VAP (in HKv1) modes.
 	 *
 	 * In all other VAP modes, only DA based search should be
 	 * enabled
@@ -3289,8 +3289,10 @@ void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
 	    vdev->tdls_link_connected)
 		vdev->hal_desc_addr_search_flags =
 			(HAL_TX_DESC_ADDRX_EN | HAL_TX_DESC_ADDRY_EN);
-	else if ((vdev->opmode == wlan_op_mode_sta &&
-				(!vdev->wds_enabled || vdev->proxysta_vdev)))
+	else if ((vdev->opmode == wlan_op_mode_sta) &&
+		 (!vdev->wds_enabled ||
+		 (vdev->proxysta_vdev &&
+			  !soc->ast_override_support)))
 		vdev->hal_desc_addr_search_flags = HAL_TX_DESC_ADDRY_EN;
 	else
 		vdev->hal_desc_addr_search_flags = HAL_TX_DESC_ADDRX_EN;
