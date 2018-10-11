@@ -233,6 +233,8 @@ QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
 
 	if (!hif_needs_bmi(scn))
 		return QDF_STATUS_SUCCESS;
+	else
+		hif_register_bmi_callbacks(scn);
 
 	return bmi_firmware_download(ol_ctx);
 }
