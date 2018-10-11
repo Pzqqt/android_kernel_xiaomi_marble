@@ -2630,6 +2630,16 @@ struct hdd_adapter *hdd_get_adapter_by_iface_name(struct hdd_context *hdd_ctx,
 enum phy_ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width);
 
 /**
+ * hdd_nl_to_qdf_iface_type() - map nl80211_iftype to QDF_OPMODE
+ * @nl_type: the input NL80211 interface type to map
+ * @out_qdf_type: the output, equivalent QDF operating mode
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_nl_to_qdf_iface_type(enum nl80211_iftype nl_type,
+				    enum QDF_OPMODE *out_qdf_type);
+
+/**
  * wlan_hdd_find_opclass() - Find operating class for a channel
  * @mac_handle: global MAC handle
  * @channel: channel id

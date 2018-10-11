@@ -802,6 +802,45 @@ enum phy_ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width)
 	}
 }
 
+QDF_STATUS hdd_nl_to_qdf_iface_type(enum nl80211_iftype nl_type,
+				    enum QDF_OPMODE *out_qdf_type)
+{
+	switch (nl_type) {
+	case NL80211_IFTYPE_ADHOC:
+		*out_qdf_type = QDF_IBSS_MODE;
+		break;
+	case NL80211_IFTYPE_AP:
+		*out_qdf_type = QDF_SAP_MODE;
+		break;
+	case NL80211_IFTYPE_MONITOR:
+		*out_qdf_type = QDF_MONITOR_MODE;
+		break;
+	case NL80211_IFTYPE_OCB:
+		*out_qdf_type = QDF_OCB_MODE;
+		break;
+	case NL80211_IFTYPE_P2P_CLIENT:
+		*out_qdf_type = QDF_P2P_CLIENT_MODE;
+		break;
+	case NL80211_IFTYPE_P2P_DEVICE:
+		*out_qdf_type = QDF_P2P_DEVICE_MODE;
+		break;
+	case NL80211_IFTYPE_P2P_GO:
+		*out_qdf_type = QDF_P2P_GO_MODE;
+		break;
+	case NL80211_IFTYPE_STATION:
+		*out_qdf_type = QDF_STA_MODE;
+		break;
+	case NL80211_IFTYPE_WDS:
+		*out_qdf_type = QDF_WDS_MODE;
+		break;
+	default:
+		hdd_err("Invalid nl80211 interface type %d", nl_type);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 uint8_t wlan_hdd_find_opclass(mac_handle_t mac_handle, uint8_t channel,
 			      uint8_t bw_offset)
 {
