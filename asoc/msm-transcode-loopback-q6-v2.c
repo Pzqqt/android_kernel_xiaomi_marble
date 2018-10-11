@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -58,7 +58,7 @@ struct msm_transcode_audio_effects {
 struct trans_loopback_pdata {
 	struct snd_compr_stream *cstream[MSM_FRONTEND_DAI_MAX];
 	uint32_t master_gain;
-	int perf_mode;
+	int perf_mode[MSM_FRONTEND_DAI_MAX];
 	struct msm_transcode_audio_effects *audio_effects[MSM_FRONTEND_DAI_MAX];
 };
 
@@ -66,6 +66,7 @@ struct loopback_stream {
 	struct snd_compr_stream *cstream;
 	uint32_t codec_format;
 	bool start;
+	int perf_mode;
 };
 
 enum loopback_session_state {
@@ -461,6 +462,7 @@ static int msm_transcode_loopback_set_params(struct snd_compr_stream *cstream,
 			goto exit;
 		}
 		trans->sink.start = true;
+		trans->sink.perf_mode = pdata->perf_mode[rtd->dai_link->id];
 	}
 
 	if (cstream->direction == SND_COMPRESS_CAPTURE) {
@@ -486,6 +488,7 @@ static int msm_transcode_loopback_set_params(struct snd_compr_stream *cstream,
 			goto exit;
 		}
 		trans->source.start = true;
+		trans->source.perf_mode = pdata->perf_mode[rtd->dai_link->id];
 	}
 
 	pr_debug("%s: trans->source.start %d trans->sink.start %d trans->source.cstream %pK trans->sink.cstream %pK trans->session_state %d\n",
@@ -517,7 +520,7 @@ static int msm_transcode_loopback_set_params(struct snd_compr_stream *cstream,
 		pr_debug("%s: ASM client allocated, callback %pK\n", __func__,
 						loopback_event_handler);
 		trans->session_id = trans->audio_client->session;
-		trans->audio_client->perf_mode = pdata->perf_mode;
+		trans->audio_client->perf_mode = trans->sink.perf_mode;
 		ret = q6asm_open_transcode_loopback(trans->audio_client,
 					bit_width,
 					trans->source.codec_format,
@@ -543,13 +546,13 @@ static int msm_transcode_loopback_set_params(struct snd_compr_stream *cstream,
 		else
 			msm_pcm_routing_reg_phy_stream(
 					soc_pcm_tx->dai_link->id,
-					trans->audio_client->perf_mode,
+					trans->source.perf_mode,
 					trans->session_id,
 					SNDRV_PCM_STREAM_CAPTURE);
 		/* Opening Rx ADM in LOW_LATENCY mode by default */
 		msm_pcm_routing_reg_phy_stream(
 					soc_pcm_rx->dai_link->id,
-					trans->audio_client->perf_mode,
+					trans->sink.perf_mode,
 					trans->session_id,
 					SNDRV_PCM_STREAM_PLAYBACK);
 		pr_debug("%s: Successfully opened ADM sessions\n", __func__);
@@ -614,15 +617,16 @@ static int msm_transcode_loopback_set_metadata(struct snd_compr_stream *cstream,
 	{
 		switch (metadata->value[0]) {
 		case SNDRV_COMPRESS_LEGACY_LATENCY_MODE:
-			pdata->perf_mode = LEGACY_PCM_MODE;
+			pdata->perf_mode[rtd->dai_link->id] = LEGACY_PCM_MODE;
 			break;
 		case SNDRV_COMPRESS_LOW_LATENCY_MODE:
-			pdata->perf_mode = LOW_LATENCY_PCM_MODE;
+			pdata->perf_mode[rtd->dai_link->id] =
+					LOW_LATENCY_PCM_MODE;
 			break;
 		default:
 			pr_debug("%s: Unsupported latency mode %d, default to Legacy\n",
 					__func__, metadata->value[0]);
-			pdata->perf_mode = LEGACY_PCM_MODE;
+			pdata->perf_mode[rtd->dai_link->id] = LEGACY_PCM_MODE;
 			break;
 		}
 		break;
@@ -1539,9 +1543,10 @@ static int msm_transcode_loopback_probe(struct snd_soc_component *component)
 	if (!pdata)
 		return -ENOMEM;
 
-	pdata->perf_mode = LOW_LATENCY_PCM_MODE;
-	for (i = 0; i < MSM_FRONTEND_DAI_MAX; i++)
+	for (i = 0; i < MSM_FRONTEND_DAI_MAX; i++) {
 		pdata->audio_effects[i] = NULL;
+		pdata->perf_mode[i] = LOW_LATENCY_PCM_MODE;
+	}
 
 	snd_soc_component_set_drvdata(component, pdata);
 	return 0;
