@@ -375,3 +375,50 @@ void tgt_tdls_peers_deleted_notification(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
+/**
+ * tgt_tdls_delete_all_peers_ind_callback()- Callback to call from
+ * TDLS component
+ * @psoc: soc object
+ * @session_id: session id
+ *
+ * This function release the obj mgr vdev ref
+ *
+ * Return: None
+ */
+static void tgt_tdls_delete_all_peers_ind_callback(
+			struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		tdls_err("vdev is NULL");
+		return;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_SB_ID);
+}
+
+void tgt_tdls_delete_all_peers_indication(struct wlan_objmgr_psoc *psoc,
+					  uint32_t session_id)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct tdls_delete_all_peers_params delete_peers_ind;
+	QDF_STATUS status;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+						    session_id,
+						    WLAN_TDLS_SB_ID);
+
+	if (!vdev) {
+		tdls_err("vdev not exist for the session id %d",
+			 session_id);
+		return;
+	}
+
+	delete_peers_ind.vdev = vdev;
+	delete_peers_ind.callback = tgt_tdls_delete_all_peers_ind_callback;
+	status = tdls_delete_all_peers_indication(&delete_peers_ind);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("tdls_delete_all_peers_indication failed");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_SB_ID);
+	}
+}
+
