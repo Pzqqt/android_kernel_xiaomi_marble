@@ -2025,10 +2025,11 @@ void wlan_objmgr_psoc_check_for_pdev_leaks(struct wlan_objmgr_psoc *psoc)
 		return;
 	}
 
-	obj_mgr_err("objmgr pdev leaks detected for psoc %u!", _psoc->psoc_id);
-	obj_mgr_err("--------------------------------------------------------");
-	obj_mgr_err("Pdev Id   Refs   Module");
-	obj_mgr_err("--------------------------------------------------------");
+	obj_mgr_alert("objmgr pdev leaks detected for psoc %u!",
+		      _psoc->psoc_id);
+	obj_mgr_alert("----------------------------------------------------");
+	obj_mgr_alert("Pdev Id   Refs   Module");
+	obj_mgr_alert("----------------------------------------------------");
 
 	wlan_objmgr_for_each_psoc_pdev(psoc, pdev_id, pdev) {
 		qdf_atomic_t *ref_id_dbg;
@@ -2039,8 +2040,9 @@ void wlan_objmgr_psoc_check_for_pdev_leaks(struct wlan_objmgr_psoc *psoc)
 		ref_id_dbg = pdev->pdev_objmgr.ref_id_dbg;
 		wlan_objmgr_for_each_refs(ref_id_dbg, ref_id, refs) {
 			leaks++;
-			obj_mgr_err("%7u   %4u   %s",
-				    pdev_id, refs, string_from_dbgid(ref_id));
+			obj_mgr_alert("%7u   %4u   %s",
+				      pdev_id, refs,
+				      string_from_dbgid(ref_id));
 		}
 		wlan_pdev_obj_unlock(pdev);
 	}
@@ -2070,10 +2072,11 @@ void wlan_objmgr_psoc_check_for_vdev_leaks(struct wlan_objmgr_psoc *psoc)
 		return;
 	}
 
-	obj_mgr_err("objmgr vdev leaks detected for psoc %u!", _psoc->psoc_id);
-	obj_mgr_err("--------------------------------------------------------");
-	obj_mgr_err("Vdev Id   Refs   Module");
-	obj_mgr_err("--------------------------------------------------------");
+	obj_mgr_alert("objmgr vdev leaks detected for psoc %u!",
+		      _psoc->psoc_id);
+	obj_mgr_alert("----------------------------------------------------");
+	obj_mgr_alert("Vdev Id   Refs   Module");
+	obj_mgr_alert("----------------------------------------------------");
 
 	wlan_objmgr_for_each_psoc_vdev(psoc, vdev_id, vdev) {
 		qdf_atomic_t *ref_id_dbg;
@@ -2084,8 +2087,8 @@ void wlan_objmgr_psoc_check_for_vdev_leaks(struct wlan_objmgr_psoc *psoc)
 		ref_id_dbg = vdev->vdev_objmgr.ref_id_dbg;
 		wlan_objmgr_for_each_refs(ref_id_dbg, ref_id, refs) {
 			leaks++;
-			obj_mgr_err("%7u   %4u   %s",
-				    vdev_id, refs, string_from_dbgid(ref_id));
+			obj_mgr_alert("%7u   %4u   %s",
+				      vdev_id, refs, string_from_dbgid(ref_id));
 		}
 		wlan_vdev_obj_unlock(vdev);
 	}
@@ -2107,22 +2110,22 @@ wlan_objmgr_print_peer_ref_leaks(struct wlan_objmgr_peer *peer, int vdev_id)
 
 	ref_id_dbg = peer->peer_objmgr.ref_id_dbg;
 	wlan_objmgr_for_each_refs(ref_id_dbg, ref_id, refs) {
-		obj_mgr_err(QDF_MAC_ADDR_STR " %7u   %4u   %s",
-			    QDF_MAC_ADDR_ARRAY(peer->macaddr),
-			    vdev_id,
-			    refs,
-			    string_from_dbgid(ref_id));
+		obj_mgr_alert(QDF_MAC_ADDR_STR " %7u   %4u   %s",
+			      QDF_MAC_ADDR_ARRAY(peer->macaddr),
+			      vdev_id,
+			      refs,
+			      string_from_dbgid(ref_id));
 	}
 }
 #else
 static inline void
 wlan_objmgr_print_peer_ref_leaks(struct wlan_objmgr_peer *peer, int vdev_id)
 {
-	obj_mgr_err(QDF_MAC_ADDR_STR " %7u   %4u   %s",
-		    QDF_MAC_ADDR_ARRAY(peer->macaddr),
-		    vdev_id,
-		    qdf_atomic_read(&peer->peer_objmgr.ref_cnt),
-		    "TOTAL_REF_COUNT");
+	obj_mgr_alert(QDF_MAC_ADDR_STR " %7u   %4u   %s",
+		      QDF_MAC_ADDR_ARRAY(peer->macaddr),
+		      vdev_id,
+		      qdf_atomic_read(&peer->peer_objmgr.ref_cnt),
+		      "TOTAL_REF_COUNT");
 }
 #endif
 
@@ -2144,10 +2147,11 @@ void wlan_objmgr_psoc_check_for_peer_leaks(struct wlan_objmgr_psoc *psoc)
 		return;
 	}
 
-	obj_mgr_err("objmgr peer leaks detected for psoc %u!", _psoc->psoc_id);
-	obj_mgr_err("--------------------------------------------------------");
-	obj_mgr_err("Peer MAC          Vdev Id   Refs   Module");
-	obj_mgr_err("--------------------------------------------------------");
+	obj_mgr_alert("objmgr peer leaks detected for psoc %u!",
+		      _psoc->psoc_id);
+	obj_mgr_alert("----------------------------------------------------");
+	obj_mgr_alert("Peer MAC          Vdev Id   Refs   Module");
+	obj_mgr_alert("----------------------------------------------------");
 
 	wlan_objmgr_for_each_psoc_vdev(psoc, vdev_id, vdev) {
 		struct wlan_objmgr_peer *peer;
