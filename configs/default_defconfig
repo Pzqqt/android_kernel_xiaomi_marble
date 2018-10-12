@@ -211,7 +211,9 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	CONFIG_WLAN_FEATURE_SAE := y
 
 	#Flag to enable Fast Path feature
-	CONFIG_WLAN_FASTPATH := y
+	ifeq ($(CONFIG_LITHIUM), n)
+		CONFIG_WLAN_FASTPATH := y
+	endif
 
 	# Flag to enable NAPI
 	CONFIG_WLAN_NAPI := y
