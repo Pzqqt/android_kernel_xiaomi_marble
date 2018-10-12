@@ -11511,16 +11511,16 @@ void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp, void *context)
 		return;
 	}
 
-	hdd_info("rsp->arp_req_enqueue :%x", rsp->arp_req_enqueue);
-	hdd_info("rsp->arp_req_tx_success :%x", rsp->arp_req_tx_success);
-	hdd_info("rsp->arp_req_tx_failure :%x", rsp->arp_req_tx_failure);
-	hdd_info("rsp->arp_rsp_recvd :%x", rsp->arp_rsp_recvd);
-	hdd_info("rsp->out_of_order_arp_rsp_drop_cnt :%x",
-		 rsp->out_of_order_arp_rsp_drop_cnt);
-	hdd_info("rsp->dad_detected :%x", rsp->dad_detected);
-	hdd_info("rsp->connect_status :%x", rsp->connect_status);
-	hdd_info("rsp->ba_session_establishment_status :%x",
-		 rsp->ba_session_establishment_status);
+	hdd_debug("rsp->arp_req_enqueue :%x", rsp->arp_req_enqueue);
+	hdd_debug("rsp->arp_req_tx_success :%x", rsp->arp_req_tx_success);
+	hdd_debug("rsp->arp_req_tx_failure :%x", rsp->arp_req_tx_failure);
+	hdd_debug("rsp->arp_rsp_recvd :%x", rsp->arp_rsp_recvd);
+	hdd_debug("rsp->out_of_order_arp_rsp_drop_cnt :%x",
+		  rsp->out_of_order_arp_rsp_drop_cnt);
+	hdd_debug("rsp->dad_detected :%x", rsp->dad_detected);
+	hdd_debug("rsp->connect_status :%x", rsp->connect_status);
+	hdd_debug("rsp->ba_session_establishment_status :%x",
+		  rsp->ba_session_establishment_status);
 
 	adapter->hdd_stats.hdd_arp_stats.rx_fw_cnt = rsp->arp_rsp_recvd;
 	adapter->dad |= rsp->dad_detected;
@@ -11528,8 +11528,8 @@ void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp, void *context)
 
 	/* Flag true indicates connectivity check stats present. */
 	if (rsp->connect_stats_present) {
-		hdd_info("rsp->tcp_ack_recvd :%x", rsp->tcp_ack_recvd);
-		hdd_info("rsp->icmpv4_rsp_recvd :%x", rsp->icmpv4_rsp_recvd);
+		hdd_debug("rsp->tcp_ack_recvd :%x", rsp->tcp_ack_recvd);
+		hdd_debug("rsp->icmpv4_rsp_recvd :%x", rsp->icmpv4_rsp_recvd);
 		adapter->hdd_stats.hdd_tcp_stats.rx_fw_cnt = rsp->tcp_ack_recvd;
 		adapter->hdd_stats.hdd_icmpv4_stats.rx_fw_cnt =
 							rsp->icmpv4_rsp_recvd;
