@@ -73,6 +73,7 @@ static void sched_history_start(struct scheduler_msg *msg)
 		.type_id = msg->type,
 		.queue_start_us = msg->queued_at_us,
 		.queue_duration_us = started_at_us - msg->queued_at_us,
+		.queue_depth = msg->queue_depth,
 		.run_start_us = started_at_us,
 	};
 
