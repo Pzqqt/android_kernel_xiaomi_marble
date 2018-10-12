@@ -229,92 +229,16 @@ error:
 	return status;
 }
 
-QDF_STATUS
-wlan_serialization_activate_multiple_cmd(
-		struct wlan_ser_pdev_obj *ser_pdev_obj)
-{
-	struct wlan_serialization_pdev_queue *pdev_queue;
-	qdf_list_t *active_queue;
-	QDF_STATUS peek_status = QDF_STATUS_E_FAILURE;
-	struct wlan_serialization_command_list *active_cmd_list;
-	uint32_t qsize;
-	uint32_t vdev_id;
-	qdf_list_node_t *nnode = NULL;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct wlan_objmgr_psoc *psoc = NULL;
-
-	pdev_queue = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_NON_SCAN];
-
-	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
-
-	active_queue = &pdev_queue->active_list;
-	qsize =  wlan_serialization_list_size(active_queue);
-
-	while (qsize--) {
-		peek_status = wlan_serialization_get_cmd_from_queue(
-				active_queue, &nnode);
-
-		if (peek_status != QDF_STATUS_SUCCESS) {
-			ser_err("can't peek cmd");
-			break;
-		}
-
-		active_cmd_list = qdf_container_of(
-				nnode, struct wlan_serialization_command_list,
-				pdev_node);
-
-		if (!qdf_atomic_test_bit(CMD_MARKED_FOR_ACTIVATION,
-					 &active_cmd_list->cmd_in_use)) {
-			continue;
-		}
-
-		qdf_atomic_clear_bit(CMD_MARKED_FOR_ACTIVATION,
-				     &active_cmd_list->cmd_in_use);
-
-		qdf_atomic_set_bit(CMD_IS_ACTIVE,
-				   &active_cmd_list->cmd_in_use);
-
-		vdev_id = wlan_vdev_get_id(active_cmd_list->cmd.vdev);
-		pdev_queue->vdev_active_cmd_bitmap |= (1 << vdev_id);
-
-		if (active_cmd_list->cmd.is_blocking)
-			pdev_queue->blocking_cmd_active = 1;
-
-		/*
-		 * Command is already pushed to active queue.
-		 * Now start the timer.
-		 */
-		psoc = wlan_vdev_get_psoc(active_cmd_list->cmd.vdev);
-		wlan_serialization_find_and_start_timer(psoc,
-							&active_cmd_list->cmd);
-
-		ser_debug("cmd cb: type[%d] id[%d] : reason: %s",
-			  active_cmd_list->cmd.cmd_type,
-			  active_cmd_list->cmd.cmd_id,
-			  "WLAN_SER_CB_ACTIVATE_CMD");
-
-		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
-
-		status = active_cmd_list->cmd.cmd_cb(&active_cmd_list->cmd,
-					    WLAN_SER_CB_ACTIVATE_CMD);
-
-		if (QDF_IS_STATUS_ERROR(status))
-			wlan_serialization_dequeue_cmd(&active_cmd_list->cmd,
-						       true);
-
-		wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
-	}
-
-	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
-	return status;
-}
-
 QDF_STATUS wlan_serialization_activate_cmd(
 			struct wlan_serialization_command_list *cmd_list,
 			struct wlan_ser_pdev_obj *ser_pdev_obj)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_serialization_pdev_queue *pdev_queue;
+
+	pdev_queue = wlan_serialization_get_pdev_queue_obj(
+			ser_pdev_obj, cmd_list->cmd.cmd_type);
 
 	psoc = wlan_vdev_get_psoc(cmd_list->cmd.vdev);
 	if (!psoc) {
@@ -343,10 +267,14 @@ QDF_STATUS wlan_serialization_activate_cmd(
 	status = cmd_list->cmd.cmd_cb(&cmd_list->cmd,
 				WLAN_SER_CB_ACTIVATE_CMD);
 
+	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
+
 	qdf_atomic_clear_bit(CMD_MARKED_FOR_ACTIVATION,
 			     &cmd_list->cmd_in_use);
 	qdf_atomic_set_bit(CMD_IS_ACTIVE,
 			   &cmd_list->cmd_in_use);
+
+	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
 	if (QDF_IS_STATUS_ERROR(status))
 		wlan_serialization_dequeue_cmd(&cmd_list->cmd, true);
@@ -386,34 +314,22 @@ error:
 enum wlan_serialization_status
 wlan_serialization_move_pending_to_active(
 		enum wlan_serialization_cmd_type cmd_type,
-		struct wlan_serialization_command_list **pcmd_list,
 		struct wlan_ser_pdev_obj *ser_pdev_obj,
 		struct wlan_objmgr_vdev *vdev,
-		bool blocking_cmd_removed,
-		bool blocking_cmd_waiting)
+		bool blocking_cmd_removed)
 {
 	enum wlan_serialization_status status;
-	struct wlan_serialization_pdev_queue *pdev_queue;
 
 	if (cmd_type < WLAN_SER_CMD_NONSCAN) {
 		status =
 		wlan_ser_move_scan_pending_to_active(
-				pcmd_list,
 				ser_pdev_obj);
 	} else {
-		pdev_queue =
-			&ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_NON_SCAN];
-
-		if (!blocking_cmd_removed && !blocking_cmd_waiting)
-			status =
-			wlan_ser_move_non_scan_pending_to_active(
-				pcmd_list,
+		status =
+		wlan_ser_move_non_scan_pending_to_active(
 				ser_pdev_obj,
-				vdev);
-		else
-			status =
-			wlan_ser_move_multiple_non_scan_pending_to_active(
-				ser_pdev_obj);
+				vdev,
+				blocking_cmd_removed);
 	}
 
 	return status;
@@ -434,10 +350,8 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 	struct wlan_ser_pdev_obj *ser_pdev_obj;
 	struct wlan_serialization_command cmd_bkup;
 	struct wlan_serialization_command_list *cmd_list;
-	struct wlan_serialization_command_list *pcmd_list;
 	struct wlan_serialization_pdev_queue *pdev_queue;
 	bool blocking_cmd_removed = 0;
-	bool blocking_cmd_waiting = 0;
 
 	ser_enter();
 
@@ -490,11 +404,12 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 	}
 
 	if (active_cmd) {
-		wlan_serialization_find_and_stop_timer(psoc, &cmd_list->cmd);
-
 		if (cmd_list->cmd.cmd_type >= WLAN_SER_CMD_NONSCAN)
 			blocking_cmd_removed = cmd_list->cmd.is_blocking;
 	}
+
+	if (active_cmd)
+		wlan_serialization_find_and_stop_timer(psoc, &cmd_list->cmd);
 
 	qdf_mem_copy(&cmd_bkup, &cmd_list->cmd,
 		     sizeof(struct wlan_serialization_command));
@@ -503,32 +418,6 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 	qdf_status = wlan_serialization_insert_back(
 			&pdev_queue->cmd_pool_list,
 			&cmd_list->pdev_node);
-
-	/*
-	 * For NON SCAN commands, the following is possible:
-	 *
-	 * If the remove is for non blocking command,
-	 * and there is no blocking command waiting,
-	 * look at vdev pending queue and
-	 * only one command moves from pending
-	 * to active
-	 *
-	 * If the remove is for blocking comamnd,
-	 * look at the pdev queue and
-	 * either single blocking command
-	 * or multiple non blocking commands moves
-	 * from pending to active
-	 */
-
-	blocking_cmd_waiting = pdev_queue->blocking_cmd_waiting;
-
-	if (active_cmd) {
-		ser_status = wlan_serialization_move_pending_to_active(
-			cmd_bkup.cmd_type, &pcmd_list, ser_pdev_obj,
-			cmd_bkup.vdev,
-			blocking_cmd_removed,
-			blocking_cmd_waiting);
-	}
 
 	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
@@ -543,31 +432,13 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 				     WLAN_SER_CB_RELEASE_MEM_CMD);
 	}
 
-	/*
-	 * If the remove is for non blocking command,
-	 * and there is no blocking command waiting,
-	 * look at vdev pending queue and
-	 * only one command moves from pending
-	 * to active and gets activated
-	 */
-	if (WLAN_SER_CMD_ACTIVE == ser_status && !blocking_cmd_removed &&
-	    !blocking_cmd_waiting) {
-		ser_debug("cmd type[%d] id[%d] moved from pending to active",
-			  pcmd_list->cmd.cmd_type,
-			  pcmd_list->cmd.cmd_id);
-		wlan_serialization_activate_cmd(pcmd_list,
-						ser_pdev_obj);
-	} else if (ser_status == WLAN_SER_CMD_ACTIVE) {
-		/* If the remove is for blocking command
-		 * either one or multiple commands can move
-		 * from pending to active and gets activated
-		 */
-		wlan_serialization_activate_multiple_cmd(ser_pdev_obj);
-	} else {
-		goto exit;
+	if (active_cmd) {
+		ser_status = wlan_serialization_move_pending_to_active(
+			cmd_bkup.cmd_type, ser_pdev_obj,
+			cmd_bkup.vdev,
+			blocking_cmd_removed);
 	}
 
-exit:
 	if (active_cmd)
 		status = WLAN_SER_CMD_IN_ACTIVE_LIST;
 	else
@@ -665,7 +536,7 @@ wlan_serialization_find_and_stop_timer(struct wlan_objmgr_psoc *psoc,
 
 	if (!psoc || !cmd) {
 		ser_err("invalid param");
-		goto error;
+		goto exit;
 	}
 
 	if (cmd->cmd_timeout_duration == 0) {
@@ -680,9 +551,7 @@ wlan_serialization_find_and_stop_timer(struct wlan_objmgr_psoc *psoc,
 	psoc_ser_obj = wlan_serialization_get_psoc_obj(psoc);
 	/*
 	 * Here cmd_id and cmd_type are used to locate the timer being
-	 * associated with command. For scan command, cmd_id is expected to
-	 * be unique and For non-scan command, there should be only one active
-	 * command per pdev
+	 * associated with command.
 	 */
 	wlan_serialization_acquire_lock(&psoc_ser_obj->timer_lock);
 
@@ -708,10 +577,7 @@ wlan_serialization_find_and_stop_timer(struct wlan_objmgr_psoc *psoc,
 		ser_err("Can't find timer for cmd_type[%d]", cmd->cmd_type);
 	}
 
-
-error:
 exit:
-
 	return status;
 }
 

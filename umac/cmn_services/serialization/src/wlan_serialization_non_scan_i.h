@@ -73,20 +73,9 @@ wlan_ser_add_non_scan_cmd(
  */
 enum wlan_serialization_status
 wlan_ser_move_non_scan_pending_to_active(
-		struct wlan_serialization_command_list **pcmd_list,
 		struct wlan_ser_pdev_obj *ser_pdev_obj,
-		struct wlan_objmgr_vdev *vdev);
-
-/**
- * wlan_ser_move_multiple_non_scan_pending_to_active() - Move multiple non-scan
- *			cmd from pending queue to active queue
- * @ser_pdev_obj: Serialization private pdev object
- *
- * Return: Status of the cmd's serialization request
- */
-enum wlan_serialization_status
-wlan_ser_move_multiple_non_scan_pending_to_active(
-		struct wlan_ser_pdev_obj *ser_pdev_obj);
+		struct wlan_objmgr_vdev *vdev,
+		bool blocking_cmd_removed);
 
 /**
  * wlan_ser_remove_non_scan_cmd() - Remove a non-scan cmd from the given queue

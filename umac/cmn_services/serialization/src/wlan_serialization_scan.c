@@ -317,28 +317,41 @@ error:
 	return status;
 }
 
-static struct wlan_serialization_command_list*
-wlan_serialization_get_next_scan_active_cmd(
+enum wlan_serialization_status wlan_ser_move_scan_pending_to_active(
 		struct wlan_ser_pdev_obj *ser_pdev_obj)
 {
+	struct wlan_serialization_command_list *pending_cmd_list = NULL;
+	struct wlan_serialization_command_list *active_cmd_list;
+	struct wlan_serialization_command cmd_to_remove;
+	enum wlan_serialization_status status = WLAN_SER_CMD_DENIED_UNSPECIFIED;
+	QDF_STATUS qdf_status;
+	struct wlan_serialization_pdev_queue *pdev_queue;
 	qdf_list_t *pending_queue;
 	qdf_list_node_t *pending_node = NULL;
-	struct wlan_serialization_command_list *pending_cmd_list = NULL;
-	struct wlan_serialization_pdev_queue *pdev_q;
-	QDF_STATUS status;
 
-	pdev_q = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_SCAN];
+	pdev_queue = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_SCAN];
 
-	pending_queue = &pdev_q->pending_list;
+	ser_enter();
+
+	if (!ser_pdev_obj) {
+		ser_err("Can't find ser_pdev_obj");
+		goto error;
+	}
+
+	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
+
+	pending_queue = &pdev_queue->pending_list;
 
 	if (wlan_serialization_list_empty(pending_queue)) {
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 		ser_debug("nothing to move from pend to active que");
 		goto error;
 	}
 
-	status = wlan_serialization_peek_front(pending_queue,
-					       &pending_node);
-	if (QDF_STATUS_SUCCESS != status) {
+	qdf_status = wlan_serialization_peek_front(pending_queue,
+						   &pending_node);
+	if (QDF_STATUS_SUCCESS != qdf_status) {
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 		ser_err("can't read from pending queue");
 		goto error;
 	}
@@ -348,36 +361,10 @@ wlan_serialization_get_next_scan_active_cmd(
 				 struct wlan_serialization_command_list,
 				 pdev_node);
 
-	ser_debug("next active scan cmd found from pending queue");
-error:
-	return pending_cmd_list;
-}
-
-enum wlan_serialization_status wlan_ser_move_scan_pending_to_active(
-		struct wlan_serialization_command_list **pcmd_list,
-		struct wlan_ser_pdev_obj *ser_pdev_obj)
-{
-	struct wlan_serialization_command_list *pending_cmd_list;
-	struct wlan_serialization_command_list *active_cmd_list;
-	struct wlan_serialization_command cmd_to_remove;
-	enum wlan_serialization_status status = WLAN_SER_CMD_DENIED_UNSPECIFIED;
-	QDF_STATUS qdf_status;
-	struct wlan_serialization_pdev_queue *pdev_q;
-
-	pdev_q = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_SCAN];
-
-	ser_enter();
-
-	if (!ser_pdev_obj) {
-		ser_err("Can't find ser_pdev_obj");
+	if (!pending_cmd_list) {
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 		goto error;
 	}
-
-	pending_cmd_list =
-		wlan_serialization_get_next_scan_active_cmd(ser_pdev_obj);
-
-	if (!pending_cmd_list)
-		goto error;
 
 	qdf_mem_copy(&cmd_to_remove, &pending_cmd_list->cmd,
 		     sizeof(struct wlan_serialization_command));
@@ -388,6 +375,7 @@ enum wlan_serialization_status wlan_ser_move_scan_pending_to_active(
 					 &cmd_to_remove, false);
 
 	if (QDF_STATUS_SUCCESS != qdf_status) {
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 		ser_err("Can't remove cmd from pendingQ id-%d type-%d",
 			pending_cmd_list->cmd.cmd_id,
 			pending_cmd_list->cmd.cmd_type);
@@ -403,9 +391,9 @@ enum wlan_serialization_status wlan_ser_move_scan_pending_to_active(
 
 	if (WLAN_SER_CMD_ACTIVE != status) {
 		wlan_serialization_insert_back(
-			&pdev_q->cmd_pool_list,
+			&pdev_queue->cmd_pool_list,
 			&active_cmd_list->pdev_node);
-
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 		status = WLAN_SER_CMD_DENIED_UNSPECIFIED;
 		ser_err("Can't add cmd to activeQ id-%d type-%d",
 			active_cmd_list->cmd.cmd_id,
@@ -417,8 +405,9 @@ enum wlan_serialization_status wlan_ser_move_scan_pending_to_active(
 	qdf_atomic_set_bit(CMD_MARKED_FOR_ACTIVATION,
 			   &active_cmd_list->cmd_in_use);
 
-	*pcmd_list = active_cmd_list;
+	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
+	wlan_serialization_activate_cmd(active_cmd_list, ser_pdev_obj);
 error:
 	ser_exit();
 	return status;

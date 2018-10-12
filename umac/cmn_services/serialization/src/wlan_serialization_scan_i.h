@@ -134,14 +134,12 @@ wlan_ser_cancel_scan_cmd(struct wlan_ser_pdev_obj *ser_obj,
 /**
  * wlan_ser_move_scan_pending_to_active() - Move a scan cmd from pending
  *			queue to active queue
- * @pcmd_list: Pointer to command list containing the command
  * @ser_pdev_obj: Serialization private pdev object
  *
  * Return: Status of the cmd's serialization request
  */
 enum wlan_serialization_status
 wlan_ser_move_scan_pending_to_active(
-		struct wlan_serialization_command_list **pcmd_list,
 		struct wlan_ser_pdev_obj *ser_pdev_obj);
 #endif
 

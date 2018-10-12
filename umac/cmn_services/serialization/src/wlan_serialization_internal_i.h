@@ -84,17 +84,6 @@ wlan_serialization_activate_cmd(
 		struct wlan_ser_pdev_obj *ser_pdev_obj);
 
 /**
- * wlan_serialization_activate_multiple_cmd() - Activate multiple cmd in
- *			active queue
- * @ser_pdev_obj: Serialization private pdev object
- *
- * Return: Status of activation of the command
- */
-QDF_STATUS
-wlan_serialization_activate_multiple_cmd(
-		struct wlan_ser_pdev_obj *ser_pdev_obj);
-
-/**
  * wlan_serialization_move_pending_to_active() - Move a cmd from pending
  *			queue to active queue
  * @cmd_type: Type of command to be moved i.e scan or non scan
@@ -109,11 +98,9 @@ wlan_serialization_activate_multiple_cmd(
 enum wlan_serialization_status
 wlan_serialization_move_pending_to_active(
 		enum wlan_serialization_cmd_type cmd_type,
-		struct wlan_serialization_command_list **pcmd_list,
 		struct wlan_ser_pdev_obj *ser_pdev_obj,
 		struct wlan_objmgr_vdev *vdev,
-		bool blocking_cmd_removed,
-		bool blocking_cmd_waiting);
+		bool blocking_cmd_removed);
 
 /**
  * wlan_serialization_dequeue_cmd() - dequeue the cmd to pending/active Queue
