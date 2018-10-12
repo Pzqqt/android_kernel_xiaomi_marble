@@ -2023,7 +2023,31 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		 key_params->def_key_idx);
 	WMA_LOGD("keyrsc param %llu", *(params.key_rsc_counter));
 
-	/* Set PN check & security type in data path */
+	/*
+	 * To prevent from any replay-attack, PN number provided by
+	 * upper layer is used.
+	 *
+	 * Plumb the PN number to HW which will be used to evaluate whether
+	 * incoming traffic is not replayed.
+	 *
+	 * supplicant would have some thing like following, example:
+	 *
+	 * num = 0x123456789ABCDEFF (64 bit number)
+	 * uint8_t keyrsc[16] would look like following
+	 *
+	 * bit  0      7      15      23      31      39      47      55      63
+	 *      +------+-------+-------+-------+-------+-------+-------+-------+
+	 * byte |  0   |   1   |   2   |   3   |   4   |   5   |   6   |   7   |
+	 *      +------+-------+-------+-------+-------+-------+-------+-------+
+	 * value| 0xFF |  0XDE | 0xBC  | 0x9A  | 0x78  | 0x56  | 0x34  | 0x12  |
+	 *      +------+-------+-------+-------+-------+-------+-------+-------+
+	 */
+	qdf_mem_copy(&pn[0],
+		     &key_params->key_rsc[0], sizeof(pn));
+	wma_debug("key_type[%s] pn[%x:%x:%x:%x]",
+		  (key_params->unicast) ? "unicast" : "group",
+		  key_params->key_rsc[3], key_params->key_rsc[2],
+		  key_params->key_rsc[1], key_params->key_rsc[0]);
 	cdp_set_pn_check(soc, txrx_vdev, peer, sec_type, pn);
 	cdp_set_key(soc, peer, key_params->unicast,
 		    (uint32_t *)(key_params->key_data +
