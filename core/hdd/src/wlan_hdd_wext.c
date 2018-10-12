@@ -2952,10 +2952,10 @@ static int hdd_check_wext_control(enum hdd_wext_control wext_control,
 	switch (wext_control) {
 	default:
 	case hdd_wext_disabled:
-		hdd_err("Rejecting disabled ioctl %x", info->cmd);
+		hdd_err_rl("Rejecting disabled ioctl %x", info->cmd);
 		return -ENOTSUPP;
 	case hdd_wext_deprecated:
-		hdd_warn("Using deprecated ioctl %x", info->cmd);
+		hdd_warn_rl("Using deprecated ioctl %x", info->cmd);
 		return 0;
 	case hdd_wext_enabled:
 		return 0;
