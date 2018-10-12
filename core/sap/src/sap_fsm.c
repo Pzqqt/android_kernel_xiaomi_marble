@@ -3676,6 +3676,16 @@ static int sap_start_dfs_cac_timer(struct sap_context *sap_ctx)
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: cac timer offloaded to firmware", __func__);
 		mac->sap.SapDfsInfo.is_dfs_cac_timer_running = true;
+#ifdef CONFIG_VDEV_SM
+		status =
+		     wlan_vdev_mlme_sm_deliver_evt(sap_ctx->vdev,
+						   WLAN_VDEV_SM_EV_DFS_CAC_WAIT,
+						   0, NULL);
+		if (QDF_IS_STATUS_ERROR(status))
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  "%s: failed to post WLAN_VDEV_SM_EV_DFS_CAC_WAIT",
+				  __func__);
+#endif
 		return 1;
 	}
 
