@@ -13070,6 +13070,56 @@ static int wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 }
 
 /**
+ * hdd_nl_to_policy_mgr_iface_type() - map nl80211_iftype to policy_mgr_con_mode
+ * @type: the input NL80211 interface type to map
+ *
+ * Return: policy_mgr_con_mode
+ */
+static enum policy_mgr_con_mode
+hdd_nl_to_policy_mgr_iface_type(enum nl80211_iftype type)
+{
+	switch (type) {
+	case NL80211_IFTYPE_STATION:
+		return PM_STA_MODE;
+	case NL80211_IFTYPE_P2P_CLIENT:
+		return PM_P2P_CLIENT_MODE;
+	case NL80211_IFTYPE_P2P_GO:
+		return PM_P2P_GO_MODE;
+	case NL80211_IFTYPE_AP:
+		return PM_SAP_MODE;
+	case NL80211_IFTYPE_ADHOC:
+		return PM_IBSS_MODE;
+	default:
+		hdd_err("Unsupported interface type: %d", type);
+		return PM_MAX_NUM_OF_MODE;
+	}
+}
+
+static bool hdd_is_client_mode(enum QDF_OPMODE mode)
+{
+	switch (mode) {
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_P2P_DEVICE_MODE:
+	case QDF_IBSS_MODE:
+		return true;
+	default:
+		return false;
+	}
+}
+
+static bool hdd_is_ap_mode(enum QDF_OPMODE mode)
+{
+	switch (mode) {
+	case QDF_SAP_MODE:
+	case QDF_P2P_GO_MODE:
+		return true;
+	default:
+		return false;
+	}
+}
+
+/**
  * __wlan_hdd_cfg80211_change_iface() - change interface cfg80211 op
  * @wiphy: Pointer to the wiphy structure
  * @ndev: Pointer to the net device
@@ -13085,17 +13135,16 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 					    u32 *flags,
 					    struct vif_params *params)
 {
-	struct wireless_dev *wdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct hdd_context *hdd_ctx;
-	int errno;
 	bool iff_up = ndev->flags & IFF_UP;
 	enum QDF_OPMODE new_mode;
 	QDF_STATUS status;
+	int errno;
 
 	hdd_enter();
 
-	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
@@ -13108,12 +13157,6 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_CHANGE_IFACE,
 			 adapter->session_id, type));
-
-	wdev = ndev->ieee80211_ptr;
-	if (!wdev) {
-		hdd_err("Wireless dev is NULL");
-		return -EINVAL;
-	}
 
 	status = hdd_nl_to_qdf_iface_type(type, &new_mode);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -13131,8 +13174,8 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	}
 
 	if (!policy_mgr_allow_concurrency(hdd_ctx->psoc,
-				wlan_hdd_convert_nl_iftype_to_hdd_type(type),
-				0, HW_MODE_20_MHZ)) {
+					  hdd_nl_to_policy_mgr_iface_type(type),
+					  0, HW_MODE_20_MHZ)) {
 		hdd_debug("This concurrency combination is not allowed");
 		return -EINVAL;
 	}
@@ -13146,38 +13189,18 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		hdd_notify_teardown_tdls_links(adapter->vdev);
 	}
 
-	if (adapter->device_mode == QDF_STA_MODE ||
-	    adapter->device_mode == QDF_P2P_CLIENT_MODE ||
-	    adapter->device_mode == QDF_P2P_DEVICE_MODE ||
-	    adapter->device_mode == QDF_IBSS_MODE) {
-		switch (new_mode) {
-		case QDF_STA_MODE:
-		case QDF_P2P_CLIENT_MODE:
-		case QDF_IBSS_MODE:
+	if (hdd_is_client_mode(adapter->device_mode)) {
+		if (hdd_is_client_mode(new_mode)) {
 			if (new_mode == QDF_IBSS_MODE)
 				hdd_deregister_tx_flow_control(adapter);
 
 			errno = hdd_change_adapter_mode(adapter, new_mode);
 			if (errno)
 				return errno;
-
-			if (iff_up) {
-				errno = hdd_start_adapter(adapter);
-				if (errno) {
-					hdd_err("Failed to start adapter");
-					return -EINVAL;
-				}
-			}
-
-			wdev->iftype = type;
-
-			goto done;
-		case QDF_SAP_MODE:
-		case QDF_P2P_GO_MODE:
-			if (new_mode == QDF_P2P_GO_MODE) {
+		} else if (hdd_is_ap_mode(new_mode)) {
+			if (new_mode == QDF_P2P_GO_MODE)
 				wlan_hdd_cancel_existing_remain_on_channel
 					(adapter);
-			}
 
 			hdd_stop_adapter(hdd_ctx, adapter);
 			hdd_deinit_adapter(hdd_ctx, adapter, true);
@@ -13203,51 +13226,22 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 			}
 
 			hdd_set_ap_ops(adapter->dev);
-
-			if (iff_up) {
-				errno = hdd_start_adapter(adapter);
-				if (errno) {
-					hdd_err("Failed to start adapter");
-					return errno;
-				}
-			}
-
-			wdev->iftype = type;
-
-			goto done;
-		default:
+		} else {
 			hdd_err("Changing to device mode '%s' is not supported",
 				qdf_opmode_str(new_mode));
 			return -EOPNOTSUPP;
 		}
-	} else if (adapter->device_mode == QDF_SAP_MODE ||
-		   adapter->device_mode == QDF_P2P_GO_MODE) {
-		switch (new_mode) {
-		case QDF_STA_MODE:
-		case QDF_P2P_CLIENT_MODE:
-		case QDF_IBSS_MODE:
+	} else if (hdd_is_ap_mode(adapter->device_mode)) {
+		if (hdd_is_client_mode(new_mode)) {
 			errno = hdd_change_adapter_mode(adapter, new_mode);
 			if (errno)
 				return errno;
-
-			if (iff_up) {
-				errno = hdd_start_adapter(adapter);
-				if (errno) {
-					hdd_err("Failed to start adapter");
-					return -EINVAL;
-				}
-			}
-
-			wdev->iftype = type;
-
-			goto done;
-		case QDF_SAP_MODE:
-		case QDF_P2P_GO_MODE:
-			wdev->iftype = type;
+		} else if (hdd_is_ap_mode(new_mode)) {
 			adapter->device_mode = new_mode;
 
-			goto done;
-		default:
+			/* avoid starting the adapter, since it never stopped */
+			iff_up = false;
+		} else {
 			hdd_err("Changing to device mode '%s' is not supported",
 				qdf_opmode_str(new_mode));
 			return -EOPNOTSUPP;
@@ -13258,7 +13252,17 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		return -EOPNOTSUPP;
 	}
 
-done:
+	/* restart the adapter if it was up before the change iface request */
+	if (iff_up) {
+		errno = hdd_start_adapter(adapter);
+		if (errno) {
+			hdd_err("Failed to start adapter");
+			return -EINVAL;
+		}
+	}
+
+	ndev->ieee80211_ptr->iftype = type;
+
 	/* Set bitmask based on updated value */
 	policy_mgr_set_concurrency_mode(hdd_ctx->psoc, adapter->device_mode);
 
@@ -19197,43 +19201,6 @@ static int wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 	return ret;
 }
 #endif
-
-/**
- * wlan_hdd_convert_nl_iftype_to_hdd_type() - provides the type
- * translation from NL to policy manager type
- * @type: Generic connection mode type defined in NL
- *
- *
- * This function provides the type translation
- *
- * Return: cds_con_mode enum
- */
-enum policy_mgr_con_mode wlan_hdd_convert_nl_iftype_to_hdd_type(
-						enum nl80211_iftype type)
-{
-	enum policy_mgr_con_mode mode = PM_MAX_NUM_OF_MODE;
-
-	switch (type) {
-	case NL80211_IFTYPE_STATION:
-		mode = PM_STA_MODE;
-		break;
-	case NL80211_IFTYPE_P2P_CLIENT:
-		mode = PM_P2P_CLIENT_MODE;
-		break;
-	case NL80211_IFTYPE_P2P_GO:
-		mode = PM_P2P_GO_MODE;
-		break;
-	case NL80211_IFTYPE_AP:
-		mode = PM_SAP_MODE;
-		break;
-	case NL80211_IFTYPE_ADHOC:
-		mode = PM_IBSS_MODE;
-		break;
-	default:
-		hdd_err("Unsupported interface type: %d", type);
-	}
-	return mode;
-}
 
 int wlan_hdd_change_hw_mode_for_given_chnl(struct hdd_adapter *adapter,
 			uint8_t channel,

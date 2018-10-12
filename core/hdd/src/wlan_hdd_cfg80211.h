@@ -394,9 +394,6 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter);
 int wlan_hdd_request_pre_cac(uint8_t channel);
 int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter);
 
-enum policy_mgr_con_mode wlan_hdd_convert_nl_iftype_to_hdd_type(
-					enum nl80211_iftype type);
-
 int wlan_hdd_enable_dfs_chan_scan(struct hdd_context *hdd_ctx,
 				  bool enable_dfs_channels);
 
