@@ -23,6 +23,7 @@
 #include "wmi_version_whitelist.h"
 #include <qdf_module.h>
 #include <wlan_defs.h>
+#include <wlan_cmn.h>
 #include <htc_services.h>
 #ifdef FEATURE_WLAN_APF
 #include "wmi_unified_apf_tlv.h"
@@ -17045,7 +17046,8 @@ static QDF_STATUS extract_chainmask_tables_tlv(wmi_unified_t wmi_handle,
 	if (!hw_caps)
 		return QDF_STATUS_E_INVAL;
 
-	if (!hw_caps->num_chainmask_tables)
+	if ((!hw_caps->num_chainmask_tables) ||
+	    (hw_caps->num_chainmask_tables > PSOC_MAX_CHAINMASK_TABLES))
 		return QDF_STATUS_E_INVAL;
 
 	chainmask_caps = param_buf->mac_phy_chainmask_caps;
