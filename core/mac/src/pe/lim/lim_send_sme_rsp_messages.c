@@ -2224,10 +2224,8 @@ void lim_handle_delete_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *MsgQ)
 	if (psessionEntry == NULL) {
 		pe_err("Session Does not exist for given sessionID: %d",
 			pDelBss->sessionId);
-		if (MsgQ->bodyptr) {
-			qdf_mem_free(MsgQ->bodyptr);
-			MsgQ->bodyptr = NULL;
-		}
+		qdf_mem_free(MsgQ->bodyptr);
+		MsgQ->bodyptr = NULL;
 		return;
 	}
 
