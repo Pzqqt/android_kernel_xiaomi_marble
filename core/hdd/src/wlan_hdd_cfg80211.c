@@ -13025,18 +13025,7 @@ static int hdd_change_adapter_mode(struct hdd_adapter *adapter,
 
 	hdd_stop_adapter(hdd_ctx, adapter);
 	hdd_deinit_adapter(hdd_ctx, adapter, true);
-
-	/* A userspace issue leads to it sending a 'change to station mode'
-	 * request on a "p2p" device, expecting the driver do execute a 'change
-	 * to p2p-device mode' request instead. The (unfortunate) work around
-	 * here is implemented by overriding the new mode if the net_device name
-	 * starts with "p2p" and the requested mode was station.
-	 */
-	if (strnstr(netdev->name, "p2p", 3) && new_mode == QDF_STA_MODE)
-		adapter->device_mode = QDF_P2P_DEVICE_MODE;
-	else
-		adapter->device_mode = new_mode;
-
+	adapter->device_mode = new_mode;
 	memset(&adapter->session, 0, sizeof(adapter->session));
 	hdd_set_station_ops(netdev);
 
@@ -13162,6 +13151,15 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	if (QDF_IS_STATUS_ERROR(status))
 		return qdf_status_to_os_return(status);
 
+	/* A userspace issue leads to it sending a 'change to station mode'
+	 * request on a "p2p" device, expecting the driver do execute a 'change
+	 * to p2p-device mode' request instead. The (unfortunate) work around
+	 * here is implemented by overriding the new mode if the net_device name
+	 * starts with "p2p" and the requested mode was station.
+	 */
+	if (strnstr(ndev->name, "p2p", 3) && new_mode == QDF_STA_MODE)
+		new_mode = QDF_P2P_DEVICE_MODE;
+
 	hdd_debug("Changing mode for '%s' from %s to %s",
 		  ndev->name,
 		  qdf_opmode_str(adapter->device_mode),
@@ -13183,8 +13181,8 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	/* Reset the current device mode bit mask */
 	policy_mgr_clear_concurrency_mode(hdd_ctx->psoc, adapter->device_mode);
 
-	if (adapter->device_mode != QDF_P2P_DEVICE_MODE ||
-	    new_mode != QDF_STA_MODE) {
+	/* TDLS ignores p2p-device mode for concurrency considerations */
+	if (new_mode != QDF_P2P_DEVICE_MODE) {
 		hdd_debug("Disable tdls; new interface is coming up");
 		hdd_notify_teardown_tdls_links(adapter->vdev);
 	}
