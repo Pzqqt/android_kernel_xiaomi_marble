@@ -1750,7 +1750,8 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		break;
 	case SIR_LIM_BEACON_GEN_IND:
 		if (mac_ctx->lim.gLimSystemRole != eLIM_AP_ROLE)
-			sch_process_pre_beacon_ind(mac_ctx, msg);
+			sch_process_pre_beacon_ind(mac_ctx,
+						   msg, REASON_DEFAULT);
 		break;
 	case SIR_LIM_DELETE_STA_CONTEXT_IND:
 		lim_delete_sta_context(mac_ctx, msg);
@@ -2053,6 +2054,11 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		lim_send_csa_restart_req(mac_ctx, msg->bodyval);
 		break;
 #endif
+	case WMA_SEND_BCN_RSP:
+		lim_send_bcn_rsp(mac_ctx, (tpSendbeaconParams)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
+		msg->bodyptr = NULL;
+		break;
 	default:
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;

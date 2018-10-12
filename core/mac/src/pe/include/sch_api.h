@@ -56,9 +56,17 @@ QDF_STATUS sch_set_fixed_beacon_fields(tpAniSirGlobal pMac,
 void sch_process_message(tpAniSirGlobal pMac,
 			 struct scheduler_msg *pSchMsg);
 
-/* / The beacon Indication handler function */
-void sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
-				struct scheduler_msg *limMsg);
+/**
+ * sch_process_pre_beacon_ind() - Process the PreBeacon Indication from the Lim
+ * @pMac: pointer to mac structure
+ * @msg: schedular msg
+ * @reason: beaon update reason
+ *
+ * return: success: QDF_STATUS_SUCCESS failure: QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
+				      struct scheduler_msg *msg,
+				      enum sir_bcn_update_reason reason);
 
 /* / Post a message to the scheduler message queue */
 QDF_STATUS sch_post_message(tpAniSirGlobal pMac,
@@ -75,8 +83,20 @@ void sch_generate_tim(tpAniSirGlobal, uint8_t **, uint16_t *, uint8_t);
 
 void sch_set_beacon_interval(tpAniSirGlobal pMac, tpPESession psessionEntry);
 
-QDF_STATUS sch_send_beacon_req(tpAniSirGlobal, uint8_t *, uint16_t,
-			       tpPESession psessionEntry);
+/**
+ * sch_send_beacon_req() - send beacon update req to wma
+ * @mac_ctx: pointer to mac structure
+ * @bcn_payload: beacon payload
+ * @size: beacon size
+ * @session:pe session
+ * @reason: beaon update reason
+ *
+ * return: success: QDF_STATUS_SUCCESS failure: QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS sch_send_beacon_req(tpAniSirGlobal mac_ctx, uint8_t *bcn_payload,
+			       uint16_t size, tpPESession session,
+			       enum sir_bcn_update_reason reason);
+
 
 QDF_STATUS lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal,
 							   tDot11fBeacon1 *,

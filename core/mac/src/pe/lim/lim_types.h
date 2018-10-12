@@ -926,20 +926,15 @@ lim_get_ielen_from_bss_description(tpSirBssDescription pBssDescr)
 } /*** end lim_get_ielen_from_bss_description() ***/
 
 /**
- * lim_send_beacon_ind()
+ * lim_send_beacon_ind() - send the beacon indication
+ * @mac_ctx: pointer to mac structure
+ * @session: pe session
+ * @reason: beacon update reason
  *
- ***FUNCTION:
- * This function is called  to send the beacon indication
- * number being scanned.
- *
- ***PARAMS:
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
+ * return: success: QDF_STATUS_SUCCESS failure: QDF_STATUS_E_FAILURE
  */
-
-void lim_send_beacon_ind(tpAniSirGlobal pMac, tpPESession psessionEntry);
+QDF_STATUS lim_send_beacon_ind(tpAniSirGlobal mac_ctx, tpPESession session,
+			       enum sir_bcn_update_reason reason);
 
 void
 lim_send_vdev_restart(tpAniSirGlobal pMac, tpPESession psessionEntry,
@@ -1016,6 +1011,15 @@ QDF_STATUS lim_process_sme_del_all_tdls_peers(tpAniSirGlobal p_mac,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * lim_send_bcn_rsp() - handle beacon send response
+ * @mac_ctx Pointer to Global MAC structure
+ * @rsp: beacon send response
+ *
+ * Return: None
+ */
+void lim_send_bcn_rsp(tpAniSirGlobal mac_ctx, tpSendbeaconParams rsp);
 
 /**
  * lim_process_rx_channel_status_event() - processes

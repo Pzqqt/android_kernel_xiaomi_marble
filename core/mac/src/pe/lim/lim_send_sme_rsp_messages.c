@@ -2352,7 +2352,7 @@ lim_send_bss_color_change_ie_update(tpAniSirGlobal mac_ctx,
 	}
 
 	/* Send update beacon template message */
-	lim_send_beacon_ind(mac_ctx, session);
+	lim_send_beacon_ind(mac_ctx, session, REASON_COLOR_CHANGE);
 	pe_debug("Updated BSS color change countdown = %d",
 		 session->he_bss_color_change.countdown);
 }
@@ -2406,11 +2406,8 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal mac_ctx, uint16_t msgType,
 				  void *event)
 {
 	tpPESession session;
-	struct scheduler_msg msg = {0};
-	struct sir_beacon_tx_complete_rsp *bcn_tx_comp_rsp;
 	tpSirFirstBeaconTxCompleteInd bcn_ind =
 		(tSirFirstBeaconTxCompleteInd *) event;
-	QDF_STATUS status;
 
 	session = pe_find_session_by_bss_idx(mac_ctx, bcn_ind->bssIdx);
 	if (!session) {
@@ -2433,25 +2430,9 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal mac_ctx, uint16_t msgType,
 		lim_process_ap_ecsa_timeout(session);
 
 
-	if (session->gLimOperatingMode.present) {
-		/* Done with nss update, send response back to SME */
+	if (session->gLimOperatingMode.present)
+		/* Done with nss update */
 		session->gLimOperatingMode.present = 0;
-		bcn_tx_comp_rsp = qdf_mem_malloc(sizeof(*bcn_tx_comp_rsp));
-		if (!bcn_tx_comp_rsp)
-			return;
-		bcn_tx_comp_rsp->session_id = session->smeSessionId;
-		bcn_tx_comp_rsp->tx_status = QDF_STATUS_SUCCESS;
-		msg.type = eWNI_SME_NSS_UPDATE_RSP;
-		msg.bodyptr = bcn_tx_comp_rsp;
-		msg.bodyval = 0;
-		status = scheduler_post_message(QDF_MODULE_ID_PE,
-						QDF_MODULE_ID_SME,
-						QDF_MODULE_ID_SME, &msg);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			sme_err("Failed to post eWNI_SME_NSS_UPDATE_RSP");
-			qdf_mem_free(bcn_tx_comp_rsp);
-		}
-	}
 
 	lim_handle_bss_color_change_ie(mac_ctx, session);
 

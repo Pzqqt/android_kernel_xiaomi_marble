@@ -712,6 +712,7 @@ typedef struct sBeaconGenParams {
 
 /**
  * struct tSendbeaconParams - send beacon parameters
+ * vdev_id: vdev id
  * @bssId: BSSID mac address
  * @beacon: beacon data
  * @beaconLength: beacon length of template
@@ -719,8 +720,11 @@ typedef struct sBeaconGenParams {
  * @p2pIeOffset: P2P IE offset
  * @csa_count_offset: Offset of Switch count field in CSA IE
  * @ecsa_count_offset: Offset of Switch count field in ECSA IE
+ * @reason: bcn update reason
+ * @status: beacon send status
  */
 typedef struct {
+	uint8_t vdev_id;
 	tSirMacAddr bssId;
 	uint8_t beacon[SIR_MAX_BEACON_SIZE];
 	uint32_t beaconLength;
@@ -728,6 +732,8 @@ typedef struct {
 	uint16_t p2pIeOffset;
 	uint32_t csa_count_offset;
 	uint32_t ecsa_count_offset;
+	enum sir_bcn_update_reason reason;
+	QDF_STATUS status;
 } tSendbeaconParams, *tpSendbeaconParams;
 
 /**

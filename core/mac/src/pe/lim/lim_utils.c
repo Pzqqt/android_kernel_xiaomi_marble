@@ -5440,7 +5440,8 @@ void lim_update_beacon(tpAniSirGlobal mac_ctx)
 			if (false == mac_ctx->sap.SapDfsInfo.
 					is_dfs_cac_timer_running)
 				lim_send_beacon_ind(mac_ctx,
-						&mac_ctx->lim.gpSession[i]);
+						&mac_ctx->lim.gpSession[i],
+						REASON_DEFAULT);
 		}
 	}
 }
@@ -8298,7 +8299,7 @@ lim_send_dfs_chan_sw_ie_update(tpAniSirGlobal mac_ctx, tpPESession session)
 	}
 
 	/* Send update beacon template message */
-	lim_send_beacon_ind(mac_ctx, session);
+	lim_send_beacon_ind(mac_ctx, session, REASON_CHANNEL_SWITCH);
 	pe_debug("Updated CSA IE, IE COUNT: %d",
 		 session->gLimChannelSwitch.switchCount);
 }
@@ -8537,7 +8538,7 @@ QDF_STATUS lim_ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_SUCCESS;
 
 	if (op == BEACON_INIT)
-		lim_send_beacon_ind(session->mac_ctx, session);
+		lim_send_beacon_ind(session->mac_ctx, session, REASON_DEFAULT);
 	else if (op == BEACON_CSA)
 		lim_send_csa_restart_resp(session->mac_ctx, session);
 
@@ -8683,7 +8684,7 @@ void lim_send_start_bss_confirm(tpAniSirGlobal mac_ctx,
 
 void lim_send_beacon(tpAniSirGlobal mac_ctx, tpPESession session)
 {
-	lim_send_beacon_ind(mac_ctx, session);
+	lim_send_beacon_ind(mac_ctx, session, REASON_DEFAULT);
 }
 
 void lim_ndi_mlme_vdev_up_transition(tpPESession session)

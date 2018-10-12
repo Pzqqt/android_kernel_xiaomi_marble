@@ -76,42 +76,16 @@ QDF_STATUS sch_post_message(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 	return QDF_STATUS_SUCCESS;
 }
 
-/* --------------------------------------------------------------------------- */
-
-/**
- * sch_send_beacon_req
- *
- * FUNCTION:
- *
- * LOGIC:
- * 1) SCH received SIR_SCH_BEACON_GEN_IND
- * 2) SCH updates TIM IE and other beacon related IE's
- * 3) SCH sends WMA_SEND_BEACON_REQ to HAL. HAL then copies the beacon
- *    template to memory
- *
- * ASSUMPTIONS:
- * Memory allocation is reqd to send this message and SCH allocates memory.
- * The assumption is that HAL will "free" this memory.
- *
- * NOTE:
- *
- * @param pMac global
- *
- * @param beaconPayload
- *
- * @param size - Length of the beacon
- *
- * @return QDF_STATUS
- */
 QDF_STATUS sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
-			       uint16_t size, tpPESession psessionEntry)
+			       uint16_t size, tpPESession psessionEntry,
+			       enum sir_bcn_update_reason reason)
 {
 	struct scheduler_msg msgQ = {0};
 	tpSendbeaconParams beaconParams = NULL;
 	QDF_STATUS retCode;
 
-	pe_debug("Indicating HAL to copy the beacon template [%d bytes] to memory",
-		size);
+	pe_debug("Indicating HAL to copy the beacon template [%d bytes] to memory, reason %d",
+		size, reason);
 
 	if (LIM_IS_AP_ROLE(psessionEntry) &&
 	   (pMac->sch.schObject.fBeaconChanged)) {
@@ -150,6 +124,9 @@ QDF_STATUS sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 				 beaconParams->ecsa_count_offset);
 		}
 	}
+
+	beaconParams->vdev_id = psessionEntry->smeSessionId;
+	beaconParams->reason = reason;
 
 	/* p2pIeOffset should be atleast greater than timIeOffset */
 	if ((pMac->sch.schObject.p2pIeOffset != 0) &&
