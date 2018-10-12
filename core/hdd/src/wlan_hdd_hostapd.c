@@ -1419,7 +1419,8 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 				  tSap_StationAssocReassocCompleteEvent *event)
 {
 	struct hdd_station_info *stainfo;
-	uint8_t i = 0;
+	uint8_t i = 0, oldest_disassoc_sta_idx = WLAN_MAX_STA_COUNT + 1;
+	qdf_time_t oldest_disassoc_sta_ts = 0;
 
 	if (event->staId >= WLAN_MAX_STA_COUNT) {
 		hdd_err("invalid sta id");
@@ -1480,11 +1481,8 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 	while (i < WLAN_MAX_STA_COUNT) {
 		if (!qdf_mem_cmp(adapter->cache_sta_info[i].sta_mac.bytes,
 				 event->staMac.bytes,
-				 QDF_MAC_ADDR_SIZE)) {
-			qdf_mem_zero(&adapter->cache_sta_info[i],
-				     sizeof(*stainfo));
+				 QDF_MAC_ADDR_SIZE))
 			break;
-		}
 		i++;
 	}
 	if (i >= WLAN_MAX_STA_COUNT) {
@@ -1492,14 +1490,35 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 		while (i < WLAN_MAX_STA_COUNT) {
 			if (adapter->cache_sta_info[i].in_use != TRUE)
 				break;
+
+			if (adapter->cache_sta_info[i].disassoc_ts &&
+			    (!oldest_disassoc_sta_ts ||
+			    (qdf_system_time_after(
+					oldest_disassoc_sta_ts,
+					adapter->
+					cache_sta_info[i].disassoc_ts)))) {
+				oldest_disassoc_sta_ts =
+					adapter->
+						cache_sta_info[i].disassoc_ts;
+				oldest_disassoc_sta_idx = i;
+			}
 			i++;
 		}
 	}
-	if (i < WLAN_MAX_STA_COUNT)
+
+	if ((i == WLAN_MAX_STA_COUNT) && oldest_disassoc_sta_ts) {
+		hdd_debug("reached max cached staid, removing oldest stainfo");
+		i = oldest_disassoc_sta_idx;
+	}
+	if (i < WLAN_MAX_STA_COUNT) {
+		qdf_mem_zero(&adapter->cache_sta_info[i],
+			     sizeof(*stainfo));
 		qdf_mem_copy(&adapter->cache_sta_info[i],
-			     stainfo, sizeof(struct hdd_station_info));
-	else
+				     stainfo, sizeof(struct hdd_station_info));
+
+	} else {
 		hdd_debug("reached max staid, stainfo can't be cached");
+	}
 
 	hdd_debug("cap %d %d %d %d %d %d %d %d %d %x %d",
 		  stainfo->ampdu,
@@ -1597,7 +1616,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	eCsrPhyMode phy_mode;
 	bool legacy_phymode;
 	tSap_StationDisassocCompleteEvent *disassoc_comp;
-	struct hdd_station_info *stainfo;
+	struct hdd_station_info *stainfo, *cache_stainfo;
 	mac_handle_t mac_handle;
 	tsap_config_t *sap_config;
 
@@ -2193,20 +2212,18 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		memcpy(wrqu.addr.sa_data,
 		       &disassoc_comp->staMac, QDF_MAC_ADDR_SIZE);
 
-		stainfo = hdd_get_stainfo(adapter->cache_sta_info,
-					  disassoc_comp->staMac);
-		if (!stainfo) {
-			hdd_err("peer " MAC_ADDRESS_STR " not found",
-					MAC_ADDR_ARRAY(wrqu.addr.sa_data));
-			return -EINVAL;
+		cache_stainfo = hdd_get_stainfo(adapter->cache_sta_info,
+						disassoc_comp->staMac);
+		if (cache_stainfo) {
+			/* Cache the disassoc info */
+			cache_stainfo->rssi = disassoc_comp->rssi;
+			cache_stainfo->tx_rate = disassoc_comp->tx_rate;
+			cache_stainfo->rx_rate = disassoc_comp->rx_rate;
+			cache_stainfo->reason_code = disassoc_comp->reason_code;
+			cache_stainfo->disassoc_ts = qdf_system_ticks();
 		}
 		hdd_info(" disassociated " MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(wrqu.addr.sa_data));
-
-		stainfo->rssi = disassoc_comp->rssi;
-		stainfo->tx_rate = disassoc_comp->tx_rate;
-		stainfo->rx_rate = disassoc_comp->rx_rate;
-		stainfo->reason_code = disassoc_comp->reason_code;
 
 		qdf_status = qdf_event_set(&hostapd_state->qdf_sta_disassoc_event);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
@@ -2233,14 +2250,17 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			QDF_TRACE_DEFAULT_PDEV_ID,
 			QDF_PROTO_TYPE_MGMT, QDF_PROTO_MGMT_DISASSOC));
 
-		/* Send DHCP STOP indication to FW */
-		stainfo->dhcp_phase = DHCP_PHASE_ACK;
-		if (stainfo->dhcp_nego_status ==
-					DHCP_NEGO_IN_PROGRESS)
-			hdd_post_dhcp_ind(adapter, staId,
-					WMA_DHCP_STOP_IND);
-		stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
-
+		stainfo = hdd_get_stainfo(adapter->sta_info,
+					  disassoc_comp->staMac);
+		if (stainfo) {
+			/* Send DHCP STOP indication to FW */
+			stainfo->dhcp_phase = DHCP_PHASE_ACK;
+			if (stainfo->dhcp_nego_status ==
+						DHCP_NEGO_IN_PROGRESS)
+				hdd_post_dhcp_ind(adapter, staId,
+						  WMA_DHCP_STOP_IND);
+			stainfo->dhcp_nego_status = DHCP_NEGO_STOP;
+		}
 		hdd_softap_deregister_sta(adapter, staId);
 
 		ap_ctx->ap_active = false;
