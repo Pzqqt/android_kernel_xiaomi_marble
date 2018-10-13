@@ -4713,9 +4713,11 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 
 	enable2x2 = (nss == 1) ? 0 : 1;
 
-	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	qdf_status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("unable to get vht_enable2x2");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (bval == enable2x2) {
 		hdd_debug("NSS same as requested");
@@ -4733,9 +4735,11 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	status = ucfg_mlme_set_vht_enable2x2(hdd_ctx->psoc, enable2x2);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("unable to get vht_enable2x2");
+	qdf_status = ucfg_mlme_set_vht_enable2x2(hdd_ctx->psoc, enable2x2);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		hdd_err("Failed to set vht_enable2x2");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	if (!enable2x2) {
 		/* 1x1 */
@@ -4767,7 +4771,7 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	qdf_status = ucfg_mlme_get_ht_cap_info(hdd_ctx->psoc, &ht_cap_info);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to get HT Cap info");
-		status = false;
+		goto skip_ht_cap_update;
 	}
 
 	if (!(hdd_ctx->ht_tx_stbc_supported && enable2x2)) {
@@ -4783,11 +4787,10 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 
 	qdf_status = ucfg_mlme_set_ht_cap_info(hdd_ctx->psoc, ht_cap_info);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		status = false;
 		hdd_err("Could not set the HT_CAP_INFO");
 	}
-
-	status = ucfg_mlme_update_nss_vht_cap(hdd_ctx->psoc);
+skip_ht_cap_update:
+	qdf_status = ucfg_mlme_update_nss_vht_cap(hdd_ctx->psoc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to set update_nss_vht_cap");
 		status = false;
