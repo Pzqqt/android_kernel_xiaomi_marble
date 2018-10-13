@@ -56,6 +56,14 @@
 #define WLAN_CFG_RX_MON_RING_MASK_2 0x4
 #define WLAN_CFG_RX_MON_RING_MASK_3 0x0
 
+#define WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0 0x1
+#define WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1 0x2
+#define WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2 0x4
+
+#define WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0 0x1
+#define WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1 0x2
+#define WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2 0x4
+
 #define WLAN_CFG_RX_ERR_RING_MASK_0 0x1
 #define WLAN_CFG_RX_ERR_RING_MASK_1 0x0
 #define WLAN_CFG_RX_ERR_RING_MASK_2 0x0
@@ -137,6 +145,22 @@ static const int rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					0,
 					0,
 					0};
+
+static const int host2rxdma_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					0,
+					0,
+					0,
+					WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0,
+					WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1,
+					WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2};
+
+static const int rxdma2host_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					0,
+					0,
+					0,
+					WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0,
+					WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1,
+					WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2};
 #else
 static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 						WLAN_CFG_TX_RING_MASK_0,
@@ -177,6 +201,24 @@ static const int rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_RXDMA2HOST_RING_MASK_1,
 					WLAN_CFG_RXDMA2HOST_RING_MASK_2,
 					WLAN_CFG_RXDMA2HOST_RING_MASK_3};
+
+static const int host2rxdma_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					0,
+					0,
+					0,
+					0,
+					WLAN_CFG_HOST2RXDMA_MON_RING_MASK_0,
+					WLAN_CFG_HOST2RXDMA_MON_RING_MASK_1,
+					WLAN_CFG_HOST2RXDMA_MON_RING_MASK_2};
+
+static const int rxdma2host_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					0,
+					0,
+					0,
+					0,
+					WLAN_CFG_RXDMA2HOST_MON_RING_MASK_0,
+					WLAN_CFG_RXDMA2HOST_MON_RING_MASK_1,
+					WLAN_CFG_RXDMA2HOST_MON_RING_MASK_2};
 #endif
 
 static const int rx_err_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
@@ -261,6 +303,10 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach(void *psoc)
 			rxdma2host_ring_mask[i];
 		wlan_cfg_ctx->int_host2rxdma_ring_mask[i] =
 			host2rxdma_ring_mask[i];
+		wlan_cfg_ctx->int_host2rxdma_mon_ring_mask[i] =
+			host2rxdma_mon_ring_mask[i];
+		wlan_cfg_ctx->int_rxdma2host_mon_ring_mask[i] =
+			rxdma2host_mon_ring_mask[i];
 	}
 
 	/* This is default mapping and can be overridden by HW config
@@ -375,7 +421,7 @@ void wlan_cfg_set_tx_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 }
 
 void wlan_cfg_set_rx_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
-		int context, int mask)
+			       int context, int mask)
 {
 	cfg->int_rx_ring_mask[context] = mask;
 }
@@ -384,6 +430,30 @@ void wlan_cfg_set_rx_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 		int context, int mask)
 {
 	cfg->int_rx_mon_ring_mask[context] = mask;
+}
+
+int wlan_cfg_get_host2rxdma_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					  int context)
+{
+	return cfg->int_host2rxdma_mon_ring_mask[context];
+}
+
+void wlan_cfg_set_host2rxdma_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					   int context, int mask)
+{
+	cfg->int_host2rxdma_mon_ring_mask[context] = mask;
+}
+
+int wlan_cfg_get_rxdma2host_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					  int context)
+{
+	return cfg->int_rxdma2host_mon_ring_mask[context];
+}
+
+void wlan_cfg_set_rxdma2host_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					   int context, int mask)
+{
+	cfg->int_rxdma2host_mon_ring_mask[context] = mask;
 }
 
 void wlan_cfg_set_rxdma2host_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
@@ -721,6 +791,11 @@ int wlan_cfg_get_int_batch_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg)
 int wlan_cfg_get_int_timer_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->int_timer_threshold_other;
+}
+
+int wlan_cfg_get_int_timer_threshold_mon(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->int_timer_threshold_mon;
 }
 
 int wlan_cfg_get_checksum_offload(struct wlan_cfg_dp_soc_ctxt *cfg)

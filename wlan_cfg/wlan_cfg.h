@@ -158,12 +158,15 @@ struct wlan_cfg_dp_soc_ctxt {
 	int int_timer_threshold_rx;
 	int int_batch_threshold_other;
 	int int_timer_threshold_other;
+	int int_timer_threshold_mon;
 	int tx_ring_size;
 	int tx_comp_ring_size;
 	int tx_comp_ring_size_nss;
 	int int_tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_host2rxdma_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_rxdma2host_mon_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_ce_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_err_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rx_wbm_rel_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
@@ -372,6 +375,50 @@ void wlan_cfg_set_host2rxdma_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
  */
 int wlan_cfg_get_host2rxdma_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 	int context);
+
+/**
+ * wlan_cfg_set_host2rxdma_mon_ring_mask() - Set host2rxdma monitor ring
+ *                                interrupt mask for the given interrupt context
+ * @wlan_cfg_ctx - Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ */
+void wlan_cfg_set_host2rxdma_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					   int context, int mask);
+
+/**
+ * wlan_cfg_get_host2rxdma_mon_ring_mask() - Return host2rxdma monitoe ring
+ *                               interrupt mask mapped to an interrupt context
+ * @wlan_cfg_ctx - Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ * Return: int_host2rxdma_mon_ring_mask[context]
+ */
+int wlan_cfg_get_host2rxdma_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					  int context);
+
+/**
+ * wlan_cfg_set_rxdma2host_mon_ring_mask() - Set rxdma2host monitor
+ *				   destination ring interrupt mask
+ *				   for the given interrupt context
+ * @wlan_cfg_ctx - Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ */
+void wlan_cfg_set_rxdma2host_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					   int context, int mask);
+
+/**
+ * wlan_cfg_get_rxdma2host_mon_ring_mask() - Return rxdma2host monitor
+ *				   destination ring interrupt mask
+ *				   mapped to an interrupt context
+ * @wlan_cfg_ctx - Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ * Return: int_rxdma2host_mon_ring_mask[context]
+ */
+int wlan_cfg_get_rxdma2host_mon_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+					  int context);
 
 /**
  * wlan_cfg_set_hw_macid() - Set HW MAC Id for the given PDEV index
@@ -792,6 +839,14 @@ int wlan_cfg_get_int_batch_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg);
  * Return: Timer threshold
  */
 int wlan_cfg_get_int_timer_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
+ * wlan_cfg_get_int_timer_threshold_mon - Get int mitigation cfg for mon srngs
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: Timer threshold
+ */
+int wlan_cfg_get_int_timer_threshold_mon(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 /*
  * wlan_cfg_get_checksum_offload - Get checksum offload enable or disable status

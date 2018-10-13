@@ -548,6 +548,8 @@ struct dp_intr {
 	uint8_t reo_status_ring_mask; /* REO command response ring */
 	uint8_t rxdma2host_ring_mask; /* RXDMA to host destination ring */
 	uint8_t host2rxdma_ring_mask; /* Host to RXDMA buffer ring */
+	/* Host to RXDMA monitor  buffer ring */
+	uint8_t host2rxdma_mon_ring_mask;
 	struct dp_soc *soc;    /* Reference to SoC structure ,
 				to get DMA ring handles */
 	qdf_lro_ctx_t lro_ctx;
