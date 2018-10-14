@@ -781,9 +781,11 @@ struct ol_if_ops {
 	int (*peer_unref_delete)(void *scn_handle, uint8_t vdev_id,
 			uint8_t *peer_macaddr);
 	bool (*is_hw_dbs_2x2_capable)(struct wlan_objmgr_psoc *psoc);
-	int (*peer_add_wds_entry)(void *ol_soc_handle,
-			const uint8_t *dest_macaddr, uint8_t *peer_macaddr,
-			uint32_t flags);
+	int (*peer_add_wds_entry)(void *vdev_handle,
+				  struct cdp_peer *peer_handle,
+				  const uint8_t *dest_macaddr,
+				  uint8_t *next_node_mac,
+				  uint32_t flags);
 	int (*peer_update_wds_entry)(void *ol_soc_handle,
 			uint8_t *dest_macaddr, uint8_t *peer_macaddr,
 			uint32_t flags);

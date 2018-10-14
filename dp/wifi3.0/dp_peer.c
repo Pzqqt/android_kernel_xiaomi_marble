@@ -641,6 +641,7 @@ add_ast_entry:
 		if (QDF_STATUS_SUCCESS ==
 				soc->cdp_soc.ol_ops->peer_add_wds_entry(
 				peer->vdev->osif_vdev,
+				(struct cdp_peer *)peer,
 				mac_addr,
 				next_node_mac,
 				flags))
