@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -131,8 +131,35 @@ static inline void host_log_rsn_info(uint8_t *ucast_cipher,
 {
 
 }
+
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+ * host_log_wlan_auth_info() - This function is used to send
+ * algo num, seq num and status code for auth request
+ * @auth_algo_num: Gives information about algo num used in auth request
+ * @auth_tx_seq_num: seq num of auth request
+ * @auth_status_code: status code of auth request
+ *
+ * This function is used to send send algo num, seq num and status code
+ * for auth request
+ *
+ * Return: None
+ *
+ */
+void
+host_log_wlan_auth_info(uint16_t auth_algo_num, uint16_t auth_tx_seq_num,
+			uint16_t auth_status_code);
+
+#else
+static inline void
+host_log_wlan_auth_info(uint16_t auth_algo_num, uint16_t auth_tx_seq_num,
+			uint16_t auth_status_code)
+{
+}
+
+#endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 void qdf_wow_wakeup_host_event(uint8_t wow_wakeup_cause);

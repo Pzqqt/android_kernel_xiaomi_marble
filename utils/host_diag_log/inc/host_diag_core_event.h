@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -580,6 +580,26 @@ struct event_wlan_csr_rsn_info {
 	uint8_t   ucast_cipher[RSN_OUI_SIZE];
 	uint8_t   mcast_cipher[RSN_OUI_SIZE];
 	uint8_t   group_mgmt[RSN_OUI_SIZE];
+};
+
+/*-------------------------------------------------------------------------
+  Event ID: EVENT_WLAN_AUTH_INFO
+  -------------------------------------------------------------------------
+ */
+/**
+ * struct event_wlan_lim_auth_info - Structure holding the
+ * algo num, seq num and status code for auth request
+ * @auth_algo_num: Gives information about algo num used in auth request
+ * @auth_transaction_seq_num: seq num of auth request
+ * @auth_status_code: status code of auth request
+ *
+ * This structure will hold the algo num, seq num and status code
+ * for auth request
+ */
+struct event_wlan_lim_auth_info {
+	uint16_t   auth_algo_num;
+	uint16_t   auth_transaction_seq_num;
+	uint16_t   auth_status_code;
 };
 
 /*-------------------------------------------------------------------------

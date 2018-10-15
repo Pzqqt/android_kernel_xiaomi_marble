@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -292,6 +292,21 @@ void host_log_rsn_info(uint8_t *ucast_cipher, uint8_t *mcast_cipher,
 
 	WLAN_HOST_DIAG_EVENT_REPORT(&wlan_diag_event,
 				    EVENT_WLAN_RSN_INFO);
+}
+
+void
+host_log_wlan_auth_info(uint16_t auth_algo_num, uint16_t auth_tx_seq_num,
+			uint16_t auth_status_code)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(wlan_diag_event,
+				 struct event_wlan_lim_auth_info);
+
+	wlan_diag_event.auth_algo_num = auth_algo_num;
+	wlan_diag_event.auth_transaction_seq_num = auth_tx_seq_num;
+	wlan_diag_event.auth_status_code = auth_status_code;
+
+	WLAN_HOST_DIAG_EVENT_REPORT(&wlan_diag_event,
+				    EVENT_WLAN_AUTH_INFO);
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
