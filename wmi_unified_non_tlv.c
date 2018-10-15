@@ -623,6 +623,80 @@ static QDF_STATUS send_vdev_up_cmd_non_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_peer_chan_width_switch_cmd_non_tlv() - send peer channel width params
+ * @wmi_handle: WMI handle
+ * @param: Peer channel width switching params
+ *
+ * Return: 0 for success or error code
+ */
+
+static QDF_STATUS
+send_peer_chan_width_switch_cmd_non_tlv(wmi_unified_t wmi_handle,
+				struct peer_chan_width_switch_params *param)
+{
+	wmi_buf_t buf;
+	wmi_peer_chan_width_switch_cmd *cmd;
+	int len = sizeof(*cmd);
+	int max_peers_per_command;
+	struct chan_width_peer_list *cmd_peer_list;
+	int pending_peers = param->num_peers;
+	struct peer_chan_width_switch_info *param_peer_list =
+						param->chan_width_peer_list;
+	int ix;
+
+	max_peers_per_command = (wmi_get_max_msg_len(wmi_handle) -
+				 sizeof(*cmd)) / sizeof(*cmd_peer_list);
+
+	while (pending_peers > 0) {
+		if (pending_peers >= max_peers_per_command) {
+			len += (max_peers_per_command * sizeof(*cmd_peer_list));
+		} else {
+			len += (pending_peers * sizeof(*cmd_peer_list));
+		}
+
+                buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMI_LOGE("wmi_buf_alloc failed");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		cmd = (wmi_peer_chan_width_switch_cmd *)
+							wmi_buf_data(buf);
+
+		cmd->num_peers = (pending_peers >= max_peers_per_command) ?
+					max_peers_per_command : pending_peers;
+
+		cmd_peer_list = (struct chan_width_peer_list *)
+							(cmd + sizeof(*cmd));
+
+		for (ix = 0; ix < cmd->num_peers; ix++) {
+			WMI_CHAR_ARRAY_TO_MAC_ADDR(param_peer_list[ix].mac_addr,
+					   &cmd_peer_list[ix].peer_macaddr);
+
+			cmd_peer_list[ix].chan_width =
+					param_peer_list[ix].chan_width;
+
+			WMI_LOGD("Peer[%u]: chan_width = %u", ix,
+				 cmd_peer_list[ix].chan_width);
+		}
+
+		pending_peers -= cmd->num_peers;
+		param_peer_list += cmd->num_peers;
+
+		if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_PEER_CHAN_WIDTH_SWITCH_CMDID)) {
+			WMI_LOGE("Sending peers for chwidth switch failed");
+			wmi_buf_free(buf);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+	}
+
+	return QDF_STATUS_SUCCESS;
+
+}
+
+/**
  * send_peer_create_cmd_non_tlv() - send peer create command to fw
  * @wmi_handle: wmi handle
  * @param: pointer to hold peer create parameter
@@ -8871,6 +8945,8 @@ struct wmi_ops non_tlv_ops =  {
 	.send_set_ps_mode_cmd = send_set_ps_mode_cmd_non_tlv,
 	.init_cmd_send = init_cmd_send_non_tlv,
 	.send_ext_resource_config = send_ext_resource_config_non_tlv,
+	.send_peer_chan_width_switch_cmd =
+				 send_peer_chan_width_switch_cmd_non_tlv,
 #if 0
 	.send_bcn_prb_template_cmd = send_bcn_prb_template_cmd_non_tlv,
 #endif

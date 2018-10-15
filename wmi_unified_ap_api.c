@@ -1061,3 +1061,21 @@ QDF_STATUS wmi_extract_channel_hopping_event(void *wmi_hdl, void *evt_buf,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/**
+ * wmi_unified_peer_chan_width_switch_cmd_send() - WMI send peer chan width
+ * @wmi_hdl: handle to WMI
+ * @param: pointer to hold peer capability param
+ *
+ * @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_peer_chan_width_switch_cmd_send(void *wmi_hdl,
+				struct peer_chan_width_switch_params *param)
+{
+	wmi_unified_t wmi = (wmi_unified_t)wmi_hdl;
+
+	if (wmi->ops->send_peer_chan_width_switch_cmd)
+		return wmi->ops->send_peer_chan_width_switch_cmd(wmi, param);
+
+	return QDF_STATUS_E_FAILURE;
+}

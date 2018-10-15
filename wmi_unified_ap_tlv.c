@@ -2467,6 +2467,96 @@ static QDF_STATUS extract_channel_hopping_event_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * send_peer_chan_width_switch_cmd_tlv() - send peer channel width params
+ * @wmi_handle: WMI handle
+ * @param: Peer channel width switching params
+ *
+ * Return: QDF_STATUS_SUCCESS on success or error code
+ */
+
+static QDF_STATUS
+send_peer_chan_width_switch_cmd_tlv(wmi_unified_t wmi_handle,
+				    struct peer_chan_width_switch_params *param)
+{
+	wmi_buf_t buf;
+	wmi_peer_chan_width_switch_cmd_fixed_param *cmd;
+	int32_t len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+	int16_t max_peers_per_command;
+	wmi_chan_width_peer_list *cmd_peer_list;
+	int16_t pending_peers = param->num_peers;
+	struct peer_chan_width_switch_info *param_peer_list =
+						param->chan_width_peer_list;
+	uint8_t ix;
+
+	max_peers_per_command = (wmi_get_max_msg_len(wmi_handle) -
+				 sizeof(*cmd) - WMI_TLV_HDR_SIZE) /
+				sizeof(*cmd_peer_list);
+
+	while (pending_peers > 0) {
+		if (pending_peers >= max_peers_per_command) {
+			len += (max_peers_per_command * sizeof(*cmd_peer_list));
+		} else {
+			len += (pending_peers * sizeof(*cmd_peer_list));
+		}
+
+                buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMI_LOGE("wmi_buf_alloc failed");
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		cmd = (wmi_peer_chan_width_switch_cmd_fixed_param *)
+							wmi_buf_data(buf);
+
+		WMITLV_SET_HDR(&cmd->tlv_header,
+		    WMITLV_TAG_STRUC_wmi_peer_chan_width_switch_cmd_fixed_param,
+		    WMITLV_GET_STRUCT_TLVLEN(
+				wmi_peer_chan_width_switch_cmd_fixed_param));
+
+		cmd->num_peers = (pending_peers >= max_peers_per_command) ?
+					max_peers_per_command : pending_peers;
+
+		WMITLV_SET_HDR(((void *)cmd + sizeof(*cmd)),
+                               WMITLV_TAG_ARRAY_STRUC,
+			       cmd->num_peers *
+			       sizeof(wmi_chan_width_peer_list));
+
+		cmd_peer_list = (wmi_chan_width_peer_list *)
+				((void *)cmd + sizeof(*cmd) +
+				 WMI_TLV_HDR_SIZE);
+
+		for (ix = 0; ix < cmd->num_peers; ix++) {
+			WMITLV_SET_HDR(&cmd_peer_list[ix].tlv_header,
+				WMITLV_TAG_STRUC_wmi_chan_width_peer_list,
+				WMITLV_GET_STRUCT_TLVLEN(
+					wmi_chan_width_peer_list));
+
+			WMI_CHAR_ARRAY_TO_MAC_ADDR(param_peer_list[ix].mac_addr,
+					   &cmd_peer_list[ix].peer_macaddr);
+
+			cmd_peer_list[ix].chan_width =
+					param_peer_list[ix].chan_width;
+
+			WMI_LOGD("Peer[%u]: chan_width = %u", ix,
+				 cmd_peer_list[ix].chan_width);
+		}
+
+		pending_peers -= cmd->num_peers;
+		param_peer_list += cmd->num_peers;
+
+		if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_PEER_CHAN_WIDTH_SWITCH_CMDID)) {
+			WMI_LOGE("Sending peers for chwidth switch failed");
+			wmi_buf_free(buf);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
@@ -2541,4 +2631,6 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 	ops->extract_mgmt_tx_compl_param = extract_mgmt_tx_compl_param_tlv;
 	ops->extract_chan_info_event = extract_chan_info_event_tlv;
 	ops->extract_channel_hopping_event = extract_channel_hopping_event_tlv;
+	ops->send_peer_chan_width_switch_cmd =
+					send_peer_chan_width_switch_cmd_tlv;
 }
