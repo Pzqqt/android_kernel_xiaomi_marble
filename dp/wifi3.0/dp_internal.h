@@ -340,12 +340,10 @@ static inline void dp_update_pdev_stats(struct dp_pdev *tgtobj,
 
 	srcobj->rx.unicast.num =
 		srcobj->rx.to_stack.num -
-				(srcobj->rx.multicast.num +
-				srcobj->rx.bcast.num);
+				(srcobj->rx.multicast.num);
 	srcobj->rx.unicast.bytes =
 		srcobj->rx.to_stack.bytes -
-				(srcobj->rx.multicast.bytes +
-				srcobj->rx.bcast.bytes);
+				(srcobj->rx.multicast.bytes);
 
 	tgtobj->stats.rx.unicast.num += srcobj->rx.unicast.num;
 	tgtobj->stats.rx.unicast.bytes += srcobj->rx.unicast.bytes;
