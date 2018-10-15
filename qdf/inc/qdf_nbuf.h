@@ -200,6 +200,7 @@
  * @rs_flags: Flags to indicate AMPDU or AMSDU aggregation
  * @cck_flag: Flag to indicate CCK modulation
  * @ofdm_flag: Flag to indicate OFDM modulation
+ * @ulofdma_flag: Flag to indicate UL OFDMA PPDU
  * @he_per_user_1: HE per user info1
  * @he_per_user_2: HE per user info2
  * @he_per_user_position: HE per user position info
@@ -275,6 +276,7 @@ struct mon_rx_status {
 	uint8_t      rs_flags;
 	uint8_t cck_flag;
 	uint8_t ofdm_flag;
+	uint8_t ulofdma_flag;
 	/* New HE radiotap fields */
 	uint16_t he_per_user_1;
 	uint16_t he_per_user_2;
@@ -510,6 +512,20 @@ enum qdf_proto_type {
 	QDF_PROTO_TYPE_ICMPv6,
 	QDF_PROTO_TYPE_EVENT,
 	QDF_PROTO_TYPE_MAX
+};
+
+/**
+ * qdf_reception_type - reception type used by lithium phy TLV
+ * @QDF_RECEPTION_TYPE_ULOFMDA - UL OFDMA
+ * @QDF_RECEPTION_TYPE_ULMIMO - UL MIMO
+ * @QQDF_RECEPTION_TYPE_FRAMELESS - Frame less
+ * @QDF_RECEPTION_TYPE_OTHER - All the other types
+ */
+enum qdf_reception_type {
+	QDF_RECEPTION_TYPE_ULOFMDA,
+	QDF_RECEPTION_TYPE_ULMIMO,
+	QDF_RECEPTION_TYPE_OTHER,
+	QDF_RECEPTION_TYPE_FRAMELESS
 };
 
 /**
