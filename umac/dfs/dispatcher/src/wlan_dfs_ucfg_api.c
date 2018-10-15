@@ -26,6 +26,7 @@
 #include "../../core/src/dfs.h"
 #include "../../core/src/dfs_zero_cac.h"
 #include "../../core/src/dfs_partial_offload_radar.h"
+#include "../../core/src/dfs_process_radar_found_ind.h"
 #include <qdf_module.h>
 
 QDF_STATUS ucfg_dfs_is_ap_cac_timer_running(struct wlan_objmgr_pdev *pdev,
@@ -157,6 +158,36 @@ QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev,
 }
 qdf_export_symbol(ucfg_dfs_get_precac_enable);
 
+QDF_STATUS
+ucfg_dfs_set_nol_subchannel_marking(struct wlan_objmgr_pdev *pdev,
+				    bool nol_subchannel_marking)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs)
+		return  QDF_STATUS_E_FAILURE;
+
+	dfs_set_nol_subchannel_marking(dfs, nol_subchannel_marking);
+
+	return QDF_STATUS_SUCCESS;
+}
+qdf_export_symbol(ucfg_dfs_set_nol_subchannel_marking);
+
+QDF_STATUS ucfg_dfs_get_nol_subchannel_marking(struct wlan_objmgr_pdev *pdev,
+					       bool *nol_subchannel_marking)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs)
+		return  QDF_STATUS_E_FAILURE;
+
+	dfs_get_nol_subchannel_marking(dfs, nol_subchannel_marking);
+
+	return QDF_STATUS_SUCCESS;
+}
+qdf_export_symbol(ucfg_dfs_get_nol_subchannel_marking);
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
 QDF_STATUS ucfg_dfs_set_precac_intermediate_chan(struct wlan_objmgr_pdev *pdev,
 						 uint32_t value)

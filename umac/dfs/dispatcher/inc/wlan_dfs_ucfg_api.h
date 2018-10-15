@@ -362,4 +362,31 @@ QDF_STATUS ucfg_dfs_get_override_status_timeout(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * ucfg_dfs_set_nol_subchannel_marking() - Set or unset NOL subchannel marking.
+ * @pdev: Pointer to DFS pdev object.
+ * @nol_subchannel_marking: Set NOL subchannel marking based on this value.
+ *
+ * Wrapper function for dfs_set_nol_subchannel_marking().
+ * This function is called from outside of dfs component.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_dfs_set_nol_subchannel_marking(struct wlan_objmgr_pdev *pdev,
+					       bool nol_subchannel_marking);
+
+/**
+ * ucfg_dfs_get_nol_subchannel_marking() - Get the value of NOL subchannel
+ * marking.
+ * @pdev: Pointer to DFS pdev object.
+ * @nol_subchannel_marking: Store the value of  NOL subchannel marking.
+ *
+ * Wrapper function for dfs_get_nol_subchannel_marking().
+ * This function is called from outside of dfs component.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_dfs_get_nol_subchannel_marking(struct wlan_objmgr_pdev *pdev,
+					       bool *nol_subchannel_marking);
 #endif /* _WLAN_DFS_UCFG_API_H_ */

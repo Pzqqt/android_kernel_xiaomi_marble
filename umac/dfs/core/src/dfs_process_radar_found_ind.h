@@ -159,4 +159,27 @@ uint8_t dfs_get_bonding_channels(struct wlan_dfs *dfs,
  */
 uint8_t dfs_get_bonding_channels_without_seg_info(struct dfs_channel *chan,
 						  uint8_t *channels);
+
+/**
+ * dfs_set_nol_subchannel_marking() - Set or unset NOL subchannel marking.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @nol_subchannel_marking - Configure NOL subchannel marking.
+ *
+ * Return: Status of the configuration.
+ */
+int
+dfs_set_nol_subchannel_marking(struct wlan_dfs *dfs,
+			       bool nol_subchannel_marking);
+
+/**
+ * dfs_get_nol_subchannel_marking() - Get the value of NOL subchannel marking.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @nol_subchannel_marking - Read and store the value of NOL subchannel marking
+ * config.
+ *
+ * Return: Status of the read.
+ */
+int
+dfs_get_nol_subchannel_marking(struct wlan_dfs *dfs,
+			       bool *nol_subchannel_marking);
 #endif /*_DFS_PROCESS_RADAR_FOUND_IND_H_ */

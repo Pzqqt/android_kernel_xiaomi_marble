@@ -119,6 +119,30 @@
  *     <-------- 20 Mhz ------>
  */
 
+int dfs_set_nol_subchannel_marking(struct wlan_dfs *dfs,
+				   bool nol_subchannel_marking)
+{
+	if (!dfs)
+		return -EIO;
+
+	dfs->dfs_use_nol_subchannel_marking = nol_subchannel_marking;
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "NOL subchannel marking is %s ",
+		 (nol_subchannel_marking) ? "set" : "disabled");
+
+	return 0;
+}
+
+int dfs_get_nol_subchannel_marking(struct wlan_dfs *dfs,
+				   bool *nol_subchannel_marking)
+{
+	if (!dfs)
+		return -EIO;
+
+	(*nol_subchannel_marking) = dfs->dfs_use_nol_subchannel_marking;
+
+	return 0;
+}
+
 /**
  * dfs_radar_add_channel_list_to_nol()- Add given channels to nol
  * @dfs: Pointer to wlan_dfs structure.

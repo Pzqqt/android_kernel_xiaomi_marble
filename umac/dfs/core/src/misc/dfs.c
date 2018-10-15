@@ -193,7 +193,6 @@ int dfs_attach(struct wlan_dfs *dfs)
 	dfs_zero_cac_attach(dfs);
 	dfs_etsi_precac_attach(dfs);
 	dfs_nol_attach(dfs);
-	dfs->dfs_use_nol_subchannel_marking = 1;
 
 	/*
 	 * Init of timer ,dfs_testtimer_task is required by both partial
