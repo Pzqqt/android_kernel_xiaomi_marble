@@ -292,6 +292,19 @@ void tdls_reset_nss(struct tdls_soc_priv_obj *tdls_soc,
 				  uint8_t action_code);
 
 /**
+ * tdls_release_serialization_command() - TDLS wrapper to
+ * relases serialization command.
+ * @vdev: Object manager vdev
+ * @type: command to release.
+ *
+ * Return: None
+ */
+
+void
+tdls_release_serialization_command(struct wlan_objmgr_vdev *vdev,
+				   enum wlan_serialization_cmd_type type);
+
+/**
  * tdls_set_cap() - set TDLS capability type
  * @tdls_vdev: tdls vdev object
  * @mac: peer mac address

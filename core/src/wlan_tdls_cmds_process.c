@@ -97,7 +97,7 @@ static char *tdls_get_ser_cmd_str(enum  wlan_serialization_cmd_type type)
 	}
 }
 
-static void
+void
 tdls_release_serialization_command(struct wlan_objmgr_vdev *vdev,
 				   enum wlan_serialization_cmd_type type)
 {
