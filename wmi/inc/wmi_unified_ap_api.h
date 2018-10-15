@@ -230,4 +230,7 @@ QDF_STATUS wmi_extract_chan_info_event(void *wmi_hdl, void *evt_buf,
 
 QDF_STATUS wmi_extract_channel_hopping_event(void *wmi_hdl, void *evt_buf,
 			wmi_host_pdev_channel_hopping_event *ch_hopping);
+
+QDF_STATUS wmi_unified_peer_chan_width_switch_cmd_send(void *wmi_hdl,
+			struct peer_chan_width_switch_params *param);
 #endif /* _WMI_UNIFIED_AP_API_H_ */

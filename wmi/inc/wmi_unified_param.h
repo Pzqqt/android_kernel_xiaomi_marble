@@ -3089,7 +3089,28 @@ struct set_qdepth_thresh_params {
 	msduq_update_params update_params[QDEPTH_THRESH_MAX_UPDATES];
 };
 
+/**
+ * struct peer_chan_width_switch_info - Peer channel width capability params
+ * @mac_addr: MAC address of peer
+ * @chan_width: Max supported channel width of peer
+ *              (enum ieee80211_cwm_width)
+ */
 
+struct peer_chan_width_switch_info {
+	uint8_t mac_addr[IEEE80211_ADDR_LEN];
+	uint32_t chan_width;
+};
+
+/**
+ * struct peer_chan_width_switch_params - Peer channel width capability wrapper
+ * @num_peers: Total number of peers connected to AP
+ * @chan_width_peer_list: List of capabilities for all connected peers
+ */
+
+struct peer_chan_width_switch_params {
+	uint32_t num_peers;
+	struct peer_chan_width_switch_info *chan_width_peer_list;
+};
 
 /**
  * struct config_ratemask_params - ratemask config parameters
