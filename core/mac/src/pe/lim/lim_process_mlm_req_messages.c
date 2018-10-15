@@ -1029,10 +1029,14 @@ static void lim_process_mlm_auth_req(struct mac_context *mac_ctx, uint32_t *msg)
 			goto end;
 		} else {
 			pe_debug("lim_process_mlm_auth_req_sae is successful");
-			lim_diag_event_report(mac_ctx,
-					      WLAN_PE_DIAG_AUTH_ALGO_NUM,
-					      session, QDF_STATUS_SUCCESS,
-					      eSIR_AUTH_TYPE_SAE);
+			auth_frame_body.authAlgoNumber = eSIR_AUTH_TYPE_SAE;
+			auth_frame_body.authTransactionSeqNumber =
+							SIR_MAC_AUTH_FRAME_1;
+			auth_frame_body.authStatusCode = 0;
+			host_log_wlan_auth_info(auth_frame_body.authAlgoNumber,
+				auth_frame_body.authTransactionSeqNumber,
+				auth_frame_body.authStatusCode);
+
 			return;
 		}
 	} else
@@ -1049,16 +1053,13 @@ static void lim_process_mlm_auth_req(struct mac_context *mac_ctx, uint32_t *msg)
 		auth_frame_body.authAlgoNumber =
 		(uint8_t) mac_ctx->lim.gpLimMlmAuthReq->authType;
 	}
-	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_AUTH_ALGO_NUM, session,
-			      QDF_STATUS_SUCCESS, auth_frame_body.authAlgoNumber);
 
 	/* Prepare & send Authentication frame */
 	auth_frame_body.authTransactionSeqNumber = SIR_MAC_AUTH_FRAME_1;
 	auth_frame_body.authStatusCode = 0;
-#ifdef FEATURE_WLAN_DIAG_SUPPORT
-	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_AUTH_START_EVENT, session,
-			      QDF_STATUS_SUCCESS, auth_frame_body.authStatusCode);
-#endif
+	host_log_wlan_auth_info(auth_frame_body.authAlgoNumber,
+				auth_frame_body.authTransactionSeqNumber,
+				auth_frame_body.authStatusCode);
 	mac_ctx->auth_ack_status = LIM_AUTH_ACK_NOT_RCD;
 	lim_send_auth_mgmt_frame(mac_ctx,
 		&auth_frame_body, mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
