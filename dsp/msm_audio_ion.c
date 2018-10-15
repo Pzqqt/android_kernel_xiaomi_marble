@@ -279,7 +279,7 @@ exit:
 	return addr;
 }
 
-static void msm_audio_ion_unmap_kernel(struct dma_buf *dma_buf)
+static int msm_audio_ion_unmap_kernel(struct dma_buf *dma_buf)
 {
 	int rc = 0;
 	void *vaddr = NULL;
@@ -304,6 +304,7 @@ static void msm_audio_ion_unmap_kernel(struct dma_buf *dma_buf)
 		dev_err(cb_dev,
 			"%s: cannot find allocation for dma_buf %pK",
 			__func__, dma_buf);
+		rc = -EINVAL;
 		goto err;
 	}
 
@@ -317,7 +318,7 @@ static void msm_audio_ion_unmap_kernel(struct dma_buf *dma_buf)
 	}
 
 err:
-	return;
+	return rc;
 }
 
 static int msm_audio_ion_map_buf(struct dma_buf *dma_buf, dma_addr_t *paddr,
@@ -489,12 +490,16 @@ EXPORT_SYMBOL(msm_audio_ion_import);
  */
 int msm_audio_ion_free(struct dma_buf *dma_buf)
 {
+	int ret = 0;
+
 	if (!dma_buf) {
 		pr_err("%s: dma_buf invalid\n", __func__);
 		return -EINVAL;
 	}
 
-	msm_audio_ion_unmap_kernel(dma_buf);
+	ret = msm_audio_ion_unmap_kernel(dma_buf);
+	if (ret)
+		return ret;
 
 	msm_audio_dma_buf_unmap(dma_buf);
 
