@@ -206,7 +206,6 @@ tdls_internal_send_mgmt_tx_done(struct tdls_action_frame_request *req,
 
 	indication.status = status;
 	indication.vdev = req->vdev;
-
 	tdls_soc_obj = wlan_vdev_get_tdls_soc_obj(req->vdev);
 	if (tdls_soc_obj && tdls_soc_obj->tdls_event_cb)
 		tdls_soc_obj->tdls_event_cb(tdls_soc_obj->tdls_evt_cb_data,
@@ -272,8 +271,8 @@ static QDF_STATUS tdls_activate_send_mgmt_request(
 
 	peer = wlan_vdev_get_bsspeer(action_req->vdev);
 
-	if (QDF_STATUS_SUCCESS != wlan_objmgr_peer_try_get_ref(peer,
-							WLAN_TDLS_SB_ID)) {
+	status =  wlan_objmgr_peer_try_get_ref(peer, WLAN_TDLS_SB_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		qdf_mem_free(tdls_mgmt_req);
 		goto release_mgmt_ref;
 	}
@@ -315,6 +314,11 @@ release_mgmt_ref:
 
 	/*update tdls nss infornation based on action code */
 	tdls_reset_nss(tdls_soc_obj, action_req->chk_frame->action_code);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_internal_send_mgmt_tx_done(action_req, status);
+		tdls_release_serialization_command(action_req->vdev,
+						   WLAN_SER_CMD_TDLS_SEND_MGMT);
+	}
 
 	return status;
 }
