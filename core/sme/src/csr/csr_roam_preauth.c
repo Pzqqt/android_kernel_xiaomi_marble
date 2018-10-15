@@ -513,7 +513,10 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(tpAniSirGlobal mac_ctx,
 					 tpSirBssDescription bss_desc)
 {
 	tpSirFTPreAuthReq preauth_req;
-	uint16_t auth_req_len = 0;
+	uint16_t auth_req_len;
+	tpSirBssDescription buf;
+	uint32_t dot11mode, buf_len;
+	QDF_STATUS status;
 	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
 				session_id);
 
@@ -523,28 +526,29 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(tpAniSirGlobal mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	dot11mode = csr_get_dot11_mode(mac_ctx, session_id, bss_desc);
+	if (!dot11mode) {
+		sme_err("dot11mode is zero");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	auth_req_len = sizeof(tSirFTPreAuthReq);
 	preauth_req = qdf_mem_malloc(auth_req_len);
 	if (!preauth_req)
 		return QDF_STATUS_E_NOMEM;
 
+	buf_len = sizeof(bss_desc->length) + bss_desc->length;
+	buf = qdf_mem_malloc(buf_len);
+	if (!buf) {
+		qdf_mem_free(preauth_req);
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	/* Save the SME Session ID. We need it while processing preauth resp */
 	csr_session->ftSmeContext.smeSessionId = session_id;
-	preauth_req->pbssDescription = qdf_mem_malloc(sizeof(bss_desc->length)
-				+ bss_desc->length);
-	if (!preauth_req->pbssDescription)
-		return QDF_STATUS_E_NOMEM;
-
 	preauth_req->messageType = eWNI_SME_FT_PRE_AUTH_REQ;
-
 	preauth_req->preAuthchannelNum = bss_desc->channelId;
-	preauth_req->dot11mode = csr_get_dot11_mode(mac_ctx, session_id,
-						    bss_desc);
-	if (!preauth_req->dot11mode) {
-		sme_err("preauth_req->dot11mode is zero");
-		qdf_mem_free(preauth_req);
-		return QDF_STATUS_E_FAILURE;
-	}
+	preauth_req->dot11mode = dot11mode;
 
 	qdf_mem_copy((void *)&preauth_req->currbssId,
 			(void *)csr_session->connectedProfile.bssid.bytes,
@@ -565,10 +569,15 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(tpAniSirGlobal mac_ctx,
 	} else {
 		preauth_req->ft_ies_length = 0;
 	}
-	qdf_mem_copy(preauth_req->pbssDescription, bss_desc,
-			sizeof(bss_desc->length) + bss_desc->length);
+	qdf_mem_copy(buf, bss_desc, buf_len);
+	preauth_req->pbssDescription = buf;
 	preauth_req->length = auth_req_len;
-	return umac_send_mb_message_to_mac(preauth_req);
+
+	status = umac_send_mb_message_to_mac(preauth_req);
+	if (QDF_IS_STATUS_ERROR(status))
+		qdf_mem_free(buf);
+
+	return status;
 }
 
 void csr_roam_ft_pre_auth_rsp_processor(tpAniSirGlobal mac_ctx,
