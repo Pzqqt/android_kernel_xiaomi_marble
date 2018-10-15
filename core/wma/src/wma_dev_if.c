@@ -818,7 +818,7 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	 * Cleanup the ObjMgr Peers for the current vdev and detach the
 	 * CDP Vdev.
 	 */
-	if (cds_is_driver_recovering() || !cds_is_target_ready()) {
+	if (!cds_is_target_ready()) {
 		wma_force_objmgr_vdev_peer_cleanup(wma_handle, vdev_id);
 		wma_release_vdev_ref(wma_handle, vdev_id);
 		wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
