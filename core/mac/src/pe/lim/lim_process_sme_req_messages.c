@@ -1177,7 +1177,7 @@ static inline void lim_update_sae_config(tpPESession session,
 #endif
 
 /**
- * lim_send_join_req() - send vdev start request
+ * lim_send_join_req() - send vdev start request for assoc
  *@session: pe session
  *@mlm_join_req: join req
  *
@@ -1188,6 +1188,7 @@ static inline void lim_update_sae_config(tpPESession session,
 static QDF_STATUS lim_send_join_req(tpPESession session,
 				    tLimMlmJoinReq *mlm_join_req)
 {
+	mlme_set_assoc_type(session->vdev, VDEV_ASSOC);
 	return wlan_vdev_mlme_sm_deliver_evt(session->vdev,
 					     WLAN_VDEV_SM_EV_START,
 					     sizeof(*mlm_join_req),
@@ -1203,6 +1204,59 @@ static QDF_STATUS lim_send_join_req(tpPESession session,
 }
 #endif
 
+/**
+ * lim_send_reassoc_req() - send vdev start request for reassoc
+ *@session: pe session
+ *@mlm_join_req: join req
+ *
+ * Return: QDF_STATUS
+ */
+
+#ifdef CONFIG_VDEV_SM
+static QDF_STATUS lim_send_reassoc_req(tpPESession session,
+				       tLimMlmReassocReq *reassoc_req)
+{
+	mlme_set_assoc_type(session->vdev, VDEV_REASSOC);
+	return wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					     WLAN_VDEV_SM_EV_START,
+					     sizeof(*reassoc_req),
+					     reassoc_req);
+}
+#else
+static QDF_STATUS lim_send_reassoc_req(tpPESession session,
+				       tLimMlmReassocReq *reassoc_req)
+{
+	lim_process_mlm_reassoc_req(session->mac_ctx, reassoc_req);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * lim_send_ft_reassoc_req() - send vdev start request for ft_reassoc
+ *@session: pe session
+ *@mlm_join_req: join req
+ *
+ * Return: QDF_STATUS
+ */
+
+#ifdef CONFIG_VDEV_SM
+static QDF_STATUS lim_send_ft_reassoc_req(tpPESession session)
+{
+	mlme_set_assoc_type(session->vdev, VDEV_FT_REASSOC);
+	return wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					     WLAN_VDEV_SM_EV_START,
+					     sizeof(*session),
+					     session);
+}
+#else
+static QDF_STATUS lim_send_ft_reassoc_req(tpPESession session)
+{
+	lim_process_mlm_ft_reassoc_req(session->mac_ctx, session);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * __lim_process_sme_join_req() - process SME_JOIN_REQ message
@@ -1772,6 +1826,8 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 		ret_code = eSIR_SME_INVALID_PARAMETERS;
 		goto end;
 	}
+	lim_get_session_info(mac_ctx, (uint8_t *)msg_buf,
+			     &sme_session_id, &transaction_id);
 
 	session_entry = pe_find_session_by_bssid(mac_ctx,
 			reassoc_req->bssDescription.bssId,
@@ -1781,8 +1837,6 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 		lim_print_mac_addr(mac_ctx, reassoc_req->bssDescription.bssId,
 				LOGE);
 		ret_code = eSIR_SME_INVALID_PARAMETERS;
-		lim_get_session_info(mac_ctx, (uint8_t *)msg_buf,
-				&sme_session_id, &transaction_id);
 		session_entry =
 			pe_find_session_by_sme_session_id(mac_ctx,
 					sme_session_id);
@@ -1865,8 +1919,9 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 				goto end;
 			}
 
-			lim_process_mlm_ft_reassoc_req(mac_ctx, msg_buf,
-					session_entry);
+			session_entry->smeSessionId = sme_session_id;
+			session_entry->transactionId = transaction_id;
+			lim_send_ft_reassoc_req(session_entry);
 			return;
 		}
 		/*
@@ -1975,8 +2030,8 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 				session_entry->peSessionId,
 				session_entry->limSmeState));
 
-	lim_post_mlm_message(mac_ctx,
-			     LIM_MLM_REASSOC_REQ, (uint32_t *)mlm_reassoc_req);
+	lim_send_reassoc_req(session_entry, mlm_reassoc_req);
+
 	return;
 end:
 	if (reassoc_req) {

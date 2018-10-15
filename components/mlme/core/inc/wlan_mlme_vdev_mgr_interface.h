@@ -27,18 +27,32 @@
 #include "include/wlan_vdev_mlme.h"
 
 /**
+ * enum vdev_assoc_type - VDEV associate/reassociate type
+ * @VDEV_ASSOC: associate
+ * @VDEV_REASSOC: reassociate
+ * @VDEV_FT_REASSOC: fast reassociate
+ */
+enum vdev_assoc_type {
+	VDEV_ASSOC,
+	VDEV_REASSOC,
+	VDEV_FT_REASSOC
+};
+
+/**
  * struct mlme_legacy_priv - VDEV MLME legacy priv object
  * @chan_switch_in_progress: flag to indicate that channel switch is in progress
  * @hidden_ssid_restart_in_progress: flag to indicate hidden ssid restart is
  *                                   in progress
  * @vdev_start_failed: flag to indicate that vdev start failed.
  * @connection_fail: flag to indicate connection failed
+ * @assoc_type: vdev associate/reassociate type
  */
 struct mlme_legacy_priv {
 	bool chan_switch_in_progress;
 	bool hidden_ssid_restart_in_progress;
 	bool vdev_start_failed;
 	bool connection_fail;
+	enum vdev_assoc_type assoc_type;
 };
 
 /**
@@ -144,5 +158,24 @@ bool mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev);
  * Return: true or false
  */
 bool mlme_is_vdev_in_beaconning_mode(enum QDF_OPMODE vdev_opmode);
+
+/**
+ * mlme_set_assoc_type() - set associate type
+ * @vdev: vdev pointer
+ * @assoc_type: type to be set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_set_assoc_type(struct wlan_objmgr_vdev *vdev,
+			       enum vdev_assoc_type assoc_type);
+
+/**
+ * mlme_get_assoc_type() - get associate type
+ * @vdev: vdev pointer
+ *
+ * Return: associate type
+ */
+enum vdev_assoc_type  mlme_get_assoc_type(struct wlan_objmgr_vdev *vdev);
+
 #endif
 #endif

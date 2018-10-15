@@ -41,8 +41,8 @@ void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac,
 int lim_process_ft_pre_auth_req(tpAniSirGlobal pMac,
 				struct scheduler_msg *pMsg);
 void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal pMac);
-void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
-		tpPESession psessionEntry);
+void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
+				    tpPESession psessionEntry);
 void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, QDF_STATUS status,
 		uint32_t *data, tpPESession psessionEntry);
 void lim_post_ft_pre_auth_rsp(tpAniSirGlobal pMac, QDF_STATUS status,
@@ -56,7 +56,8 @@ QDF_STATUS lim_ft_setup_auth_session(tpAniSirGlobal pMac,
 void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg);
 void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 		struct scheduler_msg *limMsgQ, tpPESession psessionEntry);
-void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg);
+void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx,
+				 tLimMlmReassocReq *reassoc_req);
 void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
 				enum sir_scan_event_type event,
 				uint8_t session_id,
@@ -70,7 +71,7 @@ static inline void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac,
 static inline void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal pMac)
 {}
 static inline void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
-		uint32_t *pMsgBuf, tpPESession psessionEntry)
+						  tpPESession psessionEntry)
 {}
 static inline void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac,
 		QDF_STATUS status, uint8_t *auth_rsp,
@@ -83,7 +84,7 @@ static inline void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 		struct scheduler_msg *limMsgQ, tpPESession psessionEntry)
 {}
 static inline void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx,
-		uint32_t *msg)
+					       tLimMlmReassocReq *reassoc_req)
 {}
 static inline void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
 		enum sir_scan_event_type event,

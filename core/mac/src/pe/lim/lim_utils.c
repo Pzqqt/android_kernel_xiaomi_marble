@@ -63,6 +63,7 @@
 #endif
 #include "cfg_mlme_obss_ht40.h"
 #include "cfg_ucfg_api.h"
+#include "lim_ft.h"
 
 #define ASCII_SPACE_CHARACTER 0x20
 
@@ -8392,6 +8393,7 @@ QDF_STATUS lim_sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 					uint16_t data_len, void *data)
 {
 	tpAniSirGlobal mac_ctx;
+	enum vdev_assoc_type assoc_type;
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac_ctx) {
@@ -8401,8 +8403,20 @@ QDF_STATUS lim_sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	lim_process_mlm_join_req(mac_ctx, (tLimMlmJoinReq *)data);
-
+	assoc_type = mlme_get_assoc_type(vdev_mlme->vdev);
+	switch (assoc_type) {
+	case VDEV_ASSOC:
+		lim_process_mlm_join_req(mac_ctx, (tLimMlmJoinReq *)data);
+		break;
+	case VDEV_REASSOC:
+		lim_process_mlm_reassoc_req(mac_ctx, (tLimMlmReassocReq *)data);
+		break;
+	case VDEV_FT_REASSOC:
+		lim_process_mlm_ft_reassoc_req(mac_ctx, (tPESession *)data);
+		break;
+	default:
+		pe_err("assoc_type %d is invalid", assoc_type);
+	}
 	return QDF_STATUS_SUCCESS;
 }
 

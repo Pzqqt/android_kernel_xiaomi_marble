@@ -4807,9 +4807,22 @@ QDF_STATUS wma_sta_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 					    uint16_t data_len, void *data)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	enum vdev_assoc_type assoc_type;
 
-	wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
-				   data, 0);
+	assoc_type = mlme_get_assoc_type(vdev_mlme->vdev);
+	switch (assoc_type) {
+	case VDEV_ASSOC:
+	case VDEV_REASSOC:
+		wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
+					   data, 0);
+		break;
+	case VDEV_FT_REASSOC:
+		wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP,
+					   data, 0);
+		break;
+	default:
+		WMA_LOGE(FL("assoc_type %d is invalid"), assoc_type);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

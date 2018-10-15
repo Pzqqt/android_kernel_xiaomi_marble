@@ -56,20 +56,14 @@ static void lim_handle_sme_reaasoc_result(tpAniSirGlobal, tSirResultCodes,
  *
  * Return: None
  */
-void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
+void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx,
+				 tLimMlmReassocReq *reassoc_req)
 {
 	uint8_t channel, sec_ch_offset;
 	struct tLimPreAuthNode *auth_node;
-	tLimMlmReassocReq *reassoc_req;
 	tLimMlmReassocCnf reassoc_cnf;
 	tpPESession session;
 
-	if (msg == NULL) {
-		pe_err("Buffer is Pointing to NULL");
-		return;
-	}
-
-	reassoc_req = (tLimMlmReassocReq *) msg;
 	session = pe_find_session_by_session_id(mac_ctx,
 			reassoc_req->sessionId);
 	if (NULL == session) {
@@ -572,18 +566,15 @@ end:
 /**
  * lim_process_mlm_ft_reassoc_req() - Handle the Reassoc request
  * @pMac: Global MAC context
- * @pMsgBuf: Buffer which holds the data
  * @psessionEntry: PE Session
  *
  *  This function handles the Reassoc Req from SME
  *
  *  Return: None
  */
-void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
+void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
 				    tpPESession psessionEntry)
 {
-	uint8_t smeSessionId = 0;
-	uint16_t transactionId = 0;
 	uint8_t chanNum = 0;
 	tLimMlmReassocReq *pMlmReassocReq;
 	uint16_t caps;
@@ -593,10 +584,6 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	uint32_t teleBcnEn = 0;
 
 	chanNum = psessionEntry->currentOperChannel;
-	lim_get_session_info(pMac, (uint8_t *) pMsgBuf, &smeSessionId,
-			     &transactionId);
-	psessionEntry->smeSessionId = smeSessionId;
-	psessionEntry->transactionId = transactionId;
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_REASSOCIATING,
