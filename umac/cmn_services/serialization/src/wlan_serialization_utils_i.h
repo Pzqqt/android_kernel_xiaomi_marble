@@ -635,6 +635,7 @@ QDF_STATUS wlan_serialization_peek_next(
  */
 #define CMD_MARKED_FOR_ACTIVATION 1
 #define CMD_IS_ACTIVE             2
+#define CMD_ACTIVE_MARKED_FOR_CANCEL 3
 /**
  * struct wlan_serialization_timer - Timer used for serialization
  * @cmd:      Cmd to which the timer is linked

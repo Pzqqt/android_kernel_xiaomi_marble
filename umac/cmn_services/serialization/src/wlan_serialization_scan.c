@@ -237,15 +237,16 @@ wlan_ser_cancel_scan_cmd(
 			}
 
 			/* Cancel request received for a cmd in active
-			 * queue which has not been activated yet, we
-			 * should assert here
+			 * queue which has not been activated yet, we mark
+			 * it as CMD_ACTIVE_MARKED_FOR_CANCEL and remove
+			 * the cmd after activation
 			 */
 			if (qdf_atomic_test_bit(CMD_MARKED_FOR_ACTIVATION,
 						&cmd_list->cmd_in_use)) {
-				wlan_serialization_release_lock(
-						&pdev_q->pdev_queue_lock);
+				qdf_atomic_set_bit(CMD_ACTIVE_MARKED_FOR_CANCEL,
+						   &cmd_list->cmd_in_use);
 				status = WLAN_SER_CMD_MARKED_FOR_ACTIVATION;
-				goto error;
+				continue;
 			}
 
 			qdf_status = wlan_serialization_find_and_stop_timer(
@@ -312,7 +313,6 @@ wlan_ser_cancel_scan_cmd(
 
 	wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
 
-error:
 	ser_exit();
 	return status;
 }
