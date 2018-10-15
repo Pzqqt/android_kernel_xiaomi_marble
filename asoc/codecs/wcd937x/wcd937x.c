@@ -2324,6 +2324,7 @@ static int wcd937x_bind(struct device *dev)
 	}
 	wcd937x->tx_swr_dev->slave_irq = wcd937x->virq;
 
+	mutex_init(&wcd937x->micb_lock);
 	ret = snd_soc_register_codec(dev, &soc_codec_dev_wcd937x,
 				     NULL, 0);
 	if (ret) {
@@ -2347,6 +2348,7 @@ static void wcd937x_unbind(struct device *dev)
 	wcd_irq_exit(&wcd937x->irq_info, wcd937x->virq);
 	snd_soc_unregister_codec(dev);
 	component_unbind_all(dev, wcd937x);
+	mutex_destroy(&wcd937x->micb_lock);
 }
 
 static const struct of_device_id wcd937x_dt_match[] = {
