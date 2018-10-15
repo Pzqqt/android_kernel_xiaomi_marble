@@ -541,6 +541,41 @@ bool mlme_is_connection_fail(struct wlan_objmgr_vdev *vdev)
 	return mlme_priv->connection_fail;
 }
 
+QDF_STATUS mlme_set_assoc_type(struct wlan_objmgr_vdev *vdev,
+			       enum vdev_assoc_type assoc_type)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+
+	mlme_priv->assoc_type = assoc_type;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+enum vdev_assoc_type  mlme_get_assoc_type(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return false;
+	}
+
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+
+	return mlme_priv->assoc_type;
+}
+
 QDF_STATUS
 mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val)
 {
