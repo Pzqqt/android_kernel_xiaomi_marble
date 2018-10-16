@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016, 2018 The Linux Foundation. All rights reserved.*
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -597,7 +597,12 @@ typedef enum {
  * so that it is easy to handle the statistics in BE host.
  */
 
-struct wlan_dbg_tx_stats {
+/*
+ * wlan_dbg_tx_stats_v1, _v2:
+ * differing versions of the wlan_dbg_tx_stats struct used by different
+ * targets
+ */
+struct wlan_dbg_tx_stats_v1 {
     /* Num HTT cookies queued to dispatch list */
     A_INT32 comp_queued;
     /* Num HTT cookies dispatched */
@@ -618,19 +623,12 @@ struct wlan_dbg_tx_stats {
     A_INT32 hw_reaped;
     /* Num underruns */
     A_INT32 underrun;
-#if defined(AR900B)
-    /* HW Paused. */
-    A_UINT32 hw_paused;
-#endif
     /* Num PPDUs cleaned up in TX abort */
     A_INT32 tx_abort;
     /* Num MPDUs requed by SW */
     A_INT32 mpdus_requed;
     /* excessive retries */
     A_UINT32 tx_ko;
-#if defined(AR900B)
-    A_UINT32 tx_xretry;
-#endif
     /* data hw rate code */
     A_UINT32 data_rc;
     /* Scheduler self triggers */
@@ -651,7 +649,58 @@ struct wlan_dbg_tx_stats {
     A_UINT32 phy_underrun;
     /* MPDU is more than txop limit */
     A_UINT32 txop_ovf;
-#if defined(AR900B)
+};
+
+struct wlan_dbg_tx_stats_v2 {
+    /* Num HTT cookies queued to dispatch list */
+    A_INT32 comp_queued;
+    /* Num HTT cookies dispatched */
+    A_INT32 comp_delivered;
+    /* Num MSDU queued to WAL */
+    A_INT32 msdu_enqued;
+    /* Num MPDU queue to WAL */
+    A_INT32 mpdu_enqued;
+    /* Num MSDUs dropped by WMM limit */
+    A_INT32 wmm_drop;
+    /* Num Local frames queued */
+    A_INT32 local_enqued;
+    /* Num Local frames done */
+    A_INT32 local_freed;
+    /* Num queued to HW */
+    A_INT32 hw_queued;
+    /* Num PPDU reaped from HW */
+    A_INT32 hw_reaped;
+    /* Num underruns */
+    A_INT32 underrun;
+    /* HW Paused. */
+    A_UINT32 hw_paused;
+    /* Num PPDUs cleaned up in TX abort */
+    A_INT32 tx_abort;
+    /* Num MPDUs requed by SW */
+    A_INT32 mpdus_requed;
+    /* excessive retries */
+    A_UINT32 tx_ko;
+    A_UINT32 tx_xretry;
+    /* data hw rate code */
+    A_UINT32 data_rc;
+    /* Scheduler self triggers */
+    A_UINT32 self_triggers;
+    /* frames dropped due to excessive sw retries */
+    A_UINT32 sw_retry_failure;
+    /* illegal rate phy errors  */
+    A_UINT32 illgl_rate_phy_err;
+    /* wal pdev continous xretry */
+    A_UINT32 pdev_cont_xretry;
+    /* wal pdev continous xretry */
+    A_UINT32 pdev_tx_timeout;
+    /* wal pdev resets  */
+    A_UINT32 pdev_resets;
+    /* frames dropped due to non-availability of stateless TIDs */
+    A_UINT32 stateless_tid_alloc_failure;
+    /* PhY/BB underrun */
+    A_UINT32 phy_underrun;
+    /* MPDU is more than txop limit */
+    A_UINT32 txop_ovf;
     /* Number of Sequences posted */
     A_UINT32 seq_posted;
     /* Number of Sequences failed queueing */
@@ -672,10 +721,20 @@ struct wlan_dbg_tx_stats {
     A_INT32 mpdus_ack_failed;
     /* Num MPDUs that was dropped du to expiry. */
     A_INT32 mpdus_expired;
-#endif
 };
 
-struct wlan_dbg_rx_stats {
+#if defined(AR900B)
+#define wlan_dbg_tx_stats wlan_dbg_tx_stats_v2
+#else
+#define wlan_dbg_tx_stats wlan_dbg_tx_stats_v1
+#endif
+
+/*
+ * wlan_dbg_rx_stats_v1, _v2:
+ * differing versions of the wlan_dbg_rx_stats struct used by different
+ * targets
+ */
+struct wlan_dbg_rx_stats_v1 {
     /* Cnts any change in ring routing mid-ppdu */
     A_INT32 mid_ppdu_route_change;
     /* Total number of statuses processed */
@@ -699,12 +758,41 @@ struct wlan_dbg_rx_stats {
     A_INT32 phy_err_drop;
     /* Number of mpdu errors - FCS, MIC, ENC etc. */
     A_INT32 mpdu_errs;
-#if defined(AR900B)
-    /* Number of rx overflow errors. */
-    A_INT32 rx_ovfl_errs;
-#endif
 };
 
+struct wlan_dbg_rx_stats_v2 {
+    /* Cnts any change in ring routing mid-ppdu */
+    A_INT32 mid_ppdu_route_change;
+    /* Total number of statuses processed */
+    A_INT32 status_rcvd;
+    /* Extra frags on rings 0-3 */
+    A_INT32 r0_frags;
+    A_INT32 r1_frags;
+    A_INT32 r2_frags;
+    A_INT32 r3_frags;
+    /* MSDUs / MPDUs delivered to HTT */
+    A_INT32 htt_msdus;
+    A_INT32 htt_mpdus;
+    /* MSDUs / MPDUs delivered to local stack */
+    A_INT32 loc_msdus;
+    A_INT32 loc_mpdus;
+    /* AMSDUs that have more MSDUs than the status ring size */
+    A_INT32 oversize_amsdu;
+    /* Number of PHY errors */
+    A_INT32 phy_errs;
+    /* Number of PHY errors drops */
+    A_INT32 phy_err_drop;
+    /* Number of mpdu errors - FCS, MIC, ENC etc. */
+    A_INT32 mpdu_errs;
+    /* Number of rx overflow errors. */
+    A_INT32 rx_ovfl_errs;
+};
+
+#if defined(AR900B)
+#define wlan_dbg_rx_stats wlan_dbg_rx_stats_v2
+#else
+#define wlan_dbg_rx_stats wlan_dbg_rx_stats_v1
+#endif
 
 struct wlan_dbg_mem_stats {
     A_UINT32 iram_free_size;
@@ -715,6 +803,28 @@ struct wlan_dbg_peer_stats {
 
 	A_INT32 dummy; /* REMOVE THIS ONCE REAL PEER STAT COUNTERS ARE ADDED */
 };
+
+/*
+ * wlan_dbg_rx_rate_info_v1a_t, _v1b_t:
+ * differing versions of the wlan_dbg_rx_rate_info struct used by different
+ * targets
+ */
+typedef struct {
+    A_UINT32 mcs[10];
+    A_UINT32 sgi[10];
+    A_UINT32 nss[4];
+    A_UINT32 nsts;
+    A_UINT32 stbc[10];
+    A_UINT32 bw[3];
+    A_UINT32 pream[6];
+    A_UINT32 ldpc;
+    A_UINT32 txbf;
+    A_UINT32 mgmt_rssi;
+    A_UINT32 data_rssi;
+    A_UINT32 rssi_chain0;
+    A_UINT32 rssi_chain1;
+    A_UINT32 rssi_chain2;
+} wlan_dbg_rx_rate_info_v1a_t;
 
 typedef struct {
     A_UINT32 mcs[10];
@@ -734,12 +844,15 @@ typedef struct {
 /*
  * TEMPORARY: leave rssi_chain3 in place for AR900B builds until code using
  * rssi_chain3 has been converted to use wlan_dbg_rx_rate_info_v2_t.
- * At that time, this rssi_chain3 field will be deleted.
  */
-#if defined(AR900B)
 	A_UINT32 rssi_chain3;
+} wlan_dbg_rx_rate_info_v1b_t;
+
+#if defined(AR900B)
+#define wlan_dbg_rx_rate_info_t wlan_dbg_rx_rate_info_v1b_t
+#else
+#define wlan_dbg_rx_rate_info_t wlan_dbg_rx_rate_info_v1a_t
 #endif
-} wlan_dbg_rx_rate_info_t ;
 
 typedef struct {
     A_UINT32 mcs[10];
