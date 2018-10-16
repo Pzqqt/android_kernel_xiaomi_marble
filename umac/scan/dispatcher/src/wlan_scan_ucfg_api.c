@@ -805,6 +805,7 @@ ucfg_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 		req->scan_req.scan_f_add_tpc_ie_in_probe = true;
 	} else {
 		req->scan_req.adaptive_dwell_time_mode = SCAN_DWELL_MODE_STATIC;
+		req->scan_req.dwell_time_active_2g = 0;
 		if (req->scan_req.p2p_scan_type == SCAN_P2P_LISTEN) {
 			req->scan_req.repeat_probe_time = 0;
 		} else {
