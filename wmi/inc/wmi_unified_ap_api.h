@@ -65,6 +65,9 @@ QDF_STATUS wmi_unified_vdev_config_ratemask_cmd_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_set_quiet_mode_cmd_send(void *wmi_hdl,
 				struct set_quiet_mode_params *param);
 
+QDF_STATUS wmi_unified_set_bcn_offload_quiet_mode_cmd_send(void *wmi_hdl,
+			struct set_bcn_offload_quiet_mode_params *param);
+
 QDF_STATUS wmi_unified_nf_dbr_dbm_info_get_cmd_send(void *wmi_hdl,
 						    uint8_t mac_id);
 
