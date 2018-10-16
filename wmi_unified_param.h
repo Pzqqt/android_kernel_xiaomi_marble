@@ -3348,6 +3348,22 @@ struct set_quiet_mode_params {
 };
 
 /**
+ * struct set_bcn_offload_quiet_mode_params - Set quiet mode params
+ * @vdev_id: Vdev ID
+ * @period: Quite period
+ * @duration: Quite duration
+ * @next_start: Next quiet start
+ * @flag: 0 - disable, 1 - enable and continuous, 3 - enable and single shot
+ */
+struct set_bcn_offload_quiet_mode_params {
+	uint32_t vdev_id;
+	uint32_t period;
+	uint32_t duration;
+	uint32_t next_start;
+	uint32_t flag;
+};
+
+/**
  * struct set_beacon_filter_params - Set beacon filter params
  * @vdev_id: VDEV id
  * @ie: Pointer to IE fields

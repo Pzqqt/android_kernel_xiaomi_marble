@@ -1151,6 +1151,9 @@ QDF_STATUS (*send_pdev_set_regdomain_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_set_quiet_mode_cmd)(wmi_unified_t wmi_handle,
 		struct set_quiet_mode_params *param);
 
+QDF_STATUS (*send_set_bcn_offload_quiet_mode_cmd)(wmi_unified_t wmi_handle,
+		struct set_bcn_offload_quiet_mode_params *param);
+
 QDF_STATUS (*send_set_beacon_filter_cmd)(wmi_unified_t wmi_handle,
 		struct set_beacon_filter_params *param);
 
