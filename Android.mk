@@ -20,7 +20,7 @@ LOCAL_PATH := $(call my-dir)
 ifneq ($(findstring vendor,$(LOCAL_PATH)),)
 
 ifneq ($(findstring opensource,$(LOCAL_PATH)),)
-	WLAN_BLD_DIR := $(ANDROID_BUILD_TOP)/vendor/qcom/opensource/wlan
+	WLAN_BLD_DIR := vendor/qcom/opensource/wlan
 endif # opensource
 
 # DLKM_DIR was moved for JELLY_BEAN (PLATFORM_SDK 16)
