@@ -809,11 +809,11 @@ static int msm_qti_pp_set_sec_auxpcm_lb_vol_mixer(
 static int msm_qti_pp_get_channel_map_mixer(struct snd_kcontrol *kcontrol,
 					    struct snd_ctl_elem_value *ucontrol)
 {
-	char channel_map[PCM_FORMAT_MAX_NUM_CHANNEL] = {0};
+	char channel_map[PCM_FORMAT_MAX_NUM_CHANNEL_V8] = {0};
 	int i;
 
 	adm_get_multi_ch_map(channel_map, ADM_PATH_PLAYBACK);
-	for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL; i++)
+	for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
 		ucontrol->value.integer.value[i] =
 			(unsigned int) channel_map[i];
 	return 0;
@@ -822,10 +822,10 @@ static int msm_qti_pp_get_channel_map_mixer(struct snd_kcontrol *kcontrol,
 static int msm_qti_pp_put_channel_map_mixer(struct snd_kcontrol *kcontrol,
 					    struct snd_ctl_elem_value *ucontrol)
 {
-	char channel_map[PCM_FORMAT_MAX_NUM_CHANNEL];
+	char channel_map[PCM_FORMAT_MAX_NUM_CHANNEL_V8];
 	int i;
 
-	for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL; i++)
+	for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
 		channel_map[i] = (char)(ucontrol->value.integer.value[i]);
 	adm_set_multi_ch_map(channel_map, ADM_PATH_PLAYBACK);
 
@@ -1414,8 +1414,8 @@ static const struct snd_kcontrol_new sec_auxpcm_lb_vol_mixer_controls[] = {
 };
 
 static const struct snd_kcontrol_new multi_ch_channel_map_mixer_controls[] = {
-	SOC_SINGLE_MULTI_EXT("Playback Device Channel Map", SND_SOC_NOPM, 0, 16,
-	0, 8, msm_qti_pp_get_channel_map_mixer,
+	SOC_SINGLE_MULTI_EXT("Playback Device Channel Map", SND_SOC_NOPM, 0, 34,
+	0, PCM_FORMAT_MAX_NUM_CHANNEL_V8, msm_qti_pp_get_channel_map_mixer,
 	msm_qti_pp_put_channel_map_mixer),
 };
 

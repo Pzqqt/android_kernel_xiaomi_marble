@@ -35,6 +35,8 @@
 #include <sound/pcm_params.h>
 #include <dsp/msm_audio_ion.h>
 #include <dsp/q6audio-v2.h>
+#include <dsp/q6core.h>
+#include <dsp/q6asm-v2.h>
 
 #include "msm-pcm-q6-v2.h"
 #include "msm-pcm-routing-v2.h"
@@ -384,11 +386,17 @@ static int msm_pcm_playback_prepare(struct snd_pcm_substream *substream)
 			return -ENOMEM;
 		}
 	} else {
-		ret = q6asm_open_write_v4(prtd->audio_client,
-			fmt_type, bits_per_sample);
+		if (q6core_get_avcs_api_version_per_service(
+				APRV2_IDS_SERVICE_ID_ADSP_ASM_V) >=
+				ADSP_ASM_API_VERSION_V2)
+			ret = q6asm_open_write_v5(prtd->audio_client,
+				fmt_type, bits_per_sample);
+		else
+			ret = q6asm_open_write_v4(prtd->audio_client,
+				fmt_type, bits_per_sample);
 
 		if (ret < 0) {
-			pr_err("%s: q6asm_open_write_v4 failed (%d)\n",
+			pr_err("%s: q6asm_open_write failed (%d)\n",
 			__func__, ret);
 			q6asm_audio_client_free(prtd->audio_client);
 			prtd->audio_client = NULL;
@@ -425,12 +433,25 @@ static int msm_pcm_playback_prepare(struct snd_pcm_substream *substream)
 			runtime->channels, !prtd->set_channel_map,
 			prtd->channel_map, bits_per_sample);
 	} else {
-		ret = q6asm_media_format_block_multi_ch_pcm_v4(
+
+		if (q6core_get_avcs_api_version_per_service(
+				APRV2_IDS_SERVICE_ID_ADSP_ASM_V) >=
+				ADSP_ASM_API_VERSION_V2) {
+
+			ret = q6asm_media_format_block_multi_ch_pcm_v5(
 				prtd->audio_client, runtime->rate,
 				runtime->channels, !prtd->set_channel_map,
 				prtd->channel_map, bits_per_sample,
 				sample_word_size, ASM_LITTLE_ENDIAN,
 				DEFAULT_QF);
+		} else {
+			ret = q6asm_media_format_block_multi_ch_pcm_v4(
+				prtd->audio_client, runtime->rate,
+				runtime->channels, !prtd->set_channel_map,
+				prtd->channel_map, bits_per_sample,
+				sample_word_size, ASM_LITTLE_ENDIAN,
+				DEFAULT_QF);
+		}
 	}
 	if (ret < 0)
 		pr_info("%s: CMD Format block failed\n", __func__);
@@ -489,7 +510,15 @@ static int msm_pcm_capture_prepare(struct snd_pcm_substream *substream)
 				__func__, params_channels(params),
 				prtd->audio_client->perf_mode);
 
-		ret = q6asm_open_read_v4(prtd->audio_client, FORMAT_LINEAR_PCM,
+		if (q6core_get_avcs_api_version_per_service(
+				APRV2_IDS_SERVICE_ID_ADSP_ASM_V) >=
+				ADSP_ASM_API_VERSION_V2)
+			ret = q6asm_open_read_v5(prtd->audio_client,
+				FORMAT_LINEAR_PCM,
+				bits_per_sample, false, ENC_CFG_ID_NONE);
+		else
+			ret = q6asm_open_read_v4(prtd->audio_client,
+				FORMAT_LINEAR_PCM,
 				bits_per_sample, false, ENC_CFG_ID_NONE);
 		if (ret < 0) {
 			pr_err("%s: q6asm_open_read failed\n", __func__);
@@ -557,13 +586,28 @@ static int msm_pcm_capture_prepare(struct snd_pcm_substream *substream)
 	pr_debug("%s: Samp_rate = %d Channel = %d bit width = %d, word size = %d\n",
 			__func__, prtd->samp_rate, prtd->channel_mode,
 			bits_per_sample, sample_word_size);
-	ret = q6asm_enc_cfg_blk_pcm_format_support_v4(prtd->audio_client,
-						      prtd->samp_rate,
-						      prtd->channel_mode,
-						      bits_per_sample,
-						      sample_word_size,
-						      ASM_LITTLE_ENDIAN,
-						      DEFAULT_QF);
+
+	if (q6core_get_avcs_api_version_per_service(
+			APRV2_IDS_SERVICE_ID_ADSP_ASM_V) >=
+			ADSP_ASM_API_VERSION_V2)
+		ret = q6asm_enc_cfg_blk_pcm_format_support_v5(
+						prtd->audio_client,
+						prtd->samp_rate,
+						prtd->channel_mode,
+						bits_per_sample,
+						sample_word_size,
+						ASM_LITTLE_ENDIAN,
+						DEFAULT_QF);
+	else
+		ret = q6asm_enc_cfg_blk_pcm_format_support_v4(
+						prtd->audio_client,
+						prtd->samp_rate,
+						prtd->channel_mode,
+						bits_per_sample,
+						sample_word_size,
+						ASM_LITTLE_ENDIAN,
+						DEFAULT_QF);
+
 	if (ret < 0)
 		pr_debug("%s: cmd cfg pcm was block failed", __func__);
 
@@ -1508,7 +1552,7 @@ static int msm_pcm_chmap_ctl_put(struct snd_kcontrol *kcontrol,
 	prtd = substream->runtime->private_data;
 	if (prtd) {
 		prtd->set_channel_map = true;
-			for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL; i++)
+			for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
 				prtd->channel_map[i] =
 				(char)(ucontrol->value.integer.value[i]);
 	}
@@ -1536,11 +1580,11 @@ static int msm_pcm_chmap_ctl_get(struct snd_kcontrol *kcontrol,
 	prtd = substream->runtime->private_data;
 
 	if (prtd && prtd->set_channel_map == true) {
-		for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL; i++)
+		for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
 			ucontrol->value.integer.value[i] =
 					(int)prtd->channel_map[i];
 	} else {
-		for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL; i++)
+		for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
 			ucontrol->value.integer.value[i] = 0;
 	}
 
@@ -1558,7 +1602,7 @@ static int msm_pcm_add_chmap_controls(struct snd_soc_pcm_runtime *rtd)
 	pr_debug("%s, Channel map cntrl add\n", __func__);
 	ret = snd_pcm_add_chmap_ctls(pcm, SNDRV_PCM_STREAM_PLAYBACK,
 				     snd_pcm_std_chmaps,
-				     PCM_FORMAT_MAX_NUM_CHANNEL, 0,
+				     PCM_FORMAT_MAX_NUM_CHANNEL_V8, 0,
 				     &chmap_info);
 	if (ret < 0) {
 		pr_err("%s, channel map cntrl add failed\n", __func__);

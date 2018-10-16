@@ -112,11 +112,14 @@
 #define ASM_LITTLE_ENDIAN 0
 #define ASM_BIG_ENDIAN 1
 
+#define ADSP_ASM_API_VERSION_V2   2
+
 /* PCM_MEDIA_FORMAT_Version */
 enum {
 	PCM_MEDIA_FORMAT_V2 = 0,
 	PCM_MEDIA_FORMAT_V3,
 	PCM_MEDIA_FORMAT_V4,
+	PCM_MEDIA_FORMAT_V5,
 };
 
 /* PCM format modes in DSP */
@@ -296,6 +299,10 @@ int q6asm_open_read_v4(struct audio_client *ac, uint32_t format,
 		       uint16_t bits_per_sample, bool ts_mode,
 			   uint32_t enc_cfg_id);
 
+int q6asm_open_read_v5(struct audio_client *ac, uint32_t format,
+			uint16_t bits_per_sample, bool ts_mode,
+			uint32_t enc_cfg_id);
+
 int q6asm_open_write(struct audio_client *ac, uint32_t format
 		/*, uint16_t bits_per_sample*/);
 
@@ -312,6 +319,9 @@ int q6asm_open_write_v3(struct audio_client *ac, uint32_t format,
 int q6asm_open_write_v4(struct audio_client *ac, uint32_t format,
 			uint16_t bits_per_sample);
 
+int q6asm_open_write_v5(struct audio_client *ac, uint32_t format,
+			uint16_t bits_per_sample);
+
 int q6asm_stream_open_write_v2(struct audio_client *ac, uint32_t format,
 			       uint16_t bits_per_sample, int32_t stream_id,
 			       bool is_gapless_mode);
@@ -321,6 +331,10 @@ int q6asm_stream_open_write_v3(struct audio_client *ac, uint32_t format,
 			       bool is_gapless_mode);
 
 int q6asm_stream_open_write_v4(struct audio_client *ac, uint32_t format,
+			       uint16_t bits_per_sample, int32_t stream_id,
+			       bool is_gapless_mode);
+
+int q6asm_stream_open_write_v5(struct audio_client *ac, uint32_t format,
 			       uint16_t bits_per_sample, int32_t stream_id,
 			       bool is_gapless_mode);
 
@@ -462,6 +476,13 @@ int q6asm_enc_cfg_blk_pcm_format_support_v4(struct audio_client *ac,
 					    uint16_t endianness,
 					    uint16_t mode);
 
+int q6asm_enc_cfg_blk_pcm_format_support_v5(struct audio_client *ac,
+					uint32_t rate, uint32_t channels,
+					uint16_t bits_per_sample,
+					uint16_t sample_word_size,
+					uint16_t endianness,
+					uint16_t mode);
+
 int q6asm_enc_cfg_blk_custom(struct audio_client *ac,
 			uint32_t sample_rate, uint32_t channels,
 			uint32_t format, void *cfg);
@@ -526,6 +547,17 @@ int q6asm_media_format_block_pcm_format_support_v4(struct audio_client *ac,
 						   uint16_t endianness,
 						   uint16_t mode);
 
+int q6asm_media_format_block_pcm_format_support_v5(struct audio_client *ac,
+		   uint32_t rate,
+		   uint32_t channels,
+		   uint16_t bits_per_sample,
+		   int stream_id,
+		   bool use_default_chmap,
+		   char *channel_map,
+		   uint16_t sample_word_size,
+		   uint16_t endianness,
+		   uint16_t mode);
+
 int q6asm_media_format_block_multi_ch_pcm(struct audio_client *ac,
 			uint32_t rate, uint32_t channels,
 			bool use_default_chmap, char *channel_map);
@@ -553,6 +585,15 @@ int q6asm_media_format_block_multi_ch_pcm_v3(struct audio_client *ac,
 					     uint16_t sample_word_size);
 
 int q6asm_media_format_block_multi_ch_pcm_v4(struct audio_client *ac,
+					     uint32_t rate, uint32_t channels,
+					     bool use_default_chmap,
+					     char *channel_map,
+					     uint16_t bits_per_sample,
+					     uint16_t sample_word_size,
+					     uint16_t endianness,
+					     uint16_t mode);
+
+int q6asm_media_format_block_multi_ch_pcm_v5(struct audio_client *ac,
 					     uint32_t rate, uint32_t channels,
 					     bool use_default_chmap,
 					     char *channel_map,

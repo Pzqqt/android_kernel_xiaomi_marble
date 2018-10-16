@@ -41,6 +41,7 @@
 #include <dsp/msm_audio_ion.h>
 #include <dsp/apr_audio-v2.h>
 #include <dsp/q6asm-v2.h>
+#include <dsp/q6core.h>
 #include <dsp/msm-audio-effects-q6-v2.h>
 #include "msm-pcm-routing-v2.h"
 #include "msm-qti-pp-config.h"
@@ -204,7 +205,7 @@ struct msm_compr_dec_params {
 
 struct msm_compr_ch_map {
 	bool set_ch_map;
-	char channel_map[PCM_FORMAT_MAX_NUM_CHANNEL];
+	char channel_map[PCM_FORMAT_MAX_NUM_CHANNEL_V8];
 };
 
 static int msm_compr_send_dec_params(struct snd_compr_stream *cstream,
@@ -1012,16 +1013,32 @@ static int msm_compr_send_media_format_block(struct snd_compr_stream *cstream,
 			sample_word_size = 16;
 			break;
 		}
-		ret = q6asm_media_format_block_pcm_format_support_v4(
-							prtd->audio_client,
-							prtd->sample_rate,
-							prtd->num_channels,
-							bit_width, stream_id,
-							use_default_chmap,
-							chmap,
-							sample_word_size,
-							ASM_LITTLE_ENDIAN,
-							DEFAULT_QF);
+
+		if (q6core_get_avcs_api_version_per_service(
+					APRV2_IDS_SERVICE_ID_ADSP_ASM_V) >=
+					ADSP_ASM_API_VERSION_V2) {
+			ret = q6asm_media_format_block_pcm_format_support_v5(
+					prtd->audio_client,
+					prtd->sample_rate,
+					prtd->num_channels,
+					bit_width, stream_id,
+					use_default_chmap,
+					chmap,
+					sample_word_size,
+					ASM_LITTLE_ENDIAN,
+					DEFAULT_QF);
+		} else {
+			ret = q6asm_media_format_block_pcm_format_support_v4(
+					prtd->audio_client,
+					prtd->sample_rate,
+					prtd->num_channels,
+					bit_width, stream_id,
+					use_default_chmap,
+					chmap,
+					sample_word_size,
+					ASM_LITTLE_ENDIAN,
+					DEFAULT_QF);
+		}
 		if (ret < 0)
 			pr_err("%s: CMD Format block failed\n", __func__);
 
@@ -1336,7 +1353,16 @@ static int msm_compr_configure_dsp_for_playback
 	} else {
 		pr_debug("%s: stream_id %d bits_per_sample %d\n",
 				__func__, ac->stream_id, bits_per_sample);
-		ret = q6asm_stream_open_write_v4(ac,
+
+		if (q6core_get_avcs_api_version_per_service(
+					APRV2_IDS_SERVICE_ID_ADSP_ASM_V) >=
+					ADSP_ASM_API_VERSION_V2)
+			ret = q6asm_stream_open_write_v5(ac,
+				prtd->codec, bits_per_sample,
+				ac->stream_id,
+				prtd->gapless_state.use_dsp_gapless_mode);
+		else
+			ret = q6asm_stream_open_write_v4(ac,
 				prtd->codec, bits_per_sample,
 				ac->stream_id,
 				prtd->gapless_state.use_dsp_gapless_mode);
@@ -3640,7 +3666,7 @@ static int msm_compr_channel_map_put(struct snd_kcontrol *kcontrol,
 
 	if (pdata->ch_map[fe_id]) {
 		pdata->ch_map[fe_id]->set_ch_map = true;
-		for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL; i++)
+		for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
 			pdata->ch_map[fe_id]->channel_map[i] =
 				(char)(ucontrol->value.integer.value[i]);
 	} else {
@@ -3669,7 +3695,7 @@ static int msm_compr_channel_map_get(struct snd_kcontrol *kcontrol,
 		goto end;
 	}
 	if (pdata->ch_map[fe_id]) {
-		for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL; i++)
+		for (i = 0; i < PCM_FORMAT_MAX_NUM_CHANNEL_V8; i++)
 			ucontrol->value.integer.value[i] =
 				pdata->ch_map[fe_id]->channel_map[i];
 	}
@@ -3983,9 +4009,10 @@ static int msm_compr_channel_map_info(struct snd_kcontrol *kcontrol,
 				      struct snd_ctl_elem_info *uinfo)
 {
 	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
-	uinfo->count = 8;
+	uinfo->count = PCM_FORMAT_MAX_NUM_CHANNEL_V8;
 	uinfo->value.integer.min = 0;
-	uinfo->value.integer.max = 0xFFFFFFFF;
+	/* See PCM_CHANNEL_RSD=34 in apr_audio-v2.h */
+	uinfo->value.integer.max = 34;
 	return 0;
 }
 
