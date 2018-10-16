@@ -221,7 +221,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		localPattern.session_id = sessionId;
 
 		/* Register the pattern downstream */
-		status = pmo_ucfg_add_wow_user_pattern(
+		status = ucfg_pmo_add_wow_user_pattern(
 					adapter->vdev, &localPattern);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			/* Add failed, so invalidate the local storage */
@@ -281,7 +281,7 @@ bool hdd_del_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 	if (!patternFound)
 		return false;
 
-	status = pmo_ucfg_del_wow_user_pattern(adapter->vdev, id);
+	status = ucfg_pmo_del_wow_user_pattern(adapter->vdev, id);
 	if (QDF_IS_STATUS_ERROR(status))
 		return false;
 
@@ -388,7 +388,7 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 	}
 
 	/* Register the pattern downstream */
-	qdf_ret_status = pmo_ucfg_add_wow_user_pattern(
+	qdf_ret_status = ucfg_pmo_add_wow_user_pattern(
 				adapter->vdev, &localPattern);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		hdd_err("pmo_wow_user_pattern failed with error code (%d).",
@@ -435,7 +435,7 @@ bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter,
 		return false;
 	}
 
-	qdf_ret_status = pmo_ucfg_del_wow_user_pattern(
+	qdf_ret_status = ucfg_pmo_del_wow_user_pattern(
 				adapter->vdev, pattern_idx);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		hdd_err("sme_wowl_del_bcast_pattern failed with error code (%d).",

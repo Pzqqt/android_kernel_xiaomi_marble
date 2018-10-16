@@ -4821,7 +4821,7 @@ void wlan_hdd_save_gtk_offload_params(struct hdd_adapter *adapter,
 	for (i = 0; i < 8; i++)
 		buf[7 - i] = replay_ctr[i];
 
-	status = pmo_ucfg_cache_gtk_offload_req(adapter->vdev, gtk_req);
+	status = ucfg_pmo_cache_gtk_offload_req(adapter->vdev, gtk_req);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Failed to cache GTK Offload");
 
@@ -5590,7 +5590,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		modulated_dtim = nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MODULATED_DTIM]);
 
-		status = pmo_ucfg_config_modulated_dtim(adapter->vdev,
+		status = ucfg_pmo_config_modulated_dtim(adapter->vdev,
 							modulated_dtim);
 		if (QDF_STATUS_SUCCESS != status)
 			ret_val = -EPERM;
@@ -5606,7 +5606,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 			return -EINVAL;
 		}
 
-		status = pmo_ucfg_config_listen_interval(adapter->vdev,
+		status = ucfg_pmo_config_listen_interval(adapter->vdev,
 							 override_li);
 		if (status != QDF_STATUS_SUCCESS)
 			ret_val = -EPERM;
@@ -14944,7 +14944,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			}
 		}
 #endif
-		pmo_ucfg_flush_gtk_offload_req(adapter->vdev);
+		ucfg_pmo_flush_gtk_offload_req(adapter->vdev);
 		roam_profile->csrPersona = adapter->device_mode;
 
 		if (operatingChannel) {
@@ -18638,7 +18638,7 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 	wlan_hdd_copy_gtk_kek(gtk_req, data);
 	qdf_mem_copy(gtk_req->kck, data->kck, NL80211_KCK_LEN);
 	gtk_req->is_fils_connection = hdd_is_fils_connection(adapter);
-	status = pmo_ucfg_cache_gtk_offload_req(adapter->vdev, gtk_req);
+	status = ucfg_pmo_cache_gtk_offload_req(adapter->vdev, gtk_req);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to cache GTK Offload");
 		result = qdf_status_to_os_return(status);
@@ -18948,9 +18948,10 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 
 		qdf_mem_zero(hb_params, sizeof(*hb_params));
 		qdf_mem_copy(hb_params, buf, buf_len);
-		status = pmo_ucfg_lphb_config_req(hdd_ctx->psoc,
+		status = ucfg_pmo_lphb_config_req(
+					hdd_ctx->psoc,
 					hb_params, (void *)hdd_ctx,
-					    wlan_hdd_cfg80211_lphb_ind_handler);
+					wlan_hdd_cfg80211_lphb_ind_handler);
 		if (status != QDF_STATUS_SUCCESS)
 			hdd_err("LPHB Config Fail, disable");
 

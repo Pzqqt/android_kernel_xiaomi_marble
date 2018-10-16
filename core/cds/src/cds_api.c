@@ -536,8 +536,8 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	htcInfo.pContext = ol_ctx;
 	htcInfo.TargetFailure = ol_target_failure;
 	htcInfo.TargetSendSuspendComplete =
-		pmo_ucfg_psoc_target_suspend_acknowledge;
-	htcInfo.target_initial_wakeup_cb = pmo_ucfg_psoc_handle_initial_wake_up;
+		ucfg_pmo_psoc_target_suspend_acknowledge;
+	htcInfo.target_initial_wakeup_cb = ucfg_pmo_psoc_handle_initial_wake_up;
 	htcInfo.target_psoc = (void *)psoc;
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
@@ -550,7 +550,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		status = QDF_STATUS_E_FAILURE;
 		goto err_bmi_close;
 	}
-	pmo_ucfg_psoc_update_htc_handle(psoc, (void *)gp_cds_context->htc_ctx);
+	ucfg_pmo_psoc_update_htc_handle(psoc, (void *)gp_cds_context->htc_ctx);
 
 	status = bmi_done(ol_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -618,7 +618,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	}
 
 	wlan_psoc_set_dp_handle(psoc, gp_cds_context->dp_soc);
-	pmo_ucfg_psoc_update_dp_handle(psoc, gp_cds_context->dp_soc);
+	ucfg_pmo_psoc_update_dp_handle(psoc, gp_cds_context->dp_soc);
 	ucfg_ocb_update_dp_handle(psoc, gp_cds_context->dp_soc);
 
 	cds_set_ac_specs_params(cds_cfg);
@@ -667,7 +667,7 @@ err_soc_detach:
 	gp_cds_context->dp_soc = NULL;
 
 	ucfg_ocb_update_dp_handle(psoc, NULL);
-	pmo_ucfg_psoc_update_dp_handle(psoc, NULL);
+	ucfg_pmo_psoc_update_dp_handle(psoc, NULL);
 	wlan_psoc_set_dp_handle(psoc, NULL);
 
 err_wma_close:
@@ -679,7 +679,7 @@ err_htc_close:
 	if (gp_cds_context->htc_ctx) {
 		htc_destroy(gp_cds_context->htc_ctx);
 		gp_cds_context->htc_ctx = NULL;
-		pmo_ucfg_psoc_update_htc_handle(psoc, NULL);
+		ucfg_pmo_psoc_update_htc_handle(psoc, NULL);
 	}
 
 err_bmi_close:
@@ -732,7 +732,7 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		goto pdev_detach;
 
-	pmo_ucfg_psoc_set_txrx_handle(psoc, gp_cds_context->pdev_txrx_ctx);
+	ucfg_pmo_psoc_set_txrx_handle(psoc, gp_cds_context->pdev_txrx_ctx);
 	ucfg_ocb_set_txrx_handle(psoc, gp_cds_context->pdev_txrx_ctx);
 
 	cds_debug("CDS successfully Opened");
@@ -1003,7 +1003,7 @@ static inline void cds_suspend_target(tp_wma_handle wma_handle)
 {
 	QDF_STATUS status;
 	/* Suspend the target and disable interrupt */
-	status = pmo_ucfg_psoc_suspend_target(wma_handle->psoc, 0);
+	status = ucfg_pmo_psoc_suspend_target(wma_handle->psoc, 0);
 	if (status)
 		cds_err("Failed to suspend target, status = %d", status);
 }
@@ -1012,7 +1012,7 @@ static inline void cds_suspend_target(tp_wma_handle wma_handle)
 {
 	QDF_STATUS status;
 	/* Suspend the target and disable interrupt */
-	status = pmo_ucfg_psoc_suspend_target(wma_handle->psoc, 1);
+	status = ucfg_pmo_psoc_suspend_target(wma_handle->psoc, 1);
 	if (status)
 		cds_err("Failed to suspend target, status = %d", status);
 }
@@ -1106,7 +1106,7 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 
 	if (gp_cds_context->htc_ctx) {
 		htc_destroy(gp_cds_context->htc_ctx);
-		pmo_ucfg_psoc_update_htc_handle(psoc, NULL);
+		ucfg_pmo_psoc_update_htc_handle(psoc, NULL);
 		gp_cds_context->htc_ctx = NULL;
 	}
 
@@ -1125,7 +1125,7 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 	gp_cds_context->mac_context = NULL;
 
 	cdp_soc_detach(gp_cds_context->dp_soc);
-	pmo_ucfg_psoc_update_dp_handle(psoc, NULL);
+	ucfg_pmo_psoc_update_dp_handle(psoc, NULL);
 	wlan_psoc_set_dp_handle(psoc, NULL);
 
 	cds_shutdown_notifier_purge();
@@ -1173,7 +1173,7 @@ QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc)
 		       (struct cdp_pdev *)ctx, 1);
 
 	cds_set_context(QDF_MODULE_ID_TXRX, NULL);
-	pmo_ucfg_psoc_set_txrx_handle(psoc, NULL);
+	ucfg_pmo_psoc_set_txrx_handle(psoc, NULL);
 
 	return QDF_STATUS_SUCCESS;
 }

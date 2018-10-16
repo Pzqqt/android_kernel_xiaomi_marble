@@ -69,7 +69,7 @@ wlan_hdd_mc_addr_list_info_debugfs(struct hdd_context *hdd_ctx,
 		return length;
 	}
 
-	status = pmo_ucfg_get_mc_addr_list(hdd_ctx->psoc,
+	status = ucfg_pmo_get_mc_addr_list(hdd_ctx->psoc,
 					   adapter->session_id,
 					   &mc_addr_list);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -142,7 +142,7 @@ wlan_hdd_arp_offload_info_debugfs(struct hdd_context *hdd_ctx,
 	struct pmo_arp_offload_params info = {0};
 	QDF_STATUS status;
 
-	status = pmo_ucfg_get_arp_offload_params(adapter->vdev,
+	status = ucfg_pmo_get_arp_offload_params(adapter->vdev,
 						 &info);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		ret_val = scnprintf(buf, buf_avail_len,
@@ -232,7 +232,7 @@ wlan_hdd_ns_offload_info_debugfs(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 	uint32_t i;
 
-	status = pmo_ucfg_get_ns_offload_params(adapter->vdev,
+	status = ucfg_pmo_get_ns_offload_params(adapter->vdev,
 						&info);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		ret = scnprintf(buf, buf_avail_len,

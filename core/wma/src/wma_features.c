@@ -2960,7 +2960,7 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event, uint32_t len)
 
 	wma_wake_event_log_reason(wma, wake_info);
 
-	pmo_ucfg_psoc_wakeup_host_event_received(wma->psoc);
+	ucfg_pmo_psoc_wakeup_host_event_received(wma->psoc);
 
 	wma_print_wow_stats(wma, wake_info);
 	/* split based on payload type */
@@ -3005,7 +3005,7 @@ int wma_d0_wow_disable_ack_event(void *handle, uint8_t *event, uint32_t len)
 
 	resp_data = param_buf->fixed_param;
 
-	pmo_ucfg_psoc_wakeup_host_event_received(wma->psoc);
+	ucfg_pmo_psoc_wakeup_host_event_received(wma->psoc);
 
 	WMA_LOGD("Received D0-WOW disable ACK");
 
@@ -3032,7 +3032,7 @@ int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len)
 
 	WMA_LOGA("Received PDEV resume event");
 
-	pmo_ucfg_psoc_wakeup_host_event_received(wma->psoc);
+	ucfg_pmo_psoc_wakeup_host_event_received(wma->psoc);
 
 	return 0;
 }

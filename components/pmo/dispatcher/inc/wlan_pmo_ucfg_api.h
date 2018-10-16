@@ -246,47 +246,47 @@ uint8_t
 ucfg_pmo_power_save_offload_enabled(struct wlan_objmgr_psoc *psoc);
 
 /**
- * pmo_ucfg_enable_wakeup_event() -  enable wow wakeup events
+ * ucfg_pmo_enable_wakeup_event() -  enable wow wakeup events
  * @psoc: objmgr psoc
  * @vdev_id: vdev id
  * @wow_event: wow event to enable
  *
  * Return: none
  */
-void pmo_ucfg_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
+void ucfg_pmo_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 				  uint32_t vdev_id,
 				  WOW_WAKE_EVENT_TYPE wow_event);
 
 /**
- * pmo_ucfg_disable_wakeup_event() -  disable wow wakeup events
+ * ucfg_pmo_disable_wakeup_event() -  disable wow wakeup events
  * @psoc: objmgr psoc
  * @vdev_id: vdev id
  * @wow_event: wow event to disable
  *
  * Return: none
  */
-void pmo_ucfg_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
+void ucfg_pmo_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 				   uint32_t vdev_id,
 				   WOW_WAKE_EVENT_TYPE wow_event);
 
 /**
- * pmo_ucfg_cache_arp_offload_req(): API to cache arp req in pmo vdev priv ctx
+ * ucfg_pmo_cache_arp_offload_req(): API to cache arp req in pmo vdev priv ctx
  * @arp_req: pmo arp req param
  *
  * Return QDF_STATUS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_cache_arp_offload_req(struct pmo_arp_req *arp_req);
+QDF_STATUS ucfg_pmo_cache_arp_offload_req(struct pmo_arp_req *arp_req);
 
 /**
- * pmo_ucfg_flush_arp_offload_req(): API to flush arp req from pmo vdev priv ctx
+ * ucfg_pmo_flush_arp_offload_req(): API to flush arp req from pmo vdev priv ctx
  * @vdev: objmgr vdev param
  *
  * Return QDF_STATUS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_flush_arp_offload_req(struct wlan_objmgr_vdev *vdev);
+QDF_STATUS ucfg_pmo_flush_arp_offload_req(struct wlan_objmgr_vdev *vdev);
 
 /**
- * pmo_ucfg_enable_arp_offload_in_fwr(): API to enable arp req in fwr
+ * ucfg_pmo_enable_arp_offload_in_fwr(): API to enable arp req in fwr
  * @vdev: objmgr vdev param
  * @trigger: triger reason for enable arp offload
  *
@@ -294,49 +294,51 @@ QDF_STATUS pmo_ucfg_flush_arp_offload_req(struct wlan_objmgr_vdev *vdev);
  *
  * Return QDF_STATUS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_enable_arp_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
-		enum pmo_offload_trigger trigger);
+QDF_STATUS
+ucfg_pmo_enable_arp_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
+				   enum pmo_offload_trigger trigger);
 
 /**
- * pmo_ucfg_disable_arp_offload_in_fwr(): API to disable arp req in fwr
+ * ucfg_pmo_disable_arp_offload_in_fwr(): API to disable arp req in fwr
  * @vdev: objmgr vdev param
  * @trigger: triger reason  for disable arp offload
  *  API to disable cache arp req in fwr
  *
  * Return QDF_STATUS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_disable_arp_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
-		enum pmo_offload_trigger trigger);
+QDF_STATUS
+ucfg_pmo_disable_arp_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
+				    enum pmo_offload_trigger trigger);
 
 /**
- * pmo_ucfg_get_arp_offload_params() - API to get arp offload params
+ * ucfg_pmo_get_arp_offload_params() - API to get arp offload params
  * @vdev: objmgr vdev
  * @params: output pointer to hold offload params
  *
  * Return: QDF_STATUS_SUCCESS in case of success else return error
  */
 QDF_STATUS
-pmo_ucfg_get_arp_offload_params(struct wlan_objmgr_vdev *vdev,
+ucfg_pmo_get_arp_offload_params(struct wlan_objmgr_vdev *vdev,
 				struct pmo_arp_offload_params *params);
 
 /**
- * pmo_ucfg_cache_ns_offload_req(): API to cache ns req in pmo vdev priv ctx
+ * ucfg_pmo_cache_ns_offload_req(): API to cache ns req in pmo vdev priv ctx
  * @ns_req: pmo ns req param
  *
  * Return QDF_STATUS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_cache_ns_offload_req(struct pmo_ns_req *ns_req);
+QDF_STATUS ucfg_pmo_cache_ns_offload_req(struct pmo_ns_req *ns_req);
 
 /**
- * pmo_ucfg_flush_ns_offload_req(): API to flush ns req from pmo vdev priv ctx
+ * ucfg_pmo_flush_ns_offload_req(): API to flush ns req from pmo vdev priv ctx
  * @vdev: vdev ojbmgr handle
  *
  * Return QDF_STATUS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_flush_ns_offload_req(struct wlan_objmgr_vdev *vdev);
+QDF_STATUS ucfg_pmo_flush_ns_offload_req(struct wlan_objmgr_vdev *vdev);
 
 /**
- * pmo_ucfg_enable_ns_offload_in_fwr(): API to enable ns req in fwr
+ * ucfg_pmo_enable_ns_offload_in_fwr(): API to enable ns req in fwr
  * @arp_req: pmo arp req param
  * @trigger: trigger reason to enable ns offload
  *
@@ -344,11 +346,12 @@ QDF_STATUS pmo_ucfg_flush_ns_offload_req(struct wlan_objmgr_vdev *vdev);
  *
  * Return QDF_STATUS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_enable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
-		enum pmo_offload_trigger trigger);
+QDF_STATUS
+ucfg_pmo_enable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
+				  enum pmo_offload_trigger trigger);
 
 /**
- * pmo_ucfg_disable_ns_offload_in_fwr(): API to disable ns req in fwr
+ * ucfg_pmo_disable_ns_offload_in_fwr(): API to disable ns req in fwr
  * @arp_req: pmo arp req param
  * @trigger: trigger reason to disable ns offload
  *
@@ -356,101 +359,102 @@ QDF_STATUS pmo_ucfg_enable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
  *
  * Return QDF_STATUS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_disable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
-		enum pmo_offload_trigger trigger);
+QDF_STATUS
+ucfg_pmo_disable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
+				   enum pmo_offload_trigger trigger);
 
 /**
- * pmo_ucfg_get_ns_offload_params() - API to get ns offload params
+ * ucfg_pmo_get_ns_offload_params() - API to get ns offload params
  * @vdev: objmgr vdev
  * @params: output pointer to hold offload params
  *
  * Return: QDF_STATUS_SUCCESS in case of success else return error
  */
 QDF_STATUS
-pmo_ucfg_get_ns_offload_params(struct wlan_objmgr_vdev *vdev,
+ucfg_pmo_get_ns_offload_params(struct wlan_objmgr_vdev *vdev,
 			       struct pmo_ns_offload_params *params);
 
 /**
- * pmo_ucfg_ns_addr_scope() - Convert linux specific IPv6 addr scope to
+ * ucfg_pmo_ns_addr_scope() - Convert linux specific IPv6 addr scope to
  *			      WLAN driver specific value
  * @scope: linux specific IPv6 addr scope
  *
  * Return: PMO identifier of linux IPv6 addr scope
  */
 enum pmo_ns_addr_scope
-pmo_ucfg_ns_addr_scope(uint32_t ipv6_scope);
+ucfg_pmo_ns_addr_scope(uint32_t ipv6_scope);
 
 /**
- * pmo_ucfg_enable_hw_filter_in_fwr() - enable previously configured hw filter
+ * ucfg_pmo_enable_hw_filter_in_fwr() - enable previously configured hw filter
  * @vdev: objmgr vdev to configure
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS pmo_ucfg_enable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev);
+QDF_STATUS ucfg_pmo_enable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev);
 
 /**
- * pmo_ucfg_disable_hw_filter_in_fwr() - disable previously configured hw filter
+ * ucfg_pmo_disable_hw_filter_in_fwr() - disable previously configured hw filter
  * @vdev: objmgr vdev to configure
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS pmo_ucfg_disable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev);
+QDF_STATUS ucfg_pmo_disable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev);
 
 /**
- * pmo_ucfg_max_mc_addr_supported() -  to get max support mc address
+ * ucfg_pmo_max_mc_addr_supported() -  to get max support mc address
  * @psoc: objmgr psoc
  *
  * Return: max mc addr supported count for all vdev in corresponding psoc
  */
-uint8_t pmo_ucfg_max_mc_addr_supported(struct wlan_objmgr_psoc *psoc);
+uint8_t ucfg_pmo_max_mc_addr_supported(struct wlan_objmgr_psoc *psoc);
 
 /**
- * pmo_ucfg_cache_mc_addr_list(): API to cache mc addr list in pmo vdev priv obj
+ * ucfg_pmo_cache_mc_addr_list(): API to cache mc addr list in pmo vdev priv obj
  * @psoc: objmgr psoc handle
  * @vdev_id: vdev id
  * @gtk_req: pmo gtk req param
  *
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_cache_mc_addr_list(
+QDF_STATUS ucfg_pmo_cache_mc_addr_list(
 		struct pmo_mc_addr_list_params *mc_list_config);
 
 /**
- * pmo_ucfg_flush_mc_addr_list(): API to flush mc addr list in pmo vdev priv obj
+ * ucfg_pmo_flush_mc_addr_list(): API to flush mc addr list in pmo vdev priv obj
  * @psoc: objmgr psoc handle
  * @vdev_id: vdev id
  *
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_flush_mc_addr_list(struct wlan_objmgr_psoc *psoc,
-	uint8_t vdev_id);
+QDF_STATUS ucfg_pmo_flush_mc_addr_list(struct wlan_objmgr_psoc *psoc,
+				       uint8_t vdev_id);
 
 /**
- * pmo_ucfg_enhance_mc_filter_enable() - enable enhanced multicast filtering
+ * ucfg_pmo_enhance_mc_filter_enable() - enable enhanced multicast filtering
  * @vdev: the vdev to enable enhanced multicast filtering for
  *
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
-pmo_ucfg_enhanced_mc_filter_enable(struct wlan_objmgr_vdev *vdev)
+ucfg_pmo_enhanced_mc_filter_enable(struct wlan_objmgr_vdev *vdev)
 {
 	return pmo_core_enhanced_mc_filter_enable(vdev);
 }
 
 /**
- * pmo_ucfg_enhance_mc_filter_disable() - disable enhanced multicast filtering
+ * ucfg_pmo_enhance_mc_filter_disable() - disable enhanced multicast filtering
  * @vdev: the vdev to disable enhanced multicast filtering for
  *
  * Return: QDF_STATUS
  */
 static inline QDF_STATUS
-pmo_ucfg_enhanced_mc_filter_disable(struct wlan_objmgr_vdev *vdev)
+ucfg_pmo_enhanced_mc_filter_disable(struct wlan_objmgr_vdev *vdev)
 {
 	return pmo_core_enhanced_mc_filter_disable(vdev);
 }
 
 /**
- * pmo_ucfg_enable_mc_addr_filtering_in_fwr(): Enable cached mc add list in fwr
+ * ucfg_pmo_enable_mc_addr_filtering_in_fwr(): Enable cached mc add list in fwr
  * @psoc: objmgr psoc handle
  * @vdev_id: vdev id
  * @gtk_req: pmo gtk req param
@@ -460,13 +464,13 @@ pmo_ucfg_enhanced_mc_filter_disable(struct wlan_objmgr_vdev *vdev)
  *
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_enable_mc_addr_filtering_in_fwr(
+QDF_STATUS ucfg_pmo_enable_mc_addr_filtering_in_fwr(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id,
 		enum pmo_offload_trigger trigger);
 
 /**
- * pmo_ucfg_disable_mc_addr_filtering_in_fwr(): Disable cached mc addr list
+ * ucfg_pmo_disable_mc_addr_filtering_in_fwr(): Disable cached mc addr list
  * @psoc: objmgr psoc handle
  * @vdev_id: vdev id
  * @gtk_req: pmo gtk req param
@@ -476,13 +480,13 @@ QDF_STATUS pmo_ucfg_enable_mc_addr_filtering_in_fwr(
  *
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_disable_mc_addr_filtering_in_fwr(
+QDF_STATUS ucfg_pmo_disable_mc_addr_filtering_in_fwr(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id,
 		enum pmo_offload_trigger trigger);
 
 /**
- * pmo_ucfg_get_mc_addr_list() - API to get mc addr list configured
+ * ucfg_pmo_get_mc_addr_list() - API to get mc addr list configured
  * @psoc: objmgr psoc
  * @vdev_id: vdev identifier
  * @mc_list_req: output pointer to hold mc addr list params
@@ -490,43 +494,43 @@ QDF_STATUS pmo_ucfg_disable_mc_addr_filtering_in_fwr(
  * Return: QDF_STATUS_SUCCESS in case of success else return error
  */
 QDF_STATUS
-pmo_ucfg_get_mc_addr_list(struct wlan_objmgr_psoc *psoc,
+ucfg_pmo_get_mc_addr_list(struct wlan_objmgr_psoc *psoc,
 			  uint8_t vdev_id,
 			  struct pmo_mc_addr_list *mc_list_req);
 
 /**
- * pmo_ucfg_cache_gtk_offload_req(): API to cache gtk req in pmo vdev priv obj
+ * ucfg_pmo_cache_gtk_offload_req(): API to cache gtk req in pmo vdev priv obj
  * @vdev: objmgr vdev handle
  * @gtk_req: pmo gtk req param
  *
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_cache_gtk_offload_req(struct wlan_objmgr_vdev *vdev,
-		struct pmo_gtk_req *gtk_req);
+QDF_STATUS ucfg_pmo_cache_gtk_offload_req(struct wlan_objmgr_vdev *vdev,
+					  struct pmo_gtk_req *gtk_req);
 
 /**
- * pmo_ucfg_flush_gtk_offload_req(): Flush saved gtk req from pmo vdev priv obj
+ * ucfg_pmo_flush_gtk_offload_req(): Flush saved gtk req from pmo vdev priv obj
  * @vdev: objmgr vdev handle
  *
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev);
+QDF_STATUS ucfg_pmo_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev);
 
 /**
- * pmo_ucfg_enable_gtk_offload_in_fwr(): enable cached gtk request in fwr
+ * ucfg_pmo_enable_gtk_offload_in_fwr(): enable cached gtk request in fwr
  * @vdev: objmgr vdev handle
  *
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
+QDF_STATUS ucfg_pmo_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
 
 /**
- * pmo_ucfg_disable_gtk_offload_in_fwr(): disable cached gtk request in fwr
+ * ucfg_pmo_disable_gtk_offload_in_fwr(): disable cached gtk request in fwr
  * @vdev: objmgr vdev handle
  *
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
+QDF_STATUS ucfg_pmo_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev);
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 /**
@@ -546,26 +550,28 @@ uint8_t ucfg_pmo_get_pkt_filter_bitmap(struct wlan_objmgr_psoc *psoc);
 uint32_t ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc);
 
 /**
- * pmo_ucfg_set_pkt_filter() - Set packet filter
+ * ucfg_pmo_set_pkt_filter() - Set packet filter
  * @psoc: objmgr psoc handle
  * @pmo_set_pkt_fltr_req:
  * @vdev_id: vdev id
  *
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_set_pkt_filter(struct wlan_objmgr_psoc *psoc,
-	struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req,
-	uint8_t vdev_id);
+QDF_STATUS
+ucfg_pmo_set_pkt_filter(struct wlan_objmgr_psoc *psoc,
+			struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req,
+			uint8_t vdev_id);
 
 /**
- * pmo_ucfg_clear_pkt_filter() - Clear packet filter
+ * ucfg_pmo_clear_pkt_filter() - Clear packet filter
  * @psoc: objmgr psoc handle
  * @pmo_clr_pkt_fltr_req:
  * @vdev_id: vdev id
  *
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_clear_pkt_filter(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS ucfg_pmo_clear_pkt_filter(
+	struct wlan_objmgr_psoc *psoc,
 	struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_param,
 	uint8_t vdev_id);
 #else
@@ -582,7 +588,7 @@ ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc)
 }
 
 static inline QDF_STATUS
-pmo_ucfg_set_pkt_filter(
+ucfg_pmo_set_pkt_filter(
 		struct wlan_objmgr_psoc *psoc,
 		struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req,
 		uint8_t vdev_id)
@@ -591,7 +597,7 @@ pmo_ucfg_set_pkt_filter(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_clear_pkt_filter(
+ucfg_pmo_clear_pkt_filter(
 		struct wlan_objmgr_psoc *psoc,
 		struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_param,
 		uint8_t vdev_id)
@@ -639,7 +645,7 @@ bool
 ucfg_pmo_is_wowlan_disassoc_enabled(struct wlan_objmgr_psoc *psoc);
 
 /**
- * pmo_ucfg_get_gtk_rsp(): API to send gtk response request to fwr
+ * ucfg_pmo_get_gtk_rsp(): API to send gtk response request to fwr
  * @vdev: objmgr vdev handle
  * @gtk_rsp: pmo gtk response request
  *
@@ -647,31 +653,32 @@ ucfg_pmo_is_wowlan_disassoc_enabled(struct wlan_objmgr_psoc *psoc);
  *
  * Return QDF_STATUS_SUCCESS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_get_gtk_rsp(struct wlan_objmgr_vdev *vdev,
-		struct pmo_gtk_rsp_req *gtk_rsp_req);
+QDF_STATUS
+ucfg_pmo_get_gtk_rsp(struct wlan_objmgr_vdev *vdev,
+		     struct pmo_gtk_rsp_req *gtk_rsp_req);
 
 /**
- * pmo_ucfg_update_extscan_in_progress(): update extscan is in progress flags
+ * ucfg_pmo_update_extscan_in_progress(): update extscan is in progress flags
  * @vdev: objmgr vdev handle
  * @value:true if extscan is in progress else false
  *
  * Return: TRUE/FALSE
  */
-void pmo_ucfg_update_extscan_in_progress(struct wlan_objmgr_vdev *vdev,
-	bool value);
+void ucfg_pmo_update_extscan_in_progress(struct wlan_objmgr_vdev *vdev,
+					 bool value);
 
 /**
- * pmo_ucfg_update_p2plo_in_progress(): update p2plo is in progress flags
+ * ucfg_pmo_update_p2plo_in_progress(): update p2plo is in progress flags
  * @vdev: objmgr vdev handle
  * @value:true if p2plo is in progress else false
  *
  * Return: TRUE/FALSE
  */
-void pmo_ucfg_update_p2plo_in_progress(struct wlan_objmgr_vdev *vdev,
-	bool value);
+void ucfg_pmo_update_p2plo_in_progress(struct wlan_objmgr_vdev *vdev,
+				       bool value);
 
 /**
- * pmo_ucfg_lphb_config_req() -  Handles lphb config request for psoc
+ * ucfg_pmo_lphb_config_req() -  Handles lphb config request for psoc
  * @psoc: objmgr psoc handle
  * @lphb_req: low power heart beat request
  * @lphb_cb_ctx: Context which needs to pass to soif when lphb callback called
@@ -679,62 +686,63 @@ void pmo_ucfg_update_p2plo_in_progress(struct wlan_objmgr_vdev *vdev,
  *
  * Return: QDF status
  */
-QDF_STATUS pmo_ucfg_lphb_config_req(struct wlan_objmgr_psoc *psoc,
-		struct pmo_lphb_req *lphb_req, void *lphb_cb_ctx,
-		pmo_lphb_callback callback);
+QDF_STATUS ucfg_pmo_lphb_config_req(struct wlan_objmgr_psoc *psoc,
+				    struct pmo_lphb_req *lphb_req,
+				    void *lphb_cb_ctx,
+				    pmo_lphb_callback callback);
 
 /**
- * pmo_ucfg_psoc_update_power_save_mode() - update power save mode
+ * ucfg_pmo_psoc_update_power_save_mode() - update power save mode
  * @vdev: objmgr vdev handle
  * @value:vdev power save mode
  *
  * Return: None
  */
-void pmo_ucfg_psoc_update_power_save_mode(struct wlan_objmgr_psoc *psoc,
-	uint8_t value);
+void ucfg_pmo_psoc_update_power_save_mode(struct wlan_objmgr_psoc *psoc,
+					  uint8_t value);
 
 /**
- * pmo_ucfg_psoc_update_dp_handle() - update psoc data path handle
+ * ucfg_pmo_psoc_update_dp_handle() - update psoc data path handle
  * @psoc: objmgr psoc handle
  * @dp_hdl: psoc data path handle
  *
  * Return: None
  */
-void pmo_ucfg_psoc_update_dp_handle(struct wlan_objmgr_psoc *psoc,
-	void *dp_hdl);
+void ucfg_pmo_psoc_update_dp_handle(struct wlan_objmgr_psoc *psoc,
+				    void *dp_hdl);
 
 /**
- * pmo_ucfg_psoc_update_htc_handle() - update psoc htc layer handle
+ * ucfg_pmo_psoc_update_htc_handle() - update psoc htc layer handle
  * @psoc: objmgr psoc handle
  * @htc_handle: psoc host-to-tagret layer (htc) handle
  *
  * Return: None
  */
-void pmo_ucfg_psoc_update_htc_handle(struct wlan_objmgr_psoc *psoc,
-		void *htc_handle);
+void ucfg_pmo_psoc_update_htc_handle(struct wlan_objmgr_psoc *psoc,
+				     void *htc_handle);
 
 /**
- * pmo_ucfg_psoc_set_hif_handle() - Set psoc hif layer handle
+ * ucfg_pmo_psoc_set_hif_handle() - Set psoc hif layer handle
  * @psoc: objmgr psoc handle
  * @hif_handle: hif context handle
  *
  * Return: None
  */
-void pmo_ucfg_psoc_set_hif_handle(struct wlan_objmgr_psoc *psoc,
+void ucfg_pmo_psoc_set_hif_handle(struct wlan_objmgr_psoc *psoc,
 				  void *hif_handle);
 
 /**
- * pmo_ucfg_psoc_set_txrx_handle() - Set psoc pdev txrx layer handle
+ * ucfg_pmo_psoc_set_txrx_handle() - Set psoc pdev txrx layer handle
  * @psoc: objmgr psoc handle
  * @txrx_handle: pdev txrx context handle
  *
  * Return: None
  */
-void pmo_ucfg_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
+void ucfg_pmo_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
 				   void *txrx_handle);
 
 /**
- * pmo_ucfg_psoc_user_space_suspend_req() -  Handles user space suspend req
+ * ucfg_pmo_psoc_user_space_suspend_req() -  Handles user space suspend req
  * @psoc: objmgr psoc handle
  * @type: type of suspend
  *
@@ -742,11 +750,11 @@ void pmo_ucfg_psoc_set_txrx_handle(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF status
  */
-QDF_STATUS pmo_ucfg_psoc_user_space_suspend_req(struct wlan_objmgr_psoc *psoc,
-		enum qdf_suspend_type type);
+QDF_STATUS ucfg_pmo_psoc_user_space_suspend_req(struct wlan_objmgr_psoc *psoc,
+						enum qdf_suspend_type type);
 
 /**
- * pmo_ucfg_psoc_user_space_resume_req() -  Handles user space resume req
+ * ucfg_pmo_psoc_user_space_resume_req() -  Handles user space resume req
  * @psoc: objmgr psoc handle
  * @type: type of suspend from which resume needed
  *
@@ -754,11 +762,11 @@ QDF_STATUS pmo_ucfg_psoc_user_space_suspend_req(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF status
  */
-QDF_STATUS pmo_ucfg_psoc_user_space_resume_req(struct wlan_objmgr_psoc *psoc,
-		enum qdf_suspend_type type);
+QDF_STATUS ucfg_pmo_psoc_user_space_resume_req(struct wlan_objmgr_psoc *psoc,
+					       enum qdf_suspend_type type);
 
 /**
- * pmo_ucfg_psoc_bus_suspend_req(): handles bus suspend for psoc
+ * ucfg_pmo_psoc_bus_suspend_req(): handles bus suspend for psoc
  * @psoc: objmgr psoc
  * @type: is this suspend part of runtime suspend or system suspend?
  * @wow_params: collection of wow enable override parameters
@@ -768,108 +776,112 @@ QDF_STATUS pmo_ucfg_psoc_user_space_resume_req(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
-QDF_STATUS pmo_ucfg_psoc_bus_suspend_req(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS ucfg_pmo_psoc_bus_suspend_req(
+		struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type type,
 		struct pmo_wow_enable_params *wow_params);
 
 #ifdef FEATURE_RUNTIME_PM
 /**
- * pmo_ucfg_psoc_bus_runtime_suspend(): handles bus runtime suspend for psoc
+ * ucfg_pmo_psoc_bus_runtime_suspend(): handles bus runtime suspend for psoc
  * @psoc: objmgr psoc
  * @pld_cb: callback to call link auto suspend
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
-QDF_STATUS pmo_ucfg_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS ucfg_pmo_psoc_bus_runtime_suspend(struct wlan_objmgr_psoc *psoc,
 					     pmo_pld_auto_suspend_cb pld_cb);
 
 /**
- * pmo_ucfg_psoc_bus_runtime_resume(): handles bus runtime resume for psoc
+ * ucfg_pmo_psoc_bus_runtime_resume(): handles bus runtime resume for psoc
  * @psoc: objmgr psoc
  * @pld_cb: callback to call link auto resume
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
-QDF_STATUS pmo_ucfg_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS ucfg_pmo_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
 					    pmo_pld_auto_resume_cb pld_cb);
 #endif
 
 /**
- * pmo_ucfg_psoc_suspend_target() -Send suspend target command
+ * ucfg_pmo_psoc_suspend_target() -Send suspend target command
  * @psoc: objmgr psoc handle
  * @disable_target_intr: disable target interrupt
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
-QDF_STATUS pmo_ucfg_psoc_suspend_target(struct wlan_objmgr_psoc *psoc,
-		int disable_target_intr);
+QDF_STATUS
+ucfg_pmo_psoc_suspend_target(struct wlan_objmgr_psoc *psoc,
+			     int disable_target_intr);
 
-QDF_STATUS pmo_ucfg_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
-		struct pmo_wow_add_pattern *ptrn);
+QDF_STATUS
+ucfg_pmo_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
+			      struct pmo_wow_add_pattern *ptrn);
 
-QDF_STATUS pmo_ucfg_del_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
-		uint8_t pattern_id);
+QDF_STATUS
+ucfg_pmo_del_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
+			      uint8_t pattern_id);
 
 /**
- * pmo_ucfg_psoc_bus_resume() -handle bus resume request for psoc
+ * ucfg_pmo_psoc_bus_resume() -handle bus resume request for psoc
  * @psoc: objmgr psoc handle
  * @type: is this suspend part of runtime suspend or system suspend?
  *
  * Return:QDF_STATUS_SUCCESS on success else error code
  */
-QDF_STATUS pmo_ucfg_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
-		enum qdf_suspend_type type);
+QDF_STATUS ucfg_pmo_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
+					enum qdf_suspend_type type);
 
 /**
- * pmo_ucfg_get_wow_bus_suspend(): API to check if wow bus is suspended or not
+ * ucfg_pmo_get_wow_bus_suspend(): API to check if wow bus is suspended or not
  * @psoc: objmgr psoc handle
  *
  * Return: True if bus suspende else false
  */
-bool pmo_ucfg_get_wow_bus_suspend(struct wlan_objmgr_psoc *psoc);
+bool ucfg_pmo_get_wow_bus_suspend(struct wlan_objmgr_psoc *psoc);
 
 /**
- * pmo_ucfg_psoc_handle_initial_wake_up() - update initial wake up
+ * ucfg_pmo_psoc_handle_initial_wake_up() - update initial wake up
  * @cb_ctx: objmgr psoc handle as void * due to htc layer is not aware psoc
  *
  * Return: None
  */
-void pmo_ucfg_psoc_handle_initial_wake_up(void *cb_ctx);
+void ucfg_pmo_psoc_handle_initial_wake_up(void *cb_ctx);
 
 /**
- * pmo_ucfg_psoc_is_target_wake_up_received() - Get initial wake up status
+ * ucfg_pmo_psoc_is_target_wake_up_received() - Get initial wake up status
  * @psoc: objmgr psoc handle
  *
  * Return: 0 on success else error code
  */
-int pmo_ucfg_psoc_is_target_wake_up_received(struct wlan_objmgr_psoc *psoc);
+int ucfg_pmo_psoc_is_target_wake_up_received(struct wlan_objmgr_psoc *psoc);
 
 /**
- * pmo_ucfg_psoc_is_target_wake_up_received() - Clear initial wake up status
+ * ucfg_pmo_psoc_is_target_wake_up_received() - Clear initial wake up status
  * @psoc: objmgr psoc handle
  *
  * Return: 0 on success else error code
  */
-int pmo_ucfg_psoc_clear_target_wake_up(struct wlan_objmgr_psoc *psoc);
+int ucfg_pmo_psoc_clear_target_wake_up(struct wlan_objmgr_psoc *psoc);
 
 /**
- * pmo_ucfg_psoc_target_suspend_acknowledge() - Clear initial wake up status
+ * ucfg_pmo_psoc_target_suspend_acknowledge() - Clear initial wake up status
  * @psoc: objmgr psoc handle
  *
  * Return: None
  */
-void pmo_ucfg_psoc_target_suspend_acknowledge(void *context, bool wow_nack);
+void ucfg_pmo_psoc_target_suspend_acknowledge(void *context, bool wow_nack);
 
 /**
- * pmo_ucfg_psoc_wakeup_host_event_received() - got host wake up evennt from fwr
+ * ucfg_pmo_psoc_wakeup_host_event_received() - got host wake up evennt from fwr
  * @psoc: objmgr psoc handle
  *
  * Return: None
  */
-void pmo_ucfg_psoc_wakeup_host_event_received(struct wlan_objmgr_psoc *psoc);
+void ucfg_pmo_psoc_wakeup_host_event_received(struct wlan_objmgr_psoc *psoc);
 
 /**
- * pmo_ucfg_config_listen_interval() - function to configure listen interval
+ * ucfg_pmo_config_listen_interval() - function to configure listen interval
  * @vdev: objmgr vdev
  * @listen_interval: new listen interval passed by user
  *
@@ -877,11 +889,11 @@ void pmo_ucfg_psoc_wakeup_host_event_received(struct wlan_objmgr_psoc *psoc);
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS pmo_ucfg_config_listen_interval(struct wlan_objmgr_vdev *vdev,
-					     uint32_t listen_interval);
+QDF_STATUS ucfg_pmo_config_listen_interval(struct wlan_objmgr_vdev *vdev,
+					   uint32_t listen_interval);
 
 /**
- * pmo_ucfg_config_modulated_dtim() - function to configure modulated dtim
+ * ucfg_pmo_config_modulated_dtim() - function to configure modulated dtim
  * @vdev: objmgr vdev handle
  * @param_value: New modulated dtim value passed by user
  *
@@ -889,8 +901,8 @@ QDF_STATUS pmo_ucfg_config_listen_interval(struct wlan_objmgr_vdev *vdev,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS pmo_ucfg_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
-				       uint32_t mod_dtim);
+QDF_STATUS ucfg_pmo_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
+					  uint32_t mod_dtim);
 
 #ifdef WLAN_FEATURE_WOW_PULSE
 /**
@@ -1058,33 +1070,33 @@ ucfg_pmo_is_vdev_supports_offload(struct wlan_objmgr_vdev *vdev)
 }
 
 static inline void
-pmo_ucfg_enable_wakeup_event(
+ucfg_pmo_enable_wakeup_event(
 		struct wlan_objmgr_psoc *psoc,
 		uint32_t vdev_id, uint32_t *bitmap)
 {
 }
 
 static inline void
-pmo_ucfg_disable_wakeup_event(
+ucfg_pmo_disable_wakeup_event(
 		struct wlan_objmgr_psoc *psoc,
 		uint32_t vdev_id, uint32_t bitmap)
 {
 }
 
 static inline QDF_STATUS
-pmo_ucfg_cache_arp_offload_req(struct pmo_arp_req *arp_req)
+ucfg_pmo_cache_arp_offload_req(struct pmo_arp_req *arp_req)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_flush_arp_offload_req(struct wlan_objmgr_vdev *vdev)
+ucfg_pmo_flush_arp_offload_req(struct wlan_objmgr_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_enable_arp_offload_in_fwr(
+ucfg_pmo_enable_arp_offload_in_fwr(
 		struct wlan_objmgr_vdev *vdev,
 		enum pmo_offload_trigger trigger)
 {
@@ -1092,7 +1104,7 @@ pmo_ucfg_enable_arp_offload_in_fwr(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_disable_arp_offload_in_fwr(
+ucfg_pmo_disable_arp_offload_in_fwr(
 		struct wlan_objmgr_vdev *vdev,
 		enum pmo_offload_trigger trigger)
 {
@@ -1100,26 +1112,26 @@ pmo_ucfg_disable_arp_offload_in_fwr(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_get_arp_offload_params(struct wlan_objmgr_vdev *vdev,
+ucfg_pmo_get_arp_offload_params(struct wlan_objmgr_vdev *vdev,
 				struct pmo_arp_offload_params *params)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_cache_ns_offload_req(struct pmo_ns_req *ns_req)
+ucfg_pmo_cache_ns_offload_req(struct pmo_ns_req *ns_req)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_flush_ns_offload_req(struct wlan_objmgr_vdev *vdev)
+ucfg_pmo_flush_ns_offload_req(struct wlan_objmgr_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_enable_ns_offload_in_fwr(
+ucfg_pmo_enable_ns_offload_in_fwr(
 		struct wlan_objmgr_vdev *vdev,
 		enum pmo_offload_trigger trigger)
 {
@@ -1127,7 +1139,7 @@ pmo_ucfg_enable_ns_offload_in_fwr(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_disable_ns_offload_in_fwr(
+ucfg_pmo_disable_ns_offload_in_fwr(
 		struct wlan_objmgr_vdev *vdev,
 		enum pmo_offload_trigger trigger)
 {
@@ -1135,27 +1147,27 @@ pmo_ucfg_disable_ns_offload_in_fwr(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_get_ns_offload_params(struct wlan_objmgr_vdev *vdev,
+ucfg_pmo_get_ns_offload_params(struct wlan_objmgr_vdev *vdev,
 			       struct pmo_ns_offload_params *params)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline enum pmo_ns_addr_scope
-pmo_ucfg_ns_addr_scope(uint32_t ipv6_scope)
+ucfg_pmo_ns_addr_scope(uint32_t ipv6_scope)
 {
 	return PMO_NS_ADDR_SCOPE_INVALID;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_cache_mc_addr_list(
+ucfg_pmo_cache_mc_addr_list(
 		struct pmo_mc_addr_list_params *mc_list_config)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_flush_mc_addr_list(
+ucfg_pmo_flush_mc_addr_list(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id)
 {
@@ -1163,7 +1175,7 @@ pmo_ucfg_flush_mc_addr_list(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_enable_mc_addr_filtering_in_fwr(
+ucfg_pmo_enable_mc_addr_filtering_in_fwr(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id,
 		enum pmo_offload_trigger trigger)
@@ -1172,7 +1184,7 @@ pmo_ucfg_enable_mc_addr_filtering_in_fwr(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_disable_mc_addr_filtering_in_fwr(
+ucfg_pmo_disable_mc_addr_filtering_in_fwr(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id,
 		enum pmo_offload_trigger trigger)
@@ -1181,13 +1193,13 @@ pmo_ucfg_disable_mc_addr_filtering_in_fwr(
 }
 
 static inline uint8_t
-pmo_ucfg_max_mc_addr_supported(struct wlan_objmgr_psoc *psoc)
+ucfg_pmo_max_mc_addr_supported(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_get_mc_addr_list(struct wlan_objmgr_psoc *psoc,
+ucfg_pmo_get_mc_addr_list(struct wlan_objmgr_psoc *psoc,
 			  uint8_t vdev_id,
 			  struct pmo_mc_addr_list *mc_list_req)
 {
@@ -1195,7 +1207,7 @@ pmo_ucfg_get_mc_addr_list(struct wlan_objmgr_psoc *psoc,
 }
 
 static inline QDF_STATUS
-pmo_ucfg_cache_gtk_offload_req(
+ucfg_pmo_cache_gtk_offload_req(
 		struct wlan_objmgr_vdev *vdev,
 		struct pmo_gtk_req *gtk_req)
 {
@@ -1203,25 +1215,25 @@ pmo_ucfg_cache_gtk_offload_req(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev)
+ucfg_pmo_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
+ucfg_pmo_enable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
+ucfg_pmo_disable_gtk_offload_in_fwr(struct wlan_objmgr_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_set_pkt_filter(
+ucfg_pmo_set_pkt_filter(
 		struct wlan_objmgr_psoc *psoc,
 		struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req,
 		uint8_t vdev_id)
@@ -1230,7 +1242,7 @@ pmo_ucfg_set_pkt_filter(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_clear_pkt_filter(
+ucfg_pmo_clear_pkt_filter(
 		struct wlan_objmgr_psoc *psoc,
 		struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_param,
 		uint8_t vdev_id)
@@ -1239,7 +1251,7 @@ pmo_ucfg_clear_pkt_filter(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_get_gtk_rsp(
+ucfg_pmo_get_gtk_rsp(
 		struct wlan_objmgr_vdev *vdev,
 		struct pmo_gtk_rsp_req *gtk_rsp_req)
 {
@@ -1247,21 +1259,21 @@ pmo_ucfg_get_gtk_rsp(
 }
 
 static inline void
-pmo_ucfg_update_extscan_in_progress(
+ucfg_pmo_update_extscan_in_progress(
 		struct wlan_objmgr_vdev *vdev,
 		bool value)
 {
 }
 
 static inline void
-pmo_ucfg_update_p2plo_in_progress(
+ucfg_pmo_update_p2plo_in_progress(
 		struct wlan_objmgr_vdev *vdev,
 		bool value)
 {
 }
 
 static inline QDF_STATUS
-pmo_ucfg_lphb_config_req(
+ucfg_pmo_lphb_config_req(
 		struct wlan_objmgr_psoc *psoc,
 		struct pmo_lphb_req *lphb_req, void *lphb_cb_ctx,
 		pmo_lphb_callback callback)
@@ -1270,54 +1282,54 @@ pmo_ucfg_lphb_config_req(
 }
 
 static inline void
-pmo_ucfg_psoc_update_power_save_mode(
+ucfg_pmo_psoc_update_power_save_mode(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t value)
 {
 }
 
 static inline void
-pmo_ucfg_psoc_update_dp_handle(
+ucfg_pmo_psoc_update_dp_handle(
 		struct wlan_objmgr_psoc *psoc,
 		void *dp_handle)
 {
 }
 
 static inline void
-pmo_ucfg_vdev_update_dp_handle(
+ucfg_pmo_vdev_update_dp_handle(
 		struct wlan_objmgr_vdev *vdev,
 		void *dp_handle)
 {
 }
 
 static inline void
-pmo_ucfg_psoc_update_htc_handle(
+ucfg_pmo_psoc_update_htc_handle(
 		struct wlan_objmgr_psoc *psoc,
 		void *htc_handle)
 {
 }
 
 static inline void
-pmo_ucfg_psoc_set_hif_handle(
+ucfg_pmo_psoc_set_hif_handle(
 		struct wlan_objmgr_psoc *psoc,
 		void *hif_handle)
 {
 }
 
 static inline void
-pmo_ucfg_psoc_set_txrx_handle(
+ucfg_pmo_psoc_set_txrx_handle(
 		struct wlan_objmgr_psoc *psoc,
 		void *txrx_handle)
 {
 }
 
 static inline void
-pmo_ucfg_psoc_handle_initial_wake_up(void *cb_ctx)
+ucfg_pmo_psoc_handle_initial_wake_up(void *cb_ctx)
 {
 }
 
 static inline QDF_STATUS
-pmo_ucfg_psoc_user_space_suspend_req(
+ucfg_pmo_psoc_user_space_suspend_req(
 		struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type type)
 {
@@ -1325,7 +1337,7 @@ pmo_ucfg_psoc_user_space_suspend_req(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_psoc_user_space_resume_req(
+ucfg_pmo_psoc_user_space_resume_req(
 		struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type type)
 {
@@ -1333,7 +1345,7 @@ pmo_ucfg_psoc_user_space_resume_req(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_psoc_bus_suspend_req(
+ucfg_pmo_psoc_bus_suspend_req(
 		struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type type,
 		struct pmo_wow_enable_params *wow_params)
@@ -1343,7 +1355,7 @@ pmo_ucfg_psoc_bus_suspend_req(
 
 #ifdef FEATURE_RUNTIME_PM
 static inline QDF_STATUS
-pmo_ucfg_psoc_bus_runtime_suspend(
+ucfg_pmo_psoc_bus_runtime_suspend(
 		struct wlan_objmgr_psoc *psoc,
 		pmo_pld_auto_suspend_cb pld_cb)
 {
@@ -1351,7 +1363,7 @@ pmo_ucfg_psoc_bus_runtime_suspend(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_psoc_bus_runtime_resume(
+ucfg_pmo_psoc_bus_runtime_resume(
 		struct wlan_objmgr_psoc *psoc,
 		pmo_pld_auto_suspend_cb pld_cb)
 {
@@ -1360,7 +1372,7 @@ pmo_ucfg_psoc_bus_runtime_resume(
 #endif
 
 static inline QDF_STATUS
-pmo_ucfg_psoc_suspend_target(
+ucfg_pmo_psoc_suspend_target(
 		struct wlan_objmgr_psoc *psoc,
 		int disable_target_intr)
 {
@@ -1368,7 +1380,7 @@ pmo_ucfg_psoc_suspend_target(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_add_wow_user_pattern(
+ucfg_pmo_add_wow_user_pattern(
 		struct wlan_objmgr_vdev *vdev,
 		struct pmo_wow_add_pattern *ptrn)
 {
@@ -1376,7 +1388,7 @@ pmo_ucfg_add_wow_user_pattern(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_del_wow_user_pattern(
+ucfg_pmo_del_wow_user_pattern(
 		struct wlan_objmgr_vdev *vdev,
 		uint8_t pattern_id)
 {
@@ -1384,7 +1396,7 @@ pmo_ucfg_del_wow_user_pattern(
 }
 
 static inline QDF_STATUS
-pmo_ucfg_psoc_bus_resume_req(
+ucfg_pmo_psoc_bus_resume_req(
 		struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type type)
 {
@@ -1392,66 +1404,66 @@ pmo_ucfg_psoc_bus_resume_req(
 }
 
 static inline bool
-pmo_ucfg_get_wow_bus_suspend(struct wlan_objmgr_psoc *psoc)
+ucfg_pmo_get_wow_bus_suspend(struct wlan_objmgr_psoc *psoc)
 {
 	return true;
 }
 
 static inline int
-pmo_ucfg_psoc_is_target_wake_up_received(struct wlan_objmgr_psoc *psoc)
+ucfg_pmo_psoc_is_target_wake_up_received(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
 }
 
 static inline int
-pmo_ucfg_psoc_clear_target_wake_up(struct wlan_objmgr_psoc *psoc)
+ucfg_pmo_psoc_clear_target_wake_up(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
 }
 
 static inline void
-pmo_ucfg_psoc_target_suspend_acknowledge(void *context, bool wow_nack)
+ucfg_pmo_psoc_target_suspend_acknowledge(void *context, bool wow_nack)
 {
 }
 
 static inline void
-pmo_ucfg_psoc_wakeup_host_event_received(struct wlan_objmgr_psoc *psoc)
+ucfg_pmo_psoc_wakeup_host_event_received(struct wlan_objmgr_psoc *psoc)
 {
 }
 
 static inline QDF_STATUS
-pmo_ucfg_enable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS
-pmo_ucfg_disable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
+ucfg_pmo_enable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_enhanced_mc_filter_enable(struct wlan_objmgr_vdev *vdev)
+ucfg_pmo_disable_hw_filter_in_fwr(struct wlan_objmgr_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_enhanced_mc_filter_disable(struct wlan_objmgr_vdev *vdev)
+ucfg_pmo_enhanced_mc_filter_enable(struct wlan_objmgr_vdev *vdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_config_listen_interval(struct wlan_objmgr_vdev *vdev,
+ucfg_pmo_enhanced_mc_filter_disable(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+ucfg_pmo_config_listen_interval(struct wlan_objmgr_vdev *vdev,
 				uint32_t listen_interval)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-pmo_ucfg_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
+ucfg_pmo_config_modulated_dtim(struct wlan_objmgr_vdev *vdev,
 			       uint32_t mod_dtim)
 {
 	return QDF_STATUS_SUCCESS;

@@ -1854,7 +1854,7 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 					       eConnectionState_NotConnected);
 		 hdd_set_roaming_in_progress(false);
 	}
-	pmo_ucfg_flush_gtk_offload_req(adapter->vdev);
+	ucfg_pmo_flush_gtk_offload_req(adapter->vdev);
 
 	if ((QDF_STA_MODE == adapter->device_mode) ||
 	    (QDF_P2P_CLIENT_MODE == adapter->device_mode)) {

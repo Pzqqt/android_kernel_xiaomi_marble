@@ -3411,9 +3411,9 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 			pmo_mc_list_change_notify);
 	} else {
 		mc_count = netdev_mc_count(dev);
-		if (mc_count > pmo_ucfg_max_mc_addr_supported(psoc)) {
+		if (mc_count > ucfg_pmo_max_mc_addr_supported(psoc)) {
 			hdd_debug("Exceeded max MC filter addresses (%d). Allowing all MC frames by disabling MC address filtering",
-				  pmo_ucfg_max_mc_addr_supported(psoc));
+				  ucfg_pmo_max_mc_addr_supported(psoc));
 			hdd_disable_and_flush_mc_addr_list(adapter,
 				pmo_mc_list_change_notify);
 			goto free_req;
@@ -3749,9 +3749,9 @@ int hdd_vdev_ready(struct hdd_adapter *adapter)
 		return qdf_status_to_os_return(status);
 
 	if (wma_capability_enhanced_mcast_filter())
-		status = pmo_ucfg_enhanced_mc_filter_enable(adapter->vdev);
+		status = ucfg_pmo_enhanced_mc_filter_enable(adapter->vdev);
 	else
-		status = pmo_ucfg_enhanced_mc_filter_disable(adapter->vdev);
+		status = ucfg_pmo_enhanced_mc_filter_disable(adapter->vdev);
 
 	return qdf_status_to_os_return(status);
 }

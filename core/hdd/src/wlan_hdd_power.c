@@ -136,7 +136,7 @@ static void hdd_enable_gtk_offload(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 
-	status = pmo_ucfg_enable_gtk_offload_in_fwr(adapter->vdev);
+	status = ucfg_pmo_enable_gtk_offload_in_fwr(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to enable gtk offload");
 }
@@ -160,14 +160,14 @@ static void hdd_disable_gtk_offload(struct hdd_adapter *adapter)
 	/* Passing as void* as PMO does not know legacy HDD adapter type */
 	gtk_rsp_request.callback_context = (void *)adapter;
 
-	status = pmo_ucfg_get_gtk_rsp(adapter->vdev, &gtk_rsp_request);
+	status = ucfg_pmo_get_gtk_rsp(adapter->vdev, &gtk_rsp_request);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to send get gtk rsp status:%d", status);
 		return;
 	}
 
 	hdd_debug("send get_gtk_rsp successful");
-	status = pmo_ucfg_disable_gtk_offload_in_fwr(adapter->vdev);
+	status = ucfg_pmo_disable_gtk_offload_in_fwr(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to disable gtk offload");
 }
@@ -279,7 +279,7 @@ static int hdd_fill_ipv6_uc_addr(struct inet6_dev *idev,
 			qdf_mem_copy(ipv6_uc_addr[*count], &ifa->addr.s6_addr,
 				sizeof(ifa->addr.s6_addr));
 			ipv6addr_type[*count] = PMO_IPV6_ADDR_UC_TYPE;
-			scope_array[*count] = pmo_ucfg_ns_addr_scope(scope);
+			scope_array[*count] = ucfg_pmo_ns_addr_scope(scope);
 			hdd_debug("Index %d scope = %s UC-Address: %pI6",
 				*count, (scope == IPV6_ADDR_SCOPE_LINKLOCAL) ?
 				"LINK LOCAL" : "GLOBAL", ipv6_uc_addr[*count]);
@@ -329,7 +329,7 @@ static int hdd_fill_ipv6_ac_addr(struct inet6_dev *idev,
 			qdf_mem_copy(ipv6_ac_addr[*count], &ifaca->aca_addr,
 				sizeof(ifaca->aca_addr));
 			ipv6addr_type[*count] = PMO_IPV6_ADDR_AC_TYPE;
-			scope_array[*count] = pmo_ucfg_ns_addr_scope(scope);
+			scope_array[*count] = ucfg_pmo_ns_addr_scope(scope);
 			hdd_debug("Index %d scope = %s AC-Address: %pI6",
 				*count, (scope == IPV6_ADDR_SCOPE_LINKLOCAL) ?
 				"LINK LOCAL" : "GLOBAL", ipv6_ac_addr[*count]);
@@ -397,14 +397,14 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
 	}
 
 	/* cache ns request */
-	status = pmo_ucfg_cache_ns_offload_req(ns_req);
+	status = ucfg_pmo_cache_ns_offload_req(ns_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to cache ns request; status:%d", status);
 		goto free_req;
 	}
 
 	/* enable ns request */
-	status = pmo_ucfg_enable_ns_offload_in_fwr(adapter->vdev, trigger);
+	status = ucfg_pmo_enable_ns_offload_in_fwr(adapter->vdev, trigger);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to enable ns offload; status:%d", status);
 		goto free_req;
@@ -425,13 +425,13 @@ void hdd_disable_ns_offload(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	hdd_enter();
-	status = pmo_ucfg_flush_ns_offload_req(adapter->vdev);
+	status = ucfg_pmo_flush_ns_offload_req(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to flush NS Offload");
 		goto out;
 	}
 
-	status = pmo_ucfg_disable_ns_offload_in_fwr(adapter->vdev, trigger);
+	status = ucfg_pmo_disable_ns_offload_in_fwr(adapter->vdev, trigger);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_err("Failed to disable NS Offload");
 	else
@@ -491,7 +491,7 @@ static void hdd_enable_hw_filter(struct hdd_adapter *adapter)
 
 	hdd_enter();
 
-	status = pmo_ucfg_enable_hw_filter_in_fwr(adapter->vdev);
+	status = ucfg_pmo_enable_hw_filter_in_fwr(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to enable hardware filter");
 
@@ -504,7 +504,7 @@ static void hdd_disable_hw_filter(struct hdd_adapter *adapter)
 
 	hdd_enter();
 
-	status = pmo_ucfg_disable_hw_filter_in_fwr(adapter->vdev);
+	status = ucfg_pmo_disable_hw_filter_in_fwr(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to disable hardware filter");
 
@@ -886,13 +886,13 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 
 	arp_req->ipv4_addr = (uint32_t)ifa->ifa_local;
 
-	status = pmo_ucfg_cache_arp_offload_req(arp_req);
+	status = ucfg_pmo_cache_arp_offload_req(arp_req);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed to cache arp offload req; status:%d", status);
 		goto free_req;
 	}
 
-	status = pmo_ucfg_enable_arp_offload_in_fwr(adapter->vdev, trigger);
+	status = ucfg_pmo_enable_arp_offload_in_fwr(adapter->vdev, trigger);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed arp offload config in fw; status:%d", status);
 		goto free_req;
@@ -913,13 +913,13 @@ void hdd_disable_arp_offload(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	hdd_enter();
-	status = pmo_ucfg_flush_arp_offload_req(adapter->vdev);
+	status = ucfg_pmo_flush_arp_offload_req(adapter->vdev);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to flush arp Offload");
 		goto out;
 	}
 
-	status = pmo_ucfg_disable_arp_offload_in_fwr(adapter->vdev,
+	status = ucfg_pmo_disable_arp_offload_in_fwr(adapter->vdev,
 						     trigger);
 	if (status == QDF_STATUS_SUCCESS)
 		hdd_wlan_offload_event(PMO_IPV4_ARP_REPLY_OFFLOAD,
@@ -944,7 +944,7 @@ void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
 	if (!hdd_adapter_is_connected_sta(adapter))
 		goto out;
 
-	status = pmo_ucfg_enable_mc_addr_filtering_in_fwr(hdd_ctx->psoc,
+	status = ucfg_pmo_enable_mc_addr_filtering_in_fwr(hdd_ctx->psoc,
 							  adapter->session_id,
 							  trigger);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -968,7 +968,7 @@ void hdd_disable_mc_addr_filtering(struct hdd_adapter *adapter,
 	if (!hdd_adapter_is_connected_sta(adapter))
 		goto out;
 
-	status = pmo_ucfg_disable_mc_addr_filtering_in_fwr(hdd_ctx->psoc,
+	status = ucfg_pmo_disable_mc_addr_filtering_in_fwr(hdd_ctx->psoc,
 							   adapter->session_id,
 							   trigger);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -983,7 +983,7 @@ int hdd_cache_mc_addr_list(struct pmo_mc_addr_list_params *mc_list_config)
 	QDF_STATUS status;
 
 	hdd_enter();
-	status = pmo_ucfg_cache_mc_addr_list(mc_list_config);
+	status = ucfg_pmo_cache_mc_addr_list(mc_list_config);
 	hdd_exit();
 
 	return qdf_status_to_os_return(status);
@@ -1001,14 +1001,14 @@ void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
 		goto flush_mc_list;
 
 	/* disable mc list first because the mc list is cached in PMO */
-	status = pmo_ucfg_disable_mc_addr_filtering_in_fwr(hdd_ctx->psoc,
+	status = ucfg_pmo_disable_mc_addr_filtering_in_fwr(hdd_ctx->psoc,
 							   adapter->session_id,
 							   trigger);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("failed to disable mc list; status:%d", status);
 
 flush_mc_list:
-	status = pmo_ucfg_flush_mc_addr_list(hdd_ctx->psoc,
+	status = ucfg_pmo_flush_mc_addr_list(hdd_ctx->psoc,
 					     adapter->session_id);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("failed to flush mc list; status:%d", status);
@@ -1087,8 +1087,8 @@ hdd_suspend_wlan(void)
 		hdd_update_conn_state_mask(adapter, &conn_state_mask);
 	}
 
-	status = pmo_ucfg_psoc_user_space_suspend_req(hdd_ctx->psoc,
-			QDF_SYSTEM_SUSPEND);
+	status = ucfg_pmo_psoc_user_space_suspend_req(hdd_ctx->psoc,
+						      QDF_SYSTEM_SUSPEND);
 	if (status != QDF_STATUS_SUCCESS)
 		return -EAGAIN;
 
@@ -1146,7 +1146,7 @@ static int hdd_resume_wlan(void)
 	}
 
 	ucfg_ipa_resume(hdd_ctx->pdev);
-	status = pmo_ucfg_psoc_user_space_resume_req(hdd_ctx->psoc,
+	status = ucfg_pmo_psoc_user_space_resume_req(hdd_ctx->psoc,
 						     QDF_SYSTEM_SUSPEND);
 	if (QDF_IS_STATUS_ERROR(status))
 		return qdf_status_to_os_return(status);

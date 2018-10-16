@@ -3968,7 +3968,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		goto send_fail_resp;
 	}
 	if (SAP_WPS_DISABLED == add_bss->wps_state)
-		pmo_ucfg_disable_wakeup_event(wma->psoc, vdev_id,
+		ucfg_pmo_disable_wakeup_event(wma->psoc, vdev_id,
 					      WOW_PROBE_REQ_WPS_IE_EVENT);
 	wma_set_bss_rate_flags(wma, vdev_id, add_bss);
 	status = wma_create_peer(wma, pdev, vdev, add_bss->bssId,
