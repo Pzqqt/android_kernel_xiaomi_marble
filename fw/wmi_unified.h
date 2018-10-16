@@ -580,6 +580,8 @@ typedef enum {
     WMI_BCN_OFFLOAD_CTRL_CMDID,
     /** Cmd to enable FW handling BSS color change notification from AP. */
     WMI_BSS_COLOR_CHANGE_ENABLE_CMDID,
+    /** To configure Beacon offload quiet-ie params */
+    WMI_VDEV_BCN_OFFLOAD_QUIET_CONFIG_CMDID,
 
     /** commands to directly control ba negotiation directly from host. only used in test mode */
 
@@ -4409,6 +4411,27 @@ typedef struct {
     A_UINT32 next_start; /* offset in TUs */
     A_UINT32 enabled;    /* enable/disable */
 } wmi_vdev_set_quiet_cmd_fixed_param;
+
+/*
+ * START_STOP flag value: 1 - Start, 0 - Stop
+ */
+#define WMI_OFFLOAD_QUIET_FLAG_START_STOP   0x00000001
+/*
+ * ONE_SHOT flag value: 1 - One shot, 0 - Repeat
+ * This flag is only relevant if the START_STOP flag == 1 (start).
+ */
+#define WMI_OFFLOAD_QUIET_FLAG_ONE_SHOT     0x00000002
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_bcn_offload_quiet_config_cmd_fixed_param */
+    A_UINT32 vdev_id;    /* Virtual interface ID */
+    A_UINT32 period;     /* period in TUs */
+    A_UINT32 duration;   /* duration in TUs */
+    A_UINT32 next_start; /* offset in TUs from beacon */
+    A_UINT32 flags;      /* STOP or START (and single vs. repeated) Quiet IE
+                          * See WMI_OFFLOAD_QUIET_FLAG_xxx defs.
+                          */
+} wmi_vdev_bcn_offload_quiet_config_cmd_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header;   /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_set_custom_aggr_size_cmd_fixed_param */
@@ -22424,6 +22447,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_HE_TB_ACTION_FRM_CMDID);
         WMI_RETURN_STRING(WMI_HPCS_PULSE_START_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_CHAINMASK_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_BCN_OFFLOAD_QUIET_CONFIG_CMDID);
     }
 
     return "Invalid WMI cmd";

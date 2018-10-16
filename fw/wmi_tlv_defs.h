@@ -936,6 +936,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_hpcs_pulse_start_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_ctl_failsafe_check_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_chainmask_config_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_bcn_offload_quiet_config_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1320,6 +1321,7 @@ typedef enum {
     OP(WMI_PDEV_HE_TB_ACTION_FRM_CMDID) \
     OP(WMI_HPCS_PULSE_START_CMDID) \
     OP(WMI_VDEV_CHAINMASK_CONFIG_CMDID) \
+    OP(WMI_VDEV_BCN_OFFLOAD_QUIET_CONFIG_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2615,6 +2617,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_QUIET_MODE_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_set_quiet_cmd_fixed_param, wmi_vdev_set_quiet_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_QUIET_MODE_CMDID);
+
+/* vdev set offload quiet Cmd */
+#define WMITLV_TABLE_WMI_VDEV_BCN_OFFLOAD_QUIET_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_bcn_offload_quiet_config_cmd_fixed_param, wmi_vdev_bcn_offload_quiet_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_BCN_OFFLOAD_QUIET_CONFIG_CMDID);
 
 /* Setting custom aggregation size using command */
 #define WMITLV_TABLE_WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID(id,op,buf,len) \
