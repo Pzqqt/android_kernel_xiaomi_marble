@@ -7118,8 +7118,23 @@ typedef struct {
 
 /**
  *  PDEV statistics
- *  @todo
- *  add all PDEV stats here
+ *
+ *  This struct incorporates the wlan_dbg_stats struct, which is
+ *  conditionally defined, based on the AR900B flag.
+ *  The below _v1 struct variant is the unconditional definition
+ *  that matches what would be conditionally defined by builds that
+ *  don't use the AR900B flag.  The _v2 struct variant is the
+ *  unconditional definition that matches what would be conditionally
+ *  defined by builds that use the AR900B flag.
+ *  The _v2 struct def can be used within host or target builds
+ *  that don't use the AR900B flag, but needs to interoperate with a
+ *  target or host build that does use the AR900B flag.
+ *  Similarly, the _v1 struct def can be used by a host or target build
+ *  that does use the AR900B flag, but needs to interoperate with a
+ *  target or host build that doesn't use the AR900B flag.
+ *
+ *  For backwards compatibility, wmi_pdev_stats is still (conditionally)
+ *  defined, as an alias for either the _v1 or _v2 variant.
  */
 typedef struct {
     /** Channel noise floor */
@@ -7137,9 +7152,33 @@ typedef struct {
     /** Channel Tx Power */
     A_UINT32 chan_tx_pwr;
     /** WAL dbg stats */
-    struct wlan_dbg_stats pdev_stats;
+    struct wlan_dbg_stats_v1 pdev_stats;
+} wmi_pdev_stats_v1;
 
-} wmi_pdev_stats;
+typedef struct {
+    /** Channel noise floor */
+    A_INT32 chan_nf;
+    /** TX frame count */
+    A_UINT32 tx_frame_count;
+    /** RX frame count */
+    A_UINT32 rx_frame_count;
+    /** rx clear count */
+    A_UINT32 rx_clear_count;
+    /** cycle count */
+    A_UINT32 cycle_count;
+    /** Phy error count */
+    A_UINT32 phy_err_count;
+    /** Channel Tx Power */
+    A_UINT32 chan_tx_pwr;
+    /** WAL dbg stats */
+    struct wlan_dbg_stats_v2 pdev_stats;
+} wmi_pdev_stats_v2;
+
+#if defined(AR900B)
+#define wmi_pdev_stats wmi_pdev_stats_v2
+#else
+#define wmi_pdev_stats wmi_pdev_stats_v1
+#endif
 
 /**
  *  VDEV statistics
