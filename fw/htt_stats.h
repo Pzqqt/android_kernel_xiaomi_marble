@@ -1007,6 +1007,7 @@ typedef struct {
     /* Total ppdu transmitted bytes for peer: includes MAC header overhead */
     A_UINT32 ppdu_transmitted_bytes_low;
     A_UINT32 ppdu_transmitted_bytes_high;
+    A_UINT32 peer_ttl_removed_count;
 } htt_peer_stats_cmn_tlv;
 
 typedef struct {
