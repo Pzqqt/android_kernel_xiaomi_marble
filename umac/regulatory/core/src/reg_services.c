@@ -1237,6 +1237,11 @@ static void reg_set_5g_channel_params(struct wlan_objmgr_pdev *pdev,
 				 bonded_chan_ptr->end_ch)/2;
 	}
 
+	/* Overwrite center_freq_seg1 to 0 for non 160 and 80+80 width */
+	if (!(ch_params->ch_width == CH_WIDTH_160MHZ ||
+	      ch_params->ch_width == CH_WIDTH_80P80MHZ))
+		ch_params->center_freq_seg1 = 0;
+
 	reg_debug("ch %d ch_wd %d freq0 %d freq1 %d", ch,
 		  ch_params->ch_width, ch_params->center_freq_seg0,
 		  ch_params->center_freq_seg1);
@@ -1288,6 +1293,8 @@ static void reg_set_2g_channel_params(struct wlan_objmgr_pdev *pdev,
 
 		ch_params->ch_width = get_next_lower_bw[ch_params->ch_width];
 	}
+	/* Overwrite center_freq_seg1 to 0 for 2.4 Ghz */
+	ch_params->center_freq_seg1 = 0;
 }
 
 /**
