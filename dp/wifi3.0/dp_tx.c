@@ -2069,7 +2069,8 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	/* Mcast to Ucast Conversion*/
 	if (qdf_unlikely(vdev->mcast_enhancement_en > 0)) {
 		eh = (struct ether_header *)qdf_nbuf_data(nbuf);
-		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost)) {
+		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost) &&
+		    !DP_FRAME_IS_BROADCAST((eh)->ether_dhost)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				  "%s Mcast frm for ME %pK", __func__, vdev);
 
