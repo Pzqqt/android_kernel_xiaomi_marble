@@ -551,6 +551,7 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 				 vdev_id);
 			wma_remove_req(wma_handle, vdev_id,
 				WMA_DEL_P2P_SELF_STA_RSP_START);
+			qdf_mem_free(sta_self_wmi_rsp);
 			qdf_status = QDF_STATUS_E_FAILURE;
 			goto error;
 		}
