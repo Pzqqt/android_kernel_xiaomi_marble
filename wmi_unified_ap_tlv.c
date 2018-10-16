@@ -795,6 +795,55 @@ send_set_quiet_mode_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_set_bcn_offload_quiet_mode_cmd_tlv() - send set quiet mode command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to quiet mode params in bcn offload mode
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_set_bcn_offload_quiet_mode_cmd_tlv(wmi_unified_t wmi_handle,
+			    struct set_bcn_offload_quiet_mode_params *param)
+{
+	wmi_vdev_bcn_offload_quiet_config_cmd_fixed_param *quiet_cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int32_t len;
+
+	len = sizeof(*quiet_cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	quiet_cmd = (wmi_vdev_bcn_offload_quiet_config_cmd_fixed_param *)
+			wmi_buf_data(buf);
+	WMITLV_SET_HDR(&quiet_cmd->tlv_header,
+	    WMITLV_TAG_STRUC_wmi_vdev_bcn_offload_quiet_config_cmd_fixed_param,
+	    WMITLV_GET_STRUCT_TLVLEN(
+		wmi_vdev_bcn_offload_quiet_config_cmd_fixed_param));
+	quiet_cmd = (wmi_vdev_bcn_offload_quiet_config_cmd_fixed_param *)
+		wmi_buf_data(buf);
+	quiet_cmd->vdev_id = param->vdev_id;
+	quiet_cmd->period = param->period;
+	quiet_cmd->duration = param->duration;
+	quiet_cmd->next_start = param->next_start;
+	quiet_cmd->flags = param->flag;
+
+	wmi_mtrace(WMI_VDEV_BCN_OFFLOAD_QUIET_CONFIG_CMDID, NO_SESSION, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_VDEV_BCN_OFFLOAD_QUIET_CONFIG_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Sending set quiet cmd failed");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
  * send_bcn_offload_control_cmd_tlv - send beacon ofload control cmd to fw
  * @wmi_handle: wmi handle
  * @bcn_ctrl_param: pointer to bcn_offload_control param
@@ -2578,6 +2627,8 @@ void wmi_ap_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_set_ht_ie_cmd = send_set_ht_ie_cmd_tlv;
 	ops->send_set_vht_ie_cmd = send_set_vht_ie_cmd_tlv;
 	ops->send_set_quiet_mode_cmd = send_set_quiet_mode_cmd_tlv;
+	ops->send_set_bcn_offload_quiet_mode_cmd =
+		send_set_bcn_offload_quiet_mode_cmd_tlv;
 	ops->send_bcn_offload_control_cmd = send_bcn_offload_control_cmd_tlv;
 	ops->extract_tbttoffset_update_params =
 				extract_tbttoffset_update_params_tlv;

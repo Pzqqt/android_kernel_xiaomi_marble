@@ -285,6 +285,26 @@ QDF_STATUS wmi_unified_set_quiet_mode_cmd_send(void *wmi_hdl,
 }
 
 /**
+ *  wmi_unified_set_bcn_offload_quiet_mode_cmd_send - WMI set quiet mode
+ *	function in beacon offload case
+ *  @param wmi_handle      : handle to WMI.
+ *  @param param    : pointer to hold quiet mode param in bcn offload
+ *
+ *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_set_bcn_offload_quiet_mode_cmd_send(void *wmi_hdl,
+			struct set_bcn_offload_quiet_mode_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_set_bcn_offload_quiet_mode_cmd)
+		return wmi_handle->ops->send_set_bcn_offload_quiet_mode_cmd(
+				wmi_handle, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_send_bcn_offload_control_cmd - send beacon ofload control cmd to fw
  * @wmi_hdl: wmi handle
  * @bcn_ctrl_param: pointer to bcn_offload_control param
