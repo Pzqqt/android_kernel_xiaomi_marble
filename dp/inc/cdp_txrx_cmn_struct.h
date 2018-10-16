@@ -1243,7 +1243,7 @@ struct cdp_rx_indication_ppdu {
 				 gi:4,
 				 dcm:1,
 				 ldpc:1,
-				 ppdu_type:2;
+				 ppdu_type:5;
 		};
 	} u;
 	uint32_t lsig_a;
