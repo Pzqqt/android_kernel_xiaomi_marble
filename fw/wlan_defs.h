@@ -1043,24 +1043,55 @@ typedef struct wlan_dbg_stats_wifi2 {
     wlan_dgb_sifs_resp_stats_t sifs_resp_info;
 } wlan_dbg_wifi2_stats_t;
 
+/*
+ * wlan_dbg_rx_rate_info_v1a, _v1b:
+ * differing versions of the wlan_dbg_rx_rate_info struct used by different
+ * targets
+ */
 typedef struct {
-    wlan_dbg_rx_rate_info_t rx_phy_info;
+    wlan_dbg_rx_rate_info_v1a_t rx_phy_info;
     wlan_dbg_tx_rate_info_t tx_rate_info;
-} wlan_dbg_rate_info_t;
+} wlan_dbg_rate_info_v1a_t;
+
+typedef struct {
+    wlan_dbg_rx_rate_info_v1b_t rx_phy_info;
+    wlan_dbg_tx_rate_info_t tx_rate_info;
+} wlan_dbg_rate_info_v1b_t;
+
+#if defined(AR900B)
+#define wlan_dbg_rate_info_t wlan_dbg_rate_info_v1b_t
+#else
+#define wlan_dbg_rate_info_t wlan_dbg_rate_info_v1a_t
+#endif
 
 typedef struct {
     wlan_dbg_rx_rate_info_v2_t rx_phy_info;
     wlan_dbg_tx_rate_info_v2_t tx_rate_info;
 } wlan_dbg_rate_info_v2_t;
 
-struct wlan_dbg_stats {
-    struct wlan_dbg_tx_stats tx;
-    struct wlan_dbg_rx_stats rx;
-#if defined(AR900B)
-    struct wlan_dbg_mem_stats mem;
-#endif
+/*
+ * wlan_dbg_stats_v1, _v2:
+ * differing versions of the wlan_dbg_stats struct used by different
+ * targets
+ */
+struct wlan_dbg_stats_v1 {
+    struct wlan_dbg_tx_stats_v1 tx;
+    struct wlan_dbg_rx_stats_v1 rx;
     struct wlan_dbg_peer_stats peer;
 };
+
+struct wlan_dbg_stats_v2 {
+    struct wlan_dbg_tx_stats_v2 tx;
+    struct wlan_dbg_rx_stats_v2 rx;
+    struct wlan_dbg_mem_stats mem;
+    struct wlan_dbg_peer_stats peer;
+};
+
+#if defined(AR900B)
+#define wlan_dbg_stats wlan_dbg_stats_v2
+#else
+#define wlan_dbg_stats wlan_dbg_stats_v1
+#endif
 
 #define DBG_STATS_MAX_HWQ_NUM 10
 #define DBG_STATS_MAX_TID_NUM 20
