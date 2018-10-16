@@ -468,6 +468,8 @@ typedef enum {
     WMI_VDEV_LIMIT_OFFCHAN_CMDID,
     /** To set custom software retries per-AC for vdev */
     WMI_VDEV_SET_CUSTOM_SW_RETRY_TH_CMDID,
+    /** To set chainmask configuration for vdev */
+    WMI_VDEV_CHAINMASK_CONFIG_CMDID,
 
     /* peer specific commands */
 
@@ -4498,6 +4500,35 @@ typedef struct {
     A_UINT32 sw_retry_type; /* 0 = non-aggr retry, 1 = aggr retry (wmi_vdev_custom_sw_retry_type_t enum) */
     A_UINT32 sw_retry_th;   /* max retry count per AC base on ac_type for the vdev mentioned in vdev id*/
 } wmi_vdev_set_custom_sw_retry_th_cmd_fixed_param;
+
+typedef struct {
+    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_chainmask_config_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /* vdev id indicating to which the vdev, this chainmask configuration will be applied. */
+    A_UINT32 vdev_id;
+    /* number of chains to use for transmissions in 2.4 GHz band */
+    A_UINT32 num_tx_chains_2g;
+    /* number of chains to use for reception in 2.4 GHz band */
+    A_UINT32 num_rx_chains_2g;
+    /* nss to use for transmissions in 2.4 GHz band */
+    A_UINT32 tx_nss_2g;
+    /* nss to use for reception in 2.4 GHz band */
+    A_UINT32 rx_nss_2g;
+    /* number of chains to use for 11b transmissions. Valid only in 2.4 GHz */
+    A_UINT32 num_tx_chains_b;
+    /* number of chains to use for 11g transmissions. Valid only in 2.4 GHz */
+    A_UINT32 num_tx_chains_g;
+    /* number of chains to use for transmissions in 5 GHz band */
+    A_UINT32 num_tx_chains_5g;
+    /* number of chains to use for reception in 5 GHz band */
+    A_UINT32 num_rx_chains_5g;
+    /* nss to use for transmissions in 5 GHz band */
+    A_UINT32 tx_nss_5g;
+    /* nss to use for reception in 5 GHz band */
+    A_UINT32 rx_nss_5g;
+    /* number of chains to use for 11a transmissions. Valid only in 5 GHz */
+    A_UINT32 num_tx_chains_a;
+} wmi_vdev_chainmask_config_cmd_fixed_param;
 
 /*
  * Command to enable/disable Green AP Power Save.
@@ -22353,6 +22384,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_OBSS_PD_SPATIAL_REUSE_SET_DEF_OBSS_THRESH_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_HE_TB_ACTION_FRM_CMDID);
         WMI_RETURN_STRING(WMI_HPCS_PULSE_START_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_CHAINMASK_CONFIG_CMDID);
     }
 
     return "Invalid WMI cmd";

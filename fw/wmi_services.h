@@ -266,6 +266,7 @@ typedef  enum  {
     WMI_SERVICE_ESP_SUPPORT=170, /* Support for Estimated Service Params IE */
     WMI_SERVICE_PEER_CHWIDTH_CHANGE = 171, /* Support for host to update/re-intersect the node capability */
     WMI_SERVICE_WLAN_HPCS_PULSE=172, /* Support for High Precision Clock Synchronization feature */
+    WMI_SERVICE_PER_VDEV_CHAINMASK_CONFIG_SUPPORT=173, /* Support for configuring chainmask per VDEV */
 
     /******* ADD NEW SERVICES HERE *******/
 
