@@ -1147,6 +1147,7 @@ typedef enum {
     WMI_NDP_INITIATOR_REQ_CMDID,
     WMI_NDP_RESPONDER_REQ_CMDID,
     WMI_NDP_END_REQ_CMDID,
+    WMI_NDP_CMDID,
 
     /** WMI commands related to HW data filtering **/
     WMI_HW_DATA_FILTER_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_HW_DATA_FILTER),
@@ -1734,6 +1735,7 @@ typedef enum {
     WMI_NDP_END_INDICATION_EVENTID,
     WMI_WLAN_COEX_BT_ACTIVITY_EVENTID,
     WMI_NDL_SCHEDULE_UPDATE_EVENTID,
+    WMI_NDP_EVENTID,
 
     /** WMI events related to motion detection */
     WMI_MOTION_DET_HOST_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_MOTION_DET),
@@ -16284,7 +16286,9 @@ typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_host_config_param */
     A_UINT32 nan_2g_disc_disable:1; /** This bit when set to 1 indicate NAN 2G discovery should be disabled */
     A_UINT32 nan_5g_disc_disable:1; /** This bit when set to 1 indicate NAN 5G discovery should be disabled */
-} wmi_nan_host_config_param;
+    A_UINT32 reserved:30;
+} wmi_nan_host_config_param_PROTOTYPE;
+#define wmi_nan_host_config_param wmi_nan_host_config_param_PROTOTYPE
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_event_hdr */
@@ -16295,6 +16299,15 @@ typedef struct {
 *     A_UINT8 data[]; <-- length in byte given by field data_len.
 */
 } wmi_nan_event_hdr;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nan_event_info */
+    A_UINT32 mac_id; /* MAC ID associated with NAN primary discovery channel; Valid only for NAN enable resp message identified by NAN_MSG_ID_ENABLE_RSP */
+    A_UINT32 status:1; /** This bit when set to 0 indicates status is successful; Valid only for NAN enable resp message identified by NAN_MSG_ID_ENABLE_RSP */
+    A_UINT32 reserved:31;
+} wmi_nan_event_info_PROTOTYPE;
+
+#define wmi_nan_event_info wmi_nan_event_info_PROTOTYPE
 
 /**
  * Event to indicate NAN discovery interface created
@@ -16407,6 +16420,22 @@ typedef struct {
 } wmi_ndp_transport_ip_param;
 
 #define wmi_ndp_channel_cfg wmi_ndp_channel_cfg_PROTOTYPE
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ndp_channel_info */
+    A_UINT32 mac_id; /* mac_id associated with ndp channel at same index */
+} wmi_ndp_channel_info_PROTOTYPE;
+
+#define wmi_ndp_channel_info wmi_ndp_channel_info_PROTOTYPE
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ndp_event_param */
+    A_UINT32 vdev_id; /* NDI VDEV ID */
+    A_UINT32 ndp_termination_in_progress:1; /** This bit when set to 1 indicates to termination of all NDPs associated with NDI vdev ID is started */
+    A_UINT32 reserved:31;
+} wmi_ndp_event_param_PROTOTYPE;
+
+#define wmi_ndp_event_param wmi_ndp_event_param_PROTOTYPE
 
 /**
  * NDP Initiator requesting a data session
@@ -16529,6 +16558,15 @@ typedef struct {
 
 #define wmi_ndp_end_req wmi_ndp_end_req_PROTOTYPE
 
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_ndp_cmd_param */
+    A_UINT32 vdev_id; /* NDI VDEV ID */
+    A_UINT32 ndp_disable:1; /** This bit when set to 1 indicates to terminate all NDPs associated with NDI vdev ID */
+    A_UINT32 reserved:31;
+} wmi_ndp_cmd_param_PROTOTYPE;
+
+#define wmi_ndp_cmd_param wmi_ndp_cmd_param_PROTOTYPE
+
 /**
  * NDP End request
  */
@@ -16625,6 +16663,7 @@ typedef struct {
 } wmi_ndp_responder_rsp_event_fixed_param_PROTOTYPE;
 
 #define wmi_ndp_responder_rsp_event_fixed_param wmi_ndp_responder_rsp_event_fixed_param_PROTOTYPE
+
 /**
  * Active ndp instance id
  */
@@ -22472,6 +22511,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_HPCS_PULSE_START_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_CHAINMASK_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_BCN_OFFLOAD_QUIET_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_NDP_CMDID);
     }
 
     return "Invalid WMI cmd";

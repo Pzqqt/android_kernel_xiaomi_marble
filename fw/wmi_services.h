@@ -268,6 +268,7 @@ typedef  enum  {
     WMI_SERVICE_WLAN_HPCS_PULSE=172, /* Support for High Precision Clock Synchronization feature */
     WMI_SERVICE_PER_VDEV_CHAINMASK_CONFIG_SUPPORT=173, /* Support for configuring chainmask per VDEV */
     WMI_SERVICE_TX_DATA_MGMT_ACK_RSSI=174, /* ACK RSSI indication to host for host TX data and mgmt frame */
+    WMI_SERVICE_NAN_DISABLE_SUPPORT=175, /* indicates firmware is dependent on host to disable NAN incase of concurrencies */
 
     /******* ADD NEW SERVICES HERE *******/
 
