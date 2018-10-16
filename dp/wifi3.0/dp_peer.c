@@ -670,7 +670,12 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 	if (ast_entry->next_hop) {
 		dp_peer_ast_send_wds_del(soc, ast_entry);
 	} else {
-		soc->ast_table[ast_entry->ast_idx] = NULL;
+		/*
+		 * For TYPE_SELF (STA mode), no T2H_PEER_MAP message to map
+		 * the peer, hence no need to clear ast_table here.
+		 */
+		if (ast_entry->type != CDP_TXRX_AST_TYPE_SELF)
+			soc->ast_table[ast_entry->ast_idx] = NULL;
 		TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
 
 		if (ast_entry == peer->self_ast_entry)
@@ -702,7 +707,12 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 		soc->cdp_soc.ol_ops->peer_del_wds_entry(peer->vdev->osif_vdev,
 						ast_entry->mac_addr.raw);
 
-	soc->ast_table[ast_entry->ast_idx] = NULL;
+	/*
+	 * For TYPE_SELF (STA mode), no T2H_PEER_MAP message to map the peer,
+	 * hence no need to clear ast_table here.
+	 */
+	if (ast_entry->type != CDP_TXRX_AST_TYPE_SELF)
+		soc->ast_table[ast_entry->ast_idx] = NULL;
 	TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
 
 	if (ast_entry == peer->self_ast_entry)
@@ -1233,7 +1243,7 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
 
 		if (peer) {
 			/*
-			 * For every peer MAp message search and set if bss_peer
+			 * For every peer Map message search and set if bss_peer
 			 */
 			if (!(qdf_mem_cmp(peer->mac_addr.raw,
 					  peer->vdev->mac_addr.raw,
