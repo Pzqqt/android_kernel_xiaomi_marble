@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -1024,17 +1024,17 @@ static int wcd937x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 	case 0:
 	case 1:
 		dmic_clk_cnt = &(wcd937x->dmic_0_1_clk_cnt);
-		dmic_clk_reg = WCD937X_DIGITAL_CDC_DMIC0_CTL;
+		dmic_clk_reg = WCD937X_DIGITAL_CDC_DMIC1_CTL;
 		break;
 	case 2:
 	case 3:
 		dmic_clk_cnt = &(wcd937x->dmic_2_3_clk_cnt);
-		dmic_clk_reg = WCD937X_DIGITAL_CDC_DMIC1_CTL;
+		dmic_clk_reg = WCD937X_DIGITAL_CDC_DMIC2_CTL;
 		break;
 	case 4:
 	case 5:
 		dmic_clk_cnt = &(wcd937x->dmic_4_5_clk_cnt);
-		dmic_clk_reg = WCD937X_DIGITAL_CDC_DMIC2_CTL;
+		dmic_clk_reg = WCD937X_DIGITAL_CDC_DMIC3_CTL;
 		break;
 	default:
 		dev_err(component->dev, "%s: Invalid DMIC Selection\n",
@@ -2098,7 +2098,7 @@ static int wcd937x_soc_codec_probe(struct snd_soc_component *component)
 
 	wcd937x->component = component;
 	variant = (snd_soc_component_read32(
-			component, WCD937X_DIGITAL_EFUSE_REG_0) & 0x0E) >> 1;
+			component, WCD937X_DIGITAL_EFUSE_REG_0) & 0x1E) >> 1;
 	wcd937x->variant = variant;
 
 	wcd937x->fw_data = devm_kzalloc(component->dev,
