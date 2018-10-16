@@ -16,22 +16,29 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef WLAN_PMO_CFG_H__
-#define WLAN_PMO_CFG_H__
+#ifndef WLAN_PMO_APF_CFG_H__
+#define WLAN_PMO_APF_CFG_H__
 
-#include "wlan_pmo_apf_cfg.h"
-#include "wlan_pmo_common_cfg.h"
-#include "wlan_pmo_extwow_cfg.h"
-#include "wlan_pmo_pkt_filter_cfg.h"
-#include "wlan_pmo_runtime_pm_cfg.h"
-#include "wlan_pmo_wow_pulse_cfg.h"
+/*
+ * <ini>
+ * gBpfFilterEnable - APF feature support configuration
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * When set to 1 APF feature will be enabled.
+ *
+ * Supported Feature: Android packet filter
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PMO_APF_ENABLE CFG_INI_BOOL("gBpfFilterEnable", \
+					1, \
+					"Enable APF Support")
 
-#define CFG_PMO_ALL \
-	CFG_EXTWOW_ALL \
-	CFG_PACKET_FILTER_ALL \
-	CFG_PMO_APF_ALL \
-	CFG_PMO_COMMON_ALL \
-	CFG_RUNTIME_PM_ALL \
-	CFG_WOW_PULSE_ALL
+#define CFG_PMO_APF_ALL \
+	CFG(CFG_PMO_APF_ENABLE)
 
-#endif /* WLAN_PMO_CFG_H__ */
+#endif /* WLAN_PMO_APF_CFG_H__ */

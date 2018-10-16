@@ -340,9 +340,7 @@ enum pmo_auto_pwr_detect_failure_mode {
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
-#ifdef FEATURE_WLAN_APF
 	bool apf_enable;
-#endif
 	bool arp_offload_enable;
 	enum pmo_hw_filter_mode hw_filter_mode_bitmap;
 	bool ns_offload_enable_static;
