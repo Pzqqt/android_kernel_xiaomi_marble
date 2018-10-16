@@ -97,6 +97,7 @@ struct pdev_hw_stats {
  * @cs_cycle_count: cycle count
  * @cs_phy_err_count: phy error count
  * @cs_chan_tx_pwr: channel tx power
+ * @cs_fcsbad: fcs error count
  */
 struct pdev_80211_stats {
 	uint64_t cs_tx_beacon;
@@ -138,6 +139,7 @@ struct pdev_80211_stats {
 	uint32_t cs_cycle_count;
 	uint32_t cs_phy_err_count;
 	uint32_t cs_chan_tx_pwr;
+	uint32_t cs_fcsbad;
 
 	/* at places of copying required for scn-stats, copy till here only */
 	struct pdev_hw_stats hw_stats;
@@ -233,6 +235,7 @@ struct pdev_ic_cp_stats {
  * @cs_tx_offchan_data: tx offchan data
  * @cs_tx_offchan_fail: tx offchan fail
  * @cs_rx_wrongbss: rx from wrong bssid
+ * @cs_rx_tooshort: rx packet length too short
  * @cs_rx_wrongdir: rx wrong direction
  * @cs_rx_not_assoc: rx discard cuz sta !assoc
  * @cs_rx_no_privacy: rx wep but privacy off
@@ -295,6 +298,7 @@ struct pdev_ic_cp_stats {
  */
 struct vdev_80211_stats {
 	uint64_t cs_rx_wrongbss;
+	uint64_t cs_rx_tooshort;
 	uint64_t cs_rx_wrongdir;
 	uint64_t cs_rx_mcast_echo;
 	uint64_t cs_rx_not_assoc;
@@ -380,6 +384,8 @@ struct vdev_80211_stats {
  * @cs_rx_countermeasure: rx counter measures count
  * @cs_tx_mgmt: tx mgmt
  * @cs_rx_mgmt: rx mgmt
+ * @cs_tx_discard: tx dropped due to errors
+ * @cs_rx_mgmt: rx dropped due to errors
  */
 struct vdev_80211_mac_stats {
 	uint64_t cs_rx_badkeyid;
@@ -396,6 +402,8 @@ struct vdev_80211_mac_stats {
 	uint64_t cs_rx_countermeasure;
 	uint64_t cs_tx_mgmt;
 	uint64_t cs_rx_mgmt;
+	uint64_t cs_tx_discard;
+	uint64_t cs_rx_discard;
 };
 
 /**

@@ -120,6 +120,8 @@ VDEV_UCAST_CP_STATS_SET_FUNCS(rx_wpireplay);
 VDEV_UCAST_CP_STATS_SET_FUNCS(rx_countermeasure);
 VDEV_UCAST_CP_STATS_SET_FUNCS(rx_mgmt);
 VDEV_UCAST_CP_STATS_SET_FUNCS(tx_mgmt);
+VDEV_UCAST_CP_STATS_SET_FUNCS(rx_discard);
+VDEV_UCAST_CP_STATS_SET_FUNCS(tx_discard);
 
 #define VDEV_UCAST_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \
@@ -161,6 +163,8 @@ VDEV_MCAST_CP_STATS_SET_FUNCS(rx_wpireplay);
 VDEV_MCAST_CP_STATS_SET_FUNCS(rx_countermeasure);
 VDEV_MCAST_CP_STATS_SET_FUNCS(rx_mgmt);
 VDEV_MCAST_CP_STATS_SET_FUNCS(tx_mgmt);
+VDEV_MCAST_CP_STATS_SET_FUNCS(rx_discard);
+VDEV_MCAST_CP_STATS_SET_FUNCS(tx_discard);
 
 #define VDEV_MCAST_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \
@@ -186,9 +190,16 @@ VDEV_MCAST_CP_STATS_GET_FUNCS(rx_ccmpreplay);
 				       uint64_t _val) \
 	{ \
 		ucfg_vdev_cp_stats_##field##_update(_vdev, _val); \
+	} \
+	static inline void \
+	vdev_cp_stats_##field##_dec(struct wlan_objmgr_vdev *_vdev, \
+				    uint64_t _val) \
+	{ \
+		ucfg_vdev_cp_stats_##field##_dec(_vdev, _val); \
 	}
 
 VDEV_CP_STATS_SET_FUNCS(rx_wrongbss);
+VDEV_CP_STATS_SET_FUNCS(rx_tooshort);
 VDEV_CP_STATS_SET_FUNCS(rx_wrongdir);
 VDEV_CP_STATS_SET_FUNCS(rx_not_assoc);
 VDEV_CP_STATS_SET_FUNCS(rx_noprivacy);
@@ -360,6 +371,7 @@ PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt_completions);
 PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt_completion_err);
 PDEV_CP_STATS_GET_FUNCS(tgt_asserts);
 PDEV_CP_STATS_GET_FUNCS(rx_phy_err);
+PDEV_CP_STATS_GET_FUNCS(fcsbad);
 
 static inline void pdev_cp_stats_reset(struct wlan_objmgr_pdev *pdev)
 {

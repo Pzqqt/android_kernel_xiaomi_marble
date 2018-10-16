@@ -136,6 +136,7 @@ UCFG_PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt_completions);
 UCFG_PDEV_CP_STATS_GET_FUNCS(wmi_tx_mgmt_completion_err);
 UCFG_PDEV_CP_STATS_GET_FUNCS(tgt_asserts);
 UCFG_PDEV_CP_STATS_GET_FUNCS(rx_phy_err);
+UCFG_PDEV_CP_STATS_GET_FUNCS(fcsbad);
 
 #define UCFG_PDEV_CHAN_STATS_GET_FUNCS(field) \
 	static inline uint32_t \
@@ -317,6 +318,7 @@ UCFG_PDEV_LMAC_CP_STATS_GET_FUNCS(ast_noise_floor);
 	}
 
 UCFG_VDEV_CP_STATS_SET_FUNCS(rx_wrongbss);
+UCFG_VDEV_CP_STATS_SET_FUNCS(rx_tooshort);
 UCFG_VDEV_CP_STATS_SET_FUNCS(rx_wrongdir);
 UCFG_VDEV_CP_STATS_SET_FUNCS(rx_not_assoc);
 UCFG_VDEV_CP_STATS_SET_FUNCS(rx_noprivacy);
@@ -452,6 +454,8 @@ UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_wpireplay);
 UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_countermeasure);
 UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_mgmt);
 UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(tx_mgmt);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(rx_discard);
+UCFG_VDEV_UCAST_CP_STATS_SET_FUNCS(tx_discard);
 
 #define UCFG_VDEV_UCAST_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \
@@ -530,6 +534,8 @@ UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_wpireplay);
 UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_countermeasure);
 UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_mgmt);
 UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(tx_mgmt);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(rx_discard);
+UCFG_VDEV_MCAST_CP_STATS_SET_FUNCS(tx_discard);
 
 #define UCFG_VDEV_MCAST_CP_STATS_GET_FUNCS(field) \
 	static inline uint64_t \
