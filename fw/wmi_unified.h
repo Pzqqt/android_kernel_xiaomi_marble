@@ -2845,6 +2845,15 @@ typedef struct {
     #define WMI_RSRC_CFG_FLAG_EAPOL_AC_OVERRIDE_S 16
     #define WMI_RSRC_CFG_FLAG_EAPOL_AC_OVERRIDE_M 0x30000
 
+    /*
+     * If TX_ACK_RSSI is set, then the target should populate the ack_rssi
+     * field within the WMI_MGMT_TX_COMPLETION_EVENT message, the ack_rssi
+     * TLV within the WMI_MGMT_TX_BUNDLE_COMPLETION_EVENT message, and the
+     * "MSDU ACK RSSI" array within the HTT_T2H TX_COMPL_IND message.
+     */
+    #define WMI_RSRC_CFG_FLAG_TX_ACK_RSSI_S 18
+    #define WMI_RSRC_CFG_FLAG_TX_ACK_RSSI_M 0x40000
+
     A_UINT32 flag1;
 
     /** @brief smart_ant_cap - Smart Antenna capabilities information
@@ -3072,6 +3081,12 @@ typedef struct {
     WMI_RSRC_CFG_FLAG_SET((word32), EAPOL_AC_OVERRIDE, (value))
 #define WMI_RSRC_CFG_FLAG_EAPOL_AC_OVERRIDE_GET(word32) \
     WMI_RSRC_CFG_FLAG_GET((word32), EAPOL_AC_OVERRIDE)
+
+#define WMI_RSRC_CFG_FLAG_TX_ACK_RSSI_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), TX_ACK_RSSI, (value))
+#define WMI_RSRC_CFG_FLAG_TX_ACK_RSSI_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), TX_ACK_RSSI)
+
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
@@ -5547,6 +5562,13 @@ typedef struct {
      * A ppdu_id value of 0x0 is invalid, and should be ignored.
      */
     A_UINT32    ppdu_id;
+    /* ack_rssi
+     * TX mgmt ack RSSI report to host.
+     * Only valid when status == COMPLETE_OK and the ACK_RSSI report is enabled
+     * ACK RSSI is reported as SNR dB, i.e. how many dB the RSSI is above
+     * the noise floor.
+     */
+    A_UINT32    ack_rssi;
 } wmi_mgmt_tx_compl_event_fixed_param;
 
 typedef struct {
@@ -5571,6 +5593,8 @@ typedef struct {
      * A_UINT32 desc_ids[num_reports]; <- from tx_send_cmd
      * A_UINT32 status[num_reports];   <- WMI_MGMT_TX_COMP_STATUS_TYPE
      * A_UINT32 ppdu_id[num_reports];  <- list of PPDU IDs
+     * A_UINT32 ack_rssi[num_reports]; <- list of ack RSSI
+     *                                    RSSI units = dB w.r.t. noise floor
      */
 } wmi_mgmt_tx_compl_bundle_event_fixed_param;
 

@@ -172,9 +172,10 @@
  * 3.55 Add initiator / responder flags to RX_DELBA indication
  * 3.56 Fix HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE bit-mask defs
  * 3.57 Add support for in-band data within HTT_T2H_MSG_TYPE_CFR_DUMP_COMPL_IND
+ * 3.58 Add optional MSDU ack RSSI array to end of HTT_T2H TX_COMPL_IND msg
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 57
+#define HTT_CURRENT_VERSION_MINOR 58
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -8067,22 +8068,27 @@ PREPACK struct htt_txq_group {
  * The following diagram shows the format of the TX completion indication sent
  * from the target to the host
  *
- *          |31   27|26|25|24|23        16| 15 |14 11|10   8|7          0|
- *          |------------------------------------------------------------|
- * header:  |  rsvd |TP|A1|A0|     num    | t_i| tid |status|  msg_type  |
- *          |------------------------------------------------------------|
- * payload: |           MSDU1 ID          |         MSDU0 ID             |
- *          |------------------------------------------------------------|
- *          :           MSDU3 ID          :         MSDU2 ID             :
- *          |------------------------------------------------------------|
- *          |         struct htt_tx_compl_ind_append_retries             |
- *          |- - - - -  - - - - - - - - - - - - - - - - - - - - - - - - -|
- *          |         struct htt_tx_compl_ind_append_tx_tstamp           |
- *          |- - - - -  - - - - - - - - - - - - - - - - - - - - - - - - -|
+ *          |31 28|27|26|25|24|23        16| 15 |14 11|10   8|7          0|
+ *          |-------------------------------------------------------------|
+ * header:  |rsvd |A2|TP|A1|A0|     num    | t_i| tid |status|  msg_type  |
+ *          |-------------------------------------------------------------|
+ * payload: |            MSDU1 ID          |         MSDU0 ID             |
+ *          |-------------------------------------------------------------|
+ *          :            MSDU3 ID          :         MSDU2 ID             :
+ *          |-------------------------------------------------------------|
+ *          |          struct htt_tx_compl_ind_append_retries             |
+ *          |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -|
+ *          |          struct htt_tx_compl_ind_append_tx_tstamp           |
+ *          |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -|
+ *          |           MSDU1 ACK RSSI     |        MSDU0 ACK RSSI        |
+ *          |-------------------------------------------------------------|
+ *          :           MSDU3 ACK RSSI     :        MSDU2 ACK RSSI        :
+ *          |- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -|
  * Where:
  *     A0 = append (a.k.a. append0)
  *     A1 = append1
  *     TP = MSDU tx power presence
+ *     A2 = append2
  *
  * The following field definitions describe the format of the TX completion
  * indication sent from the target to the host
@@ -8136,6 +8142,19 @@ PREPACK struct htt_txq_group {
  *            which MSDU ID.
  *   Value: 0 indicates MSDU tx power reports are not appended,
  *          1 indicates MSDU tx power reports are appended
+ * - append2
+ *   Bits 27:27
+ *   Purpose: Indicate whether data ACK RSSI is appended for each MSDU in
+ *            TX_COMP_IND message.  The order of the per-MSDU ACK RSSI report
+ *            matches the order of the MSDU IDs.  Although the ACK RSSI is the
+ *            same for all MSDUs witin a single PPDU, the RSSI is duplicated
+ *            for each MSDU, for convenience.
+ *            The ACK RSSI values are valid when status is COMPLETE_OK (and
+ *            this append2 bit is set).
+ *            The ACK RSSI values are SNR in dB, i.e. are the RSSI in units of
+ *            dB above the noise floor.
+ *   Value: 0 indicates MSDU ACK RSSI values are not appended,
+ *          1 indicates MSDU ACK RSSI values are appended.
  * Payload fields:
  * - hmsdu_id
  *   Bits 15:0
@@ -8157,6 +8176,8 @@ PREPACK struct htt_txq_group {
 #define HTT_TX_COMPL_IND_APPEND1_M     0x02000000
 #define HTT_TX_COMPL_IND_TX_POWER_S    26
 #define HTT_TX_COMPL_IND_TX_POWER_M    0x04000000
+#define HTT_TX_COMPL_IND_APPEND2_S     27
+#define HTT_TX_COMPL_IND_APPEND2_M     0x08000000
 
 #define HTT_TX_COMPL_IND_STATUS_SET(_info, _val)                        \
     do {                                                                \
@@ -8208,6 +8229,14 @@ PREPACK struct htt_txq_group {
     } while (0)
 #define HTT_TX_COMPL_IND_TX_POWER_GET(_info)                             \
     (((_info) & HTT_TX_COMPL_IND_TX_POWER_M) >> HTT_TX_COMPL_IND_TX_POWER_S)
+#define HTT_TX_COMPL_IND_APPEND2_SET(_info, _val)                      \
+    do {                                                               \
+        HTT_CHECK_SET_VAL(HTT_TX_COMPL_IND_APPEND2, _val);             \
+        ((_info) |= ((_val) << HTT_TX_COMPL_IND_APPEND2_S));           \
+    } while (0)
+#define HTT_TX_COMPL_IND_APPEND2_GET(_info)                            \
+    (((_info) & HTT_TX_COMPL_IND_APPEND2_M) >> HTT_TX_COMPL_IND_APPEND2_S)
+
 #define HTT_TX_COMPL_INV_TX_POWER           0xffff
 
 #define HTT_TX_COMPL_CTXT_SZ                sizeof(A_UINT16)
