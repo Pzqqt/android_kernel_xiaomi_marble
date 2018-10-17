@@ -342,6 +342,12 @@ QDF_STATUS init_deinit_handle_host_mem_req(
 	if (!num_mem_reqs)
 		return QDF_STATUS_SUCCESS;
 
+	if (num_mem_reqs > MAX_MEM_CHUNKS) {
+		target_if_err_rl("num_mem_reqs:%u is out of bounds",
+				 num_mem_reqs);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	for (i = 0; i < FW_PRIORITY_MAX; i++) {
 		for (idx = 0; idx < num_mem_reqs; idx++) {
 			status = init_deinit_alloc_num_units(psoc, tgt_hdl,
