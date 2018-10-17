@@ -3185,8 +3185,22 @@ int afe_tdm_port_start(u16 port_id, struct afe_tdm_port_config *tdm_port,
 			this_afe.dev_acdb_id[index] = this_afe.rt_cb(port_id);
 	}
 
-	/* Also send the topology id here: */
 	port_index = afe_get_port_index(port_id);
+
+	if (q6core_get_avcs_api_version_per_service(
+		APRV2_IDS_SERVICE_ID_ADSP_AFE_V) >= AFE_API_VERSION_V4) {
+		/* send VAD configuration if enabled */
+		if (this_afe.vad_cfg[port_index].is_enable) {
+			ret = afe_send_port_vad_cfg_params(port_id);
+			if (ret) {
+				pr_err("%s: afe send VAD config failed %d\n",
+					__func__, ret);
+				goto fail_cmd;
+			}
+		}
+	}
+
+	/* Also send the topology id here: */
 	if (!(this_afe.afe_cal_mode[port_index] == AFE_CAL_MODE_NONE)) {
 		/* One time call: only for first time */
 		afe_send_custom_topology();
