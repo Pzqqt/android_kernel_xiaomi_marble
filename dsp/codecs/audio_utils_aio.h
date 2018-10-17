@@ -210,7 +210,7 @@ void audio_aio_async_read_ack(struct q6audio_aio *audio, uint32_t token,
 int insert_eos_buf(struct q6audio_aio *audio,
 		struct audio_aio_buffer_node *buf_node);
 
-void extract_meta_out_info(struct q6audio_aio *audio,
+int extract_meta_out_info(struct q6audio_aio *audio,
 		struct audio_aio_buffer_node *buf_node, int dir);
 
 int audio_aio_open(struct q6audio_aio *audio, struct file *file);

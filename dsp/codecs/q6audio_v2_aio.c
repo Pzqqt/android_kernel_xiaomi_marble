@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -118,19 +118,26 @@ void audio_aio_cb(uint32_t opcode, uint32_t token,
 	}
 }
 
-void extract_meta_out_info(struct q6audio_aio *audio,
+int extract_meta_out_info(struct q6audio_aio *audio,
 		struct audio_aio_buffer_node *buf_node, int dir)
 {
 	struct dec_meta_out *meta_data = buf_node->kvaddr;
 	uint32_t temp;
 
 	if (dir) { /* input buffer - Write */
-		if (audio->buf_cfg.meta_info_enable)
+		if (audio->buf_cfg.meta_info_enable) {
+			if (buf_node->buf.buf_len <
+				sizeof(struct dec_meta_in)) {
+				pr_debug("%s: invalid buf len %d\n",
+					 __func__, buf_node->buf.buf_len);
+				return -EINVAL;
+			}
 			memcpy(&buf_node->meta_info.meta_in,
 			(char *)buf_node->kvaddr, sizeof(struct dec_meta_in));
-		else
+		} else {
 			memset(&buf_node->meta_info.meta_in,
 			0, sizeof(struct dec_meta_in));
+		}
 		pr_debug("%s[%pK]:i/p: msw_ts %d lsw_ts %d nflags 0x%8x\n",
 			__func__, audio,
 			buf_node->meta_info.meta_in.ntimestamp.highpart,
@@ -156,6 +163,7 @@ void extract_meta_out_info(struct q6audio_aio *audio,
 			meta_out_dsp[0].nflags,
 		((struct dec_meta_out *)buf_node->kvaddr)->num_of_frames);
 	}
+	return 0;
 }
 
 /* Read buffer from DSP / Handle Ack from DSP */
@@ -165,6 +173,7 @@ void audio_aio_async_read_ack(struct q6audio_aio *audio, uint32_t token,
 	unsigned long flags;
 	union msm_audio_event_payload event_payload;
 	struct audio_aio_buffer_node *filled_buf;
+	int ret;
 
 	pr_debug("%s\n", __func__);
 
@@ -208,7 +217,7 @@ void audio_aio_async_read_ack(struct q6audio_aio *audio, uint32_t token,
 				__func__, audio,
 				filled_buf->meta_info.meta_out.num_of_frames,
 				event_payload.aio_buf.data_len);
-			extract_meta_out_info(audio, filled_buf, 0);
+			ret = extract_meta_out_info(audio, filled_buf, 0);
 			audio->eos_rsp = 0;
 		}
 		pr_debug("%s, posting read done to the app here\n", __func__);
