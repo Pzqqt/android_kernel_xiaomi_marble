@@ -1791,7 +1791,7 @@ QDF_STATUS mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc,
 			       struct wma_tgt_vht_cap *cfg)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
-	struct mlme_vht_capabilities_info vht_cap_info;
+	struct mlme_vht_capabilities_info *vht_cap_info;
 	uint32_t value = 0;
 	bool hw_rx_ldpc_enabled;
 
@@ -1801,64 +1801,65 @@ QDF_STATUS mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	vht_cap_info = mlme_obj->cfg.vht_caps.vht_cap_info;
+	vht_cap_info = &mlme_obj->cfg.vht_caps.vht_cap_info;
 
 	/*
 	 * VHT max MPDU length:
 	 * override if user configured value is too high
 	 * that the target cannot support
 	 */
-	if (vht_cap_info.ampdu_len > cfg->vht_max_mpdu)
-		vht_cap_info.ampdu_len = cfg->vht_max_mpdu;
+	if (vht_cap_info->ampdu_len > cfg->vht_max_mpdu)
+		vht_cap_info->ampdu_len = cfg->vht_max_mpdu;
 
 	value = (CFG_VHT_BASIC_MCS_SET_STADEF & VHT_MCS_1x1) |
-		vht_cap_info.basic_mcs_set;
-	if (vht_cap_info.enable2x2)
-		value = (value & VHT_MCS_2x2) | (vht_cap_info.rx_mcs2x2 << 2);
-	vht_cap_info.basic_mcs_set = value;
+		vht_cap_info->basic_mcs_set;
+	if (vht_cap_info->enable2x2)
+		value = (value & VHT_MCS_2x2) | (vht_cap_info->rx_mcs2x2 << 2);
+	vht_cap_info->basic_mcs_set = value;
 
-	value = (CFG_VHT_RX_MCS_MAP_STADEF & VHT_MCS_1x1) | vht_cap_info.rx_mcs;
-	if (vht_cap_info.enable2x2)
-		value = (value & VHT_MCS_2x2) | (vht_cap_info.rx_mcs2x2 << 2);
-	vht_cap_info.rx_mcs_map = value;
+	value = (CFG_VHT_RX_MCS_MAP_STADEF & VHT_MCS_1x1) | vht_cap_info->rx_mcs;
 
-	value = (CFG_VHT_TX_MCS_MAP_STADEF & VHT_MCS_1x1) | vht_cap_info.tx_mcs;
-	if (vht_cap_info.enable2x2)
-		value = (value & VHT_MCS_2x2) | (vht_cap_info.tx_mcs2x2 << 2);
-	vht_cap_info.tx_mcs_map = value;
+	if (vht_cap_info->enable2x2)
+		value = (value & VHT_MCS_2x2) | (vht_cap_info->rx_mcs2x2 << 2);
+	vht_cap_info->rx_mcs_map = value;
+
+	value = (CFG_VHT_TX_MCS_MAP_STADEF & VHT_MCS_1x1) | vht_cap_info->tx_mcs;
+	if (vht_cap_info->enable2x2)
+		value = (value & VHT_MCS_2x2) | (vht_cap_info->tx_mcs2x2 << 2);
+	vht_cap_info->tx_mcs_map = value;
 
 	 /* Set HW RX LDPC capability */
 	hw_rx_ldpc_enabled = !!cfg->vht_rx_ldpc;
-	if (hw_rx_ldpc_enabled != vht_cap_info.ldpc_coding_cap)
-		vht_cap_info.ldpc_coding_cap = hw_rx_ldpc_enabled;
+	if (hw_rx_ldpc_enabled != vht_cap_info->ldpc_coding_cap)
+		vht_cap_info->ldpc_coding_cap = hw_rx_ldpc_enabled;
 
 	/* set the Guard interval 80MHz */
-	if (vht_cap_info.short_gi_80mhz && !cfg->vht_short_gi_80)
-		vht_cap_info.short_gi_80mhz = cfg->vht_short_gi_80;
+	if (vht_cap_info->short_gi_80mhz && !cfg->vht_short_gi_80)
+		vht_cap_info->short_gi_80mhz = cfg->vht_short_gi_80;
 
 	/* Set VHT TX STBC cap */
-	if (vht_cap_info.tx_stbc && !cfg->vht_tx_stbc)
-		vht_cap_info.tx_stbc = cfg->vht_tx_stbc;
+	if (vht_cap_info->tx_stbc && !cfg->vht_tx_stbc)
+		vht_cap_info->tx_stbc = cfg->vht_tx_stbc;
 
 	/* Set VHT RX STBC cap */
-	if (vht_cap_info.rx_stbc && !cfg->vht_rx_stbc)
-		vht_cap_info.rx_stbc = cfg->vht_rx_stbc;
+	if (vht_cap_info->rx_stbc && !cfg->vht_rx_stbc)
+		vht_cap_info->rx_stbc = cfg->vht_rx_stbc;
 
 	/* Set VHT SU Beamformer cap */
-	if (vht_cap_info.su_bformer && !cfg->vht_su_bformer)
-		vht_cap_info.su_bformer = cfg->vht_su_bformer;
+	if (vht_cap_info->su_bformer && !cfg->vht_su_bformer)
+		vht_cap_info->su_bformer = cfg->vht_su_bformer;
 
 	/* check and update SU BEAMFORMEE capabality */
-	if (vht_cap_info.enable_txbf_20mhz && !cfg->vht_su_bformee)
-		vht_cap_info.su_bformee = cfg->vht_su_bformee;
+	if (vht_cap_info->enable_txbf_20mhz && !cfg->vht_su_bformee)
+		vht_cap_info->su_bformee = cfg->vht_su_bformee;
 
 	/* Set VHT MU Beamformer cap */
-	if (vht_cap_info.mu_bformer && !cfg->vht_mu_bformer)
-		vht_cap_info.mu_bformer = cfg->vht_mu_bformer;
+	if (vht_cap_info->mu_bformer && !cfg->vht_mu_bformer)
+		vht_cap_info->mu_bformer = cfg->vht_mu_bformer;
 
 	/* Set VHT MU Beamformee cap */
-	if (vht_cap_info.enable_mu_bformee && !cfg->vht_mu_bformee)
-		vht_cap_info.enable_mu_bformee = cfg->vht_mu_bformee;
+	if (vht_cap_info->enable_mu_bformee && !cfg->vht_mu_bformee)
+		vht_cap_info->enable_mu_bformee = cfg->vht_mu_bformee;
 
 	/*
 	 * VHT max AMPDU len exp:
@@ -1867,16 +1868,16 @@ QDF_STATUS mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc,
 	 * Even though Rome publish ampdu_len=7, it can
 	 * only support 4 because of some h/w bug.
 	 */
-	if (vht_cap_info.ampdu_len_exponent > cfg->vht_max_ampdu_len_exp)
-		vht_cap_info.ampdu_len_exponent = cfg->vht_max_ampdu_len_exp;
+	if (vht_cap_info->ampdu_len_exponent > cfg->vht_max_ampdu_len_exp)
+		vht_cap_info->ampdu_len_exponent = cfg->vht_max_ampdu_len_exp;
 
 	/* Set VHT TXOP PS CAP */
-	if (vht_cap_info.txop_ps && !cfg->vht_txop_ps)
-		vht_cap_info.txop_ps = cfg->vht_txop_ps;
+	if (vht_cap_info->txop_ps && !cfg->vht_txop_ps)
+		vht_cap_info->txop_ps = cfg->vht_txop_ps;
 
 	/* set the Guard interval 160MHz */
-	if (vht_cap_info.short_gi_160mhz && !cfg->vht_short_gi_160)
-		vht_cap_info.short_gi_160mhz = cfg->vht_short_gi_160;
+	if (vht_cap_info->short_gi_160mhz && !cfg->vht_short_gi_160)
+		vht_cap_info->short_gi_160mhz = cfg->vht_short_gi_160;
 
 	return QDF_STATUS_SUCCESS;
 
@@ -1885,7 +1886,7 @@ QDF_STATUS mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS mlme_update_nss_vht_cap(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
-	struct mlme_vht_capabilities_info vht_cap_info;
+	struct mlme_vht_capabilities_info *vht_cap_info;
 	uint32_t temp = 0;
 
 	mlme_obj = mlme_get_psoc_obj(psoc);
@@ -1894,34 +1895,34 @@ QDF_STATUS mlme_update_nss_vht_cap(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	vht_cap_info = mlme_obj->cfg.vht_caps.vht_cap_info;
+	vht_cap_info = &mlme_obj->cfg.vht_caps.vht_cap_info;
 
-	temp = vht_cap_info.basic_mcs_set;
-	temp = (temp & 0xFFFC) | vht_cap_info.rx_mcs;
-	if (vht_cap_info.enable2x2)
-		temp = (temp & 0xFFF3) | (vht_cap_info.rx_mcs2x2 << 2);
+	temp = vht_cap_info->basic_mcs_set;
+	temp = (temp & 0xFFFC) | vht_cap_info->rx_mcs;
+	if (vht_cap_info->enable2x2)
+		temp = (temp & 0xFFF3) | (vht_cap_info->rx_mcs2x2 << 2);
 	else
 		temp |= 0x000C;
 
-	vht_cap_info.basic_mcs_set = temp;
+	vht_cap_info->basic_mcs_set = temp;
 
-	temp = vht_cap_info.rx_mcs_map;
-	temp = (temp & 0xFFFC) | vht_cap_info.rx_mcs;
-	if (vht_cap_info.enable2x2)
-		temp = (temp & 0xFFF3) | (vht_cap_info.rx_mcs2x2 << 2);
+	temp = vht_cap_info->rx_mcs_map;
+	temp = (temp & 0xFFFC) | vht_cap_info->rx_mcs;
+	if (vht_cap_info->enable2x2)
+		temp = (temp & 0xFFF3) | (vht_cap_info->rx_mcs2x2 << 2);
 	else
 		temp |= 0x000C;
 
-	vht_cap_info.rx_mcs_map = temp;
+	vht_cap_info->rx_mcs_map = temp;
 
-	temp = vht_cap_info.tx_mcs_map;
-	temp = (temp & 0xFFFC) | vht_cap_info.tx_mcs;
-	if (vht_cap_info.enable2x2)
-		temp = (temp & 0xFFF3) | (vht_cap_info.tx_mcs2x2 << 2);
+	temp = vht_cap_info->tx_mcs_map;
+	temp = (temp & 0xFFFC) | vht_cap_info->tx_mcs;
+	if (vht_cap_info->enable2x2)
+		temp = (temp & 0xFFF3) | (vht_cap_info->tx_mcs2x2 << 2);
 	else
 		temp |= 0x000C;
 
-	vht_cap_info.tx_mcs_map = temp;
+	vht_cap_info->tx_mcs_map = temp;
 
 	return QDF_STATUS_SUCCESS;
 }
