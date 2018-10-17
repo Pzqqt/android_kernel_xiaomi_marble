@@ -25,60 +25,28 @@
 #include "cfg_api.h"
 #include "wma_types.h"
 
-/**
- * sme_nan_register_callback() -
- * This function gets called when HDD wants register nan rsp callback with
- * sme layer.
- *
- * @hHal: Hal handle
- * @callback: which needs to be registered.
- *
- * Return: void
- */
-void sme_nan_register_callback(tHalHandle hHal, nan_callback callback)
+void sme_nan_register_callback(mac_handle_t mac_handle, nan_callback callback)
 {
-	tpAniSirGlobal pMac = NULL;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
-	if (NULL == hHal) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("hHal is not valid"));
+	if (!mac) {
+		sme_err("Invalid MAC handle");
 		return;
 	}
-	pMac = PMAC_STRUCT(hHal);
-	pMac->sme.nan_callback = callback;
+	mac->sme.nan_callback = callback;
 }
 
-/**
- * sme_nan_deregister_callback() - NAN De-register cb function
- * @h_hal: Hal handle
- *
- * De-register nan rsp callback with sme layer.
- *
- * Return: void
- */
-void sme_nan_deregister_callback(tHalHandle h_hal)
+void sme_nan_deregister_callback(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal pmac;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
-	if (!h_hal) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("hHal is not valid"));
+	if (!mac) {
+		sme_err("Invalid MAC handle");
 		return;
 	}
-	pmac = PMAC_STRUCT(h_hal);
-	pmac->sme.nan_callback = NULL;
+	mac->sme.nan_callback = NULL;
 }
 
-
-/**
- * sme_nan_request() -
- * This function gets called when HDD receives NAN vendor command
- * from userspace
- *
- * @input: Nan Request structure ptr
- *
- * Return: QDF_STATUS
- */
 QDF_STATUS sme_nan_request(tpNanRequestReq input)
 {
 	struct scheduler_msg msg = {0};
@@ -104,8 +72,7 @@ QDF_STATUS sme_nan_request(tpNanRequestReq input)
 							 QDF_MODULE_ID_WMA,
 							 QDF_MODULE_ID_WMA,
 							 &msg)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"Not able to post WMA_NAN_REQUEST message to WMA");
+		sme_err("Not able to post WMA_NAN_REQUEST message to WMA");
 		qdf_mem_free(data);
 		return QDF_STATUS_SUCCESS;
 	}
@@ -113,32 +80,22 @@ QDF_STATUS sme_nan_request(tpNanRequestReq input)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * sme_nan_event() -
- * This callback function will be called when SME received eWNI_SME_NAN_EVENT
- * event from WMA
- *
- * @hHal: HAL handle for device
- * @pMsg: Message body passed from WMA; includes NAN header
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_nan_event(tHalHandle hHal, void *pMsg)
+void sme_nan_event(mac_handle_t mac_handle, tSirNanEvent *event)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
-	if (NULL == pMsg) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("msg ptr is NULL"));
-		status = QDF_STATUS_E_FAILURE;
-	} else {
-		sme_debug("Received eWNI_SME_NAN_EVENT");
-		if (pMac->sme.nan_callback) {
-			pMac->sme.nan_callback(pMac->hdd_handle,
-					      (tSirNanEvent *) pMsg);
-		}
+	sme_debug("Received eWNI_SME_NAN_EVENT");
+
+	if (!mac) {
+		sme_err("Invalid MAC handle");
+		return;
 	}
 
-	return status;
+	if (!event) {
+		sme_err("NULL event");
+		return;
+	}
+
+	if (mac->sme.nan_callback)
+		mac->sme.nan_callback(mac->hdd_handle, event);
 }

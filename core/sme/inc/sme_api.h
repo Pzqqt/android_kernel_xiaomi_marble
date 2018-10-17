@@ -1212,9 +1212,6 @@ QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(tHalHandle hal_ctx,
 		bool key_mgmt_offload_enabled,
 		struct pmkid_mode_bits *pmkid_modes);
 #endif
-#ifdef WLAN_FEATURE_NAN
-QDF_STATUS sme_nan_event(tHalHandle hHal, void *pMsg);
-#endif /* WLAN_FEATURE_NAN */
 QDF_STATUS sme_get_link_status(mac_handle_t mac_handle,
 			       csr_link_status_callback callback,
 			       void *context, uint8_t session_id);
