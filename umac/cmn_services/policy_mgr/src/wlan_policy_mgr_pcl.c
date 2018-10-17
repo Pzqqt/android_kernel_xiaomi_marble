@@ -358,6 +358,46 @@ static QDF_STATUS policy_mgr_modify_sap_pcl_based_on_nol(
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS
+policy_mgr_modify_sap_pcl_based_on_srd(struct wlan_objmgr_psoc *psoc,
+				       uint8_t *pcl_list_org,
+				       uint8_t *weight_list_org,
+				       uint32_t *pcl_len_org)
+{
+	uint32_t i, pcl_len = 0;
+	uint8_t pcl_list[QDF_MAX_NUM_CHAN];
+	uint8_t weight_list[QDF_MAX_NUM_CHAN];
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool is_etsi13_srd_chan_allowed_in_mas_mode = true;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+	is_etsi13_srd_chan_allowed_in_mas_mode =
+		wlan_reg_is_etsi13_srd_chan_allowed_master_mode(pm_ctx->pdev);
+
+	if (is_etsi13_srd_chan_allowed_in_mas_mode)
+		return QDF_STATUS_SUCCESS;
+
+	for (i = 0; i < *pcl_len_org; i++) {
+		if (wlan_reg_is_etsi13_srd_chan(pm_ctx->pdev,
+						pcl_list_org[i]))
+			continue;
+		pcl_list[pcl_len] = pcl_list_org[i];
+		weight_list[pcl_len++] = weight_list_org[i];
+	}
+
+	qdf_mem_zero(pcl_list_org, QDF_ARRAY_SIZE(pcl_list_org));
+	qdf_mem_zero(weight_list_org, QDF_ARRAY_SIZE(weight_list_org));
+	qdf_mem_copy(pcl_list_org, pcl_list, pcl_len);
+	qdf_mem_copy(weight_list_org, weight_list, pcl_len);
+	*pcl_len_org = pcl_len;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS policy_mgr_pcl_modification_for_sap(
 			struct wlan_objmgr_psoc *psoc,
 			uint8_t *pcl_channels, uint8_t *pcl_weight,
@@ -389,6 +429,17 @@ static QDF_STATUS policy_mgr_pcl_modification_for_sap(
 	for (i = 0; i < *len; i++)
 		policy_mgr_debug("chan:%d weight:%d",
 			pcl_channels[i], pcl_weight[i]);
+
+	status = policy_mgr_modify_sap_pcl_based_on_srd
+			(psoc, pcl_channels, pcl_weight, len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("failed to get modified pcl for SAP");
+		return status;
+	}
+	policy_mgr_debug("modified final pcl len:%d", *len);
+	for (i = 0; i < *len; i++)
+		policy_mgr_debug("chan:%d weight:%d",
+				 pcl_channels[i], pcl_weight[i]);
 
 	return QDF_STATUS_SUCCESS;
 }
