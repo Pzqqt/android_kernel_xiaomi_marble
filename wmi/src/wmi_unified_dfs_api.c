@@ -27,6 +27,7 @@
 #include <wmi_unified_priv.h>
 #include <wlan_dfs_utils_api.h>
 #include <wmi_unified_dfs_api.h>
+#include <init_deinit_lmac.h>
 
 QDF_STATUS wmi_extract_dfs_cac_complete_event(void *wmi_hdl,
 		uint8_t *evt_buf,
@@ -72,4 +73,24 @@ QDF_STATUS wmi_extract_wlan_radar_event_info(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 qdf_export_symbol(wmi_extract_dfs_radar_detection_event);
+#endif
+
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+QDF_STATUS wmi_send_usenol_pdev_param(void *wmi_hdl, bool usenol,
+				      struct wlan_objmgr_pdev *pdev)
+{
+	struct pdev_params pparam;
+	int pdev_idx;
+	struct wmi_unified *wmi_handle = (struct wmi_unified *)wmi_hdl;
+
+	pdev_idx = lmac_get_pdev_idx(pdev);
+	if (pdev_idx < 0)
+		return QDF_STATUS_E_FAILURE;
+
+	qdf_mem_set(&pparam, sizeof(pparam), 0);
+	pparam.param_id = wmi_pdev_param_use_nol;
+	pparam.param_value = usenol;
+
+	return wmi_unified_pdev_param_send(wmi_handle, &pparam, pdev_idx);
+}
 #endif

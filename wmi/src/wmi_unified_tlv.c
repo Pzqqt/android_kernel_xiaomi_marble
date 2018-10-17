@@ -8225,6 +8225,9 @@ static QDF_STATUS extract_vdev_scan_ev_param_tlv(wmi_unified_t wmi_handle,
 	case WMI_SCAN_REASON_SUSPENDED:
 		param->reason = SCAN_REASON_SUSPENDED;
 		break;
+	case WMI_SCAN_REASON_DFS_VIOLATION:
+		param->reason = SCAN_REASON_DFS_VIOLATION;
+		break;
 	case WMI_SCAN_REASON_MAX:
 		param->reason = SCAN_REASON_MAX;
 		break;
@@ -11878,6 +11881,7 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 #ifdef WLAN_RU26_SUPPORT
 	pdev_param[wmi_pdev_param_ru26_allowed] = WMI_PDEV_PARAM_RU26_ALLOWED;
 #endif
+	pdev_param[wmi_pdev_param_use_nol] = WMI_PDEV_PARAM_USE_NOL;
 }
 
 /**

@@ -69,4 +69,24 @@ QDF_STATUS wmi_extract_wlan_radar_event_info(void *wmi_hdl,
 		struct radar_event_info *wlan_radar_event,
 		uint32_t len);
 #endif
+
+/**
+ * wmi_send_usenol_pdev_param() - function to send usenol pdev param.
+ * @wmi_hdl: wmi handle
+ * @usenol: value of usenol
+ * @pdev: pointer to objmgr_pdev structure
+ *
+ * Return: QDF_STATUS
+ */
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
+QDF_STATUS wmi_send_usenol_pdev_param(void *wmi_hdl, bool usenol,
+				      struct wlan_objmgr_pdev *pdev);
+#else
+static inline QDF_STATUS
+wmi_send_usenol_pdev_param(void *wmi_hdl, bool usenol,
+			   struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif /* _WMI_UNIFIED_DFS_API_H_ */
