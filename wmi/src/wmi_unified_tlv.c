@@ -10541,6 +10541,11 @@ static QDF_STATUS extract_green_ap_egap_status_info_tlv(
 	chainmask_event = (wmi_ap_ps_egap_info_chainmask_list *)
 				param_buf->chainmask_list;
 
+	if (!egap_info_event || !chainmask_event) {
+		WMI_LOGE("Invalid EGAP Info event or chainmask event");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	egap_status_info_params->status = egap_info_event->status;
 	egap_status_info_params->mac_id = chainmask_event->mac_id;
 	egap_status_info_params->tx_chainmask = chainmask_event->tx_chainmask;
