@@ -176,18 +176,18 @@ ucfg_mlme_set_pmkid_modes(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS
 ucfg_mlme_get_dot11p_mode(struct wlan_objmgr_psoc *psoc,
-			  uint8_t *val)
+			  enum dot11p_mode *out_mode)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
 	mlme_obj = mlme_get_psoc_obj(psoc);
 	if (!mlme_obj) {
-		*val = cfg_default(CFG_DOT11P_MODE);
+		*out_mode = cfg_default(CFG_DOT11P_MODE);
 		mlme_err("mlme obj null");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	*val = mlme_obj->cfg.sta.dot11p_mode;
+	*out_mode = mlme_obj->cfg.sta.dot11p_mode;
 
 	return QDF_STATUS_SUCCESS;
 }

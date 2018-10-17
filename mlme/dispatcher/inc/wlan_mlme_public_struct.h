@@ -841,7 +841,7 @@ struct wlan_mlme_sta_cfg {
 	uint32_t tgt_gtx_usr_cfg;
 	uint32_t pmkid_modes;
 	uint32_t wait_cnf_timeout;
-	uint8_t dot11p_mode;
+	enum dot11p_mode dot11p_mode;
 	uint8_t fils_max_chan_guard_time;
 	uint8_t current_rssi;
 	bool ignore_peer_erp_info;

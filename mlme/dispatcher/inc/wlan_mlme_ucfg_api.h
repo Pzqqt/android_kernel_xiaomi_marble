@@ -616,13 +616,13 @@ ucfg_mlme_set_pmkid_modes(struct wlan_objmgr_psoc *psoc,
 /**
  * ucfg_mlme_get_dot11p_mode() - Get the setting about 802.11p mode
  * @psoc: pointer to psoc object
- * @val:  Pointer to the value which will be filled for the caller
+ * @out_mode:  Pointer to the mode which will be filled for the caller
  *
  * Return: QDF Status
  */
 QDF_STATUS
 ucfg_mlme_get_dot11p_mode(struct wlan_objmgr_psoc *psoc,
-			  uint8_t *val);
+			  enum dot11p_mode *out_mode);
 
 /**
  * ucfg_mlme_get_go_cts2self_for_sta() - Stop NOA and start using cts2self
