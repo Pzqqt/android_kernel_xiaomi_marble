@@ -16948,28 +16948,36 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 
 	add_sta_self_req->tx_aggregation_size = qos_aggr->tx_aggregation_size;
 	add_sta_self_req->tx_aggregation_size_be =
-					qos_aggr->tx_aggregation_size_be;
+			qos_aggr->tx_aggregation_size_be;
 	add_sta_self_req->tx_aggregation_size_bk =
-					qos_aggr->tx_aggregation_size_bk;
+			qos_aggr->tx_aggregation_size_bk;
 	add_sta_self_req->tx_aggregation_size_vi =
-					qos_aggr->tx_aggregation_size_vi;
+			qos_aggr->tx_aggregation_size_vi;
 	add_sta_self_req->tx_aggregation_size_vo =
-					qos_aggr->tx_aggregation_size_vo;
+			qos_aggr->tx_aggregation_size_vo;
 
 	add_sta_self_req->rx_aggregation_size = qos_aggr->rx_aggregation_size;
 	add_sta_self_req->tx_aggr_sw_retry_threshold_be =
-					qos_aggr->tx_aggr_sw_retry_threshold_be;
+			qos_aggr->tx_aggr_sw_retry_threshold_be;
 	add_sta_self_req->tx_aggr_sw_retry_threshold_bk =
-					qos_aggr->tx_aggr_sw_retry_threshold_bk;
+			qos_aggr->tx_aggr_sw_retry_threshold_bk;
 	add_sta_self_req->tx_aggr_sw_retry_threshold_vi =
-					qos_aggr->tx_aggr_sw_retry_threshold_vi;
+			qos_aggr->tx_aggr_sw_retry_threshold_vi;
 	add_sta_self_req->tx_aggr_sw_retry_threshold_vo =
-					qos_aggr->tx_aggr_sw_retry_threshold_vo;
+			qos_aggr->tx_aggr_sw_retry_threshold_vo;
+	add_sta_self_req->tx_non_aggr_sw_retry_threshold_be =
+			qos_aggr->tx_non_aggr_sw_retry_threshold_be;
+	add_sta_self_req->tx_non_aggr_sw_retry_threshold_bk =
+			qos_aggr->tx_non_aggr_sw_retry_threshold_bk;
+	add_sta_self_req->tx_non_aggr_sw_retry_threshold_vi =
+			qos_aggr->tx_non_aggr_sw_retry_threshold_vi;
+	add_sta_self_req->tx_non_aggr_sw_retry_threshold_vo =
+			qos_aggr->tx_non_aggr_sw_retry_threshold_vo;
 
 	add_sta_self_req->enable_bcast_probe_rsp =
 			pMac->mlme_cfg->oce.enable_bcast_probe_rsp;
 	add_sta_self_req->fils_max_chan_guard_time =
-				pMac->mlme_cfg->sta.fils_max_chan_guard_time;
+			pMac->mlme_cfg->sta.fils_max_chan_guard_time;
 	add_sta_self_req->pkt_err_disconn_th =
 			pMac->mlme_cfg->gen.dropped_pkt_disconnect_thresh;
 	add_sta_self_req->oce_feature_bitmap =

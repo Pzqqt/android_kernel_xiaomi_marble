@@ -296,6 +296,110 @@
 
 /*
  * <ini>
+ * gTxNonAggSwRetryBE - Configure Tx non aggregation sw retry for BE
+ * @Min: 0
+ * @Max: 64
+ * @Default: 0
+ *
+ * gTxNonAggSwRetryBE gives an option to configure Tx non aggregation sw
+ * retry for BE. This can be useful in debugging throughput issues.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_TX_NON_AGGR_SW_RETRY_BE CFG_INI_UINT( \
+			"gTxNonAggSwRetryBE", \
+			0, \
+			64, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Tx non aggregation retry value for BE")
+
+/*
+ * <ini>
+ * gTxNonAggSwRetryBK - Configure Tx non aggregation sw retry for BK
+ * @Min: 0
+ * @Max: 64
+ * @Default: 0
+ *
+ * gTxNonAggSwRetryBK gives an option to configure Tx non aggregation sw
+ * retry for BK. This can be useful in debugging throughput issues.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_TX_NON_AGGR_SW_RETRY_BK CFG_INI_UINT( \
+			"gTxNonAggSwRetryBK", \
+			0, \
+			64, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Tx non aggregation retry value for BK")
+
+/*
+ * <ini>
+ * gTxNonAggSwRetryVI - Configure Tx non aggregation sw retry for VI
+ * @Min: 0
+ * @Max: 64
+ * @Default: 0
+ *
+ * gTxNonAggSwRetryVI gives an option to configure Tx non aggregation sw
+ * retry for VI. This can be useful in debugging throughput issues.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_TX_NON_AGGR_SW_RETRY_VI CFG_INI_UINT( \
+			"gTxNonAggSwRetryVI", \
+			0, \
+			64, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Tx non aggregation retry value for VI")
+
+/*
+ * <ini>
+ * gTxNonAggSwRetryVO - Configure Tx non aggregation sw retry for VO
+ * @Min: 0
+ * @Max: 64
+ * @Default: 0
+ *
+ * gTxNonAggSwRetryVO gives an option to configure Tx non aggregation sw
+ * retry for VO. This can be useful in debugging throughput issues.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_TX_NON_AGGR_SW_RETRY_VO CFG_INI_UINT( \
+			"gTxNonAggSwRetryVO", \
+			0, \
+			64, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Tx non aggregation retry value for VO")
+
+/*
+ * <ini>
  * gSapMaxInactivityOverride - Configure
  * @Min: 0
  * @Max: 1
@@ -322,6 +426,7 @@
 			"SAP maximum inactivity override flag")
 
 #define CFG_QOS_ALL \
+	CFG(CFG_SAP_MAX_INACTIVITY_OVERRIDE) \
 	CFG(CFG_TX_AGGREGATION_SIZE) \
 	CFG(CFG_TX_AGGREGATION_SIZEBE) \
 	CFG(CFG_TX_AGGREGATION_SIZEBK) \
@@ -332,6 +437,9 @@
 	CFG(CFG_TX_AGGR_SW_RETRY_BK) \
 	CFG(CFG_TX_AGGR_SW_RETRY_VI) \
 	CFG(CFG_TX_AGGR_SW_RETRY_VO) \
-	CFG(CFG_SAP_MAX_INACTIVITY_OVERRIDE)
+	CFG(CFG_TX_NON_AGGR_SW_RETRY_BE) \
+	CFG(CFG_TX_NON_AGGR_SW_RETRY_BK) \
+	CFG(CFG_TX_NON_AGGR_SW_RETRY_VI) \
+	CFG(CFG_TX_NON_AGGR_SW_RETRY_VO)
 
 #endif /* __CFG_MLME_QOS_H */

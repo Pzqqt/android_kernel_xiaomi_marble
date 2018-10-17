@@ -4790,72 +4790,112 @@ QDF_STATUS wma_set_tx_rx_aggregation_size_per_ac(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wma_set_sw_retry_threshold(
-	struct sir_set_tx_aggr_sw_retry_threshold *tx_sw_retry_threshold)
+static QDF_STATUS wma_set_sw_retry_by_qos(
+	tp_wma_handle handle, uint8_t vdev_id,
+	wmi_vdev_custom_sw_retry_type_t retry_type,
+	wmi_traffic_ac ac_type,
+	uint32_t sw_retry)
 {
-	tp_wma_handle wma_handle;
 	wmi_vdev_set_custom_sw_retry_th_cmd_fixed_param *cmd;
 	int32_t len;
 	wmi_buf_t buf;
 	u_int8_t *buf_ptr;
 	int ret;
-	int queue_num;
-	uint32_t tx_aggr_retry[WMI_AC_MAX];
 
-	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(handle->wmi_handle, len);
+
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (u_int8_t *)wmi_buf_data(buf);
+	cmd = (wmi_vdev_set_custom_sw_retry_th_cmd_fixed_param *)buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_set_custom_sw_retry_th_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+		       wmi_vdev_set_custom_sw_retry_th_cmd_fixed_param));
+
+	cmd->vdev_id = vdev_id;
+	cmd->ac_type = ac_type;
+	cmd->sw_retry_type = retry_type;
+	cmd->sw_retry_th = sw_retry;
+
+	wma_debug("ac_type: %d re_type: %d threshold: %d vid: %d",
+		  cmd->ac_type, cmd->sw_retry_type,
+		  cmd->sw_retry_th, cmd->vdev_id);
+
+	ret = wmi_unified_cmd_send(handle->wmi_handle,
+				   buf, len,
+				   WMI_VDEV_SET_CUSTOM_SW_RETRY_TH_CMDID);
+
+	if (ret) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wma_set_sw_retry_threshold(
+	WMA_HANDLE handle,
+	struct sir_set_tx_sw_retry_threshold *tx_sw_retry_threshold)
+{
+	QDF_STATUS ret;
+	tp_wma_handle wma_handle;
+	uint8_t vdev_id;
+	int retry_type, queue_num;
+	uint32_t tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_MAX][WMI_AC_MAX];
+	uint32_t sw_retry;
+
+	wma_handle = (tp_wma_handle)handle;
 
 	if (!tx_sw_retry_threshold) {
-		WMA_LOGE("%s: invalid pointer", __func__);
+		wma_err("%s: invalid pointer", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!wma_handle) {
-		WMA_LOGE("%s: WMA context is invald!", __func__);
+		wma_err("%s: WMA context is invalid!", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	tx_aggr_retry[0] =
+	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_AGGR][WMI_AC_BE] =
 		tx_sw_retry_threshold->tx_aggr_sw_retry_threshold_be;
-	tx_aggr_retry[1] =
+	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_AGGR][WMI_AC_BK] =
 		tx_sw_retry_threshold->tx_aggr_sw_retry_threshold_bk;
-	tx_aggr_retry[2] =
+	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_AGGR][WMI_AC_VI] =
 		tx_sw_retry_threshold->tx_aggr_sw_retry_threshold_vi;
-	tx_aggr_retry[3] =
+	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_AGGR][WMI_AC_VO] =
 		tx_sw_retry_threshold->tx_aggr_sw_retry_threshold_vo;
 
-	for (queue_num = 0; queue_num < WMI_AC_MAX; queue_num++) {
-		if (tx_aggr_retry[queue_num] == 0)
-			continue;
+	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_NONAGGR][WMI_AC_BE] =
+		tx_sw_retry_threshold->tx_non_aggr_sw_retry_threshold_be;
+	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_NONAGGR][WMI_AC_BK] =
+		tx_sw_retry_threshold->tx_non_aggr_sw_retry_threshold_bk;
+	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_NONAGGR][WMI_AC_VI] =
+		tx_sw_retry_threshold->tx_non_aggr_sw_retry_threshold_vi;
+	tx_sw_retry[WMI_VDEV_CUSTOM_SW_RETRY_TYPE_NONAGGR][WMI_AC_VO] =
+		tx_sw_retry_threshold->tx_non_aggr_sw_retry_threshold_vo;
 
-		len = sizeof(*cmd);
-		buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-		if (!buf)
-			return QDF_STATUS_E_NOMEM;
+	retry_type = WMI_VDEV_CUSTOM_SW_RETRY_TYPE_NONAGGR;
+	while (retry_type < WMI_VDEV_CUSTOM_SW_RETRY_TYPE_MAX) {
+		for (queue_num = 0; queue_num < WMI_AC_MAX; queue_num++) {
+			if (tx_sw_retry[retry_type][queue_num] == 0)
+				continue;
 
-		buf_ptr = (u_int8_t *)wmi_buf_data(buf);
-		cmd =
-		    (wmi_vdev_set_custom_sw_retry_th_cmd_fixed_param *)buf_ptr;
+			vdev_id = tx_sw_retry_threshold->vdev_id;
+			sw_retry = tx_sw_retry[retry_type][queue_num];
+			ret = wma_set_sw_retry_by_qos(wma_handle,
+						      vdev_id,
+						      retry_type,
+						      queue_num,
+						      sw_retry);
 
-		WMITLV_SET_HDR(&cmd->tlv_header,
-			       WMITLV_TAG_STRUC_wmi_vdev_set_custom_sw_retry_th_cmd_fixed_param,
-			       WMITLV_GET_STRUCT_TLVLEN(
-				   wmi_vdev_set_custom_sw_retry_th_cmd_fixed_param));
-
-		cmd->vdev_id = tx_sw_retry_threshold->vdev_id;
-		cmd->ac_type = queue_num;
-		cmd->sw_retry_type = WMI_VDEV_CUSTOM_SW_RETRY_TYPE_AGGR;
-		cmd->sw_retry_th = tx_aggr_retry[queue_num];
-
-		WMA_LOGD("queue: %d type: %d threshold: %d vdev: %d",
-			 queue_num, cmd->sw_retry_type,
-			 cmd->sw_retry_th, cmd->vdev_id);
-
-		ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-					   WMI_VDEV_SET_CUSTOM_SW_RETRY_TH_CMDID);
-		if (ret) {
-			wmi_buf_free(buf);
-			return QDF_STATUS_E_FAILURE;
+			if (QDF_IS_STATUS_ERROR(ret))
+				return ret;
 		}
+		retry_type++;
 	}
 
 	return QDF_STATUS_SUCCESS;
