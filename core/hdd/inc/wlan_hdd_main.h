@@ -1984,6 +1984,7 @@ struct hdd_context {
 	qdf_mutex_t cache_channel_lock;
 #endif
 	enum sar_version sar_version;
+	struct qdf_mac_addr dynamic_mac_list[QDF_MAX_CONCURRENCY_PERSONA];
 };
 
 /**
@@ -3534,5 +3535,21 @@ struct hdd_context *hdd_handle_to_context(hdd_handle_t hdd_handle)
  * Return: None
  */
 void wlan_hdd_free_cache_channels(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_update_dynamic_mac() - Updates the dynamic MAC list
+ * @hdd_ctx: Pointer to HDD context
+ * @curr_mac_addr: Current interface mac address
+ * @new_mac_addr: New mac address which needs to be updated
+ *
+ * This function updates newly configured MAC address to the
+ * dynamic MAC address list corresponding to the current
+ * adapter MAC address
+ *
+ * Return: None
+ */
+void hdd_update_dynamic_mac(struct hdd_context *hdd_ctx,
+			    struct qdf_mac_addr *curr_mac_addr,
+			    struct qdf_mac_addr *new_mac_addr);
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

@@ -3252,6 +3252,28 @@ static void hdd_close_cesium_nl_sock(void)
 	}
 }
 
+void hdd_update_dynamic_mac(struct hdd_context *hdd_ctx,
+			    struct qdf_mac_addr *curr_mac_addr,
+			    struct qdf_mac_addr *new_mac_addr)
+{
+	uint8_t i;
+
+	hdd_enter();
+
+	for (i = 0; i < QDF_MAX_CONCURRENCY_PERSONA; i++) {
+		if (!qdf_mem_cmp(curr_mac_addr->bytes,
+				 &hdd_ctx->dynamic_mac_list[i].bytes[0],
+				 sizeof(struct qdf_mac_addr))) {
+			qdf_mem_copy(&hdd_ctx->dynamic_mac_list[i],
+				     new_mac_addr->bytes,
+				     sizeof(struct qdf_mac_addr));
+			break;
+		}
+	}
+
+	hdd_exit();
+}
+
 /**
  * __hdd_set_mac_address() - set the user specified mac address
  * @dev:	Pointer to the net device.
@@ -3302,6 +3324,7 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 	hdd_info("Changing MAC to " MAC_ADDRESS_STR " of the interface %s ",
 		 MAC_ADDR_ARRAY(mac_addr.bytes), dev->name);
 
+	hdd_update_dynamic_mac(hdd_ctx, &adapter->mac_addr, &mac_addr);
 	memcpy(&adapter->mac_addr, psta_mac_addr->sa_data, ETH_ALEN);
 	memcpy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);
 
@@ -3341,6 +3364,9 @@ uint8_t *wlan_hdd_get_intf_addr(struct hdd_context *hdd_ctx)
 
 	hdd_ctx->config->intfAddrMask |= (1 << i);
 
+	qdf_mem_copy(&hdd_ctx->dynamic_mac_list[i].bytes,
+		     &hdd_ctx->config->intfMacAddr[i].bytes,
+		     sizeof(struct qdf_mac_addr));
 	return hdd_ctx->config->intfMacAddr[i].bytes;
 }
 
@@ -3351,7 +3377,7 @@ void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,
 
 	for (i = 0; i < QDF_MAX_CONCURRENCY_PERSONA; i++) {
 		if (!memcmp(releaseAddr,
-			    hdd_ctx->config->intfMacAddr[i].bytes,
+			    hdd_ctx->dynamic_mac_list[i].bytes,
 			    QDF_MAC_ADDR_SIZE)) {
 			hdd_ctx->config->intfAddrMask &= ~(1 << i);
 			break;
@@ -4688,6 +4714,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 {
 	struct hdd_adapter *adapter = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	uint8_t i;
 
 	if (hdd_ctx->current_intf_count >= hdd_ctx->max_intf_count) {
 		/*
@@ -4716,6 +4743,22 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 
 	switch (session_type) {
 	case QDF_STA_MODE:
+		/*
+		 * Reset locally administered bit for dynamic_mac_list
+		 * also as while releasing the MAC address for any interface
+		 * mac will be compared with dynamic mac list
+		 */
+		for (i = 0; i < QDF_MAX_CONCURRENCY_PERSONA; i++) {
+			if (!qdf_mem_cmp(
+					macAddr,
+					&hdd_ctx->dynamic_mac_list[i].bytes[0],
+					sizeof(struct qdf_mac_addr))) {
+				WLAN_HDD_RESET_LOCALLY_ADMINISTERED_BIT(
+					hdd_ctx->dynamic_mac_list[i].bytes);
+				break;
+			}
+		}
+
 		/* Reset locally administered bit if the device mode is STA */
 		WLAN_HDD_RESET_LOCALLY_ADMINISTERED_BIT(macAddr);
 		hdd_debug("locally administered bit reset in sta mode: "
