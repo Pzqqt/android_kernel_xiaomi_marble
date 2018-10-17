@@ -467,6 +467,7 @@ typedef enum {
 	WMI_HOST_VDEV_START_OK = 0,
 	WMI_HOST_VDEV_START_CHAN_INVALID,
 	WMI_HOST_VDEV_START_CHAN_BLOCKED,
+	WMI_HOST_VDEV_START_CHAN_DFS_VIOLATION,
 } WMI_HOST_VDEV_START_STATUS;
 
 /*
@@ -4863,6 +4864,7 @@ typedef enum {
 	wmi_pdev_param_esp_ba_window,
 	wmi_pdev_param_esp_airtime_fraction,
 	wmi_pdev_param_esp_ppdu_duration,
+	wmi_pdev_param_use_nol,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
