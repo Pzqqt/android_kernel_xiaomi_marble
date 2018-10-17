@@ -27,6 +27,7 @@
 #include "reg_host_11d.h"
 #include <scheduler_api.h>
 #include <wlan_reg_services_api.h>
+#include <qdf_platform.h>
 
 #define CHAN_12_CENT_FREQ 2467
 #define MAX_PWR_FCC_CHAN_12 8
@@ -1573,7 +1574,7 @@ QDF_STATUS reg_reset_country(struct wlan_objmgr_psoc *psoc)
 	qdf_mem_copy(psoc_reg->cur_country,
 		     psoc_reg->def_country,
 		     REG_ALPHA2_LEN + 1);
-
+	reg_debug("set cur_country %.2s", psoc_reg->cur_country);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3046,8 +3047,7 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 	struct reg_rule_info *reg_rules;
-
-	reg_debug("process reg master chan list");
+	struct set_country country_code;
 
 	psoc = regulat_info->psoc;
 	soc_reg = reg_get_psoc_obj(psoc);
@@ -3056,6 +3056,29 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 		reg_err("psoc reg component is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	tx_ops = reg_get_psoc_tx_ops(psoc);
+
+	if (qdf_is_recovering()) {
+		if (soc_reg->offload_enabled &&
+		    qdf_mem_cmp(soc_reg->cur_country,
+				regulat_info->alpha2,
+				REG_ALPHA2_LEN)) {
+			reg_debug("target cc:%.2s, restore %.2s to target",
+				  regulat_info->alpha2,
+				  soc_reg->cur_country);
+			qdf_mem_copy(country_code.country,
+				     soc_reg->cur_country,
+				     REG_ALPHA2_LEN + 1);
+			country_code.pdev_id = regulat_info->phy_id;
+			if (tx_ops && tx_ops->set_country_code)
+				tx_ops->set_country_code(psoc, &country_code);
+		}
+		reg_debug("ignore chan list update in ssr");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	reg_debug("process reg master chan list");
 
 	phy_id = regulat_info->phy_id;
 
@@ -3078,7 +3101,6 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 		}
 		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
 
-		tx_ops = reg_get_psoc_tx_ops(psoc);
 		if (tx_ops->set_country_failed)
 			tx_ops->set_country_failed(pdev);
 
@@ -3117,6 +3139,7 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 	qdf_mem_copy(soc_reg->cur_country,
 		     regulat_info->alpha2,
 		     REG_ALPHA2_LEN + 1);
+	reg_debug("set cur_country %.2s", soc_reg->cur_country);
 
 	min_bw_2g = regulat_info->min_bw_2g;
 	max_bw_2g = regulat_info->max_bw_2g;
@@ -4092,7 +4115,7 @@ void reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 
 	qdf_mem_copy(psoc_priv_obj->cur_country, alpha2,
 		     REG_ALPHA2_LEN);
-
+	reg_debug("set cur_country %.2s", psoc_priv_obj->cur_country);
 	for (count = 0; count < NUM_CHANNELS; count++) {
 		reg_channels[count].chan_num =
 			channel_map[count].chan_num;
