@@ -1193,7 +1193,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	struct scan_start_request *req;
 	struct wlan_ssid *pssid;
 	uint8_t i;
-	int status;
+	int ret = 0;
 	uint8_t num_chan = 0, channel;
 	uint32_t c_freq;
 	struct wlan_objmgr_vdev *vdev;
@@ -1204,6 +1204,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	bool is_p2p_scan = false;
 	enum wlan_band band;
 	struct net_device *netdev = NULL;
+	QDF_STATUS qdf_status;
 
 	/* Get the vdev object */
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
@@ -1330,16 +1331,16 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 #ifdef WLAN_POLICY_MGR_ENABLE
 			if (ap_or_go_present) {
 				bool ok;
-				int ret;
 
-				ret = policy_mgr_is_chan_ok_for_dnbs(psoc,
-								channel,
-								&ok);
+				qdf_status =
+					policy_mgr_is_chan_ok_for_dnbs(psoc,
+								       channel,
+								       &ok);
 
-				if (QDF_IS_STATUS_ERROR(ret)) {
+				if (QDF_IS_STATUS_ERROR(qdf_status)) {
 					cfg80211_err("DNBS check failed");
 					qdf_mem_free(req);
-					status = -EINVAL;
+					ret = -EINVAL;
 					goto end;
 				}
 				if (!ok)
@@ -1363,7 +1364,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	if (!num_chan) {
 		cfg80211_err("Received zero non-dsrc channels");
 		qdf_mem_free(req);
-		status = -EINVAL;
+		ret = -EINVAL;
 		goto end;
 	}
 	req->scan_req.chan_list.num_chan = num_chan;
@@ -1375,7 +1376,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		req->scan_req.extraie.ptr = qdf_mem_malloc(request->ie_len);
 		if (!req->scan_req.extraie.ptr) {
 			cfg80211_err("Failed to allocate memory");
-			status = -ENOMEM;
+			ret = -ENOMEM;
 			qdf_mem_free(req);
 			goto end;
 		}
@@ -1387,7 +1388,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 			qdf_mem_malloc(params->default_ie.len);
 		if (!req->scan_req.extraie.ptr) {
 			cfg80211_err("Failed to allocate memory");
-			status = -ENOMEM;
+			ret = -ENOMEM;
 			qdf_mem_free(req);
 			goto end;
 		}
@@ -1415,25 +1416,22 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	qdf_runtime_pm_prevent_suspend(
 		&osif_priv->osif_scan->runtime_pm_lock);
 
-	status = ucfg_scan_start(req);
-	if (QDF_STATUS_SUCCESS != status) {
-		cfg80211_err("ucfg_scan_start returned error %d", status);
-		if (QDF_STATUS_E_RESOURCES == status) {
+	qdf_status = ucfg_scan_start(req);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		cfg80211_err("ucfg_scan_start returned error %d", qdf_status);
+		if (qdf_status == QDF_STATUS_E_RESOURCES)
 			cfg80211_err("HO is in progress.So defer the scan by informing busy");
-			status = -EBUSY;
-		} else {
-			status = -EIO;
-		}
 		wlan_scan_request_dequeue(pdev, scan_id, &request,
 					  &params->source, &netdev);
 		if (qdf_list_empty(&osif_priv->osif_scan->scan_req_q))
 			qdf_runtime_pm_allow_suspend(
 				&osif_priv->osif_scan->runtime_pm_lock);
 	}
+	ret = qdf_status_to_os_return(qdf_status);
 
 end:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
-	return status;
+	return ret;
 }
 
 /**
