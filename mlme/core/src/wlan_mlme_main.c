@@ -479,6 +479,14 @@ static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_TX_AGGR_SW_RETRY_VI);
 	qos_aggr_params->tx_aggr_sw_retry_threshold_vo =
 				cfg_get(psoc, CFG_TX_AGGR_SW_RETRY_VO);
+	qos_aggr_params->tx_non_aggr_sw_retry_threshold_be =
+				cfg_get(psoc, CFG_TX_NON_AGGR_SW_RETRY_BE);
+	qos_aggr_params->tx_non_aggr_sw_retry_threshold_bk =
+				cfg_get(psoc, CFG_TX_NON_AGGR_SW_RETRY_BK);
+	qos_aggr_params->tx_non_aggr_sw_retry_threshold_vi =
+				cfg_get(psoc, CFG_TX_NON_AGGR_SW_RETRY_VI);
+	qos_aggr_params->tx_non_aggr_sw_retry_threshold_vo =
+				cfg_get(psoc, CFG_TX_NON_AGGR_SW_RETRY_VO);
 	qos_aggr_params->sap_max_inactivity_override =
 				cfg_get(psoc, CFG_SAP_MAX_INACTIVITY_OVERRIDE);
 }

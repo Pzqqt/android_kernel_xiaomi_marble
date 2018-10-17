@@ -486,10 +486,14 @@ struct wlan_mlme_vht_caps {
  * @tx_aggregation_size_vi: No. of MPDUs for VI queue for TX aggr
  * @tx_aggregation_size_vo: No. of MPDUs for VO queue for TX aggr
  * @rx_aggregation_size: No. of MPDUs for RX aggr
- * @tx_aggr_sw_retry_threshold_be: Tx aggregation sw retry for BE
- * @tx_aggr_sw_retry_threshold_bk: Tx aggregation sw retry for BK
- * @tx_aggr_sw_retry_threshold_vi: Tx aggregation sw retry for VI
- * @tx_aggr_sw_retry_threshold_vo: Tx aggregation sw retry for VO
+ * @tx_aggr_sw_retry_threshold_be: aggr sw retry threshold for BE
+ * @tx_aggr_sw_retry_threshold_bk: aggr sw retry threshold for BK
+ * @tx_aggr_sw_retry_threshold_vi: aggr sw retry threshold for VI
+ * @tx_aggr_sw_retry_threshold_vo: aggr sw retry threshold for VO
+ * @tx_non_aggr_sw_retry_threshold_be: non aggr sw retry threshold for BE
+ * @tx_non_aggr_sw_retry_threshold_bk: non aggr sw retry threshold for BK
+ * @tx_non_aggr_sw_retry_threshold_vi: non aggr sw retry threshold for VI
+ * @tx_non_aggr_sw_retry_threshold_vo: non aggr sw retry threshold for VO
  * @sap_max_inactivity_override: Override updating ap_sta_inactivity from
  * hostapd.conf
  */
@@ -504,6 +508,10 @@ struct wlan_mlme_qos {
 	uint32_t tx_aggr_sw_retry_threshold_bk;
 	uint32_t tx_aggr_sw_retry_threshold_vi;
 	uint32_t tx_aggr_sw_retry_threshold_vo;
+	uint32_t tx_non_aggr_sw_retry_threshold_be;
+	uint32_t tx_non_aggr_sw_retry_threshold_bk;
+	uint32_t tx_non_aggr_sw_retry_threshold_vi;
+	uint32_t tx_non_aggr_sw_retry_threshold_vo;
 	bool sap_max_inactivity_override;
 };
 
