@@ -246,5 +246,7 @@ void dfs_get_radars_for_ar9300(struct wlan_dfs *dfs)
 	rinfo.dfs_defaultparams.pe_relstep = AR9300_DFS_RELSTEP;
 	rinfo.dfs_defaultparams.pe_maxlen = AR9300_DFS_MAXLEN;
 
+	WLAN_DFS_DATA_STRUCT_LOCK(dfs);
 	dfs_init_radar_filters(dfs, &rinfo);
+	WLAN_DFS_DATA_STRUCT_UNLOCK(dfs);
 }

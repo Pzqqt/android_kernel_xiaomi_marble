@@ -168,5 +168,7 @@ void dfs_get_radars_for_ar5416(struct wlan_dfs *dfs)
 	rinfo.dfs_defaultparams.pe_relstep = AR5416_DFS_RELSTEP;
 	rinfo.dfs_defaultparams.pe_maxlen = AR5416_DFS_MAXLEN;
 
+	WLAN_DFS_DATA_STRUCT_LOCK(dfs);
 	dfs_init_radar_filters(dfs, &rinfo);
+	WLAN_DFS_DATA_STRUCT_UNLOCK(dfs);
 }

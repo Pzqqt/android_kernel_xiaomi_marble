@@ -220,5 +220,7 @@ void dfs_get_radars_for_ar5212(struct wlan_dfs *dfs)
 	rinfo.dfs_defaultparams.pe_prssi = AR5212_DFS_PRSSI;
 	rinfo.dfs_defaultparams.pe_inband = AR5212_DFS_INBAND;
 
+	WLAN_DFS_DATA_STRUCT_LOCK(dfs);
 	dfs_init_radar_filters(dfs, &rinfo);
+	WLAN_DFS_DATA_STRUCT_UNLOCK(dfs);
 }
