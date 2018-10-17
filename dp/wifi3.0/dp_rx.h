@@ -443,13 +443,31 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	ast = soc->ast_table[sa_idx];
+	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	if (!ast) {
-		qdf_spin_unlock_bh(&soc->ast_lock);
+		/*
+		 * In HKv1, it is possible that HW retains the AST entry in
+		 * GSE cache on 1 radio , even after the AST entry is deleted
+		 * (on another radio).
+		 *
+		 * Due to this, host might still get sa_is_valid indications
+		 * for frames with SA not really present in AST table.
+		 *
+		 * So we go ahead and send an add_ast command to FW in such
+		 * cases where sa is reported still as valid, so that FW will
+		 * invalidate this GSE cache entry and new AST entry gets
+		 * cached.
+		 */
+		if (!soc->ast_override_support)
+			ret = dp_peer_add_ast(soc,
+					      ta_peer,
+					      wds_src_mac,
+					      CDP_TXRX_AST_TYPE_WDS,
+					      flags);
 		return;
 	}
 
-	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	if ((ast->type == CDP_TXRX_AST_TYPE_WDS_HM) ||
 	    (ast->type == CDP_TXRX_AST_TYPE_WDS_HM_SEC))
