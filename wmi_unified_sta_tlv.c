@@ -628,8 +628,8 @@ static uint8_t tdls_get_wmi_offchannel_bw(uint16_t tdls_off_ch_bw_offset)
 	case BWALL:
 		off_chan_bw = WMI_TDLS_OFFCHAN_160MHZ;
 	default:
-		WMI_LOGD(FL("unknown tdls_offchannel bw offset %d"),
-			 off_chan_bw);
+		WMI_LOGD(FL("unknown tdls offchannel bw offset %d"),
+			 tdls_off_ch_bw_offset);
 		off_chan_bw = WMI_TDLS_OFFCHAN_20MHZ;
 	}
 	return off_chan_bw;
