@@ -9350,7 +9350,7 @@ static int hdd_open_interfaces(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
 	struct hdd_adapter *adapter;
 	int ret;
-	uint8_t dot11p_mode;
+	enum dot11p_mode dot11p_mode;
 
 	/* open monitor mode adapter if con_mode is monitor mode */
 	if (con_mode == QDF_GLOBAL_MONITOR_MODE ||
