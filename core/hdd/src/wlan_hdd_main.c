@@ -5992,7 +5992,7 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_mon_set_ch_info *ch_info = &sta_ctx->ch_info;
 	QDF_STATUS status;
-	tHalHandle hal_hdl = hdd_ctx->mac_handle;
+	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 	struct qdf_mac_addr bssid;
 	struct csr_roam_profile roam_profile;
 	struct ch_params ch_params;
@@ -6046,8 +6046,8 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 	roam_profile.ch_params.ch_width = bandwidth;
 	hdd_select_cbmode(adapter, chan, &roam_profile.ch_params);
 	if (hdd_ctx->config->enable_change_channel_bandwidth &&
-	    (!sme_find_session_by_bssid(hal_hdl, adapter->mac_addr.bytes))) {
-		status = sme_create_mon_session(hal_hdl,
+	    (!sme_find_session_by_bssid(mac_handle, adapter->mac_addr.bytes))) {
+		status = sme_create_mon_session(mac_handle,
 						adapter->mac_addr.bytes,
 						adapter->session_id);
 		if (status != QDF_STATUS_SUCCESS) {
