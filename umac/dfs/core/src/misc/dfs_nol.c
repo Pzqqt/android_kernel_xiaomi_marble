@@ -479,6 +479,7 @@ void dfs_nol_update(struct wlan_dfs *dfs)
 
 	if (!dfs->dfs_nol_count) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS_NOL, "dfs_nol_count is zero");
+		dfs_mlme_clist_update(dfs->dfs_pdev_obj, NULL, 0);
 		return;
 	}
 
