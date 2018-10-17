@@ -3599,17 +3599,20 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	qdf_mem_copy(
 		&vdev->mac_addr.raw[0], vdev_mac_addr, OL_TXRX_MAC_ADDR_LEN);
 
-	vdev->tx_encap_type = wlan_cfg_pkt_type(soc->wlan_cfg_ctx);
-	vdev->rx_decap_type = wlan_cfg_pkt_type(soc->wlan_cfg_ctx);
-	vdev->dscp_tid_map_id = 0;
-	vdev->mcast_enhancement_en = 0;
-	vdev->raw_mode_war = wlan_cfg_get_raw_mode_war(soc->wlan_cfg_ctx);
-
 	/* TODO: Initialize default HTT meta data that will be used in
 	 * TCL descriptors for packets transmitted from this VDEV
 	 */
 
 	TAILQ_INIT(&vdev->peer_list);
+
+	if (wlan_op_mode_monitor == vdev->opmode)
+		return (struct cdp_vdev *)vdev;
+
+	vdev->tx_encap_type = wlan_cfg_pkt_type(soc->wlan_cfg_ctx);
+	vdev->rx_decap_type = wlan_cfg_pkt_type(soc->wlan_cfg_ctx);
+	vdev->dscp_tid_map_id = 0;
+	vdev->mcast_enhancement_en = 0;
+	vdev->raw_mode_war = wlan_cfg_get_raw_mode_war(soc->wlan_cfg_ctx);
 
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	/* add this vdev into the pdev's list */
@@ -3754,6 +3757,8 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	/* preconditions */
 	qdf_assert(vdev);
 
+	if (wlan_op_mode_monitor == vdev->opmode)
+		goto free_vdev;
 
 	if (wlan_op_mode_sta == vdev->opmode)
 		dp_peer_delete_wifi3(vdev->vap_bss_peer, 0);
@@ -3800,8 +3805,10 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	TAILQ_REMOVE(&pdev->vdev_list, vdev, vdev_list_elem);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 		FL("deleting vdev object %pK (%pM)"), vdev, vdev->mac_addr.raw);
-	qdf_mem_free(vdev);
+
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+free_vdev:
+	qdf_mem_free(vdev);
 
 	if (callback)
 		callback(cb_context);
