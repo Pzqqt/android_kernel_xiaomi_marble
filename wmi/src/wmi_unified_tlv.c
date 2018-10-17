@@ -10354,7 +10354,7 @@ extract_roam_scan_stats_res_evt_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	uint32_t total_len;
 	struct wmi_roam_scan_stats_res *res;
 	uint32_t i, j;
-	uint32_t num_scans;
+	uint32_t num_scans, scan_param_size;
 
 	*res_param = NULL;
 	*vdev_id = 0xFF; /* Initialize to invalid vdev id */
@@ -10365,11 +10365,16 @@ extract_roam_scan_stats_res_evt_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	}
 
 	fixed_param = param_buf->fixed_param;
-	total_len = sizeof(*res) + fixed_param->num_roam_scans *
-		    sizeof(struct wmi_roam_scan_stats_params);
 
-	*vdev_id = fixed_param->vdev_id;
 	num_scans = fixed_param->num_roam_scans;
+	scan_param_size = sizeof(struct wmi_roam_scan_stats_params);
+	if ((num_scans > ((UINT_MAX - sizeof(*res)) / scan_param_size))) {
+		wmi_err_rl("Invalid num_roam_scans %d", num_scans);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	total_len = sizeof(*res) + num_scans * scan_param_size;
+	*vdev_id = fixed_param->vdev_id;
 
 	res = qdf_mem_malloc(total_len);
 	if (!res) {
