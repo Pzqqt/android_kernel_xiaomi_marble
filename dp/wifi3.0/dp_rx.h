@@ -489,11 +489,22 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 		    (ast->type != CDP_TXRX_AST_TYPE_SELF) &&
 			(ast->type != CDP_TXRX_AST_TYPE_STA_BSS)) {
 			if (ast->pdev_id != ta_peer->vdev->pdev->pdev_id) {
-				ret = dp_peer_add_ast(soc,
-						      ta_peer, wds_src_mac,
-						      CDP_TXRX_AST_TYPE_WDS,
-						      flags);
+				/* This case is when a STA roams from one
+				 * repeater to another repeater, but these
+				 * repeaters are connected to root AP on
+				 * different radios.
+				 * Ex: rptr1 connected to ROOT AP over 5G
+				 * and rptr2 connected to ROOT AP over 2G
+				 * radio
+				 */
+				qdf_spin_lock_bh(&soc->ast_lock);
+				dp_peer_del_ast(soc, ast);
+				qdf_spin_unlock_bh(&soc->ast_lock);
 			} else {
+				/* this case is when a STA roams from one
+				 * reapter to another repeater, but inside
+				 * same radio.
+				 */
 				qdf_spin_lock_bh(&soc->ast_lock);
 				dp_peer_update_ast(soc, ta_peer, ast, flags);
 				qdf_spin_unlock_bh(&soc->ast_lock);
