@@ -479,7 +479,7 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 	 * There is a possibility we might arrive here without
 	 * AST MAP event , so this check is mandatory
 	 */
-	if (ast->ast_idx == sa_idx)
+	if (ast->is_mapped && (ast->ast_idx == sa_idx))
 		ast->is_active = TRUE;
 
 	if (sa_sw_peer_id != ta_peer->peer_ids[0]) {
@@ -743,7 +743,7 @@ static inline QDF_STATUS dp_rx_ast_set_active(struct dp_soc *soc, uint16_t sa_id
 	 * There is a possibility we might arrive here without
 	 * AST MAP event , so this check is mandatory
 	 */
-	if (ast && (ast->ast_idx == sa_idx)) {
+	if (ast && ast->is_mapped && (ast->ast_idx == sa_idx)) {
 		ast->is_active = is_active;
 		qdf_spin_unlock_bh(&soc->ast_lock);
 		return QDF_STATUS_SUCCESS;
