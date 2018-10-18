@@ -9337,74 +9337,6 @@ static int hdd_open_concurrent_interface(struct hdd_context *hdd_ctx,
 	return 0;
 }
 
-/**
- * hdd_open_interfaces - Open all required interfaces
- * hdd_ctx:	HDD context
- * rtnl_held: True if RTNL lock is held
- *
- * Open all the interfaces like STA, P2P and OCB based on the configuration.
- *
- * Return: 0 if all interfaces were created, otherwise negative errno
- */
-static int hdd_open_interfaces(struct hdd_context *hdd_ctx, bool rtnl_held)
-{
-	struct hdd_adapter *adapter;
-	int ret;
-	enum dot11p_mode dot11p_mode;
-
-	/* open monitor mode adapter if con_mode is monitor mode */
-	if (con_mode == QDF_GLOBAL_MONITOR_MODE ||
-	    con_mode == QDF_GLOBAL_FTM_MODE) {
-		uint8_t session_type = (con_mode == QDF_GLOBAL_MONITOR_MODE) ?
-						QDF_MONITOR_MODE : QDF_FTM_MODE;
-
-		adapter = hdd_open_adapter(hdd_ctx, session_type, "wlan%d",
-					   wlan_hdd_get_intf_addr(hdd_ctx),
-					   NET_NAME_UNKNOWN, rtnl_held);
-		if (!adapter) {
-			hdd_err("open adapter failed");
-			return -ENOSPC;
-		}
-
-		return 0;
-	}
-	ucfg_mlme_get_dot11p_mode(hdd_ctx->psoc, &dot11p_mode);
-	if (dot11p_mode == CFG_11P_STANDALONE)
-		/* Create only 802.11p interface */
-		return hdd_open_ocb_interface(hdd_ctx, rtnl_held);
-
-	adapter = hdd_open_adapter(hdd_ctx, QDF_STA_MODE, "wlan%d",
-				   wlan_hdd_get_intf_addr(hdd_ctx),
-				   NET_NAME_UNKNOWN, rtnl_held);
-
-	if (adapter == NULL)
-		return -ENOSPC;
-
-	if (strlen(hdd_ctx->config->enableConcurrentSTA) != 0) {
-		ret = hdd_open_concurrent_interface(hdd_ctx, rtnl_held);
-		if (ret)
-			hdd_err("Cannot create concurrent STA interface");
-	}
-
-	ret = hdd_open_p2p_interface(hdd_ctx, rtnl_held);
-	if (ret)
-		goto err_close_adapters;
-
-	/* Open 802.11p Interface */
-	if (dot11p_mode == CFG_11P_CONCURRENT) {
-		ret = hdd_open_ocb_interface(hdd_ctx, rtnl_held);
-		if (ret)
-			goto err_close_adapters;
-	}
-
-	return 0;
-
-err_close_adapters:
-	hdd_close_all_adapters(hdd_ctx, rtnl_held);
-	return ret;
-}
-
-
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /**
  * hdd_txrx_populate_cds_config() - Populate txrx cds configuration
@@ -11328,6 +11260,104 @@ static int wlan_hdd_cache_chann_mutex_create(struct hdd_context *hdd_ctx)
 }
 #endif
 
+static int hdd_open_adapters_for_mission_mode(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter;
+	enum dot11p_mode dot11p_mode;
+	int errno;
+
+	ucfg_mlme_get_dot11p_mode(hdd_ctx->psoc, &dot11p_mode);
+
+	/* Create only 802.11p interface? */
+	if (dot11p_mode == CFG_11P_STANDALONE)
+		return hdd_open_ocb_interface(hdd_ctx, true);
+
+	adapter = hdd_open_adapter(hdd_ctx, QDF_STA_MODE, "wlan%d",
+				   wlan_hdd_get_intf_addr(hdd_ctx),
+				   NET_NAME_UNKNOWN, true);
+	if (!adapter)
+		return -EINVAL;
+
+	if (strlen(hdd_ctx->config->enableConcurrentSTA)) {
+		errno = hdd_open_concurrent_interface(hdd_ctx, true);
+		if (errno)
+			hdd_err("Cannot create concurrent STA interface");
+	}
+
+	errno = hdd_open_p2p_interface(hdd_ctx, true);
+	if (errno)
+		goto err_close_adapters;
+
+	/* Open 802.11p Interface */
+	if (dot11p_mode == CFG_11P_CONCURRENT) {
+		errno = hdd_open_ocb_interface(hdd_ctx, true);
+		if (errno)
+			goto err_close_adapters;
+	}
+
+	return 0;
+
+err_close_adapters:
+	hdd_close_all_adapters(hdd_ctx, true);
+
+	return errno;
+}
+
+static int hdd_open_adapters_for_mode(struct hdd_context *hdd_ctx,
+				      enum QDF_GLOBAL_MODE mode)
+{
+	struct hdd_adapter *adapter;
+	qdf_device_t qdf_dev;
+	QDF_STATUS status;
+	int errno;
+
+	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	QDF_BUG(qdf_dev);
+	if (!qdf_dev)
+		return -EINVAL;
+
+	hdd_hold_rtnl_lock();
+	switch (mode) {
+	case QDF_GLOBAL_MISSION_MODE:
+		errno = hdd_open_adapters_for_mission_mode(hdd_ctx);
+
+		break;
+	case QDF_GLOBAL_FTM_MODE:
+		adapter = hdd_open_adapter(hdd_ctx, QDF_FTM_MODE, "wlan%d",
+					   wlan_hdd_get_intf_addr(hdd_ctx),
+					   NET_NAME_UNKNOWN, true);
+		errno = adapter ? 0 : -EINVAL;
+
+		break;
+	case QDF_GLOBAL_MONITOR_MODE:
+		adapter = hdd_open_adapter(hdd_ctx, QDF_MONITOR_MODE, "wlan%d",
+					   wlan_hdd_get_intf_addr(hdd_ctx),
+					   NET_NAME_UNKNOWN, true);
+		errno = adapter ? 0 : -EINVAL;
+
+		break;
+	case QDF_GLOBAL_EPPING_MODE:
+		status = epping_open();
+		errno = qdf_status_to_os_return(status);
+		if (errno)
+			break;
+
+		errno = epping_enable(qdf_dev->dev);
+		if (errno)
+			epping_close();
+
+		break;
+	default:
+		hdd_err("Mode not supported");
+		errno = -ENOTSUPP;
+
+		break;
+	}
+	hdd_release_rtnl_lock();
+
+	return errno;
+}
+
 /**
  * hdd_wlan_startup() - HDD init function
  * @dev:	Pointer to the underlying device
@@ -11341,7 +11371,6 @@ int hdd_wlan_startup(struct device *dev)
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
 	int ret;
-	bool rtnl_held;
 	mac_handle_t mac_handle;
 
 	hdd_enter();
@@ -11405,16 +11434,11 @@ int hdd_wlan_startup(struct device *dev)
 		goto err_unregister_netdev;
 	}
 
-	rtnl_held = hdd_hold_rtnl_lock();
-
-	ret = hdd_open_interfaces(hdd_ctx, rtnl_held);
+	ret = hdd_open_adapters_for_mode(hdd_ctx, con_mode);
 	if (ret) {
 		hdd_err("Failed to open interfaces: %d", ret);
 		goto err_release_rtnl_lock;
 	}
-
-	hdd_release_rtnl_lock();
-	rtnl_held = false;
 
 	wlan_hdd_update_11n_mode(hdd_ctx->config);
 
@@ -11422,7 +11446,7 @@ int hdd_wlan_startup(struct device *dev)
 	status = qdf_mc_timer_init(&hdd_ctx->skip_acs_scan_timer,
 				   QDF_TIMER_TYPE_SW,
 				   hdd_skip_acs_scan_timer_handler,
-				   (void *)hdd_ctx);
+				   hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Failed to init ACS Skip timer");
 	qdf_spinlock_create(&hdd_ctx->acs_skip_lock);
@@ -11459,12 +11483,10 @@ int hdd_wlan_startup(struct device *dev)
 	goto success;
 
 err_close_adapters:
-	hdd_close_all_adapters(hdd_ctx, rtnl_held);
+	hdd_close_all_adapters(hdd_ctx, false);
 
 err_release_rtnl_lock:
 	unregister_reboot_notifier(&system_reboot_notifier);
-	if (rtnl_held)
-		hdd_release_rtnl_lock();
 
 err_unregister_netdev:
 	unregister_netdevice_notifier(&hdd_netdev_notifier);
@@ -13271,64 +13293,6 @@ static void hdd_cleanup_present_mode(struct hdd_context *hdd_ctx,
 	}
 }
 
-static int hdd_register_req_mode(struct hdd_context *hdd_ctx,
-				 enum QDF_GLOBAL_MODE mode)
-{
-	struct hdd_adapter *adapter;
-	int ret = 0;
-	bool rtnl_held;
-	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	QDF_STATUS status;
-
-	if (!qdf_dev) {
-		hdd_err("qdf device context is Null return!");
-		return -EINVAL;
-	}
-
-	rtnl_held = hdd_hold_rtnl_lock();
-	switch (mode) {
-	case QDF_GLOBAL_MISSION_MODE:
-		ret = hdd_open_interfaces(hdd_ctx, rtnl_held);
-		if (ret)
-			hdd_err("Failed to open interfaces: %d", ret);
-		break;
-	case QDF_GLOBAL_FTM_MODE:
-		adapter = hdd_open_adapter(hdd_ctx, QDF_FTM_MODE, "wlan%d",
-					   wlan_hdd_get_intf_addr(hdd_ctx),
-					   NET_NAME_UNKNOWN, rtnl_held);
-		if (adapter == NULL)
-			ret = -EINVAL;
-		break;
-	case QDF_GLOBAL_MONITOR_MODE:
-		adapter = hdd_open_adapter(hdd_ctx, QDF_MONITOR_MODE, "wlan%d",
-					   wlan_hdd_get_intf_addr(hdd_ctx),
-					   NET_NAME_UNKNOWN, rtnl_held);
-		if (adapter == NULL)
-			ret = -EINVAL;
-		break;
-	case QDF_GLOBAL_EPPING_MODE:
-		status = epping_open();
-		if (status != QDF_STATUS_SUCCESS) {
-			hdd_err("Failed to open in eeping mode: %d", status);
-			ret = -EINVAL;
-			break;
-		}
-		ret = epping_enable(qdf_dev->dev);
-		if (ret) {
-			hdd_err("Failed to enable in epping mode : %d", ret);
-			epping_close();
-		}
-		break;
-	default:
-		hdd_err("Mode not supported");
-		ret = -ENOTSUPP;
-		break;
-	}
-	hdd_release_rtnl_lock();
-	rtnl_held = false;
-	return ret;
-}
-
 /**
  * __con_mode_handler() - Handles module param con_mode change
  * @kmessage: con mode name on which driver to be bring up
@@ -13393,7 +13357,7 @@ static int __con_mode_handler(const char *kmessage,
 	hdd_set_conparam(new_con_mode);
 
 	/* Register for new con_mode & then kick_start modules again */
-	ret = hdd_register_req_mode(hdd_ctx, new_con_mode);
+	ret = hdd_open_adapters_for_mode(hdd_ctx, new_con_mode);
 	if (ret) {
 		hdd_err("Failed to register for new mode");
 		goto reset_flags;
