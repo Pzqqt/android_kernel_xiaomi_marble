@@ -4460,6 +4460,19 @@ wmi_unified_send_obss_spatial_reuse_set_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS
+wmi_unified_send_obss_spatial_reuse_set_def_thresh_cmd(void *wmi_hdl,
+		struct wmi_host_obss_spatial_reuse_set_def_thresh *thresh)
+{
+	wmi_unified_t wmi = (wmi_unified_t)wmi_hdl;
+
+	if (wmi->ops->send_obss_spatial_reuse_set_def_thresh)
+		return wmi->ops->send_obss_spatial_reuse_set_def_thresh(wmi,
+									thresh);
+
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
 
 QDF_STATUS wmi_convert_pdev_id_host_to_target(void *wmi_hdl,
