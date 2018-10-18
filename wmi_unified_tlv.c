@@ -9004,6 +9004,13 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 	} else
 		param->num_chainmask_tables = 0;
 
+	if (param->num_chainmask_tables > PSOC_MAX_CHAINMASK_TABLES ||
+	    param->num_chainmask_tables >
+		param_buf->num_mac_phy_chainmask_combo) {
+		wmi_err_rl("num_chainmask_tables is OOB: %u",
+			   param->num_chainmask_tables);
+		return QDF_STATUS_E_INVAL;
+	}
 	chain_mask_combo = param_buf->mac_phy_chainmask_combo;
 
 	if (chain_mask_combo == NULL)
