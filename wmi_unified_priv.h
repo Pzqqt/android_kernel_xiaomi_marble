@@ -1830,6 +1830,10 @@ QDF_STATUS (*extract_dfs_status_from_fw)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_obss_spatial_reuse_set)(wmi_unified_t wmi_handle,
 		struct wmi_host_obss_spatial_reuse_set_param
 		*obss_spatial_reuse_param);
+
+QDF_STATUS (*send_obss_spatial_reuse_set_def_thresh)(wmi_unified_t wmi_handle,
+		struct wmi_host_obss_spatial_reuse_set_def_thresh
+		*obss_spatial_reuse_param);
 #endif
 
 QDF_STATUS

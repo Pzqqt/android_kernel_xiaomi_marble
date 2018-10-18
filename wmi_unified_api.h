@@ -1577,15 +1577,25 @@ wmi_extract_ctl_failsafe_check_ev_param(void *wmi_hdl,
 
 #ifdef OBSS_PD
 /**
- * wmi_extract_smartlog_ev() - extract smartlog event info from event
+ * wmi_unified_send_obss_spatial_reuse_set_cmd() - send obss pd offset
  * @wmi_handle: wmi handle
- * @param evt_buf: pointer to event buffer
- * @param ev: Pointer to hold fatal events
+ * @oobss_spatial_reuse_param: Pointer to obsspd min max offset
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_send_obss_spatial_reuse_set_cmd(void *wmi_handle,
 	struct wmi_host_obss_spatial_reuse_set_param *obss_spatial_reuse_param);
+
+/**
+ * wmi_unified_send_obss_spatial_reuse_set_def_thresh_cmd() - send def thresh
+ * @wmi_handle: wmi handle
+ * @thresh: Pointer to def thresh
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_send_obss_spatial_reuse_set_def_thresh_cmd(void *wmi_hdl,
+	struct wmi_host_obss_spatial_reuse_set_def_thresh *thresh);
+
 #endif /* OBSS_PD */
 
 /**
