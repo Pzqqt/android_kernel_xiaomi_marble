@@ -3360,16 +3360,13 @@ uint8_t *wlan_hdd_get_intf_addr(struct hdd_context *hdd_ctx)
 {
 	int i;
 
-	for (i = 0; i < QDF_MAX_CONCURRENCY_PERSONA; i++) {
-		if (0 == ((hdd_ctx->config->intfAddrMask) & (1 << i)))
-			break;
-	}
-
-	if (QDF_MAX_CONCURRENCY_PERSONA == i)
+	i = qdf_ffz(hdd_ctx->config->intfAddrMask);
+	if (i < 0 || i >= QDF_MAX_CONCURRENCY_PERSONA)
 		return NULL;
 
 	hdd_ctx->config->intfAddrMask |= (1 << i);
-	return &hdd_ctx->config->intfMacAddr[i].bytes[0];
+
+	return hdd_ctx->config->intfMacAddr[i].bytes;
 }
 
 void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,
@@ -3379,8 +3376,8 @@ void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,
 
 	for (i = 0; i < QDF_MAX_CONCURRENCY_PERSONA; i++) {
 		if (!memcmp(releaseAddr,
-			    &hdd_ctx->config->intfMacAddr[i].bytes[0],
-			    6)) {
+			    hdd_ctx->config->intfMacAddr[i].bytes,
+			    QDF_MAC_ADDR_SIZE)) {
 			hdd_ctx->config->intfAddrMask &= ~(1 << i);
 			break;
 		}
@@ -9140,77 +9137,89 @@ err_out:
 #ifdef WLAN_OPEN_P2P_INTERFACE
 /**
  * hdd_open_p2p_interface - Open P2P interface
- * @hdd_ctx:	HDD context
- * @rtnl_held:	True if RTNL lock held
+ * @hdd_ctx: HDD context
  *
- * Open P2P interface during probe. This function called to open the P2P
- * interface at probe along with STA interface.
- *
- * Return: 0 on success and errno on failure
+ * Return: QDF_STATUS
  */
-static int hdd_open_p2p_interface(struct hdd_context *hdd_ctx, bool rtnl_held)
+static QDF_STATUS hdd_open_p2p_interface(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
-	uint8_t *p2p_dev_addr;
-	bool p2p_dev_addr_admin = false;
+	bool p2p_dev_addr_admin;
 
 	cfg_p2p_get_device_addr_admin(hdd_ctx->psoc, &p2p_dev_addr_admin);
+
 	if (p2p_dev_addr_admin &&
 	    !(hdd_ctx->config->intfMacAddr[0].bytes[0] & 0x02)) {
-		qdf_mem_copy(hdd_ctx->p2p_device_address.bytes,
-			     hdd_ctx->config->intfMacAddr[0].bytes,
-			     sizeof(tSirMacAddr));
+		hdd_ctx->p2p_device_address = hdd_ctx->config->intfMacAddr[0];
 
 		/*
-		 * Generate the P2P Device Address.  This consists of
+		 * Generate the P2P Device Address. This consists of
 		 * the device's primary MAC address with the locally
 		 * administered bit set.
 		 */
 		hdd_ctx->p2p_device_address.bytes[0] |= 0x02;
 	} else {
+		uint8_t *p2p_dev_addr;
+
 		p2p_dev_addr = wlan_hdd_get_intf_addr(hdd_ctx);
-		if (p2p_dev_addr == NULL) {
-			hdd_err("Failed to allocate mac_address for p2p_device");
-			return -ENOSPC;
+		if (!p2p_dev_addr) {
+			hdd_err("Failed to get MAC address for new p2p device");
+			return QDF_STATUS_E_INVAL;
 		}
 
-		qdf_mem_copy(&hdd_ctx->p2p_device_address.bytes[0],
+		qdf_mem_copy(hdd_ctx->p2p_device_address.bytes,
 			     p2p_dev_addr, QDF_MAC_ADDR_SIZE);
 	}
 
 	adapter = hdd_open_adapter(hdd_ctx, QDF_P2P_DEVICE_MODE, "p2p%d",
-				   &hdd_ctx->p2p_device_address.bytes[0],
-				   NET_NAME_UNKNOWN, rtnl_held);
-
-	if (NULL == adapter) {
-		hdd_err("Failed to do hdd_open_adapter for P2P Device Interface");
-		return -ENOSPC;
+				   hdd_ctx->p2p_device_address.bytes,
+				   NET_NAME_UNKNOWN, true);
+	if (!adapter) {
+		hdd_err("Failed to open p2p interface");
+		return QDF_STATUS_E_INVAL;
 	}
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 #else
-static inline int hdd_open_p2p_interface(struct hdd_context *hdd_ctx,
-					 bool rtnl_held)
+static inline QDF_STATUS hdd_open_p2p_interface(struct hdd_context *hdd_ctx)
 {
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
-static int hdd_open_ocb_interface(struct hdd_context *hdd_ctx, bool rtnl_held)
+static QDF_STATUS hdd_open_ocb_interface(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
-	int ret = 0;
 
 	adapter = hdd_open_adapter(hdd_ctx, QDF_OCB_MODE, "wlanocb%d",
 				   wlan_hdd_get_intf_addr(hdd_ctx),
-				   NET_NAME_UNKNOWN, rtnl_held);
-	if (adapter == NULL) {
+				   NET_NAME_UNKNOWN, true);
+	if (!adapter) {
 		hdd_err("Failed to open 802.11p interface");
-		ret = -ENOSPC;
+		return QDF_STATUS_E_INVAL;
 	}
 
-	return ret;
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS hdd_open_concurrent_interface(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter;
+
+	if (qdf_str_eq(hdd_ctx->config->enableConcurrentSTA, ""))
+		return QDF_STATUS_SUCCESS;
+
+	adapter = hdd_open_adapter(hdd_ctx, QDF_STA_MODE,
+				   hdd_ctx->config->enableConcurrentSTA,
+				   wlan_hdd_get_intf_addr(hdd_ctx),
+				   NET_NAME_UNKNOWN, true);
+	if (!adapter) {
+		hdd_err("Failed to open concurrent station interface");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -9318,22 +9327,6 @@ int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 		hdd_tx_flow_control_is_pause);
 
 	hdd_exit();
-	return 0;
-}
-
-static int hdd_open_concurrent_interface(struct hdd_context *hdd_ctx,
-								bool rtnl_held)
-{
-	struct hdd_adapter *adapter;
-
-	adapter = hdd_open_adapter(hdd_ctx, QDF_STA_MODE,
-				       hdd_ctx->config->enableConcurrentSTA,
-				       wlan_hdd_get_intf_addr(hdd_ctx),
-				       NET_NAME_UNKNOWN, rtnl_held);
-
-	if (!adapter)
-		return -ENOSPC;
-
 	return 0;
 }
 
@@ -11260,102 +11253,124 @@ static int wlan_hdd_cache_chann_mutex_create(struct hdd_context *hdd_ctx)
 }
 #endif
 
-static int hdd_open_adapters_for_mission_mode(struct hdd_context *hdd_ctx)
+static QDF_STATUS
+hdd_open_adapters_for_mission_mode(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
 	enum dot11p_mode dot11p_mode;
-	int errno;
+	QDF_STATUS status;
 
 	ucfg_mlme_get_dot11p_mode(hdd_ctx->psoc, &dot11p_mode);
 
 	/* Create only 802.11p interface? */
 	if (dot11p_mode == CFG_11P_STANDALONE)
-		return hdd_open_ocb_interface(hdd_ctx, true);
+		return hdd_open_ocb_interface(hdd_ctx);
 
 	adapter = hdd_open_adapter(hdd_ctx, QDF_STA_MODE, "wlan%d",
 				   wlan_hdd_get_intf_addr(hdd_ctx),
 				   NET_NAME_UNKNOWN, true);
 	if (!adapter)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 
-	if (strlen(hdd_ctx->config->enableConcurrentSTA)) {
-		errno = hdd_open_concurrent_interface(hdd_ctx, true);
-		if (errno)
-			hdd_err("Cannot create concurrent STA interface");
-	}
+	/* opening concurrent STA is best effort, continue on error */
+	hdd_open_concurrent_interface(hdd_ctx);
 
-	errno = hdd_open_p2p_interface(hdd_ctx, true);
-	if (errno)
+	status = hdd_open_p2p_interface(hdd_ctx);
+	if (status)
 		goto err_close_adapters;
 
 	/* Open 802.11p Interface */
 	if (dot11p_mode == CFG_11P_CONCURRENT) {
-		errno = hdd_open_ocb_interface(hdd_ctx, true);
-		if (errno)
+		status = hdd_open_ocb_interface(hdd_ctx);
+		if (QDF_IS_STATUS_ERROR(status))
 			goto err_close_adapters;
 	}
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 
 err_close_adapters:
 	hdd_close_all_adapters(hdd_ctx, true);
 
-	return errno;
+	return status;
 }
 
-static int hdd_open_adapters_for_mode(struct hdd_context *hdd_ctx,
-				      enum QDF_GLOBAL_MODE mode)
+static QDF_STATUS hdd_open_adapters_for_ftm_mode(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
-	qdf_device_t qdf_dev;
+
+	adapter = hdd_open_adapter(hdd_ctx, QDF_FTM_MODE, "wlan%d",
+				   wlan_hdd_get_intf_addr(hdd_ctx),
+				   NET_NAME_UNKNOWN, true);
+
+	return adapter ? QDF_STATUS_SUCCESS : QDF_STATUS_E_INVAL;
+}
+
+static QDF_STATUS
+hdd_open_adapters_for_monitor_mode(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter;
+
+	adapter = hdd_open_adapter(hdd_ctx, QDF_MONITOR_MODE, "wlan%d",
+				   wlan_hdd_get_intf_addr(hdd_ctx),
+				   NET_NAME_UNKNOWN, true);
+
+	return adapter ? QDF_STATUS_SUCCESS : QDF_STATUS_E_INVAL;
+}
+
+static QDF_STATUS hdd_open_adapters_for_epping_mode(struct hdd_context *hdd_ctx)
+{
 	QDF_STATUS status;
-	int errno;
+	qdf_device_t qdf_dev;
 
 	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	QDF_BUG(qdf_dev);
 	if (!qdf_dev)
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
+
+	status = epping_open();
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	if (epping_enable(qdf_dev->dev)) {
+		status = QDF_STATUS_E_INVAL;
+		goto epping_close;
+	}
+
+	return QDF_STATUS_SUCCESS;
+
+epping_close:
+	epping_close();
+
+	return status;
+}
+
+typedef QDF_STATUS (*hdd_open_mode_handler)(struct hdd_context *hdd_ctx);
+
+static const hdd_open_mode_handler
+hdd_open_mode_handlers[QDF_GLOBAL_MAX_MODE] = {
+	[QDF_GLOBAL_MISSION_MODE] = hdd_open_adapters_for_mission_mode,
+	[QDF_GLOBAL_FTM_MODE] = hdd_open_adapters_for_ftm_mode,
+	[QDF_GLOBAL_MONITOR_MODE] = hdd_open_adapters_for_monitor_mode,
+	[QDF_GLOBAL_EPPING_MODE] = hdd_open_adapters_for_epping_mode,
+};
+
+static int hdd_open_adapters_for_mode(struct hdd_context *hdd_ctx,
+				      enum QDF_GLOBAL_MODE driver_mode)
+{
+	QDF_STATUS status;
+
+	if (driver_mode < 0 ||
+	    driver_mode >= QDF_GLOBAL_MAX_MODE ||
+	    !hdd_open_mode_handlers[driver_mode]) {
+		hdd_err("Driver mode %d not supported", driver_mode);
+		return -ENOTSUPP;
+	}
 
 	hdd_hold_rtnl_lock();
-	switch (mode) {
-	case QDF_GLOBAL_MISSION_MODE:
-		errno = hdd_open_adapters_for_mission_mode(hdd_ctx);
-
-		break;
-	case QDF_GLOBAL_FTM_MODE:
-		adapter = hdd_open_adapter(hdd_ctx, QDF_FTM_MODE, "wlan%d",
-					   wlan_hdd_get_intf_addr(hdd_ctx),
-					   NET_NAME_UNKNOWN, true);
-		errno = adapter ? 0 : -EINVAL;
-
-		break;
-	case QDF_GLOBAL_MONITOR_MODE:
-		adapter = hdd_open_adapter(hdd_ctx, QDF_MONITOR_MODE, "wlan%d",
-					   wlan_hdd_get_intf_addr(hdd_ctx),
-					   NET_NAME_UNKNOWN, true);
-		errno = adapter ? 0 : -EINVAL;
-
-		break;
-	case QDF_GLOBAL_EPPING_MODE:
-		status = epping_open();
-		errno = qdf_status_to_os_return(status);
-		if (errno)
-			break;
-
-		errno = epping_enable(qdf_dev->dev);
-		if (errno)
-			epping_close();
-
-		break;
-	default:
-		hdd_err("Mode not supported");
-		errno = -ENOTSUPP;
-
-		break;
-	}
+	status = hdd_open_mode_handlers[driver_mode](hdd_ctx);
 	hdd_release_rtnl_lock();
 
-	return errno;
+	return qdf_status_to_os_return(status);
 }
 
 /**
