@@ -1346,17 +1346,18 @@ static bool qdf_dp_enable_check(qdf_nbuf_t nbuf, enum QDF_DP_TRACE_ID code,
 	if (qdf_dp_trace_verbosity_check(code) == false)
 		return false;
 
-	if (!nbuf)
+	if (nbuf && (dir == QDF_TX && ((QDF_NBUF_CB_TX_DP_TRACE(nbuf) == 0) ||
+				       (QDF_NBUF_CB_TX_PACKET_TRACK(nbuf) !=
+					QDF_NBUF_TX_PKT_DATA_TRACK))))
 		return false;
 
-	if ((dir == QDF_TX) &&
-	    ((QDF_NBUF_CB_TX_DP_TRACE(nbuf) == 0) ||
-	     (QDF_NBUF_CB_TX_PACKET_TRACK(nbuf) != QDF_NBUF_TX_PKT_DATA_TRACK)))
+	if (nbuf && (dir == QDF_RX && (QDF_NBUF_CB_RX_DP_TRACE(nbuf) == 0)))
 		return false;
 
-	if ((dir == QDF_RX) && (QDF_NBUF_CB_RX_DP_TRACE(nbuf) == 0))
-		return false;
-
+	/*
+	 * Special packets called with NULL nbuf and this API is expected to
+	 * return true
+	 */
 	return true;
 }
 
