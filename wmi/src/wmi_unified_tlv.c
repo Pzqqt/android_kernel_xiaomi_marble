@@ -7503,6 +7503,53 @@ send_addba_clearresponse_cmd_tlv(wmi_unified_t wmi_handle,
 
 #ifdef OBSS_PD
 /**
+ * send_obss_spatial_reuse_set_def_thresh_cmd_tlv - send obss spatial reuse set
+ * def thresh to fw
+ * @wmi_handle: wmi handle
+ * @thresh: pointer to obss_spatial_reuse_def_thresh
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static
+QDF_STATUS send_obss_spatial_reuse_set_def_thresh_cmd_tlv(
+			wmi_unified_t wmi_handle,
+			struct wmi_host_obss_spatial_reuse_set_def_thresh
+			*thresh)
+{
+	wmi_buf_t buf;
+	wmi_obss_spatial_reuse_set_def_obss_thresh_cmd_fixed_param *cmd;
+	QDF_STATUS ret;
+	uint32_t cmd_len;
+	uint32_t tlv_len;
+
+	cmd_len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, cmd_len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	cmd = (wmi_obss_spatial_reuse_set_def_obss_thresh_cmd_fixed_param *)
+		wmi_buf_data(buf);
+
+	tlv_len = WMITLV_GET_STRUCT_TLVLEN(
+		wmi_obss_spatial_reuse_set_def_obss_thresh_cmd_fixed_param);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_obss_spatial_reuse_set_def_obss_thresh_cmd_fixed_param,
+	tlv_len);
+
+	cmd->obss_min = thresh->obss_min;
+	cmd->obss_max = thresh->obss_max;
+	cmd->vdev_type = thresh->vdev_type;
+	ret = wmi_unified_cmd_send(wmi_handle, buf, cmd_len,
+		WMI_PDEV_OBSS_PD_SPATIAL_REUSE_SET_DEF_OBSS_THRESH_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret))
+		wmi_buf_free(buf);
+
+	return ret;
+}
+
+/**
  * send_obss_spatial_reuse_set_cmd_tlv - send obss spatial reuse set cmd to fw
  * @wmi_handle: wmi handle
  * @obss_spatial_reuse_param: pointer to obss_spatial_reuse_param
@@ -11188,6 +11235,8 @@ struct wmi_ops tlv_ops =  {
 	.extract_roam_scan_stats_res_evt = extract_roam_scan_stats_res_evt_tlv,
 #ifdef OBSS_PD
 	.send_obss_spatial_reuse_set = send_obss_spatial_reuse_set_cmd_tlv,
+	.send_obss_spatial_reuse_set_def_thresh =
+		send_obss_spatial_reuse_set_def_thresh_cmd_tlv,
 #endif
 	.extract_offload_bcn_tx_status_evt = extract_offload_bcn_tx_status_evt,
 	.extract_ctl_failsafe_check_ev_param =

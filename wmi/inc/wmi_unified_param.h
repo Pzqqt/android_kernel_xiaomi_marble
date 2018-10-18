@@ -7278,9 +7278,21 @@ struct bcn_offload_control {
  */
 struct wmi_host_obss_spatial_reuse_set_param {
 	uint32_t enable;
-	uint32_t obss_min;
-	uint32_t obss_max;
+	int32_t obss_min;
+	int32_t obss_max;
 	uint32_t vdev_id;
+};
+
+/**
+ * struct wmi_host_obss_spatial_reuse_set_def_thresh - default obsspd offsets
+ * @obss_min: Minimum OBSS level to use
+ * @obss_max: Maximum OBSS level to use
+ * @vdev_type: vdev_type should be one of WMI_VDEV_TYPE_STA or WMI_VDEV_TYPE_AP
+ */
+struct wmi_host_obss_spatial_reuse_set_def_thresh {
+	int32_t obss_min;
+	int32_t obss_max;
+	uint32_t vdev_type;
 };
 #endif
 
