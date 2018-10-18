@@ -589,4 +589,10 @@ QDF_STATUS utils_dfs_get_disable_radar_marking(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * utils_dfs_clear_cac_started_chan() - Clear dfs cac started channel.
+ * @pdev: pdev ptr
+ */
+void utils_dfs_clear_cac_started_chan(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_DFS_UTILS_API_H_ */

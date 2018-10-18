@@ -332,38 +332,6 @@ void dfs_clear_cac_started_chan(struct wlan_dfs *dfs)
 bool dfs_check_for_cac_start(struct wlan_dfs *dfs,
 			     bool *continue_current_cac)
 {
-	if (!WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(dfs->dfs_curchan)) {
-		/* Consider a case where AP was up in a DFS channel and in CAC
-		 * period (DFS-WAIT state) and the workque to initiate CAC is
-		 * scheduled. At this time, real radar/spoof radar pulses from
-		 * bottom-half/tasklet context are received which is given
-		 * higher priority than Workque context. Due to radar, channel
-		 * change happened, AP switched to non-DFS channel and curchan
-		 * is non-DFS. The scheduled workque gets executed now, starts
-		 * a CAC on non-DFS curchan(curchan has changed from DFS to
-		 * non-DFS work queue func not aware of this !!). Though the
-		 * vap state machine moves the state of the vap from DFS-WAIT
-		 * to RUN state as curchan is non-DFS, the cac timer is not
-		 * cancelled. CAC timer on non-DFS channel runs and it expires.
-		 * So cancelling CAC here if chan is not DFS to avoid this
-		 * unexpected run and expiry of CAC.
-		 */
-		dfs_cac_stop(dfs);
-		dfs_mlme_proc_cac(dfs->dfs_pdev_obj, 0);
-
-		/* Clear the old dfs cac started channel if the current channel
-		 * is NON-DFS.
-		 * For example: AP sets the cac started channel as 100. It does
-		 * cac on channel 100 and starts beaconing. User changes the AP
-		 * channel to 36 and after sometime if user changes the channel
-		 * back to 100, AP does  not do the CAC since user channel and
-		 * cac started channel is same.
-		 */
-		dfs_clear_cac_started_chan(dfs);
-		dfs_debug(dfs, WLAN_DEBUG_DFS, "Skip CAC on NON-DFS chan");
-		return false;
-	}
-
 	if (dfs->dfs_ignore_dfs || dfs->dfs_cac_valid || dfs->dfs_ignore_cac) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
 			  "Skip CAC, ignore_dfs = %d cac_valid = %d ignore_cac = %d",

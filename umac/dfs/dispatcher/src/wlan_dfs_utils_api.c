@@ -200,6 +200,17 @@ QDF_STATUS utils_dfs_cac_stop(struct wlan_objmgr_pdev *pdev)
 }
 qdf_export_symbol(utils_dfs_cac_stop);
 
+void utils_dfs_clear_cac_started_chan(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs)
+		return;
+
+	dfs_clear_cac_started_chan(dfs);
+}
+
 bool utils_dfs_check_for_cac_start(struct wlan_objmgr_pdev *pdev,
 				   bool *continue_current_cac)
 {
