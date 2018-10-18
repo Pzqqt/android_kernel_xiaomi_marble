@@ -709,6 +709,7 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 	uint32_t list_count, i;
 	qdf_list_node_t *next_node = NULL;
 	struct scan_cache_node *scan_node;
+	struct wlan_frame_hdr *hdr = NULL;
 
 	bcn = msg->bodyptr;
 	if (!bcn) {
@@ -726,6 +727,7 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 		goto free_nbuf;
 	}
 
+	hdr = (struct wlan_frame_hdr *)qdf_nbuf_data(bcn->buf);
 	psoc = bcn->psoc;
 	pdev = wlan_objmgr_get_pdev_by_id(psoc,
 			   bcn->rx_data->pdev_id, WLAN_SCAN_ID);
@@ -759,7 +761,8 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 			qdf_nbuf_len(bcn->buf), bcn->frm_type,
 			bcn->rx_data);
 	if (!scan_list || qdf_list_empty(scan_list)) {
-		scm_debug("failed to unpack frame");
+		scm_debug("failed to unpack %d frame BSSID: %pM",
+			  bcn->frm_type, hdr->i_addr3);
 		status = QDF_STATUS_E_INVAL;
 		goto free_nbuf;
 	}
@@ -768,7 +771,8 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 	for (i = 0; i < list_count; i++) {
 		status = qdf_list_remove_front(scan_list, &next_node);
 		if (QDF_IS_STATUS_ERROR(status) || next_node == NULL) {
-			scm_debug("failed to unpack frame");
+			scm_debug("list remove failure i:%d, lsize:%d, BSSID: %pM",
+				  i, list_count, hdr->i_addr3);
 			status = QDF_STATUS_E_INVAL;
 			goto free_nbuf;
 		}
