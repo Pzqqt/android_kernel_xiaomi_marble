@@ -928,7 +928,8 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 							" ast_idx = %d"
 							" ast_hash = %d"
 							" pdev_id = %d"
-							" vdev_id = %d",
+							" vdev_id = %d"
+							" wmi_sent = %d",
 							++num_entries,
 							ase->mac_addr.raw,
 							ase->peer->mac_addr.raw,
@@ -939,7 +940,8 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 							ase->ast_idx,
 							ase->ast_hash_value,
 							ase->pdev_id,
-							ase->vdev_id);
+							ase->vdev_id,
+							ase->wmi_sent);
 				}
 			}
 		}

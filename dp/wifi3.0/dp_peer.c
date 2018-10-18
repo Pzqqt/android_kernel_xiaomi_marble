@@ -646,7 +646,8 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 {
 	struct dp_peer *peer = ast_entry->peer;
 
-	if (ast_entry->next_hop) {
+	if (ast_entry->next_hop &&
+	    ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC) {
 		dp_peer_ast_send_wds_del(soc, ast_entry);
 	} else {
 		/*
