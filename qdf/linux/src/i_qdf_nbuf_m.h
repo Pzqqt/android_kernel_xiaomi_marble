@@ -45,6 +45,9 @@
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.priv_cb_m.desc_id)
 #define QDF_NBUF_CB_MGMT_TXRX_DESC_ID(skb)\
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.priv_cb_m.mgmt_desc_id)
+#define QDF_NBUF_CB_TX_DMA_BI_MAP(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.priv_cb_m. \
+	dma_option.bi_map)
 
 #define __qdf_nbuf_ipa_owned_get(skb) \
 	QDF_NBUF_CB_TX_IPA_OWNED(skb)

@@ -148,6 +148,8 @@ typedef union {
  * @tx.dev.priv_cb_m.ipa.priv: private data, used by IPA
  * @tx.dev.priv_cb_m.desc_id: tx desc id, used to sync between host and fw
  * @tx.dev.priv_cb_m.mgmt_desc_id: mgmt descriptor for tx completion cb
+ * @tx.dev.priv_cb_m.dma_option.bi_map: flag to do bi-direction dma map
+ * @tx.dev.priv_cb_m.dma_option.reserved: reserved bits for future use
  * @tx.dev.priv_cb_m.reserved: reserved
  *
  * @tx.ftype: mcast2ucast, TSO, SG, MESH
@@ -244,7 +246,11 @@ struct qdf_nbuf_cb {
 					} ipa;
 					uint16_t desc_id;
 					uint16_t mgmt_desc_id;
-					uint32_t reserved;
+					struct {
+						uint8_t bi_map:1,
+							reserved:7;
+					} dma_option;
+					uint8_t reserved[3];
 				} priv_cb_m;
 			} dev;
 			uint8_t ftype;
