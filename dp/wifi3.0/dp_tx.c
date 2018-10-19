@@ -3265,6 +3265,30 @@ QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_WDS
+static inline bool dp_tx_da_search_override(struct dp_vdev *vdev)
+{
+	struct dp_soc *soc = vdev->pdev->soc;
+
+	/*
+	 * If AST index override support is available (HKv2 etc),
+	 * DA search flag be enabled always
+	 *
+	 * If AST index override support is not available (HKv1),
+	 * DA search flag should be used for all modes except QWRAP
+	 */
+	if (soc->ast_override_support || !vdev->proxysta_vdev)
+		return true;
+
+	return false;
+}
+#else
+static inline bool dp_tx_da_search_override(struct dp_vdev *vdev)
+{
+	return false;
+}
+#endif
+
 /**
  * dp_tx_vdev_update_search_flags() - Update vdev flags as per opmode
  * @vdev: virtual device instance
@@ -3291,9 +3315,7 @@ void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
 		vdev->hal_desc_addr_search_flags =
 			(HAL_TX_DESC_ADDRX_EN | HAL_TX_DESC_ADDRY_EN);
 	else if ((vdev->opmode == wlan_op_mode_sta) &&
-		 (!vdev->wds_enabled ||
-		 (vdev->proxysta_vdev &&
-			  !soc->ast_override_support)))
+		 !dp_tx_da_search_override(vdev))
 		vdev->hal_desc_addr_search_flags = HAL_TX_DESC_ADDRY_EN;
 	else
 		vdev->hal_desc_addr_search_flags = HAL_TX_DESC_ADDRX_EN;
