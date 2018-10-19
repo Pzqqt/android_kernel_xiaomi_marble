@@ -4239,6 +4239,27 @@ static int hdd_we_set_tx_power(struct hdd_adapter *adapter, int value)
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_we_set_max_tx_power(struct hdd_adapter *adapter, int value)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	mac_handle_t mac_handle = hdd_ctx->mac_handle;
+	QDF_STATUS status;
+
+	if (!mac_handle)
+		return -EINVAL;
+
+	status = sme_set_max_tx_power(mac_handle,
+				      sta_ctx->conn_info.bssId,
+				      sta_ctx->conn_info.bssId,
+				      value);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("cfg set failed, value %d status %d", value, status);
+
+	return qdf_status_to_os_return(status);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4254,7 +4275,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	mac_handle_t mac_handle;
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx;
 	int *value = (int *)extra;
 	int sub_cmd = value[0];
@@ -4305,27 +4325,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_MAX_TX_POWER:
-	{
-		struct qdf_mac_addr bssid;
-		struct qdf_mac_addr selfMac;
-
-		if (!mac_handle)
-			return -EINVAL;
-
-		hdd_debug("Setting maximum tx power %d dBm",
-		       set_value);
-		qdf_copy_macaddr(&bssid, &sta_ctx->conn_info.bssId);
-		qdf_copy_macaddr(&selfMac, &sta_ctx->conn_info.bssId);
-
-		if (sme_set_max_tx_power(mac_handle, bssid, selfMac, set_value)
-		    != QDF_STATUS_SUCCESS) {
-			hdd_err("Setting maximum tx power failed");
-			ret = -EIO;
-			break;
-		}
-
+		ret = hdd_we_set_max_tx_power(adapter, set_value);
 		break;
-	}
+
 	case WE_SET_MAX_TX_POWER_2_4:
 	{
 		hdd_debug("Setting maximum tx power %d dBm for 2.4 GHz band",
