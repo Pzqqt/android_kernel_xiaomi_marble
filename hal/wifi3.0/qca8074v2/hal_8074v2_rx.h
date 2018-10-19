@@ -79,23 +79,6 @@ static void hal_rx_mon_hw_desc_get_mpdu_status_8074v2(void *hw_desc_addr,
 
 	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, SGI);
 	rs->sgi = sgi_hw_to_cdp[reg_value];
-	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, PKT_TYPE);
-	switch (reg_value) {
-	case HAL_RX_PKT_TYPE_11N:
-		rs->ht_flags = 1;
-		break;
-	case HAL_RX_PKT_TYPE_11AC:
-		rs->vht_flags = 1;
-		reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5,
-				       RECEIVE_BANDWIDTH);
-		rs->vht_flag_values2 = reg_value;
-		break;
-	case HAL_RX_PKT_TYPE_11AX:
-		rs->he_flags = 1;
-		break;
-	default:
-		break;
-	}
 	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, RECEPTION_TYPE);
 	rs->beamformed = (reg_value == HAL_RX_RECEPTION_TYPE_MU_MIMO) ? 1 : 0;
 	/* TODO: rs->beamformed should be set for SU beamforming also */
