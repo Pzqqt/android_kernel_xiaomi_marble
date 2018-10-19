@@ -4126,6 +4126,39 @@ static int hdd_we_set_11d_state(struct hdd_context *hdd_ctx, int state_11d)
 	return 0;
 }
 
+static int hdd_we_set_power(struct hdd_adapter *adapter, int value)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	mac_handle_t mac_handle = hdd_ctx->mac_handle;
+
+	if (!mac_handle)
+		return -EINVAL;
+
+	switch (value) {
+	case 1:
+		/* Enable PowerSave */
+		sme_ps_enable_disable(mac_handle, adapter->session_id,
+				      SME_PS_ENABLE);
+		return 0;
+	case 2:
+		/* Disable PowerSave */
+		sme_ps_enable_disable(mac_handle, adapter->session_id,
+				      SME_PS_DISABLE);
+		return 0;
+	case 3:
+		/* Enable UASPD */
+		sme_ps_uapsd_enable(mac_handle, adapter->session_id);
+		return 0;
+	case 4:
+		/* Disable UASPD */
+		sme_ps_uapsd_disable(mac_handle, adapter->session_id);
+		return 0;
+	default:
+		hdd_err("Invalid value %d", value);
+		return -EINVAL;
+	}
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4153,11 +4186,11 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	ret = hdd_check_private_wext_control(hdd_ctx, info);
-	if (0 != ret)
+	if (ret)
 		return ret;
 
 	mac_handle = hdd_ctx->mac_handle;
@@ -4167,35 +4200,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_POWER:
-	{
-		if (!mac_handle)
-			return -EINVAL;
-
-		switch (set_value) {
-		case 1:
-			/* Enable PowerSave */
-			sme_ps_enable_disable(mac_handle, adapter->session_id,
-					      SME_PS_ENABLE);
-			break;
-		case 2:
-			/* Disable PowerSave */
-			sme_ps_enable_disable(mac_handle, adapter->session_id,
-					      SME_PS_DISABLE);
-			break;
-		case 3:          /* Enable UASPD */
-			sme_ps_uapsd_enable(mac_handle, adapter->session_id);
-			break;
-		case 4:          /* Disable UASPD */
-			sme_ps_uapsd_disable(mac_handle, adapter->session_id);
-			break;
-		default:
-			hdd_err("Invalid arg  %d in WE_SET_POWER IOCTL",
-				set_value);
-			ret = -EINVAL;
-			break;
-		}
+		ret = hdd_we_set_power(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_MAX_ASSOC:
 	{
