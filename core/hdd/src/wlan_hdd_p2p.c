@@ -551,22 +551,6 @@ int hdd_set_p2p_ps(struct net_device *dev, void *msgData)
 	return wlan_hdd_set_power_save(adapter, &noa);
 }
 
-static uint8_t wlan_hdd_get_session_type(enum nl80211_iftype type)
-{
-	switch (type) {
-	case NL80211_IFTYPE_AP:
-		return QDF_SAP_MODE;
-	case NL80211_IFTYPE_P2P_GO:
-		return QDF_P2P_GO_MODE;
-	case NL80211_IFTYPE_P2P_CLIENT:
-		return QDF_P2P_CLIENT_MODE;
-	case NL80211_IFTYPE_STATION:
-		return QDF_STA_MODE;
-	default:
-		return QDF_STA_MODE;
-	}
-}
-
 /**
  * wlan_hdd_allow_sap_add() - check to add new sap interface
  * @hdd_ctx: pointer to hdd context
@@ -628,39 +612,40 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 						 u32 *flags,
 						 struct vif_params *params)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *) wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct hdd_adapter *adapter = NULL;
-	int ret;
-	uint8_t session_type;
 	bool p2p_dev_addr_admin = false;
+	enum QDF_OPMODE mode;
+	QDF_STATUS status;
+	int ret;
 
 	hdd_enter();
 
-	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
 		hdd_err("Command not allowed in FTM mode");
 		return ERR_PTR(-EINVAL);
 	}
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
+	if (ret)
 		return ERR_PTR(ret);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_ADD_VIRTUAL_INTF, NO_SESSION, type));
-	/*
-	 * Allow addition multiple interfaces for QDF_P2P_GO_MODE,
-	 * QDF_SAP_MODE, QDF_P2P_CLIENT_MODE and QDF_STA_MODE
-	 * session type.
-	 */
-	session_type = wlan_hdd_get_session_type(type);
-	if (hdd_get_adapter(hdd_ctx, session_type) != NULL
-	    && QDF_SAP_MODE != session_type
-	    && QDF_P2P_GO_MODE != session_type
-	    && QDF_P2P_CLIENT_MODE != session_type
-	    && QDF_STA_MODE != session_type) {
-		hdd_err("Interface type %d already exists. Two interfaces of same type are not supported currently.",
-			type);
-		return ERR_PTR(-EINVAL);
+
+	status = hdd_nl_to_qdf_iface_type(type, &mode);
+	if (QDF_IS_STATUS_ERROR(status))
+		return ERR_PTR(qdf_status_to_os_return(status));
+
+	switch (mode) {
+	case QDF_SAP_MODE:
+	case QDF_P2P_GO_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_STA_MODE:
+		break;
+	default:
+		mode = QDF_STA_MODE;
+		break;
 	}
 
 	adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
@@ -674,7 +659,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		}
 	}
 
-	if (session_type == QDF_SAP_MODE) {
+	if (mode == QDF_SAP_MODE) {
 		struct wireless_dev *sap_dev;
 		bool allow_add_sap = wlan_hdd_allow_sap_add(hdd_ctx, name,
 							    &sap_dev);
@@ -689,8 +674,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	adapter = NULL;
 	cfg_p2p_get_device_addr_admin(hdd_ctx->psoc, &p2p_dev_addr_admin);
 	if (p2p_dev_addr_admin &&
-	    ((NL80211_IFTYPE_P2P_GO == type) ||
-	     (NL80211_IFTYPE_P2P_CLIENT == type))) {
+	    (mode == QDF_P2P_GO_MODE || mode == QDF_P2P_CLIENT_MODE)) {
 		/*
 		 * Generate the P2P Interface Address. this address must be
 		 * different from the P2P Device Address.
@@ -698,21 +682,16 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		struct qdf_mac_addr p2p_device_address =
 						hdd_ctx->p2p_device_address;
 		p2p_device_address.bytes[4] ^= 0x80;
-		adapter = hdd_open_adapter(hdd_ctx,
-					    session_type,
-					    name, p2p_device_address.bytes,
-					    name_assign_type,
-					    true);
+		adapter = hdd_open_adapter(hdd_ctx, mode, name,
+					   p2p_device_address.bytes,
+					   name_assign_type, true);
 	} else {
-		adapter = hdd_open_adapter(hdd_ctx,
-					    session_type,
-					    name,
-					    wlan_hdd_get_intf_addr(hdd_ctx),
-					    name_assign_type,
-					    true);
+		adapter = hdd_open_adapter(hdd_ctx, mode, name,
+					   wlan_hdd_get_intf_addr(hdd_ctx),
+					   name_assign_type, true);
 	}
 
-	if (NULL == adapter) {
+	if (!adapter) {
 		hdd_err("hdd_open_adapter failed");
 		return ERR_PTR(-ENOSPC);
 	}
@@ -733,7 +712,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	 * hdd_hostapd_open/hdd_host_stop is in place.
 	 * The support for starting adapter from here can be removed.
 	 */
-	if (NL80211_IFTYPE_AP == type || (NL80211_IFTYPE_P2P_GO == type)) {
+	if (mode == QDF_SAP_MODE || mode == QDF_P2P_GO_MODE) {
 		ret = hdd_start_adapter(adapter);
 		if (ret) {
 			hdd_err("Failed to start %s", name);
