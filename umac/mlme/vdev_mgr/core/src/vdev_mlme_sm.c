@@ -409,9 +409,9 @@ static bool mlme_vdev_state_up_event(void *ctx, uint16_t event,
 	struct vdev_mlme_obj *vdev_mlme = (struct vdev_mlme_obj *)ctx;
 	enum QDF_OPMODE mode;
 	struct wlan_objmgr_vdev *vdev;
+	bool status = false;
 
 	vdev = vdev_mlme->vdev;
-
 	mode = wlan_vdev_mlme_get_opmode(vdev);
 
 	switch (event) {
@@ -427,7 +427,7 @@ static bool mlme_vdev_state_up_event(void *ctx, uint16_t event,
 			mlme_vdev_notify_up_complete(vdev_mlme, event_data_len,
 						     event_data);
 
-		return true;
+		status = true;
 		break;
 
 	case WLAN_VDEV_SM_EV_SUPSEND_RESTART:
@@ -441,8 +441,8 @@ static bool mlme_vdev_state_up_event(void *ctx, uint16_t event,
 		mlme_vdev_sm_transition_to(vdev_mlme, WLAN_VDEV_S_SUSPEND);
 		mlme_vdev_sm_deliver_event(vdev_mlme, event,
 					   event_data_len, event_data);
-	return true;
-	break;
+		status = true;
+		break;
 
 	case WLAN_VDEV_SM_EV_RADAR_DETECTED:
 		/* These events are not supported in STA mode */
@@ -452,8 +452,8 @@ static bool mlme_vdev_state_up_event(void *ctx, uint16_t event,
 		mlme_vdev_sm_deliver_event(vdev_mlme,
 					   WLAN_VDEV_SM_EV_CSA_RESTART,
 					   event_data_len, event_data);
-	return true;
-	break;
+		status = true;
+		break;
 
 	case WLAN_VDEV_SM_EV_UP_HOST_RESTART:
 		/* Reinit beacon, send template to FW(use ping-pong buffer) */
@@ -463,7 +463,7 @@ static bool mlme_vdev_state_up_event(void *ctx, uint16_t event,
 		/* notify that UP command is completed */
 		mlme_vdev_notify_up_complete(vdev_mlme,
 					     event_data_len, event_data);
-		return true;
+		status = true;
 		break;
 
 	case WLAN_VDEV_SM_EV_FW_VDEV_RESTART:
@@ -471,20 +471,27 @@ static bool mlme_vdev_state_up_event(void *ctx, uint16_t event,
 		mlme_vdev_sm_deliver_event(vdev_mlme,
 					   WLAN_VDEV_SM_EV_RESTART_REQ,
 					   event_data_len, event_data);
-		return true;
+		status = true;
 		break;
 
 	case WLAN_VDEV_SM_EV_UP_FAIL:
 		mlme_vdev_sm_transition_to(vdev_mlme, WLAN_VDEV_S_SUSPEND);
 		mlme_vdev_sm_deliver_event(vdev_mlme, event,
 					   event_data_len, event_data);
-		return true;
+		status = true;
+		break;
+
+	case WLAN_VDEV_SM_EV_ROAM:
+		mlme_vdev_notify_roam_start(vdev_mlme, event_data_len,
+					    event_data);
+		status = true;
 		break;
 
 	default:
-		return false;
 		break;
 	}
+
+	return status;
 }
 
 /**

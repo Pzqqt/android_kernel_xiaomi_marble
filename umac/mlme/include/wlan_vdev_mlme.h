@@ -72,6 +72,7 @@ enum vdev_cmd_type {
  *                                      MLME up operation
  * @mlme_vdev_notify_up_complete:       callback to notify VDEV MLME on moving
  *                                      to UP state
+ * @mlme_vdev_notify_roam_start:        callback to initiate roaming
  * @mlme_vdev_update_beacon:            callback to initiate beacon update
  * @mlme_vdev_disconnect_peers:         callback to initiate disconnection of
  *                                      peers
@@ -121,6 +122,9 @@ struct vdev_mlme_ops {
 				struct vdev_mlme_obj *vdev_mlme,
 				uint16_t event_data_len, void *event_data);
 	QDF_STATUS (*mlme_vdev_notify_up_complete)(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint16_t event_data_len, void *event_data);
+	QDF_STATUS (*mlme_vdev_notify_roam_start)(
 				struct vdev_mlme_obj *vdev_mlme,
 				uint16_t event_data_len, void *event_data);
 	QDF_STATUS (*mlme_vdev_update_beacon)(
@@ -401,15 +405,40 @@ static inline QDF_STATUS mlme_vdev_up_send(
  * Return: SUCCESS on successful completion of up notification
  *         FAILURE, if it fails due to any
  */
-static inline QDF_STATUS mlme_vdev_notify_up_complete(
-				struct vdev_mlme_obj *vdev_mlme,
+static inline
+QDF_STATUS mlme_vdev_notify_up_complete(struct vdev_mlme_obj *vdev_mlme,
 				uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_notify_up_complete)
+	if (vdev_mlme->ops && vdev_mlme->ops->mlme_vdev_notify_up_complete)
 		ret = vdev_mlme->ops->mlme_vdev_notify_up_complete(
 					vdev_mlme, event_data_len, event_data);
+
+	return ret;
+}
+
+/**
+ * mlme_vdev_notify_roam_start - VDEV Roaming notification
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @event_len: data size
+ * @event_data: event data
+ *
+ * API notifies MLME on roaming
+ *
+ * Return: SUCCESS on successful completion of up notification
+ *         FAILURE, if it fails due to any
+ */
+static inline
+QDF_STATUS mlme_vdev_notify_roam_start(struct vdev_mlme_obj *vdev_mlme,
+				       uint16_t event_len, void *event_data)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (vdev_mlme->ops && vdev_mlme->ops->mlme_vdev_notify_roam_start)
+		ret = vdev_mlme->ops->mlme_vdev_notify_roam_start(vdev_mlme,
+								  event_len,
+								  event_data);
 
 	return ret;
 }
@@ -426,14 +455,14 @@ static inline QDF_STATUS mlme_vdev_notify_up_complete(
  * Return: SUCCESS on successful update of beacon
  *         FAILURE, if it fails due to any
  */
-static inline QDF_STATUS mlme_vdev_update_beacon(
-				struct vdev_mlme_obj *vdev_mlme,
-				enum beacon_update_op op,
-				uint16_t event_data_len, void *event_data)
+static inline
+QDF_STATUS mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
+				   enum beacon_update_op op,
+				   uint16_t event_data_len, void *event_data)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_update_beacon)
+	if (vdev_mlme->ops && vdev_mlme->ops->mlme_vdev_update_beacon)
 		ret = vdev_mlme->ops->mlme_vdev_update_beacon(vdev_mlme, op,
 						event_data_len, event_data);
 
