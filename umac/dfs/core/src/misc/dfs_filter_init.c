@@ -117,7 +117,13 @@ static os_timer_func(dfs_task)
 		return;
 	}
 
+	/* Need to take a lock here since dfs filtering data structures are
+	 * freed and re-allocated in dfs_init_radar_filters() during channel
+	 * change which may happen in the middle of dfs pulse processing.
+	 */
+	WLAN_DFS_DATA_STRUCT_LOCK(dfs);
 	dfs_process_radarevent(dfs, dfs->dfs_curchan);
+	WLAN_DFS_DATA_STRUCT_UNLOCK(dfs);
 
 	dfs->wlan_radar_tasksched = 0;
 }
@@ -220,6 +226,7 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	STAILQ_INIT(&dfs->dfs_arq);
 	STAILQ_INIT(&(dfs->dfs_eventq));
 	WLAN_DFSEVENTQ_LOCK_CREATE(dfs);
+	WLAN_DFS_DATA_STRUCT_LOCK_CREATE(dfs);
 
 	dfs->events = dfs_alloc_dfs_events();
 	if (!(dfs->events)) {
@@ -411,6 +418,7 @@ void dfs_main_detach(struct wlan_dfs *dfs)
 		dfs->events = NULL;
 	}
 
+	WLAN_DFS_DATA_STRUCT_LOCK_DESTROY(dfs);
 	WLAN_DFSQ_LOCK_DESTROY(dfs);
 	WLAN_ARQ_LOCK_DESTROY(dfs);
 	WLAN_DFSEVENTQ_LOCK_DESTROY(dfs);

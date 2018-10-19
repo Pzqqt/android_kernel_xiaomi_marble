@@ -186,6 +186,15 @@
 #define PRECAC_LIST_LOCK_DESTROY(_dfs) qdf_spinlock_destroy( \
 		&(_dfs)->dfs_precac_lock)
 
+#define WLAN_DFS_DATA_STRUCT_LOCK(_dfs) \
+	qdf_spin_lock_bh(&(_dfs)->dfs_data_struct_lock)
+#define WLAN_DFS_DATA_STRUCT_UNLOCK(_dfs) \
+	qdf_spin_unlock_bh(&(_dfs)->dfs_data_struct_lock)
+#define WLAN_DFS_DATA_STRUCT_LOCK_CREATE(_dfs) \
+	qdf_spinlock_create(&(_dfs)->dfs_data_struct_lock)
+#define WLAN_DFS_DATA_STRUCT_LOCK_DESTROY(_dfs) \
+	qdf_spinlock_destroy(&(_dfs)->dfs_data_struct_lock)
+
 /* Mask for time stamp from descriptor */
 #define DFS_TSMASK    0xFFFFFFFF
 /* Shift for time stamp from descriptor */
@@ -1002,6 +1011,10 @@ struct dfs_event_log {
  * @dfs_freq_offset:                 Frequency offset where radar was found.
  * @dfs_cac_aborted:                 DFS cac is aborted.
  * @dfs_disable_radar_marking:       To mark or unmark NOL chan as radar hit.
+ * @dfs_data_struct_lock:            DFS data structure lock. This is to protect
+ *                                   all the filtering data structures. For
+ *                                   example: dfs_bin5radars, dfs_filtertype,
+ *                                   etc.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1134,6 +1147,7 @@ struct wlan_dfs {
 	uint8_t        dfs_bw_reduced;
 	int32_t        dfs_freq_offset;
 	bool           dfs_cac_aborted;
+	qdf_spinlock_t dfs_data_struct_lock;
 };
 
 /**

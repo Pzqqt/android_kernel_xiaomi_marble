@@ -417,7 +417,9 @@ void dfs_get_po_radars(struct wlan_dfs *dfs)
 			rinfo.dfs_radars[i].rp_rssithresh = RSSI_THERSH_AR900B;
 	}
 
+	WLAN_DFS_DATA_STRUCT_LOCK(dfs);
 	dfs_init_radar_filters(dfs, &rinfo);
+	WLAN_DFS_DATA_STRUCT_UNLOCK(dfs);
 }
 
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)
