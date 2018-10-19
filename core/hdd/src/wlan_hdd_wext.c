@@ -4159,6 +4159,19 @@ static int hdd_we_set_power(struct hdd_adapter *adapter, int value)
 	}
 }
 
+static int hdd_we_set_max_assoc(struct hdd_adapter *adapter, int value)
+{
+	struct hdd_context *hdd_ctx;
+	QDF_STATUS status;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	status = ucfg_mlme_set_assoc_sta_limit(hdd_ctx->psoc, value);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("cfg set failed, value %d status %d", value, status);
+
+	return qdf_status_to_os_return(status);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4204,17 +4217,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_MAX_ASSOC:
-	{
-		if (!mac_handle)
-			return -EINVAL;
-
-		if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->psoc, set_value)
-			   != QDF_STATUS_SUCCESS) {
-			hdd_err("CFG_ASSOC_STA_LIMIT failed");
-			ret = -EIO;
-		}
+		ret = hdd_we_set_max_assoc(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_DATA_INACTIVITY_TO:
 		if (!mac_handle)
