@@ -132,6 +132,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 			if (ase) {
 				ase->ast_idx = sa_idx;
 				soc->ast_table[sa_idx] = ase;
+				ase->is_mapped = TRUE;
 			}
 		}
 	} else

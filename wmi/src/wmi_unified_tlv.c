@@ -9624,6 +9624,25 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 
 	reg_info->num_2g_reg_rules = chan_list_event_hdr->num_2g_reg_rules;
 	reg_info->num_5g_reg_rules = chan_list_event_hdr->num_5g_reg_rules;
+	num_2g_reg_rules = reg_info->num_2g_reg_rules;
+	num_5g_reg_rules = reg_info->num_5g_reg_rules;
+	if ((num_2g_reg_rules > MAX_REG_RULES) ||
+	    (num_5g_reg_rules > MAX_REG_RULES) ||
+	    (num_2g_reg_rules + num_5g_reg_rules > MAX_REG_RULES) ||
+	    (num_2g_reg_rules + num_5g_reg_rules !=
+	     param_buf->num_reg_rule_array)) {
+		wmi_err_rl("Invalid num_2g_reg_rules: %u, num_5g_reg_rules: %u",
+			   num_2g_reg_rules, num_5g_reg_rules);
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (param_buf->num_reg_rule_array >
+		(WMI_SVC_MSG_MAX_SIZE - sizeof(*chan_list_event_hdr)) /
+		sizeof(*wmi_reg_rule)) {
+		wmi_err_rl("Invalid num_reg_rule_array: %u",
+			   param_buf->num_reg_rule_array);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	qdf_mem_copy(reg_info->alpha2, &(chan_list_event_hdr->alpha2),
 		     REG_ALPHA2_LEN);
 	reg_info->dfs_region = chan_list_event_hdr->dfs_region;
@@ -9655,9 +9674,6 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 	reg_info->max_bw_2g = chan_list_event_hdr->max_bw_2g;
 	reg_info->min_bw_5g = chan_list_event_hdr->min_bw_5g;
 	reg_info->max_bw_5g = chan_list_event_hdr->max_bw_5g;
-
-	num_2g_reg_rules = reg_info->num_2g_reg_rules;
-	num_5g_reg_rules = reg_info->num_5g_reg_rules;
 
 	WMI_LOGD("%s:cc %s dsf %d BW: min_2g %d max_2g %d min_5g %d max_5g %d",
 			__func__, reg_info->alpha2, reg_info->dfs_region,
@@ -10338,7 +10354,7 @@ extract_roam_scan_stats_res_evt_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	uint32_t total_len;
 	struct wmi_roam_scan_stats_res *res;
 	uint32_t i, j;
-	uint32_t num_scans;
+	uint32_t num_scans, scan_param_size;
 
 	*res_param = NULL;
 	*vdev_id = 0xFF; /* Initialize to invalid vdev id */
@@ -10349,11 +10365,16 @@ extract_roam_scan_stats_res_evt_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 	}
 
 	fixed_param = param_buf->fixed_param;
-	total_len = sizeof(*res) + fixed_param->num_roam_scans *
-		    sizeof(struct wmi_roam_scan_stats_params);
 
-	*vdev_id = fixed_param->vdev_id;
 	num_scans = fixed_param->num_roam_scans;
+	scan_param_size = sizeof(struct wmi_roam_scan_stats_params);
+	if ((num_scans > ((UINT_MAX - sizeof(*res)) / scan_param_size))) {
+		wmi_err_rl("Invalid num_roam_scans %d", num_scans);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	total_len = sizeof(*res) + num_scans * scan_param_size;
+	*vdev_id = fixed_param->vdev_id;
 
 	res = qdf_mem_malloc(total_len);
 	if (!res) {
@@ -10540,6 +10561,11 @@ static QDF_STATUS extract_green_ap_egap_status_info_tlv(
 				param_buf->fixed_param;
 	chainmask_event = (wmi_ap_ps_egap_info_chainmask_list *)
 				param_buf->chainmask_list;
+
+	if (!egap_info_event || !chainmask_event) {
+		WMI_LOGE("Invalid EGAP Info event or chainmask event");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	egap_status_info_params->status = egap_info_event->status;
 	egap_status_info_params->mac_id = chainmask_event->mac_id;

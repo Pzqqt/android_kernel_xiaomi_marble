@@ -1241,20 +1241,46 @@ void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id)
 }
 #endif /* HIF_CE_DEBUG_DATA_BUF */
 
-/*
- * Note: For MCL, #if defined (HIF_CONFIG_SLUB_DEBUG_ON) needs to be checked
- * for defined here
- */
-#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) /* MCL */
+struct hif_ce_desc_event hif_ce_desc_history[CE_COUNT_MAX][HIF_CE_HISTORY_MAX];
+
 /**
- * alloc_mem_ce_debug_history() - Allocate mem for the CE descriptors storing
+ * alloc_mem_ce_debug_history() - Allocate CE descriptor history
  * @scn: hif scn handle
- * ce_id: Copy Engine Id
+ * @ce_id: Copy Engine Id
  *
  * Return: QDF_STATUS
  */
-static inline QDF_STATUS alloc_mem_ce_debug_history(struct hif_softc *scn,
-						unsigned int CE_id)
+static QDF_STATUS
+alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int ce_id)
+{
+	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
+
+	ce_hist->hist_ev[ce_id] = hif_ce_desc_history[ce_id];
+	ce_hist->enable[ce_id] = 1;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * free_mem_ce_debug_history() - Free CE descriptor history
+ * @scn: hif scn handle
+ * @ce_id: Copy Engine Id
+ *
+ * Return: None
+ */
+static void free_mem_ce_debug_history(struct hif_softc *scn, unsigned int ce_id)
+{
+	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
+
+	ce_hist->enable[ce_id] = 0;
+	ce_hist->hist_ev[ce_id] = NULL;
+}
+
+#elif HIF_CE_DEBUG_DATA_BUF /* WIN */
+
+static QDF_STATUS
+alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id)
 {
 	scn->hif_ce_desc_hist.hist_ev[CE_id] = (struct hif_ce_desc_event *)
 	qdf_mem_malloc(HIF_CE_HISTORY_MAX * sizeof(struct hif_ce_desc_event));
@@ -1268,35 +1294,37 @@ static inline QDF_STATUS alloc_mem_ce_debug_history(struct hif_softc *scn,
 	}
 }
 
-/**
- * free_mem_ce_debug_history() - Free mem allocated for the CE descriptors
- * storing.
- * @scn: hif scn handle
- * ce_id: Copy Engine Id
- *
- * Return:
- */
-static inline void free_mem_ce_debug_history(struct hif_softc *scn,
-						unsigned int CE_id)
+static void free_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id)
 {
 	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
-	struct hif_ce_desc_event *hist_ev =
-			(struct hif_ce_desc_event *)ce_hist->hist_ev[CE_id];
+	struct hif_ce_desc_event *hist_ev = ce_hist->hist_ev[CE_id];
 
 	if (!hist_ev)
 		return;
 
-#if HIF_CE_DEBUG_DATA_BUF
 	if (ce_hist->data_enable[CE_id] == 1) {
 		ce_hist->data_enable[CE_id] = 0;
 		free_mem_ce_debug_hist_data(scn, CE_id);
 	}
-#endif
+
 	ce_hist->enable[CE_id] = 0;
 	qdf_mem_free(ce_hist->hist_ev[CE_id]);
 	ce_hist->hist_ev[CE_id] = NULL;
 }
 
+#else /* Disabled */
+
+static inline QDF_STATUS
+alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void
+free_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id) { }
+#endif
+
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF
 /**
  * reset_ce_debug_history() - reset the index and ce id used for dumping the
  * CE records on the console using sysfs.
@@ -1313,22 +1341,9 @@ static inline void reset_ce_debug_history(struct hif_softc *scn)
 	ce_hist->hist_index = 0;
 	ce_hist->hist_id = 0;
 }
-#else /*Note: #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
-static inline QDF_STATUS alloc_mem_ce_debug_history(struct hif_softc *scn,
-						unsigned int CE_id)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline void free_mem_ce_debug_history(struct hif_softc *scn,
-						unsigned int CE_id)
-{
-}
-
-static inline void reset_ce_debug_history(struct hif_softc *scn)
-{
-}
-#endif /*Note: defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
+#else /* defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
+static inline void reset_ce_debug_history(struct hif_softc *scn) { }
+#endif /* defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
 
 void ce_enable_polling(void *cestate)
 {

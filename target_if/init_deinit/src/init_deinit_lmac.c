@@ -136,6 +136,7 @@ uint32_t lmac_get_tgt_version(struct wlan_objmgr_psoc *psoc)
 
 	return target_psoc_get_target_ver(tgt_hdl);
 }
+qdf_export_symbol(lmac_get_tgt_version);
 
 uint32_t lmac_get_tgt_revision(struct wlan_objmgr_psoc *psoc)
 {

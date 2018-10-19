@@ -57,6 +57,7 @@ int fwdbg_parse_debug_logs(struct common_dbglog_handle *dbg_handle,
 
 	return 0;
 }
+qdf_export_symbol(fwdbg_parse_debug_logs);
 
 void fwdbg_ratelimit_set(struct common_dbglog_handle *dbg_handle,
 		uint32_t burst_limit)

@@ -636,7 +636,6 @@ union dp_align_mac_addr {
 	} align4_2;
 };
 
-#define DP_INVALID_AST_IDX 0xFFFF
 /*
  * dp_ast_entry
  *
@@ -649,6 +648,8 @@ union dp_align_mac_addr {
  *             (used for aging out/expiry)
  * @ase_list_elem: node in peer AST list
  * @is_bss: flag to indicate if entry corresponds to bss peer
+ * @is_mapped: flag to indicate that we have mapped the AST entry
+ *             in ast_table
  * @pdev_id: pdev ID
  * @vdev_id: vdev ID
  * @ast_hash_value: hast value in HW
@@ -666,6 +667,7 @@ struct dp_ast_entry {
 	bool next_hop;
 	bool is_active;
 	bool is_bss;
+	bool is_mapped;
 	uint8_t pdev_id;
 	uint8_t vdev_id;
 	uint16_t ast_hash_value;

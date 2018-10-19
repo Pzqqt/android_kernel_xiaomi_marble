@@ -517,4 +517,5 @@ bool hif_needs_bmi(struct hif_opaque_softc *scn)
 
 	return hif_sc->bus_ops.hif_needs_bmi(hif_sc);
 }
+qdf_export_symbol(hif_needs_bmi);
 #endif /* WLAN_FEATURE_BMI */
