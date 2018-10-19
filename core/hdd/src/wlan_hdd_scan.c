@@ -502,8 +502,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	}
 
 	hdd_debug("Device_mode %s(%d)",
-		hdd_device_mode_to_string(adapter->device_mode),
-		adapter->device_mode);
+		  qdf_opmode_str(adapter->device_mode),
+		  adapter->device_mode);
 
 	/*
 	 * IBSS vdev does not need to scan to establish
@@ -516,7 +516,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	if (QDF_IBSS_MODE == adapter->device_mode ||
 	    QDF_NDI_MODE == adapter->device_mode) {
 		hdd_err("Scan not supported for %s",
-			hdd_device_mode_to_string(adapter->device_mode));
+			qdf_opmode_str(adapter->device_mode));
 		return -EINVAL;
 	}
 

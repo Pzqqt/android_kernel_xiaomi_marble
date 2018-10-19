@@ -3336,8 +3336,8 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 			 adapter->session_id, channel_type));
 
 	hdd_debug("Device_mode %s(%d)  freq = %d",
-	       hdd_device_mode_to_string(adapter->device_mode),
-	       adapter->device_mode, chandef->chan->center_freq);
+		  qdf_opmode_str(adapter->device_mode),
+		  adapter->device_mode, chandef->chan->center_freq);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = wlan_hdd_validate_context(hdd_ctx);
@@ -3390,10 +3390,9 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 			hdd_err("Invalid Channel: %d", channel);
 			return -EINVAL;
 		}
-		hdd_debug("set channel to [%d] for device mode %s(%d)",
-		       channel,
-		       hdd_device_mode_to_string(adapter->device_mode),
-		       adapter->device_mode);
+		hdd_debug("set channel to [%d] for device mode %s(%d)", channel,
+			  qdf_opmode_str(adapter->device_mode),
+			  adapter->device_mode);
 	}
 
 	if ((adapter->device_mode == QDF_STA_MODE) ||
@@ -5341,8 +5340,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	 */
 	clear_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
 	hdd_debug("Device_mode %s(%d)",
-		hdd_device_mode_to_string(adapter->device_mode),
-		adapter->device_mode);
+		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
@@ -5639,8 +5637,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		return status;
 
 	hdd_debug("adapter = %pK, Device mode %s(%d) sub20 %d",
-		adapter, hdd_device_mode_to_string(adapter->device_mode),
-		adapter->device_mode, cds_is_sub_20_mhz_enabled());
+		  adapter, qdf_opmode_str(adapter->device_mode),
+		  adapter->device_mode, cds_is_sub_20_mhz_enabled());
 
 	if (policy_mgr_is_hw_mode_change_in_progress(hdd_ctx->psoc)) {
 		status = policy_mgr_wait_for_connection_update(
@@ -5955,8 +5953,7 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_CHANGE_BEACON,
 			 adapter->session_id, adapter->device_mode));
 	hdd_debug("Device_mode %s(%d)",
-	       hdd_device_mode_to_string(adapter->device_mode),
-	       adapter->device_mode);
+		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = wlan_hdd_validate_context(hdd_ctx);

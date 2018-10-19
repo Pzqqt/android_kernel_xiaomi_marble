@@ -2084,8 +2084,6 @@ int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
 				uint32_t chan_number,
 				enum phy_ch_width chan_bw);
 
-const char *hdd_device_mode_to_string(uint8_t device_mode);
-
 QDF_STATUS hdd_get_front_adapter(struct hdd_context *hdd_ctx,
 				 struct hdd_adapter **out_adapter);
 

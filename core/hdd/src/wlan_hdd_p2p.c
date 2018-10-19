@@ -865,8 +865,7 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 			 TRACE_CODE_HDD_DEL_VIRTUAL_INTF,
 			 adapter->session_id, adapter->device_mode));
 	hdd_debug("Device_mode %s(%d)",
-		   hdd_device_mode_to_string(adapter->device_mode),
-		   adapter->device_mode);
+		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
 	errno = wlan_hdd_validate_context(hdd_ctx);
 	if (errno)

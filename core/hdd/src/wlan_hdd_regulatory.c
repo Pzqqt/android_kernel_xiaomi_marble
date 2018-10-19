@@ -795,8 +795,8 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 			 */
 
 			hdd_debug("STA (Device mode %s(%d)) connected in band %u, Changing band to %u, Issuing Disconnect",
-					hdd_device_mode_to_string(adapter->device_mode),
-					adapter->device_mode, currBand, band);
+				  qdf_opmode_str(adapter->device_mode),
+				  adapter->device_mode, currBand, band);
 			INIT_COMPLETION(adapter->disconnect_comp_var);
 
 			status = sme_roam_disconnect(

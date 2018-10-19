@@ -188,7 +188,7 @@ void hdd_ipa_set_tx_flow_info(void)
 						hdd_ctx->config->
 						tx_hbw_flow_max_queue_depth);
 					hdd_info("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
-					       hdd_device_mode_to_string(
+					       qdf_opmode_str(
 							adapter->device_mode),
 					       adapter->device_mode,
 					       targetChannel,
@@ -214,9 +214,8 @@ void hdd_ipa_set_tx_flow_info(void)
 						hdd_ctx->config->
 						tx_hbw_flow_max_queue_depth);
 					hdd_info("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
-					       hdd_device_mode_to_string(
-						preAdapterContext->device_mode
-							  ),
+					       qdf_opmode_str(
+						preAdapterContext->device_mode),
 					       preAdapterContext->device_mode,
 					       targetChannel,
 					       preAdapterContext->
@@ -264,7 +263,7 @@ void hdd_ipa_set_tx_flow_info(void)
 						hdd_ctx->config->
 						tx_hbw_flow_max_queue_depth);
 					hdd_info("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
-					    hdd_device_mode_to_string(
+					    qdf_opmode_str(
 						    adapter5->device_mode),
 					    adapter5->device_mode,
 					    channel5,
@@ -292,7 +291,7 @@ void hdd_ipa_set_tx_flow_info(void)
 						hdd_ctx->config->
 						tx_lbw_flow_max_queue_depth);
 					hdd_info("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
-						hdd_device_mode_to_string(
+						qdf_opmode_str(
 						    adapter2_4->device_mode),
 						adapter2_4->device_mode,
 						channel24,

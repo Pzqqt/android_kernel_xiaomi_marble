@@ -411,32 +411,6 @@ uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBU
 #endif
 
 /**
- * hdd_device_mode_to_string() - return string conversion of device mode
- * @device_mode: device mode
- *
- * This utility function helps log string conversion of device mode.
- *
- * Return: string conversion of device mode, if match found;
- *	   "Unknown" otherwise.
- */
-const char *hdd_device_mode_to_string(uint8_t device_mode)
-{
-	switch (device_mode) {
-	CASE_RETURN_STRING(QDF_STA_MODE);
-	CASE_RETURN_STRING(QDF_SAP_MODE);
-	CASE_RETURN_STRING(QDF_P2P_CLIENT_MODE);
-	CASE_RETURN_STRING(QDF_P2P_GO_MODE);
-	CASE_RETURN_STRING(QDF_FTM_MODE);
-	CASE_RETURN_STRING(QDF_IBSS_MODE);
-	CASE_RETURN_STRING(QDF_P2P_DEVICE_MODE);
-	CASE_RETURN_STRING(QDF_OCB_MODE);
-	CASE_RETURN_STRING(QDF_NDI_MODE);
-	default:
-		return "Unknown";
-	}
-}
-
-/**
  * hdd_get_valid_chan() - return current chan list from regulatory.
  * @hdd_ctx: HDD context
  * @chan_list: buf hold returned chan list
@@ -3101,8 +3075,7 @@ static int __hdd_stop(struct net_device *dev)
 	 * be called on that interface
 	 */
 	hdd_debug("Disabling queues, adapter device mode: %s(%d)",
-		  hdd_device_mode_to_string(adapter->device_mode),
-		  adapter->device_mode);
+		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
@@ -5360,7 +5333,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		hdd_info("[SSR] reset adapter with device mode %s(%d)",
-			 hdd_device_mode_to_string(adapter->device_mode),
+			 qdf_opmode_str(adapter->device_mode),
 			 adapter->device_mode);
 
 		if ((adapter->device_mode == QDF_STA_MODE) ||
@@ -6138,7 +6111,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 			continue;
 
 		hdd_debug("[SSR] start adapter with device mode %s(%d)",
-			  hdd_device_mode_to_string(adapter->device_mode),
+			  qdf_opmode_str(adapter->device_mode),
 			  adapter->device_mode);
 
 		hdd_wmm_init(adapter);
@@ -14111,8 +14084,8 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		hdd_debug("Adapter with device mode %s(%d) exists",
-			hdd_device_mode_to_string(adapter->device_mode),
-			adapter->device_mode);
+			  qdf_opmode_str(adapter->device_mode),
+			  adapter->device_mode);
 		if (((QDF_STA_MODE == adapter->device_mode)
 			|| (QDF_P2P_CLIENT_MODE == adapter->device_mode)
 			|| (QDF_P2P_DEVICE_MODE == adapter->device_mode))

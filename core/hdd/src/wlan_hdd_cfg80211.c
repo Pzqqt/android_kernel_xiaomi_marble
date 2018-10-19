@@ -12774,8 +12774,7 @@ static void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter,
 	mac_handle_t mac_handle;
 
 	hdd_debug("Device_mode %s(%d)",
-		hdd_device_mode_to_string(adapter->device_mode),
-		adapter->device_mode);
+		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
 	qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
 	setKey.keyId = key_index;       /* Store Key ID */
@@ -12962,8 +12961,8 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_CHANGE_BSS,
 			 adapter->session_id, params->ap_isolate));
 	hdd_debug("Device_mode %s(%d), ap_isolate = %d",
-		hdd_device_mode_to_string(adapter->device_mode),
-		adapter->device_mode, params->ap_isolate);
+		  qdf_opmode_str(adapter->device_mode),
+		  adapter->device_mode, params->ap_isolate);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -13476,8 +13475,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		return status;
 
 	hdd_debug("Device_mode %s(%d)",
-		hdd_device_mode_to_string(adapter->device_mode),
-		adapter->device_mode);
+		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
 	if (CSR_MAX_NUM_KEY <= key_index) {
 		hdd_err("Invalid key index %d", key_index);
@@ -13799,8 +13797,7 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 		return -EINVAL;
 
 	hdd_debug("Device_mode %s(%d)",
-		hdd_device_mode_to_string(adapter->device_mode),
-		adapter->device_mode);
+		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
 	memset(&params, 0, sizeof(params));
 
@@ -13992,8 +13989,8 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 			 adapter->session_id, key_index));
 
 	hdd_debug("Device_mode %s(%d) key_index = %d",
-		hdd_device_mode_to_string(adapter->device_mode),
-		adapter->device_mode, key_index);
+		  qdf_opmode_str(adapter->device_mode),
+		  adapter->device_mode, key_index);
 
 	if (CSR_MAX_NUM_KEY <= key_index) {
 		hdd_err("Invalid key index: %d", key_index);
@@ -16714,13 +16711,12 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_CONNECT,
 			 adapter->session_id, adapter->device_mode));
 	hdd_debug("Device_mode %s(%d)",
-		hdd_device_mode_to_string(adapter->device_mode),
-		adapter->device_mode);
+		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
 	if (adapter->device_mode != QDF_STA_MODE &&
-		adapter->device_mode != QDF_P2P_CLIENT_MODE) {
+	    adapter->device_mode != QDF_P2P_CLIENT_MODE) {
 		hdd_err("Device_mode %s(%d) is not supported",
-			hdd_device_mode_to_string(adapter->device_mode),
+			qdf_opmode_str(adapter->device_mode),
 			adapter->device_mode);
 		return -EINVAL;
 	}
@@ -17099,8 +17095,8 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 			 adapter->session_id, reason));
 	hdd_print_netdev_txq_status(dev);
 	hdd_debug("Device_mode %s(%d) reason code(%d)",
-		hdd_device_mode_to_string(adapter->device_mode),
-		adapter->device_mode, reason);
+		  qdf_opmode_str(adapter->device_mode),
+		  adapter->device_mode, reason);
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 
@@ -17345,8 +17341,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_JOIN_IBSS,
 			 adapter->session_id, adapter->device_mode));
 	hdd_debug("Device_mode %s(%d)",
-		hdd_device_mode_to_string(adapter->device_mode),
-		adapter->device_mode);
+		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 
@@ -17552,8 +17547,7 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 		return status;
 
 	hdd_debug("Device_mode %s(%d)",
-		hdd_device_mode_to_string(adapter->device_mode),
-		adapter->device_mode);
+		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 
 	roam_profile = hdd_roam_profile(adapter);
 
@@ -18829,8 +18823,8 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 		}
 	} else {
 		hdd_debug("Invalid device_mode %s(%d)",
-			hdd_device_mode_to_string(adapter->device_mode),
-			adapter->device_mode);
+			  qdf_opmode_str(adapter->device_mode),
+			  adapter->device_mode);
 		return -EINVAL;
 	}
 	hdd_exit();

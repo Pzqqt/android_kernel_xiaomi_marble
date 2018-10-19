@@ -703,7 +703,7 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 
 	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
-			 hdd_device_mode_to_string(adapter->device_mode),
+			 qdf_opmode_str(adapter->device_mode),
 			 adapter->device_mode);
 		return -EINVAL;
 	}
@@ -916,7 +916,7 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 
 	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
-			 hdd_device_mode_to_string(adapter->device_mode),
+			 qdf_opmode_str(adapter->device_mode),
 			 adapter->device_mode);
 		return -EINVAL;
 	}
@@ -2408,7 +2408,7 @@ static int wlan_hdd_get_link_status(struct hdd_adapter *adapter)
 	if ((QDF_STA_MODE != adapter->device_mode) &&
 	    (QDF_P2P_CLIENT_MODE != adapter->device_mode)) {
 		hdd_warn("Unsupported in mode %s(%d)",
-			 hdd_device_mode_to_string(adapter->device_mode),
+			 qdf_opmode_str(adapter->device_mode),
 			 adapter->device_mode);
 		return 0;
 	}
@@ -2823,8 +2823,8 @@ int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int targetRate)
 	    (QDF_SAP_MODE != adapter->device_mode) &&
 	    (QDF_STA_MODE != adapter->device_mode)) {
 		hdd_err("Received SETMCRATE cmd in invalid mode %s(%d)",
-			 hdd_device_mode_to_string(adapter->device_mode),
-			 adapter->device_mode);
+			qdf_opmode_str(adapter->device_mode),
+			adapter->device_mode);
 		hdd_err("SETMCRATE cmd is allowed only in STA, IBSS or SOFTAP mode");
 		return -EINVAL;
 	}
@@ -2845,8 +2845,7 @@ int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int targetRate)
 	qdf_copy_macaddr(&rateUpdate.bssid, &adapter->mac_addr);
 	hdd_debug("MC Target rate %d, mac = %pM, dev_mode %s(%d)",
 		  rateUpdate.mcastDataRate24GHz, rateUpdate.bssid.bytes,
-		  hdd_device_mode_to_string(adapter->device_mode),
-		  adapter->device_mode);
+		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 	status = sme_send_rate_update_ind(hdd_ctx->mac_handle, &rateUpdate);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("SETMCRATE failed");
@@ -4392,7 +4391,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 
 	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
-			 hdd_device_mode_to_string(adapter->device_mode),
+			 qdf_opmode_str(adapter->device_mode),
 			 adapter->device_mode);
 		return -EINVAL;
 	}
@@ -4819,7 +4818,7 @@ static int drv_cmd_set_ibss_beacon_oui_data(struct hdd_adapter *adapter,
 
 	if (QDF_IBSS_MODE != adapter->device_mode) {
 		hdd_debug("Device_mode %s(%d) not IBSS",
-			  hdd_device_mode_to_string(adapter->device_mode),
+			  qdf_opmode_str(adapter->device_mode),
 			  adapter->device_mode);
 		return ret;
 	}
@@ -5065,8 +5064,8 @@ static int drv_cmd_set_rmc_enable(struct hdd_adapter *adapter,
 	if ((QDF_IBSS_MODE != adapter->device_mode) &&
 	    (QDF_SAP_MODE != adapter->device_mode)) {
 		hdd_err("Received SETRMCENABLE cmd in invalid mode %s(%d)",
-			 hdd_device_mode_to_string(adapter->device_mode),
-			 adapter->device_mode);
+			qdf_opmode_str(adapter->device_mode),
+			adapter->device_mode);
 		hdd_err("SETRMCENABLE cmd is allowed only in IBSS/SOFTAP mode");
 		ret = -EINVAL;
 		goto exit;
@@ -5117,7 +5116,7 @@ static int drv_cmd_set_rmc_action_period(struct hdd_adapter *adapter,
 	if ((QDF_IBSS_MODE != adapter->device_mode) &&
 	    (QDF_SAP_MODE != adapter->device_mode)) {
 		hdd_err("Received SETRMC cmd in invalid mode %s(%d)",
-			hdd_device_mode_to_string(adapter->device_mode),
+			qdf_opmode_str(adapter->device_mode),
 			adapter->device_mode);
 		hdd_err("SETRMC cmd is allowed only in IBSS/SOFTAP mode");
 		ret = -EINVAL;
@@ -5172,8 +5171,8 @@ static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
 	if ((QDF_IBSS_MODE != adapter->device_mode) &&
 	    (QDF_SAP_MODE != adapter->device_mode)) {
 		hdd_err("Received SETRMCTXRATE cmd in invalid mode %s(%d)",
-			 hdd_device_mode_to_string(adapter->device_mode),
-			 adapter->device_mode);
+			qdf_opmode_str(adapter->device_mode),
+			adapter->device_mode);
 		hdd_err("SETRMCTXRATE cmd is allowed only in IBSS/SOFTAP mode");
 		ret = -EINVAL;
 		goto exit;
@@ -5232,7 +5231,7 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 
 	if (QDF_IBSS_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
-			 hdd_device_mode_to_string(adapter->device_mode),
+			 qdf_opmode_str(adapter->device_mode),
 			 adapter->device_mode);
 		return -EINVAL;
 	}
@@ -5359,7 +5358,7 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 
 	if (QDF_IBSS_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
-			 hdd_device_mode_to_string(adapter->device_mode),
+			 qdf_opmode_str(adapter->device_mode),
 			 adapter->device_mode);
 		return -EINVAL;
 	}
@@ -5546,7 +5545,7 @@ static int drv_cmd_get_tsm_stats(struct hdd_adapter *adapter,
 	if ((QDF_STA_MODE != adapter->device_mode) &&
 	    (QDF_P2P_CLIENT_MODE != adapter->device_mode)) {
 		hdd_warn("Unsupported in mode %s(%d)",
-			 hdd_device_mode_to_string(adapter->device_mode),
+			 qdf_opmode_str(adapter->device_mode),
 			 adapter->device_mode);
 		return -EINVAL;
 	}
@@ -5684,7 +5683,7 @@ static int drv_cmd_ccx_beacon_req(struct hdd_adapter *adapter,
 
 	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
-			 hdd_device_mode_to_string(adapter->device_mode),
+			 qdf_opmode_str(adapter->device_mode),
 			 adapter->device_mode);
 		return -EINVAL;
 	}

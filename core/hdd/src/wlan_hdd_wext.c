@@ -7203,8 +7203,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 
 		if (adapter->device_mode != QDF_P2P_GO_MODE) {
 			hdd_err("Setting NoA is not allowed in Device mode %s(%d)",
-				hdd_device_mode_to_string(
-					adapter->device_mode),
+				qdf_opmode_str(adapter->device_mode),
 				adapter->device_mode);
 			return -EINVAL;
 		}
