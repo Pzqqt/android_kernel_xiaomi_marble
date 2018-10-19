@@ -4219,6 +4219,26 @@ static int hdd_we_set_wow_data_inactivity_timeout(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_we_set_tx_power(struct hdd_adapter *adapter, int value)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	mac_handle_t mac_handle = hdd_ctx->mac_handle;
+	QDF_STATUS status;
+
+	if (!mac_handle)
+		return -EINVAL;
+
+	status = sme_set_tx_power(mac_handle, adapter->session_id,
+				  sta_ctx->conn_info.bssId,
+				  adapter->device_mode, value);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("cfg set failed, value %d status %d", value, status);
+
+	return qdf_status_to_os_return(status);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4277,31 +4297,13 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_MC_RATE:
-	{
-		if (!mac_handle)
-			return -EINVAL;
-
 		ret = wlan_hdd_set_mc_rate(adapter, set_value);
 		break;
-	}
+
 	case WE_SET_TX_POWER:
-	{
-		struct qdf_mac_addr bssid;
-
-		if (!mac_handle)
-			return -EINVAL;
-
-		qdf_copy_macaddr(&bssid, &sta_ctx->conn_info.bssId);
-		if (sme_set_tx_power
-			    (mac_handle, adapter->session_id, bssid,
-			    adapter->device_mode,
-			    set_value) != QDF_STATUS_SUCCESS) {
-			hdd_err("Setting tx power failed");
-			ret = -EIO;
-			break;
-		}
+		ret = hdd_we_set_tx_power(adapter, set_value);
 		break;
-	}
+
 	case WE_SET_MAX_TX_POWER:
 	{
 		struct qdf_mac_addr bssid;
