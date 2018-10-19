@@ -1008,6 +1008,12 @@ typedef struct {
     A_UINT32 ppdu_transmitted_bytes_low;
     A_UINT32 ppdu_transmitted_bytes_high;
     A_UINT32 peer_ttl_removed_count;
+    /* inactive_time
+     * Running duration of the time since last tx/rx activity by this peer,
+     * units = seconds.
+     * If the peer is currently active, this inactive_time will be 0x0.
+     */
+    A_UINT32 inactive_time;
 } htt_peer_stats_cmn_tlv;
 
 typedef struct {
