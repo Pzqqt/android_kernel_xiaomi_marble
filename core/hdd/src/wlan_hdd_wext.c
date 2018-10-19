@@ -4193,6 +4193,32 @@ static int hdd_we_set_data_inactivity_timeout(struct hdd_adapter *adapter,
 	return 0;
 }
 
+static int hdd_we_set_wow_data_inactivity_timeout(struct hdd_adapter *adapter,
+						  int value)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	mac_handle_t mac_handle = hdd_ctx->mac_handle;
+	QDF_STATUS status;
+
+	if (!mac_handle)
+		return -EINVAL;
+
+	if ((value < CFG_WOW_DATA_INACTIVITY_TIMEOUT_MIN) ||
+	    (value > CFG_WOW_DATA_INACTIVITY_TIMEOUT_MAX)) {
+		hdd_err_rl("Invalid value %d", value);
+		return -EINVAL;
+	}
+
+	status = sme_cfg_set_int(mac_handle,
+				 WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT,
+				 value);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("cfg set failed, value %d status %d", value, status);
+
+	return qdf_status_to_os_return(status);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4246,20 +4272,10 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_WOW_DATA_INACTIVITY_TO:
-		if (!mac_handle) {
-			ret = -EINVAL;
-			break;
-		}
-
-		if ((set_value < CFG_WOW_DATA_INACTIVITY_TIMEOUT_MIN) ||
-		    (set_value > CFG_WOW_DATA_INACTIVITY_TIMEOUT_MAX) ||
-		    (sme_cfg_set_int(mac_handle,
-				     WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT,
-				     set_value) == QDF_STATUS_E_FAILURE)) {
-			hdd_err("WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT fail");
-			ret = -EINVAL;
-		}
+		ret = hdd_we_set_wow_data_inactivity_timeout(adapter,
+							     set_value);
 		break;
+
 	case WE_SET_MC_RATE:
 	{
 		if (!mac_handle)
