@@ -2549,6 +2549,13 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			frmLen = newFrmLen;
 			pFc = (tpSirMacFrameCtl) (qdf_nbuf_data(tx_frame));
 		}
+		/*
+		 * Some target which support sending mgmt frame based on htt
+		 * would DMA write this PMF tx frame buffer, it may cause smmu
+		 * check permission fault, set a flag to do bi-direction DMA
+		 * map, normal tx unmap is enough for this case.
+		 */
+		QDF_NBUF_CB_TX_DMA_BI_MAP((qdf_nbuf_t)tx_frame) = 1;
 	}
 #endif /* WLAN_FEATURE_11W */
 	mHdr = (tpSirMacMgmtHdr)qdf_nbuf_data(tx_frame);
