@@ -2803,6 +2803,8 @@ static int wmi_connect_pdev_htc_service(struct wmi_soc *soc,
 		return status;
 	}
 
+	htc_set_async_ep(soc->htc_handle, response.Endpoint, 1);
+
 	soc->wmi_endpoint_id[pdev_idx] = response.Endpoint;
 	soc->max_msg_len[pdev_idx] = response.MaxMsgLength;
 
