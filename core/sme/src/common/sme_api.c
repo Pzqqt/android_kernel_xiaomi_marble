@@ -2455,7 +2455,8 @@ static QDF_STATUS sme_process_nss_update_resp(tpAniSirGlobal mac, uint8_t *msg)
 				param->tx_status,
 				param->session_id,
 				command->u.nss_update_cmd.next_action,
-				command->u.nss_update_cmd.reason);
+				command->u.nss_update_cmd.reason,
+				command->u.nss_update_cmd.original_vdev_id);
 	} else {
 		sme_err("Callback does not exisit");
 	}
@@ -13179,6 +13180,7 @@ void sme_register_hw_mode_trans_cb(tHalHandle hal,
  * @new_nss: the new nss value
  * @cback: hdd callback
  * @next_action: next action to happen at policy mgr after beacon update
+ * @original_vdev_id: original request hwmode change vdev id
  *
  * Sends the command to CSR to send to PE
  * Return: QDF_STATUS_SUCCESS on successful posting
@@ -13186,7 +13188,8 @@ void sme_register_hw_mode_trans_cb(tHalHandle hal,
 QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
 				uint8_t  new_nss, policy_mgr_nss_update_cback cback,
 				uint8_t next_action, struct wlan_objmgr_psoc *psoc,
-				enum policy_mgr_conn_update_reason reason)
+				enum policy_mgr_conn_update_reason reason,
+				uint32_t original_vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal mac = sme_get_mac_context();
@@ -13213,8 +13216,10 @@ QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
 		cmd->u.nss_update_cmd.context = psoc;
 		cmd->u.nss_update_cmd.next_action = next_action;
 		cmd->u.nss_update_cmd.reason = reason;
+		cmd->u.nss_update_cmd.original_vdev_id = original_vdev_id;
 
-		sme_debug("Queuing e_sme_command_nss_update to CSR");
+		sme_debug("Queuing e_sme_command_nss_update to CSR:vdev (%d %d) ss %d r %d",
+			  vdev_id, original_vdev_id, new_nss, reason);
 		csr_queue_sme_command(mac, cmd, false);
 		sme_release_global_lock(&mac->sme);
 	}

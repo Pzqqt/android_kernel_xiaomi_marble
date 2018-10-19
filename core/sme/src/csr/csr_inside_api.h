@@ -1123,4 +1123,27 @@ uint8_t
 csr_get_channel_for_hw_mode_change(tpAniSirGlobal mac_ctx,
 				   tScanResultHandle result_handle,
 				   uint32_t session_id);
+
+/**
+ * csr_scan_get_channel_for_hw_mode_change() - This function to find
+ *                                       out if HW mode change
+ *                                       is needed for any of
+ *                                       the candidate AP which
+ *                                       STA could join
+ * @mac_ctx: mac context
+ * @session_id: STA session ID
+ * @profile: profile
+ *
+ * This function is written to find out for any bss from scan
+ * handle a HW mode change to DBS will be needed or not.
+ * If there is no candidate AP which requires DBS, this function will return
+ * the first Candidate AP's chan.
+ *
+ * Return: AP channel for which HW mode change will be needed. 0
+ * means no candidate AP to connect.
+ */
+uint8_t
+csr_scan_get_channel_for_hw_mode_change(
+	tpAniSirGlobal mac_ctx, uint32_t session_id,
+	struct csr_roam_profile *profile);
 #endif /* CSR_INSIDE_API_H__ */

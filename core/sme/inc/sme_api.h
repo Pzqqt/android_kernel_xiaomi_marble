@@ -1343,7 +1343,8 @@ void sme_register_hw_mode_trans_cb(tHalHandle hal,
 QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
 				uint8_t  new_nss, policy_mgr_nss_update_cback cback,
 				uint8_t next_action, struct wlan_objmgr_psoc *psoc,
-				enum policy_mgr_conn_update_reason reason);
+				enum policy_mgr_conn_update_reason reason,
+				uint32_t original_vdev_id);
 
 typedef void (*sme_peer_authorized_fp) (uint32_t vdev_id);
 QDF_STATUS sme_set_peer_authorized(uint8_t *peer_addr,

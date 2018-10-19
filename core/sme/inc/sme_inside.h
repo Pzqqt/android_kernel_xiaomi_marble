@@ -136,6 +136,7 @@ typedef struct s_tdls_cmd {
  * @context: Adapter context
  * @next_action: Action to be taken after nss update
  * @reason: reason for nss update
+ * @original_vdev_id: original request hwmode change vdev id
  */
 struct s_nss_update_cmd {
 	uint32_t new_nss;
@@ -144,6 +145,7 @@ struct s_nss_update_cmd {
 	void *context;
 	uint8_t next_action;
 	enum policy_mgr_conn_update_reason reason;
+	uint32_t original_vdev_id;
 };
 
 typedef struct tagSmeCmd {

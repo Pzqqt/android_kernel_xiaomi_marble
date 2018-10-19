@@ -1034,8 +1034,8 @@ static enum csr_scancomplete_nextcommand csr_scan_get_next_command_state(
 	switch (session->scan_info.scan_reason) {
 	case eCsrScanForSsid:
 		sme_debug("Resp for Scan For Ssid");
-		channel = policy_mgr_search_and_check_for_session_conc(
-				mac_ctx->psoc,
+		channel = csr_scan_get_channel_for_hw_mode_change(
+				mac_ctx,
 				session_id,
 				session->scan_info.profile);
 		if ((!channel) || scan_status) {
@@ -2173,6 +2173,45 @@ csr_get_channel_for_hw_mode_change(tpAniSirGlobal mac_ctx,
 	}
 end:
 	return channel_id;
+}
+
+uint8_t
+csr_scan_get_channel_for_hw_mode_change(
+	tpAniSirGlobal mac_ctx, uint32_t session_id,
+	struct csr_roam_profile *profile)
+{
+	tScanResultHandle result_handle = NULL;
+	QDF_STATUS status;
+	uint8_t first_ap_ch = 0;
+	uint8_t candidate_chan;
+
+	status = sme_get_ap_channel_from_scan_cache(profile, &result_handle,
+						    &first_ap_ch);
+	if (status != QDF_STATUS_SUCCESS || !result_handle || !first_ap_ch) {
+		if (result_handle)
+			sme_scan_result_purge(result_handle);
+		sme_err("fail get scan result: status %d first ap ch %d",
+			status, first_ap_ch);
+		return 0;
+	}
+	if (!policy_mgr_check_for_session_conc(mac_ctx->psoc, session_id,
+					       first_ap_ch)) {
+		sme_scan_result_purge(result_handle);
+		sme_err("Conc not allowed for the session %d ch %d",
+			session_id, first_ap_ch);
+		return 0;
+	}
+
+	candidate_chan = csr_get_channel_for_hw_mode_change(mac_ctx,
+							    result_handle,
+							    session_id);
+	sme_scan_result_purge(result_handle);
+	if (!candidate_chan)
+		candidate_chan = first_ap_ch;
+	sme_debug("session %d hw mode check candidate_chan %d", session_id,
+		  candidate_chan);
+
+	return candidate_chan;
 }
 
 static enum wlan_auth_type csr_covert_auth_type_new(eCsrAuthType auth)
