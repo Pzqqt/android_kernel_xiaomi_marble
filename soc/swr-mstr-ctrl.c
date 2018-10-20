@@ -231,21 +231,37 @@ static const struct file_operations swrm_debug_ops = {
 
 static int swrm_clk_request(struct swr_mstr_ctrl *swrm, bool enable)
 {
+	int ret = 0;
+
 	if (!swrm->clk || !swrm->handle)
 		return -EINVAL;
 
+	mutex_lock(&swrm->clklock);
 	if (enable) {
+		if (!swrm->dev_up)
+			goto exit;
 		swrm->clk_ref_count++;
 		if (swrm->clk_ref_count == 1) {
-			swrm->clk(swrm->handle, true);
+			ret = swrm->clk(swrm->handle, true);
+			if (ret) {
+				dev_err(swrm->dev,
+					"%s: clock enable req failed",
+					__func__);
+				--swrm->clk_ref_count;
+			}
 		}
 	} else if (--swrm->clk_ref_count == 0) {
 		swrm->clk(swrm->handle, false);
-	} else if (swrm->clk_ref_count < 0) {
+		complete(&swrm->clk_off_complete);
+	}
+	if (swrm->clk_ref_count < 0) {
 		pr_err("%s: swrm clk count mismatch\n", __func__);
 		swrm->clk_ref_count = 0;
 	}
-	return 0;
+
+exit:
+	mutex_unlock(&swrm->clklock);
+	return ret;
 }
 
 static int swrm_ahb_write(struct swr_mstr_ctrl *swrm,
@@ -1723,10 +1739,12 @@ static int swrm_probe(struct platform_device *pdev)
 	swrm->state = SWR_MSTR_UP;
 	init_completion(&swrm->reset);
 	init_completion(&swrm->broadcast);
+	init_completion(&swrm->clk_off_complete);
 	mutex_init(&swrm->mlock);
 	mutex_init(&swrm->reslock);
 	mutex_init(&swrm->force_down_lock);
 	mutex_init(&swrm->iolock);
+	mutex_init(&swrm->clklock);
 	mutex_init(&swrm->devlock);
 
 	for (i = 0 ; i < SWR_MSTR_PORT_LEN; i++)
@@ -1845,6 +1863,7 @@ err_irq_fail:
 	mutex_destroy(&swrm->reslock);
 	mutex_destroy(&swrm->force_down_lock);
 	mutex_destroy(&swrm->iolock);
+	mutex_destroy(&swrm->clklock);
 err_pdata_fail:
 err_memory_fail:
 	return ret;
@@ -1865,6 +1884,8 @@ static int swrm_remove(struct platform_device *pdev)
 	msm_aud_evt_unregister_client(&swrm->event_notifier);
 	mutex_destroy(&swrm->mlock);
 	mutex_destroy(&swrm->reslock);
+	mutex_destroy(&swrm->iolock);
+	mutex_destroy(&swrm->clklock);
 	mutex_destroy(&swrm->force_down_lock);
 	devm_kfree(&pdev->dev, swrm);
 	return 0;
@@ -2063,6 +2084,13 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 		mutex_unlock(&swrm->reslock);
 		break;
 	case SWR_DEVICE_SSR_UP:
+		/* wait for clk voting to be zero */
+		if (swrm->clk_ref_count &&
+			 !wait_for_completion_timeout(&swrm->clk_off_complete,
+						   (1 * HZ/100)))
+			dev_err(swrm->dev, "%s: clock voting not zero\n",
+				__func__);
+
 		mutex_lock(&swrm->devlock);
 		swrm->dev_up = true;
 		mutex_unlock(&swrm->devlock);
