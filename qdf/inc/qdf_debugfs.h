@@ -70,9 +70,9 @@ QDF_STATUS qdf_debugfs_init(void);
 /**
  * qdf_debugfs_exit() - cleanup debugfs
  *
- * Return: QDF_STATUS
+ * Return: None
  */
-QDF_STATUS qdf_debugfs_exit(void);
+void qdf_debugfs_exit(void);
 
 /**
  * qdf_debugfs_create_dir() - create a debugfs directory
@@ -244,13 +244,10 @@ void qdf_debugfs_remove_file(qdf_dentry_t d);
 
 static inline QDF_STATUS qdf_debugfs_init(void)
 {
-	return QDF_STATUS_E_NOSUPPORT;
+	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS qdf_debugfs_exit(void)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
+static inline void qdf_debugfs_exit(void) { }
 
 static inline qdf_dentry_t qdf_debugfs_create_dir(const char *name,
 						  qdf_dentry_t parent)
