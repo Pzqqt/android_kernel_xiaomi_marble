@@ -534,6 +534,7 @@ void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
  * @next_action: Next action after nss update
  * @band: update AP vdev on the Band.
  * @reason: action reason
+ * @original_vdev_id: original request hwmode change vdev id
  *
  * The function will update AP vdevs on specific band.
  *  eg. band = POLICY_MGR_ANY will request to update all band (2g and 5g)
@@ -543,7 +544,8 @@ void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 		uint8_t  new_nss, uint8_t next_action,
 		enum policy_mgr_band band,
-		enum policy_mgr_conn_update_reason reason);
+		enum policy_mgr_conn_update_reason reason,
+		uint32_t original_vdev_id);
 
 /**
  * policy_mgr_is_concurrency_allowed() - Check for allowed

@@ -1066,7 +1066,8 @@ QDF_STATUS policy_mgr_next_actions(
 		 * intially. If yes, update the beacon template & notify FW.
 		 */
 		status = policy_mgr_nss_update(psoc, POLICY_MGR_RX_NSS_1,
-					PM_NOP, POLICY_MGR_ANY, reason);
+					PM_NOP, POLICY_MGR_ANY, reason,
+					session_id);
 		break;
 	case PM_UPGRADE:
 		/*
@@ -1074,7 +1075,8 @@ QDF_STATUS policy_mgr_next_actions(
 		 * intially. If yes, update the beacon template & notify FW.
 		 */
 		status = policy_mgr_nss_update(psoc, POLICY_MGR_RX_NSS_2,
-					PM_NOP, POLICY_MGR_ANY, reason);
+					PM_NOP, POLICY_MGR_ANY, reason,
+					session_id);
 		break;
 	case PM_DBS1_DOWNGRADE:
 		status = policy_mgr_complete_action(psoc, POLICY_MGR_RX_NSS_1,
@@ -1133,12 +1135,14 @@ QDF_STATUS policy_mgr_next_actions(
 	case PM_UPGRADE_5G:
 		status = policy_mgr_nss_update(
 					psoc, POLICY_MGR_RX_NSS_2,
-					PM_NOP, POLICY_MGR_BAND_5, reason);
+					PM_NOP, POLICY_MGR_BAND_5, reason,
+					session_id);
 		break;
 	case PM_UPGRADE_2G:
 		status = policy_mgr_nss_update(
 					psoc, POLICY_MGR_RX_NSS_2,
-					PM_NOP, POLICY_MGR_BAND_24, reason);
+					PM_NOP, POLICY_MGR_BAND_24, reason,
+					session_id);
 		break;
 	default:
 		policy_mgr_err("unexpected action value %d", action);
