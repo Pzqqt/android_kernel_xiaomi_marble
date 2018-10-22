@@ -122,6 +122,8 @@ static inline __qdf_time_t __qdf_system_ticks(void)
 	return jiffies;
 }
 
+#define __qdf_system_ticks_per_sec HZ
+
 /**
  * __qdf_system_ticks_to_msecs() - convert system ticks into milli seconds
  * @ticks: System ticks

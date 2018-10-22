@@ -115,6 +115,8 @@ static inline qdf_time_t qdf_system_ticks(void)
 	return __qdf_system_ticks();
 }
 
+#define qdf_system_ticks_per_sec __qdf_system_ticks_per_sec
+
 /**
  * qdf_system_ticks_to_msecs - convert ticks to milliseconds
  * @clock_ticks: Number of ticks
