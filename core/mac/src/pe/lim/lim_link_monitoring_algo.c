@@ -579,7 +579,7 @@ void lim_rx_invalid_peer_process(tpAniSirGlobal mac_ctx,
 	session_entry = pe_find_session_by_sme_session_id(mac_ctx,
 							  msg->vdev_id);
 	if (NULL == session_entry) {
-		pe_err("session not found for given sme session");
+		pe_err_rl("session not found for given sme session");
 		qdf_mem_free(msg);
 		return;
 	}
