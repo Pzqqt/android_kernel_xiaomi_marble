@@ -2517,6 +2517,7 @@ bool policy_mgr_is_5g_channel_allowed(struct wlan_objmgr_psoc *psoc,
  * @next_action: next action to happen at policy mgr after
  *		beacon update
  * @reason: Reason for nss update
+ * @original_vdev_id: original request hwmode change vdev id
  *
  * This function is the callback registered with SME at nss
  * update request time
@@ -2527,7 +2528,8 @@ static void policy_mgr_nss_update_cb(struct wlan_objmgr_psoc *psoc,
 		uint8_t tx_status,
 		uint8_t vdev_id,
 		uint8_t next_action,
-		enum policy_mgr_conn_update_reason reason)
+		enum policy_mgr_conn_update_reason reason,
+		uint32_t original_vdev_id)
 {
 	uint32_t conn_index = 0;
 	QDF_STATUS ret;
@@ -2545,9 +2547,11 @@ static void policy_mgr_nss_update_cb(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	policy_mgr_debug("nss update successful for vdev:%d", vdev_id);
+	policy_mgr_debug("nss update successful for vdev:%d ori %d reason %d",
+			 vdev_id, original_vdev_id, reason);
 	if (PM_NOP != next_action)
-		policy_mgr_next_actions(psoc, vdev_id, next_action, reason);
+		policy_mgr_next_actions(psoc, original_vdev_id, next_action,
+					reason);
 	else {
 		policy_mgr_debug("No action needed right now");
 		ret = policy_mgr_set_opportunistic_update(psoc);
@@ -2561,7 +2565,8 @@ static void policy_mgr_nss_update_cb(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 		uint8_t  new_nss, uint8_t next_action,
 		enum policy_mgr_band band,
-		enum policy_mgr_conn_update_reason reason)
+		enum policy_mgr_conn_update_reason reason,
+		uint32_t original_vdev_id)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t index, count;
@@ -2604,7 +2609,8 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 			status = pm_ctx->sme_cbacks.sme_nss_update_request(
 					vdev_id, new_nss,
 					policy_mgr_nss_update_cb,
-					next_action, psoc, reason);
+					next_action, psoc, reason,
+					original_vdev_id);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				policy_mgr_err("sme_nss_update_request() failed for vdev %d",
 				vdev_id);
@@ -2637,7 +2643,8 @@ QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
 			status = pm_ctx->sme_cbacks.sme_nss_update_request(
 					vdev_id, new_nss,
 					policy_mgr_nss_update_cb,
-					next_action, psoc, reason);
+					next_action, psoc, reason,
+					original_vdev_id);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				policy_mgr_err("sme_nss_update_request() failed for vdev %d",
 				vdev_id);
@@ -2690,7 +2697,8 @@ QDF_STATUS policy_mgr_complete_action(struct wlan_objmgr_psoc *psoc,
 		downgrade_band = POLICY_MGR_ANY;
 
 	status = policy_mgr_nss_update(psoc, new_nss, next_action,
-				       downgrade_band, reason);
+				       downgrade_band, reason,
+				       session_id);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		status = policy_mgr_next_actions(psoc, session_id,
 						next_action, reason);
