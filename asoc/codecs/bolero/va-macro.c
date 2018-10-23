@@ -304,10 +304,10 @@ static void va_macro_tx_hpf_corner_freq_callback(struct work_struct *work)
 
 	snd_soc_update_bits(codec, dec_cfg_reg, TX_HPF_CUT_OFF_FREQ_MASK,
 			    hpf_cut_off_freq << 5);
-	snd_soc_update_bits(codec, hpf_gate_reg, 0x02, 0x02);
+	snd_soc_update_bits(codec, hpf_gate_reg, 0x03, 0x02);
 	/* Minimum 1 clk cycle delay is required as per HW spec */
 	usleep_range(1000, 1010);
-	snd_soc_update_bits(codec, hpf_gate_reg, 0x02, 0x00);
+	snd_soc_update_bits(codec, hpf_gate_reg, 0x03, 0x01);
 }
 
 static void va_macro_mute_update_callback(struct work_struct *work)
@@ -316,7 +316,7 @@ static void va_macro_mute_update_callback(struct work_struct *work)
 	struct snd_soc_codec *codec = NULL;
 	struct va_macro_priv *va_priv;
 	struct delayed_work *delayed_work;
-	u16 tx_vol_ctl_reg, hpf_gate_reg, decimator;
+	u16 tx_vol_ctl_reg, decimator;
 
 	delayed_work = to_delayed_work(work);
 	va_mute_dwork = container_of(delayed_work, struct va_mute_work, dwork);
@@ -327,9 +327,6 @@ static void va_macro_mute_update_callback(struct work_struct *work)
 	tx_vol_ctl_reg =
 		BOLERO_CDC_VA_TX0_TX_PATH_CTL +
 			VA_MACRO_TX_PATH_OFFSET * decimator;
-	hpf_gate_reg = BOLERO_CDC_VA_TX0_TX_PATH_SEC2 +
-			VA_MACRO_TX_PATH_OFFSET * decimator;
-	snd_soc_update_bits(codec, hpf_gate_reg, 0x01, 0x01);
 	snd_soc_update_bits(codec, tx_vol_ctl_reg, 0x10, 0x00);
 	dev_dbg(va_priv->dev, "%s: decimator %u unmute\n",
 		__func__, decimator);
