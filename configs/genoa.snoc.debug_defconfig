@@ -70,6 +70,13 @@ ifeq ($(CONFIG_DEBUG_FS), y)
 endif
 
 # other features
+CONFIG_QCA_WIFI_FTM := y
+ifeq ($(CONFIG_NL80211_TESTMODE), y)
+	QCA_WIFI_FTM_NL80211 :=y
+else
+	QCA_WIFI_FTM_NL80211 :=n
+endif
+CONFIG_LINUX_QCMBR :=y
 
 #Flag to enable Dynamic Voltage WDCVS (Config Voltage Mode)
 CONFIG_WLAN_DYNAMIC_CVM := y

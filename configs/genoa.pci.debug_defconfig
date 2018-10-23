@@ -103,4 +103,12 @@ CONFIG_PLD_PCIE_CNSS_FLAG := y
 CONFIG_PLD_PCIE_INIT_FLAG := y
 endif
 endif
+
+CONFIG_QCA_WIFI_FTM := y
+ifeq ($(CONFIG_NL80211_TESTMODE), y)
+	QCA_WIFI_FTM_NL80211 :=y
+else
+	QCA_WIFI_FTM_NL80211 :=n
+endif
+CONFIG_LINUX_QCMBR :=y
 ###################################
