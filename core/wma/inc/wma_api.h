@@ -462,6 +462,20 @@ QDF_STATUS wma_sta_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 					    uint16_t data_len, void *data);
 
 /**
+ * wma_sta_mlme_vdev_roam_notify - VDEV roam notify handling
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes VDEV roam event handling
+ *
+ * Return: SUCCESS on successful completion of roam event handling
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS wma_sta_mlme_vdev_roam_notify(struct vdev_mlme_obj *vdev_mlme,
+					 uint16_t data_len, void *data);
+
+/**
  * wma_ap_mlme_vdev_start_continue - VDEV start response handling
  * @vdev_mlme_obj:  VDEV MLME comp object
  * @data_len: data size

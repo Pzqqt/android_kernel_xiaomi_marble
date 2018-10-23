@@ -2389,19 +2389,8 @@ static void wma_roam_update_vdev(tp_wma_handle wma,
 	qdf_mem_free(add_sta_params);
 }
 
-/**
- * wma_roam_synch_event_handler() - roam synch event handler
- * @handle: wma handle
- * @event: event data
- * @len: length of data
- *
- * This function is roam synch event handler. It sends roam
- * indication for upper layer.
- *
- * Return: Success or Failure status
- */
-int wma_roam_synch_event_handler(void *handle, uint8_t *event,
-					uint32_t len)
+int wma_mlme_roam_synch_event_handler_cb(void *handle, uint8_t *event,
+					 uint32_t len)
 {
 	WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf = NULL;
 	wmi_roam_synch_event_fixed_param *synch_event = NULL;
@@ -2786,6 +2775,78 @@ int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 	}
 	return 0;
 }
+
+#ifdef CONFIG_VDEV_SM
+/**
+ * __wma_roam_synch_event_handler() - roam synch event handler
+ * @handle: wma handle
+ * @event: event data
+ * @len: length of data
+ *
+ * This function is roam synch event handler.It sends roam
+ * indication for upper layer.
+ *
+ * Return: Success or Failure status
+ */
+int wma_roam_synch_event_handler(void *handle, uint8_t *event,
+				 uint32_t len)
+{
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
+	int status = -EINVAL;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+	struct wma_txrx_node *iface = NULL;
+	wmi_roam_synch_event_fixed_param *synch_event = NULL;
+	WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf = NULL;
+
+	if (!event) {
+		wma_err_rl("event param null");
+		goto cleanup;
+	}
+
+	param_buf = (WMI_ROAM_SYNCH_EVENTID_param_tlvs *)event;
+	if (!param_buf) {
+		wma_err_rl("received null buf from target");
+		goto cleanup;
+	}
+	synch_event = param_buf->fixed_param;
+	if (!synch_event) {
+		wma_err_rl("received null event data from target");
+		goto cleanup;
+	}
+
+	if (synch_event->vdev_id >= wma->max_bssid) {
+		wma_err_rl("received invalid vdev_id %d",
+			   synch_event->vdev_id);
+		goto cleanup;
+	}
+
+	iface = &wma->interfaces[synch_event->vdev_id];
+	qdf_status = wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
+						   WLAN_VDEV_SM_EV_ROAM,
+						   sizeof(*synch_event),
+						   synch_event);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		wma_err("Failed to send the EV_ROAM");
+	} else {
+		wma_debug("Posted EV_ROAM to VDEV SM");
+		return 0;
+	}
+
+cleanup:
+	if (wma && synch_event)
+		iface->roam_synch_in_progress = false;
+
+	return status;
+}
+#else
+int wma_roam_synch_event_handler(void *handle, uint8_t *event,
+				 uint32_t len)
+{
+	wma_mlme_roam_synch_event_handler_cb(handle, event, len);
+
+	return 0;
+}
+#endif
 
 #define RSN_CAPS_SHIFT               16
 /**
