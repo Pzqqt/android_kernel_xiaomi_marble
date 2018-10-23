@@ -344,6 +344,10 @@ static void hdd_nud_filter_netevent(struct neighbour *neigh)
 		return;
 
 	adapter = hdd_get_adapter_by_macaddr(hdd_ctx, netdev->dev_addr);
+
+	if (!adapter)
+		return;
+
 	status = hdd_validate_adapter(adapter);
 	if (status)
 		return;
