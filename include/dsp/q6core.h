@@ -199,7 +199,11 @@ struct avcs_cmd_load_unload_topo_modules {
 int q6core_map_memory_regions(phys_addr_t *buf_add, uint32_t mempool_id,
 			uint32_t *bufsz, uint32_t bufcnt, uint32_t *map_handle);
 int q6core_memory_unmap_regions(uint32_t mem_map_handle);
-int q6core_map_mdf_shared_memory(uint32_t map_handle, phys_addr_t *buf_add,
+
+int q6core_map_mdf_memory_regions(uint64_t *buf_add, uint32_t mempool_id,
+			uint32_t *bufsz, uint32_t bufcnt, uint32_t *map_handle);
+
+int q6core_map_mdf_shared_memory(uint32_t map_handle, uint64_t *buf_add,
 			uint32_t proc_id, uint32_t *bufsz, uint32_t bufcnt);
 
 int32_t core_set_license(uint32_t key, uint32_t module_id);
