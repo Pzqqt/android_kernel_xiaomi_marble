@@ -31,6 +31,8 @@
 #include <wlan_scan_public_structs.h>
 #include<wlan_mgmt_txrx_utils_api.h>
 
+#define ASCII_SPACE_CHARACTER 32
+
 /**
  * util_is_scan_entry_match() - func to check if both scan entry
  * are from same AP
@@ -286,10 +288,6 @@ static inline bool
 util_is_ssid_match(struct wlan_ssid *ssid1,
 		struct wlan_ssid *ssid2)
 {
-
-	if (ssid1->length == 0)
-		return true;
-
 	if (ssid1->length != ssid2->length)
 		return false;
 
@@ -1560,6 +1558,41 @@ static inline uint8_t*
 util_scan_entry_mdie(struct scan_cache_entry *scan_entry)
 {
 	return scan_entry->ie_list.mdie;
+}
+
+/**
+ * util_scan_is_null_ssid() - to check for NULL ssid
+ * @ssid: ssid
+ *
+ * Return: true if NULL ssid else false
+ */
+static inline bool util_scan_is_null_ssid(struct wlan_ssid *ssid)
+{
+	uint32_t ssid_length;
+	uint8_t *ssid_str;
+
+	if (ssid->length == 0)
+		return true;
+
+	/* Consider 0 or space for hidden SSID */
+	if (0 == ssid->ssid[0])
+		return true;
+
+	ssid_length = ssid->length;
+	ssid_str = ssid->ssid;
+
+	while (ssid_length) {
+		if (*ssid_str != ASCII_SPACE_CHARACTER &&
+		    *ssid_str)
+			break;
+		ssid_str++;
+		ssid_length--;
+	}
+
+	if (ssid_length == 0)
+		return true;
+
+	return false;
 }
 
 #endif

@@ -491,7 +491,8 @@ scm_copy_info_from_dup_entry(struct scan_dbs *scan_db,
 
 	scan_entry = scan_node->entry;
 	/* If old entry have the ssid but new entry does not */
-	if (!scan_params->ssid.length && scan_entry->ssid.length) {
+	if (util_scan_is_null_ssid(&scan_params->ssid) &&
+	    scan_entry->ssid.length) {
 		/*
 		 * New entry has a hidden SSID and old one has the SSID.
 		 * Add the entry by using the ssid of the old entry
@@ -510,7 +511,7 @@ scm_copy_info_from_dup_entry(struct scan_dbs *scan_db,
 				scan_entry->ssid.length;
 			qdf_mem_copy(scan_params->ssid.ssid,
 				scan_entry->ssid.ssid,
-				scan_params->ssid.length);
+				scan_entry->ssid.length);
 		}
 	}
 
