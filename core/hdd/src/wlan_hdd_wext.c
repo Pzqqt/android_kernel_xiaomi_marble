@@ -4260,6 +4260,18 @@ static int hdd_we_set_max_tx_power(struct hdd_adapter *adapter, int value)
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_we_set_max_tx_power_2_4(struct hdd_adapter *adapter, int power)
+{
+	QDF_STATUS status;
+
+	hdd_debug("power %d dBm", power);
+	status = sme_set_max_tx_power_per_band(BAND_2G, power);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("cfg set failed, value %d status %d", power, status);
+
+	return qdf_status_to_os_return(status);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4329,18 +4341,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_MAX_TX_POWER_2_4:
-	{
-		hdd_debug("Setting maximum tx power %d dBm for 2.4 GHz band",
-			   set_value);
-		if (sme_set_max_tx_power_per_band(BAND_2G, set_value) !=
-		    QDF_STATUS_SUCCESS) {
-			hdd_err("Setting max tx power failed for 2.4 GHz band");
-			ret = -EIO;
-			break;
-		}
-
+		ret = hdd_we_set_max_tx_power_2_4(adapter, set_value);
 		break;
-	}
+
 	case WE_SET_MAX_TX_POWER_5_0:
 	{
 		hdd_debug("Setting maximum tx power %d dBm for 5.0 GHz band",
