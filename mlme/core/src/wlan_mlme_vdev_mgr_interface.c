@@ -198,6 +198,26 @@ static QDF_STATUS sta_mlme_vdev_notify_up_complete(struct vdev_mlme_obj *vdev_ml
 }
 
 /**
+ * sta_mlme_vdev_notify_roam_start() - MLME vdev Roam start callback
+ * @vdev_mlme: vdev mlme object
+ * @event_data_len: event data length
+ * @event_data: event data
+ *
+ * This function is called to VDEV MLME on roaming
+ *  to UP state
+ *
+ * Return: QDF_STATUS
+ */
+static
+QDF_STATUS sta_mlme_vdev_notify_roam_start(struct vdev_mlme_obj *vdev_mlme,
+					   uint16_t event_data_len,
+					   void *event_data)
+{
+	return wma_sta_mlme_vdev_roam_notify(vdev_mlme, event_data_len,
+					     event_data);
+}
+
+/**
  * sta_mlme_vdev_disconnect_bss() - MLME vdev disconnect bss callback
  * @vdev_mlme: vdev mlme object
  * @event_data_len: event data length
@@ -715,6 +735,7 @@ static struct vdev_mlme_ops sta_mlme_ops = {
 	.mlme_vdev_sta_conn_start = sta_mlme_vdev_start_connection,
 	.mlme_vdev_up_send = sta_mlme_vdev_up_send,
 	.mlme_vdev_notify_up_complete = sta_mlme_vdev_notify_up_complete,
+	.mlme_vdev_notify_roam_start = sta_mlme_vdev_notify_roam_start,
 	.mlme_vdev_disconnect_peers = sta_mlme_vdev_disconnect_bss,
 	.mlme_vdev_stop_send = sta_mlme_vdev_stop_send,
 	.mlme_vdev_stop_continue = vdevmgr_mlme_stop_continue,
