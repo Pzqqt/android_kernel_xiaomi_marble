@@ -42,7 +42,7 @@
 #include "codecs/bolero/bolero-cdc.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
 #include "codecs/bolero/wsa-macro.h"
-#include "codecs/wcd937x/internal.h"
+#include "codecs/wcd937x/wcd937x.h"
 
 #define DRV_NAME "sm6150-asoc-snd"
 
