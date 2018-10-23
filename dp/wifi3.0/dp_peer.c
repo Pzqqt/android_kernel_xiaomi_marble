@@ -614,6 +614,7 @@ add_ast_entry:
 		ast_entry->type = CDP_TXRX_AST_TYPE_MEC;
 		break;
 	case CDP_TXRX_AST_TYPE_DA:
+		ast_entry->peer = peer->vdev->vap_bss_peer;
 		ast_entry->next_hop = 1;
 		ast_entry->type = CDP_TXRX_AST_TYPE_DA;
 		break;
