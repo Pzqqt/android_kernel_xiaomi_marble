@@ -96,7 +96,7 @@ wlan_cp_stats_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 wlan_cp_stats_psoc_obj_create_handler_return:
 	if (QDF_IS_STATUS_ERROR(status)) {
 		if (csc) {
-			if (csc->cp_stats_psoc_obj_deinit)
+			if (csc->cp_stats_psoc_obj_deinit && psoc_cs)
 				csc->cp_stats_psoc_obj_deinit(psoc_cs);
 
 			if (csc->psoc_cs) {
