@@ -1987,7 +1987,9 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
 					 * Do not expire static ast entries
 					 * and HM WDS entries
 					 */
-					if (ase->type != CDP_TXRX_AST_TYPE_WDS)
+					if (ase->type !=
+					    CDP_TXRX_AST_TYPE_WDS &&
+					    ase->type != CDP_TXRX_AST_TYPE_MEC)
 						continue;
 
 					if (ase->is_active) {

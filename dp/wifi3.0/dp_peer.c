@@ -523,7 +523,6 @@ int dp_peer_add_ast(struct dp_soc *soc,
 		"%s: peer %pK mac %02x:%02x:%02x:%02x:%02x:%02x",
 		__func__, peer, mac_addr[0], mac_addr[1], mac_addr[2],
 		mac_addr[3], mac_addr[4], mac_addr[5]);
-
 	qdf_spin_lock_bh(&soc->ast_lock);
 
 	/* For HMWDS and HWMWDS_SEC entries can be added for same mac address
@@ -554,6 +553,16 @@ int dp_peer_add_ast(struct dp_soc *soc,
 			if (ast_entry->type == CDP_TXRX_AST_TYPE_MEC)
 				ast_entry->is_active = TRUE;
 
+			/* Modify an already existing AST entry from type
+			 * WDS to MEC on promption. This serves as a fix when
+			 * backbone of interfaces are interchanged wherein
+			 * wds entr becomes its own MEC.
+			 */
+			if ((ast_entry->type == CDP_TXRX_AST_TYPE_WDS) &&
+			    (type == CDP_TXRX_AST_TYPE_MEC)) {
+				ast_entry->is_active = FALSE;
+				dp_peer_del_ast(soc, ast_entry);
+			}
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			return 0;
 		}
