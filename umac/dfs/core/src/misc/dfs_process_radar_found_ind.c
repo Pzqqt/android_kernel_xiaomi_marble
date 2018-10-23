@@ -275,21 +275,55 @@ static void dfs_radar_chan_for_20(struct freqs_offsets *freq_offset,
 	}
 }
 
+/* dfs_compute_radar_found_cfreq(): Computes the centre frequency of the
+ * radar hit channel.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @radar_found: Pointer to radar_found_info.
+ * @freq_center: Pointer to retrieve the value of radar found cfreq.
+ */
+static void
+dfs_compute_radar_found_cfreq(struct wlan_dfs *dfs,
+			      struct radar_found_info
+			      *radar_found,
+			      uint32_t *freq_center)
+{
+	struct dfs_channel *curchan = dfs->dfs_curchan;
+	uint32_t flag;
+
+	flag = curchan->dfs_ch_flags;
+	if (!radar_found->segment_id) {
+		*freq_center = utils_dfs_chan_to_freq(
+				curchan->dfs_ch_vhtop_ch_freq_seg1);
+	} else {
+		if (dfs_is_precac_timer_running(dfs)) {
+			*freq_center = utils_dfs_chan_to_freq(
+					dfs->dfs_precac_secondary_freq);
+		} else {
+			*freq_center = utils_dfs_chan_to_freq(
+					curchan->dfs_ch_vhtop_ch_freq_seg2);
+			if (flag & WLAN_CHAN_VHT160)
+				*freq_center += DFS_160MHZ_SECOND_SEG_OFFSET;
+		}
+	}
+}
+
 /**
  * dfs_find_radar_affected_subchans() - Finds radar affected sub channels.
  * @dfs: Pointer to wlan_dfs structure.
  * @radar_found: Pointer to radar_found structure.
  * @channels: Pointer to save radar affected channels.
+ * @freq_center: Freq_center of the radar affected chan.
  *
  * Return: Number of channels.
  */
 static uint8_t dfs_find_radar_affected_subchans(struct wlan_dfs *dfs,
 						struct radar_found_info
 						*radar_found,
-						uint8_t *channels)
+						uint8_t *channels,
+						uint32_t freq_center)
 {
 	int i;
-	uint32_t freq_center, flag;
+	uint32_t flag;
 	int32_t sidx;
 	struct dfs_channel *curchan = dfs->dfs_curchan;
 	struct freqs_offsets freq_offset;
@@ -301,21 +335,6 @@ static uint8_t dfs_find_radar_affected_subchans(struct wlan_dfs *dfs,
 		freq_offset.offset[i] = radar_found->freq_offset;
 
 	sidx = DFS_FREQ_OFFSET_TO_SIDX(radar_found->freq_offset);
-
-	if (!radar_found->segment_id)
-		freq_center = utils_dfs_chan_to_freq(
-				curchan->dfs_ch_vhtop_ch_freq_seg1);
-	else {
-		if (dfs_is_precac_timer_running(dfs)) {
-			freq_center = utils_dfs_chan_to_freq(
-					dfs->dfs_precac_secondary_freq);
-		} else {
-			freq_center = utils_dfs_chan_to_freq(
-					curchan->dfs_ch_vhtop_ch_freq_seg2);
-			if (flag & WLAN_CHAN_VHT160)
-				freq_center += DFS_160MHZ_SECOND_SEG_OFFSET;
-		}
-	}
 
 	dfs_info(dfs, WLAN_DEBUG_DFS,
 		 "seg=%d, sidx=%d, offset=%d, chirp=%d, flag=%d, f=%d",
@@ -514,6 +533,9 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	uint8_t channels[NUM_CHANNELS_160MHZ];
 	uint8_t num_channels;
 	QDF_STATUS status;
+	uint32_t freq_center;
+	uint32_t radarfound_freq;
+	struct dfs_channel *dfs_curchan;
 
 	if (!dfs->dfs_curchan) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs->dfs_curchan is NULL");
@@ -538,14 +560,32 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		radar_found->is_chirp = dfs->dfs_is_chirp;
 	}
 
+	dfs_compute_radar_found_cfreq(dfs, radar_found, &freq_center);
+
+	if (dfs->dfs_bangradar || dfs->dfs_second_segment_bangradar) {
+		dfs_curchan = dfs->dfs_curchan;
+		if (radar_found->segment_id == SEG_ID_SECONDARY)
+			if (dfs_is_precac_timer_running(dfs))
+				radarfound_freq =
+					dfs->dfs_precac_secondary_freq;
+			else
+				radarfound_freq =
+					dfs_curchan->dfs_ch_vhtop_ch_freq_seg2;
+		else
+			radarfound_freq = dfs->dfs_curchan->dfs_ch_freq;
+	} else {
+		radarfound_freq = freq_center + dfs->dfs_freq_offset;
+	}
+
 	if (radar_found->segment_id == SEG_ID_SECONDARY)
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			 "Radar found on second segment VHT80 freq=%d MHz",
-			 dfs->dfs_precac_secondary_freq);
+			 "Radar found on second segment.Radarfound Freq=%d MHz.Secondary Chan cfreq=%d MHz.",
+			 radarfound_freq, freq_center);
 	else
 		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
-			 "Radar found on channel=%d, freq=%d MHz",
-			 dfs->dfs_curchan->dfs_ch_ieee,
+			 "Radar found on channel=%d, freq=%d MHz. Primary beaconning chan:%d, freq=%d MHz.",
+			 utils_dfs_freq_to_chan(radarfound_freq),
+			 radarfound_freq, dfs->dfs_curchan->dfs_ch_ieee,
 			 dfs->dfs_curchan->dfs_ch_freq);
 
 	if (!dfs->dfs_use_nol) {
@@ -555,10 +595,11 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	}
 
 	if (dfs->dfs_use_nol_subchannel_marking &&
-	    !(dfs->dfs_bangradar || dfs->dfs_second_segment_bangradar))
+		!(dfs->dfs_bangradar || dfs->dfs_second_segment_bangradar))
 		num_channels = dfs_find_radar_affected_subchans(dfs,
 								radar_found,
-								channels);
+								channels,
+								freq_center);
 	else
 		num_channels = dfs_get_bonding_channels(dfs,
 							dfs->dfs_curchan,
