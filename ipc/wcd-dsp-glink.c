@@ -33,7 +33,7 @@
 
 #define MINOR_NUMBER_COUNT 1
 #define RESP_QUEUE_SIZE 3
-#define TIMEOUT_MS 1000
+#define TIMEOUT_MS 2000
 
 enum wdsp_ch_state {
 	WDSP_CH_DISCONNECTED,
