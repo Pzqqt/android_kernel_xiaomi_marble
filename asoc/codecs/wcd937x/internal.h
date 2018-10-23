@@ -70,7 +70,6 @@ struct wcd937x_priv {
 	struct codec_port_info
 			rx_port_mapping[MAX_PORT][MAX_CH_PER_PORT];
 	struct regulator_bulk_data *supplies;
-
 	struct notifier_block nblock;
 	/* wcd callback to bolero */
 	void *handle;
@@ -78,7 +77,7 @@ struct wcd937x_priv {
 	int (*register_notifier)(void *handle,
 				struct notifier_block *nblock,
 				bool enable);
-
+	int (*wakeup)(void *handle, bool enable);
 	u32 version;
 	/* Entry for version info */
 	struct snd_info_entry *entry;
