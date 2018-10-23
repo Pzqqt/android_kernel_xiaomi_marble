@@ -248,8 +248,20 @@ int hdd_assemble_rate_code(uint8_t preamble, uint8_t nss, uint8_t rate);
 int hdd_set_11ax_rate(struct hdd_adapter *adapter, int value,
 		      struct sap_config *sap_config);
 
-int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
-			    int new_phymode, struct hdd_context *phddctx);
+/**
+ * wlan_hdd_update_phymode() - handle change in PHY mode
+ * @adapter: adapter being modified
+ * @new_phymode: new PHY mode for the device
+ *
+ * This function is called when the device is set to a new PHY mode.
+ * It takes a holistic look at the desired PHY mode along with the
+ * configured capabilities of the driver and the reported capabilities
+ * of the hardware in order to correctly configure all PHY-related
+ * parameters.
+ *
+ * Return: 0 on success, negative errno value on error
+ */
+int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode);
 
 struct iw_request_info;
 

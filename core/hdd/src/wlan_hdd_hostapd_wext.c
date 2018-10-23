@@ -1028,8 +1028,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	}
 
 	case QCASAP_SET_PHYMODE:
-		ret = wlan_hdd_update_phymode(dev, mac_handle, set_value,
-					      hdd_ctx);
+		ret = wlan_hdd_update_phymode(adapter, set_value);
 		break;
 
 	case QCASAP_DUMP_STATS:

@@ -3656,28 +3656,11 @@ static int iw_get_linkspeed(struct net_device *dev,
 	return ret;
 }
 
-/**
- * wlan_hdd_update_phymode() - handle change in PHY mode
- * @net: device upon which PHY mode change was received
- * @mac_handle: umac handle for the driver
- * @new_phymode: new PHY mode for the device
- * @phddctx: pointer to the HDD context
- *
- * This function is called when the device is set to a new PHY mode.
- * It takes a holistic look at the desired PHY mode along with the
- * configured capabilities of the driver and the reported capabilities
- * of the hardware in order to correctly configure all PHY-related
- * parameters.
- *
- * Return: 0 on success, negative errno value on error
- */
-int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
-			    int new_phymode, struct hdd_context *phddctx)
+int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 {
-#ifdef QCA_HT_2040_COEX
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(net);
-	QDF_STATUS halStatus = QDF_STATUS_E_FAILURE;
-#endif
+	struct net_device *net = adapter->dev;
+	struct hdd_context *phddctx = WLAN_HDD_GET_CTX(adapter);
+	mac_handle_t mac_handle = phddctx->mac_handle;
 	bool band_24 = false, band_5g = false;
 	bool ch_bond24 = false, ch_bond5g = false;
 	tSmeConfigParams *sme_config;
@@ -3689,6 +3672,9 @@ int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 	int retval = 0;
 	uint8_t band_capability;
 	QDF_STATUS status;
+
+	if (!mac_handle)
+		return -EINVAL;
 
 	old_phymode = sme_get_phy_mode(mac_handle);
 
@@ -3715,9 +3701,8 @@ int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 	else if (band_capability == BAND_5G)
 		band_5g = true;
 
-	halStatus = ucfg_mlme_get_vht_channel_width(phddctx->psoc,
-						    &vhtchanwidth);
-	if (!QDF_IS_STATUS_SUCCESS(halStatus))
+	status = ucfg_mlme_get_vht_channel_width(phddctx->psoc, &vhtchanwidth);
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Failed to set channel_width");
 
 	hdd_debug("ch_bond24=%d ch_bond5g=%d band_24=%d band_5g=%d VHT_ch_width=%u",
@@ -3902,9 +3887,9 @@ int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 		vhtchanwidth = eHT_CHANNEL_WIDTH_80MHZ;
 		break;
 	default:
-		halStatus = ucfg_mlme_get_vht_channel_width(phddctx->psoc,
-							    &vhtchanwidth);
-		if (!QDF_IS_STATUS_SUCCESS(halStatus))
+		status = ucfg_mlme_get_vht_channel_width(phddctx->psoc,
+							 &vhtchanwidth);
+		if (!QDF_IS_STATUS_SUCCESS(status))
 			hdd_err("Failed to set channel_width");
 		break;
 	}
@@ -3922,10 +3907,10 @@ int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 		if (phymode == eCSR_DOT11_MODE_11n &&
 		    chwidth == WNI_CFG_CHANNEL_BONDING_MODE_DISABLE) {
 			sme_config->csrConfig.obssEnabled = false;
-			halStatus = sme_set_ht2040_mode(mac_handle,
-							adapter->session_id,
-							eHT_CHAN_HT20, false);
-			if (halStatus == QDF_STATUS_E_FAILURE) {
+			status = sme_set_ht2040_mode(mac_handle,
+						     adapter->session_id,
+						     eHT_CHAN_HT20, false);
+			if (status == QDF_STATUS_E_FAILURE) {
 				hdd_err("Failed to disable OBSS");
 				retval = -EIO;
 				goto free;
@@ -3933,10 +3918,10 @@ int wlan_hdd_update_phymode(struct net_device *net, mac_handle_t mac_handle,
 		} else if (phymode == eCSR_DOT11_MODE_11n &&
 			   chwidth == WNI_CFG_CHANNEL_BONDING_MODE_ENABLE) {
 			sme_config->csrConfig.obssEnabled = true;
-			halStatus = sme_set_ht2040_mode(mac_handle,
-							adapter->session_id,
-							eHT_CHAN_HT20, true);
-			if (halStatus == QDF_STATUS_E_FAILURE) {
+			status = sme_set_ht2040_mode(mac_handle,
+						     adapter->session_id,
+						     eHT_CHAN_HT20, true);
+			if (status == QDF_STATUS_E_FAILURE) {
 				hdd_err("Failed to enable OBSS");
 				retval = -EIO;
 				goto free;
@@ -4382,11 +4367,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_PHYMODE:
-		if (!mac_handle)
-			return -EINVAL;
-
-		ret = wlan_hdd_update_phymode(dev, mac_handle, set_value,
-					      hdd_ctx);
+		ret = wlan_hdd_update_phymode(adapter, set_value);
 		break;
 
 	case WE_SET_NSS:
