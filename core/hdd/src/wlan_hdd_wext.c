@@ -4284,6 +4284,23 @@ static int hdd_we_set_max_tx_power_5_0(struct hdd_adapter *adapter, int power)
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_we_set_tm_level(struct hdd_adapter *adapter, int level)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	mac_handle_t mac_handle = hdd_ctx->mac_handle;
+	QDF_STATUS status;
+
+	if (!mac_handle)
+		return -EINVAL;
+
+	hdd_debug("Thermal Mitigation Level %d", level);
+	status = sme_set_thermal_level(mac_handle, level);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("cfg set failed, value %d status %d", level, status);
+
+	return qdf_status_to_os_return(status);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4361,14 +4378,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_TM_LEVEL:
-	{
-		if (!mac_handle)
-			return -EINVAL;
-
-		hdd_debug("Set Thermal Mitigation Level %d", set_value);
-		(void)sme_set_thermal_level(mac_handle, set_value);
+		ret = hdd_we_set_tm_level(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_PHYMODE:
 		if (!mac_handle)
