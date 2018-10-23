@@ -1167,8 +1167,6 @@ QDF_STATUS wlan_serialization_validate_cmd(
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 
-	ser_debug("validate cmd_type:%d, comp_id:%d",
-		  cmd_type, comp_id);
 	if (cmd_type < 0 || comp_id < 0 ||
 	    cmd_type >= WLAN_SER_CMD_MAX ||
 	   comp_id >= WLAN_UMAC_COMP_ID_MAX) {
@@ -1209,8 +1207,6 @@ static void wlan_serialization_release_pdev_list_cmds(
 {
 	qdf_list_node_t *node = NULL;
 
-	ser_enter();
-
 	while (!wlan_serialization_list_empty(&pdev_queue->active_list)) {
 		wlan_serialization_remove_front(
 				&pdev_queue->active_list, &node);
@@ -1225,31 +1221,26 @@ static void wlan_serialization_release_pdev_list_cmds(
 				&pdev_queue->cmd_pool_list, node);
 	}
 
-	ser_exit();
 }
 
 static void wlan_serialization_release_vdev_list_cmds(qdf_list_t *list)
 {
 	qdf_list_node_t *node = NULL;
 
-	ser_enter();
 
 	while (!wlan_serialization_list_empty(list))
 		wlan_serialization_remove_front(list, &node);
 
-	ser_exit();
 }
 
 void wlan_serialization_destroy_pdev_list(
 		struct wlan_serialization_pdev_queue *pdev_queue)
 {
-	ser_enter();
 
 	wlan_serialization_release_pdev_list_cmds(pdev_queue);
 	qdf_list_destroy(&pdev_queue->active_list);
 	qdf_list_destroy(&pdev_queue->pending_list);
 
-	ser_exit();
 }
 
 void wlan_serialization_destroy_vdev_list(qdf_list_t *list)
@@ -1304,8 +1295,6 @@ bool wlan_serialization_is_cmd_in_vdev_list(
 	qdf_list_node_t *node = NULL;
 	bool cmd_found = false;
 
-	ser_enter();
-
 	node = wlan_serialization_find_cmd(
 			queue, WLAN_SER_MATCH_VDEV,
 			NULL, 0, NULL, vdev, node_type);
@@ -1313,7 +1302,6 @@ bool wlan_serialization_is_cmd_in_vdev_list(
 	if (node)
 		cmd_found = true;
 
-	ser_exit();
 	return cmd_found;
 }
 
@@ -1324,8 +1312,6 @@ bool wlan_serialization_is_cmd_in_pdev_list(
 	qdf_list_node_t *node = NULL;
 	bool cmd_found = false;
 
-	ser_enter();
-
 	node = wlan_serialization_find_cmd(
 			queue, WLAN_SER_MATCH_PDEV,
 			NULL, 0, pdev, NULL,  WLAN_SER_PDEV_NODE);
@@ -1333,7 +1319,6 @@ bool wlan_serialization_is_cmd_in_pdev_list(
 	if (node)
 		cmd_found = true;
 
-	ser_exit();
 	return cmd_found;
 }
 
