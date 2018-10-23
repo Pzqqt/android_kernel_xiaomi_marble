@@ -1575,7 +1575,7 @@ static void wlan_hdd_flush_iface_idle_work(void)
 		return;
 	}
 
-	qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
+	hdd_psoc_idle_timer_stop(hdd_ctx);
 }
 
 /**

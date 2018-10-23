@@ -1711,6 +1711,7 @@ struct hdd_cache_channels {
  * @psoc: object manager psoc context
  * @pdev: object manager pdev context
  * @g_event_flags: a bitmap of hdd_driver_flags
+ * @psoc_idle_timeout_work: delayed work for psoc idle shutdown
  */
 struct hdd_context {
 	struct wlan_objmgr_psoc *psoc;
@@ -1904,8 +1905,7 @@ struct hdd_context {
 #endif
 	/* Present state of driver cds modules */
 	enum driver_modules_status driver_status;
-	/* interface idle work */
-	qdf_delayed_work_t iface_idle_work;
+	qdf_delayed_work_t psoc_idle_timeout_work;
 	/* Interface change lock */
 	struct mutex iface_change_lock;
 	bool rps;
@@ -2784,6 +2784,23 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx);
 int hdd_set_fw_params(struct hdd_adapter *adapter);
 int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit);
 int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode);
+
+/**
+ * hdd_psoc_idle_timer_start() - start the idle psoc detection timer
+ * @hdd_ctx: the hdd context for which the timer should be started
+ *
+ * Return: None
+ */
+void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_psoc_idle_timer_stop() - stop the idle psoc detection timer
+ * @hdd_ctx: the hdd context for which the timer should be stopped
+ *
+ * Return: None
+ */
+void hdd_psoc_idle_timer_stop(struct hdd_context *hdd_ctx);
+
 int hdd_start_adapter(struct hdd_adapter *adapter);
 void hdd_populate_random_mac_addr(struct hdd_context *hdd_ctx, uint32_t num);
 /**
@@ -2988,15 +3005,12 @@ void wlan_hdd_deinit_chan_info(struct hdd_context *hdd_ctx);
 void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit);
 
 /**
- * hdd_check_for_opened_interfaces()- Check for interface up
+ * hdd_is_any_interface_open() - Check for interface up
  * @hdd_ctx: HDD context
  *
- * check  if there are any wlan interfaces before starting the timer
- * to close the modules
- *
- * Return: 0 if interface was opened else false
+ * Return: true if any interface is open
  */
-bool hdd_check_for_opened_interfaces(struct hdd_context *hdd_ctx);
+bool hdd_is_any_interface_open(struct hdd_context *hdd_ctx);
 
 #ifdef WIFI_POS_CONVERGED
 /**

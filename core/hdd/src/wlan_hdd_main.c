@@ -2647,7 +2647,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, bool reinit)
 		return -EINVAL;
 	}
 
-	qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
+	hdd_psoc_idle_timer_stop(hdd_ctx);
 
 	mutex_lock(&hdd_ctx->iface_change_lock);
 	if (hdd_ctx->driver_status == DRIVER_MODULES_ENABLED) {
@@ -3119,20 +3119,11 @@ static int __hdd_stop(struct net_device *dev)
 	if (!hdd_is_cli_iface_up(hdd_ctx))
 		sme_scan_flush_result(mac_handle);
 
-	/*
-	 * Find if any iface is up. If any iface is up then can't put device to
-	 * sleep/power save mode
-	 */
-	if (hdd_check_for_opened_interfaces(hdd_ctx)) {
-		hdd_debug("Closing all modules from the hdd_stop");
-		qdf_sched_delayed_work(&hdd_ctx->iface_idle_work,
-				       hdd_ctx->config->iface_change_wait_time);
-		hdd_prevent_suspend_timeout(
-			hdd_ctx->config->iface_change_wait_time,
-			WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER);
-	}
+	if (!hdd_is_any_interface_open(hdd_ctx))
+		hdd_psoc_idle_timer_start(hdd_ctx);
 
 	hdd_exit();
+
 	return 0;
 }
 
@@ -5429,26 +5420,22 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
-bool hdd_check_for_opened_interfaces(struct hdd_context *hdd_ctx)
+bool hdd_is_any_interface_open(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
-	bool close_modules = true;
 
-	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
 		hdd_info("FTM mode, don't close the module");
-		return false;
+		return true;
 	}
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags) ||
-		    test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
-			hdd_debug("Still other ifaces are up cannot close modules");
-			close_modules = false;
-			break;
-		}
+		    test_bit(SME_SESSION_OPENED, &adapter->event_flags))
+			return true;
 	}
 
-	return close_modules;
+	return false;
 }
 
 bool hdd_is_interface_up(struct hdd_adapter *adapter)
@@ -6874,7 +6861,7 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_enter();
 
-	qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
+	hdd_psoc_idle_timer_stop(hdd_ctx);
 
 	hdd_unregister_notifiers(hdd_ctx);
 
@@ -8852,6 +8839,23 @@ list_destroy:
 	return ret;
 }
 
+void hdd_psoc_idle_timer_start(struct hdd_context *hdd_ctx)
+{
+	uint32_t timeout_ms = hdd_ctx->config->iface_change_wait_time;
+	enum wake_lock_reason reason =
+		WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER;
+
+	hdd_debug("Starting psoc idle timer");
+	qdf_sched_delayed_work(&hdd_ctx->psoc_idle_timeout_work, timeout_ms);
+	hdd_prevent_suspend_timeout(timeout_ms, reason);
+}
+
+void hdd_psoc_idle_timer_stop(struct hdd_context *hdd_ctx)
+{
+	qdf_cancel_delayed_work(&hdd_ctx->psoc_idle_timeout_work);
+	hdd_debug("Stopped psoc idle timer");
+}
+
 /**
  * hdd_iface_change_callback() - Function invoked when stop modules expires
  * @priv: pointer to hdd context
@@ -8999,9 +9003,9 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 		goto err_out;
 	}
 
-	qdf_create_delayed_work(&hdd_ctx->iface_idle_work,
+	qdf_create_delayed_work(&hdd_ctx->psoc_idle_timeout_work,
 				hdd_iface_change_callback,
-				(void *)hdd_ctx);
+				hdd_ctx);
 
 	mutex_init(&hdd_ctx->iface_change_lock);
 
@@ -10915,11 +10919,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 
 		if (IS_IDLE_STOP && !ftm_mode) {
 			mutex_unlock(&hdd_ctx->iface_change_lock);
-			qdf_sched_delayed_work(&hdd_ctx->iface_idle_work,
-				       hdd_ctx->config->iface_change_wait_time);
-			hdd_prevent_suspend_timeout(
-				hdd_ctx->config->iface_change_wait_time,
-				WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER);
+			hdd_psoc_idle_timer_start(hdd_ctx);
 			hdd_ctx->stop_modules_in_progress = false;
 			cds_set_module_stop_in_progress(false);
 
@@ -11446,13 +11446,8 @@ int hdd_wlan_startup(struct device *dev)
 	else
 		hdd_set_idle_ps_config(hdd_ctx, false);
 
-	if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam()) {
-		qdf_sched_delayed_work(&hdd_ctx->iface_idle_work,
-				       hdd_ctx->config->iface_change_wait_time);
-		hdd_prevent_suspend_timeout(
-			hdd_ctx->config->iface_change_wait_time,
-			WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER);
-	}
+	if (hdd_get_conparam() != QDF_GLOBAL_FTM_MODE)
+		hdd_psoc_idle_timer_start(hdd_ctx);
 
 	goto success;
 
@@ -12940,7 +12935,7 @@ static void hdd_driver_unload(void)
 			 "driver unload anyway");
 
 	if (hdd_ctx)
-		qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
+		hdd_psoc_idle_timer_stop(hdd_ctx);
 
 	wlan_hdd_unregister_driver();
 	pld_deinit();
