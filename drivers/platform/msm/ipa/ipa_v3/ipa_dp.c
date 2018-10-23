@@ -1,3 +1,4 @@
+
 // SPDX-License-Identifier: GPL-2.0-only
 /*
  * Copyright (c) 2012-2020, The Linux Foundation. All rights reserved.
@@ -140,6 +141,9 @@ static void ipa3_wq_write_done_common(struct ipa3_sys_context *sys,
 {
 	struct ipa3_tx_pkt_wrapper *next_pkt;
 	int i, cnt;
+	void *user1;
+	int user2;
+	void (*callback)(void *user1, int user2);
 
 	if (unlikely(tx_pkt == NULL)) {
 		IPAERR("tx_pkt is NULL\n");
@@ -157,7 +161,6 @@ static void ipa3_wq_write_done_common(struct ipa3_sys_context *sys,
 		next_pkt = list_next_entry(tx_pkt, link);
 		list_del(&tx_pkt->link);
 		sys->len--;
-		spin_unlock_bh(&sys->spinlock);
 		if (!tx_pkt->no_unmap_dma) {
 			if (tx_pkt->type != IPA_DATA_DESC_SKB_PAGED) {
 				dma_unmap_single(ipa3_ctx->pdev,
@@ -171,10 +174,22 @@ static void ipa3_wq_write_done_common(struct ipa3_sys_context *sys,
 					DMA_TO_DEVICE);
 			}
 		}
-		if (tx_pkt->callback)
-			tx_pkt->callback(tx_pkt->user1, tx_pkt->user2);
-
-		kmem_cache_free(ipa3_ctx->tx_pkt_wrapper_cache, tx_pkt);
+		callback = tx_pkt->callback;
+		user1 = tx_pkt->user1;
+		user2 = tx_pkt->user2;
+		if (sys->avail_tx_wrapper >=
+			ipa3_ctx->tx_wrapper_cache_max_size ||
+			sys->ep->client == IPA_CLIENT_APPS_CMD_PROD) {
+			kmem_cache_free(ipa3_ctx->tx_pkt_wrapper_cache,
+				tx_pkt);
+		} else {
+			list_add_tail(&tx_pkt->link,
+				&sys->avail_tx_wrapper_list);
+			sys->avail_tx_wrapper++;
+		}
+		spin_unlock_bh(&sys->spinlock);
+		if (callback)
+			(*callback)(user1, user2);
 		tx_pkt = next_pkt;
 	}
 }
@@ -239,12 +254,21 @@ static void ipa3_send_nop_desc(struct work_struct *work)
 	struct ipa3_tx_pkt_wrapper *tx_pkt;
 
 	IPADBG_LOW("gsi send NOP for ch: %lu\n", sys->ep->gsi_chan_hdl);
-
 	if (atomic_read(&sys->workqueue_flushed))
 		return;
-
-	tx_pkt = kmem_cache_zalloc(ipa3_ctx->tx_pkt_wrapper_cache, GFP_KERNEL);
+	spin_lock_bh(&sys->spinlock);
+	if (!list_empty(&sys->avail_tx_wrapper_list)) {
+		tx_pkt = list_first_entry(&sys->avail_tx_wrapper_list,
+				struct ipa3_tx_pkt_wrapper, link);
+		list_del(&tx_pkt->link);
+		sys->avail_tx_wrapper--;
+		memset(tx_pkt, 0, sizeof(struct ipa3_tx_pkt_wrapper));
+	} else {
+		tx_pkt = kmem_cache_zalloc(ipa3_ctx->tx_pkt_wrapper_cache,
+			GFP_KERNEL);
+	}
 	if (!tx_pkt) {
+		spin_unlock_bh(&sys->spinlock);
 		queue_work(sys->wq, &sys->work);
 		return;
 	}
@@ -253,7 +277,6 @@ static void ipa3_send_nop_desc(struct work_struct *work)
 	tx_pkt->cnt = 1;
 	tx_pkt->no_unmap_dma = true;
 	tx_pkt->sys = sys;
-	spin_lock_bh(&sys->spinlock);
 	if (unlikely(!sys->nop_pending)) {
 		spin_unlock_bh(&sys->spinlock);
 		kmem_cache_free(ipa3_ctx->tx_pkt_wrapper_cache, tx_pkt);
@@ -349,8 +372,18 @@ int ipa3_send(struct ipa3_sys_context *sys,
 	spin_lock_bh(&sys->spinlock);
 
 	for (i = 0; i < num_desc; i++) {
-		tx_pkt = kmem_cache_zalloc(ipa3_ctx->tx_pkt_wrapper_cache,
-					   GFP_ATOMIC);
+		if (!list_empty(&sys->avail_tx_wrapper_list)) {
+			tx_pkt = list_first_entry(&sys->avail_tx_wrapper_list,
+				struct ipa3_tx_pkt_wrapper, link);
+			list_del(&tx_pkt->link);
+			sys->avail_tx_wrapper--;
+
+			memset(tx_pkt, 0, sizeof(struct ipa3_tx_pkt_wrapper));
+		} else {
+			tx_pkt = kmem_cache_zalloc(
+				ipa3_ctx->tx_pkt_wrapper_cache,
+				GFP_ATOMIC);
+		}
 		if (!tx_pkt) {
 			IPAERR("failed to alloc tx wrapper\n");
 			result = -ENOMEM;
@@ -1035,6 +1068,8 @@ int ipa3_setup_sys_pipe(struct ipa_sys_connect_params *sys_in, u32 *clnt_hdl)
 
 		INIT_LIST_HEAD(&ep->sys->head_desc_list);
 		INIT_LIST_HEAD(&ep->sys->rcycl_list);
+		INIT_LIST_HEAD(&ep->sys->avail_tx_wrapper_list);
+		ep->sys->avail_tx_wrapper = 0;
 		spin_lock_init(&ep->sys->spinlock);
 		hrtimer_init(&ep->sys->db_timer, CLOCK_MONOTONIC,
 			HRTIMER_MODE_REL);
@@ -1282,6 +1317,22 @@ fail_gen:
 	return result;
 }
 
+static void delete_avail_tx_wrapper_list(struct ipa3_ep_context *ep)
+{
+	struct ipa3_tx_pkt_wrapper *tx_pkt_iterator = NULL;
+	struct ipa3_tx_pkt_wrapper *tx_pkt_temp = NULL;
+
+	spin_lock_bh(&ep->sys->spinlock);
+	list_for_each_entry_safe(tx_pkt_iterator, tx_pkt_temp,
+	    &ep->sys->avail_tx_wrapper_list, link) {
+		list_del(&tx_pkt_iterator->link);
+		kmem_cache_free(ipa3_ctx->tx_pkt_wrapper_cache, tx_pkt_iterator);
+		ep->sys->avail_tx_wrapper--;
+	}
+	ep->sys->avail_tx_wrapper = 0;
+	spin_unlock_bh(&ep->sys->spinlock);
+}
+
 /**
  * ipa3_teardown_sys_pipe() - Teardown the GPI pipe and cleanup IPA EP
  * @clnt_hdl:	[in] the handle obtained from ipa3_setup_sys_pipe
@@ -1318,6 +1369,8 @@ int ipa3_teardown_sys_pipe(u32 clnt_hdl)
 			else
 				break;
 		} while (1);
+
+		delete_avail_tx_wrapper_list(ep);
 	}
 
 	/* channel stop might fail on timeout if IPA is busy */

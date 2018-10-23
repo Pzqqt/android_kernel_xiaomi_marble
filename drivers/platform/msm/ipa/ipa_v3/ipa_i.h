@@ -210,6 +210,7 @@
 #define IPA3_ACTIVE_CLIENTS_LOG_HASHTABLE_SIZE 50
 #define IPA3_ACTIVE_CLIENTS_LOG_NAME_LEN 40
 #define SMEM_IPA_FILTER_TABLE 497
+#define IPA_TX_WRAPPER_CACHE_MAX_THRESHOLD 2000
 
 enum {
 	SMEM_APPS,
@@ -1066,6 +1067,8 @@ struct ipa3_sys_context {
 	struct ipa3_ep_context *ep;
 	struct list_head head_desc_list;
 	struct list_head rcycl_list;
+	struct list_head avail_tx_wrapper_list;
+	u32 avail_tx_wrapper;
 	spinlock_t spinlock;
 	struct hrtimer db_timer;
 	struct workqueue_struct *wq;
@@ -2062,6 +2065,7 @@ struct ipa3_context {
 	u32 icc_num_paths;
 	u32 icc_clk[IPA_ICC_LVL_MAX][IPA_ICC_PATH_MAX][IPA_ICC_TYPE_MAX];
 	struct ipahal_imm_cmd_pyld *coal_cmd_pyld;
+	u32 tx_wrapper_cache_max_size;
 	struct ipa3_app_clock_vote app_clock_vote;
 	bool clients_registered;
 	bool rmnet_ctl_enable;
@@ -2122,6 +2126,7 @@ struct ipa3_plat_drv_res {
 	bool rmnet_ctl_enable;
 	const char *gsi_fw_file_name;
 	const char *uc_fw_file_name;
+	u32 tx_wrapper_cache_max_size;
 };
 
 /**

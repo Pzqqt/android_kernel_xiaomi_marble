@@ -6562,6 +6562,13 @@ static inline void ipa3_enable_napi_netdev(void)
 	}
 }
 
+static u32 get_tx_wrapper_cache_size(u32 cache_size)
+{
+	if (cache_size <= IPA_TX_WRAPPER_CACHE_MAX_THRESHOLD)
+		return cache_size;
+	return IPA_TX_WRAPPER_CACHE_MAX_THRESHOLD;
+}
+
 /**
  * ipa3_pre_init() - Initialize the IPA Driver.
  * This part contains all initialization which doesn't require IPA HW, such
@@ -6672,6 +6679,8 @@ static int ipa3_pre_init(const struct ipa3_plat_drv_res *resource_p,
 		resource_p->do_ram_collection_on_crash;
 	ipa3_ctx->lan_rx_napi_enable = resource_p->lan_rx_napi_enable;
 	ipa3_ctx->rmnet_ctl_enable = resource_p->rmnet_ctl_enable;
+	ipa3_ctx->tx_wrapper_cache_max_size = get_tx_wrapper_cache_size(
+			resource_p->tx_wrapper_cache_max_size);
 
 	if (resource_p->gsi_fw_file_name) {
 		ipa3_ctx->gsi_fw_file_name =
@@ -7381,6 +7390,22 @@ static int get_ipa_dts_pm_info(struct platform_device *pdev,
 	return 0;
 }
 
+static void get_dts_tx_wrapper_cache_size(struct platform_device *pdev,
+		struct ipa3_plat_drv_res *ipa_drv_res)
+{
+	int result;
+
+	result = of_property_read_u32 (
+		pdev->dev.of_node,
+		"qcom,tx-wrapper-cache-max-size",
+		&ipa_drv_res->tx_wrapper_cache_max_size);
+	if (result)
+		ipa_drv_res->tx_wrapper_cache_max_size = 0;
+
+	IPADBG("tx_wrapper_cache_max_size is set to %d",
+		ipa_drv_res->tx_wrapper_cache_max_size);
+}
+
 static int get_ipa_dts_configuration(struct platform_device *pdev,
 		struct ipa3_plat_drv_res *ipa_drv_res)
 {
@@ -7842,6 +7867,8 @@ static int get_ipa_dts_configuration(struct platform_device *pdev,
 
 	IPADBG(": secure-debug-check-action = %d\n",
 		   ipa_drv_res->secure_debug_check_action);
+
+	get_dts_tx_wrapper_cache_size(pdev, ipa_drv_res);
 
 	return 0;
 }

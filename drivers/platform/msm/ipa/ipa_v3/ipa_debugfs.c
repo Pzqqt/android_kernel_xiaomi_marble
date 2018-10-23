@@ -3042,6 +3042,14 @@ void ipa3_debugfs_init(void)
 		goto fail;
 	}
 
+	file = debugfs_create_u32("tx_wrapper_cache_max_size",
+		IPA_READ_WRITE_MODE,
+		dent, &ipa3_ctx->tx_wrapper_cache_max_size);
+	if (!file) {
+		IPAERR("could not create tx_wrapper_cache_max_size file\n");
+		goto fail;
+	}
+
 	file = debugfs_create_u32("enable_napi_chain", IPA_READ_WRITE_MODE,
 		dent, &ipa3_ctx->enable_napi_chain);
 	if (!file) {
