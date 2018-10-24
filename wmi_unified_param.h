@@ -5218,6 +5218,7 @@ typedef enum {
 	wmi_service_infra_mbssid,
 	wmi_service_esp_support,
 	wmi_service_obss_spatial_reuse,
+	wmi_service_per_vdev_chain_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
