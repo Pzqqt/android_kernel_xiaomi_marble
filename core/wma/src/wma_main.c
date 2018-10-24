@@ -5563,6 +5563,8 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	tgt_cfg.wmi_max_len = wmi_get_max_msg_len(wma_handle->wmi_handle)
 			      - WMI_TLV_HEADROOM;
 	tgt_cfg.tx_bfee_8ss_enabled = wma_handle->tx_bfee_8ss_enabled;
+	tgt_cfg.dynamic_nss_chains_support =
+				wma_handle->dynamic_nss_chains_support;
 	wma_update_obss_detection_support(wma_handle, &tgt_cfg);
 	wma_update_obss_color_collision_support(wma_handle, &tgt_cfg);
 	wma_update_hdd_cfg_ndp(wma_handle, &tgt_cfg);
@@ -6010,6 +6012,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	wma_handle->tx_bfee_8ss_enabled =
 		wmi_service_enabled(wmi_handle, wmi_service_8ss_tx_bfee);
 
+	wma_handle->dynamic_nss_chains_support = wmi_service_enabled(wmi_handle,
+					wmi_service_per_vdev_chain_support);
 	target_psoc_set_num_radios(tgt_hdl, 1);
 
 	return 0;

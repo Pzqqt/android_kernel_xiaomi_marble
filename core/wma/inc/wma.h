@@ -1134,6 +1134,7 @@ struct wma_valid_channels {
  * @bandcapability: band capability configured through ini
  * @tx_bfee_8ss_enabled: Is Tx Beamformee support for 8x8 enabled?
  * @in_imps: Is device in Idle Mode Power Save?
+ * @dynamic_nss_chains_update: per vdev nss, chains update
  * @ito_repeat_count: Indicates ito repeated count
  * @wma_fw_time_sync_timer: timer used for firmware time sync
  * @critical_events_in_flight: number of suspend-preventing events
@@ -1282,6 +1283,7 @@ typedef struct {
 	uint8_t bandcapability;
 	bool tx_bfee_8ss_enabled;
 	bool in_imps;
+	bool dynamic_nss_chains_support;
 	uint8_t  ito_repeat_count;
 	qdf_mc_timer_t wma_fw_time_sync_timer;
 	qdf_atomic_t critical_events_in_flight;

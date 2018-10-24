@@ -177,6 +177,7 @@ struct board_info {
  * @he_cap: HE capability received from FW
  * @dfs_cac_offload: dfs and cac timer offloaded
  * @tx_bfee_8ss_enabled: Tx Beamformee support for 8x8
+ * @dynamic_nss_chains_update: per vdev dynamic nss, chains update
  * @rcpi_enabled: for checking rcpi support
  * @obss_detection_offloaded: obss detection offloaded to firmware
  * @obss_color_collision_offloaded: obss color collision offloaded to firmware
@@ -215,6 +216,7 @@ struct wma_tgt_cfg {
 #endif
 	bool dfs_cac_offload;
 	bool tx_bfee_8ss_enabled;
+	bool dynamic_nss_chains_support;
 	bool rcpi_enabled;
 	bool obss_detection_offloaded;
 	bool obss_color_collision_offloaded;

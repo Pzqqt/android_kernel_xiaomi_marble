@@ -1744,6 +1744,7 @@ struct hdd_psoc {
  * @pdev: object manager pdev context
  * @g_event_flags: a bitmap of hdd_driver_flags
  * @psoc_idle_timeout_work: delayed work for psoc idle shutdown
+ * @dynamic_nss_chains_support: Per vdev dynamic nss chains update capability
  */
 struct hdd_context {
 	struct hdd_psoc *hdd_psoc;
@@ -2020,6 +2021,8 @@ struct hdd_context {
 #endif
 	enum sar_version sar_version;
 	struct qdf_mac_addr dynamic_mac_list[QDF_MAX_CONCURRENCY_PERSONA];
+	bool dynamic_nss_chains_support;
+
 };
 
 /**
