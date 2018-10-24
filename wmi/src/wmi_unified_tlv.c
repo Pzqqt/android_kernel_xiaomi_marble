@@ -11767,7 +11767,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_esp_support] = WMI_SERVICE_ESP_SUPPORT;
 	wmi_service[wmi_service_obss_spatial_reuse] =
 			WMI_SERVICE_OBSS_SPATIAL_REUSE;
-
+	wmi_service[wmi_service_per_vdev_chain_support] =
+			WMI_SERVICE_PER_VDEV_CHAINMASK_CONFIG_SUPPORT;
 }
 
 #ifndef CONFIG_MCL
