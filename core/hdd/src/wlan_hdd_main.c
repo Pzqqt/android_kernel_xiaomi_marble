@@ -13189,32 +13189,6 @@ static bool is_con_mode_valid(enum QDF_GLOBAL_MODE mode)
 	}
 }
 
-/**
- * hdd_get_adpter_mode() - returns adapter mode based on global con mode
- * @mode: global con mode
- *
- * Return: adapter mode
- */
-static enum QDF_OPMODE hdd_get_adpter_mode(
-					enum QDF_GLOBAL_MODE mode)
-{
-
-	switch (mode) {
-	case QDF_GLOBAL_MISSION_MODE:
-		return QDF_STA_MODE;
-	case QDF_GLOBAL_MONITOR_MODE:
-		return QDF_MONITOR_MODE;
-	case QDF_GLOBAL_EPPING_MODE:
-		return QDF_EPPING_MODE;
-	case QDF_GLOBAL_FTM_MODE:
-		return QDF_FTM_MODE;
-	case QDF_GLOBAL_QVIT_MODE:
-		return QDF_QVIT_MODE;
-	default:
-		return QDF_MAX_NO_OF_MODE;
-	}
-}
-
 static void hdd_stop_present_mode(struct hdd_context *hdd_ctx,
 				  enum QDF_GLOBAL_MODE curr_mode)
 {
@@ -13262,6 +13236,19 @@ static void hdd_cleanup_present_mode(struct hdd_context *hdd_ctx,
 	}
 }
 
+static int
+hdd_parse_driver_mode(const char *mode_str, enum QDF_GLOBAL_MODE *out_mode)
+{
+	int mode;
+	int errno;
+
+	errno = kstrtoint(mode_str, 0, &mode);
+	if (!errno)
+		*out_mode = (enum QDF_GLOBAL_MODE)mode;
+
+	return errno;
+}
+
 /**
  * __con_mode_handler() - Handles module param con_mode change
  * @kmessage: con mode name on which driver to be bring up
@@ -13271,111 +13258,102 @@ static void hdd_cleanup_present_mode(struct hdd_context *hdd_ctx,
  * This function is invoked when user updates con mode using sys entry,
  * to initialize and bring-up driver in that specific mode.
  *
- * Return - 0 on success and failure code on failure
+ * Return: Errno
  */
 static int __con_mode_handler(const char *kmessage,
 			      const struct kernel_param *kp,
 			      struct hdd_context *hdd_ctx)
 {
-	int ret;
 	enum QDF_GLOBAL_MODE curr_mode;
-	enum QDF_OPMODE adapter_mode;
-	int new_con_mode;
+	enum QDF_GLOBAL_MODE next_mode;
+	int errno;
 
-	hdd_info("con_mode handler: %s", kmessage);
+	hdd_info("Driver mode changing to %s", kmessage);
 
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret)
-		return ret;
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
+
+	errno = hdd_parse_driver_mode(kmessage, &next_mode);
+	if (errno) {
+		hdd_err_rl("Failed to parse driver mode '%s'", kmessage);
+		return errno;
+	}
+
+	if (!is_con_mode_valid(next_mode)) {
+		hdd_err_rl("Requested driver mode is invalid");
+		return -EINVAL;
+	}
 
 	qdf_atomic_set(&hdd_ctx->con_mode_flag, 1);
-
-	ret = kstrtoint(kmessage, 0, &new_con_mode);
-	if (ret) {
-		hdd_err("Failed to parse con_mode '%s'", kmessage);
-		goto reset_flags;
-	}
 	mutex_lock(&hdd_init_deinit_lock);
 
-	if (!is_con_mode_valid(new_con_mode)) {
-		hdd_err("invalid con_mode %d", new_con_mode);
-		ret = -EINVAL;
-		goto reset_flags;
-	}
-
 	curr_mode = hdd_get_conparam();
-	if (curr_mode == new_con_mode) {
-		hdd_err("curr mode: %d is same as user triggered mode %d",
-			curr_mode, new_con_mode);
-		ret = 0;
-		goto reset_flags;
+	if (curr_mode == next_mode) {
+		hdd_err_rl("Driver is already in the requested mode");
+		errno = 0;
+		goto unlock;
 	}
 
 	/* ensure adapters are stopped */
 	hdd_stop_present_mode(hdd_ctx, curr_mode);
 
-	ret = hdd_wlan_stop_modules(hdd_ctx, true);
-	if (ret) {
+	errno = hdd_wlan_stop_modules(hdd_ctx, true);
+	if (errno) {
 		hdd_err("Stop wlan modules failed");
-		goto reset_flags;
+		goto unlock;
 	}
 
 	/* Cleanup present mode before switching to new mode */
 	hdd_cleanup_present_mode(hdd_ctx, curr_mode);
 
-	hdd_set_conparam(new_con_mode);
+	hdd_set_conparam(next_mode);
 
-	/* Register for new con_mode & then kick_start modules again */
-	ret = hdd_open_adapters_for_mode(hdd_ctx, new_con_mode);
-	if (ret) {
-		hdd_err("Failed to register for new mode");
-		goto reset_flags;
+	errno = hdd_open_adapters_for_mode(hdd_ctx, next_mode);
+	if (errno) {
+		hdd_err("Failed to open adapters");
+		goto unlock;
 	}
 
-	adapter_mode = hdd_get_adpter_mode(new_con_mode);
-	if (adapter_mode == QDF_MAX_NO_OF_MODE) {
-		hdd_err("invalid adapter");
-		ret = -EINVAL;
-		goto reset_flags;
+	errno = hdd_wlan_start_modules(hdd_ctx, false);
+	if (errno) {
+		hdd_err("Start wlan modules failed: %d", errno);
+		goto unlock;
 	}
 
-	ret = hdd_wlan_start_modules(hdd_ctx, false);
-	if (ret) {
-		hdd_err("Start wlan modules failed: %d", ret);
-		goto reset_flags;
-	}
-
-	if (new_con_mode == QDF_GLOBAL_MONITOR_MODE) {
+	if (next_mode == QDF_GLOBAL_MONITOR_MODE) {
 		struct hdd_adapter *adapter =
-			hdd_get_adapter(hdd_ctx, adapter_mode);
+			hdd_get_adapter(hdd_ctx, QDF_MONITOR_MODE);
 
+		QDF_BUG(adapter);
 		if (!adapter) {
-			hdd_err("Failed to get adapter:%d", adapter_mode);
-			goto reset_flags;
+			hdd_err("Failed to get monitor adapter");
+			goto unlock;
 		}
 
-		if (hdd_start_adapter(adapter)) {
-			hdd_err("Failed to start %s adapter", kmessage);
-			ret = -EINVAL;
-			goto reset_flags;
+		errno = hdd_start_adapter(adapter);
+		if (errno) {
+			hdd_err("Failed to start monitor adapter");
+			goto unlock;
 		}
 
-		hdd_info("Acquire wakelock for monitor mode!");
+		hdd_info("Acquire wakelock for monitor mode");
 		qdf_wake_lock_acquire(&hdd_ctx->monitor_mode_wakelock,
 				      WIFI_POWER_EVENT_WAKELOCK_MONITOR_MODE);
 	}
 
 	/* con_mode is a global module parameter */
-	con_mode = new_con_mode;
-	hdd_info("Mode successfully changed to %s", kmessage);
-	ret = 0;
+	con_mode = next_mode;
+	hdd_info("Driver mode successfully changed to %s", kmessage);
 
-reset_flags:
+	errno = 0;
+
+unlock:
 	mutex_unlock(&hdd_init_deinit_lock);
 	qdf_atomic_set(&hdd_ctx->con_mode_flag, 0);
-	return ret;
-}
 
+	return errno;
+}
 
 static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
 {
