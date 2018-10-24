@@ -8890,7 +8890,9 @@ static QDF_STATUS extract_chainmask_tables_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_INVAL;
 
 	if ((!hw_caps->num_chainmask_tables) ||
-	    (hw_caps->num_chainmask_tables > PSOC_MAX_CHAINMASK_TABLES))
+	    (hw_caps->num_chainmask_tables > PSOC_MAX_CHAINMASK_TABLES) ||
+	    (hw_caps->num_chainmask_tables >
+	     param_buf->num_mac_phy_chainmask_combo))
 		return QDF_STATUS_E_INVAL;
 
 	chainmask_caps = param_buf->mac_phy_chainmask_caps;
