@@ -1094,6 +1094,8 @@ struct wlan_lmac_if_nan_rx_ops {
  * @dfs_process_radar_ind:            Process radar found indication.
  * @dfs_dfs_cac_complete_ind:         Process cac complete indication.
  * @dfs_stop:                         Clear dfs timers.
+ * @dfs_enable_stadfs:                Enable/Disable STADFS capability.
+ * @dfs_is_stadfs_enabled:            Get STADFS capability value.
  * @dfs_process_phyerr_filter_offload:Process radar event.
  * @dfs_is_phyerr_filter_offload:     Check whether phyerr filter is offload.
  * @dfs_action_on_status:             Trigger the action to be taken based on
@@ -1175,6 +1177,8 @@ struct wlan_lmac_if_dfs_rx_ops {
 			uint32_t vdev_id);
 #endif
 	QDF_STATUS (*dfs_stop)(struct wlan_objmgr_pdev *pdev);
+	void (*dfs_enable_stadfs)(struct wlan_objmgr_pdev *pdev, bool val);
+	bool (*dfs_is_stadfs_enabled)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_process_phyerr_filter_offload)(
 			struct wlan_objmgr_pdev *pdev,
 			struct radar_event_info *wlan_radar_info);
