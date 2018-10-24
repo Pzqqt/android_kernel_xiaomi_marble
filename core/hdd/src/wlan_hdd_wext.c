@@ -4286,6 +4286,24 @@ static int hdd_we_set_tm_level(struct hdd_adapter *adapter, int level)
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_we_set_nss(struct hdd_adapter *adapter, int nss)
+{
+	QDF_STATUS status;
+
+	hdd_debug("NSS %d", nss);
+
+	if ((nss > 2) || (nss <= 0)) {
+		hdd_err("Invalid NSS: %d", nss);
+		return -EINVAL;
+	}
+
+	status = hdd_update_nss(adapter, nss);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("cfg set failed, value %d status %d", nss, status);
+
+	return qdf_status_to_os_return(status);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4371,21 +4389,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_NSS:
-	{
-		if (!mac_handle)
-			return -EINVAL;
-
-		hdd_debug("Set NSS = %d", set_value);
-		if ((set_value > 2) || (set_value <= 0)) {
-			hdd_err("NSS greater than 2 not supported");
-			ret = -EINVAL;
-		} else {
-			if (QDF_STATUS_SUCCESS !=
-				hdd_update_nss(adapter, set_value))
-				ret = -EINVAL;
-		}
+		ret = hdd_we_set_nss(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_GTX_HT_MCS:
 	{

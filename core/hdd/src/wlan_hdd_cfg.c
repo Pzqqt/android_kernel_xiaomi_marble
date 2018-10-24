@@ -4723,6 +4723,11 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	}
 
 	mac_handle = hdd_ctx->mac_handle;
+	if (!mac_handle) {
+		hdd_err("NULL MAC handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	if (sme_is_any_session_in_connected_state(mac_handle)) {
 		hdd_err("Connected sessions present, Do not change NSS");
 		return QDF_STATUS_E_INVAL;
