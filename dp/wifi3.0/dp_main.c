@@ -1217,12 +1217,6 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 				remaining_quota = budget;
 			}
 		}
-
-		for (ring = 0; ring < MAX_RX_MAC_RINGS; ring++) {
-			work_done = dp_rxdma_err_process(soc, ring,
-						remaining_quota);
-			budget -= work_done;
-		}
 	}
 
 	if (reo_status_mask)
