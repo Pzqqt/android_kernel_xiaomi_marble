@@ -194,6 +194,9 @@ static void pld_pcie_uevent(struct pci_dev *pdev, uint32_t status)
 	case CNSS_RECOVERY:
 		data.uevent = PLD_RECOVERY;
 		break;
+	case CNSS_FW_DOWN:
+		data.uevent = PLD_FW_DOWN;
+		break;
 	default:
 		goto out;
 	}
