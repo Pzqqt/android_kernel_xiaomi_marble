@@ -13242,6 +13242,8 @@ hdd_parse_driver_mode(const char *mode_str, enum QDF_GLOBAL_MODE *out_mode)
 	int mode;
 	int errno;
 
+	*out_mode = QDF_GLOBAL_MAX_MODE;
+
 	errno = kstrtoint(mode_str, 0, &mode);
 	if (!errno)
 		*out_mode = (enum QDF_GLOBAL_MODE)mode;
