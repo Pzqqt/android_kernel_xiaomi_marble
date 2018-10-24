@@ -6651,10 +6651,76 @@ wlan_hdd_soc_set_antenna_mode_cb(enum set_antenna_mode_status status,
 	osif_request_put(request);
 }
 
+static QDF_STATUS
+hdd_populate_vdev_chains(struct wlan_mlme_nss_chains *nss_chains_cfg,
+			 uint8_t tx_chains,
+			 uint8_t rx_chains,
+			 enum nss_chains_band_info band,
+			 struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_mlme_nss_chains *dynamic_cfg;
+
+	nss_chains_cfg->num_rx_chains[band] = rx_chains;
+	nss_chains_cfg->num_tx_chains[band] = tx_chains;
+
+	dynamic_cfg = mlme_get_dynamic_vdev_config(vdev);
+	if (!dynamic_cfg) {
+		hdd_err("nss chain dynamic config NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	/*
+	 * If user gives any nss value, then chains will be adjusted based on
+	 * nss (in SME func sme_validate_user_nss_chain_params).
+	 * If Chains are not suitable as per current NSS then, we need to
+	 * return, and the below logic is added for the same.
+	 */
+
+	if ((dynamic_cfg->rx_nss[band] > rx_chains) ||
+	    (dynamic_cfg->tx_nss[band] > tx_chains)) {
+		hdd_err("Chains less than nss, configure correct nss first.");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static int
+hdd_set_dynamic_antenna_mode(struct hdd_adapter *adapter,
+			     uint8_t num_rx_chains,
+			     uint8_t num_tx_chains)
+{
+	enum nss_chains_band_info band;
+	struct wlan_mlme_nss_chains user_cfg;
+	QDF_STATUS status;
+	mac_handle_t mac_handle;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	mac_handle = hdd_ctx->mac_handle;
+	if (!mac_handle) {
+		hdd_err("NULL MAC handle");
+		return -EINVAL;
+	}
+
+	qdf_mem_zero(&user_cfg, sizeof(user_cfg));
+	for (band = BAND_2GHZ; band < BAND_MAX; band++) {
+		status = hdd_populate_vdev_chains(&user_cfg,
+						  num_rx_chains,
+						  num_tx_chains, band,
+						  adapter->vdev);
+		if (QDF_IS_STATUS_ERROR(status))
+			return -EINVAL;
+	}
+	status = sme_nss_chains_update(mac_handle,
+				       &user_cfg,
+				       adapter->session_id);
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EINVAL;
+
+	return 0;
+}
 int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 				  struct hdd_context *hdd_ctx, int mode)
 {
-
 	struct sir_antenna_mode_param params;
 	QDF_STATUS status;
 	int ret = 0;
@@ -6695,6 +6761,12 @@ int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 		hdd_err("unsupported antenna mode");
 		ret = -EINVAL;
 		goto exit;
+	}
+
+	if (hdd_ctx->dynamic_nss_chains_support) {
+		return hdd_set_dynamic_antenna_mode(adapter,
+						    params.num_rx_chains,
+						    params.num_tx_chains);
 	}
 
 	/* Check TDLS status and update antenna mode */
