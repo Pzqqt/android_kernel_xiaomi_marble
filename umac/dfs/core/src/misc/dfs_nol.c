@@ -292,34 +292,35 @@ void dfs_print_nol(struct wlan_dfs *dfs)
 
 void dfs_print_nolhistory(struct wlan_dfs *dfs)
 {
-	struct dfs_channel *c, lc;
-	int i, j = 0;
-	int nchans = 0;
+	struct dfs_channel *chan_list;
+	int i, j;
+	int nchans;
 
 	if (!dfs) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
-	c = &lc;
+	nchans = dfs_get_num_chans();
 
-	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
-	for (i = 0; i < nchans; i++) {
-		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
-				&(c->dfs_ch_freq),
-				&(c->dfs_ch_flags),
-				&(c->dfs_ch_flagext),
-				&(c->dfs_ch_ieee),
-				&(c->dfs_ch_vhtop_ch_freq_seg1),
-				&(c->dfs_ch_vhtop_ch_freq_seg2),
-				i);
-		if (WLAN_IS_CHAN_HISTORY_RADAR(c)) {
-			dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
-				"nolhistory:%d channel=%d MHz Flags=%llx",
-				j, c->dfs_ch_freq, c->dfs_ch_flags);
-			j++;
-		}
+	chan_list = qdf_mem_malloc(nchans * sizeof(*chan_list));
+	if (!chan_list)
+		return;
+
+	utils_dfs_get_nol_history_chan_list(dfs->dfs_pdev_obj,
+					    (void *)chan_list, &nchans);
+	if (!nchans) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "zero chans");
+		qdf_mem_free(chan_list);
+		return;
 	}
+
+	for (i = 0, j = 0; i < nchans; i++, j++)
+		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			 "nolhistory = %d channel = %d MHz",
+			 j, chan_list[i].dfs_ch_freq);
+
+	qdf_mem_free(chan_list);
 }
 
 void dfs_get_nol(struct wlan_dfs *dfs,
@@ -592,24 +593,36 @@ void dfs_getnol(struct wlan_dfs *dfs, void *dfs_nolinfo)
 
 void dfs_clear_nolhistory(struct wlan_dfs *dfs)
 {
-	/* We should have a dfs_clear_nolhistory API from Regdomain. */
-	struct dfs_channel *c, lc;
-	int i;
+	struct dfs_channel *chan_list;
 	int nchans = 0;
+	bool sta_opmode;
 
-	c = &lc;
-	dfs_mlme_get_dfs_ch_nchans(dfs->dfs_pdev_obj, &nchans);
-	for (i = 0; i < nchans; i++) {
-		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
-				&(c->dfs_ch_freq),
-				&(c->dfs_ch_flags),
-				&(c->dfs_ch_flagext),
-				&(c->dfs_ch_ieee),
-				&(c->dfs_ch_vhtop_ch_freq_seg1),
-				&(c->dfs_ch_vhtop_ch_freq_seg2),
-				i);
-		WLAN_CHAN_CLR_HISTORY_RADAR(c);
+	if (!dfs->dfs_is_stadfs_enabled)
+		return;
+
+	sta_opmode = dfs_mlme_is_opmode_sta(dfs->dfs_pdev_obj);
+	if (!sta_opmode)
+		return;
+
+	nchans = dfs_get_num_chans();
+
+	chan_list = qdf_mem_malloc(nchans * sizeof(*chan_list));
+	if (!chan_list)
+		return;
+
+	utils_dfs_get_nol_history_chan_list(dfs->dfs_pdev_obj,
+					    (void *)chan_list, &nchans);
+	if (!nchans) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "zero chans");
+		qdf_mem_free(chan_list);
+		return;
 	}
+
+	utils_dfs_reg_update_nol_history_ch(dfs->dfs_pdev_obj,
+					    (void *)chan_list, nchans,
+					    DFS_NOL_HISTORY_RESET);
+
+	qdf_mem_free(chan_list);
 }
 
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && defined(HOST_DFS_SPOOF_TEST)

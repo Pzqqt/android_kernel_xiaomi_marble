@@ -170,6 +170,13 @@ static QDF_STATUS dfs_radar_add_channel_list_to_nol(struct wlan_dfs *dfs,
 
 	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
 				    nollist, num_ch, DFS_NOL_SET);
+
+	if (dfs->dfs_is_stadfs_enabled)
+		if (dfs_mlme_is_opmode_sta(dfs->dfs_pdev_obj))
+			utils_dfs_reg_update_nol_history_ch(
+					dfs->dfs_pdev_obj, nollist, num_ch,
+					DFS_NOL_HISTORY_SET);
+
 	dfs_nol_update(dfs);
 	utils_dfs_save_nol(dfs->dfs_pdev_obj);
 

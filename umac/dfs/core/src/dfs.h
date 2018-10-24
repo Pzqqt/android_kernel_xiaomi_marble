@@ -1003,6 +1003,7 @@ struct dfs_event_log {
  * @dfs_spoof_test_done:             Indicates if the sppof test is done.
  * @dfs_status_timeout_override:     Used to change the timeout value of
  *                                   dfs_host_wait_timer.
+ * @dfs_is_stadfs_enabled:           Is STADFS enabled.
  * @dfs_min_sidx:                    Minimum sidx of the received radar pulses.
  * @dfs_max_sidx:                    Maximum sidx of the received radar pulses.
  * @dfs_seg_id:                      Segment ID of the radar hit channel.
@@ -1140,6 +1141,7 @@ struct wlan_dfs {
 	struct dfs_channel dfs_radar_found_chan;
 	int            dfs_status_timeout_override;
 #endif
+	bool           dfs_is_stadfs_enabled;
 	uint32_t       dfs_min_sidx;
 	uint32_t       dfs_max_sidx;
 	uint8_t        dfs_seg_id;

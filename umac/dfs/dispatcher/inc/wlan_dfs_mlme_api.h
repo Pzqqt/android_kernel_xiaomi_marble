@@ -281,4 +281,12 @@ void dfs_mlme_handle_dfs_scan_violation(struct wlan_objmgr_pdev *pdev)
 {
 }
 #endif
+
+/**
+ * dfs_mlme_is_opmode_sta() - Check if pdev opmode is STA.
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Return: true if pdev opmode is STA, else false.
+ */
+bool dfs_mlme_is_opmode_sta(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_DFS_MLME_API_H_ */

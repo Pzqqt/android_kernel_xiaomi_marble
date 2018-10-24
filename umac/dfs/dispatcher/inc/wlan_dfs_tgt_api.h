@@ -396,6 +396,21 @@ QDF_STATUS tgt_dfs_reset_spoof_test(struct wlan_objmgr_pdev *pdev)
 #endif
 
 /**
+ * tgt_dfs_enable_stadfs() - Enable/Disable STADFS capability.
+ * @pdev: Pointer to DFS pdev object.
+ * @val: input value.
+ */
+void tgt_dfs_enable_stadfs(struct wlan_objmgr_pdev *pdev, bool val);
+
+/**
+ * tgt_dfs_is_stadfs_enabled() - Get STADFS capability
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Return: true if STADFS is enabled, else false.
+ */
+bool tgt_dfs_is_stadfs_enabled(struct wlan_objmgr_pdev *pdev);
+
+/**
  * tgt_dfs_is_pdev_5ghz() - Check if the input pdev is 5GHZ.
  * @pdev: Pointer to DFS pdev object.
  *

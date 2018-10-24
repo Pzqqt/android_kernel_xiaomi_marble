@@ -102,6 +102,8 @@ void register_dfs_callbacks(void)
 		mlme_dfs_rebuild_chan_list_with_non_dfs_channels;
 	tmp_dfs_to_mlme->mlme_restart_vaps_with_non_dfs_chan =
 		mlme_dfs_restart_vaps_with_non_dfs_chan;
+	tmp_dfs_to_mlme->mlme_is_opmode_sta =
+		mlme_dfs_is_opmode_sta;
 	tmp_dfs_to_mlme->mlme_check_allowed_prim_chanlist =
 		mlme_dfs_check_allowed_prim_chanlist;
 	tmp_dfs_to_mlme->mlme_update_scan_channel_list =

@@ -34,6 +34,12 @@
 /* Remove channel from nol */
 #define DFS_NOL_RESET                0
 
+/* Mark nol-history flag for the channel */
+#define DFS_NOL_HISTORY_SET 1
+
+/* Clear nol-history flag from the channel */
+#define DFS_NOL_HISTORY_RESET 0
+
 /* Max nol channels */
 #define DFS_MAX_NOL_CHANNEL         80
 
@@ -559,6 +565,31 @@ int dfs_get_num_chans(void);
 void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 			     void *clist,
 			     uint32_t *num_chan);
+
+/**
+ * utils_dfs_get_nol_history_chan_list() - Get nol_history channels from regdb
+ * component.
+ * @pdev: Pointer to pdev structure.
+ * @clist: Pointer to channel list.
+ * @num_chan: number of channels.
+ */
+void utils_dfs_get_nol_history_chan_list(struct wlan_objmgr_pdev *pdev,
+					 void *clist, uint32_t *num_chan);
+
+/**
+ * utils_dfs_reg_update_nol_history_ch() - set nol history channel
+ *
+ * @pdev: pdev ptr
+ * @ch_list: channel list to be returned
+ * @num_ch: number of channels
+ * @nol_history_ch: nol history flag
+ *
+ * Return: void
+ */
+void utils_dfs_reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
+					 uint8_t *ch_list,
+					 uint8_t num_ch,
+					 bool nol_history_ch);
 
 /**
  * utils_dfs_check_for_cac_start() - Check for DFS CAC start conditions.

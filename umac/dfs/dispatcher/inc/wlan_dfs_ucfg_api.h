@@ -52,6 +52,7 @@
  *                                     Channel Switch Announcement.
  * @mlme_nol_timeout_notification:     NOL timeout notification.
  * @mlme_clist_update:                 Updates the channel list.
+ * @mlme_is_opmode_sta:                Check if pdev opmode is STA.
  * @mlme_get_cac_timeout:              Gets the CAC timeout.
  * @mlme_rebuild_chan_list_with_non_dfs_channel: Rebuild channels with non-dfs
  *                                     channels.
@@ -132,6 +133,7 @@ struct dfs_to_mlme {
 	QDF_STATUS (*mlme_clist_update)(struct wlan_objmgr_pdev *pdev,
 			void *nollist,
 			int nentries);
+	bool (*mlme_is_opmode_sta)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_get_cac_timeout)(struct wlan_objmgr_pdev *pdev,
 			uint16_t dfs_ch_freq,
 			uint8_t c_vhtop_ch_freq_seg2,

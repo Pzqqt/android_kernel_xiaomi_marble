@@ -338,3 +338,11 @@ void dfs_mlme_handle_dfs_scan_violation(struct wlan_objmgr_pdev *pdev)
 	global_dfs_to_mlme.mlme_update_scan_channel_list(pdev);
 }
 #endif
+
+bool dfs_mlme_is_opmode_sta(struct wlan_objmgr_pdev *pdev)
+{
+	if (!global_dfs_to_mlme.mlme_is_opmode_sta)
+		return false;
+
+	return global_dfs_to_mlme.mlme_is_opmode_sta(pdev);
+}

@@ -610,3 +610,29 @@ QDF_STATUS tgt_dfs_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
 
 qdf_export_symbol(tgt_dfs_send_usenol_pdev_param);
 #endif
+
+void tgt_dfs_enable_stadfs(struct wlan_objmgr_pdev *pdev, bool val)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return;
+	}
+
+	dfs->dfs_is_stadfs_enabled = val;
+}
+
+bool tgt_dfs_is_stadfs_enabled(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return false;
+	}
+
+	return dfs->dfs_is_stadfs_enabled;
+}
