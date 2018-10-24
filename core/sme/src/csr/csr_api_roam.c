@@ -1259,6 +1259,11 @@ QDF_STATUS csr_stop(tpAniSirGlobal pMac)
 	ucfg_scan_set_enable(pMac->psoc, false);
 	ucfg_scan_unregister_requester(pMac->psoc, pMac->scan.requester_id);
 
+	/*
+	 * purge all serialization commnad if there are any pending to make
+	 * sure memory and vdev ref are freed.
+	 */
+	csr_purge_pdev_all_ser_cmd_list(pMac);
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
 		csr_roam_close_session(pMac, sessionId, true);
 
@@ -1421,6 +1426,11 @@ static QDF_STATUS csr_roam_close(tpAniSirGlobal pMac)
 {
 	uint32_t sessionId;
 
+	/*
+	 * purge all serialization commnad if there are any pending to make
+	 * sure memory and vdev ref are freed.
+	 */
+	csr_purge_pdev_all_ser_cmd_list(pMac);
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
 		csr_roam_close_session(pMac, sessionId, true);
 
@@ -17116,7 +17126,13 @@ QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal mac_ctx,
 	rsp = (struct del_sta_self_params *) pMsg;
 	sessionId = rsp->session_id;
 	sme_debug("Del Sta rsp status = %d", rsp->status);
-	/* This session is done. */
+
+	/*
+	 * This session is done. This will also flush all the pending command
+	 * for this vdev, as vdev is deleted and no command should be sent
+	 * for this vdev. Active cmnd is e_sme_command_del_sta_session and will
+	 * be removed anyway next.
+	 */
 	csr_cleanup_session(mac_ctx, sessionId);
 
 	/* Remove this command out of the non scan active list */
@@ -17187,8 +17203,7 @@ void csr_cleanup_session(tpAniSirGlobal pMac, uint32_t sessionId)
 #ifdef FEATURE_WLAN_BTAMP_UT_RF
 		qdf_mc_timer_destroy(&pSession->hTimerJoinRetry);
 #endif
-		purge_sme_session_pending_cmd_list(pMac, sessionId);
-		purge_sme_session_pending_scan_cmd_list(pMac, sessionId);
+		csr_purge_vdev_pending_ser_cmd_list(pMac, sessionId);
 		csr_init_session(pMac, sessionId);
 	}
 }
@@ -17219,10 +17234,11 @@ QDF_STATUS csr_roam_close_session(tpAniSirGlobal mac_ctx,
 					 session_id);
 	}
 
-	purge_sme_session_pending_cmd_list(mac_ctx, session_id);
-	purge_sme_session_active_cmd_list(mac_ctx, session_id);
-	purge_sme_session_pending_scan_cmd_list(mac_ctx, session_id);
-	purge_sme_session_active_scan_cmd_list(mac_ctx, session_id);
+	/*
+	 * Flush only scan commands. Non scan commands should go in sequence
+	 * as expected by firmware and should not be flushed.
+	 */
+	csr_purge_vdev_all_scan_ser_cmd_list(mac_ctx, session_id);
 	if (!session->session_close_cb) {
 		sme_err("no close session callback registered");
 		return QDF_STATUS_E_FAILURE;
@@ -20263,6 +20279,8 @@ QDF_STATUS csr_set_serialization_params_to_cmd(tpAniSirGlobal mac_ctx,
 	    ((cmd->cmd_type == WLAN_SER_CMD_HDD_ISSUED) ||
 	    (cmd->cmd_type == WLAN_SER_CMD_VDEV_STOP_BSS)))
 		cmd->cmd_timeout_duration = SME_START_STOP_BSS_CMD_TIMEOUT;
+	else if (cmd->cmd_type == WLAN_SER_CMD_DEL_STA_SESSION)
+		cmd->cmd_timeout_duration = SME_VDEV_DELETE_CMD_TIMEOUT;
 	else
 		cmd->cmd_timeout_duration = SME_DEFAULT_CMD_TIMEOUT;
 

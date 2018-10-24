@@ -409,40 +409,34 @@ const char *csr_phy_mode_str(eCsrPhyMode phy_mode)
 	}
 }
 
-void purge_sme_session_active_scan_cmd_list(struct sAniSirGlobal *mac_ctx,
-				uint32_t session_id)
+void csr_purge_vdev_pending_ser_cmd_list(struct sAniSirGlobal *mac_ctx,
+					 uint32_t vdev_id)
 {
-	uint8_t vdev_id = session_id;
-
 	wlan_serialization_purge_cmd_list_by_vdev_id(mac_ctx->psoc, vdev_id,
-			true, false, false, false, false);
+						     false, true, false,
+						     true, false);
 }
 
-void purge_sme_session_pending_scan_cmd_list(struct sAniSirGlobal *mac_ctx,
-				uint32_t session_id)
+void csr_purge_vdev_all_ser_cmd_list(struct sAniSirGlobal *mac_ctx,
+				     uint32_t vdev_id)
 {
-	uint8_t vdev_id = session_id;
-
 	wlan_serialization_purge_cmd_list_by_vdev_id(mac_ctx->psoc, vdev_id,
-			false, true, false, false, false);
+						     true, true, true,
+						     true, true);
 }
 
-void purge_sme_session_pending_cmd_list(struct sAniSirGlobal *mac_ctx,
-				uint32_t session_id)
+void csr_purge_vdev_all_scan_ser_cmd_list(struct sAniSirGlobal *mac_ctx,
+					  uint32_t vdev_id)
 {
-	uint8_t vdev_id = session_id;
-
 	wlan_serialization_purge_cmd_list_by_vdev_id(mac_ctx->psoc, vdev_id,
-			false, false, false, true, false);
+						     true, true, false,
+						     false, false);
 }
 
-void purge_sme_session_active_cmd_list(struct sAniSirGlobal *mac_ctx,
-				uint32_t session_id)
+void csr_purge_pdev_all_ser_cmd_list(struct sAniSirGlobal *mac_ctx)
 {
-	uint8_t vdev_id = session_id;
-
-	wlan_serialization_purge_cmd_list_by_vdev_id(mac_ctx->psoc, vdev_id,
-			false, false, true, false, false);
+	wlan_serialization_purge_cmd_list(mac_ctx->psoc, NULL, true, true,
+					  true, true, true);
 }
 
 void csr_nonscan_active_ll_insert_head(struct sAniSirGlobal *mac_ctx,

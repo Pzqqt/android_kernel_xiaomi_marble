@@ -3780,7 +3780,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	/* block on a completion variable until sme session is closed */
 	status = qdf_wait_for_event_completion(
 			&adapter->qdf_session_close_event,
-			WLAN_WAIT_TIME_SESSIONOPENCLOSE);
+			SME_CMD_VDEV_CREATE_DELETE_TIMEOUT);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
@@ -3879,7 +3879,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 
 	/* block on a completion variable until sme session is opened */
 	status = qdf_wait_for_event_completion(&adapter->qdf_session_open_event,
-			WLAN_WAIT_TIME_SESSIONOPENCLOSE);
+			SME_CMD_VDEV_CREATE_DELETE_TIMEOUT);
 	if (QDF_STATUS_SUCCESS != status) {
 		if (adapter->qdf_session_open_event.force_set) {
 			/*

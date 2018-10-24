@@ -1320,16 +1320,49 @@ void csr_nonscan_active_ll_insert_head(
 tListElem *csr_nonscan_pending_ll_next(
 			struct sAniSirGlobal *mac_ctx,
 		tListElem *entry, bool inter_locked);
-void purge_sme_session_pending_cmd_list(
-			struct sAniSirGlobal *mac_ctx,
-		uint32_t session_id);
-void purge_sme_session_active_cmd_list(
-			struct sAniSirGlobal *mac_ctx,
-		uint32_t session_id);
-void purge_sme_session_pending_scan_cmd_list(struct sAniSirGlobal *mac_ctx,
-		uint32_t session_id);
-void purge_sme_session_active_scan_cmd_list(struct sAniSirGlobal *mac_ctx,
-		uint32_t session_id);
+
+/**
+ * csr_purge_vdev_pending_ser_cmd_list() - purge all scan and non-scan
+ * pending cmds for the vdev id
+ * @mac_ctx: pointer to global MAC context
+ * @vdev_id : vdev id for which the pending cmds need to be purged
+ *
+ * Return : none
+ */
+void csr_purge_vdev_pending_ser_cmd_list(struct sAniSirGlobal *mac_ctx,
+					 uint32_t vdev_id);
+
+/**
+ * csr_purge_vdev_all_ser_cmd_list() - purge all scan and non-scan
+ * active and pending cmds for the vdev id
+ * @mac_ctx: pointer to global MAC context
+ * @vdev_id : vdev id for which cmds need to be purged
+ *
+ * Return : none
+ */
+void csr_purge_vdev_all_ser_cmd_list(struct sAniSirGlobal *mac_ctx,
+				     uint32_t vdev_id);
+
+/**
+ * csr_purge_vdev_all_scan_ser_cmd_list() - purge all scan active and pending
+ * cmds for the vdev id
+ * @mac_ctx: pointer to global MAC context
+ * @vdev_id : vdev id for which cmds need to be purged
+ *
+ * Return : none
+ */
+void csr_purge_vdev_all_scan_ser_cmd_list(struct sAniSirGlobal *mac_ctx,
+					  uint32_t vdev_id);
+
+/**
+ * csr_purge_pdev_all_ser_cmd_list() - purge all scan and non-scan
+ * active and pending cmds for all vdevs in pdev
+ * @mac_ctx: pointer to global MAC context
+ *
+ * Return : none
+ */
+void csr_purge_pdev_all_ser_cmd_list(struct sAniSirGlobal *mac_ctx);
+
 bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 		bool do_release_reacquire_lock);
 enum QDF_OPMODE csr_get_session_persona(tpAniSirGlobal pmac,
@@ -1358,5 +1391,4 @@ QDF_STATUS csr_roam_update_config(
  * Return : true if channel causes MCC, else false
  */
 bool csr_is_mcc_channel(tpAniSirGlobal mac_ctx, uint8_t channel);
-
 #endif

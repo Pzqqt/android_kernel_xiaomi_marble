@@ -227,11 +227,7 @@ enum hdd_driver_flags {
 #define WLAN_WAIT_TIME_COUNTRY     1000
 #define WLAN_WAIT_TIME_LINK_STATUS 800
 #define WLAN_WAIT_TIME_POWER_STATS 800
-/* Amount of time to wait for sme close session callback.
- * This value should be larger than the timeout used by WDI to wait for
- * a response from WCNSS
- */
-#define WLAN_WAIT_TIME_SESSIONOPENCLOSE  15000
+
 #define WLAN_WAIT_TIME_ABORTSCAN         2000
 
 /** Maximum time(ms) to wait for mc thread suspend **/
