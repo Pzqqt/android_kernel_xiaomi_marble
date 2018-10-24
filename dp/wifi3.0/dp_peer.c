@@ -666,6 +666,7 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 
 	if (ast_entry->next_hop &&
 	    ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC) {
+		TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
 		dp_peer_ast_send_wds_del(soc, ast_entry);
 	} else {
 		/*
@@ -927,7 +928,6 @@ bool dp_peer_ast_get_wmi_sent(struct dp_soc *soc,
 void dp_peer_ast_free_entry(struct dp_soc *soc,
 			    struct dp_ast_entry *ast_entry)
 {
-	struct dp_peer *peer = ast_entry->peer;
 
 	/*
 	 * release the reference only if it is mapped
@@ -935,7 +935,7 @@ void dp_peer_ast_free_entry(struct dp_soc *soc,
 	 */
 	if (ast_entry->is_mapped)
 		soc->ast_table[ast_entry->ast_idx] = NULL;
-	TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
+
 	DP_STATS_INC(soc, ast.deleted, 1);
 	dp_peer_ast_hash_remove(soc, ast_entry);
 	qdf_mem_free(ast_entry);
