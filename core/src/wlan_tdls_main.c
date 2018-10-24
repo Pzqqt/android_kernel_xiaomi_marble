@@ -451,10 +451,10 @@ static QDF_STATUS tdls_reset_all_peers(
 
 	status = tdls_process_reset_all_peers(delete_all_peers_ind->vdev);
 
-	if (delete_all_peers_ind->callback)
-		delete_all_peers_ind->callback(delete_all_peers_ind->vdev);
-
+	wlan_objmgr_vdev_release_ref(delete_all_peers_ind->vdev,
+				     WLAN_TDLS_SB_ID);
 	qdf_mem_free(delete_all_peers_ind);
+
 	return status;
 }
 
@@ -890,6 +890,33 @@ struct wlan_objmgr_vdev *tdls_get_vdev(struct wlan_objmgr_psoc *psoc,
 	return NULL;
 }
 
+static QDF_STATUS tdls_post_msg_flush_cb(struct scheduler_msg *msg)
+{
+	void *ptr = msg->bodyptr;
+	struct wlan_objmgr_vdev *vdev = NULL;
+
+	switch (msg->type) {
+	case TDLS_NOTIFY_STA_DISCONNECTION:
+		vdev = ((struct tdls_sta_notify_params *)ptr)->vdev;
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+		qdf_mem_free(ptr);
+		break;
+
+	case TDLS_DELETE_ALL_PEERS_INDICATION:
+		vdev = ((struct tdls_delete_all_peers_params *)ptr)->vdev;
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_SB_ID);
+		qdf_mem_free(ptr);
+		break;
+
+	case TDLS_CMD_SCAN_DONE:
+	case TDLS_CMD_SESSION_INCREMENT:
+	case TDLS_CMD_SESSION_DECREMENT:
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * tdls_process_session_update() - update session count information
  * @psoc: soc object
@@ -907,6 +934,7 @@ static void tdls_process_session_update(struct wlan_objmgr_psoc *psoc,
 
 	msg.bodyptr = psoc;
 	msg.callback = tdls_process_cmd;
+	msg.flush_callback = tdls_post_msg_flush_cb;
 	msg.type = (uint16_t)cmd_type;
 
 	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
@@ -1107,10 +1135,9 @@ QDF_STATUS tdls_notify_sta_connect(struct tdls_sta_notify_params *notify)
 
 	status = tdls_process_sta_connect(notify);
 
-	if (notify->callback)
-		notify->callback(notify->vdev);
-
+	wlan_objmgr_vdev_release_ref(notify->vdev, WLAN_TDLS_NB_ID);
 	qdf_mem_free(notify);
+
 	return status;
 }
 
@@ -1196,10 +1223,9 @@ QDF_STATUS tdls_notify_sta_disconnect(struct tdls_sta_notify_params *notify)
 
 	status = tdls_process_sta_disconnect(notify);
 
-	if (notify->callback)
-		notify->callback(notify->vdev);
-
+	wlan_objmgr_vdev_release_ref(notify->vdev, WLAN_TDLS_NB_ID);
 	qdf_mem_free(notify);
+
 	return status;
 }
 
@@ -1228,12 +1254,13 @@ void tdls_notify_reset_adapter(struct wlan_objmgr_vdev *vdev)
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 }
 
-QDF_STATUS tdls_peers_deleted_notification(
-				struct tdls_sta_notify_params *notify_info)
+QDF_STATUS tdls_peers_deleted_notification(struct wlan_objmgr_psoc *psoc,
+					   uint8_t vdev_id)
 {
 	struct scheduler_msg msg = {0, };
 	struct tdls_sta_notify_params *notify;
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
 
 	notify = qdf_mem_malloc(sizeof(*notify));
 	if (!notify) {
@@ -1241,30 +1268,50 @@ QDF_STATUS tdls_peers_deleted_notification(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	*notify = *notify_info;
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+						    vdev_id,
+						    WLAN_TDLS_NB_ID);
+
+	if (!vdev) {
+		tdls_err("vdev not exist for the vdev id %d",
+			 vdev_id);
+		qdf_mem_free(notify);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	notify->lfr_roam = true;
+	notify->tdls_chan_swit_prohibited = false;
+	notify->tdls_prohibited = false;
+	notify->session_id = vdev_id;
+	notify->vdev = vdev;
+	notify->user_disconnect = false;
 
 	msg.bodyptr = notify;
 	msg.callback = tdls_process_cmd;
+	msg.flush_callback = tdls_post_msg_flush_cb;
 	msg.type = TDLS_NOTIFY_STA_DISCONNECTION;
 
 	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 		qdf_mem_free(notify);
 		tdls_alert("message post failed ");
+
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS tdls_delete_all_peers_indication(
-		struct tdls_delete_all_peers_params *delete_peers_ind)
+QDF_STATUS tdls_delete_all_peers_indication(struct wlan_objmgr_psoc *psoc,
+					    uint8_t vdev_id)
 {
 	struct scheduler_msg msg = {0, };
 	struct tdls_delete_all_peers_params *indication;
 	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
 
 	indication = qdf_mem_malloc(sizeof(*indication));
 	if (!indication) {
@@ -1272,16 +1319,29 @@ QDF_STATUS tdls_delete_all_peers_indication(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	*indication = *delete_peers_ind;
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+						    vdev_id,
+						    WLAN_TDLS_SB_ID);
+
+	if (!vdev) {
+		tdls_err("vdev not exist for the session id %d",
+			 vdev_id);
+		qdf_mem_free(indication);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	indication->vdev = vdev;
 
 	msg.bodyptr = indication;
 	msg.callback = tdls_process_cmd;
 	msg.type = TDLS_DELETE_ALL_PEERS_INDICATION;
+	msg.flush_callback = tdls_post_msg_flush_cb;
 
 	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_SB_ID);
 		qdf_mem_free(indication);
 		tdls_alert("message post failed ");
 		return QDF_STATUS_E_FAILURE;
@@ -1450,15 +1510,10 @@ QDF_STATUS tdls_set_operation_mode(struct tdls_set_mode_params *tdls_set_mode)
 	if (!tdls_set_mode || !tdls_set_mode->vdev)
 		return QDF_STATUS_E_INVAL;
 
-	if (QDF_STATUS_SUCCESS !=
-		wlan_objmgr_vdev_try_get_ref(tdls_set_mode->vdev,
-						WLAN_TDLS_NB_ID))
-		return QDF_STATUS_E_INVAL;
-
 	status = tdls_get_vdev_objects(tdls_set_mode->vdev,
 				       &tdls_vdev, &tdls_soc);
 
-	if (status != QDF_STATUS_SUCCESS)
+	if (QDF_IS_STATUS_ERROR(status))
 		goto release_mode_ref;
 
 	tdls_set_current_mode(tdls_soc,
@@ -1518,12 +1573,12 @@ static QDF_STATUS tdls_post_scan_done_msg(struct tdls_soc_priv_obj *tdls_soc)
 
 	msg.bodyptr = tdls_soc;
 	msg.callback = tdls_process_cmd;
+	msg.flush_callback = tdls_post_msg_flush_cb;
 	msg.type = TDLS_CMD_SCAN_DONE;
-	scheduler_post_message(QDF_MODULE_ID_TDLS,
-			       QDF_MODULE_ID_TDLS,
-			       QDF_MODULE_ID_OS_IF, &msg);
 
-	return QDF_STATUS_SUCCESS;
+	return scheduler_post_message(QDF_MODULE_ID_TDLS,
+				      QDF_MODULE_ID_TDLS,
+				      QDF_MODULE_ID_OS_IF, &msg);
 }
 
 void tdls_scan_complete_event_handler(struct wlan_objmgr_vdev *vdev,
