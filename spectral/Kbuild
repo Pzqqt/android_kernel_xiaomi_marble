@@ -50,7 +50,8 @@ HOST_CMN_CONVG_HAL_INC := $(DEPTH)/cmn_dev/hal/inc
 HOST_CMN_CONVG_HAL_WIFI_INC := $(DEPTH)/cmn_dev/hal/wifi3.0
 
 INCS += -I$(obj)/$(DEPTH)/include -I$(obj)/$(DEPTH)/umac/include \
-        -I$(obj)/$(DEPTH)/umac/if_lmac -I$(obj)/$(DEPTH)/umac/crypto \
+        -I$(obj)/$(DEPTH)/direct_attach/umac/include \
+        -I$(obj)/$(DEPTH)/direct_attach/umac/if_lmac -I$(obj)/$(DEPTH)/umac/crypto \
         -I$(obj)/$(DEPTH)/umac/scan -I$(obj)/$(DEPTH)/umac/resmgr \
         -I$(obj)/$(DEPTH)/umac/pm -I$(obj)/$(DEPTH)/umac/txrx \
         -I$(obj)/$(DEPTH)/umac/acs -I$(obj)/$(DEPTH)/umac/txbf \
