@@ -1121,6 +1121,15 @@ int tdls_set_tdls_offchannelmode(struct wlan_objmgr_vdev *vdev,
 	return ret_value;
 }
 
+static QDF_STATUS tdls_delete_all_tdls_peers_flush_cb(struct scheduler_msg *msg)
+{
+	if (msg && msg->bodyptr)
+		qdf_mem_free(msg->bodyptr);
+
+	msg->bodyptr = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
 /**
  * tdls_delete_all_tdls_peers(): send request to delete tdls peers
  * @vdev: vdev object
@@ -1166,10 +1175,15 @@ QDF_STATUS tdls_delete_all_tdls_peers(struct wlan_objmgr_vdev *vdev,
 
 	msg.type = del_msg->msg_type;
 	msg.bodyptr = del_msg;
+	msg.flush_callback = tdls_delete_all_tdls_peers_flush_cb;
 
 	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_PE,
 					QDF_MODULE_ID_PE, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("post delete all peer req failed, status %d", status);
+		qdf_mem_free(del_msg);
+	}
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_TDLS_SB_ID);
 	return status;

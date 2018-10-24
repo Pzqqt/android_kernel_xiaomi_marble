@@ -213,6 +213,19 @@ tdls_internal_send_mgmt_tx_done(struct tdls_action_frame_request *req,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS tdls_activate_send_mgmt_request_flush_cb(
+	struct scheduler_msg *msg)
+{
+	struct tdls_send_mgmt_request *tdls_mgmt_req;
+
+	tdls_mgmt_req = msg->bodyptr;
+
+	qdf_mem_free(tdls_mgmt_req);
+	msg->bodyptr = NULL;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS tdls_activate_send_mgmt_request(
 				struct tdls_action_frame_request *action_req)
 {
@@ -298,10 +311,15 @@ static QDF_STATUS tdls_activate_send_mgmt_request(
 
 	msg.type = tdls_soc_obj->tdls_send_mgmt_req;
 	msg.bodyptr = tdls_mgmt_req;
+	msg.flush_callback = tdls_activate_send_mgmt_request_flush_cb;
 
 	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_PE, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("failed to post msg, status %d", status);
+		qdf_mem_free(tdls_mgmt_req);
+	}
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_TDLS_SB_ID);
 
