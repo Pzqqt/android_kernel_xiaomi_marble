@@ -1701,6 +1701,22 @@ static void wma_discard_fw_event(struct scheduler_msg *msg)
 	msg->type = 0;
 }
 
+QDF_STATUS
+wma_vdev_nss_chain_params_send(uint8_t vdev_id,
+			       struct wlan_mlme_nss_chains *user_cfg)
+{
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma_handle) {
+		WMA_LOGE("%s: wma_handle is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return wmi_unified_vdev_nss_chain_params_send(wma_handle->wmi_handle,
+						      vdev_id,
+						      user_cfg);
+}
+
 /**
  * wma_process_fw_event_handler() - common event handler to serialize
  *                                  event processing through mc_thread

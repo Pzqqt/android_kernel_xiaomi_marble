@@ -31,6 +31,7 @@
 #include "csr_internal.h"
 #include "wma_types.h"
 #include "wma_if.h"
+#include "wma.h"
 #include "wma_fips_api.h"
 #include "qdf_trace.h"
 #include "sme_trace.h"
@@ -5063,11 +5064,26 @@ sme_nss_chains_update(mac_handle_t mac_handle,
 		sme_err("Got NULL vdev obj, returning");
 		return QDF_STATUS_E_FAILURE;
 	}
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto release_ref;
+
 	status = sme_validate_nss_chains_config(vdev, user_cfg);
 	if (QDF_IS_STATUS_ERROR(status))
-		goto end;
+		goto release_lock;
+	sme_debug("User params verified, sending to fw vdev id %d", vdev_id);
 
-end:
+	status = wma_vdev_nss_chain_params_send(vdev->vdev_objmgr.vdev_id,
+						user_cfg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("params sent failed to fw vdev id %d", vdev_id);
+		goto release_lock;
+	}
+
+release_lock:
+	sme_release_global_lock(&mac_ctx->sme);
+
+release_ref:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	return status;
 }

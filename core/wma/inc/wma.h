@@ -1290,6 +1290,20 @@ typedef struct {
 } t_wma_handle, *tp_wma_handle;
 
 extern void cds_wma_complete_cback(void);
+
+/**
+ * wma_vdev_nss_chain_params_send() - send vdev nss chain params to fw.
+ * @vdev_id: vdev_id
+ * @user_cfg: pointer to the params structure
+ *
+ * This function sends nss chain params to the fw
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on error
+ */
+QDF_STATUS
+wma_vdev_nss_chain_params_send(uint8_t vdev_id,
+			       struct wlan_mlme_nss_chains *user_cfg);
+
 extern void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 					  uint16_t regdmn5G, uint8_t ctl2G,
 					  uint8_t ctl5G);
