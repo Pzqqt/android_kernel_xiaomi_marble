@@ -342,6 +342,23 @@ void sme_populate_nss_chain_params(mac_handle_t mac_handle,
 			     uint8_t rf_chains_supported);
 
 /**
+ * sme_nss_chains_update() - validate and send the user params to fw
+ * @mac_handle: The handle returned by mac_open.
+ * @user_cfg: pointer to the structure to be validated and sent to fw
+ * @vdev_id: vdev id
+ *
+ *
+ * This API will validate the config, and if found correct will update the
+ * config in dynamic config, and send to the fw.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+sme_nss_chains_update(mac_handle_t mac_handle,
+		      struct wlan_mlme_nss_chains *user_cfg,
+		      uint8_t vdev_id);
+
+/**
  * sme_open_session() - Open a session for given persona
  *
  * This is a synchronous API. For any protocol stack related activity

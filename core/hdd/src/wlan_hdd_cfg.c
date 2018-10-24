@@ -4342,6 +4342,16 @@ void hdd_get_pmkid_modes(struct hdd_context *hdd_ctx,
 				       CFG_PMKID_MODES_PMKSA_CACHING) ? 1 : 0;
 }
 
+static void
+hdd_populate_vdev_nss(struct wlan_mlme_nss_chains *user_cfg,
+		      uint8_t tx_nss,
+		      uint8_t rx_nss,
+		      enum nss_chains_band_info  band)
+{
+	user_cfg->rx_nss[band] = rx_nss;
+	user_cfg->tx_nss[band] = tx_nss;
+}
+
 /**
  * hdd_update_nss() - Update the number of spatial streams supported.
  * Ensure that nss is either 1 or 2 before calling this.
@@ -4368,12 +4378,50 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	uint8_t enable2x2;
 	mac_handle_t mac_handle;
 	bool bval = 0;
+	enum nss_chains_band_info band;
+	struct wlan_mlme_nss_chains user_cfg;
+	uint8_t tx_nss, rx_nss;
 
 	if ((nss == 2) && (hdd_ctx->num_rf_chains != 2)) {
 		hdd_err("No support for 2 spatial streams");
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (nss > MAX_VDEV_NSS) {
+		hdd_debug("Cannot support %d nss streams", nss);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mac_handle = hdd_ctx->mac_handle;
+	if (!mac_handle) {
+		hdd_err("NULL MAC handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* Till now we dont have support for different rx, tx nss values */
+	tx_nss = nss;
+	rx_nss = nss;
+
+	qdf_mem_zero(&user_cfg, sizeof(user_cfg));
+
+	if (hdd_ctx->dynamic_nss_chains_support) {
+		for (band = BAND_2GHZ; band < BAND_MAX; band++)
+			hdd_populate_vdev_nss(&user_cfg, tx_nss,
+					      rx_nss, band);
+		if (QDF_IS_STATUS_ERROR(
+			sme_nss_chains_update(mac_handle,
+					      &user_cfg,
+					      adapter->session_id)))
+			return QDF_STATUS_E_FAILURE;
+
+		return QDF_STATUS_SUCCESS;
+	}
+
+	/*
+	 * The code below is executed only when fw doesn't support dynamic
+	 * update of nss and chains per vdev feature, for the upcoming
+	 * connection
+	 */
 	enable2x2 = (nss == 1) ? 0 : 1;
 
 	qdf_status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
@@ -4385,12 +4433,6 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	if (bval == enable2x2) {
 		hdd_debug("NSS same as requested");
 		return QDF_STATUS_SUCCESS;
-	}
-
-	mac_handle = hdd_ctx->mac_handle;
-	if (!mac_handle) {
-		hdd_err("NULL MAC handle");
-		return QDF_STATUS_E_INVAL;
 	}
 
 	if (sme_is_any_session_in_connected_state(mac_handle)) {
