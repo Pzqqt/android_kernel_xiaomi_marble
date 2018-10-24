@@ -3703,7 +3703,7 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 
 	status = ucfg_mlme_get_vht_channel_width(phddctx->psoc, &vhtchanwidth);
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("Failed to set channel_width");
+		hdd_err("Failed to get channel_width");
 
 	hdd_debug("ch_bond24=%d ch_bond5g=%d band_24=%d band_5g=%d VHT_ch_width=%u",
 		ch_bond24, ch_bond5g, band_24, band_5g, vhtchanwidth);
@@ -3890,7 +3890,7 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 		status = ucfg_mlme_get_vht_channel_width(phddctx->psoc,
 							 &vhtchanwidth);
 		if (!QDF_IS_STATUS_SUCCESS(status))
-			hdd_err("Failed to set channel_width");
+			hdd_err("Failed to get channel_width");
 		break;
 	}
 
