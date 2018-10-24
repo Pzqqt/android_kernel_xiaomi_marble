@@ -3660,8 +3660,6 @@ static void hdd_override_all_ps(struct hdd_context *hdd_ctx)
 	cfg_ini->is_ps_enabled = 0;
 	hdd_disable_runtime_pm(cfg_ini);
 	hdd_disable_auto_shutdown(cfg_ini);
-	ucfg_pmo_set_power_save_mode(hdd_ctx->psoc, PS_NOT_SUPPORTED);
-	ucfg_pmo_set_wow_enable(hdd_ctx->psoc, PMO_WOW_DISABLE_BOTH);
 }
 
 /**

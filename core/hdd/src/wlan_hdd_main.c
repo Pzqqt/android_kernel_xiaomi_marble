@@ -2047,6 +2047,18 @@ static void hdd_mon_mode_ether_setup(struct net_device *dev)
 
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
 /**
+ * hdd_mon_turn_off_ps_and_wow() - Update monitor mode struct net_device.
+ * @hdd_ctx: Pointer to HDD context.
+ *
+ * Return: None
+ */
+static void hdd_mon_turn_off_ps_and_wow(struct hdd_context *hdd_ctx)
+{
+	ucfg_pmo_set_power_save_mode(hdd_ctx->psoc, PS_NOT_SUPPORTED);
+	ucfg_pmo_set_wow_enable(hdd_ctx->psoc, PMO_WOW_DISABLE_BOTH);
+}
+
+/**
  * __hdd__mon_open() - HDD Open function
  * @dev: Pointer to net_device structure
  *
@@ -2085,6 +2097,7 @@ static int __hdd_mon_open(struct net_device *dev)
 			}
 			hdd_err("hdd_start_adapters() successful !");
 		}
+		hdd_mon_turn_off_ps_and_wow(hdd_ctx);
 		set_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
 	}
 
