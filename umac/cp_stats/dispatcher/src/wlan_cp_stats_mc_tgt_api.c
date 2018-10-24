@@ -365,7 +365,7 @@ static void tgt_mc_cp_stats_extract_vdev_summary_stats(
 {
 	uint8_t i;
 	QDF_STATUS status;
-	struct wlan_objmgr_peer *peer;
+	struct wlan_objmgr_peer *peer = NULL;
 	struct request_info last_req = {0};
 	struct wlan_objmgr_vdev *vdev;
 	struct peer_mc_cp_stats *peer_mc_stats;
@@ -416,9 +416,10 @@ static void tgt_mc_cp_stats_extract_vdev_summary_stats(
 		     sizeof(vdev_mc_stats->vdev_summary_stats));
 	wlan_cp_stats_vdev_obj_unlock(vdev_cp_stats_priv);
 
-	peer = wlan_vdev_get_bsspeer(vdev);
+	peer = wlan_objmgr_get_peer(psoc, last_req.pdev_id,
+				    last_req.peer_mac_addr, WLAN_CP_STATS_ID);
 	if (!peer) {
-		cp_stats_err("bsspeer is null");
+		cp_stats_err("peer is null %pM", last_req.peer_mac_addr);
 		goto end;
 	}
 
@@ -434,6 +435,8 @@ static void tgt_mc_cp_stats_extract_vdev_summary_stats(
 	wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);
 
 end:
+	if (peer)
+		wlan_objmgr_peer_release_ref(peer, WLAN_CP_STATS_ID);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_CP_STATS_ID);
 }
 
