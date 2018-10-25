@@ -14027,7 +14027,7 @@ QDF_STATUS sme_create_mon_session(tHalHandle hal_handle, tSirMacAddr bss_id,
 	struct sir_create_session *msg;
 
 	msg = qdf_mem_malloc(sizeof(*msg));
-	if (!msg) {
+	if (msg) {
 		msg->type = eWNI_SME_MON_INIT_SESSION;
 		msg->vdev_id = vdev_id;
 		msg->msg_len = sizeof(*msg);
