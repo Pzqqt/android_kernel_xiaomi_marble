@@ -57,6 +57,7 @@
 #include "wmi_unified_param.h"
 #include "linux/ieee80211.h"
 #include <cdp_txrx_handle.h>
+#include <cdp_txrx_peer_ops.h>
 #include "cds_reg_service.h"
 #include "target_if.h"
 #include <wlan_utility.h>
@@ -4770,6 +4771,34 @@ QDF_STATUS wma_get_roam_scan_stats(WMA_HANDLE handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+void wma_remove_peer_on_add_bss_failure(tpAddBssParams add_bss_params)
+{
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	struct cdp_pdev *pdev;
+	void *peer = NULL;
+	uint8_t peer_id;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	WMA_LOGE("%s: ADD BSS failure %d", __func__, add_bss_params->status);
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (NULL == pdev)
+		WMA_LOGE("%s: Failed to get pdev", __func__);
+
+	if (pdev)
+		peer = cdp_peer_find_by_addr(soc, pdev,
+					     add_bss_params->bssId,
+					     &peer_id);
+
+	if (!peer)
+		WMA_LOGE("%s Failed to find peer %pM",
+			 __func__, add_bss_params->bssId);
+
+	if (peer)
+		wma_remove_peer(wma, add_bss_params->bssId,
+				add_bss_params->bssIdx, peer, false);
+}
+
 #ifdef CONFIG_VDEV_SM
 
 QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
@@ -4894,6 +4923,8 @@ QDF_STATUS wma_ap_mlme_vdev_stop_start_send(struct vdev_mlme_obj *vdev_mlme,
 	if (wma_send_vdev_stop_to_fw(wma, bss_params->bssIdx))
 		WMA_LOGE(FL("Failed to send vdev stop for vdev id %d"),
 			 bss_params->bssIdx);
+
+	wma_remove_peer_on_add_bss_failure(bss_params);
 
 	return wma_vdev_send_start_resp(wma, bss_params);
 }
