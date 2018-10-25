@@ -11077,7 +11077,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 
 	ol_cds_free();
 
-	if (IS_IDLE_STOP && cds_is_target_ready()) {
+	if (IS_IDLE_STOP) {
 		ret = pld_power_off(qdf_ctx->dev);
 		if (ret)
 			hdd_err("Failed to power down device; errno:%d", ret);

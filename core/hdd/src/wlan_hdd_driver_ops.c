@@ -255,7 +255,7 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 			hdd_err("NAPI creation error, rc: 0x%x, reinit: %d",
 				ret, reinit);
 			ret = -EFAULT;
-			goto err_hif_close;
+			goto mark_target_not_ready;
 		} else {
 			hdd_napi_event(NAPI_EVT_INI_FILE,
 				(void *)hdd_ctx->napi_enable);
@@ -270,6 +270,9 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 				cfg_get(hdd_ctx->psoc,
 					CFG_DP_CE_SERVICE_MAX_RX_IND_FLUSH));
 	return 0;
+
+mark_target_not_ready:
+	cds_set_target_ready(false);
 
 err_hif_close:
 	hdd_deinit_cds_hif_context();
@@ -287,6 +290,7 @@ void hdd_hif_close(struct hdd_context *hdd_ctx, void *hif_ctx)
 	if (hif_ctx == NULL)
 		return;
 
+	cds_set_target_ready(false);
 	hif_disable(hif_ctx, HIF_DISABLE_TYPE_REMOVE);
 
 	hdd_napi_destroy(true);
