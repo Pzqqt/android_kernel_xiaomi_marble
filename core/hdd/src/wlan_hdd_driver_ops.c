@@ -1484,6 +1484,8 @@ static void wlan_hdd_purge_notifier(void)
 		return;
 	}
 
+	hdd_psoc_idle_timer_stop(hdd_ctx);
+
 	mutex_lock(&hdd_ctx->iface_change_lock);
 	cds_shutdown_notifier_call();
 	cds_shutdown_notifier_purge();
@@ -1560,25 +1562,6 @@ static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
 }
 
 /**
- * wlan_hdd_flush_iface_idle_work() - function to flush the interface idle work
- * event
- *
- * Return:  void
- */
-static void wlan_hdd_flush_iface_idle_work(void)
-{
-	struct hdd_context *hdd_ctx;
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("hdd context is NULL ");
-		return;
-	}
-
-	hdd_psoc_idle_timer_stop(hdd_ctx);
-}
-
-/**
  * wlan_hdd_pld_uevent() - update driver status
  * @dev: device
  * @uevent: uevent status
@@ -1591,7 +1574,6 @@ static void wlan_hdd_pld_uevent(struct device *dev,
 	hdd_enter();
 	hdd_info("pld event %d", uevent->uevent);
 
-	wlan_hdd_flush_iface_idle_work();
 	wlan_hdd_set_the_pld_uevent(uevent);
 	mutex_lock(&hdd_init_deinit_lock);
 	wlan_hdd_handle_the_pld_uevent(uevent);
