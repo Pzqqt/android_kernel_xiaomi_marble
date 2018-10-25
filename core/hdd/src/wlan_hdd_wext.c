@@ -2060,6 +2060,25 @@
  */
 #define WE_GET_BA_AGEING_TIMEOUT 16
 
+/*
+ * <ioctl>
+ *
+ * sta_cxn_info - STA connection information
+ *
+ * @INPUT: none
+ *
+ * @OUTPUT: STA's connection information
+ *
+ * This IOCTL is used to get connection's information.
+ *
+ * @E.g: iwpriv wlan0 get_cxn_info
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_GET_STA_CXN_INFO 17
+
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_NONE   (SIOCIWFIRSTPRIV + 6)
 
@@ -6260,6 +6279,32 @@ static inline int iw_get_oem_data_cap_wrapper(struct net_device *dev,
 }
 #endif
 
+#ifdef WLAN_UNIT_TEST
+static int hdd_get_sta_cxn_info(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
+				char *extra)
+{
+	QDF_STATUS status;
+
+	status = sme_get_sta_cxn_info(hdd_ctx->mac_handle, adapter->session_id,
+				      extra, WE_MAX_STR_LEN);
+	if (status != QDF_STATUS_SUCCESS)
+		qdf_scnprintf(extra, WE_MAX_STR_LEN,
+			      "\nNo active connection");
+
+	return 0;
+}
+#else
+static int hdd_get_sta_cxn_info(struct hdd_context *hdd_ctx,
+				struct hdd_adapter *adapter,
+				char *extra)
+{
+	qdf_scnprintf(extra, WE_MAX_STR_LEN,
+		      "\nNot supported");
+	return -ENOTSUPP;
+}
+#endif
+
 /**
  * iw_get_char_setnone() - Generic "get string" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -6828,6 +6873,11 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		wrqu->data.length = strlen(extra) + 1;
 		break;
 	}
+
+	case WE_GET_STA_CXN_INFO:
+		ret = hdd_get_sta_cxn_info(hdd_ctx, adapter, extra);
+		wrqu->data.length = strlen(extra) + 1;
+		break;
 
 	default:
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
@@ -10074,6 +10124,13 @@ static const struct iw_priv_args we_private_args[] = {
 		"getPMFInfo"
 	},
 #endif
+	{
+		WE_GET_STA_CXN_INFO,
+		0,
+		IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
+		"get_cxn_info"
+	},
+
 	{
 		WE_GET_IBSS_STA_INFO,
 		0,

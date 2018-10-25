@@ -3093,6 +3093,31 @@ QDF_STATUS sme_deregister_twt_disable_complete_cb(mac_handle_t mac_handle)
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+/**
+ * sme_get_sta_cxn_info() - This function populates all the connection
+ *			    information which is formed by DUT-STA to AP
+ *			    by calling CSR helper API.
+ * @mac_ctx: pointer to mac context
+ * @session: pointer to sta session
+ * @conn_profile: pointer to connected DUTSTA-REFAP profile
+ * @buf: pointer to char buffer to write all the connection information.
+ * @buf_size: maximum size of the provided buffer
+ *
+ * Returns: QDF_STATUS
+ */
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+QDF_STATUS sme_get_sta_cxn_info(mac_handle_t mac_handle, uint32_t session_id,
+				char *buf, uint32_t buf_sz);
+#else
+static inline QDF_STATUS
+sme_get_sta_cxn_info(mac_handle_t mac_handle, uint32_t session_id,
+		     char *buf, uint32_t buf_sz)
+{
+	qdf_scnprintf(buf, buf_sz,
+		      "\nDiag macro disable, ask vendor to enable");
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * sme_find_session_by_bssid() - checks whether has session

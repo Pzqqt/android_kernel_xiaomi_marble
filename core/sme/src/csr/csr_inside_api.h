@@ -1144,4 +1144,22 @@ uint8_t
 csr_scan_get_channel_for_hw_mode_change(
 	tpAniSirGlobal mac_ctx, uint32_t session_id,
 	struct csr_roam_profile *profile);
+
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+/**
+ * csr_get_sta_cxn_info() - This function populates all the connection
+ *			    information which is formed by DUT-STA to AP
+ * @mac_ctx: pointer to mac context
+ * @session: pointer to sta session
+ * @conn_profile: pointer to connected DUTSTA-REFAP profile
+ * @buf: pointer to char buffer to write all the connection information.
+ * @buf_size: maximum size of the provided buffer
+ *
+ * Returns: None (information gets populated in buffer)
+ */
+void csr_get_sta_cxn_info(tpAniSirGlobal mac_ctx,
+			  struct csr_roam_session *session,
+			  struct tagCsrRoamConnectedProfile *conn_profile,
+			  char *buf, uint32_t buf_sz);
+#endif
 #endif /* CSR_INSIDE_API_H__ */

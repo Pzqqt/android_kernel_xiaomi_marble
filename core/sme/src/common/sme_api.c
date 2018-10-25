@@ -16716,6 +16716,34 @@ bool sme_find_session_by_bssid(mac_handle_t mac_handle, uint8_t *bssid)
 	return ret;
 }
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+QDF_STATUS sme_get_sta_cxn_info(mac_handle_t mac_handle, uint32_t session_id,
+				char *buf, uint32_t buf_sz)
+{
+	QDF_STATUS status;
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct tagCsrRoamConnectedProfile *conn_profile;
+	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		return status;
+	if (!session || !session->pCurRoamProfile) {
+		status = QDF_STATUS_E_FAILURE;
+		goto end;
+	}
+	conn_profile = &session->connectedProfile;
+	if (!conn_profile) {
+		status = QDF_STATUS_E_FAILURE;
+		goto end;
+	}
+	csr_get_sta_cxn_info(mac_ctx, session, conn_profile, buf, buf_sz);
+end:
+	sme_release_global_lock(&mac_ctx->sme);
+
+	return status;
+}
+#endif
 QDF_STATUS
 sme_get_roam_scan_stats(mac_handle_t mac_handle,
 			roam_scan_stats_cb cb, void *context,

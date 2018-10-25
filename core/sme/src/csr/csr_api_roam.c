@@ -3508,7 +3508,25 @@ static const char *csr_get_ch_width_str(uint8_t ch_width)
 	}
 }
 
-static const char *csr_get_dot11_mode_str(enum csr_cfgdot11mode dot11mode)
+static const char *csr_get_persona(enum mgmt_bss_type persona)
+{
+	switch (persona) {
+	CASE_RETURN_STRING(STA_PERSONA);
+	CASE_RETURN_STRING(SAP_PERSONA);
+	CASE_RETURN_STRING(P2P_CLIENT_PERSONA);
+	CASE_RETURN_STRING(P2P_GO_PERSONA);
+	CASE_RETURN_STRING(FTM_PERSONA);
+	CASE_RETURN_STRING(IBSS_PERSONA);
+	CASE_RETURN_STRING(MONITOR_PERSONA);
+	CASE_RETURN_STRING(P2P_DEVICE_PERSONA);
+	CASE_RETURN_STRING(NDI_PERSONA);
+	CASE_RETURN_STRING(WDS_PERSONA);
+	default:
+		return "Unknown";
+	}
+}
+
+static const char *csr_get_dot11_mode_str(enum mgmt_dot11_mode dot11mode)
 {
 	switch (dot11mode) {
 	CASE_RETURN_STRING(DOT11_MODE_AUTO);
@@ -3625,6 +3643,82 @@ static void csr_dump_connection_stats(tpAniSirGlobal mac_ctx,
 	sme_debug("+---------CONNECTION INFO END------------+");
 
 	WLAN_HOST_DIAG_EVENT_REPORT(&conn_stats, EVENT_WLAN_CONN_STATS_V2);
+}
+
+void csr_get_sta_cxn_info(tpAniSirGlobal mac_ctx,
+			  struct csr_roam_session *session,
+			  struct tagCsrRoamConnectedProfile *conn_profile,
+			  char *buf, uint32_t buf_sz)
+{
+	int8_t rssi = 0;
+	uint32_t nss, hw_mode;
+	struct policy_mgr_conc_connection_info *conn_info;
+	struct wma_txrx_node *wma_conn_table_entry = NULL;
+	uint32_t i = 0, len = 0, max_cxn = 0;
+	enum mgmt_ch_width ch_width;
+	enum mgmt_dot11_mode dot11mode;
+	enum mgmt_bss_type type;
+	enum mgmt_auth_type authtype;
+	enum mgmt_encrypt_type enctype;
+
+	if (!session || !session->pCurRoamProfile || !conn_profile)
+		return;
+	if (!conn_profile->operationChannel)
+		return;
+	qdf_mem_set(buf, buf_sz, '\0');
+	len += qdf_scnprintf(buf + len, buf_sz - len,
+			     "\n\tbssid: %pM", conn_profile->bssid.bytes);
+	len += qdf_scnprintf(buf + len, buf_sz - len,
+			     "\n\tssid: %.*s", conn_profile->SSID.length,
+			     conn_profile->SSID.ssId);
+	sme_get_rssi_snr_by_bssid(MAC_HANDLE(mac_ctx),
+				  session->pCurRoamProfile,
+				  conn_profile->bssid.bytes,
+				  &rssi, NULL);
+	len += qdf_scnprintf(buf + len, buf_sz - len,
+			     "\n\trssi: %d", rssi);
+	ch_width = diag_ch_width_from_csr_type(conn_profile->vht_channel_width);
+	len += qdf_scnprintf(buf + len, buf_sz - len,
+			     "\n\tbw: %s", csr_get_ch_width_str(ch_width));
+	dot11mode = diag_dot11_mode_from_csr_type(conn_profile->dot11Mode);
+	len += qdf_scnprintf(buf + len, buf_sz - len,
+			     "\n\tdot11mode: %s",
+			     csr_get_dot11_mode_str(dot11mode));
+	type = diag_persona_from_csr_type(session->pCurRoamProfile->csrPersona);
+	len += qdf_scnprintf(buf + len, buf_sz - len,
+			     "\n\tbss_type: %s", csr_get_persona(type));
+	len += qdf_scnprintf(buf + len, buf_sz - len,
+			     "\n\tchnl: %d", conn_profile->operationChannel);
+	len += qdf_scnprintf(buf + len, buf_sz - len,
+			     "\n\tQoS: %d", conn_profile->qosConnection);
+	authtype = diag_auth_type_from_csr_type(conn_profile->AuthType);
+	len += qdf_scnprintf(buf + len, buf_sz - len,
+			     "\n\tauth_type: %s",
+			     csr_get_auth_type_str(authtype));
+	enctype = diag_enc_type_from_csr_type(conn_profile->EncryptionType);
+	len += qdf_scnprintf(buf + len, buf_sz - len,
+			     "\n\tencry_type: %s",
+			     csr_get_encr_type_str(enctype));
+	conn_info = policy_mgr_get_conn_info(&max_cxn);
+	for (i = 0; i < max_cxn; i++)
+		if ((conn_info->vdev_id == session->sessionId) &&
+		    (conn_info->in_use))
+			break;
+	len += qdf_scnprintf(buf + len, buf_sz - len,
+			     "\n\tmac: %d", conn_info->mac);
+	wma_conn_table_entry = wma_get_interface_by_vdev_id(session->sessionId);
+	if (wma_conn_table_entry)
+		nss = wma_conn_table_entry->nss;
+	else
+		nss = 0;
+	len += qdf_scnprintf(buf + len, buf_sz - len,
+			     "\n\torig_nss: %dx%d neg_nss: %dx%d",
+			     conn_info->original_nss, conn_info->original_nss,
+			     nss, nss);
+	hw_mode = policy_mgr_is_current_hwmode_dbs(mac_ctx->psoc);
+	len += qdf_scnprintf(buf + len, buf_sz - len,
+			     "\n\tis_current_hw_mode_dbs: %s",
+			     ((hw_mode != 0) ? "yes" : "no"));
 }
 #else
 static void csr_dump_connection_stats(tpAniSirGlobal mac_ctx,
