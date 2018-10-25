@@ -796,4 +796,11 @@ int dsi_ctrl_pixel_format_to_bpp(enum dsi_pixel_format dst_format);
  * @enable:			   variable to control continuous clock.
  */
 void dsi_ctrl_set_continuous_clk(struct dsi_ctrl *dsi_ctrl, bool enable);
+
+/**
+ * dsi_ctrl_wait4dynamic_refresh_done() - Poll for dynamic refresh done
+ *					interrupt.
+ * @dsi_ctrl:                      DSI controller handle.
+ */
+int dsi_ctrl_wait4dynamic_refresh_done(struct dsi_ctrl *ctrl);
 #endif /* _DSI_CTRL_H_ */
