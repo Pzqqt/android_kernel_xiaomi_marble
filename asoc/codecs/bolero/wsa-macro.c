@@ -756,6 +756,11 @@ static int wsa_macro_mclk_enable(struct wsa_macro_priv *wsa_priv,
 	struct regmap *regmap = dev_get_regmap(wsa_priv->dev->parent, NULL);
 	int ret = 0;
 
+	if (regmap == NULL) {
+		dev_err(wsa_priv->dev, "%s: regmap is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	dev_dbg(wsa_priv->dev, "%s: mclk_enable = %u, dapm = %d clk_users= %d\n",
 		__func__, mclk_enable, dapm, wsa_priv->wsa_mclk_users);
 
@@ -2430,6 +2435,11 @@ static int wsa_swrm_clock(void *handle, bool enable)
 {
 	struct wsa_macro_priv *wsa_priv = (struct wsa_macro_priv *) handle;
 	struct regmap *regmap = dev_get_regmap(wsa_priv->dev->parent, NULL);
+
+	if (regmap == NULL) {
+		dev_err(wsa_priv->dev, "%s: regmap is NULL\n", __func__);
+		return -EINVAL;
+	}
 
 	mutex_lock(&wsa_priv->swr_clk_lock);
 

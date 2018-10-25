@@ -31,6 +31,11 @@ static int wcd937x_slave_bind(struct device *dev,
 	uint8_t devnum = 0;
 	struct swr_device *pdev = to_swr_device(dev);
 
+	if (pdev == NULL) {
+		dev_err(dev, "%s: pdev is NULL\n", __func__);
+		return -EINVAL;
+	}
+
 	wcd937x_slave = devm_kzalloc(&pdev->dev,
 				sizeof(struct wcd937x_slave_priv), GFP_KERNEL);
 	if (!wcd937x_slave)
@@ -58,6 +63,11 @@ static void wcd937x_slave_unbind(struct device *dev,
 {
 	struct wcd937x_slave_priv *wcd937x_slave = NULL;
 	struct swr_device *pdev = to_swr_device(dev);
+
+	if (pdev == NULL) {
+		dev_err(dev, "%s: pdev is NULL\n", __func__);
+		return;
+	}
 
 	wcd937x_slave = swr_get_dev_data(pdev);
 	if (!wcd937x_slave) {
