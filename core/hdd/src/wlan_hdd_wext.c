@@ -4328,6 +4328,56 @@ static int hdd_we_set_short_gi(struct hdd_adapter *adapter, int sgi)
 	return errno;
 }
 
+static int hdd_we_set_rtscts(struct hdd_adapter *adapter, int rtscts)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	mac_handle_t mac_handle = hdd_ctx->mac_handle;
+	uint32_t value;
+	uint32_t rts_threshold_val;
+	QDF_STATUS status;
+	int errno;
+
+	hdd_debug("RTSCTS %d", rtscts);
+
+	if (!mac_handle) {
+		hdd_err("NULL Mac handle");
+		return -EINVAL;
+	}
+
+	status = ucfg_mlme_get_rts_threshold(hdd_ctx->psoc,
+					     &rts_threshold_val);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Get rts threshold failed, status %d", status);
+		return -EINVAL;
+	}
+
+	if ((rtscts & HDD_RTSCTS_EN_MASK) == HDD_RTSCTS_ENABLE) {
+		value = rts_threshold_val;
+	} else if (((rtscts & HDD_RTSCTS_EN_MASK) == 0) ||
+		   ((rtscts & HDD_RTSCTS_EN_MASK) == HDD_CTS_ENABLE)) {
+		value = cfg_max(CFG_RTS_THRESHOLD);
+	} else {
+		hdd_err_rl("Invalid value %d", rtscts);
+		return -EINVAL;
+	}
+
+	errno = wma_cli_set_command(adapter->session_id,
+				    WMI_VDEV_PARAM_ENABLE_RTSCTS,
+				    rtscts, VDEV_CMD);
+	if (errno) {
+		hdd_err("Failed to set firmware, errno %d", errno);
+		return errno;
+	}
+
+	status = ucfg_mlme_set_rts_threshold(hdd_ctx->psoc, value);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Set rts threshold failed, status %d", status);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4507,48 +4557,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_RTSCTS:
-	{
-		uint32_t value;
-		uint32_t rts_threshold_val;
-
-		if (!mac_handle)
-			return -EINVAL;
-
-		hdd_debug("WMI_VDEV_PARAM_ENABLE_RTSCTS val 0x%x", set_value);
-		status = ucfg_mlme_get_rts_threshold(hdd_ctx->psoc,
-						     &rts_threshold_val);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			hdd_err("Get rts threshold failed");
-			return -EINVAL;
-		}
-
-		if ((set_value & HDD_RTSCTS_EN_MASK) ==
-		    HDD_RTSCTS_ENABLE)
-			value = rts_threshold_val;
-		else if (((set_value & HDD_RTSCTS_EN_MASK) == 0)
-			 || ((set_value & HDD_RTSCTS_EN_MASK) ==
-			     HDD_CTS_ENABLE)) {
-			value = cfg_max(CFG_RTS_THRESHOLD);
-		} else {
-			ret = -EIO;
-			break;
-		}
-
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_ENABLE_RTSCTS,
-					  set_value, VDEV_CMD);
-		if (!ret) {
-			if (ucfg_mlme_set_rts_threshold(hdd_ctx->psoc,
-							value) !=
-							QDF_STATUS_SUCCESS) {
-				hdd_err("FAILED TO SET RTSCTS");
-				ret = -EIO;
-				break;
-			}
-		}
-
+		ret = hdd_we_set_rtscts(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_CHWIDTH:
 		ret = hdd_we_set_ch_width(adapter, set_value);
