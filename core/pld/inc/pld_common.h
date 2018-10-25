@@ -119,13 +119,15 @@ struct pld_platform_cap {
 };
 
 /**
- * enum pld_uevent - WLAN FW status
- * @PLD_RECOVERY: driver is recovering
- * @PLD_FW_DOWN: FW is down
+ * enum pld_uevent - PLD uevent event types
+ * @PLD_FW_DOWN: firmware is down
+ * @PLD_FW_CRASHED: firmware has crashed
+ * @PLD_FW_RECOVERY_START: firmware is starting recovery
  */
 enum pld_uevent {
-	PLD_RECOVERY,
 	PLD_FW_DOWN,
+	PLD_FW_CRASHED,
+	PLD_FW_RECOVERY_START,
 };
 
 /**

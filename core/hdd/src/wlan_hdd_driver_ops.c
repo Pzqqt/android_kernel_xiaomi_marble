@@ -1483,7 +1483,7 @@ static void wlan_hdd_purge_notifier(void)
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		hdd_err("hdd context is NULL return!!");
+		hdd_err("hdd_ctx is null");
 		return;
 	}
 
@@ -1493,43 +1493,15 @@ static void wlan_hdd_purge_notifier(void)
 	cds_shutdown_notifier_call();
 	cds_shutdown_notifier_purge();
 	mutex_unlock(&hdd_ctx->iface_change_lock);
+
 	hdd_exit();
 }
 
-/**
- * wlan_hdd_set_the_pld_uevent() - set the pld event
- * @uevent: uevent status
- *
- * Return: void
- */
-static void wlan_hdd_set_the_pld_uevent(struct pld_uevent_data *uevent)
+static void __hdd_firmware_down_handler(void)
 {
-	switch (uevent->uevent) {
-	case PLD_RECOVERY:
-		cds_set_target_ready(false);
-		cds_set_recovery_in_progress(true);
-		break;
-	case PLD_FW_DOWN:
-		cds_set_target_ready(false);
-		cds_set_recovery_in_progress(true);
-		break;
-	}
-}
-
-/**
- * wlan_hdd_handle_the_pld_uevent() - handle the pld event
- * @uevent: uevent status
- *
- * Return: void
- */
-static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
-{
-	enum cds_driver_state driver_state;
 	struct hdd_context *hdd_ctx;
 
-	driver_state = cds_get_driver_state();
-
-	if (driver_state == CDS_DRIVER_STATE_UNINITIALIZED)
+	if (cds_get_driver_state() == CDS_DRIVER_STATE_UNINITIALIZED)
 		return;
 
 	if (cds_is_driver_loading())
@@ -1537,53 +1509,60 @@ static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		hdd_err("hdd_ctx is NULL return");
+		hdd_err("hdd_ctx is null");
 		return;
 	}
 
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
-		hdd_info("Driver modules are already closed!");
+		hdd_info("Driver modules are already closed");
 		return;
 	}
 
-	switch (uevent->uevent) {
-	case PLD_RECOVERY:
-		cds_set_target_ready(false);
-		hdd_pld_ipa_uc_shutdown_pipes();
-		break;
-	case PLD_FW_DOWN:
-		qdf_complete_wait_events();
-		cds_set_target_ready(false);
-		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, NULL);
-		if (pld_is_fw_rejuvenate(hdd_ctx->parent_dev) &&
-		    ucfg_ipa_is_enabled())
+	cds_set_target_ready(false);
+	qdf_complete_wait_events();
+	wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, NULL);
+
+	if (ucfg_ipa_is_enabled()) {
+		ucfg_ipa_uc_force_pipe_shutdown(hdd_ctx->pdev);
+
+		if (pld_is_fw_rejuvenate(hdd_ctx->parent_dev))
 			ucfg_ipa_fw_rejuvenate_send_msg(hdd_ctx->pdev);
+	}
+}
+
+static void hdd_firmware_down_handler(void)
+{
+	hdd_info("Received firmware down indication");
+
+	cds_set_target_ready(false);
+	cds_set_recovery_in_progress(true);
+
+	mutex_lock(&hdd_init_deinit_lock);
+	__hdd_firmware_down_handler();
+	mutex_unlock(&hdd_init_deinit_lock);
+
+	wlan_hdd_purge_notifier();
+}
+
+/**
+ * wlan_hdd_pld_uevent() - platform uevent handler
+ * @dev: device on which the uevent occurred
+ * @event_data: uevent parameters
+ *
+ * Return: None
+ */
+static void
+wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
+{
+	hdd_debug("Received uevent %d", event_data->uevent);
+
+	switch (event_data->uevent) {
+	case PLD_FW_DOWN:
+		hdd_firmware_down_handler();
 		break;
 	default:
 		break;
 	}
-}
-
-/**
- * wlan_hdd_pld_uevent() - update driver status
- * @dev: device
- * @uevent: uevent status
- *
- * Return: void
- */
-static void wlan_hdd_pld_uevent(struct device *dev,
-				struct pld_uevent_data *uevent)
-{
-	hdd_enter();
-	hdd_info("pld event %d", uevent->uevent);
-
-	wlan_hdd_set_the_pld_uevent(uevent);
-	mutex_lock(&hdd_init_deinit_lock);
-	wlan_hdd_handle_the_pld_uevent(uevent);
-	mutex_unlock(&hdd_init_deinit_lock);
-
-	wlan_hdd_purge_notifier();
-	hdd_exit();
 }
 
 #ifdef FEATURE_RUNTIME_PM

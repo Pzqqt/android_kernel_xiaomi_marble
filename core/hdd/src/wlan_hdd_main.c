@@ -14534,16 +14534,6 @@ void hdd_drv_ops_inactivity_handler(void)
 	cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 }
 
-void hdd_pld_ipa_uc_shutdown_pipes(void)
-{
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-
-	if (!hdd_ctx)
-		return;
-
-	ucfg_ipa_uc_force_pipe_shutdown(hdd_ctx->pdev);
-}
-
 /**
  * hdd_set_rx_mode_rps() - Enable/disable RPS in SAP mode
  * @struct hdd_context *hdd_ctx

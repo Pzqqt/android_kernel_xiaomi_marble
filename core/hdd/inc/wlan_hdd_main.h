@@ -3307,13 +3307,6 @@ void hdd_start_driver_ops_timer(int drv_op);
 void hdd_stop_driver_ops_timer(void);
 
 /**
- * hdd_pld_ipa_uc_shutdown_pipes() - Disconnect IPA WDI pipes during PDR
- *
- * Return: None
- */
-void hdd_pld_ipa_uc_shutdown_pipes(void);
-
-/**
  * hdd_limit_max_per_index_score() -check if per index score doesn't exceed 100%
  * (0x64). If it exceed make it 100%
  *

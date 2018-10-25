@@ -245,7 +245,7 @@ static int pld_snoc_uevent(struct device *dev,
 
 	switch (uevent->uevent) {
 	case ICNSS_UEVENT_FW_CRASHED:
-		data.uevent = PLD_RECOVERY;
+		data.uevent = PLD_FW_CRASHED;
 		break;
 	case ICNSS_UEVENT_FW_DOWN:
 		if (uevent->data == NULL)
