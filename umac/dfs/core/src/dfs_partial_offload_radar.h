@@ -189,4 +189,12 @@ static inline void dfs_action_on_fw_radar_status_check(struct wlan_dfs *dfs,
 {
 }
 #endif
+
+#if defined(WLAN_DFS_PARTIAL_OFFLOAD)
+void dfs_false_radarfound_reset_vars(struct wlan_dfs *dfs);
+#else
+static inline void dfs_false_radarfound_reset_vars(struct wlan_dfs *dfs)
+{
+}
+#endif
 #endif /*  _DFS_PARTIAL_OFFLOAD_RADAR_H_ */

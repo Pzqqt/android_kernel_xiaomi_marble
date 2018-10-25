@@ -576,7 +576,7 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 			"Radar already found in the channel, do not queue radar data");
 		return;
 	}
-
+	dfs->dfs_phyerr_count++;
 	dfs->wlan_dfs_stats.total_phy_errors++;
 	dfs_debug(dfs, WLAN_DEBUG_DFS2, "phyerr %d len %d",
 		dfs->wlan_dfs_stats.total_phy_errors, datalen);

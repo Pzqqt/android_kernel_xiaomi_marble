@@ -1267,7 +1267,7 @@ static inline int dfs_process_each_radarevent(
  *                                      found.
  * @dfs: Pointer to wlan_dfs structure.
  */
-static inline void dfs_false_radarfound_reset_vars(
+void dfs_false_radarfound_reset_vars(
 	struct wlan_dfs *dfs)
 {
 	dfs->dfs_seq_num = 0;
@@ -1276,6 +1276,10 @@ static inline void dfs_false_radarfound_reset_vars(
 	dfs->dfs_phyerr_freq_min     = 0x7fffffff;
 	dfs->dfs_phyerr_freq_max     = 0;
 	dfs->dfs_phyerr_w53_counter  = 0;
+	dfs->dfs_event_log_count = 0;
+	dfs->dfs_phyerr_count = 0;
+	dfs->dfs_phyerr_reject_count = 0;
+	dfs->dfs_phyerr_queued_count = 0;
 }
 
 void dfs_radarfound_action_generic(struct wlan_dfs *dfs, uint8_t seg_id)

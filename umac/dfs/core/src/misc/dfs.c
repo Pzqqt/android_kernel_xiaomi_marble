@@ -236,7 +236,7 @@ void dfs_reset(struct wlan_dfs *dfs)
 	if (!dfs->dfs_is_offload_enabled) {
 		dfs_main_timer_reset(dfs);
 		dfs_host_wait_timer_reset(dfs);
-		dfs->dfs_event_log_count = 0;
+		dfs_false_radarfound_reset_vars(dfs);
 	}
 	dfs_task_testtimer_reset(dfs);
 }
