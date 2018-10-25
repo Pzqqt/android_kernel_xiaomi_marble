@@ -1015,6 +1015,7 @@ void hif_update_napi_max_poll_time(struct CE_state *ce_state,
 			napi_info->stats[cpu_id].napi_max_poll_time)
 		napi_info->stats[cpu_id].napi_max_poll_time = napi_poll_time;
 }
+qdf_export_symbol(hif_update_napi_max_poll_time);
 
 #ifdef HIF_IRQ_AFFINITY
 /**

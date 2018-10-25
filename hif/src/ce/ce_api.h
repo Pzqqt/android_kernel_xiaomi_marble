@@ -564,4 +564,26 @@ struct ce_ops {
 
 int hif_ce_bus_early_suspend(struct hif_softc *scn);
 int hif_ce_bus_late_resume(struct hif_softc *scn);
+
+/*
+ * ce_engine_service_reg:
+ * @scn: hif_context
+ * @CE_id: Copy engine ID
+ *
+ * Called from ce_per_engine_service and goes through the regular interrupt
+ * handling that does not involve the WLAN fast path feature.
+ *
+ * Returns void
+ */
+void ce_engine_service_reg(struct hif_softc *scn, int CE_id);
+
+/**
+ * ce_per_engine_service_fast() - CE handler routine to service fastpath msgs
+ * @scn: hif_context
+ * @ce_id: Copy engine ID
+ *
+ * Return: void
+ */
+void ce_per_engine_service_fast(struct hif_softc *scn, int ce_id);
+
 #endif /* __COPY_ENGINE_API_H__ */

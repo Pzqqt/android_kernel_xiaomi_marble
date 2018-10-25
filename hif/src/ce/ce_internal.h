@@ -145,6 +145,8 @@ struct CE_state {
 	bool htt_tx_data;
 	bool htt_rx_data;
 	qdf_lro_ctx_t lro_data;
+
+	void (*service)(struct hif_softc *scn, int CE_id);
 };
 
 /* Descriptor rings must be aligned to this boundary */

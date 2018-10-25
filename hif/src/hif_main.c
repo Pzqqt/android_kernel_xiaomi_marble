@@ -933,6 +933,7 @@ int hif_get_rx_ctx_id(int ctx_id, struct hif_opaque_softc *hif_hdl)
 {
 	return 0;
 }
+qdf_export_symbol(hif_get_rx_ctx_id);
 #endif /* RECEIVE_OFFLOAD */
 
 #if defined(FEATURE_LRO)
@@ -1182,29 +1183,6 @@ int hif_send_single(struct hif_opaque_softc *osc, qdf_nbuf_t msdu, uint32_t
 			len);
 }
 qdf_export_symbol(hif_send_single);
-
-#ifdef WLAN_FEATURE_FASTPATH
-/**
- * hif_send_fast() - API to access hif specific function
- * ce_send_fast.
- * @osc: HIF Context
- * @msdu : array of msdus to be sent
- * @num_msdus : number of msdus in an array
- * @transfer_id: transfer id
- * @download_len: download length
- *
- * Return: No. of packets that could be sent
- */
-int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t nbuf,
-		uint32_t transfer_id, uint32_t download_len)
-{
-	void *ce_tx_hdl = hif_get_ce_handle(osc, CE_HTT_TX_CE);
-
-	return ce_send_fast((struct CE_handle *)ce_tx_hdl, nbuf,
-			transfer_id, download_len);
-}
-qdf_export_symbol(hif_send_fast);
-#endif
 #endif
 
 /**

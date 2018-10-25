@@ -1401,6 +1401,7 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 		CE_state->attr_flags = attr->flags;
 	}
 	CE_state->scn = scn;
+	CE_state->service = ce_engine_service_reg;
 
 	qdf_atomic_init(&CE_state->rx_pending);
 	if (attr == NULL) {
@@ -1581,6 +1582,32 @@ error_no_dma_mem:
 	return NULL;
 }
 
+/**
+ * hif_is_polled_mode_enabled - API to query if polling is enabled on all CEs
+ * @hif_ctx: HIF Context
+ *
+ * API to check if polling is enabled on all CEs. Returns true when polling
+ * is enabled on all CEs.
+ *
+ * Return: bool
+ */
+bool hif_is_polled_mode_enabled(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct CE_attr *attr;
+	int id;
+
+	for (id = 0; id < scn->ce_count; id++) {
+		attr = &hif_state->host_ce_config[id];
+		if (attr && (attr->dest_nentries) &&
+		    !(attr->flags & CE_ATTR_ENABLE_POLL))
+			return false;
+	}
+	return true;
+}
+qdf_export_symbol(hif_is_polled_mode_enabled);
+
 #ifdef WLAN_FEATURE_FASTPATH
 /**
  * hif_enable_fastpath() Update that we have enabled fastpath mode
@@ -1618,32 +1645,6 @@ bool hif_is_fastpath_mode_enabled(struct hif_opaque_softc *hif_ctx)
 }
 
 /**
- * hif_is_polled_mode_enabled - API to query if polling is enabled on all CEs
- * @hif_ctx: HIF Context
- *
- * API to check if polling is enabled on all CEs. Returns true when polling
- * is enabled on all CEs.
- *
- * Return: bool
- */
-bool hif_is_polled_mode_enabled(struct hif_opaque_softc *hif_ctx)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-	struct CE_attr *attr;
-	int id;
-
-	for (id = 0; id < scn->ce_count; id++) {
-		attr = &hif_state->host_ce_config[id];
-		if (attr && (attr->dest_nentries) &&
-		    !(attr->flags & CE_ATTR_ENABLE_POLL))
-			return false;
-	}
-	return true;
-}
-qdf_export_symbol(hif_is_polled_mode_enabled);
-
-/**
  * hif_get_ce_handle - API to get CE handle for FastPath mode
  * @hif_ctx: HIF Context
  * @id: CopyEngine Id
@@ -1658,6 +1659,7 @@ void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int id)
 
 	return scn->ce_id_to_state[id];
 }
+qdf_export_symbol(hif_get_ce_handle);
 
 /**
  * ce_h2t_tx_ce_cleanup() Place holder function for H2T CE cleanup.
@@ -1782,11 +1784,6 @@ static inline void hif_update_fastpath_recv_bufs_cnt(struct hif_softc *scn)
 }
 
 static inline bool ce_is_fastpath_enabled(struct hif_softc *scn)
-{
-	return false;
-}
-
-static inline bool ce_is_fastpath_handler_registered(struct CE_state *ce_state)
 {
 	return false;
 }
@@ -3166,46 +3163,6 @@ err:
 	HIF_TRACE("%s: X, ret = %d", __func__, rv);
 	return QDF_STATUS_SUCCESS != QDF_STATUS_E_FAILURE;
 }
-
-#ifdef WLAN_FEATURE_FASTPATH
-/**
- * hif_ce_fastpath_cb_register() - Register callback for fastpath msg handler
- * @handler: Callback funtcion
- * @context: handle for callback function
- *
- * Return: QDF_STATUS_SUCCESS on success or QDF_STATUS_E_FAILURE
- */
-int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
-				fastpath_msg_handler handler,
-				void *context)
-{
-	struct CE_state *ce_state;
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	int i;
-
-	if (!scn) {
-		HIF_ERROR("%s: scn is NULL", __func__);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!scn->fastpath_mode_on) {
-		HIF_WARN("%s: Fastpath mode disabled", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	for (i = 0; i < scn->ce_count; i++) {
-		ce_state = scn->ce_id_to_state[i];
-		if (ce_state->htt_rx_data) {
-			ce_state->fastpath_handler = handler;
-			ce_state->context = context;
-		}
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-qdf_export_symbol(hif_ce_fastpath_cb_register);
-#endif
 
 #ifdef IPA_OFFLOAD
 /**

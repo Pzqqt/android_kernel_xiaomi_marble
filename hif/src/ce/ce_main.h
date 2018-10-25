@@ -25,6 +25,23 @@
 #include "qdf_util.h"
 #include "hif_exec.h"
 
+#ifndef DATA_CE_SW_INDEX_NO_INLINE_UPDATE
+#define DATA_CE_UPDATE_SWINDEX(x, scn, addr)				\
+		(x = CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, addr))
+#else
+#define DATA_CE_UPDATE_SWINDEX(x, scn, addr)
+#endif
+
+/*
+ * Number of times to check for any pending tx/rx completion on
+ * a copy engine, this count should be big enough. Once we hit
+ * this threashold we'll not check for any Tx/Rx comlpetion in same
+ * interrupt handling. Note that this threashold is only used for
+ * Rx interrupt processing, this can be used tor Tx as well if we
+ * suspect any infinite loop in checking for pending Tx completion.
+ */
+#define CE_TXRX_COMP_CHECK_THRESHOLD 20
+
 #define CE_HTT_T2H_MSG 1
 #define CE_HTT_H2T_MSG 4
 
