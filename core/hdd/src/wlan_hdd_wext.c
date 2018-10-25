@@ -3403,13 +3403,6 @@ int hdd_get_ldpc(struct hdd_adapter *adapter, int *value)
 	return ret;
 }
 
-/**
- * hdd_set_ldpc() - Set adapter LDPC
- * @adapter: adapter being modified
- * @value: new LDPC value
- *
- * Return: 0 on success, negative errno on failure
- */
 int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 {
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
@@ -3420,6 +3413,12 @@ int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 	struct mlme_ht_capabilities_info ht_cap_info;
 
 	hdd_debug("%d", value);
+
+	if (!mac_handle) {
+		hdd_err("NULL Mac handle");
+		return -EINVAL;
+	}
+
 	if (value) {
 		/* make sure HT capabilities allow this */
 		if (!config->enable_rx_ldpc) {
@@ -4467,13 +4466,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 	}
 
 	case WE_SET_LDPC:
-	{
-		if (!mac_handle)
-			return -EINVAL;
-
 		ret = hdd_set_ldpc(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_TX_STBC:
 	{

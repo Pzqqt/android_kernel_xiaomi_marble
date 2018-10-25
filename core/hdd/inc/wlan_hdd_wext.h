@@ -217,7 +217,16 @@ int hdd_priv_get_data(struct iw_point *p_priv_data,
 void *mem_alloc_copy_from_user_helper(const void *wrqu_data, size_t len);
 
 int hdd_get_ldpc(struct hdd_adapter *adapter, int *value);
+
+/**
+ * hdd_set_ldpc() - Set adapter LDPC
+ * @adapter: adapter being modified
+ * @value: new LDPC value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
 int hdd_set_ldpc(struct hdd_adapter *adapter, int value);
+
 int hdd_get_tx_stbc(struct hdd_adapter *adapter, int *value);
 int hdd_set_tx_stbc(struct hdd_adapter *adapter, int value);
 int hdd_get_rx_stbc(struct hdd_adapter *adapter, int *value);
