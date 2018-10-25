@@ -2776,6 +2776,13 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	struct wma_target_req *req_msg;
 	uint32_t chan_mode;
 	enum phy_ch_width ch_width;
+	struct wlan_mlme_nss_chains *ini_cfg;
+
+	ini_cfg = mlme_get_ini_vdev_config(iface->vdev);
+	if (!ini_cfg) {
+		wma_err("nss chain ini config NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (mac_ctx == NULL) {
@@ -3020,6 +3027,10 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 			0xffffffff);
 		wma_vdev_update_pause_bitmap(params.vdev_id, 0);
 	}
+
+	/* Send the dynamic nss chain params before vdev start to fw */
+	if (wma->dynamic_nss_chains_support)
+		wma_vdev_nss_chain_params_send(params.vdev_id, ini_cfg);
 
 	return wma_send_vdev_start_to_fw(wma, &params);
 }
