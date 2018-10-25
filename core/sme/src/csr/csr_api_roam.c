@@ -2232,42 +2232,6 @@ bool csr_roam_is_roam_offload_scan_enabled(tpAniSirGlobal mac_ctx)
 	return mac_ctx->roam.configParam.isRoamOffloadScanEnabled;
 }
 
-QDF_STATUS csr_set_band(tHalHandle hHal, uint8_t sessionId,
-			enum band_info eBand)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	if (CSR_IS_PHY_MODE_A_ONLY(pMac) && (eBand == BAND_2G)) {
-		/* DOT11 mode configured to 11a only and received
-		 * request to change the band to 2.4 GHz
-		 */
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "failed to set band cfg80211 = %u, band = %u",
-			  pMac->roam.configParam.uCfgDot11Mode, eBand);
-		return QDF_STATUS_E_INVAL;
-	}
-	if ((CSR_IS_PHY_MODE_B_ONLY(pMac) ||
-	     CSR_IS_PHY_MODE_G_ONLY(pMac)) && (eBand == BAND_5G)) {
-		/* DOT11 mode configured to 11b/11g only and received
-		 * request to change the band to 5 GHz
-		 */
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "failed to set band dot11mode = %u, band = %u",
-			  pMac->roam.configParam.uCfgDot11Mode, eBand);
-		return QDF_STATUS_E_INVAL;
-	}
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  "Band changed to %u (0 - ALL, 1 - 2.4 GHZ, 2 - 5GHZ)", eBand);
-	pMac->mlme_cfg->gen.band_capability = eBand;
-	pMac->mlme_cfg->gen.band = eBand;
-
-	status = csr_get_channel_and_power_list(pMac);
-	if (QDF_STATUS_SUCCESS == status)
-		csr_apply_channel_and_power_list(pMac);
-	return status;
-}
-
 /* The funcns csr_convert_cb_ini_value_to_phy_cb_state and
  * csr_convert_phy_cb_state_to_ini_value have been introduced
  * to convert the ini value to the ENUM used in csr and MAC for CB state

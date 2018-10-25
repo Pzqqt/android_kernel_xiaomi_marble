@@ -1641,8 +1641,6 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
-QDF_STATUS csr_set_band(tHalHandle hHal, uint8_t sessionId,
-			enum band_info eBand);
 enum band_info csr_get_current_band(tHalHandle hHal);
 typedef void (*csr_readyToSuspendCallback)(void *pContext, bool suspended);
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
