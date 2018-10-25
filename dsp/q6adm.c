@@ -2833,6 +2833,9 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 	    (topology == VPM_TX_DM_RFECNS_COPP_TOPOLOGY))
 		rate = 16000;
 
+	if (topology == VPM_TX_VOICE_SMECNS_V2_COPP_TOPOLOGY)
+		channel_mode = 1;
+
 	/*
 	 * Routing driver reuses the same adm for streams with the same
 	 * app_type, sample_rate etc.
