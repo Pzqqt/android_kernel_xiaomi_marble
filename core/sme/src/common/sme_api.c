@@ -5802,29 +5802,6 @@ bool sme_is_channel_valid(tHalHandle hHal, uint8_t channel)
 }
 
 /*
- * sme_set_freq_band() -
- *  Used to set frequency band.
- *
- * hHal
- * sessionId - Session Identifier
- * band value to be configured
- * Return QDF_STATUS
- */
-QDF_STATUS sme_set_freq_band(tHalHandle hHal, uint8_t sessionId,
-			     enum band_info eBand)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_set_band(hHal, sessionId, eBand);
-		sme_release_global_lock(&pMac->sme);
-	}
-	return status;
-}
-
-/*
  * sme_get_freq_band() -
  * Used to get the current band settings.
  *
