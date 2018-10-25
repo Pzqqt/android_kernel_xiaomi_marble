@@ -90,7 +90,6 @@ void hif_ce_war_enable(void)
 #define CE_DEBUG_PRINT_BUF_SIZE(x) (((x) * 3) - 1)
 #define CE_DEBUG_DATA_PER_ROW 16
 
-qdf_mutex_t ce_dbg_datamem_lock[CE_COUNT_MAX];
 static const char *ce_event_type_to_str(enum hif_ce_event_type type);
 
 /**
@@ -117,7 +116,7 @@ static int get_next_record_index(qdf_atomic_t *table_index, int array_size)
 	return record_index;
 }
 
-#if HIF_CE_DEBUG_DATA_BUF
+#ifdef HIF_CE_DEBUG_DATA_BUF
 /**
  * hif_ce_desc_data_record() - Record data pointed by the CE descriptor
  * @event: structure detailing a ce event
@@ -198,7 +197,7 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 	event->memory = memory;
 	event->index = index;
 
-#if HIF_CE_DEBUG_DATA_BUF
+#ifdef HIF_CE_DEBUG_DATA_BUF
 	if (ce_hist->data_enable[ce_id])
 		hif_ce_desc_data_record(event, len);
 #endif
@@ -216,7 +215,7 @@ void ce_init_ce_desc_event_log(struct hif_softc *scn, int ce_id, int size)
 {
 	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
 	qdf_atomic_init(&ce_hist->history_index[ce_id]);
-	qdf_mutex_create(&ce_dbg_datamem_lock[ce_id]);
+	qdf_mutex_create(&ce_hist->ce_dbg_datamem_lock[ce_id]);
 }
 
 /**
@@ -226,10 +225,12 @@ void ce_init_ce_desc_event_log(struct hif_softc *scn, int ce_id, int size)
  */
 inline void ce_deinit_ce_desc_event_log(struct hif_softc *scn, int ce_id)
 {
-	qdf_mutex_destroy(&ce_dbg_datamem_lock[ce_id]);
+	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
+
+	qdf_mutex_destroy(&ce_hist->ce_dbg_datamem_lock[ce_id]);
 }
 
-#else /* Note: For MCL, (HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
+#else /* (HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF) */
 void hif_record_ce_desc_event(struct hif_softc *scn,
 		int ce_id, enum hif_ce_event_type type,
 		union ce_desc *descriptor, void *memory,
@@ -246,7 +247,7 @@ inline void ce_init_ce_desc_event_log(struct hif_softc *scn, int ce_id,
 void ce_deinit_ce_desc_event_log(struct hif_softc *scn, int ce_id)
 {
 }
-#endif /* Note: for MCL, HIF_CONFIG_SLUB_DEBUG_ON || HIF_CE_DEBUG_DATA_BUF */
+#endif /*defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF) */
 
 #ifdef NAPI_YIELD_BUDGET_BASED
 bool hif_ce_service_should_yield(struct hif_softc *scn,
@@ -1457,7 +1458,7 @@ void ce_ipa_get_resource(struct CE_handle *ce,
 }
 #endif /* IPA_OFFLOAD */
 
-#if HIF_CE_DEBUG_DATA_BUF
+#ifdef HIF_CE_DEBUG_DATA_BUF
 /**
  * hif_dump_desc_data_buf() - record ce descriptor events
  * @buf: buffer to copy to
@@ -1607,7 +1608,7 @@ ssize_t hif_dump_desc_event(struct hif_softc *scn, char *buf)
 			secs, usecs, ce_hist->hist_id,
 			ce_event_type_to_str(event->type),
 			event->index, event->memory);
-#if HIF_CE_DEBUG_DATA_BUF
+#ifdef HIF_CE_DEBUG_DATA_BUF
 	len += snprintf(buf + len, PAGE_SIZE - len, ", Data len=%d",
 			event->actual_data_len);
 #endif
@@ -1620,7 +1621,7 @@ ssize_t hif_dump_desc_event(struct hif_softc *scn, char *buf)
 	len += CE_DEBUG_PRINT_BUF_SIZE(sizeof(union ce_desc));
 	len += snprintf(buf + len, PAGE_SIZE - len, "\n");
 
-#if HIF_CE_DEBUG_DATA_BUF
+#ifdef HIF_CE_DEBUG_DATA_BUF
 	if (ce_hist->data_enable[ce_hist->hist_id])
 		len = hif_dump_desc_data_buf(buf, len, event->data,
 						(event->actual_data_len <
@@ -1673,9 +1674,9 @@ ssize_t hif_input_desc_trace_buf_index(struct hif_softc *scn,
 	return size;
 }
 
-#endif  /*For MCL,  HIF_CONFIG_SLUB_DEBUG_ON || HIF_CE_DEBUG_DATA_BUF */
+#endif /*defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF) */
 
-#if HIF_CE_DEBUG_DATA_BUF
+#ifdef HIF_CE_DEBUG_DATA_BUF
 /*
  * hif_ce_en_desc_hist() -
  * API to enable recording the CE desc history
@@ -1722,7 +1723,7 @@ ssize_t hif_ce_en_desc_hist(struct hif_softc *scn, const char *buf, size_t size)
 	if (!ce_hist->hist_ev[ce_id])
 		return -EINVAL;
 
-	qdf_mutex_acquire(&ce_dbg_datamem_lock[ce_id]);
+	qdf_mutex_acquire(&ce_hist->ce_dbg_datamem_lock[ce_id]);
 	if (cfg == 1) {
 		if (ce_hist->data_enable[ce_id] == 1) {
 			qdf_print("\nAlready Enabled");
@@ -1742,7 +1743,7 @@ ssize_t hif_ce_en_desc_hist(struct hif_softc *scn, const char *buf, size_t size)
 				free_mem_ce_debug_hist_data(scn, ce_id);
 		}
 	}
-	qdf_mutex_release(&ce_dbg_datamem_lock[ce_id]);
+	qdf_mutex_release(&ce_hist->ce_dbg_datamem_lock[ce_id]);
 
 	return size;
 }

@@ -540,17 +540,17 @@ struct hif_ce_desc_event {
 	uint64_t time;
 	union ce_desc descriptor;
 	void *memory;
-#if HIF_CE_DEBUG_DATA_BUF
+#ifdef HIF_CE_DEBUG_DATA_BUF
 	uint8_t *data;
 	ssize_t actual_data_len;
 #endif
 };
 
-#if HIF_CE_DEBUG_DATA_BUF
+#ifdef HIF_CE_DEBUG_DATA_BUF
 QDF_STATUS alloc_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
 void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
 #endif /*HIF_CE_DEBUG_DATA_BUF*/
-#endif /* #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
+#endif/*#if defined(HIF_CONFIG_SLUB_DEBUG_ON)||defined(HIF_CE_DEBUG_DATA_BUF)*/
 
 #ifdef HIF_CONFIG_SLUB_DEBUG_ON
 /**

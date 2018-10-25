@@ -1215,7 +1215,7 @@ static void ce_oom_recovery(void *context)
 	hif_post_recv_buffers_for_pipe(pipe_info);
 }
 
-#if HIF_CE_DEBUG_DATA_BUF
+#ifdef HIF_CE_DEBUG_DATA_BUF
 /**
  * alloc_mem_ce_debug_hist_data() - Allocate mem for the data pointed by
  * the CE descriptors.
@@ -1313,7 +1313,7 @@ static void free_mem_ce_debug_history(struct hif_softc *scn, unsigned int ce_id)
 	ce_hist->hist_ev[ce_id] = NULL;
 }
 
-#elif HIF_CE_DEBUG_DATA_BUF /* WIN */
+#elif defined(HIF_CE_DEBUG_DATA_BUF) /* WIN */
 
 static QDF_STATUS
 alloc_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id)
@@ -1360,7 +1360,7 @@ static inline void
 free_mem_ce_debug_history(struct hif_softc *scn, unsigned int CE_id) { }
 #endif
 
-#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF
+#if defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF)
 /**
  * reset_ce_debug_history() - reset the index and ce id used for dumping the
  * CE records on the console using sysfs.
@@ -1377,9 +1377,9 @@ static inline void reset_ce_debug_history(struct hif_softc *scn)
 	ce_hist->hist_index = 0;
 	ce_hist->hist_id = 0;
 }
-#else /* defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
+#else /* defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF) */
 static inline void reset_ce_debug_history(struct hif_softc *scn) { }
-#endif /* defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
+#endif /*defined(HIF_CONFIG_SLUB_DEBUG_ON) || defined(HIF_CE_DEBUG_DATA_BUF) */
 
 void ce_enable_polling(void *cestate)
 {
