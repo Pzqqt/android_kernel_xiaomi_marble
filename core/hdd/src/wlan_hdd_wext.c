@@ -4301,6 +4301,33 @@ static int hdd_we_set_nss(struct hdd_adapter *adapter, int nss)
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_we_set_short_gi(struct hdd_adapter *adapter, int sgi)
+{
+	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
+	int errno;
+
+	hdd_debug("Short GI %d", sgi);
+
+	if (!mac_handle) {
+		hdd_err("NULL Mac handle");
+		return -EINVAL;
+	}
+
+	if (sgi & HDD_AUTO_RATE_SGI)
+		errno = sme_set_auto_rate_he_sgi(mac_handle,
+						 adapter->session_id,
+						 sgi);
+	else
+		errno = sme_update_ht_config(mac_handle,
+					     adapter->session_id,
+					     WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
+					     sgi);
+	if (errno)
+		hdd_err("cfg set failed, value %d status %d", sgi, errno);
+
+	return errno;
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4476,25 +4503,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_SHORT_GI:
-	{
-		if (!mac_handle)
-			return -EINVAL;
-
-		hdd_debug("WMI_VDEV_PARAM_SGI val %d", set_value);
-		if (set_value & HDD_AUTO_RATE_SGI)
-			ret = sme_set_auto_rate_he_sgi(mac_handle,
-						       adapter->session_id,
-						       set_value);
-		else
-			ret = sme_update_ht_config(mac_handle,
-					adapter->session_id,
-					WNI_CFG_HT_CAP_INFO_SHORT_GI_20MHZ,
-					set_value);
-		if (ret)
-			hdd_err("Failed to set ShortGI value %d", set_value);
-
+		ret = hdd_we_set_short_gi(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_RTSCTS:
 	{
