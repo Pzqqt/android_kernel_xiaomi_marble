@@ -228,7 +228,16 @@ int hdd_get_ldpc(struct hdd_adapter *adapter, int *value);
 int hdd_set_ldpc(struct hdd_adapter *adapter, int value);
 
 int hdd_get_tx_stbc(struct hdd_adapter *adapter, int *value);
+
+/**
+ * hdd_set_tx_stbc() - Set adapter TX STBC
+ * @adapter: adapter being modified
+ * @value: new TX STBC value
+ *
+ * Return: 0 on success, negative errno on failure
+ */
 int hdd_set_tx_stbc(struct hdd_adapter *adapter, int value);
+
 int hdd_get_rx_stbc(struct hdd_adapter *adapter, int *value);
 int hdd_set_rx_stbc(struct hdd_adapter *adapter, int value);
 

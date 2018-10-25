@@ -3484,13 +3484,6 @@ int hdd_get_tx_stbc(struct hdd_adapter *adapter, int *value)
 	return ret;
 }
 
-/**
- * hdd_set_tx_stbc() - Set adapter TX STBC
- * @adapter: adapter being modified
- * @value: new TX STBC value
- *
- * Return: 0 on success, negative errno on failure
- */
 int hdd_set_tx_stbc(struct hdd_adapter *adapter, int value)
 {
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
@@ -3500,6 +3493,12 @@ int hdd_set_tx_stbc(struct hdd_adapter *adapter, int value)
 	struct mlme_ht_capabilities_info ht_cap_info;
 
 	hdd_debug("%d", value);
+
+	if (!mac_handle) {
+		hdd_err("NULL Mac handle");
+		return -EINVAL;
+	}
+
 	if (value) {
 		/* make sure HT capabilities allow this */
 		status = ucfg_mlme_get_ht_cap_info(hdd_ctx->psoc,
@@ -4470,13 +4469,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_TX_STBC:
-	{
-		if (!mac_handle)
-			return -EINVAL;
-
 		ret = hdd_set_tx_stbc(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_RX_STBC:
 	{
