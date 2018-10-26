@@ -589,6 +589,17 @@ ol_tx_hl_base(
 			txq = ol_tx_classify(vdev, tx_desc, msdu,
 					     &tx_msdu_info);
 
+			/* initialize the HW tx descriptor */
+			htt_tx_desc_init(
+					pdev->htt_pdev, tx_desc->htt_tx_desc,
+					tx_desc->htt_tx_desc_paddr,
+					ol_tx_desc_id(pdev, tx_desc),
+					msdu,
+					&tx_msdu_info.htt,
+					&tx_msdu_info.tso_info,
+					&tx_ctrl,
+					vdev->opmode == wlan_op_mode_ocb);
+
 			if ((!txq) || TX_FILTER_CHECK(&tx_msdu_info)) {
 				/* drop this frame,
 				 * but try sending subsequent frames
@@ -666,16 +677,6 @@ ol_tx_hl_base(
 						&tx_msdu_info))
 				goto MSDU_LOOP_BOTTOM;
 
-			/* initialize the HW tx descriptor */
-			htt_tx_desc_init(
-					pdev->htt_pdev, tx_desc->htt_tx_desc,
-					tx_desc->htt_tx_desc_paddr,
-					ol_tx_desc_id(pdev, tx_desc),
-					msdu,
-					&tx_msdu_info.htt,
-					&tx_msdu_info.tso_info,
-					&tx_ctrl,
-					vdev->opmode == wlan_op_mode_ocb);
 			/*
 			 * If debug display is enabled, show the meta-data
 			 * being downloaded to the target via the
