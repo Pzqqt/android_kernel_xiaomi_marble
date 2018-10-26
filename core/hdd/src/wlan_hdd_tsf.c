@@ -31,6 +31,7 @@ static struct completion tsf_sync_get_completion_evt;
 #define WLAN_TSF_SYNC_GET_TIMEOUT 2000
 #define WLAN_HDD_CAPTURE_TSF_REQ_TIMEOUT_MS 500
 #define WLAN_HDD_CAPTURE_TSF_INIT_INTERVAL_MS 100
+#define WLAN_HDD_SOFTAP_INTERVEL_TIMES 100
 
 /**
  * enum hdd_tsf_op_result - result of tsf operation
@@ -571,6 +572,11 @@ static void hdd_update_timestamp(struct hdd_adapter *adapter,
 		 */
 		interval = (WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC -
 			    CAP_TSF_TIMER_FIX_SEC) * MSEC_PER_SEC;
+		if (adapter->device_mode == QDF_SAP_MODE ||
+		    adapter->device_mode == QDF_P2P_GO_MODE) {
+			interval *= WLAN_HDD_SOFTAP_INTERVEL_TIMES;
+		}
+
 		adapter->continuous_error_count = 0;
 		hdd_debug("ts-pair updated: interval: %d",
 			  interval);
@@ -741,7 +747,9 @@ static ssize_t __hdd_wlan_tsf_show(struct device *dev,
 				 "TSF sync is not initialized\n");
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (eConnectionState_Associated != hdd_sta_ctx->conn_info.connState)
+	if (eConnectionState_Associated != hdd_sta_ctx->conn_info.connState &&
+	    (adapter->device_mode == QDF_STA_MODE ||
+	    adapter->device_mode == QDF_P2P_CLIENT_MODE))
 		return scnprintf(buf, PAGE_SIZE, "NOT connected\n");
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -751,12 +759,20 @@ static ssize_t __hdd_wlan_tsf_show(struct device *dev,
 	host_time = hdd_get_monotonic_host_time(hdd_ctx);
 
 	if (hdd_get_targettime_from_hosttime(adapter, host_time,
-					     &target_time))
+					     &target_time)) {
 		size = scnprintf(buf, PAGE_SIZE, "Invalid timestamp\n");
-	else
-		size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM\n",
-				 buf, target_time, host_time,
-				 hdd_sta_ctx->conn_info.bssId.bytes);
+	} else {
+		if (adapter->device_mode == QDF_STA_MODE ||
+		    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
+			size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM\n",
+					 buf, target_time, host_time,
+					 hdd_sta_ctx->conn_info.bssId.bytes);
+		} else {
+			size = scnprintf(buf, PAGE_SIZE, "%s%llu %llu %pM\n",
+					 buf, target_time, host_time,
+					 adapter->mac_addr.bytes);
+		}
+	}
 
 	return size;
 }
