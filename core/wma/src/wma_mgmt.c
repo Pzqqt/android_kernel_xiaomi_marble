@@ -103,7 +103,7 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 	uint8_t i;
 
 	bcn = wma->interfaces[vdev_id].beacon;
-	if (!bcn->buf) {
+	if (!bcn || !bcn->buf) {
 		WMA_LOGE("%s: Invalid beacon buffer", __func__);
 		return;
 	}
