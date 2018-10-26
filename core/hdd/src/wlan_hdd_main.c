@@ -4990,7 +4990,8 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 				struct hdd_adapter *adapter,
 				enum hdd_adapter_stop_flag_t flag)
 {
-	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct hdd_station_ctx *sta_ctx;
 	struct csr_roam_profile *roam_profile;
 	union iwreq_data wrqu;
 	tSirUpdateIE updateIE;
@@ -5015,11 +5016,11 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 	 * if this is the last active connection check & stop the
 	 * opportunistic timer first
 	 */
-	if (((policy_mgr_get_connection_count(hdd_ctx->psoc) == 1) &&
-		(policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
-			policy_mgr_convert_device_mode_to_qdf_type(
-				adapter->device_mode), NULL) == 1)) ||
-			!policy_mgr_get_connection_count(hdd_ctx->psoc))
+	if ((policy_mgr_get_connection_count(hdd_ctx->psoc) == 1 &&
+	     policy_mgr_mode_specific_connection_count(hdd_ctx->psoc,
+		policy_mgr_convert_device_mode_to_qdf_type(
+			adapter->device_mode), NULL) == 1) ||
+	    !policy_mgr_get_connection_count(hdd_ctx->psoc))
 		policy_mgr_check_and_stop_opportunistic_timer(
 			hdd_ctx->psoc, adapter->session_id);
 
@@ -5031,22 +5032,23 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 	case QDF_IBSS_MODE:
 	case QDF_P2P_DEVICE_MODE:
 	case QDF_NDI_MODE:
-		if ((QDF_NDI_MODE == adapter->device_mode) ||
-			hdd_conn_is_connected(
-				WLAN_HDD_GET_STATION_CTX_PTR(adapter)) ||
-			hdd_is_connecting(
-				WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+		if (adapter->device_mode == QDF_NDI_MODE ||
+		    hdd_conn_is_connected(sta_ctx) ||
+		    hdd_is_connecting(sta_ctx)) {
 			INIT_COMPLETION(adapter->disconnect_comp_var);
+
 			roam_profile = hdd_roam_profile(adapter);
 			/* For NDI do not use roam_profile */
-			if (QDF_NDI_MODE == adapter->device_mode)
-				qdf_ret_status = sme_roam_disconnect(
+			if (adapter->device_mode == QDF_NDI_MODE)
+				status = sme_roam_disconnect(
 					mac_handle,
 					adapter->session_id,
 					eCSR_DISCONNECT_REASON_NDI_DELETE);
 			else if (roam_profile->BSSType ==
 						eCSR_BSS_TYPE_START_IBSS)
-				qdf_ret_status = sme_roam_disconnect(
+				status = sme_roam_disconnect(
 					mac_handle,
 					adapter->session_id,
 					eCSR_DISCONNECT_REASON_IBSS_LEAVE);
@@ -5054,15 +5056,13 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 				wlan_hdd_disconnect(adapter,
 					eCSR_DISCONNECT_REASON_DEAUTH);
 			else
-				qdf_ret_status = sme_roam_disconnect(
+				status = sme_roam_disconnect(
 					mac_handle,
 					adapter->session_id,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED);
-			/* success implies disconnect command got
-			 * queued up successfully
-			 */
-			if (qdf_ret_status == QDF_STATUS_SUCCESS &&
-					QDF_STA_MODE != adapter->device_mode) {
+			/* success implies disconnect is queued */
+			if (QDF_IS_STATUS_SUCCESS(status) &&
+			    adapter->device_mode != QDF_STA_MODE) {
 				rc = wait_for_completion_timeout(
 					&adapter->disconnect_comp_var,
 					msecs_to_jiffies
@@ -5070,28 +5070,25 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 				if (!rc)
 					hdd_warn("disconn_comp_var wait fail");
 			}
-			if (qdf_ret_status != QDF_STATUS_SUCCESS)
+			if (QDF_IS_STATUS_ERROR(status))
 				hdd_warn("failed to post disconnect");
+
 			memset(&wrqu, '\0', sizeof(wrqu));
 			wrqu.ap_addr.sa_family = ARPHRD_ETHER;
 			memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
 			wireless_send_event(adapter->dev, SIOCGIWAP, &wrqu,
 					    NULL);
 		}
-		wlan_hdd_scan_abort(adapter);
 
+		wlan_hdd_scan_abort(adapter);
 		wlan_hdd_cleanup_actionframe(adapter);
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 		hdd_clear_fils_connection_info(adapter);
+		hdd_deregister_tx_flow_control(adapter);
 
 #ifdef WLAN_OPEN_SOURCE
 		cancel_work_sync(&adapter->ipv4_notifier_work);
-#endif
-
-		hdd_deregister_tx_flow_control(adapter);
-
 #ifdef WLAN_NS_OFFLOAD
-#ifdef WLAN_OPEN_SOURCE
 		cancel_work_sync(&adapter->ipv6_notifier_work);
 #endif
 #endif
@@ -5101,7 +5098,7 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 						      adapter->dev);
 
 		if (wlan_hdd_try_disconnect(adapter)) {
-			hdd_err("Error: Can't disconnect adapter");
+			hdd_err("Can't disconnect adapter");
 			return QDF_STATUS_E_FAILURE;
 		}
 
@@ -5119,35 +5116,31 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 			cds_flush_delayed_work(&adapter->acs_pending_work);
 			clear_bit(ACS_PENDING, &adapter->event_flags);
 		}
+
 		wlan_hdd_scan_abort(adapter);
-		/* Flush IPA exception path packets */
+
 		sap_config = &adapter->session.ap.sap_config;
-		if (sap_config)
-			wlansap_reset_sap_config_add_ie(sap_config,
-							eUPDATE_IE_ALL);
+		wlansap_reset_sap_config_add_ie(sap_config, eUPDATE_IE_ALL);
+
 		ucfg_ipa_flush(hdd_ctx->pdev);
+
 		if (!(flag & HDD_IN_CAC_WORK_TH_CONTEXT))
 			cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 		/* fallthrough */
 
 	case QDF_P2P_GO_MODE:
 		cds_flush_work(&adapter->sap_stop_bss_work);
-
-		/* Any softap specific cleanup here... */
 		qdf_atomic_set(&adapter->session.ap.acs_in_progress, 0);
 		wlan_hdd_undo_acs(adapter);
+
 		if (adapter->device_mode == QDF_P2P_GO_MODE)
 			wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 
 		hdd_deregister_tx_flow_control(adapter);
-
 		hdd_destroy_acs_timer(adapter);
+
 		mutex_lock(&hdd_ctx->sap_lock);
 		if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-			QDF_STATUS status;
-			QDF_STATUS qdf_status;
-
-			/* Stop Bss. */
 			status = wlansap_stop_bss(
 					WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 
@@ -5156,18 +5149,16 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 					WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 				qdf_event_reset(&hostapd_state->
 						qdf_stop_bss_event);
-				qdf_status =
-					qdf_wait_for_event_completion(
+				status = qdf_wait_for_event_completion(
 					&hostapd_state->qdf_stop_bss_event,
 					SME_CMD_START_STOP_BSS_TIMEOUT);
-
-				if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+				if (QDF_IS_STATUS_ERROR(status))
 					hdd_err("failure waiting for wlansap_stop_bss %d",
-						qdf_status);
-				}
+						status);
 			} else {
 				hdd_err("failure in wlansap_stop_bss");
 			}
+
 			clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
 			policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
 						adapter->device_mode,
@@ -5183,19 +5174,19 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 			updateIE.pAdditionIEBuffer = NULL;
 			updateIE.append = false;
 			updateIE.notify = false;
+
 			/* Probe bcn reset */
-			if (sme_update_add_ie(mac_handle,
-					      &updateIE, eUPDATE_IE_PROBE_BCN)
-			    == QDF_STATUS_E_FAILURE) {
-				hdd_err("Could not pass on PROBE_RSP_BCN data to PE");
-			}
+			status = sme_update_add_ie(mac_handle, &updateIE,
+						   eUPDATE_IE_PROBE_BCN);
+			if (status == QDF_STATUS_E_FAILURE)
+				hdd_err("Could not pass PROBE_RSP_BCN to PE");
+
 			/* Assoc resp reset */
-			if (sme_update_add_ie(mac_handle,
-					      &updateIE,
-					      eUPDATE_IE_ASSOC_RESP) ==
-			    QDF_STATUS_E_FAILURE) {
-				hdd_err("Could not pass on ASSOC_RSP data to PE");
-			}
+			status = sme_update_add_ie(mac_handle, &updateIE,
+						   eUPDATE_IE_ASSOC_RESP);
+			if (status == QDF_STATUS_E_FAILURE)
+				hdd_err("Could not pass ASSOC_RSP to PE");
+
 			/* Reset WNI_CFG_PROBE_RSP Flags */
 			wlan_hdd_reset_prob_rspies(adapter);
 		}
@@ -5211,10 +5202,7 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 
 #ifdef WLAN_OPEN_SOURCE
 		cancel_work_sync(&adapter->ipv4_notifier_work);
-#endif
-
 #ifdef WLAN_NS_OFFLOAD
-#ifdef WLAN_OPEN_SOURCE
 		cancel_work_sync(&adapter->ipv6_notifier_work);
 #endif
 #endif
@@ -5224,9 +5212,10 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 		mutex_unlock(&hdd_ctx->sap_lock);
 		break;
 	case QDF_OCB_MODE:
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
-			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
-			WLAN_HDD_GET_STATION_CTX_PTR(adapter)->conn_info.staId[0]);
+			       cds_get_context(QDF_MODULE_ID_TXRX),
+			       sta_ctx->conn_info.staId[0]);
 		hdd_deregister_tx_flow_control(adapter);
 		hdd_vdev_destroy(adapter);
 		break;
@@ -5242,6 +5231,7 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 	}
 
 	hdd_exit();
+
 	return QDF_STATUS_SUCCESS;
 }
 
