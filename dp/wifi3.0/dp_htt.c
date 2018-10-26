@@ -2448,6 +2448,7 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 	struct dp_peer *peer = NULL;
 	qdf_nbuf_t nbuf;
 	uint16_t i;
+	uint32_t tlv_bitmap_expected;
 
 	ppdu_desc = (struct cdp_tx_completion_ppdu *)
 		qdf_nbuf_data(ppdu_info->nbuf);
@@ -2455,6 +2456,11 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 	ppdu_desc->num_users = ppdu_info->last_user;
 	ppdu_desc->ppdu_id = ppdu_info->ppdu_id;
 
+	tlv_bitmap_expected = HTT_PPDU_DEFAULT_TLV_BITMAP;
+	if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
+		if (ppdu_info->is_ampdu)
+			tlv_bitmap_expected = HTT_PPDU_SNIFFER_AMPDU_TLV_BITMAP;
+	}
 	for (i = 0; i < ppdu_desc->num_users; i++) {
 
 		ppdu_desc->num_mpdu += ppdu_desc->user[i].num_mpdu;
@@ -2469,6 +2475,10 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 		if (!peer)
 			continue;
 
+		if (ppdu_info->tlv_bitmap != tlv_bitmap_expected) {
+			dp_peer_unref_del_find_by_id(peer);
+			continue;
+		}
 		if (ppdu_desc->user[i].tid < CDP_DATA_TID_MAX) {
 
 			dp_tx_stats_update(pdev->soc, peer,
