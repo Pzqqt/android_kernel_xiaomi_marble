@@ -4445,6 +4445,37 @@ static int hdd_we_set_vht_rate(struct hdd_adapter *adapter, int rate_code)
 	return errno;
 }
 
+static int hdd_we_set_amsdu(struct hdd_adapter *adapter, int amsdu)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	mac_handle_t mac_handle = hdd_ctx->mac_handle;
+	int errno;
+
+	hdd_debug("AMSDU %d", amsdu);
+
+	if (!mac_handle) {
+		hdd_err("NULL Mac handle");
+		return -EINVAL;
+	}
+
+	if (amsdu > 1)
+		sme_set_amsdu(mac_handle, true);
+	else
+		sme_set_amsdu(mac_handle, false);
+
+	errno = wma_cli_set_command(adapter->session_id,
+				    GEN_VDEV_PARAM_AMSDU,
+				    amsdu, GEN_CMD);
+	if (errno) {
+		hdd_err("Failed to set firmware, errno %d", errno);
+		return errno;
+	}
+
+	hdd_ctx->config->max_amsdu_num = amsdu;
+
+	return 0;
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4718,21 +4749,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 	}
 
 	case WE_SET_AMSDU:
-	{
-		hdd_debug("SET AMSDU val %d", set_value);
-		if (set_value > 1)
-			sme_set_amsdu(mac_handle, true);
-		else
-			sme_set_amsdu(mac_handle, false);
-
-		ret = wma_cli_set_command(adapter->session_id,
-					  GEN_VDEV_PARAM_AMSDU,
-					  set_value, GEN_CMD);
-		/* Update the stored ini value */
-		if (!ret)
-			hdd_ctx->config->max_amsdu_num = set_value;
+		ret = hdd_we_set_amsdu(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_TX_CHAINMASK:
 	{
