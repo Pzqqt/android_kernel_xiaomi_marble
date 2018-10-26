@@ -1932,6 +1932,12 @@ static void msm_pcm_routing_process_audio(u16 reg, u16 val, int set)
 				if (test_bit(idx, &copp))
 					break;
 
+			if (idx >= MAX_COPPS_PER_PORT) {
+				pr_debug("%s: copp idx is invalid, exiting\n",
+								__func__);
+				mutex_unlock(&routing_lock);
+				return;
+			}
 			port_id = msm_bedais[reg].port_id;
 			topology = adm_get_topology_for_port_copp_idx(port_id,
 								      idx);
@@ -22898,6 +22904,12 @@ static int msm_pcm_routing_close(struct snd_pcm_substream *substream)
 			for (idx = 0; idx < MAX_COPPS_PER_PORT; idx++)
 				if (test_bit(idx, &copp))
 					break;
+
+			if (idx >= MAX_COPPS_PER_PORT) {
+				pr_debug("%s: copp idx is invalid, exiting\n",
+								__func__);
+				continue;
+			}
 			fdai->be_srate = bedai->sample_rate;
 			port_id = bedai->port_id;
 			topology = adm_get_topology_for_port_copp_idx(port_id,
