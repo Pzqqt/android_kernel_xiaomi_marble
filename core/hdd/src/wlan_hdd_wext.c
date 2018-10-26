@@ -4378,6 +4378,47 @@ static int hdd_we_set_rtscts(struct hdd_adapter *adapter, int rtscts)
 	return 0;
 }
 
+static int hdd_we_set_11n_rate(struct hdd_adapter *adapter, int rate_code)
+{
+	uint8_t preamble = 0, nss = 0, rix = 0;
+	int errno;
+
+	hdd_debug("Rate code %d", rate_code);
+
+	if (rate_code != 0xff) {
+		rix = RC_2_RATE_IDX(rate_code);
+		if (rate_code & 0x80) {
+			preamble = WMI_RATE_PREAMBLE_HT;
+			nss = HT_RC_2_STREAMS(rate_code) - 1;
+		} else {
+			nss = 0;
+			rix = RC_2_RATE_IDX(rate_code);
+			if (rate_code & 0x10) {
+				preamble = WMI_RATE_PREAMBLE_CCK;
+				if (rix != 0x3)
+					/* Enable Short preamble
+					 * always for CCK except 1mbps
+					 */
+					rix |= 0x4;
+			} else {
+				preamble = WMI_RATE_PREAMBLE_OFDM;
+			}
+		}
+		rate_code = hdd_assemble_rate_code(preamble, nss, rix);
+	}
+
+	hdd_debug("WMI_VDEV_PARAM_FIXED_RATE val %d rix %d preamble %x nss %d",
+		  rate_code, rix, preamble, nss);
+
+	errno = wma_cli_set_command(adapter->session_id,
+				    WMI_VDEV_PARAM_FIXED_RATE,
+				    rate_code, VDEV_CMD);
+	if (errno)
+		hdd_err("Failed to set firmware, errno %d", errno);
+
+	return errno;
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4634,44 +4675,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 	}
 
 	case WE_SET_11N_RATE:
-	{
-		uint8_t preamble = 0, nss = 0, rix = 0;
-
-		hdd_debug("WMI_VDEV_PARAM_FIXED_RATE val %d",
-		       set_value);
-
-		if (set_value != 0xff) {
-			rix = RC_2_RATE_IDX(set_value);
-			if (set_value & 0x80) {
-				preamble = WMI_RATE_PREAMBLE_HT;
-				nss = HT_RC_2_STREAMS(set_value) - 1;
-			} else {
-				nss = 0;
-				rix = RC_2_RATE_IDX(set_value);
-				if (set_value & 0x10) {
-					preamble =
-						WMI_RATE_PREAMBLE_CCK;
-					if (rix != 0x3)
-						/* Enable Short
-						 * preamble always for
-						 * CCK except 1mbps
-						 */
-						rix |= 0x4;
-				} else {
-					preamble =
-						WMI_RATE_PREAMBLE_OFDM;
-				}
-			}
-			set_value = hdd_assemble_rate_code(preamble, nss, rix);
-		}
-		hdd_debug("WMI_VDEV_PARAM_FIXED_RATE val %d rix %d preamble %x nss %d",
-			 set_value, rix, preamble, nss);
-
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_FIXED_RATE,
-					  set_value, VDEV_CMD);
+		ret = hdd_we_set_11n_rate(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_VHT_RATE:
 	{
