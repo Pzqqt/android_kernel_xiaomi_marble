@@ -296,9 +296,10 @@ qdf_export_symbol(hif_exchange_bmi_msg);
  *
  * Bmi phase uses different copy complete callbacks than mission mode.
  */
-void hif_register_bmi_callbacks(struct hif_softc *hif_sc)
+void hif_register_bmi_callbacks(struct hif_opaque_softc *hif_ctx)
 {
 	struct HIF_CE_pipe_info *pipe_info;
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
 
 	/*

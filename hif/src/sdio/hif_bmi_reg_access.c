@@ -434,6 +434,10 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 	return status;
 }
 
+void hif_register_bmi_callbacks(struct hif_opaque_softc *hif_ctx)
+{
+}
+
 #ifdef BRINGUP_DEBUG
 #define SDIO_SCRATCH_1_ADDRESS 0x864
 /*Functions used for debugging*/

@@ -455,11 +455,11 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 				uint8_t *pSendMessage, uint32_t Length,
 				uint8_t *pResponseMessage,
 				uint32_t *pResponseLength, uint32_t TimeoutMS);
-void hif_register_bmi_callbacks(struct hif_softc *hif_sc);
+void hif_register_bmi_callbacks(struct hif_opaque_softc *hif_ctx);
 bool hif_needs_bmi(struct hif_opaque_softc *hif_ctx);
 #else /* WLAN_FEATURE_BMI */
 static inline void
-hif_register_bmi_callbacks(struct hif_softc *hif_sc)
+hif_register_bmi_callbacks(struct hif_opaque_softc *hif_ctx)
 {
 }
 

@@ -695,6 +695,10 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *scn,
 				USB_CONTROL_REQ_RECV_BMI_RESP,
 				bmi_response, bmi_response_lengthp);
 }
+
+void hif_register_bmi_callbacks(struct hif_opaque_softc *hif_ctx)
+{
+}
 #endif /* WLAN_FEATURE_BMI */
 
 /**
