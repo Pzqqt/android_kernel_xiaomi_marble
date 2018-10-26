@@ -428,7 +428,7 @@ int bolero_request_clock(struct device *dev, u16 macro_id,
 {
 	struct bolero_priv *priv;
 	u16 mclk_mux0_macro, mclk_mux1_macro;
-	int ret = 0;
+	int ret = 0, ret1 = 0;
 
 	if (!dev) {
 		pr_err("%s: dev is null\n", __func__);
@@ -468,24 +468,32 @@ int bolero_request_clock(struct device *dev, u16 macro_id,
 			dev_err(dev,
 				"%s: MCLK_MUX0 en failed for macro:%d mclk_mux0_macro:%d\n",
 				__func__, macro_id, mclk_mux0_macro);
-			goto err;
+			/*
+			 * for disable case, need to proceed still for mclk_mux1
+			 * counter to decrement
+			 */
+			if (enable)
+				goto err;
 		}
-		ret = priv->macro_params[mclk_mux1_macro].mclk_fn(
+		/*
+		 * need different return value as ret variable
+		 * is used to track mclk_mux0 enable success or fail
+		 */
+		ret1 = priv->macro_params[mclk_mux1_macro].mclk_fn(
 			priv->macro_params[mclk_mux1_macro].dev, enable);
-		if (ret < 0) {
+		if (ret1 < 0)
 			dev_err(dev,
 				"%s: MCLK_MUX1 %s failed for macro:%d, mclk_mux1_macro:%d\n",
 				__func__,
 				enable ? "enable" : "disable",
 				macro_id, mclk_mux1_macro);
+		/* disable mclk_mux0 only if ret is success(0) */
+		if (!ret)
 			priv->macro_params[mclk_mux0_macro].mclk_fn(
 				priv->macro_params[mclk_mux0_macro].dev,
 				false);
+		if (enable && ret1)
 			goto err;
-		}
-		priv->macro_params[mclk_mux0_macro].mclk_fn(
-			priv->macro_params[mclk_mux0_macro].dev,
-			false);
 		break;
 	case MCLK_MUX_MAX:
 	default:

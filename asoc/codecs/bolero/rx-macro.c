@@ -343,6 +343,7 @@ struct rx_macro_priv {
 	int rx_mclk_cnt;
 	bool is_native_on;
 	bool is_ear_mode_on;
+	bool dev_up;
 	u16 mclk_mux;
 	struct mutex mclk_lock;
 	struct mutex swr_clk_lock;
@@ -1087,16 +1088,20 @@ static int rx_macro_mclk_ctrl(struct device *dev, bool enable)
 				__func__);
 			return ret;
 		}
-		if (rx_priv->rx_mclk_cnt++ == 0)
-			iowrite32(0x1, rx_priv->rx_mclk_mode_muxsel);
+		if (rx_priv->rx_mclk_cnt++ == 0) {
+			if (rx_priv->dev_up)
+				iowrite32(0x1, rx_priv->rx_mclk_mode_muxsel);
+		}
 	} else {
 		if (rx_priv->rx_mclk_cnt <= 0) {
 			dev_dbg(dev, "%s:rx mclk already disabled\n", __func__);
 			rx_priv->rx_mclk_cnt = 0;
 			return 0;
 		}
-		if (--rx_priv->rx_mclk_cnt == 0)
-			iowrite32(0x0, rx_priv->rx_mclk_mode_muxsel);
+		if (--rx_priv->rx_mclk_cnt == 0) {
+			if (rx_priv->dev_up)
+				iowrite32(0x0, rx_priv->rx_mclk_mode_muxsel);
+		}
 		clk_disable_unprepare(rx_priv->rx_npl_clk);
 		clk_disable_unprepare(rx_priv->rx_core_clk);
 	}
@@ -1132,6 +1137,7 @@ static int rx_macro_event_handler(struct snd_soc_codec *codec, u16 event,
 		rx_macro_wcd_clsh_imped_config(codec, data, false);
 		break;
 	case BOLERO_MACRO_EVT_SSR_DOWN:
+		rx_priv->dev_up = false;
 		swrm_wcd_notify(
 			rx_priv->swr_ctrl_data[0].rx_swr_pdev,
 			SWR_DEVICE_SSR_DOWN, NULL);
@@ -1140,6 +1146,12 @@ static int rx_macro_event_handler(struct snd_soc_codec *codec, u16 event,
 			SWR_DEVICE_DOWN, NULL);
 		break;
 	case BOLERO_MACRO_EVT_SSR_UP:
+		rx_priv->dev_up = true;
+		/* enable&disable MCLK_MUX1 to reset GFMUX reg */
+		bolero_request_clock(rx_priv->dev,
+				RX_MACRO, MCLK_MUX1, true);
+		bolero_request_clock(rx_priv->dev,
+				RX_MACRO, MCLK_MUX1, false);
 		swrm_wcd_notify(
 			rx_priv->swr_ctrl_data[0].rx_swr_pdev,
 			SWR_DEVICE_SSR_UP, NULL);
@@ -3028,6 +3040,7 @@ static int rx_macro_init(struct snd_soc_codec *codec)
 		dev_err(rx_dev, "%s: failed to add snd_ctls\n", __func__);
 		return ret;
 	}
+	rx_priv->dev_up = true;
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF1 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF2 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "RX_MACRO_AIF3 Playback");
