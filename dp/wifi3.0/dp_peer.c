@@ -505,15 +505,32 @@ int dp_peer_add_ast(struct dp_soc *soc,
 			uint32_t flags)
 {
 	struct dp_ast_entry *ast_entry;
-	struct dp_vdev *vdev = peer->vdev;
+	struct dp_vdev *vdev = NULL;
 	struct dp_pdev *pdev = NULL;
 	uint8_t next_node_mac[6];
+	bool peer_ref_cnt = false;
 	int  ret = -1;
 
+	if (peer->delete_in_progress)
+		return 0;
+
+	if (type != CDP_TXRX_AST_TYPE_STATIC &&
+	    type != CDP_TXRX_AST_TYPE_SELF) {
+		peer_ref_cnt =  true;
+		qdf_spin_lock_bh(&soc->peer_ref_mutex);
+		qdf_atomic_inc(&peer->ref_cnt);
+		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+	}
+
+	vdev = peer->vdev;
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			FL("Peers vdev is NULL"));
 		QDF_ASSERT(0);
+		/*Handling case when assert is disabled*/
+		if (peer_ref_cnt)
+			dp_peer_unref_delete(peer);
+
 		return ret;
 	}
 
@@ -545,6 +562,8 @@ int dp_peer_add_ast(struct dp_soc *soc,
 							    pdev->pdev_id);
 		if (ast_entry) {
 			qdf_spin_unlock_bh(&soc->ast_lock);
+			if (peer_ref_cnt)
+				dp_peer_unref_delete(peer);
 			return 0;
 		}
 	} else {
@@ -565,6 +584,8 @@ int dp_peer_add_ast(struct dp_soc *soc,
 				dp_peer_del_ast(soc, ast_entry);
 			}
 			qdf_spin_unlock_bh(&soc->ast_lock);
+			if (peer_ref_cnt)
+				dp_peer_unref_delete(peer);
 			return 0;
 		}
 	}
@@ -575,6 +596,8 @@ add_ast_entry:
 
 	if (!ast_entry) {
 		qdf_spin_unlock_bh(&soc->ast_lock);
+		if (peer_ref_cnt)
+			dp_peer_unref_delete(peer);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			FL("fail to allocate ast_entry"));
 		QDF_ASSERT(0);
@@ -647,8 +670,13 @@ add_ast_entry:
 				mac_addr,
 				next_node_mac,
 				flags))
+			if (peer_ref_cnt)
+				dp_peer_unref_delete(peer);
 			return 0;
 	}
+
+	if (peer_ref_cnt)
+		dp_peer_unref_delete(peer);
 
 	return ret;
 }
