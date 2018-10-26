@@ -13326,15 +13326,15 @@ static int __con_mode_handler(const char *kmessage,
 
 	hdd_set_conparam(next_mode);
 
-	errno = hdd_open_adapters_for_mode(hdd_ctx, next_mode);
-	if (errno) {
-		hdd_err("Failed to open adapters");
-		goto unlock;
-	}
-
 	errno = hdd_wlan_start_modules(hdd_ctx, false);
 	if (errno) {
 		hdd_err("Start wlan modules failed: %d", errno);
+		goto unlock;
+	}
+
+	errno = hdd_open_adapters_for_mode(hdd_ctx, next_mode);
+	if (errno) {
+		hdd_err("Failed to open adapters");
 		goto unlock;
 	}
 
