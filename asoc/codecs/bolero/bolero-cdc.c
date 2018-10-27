@@ -13,6 +13,7 @@
 #include <linux/clk.h>
 #include <soc/snd_event.h>
 #include <linux/pm_runtime.h>
+#include <soc/swr-common.h>
 #include "bolero-cdc.h"
 #include "internal.h"
 
@@ -36,6 +37,41 @@ static u16 bolero_mclk_mux_tbl[MAX_MACRO][MCLK_MUX_MAX] = {
 	{TX_MACRO, WSA_MACRO},
 	{TX_MACRO, VA_MACRO},
 };
+
+static bool bolero_is_valid_codec_dev(struct device *dev);
+
+int bolero_set_port_map(struct snd_soc_component *component,
+			u32 size, void *data)
+{
+	struct bolero_priv *priv = NULL;
+	struct swr_mstr_port_map *map = NULL;
+	u16 idx;
+
+	if (!component || (size == 0) || !data)
+		return -EINVAL;
+
+	priv = snd_soc_component_get_drvdata(component);
+	if (!priv)
+		return -EINVAL;
+
+	if (!bolero_is_valid_codec_dev(priv->dev)) {
+		dev_err(priv->dev, "%s: invalid codec\n", __func__);
+		return -EINVAL;
+	}
+	map = (struct swr_mstr_port_map *)data;
+
+	for (idx = 0; idx < size; idx++) {
+		if (priv->macro_params[map->id].set_port_map)
+			priv->macro_params[map->id].set_port_map(component,
+						map->uc,
+						SWR_MSTR_PORT_LEN,
+						map->swr_port_params);
+		map += 1;
+	}
+
+	return 0;
+}
+EXPORT_SYMBOL(bolero_set_port_map);
 
 static void bolero_ahb_write_device(char __iomem *io_base,
 				    u16 reg, u8 value)
@@ -350,6 +386,7 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 	priv->macro_params[macro_id].dai_ptr = ops->dai_ptr;
 	priv->macro_params[macro_id].mclk_fn = ops->mclk_fn;
 	priv->macro_params[macro_id].event_handler = ops->event_handler;
+	priv->macro_params[macro_id].set_port_map = ops->set_port_map;
 	priv->macro_params[macro_id].dev = dev;
 	priv->current_mclk_mux_macro[macro_id] =
 				bolero_mclk_mux_tbl[macro_id][MCLK_MUX0];
