@@ -851,7 +851,7 @@ static int afe_apr_send_pkt(void *data, wait_queue_head_t *wait)
 		if (wait) {
 			ret = wait_event_timeout(*wait,
 					(atomic_read(&this_afe.state) == 0),
-					msecs_to_jiffies(TIMEOUT_MS));
+					msecs_to_jiffies(2 * TIMEOUT_MS));
 			if (!ret) {
 				ret = -ETIMEDOUT;
 			} else if (atomic_read(&this_afe.status) > 0) {
