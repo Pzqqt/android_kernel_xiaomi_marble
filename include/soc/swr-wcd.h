@@ -20,6 +20,7 @@ enum {
 	SWR_DEVICE_SSR_DOWN,
 	SWR_DEVICE_SSR_UP,
 	SWR_REGISTER_WAKE_IRQ,
+	SWR_SET_PORT_MAP,
 };
 
 struct swr_mstr_port {
