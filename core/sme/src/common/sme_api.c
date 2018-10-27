@@ -35,6 +35,7 @@
 #include "qdf_trace.h"
 #include "sme_trace.h"
 #include "qdf_types.h"
+#include "qdf_util.h"
 #include "qdf_trace.h"
 #include "cds_utils.h"
 #include "sap_api.h"
@@ -4767,6 +4768,117 @@ QDF_STATUS sme_oem_data_req(mac_handle_t hal, struct oem_data_req *hdd_oem_req)
 	return status;
 }
 #endif /*FEATURE_OEM_DATA_SUPPORT */
+
+#define STA_NSS_CHAINS_SHIFT               0
+#define SAP_NSS_CHAINS_SHIFT               3
+#define P2P_GO_NSS_CHAINS_SHIFT            6
+#define P2P_CLI_CHAINS_SHIFT               9
+#define TDLS_CHAINS_SHIFT                  12
+#define IBSS_NSS_CHAINS_SHIFT              15
+#define P2P_DEV_NSS_CHAINS_SHIFT           18
+#define OCB_NSS_CHAINS_SHIFT               21
+#define NAN_NSS_CHAIN_SHIFT                24
+#define NSS_CHAIN_MASK                     0x7
+#define GET_VDEV_NSS_CHAIN(x, y)         (((x) >> (y)) & NSS_CHAIN_MASK)
+
+static uint8_t sme_get_nss_chain_shift(enum QDF_OPMODE device_mode)
+{
+	switch (device_mode) {
+	case QDF_STA_MODE:
+		return STA_NSS_CHAINS_SHIFT;
+	case QDF_SAP_MODE:
+		return SAP_NSS_CHAINS_SHIFT;
+	case QDF_P2P_GO_MODE:
+		return P2P_GO_NSS_CHAINS_SHIFT;
+	case QDF_P2P_CLIENT_MODE:
+		return P2P_CLI_CHAINS_SHIFT;
+	case QDF_IBSS_MODE:
+		return IBSS_NSS_CHAINS_SHIFT;
+	case QDF_P2P_DEVICE_MODE:
+		return P2P_DEV_NSS_CHAINS_SHIFT;
+	case QDF_OCB_MODE:
+		return OCB_NSS_CHAINS_SHIFT;
+
+	default:
+		sme_err("Device mode %d invalid", device_mode);
+		return STA_NSS_CHAINS_SHIFT;
+	}
+}
+
+static void
+sme_fill_nss_chain_params(struct sAniSirGlobal *mac_ctx,
+			  struct wlan_mlme_nss_chains *vdev_ini_cfg,
+			  enum QDF_OPMODE device_mode,
+			  enum nss_chains_band_info band,
+			  uint8_t rf_chains_supported)
+{
+	uint8_t nss_chain_shift;
+	uint8_t max_supported_nss;
+	struct wlan_mlme_nss_chains *nss_chains_ini_cfg =
+					&mac_ctx->mlme_cfg->nss_chains_ini_cfg;
+
+	nss_chain_shift = sme_get_nss_chain_shift(device_mode);
+	max_supported_nss = mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable2x2 ?
+			    MAX_VDEV_NSS : 1;
+
+	/* If the fw doesn't support two chains, num rf chains can max be 1 */
+	vdev_ini_cfg->num_rx_chains[band] =
+		QDF_MIN(GET_VDEV_NSS_CHAIN(
+				nss_chains_ini_cfg->num_rx_chains[band],
+				nss_chain_shift), rf_chains_supported);
+
+	vdev_ini_cfg->num_tx_chains[band] =
+		QDF_MIN(GET_VDEV_NSS_CHAIN(
+				nss_chains_ini_cfg->num_tx_chains[band],
+				nss_chain_shift), rf_chains_supported);
+
+	/* If 2x2 mode is disabled, then max rx, tx nss can be 1 */
+	vdev_ini_cfg->rx_nss[band] =
+		QDF_MIN(GET_VDEV_NSS_CHAIN(
+				nss_chains_ini_cfg->rx_nss[band],
+				nss_chain_shift), max_supported_nss);
+
+	vdev_ini_cfg->tx_nss[band] =
+		QDF_MIN(GET_VDEV_NSS_CHAIN(
+				nss_chains_ini_cfg->tx_nss[band],
+				nss_chain_shift), max_supported_nss);
+
+	vdev_ini_cfg->num_tx_chains_11a =
+		QDF_MIN(GET_VDEV_NSS_CHAIN(
+				nss_chains_ini_cfg->num_tx_chains_11a,
+				nss_chain_shift), rf_chains_supported);
+
+	/* If the fw doesn't support two chains, num rf chains can max be 1 */
+	vdev_ini_cfg->num_tx_chains_11b =
+		QDF_MIN(GET_VDEV_NSS_CHAIN(
+				nss_chains_ini_cfg->num_tx_chains_11b,
+				nss_chain_shift), rf_chains_supported);
+
+	vdev_ini_cfg->num_tx_chains_11g =
+		QDF_MIN(GET_VDEV_NSS_CHAIN(
+				nss_chains_ini_cfg->num_tx_chains_11g,
+				nss_chain_shift), rf_chains_supported);
+
+	vdev_ini_cfg->disable_rx_mrc[band] =
+				nss_chains_ini_cfg->disable_rx_mrc[band];
+
+	vdev_ini_cfg->disable_tx_mrc[band] =
+				nss_chains_ini_cfg->disable_tx_mrc[band];
+}
+
+void sme_populate_nss_chain_params(mac_handle_t mac_handle,
+				   struct wlan_mlme_nss_chains *vdev_ini_cfg,
+				   enum QDF_OPMODE device_mode,
+				   uint8_t rf_chains_supported)
+{
+	struct sAniSirGlobal *mac_ctx = MAC_CONTEXT(mac_handle);
+	enum nss_chains_band_info band;
+
+	for (band = BAND_2GHZ; band < BAND_MAX; band++)
+		sme_fill_nss_chain_params(mac_ctx, vdev_ini_cfg,
+					  device_mode, band,
+					  rf_chains_supported);
+}
 
 QDF_STATUS sme_open_session(mac_handle_t hal, struct sme_session_params *params)
 {

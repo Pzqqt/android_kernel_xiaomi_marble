@@ -37,7 +37,7 @@
 #include "wma_tgt_cfg.h"
 #include "wma_fips_public_structs.h"
 #include "wma_sar_public_structs.h"
-
+#include "wlan_mlme_public_struct.h"
 #include "sme_rrm_internal.h"
 #include "sir_types.h"
 #include "scheduler_api.h"
@@ -323,13 +323,30 @@ QDF_STATUS sme_start(mac_handle_t mac_handle);
  */
 QDF_STATUS sme_stop(mac_handle_t mac_handle);
 
-/*
+/**
+ * sme_populate_nss_chain_params() - fill vdev nss chain params from ini
+ * @mac_handle: The handle returned by mac_open.
+ * @vdev_ini_cfg: pointer to the structure to be filled
+ * @device_mode: device mode (eg STA, SAP etc.)
+ * @rf_chains_supported: number of chains supported by fw(updated during
+ *                       service ready event)
+ *
+ * This API will fill the nss chain params for the particlar vdev from ini
+ * configuration for the respective vdev.
+ *
+ * Return: none
+ */
+void sme_populate_nss_chain_params(mac_handle_t mac_handle,
+			     struct wlan_mlme_nss_chains *vdev_ini_cfg,
+			     enum QDF_OPMODE device_mode,
+			     uint8_t rf_chains_supported);
+
+/**
  * sme_open_session() - Open a session for given persona
  *
  * This is a synchronous API. For any protocol stack related activity
  * requires session to be opened. This API needs to be called to open
  * the session in SME module.
- *
  * hal: The handle returned by mac_open.
  * params: to initialize the session open params
  *
@@ -339,7 +356,7 @@ QDF_STATUS sme_stop(mac_handle_t mac_handle);
  */
 QDF_STATUS sme_open_session(mac_handle_t hal, struct sme_session_params *params);
 
-/*
+/**
  * sme_close_session() - Close a session for given persona
  *
  * This is a synchronous API. This API needs to be called to close the session

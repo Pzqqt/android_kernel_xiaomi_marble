@@ -4043,6 +4043,21 @@ static int hdd_set_sme_session_param(struct hdd_adapter *adapter,
 	return 0;
 }
 
+static void
+hdd_store_nss_chains_cfg_in_vdev(struct hdd_adapter *adapter)
+{
+	struct wlan_mlme_nss_chains vdev_ini_cfg;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	/* store the ini config in vdev component in mlme priv structure */
+	sme_populate_nss_chain_params(hdd_ctx->mac_handle, &vdev_ini_cfg,
+				      adapter->device_mode,
+				      hdd_ctx->num_rf_chains);
+	qdf_mem_copy(mlme_get_dynamic_vdev_config(adapter->vdev),
+		     &vdev_ini_cfg, sizeof(struct wlan_mlme_nss_chains));
+	qdf_mem_copy(mlme_get_ini_vdev_config(adapter->vdev),
+		     &vdev_ini_cfg, sizeof(struct wlan_mlme_nss_chains));
+}
 int hdd_vdev_create(struct hdd_adapter *adapter,
 		    csr_roam_complete_cb callback, void *ctx)
 {
@@ -4075,7 +4090,6 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 		hdd_err("failed to populating SME params");
 		goto objmgr_vdev_destroy_procedure;
 	}
-
 	status = sme_open_session(hdd_ctx->mac_handle, &sme_session_params);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed to open sme session: %d", status);
@@ -4145,6 +4159,8 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 		wlan_vdev_set_max_peer_count(vdev, HDD_MAX_VDEV_PEER_COUNT);
 		hdd_objmgr_put_vdev(adapter);
 	}
+
+	hdd_store_nss_chains_cfg_in_vdev(adapter);
 
 	hdd_info("vdev %d created successfully", adapter->session_id);
 
