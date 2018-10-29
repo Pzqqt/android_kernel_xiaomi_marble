@@ -4715,15 +4715,15 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 	 * CFG based on the advertised privacy setting from the AP for WPA
 	 * associations. See note below in this function...
 	 */
-	uint32_t privacy_enabled = 0, RsnEnabled = 0, wep_default_key_id = 0;
-	uint32_t WepKeyLength = WNI_CFG_WEP_KEY_LENGTH_5;
+	uint32_t privacy_enabled = 0, rsn_enabled = 0, wep_default_key_id = 0;
+	uint32_t WepKeyLength = MLME_WEP_KEY_LENGTH_5;
 	uint32_t Key0Length = 0, Key1Length = 0, Key2Length = 0, Key3Length = 0;
 
 	/* Reserve for the biggest key */
-	uint8_t Key0[MLME_WEP_MAX_KEY_LEN];
-	uint8_t Key1[MLME_WEP_MAX_KEY_LEN];
-	uint8_t Key2[MLME_WEP_MAX_KEY_LEN];
-	uint8_t Key3[MLME_WEP_MAX_KEY_LEN];
+	uint8_t Key0[MLME_WEP_KEY_LEN_13];
+	uint8_t Key1[MLME_WEP_KEY_LEN_13];
+	uint8_t Key2[MLME_WEP_KEY_LEN_13];
+	uint8_t Key3[MLME_WEP_KEY_LEN_13];
 
 	struct wlan_mlme_wep_cfg *wep_params = &pMac->mlme_cfg->wep_params;
 
@@ -4731,7 +4731,7 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 	case eCSR_ENCRYPT_TYPE_NONE:
 		/* for NO encryption, turn off Privacy and Rsn. */
 		privacy_enabled = 0;
-		RsnEnabled = 0;
+		rsn_enabled = 0;
 		/* clear out the WEP keys that may be hanging around. */
 		Key0Length = 0;
 		Key1Length = 0;
@@ -4744,11 +4744,11 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 
 		/* Privacy is ON.  NO RSN for Wep40 static key. */
 		privacy_enabled = 1;
-		RsnEnabled = 0;
+		rsn_enabled = 0;
 		/* Set the Wep default key ID. */
 		wep_default_key_id = pProfile->Keys.defaultIndex;
 		/* Wep key size if 5 bytes (40 bits). */
-		WepKeyLength = WNI_CFG_WEP_KEY_LENGTH_5;
+		WepKeyLength = MLME_WEP_KEY_LENGTH_5;
 		/*
 		 * set encryption keys in the CFG database or
 		 * clear those that are not present in this profile.
@@ -4756,8 +4756,8 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 		if (pProfile->Keys.KeyLength[0]) {
 			qdf_mem_copy(Key0,
 				pProfile->Keys.KeyMaterial[0],
-				WNI_CFG_WEP_KEY_LENGTH_5);
-			Key0Length = WNI_CFG_WEP_KEY_LENGTH_5;
+				MLME_WEP_KEY_LENGTH_5);
+			Key0Length = MLME_WEP_KEY_LENGTH_5;
 		} else {
 			Key0Length = 0;
 		}
@@ -4765,8 +4765,8 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 		if (pProfile->Keys.KeyLength[1]) {
 			qdf_mem_copy(Key1,
 				pProfile->Keys.KeyMaterial[1],
-				WNI_CFG_WEP_KEY_LENGTH_5);
-			Key1Length = WNI_CFG_WEP_KEY_LENGTH_5;
+				MLME_WEP_KEY_LENGTH_5);
+			Key1Length = MLME_WEP_KEY_LENGTH_5;
 		} else {
 			Key1Length = 0;
 		}
@@ -4774,8 +4774,8 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 		if (pProfile->Keys.KeyLength[2]) {
 			qdf_mem_copy(Key2,
 				pProfile->Keys.KeyMaterial[2],
-				WNI_CFG_WEP_KEY_LENGTH_5);
-			Key2Length = WNI_CFG_WEP_KEY_LENGTH_5;
+				MLME_WEP_KEY_LENGTH_5);
+			Key2Length = MLME_WEP_KEY_LENGTH_5;
 		} else {
 			Key2Length = 0;
 		}
@@ -4783,8 +4783,8 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 		if (pProfile->Keys.KeyLength[3]) {
 			qdf_mem_copy(Key3,
 				pProfile->Keys.KeyMaterial[3],
-				WNI_CFG_WEP_KEY_LENGTH_5);
-			Key3Length = WNI_CFG_WEP_KEY_LENGTH_5;
+				MLME_WEP_KEY_LENGTH_5);
+			Key3Length = MLME_WEP_KEY_LENGTH_5;
 		} else {
 			Key3Length = 0;
 		}
@@ -4795,11 +4795,11 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 
 		/* Privacy is ON.  NO RSN for Wep40 static key. */
 		privacy_enabled = 1;
-		RsnEnabled = 0;
+		rsn_enabled = 0;
 		/* Set the Wep default key ID. */
 		wep_default_key_id = pProfile->Keys.defaultIndex;
 		/* Wep key size if 13 bytes (104 bits). */
-		WepKeyLength = WNI_CFG_WEP_KEY_LENGTH_13;
+		WepKeyLength = MLME_WEP_KEY_LEN_13;
 		/*
 		 * set encryption keys in the CFG database or clear
 		 * those that are not present in this profile.
@@ -4807,8 +4807,8 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 		if (pProfile->Keys.KeyLength[0]) {
 			qdf_mem_copy(Key0,
 				pProfile->Keys.KeyMaterial[0],
-				WNI_CFG_WEP_KEY_LENGTH_13);
-			Key0Length = WNI_CFG_WEP_KEY_LENGTH_13;
+				MLME_WEP_KEY_LEN_13);
+			Key0Length = MLME_WEP_KEY_LEN_13;
 		} else {
 			Key0Length = 0;
 		}
@@ -4816,8 +4816,8 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 		if (pProfile->Keys.KeyLength[1]) {
 			qdf_mem_copy(Key1,
 				pProfile->Keys.KeyMaterial[1],
-				WNI_CFG_WEP_KEY_LENGTH_13);
-			Key1Length = WNI_CFG_WEP_KEY_LENGTH_13;
+				MLME_WEP_KEY_LEN_13);
+			Key1Length = MLME_WEP_KEY_LEN_13;
 		} else {
 			Key1Length = 0;
 		}
@@ -4825,8 +4825,8 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 		if (pProfile->Keys.KeyLength[2]) {
 			qdf_mem_copy(Key2,
 				pProfile->Keys.KeyMaterial[2],
-				WNI_CFG_WEP_KEY_LENGTH_13);
-			Key2Length = WNI_CFG_WEP_KEY_LENGTH_13;
+				MLME_WEP_KEY_LEN_13);
+			Key2Length = MLME_WEP_KEY_LEN_13;
 		} else {
 			Key2Length = 0;
 		}
@@ -4834,8 +4834,8 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 		if (pProfile->Keys.KeyLength[3]) {
 			qdf_mem_copy(Key3,
 				pProfile->Keys.KeyMaterial[3],
-				WNI_CFG_WEP_KEY_LENGTH_13);
-			Key3Length = WNI_CFG_WEP_KEY_LENGTH_13;
+				MLME_WEP_KEY_LEN_13);
+			Key3Length = MLME_WEP_KEY_LEN_13;
 		} else {
 			Key3Length = 0;
 		}
@@ -4856,7 +4856,7 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 		 */
 		privacy_enabled = (0 != fPrivacy);
 		/* turn on RSN enabled for WPA associations */
-		RsnEnabled = 1;
+		rsn_enabled = 1;
 		/* clear static WEP keys that may be hanging around. */
 		Key0Length = 0;
 		Key1Length = 0;
@@ -4865,12 +4865,12 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 		break;
 	default:
 		privacy_enabled = 0;
-		RsnEnabled = 0;
+		rsn_enabled = 0;
 		break;
 	}
 
 	pMac->mlme_cfg->wep_params.is_privacy_enabled = privacy_enabled;
-	pMac->mlme_cfg->feature_flags.enable_rsn = RsnEnabled;
+	pMac->mlme_cfg->feature_flags.enable_rsn = rsn_enabled;
 	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_1, Key0, Key0Length);
 	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_2, Key1, Key1Length);
 	mlme_set_wep_key(wep_params, MLME_WEP_DEFAULT_KEY_3, Key2, Key2Length);
@@ -16615,7 +16615,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 	else if (pParam->beaconInterval)
 		wTmp = pParam->beaconInterval;
 	else
-		wTmp = WNI_CFG_BEACON_INTERVAL_STADEF;
+		wTmp = MLME_CFG_BEACON_INTERVAL_DEF;
 
 	csr_validate_mcc_beacon_interval(pMac, pParam->operationChn,
 					 &wTmp, sessionId, pParam->bssPersona);

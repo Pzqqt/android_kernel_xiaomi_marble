@@ -695,24 +695,20 @@ void wma_set_vdev_mgmt_rate(tp_wma_handle wma, uint8_t vdev_id)
 
 	cfg_val = mac->mlme_cfg->sap_cfg.rate_tx_mgmt;
 	band = CDS_BAND_ALL;
-	if ((cfg_val == WNI_CFG_RATE_FOR_TX_MGMT_STADEF) ||
+	if ((cfg_val == MLME_CFG_TX_MGMT_RATE_DEF) ||
 	    !wma_verify_rate_code(cfg_val, band)) {
 		WMA_LOGD("default WNI_CFG_RATE_FOR_TX_MGMT, ignore");
 	} else {
-		ret = wma_vdev_set_param(
-			wma->wmi_handle,
-			vdev_id,
-			WMI_VDEV_PARAM_MGMT_TX_RATE,
-			cfg_val);
+		ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+					 WMI_VDEV_PARAM_MGMT_TX_RATE,
+					 cfg_val);
 		if (ret)
-			WMA_LOGE(
-			"Failed to set WMI_VDEV_PARAM_MGMT_TX_RATE"
-			);
+			WMA_LOGE("Failed to set WMI_VDEV_PARAM_MGMT_TX_RATE");
 	}
 
 	cfg_val = mac->mlme_cfg->sap_cfg.rate_tx_mgmt_2g;
 	band = CDS_BAND_2GHZ;
-	if ((cfg_val == WNI_CFG_RATE_FOR_TX_MGMT_2G_STADEF) ||
+	if ((cfg_val == MLME_CFG_TX_MGMT_2G_RATE_DEF) ||
 	    !wma_verify_rate_code(cfg_val, band)) {
 		WMA_LOGD("use default 2G MGMT rate.");
 		per_band_mgmt_tx_rate &=
@@ -726,7 +722,7 @@ void wma_set_vdev_mgmt_rate(tp_wma_handle wma, uint8_t vdev_id)
 
 	cfg_val = mac->mlme_cfg->sap_cfg.rate_tx_mgmt;
 	band = CDS_BAND_5GHZ;
-	if ((cfg_val == WNI_CFG_RATE_FOR_TX_MGMT_5G_STADEF) ||
+	if ((cfg_val == MLME_CFG_TX_MGMT_5G_RATE_DEF) ||
 	    !wma_verify_rate_code(cfg_val, band)) {
 		WMA_LOGD("use default 5G MGMT rate.");
 		per_band_mgmt_tx_rate &=

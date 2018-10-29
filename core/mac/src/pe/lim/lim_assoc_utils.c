@@ -2711,7 +2711,7 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	struct scheduler_msg msgQ = {0};
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 	tSirMacAddr staMac;
-	uint32_t listenInterval = WNI_CFG_LISTEN_INTERVAL_STADEF;
+	uint32_t listenInterval = MLME_CFG_LISTEN_INTERVAL;
 	/*This self Sta dot 11 mode comes from the cfg and the expectation here is
 	 * that cfg carries the systemwide capability that device under
 	 * consideration can support. This capability gets plumbed into the cfg
@@ -3579,7 +3579,7 @@ QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	tDot11fIEVHTOperation *vht_oper = NULL;
 	tAddStaParams *sta_context;
-	uint32_t listen_interval = WNI_CFG_LISTEN_INTERVAL_STADEF;
+	uint32_t listen_interval = MLME_CFG_LISTEN_INTERVAL;
 	struct mlme_vht_capabilities_info vht_cap_info;
 
 	vht_cap_info = pMac->mlme_cfg->vht_caps.vht_cap_info;
@@ -4110,7 +4110,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t updateEnt
 	uint8_t chanWidthSupp = 0;
 	tDot11fIEVHTOperation *vht_oper = NULL;
 	tDot11fIEVHTCaps *vht_caps = NULL;
-	uint32_t listen_interval = WNI_CFG_LISTEN_INTERVAL_STADEF;
+	uint32_t listen_interval = MLME_CFG_LISTEN_INTERVAL;
 
 	tpSirBssDescription bssDescription =
 		&psessionEntry->pLimJoinReq->bssDescription;

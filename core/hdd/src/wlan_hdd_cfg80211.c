@@ -65,7 +65,6 @@
 #include "csr_api.h"
 #include "pld_common.h"
 #include "wmi_unified_param.h"
-#include "cfg_ucfg_api.h"
 
 #ifdef WLAN_UMAC_CONVERGENCE
 #include "wlan_cfg80211.h"
@@ -119,7 +118,6 @@
 #include <wlan_hdd_sar_limits.h>
 #include <wlan_hdd_ota_test.h>
 #include "wlan_policy_mgr_ucfg.h"
-#include "wlan_mlme_public_struct.h"
 #include "wlan_extscan_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_pmo_cfg.h"
@@ -128,7 +126,6 @@
 #include "wlan_crypto_global_api.h"
 #include "wlan_nl_to_crypto_params.h"
 #include "wlan_crypto_global_def.h"
-#include "cfg_ucfg_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)

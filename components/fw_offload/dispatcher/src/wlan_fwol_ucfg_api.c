@@ -19,7 +19,6 @@
  * DOC: define internal APIs related to the fwol component
  */
 
-#include "cfg_ucfg_api.h"
 #include "wlan_fw_offload_main.h"
 #include "wlan_fwol_ucfg_api.h"
 

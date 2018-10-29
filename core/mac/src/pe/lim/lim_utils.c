@@ -8349,7 +8349,7 @@ void lim_process_ap_ecsa_timeout(void *data)
 		if (session->beaconParams.beaconInterval)
 			bcn_int = session->beaconParams.beaconInterval;
 		else
-			bcn_int = WNI_CFG_BEACON_INTERVAL_STADEF;
+			bcn_int = MLME_CFG_BEACON_INTERVAL_DEF;
 
 		status = qdf_mc_timer_start(&session->ap_ecsa_timer,
 					    bcn_int);

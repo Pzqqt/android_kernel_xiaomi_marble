@@ -23,7 +23,6 @@
 #include "cfg_ucfg_api.h"
 #include "wmi_unified.h"
 #include "wlan_scan_public_structs.h"
-#include "cfg_mlme_threshold.h"
 
 #define NUM_OF_SOUNDING_DIMENSIONS     1 /*Nss - 1, (Nss = 2 for 2x2)*/
 
@@ -1201,21 +1200,21 @@ static void mlme_init_oce_cfg(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_wep_keys(struct wlan_mlme_wep_cfg *wep_params)
 {
 	/* initialize the default key values to zero */
-	wep_params->wep_default_key_1.len = MLME_WEP_MAX_KEY_LEN;
-	wep_params->wep_default_key_1.max_len = MLME_WEP_MAX_KEY_LEN;
-	qdf_mem_zero(wep_params->wep_default_key_1.data, MLME_WEP_MAX_KEY_LEN);
+	wep_params->wep_default_key_1.len = MLME_WEP_KEY_LEN_13;
+	wep_params->wep_default_key_1.max_len = MLME_WEP_KEY_LEN_13;
+	qdf_mem_zero(wep_params->wep_default_key_1.data, MLME_WEP_KEY_LEN_13);
 
-	wep_params->wep_default_key_2.len = MLME_WEP_MAX_KEY_LEN;
-	wep_params->wep_default_key_2.max_len = MLME_WEP_MAX_KEY_LEN;
-	qdf_mem_zero(wep_params->wep_default_key_2.data, MLME_WEP_MAX_KEY_LEN);
+	wep_params->wep_default_key_2.len = MLME_WEP_KEY_LEN_13;
+	wep_params->wep_default_key_2.max_len = MLME_WEP_KEY_LEN_13;
+	qdf_mem_zero(wep_params->wep_default_key_2.data, MLME_WEP_KEY_LEN_13);
 
-	wep_params->wep_default_key_3.len = MLME_WEP_MAX_KEY_LEN;
-	wep_params->wep_default_key_3.max_len = MLME_WEP_MAX_KEY_LEN;
-	qdf_mem_zero(wep_params->wep_default_key_3.data, MLME_WEP_MAX_KEY_LEN);
+	wep_params->wep_default_key_3.len = MLME_WEP_KEY_LEN_13;
+	wep_params->wep_default_key_3.max_len = MLME_WEP_KEY_LEN_13;
+	qdf_mem_zero(wep_params->wep_default_key_3.data, MLME_WEP_KEY_LEN_13);
 
-	wep_params->wep_default_key_4.len = MLME_WEP_MAX_KEY_LEN;
-	wep_params->wep_default_key_4.max_len = MLME_WEP_MAX_KEY_LEN;
-	qdf_mem_zero(wep_params->wep_default_key_4.data, MLME_WEP_MAX_KEY_LEN);
+	wep_params->wep_default_key_4.len = MLME_WEP_KEY_LEN_13;
+	wep_params->wep_default_key_4.max_len = MLME_WEP_KEY_LEN_13;
+	qdf_mem_zero(wep_params->wep_default_key_4.data, MLME_WEP_KEY_LEN_13);
 }
 
 static void mlme_init_wep_cfg(struct wlan_mlme_wep_cfg *wep_params)

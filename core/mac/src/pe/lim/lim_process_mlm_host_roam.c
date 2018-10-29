@@ -352,7 +352,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 	tLimMlmReassocCnf mlmReassocCnf; /* keep sme */
 	tpDphHashNode pStaDs = NULL;
 	tpAddStaParams pAddStaParams = NULL;
-	uint32_t listenInterval = WNI_CFG_LISTEN_INTERVAL_STADEF;
+	uint32_t listenInterval = MLME_CFG_LISTEN_INTERVAL;
 	tpAddBssParams pAddBssParams = (tpAddBssParams) limMsgQ->bodyptr;
 	uint32_t selfStaDot11Mode = 0;
 

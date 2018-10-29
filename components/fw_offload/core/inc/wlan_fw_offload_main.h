@@ -27,7 +27,7 @@
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_cmn.h>
 
-#include "cfg_ie_whitelist.h"
+#include "cfg_ucfg_api.h"
 
 #define fwol_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_FWOL, params)
 #define fwol_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_FWOL, params)

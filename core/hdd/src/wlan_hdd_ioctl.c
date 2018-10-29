@@ -21,6 +21,7 @@
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_wowl.h>
 #include <wlan_hdd_stats.h>
+#include "cfg_ucfg_api.h"
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_ioctl.h"
 #include "wlan_hdd_power.h"
@@ -4974,8 +4975,8 @@ static int hdd_parse_setrmcactionperiod_command(uint8_t *pValue,
 	if (v < 0)
 		return -EINVAL;
 
-	if ((tempInt < WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY_STAMIN) ||
-	    (tempInt > WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY_STAMAX))
+	if ((tempInt < cfg_min(CFG_RMC_ACTION_PERIOD_FREQUENCY)) ||
+	    (tempInt > cfg_max(CFG_RMC_ACTION_PERIOD_FREQUENCY)))
 		return -EINVAL;
 
 	*pActionPeriod = tempInt;
