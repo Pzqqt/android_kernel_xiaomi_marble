@@ -1526,14 +1526,18 @@ static QDF_STATUS extract_sar_limit_event_tlv(wmi_unified_t wmi_handle,
 	}
 
 	row_in = param_buf->sar_get_limits;
-	row_out = &event->sar_limit_row[0];
-	for (row = 0; row < event->num_limit_rows; row++) {
-		row_out->band_id = row_in->band_id;
-		row_out->chain_id = row_in->chain_id;
-		row_out->mod_id = row_in->mod_id;
-		row_out->limit_value = row_in->limit_value;
-		row_out++;
-		row_in++;
+	if (!row_in) {
+		WMI_LOGD("sar_get_limits is NULL");
+	} else {
+		row_out = &event->sar_limit_row[0];
+		for (row = 0; row < event->num_limit_rows; row++) {
+			row_out->band_id = row_in->band_id;
+			row_out->chain_id = row_in->chain_id;
+			row_out->mod_id = row_in->mod_id;
+			row_out->limit_value = row_in->limit_value;
+			row_out++;
+			row_in++;
+		}
 	}
 
 	return QDF_STATUS_SUCCESS;
