@@ -332,9 +332,36 @@ struct wlan_mlme_wps_params {
 	uint32_t wps_device_password_id;
 };
 
+#define MLME_CFG_LISTEN_INTERVAL        1
+#define MLME_CFG_BEACON_INTERVAL_DEF    100
+#define MLME_CFG_TX_MGMT_RATE_DEF       0xFF
+#define MLME_CFG_TX_MGMT_2G_RATE_DEF    0xFF
+#define MLME_CFG_TX_MGMT_5G_RATE_DEF    0xFF
 /**
- * struct wlan_mlme_ - HT Capabilities related config items
- * @ht_cap_info: HT capabilities Info Structure
+ * struct wlan_mlme_cfg_sap - SAP related config items
+ * @cfg_ssid: SSID to be configured
+ * @beacon_interval: beacon interval
+ * @dtim_interval:   dtim interval
+ * @listen_interval: listen interval
+ * @sap_11g_policy:  Check if 11g support is enabled
+ * @assoc_sta_limit: Limit on number of STA associated to SAP
+ * @enable_lte_coex: Flag for LTE coexistence
+ * @rmc_action_period_freq: rmc action period frequency
+ * @rate_tx_mgmt: mgmt frame tx rate
+ * @rate_tx_mgmt_2g: mgmt frame tx rate for 2G band
+ * @rate_tx_mgmt_5g: mgmt frame tx rate for 5G band
+ * @tele_bcn_wakeup_en: beacon wakeup enable/disable
+ * @tele_bcn_max_li: max listen interval
+ * @sap_get_peer_info: get peer info
+ * @sap_allow_all_chan_param_name: allow all channels
+ * @sap_max_no_peers: Maximum number of peers
+ * @sap_max_offload_peers: Maximum number of peer offloads
+ * @sap_max_offload_reorder_buffs: Maximum offload reorder buffs
+ * @sap_ch_switch_beacon_cnt: Number of beacons to be sent out during CSA
+ * @sap_internal_restart: flag to check if sap restart is in progress
+ * @sap_ch_switch_mode: Channel switch test mode enable/disable
+ * @chan_switch_hostapd_rate_enabled_name: enable/disable skip hostapd rate
+ * @reduced_beacon_interval: reduced beacon interval value
  */
 struct wlan_mlme_cfg_sap {
 	uint8_t cfg_ssid[32];
@@ -1178,7 +1205,8 @@ struct wlan_mlme_oce {
 	uint8_t feature_bitmap;
 };
 
-#define MLME_WEP_MAX_KEY_LEN (13)
+#define MLME_WEP_KEY_LEN_13 (13)
+#define MLME_WEP_KEY_LENGTH_5 (5)
 
 /**
  * enum wep_key_id  - values passed to get/set wep default keys

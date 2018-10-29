@@ -20,7 +20,6 @@
  */
 
 #include "wlan_fw_offload_main.h"
-#include "cfg_ucfg_api.h"
 
 struct wlan_fwol_psoc_obj *fwol_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
 {
