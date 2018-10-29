@@ -2874,7 +2874,7 @@ dp_ppdu_stats_ind_handler(struct htt_soc *soc,
 #endif
 
 #if defined(WDI_EVENT_ENABLE) && \
-		!defined(REMOVE_PKT_LOG) && defined(CONFIG_WIN)
+	!defined(REMOVE_PKT_LOG)
 /*
  * dp_pktlog_msg_handler() - Pktlog msg handler
  * @htt_soc:	 HTT SOC handle
@@ -2884,7 +2884,7 @@ dp_ppdu_stats_ind_handler(struct htt_soc *soc,
  */
 static void
 dp_pktlog_msg_handler(struct htt_soc *soc,
-				uint32_t *msg_word)
+		      uint32_t *msg_word)
 {
 	uint8_t pdev_id;
 	uint32_t *pl_hdr;
@@ -2900,11 +2900,10 @@ dp_pktlog_msg_handler(struct htt_soc *soc,
 #else
 static void
 dp_pktlog_msg_handler(struct htt_soc *soc,
-				uint32_t *msg_word)
+		      uint32_t *msg_word)
 {
 }
 #endif
-
 /*
  * dp_htt_t2h_msg_handler() - Generic Target to host Msg/event handler
  * @context:	Opaque context (HTT SOC handle)

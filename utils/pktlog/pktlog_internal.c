@@ -110,9 +110,7 @@ void pktlog_getbuf_intsafe(struct ath_pktlog_arg *plarg)
 	log_hdr->size = (uint16_t) log_size;
 	log_hdr->missed_cnt = plarg->missed_cnt;
 	log_hdr->timestamp = plarg->timestamp;
-#ifdef HELIUMPLUS
 	log_hdr->type_specific_data = plarg->type_specific_data;
-#endif
 	cur_wr_offset += sizeof(*log_hdr);
 
 	if ((buf_size - cur_wr_offset) < log_size) {
@@ -157,9 +155,8 @@ char *pktlog_getbuf(struct pktlog_dev_t *pl_dev,
 	plarg.flags = pl_hdr->flags;
 	plarg.missed_cnt = pl_hdr->missed_cnt;
 	plarg.timestamp = pl_hdr->timestamp;
-#ifdef HELIUMPLUS
 	plarg.type_specific_data = pl_hdr->type_specific_data;
-#endif
+
 	if (flags & PHFLAGS_INTERRUPT_CONTEXT) {
 		/*
 		 * We are already in interrupt context, no need to make it
@@ -453,7 +450,6 @@ A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
 	}
 	return A_OK;
 }
-
 #else
 A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
 {
@@ -639,6 +635,77 @@ A_STATUS process_tx_info(struct cdp_pdev *txrx_pdev, void *data)
 	return A_OK;
 }
 #endif
+
+/**
+ * process_offload_pktlog() - Process full pktlog events
+ * pdev: abstract pdev handle
+ * data: pktlog buffer
+ *
+ * Return: zero on success, non-zero on failure
+ */
+A_STATUS
+process_offload_pktlog(struct cdp_pdev *pdev, void *data)
+{
+	struct pktlog_dev_t *pl_dev = get_pktlog_handle();
+	struct ath_pktlog_info *pl_info;
+	struct ath_pktlog_hdr pl_hdr;
+	uint32_t *pl_tgt_hdr;
+	void *txdesc_hdr_ctl = NULL;
+	size_t log_size = 0;
+	size_t tmp_log_size = 0;
+
+	if (!pl_dev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid context in %s\n", __func__);
+		return A_ERROR;
+	}
+
+	if (!data) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid data in %s\n", __func__);
+		return A_ERROR;
+	}
+
+	pl_tgt_hdr = (uint32_t *)data;
+
+	pl_hdr.flags = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_FLAGS_OFFSET) &
+			ATH_PKTLOG_HDR_FLAGS_MASK) >>
+				ATH_PKTLOG_HDR_FLAGS_SHIFT;
+	pl_hdr.missed_cnt =  (*(pl_tgt_hdr + ATH_PKTLOG_HDR_MISSED_CNT_OFFSET) &
+			ATH_PKTLOG_HDR_MISSED_CNT_MASK) >>
+				ATH_PKTLOG_HDR_MISSED_CNT_SHIFT;
+	pl_hdr.log_type =  (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
+			ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
+				ATH_PKTLOG_HDR_LOG_TYPE_SHIFT;
+	pl_hdr.size =  (*(pl_tgt_hdr + ATH_PKTLOG_HDR_SIZE_OFFSET) &
+			ATH_PKTLOG_HDR_SIZE_MASK) >> ATH_PKTLOG_HDR_SIZE_SHIFT;
+	pl_hdr.timestamp = *(pl_tgt_hdr + ATH_PKTLOG_HDR_TIMESTAMP_OFFSET);
+	pl_hdr.type_specific_data = *(pl_tgt_hdr
+			+ ATH_PKTLOG_HDR_TYPE_SPECIFIC_DATA_OFFSET);
+
+	/*
+	 *  Must include to process different types
+	 *  TX_CTL, TX_STATUS, TX_MSDU_ID, TX_FRM_HDR
+	 */
+	pl_info = pl_dev->pl_info;
+	tmp_log_size = sizeof(frm_hdr) + pl_hdr.size;
+	log_size = pl_hdr.size;
+	txdesc_hdr_ctl =
+		(void *)pktlog_getbuf(pl_dev, pl_info, log_size, &pl_hdr);
+	if (!txdesc_hdr_ctl) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "Failed to allocate pktlog descriptor");
+		return A_NO_MEMORY;
+	}
+	qdf_assert(txdesc_hdr_ctl);
+	qdf_assert(pl_hdr->size < PKTLOG_MAX_TX_WORDS * sizeof(u_int32_t));
+	qdf_mem_copy(txdesc_hdr_ctl,
+		     ((void *)data + sizeof(struct ath_pktlog_hdr)),
+		     pl_hdr.size);
+	cds_pkt_stats_to_logger_thread(&pl_hdr, NULL, txdesc_hdr_ctl);
+
+	return A_OK;
+}
 
 /* TODO: hardware dependent function */
 A_STATUS process_rx_info_remote(void *pdev, void *data)

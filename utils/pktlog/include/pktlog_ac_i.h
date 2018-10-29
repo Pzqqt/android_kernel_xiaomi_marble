@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -45,9 +45,7 @@ struct ath_pktlog_arg {
 #endif
 	size_t log_size;
 	uint16_t timestamp;
-#ifdef HELIUMPLUS
 	uint32_t type_specific_data;
-#endif
 	char *buf;
 };
 
@@ -64,5 +62,6 @@ A_STATUS process_rate_update(void *pdev, void *data);
 A_STATUS process_sw_event(void *pdev, void *data);
 int process_pktlog_lite(void *context, void *log_data, uint16_t log_type);
 int process_rx_desc_remote(void *pdev, void *data);
+A_STATUS process_offload_pktlog(struct cdp_pdev *pdev, void *data);
 #endif /* REMOVE_PKT_LOG */
 #endif
