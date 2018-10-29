@@ -3025,7 +3025,8 @@ bool policy_mgr_is_scan_simultaneous_capable(struct wlan_objmgr_psoc *psoc)
 	    (ENABLE_DBS_CXN_AND_DISABLE_DBS_SCAN ==
 	     wlan_objmgr_psoc_get_dual_mac_disable(psoc)) ||
 	    (ENABLE_DBS_CXN_AND_DISABLE_SIMULTANEOUS_SCAN ==
-	     wlan_objmgr_psoc_get_dual_mac_disable(psoc)))
+	     wlan_objmgr_psoc_get_dual_mac_disable(psoc)) ||
+	     !policy_mgr_is_hw_dbs_capable(psoc))
 		return false;
 
 	return true;
