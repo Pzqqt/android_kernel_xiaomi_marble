@@ -450,7 +450,6 @@ static int hdd_soc_recovery_reinit(struct device *dev,
 	hdd_info("re-probing driver");
 
 	hdd_soc_load_lock(dev, eHDD_DRV_OP_REINIT);
-	cds_set_recovery_in_progress(true);
 	cds_set_driver_in_bad_state(false);
 
 	errno = hdd_init_qdf_ctx(dev, bdev, bus_type, bid);
@@ -476,7 +475,6 @@ assert_fail_count:
 
 unlock:
 	cds_set_driver_in_bad_state(true);
-	cds_set_recovery_in_progress(false);
 	hdd_soc_load_unlock(dev);
 
 	return check_for_probe_defer(errno);
@@ -565,6 +563,37 @@ static void hdd_send_hang_reason(void)
 }
 
 /**
+ * hdd_psoc_shutdown_notify() - notify the various interested parties that the
+ *	soc is starting recovery shutdown
+ * @hdd_ctx: the HDD context corresponding to the soc undergoing shutdown
+ *
+ * Return: None
+ */
+static void hdd_psoc_shutdown_notify(struct hdd_context *hdd_ctx)
+{
+	/* Notify external threads currently waiting on firmware by forcefully
+	 * completing waiting events with a "reset" status. This will cause the
+	 * event to fail early instead of timing out.
+	 */
+	qdf_complete_wait_events();
+
+	wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, NULL);
+
+	if (ucfg_ipa_is_enabled()) {
+		ucfg_ipa_uc_force_pipe_shutdown(hdd_ctx->pdev);
+
+		if (pld_is_fw_rejuvenate(hdd_ctx->parent_dev))
+			ucfg_ipa_fw_rejuvenate_send_msg(hdd_ctx->pdev);
+	}
+
+	cds_shutdown_notifier_call();
+	cds_shutdown_notifier_purge();
+
+	hdd_wlan_ssr_shutdown_event();
+	hdd_send_hang_reason();
+}
+
+/**
  * hdd_soc_recovery_shutdown() - perform PDR/SSR SoC shutdown
  *
  * When communication with firmware breaks down, a SoC recovery process kicks in
@@ -579,10 +608,29 @@ static void hdd_send_hang_reason(void)
  */
 static void hdd_soc_recovery_shutdown(void)
 {
+	struct hdd_context *hdd_ctx;
 	void *hif_ctx;
 
+	/* recovery starts via firmware down indication; ensure we got one */
+	QDF_BUG(cds_is_driver_recovering());
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is null");
+		return;
+	}
+
+	/* cancel/flush any pending/active idle shutdown work */
+	hdd_psoc_idle_timer_stop(hdd_ctx);
+
+	/* nothing to do if the soc is already unloaded */
+	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
+		hdd_info("Driver modules are already closed");
+		return;
+	}
+
 	if (cds_is_load_or_unload_in_progress()) {
-		hdd_err("Load/unload in progress, ignore SSR shutdown");
+		hdd_info("Load/unload in progress, ignore SSR shutdown");
 		return;
 	}
 
@@ -595,21 +643,7 @@ static void hdd_soc_recovery_shutdown(void)
 	/* mask the host controller interrupts */
 	hif_mask_interrupt_call(hif_ctx);
 
-	/*
-	 * Force Complete all the wait events before shutdown.
-	 * This is done at "hdd_cleanup_on_fw_down" api also to clean up the
-	 * wait events of north bound apis.
-	 * In case of SSR there is significant dely between FW down event and
-	 * wlan_hdd_shutdown, there is a possibility of race condition that
-	 * these wait events gets complete at "hdd_cleanup_on_fw_down" and
-	 * some new event is added before shutdown.
-	 */
-	qdf_complete_wait_events();
-
-	/* this is for cases, where shutdown invoked from platform */
-	cds_set_recovery_in_progress(true);
-	hdd_wlan_ssr_shutdown_event();
-	hdd_send_hang_reason();
+	hdd_psoc_shutdown_notify(hdd_ctx);
 
 	if (!cds_wait_for_external_threads_completion(__func__))
 		hdd_err("Host is not ready for SSR, attempting anyway");
@@ -1475,75 +1509,6 @@ static void wlan_hdd_pld_notify_handler(struct device *dev,
 	wlan_hdd_notify_handler(state);
 }
 
-static void wlan_hdd_purge_notifier(void)
-{
-	struct hdd_context *hdd_ctx;
-
-	hdd_enter();
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("hdd_ctx is null");
-		return;
-	}
-
-	hdd_psoc_idle_timer_stop(hdd_ctx);
-
-	mutex_lock(&hdd_ctx->iface_change_lock);
-	cds_shutdown_notifier_call();
-	cds_shutdown_notifier_purge();
-	mutex_unlock(&hdd_ctx->iface_change_lock);
-
-	hdd_exit();
-}
-
-static void __hdd_firmware_down_handler(void)
-{
-	struct hdd_context *hdd_ctx;
-
-	if (cds_get_driver_state() == CDS_DRIVER_STATE_UNINITIALIZED)
-		return;
-
-	if (cds_is_driver_loading())
-		return;
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("hdd_ctx is null");
-		return;
-	}
-
-	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
-		hdd_info("Driver modules are already closed");
-		return;
-	}
-
-	cds_set_target_ready(false);
-	qdf_complete_wait_events();
-	wlan_cfg80211_cleanup_scan_queue(hdd_ctx->pdev, NULL);
-
-	if (ucfg_ipa_is_enabled()) {
-		ucfg_ipa_uc_force_pipe_shutdown(hdd_ctx->pdev);
-
-		if (pld_is_fw_rejuvenate(hdd_ctx->parent_dev))
-			ucfg_ipa_fw_rejuvenate_send_msg(hdd_ctx->pdev);
-	}
-}
-
-static void hdd_firmware_down_handler(void)
-{
-	hdd_info("Received firmware down indication");
-
-	cds_set_target_ready(false);
-	cds_set_recovery_in_progress(true);
-
-	mutex_lock(&hdd_init_deinit_lock);
-	__hdd_firmware_down_handler();
-	mutex_unlock(&hdd_init_deinit_lock);
-
-	wlan_hdd_purge_notifier();
-}
-
 /**
  * wlan_hdd_pld_uevent() - platform uevent handler
  * @dev: device on which the uevent occurred
@@ -1554,13 +1519,30 @@ static void hdd_firmware_down_handler(void)
 static void
 wlan_hdd_pld_uevent(struct device *dev, struct pld_uevent_data *event_data)
 {
-	hdd_debug("Received uevent %d", event_data->uevent);
-
 	switch (event_data->uevent) {
 	case PLD_FW_DOWN:
-		hdd_firmware_down_handler();
+		hdd_info("Received firmware down indication");
+
+		/* NOTE! SSR cleanup logic goes in pld shutdown, not here */
+
+		cds_set_target_ready(false);
+		cds_set_recovery_in_progress(true);
+
+		/* SSR cleanup happens in pld shutdown, which is serialized by
+		 * the platform driver. Other operations are also serialized by
+		 * platform driver, such as probe, remove, and reinit. If the
+		 * firmware goes down during one of these operations, the driver
+		 * would normally have to wait for a timeout before shutdown
+		 * could begin. Instead, forcefully complete events waiting on
+		 * firmware with a "reset" status to avoid waiting to time out
+		 * on a firmware we already know is down.
+		 */
+		qdf_complete_wait_events();
+
 		break;
 	default:
+		/* other events intentionally not handled */
+		hdd_debug("Received uevent %d", event_data->uevent);
 		break;
 	}
 }
