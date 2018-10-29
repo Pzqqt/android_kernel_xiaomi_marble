@@ -4476,6 +4476,35 @@ static int hdd_we_set_amsdu(struct hdd_adapter *adapter, int amsdu)
 	return 0;
 }
 
+static int hdd_we_clear_stats(struct hdd_adapter *adapter, int option)
+{
+	hdd_debug("option %d", option);
+
+	switch (option) {
+	case CDP_HDD_STATS:
+		memset(&adapter->stats, 0, sizeof(adapter->stats));
+		memset(&adapter->hdd_stats, 0, sizeof(adapter->hdd_stats));
+		break;
+	case CDP_TXRX_HIST_STATS:
+		wlan_hdd_clear_tx_rx_histogram(adapter->hdd_ctx);
+		break;
+	case CDP_HDD_NETIF_OPER_HISTORY:
+		wlan_hdd_clear_netif_queue_history(adapter->hdd_ctx);
+		break;
+	case CDP_HIF_STATS:
+		hdd_clear_hif_stats();
+		break;
+	case CDP_NAPI_STATS:
+		hdd_clear_napi_stats();
+		break;
+	default:
+		cdp_clear_stats(cds_get_context(QDF_MODULE_ID_SOC),
+				option);
+	}
+
+	return 0;
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4909,32 +4938,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 	}
 
 	case WE_CLEAR_STATS:
-	{
-		hdd_debug("WE_CLEAR_STATS val %d", set_value);
-		switch (set_value) {
-		case CDP_HDD_STATS:
-			memset(&adapter->stats, 0, sizeof(adapter->stats));
-			memset(&adapter->hdd_stats, 0,
-					sizeof(adapter->hdd_stats));
-			break;
-		case CDP_TXRX_HIST_STATS:
-			wlan_hdd_clear_tx_rx_histogram(hdd_ctx);
-			break;
-		case CDP_HDD_NETIF_OPER_HISTORY:
-			wlan_hdd_clear_netif_queue_history(hdd_ctx);
-			break;
-		case CDP_HIF_STATS:
-			hdd_clear_hif_stats();
-			break;
-		case CDP_NAPI_STATS:
-			hdd_clear_napi_stats();
-			break;
-		default:
-			cdp_clear_stats(cds_get_context(QDF_MODULE_ID_SOC),
-						set_value);
-		}
+		ret = hdd_we_clear_stats(adapter, set_value);
 		break;
-	}
 
 	case WE_PPS_PAID_MATCH:
 	{
