@@ -1185,6 +1185,7 @@ void tdls_disable_offchan_and_teardown_links(
 	struct tdls_soc_priv_obj *tdls_soc;
 	QDF_STATUS status;
 	uint8_t vdev_id;
+	bool tdls_in_progress = false;
 
 	status = tdls_get_vdev_objects(vdev, &tdls_vdev, &tdls_soc);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -1199,9 +1200,11 @@ void tdls_disable_offchan_and_teardown_links(
 	}
 
 	connected_tdls_peers = tdls_soc->connected_peer_count;
+	if (tdls_is_progress(tdls_vdev, NULL, 0))
+		tdls_in_progress = true;
 
-	if (!connected_tdls_peers) {
-		tdls_notice("No TDLS connected peers to delete");
+	if (!(connected_tdls_peers || tdls_in_progress)) {
+		tdls_notice("No TDLS connected/progress peers to delete");
 		vdev_id = vdev->vdev_objmgr.vdev_id;
 		if (tdls_soc->set_state_info.set_state_cnt > 0) {
 			tdls_debug("Disable the tdls in FW as second interface is coming up");
