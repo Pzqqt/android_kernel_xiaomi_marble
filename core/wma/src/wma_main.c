@@ -7061,8 +7061,14 @@ static void wma_set_wifi_start_packet_stats(void *wma_handle,
 	log_state = ATH_PKTLOG_ANI | ATH_PKTLOG_RCUPDATE | ATH_PKTLOG_RCFIND |
 		ATH_PKTLOG_RX | ATH_PKTLOG_TX |
 		ATH_PKTLOG_TEXT | ATH_PKTLOG_SW_EVENT;
+#elif defined(QCA_WIFI_QCA6390)
+	log_state = ATH_PKTLOG_RCFIND | ATH_PKTLOG_RCUPDATE |
+		    ATH_PKTLOG_LITE_RX | ATH_PKTLOG_LITE_T2H;
+#elif defined(QCA_WIFI_QCA6290)
+	log_state = ATH_PKTLOG_LITE_RX | ATH_PKTLOG_LITE_T2H;
 #else
-	log_state = ATH_PKTLOG_LITE_T2H | ATH_PKTLOG_LITE_RX;
+	WMA_LOGD("%s: Packet log Not supported", __func__);
+	log_state = 0;
 #endif
 	if (start_log->size != 0) {
 		pktlog_setsize(scn, start_log->size * MEGABYTE);

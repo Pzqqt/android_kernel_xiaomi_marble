@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,7 @@
 #define WDI_NO_VAL (-1)
 enum WDI_EVENT {
 	WDI_EVENT_TX_STATUS = WDI_EVENT_BASE,
+	WDI_EVENT_OFFLOAD_ALL,
 	WDI_EVENT_RX_DESC,
 	WDI_EVENT_RX_DESC_REMOTE,
 	WDI_EVENT_RATE_FIND,
