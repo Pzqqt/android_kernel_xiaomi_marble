@@ -84,6 +84,7 @@ static bool is_custom_stereo_on;
 static bool is_ds2_on;
 static bool swap_ch;
 static int aanc_level;
+static int num_app_cfg_types;
 
 #define WEIGHT_0_DB 0x4000
 /* all the FEs which can support channel mixer */
@@ -17238,6 +17239,23 @@ static int msm_routing_get_lsm_app_type_cfg_control(
 					struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
 {
+	int shift = ((struct soc_multi_mixer_control *)
+				kcontrol->private_value)->shift;
+	int i = 0, j = 0;
+
+	ucontrol->value.integer.value[i] = num_app_cfg_types;
+
+	for (j = 0; j < num_app_cfg_types; ++j) {
+		ucontrol->value.integer.value[++i] =
+				lsm_app_type_cfg[j].app_type;
+		ucontrol->value.integer.value[++i] =
+				lsm_app_type_cfg[j].sample_rate;
+		ucontrol->value.integer.value[++i] =
+				lsm_app_type_cfg[j].bit_width;
+		if (shift == 1)
+			ucontrol->value.integer.value[++i] =
+				lsm_app_type_cfg[j].num_out_channels;
+	}
 	return 0;
 }
 
@@ -17248,18 +17266,18 @@ static int msm_routing_put_lsm_app_type_cfg_control(
 	int shift = ((struct soc_multi_mixer_control *)
 				kcontrol->private_value)->shift;
 	int i = 0, j;
-	int num_app_types = ucontrol->value.integer.value[i++];
 
+	num_app_cfg_types = ucontrol->value.integer.value[i++];
 	memset(lsm_app_type_cfg, 0, MAX_APP_TYPES*
 	       sizeof(struct msm_pcm_routing_app_type_data));
 
-	if (num_app_types > MAX_APP_TYPES) {
+	if (num_app_cfg_types > MAX_APP_TYPES) {
 		pr_err("%s: number of app types exceed the max supported\n",
 			__func__);
 		return -EINVAL;
 	}
 
-	for (j = 0; j < num_app_types; j++) {
+	for (j = 0; j < num_app_cfg_types; j++) {
 		lsm_app_type_cfg[j].app_type =
 				ucontrol->value.integer.value[i++];
 		lsm_app_type_cfg[j].sample_rate =
