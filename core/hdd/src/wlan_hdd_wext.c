@@ -4505,6 +4505,99 @@ static int hdd_we_clear_stats(struct hdd_adapter *adapter, int option)
 	return 0;
 }
 
+static int hdd_we_packet_power_save(struct hdd_adapter *adapter,
+				    packet_power_save id,
+				    const char *id_string,
+				    int value)
+{
+	int errno;
+
+	if (adapter->device_mode != QDF_STA_MODE) {
+		hdd_err_rl("Not supported in mode %d", adapter->device_mode);
+		return -EINVAL;
+	}
+
+	hdd_debug("%s %d", id_string, value);
+	errno = wma_cli_set_command(adapter->session_id, id, value, PPS_CMD);
+	if (errno)
+		hdd_err("Failed to set firmware, errno %d", errno);
+
+	return errno;
+}
+
+#define hdd_we_packet_power_save(adapter, id, value) \
+			hdd_we_packet_power_save(adapter, id, #id, value)
+
+static int hdd_we_pps_paid_match(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_packet_power_save(adapter,
+					WMI_VDEV_PPS_PAID_MATCH,
+					value);
+}
+
+static int hdd_we_pps_gid_match(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_packet_power_save(adapter,
+					WMI_VDEV_PPS_GID_MATCH,
+					value);
+}
+
+static int hdd_we_pps_early_tim_clear(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_packet_power_save(adapter,
+					WMI_VDEV_PPS_EARLY_TIM_CLEAR,
+					value);
+}
+
+static int hdd_we_pps_early_dtim_clear(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_packet_power_save(adapter,
+					WMI_VDEV_PPS_EARLY_DTIM_CLEAR,
+					value);
+}
+
+static int hdd_we_pps_eof_pad_delim(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_packet_power_save(adapter,
+					WMI_VDEV_PPS_EOF_PAD_DELIM,
+					value);
+}
+
+static int hdd_we_pps_macaddr_mismatch(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_packet_power_save(adapter,
+					WMI_VDEV_PPS_MACADDR_MISMATCH,
+					value);
+}
+
+static int hdd_we_pps_delim_crc_fail(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_packet_power_save(adapter,
+					WMI_VDEV_PPS_DELIM_CRC_FAIL,
+					value);
+}
+
+static int hdd_we_pps_gid_nsts_zero(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_packet_power_save(adapter,
+					WMI_VDEV_PPS_GID_NSTS_ZERO,
+					value);
+}
+
+static int hdd_we_pps_rssi_check(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_packet_power_save(adapter,
+					WMI_VDEV_PPS_RSSI_CHECK,
+					value);
+}
+
+static int hdd_we_pps_5g_ebt(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_packet_power_save(adapter,
+					WMI_VDEV_PPS_5G_EBT,
+					value);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4942,145 +5035,44 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_PPS_PAID_MATCH:
-	{
-		if (adapter->device_mode != QDF_STA_MODE) {
-			ret = -EINVAL;
-			break;
-		}
-
-		hdd_debug("WMI_VDEV_PPS_PAID_MATCH val %d ",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PPS_PAID_MATCH,
-					  set_value, PPS_CMD);
+		ret = hdd_we_pps_paid_match(adapter, set_value);
 		break;
-	}
 
 	case WE_PPS_GID_MATCH:
-	{
-		if (adapter->device_mode != QDF_STA_MODE) {
-			ret = -EINVAL;
-			break;
-		}
-		hdd_debug("WMI_VDEV_PPS_GID_MATCH val %d ",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PPS_GID_MATCH,
-					  set_value, PPS_CMD);
+		ret = hdd_we_pps_gid_match(adapter, set_value);
 		break;
-	}
 
 	case WE_PPS_EARLY_TIM_CLEAR:
-	{
-		if (adapter->device_mode != QDF_STA_MODE) {
-			ret = -EINVAL;
-			break;
-		}
-		hdd_debug(" WMI_VDEV_PPS_EARLY_TIM_CLEAR val %d ",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PPS_EARLY_TIM_CLEAR,
-					  set_value, PPS_CMD);
+		ret = hdd_we_pps_early_tim_clear(adapter, set_value);
 		break;
-	}
 
 	case WE_PPS_EARLY_DTIM_CLEAR:
-	{
-		if (adapter->device_mode != QDF_STA_MODE) {
-			ret = -EINVAL;
-			break;
-		}
-		hdd_debug("WMI_VDEV_PPS_EARLY_DTIM_CLEAR val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PPS_EARLY_DTIM_CLEAR,
-					  set_value, PPS_CMD);
+		ret = hdd_we_pps_early_dtim_clear(adapter, set_value);
 		break;
-	}
 
 	case WE_PPS_EOF_PAD_DELIM:
-	{
-		if (adapter->device_mode != QDF_STA_MODE) {
-			ret = -EINVAL;
-			break;
-		}
-		hdd_debug("WMI_VDEV_PPS_EOF_PAD_DELIM val %d ",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PPS_EOF_PAD_DELIM,
-					  set_value, PPS_CMD);
+		ret = hdd_we_pps_eof_pad_delim(adapter, set_value);
 		break;
-	}
 
 	case WE_PPS_MACADDR_MISMATCH:
-	{
-		if (adapter->device_mode != QDF_STA_MODE) {
-			ret = -EINVAL;
-			break;
-		}
-		hdd_debug("WMI_VDEV_PPS_MACADDR_MISMATCH val %d ",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PPS_MACADDR_MISMATCH,
-					  set_value, PPS_CMD);
+		ret = hdd_we_pps_macaddr_mismatch(adapter, set_value);
 		break;
-	}
 
 	case WE_PPS_DELIM_CRC_FAIL:
-	{
-		if (adapter->device_mode != QDF_STA_MODE) {
-			ret = -EINVAL;
-			break;
-		}
-		hdd_debug("WMI_VDEV_PPS_DELIM_CRC_FAIL val %d ",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PPS_DELIM_CRC_FAIL,
-					  set_value, PPS_CMD);
+		ret = hdd_we_pps_delim_crc_fail(adapter, set_value);
 		break;
-	}
 
 	case WE_PPS_GID_NSTS_ZERO:
-	{
-		if (adapter->device_mode != QDF_STA_MODE) {
-			ret = -EINVAL;
-			break;
-		}
-		hdd_debug("WMI_VDEV_PPS_GID_NSTS_ZERO val %d ",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PPS_GID_NSTS_ZERO,
-					  set_value, PPS_CMD);
+		ret = hdd_we_pps_gid_nsts_zero(adapter, set_value);
 		break;
-	}
 
 	case WE_PPS_RSSI_CHECK:
-	{
-		if (adapter->device_mode != QDF_STA_MODE) {
-			ret = -EINVAL;
-			break;
-		}
-		hdd_debug("WMI_VDEV_PPS_RSSI_CHECK val %d ",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PPS_RSSI_CHECK,
-					  set_value, PPS_CMD);
+		ret = hdd_we_pps_rssi_check(adapter, set_value);
 		break;
-	}
 
 	case WE_PPS_5G_EBT:
-	{
-		if (adapter->device_mode != QDF_STA_MODE) {
-			ret = -EINVAL;
-			break;
-		}
-
-		hdd_debug("WMI_VDEV_PPS_5G_EBT val %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PPS_5G_EBT,
-					  set_value, PPS_CMD);
+		ret = hdd_we_pps_5g_ebt(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_HTSMPS:
 	{
