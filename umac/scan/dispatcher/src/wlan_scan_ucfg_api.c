@@ -561,8 +561,9 @@ int ucfg_scan_get_burst_duration(int max_ch_time,
 		 * If miracast is not running, accommodate max
 		 * stations to make the scans faster
 		 */
-		burst_duration = SCAN_BURST_SCAN_MAX_NUM_OFFCHANNELS *
-						max_ch_time;
+		burst_duration = SCAN_GO_BURST_SCAN_MAX_NUM_OFFCHANNELS *
+							max_ch_time;
+
 		if (burst_duration > SCAN_GO_MAX_ACTIVE_SCAN_BURST_DURATION) {
 			uint8_t channels = SCAN_P2P_SCAN_MAX_BURST_DURATION /
 								 max_ch_time;
@@ -628,8 +629,10 @@ static void ucfg_scan_req_update_concurrency_params(
 	 * firmware spends more time on home channel which will increase the
 	 * probability of sending beacon at TBTT
 	 */
-	if (ap_present || go_present)
+	if (ap_present || go_present) {
+		req->scan_req.dwell_time_active_2g = 0;
 		req->scan_req.min_rest_time = req->scan_req.max_rest_time;
+	}
 
 	if (req->scan_req.p2p_scan_type == SCAN_NON_P2P_DEFAULT) {
 		/*
