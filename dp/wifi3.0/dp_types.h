@@ -1391,6 +1391,12 @@ struct dp_vdev {
 	/* WDS enabled */
 	bool wds_enabled;
 
+	/* MEC enabled */
+	bool mec_enabled;
+
+	/* DA WAR enable flag */
+	bool da_war_enabled;
+
 	/* WDS Aging timer period */
 	uint32_t wds_aging_timer_val;
 

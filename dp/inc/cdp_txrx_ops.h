@@ -554,6 +554,9 @@ struct cdp_ctrl_ops {
 #endif
 	void (*set_key)(struct cdp_peer *peer_handle,
 			bool is_unicast, uint32_t *key);
+
+	uint32_t (*txrx_get_vdev_param)(struct cdp_vdev *vdev,
+					enum cdp_vdev_param_type param);
 };
 
 struct cdp_me_ops {

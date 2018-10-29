@@ -7281,6 +7281,39 @@ static void dp_set_pdev_param(struct cdp_pdev *pdev_handle,
 }
 
 /*
+ * dp_get_vdev_param: function to get parameters from vdev
+ * @param: parameter type to get value
+ *
+ * return: void
+ */
+static uint32_t dp_get_vdev_param(struct cdp_vdev *vdev_handle,
+				  enum cdp_vdev_param_type param)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	uint32_t val;
+
+	switch (param) {
+	case CDP_ENABLE_WDS:
+		val = vdev->wds_enabled;
+		break;
+	case CDP_ENABLE_MEC:
+		val = vdev->mec_enabled;
+		break;
+	case CDP_ENABLE_DA_WAR:
+		val = vdev->da_war_enabled;
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "param value %d is wrong\n",
+			  param);
+		val = -1;
+		break;
+	}
+
+	return val;
+}
+
+/*
  * dp_set_vdev_param: function to set parameters in vdev
  * @param: parameter type to be set
  * @val: value of parameter to be set
@@ -7297,6 +7330,18 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 			  "wds_enable %d for vdev(%p) id(%d)\n",
 			  val, vdev, vdev->vdev_id);
 		vdev->wds_enabled = val;
+		break;
+	case CDP_ENABLE_MEC:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "mec_enable %d for vdev(%p) id(%d)\n",
+			  val, vdev, vdev->vdev_id);
+		vdev->mec_enabled = val;
+		break;
+	case CDP_ENABLE_DA_WAR:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "da_war_enable %d for vdev(%p) id(%d)\n",
+			  val, vdev, vdev->vdev_id);
+		vdev->da_war_enabled = val;
 		break;
 	case CDP_ENABLE_NAWDS:
 		vdev->nawds_enabled = val;
@@ -8421,6 +8466,7 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_vdev_get_neighbour_rssi = dp_vdev_get_neighbour_rssi,
 #endif
 	.set_key = dp_set_michael_key,
+	.txrx_get_vdev_param = dp_get_vdev_param,
 };
 
 static struct cdp_me_ops dp_ops_me = {

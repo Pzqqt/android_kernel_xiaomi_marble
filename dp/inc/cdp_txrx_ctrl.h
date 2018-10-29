@@ -408,6 +408,27 @@ static inline void cdp_tx_flush_buffers
 	soc->ops->ctrl_ops->tx_flush_buffers(vdev);
 }
 
+static inline uint32_t cdp_txrx_get_vdev_param(ol_txrx_soc_handle soc,
+					       struct cdp_vdev *vdev,
+					       enum cdp_vdev_param_type type)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return -1;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_get_vdev_param) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: callback not registered:", __func__);
+		return -1;
+	}
+
+	return soc->ops->ctrl_ops->txrx_get_vdev_param(vdev, type);
+}
+
 static inline void cdp_txrx_set_vdev_param(ol_txrx_soc_handle soc,
 		struct cdp_vdev *vdev, enum cdp_vdev_param_type type,
 		uint32_t val)

@@ -2480,7 +2480,7 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 	struct dp_peer *peer;
 	uint8_t mac_addr[DP_MAC_ADDR_LEN], i;
 
-	if (!vdev->wds_enabled)
+	if (!vdev->mec_enabled)
 		return;
 
 	/* MEC required only in STA mode */
