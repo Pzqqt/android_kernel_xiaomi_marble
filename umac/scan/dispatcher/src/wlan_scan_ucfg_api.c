@@ -880,8 +880,7 @@ ucfg_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 	if (custom_chan_list->num_chan)
 		qdf_mem_copy(&req->scan_req.chan_list, custom_chan_list,
 				sizeof(struct chan_list));
-	else if (req->scan_req.scan_f_wide_band &&
-			!req->scan_req.chan_list.num_chan)
+	else if (!req->scan_req.chan_list.num_chan)
 		ucfg_scan_init_chanlist_params(req, 0, NULL, NULL);
 
 	scm_debug("dwell time: active %d, passive %d, repeat_probe_time %d "
@@ -1753,7 +1752,7 @@ ucfg_scan_init_chanlist_params(struct scan_start_request *req,
 	 * provided in scan request causing scan to take
 	 * too much time to complete.
 	 */
-	if (pdev && !num_chans && ucfg_scan_get_wide_band_scan(pdev)) {
+	if (pdev && !num_chans) {
 		reg_chan_list = qdf_mem_malloc_atomic(NUM_CHANNELS *
 				sizeof(struct regulatory_channel));
 		if (!reg_chan_list) {
