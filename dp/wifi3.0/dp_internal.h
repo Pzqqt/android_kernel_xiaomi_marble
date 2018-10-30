@@ -301,6 +301,8 @@ static inline void dp_update_pdev_stats(struct dp_pdev *tgtobj,
 		srcobj->tx.nawds_mcast.num;
 	tgtobj->stats.tx.nawds_mcast.bytes +=
 		srcobj->tx.nawds_mcast.bytes;
+	tgtobj->stats.tx.nawds_mcast_drop +=
+		srcobj->tx.nawds_mcast_drop;
 	tgtobj->stats.tx.tx_failed += srcobj->tx.tx_failed;
 	tgtobj->stats.tx.ofdma += srcobj->tx.ofdma;
 	tgtobj->stats.tx.stbc += srcobj->tx.stbc;
@@ -323,13 +325,15 @@ static inline void dp_update_pdev_stats(struct dp_pdev *tgtobj,
 			srcobj->tx.dropped.fw_reason3;
 	tgtobj->stats.tx.dropped.age_out += srcobj->tx.dropped.age_out;
 	tgtobj->stats.rx.err.mic_err += srcobj->rx.err.mic_err;
-	tgtobj->stats.rx.rssi = srcobj->rx.rssi;
+	if (srcobj->rx.rssi != 0)
+		tgtobj->stats.rx.rssi = srcobj->rx.rssi;
 	tgtobj->stats.rx.rx_rate = srcobj->rx.rx_rate;
 	tgtobj->stats.rx.err.decrypt_err += srcobj->rx.err.decrypt_err;
 	tgtobj->stats.rx.non_ampdu_cnt += srcobj->rx.non_ampdu_cnt;
 	tgtobj->stats.rx.amsdu_cnt += srcobj->rx.ampdu_cnt;
 	tgtobj->stats.rx.non_amsdu_cnt += srcobj->rx.non_amsdu_cnt;
 	tgtobj->stats.rx.amsdu_cnt += srcobj->rx.amsdu_cnt;
+	tgtobj->stats.rx.nawds_mcast_drop += srcobj->rx.nawds_mcast_drop;
 	tgtobj->stats.rx.to_stack.num += srcobj->rx.to_stack.num;
 	tgtobj->stats.rx.to_stack.bytes += srcobj->rx.to_stack.bytes;
 
@@ -434,6 +438,8 @@ static inline void dp_update_vdev_stats(struct cdp_vdev_stats *tgtobj,
 		srcobj->stats.tx.nawds_mcast.num;
 	tgtobj->tx.nawds_mcast.bytes +=
 		srcobj->stats.tx.nawds_mcast.bytes;
+	tgtobj->tx.nawds_mcast_drop +=
+		srcobj->stats.tx.nawds_mcast_drop;
 	tgtobj->tx.tx_failed += srcobj->stats.tx.tx_failed;
 	tgtobj->tx.ofdma += srcobj->stats.tx.ofdma;
 	tgtobj->tx.stbc += srcobj->stats.tx.stbc;
@@ -456,13 +462,15 @@ static inline void dp_update_vdev_stats(struct cdp_vdev_stats *tgtobj,
 			srcobj->stats.tx.dropped.fw_reason3;
 	tgtobj->tx.dropped.age_out += srcobj->stats.tx.dropped.age_out;
 	tgtobj->rx.err.mic_err += srcobj->stats.rx.err.mic_err;
-	tgtobj->rx.rssi = srcobj->stats.rx.rssi;
+	if (srcobj->stats.rx.rssi != 0)
+		tgtobj->rx.rssi = srcobj->stats.rx.rssi;
 	tgtobj->rx.rx_rate = srcobj->stats.rx.rx_rate;
 	tgtobj->rx.err.decrypt_err += srcobj->stats.rx.err.decrypt_err;
 	tgtobj->rx.non_ampdu_cnt += srcobj->stats.rx.non_ampdu_cnt;
 	tgtobj->rx.amsdu_cnt += srcobj->stats.rx.ampdu_cnt;
 	tgtobj->rx.non_amsdu_cnt += srcobj->stats.rx.non_amsdu_cnt;
 	tgtobj->rx.amsdu_cnt += srcobj->stats.rx.amsdu_cnt;
+	tgtobj->rx.nawds_mcast_drop += srcobj->stats.rx.nawds_mcast_drop;
 	tgtobj->rx.to_stack.num += srcobj->stats.rx.to_stack.num;
 	tgtobj->rx.to_stack.bytes += srcobj->stats.rx.to_stack.bytes;
 
