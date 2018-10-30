@@ -7268,7 +7268,7 @@ static int msm_init_wsa_dev(struct platform_device *pdev,
 			ret = -EINVAL;
 			goto err_free_dev_info;
 		}
-		if (soc_find_component(wsa_of_node, NULL)) {
+		if (soc_find_component_locked(wsa_of_node, NULL)) {
 			/* WSA device registered with ALSA core */
 			wsa881x_dev_info[found].of_node = wsa_of_node;
 			wsa881x_dev_info[found].index = i;
