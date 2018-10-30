@@ -1004,6 +1004,15 @@ wlan_serialization_destroy_lock(struct wlan_serialization_pdev_priv_obj *obj)
 #include "wlan_serialization_queue_i.h"
 #include "wlan_serialization_api.h"
 
+#ifndef WLAN_SER_DEBUG
+void wlan_ser_update_cmd_history(
+		struct wlan_serialization_pdev_queue *pdev_queue,
+		struct wlan_serialization_command *cmd,
+		enum ser_queue_reason ser_reason,
+		bool add_remove,
+		bool active_queue){ }
+#endif
+
 struct wlan_objmgr_pdev*
 wlan_serialization_get_pdev_from_cmd(struct wlan_serialization_command *cmd)
 {

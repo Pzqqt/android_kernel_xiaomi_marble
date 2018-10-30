@@ -625,6 +625,19 @@ QDF_STATUS wlan_serialization_peek_next(
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_scan_ucfg_api.h>
 #include "wlan_serialization_rules_i.h"
+#ifdef WLAN_SER_DEBUG
+#include "wlan_serialization_debug_i.h"
+#endif
+
+enum ser_queue_reason {
+	SER_REQUEST,
+	SER_REMOVE,
+	SER_CANCEL,
+	SER_TIMEOUT,
+	SER_ACTIVATION_FAILED,
+	SER_PENDING_TO_ACTIVE,
+	SER_QUEUE_ACTION_MAX,
+};
 
 /*
  * Below bit positions are used to identify if a
@@ -697,6 +710,9 @@ struct wlan_serialization_pdev_queue {
 	bool blocking_cmd_active;
 	uint16_t blocking_cmd_waiting;
 	qdf_spinlock_t pdev_queue_lock;
+#ifdef WLAN_SER_DEBUG
+	struct ser_history history;
+#endif
 };
 
 /**
@@ -1237,5 +1253,24 @@ wlan_serialization_create_lock(qdf_spinlock_t *lock);
  */
 QDF_STATUS
 wlan_serialization_destroy_lock(qdf_spinlock_t *lock);
+
+/**
+ * wlan_ser_update_cmd_history() - Update serialization queue history
+ * @pdev_queue:serialization pdev queue
+ * @cmd: cmd to be added/remeoved
+ * @ser_reason: serialization action that resulted in addition/removal
+ * @add_remove: added or removed from queue
+ * @active_queue:for active queue
+ *
+ * Return: QDF_STATUS success or failure
+ */
+
+void wlan_ser_update_cmd_history(
+		struct wlan_serialization_pdev_queue *pdev_queue,
+		struct wlan_serialization_command *cmd,
+		enum ser_queue_reason ser_reason,
+		bool add_remove,
+		bool active_queue);
+
 #endif
 #endif

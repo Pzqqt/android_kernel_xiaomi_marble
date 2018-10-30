@@ -86,7 +86,8 @@ error:
 }
 
 enum wlan_serialization_status
-wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd)
+wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
+			       enum ser_queue_reason ser_reason)
 {
 	enum wlan_serialization_status status = WLAN_SER_CMD_DENIED_UNSPECIFIED;
 	struct wlan_serialization_command_list *cmd_list;
@@ -204,18 +205,23 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd)
 	}
 
 	if (status != WLAN_SER_CMD_PENDING && status != WLAN_SER_CMD_ACTIVE) {
-		ser_err("Failed to add cmd to active/pending queue");
 		qdf_mem_zero(&cmd_list->cmd,
 			     sizeof(struct wlan_serialization_command));
 		wlan_serialization_insert_back(
 			&pdev_queue->cmd_pool_list,
 			&cmd_list->pdev_node);
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
+		ser_err("Failed to add cmd to active/pending queue");
+		goto error;
 	}
 
 	if (WLAN_SER_CMD_ACTIVE == status) {
 		qdf_atomic_set_bit(CMD_MARKED_FOR_ACTIVATION,
 				   &cmd_list->cmd_in_use);
 	}
+
+	wlan_ser_update_cmd_history(pdev_queue, &cmd_list->cmd,
+				    ser_reason, true, active_queue);
 
 	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
@@ -277,7 +283,9 @@ QDF_STATUS wlan_serialization_activate_cmd(
 	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
-		wlan_serialization_dequeue_cmd(&cmd_list->cmd, true);
+		wlan_serialization_dequeue_cmd(&cmd_list->cmd,
+					       SER_ACTIVATION_FAILED,
+					       true);
 		return status;
 	}
 
@@ -350,6 +358,7 @@ wlan_serialization_move_pending_to_active(
 
 enum wlan_serialization_cmd_status
 wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
+			       enum ser_queue_reason ser_reason,
 			       uint8_t active_cmd)
 {
 	enum wlan_serialization_cmd_status status =
@@ -432,6 +441,9 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 			&pdev_queue->cmd_pool_list,
 			&cmd_list->pdev_node);
 
+	wlan_ser_update_cmd_history(pdev_queue, &cmd_bkup, ser_reason,
+				    false, active_cmd);
+
 	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
 	/* Call cmd cb for remove request*/
@@ -483,7 +495,7 @@ void wlan_serialization_generic_timer_cb(void *arg)
 	 * dequeue cmd API will cleanup and destroy the timer. If it fails to
 	 * dequeue command then we have to destroy the timer.
 	 */
-	wlan_serialization_dequeue_cmd(cmd, true);
+	wlan_serialization_dequeue_cmd(cmd, SER_TIMEOUT, true);
 }
 
 static QDF_STATUS wlan_serialization_mc_flush_noop(struct scheduler_msg *msg)

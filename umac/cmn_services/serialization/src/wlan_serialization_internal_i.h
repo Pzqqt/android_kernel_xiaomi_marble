@@ -65,11 +65,13 @@ wlan_serialization_is_active_cmd_allowed(
 /**
  * wlan_serialization_enqueue_cmd() - Enqueue the cmd to pending/active Queue
  * @cmd: Command information
+ * @ser_reason: action for dequeue
  *
  * Return: Status of the serialization request
  */
 enum wlan_serialization_status
-wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd);
+wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
+			       enum ser_queue_reason ser_reason);
 
 /**
  * wlan_serialization_activate_cmd() - activate cmd in active queue
@@ -105,12 +107,14 @@ wlan_serialization_move_pending_to_active(
 /**
  * wlan_serialization_dequeue_cmd() - dequeue the cmd to pending/active Queue
  * @cmd: Command information
+ * @ser_reason: action for dequeue
  * @active_cmd: whether command is for active queue
  *
  * Return: Status of the serialization request
  */
 enum wlan_serialization_cmd_status
 wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
+			       enum ser_queue_reason ser_reason,
 			       uint8_t active_cmd);
 
 /**

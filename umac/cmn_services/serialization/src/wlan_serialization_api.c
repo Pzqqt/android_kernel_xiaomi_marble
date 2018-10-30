@@ -731,7 +731,7 @@ void wlan_serialization_remove_cmd(
 	cmd.source = cmd_info->requestor;
 	cmd.vdev = cmd_info->vdev;
 
-	if (wlan_serialization_dequeue_cmd(&cmd, true) !=
+	if (wlan_serialization_dequeue_cmd(&cmd, SER_REMOVE, true) !=
 			WLAN_SER_CMD_IN_ACTIVE_LIST) {
 		ser_err("Can't dequeue requested cmd_id[%d] type[%d]",
 			cmd.cmd_id, cmd.cmd_type);
@@ -792,7 +792,7 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 			return WLAN_SER_CMD_DENIED_RULES_FAILED;
 	}
 
-	serialization_status = wlan_serialization_enqueue_cmd(cmd);
+	serialization_status = wlan_serialization_enqueue_cmd(cmd, SER_REQUEST);
 
 error:
 	ser_exit();

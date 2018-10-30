@@ -286,6 +286,9 @@ wlan_ser_cancel_scan_cmd(
 		}
 		nnode = pnode;
 
+		wlan_ser_update_cmd_history(pdev_q, &cmd_bkup,
+					    SER_CANCEL, false, is_active_queue);
+
 		wlan_serialization_release_lock(&pdev_q->pdev_queue_lock);
 		/*
 		 * call pending cmd's callback to notify that
@@ -374,6 +377,10 @@ enum wlan_serialization_status wlan_ser_move_scan_pending_to_active(
 					 &pending_cmd_list,
 					 &cmd_to_remove, false);
 
+	wlan_ser_update_cmd_history(pdev_queue, &pending_cmd_list->cmd,
+				    SER_PENDING_TO_ACTIVE,
+				    false, false);
+
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 		ser_err("Can't remove cmd from pendingQ id-%d type-%d",
@@ -404,6 +411,10 @@ enum wlan_serialization_status wlan_ser_move_scan_pending_to_active(
 
 	qdf_atomic_set_bit(CMD_MARKED_FOR_ACTIVATION,
 			   &active_cmd_list->cmd_in_use);
+
+	wlan_ser_update_cmd_history(pdev_queue, &active_cmd_list->cmd,
+				    SER_PENDING_TO_ACTIVE,
+				    true, true);
 
 	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
