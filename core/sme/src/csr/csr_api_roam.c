@@ -1751,11 +1751,9 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.csr_mawc_config.mawc_enabled = true;
 }
 
-enum band_info csr_get_current_band(tHalHandle hHal)
+enum band_info csr_get_current_band(struct mac_context *mac)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	return pMac->mlme_cfg->gen.band_capability;
+	return mac->mlme_cfg->gen.band_capability;
 }
 
 /* This function flushes the roam scan cache */

@@ -1786,7 +1786,7 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(tHalHandle hHal,
 	}
 	status = csr_create_roam_scan_channel_list(pMac, sessionId,
 				pChannelList, numChannels,
-				csr_get_current_band(hHal));
+				csr_get_current_band(pMac));
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		if (NULL != curchnl_list_info->ChannelList) {
 			j = 0;
@@ -5816,7 +5816,7 @@ QDF_STATUS sme_get_freq_band(tHalHandle hHal, enum band_info *pBand)
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		*pBand = csr_get_current_band(hHal);
+		*pBand = csr_get_current_band(pMac);
 		sme_release_global_lock(&pMac->sme);
 	}
 	return status;
