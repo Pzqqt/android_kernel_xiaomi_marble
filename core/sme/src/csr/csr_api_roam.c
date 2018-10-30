@@ -9955,9 +9955,15 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 		qdf_copy_macaddr(&roamInfo->bssid,
 			pNeighborRoamInfo->csrNeighborRoamProfile.BSSIDs.bssid);
 
+		/*
+		 * For LFR2, removal of policy mgr entry for disassociated
+		 * AP is handled in eCSR_ROAM_ROAMING_START.
+		 * eCSR_ROAM_RESULT_NOT_ASSOCIATED is sent to differentiate
+		 * eCSR_ROAM_ROAMING_START sent after FT preauth success
+		 */
 		csr_roam_call_callback(pMac, sessionId, roamInfo, 0,
 				       eCSR_ROAM_ROAMING_START,
-				       eCSR_ROAM_RESULT_NONE);
+				       eCSR_ROAM_RESULT_NOT_ASSOCIATED);
 
 		/*
 		 * Copy the connected profile to apply the same for this

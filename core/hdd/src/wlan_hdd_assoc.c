@@ -4902,6 +4902,23 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 			wlan_hdd_sae_callback(adapter, roam_info);
 		break;
 
+	case eCSR_ROAM_ROAMING_START:
+		/*
+		 * For LFR2, Handle roaming start to remove disassociated
+		 * session
+		 */
+		if (roaming_offload_enabled(hdd_ctx))
+			break;
+		if (roamResult == eCSR_ROAM_RESULT_NOT_ASSOCIATED) {
+			hdd_debug("Decrement session of disassociated AP device_mode %d sessionId %d",
+				  adapter->device_mode,
+				  adapter->session_id);
+			policy_mgr_decr_session_set_pcl(hdd_ctx->psoc,
+							adapter->device_mode,
+							adapter->session_id);
+		}
+		break;
+
 	default:
 		break;
 	}
