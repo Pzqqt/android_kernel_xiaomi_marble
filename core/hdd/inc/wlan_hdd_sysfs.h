@@ -21,6 +21,20 @@
 
 #ifdef WLAN_SYSFS
 /**
+ * hdd_sysfs_create_driver_root_obj() - create driver root kobject
+ *
+ * Return: none
+ */
+void hdd_sysfs_create_driver_root_obj(void);
+
+/**
+ * hdd_sysfs_destroy_driver_root_obj() - destroy driver root kobject
+ *
+ * Return: none
+ */
+void hdd_sysfs_destroy_driver_root_obj(void);
+
+/**
  * hdd_sysfs_create_version_interface() - create version interface
  * @psoc: PSOC ptr
  *
@@ -34,7 +48,29 @@ void hdd_sysfs_create_version_interface(struct wlan_objmgr_psoc *psoc);
  * Return: none
  */
 void hdd_sysfs_destroy_version_interface(void);
+/**
+ * hdd_sysfs_create_powerstats_interface() - create power_stats interface
+ *
+ * Return: none
+ */
+void hdd_sysfs_create_powerstats_interface(void);
+/**
+ * hdd_sysfs_destroy_powerstats_interface() - destroy power_stats interface
+ *
+ * Return: none
+ */
+void hdd_sysfs_destroy_powerstats_interface(void);
 #else
+static inline
+void hdd_sysfs_create_driver_root_obj(void)
+{
+}
+
+static inline
+void hdd_sysfs_destroy_driver_root_obj(void)
+{
+}
+
 static inline
 void hdd_sysfs_create_version_interface(struct wlan_objmgr_psoc *psoc)
 {
@@ -42,6 +78,16 @@ void hdd_sysfs_create_version_interface(struct wlan_objmgr_psoc *psoc)
 
 static inline
 void hdd_sysfs_destroy_version_interface(void)
+{
+}
+
+static inline
+void hdd_sysfs_create_powerstats_interface(void)
+{
+}
+
+static inline
+void hdd_sysfs_destroy_powerstats_interface(void)
 {
 }
 #endif
