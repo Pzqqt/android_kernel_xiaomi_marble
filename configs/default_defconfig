@@ -211,7 +211,7 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	CONFIG_WLAN_FEATURE_SAE := y
 
 	#Flag to enable Fast Path feature
-	ifeq ($(CONFIG_LITHIUM), n)
+	ifneq ($(CONFIG_LITHIUM), y)
 		CONFIG_WLAN_FASTPATH := y
 	endif
 
