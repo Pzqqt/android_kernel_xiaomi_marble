@@ -1494,16 +1494,8 @@ QDF_STATUS wlan_sap_update_next_channel(struct sap_context *sap_ctx,
 
 #ifdef FEATURE_SAP_COND_CHAN_SWITCH
 QDF_STATUS wlan_sap_set_pre_cac_status(struct sap_context *sap_ctx,
-				       bool status, tHalHandle handle)
+				       bool status)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(handle);
-
-	if (!mac_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid mac pointer", __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer", __func__);

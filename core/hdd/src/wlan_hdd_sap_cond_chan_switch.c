@@ -48,7 +48,7 @@ static int wlan_hdd_set_pre_cac_status(struct hdd_adapter *pre_cac_adapter,
 	QDF_STATUS ret;
 
 	ret = wlan_sap_set_pre_cac_status(
-		WLAN_HDD_GET_SAP_CTX_PTR(pre_cac_adapter), status, handle);
+		WLAN_HDD_GET_SAP_CTX_PTR(pre_cac_adapter), status);
 	if (QDF_IS_STATUS_ERROR(ret))
 		return -EINVAL;
 
