@@ -497,7 +497,7 @@ static QDF_STATUS csr_roam_get_qos_info_from_bss(tpAniSirGlobal pMac,
 						 tSirBssDescription *pBssDesc);
 static void csr_ser_des_unpack_diassoc_rsp(uint8_t *pBuf,
 					   tSirSmeDisassocRsp *pRsp);
-static void csr_init_operating_classes(tHalHandle hHal);
+static void csr_init_operating_classes(struct mac_context *mac);
 
 static void csr_add_len_of_social_channels(tpAniSirGlobal mac,
 		uint8_t *num_chan);
@@ -1061,7 +1061,7 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 	bufLen = sizeof(tSirUpdateChanList) +
 		 (sizeof(tSirUpdateChanParam) * (numChan));
 
-	csr_init_operating_classes((tHalHandle) pMac);
+	csr_init_operating_classes(pMac);
 	pChanList = qdf_mem_malloc(bufLen);
 	if (!pChanList)
 		return QDF_STATUS_E_NOMEM;
@@ -3420,7 +3420,7 @@ QDF_STATUS csr_apply_channel_and_power_list(tpAniSirGlobal pMac)
 					   &pMac->scan.base_channels,
 					   pMac->scan.countryCodeCurrent);
 
-	csr_init_operating_classes((tHalHandle) pMac);
+	csr_init_operating_classes(pMac);
 	return status;
 }
 
@@ -20809,26 +20809,25 @@ csr_update_op_class_array(tpAniSirGlobal mac_ctx,
 }
 
 /**
- * csr_update_op_class_array() - update op class for all bands
- * @hHal:          global hal context
+ * csr_init_operating_classes() - update op class for all bands
+ * @mac: pointer to mac context.
  *
  * Return: void
  */
-static void csr_init_operating_classes(tHalHandle hHal)
+static void csr_init_operating_classes(struct mac_context *mac)
 {
 	uint8_t i = 0;
 	uint8_t j = 0;
 	uint8_t swap = 0;
 	uint8_t numClasses = 0;
 	uint8_t opClasses[REG_MAX_SUPP_OPER_CLASSES] = {0,};
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	sme_debug("Current Country = %c%c",
-		pMac->scan.countryCodeCurrent[0],
-		pMac->scan.countryCodeCurrent[1]);
+		  mac->scan.countryCodeCurrent[0],
+		  mac->scan.countryCodeCurrent[1]);
 
-	csr_update_op_class_array(pMac, opClasses,
-				  &pMac->scan.base_channels, "20MHz", &i);
+	csr_update_op_class_array(mac, opClasses,
+				  &mac->scan.base_channels, "20MHz", &i);
 	numClasses = i;
 
 	/* As per spec the operating classes should be in ascending order.
