@@ -36,14 +36,13 @@
  * wlan_hdd_set_pre_cac_status() - Set the pre cac status
  * @pre_cac_adapter: AP adapter used for pre cac
  * @status: Status (true or false)
- * @handle: Global handle
  *
  * Sets the status of pre cac i.e., whether the pre cac is active or not
  *
  * Return: Zero on success, non-zero on failure
  */
 static int wlan_hdd_set_pre_cac_status(struct hdd_adapter *pre_cac_adapter,
-				       bool status, mac_handle_t handle)
+				       bool status)
 {
 	QDF_STATUS ret;
 
@@ -359,7 +358,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	 * anywhere, since after the pre cac success/failure, the pre cac
 	 * adapter itself would be removed.
 	 */
-	ret = wlan_hdd_set_pre_cac_status(pre_cac_adapter, true, mac_handle);
+	ret = wlan_hdd_set_pre_cac_status(pre_cac_adapter, true);
 	if (ret != 0) {
 		hdd_err("failed to set pre cac status");
 		goto stop_close_pre_cac_adapter;
