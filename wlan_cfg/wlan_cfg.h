@@ -741,6 +741,14 @@ int wlan_cfg_get_num_mac_rings(struct wlan_cfg_dp_pdev_ctxt *cfg);
 bool wlan_cfg_is_lro_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 /*
+ * wlan_cfg_is_gro_enabled - Return GRO enabled/disabled
+ * @wlan_cfg_dp_soc_ctxt
+ *
+ * Return: true - GRO enabled false - GRO disabled
+ */
+bool wlan_cfg_is_gro_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
  * wlan_cfg_is_rx_hash_enabled - Return RX hash enabled/disabled
  * @wlan_cfg_dp_soc_ctxt
  *

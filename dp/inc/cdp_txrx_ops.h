@@ -989,6 +989,7 @@ struct cdp_misc_ops {
 		uint64_t *fwd_tx_packets, uint64_t *fwd_rx_packets);
 	void (*pkt_log_init)(struct cdp_pdev *handle, void *scn);
 	void (*pkt_log_con_service)(struct cdp_pdev *pdev, void *scn);
+	int (*get_num_rx_contexts)(struct cdp_soc_t *soc);
 };
 
 /**
@@ -1282,7 +1283,7 @@ struct cdp_mob_stats_ops {
 
 #ifdef RECEIVE_OFFLOAD
 /**
- * struct cdp_rx_offld_ops - mcl receive offload ops
+ * struct cdp_rx_offld_ops - mcl host receive offload ops
  * @register_rx_offld_flush_cb:
  * @deregister_rx_offld_flush_cb:
  */

@@ -550,4 +550,24 @@ static inline void cdp_pkt_log_con_service(ol_txrx_soc_handle soc,
 
 	return;
 }
+
+/**
+ * cdp_get_num_rx_contexts() - API to get the number of RX contexts
+ * @soc: soc handle
+ *
+ * Return: number of RX contexts
+ */
+static inline int cdp_get_num_rx_contexts(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return 0;
+	}
+
+	if (soc->ops->misc_ops->get_num_rx_contexts)
+		return soc->ops->misc_ops->get_num_rx_contexts(soc);
+
+	return 0;
+}
 #endif /* _CDP_TXRX_MISC_H_ */

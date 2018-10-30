@@ -435,6 +435,26 @@ static void dp_pkt_log_con_service(struct cdp_pdev *ppdev, void *scn)
 }
 
 /**
+ * dp_get_num_rx_contexts() - get number of RX contexts
+ * @soc_hdl: cdp opaque soc handle
+ *
+ * Return: number of RX contexts
+ */
+static int dp_get_num_rx_contexts(struct cdp_soc_t *soc_hdl)
+{
+	int i;
+	int num_rx_contexts = 0;
+
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+
+	for (i = 0; i < wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx); i++)
+		if (wlan_cfg_get_rx_ring_mask(soc->wlan_cfg_ctx, i))
+			num_rx_contexts++;
+
+	return num_rx_contexts;
+}
+
+/**
  * dp_pktlogmod_exit() - API to cleanup pktlog info
  * @handle: Pdev handle
  *
@@ -2711,20 +2731,22 @@ fail1:
 
 static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force);
 
-static void dp_lro_hash_setup(struct dp_soc *soc, struct dp_pdev *pdev)
+static QDF_STATUS dp_lro_hash_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 	struct cdp_lro_hash_config lro_hash;
+	QDF_STATUS status;
 
 	if (!wlan_cfg_is_lro_enabled(soc->wlan_cfg_ctx) &&
-		!wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			 FL("LRO disabled RX hash disabled"));
-		return;
+	    !wlan_cfg_is_gro_enabled(soc->wlan_cfg_ctx) &&
+	    !wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx)) {
+		dp_err("LRO, GRO and RX hash disabled");
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	qdf_mem_zero(&lro_hash, sizeof(lro_hash));
 
-	if (wlan_cfg_is_lro_enabled(soc->wlan_cfg_ctx)) {
+	if (wlan_cfg_is_lro_enabled(soc->wlan_cfg_ctx) ||
+	    wlan_cfg_is_gro_enabled(soc->wlan_cfg_ctx)) {
 		lro_hash.lro_enable = 1;
 		lro_hash.tcp_flag = QDF_TCPHDR_ACK;
 		lro_hash.tcp_flag_mask = QDF_TCPHDR_FIN | QDF_TCPHDR_SYN |
@@ -2732,7 +2754,6 @@ static void dp_lro_hash_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 			 QDF_TCPHDR_ECE | QDF_TCPHDR_CWR;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW, FL("enabled"));
 	qdf_get_random_bytes(lro_hash.toeplitz_hash_ipv4,
 		 (sizeof(lro_hash.toeplitz_hash_ipv4[0]) *
 		 LRO_IPV4_SEED_ARR_SZ));
@@ -2740,28 +2761,38 @@ static void dp_lro_hash_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 		 (sizeof(lro_hash.toeplitz_hash_ipv6[0]) *
 		 LRO_IPV6_SEED_ARR_SZ));
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
-		 "lro_hash: lro_enable: 0x%x tcp_flag 0x%x tcp_flag_mask 0x%x",
-		 lro_hash.lro_enable, lro_hash.tcp_flag,
-		 lro_hash.tcp_flag_mask);
-
-	qdf_trace_hex_dump(QDF_MODULE_ID_DP,
-		 QDF_TRACE_LEVEL_ERROR,
-		 (void *)lro_hash.toeplitz_hash_ipv4,
-		 (sizeof(lro_hash.toeplitz_hash_ipv4[0]) *
-		 LRO_IPV4_SEED_ARR_SZ));
-
-	qdf_trace_hex_dump(QDF_MODULE_ID_DP,
-		 QDF_TRACE_LEVEL_ERROR,
-		 (void *)lro_hash.toeplitz_hash_ipv6,
-		 (sizeof(lro_hash.toeplitz_hash_ipv6[0]) *
-		 LRO_IPV6_SEED_ARR_SZ));
-
 	qdf_assert(soc->cdp_soc.ol_ops->lro_hash_config);
 
-	if (soc->cdp_soc.ol_ops->lro_hash_config)
-		(void)soc->cdp_soc.ol_ops->lro_hash_config
-			(pdev->ctrl_pdev, &lro_hash);
+	if (!soc->cdp_soc.ol_ops->lro_hash_config) {
+		QDF_BUG(0);
+		dp_err("lro_hash_config not configured");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = soc->cdp_soc.ol_ops->lro_hash_config(pdev->ctrl_pdev,
+						      &lro_hash);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		dp_err("failed to send lro_hash_config to FW %u", status);
+		return status;
+	}
+
+	dp_info("LRO CMD config: lro_enable: 0x%x tcp_flag 0x%x tcp_flag_mask 0x%x",
+		lro_hash.lro_enable, lro_hash.tcp_flag,
+		lro_hash.tcp_flag_mask);
+
+	dp_info("toeplitz_hash_ipv4:");
+	qdf_trace_hex_dump(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			   (void *)lro_hash.toeplitz_hash_ipv4,
+			   (sizeof(lro_hash.toeplitz_hash_ipv4[0]) *
+			   LRO_IPV4_SEED_ARR_SZ));
+
+	dp_info("toeplitz_hash_ipv6:");
+	qdf_trace_hex_dump(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			   (void *)lro_hash.toeplitz_hash_ipv6,
+			   (sizeof(lro_hash.toeplitz_hash_ipv6[0]) *
+			   LRO_IPV6_SEED_ARR_SZ));
+
+	return status;
 }
 
 /*
@@ -4175,14 +4206,6 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 
 	if (pdev->vdev_count == 1)
 		dp_lro_hash_setup(soc, pdev);
-
-	/* LRO */
-	if (wlan_cfg_is_lro_enabled(soc->wlan_cfg_ctx) &&
-		wlan_op_mode_sta == vdev->opmode)
-		vdev->lro_enable = true;
-
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		 "LRO: vdev_id %d lro_enable %d", vdev_id, vdev->lro_enable);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 		"Created vdev %pK (%pM)", vdev, vdev->mac_addr.raw);
@@ -8506,6 +8529,7 @@ QDF_STATUS dp_update_config_parameters(struct cdp_soc *psoc,
 				params->tcp_udp_checksumoffload;
 	soc->wlan_cfg_ctx->napi_enabled = params->napi_enable;
 	soc->wlan_cfg_ctx->ipa_enabled = params->ipa_enable;
+	soc->wlan_cfg_ctx->gro_enabled = params->gro_enable;
 
 	dp_update_flow_control_parameters(soc, params);
 
@@ -9138,6 +9162,7 @@ static struct cdp_misc_ops dp_ops_misc = {
 #endif /* FEATURE_RUNTIME_PM */
 	.pkt_log_init = dp_pkt_log_init,
 	.pkt_log_con_service = dp_pkt_log_con_service,
+	.get_num_rx_contexts = dp_get_num_rx_contexts,
 };
 
 static struct cdp_flowctl_ops dp_ops_flowctl = {

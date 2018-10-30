@@ -721,6 +721,11 @@ int wlan_cfg_get_num_mac_rings(struct wlan_cfg_dp_pdev_ctxt *cfg)
 	return  cfg->num_mac_rings;
 }
 
+bool wlan_cfg_is_gro_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return  cfg->gro_enabled;
+}
+
 bool wlan_cfg_is_lro_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return  cfg->lro_enabled;

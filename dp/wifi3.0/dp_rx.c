@@ -887,62 +887,51 @@ void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
 }
 #endif
 
-#if defined(FEATURE_LRO)
-static void dp_rx_print_lro_info(uint8_t *rx_tlv)
+#ifdef RECEIVE_OFFLOAD
+/**
+ * dp_rx_print_offload_info() - Print offload info from RX TLV
+ * @rx_tlv: RX TLV for which offload information is to be printed
+ *
+ * Return: None
+ */
+static void dp_rx_print_offload_info(uint8_t *rx_tlv)
 {
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-	FL("----------------------RX DESC LRO----------------------"));
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		FL("lro_eligible 0x%x"), HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		FL("pure_ack 0x%x"), HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		FL("chksum 0x%x"), HAL_RX_TLV_GET_TCP_CHKSUM(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		FL("TCP seq num 0x%x"), HAL_RX_TLV_GET_TCP_SEQ(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		FL("TCP ack num 0x%x"), HAL_RX_TLV_GET_TCP_ACK(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		FL("TCP window 0x%x"), HAL_RX_TLV_GET_TCP_WIN(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		FL("TCP protocol 0x%x"), HAL_RX_TLV_GET_TCP_PROTO(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		FL("TCP offset 0x%x"), HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		FL("toeplitz 0x%x"), HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv));
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-	FL("---------------------------------------------------------"));
+	dp_debug("----------------------RX DESC LRO/GRO----------------------");
+	dp_debug("lro_eligible 0x%x", HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv));
+	dp_debug("pure_ack 0x%x", HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv));
+	dp_debug("chksum 0x%x", HAL_RX_TLV_GET_TCP_CHKSUM(rx_tlv));
+	dp_debug("TCP seq num 0x%x", HAL_RX_TLV_GET_TCP_SEQ(rx_tlv));
+	dp_debug("TCP ack num 0x%x", HAL_RX_TLV_GET_TCP_ACK(rx_tlv));
+	dp_debug("TCP window 0x%x", HAL_RX_TLV_GET_TCP_WIN(rx_tlv));
+	dp_debug("TCP protocol 0x%x", HAL_RX_TLV_GET_TCP_PROTO(rx_tlv));
+	dp_debug("TCP offset 0x%x", HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv));
+	dp_debug("toeplitz 0x%x", HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv));
+	dp_debug("---------------------------------------------------------");
 }
 
 /**
- * dp_rx_lro() - LRO related processing
- * @rx_tlv: TLV data extracted from the rx packet
- * @peer: destination peer of the msdu
- * @msdu: network buffer
- * @ctx: LRO context
+ * dp_rx_fill_gro_info() - Fill GRO info from RX TLV into skb->cb
+ * @soc: DP SOC handle
+ * @rx_tlv: RX TLV received for the msdu
+ * @msdu: msdu for which GRO info needs to be filled
  *
- * This function performs the LRO related processing of the msdu
- *
- * Return: true: LRO enabled false: LRO is not enabled
+ * Return: None
  */
-static void dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
-	 qdf_nbuf_t msdu, qdf_lro_ctx_t ctx)
+static
+void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,
+			 qdf_nbuf_t msdu)
 {
-	if (!peer || !peer->vdev || !peer->vdev->lro_enable) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			 FL("no peer, no vdev or LRO disabled"));
-		QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu) = 0;
+	if (!wlan_cfg_is_gro_enabled(soc->wlan_cfg_ctx))
 		return;
-	}
-	qdf_assert(rx_tlv);
-	dp_rx_print_lro_info(rx_tlv);
+
+	/* Filling up RX offload info only for TCP packets */
+	if (!HAL_RX_TLV_GET_TCP_PROTO(rx_tlv))
+		return;
 
 	QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu) =
 		 HAL_RX_TLV_GET_LRO_ELIGIBLE(rx_tlv);
-
 	QDF_NBUF_CB_RX_TCP_PURE_ACK(msdu) =
 			HAL_RX_TLV_GET_TCP_PURE_ACK(rx_tlv);
-
 	QDF_NBUF_CB_RX_TCP_CHKSUM(msdu) =
 			 HAL_RX_TLV_GET_TCP_CHKSUM(rx_tlv);
 	QDF_NBUF_CB_RX_TCP_SEQ_NUM(msdu) =
@@ -959,15 +948,15 @@ static void dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
 			 HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv);
 	QDF_NBUF_CB_RX_FLOW_ID(msdu) =
 			 HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv);
-	QDF_NBUF_CB_RX_LRO_CTX(msdu) = (unsigned char *)ctx;
 
+	dp_rx_print_offload_info(rx_tlv);
 }
 #else
-static void dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
-	 qdf_nbuf_t msdu, qdf_lro_ctx_t ctx)
+static void dp_rx_fill_gro_info(struct dp_soc *soc, uint8_t *rx_tlv,
+				qdf_nbuf_t msdu)
 {
 }
-#endif
+#endif /* RECEIVE_OFFLOAD */
 
 /**
  * dp_rx_adjust_nbuf_len() - set appropriate msdu length in nbuf.
@@ -1756,7 +1745,7 @@ done:
 				}
 		}
 
-		dp_rx_lro(rx_tlv_hdr, peer, nbuf, int_ctx->lro_ctx);
+		dp_rx_fill_gro_info(soc, rx_tlv_hdr, nbuf);
 		qdf_nbuf_cb_update_peer_local_id(nbuf, peer->local_id);
 		DP_RX_LIST_APPEND(deliver_list_head,
 				  deliver_list_tail,

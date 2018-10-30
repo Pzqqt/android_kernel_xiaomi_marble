@@ -1482,7 +1482,6 @@ struct dp_vdev {
 
 	/* VDEV Stats */
 	struct cdp_vdev_stats stats;
-	bool lro_enable;
 
 	/* Is this a proxySTA VAP */
 	bool proxysta_vdev;
