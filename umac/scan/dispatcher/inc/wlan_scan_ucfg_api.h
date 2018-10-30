@@ -28,6 +28,7 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_scan_public_structs.h>
+#include "wlan_scan_api.h"
 
 /**
  * ucfg_scan_register_requester() - assigns requester ID to caller and
@@ -629,41 +630,58 @@ void ucfg_scan_set_vdev_del_in_progress(struct wlan_objmgr_vdev *vdev);
 void ucfg_scan_clear_vdev_del_in_progress(struct wlan_objmgr_vdev *vdev);
 
 /**
- * wlan_scan_cfg_set_active_dwelltime() - API to set scan active dwelltime
+ * ucfg_scan_cfg_set_active_dwelltime() - API to set scan active dwelltime
  * @psoc: pointer to psoc object
  * @dwell_time: scan active dwell time
  *
  * Return: none
  */
-void wlan_scan_cfg_set_active_dwelltime(struct wlan_objmgr_psoc *psoc,
-					uint32_t dwell_time);
-/**
- * wlan_scan_cfg_get_active_dwelltime() - API to get active dwelltime
- * @psoc: pointer to psoc object
- * @dwell_time: scan active dwelltime
- *
- * Return: scan active dwell time
- */
-void wlan_scan_cfg_get_active_dwelltime(struct wlan_objmgr_psoc *psoc,
-					uint32_t *dwell_time);
+static inline
+void ucfg_scan_cfg_set_active_dwelltime(struct wlan_objmgr_psoc *psoc,
+					uint32_t dwell_time)
+{
+	return wlan_scan_cfg_set_active_dwelltime(psoc, dwell_time);
+}
 
 /**
- * wlan_scan_cfg_set_passive_dwelltime() - API to set scan active dwelltime
- * @psoc: pointer to psoc object
- * @dwell_time: scan active dwell time
- *
- * Return: none
- */
-void wlan_scan_cfg_set_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
-					 uint32_t dwell_time);
-/**
- * wlan_scan_cfg_get_passive_dwelltime() - API to get active dwelltime
+ * ucfg_scan_cfg_get_active_dwelltime() - API to get active dwelltime
  * @psoc: pointer to psoc object
  * @dwell_time: scan active dwelltime
  *
  * Return: scan active dwell time
  */
-void wlan_scan_cfg_get_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
-					 uint32_t *dwell_time);
+static inline
+void ucfg_scan_cfg_get_active_dwelltime(struct wlan_objmgr_psoc *psoc,
+					uint32_t *dwell_time)
+{
+	return wlan_scan_cfg_get_active_dwelltime(psoc, dwell_time);
+}
+
+/**
+ * ucfg_scan_cfg_set_passive_dwelltime() - API to set scan passive dwelltime
+ * @psoc: pointer to psoc object
+ * @dwell_time: scan passive dwell time
+ *
+ * Return: none
+ */
+static inline
+void ucfg_scan_cfg_set_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
+					 uint32_t dwell_time)
+{
+	return wlan_scan_cfg_set_passive_dwelltime(psoc, dwell_time);
+}
+/**
+ * ucfg_scan_cfg_get_passive_dwelltime() - API to get passive dwelltime
+ * @psoc: pointer to psoc object
+ * @dwell_time: scan passive dwelltime
+ *
+ * Return: scan passive dwell time
+ */
+static inline
+void ucfg_scan_cfg_get_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
+					 uint32_t *dwell_time)
+{
+	return wlan_scan_cfg_get_passive_dwelltime(psoc, dwell_time);
+}
 
 #endif

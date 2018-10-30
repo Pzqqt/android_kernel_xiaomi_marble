@@ -987,6 +987,8 @@ ucfg_scan_set_wide_band_scan(struct wlan_objmgr_pdev *pdev, bool enable)
 	}
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 	scan_obj = wlan_pdev_get_scan_obj(pdev);
+	if (!scan_obj)
+		return QDF_STATUS_E_FAILURE;
 
 	scm_debug("set wide_band_scan to %d", enable);
 	scan_obj->pdev_info[pdev_id].wide_band_scan = enable;
@@ -1005,6 +1007,8 @@ bool ucfg_scan_get_wide_band_scan(struct wlan_objmgr_pdev *pdev)
 	}
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 	scan_obj = wlan_pdev_get_scan_obj(pdev);
+	if (!scan_obj)
+		return QDF_STATUS_E_FAILURE;
 
 	return scan_obj->pdev_info[pdev_id].wide_band_scan;
 }
@@ -1023,6 +1027,8 @@ ucfg_scan_config_hidden_ssid_for_bssid(struct wlan_objmgr_pdev *pdev,
 	}
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 	scan_obj = wlan_pdev_get_scan_obj(pdev);
+	if (!scan_obj)
+		return QDF_STATUS_E_FAILURE;
 
 	scm_debug("Configure bsssid:%pM ssid:%.*s",
 		  bssid, ssid->length, ssid->ssid);
@@ -1166,6 +1172,9 @@ ucfg_scan_register_requester(struct wlan_objmgr_psoc *psoc,
 		return 0;
 	}
 	scan = wlan_psoc_get_scan_obj(psoc);
+	if (!scan)
+		return 0;
+
 	requesters = scan->requesters;
 	qdf_spin_lock_bh(&scan->lock);
 	for (i = 0; i < WLAN_MAX_REQUESTORS; ++i) {
@@ -1216,6 +1225,8 @@ ucfg_scan_unregister_requester(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 	scan = wlan_psoc_get_scan_obj(psoc);
+	if (!scan)
+		return;
 	requesters = scan->requesters;
 	scm_debug("reqid: %d", requester);
 
@@ -1240,6 +1251,9 @@ ucfg_get_scan_requester_name(struct wlan_objmgr_psoc *psoc,
 		return "null";
 	}
 	scan = wlan_psoc_get_scan_obj(psoc);
+	if (!scan)
+		return "null";
+
 	requesters = scan->requesters;
 
 	if ((idx < WLAN_MAX_REQUESTORS) &&
@@ -1339,62 +1353,6 @@ ucfg_scan_register_event_handler(struct wlan_objmgr_pdev *pdev,
 	scm_debug("event_cb: 0x%pK, arg: 0x%pK", event_cb, arg);
 
 	return QDF_STATUS_SUCCESS;
-}
-
-void wlan_scan_cfg_get_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
-					 uint32_t *dwell_time)
-{
-	struct wlan_scan_obj *scan_obj;
-
-	scan_obj = wlan_psoc_get_scan_obj(psoc);
-	if (!scan_obj) {
-		scm_err("Failed to get scan object");
-		return;
-	}
-
-	*dwell_time = scan_obj->scan_def.passive_dwell;
-}
-
-void wlan_scan_cfg_set_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
-					 uint32_t dwell_time)
-{
-	struct wlan_scan_obj *scan_obj;
-
-	scan_obj = wlan_psoc_get_scan_obj(psoc);
-	if (!scan_obj) {
-		scm_err("Failed to get scan object");
-		return;
-	}
-
-	scan_obj->scan_def.passive_dwell = dwell_time;
-}
-
-void wlan_scan_cfg_get_active_dwelltime(struct wlan_objmgr_psoc *psoc,
-					uint32_t *dwell_time)
-{
-	struct wlan_scan_obj *scan_obj;
-
-	scan_obj = wlan_psoc_get_scan_obj(psoc);
-	if (!scan_obj) {
-		scm_err("Failed to get scan object");
-		return;
-	}
-
-	*dwell_time = scan_obj->scan_def.active_dwell;
-}
-
-void wlan_scan_cfg_set_active_dwelltime(struct wlan_objmgr_psoc *psoc,
-					uint32_t dwell_time)
-{
-	struct wlan_scan_obj *scan_obj;
-
-	scan_obj = wlan_psoc_get_scan_obj(psoc);
-	if (!scan_obj) {
-		scm_err("Failed to get scan object");
-		return;
-	}
-
-	scan_obj->scan_def.active_dwell = dwell_time;
 }
 
 static QDF_STATUS
@@ -1509,6 +1467,9 @@ ucfg_scan_unregister_event_handler(struct wlan_objmgr_pdev *pdev,
 		return;
 	}
 	scan = wlan_pdev_get_scan_obj(pdev);
+	if (!scan)
+		return;
+
 	pdev_ev_handler = wlan_pdev_get_pdev_scan_ev_handlers(pdev);
 	cb_handler = &(pdev_ev_handler->cb_handlers[0]);
 

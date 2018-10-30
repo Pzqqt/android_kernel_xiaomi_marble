@@ -510,15 +510,23 @@ struct wlan_scan_obj {
  *
  * Return: scan object
  */
+#define wlan_psoc_get_scan_obj(psoc) \
+	wlan_psoc_get_scan_obj_fl(psoc, \
+				  __func__, __LINE__)
+
 static inline struct wlan_scan_obj *
-wlan_psoc_get_scan_obj(struct wlan_objmgr_psoc *psoc)
+wlan_psoc_get_scan_obj_fl(struct wlan_objmgr_psoc *psoc,
+			  const char *func, uint32_t line)
 {
 	struct wlan_scan_obj *scan_obj;
 
 	scan_obj = (struct wlan_scan_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_UMAC_COMP_SCAN);
-
+	if (!scan_obj) {
+		scm_err("%s:%u, Failed to get scan object", func, line);
+		return NULL;
+	}
 	return scan_obj;
 }
 
