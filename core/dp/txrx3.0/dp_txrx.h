@@ -28,11 +28,9 @@
 /**
  * struct dp_txrx_config - dp txrx configuration passed to dp txrx modules
  * @enable_dp_rx_threads: enable DP rx threads or not
- * @num_rx_threads: number of DP RX threads
  */
 struct dp_txrx_config {
 	bool enable_rx_threads;
-	uint8_t num_rx_threads;
 };
 
 struct dp_txrx_handle_cmn;
@@ -166,6 +164,16 @@ ret:
 	return qdf_status;
 }
 
+/**
+ * dp_rx_enqueue_pkt() - enqueue packet(s) into the thread
+ * @soc: ol_txrx_soc_handle object
+ * @nbuf_list: list of packets to be queued into the rx_thread
+ *
+ * The function accepts a list of skbs connected by the skb->next pointer and
+ * queues them into a RX thread to be sent to the stack.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error qdf status on failure
+ */
 static inline
 QDF_STATUS dp_rx_enqueue_pkt(ol_txrx_soc_handle soc, qdf_nbuf_t nbuf_list)
 {
@@ -190,7 +198,14 @@ ret:
 	return qdf_status;
 }
 
-static inline QDF_STATUS dp_txrx_dump_stats(ol_txrx_soc_handle soc)
+/**
+ * dp_txrx_ext_dump_stats() - dump txrx external module stats
+ * @soc: ol_txrx_soc_handle object
+ *
+ *
+ * Return: QDF_STATUS_SUCCESS on success, error qdf status on failure
+ */
+static inline QDF_STATUS dp_txrx_ext_dump_stats(ol_txrx_soc_handle soc)
 {
 	struct dp_txrx_handle *dp_ext_hdl;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -211,7 +226,37 @@ static inline QDF_STATUS dp_txrx_dump_stats(ol_txrx_soc_handle soc)
 ret:
 	return qdf_status;
 }
+
+/**
+ * dp_rx_get_napi_context() - get NAPI context for a RX CTX ID
+ * @soc: ol_txrx_soc_handle object
+ * @rx_ctx_id: RX context ID (RX thread ID) corresponding to which NAPI is
+ *             needed
+ *
+ * Return: NULL on failure, else pointer to NAPI corresponding to rx_ctx_id
+ */
+static inline
+struct napi_struct *dp_rx_get_napi_context(ol_txrx_soc_handle soc,
+					   uint8_t rx_ctx_id)
+{
+	struct dp_txrx_handle *dp_ext_hdl;
+
+	if (!soc) {
+		dp_err("soc in NULL!");
+		return NULL;
+	}
+
+	dp_ext_hdl = cdp_soc_get_dp_txrx_handle(soc);
+	if (!dp_ext_hdl) {
+		dp_err("dp_ext_hdl in NULL!");
+		return NULL;
+	}
+
+	return dp_rx_tm_get_napi_context(&dp_ext_hdl->rx_tm_hdl, rx_ctx_id);
+}
+
 #else
+
 static inline
 QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 			    struct dp_txrx_config *config)
@@ -240,9 +285,16 @@ QDF_STATUS dp_rx_enqueue_pkt(ol_txrx_soc_handle soc, qdf_nbuf_t nbuf_list)
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS dp_txrx_dump_stats(ol_txrx_soc_handle soc)
+static inline QDF_STATUS dp_txrx_ext_dump_stats(ol_txrx_soc_handle soc)
 {
 	return QDF_STATUS_SUCCESS;
+}
+
+static inline
+struct napi_struct *dp_rx_get_napi_context(ol_txrx_soc_handle soc,
+					   uint8_t rx_ctx_id)
+{
+	return NULL;
 }
 #endif /* FEATURE_WLAN_DP_RX_THREADS */
 #endif /* _DP_TXRX_H */

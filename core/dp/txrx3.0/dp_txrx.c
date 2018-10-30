@@ -19,12 +19,14 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <dp_txrx.h>
 #include <cdp_txrx_cmn.h>
+#include <cdp_txrx_misc.h>
 
 QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 			struct dp_txrx_config *config)
 {
 	struct dp_txrx_handle *dp_ext_hdl;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	uint8_t num_dp_rx_threads;
 
 	dp_ext_hdl = qdf_mem_malloc(sizeof(*dp_ext_hdl));
 	if (!dp_ext_hdl) {
@@ -40,9 +42,11 @@ QDF_STATUS dp_txrx_init(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 	dp_ext_hdl->rx_tm_hdl.txrx_handle_cmn =
 				dp_txrx_get_cmn_hdl_frm_ext_hdl(dp_ext_hdl);
 
+	num_dp_rx_threads = cdp_get_num_rx_contexts(soc);
+
 	if (dp_ext_hdl->config.enable_rx_threads) {
 		qdf_status = dp_rx_tm_init(&dp_ext_hdl->rx_tm_hdl,
-					   dp_ext_hdl->config.num_rx_threads);
+					   num_dp_rx_threads);
 	}
 
 	return qdf_status;

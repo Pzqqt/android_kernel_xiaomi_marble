@@ -3010,6 +3010,7 @@ void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
 	uint32_t total_rx_pkt = 0, total_rx_dropped = 0;
 	uint32_t total_rx_delv = 0, total_rx_refused = 0;
 	int i = 0;
+	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
 
 	for (; i < NUM_CPUS; i++) {
 		total_rx_pkt += stats->rx_packets[i];
@@ -3019,39 +3020,42 @@ void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
 	}
 
 	len = scnprintf(buffer, buf_len,
-		"\nTransmit[%lu] - "
-		"called %u, dropped %u orphan %u,"
-		"\n[dropped]    BK %u, BE %u, VI %u, VO %u"
-		"\n[classified] BK %u, BE %u, VI %u, VO %u"
-		"\n\nReceive[%lu] - "
-		"packets %u, dropped %u, delivered %u, refused %u"
-		"\n",
-		qdf_system_ticks(),
-		stats->tx_called,
-		stats->tx_dropped,
-		stats->tx_orphaned,
-
-		stats->tx_dropped_ac[SME_AC_BK],
-		stats->tx_dropped_ac[SME_AC_BE],
-		stats->tx_dropped_ac[SME_AC_VI],
-		stats->tx_dropped_ac[SME_AC_VO],
-
-		stats->tx_classified_ac[SME_AC_BK],
-		stats->tx_classified_ac[SME_AC_BE],
-		stats->tx_classified_ac[SME_AC_VI],
-		stats->tx_classified_ac[SME_AC_VO],
-		qdf_system_ticks(),
-		total_rx_pkt, total_rx_dropped, total_rx_delv, total_rx_refused
-		);
+			"\nTransmit[%lu] - "
+			"called %u, dropped %u orphan %u,"
+			"\n[dropped]    BK %u, BE %u, VI %u, VO %u"
+			"\n[classified] BK %u, BE %u, VI %u, VO %u"
+			"\n\nReceive[%lu] - "
+			"packets %u, dropped %u, delivered %u, refused %u\n"
+			"GRO - agg %u non-agg %u flushes(%u %u) disabled(conc %u low-tput %u)\n",
+			qdf_system_ticks(),
+			stats->tx_called,
+			stats->tx_dropped,
+			stats->tx_orphaned,
+			stats->tx_dropped_ac[SME_AC_BK],
+			stats->tx_dropped_ac[SME_AC_BE],
+			stats->tx_dropped_ac[SME_AC_VI],
+			stats->tx_dropped_ac[SME_AC_VO],
+			stats->tx_classified_ac[SME_AC_BK],
+			stats->tx_classified_ac[SME_AC_BE],
+			stats->tx_classified_ac[SME_AC_VI],
+			stats->tx_classified_ac[SME_AC_VO],
+			qdf_system_ticks(),
+			total_rx_pkt, total_rx_dropped, total_rx_delv,
+			total_rx_refused,
+			stats->rx_aggregated, stats->rx_non_aggregated,
+			stats->rx_gro_flushes,
+			stats->rx_gro_force_flushes,
+			qdf_atomic_read(&hdd_ctx->disable_rx_ol_in_concurrency),
+			qdf_atomic_read(&hdd_ctx->disable_rx_ol_in_low_tput));
 
 	for (i = 0; i < NUM_CPUS; i++) {
 		if (stats->rx_packets[i] == 0)
 			continue;
 		len += scnprintf(buffer + len, buf_len - len,
-			"Rx CPU[%d]:"
-			"packets %u, dropped %u, delivered %u, refused %u\n",
-			i, stats->rx_packets[i], stats->rx_dropped[i],
-			stats->rx_delivered[i], stats->rx_refused[i]);
+				 "Rx CPU[%d]:"
+				 "packets %u, dropped %u, delivered %u, refused %u\n",
+				 i, stats->rx_packets[i], stats->rx_dropped[i],
+				 stats->rx_delivered[i], stats->rx_refused[i]);
 	}
 
 	len += scnprintf(buffer + len, buf_len - len,
@@ -3065,7 +3069,7 @@ void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
 		stats->txflow_unpause_cnt);
 
 	len += cdp_stats(cds_get_context(QDF_MODULE_ID_SOC),
-		adapter->session_id, &buffer[len], (buf_len - len));
+			 adapter->session_id, &buffer[len], (buf_len - len));
 	*length = len + 1;
 }
 

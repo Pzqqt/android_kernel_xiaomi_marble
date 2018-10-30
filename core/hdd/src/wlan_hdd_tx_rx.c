@@ -24,7 +24,6 @@
 
 /* denote that this file does not allow legacy hddLog */
 #define HDD_DISALLOW_LEGACY_HDDLOG 1
-
 #include <wlan_hdd_tx_rx.h>
 #include <wlan_hdd_softap_tx_rx.h>
 #include <wlan_hdd_napi.h>
@@ -61,6 +60,7 @@
 #include "wlan_hdd_nud_tracking.h"
 #include "dp_txrx.h"
 #include "cfg_ucfg_api.h"
+#include "target_type.h"
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /*
@@ -1530,33 +1530,136 @@ static void hdd_resolve_rx_ol_mode(struct hdd_context *hdd_ctx)
 		cdp_cfg_get(soc, cfg_dp_lro_enable) &&
 			cdp_cfg_get(soc, cfg_dp_gro_enable) ?
 		hdd_err("Can't enable both LRO and GRO, disabling Rx offload") :
-		hdd_debug("LRO and GRO both are disabled");
+		hdd_info("LRO and GRO both are disabled");
 		hdd_ctx->ol_enable = 0;
 	} else if (cdp_cfg_get(soc, cfg_dp_lro_enable)) {
 		hdd_debug("Rx offload LRO is enabled");
 		hdd_ctx->ol_enable = CFG_LRO_ENABLED;
 	} else {
-		hdd_debug("Rx offload GRO is enabled");
+		hdd_info("Rx offload: GRO is enabled");
 		hdd_ctx->ol_enable = CFG_GRO_ENABLED;
 	}
 }
 
 /**
- * hdd_gro_rx() - Handle Rx procesing via GRO
+ * hdd_gro_rx_bh_disable() - GRO RX/flush function.
+ * @napi_to_use: napi to be used to give packets to the stack, gro flush
+ * @skb: pointer to sk_buff
+ *
+ * Function calls napi_gro_receive for the skb. If the skb indicates that a
+ * flush needs to be done (set by the lower DP layer), the function also calls
+ * napi_gro_flush. Local softirqs are disabled (and later enabled) while making
+ * napi_gro__ calls.
+ *
+ * Return: QDF_STATUS_SUCCESS if not dropped by napi_gro_receive or
+ *	   QDF error code.
+ */
+static QDF_STATUS hdd_gro_rx_bh_disable(struct hdd_adapter *adapter,
+					struct napi_struct *napi_to_use,
+					struct sk_buff *skb)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	gro_result_t gro_res;
+	bool flush_ind = QDF_NBUF_CB_RX_FLUSH_IND(skb);
+
+	skb_set_hash(skb, QDF_NBUF_CB_RX_FLOW_ID(skb), PKT_HASH_TYPE_L4);
+
+	local_bh_disable();
+	gro_res = napi_gro_receive(napi_to_use, skb);
+	if (flush_ind)
+		napi_gro_flush(napi_to_use, false);
+	local_bh_enable();
+
+	if (gro_res != GRO_DROP)
+		status = QDF_STATUS_SUCCESS;
+
+	if (flush_ind)
+		adapter->hdd_stats.tx_rx_stats.rx_gro_flushes++;
+
+	return status;
+}
+
+/**
+ * hdd_gro_rx_dp_thread() - Handle Rx procesing via GRO for DP thread
  * @adapter: pointer to adapter context
  * @skb: pointer to sk_buff
  *
  * Return: QDF_STATUS_SUCCESS if processed via GRO or non zero return code
  */
-static QDF_STATUS hdd_gro_rx(struct hdd_adapter *adapter, struct sk_buff *skb)
+static
+QDF_STATUS hdd_gro_rx_dp_thread(struct hdd_adapter *adapter,
+				struct sk_buff *skb)
+{
+	struct napi_struct *napi_to_use = NULL;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	bool gro_disabled_temp = false;
+	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
+
+	if (!adapter->hdd_ctx->enable_dp_rx_threads) {
+		hdd_dp_err_rl("gro not supported without DP RX thread!");
+		status = QDF_STATUS_E_FAILURE;
+		return status;
+	}
+
+	napi_to_use =
+		dp_rx_get_napi_context(cds_get_context(QDF_MODULE_ID_SOC),
+				       QDF_NBUF_CB_RX_CTX_ID(skb));
+
+	if (!napi_to_use) {
+		hdd_dp_err_rl("no napi to use for GRO!");
+		status = QDF_STATUS_E_FAILURE;
+		return status;
+	}
+
+	gro_disabled_temp =
+		qdf_atomic_read(&hdd_ctx->disable_rx_ol_in_low_tput);
+
+	if (!gro_disabled_temp) {
+		/* nothing to do */
+	} else {
+		/*
+		 * GRO is disabled temporarily, but there is a pending
+		 * gro_list, flush it.
+		 */
+		if (napi_to_use->gro_list) {
+			QDF_NBUF_CB_RX_FLUSH_IND(skb) = 1;
+			adapter->hdd_stats.tx_rx_stats.rx_gro_force_flushes++;
+		} else {
+			hdd_err_rl("GRO disabled - return");
+			status = QDF_STATUS_E_FAILURE;
+			return status;
+		}
+	}
+
+	status = hdd_gro_rx_bh_disable(adapter, napi_to_use, skb);
+
+	return status;
+}
+
+/**
+ * hdd_gro_rx_legacy() - Handle Rx processing via GRO for ihelium based targets
+ * @adapter: pointer to adapter context
+ * @skb: pointer to sk_buff
+ *
+ * Supports GRO for only station mode
+ *
+ * Return: QDF_STATUS_SUCCESS if processed via GRO or non zero return code
+ */
+static
+QDF_STATUS hdd_gro_rx_legacy(struct hdd_adapter *adapter, struct sk_buff *skb)
 {
 	struct qca_napi_info *qca_napii;
 	struct qca_napi_data *napid;
 	struct napi_struct *napi_to_use;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
 
 	/* Only enabling it for STA mode like LRO today */
 	if (QDF_STA_MODE != adapter->device_mode)
+		return QDF_STATUS_E_NOSUPPORT;
+
+	if (qdf_atomic_read(&hdd_ctx->disable_rx_ol_in_low_tput) ||
+	    qdf_atomic_read(&hdd_ctx->disable_rx_ol_in_concurrency))
 		return QDF_STATUS_E_NOSUPPORT;
 
 	napid = hdd_napi_get_all();
@@ -1567,7 +1670,6 @@ static QDF_STATUS hdd_gro_rx(struct hdd_adapter *adapter, struct sk_buff *skb)
 	if (unlikely(qca_napii == NULL))
 		goto out;
 
-	skb_set_hash(skb, QDF_NBUF_CB_RX_FLOW_ID(skb), PKT_HASH_TYPE_L4);
 	/*
 	 * As we are breaking context in Rxthread mode, there is rx_thread NAPI
 	 * corresponds each hif_napi.
@@ -1577,11 +1679,7 @@ static QDF_STATUS hdd_gro_rx(struct hdd_adapter *adapter, struct sk_buff *skb)
 	else
 		napi_to_use = &qca_napii->napi;
 
-	local_bh_disable();
-	napi_gro_receive(napi_to_use, skb);
-	local_bh_enable();
-
-	status = QDF_STATUS_SUCCESS;
+	status = hdd_gro_rx_bh_disable(adapter, napi_to_use, skb);
 out:
 
 	return status;
@@ -1643,12 +1741,14 @@ static void hdd_qdf_lro_flush(void *data)
 
 /**
  * hdd_register_rx_ol() - Register LRO/GRO rx processing callbacks
+ * @hdd_ctx: pointer to hdd_ctx
+ * @lithium_based_target: whether its a lithium arch based target or not
  *
  * Return: none
  */
-static void hdd_register_rx_ol(void)
+static void hdd_register_rx_ol_cb(struct hdd_context *hdd_ctx,
+				  bool lithium_based_target)
 {
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	if  (!hdd_ctx) {
@@ -1663,40 +1763,51 @@ static void hdd_register_rx_ol(void)
 		hdd_ctx->receive_offload_cb = hdd_lro_rx;
 		hdd_debug("LRO is enabled");
 	} else if (hdd_ctx->ol_enable == CFG_GRO_ENABLED) {
-		if (hdd_ctx->enable_rxthread)
-			cdp_register_rx_offld_flush_cb(soc,
-						hdd_rxthread_napi_gro_flush);
-		else
-			cdp_register_rx_offld_flush_cb(soc,
-						       hdd_hif_napi_gro_flush);
-		hdd_ctx->receive_offload_cb = hdd_gro_rx;
+		if (lithium_based_target) {
+		/* no flush registration needed, it happens in DP thread */
+			hdd_ctx->receive_offload_cb = hdd_gro_rx_dp_thread;
+		} else {
+			/*ihelium based targets */
+			if (hdd_ctx->enable_rxthread)
+				cdp_register_rx_offld_flush_cb(soc,
+							       hdd_rxthread_napi_gro_flush);
+			else
+				cdp_register_rx_offld_flush_cb(soc,
+							       hdd_hif_napi_gro_flush);
+			hdd_ctx->receive_offload_cb = hdd_gro_rx_legacy;
+		}
 		hdd_debug("GRO is enabled");
 	} else if (HDD_MSM_CFG(hdd_ctx->config->enable_tcp_delack)) {
 		hdd_ctx->en_tcp_delack_no_lro = 1;
+		hdd_debug("TCP Del ACK is enabled");
 	}
 }
 
-int hdd_rx_ol_init(struct hdd_context *hdd_ctx)
+/**
+ * hdd_rx_ol_send_config() - Send RX offload configuration to FW
+ * @hdd_ctx: pointer to hdd_ctx
+ *
+ * This function is only used for non lithium targets. Lithium based targets are
+ * sending LRO config to FW in vdev attach implemented in cmn DP layer.
+ *
+ * Return: 0 on success, non zero on failure
+ */
+static int hdd_rx_ol_send_config(struct hdd_context *hdd_ctx)
 {
 	struct cdp_lro_hash_config lro_config = {0};
-
-	hdd_resolve_rx_ol_mode(hdd_ctx);
-
-	hdd_register_rx_ol();
-
 	/*
 	 * This will enable flow steering and Toeplitz hash
 	 * So enable it for LRO or GRO processing.
 	 */
-	if (hdd_napi_enabled(HDD_NAPI_ANY) == 0) {
-		hdd_warn("NAPI is disabled");
-		return 0;
+	if (cfg_get(hdd_ctx->psoc, CFG_DP_GRO) ||
+	    cfg_get(hdd_ctx->psoc, CFG_DP_LRO)) {
+		lro_config.lro_enable = 1;
+		lro_config.tcp_flag = TCPHDR_ACK;
+		lro_config.tcp_flag_mask = TCPHDR_FIN | TCPHDR_SYN |
+					   TCPHDR_RST | TCPHDR_ACK |
+					   TCPHDR_URG | TCPHDR_ECE |
+					   TCPHDR_CWR;
 	}
-
-	lro_config.lro_enable = 1;
-	lro_config.tcp_flag = TCPHDR_ACK;
-	lro_config.tcp_flag_mask = TCPHDR_FIN | TCPHDR_SYN | TCPHDR_RST |
-		TCPHDR_ACK | TCPHDR_URG | TCPHDR_ECE | TCPHDR_CWR;
 
 	get_random_bytes(lro_config.toeplitz_hash_ipv4,
 			 (sizeof(lro_config.toeplitz_hash_ipv4[0]) *
@@ -1706,10 +1817,35 @@ int hdd_rx_ol_init(struct hdd_context *hdd_ctx)
 			 (sizeof(lro_config.toeplitz_hash_ipv6[0]) *
 			  LRO_IPV6_SEED_ARR_SZ));
 
-	if (0 != wma_lro_init(&lro_config)) {
-		hdd_err("Failed to send LRO/GRO configuration!");
-		hdd_ctx->ol_enable = 0;
+	if (wma_lro_init(&lro_config))
 		return -EAGAIN;
+	else
+		hdd_dp_info("LRO Config: lro_enable: 0x%x tcp_flag 0x%x tcp_flag_mask 0x%x",
+			    lro_config.lro_enable, lro_config.tcp_flag,
+			    lro_config.tcp_flag_mask);
+
+	return 0;
+}
+
+int hdd_rx_ol_init(struct hdd_context *hdd_ctx)
+{
+	int ret = 0;
+	bool lithium_based_target = false;
+
+	if (hdd_ctx->target_type == TARGET_TYPE_QCA6290 ||
+	    hdd_ctx->target_type == TARGET_TYPE_QCA6390)
+		lithium_based_target = true;
+
+	hdd_resolve_rx_ol_mode(hdd_ctx);
+	hdd_register_rx_ol_cb(hdd_ctx, lithium_based_target);
+
+	if (!lithium_based_target) {
+		ret = hdd_rx_ol_send_config(hdd_ctx);
+		if (ret) {
+			hdd_ctx->ol_enable = 0;
+			hdd_err("Failed to send LRO/GRO configuration! %u", ret);
+			return ret;
+		}
 	}
 
 	return 0;
@@ -1734,55 +1870,26 @@ void hdd_disable_rx_ol_in_concurrency(bool disable)
 			wlan_hdd_update_tcp_rx_param(hdd_ctx, &rx_tp_data);
 			hdd_ctx->en_tcp_delack_no_lro = 1;
 		}
-		qdf_atomic_set(&hdd_ctx->disable_lro_in_concurrency, 1);
+		qdf_atomic_set(&hdd_ctx->disable_rx_ol_in_concurrency, 1);
 	} else {
 		if (HDD_MSM_CFG(hdd_ctx->config->enable_tcp_delack)) {
 			hdd_info("Disable TCP delack as LRO is enabled");
 			hdd_ctx->en_tcp_delack_no_lro = 0;
 			hdd_reset_tcp_delack(hdd_ctx);
 		}
-		qdf_atomic_set(&hdd_ctx->disable_lro_in_concurrency, 0);
+		qdf_atomic_set(&hdd_ctx->disable_rx_ol_in_concurrency, 0);
 	}
 }
 
 void hdd_disable_rx_ol_for_low_tput(struct hdd_context *hdd_ctx, bool disable)
 {
 	if (disable)
-		qdf_atomic_set(&hdd_ctx->disable_lro_in_low_tput, 1);
+		qdf_atomic_set(&hdd_ctx->disable_rx_ol_in_low_tput, 1);
 	else
-		qdf_atomic_set(&hdd_ctx->disable_lro_in_low_tput, 0);
+		qdf_atomic_set(&hdd_ctx->disable_rx_ol_in_low_tput, 0);
 }
 
-/**
- * hdd_can_handle_receive_offload() - Check for dynamic disablement
- * @hdd_ctx: hdd context
- * @skb: pointer to sk_buff which will be processed by Rx OL
- *
- * Check for dynamic disablement of Rx offload
- *
- * Return: false if we cannot process otherwise true
- */
-static bool hdd_can_handle_receive_offload(struct hdd_context *hdd_ctx,
-					   struct sk_buff *skb)
-{
-	if (!hdd_ctx->receive_offload_cb)
-		return false;
-
-	if (!QDF_NBUF_CB_RX_TCP_PROTO(skb) ||
-	    qdf_atomic_read(&hdd_ctx->disable_lro_in_concurrency) ||
-	    QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb) ||
-	    qdf_atomic_read(&hdd_ctx->disable_lro_in_low_tput))
-		return false;
-	else
-		return true;
-}
 #else /* RECEIVE_OFFLOAD */
-static bool hdd_can_handle_receive_offload(struct hdd_context *hdd_ctx,
-					   struct sk_buff *skb)
-{
-	return false;
-}
-
 int hdd_rx_ol_init(struct hdd_context *hdd_ctx)
 {
 	hdd_err("Rx_OL, LRO/GRO not supported");
@@ -1826,13 +1933,61 @@ QDF_STATUS hdd_rx_pkt_thread_enqueue_cbk(void *adapter,
 	return dp_rx_enqueue_pkt(cds_get_context(QDF_MODULE_ID_SOC), nbuf_list);
 }
 
+QDF_STATUS hdd_rx_deliver_to_stack(struct hdd_adapter *adapter,
+				   struct sk_buff *skb)
+{
+	struct hdd_context *hdd_ctx = adapter->hdd_ctx;
+	int status = QDF_STATUS_E_FAILURE;
+	int netif_status;
+	bool skb_receive_offload_ok = false;
+
+	if (QDF_NBUF_CB_RX_TCP_PROTO(skb) &&
+	    !QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb))
+		skb_receive_offload_ok = true;
+
+	if (skb_receive_offload_ok && hdd_ctx->receive_offload_cb)
+		status = hdd_ctx->receive_offload_cb(adapter, skb);
+
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		adapter->hdd_stats.tx_rx_stats.rx_aggregated++;
+		return status;
+	}
+
+	adapter->hdd_stats.tx_rx_stats.rx_non_aggregated++;
+
+	/* Account for GRO/LRO ineligible packets, mostly UDP */
+	hdd_ctx->no_rx_offload_pkt_cnt++;
+
+	if (qdf_likely(hdd_ctx->enable_dp_rx_threads ||
+		       hdd_ctx->enable_rxthread)) {
+		local_bh_disable();
+		netif_status = netif_receive_skb(skb);
+		local_bh_enable();
+	} else if (qdf_unlikely(QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb))) {
+		/*
+		 * Frames before peer is registered to avoid contention with
+		 * NAPI softirq.
+		 * Refer fix:
+		 * qcacld-3.0: Do netif_rx_ni() for frames received before
+		 * peer assoc
+		 */
+		netif_status = netif_rx_ni(skb);
+	} else { /* NAPI Context */
+		netif_status = netif_receive_skb(skb);
+	}
+
+	if (netif_status == NET_RX_SUCCESS)
+		status = QDF_STATUS_SUCCESS;
+
+	return status;
+}
+
 QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 			     qdf_nbuf_t rxBuf)
 {
 	struct hdd_adapter *adapter = NULL;
 	struct hdd_context *hdd_ctx = NULL;
-	int rxstat = 0;
-	QDF_STATUS rx_ol_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct sk_buff *skb = NULL;
 	struct sk_buff *next = NULL;
 	struct hdd_station_ctx *sta_ctx = NULL;
@@ -1873,11 +2028,6 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 		next = skb->next;
 		skb->next = NULL;
 
-/* Debug code, remove later */
-#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390)
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
-			 "%s: skb %pK skb->len %d\n", __func__, skb, skb->len);
-#endif
 		if (QDF_NBUF_CB_PACKET_TYPE_ARP ==
 		    QDF_NBUF_CB_GET_PACKET_TYPE(skb)) {
 			if (qdf_nbuf_data_is_arp_rsp(skb) &&
@@ -1975,26 +2125,9 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 
 		hdd_tsf_timestamp_rx(hdd_ctx, skb, ktime_to_us(skb->tstamp));
 
-		if (hdd_can_handle_receive_offload(hdd_ctx, skb))
-			rx_ol_status = hdd_ctx->receive_offload_cb(adapter,
-								   skb);
+		qdf_status = hdd_rx_deliver_to_stack(adapter, skb);
 
-		if (rx_ol_status != QDF_STATUS_SUCCESS) {
-			/* we should optimize this per packet check, unlikely */
-			/* Account for GRO/LRO ineligible packets, mostly UDP */
-			hdd_ctx->no_rx_offload_pkt_cnt++;
-			if (hdd_napi_enabled(HDD_NAPI_ANY) &&
-			    !hdd_ctx->enable_rxthread &&
-			    !QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb)) {
-				rxstat = netif_receive_skb(skb);
-			} else {
-				local_bh_disable();
-				rxstat = netif_receive_skb(skb);
-				local_bh_enable();
-			}
-		}
-
-		if (!rxstat) {
+		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			++adapter->hdd_stats.tx_rx_stats.
 						rx_delivered[cpu_index];
 			if (track_arp)

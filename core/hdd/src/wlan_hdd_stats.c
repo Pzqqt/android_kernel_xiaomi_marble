@@ -6131,7 +6131,7 @@ int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature)
 	return 0;
 }
 
-void wlan_hdd_display_txrx_stats(struct hdd_context *hdd_ctx)
+void wlan_hdd_display_txrx_stats(struct hdd_context *ctx)
 {
 	struct hdd_adapter *adapter = NULL;
 	struct hdd_tx_rx_stats *stats;
@@ -6139,7 +6139,7 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *hdd_ctx)
 	uint32_t total_rx_pkt, total_rx_dropped,
 		 total_rx_delv, total_rx_refused;
 
-	hdd_for_each_adapter(hdd_ctx, adapter) {
+	hdd_for_each_adapter(ctx, adapter) {
 		total_rx_pkt = 0;
 		total_rx_dropped = 0;
 		total_rx_delv = 0;
@@ -6153,7 +6153,7 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *hdd_ctx)
 			total_rx_refused += stats->rx_refused[i];
 		}
 
-		hdd_debug("Total Transmit - called %u, dropped %u orphan %u",
+		hdd_debug("TX - called %u, dropped %u orphan %u",
 			  stats->tx_called, stats->tx_dropped,
 			  stats->tx_orphaned);
 
@@ -6164,8 +6164,12 @@ void wlan_hdd_display_txrx_stats(struct hdd_context *hdd_ctx)
 				  i, stats->rx_packets[i], stats->rx_dropped[i],
 				  stats->rx_delivered[i], stats->rx_refused[i]);
 		}
-		hdd_debug("Total Receive - packets %u, dropped %u, delivered %u, refused %u",
+		hdd_debug("RX - packets %u, dropped %u, delivered %u, refused %u\nGRO - agg %u non-agg %u flushes(%u %u) disabled(conc %u low-tput %u)",
 			  total_rx_pkt, total_rx_dropped, total_rx_delv,
-			  total_rx_refused);
+			  total_rx_refused, stats->rx_aggregated,
+			  stats->rx_non_aggregated, stats->rx_gro_flushes,
+			  stats->rx_gro_force_flushes,
+			  qdf_atomic_read(&ctx->disable_rx_ol_in_concurrency),
+			  qdf_atomic_read(&ctx->disable_rx_ol_in_low_tput));
 	}
 }

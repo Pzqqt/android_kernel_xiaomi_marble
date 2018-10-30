@@ -545,6 +545,11 @@ struct hdd_tx_rx_stats {
 	__u32 rx_dropped[NUM_CPUS];
 	__u32 rx_delivered[NUM_CPUS];
 	__u32 rx_refused[NUM_CPUS];
+	/* rx gro */
+	__u32 rx_aggregated;
+	__u32 rx_non_aggregated;
+	__u32 rx_gro_flushes;
+	__u32 rx_gro_force_flushes;
 
 	/* txflow stats */
 	bool     is_txflow_paused;
@@ -1966,8 +1971,11 @@ struct hdd_context {
 	QDF_STATUS (*receive_offload_cb)(struct hdd_adapter *,
 					 struct sk_buff *);
 	qdf_atomic_t vendor_disable_lro_flag;
-	qdf_atomic_t disable_lro_in_concurrency;
-	qdf_atomic_t disable_lro_in_low_tput;
+
+	/* disable RX offload (GRO/LRO) in concurrency scenarios */
+	qdf_atomic_t disable_rx_ol_in_concurrency;
+	/* disable RX offload (GRO/LRO) in low throughput scenarios */
+	qdf_atomic_t disable_rx_ol_in_low_tput;
 	bool en_tcp_delack_no_lro;
 	bool force_rsne_override;
 	qdf_wake_lock_t monitor_mode_wakelock;

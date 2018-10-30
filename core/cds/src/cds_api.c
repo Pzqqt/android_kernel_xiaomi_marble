@@ -746,7 +746,6 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 		goto intr_close;
 	}
 
-	dp_config.num_rx_threads = gp_cds_context->cds_cfg->num_dp_rx_threads;
 	dp_config.enable_rx_threads =
 		gp_cds_context->cds_cfg->enable_dp_rx_threads;
 	qdf_status = dp_txrx_init(cds_get_context(QDF_MODULE_ID_SOC),

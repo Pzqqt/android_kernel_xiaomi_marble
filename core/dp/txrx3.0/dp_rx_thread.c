@@ -51,6 +51,25 @@ static inline void dp_rx_tm_walk_skb_list(qdf_nbuf_t nbuf_list)
 #endif /* DP_RX_TM_DEBUG */
 
 /**
+ * dp_rx_tm_get_soc_handle() - get soc handle from struct dp_rx_tm_handle_cmn
+ * @rx_tm_handle_cmn - rx thread manager cmn handle
+ *
+ * Returns: ol_txrx_soc_handle on success, NULL on failure.
+ */
+static inline
+ol_txrx_soc_handle dp_rx_tm_get_soc_handle(struct dp_rx_tm_handle_cmn *rx_tm_handle_cmn)
+{
+	struct dp_txrx_handle_cmn *txrx_handle_cmn;
+	ol_txrx_soc_handle soc;
+
+	txrx_handle_cmn =
+		dp_rx_thread_get_txrx_handle(rx_tm_handle_cmn);
+
+	soc = dp_txrx_get_soc_from_ext_handle(txrx_handle_cmn);
+	return soc;
+}
+
+/**
  * dp_rx_tm_thread_dump_stats() - display stats for a rx_thread
  * @rx_thread - rx_thread pointer for which the stats need to be
  *            displayed
@@ -96,7 +115,7 @@ QDF_STATUS dp_rx_tm_dump_stats(struct dp_rx_tm_handle *rx_tm_hdl)
 {
 	int i;
 
-	for (i = 0; i < DP_MAX_RX_THREADS; i++) {
+	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
 		if (!rx_tm_hdl->rx_thread[i])
 			continue;
 		dp_rx_tm_thread_dump_stats(rx_tm_hdl->rx_thread[i]);
@@ -396,6 +415,46 @@ static int dp_rx_thread_loop(void *arg)
 	return 0;
 }
 
+/**
+ * dp_rx_tm_thread_napi_poll() - dummy napi poll for rx_thread NAPI
+ * @napi: pointer to DP rx_thread NAPI
+ * @budget: NAPI BUDGET
+ *
+ * Return: 0 as it is not supposed to be polled at all as it is not scheduled.
+ */
+static int dp_rx_tm_thread_napi_poll(struct napi_struct *napi, int budget)
+{
+	dp_err("this napi_poll should not be polled as we don't schedule it");
+	QDF_BUG(0);
+	return 0;
+}
+
+/**
+ * dp_rx_tm_thread_napi_init() - Initialize dummy rx_thread NAPI
+ * @rx_thread: dp_rx_thread structure containing dummy napi and netdev
+ *
+ * Return: None
+ */
+static void dp_rx_tm_thread_napi_init(struct dp_rx_thread *rx_thread)
+{
+	/* Todo - optimize to use only one dummy netdev for all thread napis */
+	init_dummy_netdev(&rx_thread->netdev);
+	netif_napi_add(&rx_thread->netdev, &rx_thread->napi,
+		       dp_rx_tm_thread_napi_poll, 64);
+	napi_enable(&rx_thread->napi);
+}
+
+/**
+ * dp_rx_tm_thread_napi_deinit() - De-initialize dummy rx_thread NAPI
+ * @rx_thread: dp_rx_thread handle containing dummy napi and netdev
+ *
+ * Return: None
+ */
+static void dp_rx_tm_thread_napi_deinit(struct dp_rx_thread *rx_thread)
+{
+	netif_napi_del(&rx_thread->napi);
+}
+
 /*
  * dp_rx_tm_thread_init() - Initialize dp_rx_thread structure and thread
  *
@@ -425,6 +484,11 @@ static QDF_STATUS dp_rx_tm_thread_init(struct dp_rx_thread *rx_thread,
 	qdf_event_create(&rx_thread->shutdown_event);
 	qdf_scnprintf(thread_name, sizeof(thread_name), "dp_rx_thread_%u", id);
 	dp_info("%s %u", thread_name, id);
+
+	if (cdp_cfg_get(dp_rx_tm_get_soc_handle(rx_thread->rtm_handle_cmn),
+			cfg_dp_gro_enable))
+		dp_rx_tm_thread_napi_init(rx_thread);
+
 	rx_thread->task = qdf_create_thread(dp_rx_thread_loop,
 					    rx_thread, thread_name);
 	if (!rx_thread->task) {
@@ -455,6 +519,11 @@ static QDF_STATUS dp_rx_tm_thread_deinit(struct dp_rx_thread *rx_thread)
 	qdf_event_destroy(&rx_thread->suspend_event);
 	qdf_event_destroy(&rx_thread->resume_event);
 	qdf_event_destroy(&rx_thread->shutdown_event);
+
+	if (cdp_cfg_get(dp_rx_tm_get_soc_handle(rx_thread->rtm_handle_cmn),
+			cfg_dp_gro_enable))
+		dp_rx_tm_thread_napi_deinit(rx_thread);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -463,10 +532,29 @@ QDF_STATUS dp_rx_tm_init(struct dp_rx_tm_handle *rx_tm_hdl,
 {
 	int i;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	/* ignoring num_dp_rx_threads for now */
+
+	if (num_dp_rx_threads > DP_MAX_RX_THREADS) {
+		dp_err("unable to initialize %u number of threads. MAX %u",
+		       num_dp_rx_threads, DP_MAX_RX_THREADS);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	rx_tm_hdl->num_dp_rx_threads = num_dp_rx_threads;
+
+	dp_info("initializing %u threads", num_dp_rx_threads);
+
+	/* allocate an array to contain the DP RX thread pointers */
+	rx_tm_hdl->rx_thread = qdf_mem_malloc(num_dp_rx_threads *
+					      sizeof(struct dp_rx_thread *));
+
+	if (qdf_unlikely(!rx_tm_hdl->rx_thread)) {
+		qdf_status = QDF_STATUS_E_NOMEM;
+		goto ret;
+	}
+
 	qdf_init_waitqueue_head(&rx_tm_hdl->wait_q);
 
-	for (i = 0; i < DP_MAX_RX_THREADS; i++) {
+	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
 		rx_tm_hdl->rx_thread[i] =
 			(struct dp_rx_thread *)
 			qdf_mem_malloc(sizeof(struct dp_rx_thread));
@@ -502,7 +590,7 @@ QDF_STATUS dp_rx_tm_suspend(struct dp_rx_tm_handle *rx_tm_hdl)
 	QDF_STATUS qdf_status;
 	struct dp_rx_thread *rx_thread;
 
-	for (i = 0; i < DP_MAX_RX_THREADS; i++) {
+	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
 		if (!rx_tm_hdl->rx_thread[i])
 			continue;
 		qdf_set_bit(RX_SUSPEND_EVENT,
@@ -511,7 +599,7 @@ QDF_STATUS dp_rx_tm_suspend(struct dp_rx_tm_handle *rx_tm_hdl)
 
 	qdf_wake_up_interruptible(&rx_tm_hdl->wait_q);
 
-	for (i = 0; i < DP_MAX_RX_THREADS; i++) {
+	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
 		rx_thread = rx_tm_hdl->rx_thread[i];
 		if (!rx_thread)
 			continue;
@@ -548,7 +636,7 @@ QDF_STATUS dp_rx_tm_resume(struct dp_rx_tm_handle *rx_tm_hdl)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	for (i = 0; i < DP_MAX_RX_THREADS; i++) {
+	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
 		if (!rx_tm_hdl->rx_thread[i])
 			continue;
 		dp_debug("calling thread %d to resume", i);
@@ -568,7 +656,7 @@ static QDF_STATUS dp_rx_tm_shutdown(struct dp_rx_tm_handle *rx_tm_hdl)
 {
 	int i;
 
-	for (i = 0; i < DP_MAX_RX_THREADS; i++) {
+	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
 		if (!rx_tm_hdl->rx_thread[i])
 			continue;
 		qdf_set_bit(RX_SHUTDOWN_EVENT,
@@ -579,7 +667,7 @@ static QDF_STATUS dp_rx_tm_shutdown(struct dp_rx_tm_handle *rx_tm_hdl)
 
 	qdf_wake_up_interruptible(&rx_tm_hdl->wait_q);
 
-	for (i = 0; i < DP_MAX_RX_THREADS; i++) {
+	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
 		if (!rx_tm_hdl->rx_thread[i])
 			continue;
 		dp_debug("waiting for shutdown of thread %d", i);
@@ -599,15 +687,24 @@ static QDF_STATUS dp_rx_tm_shutdown(struct dp_rx_tm_handle *rx_tm_hdl)
 QDF_STATUS dp_rx_tm_deinit(struct dp_rx_tm_handle *rx_tm_hdl)
 {
 	int i = 0;
+	if (!rx_tm_hdl->rx_thread) {
+		dp_err("rx_tm_hdl->rx_thread not initialized!");
+		return QDF_STATUS_SUCCESS;
+	}
 
 	dp_rx_tm_shutdown(rx_tm_hdl);
 
-	for (i = 0; i < DP_MAX_RX_THREADS; i++) {
+	for (i = 0; i < rx_tm_hdl->num_dp_rx_threads; i++) {
 		if (!rx_tm_hdl->rx_thread[i])
 			continue;
 		dp_rx_tm_thread_deinit(rx_tm_hdl->rx_thread[i]);
 		qdf_mem_free(rx_tm_hdl->rx_thread[i]);
 	}
+
+	/* free the array of RX thread pointers*/
+	qdf_mem_free(rx_tm_hdl->rx_thread);
+	rx_tm_hdl->rx_thread = NULL;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -621,12 +718,6 @@ QDF_STATUS dp_rx_tm_deinit(struct dp_rx_tm_handle *rx_tm_hdl)
  * in the nbuf list. Depending on the RX_CTX (copy engine or reo
  * ring) on which the packet was received, the function selects
  * a corresponding rx_thread.
- * The function uses a simplistic mapping -
- *
- * RX_THREAD = RX_CTX % number of RX threads in the system.
- *
- * This also means that if RX_CTX < # rx threads, more than one
- * interrupt source may end up on the same rx_thread.
  *
  * Return: rx thread ID selected for the nbuf
  */
@@ -636,8 +727,13 @@ static uint8_t dp_rx_tm_select_thread(struct dp_rx_tm_handle *rx_tm_hdl,
 	uint8_t selected_rx_thread;
 	uint8_t reo_ring_num = QDF_NBUF_CB_RX_CTX_ID(nbuf_list);
 
-	selected_rx_thread = reo_ring_num % DP_MAX_RX_THREADS;
+	if (reo_ring_num >= rx_tm_hdl->num_dp_rx_threads) {
+		dp_err_rl("unexpected ring number");
+		QDF_BUG(0);
+		return 0;
+	}
 
+	selected_rx_thread = reo_ring_num;
 	return selected_rx_thread;
 }
 
@@ -647,9 +743,19 @@ QDF_STATUS dp_rx_tm_enqueue_pkt(struct dp_rx_tm_handle *rx_tm_hdl,
 	uint8_t selected_thread_id;
 
 	selected_thread_id = dp_rx_tm_select_thread(rx_tm_hdl, nbuf_list);
-
 	dp_rx_tm_thread_enqueue(rx_tm_hdl->rx_thread[selected_thread_id],
 				nbuf_list);
 	return QDF_STATUS_SUCCESS;
 }
 
+struct napi_struct *dp_rx_tm_get_napi_context(struct dp_rx_tm_handle *rx_tm_hdl,
+					      uint8_t rx_ctx_id)
+{
+	if (rx_ctx_id >= rx_tm_hdl->num_dp_rx_threads) {
+		dp_err_rl("unexpected rx_ctx_id %u", rx_ctx_id);
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	return &rx_tm_hdl->rx_thread[rx_ctx_id]->napi;
+}

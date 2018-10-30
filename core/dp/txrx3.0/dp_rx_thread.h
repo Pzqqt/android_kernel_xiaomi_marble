@@ -27,7 +27,7 @@
 #define DP_RX_TM_MAX_REO_RINGS 4
 
 /* Number of DP RX threads supported */
-#define DP_MAX_RX_THREADS 3
+#define DP_MAX_RX_THREADS DP_RX_TM_MAX_REO_RINGS
 
 /*
  * Macro to get to wait_queue structure. Needed since wait_q is an object.
@@ -68,6 +68,7 @@ struct dp_rx_thread_stats {
 
 /**
  * struct dp_rx_thread - structure holding variables for a single DP RX thread
+ * @id: id of the dp_rx_thread (0 or 1 or 2..DP_MAX_RX_THREADS - 1)
  * @task: task structure corresponding to the thread
  * @start_event: handle of Event for DP Rx thread to signal startup
  * @suspend_event: handle of Event for DP Rx thread to signal suspend
@@ -78,11 +79,13 @@ struct dp_rx_thread_stats {
  * @nbufq_len: length of the nbuf queue
  * @aff_mask: cuurent affinity mask of the DP Rx thread
  * @stats: per thread stats
- * @id: id of the dp_rx_thread (0 or 1 or 2..DP_MAX_RX_THREADS - 1)
  * @rtm_handle_cmn: abstract RX TM handle. This allows access to the dp_rx_tm
  *		    structures via APIs.
+ * @napi: napi to deliver packet to stack via GRO
+ * @netdev: dummy netdev to initialize the napi structure with
  */
 struct dp_rx_thread {
+	uint8_t id;
 	qdf_thread_t *task;
 	qdf_event_t start_event;
 	qdf_event_t suspend_event;
@@ -92,8 +95,9 @@ struct dp_rx_thread {
 	qdf_nbuf_queue_head_t nbuf_queue;
 	unsigned long aff_mask;
 	struct dp_rx_thread_stats stats;
-	uint8_t id;
 	struct dp_rx_tm_handle_cmn *rtm_handle_cmn;
+	struct napi_struct napi;
+	struct net_device netdev;
 };
 
 /**
@@ -113,16 +117,18 @@ enum dp_rx_thread_state {
 
 /**
  * struct dp_rx_tm_handle - DP RX thread infrastructure handle
+ * @num_dp_rx_threads: number of DP RX threads initialized
  * @txrx_handle_cmn: opaque txrx handle to get to pdev and soc
  * wait_q: wait_queue for the rx_threads to wait on and expect an event
  * @state: state of the rx_threads. All of them should be in the same state.
  * @rx_thread: array of pointers of type struct dp_rx_thread
  */
 struct dp_rx_tm_handle {
+	uint8_t num_dp_rx_threads;
 	struct dp_txrx_handle_cmn *txrx_handle_cmn;
 	qdf_wait_queue_head_t wait_q;
 	enum dp_rx_thread_state state;
-	struct dp_rx_thread *rx_thread[DP_MAX_RX_THREADS];
+	struct dp_rx_thread **rx_thread;
 };
 
 /**
@@ -207,4 +213,14 @@ dp_rx_thread_get_wait_queue(struct dp_rx_tm_handle_cmn *rx_tm_handle_cmn)
 	return &rx_tm_handle->wait_q;
 }
 
+/**
+ * dp_rx_tm_get_napi_context() - get NAPI context for a RX CTX ID
+ * @soc: ol_txrx_soc_handle object
+ * @rx_ctx_id: RX context ID (RX thread ID) corresponding to which NAPI is
+ *             needed
+ *
+ * Return: NULL on failure, else pointer to NAPI corresponding to rx_ctx_id
+ */
+struct napi_struct *dp_rx_tm_get_napi_context(struct dp_rx_tm_handle *rx_tm_hdl,
+					      uint8_t rx_ctx_id);
 #endif /* __DP_RX_THREAD_H */

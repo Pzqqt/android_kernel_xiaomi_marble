@@ -159,6 +159,7 @@
 #include <wlan_hdd_spectralscan.h>
 #include "wlan_green_ap_ucfg_api.h"
 #include <wlan_p2p_ucfg_api.h>
+#include <target_type.h>
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -7669,9 +7670,16 @@ static void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
 	static uint32_t counter;
 	static bool data_in_time_period;
 	ol_txrx_pdev_handle pdev;
+	ol_txrx_soc_handle soc;
 
 	if (hdd_ctx->config->periodic_stats_disp_time == 0)
 		return;
+
+	soc = cds_get_context(QDF_MODULE_ID_SOC);
+	if (!soc) {
+		hdd_err("soc is NULL");
+		return;
+	}
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
@@ -7687,11 +7695,11 @@ static void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
 		hdd_ctx->config->periodic_stats_disp_time * 1000) {
 		if (data_in_time_period) {
 			wlan_hdd_display_txrx_stats(hdd_ctx);
-			dp_txrx_dump_stats(cds_get_context(QDF_MODULE_ID_SOC));
-			cdp_display_stats(cds_get_context(QDF_MODULE_ID_SOC),
+			dp_txrx_ext_dump_stats(soc);
+			cdp_display_stats(soc,
 					  CDP_RX_RING_STATS,
 					  QDF_STATS_VERBOSITY_LEVEL_LOW);
-			cdp_display_stats(cds_get_context(QDF_MODULE_ID_SOC),
+			cdp_display_stats(soc,
 					  CDP_TXRX_PATH_STATS,
 					  QDF_STATS_VERBOSITY_LEVEL_LOW);
 			wlan_hdd_display_netif_queue_history
@@ -9817,7 +9825,6 @@ static inline void hdd_txrx_populate_cds_config(struct cds_config_info
 		cfg_get(hdd_ctx->psoc, CFG_DP_TX_FLOW_START_QUEUE_OFFSET);
 	/* configuration for DP RX Threads */
 	cds_cfg->enable_dp_rx_threads = hdd_ctx->enable_dp_rx_threads;
-	cds_cfg->num_dp_rx_threads = hdd_ctx->config->num_dp_rx_threads;
 }
 #else
 static inline void hdd_txrx_populate_cds_config(struct cds_config_info
@@ -11284,9 +11291,12 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	if (ret)
 		goto cds_disable;
 
-	if (hdd_ctx->ol_enable)
-		dp_cbs.hdd_disable_rx_ol_in_concurrency =
-				hdd_disable_rx_ol_in_concurrency;
+	/* Donot disable rx offload on concurrency for lithium based targets */
+	if (!(hdd_ctx->target_type == TARGET_TYPE_QCA6290 ||
+	      hdd_ctx->target_type == TARGET_TYPE_QCA6390))
+		if (hdd_ctx->ol_enable)
+			dp_cbs.hdd_disable_rx_ol_in_concurrency =
+					hdd_disable_rx_ol_in_concurrency;
 	dp_cbs.hdd_set_rx_mode_rps_cb = hdd_set_rx_mode_rps;
 	dp_cbs.hdd_ipa_set_mcc_mode_cb = hdd_ipa_set_mcc_mode;
 	dp_cbs.hdd_v2_flow_pool_map = hdd_v2_flow_pool_map;
@@ -14269,6 +14279,7 @@ static int hdd_update_dp_config(struct hdd_context *hdd_ctx)
 			cfg_get(hdd_ctx->psoc,
 				CFG_DP_TCP_UDP_CKSUM_OFFLOAD);
 	params.ipa_enable = ucfg_ipa_is_enabled();
+	params.gro_enable = cfg_get(hdd_ctx->psoc, CFG_DP_GRO);
 
 	status = cdp_update_config_parameters(soc, &params);
 	if (status) {
