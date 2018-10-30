@@ -858,6 +858,21 @@ static void mlme_init_threshold_cfg(struct wlan_objmgr_psoc *psoc,
 	threshold->frag_threshold = cfg_get(psoc, CFG_FRAG_THRESHOLD);
 }
 
+static void mlme_init_acs_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_acs *acs)
+{
+	acs->is_acs_with_more_param =
+		cfg_get(psoc, CFG_ACS_WITH_MORE_PARAM);
+	acs->auto_channel_select_weight =
+		cfg_get(psoc, CFG_AUTO_CHANNEL_SELECT_WEIGHT);
+	acs->is_vendor_acs_support =
+		cfg_get(psoc, CFG_USER_AUTO_CHANNEL_SELECTION);
+	acs->is_acs_support_for_dfs_ltecoex =
+		cfg_get(psoc, CFG_USER_ACS_DFS_LTE);
+	acs->is_external_acs_policy =
+		cfg_get(psoc, CFG_EXTERNAL_ACS_POLICY);
+}
+
 static void
 mlme_init_product_details_cfg(struct wlan_mlme_product_details_cfg
 			      *product_details)
@@ -1304,6 +1319,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_feature_flag_in_cfg(psoc, &mlme_cfg->feature_flags);
 	mlme_init_scoring_cfg(psoc, &mlme_cfg->scoring);
 	mlme_init_threshold_cfg(psoc, &mlme_cfg->threshold);
+	mlme_init_acs_cfg(psoc, &mlme_cfg->acs);
 	mlme_init_oce_cfg(psoc, &mlme_cfg->oce);
 	mlme_init_wep_cfg(&mlme_cfg->wep_params);
 	mlme_init_wps_params_cfg(psoc, &mlme_cfg->wps_params);
