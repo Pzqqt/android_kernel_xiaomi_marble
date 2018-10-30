@@ -1192,7 +1192,12 @@ static inline void lim_update_sae_config(tpPESession session,
 static QDF_STATUS lim_send_join_req(tpPESession session,
 				    tLimMlmJoinReq *mlm_join_req)
 {
-	mlme_set_assoc_type(session->vdev, VDEV_ASSOC);
+	QDF_STATUS status;
+
+	status = mlme_set_assoc_type(session->vdev, VDEV_ASSOC);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
 	return wlan_vdev_mlme_sm_deliver_evt(session->vdev,
 					     WLAN_VDEV_SM_EV_START,
 					     sizeof(*mlm_join_req),
@@ -1220,7 +1225,12 @@ static QDF_STATUS lim_send_join_req(tpPESession session,
 static QDF_STATUS lim_send_reassoc_req(tpPESession session,
 				       tLimMlmReassocReq *reassoc_req)
 {
-	mlme_set_assoc_type(session->vdev, VDEV_REASSOC);
+	QDF_STATUS status;
+
+	status = mlme_set_assoc_type(session->vdev, VDEV_REASSOC);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
 	return wlan_vdev_mlme_sm_deliver_evt(session->vdev,
 					     WLAN_VDEV_SM_EV_START,
 					     sizeof(*reassoc_req),
@@ -1245,18 +1255,25 @@ static QDF_STATUS lim_send_reassoc_req(tpPESession session,
  */
 
 #ifdef CONFIG_VDEV_SM
-static QDF_STATUS lim_send_ft_reassoc_req(tpPESession session)
+static QDF_STATUS lim_send_ft_reassoc_req(tpPESession session,
+					  tLimMlmReassocReq *reassoc_req)
 {
-	mlme_set_assoc_type(session->vdev, VDEV_FT_REASSOC);
+	QDF_STATUS status;
+
+	status = mlme_set_assoc_type(session->vdev, VDEV_FT_REASSOC);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
 	return wlan_vdev_mlme_sm_deliver_evt(session->vdev,
 					     WLAN_VDEV_SM_EV_START,
-					     sizeof(*session),
-					     session);
+					     sizeof(*reassoc_req),
+					     reassoc_req);
 }
 #else
-static QDF_STATUS lim_send_ft_reassoc_req(tpPESession session)
+static QDF_STATUS lim_send_ft_reassoc_req(tpPESession session,
+					  tLimMlmReassocReq *reassoc_req)
 {
-	lim_process_mlm_ft_reassoc_req(session->mac_ctx, session);
+	lim_process_mlm_ft_reassoc_req(session->mac_ctx, reassoc_req);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1288,6 +1305,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	uint16_t ie_len;
 	const uint8_t *vendor_ie;
 	tSirBssDescription *bss_desc;
+	QDF_STATUS status;
 
 	if (!mac_ctx || !msg_buf) {
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
@@ -1731,7 +1749,12 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		session->isOSENConnection = sme_join_req->isOSENConnection;
 
 		/* Issue LIM_MLM_JOIN_REQ to MLM */
-		lim_send_join_req(session, mlm_join_req);
+		status = lim_send_join_req(session, mlm_join_req);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			qdf_mem_free(mlm_join_req);
+			ret_code = eSIR_SME_REFUSED;
+			goto end;
+		}
 		return;
 
 	} else {
@@ -1811,6 +1834,7 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 	int8_t local_pwr_constraint = 0, reg_max = 0;
 	uint32_t tele_bcn_en = 0;
 	uint16_t size;
+	QDF_STATUS status;
 
 	size = __lim_get_sme_join_req_size_for_alloc((uint8_t *)msg_buf);
 	reassoc_req = qdf_mem_malloc(size);
@@ -1925,7 +1949,22 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 
 			session_entry->smeSessionId = sme_session_id;
 			session_entry->transactionId = transaction_id;
-			lim_send_ft_reassoc_req(session_entry);
+			mlm_reassoc_req =
+				qdf_mem_malloc(sizeof(*mlm_reassoc_req));
+			if (!mlm_reassoc_req) {
+				ret_code = eSIR_SME_RESOURCES_UNAVAILABLE;
+				goto end;
+			}
+
+			/* Update PE sessionId */
+			mlm_reassoc_req->sessionId = session_entry->peSessionId;
+			status = lim_send_ft_reassoc_req(session_entry,
+							 mlm_reassoc_req);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				qdf_mem_free(mlm_reassoc_req);
+				ret_code = eSIR_SME_REFUSED;
+				goto end;
+			}
 			return;
 		}
 		/*
@@ -2034,7 +2073,12 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 				session_entry->peSessionId,
 				session_entry->limSmeState));
 
-	lim_send_reassoc_req(session_entry, mlm_reassoc_req);
+	status = lim_send_reassoc_req(session_entry, mlm_reassoc_req);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(mlm_reassoc_req);
+		ret_code = eSIR_SME_REFUSED;
+		goto end;
+	}
 
 	return;
 end:

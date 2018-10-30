@@ -41,8 +41,18 @@ void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac,
 int lim_process_ft_pre_auth_req(tpAniSirGlobal pMac,
 				struct scheduler_msg *pMsg);
 void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal pMac);
+
+/**
+ * lim_process_mlm_ft_reassoc_req() - Handle the Reassoc request
+ * @pMac: Global MAC context
+ * @reassoc_req: reassoc req
+ *
+ *  This function handles the Reassoc Req from SME
+ *
+ *  Return: None
+ */
 void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
-				    tpPESession psessionEntry);
+				    tLimMlmReassocReq *reassoc_req);
 void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, QDF_STATUS status,
 		uint32_t *data, tpPESession psessionEntry);
 void lim_post_ft_pre_auth_rsp(tpAniSirGlobal pMac, QDF_STATUS status,
@@ -70,8 +80,9 @@ static inline void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac,
 {}
 static inline void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal pMac)
 {}
-static inline void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
-						  tpPESession psessionEntry)
+static inline
+void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
+				    tLimMlmReassocReq *reassoc_req)
 {}
 static inline void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac,
 		QDF_STATUS status, uint8_t *auth_rsp,

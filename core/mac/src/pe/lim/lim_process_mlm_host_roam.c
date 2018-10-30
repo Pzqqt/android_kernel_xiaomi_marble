@@ -563,69 +563,67 @@ end:
 			     (uint32_t *) &mlmReassocCnf);
 }
 
-/**
- * lim_process_mlm_ft_reassoc_req() - Handle the Reassoc request
- * @pMac: Global MAC context
- * @psessionEntry: PE Session
- *
- *  This function handles the Reassoc Req from SME
- *
- *  Return: None
- */
 void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
-				    tpPESession psessionEntry)
+				    tLimMlmReassocReq *reassoc_req)
 {
 	uint8_t chanNum = 0;
-	tLimMlmReassocReq *pMlmReassocReq;
+	tpPESession session;
 	uint16_t caps;
 	uint32_t val;
 	struct scheduler_msg msgQ = {0};
 	QDF_STATUS retCode;
 	uint32_t teleBcnEn = 0;
 
-	chanNum = psessionEntry->currentOperChannel;
+	if (!reassoc_req) {
+		pe_err("reassoc_req is NULL");
+		return;
+	}
+
+	session = pe_find_session_by_session_id(pMac, reassoc_req->sessionId);
+	if (!session) {
+		pe_err("session Does not exist for given session Id");
+		qdf_mem_free(reassoc_req);
+		return;
+	}
+
+	chanNum = session->currentOperChannel;
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_REASSOCIATING,
-			psessionEntry, 0, 0);
+			session, 0, 0);
 #endif
 
 	/* Nothing to be done if the session is not in STA mode */
-	if (!LIM_IS_STA_ROLE(psessionEntry)) {
+	if (!LIM_IS_STA_ROLE(session)) {
 		pe_err("psessionEntry is not in STA mode");
+		qdf_mem_free(reassoc_req);
 		return;
 	}
 
-	if (NULL == psessionEntry->ftPEContext.pAddBssReq) {
+	if (NULL == session->ftPEContext.pAddBssReq) {
 		pe_err("pAddBssReq is NULL");
 		return;
 	}
-	pMlmReassocReq = qdf_mem_malloc(sizeof(tLimMlmReassocReq));
-	if (!pMlmReassocReq)
-		return;
 
-	qdf_mem_copy(pMlmReassocReq->peerMacAddr,
-		     psessionEntry->bssId, sizeof(tSirMacAddr));
+	qdf_mem_copy(reassoc_req->peerMacAddr,
+		     session->bssId, sizeof(tSirMacAddr));
 
-	if (cfg_get_capability_info(pMac, &caps, psessionEntry) !=
+	if (cfg_get_capability_info(pMac, &caps, session) !=
 			QDF_STATUS_SUCCESS) {
 		/**
 		 * Could not get Capabilities value
 		 * from CFG. Log error.
 		 */
 		pe_err("could not get Capabilities value");
-		qdf_mem_free(pMlmReassocReq);
+		qdf_mem_free(reassoc_req);
 		return;
 	}
 
 	lim_update_caps_info_for_bss(pMac, &caps,
-		psessionEntry->pLimReAssocReq->bssDescription.capabilityInfo);
+		session->pLimReAssocReq->bssDescription.capabilityInfo);
 	pe_debug("Capabilities info FT Reassoc: 0x%X", caps);
 
-	pMlmReassocReq->capabilityInfo = caps;
-
-	/* Update PE sessionId */
-	pMlmReassocReq->sessionId = psessionEntry->peSessionId;
+	reassoc_req->capabilityInfo = caps;
 
 	/* If telescopic beaconing is enabled, set listen interval
 	   to CFG_TELE_BCN_MAX_LI
@@ -637,33 +635,33 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
 		val = pMac->mlme_cfg->sap_cfg.listen_interval;
 
 	if (lim_set_link_state
-		    (pMac, eSIR_LINK_PREASSOC_STATE, psessionEntry->bssId,
-		    psessionEntry->selfMacAddr, NULL, NULL) != QDF_STATUS_SUCCESS) {
-		qdf_mem_free(pMlmReassocReq);
+		    (pMac, eSIR_LINK_PREASSOC_STATE, session->bssId,
+		    session->selfMacAddr, NULL, NULL) != QDF_STATUS_SUCCESS) {
+		qdf_mem_free(reassoc_req);
 		return;
 	}
 
-	pMlmReassocReq->listenInterval = (uint16_t) val;
-	psessionEntry->pLimMlmReassocReq = pMlmReassocReq;
+	reassoc_req->listenInterval = (uint16_t) val;
+	session->pLimMlmReassocReq = reassoc_req;
 
 	/* we need to defer the message until we get response back from HAL */
 	SET_LIM_PROCESS_DEFD_MESGS(pMac, false);
 
 	msgQ.type = SIR_HAL_ADD_BSS_REQ;
 	msgQ.reserved = 0;
-	msgQ.bodyptr = psessionEntry->ftPEContext.pAddBssReq;
+	msgQ.bodyptr = session->ftPEContext.pAddBssReq;
 	msgQ.bodyval = 0;
 
 	pe_debug("Sending SIR_HAL_ADD_BSS_REQ");
-	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
+	MTRACE(mac_trace_msg_tx(pMac, session->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
-		qdf_mem_free(psessionEntry->ftPEContext.pAddBssReq);
+		qdf_mem_free(session->ftPEContext.pAddBssReq);
 		pe_err("Posting ADD_BSS_REQ to HAL failed, reason: %X",
 			retCode);
 	}
 
-	psessionEntry->ftPEContext.pAddBssReq = NULL;
+	session->ftPEContext.pAddBssReq = NULL;
 	return;
 }
 

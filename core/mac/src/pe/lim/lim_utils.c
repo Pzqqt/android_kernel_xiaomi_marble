@@ -8413,7 +8413,8 @@ QDF_STATUS lim_sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 		lim_process_mlm_reassoc_req(mac_ctx, (tLimMlmReassocReq *)data);
 		break;
 	case VDEV_FT_REASSOC:
-		lim_process_mlm_ft_reassoc_req(mac_ctx, (tPESession *)data);
+		lim_process_mlm_ft_reassoc_req(mac_ctx,
+					       (tLimMlmReassocReq *)data);
 		break;
 	default:
 		pe_err("assoc_type %d is invalid", assoc_type);
