@@ -882,6 +882,8 @@ struct dfs_event_log {
 #define RSSI_POSSIBLY_FALSE              50
 #define SEARCH_FFT_REPORT_PEAK_MAG_THRSH 40
 
+#define MIN_DFS_SUBCHAN_BW 20 /* Minimum bandwidth of each subchannel. */
+
 /**
  * struct wlan_dfs -                 The main dfs structure.
  * @dfs_debug_mask:                  Current debug bitmask.
@@ -1016,6 +1018,16 @@ struct dfs_event_log {
  *                                   all the filtering data structures. For
  *                                   example: dfs_bin5radars, dfs_filtertype,
  *                                   etc.
+ * @dfs_nol_ie_bandwidth:            Minimum Bandwidth of subchannels that
+ *                                   are added to NOL.
+ * @dfs_nol_ie_startfreq:            The centre frequency of the starting
+ *                                   subchannel in the current channel list
+ *                                   to be sent in NOL IE with RCSA.
+ * @dfs_nol_ie_bitmap:               The bitmap of radar affected subchannels
+ *                                   in the current channel list
+ *                                   to be sent in NOL IE with RCSA.
+ * @dfs_is_rcsa_ie_sent              To send or to not send RCSA IE.
+ * @dfs_is_nol_ie_sent               To send or to not send NOL IE.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1150,6 +1162,11 @@ struct wlan_dfs {
 	int32_t        dfs_freq_offset;
 	bool           dfs_cac_aborted;
 	qdf_spinlock_t dfs_data_struct_lock;
+	uint8_t        dfs_nol_ie_bandwidth;
+	uint16_t       dfs_nol_ie_startfreq;
+	uint8_t        dfs_nol_ie_bitmap;
+	bool           dfs_is_rcsa_ie_sent;
+	bool           dfs_is_nol_ie_sent;
 };
 
 /**
@@ -2487,6 +2504,37 @@ void dfs_nol_free_list(struct wlan_dfs *dfs);
  * Return: returns 0.
  */
 int dfs_second_segment_radar_disable(struct wlan_dfs *dfs);
+
+/**
+ * dfs_fetch_nol_ie_info() - Fill NOL information to be sent with RCSA.
+ * @dfs                    - Pointer to wlan_dfs structure.
+ * @nol_ie_bandwidth       - Minimum subchannel bandwidth.
+ * @nol_ie_startfreq       - Radar affected channel list's first subchannel's
+ *                         - centre frequency.
+ * @nol_ie_bitmap          - NOL bitmap denoting affected subchannels.
+ */
+void dfs_fetch_nol_ie_info(struct wlan_dfs *dfs, uint8_t *nol_ie_bandwidth,
+			   uint16_t *nol_ie_startfreq, uint8_t *nol_ie_bitmap);
+
+/**
+ * dfs_set_rcsa_flags() - Set flags that are required for sending RCSA and
+ * NOL IE.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @is_rcsa_ie_sent: Boolean to check if RCSA IE should be sent or not.
+ * @is_nol_ie_sent: Boolean to check if NOL IE should be sent or not.
+ */
+void dfs_set_rcsa_flags(struct wlan_dfs *dfs, bool is_rcsa_ie_sent,
+			bool is_nol_ie_sent);
+
+/**
+ * dfs_get_rcsa_flags() - Get flags that are required for sending RCSA and
+ * NOL IE.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @is_rcsa_ie_sent: Boolean to check if RCSA IE should be sent or not.
+ * @is_nol_ie_sent: Boolean to check if NOL IE should be sent or not.
+ */
+void dfs_get_rcsa_flags(struct wlan_dfs *dfs, bool *is_rcsa_ie_sent,
+			bool *is_nol_ie_sent);
 
 /**
  * dfs_check_for_cac_start() - Check for DFS CAC start conditions.
