@@ -553,7 +553,7 @@ typedef void (*tdls_rx_callback)(void *user_data,
  *
  * Return: true or false
  */
-typedef bool (*tdls_wmm_check)(struct wlan_objmgr_vdev **vdev);
+typedef bool (*tdls_wmm_check)(uint8_t vdev_id);
 
 
 /* This callback is used to report state change of peer to wpa_supplicant */
