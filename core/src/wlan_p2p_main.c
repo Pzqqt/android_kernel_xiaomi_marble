@@ -429,6 +429,7 @@ static QDF_STATUS p2p_send_noa_to_pe(struct p2p_noa_info *noa_info)
 {
 	struct p2p_noa_attr *noa_attr;
 	struct scheduler_msg msg = {0};
+	QDF_STATUS status;
 
 	if (!noa_info) {
 		p2p_err("noa info is null");
@@ -474,11 +475,16 @@ static QDF_STATUS p2p_send_noa_to_pe(struct p2p_noa_info *noa_info)
 	msg.type = P2P_NOA_ATTR_IND;
 	msg.bodyval = 0;
 	msg.bodyptr = noa_attr;
-	scheduler_post_message(QDF_MODULE_ID_P2P,
-			       QDF_MODULE_ID_P2P,
-			       QDF_MODULE_ID_PE,  &msg);
+	status = scheduler_post_message(QDF_MODULE_ID_P2P,
+					QDF_MODULE_ID_P2P,
+					QDF_MODULE_ID_PE,
+					&msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(noa_attr);
+		p2p_err("post msg fail:%d", status);
+	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**
@@ -1042,6 +1048,72 @@ QDF_STATUS p2p_process_evt(struct scheduler_msg *msg)
 	msg->bodyptr = NULL;
 
 	return status;
+}
+
+QDF_STATUS p2p_msg_flush_callback(struct scheduler_msg *msg)
+{
+	struct tx_action_context *tx_action;
+
+	if (!msg || !(msg->bodyptr)) {
+		p2p_err("invalid msg");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	p2p_debug("flush msg, type:%d", msg->type);
+	switch (msg->type) {
+	case P2P_MGMT_TX:
+		tx_action = (struct tx_action_context *)msg->bodyptr;
+		qdf_mem_free(tx_action->buf);
+		qdf_mem_free(tx_action);
+		break;
+	default:
+		qdf_mem_free(msg->bodyptr);
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS p2p_event_flush_callback(struct scheduler_msg *msg)
+{
+	struct p2p_noa_event *noa_event;
+	struct p2p_rx_mgmt_event *rx_mgmt_event;
+	struct p2p_tx_conf_event *tx_conf_event;
+	struct p2p_lo_stop_event *lo_stop_event;
+
+	if (!msg || !(msg->bodyptr)) {
+		p2p_err("invalid msg");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	p2p_debug("flush event, type:%d", msg->type);
+	switch (msg->type) {
+	case P2P_EVENT_NOA:
+		noa_event = (struct p2p_noa_event *)msg->bodyptr;
+		qdf_mem_free(noa_event->noa_info);
+		qdf_mem_free(noa_event);
+		break;
+	case P2P_EVENT_RX_MGMT:
+		rx_mgmt_event = (struct p2p_rx_mgmt_event *)msg->bodyptr;
+		qdf_mem_free(rx_mgmt_event->rx_mgmt);
+		qdf_mem_free(rx_mgmt_event);
+		break;
+	case P2P_EVENT_MGMT_TX_ACK_CNF:
+		tx_conf_event = (struct p2p_tx_conf_event *)msg->bodyptr;
+		qdf_mem_free(tx_conf_event);
+		qdf_nbuf_free(tx_conf_event->nbuf);
+		break;
+	case P2P_EVENT_LO_STOPPED:
+		lo_stop_event = (struct p2p_lo_stop_event *)msg->bodyptr;
+		qdf_mem_free(lo_stop_event->lo_event);
+		qdf_mem_free(lo_stop_event);
+		break;
+	default:
+		qdf_mem_free(msg->bodyptr);
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD

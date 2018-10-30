@@ -445,6 +445,26 @@ QDF_STATUS p2p_process_cmd(struct scheduler_msg *msg);
  */
 QDF_STATUS p2p_process_evt(struct scheduler_msg *msg);
 
+/**
+ * p2p_msg_flush_callback() - Callback used to flush P2P messages
+ * @msg: message information
+ *
+ * This callback will be called when scheduler flush some of P2P messages.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS p2p_msg_flush_callback(struct scheduler_msg *msg);
+
+/**
+ * p2p_event_flush_callback() - Callback used to flush P2P events
+ * @msg: event information
+ *
+ * This callback will be called when scheduler flush some of P2P events.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS p2p_event_flush_callback(struct scheduler_msg *msg);
+
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * p2p_process_lo_stop() - Process lo stop event
