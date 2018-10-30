@@ -519,10 +519,11 @@ int dp_peer_add_ast(struct dp_soc *soc,
 
 	pdev = vdev->pdev;
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"%s: peer %pK mac %02x:%02x:%02x:%02x:%02x:%02x",
-		__func__, peer, mac_addr[0], mac_addr[1], mac_addr[2],
-		mac_addr[3], mac_addr[4], mac_addr[5]);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_TRACE,
+		  "%s: pdevid: %u vdev: %u  ast_entry->type: %d flags: 0x%x peer_mac: %pM peer: %pK mac %pM",
+		  __func__, pdev->pdev_id, vdev->vdev_id, type, flags,
+		  peer->mac_addr.raw, peer, mac_addr);
+
 	qdf_spin_lock_bh(&soc->ast_lock);
 
 	/* For HMWDS and HWMWDS_SEC entries can be added for same mac address
@@ -657,6 +658,12 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 {
 	struct dp_peer *peer = ast_entry->peer;
 
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_TRACE,
+		  "%s: ast_entry->type: %d pdevid: %u vdev: %u mac_addr: %pM next_hop: %u peer_mac: %pM\n",
+		  __func__, ast_entry->type, peer->vdev->pdev->pdev_id,
+		  peer->vdev->vdev_id, ast_entry->mac_addr.raw,
+		  ast_entry->next_hop, ast_entry->peer->mac_addr.raw);
+
 	if (ast_entry->next_hop &&
 	    ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC) {
 		dp_peer_ast_send_wds_del(soc, ast_entry);
@@ -734,6 +741,12 @@ int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 {
 	int ret = -1;
 	struct dp_peer *old_peer;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_TRACE,
+		  "%s: ast_entry->type: %d pdevid: %u vdevid: %u flags: 0x%x mac_addr: %pM peer_mac: %pM\n",
+		  __func__, ast_entry->type, peer->vdev->pdev->pdev_id,
+		  peer->vdev->vdev_id, flags, ast_entry->mac_addr.raw,
+		  peer->mac_addr.raw);
 
 	if ((ast_entry->type == CDP_TXRX_AST_TYPE_STATIC) ||
 	    (ast_entry->type == CDP_TXRX_AST_TYPE_SELF) ||
