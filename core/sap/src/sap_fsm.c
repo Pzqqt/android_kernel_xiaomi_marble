@@ -812,19 +812,19 @@ sap_validate_chan(struct sap_context *sap_context,
 	tpAniSirGlobal mac_ctx;
 	bool is_dfs;
 	bool is_safe;
-	tHalHandle h_hal;
+	mac_handle_t mac_handle;
 	uint8_t con_ch;
 	bool sta_sap_scc_on_dfs_chan;
 
-	h_hal = cds_get_context(QDF_MODULE_ID_SME);
-	if (NULL == h_hal) {
+	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
+	mac_ctx = MAC_CONTEXT(mac_handle);
+	if (!mac_ctx) {
 		/* we have a serious problem */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
-			  FL("invalid h_hal"));
+			  FL("invalid MAC handle"));
 		return QDF_STATUS_E_FAULT;
 	}
 
-	mac_ctx = PMAC_STRUCT(h_hal);
 	if (!sap_context->channel) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid channel"));
@@ -839,7 +839,7 @@ sap_validate_chan(struct sap_context *sap_context,
 	     policy_mgr_mode_specific_connection_count(mac_ctx->psoc,
 		PM_P2P_GO_MODE, NULL)))) {
 		con_ch =
-			sme_get_concurrent_operation_channel(h_hal);
+			sme_get_concurrent_operation_channel(mac_handle);
 #ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
 		if (con_ch && sap_context->channel != con_ch &&
 		    wlan_reg_is_dfs_ch(mac_ctx->pdev,
@@ -862,7 +862,8 @@ sap_validate_chan(struct sap_context *sap_context,
 			 * channel con_ch could becreated. That may cause
 			 * SAP start failed.
 			 */
-			con_ch = sme_check_concurrent_channel_overlap(h_hal,
+			con_ch = sme_check_concurrent_channel_overlap(
+					mac_handle,
 					sap_context->channel,
 					sap_context->csr_roamProfile.phyMode,
 					sap_context->cc_switch_mode);
@@ -915,7 +916,8 @@ sap_validate_chan(struct sap_context *sap_context,
 				FL("check for overlap: chan:%d mode:%d"),
 				sap_context->channel,
 				sap_context->csr_roamProfile.phyMode);
-			con_ch = sme_check_concurrent_channel_overlap(h_hal,
+			con_ch = sme_check_concurrent_channel_overlap(
+					mac_handle,
 					sap_context->channel,
 					sap_context->csr_roamProfile.phyMode,
 					sap_context->cc_switch_mode);
@@ -984,7 +986,7 @@ sap_validate_chan(struct sap_context *sap_context,
 		sap_context->acs_cfg->pri_ch = sap_context->channel;
 		sap_context->acs_cfg->ch_width =
 					 sap_context->ch_width_orig;
-		sap_config_acs_result(h_hal, sap_context, 0);
+		sap_config_acs_result(mac_handle, sap_context, 0);
 		return QDF_STATUS_E_CANCELED;
 	}
 
