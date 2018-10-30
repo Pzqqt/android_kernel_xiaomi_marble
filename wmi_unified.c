@@ -2099,8 +2099,7 @@ static void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 	id = WMI_GET_FIELD(qdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
 	idx = wmi_unified_get_event_handler_ix(wmi_handle, id);
 	if (qdf_unlikely(idx == A_ERROR)) {
-		WMI_LOGE("%s :event handler is not registered: event id 0x%x\n",
-				 __func__, id);
+		wmi_debug("no handler registered for event id 0x%x", id);
 		qdf_nbuf_free(evt_buf);
 		return;
 	}
