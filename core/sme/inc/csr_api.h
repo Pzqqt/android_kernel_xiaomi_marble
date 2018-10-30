@@ -1651,6 +1651,15 @@ static inline void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx,
 					   tpSirSmeJoinRsp join_rsp)
 {}
 #endif
+
+/**
+ * csr_packetdump_timer_stop() - stops packet dump timer
+ *
+ * This function is used to stop packet dump timer
+ *
+ * Return: None
+ *
+ */
 void csr_packetdump_timer_stop(void);
 
 /**

@@ -1360,27 +1360,19 @@ static void csr_packetdump_timer_handler(void *pv)
 	wlan_deregister_txrx_packetdump();
 }
 
-/**
- * csr_packetdump_timer_stop() - stops packet dump timer
- *
- * This function is used to stop packet dump timer
- *
- * Return: None
- *
- */
 void csr_packetdump_timer_stop(void)
 {
 	QDF_STATUS status;
-	tHalHandle hal;
-	tpAniSirGlobal mac;
+	mac_handle_t mac_handle;
+	struct mac_context *mac;
 
-	hal = cds_get_context(QDF_MODULE_ID_SME);
-	if (hal == NULL) {
+	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
+	mac = MAC_CONTEXT(mac_handle);
+	if (!mac) {
 		QDF_ASSERT(0);
 		return;
 	}
 
-	mac = PMAC_STRUCT(hal);
 	status = qdf_mc_timer_stop(&mac->roam.packetdump_timer);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		sme_err("cannot stop packetdump timer");
