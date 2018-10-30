@@ -1609,8 +1609,6 @@ QDF_STATUS csr_set_channels(tpAniSirGlobal pMac, tCsrConfigParam *pParam);
 const char *get_e_roam_cmd_status_str(eRoamCmdStatus val);
 const char *get_e_csr_roam_result_str(eCsrRoamResult val);
 const char *csr_phy_mode_str(eCsrPhyMode phy_mode);
-QDF_STATUS csr_set_phy_mode(tHalHandle hHal, uint32_t phyMode,
-			    enum band_info eBand, bool *pfRestartNeeded);
 typedef void (*tCsrStatsCallback)(void *stats, void *pContext);
 typedef void (*tCsrRssiCallback)(int8_t rssi, uint32_t staId, void *pContext);
 
