@@ -3398,16 +3398,30 @@ void wma_hold_req_timer(void *data)
 
 		WMA_LOGE(FL("set hw mode req timed out"));
 
-		if (params) {
+		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash)) {
+			wma_trigger_recovery_assert_on_fw_timeout(
+						SIR_HAL_PDEV_SET_HW_MODE);
+		} else if (params) {
 			params->status = SET_HW_MODE_STATUS_ECANCELED;
 			params->cfgd_hw_mode_index = 0;
 			params->num_vdev_mac_entries = 0;
+			wma_send_msg_high_priority(wma,
+				SIR_HAL_PDEV_SET_HW_MODE_RESP, params, 0);
+		}
+	} else if ((tgt_req->msg_type == SIR_HAL_PDEV_DUAL_MAC_CFG_REQ) &&
+			(tgt_req->type == WMA_PDEV_MAC_CFG_RESP)) {
+		struct sir_dual_mac_config_resp *resp =
+						qdf_mem_malloc(sizeof(*resp));
 
-			if (wma_crash_on_fw_timeout(wma->fw_timeout_crash) == true)
-				QDF_BUG(0);
-			else
-				wma_send_msg_high_priority(wma,
-					SIR_HAL_PDEV_SET_HW_MODE_RESP, params, 0);
+		WMA_LOGE(FL("set dual mac config timeout"));
+		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash)) {
+			wma_trigger_recovery_assert_on_fw_timeout(
+						SIR_HAL_PDEV_DUAL_MAC_CFG_REQ);
+		} else if (resp) {
+			resp->status = SET_HW_MODE_STATUS_ECANCELED;
+			wma_send_msg_high_priority(wma,
+						   SIR_HAL_PDEV_MAC_CFG_RESP,
+						   resp, 0);
 		}
 	} else {
 		WMA_LOGE(FL("Unhandled timeout for msg_type:%d and type:%d"),

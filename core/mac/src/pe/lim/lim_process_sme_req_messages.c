@@ -136,6 +136,7 @@ static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 	buf = (struct s_sir_set_hw_mode *) msg;
 	if (!buf) {
 		pe_err("Set HW mode param is NULL");
+		status = QDF_STATUS_E_INVAL;
 		/* To free the active command list */
 		goto fail;
 	}
@@ -143,8 +144,11 @@ static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 	len = sizeof(*req_msg);
 
 	req_msg = qdf_mem_malloc(len);
-	if (!req_msg)
-		return QDF_STATUS_E_NOMEM;
+	if (!req_msg) {
+		pe_debug("failed to allocate memory");
+		status = QDF_STATUS_E_NOMEM;
+		goto fail;
+	}
 
 	req_msg->hw_mode_index = buf->set_hw.hw_mode_index;
 	req_msg->reason = buf->set_hw.reason;
@@ -175,7 +179,7 @@ fail:
 	resp_msg.bodyptr = param;
 	resp_msg.bodyval = 0;
 	lim_sys_process_mmh_msg_api(mac, &resp_msg, ePROT);
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**
@@ -201,6 +205,7 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 	buf = (struct sir_set_dual_mac_cfg *) msg;
 	if (!buf) {
 		pe_err("Set Dual mac config is NULL");
+		status = QDF_STATUS_E_INVAL;
 		/* To free the active command list */
 		goto fail;
 	}
@@ -208,8 +213,11 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 	len = sizeof(*req_msg);
 
 	req_msg = qdf_mem_malloc(len);
-	if (!req_msg)
-		return QDF_STATUS_E_NOMEM;
+	if (!req_msg) {
+		pe_debug("failed to allocate memory");
+		status = QDF_STATUS_E_NOMEM;
+		goto fail;
+	}
 
 	req_msg->scan_config = buf->set_dual_mac.scan_config;
 	req_msg->fw_mode_config = buf->set_dual_mac.fw_mode_config;
@@ -239,7 +247,7 @@ fail:
 	resp_msg.bodyptr = param;
 	resp_msg.bodyval = 0;
 	lim_sys_process_mmh_msg_api(mac, &resp_msg, ePROT);
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**
@@ -265,13 +273,17 @@ static QDF_STATUS lim_process_set_antenna_mode_req(tpAniSirGlobal mac,
 	buf = (struct sir_set_antenna_mode *) msg;
 	if (!buf) {
 		pe_err("Set antenna mode is NULL");
+		status = QDF_STATUS_E_INVAL;
 		/* To free the active command list */
 		goto fail;
 	}
 
 	req_msg = qdf_mem_malloc(sizeof(*req_msg));
-	if (!req_msg)
-		return QDF_STATUS_E_NOMEM;
+	if (!req_msg) {
+		pe_debug("failed to allocate memory");
+		status = QDF_STATUS_E_NOMEM;
+		goto fail;
+	}
 
 	req_msg->num_rx_chains = buf->set_antenna_mode.num_rx_chains;
 	req_msg->num_tx_chains = buf->set_antenna_mode.num_tx_chains;
@@ -301,7 +313,7 @@ fail:
 	resp_msg.bodyptr = param;
 	resp_msg.bodyval = 0;
 	lim_sys_process_mmh_msg_api(mac, &resp_msg, ePROT);
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**

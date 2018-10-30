@@ -21332,7 +21332,8 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 		policy_mgr_set_hw_mode_change_in_progress(mac->psoc,
 			POLICY_MGR_HW_MODE_NOT_IN_PROGRESS);
 		sme_err("Posting to PE failed");
-		return;
+		cmd = NULL;
+		goto fail;
 	}
 	return;
 fail:
@@ -21398,15 +21399,14 @@ void csr_process_set_dual_mac_config(tpAniSirGlobal mac, tSmeCmd *command)
 	cmd->set_dual_mac.set_dual_mac_cb =
 		command->u.set_dual_mac_cmd.set_dual_mac_cb;
 
-	sme_debug(
-		"Posting eWNI_SME_SET_DUAL_MAC_CFG_REQ to PE: %x %x",
-		cmd->set_dual_mac.scan_config,
-		cmd->set_dual_mac.fw_mode_config);
+	sme_debug("Posting eWNI_SME_SET_DUAL_MAC_CFG_REQ to PE: %x %x",
+		  cmd->set_dual_mac.scan_config,
+		  cmd->set_dual_mac.fw_mode_config);
 
 	status = umac_send_mb_message_to_mac(cmd);
-	if (QDF_STATUS_SUCCESS != status) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("Posting to PE failed");
-		return;
+		goto fail;
 	}
 	return;
 fail:
