@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012,2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012,2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -351,11 +351,12 @@ bool hdd_wmm_is_active(struct hdd_adapter *adapter);
  * hdd_wmm_is_acm_allowed() - Function which will determine if WMM is
  * active on the current connection
  *
- * @vdev: vdev object
+ * @vdev_id: vdev id
  *
  * Return: true if WMM is enabled, false if WMM is not enabled
  */
-bool hdd_wmm_is_acm_allowed(struct wlan_objmgr_vdev **vdev);
+bool hdd_wmm_is_acm_allowed(uint8_t vdev_id);
+
 
 /**
  * hdd_wmm_addts() - Function which will add a traffic spec at the

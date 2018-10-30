@@ -2347,17 +2347,24 @@ bool hdd_wmm_is_active(struct hdd_adapter *adapter)
 	}
 }
 
-bool hdd_wmm_is_acm_allowed(struct wlan_objmgr_vdev **vdev)
+bool hdd_wmm_is_acm_allowed(uint8_t vdev_id)
 {
 	struct hdd_adapter *adapter;
 	struct hdd_wmm_ac_status *wmm_ac_status;
+	struct hdd_context *hdd_ctx;
 
-
-	adapter = container_of(vdev, struct hdd_adapter, vdev);
-	if (NULL == adapter) {
-		hdd_err("failed, hdd adapter is NULL");
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("Unable to fetch the hdd context");
 		return false;
 	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (hdd_validate_adapter(adapter)) {
+		hdd_err("Invalid adapter");
+		return false;
+	}
+
 	wmm_ac_status = adapter->hdd_wmm_status.wmmAcStatus;
 
 	if (hdd_wmm_is_active(adapter) &&
