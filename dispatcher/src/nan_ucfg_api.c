@@ -302,6 +302,38 @@ inline QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS ucfg_nan_sch_msg_flush_cb(struct scheduler_msg *msg)
+{
+	struct wlan_objmgr_vdev *vdev = NULL;
+
+	if (!msg || !msg->bodyptr)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	switch (msg->type) {
+	case NDP_INITIATOR_REQ:
+		vdev = ((struct nan_datapath_initiator_req *)
+			msg->bodyptr)->vdev;
+		break;
+	case NDP_RESPONDER_REQ:
+		vdev = ((struct nan_datapath_responder_req *)
+			msg->bodyptr)->vdev;
+		break;
+	case NDP_END_REQ:
+		vdev = ((struct nan_datapath_end_req *)msg->bodyptr)->vdev;
+		break;
+	default:
+		nan_err("Invalid NAN msg type during sch flush");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (vdev) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
+		qdf_mem_free(msg->bodyptr);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 				  void *in_req, uint32_t req_type)
 {
@@ -337,12 +369,14 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 	qdf_mem_copy(msg.bodyptr, in_req, len);
 	msg.type = req_type;
 	msg.callback = nan_scheduled_msg_handler;
+	msg.flush_callback = ucfg_nan_sch_msg_flush_cb;
 	status = scheduler_post_message(QDF_MODULE_ID_HDD,
 					QDF_MODULE_ID_NAN,
 					QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		nan_err("failed to post msg to NAN component, status: %d",
 			status);
+		qdf_mem_free(msg.bodyptr);
 	}
 
 	return status;
