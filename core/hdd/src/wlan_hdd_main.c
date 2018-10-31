@@ -4058,6 +4058,27 @@ hdd_store_nss_chains_cfg_in_vdev(struct hdd_adapter *adapter)
 	qdf_mem_copy(mlme_get_ini_vdev_config(adapter->vdev),
 		     &vdev_ini_cfg, sizeof(struct wlan_mlme_nss_chains));
 }
+
+bool hdd_is_vdev_in_conn_state(struct hdd_adapter *adapter)
+{
+	switch (adapter->device_mode) {
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_P2P_DEVICE_MODE:
+		return hdd_conn_is_connected(
+				WLAN_HDD_GET_STATION_CTX_PTR(adapter));
+	case QDF_SAP_MODE:
+	case QDF_P2P_GO_MODE:
+		return (test_bit(SOFTAP_BSS_STARTED,
+				 &adapter->event_flags));
+	default:
+		hdd_err("Device mode %d invalid", adapter->device_mode);
+		return 0;
+	}
+
+	return 0;
+}
+
 int hdd_vdev_create(struct hdd_adapter *adapter,
 		    csr_roam_complete_cb callback, void *ctx)
 {

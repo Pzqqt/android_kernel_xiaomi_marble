@@ -6701,6 +6701,12 @@ hdd_set_dynamic_antenna_mode(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
+	if (!hdd_is_vdev_in_conn_state(adapter)) {
+		hdd_debug("Vdev (id %d) not in connected/started state, cannot accept command",
+			  adapter->session_id);
+		return -EINVAL;
+	}
+
 	qdf_mem_zero(&user_cfg, sizeof(user_cfg));
 	for (band = BAND_2GHZ; band < BAND_MAX; band++) {
 		status = hdd_populate_vdev_chains(&user_cfg,
@@ -6750,11 +6756,6 @@ int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 						    params.num_rx_chains,
 						    params.num_tx_chains);
 
-	if (hdd_ctx->current_antenna_mode == mode) {
-		hdd_err("System already in the requested mode");
-		goto exit;
-	}
-
 	if ((HDD_ANTENNA_MODE_2X2 == mode) &&
 	    (!hdd_is_supported_chain_mask_2x2(hdd_ctx))) {
 		hdd_err("System does not support 2x2 mode");
@@ -6767,7 +6768,6 @@ int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 		hdd_err("System only supports 1x1 mode");
 		goto exit;
 	}
-
 
 	/* Check TDLS status and update antenna mode */
 	if ((QDF_STA_MODE == adapter->device_mode) &&

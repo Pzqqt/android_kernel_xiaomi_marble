@@ -4370,6 +4370,12 @@ hdd_set_nss_params(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_INVAL;
 	}
 
+	if (!hdd_is_vdev_in_conn_state(adapter)) {
+		hdd_debug("Vdev (id %d) not in connected/started state, cannot accept command",
+				adapter->session_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	for (band = BAND_2GHZ; band < NUM_OF_BANDS; band++)
 		hdd_populate_vdev_nss(&user_cfg, tx_nss,
 				      rx_nss, band);

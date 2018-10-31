@@ -4403,18 +4403,28 @@ wma_send_vdev_start_to_fw(t_wma_handle *wma, struct vdev_start_params *params)
 QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 {
 	QDF_STATUS status;
-	struct wma_txrx_node *vdev = &wma->interfaces[vdev_id];
+	struct wma_txrx_node *iface = &wma->interfaces[vdev_id];
 
 	if (!wma_is_vdev_valid(vdev_id)) {
 		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
 		status = QDF_STATUS_E_FAILURE;
 		return status;
 	}
-	wma_acquire_wakelock(&vdev->vdev_stop_wakelock,
+
+	/**
+	 * Reset the dynamic nss chains config to the ini values, as when the
+	 * vdev gets its started again, this would be a fresh connection,
+	 * and we dont want the config of previous connection to affect the
+	 * current connection.
+	 */
+	qdf_mem_copy(mlme_get_dynamic_vdev_config(iface->vdev),
+		     mlme_get_ini_vdev_config(iface->vdev),
+		     sizeof(struct wlan_mlme_nss_chains));
+	wma_acquire_wakelock(&iface->vdev_stop_wakelock,
 			     WMA_VDEV_STOP_REQUEST_TIMEOUT);
 	status = wmi_unified_vdev_stop_send(wma->wmi_handle, vdev_id);
 	if (QDF_IS_STATUS_ERROR(status))
-		wma_release_wakelock(&vdev->vdev_stop_wakelock);
+		wma_release_wakelock(&iface->vdev_stop_wakelock);
 
 	return status;
 }

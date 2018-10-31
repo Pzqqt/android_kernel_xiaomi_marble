@@ -2199,6 +2199,18 @@ struct hdd_adapter *
 hdd_get_adapter_by_rand_macaddr(struct hdd_context *hdd_ctx,
 				tSirMacAddr mac_addr);
 
+/**
+ * hdd_is_vdev_in_conn_state() - Check whether the vdev is in
+ * connected/started state.
+ * @adapter: hdd adapter of the vdev
+ *
+ * This function will give whether the vdev in the adapter is in
+ * connected/started state.
+ *
+ * Return: True/false
+ */
+bool hdd_is_vdev_in_conn_state(struct hdd_adapter *adapter);
+
 int hdd_vdev_create(struct hdd_adapter *adapter,
 		    csr_roam_complete_cb callback, void *ctx);
 int hdd_vdev_destroy(struct hdd_adapter *adapter);
