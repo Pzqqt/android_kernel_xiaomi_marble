@@ -6871,6 +6871,8 @@ static void hdd_context_destroy(struct hdd_context *hdd_ctx)
 
 	hdd_context_deinit(hdd_ctx);
 
+	hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
+
 	qdf_mem_free(hdd_ctx->config);
 	hdd_ctx->config = NULL;
 
@@ -7026,10 +7028,6 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 #ifdef FEATURE_WLAN_CH_AVOID
 	mutex_destroy(&hdd_ctx->avoid_freq_lock);
 #endif
-
-	driver_status = hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
-	if (driver_status)
-		hdd_err("Psoc delete failed");
 
 	hdd_context_destroy(hdd_ctx);
 }
