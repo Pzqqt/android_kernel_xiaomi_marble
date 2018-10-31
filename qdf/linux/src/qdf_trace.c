@@ -3343,25 +3343,25 @@ QDF_STATUS qdf_print_set_category_verbose(unsigned int idx,
 {
 	/* Check if index passed is valid */
 	if (idx < 0 || idx >= MAX_PRINT_CONFIG_SUPPORTED) {
-		pr_info("%s: Invalid index - %d\n", __func__, idx);
+		pr_err("%s: Invalid index - %d\n", __func__, idx);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Check if print control object is in use */
 	if (!print_ctrl_obj[idx].in_use) {
-		pr_info("%s: Invalid print control object\n", __func__);
+		pr_err("%s: Invalid print control object\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Check if category passed is valid */
 	if (category < 0 || category >= MAX_SUPPORTED_CATEGORY) {
-		pr_info("%s: Invalid category: %d\n", __func__, category);
+		pr_err("%s: Invalid category: %d\n", __func__, category);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Check if verbose mask is valid */
 	if (verbose < 0 || verbose >= QDF_TRACE_LEVEL_MAX) {
-		pr_info("%s: Invalid verbose level %d\n", __func__, verbose);
+		pr_err("%s: Invalid verbose level %d\n", __func__, verbose);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -3389,7 +3389,7 @@ QDF_STATUS qdf_print_set_category_verbose(unsigned int idx,
 				QDF_TRACE_LEVEL_TO_MODULE_BITMASK(verbose);
 	}
 
-	pr_info("%s: Print control object %d, Category %d, Verbose level %d\n",
+	pr_debug("%s: Print control object %d, Category %d, Verbose level %d\n",
 		__func__,
 		idx,
 		category,
