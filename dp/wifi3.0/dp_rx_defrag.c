@@ -163,21 +163,19 @@ void dp_rx_defrag_waitlist_flush(struct dp_soc *soc)
 
 	TAILQ_INIT(&temp_list);
 
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		  FL("Current time  %u"), now_ms);
+
 	qdf_spin_lock_bh(&soc->rx.defrag.defrag_lock);
 	TAILQ_FOREACH_SAFE(rx_reorder, &soc->rx.defrag.waitlist,
 			   defrag_waitlist_elem, tmp) {
-		unsigned int tid;
-
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("Current time  %u"), now_ms);
+		uint32_t tid;
 
 		if (rx_reorder->defrag_timeout_ms > now_ms)
 			break;
 
 		tid = rx_reorder->tid;
 		if (tid >= DP_MAX_TIDS) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  "%s: TID out of bounds: %d", __func__, tid);
 			qdf_assert(0);
 			continue;
 		}
