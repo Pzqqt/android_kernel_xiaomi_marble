@@ -24,10 +24,11 @@
 #include <dsp/msm-audio-event-notify.h>
 #include "swrm_registers.h"
 #include "swr-mstr-ctrl.h"
-#include "swrm_port_config.h"
 
 #define SWRM_SYSTEM_RESUME_TIMEOUT_MS 700
 #define SWRM_SYS_SUSPEND_WAIT 1
+
+#define SWRM_DSD_PARAMS_PORT 4
 
 #define SWR_BROADCAST_CMD_ID            0x0F
 #define SWR_AUTO_SUSPEND_DELAY          3 /* delay in sec */
@@ -378,27 +379,16 @@ static void copy_port_tables(struct swr_mstr_ctrl *swrm,
 static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 {
 	struct port_params *params;
+	u32 usecase = 0;
 
-	switch (swrm->master_id) {
-	case MASTER_ID_WSA:
-		params = wsa_frame_superset;
-		break;
-	case MASTER_ID_RX:
-		/* Two RX tables for dsd and without dsd enabled */
-		if (swrm->mport_cfg[4].port_en)
-			params = rx_frame_params_dsd;
-		else
-			params = rx_frame_params;
-		break;
-	case MASTER_ID_TX:
-		params = tx_frame_params_superset;
-		break;
-	default: /* MASTER_GENERIC*/
-		/* computer generic frame parameters */
-		return -EINVAL;
-	}
+	/* TODO - Send usecase information to avoid checking for master_id */
+	if (swrm->mport_cfg[SWRM_DSD_PARAMS_PORT].port_en &&
+				(swrm->master_id == MASTER_ID_RX))
+		usecase = 1;
 
+	params = swrm->port_param[usecase];
 	copy_port_tables(swrm, params);
+
 	return 0;
 }
 
