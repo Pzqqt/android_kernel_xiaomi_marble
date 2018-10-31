@@ -444,11 +444,6 @@ scm_scan_start_req(struct scheduler_msg *msg)
 	case WLAN_SER_CMD_DENIED_LIST_FULL:
 	case WLAN_SER_CMD_DENIED_RULES_FAILED:
 	case WLAN_SER_CMD_DENIED_UNSPECIFIED:
-		/* notify registered scan event handlers
-		 * about internal error
-		 */
-		scm_post_internal_scan_complete_event(req,
-				SCAN_REASON_INTERNAL_FAILURE);
 		goto err;
 	default:
 		QDF_ASSERT(0);
@@ -458,6 +453,12 @@ scm_scan_start_req(struct scheduler_msg *msg)
 
 	return status;
 err:
+	/*
+	 * notify registered scan event handlers
+	 * about internal error
+	 */
+	scm_post_internal_scan_complete_event(req,
+					      SCAN_REASON_INTERNAL_FAILURE);
 	/*
 	 * cmd can't be serviced.
 	 * release vdev reference and free scan_start_request memory
