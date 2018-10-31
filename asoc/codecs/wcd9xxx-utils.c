@@ -12,11 +12,11 @@
 #include <linux/delay.h>
 #include <linux/sched.h>
 #include <linux/mfd/core.h>
-#include "core.h"
-#include "msm-cdc-supply.h"
-#include "msm-cdc-pinctrl.h"
-#include "pdata.h"
-#include "wcd9xxx-irq.h"
+#include <asoc/core.h>
+#include <asoc/msm-cdc-supply.h>
+#include <asoc/msm-cdc-pinctrl.h>
+#include <asoc/pdata.h>
+#include <asoc/wcd9xxx-irq.h>
 #include "wcd9xxx-utils.h"
 
 #define REG_BYTES 2

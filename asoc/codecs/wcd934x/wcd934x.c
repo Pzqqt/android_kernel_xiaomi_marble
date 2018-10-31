@@ -35,12 +35,12 @@
 #include "wcd934x-routing.h"
 #include "wcd934x-dsp-cntl.h"
 #include "wcd934x_irq.h"
-#include "../core.h"
-#include "../pdata.h"
-#include "../wcd9xxx-irq.h"
-#include "../wcd9xxx-common-v2.h"
-#include "../wcd9xxx-resmgr-v2.h"
-#include "../wcdcal-hwdep.h"
+#include <asoc/core.h>
+#include <asoc/pdata.h>
+#include <asoc/wcd9xxx-irq.h>
+#include <asoc/wcd9xxx-common-v2.h>
+#include <asoc/wcd9xxx-resmgr-v2.h>
+#include <asoc/wcdcal-hwdep.h>
 #include "wcd934x-dsd.h"
 
 #define DRV_NAME "tavil_codec"

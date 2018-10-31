@@ -20,11 +20,11 @@
 #include <linux/soc/qcom/fsa4480-i2c.h>
 #include <sound/soc.h>
 #include <sound/jack.h>
-#include "msm-cdc-pinctrl.h"
-#include "wcdcal-hwdep.h"
+#include <asoc/msm-cdc-pinctrl.h>
+#include <asoc/wcdcal-hwdep.h>
 #include "wcd-mbhc-legacy.h"
 #include "wcd-mbhc-adc.h"
-#include "wcd-mbhc-v2-api.h"
+#include <asoc/wcd-mbhc-v2-api.h>
 
 void wcd_mbhc_jack_report(struct wcd_mbhc *mbhc,
 			  struct snd_soc_jack *jack, int status, int mask)

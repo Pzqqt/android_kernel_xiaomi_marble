@@ -9,8 +9,8 @@
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <linux/mfd/wcd9xxx/wcd9xxx_registers.h>
-#include "core.h"
-#include "wcd9xxx-common-v2.h"
+#include <asoc/core.h>
+#include <asoc/wcd9xxx-common-v2.h>
 
 #define WCD_USLEEP_RANGE 50
 #define MAX_IMPED_PARAMS 6

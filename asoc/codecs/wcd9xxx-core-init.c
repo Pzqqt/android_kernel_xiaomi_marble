@@ -1,11 +1,11 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
-#include "msm-cdc-pinctrl.h"
-#include "wcd9xxx-irq.h"
-#include "core.h"
+#include <asoc/msm-cdc-pinctrl.h>
+#include <asoc/wcd9xxx-irq.h>
+#include <asoc/core.h>
 
 #define NUM_DRIVERS_REG_RET 3
 

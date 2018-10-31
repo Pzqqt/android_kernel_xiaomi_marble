@@ -28,18 +28,18 @@
 #include <sound/soc-dapm.h>
 #include <sound/tlv.h>
 #include <sound/info.h>
-#include "core.h"
-#include "pdata.h"
+#include <asoc/core.h>
+#include <asoc/pdata.h>
 #include "wcd9335.h"
-#include "wcd-mbhc-v2.h"
-#include "wcd9xxx-common-v2.h"
-#include "wcd9xxx-resmgr-v2.h"
-#include "wcd9xxx-irq.h"
+#include <asoc/wcd-mbhc-v2.h>
+#include <asoc/wcd9xxx-common-v2.h>
+#include <asoc/wcd9xxx-resmgr-v2.h>
+#include <asoc/wcd9xxx-irq.h>
 #include "wcd9335_registers.h"
 #include "wcd9335_irq.h"
 #include "wcd_cpe_core.h"
-#include "wcdcal-hwdep.h"
-#include "wcd-mbhc-v2-api.h"
+#include <asoc/wcdcal-hwdep.h>
+#include <asoc/wcd-mbhc-v2-api.h>
 
 #define DRV_NAME "tasha_codec"
 

@@ -21,11 +21,11 @@
 #include "wcd934x-mbhc.h"
 #include <asoc/wcd934x_registers.h>
 #include "wcd934x_irq.h"
-#include "../core.h"
-#include "../pdata.h"
-#include "../wcd9xxx-irq.h"
-#include "../wcdcal-hwdep.h"
-#include "../wcd-mbhc-v2-api.h"
+#include <asoc/core.h>
+#include <asoc/pdata.h>
+#include <asoc/wcd9xxx-irq.h>
+#include <asoc/wcdcal-hwdep.h>
+#include <asoc/wcd-mbhc-v2-api.h>
 
 #define TAVIL_ZDET_SUPPORTED          true
 /* Z value defined in milliohm */

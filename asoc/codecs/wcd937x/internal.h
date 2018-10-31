@@ -5,9 +5,9 @@
 #ifndef _WCD937X_INTERNAL_H
 #define _WCD937X_INTERNAL_H
 
-#include "../wcd-clsh.h"
-#include "../wcd-mbhc-v2.h"
-#include "asoc/wcd-irq.h"
+#include <asoc/wcd-clsh.h>
+#include <asoc/wcd-mbhc-v2.h>
+#include <asoc/wcd-irq.h>
 #include "wcd937x-mbhc.h"
 
 #define WCD937X_MAX_MICBIAS 3

@@ -11,7 +11,7 @@
 #include <sound/hwdep.h>
 #include <sound/msmcal-hwdep.h>
 #include <sound/soc.h>
-#include "wcdcal-hwdep.h"
+#include <asoc/wcdcal-hwdep.h>
 
 const int cal_size_info[WCD9XXX_MAX_CAL] = {
 	[WCD9XXX_ANC_CAL] = 16384,

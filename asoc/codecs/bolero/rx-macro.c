@@ -14,9 +14,9 @@
 #include <sound/tlv.h>
 #include <soc/swr-wcd.h>
 
+#include <asoc/msm-cdc-pinctrl.h>
 #include "bolero-cdc.h"
 #include "bolero-cdc-registers.h"
-#include "../msm-cdc-pinctrl.h"
 
 #define RX_MACRO_RATES (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |\
 			SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |\

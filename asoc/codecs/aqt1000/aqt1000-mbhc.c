@@ -21,8 +21,8 @@
 #include "aqt1000-registers.h"
 #include "aqt1000-irq.h"
 #include "pdata.h"
-#include "../wcdcal-hwdep.h"
-#include "../wcd-mbhc-v2-api.h"
+#include <asoc/wcdcal-hwdep.h>
+#include <asoc/wcd-mbhc-v2-api.h>
 
 #define AQT_ZDET_SUPPORTED          true
 /* Z value defined in milliohm */

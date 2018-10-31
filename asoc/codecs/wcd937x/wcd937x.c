@@ -19,11 +19,11 @@
 #include <sound/soc-dapm.h>
 #include "internal.h"
 #include "wcd937x.h"
-#include "../wcdcal-hwdep.h"
+#include <asoc/wcdcal-hwdep.h>
 #include "wcd937x-registers.h"
-#include "../msm-cdc-pinctrl.h"
+#include <asoc/msm-cdc-pinctrl.h>
 #include <dt-bindings/sound/audio-codec-port-types.h>
-#include "../msm-cdc-supply.h"
+#include <asoc/msm-cdc-supply.h>
 
 #define DRV_NAME "wcd937x_codec"
 

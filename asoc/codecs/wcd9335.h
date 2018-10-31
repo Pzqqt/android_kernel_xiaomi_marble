@@ -8,8 +8,8 @@
 #include <sound/soc.h>
 #include <sound/jack.h>
 #include <dsp/apr_audio-v2.h>
-#include "wcd9xxx-slimslave.h"
-#include "wcd-mbhc-v2.h"
+#include <asoc/wcd9xxx-slimslave.h>
+#include <asoc/wcd-mbhc-v2.h>
 
 #define TASHA_REG_VAL(reg, val)      {reg, 0, val}
 

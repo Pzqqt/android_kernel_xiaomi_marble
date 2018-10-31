@@ -18,7 +18,7 @@
 #include <dsp/q6afe-v2.h>
 #include <dsp/q6core.h>
 #include "msm-dai-q6-v2.h"
-#include "codecs/core.h"
+#include <asoc/core.h>
 
 #define MSM_DAI_PRI_AUXPCM_DT_DEV_ID 1
 #define MSM_DAI_SEC_AUXPCM_DT_DEV_ID 2

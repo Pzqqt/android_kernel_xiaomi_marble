@@ -16,8 +16,8 @@
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 #include "wcd937x-registers.h"
-#include "../wcdcal-hwdep.h"
-#include "../wcd-mbhc-v2-api.h"
+#include <asoc/wcdcal-hwdep.h>
+#include <asoc/wcd-mbhc-v2-api.h>
 #include "internal.h"
 
 #define WCD937X_ZDET_SUPPORTED          true

@@ -6,8 +6,8 @@
 #include <linux/regmap.h>
 #include <linux/device.h>
 #include <asoc/wcd934x_registers.h>
-#include "../core.h"
-#include "../wcd9xxx-regmap.h"
+#include <asoc/core.h>
+#include <asoc/wcd9xxx-regmap.h>
 
 
 static const struct reg_sequence wcd934x_1_1_defaults[] = {

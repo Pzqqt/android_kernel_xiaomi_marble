@@ -24,7 +24,7 @@
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 #include <sound/tlv.h>
-#include "msm-cdc-pinctrl.h"
+#include <asoc/msm-cdc-pinctrl.h>
 #include "wsa881x.h"
 #include "wsa881x-temp-sensor.h"
 

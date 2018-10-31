@@ -8,8 +8,8 @@
 #include <linux/of_irq.h>
 #include <linux/of_device.h>
 #include <linux/slab.h>
-#include "msm-cdc-supply.h"
 #include <linux/regulator/consumer.h>
+#include <asoc/msm-cdc-supply.h>
 
 #define CODEC_DT_MAX_PROP_SIZE 40
 
