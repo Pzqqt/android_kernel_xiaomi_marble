@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -138,6 +138,25 @@ cdp_tx_me_convert_ucast(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 
 	return soc->ops->me_ops->tx_me_convert_ucast
 			(vdev, wbuf, newmac, newmaccnt);
+}
+
+static inline uint16_t
+cdp_tx_me_find_ast_entry(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
+			 uint8_t *da_mac_addr, uint8_t *ra_mac_addr)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->me_ops ||
+	    !soc->ops->me_ops->tx_me_find_ast_entry)
+		return 0;
+
+	return soc->ops->me_ops->tx_me_find_ast_entry(vdev, da_mac_addr,
+						      ra_mac_addr);
 }
 
 /* Should be a function pointer in ol_txrx_osif_ops{} */

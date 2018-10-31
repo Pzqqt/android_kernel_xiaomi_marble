@@ -8335,6 +8335,7 @@ static struct cdp_me_ops dp_ops_me = {
 	.tx_me_free_descriptor = dp_tx_me_free_descriptor,
 	.tx_me_convert_ucast = dp_tx_me_send_convert_ucast,
 #endif
+	.tx_me_find_ast_entry = NULL,
 };
 
 static struct cdp_mon_ops dp_ops_mon = {
