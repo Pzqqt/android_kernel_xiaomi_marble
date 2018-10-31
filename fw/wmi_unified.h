@@ -12688,6 +12688,12 @@ typedef struct {
     A_UINT32 interval_low; /* interval for keeping low voltage, unit: ms */
     A_UINT32 interval_high; /* interval for keeping high voltage, unit: ms */
     A_UINT32 repeat_cnt; /* repeat times for pulse (0xffffffff means forever) */
+    A_UINT32 init_state; /* Sense of the GPIO pin used for host wakeups.
+                          * If init_state is 0, a low --> high transition
+                          * causes a host wakeup interrupt.
+                          * If init_state is 1, a high --> low transition
+                          * causes a host wakeup interrrupt.
+                          */
 } WMI_WOW_HOSTWAKEUP_GPIO_PIN_PATTERN_CONFIG_CMD_fixed_param;
 
 #define MAX_SUPPORTED_ACTION_CATEGORY           256
