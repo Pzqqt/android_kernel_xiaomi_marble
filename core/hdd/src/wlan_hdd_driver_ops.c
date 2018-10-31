@@ -389,6 +389,8 @@ static int hdd_soc_probe(struct device *dev,
 			 const struct hif_bus_id *bid,
 			 enum qdf_bus_type bus_type)
 {
+	struct hdd_context *hdd_ctx;
+	QDF_STATUS status;
 	int errno;
 
 	hdd_info("probing driver");
@@ -401,10 +403,14 @@ static int hdd_soc_probe(struct device *dev,
 	if (errno)
 		goto unlock;
 
-	errno = hdd_wlan_startup(dev);
-	if (errno) {
-		probe_fail_cnt++;
+	errno = hdd_wlan_startup(dev, &hdd_ctx);
+	if (errno)
 		goto assert_fail_count;
+
+	status = hdd_psoc_create_vdevs(hdd_ctx);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		errno = qdf_status_to_os_return(status);
+		goto wlan_exit;
 	}
 
 	probe_fail_cnt = 0;
@@ -416,7 +422,11 @@ static int hdd_soc_probe(struct device *dev,
 
 	return 0;
 
+wlan_exit:
+	hdd_wlan_exit(hdd_ctx);
+
 assert_fail_count:
+	probe_fail_cnt++;
 	hdd_err("consecutive probe failures:%u", probe_fail_cnt);
 	QDF_BUG(probe_fail_cnt < SSR_MAX_FAIL_CNT);
 
@@ -509,11 +519,18 @@ static void hdd_soc_remove(struct device *dev)
 
 	mutex_lock(&hdd_init_deinit_lock);
 	hdd_start_driver_ops_timer(eHDD_DRV_OP_REMOVE);
-	if (QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
+	if (hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE) {
 		epping_disable();
 		epping_close();
 	} else {
-		__hdd_wlan_exit();
+		struct hdd_context *hdd_ctx;
+
+		hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+		if (hdd_ctx)
+			hdd_wlan_exit(hdd_ctx);
+		else
+			hdd_err("invalid hdd context");
+
 	}
 	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
@@ -542,10 +559,7 @@ static void hdd_wlan_ssr_shutdown_event(void)
 					EVENT_WLAN_SSR_SHUTDOWN_SUBSYSTEM);
 }
 #else
-static inline void hdd_wlan_ssr_shutdown_event(void)
-{
-
-};
+static inline void hdd_wlan_ssr_shutdown_event(void) { }
 #endif
 
 /**

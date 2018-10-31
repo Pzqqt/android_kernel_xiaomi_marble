@@ -11918,31 +11918,20 @@ static void hdd_config_sched_scan_plans_to_wiphy(struct wiphy *wiphy,
 }
 #endif
 
-
-/**
- * hdd_cfg80211_wiphy_alloc() - Allocate wiphy context
- * @priv_size:         Size of the hdd context.
- *
- * Allocate wiphy context and hdd context.
- *
- * Return: hdd context on success and NULL on failure.
- */
-struct hdd_context *hdd_cfg80211_wiphy_alloc(int priv_size)
+struct hdd_context *hdd_cfg80211_wiphy_alloc(void)
 {
 	struct wiphy *wiphy;
 	struct hdd_context *hdd_ctx;
 
 	hdd_enter();
 
-	wiphy = wiphy_new(&wlan_hdd_cfg80211_ops, priv_size);
-
+	wiphy = wiphy_new(&wlan_hdd_cfg80211_ops, sizeof(*hdd_ctx));
 	if (!wiphy) {
-		hdd_err("wiphy init failed!");
+		hdd_err("failed to allocate wiphy!");
 		return NULL;
 	}
 
 	hdd_ctx = wiphy_priv(wiphy);
-
 	hdd_ctx->wiphy = wiphy;
 
 	return hdd_ctx;

@@ -2395,8 +2395,31 @@ int hdd_qdf_trace_enable(QDF_MODULE_ID module_id, uint32_t bitmask);
 int hdd_init(void);
 void hdd_deinit(void);
 
-int hdd_wlan_startup(struct device *dev);
-void __hdd_wlan_exit(void);
+/**
+ * hdd_wlan_startup() - HDD init function
+ * @dev: pointer to the underlying device
+ * @out_hdd_ctx: output hdd context pointer for the newly created context
+ *
+ * Return: Errno
+ */
+int hdd_wlan_startup(struct device *dev, struct hdd_context **out_hdd_ctx);
+
+/**
+ * hdd_wlan_exit() - HDD WLAN exit function
+ * @hdd_ctx: pointer to the HDD Context
+ *
+ * Return: None
+ */
+void hdd_wlan_exit(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_psoc_create_vdevs() - create the default vdevs for a psoc
+ * @hdd_ctx: the HDD context for the psoc to operate against
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_psoc_create_vdevs(struct hdd_context *hdd_ctx);
+
 int hdd_wlan_notify_modem_power_state(int state);
 #ifdef QCA_HT_2040_COEX
 /**

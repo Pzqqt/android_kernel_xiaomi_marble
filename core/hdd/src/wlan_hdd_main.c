@@ -6933,15 +6933,7 @@ static void wlan_hdd_cache_chann_mutex_destroy(struct hdd_context *hdd_ctx)
 }
 #endif
 
-/**
- * hdd_wlan_exit() - HDD WLAN exit function
- * @hdd_ctx:	Pointer to the HDD Context
- *
- * This is the driver exit point (invoked during rmmod)
- *
- * Return: None
- */
-static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
+void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 {
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 	int driver_status;
@@ -7051,25 +7043,6 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 #endif
 
 	hdd_context_destroy(hdd_ctx);
-}
-
-void __hdd_wlan_exit(void)
-{
-	struct hdd_context *hdd_ctx;
-
-	hdd_enter();
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("Invalid HDD Context");
-		hdd_exit();
-		return;
-	}
-
-	/* Do all the cleanup before deregistering the driver */
-	hdd_wlan_exit(hdd_ctx);
-
-	hdd_exit();
 }
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
@@ -9081,8 +9054,8 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 
 	hdd_enter();
 
-	hdd_ctx = hdd_cfg80211_wiphy_alloc(sizeof(struct hdd_context));
-	if (hdd_ctx == NULL) {
+	hdd_ctx = hdd_cfg80211_wiphy_alloc();
+	if (!hdd_ctx) {
 		ret = -ENOMEM;
 		goto err_out;
 	}
@@ -11365,8 +11338,8 @@ hdd_open_mode_handlers[QDF_GLOBAL_MAX_MODE] = {
 	[QDF_GLOBAL_EPPING_MODE] = hdd_open_adapters_for_epping_mode,
 };
 
-static int hdd_open_adapters_for_mode(struct hdd_context *hdd_ctx,
-				      enum QDF_GLOBAL_MODE driver_mode)
+static QDF_STATUS hdd_open_adapters_for_mode(struct hdd_context *hdd_ctx,
+					     enum QDF_GLOBAL_MODE driver_mode)
 {
 	QDF_STATUS status;
 
@@ -11381,18 +11354,10 @@ static int hdd_open_adapters_for_mode(struct hdd_context *hdd_ctx,
 	status = hdd_open_mode_handlers[driver_mode](hdd_ctx);
 	hdd_release_rtnl_lock();
 
-	return qdf_status_to_os_return(status);
+	return status;
 }
 
-/**
- * hdd_wlan_startup() - HDD init function
- * @dev:	Pointer to the underlying device
- *
- * This is the driver startup code executed once a WLAN device has been detected
- *
- * Return:  0 for success, < 0 for failure
- */
-int hdd_wlan_startup(struct device *dev)
+int hdd_wlan_startup(struct device *dev, struct hdd_context **out_hdd_ctx)
 {
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
@@ -11402,7 +11367,6 @@ int hdd_wlan_startup(struct device *dev)
 	hdd_enter();
 
 	hdd_ctx = hdd_context_create(dev);
-
 	if (IS_ERR(hdd_ctx))
 		return PTR_ERR(hdd_ctx);
 
@@ -11460,12 +11424,6 @@ int hdd_wlan_startup(struct device *dev)
 		goto err_unregister_netdev;
 	}
 
-	ret = hdd_open_adapters_for_mode(hdd_ctx, con_mode);
-	if (ret) {
-		hdd_err("Failed to open interfaces: %d", ret);
-		goto err_release_rtnl_lock;
-	}
-
 	wlan_hdd_update_11n_mode(hdd_ctx->config);
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
@@ -11473,40 +11431,36 @@ int hdd_wlan_startup(struct device *dev)
 				   QDF_TIMER_TYPE_SW,
 				   hdd_skip_acs_scan_timer_handler,
 				   hdd_ctx);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to init ACS Skip timer");
+
 	qdf_spinlock_create(&hdd_ctx->acs_skip_lock);
 #endif
 
 	hdd_lpass_notify_wlan_version(hdd_ctx);
-
-	if (hdd_ctx->rps)
-		hdd_set_rps_cpu_mask(hdd_ctx);
 
 	ret = hdd_register_notifiers(hdd_ctx);
 	if (ret)
 		goto err_close_adapters;
 
 	status = wlansap_global_init();
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_unregister_notifiers(hdd_ctx);
-		goto err_close_adapters;
-	}
+	if (QDF_IS_STATUS_ERROR(status))
+		goto unregister_notifiers;
 
-	if (hdd_ctx->config->fIsImpsEnabled)
-		hdd_set_idle_ps_config(hdd_ctx, true);
-	else
-		hdd_set_idle_ps_config(hdd_ctx, false);
+	hdd_set_idle_ps_config(hdd_ctx, hdd_ctx->config->fIsImpsEnabled);
 
-	if (hdd_get_conparam() != QDF_GLOBAL_FTM_MODE)
-		hdd_psoc_idle_timer_start(hdd_ctx);
+	*out_hdd_ctx = hdd_ctx;
 
-	goto success;
+	hdd_exit();
+
+	return 0;
+
+unregister_notifiers:
+	hdd_unregister_notifiers(hdd_ctx);
 
 err_close_adapters:
 	hdd_close_all_adapters(hdd_ctx, false);
 
-err_release_rtnl_lock:
 	unregister_reboot_notifier(&system_reboot_notifier);
 
 err_unregister_netdev:
@@ -11534,11 +11488,30 @@ err_hdd_free_context:
 
 	qdf_nbuf_deinit_replenish_timer();
 	hdd_context_destroy(hdd_ctx);
-	return ret;
 
-success:
 	hdd_exit();
-	return 0;
+
+	return ret;
+}
+
+QDF_STATUS hdd_psoc_create_vdevs(struct hdd_context *hdd_ctx)
+{
+	enum QDF_GLOBAL_MODE driver_mode = hdd_get_conparam();
+	QDF_STATUS status;
+
+	status = hdd_open_adapters_for_mode(hdd_ctx, driver_mode);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to create vdevs; status:%d", status);
+		return status;
+	}
+
+	if (hdd_ctx->rps)
+		hdd_set_rps_cpu_mask(hdd_ctx);
+
+	if (driver_mode != QDF_GLOBAL_FTM_MODE)
+		hdd_psoc_idle_timer_start(hdd_ctx);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

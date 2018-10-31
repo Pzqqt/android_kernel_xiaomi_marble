@@ -250,7 +250,14 @@ wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 					struct csr_roam_info *roam_info);
 #endif
 
-struct hdd_context *hdd_cfg80211_wiphy_alloc(int priv_size);
+/**
+ * hdd_cfg80211_wiphy_alloc() - Allocate wiphy
+ *
+ * Allocate wiphy and hdd context.
+ *
+ * Return: hdd context on success and NULL on failure.
+ */
+struct hdd_context *hdd_cfg80211_wiphy_alloc(void);
 
 int wlan_hdd_cfg80211_tdls_scan(struct wiphy *wiphy,
 				struct cfg80211_scan_request *request,
