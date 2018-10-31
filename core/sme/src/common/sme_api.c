@@ -5010,21 +5010,16 @@ sme_validate_user_nss_chain_params(
 
 static QDF_STATUS
 sme_validate_nss_chains_config(struct wlan_objmgr_vdev *vdev,
-			       struct wlan_mlme_nss_chains *user_cfg)
+			       struct wlan_mlme_nss_chains *user_cfg,
+			       struct wlan_mlme_nss_chains *dynamic_cfg)
 {
 	enum nss_chains_band_info band;
 	struct wlan_mlme_nss_chains *ini_cfg;
-	struct wlan_mlme_nss_chains *dynamic_cfg;
 	QDF_STATUS status;
 
 	ini_cfg = mlme_get_ini_vdev_config(vdev);
 	if (!ini_cfg) {
 		sme_err("nss chain ini config NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	dynamic_cfg = mlme_get_dynamic_vdev_config(vdev);
-	if (!dynamic_cfg) {
-		sme_err("nss chain dynamic config NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -5056,6 +5051,7 @@ sme_nss_chains_update(mac_handle_t mac_handle,
 {
 	struct sAniSirGlobal *mac_ctx = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status;
+	struct wlan_mlme_nss_chains *dynamic_cfg;
 	struct wlan_objmgr_vdev *vdev =
 		       wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
 							    vdev_id,
@@ -5064,13 +5060,29 @@ sme_nss_chains_update(mac_handle_t mac_handle,
 		sme_err("Got NULL vdev obj, returning");
 		return QDF_STATUS_E_FAILURE;
 	}
+
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto release_ref;
 
-	status = sme_validate_nss_chains_config(vdev, user_cfg);
+	dynamic_cfg = mlme_get_dynamic_vdev_config(vdev);
+	if (!dynamic_cfg) {
+		sme_err("nss chain dynamic config NULL");
+		status = QDF_STATUS_E_FAILURE;
+		goto release_lock;
+	}
+
+	status = sme_validate_nss_chains_config(vdev, user_cfg,
+						dynamic_cfg);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto release_lock;
+
+	if (!qdf_mem_cmp(dynamic_cfg, user_cfg,
+			 sizeof(struct wlan_mlme_nss_chains))) {
+		sme_debug("current config same as user config");
+		status = QDF_STATUS_SUCCESS;
+		goto release_lock;
+	}
 	sme_debug("User params verified, sending to fw vdev id %d", vdev_id);
 
 	status = wma_vdev_nss_chain_params_send(vdev->vdev_objmgr.vdev_id,
@@ -5079,6 +5091,9 @@ sme_nss_chains_update(mac_handle_t mac_handle,
 		sme_err("params sent failed to fw vdev id %d", vdev_id);
 		goto release_lock;
 	}
+
+	qdf_mem_copy(dynamic_cfg, user_cfg,
+		     sizeof(struct wlan_mlme_nss_chains));
 
 release_lock:
 	sme_release_global_lock(&mac_ctx->sme);
