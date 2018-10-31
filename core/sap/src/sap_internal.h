@@ -279,6 +279,18 @@ typedef struct sWLAN_SAPEvent {
 /*----------------------------------------------------------------------------
  * Function Declarations and Documentation
  * -------------------------------------------------------------------------*/
+
+/**
+ * sap_get_mac_context() - Get a pointer to the global MAC context
+ *
+ * Return: pointer to the global MAC context, or NULL if the MAC
+ *         context is no longer registered
+ */
+static inline struct mac_context *sap_get_mac_context(void)
+{
+	return cds_get_context(QDF_MODULE_ID_PE);
+}
+
 QDF_STATUS wlansap_context_get(struct sap_context *ctx);
 void wlansap_context_put(struct sap_context *ctx);
 
