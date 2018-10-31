@@ -714,12 +714,9 @@ static void wlansap_update_vendor_acs_chan(tpAniSirGlobal mac_ctx,
 				struct sap_context *sap_ctx)
 {
 	int intf;
-	tHalHandle hal;
 
-	hal = CDS_GET_HAL_CB();
-	if (!hal) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("null hal"));
+	if (!mac_ctx) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid MAC context");
 		return;
 	}
 
@@ -734,7 +731,7 @@ static void wlansap_update_vendor_acs_chan(tpAniSirGlobal mac_ctx,
 	if (mac_ctx->sap.SapDfsInfo.target_channel != 0) {
 		mac_ctx->sap.SapDfsInfo.cac_state =
 			eSAP_DFS_DO_NOT_SKIP_CAC;
-		sap_cac_reset_notify(hal);
+		sap_cac_reset_notify(MAC_HANDLE(mac_ctx));
 		return;
 	}
 	/* App failed to provide new channel, try random channel algo */
@@ -768,35 +765,33 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 		      eRoamCmdStatus roam_status, eCsrRoamResult roam_result)
 {
 	/* sap_ctx value */
-	struct sap_context *sap_ctx;
+	struct sap_context *sap_ctx = ctx;
 	/* State machine event */
 	tWLAN_SAPEvent sap_event;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
-	tHalHandle hal;
-	tpAniSirGlobal mac_ctx = NULL;
+	mac_handle_t mac_handle;
+	struct mac_context *mac_ctx;
 	uint8_t intf;
 	bool sta_sap_scc_on_dfs_chan;
 
-	if (QDF_IS_STATUS_ERROR(wlansap_context_get(ctx)))
+	if (QDF_IS_STATUS_ERROR(wlansap_context_get(sap_ctx)))
 		return QDF_STATUS_E_FAILURE;
 
-	sap_ctx = ctx;
-	hal = CDS_GET_HAL_CB();
-	if (!hal) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("Invalid handle"));
+	mac_ctx = sap_get_mac_context();
+	if (!mac_ctx) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid MAC context");
 		wlansap_context_put(sap_ctx);
 		return QDF_STATUS_E_NOMEM;
 	}
-
-	mac_ctx = PMAC_STRUCT(hal);
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			FL("roam_status = %d, roam_result = %d"),
 			roam_status, roam_result);
 
 	sta_sap_scc_on_dfs_chan =
 		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(mac_ctx->psoc);
+
+	mac_handle = MAC_HANDLE(mac_ctx);
 
 	switch (roam_status) {
 	case eCSR_ROAM_INFRA_IND:
@@ -945,7 +940,7 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 		if (mac_ctx->sap.SapDfsInfo.target_channel != 0) {
 			mac_ctx->sap.SapDfsInfo.cac_state =
 				eSAP_DFS_DO_NOT_SKIP_CAC;
-			sap_cac_reset_notify(hal);
+			sap_cac_reset_notify(mac_handle);
 			break;
 		}
 		/* Issue stopbss for each sapctx */
@@ -1199,11 +1194,11 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 				  roam_result);
 		break;
 	case eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS:
-		wlansap_roam_process_dfs_chansw_update(hal, sap_ctx,
-				&qdf_ret_status);
+		wlansap_roam_process_dfs_chansw_update(mac_handle, sap_ctx,
+						       &qdf_ret_status);
 		break;
 	case eCSR_ROAM_RESULT_CAC_END_IND:
-		sap_dfs_cac_timer_callback(hal);
+		sap_dfs_cac_timer_callback(mac_handle);
 		break;
 	case eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS:
 		wlansap_roam_process_ch_change_success(mac_ctx, sap_ctx,
