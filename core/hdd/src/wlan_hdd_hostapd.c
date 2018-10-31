@@ -842,12 +842,22 @@ QDF_STATUS hdd_chan_change_notify(struct hdd_adapter *adapter,
 	 * only for NL80211_CHAN_NO_HT, NL80211_CHAN_HT20, NL80211_CHAN_HT40PLUS
 	 * and NL80211_CHAN_HT40MINUS.
 	 */
-	if (chan_change.chan_params.ch_width == CH_WIDTH_80MHZ)
+	switch (chan_change.chan_params.ch_width) {
+	case CH_WIDTH_80MHZ:
 		chandef.width = NL80211_CHAN_WIDTH_80;
-	else if (chan_change.chan_params.ch_width == CH_WIDTH_80P80MHZ)
+		break;
+	case CH_WIDTH_80P80MHZ:
 		chandef.width = NL80211_CHAN_WIDTH_80P80;
-	else if (chan_change.chan_params.ch_width == CH_WIDTH_160MHZ)
+		if (chan_change.chan_params.center_freq_seg1)
+			chandef.center_freq2 = cds_chan_to_freq(
+				chan_change.chan_params.center_freq_seg1);
+		break;
+	case CH_WIDTH_160MHZ:
 		chandef.width = NL80211_CHAN_WIDTH_160;
+		break;
+	default:
+		break;
+	}
 
 	if ((chan_change.chan_params.ch_width == CH_WIDTH_80MHZ) ||
 	    (chan_change.chan_params.ch_width == CH_WIDTH_80P80MHZ) ||
@@ -855,10 +865,6 @@ QDF_STATUS hdd_chan_change_notify(struct hdd_adapter *adapter,
 		if (chan_change.chan_params.center_freq_seg0)
 			chandef.center_freq1 = cds_chan_to_freq(
 				chan_change.chan_params.center_freq_seg0);
-
-		if (chan_change.chan_params.center_freq_seg1)
-			chandef.center_freq2 = cds_chan_to_freq(
-				chan_change.chan_params.center_freq_seg1);
 	}
 
 	hdd_debug("notify: chan:%d width:%d freq1:%d freq2:%d",
