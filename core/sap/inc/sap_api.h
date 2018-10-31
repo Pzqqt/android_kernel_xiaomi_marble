@@ -1061,7 +1061,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 /**
  * wlansap_set_key_sta() - set keys for a stations.
  * @sap_ctx: Pointer to the SAP context
- * @pSetKeyInfo : tCsrRoamSetKey structure for the station
+ * @key_info : tCsrRoamSetKey structure for the station
  *
  * This api function provides for Ap App/HDD to set key for a station.
  *
@@ -1069,7 +1069,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
  *         QDF_STATUS_SUCCESS:  Success
  */
 QDF_STATUS wlansap_set_key_sta(struct sap_context *sap_ctx,
-			       tCsrRoamSetKey *pSetKeyInfo);
+			       tCsrRoamSetKey *key_info);
 
 /**
  * wlan_sap_getstation_ie_information() - RSNIE Population
