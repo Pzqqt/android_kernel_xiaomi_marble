@@ -6847,6 +6847,39 @@ static int drv_cmd_set_antenna_mode(struct hdd_adapter *adapter,
 }
 
 /**
+ * hdd_get_dynamic_antenna_mode() -get the dynamic antenna mode for vdev
+ * @antenna_mode: pointer to antenna mode of vdev
+ * @dynamic_nss_chains_support: feature support for dynamic nss chains update
+ * @vdev: Pointer to vdev
+ *
+ * This API will check for the num of chains configured for the vdev, and fill
+ * that info in the antenna mode if the dynamic chains per vdev are supported.
+ *
+ * Return: None
+ */
+static void
+hdd_get_dynamic_antenna_mode(uint32_t *antenna_mode,
+			     bool dynamic_nss_chains_support,
+			     struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_mlme_nss_chains *nss_chains_dynamic_cfg;
+
+	if (!dynamic_nss_chains_support)
+		return;
+
+	nss_chains_dynamic_cfg = mlme_get_dynamic_vdev_config(vdev);
+	if (!nss_chains_dynamic_cfg) {
+		hdd_err("nss chain dynamic config NULL");
+		return;
+	}
+	/*
+	 * At present, this command doesn't include band, so by default
+	 * it will return the band 2ghz present rf chains.
+	 */
+	*antenna_mode = nss_chains_dynamic_cfg->num_rx_chains[BAND_2GHZ];
+}
+
+/**
  * drv_cmd_get_antenna_mode() - GET ANTENNA MODE driver command
  * handler
  * @adapter: Pointer to hdd adapter
@@ -6868,6 +6901,10 @@ static inline int drv_cmd_get_antenna_mode(struct hdd_adapter *adapter,
 	uint8_t len = 0;
 
 	antenna_mode = hdd_ctx->current_antenna_mode;
+	/* Overwrite this antenna mode if dynamic vdev chains are supported */
+	hdd_get_dynamic_antenna_mode(&antenna_mode,
+				     hdd_ctx->dynamic_nss_chains_support,
+				     adapter->vdev);
 	len = scnprintf(extra, sizeof(extra), "%s %d", command,
 			antenna_mode);
 	len = QDF_MIN(priv_data->total_len, len + 1);
