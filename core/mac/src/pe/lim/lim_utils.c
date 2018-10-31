@@ -5918,6 +5918,100 @@ static inline bool lim_get_rx_ldpc(tpAniSirGlobal mac_ctx, enum channel_enum ch)
 }
 
 /**
+ * lim_populate_mcs_set_ht_per_vdev() - update the MCS set according to vdev nss
+ * @mac_ctx: global mac context
+ * @ht_cap: pointer to ht caps
+ * @vdev_id: vdev for which IE is targeted
+ * @band: band for which the MCS set has to be updated
+ *
+ * This funciton updates the MCS set according to vdev nss
+ *
+ * Return: None
+ */
+static void lim_populate_mcs_set_ht_per_vdev(tpAniSirGlobal mac_ctx,
+						      struct sHtCaps *ht_cap,
+						      uint8_t vdev_id,
+						      uint8_t band)
+{
+	struct wlan_mlme_nss_chains *nss_chains_ini_cfg;
+	struct wlan_objmgr_vdev *vdev =
+			wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
+							     vdev_id,
+							     WLAN_MLME_SB_ID);
+	if (!vdev) {
+		pe_err("Got NULL vdev obj, returning");
+		return;
+	}
+	if (!ht_cap->supportedMCSSet[1])
+		goto end;
+	nss_chains_ini_cfg = mlme_get_ini_vdev_config(vdev);
+	if (!nss_chains_ini_cfg) {
+		pe_err("nss chain dynamic config NULL");
+		goto end;
+	}
+
+	/* convert from unpacked to packed structure */
+	if (nss_chains_ini_cfg->rx_nss[band] == 1)
+		ht_cap->supportedMCSSet[1] = 0;
+
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
+}
+
+/**
+ * lim_populate_mcs_set_vht_per_vdev() - update MCS set according to vdev nss
+ * @mac_ctx: global mac context
+ * @vht_caps: pointer to vht_caps
+ * @vdev_id: vdev for which IE is targeted
+ * @band: band for which the MCS set has to be updated
+ *
+ * This funciton updates the MCS set according to vdev nss
+ *
+ * Return: None
+ */
+static void lim_populate_mcs_set_vht_per_vdev(tpAniSirGlobal mac_ctx,
+					      uint8_t *vht_caps,
+					      uint8_t vdev_id,
+					      uint8_t band)
+{
+	struct wlan_mlme_nss_chains *nss_chains_ini_cfg;
+	tSirVhtMcsInfo *vht_mcs;
+	struct wlan_objmgr_vdev *vdev =
+			wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
+							     vdev_id,
+							     WLAN_MLME_SB_ID);
+	if (!vdev) {
+		pe_err("Got NULL vdev obj, returning");
+		return;
+	}
+
+	nss_chains_ini_cfg = mlme_get_ini_vdev_config(vdev);
+	if (!nss_chains_ini_cfg) {
+		pe_err("nss chain dynamic config NULL");
+		goto end;
+	}
+
+	vht_mcs = (tSirVhtMcsInfo *)&vht_caps[2 +
+					sizeof(tSirMacVHTCapabilityInfo)];
+	if (nss_chains_ini_cfg->tx_nss[band] == 1) {
+	/* Populate VHT MCS Information */
+		vht_mcs->txMcsMap |= DISABLE_NSS2_MCS;
+		vht_mcs->txHighest =
+				VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
+	}
+
+	if (nss_chains_ini_cfg->rx_nss[band] == 1) {
+	/* Populate VHT MCS Information */
+		vht_mcs->rxMcsMap |= DISABLE_NSS2_MCS;
+		vht_mcs->rxHighest =
+				VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
+	}
+
+end:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_MLME_SB_ID);
+}
+
+/**
  * lim_send_ies_per_band() - gets ht and vht capability and send to firmware via
  * wma
  * @mac_ctx: global mac context
@@ -5958,6 +6052,7 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 		p_ht_cap->supportedChannelWidthSet = 0;
 		p_ht_cap->shortGI40MHz = 0;
 	}
+	lim_populate_mcs_set_ht_per_vdev(mac_ctx, p_ht_cap, vdev_id, BAND_2GHZ);
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HTCAPS,
 		CDS_BAND_2GHZ, &ht_caps[2], DOT11F_IE_HTCAPS_MIN_LEN);
 	/*
@@ -5973,6 +6068,7 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 		p_ht_cap->supportedChannelWidthSet = 0;
 		p_ht_cap->shortGI40MHz = 0;
 	}
+	lim_populate_mcs_set_ht_per_vdev(mac_ctx, p_ht_cap, vdev_id, BAND_5GHZ);
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HTCAPS,
 		CDS_BAND_5GHZ, &ht_caps[2], DOT11F_IE_HTCAPS_MIN_LEN);
 
@@ -5985,6 +6081,9 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 	 * is available in all reg domains.
 	 */
 	p_vht_cap->ldpcCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_64);
+	lim_populate_mcs_set_vht_per_vdev(mac_ctx, vht_caps,
+					  vdev_id, BAND_5GHZ);
+
 	/* Self VHT channel width for 5G is already negotiated with FW */
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
 			CDS_BAND_5GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
@@ -5995,6 +6094,8 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 	p_vht_cap->supportedChannelWidthSet = 0;
 	p_vht_cap->shortGI80MHz = 0;
 	p_vht_cap->shortGI160and80plus80MHz = 0;
+	lim_populate_mcs_set_vht_per_vdev(mac_ctx, vht_caps,
+					  vdev_id, BAND_2GHZ);
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
 			CDS_BAND_2GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
 
