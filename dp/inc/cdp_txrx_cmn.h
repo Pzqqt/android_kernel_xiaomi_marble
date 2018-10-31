@@ -1381,6 +1381,56 @@ static inline void cdp_set_pdev_dscp_tid_map(ol_txrx_soc_handle soc,
 }
 
 /**
+ * cdp_hmmc_tid_override_en(): Function to enable hmmc tid override.
+ * @soc : soc handle
+ * @pdev: pdev handle
+ * @val: hmmc-dscp flag value
+ *
+ * Return: void
+ */
+static inline void cdp_hmmc_tid_override_en(ol_txrx_soc_handle soc,
+					    struct cdp_pdev *pdev, bool val)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->hmmc_tid_override_en)
+		return;
+
+	soc->ops->cmn_drv_ops->hmmc_tid_override_en(pdev, val);
+}
+
+/**
+ * cdp_set_hmmc_tid_val(): Function to set hmmc tid value.
+ * @soc : soc handle
+ * @pdev: pdev handle
+ * @tid: tid value
+ *
+ * Return: void
+ */
+static inline void cdp_set_hmmc_tid_val(ol_txrx_soc_handle soc,
+					struct cdp_pdev *pdev, uint8_t tid)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->set_hmmc_tid_val)
+		return;
+
+	soc->ops->cmn_drv_ops->set_hmmc_tid_val(pdev, tid);
+}
+
+/**
  * cdp_flush_cache_rx_queue() - flush cache rx queue frame
  *
  * Return: None

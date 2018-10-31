@@ -1207,6 +1207,9 @@ struct dp_pdev {
 		qdf_dma_mem_context(memctx);
 	} me_buf;
 
+	bool hmmc_tid_override_en;
+	uint8_t hmmc_tid;
+
 	/* Number of VAPs with mcast enhancement enabled */
 	qdf_atomic_t mc_num_vap_attached;
 

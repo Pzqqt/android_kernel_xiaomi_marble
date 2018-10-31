@@ -319,6 +319,8 @@ struct cdp_cmn_ops {
 	void (*flush_cache_rx_queue)(void);
 	void (*set_pdev_dscp_tid_map)(struct cdp_pdev *pdev, uint8_t map_id,
 			uint8_t tos, uint8_t tid);
+	void (*hmmc_tid_override_en)(struct cdp_pdev *pdev, bool val);
+	void (*set_hmmc_tid_val)(struct cdp_pdev *pdev, uint8_t tid);
 
 	QDF_STATUS (*txrx_stats_request)(struct cdp_vdev *vdev,
 					 struct cdp_txrx_stats_req *req);

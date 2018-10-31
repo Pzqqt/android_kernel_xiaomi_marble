@@ -7499,6 +7499,36 @@ static void dp_set_pdev_dscp_tid_map_wifi3(struct cdp_pdev *pdev_handle,
 }
 
 /**
+ * dp_hmmc_tid_override_en_wifi3(): Function to enable hmmc tid override.
+ * @pdev_handle: pdev handle
+ * @val: hmmc-dscp flag value
+ *
+ * Return: void
+ */
+static void dp_hmmc_tid_override_en_wifi3(struct cdp_pdev *pdev_handle,
+					  bool val)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	pdev->hmmc_tid_override_en = val;
+}
+
+/**
+ * dp_set_hmmc_tid_val_wifi3(): Function to set hmmc tid value.
+ * @pdev_handle: pdev handle
+ * @tid: tid value
+ *
+ * Return: void
+ */
+static void dp_set_hmmc_tid_val_wifi3(struct cdp_pdev *pdev_handle,
+				      uint8_t tid)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	pdev->hmmc_tid = tid;
+}
+
+/**
  * dp_fw_stats_process(): Process TxRX FW stats request
  * @vdev_handle: DP VDEV handle
  * @req: stats request
@@ -8313,6 +8343,8 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	/* TODO: get API's for dscp-tid need to be added*/
 	.set_vdev_dscp_tid_map = dp_set_vdev_dscp_tid_map_wifi3,
 	.set_pdev_dscp_tid_map = dp_set_pdev_dscp_tid_map_wifi3,
+	.hmmc_tid_override_en = dp_hmmc_tid_override_en_wifi3,
+	.set_hmmc_tid_val = dp_set_hmmc_tid_val_wifi3,
 	.txrx_get_total_per = dp_get_total_per,
 	.txrx_stats_request = dp_txrx_stats_request,
 	.txrx_set_monitor_mode = dp_vdev_set_monitor_mode,
