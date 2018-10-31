@@ -3794,7 +3794,6 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	}
 
 release_vdev:
-	ucfg_scan_clear_vdev_del_in_progress(adapter->vdev);
 
 	/* do vdev logical destroy via objmgr */
 	errno = hdd_objmgr_release_and_destroy_vdev(adapter);

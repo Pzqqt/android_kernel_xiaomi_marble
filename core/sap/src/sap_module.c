@@ -357,16 +357,16 @@ QDF_STATUS sap_deinit_ctx(struct sap_context *sap_ctx)
 		return QDF_STATUS_E_FAULT;
 	}
 	ucfg_scan_unregister_requester(pmac->psoc, sap_ctx->req_id);
-	sap_free_roam_profile(&sap_ctx->csr_roamProfile);
-	if (sap_ctx->sessionId != CSR_SESSION_ID_INVALID) {
-		/* empty queues/lists/pkts if any */
-		sap_clear_session_param(hal, sap_ctx, sap_ctx->sessionId);
-	}
 
 	if (sap_ctx->channelList) {
 		qdf_mem_free(sap_ctx->channelList);
 		sap_ctx->channelList = NULL;
 		sap_ctx->num_of_channel = 0;
+	}
+	sap_free_roam_profile(&sap_ctx->csr_roamProfile);
+	if (sap_ctx->sessionId != CSR_SESSION_ID_INVALID) {
+		/* empty queues/lists/pkts if any */
+		sap_clear_session_param(hal, sap_ctx, sap_ctx->sessionId);
 	}
 
 	return QDF_STATUS_SUCCESS;
