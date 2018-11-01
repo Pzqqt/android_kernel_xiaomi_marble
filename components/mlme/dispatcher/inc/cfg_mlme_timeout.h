@@ -59,8 +59,8 @@
  */
 #define CFG_AUTH_FAILURE_TIMEOUT CFG_INI_UINT( \
 		"auth_failure_timeout", \
-		0, \
-		65535, \
+		500, \
+		5000, \
 		1000, \
 		CFG_VALUE_OR_DEFAULT, \
 		"auth failure timeout")

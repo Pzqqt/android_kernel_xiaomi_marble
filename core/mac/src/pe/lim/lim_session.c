@@ -37,6 +37,7 @@
 
 #include "sch_api.h"
 #include "lim_send_messages.h"
+#include "cfg_ucfg_api.h"
 
 #ifdef WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY
 static struct sDphHashNode *g_dph_node_array;
@@ -880,6 +881,18 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 		MAC_ADDR_ARRAY(session->bssId));
 
 	lim_reset_bcn_probe_filter(mac_ctx, session);
+
+	/* Restore default failure timeout */
+	if (session->defaultAuthFailureTimeout) {
+		pe_debug("Restore default failure timeout");
+		if (cfg_in_range(CFG_AUTH_FAILURE_TIMEOUT,
+				 session->defaultAuthFailureTimeout))
+			mac_ctx->mlme_cfg->timeouts.auth_failure_timeout =
+				session->defaultAuthFailureTimeout;
+		else
+			mac_ctx->mlme_cfg->timeouts.auth_failure_timeout =
+				cfg_default(CFG_AUTH_FAILURE_TIMEOUT);
+	}
 
 	for (n = 0; n < (mac_ctx->lim.maxStation + 1); n++) {
 		timer_ptr = &mac_ctx->lim.limTimers.gpLimCnfWaitTimer[n];

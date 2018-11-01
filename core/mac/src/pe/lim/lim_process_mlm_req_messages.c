@@ -1223,6 +1223,7 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	/* Activate Auth failure timer */
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TIMER_ACTIVATE,
 			 session->peSessionId, eLIM_AUTH_FAIL_TIMER));
+	 lim_deactivate_and_change_timer(mac_ctx, eLIM_AUTH_FAIL_TIMER);
 	if (tx_timer_activate(&mac_ctx->lim.limTimers.gLimAuthFailureTimer)
 	    != TX_SUCCESS) {
 		pe_err("could not start Auth failure timer");
