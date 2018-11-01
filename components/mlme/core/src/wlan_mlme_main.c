@@ -531,8 +531,6 @@ static void mlme_init_vht_cap_cfg(struct wlan_objmgr_psoc *psoc,
 			CFG_VHT_TX_MCS_MAP_STADEF;
 	vht_cap_info->basic_mcs_set =
 			CFG_VHT_BASIC_MCS_SET_STADEF;
-	vht_cap_info->su_bformer =
-			cfg_default(CFG_VHT_SU_BEAMFORMER_CAP);
 
 	vht_cap_info->tx_bfee_ant_supp =
 			cfg_get(psoc, CFG_VHT_BEAMFORMEE_ANT_SUPP);
@@ -592,10 +590,10 @@ static void mlme_init_vht_cap_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE);
 
 	if (vht_cap_info->enable2x2)
-		vht_cap_info->su_bfer =
+		vht_cap_info->su_bformer =
 			cfg_get(psoc, CFG_VHT_ENABLE_TX_SU_BEAM_FORMER);
 
-	if (vht_cap_info->enable2x2 && vht_cap_info->su_bfer)
+	if (vht_cap_info->enable2x2 && vht_cap_info->su_bformer)
 		vht_cap_info->num_soundingdim = NUM_OF_SOUNDING_DIMENSIONS;
 }
 
