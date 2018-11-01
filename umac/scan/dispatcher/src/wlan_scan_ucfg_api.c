@@ -1231,12 +1231,19 @@ void
 ucfg_scan_unregister_requester(struct wlan_objmgr_psoc *psoc,
 	wlan_scan_requester requester)
 {
-	int idx = requester & WLAN_SCAN_REQUESTER_ID_MASK;
+	int idx;
 	struct wlan_scan_obj *scan;
 	struct scan_requester_info *requesters;
 
+	idx = requester & WLAN_SCAN_REQUESTER_ID_PREFIX;
+	if (idx != WLAN_SCAN_REQUESTER_ID_PREFIX) {
+		scm_err("prefix didn't match for requester id %d", requester);
+		return;
+	}
+
+	idx = requester & WLAN_SCAN_REQUESTER_ID_MASK;
 	if (idx >= WLAN_MAX_REQUESTORS) {
-		scm_err("requester id invalid");
+		scm_err("requester id %d greater than max value", requester);
 		return;
 	}
 
