@@ -4505,6 +4505,80 @@ static int hdd_we_clear_stats(struct hdd_adapter *adapter, int option)
 	return 0;
 }
 
+static int hdd_we_set_green_tx_param(struct hdd_adapter *adapter,
+				     green_tx_param id,
+				     const char *id_string,
+				     int value)
+{
+	int errno;
+
+	hdd_debug("%s %d", id_string, value);
+	errno = wma_cli_set_command(adapter->session_id, id, value, GTX_CMD);
+	if (errno)
+		hdd_err("Failed to set firmware, errno %d", errno);
+
+	return errno;
+}
+
+#define hdd_we_set_green_tx_param(adapter, id, value) \
+			hdd_we_set_green_tx_param(adapter, id, #id, value)
+
+static int hdd_we_set_gtx_ht_mcs(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_green_tx_param(adapter,
+					 WMI_VDEV_PARAM_GTX_HT_MCS,
+					 value);
+}
+
+static int hdd_we_set_gtx_vht_mcs(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_green_tx_param(adapter,
+					 WMI_VDEV_PARAM_GTX_VHT_MCS,
+					 value);
+}
+
+static int hdd_we_set_gtx_usrcfg(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_green_tx_param(adapter,
+					 WMI_VDEV_PARAM_GTX_USR_CFG,
+					 value);
+}
+
+static int hdd_we_set_gtx_thre(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_green_tx_param(adapter,
+					 WMI_VDEV_PARAM_GTX_THRE,
+					 value);
+}
+
+static int hdd_we_set_gtx_margin(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_green_tx_param(adapter,
+					 WMI_VDEV_PARAM_GTX_MARGIN,
+					 value);
+}
+
+static int hdd_we_set_gtx_step(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_green_tx_param(adapter,
+					 WMI_VDEV_PARAM_GTX_STEP,
+					 value);
+}
+
+static int hdd_we_set_gtx_mintpc(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_green_tx_param(adapter,
+					 WMI_VDEV_PARAM_GTX_MINTPC,
+					 value);
+}
+
+static int hdd_we_set_gtx_bwmask(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_green_tx_param(adapter,
+					 WMI_VDEV_PARAM_GTX_BW_MASK,
+					 value);
+}
+
 static int hdd_we_packet_power_save(struct hdd_adapter *adapter,
 				    packet_power_save id,
 				    const char *id_string,
@@ -4687,78 +4761,36 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_GTX_HT_MCS:
-	{
-		hdd_debug("WMI_VDEV_PARAM_GTX_HT_MCS %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_GTX_HT_MCS,
-					  set_value, GTX_CMD);
+		ret = hdd_we_set_gtx_ht_mcs(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_GTX_VHT_MCS:
-	{
-		hdd_debug("WMI_VDEV_PARAM_GTX_VHT_MCS %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_GTX_VHT_MCS,
-					  set_value, GTX_CMD);
+		ret = hdd_we_set_gtx_vht_mcs(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_GTX_USRCFG:
-	{
-		hdd_debug("WMI_VDEV_PARAM_GTX_USR_CFG %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_GTX_USR_CFG,
-					  set_value, GTX_CMD);
+		ret = hdd_we_set_gtx_usrcfg(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_GTX_THRE:
-	{
-		hdd_debug("WMI_VDEV_PARAM_GTX_THRE %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_GTX_THRE,
-					  set_value, GTX_CMD);
+		ret = hdd_we_set_gtx_thre(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_GTX_MARGIN:
-	{
-		hdd_debug("WMI_VDEV_PARAM_GTX_MARGIN %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_GTX_MARGIN,
-					  set_value, GTX_CMD);
+		ret = hdd_we_set_gtx_margin(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_GTX_STEP:
-	{
-		hdd_debug("WMI_VDEV_PARAM_GTX_STEP %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_GTX_STEP,
-					  set_value, GTX_CMD);
+		ret = hdd_we_set_gtx_step(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_GTX_MINTPC:
-	{
-		hdd_debug("WMI_VDEV_PARAM_GTX_MINTPC %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_GTX_MINTPC,
-					  set_value, GTX_CMD);
+		ret = hdd_we_set_gtx_mintpc(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_GTX_BWMASK:
-	{
-		hdd_debug("WMI_VDEV_PARAM_GTX_BWMASK %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_GTX_BW_MASK,
-					  set_value, GTX_CMD);
+		ret = hdd_we_set_gtx_bwmask(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_LDPC:
 		ret = hdd_set_ldpc(adapter, set_value);
