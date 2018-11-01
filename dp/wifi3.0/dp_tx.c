@@ -2603,7 +2603,6 @@ dp_tx_update_peer_stats(struct dp_peer *peer,
 		     (ts->status == HAL_TX_TQM_RR_FW_REASON3));
 
 	if (ts->status != HAL_TX_TQM_RR_FRAME_ACKED) {
-		dp_err("Tx completion has no valid acknowledgment");
 		return;
 	}
 
