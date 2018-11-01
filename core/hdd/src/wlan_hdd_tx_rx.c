@@ -1231,13 +1231,12 @@ static void __hdd_tx_timeout(struct net_device *dev)
 
 	for (i = 0; i < NUM_TX_QUEUES; i++) {
 		txq = netdev_get_tx_queue(dev, i);
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
-			  "Queue: %d status: %d txq->trans_start: %lu",
-			   i, netif_tx_queue_stopped(txq), txq->trans_start);
+		hdd_info("Queue: %d status: %d txq->trans_start: %lu",
+			 i, netif_tx_queue_stopped(txq), txq->trans_start);
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
-		  "carrier state: %d", netif_carrier_ok(dev));
+	hdd_info("carrier state: %d", netif_carrier_ok(dev));
+
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	wlan_hdd_display_netif_queue_history(hdd_ctx,
 					     QDF_STATS_VERBOSITY_LEVEL_HIGH);
