@@ -425,10 +425,8 @@ DFS_OBJS +=	$(WLAN_COMMON_ROOT)/target_if/dfs/src/target_if_dfs_partial_offload.
 		$(DFS_CORE_SRC_DIR)/filtering/dfs_process_radarevent.o \
 		$(DFS_CORE_SRC_DIR)/filtering/dfs_staggered.o \
 		$(DFS_CORE_SRC_DIR)/filtering/dfs_radar.o \
-		$(DFS_CORE_SRC_DIR)/filtering/dfs_ar.o \
 		$(DFS_CORE_SRC_DIR)/filtering/dfs_partial_offload_radar.o \
-		$(DFS_CORE_SRC_DIR)/misc/dfs_filter_init.o \
-		$(DFS_CORE_SRC_DIR)/misc/dfs_zero_cac.o
+		$(DFS_CORE_SRC_DIR)/misc/dfs_filter_init.o
 endif
 
 ############ SME ############
