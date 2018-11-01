@@ -1709,25 +1709,40 @@ int dfs_get_filter_threshold(struct wlan_dfs *dfs,
 		struct dfs_filter *rf,
 		int is_extchan_detect);
 
+#if defined(QCA_MCL_DFS_SUPPORT)
 /**
  * dfs_process_ar_event() - Process the ar event.
  * @dfs: Pointer to wlan_dfs structure.
  * @chan: Current channel structure.
  */
-void dfs_process_ar_event(struct wlan_dfs *dfs,
-		struct dfs_channel *chan);
+static inline void dfs_process_ar_event(struct wlan_dfs *dfs,
+					struct dfs_channel *chan)
+{
+}
 
 /**
  * dfs_reset_ar() - resets the ar state.
  * @dfs: pointer to wlan_dfs structure.
  */
-void dfs_reset_ar(struct wlan_dfs *dfs);
+static inline void dfs_reset_ar(struct wlan_dfs *dfs)
+{
+}
 
 /**
  * dfs_reset_arq() - resets the ar queue.
  * @dfs: pointer to wlan_dfs structure.
  */
+static inline void dfs_reset_arq(struct wlan_dfs *dfs)
+{
+}
+
+#else
+void dfs_process_ar_event(struct wlan_dfs *dfs,
+			  struct dfs_channel *chan);
+
+void dfs_reset_ar(struct wlan_dfs *dfs);
 void dfs_reset_arq(struct wlan_dfs *dfs);
+#endif
 
 /**
  * dfs_is_radar_enabled() - check if radar detection is enabled.
