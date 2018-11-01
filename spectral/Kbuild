@@ -60,8 +60,8 @@ INCS += -I$(obj)/$(DEPTH)/include -I$(obj)/$(DEPTH)/umac/include \
         -I$(obj)/$(DEPTH)/umac/rpt_placement \
         -I$(obj)/$(DEPTH)/umac/wifipos \
         -I$(obj)/$(DEPTH)/umac/wds -I$(obj)/$(DEPTH)/umac/ique \
-        -I$(obj)/$(DEPTH)/hal -I$(obj)/$(DEPTH)/direct_attach/lmac/ath_dev \
-        -I$(obj)/$(DEPTH)/hal/$(OS) \
+        -I$(obj)/$(DEPTH)/direct_attach/hal -I$(obj)/$(DEPTH)/direct_attach/lmac/ath_dev \
+        -I$(obj)/$(DEPTH)/direct_attach/hal/$(OS) \
         -I$(obj)/$(DEPTH)/umac/vi_dbg \
         -I$(obj)/$(DEPTH)/umac/smart_antenna \
         -I$(obj)/$(DEPTH)/umac/smart_ant \
