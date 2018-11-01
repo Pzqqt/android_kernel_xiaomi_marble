@@ -25,6 +25,7 @@
 #include <sound/pcm.h>
 #include <sound/initval.h>
 #include <sound/control.h>
+#include <sound/audio_effects.h>
 #include <sound/pcm_params.h>
 #include <sound/timer.h>
 #include <sound/tlv.h>
@@ -35,6 +36,7 @@
 #include <dsp/apr_audio-v2.h>
 #include <dsp/q6asm-v2.h>
 #include <dsp/q6audio-v2.h>
+#include <dsp/msm-audio-effects-q6-v2.h>
 
 #include "msm-pcm-routing-v2.h"
 #include "msm-qti-pp-config.h"
@@ -50,10 +52,20 @@
 
 static DEFINE_MUTEX(transcode_loopback_session_lock);
 
+struct msm_transcode_audio_effects {
+	struct bass_boost_params bass_boost;
+	struct pbe_params pbe;
+	struct virtualizer_params virtualizer;
+	struct reverb_params reverb;
+	struct eq_params equalizer;
+	struct soft_volume_params volume;
+};
+
 struct trans_loopback_pdata {
 	struct snd_compr_stream *cstream[MSM_FRONTEND_DAI_MAX];
 	uint32_t master_gain;
 	int perf_mode;
+	struct msm_transcode_audio_effects *audio_effects[MSM_FRONTEND_DAI_MAX];
 };
 
 struct loopback_stream {
@@ -204,6 +216,13 @@ static int msm_transcode_loopback_open(struct snd_compr_stream *cstream)
 	rtd = snd_pcm_substream_chip(cstream);
 	pdata = snd_soc_platform_get_drvdata(rtd->platform);
 	pdata->cstream[rtd->dai_link->id] = cstream;
+	pdata->audio_effects[rtd->dai_link->id] =
+				kzalloc(sizeof(struct msm_transcode_audio_effects), GFP_KERNEL);
+
+	if (pdata->audio_effects[rtd->dai_link->id] == NULL) {
+		ret = -ENOMEM;
+		goto effect_error;
+	}
 
 	mutex_lock(&trans->lock);
 	if (trans->num_streams > LOOPBACK_SESSION_MAX_NUM_STREAMS) {
@@ -250,6 +269,11 @@ static int msm_transcode_loopback_open(struct snd_compr_stream *cstream)
 
 exit:
 	mutex_unlock(&trans->lock);
+	if ((pdata->audio_effects[rtd->dai_link->id] != NULL) && (ret < 0)) {
+		kfree(pdata->audio_effects[rtd->dai_link->id]);
+		pdata->audio_effects[rtd->dai_link->id] = NULL;
+	}
+effect_error:
 	return ret;
 }
 
@@ -283,9 +307,17 @@ static int msm_transcode_loopback_free(struct snd_compr_stream *cstream)
 	struct snd_compr_runtime *runtime = cstream->runtime;
 	struct msm_transcode_loopback *trans = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd = snd_pcm_substream_chip(cstream);
+	struct trans_loopback_pdata *pdata;
 	int ret = 0;
 
+	pdata = snd_soc_platform_get_drvdata(rtd->platform);
+
 	mutex_lock(&trans->lock);
+
+	if (pdata->audio_effects[rtd->dai_link->id] != NULL) {
+		kfree(pdata->audio_effects[rtd->dai_link->id]);
+		pdata->audio_effects[rtd->dai_link->id] = NULL;
+	}
 
 	pr_debug("%s: Transcode loopback end:%d, streams %d\n", __func__,
 		  cstream->direction, trans->num_streams);
@@ -336,6 +368,39 @@ static int msm_transcode_loopback_trigger(struct snd_compr_stream *cstream,
 		break;
 	}
 	return 0;
+}
+
+static int msm_transcode_set_render_window(struct audio_client *ac,
+					uint32_t ws_lsw, uint32_t ws_msw,
+					uint32_t we_lsw, uint32_t we_msw)
+{
+	int ret = -EINVAL;
+	struct asm_session_mtmx_strtr_param_window_v2_t asm_mtmx_strtr_window;
+	uint32_t param_id;
+
+	pr_debug("%s, ws_lsw 0x%x ws_msw 0x%x we_lsw 0x%x we_msw 0x%x\n",
+		__func__, ws_lsw, ws_msw, we_lsw, we_msw);
+
+	memset(&asm_mtmx_strtr_window, 0,
+		sizeof(struct asm_session_mtmx_strtr_param_window_v2_t));
+	asm_mtmx_strtr_window.window_lsw = ws_lsw;
+	asm_mtmx_strtr_window.window_msw = ws_msw;
+	param_id = ASM_SESSION_MTMX_STRTR_PARAM_RENDER_WINDOW_START_V2;
+	ret = q6asm_send_mtmx_strtr_window(ac, &asm_mtmx_strtr_window, param_id);
+	if (ret) {
+		pr_err("%s, start window can't be set error %d\n", __func__, ret);
+		goto exit;
+	}
+
+	asm_mtmx_strtr_window.window_lsw = we_lsw;
+	asm_mtmx_strtr_window.window_msw = we_msw;
+	param_id = ASM_SESSION_MTMX_STRTR_PARAM_RENDER_WINDOW_END_V2;
+	ret = q6asm_send_mtmx_strtr_window(ac, &asm_mtmx_strtr_window, param_id);
+	if (ret)
+		pr_err("%s, end window can't be set error %d\n", __func__, ret);
+
+exit:
+	return ret;
 }
 
 static int msm_transcode_loopback_set_params(struct snd_compr_stream *cstream,
@@ -512,6 +577,8 @@ static int msm_transcode_loopback_set_metadata(struct snd_compr_stream *cstream,
 {
 	struct snd_soc_pcm_runtime *rtd;
 	struct trans_loopback_pdata *pdata;
+	struct msm_transcode_loopback *prtd = NULL;
+	struct audio_client *ac = NULL;
 
 	if (!metadata || !cstream) {
 		pr_err("%s: Invalid arguments\n", __func__);
@@ -520,6 +587,15 @@ static int msm_transcode_loopback_set_metadata(struct snd_compr_stream *cstream,
 
 	rtd = snd_pcm_substream_chip(cstream);
 	pdata = snd_soc_platform_get_drvdata(rtd->platform);
+
+	prtd = cstream->runtime->private_data;
+
+	if (!prtd || !prtd->audio_client) {
+		pr_err("%s: prtd or audio client is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	ac = prtd->audio_client;
 
 	switch (metadata->key) {
 	case SNDRV_COMPRESS_LATENCY_MODE:
@@ -537,8 +613,17 @@ static int msm_transcode_loopback_set_metadata(struct snd_compr_stream *cstream,
 			pdata->perf_mode = LEGACY_PCM_MODE;
 			break;
 		}
-	}
 		break;
+	}
+	case SNDRV_COMPRESS_RENDER_WINDOW:
+	{
+		return msm_transcode_set_render_window(
+						ac,
+						metadata->value[0],
+						metadata->value[1],
+						metadata->value[2],
+						metadata->value[3]);
+	}
 	default:
 		pr_debug("%s: Unsupported metadata %d\n",
 				__func__, metadata->key);
@@ -852,6 +937,192 @@ static int msm_transcode_volume_get(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int msm_transcode_audio_effects_config_info(struct snd_kcontrol *kcontrol,
+						struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_INTEGER;
+	uinfo->count = MAX_PP_PARAMS_SZ;
+	uinfo->value.integer.min = 0;
+	uinfo->value.integer.max = 0xFFFFFFFF;
+	return 0;
+}
+
+static int msm_transcode_audio_effects_config_get(struct snd_kcontrol *kcontrol,
+						struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *comp = snd_kcontrol_chip(kcontrol);
+	unsigned long fe_id = kcontrol->private_value;
+	struct trans_loopback_pdata *pdata = (struct trans_loopback_pdata *)
+					      snd_soc_component_get_drvdata(comp);
+	struct msm_transcode_audio_effects *audio_effects = NULL;
+	struct snd_compr_stream *cstream = NULL;
+
+	pr_debug("%s: fe_id: %lu\n", __func__, fe_id);
+	if (fe_id >= MSM_FRONTEND_DAI_MAX) {
+		pr_err("%s Received out of bounds fe_id %lu\n",
+			__func__, fe_id);
+		return -EINVAL;
+	}
+	cstream = pdata->cstream[fe_id];
+	audio_effects = pdata->audio_effects[fe_id];
+	if (!cstream || !audio_effects) {
+		pr_err("%s: stream or effects inactive\n", __func__);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int msm_transcode_audio_effects_config_put(struct snd_kcontrol *kcontrol,
+						struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_component *comp = snd_kcontrol_chip(kcontrol);
+	unsigned long fe_id = kcontrol->private_value;
+	struct trans_loopback_pdata *pdata = (struct trans_loopback_pdata *)
+					      snd_soc_component_get_drvdata(comp);
+	struct msm_transcode_audio_effects *audio_effects = NULL;
+	struct snd_compr_stream *cstream = NULL;
+	struct msm_transcode_loopback *prtd = NULL;
+	long *values = &(ucontrol->value.integer.value[0]);
+	int effects_module;
+	int ret = 0;
+
+	pr_debug("%s: fe_id: %lu\n", __func__, fe_id);
+	if (fe_id >= MSM_FRONTEND_DAI_MAX) {
+		pr_err("%s Received out of bounds fe_id %lu\n",
+			__func__, fe_id);
+		ret = -EINVAL;
+		goto exit;
+	}
+	cstream = pdata->cstream[fe_id];
+	audio_effects = pdata->audio_effects[fe_id];
+	if (!cstream || !audio_effects) {
+		pr_err("%s: stream or effects inactive\n", __func__);
+		ret = -EINVAL;
+		goto exit;
+	}
+	prtd = cstream->runtime->private_data;
+	if (!prtd) {
+		pr_err("%s: cannot set audio effects\n", __func__);
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	effects_module = *values++;
+	switch (effects_module) {
+	case VIRTUALIZER_MODULE:
+		pr_debug("%s: VIRTUALIZER_MODULE\n", __func__);
+		if (msm_audio_effects_is_effmodule_supp_in_top(effects_module,
+						prtd->audio_client->topology))
+			ret = msm_audio_effects_virtualizer_handler(
+							prtd->audio_client,
+							&(audio_effects->virtualizer),
+							values);
+		break;
+	case REVERB_MODULE:
+		pr_debug("%s: REVERB_MODULE\n", __func__);
+		if (msm_audio_effects_is_effmodule_supp_in_top(effects_module,
+						prtd->audio_client->topology))
+			ret = msm_audio_effects_reverb_handler(prtd->audio_client,
+							&(audio_effects->reverb),
+							values);
+		break;
+	case BASS_BOOST_MODULE:
+		pr_debug("%s: BASS_BOOST_MODULE\n", __func__);
+		if (msm_audio_effects_is_effmodule_supp_in_top(effects_module,
+						prtd->audio_client->topology))
+			ret = msm_audio_effects_bass_boost_handler(prtd->audio_client,
+							&(audio_effects->bass_boost),
+							values);
+		break;
+	case PBE_MODULE:
+		pr_debug("%s: PBE_MODULE\n", __func__);
+		if (msm_audio_effects_is_effmodule_supp_in_top(effects_module,
+						prtd->audio_client->topology))
+			ret = msm_audio_effects_pbe_handler(prtd->audio_client,
+							&(audio_effects->pbe),
+							values);
+		break;
+	case EQ_MODULE:
+		pr_debug("%s: EQ_MODULE\n", __func__);
+		if (msm_audio_effects_is_effmodule_supp_in_top(effects_module,
+						prtd->audio_client->topology))
+			ret = msm_audio_effects_popless_eq_handler(prtd->audio_client,
+							&(audio_effects->equalizer),
+							values);
+		break;
+	case SOFT_VOLUME_MODULE:
+		pr_debug("%s: SOFT_VOLUME_MODULE\n", __func__);
+		break;
+	case SOFT_VOLUME2_MODULE:
+		pr_debug("%s: SOFT_VOLUME2_MODULE\n", __func__);
+		if (msm_audio_effects_is_effmodule_supp_in_top(effects_module,
+						prtd->audio_client->topology))
+			ret = msm_audio_effects_volume_handler_v2(prtd->audio_client,
+							&(audio_effects->volume),
+							values, SOFT_VOLUME_INSTANCE_2);
+		break;
+	default:
+		pr_err("%s Invalid effects config module\n", __func__);
+		ret = -EINVAL;
+	}
+
+exit:
+	return ret;
+}
+
+static int msm_transcode_add_audio_effects_control(struct snd_soc_pcm_runtime *rtd)
+{
+	const char *mixer_ctl_name = "Audio Effects Config";
+	const char *deviceNo       = "NN";
+	char *mixer_str = NULL;
+	int ctl_len = 0;
+	int ret = 0;
+	struct snd_kcontrol_new fe_audio_effects_config_control[1] = {
+		{
+		.iface = SNDRV_CTL_ELEM_IFACE_MIXER,
+		.name = "?",
+		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
+		.info = msm_transcode_audio_effects_config_info,
+		.get = msm_transcode_audio_effects_config_get,
+		.put = msm_transcode_audio_effects_config_put,
+		.private_value = 0,
+		}
+	};
+
+	if (!rtd) {
+		pr_err("%s NULL rtd\n", __func__);
+		ret = -EINVAL;
+		goto done;
+	}
+
+	pr_debug("%s: added new compr FE with name %s, id %d, cpu dai %s, device no %d\n", __func__,
+						rtd->dai_link->name, rtd->dai_link->id,
+						rtd->dai_link->cpu_dai_name, rtd->pcm->device);
+
+	ctl_len = strlen(mixer_ctl_name) + 1 + strlen(deviceNo) + 1;
+	mixer_str = kzalloc(ctl_len, GFP_KERNEL);
+
+	if (!mixer_str) {
+		ret = -ENOMEM;
+		goto done;
+	}
+
+	snprintf(mixer_str, ctl_len, "%s %d", mixer_ctl_name, rtd->pcm->device);
+
+	fe_audio_effects_config_control[0].name = mixer_str;
+	fe_audio_effects_config_control[0].private_value = rtd->dai_link->id;
+	ret = snd_soc_add_platform_controls(rtd->platform,
+					    fe_audio_effects_config_control,
+					    ARRAY_SIZE(fe_audio_effects_config_control));
+	if (ret < 0)
+		pr_err("%s: failed to add ctl %s. err = %d\n", __func__, mixer_str, ret);
+
+	kfree(mixer_str);
+done:
+	return ret;
+}
+
 static int msm_transcode_stream_cmd_control(
 			struct snd_soc_pcm_runtime *rtd)
 {
@@ -1147,6 +1418,11 @@ static int msm_transcode_loopback_new(struct snd_soc_pcm_runtime *rtd)
 {
 	int rc;
 
+	rc = msm_transcode_add_audio_effects_control(rtd);
+	if (rc)
+		pr_err("%s: Could not add Compr Audio Effects Control\n",
+			__func__);
+
 	rc = msm_transcode_stream_cmd_control(rtd);
 	if (rc)
 		pr_err("%s: ADSP Stream Cmd Control open failed\n", __func__);
@@ -1192,6 +1468,7 @@ static struct snd_compr_ops msm_transcode_loopback_ops = {
 static int msm_transcode_loopback_probe(struct snd_soc_platform *platform)
 {
 	struct trans_loopback_pdata *pdata = NULL;
+	int i;
 
 	pr_debug("%s\n", __func__);
 	pdata = (struct trans_loopback_pdata *)
@@ -1201,6 +1478,9 @@ static int msm_transcode_loopback_probe(struct snd_soc_platform *platform)
 		return -ENOMEM;
 
 	pdata->perf_mode = LOW_LATENCY_PCM_MODE;
+	for (i = 0; i < MSM_FRONTEND_DAI_MAX; i++)
+		pdata->audio_effects[i] = NULL;
+
 	snd_soc_platform_set_drvdata(platform, pdata);
 	return 0;
 }
