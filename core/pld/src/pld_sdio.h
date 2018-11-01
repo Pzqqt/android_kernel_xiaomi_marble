@@ -32,7 +32,6 @@
 
 #define PLD_QCA9377_REV1_1_VERSION          0x5020001
 #define PLD_QCA9379_REV1_VERSION            0x5040000
-#define TOTAL_DUMP_SIZE         0x00200000
 
 #ifndef CONFIG_CNSS
 #define PLD_AR6004_VERSION_REV1_3           0x31c8088a
@@ -98,6 +97,10 @@ static inline void *pld_sdio_get_virt_ramdump_mem(struct device *dev,
 	return cnss_common_get_virt_ramdump_mem(dev, size);
 }
 
+static inline void pld_sdio_release_virt_ramdump_mem(void *address)
+{
+}
+
 static inline void pld_sdio_device_crashed(struct device *dev)
 {
 	cnss_common_device_crashed(dev);
@@ -111,11 +114,34 @@ static inline void pld_sdio_device_self_recovery(struct device *dev)
 {
 	cnss_common_device_self_recovery(dev);
 }
+
+static inline bool pld_sdio_platform_driver_support(void)
+{
+	return true;
+}
 #else
 static inline void *pld_sdio_get_virt_ramdump_mem(struct device *dev,
 		unsigned long *size)
 {
-	return NULL;
+	size_t length = 0;
+	int flags = GFP_KERNEL;
+
+	length = TOTAL_DUMP_SIZE;
+
+	if (!size)
+		return NULL;
+
+	*size = (unsigned long)length;
+
+	if (in_interrupt() || irqs_disabled() || in_atomic())
+		flags = GFP_ATOMIC;
+
+	return kzalloc(length, flags);
+}
+
+static inline void pld_sdio_release_virt_ramdump_mem(void *address)
+{
+	kfree(address);
 }
 
 static inline void pld_sdio_device_crashed(struct device *dev)
@@ -128,6 +154,11 @@ static inline bool pld_sdio_is_fw_dump_skipped(void)
 
 static inline void pld_sdio_device_self_recovery(struct device *dev)
 {
+}
+
+static inline bool pld_sdio_platform_driver_support(void)
+{
+	return false;
 }
 #endif
 

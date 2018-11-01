@@ -168,7 +168,25 @@ pld_pcie_schedule_recovery_work(struct device *dev,
 static inline void *pld_pcie_get_virt_ramdump_mem(struct device *dev,
 						  unsigned long *size)
 {
-	return NULL;
+	size_t length = 0;
+	int flags = GFP_KERNEL;
+
+	length = TOTAL_DUMP_SIZE;
+
+	if (!size)
+		return NULL;
+
+	*size = (unsigned long)length;
+
+	if (in_interrupt() || irqs_disabled() || in_atomic())
+		flags = GFP_ATOMIC;
+
+	return kzalloc(length, flags);
+}
+
+static inline void pld_pcie_release_virt_ramdump_mem(void *address)
+{
+	kfree(address);
 }
 
 static inline void pld_pcie_device_crashed(struct device *dev)
@@ -274,6 +292,11 @@ static inline void pld_pcie_get_msi_address(struct device *dev,
 {
 	return;
 }
+
+static inline bool pld_pcie_platform_driver_support(void)
+{
+	return false;
+}
 #else
 int pld_pcie_get_fw_files_for_target(struct device *dev,
 				     struct pld_fw_files *pfw_files,
@@ -313,6 +336,10 @@ static inline void *pld_pcie_get_virt_ramdump_mem(struct device *dev,
 						  unsigned long *size)
 {
 	return cnss_get_virt_ramdump_mem(dev, size);
+}
+
+static inline void pld_pcie_release_virt_ramdump_mem(void *address)
+{
 }
 
 static inline void pld_pcie_device_crashed(struct device *dev)
@@ -406,6 +433,11 @@ static inline void pld_pcie_get_msi_address(struct device *dev,
 					    uint32_t *msi_addr_high)
 {
 	cnss_get_msi_address(dev, msi_addr_low, msi_addr_high);
+}
+
+static inline bool pld_pcie_platform_driver_support(void)
+{
+	return true;
 }
 #endif
 #endif

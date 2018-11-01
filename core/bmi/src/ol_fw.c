@@ -542,15 +542,34 @@ struct ramdump_info {
 	unsigned long size;
 };
 
+/**
+ * if have platform driver support, reinit will be called by CNSS.
+ * recovery flag will be cleaned by reinit function. If not support,
+ * clean recovery flag in CLD driver.
+ */
+static inline void ol_check_clean_recovery_flag(struct device *dev)
+{
+	if (!pld_have_platform_driver_support(dev))
+		cds_set_recovery_in_progress(false);
+}
+
 #if !defined(QCA_WIFI_3_0)
 static inline void ol_get_ramdump_mem(struct device *dev,
 				      struct ramdump_info *info)
 {
 	info->base = pld_get_virt_ramdump_mem(dev, &info->size);
 }
+
+static inline void ol_release_ramdump_mem(struct device *dev,
+					  struct ramdump_info *info)
+{
+	pld_release_virt_ramdump_mem(dev, info->base);
+}
 #else
 static inline void ol_get_ramdump_mem(struct device *dev,
 				      struct ramdump_info *info) { }
+static inline void ol_release_ramdump_mem(struct device *dev,
+					  struct ramdump_info *info) { }
 #endif
 
 int ol_copy_ramdump(struct hif_opaque_softc *scn)
@@ -583,6 +602,7 @@ int ol_copy_ramdump(struct hif_opaque_softc *scn)
 
 	ret = ol_target_coredump(scn, info->base, info->size);
 
+	ol_release_ramdump_mem(qdf_dev->dev, info);
 	qdf_mem_free(info);
 	return ret;
 }
@@ -624,6 +644,7 @@ void ramdump_work_handler(void *data)
 		BMI_ERR("HifDiagReadiMem FW Dump Area Pointer failed!");
 		ol_copy_ramdump(ramdump_scn);
 		pld_device_crashed(qdf_dev->dev);
+		ol_check_clean_recovery_flag(qdf_dev->dev);
 
 		return;
 	}
@@ -652,6 +673,8 @@ void ramdump_work_handler(void *data)
 		cds_set_recovery_in_progress(false);
 	else
 		pld_device_crashed(qdf_dev->dev);
+
+	ol_check_clean_recovery_flag(qdf_dev->dev);
 	return;
 
 out_fail:
@@ -661,6 +684,8 @@ out_fail:
 					 PLD_REASON_DEFAULT);
 	else
 		pld_device_crashed(qdf_dev->dev);
+
+	ol_check_clean_recovery_flag(qdf_dev->dev);
 }
 
 void fw_indication_work_handler(void *data)

@@ -36,6 +36,8 @@
 #define PLD_EPPING_FILE              "epping.bin"
 #define PLD_EVICTED_FILE             ""
 
+#define TOTAL_DUMP_SIZE         0x00200000
+
 #ifdef CONFIG_WCNSS_MEM_PRE_ALLOC
 #include <net/cnss_prealloc.h>
 #endif
@@ -502,6 +504,15 @@ static inline int pld_get_driver_load_cnt(struct device *dev)
 #endif
 int pld_wlan_pm_control(struct device *dev, bool vote);
 void *pld_get_virt_ramdump_mem(struct device *dev, unsigned long *size);
+
+/**
+ * pld_release_virt_ramdump_mem() - Release virtual ramdump memory
+ * @dev: device
+ * @address: buffer to virtual memory address
+ *
+ * Return: void
+ */
+void pld_release_virt_ramdump_mem(struct device *dev, void *address);
 void pld_device_crashed(struct device *dev);
 void pld_device_self_recovery(struct device *dev,
 			      enum pld_recovery_reason reason);
@@ -560,6 +571,14 @@ bool pld_is_fw_dump_skipped(struct device *dev);
  *         0 FW is not rejuvenating
  */
 int pld_is_fw_rejuvenate(struct device *dev);
+
+/**
+ * pld_have_platform_driver_support() - check if platform driver support
+ * @dev: device
+ *
+ * Return: true if platform driver support.
+ */
+bool pld_have_platform_driver_support(struct device *dev);
 
 #if defined(CONFIG_WCNSS_MEM_PRE_ALLOC) && defined(FEATURE_SKB_PRE_ALLOC)
 

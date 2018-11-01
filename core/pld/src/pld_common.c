@@ -593,6 +593,23 @@ void *pld_get_virt_ramdump_mem(struct device *dev, unsigned long *size)
 	return mem;
 }
 
+void pld_release_virt_ramdump_mem(struct device *dev, void *address)
+{
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+		pld_pcie_release_virt_ramdump_mem(address);
+		break;
+	case PLD_BUS_TYPE_SNOC:
+		break;
+	case PLD_BUS_TYPE_SDIO:
+		pld_sdio_release_virt_ramdump_mem(address);
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		break;
+	}
+}
+
 /**
  * pld_device_crashed() - Notification for device crash event
  * @dev: device
@@ -1660,3 +1677,25 @@ int pld_is_fw_rejuvenate(struct device *dev)
 	}
 	return ret;
 }
+
+bool pld_have_platform_driver_support(struct device *dev)
+{
+	bool ret = false;
+
+	switch (pld_get_bus_type(dev)) {
+	case PLD_BUS_TYPE_PCIE:
+		ret = pld_pcie_platform_driver_support();
+		break;
+	case PLD_BUS_TYPE_SNOC:
+		break;
+	case PLD_BUS_TYPE_SDIO:
+		ret = pld_sdio_platform_driver_support();
+		break;
+	default:
+		pr_err("Invalid device type\n");
+		break;
+	}
+
+	return ret;
+}
+
