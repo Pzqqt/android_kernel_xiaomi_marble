@@ -8661,6 +8661,16 @@ QDF_STATUS csr_roam_save_connected_information(struct mac_context *mac,
 				p_ext_cap->proxy_arp_service;
 		}
 
+		if (pIesTemp->Country.present) {
+			qdf_mem_copy(pConnectProfile->country_code,
+				     pIesTemp->Country.country,
+				     WNI_CFG_COUNTRY_CODE_LEN);
+			sme_debug("Storing country in connected info, %c%c 0x%x",
+				  pConnectProfile->country_code[0],
+				  pConnectProfile->country_code[1],
+				  pConnectProfile->country_code[2]);
+		}
+
 		if (!pIes)
 			/* Free memory if it allocated locally */
 			qdf_mem_free(pIesTemp);

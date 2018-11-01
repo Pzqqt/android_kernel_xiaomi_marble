@@ -959,9 +959,41 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 	tpSirBeaconReportReqInd pBeaconReq = (tpSirBeaconReportReqInd) pMsgBuf;
 	tpRrmSMEContext pSmeRrmContext = &mac->rrm.rrmSmeContext;
 	uint32_t len = 0, i = 0;
+	uint8_t num_chan = 0;
+	uint8_t country[WNI_CFG_COUNTRY_CODE_LEN];
+	uint32_t session_id;
+	struct csr_roam_session *session;
+	QDF_STATUS status;
 
-	sme_debug("Received Beacon report request ind Channel = %d",
-		pBeaconReq->channelInfo.channelNum);
+	status = csr_roam_get_session_id_from_bssid(mac, (struct qdf_mac_addr *)
+						    pBeaconReq->bssId,
+						    &session_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sme_err("sme session ID not found for bssid");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	session = CSR_GET_SESSION(mac, session_id);
+	if (!session) {
+		sme_err("Invalid session id %d", session_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_zero(country, WNI_CFG_COUNTRY_CODE_LEN);
+	if (session->connectedProfile.country_code[0])
+		qdf_mem_copy(country, session->connectedProfile.country_code,
+			     WNI_CFG_COUNTRY_CODE_LEN);
+	else
+		country[2] = OP_CLASS_GLOBAL;
+
+	sme_debug("Channel = %d", pBeaconReq->channelInfo.channelNum);
+
+	sme_debug("Request Reg class %d, AP's country code %c%c 0x%x",
+		  pBeaconReq->channelInfo.regulatoryClass,
+		  country[0], country[1], country[2]);
+	if (country[2] > OP_CLASS_GLOBAL)
+		country[2] = OP_CLASS_GLOBAL;
+
 
 	if (pBeaconReq->channelList.numChannels >
 	    SIR_ESE_MAX_MEAS_IE_REQS) {
@@ -987,7 +1019,28 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 
 		csr_get_cfg_valid_channels(mac, pSmeRrmContext->channelList.
 					ChannelList, &len);
-		pSmeRrmContext->channelList.numOfChannels = (uint8_t) len;
+		/* List all the channels in the requested RC */
+		wlan_reg_dmn_print_channels_in_opclass(country,
+				pBeaconReq->channelInfo.regulatoryClass);
+
+		for (i = 0; i < len; i++) {
+			if (wlan_reg_dmn_get_opclass_from_channel(country,
+			    pSmeRrmContext->channelList.ChannelList[i],
+			    BWALL) ==
+			    pBeaconReq->channelInfo.regulatoryClass) {
+				pSmeRrmContext->channelList.
+				ChannelList[num_chan] =
+				pSmeRrmContext->channelList.ChannelList[i];
+				num_chan++;
+			}
+		}
+		pSmeRrmContext->channelList.numOfChannels = num_chan;
+		if (pSmeRrmContext->channelList.numOfChannels == 0) {
+			qdf_mem_free(pSmeRrmContext->channelList.ChannelList);
+			pSmeRrmContext->channelList.ChannelList = NULL;
+			sme_err("No channels populated with requested operation class and current country, Hence abort the rrm operation");
+			return QDF_STATUS_E_FAILURE;
+		}
 	} else {
 		len = 0;
 		pSmeRrmContext->channelList.numOfChannels = 0;
