@@ -831,6 +831,7 @@ QDF_STATUS sap_destroy_ctx(struct sap_context *sap_ctx);
  * @mode: Device mode
  * @addr: MAC address of the SAP
  * @session_id: Pointer to the session id
+ * @reinit: if called as part of reinit
  *
  * sap_create_ctx() allocates the sap context which is uninitialized.
  * This API needs to be called to properly initialize the sap context
@@ -842,7 +843,7 @@ QDF_STATUS sap_destroy_ctx(struct sap_context *sap_ctx);
  */
 QDF_STATUS sap_init_ctx(struct sap_context *sap_ctx,
 			 enum QDF_OPMODE mode,
-			 uint8_t *addr, uint32_t session_id);
+			 uint8_t *addr, uint32_t session_id, bool reinit);
 
 /**
  * sap_deinit_ctx() - De-initialize the sap context

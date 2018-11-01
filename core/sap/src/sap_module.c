@@ -275,7 +275,7 @@ struct sap_context *sap_create_ctx(void)
 
 QDF_STATUS sap_init_ctx(struct sap_context *sap_ctx,
 			 enum QDF_OPMODE mode,
-			 uint8_t *addr, uint32_t session_id)
+			 uint8_t *addr, uint32_t session_id, bool reinit)
 {
 	QDF_STATUS qdf_ret_status;
 	tHalHandle hal;
@@ -328,8 +328,10 @@ QDF_STATUS sap_init_ctx(struct sap_context *sap_ctx,
 			__func__, qdf_ret_status);
 		return QDF_STATUS_E_FAILURE;
 	}
-	/* Register with scan component */
-	sap_ctx->req_id = ucfg_scan_register_requester(pmac->psoc, "SAP",
+	/* Register with scan component only during init */
+	if (!reinit)
+		sap_ctx->req_id =
+			ucfg_scan_register_requester(pmac->psoc, "SAP",
 					sap_scan_event_callback, sap_ctx);
 
 	return QDF_STATUS_SUCCESS;
