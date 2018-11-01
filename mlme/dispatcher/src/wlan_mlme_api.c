@@ -1589,7 +1589,7 @@ wlan_mlme_get_vht_tx_su_beamformer(struct wlan_objmgr_psoc *psoc, bool *value)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	*value = mlme_obj->cfg.vht_caps.vht_cap_info.su_bfer;
+	*value = mlme_obj->cfg.vht_caps.vht_cap_info.su_bformer;
 
 	return QDF_STATUS_SUCCESS;
 }
