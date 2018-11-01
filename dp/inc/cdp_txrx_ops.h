@@ -274,6 +274,15 @@ struct cdp_cmn_ops {
 	struct cdp_cfg *
 		(*txrx_get_ctrl_pdev_from_vdev)(struct cdp_vdev *vdev);
 
+	/**
+	 * txrx_get_mon_vdev_from_pdev() - Return monitor mode vdev
+	 * @pdev: pdev handle
+	 *
+	 * Return: Handle to vdev
+	 */
+	struct cdp_vdev *
+		(*txrx_get_mon_vdev_from_pdev)(struct cdp_pdev *pdev);
+
 	struct cdp_vdev *
 		(*txrx_get_vdev_from_vdev_id)(struct cdp_pdev *pdev,
 				uint8_t vdev_id);

@@ -1126,6 +1126,24 @@ cdp_get_vdev_from_vdev_id(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 			(pdev, vdev_id);
 }
 
+static inline struct cdp_vdev *
+cdp_get_mon_vdev_from_pdev(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_get_mon_vdev_from_pdev)
+		return NULL;
+
+	return soc->ops->cmn_drv_ops->txrx_get_mon_vdev_from_pdev
+			(pdev);
+}
+
 static inline void
 cdp_soc_detach(ol_txrx_soc_handle soc)
 {

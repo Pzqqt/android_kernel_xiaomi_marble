@@ -3799,8 +3799,10 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 
 	TAILQ_INIT(&vdev->peer_list);
 
-	if (wlan_op_mode_monitor == vdev->opmode)
+	if (wlan_op_mode_monitor == vdev->opmode) {
+		pdev->monitor_vdev = vdev;
 		return (struct cdp_vdev *)vdev;
+	}
 
 	vdev->tx_encap_type = wlan_cfg_pkt_type(soc->wlan_cfg_ctx);
 	vdev->rx_decap_type = wlan_cfg_pkt_type(soc->wlan_cfg_ctx);
@@ -4893,6 +4895,23 @@ static struct cdp_vdev *dp_get_vdev_from_vdev_id_wifi3(struct cdp_pdev *dev,
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 
 	return (struct cdp_vdev *)vdev;
+}
+
+/*
+ * dp_get_mon_vdev_from_pdev_wifi3() - Get vdev handle of monitor mode
+ * @dev: PDEV handle
+ *
+ * Return: VDEV handle of monitor mode
+ */
+
+static struct cdp_vdev *dp_get_mon_vdev_from_pdev_wifi3(struct cdp_pdev *dev)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)dev;
+
+	if (qdf_unlikely(!pdev))
+		return NULL;
+
+	return (struct cdp_vdev *)pdev->monitor_vdev;
 }
 
 static int dp_get_opmode(struct cdp_vdev *vdev_handle)
@@ -8446,6 +8465,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_detach = dp_soc_detach_wifi3,
 	.txrx_get_vdev_mac_addr = dp_get_vdev_mac_addr_wifi3,
 	.txrx_get_vdev_from_vdev_id = dp_get_vdev_from_vdev_id_wifi3,
+	.txrx_get_mon_vdev_from_pdev = dp_get_mon_vdev_from_pdev_wifi3,
 	.txrx_get_ctrl_pdev_from_vdev = dp_get_ctrl_pdev_from_vdev_wifi3,
 	.txrx_ath_getstats = dp_get_device_stats,
 	.addba_requestprocess = dp_addba_requestprocess_wifi3,
