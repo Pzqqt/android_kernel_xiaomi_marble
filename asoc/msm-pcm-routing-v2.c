@@ -794,7 +794,7 @@ static struct msm_pcm_stream_app_type_cfg
 
 static int last_be_id_configured[MSM_FRONTEND_DAI_MAX][MAX_SESSION_TYPES];
 
-/* The caller of this should aqcuire routing lock */
+/* The caller of this should acquire routing lock */
 void msm_pcm_routing_get_bedai_info(int be_idx,
 				    struct msm_pcm_routing_bdai_data *be_dai)
 {
@@ -803,7 +803,7 @@ void msm_pcm_routing_get_bedai_info(int be_idx,
 		       sizeof(struct msm_pcm_routing_bdai_data));
 }
 
-/* The caller of this should aqcuire routing lock */
+/* The caller of this should acquire routing lock */
 void msm_pcm_routing_get_fedai_info(int fe_idx, int sess_type,
 				    struct msm_pcm_routing_fdai_data *fe_dai)
 {

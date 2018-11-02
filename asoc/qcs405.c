@@ -70,8 +70,9 @@
 #define WSA8810_NAME_1 "wsa881x.20170211"
 #define WSA8810_NAME_2 "wsa881x.20170212"
 #define WCN_CDC_SLIM_RX_CH_MAX 2
-#define WCN_CDC_SLIM_TX_CH_MAX 3
+#define WCN_CDC_SLIM_TX_CH_MAX 4
 #define TDM_CHANNEL_MAX 8
+#define BT_SLIM_TX SLIM_TX_9
 
 #define ADSP_STATE_READY_TIMEOUT_MS 3000
 #define MSM_LL_QOS_VALUE 300 /* time in us to ensure LPM doesn't go in C3/C4 */
@@ -98,6 +99,7 @@ enum {
 	SLIM_TX_6,
 	SLIM_TX_7,
 	SLIM_TX_8,
+	SLIM_TX_9,
 	SLIM_TX_MAX,
 };
 
@@ -361,6 +363,7 @@ static struct dev_config slim_tx_cfg[] = {
 	[SLIM_TX_6] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 	[SLIM_TX_7] = {SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 	[SLIM_TX_8] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+	[SLIM_TX_9] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 };
 
 /* Default configuration of Codec DMA Interface Tx */
@@ -524,6 +527,7 @@ static SOC_ENUM_SINGLE_EXT_DECL(slim_0_tx_sample_rate, slim_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(slim_5_rx_sample_rate, slim_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(slim_6_rx_sample_rate, slim_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(bt_sample_rate, bt_sample_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(bt_sample_rate_sink, bt_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(usb_rx_sample_rate, usb_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(usb_tx_sample_rate, usb_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tdm_tx_chs, tdm_ch_text);
@@ -1144,6 +1148,68 @@ static int msm_bt_sample_rate_put(struct snd_kcontrol *kcontrol,
 		 __func__,
 		 slim_rx_cfg[SLIM_RX_7].sample_rate,
 		 slim_tx_cfg[SLIM_TX_7].sample_rate,
+		 ucontrol->value.enumerated.item[0]);
+
+	return 0;
+}
+
+static int msm_bt_sample_rate_sink_get(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_value *ucontrol)
+{
+	switch (slim_tx_cfg[BT_SLIM_TX].sample_rate) {
+	case SAMPLING_RATE_96KHZ:
+		ucontrol->value.integer.value[0] = 5;
+		break;
+	case SAMPLING_RATE_88P2KHZ:
+		ucontrol->value.integer.value[0] = 4;
+		break;
+	case SAMPLING_RATE_48KHZ:
+		ucontrol->value.integer.value[0] = 3;
+		break;
+	case SAMPLING_RATE_44P1KHZ:
+		ucontrol->value.integer.value[0] = 2;
+		break;
+	case SAMPLING_RATE_16KHZ:
+		ucontrol->value.integer.value[0] = 1;
+		break;
+	case SAMPLING_RATE_8KHZ:
+	default:
+		ucontrol->value.integer.value[0] = 0;
+		break;
+	}
+	pr_debug("%s: sample rate = %d", __func__,
+		 slim_tx_cfg[BT_SLIM_TX].sample_rate);
+
+	return 0;
+}
+
+static int msm_bt_sample_rate_sink_put(struct snd_kcontrol *kcontrol,
+				  struct snd_ctl_elem_value *ucontrol)
+{
+	switch (ucontrol->value.integer.value[0]) {
+	case 1:
+		slim_tx_cfg[BT_SLIM_TX].sample_rate = SAMPLING_RATE_16KHZ;
+		break;
+	case 2:
+		slim_tx_cfg[BT_SLIM_TX].sample_rate = SAMPLING_RATE_44P1KHZ;
+		break;
+	case 3:
+		slim_tx_cfg[BT_SLIM_TX].sample_rate = SAMPLING_RATE_48KHZ;
+		break;
+	case 4:
+		slim_tx_cfg[BT_SLIM_TX].sample_rate = SAMPLING_RATE_88P2KHZ;
+		break;
+	case 5:
+		slim_tx_cfg[BT_SLIM_TX].sample_rate = SAMPLING_RATE_96KHZ;
+		break;
+	case 0:
+	default:
+		slim_tx_cfg[BT_SLIM_TX].sample_rate = SAMPLING_RATE_8KHZ;
+		break;
+	}
+	pr_debug("%s: sample rate = %d, value = %d\n",
+		 __func__,
+		 slim_tx_cfg[BT_SLIM_TX].sample_rate,
 		 ucontrol->value.enumerated.item[0]);
 
 	return 0;
@@ -3427,19 +3493,25 @@ static const struct snd_kcontrol_new msm_snd_wsa_controls[] = {
 };
 
 static const struct snd_kcontrol_new msm_snd_controls[] = {
+	SOC_ENUM_EXT("BT_TX SampleRate", bt_sample_rate_sink,
+			msm_bt_sample_rate_sink_get,
+			msm_bt_sample_rate_sink_put),
+	SOC_ENUM_EXT("BT SampleRate", bt_sample_rate,
+			msm_bt_sample_rate_get,
+			msm_bt_sample_rate_put),
+	SOC_ENUM_EXT("BT_RX SampleRate", bt_sample_rate,
+			msm_bt_sample_rate_get,
+			msm_bt_sample_rate_put),
+	SOC_ENUM_EXT("PROXY_RX Channels", proxy_rx_chs,
+			proxy_rx_ch_get, proxy_rx_ch_put),
 	SOC_ENUM_EXT("USB_AUDIO_RX Channels", usb_rx_chs,
 			usb_audio_rx_ch_get, usb_audio_rx_ch_put),
 	SOC_ENUM_EXT("USB_AUDIO_TX Channels", usb_tx_chs,
 			usb_audio_tx_ch_get, usb_audio_tx_ch_put),
-	SOC_ENUM_EXT("PROXY_RX Channels", proxy_rx_chs,
-			proxy_rx_ch_get, proxy_rx_ch_put),
 	SOC_ENUM_EXT("USB_AUDIO_RX Format", usb_rx_format,
 			usb_audio_rx_format_get, usb_audio_rx_format_put),
 	SOC_ENUM_EXT("USB_AUDIO_TX Format", usb_tx_format,
 			usb_audio_tx_format_get, usb_audio_tx_format_put),
-	SOC_ENUM_EXT("BT SampleRate", bt_sample_rate,
-			msm_bt_sample_rate_get,
-			msm_bt_sample_rate_put),
 	SOC_ENUM_EXT("USB_AUDIO_RX SampleRate", usb_rx_sample_rate,
 			usb_audio_rx_sample_rate_get,
 			usb_audio_rx_sample_rate_put),
@@ -4106,6 +4178,14 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 		rate->min = rate->max = slim_tx_cfg[SLIM_TX_8].sample_rate;
 		channels->min = channels->max =
 			slim_tx_cfg[SLIM_TX_8].channels;
+		break;
+
+	case MSM_BACKEND_DAI_SLIMBUS_9_TX:
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+				slim_tx_cfg[SLIM_TX_9].bit_format);
+		rate->min = rate->max = slim_tx_cfg[SLIM_TX_9].sample_rate;
+		channels->min = channels->max =
+			slim_tx_cfg[SLIM_TX_9].channels;
 		break;
 
 	case MSM_BACKEND_DAI_USB_RX:
@@ -4853,7 +4933,7 @@ done:
 static int msm_wcn_init(struct snd_soc_pcm_runtime *rtd)
 {
 	unsigned int rx_ch[WCN_CDC_SLIM_RX_CH_MAX] = {157, 158};
-	unsigned int tx_ch[WCN_CDC_SLIM_TX_CH_MAX]  = {159, 160, 161};
+	unsigned int tx_ch[WCN_CDC_SLIM_TX_CH_MAX]  = {159, 160, 161, 162};
 	struct snd_soc_dai *codec_dai = rtd->codec_dai;
 
 	return snd_soc_dai_set_channel_map(codec_dai, ARRAY_SIZE(tx_ch),
