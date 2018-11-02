@@ -1573,7 +1573,7 @@ wlan_mlme_get_vht_enable_tx_bf(struct wlan_objmgr_psoc *psoc, bool *value)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	*value = mlme_obj->cfg.vht_caps.vht_cap_info.enable_txbf_20mhz;
+	*value = mlme_obj->cfg.vht_caps.vht_cap_info.su_bformee;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1852,7 +1852,7 @@ QDF_STATUS mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc,
 		vht_cap_info->su_bformer = cfg->vht_su_bformer;
 
 	/* check and update SU BEAMFORMEE capabality */
-	if (vht_cap_info->enable_txbf_20mhz && !cfg->vht_su_bformee)
+	if (vht_cap_info->su_bformee && !cfg->vht_su_bformee)
 		vht_cap_info->su_bformee = cfg->vht_su_bformee;
 
 	/* Set VHT MU Beamformer cap */

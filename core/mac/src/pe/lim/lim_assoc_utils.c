@@ -3864,7 +3864,7 @@ QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 					psessionEntry->ch_width;
 		} else {
 			sta_context->ch_width =	CH_WIDTH_20MHZ;
-			if (vht_cap_info.enable_txbf_20mhz)
+			if (!vht_cap_info.enable_txbf_20mhz)
 				sta_context->vhtTxBFCapable = 0;
 		}
 

@@ -263,7 +263,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 
 	if (session->vhtCapabilityPresentInBeacon == 1 &&
 			!session->htSupportedChannelWidthSet) {
-		if (mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable_txbf_20mhz)
+		if (!mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable_txbf_20mhz)
 			session->vht_config.su_beam_formee = 0;
 	} else if (session->vhtCapabilityPresentInBeacon &&
 			vht_op->chanWidth) {
