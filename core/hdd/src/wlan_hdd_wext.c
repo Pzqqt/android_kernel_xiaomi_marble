@@ -4678,6 +4678,62 @@ static int hdd_we_pps_5g_ebt(struct hdd_adapter *adapter, int value)
 					value);
 }
 
+static int hdd_we_set_qpower(struct hdd_adapter *adapter,
+			     enum wmi_sta_powersave_param id,
+			     const char *id_string,
+			     int value)
+{
+	int errno;
+
+	hdd_debug("%s %d", id_string, value);
+	errno = wma_cli_set_command(adapter->session_id, id, value, QPOWER_CMD);
+	if (errno)
+		hdd_err("Failed to set firmware, errno %d", errno);
+
+	return errno;
+}
+
+#define hdd_we_set_qpower(adapter, id, value) \
+			hdd_we_set_qpower(adapter, id, #id, value)
+
+static int
+hdd_we_set_qpower_max_pspoll_count(struct hdd_adapter *adapter, int value)
+{
+	enum wmi_sta_powersave_param id =
+		WMI_STA_PS_PARAM_QPOWER_PSPOLL_COUNT;
+
+	return hdd_we_set_qpower(adapter, id, value);
+}
+
+static int
+hdd_we_set_qpower_max_tx_before_wake(struct hdd_adapter *adapter, int value)
+{
+	enum wmi_sta_powersave_param id =
+		WMI_STA_PS_PARAM_QPOWER_MAX_TX_BEFORE_WAKE;
+
+	return hdd_we_set_qpower(adapter, id, value);
+}
+
+static int
+hdd_we_set_qpower_spec_pspoll_wake_interval(struct hdd_adapter *adapter,
+					    int value)
+{
+	enum wmi_sta_powersave_param id =
+		WMI_STA_PS_PARAM_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL;
+
+	return hdd_we_set_qpower(adapter, id, value);
+}
+
+static int
+hdd_we_set_qpower_spec_max_spec_nodata_pspoll(struct hdd_adapter *adapter,
+					      int value)
+{
+	enum wmi_sta_powersave_param id =
+		WMI_STA_PS_PARAM_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL;
+
+	return hdd_we_set_qpower(adapter, id, value);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -5122,47 +5178,22 @@ static int __iw_setint_getnone(struct net_device *dev,
 	}
 
 	case WE_SET_QPOWER_MAX_PSPOLL_COUNT:
-	{
-		hdd_debug("WE_SET_QPOWER_MAX_PSPOLL_COUNT val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_STA_PS_PARAM_QPOWER_PSPOLL_COUNT,
-					  set_value, QPOWER_CMD);
+		ret = hdd_we_set_qpower_max_pspoll_count(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_QPOWER_MAX_TX_BEFORE_WAKE:
-	{
-		hdd_debug("WE_SET_QPOWER_MAX_TX_BEFORE_WAKE val %d",
-		       set_value);
-		ret = wma_cli_set_command(
-				adapter->session_id,
-				WMI_STA_PS_PARAM_QPOWER_MAX_TX_BEFORE_WAKE,
-				set_value, QPOWER_CMD);
+		ret = hdd_we_set_qpower_max_tx_before_wake(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL:
-	{
-		hdd_debug("WE_SET_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL val %d",
-		       set_value);
-		ret = wma_cli_set_command(
-			adapter->session_id,
-			WMI_STA_PS_PARAM_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL,
-			set_value, QPOWER_CMD);
+		ret = hdd_we_set_qpower_spec_pspoll_wake_interval(adapter,
+								  set_value);
 		break;
-	}
 
 	case WE_SET_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL:
-	{
-		hdd_debug("WE_SET_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL val %d",
-		       set_value);
-		ret = wma_cli_set_command(
-			adapter->session_id,
-			WMI_STA_PS_PARAM_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL,
-			set_value, QPOWER_CMD);
+		ret = hdd_we_set_qpower_spec_max_spec_nodata_pspoll(adapter,
+								    set_value);
 		break;
-	}
 
 	case WE_MCC_CONFIG_LATENCY:
 	{
