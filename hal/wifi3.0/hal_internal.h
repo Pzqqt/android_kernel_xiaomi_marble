@@ -25,6 +25,12 @@
 #include "qdf_nbuf.h"
 #include "pld_common.h"
 
+#define hal_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_TXRX, params)
+#define hal_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_TXRX, params)
+#define hal_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_TXRX, params)
+#define hal_info(params...) QDF_TRACE_INFO(QDF_MODULE_ID_TXRX, params)
+#define hal_debug(params...) QDF_TRACE_DEBUG(QDF_MODULE_ID_TXRX, params)
+
 
 /* TBD: This should be movded to shared HW header file */
 enum hal_srng_ring_id {

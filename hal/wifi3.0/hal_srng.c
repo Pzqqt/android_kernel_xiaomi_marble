@@ -96,16 +96,14 @@ static void hal_update_srng_hp_tp_address(void *hal_soc,
 	if (ring_config->ring_dir == HAL_SRNG_DST_RING) {
 		srng->u.dst_ring.tp_addr = SHADOW_REGISTER(shadow_config_index)
 			+ hal->dev_base_addr;
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-			  "%s: tp_addr=%pK dev base addr %pK index %u",
-			  __func__, srng->u.dst_ring.tp_addr,
-			  hal->dev_base_addr, shadow_config_index);
+		hal_debug("tp_addr=%pK dev base addr %pK index %u",
+			  srng->u.dst_ring.tp_addr, hal->dev_base_addr,
+			  shadow_config_index);
 	} else {
 		srng->u.src_ring.hp_addr = SHADOW_REGISTER(shadow_config_index)
 			+ hal->dev_base_addr;
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-			  "%s: hp_addr=%pK dev base addr %pK index %u",
-			  __func__, srng->u.src_ring.hp_addr,
+		hal_debug("hp_addr=%pK dev base addr %pK index %u",
+			  srng->u.src_ring.hp_addr,
 			  hal->dev_base_addr, shadow_config_index);
 	}
 
@@ -141,9 +139,8 @@ QDF_STATUS hal_set_one_shadow_config(void *hal_soc,
 	hal_update_srng_hp_tp_address(hal_soc, shadow_config_index, ring_type,
 				      ring_num);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-		  "%s: target_reg %x, shadow register 0x%x shadow_index 0x%x, ring_type %d, ring num %d",
-		  __func__, target_register,
+	hal_debug("target_reg %x, shadow register 0x%x shadow_index 0x%x, ring_type %d, ring num %d",
+		  target_register,
 		  SHADOW_REGISTER(shadow_config_index),
 		  shadow_config_index,
 		  ring_type, ring_num);
