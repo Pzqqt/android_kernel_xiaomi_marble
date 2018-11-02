@@ -384,6 +384,12 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 	if (!params)
 		return QDF_STATUS_E_NOMEM;
 
+	if (!wma_is_vdev_valid(vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
+		qdf_mem_free(params);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	params->is_roam_req_valid = 0;
 	params->mode = mode;
 	params->vdev_id = vdev_id;
@@ -621,8 +627,14 @@ QDF_STATUS wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 					     uint32_t scan_age,
 					     uint32_t vdev_id)
 {
+	if (!wma_is_vdev_valid(vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	return wmi_unified_roam_scan_offload_scan_period(wma_handle->wmi_handle,
-				  scan_period, scan_age, vdev_id);
+							 scan_period, scan_age,
+							 vdev_id);
 }
 
 /**
@@ -637,12 +649,17 @@ QDF_STATUS wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
  * Return: QDF status
  */
 QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
-	uint32_t vdev_id,
-	int32_t rssi_change_thresh,
-	uint32_t bcn_rssi_weight,
-	uint32_t hirssi_delay_btw_scans)
+					     uint32_t vdev_id,
+					     int32_t rssi_change_thresh,
+					     uint32_t bcn_rssi_weight,
+					     uint32_t hirssi_delay_btw_scans)
 {
 	int status;
+
+	if (!wma_is_vdev_valid(vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	status = wmi_unified_roam_scan_offload_rssi_change_cmd(
 				wma_handle->wmi_handle,
@@ -681,6 +698,12 @@ QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 			 chan_count);
 		return QDF_STATUS_E_EMPTY;
 	}
+
+	if (!wma_is_vdev_valid(vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	chan_list_mhz = qdf_mem_malloc(chan_count * sizeof(*chan_list_mhz));
 	if (!chan_list_mhz)
 		return QDF_STATUS_E_NOMEM;
@@ -1187,6 +1210,11 @@ static QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
 	struct ap_profile_params ap_profile;
 	bool db2dbm_enabled;
 
+	if (!wma_is_vdev_valid(roam_req->sessionId)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__,
+			 roam_req->sessionId);
+		return QDF_STATUS_E_FAILURE;
+	}
 	ap_profile.vdev_id = roam_req->sessionId;
 	wma_roam_scan_fill_ap_profile(roam_req, &ap_profile.profile);
 
@@ -1228,6 +1256,12 @@ static QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	struct roam_ext_params *roam_params;
 	struct roam_scan_filter_params *params;
 	struct lca_disallow_config_params *lca_config_params;
+
+	if (!wma_is_vdev_valid(roam_req->sessionId)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__,
+			 roam_req->sessionId);
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	params = qdf_mem_malloc(sizeof(struct roam_scan_filter_params));
 	if (!params)
@@ -1381,8 +1415,13 @@ QDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
 QDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
 					 uint32_t command, uint32_t vdev_id)
 {
+	if (!wma_is_vdev_valid(vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	return wmi_unified_roam_scan_offload_cmd(wma_handle->wmi_handle,
-			  command, vdev_id);
+						 command, vdev_id);
 }
 
 /**
@@ -1956,6 +1995,12 @@ void wma_process_roam_invoke(WMA_HANDLE handle,
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not send roam invoke",
 				__func__);
+		goto free_frame_buf;
+	}
+
+	if (!wma_is_vdev_valid(roaminvoke->vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__,
+			 roaminvoke->vdev_id);
 		goto free_frame_buf;
 	}
 	ch_hz = (A_UINT32)cds_chan_to_freq(roaminvoke->channel);
@@ -3020,6 +3065,11 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue roam synch cnf",
 			 __func__);
+		return;
+	}
+
+	if (!wma_is_vdev_valid(vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__, vdev_id);
 		return;
 	}
 
