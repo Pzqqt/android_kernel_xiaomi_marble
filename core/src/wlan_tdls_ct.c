@@ -975,7 +975,7 @@ int tdls_set_tdls_secoffchanneloffset(struct tdls_soc_priv_obj *tdls_soc,
 		return  -ENOTSUPP;
 	}
 
-	tdls_soc->tdls_channel_offset = 0;
+	tdls_soc->tdls_channel_offset = BW_INVALID;
 
 	switch (offchanoffset) {
 	case TDLS_SEC_OFFCHAN_OFFSET_0:
@@ -1054,7 +1054,7 @@ int tdls_set_tdls_offchannelmode(struct wlan_objmgr_vdev *vdev,
 	switch (offchanmode) {
 	case ENABLE_CHANSWITCH:
 		if (tdls_soc->tdls_off_channel &&
-			tdls_soc->tdls_channel_offset) {
+			tdls_soc->tdls_channel_offset != BW_INVALID) {
 			chan_switch_params.tdls_off_ch =
 				tdls_soc->tdls_off_channel;
 			chan_switch_params.tdls_off_ch_bw_offset =
