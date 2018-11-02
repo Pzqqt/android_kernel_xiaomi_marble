@@ -493,7 +493,6 @@ void tdls_extract_peer_state_param(struct tdls_peer_update_state *peer_param,
 		peer->off_channel_capable;
 	peer_param->peer_cap.peer_curr_operclass = 0;
 	peer_param->peer_cap.self_curr_operclass = 0;
-	peer_param->peer_cap.peer_chanlen = peer->supported_channels_len;
 	peer_param->peer_cap.pref_off_channum = peer->pref_off_chan_num;
 	peer_param->peer_cap.pref_off_chan_bandwidth =
 		soc_obj->tdls_configs.tdls_pre_off_chan_bw;
@@ -520,6 +519,7 @@ void tdls_extract_peer_state_param(struct tdls_peer_update_state *peer_param,
 			peer_param->peer_cap.peer_chan[num].pwr =
 				wlan_reg_get_channel_reg_power(pdev, chan_id);
 			peer_param->peer_cap.peer_chan[num].dfs_set = false;
+			peer_param->peer_cap.peer_chanlen++;
 			num++;
 		}
 	}
