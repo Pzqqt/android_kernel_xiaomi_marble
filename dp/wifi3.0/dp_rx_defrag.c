@@ -736,8 +736,8 @@ static QDF_STATUS dp_rx_defrag_tkip_demic(const uint8_t *key,
 		pktlen += (qdf_nbuf_len(next) - hdrlen);
 		prev = next;
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			  "%s pktlen %ld", __func__,
-				qdf_nbuf_len(next) - hdrlen);
+			  "%s pktlen %u", __func__,
+			  (uint32_t)(qdf_nbuf_len(next) - hdrlen));
 		next = qdf_nbuf_next(next);
 	}
 

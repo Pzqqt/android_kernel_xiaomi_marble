@@ -4376,8 +4376,9 @@ int hif_pci_addr_in_boundary(struct hif_softc *scn, uint32_t offset)
 		return 0;
 	}
 
-	HIF_TRACE("Refusing to read memory at 0x%x - 0x%lx (max 0x%zx)\n",
-		 offset, offset + sizeof(unsigned int), sc->mem_len);
+	HIF_TRACE("Refusing to read memory at 0x%x - 0x%x (max 0x%zx)\n",
+		  offset, (uint32_t)(offset + sizeof(unsigned int)),
+		  sc->mem_len);
 
 	return -EINVAL;
 }
