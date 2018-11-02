@@ -1244,9 +1244,10 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 static void dp_tx_update_tdls_flags(struct dp_tx_desc_s *tx_desc)
 {
 	if (tx_desc->vdev) {
-		if (tx_desc->vdev->is_tdls_frame)
+		if (tx_desc->vdev->is_tdls_frame) {
 			tx_desc->flags |= DP_TX_DESC_FLAG_TDLS_FRAME;
 			tx_desc->vdev->is_tdls_frame = false;
+		}
 	}
 }
 
