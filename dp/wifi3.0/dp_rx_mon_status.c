@@ -333,9 +333,9 @@ dp_rx_handle_smart_mesh_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 		return 1;
 	}
 
-	/* Include 2 bytes of reserved space appended to the msdu payload */
+	/* Adding 4 bytes to get to start of 802.11 frame after phy_ppdu_id */
 	size = (ppdu_info->msdu_info.first_msdu_payload -
-		qdf_nbuf_data(nbuf)) + 2;
+		qdf_nbuf_data(nbuf)) + 4;
 	ppdu_info->msdu_info.first_msdu_payload = NULL;
 
 	if (qdf_nbuf_pull_head(nbuf, size) == NULL) {
@@ -345,14 +345,14 @@ dp_rx_handle_smart_mesh_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 		return 1;
 	}
 
-	/* only retain RX MSDU payload in the skb */
+	/* Only retain RX MSDU payload in the skb */
 	qdf_nbuf_trim_tail(nbuf, qdf_nbuf_len(nbuf) -
 			   ppdu_info->msdu_info.payload_len);
 	qdf_nbuf_update_radiotap(&(pdev->ppdu_info.rx_status),
 				 nbuf, sizeof(struct rx_pkt_tlvs));
 	pdev->monitor_vdev->osif_rx_mon(pdev->monitor_vdev->osif_vdev,
 					nbuf, NULL);
-
+	pdev->ppdu_info.rx_status.monitor_direct_used = 0;
 	return 0;
 }
 

@@ -4297,6 +4297,7 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_neighbour_peer *peer = NULL;
+	struct dp_neighbour_peer *temp_peer = NULL;
 
 	/* preconditions */
 	qdf_assert(vdev);
@@ -4337,9 +4338,20 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
 	qdf_spin_lock_bh(&pdev->neighbour_peer_mutex);
-	TAILQ_FOREACH(peer, &pdev->neighbour_peers_list,
-		      neighbour_peer_list_elem) {
-		QDF_ASSERT(peer->vdev != vdev);
+	if (!soc->hw_nac_monitor_support) {
+		TAILQ_FOREACH(peer, &pdev->neighbour_peers_list,
+			      neighbour_peer_list_elem) {
+			QDF_ASSERT(peer->vdev != vdev);
+		}
+	} else {
+		TAILQ_FOREACH_SAFE(peer, &pdev->neighbour_peers_list,
+				   neighbour_peer_list_elem, temp_peer) {
+			if (peer->vdev == vdev) {
+				TAILQ_REMOVE(&pdev->neighbour_peers_list, peer,
+					     neighbour_peer_list_elem);
+				qdf_mem_free(peer);
+			}
+		}
 	}
 	qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
 
@@ -4937,8 +4949,10 @@ static int dp_update_filter_neighbour_peers(struct cdp_vdev *vdev_handle,
 			}
 		}
 		/* last neighbour deleted */
-		if (TAILQ_EMPTY(&pdev->neighbour_peers_list))
+		if (TAILQ_EMPTY(&pdev->neighbour_peers_list)) {
 			pdev->neighbour_peers_added = false;
+			dp_ppdu_ring_cfg(pdev);
+		}
 
 		qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
 
@@ -9405,7 +9419,6 @@ void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle, void *hif_handle)
 		wlan_cfg_set_reo_dst_ring_size(soc->wlan_cfg_ctx,
 					       REO_DST_RING_SIZE_QCA8074);
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, true);
-		soc->hw_nac_monitor_support = 1;
 		break;
 	case TARGET_TYPE_QCA8074V2:
 	case TARGET_TYPE_QCA6018:
