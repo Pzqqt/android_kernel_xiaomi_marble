@@ -3442,15 +3442,21 @@ exit:
 
 static int q6afe_send_dec_config(u16 port_id,
 			union afe_port_config afe_config,
-			struct afe_dec_config *cfg)
+			struct afe_dec_config *cfg,
+			u32 format,
+			u16 afe_in_channels, u16 afe_in_bit_width)
 {
+	struct afe_dec_media_fmt_t dec_media_fmt;
 	struct avs_dec_depacketizer_id_param_t dec_depkt_id_param;
+	struct avs_dec_congestion_buffer_param_t dec_buffer_id_param;
 	struct afe_enc_dec_imc_info_param_t imc_info_param;
 	struct afe_port_media_type_t media_type;
 	struct param_hdr_v3 param_hdr;
 	int ret;
+	u32 dec_fmt;
 
 	memset(&dec_depkt_id_param, 0, sizeof(dec_depkt_id_param));
+	memset(&dec_media_fmt, 0, sizeof(dec_media_fmt));
 	memset(&imc_info_param, 0, sizeof(imc_info_param));
 	memset(&media_type, 0, sizeof(media_type));
 	memset(&param_hdr, 0, sizeof(param_hdr));
@@ -3463,10 +3469,10 @@ static int q6afe_send_dec_config(u16 port_id,
 	param_hdr.param_id = AFE_DECODER_PARAM_ID_DEPACKETIZER_ID;
 	param_hdr.param_size = sizeof(struct avs_dec_depacketizer_id_param_t);
 	dec_depkt_id_param.dec_depacketizer_id =
-					       AFE_MODULE_ID_DEPACKETIZER_COP;
-	if (cfg->format == ASM_MEDIA_FMT_APTX_ADAPTIVE)
-		dec_depkt_id_param.dec_depacketizer_id =
 					       AFE_MODULE_ID_DEPACKETIZER_COP_V1;
+	if (cfg->format == ENC_CODEC_TYPE_LDAC)
+		dec_depkt_id_param.dec_depacketizer_id =
+					       AFE_MODULE_ID_DEPACKETIZER_COP;
 	ret = q6afe_pack_and_set_param_in_band(port_id,
 					       q6audio_get_port_index(port_id),
 					       param_hdr,
@@ -3477,19 +3483,52 @@ static int q6afe_send_dec_config(u16 port_id,
 		goto exit;
 	}
 
-	pr_debug("%s:sending AFE_ENCDEC_PARAM_ID_DEC_TO_ENC_COMMUNICATION to DSP payload\n",
-		  __func__);
-	param_hdr.param_id = AFE_ENCDEC_PARAM_ID_DEC_TO_ENC_COMMUNICATION;
-	param_hdr.param_size = sizeof(struct afe_enc_dec_imc_info_param_t);
-	imc_info_param.imc_info = cfg->abr_dec_cfg.imc_info;
-	ret = q6afe_pack_and_set_param_in_band(port_id,
-					       q6audio_get_port_index(port_id),
-					       param_hdr,
-					       (u8 *) &imc_info_param);
-	if (ret) {
-		pr_err("%s: AFE_ENCDEC_PARAM_ID_DEC_TO_ENC_COMMUNICATION for port 0x%x failed %d\n",
-			__func__, port_id, ret);
-		goto exit;
+	switch (cfg->format) {
+	case ASM_MEDIA_FMT_SBC:
+	case ASM_MEDIA_FMT_AAC_V2:
+	case ASM_MEDIA_FMT_MP3:
+		if (port_id == SLIMBUS_9_TX) {
+			dec_buffer_id_param.max_nr_buffers  = 200;
+			dec_buffer_id_param.pre_buffer_size = 200;
+		} else {
+			dec_buffer_id_param.max_nr_buffers  = 0;
+			dec_buffer_id_param.pre_buffer_size = 0;
+		}
+		pr_debug("%s: sending AFE_DECODER_PARAM_ID_CONGESTION_BUFFER_SIZE to DSP payload\n",
+			  __func__);
+		param_hdr.param_id =
+			AFE_DECODER_PARAM_ID_CONGESTION_BUFFER_SIZE;
+		param_hdr.param_size =
+			sizeof(struct avs_dec_congestion_buffer_param_t);
+		dec_buffer_id_param.version = 0;
+		ret = q6afe_pack_and_set_param_in_band(port_id,
+						q6audio_get_port_index(port_id),
+						param_hdr,
+						(u8 *) &dec_buffer_id_param);
+		if (ret) {
+			pr_err("%s: AFE_DECODER_PARAM_ID_CONGESTION_BUFFER_SIZE for port 0x%x failed %d\n",
+				__func__, port_id, ret);
+			goto exit;
+		}
+		break;
+	default:
+		pr_debug("%s:sending AFE_ENCDEC_PARAM_ID_DEC_TO_ENC_COMMUNICATION to DSP payload\n",
+			  __func__);
+		param_hdr.param_id =
+			AFE_ENCDEC_PARAM_ID_DEC_TO_ENC_COMMUNICATION;
+		param_hdr.param_size =
+			sizeof(struct afe_enc_dec_imc_info_param_t);
+		imc_info_param.imc_info = cfg->abr_dec_cfg.imc_info;
+		ret = q6afe_pack_and_set_param_in_band(port_id,
+						q6audio_get_port_index(port_id),
+						param_hdr,
+						(u8 *) &imc_info_param);
+		if (ret) {
+			pr_err("%s: AFE_ENCDEC_PARAM_ID_DEC_TO_ENC_COMMUNICATION for port 0x%x failed %d\n",
+				__func__, port_id, ret);
+			goto exit;
+		}
+		break;
 	}
 
 	pr_debug("%s:Sending AFE_API_VERSION_PORT_MEDIA_TYPE to DSP", __func__);
@@ -3497,9 +3536,24 @@ static int q6afe_send_dec_config(u16 port_id,
 	param_hdr.param_id = AFE_PARAM_ID_PORT_MEDIA_TYPE;
 	param_hdr.param_size = sizeof(struct afe_port_media_type_t);
 	media_type.minor_version = AFE_API_VERSION_PORT_MEDIA_TYPE;
-	media_type.sample_rate = afe_config.slim_sch.sample_rate;
-	media_type.bit_width = afe_config.slim_sch.bit_width;
-	media_type.num_channels = afe_config.slim_sch.num_channels;
+	switch (cfg->format) {
+	case ASM_MEDIA_FMT_AAC_V2:
+		media_type.sample_rate =
+			cfg->data.aac_config.sample_rate;
+		break;
+	default:
+		media_type.sample_rate =
+			afe_config.slim_sch.sample_rate;
+	}
+	if (afe_in_bit_width)
+		media_type.bit_width = afe_in_bit_width;
+	else
+		media_type.bit_width = afe_config.slim_sch.bit_width;
+
+	if (afe_in_channels)
+		media_type.num_channels = afe_in_channels;
+	else
+		media_type.num_channels = afe_config.slim_sch.num_channels;
 	media_type.data_format = AFE_PORT_DATA_FORMAT_PCM;
 	media_type.reserved = 0;
 
@@ -3510,6 +3564,50 @@ static int q6afe_send_dec_config(u16 port_id,
 		pr_err("%s: AFE_API_VERSION_PORT_MEDIA_TYPE for port 0x%x failed %d\n",
 			__func__, port_id, ret);
 		goto exit;
+	}
+
+	if (format != ASM_MEDIA_FMT_SBC && format != ASM_MEDIA_FMT_AAC_V2) {
+		pr_debug("%s:Unsuppported dec format. Ignore AFE config %u\n",
+				__func__, format);
+		goto exit;
+	}
+	pr_debug("%s: sending AFE_DECODER_PARAM_ID_DEC_MEDIA_FMT to DSP payload\n",
+		  __func__);
+	param_hdr.module_id = AFE_MODULE_ID_DECODER;
+	param_hdr.instance_id = INSTANCE_ID_0;
+	param_hdr.param_id = AFE_DECODER_PARAM_ID_DEC_FMT_ID;
+	param_hdr.param_size = sizeof(dec_fmt);
+	dec_fmt = format;
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+					       q6audio_get_port_index(port_id),
+					       param_hdr, (u8 *) &dec_fmt);
+	if (ret) {
+		pr_err("%s: AFE_DECODER_PARAM_ID_DEC_MEDIA_FMT for port 0x%x failed %d\n",
+			__func__, port_id, ret);
+		goto exit;
+	}
+
+	switch (cfg->format) {
+	case ASM_MEDIA_FMT_AAC_V2:
+		param_hdr.param_size = sizeof(struct afe_dec_media_fmt_t);
+
+		pr_debug("%s:send AFE_DECODER_PARAM_ID DEC_MEDIA_FMT to DSP payload\n",
+			 __func__);
+		param_hdr.param_id = AVS_DECODER_PARAM_ID_DEC_MEDIA_FMT;
+		dec_media_fmt.dec_media_config = cfg->data;
+		ret = q6afe_pack_and_set_param_in_band(port_id,
+						q6audio_get_port_index(port_id),
+						param_hdr,
+						(u8 *) &dec_media_fmt);
+		if (ret) {
+			pr_err("%s: AFE_DECODER_PARAM_ID DEC_MEDIA_FMT for port 0x%x failed %d\n",
+				__func__, port_id, ret);
+			goto exit;
+		}
+		break;
+	default:
+		pr_debug("%s:No need to send DEC_MEDIA_FMT to DSP payload\n",
+			 __func__);
 	}
 
 exit:
@@ -3550,7 +3648,8 @@ static int q6afe_send_enc_config(u16 port_id,
 		format != ASM_MEDIA_FMT_APTX && format != ASM_MEDIA_FMT_APTX_HD &&
 		format != ASM_MEDIA_FMT_CELT && format != ASM_MEDIA_FMT_LDAC &&
 		format != ASM_MEDIA_FMT_APTX_ADAPTIVE) {
-		pr_err("%s:Unsuppported format Ignore AFE config\n", __func__);
+		pr_err("%s:Unsuppported enc format. Ignore AFE config\n",
+				__func__);
 		return 0;
 	}
 
@@ -3582,7 +3681,7 @@ static int q6afe_send_enc_config(u16 port_id,
 		enc_blk_param.enc_cfg_blk_size =
 			sizeof(union afe_enc_config_data);
 	}
-	pr_debug("%s:send AFE_ENCODER_PARAM_ID_ENC_CFG_BLK to DSP payloadn",
+	pr_debug("%s:send AFE_ENCODER_PARAM_ID_ENC_CFG_BLK to DSP payload\n",
 		 __func__);
 	param_hdr.param_id = AFE_ENCODER_PARAM_ID_ENC_CFG_BLK;
 	enc_blk_param.enc_blk_config = *cfg;
@@ -4064,7 +4163,9 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 			pr_debug("%s: Found AFE decoder support for SLIMBUS format = %d\n",
 				  __func__, codec_format);
 			ret = q6afe_send_dec_config(port_id, *afe_config,
-						    dec_cfg);
+						    dec_cfg, codec_format,
+						    afe_in_channels,
+						    afe_in_bit_width);
 			if (ret) {
 				pr_err("%s: AFE decoder config for port 0x%x failed %d\n",
 					 __func__, port_id, ret);

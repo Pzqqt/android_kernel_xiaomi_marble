@@ -3876,6 +3876,12 @@ struct afe_id_aptx_adaptive_enc_init
 #define AFE_ENCODER_PARAM_ID_ENC_FMT_ID         0x0001322B
 
 /*
+ * Decoder format ID parameter for the #AVS_MODULE_ID_DECODER module.
+ * This parameter cannot be set runtime.
+ */
+#define AFE_DECODER_PARAM_ID_DEC_FMT_ID         0x00013234
+
+/*
  * Encoder scrambler parameter for the #AVS_MODULE_ID_ENCODER module.
  * This parameter cannot be set runtime.
  */
@@ -3914,6 +3920,12 @@ struct afe_id_aptx_adaptive_enc_init
  * This parameter cannot be set runtime.
  */
 #define AFE_DECODER_PARAM_ID_DEPACKETIZER_ID        0x00013235
+
+/*
+ * Decoder buffer ID parameter for the #AVS_MODULE_ID_DECODER module.
+ * This parameter cannot be set runtime.
+ */
+#define AFE_DECODER_PARAM_ID_CONGESTION_BUFFER_SIZE 0x000132ec
 
 /*
  * Data format to send compressed data
@@ -4185,6 +4197,7 @@ struct asm_celt_enc_cfg_t {
 } __packed;
 
 #define ASM_MEDIA_FMT_LDAC 0x00013224
+#define ENC_CODEC_TYPE_LDAC 0x23000000
 struct asm_ldac_specific_enc_cfg_t {
 	/*
 	 * This is used to calculate the encoder output
@@ -4293,6 +4306,98 @@ struct afe_port_media_type_t {
 	uint16_t   reserved;
 } __packed;
 
+/*
+ * Payload of the SBC decoder configuration parameters in the
+ * #ASM_MEDIA_FMT_SBC media format.
+ */
+struct asm_sbc_dec_cfg_t {
+	/* All configuration is extracted from the stream */
+} __packed;
+
+/*
+ * Payload of the MP3 decoder configuration parameters in the
+ * #ASM_MEDIA_FMT_MP3 media format.
+ */
+struct asm_mp3_dec_cfg_t {
+	/* All configuration is extracted from the stream */
+} __packed;
+
+struct asm_aac_dec_cfg_v2_t {
+	uint16_t          aac_fmt_flag;
+	/*
+	 * Bit stream format option.
+	 *
+	 * @values
+	 * - #ASM_MEDIA_FMT_AAC_FORMAT_FLAG_ADTS
+	 * - #ASM_MEDIA_FMT_AAC_FORMAT_FLAG_LOAS
+	 * - #ASM_MEDIA_FMT_AAC_FORMAT_FLAG_ADIF
+	 * - #ASM_MEDIA_FMT_AAC_FORMAT_FLAG_RAW
+	 * - #ASM_MEDIA_FMT_AAC_FORMAT_FLAG_LATM
+	 */
+
+	uint16_t          audio_obj_type;
+	/*
+	 * Audio Object Type (AOT) present in the AAC stream.
+	 *
+	 * @values
+	 * - #ASM_MEDIA_FMT_AAC_AOT_LC
+	 * - #ASM_MEDIA_FMT_AAC_AOT_SBR
+	 * - #ASM_MEDIA_FMT_AAC_AOT_BSAC
+	 * - #ASM_MEDIA_FMT_AAC_AOT_PS
+	 *
+	 * Other values are not supported.
+	 */
+
+	uint16_t          channel_config;
+	/*
+	 * Number of channels present in the AAC stream.
+	 *
+	 * @values
+	 * - 0 -- PCE
+	 * - 1 -- Mono
+	 * - 2 -- Stereo
+	 * - 6 -- 5.1 content
+	 */
+
+	uint16_t          total_size_of_PCE_bits;
+	/*
+	 * For RAW formats and if channel_config=0 (PCE),
+	 * the client can send the bit stream containing PCE
+	 * immediately following this structure (in band).
+	 *
+	 * @values @ge 0 (does not include the bits required
+	 * for 32-bit alignment)
+	 *
+	 * If this field is set to 0, the PCE information is
+	 * assumed to be available in the audio bit stream
+	 * and not in band.
+	 *
+	 * If this field is greater than 0, the PCE information
+	 * follows this structure. Additional bits might
+	 * be required for 32-bit alignment.
+	 */
+
+	uint32_t          sample_rate;
+	/*
+	 * Number of samples per second.
+	 *
+	 * @values 8000, 11025, 12000, 16000, 22050, 24000, 32000,
+	 *         44100, 48000, 64000, 88200, 96000 Hz
+	 *
+	 * This field must be equal to the sample rate of the
+	 * AAC-LC decoder output.
+	 * - For MP4 or 3GP containers, this sample rate
+	 *   is indicated by the
+	 *   samplingFrequencyIndex field in the
+	 *   AudioSpecificConfig element.
+	 * - For ADTS format, this sample rate is indicated by the
+	 *   samplingFrequencyIndex in the ADTS fixed header.
+	 * - For ADIF format, this sample rate is indicated by the
+	 *   samplingFrequencyIndex in the program_config_element
+	 *   present in the ADIF header.
+	 */
+} __packed;
+
 union afe_enc_config_data {
 	struct asm_sbc_enc_cfg_t sbc_config;
 	struct asm_aac_enc_cfg_v2_t aac_config;
@@ -4309,9 +4414,16 @@ struct afe_enc_config {
 	union afe_enc_config_data data;
 };
 
+union afe_dec_config_data {
+	struct asm_sbc_dec_cfg_t sbc_config;
+	struct asm_aac_dec_cfg_v2_t aac_config;
+	struct asm_mp3_dec_cfg_t mp3_config;
+};
+
 struct afe_dec_config {
 	u32 format;
 	struct afe_abr_dec_cfg_t abr_dec_cfg;
+	union afe_dec_config_data data;
 };
 
 struct afe_enc_cfg_blk_param_t {
@@ -4321,6 +4433,14 @@ struct afe_enc_cfg_blk_param_t {
 	 */
 	union afe_enc_config_data enc_blk_config;
 };
+
+/*
+ * Payload of the AVS_DECODER_PARAM_ID_DEC_MEDIA_FMT parameter used by
+ * AVS_MODULE_ID_DECODER.
+ */
+struct afe_dec_media_fmt_t {
+	union afe_dec_config_data dec_media_config;
+} __packed;
 
 /*
  * Payload of the AVS_ENCODER_PARAM_ID_PACKETIZER_ID parameter.
@@ -4373,11 +4493,33 @@ struct afe_enc_dec_imc_info_param_t {
 struct avs_dec_depacketizer_id_param_t {
 	/*
 	 * Supported values:
-	 * #AVS_MODULE_ID_DEPACKETIZER_COP
+	 * #AFE_MODULE_ID_DEPACKETIZER_COP
+	 * #AFE_MODULE_ID_DEPACKETIZER_COP_V1
 	 * Any OpenDSP supported values
 	 */
 	uint32_t dec_depacketizer_id;
 };
+
+struct avs_dec_congestion_buffer_param_t {
+	uint32_t version;
+	uint16_t max_nr_buffers;
+	/*
+	 * Maximum number of 1ms buffers:
+	 * 0 - 256
+	 */
+	uint16_t pre_buffer_size;
+	/*
+	 * Pre-buffering size in 1ms:
+	 * 1 - 128
+	 */
+};
+
+/*
+ * ID of the parameter used by #AVS_MODULE_ID_DECODER to configure
+ * the decoder mode for the AFE module.
+ * This parameter cannot be set at runtime.
+ */
+#define AVS_DECODER_PARAM_ID_DEC_MEDIA_FMT 0x00013232
 
 /* ID of the parameter used by #AFE_MODULE_AUDIO_DEV_INTERFACE to configure
  * the island mode for a given AFE port.
@@ -4492,6 +4634,7 @@ union afe_port_config {
 	struct avs_enc_packetizer_id_param_t      enc_pkt_id_param;
 	struct avs_enc_set_scrambler_param_t      enc_set_scrambler_param;
 	struct avs_dec_depacketizer_id_param_t    dec_depkt_id_param;
+	struct afe_dec_media_fmt_t                dec_media_fmt;
 	struct afe_enc_level_to_bitrate_map_param_t    map_param;
 	struct afe_enc_dec_imc_info_param_t       imc_info_param;
 	struct afe_param_id_cdc_dma_cfg_t         cdc_dma;
