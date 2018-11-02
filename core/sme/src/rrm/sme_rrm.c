@@ -421,7 +421,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	uint8_t num_scan_results, counter = 0;
 	tpRrmSMEContext rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
 	uint32_t session_id;
-	struct csr_roam_info *roam_info;
+	struct csr_roam_info *roam_info = NULL;
 	tSirScanType scan_type;
 	struct csr_roam_session *session;
 
@@ -578,7 +578,6 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 		if (counter >= num_scan_results)
 			break;
 	}
-	qdf_mem_free(roam_info);
 	/*
 	 * The beacon report should be sent whether the counter is zero or
 	 * non-zero. There might be a few scan results in the cache but not
@@ -607,6 +606,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 rrm_send_scan_results_done:
 	if (scanresults_arr)
 		qdf_mem_free(scanresults_arr);
+	qdf_mem_free(roam_info);
 	sme_scan_result_purge(result_handle);
 
 	return status;
