@@ -1001,6 +1001,7 @@ bool ce_srng_based(struct hif_softc *scn)
 	case TARGET_TYPE_QCA8074V2:
 	case TARGET_TYPE_QCA6290:
 	case TARGET_TYPE_QCA6390:
+	case TARGET_TYPE_QCA6018:
 		return true;
 	default:
 		return false;
@@ -2942,6 +2943,7 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 
 	case TARGET_TYPE_QCA8074:
 	case TARGET_TYPE_QCA8074V2:
+	case TARGET_TYPE_QCA6018:
 		if (scn->bus_type == QDF_BUS_TYPE_PCI) {
 			hif_state->host_ce_config =
 					host_ce_config_wlan_qca8074_pci;

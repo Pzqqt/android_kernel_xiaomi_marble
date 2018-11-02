@@ -220,20 +220,20 @@
 #define QCA6018_BOARD_DATA_SZ MISSING
 #define QCA6018_BOARD_EXT_DATA_SZ MISSING
 
-#define MY_TARGET_DEF QCA6018_TARGETdef
-#define MY_HOST_DEF QCA6018_HOSTdef
-#define MY_CEREG_DEF QCA6018_CE_TARGETdef
+#define MY_TARGET_DEF QCA6018_TARGETDEF
+#define MY_HOST_DEF QCA6018_HOSTDEF
+#define MY_CEREG_DEF QCA6018_CE_TARGETDEF
 #define MY_TARGET_BOARD_DATA_SZ QCA6018_BOARD_DATA_SZ
 #define MY_TARGET_BOARD_EXT_DATA_SZ QCA6018_BOARD_EXT_DATA_SZ
 #include "targetdef.h"
 #include "hostdef.h"
-qdf_export_symbol(QCA6018_CE_TARGETdef);
+qdf_export_symbol(QCA6018_CE_TARGETDEF);
 #else
 #include "common_drv.h"
 #include "targetdef.h"
 #include "hostdef.h"
-struct targetdef_s *QCA6018_TARGETdef;
-struct hostdef_s *QCA6018_HOSTdef;
+struct targetdef_s *QCA6018_TARGETDEF;
+struct hostdef_s *QCA6018_HOSTDEF;
 #endif /*QCA6018_HEADERS_DEF */
-qdf_export_symbol(QCA6018_TARGETdef);
-qdf_export_symbol(QCA6018_HOSTdef);
+qdf_export_symbol(QCA6018_TARGETDEF);
+qdf_export_symbol(QCA6018_HOSTDEF);

@@ -95,6 +95,7 @@
 					currently defining this to 0xffff for
 					emulation purpose */
 #define QCA8074V2_DEVICE_ID (0xfffe) /* Todo: replace this with actual number */
+#define QCA6018_DEVICE_ID (0xfffd) /* Todo: replace this with actual number */
 /* Genoa */
 #define QCN7605_DEVICE_ID  (0x1102) /* Genoa PCIe device ID*/
 #define QCN7605_COMPOSITE  (0x9900)
@@ -104,6 +105,8 @@
 #define RUMIM2M_DEVICE_ID_NODE1	0xabc1
 #define RUMIM2M_DEVICE_ID_NODE2	0xabc2
 #define RUMIM2M_DEVICE_ID_NODE3	0xabc3
+#define RUMIM2M_DEVICE_ID_NODE4	0xaa10
+#define RUMIM2M_DEVICE_ID_NODE5	0xaa11
 
 #define HIF_GET_PCI_SOFTC(scn) ((struct hif_pci_softc *)scn)
 #define HIF_GET_CE_STATE(scn) ((struct HIF_CE_state *)scn)

@@ -70,6 +70,10 @@ extern "C" {
 #ifndef TARGET_TYPE_QCA8074V2
 #define TARGET_TYPE_QCA8074V2 24
 #endif
+/* For Cypress */
+#ifndef TARGET_TYPE_QCA6018
+#define TARGET_TYPE_QCA6018      25
+#endif
 
 #ifdef __cplusplus
 }
