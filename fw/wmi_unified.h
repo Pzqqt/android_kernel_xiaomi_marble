@@ -4568,6 +4568,14 @@ typedef struct {
     A_UINT32 rx_nss_5g;
     /* number of chains to use for 11a transmissions. Valid only in 5 GHz */
     A_UINT32 num_tx_chains_a;
+    /* If non-zero then use only one chain for TX when connection tx_nss is 1 in 2.4 GHz */
+    A_UINT32 disable_tx_mrc_2g;
+    /* If non-zero then use only one chain for RX when connection rx_nss is 1 in 2.4 GHz */
+    A_UINT32 disable_rx_mrc_2g;
+    /* If non-zero then use only one chain for TX when connection tx_nss is 1 in 5 GHz */
+    A_UINT32 disable_tx_mrc_5g;
+    /* If non-zero then use only one chain for RX when connection rx_nss is 1 in 5 GHz */
+    A_UINT32 disable_rx_mrc_5g;
 } wmi_vdev_chainmask_config_cmd_fixed_param;
 
 /*
