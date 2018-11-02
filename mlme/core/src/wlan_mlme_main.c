@@ -551,9 +551,8 @@ static void mlme_init_vht_cap_cfg(struct wlan_objmgr_psoc *psoc,
 	vht_cap_info->rx_stbc =
 			cfg_get(psoc, CFG_RX_STBC_ENABLE);
 
-	if (vht_cap_info->enable_txbf_20mhz)
-		vht_cap_info->su_bformee =
-				cfg_default(CFG_VHT_SU_BEAMFORMEE_CAP);
+	vht_cap_info->su_bformee =
+		cfg_default(CFG_VHT_SU_BEAMFORMEE_CAP);
 
 	vht_cap_info->mu_bformer =
 			cfg_default(CFG_VHT_MU_BEAMFORMER_CAP);
