@@ -471,3 +471,108 @@ bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc)
 
 	return (psoc_priv->nan_caps.nan_dbs_supported == 1);
 }
+
+QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct scheduler_msg msg = {0};
+	uint32_t len;
+	QDF_STATUS status;
+
+	if (!in_req) {
+		nan_alert("NAN Discovery req is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	switch (req_type) {
+	case NAN_ENABLE_REQ: {
+			struct nan_enable_req *req = in_req;
+
+			psoc = req->psoc;
+			/*
+			 * Take a psoc reference while it is being used by the
+			 * NAN requests.
+			 */
+			status =  wlan_objmgr_psoc_try_get_ref(psoc,
+							       WLAN_NAN_ID);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				nan_err("Couldn't obtain psoc ref");
+				return status;
+			}
+
+			status = nan_discovery_pre_enable(psoc,
+							  req->social_chan_2g);
+			if (QDF_IS_STATUS_SUCCESS(status)) {
+				len = sizeof(struct nan_enable_req) +
+					req->params.request_data_len;
+			} else {
+				wlan_objmgr_psoc_release_ref(psoc,
+							     WLAN_NAN_ID);
+				return status;
+			}
+			break;
+		}
+	case NAN_DISABLE_REQ: {
+			struct nan_disable_req *req = in_req;
+
+			psoc = req->psoc;
+			status =  wlan_objmgr_psoc_try_get_ref(psoc,
+							       WLAN_NAN_ID);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				nan_err("Couldn't obtain psoc ref");
+				return status;
+			}
+
+			status =
+			  nan_set_discovery_state(req->psoc,
+						  NAN_DISC_DISABLE_IN_PROGRESS);
+			if (QDF_IS_STATUS_SUCCESS(status)) {
+				len = sizeof(struct nan_disable_req) +
+					req->params.request_data_len;
+			} else {
+				wlan_objmgr_psoc_release_ref(psoc,
+							     WLAN_NAN_ID);
+				return status;
+			}
+			break;
+		}
+	case NAN_GENERIC_REQ: {
+			struct nan_generic_req *req = in_req;
+
+			psoc = req->psoc;
+			status =  wlan_objmgr_psoc_try_get_ref(psoc,
+							       WLAN_NAN_ID);
+			if (QDF_IS_STATUS_ERROR(status)) {
+				nan_err("Couldn't obtain psoc ref");
+				return status;
+			}
+			len = sizeof(struct nan_generic_req) +
+				req->params.request_data_len;
+			break;
+		}
+	default:
+		nan_err("in correct message req type: %d", req_type);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	msg.bodyptr = qdf_mem_malloc(len);
+	if (!msg.bodyptr) {
+		wlan_objmgr_psoc_release_ref(psoc, WLAN_NAN_ID);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_mem_copy(msg.bodyptr, in_req, len);
+	msg.type = req_type;
+	msg.callback = nan_discovery_scheduled_handler;
+	msg.flush_callback = nan_discovery_flush_callback;
+	status = scheduler_post_message(QDF_MODULE_ID_NAN,
+					QDF_MODULE_ID_NAN,
+					QDF_MODULE_ID_OS_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		nan_err("failed to post msg to NAN component, status: %d",
+			status);
+		nan_discovery_flush_callback(&msg);
+	}
+
+	return status;
+}

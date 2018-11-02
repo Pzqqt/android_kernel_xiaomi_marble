@@ -2216,7 +2216,7 @@ static int os_if_nan_generic_req(struct wlan_objmgr_psoc *psoc,
 	status = ucfg_nan_discovery_req(nan_req, NAN_GENERIC_REQ);
 
 	if (QDF_IS_STATUS_SUCCESS(status))
-		cfg80211_err("Successfully sent a NAN request");
+		cfg80211_debug("Successfully sent a NAN request");
 	else
 		cfg80211_err("Unable to send a NAN request");
 
@@ -2248,9 +2248,9 @@ static int os_if_process_nan_disable_req(struct wlan_objmgr_psoc *psoc,
 	status = ucfg_nan_discovery_req(nan_req, NAN_DISABLE_REQ);
 
 	if (QDF_IS_STATUS_SUCCESS(status))
-		cfg80211_err("Successfully sent NAN Disable request");
+		cfg80211_debug("Successfully sent NAN Disable request");
 	else
-		cfg80211_err("Unable to disable NAN Discovery");
+		cfg80211_err("Unable to send NAN Disable request");
 
 	qdf_mem_free(nan_req);
 	return qdf_status_to_os_return(status);
@@ -2290,7 +2290,8 @@ static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
 		return -ENOMEM;
 	}
 	nan_req->social_chan_2g = wlan_freq_to_chan(chan_freq_2g);
-	nan_req->social_chan_5g = wlan_freq_to_chan(chan_freq_5g);
+	if (chan_freq_5g)
+		nan_req->social_chan_5g = wlan_freq_to_chan(chan_freq_5g);
 	nan_req->psoc = psoc;
 	nan_req->params.request_data_len = buf_len;
 
@@ -2301,9 +2302,9 @@ static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
 	status = ucfg_nan_discovery_req(nan_req, NAN_ENABLE_REQ);
 
 	if (QDF_IS_STATUS_SUCCESS(status))
-		cfg80211_err("Successfully sent NAN Enable");
+		cfg80211_debug("Successfully sent NAN Enable request");
 	else
-		cfg80211_err("Unable to enable NAN Discovery");
+		cfg80211_err("Unable to send NAN Enable request");
 
 	qdf_mem_free(nan_req);
 	return qdf_status_to_os_return(status);

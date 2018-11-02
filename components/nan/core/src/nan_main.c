@@ -31,6 +31,67 @@
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
 
+QDF_STATUS nan_set_discovery_state(struct wlan_objmgr_psoc *psoc,
+				   enum nan_disc_state new_state)
+{
+	enum nan_disc_state cur_state;
+	struct nan_psoc_priv_obj *psoc_priv = nan_get_psoc_priv_obj(psoc);
+	bool nan_state_change_allowed = false;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+
+	if (!psoc_priv) {
+		nan_err("nan psoc priv object is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_spin_lock_bh(&psoc_priv->lock);
+	cur_state = psoc_priv->disc_state;
+
+	switch (new_state) {
+	case NAN_DISC_DISABLED:
+		nan_state_change_allowed = true;
+		break;
+	case NAN_DISC_ENABLE_IN_PROGRESS:
+		if (cur_state == NAN_DISC_DISABLED)
+			nan_state_change_allowed = true;
+		break;
+	case NAN_DISC_ENABLED:
+		if (cur_state == NAN_DISC_ENABLE_IN_PROGRESS)
+			nan_state_change_allowed = true;
+		break;
+	case NAN_DISC_DISABLE_IN_PROGRESS:
+		if (cur_state == NAN_DISC_ENABLE_IN_PROGRESS ||
+		    cur_state == NAN_DISC_ENABLED)
+			nan_state_change_allowed = true;
+		break;
+	default:
+		break;
+	}
+
+	if (nan_state_change_allowed) {
+		psoc_priv->disc_state = new_state;
+		status = QDF_STATUS_SUCCESS;
+	}
+
+	qdf_spin_unlock_bh(&psoc_priv->lock);
+
+	nan_info("NAN State transitioned from %d -> %d", cur_state,
+		 psoc_priv->disc_state);
+
+	return status;
+}
+
+enum nan_disc_state nan_get_discovery_state(struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_psoc_priv_obj *psoc_priv = nan_get_psoc_priv_obj(psoc);
+
+	if (!psoc_priv) {
+		nan_err("nan psoc priv object is NULL");
+		return NAN_DISC_DISABLED;
+	}
+
+	return psoc_priv->disc_state;
+}
 
 void nan_release_cmd(void *in_req, uint32_t cmdtype)
 {
@@ -135,7 +196,7 @@ static void nan_req_activated(void *in_req, uint32_t cmdtype)
 	}
 
 	/* send ndp_intiator_req/responder_req/end_req to FW */
-	tx_ops->nan_req_tx(in_req, req_type);
+	tx_ops->nan_datapath_req_tx(in_req, req_type);
 }
 
 static QDF_STATUS nan_serialized_cb(void *cmd,
@@ -445,7 +506,7 @@ static QDF_STATUS nan_handle_schedule_update(
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS nan_event_handler(struct scheduler_msg *pe_msg)
+QDF_STATUS nan_datapath_event_handler(struct scheduler_msg *pe_msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_serialization_queued_cmd_info cmd;
@@ -496,5 +557,145 @@ QDF_STATUS nan_event_handler(struct scheduler_msg *pe_msg)
 		status = QDF_STATUS_E_NOSUPPORT;
 		break;
 	}
+	return status;
+}
+
+QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
+				    uint8_t nan_social_channel)
+{
+	return nan_set_discovery_state(psoc, NAN_DISC_ENABLE_IN_PROGRESS);
+}
+
+static QDF_STATUS nan_discovery_disable_req(struct nan_disable_req *req)
+{
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+	struct wlan_nan_tx_ops *tx_ops;
+
+	/*
+	 * State was already set to Disabled by failed Enable
+	 * request OR by the Disable Indication event, drop the
+	 * Disable request.
+	 */
+	if (NAN_DISC_DISABLED == nan_get_discovery_state(req->psoc))
+		return QDF_STATUS_SUCCESS;
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(req->psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	tx_ops = &psoc_nan_obj->tx_ops;
+	if (!tx_ops->nan_discovery_req_tx) {
+		nan_err("NAN Discovery tx op is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return tx_ops->nan_discovery_req_tx(req, NAN_DISABLE_REQ);
+}
+
+static QDF_STATUS nan_discovery_enable_req(struct nan_enable_req *req)
+{
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+	struct wlan_nan_tx_ops *tx_ops;
+
+	/*
+	 * State was already set to Disable in progress by a
+	 * disable request, drop the Enable request and move
+	 * back to Disabled state.
+	 */
+	if (NAN_DISC_DISABLE_IN_PROGRESS == nan_get_discovery_state(req->psoc))
+		return nan_set_discovery_state(req->psoc, NAN_DISC_DISABLED);
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(req->psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	tx_ops = &psoc_nan_obj->tx_ops;
+	if (!tx_ops->nan_discovery_req_tx) {
+		nan_err("NAN Discovery tx op is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return tx_ops->nan_discovery_req_tx(req, NAN_ENABLE_REQ);
+}
+
+static QDF_STATUS nan_discovery_generic_req(struct nan_generic_req *req)
+{
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+	struct wlan_nan_tx_ops *tx_ops;
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(req->psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	tx_ops = &psoc_nan_obj->tx_ops;
+	if (!tx_ops->nan_discovery_req_tx) {
+		nan_err("NAN Discovery tx op is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return tx_ops->nan_discovery_req_tx(req, NAN_GENERIC_REQ);
+}
+
+void nan_discovery_flush_callback(struct scheduler_msg *msg)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!msg || !msg->bodyptr) {
+		nan_err("Null pointer for NAN Discovery message");
+		return;
+	}
+
+	switch (msg->type) {
+	case NAN_ENABLE_REQ:
+		psoc = ((struct nan_enable_req *)msg->bodyptr)->psoc;
+		break;
+	case NAN_DISABLE_REQ:
+		psoc = ((struct nan_disable_req *)msg->bodyptr)->psoc;
+		break;
+	case NAN_GENERIC_REQ:
+		psoc = ((struct nan_generic_req *)msg->bodyptr)->psoc;
+		break;
+	default:
+		nan_err("Unsupported request type: %d", msg->type);
+		qdf_mem_free(msg->bodyptr);
+		return;
+	}
+
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_NAN_ID);
+	qdf_mem_free(msg->bodyptr);
+}
+
+QDF_STATUS nan_discovery_scheduled_handler(struct scheduler_msg *msg)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!msg || !msg->bodyptr) {
+		nan_alert("msg or bodyptr is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	switch (msg->type) {
+	case NAN_ENABLE_REQ:
+		status = nan_discovery_enable_req(msg->bodyptr);
+		break;
+	case NAN_DISABLE_REQ:
+		status = nan_discovery_disable_req(msg->bodyptr);
+		break;
+	case NAN_GENERIC_REQ:
+		status = nan_discovery_generic_req(msg->bodyptr);
+		break;
+	default:
+		nan_err("Unsupported request type: %d", msg->type);
+		qdf_mem_free(msg->bodyptr);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	nan_discovery_flush_callback(msg);
 	return status;
 }
