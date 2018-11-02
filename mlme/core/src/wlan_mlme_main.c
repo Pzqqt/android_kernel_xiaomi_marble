@@ -438,21 +438,69 @@ static void mlme_init_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 {
 	union {
 		uint16_t val_16;
-		struct mlme_ht_capabilities_info default_ht_cap_info;
-	} u;
+		struct mlme_ht_capabilities_info ht_cap_info;
+	} u1;
 
-	u.val_16 = (uint16_t)cfg_default(CFG_HT_CAP_INFO);
+	union {
+		uint16_t val_16;
+		struct mlme_ht_ext_cap_info ext_cap_info;
+	} u2;
 
-	u.default_ht_cap_info.adv_coding_cap =
+	union {
+		uint8_t val_8;
+		struct mlme_ht_info_field_1 info_field_1;
+	} u3;
+
+	union {
+		uint16_t val_16;
+		struct mlme_ht_info_field_2 info_field_2;
+	} u4;
+
+	union {
+		uint16_t val_16;
+		struct mlme_ht_info_field_3 info_field_3;
+	} u5;
+
+	/* HT Capabilities - HT Caps Info Field */
+	u1.val_16 = (uint16_t)cfg_default(CFG_HT_CAP_INFO);
+	u1.ht_cap_info.adv_coding_cap =
 				cfg_get(psoc, CFG_RX_LDPC_ENABLE);
-	u.default_ht_cap_info.rx_stbc = cfg_get(psoc, CFG_RX_STBC_ENABLE);
-	u.default_ht_cap_info.tx_stbc = cfg_get(psoc, CFG_TX_STBC_ENABLE);
-	u.default_ht_cap_info.short_gi_20_mhz =
+	u1.ht_cap_info.rx_stbc = cfg_get(psoc, CFG_RX_STBC_ENABLE);
+	u1.ht_cap_info.tx_stbc = cfg_get(psoc, CFG_TX_STBC_ENABLE);
+	u1.ht_cap_info.short_gi_20_mhz =
 				cfg_get(psoc, CFG_SHORT_GI_20MHZ);
-	u.default_ht_cap_info.short_gi_40_mhz =
+	u1.ht_cap_info.short_gi_40_mhz =
 				cfg_get(psoc, CFG_SHORT_GI_40MHZ);
+	ht_caps->ht_cap_info = u1.ht_cap_info;
 
-	ht_caps->ht_cap_info = u.default_ht_cap_info;
+	/* HT Capapabilties - AMPDU Params */
+	ht_caps->ampdu_params.max_rx_ampdu_factor =
+		cfg_get(psoc, CFG_MAX_RX_AMPDU_FACTOR);
+	ht_caps->ampdu_params.mpdu_density =
+		cfg_get(psoc, CFG_MPDU_DENSITY);
+	ht_caps->ampdu_params.reserved = 0;
+
+	/* HT Capabilities - Extended Capabilities field */
+	u2.val_16 = (uint16_t)cfg_default(CFG_EXT_HT_CAP_INFO);
+	ht_caps->ext_cap_info = u2.ext_cap_info;
+
+	/* HT Operation - Information subset 1 of 3 */
+	u3.val_8 = (uint8_t)cfg_default(CFG_HT_INFO_FIELD_1);
+	ht_caps->info_field_1 = u3.info_field_1;
+
+	/* HT Operation - Information subset 2 of 3 */
+	u4.val_16 = (uint16_t)cfg_default(CFG_HT_INFO_FIELD_2);
+	ht_caps->info_field_2 = u4.info_field_2;
+
+	/* HT Operation - Information subset 3 of 3 */
+	u5.val_16 = (uint16_t)cfg_default(CFG_HT_INFO_FIELD_3);
+	ht_caps->info_field_3 = u5.info_field_3;
+
+	ht_caps->short_preamble = cfg_get(psoc, CFG_SHORT_PREAMBLE);
+	ht_caps->enable_ampdu_ps = cfg_get(psoc, CFG_ENABLE_AMPDUPS);
+	ht_caps->enable_smps = cfg_get(psoc, CFG_ENABLE_HT_SMPS);
+	ht_caps->smps = cfg_get(psoc, CFG_HT_SMPS_MODE);
+	ht_caps->max_num_amsdu = cfg_get(psoc, CFG_MAX_AMSDU_NUM);
 }
 
 static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,

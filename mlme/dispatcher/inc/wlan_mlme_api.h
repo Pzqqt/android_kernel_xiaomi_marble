@@ -178,6 +178,46 @@ QDF_STATUS wlan_mlme_set_ht_cap_info(struct wlan_objmgr_psoc *psoc,
 				     ht_cap_info);
 
 /**
+ * wlan_mlme_get_max_amsdu_num() - get the max amsdu num
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value where the max_amsdu num is to be filled
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_get_max_amsdu_num(struct wlan_objmgr_psoc *psoc,
+				       uint8_t *value);
+
+/**
+ * wlan_mlme_set_max_amsdu_num() - set the max amsdu num
+ * @psoc: pointer to psoc object
+ * @value: value to be set for max_amsdu_num
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_set_max_amsdu_num(struct wlan_objmgr_psoc *psoc,
+				       uint8_t value);
+
+/**
+ * wlan_mlme_get_ht_mpdu_density() - get the ht mpdu density
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value where the ht mpdu density is to be filled
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_get_ht_mpdu_density(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *value);
+
+/**
+ * wlan_mlme_set_ht_mpdu_density() - set the ht mpdu density
+ * @psoc: pointer to psoc object
+ * @value: value to be set for ht mpdu density
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_set_ht_mpdu_density(struct wlan_objmgr_psoc *psoc,
+					 uint8_t value);
+
+/**
  * wlan_mlme_get_band_capability() - Get the Band capability config
  * @psoc: pointer to psoc object
  * @band_capability: Pointer to the variable from caller
