@@ -123,7 +123,7 @@ static QDF_STATUS target_if_nan_event_dispatcher(struct scheduler_msg *msg)
 		goto free_res;
 	}
 
-	status = nan_rx_ops->nan_event_rx(msg);
+	status = nan_rx_ops->nan_datapath_event_rx(msg);
 free_res:
 	if (vdev)
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
@@ -175,8 +175,8 @@ static QDF_STATUS target_if_nan_ndp_initiator_req(
 	ndp_rsp.status = NAN_DATAPATH_DATA_INITIATOR_REQ_FAILED;
 	pe_msg.type = NDP_INITIATOR_RSP;
 	pe_msg.bodyptr = &ndp_rsp;
-	if (nan_rx_ops->nan_event_rx)
-		nan_rx_ops->nan_event_rx(&pe_msg);
+	if (nan_rx_ops->nan_datapath_event_rx)
+		nan_rx_ops->nan_datapath_event_rx(&pe_msg);
 
 	return status;
 }
@@ -377,8 +377,8 @@ static QDF_STATUS target_if_nan_ndp_responder_req(
 	rsp.reason = NAN_DATAPATH_DATA_RESPONDER_REQ_FAILED;
 	pe_msg.bodyptr = &rsp;
 	pe_msg.type = NDP_RESPONDER_RSP;
-	if (nan_rx_ops->nan_event_rx)
-		nan_rx_ops->nan_event_rx(&pe_msg);
+	if (nan_rx_ops->nan_datapath_event_rx)
+		nan_rx_ops->nan_datapath_event_rx(&pe_msg);
 
 	return status;
 }
@@ -477,8 +477,8 @@ static QDF_STATUS target_if_nan_ndp_end_req(struct nan_datapath_end_req *req)
 	end_rsp.transaction_id = req->transaction_id;
 	msg.bodyptr = &end_rsp;
 
-	if (nan_rx_ops->nan_event_rx)
-		nan_rx_ops->nan_event_rx(&msg);
+	if (nan_rx_ops->nan_datapath_event_rx)
+		nan_rx_ops->nan_datapath_event_rx(&msg);
 
 	return status;
 }
@@ -637,7 +637,7 @@ static int target_if_ndp_sch_update_handler(ol_scn_t scn, uint8_t *data,
 	return 0;
 }
 
-static QDF_STATUS target_if_nan_req(void *req, uint32_t req_type)
+static QDF_STATUS target_if_nan_datapath_req(void *req, uint32_t req_type)
 {
 	/* send cmd to fw */
 	switch (req_type) {
@@ -657,14 +657,101 @@ static QDF_STATUS target_if_nan_req(void *req, uint32_t req_type)
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS target_if_nan_generic_req(struct wlan_objmgr_psoc *psoc,
+					    void *nan_req)
+{
+	struct wmi_unified *wmi_handle;
+
+	if (!psoc) {
+		target_if_err("psoc is null.");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!nan_req) {
+		target_if_err("Invalid req.");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null.");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return wmi_unified_nan_req_cmd(wmi_handle, nan_req);
+}
+
+static QDF_STATUS target_if_nan_disable_req(struct nan_disable_req *nan_req)
+{
+	struct wmi_unified *wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!nan_req) {
+		target_if_err("Invalid req.");
+		return QDF_STATUS_E_INVAL;
+	}
+	psoc = nan_req->psoc;
+
+	if (!psoc) {
+		target_if_err("psoc is null.");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null.");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS target_if_nan_discovery_req(void *req, uint32_t req_type)
+{
+	QDF_STATUS status;
+
+	if (!req) {
+		target_if_err("Invalid req.");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	switch (req_type) {
+	case NAN_DISABLE_REQ:
+		status = target_if_nan_disable_req(req);
+		break;
+	case NAN_GENERIC_REQ: {
+			struct nan_generic_req *nan_req = req;
+
+			status = target_if_nan_generic_req(nan_req->psoc,
+							   &nan_req->params);
+			break;
+		}
+	case NAN_ENABLE_REQ: {
+			struct nan_enable_req *nan_req = req;
+
+			status = target_if_nan_generic_req(nan_req->psoc,
+							   &nan_req->params);
+			break;
+		}
+	default:
+		target_if_err("Invalid NAN req type");
+		status = QDF_STATUS_E_INVAL;
+		break;
+	}
+
+	return status;
+}
+
 void target_if_nan_register_tx_ops(struct wlan_nan_tx_ops *tx_ops)
 {
-	tx_ops->nan_req_tx = target_if_nan_req;
+	tx_ops->nan_discovery_req_tx = target_if_nan_discovery_req;
+	tx_ops->nan_datapath_req_tx = target_if_nan_datapath_req;
 }
 
 void target_if_nan_register_rx_ops(struct wlan_nan_rx_ops *rx_ops)
 {
-	rx_ops->nan_event_rx = nan_event_handler;
+	rx_ops->nan_discovery_event_rx = NULL;
+	rx_ops->nan_datapath_event_rx = nan_datapath_event_handler;
 }
 
 QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)

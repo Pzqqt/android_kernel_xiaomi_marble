@@ -63,6 +63,20 @@ struct scheduler_msg;
 #endif
 
 /**
+ * enum nan_disc_state - NAN Discovery states
+ * @NAN_DISC_DISABLED: NAN Discovery is disabled
+ * @NAN_DISC_ENABLE_IN_PROGRESS: NAN Discovery enable is in progress
+ * @NAN_DISC_ENABLED: NAN Discovery is enabled
+ * @NAN_DISC_DISABLE_IN_PROGRESS: NAN Discovery disable is in progress
+ */
+enum nan_disc_state {
+	NAN_DISC_DISABLED,
+	NAN_DISC_ENABLE_IN_PROGRESS,
+	NAN_DISC_ENABLED,
+	NAN_DISC_DISABLE_IN_PROGRESS,
+};
+
+/**
  * struct nan_cfg_params - NAN INI config params
  * @enable: NAN feature enable
  * @dp_enable: NAN Datapath feature enable
@@ -86,8 +100,9 @@ struct nan_cfg_params {
  * @cb_obj: struct contaning callback pointers
  * @cfg_param: NAN Config parameters in INI
  * @nan_caps: NAN Target capabilities
- * @tx_ops: NAN Tx operations
- * @rx_ops: NAN Rx operations
+ * @tx_ops: Tx ops registered with Target IF interface
+ * @rx_ops: Rx  ops registered with Target IF interface
+ * @disc_state: Present NAN Discovery state
  */
 struct nan_psoc_priv_obj {
 	qdf_spinlock_t lock;
@@ -96,6 +111,7 @@ struct nan_psoc_priv_obj {
 	struct nan_tgt_caps nan_caps;
 	struct wlan_nan_tx_ops tx_ops;
 	struct wlan_nan_rx_ops rx_ops;
+	enum nan_disc_state disc_state;
 };
 
 /**
@@ -139,13 +155,58 @@ void nan_release_cmd(void *in_req, uint32_t req_type);
  */
 QDF_STATUS nan_scheduled_msg_handler(struct scheduler_msg *msg);
 
+/**
+ * nan_discovery_flush_callback: callback to flush the NAN scheduler msg
+ * @msg: pointer to msg
+ *
+ * Return: None
+ */
+void nan_discovery_flush_callback(struct scheduler_msg *msg);
+
+/**
+ * nan_discovery_scheduled_handler: callback pointer to be called when scheduler
+ * starts executing enqueued NAN command.
+ * @msg: pointer to msg
+ *
+ * Return: status of operation
+ */
+QDF_STATUS nan_discovery_scheduled_handler(struct scheduler_msg *msg);
+
 /*
- * nan_event_handler: function to process events from firmware
+ * nan_datapath_event_handler: function to process events from firmware
  * @msg: message received from lmac
  *
  * Return: status of operation
  */
-QDF_STATUS nan_event_handler(struct scheduler_msg *msg);
+QDF_STATUS nan_datapath_event_handler(struct scheduler_msg *msg);
+
+/*
+ * nan_set_discovery_state: Attempts to set NAN Discovery state as the given one
+ * @psoc: PSOC object
+ * @new_state: Attempting to this NAN discovery state
+ *
+ * Return: status of operation
+ */
+QDF_STATUS nan_set_discovery_state(struct wlan_objmgr_psoc *psoc,
+				   enum nan_disc_state new_state);
+
+/*
+ * nan_discovery_pre_enable: Takes steps before sending NAN Enable to Firmware
+ * @psoc: PSOC object
+ * @nan_social_channel: Primary social channel for NAN Discovery
+ *
+ * Return: status of operation
+ */
+QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
+				    uint8_t nan_social_channel);
+
+/*
+ * nan_get_discovery_state: Returns the current NAN Discovery state
+ * @psoc: PSOC object
+ *
+ * Return: Current NAN Discovery state
+ */
+enum nan_disc_state nan_get_discovery_state(struct wlan_objmgr_psoc *psoc);
 
 #endif /* _WLAN_NAN_MAIN_I_H_ */
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */

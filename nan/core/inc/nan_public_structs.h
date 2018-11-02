@@ -690,18 +690,22 @@ struct nan_callbacks {
 
 /**
  * struct wlan_nan_tx_ops - structure of tx function pointers for nan component
- * @nan_req_tx: Message handler for TX operations for the NAN Datapath
+ * @nan_discovery_req_tx: Msg handler for TX operations for the NAN Discovery
+ * @nan_datapath_req_tx: Msg handler for TX operations for the NAN Datapath
  */
 struct wlan_nan_tx_ops {
-	QDF_STATUS (*nan_req_tx)(void *req, uint32_t req_id);
+	QDF_STATUS (*nan_discovery_req_tx)(void *nan_req, uint32_t req_type);
+	QDF_STATUS (*nan_datapath_req_tx)(void *req, uint32_t req_id);
 };
 
 /**
  * struct wlan_nan_rx_ops - structure of rx function pointers for nan component
- * @nan_event_rx: Event handler for RX operations for the NAN Datapath
+ * @nan_discovery_event_rx: Evt handler for RX operations for the NAN Discovery
+ * @nan_datapath_event_rx: Evt handler for RX operations for the NAN Datapath
  */
 struct wlan_nan_rx_ops {
-	QDF_STATUS (*nan_event_rx)(struct scheduler_msg *event);
+	QDF_STATUS (*nan_discovery_event_rx)(struct scheduler_msg *event);
+	QDF_STATUS (*nan_datapath_event_rx)(struct scheduler_msg *event);
 };
 
 /**

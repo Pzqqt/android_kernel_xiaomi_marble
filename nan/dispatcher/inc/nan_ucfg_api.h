@@ -236,10 +236,7 @@ QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
  *
  * Return: status of operation
  */
-static inline QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type)
-{
-	return QDF_STATUS_SUCCESS;
-}
+QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type);
 
 /**
  * ucfg_is_nan_dbs_supported() - ucfg API to query NAN DBS support
