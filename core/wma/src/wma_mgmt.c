@@ -2709,7 +2709,8 @@ static QDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
 	len = *(uint32_t *) &bcn_info->beacon[0];
 	if (len > SIR_MAX_BEACON_SIZE - sizeof(uint32_t)) {
 		WMA_LOGE("%s: Received beacon len %u exceeding max limit %lu",
-			 __func__, len, SIR_MAX_BEACON_SIZE - sizeof(uint32_t));
+			 __func__, len, (unsigned long)(
+			 SIR_MAX_BEACON_SIZE - sizeof(uint32_t)));
 		return QDF_STATUS_E_INVAL;
 	}
 	WMA_LOGD("%s: Storing received beacon template buf to local buffer",
