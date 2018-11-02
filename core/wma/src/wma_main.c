@@ -5539,6 +5539,37 @@ static void wma_green_ap_register_handlers(tp_wma_handle wma_handle)
 }
 #endif
 
+#ifdef WLAN_FEATURE_NAN
+static void wma_update_nan_target_caps(tp_wma_handle wma_handle,
+				       struct wma_tgt_cfg *tgt_cfg)
+{
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_nan_disable_support))
+		tgt_cfg->nan_caps.nan_disable_supported = 1;
+
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_nan_dbs_support))
+		tgt_cfg->nan_caps.nan_dbs_supported = 1;
+
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_ndi_dbs_support))
+		tgt_cfg->nan_caps.ndi_dbs_supported = 1;
+
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_nan_sap_support))
+		tgt_cfg->nan_caps.nan_sap_supported = 1;
+
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_ndi_sap_support))
+		tgt_cfg->nan_caps.ndi_sap_supported = 1;
+}
+#else
+static void wma_update_nan_target_caps(tp_wma_handle wma_handle,
+				       struct wma_tgt_cfg *tgt_cfg)
+{
+}
+#endif
+
 /**
  * wma_update_hdd_cfg() - update HDD config
  * @wma_handle: wma handle
@@ -5632,6 +5663,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	wma_update_obss_detection_support(wma_handle, &tgt_cfg);
 	wma_update_obss_color_collision_support(wma_handle, &tgt_cfg);
 	wma_update_hdd_cfg_ndp(wma_handle, &tgt_cfg);
+	wma_update_nan_target_caps(wma_handle, &tgt_cfg);
 	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
 	target_if_store_pdev_target_if_ctx(wma_get_pdev_from_scn_handle);
 	target_pdev_set_wmi_handle(wma_handle->pdev->tgt_if_handle,

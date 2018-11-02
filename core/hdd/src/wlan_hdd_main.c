@@ -126,6 +126,7 @@
 #include "wlan_hdd_he.h"
 #include "os_if_nan.h"
 #include "nan_public_structs.h"
+#include "nan_ucfg_api.h"
 #include "wlan_reg_ucfg_api.h"
 #include "wlan_dfs_ucfg_api.h"
 #include "wlan_hdd_rx_monitor.h"
@@ -2119,6 +2120,7 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 
 	/* Configure NAN datapath features */
 	hdd_nan_datapath_target_config(hdd_ctx, cfg);
+	ucfg_nan_set_tgt_caps(hdd_ctx->psoc, &cfg->nan_caps);
 	hdd_ctx->dfs_cac_offload = cfg->dfs_cac_offload;
 	hdd_ctx->lte_coex_ant_share = cfg->services.lte_coex_ant_share;
 	hdd_ctx->obss_scan_offload = cfg->services.obss_scan_offload;

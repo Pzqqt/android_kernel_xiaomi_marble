@@ -445,3 +445,29 @@ int ucfg_nan_register_lim_callbacks(struct wlan_objmgr_psoc *psoc,
 
 	return 0;
 }
+
+void ucfg_nan_set_tgt_caps(struct wlan_objmgr_psoc *psoc,
+			   struct nan_tgt_caps *nan_caps)
+{
+	struct nan_psoc_priv_obj *psoc_priv = nan_get_psoc_priv_obj(psoc);
+
+	if (!psoc_priv) {
+		nan_err("nan psoc priv object is NULL");
+		return;
+	}
+
+	psoc_priv->nan_caps = *nan_caps;
+}
+
+bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_psoc_priv_obj *psoc_priv;
+
+	psoc_priv = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_priv) {
+		nan_err("nan psoc priv object is NULL");
+		return false;
+	}
+
+	return (psoc_priv->nan_caps.nan_dbs_supported == 1);
+}

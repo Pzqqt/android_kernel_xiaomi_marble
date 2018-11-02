@@ -20,6 +20,7 @@
 #define WMA_TGT_CFG_H
 
 #include "wma_sar_public_structs.h"
+#include "nan_public_structs.h"
 
 /**
  * struct wma_tgt_services - target services
@@ -225,5 +226,6 @@ struct wma_tgt_cfg {
 	uint32_t hw_bd_id;
 	struct board_info hw_bd_info;
 	enum sar_version sar_version;
+	struct nan_tgt_caps nan_caps;
 };
 #endif /* WMA_TGT_CFG_H */
