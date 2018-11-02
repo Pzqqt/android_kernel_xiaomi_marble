@@ -26,6 +26,7 @@
 #include "wlan_objmgr_cmn.h"
 #include "nan_public_structs.h"
 
+#ifdef WLAN_FEATURE_NAN
 /**
  * ucfg_nan_set_ndi_state: set ndi state
  * @vdev: pointer to vdev object
@@ -248,10 +249,7 @@ static inline QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type)
  *
  * Return: True if NAN DBS is supported, False otherwise
  */
-static inline bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc)
-{
-	return true;
-}
+bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_is_nan_enable_allowed() - ucfg API to query if NAN Discovery is
@@ -264,4 +262,23 @@ static inline bool ucfg_is_nan_enable_allowed(struct wlan_objmgr_psoc *psoc)
 {
 	return true;
 }
+
+/**
+ * ucfg_nan_set_tgt_caps: ucfg API to set the NAN capabilities of the Target
+ * @psoc: pointer to psoc object
+ * @nan_caps: pointer to the structure of NAN capability bits
+ *
+ * Return: status of operation
+ */
+void ucfg_nan_set_tgt_caps(struct wlan_objmgr_psoc *psoc,
+			   struct nan_tgt_caps *nan_caps);
+
+#else /* WLAN_FEATURE_NAN */
+
+static inline
+void ucfg_nan_set_tgt_caps(struct wlan_objmgr_psoc *psoc,
+			   struct nan_tgt_caps *nan_caps)
+{
+}
+#endif /* WLAN_FEATURE_NAN */
 #endif /* _NAN_UCFG_API_H_ */

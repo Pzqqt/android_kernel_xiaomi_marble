@@ -20,7 +20,6 @@
  * DOC: contains nan definitions exposed to other modules
  */
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #ifndef _NAN_PUBLIC_STRUCTS_H_
 #define _NAN_PUBLIC_STRUCTS_H_
 
@@ -705,5 +704,20 @@ struct wlan_nan_rx_ops {
 	QDF_STATUS (*nan_event_rx)(struct scheduler_msg *event);
 };
 
+/**
+ * struct nan_tgt_caps - NAN Target capabilities
+ * @nan_disable_supported: Target supports disabling NAN Discovery
+ * @nan_dbs_supported: Target supports NAN Discovery with DBS
+ * @ndi_dbs_supported: Target supports NAN Datapath with DBS
+ * @nan_sap_supported: Target supports NAN Discovery with SAP concurrency
+ * @ndi_sap_supported: Target supports NAN Datapth with SAP concurrency
+ */
+struct nan_tgt_caps {
+	uint32_t nan_disable_supported:1;
+	uint32_t nan_dbs_supported:1;
+	uint32_t ndi_dbs_supported:1;
+	uint32_t nan_sap_supported:1;
+	uint32_t ndi_sap_supported:1;
+};
+
 #endif
-#endif /* WLAN_FEATURE_NAN_CONVERGENCE */

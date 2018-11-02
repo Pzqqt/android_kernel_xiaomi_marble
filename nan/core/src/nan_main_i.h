@@ -84,11 +84,16 @@ struct nan_cfg_params {
  * struct nan_psoc_priv_obj - nan private psoc obj
  * @lock: lock to be acquired before reading or writing to object
  * @cb_obj: struct contaning callback pointers
+ * @cfg_param: NAN Config parameters in INI
+ * @nan_caps: NAN Target capabilities
+ * @tx_ops: NAN Tx operations
+ * @rx_ops: NAN Rx operations
  */
 struct nan_psoc_priv_obj {
 	qdf_spinlock_t lock;
 	struct nan_callbacks cb_obj;
 	struct nan_cfg_params cfg_param;
+	struct nan_tgt_caps nan_caps;
 	struct wlan_nan_tx_ops tx_ops;
 	struct wlan_nan_rx_ops rx_ops;
 };
