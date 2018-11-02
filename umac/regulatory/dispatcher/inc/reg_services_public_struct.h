@@ -547,7 +547,8 @@ enum offset_t {
 	BW40_LOW_PRIMARY = 1,
 	BW40_HIGH_PRIMARY = 3,
 	BW80,
-	BWALL
+	BWALL,
+	BW_INVALID = 0xFF
 };
 
 /**
