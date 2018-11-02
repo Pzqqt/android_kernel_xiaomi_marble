@@ -305,7 +305,6 @@ int dfs_set_thresholds(struct wlan_dfs *dfs, const uint32_t threshtype,
 int dfs_get_thresholds(struct wlan_dfs *dfs,
 		struct wlan_dfs_phyerr_param *param)
 {
-	qdf_mem_zero(param, sizeof(*param));
 	lmac_dfs_get_thresholds(dfs->dfs_pdev_obj, param);
 
 	return 1;

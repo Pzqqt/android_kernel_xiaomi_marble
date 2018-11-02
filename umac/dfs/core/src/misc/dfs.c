@@ -411,6 +411,8 @@ int dfs_control(struct wlan_dfs *dfs,
 		*outsize = sizeof(struct dfs_ioctl_params);
 		dfsparams = (struct dfs_ioctl_params *) outdata;
 
+		qdf_mem_zero(&peout, sizeof(struct wlan_dfs_phyerr_param));
+
 		/* Fetch the DFS thresholds using the internal representation */
 		(void) dfs_get_thresholds(dfs, &peout);
 
