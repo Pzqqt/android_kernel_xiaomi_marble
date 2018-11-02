@@ -265,88 +265,33 @@ static void __lim_init_ht_vars(tpAniSirGlobal pMac)
 
 static QDF_STATUS __lim_init_config(tpAniSirGlobal pMac)
 {
-	uint32_t val1, val2, val3;
-	uint16_t val16;
-	uint8_t val8;
+	uint32_t val1;
 	bool valb;
 	struct mlme_ht_capabilities_info *ht_cap_info;
 	QDF_STATUS status;
-	tSirMacHTInfoField1 *pHTInfoField1;
-	tSirMacHTParametersInfo *pAmpduParamInfo;
 
 	/* Read all the CFGs here that were updated before pe_start is called */
 	/* All these CFG READS/WRITES are only allowed in init, at start when there is no session
 	 * and they will be used throughout when there is no session
 	 */
-
-	val1 = pMac->mlme_cfg->sap_cfg.assoc_sta_limit;
-	pMac->lim.gLimIbssStaLimit = val1;
+	pMac->lim.gLimIbssStaLimit = pMac->mlme_cfg->sap_cfg.assoc_sta_limit;
 	ht_cap_info = &pMac->mlme_cfg->ht_caps.ht_cap_info;
-
-	val2 = pMac->mlme_cfg->feature_flags.channel_bonding_mode;
 
 	/* channel bonding mode could be set to anything from 0 to 4(Titan had these */
 	/* modes But for Taurus we have only two modes: enable(>0) or disable(=0) */
-	ht_cap_info->supported_channel_width_set = val2 ?
-				      WNI_CFG_CHANNEL_BONDING_MODE_ENABLE :
-				      WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
+	ht_cap_info->supported_channel_width_set =
+			pMac->mlme_cfg->feature_flags.channel_bonding_mode ?
+			WNI_CFG_CHANNEL_BONDING_MODE_ENABLE :
+			WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_INFO_FIELD1, &val1) != QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve HT INFO Field1 CFG");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	val8 = (uint8_t) val1;
-	pHTInfoField1 = (tSirMacHTInfoField1 *) &val8;
-	pHTInfoField1->recommendedTxWidthSet =
-				ht_cap_info->supported_channel_width_set;
-	if (cfg_set_int(pMac, WNI_CFG_HT_INFO_FIELD1, *(uint8_t *) pHTInfoField1)
-	    != QDF_STATUS_SUCCESS) {
-		pe_err("could not update HT Info Field");
-		return QDF_STATUS_E_FAILURE;
-	}
+	pMac->mlme_cfg->ht_caps.info_field_1.recommended_tx_width_set =
+		ht_cap_info->supported_channel_width_set;
 
 	if (!pMac->mlme_cfg->timeouts.heart_beat_threshold) {
 		pMac->sys.gSysEnableLinkMonitorMode = 0;
 	} else {
 		/* No need to activate the timer during init time. */
 		pMac->sys.gSysEnableLinkMonitorMode = 1;
-	}
-
-	/* WNI_CFG_MAX_RX_AMPDU_FACTOR */
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &val1) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve HT AMPDU Param");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (wlan_cfg_get_int(pMac, WNI_CFG_MAX_RX_AMPDU_FACTOR, &val2) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve AMPDU Factor CFG");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (wlan_cfg_get_int(pMac, WNI_CFG_MPDU_DENSITY, &val3) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve MPDU Density CFG");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	val16 = (uint16_t) val1;
-	pAmpduParamInfo = (tSirMacHTParametersInfo *) &val16;
-	pAmpduParamInfo->maxRxAMPDUFactor = (uint8_t) val2;
-	pAmpduParamInfo->mpduDensity = (uint8_t)val3;
-	if (cfg_set_int
-		    (pMac, WNI_CFG_HT_AMPDU_PARAMS,
-		    *(uint8_t *) pAmpduParamInfo) != QDF_STATUS_SUCCESS) {
-		pe_err("cfg get short preamble failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* WNI_CFG_SHORT_PREAMBLE - this one is not updated in
-	   lim_handle_cf_gparam_update do we want to update this? */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val1) != QDF_STATUS_SUCCESS) {
-		pe_err("cfg get short preamble failed");
-		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* WNI_CFG_PROBE_RSP_BCN_ADDNIE_DATA - not needed */

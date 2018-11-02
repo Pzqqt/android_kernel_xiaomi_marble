@@ -2966,16 +2966,12 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		/* Remove this code once SLM_Sessionization is supported */
 		/* BMPS_WORKAROUND_NOT_NEEDED */
 		pMac->roam.configParam.doBMPSWorkaround = 0;
-		pMac->roam.configParam.enableHtSmps = pParam->enableHtSmps;
-		pMac->roam.configParam.htSmps = pParam->htSmps;
 		pMac->roam.configParam.send_smps_action =
 			pParam->send_smps_action;
 		pMac->roam.configParam.tx_ldpc_enable = pParam->enable_tx_ldpc;
 		pMac->roam.configParam.rx_ldpc_enable = pParam->enable_rx_ldpc;
 		pMac->roam.configParam.disable_high_ht_mcs_2x2 =
 					pParam->disable_high_ht_mcs_2x2;
-		pMac->roam.configParam.max_amsdu_num =
-			pParam->max_amsdu_num;
 		pMac->roam.configParam.ho_delay_for_rx =
 			pParam->ho_delay_for_rx;
 		pMac->roam.configParam.min_delay_btw_roam_scans =
@@ -3190,7 +3186,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->enable_rx_ldpc = cfg_params->rx_ldpc_enable;
 	pParam->wep_tkip_in_he = cfg_params->wep_tkip_in_he;
 	pParam->disable_high_ht_mcs_2x2 = cfg_params->disable_high_ht_mcs_2x2;
-	pParam->max_amsdu_num = cfg_params->max_amsdu_num;
 	pParam->ho_delay_for_rx = cfg_params->ho_delay_for_rx;
 	pParam->min_delay_btw_roam_scans = cfg_params->min_delay_btw_roam_scans;
 	pParam->roam_trigger_reason_bitmask =
@@ -3239,8 +3234,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->sme.ps_global_info.auto_bmps_timer_val;
 	pParam->f_sta_miracast_mcc_rest_time_val =
 		pMac->f_sta_miracast_mcc_rest_time_val;
-	pParam->enableHtSmps = pMac->roam.configParam.enableHtSmps;
-	pParam->htSmps = pMac->roam.configParam.htSmps;
 	pParam->send_smps_action = pMac->roam.configParam.send_smps_action;
 	pParam->sta_roam_policy_params.dfs_mode =
 		pMac->roam.configParam.sta_roam_policy.dfs_mode;
@@ -15785,17 +15778,17 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			pMac->mlme_cfg->vht_caps.vht_cap_info.enable_gid;
 
 		csr_join_req->enableAmpduPs =
-			(uint8_t)pMac->mlme_cfg->feature_flags.enable_ampdu;
+			(uint8_t)pMac->mlme_cfg->ht_caps.enable_ampdu_ps;
 
 		csr_join_req->enableHtSmps =
-			(uint8_t) pMac->roam.configParam.enableHtSmps;
+			(uint8_t)pMac->mlme_cfg->ht_caps.enable_smps;
 
-		csr_join_req->htSmps = (uint8_t) pMac->roam.configParam.htSmps;
+		csr_join_req->htSmps = (uint8_t)pMac->mlme_cfg->ht_caps.smps;
 		csr_join_req->send_smps_action =
 			pMac->roam.configParam.send_smps_action;
 
 		csr_join_req->max_amsdu_num =
-			(uint8_t) pMac->roam.configParam.max_amsdu_num;
+			(uint8_t)pMac->mlme_cfg->ht_caps.max_num_amsdu;
 
 		if (pMac->roam.roamSession[sessionId].fWMMConnection)
 			csr_join_req->isWMEenabled = true;

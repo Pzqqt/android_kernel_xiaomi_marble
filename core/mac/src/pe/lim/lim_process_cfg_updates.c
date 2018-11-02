@@ -138,89 +138,6 @@ void lim_handle_param_update(tpAniSirGlobal pMac, eUpdateIEsType cfgId)
 }
 
 /**
- * lim_handle_cf_gparam_update()
- *
- ***FUNCTION:
- * This function is called by lim_process_messages() to
- * whenever SIR_CFG_PARAM_UPDATE_IND message is posted
- * to LIM (due to a set operation on a CFG parameter).
- *
- ***PARAMS:
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- *
- * @param  pMac  - Pointer to Global MAC structure
- * @param  cfgId - ID of CFG parameter that got updated
- * @return None
- */
-
-void lim_handle_cf_gparam_update(tpAniSirGlobal pMac, uint32_t cfgId)
-{
-	uint32_t val1, val2;
-	uint16_t val16;
-	tSirMacHTParametersInfo *pAmpduParamInfo;
-
-	pe_debug("Handling CFG parameter id %X update", cfgId);
-
-	switch (cfgId) {
-	case WNI_CFG_MPDU_DENSITY:
-		if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &val1) !=
-		    QDF_STATUS_SUCCESS) {
-			pe_err("could not retrieve HT AMPDU Param CFG");
-			break;
-		}
-		if (wlan_cfg_get_int(pMac, WNI_CFG_MPDU_DENSITY, &val2) !=
-		    QDF_STATUS_SUCCESS) {
-			pe_err("could not retrieve MPDU Density CFG");
-			break;
-		}
-		val16 = (uint16_t) val1;
-		pAmpduParamInfo = (tSirMacHTParametersInfo *) &val16;
-		pAmpduParamInfo->mpduDensity = (uint8_t) val2;
-		if (cfg_set_int
-			    (pMac, WNI_CFG_HT_AMPDU_PARAMS,
-			    *(uint8_t *) pAmpduParamInfo) != QDF_STATUS_SUCCESS)
-			pe_err("could not update HT AMPDU Param CFG");
-			break;
-	case WNI_CFG_MAX_RX_AMPDU_FACTOR:
-		if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &val1) !=
-		    QDF_STATUS_SUCCESS) {
-			pe_err("could not retrieve HT AMPDU Param CFG");
-			break;
-		}
-		if (wlan_cfg_get_int(pMac, WNI_CFG_MAX_RX_AMPDU_FACTOR, &val2) !=
-		    QDF_STATUS_SUCCESS) {
-			pe_err("could not retrieve AMPDU Factor CFG");
-			break;
-		}
-		val16 = (uint16_t) val1;
-		pAmpduParamInfo = (tSirMacHTParametersInfo *) &val16;
-		pAmpduParamInfo->maxRxAMPDUFactor = (uint8_t) val2;
-		if (cfg_set_int
-			    (pMac, WNI_CFG_HT_AMPDU_PARAMS,
-			    *(uint8_t *) pAmpduParamInfo) != QDF_STATUS_SUCCESS)
-			pe_err("could not update HT AMPDU Param CFG");
-			break;
-
-	case WNI_CFG_DOT11_MODE:
-		if (wlan_cfg_get_int(pMac, WNI_CFG_DOT11_MODE, &val1) !=
-		    QDF_STATUS_SUCCESS) {
-			pe_err("could not retrieve Dot11 Mode CFG");
-			break;
-		}
-		break;
-
-	default:
-		break;
-	}
-} /*** end lim_handle_cf_gparam_update() ***/
-
-/**
  * lim_apply_configuration()
  *
  ***FUNCTION:
@@ -299,9 +216,8 @@ static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	uint32_t val;
 	bool enabled;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val) != QDF_STATUS_SUCCESS)
-		pe_err("cfg get short preamble failed");
-	psessionEntry->beaconParams.fShortPreamble = (val) ? 1 : 0;
+	psessionEntry->beaconParams.fShortPreamble =
+					pMac->mlme_cfg->ht_caps.short_preamble;
 
 	/* In STA case this parameter is filled during the join request */
 	if (LIM_IS_AP_ROLE(psessionEntry) ||

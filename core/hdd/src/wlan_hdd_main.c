@@ -1430,17 +1430,16 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 	qdf_size_t value_len;
 	uint32_t value;
+	uint8_t mpdu_density;
 	struct mlme_ht_capabilities_info ht_cap_info;
 	uint8_t mcs_set[SIZE_OF_SUPPORTED_MCS_SET];
-	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 	bool b_enable1x1;
 
 	/* get the MPDU density */
-	status = sme_cfg_get_int(mac_handle, WNI_CFG_MPDU_DENSITY, &value);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("could not get MPDU DENSITY");
-		value = 0;
+	status = ucfg_mlme_get_ht_mpdu_density(hdd_ctx->psoc, &mpdu_density);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("could not get HT MPDU Density");
+		return;
 	}
 
 	/*
@@ -1448,12 +1447,11 @@ static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 	 * override user's setting if value is larger
 	 * than the one supported by target
 	 */
-	if (value > cfg->mpdu_density) {
-		status = sme_cfg_set_int(mac_handle, WNI_CFG_MPDU_DENSITY,
-					 cfg->mpdu_density);
-
-		if (status == QDF_STATUS_E_FAILURE)
-			hdd_err("could not set MPDU DENSITY to CCM");
+	if (mpdu_density > cfg->mpdu_density) {
+		status = ucfg_mlme_set_ht_mpdu_density(hdd_ctx->psoc,
+						       cfg->mpdu_density);
+		if (QDF_IS_STATUS_ERROR(status))
+			hdd_err("could not set HT capability to CCM");
 	}
 
 	/* get the HT capability info */
@@ -4497,6 +4495,7 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
 	bool bval = false;
+	uint8_t max_amsdu_len;
 
 	hdd_enter_dev(adapter->dev);
 
@@ -4642,11 +4641,17 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 		goto error;
 	}
 
-	hdd_debug("SET AMSDU num %d", hdd_ctx->config->max_amsdu_num);
+	status = ucfg_mlme_get_max_amsdu_num(hdd_ctx->psoc, &max_amsdu_len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to get Max AMSDU Num");
+		goto error;
+	}
+
+	hdd_debug("SET AMSDU num %d", max_amsdu_len);
 
 	ret = wma_cli_set_command(adapter->session_id,
 				  GEN_VDEV_PARAM_AMSDU,
-				  hdd_ctx->config->max_amsdu_num,
+				  max_amsdu_len,
 				  GEN_CMD);
 	if (ret != 0) {
 		hdd_err("GEN_VDEV_PARAM_AMSDU set failed %d", ret);

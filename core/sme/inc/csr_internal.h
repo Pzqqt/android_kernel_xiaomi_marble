@@ -488,8 +488,6 @@ struct csr_config {
 	/* To enable scanning 2g channels twice on single scan req from HDD */
 	bool fScanTwice;
 	uint32_t nVhtChannelWidth;
-	uint8_t enableHtSmps;
-	uint8_t htSmps;
 	bool send_smps_action;
 	uint8_t tx_ldpc_enable;
 	uint8_t rx_ldpc_enable;
@@ -498,7 +496,6 @@ struct csr_config {
 	 * Enable/Disable heartbeat offload
 	 */
 	bool enableHeartBeatOffload;
-	uint8_t max_amsdu_num;
 	uint32_t ho_delay_for_rx;
 	uint32_t min_delay_btw_roam_scans;
 	uint32_t roam_trigger_reason_bitmask;

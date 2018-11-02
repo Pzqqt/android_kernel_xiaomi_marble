@@ -302,11 +302,160 @@ struct mlme_ht_capabilities_info {
 #endif
 
 /**
+ * struct mlme_ht_param_info - HT AMPDU Parameters Info
+ * @reserved: reserved bits
+ * @mpdu_density: MPDU Density
+ * @max_rx_ampdu_factor: Max Rx AMPDU Factor
+ */
+#ifndef ANI_LITTLE_BIT_ENDIAN
+struct mlme_ht_param_info {
+	uint8_t reserved:3;
+	uint8_t mpdu_density:3;
+	uint8_t max_rx_ampdu_factor:2;
+} qdf_packed;
+#else
+struct mlme_ht_param_info {
+	uint8_t max_rx_ampdu_factor:2;
+	uint8_t mpdu_density:3;
+	uint8_t reserved:3;
+#endif
+} qdf_packed;
+
+/**
+ * struct mlme_ht_ext_cap_info - Extended HT Capabilities Info
+ * reserved_2: Reserved Bits
+ * mcs_feedback: MCS Feedback Capability
+ * reserved_1: Reserved Bits
+ * transition_time: Time needed for transition between 20Mhz and 40 Mhz
+ * pco: PCO (Phased Coexistence Operation) Support
+ */
+#ifndef ANI_LITTLE_BIT_ENDIAN
+struct mlme_ht_ext_cap_info {
+	uint16_t reserved_2:6;
+	uint16_t mcs_feedback:2;
+	uint16_t reserved_1:5;
+	uint16_t transition_time:2;
+	uint16_t pco:1;
+} qdf_packed;
+#else
+struct mlme_ht_ext_cap_info {
+	uint16_t pco:1;
+	uint16_t transition_time:2;
+	uint16_t reserved1:5;
+	uint16_t mcs_feedback:2;
+	uint16_t reserved2:6;
+} qdf_packed;
+#endif
+
+/**
+ * struct mlme_ht_info_field_1 - Additional HT IE Field1
+ * @service_interval_granularity: Shortest Service Interval
+ * @controlled_access_only: Access Control for assoc requests
+ * @rifs_mode: Reduced Interframe Spacing mode
+ * @recommended_tx_width_set: Recommended Tx Channel Width
+ * @secondary_channel_offset: Secondary Channel Offset
+ */
+#ifndef ANI_LITTLE_BIT_ENDIAN
+struct mlme_ht_info_field_1 {
+	uint8_t service_interval_granularity:3;
+	uint8_t controlled_access_only:1;
+	uint8_t rifs_mode:1;
+	uint8_t recommended_tx_width_set:1;
+	uint8_t secondary_channel_offset:2;
+} qdf_packed;
+#else
+struct mlme_ht_info_field_1 {
+	uint8_t secondary_channel_offset:2;
+	uint8_t recommended_tx_width_set:1;
+	uint8_t rifs_mode:1;
+	uint8_t controlled_access_only:1;
+	uint8_t service_interval_granularity:3;
+} qdf_packed;
+#endif
+
+/* struct mlme_ht_info_field_2 - Additional HT IE Field2
+ * @reserved: reserved bits
+ * @obss_non_ht_sta_present: Protection for non-HT STAs by Overlapping BSS
+ * @transmit_burst_limit: Transmit Burst Limit
+ * @non_gf_devices_present: Non Greenfield devices present
+ * @op_mode: Operation Mode
+ */
+#ifndef ANI_LITTLE_BIT_ENDIAN
+struct mlme_ht_info_field_2 {
+	uint16_t reserved:11;
+	uint16_t obss_non_ht_sta_present:1;
+	uint16_t transmit_burst_limit:1;
+	uint16_t non_gf_devices_present:1;
+	uint16_t op_mode:2;
+} qdf_packed;
+#else
+struct mlme_ht_info_field_2 {
+	uint16_t op_mode:2;
+	uint16_t nonGFDevicesPresent:1;
+	uint16_t transmit_burst_limit:1;
+	uint16_t obss_non_ht_sta_present:1;
+	uint16_t reserved:11;
+} qdf_packed;
+#endif
+
+/**
+ * struct mlme_ht_info_field_3 - Additional HT IE Field3
+ * @reserved: reserved bits
+ * @pco_phase: PCO Phase
+ * @pco_active: PCO state
+ * @lsig_txop_protection_full_support: L-Sig TXOP Protection Full Support
+ * @secondary_beacon: Beacon ID
+ * @dual_cts_protection: Dual CTS protection Required
+ * @basic_stbc_mcs: Basic STBC MCS
+ */
+#ifndef ANI_LITTLE_BIT_ENDIAN
+struct mlme_ht_info_field_3 {
+	uint16_t reserved:4;
+	uint16_t pco_phase:1;
+	uint16_t pco_active:1;
+	uint16_t lsig_txop_protection_full_support:1;
+	uint16_t secondary_beacon:1;
+	uint16_t dual_cts_protection:1;
+	uint16_t basic_stbc_mcs:7;
+} qdf_packed;
+#else
+struct mlme_ht_info_field_3 {
+	uint16_t basic_stbc_mcs:7;
+	uint16_t dual_cts_protection:1;
+	uint16_t secondary_beacon:1;
+	uint16_t lsig_txop_protection_full_support:1;
+	uint16_t pco_active:1;
+	uint16_t pco_phase:1;
+	uint16_t reserved:4;
+} qdf_packed;
+#endif
+
+/**
  * struct wlan_mlme_ht_caps - HT Capabilities related config items
  * @ht_cap_info: HT capabilities Info Structure
+ * @ampdu_params: AMPDU parameters
+ * @ext_cap_info: HT EXT capabilities info
+ * @info_field_1: HT Information Subset 1
+ * @info_field_2: HT Information Subset 2
+ * @info_field_3: HT Information Subset 3
+ * @short_preamble: Short Preamble support
+ * @enable_ampdu_ps: Enable AMPDU Power Save
+ * @enable_smps: Enabled SM Power Save
+ * @smps : SM Power Save mode
+ * @max_num_amsdu: Max number of AMSDU
  */
 struct wlan_mlme_ht_caps {
 	struct mlme_ht_capabilities_info ht_cap_info;
+	struct mlme_ht_param_info ampdu_params;
+	struct mlme_ht_ext_cap_info ext_cap_info;
+	struct mlme_ht_info_field_1 info_field_1;
+	struct mlme_ht_info_field_2 info_field_2;
+	struct mlme_ht_info_field_3 info_field_3;
+	bool short_preamble;
+	bool enable_ampdu_ps;
+	bool enable_smps;
+	uint8_t smps;
+	uint8_t max_num_amsdu;
 };
 
 /*

@@ -341,10 +341,8 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 	val = mac_ctx->mlme_cfg->sap_cfg.listen_interval;
 	sta_param->listenInterval = (uint16_t) val;
 
-	if (QDF_STATUS_SUCCESS != wlan_cfg_get_int(mac_ctx, WNI_CFG_SHORT_PREAMBLE,
-					     &val))
-		pe_warn("Couldn't get SHORT_PREAMBLE");
-	sta_param->shortPreambleSupported = (uint8_t) val;
+	sta_param->shortPreambleSupported =
+		mac_ctx->mlme_cfg->ht_caps.short_preamble;
 
 	sta_param->assocId = 0;      /* Is SMAC OK with this? */
 	sta_param->wmmEnabled = 0;

@@ -1137,9 +1137,6 @@ typedef struct tagCsrConfigParam {
 	bool fScanTwice;
 	bool enableVhtFor24GHz;
 	bool vendor_vht_sap;
-	uint8_t enableAmpduPs;
-	uint8_t enableHtSmps;
-	uint8_t htSmps;
 	bool send_smps_action;
 	/*
 	 * To enable/disable scanning only 2.4Ghz channels on first scan
@@ -1156,7 +1153,6 @@ typedef struct tagCsrConfigParam {
 	uint8_t enable_tx_ldpc;
 	uint8_t enable_rx_ldpc;
 	uint8_t disable_high_ht_mcs_2x2;
-	uint8_t max_amsdu_num;
 	uint32_t ho_delay_for_rx;
 	uint32_t min_delay_btw_roam_scans;
 	uint32_t roam_trigger_reason_bitmask;

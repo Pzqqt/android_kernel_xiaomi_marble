@@ -436,9 +436,6 @@ void lim_get_random_bssid(tpAniSirGlobal pMac, uint8_t *data);
 void handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
 				     tpPESession psessionEntry);
 
-/* Function to handle CFG parameter updates */
-void lim_handle_cf_gparam_update(tpAniSirGlobal, uint32_t);
-
 void lim_handle_param_update(tpAniSirGlobal pMac, eUpdateIEsType cfgId);
 
 /* Function to apply CFG parameters before join/reassoc/start BSS */

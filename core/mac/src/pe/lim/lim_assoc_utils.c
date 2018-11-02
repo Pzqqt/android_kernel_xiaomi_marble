@@ -2720,7 +2720,6 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	 * responsibility of SME to evict the selfSta and reissue a new AddStaSelf
 	 * command.*/
 	uint32_t selfStaDot11Mode = 0, selfTxWidth = 0;
-	uint32_t val;
 
 	wlan_cfg_get_int(pMac, WNI_CFG_DOT11_MODE, &selfStaDot11Mode);
 	wlan_cfg_get_int(pMac, WNI_CFG_HT_CAP_INFO_SUPPORTED_CHAN_WIDTH_SET,
@@ -2760,13 +2759,8 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	pAddStaParams->staIdx = staIdx;
 	pAddStaParams->updateSta = updateSta;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val) !=
-			QDF_STATUS_SUCCESS) {
-		pe_err("Couldn't get SHORT_PREAMBLE, set default");
-		pAddStaParams->shortPreambleSupported = 1;
-	} else {
-		pAddStaParams->shortPreambleSupported = val;
-	}
+	pAddStaParams->shortPreambleSupported =
+					pMac->mlme_cfg->ht_caps.short_preamble;
 
 	lim_populate_own_rate_set(pMac, &pAddStaParams->supportedRates, NULL, false,
 				  psessionEntry, NULL, NULL);

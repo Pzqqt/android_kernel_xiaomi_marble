@@ -4452,6 +4452,7 @@ static int hdd_we_set_amsdu(struct hdd_adapter *adapter, int amsdu)
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 	int errno;
+	QDF_STATUS status;
 
 	hdd_debug("AMSDU %d", amsdu);
 
@@ -4473,7 +4474,10 @@ static int hdd_we_set_amsdu(struct hdd_adapter *adapter, int amsdu)
 		return errno;
 	}
 
-	hdd_ctx->config->max_amsdu_num = amsdu;
+	status = ucfg_mlme_set_max_amsdu_num(hdd_ctx->psoc,
+					     amsdu);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set Max AMSDU Num to cfg");
 
 	return 0;
 }

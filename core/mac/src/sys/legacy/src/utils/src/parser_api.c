@@ -612,12 +612,7 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 	uint8_t nCfgValue8;
 	qdf_size_t ncfglen;
 	QDF_STATUS nSirStatus;
-	tSirMacHTParametersInfo *pHTParametersInfo;
 	uint8_t disable_high_ht_mcs_2x2 = 0;
-	union {
-		uint16_t nCfgValue16;
-		tSirMacExtendedHTCapabilityInfo extHtCapInfo;
-	} uHTCapabilityInfo;
 
 	tSirMacTxBFCapabilityInfo *pTxBFCapabilityInfo;
 	tSirMacASCapabilityInfo *pASCapabilityInfo;
@@ -659,14 +654,11 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 		pDot11f->shortGI40MHz = 0;
 	}
 
-	CFG_GET_INT(nSirStatus, pMac, WNI_CFG_HT_AMPDU_PARAMS, nCfgValue);
-
-	nCfgValue8 = (uint8_t) nCfgValue;
-	pHTParametersInfo = (tSirMacHTParametersInfo *) &nCfgValue8;
-
-	pDot11f->maxRxAMPDUFactor = pHTParametersInfo->maxRxAMPDUFactor;
-	pDot11f->mpduDensity = pHTParametersInfo->mpduDensity;
-	pDot11f->reserved1 = pHTParametersInfo->reserved;
+	pDot11f->maxRxAMPDUFactor =
+		pMac->mlme_cfg->ht_caps.ampdu_params.max_rx_ampdu_factor;
+	pDot11f->mpduDensity =
+		pMac->mlme_cfg->ht_caps.ampdu_params.mpdu_density;
+	pDot11f->reserved1 = pMac->mlme_cfg->ht_caps.ampdu_params.reserved;
 
 	ncfglen = SIZE_OF_SUPPORTED_MCS_SET;
 	nSirStatus = wlan_mlme_get_cfg_str(
@@ -709,13 +701,11 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 		pDot11f->mimoPowerSave = psessionEntry->htSmpsvalue;
 	}
 
-	CFG_GET_INT(nSirStatus, pMac, WNI_CFG_EXT_HT_CAP_INFO, nCfgValue);
-
-	uHTCapabilityInfo.nCfgValue16 = nCfgValue & 0xFFFF;
-
-	pDot11f->pco = uHTCapabilityInfo.extHtCapInfo.pco;
-	pDot11f->transitionTime = uHTCapabilityInfo.extHtCapInfo.transitionTime;
-	pDot11f->mcsFeedback = uHTCapabilityInfo.extHtCapInfo.mcsFeedback;
+	pDot11f->pco = pMac->mlme_cfg->ht_caps.ext_cap_info.pco;
+	pDot11f->transitionTime =
+		pMac->mlme_cfg->ht_caps.ext_cap_info.transition_time;
+	pDot11f->mcsFeedback =
+		pMac->mlme_cfg->ht_caps.ext_cap_info.mcs_feedback;
 
 	CFG_GET_INT(nSirStatus, pMac, WNI_CFG_TX_BF_CAP, nCfgValue);
 
@@ -1155,23 +1145,8 @@ QDF_STATUS
 populate_dot11f_ht_info(tpAniSirGlobal pMac,
 			tDot11fIEHTInfo *pDot11f, tpPESession psessionEntry)
 {
-	uint32_t nCfgValue;
 	qdf_size_t ncfglen;
-	uint8_t htInfoField1;
-	uint16_t htInfoField2;
 	QDF_STATUS nSirStatus;
-	tSirMacHTInfoField1 *pHTInfoField1;
-	tSirMacHTInfoField2 *pHTInfoField2;
-	union {
-		uint16_t nCfgValue16;
-		tSirMacHTInfoField3 infoField3;
-	} uHTInfoField;
-	union {
-		uint16_t nCfgValue16;
-		tSirMacHTInfoField2 infoField2;
-	} uHTInfoField2 = {
-		0
-	};
 
 	if (NULL == psessionEntry) {
 		pe_err("Invalid session entry");
@@ -1180,84 +1155,39 @@ populate_dot11f_ht_info(tpAniSirGlobal pMac,
 
 	pDot11f->primaryChannel = psessionEntry->currentOperChannel;
 
-	CFG_GET_INT(nSirStatus, pMac, WNI_CFG_HT_INFO_FIELD1, nCfgValue);
-
-	htInfoField1 = (uint8_t) nCfgValue;
-
-	pHTInfoField1 = (tSirMacHTInfoField1 *) &htInfoField1;
-	pHTInfoField1->rifsMode = psessionEntry->beaconParams.fRIFSMode;
-	pHTInfoField1->serviceIntervalGranularity =
+	pDot11f->secondaryChannelOffset =
+		psessionEntry->htSecondaryChannelOffset;
+	pDot11f->recommendedTxWidthSet =
+		psessionEntry->htRecommendedTxWidthSet;
+	pDot11f->rifsMode = psessionEntry->beaconParams.fRIFSMode;
+	pDot11f->controlledAccessOnly =
+		pMac->mlme_cfg->ht_caps.info_field_1.controlled_access_only;
+	pDot11f->serviceIntervalGranularity =
 		pMac->lim.gHTServiceIntervalGranularity;
 
-		pHTInfoField1->secondaryChannelOffset =
-			psessionEntry->htSecondaryChannelOffset;
-		pHTInfoField1->recommendedTxWidthSet =
-			psessionEntry->htRecommendedTxWidthSet;
-
-	if ((psessionEntry) && LIM_IS_AP_ROLE(psessionEntry)) {
-		CFG_GET_INT(nSirStatus, pMac, WNI_CFG_HT_INFO_FIELD2,
-			    nCfgValue);
-
-		uHTInfoField2.nCfgValue16 = nCfgValue & 0xFFFF; /* this is added for fixing CRs on MDM9K platform - 257951, 259577 */
-
-		uHTInfoField2.infoField2.opMode = psessionEntry->htOperMode;
-		uHTInfoField2.infoField2.nonGFDevicesPresent =
+	if (LIM_IS_AP_ROLE(psessionEntry)) {
+		pDot11f->opMode = psessionEntry->htOperMode;
+		pDot11f->nonGFDevicesPresent =
 			psessionEntry->beaconParams.llnNonGFCoexist;
-		uHTInfoField2.infoField2.obssNonHTStaPresent = psessionEntry->beaconParams.gHTObssMode; /*added for Obss  */
-
-		uHTInfoField2.infoField2.reserved = 0;
-
+		pDot11f->obssNonHTStaPresent =
+			psessionEntry->beaconParams.gHTObssMode;
+		pDot11f->reserved = 0;
 	} else {
-		CFG_GET_INT(nSirStatus, pMac, WNI_CFG_HT_INFO_FIELD2,
-			    nCfgValue);
-
-		htInfoField2 = (uint16_t) nCfgValue;
-
-		pHTInfoField2 = (tSirMacHTInfoField2 *) &htInfoField2;
-		pHTInfoField2->opMode = pMac->lim.gHTOperMode;
-		pHTInfoField2->nonGFDevicesPresent =
-			pMac->lim.gHTNonGFDevicesPresent;
-		pHTInfoField2->obssNonHTStaPresent = pMac->lim.gHTObssMode;     /*added for Obss  */
-
-		pHTInfoField2->reserved = 0;
+		pDot11f->opMode = 0;
+		pDot11f->nonGFDevicesPresent = 0;
+		pDot11f->obssNonHTStaPresent = 0;
+		pDot11f->reserved = 0;
 	}
 
-	CFG_GET_INT(nSirStatus, pMac, WNI_CFG_HT_INFO_FIELD3, nCfgValue);
-
-	uHTInfoField.nCfgValue16 = nCfgValue & 0xFFFF;
-
-	uHTInfoField.infoField3.basicSTBCMCS = pMac->lim.gHTSTBCBasicMCS;
-	uHTInfoField.infoField3.dualCTSProtection =
-		pMac->lim.gHTDualCTSProtection;
-	uHTInfoField.infoField3.secondaryBeacon = pMac->lim.gHTSecondaryBeacon;
-	uHTInfoField.infoField3.lsigTXOPProtectionFullSupport =
-		psessionEntry->beaconParams.fLsigTXOPProtectionFullSupport;
-	uHTInfoField.infoField3.pcoActive = pMac->lim.gHTPCOActive;
-	uHTInfoField.infoField3.pcoPhase = pMac->lim.gHTPCOPhase;
-	uHTInfoField.infoField3.reserved = 0;
-
-	pDot11f->secondaryChannelOffset = pHTInfoField1->secondaryChannelOffset;
-	pDot11f->recommendedTxWidthSet = pHTInfoField1->recommendedTxWidthSet;
-	pDot11f->rifsMode = pHTInfoField1->rifsMode;
-	pDot11f->controlledAccessOnly = pHTInfoField1->controlledAccessOnly;
-	pDot11f->serviceIntervalGranularity =
-		pHTInfoField1->serviceIntervalGranularity;
-
-	pDot11f->opMode = uHTInfoField2.infoField2.opMode;
-	pDot11f->nonGFDevicesPresent =
-		uHTInfoField2.infoField2.nonGFDevicesPresent;
-	pDot11f->obssNonHTStaPresent =
-		uHTInfoField2.infoField2.obssNonHTStaPresent;
-	pDot11f->reserved = uHTInfoField2.infoField2.reserved;
-
-	pDot11f->basicSTBCMCS = uHTInfoField.infoField3.basicSTBCMCS;
-	pDot11f->dualCTSProtection = uHTInfoField.infoField3.dualCTSProtection;
-	pDot11f->secondaryBeacon = uHTInfoField.infoField3.secondaryBeacon;
+	pDot11f->basicSTBCMCS = pMac->lim.gHTSTBCBasicMCS;
+	pDot11f->dualCTSProtection = pMac->lim.gHTDualCTSProtection;
+	pDot11f->secondaryBeacon = pMac->lim.gHTSecondaryBeacon;
 	pDot11f->lsigTXOPProtectionFullSupport =
-		uHTInfoField.infoField3.lsigTXOPProtectionFullSupport;
-	pDot11f->pcoActive = uHTInfoField.infoField3.pcoActive;
-	pDot11f->pcoPhase = uHTInfoField.infoField3.pcoPhase;
-	pDot11f->reserved2 = uHTInfoField.infoField3.reserved;
+		psessionEntry->beaconParams.fLsigTXOPProtectionFullSupport;
+	pDot11f->pcoActive = pMac->lim.gHTPCOActive;
+	pDot11f->pcoPhase = pMac->lim.gHTPCOPhase;
+	pDot11f->reserved2 = 0;
+
 	ncfglen = SIZE_OF_BASIC_MCS_SET;
 	nSirStatus = wlan_mlme_get_cfg_str(pDot11f->basicMCSSet,
 					   &pMac->mlme_cfg->rates.basic_mcs_set,
@@ -5931,8 +5861,7 @@ populate_dot11f_timing_advert_frame(tpAniSirGlobal mac_ctx,
 	if (val)
 		frame->Capabilities.privacy = 1;
 
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_SHORT_PREAMBLE, &val);
-	if (val)
+	if (mac_ctx->mlme_cfg->ht_caps.short_preamble)
 		frame->Capabilities.shortPreamble = 1;
 
 	wlan_cfg_get_int(mac_ctx, WNI_CFG_11H_ENABLED, &val);

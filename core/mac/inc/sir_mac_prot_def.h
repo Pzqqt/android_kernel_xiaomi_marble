@@ -1871,61 +1871,6 @@ typedef struct sSirMacASCapabilityInfo {
 #endif
 } qdf_packed tSirMacASCapabilityInfo;
 
-/* Additional HT IE Field1 */
-typedef struct sSirMacHTInfoField1 {
-#ifndef ANI_LITTLE_BIT_ENDIAN
-	uint8_t serviceIntervalGranularity:3;   /* Dynamic state */
-	uint8_t controlledAccessOnly:1; /* Static via CFG */
-	uint8_t rifsMode:1;     /* Dynamic state */
-	uint8_t recommendedTxWidthSet:1;        /* Dynamic state */
-	uint8_t secondaryChannelOffset:2;       /* Dynamic state */
-#else
-	uint8_t secondaryChannelOffset:2;
-	uint8_t recommendedTxWidthSet:1;
-	uint8_t rifsMode:1;
-	uint8_t controlledAccessOnly:1;
-	uint8_t serviceIntervalGranularity:3;
-#endif
-} qdf_packed tSirMacHTInfoField1;
-
-/* Additional HT IE Field2 */
-typedef struct sSirMacHTInfoField2 {
-#ifndef ANI_LITTLE_BIT_ENDIAN
-	uint16_t reserved:11;
-	uint16_t obssNonHTStaPresent:1; /*added for Obss  */
-	uint16_t transmitBurstLimit:1;
-	uint16_t nonGFDevicesPresent:1;
-	uint16_t opMode:2;      /* Dynamic state */
-#else
-	uint16_t opMode:2;
-	uint16_t nonGFDevicesPresent:1;
-	uint16_t transmitBurstLimit:1;
-	uint16_t obssNonHTStaPresent:1; /*added for Obss  */
-	uint16_t reserved:11;
-#endif
-} qdf_packed tSirMacHTInfoField2;
-
-/* Additional HT IE Field3 */
-typedef struct sSirMacHTInfoField3 {
-#ifndef ANI_LITTLE_BIT_ENDIAN
-	uint16_t reserved:4;
-	uint16_t pcoPhase:1;    /* Dynamic state */
-	uint16_t pcoActive:1;   /* Dynamic state */
-	uint16_t lsigTXOPProtectionFullSupport:1;       /* Dynamic state */
-	uint16_t secondaryBeacon:1;     /* Dynamic state */
-	uint16_t dualCTSProtection:1;   /* Dynamic state */
-	uint16_t basicSTBCMCS:7;        /* Dynamic state */
-#else
-	uint16_t basicSTBCMCS:7;
-	uint16_t dualCTSProtection:1;
-	uint16_t secondaryBeacon:1;
-	uint16_t lsigTXOPProtectionFullSupport:1;
-	uint16_t pcoActive:1;
-	uint16_t pcoPhase:1;
-	uint16_t reserved:4;
-#endif
-} qdf_packed tSirMacHTInfoField3;
-
 typedef struct sSirMacProbeReqFrame {
 	tSirMacSSidIE ssIdIE;
 	tSirMacRateSetIE rateSetIE;

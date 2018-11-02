@@ -490,20 +490,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_CHANNEL_BONDING_MODE_MIN,
 		     CFG_CHANNEL_BONDING_MODE_MAX),
 
-	REG_VARIABLE(CFG_MAX_RX_AMPDU_FACTOR_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, MaxRxAmpduFactor,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_MAX_RX_AMPDU_FACTOR_DEFAULT,
-		     CFG_MAX_RX_AMPDU_FACTOR_MIN,
-		     CFG_MAX_RX_AMPDU_FACTOR_MAX),
-
-	REG_VARIABLE(CFG_HT_MPDU_DENSITY_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, ht_mpdu_density,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_HT_MPDU_DENSITY_DEFAULT,
-		     CFG_HT_MPDU_DENSITY_MIN,
-		     CFG_HT_MPDU_DENSITY_MAX),
-
 	REG_VARIABLE(CFG_SCAN_RESULT_AGE_COUNT_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, ScanResultAgeCount,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
@@ -517,13 +503,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_RSSI_CATEGORY_GAP_DEFAULT,
 		     CFG_RSSI_CATEGORY_GAP_MIN,
 		     CFG_RSSI_CATEGORY_GAP_MAX),
-
-	REG_VARIABLE(CFG_SHORT_PREAMBLE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, fIsShortPreamble,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_SHORT_PREAMBLE_DEFAULT,
-		     CFG_SHORT_PREAMBLE_MIN,
-		     CFG_SHORT_PREAMBLE_MAX),
 
 	REG_VARIABLE_STRING(CFG_IBSS_BSSID_NAME, WLAN_PARAM_MacAddr,
 			    struct hdd_config, IbssBssid,
@@ -556,7 +535,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_AP_QOS_UAPSD_MODE_DEFAULT,
 		     CFG_AP_QOS_UAPSD_MODE_MIN,
 		     CFG_AP_QOS_UAPSD_MODE_MAX),
-
 
 	REG_VARIABLE(CFG_AP_ENABLE_RANDOM_BSSID_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, apRandomBssidEnabled,
@@ -1443,21 +1421,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_VDEV_TYPE_NSS_5G_MIN,
 		     CFG_VDEV_TYPE_NSS_5G_MAX),
 
-
-	REG_VARIABLE(CFG_HT_ENABLE_SMPS_CAP_FEATURE, WLAN_PARAM_Integer,
-		     struct hdd_config, enableHtSmps,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_HT_ENABLE_SMPS_CAP_FEATURE_DEFAULT,
-		     CFG_HT_ENABLE_SMPS_CAP_FEATURE_MIN,
-		     CFG_HT_ENABLE_SMPS_CAP_FEATURE_MAX),
-
-	REG_VARIABLE(CFG_HT_SMPS_CAP_FEATURE, WLAN_PARAM_Integer,
-		     struct hdd_config, htSmps,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_HT_SMPS_CAP_FEATURE_DEFAULT,
-		     CFG_HT_SMPS_CAP_FEATURE_MIN,
-		     CFG_HT_SMPS_CAP_FEATURE_MAX),
-
 	REG_VARIABLE(CFG_DISABLE_DFS_CH_SWITCH, WLAN_PARAM_Integer,
 		     struct hdd_config, disableDFSChSwitch,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1580,13 +1543,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_PNO_SLOW_SCAN_MULTIPLIER_MIN,
 		     CFG_PNO_SLOW_SCAN_MULTIPLIER_MAX),
 #endif
-	REG_VARIABLE(CFG_MAX_AMSDU_NUM_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, max_amsdu_num,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MAX_AMSDU_NUM_DEFAULT,
-		     CFG_MAX_AMSDU_NUM_MIN,
-		     CFG_MAX_AMSDU_NUM_MAX),
-
 	REG_VARIABLE(CFG_COALESING_IN_IBSS_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, isCoalesingInIBSSAllowed,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -3840,26 +3796,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 
 	mac_handle = hdd_ctx->mac_handle;
 
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_MAX_RX_AMPDU_FACTOR,
-			    config->MaxRxAmpduFactor) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_HT_AMPDU_PARAMS_MAX_RX_AMPDU_FACTOR to CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_MPDU_DENSITY,
-			    config->ht_mpdu_density) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_MPDU_DENSITY to CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_SHORT_PREAMBLE,
-		     config->fIsShortPreamble) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_SHORT_PREAMBLE to CFG");
-	}
-
 	if (sme_cfg_set_int(mac_handle,
 				WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
 				config->nPassiveMaxChnTime)
@@ -4124,8 +4060,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	/* Remaining config params not obtained from registry
 	 * On RF EVB beacon using channel 1.
 	 */
-	smeConfig->csrConfig.enableHtSmps = pConfig->enableHtSmps;
-	smeConfig->csrConfig.htSmps = pConfig->htSmps;
 	/* This param cannot be configured from INI */
 	smeConfig->csrConfig.send_smps_action = true;
 	smeConfig->csrConfig.AdHocChannel5G = pConfig->AdHocChannel5G;
@@ -4235,8 +4169,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	smeConfig->csrConfig.enable_tx_ldpc = pConfig->enable_tx_ldpc;
 	smeConfig->csrConfig.enable_rx_ldpc = pConfig->enable_rx_ldpc;
-
-	smeConfig->csrConfig.max_amsdu_num = pConfig->max_amsdu_num;
 
 	smeConfig->csrConfig.isCoalesingInIBSSAllowed =
 		hdd_ctx->config->isCoalesingInIBSSAllowed;

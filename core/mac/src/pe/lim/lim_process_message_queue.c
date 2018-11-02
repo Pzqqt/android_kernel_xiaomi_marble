@@ -1513,10 +1513,8 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		lim_update_beacon(mac_ctx);
 		break;
 	case SIR_CFG_PARAM_UPDATE_IND:
-		if (!lim_is_system_in_scan_state(mac_ctx)) {
-			lim_handle_cf_gparam_update(mac_ctx, msg->bodyval);
+		if (!lim_is_system_in_scan_state(mac_ctx))
 			break;
-		}
 		/* System is in DFS (Learn) mode.
 		 * Defer processing this message
 		 */
@@ -2216,12 +2214,6 @@ handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
 				tpPESession psessionEntry)
 {
 	struct mlme_ht_capabilities_info *ht_cap_info;
-	tSirMacHTParametersInfo macHTParametersInfo;
-	tSirMacHTInfoField1 macHTInfoField1;
-	tSirMacHTInfoField2 macHTInfoField2;
-	tSirMacHTInfoField3 macHTInfoField3;
-	uint32_t cfgValue;
-	uint8_t *ptr;
 
 	ht_cap_info = &pMac->mlme_cfg->ht_caps.ht_cap_info;
 	pMac->lim.gHTLsigTXOPProtection =
@@ -2237,54 +2229,32 @@ handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
 	pMac->lim.gHTDsssCckRate40MHzSupport =
 		(uint8_t)ht_cap_info->dsss_cck_mode_40_mhz;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &cfgValue) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("Fail to retrieve WNI_CFG_HT_PARAM_INFO value");
-		return;
-	}
-	ptr = (uint8_t *) &macHTParametersInfo;
-	*ptr = (uint8_t) (cfgValue & 0xff);
-	pMac->lim.gHTAMpduDensity = (uint8_t) macHTParametersInfo.mpduDensity;
+	pMac->lim.gHTAMpduDensity =
+		(uint8_t)pMac->mlme_cfg->ht_caps.ampdu_params.mpdu_density;
 	pMac->lim.gHTMaxRxAMpduFactor =
-		(uint8_t) macHTParametersInfo.maxRxAMPDUFactor;
+		(uint8_t)pMac->mlme_cfg->ht_caps.ampdu_params.
+		max_rx_ampdu_factor;
 
 	/* Get HT IE Info */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_INFO_FIELD1, &cfgValue) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("Fail to retrieve WNI_CFG_HT_INFO_FIELD1 value");
-		return;
-	}
-	ptr = (uint8_t *) &macHTInfoField1;
-	*((uint8_t *) ptr) = (uint8_t) (cfgValue & 0xff);
 	pMac->lim.gHTServiceIntervalGranularity =
-		(uint8_t) macHTInfoField1.serviceIntervalGranularity;
+		(uint8_t)pMac->mlme_cfg->ht_caps.info_field_1.
+		service_interval_granularity;
 	pMac->lim.gHTControlledAccessOnly =
-		(uint8_t) macHTInfoField1.controlledAccessOnly;
-	pMac->lim.gHTRifsMode = (uint8_t) macHTInfoField1.rifsMode;
+		(uint8_t)pMac->mlme_cfg->ht_caps.info_field_1.
+		controlled_access_only;
+	pMac->lim.gHTRifsMode = (uint8_t)pMac->mlme_cfg->ht_caps.info_field_1.
+		rifs_mode;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_INFO_FIELD2, &cfgValue) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("Fail to retrieve WNI_CFG_HT_INFO_FIELD2 value");
-		return;
-	}
-	ptr = (uint8_t *) &macHTInfoField2;
-	*((uint16_t *) ptr) = (uint16_t) (cfgValue & 0xffff);
-	pMac->lim.gHTOperMode = (tSirMacHTOperatingMode) macHTInfoField2.opMode;
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_INFO_FIELD3, &cfgValue) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("Fail to retrieve WNI_CFG_HT_INFO_FIELD3 value");
-		return;
-	}
-	ptr = (uint8_t *) &macHTInfoField3;
-	*((uint16_t *) ptr) = (uint16_t) (cfgValue & 0xffff);
-	pMac->lim.gHTPCOActive = (uint8_t) macHTInfoField3.pcoActive;
-	pMac->lim.gHTPCOPhase = (uint8_t) macHTInfoField3.pcoPhase;
+	pMac->lim.gHTPCOActive = (uint8_t)pMac->mlme_cfg->ht_caps.info_field_3.
+								pco_active;
+	pMac->lim.gHTPCOPhase = (uint8_t)pMac->mlme_cfg->ht_caps.info_field_3.
+								pco_phase;
 	pMac->lim.gHTSecondaryBeacon =
-		(uint8_t) macHTInfoField3.secondaryBeacon;
-	pMac->lim.gHTDualCTSProtection =
-		(uint8_t) macHTInfoField3.dualCTSProtection;
-	pMac->lim.gHTSTBCBasicMCS = (uint8_t) macHTInfoField3.basicSTBCMCS;
+		(uint8_t)pMac->mlme_cfg->ht_caps.info_field_3.secondary_beacon;
+	pMac->lim.gHTDualCTSProtection = (uint8_t)pMac->mlme_cfg->ht_caps.
+					info_field_3.dual_cts_protection;
+	pMac->lim.gHTSTBCBasicMCS = (uint8_t)pMac->mlme_cfg->ht_caps.
+					info_field_3.basic_stbc_mcs;
 
 	/* The lim globals for channelwidth and secondary chnl have been removed and should not be used during no session;
 	 * instead direct cfg is read and used when no session for transmission of mgmt frames (same as old);
@@ -2295,7 +2265,8 @@ handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
 		psessionEntry->htCapability =
 			IS_DOT11_MODE_HT(psessionEntry->dot11mode);
 		psessionEntry->beaconParams.fLsigTXOPProtectionFullSupport =
-			(uint8_t) macHTInfoField3.lsigTXOPProtectionFullSupport;
+			(uint8_t)pMac->mlme_cfg->ht_caps.info_field_3.
+			lsig_txop_protection_full_support;
 		lim_init_obss_params(pMac, psessionEntry);
 	}
 }

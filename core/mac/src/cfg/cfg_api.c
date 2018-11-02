@@ -707,13 +707,9 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 		pCapInfo->privacy = 1;
 
 	/* Short preamble bit */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val) !=
-							QDF_STATUS_SUCCESS) {
-		pe_err("cfg get WNI_CFG_SHORT_PREAMBLE failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (val)
-		pCapInfo->shortPreamble = 1;
+	if (pMac->mlme_cfg->ht_caps.short_preamble)
+		pCapInfo->shortPreamble =
+			pMac->mlme_cfg->ht_caps.short_preamble;
 
 	/* PBCC bit */
 	pCapInfo->pbcc = 0;

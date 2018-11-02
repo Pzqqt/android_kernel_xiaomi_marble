@@ -2742,8 +2742,6 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 	uint8_t retVal = 0;
 	uint8_t *ptr;
 	uint32_t cfgValue;
-	struct mlme_ht_capabilities_info ht_cap_info = { 0 };
-	tSirMacExtendedHTCapabilityInfo macExtHTCapabilityInfo = { 0 };
 	tSirMacTxBFCapabilityInfo macTxBFCapabilityInfo = { 0 };
 	tSirMacASCapabilityInfo macASCapabilityInfo = { 0 };
 
@@ -2759,39 +2757,14 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 			cfgValue = 0;
 		ptr = (uint8_t *) &macASCapabilityInfo;
 		*((uint8_t *) ptr) = (uint8_t) (cfgValue & 0xff);
-	} else {
-		if (htCap >= eHT_TX_BEAMFORMING &&
-		    htCap < eHT_ANTENNA_SELECTION) {
-			/* Get Transmit Beam Forming HT Capabilities */
-			if (QDF_STATUS_SUCCESS !=
-			    wlan_cfg_get_int(pMac, WNI_CFG_TX_BF_CAP, &cfgValue))
-				cfgValue = 0;
-			ptr = (uint8_t *) &macTxBFCapabilityInfo;
-			*((uint32_t *) ptr) = (uint32_t) (cfgValue);
-		} else {
-			if (htCap >= eHT_PCO && htCap < eHT_TX_BEAMFORMING) {
-				/* Get Extended HT Capabilities */
-				if (QDF_STATUS_SUCCESS !=
-				    wlan_cfg_get_int(pMac,
-						     WNI_CFG_EXT_HT_CAP_INFO,
-						     &cfgValue))
-					cfgValue = 0;
-				ptr = (uint8_t *) &macExtHTCapabilityInfo;
-				*((uint16_t *) ptr) =
-					(uint16_t) (cfgValue & 0xffff);
-			} else {
-				if (htCap < eHT_MAX_RX_AMPDU_FACTOR) {
-					/* Get HT Capabilities */
-					cfgValue = *(uint32_t *)
-						&pMac->mlme_cfg->ht_caps.
-						ht_cap_info;
-					ptr = (uint8_t *)&ht_cap_info;
-					/* CR 265282 MDM SoftAP 2.4PL: SoftAP boot up crash in 2.4 PL builds while same WLAN SU is working on 2.1 PL */
-					*ptr++ = cfgValue & 0xff;
-					*ptr = (cfgValue >> 8) & 0xff;
-				}
-			}
-		}
+	} else if (htCap >= eHT_TX_BEAMFORMING &&
+		   htCap < eHT_ANTENNA_SELECTION) {
+		/* Get Transmit Beam Forming HT Capabilities */
+		if (QDF_STATUS_SUCCESS !=
+		    wlan_cfg_get_int(pMac, WNI_CFG_TX_BF_CAP, &cfgValue))
+			cfgValue = 0;
+		ptr = (uint8_t *)&macTxBFCapabilityInfo;
+		*((uint32_t *)ptr) = (uint32_t)(cfgValue);
 	}
 
 	switch (htCap) {
@@ -2800,7 +2773,8 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 		break;
 
 	case eHT_STBC_CONTROL_FRAME:
-		retVal = (uint8_t)ht_cap_info.stbc_control_frame;
+		retVal = (uint8_t)pMac->mlme_cfg->ht_caps.ht_cap_info.
+			stbc_control_frame;
 		break;
 
 	case eHT_PSMP:
@@ -2812,7 +2786,8 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 		break;
 
 	case eHT_MAX_AMSDU_LENGTH:
-		retVal = (uint8_t)ht_cap_info.maximal_amsdu_size;
+		retVal = (uint8_t)pMac->mlme_cfg->ht_caps.ht_cap_info.
+			maximal_amsdu_size;
 		break;
 
 	case eHT_MAX_AMSDU_NUM:
@@ -2828,17 +2803,18 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 		break;
 
 	case eHT_SHORT_GI_40MHZ:
-		retVal = (uint8_t) (psessionEntry->htConfig.ht_sgi40) ?
-			 ht_cap_info.short_gi_40_mhz : 0;
+		retVal = (uint8_t)(psessionEntry->htConfig.ht_sgi40) ?
+			pMac->mlme_cfg->ht_caps.ht_cap_info.short_gi_40_mhz : 0;
 		break;
 
 	case eHT_SHORT_GI_20MHZ:
-		retVal = (uint8_t) (psessionEntry->htConfig.ht_sgi20) ?
-			 ht_cap_info.short_gi_20_mhz : 0;
+		retVal = (uint8_t)(psessionEntry->htConfig.ht_sgi20) ?
+			pMac->mlme_cfg->ht_caps.ht_cap_info.short_gi_20_mhz : 0;
 		break;
 
 	case eHT_GREENFIELD:
-		retVal = (uint8_t)ht_cap_info.green_field;
+		retVal = (uint8_t)pMac->mlme_cfg->ht_caps.ht_cap_info.
+			green_field;
 		break;
 
 	case eHT_MIMO_POWER_SAVE:
@@ -2862,15 +2838,17 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal pMac,
 		break;
 
 	case eHT_PCO:
-		retVal = (uint8_t) macExtHTCapabilityInfo.pco;
+		retVal = (uint8_t)pMac->mlme_cfg->ht_caps.ext_cap_info.pco;
 		break;
 
 	case eHT_TRANSITION_TIME:
-		retVal = (uint8_t) macExtHTCapabilityInfo.transitionTime;
+		retVal = (uint8_t)pMac->mlme_cfg->ht_caps.ext_cap_info.
+			transition_time;
 		break;
 
 	case eHT_MCS_FEEDBACK:
-		retVal = (uint8_t) macExtHTCapabilityInfo.mcsFeedback;
+		retVal = (uint8_t)pMac->mlme_cfg->ht_caps.ext_cap_info.
+			mcs_feedback;
 		break;
 
 	case eHT_TX_BEAMFORMING:
@@ -4156,15 +4134,7 @@ lim_enable_short_preamble(tpAniSirGlobal pMac, uint8_t enable,
 			  tpUpdateBeaconParams pBeaconParams,
 			  tpPESession psessionEntry)
 {
-	uint32_t val;
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val) != QDF_STATUS_SUCCESS) {
-		/* Could not get short preamble enabled flag from CFG. Log error. */
-		pe_err("could not retrieve short preamble flag");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!val)
+	if (!pMac->mlme_cfg->ht_caps.short_preamble)
 		return QDF_STATUS_SUCCESS;
 
 	/* 11G short preamble switching is disabled. */

@@ -13670,9 +13670,9 @@ QDF_STATUS sme_update_mimo_power_save(tHalHandle hal,
 	sme_debug("SMPS enable: %d mode: %d send action: %d",
 		is_ht_smps_enabled, ht_smps_mode,
 		send_smps_action);
-	mac_ctx->roam.configParam.enableHtSmps =
+	mac_ctx->mlme_cfg->ht_caps.enable_smps =
 		is_ht_smps_enabled;
-	mac_ctx->roam.configParam.htSmps = ht_smps_mode;
+	mac_ctx->mlme_cfg->ht_caps.smps = ht_smps_mode;
 	mac_ctx->roam.configParam.send_smps_action =
 		send_smps_action;
 

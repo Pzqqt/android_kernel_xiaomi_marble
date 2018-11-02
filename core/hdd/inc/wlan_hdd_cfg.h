@@ -178,44 +178,6 @@ struct hdd_context;
 #define CFG_COUNTRY_CODE_PRIORITY_MAX          (1)
 #define CFG_COUNTRY_CODE_PRIORITY_DEFAULT      (0)
 
-/*
- * <ini>
- * gMaxRxAmpduFactor - Provide the maximum ampdu factor.
- * @Min: 0
- * @Max: 3
- * @Default: 3
- *
- * This ini is used to set default maxampdu factor
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_MAX_RX_AMPDU_FACTOR_NAME         "gMaxRxAmpduFactor"
-#define CFG_MAX_RX_AMPDU_FACTOR_MIN          WNI_CFG_MAX_RX_AMPDU_FACTOR_STAMIN
-#define CFG_MAX_RX_AMPDU_FACTOR_MAX          WNI_CFG_MAX_RX_AMPDU_FACTOR_STAMAX
-#define CFG_MAX_RX_AMPDU_FACTOR_DEFAULT      WNI_CFG_MAX_RX_AMPDU_FACTOR_STADEF
-
-/* Configuration option for HT MPDU density (Table 8-125 802.11-2012)
- * 0 for no restriction
- * 1 for 1/4 micro sec
- * 2 for 1/2 micro sec
- * 3 for 1 micro sec
- * 4 for 2 micro sec
- * 5 for 4 micro sec
- * 6 for 8 micro sec
- * 7 for 16 micro sec
- */
-#define CFG_HT_MPDU_DENSITY_NAME               "ght_mpdu_density"
-#define CFG_HT_MPDU_DENSITY_MIN                WNI_CFG_MPDU_DENSITY_STAMIN
-#define CFG_HT_MPDU_DENSITY_MAX                WNI_CFG_MPDU_DENSITY_STAMAX
-#define CFG_HT_MPDU_DENSITY_DEFAULT            WNI_CFG_MPDU_DENSITY_STADEF
-
 #define CFG_REG_CHANGE_DEF_COUNTRY_NAME          "gRegulatoryChangeCountry"
 #define CFG_REG_CHANGE_DEF_COUNTRY_DEFAULT       (0)
 #define CFG_REG_CHANGE_DEF_COUNTRY_MIN           (0)
@@ -1610,29 +1572,6 @@ enum hdd_dot11_mode {
 #define CFG_ROAM_FORCE_RSSI_TRIGGER_MIN     (0)
 #define CFG_ROAM_FORCE_RSSI_TRIGGER_MAX     (1)
 #define CFG_ROAM_FORCE_RSSI_TRIGGER_DEFAULT (1)
-
-/*
- * <ini>
- * gShortPreamble - Set Short Preamble
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to set default short Preamble
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_SHORT_PREAMBLE_NAME                "gShortPreamble"
-#define CFG_SHORT_PREAMBLE_MIN                 WNI_CFG_SHORT_PREAMBLE_STAMIN
-#define CFG_SHORT_PREAMBLE_MAX                 WNI_CFG_SHORT_PREAMBLE_STAMAX
-#define CFG_SHORT_PREAMBLE_DEFAULT             WNI_CFG_SHORT_PREAMBLE_STADEF
 
 /*
  * <ini>
@@ -3078,16 +3017,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_VDEV_TYPE_NSS_5G_MAX     (0xAAAA)
 #define CFG_VDEV_TYPE_NSS_5G_DEFAULT (0xAAAA)
 
-#define CFG_HT_ENABLE_SMPS_CAP_FEATURE          "gEnableHtSMPS"
-#define CFG_HT_ENABLE_SMPS_CAP_FEATURE_MIN      (0)
-#define CFG_HT_ENABLE_SMPS_CAP_FEATURE_MAX      (1)
-#define CFG_HT_ENABLE_SMPS_CAP_FEATURE_DEFAULT  (0)
-
-#define CFG_HT_SMPS_CAP_FEATURE                 "gHtSMPS"
-#define CFG_HT_SMPS_CAP_FEATURE_MIN             (0)
-#define CFG_HT_SMPS_CAP_FEATURE_MAX             (3)
-#define CFG_HT_SMPS_CAP_FEATURE_DEFAULT         (3)
-
 /*
  * <ini>
  * gDisableDFSChSwitch - Disable channel switch if radar is found
@@ -3964,27 +3893,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_MEMORY_DEBUG_MAX              (1)
 #define CFG_ENABLE_MEMORY_DEBUG_DEFAULT          (1)
 #endif
-
-/*
- * <ini>
- * gMaxAmsduNum - Max number of MSDU's in aggregate
- * @Min: 0
- * @Max: 3
- * @Default: 1
- * gMaxAmsduNum is the number of MSDU's transmitted in the 11n aggregate
- * frame. Setting it to a value larger than 1 enables transmit aggregation.
- * It is a PHY parameter that applies to all vdev's in firmware.
- *
- * Supported Feature: 11n aggregation
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_MAX_AMSDU_NUM_NAME                "gMaxAmsduNum"
-#define CFG_MAX_AMSDU_NUM_MIN                 (0)
-#define CFG_MAX_AMSDU_NUM_MAX                 (3)
-#define CFG_MAX_AMSDU_NUM_DEFAULT             (1)
 
 /*
  * <ini>
@@ -6488,10 +6396,8 @@ struct hdd_config {
 	uint32_t nChannelBondingMode24GHz;
 	bool override_ht20_40_24g;
 	uint32_t nChannelBondingMode5GHz;
-	uint32_t MaxRxAmpduFactor;
 	uint32_t ScanResultAgeCount;
 	uint8_t nRssiCatGap;
-	bool fIsShortPreamble;
 	struct qdf_mac_addr IbssBssid;
 	uint32_t AdHocChannel5G;
 	uint32_t AdHocChannel24G;
@@ -6681,9 +6587,6 @@ struct hdd_config {
 #endif
 	uint32_t vdev_type_nss_2g;
 	uint32_t vdev_type_nss_5g;
-	uint8_t enableAmpduPs;
-	uint8_t enableHtSmps;
-	uint8_t htSmps;
 	bool enableFirstScan2GOnly;
 	uint8_t enable_tx_ldpc;
 	uint8_t enable_rx_ldpc;
@@ -6699,7 +6602,6 @@ struct hdd_config {
 	uint32_t configPNOScanTimerRepeatValue;
 	uint32_t pno_slow_scan_multiplier;
 #endif
-	uint8_t max_amsdu_num;
 	uint8_t isCoalesingInIBSSAllowed;
 
 	/* IBSS Power Save related parameters */
@@ -6777,7 +6679,6 @@ struct hdd_config {
 	int8_t early_stop_scan_min_threshold;
 	int8_t early_stop_scan_max_threshold;
 	int8_t first_scan_bucket_threshold;
-	uint8_t ht_mpdu_density;
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 	bool enable_lfr_subnet_detection;
 #endif

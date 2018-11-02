@@ -2655,11 +2655,6 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	uint16_t *pCfgValue16;
 	uint8_t nCfgValue8, *pCfgValue8;
 	tSirMacQosInfoStation macQosInfoSta;
-	union {
-		uint16_t nCfgValue16;
-		struct mlme_ht_capabilities_info htCapInfo;
-		tSirMacExtendedHTCapabilityInfo extHtCapInfo;
-	} uHTCapabilityInfo;
 
 	qdf_mem_set(&macQosInfoSta, sizeof(tSirMacQosInfoStation), 0);
 	/* Roaming is done only for INFRA STA type.
@@ -2678,13 +2673,8 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	val = pMac->mlme_cfg->wep_params.is_privacy_enabled;
 	if (val)
 		selfCaps.privacy = 1;
-	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val) !=
-							 QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_SHORT_PREAMBLE");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (val)
+
+	if (pMac->mlme_cfg->ht_caps.short_preamble)
 		selfCaps.shortPreamble = 1;
 
 	selfCaps.pbcc = 0;
@@ -2735,19 +2725,14 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	roam_offload_params->capability <<= RSN_CAPS_SHIFT;
 	roam_offload_params->capability |= ((*pCfgValue16) & 0xFFFF);
 
-	nCfgValue = *(uint32_t *)&pMac->mlme_cfg->ht_caps.ht_cap_info;
-	uHTCapabilityInfo.nCfgValue16 = nCfgValue & 0xFFFF;
 	roam_offload_params->ht_caps_info =
-		uHTCapabilityInfo.nCfgValue16 & 0xFFFF;
-	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &nCfgValue) !=
-	    QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_HT_AMPDU_PARAMS");
-		return QDF_STATUS_E_FAILURE;
-	}
-	/* tSirMacHTParametersInfo */
-	nCfgValue8 = (uint8_t) nCfgValue;
-	roam_offload_params->ampdu_param = (nCfgValue8) & 0xFF;
+		*(uint32_t *)&pMac->mlme_cfg->ht_caps.ht_cap_info;
+
+	roam_offload_params->ampdu_param =
+		*(uint32_t *)&pMac->mlme_cfg->ht_caps.ampdu_params;
+
+	roam_offload_params->ht_ext_cap =
+		*(uint32_t *)&pMac->mlme_cfg->ht_caps.ext_cap_info;
 
 	val_len = ROAM_OFFLOAD_NUM_MCS_SET;
 	if (wlan_mlme_get_cfg_str((uint8_t *)roam_offload_params->mcsset,
@@ -2757,16 +2742,6 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 			  "Failed to get CFG_SUPPORTED_MCS_SET");
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (wlan_cfg_get_int(pMac, WNI_CFG_EXT_HT_CAP_INFO, &nCfgValue) !=
-	    QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_EXT_HT_CAP_INFO");
-		return QDF_STATUS_E_FAILURE;
-	}
-	/* uHTCapabilityInfo.extHtCapInfo */
-	uHTCapabilityInfo.nCfgValue16 = nCfgValue & 0xFFFF;
-	roam_offload_params->ht_ext_cap =
-		uHTCapabilityInfo.nCfgValue16 & 0xFFFF;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_TX_BF_CAP, &nCfgValue) !=
 							QDF_STATUS_SUCCESS) {
