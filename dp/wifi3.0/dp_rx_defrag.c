@@ -893,11 +893,10 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 	if (hal_rx_get_mpdu_frame_control_valid(rx_desc_info))
 		fc = hal_rx_get_frame_ctrl_field(rx_desc_info);
 
-	switch (((fc & 0xff00) >> 8) & IEEE80211_FC1_DIR_MASK) {
-
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 		"%s: frame control type: 0x%x", __func__, fc);
 
+	switch (((fc & 0xff00) >> 8) & IEEE80211_FC1_DIR_MASK) {
 	case IEEE80211_FC1_DIR_NODS:
 		hal_rx_mpdu_get_addr1(rx_desc_info,
 			&mac_addr.raw[0]);
