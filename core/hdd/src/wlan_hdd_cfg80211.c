@@ -13192,8 +13192,10 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 				hdd_deregister_tx_flow_control(adapter);
 
 			errno = hdd_change_adapter_mode(adapter, new_mode);
-			if (errno)
-				return errno;
+			if (errno) {
+				hdd_err("change intf mode fail %d", errno);
+				goto err;
+			}
 		} else if (hdd_is_ap_mode(new_mode)) {
 			if (new_mode == QDF_P2P_GO_MODE)
 				wlan_hdd_cancel_existing_remain_on_channel
@@ -13226,13 +13228,16 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		} else {
 			hdd_err("Changing to device mode '%s' is not supported",
 				qdf_opmode_str(new_mode));
-			return -EOPNOTSUPP;
+			errno = -EOPNOTSUPP;
+			goto err;
 		}
 	} else if (hdd_is_ap_mode(adapter->device_mode)) {
 		if (hdd_is_client_mode(new_mode)) {
 			errno = hdd_change_adapter_mode(adapter, new_mode);
-			if (errno)
-				return errno;
+			if (errno) {
+				hdd_err("change mode fail %d", errno);
+				goto err;
+			}
 		} else if (hdd_is_ap_mode(new_mode)) {
 			adapter->device_mode = new_mode;
 
@@ -13241,12 +13246,14 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		} else {
 			hdd_err("Changing to device mode '%s' is not supported",
 				qdf_opmode_str(new_mode));
-			return -EOPNOTSUPP;
+			errno = -EOPNOTSUPP;
+			goto err;
 		}
 	} else {
 		hdd_err("Changing from device mode '%s' is not supported",
 			qdf_opmode_str(adapter->device_mode));
-		return -EOPNOTSUPP;
+		errno = -EOPNOTSUPP;
+		goto err;
 	}
 
 	/* restart the adapter if it was up before the change iface request */
@@ -13254,20 +13261,20 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		errno = hdd_start_adapter(adapter);
 		if (errno) {
 			hdd_err("Failed to start adapter");
-			return -EINVAL;
+			errno = -EINVAL;
+			goto err;
 		}
 	}
 
 	ndev->ieee80211_ptr->iftype = type;
-
+	hdd_lpass_notify_mode_change(adapter);
+err:
 	/* Set bitmask based on updated value */
 	policy_mgr_set_concurrency_mode(hdd_ctx->psoc, adapter->device_mode);
 
-	hdd_lpass_notify_mode_change(adapter);
-
 	hdd_exit();
 
-	return 0;
+	return errno;
 }
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
