@@ -2856,6 +2856,20 @@ typedef struct {
     #define WMI_RSRC_CFG_FLAG_TX_ACK_RSSI_S 18
     #define WMI_RSRC_CFG_FLAG_TX_ACK_RSSI_M 0x40000
 
+    /*
+     * If HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN is set, the host will not
+     * include the HTC header length in the payload length for all HTT_H2T
+     * messages.
+     * Otherwise, only when sending HTT_H2T_MSG_TYPE_TX_FRM message,
+     * payload length includes HTC header length. Other HTT_H2T messages'
+     * payload length does not include HTC header length.
+     * The host will only set this HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN flag
+     * if the target has set the WMI_SERVICE_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN
+     * flag to indicate its support for this option.
+     */
+    #define WMI_RSRC_CFG_FLAG_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN_S 19
+    #define WMI_RSRC_CFG_FLAG_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN_M 0x80000
+
     A_UINT32 flag1;
 
     /** @brief smart_ant_cap - Smart Antenna capabilities information
@@ -3089,6 +3103,10 @@ typedef struct {
 #define WMI_RSRC_CFG_FLAG_TX_ACK_RSSI_GET(word32) \
     WMI_RSRC_CFG_FLAG_GET((word32), TX_ACK_RSSI)
 
+#define WMI_RSRC_CFG_FLAG_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN, (value))
+#define WMI_RSRC_CFG_FLAG_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN)
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
