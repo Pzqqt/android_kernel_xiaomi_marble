@@ -46,30 +46,11 @@ struct wmi_twt_enable_complete_event_param;
 /* Mask can be only have one bit set */
 typedef enum eSmeCommandType {
 	eSmeNoCommand = 0,
-	eSmeDropCommand,
 	/* this is not a command, it is to identify this is a CSR command */
 	eSmeCsrCommandMask = 0x10000,
 	eSmeCommandRoam,
 	eSmeCommandWmStatusChange,
 	e_sme_command_del_sta_session,
-#ifdef FEATURE_WLAN_TDLS
-	/*
-	 * eSmeTdlsCommandMask = 0x80000,
-	 * To identify TDLS commands <TODO>
-	 * These can be considered as csr commands.
-	 */
-	eSmeCommandTdlsSendMgmt,
-	eSmeCommandTdlsAddPeer,
-	eSmeCommandTdlsDelPeer,
-	eSmeCommandTdlsLinkEstablish,
-#endif
-	/* PMC */
-	eSmePmcCommandMask = 0x20000,   /* To identify PMC commands */
-	eSmeCommandEnterBmps,
-	eSmeCommandExitBmps,
-	eSmeCommandEnterUapsd,
-	eSmeCommandExitUapsd,
-	eSmeCommandExitWowl,
 	/* QOS */
 	eSmeQosCommandMask = 0x40000,   /* To identify Qos commands */
 	eSmeCommandAddTs,

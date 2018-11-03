@@ -20082,18 +20082,6 @@ enum wlan_serialization_cmd_type csr_get_cmd_type(tSmeCmd *sme_cmd)
 	case eSmeCommandDelTs:
 		cmd_type = WLAN_SER_CMD_DELTS;
 		break;
-	case eSmeCommandTdlsSendMgmt:
-		cmd_type = WLAN_SER_CMD_TDLS_SEND_MGMT;
-		break;
-	case eSmeCommandTdlsAddPeer:
-		cmd_type = WLAN_SER_CMD_TDLS_ADD_PEER;
-		break;
-	case eSmeCommandTdlsDelPeer:
-		cmd_type = WLAN_SER_CMD_TDLS_DEL_PEER;
-		break;
-	case eSmeCommandTdlsLinkEstablish:
-		cmd_type = WLAN_SER_CMD_TDLS_LINK_EST;
-		break;
 	case e_sme_command_set_hw_mode:
 		cmd_type = WLAN_SER_CMD_SET_HW_MODE;
 		break;
@@ -20105,21 +20093,6 @@ enum wlan_serialization_cmd_type csr_get_cmd_type(tSmeCmd *sme_cmd)
 		break;
 	case e_sme_command_set_antenna_mode:
 		cmd_type = WLAN_SER_CMD_SET_ANTENNA_MODE;
-		break;
-	case eSmeCommandEnterBmps:
-		cmd_type = WLAN_SER_CMD_ENTER_BMPS;
-		break;
-	case eSmeCommandExitBmps:
-		cmd_type = WLAN_SER_CMD_EXIT_BMPS;
-		break;
-	case eSmeCommandEnterUapsd:
-		cmd_type = WLAN_SER_CMD_ENTER_UAPSD;
-		break;
-	case eSmeCommandExitUapsd:
-		cmd_type = WLAN_SER_CMD_EXIT_UAPSD;
-		break;
-	case eSmeCommandExitWowl:
-		cmd_type = WLAN_SER_CMD_EXIT_WOWL;
 		break;
 	default:
 		break;
