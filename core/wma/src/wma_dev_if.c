@@ -224,6 +224,67 @@ static enum wlan_op_mode wma_get_txrx_vdev_type(uint32_t type)
 }
 
 /**
+ * wma_find_req_on_timer_expiry() - find request by address
+ * @wma: wma handle
+ * @req: pointer to the target request
+ *
+ * On timer expiry, the pointer to the req message is received from the
+ * timer callback. Lookup the wma_hold_req_queue for the request with the
+ * same address and return success if found.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wma_find_req_on_timer_expiry(tp_wma_handle wma,
+					       struct wma_target_req *req)
+{
+	struct wma_target_req *req_msg = NULL;
+	bool found = false;
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	QDF_STATUS status;
+
+	qdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
+	if (QDF_STATUS_SUCCESS != qdf_list_peek_front(&wma->wma_hold_req_queue,
+						      &next_node)) {
+		qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+		WMA_LOGE(FL("unable to get msg node from request queue"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	do {
+		cur_node = next_node;
+		req_msg = qdf_container_of(cur_node,
+					   struct wma_target_req, node);
+		if (req_msg != req)
+			continue;
+
+		found = true;
+		status = qdf_list_remove_node(&wma->wma_hold_req_queue,
+					      cur_node);
+		if (QDF_STATUS_SUCCESS != status) {
+			qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+			WMA_LOGD(FL("Failed to remove request for req %pK"),
+				 req);
+			return QDF_STATUS_E_FAILURE;
+		}
+		break;
+	} while (QDF_STATUS_SUCCESS  ==
+		 qdf_list_peek_next(&wma->wma_hold_req_queue,
+				    cur_node, &next_node));
+
+	qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+	if (!found) {
+		WMA_LOGE(FL("target request not found for req %pK"),
+			 req);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	WMA_LOGD(FL("target request found for vdev id: %d type %d"),
+		 req_msg->vdev_id, req_msg->type);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * wma_find_req() - find target request for vdev id
  * @wma: wma handle
  * @vdev_id: vdev id
@@ -345,6 +406,66 @@ static struct wma_target_req *wma_find_remove_req_msgtype(tp_wma_handle wma,
 	return req_msg;
 }
 
+/**
+ * wma_find_vdev_req_on_timer_expiry() - find target request by address
+ * @wma: wma handle
+ * @req: pointer to the target request
+ *
+ * On timer expiry, the pointer to the req message is received from the
+ * timer callback. Lookup the vdev_resp_queue for the request with the
+ * same address and return success if found.
+ *
+ * Return: QDF_STATUS
+ */
+static
+QDF_STATUS wma_find_vdev_req_on_timer_expiry(tp_wma_handle wma,
+					     struct wma_target_req *req)
+{
+	struct wma_target_req *req_msg = NULL;
+	bool found = false;
+	qdf_list_node_t *cur_node = NULL, *next_node = NULL;
+	QDF_STATUS status;
+
+	qdf_spin_lock_bh(&wma->vdev_respq_lock);
+	if (QDF_STATUS_SUCCESS != qdf_list_peek_front(&wma->vdev_resp_queue,
+						      &next_node)) {
+		qdf_spin_unlock_bh(&wma->vdev_respq_lock);
+		WMA_LOGD(FL("unable to find req from vdev resp queue for %pK"),
+			 req);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	do {
+		cur_node = next_node;
+		req_msg = qdf_container_of(cur_node, struct wma_target_req,
+					   node);
+		if (req_msg != req)
+			continue;
+
+		found = true;
+		status = qdf_list_remove_node(&wma->vdev_resp_queue,
+					      cur_node);
+		if (QDF_STATUS_SUCCESS != status) {
+			qdf_spin_unlock_bh(&wma->vdev_respq_lock);
+			WMA_LOGD(FL("Failed to target req for %pK"), req);
+			return QDF_STATUS_E_FAILURE;
+		}
+		break;
+	} while (QDF_STATUS_SUCCESS  ==
+		 qdf_list_peek_next(&wma->vdev_resp_queue,
+				    cur_node, &next_node));
+
+	qdf_spin_unlock_bh(&wma->vdev_respq_lock);
+	if (!found) {
+		WMA_LOGD(FL("target request not found for req %pK"),
+			 req);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	WMA_LOGD(FL("target request found for vdev id: %d type %d msg %d"),
+		 req_msg->vdev_id, req_msg->type, req_msg->msg_type);
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
  * wma_find_vdev_req() - find target request for vdev id
@@ -3309,7 +3430,7 @@ void wma_hold_req_timer(void *data)
 {
 	tp_wma_handle wma;
 	struct wma_target_req *tgt_req = (struct wma_target_req *)data;
-	struct wma_target_req *msg;
+	QDF_STATUS status;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == wma) {
@@ -3317,19 +3438,19 @@ void wma_hold_req_timer(void *data)
 		return;
 	}
 
-	WMA_LOGA(FL("request %d is timed out for vdev_id - %d"),
-		 tgt_req->msg_type, tgt_req->vdev_id);
-	msg = wma_find_req(wma, tgt_req->vdev_id, tgt_req->type);
+	status = wma_find_req_on_timer_expiry(wma, tgt_req);
 
-	if (!msg) {
-		WMA_LOGE(FL("Failed to lookup request message - %d"),
-			 tgt_req->msg_type);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		/*
 		 * if find request failed, then firmware rsp should have
 		 * consumed the buffer. Do not free.
 		 */
+		WMA_LOGD(FL("Failed to lookup request message - %pK"),
+			 tgt_req);
 		return;
 	}
+	WMA_LOGA(FL("request %d is timed out for vdev_id - %d"),
+		 tgt_req->msg_type, tgt_req->vdev_id);
 
 	if (tgt_req->msg_type == WMA_ADD_STA_REQ) {
 		tpAddStaParams params = (tpAddStaParams) tgt_req->user_data;
@@ -3545,9 +3666,9 @@ void wma_vdev_resp_timer(void *data)
 	tp_wma_handle wma;
 	struct wma_target_req *tgt_req = (struct wma_target_req *)data;
 	struct cdp_pdev *pdev;
-	struct wma_target_req *msg;
 	uint8_t peer_id;
 	int status;
+	QDF_STATUS qdf_status;
 	void *peer;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wma_txrx_node *iface;
@@ -3564,15 +3685,19 @@ void wma_vdev_resp_timer(void *data)
 		goto free_tgt_req;
 	}
 
-	WMA_LOGA("%s: request %d is timed out for vdev_id - %d", __func__,
-		 tgt_req->msg_type, tgt_req->vdev_id);
-	msg = wma_find_vdev_req(wma, tgt_req->vdev_id, tgt_req->type, true);
+	qdf_status = wma_find_vdev_req_on_timer_expiry(wma, tgt_req);
 
-	if (!msg) {
-		WMA_LOGE("%s: Failed to lookup request message - %d",
-			 __func__, tgt_req->msg_type);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		/*
+		 * if find request failed, then firmware rsp should have
+		 * consumed the buffer. Do not free.
+		 */
+		WMA_LOGD("%s: Failed to lookup request message - %pK",
+			 __func__, tgt_req);
 		return;
 	}
+	WMA_LOGA("%s: request %d is timed out for vdev_id - %d", __func__,
+		 tgt_req->msg_type, tgt_req->vdev_id);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
