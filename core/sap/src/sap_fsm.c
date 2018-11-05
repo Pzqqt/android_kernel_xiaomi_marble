@@ -2207,8 +2207,12 @@ sap_goto_starting(struct sap_context *sap_ctx,
 		uint16_t con_ch;
 
 		con_ch = sme_get_concurrent_operation_channel(hal);
-		if (con_ch && wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch))
+		if (con_ch && wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch)) {
 			sap_ctx->channel = con_ch;
+			wlan_reg_set_channel_params(mac_ctx->pdev,
+						    sap_ctx->channel, 0,
+						    &sap_ctx->ch_params);
+		}
 	}
 
 	/*
