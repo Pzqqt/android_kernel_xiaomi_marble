@@ -485,6 +485,18 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 	return;
 }
 
+#ifdef AST_HKV1_WORKAROUND
+static inline void
+dp_peer_ast_init_del_cmd_sent_flag(struct dp_ast_entry *ast_entry)
+{
+	ast_entry->del_cmd_sent = false;
+}
+#else
+static inline void
+dp_peer_ast_init_del_cmd_sent_flag(struct dp_ast_entry *ast_entry)
+{}
+#endif
+
 /*
  * dp_peer_add_ast() - Allocate and add AST entry into peer list
  * @soc: SoC handle
@@ -609,6 +621,7 @@ add_ast_entry:
 	ast_entry->pdev_id = vdev->pdev->pdev_id;
 	ast_entry->vdev_id = vdev->vdev_id;
 	ast_entry->is_mapped = false;
+	dp_peer_ast_init_del_cmd_sent_flag(ast_entry);
 
 	switch (type) {
 	case CDP_TXRX_AST_TYPE_STATIC:
@@ -695,14 +708,23 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 	if (ast_entry->next_hop &&
 	    ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC) {
 		dp_peer_ast_send_wds_del(soc, ast_entry);
-	} else {
+	}
+	/* AST free happens in completion handler for HKV1 */
+	if (soc->ast_override_support || !ast_entry->del_cmd_sent) {
 		/*
 		 * release the reference only if it is mapped
 		 * to ast_table
 		 */
 		if (ast_entry->is_mapped)
 			soc->ast_table[ast_entry->ast_idx] = NULL;
-		TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
+
+		/* ast_entry like next_hop is already removed as part of
+		 * AST del command send, Remove ast_entry that dont
+		 * send ast del command.
+		 */
+		if (!ast_entry->del_cmd_sent)
+			TAILQ_REMOVE(&peer->ast_entry_list, ast_entry,
+				     ase_list_elem);
 
 		if (ast_entry == peer->self_ast_entry)
 			peer->self_ast_entry = NULL;
@@ -939,18 +961,18 @@ void dp_peer_ast_send_wds_del(struct dp_soc *soc,
 	struct dp_peer *peer = ast_entry->peer;
 	struct cdp_soc_t *cdp_soc = &soc->cdp_soc;
 
-	if (!ast_entry->wmi_sent) {
+	if (!ast_entry->del_cmd_sent) {
 		cdp_soc->ol_ops->peer_del_wds_entry(peer->vdev->osif_vdev,
 						    ast_entry->mac_addr.raw);
-		ast_entry->wmi_sent = true;
+		ast_entry->del_cmd_sent = true;
 		TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
 	}
 }
 
-bool dp_peer_ast_get_wmi_sent(struct dp_soc *soc,
-			      struct dp_ast_entry *ast_entry)
+bool dp_peer_ast_get_del_cmd_sent(struct dp_soc *soc,
+				  struct dp_ast_entry *ast_entry)
 {
-	return ast_entry->wmi_sent;
+	return ast_entry->del_cmd_sent;
 }
 
 void dp_peer_ast_free_entry(struct dp_soc *soc,

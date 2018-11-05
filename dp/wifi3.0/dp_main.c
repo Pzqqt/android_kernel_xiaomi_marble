@@ -723,8 +723,9 @@ bool dp_peer_ast_get_wmi_sent_wifi3(struct cdp_soc_t *soc_handle,
 	bool wmi_sent = false;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
-	wmi_sent = dp_peer_ast_get_wmi_sent(soc,
-					    (struct dp_ast_entry *)ast_entry);
+	wmi_sent = dp_peer_ast_get_del_cmd_sent(soc,
+						(struct dp_ast_entry *)
+						ast_entry);
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	return wmi_sent;
@@ -951,7 +952,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 							" ast_hash = %d"
 							" pdev_id = %d"
 							" vdev_id = %d"
-							" wmi_sent = %d",
+							" del_cmd_sent = %d",
 							++num_entries,
 							ase->mac_addr.raw,
 							ase->peer->mac_addr.raw,
@@ -963,7 +964,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 							ase->ast_hash_value,
 							ase->pdev_id,
 							ase->vdev_id,
-							ase->wmi_sent);
+							ase->del_cmd_sent);
 				}
 			}
 		}
@@ -4071,7 +4072,8 @@ static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
 }
 #endif
 
-#if defined(FEATURE_AST) && !defined(AST_HKV1_WORKAROUND)
+#if defined(FEATURE_AST)
+#if !defined(AST_HKV1_WORKAROUND)
 static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
 					       uint8_t *peer_mac_addr)
 {
@@ -4083,6 +4085,21 @@ static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
 		dp_peer_del_ast(soc, ast_entry);
 	qdf_spin_unlock_bh(&soc->ast_lock);
 }
+#else
+static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
+					       uint8_t *peer_mac_addr)
+{
+	struct dp_ast_entry *ast_entry;
+
+	if (soc->ast_override_support) {
+		qdf_spin_lock_bh(&soc->ast_lock);
+		ast_entry = dp_peer_ast_hash_find_soc(soc, peer_mac_addr);
+		if (ast_entry && ast_entry->next_hop)
+			dp_peer_del_ast(soc, ast_entry);
+		qdf_spin_unlock_bh(&soc->ast_lock);
+	}
+}
+#endif
 #else
 static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
 					       uint8_t *peer_mac_addr)

@@ -145,8 +145,8 @@ void *dp_peer_ast_get_cp_ctx(struct dp_soc *soc,
 void dp_peer_ast_send_wds_del(struct dp_soc *soc,
 			      struct dp_ast_entry *ast_entry);
 
-bool dp_peer_ast_get_wmi_sent(struct dp_soc *soc,
-			      struct dp_ast_entry *ast_entry);
+bool dp_peer_ast_get_del_cmd_sent(struct dp_soc *soc,
+				  struct dp_ast_entry *ast_entry);
 
 void dp_peer_ast_free_entry(struct dp_soc *soc,
 			    struct dp_ast_entry *ast_entry);
