@@ -41,11 +41,11 @@
 #endif
 
 #ifdef WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY
-static tAniSirGlobal *global_mac_context;
+static struct mac_context *global_mac_context;
 
 static inline tpAniSirGlobal mac_allocate_context_buffer(void)
 {
-	global_mac_context = qdf_mem_malloc(sizeof(tAniSirGlobal));
+	global_mac_context = qdf_mem_malloc(sizeof(*global_mac_context));
 
 	return global_mac_context;
 }
@@ -56,7 +56,7 @@ static inline void mac_free_context_buffer(void)
 	global_mac_context = NULL;
 }
 #else /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
-static tAniSirGlobal global_mac_context;
+static struct mac_context global_mac_context;
 
 static inline tpAniSirGlobal mac_allocate_context_buffer(void)
 {

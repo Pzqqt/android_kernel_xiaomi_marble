@@ -915,10 +915,6 @@ struct mac_context {
 	bool obss_scan_offload;
 };
 
-/* legacy definitions in place until converted to use struct mac_context */
-typedef struct mac_context tAniSirGlobal;
-
-
 #ifdef FEATURE_WLAN_TDLS
 
 #define RFC1042_HDR_LENGTH      (6)
