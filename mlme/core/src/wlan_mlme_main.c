@@ -1539,6 +1539,21 @@ static void mlme_init_wep_cfg(struct wlan_mlme_wep_cfg *wep_params)
 	mlme_init_wep_keys(wep_params);
 }
 
+#ifdef FEATURE_WLAN_ESE
+static void mlme_init_inactivity_intv(struct wlan_objmgr_psoc *psoc,
+				      struct wlan_mlme_wmm_params *wmm_params)
+{
+	wmm_params->wmm_tspec_element.inactivity_intv =
+		cfg_get(psoc, CFG_QOS_WMM_INACTIVITY_INTERVAL);
+}
+#else
+static inline void
+mlme_init_inactivity_intv(struct wlan_objmgr_psoc *psoc,
+			  struct wlan_mlme_wmm_params *wmm_params)
+{
+}
+#endif /* FEATURE_WLAN_ESE */
+
 static void mlme_init_wmm_in_cfg(struct wlan_objmgr_psoc *psoc,
 				 struct wlan_mlme_wmm_params *wmm_params)
 {
@@ -1614,6 +1629,14 @@ static void mlme_init_wmm_in_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_QOS_WMM_UAPSD_MASK);
 	wmm_params->wmm_config.bimplicit_qos_enabled =
 		cfg_get(psoc, CFG_QOS_WMM_IMPLICIT_SETUP_ENABLED);
+
+	mlme_init_inactivity_intv(psoc, wmm_params);
+	wmm_params->wmm_tspec_element.burst_size_def =
+		cfg_get(psoc, CFG_QOS_WMM_BURST_SIZE_DEFN);
+	wmm_params->wmm_tspec_element.ts_ack_policy =
+		cfg_get(psoc, CFG_QOS_WMM_TS_INFO_ACK_POLICY);
+	wmm_params->wmm_tspec_element.ts_acm_is_off =
+		cfg_get(psoc, CFG_QOS_ADDTS_WHEN_ACM_IS_OFF);
 }
 
 static void mlme_init_wps_params_cfg(struct wlan_objmgr_psoc *psoc,

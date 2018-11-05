@@ -2359,4 +2359,69 @@ ucfg_mlme_get_implicit_qos_is_enabled(struct wlan_objmgr_psoc *psoc,
 	return wlan_mlme_get_implicit_qos_is_enabled(psoc, value);
 }
 
+#ifdef FEATURE_WLAN_ESE
+/**
+ * ucfg_mlme_get_inactivity_interval() - Infra Inactivity Interval
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be get from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: None
+ */
+static inline void
+ucfg_mlme_get_inactivity_interval(struct wlan_objmgr_psoc *psoc,
+				  uint32_t *value)
+{
+	wlan_mlme_get_inactivity_interval(psoc, value);
+}
+#endif
+
+/**
+ * ucfg_mlme_get_is_ts_burst_size_enable() - Get TS burst size flag
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be get from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: None
+ */
+static inline void
+ucfg_mlme_get_is_ts_burst_size_enable(struct wlan_objmgr_psoc *psoc,
+				      bool *value)
+{
+	wlan_mlme_get_is_ts_burst_size_enable(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_ts_info_ack_policy() - Get TS ack policy
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be get from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: None
+ */
+static inline void
+ucfg_mlme_get_ts_info_ack_policy(struct wlan_objmgr_psoc *psoc,
+				 enum mlme_ts_info_ack_policy *value)
+{
+	wlan_mlme_get_ts_info_ack_policy(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_ts_acm_value_for_ac() - Get ACM value for AC
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be get from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_ts_acm_value_for_ac(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	return wlan_mlme_get_ts_acm_value_for_ac(psoc, value);
+}
+
 #endif /* _WLAN_MLME_UCFG_API_H_ */
