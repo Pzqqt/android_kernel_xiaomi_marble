@@ -6763,11 +6763,10 @@ int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	if (hdd_ctx->dynamic_nss_chains_support) {
+	if (hdd_ctx->dynamic_nss_chains_support)
 		return hdd_set_dynamic_antenna_mode(adapter,
 						    params.num_rx_chains,
 						    params.num_tx_chains);
-	}
 
 	/* Check TDLS status and update antenna mode */
 	if ((QDF_STA_MODE == adapter->device_mode) &&

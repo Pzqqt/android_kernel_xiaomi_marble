@@ -4352,6 +4352,41 @@ hdd_populate_vdev_nss(struct wlan_mlme_nss_chains *user_cfg,
 	user_cfg->tx_nss[band] = tx_nss;
 }
 
+static QDF_STATUS
+hdd_set_nss_params(struct hdd_adapter *adapter,
+		   uint8_t tx_nss,
+		   uint8_t rx_nss)
+{
+	enum nss_chains_band_info band;
+	struct wlan_mlme_nss_chains user_cfg;
+	mac_handle_t mac_handle;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	qdf_mem_zero(&user_cfg, sizeof(user_cfg));
+
+	mac_handle = hdd_ctx->mac_handle;
+	if (!mac_handle) {
+		hdd_err("NULL MAC handle");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	for (band = BAND_2GHZ; band < NUM_OF_BANDS; band++)
+		hdd_populate_vdev_nss(&user_cfg, tx_nss,
+				      rx_nss, band);
+	if (QDF_IS_STATUS_ERROR(
+		sme_nss_chains_update(mac_handle,
+				      &user_cfg,
+				      adapter->session_id)))
+		return QDF_STATUS_E_FAILURE;
+
+	/* Check TDLS status and update antenna mode */
+	if ((adapter->device_mode == QDF_STA_MODE ||
+	     adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
+	     policy_mgr_is_sta_active_connection_exists(hdd_ctx->psoc))
+		wlan_hdd_tdls_antenna_switch(hdd_ctx, adapter, rx_nss);
+
+	return QDF_STATUS_SUCCESS;
+}
 /**
  * hdd_update_nss() - Update the number of spatial streams supported.
  * Ensure that nss is either 1 or 2 before calling this.
@@ -4378,8 +4413,6 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	uint8_t enable2x2;
 	mac_handle_t mac_handle;
 	bool bval = 0;
-	enum nss_chains_band_info band;
-	struct wlan_mlme_nss_chains user_cfg;
 	uint8_t tx_nss, rx_nss;
 
 	if ((nss == 2) && (hdd_ctx->num_rf_chains != 2)) {
@@ -4402,20 +4435,8 @@ QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 	tx_nss = nss;
 	rx_nss = nss;
 
-	qdf_mem_zero(&user_cfg, sizeof(user_cfg));
-
-	if (hdd_ctx->dynamic_nss_chains_support) {
-		for (band = BAND_2GHZ; band < BAND_MAX; band++)
-			hdd_populate_vdev_nss(&user_cfg, tx_nss,
-					      rx_nss, band);
-		if (QDF_IS_STATUS_ERROR(
-			sme_nss_chains_update(mac_handle,
-					      &user_cfg,
-					      adapter->session_id)))
-			return QDF_STATUS_E_FAILURE;
-
-		return QDF_STATUS_SUCCESS;
-	}
+	if (hdd_ctx->dynamic_nss_chains_support)
+		return hdd_set_nss_params(adapter, tx_nss, rx_nss);
 
 	/*
 	 * The code below is executed only when fw doesn't support dynamic
