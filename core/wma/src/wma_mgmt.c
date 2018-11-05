@@ -572,7 +572,7 @@ int wma_unified_bcntx_status_event_handler(void *handle,
  */
 #ifdef CONVERGED_P2P_ENABLE
 static inline void
-wma_get_go_probe_timeout(struct sAniSirGlobal *mac,
+wma_get_go_probe_timeout(struct mac_context *mac,
 			 uint32_t *max_inactive_time,
 			 uint32_t *max_unresponsive_time)
 {
@@ -596,7 +596,7 @@ wma_get_go_probe_timeout(struct sAniSirGlobal *mac,
 }
 #else
 static inline void
-wma_get_go_probe_timeout(struct sAniSirGlobal *mac,
+wma_get_go_probe_timeout(struct mac_context *mac,
 			 uint32_t *max_inactive_time,
 			 uint32_t *max_unresponsive_time)
 {
@@ -613,7 +613,7 @@ wma_get_go_probe_timeout(struct sAniSirGlobal *mac,
  * Return: none
  */
 static inline void
-wma_get_link_probe_timeout(struct sAniSirGlobal *mac,
+wma_get_link_probe_timeout(struct mac_context *mac,
 			   uint32_t sub_type,
 			   uint32_t *max_inactive_time,
 			   uint32_t *max_unresponsive_time)
@@ -686,7 +686,7 @@ void wma_set_vdev_mgmt_rate(tp_wma_handle wma, uint8_t vdev_id)
 	int ret;
 	uint32_t per_band_mgmt_tx_rate = 0;
 	enum cds_band_type band = 0;
-	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (NULL == mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
@@ -754,7 +754,7 @@ void wma_set_vdev_mgmt_rate(tp_wma_handle wma, uint8_t vdev_id)
 void wma_set_sap_keepalive(tp_wma_handle wma, uint8_t vdev_id)
 {
 	uint32_t min_inactive_time, max_inactive_time, max_unresponsive_time;
-	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	QDF_STATUS status;
 
 	if (NULL == mac) {
@@ -803,7 +803,7 @@ void wma_set_sap_keepalive(tp_wma_handle wma, uint8_t vdev_id)
 void wma_set_sta_sa_query_param(tp_wma_handle wma,
 				  uint8_t vdev_id)
 {
-	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint8_t max_retries;
 	uint16_t retry_interval;
 
@@ -995,7 +995,7 @@ static void wma_mask_tx_ht_rate(tp_wma_handle wma, uint8_t *mcs_set)
 	uint32_t i, j;
 	uint16_t mcs_limit;
 	uint8_t *rate_pos = mcs_set;
-	struct sAniSirGlobal *mac = (struct sAniSirGlobal *)wma->mac_context;
+	struct mac_context *mac = (struct mac_context *)wma->mac_context;
 
 	/*
 	 * Get MCS limit from ini configure, and map it to rate parameters
@@ -1200,7 +1200,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	struct wma_txrx_node *intr = NULL;
 	bool is_he;
 	QDF_STATUS status;
-	struct sAniSirGlobal *mac = (struct sAniSirGlobal *)wma->mac_context;
+	struct mac_context *mac = (struct mac_context *)wma->mac_context;
 
 	cmd = qdf_mem_malloc(sizeof(struct peer_assoc_params));
 	if (!cmd) {

@@ -1066,7 +1066,7 @@ QDF_STATUS wma_set_mcc_channel_time_latency(tp_wma_handle wma,
 	uint32_t mcc_channel, uint32_t mcc_channel_time_latency)
 {
 	uint32_t cfg_val = 0;
-	struct sAniSirGlobal *pMac = NULL;
+	struct mac_context *pMac = NULL;
 	uint32_t channel1 = mcc_channel;
 	uint32_t chan1_freq = cds_chan_to_freq(channel1);
 
@@ -1129,7 +1129,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota(tp_wma_handle wma,
 		uint32_t adapter_2_chan_number)
 {
 	uint32_t cfg_val = 0;
-	struct sAniSirGlobal *pMac = NULL;
+	struct mac_context *pMac = NULL;
 	uint32_t chan1_freq = cds_chan_to_freq(adapter_1_chan_number);
 	uint32_t chan2_freq = cds_chan_to_freq(adapter_2_chan_number);
 

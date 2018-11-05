@@ -3715,7 +3715,7 @@ __lim_process_sme_get_statistics_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 }
 #else
 static void __lim_process_sme_get_statistics_request(
-			struct sAniSirGlobal *mac_ctx, uint32_t *pMsgBuf) {}
+			struct mac_context *mac_ctx, uint32_t *pMsgBuf) {}
 #endif
 
 #ifdef FEATURE_WLAN_ESE

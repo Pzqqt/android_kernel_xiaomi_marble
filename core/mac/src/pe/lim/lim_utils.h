@@ -314,7 +314,7 @@ void limUpdateStaRunTimeHTSwtichChnlParams(tpAniSirGlobal pMac,
 		uint8_t bssIdx);
 void lim_update_sta_run_time_ht_capability(tpAniSirGlobal pMac,
 		tDot11fIEHTCaps *pHTCaps);
-void lim_update_sta_run_time_ht_info(struct sAniSirGlobal *pMac,
+void lim_update_sta_run_time_ht_info(struct mac_context *pMac,
 		tDot11fIEHTInfo *pRcvdHTInfo,
 		tpPESession psessionEntry);
 void lim_cancel_dot11h_channel_switch(tpAniSirGlobal pMac,

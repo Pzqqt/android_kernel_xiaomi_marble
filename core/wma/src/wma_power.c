@@ -554,7 +554,7 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 	QDF_STATUS ret;
 	uint32_t cfg_data_val = 0;
 	/* get mac to access CFG data base */
-	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t rx_wake_policy;
 	uint32_t tx_wake_threshold;
 	uint32_t pspoll_count;

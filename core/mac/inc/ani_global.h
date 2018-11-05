@@ -840,9 +840,10 @@ struct mgmt_beacon_probe_filter {
 	uint8_t sap_channel[SIR_MAX_SUPPORTED_BSS];
 };
 
-/* ------------------------------------------------------------------- */
-/* / MAC Sirius parameter structure */
-typedef struct sAniSirGlobal {
+/**
+ * struct mac_context - Global MAC context
+ */
+struct mac_context {
 	enum qdf_driver_type gDriverType;
 
 	tAniSirCfg cfg;
@@ -912,7 +913,10 @@ typedef struct sAniSirGlobal {
 	tDot11fIEhe_cap he_cap_5g;
 #endif
 	bool obss_scan_offload;
-} tAniSirGlobal;
+};
+
+/* legacy definitions in place until converted to use struct mac_context */
+typedef struct mac_context tAniSirGlobal;
 
 
 #ifdef FEATURE_WLAN_TDLS

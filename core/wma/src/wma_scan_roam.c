@@ -2648,7 +2648,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 					tSirRoamOffloadScanReq *roam_req)
 {
 	qdf_size_t val_len;
-	struct sAniSirGlobal *pMac = NULL;
+	struct mac_context *pMac = NULL;
 	tSirMacCapabilityInfo selfCaps;
 	uint32_t val = 0;
 	uint32_t nCfgValue;

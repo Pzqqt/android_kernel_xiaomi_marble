@@ -2328,7 +2328,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	struct cdp_pdev *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	enum wlan_op_mode txrx_vdev_type;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t cfg_val;
 	QDF_STATUS ret;
 	struct mlme_ht_capabilities_info *ht_cap_info;
@@ -4601,7 +4601,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	uint32_t i, j;
 	uint16_t mcs_limit;
 	uint8_t *rate_pos;
-	struct sAniSirGlobal *mac = (struct sAniSirGlobal *)wma->mac_context;
+	struct mac_context *mac = (struct mac_context *)wma->mac_context;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 

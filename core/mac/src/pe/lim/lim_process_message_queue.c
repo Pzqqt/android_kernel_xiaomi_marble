@@ -2210,7 +2210,7 @@ static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
 }
 
 void
-handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
+handle_ht_capabilityand_ht_info(struct mac_context *pMac,
 				tpPESession psessionEntry)
 {
 	struct mlme_ht_capabilities_info *ht_cap_info;

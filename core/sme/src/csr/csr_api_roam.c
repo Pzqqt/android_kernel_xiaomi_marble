@@ -571,14 +571,14 @@ static void csr_roam_de_init_globals(tpAniSirGlobal pMac)
 }
 
 #ifdef QCA_SUPPORT_CP_STATS
-static QDF_STATUS csr_open_stats_ll(struct sAniSirGlobal *mac_ctx)
+static QDF_STATUS csr_open_stats_ll(struct mac_context *mac_ctx)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static void csr_close_stats_ll(struct sAniSirGlobal *mac_ctx) {}
+static void csr_close_stats_ll(struct mac_context *mac_ctx) {}
 #else
-static QDF_STATUS csr_open_stats_ll(struct sAniSirGlobal *mac_ctx)
+static QDF_STATUS csr_open_stats_ll(struct mac_context *mac_ctx)
 {
 	QDF_STATUS status;
 
@@ -589,7 +589,7 @@ static QDF_STATUS csr_open_stats_ll(struct sAniSirGlobal *mac_ctx)
 	return csr_ll_open(&mac_ctx->roam.peStatsReqList);
 }
 
-static void csr_close_stats_ll(struct sAniSirGlobal *mac_ctx)
+static void csr_close_stats_ll(struct mac_context *mac_ctx)
 {
 	csr_ll_close(&mac_ctx->roam.statsClientReqList);
 	csr_ll_close(&mac_ctx->roam.peStatsReqList);
@@ -1214,9 +1214,9 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 }
 
 #ifdef QCA_SUPPORT_CP_STATS
-static void csr_init_tl_stats(struct sAniSirGlobal *mac_ctx) {}
+static void csr_init_tl_stats(struct mac_context *mac_ctx) {}
 #else
-static void csr_init_tl_stats(struct sAniSirGlobal *mac_ctx)
+static void csr_init_tl_stats(struct mac_context *mac_ctx)
 {
 	mac_ctx->roam.tlStatsReqInfo.numClient = 0;
 }

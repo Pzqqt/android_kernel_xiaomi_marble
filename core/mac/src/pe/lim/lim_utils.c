@@ -2085,7 +2085,7 @@ void lim_process_channel_switch_timeout(tpAniSirGlobal pMac)
  * Return: none
  */
 void
-lim_update_channel_switch(struct sAniSirGlobal *mac_ctx,
+lim_update_channel_switch(struct mac_context *mac_ctx,
 			tpSirProbeRespBeacon beacon,
 			tpPESession psession_entry)
 {

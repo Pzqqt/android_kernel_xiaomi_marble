@@ -2199,7 +2199,7 @@ static inline bool wma_vdev_is_device_in_low_pwr_mode(uint8_t vdev_id)
 static inline
 QDF_STATUS wma_vdev_get_cfg_int(int cfg_id, int *value)
 {
-	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	*value = 0;
 

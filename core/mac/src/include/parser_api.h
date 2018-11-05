@@ -537,7 +537,7 @@ struct s_ext_cap {
 	uint8_t twt_responder_support:1;
 };
 
-uint8_t sirIsPropCapabilityEnabled(struct sAniSirGlobal *pMac, uint32_t bitnum);
+uint8_t sirIsPropCapabilityEnabled(struct mac_context *pMac, uint32_t bitnum);
 
 #define CFG_GET_INT(nStatus, pMac, nItem, cfg)  do { \
 		(nStatus) = wlan_cfg_get_int((pMac), (nItem), &(cfg)); \
@@ -579,57 +579,57 @@ void swap_bit_field16(uint16_t in, uint16_t *out);
 /* generated code: */
 
 QDF_STATUS
-sir_convert_probe_req_frame2_struct(struct sAniSirGlobal *pMac,
+sir_convert_probe_req_frame2_struct(struct mac_context *pMac,
 				uint8_t *frame, uint32_t len,
 				tpSirProbeReq probe);
 
 QDF_STATUS
-sir_convert_probe_frame2_struct(struct sAniSirGlobal *pMac, uint8_t *frame,
+sir_convert_probe_frame2_struct(struct mac_context *pMac, uint8_t *frame,
 				uint32_t len, tpSirProbeRespBeacon probe);
 
 QDF_STATUS
-sir_convert_assoc_req_frame2_struct(struct sAniSirGlobal *pMac,
+sir_convert_assoc_req_frame2_struct(struct mac_context *pMac,
 				uint8_t *frame, uint32_t len,
 				tpSirAssocReq assoc);
 
 QDF_STATUS
-sir_convert_assoc_resp_frame2_struct(struct sAniSirGlobal *pMac,
+sir_convert_assoc_resp_frame2_struct(struct mac_context *pMac,
 				tpPESession session_entry,
 				uint8_t *frame, uint32_t len,
 				tpSirAssocRsp assoc);
 
 QDF_STATUS
-sir_convert_reassoc_req_frame2_struct(struct sAniSirGlobal *pMac,
+sir_convert_reassoc_req_frame2_struct(struct mac_context *pMac,
 				uint8_t *frame, uint32_t len,
 				tpSirAssocReq assoc);
 
 QDF_STATUS
-sir_parse_beacon_ie(struct sAniSirGlobal *pMac,
+sir_parse_beacon_ie(struct mac_context *pMac,
 		tpSirProbeRespBeacon pBeaconStruct,
 		uint8_t *pPayload, uint32_t payloadLength);
 
 QDF_STATUS
-sir_convert_beacon_frame2_struct(struct sAniSirGlobal *pMac,
+sir_convert_beacon_frame2_struct(struct mac_context *pMac,
 				uint8_t *pBeaconFrame,
 				tpSirProbeRespBeacon pBeaconStruct);
 
 QDF_STATUS
-sir_convert_auth_frame2_struct(struct sAniSirGlobal *pMac,
+sir_convert_auth_frame2_struct(struct mac_context *pMac,
 			uint8_t *frame, uint32_t len,
 			tpSirMacAuthFrameBody auth);
 
 QDF_STATUS
-sir_convert_addts_req2_struct(struct sAniSirGlobal *pMac,
+sir_convert_addts_req2_struct(struct mac_context *pMac,
 			uint8_t *frame, uint32_t len,
 			tSirAddtsReqInfo *addTs);
 
 QDF_STATUS
-sir_convert_addts_rsp2_struct(struct sAniSirGlobal *pMac,
+sir_convert_addts_rsp2_struct(struct mac_context *pMac,
 			uint8_t *frame, uint32_t len,
 			tSirAddtsRspInfo *addts);
 
 QDF_STATUS
-sir_convert_delts_req2_struct(struct sAniSirGlobal *pMac,
+sir_convert_delts_req2_struct(struct mac_context *pMac,
 			uint8_t *frame, uint32_t len,
 			tSirDeltsReqInfo *delTs);
 QDF_STATUS
@@ -639,11 +639,11 @@ sir_convert_qos_map_configure_frame2_struct(tpAniSirGlobal pMac,
 
 #ifdef ANI_SUPPORT_11H
 QDF_STATUS
-sir_convert_tpc_req_frame2_struct(struct sAniSirGlobal *, uint8_t *,
+sir_convert_tpc_req_frame2_struct(struct mac_context *, uint8_t *,
 				tpSirMacTpcReqActionFrame, uint32_t);
 
 QDF_STATUS
-sir_convert_meas_req_frame2_struct(struct sAniSirGlobal *, uint8_t *,
+sir_convert_meas_req_frame2_struct(struct mac_context *, uint8_t *,
 				tpSirMacMeasReqActionFrame, uint32_t);
 #endif
 

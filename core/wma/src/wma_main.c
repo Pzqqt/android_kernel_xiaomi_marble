@@ -3097,7 +3097,7 @@ static void wma_get_phy_mode_cb(uint8_t chan, uint32_t chan_width,
 				uint32_t *phy_mode)
 {
 	uint32_t dot11_mode;
-	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {
 		wma_err("MAC context is NULL");

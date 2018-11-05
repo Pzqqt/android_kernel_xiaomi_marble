@@ -3532,7 +3532,7 @@ QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma)
 	wmi_buf_t buf;
 	int32_t vdev_id;
 	wmi_rmc_set_action_period_cmd_fixed_param *p_rmc_cmd;
-	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (NULL == mac) {
 		WMA_LOGE("%s: MAC mac does not exist", __func__);

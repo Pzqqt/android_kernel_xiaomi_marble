@@ -72,20 +72,9 @@ QDF_STATUS sys_init_globals(tpAniSirGlobal pMac)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * sys_bbt_process_message_core() - to process BBT messages
- * @mac_ctx: pointer to mac context
- * @msg: message pointer
- * @type: type of persona
- * @subtype: subtype of persona
- *
- * This routine is to process some bbt messages
- *
- * Return: None
- */
-QDF_STATUS
-sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
-		uint32_t type, uint32_t subtype)
+QDF_STATUS sys_bbt_process_message_core(struct mac_context *mac_ctx,
+					struct scheduler_msg *msg,
+					uint32_t type, uint32_t subtype)
 {
 	uint32_t framecount;
 	QDF_STATUS ret;

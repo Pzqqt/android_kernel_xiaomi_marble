@@ -433,7 +433,7 @@ void lim_process_mlm_start_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf);
 void lim_get_random_bssid(tpAniSirGlobal pMac, uint8_t *data);
 
 /* Function to handle HT and HT IE CFG parameter intializations */
-void handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
+void handle_ht_capabilityand_ht_info(struct mac_context *pMac,
 				     tpPESession psessionEntry);
 
 void lim_handle_param_update(tpAniSirGlobal pMac, eUpdateIEsType cfgId);

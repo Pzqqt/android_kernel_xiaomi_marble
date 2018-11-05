@@ -409,7 +409,7 @@ const char *csr_phy_mode_str(eCsrPhyMode phy_mode)
 	}
 }
 
-void csr_purge_vdev_pending_ser_cmd_list(struct sAniSirGlobal *mac_ctx,
+void csr_purge_vdev_pending_ser_cmd_list(struct mac_context *mac_ctx,
 					 uint32_t vdev_id)
 {
 	wlan_serialization_purge_cmd_list_by_vdev_id(mac_ctx->psoc, vdev_id,
@@ -417,7 +417,7 @@ void csr_purge_vdev_pending_ser_cmd_list(struct sAniSirGlobal *mac_ctx,
 						     true, false);
 }
 
-void csr_purge_vdev_all_ser_cmd_list(struct sAniSirGlobal *mac_ctx,
+void csr_purge_vdev_all_ser_cmd_list(struct mac_context *mac_ctx,
 				     uint32_t vdev_id)
 {
 	wlan_serialization_purge_cmd_list_by_vdev_id(mac_ctx->psoc, vdev_id,
@@ -425,7 +425,7 @@ void csr_purge_vdev_all_ser_cmd_list(struct sAniSirGlobal *mac_ctx,
 						     true, true);
 }
 
-void csr_purge_vdev_all_scan_ser_cmd_list(struct sAniSirGlobal *mac_ctx,
+void csr_purge_vdev_all_scan_ser_cmd_list(struct mac_context *mac_ctx,
 					  uint32_t vdev_id)
 {
 	wlan_serialization_purge_cmd_list_by_vdev_id(mac_ctx->psoc, vdev_id,
@@ -433,66 +433,67 @@ void csr_purge_vdev_all_scan_ser_cmd_list(struct sAniSirGlobal *mac_ctx,
 						     false, false);
 }
 
-void csr_purge_pdev_all_ser_cmd_list(struct sAniSirGlobal *mac_ctx)
+void csr_purge_pdev_all_ser_cmd_list(struct mac_context *mac_ctx)
 {
 	wlan_serialization_purge_cmd_list(mac_ctx->psoc, NULL, true, true,
 					  true, true, true);
 }
 
-void csr_nonscan_active_ll_insert_head(struct sAniSirGlobal *mac_ctx,
-			tListElem *entry, bool inter_locked)
+void csr_nonscan_active_ll_insert_head(struct mac_context *mac_ctx,
+				       tListElem *entry, bool inter_locked)
 {
 }
 
-void csr_nonscan_pending_ll_insert_head(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool inter_locked)
+void csr_nonscan_pending_ll_insert_head(struct mac_context *mac_ctx,
+					tListElem *entry, bool inter_locked)
 {
 }
 
-void csr_nonscan_pending_ll_insert_tail(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool inter_locked)
+void csr_nonscan_pending_ll_insert_tail(struct mac_context *mac_ctx,
+					tListElem *entry, bool inter_locked)
 {
 }
 
-void csr_nonscan_pending_ll_unlock(struct sAniSirGlobal *mac_ctx)
+void csr_nonscan_pending_ll_unlock(struct mac_context *mac_ctx)
 {
 }
 
-void csr_nonscan_active_ll_unlock(struct sAniSirGlobal *mac_ctx)
+void csr_nonscan_active_ll_unlock(struct mac_context *mac_ctx)
 {
 }
 
-void csr_nonscan_pending_ll_lock(struct sAniSirGlobal *mac_ctx)
+void csr_nonscan_pending_ll_lock(struct mac_context *mac_ctx)
 {
 }
 
-void csr_nonscan_active_ll_lock(struct sAniSirGlobal *mac_ctx)
+void csr_nonscan_active_ll_lock(struct mac_context *mac_ctx)
 {
 }
 
-uint32_t csr_nonscan_active_ll_count(struct sAniSirGlobal *mac_ctx)
+uint32_t csr_nonscan_active_ll_count(struct mac_context *mac_ctx)
 {
 	return wlan_serialization_get_active_list_count(mac_ctx->psoc, false);
 }
 
-uint32_t csr_nonscan_pending_ll_count(struct sAniSirGlobal *mac_ctx)
+uint32_t csr_nonscan_pending_ll_count(struct mac_context *mac_ctx)
 {
 	return wlan_serialization_get_pending_list_count(mac_ctx->psoc, false);
 }
 
-bool csr_nonscan_active_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
-				bool inter_locked)
+bool csr_nonscan_active_ll_is_list_empty(struct mac_context *mac_ctx,
+					 bool inter_locked)
 {
 	return !wlan_serialization_get_active_list_count(mac_ctx->psoc, false);
 }
-bool csr_nonscan_pending_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
-				bool inter_locked)
+
+bool csr_nonscan_pending_ll_is_list_empty(struct mac_context *mac_ctx,
+					  bool inter_locked)
 {
 	return !wlan_serialization_get_pending_list_count(mac_ctx->psoc, false);
 }
 
-tListElem *csr_nonscan_active_ll_peek_head(struct sAniSirGlobal *mac_ctx,
-		bool inter_locked)
+tListElem *csr_nonscan_active_ll_peek_head(struct mac_context *mac_ctx,
+					   bool inter_locked)
 {
 	struct wlan_serialization_command *cmd;
 	tSmeCmd *sme_cmd;
@@ -508,8 +509,8 @@ tListElem *csr_nonscan_active_ll_peek_head(struct sAniSirGlobal *mac_ctx,
 	return &sme_cmd->Link;
 }
 
-tListElem *csr_nonscan_pending_ll_peek_head(struct sAniSirGlobal *mac_ctx,
-		bool inter_locked)
+tListElem *csr_nonscan_pending_ll_peek_head(struct mac_context *mac_ctx,
+					    bool inter_locked)
 {
 	struct wlan_serialization_command *cmd;
 	tSmeCmd *sme_cmd;
@@ -524,8 +525,8 @@ tListElem *csr_nonscan_pending_ll_peek_head(struct sAniSirGlobal *mac_ctx,
 	return &sme_cmd->Link;
 }
 
-bool csr_nonscan_active_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool inter_locked)
+bool csr_nonscan_active_ll_remove_entry(struct mac_context *mac_ctx,
+					tListElem *entry, bool inter_locked)
 {
 	tListElem *head;
 
@@ -536,20 +537,20 @@ bool csr_nonscan_active_ll_remove_entry(struct sAniSirGlobal *mac_ctx,
 	return false;
 }
 
-tListElem *csr_nonscan_active_ll_remove_head(struct sAniSirGlobal *mac_ctx,
-		bool inter_locked)
+tListElem *csr_nonscan_active_ll_remove_head(struct mac_context *mac_ctx,
+					     bool inter_locked)
 {
 	return csr_nonscan_active_ll_peek_head(mac_ctx, inter_locked);
 }
 
-tListElem *csr_nonscan_pending_ll_remove_head(struct sAniSirGlobal *mac_ctx,
-		bool inter_locked)
+tListElem *csr_nonscan_pending_ll_remove_head(struct mac_context *mac_ctx,
+					      bool inter_locked)
 {
 	return csr_nonscan_pending_ll_peek_head(mac_ctx, inter_locked);
 }
 
-tListElem *csr_nonscan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
-				tListElem *entry, bool inter_locked)
+tListElem *csr_nonscan_pending_ll_next(struct mac_context *mac_ctx,
+				       tListElem *entry, bool inter_locked)
 {
 	tSmeCmd *sme_cmd;
 	struct wlan_serialization_command cmd, *tcmd;
