@@ -269,6 +269,10 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	 * with it for the time being, since this is not checked in f/w
 	 */
 	/* TODO : Prefill this, look at multi-fragment case */
+
+	if (ol_txrx_get_new_htt_msg_format(pdev))
+		pkt_download_len = pkt_download_len - HTC_HEADER_LEN;
+
 	HTC_TX_DESC_FILL(htc_hdr_vaddr, pkt_download_len, ep_id, 0);
 
 	return tx_desc;

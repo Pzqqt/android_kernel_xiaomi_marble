@@ -1047,6 +1047,7 @@ struct ol_txrx_pdev_t {
 	void *usr_ctxt;
 	struct ol_txrx_ipa_resources ipa_resource;
 #endif /* IPA_UC_OFFLOAD */
+	bool new_htt_msg_format;
 };
 
 struct ol_txrx_vdev_t {

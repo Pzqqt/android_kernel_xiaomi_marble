@@ -358,4 +358,24 @@ int ol_txrx_register_hl_flow_control(struct cdp_soc_t *soc,
 int ol_txrx_set_vdev_os_queue_status(u8 vdev_id, enum netif_action_type action);
 int ol_txrx_set_vdev_tx_desc_limit(u8 vdev_id, u8 chan);
 #endif
+
+/**
+ * ol_txrx_get_new_htt_msg_format() - check htt h2t msg feature
+ * @pdev - datapath device instance
+ *
+ * Check if h2t message length includes htc header length
+ *
+ * return if new htt h2t msg feature enabled
+ */
+bool ol_txrx_get_new_htt_msg_format(struct ol_txrx_pdev_t *pdev);
+
+/**
+ * ol_txrx_set_new_htt_msg_format() - set htt h2t msg feature
+ * @val - enable or disable new htt h2t msg feature
+ *
+ * Set if h2t message length includes htc header length
+ *
+ * return NONE
+ */
+void ol_txrx_set_new_htt_msg_format(uint8_t val);
 #endif /* _OL_TXRX__H_ */

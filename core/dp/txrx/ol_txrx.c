@@ -5526,6 +5526,8 @@ static struct cdp_cfg_ops ol_ops_cfg = {
 		ol_txrx_wrapper_set_flow_control_parameters,
 	.set_flow_steering = ol_set_cfg_flow_steering,
 	.set_ptp_rx_opt_enabled = ol_set_cfg_ptp_rx_opt_enabled,
+	.set_new_htt_msg_format =
+		ol_txrx_set_new_htt_msg_format,
 };
 
 static struct cdp_peer_ops ol_ops_peer = {
@@ -5644,3 +5646,24 @@ struct cdp_soc_t *ol_txrx_soc_attach(void *scn_handle,
 	soc->ops = &ol_txrx_ops;
 	return soc;
 }
+
+bool ol_txrx_get_new_htt_msg_format(struct ol_txrx_pdev_t *pdev)
+{
+	if (!pdev) {
+		qdf_print("%s: pdev is NULL\n", __func__);
+		return false;
+	}
+	return pdev->new_htt_msg_format;
+}
+
+void ol_txrx_set_new_htt_msg_format(uint8_t val)
+{
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (!pdev) {
+		qdf_print("%s: pdev is NULL\n", __func__);
+		return;
+	}
+	pdev->new_htt_msg_format = val;
+}
+

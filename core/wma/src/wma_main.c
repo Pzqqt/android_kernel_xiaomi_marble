@@ -6645,6 +6645,9 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	QDF_STATUS ret;
 	struct target_psoc_info *tgt_hdl;
 	uint32_t conc_scan_config_bits, fw_config_bits;
+	struct wmi_unified *wmi_handle;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	target_resource_config *wlan_res_cfg;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -6653,12 +6656,15 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 		return -EINVAL;
 	}
 
+	wmi_handle = get_wmi_unified_hdl_from_psoc(wma_handle->psoc);
+
 	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
 	if (!tgt_hdl) {
 		WMA_LOGE("%s: target psoc info is NULL", __func__);
 		return -EINVAL;
 	}
 
+	wlan_res_cfg = target_psoc_get_wlan_res_cfg(tgt_hdl);
 	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
 	if (!param_buf) {
 		WMA_LOGE("%s: Invalid event", __func__);
@@ -6698,6 +6704,16 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 				     fw_config_bits);
 
 	target_psoc_set_num_radios(tgt_hdl, 1);
+
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_new_htt_msg_format)) {
+		cdp_cfg_set_new_htt_msg_format(soc, 1);
+		wlan_res_cfg->new_htt_msg_format = true;
+	} else {
+		cdp_cfg_set_new_htt_msg_format(soc, 0);
+		wlan_res_cfg->new_htt_msg_format = false;
+	}
+
 	return 0;
 }
 
