@@ -992,6 +992,8 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 			mutex_unlock(&swrm->mlock);
 			return -EINVAL;
 		}
+		swr_master_write(swrm, SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN,
+					SWRM_INTERRUPT_STATUS_MASK);
 		/* apply the new port config*/
 		swrm_apply_port_config(master);
 	} else {
@@ -1252,7 +1254,7 @@ static int swrm_check_slave_change_status(struct swr_mstr_ctrl *swrm,
 static irqreturn_t swr_mstr_interrupt(int irq, void *dev)
 {
 	struct swr_mstr_ctrl *swrm = dev;
-	u32 value, intr_sts;
+	u32 value, intr_sts, intr_mask;
 	u32 temp = 0;
 	u32 status, chg_sts, i;
 	u8 devnum = 0;
@@ -1266,7 +1268,8 @@ static irqreturn_t swr_mstr_interrupt(int irq, void *dev)
 	mutex_unlock(&swrm->reslock);
 
 	intr_sts = swr_master_read(swrm, SWRM_INTERRUPT_STATUS);
-	intr_sts &= SWRM_INTERRUPT_STATUS_MASK;
+	intr_mask = swr_master_read(swrm, SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN);
+	intr_sts &= intr_mask;
 handle_irq:
 	for (i = 0; i < SWRM_INTERRUPT_MAX; i++) {
 		value = intr_sts & (1 << i);
@@ -1279,8 +1282,8 @@ handle_irq:
 			status = swr_master_read(swrm, SWRM_MCP_SLV_STATUS);
 			ret = swrm_find_alert_slave(swrm, status, &devnum);
 			if (ret) {
-				dev_err(swrm->dev, "no slave alert found.\
-						spurious interrupt\n");
+				dev_err_ratelimited(swrm->dev,
+				   "no slave alert found.spurious interrupt\n");
 				break;
 			}
 			swrm_cmd_fifo_rd_cmd(swrm, &temp, devnum, 0x0,
@@ -1360,10 +1363,17 @@ handle_irq:
 			swr_master_write(swrm, SWRM_CMD_FIFO_CMD, 0x1);
 			break;
 		case SWRM_INTERRUPT_STATUS_DOUT_PORT_COLLISION:
-			dev_dbg(swrm->dev, "SWR Port collision detected\n");
+			dev_err_ratelimited(swrm->dev, "SWR Port collision detected\n");
+			intr_mask &= ~SWRM_INTERRUPT_STATUS_DOUT_PORT_COLLISION;
+			swr_master_write(swrm,
+				SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, intr_mask);
 			break;
 		case SWRM_INTERRUPT_STATUS_READ_EN_RD_VALID_MISMATCH:
 			dev_dbg(swrm->dev, "SWR read enable valid mismatch\n");
+			intr_mask &=
+				~SWRM_INTERRUPT_STATUS_READ_EN_RD_VALID_MISMATCH;
+			swr_master_write(swrm,
+				 SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, intr_mask);
 			break;
 		case SWRM_INTERRUPT_STATUS_SPECIAL_CMD_ID_FINISHED:
 			complete(&swrm->broadcast);
@@ -1391,7 +1401,7 @@ handle_irq:
 	swr_master_write(swrm, SWRM_INTERRUPT_CLEAR, 0x0);
 
 	intr_sts = swr_master_read(swrm, SWRM_INTERRUPT_STATUS);
-	intr_sts &= SWRM_INTERRUPT_STATUS_MASK;
+	intr_sts &= intr_mask;
 
 	if (intr_sts) {
 		dev_dbg(swrm->dev, "%s: new interrupt received\n", __func__);
