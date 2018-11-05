@@ -302,6 +302,14 @@ void cds_free_ol_rx_pkt(p_cds_sched_context pSchedContext,
 void cds_free_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext);
 #else
 /**
+ * cds_set_rx_thread_cpu_mask() - Rx_thread affinity from INI
+ * @cpu_affinity_mask: CPU affinity bitmap
+ *
+ * Return:None
+ */
+static inline void cds_set_rx_thread_cpu_mask(uint8_t cpu_affinity_mask) {}
+
+/**
  * cds_drop_rxpkt_by_staid() - api to drop pending rx packets for a sta
  * @pSchedContext: Pointer to the global CDS Sched Context
  * @staId: Station Id

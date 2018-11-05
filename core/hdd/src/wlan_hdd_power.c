@@ -87,9 +87,6 @@
 #define HDD_SSR_BRING_UP_TIME 30000
 #endif
 
-/* timeout in msec to wait for RX_THREAD to suspend */
-#define HDD_RXTHREAD_SUSPEND_TIMEOUT 200
-
 /* Type declarations */
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -123,6 +120,47 @@ void hdd_wlan_offload_event(uint8_t type, uint8_t state)
 	WLAN_HOST_DIAG_EVENT_REPORT(&host_offload, EVENT_WLAN_OFFLOAD_REQ);
 }
 #endif
+
+#ifdef QCA_CONFIG_SMP
+
+/* timeout in msec to wait for RX_THREAD to suspend */
+#define HDD_RXTHREAD_SUSPEND_TIMEOUT 200
+
+void wlan_hdd_rx_thread_resume(struct hdd_context *hdd_ctx)
+{
+	if (hdd_ctx->is_ol_rx_thread_suspended) {
+		cds_resume_rx_thread();
+		hdd_ctx->is_ol_rx_thread_suspended = false;
+	}
+}
+
+int wlan_hdd_rx_thread_suspend(struct hdd_context *hdd_ctx)
+{
+	p_cds_sched_context cds_sched_context = get_cds_sched_ctxt();
+	int rc;
+
+	if (!cds_sched_context)
+		return 0;
+
+	/* Suspend tlshim rx thread */
+	set_bit(RX_SUSPEND_EVENT, &cds_sched_context->ol_rx_event_flag);
+	wake_up_interruptible(&cds_sched_context->ol_rx_wait_queue);
+	rc = wait_for_completion_timeout(&cds_sched_context->
+					 ol_suspend_rx_event,
+					 msecs_to_jiffies
+					 (HDD_RXTHREAD_SUSPEND_TIMEOUT)
+					);
+	if (!rc) {
+		clear_bit(RX_SUSPEND_EVENT,
+			  &cds_sched_context->ol_rx_event_flag);
+		hdd_err("Failed to stop tl_shim rx thread");
+		return -EINVAL;
+	}
+	hdd_ctx->is_ol_rx_thread_suspended = true;
+
+	return 0;
+}
+#endif /* QCA_CONFIG_SMP */
 
 /**
  * hdd_enable_gtk_offload() - enable GTK offload
@@ -1216,10 +1254,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 		hdd_ctx->is_wiphy_suspended = false;
 	}
 
-	if (hdd_ctx->is_ol_rx_thread_suspended) {
-		cds_resume_rx_thread();
-		hdd_ctx->is_ol_rx_thread_suspended = false;
-	}
+	wlan_hdd_rx_thread_resume(hdd_ctx);
 
 	/*
 	 * After SSR, FW clear its txrx stats. In host,
@@ -1543,7 +1578,6 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int exit_code;
-	p_cds_sched_context cds_sched_context = get_cds_sched_ctxt();
 
 	hdd_enter();
 
@@ -1588,10 +1622,8 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	}
 
 	/* Resume tlshim Rx thread */
-	if (hdd_ctx->enable_rxthread && hdd_ctx->is_ol_rx_thread_suspended) {
-		complete(&cds_sched_context->ol_resume_rx_event);
-		hdd_ctx->is_ol_rx_thread_suspended = false;
-	}
+	if (hdd_ctx->enable_rxthread)
+		wlan_hdd_rx_thread_resume(hdd_ctx);
 
 	if (hdd_ctx->enable_dp_rx_threads)
 		dp_txrx_resume(cds_get_context(QDF_MODULE_ID_SOC));
@@ -1647,7 +1679,6 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				     struct cfg80211_wowlan *wow)
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	p_cds_sched_context cds_sched_context = get_cds_sched_ctxt();
 	struct hdd_adapter *adapter;
 	struct hdd_scan_info *scan_info;
 	mac_handle_t mac_handle;
@@ -1765,21 +1796,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	hdd_ctx->is_scheduler_suspended = true;
 
 	if (hdd_ctx->enable_rxthread) {
-		/* Suspend tlshim rx thread */
-		set_bit(RX_SUSPEND_EVENT, &cds_sched_context->ol_rx_event_flag);
-		wake_up_interruptible(&cds_sched_context->ol_rx_wait_queue);
-		rc = wait_for_completion_timeout(&cds_sched_context->
-						 ol_suspend_rx_event,
-						 msecs_to_jiffies
-						 (HDD_RXTHREAD_SUSPEND_TIMEOUT)
-						);
-		if (!rc) {
-			clear_bit(RX_SUSPEND_EVENT,
-				  &cds_sched_context->ol_rx_event_flag);
-			hdd_err("Failed to stop tl_shim rx thread");
+		if (wlan_hdd_rx_thread_suspend(hdd_ctx))
 			goto resume_ol_rx;
-		}
-		hdd_ctx->is_ol_rx_thread_suspended = true;
 	}
 
 	if (hdd_ctx->enable_dp_rx_threads)
@@ -1806,10 +1824,7 @@ resume_dp_thread:
 
 resume_ol_rx:
 	/* Resume tlshim Rx thread */
-	if (hdd_ctx->is_ol_rx_thread_suspended) {
-		cds_resume_rx_thread();
-		hdd_ctx->is_ol_rx_thread_suspended = false;
-	}
+	wlan_hdd_rx_thread_resume(hdd_ctx);
 	scheduler_resume();
 	hdd_ctx->is_scheduler_suspended = false;
 resume_tx:

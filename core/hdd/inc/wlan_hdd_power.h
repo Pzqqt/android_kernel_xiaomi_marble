@@ -522,4 +522,33 @@ hdd_wlan_fake_apps_suspend(struct wiphy *wiphy, struct net_device *dev,
 }
 #endif /* WLAN_SUSPEND_RESUME_TEST */
 
+#ifdef QCA_CONFIG_SMP
+/**
+ * wlan_hdd_rx_thread_resume() - Resume RX thread
+ * @hdd_ctx: HDD context
+ *
+ * Check if RX thread suspended, and resume if yes.
+ *
+ * Return: None
+ */
+void wlan_hdd_rx_thread_resume(struct hdd_context *hdd_ctx);
+
+/**
+ * wlan_hdd_rx_thread_suspend() - Suspend RX thread
+ * @hdd_ctx: HDD context
+ *
+ * To suspend RX thread
+ *
+ * Return: 0 for success
+ */
+int wlan_hdd_rx_thread_suspend(struct hdd_context *hdd_ctx);
+
+#else
+static inline void wlan_hdd_rx_thread_resume(struct hdd_context *hdd_ctx) {}
+static inline int wlan_hdd_rx_thread_suspend(struct hdd_context *hdd_ctx)
+{
+	return 0;
+}
+#endif
+
 #endif /* __WLAN_HDD_POWER_H */
