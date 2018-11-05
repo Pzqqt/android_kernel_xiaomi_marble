@@ -52,6 +52,8 @@ QDF_STATUS ucfg_reg_get_current_chan_list(struct wlan_objmgr_pdev *pdev,
 	return reg_get_current_chan_list(pdev, chan_list);
 }
 
+qdf_export_symbol(ucfg_reg_get_current_chan_list);
+
 QDF_STATUS ucfg_reg_modify_chan_144(struct wlan_objmgr_pdev *pdev,
 				    bool enable_ch_144)
 {
