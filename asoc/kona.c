@@ -13,6 +13,7 @@
 #include <linux/module.h>
 #include <linux/input.h>
 #include <linux/of_device.h>
+#include <linux/soc/qcom/fsa4480-i2c.h>
 #include <sound/core.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
@@ -28,7 +29,9 @@
 #include "msm-pcm-routing-v2.h"
 #include "asoc/msm-cdc-pinctrl.h"
 #include "asoc/wcd-mbhc-v2.h"
+#include "codecs/wcd938x/wcd938x-mbhc.h"
 #include "codecs/wsa881x.h"
+#include "codecs/wcd938x/wcd938x.h"
 #include "codecs/bolero/bolero-cdc.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
 #include "codecs/bolero/wsa-macro.h"
@@ -51,6 +54,13 @@
 #define SAMPLING_RATE_192KHZ    192000
 #define SAMPLING_RATE_352P8KHZ  352800
 #define SAMPLING_RATE_384KHZ    384000
+
+#define WCD9XXX_MBHC_DEF_RLOADS     5
+#define WCD9XXX_MBHC_DEF_BUTTONS    8
+#define CODEC_EXT_CLK_RATE          9600000
+#define ADSP_STATE_READY_TIMEOUT_MS 3000
+#define DEV_NAME_STR_LEN            32
+#define WCD_MBHC_HS_V_MAX           1600
 
 #define TDM_CHANNEL_MAX		8
 #define DEV_NAME_STR_LEN	32
@@ -130,6 +140,7 @@ struct msm_asoc_mach_data {
 	struct device_node *hph_en1_gpio_p; /* used by pinctrl API */
 	struct device_node *hph_en0_gpio_p; /* used by pinctrl API */
 	bool is_afe_config_done;
+	struct device_node *fsa_handle;
 };
 
 struct tdm_port {
@@ -474,6 +485,8 @@ static int dmic_0_1_gpio_cnt;
 static int dmic_2_3_gpio_cnt;
 static int dmic_4_5_gpio_cnt;
 static int msm_vi_feed_tx_ch = 2;
+
+static void *def_wcd_mbhc_cal(void);
 
 /*
  * Need to report LINEIN
@@ -3047,6 +3060,56 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 	return rc;
 }
 
+static bool msm_usbc_swap_gnd_mic(struct snd_soc_component *component, bool active)
+{
+	struct snd_soc_card *card = component->card;
+	struct msm_asoc_mach_data *pdata =
+				snd_soc_card_get_drvdata(card);
+
+	if (!pdata->fsa_handle)
+		return false;
+
+	return fsa4480_switch_event(pdata->fsa_handle, FSA_MIC_GND_SWAP);
+}
+
+static bool msm_swap_gnd_mic(struct snd_soc_component *component, bool active)
+{
+	int value = 0;
+	bool ret = false;
+	struct snd_soc_card *card;
+	struct msm_asoc_mach_data *pdata;
+
+	if (!component) {
+		pr_err("%s component is NULL\n", __func__);
+		return false;
+	}
+	card = component->card;
+	pdata = snd_soc_card_get_drvdata(card);
+
+	if (!pdata)
+		return false;
+
+	if (wcd_mbhc_cfg.enable_usbc_analog)
+		return msm_usbc_swap_gnd_mic(component, active);
+
+	/* if usbc is not defined, swap using us_euro_gpio_p */
+	if (pdata->us_euro_gpio_p) {
+		value = msm_cdc_pinctrl_get_state(
+				pdata->us_euro_gpio_p);
+		if (value)
+			msm_cdc_pinctrl_select_sleep_state(
+					pdata->us_euro_gpio_p);
+		else
+			msm_cdc_pinctrl_select_active_state(
+					pdata->us_euro_gpio_p);
+		dev_dbg(component->dev, "%s: swap select switch %d to %d\n",
+			__func__, value, !value);
+		ret = true;
+	}
+
+	return ret;
+}
+
 static int kona_tdm_snd_hw_params(struct snd_pcm_substream *substream,
 				     struct snd_pcm_hw_params *params)
 {
@@ -3547,6 +3610,35 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 	return 0;
 err:
 	return ret;
+}
+
+static void *def_wcd_mbhc_cal(void)
+{
+	void *wcd_mbhc_cal;
+	struct wcd_mbhc_btn_detect_cfg *btn_cfg;
+	u16 *btn_high;
+
+	wcd_mbhc_cal = kzalloc(WCD_MBHC_CAL_SIZE(WCD_MBHC_DEF_BUTTONS,
+				WCD9XXX_MBHC_DEF_RLOADS), GFP_KERNEL);
+	if (!wcd_mbhc_cal)
+		return NULL;
+
+	WCD_MBHC_CAL_PLUG_TYPE_PTR(wcd_mbhc_cal)->v_hs_max = WCD_MBHC_HS_V_MAX;
+	WCD_MBHC_CAL_BTN_DET_PTR(wcd_mbhc_cal)->num_btn = WCD_MBHC_DEF_BUTTONS;
+	btn_cfg = WCD_MBHC_CAL_BTN_DET_PTR(wcd_mbhc_cal);
+	btn_high = ((void *)&btn_cfg->_v_btn_low) +
+		(sizeof(btn_cfg->_v_btn_low[0]) * btn_cfg->num_btn);
+
+	btn_high[0] = 75;
+	btn_high[1] = 150;
+	btn_high[2] = 237;
+	btn_high[3] = 500;
+	btn_high[4] = 500;
+	btn_high[5] = 500;
+	btn_high[6] = 500;
+	btn_high[7] = 500;
+
+	return wcd_mbhc_cal;
 }
 
 /* Digital audio interface glue - connects codec <---> CPU */
@@ -5093,6 +5185,7 @@ static int msm_aux_codec_init(struct snd_soc_component *component)
 {
 	struct snd_soc_dapm_context *dapm = snd_soc_component_get_dapm(component);
 	int ret = 0;
+	void *mbhc_calibration;
 	struct snd_info_entry *entry;
 	struct snd_card *card = component->card->snd_card;
 	struct msm_asoc_mach_data *pdata;
@@ -5112,14 +5205,30 @@ static int msm_aux_codec_init(struct snd_soc_component *component)
 		entry = snd_info_create_subdir(card->module, "codecs",
 						 card->proc_root);
 		if (!entry) {
-			pr_err("%s: Cannot create codecs module entry\n",
+			dev_dbg(component->dev, "%s: Cannot create codecs module entry\n",
 				 __func__);
 			ret = 0;
-			goto codec_root_err;
+			goto mbhc_cfg_cal;
 		}
 		pdata->codec_root = entry;
 	}
-codec_root_err:
+	wcd938x_info_create_codec_entry(pdata->codec_root, component);
+
+mbhc_cfg_cal:
+	mbhc_calibration = def_wcd_mbhc_cal();
+	if (!mbhc_calibration)
+		return -ENOMEM;
+	wcd_mbhc_cfg.calibration = mbhc_calibration;
+	ret = wcd938x_mbhc_hs_detect(component, &wcd_mbhc_cfg);
+	if (ret) {
+		dev_err(component->dev, "%s: mbhc hs detect failed, err:%d\n",
+			__func__, ret);
+		goto err_hs_detect;
+	}
+	return 0;
+
+err_hs_detect:
+	kfree(mbhc_calibration);
 	return ret;
 }
 
@@ -5608,6 +5717,21 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 			wcd_mbhc_cfg.enable_anc_mic_detect = false;
 			dev_dbg(&pdev->dev, "Unknown value, set to default\n");
 		}
+	}
+	/*
+	 * Parse US-Euro gpio info from DT. Report no error if us-euro
+	 * entry is not found in DT file as some targets do not support
+	 * US-Euro detection
+	 */
+	pdata->us_euro_gpio_p = of_parse_phandle(pdev->dev.of_node,
+					"qcom,us-euro-gpios", 0);
+	if (!pdata->us_euro_gpio_p) {
+		dev_dbg(&pdev->dev, "property %s not detected in node %s",
+			"qcom,us-euro-gpios", pdev->dev.of_node->full_name);
+	} else {
+		dev_dbg(&pdev->dev, "%s detected\n",
+			"qcom,us-euro-gpios");
+		wcd_mbhc_cfg.swap_gnd_mic = msm_swap_gnd_mic;
 	}
 
 	msm_i2s_auxpcm_init(pdev);
