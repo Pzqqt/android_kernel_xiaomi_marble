@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,9 +24,6 @@
 
 #ifndef _WLAN_TDLS_MGMT_H_
 #define _WLAN_TDLS_MGMT_H_
-
-/* default tdls serialize timeout is set to 10 secs */
-#define TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT  10000
 
 #define TDLS_PUBLIC_ACTION_FRAME_OFFSET 24
 #define TDLS_PUBLIC_ACTION_FRAME 4
