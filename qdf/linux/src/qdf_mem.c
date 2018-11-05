@@ -1200,6 +1200,35 @@ void *qdf_mem_malloc_atomic_fl(size_t size, const char *func, uint32_t line)
 }
 qdf_export_symbol(qdf_mem_malloc_atomic_fl);
 
+void *qdf_aligned_malloc_fl(qdf_size_t size, uint32_t ring_base_align,
+			    void **vaddr_unaligned,
+			    const char *func, uint32_t line)
+{
+	void *vaddr_aligned;
+
+	*vaddr_unaligned = qdf_mem_malloc(size);
+	if (!*vaddr_unaligned) {
+		qdf_warn("Failed to alloc %zuB @ %s:%d", size, func, line);
+		return NULL;
+	}
+
+	if ((unsigned long)(*vaddr_unaligned) % ring_base_align) {
+		qdf_mem_free(*vaddr_unaligned);
+		*vaddr_unaligned = qdf_mem_malloc(size + ring_base_align - 1);
+		if (!*vaddr_unaligned) {
+			qdf_warn("Failed to alloc %zuB @ %s:%d",
+				 size, func, line);
+			return NULL;
+		}
+	}
+
+	vaddr_aligned = (*vaddr_unaligned) +
+		((unsigned long)(*vaddr_unaligned) % ring_base_align);
+
+	return vaddr_aligned;
+}
+qdf_export_symbol(qdf_aligned_malloc_fl);
+
 /**
  * qdf_mem_free() - free QDF memory
  * @ptr: Pointer to the starting address of the memory to be free'd.
@@ -1767,6 +1796,42 @@ void qdf_mem_free_consistent(qdf_device_t osdev, void *dev,
 qdf_export_symbol(qdf_mem_free_consistent);
 
 #endif /* MEMORY_DEBUG */
+
+void *qdf_aligned_mem_alloc_consistent_fl(
+	qdf_device_t osdev, void *dev, qdf_size_t size,
+	void **vaddr_unaligned, qdf_dma_addr_t *paddr_unaligned,
+	qdf_dma_addr_t *paddr_aligned, uint32_t ring_base_align,
+	const char *func, uint32_t line)
+{
+	void *vaddr_aligned;
+
+	*vaddr_unaligned = qdf_mem_alloc_consistent(osdev, dev, size,
+						    paddr_unaligned);
+	if (!*vaddr_unaligned) {
+		qdf_warn("Failed to alloc %zuB @ %s:%d", size, func, line);
+		return NULL;
+	}
+
+	if ((unsigned long)(*vaddr_unaligned) % ring_base_align) {
+		qdf_mem_free_consistent(osdev, dev, size, *vaddr_unaligned,
+					*paddr_unaligned, 0);
+		*vaddr_unaligned = qdf_mem_alloc_consistent(osdev, dev,
+				size + ring_base_align - 1, paddr_unaligned);
+		if (!*vaddr_unaligned) {
+			qdf_warn("Failed to alloc %zuB @ %s:%d",
+				 size, func, line);
+			return NULL;
+		}
+	}
+
+	vaddr_aligned = *vaddr_unaligned +
+		((unsigned long)(*vaddr_unaligned) % ring_base_align);
+	*paddr_aligned = *paddr_unaligned + ((unsigned long)(vaddr_aligned) -
+		 (unsigned long)(*vaddr_unaligned));
+
+	return vaddr_aligned;
+}
+qdf_export_symbol(qdf_aligned_mem_alloc_consistent_fl);
 
 /**
  * qdf_mem_dma_sync_single_for_device() - assign memory to device

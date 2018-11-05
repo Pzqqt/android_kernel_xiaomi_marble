@@ -259,6 +259,58 @@ void qdf_mem_free_consistent(qdf_device_t osdev, void *dev,
 
 #endif /* MEMORY_DEBUG */
 
+/**
+ * qdf_aligned_malloc() - allocates aligned QDF memory.
+ * @size: Number of bytes of memory to allocate.
+ * @ring_base_align: Base address alignment.
+ * @vaddr_unaligned: Unaligned virtual address.
+ * @func: Function name of the call site.
+ * @line: Line number of the call site.
+ *
+ * This function will dynamically allocate the specified number of bytes of
+ * memory. Checks if the allocated base address is aligned with base_align.
+ * If not, it frees the allocated memory, adds base_align to alloc size and
+ * re-allocates the memory.
+ *
+ * Return:
+ * Upon successful allocate, returns an aligned base address of the allocated
+ * memory.  If this function is unable to allocate the amount of memory
+ * specified (for any reason) it returns NULL.
+ */
+#define qdf_aligned_malloc(size, ring_base_align, vaddr_unaligned) \
+	qdf_aligned_malloc_fl(size, ring_base_align, vaddr_unaligned, \
+			      __func__, __LINE__)
+
+void *qdf_aligned_malloc_fl(qdf_size_t size, uint32_t ring_base_align,
+			    void **vaddr_unaligned,
+			    const char *func, uint32_t line);
+
+/**
+ * qdf_aligned_mem_alloc_consistent() - allocates consistent qdf memory
+ * @osdev: OS device handle
+ * @dev: Pointer to device handle
+ * @size: Size to be allocated
+ * @vaddr_unaligned: Unaligned virtual address.
+ * @paddr_unaligned: Unaligned physical address.
+ * @paddr_aligned: Aligned physical address.
+ * @ring_base_align: Base address alignment.
+ * @func: Function name of the call site.
+ * @line: Line number of the call site.
+ *
+ * Return: pointer of allocated memory or null if memory alloc fails.
+ */
+#define qdf_aligned_mem_alloc_consistent(osdev, dev, size, vaddr_unaligned, \
+		paddr_unaligned, paddr_aligned, ring_base_align) \
+	qdf_aligned_mem_alloc_consistent_fl(osdev, dev, size, vaddr_unaligned, \
+			paddr_unaligned, paddr_aligned, \
+			ring_base_align, __func__, __LINE__)
+
+void *qdf_aligned_mem_alloc_consistent_fl(
+	qdf_device_t osdev, void *dev, qdf_size_t size,
+	void **vaddr_unaligned, qdf_dma_addr_t *paddr_unaligned,
+	qdf_dma_addr_t *paddr_aligned, uint32_t ring_base_align,
+	const char *func, uint32_t line);
+
 void *qdf_mem_alloc_outline(qdf_device_t osdev, qdf_size_t size);
 
 void qdf_mem_set_io(void *ptr, uint32_t num_bytes, uint32_t value);
