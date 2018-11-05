@@ -683,13 +683,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_WOW_DATA_INACTIVITY_TIMEOUT_MAX),
 
 #ifdef FEATURE_WLAN_ESE
-	REG_VARIABLE(CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, InfraInactivityInterval,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_DEFAULT,
-		     CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_MIN,
-		     CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_MAX),
 
 	REG_DYNAMIC_VARIABLE(CFG_ESE_FEATURE_ENABLED_NAME, WLAN_PARAM_Integer,
 			     struct hdd_config, isEseIniFeatureEnabled,
@@ -981,13 +974,6 @@ struct reg_table_entry g_registry_table[] = {
 			     cb_notify_set_roam_scan_hi_rssi_scan_params,
 			     eCSR_HI_RSSI_SCAN_RSSI_UB_ID),
 
-	REG_VARIABLE(CFG_QOS_WMM_BURST_SIZE_DEFN_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, burstSizeDefinition,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_QOS_WMM_BURST_SIZE_DEFN_DEFAULT,
-		     CFG_QOS_WMM_BURST_SIZE_DEFN_MIN,
-		     CFG_QOS_WMM_BURST_SIZE_DEFN_MAX),
-
 #ifdef FEATURE_WLAN_RA_FILTERING
 
 	REG_VARIABLE(CFG_RA_RATE_LIMIT_INTERVAL_NAME, WLAN_PARAM_Integer,
@@ -1007,26 +993,12 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_RUNTIME_PM_MAX),
 #endif
 
-	REG_VARIABLE(CFG_QOS_WMM_TS_INFO_ACK_POLICY_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, tsInfoAckPolicy,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_QOS_WMM_TS_INFO_ACK_POLICY_DEFAULT,
-		     CFG_QOS_WMM_TS_INFO_ACK_POLICY_MIN,
-		     CFG_QOS_WMM_TS_INFO_ACK_POLICY_MAX),
-
 	REG_VARIABLE(CFG_STA_KEEPALIVE_METHOD_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, sta_keepalive_method,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_STA_KEEPALIVE_METHOD_DEFAULT,
 		     CFG_STA_KEEPALIVE_METHOD_MIN,
 		     CFG_STA_KEEPALIVE_METHOD_MAX),
-
-	REG_VARIABLE(CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, AddTSWhenACMIsOff,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_DEFAULT,
-		     CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_MIN,
-		     CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_MAX),
 
 /* CFG_QDF_TRACE_ENABLE Parameters */
 	REG_VARIABLE(CFG_QDF_TRACE_ENABLE_WDI_NAME, WLAN_PARAM_Integer,
@@ -4029,7 +4001,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		pConfig->nhi_rssi_scan_delay;
 	smeConfig->csrConfig.neighborRoamConfig.nhi_rssi_scan_rssi_ub =
 		pConfig->nhi_rssi_scan_rssi_ub;
-	smeConfig->csrConfig.addTSWhenACMIsOff = pConfig->AddTSWhenACMIsOff;
+
 	smeConfig->csrConfig.allowDFSChannelRoam = pConfig->allowDFSChannelRoam;
 
 	/* Enable/Disable MCC */

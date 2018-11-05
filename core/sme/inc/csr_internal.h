@@ -34,6 +34,7 @@
 #include "csr_neighbor_roam.h"
 
 #include "sir_types.h"
+#include "wlan_mlme_public_struct.h"
 
 /* define scan return criteria. LIM should use these define as well */
 #define CSR_SCAN_RETURN_AFTER_ALL_CHANNELS          (0)
@@ -471,11 +472,6 @@ struct csr_config {
 
 	struct csr_neighbor_roamconfig neighborRoamConfig;
 
-	/*
-	 * Instead of Reassoc, send ADDTS/DELTS even when ACM is off for
-	 * that AC This is mandated by WMM-AC certification
-	 */
-	bool addTSWhenACMIsOff;
 	/*
 	 * Remove this code once SLM_Sessionization is supported
 	 * BMPS_WORKAROUND_NOT_NEEDED
@@ -1048,7 +1044,7 @@ struct csr_roamstruct {
 		(eCsrDynamicRoaming == (pSession)->roamingReason)  ||	\
 		(eCsrReassocRoaming == (pSession)->roamingReason))
 #define CSR_IS_ADDTS_WHEN_ACMOFF_SUPPORTED(pMac) \
-	(pMac->roam.configParam.addTSWhenACMIsOff)
+	(pMac->mlme_cfg->wmm_params.wmm_tspec_element.ts_acm_is_off = 0)
 #define CSR_IS_LOSTLINK_ROAMING(reason) \
 	((eCsrLostlinkRoamingDisassoc == (reason)) || \
 		(eCsrLostlinkRoamingDeauth == (reason)))

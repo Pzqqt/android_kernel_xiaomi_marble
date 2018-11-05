@@ -1726,7 +1726,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.nVhtChannelWidth =
 		WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ + 1;
 
-	pMac->roam.configParam.addTSWhenACMIsOff = 0;
 	pMac->roam.configParam.fScanTwice = false;
 
 	/* Remove this code once SLM_Sessionization is supported */
@@ -2733,8 +2732,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		sme_debug("nRoamBeaconRssiWeight: %d",
 			pMac->roam.configParam.neighborRoamConfig.
 			nRoamBeaconRssiWeight);
-		pMac->roam.configParam.addTSWhenACMIsOff =
-			pParam->addTSWhenACMIsOff;
 		pMac->scan.fEnableDFSChnlScan = pParam->fEnableDFSChnlScan;
 		pMac->scan.scanResultCfgAgingTime = pParam->scanCfgAgingTime;
 		pMac->roam.configParam.fScanTwice = pParam->fScanTwice;
@@ -2922,7 +2919,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->allow_tpc_from_ap = cfg_params->allow_tpc_from_ap;
 	pParam->statsReqPeriodicity = cfg_params->statsReqPeriodicity;
 	pParam->statsReqPeriodicityInPS = cfg_params->statsReqPeriodicityInPS;
-	pParam->addTSWhenACMIsOff = cfg_params->addTSWhenACMIsOff;
 	pParam->fEnableDFSChnlScan = pMac->scan.fEnableDFSChnlScan;
 	pParam->fScanTwice = cfg_params->fScanTwice;
 	pParam->fFirstScanOnly2GChnl = pMac->scan.fFirstScanOnly2GChnl;

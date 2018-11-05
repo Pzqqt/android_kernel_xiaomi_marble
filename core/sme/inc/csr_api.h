@@ -1109,11 +1109,6 @@ typedef struct tagCsrConfigParam {
 	bool isWESModeEnabled;
 	tCsrNeighborRoamConfigParams neighborRoamConfig;
 	/*
-	 * Instead of Reassoc, send ADDTS/DELTS even when ACM is off for that AC
-	 * This is mandated by WMM-AC certification
-	 */
-	bool addTSWhenACMIsOff;
-	/*
 	 * Customer wants to optimize the scan time. Avoiding scans(passive)
 	 * on DFS channels while swipping through both bands can save some time
 	 * (apprx 1.3 sec)

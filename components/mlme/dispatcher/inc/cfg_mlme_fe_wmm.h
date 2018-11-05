@@ -778,7 +778,7 @@
 		"WmmIsEnabled", \
 		0, \
 		2, \
-		2, \
+		0, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Enable WMM feature")
 
@@ -851,6 +851,115 @@
 		0, \
 		"Enable implicit QOS")
 
+#ifdef FEATURE_WLAN_ESE
+/*
+ * <ini>
+ * UapsdMask - To setup Infra Inactivity Interval for ACs
+ * @Min: 0
+ * @Max: 4294967295UL
+ * @Default: 0
+ *
+ * This ini is used to setup Infra Inactivity Interval for
+ * ACs.
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_INACTIVITY_INTERVAL CFG_INI_UINT( \
+		"InfraInactivityInterval", \
+		0, \
+		4294967295UL, \
+		0, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Infra Inactivity Interval")
+
+#define QOS_CFG CFG(CFG_QOS_WMM_INACTIVITY_INTERVAL)
+#else
+
+#define QOS_CFG
+
+#endif /* FEATURE_WLAN_ESE */
+
+/*
+ * <ini>
+ * burstSizeDefinition - Set TS burst size
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set TS burst size
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_BURST_SIZE_DEFN CFG_INI_BOOL( \
+		"burstSizeDefinition", \
+		0, \
+		"burst size definition")
+
+/*
+ * <ini>
+ * tsInfoAckPolicy - Set TS ack policy
+ * @Min: 0x00
+ * @Max: 0x01
+ * @Default: 0x00
+ *
+ * This ini is used to set TS ack policy
+ * TS Info Ack Policy can be either of the
+ * following values:
+ * enum mlme_ts_info_ack_policy {
+ * TS_INFO_ACK_POLICY_NORMAL_ACK = 0,
+ * TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK = 1,
+ * }
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_WMM_TS_INFO_ACK_POLICY CFG_INI_UINT( \
+		"tsInfoAckPolicy", \
+		0, \
+		1, \
+		0, \
+		CFG_VALUE_OR_DEFAULT, \
+		"ts info ack policy")
+
+/*
+ * <ini>
+ * gAddTSWhenACMIsOff - Set ACM value for AC
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set ACM value for AC
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF CFG_INI_BOOL( \
+		"gAddTSWhenACMIsOff", \
+		0, \
+		"ACM value for AC")
+
 #define CFG_WMM_PARAMS_ALL \
 	CFG(CFG_QOS_ENABLED) \
 	CFG(CFG_WME_ENABLED) \
@@ -888,6 +997,10 @@
 	CFG(CFG_QOS_WMM_MODE) \
 	CFG(CFG_QOS_WMM_80211E_ENABLED) \
 	CFG(CFG_QOS_WMM_UAPSD_MASK) \
-	CFG(CFG_QOS_WMM_IMPLICIT_SETUP_ENABLED)
+	CFG(CFG_QOS_WMM_IMPLICIT_SETUP_ENABLED) \
+	QOS_CFG \
+	CFG(CFG_QOS_WMM_BURST_SIZE_DEFN) \
+	CFG(CFG_QOS_WMM_TS_INFO_ACK_POLICY) \
+	CFG(CFG_QOS_ADDTS_WHEN_ACM_IS_OFF)
 
 #endif /* __CFG_MLME_FE_WMM_H */

@@ -2733,50 +2733,6 @@ enum station_keepalive_method {
 
 /*
  * <ini>
- * burstSizeDefinition - Set TS burst size
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set TS burst size
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_BURST_SIZE_DEFN_NAME                "burstSizeDefinition"
-#define CFG_QOS_WMM_BURST_SIZE_DEFN_MIN                  (0)
-#define CFG_QOS_WMM_BURST_SIZE_DEFN_MAX                  (1)
-#define CFG_QOS_WMM_BURST_SIZE_DEFN_DEFAULT              (0)
-
-/*
- * <ini>
- * tsInfoAckPolicy - Set TS ack policy
- * @Min: 0x00
- * @Max: 0x01
- * @Default: 0x00
- *
- * This ini is used to set TS ack policy
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_WMM_TS_INFO_ACK_POLICY_NAME              "tsInfoAckPolicy"
-#define CFG_QOS_WMM_TS_INFO_ACK_POLICY_MIN                (0x00)
-#define CFG_QOS_WMM_TS_INFO_ACK_POLICY_MAX                (0x01)
-#define CFG_QOS_WMM_TS_INFO_ACK_POLICY_DEFAULT            (0x00)
-
-/*
- * <ini>
  * gAddTSWhenACMIsOff - Set ACM value for AC
  * @Min: 0
  * @Max: 1
@@ -2799,30 +2755,6 @@ enum station_keepalive_method {
 #define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_DEFAULT            (0)
 
 #ifdef FEATURE_WLAN_ESE
-
-/*
- * <ini>
- * InfraInactivityInterval - WMM inactivity interval
- * @Min: 0
- * @Max: 4294967295
- * @Default: 0
- *
- * This ini is used to set the value of inactivity interval for WMM TSPEC.
- *
- * Related: None.
- *
- * Supported Feature: WMM/ESE
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_NAME    "InfraInactivityInterval"
-#define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_MIN      (0)
-#define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_MAX      (4294967295UL)
-#define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_DEFAULT  (0) /* disabled */
-
 /*
  * <ini>
  * EseEnabled - Enable ESE
@@ -6532,7 +6464,6 @@ struct hdd_config {
 	bool isFastRoamIniFeatureEnabled;
 	bool MAWCEnabled;
 #ifdef FEATURE_WLAN_ESE
-	uint32_t InfraInactivityInterval;
 	bool isEseIniFeatureEnabled;
 #endif
 	bool isFastTransitionEnabled;
@@ -6554,10 +6485,6 @@ struct hdd_config {
 #ifdef FEATURE_WLAN_SCAN_PNO
 	bool PnoOffload;
 #endif
-	bool burstSizeDefinition;
-	uint8_t tsInfoAckPolicy;
-
-	bool AddTSWhenACMIsOff;
 
 /* QDF Trace Control*/
 	uint16_t qdf_trace_enable_wdi;

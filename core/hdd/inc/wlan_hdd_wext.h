@@ -137,12 +137,6 @@ typedef enum {
 	HDD_WLAN_WMM_STATUS_MODIFY_UAPSD_SET_FAILED = 21
 } hdd_wlan_wmm_status_e;
 
-/** TS Info Ack Policy */
-enum hdd_wlan_wmm_ts_info_ack_policy {
-	HDD_WLAN_WMM_TS_INFO_ACK_POLICY_NORMAL_ACK = 0,
-	HDD_WLAN_WMM_TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK = 1,
-};
-
 /** Enable 11d */
 #define ENABLE_11D  1
 

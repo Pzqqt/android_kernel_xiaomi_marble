@@ -7810,11 +7810,11 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 
 	/* validate the ts info ack policy */
 	switch (params[HDD_WLAN_WMM_PARAM_ACK_POLICY]) {
-	case HDD_WLAN_WMM_TS_INFO_ACK_POLICY_NORMAL_ACK:
+	case TS_INFO_ACK_POLICY_NORMAL_ACK:
 		tSpec.ts_info.ack_policy = SME_QOS_WMM_TS_ACK_POLICY_NORMAL_ACK;
 		break;
 
-	case HDD_WLAN_WMM_TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK:
+	case TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK:
 		tSpec.ts_info.ack_policy =
 			SME_QOS_WMM_TS_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK;
 		break;

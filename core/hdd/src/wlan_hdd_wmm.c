@@ -1022,6 +1022,8 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	uint32_t rate_ac = 0;
 	uint16_t sba_ac = 0;
 	uint32_t uapsd_value = 0;
+	bool is_ts_burst_enable;
+	enum mlme_ts_info_ack_policy ack_policy;
 
 	hdd_debug("Entered, context %pK", pQosContext);
 
@@ -1340,19 +1342,21 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 		break;
 	}
 #ifdef FEATURE_WLAN_ESE
-	qosInfo.inactivity_interval =
-		(WLAN_HDD_GET_CTX(adapter))->config->InfraInactivityInterval;
+	ucfg_mlme_get_inactivity_interval(hdd_ctx->psoc, &uapsd_value);
+	qosInfo.inactivity_interval = uapsd_value;
 #endif
-	qosInfo.ts_info.burst_size_defn =
-		(WLAN_HDD_GET_CTX(adapter))->config->burstSizeDefinition;
+	ucfg_mlme_get_is_ts_burst_size_enable(hdd_ctx->psoc,
+					      &is_ts_burst_enable);
+	qosInfo.ts_info.burst_size_defn = is_ts_burst_enable;
 
-	switch ((WLAN_HDD_GET_CTX(adapter))->config->tsInfoAckPolicy) {
-	case HDD_WLAN_WMM_TS_INFO_ACK_POLICY_NORMAL_ACK:
+	ucfg_mlme_get_ts_info_ack_policy(hdd_ctx->psoc, &ack_policy);
+	switch (ack_policy) {
+	case TS_INFO_ACK_POLICY_NORMAL_ACK:
 		qosInfo.ts_info.ack_policy =
 			SME_QOS_WMM_TS_ACK_POLICY_NORMAL_ACK;
 		break;
 
-	case HDD_WLAN_WMM_TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK:
+	case TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK:
 		qosInfo.ts_info.ack_policy =
 			SME_QOS_WMM_TS_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK;
 		break;

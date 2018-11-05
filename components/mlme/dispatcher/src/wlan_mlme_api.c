@@ -1527,6 +1527,70 @@ wlan_mlme_get_implicit_qos_is_enabled(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_WLAN_ESE
+void wlan_mlme_get_inactivity_interval(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		*value = cfg_default(CFG_QOS_WMM_INACTIVITY_INTERVAL);
+		return;
+	}
+
+	*value = mlme_obj->cfg.wmm_params.wmm_tspec_element.inactivity_intv;
+}
+#endif
+
+void wlan_mlme_get_is_ts_burst_size_enable(struct wlan_objmgr_psoc *psoc,
+					   bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		*value = cfg_default(CFG_QOS_WMM_BURST_SIZE_DEFN);
+		return;
+	}
+
+	*value = mlme_obj->cfg.wmm_params.wmm_tspec_element.burst_size_def;
+}
+
+void wlan_mlme_get_ts_info_ack_policy(struct wlan_objmgr_psoc *psoc,
+				      enum mlme_ts_info_ack_policy *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		*value = cfg_default(CFG_QOS_WMM_TS_INFO_ACK_POLICY);
+		return;
+	}
+
+	*value = mlme_obj->cfg.wmm_params.wmm_tspec_element.ts_ack_policy;
+
+}
+
+QDF_STATUS
+wlan_mlme_get_ts_acm_value_for_ac(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.wmm_params.wmm_tspec_element.ts_acm_is_off;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS wlan_mlme_set_sap_listen_interval(struct wlan_objmgr_psoc *psoc,
 					     int value)
 {

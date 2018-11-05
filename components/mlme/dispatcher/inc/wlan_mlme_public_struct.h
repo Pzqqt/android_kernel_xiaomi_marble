@@ -177,6 +177,16 @@ struct mlme_edca_ac_be {
 };
 
 /**
+ * enum mlme_ts_info_ack_policy - TS Info Ack Policy
+ * @TS_INFO_ACK_POLICY_NORMAL_ACK:normal ack
+ * @TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK: HT immediate block ack
+ */
+enum mlme_ts_info_ack_policy {
+	TS_INFO_ACK_POLICY_NORMAL_ACK = 0,
+	TS_INFO_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK = 1,
+};
+
+/**
  * struct mlme_edca_params - EDCA pramaters related config items
  *
  * @ani_acbk_l:  EDCA parameters for ANI local access category background
@@ -1115,6 +1125,23 @@ struct wlan_mlme_wmm_config {
 };
 
 /**
+ * struct wlan_mlme_wmm_tspec_element - Default TSPEC parameters
+ * from the wmm spec
+ * @inactivity_interval: inactivity_interval as per wmm spec
+ * @burst_size_def: TS burst size
+ * @ts_ack_policy: TS Info ACK policy
+ * @ts_acm_is_off: ACM is off for AC
+ */
+struct wlan_mlme_wmm_tspec_element {
+#ifdef FEATURE_WLAN_ESE
+	uint32_t inactivity_intv;
+#endif
+	bool burst_size_def;
+	enum mlme_ts_info_ack_policy ts_ack_policy;
+	bool ts_acm_is_off;
+};
+
+/**
  * struct wlan_mlme_wmm_ac_vo - Default TSPEC parameters
  * for AC_VO
  * @dir_ac_vo: TSPEC direction for VO
@@ -1206,6 +1233,9 @@ struct wlan_mlme_wmm_ac_bk {
  * @wme_enabled: AP is enabled with WMM
  * @max_sp_length: Maximum SP Length
  * @wsm_enabled: AP is enabled with WSM
+ * @edca_profile: WMM Edca profile
+ * @wmm_config: WMM configuration
+ * @wmm_tspec_element: Default TSPEC parameters
  * @ac_vo: Default TSPEC parameters for AC_VO
  * @ac_vi: Default TSPEC parameters for AC_VI
  * @ac_be: Default TSPEC parameters for AC_BE
@@ -1218,6 +1248,7 @@ struct wlan_mlme_wmm_params {
 	bool wsm_enabled;
 	uint32_t edca_profile;
 	struct wlan_mlme_wmm_config wmm_config;
+	struct wlan_mlme_wmm_tspec_element wmm_tspec_element;
 	struct wlan_mlme_wmm_ac_vo ac_vo;
 	struct wlan_mlme_wmm_ac_vi ac_vi;
 	struct wlan_mlme_wmm_ac_be ac_be;
