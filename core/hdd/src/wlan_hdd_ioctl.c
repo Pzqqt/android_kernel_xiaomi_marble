@@ -6730,24 +6730,6 @@ int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 		.timeout_ms = WLAN_WAIT_TIME_ANTENNA_MODE_REQ,
 	};
 
-	if (hdd_ctx->current_antenna_mode == mode) {
-		hdd_err("System already in the requested mode");
-		goto exit;
-	}
-
-	if ((HDD_ANTENNA_MODE_2X2 == mode) &&
-	    (!hdd_is_supported_chain_mask_2x2(hdd_ctx))) {
-		hdd_err("System does not support 2x2 mode");
-		ret = -EPERM;
-		goto exit;
-	}
-
-	if ((HDD_ANTENNA_MODE_1X1 == mode) &&
-	    hdd_is_supported_chain_mask_1x1(hdd_ctx)) {
-		hdd_err("System only supports 1x1 mode");
-		goto exit;
-	}
-
 	switch (mode) {
 	case HDD_ANTENNA_MODE_1X1:
 		params.num_rx_chains = 1;
@@ -6767,6 +6749,25 @@ int hdd_set_antenna_mode(struct hdd_adapter *adapter,
 		return hdd_set_dynamic_antenna_mode(adapter,
 						    params.num_rx_chains,
 						    params.num_tx_chains);
+
+	if (hdd_ctx->current_antenna_mode == mode) {
+		hdd_err("System already in the requested mode");
+		goto exit;
+	}
+
+	if ((HDD_ANTENNA_MODE_2X2 == mode) &&
+	    (!hdd_is_supported_chain_mask_2x2(hdd_ctx))) {
+		hdd_err("System does not support 2x2 mode");
+		ret = -EPERM;
+		goto exit;
+	}
+
+	if ((HDD_ANTENNA_MODE_1X1 == mode) &&
+	    hdd_is_supported_chain_mask_1x1(hdd_ctx)) {
+		hdd_err("System only supports 1x1 mode");
+		goto exit;
+	}
+
 
 	/* Check TDLS status and update antenna mode */
 	if ((QDF_STA_MODE == adapter->device_mode) &&
