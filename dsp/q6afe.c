@@ -3541,6 +3541,10 @@ static int q6afe_send_dec_config(u16 port_id,
 		media_type.sample_rate =
 			cfg->data.aac_config.sample_rate;
 		break;
+	case ASM_MEDIA_FMT_SBC:
+		media_type.sample_rate =
+			cfg->data.sbc_config.sample_rate;
+		break;
 	default:
 		media_type.sample_rate =
 			afe_config.slim_sch.sample_rate;

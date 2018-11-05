@@ -4311,9 +4311,23 @@ struct afe_port_media_type_t {
  * #ASM_MEDIA_FMT_SBC media format.
  */
 struct asm_sbc_dec_cfg_t {
-	/* All configuration is extracted from the stream */
-} __packed;
+	uint16_t          channels;
+	/*
+	 * Number of channels present in the SBC stream.
+	 *
+	 * @values
+	 * - 1 -- Mono
+	 * - 2 -- Stereo
+	 */
 
+	uint32_t          sample_rate;
+	/*
+	 * Number of samples per second.
+	 *
+	 * @values 8000, 11025, 12000, 16000, 22050, 24000, 32000,
+	 *         44100, 48000, 64000, 88200, 96000 Hz
+	 */
+} __packed;
 /*
  * Payload of the MP3 decoder configuration parameters in the
  * #ASM_MEDIA_FMT_MP3 media format.
