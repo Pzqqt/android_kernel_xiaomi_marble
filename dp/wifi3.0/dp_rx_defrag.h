@@ -57,8 +57,7 @@ struct dp_rx_defrag_cipher {
 
 uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 		struct hal_rx_mpdu_desc_info *mpdu_desc_info,
-		union dp_rx_desc_list_elem_t **head,
-		union dp_rx_desc_list_elem_t **tail,
+		uint8_t *mac_id,
 		uint32_t quota);
 
 /*

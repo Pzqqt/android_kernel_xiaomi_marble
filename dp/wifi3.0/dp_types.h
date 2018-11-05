@@ -1289,6 +1289,9 @@ struct dp_pdev {
 
 	/* peer pointer for collecting invalid peer stats */
 	struct dp_peer *invalid_peer;
+
+	union dp_rx_desc_list_elem_t *free_list_head;
+	union dp_rx_desc_list_elem_t *free_list_tail;
 };
 
 struct dp_peer;

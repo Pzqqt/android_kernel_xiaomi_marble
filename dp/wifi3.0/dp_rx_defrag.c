@@ -1609,8 +1609,7 @@ end:
  */
 uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 		struct hal_rx_mpdu_desc_info *mpdu_desc_info,
-		union dp_rx_desc_list_elem_t **head,
-		union dp_rx_desc_list_elem_t **tail,
+		uint8_t *mac_id,
 		uint32_t quota)
 {
 	uint32_t rx_bufs_used = 0;
@@ -1620,6 +1619,7 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 	qdf_nbuf_t msdu = NULL;
 	uint32_t tid, msdu_len;
 	int idx, rx_bfs = 0;
+	struct dp_pdev *pdev;
 	QDF_STATUS status;
 
 	qdf_assert(soc);
@@ -1653,7 +1653,11 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 			dp_rx_cookie_2_va_rxdma_buf(soc,
 				msdu_list.sw_cookie[idx]);
 
-		qdf_assert(rx_desc);
+		qdf_assert_always(rx_desc);
+
+		/* all buffers in MSDU link belong to same pdev */
+		pdev = soc->pdev_list[rx_desc->pool_id];
+		*mac_id = rx_desc->pool_id;
 
 		msdu = rx_desc->nbuf;
 
@@ -1673,8 +1677,10 @@ uint32_t dp_rx_frag_handle(struct dp_soc *soc, void *ring_desc,
 
 		/* Process fragment-by-fragment */
 		status = dp_rx_defrag_store_fragment(soc, ring_desc,
-				head, tail, mpdu_desc_info,
-				tid, rx_desc, &rx_bfs);
+						     &pdev->free_list_head,
+						     &pdev->free_list_tail,
+						     mpdu_desc_info,
+						     tid, rx_desc, &rx_bfs);
 
 		if (rx_bfs)
 			rx_bufs_used++;
