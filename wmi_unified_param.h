@@ -5236,6 +5236,7 @@ typedef enum {
 	wmi_service_esp_support,
 	wmi_service_obss_spatial_reuse,
 	wmi_service_per_vdev_chain_support,
+	wmi_service_new_htt_msg_format,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
@@ -5399,7 +5400,8 @@ typedef struct {
 	uint32_t tt_support;
 	uint32_t atf_config:1,
 		 mgmt_comp_evt_bundle_support:1,
-		 tx_msdu_new_partition_id_support:1;
+		 tx_msdu_new_partition_id_support:1,
+		 new_htt_msg_format:1;
 	uint32_t iphdr_pad_config;
 	uint32_t
 		qwrap_config:16,
