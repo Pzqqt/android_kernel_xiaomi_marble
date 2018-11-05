@@ -964,6 +964,7 @@ struct cdp_cfg_ops {
 		void *param);
 	void (*set_flow_steering)(struct cdp_cfg *cfg_pdev, uint8_t val);
 	void (*set_ptp_rx_opt_enabled)(struct cdp_cfg *cfg_pdev, uint8_t val);
+	void (*set_new_htt_msg_format)(uint8_t val);
 };
 
 /**

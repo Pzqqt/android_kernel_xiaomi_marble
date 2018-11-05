@@ -6274,6 +6274,10 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 				tgt_res_cfg->eapol_minrate_ac_set);
 		}
 	}
+	if (tgt_res_cfg->new_htt_msg_format) {
+		WMI_RSRC_CFG_FLAG_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN_SET(
+			resource_cfg->flag1, 1);
+	}
 
 	wmi_copy_twt_resource_config(resource_cfg, tgt_res_cfg);
 	resource_cfg->peer_map_unmap_v2_support =
@@ -11856,6 +11860,9 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_OBSS_SPATIAL_REUSE;
 	wmi_service[wmi_service_per_vdev_chain_support] =
 			WMI_SERVICE_PER_VDEV_CHAINMASK_CONFIG_SUPPORT;
+	wmi_service[wmi_service_new_htt_msg_format] =
+			WMI_SERVICE_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN;
+
 }
 
 #ifndef CONFIG_MCL
