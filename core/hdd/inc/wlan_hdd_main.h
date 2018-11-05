@@ -2709,6 +2709,28 @@ int hdd_process_pktlog_command(struct hdd_context *hdd_ctx,
 }
 #endif /* REMOVE_PKT_LOG */
 
+#ifdef FEATURE_SG
+/**
+ * hdd_set_sg_flags() - enable SG flag in the network device
+ * @hdd_ctx: HDD context
+ * @wlan_dev: network device structure
+ *
+ * This function enables the SG feature flag in the
+ * given network device.
+ *
+ * Return: none
+ */
+static inline void hdd_set_sg_flags(struct hdd_context *hdd_ctx,
+				struct net_device *wlan_dev)
+{
+	hdd_debug("SG Enabled");
+	wlan_dev->features |= NETIF_F_SG;
+}
+#else
+static inline void hdd_set_sg_flags(struct hdd_context *hdd_ctx,
+				struct net_device *wlan_dev){}
+#endif
+
 #ifdef FEATURE_TSO
 /**
  * hdd_set_tso_flags() - enable TSO flags in the network device
@@ -2739,7 +2761,10 @@ static inline void hdd_set_tso_flags(struct hdd_context *hdd_ctx,
 }
 #else
 static inline void hdd_set_tso_flags(struct hdd_context *hdd_ctx,
-	 struct net_device *wlan_dev){}
+	 struct net_device *wlan_dev)
+{
+	hdd_set_sg_flags(hdd_ctx, wlan_dev);
+}
 #endif /* FEATURE_TSO */
 
 void hdd_get_ibss_peer_info_cb(void *pUserData,

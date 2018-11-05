@@ -2159,6 +2159,10 @@ ifeq ($(CONFIG_ARCH_SDX20), y)
 cppflags-y += -DSYNC_IPA_READY
 endif
 
+ifeq ($(CONFIG_ARCH_SDXPOORWILLS), y)
+cppflags-y += -DFEATURE_SG
+endif
+
 #Enable wbuff
 cppflags-$(CONFIG_WLAN_WBUFF) += -DWLAN_FEATURE_WBUFF
 
