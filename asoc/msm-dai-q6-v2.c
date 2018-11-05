@@ -3231,8 +3231,9 @@ static int msm_dai_q6_afe_dec_cfg_put(struct snd_kcontrol *kcontrol,
 			sizeof(struct asm_aac_dec_cfg_v2_t));
 		break;
 	case DEC_FMT_SBC:
-	case DEC_FMT_MP3:
-		/* No decoder specific data available */
+		memcpy(&dai_data->dec_config.data,
+			ucontrol->value.bytes.data + format_size,
+			sizeof(struct asm_sbc_dec_cfg_t));
 		break;
 	default:
 		pr_debug("%s: Default decoder config for %d format: Expect abr_dec_cfg\n",
