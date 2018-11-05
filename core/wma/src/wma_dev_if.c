@@ -4950,6 +4950,9 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			wma_remove_peer(wma, add_sta->staMac,
 					add_sta->smesessionId, peer, false);
 			cdp_peer_add_last_real_peer(soc, pdev, vdev, &peer_id);
+			wma_remove_req(wma, add_sta->smesessionId,
+				       WMA_PEER_ASSOC_CNF_START);
+			peer_assoc_cnf = false;
 
 			goto send_rsp;
 		}

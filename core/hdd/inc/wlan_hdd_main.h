@@ -237,12 +237,6 @@ enum hdd_driver_flags {
 /** Maximum time(ms) to wait for target to be ready for suspend **/
 #define WLAN_WAIT_TIME_READY_TO_SUSPEND  2000
 
-/** Maximum time(ms) to wait for tdls add sta to complete **/
-#define WAIT_TIME_TDLS_ADD_STA      1500
-
-/** Maximum time(ms) to wait for tdls del sta to complete **/
-#define WAIT_TIME_TDLS_DEL_STA      1500
-
 /** Maximum time(ms) to wait for Link Establish Req to complete **/
 #define WAIT_TIME_TDLS_LINK_ESTABLISH_REQ      1500
 
