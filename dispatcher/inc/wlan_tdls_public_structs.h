@@ -50,11 +50,14 @@
 
 #define AC_PRIORITY_NUM                 4
 
+/* default tdls serialize timeout is set to 10 secs */
+#define TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT 10000
+
 /** Maximum time(ms) to wait for tdls add sta to complete **/
-#define WAIT_TIME_TDLS_ADD_STA      1500
+#define WAIT_TIME_TDLS_ADD_STA  (TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT + 1000)
 
 /** Maximum time(ms) to wait for tdls del sta to complete **/
-#define WAIT_TIME_TDLS_DEL_STA      1500
+#define WAIT_TIME_TDLS_DEL_STA  (TDLS_DEFAULT_SERIALIZE_CMD_TIMEOUT + 1000)
 
 /** Maximum time(ms) to wait for Link Establish Req to complete **/
 #define WAIT_TIME_TDLS_LINK_ESTABLISH_REQ      1500
