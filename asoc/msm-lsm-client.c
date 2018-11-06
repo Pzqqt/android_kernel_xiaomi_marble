@@ -93,6 +93,9 @@ struct lsm_priv {
 	struct mutex lsm_api_lock;
 	int appl_cnt;
 	int dma_write;
+	int xrun_count;
+	int xrun_index;
+	spinlock_t xrun_lock;
 };
 
 enum { /* lsm session states */
@@ -224,6 +227,7 @@ static void lsm_event_handler(uint32_t opcode, uint32_t token,
 		int rc;
 		struct lsm_cmd_read_done *read_done = (struct lsm_cmd_read_done *)payload;
 		int buf_index = 0;
+		unsigned long flags = 0;
 
 		if (prtd->lsm_client->session != token ||
 		    !read_done) {
@@ -250,18 +254,30 @@ static void lsm_event_handler(uint32_t opcode, uint32_t token,
 				prtd->lsm_client->out_hw_params.period_count);
 				return;
 			}
+			spin_lock_irqsave(&prtd->xrun_lock, flags);
 			prtd->dma_write += read_done->total_size;
 			atomic_inc(&prtd->buf_count);
 			snd_pcm_period_elapsed(substream);
 			wake_up(&prtd->period_wait);
-			/* queue the next period buffer */
-			buf_index = (buf_index + 1) %
-			prtd->lsm_client->out_hw_params.period_count;
-			rc = msm_lsm_queue_lab_buffer(prtd, buf_index);
-			if (rc)
-				dev_err(rtd->dev,
-					"%s: error in queuing the lab buffer rc %d\n",
-					__func__, rc);
+			if (atomic_read(&prtd->buf_count) <
+				prtd->lsm_client->out_hw_params.period_count) {
+				/* queue the next period buffer */
+				buf_index = (buf_index + 1) %
+				prtd->lsm_client->out_hw_params.period_count;
+				rc = msm_lsm_queue_lab_buffer(prtd, buf_index);
+				if (rc)
+					dev_err(rtd->dev,
+						"%s: error in queuing the lab buffer rc %d\n",
+						__func__, rc);
+			} else {
+				dev_dbg(rtd->dev,
+					"%s: xrun: further lab to be queued after read from user\n",
+					 __func__);
+				if (!prtd->xrun_count)
+					prtd->xrun_index = buf_index;
+				(prtd->xrun_count)++;
+			}
+			spin_unlock_irqrestore(&prtd->xrun_lock, flags);
 		} else
 			dev_err(rtd->dev, "%s: Invalid lab buffer returned by dsp\n",
 				__func__);
@@ -970,6 +986,8 @@ static int msm_lsm_start_lab_buffer(struct lsm_priv *prtd, uint16_t status)
 		atomic_set(&prtd->buf_count, 0);
 		prtd->appl_cnt = 0;
 		prtd->dma_write = 0;
+		prtd->xrun_count = 0;
+		prtd->xrun_index = 0;
 
 		rc = msm_lsm_queue_lab_buffer(prtd, 0);
 		if (rc)
@@ -2377,6 +2395,7 @@ static int msm_lsm_open(struct snd_pcm_substream *substream)
 	}
 	mutex_init(&prtd->lsm_api_lock);
 	spin_lock_init(&prtd->event_lock);
+	spin_lock_init(&prtd->xrun_lock);
 	init_waitqueue_head(&prtd->event_wait);
 	init_waitqueue_head(&prtd->period_wait);
 	prtd->substream = substream;
@@ -2721,7 +2740,8 @@ static int msm_lsm_pcm_copy(struct snd_pcm_substream *substream, int ch,
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
 	char *pcm_buf = NULL;
-	int rc = 0;
+	int rc = 0, buf_index = 0;
+	unsigned long flags = 0;
 	struct snd_soc_pcm_runtime *rtd;
 
 	if (!substream->private_data) {
@@ -2776,7 +2796,23 @@ static int msm_lsm_pcm_copy(struct snd_pcm_substream *substream, int ch,
 	}
 	prtd->appl_cnt = (prtd->appl_cnt + 1) %
 		prtd->lsm_client->out_hw_params.period_count;
+
+	spin_lock_irqsave(&prtd->xrun_lock, flags);
+	/* Queue lab buffer here if in xrun */
+	if (prtd->xrun_count > 0) {
+		(prtd->xrun_count)--;
+		buf_index = (prtd->xrun_index + 1) %
+			prtd->lsm_client->out_hw_params.period_count;
+		rc = msm_lsm_queue_lab_buffer(prtd, buf_index);
+		if (rc)
+			dev_err(rtd->dev,
+				"%s: error in queuing the lab buffer rc %d\n",
+				__func__, rc);
+		prtd->xrun_index = buf_index;
+	}
 	atomic_dec(&prtd->buf_count);
+	spin_unlock_irqrestore(&prtd->xrun_lock, flags);
+
 	return 0;
 }
 
