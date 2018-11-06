@@ -6470,12 +6470,15 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle,
 	wma_handle->hw_mode.hw_mode_list =
 		qdf_mem_malloc(sizeof(*wma_handle->hw_mode.hw_mode_list) *
 			       num_hw_modes);
-	if (!wma_handle->hw_mode.hw_mode_list)
+	if (!wma_handle->hw_mode.hw_mode_list) {
+		wma_handle->num_dbs_hw_modes = 0;
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	WMA_LOGD("%s: Updated HW mode list: Num modes:%d",
 		 __func__, num_hw_modes);
 
+	wma_handle->num_dbs_hw_modes = num_hw_modes;
 	for (i = 0; i < num_hw_modes; i++) {
 		/* Update for MAC0 */
 		tmp = &mac_phy_cap[j++];
