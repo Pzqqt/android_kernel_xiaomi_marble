@@ -2931,6 +2931,8 @@ typedef struct {
 #define WMI_HOST_FW_FEATURE_BSS_CHANNEL_INFO_64	       0x0010
 #define WMI_HOST_FW_FEATURE_PEER_STATS                 0x0020
 #define WMI_HOST_FW_FEATURE_VDEV_STATS                 0x0040
+#define WMI_HOST_FW_FEATURE_VOW_FEATURES               0x00004000
+#define WMI_HOST_FW_FEATURE_VOW_STATS                  0x00008000
 	/**
 	* @brief fw_feature_bitmask - Enable/Disable features in FW
 	* @details
