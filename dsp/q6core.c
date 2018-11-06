@@ -1209,8 +1209,7 @@ int q6core_map_mdf_shared_memory(uint32_t map_handle, uint64_t *buf_add,
 
 	for (i = 0; i < bufcnt; i++) {
 		mregions->shm_addr_lsw = lower_32_bits(buf_add[i]);
-		mregions->shm_addr_msw =
-				msm_audio_populate_upper_32_bits(buf_add[i]);
+		mregions->shm_addr_msw = upper_32_bits(buf_add[i]);
 		mregions->mem_size_bytes = bufsz[i];
 		++mregions;
 	}
