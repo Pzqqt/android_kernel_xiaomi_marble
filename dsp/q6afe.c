@@ -7509,14 +7509,17 @@ int afe_alloc_cal(int32_t cal_type, size_t data_size,
 		goto done;
 	}
 
+	mutex_lock(&this_afe.afe_cmd_lock);
 	ret = cal_utils_alloc_cal(data_size, data,
 		this_afe.cal_data[cal_index], 0, NULL);
 	if (ret < 0) {
 		pr_err("%s: cal_utils_alloc_block failed, ret = %d, cal type = %d!\n",
 			__func__, ret, cal_type);
 		ret = -EINVAL;
+		mutex_unlock(&this_afe.afe_cmd_lock);
 		goto done;
 	}
+	mutex_unlock(&this_afe.afe_cmd_lock);
 done:
 	return ret;
 }
@@ -7900,8 +7903,6 @@ static int afe_map_cal_data(int32_t cal_type,
 		goto done;
 	}
 
-
-	mutex_lock(&this_afe.afe_cmd_lock);
 	atomic_set(&this_afe.mem_map_cal_index, cal_index);
 	ret = afe_cmd_memory_map(cal_block->cal_data.paddr,
 			cal_block->map_data.map_size);
@@ -7914,12 +7915,10 @@ static int afe_map_cal_data(int32_t cal_type,
 			__func__,
 			&cal_block->cal_data.paddr,
 			cal_block->map_data.map_size);
-		mutex_unlock(&this_afe.afe_cmd_lock);
 		goto done;
 	}
 	cal_block->map_data.q6map_handle = atomic_read(&this_afe.
 		mem_map_cal_handles[cal_index]);
-	mutex_unlock(&this_afe.afe_cmd_lock);
 done:
 	return ret;
 }
