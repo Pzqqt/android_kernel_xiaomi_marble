@@ -2110,9 +2110,10 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 		break;
 	case SWR_DEVICE_SSR_UP:
 		/* wait for clk voting to be zero */
+		reinit_completion(&swrm->clk_off_complete);
 		if (swrm->clk_ref_count &&
 			 !wait_for_completion_timeout(&swrm->clk_off_complete,
-						   (1 * HZ/100)))
+						   msecs_to_jiffies(200)))
 			dev_err(swrm->dev, "%s: clock voting not zero\n",
 				__func__);
 
