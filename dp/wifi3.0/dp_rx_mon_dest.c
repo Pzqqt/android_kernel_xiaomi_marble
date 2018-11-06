@@ -1431,10 +1431,10 @@ dp_rx_pdev_mon_detach(struct dp_pdev *pdev) {
 	struct dp_soc *soc = pdev->soc;
 	int mac_id;
 
+	qdf_spinlock_destroy(&pdev->mon_lock);
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
 
-		qdf_spinlock_destroy(&pdev->mon_lock);
 		dp_mon_link_desc_pool_cleanup(soc, mac_for_pdev);
 		dp_rx_pdev_mon_status_detach(pdev, mac_for_pdev);
 		dp_rx_pdev_mon_buf_detach(pdev, mac_for_pdev);
