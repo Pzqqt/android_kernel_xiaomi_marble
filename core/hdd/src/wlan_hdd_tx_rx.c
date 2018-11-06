@@ -2579,7 +2579,6 @@ void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 int hdd_set_mon_rx_cb(struct net_device *dev)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_context *hdd_ctx =  WLAN_HDD_GET_CTX(adapter);
 	int ret;
 	QDF_STATUS qdf_status;
 	struct ol_txrx_desc_type sta_desc = {0};
@@ -2604,13 +2603,6 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 		goto exit;
 	}
 
-	qdf_status = sme_create_mon_session(hdd_ctx->mac_handle,
-					    adapter->mac_addr.bytes,
-					    adapter->session_id);
-	if (QDF_STATUS_SUCCESS != qdf_status) {
-		hdd_err("sme_create_mon_session() failed to register. Status= %d [0x%08X]",
-			qdf_status, qdf_status);
-	}
 exit:
 	ret = qdf_status_to_os_return(qdf_status);
 	return ret;
