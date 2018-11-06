@@ -61,6 +61,7 @@
 #include "wlan_p2p_ucfg_api.h"
 #include "wlan_ipa_ucfg_api.h"
 #include "wlan_hdd_stats.h"
+#include "wlan_hdd_scan.h"
 
 #include "wlan_hdd_nud_tracking.h"
 /* These are needed to recognize WPA and RSN suite types */
@@ -2739,6 +2740,12 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		hdd_err("config is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
+	/*
+	 * reset scan reject params if connection is success or we received
+	 * final failure from CSR after trying with all APs.
+	 */
+	hdd_reset_scan_reject_params(hdd_ctx, roamStatus, roamResult);
 
 	/*
 	 * Enable roaming on other STA iface except this one.

@@ -1408,10 +1408,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 	/* Restart all adapters */
 	hdd_start_all_adapters(hdd_ctx);
 
-	hdd_ctx->last_scan_reject_session_id = 0xFF;
-	hdd_ctx->last_scan_reject_reason = 0;
-	hdd_ctx->last_scan_reject_timestamp = 0;
-	hdd_ctx->scan_reject_cnt = 0;
+	hdd_init_scan_reject_params(hdd_ctx);
 
 	hdd_set_roaming_in_progress(false);
 	complete(&adapter->roaming_comp_var);
