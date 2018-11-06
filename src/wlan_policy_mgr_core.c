@@ -1972,6 +1972,7 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	}
 
 	while ((chan_index < num_channels) &&
+		(chan_index < QDF_MAX_NUM_CHAN) &&
 		(chan_index_5 < QDF_MAX_NUM_CHAN)) {
 		if ((true == skip_dfs_channel) &&
 		    wlan_reg_is_dfs_ch(pm_ctx->pdev,
@@ -3090,7 +3091,7 @@ void  policy_mgr_init_sap_mandatory_2g_chan(struct wlan_objmgr_psoc *psoc)
 	}
 	pm_ctx->sap_mandatory_channels_len = 0;
 
-	for (i = 0; i < len; i++) {
+	for (i = 0; (i < len) && (i < QDF_MAX_NUM_CHAN); i++) {
 		if (WLAN_REG_IS_24GHZ_CH(chan_list[i])) {
 			policy_mgr_debug("Add chan %hu to mandatory list",
 					chan_list[i]);
