@@ -1193,6 +1193,10 @@ struct dp_pdev {
 	struct cdp_mon_status rx_mon_recv_status;
 	/* monitor mode status/destination ring PPDU and MPDU count */
 	struct cdp_pdev_mon_stats rx_mon_stats;
+	/* to track duplicate link descriptor indications by HW for a WAR */
+	uint64_t mon_last_linkdesc_paddr;
+	/* to track duplicate buffer indications by HW for a WAR */
+	uint32_t mon_last_buf_cookie;
 
 	/* pool addr for mcast enhance buff */
 	struct {

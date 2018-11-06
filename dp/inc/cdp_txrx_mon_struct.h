@@ -212,6 +212,8 @@ enum {
  * @status_ppdu_done: status ring PPDU done TLV count
  * @dest_ppdu_done: destination ring PPDU count
  * @dest_mpdu_done: destination ring MPDU count
+ * @dup_mon_linkdesc_cnt: duplicate link descriptor indications from HW
+ * @dup_mon_buf_cnt: duplicate buffer indications from HW
  */
 struct cdp_pdev_mon_stats {
 #ifndef REMOVE_MON_DBG_STATS
@@ -226,5 +228,7 @@ struct cdp_pdev_mon_stats {
 	uint32_t dest_ppdu_done;
 	uint32_t dest_mpdu_done;
 	uint32_t dest_mpdu_drop;
+	uint32_t dup_mon_linkdesc_cnt;
+	uint32_t dup_mon_buf_cnt;
 };
 #endif

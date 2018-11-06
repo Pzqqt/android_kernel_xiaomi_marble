@@ -242,6 +242,7 @@ struct dp_rx_desc *dp_rx_get_mon_desc(struct dp_soc *soc,
  * @ppdu_id: ppdu id of processing ppdu
  * @head: head of descs list to be freed
  * @tail: tail of decs list to be freed
+ *
  * Return: number of msdu in MPDU to be popped
  */
 static inline uint32_t
@@ -295,6 +296,13 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	is_first_msdu = true;
 
 	do {
+		/* WAR for duplicate link descriptors received from HW */
+		if (qdf_unlikely(dp_pdev->mon_last_linkdesc_paddr ==
+		    buf_info.paddr)) {
+			dp_pdev->rx_mon_stats.dup_mon_linkdesc_cnt++;
+			return rx_bufs_used;
+		}
+
 		rx_msdu_link_desc =
 			dp_rx_cookie_2_mon_link_desc(dp_pdev,
 						     buf_info, mac_id);
@@ -306,12 +314,22 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 		for (i = 0; i < num_msdus; i++) {
 			uint32_t l2_hdr_offset;
-			struct dp_rx_desc *rx_desc =
-				dp_rx_get_mon_desc(soc,
-						   msdu_list.sw_cookie[i]);
+			struct dp_rx_desc *rx_desc = NULL;
+
+			/* WAR for duplicate buffers received from HW */
+			if (qdf_unlikely(dp_pdev->mon_last_buf_cookie ==
+			    msdu_list.sw_cookie[i])) {
+				/* Skip duplicate buffer and drop subsequent
+				 * buffers in this MPDU
+				 */
+				drop_mpdu = true;
+				dp_pdev->rx_mon_stats.dup_mon_buf_cnt++;
+				continue;
+			}
+			rx_desc = dp_rx_get_mon_desc(soc,
+						     msdu_list.sw_cookie[i]);
 
 			qdf_assert_always(rx_desc);
-
 			msdu = rx_desc->nbuf;
 
 			if (rx_desc->unmapped == 0) {
@@ -373,7 +391,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					*ppdu_id = msdu_ppdu_id;
 					return rx_bufs_used;
 				}
-
+				dp_pdev->mon_last_linkdesc_paddr =
+					buf_info.paddr;
 			}
 
 			if (hal_rx_desc_is_first_msdu(rx_desc_tlv))
@@ -459,6 +478,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 			last = msdu;
 next_msdu:
+			dp_pdev->mon_last_buf_cookie = msdu_list.sw_cookie[i];
 			rx_bufs_used++;
 			dp_rx_add_to_free_desc_list(head,
 				tail, rx_desc);
@@ -1410,6 +1430,8 @@ dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
 			return status;
 		}
 	}
+	pdev->mon_last_linkdesc_paddr = 0;
+	pdev->mon_last_buf_cookie = DP_RX_DESC_COOKIE_MAX + 1;
 	qdf_spinlock_create(&pdev->mon_lock);
 	return QDF_STATUS_SUCCESS;
 }
