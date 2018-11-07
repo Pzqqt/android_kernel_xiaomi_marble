@@ -2678,17 +2678,20 @@ void hdd_perform_roam_set_key_complete(struct hdd_adapter *adapter)
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct csr_roam_info roamInfo;
+	struct csr_roam_info *roam_info;
 
-	roamInfo.fAuthRequired = false;
-	qdf_mem_copy(roamInfo.bssid.bytes,
+	roam_info = qdf_mem_malloc(sizeof(*roam_info));
+	if (!roam_info)
+		return;
+	roam_info->fAuthRequired = false;
+	qdf_mem_copy(roam_info->bssid.bytes,
 		     sta_ctx->roam_info.bssid, QDF_MAC_ADDR_SIZE);
-	qdf_mem_copy(roamInfo.peerMac.bytes,
+	qdf_mem_copy(roam_info->peerMac.bytes,
 		     sta_ctx->roam_info.peer_mac, QDF_MAC_ADDR_SIZE);
 
 	qdf_ret_status =
 			hdd_roam_set_key_complete_handler(adapter,
-					   &roamInfo,
+					   roam_info,
 					   sta_ctx->roam_info.roam_id,
 					   sta_ctx->roam_info.roam_status,
 					   eCSR_ROAM_RESULT_AUTHENTICATED);
@@ -2696,6 +2699,7 @@ void hdd_perform_roam_set_key_complete(struct hdd_adapter *adapter)
 		hdd_err("Set Key complete failure");
 
 	sta_ctx->roam_info.defer_key_complete = false;
+	qdf_mem_free(roam_info);
 }
 
 #if defined(WLAN_FEATURE_FILS_SK) && \

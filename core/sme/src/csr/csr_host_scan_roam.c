@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -606,7 +606,7 @@ tpCsrNeighborRoamBSSInfo csr_neighbor_roam_next_roamable_ap(
 void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 		uint8_t session_id)
 {
-	struct csr_roam_info roam_info;
+	struct csr_roam_info *roam_info;
 	tpCsrNeighborRoamControlInfo neighbor_roam_info =
 		&mac_ctx->roam.neighborRoamInfo[session_id];
 	tCsrNeighborRoamBSSInfo handoff_node;
@@ -634,11 +634,13 @@ void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 		  FL("HANDOFF CANDIDATE BSSID "MAC_ADDRESS_STR),
 		  MAC_ADDR_ARRAY(handoff_node.pBssDescription->bssId));
 
-	qdf_mem_zero(&roam_info, sizeof(struct csr_roam_info));
-	csr_roam_call_callback(mac_ctx, session_id, &roam_info, roamid,
+	roam_info = qdf_mem_malloc(sizeof(*roam_info));
+	if (!roam_info)
+		return;
+	csr_roam_call_callback(mac_ctx, session_id, roam_info, roamid,
 			       eCSR_ROAM_FT_START, eCSR_ROAM_RESULT_SUCCESS);
 
-	qdf_mem_zero(&roam_info, sizeof(struct csr_roam_info));
+	qdf_mem_zero(roam_info, sizeof(*roam_info));
 	csr_neighbor_roam_state_transition(mac_ctx,
 			eCSR_NEIGHBOR_ROAM_STATE_REASSOCIATING, session_id);
 
@@ -659,6 +661,7 @@ void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("csr_roam_copy_connected_profile failed %d"),
 			status);
+		qdf_mem_free(roam_info);
 		return;
 	}
 	qdf_mem_copy(neighbor_roam_info->csrNeighborRoamProfile.BSSIDs.bssid,
@@ -673,17 +676,19 @@ void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 			    (mac_ctx, session_id,
 			    eCSR_DISCONNECT_REASON_HANDOFF))) {
 		sme_warn("csr_roamHandoffRequested: fail to issue disassoc");
+		qdf_mem_free(roam_info);
 		return;
 	}
 	/* notify HDD for handoff, providing the BSSID too */
-	roam_info.reasonCode = eCsrRoamReasonBetterAP;
+	roam_info->reasonCode = eCsrRoamReasonBetterAP;
 
-	qdf_mem_copy(roam_info.bssid.bytes,
+	qdf_mem_copy(roam_info->bssid.bytes,
 		     handoff_node.pBssDescription->bssId,
 		     sizeof(struct qdf_mac_addr));
 
-	csr_roam_call_callback(mac_ctx, session_id, &roam_info, 0,
+	csr_roam_call_callback(mac_ctx, session_id, roam_info, 0,
 			       eCSR_ROAM_ROAMING_START, eCSR_ROAM_RESULT_NONE);
+	qdf_mem_free(roam_info);
 
 }
 

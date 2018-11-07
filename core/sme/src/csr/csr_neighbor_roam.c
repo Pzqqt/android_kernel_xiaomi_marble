@@ -1074,7 +1074,7 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 		&mac->roam.neighborRoamInfo[session_id];
 	struct csr_roam_session *session = &mac->roam.roamSession[session_id];
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	struct csr_roam_info roamInfo;
+	struct csr_roam_info *roam_info;
 #endif
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -1109,16 +1109,20 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 		(eSIR_ROAM_AUTH_STATUS_AUTHENTICATED ==
 		session->roam_synch_data->authStatus)) {
 		sme_debug("LFR3: Authenticated");
-		qdf_copy_macaddr(&roamInfo.peerMac,
-			&session->connectedProfile.bssid);
-		roamInfo.roamSynchInProgress =
+		roam_info = qdf_mem_malloc(sizeof(*roam_info));
+		if (!roam_info)
+			return QDF_STATUS_E_NOMEM;
+		qdf_copy_macaddr(&roam_info->peerMac,
+				 &session->connectedProfile.bssid);
+		roam_info->roamSynchInProgress =
 			session->roam_synch_in_progress;
-		csr_roam_call_callback(mac, session_id, &roamInfo, 0,
-			eCSR_ROAM_SET_KEY_COMPLETE,
-			eCSR_ROAM_RESULT_AUTHENTICATED);
+		csr_roam_call_callback(mac, session_id, roam_info, 0,
+				       eCSR_ROAM_SET_KEY_COMPLETE,
+				       eCSR_ROAM_RESULT_AUTHENTICATED);
 		csr_neighbor_roam_reset_init_state_control_info(mac,
 			session_id);
 		csr_neighbor_roam_info_ctx_init(mac, session_id);
+		qdf_mem_free(roam_info);
 		return status;
 	}
 #endif

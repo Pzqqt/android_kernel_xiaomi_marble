@@ -580,7 +580,7 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 					tpSirFTPreAuthRsp preauth_rsp)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct csr_roam_info roam_info;
+	struct csr_roam_info *roam_info;
 	eCsrAuthType conn_Auth_type;
 	uint32_t session_id = preauth_rsp->smeSessionId;
 	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
@@ -622,6 +622,10 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 			status);
 		return;
 	}
+
+	roam_info = qdf_mem_malloc(sizeof(*roam_info));
+	if (!roam_info)
+		return;
 	qdf_mem_copy((void *)&csr_session->ftSmeContext.preAuthbssId,
 		(void *)preauth_rsp->preAuthbssId,
 		sizeof(struct qdf_mac_addr));
@@ -631,25 +635,27 @@ void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 
 #ifdef FEATURE_WLAN_ESE
 	if (csr_roam_is_ese_assoc(mac_ctx, preauth_rsp->smeSessionId)) {
-		csr_roam_read_tsf(mac_ctx, (uint8_t *) roam_info.timestamp,
-				preauth_rsp->smeSessionId);
-		qdf_mem_copy((void *)&roam_info.bssid,
-				(void *)preauth_rsp->preAuthbssId,
-				sizeof(struct qdf_mac_addr));
+		csr_roam_read_tsf(mac_ctx, (uint8_t *)&roam_info->timestamp,
+				  preauth_rsp->smeSessionId);
+		qdf_mem_copy((void *)&roam_info->bssid,
+			     (void *)preauth_rsp->preAuthbssId,
+			     sizeof(struct qdf_mac_addr));
 		csr_roam_call_callback(mac_ctx, preauth_rsp->smeSessionId,
-				&roam_info, 0, eCSR_ROAM_CCKM_PREAUTH_NOTIFY,
-				0);
+				       roam_info, 0,
+				       eCSR_ROAM_CCKM_PREAUTH_NOTIFY, 0);
 	}
 #endif
 
 	if (csr_roam_is_fast_roam_enabled(mac_ctx, preauth_rsp->smeSessionId)) {
 		/* Save the bssid from the received response */
-		qdf_mem_copy((void *)&roam_info.bssid,
-				(void *)preauth_rsp->preAuthbssId,
-				sizeof(struct qdf_mac_addr));
+		qdf_mem_copy((void *)&roam_info->bssid,
+			     (void *)preauth_rsp->preAuthbssId,
+			     sizeof(struct qdf_mac_addr));
 		csr_roam_call_callback(mac_ctx, preauth_rsp->smeSessionId,
-				&roam_info, 0, eCSR_ROAM_PMK_NOTIFY, 0);
+				       roam_info, 0, eCSR_ROAM_PMK_NOTIFY, 0);
 	}
+
+	qdf_mem_free(roam_info);
 
 	/* If its an Open Auth, FT IEs are not provided by supplicant */
 	/* Hence populate them here */
