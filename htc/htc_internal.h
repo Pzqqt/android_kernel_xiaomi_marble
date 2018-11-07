@@ -190,7 +190,6 @@ typedef struct _HTC_TARGET {
 	qdf_spinlock_t HTCLock;
 	qdf_spinlock_t HTCRxLock;
 	qdf_spinlock_t HTCTxLock;
-	qdf_spinlock_t HTCCreditLock;
 	uint32_t HTCStateFlags;
 	void *host_handle;
 	struct htc_init_info HTCInitInfo;

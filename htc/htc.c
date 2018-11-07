@@ -192,7 +192,6 @@ static void htc_cleanup(HTC_TARGET *target)
 	qdf_spinlock_destroy(&target->HTCLock);
 	qdf_spinlock_destroy(&target->HTCRxLock);
 	qdf_spinlock_destroy(&target->HTCTxLock);
-	qdf_spinlock_destroy(&target->HTCCreditLock);
 	for (i = 0; i < ENDPOINT_MAX; i++) {
 		endpoint = &target->endpoint[i];
 		qdf_spinlock_destroy(&endpoint->lookup_queue_lock);
