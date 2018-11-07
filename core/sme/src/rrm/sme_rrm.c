@@ -615,7 +615,7 @@ rrm_send_scan_results_done:
 
 /**
  * sme_rrm_scan_request_callback() -Sends the beacon report xmit to PE
- * @halHandle: Pointer to the Hal Handle.
+ * @mac_handle: Opaque handle to the MAC context
  * @sessionId: session id
  * @scanId: Scan ID.
  * @status: CSR Status.
@@ -626,13 +626,13 @@ rrm_send_scan_results_done:
  *
  * Return : 0 for success, non zero for failure
  */
-static QDF_STATUS sme_rrm_scan_request_callback(tHalHandle halHandle,
+static QDF_STATUS sme_rrm_scan_request_callback(mac_handle_t mac_handle,
 						uint8_t sessionId,
 						uint32_t scanId,
 						eCsrScanStatus status)
 {
 	uint16_t interval;
-	tpAniSirGlobal pMac = (tpAniSirGlobal) halHandle;
+	tpAniSirGlobal pMac = MAC_CONTEXT(mac_handle);
 	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
 	uint32_t time_tick;
 
@@ -683,12 +683,13 @@ static void sme_rrm_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 	uint32_t scan_id;
 	uint8_t session_id;
 	eCsrScanStatus scan_status = eCSR_SCAN_FAILURE;
-	tHalHandle hal_handle;
+	mac_handle_t mac_handle;
 	bool success = false;
+
 	session_id = wlan_vdev_get_id(vdev);
 	scan_id = event->scan_id;
-	hal_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (!hal_handle) {
+	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
+	if (!mac_handle) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
 			  FL("invalid h_hal"));
 		return;
@@ -703,8 +704,8 @@ static void sme_rrm_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 	if (success)
 		scan_status = eCSR_SCAN_SUCCESS;
 
-	sme_rrm_scan_request_callback(hal_handle, session_id,
-					scan_id, scan_status);
+	sme_rrm_scan_request_callback(mac_handle, session_id,
+				      scan_id, scan_status);
 }
 
 
