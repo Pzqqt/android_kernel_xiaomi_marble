@@ -983,8 +983,8 @@ QDF_STATUS wlan_sap_set_chan_before_pre_cac(struct sap_context *sap_ctx,
 QDF_STATUS wlan_sap_set_pre_cac_complete_status(struct sap_context *sap_ctx,
 						bool status);
 
-bool wlan_sap_is_pre_cac_active(tHalHandle handle);
-QDF_STATUS wlan_sap_get_pre_cac_vdev_id(tHalHandle handle, uint8_t *vdev_id);
+bool wlan_sap_is_pre_cac_active(mac_handle_t handle);
+QDF_STATUS wlan_sap_get_pre_cac_vdev_id(mac_handle_t handle, uint8_t *vdev_id);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 /**
  * wlansap_check_cc_intf() - Get interfering concurrent channel
@@ -1244,19 +1244,19 @@ QDF_STATUS wlansap_start_beacon_req(struct sap_context *sap_ctx);
  */
 QDF_STATUS wlansap_dfs_send_csa_ie_request(struct sap_context *sap_ctx);
 
-QDF_STATUS wlansap_get_dfs_ignore_cac(tHalHandle hHal, uint8_t *pIgnore_cac);
-QDF_STATUS wlansap_set_dfs_ignore_cac(tHalHandle hHal, uint8_t ignore_cac);
-QDF_STATUS wlansap_set_dfs_restrict_japan_w53(tHalHandle hHal,
+QDF_STATUS wlansap_get_dfs_ignore_cac(mac_handle_t hHal, uint8_t *pIgnore_cac);
+QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t hHal, uint8_t ignore_cac);
+QDF_STATUS wlansap_set_dfs_restrict_japan_w53(mac_handle_t hHal,
 			uint8_t disable_Dfs_JapanW3);
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 QDF_STATUS
-wlan_sap_set_channel_avoidance(tHalHandle hal, bool sap_channel_avoidance);
+wlan_sap_set_channel_avoidance(mac_handle_t hal, bool sap_channel_avoidance);
 #endif
 
-QDF_STATUS wlansap_set_dfs_preferred_channel_location(tHalHandle hHal,
+QDF_STATUS wlansap_set_dfs_preferred_channel_location(mac_handle_t hHal,
 		uint8_t dfs_Preferred_Channels_location);
-QDF_STATUS wlansap_set_dfs_target_chnl(tHalHandle hHal,
+QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t hHal,
 			uint8_t target_channel);
 
 /**
@@ -1323,7 +1323,7 @@ QDF_STATUS wlansap_update_sap_config_add_ie(tsap_config_t *pConfig,
 		eUpdateIEsType updateType);
 QDF_STATUS wlansap_reset_sap_config_add_ie(tsap_config_t *pConfig,
 			eUpdateIEsType updateType);
-void wlansap_extend_to_acs_range(tHalHandle hal, uint8_t *startChannelNum,
+void wlansap_extend_to_acs_range(mac_handle_t hal, uint8_t *startChannelNum,
 		uint8_t *endChannelNum, uint8_t *bandStartChannel,
 		uint8_t *bandEndChannel);
 
@@ -1399,8 +1399,8 @@ uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx);
  *
  * Return: QDF_STATUS.
  */
-QDF_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
-			uint16_t tx_leakage_threshold);
+QDF_STATUS wlansap_set_tx_leakage_threshold(mac_handle_t hal,
+					    uint16_t tx_leakage_threshold);
 
 /*
  * wlansap_set_invalid_session() - set session ID to invalid

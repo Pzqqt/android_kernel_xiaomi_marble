@@ -605,7 +605,7 @@ void wlan_sap_set_vht_ch_width(struct sap_context *sap_ctx,
  * Return: true if there is no channel interference else return false
  */
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-static bool wlan_sap_validate_channel_switch(tHalHandle hal, uint16_t sap_ch,
+static bool wlan_sap_validate_channel_switch(mac_handle_t hal, uint16_t sap_ch,
 		struct sap_context *sap_context)
 {
 	return sme_validate_sap_channel_switch(
@@ -616,7 +616,7 @@ static bool wlan_sap_validate_channel_switch(tHalHandle hal, uint16_t sap_ch,
 			sap_context->sessionId);
 }
 #else
-static inline bool wlan_sap_validate_channel_switch(tHalHandle hal,
+static inline bool wlan_sap_validate_channel_switch(mac_handle_t hal,
 		uint16_t sap_ch, struct sap_context *sap_context)
 {
 	return true;
@@ -1549,7 +1549,7 @@ QDF_STATUS wlan_sap_set_pre_cac_complete_status(struct sap_context *sap_ctx,
  *
  * Return: True is pre cac is active, false otherwise
  */
-bool wlan_sap_is_pre_cac_active(tHalHandle handle)
+bool wlan_sap_is_pre_cac_active(mac_handle_t handle)
 {
 	tpAniSirGlobal mac = NULL;
 	int i;
@@ -1579,7 +1579,7 @@ bool wlan_sap_is_pre_cac_active(tHalHandle handle)
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_sap_get_pre_cac_vdev_id(tHalHandle handle, uint8_t *vdev_id)
+QDF_STATUS wlan_sap_get_pre_cac_vdev_id(mac_handle_t handle, uint8_t *vdev_id)
 {
 	tpAniSirGlobal mac = NULL;
 	uint8_t i;
@@ -1841,7 +1841,7 @@ QDF_STATUS wlansap_dfs_send_csa_ie_request(struct sap_context *sap_ctx)
 
    SIDE EFFECTS
    ============================================================================*/
-QDF_STATUS wlansap_get_dfs_ignore_cac(tHalHandle hHal, uint8_t *pIgnore_cac)
+QDF_STATUS wlansap_get_dfs_ignore_cac(mac_handle_t hHal, uint8_t *pIgnore_cac)
 {
 	tpAniSirGlobal pMac = NULL;
 
@@ -1878,7 +1878,7 @@ QDF_STATUS wlansap_get_dfs_ignore_cac(tHalHandle hHal, uint8_t *pIgnore_cac)
 
    SIDE EFFECTS
    ============================================================================*/
-QDF_STATUS wlansap_set_dfs_ignore_cac(tHalHandle hHal, uint8_t ignore_cac)
+QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t hHal, uint8_t ignore_cac)
 {
 	tpAniSirGlobal pMac = NULL;
 
@@ -1906,7 +1906,7 @@ QDF_STATUS wlansap_set_dfs_ignore_cac(tHalHandle hHal, uint8_t ignore_cac)
  *         QDF_STATUS_SUCCESS:  Success
  */
 QDF_STATUS
-wlansap_set_dfs_restrict_japan_w53(tHalHandle hHal, uint8_t disable_Dfs_W53)
+wlansap_set_dfs_restrict_japan_w53(mac_handle_t hHal, uint8_t disable_Dfs_W53)
 {
 	tpAniSirGlobal pMac = NULL;
 	QDF_STATUS status;
@@ -1966,7 +1966,7 @@ bool sap_is_auto_channel_select(struct sap_context *sapcontext)
  * Return: success of failure of operation
  */
 QDF_STATUS
-wlan_sap_set_channel_avoidance(tHalHandle hal, bool sap_channel_avoidance)
+wlan_sap_set_channel_avoidance(mac_handle_t hal, bool sap_channel_avoidance)
 {
 	tpAniSirGlobal mac_ctx = NULL;
 
@@ -1999,7 +1999,7 @@ wlan_sap_set_channel_avoidance(tHalHandle hal, bool sap_channel_avoidance)
  *         QDF_STATUS_SUCCESS:  Success and error code otherwise.
  */
 QDF_STATUS
-wlansap_set_dfs_preferred_channel_location(tHalHandle hHal,
+wlansap_set_dfs_preferred_channel_location(mac_handle_t hHal,
 					   uint8_t
 					   dfs_Preferred_Channels_location)
 {
@@ -2066,7 +2066,8 @@ wlansap_set_dfs_preferred_channel_location(tHalHandle hHal,
 
    SIDE EFFECTS
    ============================================================================*/
-QDF_STATUS wlansap_set_dfs_target_chnl(tHalHandle hHal, uint8_t target_channel)
+QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t hHal,
+				       uint8_t target_channel)
 {
 	tpAniSirGlobal pMac = NULL;
 
@@ -2234,7 +2235,7 @@ wlansap_reset_sap_config_add_ie(tsap_config_t *pConfig, eUpdateIEsType updateTyp
 
    SIDE EFFECTS
    ============================================================================*/
-void wlansap_extend_to_acs_range(tHalHandle hal, uint8_t *startChannelNum,
+void wlansap_extend_to_acs_range(mac_handle_t hal, uint8_t *startChannelNum,
 		uint8_t *endChannelNum, uint8_t *bandStartChannel,
 		uint8_t *bandEndChannel)
 {
@@ -2496,7 +2497,7 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
  *
  * Return: void
  */
-void wlan_sap_enable_phy_error_logs(tHalHandle hal, uint32_t enable_log)
+void wlan_sap_enable_phy_error_logs(mac_handle_t hal, uint32_t enable_log)
 {
 	int error;
 
@@ -2512,7 +2513,7 @@ uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx)
 	return wlan_sap_get_vht_ch_width(sap_ctx);
 }
 
-QDF_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
+QDF_STATUS wlansap_set_tx_leakage_threshold(mac_handle_t hal,
 			uint16_t tx_leakage_threshold)
 {
 	tpAniSirGlobal mac;
