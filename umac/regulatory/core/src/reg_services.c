@@ -3319,6 +3319,12 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	status = wlan_objmgr_psoc_component_obj_attach(psoc,
 			WLAN_UMAC_COMP_REGULATORY, soc_reg_obj,
 			QDF_STATUS_SUCCESS);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_spinlock_destroy(&soc_reg_obj->cbk_list_lock);
+		qdf_mem_free(soc_reg_obj);
+		reg_err("Obj attach failed");
+		return status;
+	}
 
 	reg_debug("reg psoc obj created with status %d", status);
 
@@ -3741,8 +3747,12 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 						     WLAN_UMAC_COMP_REGULATORY,
 						     pdev_priv_obj,
 						     QDF_STATUS_SUCCESS);
-	if (QDF_IS_STATUS_SUCCESS(status) &&
-	    !psoc_priv_obj->is_11d_offloaded)
+	if (QDF_IS_STATUS_ERROR(status)) {
+		reg_err("Obj attach failed");
+		qdf_mem_free(pdev_priv_obj);
+		return status;
+	}
+	if (!psoc_priv_obj->is_11d_offloaded)
 		reg_11d_host_scan_init(parent_psoc);
 
 	reg_debug("reg pdev obj created with status %d", status);
