@@ -2241,6 +2241,9 @@ handle_ht_capabilityand_ht_info(struct mac_context *pMac,
 	pMac->lim.gHTRifsMode = (uint8_t)pMac->mlme_cfg->ht_caps.info_field_1.
 		rifs_mode;
 
+	pMac->lim.gHTOperMode = (tSirMacHTOperatingMode)pMac->mlme_cfg->ht_caps.
+		info_field_2.op_mode;
+
 	pMac->lim.gHTPCOActive = (uint8_t)pMac->mlme_cfg->ht_caps.info_field_3.
 								pco_active;
 	pMac->lim.gHTPCOPhase = (uint8_t)pMac->mlme_cfg->ht_caps.info_field_3.
