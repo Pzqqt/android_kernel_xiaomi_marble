@@ -671,12 +671,12 @@ QDF_STATUS sme_qos_close(tpAniSirGlobal pMac)
  * Return: QDF_STATUS_SUCCESS - Setup is successful.
  *          Other status means Setup request failed
  */
-enum sme_qos_statustype sme_qos_setup_req(tHalHandle hHal, uint32_t sessionId,
-				    struct sme_qos_wmmtspecinfo *pQoSInfo,
-				    sme_QosCallback QoSCallback,
-				    void *HDDcontext,
-				    enum sme_qos_wmmuptype UPType,
-				    uint32_t *pQosFlowID)
+enum sme_qos_statustype sme_qos_setup_req(mac_handle_t hHal, uint32_t sessionId,
+					  struct sme_qos_wmmtspecinfo *pQoSInfo,
+					  sme_QosCallback QoSCallback,
+					  void *HDDcontext,
+					  enum sme_qos_wmmuptype UPType,
+					  uint32_t *pQosFlowID)
 {
 	struct sme_qos_sessioninfo *pSession;
 	QDF_STATUS lock_status = QDF_STATUS_E_FAILURE;
@@ -749,9 +749,9 @@ enum sme_qos_statustype sme_qos_setup_req(tHalHandle hHal, uint32_t sessionId,
  * Return: SME_QOS_STATUS_SETUP_SUCCESS_RSP - Modification is successful.
  *         Other status means request failed
  */
-enum sme_qos_statustype sme_qos_modify_req(tHalHandle hHal,
-				     struct sme_qos_wmmtspecinfo *pQoSInfo,
-				     uint32_t QosFlowID)
+enum sme_qos_statustype sme_qos_modify_req(mac_handle_t hHal,
+					struct sme_qos_wmmtspecinfo *pQoSInfo,
+					uint32_t QosFlowID)
 {
 	QDF_STATUS lock_status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -792,8 +792,9 @@ enum sme_qos_statustype sme_qos_modify_req(tHalHandle hHal,
  *
  * Return: QDF_STATUS_SUCCESS - Release is successful.
  */
-enum sme_qos_statustype sme_qos_release_req(tHalHandle hHal, uint8_t session_id,
-				      uint32_t QosFlowID)
+enum sme_qos_statustype sme_qos_release_req(mac_handle_t hHal,
+					    uint8_t session_id,
+					    uint32_t QosFlowID)
 {
 	QDF_STATUS lock_status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
