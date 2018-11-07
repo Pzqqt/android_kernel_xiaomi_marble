@@ -23,7 +23,7 @@
 #include <sir_api.h>
 
 /* Initialize the FT context. */
-void sme_ft_open(tHalHandle hHal, uint32_t sessionId)
+void sme_ft_open(mac_handle_t hHal, uint32_t sessionId)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -58,7 +58,7 @@ void sme_ft_open(tHalHandle hHal, uint32_t sessionId)
 }
 
 /* Cleanup the SME FT Global context. */
-void sme_ft_close(tHalHandle hHal, uint32_t sessionId)
+void sme_ft_close(mac_handle_t hHal, uint32_t sessionId)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	struct csr_roam_session *pSession = NULL;
@@ -86,7 +86,8 @@ void sme_ft_close(tHalHandle hHal, uint32_t sessionId)
 	}
 }
 
-void sme_set_ft_pre_auth_state(tHalHandle hHal, uint32_t sessionId, bool state)
+void sme_set_ft_pre_auth_state(mac_handle_t hHal, uint32_t sessionId,
+			       bool state)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
@@ -95,7 +96,7 @@ void sme_set_ft_pre_auth_state(tHalHandle hHal, uint32_t sessionId, bool state)
 		pSession->ftSmeContext.setFTPreAuthState = state;
 }
 
-bool sme_get_ft_pre_auth_state(tHalHandle hHal, uint32_t sessionId)
+bool sme_get_ft_pre_auth_state(mac_handle_t hHal, uint32_t sessionId)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
@@ -118,8 +119,8 @@ bool sme_get_ft_pre_auth_state(tHalHandle hHal, uint32_t sessionId)
  *
  * Return: none
  */
-void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
-		const uint8_t *ft_ies, uint16_t ft_ies_length)
+void sme_set_ft_ies(mac_handle_t hal_ptr, uint32_t session_id,
+		    const uint8_t *ft_ies, uint16_t ft_ies_length)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ptr);
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
@@ -281,7 +282,7 @@ QDF_STATUS sme_ft_send_update_key_ind(tpAniSirGlobal mac, uint32_t session_id,
 	return status;
 }
 
-bool sme_get_ftptk_state(tHalHandle hHal, uint32_t sessionId)
+bool sme_get_ftptk_state(mac_handle_t hHal, uint32_t sessionId)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
@@ -293,7 +294,7 @@ bool sme_get_ftptk_state(tHalHandle hHal, uint32_t sessionId)
 	return pSession->ftSmeContext.setFTPTKState;
 }
 
-void sme_set_ftptk_state(tHalHandle hHal, uint32_t sessionId, bool state)
+void sme_set_ftptk_state(mac_handle_t hHal, uint32_t sessionId, bool state)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
@@ -305,7 +306,7 @@ void sme_set_ftptk_state(tHalHandle hHal, uint32_t sessionId, bool state)
 	pSession->ftSmeContext.setFTPTKState = state;
 }
 
-QDF_STATUS sme_ft_update_key(tHalHandle hHal, uint32_t sessionId,
+QDF_STATUS sme_ft_update_key(mac_handle_t hHal, uint32_t sessionId,
 			     tCsrRoamSetKey *pFTKeyInfo)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -367,7 +368,7 @@ QDF_STATUS sme_ft_update_key(tHalHandle hHal, uint32_t sessionId,
  * supplicant. The supplicant will then proceed to send down the
  * Reassoc Req.
  */
-void sme_get_ft_pre_auth_response(tHalHandle hHal, uint32_t sessionId,
+void sme_get_ft_pre_auth_response(mac_handle_t hHal, uint32_t sessionId,
 				  uint8_t *ft_ies, uint32_t ft_ies_ip_len,
 				  uint16_t *ft_ies_length)
 {
@@ -417,7 +418,7 @@ void sme_get_ft_pre_auth_response(tHalHandle hHal, uint32_t sessionId,
  * The supplicant will then proceed to send down the
  * Reassoc Req.
  */
-void sme_get_rici_es(tHalHandle hHal, uint32_t sessionId, uint8_t *ric_ies,
+void sme_get_rici_es(mac_handle_t hHal, uint32_t sessionId, uint8_t *ric_ies,
 		     uint32_t ric_ies_ip_len, uint32_t *ric_ies_length)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -470,7 +471,7 @@ void sme_preauth_reassoc_intvl_timer_callback(void *context)
 }
 
 /* Reset the FT context. */
-void sme_ft_reset(tHalHandle hHal, uint32_t sessionId)
+void sme_ft_reset(mac_handle_t hHal, uint32_t sessionId)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	struct csr_roam_session *pSession = NULL;
