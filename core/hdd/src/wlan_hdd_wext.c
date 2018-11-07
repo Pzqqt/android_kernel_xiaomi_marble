@@ -4734,6 +4734,113 @@ hdd_we_set_qpower_spec_max_spec_nodata_pspoll(struct hdd_adapter *adapter,
 	return hdd_we_set_qpower(adapter, id, value);
 }
 
+static int hdd_we_set_pdev(struct hdd_adapter *adapter,
+			   WMI_PDEV_PARAM id,
+			   const char *id_string,
+			   int value)
+{
+	int errno;
+
+	hdd_debug("%s %d", id_string, value);
+	errno = wma_cli_set_command(adapter->session_id, id, value, PDEV_CMD);
+	if (errno)
+		hdd_err("Failed to set firmware, errno %d", errno);
+
+	return errno;
+}
+
+#define hdd_we_set_pdev(adapter, id, value) \
+			hdd_we_set_pdev(adapter, id, #id, value)
+
+static int hdd_we_set_ani_en_dis(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_pdev(adapter,
+			       WMI_PDEV_PARAM_ANI_ENABLE,
+			       value);
+}
+
+static int hdd_we_set_ani_poll_period(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_pdev(adapter,
+			       WMI_PDEV_PARAM_ANI_POLL_PERIOD,
+			       value);
+}
+
+static int hdd_we_set_ani_listen_period(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_pdev(adapter,
+			       WMI_PDEV_PARAM_ANI_LISTEN_PERIOD,
+			       value);
+}
+
+static int hdd_we_set_ani_ofdm_level(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_pdev(adapter,
+			       WMI_PDEV_PARAM_ANI_OFDM_LEVEL,
+			       value);
+}
+
+static int hdd_we_set_ani_cck_level(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_pdev(adapter,
+			       WMI_PDEV_PARAM_ANI_CCK_LEVEL,
+			       value);
+}
+
+static int hdd_we_set_dynamic_bw(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_pdev(adapter,
+			       WMI_PDEV_PARAM_DYNAMIC_BW,
+			       value);
+}
+
+static int hdd_we_set_cts_cbw(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_pdev(adapter,
+			       WMI_PDEV_PARAM_CTS_CBW,
+			       value);
+}
+
+static int hdd_we_set_tx_chainmask(struct hdd_adapter *adapter, int value)
+{
+	int errno;
+
+	errno = hdd_we_set_pdev(adapter,
+				WMI_PDEV_PARAM_TX_CHAIN_MASK,
+				value);
+	if (errno)
+		return errno;
+
+	return hdd_set_antenna_mode(adapter, adapter->hdd_ctx, value);
+}
+
+static int hdd_we_set_rx_chainmask(struct hdd_adapter *adapter, int value)
+{
+	int errno;
+
+	errno = hdd_we_set_pdev(adapter,
+				WMI_PDEV_PARAM_RX_CHAIN_MASK,
+				value);
+	if (errno)
+		return errno;
+
+	return hdd_set_antenna_mode(adapter, adapter->hdd_ctx, value);
+}
+
+static int hdd_we_set_txpow_2g(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_pdev(adapter,
+			       WMI_PDEV_PARAM_TXPOWER_LIMIT2G,
+			       value);
+}
+
+static int hdd_we_set_txpow_5g(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_pdev(adapter,
+			       WMI_PDEV_PARAM_TXPOWER_LIMIT5G,
+			       value);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -4879,73 +4986,32 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_ANI_EN_DIS:
-	{
-		hdd_debug("WMI_PDEV_PARAM_ANI_ENABLE val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_PDEV_PARAM_ANI_ENABLE,
-					  set_value, PDEV_CMD);
+		ret = hdd_we_set_ani_en_dis(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_ANI_POLL_PERIOD:
-	{
-		hdd_debug("WMI_PDEV_PARAM_ANI_POLL_PERIOD val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_PDEV_PARAM_ANI_POLL_PERIOD,
-					  set_value, PDEV_CMD);
+		ret = hdd_we_set_ani_poll_period(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_ANI_LISTEN_PERIOD:
-	{
-		hdd_debug("WMI_PDEV_PARAM_ANI_LISTEN_PERIOD val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_PDEV_PARAM_ANI_LISTEN_PERIOD,
-					  set_value, PDEV_CMD);
+		ret = hdd_we_set_ani_listen_period(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_ANI_OFDM_LEVEL:
-	{
-		hdd_debug("WMI_PDEV_PARAM_ANI_OFDM_LEVEL val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_PDEV_PARAM_ANI_OFDM_LEVEL,
-					  set_value, PDEV_CMD);
+		ret = hdd_we_set_ani_ofdm_level(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_ANI_CCK_LEVEL:
-	{
-		hdd_debug("WMI_PDEV_PARAM_ANI_CCK_LEVEL val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_PDEV_PARAM_ANI_CCK_LEVEL,
-					  set_value, PDEV_CMD);
+		ret = hdd_we_set_ani_cck_level(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_DYNAMIC_BW:
-	{
-		hdd_debug("WMI_PDEV_PARAM_DYNAMIC_BW val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_PDEV_PARAM_DYNAMIC_BW,
-					  set_value, PDEV_CMD);
+		ret = hdd_we_set_dynamic_bw(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_CTS_CBW:
-	{
-		hdd_debug("WE_SET_CTS_CBW val %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_PDEV_PARAM_CTS_CBW,
-					  set_value, PDEV_CMD);
+		ret = hdd_we_set_cts_cbw(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_11N_RATE:
 		ret = hdd_we_set_11n_rate(adapter, set_value);
@@ -4969,46 +5035,20 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_TX_CHAINMASK:
-	{
-		hdd_debug("WMI_PDEV_PARAM_TX_CHAIN_MASK val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_PDEV_PARAM_TX_CHAIN_MASK,
-					  set_value, PDEV_CMD);
-		ret = hdd_set_antenna_mode(adapter, hdd_ctx, set_value);
+		ret = hdd_we_set_tx_chainmask(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_RX_CHAINMASK:
-	{
-		hdd_debug("WMI_PDEV_PARAM_RX_CHAIN_MASK val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_PDEV_PARAM_RX_CHAIN_MASK,
-					  set_value, PDEV_CMD);
-		ret = hdd_set_antenna_mode(adapter, hdd_ctx, set_value);
+		ret = hdd_we_set_rx_chainmask(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_TXPOW_2G:
-	{
-		hdd_debug("WMI_PDEV_PARAM_TXPOWER_LIMIT2G val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_PDEV_PARAM_TXPOWER_LIMIT2G,
-					  set_value, PDEV_CMD);
+		ret = hdd_we_set_txpow_2g(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_TXPOW_5G:
-	{
-		hdd_debug("WMI_PDEV_PARAM_TXPOWER_LIMIT5G val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_PDEV_PARAM_TXPOWER_LIMIT5G,
-					  set_value, PDEV_CMD);
+		ret = hdd_we_set_txpow_5g(adapter, set_value);
 		break;
-	}
 
 	/* Firmware debug log */
 	case WE_DBGLOG_LOG_LEVEL:
