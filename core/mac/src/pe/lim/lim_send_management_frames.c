@@ -839,12 +839,12 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	/* Queue Probe Response frame in high priority WQ */
-	qdf_status = wma_tx_frame((tHalHandle) mac_ctx, packet,
-				(uint16_t) bytes,
-				TXRX_FRM_802_11_MGMT,
-				ANI_TXDIR_TODS,
-				7, lim_tx_complete, frame, tx_flag,
-				sme_sessionid, 0, RATEID_DEFAULT);
+	qdf_status = wma_tx_frame(mac_ctx, packet,
+				  (uint16_t)bytes,
+				  TXRX_FRM_802_11_MGMT,
+				  ANI_TXDIR_TODS,
+				  7, lim_tx_complete, frame, tx_flag,
+				  sme_sessionid, 0, RATEID_DEFAULT);
 
 	/* Pkt will be freed up by the callback */
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))

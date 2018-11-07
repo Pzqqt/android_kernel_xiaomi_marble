@@ -566,18 +566,15 @@ void lim_cleanup(tpAniSirGlobal pMac)
  */
 static void lim_state_info_dump(char **buf_ptr, uint16_t *size)
 {
-	tHalHandle hal;
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 	uint16_t len = 0;
 	char *buf = *buf_ptr;
 
-	hal = cds_get_context(QDF_MODULE_ID_PE);
-	if (hal == NULL) {
+	mac = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac) {
 		QDF_ASSERT(0);
 		return;
 	}
-
-	mac = PMAC_STRUCT(hal);
 
 	pe_debug("size of buffer: %d", *size);
 
