@@ -53,15 +53,14 @@ QDF_STATUS wlan_sm_dispatch(struct wlan_sm *sm, uint16_t event,
 		if (event < sm->num_event_names)
 			event_name = sm->event_names[event];
 
-		sm_engine_nofl_info("%s: current state %s[%d] event %s[%d]",
-				    sm->name, sm->state_info[state].name, state,
-				    event_name ? event_name : "UNKNOWN_EVENT",
-				    event);
+		sm_engine_debug("%s: current state %s[%d] event %s[%d]",
+				sm->name, sm->state_info[state].name, state,
+				event_name ? event_name : "UNKNOWN_EVENT",
+				event);
 	} else {
-		sm_engine_nofl_info("%s: current state %s[%d] event %d",
-				    sm->name,
-				    sm->state_info[state].name, state,
-				    event);
+		sm_engine_debug("%s: current state %s[%d] event %d",
+				sm->name, sm->state_info[state].name, state,
+				event);
 	}
 
 	if (state != WLAN_SM_ENGINE_STATE_NONE) {
@@ -145,15 +144,15 @@ void wlan_sm_transition_to(struct wlan_sm *sm, uint8_t state)
 	else
 		new_sub_st = 0;
 
-	sm_engine_nofl_info("%s: transition(state) %s[%d] => %s[%d]",
-			    sm->name, state_info[old_state].name, old_state,
-			    state_info[new_state].name, new_state);
-	sm_engine_nofl_info("%s: transition(sub_state) %s[%d] => %s[%d]",
-			    sm->name,
-			    ol_sub_st ? state_info[ol_sub_st].name : "IDLE",
-			    ol_sub_st,
-			    new_sub_st ? state_info[new_sub_st].name : "IDLE",
-			    new_sub_st);
+	sm_engine_debug("%s: transition(state) %s[%d] => %s[%d]",
+			sm->name, state_info[old_state].name, old_state,
+			state_info[new_state].name, new_state);
+	sm_engine_debug("%s: transition(sub_state) %s[%d] => %s[%d]",
+			sm->name,
+			ol_sub_st ? state_info[ol_sub_st].name : "IDLE",
+			ol_sub_st,
+			new_sub_st ? state_info[new_sub_st].name : "IDLE",
+			new_sub_st);
 
 	/*
 	 * call the exit function(s) of the current state hierarchy
