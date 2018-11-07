@@ -3938,6 +3938,39 @@ static void __lim_process_roam_scan_offload_req(tpAniSirGlobal mac_ctx,
 	}
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/**
+ * lim_process_roam_invoke() - process the Roam Invoke req
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg_buf: Pointer to the SME message buffer
+ *
+ * This function is called by limProcessMessageQueue(). This function sends the
+ * ROAM_INVOKE command to WMA.
+ *
+ * Return: None
+ */
+static void lim_process_roam_invoke(tpAniSirGlobal mac_ctx,
+				    uint32_t *msg_buf)
+{
+	struct scheduler_msg msg = {0};
+	QDF_STATUS status;
+
+	msg.type = SIR_HAL_ROAM_INVOKE;
+	msg.bodyptr = msg_buf;
+	msg.reserved = 0;
+
+	status = wma_post_ctrl_msg(mac_ctx, &msg);
+	if (QDF_STATUS_SUCCESS != status)
+		pe_err("Not able to post SIR_HAL_ROAM_INVOKE to WMA");
+}
+#else
+static void lim_process_roam_invoke(tpAniSirGlobal mac_ctx,
+				    uint32_t *msg_buf)
+{
+	qdf_mem_free(msg_buf);
+}
+#endif
+
 /*
  * lim_handle_update_ssid_hidden() - Processes SSID hidden update
  * @mac_ctx: Pointer to global mac context
@@ -4965,6 +4998,10 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 		break;
 	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
 		__lim_process_roam_scan_offload_req(pMac, pMsgBuf);
+		bufConsumed = false;
+		break;
+	case eWNI_SME_ROAM_INVOKE:
+		lim_process_roam_invoke(pMac, pMsgBuf);
 		bufConsumed = false;
 		break;
 	case eWNI_SME_CHNG_MCC_BEACON_INTERVAL:

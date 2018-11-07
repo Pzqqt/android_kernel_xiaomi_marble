@@ -1648,6 +1648,8 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 #endif  /* FEATURE_WLAN_ESE */
 	case eWNI_SME_REGISTER_MGMT_FRAME_CB:
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
+	case eWNI_SME_ROAM_INVOKE:
+		/* fall through */
 	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
 	case eWNI_SME_SET_ADDBA_ACCEPT:
 	case eWNI_SME_UPDATE_EDCA_PROFILE:
