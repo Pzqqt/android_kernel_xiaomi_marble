@@ -1247,8 +1247,8 @@ void wlan_serialization_destroy_pdev_list(
 {
 
 	wlan_serialization_release_pdev_list_cmds(pdev_queue);
-	qdf_list_destroy(&pdev_queue->active_list);
 	qdf_list_destroy(&pdev_queue->pending_list);
+	qdf_list_destroy(&pdev_queue->active_list);
 
 }
 

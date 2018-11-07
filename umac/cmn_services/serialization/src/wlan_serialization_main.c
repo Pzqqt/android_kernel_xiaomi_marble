@@ -579,12 +579,17 @@ static QDF_STATUS wlan_serialization_psoc_create_handler(
 		ser_alert("Mem alloc failed for ser psoc priv obj");
 		goto error;
 	}
-	wlan_objmgr_psoc_component_obj_attach(psoc,
-					      WLAN_UMAC_COMP_SERIALIZATION,
-					      soc_ser_obj,
-					      QDF_STATUS_SUCCESS);
+	status = wlan_objmgr_psoc_component_obj_attach(
+					psoc,
+					WLAN_UMAC_COMP_SERIALIZATION,
+					soc_ser_obj,
+					QDF_STATUS_SUCCESS);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		qdf_mem_free(soc_ser_obj);
+		ser_err("Obj attach failed");
+		goto error;
+	}
 	ser_debug("ser psoc obj created");
-
 	status = QDF_STATUS_SUCCESS;
 
 error:
@@ -640,6 +645,8 @@ wlan_serialization_create_cmd_pool(
 	uint8_t i;
 	QDF_STATUS status = QDF_STATUS_E_NOMEM;
 
+	qdf_list_create(&pdev_queue->cmd_pool_list, cmd_pool_size);
+
 	for (i = 0; i < cmd_pool_size; i++) {
 		cmd_list_ptr = qdf_mem_malloc(sizeof(*cmd_list_ptr));
 		if (!cmd_list_ptr) {
@@ -682,6 +689,7 @@ static QDF_STATUS wlan_serialization_pdev_create_handler(
 	struct wlan_serialization_pdev_queue *pdev_queue;
 	QDF_STATUS status = QDF_STATUS_E_NOMEM;
 	uint8_t index;
+	uint8_t free_index;
 	uint8_t max_active_cmds;
 	uint8_t max_pending_cmds;
 	uint16_t cmd_pool_size;
@@ -715,15 +723,13 @@ static QDF_STATUS wlan_serialization_pdev_create_handler(
 				max_active_cmds);
 		qdf_list_create(&pdev_queue->pending_list,
 				max_pending_cmds);
-		qdf_list_create(&pdev_queue->cmd_pool_list,
-				cmd_pool_size);
 
 		status = wlan_serialization_create_cmd_pool(pdev_queue,
 							    cmd_pool_size);
 		if (status != QDF_STATUS_SUCCESS) {
-			ser_err("ser_pdev_obj failed status %d", status);
-			goto error;
-	}
+			ser_err("Create cmd pool failed, status %d", status);
+			goto error_free;
+		}
 
 		pdev_queue->vdev_active_cmd_bitmap = 0;
 		pdev_queue->blocking_cmd_active = 0;
@@ -734,9 +740,22 @@ static QDF_STATUS wlan_serialization_pdev_create_handler(
 			pdev, WLAN_UMAC_COMP_SERIALIZATION,
 			ser_pdev_obj, QDF_STATUS_SUCCESS);
 
-	if (status != QDF_STATUS_SUCCESS)
-		ser_err("serialization pdev obj attach failed");
+	if (status != QDF_STATUS_SUCCESS) {
+		ser_err("Pdev obj attach failed, status %d", status);
+		goto error_free;
+	}
 
+	return QDF_STATUS_SUCCESS;
+
+error_free:
+	for (free_index = 0; free_index <= index; free_index++) {
+		pdev_queue = &ser_pdev_obj->pdev_q[free_index];
+
+		wlan_serialization_destroy_cmd_pool(pdev_queue);
+		qdf_list_destroy(&pdev_queue->pending_list);
+		qdf_list_destroy(&pdev_queue->active_list);
+		wlan_serialization_destroy_lock(&pdev_queue->pdev_queue_lock);
+	}
 error:
 	return status;
 }
@@ -798,6 +817,10 @@ static QDF_STATUS wlan_serialization_pdev_destroy_handler(
 		wlan_serialization_get_pdev_obj(pdev);
 	uint8_t index;
 
+	if (!ser_pdev_obj) {
+		ser_err("ser_pdev_obj NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 	status = wlan_objmgr_pdev_component_obj_detach(
 			pdev, WLAN_UMAC_COMP_SERIALIZATION, ser_pdev_obj);
 
@@ -809,7 +832,6 @@ static QDF_STATUS wlan_serialization_pdev_destroy_handler(
 
 		wlan_serialization_destroy_lock(&pdev_queue->pdev_queue_lock);
 	}
-
 	qdf_mem_free(ser_pdev_obj);
 
 	return status;
@@ -866,9 +888,15 @@ wlan_serialization_vdev_create_handler(struct wlan_objmgr_vdev *vdev,
 			vdev, WLAN_UMAC_COMP_SERIALIZATION, ser_vdev_obj,
 			QDF_STATUS_SUCCESS);
 
-	if (status != QDF_STATUS_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS) {
+		for (index = 0; index < SER_VDEV_QUEUE_COMP_MAX; index++) {
+			vdev_q = &ser_vdev_obj->vdev_q[index];
+			qdf_list_destroy(&vdev_q->pending_list);
+			qdf_list_destroy(&vdev_q->active_list);
+		}
+		qdf_mem_free(ser_vdev_obj);
 		ser_err("serialization vdev obj attach failed");
-
+	}
 error:
 	return status;
 }
@@ -895,13 +923,17 @@ static QDF_STATUS wlan_serialization_vdev_destroy_handler(
 	uint8_t vdev_id = wlan_vdev_get_id(vdev);
 	uint8_t index;
 
+	if (!ser_vdev_obj) {
+		ser_err("ser_vdev_obj NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 	status = wlan_objmgr_vdev_component_obj_detach(
 			vdev, WLAN_UMAC_COMP_SERIALIZATION, ser_vdev_obj);
 
 	for (index = 0; index < SER_VDEV_QUEUE_COMP_MAX; index++) {
 		vdev_q = &ser_vdev_obj->vdev_q[index];
-		wlan_serialization_destroy_vdev_list(&vdev_q->active_list);
 		wlan_serialization_destroy_vdev_list(&vdev_q->pending_list);
+		wlan_serialization_destroy_vdev_list(&vdev_q->active_list);
 	}
 
 	qdf_mem_free(ser_vdev_obj);
