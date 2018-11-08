@@ -283,6 +283,64 @@ static QDF_STATUS send_vdev_delete_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_vdev_nss_chain_params_cmd_tlv() - send VDEV nss chain params to fw
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @nss_chains_user_cfg: user configured nss chain params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS
+send_vdev_nss_chain_params_cmd_tlv(wmi_unified_t wmi_handle,
+				   uint8_t vdev_id,
+				   struct wlan_mlme_nss_chains *user_cfg)
+{
+	wmi_vdev_chainmask_config_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+
+	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
+	if (!buf) {
+		WMI_LOGP("%s:wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_vdev_chainmask_config_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		     WMITLV_TAG_STRUC_wmi_vdev_chainmask_config_cmd_fixed_param,
+		     WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_vdev_chainmask_config_cmd_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->disable_rx_mrc_2g = user_cfg->disable_rx_mrc[NSS_CHAINS_BAND_2GHZ];
+	cmd->disable_tx_mrc_2g = user_cfg->disable_tx_mrc[NSS_CHAINS_BAND_2GHZ];
+	cmd->disable_rx_mrc_5g = user_cfg->disable_rx_mrc[NSS_CHAINS_BAND_5GHZ];
+	cmd->disable_tx_mrc_5g = user_cfg->disable_tx_mrc[NSS_CHAINS_BAND_5GHZ];
+	cmd->num_rx_chains_2g = user_cfg->num_rx_chains[NSS_CHAINS_BAND_2GHZ];
+	cmd->num_tx_chains_2g = user_cfg->num_tx_chains[NSS_CHAINS_BAND_2GHZ];
+	cmd->num_rx_chains_5g = user_cfg->num_rx_chains[NSS_CHAINS_BAND_5GHZ];
+	cmd->num_tx_chains_5g = user_cfg->num_tx_chains[NSS_CHAINS_BAND_5GHZ];
+	cmd->rx_nss_2g = user_cfg->rx_nss[NSS_CHAINS_BAND_2GHZ];
+	cmd->tx_nss_2g = user_cfg->tx_nss[NSS_CHAINS_BAND_2GHZ];
+	cmd->rx_nss_5g = user_cfg->rx_nss[NSS_CHAINS_BAND_5GHZ];
+	cmd->tx_nss_5g = user_cfg->tx_nss[NSS_CHAINS_BAND_5GHZ];
+	cmd->num_tx_chains_a = user_cfg->num_tx_chains_11a;
+	cmd->num_tx_chains_b = user_cfg->num_tx_chains_11b;
+	cmd->num_tx_chains_g = user_cfg->num_tx_chains_11g;
+
+	wmi_mtrace(WMI_VDEV_CHAINMASK_CONFIG_CMDID, cmd->vdev_id, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf,
+			sizeof(wmi_vdev_chainmask_config_cmd_fixed_param),
+			WMI_VDEV_CHAINMASK_CONFIG_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("Failed to send WMI_VDEV_CHAINMASK_CONFIG_CMDID");
+		wmi_buf_free(buf);
+	}
+	WMI_LOGD("%s: vdev_id %d", __func__, vdev_id);
+
+	return ret;
+}
+
+/**
  * send_vdev_stop_cmd_tlv() - send vdev stop command to fw
  * @wmi: wmi handle
  * @vdev_id: vdev id
@@ -10999,6 +11057,7 @@ static void wmi_11ax_bss_color_attach_tlv(struct wmi_unified *wmi_handle)
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
+	.send_vdev_nss_chain_params_cmd = send_vdev_nss_chain_params_cmd_tlv,
 	.send_vdev_down_cmd = send_vdev_down_cmd_tlv,
 	.send_vdev_start_cmd = send_vdev_start_cmd_tlv,
 	.send_hidden_ssid_vdev_restart_cmd =

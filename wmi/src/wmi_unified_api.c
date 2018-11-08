@@ -92,6 +92,22 @@ QDF_STATUS wmi_unified_vdev_delete_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS
+wmi_unified_vdev_nss_chain_params_send(void *wmi_hdl,
+				       uint8_t vdev_id,
+				       struct wlan_mlme_nss_chains *user_cfg)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_vdev_nss_chain_params_cmd)
+		return wmi_handle->ops->send_vdev_nss_chain_params_cmd(
+							wmi_handle,
+							vdev_id,
+							user_cfg);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 /**
  * wmi_unified_vdev_stop_send() - send vdev stop command to fw
  * @wmi: wmi handle

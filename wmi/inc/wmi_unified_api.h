@@ -461,6 +461,18 @@ QDF_STATUS wmi_unified_vdev_create_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_vdev_delete_send(void *wmi_hdl,
 					  uint8_t if_id);
 
+/**
+ * wmi_unified_vdev_nss_chain_params_send() - send VDEV nss chain params to fw
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @nss_chains_user_cfg: user configured params to send
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_vdev_nss_chain_params_send(void *wmi_hdl,
+			uint8_t vdev_id,
+			struct wlan_mlme_nss_chains *nss_chains_user_cfg);
+
 QDF_STATUS wmi_unified_vdev_stop_send(void *wmi_hdl,
 					uint8_t vdev_id);
 
