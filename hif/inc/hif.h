@@ -112,7 +112,12 @@ enum hif_ic_irq {
 struct CE_state;
 #define CE_COUNT_MAX 12
 #define HIF_MAX_GRP_IRQ 16
+
+#ifdef CONFIG_WIN
+#define HIF_MAX_GROUP 12
+#else
 #define HIF_MAX_GROUP 8
+#endif
 
 #ifdef CONFIG_SLUB_DEBUG_ON
 #ifndef CONFIG_WIN

@@ -39,7 +39,7 @@
 #define NUM_RXDMA_RINGS_PER_PDEV 2
 #else
 #define MAX_PDEV_CNT 3
-#define WLAN_CFG_INT_NUM_CONTEXTS 7
+#define WLAN_CFG_INT_NUM_CONTEXTS 11
 #define WLAN_CFG_RXDMA1_ENABLE 1
 /*
  * This mask defines how many transmit frames account for 1 NAPI work unit
@@ -75,8 +75,6 @@
 /* Miscellaneous configuration */
 #define MAX_IDLE_SCATTER_BUFS 16
 #define DP_MAX_IRQ_PER_CONTEXT 12
-#define DP_MAX_INTERRUPT_CONTEXTS 8
-#define DP_MAX_INTERRUPT_CONTEXTS 8
 #define MAX_HTT_METADATA_LEN 32
 #define MAX_NUM_PEER_ID_PER_PEER 8
 #define DP_MAX_TIDS 17

@@ -61,7 +61,6 @@
 #define REPT_MU_OFDMA_MIMO 3
 #define DP_VO_TID 6
 
-#define DP_MAX_INTERRUPT_CONTEXTS 8
 #define DP_MAX_TID_MAPS 16 /* MAX TID MAPS AVAILABLE PER PDEV*/
 #define DSCP_TID_MAP_MAX    (64)
 #define DP_IP_DSCP_SHIFT 2
@@ -85,12 +84,10 @@
 #define MAX_TCL_DATA_RINGS 4
 #define MAX_IDLE_SCATTER_BUFS 16
 #define DP_MAX_IRQ_PER_CONTEXT 12
-#define DP_MAX_INTERRUPT_CONTEXTS 8
 #define DEFAULT_HW_PEER_ID 0xffff
 
 #define MAX_TX_HW_QUEUES MAX_TCL_DATA_RINGS
 
-#define DP_MAX_INTERRUPT_CONTEXTS 8
 
 /* Maximum retries for Delba per tid per peer */
 #define DP_MAX_DELBA_RETRY 3
@@ -783,7 +780,7 @@ struct dp_soc {
 	void *hal_soc;
 
 	/* DP Interrupts */
-	struct dp_intr intr_ctx[DP_MAX_INTERRUPT_CONTEXTS];
+	struct dp_intr intr_ctx[WLAN_CFG_INT_NUM_CONTEXTS];
 
 	/* REO destination rings */
 	struct dp_srng reo_dest_ring[MAX_REO_DEST_RINGS];
