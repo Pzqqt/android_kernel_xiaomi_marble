@@ -73,22 +73,24 @@ typedef struct sFTSMEContext {
 /*--------------------------------------------------------------------------
   Prototype functions
   ------------------------------------------------------------------------*/
-void sme_ft_open(mac_handle_t hHal, uint32_t sessionId);
-void sme_ft_close(mac_handle_t hHal, uint32_t sessionId);
-void sme_ft_reset(mac_handle_t hHal, uint32_t sessionId);
-void sme_set_ft_ies(mac_handle_t hHal, uint32_t sessionId,
+void sme_ft_open(mac_handle_t mac_handle, uint32_t sessionId);
+void sme_ft_close(mac_handle_t mac_handle, uint32_t sessionId);
+void sme_ft_reset(mac_handle_t mac_handle, uint32_t sessionId);
+void sme_set_ft_ies(mac_handle_t mac_handle, uint32_t sessionId,
 		    const uint8_t *ft_ies, uint16_t ft_ies_length);
-QDF_STATUS sme_ft_update_key(mac_handle_t hHal, uint32_t sessionId,
+QDF_STATUS sme_ft_update_key(mac_handle_t mac_handle, uint32_t sessionId,
 			     tCsrRoamSetKey *pFTKeyInfo);
-void sme_get_ft_pre_auth_response(mac_handle_t hHal, uint32_t sessionId,
+void sme_get_ft_pre_auth_response(mac_handle_t mac_handle, uint32_t sessionId,
 				  uint8_t *ft_ies, uint32_t ft_ies_ip_len,
 				  uint16_t *ft_ies_length);
-void sme_get_rici_es(mac_handle_t hHal, uint32_t sessionId, uint8_t *ric_ies,
+void sme_get_rici_es(mac_handle_t mac_handle, uint32_t sessionId,
+		     uint8_t *ric_ies,
 		     uint32_t ric_ies_ip_len, uint32_t *ric_ies_length);
 void sme_preauth_reassoc_intvl_timer_callback(void *context);
-void sme_set_ft_pre_auth_state(mac_handle_t hHal, uint32_t sessionId,
+void sme_set_ft_pre_auth_state(mac_handle_t mac_handle, uint32_t sessionId,
 			       bool state);
-bool sme_get_ft_pre_auth_state(mac_handle_t hHal, uint32_t sessionId);
-bool sme_get_ftptk_state(mac_handle_t hHal, uint32_t sessionId);
-void sme_set_ftptk_state(mac_handle_t hHal, uint32_t sessionId, bool state);
+bool sme_get_ft_pre_auth_state(mac_handle_t mac_handle, uint32_t sessionId);
+bool sme_get_ftptk_state(mac_handle_t mac_handle, uint32_t sessionId);
+void sme_set_ftptk_state(mac_handle_t mac_handle, uint32_t sessionId,
+			 bool state);
 #endif
