@@ -244,8 +244,22 @@ struct wlan_core_minfreq {
 
 /* Indication to enable TCP delayed ack in TPUT indication */
 #define TCP_DEL_ACK_IND	(1 << 0)
+#define TCP_DEL_ACK_IND_MASK	0x1
 /* Indication to enable TCP advance window scaling in TPUT indication */
 #define TCP_ADV_WIN_SCL	(1 << 1)
+#define TCP_ADV_WIN_SCL_MASK	0x2
+
+/* TCP limit output bytes for low and high TPUT */
+#define TCP_LIMIT_OUTPUT_BYTES_LOW	506072
+#define TCP_LIMIT_OUTPUT_BYTES_HI	4048579
+
+/* TCP window scale for low and high TPUT */
+#define WIN_SCALE_LOW	2
+#define WIN_SCALE_HI	1
+
+/* TCP DEL ACK value for low and high TPUT */
+#define TCP_DEL_ACK_LOW		0
+#define TCP_DEL_ACK_HI		20
 
 /**
  * struct wlan_rx_tp_data - msg to TCP delayed ack and advance window scaling
@@ -256,6 +270,17 @@ struct wlan_core_minfreq {
 struct wlan_rx_tp_data {
 	enum wlan_tp_level level;
 	uint16_t rx_tp_flags;
+};
+
+/**
+ * struct wlan_tx_tp_data - msg to TCP for Tx Dir
+ * @level:            Throughput level.
+ * @tcp_limit_output: Tcp limit output flag.
+ *
+ */
+struct wlan_tx_tp_data {
+	enum wlan_tp_level level;
+	bool tcp_limit_output;
 };
 
 #endif /* WLAN_NLINK_COMMON_H__ */

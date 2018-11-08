@@ -469,6 +469,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_SET_QDEPTH_THRESH = 166,
 	/* Wi-Fi test configuration subcommand */
 	QCA_NL80211_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION = 169,
+	QCA_NL80211_VENDOR_SUBCMD_THROUGHPUT_CHANGE_EVENT = 174,
 };
 
 enum qca_wlan_vendor_tos {
@@ -891,6 +892,7 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_HANG_REASON_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_HTT_STATS_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_THROUGHPUT_CHANGE_EVENT_INDEX,
 };
 
 /**
@@ -6341,6 +6343,75 @@ enum qca_wlan_vendor_twt_setup_req_type {
 	QCA_WLAN_VENDOR_TWT_SETUP_REQUEST = 1,
 	QCA_WLAN_VENDOR_TWT_SETUP_SUGGEST = 2,
 	QCA_WLAN_VENDOR_TWT_SETUP_DEMAND = 3,
+};
+
+/**
+ * enum qca_wlan_throughput_level - Current throughput level
+ *
+ * Indicates the current level of throughput calculated by driver. The driver
+ * may choose different thresholds to decide whether the throughput level is
+ * low or medium or high based on variety of parameters like physical link
+ * capacity of current connection, number of pakcets being dispatched per
+ * second etc. The throughput level events might not be consistent with the
+ * actual current throughput value being observed.
+ *
+ * @QCA_WLAN_THROUGHPUT_LEVEL_LOW: Low level of throughput
+ * @QCA_WLAN_THROUGHPUT_LEVEL_MEDIUM: Medium level of throughput
+ * @QCA_WLAN_THROUGHPUT_LEVEL_HIGH: High level of throughput
+ */
+enum qca_wlan_throughput_level {
+	QCA_WLAN_THROUGHPUT_LEVEL_LOW = 0,
+	QCA_WLAN_THROUGHPUT_LEVEL_MEDIUM = 1,
+	QCA_WLAN_THROUGHPUT_LEVEL_HIGH = 2,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_throughput_change - Vendor subcmd attributes to
+ * report throughput changes from driver to user space. enum values are used
+ * for NL attributes sent with
+ * %QCA_NL80211_VENDOR_SUBCMD_THROUGHPUT_CHANGE_EVENT sub command.
+ */
+enum qca_wlan_vendor_attr_throughput_change {
+	QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_INVALID = 0,
+	/*
+	 * Indicates the direction of throughput in which the change is being
+	 * reported. u8 attribute. Value is 0 for TX and 1 for RX.
+	 */
+	QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_DIRECTION = 1,
+
+	/*
+	 * Indicates the newly observed throughput level.
+	 * qca_wlan_throughput_level describes the possible range of values.
+	 * u8 attribute.
+	 */
+	QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_THROUGHPUT_LEVEL = 2,
+
+	/*
+	 * Indicates the driver's guidance on the new value to be set to
+	 * kernel's tcp parameter tcp_limit_output_bytes. u32 attribute. Driver
+	 * may optionally include this attribute.
+	 */
+	QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_TCP_LIMIT_OUTPUT_BYTES = 3,
+
+	/*
+	 * Indicates the driver's guidance on the new value to be set to
+	 * kernel's tcp parameter tcp_adv_win_scale. s8 attribute. Possible
+	 * values are from -31 to 31. Driver may optionally include this
+	 * attribute.
+	 */
+	QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_TCP_ADV_WIN_SCALE = 4,
+
+	/*
+	 * Indicates the driver's guidance on the new value to be set to
+	 * kernel's tcp parameter tcp_delack_seg. u32 attribute. Driver may
+	 * optionally include this attribute.
+	 */
+	QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_TCP_DELACK_SEG = 5,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_MAX =
+	QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_AFTER_LAST - 1,
 };
 
 #endif
