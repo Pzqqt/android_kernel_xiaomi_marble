@@ -302,11 +302,11 @@ enum {
 /*-------------------------------------------------------------------------
   Function declarations and documenation
   ------------------------------------------------------------------------*/
-QDF_STATUS sme_open(mac_handle_t hHal);
+QDF_STATUS sme_open(mac_handle_t mac_handle);
 QDF_STATUS sme_init_chan_list(mac_handle_t hal, uint8_t *alpha2,
 		enum country_src cc_src);
-QDF_STATUS sme_close(mac_handle_t hHal);
-QDF_STATUS sme_start(mac_handle_t hHal);
+QDF_STATUS sme_close(mac_handle_t mac_handle);
+QDF_STATUS sme_start(mac_handle_t mac_handle);
 
 /**
  * sme_stop() - Stop all SME modules and put them at idle state
@@ -353,17 +353,20 @@ QDF_STATUS sme_open_session(mac_handle_t hal, struct sme_session_params *params)
  * Other status means SME is failed to open the session.
  */
 QDF_STATUS sme_close_session(mac_handle_t hal, uint8_t sessionId);
-void sme_set_curr_device_mode(mac_handle_t hHal,
-		enum QDF_OPMODE currDeviceMode);
-QDF_STATUS sme_update_roam_params(mac_handle_t hHal, uint8_t session_id,
-		struct roam_ext_params *roam_params_src, int update_param);
-QDF_STATUS sme_update_config(mac_handle_t hHal,
-		tpSmeConfigParams pSmeConfigParams);
+void sme_set_curr_device_mode(mac_handle_t mac_handle,
+			      enum QDF_OPMODE currDeviceMode);
+QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
+				  uint8_t session_id,
+				  struct roam_ext_params *roam_params_src,
+				  int update_param);
+QDF_STATUS sme_update_config(mac_handle_t mac_handle,
+			     tpSmeConfigParams pSmeConfigParams);
 
-QDF_STATUS sme_set11dinfo(mac_handle_t hHal, tpSmeConfigParams pSmeConfigParams);
-QDF_STATUS sme_get_soft_ap_domain(mac_handle_t hHal,
-		v_REGDOMAIN_t *domainIdSoftAp);
-QDF_STATUS sme_hdd_ready_ind(mac_handle_t hHal);
+QDF_STATUS sme_set11dinfo(mac_handle_t mac_handle,
+			  tpSmeConfigParams pSmeConfigParams);
+QDF_STATUS sme_get_soft_ap_domain(mac_handle_t mac_handle,
+				  v_REGDOMAIN_t *domainIdSoftAp);
+QDF_STATUS sme_hdd_ready_ind(mac_handle_t mac_handle);
 /**
  * sme_ser_cmd_callback() - callback from serialization module
  * @buf: serialization command buffer
@@ -392,7 +395,7 @@ QDF_STATUS sme_ser_cmd_callback(void *buf,
 QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
 
 QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg);
-QDF_STATUS sme_scan_get_result(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_scan_get_result(mac_handle_t mac_handle, uint8_t sessionId,
 		tCsrScanResultFilter *pFilter,
 		tScanResultHandle *phResult);
 QDF_STATUS sme_get_ap_channel_from_scan_cache(
@@ -402,31 +405,33 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
 		tScanResultHandle *scan_cache,
 		uint8_t *ap_chnl_id);
-bool sme_store_joinreq_param(mac_handle_t hal_handle,
+bool sme_store_joinreq_param(mac_handle_t mac_handle,
 		struct csr_roam_profile *profile,
 		tScanResultHandle scan_cache,
 		uint32_t *roam_id,
 		uint32_t session_id);
-bool sme_clear_joinreq_param(mac_handle_t hal_handle,
+bool sme_clear_joinreq_param(mac_handle_t mac_handle,
 		uint32_t session_id);
-QDF_STATUS sme_issue_stored_joinreq(mac_handle_t hal_handle,
+QDF_STATUS sme_issue_stored_joinreq(mac_handle_t mac_handle,
 		uint32_t *roam_id,
 		uint32_t session_id);
-QDF_STATUS sme_scan_flush_result(mac_handle_t hHal);
-QDF_STATUS sme_filter_scan_results(mac_handle_t hHal, uint8_t sessionId);
-QDF_STATUS sme_scan_flush_p2p_result(mac_handle_t hHal, uint8_t sessionId);
+QDF_STATUS sme_scan_flush_result(mac_handle_t mac_handle);
+QDF_STATUS sme_filter_scan_results(mac_handle_t mac_handle, uint8_t sessionId);
+QDF_STATUS sme_scan_flush_p2p_result(mac_handle_t mac_handle,
+				     uint8_t sessionId);
 tCsrScanResultInfo *sme_scan_result_get_first(mac_handle_t,
 		tScanResultHandle hScanResult);
 tCsrScanResultInfo *sme_scan_result_get_next(mac_handle_t,
 		tScanResultHandle hScanResult);
 QDF_STATUS sme_scan_result_purge(tScanResultHandle hScanResult);
-QDF_STATUS sme_roam_connect(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_roam_connect(mac_handle_t mac_handle, uint8_t sessionId,
 		struct csr_roam_profile *pProfile, uint32_t *pRoamId);
-QDF_STATUS sme_roam_reassoc(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_roam_reassoc(mac_handle_t mac_handle, uint8_t sessionId,
 		struct csr_roam_profile *pProfile,
 		tCsrRoamModifyProfileFields modProfileFields,
 		uint32_t *pRoamId, bool fForce);
-QDF_STATUS sme_roam_connect_to_last_profile(mac_handle_t hHal, uint8_t sessionId);
+QDF_STATUS sme_roam_connect_to_last_profile(mac_handle_t mac_handle,
+					    uint8_t sessionId);
 
 /**
  * sme_roam_disconnect() - API to request CSR to disconnect
@@ -440,21 +445,24 @@ QDF_STATUS sme_roam_disconnect(mac_handle_t hal, uint8_t session,
 			       eCsrRoamDisconnectReason reason);
 
 void sme_dhcp_done_ind(mac_handle_t hal, uint8_t session_id);
-QDF_STATUS sme_roam_stop_bss(mac_handle_t hHal, uint8_t sessionId);
-QDF_STATUS sme_roam_get_associated_stas(mac_handle_t hHal, uint8_t sessionId,
-		QDF_MODULE_ID modId, void *pUsrContext,
-		void *pfnSapEventCallback,
-		uint8_t *pAssocStasBuf);
-QDF_STATUS sme_roam_disconnect_sta(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_roam_stop_bss(mac_handle_t mac_handle, uint8_t sessionId);
+QDF_STATUS sme_roam_get_associated_stas(mac_handle_t mac_handle,
+					uint8_t sessionId,
+					QDF_MODULE_ID modId, void *pUsrContext,
+					void *pfnSapEventCallback,
+					uint8_t *pAssocStasBuf);
+QDF_STATUS sme_roam_disconnect_sta(mac_handle_t mac_handle, uint8_t sessionId,
 		struct csr_del_sta_params *p_del_sta_params);
-QDF_STATUS sme_roam_deauth_sta(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_roam_deauth_sta(mac_handle_t mac_handle, uint8_t sessionId,
 		struct csr_del_sta_params *pDelStaParams);
-QDF_STATUS sme_roam_get_connect_state(mac_handle_t hHal, uint8_t sessionId,
-		eCsrConnectState *pState);
-QDF_STATUS sme_roam_get_connect_profile(mac_handle_t hHal, uint8_t sessionId,
-		tCsrRoamConnectedProfile *pProfile);
+QDF_STATUS sme_roam_get_connect_state(mac_handle_t mac_handle,
+				      uint8_t sessionId,
+				      eCsrConnectState *pState);
+QDF_STATUS sme_roam_get_connect_profile(mac_handle_t mac_handle,
+					uint8_t sessionId,
+					tCsrRoamConnectedProfile *pProfile);
 void sme_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
-QDF_STATUS sme_roam_set_pmkid_cache(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_roam_set_pmkid_cache(mac_handle_t mac_handle, uint8_t sessionId,
 		tPmkidCacheInfo *pPMKIDCache,
 		uint32_t numItems,
 		bool update_entire_cache);
@@ -471,7 +479,7 @@ QDF_STATUS sme_roam_set_pmkid_cache(mac_handle_t hHal, uint8_t sessionId,
 void sme_get_pmk_info(mac_handle_t hal, uint8_t session_id,
 		      tPmkidCacheInfo *pmk_cache);
 
-QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle, uint8_t sessionId,
 		uint8_t *pPSK_PMK, size_t pmk_len);
 #endif
 
@@ -513,35 +521,38 @@ QDF_STATUS sme_roam_get_wpa_rsn_req_ie(mac_handle_t hal, uint8_t session_id,
 QDF_STATUS sme_roam_get_wpa_rsn_rsp_ie(mac_handle_t hal, uint8_t session_id,
 				       uint32_t *len, uint8_t *buf);
 
-uint32_t sme_roam_get_num_pmkid_cache(mac_handle_t hHal, uint8_t sessionId);
-QDF_STATUS sme_roam_get_pmkid_cache(mac_handle_t hHal, uint8_t sessionId,
+uint32_t sme_roam_get_num_pmkid_cache(mac_handle_t mac_handle,
+				      uint8_t sessionId);
+QDF_STATUS sme_roam_get_pmkid_cache(mac_handle_t mac_handle, uint8_t sessionId,
 		uint32_t *pNum,
 		tPmkidCacheInfo *pPmkidCache);
-QDF_STATUS sme_get_config_param(mac_handle_t hHal, tSmeConfigParams *pParam);
+QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
+				tSmeConfigParams *pParam);
 #ifndef QCA_SUPPORT_CP_STATS
-QDF_STATUS sme_get_statistics(mac_handle_t hHal,
+QDF_STATUS sme_get_statistics(mac_handle_t mac_handle,
 		eCsrStatsRequesterType requesterId,
 		uint32_t statsMask, tCsrStatsCallback callback,
 		uint8_t staId, void *pContext, uint8_t sessionId);
 #endif
-QDF_STATUS sme_get_rssi(mac_handle_t hHal,
+QDF_STATUS sme_get_rssi(mac_handle_t mac_handle,
 		tCsrRssiCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, int8_t lastRSSI,
 		void *pContext);
-QDF_STATUS sme_get_snr(mac_handle_t hHal,
+QDF_STATUS sme_get_snr(mac_handle_t mac_handle,
 		tCsrSnrCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, void *pContext);
 #ifdef FEATURE_WLAN_ESE
-QDF_STATUS sme_get_tsm_stats(mac_handle_t hHal,
+QDF_STATUS sme_get_tsm_stats(mac_handle_t mac_handle,
 		tCsrTsmStatsCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId,
 		void *pContext, uint8_t tid);
-QDF_STATUS sme_set_cckm_ie(mac_handle_t hHal,
+QDF_STATUS sme_set_cckm_ie(mac_handle_t mac_handle,
 		uint8_t sessionId,
 		uint8_t *pCckmIe, uint8_t cckmIeLen);
-QDF_STATUS sme_set_ese_beacon_request(mac_handle_t hHal, const uint8_t sessionId,
-		const tCsrEseBeaconReq *pEseBcnReq);
-QDF_STATUS sme_set_plm_request(mac_handle_t hHal, tpSirPlmReq pPlm);
+QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
+				      const uint8_t sessionId,
+				      const tCsrEseBeaconReq *pEseBcnReq);
+QDF_STATUS sme_set_plm_request(mac_handle_t mac_handle, tpSirPlmReq pPlm);
 #endif /*FEATURE_WLAN_ESE */
 QDF_STATUS sme_cfg_set_int(mac_handle_t hal, uint16_t cfg_id, uint32_t value);
 QDF_STATUS sme_cfg_set_str(mac_handle_t hal, uint16_t cfg_id, uint8_t *str,
@@ -550,42 +561,47 @@ QDF_STATUS sme_cfg_get_int(mac_handle_t hal, uint16_t cfg_id,
 		uint32_t *cfg_value);
 QDF_STATUS sme_cfg_get_str(mac_handle_t hal, uint16_t cfg_id, uint8_t *str,
 		uint32_t *length);
-QDF_STATUS sme_get_modify_profile_fields(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_get_modify_profile_fields(mac_handle_t mac_handle,
+					 uint8_t sessionId,
 					 tCsrRoamModifyProfileFields *
 					 pModifyProfileFields);
 
-extern QDF_STATUS sme_set_host_power_save(mac_handle_t hHal, bool psMode);
+QDF_STATUS sme_set_host_power_save(mac_handle_t mac_handle, bool psMode);
 
-void sme_set_dhcp_till_power_active_flag(mac_handle_t hHal, uint8_t flag);
+void sme_set_dhcp_till_power_active_flag(mac_handle_t mac_handle, uint8_t flag);
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
-extern QDF_STATUS sme_register_oem_data_rsp_callback(mac_handle_t h_hal,
+QDF_STATUS sme_register_oem_data_rsp_callback(mac_handle_t mac_handle,
 		sme_send_oem_data_rsp_msg callback);
-void sme_deregister_oem_data_rsp_callback(mac_handle_t h_hal);
+void sme_deregister_oem_data_rsp_callback(mac_handle_t mac_handle);
 
 #else
-static inline QDF_STATUS sme_register_oem_data_rsp_callback(mac_handle_t hal,
-		void *callback)
+static inline
+QDF_STATUS sme_register_oem_data_rsp_callback(mac_handle_t hal,
+					      void *callback)
 {
 	return QDF_STATUS_SUCCESS;
 }
-static inline void sme_deregister_oem_data_rsp_callback(mac_handle_t h_hal)
+
+static inline
+void sme_deregister_oem_data_rsp_callback(mac_handle_t mac_handle)
 {
 }
 
 #endif
 
-QDF_STATUS sme_roam_set_key(mac_handle_t, uint8_t sessionId,
-		tCsrRoamSetKey *pSetKey, uint32_t *pRoamId);
-QDF_STATUS sme_get_country_code(mac_handle_t hHal, uint8_t *pBuf, uint8_t *pbLen);
+QDF_STATUS sme_roam_set_key(mac_handle_t mac_handle, uint8_t sessionId,
+			    tCsrRoamSetKey *pSetKey, uint32_t *pRoamId);
+QDF_STATUS sme_get_country_code(mac_handle_t mac_handle, uint8_t *pBuf,
+				uint8_t *pbLen);
 
 
 /* some support functions */
-bool sme_is11d_supported(mac_handle_t hHal);
-bool sme_is11h_supported(mac_handle_t hHal);
-bool sme_is_wmm_supported(mac_handle_t hHal);
+bool sme_is11d_supported(mac_handle_t mac_handle);
+bool sme_is11h_supported(mac_handle_t mac_handle);
+bool sme_is_wmm_supported(mac_handle_t mac_handle);
 
-QDF_STATUS sme_generic_change_country_code(mac_handle_t hHal,
+QDF_STATUS sme_generic_change_country_code(mac_handle_t mac_handle,
 					   uint8_t *pCountry);
 
 
@@ -599,112 +615,123 @@ QDF_STATUS sme_generic_change_country_code(mac_handle_t hHal,
  */
 QDF_STATUS sme_update_channel_list(mac_handle_t hal);
 
-QDF_STATUS sme_tx_fail_monitor_start_stop_ind(mac_handle_t hHal,
+QDF_STATUS sme_tx_fail_monitor_start_stop_ind(mac_handle_t mac_handle,
 		uint8_t tx_fail_count,
 		void *txFailIndCallback);
-QDF_STATUS sme_dhcp_start_ind(mac_handle_t hHal,
+QDF_STATUS sme_dhcp_start_ind(mac_handle_t mac_handle,
 		uint8_t device_mode,
 		uint8_t *macAddr, uint8_t sessionId);
-QDF_STATUS sme_dhcp_stop_ind(mac_handle_t hHal,
+QDF_STATUS sme_dhcp_stop_ind(mac_handle_t mac_handle,
 		uint8_t device_mode,
 		uint8_t *macAddr, uint8_t sessionId);
-void sme_get_recovery_stats(mac_handle_t hHal);
-QDF_STATUS sme_neighbor_report_request(mac_handle_t hHal, uint8_t sessionId,
+void sme_get_recovery_stats(mac_handle_t mac_handle);
+QDF_STATUS sme_neighbor_report_request(mac_handle_t mac_handle,
+		 uint8_t sessionId,
 		tpRrmNeighborReq pRrmNeighborReq,
 		tpRrmNeighborRspCallbackInfo callbackInfo);
-QDF_STATUS sme_get_wcnss_wlan_compiled_version(mac_handle_t hHal,
+QDF_STATUS sme_get_wcnss_wlan_compiled_version(mac_handle_t mac_handle,
 		tSirVersionType * pVersion);
-QDF_STATUS sme_get_wcnss_wlan_reported_version(mac_handle_t hHal,
+QDF_STATUS sme_get_wcnss_wlan_reported_version(mac_handle_t mac_handle,
 		tSirVersionType *pVersion);
-QDF_STATUS sme_get_wcnss_software_version(mac_handle_t hHal,
+QDF_STATUS sme_get_wcnss_software_version(mac_handle_t mac_handle,
 		uint8_t *pVersion, uint32_t versionBufferSize);
-QDF_STATUS sme_get_wcnss_hardware_version(mac_handle_t hHal,
+QDF_STATUS sme_get_wcnss_hardware_version(mac_handle_t mac_handle,
 		uint8_t *pVersion, uint32_t versionBufferSize);
 #ifdef FEATURE_OEM_DATA_SUPPORT
-QDF_STATUS sme_oem_data_req(mac_handle_t hHal, struct oem_data_req *);
-QDF_STATUS sme_oem_update_capability(mac_handle_t hHal,
+QDF_STATUS sme_oem_data_req(mac_handle_t mac_handle,
+			    struct oem_data_req *hdd_oem_req);
+QDF_STATUS sme_oem_update_capability(mac_handle_t mac_handle,
 				     struct sme_oem_capability *cap);
-QDF_STATUS sme_oem_get_capability(mac_handle_t hHal,
+QDF_STATUS sme_oem_get_capability(mac_handle_t mac_handle,
 				  struct sme_oem_capability *cap);
 #endif /*FEATURE_OEM_DATA_SUPPORT */
 QDF_STATUS sme_change_mcc_beacon_interval(uint8_t sessionId);
-QDF_STATUS sme_set_host_offload(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_set_host_offload(mac_handle_t mac_handle, uint8_t sessionId,
 		tpSirHostOffloadReq pRequest);
-QDF_STATUS sme_set_keep_alive(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_set_keep_alive(mac_handle_t mac_handle, uint8_t sessionId,
 		tpSirKeepAliveReq pRequest);
-QDF_STATUS sme_get_operation_channel(mac_handle_t hHal, uint32_t *pChannel,
-		uint8_t sessionId);
-QDF_STATUS sme_register_mgmt_frame(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_get_operation_channel(mac_handle_t mac_handle,
+				     uint32_t *pChannel,
+				     uint8_t sessionId);
+QDF_STATUS sme_register_mgmt_frame(mac_handle_t mac_handle, uint8_t sessionId,
 		uint16_t frameType, uint8_t *matchData,
 		uint16_t matchLen);
-QDF_STATUS sme_deregister_mgmt_frame(mac_handle_t hHal, uint8_t sessionId,
-		uint16_t frameType, uint8_t *matchData,
-		uint16_t matchLen);
-QDF_STATUS sme_ConfigureAppsCpuWakeupState(mac_handle_t hHal, bool isAppsAwake);
+QDF_STATUS sme_deregister_mgmt_frame(mac_handle_t mac_handle,
+				     uint8_t sessionId,
+				     uint16_t frameType, uint8_t *matchData,
+				     uint16_t matchLen);
+QDF_STATUS sme_ConfigureAppsCpuWakeupState(mac_handle_t mac_handle,
+					   bool isAppsAwake);
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
-QDF_STATUS sme_configure_ext_wow(mac_handle_t hHal,
+QDF_STATUS sme_configure_ext_wow(mac_handle_t mac_handle,
 		tpSirExtWoWParams wlanExtParams,
 		csr_readyToSuspendCallback callback,
 		void *callbackContext);
-QDF_STATUS sme_configure_app_type1_params(mac_handle_t hHal,
+QDF_STATUS sme_configure_app_type1_params(mac_handle_t mac_handle,
 		tpSirAppType1Params wlanAppType1Params);
-QDF_STATUS sme_configure_app_type2_params(mac_handle_t hHal,
+QDF_STATUS sme_configure_app_type2_params(mac_handle_t mac_handle,
 		tpSirAppType2Params wlanAppType2Params);
 #endif
-int8_t sme_get_infra_session_id(mac_handle_t hHal);
-uint8_t sme_get_infra_operation_channel(mac_handle_t hHal, uint8_t sessionId);
-uint8_t sme_get_concurrent_operation_channel(mac_handle_t hHal);
+int8_t sme_get_infra_session_id(mac_handle_t mac_handle);
+uint8_t sme_get_infra_operation_channel(mac_handle_t mac_handle,
+					uint8_t sessionId);
+uint8_t sme_get_concurrent_operation_channel(mac_handle_t mac_handle);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-uint16_t sme_check_concurrent_channel_overlap(mac_handle_t hHal, uint16_t sap_ch,
-		eCsrPhyMode sapPhyMode,
-		uint8_t cc_switch_mode);
+uint16_t sme_check_concurrent_channel_overlap(mac_handle_t mac_handle,
+					      uint16_t sap_ch,
+					      eCsrPhyMode sapPhyMode,
+					      uint8_t cc_switch_mode);
 #endif
 QDF_STATUS sme_get_cfg_valid_channels(uint8_t *aValidChannels,
 		uint32_t *len);
 #ifdef WLAN_FEATURE_PACKET_FILTERING
-QDF_STATUS sme_8023_multicast_list(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_8023_multicast_list(mac_handle_t mac_handle, uint8_t sessionId,
 		tpSirRcvFltMcAddrList pMulticastAddrs);
 #endif /* WLAN_FEATURE_PACKET_FILTERING */
-bool sme_is_channel_valid(mac_handle_t hHal, uint8_t channel);
-QDF_STATUS sme_get_freq_band(mac_handle_t hHal, enum band_info *pBand);
+bool sme_is_channel_valid(mac_handle_t mac_handle, uint8_t channel);
+QDF_STATUS sme_get_freq_band(mac_handle_t mac_handle, enum band_info *pBand);
 uint16_t sme_chn_to_freq(uint8_t chanNum);
-bool sme_is_channel_valid(mac_handle_t hHal, uint8_t channel);
-QDF_STATUS sme_set_max_tx_power(mac_handle_t hHal, struct qdf_mac_addr pBssid,
-		struct qdf_mac_addr pSelfMacAddress, int8_t dB);
+bool sme_is_channel_valid(mac_handle_t mac_handle, uint8_t channel);
+QDF_STATUS sme_set_max_tx_power(mac_handle_t mac_handle,
+				struct qdf_mac_addr pBssid,
+				struct qdf_mac_addr pSelfMacAddress, int8_t dB);
 QDF_STATUS sme_set_max_tx_power_per_band(enum band_info band, int8_t db);
-QDF_STATUS sme_set_tx_power(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_set_tx_power(mac_handle_t mac_handle, uint8_t sessionId,
 		struct qdf_mac_addr bssid,
 		enum QDF_OPMODE dev_mode, int power);
 QDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr);
-QDF_STATUS sme_hide_ssid(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_hide_ssid(mac_handle_t mac_handle, uint8_t sessionId,
 		uint8_t ssidHidden);
-QDF_STATUS sme_set_tm_level(mac_handle_t hHal, uint16_t newTMLevel,
+QDF_STATUS sme_set_tm_level(mac_handle_t mac_handle, uint16_t newTMLevel,
 		uint16_t tmMode);
-void sme_feature_caps_exchange(mac_handle_t hHal);
+void sme_feature_caps_exchange(mac_handle_t mac_handle);
 void sme_disable_feature_capablity(uint8_t feature_index);
-void sme_reset_power_values_for5_g(mac_handle_t hHal);
-QDF_STATUS sme_update_roam_prefer5_g_hz(mac_handle_t hHal, bool nRoamPrefer5GHz);
-QDF_STATUS sme_set_roam_intra_band(mac_handle_t hHal, const bool nRoamIntraBand);
-QDF_STATUS sme_update_roam_scan_n_probes(mac_handle_t hHal, uint8_t sessionId,
-		const uint8_t nProbes);
-QDF_STATUS sme_update_roam_scan_home_away_time(mac_handle_t hHal,
+void sme_reset_power_values_for5_g(mac_handle_t mac_handle);
+QDF_STATUS sme_update_roam_prefer5_g_hz(mac_handle_t mac_handle,
+					bool nRoamPrefer5GHz);
+QDF_STATUS sme_set_roam_intra_band(mac_handle_t mac_handle,
+				   const bool nRoamIntraBand);
+QDF_STATUS sme_update_roam_scan_n_probes(mac_handle_t mac_handle,
+					 uint8_t sessionId,
+					 const uint8_t nProbes);
+QDF_STATUS sme_update_roam_scan_home_away_time(mac_handle_t mac_handle,
 		uint8_t sessionId,
 		const uint16_t nRoamScanHomeAwayTime,
 		const bool bSendOffloadCmd);
 
-bool sme_get_roam_intra_band(mac_handle_t hHal);
-uint8_t sme_get_roam_scan_n_probes(mac_handle_t hHal);
-uint16_t sme_get_roam_scan_home_away_time(mac_handle_t hHal);
-QDF_STATUS sme_update_roam_rssi_diff(mac_handle_t hHal, uint8_t sessionId,
+bool sme_get_roam_intra_band(mac_handle_t mac_handle);
+uint8_t sme_get_roam_scan_n_probes(mac_handle_t mac_handle);
+uint16_t sme_get_roam_scan_home_away_time(mac_handle_t mac_handle);
+QDF_STATUS sme_update_roam_rssi_diff(mac_handle_t mac_handle, uint8_t sessionId,
 		uint8_t RoamRssiDiff);
-QDF_STATUS sme_update_fast_transition_enabled(mac_handle_t hHal,
+QDF_STATUS sme_update_fast_transition_enabled(mac_handle_t mac_handle,
 		bool isFastTransitionEnabled);
-QDF_STATUS sme_update_wes_mode(mac_handle_t hHal, bool isWESModeEnabled,
+QDF_STATUS sme_update_wes_mode(mac_handle_t mac_handle, bool isWESModeEnabled,
 		uint8_t sessionId);
-QDF_STATUS sme_set_roam_scan_control(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_set_roam_scan_control(mac_handle_t mac_handle, uint8_t sessionId,
 		bool roamScanControl);
 
-QDF_STATUS sme_update_is_fast_roam_ini_feature_enabled(mac_handle_t hHal,
+QDF_STATUS sme_update_is_fast_roam_ini_feature_enabled(mac_handle_t mac_handle,
 		uint8_t sessionId,
 		const bool
 		isFastRoamIniFeatureEnabled);
@@ -712,115 +739,137 @@ QDF_STATUS sme_update_is_fast_roam_ini_feature_enabled(mac_handle_t hHal,
 QDF_STATUS sme_config_fast_roaming(mac_handle_t hal, uint8_t session_id,
 		const bool is_fast_roam_enabled);
 
-QDF_STATUS sme_update_is_mawc_ini_feature_enabled(mac_handle_t hHal,
+QDF_STATUS sme_update_is_mawc_ini_feature_enabled(mac_handle_t mac_handle,
 		const bool MAWCEnabled);
-QDF_STATUS sme_stop_roaming(mac_handle_t hHal, uint8_t sessionId, uint8_t reason);
+QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t sessionId,
+			    uint8_t reason);
 
-QDF_STATUS sme_start_roaming(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t sessionId,
 		uint8_t reason);
-QDF_STATUS sme_update_enable_fast_roam_in_concurrency(mac_handle_t hHal,
+QDF_STATUS sme_update_enable_fast_roam_in_concurrency(mac_handle_t mac_handle,
 		bool bFastRoamInConIniFeatureEnabled);
 #ifdef FEATURE_WLAN_ESE
-QDF_STATUS sme_update_is_ese_feature_enabled(mac_handle_t hHal, uint8_t sessionId,
-		const bool isEseIniFeatureEnabled);
+QDF_STATUS sme_update_is_ese_feature_enabled(mac_handle_t mac_handle,
+					     uint8_t sessionId,
+					     const bool isEseIniFeatureEnabled);
 #endif /* FEATURE_WLAN_ESE */
-QDF_STATUS sme_set_roam_rescan_rssi_diff(mac_handle_t hHal,
+QDF_STATUS sme_set_roam_rescan_rssi_diff(mac_handle_t mac_handle,
 		uint8_t sessionId,
 		const uint8_t nRoamRescanRssiDiff);
-uint8_t sme_get_roam_rescan_rssi_diff(mac_handle_t hHal);
+uint8_t sme_get_roam_rescan_rssi_diff(mac_handle_t mac_handle);
 
-QDF_STATUS sme_set_roam_opportunistic_scan_threshold_diff(mac_handle_t hHal,
+QDF_STATUS sme_set_roam_opportunistic_scan_threshold_diff(
+		mac_handle_t mac_handle,
 		uint8_t sessionId,
 		const uint8_t nOpportunisticThresholdDiff);
-uint8_t sme_get_roam_opportunistic_scan_threshold_diff(mac_handle_t hHal);
-QDF_STATUS sme_set_neighbor_lookup_rssi_threshold(mac_handle_t hHal,
+uint8_t sme_get_roam_opportunistic_scan_threshold_diff(mac_handle_t mac_handle);
+QDF_STATUS sme_set_neighbor_lookup_rssi_threshold(mac_handle_t mac_handle,
 		uint8_t sessionId, uint8_t neighborLookupRssiThreshold);
-QDF_STATUS sme_set_delay_before_vdev_stop(mac_handle_t hHal,
+QDF_STATUS sme_set_delay_before_vdev_stop(mac_handle_t mac_handle,
 		uint8_t sessionId, uint8_t delay_before_vdev_stop);
-uint8_t sme_get_neighbor_lookup_rssi_threshold(mac_handle_t hHal);
-QDF_STATUS sme_set_neighbor_scan_refresh_period(mac_handle_t hHal,
+uint8_t sme_get_neighbor_lookup_rssi_threshold(mac_handle_t mac_handle);
+QDF_STATUS sme_set_neighbor_scan_refresh_period(mac_handle_t mac_handle,
 		uint8_t sessionId, uint16_t neighborScanResultsRefreshPeriod);
-uint16_t sme_get_neighbor_scan_refresh_period(mac_handle_t hHal);
-uint16_t sme_get_empty_scan_refresh_period(mac_handle_t hHal);
-QDF_STATUS sme_update_empty_scan_refresh_period(mac_handle_t hHal,
+uint16_t sme_get_neighbor_scan_refresh_period(mac_handle_t mac_handle);
+uint16_t sme_get_empty_scan_refresh_period(mac_handle_t mac_handle);
+QDF_STATUS sme_update_empty_scan_refresh_period(mac_handle_t mac_handle,
 		uint8_t sessionId, uint16_t nEmptyScanRefreshPeriod);
-QDF_STATUS sme_set_neighbor_scan_min_chan_time(mac_handle_t hHal,
+QDF_STATUS sme_set_neighbor_scan_min_chan_time(mac_handle_t mac_handle,
 		const uint16_t nNeighborScanMinChanTime,
 		uint8_t sessionId);
-QDF_STATUS sme_set_neighbor_scan_max_chan_time(mac_handle_t hHal,
-		uint8_t sessionId, const uint16_t nNeighborScanMaxChanTime);
-uint16_t sme_get_neighbor_scan_min_chan_time(mac_handle_t hHal,
-		uint8_t sessionId);
-uint32_t sme_get_neighbor_roam_state(mac_handle_t hHal, uint8_t sessionId);
-uint32_t sme_get_current_roam_state(mac_handle_t hHal, uint8_t sessionId);
-uint32_t sme_get_current_roam_sub_state(mac_handle_t hHal, uint8_t sessionId);
-uint32_t sme_get_lim_sme_state(mac_handle_t hHal);
-uint32_t sme_get_lim_mlm_state(mac_handle_t hHal);
-bool sme_is_lim_session_valid(mac_handle_t hHal, uint8_t sessionId);
-uint32_t sme_get_lim_sme_session_state(mac_handle_t hHal, uint8_t sessionId);
-uint32_t sme_get_lim_mlm_session_state(mac_handle_t hHal, uint8_t sessionId);
-uint16_t sme_get_neighbor_scan_max_chan_time(mac_handle_t hHal,
-		uint8_t sessionId);
-QDF_STATUS sme_set_neighbor_scan_period(mac_handle_t hHal, uint8_t sessionId,
+QDF_STATUS sme_set_neighbor_scan_max_chan_time(mac_handle_t mac_handle,
+				uint8_t sessionId,
+				const uint16_t nNeighborScanMaxChanTime);
+uint16_t sme_get_neighbor_scan_min_chan_time(mac_handle_t mac_handle,
+					     uint8_t sessionId);
+uint32_t sme_get_neighbor_roam_state(mac_handle_t mac_handle,
+				     uint8_t sessionId);
+uint32_t sme_get_current_roam_state(mac_handle_t mac_handle, uint8_t sessionId);
+uint32_t sme_get_current_roam_sub_state(mac_handle_t mac_handle,
+					uint8_t sessionId);
+uint32_t sme_get_lim_sme_state(mac_handle_t mac_handle);
+uint32_t sme_get_lim_mlm_state(mac_handle_t mac_handle);
+bool sme_is_lim_session_valid(mac_handle_t mac_handle, uint8_t sessionId);
+uint32_t sme_get_lim_sme_session_state(mac_handle_t mac_handle,
+				       uint8_t sessionId);
+uint32_t sme_get_lim_mlm_session_state(mac_handle_t mac_handle,
+				       uint8_t sessionId);
+uint16_t sme_get_neighbor_scan_max_chan_time(mac_handle_t mac_handle,
+					     uint8_t sessionId);
+QDF_STATUS sme_set_neighbor_scan_period(mac_handle_t mac_handle,
+		uint8_t sessionId,
 		const uint16_t nNeighborScanPeriod);
-uint16_t sme_get_neighbor_scan_period(mac_handle_t hHal, uint8_t sessionId);
-QDF_STATUS sme_set_neighbor_scan_min_period(mac_handle_t h_hal,
+uint16_t sme_get_neighbor_scan_period(mac_handle_t mac_handle,
+				      uint8_t sessionId);
+QDF_STATUS sme_set_neighbor_scan_min_period(mac_handle_t mac_handle,
 		uint8_t session_id, const uint16_t neighbor_scan_min_period);
-QDF_STATUS sme_set_roam_bmiss_first_bcnt(mac_handle_t hHal,
+QDF_STATUS sme_set_roam_bmiss_first_bcnt(mac_handle_t mac_handle,
 		uint8_t sessionId, const uint8_t nRoamBmissFirstBcnt);
-uint8_t sme_get_roam_bmiss_first_bcnt(mac_handle_t hHal);
-QDF_STATUS sme_set_roam_bmiss_final_bcnt(mac_handle_t hHal, uint8_t sessionId,
-		const uint8_t nRoamBmissFinalBcnt);
-uint8_t sme_get_roam_bmiss_final_bcnt(mac_handle_t hHal);
-QDF_STATUS sme_set_roam_beacon_rssi_weight(mac_handle_t hHal, uint8_t sessionId,
-		const uint8_t nRoamBeaconRssiWeight);
-uint8_t sme_get_roam_beacon_rssi_weight(mac_handle_t hHal);
-uint8_t sme_get_roam_rssi_diff(mac_handle_t hHal);
-QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t hHal, uint8_t sessionId,
-		uint8_t *pChannelList,
-		uint8_t numChannels);
-QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t hHal,
-		uint8_t sessionId, uint8_t *pChannelList,
-		uint8_t numChannels);
-QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t hHal,
-		uint8_t *pChannelList, uint8_t *pNumChannels,
-		uint8_t sessionId);
-bool sme_get_is_ese_feature_enabled(mac_handle_t hHal);
-bool sme_get_wes_mode(mac_handle_t hHal);
-bool sme_get_roam_scan_control(mac_handle_t hHal);
-bool sme_get_is_lfr_feature_enabled(mac_handle_t hHal);
-bool sme_get_is_ft_feature_enabled(mac_handle_t hHal);
-QDF_STATUS sme_update_roam_scan_offload_enabled(mac_handle_t hHal,
+uint8_t sme_get_roam_bmiss_first_bcnt(mac_handle_t mac_handle);
+QDF_STATUS sme_set_roam_bmiss_final_bcnt(mac_handle_t mac_handle,
+					 uint8_t sessionId,
+					 const uint8_t nRoamBmissFinalBcnt);
+uint8_t sme_get_roam_bmiss_final_bcnt(mac_handle_t mac_handle);
+QDF_STATUS sme_set_roam_beacon_rssi_weight(mac_handle_t mac_handle,
+					   uint8_t sessionId,
+					   const uint8_t nRoamBeaconRssiWeight);
+uint8_t sme_get_roam_beacon_rssi_weight(mac_handle_t mac_handle);
+uint8_t sme_get_roam_rssi_diff(mac_handle_t mac_handle);
+QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
+					     uint8_t sessionId,
+					     uint8_t *pChannelList,
+					     uint8_t numChannels);
+QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
+					      uint8_t sessionId,
+					      uint8_t *pChannelList,
+					      uint8_t numChannels);
+QDF_STATUS sme_get_roam_scan_channel_list(mac_handle_t mac_handle,
+					  uint8_t *pChannelList,
+					  uint8_t *pNumChannels,
+					  uint8_t sessionId);
+bool sme_get_is_ese_feature_enabled(mac_handle_t mac_handle);
+bool sme_get_wes_mode(mac_handle_t mac_handle);
+bool sme_get_roam_scan_control(mac_handle_t mac_handle);
+bool sme_get_is_lfr_feature_enabled(mac_handle_t mac_handle);
+bool sme_get_is_ft_feature_enabled(mac_handle_t mac_handle);
+QDF_STATUS sme_update_roam_scan_offload_enabled(mac_handle_t mac_handle,
 		bool nRoamScanOffloadEnabled);
 bool sme_is_feature_supported_by_fw(enum cap_bitmap feature);
 
 /*
  * SME API to enable/disable WLAN driver initiated SSR
  */
-void sme_update_enable_ssr(mac_handle_t hHal, bool enableSSR);
-QDF_STATUS sme_set_phy_mode(mac_handle_t hHal, eCsrPhyMode phyMode);
-eCsrPhyMode sme_get_phy_mode(mac_handle_t hHal);
-QDF_STATUS sme_handoff_request(mac_handle_t hHal, uint8_t sessionId,
+void sme_update_enable_ssr(mac_handle_t mac_handle, bool enableSSR);
+QDF_STATUS sme_set_phy_mode(mac_handle_t mac_handle, eCsrPhyMode phyMode);
+eCsrPhyMode sme_get_phy_mode(mac_handle_t mac_handle);
+QDF_STATUS sme_handoff_request(mac_handle_t mac_handle, uint8_t sessionId,
 			       tCsrHandoffRequest *pHandoffInfo);
-QDF_STATUS sme_is_sta_p2p_client_connected(mac_handle_t hHal);
-QDF_STATUS sme_add_periodic_tx_ptrn(mac_handle_t hHal, tSirAddPeriodicTxPtrn
-		*addPeriodicTxPtrnParams);
-QDF_STATUS sme_del_periodic_tx_ptrn(mac_handle_t hHal, tSirDelPeriodicTxPtrn
-		*delPeriodicTxPtrnParams);
-QDF_STATUS sme_send_rate_update_ind(mac_handle_t hHal,
+QDF_STATUS sme_is_sta_p2p_client_connected(mac_handle_t mac_handle);
+QDF_STATUS sme_add_periodic_tx_ptrn(mac_handle_t mac_handle,
+		tSirAddPeriodicTxPtrn *addPeriodicTxPtrnParams);
+QDF_STATUS sme_del_periodic_tx_ptrn(mac_handle_t mac_handle,
+		tSirDelPeriodicTxPtrn *delPeriodicTxPtrnParams);
+QDF_STATUS sme_send_rate_update_ind(mac_handle_t mac_handle,
 		tSirRateUpdateInd *rateUpdateParams);
-QDF_STATUS sme_roam_del_pmkid_from_cache(mac_handle_t hHal, uint8_t sessionId,
-		tPmkidCacheInfo *pmksa, bool flush_cache);
-void sme_get_command_q_status(mac_handle_t hHal);
+QDF_STATUS sme_roam_del_pmkid_from_cache(mac_handle_t mac_handle,
+					 uint8_t sessionId,
+					 tPmkidCacheInfo *pmksa,
+					 bool flush_cache);
+void sme_get_command_q_status(mac_handle_t mac_handle);
 
 #ifdef FEATURE_WLAN_RMC
-QDF_STATUS sme_enable_rmc(mac_handle_t hHal, uint32_t sessionId);
-QDF_STATUS sme_disable_rmc(mac_handle_t hHal, uint32_t sessionId);
-QDF_STATUS sme_send_rmc_action_period(mac_handle_t hHal, uint32_t sessionId);
+QDF_STATUS sme_enable_rmc(mac_handle_t mac_handle, uint32_t sessionId);
+QDF_STATUS sme_disable_rmc(mac_handle_t mac_handle, uint32_t sessionId);
+QDF_STATUS sme_send_rmc_action_period(mac_handle_t mac_handle,
+				      uint32_t sessionId);
 #endif
-QDF_STATUS sme_request_ibss_peer_info(mac_handle_t hHal, void *pUserData,
-	pIbssPeerInfoCb peerInfoCbk, bool allPeerInfoReqd, uint8_t staIdx);
-QDF_STATUS sme_send_cesium_enable_ind(mac_handle_t hHal, uint32_t sessionId);
+QDF_STATUS sme_request_ibss_peer_info(mac_handle_t mac_handle,
+				      void *pUserData,
+				      pIbssPeerInfoCb peerInfoCbk,
+				      bool allPeerInfoReqd,
+				      uint8_t staIdx);
+QDF_STATUS sme_send_cesium_enable_ind(mac_handle_t mac_handle,
+				      uint32_t sessionId);
 
 /**
  * sme_set_wlm_latency_level_ind() - Used to set the latency level to fw
@@ -839,49 +888,55 @@ QDF_STATUS sme_set_wlm_latency_level(mac_handle_t hal,
  * is enabled
  */
 QDF_STATUS sme_set_idle_powersave_config(bool value);
-QDF_STATUS sme_notify_modem_power_state(mac_handle_t hHal, uint32_t value);
+QDF_STATUS sme_notify_modem_power_state(mac_handle_t mac_handle,
+					uint32_t value);
 
 /*SME API to convert convert the ini value to the ENUM used in csr and MAC*/
 ePhyChanBondState sme_get_cb_phy_state_from_cb_ini_value(uint32_t cb_ini_value);
-int sme_update_ht_config(mac_handle_t hHal, uint8_t sessionId, uint16_t htCapab,
-		int value);
-int16_t sme_get_ht_config(mac_handle_t hHal, uint8_t session_id,
-		uint16_t ht_capab);
+int sme_update_ht_config(mac_handle_t mac_handle, uint8_t sessionId,
+			 uint16_t htCapab,
+			 int value);
+int16_t sme_get_ht_config(mac_handle_t mac_handle, uint8_t session_id,
+			  uint16_t ht_capab);
 #ifdef QCA_HT_2040_COEX
-QDF_STATUS sme_notify_ht2040_mode(mac_handle_t hHal, uint16_t staId,
-		struct qdf_mac_addr macAddrSTA,
-		uint8_t sessionId,
-		uint8_t channel_type);
-QDF_STATUS sme_set_ht2040_mode(mac_handle_t hHal, uint8_t sessionId,
-		uint8_t channel_type, bool obssEnabled);
+QDF_STATUS sme_notify_ht2040_mode(mac_handle_t mac_handle, uint16_t staId,
+				  struct qdf_mac_addr macAddrSTA,
+				  uint8_t sessionId,
+				  uint8_t channel_type);
+QDF_STATUS sme_set_ht2040_mode(mac_handle_t mac_handle, uint8_t sessionId,
+			       uint8_t channel_type, bool obssEnabled);
 #endif
-QDF_STATUS sme_get_reg_info(mac_handle_t hHal, uint8_t chanId,
-		uint32_t *regInfo1, uint32_t *regInfo2);
+QDF_STATUS sme_get_reg_info(mac_handle_t mac_handle, uint8_t chanId,
+			    uint32_t *regInfo1, uint32_t *regInfo2);
 #ifdef FEATURE_WLAN_TDLS
-QDF_STATUS sme_update_fw_tdls_state(mac_handle_t hHal, void *psmeTdlsParams,
-		bool useSmeLock);
+QDF_STATUS sme_update_fw_tdls_state(mac_handle_t mac_handle,
+				    void *psmeTdlsParams,
+				    bool useSmeLock);
 #endif /* FEATURE_WLAN_TDLS */
 
 #ifdef FEATURE_WLAN_CH_AVOID
-QDF_STATUS sme_ch_avoid_update_req(mac_handle_t hal_handle);
+QDF_STATUS sme_ch_avoid_update_req(mac_handle_t mac_handle);
 #else
 static inline
-QDF_STATUS sme_ch_avoid_update_req(mac_handle_t hal_handle)
+QDF_STATUS sme_ch_avoid_update_req(mac_handle_t mac_handle)
 {
 	return QDF_STATUS_SUCCESS;
 }
 #endif
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
-QDF_STATUS sme_set_auto_shutdown_cb(mac_handle_t hHal, void (*pCallbackfn)(void));
-QDF_STATUS sme_set_auto_shutdown_timer(mac_handle_t hHal, uint32_t timer_value);
+QDF_STATUS sme_set_auto_shutdown_cb(mac_handle_t mac_handle,
+				    void (*pCallbackfn)(void));
+QDF_STATUS sme_set_auto_shutdown_timer(mac_handle_t mac_handle,
+				       uint32_t timer_value);
 #endif
-QDF_STATUS sme_roam_channel_change_req(mac_handle_t hHal,
+QDF_STATUS sme_roam_channel_change_req(mac_handle_t mac_handle,
 				       struct qdf_mac_addr bssid,
 				       struct ch_params *ch_params,
 				       struct csr_roam_profile *profile);
 
-QDF_STATUS sme_roam_start_beacon_req(mac_handle_t hHal,
-		struct qdf_mac_addr bssid, uint8_t dfsCacWaitStatus);
+QDF_STATUS sme_roam_start_beacon_req(mac_handle_t mac_handle,
+				     struct qdf_mac_addr bssid,
+				     uint8_t dfsCacWaitStatus);
 
 #ifdef CONFIG_VDEV_SM
 /**
@@ -894,7 +949,8 @@ QDF_STATUS sme_roam_start_beacon_req(mac_handle_t hHal,
 QDF_STATUS sme_csa_restart(tpAniSirGlobal mac_ctx, uint8_t session_id);
 #endif
 
-QDF_STATUS sme_roam_csa_ie_request(mac_handle_t hHal, struct qdf_mac_addr bssid,
+QDF_STATUS sme_roam_csa_ie_request(mac_handle_t mac_handle,
+				   struct qdf_mac_addr bssid,
 				   uint8_t targetChannel, uint8_t csaIeReqd,
 				   struct ch_params *ch_params);
 
@@ -910,25 +966,30 @@ QDF_STATUS sme_roam_csa_ie_request(mac_handle_t hHal, struct qdf_mac_addr bssid,
  */
 int sme_set_addba_accept(mac_handle_t hal, uint8_t session_id, int value);
 
-QDF_STATUS sme_init_thermal_info(mac_handle_t hHal,
+QDF_STATUS sme_init_thermal_info(mac_handle_t mac_handle,
 				 tSmeThermalParams thermalParam);
 
-QDF_STATUS sme_set_thermal_level(mac_handle_t hHal, uint8_t level);
-QDF_STATUS sme_txpower_limit(mac_handle_t hHal, tSirTxPowerLimit *psmetx);
-QDF_STATUS sme_get_link_speed(mac_handle_t hHal, tSirLinkSpeedInfo *lsReq,
-		void *plsContext,
-		void (*pCallbackfn)(tSirLinkSpeedInfo *indParam,
-		void *pContext));
-QDF_STATUS sme_modify_add_ie(mac_handle_t hHal,
+QDF_STATUS sme_set_thermal_level(mac_handle_t mac_handle, uint8_t level);
+QDF_STATUS sme_txpower_limit(mac_handle_t mac_handle, tSirTxPowerLimit *psmetx);
+QDF_STATUS sme_get_link_speed(mac_handle_t mac_handle,
+			      tSirLinkSpeedInfo *lsReq,
+			      void *plsContext,
+			      void (*pCallbackfn)(tSirLinkSpeedInfo *indParam,
+						  void *pContext));
+QDF_STATUS sme_modify_add_ie(mac_handle_t mac_handle,
 		tSirModifyIE *pModifyIE, eUpdateIEsType updateType);
-QDF_STATUS sme_update_add_ie(mac_handle_t hHal,
+QDF_STATUS sme_update_add_ie(mac_handle_t mac_handle,
 		tSirUpdateIE *pUpdateIE, eUpdateIEsType updateType);
-QDF_STATUS sme_update_connect_debug(mac_handle_t hHal, uint32_t set_value);
+QDF_STATUS sme_update_connect_debug(mac_handle_t mac_handle,
+				    uint32_t set_value);
 const char *sme_bss_type_to_string(const uint8_t bss_type);
-QDF_STATUS sme_ap_disable_intra_bss_fwd(mac_handle_t hHal, uint8_t sessionId,
-		bool disablefwd);
-QDF_STATUS sme_get_channel_bonding_mode5_g(mac_handle_t hHal, uint32_t *mode);
-QDF_STATUS sme_get_channel_bonding_mode24_g(mac_handle_t hHal, uint32_t *mode);
+QDF_STATUS sme_ap_disable_intra_bss_fwd(mac_handle_t mac_handle,
+					uint8_t sessionId,
+					bool disablefwd);
+QDF_STATUS sme_get_channel_bonding_mode5_g(mac_handle_t mac_handle,
+					   uint32_t *mode);
+QDF_STATUS sme_get_channel_bonding_mode24_g(mac_handle_t mac_handle,
+					    uint32_t *mode);
 
 /**
  * sme_send_unit_test_cmd() - send unit test command to lower layer
@@ -981,7 +1042,7 @@ void sme_stats_ext_deregister_callback(mac_handle_t mac_handle);
  *
  * Return: void
  */
-void sme_stats_ext2_register_callback(mac_handle_t hal_handle,
+void sme_stats_ext2_register_callback(mac_handle_t mac_handle,
 				      stats_ext2_cb callback);
 
 QDF_STATUS sme_stats_ext_request(uint8_t session_id,
@@ -994,20 +1055,21 @@ sme_stats_ext_register_callback(mac_handle_t mac_handle,
 }
 
 static inline void
-sme_stats_ext2_register_callback(mac_handle_t hal_handle,
+sme_stats_ext2_register_callback(mac_handle_t mac_handle,
 				 stats_ext2_cb callback)
 {
 }
 #endif /* WLAN_FEATURE_STATS_EXT */
-QDF_STATUS sme_update_dfs_scan_mode(mac_handle_t hHal,
+QDF_STATUS sme_update_dfs_scan_mode(mac_handle_t mac_handle,
 		uint8_t sessionId,
 		uint8_t allowDFSChannelRoam);
-uint8_t sme_get_dfs_scan_mode(mac_handle_t hHal);
+uint8_t sme_get_dfs_scan_mode(mac_handle_t mac_handle);
 
 #ifdef FEATURE_WLAN_EXTSCAN
-QDF_STATUS sme_get_valid_channels_by_band(mac_handle_t hHal, uint8_t wifiBand,
-		uint32_t *aValidChannels,
-		uint8_t *pNumChannels);
+QDF_STATUS sme_get_valid_channels_by_band(mac_handle_t mac_handle,
+					  uint8_t wifiBand,
+					  uint32_t *aValidChannels,
+					  uint8_t *pNumChannels);
 
 /**
  * sme_ext_scan_get_capabilities() - SME API to fetch extscan capabilities
@@ -1145,11 +1207,11 @@ QDF_STATUS sme_ext_scan_register_callback(mac_handle_t mac_handle,
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* FEATURE_WLAN_EXTSCAN */
-QDF_STATUS sme_abort_roam_scan(mac_handle_t hHal, uint8_t sessionId);
+QDF_STATUS sme_abort_roam_scan(mac_handle_t mac_handle, uint8_t sessionId);
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
-QDF_STATUS sme_ll_stats_clear_req(mac_handle_t hHal,
+QDF_STATUS sme_ll_stats_clear_req(mac_handle_t mac_handle,
 		tSirLLStatsClearReq * pclearStatsReq);
-QDF_STATUS sme_ll_stats_set_req(mac_handle_t hHal,
+QDF_STATUS sme_ll_stats_set_req(mac_handle_t mac_handle,
 		tSirLLStatsSetReq *psetStatsReq);
 
 /**
@@ -1179,7 +1241,7 @@ QDF_STATUS sme_set_link_layer_stats_ind_cb(mac_handle_t mac_handle,
 QDF_STATUS sme_set_link_layer_ext_cb(mac_handle_t hal,
 		     void (*ll_stats_ext_cb)(hdd_handle_t callback_ctx,
 					     tSirLLStatsResults * rsp));
-QDF_STATUS sme_reset_link_layer_stats_ind_cb(mac_handle_t hhal);
+QDF_STATUS sme_reset_link_layer_stats_ind_cb(mac_handle_t mac_handle);
 QDF_STATUS sme_ll_stats_set_thresh(mac_handle_t hal,
 				struct sir_ll_ext_stats_threshold *threshold);
 #else /* WLAN_FEATURE_LINK_LAYER_STATS */
@@ -1199,7 +1261,7 @@ sme_set_link_layer_stats_ind_cb(mac_handle_t mac_handle,
 }
 
 static inline QDF_STATUS
-sme_reset_link_layer_stats_ind_cb(mac_handle_t hhal)
+sme_reset_link_layer_stats_ind_cb(mac_handle_t mac_handle)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -1208,7 +1270,7 @@ sme_reset_link_layer_stats_ind_cb(mac_handle_t hhal)
 QDF_STATUS sme_set_wisa_params(mac_handle_t hal,
 				struct sir_wisa_params *wisa_params);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS sme_update_roam_offload_enabled(mac_handle_t hHal,
+QDF_STATUS sme_update_roam_offload_enabled(mac_handle_t mac_handle,
 		bool nRoamOffloadEnabled);
 QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(mac_handle_t hal_ctx,
 		uint8_t session_id,
@@ -1218,26 +1280,26 @@ QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(mac_handle_t hal_ctx,
 QDF_STATUS sme_get_link_status(mac_handle_t mac_handle,
 			       csr_link_status_callback callback,
 			       void *context, uint8_t session_id);
-QDF_STATUS sme_get_temperature(mac_handle_t hHal,
+QDF_STATUS sme_get_temperature(mac_handle_t mac_handle,
 		void *tempContext,
 		void (*pCallbackfn)(int temperature,
 			void *pContext));
-QDF_STATUS sme_set_scanning_mac_oui(mac_handle_t hHal,
+QDF_STATUS sme_set_scanning_mac_oui(mac_handle_t mac_handle,
 		tSirScanMacOui *pScanMacOui);
 
 #ifdef DHCP_SERVER_OFFLOAD
-QDF_STATUS sme_set_dhcp_srv_offload(mac_handle_t hHal,
+QDF_STATUS sme_set_dhcp_srv_offload(mac_handle_t mac_handle,
 		tSirDhcpSrvOffloadInfo * pDhcpSrvInfo);
 #endif /* DHCP_SERVER_OFFLOAD */
 #ifdef WLAN_FEATURE_GPIO_LED_FLASHING
-QDF_STATUS sme_set_led_flashing(mac_handle_t hHal, uint8_t type,
+QDF_STATUS sme_set_led_flashing(mac_handle_t mac_handle, uint8_t type,
 		uint32_t x0, uint32_t x1);
 #endif
-QDF_STATUS sme_handle_dfs_chan_scan(mac_handle_t hHal, uint8_t dfs_flag);
-QDF_STATUS sme_enable_dfs_chan_scan(mac_handle_t hHal, uint8_t dfs_flag);
+QDF_STATUS sme_handle_dfs_chan_scan(mac_handle_t mac_handle, uint8_t dfs_flag);
+QDF_STATUS sme_enable_dfs_chan_scan(mac_handle_t mac_handle, uint8_t dfs_flag);
 QDF_STATUS sme_set_mas(uint32_t val);
 QDF_STATUS sme_set_miracast(mac_handle_t hal, uint8_t filter_type);
-QDF_STATUS sme_ext_change_channel(mac_handle_t hHal, uint32_t channel,
+QDF_STATUS sme_ext_change_channel(mac_handle_t mac_handle, uint32_t channel,
 					  uint8_t session_id);
 
 QDF_STATUS sme_configure_stats_avg_factor(mac_handle_t hal, uint8_t session_id,
@@ -1249,7 +1311,7 @@ QDF_STATUS sme_configure_guard_time(mac_handle_t hal, uint8_t session_id,
 QDF_STATUS sme_wifi_start_logger(mac_handle_t hal,
 		struct sir_wifi_start_log start_log);
 
-bool sme_neighbor_middle_of_roaming(mac_handle_t hHal,
+bool sme_neighbor_middle_of_roaming(mac_handle_t mac_handle,
 						uint8_t sessionId);
 
 /*
@@ -1334,10 +1396,10 @@ QDF_STATUS sme_reset_rssi_threshold_breached_cb(mac_handle_t mac_handle);
 QDF_STATUS sme_register_mgmt_frame_ind_callback(mac_handle_t hal,
 			sir_mgmt_frame_ind_callback callback);
 
-QDF_STATUS sme_update_nss(mac_handle_t h_hal, uint8_t nss);
+QDF_STATUS sme_update_nss(mac_handle_t mac_handle, uint8_t nss);
 void sme_update_user_configured_nss(mac_handle_t hal, uint8_t nss);
 
-bool sme_is_any_session_in_connected_state(mac_handle_t h_hal);
+bool sme_is_any_session_in_connected_state(mac_handle_t mac_handle);
 
 QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list *msg);
 QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg);
@@ -1357,14 +1419,14 @@ QDF_STATUS sme_soc_set_dual_mac_config(struct policy_mgr_dual_mac_config msg);
 QDF_STATUS sme_soc_set_antenna_mode(mac_handle_t hal,
 		struct sir_antenna_mode_param *msg);
 
-void sme_set_scan_disable(mac_handle_t h_hal, int value);
+void sme_set_scan_disable(mac_handle_t mac_handle, int value);
 void sme_setdef_dot11mode(mac_handle_t hal);
 
-QDF_STATUS sme_handle_set_fcc_channel(mac_handle_t hHal,
+QDF_STATUS sme_handle_set_fcc_channel(mac_handle_t mac_handle,
 				      bool fcc_constraint,
 				      bool scan_pending);
 
-QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(mac_handle_t hal_handle,
+QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(mac_handle_t mac_handle,
 	uint8_t session_id,
 	uint32_t notify_id,
 	int32_t val);
@@ -1394,40 +1456,43 @@ int sme_update_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 
 void wlan_sap_enable_phy_error_logs(mac_handle_t hal, uint32_t enable_log);
 #ifdef WLAN_FEATURE_DSRC
-QDF_STATUS sme_ocb_set_config(mac_handle_t hHal, void *context,
+QDF_STATUS sme_ocb_set_config(mac_handle_t mac_handle, void *context,
 			      ocb_callback callback,
 			      struct sir_ocb_config *config);
 
-QDF_STATUS sme_ocb_set_utc_time(mac_handle_t hHal, struct sir_ocb_utc *utc);
+QDF_STATUS sme_ocb_set_utc_time(mac_handle_t mac_handle,
+				struct sir_ocb_utc *utc);
 
-QDF_STATUS sme_ocb_start_timing_advert(mac_handle_t hHal,
+QDF_STATUS sme_ocb_start_timing_advert(mac_handle_t mac_handle,
 	struct sir_ocb_timing_advert *timing_advert);
 
-QDF_STATUS sme_ocb_stop_timing_advert(mac_handle_t hHal,
+QDF_STATUS sme_ocb_stop_timing_advert(mac_handle_t mac_handle,
 	struct sir_ocb_timing_advert *timing_advert);
 
-int sme_ocb_gen_timing_advert_frame(mac_handle_t hHal, tSirMacAddr self_addr,
+int sme_ocb_gen_timing_advert_frame(mac_handle_t mac_handle,
+				    tSirMacAddr self_addr,
 				    uint8_t **buf, uint32_t *timestamp_offset,
 				    uint32_t *time_value_offset);
 
-QDF_STATUS sme_ocb_get_tsf_timer(mac_handle_t hHal, void *context,
+QDF_STATUS sme_ocb_get_tsf_timer(mac_handle_t mac_handle, void *context,
 				 ocb_callback callback,
 				 struct sir_ocb_get_tsf_timer *request);
 
-QDF_STATUS sme_dcc_get_stats(mac_handle_t hHal, void *context,
+QDF_STATUS sme_dcc_get_stats(mac_handle_t mac_handle, void *context,
 			     ocb_callback callback,
 			     struct sir_dcc_get_stats *request);
 
-QDF_STATUS sme_dcc_clear_stats(mac_handle_t hHal, uint32_t vdev_id,
+QDF_STATUS sme_dcc_clear_stats(mac_handle_t mac_handle, uint32_t vdev_id,
 			       uint32_t dcc_stats_bitmap);
 
-QDF_STATUS sme_dcc_update_ndl(mac_handle_t hHal, void *context,
+QDF_STATUS sme_dcc_update_ndl(mac_handle_t mac_handle, void *context,
 			      ocb_callback callback,
 			      struct sir_dcc_update_ndl *request);
 
-QDF_STATUS sme_register_for_dcc_stats_event(mac_handle_t hHal, void *context,
+QDF_STATUS sme_register_for_dcc_stats_event(mac_handle_t mac_handle,
+					    void *context,
 					    ocb_callback callback);
-QDF_STATUS sme_deregister_for_dcc_stats_event(mac_handle_t hHal);
+QDF_STATUS sme_deregister_for_dcc_stats_event(mac_handle_t mac_handle);
 
 static inline void
 sme_set_etsi13_srd_ch_in_master_mode(mac_handle_t hal,
@@ -1435,9 +1500,10 @@ sme_set_etsi13_srd_ch_in_master_mode(mac_handle_t hal,
 {
 }
 #else
-static inline QDF_STATUS sme_ocb_set_config(mac_handle_t hHal, void *context,
-		ocb_callback callback,
-		struct sir_ocb_config *config)
+static inline
+QDF_STATUS sme_ocb_set_config(mac_handle_t mac_handle, void *context,
+			      ocb_callback callback,
+			      struct sir_ocb_config *config)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -1459,47 +1525,56 @@ static inline QDF_STATUS sme_ocb_stop_timing_advert(struct sir_ocb_timing_advert
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline int sme_ocb_gen_timing_advert_frame(mac_handle_t hHal,
-		tSirMacAddr self_addr, uint8_t **buf,
-		uint32_t *timestamp_offset,
-		uint32_t *time_value_offset)
+static inline
+int sme_ocb_gen_timing_advert_frame(mac_handle_t mac_handle,
+				    tSirMacAddr self_addr, uint8_t **buf,
+				    uint32_t *timestamp_offset,
+				    uint32_t *time_value_offset)
 {
 	return 0;
 }
 
-static inline QDF_STATUS sme_ocb_get_tsf_timer(mac_handle_t hHal, void *context,
-		ocb_callback callback,
-		struct sir_ocb_get_tsf_timer *request)
+static inline
+QDF_STATUS sme_ocb_get_tsf_timer(mac_handle_t mac_handle, void *context,
+				 ocb_callback callback,
+				 struct sir_ocb_get_tsf_timer *request)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS sme_dcc_get_stats(mac_handle_t hHal, void *context,
-		ocb_callback callback,
-		struct sir_dcc_get_stats *request)
+static inline
+QDF_STATUS sme_dcc_get_stats(mac_handle_t mac_handle, void *context,
+			     ocb_callback callback,
+			     struct sir_dcc_get_stats *request)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS sme_dcc_clear_stats(uint32_t vdev_id,
-		uint32_t dcc_stats_bitmap)
+static inline
+QDF_STATUS sme_dcc_clear_stats(uint32_t vdev_id,
+			       uint32_t dcc_stats_bitmap)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS sme_dcc_update_ndl(mac_handle_t hHal, void *context,
-		ocb_callback callback,
-		struct sir_dcc_update_ndl *request)
+static inline
+QDF_STATUS sme_dcc_update_ndl(mac_handle_t mac_handle, void *context,
+			      ocb_callback callback,
+			      struct sir_dcc_update_ndl *request)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS sme_register_for_dcc_stats_event(mac_handle_t hHal,
-		void *context, ocb_callback callback)
+static inline
+QDF_STATUS sme_register_for_dcc_stats_event(mac_handle_t mac_handle,
+					    void *context,
+					    ocb_callback callback)
 {
 	return QDF_STATUS_SUCCESS;
 }
-static inline QDF_STATUS sme_deregister_for_dcc_stats_event(mac_handle_t hHal)
+
+static inline
+QDF_STATUS sme_deregister_for_dcc_stats_event(mac_handle_t mac_handle)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -1539,29 +1614,30 @@ sme_get_opclass(mac_handle_t hal, uint8_t channel, uint8_t bw_offset,
 #endif
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
-QDF_STATUS sme_gateway_param_update(mac_handle_t hHal,
+QDF_STATUS sme_gateway_param_update(mac_handle_t mac_handle,
 				struct gateway_param_update_req *request);
 #endif
 
-void sme_update_fine_time_measurement_capab(mac_handle_t hal, uint8_t session_id,
-								uint32_t val);
-QDF_STATUS sme_ht40_stop_obss_scan(mac_handle_t hHal, uint32_t vdev_id);
+void sme_update_fine_time_measurement_capab(mac_handle_t mac_handle,
+					    uint8_t session_id,
+					    uint32_t val);
+QDF_STATUS sme_ht40_stop_obss_scan(mac_handle_t mac_handle, uint32_t vdev_id);
 QDF_STATUS sme_set_fw_test(struct set_fwtest_params *fw_test);
-QDF_STATUS sme_set_tsfcb(mac_handle_t hHal,
+QDF_STATUS sme_set_tsfcb(mac_handle_t mac_handle,
 	int (*cb_fn)(void *cb_ctx, struct stsf *ptsf), void *cb_ctx);
 
-QDF_STATUS sme_reset_tsfcb(mac_handle_t h_hal);
+QDF_STATUS sme_reset_tsfcb(mac_handle_t mac_handle);
 
 #if defined(WLAN_FEATURE_TSF) && !defined(WLAN_FEATURE_TSF_PLUS_NOIRQ)
-QDF_STATUS sme_set_tsf_gpio(mac_handle_t h_hal, uint32_t pinvalue);
+QDF_STATUS sme_set_tsf_gpio(mac_handle_t mac_handle, uint32_t pinvalue);
 #endif
 
-QDF_STATUS sme_update_mimo_power_save(mac_handle_t hHal,
+QDF_STATUS sme_update_mimo_power_save(mac_handle_t mac_handle,
 				      uint8_t is_ht_smps_enabled,
 				      uint8_t ht_smps_mode,
 				      bool send_smps_action);
 
-bool sme_is_sta_smps_allowed(mac_handle_t hHal, uint8_t session_id);
+bool sme_is_sta_smps_allowed(mac_handle_t mac_handle, uint8_t session_id);
 QDF_STATUS sme_add_beacon_filter(mac_handle_t hal,
 				uint32_t session_id, uint32_t *ie_map);
 QDF_STATUS sme_remove_beacon_filter(mac_handle_t hal, uint32_t session_id);
@@ -1640,22 +1716,22 @@ sme_apf_read_work_memory(mac_handle_t hal,
 #endif /* FEATURE_WLAN_APF */
 
 uint32_t sme_get_wni_dot11_mode(mac_handle_t hal);
-QDF_STATUS sme_create_mon_session(mac_handle_t hal_handle, uint8_t *bssid,
+QDF_STATUS sme_create_mon_session(mac_handle_t mac_handle, uint8_t *bssid,
 				  uint8_t vdev_id);
 QDF_STATUS sme_set_adaptive_dwelltime_config(mac_handle_t hal,
 			struct adaptive_dwelltime_params *dwelltime_params);
 
 void sme_set_vdev_ies_per_band(mac_handle_t hal, uint8_t vdev_id);
-void sme_set_pdev_ht_vht_ies(mac_handle_t hHal, bool enable2x2);
+void sme_set_pdev_ht_vht_ies(mac_handle_t mac_handle, bool enable2x2);
 
 void sme_update_vdev_type_nss(mac_handle_t hal, uint8_t max_supp_nss,
 		uint32_t vdev_type_nss, enum band_info band);
 void sme_update_hw_dbs_capable(mac_handle_t hal, uint8_t hw_dbs_capable);
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD
-void sme_register_p2p_lo_event(mac_handle_t hHal, void *context,
+void sme_register_p2p_lo_event(mac_handle_t mac_handle, void *context,
 					p2p_lo_callback callback);
 #else
-static inline void sme_register_p2p_lo_event(mac_handle_t hHal,
+static inline void sme_register_p2p_lo_event(mac_handle_t mac_handle,
 					     void *context,
 					     p2p_lo_callback callback)
 {
@@ -1746,11 +1822,11 @@ QDF_STATUS sme_fips_request(mac_handle_t hal, struct fips_params *param,
 QDF_STATUS sme_set_cts2self_for_p2p_go(mac_handle_t hal);
 void sme_set_prefer_80MHz_over_160MHz(mac_handle_t hal,
 		bool sta_prefer_80MHz_over_160MHz);
-QDF_STATUS sme_update_tx_fail_cnt_threshold(mac_handle_t hal_handle,
+QDF_STATUS sme_update_tx_fail_cnt_threshold(mac_handle_t mac_handle,
 		uint8_t session_id, uint32_t tx_fail_count);
-QDF_STATUS sme_update_short_retry_limit_threshold(mac_handle_t hal_handle,
+QDF_STATUS sme_update_short_retry_limit_threshold(mac_handle_t mac_handle,
 		struct sme_short_retry_limit *short_retry_limit_th);
-QDF_STATUS sme_update_long_retry_limit_threshold(mac_handle_t hal_handle,
+QDF_STATUS sme_update_long_retry_limit_threshold(mac_handle_t mac_handle,
 		struct sme_long_retry_limit  *long_retry_limit_th);
 /**
  * sme_roam_is_ese_assoc() - Check if association type is ESE
@@ -1787,7 +1863,7 @@ bool sme_neighbor_roam_is11r_assoc(mac_handle_t hal_ctx, uint8_t session_id);
  *
  * Return: QDF_STATUS_SUCCESS or non-zero on failure.
 */
-QDF_STATUS sme_update_sta_inactivity_timeout(mac_handle_t hal_handle,
+QDF_STATUS sme_update_sta_inactivity_timeout(mac_handle_t mac_handle,
 		struct sme_sta_inactivity_timeout  *sta_inactivity_timer);
 
 /**
@@ -1844,7 +1920,7 @@ QDF_STATUS sme_set_sar_power_limits(mac_handle_t hal,
  */
 QDF_STATUS sme_send_coex_config_cmd(struct coex_config_params *coex_cfg_params);
 
-void sme_set_cc_src(mac_handle_t hal_handle, enum country_src);
+void sme_set_cc_src(mac_handle_t mac_handle, enum country_src);
 
 
 #ifdef WLAN_FEATURE_WOW_PULSE
@@ -1871,7 +1947,7 @@ QDF_STATUS sme_set_nud_debug_stats_cb(mac_handle_t hal,
  *
  * Return: QDF_STATUS
  */
-void sme_set_chan_info_callback(mac_handle_t hal_handle,
+void sme_set_chan_info_callback(mac_handle_t mac_handle,
 			void (*callback)(struct scan_chan_info *chan_info));
 
 /**
@@ -1892,7 +1968,7 @@ QDF_STATUS sme_get_rssi_snr_by_bssid(mac_handle_t hal,
 /**
  * sme_get_beacon_frm() - gets the bss descriptor from scan cache and prepares
  * beacon frame
- * @hal: handle returned by mac_open
+ * @mac_handle: handle returned by mac_open
  * @profile: current connected profile
  * @bssid: bssid to look for in scan cache
  * @frame_buf: frame buffer to populate
@@ -1901,7 +1977,8 @@ QDF_STATUS sme_get_rssi_snr_by_bssid(mac_handle_t hal,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_get_beacon_frm(mac_handle_t hal, struct csr_roam_profile *profile,
+QDF_STATUS sme_get_beacon_frm(mac_handle_t mac_handle,
+			      struct csr_roam_profile *profile,
 			      const tSirMacAddr bssid,
 			      uint8_t **frame_buf, uint32_t *frame_len,
 			      int *channel);
@@ -1975,7 +2052,7 @@ QDF_STATUS sme_rso_cmd_status_cb(mac_handle_t mac_handle,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_register_set_connection_info_cb(mac_handle_t hHal,
+QDF_STATUS sme_register_set_connection_info_cb(mac_handle_t mac_handle,
 				bool (*set_connection_info_cb)(bool),
 				bool (*get_connection_info_cb)(uint8_t *session_id,
 				enum scan_reject_states *reason));
@@ -2365,7 +2442,7 @@ bool sme_is_conn_state_connected(mac_handle_t hal, uint8_t session_id);
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_scan_get_result_for_bssid(mac_handle_t hal_handle,
+QDF_STATUS sme_scan_get_result_for_bssid(mac_handle_t mac_handle,
 					 struct qdf_mac_addr *bssid,
 					 tCsrScanResultInfo *res);
 
