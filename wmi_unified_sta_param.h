@@ -99,16 +99,6 @@ struct wlm_latency_level_param {
 	uint16_t vdev_id;
 };
 
-/**
- * struct nan_req_params - NAN request params
- * @request_data_len: request data length
- * @request_data: request data
- */
-struct nan_req_params {
-	uint16_t request_data_len;
-	uint8_t request_data[];
-};
-
 #ifndef CONVERGED_TDLS_ENABLE
 /**
  * struct tdls_chan_switch_params - channel switch parameter structure

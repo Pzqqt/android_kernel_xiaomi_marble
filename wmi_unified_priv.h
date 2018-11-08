@@ -832,7 +832,14 @@ QDF_STATUS (*send_set_auto_shutdown_timer_cmd)(wmi_unified_t wmi_handle,
 
 #ifdef WLAN_FEATURE_NAN
 QDF_STATUS (*send_nan_req_cmd)(wmi_unified_t wmi_handle,
-			struct nan_req_params *nan_req);
+			struct nan_msg_params *nan_req);
+
+QDF_STATUS (*send_nan_disable_req_cmd)(wmi_unified_t wmi_handle,
+				       struct nan_disable_req *nan_msg);
+
+QDF_STATUS (*extract_nan_event_rsp)(wmi_unified_t wmi_handle, void *evt_buf,
+				    struct nan_event_params *evt_params,
+				    uint8_t **msg_buf);
 #endif
 
 QDF_STATUS (*send_process_ch_avoid_update_cmd)(wmi_unified_t wmi_handle);
@@ -2235,20 +2242,6 @@ void wmi_policy_mgr_attach_tlv(struct wmi_unified *wmi_handle)
 void wmi_sta_attach_tlv(struct wmi_unified *wmi_handle);
 #else
 static inline void wmi_sta_attach_tlv(struct wmi_unified *wmi_handle)
-{
-}
-#endif
-
-#ifdef WLAN_FEATURE_NAN
-/**
- * wmi_nan_feature_attach_tlv() - set NAN feature wmi callback
- * @wmi_handle: wmi handle
- *
- * Return: none
- */
-void wmi_nan_feature_attach_tlv(struct wmi_unified *wmi_handle);
-#else
-static inline void wmi_nan_feature_attach_tlv(struct wmi_unified *wmi_handle)
 {
 }
 #endif
