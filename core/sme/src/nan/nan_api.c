@@ -50,6 +50,7 @@ void sme_nan_deregister_callback(mac_handle_t mac_handle)
 QDF_STATUS sme_nan_request(tpNanRequestReq input)
 {
 	struct scheduler_msg msg = {0};
+	QDF_STATUS status;
 	tpNanRequest data;
 	size_t data_len;
 
@@ -68,16 +69,15 @@ QDF_STATUS sme_nan_request(tpNanRequestReq input)
 	msg.reserved = 0;
 	msg.bodyptr = data;
 
-	if (QDF_STATUS_SUCCESS != scheduler_post_message(QDF_MODULE_ID_SME,
-							 QDF_MODULE_ID_WMA,
-							 QDF_MODULE_ID_WMA,
-							 &msg)) {
+	status = scheduler_post_message(QDF_MODULE_ID_SME, QDF_MODULE_ID_WMA,
+					QDF_MODULE_ID_WMA, &msg);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("Not able to post WMA_NAN_REQUEST message to WMA");
 		qdf_mem_free(data);
-		return QDF_STATUS_SUCCESS;
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 void sme_nan_event(mac_handle_t mac_handle, tSirNanEvent *event)
