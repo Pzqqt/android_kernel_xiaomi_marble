@@ -49,9 +49,6 @@
 struct opaque_mac_handle;
 typedef struct opaque_mac_handle *mac_handle_t;
 
-/* retain legacy name until all instances have been replaced */
-typedef mac_handle_t tHalHandle;
-
 /**
  * typedef hdd_handle_t - HDD Handle
  *
