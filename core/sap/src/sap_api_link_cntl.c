@@ -83,7 +83,8 @@
 /**
  * sap_config_acs_result : Generate ACS result params based on ch constraints
  * @sap_ctx: pointer to SAP context data struct
- * @hal: HAL Handle pointer
+ * @mac_handle: Opaque handle to the global MAC context
+ * @sec_ch: Secondary channel
  *
  * This function calculates the ACS result params: ht sec channel, vht channel
  * information and channel bonding based on selected ACS channel.
@@ -91,12 +92,13 @@
  * Return: None
  */
 
-void sap_config_acs_result(tHalHandle hal, struct sap_context *sap_ctx,
-							uint32_t sec_ch)
+void sap_config_acs_result(mac_handle_t mac_handle,
+			   struct sap_context *sap_ctx,
+			   uint32_t sec_ch)
 {
 	uint32_t channel = sap_ctx->acs_cfg->pri_ch;
 	struct ch_params ch_params = {0};
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
 
 	ch_params.ch_width = sap_ctx->acs_cfg->ch_width;
 	wlan_reg_set_channel_params(mac_ctx->pdev, channel, sec_ch,
@@ -173,7 +175,7 @@ static const char *acs_scan_done_status_str(eCsrScanStatus status)
 	}
 }
 
-QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle,
+QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t hal_handle,
 						   struct sap_context *sap_ctx,
 						   uint8_t sessionid,
 						   uint32_t scanid,
@@ -407,7 +409,7 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
  * Return: void
  */
 static void
-wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
+wlansap_roam_process_dfs_chansw_update(mac_handle_t hHal,
 					    struct sap_context *sap_ctx,
 					    QDF_STATUS *ret_status)
 {
@@ -1236,7 +1238,7 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 	uint8_t session_id;
 	bool success = false;
 	eCsrScanStatus scan_status = eCSR_SCAN_FAILURE;
-	tHalHandle hal_handle;
+	mac_handle_t hal_handle;
 
 	session_id = wlan_vdev_get_id(vdev);
 	scan_id = event->scan_id;
