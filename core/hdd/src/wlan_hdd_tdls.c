@@ -24,6 +24,7 @@
 
 #include <wlan_hdd_includes.h>
 #include <ani_global.h>
+#include "osif_sync.h"
 #include <wlan_hdd_hostapd.h>
 #include <wlan_hdd_trace.h>
 #include <net/cfg80211.h>
@@ -270,14 +271,21 @@ int wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
 					const void *data,
 					int data_len)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_configure_tdls_mode(wiphy, wdev, data,
+	errno = __wlan_hdd_cfg80211_configure_tdls_mode(wiphy, wdev, data,
 							data_len);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -294,14 +302,21 @@ int wlan_hdd_cfg80211_exttdls_get_status(struct wiphy *wiphy,
 					const void *data,
 					int data_len)
 {
-	int ret = 0;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_exttdls_get_status(wiphy, wdev, data,
-							data_len);
+	errno = __wlan_hdd_cfg80211_exttdls_get_status(wiphy, wdev,
+						       data, data_len);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -341,13 +356,20 @@ int wlan_hdd_cfg80211_exttdls_enable(struct wiphy *wiphy,
 					const void *data,
 					int data_len)
 {
-	int ret = 0;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_exttdls_enable(wiphy, wdev, data, data_len);
+	errno = __wlan_hdd_cfg80211_exttdls_enable(wiphy, wdev, data, data_len);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -385,13 +407,21 @@ int wlan_hdd_cfg80211_exttdls_disable(struct wiphy *wiphy,
 					const void *data,
 					int data_len)
 {
-	int ret = 0;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_exttdls_disable(wiphy, wdev, data, data_len);
+	errno = __wlan_hdd_cfg80211_exttdls_disable(wiphy, wdev,
+						    data, data_len);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 #if TDLS_MGMT_VERSION2

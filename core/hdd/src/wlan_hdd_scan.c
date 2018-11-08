@@ -31,10 +31,10 @@
 #include "ani_global.h"
 #include "dot11f.h"
 #include "cds_sched.h"
+#include "osif_sync.h"
 #include "wlan_hdd_p2p.h"
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_scan.h"
-#include "osif_sync.h"
 #include "wlan_policy_mgr_api.h"
 #include "wlan_hdd_power.h"
 #include "wma_api.h"
@@ -1157,14 +1157,20 @@ int wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 		struct wireless_dev *wdev, const void *data,
 		int data_len)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_vendor_scan(wiphy, wdev,
-					      data, data_len);
+	errno = __wlan_hdd_cfg80211_vendor_scan(wiphy, wdev, data, data_len);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -1212,14 +1218,13 @@ static int __wlan_hdd_vendor_abort_scan(
  *
  * Return: zero for success and non zero for failure
  */
-int wlan_hdd_vendor_abort_scan(
-	struct wiphy *wiphy, struct wireless_dev *wdev,
-	const void *data, int data_len)
+int wlan_hdd_vendor_abort_scan(struct wiphy *wiphy, struct wireless_dev *wdev,
+			       const void *data, int data_len)
 {
-	struct osif_psoc_sync *psoc_sync;
+	struct osif_vdev_sync *vdev_sync;
 	int errno;
 
-	errno = osif_psoc_sync_op_start(wiphy_dev(wiphy), &psoc_sync);
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
 	if (errno)
 		return errno;
 
@@ -1227,7 +1232,7 @@ int wlan_hdd_vendor_abort_scan(
 	errno = __wlan_hdd_vendor_abort_scan(wiphy, data, data_len);
 	cds_ssr_unprotect(__func__);
 
-	osif_psoc_sync_op_stop(psoc_sync);
+	osif_vdev_sync_op_stop(vdev_sync);
 
 	return errno;
 }

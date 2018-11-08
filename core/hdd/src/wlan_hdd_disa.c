@@ -24,6 +24,7 @@
  */
 
 #include "wlan_hdd_disa.h"
+#include "osif_sync.h"
 #include "wlan_disa_ucfg_api.h"
 #include "wlan_osif_request_manager.h"
 #include "sme_api.h"
@@ -470,12 +471,19 @@ int wlan_hdd_cfg80211_encrypt_decrypt_msg(struct wiphy *wiphy,
 						const void *data,
 						int data_len)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_encrypt_decrypt_msg(wiphy, wdev,
-						data, data_len);
+	errno = __wlan_hdd_cfg80211_encrypt_decrypt_msg(wiphy, wdev,
+							data, data_len);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }

@@ -20,6 +20,7 @@
  * wlan_hdd_tsf.c - WLAN Host Device Driver tsf related implementation
  */
 
+#include "osif_sync.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_tsf.h"
 #include "wma_api.h"
@@ -27,6 +28,7 @@
 #include <qca_vendor.h>
 #include <linux/errqueue.h>
 #include "ol_txrx_api.h"
+
 static struct completion tsf_sync_get_completion_evt;
 #define WLAN_TSF_SYNC_GET_TIMEOUT 2000
 #define WLAN_HDD_CAPTURE_TSF_REQ_TIMEOUT_MS 500
@@ -1646,13 +1648,20 @@ int wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 					const void *data,
 					int data_len)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(wdev->netdev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_handle_tsf_cmd(wiphy, wdev, data, data_len);
+	errno = __wlan_hdd_cfg80211_handle_tsf_cmd(wiphy, wdev, data, data_len);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
