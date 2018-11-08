@@ -23,15 +23,15 @@
 #include "ani_global.h"
 #include "sme_inside.h"
 
-QDF_STATUS sme_ps_enable_disable(mac_handle_t hal_ctx, uint32_t session_id,
+QDF_STATUS sme_ps_enable_disable(mac_handle_t mac_handle, uint32_t session_id,
 				 enum sme_ps_cmd command);
 
 QDF_STATUS sme_ps_timer_flush_sync(mac_handle_t mac_handle,
 				   uint8_t session_id);
 
-QDF_STATUS sme_ps_uapsd_enable(mac_handle_t hal_ctx, uint32_t session_id);
+QDF_STATUS sme_ps_uapsd_enable(mac_handle_t mac_handle, uint32_t session_id);
 
-QDF_STATUS sme_ps_uapsd_disable(mac_handle_t hal_ctx, uint32_t session_id);
+QDF_STATUS sme_ps_uapsd_disable(mac_handle_t mac_handle, uint32_t session_id);
 
 /* Condition check if driver is ready to enter in PS */
 QDF_STATUS sme_enable_sta_ps_check(tpAniSirGlobal mac_ctx, uint32_t session_id);
@@ -47,13 +47,13 @@ void sme_set_tspec_uapsd_mask_per_session(tpAniSirGlobal mac_ctx,
 typedef void (*uapsd_start_indication_cb)(void *callback_context,
 		uint32_t session_id, QDF_STATUS status);
 
-QDF_STATUS sme_ps_start_uapsd(mac_handle_t hal_ctx, uint32_t session_id);
-QDF_STATUS sme_set_ps_host_offload(mac_handle_t hal_ctx,
+QDF_STATUS sme_ps_start_uapsd(mac_handle_t mac_handle, uint32_t session_id);
+QDF_STATUS sme_set_ps_host_offload(mac_handle_t mac_handle,
 				   tpSirHostOffloadReq request,
 				   uint8_t session_id);
 
 #ifdef WLAN_NS_OFFLOAD
-QDF_STATUS sme_set_ps_ns_offload(mac_handle_t hal_ctx,
+QDF_STATUS sme_set_ps_ns_offload(mac_handle_t mac_handle,
 				 tpSirHostOffloadReq request,
 				 uint8_t session_id);
 
@@ -64,26 +64,28 @@ QDF_STATUS sme_post_pe_message(tpAniSirGlobal mac_ctx,
 
 /**
  * sme_ps_enable_auto_ps_timer(): Enable power-save auto timer with timeout
- * @hal_ctx:       HAL context
+ * @mac_handle:       HAL context
  * @session_id:    adapter session Id
  * @timeout:       timeout period in ms
  *
  * Returns: QDF_STATUS
  */
-QDF_STATUS sme_ps_enable_auto_ps_timer(mac_handle_t hal_ctx,
-				       uint32_t session_id, uint32_t timeout);
-QDF_STATUS sme_ps_disable_auto_ps_timer(mac_handle_t hal_ctx,
-					uint32_t session_id);
+QDF_STATUS sme_ps_enable_auto_ps_timer(mac_handle_t mac_handle,
+				       uint32_t sessionId, uint32_t timeout);
+QDF_STATUS sme_ps_disable_auto_ps_timer(mac_handle_t mac_handle,
+					uint32_t sessionId);
 
-QDF_STATUS sme_ps_open(mac_handle_t hal_ctx);
+QDF_STATUS sme_ps_open(mac_handle_t mac_handle);
 
-QDF_STATUS sme_ps_open_per_session(mac_handle_t hal_ctx, uint32_t session_id);
+QDF_STATUS sme_ps_open_per_session(mac_handle_t mac_handle,
+				   uint32_t session_id);
 
 void sme_auto_ps_entry_timer_expired(void *ps_param);
-QDF_STATUS sme_ps_close(mac_handle_t hal_ctx);
-QDF_STATUS sme_ps_close_per_session(mac_handle_t hal_ctx, uint32_t session_id);
+QDF_STATUS sme_ps_close(mac_handle_t mac_handle);
+QDF_STATUS sme_ps_close_per_session(mac_handle_t mac_handle,
+				    uint32_t session_id);
 
-bool sme_is_auto_ps_timer_running(mac_handle_t hal_ctx,
+bool sme_is_auto_ps_timer_running(mac_handle_t mac_handle,
 				  uint32_t session_id);
 
 #endif /* #if !defined(__SME_POWER_SAVE_API_H) */
