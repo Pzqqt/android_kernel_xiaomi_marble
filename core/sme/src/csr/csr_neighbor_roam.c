@@ -995,7 +995,7 @@ static void csr_neighbor_roam_info_ctx_init(
 	if (csr_is_auth_type11r
 		(mac, session->connectedProfile.AuthType,
 		session->connectedProfile.MDID.mdiePresent)) {
-		if (mac->roam.configParam.isFastTransitionEnabled)
+		if (mac->mlme_cfg->lfr.fast_transition_enabled)
 			init_ft_flag = true;
 		ngbr_roam_info->is11rAssoc = true;
 	} else
@@ -1006,7 +1006,7 @@ static void csr_neighbor_roam_info_ctx_init(
 #ifdef FEATURE_WLAN_ESE
 	/* Based on the auth scheme tell if we are 11r */
 	if (session->connectedProfile.isESEAssoc) {
-		if (mac->roam.configParam.isFastTransitionEnabled)
+		if (mac->mlme_cfg->lfr.fast_transition_enabled)
 			init_ft_flag = true;
 		ngbr_roam_info->isESEAssoc = true;
 	} else
@@ -1226,53 +1226,44 @@ QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal mac, uint8_t sessionId)
 	pNeighborRoamInfo->prevNeighborRoamState =
 		eCSR_NEIGHBOR_ROAM_STATE_CLOSED;
 	pNeighborRoamInfo->cfgParams.maxChannelScanTime =
-		mac->roam.configParam.neighborRoamConfig.
-		nNeighborScanMaxChanTime;
+		mac->mlme_cfg->lfr.neighbor_scan_max_chan_time;
 	pNeighborRoamInfo->cfgParams.minChannelScanTime =
-		mac->roam.configParam.neighborRoamConfig.
-		nNeighborScanMinChanTime;
+		mac->mlme_cfg->lfr.neighbor_scan_min_chan_time;
 	pNeighborRoamInfo->cfgParams.neighborLookupThreshold =
-		mac->roam.configParam.neighborRoamConfig.
-		nNeighborLookupRssiThreshold;
+		mac->mlme_cfg->lfr.neighbor_lookup_rssi_threshold;
 	pNeighborRoamInfo->cfgParams.rssi_thresh_offset_5g =
 		mac->mlme_cfg->lfr.rssi_threshold_offset_5g;
 	pNeighborRoamInfo->cfgParams.delay_before_vdev_stop =
-		mac->roam.configParam.neighborRoamConfig.
-		delay_before_vdev_stop;
+		mac->mlme_cfg->lfr.delay_before_vdev_stop;
 	pNeighborRoamInfo->cfgParams.nOpportunisticThresholdDiff =
-		mac->roam.configParam.neighborRoamConfig.
-		nOpportunisticThresholdDiff;
+		mac->mlme_cfg->lfr.opportunistic_scan_threshold_diff;
 	pNeighborRoamInfo->cfgParams.nRoamRescanRssiDiff =
-		mac->roam.configParam.neighborRoamConfig.nRoamRescanRssiDiff;
+		mac->mlme_cfg->lfr.roam_rescan_rssi_diff;
 	pNeighborRoamInfo->cfgParams.nRoamBmissFirstBcnt =
-		mac->roam.configParam.neighborRoamConfig.nRoamBmissFirstBcnt;
+		mac->mlme_cfg->lfr.roam_bmiss_first_bcnt;
 	pNeighborRoamInfo->cfgParams.nRoamBmissFinalBcnt =
-		mac->roam.configParam.neighborRoamConfig.nRoamBmissFinalBcnt;
+		mac->mlme_cfg->lfr.roam_bmiss_final_bcnt;
 	pNeighborRoamInfo->cfgParams.nRoamBeaconRssiWeight =
-		mac->roam.configParam.neighborRoamConfig.nRoamBeaconRssiWeight;
+		mac->mlme_cfg->lfr.roam_beacon_rssi_weight;
 	pNeighborRoamInfo->cfgParams.neighborScanPeriod =
-		mac->roam.configParam.neighborRoamConfig.
-		nNeighborScanTimerPeriod;
+		mac->mlme_cfg->lfr.neighbor_scan_timer_period;
 	pNeighborRoamInfo->cfgParams.neighbor_scan_min_period =
-		mac->roam.configParam.neighborRoamConfig.
-		neighbor_scan_min_timer_period;
+		mac->mlme_cfg->lfr.neighbor_scan_min_timer_period;
 	pNeighborRoamInfo->cfgParams.neighborResultsRefreshPeriod =
-		mac->roam.configParam.neighborRoamConfig.
-		nNeighborResultsRefreshPeriod;
+		mac->mlme_cfg->lfr.neighbor_scan_results_refresh_period;
 	pNeighborRoamInfo->cfgParams.emptyScanRefreshPeriod =
-		mac->roam.configParam.neighborRoamConfig.
-		nEmptyScanRefreshPeriod;
+		mac->mlme_cfg->lfr.empty_scan_refresh_period;
 
 	pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels =
-		mac->roam.configParam.neighborRoamConfig.neighborScanChanList.
-		numChannels;
+		mac->mlme_cfg->lfr.neighbor_scan_channel_list_num;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("number of channels: %u"),
 			pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels);
 	if (pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels != 0) {
 		pNeighborRoamInfo->cfgParams.channelInfo.ChannelList =
-		qdf_mem_malloc(mac->roam.configParam.neighborRoamConfig.
-				neighborScanChanList.numChannels);
+		qdf_mem_malloc(mac->mlme_cfg->lfr.
+			       neighbor_scan_channel_list_num);
+
 		if (!pNeighborRoamInfo->cfgParams.channelInfo.ChannelList)
 			return QDF_STATUS_E_NOMEM;
 
@@ -1282,22 +1273,16 @@ QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal mac, uint8_t sessionId)
 
 	/* Update the roam global structure from CFG */
 	qdf_mem_copy(pNeighborRoamInfo->cfgParams.channelInfo.ChannelList,
-		     mac->roam.configParam.neighborRoamConfig.
-		     neighborScanChanList.channelList,
-		     mac->roam.configParam.neighborRoamConfig.
-		     neighborScanChanList.numChannels);
+		     mac->mlme_cfg->lfr.neighbor_scan_channel_list,
+		     mac->mlme_cfg->lfr.neighbor_scan_channel_list_num);
 	pNeighborRoamInfo->cfgParams.hi_rssi_scan_max_count =
-		mac->roam.configParam.neighborRoamConfig.
-			nhi_rssi_scan_max_count;
+		mac->mlme_cfg->lfr.roam_scan_hi_rssi_maxcount;
 	pNeighborRoamInfo->cfgParams.hi_rssi_scan_rssi_delta =
-		mac->roam.configParam.neighborRoamConfig.
-			nhi_rssi_scan_rssi_delta;
+		mac->mlme_cfg->lfr.roam_scan_hi_rssi_delta;
 	pNeighborRoamInfo->cfgParams.hi_rssi_scan_delay =
-		mac->roam.configParam.neighborRoamConfig.
-			nhi_rssi_scan_delay;
+		mac->mlme_cfg->lfr.roam_scan_hi_rssi_delay;
 	pNeighborRoamInfo->cfgParams.hi_rssi_scan_rssi_ub =
-		mac->roam.configParam.neighborRoamConfig.
-			nhi_rssi_scan_rssi_ub;
+		mac->mlme_cfg->lfr.roam_scan_hi_rssi_ub;
 
 	qdf_zero_macaddr(&pNeighborRoamInfo->currAPbssid);
 	pNeighborRoamInfo->currentNeighborLookupThreshold =

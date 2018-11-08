@@ -1476,28 +1476,28 @@ QDF_STATUS sme_update_is_ese_feature_enabled(mac_handle_t mac_handle,
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 	QDF_STATUS status;
 
-	if (mac->roam.configParam.isEseIniFeatureEnabled ==
+	if (mac->mlme_cfg->lfr.ese_enabled ==
 	    isEseIniFeatureEnabled) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: ESE Mode is already enabled or disabled, nothing to do (returning) old(%d) new(%d)",
 			  __func__,
-			  mac->roam.configParam.isEseIniFeatureEnabled,
+			  mac->mlme_cfg->lfr.ese_enabled,
 			  isEseIniFeatureEnabled);
 		return QDF_STATUS_SUCCESS;
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: EseEnabled is changed from %d to %d", __func__,
-		  mac->roam.configParam.isEseIniFeatureEnabled,
+		  mac->mlme_cfg->lfr.ese_enabled,
 		  isEseIniFeatureEnabled);
-	mac->roam.configParam.isEseIniFeatureEnabled = isEseIniFeatureEnabled;
+	mac->mlme_cfg->lfr.ese_enabled = isEseIniFeatureEnabled;
 	csr_neighbor_roam_update_fast_roaming_enabled(
 			mac, sessionId, isEseIniFeatureEnabled);
 
 	if (true == isEseIniFeatureEnabled)
-		sme_update_fast_transition_enabled(mac_handle, true);
+		mac->mlme_cfg->lfr.fast_transition_enabled = true;
 
-	if (mac->roam.configParam.isRoamOffloadScanEnabled) {
+	if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
 		status = sme_acquire_global_lock(&mac->sme);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			csr_roam_offload_scan(mac, sessionId,
@@ -1824,7 +1824,7 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 			pNeighborRoamInfo->neighborRoamState);
 	}
 
-	if (mac->roam.configParam.isRoamOffloadScanEnabled)
+	if (mac->mlme_cfg->lfr.roam_scan_offload_enabled)
 		csr_roam_offload_scan(mac, sessionId,
 				ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				REASON_CHANNEL_LIST_CHANGED);
@@ -6531,68 +6531,6 @@ void sme_reset_power_values_for5_g(mac_handle_t mac_handle)
 }
 
 /*
- * sme_update_roam_prefer5_g_hz() -
- *  Enable/disable Roam prefer 5G runtime option
- *	    This function is called through dynamic setConfig callback function
- *	    to configure the Roam prefer 5G runtime option
- *
- * mac_handle: Opaque handle to the global MAC context
- * nRoamPrefer5GHz Enable/Disable Roam prefer 5G runtime option
- * Return Success or failure
- */
-
-QDF_STATUS sme_update_roam_prefer5_g_hz(mac_handle_t mac_handle,
-					bool nRoamPrefer5GHz)
-{
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_UPDATE_RP5G, NO_SESSION, 0));
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: gRoamPrefer5GHz is changed from %d to %d",
-			  __func__, mac->roam.configParam.nRoamPrefer5GHz,
-			  nRoamPrefer5GHz);
-		mac->roam.configParam.nRoamPrefer5GHz = nRoamPrefer5GHz;
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-
-/*
- * sme_set_roam_intra_band() -
- * enable/disable Intra band roaming
- *	    This function is called through dynamic setConfig callback function
- *	    to configure the intra band roaming
- * mac_handle: Opaque handle to the global MAC context
- * nRoamIntraBand Enable/Disable Intra band roaming
- * Return Success or failure
- */
-QDF_STATUS sme_set_roam_intra_band(mac_handle_t mac_handle,
-				   const bool nRoamIntraBand)
-{
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_SET_ROAMIBAND, NO_SESSION, 0));
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: gRoamIntraBand is changed from %d to %d",
-			  __func__, mac->roam.configParam.nRoamIntraBand,
-			  nRoamIntraBand);
-		mac->roam.configParam.nRoamIntraBand = nRoamIntraBand;
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-
-/*
  * sme_update_roam_scan_n_probes() -
  * Function to update roam scan N probes
  *	    This function is called through dynamic setConfig callback function
@@ -6616,10 +6554,11 @@ QDF_STATUS sme_update_roam_scan_n_probes(mac_handle_t mac_handle,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: gRoamScanNProbes is changed from %d to %d",
-			  __func__, mac->roam.configParam.nProbes, nProbes);
-		mac->roam.configParam.nProbes = nProbes;
+			  __func__, mac->mlme_cfg->lfr.roam_scan_n_probes,
+			  nProbes);
+		mac->mlme_cfg->lfr.roam_scan_n_probes = nProbes;
 
-		if (mac->roam.configParam.isRoamOffloadScanEnabled) {
+		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
 			csr_roam_offload_scan(mac, sessionId,
 					      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 					      REASON_NPROBES_CHANGED);
@@ -6659,13 +6598,13 @@ QDF_STATUS sme_update_roam_scan_home_away_time(
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: gRoamScanHomeAwayTime is changed from %d to %d",
 			  __func__,
-			  mac->roam.configParam.nRoamScanHomeAwayTime,
+			  mac->mlme_cfg->lfr.roam_scan_home_away_time,
 			  nRoamScanHomeAwayTime);
-		mac->roam.configParam.nRoamScanHomeAwayTime =
+		mac->mlme_cfg->lfr.roam_scan_home_away_time =
 			nRoamScanHomeAwayTime;
 
-		if (mac->roam.configParam.isRoamOffloadScanEnabled &&
-						bSendOffloadCmd) {
+		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled &&
+		    bSendOffloadCmd) {
 			csr_roam_offload_scan(mac, sessionId,
 					      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 					      REASON_HOME_AWAY_TIME_CHANGED);
@@ -6727,7 +6666,8 @@ bool sme_get_roam_intra_band(mac_handle_t mac_handle)
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_GET_ROAMIBAND, NO_SESSION, 0));
-	return mac->roam.configParam.nRoamIntraBand;
+
+	return mac->mlme_cfg->lfr.roam_intra_band;
 }
 
 /*
@@ -6741,7 +6681,7 @@ uint8_t sme_get_roam_scan_n_probes(mac_handle_t mac_handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	return mac->roam.configParam.nProbes;
+	return mac->mlme_cfg->lfr.roam_scan_n_probes;
 }
 
 /*
@@ -6755,7 +6695,7 @@ uint16_t sme_get_roam_scan_home_away_time(mac_handle_t mac_handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	return mac->roam.configParam.nRoamScanHomeAwayTime;
+	return mac->mlme_cfg->lfr.roam_scan_home_away_time;
 }
 
 /*
@@ -6789,14 +6729,14 @@ QDF_STATUS sme_update_roam_rssi_diff(mac_handle_t mac_handle, uint8_t sessionId,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "LFR runtime successfully set roam rssi diff to %d - old value is %d - roam state is %s",
 			  RoamRssiDiff,
-			  mac->roam.configParam.RoamRssiDiff,
+			  mac->mlme_cfg->lfr.roam_rssi_diff,
 			  mac_trace_get_neighbour_roam_state(mac->roam.
 							     neighborRoamInfo
 							     [sessionId].
 							    neighborRoamState));
-		mac->roam.configParam.RoamRssiDiff = RoamRssiDiff;
+		mac->mlme_cfg->lfr.roam_rssi_diff = RoamRssiDiff;
 
-		if (mac->roam.configParam.isRoamOffloadScanEnabled)
+		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled)
 			csr_roam_offload_scan(mac, sessionId,
 					      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 					      REASON_RSSI_DIFF_CHANGED);
@@ -6825,7 +6765,7 @@ QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t session_id,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (!mac->roam.configParam.isFastRoamIniFeatureEnabled ||
+	if (!mac->mlme_cfg->lfr.lfr_enabled ||
 	    (neighbor_roam_info->neighborRoamState !=
 	     eCSR_NEIGHBOR_ROAM_STATE_CONNECTED)) {
 		sme_info("Fast roam is disabled or not connected(%d)",
@@ -6870,7 +6810,7 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t session_id,
 		return;
 	}
 
-	if (!mac->roam.configParam.isFastRoamIniFeatureEnabled ||
+	if (!mac->mlme_cfg->lfr.lfr_enabled ||
 	    (neighbor_roam_info->neighborRoamState !=
 	     eCSR_NEIGHBOR_ROAM_STATE_CONNECTED)) {
 		sme_debug("Fast roam is disabled or not connected(%d)",
@@ -6952,42 +6892,6 @@ inline void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t session_id,
 #endif
 
 /*
- * sme_update_fast_transition_enabled() - enable/disable Fast Transition
- *	support at runtime
- *  It is used at in the REG_DYNAMIC_VARIABLE macro definition of
- *  isFastTransitionEnabled.
- *  This is a synchronous call
- *
- * mac_handle - The handle returned by mac_open.
- * Return QDF_STATUS_SUCCESS - SME update isFastTransitionEnabled config
- *	successfully.
- *	Other status means SME is failed to update isFastTransitionEnabled.
- */
-QDF_STATUS sme_update_fast_transition_enabled(mac_handle_t mac_handle,
-					      bool isFastTransitionEnabled)
-{
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_UPDATE_FTENABLED, NO_SESSION,
-			 0));
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: FastTransitionEnabled is changed from %d to %d",
-			  __func__,
-			  mac->roam.configParam.isFastTransitionEnabled,
-			  isFastTransitionEnabled);
-		mac->roam.configParam.isFastTransitionEnabled =
-			isFastTransitionEnabled;
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-
-/*
  * sme_update_wes_mode() -
  * Update WES Mode
  *	    This function is called through dynamic setConfig callback function
@@ -7017,12 +6921,12 @@ QDF_STATUS sme_update_wes_mode(mac_handle_t mac_handle, bool isWESModeEnabled,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "LFR runtime successfully set WES Mode to %d - old value is %d - roam state is %s",
 			  isWESModeEnabled,
-			  mac->roam.configParam.isWESModeEnabled,
+			  mac->mlme_cfg->lfr.wes_mode_enabled,
 			  mac_trace_get_neighbour_roam_state(mac->roam.
 							     neighborRoamInfo
 							     [sessionId].
 							    neighborRoamState));
-		mac->roam.configParam.isWESModeEnabled = isWESModeEnabled;
+		mac->mlme_cfg->lfr.wes_mode_enabled = isWESModeEnabled;
 		sme_release_global_lock(&mac->sme);
 	}
 
@@ -7071,7 +6975,7 @@ QDF_STATUS sme_set_roam_scan_control(mac_handle_t mac_handle, uint8_t sessionId,
 				  "LFR runtime successfully cleared roam scan cache");
 			csr_flush_cfg_bg_scan_roam_channel_list(mac,
 								sessionId);
-			if (mac->roam.configParam.isRoamOffloadScanEnabled) {
+			if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
 				csr_roam_offload_scan(mac, sessionId,
 						   ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 						     REASON_FLUSH_CHANNEL_LIST);
@@ -7100,22 +7004,21 @@ QDF_STATUS sme_update_is_fast_roam_ini_feature_enabled(mac_handle_t mac_handle,
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	if (mac->roam.configParam.isFastRoamIniFeatureEnabled ==
+	if (mac->mlme_cfg->lfr.lfr_enabled ==
 	    isFastRoamIniFeatureEnabled) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: FastRoam is already enabled or disabled, nothing to do (returning) old(%d) new(%d)",
 			  __func__,
-			  mac->roam.configParam.isFastRoamIniFeatureEnabled,
+			  mac->mlme_cfg->lfr.lfr_enabled,
 			  isFastRoamIniFeatureEnabled);
 		return QDF_STATUS_SUCCESS;
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: FastRoamEnabled is changed from %d to %d", __func__,
-		  mac->roam.configParam.isFastRoamIniFeatureEnabled,
+		  mac->mlme_cfg->lfr.lfr_enabled,
 		  isFastRoamIniFeatureEnabled);
-	mac->roam.configParam.isFastRoamIniFeatureEnabled =
-		isFastRoamIniFeatureEnabled;
+	mac->mlme_cfg->lfr.lfr_enabled = isFastRoamIniFeatureEnabled;
 	csr_neighbor_roam_update_fast_roaming_enabled(mac, sessionId,
 						   isFastRoamIniFeatureEnabled);
 
@@ -7157,7 +7060,7 @@ QDF_STATUS sme_config_fast_roaming(mac_handle_t mac_handle, uint8_t session_id,
 		session->pCurRoamProfile->supplicant_disabled_roaming =
 			!is_fast_roam_enabled;
 
-	if (!mac_ctx->roam.configParam.isFastRoamIniFeatureEnabled) {
+	if (!mac_ctx->mlme_cfg->lfr.lfr_enabled) {
 		sme_debug("Fast roam is disabled through ini");
 		if (!is_fast_roam_enabled)
 			return QDF_STATUS_SUCCESS;
@@ -7172,38 +7075,6 @@ QDF_STATUS sme_config_fast_roaming(mac_handle_t mac_handle, uint8_t session_id,
 	}
 
 	return QDF_STATUS_SUCCESS;
-}
-
-/*
- * sme_update_is_mawc_ini_feature_enabled() -
- *  Enable/disable LFR MAWC support at runtime
- *  It is used at in the REG_DYNAMIC_VARIABLE macro definition of
- *  isMAWCIniFeatureEnabled.
- *  This is a synchronous call
- *
- * mac_handle - The handle returned by mac_open.
- * Return QDF_STATUS_SUCCESS - SME update MAWCEnabled config successfully.
- *	Other status means SME is failed to update MAWCEnabled.
- */
-QDF_STATUS sme_update_is_mawc_ini_feature_enabled(mac_handle_t mac_handle,
-						  const bool MAWCEnabled)
-{
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: MAWCEnabled is changed from %d to %d", __func__,
-			  mac->roam.configParam.csr_mawc_config.mawc_enabled,
-			  MAWCEnabled);
-		mac->roam.configParam.csr_mawc_config.mawc_enabled =
-			MAWCEnabled;
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-
 }
 
 /**
@@ -7307,37 +7178,6 @@ QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t sessionId,
 }
 
 /*
- * sme_update_enable_fast_roam_in_concurrency() - enable/disable LFR if
- *	Concurrent session exists
- *  This is a synchronuous call
- *
- * mac_handle - The handle returned by mac_open.
- * Return QDF_STATUS_SUCCESS
- *	Other status means SME is failed
- */
-QDF_STATUS sme_update_enable_fast_roam_in_concurrency(mac_handle_t mac_handle,
-						      bool
-						bFastRoamInConIniFeatureEnabled)
-{
-
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		mac->roam.configParam.bFastRoamInConIniFeatureEnabled =
-			bFastRoamInConIniFeatureEnabled;
-		if (0 == mac->roam.configParam.isRoamOffloadScanEnabled) {
-			mac->roam.configParam.bFastRoamInConIniFeatureEnabled =
-				0;
-		}
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-
-/*
  * sme_set_roam_opportunistic_scan_threshold_diff() -
  * Update Opportunistic Scan threshold diff
  *	This function is called through dynamic setConfig callback function
@@ -7364,8 +7204,7 @@ QDF_STATUS sme_set_roam_opportunistic_scan_threshold_diff(
 				nOpportunisticThresholdDiff,
 				REASON_OPPORTUNISTIC_THRESH_DIFF_CHANGED);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			mac->roam.configParam.neighborRoamConfig.
-			nOpportunisticThresholdDiff =
+			mac->mlme_cfg->lfr.opportunistic_scan_threshold_diff =
 				nOpportunisticThresholdDiff;
 		}
 		sme_release_global_lock(&mac->sme);
@@ -7385,8 +7224,7 @@ uint8_t sme_get_roam_opportunistic_scan_threshold_diff(mac_handle_t mac_handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	return mac->roam.configParam.neighborRoamConfig.
-	       nOpportunisticThresholdDiff;
+	return mac->mlme_cfg->lfr.opportunistic_scan_threshold_diff;
 }
 
 /*
@@ -7413,10 +7251,10 @@ QDF_STATUS sme_set_roam_rescan_rssi_diff(mac_handle_t mac_handle,
 		status = csr_neighbor_roam_update_config(mac, sessionId,
 				nRoamRescanRssiDiff,
 				REASON_ROAM_RESCAN_RSSI_DIFF_CHANGED);
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			mac->roam.configParam.neighborRoamConfig.
-			nRoamRescanRssiDiff = nRoamRescanRssiDiff;
-		}
+		if (QDF_IS_STATUS_SUCCESS(status))
+			mac->mlme_cfg->lfr.roam_rescan_rssi_diff =
+				nRoamRescanRssiDiff;
+
 		sme_release_global_lock(&mac->sme);
 	}
 	return status;
@@ -7434,7 +7272,7 @@ uint8_t sme_get_roam_rescan_rssi_diff(mac_handle_t mac_handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	return mac->roam.configParam.neighborRoamConfig.nRoamRescanRssiDiff;
+	return mac->mlme_cfg->lfr.roam_rescan_rssi_diff;
 }
 
 /*
@@ -7462,26 +7300,12 @@ QDF_STATUS sme_set_roam_bmiss_first_bcnt(mac_handle_t mac_handle,
 				nRoamBmissFirstBcnt,
 				REASON_ROAM_BMISS_FIRST_BCNT_CHANGED);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			mac->roam.configParam.neighborRoamConfig.
-			nRoamBmissFirstBcnt = nRoamBmissFirstBcnt;
+			mac->mlme_cfg->lfr.roam_bmiss_first_bcnt =
+							nRoamBmissFirstBcnt;
 		}
 		sme_release_global_lock(&mac->sme);
 	}
 	return status;
-}
-
-/*
- * sme_get_roam_bmiss_first_bcnt() -
- * get neighbor roam beacon miss first count
- *
- * mac_handle - The handle returned by mac_open.
- * Return uint8_t - neighbor roam beacon miss first count
- */
-uint8_t sme_get_roam_bmiss_first_bcnt(mac_handle_t mac_handle)
-{
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
-
-	return mac->roam.configParam.neighborRoamConfig.nRoamBmissFirstBcnt;
 }
 
 /*
@@ -7509,57 +7333,8 @@ QDF_STATUS sme_set_roam_bmiss_final_bcnt(mac_handle_t mac_handle,
 				nRoamBmissFinalBcnt,
 				REASON_ROAM_BMISS_FINAL_BCNT_CHANGED);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			mac->roam.configParam.neighborRoamConfig.
-			nRoamBmissFinalBcnt = nRoamBmissFinalBcnt;
-		}
-		sme_release_global_lock(&mac->sme);
-	}
-	return status;
-}
-
-/*
- * sme_get_roam_bmiss_final_bcnt() -
- * gets Roam count for final beacon miss
- *	  This is a synchronous call
- *
- * mac_handle - The handle returned by mac_open
- * Return uint8_t - nRoamBmissFinalBcnt
- */
-uint8_t sme_get_roam_bmiss_final_bcnt(mac_handle_t mac_handle)
-{
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
-
-	return mac->roam.configParam.neighborRoamConfig.nRoamBmissFinalBcnt;
-}
-
-/*
- * sme_set_roam_beacon_rssi_weight() -
- * Update Roam beacon rssi weight
- *	    This function is called through dynamic setConfig callback function
- *	    to configure nRoamBeaconRssiWeight
- *
- * mac_handle: Opaque handle to the global MAC context
- * sessionId - Session Identifier
- * nRoamBeaconRssiWeight - Roam beacon rssi weight
- * Return QDF_STATUS_SUCCESS - SME update nRoamBeaconRssiWeight config
- *	    successfully.
- * else SME is failed to update nRoamBeaconRssiWeight
- */
-QDF_STATUS sme_set_roam_beacon_rssi_weight(mac_handle_t mac_handle,
-					   uint8_t sessionId,
-					   const uint8_t nRoamBeaconRssiWeight)
-{
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_neighbor_roam_update_config(mac, sessionId,
-				nRoamBeaconRssiWeight,
-				REASON_ROAM_BEACON_RSSI_WEIGHT_CHANGED);
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			mac->roam.configParam.neighborRoamConfig.
-			nRoamBeaconRssiWeight = nRoamBeaconRssiWeight;
+			mac->mlme_cfg->lfr.roam_bmiss_final_bcnt =
+							nRoamBmissFinalBcnt;
 		}
 		sme_release_global_lock(&mac->sme);
 	}
@@ -7578,7 +7353,7 @@ uint8_t sme_get_roam_beacon_rssi_weight(mac_handle_t mac_handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	return mac->roam.configParam.neighborRoamConfig.nRoamBeaconRssiWeight;
+	return mac->mlme_cfg->lfr.roam_beacon_rssi_weight;
 }
 
 /*
@@ -7603,49 +7378,9 @@ QDF_STATUS sme_set_neighbor_lookup_rssi_threshold(mac_handle_t mac_handle,
 				sessionId, neighborLookupRssiThreshold,
 				REASON_LOOKUP_THRESH_CHANGED);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			mac->roam.configParam.neighborRoamConfig.
-			nNeighborLookupRssiThreshold =
+			mac->mlme_cfg->lfr.neighbor_lookup_rssi_threshold =
 				neighborLookupRssiThreshold;
 		}
-		sme_release_global_lock(&mac->sme);
-	}
-	return status;
-}
-
-/*
- * sme_set_delay_before_vdev_stop() - update delay before VDEV_STOP
- *  This is a synchronous call
- *
- * mac_handle - The handle returned by macOpen.
- * session_id - Session Identifier
- * delay_before_vdev_stop - value to be set
- * Return QDF_STATUS_SUCCESS - SME update config successful.
- *	  Other status means SME is failed to update
- */
-QDF_STATUS sme_set_delay_before_vdev_stop(mac_handle_t mac_handle,
-					  uint8_t session_id,
-					  uint8_t delay_before_vdev_stop)
-{
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	if (session_id >= CSR_ROAM_SESSION_MAX) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("Invalid sme session id: %d"), session_id);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"LFR param delay_before_vdev_stop changed from %d to %d",
-			mac->roam.configParam.neighborRoamConfig.
-			delay_before_vdev_stop,
-			delay_before_vdev_stop);
-		mac->roam.neighborRoamInfo[session_id].cfgParams.
-			delay_before_vdev_stop = delay_before_vdev_stop;
-		mac->roam.configParam.neighborRoamConfig.
-			delay_before_vdev_stop = delay_before_vdev_stop;
 		sme_release_global_lock(&mac->sme);
 	}
 	return status;
@@ -7664,8 +7399,7 @@ uint8_t sme_get_neighbor_lookup_rssi_threshold(mac_handle_t mac_handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	return mac->roam.configParam.neighborRoamConfig.
-	       nNeighborLookupRssiThreshold;
+	return mac->mlme_cfg->lfr.neighbor_lookup_rssi_threshold;
 }
 
 /*
@@ -7683,7 +7417,6 @@ QDF_STATUS sme_set_neighbor_scan_refresh_period(mac_handle_t mac_handle,
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct csr_neighbor_roamconfig *pNeighborRoamConfig = NULL;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 
 	if (sessionId >= CSR_ROAM_SESSION_MAX) {
@@ -7694,59 +7427,26 @@ QDF_STATUS sme_set_neighbor_scan_refresh_period(mac_handle_t mac_handle,
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		pNeighborRoamConfig =
-			&mac->roam.configParam.neighborRoamConfig;
 		pNeighborRoamInfo = &mac->roam.neighborRoamInfo[sessionId];
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "LFR runtime successfully set roam scan refresh period to %d- old value is %d - roam state is %s",
 			  neighborScanResultsRefreshPeriod,
-			  mac->roam.configParam.neighborRoamConfig.
-			  nNeighborResultsRefreshPeriod,
+			  mac->mlme_cfg->lfr.
+			  neighbor_scan_results_refresh_period,
 			  mac_trace_get_neighbour_roam_state(mac->roam.
 							     neighborRoamInfo
 							     [sessionId].
 							    neighborRoamState));
-		pNeighborRoamConfig->nNeighborResultsRefreshPeriod =
+		mac->mlme_cfg->lfr.neighbor_scan_results_refresh_period =
 			neighborScanResultsRefreshPeriod;
 		pNeighborRoamInfo->cfgParams.neighborResultsRefreshPeriod =
 			neighborScanResultsRefreshPeriod;
 
-		if (mac->roam.configParam.isRoamOffloadScanEnabled) {
+		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
 			csr_roam_offload_scan(mac, sessionId,
 				ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				REASON_NEIGHBOR_SCAN_REFRESH_PERIOD_CHANGED);
 		}
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-
-/*
- * sme_update_roam_scan_offload_enabled() - enable/disable roam scan
- *	offload feaure
- *  It is used at in the REG_DYNAMIC_VARIABLE macro definition of
- *  gRoamScanOffloadEnabled.
- *  This is a synchronous call
- *
- * mac_handle - The handle returned by mac_open.
- * Return QDF_STATUS_SUCCESS - SME update config successfully.
- *	   Other status means SME is failed to update.
- */
-QDF_STATUS sme_update_roam_scan_offload_enabled(mac_handle_t mac_handle,
-						bool nRoamScanOffloadEnabled)
-{
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  "gRoamScanOffloadEnabled is changed from %d to %d",
-			  mac->roam.configParam.isRoamOffloadScanEnabled,
-			  nRoamScanOffloadEnabled);
-		mac->roam.configParam.isRoamOffloadScanEnabled =
-			nRoamScanOffloadEnabled;
 		sme_release_global_lock(&mac->sme);
 	}
 
@@ -7765,8 +7465,7 @@ uint16_t sme_get_neighbor_scan_refresh_period(mac_handle_t mac_handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	return mac->roam.configParam.neighborRoamConfig.
-	       nNeighborResultsRefreshPeriod;
+	return mac->mlme_cfg->lfr.neighbor_scan_results_refresh_period;
 }
 
 /*
@@ -7781,8 +7480,7 @@ uint16_t sme_get_empty_scan_refresh_period(mac_handle_t mac_handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	return mac->roam.configParam.neighborRoamConfig.
-	       nEmptyScanRefreshPeriod;
+	return mac->mlme_cfg->lfr.empty_scan_refresh_period;
 }
 
 /*
@@ -7805,7 +7503,6 @@ QDF_STATUS sme_update_empty_scan_refresh_period(mac_handle_t mac_handle,
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct csr_neighbor_roamconfig *pNeighborRoamConfig = NULL;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 
 	if (sessionId >= CSR_ROAM_SESSION_MAX) {
@@ -7816,24 +7513,21 @@ QDF_STATUS sme_update_empty_scan_refresh_period(mac_handle_t mac_handle,
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		pNeighborRoamConfig =
-			&mac->roam.configParam.neighborRoamConfig;
 		pNeighborRoamInfo = &mac->roam.neighborRoamInfo[sessionId];
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "LFR runtime successfully set roam scan period to %d -old value is %d - roam state is %s",
 			  nEmptyScanRefreshPeriod,
-			  mac->roam.configParam.neighborRoamConfig.
-			  nEmptyScanRefreshPeriod,
+			  mac->mlme_cfg->lfr.empty_scan_refresh_period,
 			  mac_trace_get_neighbour_roam_state(mac->roam.
 							     neighborRoamInfo
 							     [sessionId].
 							    neighborRoamState));
-		pNeighborRoamConfig->nEmptyScanRefreshPeriod =
+		mac->mlme_cfg->lfr.empty_scan_refresh_period =
 			nEmptyScanRefreshPeriod;
 		pNeighborRoamInfo->cfgParams.emptyScanRefreshPeriod =
 			nEmptyScanRefreshPeriod;
 
-		if (mac->roam.configParam.isRoamOffloadScanEnabled) {
+		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
 			csr_roam_offload_scan(mac, sessionId,
 				ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				REASON_EMPTY_SCAN_REF_PERIOD_CHANGED);
@@ -7876,15 +7570,14 @@ QDF_STATUS sme_set_neighbor_scan_min_chan_time(mac_handle_t mac_handle,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "LFR runtime successfully set channel min dwell time to %d - old value is %d - roam state is %s",
 			  nNeighborScanMinChanTime,
-			  mac->roam.configParam.neighborRoamConfig.
-			  nNeighborScanMinChanTime,
+			  mac->mlme_cfg->lfr.neighbor_scan_min_chan_time,
 			  mac_trace_get_neighbour_roam_state(mac->roam.
 							     neighborRoamInfo
 							     [sessionId].
 							    neighborRoamState));
 
-		mac->roam.configParam.neighborRoamConfig.
-		nNeighborScanMinChanTime = nNeighborScanMinChanTime;
+		mac->mlme_cfg->lfr.neighbor_scan_min_chan_time =
+						nNeighborScanMinChanTime;
 		mac->roam.neighborRoamInfo[sessionId].cfgParams.
 		minChannelScanTime = nNeighborScanMinChanTime;
 		sme_release_global_lock(&mac->sme);
@@ -7913,7 +7606,6 @@ QDF_STATUS sme_set_neighbor_scan_max_chan_time(mac_handle_t mac_handle,
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct csr_neighbor_roamconfig *pNeighborRoamConfig = NULL;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 
 	if (sessionId >= CSR_ROAM_SESSION_MAX) {
@@ -7924,30 +7616,26 @@ QDF_STATUS sme_set_neighbor_scan_max_chan_time(mac_handle_t mac_handle,
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		pNeighborRoamConfig =
-			&mac->roam.configParam.neighborRoamConfig;
 		pNeighborRoamInfo = &mac->roam.neighborRoamInfo[sessionId];
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "LFR runtime successfully set channel max dwell time to %d - old value is %d - roam state is %s",
 			  nNeighborScanMaxChanTime,
-			  mac->roam.configParam.neighborRoamConfig.
-			  nNeighborScanMaxChanTime,
+			  mac->mlme_cfg->lfr.neighbor_scan_max_chan_time,
 			  mac_trace_get_neighbour_roam_state(mac->roam.
 							     neighborRoamInfo
 							     [sessionId].
 							    neighborRoamState));
-		pNeighborRoamConfig->nNeighborScanMaxChanTime =
+		mac->mlme_cfg->lfr.neighbor_scan_max_chan_time =
 			nNeighborScanMaxChanTime;
 		pNeighborRoamInfo->cfgParams.maxChannelScanTime =
 			nNeighborScanMaxChanTime;
-		if (mac->roam.configParam.isRoamOffloadScanEnabled) {
+		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
 			csr_roam_offload_scan(mac, sessionId,
 					      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 					      REASON_SCAN_CH_TIME_CHANGED);
 		}
 		sme_release_global_lock(&mac->sme);
 	}
-
 
 	return status;
 }
@@ -8147,7 +7835,6 @@ QDF_STATUS sme_set_neighbor_scan_period(mac_handle_t mac_handle,
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct csr_neighbor_roamconfig *pNeighborRoamConfig = NULL;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 
 	if (sessionId >= CSR_ROAM_SESSION_MAX) {
@@ -8158,24 +7845,21 @@ QDF_STATUS sme_set_neighbor_scan_period(mac_handle_t mac_handle,
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		pNeighborRoamConfig =
-			&mac->roam.configParam.neighborRoamConfig;
 		pNeighborRoamInfo = &mac->roam.neighborRoamInfo[sessionId];
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "LFR runtime successfully set neighbor scan period to %d - old value is %d - roam state is %s",
 			  nNeighborScanPeriod,
-			  mac->roam.configParam.neighborRoamConfig.
-			  nNeighborScanTimerPeriod,
+			  mac->mlme_cfg->lfr.neighbor_scan_timer_period,
 			  mac_trace_get_neighbour_roam_state(mac->roam.
 							     neighborRoamInfo
 							     [sessionId].
 							    neighborRoamState));
-		pNeighborRoamConfig->nNeighborScanTimerPeriod =
+		mac->mlme_cfg->lfr.neighbor_scan_timer_period =
 			nNeighborScanPeriod;
 		pNeighborRoamInfo->cfgParams.neighborScanPeriod =
 			nNeighborScanPeriod;
 
-		if (mac->roam.configParam.isRoamOffloadScanEnabled) {
+		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
 			csr_roam_offload_scan(mac, sessionId,
 					      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 					      REASON_SCAN_HOME_TIME_CHANGED);
@@ -8227,7 +7911,6 @@ QDF_STATUS sme_set_neighbor_scan_min_period(mac_handle_t mac_handle,
 {
 	tpAniSirGlobal pmac = PMAC_STRUCT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct csr_neighbor_roamconfig *p_neighbor_roam_config = NULL;
 	tpCsrNeighborRoamControlInfo p_neighbor_roam_info = NULL;
 
 	if (session_id >= CSR_ROAM_SESSION_MAX) {
@@ -8237,19 +7920,17 @@ QDF_STATUS sme_set_neighbor_scan_min_period(mac_handle_t mac_handle,
 
 	status = sme_acquire_global_lock(&pmac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		p_neighbor_roam_config =
-				&pmac->roam.configParam.neighborRoamConfig;
 		p_neighbor_roam_info = &pmac->
 				roam.neighborRoamInfo[session_id];
 		sme_debug("LFR:set neighbor scan min period, old:%d, "
 				"new: %d, state: %s",
-				pmac->roam.configParam.neighborRoamConfig.
+				pmac->mlme_cfg->lfr.
 				neighbor_scan_min_timer_period,
 				neighbor_scan_min_period,
 				mac_trace_get_neighbour_roam_state(pmac->roam.
 				neighborRoamInfo[session_id].
 				neighborRoamState));
-		p_neighbor_roam_config->neighbor_scan_min_timer_period =
+		pmac->mlme_cfg->lfr.neighbor_scan_min_timer_period =
 				neighbor_scan_min_period;
 		p_neighbor_roam_info->cfgParams.neighbor_scan_min_period =
 				neighbor_scan_min_period;
@@ -8270,7 +7951,7 @@ uint8_t sme_get_roam_rssi_diff(mac_handle_t mac_handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	return mac->roam.configParam.RoamRssiDiff;
+	return mac->mlme_cfg->lfr.roam_rssi_diff;
 }
 
 /**
@@ -8344,7 +8025,7 @@ QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
 			newChannelList, oldChannelList,
 		mac->roam.neighborRoamInfo[sessionId].neighborRoamState);
 
-	if (mac->roam.configParam.isRoamOffloadScanEnabled)
+	if (mac->mlme_cfg->lfr.roam_scan_offload_enabled)
 		csr_roam_offload_scan(mac, sessionId,
 				ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				REASON_CHANNEL_LIST_CHANGED);
@@ -8432,7 +8113,7 @@ bool sme_get_wes_mode(mac_handle_t mac_handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	return mac->roam.configParam.isWESModeEnabled;
+	return mac->mlme_cfg->lfr.wes_mode_enabled;
 }
 
 /*
@@ -8460,7 +8141,7 @@ bool sme_get_is_lfr_feature_enabled(mac_handle_t mac_handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	return mac->roam.configParam.isFastRoamIniFeatureEnabled;
+	return mac->mlme_cfg->lfr.lfr_enabled;
 }
 
 /*
@@ -8475,7 +8156,7 @@ bool sme_get_is_ft_feature_enabled(mac_handle_t mac_handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	return mac->roam.configParam.isFastTransitionEnabled;
+	return mac->mlme_cfg->lfr.fast_transition_enabled;
 }
 
 /**
@@ -11143,14 +10824,14 @@ QDF_STATUS sme_update_dfs_scan_mode(mac_handle_t mac_handle, uint8_t sessionId,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "LFR runtime successfully set AllowDFSChannelRoam Mode to %d - old value is %d - roam state is %s",
 			  allowDFSChannelRoam,
-			  mac->roam.configParam.allowDFSChannelRoam,
+			  mac->mlme_cfg->lfr.roaming_dfs_channel,
 			  mac_trace_get_neighbour_roam_state(mac->roam.
 							     neighborRoamInfo
 							     [sessionId].
 							    neighborRoamState));
-		mac->roam.configParam.allowDFSChannelRoam =
+		mac->mlme_cfg->lfr.roaming_dfs_channel =
 			allowDFSChannelRoam;
-		if (mac->roam.configParam.isRoamOffloadScanEnabled) {
+		if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
 			csr_roam_offload_scan(mac, sessionId,
 					ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 					REASON_ROAM_DFS_SCAN_MODE_CHANGED);
@@ -11173,7 +10854,7 @@ uint8_t sme_get_dfs_scan_mode(mac_handle_t mac_handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	return mac->roam.configParam.allowDFSChannelRoam;
+	return mac->mlme_cfg->lfr.roaming_dfs_channel;
 }
 
 /*
@@ -11316,7 +10997,7 @@ QDF_STATUS sme_abort_roam_scan(mac_handle_t mac_handle, uint8_t sessionId)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
-	if (mac->roam.configParam.isRoamOffloadScanEnabled) {
+	if (mac->mlme_cfg->lfr.roam_scan_offload_enabled) {
 		/* acquire the lock for the sme object */
 		status = sme_acquire_global_lock(&mac->sme);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
@@ -14110,99 +13791,6 @@ void sme_setdef_dot11mode(mac_handle_t mac_handle)
 }
 
 /**
- * sme_update_roam_scan_hi_rssi_scan_params() - update high rssi scan
- *         params
- * @mac_handle - The handle returned by macOpen.
- * @session_id - Session Identifier
- * @notify_id - Identifies 1 of the 4 parameters to be modified
- * @val New value of the parameter
- *
- * Return: QDF_STATUS - SME update config successful.
- *         Other status means SME failed to update
- */
-
-QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(mac_handle_t mac_handle,
-	uint8_t session_id,
-	uint32_t notify_id,
-	int32_t val)
-{
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
-	QDF_STATUS status  = QDF_STATUS_SUCCESS;
-	struct csr_neighbor_roamconfig *nr_config = NULL;
-	tpCsrNeighborRoamControlInfo nr_info = NULL;
-	uint32_t reason = 0;
-
-	if (session_id >= CSR_ROAM_SESSION_MAX) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("Invalid sme session id: %d"), session_id);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		nr_config = &mac_ctx->roam.configParam.neighborRoamConfig;
-		nr_info   = &mac_ctx->roam.neighborRoamInfo[session_id];
-		switch (notify_id) {
-		case eCSR_HI_RSSI_SCAN_MAXCOUNT_ID:
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				"%s: gRoamScanHirssiMaxCount %d => %d",
-				__func__, nr_config->nhi_rssi_scan_max_count,
-				val);
-			nr_config->nhi_rssi_scan_max_count = val;
-			nr_info->cfgParams.hi_rssi_scan_max_count = val;
-			reason = REASON_ROAM_SCAN_HI_RSSI_MAXCOUNT_CHANGED;
-		break;
-
-		case eCSR_HI_RSSI_SCAN_RSSI_DELTA_ID:
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				FL("gRoamScanHiRssiDelta %d => %d"),
-				nr_config->nhi_rssi_scan_rssi_delta,
-				val);
-			nr_config->nhi_rssi_scan_rssi_delta = val;
-			nr_info->cfgParams.hi_rssi_scan_rssi_delta = val;
-			reason = REASON_ROAM_SCAN_HI_RSSI_DELTA_CHANGED;
-			break;
-
-		case eCSR_HI_RSSI_SCAN_DELAY_ID:
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				FL("gRoamScanHiRssiDelay %d => %d"),
-				nr_config->nhi_rssi_scan_delay,
-				val);
-			nr_config->nhi_rssi_scan_delay = val;
-			nr_info->cfgParams.hi_rssi_scan_delay = val;
-			reason = REASON_ROAM_SCAN_HI_RSSI_DELAY_CHANGED;
-			break;
-
-		case eCSR_HI_RSSI_SCAN_RSSI_UB_ID:
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				FL("gRoamScanHiRssiUpperBound %d => %d"),
-				nr_config->nhi_rssi_scan_rssi_ub,
-				val);
-			nr_config->nhi_rssi_scan_rssi_ub = val;
-			nr_info->cfgParams.hi_rssi_scan_rssi_ub = val;
-			reason = REASON_ROAM_SCAN_HI_RSSI_UB_CHANGED;
-			break;
-
-		default:
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				FL("invalid parameter notify_id %d"),
-				notify_id);
-			status = QDF_STATUS_E_INVAL;
-			break;
-		}
-
-		if (mac_ctx->roam.configParam.isRoamOffloadScanEnabled &&
-		    status == QDF_STATUS_SUCCESS) {
-			csr_roam_offload_scan(mac_ctx, session_id,
-				ROAM_SCAN_OFFLOAD_UPDATE_CFG, reason);
-		}
-		sme_release_global_lock(&mac_ctx->sme);
-	}
-
-	return status;
-}
-
-/**
  * sme_update_tgt_services() - update the target services config.
  * @mac_handle: Opaque handle to the global MAC context.
  * @cfg: wma_tgt_services parameters.
@@ -15091,7 +14679,7 @@ QDF_STATUS sme_update_sta_roam_policy(mac_handle_t mac_handle,
 			FL("failed to update the supported channel list"));
 	}
 
-	if (mac_ctx->roam.configParam.isRoamOffloadScanEnabled) {
+	if (mac_ctx->mlme_cfg->lfr.roam_scan_offload_enabled) {
 		status = sme_acquire_global_lock(&mac_ctx->sme);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			csr_roam_offload_scan(mac_ctx, session_id,

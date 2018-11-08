@@ -81,7 +81,7 @@ static void get_ese_version_ie_probe_response(tpAniSirGlobal mac_ctx,
 					tpSirProbeRespBeacon beacon_struct,
 					struct pe_session *session)
 {
-	if (mac_ctx->roam.configParam.isEseIniFeatureEnabled)
+	if (mac_ctx->mlme_cfg->lfr.ese_enabled)
 		session->is_ese_version_ie_present =
 			beacon_struct->is_ese_ver_ie_present;
 }

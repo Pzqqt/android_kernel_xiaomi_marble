@@ -2795,8 +2795,8 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	if ((self_sta_req->type == WMI_VDEV_TYPE_STA) &&
 	    (self_sta_req->sub_type == 0))
 		wma_roam_scan_bmiss_cnt(wma_handle,
-		mac->roam.configParam.neighborRoamConfig.nRoamBmissFirstBcnt,
-		mac->roam.configParam.neighborRoamConfig.nRoamBmissFinalBcnt,
+		mac->mlme_cfg->lfr.roam_bmiss_first_bcnt,
+		mac->mlme_cfg->lfr.roam_bmiss_final_bcnt,
 		self_sta_req->session_id);
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,

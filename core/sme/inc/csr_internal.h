@@ -60,7 +60,8 @@
 #define CSR_MAX_NUM_COUNTRY_CODE  100
 #define CSR_IS_DFS_CH_ROAM_ALLOWED(mac_ctx) \
 	( \
-	  (((mac_ctx)->roam.configParam.allowDFSChannelRoam) ? true : false) \
+	  ((((mac_ctx)->mlme_cfg->lfr.roaming_dfs_channel) == \
+	    ROAMING_DFS_CHANNEL_DISABLED) ? true : false) \
 	)
 #define CSR_IS_SELECT_5GHZ_MARGIN(mac) \
 	( \
@@ -68,16 +69,15 @@
 	)
 #define CSR_IS_ROAM_PREFER_5GHZ(mac)	\
 	( \
-	  (((mac)->roam.configParam.nRoamPrefer5GHz) ? true : false) \
+	  ((mac)->mlme_cfg->lfr.roam_prefer_5ghz) \
 	)
 #define CSR_IS_ROAM_INTRA_BAND_ENABLED(mac) \
 	( \
-	  (((mac)->roam.configParam.nRoamIntraBand) ? true : false) \
+	  ((mac)->mlme_cfg->lfr.roam_intra_band) \
 	)
 #define CSR_IS_FASTROAM_IN_CONCURRENCY_INI_FEATURE_ENABLED(mac) \
 	( \
-	  (((mac)->roam.configParam.bFastRoamInConIniFeatureEnabled) ? \
-		true : false) \
+	  ((mac)->mlme_cfg->lfr.enable_fast_roam_in_concurrency) \
 	)
 #define CSR_IS_CHANNEL_24GHZ(chnNum) \
 	(((chnNum) > 0) && ((chnNum) <= 14))
@@ -365,29 +365,6 @@ struct delstafor_sessionCmd {
 	void *context;
 };
 
-struct csr_neighbor_roamconfig {
-	uint32_t nNeighborScanTimerPeriod;
-	uint32_t neighbor_scan_min_timer_period;
-	uint8_t nNeighborLookupRssiThreshold;
-	int8_t rssi_thresh_offset_5g;
-	uint16_t nNeighborScanMinChanTime;
-	uint16_t nNeighborScanMaxChanTime;
-	sCsrChannel neighborScanChanList;
-	uint8_t nMaxNeighborRetries;
-	uint16_t nNeighborResultsRefreshPeriod;
-	uint16_t nEmptyScanRefreshPeriod;
-	uint8_t nOpportunisticThresholdDiff;
-	uint8_t nRoamRescanRssiDiff;
-	uint8_t nRoamBmissFirstBcnt;
-	uint8_t nRoamBmissFinalBcnt;
-	uint8_t nRoamBeaconRssiWeight;
-	uint8_t delay_before_vdev_stop;
-	uint32_t nhi_rssi_scan_max_count;
-	uint32_t nhi_rssi_scan_rssi_delta;
-	uint32_t nhi_rssi_scan_delay;
-	int32_t nhi_rssi_scan_rssi_ub;
-};
-
 /*
  * Neighbor Report Params Bitmask
  */
@@ -452,23 +429,9 @@ struct csr_config {
 	uint32_t statsReqPeriodicityInPS;/* stats req freq while in powersave */
 	uint32_t dtimPeriod;
 	bool ssidHidden;
-	uint8_t isFastRoamIniFeatureEnabled;
 	struct mawc_params csr_mawc_config;
 	uint8_t isRoamOffloadScanEnabled;
-	bool bFastRoamInConIniFeatureEnabled;
-#ifdef FEATURE_WLAN_ESE
-	uint8_t isEseIniFeatureEnabled;
-#endif
-	uint8_t isFastTransitionEnabled;
-	uint8_t RoamRssiDiff;
-	bool nRoamPrefer5GHz;
-	bool nRoamIntraBand;
-	bool isWESModeEnabled;
 	bool nRoamScanControl;
-	uint8_t nProbes;
-	uint16_t nRoamScanHomeAwayTime;
-
-	struct csr_neighbor_roamconfig neighborRoamConfig;
 
 	/*
 	 * Remove this code once SLM_Sessionization is supported
@@ -491,7 +454,6 @@ struct csr_config {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
-	uint8_t allowDFSChannelRoam;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	bool isRoamOffloadEnabled;
 #endif

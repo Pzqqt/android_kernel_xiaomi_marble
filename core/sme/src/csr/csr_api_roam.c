@@ -1695,32 +1695,7 @@ static void init_config_param(tpAniSirGlobal mac)
 		CSR_MIN_GLOBAL_STAT_QUERY_PERIOD;
 	mac->roam.configParam.statsReqPeriodicityInPS =
 		CSR_MIN_GLOBAL_STAT_QUERY_PERIOD_IN_BMPS;
-	mac->roam.configParam.neighborRoamConfig.nMaxNeighborRetries = 3;
-	mac->roam.configParam.neighborRoamConfig.nNeighborLookupRssiThreshold =
-		120;
-	mac->roam.configParam.neighborRoamConfig.nOpportunisticThresholdDiff =
-		30;
-	mac->roam.configParam.neighborRoamConfig.nRoamRescanRssiDiff = 5;
-	mac->roam.configParam.neighborRoamConfig.nNeighborScanMinChanTime = 20;
-	mac->roam.configParam.neighborRoamConfig.nNeighborScanMaxChanTime = 40;
-	mac->roam.configParam.neighborRoamConfig.nNeighborScanTimerPeriod =
-		200;
-	mac->roam.configParam.neighborRoamConfig.
-		neighbor_scan_min_timer_period = 200;
-	mac->roam.configParam.neighborRoamConfig.neighborScanChanList.
-	numChannels = 3;
-	mac->roam.configParam.neighborRoamConfig.neighborScanChanList.
-	channelList[0] = 1;
-	mac->roam.configParam.neighborRoamConfig.neighborScanChanList.
-	channelList[1] = 6;
-	mac->roam.configParam.neighborRoamConfig.neighborScanChanList.
-	channelList[2] = 11;
-	mac->roam.configParam.neighborRoamConfig.nNeighborResultsRefreshPeriod
-						= 20000;        /* 20 seconds */
-	mac->roam.configParam.neighborRoamConfig.nEmptyScanRefreshPeriod = 0;
-	mac->roam.configParam.neighborRoamConfig.nRoamBmissFirstBcnt = 10;
-	mac->roam.configParam.neighborRoamConfig.nRoamBmissFinalBcnt = 10;
-	mac->roam.configParam.neighborRoamConfig.nRoamBeaconRssiWeight = 14;
+
 	mac->roam.configParam.nVhtChannelWidth =
 		WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ + 1;
 
@@ -1732,7 +1707,6 @@ static void init_config_param(tpAniSirGlobal mac)
 
 	mac->roam.configParam.nInitialDwellTime = 0;
 	mac->roam.configParam.initial_scan_no_dfs_chnl = 0;
-	mac->roam.configParam.csr_mawc_config.mawc_enabled = true;
 }
 
 enum band_info csr_get_current_band(struct mac_context *mac)
@@ -1934,7 +1908,7 @@ bool csr_roam_is_ese_assoc(tpAniSirGlobal mac_ctx, uint32_t session_id)
  */
 bool csr_roam_is_ese_ini_feature_enabled(tpAniSirGlobal mac)
 {
-	return mac->roam.configParam.isEseIniFeatureEnabled;
+	return mac->mlme_cfg->lfr.ese_enabled;
 }
 
 /**
@@ -2104,8 +2078,9 @@ csr_fetch_ch_lst_from_received_list(tpAniSirGlobal mac_ctx,
 
 	ch_lst = curr_ch_lst_info->ChannelList;
 	for (i = 0; i < curr_ch_lst_info->numOfChannels; i++) {
-		if ((!mac_ctx->roam.configParam.allowDFSChannelRoam ||
-		    (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
+		if (((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel !=
+			 ROAMING_DFS_CHANNEL_DISABLED) ||
+		     (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
 		     (wlan_reg_is_dfs_ch(mac_ctx->pdev, *ch_lst))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -2221,7 +2196,7 @@ QDF_STATUS csr_roam_read_tsf(tpAniSirGlobal mac, uint8_t *pTimestamp,
  */
 bool csr_roam_is_roam_offload_scan_enabled(tpAniSirGlobal mac_ctx)
 {
-	return mac_ctx->roam.configParam.isRoamOffloadScanEnabled;
+	return mac_ctx->mlme_cfg->lfr.roam_scan_offload_enabled;
 }
 
 /* The funcns csr_convert_cb_ini_value_to_phy_cb_state and
@@ -2493,7 +2468,7 @@ csr_copy_mawc_config(tpAniSirGlobal mac,
 		     struct mawc_params *mawc_config)
 {
 	mawc_config->mawc_enabled =
-		mac->roam.configParam.csr_mawc_config.mawc_enabled;
+		mac->mlme_cfg->lfr.mawc_enabled;
 	mawc_config->mawc_roam_enabled =
 		mac->mlme_cfg->lfr.mawc_roam_enabled;
 	mawc_config->mawc_roam_traffic_threshold =
@@ -2566,9 +2541,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal mac,
 		mac->roam.configParam.AdHocChannel24 = pParam->AdHocChannel24;
 		mac->roam.configParam.AdHocChannel5G = pParam->AdHocChannel5G;
 		mac->roam.configParam.wep_tkip_in_he = pParam->wep_tkip_in_he;
-		mac->roam.configParam.neighborRoamConfig.
-			delay_before_vdev_stop =
-			pParam->neighborRoamConfig.delay_before_vdev_stop;
 
 		/* if HDD passed down non zero values then only update, */
 		/* otherwise keep using the defaults */
@@ -2649,84 +2621,44 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal mac,
 				!wlan_reg_11d_enabled_on_host(mac->psoc))
 			csr_init_channel_power_list(mac, &pParam->Csr11dinfo);
 
-		mac->roam.configParam.isFastTransitionEnabled =
-			pParam->isFastTransitionEnabled;
-		mac->roam.configParam.RoamRssiDiff = pParam->RoamRssiDiff;
-		mac->roam.configParam.nRoamPrefer5GHz =
-			pParam->nRoamPrefer5GHz;
-		mac->roam.configParam.nRoamIntraBand = pParam->nRoamIntraBand;
-		mac->roam.configParam.isWESModeEnabled =
-			pParam->isWESModeEnabled;
-		mac->roam.configParam.nProbes = pParam->nProbes;
-		mac->roam.configParam.nRoamScanHomeAwayTime =
-			pParam->nRoamScanHomeAwayTime;
-		mac->roam.configParam.isRoamOffloadScanEnabled =
-			pParam->isRoamOffloadScanEnabled;
-		mac->roam.configParam.bFastRoamInConIniFeatureEnabled =
-			pParam->bFastRoamInConIniFeatureEnabled;
-		mac->roam.configParam.isFastRoamIniFeatureEnabled =
-			pParam->isFastRoamIniFeatureEnabled;
-		mac->roam.configParam.csr_mawc_config.mawc_enabled =
-			pParam->csr_mawc_config.mawc_enabled;
-#ifdef FEATURE_WLAN_ESE
-		mac->roam.configParam.isEseIniFeatureEnabled =
-			pParam->isEseIniFeatureEnabled;
-#endif
-		qdf_mem_copy(&mac->roam.configParam.neighborRoamConfig,
-			     &pParam->neighborRoamConfig,
-			     sizeof(tCsrNeighborRoamConfigParams));
-		sme_debug("nNeighborScanTimerPerioid: %d",
-			mac->roam.configParam.neighborRoamConfig.
-			nNeighborScanTimerPeriod);
+		sme_debug("neighbor_scan_timer_period: %d",
+			  mac->mlme_cfg->lfr.neighbor_scan_timer_period);
 		sme_debug("neighbor_scan_min_timer_period: %d",
-			mac->roam.configParam.neighborRoamConfig.
-			neighbor_scan_min_timer_period);
-		sme_debug("nNeighborLookupRssiThreshold: %d",
-			mac->roam.configParam.neighborRoamConfig.
-			nNeighborLookupRssiThreshold);
-		sme_debug("nOpportunisticThresholdDiff: %d",
-			mac->roam.configParam.neighborRoamConfig.
-			nOpportunisticThresholdDiff);
-		sme_debug("nRoamRescanRssiDiff: %d",
-			mac->roam.configParam.neighborRoamConfig.
-			nRoamRescanRssiDiff);
-		sme_debug("nNeighborScanMinChanTime: %d",
-			mac->roam.configParam.neighborRoamConfig.
-			nNeighborScanMinChanTime);
-		sme_debug("nNeighborScanMaxChanTime: %d",
-			mac->roam.configParam.neighborRoamConfig.
-			nNeighborScanMaxChanTime);
-		sme_debug("nNeighborResultsRefreshPeriod: %d",
-			mac->roam.configParam.neighborRoamConfig.
-			nNeighborResultsRefreshPeriod);
-		sme_debug("nEmptyScanRefreshPeriod: %d",
-			mac->roam.configParam.neighborRoamConfig.
-			nEmptyScanRefreshPeriod);
+			  mac->mlme_cfg->lfr.neighbor_scan_min_timer_period);
+		sme_debug("neighbor_lookup_rssi_threshold: %d",
+			  mac->mlme_cfg->lfr.neighbor_lookup_rssi_threshold);
+		sme_debug("opportunistic_scan_threshold_diff: %d",
+			  mac->mlme_cfg->lfr.
+			  opportunistic_scan_threshold_diff);
+		sme_debug("roam_rescan_rssi_diff: %d",
+			  mac->mlme_cfg->lfr.roam_rescan_rssi_diff);
+		sme_debug("neighbor_scan_min_chan_time: %d",
+			  mac->mlme_cfg->lfr.neighbor_scan_min_chan_time);
+		sme_debug("neighbor_scan_max_chan_time: %d",
+			  mac->mlme_cfg->lfr.neighbor_scan_max_chan_time);
+		sme_debug("neighbor_scan_results_refresh_period: %d",
+			  mac->mlme_cfg->lfr.
+			  neighbor_scan_results_refresh_period);
+		sme_debug("empty_scan_refresh_period: %d",
+			  mac->mlme_cfg->lfr.empty_scan_refresh_period);
 		{
 			int i;
 
 			sme_debug("Num of Channels in CFG Channel List: %d",
-				mac->roam.configParam.neighborRoamConfig.
-				neighborScanChanList.numChannels);
-			for (i = 0;
-			     i <
-			     mac->roam.configParam.neighborRoamConfig.
-			     neighborScanChanList.numChannels; i++) {
-				sme_debug("%d ",
-					mac->roam.configParam.
-					neighborRoamConfig.neighborScanChanList.
-					channelList[i]);
+				  mac->mlme_cfg->lfr.
+				  neighbor_scan_channel_list_num);
+			for (i = 0; i < mac->mlme_cfg->lfr.
+			     neighbor_scan_channel_list_num; i++) {
+				sme_debug("%d ", mac->mlme_cfg->lfr.
+					  neighbor_scan_channel_list[i]);
 			}
 		}
-		sme_debug("nRoamBmissFirstBcnt: %d",
-			mac->roam.configParam.neighborRoamConfig.
-			nRoamBmissFirstBcnt);
-		sme_debug("nRoamBmissFinalBcnt: %d",
-			mac->roam.configParam.neighborRoamConfig.
-			nRoamBmissFinalBcnt);
-		sme_debug("nRoamBeaconRssiWeight: %d",
-			mac->roam.configParam.neighborRoamConfig.
-			nRoamBeaconRssiWeight);
+		sme_debug("roam_bmiss_first_bcnt: %d",
+			  mac->mlme_cfg->lfr.roam_bmiss_first_bcnt);
+		sme_debug("roam_bmiss_final_bcnt: %d",
+			  mac->mlme_cfg->lfr.roam_bmiss_final_bcnt);
+		sme_debug("roam_beacon_rssi_weight: %d",
+			  mac->mlme_cfg->lfr.roam_beacon_rssi_weight);
 		mac->scan.fEnableDFSChnlScan = pParam->fEnableDFSChnlScan;
 		mac->scan.scanResultCfgAgingTime = pParam->scanCfgAgingTime;
 		mac->roam.configParam.fScanTwice = pParam->fScanTwice;
@@ -2759,8 +2691,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal mac,
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		mac->roam.configParam.cc_switch_mode = pParam->cc_switch_mode;
 #endif
-		mac->roam.configParam.allowDFSChannelRoam =
-			pParam->allowDFSChannelRoam;
 		mac->roam.configParam.obssEnabled = pParam->obssEnabled;
 		mac->roam.configParam.vendor_vht_sap =
 			pParam->vendor_vht_sap;
@@ -2916,36 +2846,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal mac, tCsrConfigParam *pParam)
 	pParam->fEnableMCCMode = cfg_params->fenableMCCMode;
 	pParam->fAllowMCCGODiffBI = cfg_params->fAllowMCCGODiffBI;
 	pParam->scanCfgAgingTime = mac->scan.scanResultCfgAgingTime;
-	qdf_mem_copy(&pParam->neighborRoamConfig,
-		     &cfg_params->neighborRoamConfig,
-		     sizeof(tCsrNeighborRoamConfigParams));
-	pParam->isFastTransitionEnabled = cfg_params->isFastTransitionEnabled;
-	pParam->RoamRssiDiff = cfg_params->RoamRssiDiff;
-	pParam->nRoamPrefer5GHz = cfg_params->nRoamPrefer5GHz;
-	pParam->nRoamIntraBand = cfg_params->nRoamIntraBand;
-	pParam->isWESModeEnabled = cfg_params->isWESModeEnabled;
-	pParam->nProbes = cfg_params->nProbes;
-	pParam->nRoamScanHomeAwayTime = cfg_params->nRoamScanHomeAwayTime;
-	pParam->isRoamOffloadScanEnabled = cfg_params->isRoamOffloadScanEnabled;
-	pParam->bFastRoamInConIniFeatureEnabled =
-		cfg_params->bFastRoamInConIniFeatureEnabled;
-	pParam->isFastRoamIniFeatureEnabled =
-		cfg_params->isFastRoamIniFeatureEnabled;
-#ifdef FEATURE_WLAN_ESE
-	pParam->isEseIniFeatureEnabled = cfg_params->isEseIniFeatureEnabled;
-#endif
-	qdf_mem_copy(&pParam->neighborRoamConfig,
-		     &cfg_params->neighborRoamConfig,
-		     sizeof(tCsrNeighborRoamConfigParams));
-	sme_debug("Num of Channels in CFG Channel List: %d",
-		cfg_params->neighborRoamConfig.
-		neighborScanChanList.numChannels);
-	for (i = 0; i < cfg_params->neighborRoamConfig.
-	     neighborScanChanList.numChannels; i++) {
-		sme_debug("%d ",
-			cfg_params->neighborRoamConfig.
-			neighborScanChanList.channelList[i]);
-	}
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	pParam->cc_switch_mode = cfg_params->cc_switch_mode;
@@ -2957,7 +2857,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal mac, tCsrConfigParam *pParam)
 	pParam->roam_trigger_reason_bitmask =
 			cfg_params->roam_trigger_reason_bitmask;
 	pParam->isCoalesingInIBSSAllowed = cfg_params->isCoalesingInIBSSAllowed;
-	pParam->allowDFSChannelRoam = cfg_params->allowDFSChannelRoam;
 	pParam->nInitialDwellTime = cfg_params->nInitialDwellTime;
 	pParam->initial_scan_no_dfs_chnl = cfg_params->initial_scan_no_dfs_chnl;
 	csr_set_channels(mac, pParam);
@@ -6363,9 +6262,9 @@ bool csr_roam_is_fast_roam_enabled(tpAniSirGlobal mac, uint32_t sessionId)
 		}
 	}
 	if (true == CSR_IS_FASTROAM_IN_CONCURRENCY_INI_FEATURE_ENABLED(mac)) {
-		return mac->roam.configParam.isFastRoamIniFeatureEnabled;
+		return mac->mlme_cfg->lfr.lfr_enabled;
 	} else {
-		return mac->roam.configParam.isFastRoamIniFeatureEnabled &&
+		return mac->mlme_cfg->lfr.lfr_enabled &&
 			(!csr_is_concurrent_session_running(mac));
 	}
 }
@@ -8973,9 +8872,10 @@ QDF_STATUS csr_roam_save_connected_information(tpAniSirGlobal mac,
 							   &pIesTemp);
 #ifdef FEATURE_WLAN_ESE
 	if ((csr_is_profile_ese(pProfile) ||
-	     (QDF_IS_STATUS_SUCCESS(status) && (pIesTemp->ESEVersion.present)
-	      && (pProfile->negotiatedAuthType == eCSR_AUTH_TYPE_OPEN_SYSTEM)))
-	    && (mac->roam.configParam.isEseIniFeatureEnabled)) {
+	     (QDF_IS_STATUS_SUCCESS(status) &&
+	      (pIesTemp->ESEVersion.present) &&
+	      (pProfile->negotiatedAuthType == eCSR_AUTH_TYPE_OPEN_SYSTEM))) &&
+	    (mac->mlme_cfg->lfr.ese_enabled)) {
 		pConnectProfile->isESEAssoc = 1;
 	}
 #endif
@@ -15453,7 +15353,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal mac, uint32_t sessionId,
 					(pProfile->negotiatedMCEncryptionType);
 	csr_set_mgmt_enc_type(pProfile, pIes, csr_join_req);
 #ifdef FEATURE_WLAN_ESE
-		ese_config =  mac->roam.configParam.isEseIniFeatureEnabled;
+		ese_config =  mac->mlme_cfg->lfr.ese_enabled;
 #endif
 		pProfile->MDID.mdiePresent = pBssDescription->mdiePresent;
 		if (csr_is_profile11r(mac, pProfile)
@@ -17781,7 +17681,7 @@ csr_update_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy(req_buf->R0KH_ID,
 		     session->ftSmeContext.r0kh_id,
 		     req_buf->R0KH_ID_Length);
-	req_buf->Prefer5GHz = mac_ctx->roam.configParam.nRoamPrefer5GHz;
+	req_buf->Prefer5GHz = (uint8_t)mac_ctx->mlme_cfg->lfr.roam_prefer_5ghz;
 	req_buf->RoamRssiCatGap = mac_ctx->roam.configParam.bCatRssiOffset;
 	req_buf->Select5GHzMargin = mac_ctx->mlme_cfg->gen.select_5ghz_margin;
 	req_buf->ho_delay_for_rx = mac_ctx->roam.configParam.ho_delay_for_rx;
@@ -17880,10 +17780,11 @@ csr_fetch_ch_lst_from_ini(tpAniSirGlobal mac_ctx,
 		if (!csr_check_band_channel_match(band, *ch_lst))
 			continue;
 		/* Allow DFS channels only if the DFS roaming is enabled */
-		if ((!mac_ctx->roam.configParam.allowDFSChannelRoam ||
-		    (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
+		if (((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel !=
+			 ROAMING_DFS_CHANNEL_DISABLED) ||
+		     (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
-		     (wlan_reg_is_dfs_ch(mac_ctx->pdev, *ch_lst))) {
+		    (wlan_reg_is_dfs_ch(mac_ctx->pdev, *ch_lst))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				("ignoring dfs channel %d"), *ch_lst);
 			ch_lst++;
@@ -17961,10 +17862,11 @@ csr_fetch_ch_lst_from_occupied_lst(tpAniSirGlobal mac_ctx,
 			 sizeof(unsafe_chan));
 	for (i = 0; i < mac_ctx->scan.occupiedChannels[session_id].numChannels;
 	     i++) {
-		if ((!mac_ctx->roam.configParam.allowDFSChannelRoam ||
-		    (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
+		if (((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel !=
+			 ROAMING_DFS_CHANNEL_DISABLED) ||
+		     (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
-		     (wlan_reg_is_dfs_ch(mac_ctx->pdev, *ch_lst))) {
+		    (wlan_reg_is_dfs_ch(mac_ctx->pdev, *ch_lst))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				("ignoring dfs channel %d"), *ch_lst);
 			ch_lst++;
@@ -17995,7 +17897,7 @@ csr_fetch_ch_lst_from_occupied_lst(tpAniSirGlobal mac_ctx,
 		if (*ch_lst)
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"DFSRoam=%d, ChnlState=%d, Chnl=%d, num_ch=%d",
-				mac_ctx->roam.configParam.allowDFSChannelRoam,
+				mac_ctx->mlme_cfg->lfr.roaming_dfs_channel,
 				wlan_reg_get_channel_state(mac_ctx->pdev,
 					*ch_lst),
 				*ch_lst,
@@ -18070,10 +17972,11 @@ csr_fetch_valid_ch_lst(tpAniSirGlobal mac_ctx,
 			continue;
 		}
 
-		if ((!mac_ctx->roam.configParam.allowDFSChannelRoam ||
-		    (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
+		if (((mac_ctx->mlme_cfg->lfr.roaming_dfs_channel !=
+			 ROAMING_DFS_CHANNEL_DISABLED) ||
+		     (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
-		     (wlan_reg_is_dfs_ch(mac_ctx->pdev, *ch_lst))) {
+		    (wlan_reg_is_dfs_ch(mac_ctx->pdev, *ch_lst))) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				("ignoring dfs channel %d"), *ch_lst);
 			ch_lst++;
@@ -18175,7 +18078,7 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 			roam_info->b_roam_scan_offload_started;
 	} else {
 		req_buf->RoamScanOffloadEnabled =
-			mac_ctx->roam.configParam.isRoamOffloadScanEnabled;
+			mac_ctx->mlme_cfg->lfr.roam_scan_offload_enabled;
 	}
 	qdf_mem_copy(req_buf->ConnectedNetwork.currAPbssid,
 		     roam_info->currAPbssid.bytes, sizeof(struct qdf_mac_addr));
@@ -18206,7 +18109,7 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		roam_info->cfgParams.nOpportunisticThresholdDiff;
 	req_buf->RoamRescanRssiDiff =
 		roam_info->cfgParams.nRoamRescanRssiDiff;
-	req_buf->RoamRssiDiff = mac_ctx->roam.configParam.RoamRssiDiff;
+	req_buf->RoamRssiDiff = mac_ctx->mlme_cfg->lfr.roam_rssi_diff;
 	req_buf->rssi_abs_thresh =
 		mac_ctx->mlme_cfg->lfr.roam_rssi_abs_threshold;
 	req_buf->reason = reason;
@@ -18322,8 +18225,8 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		mac_ctx->roam.roamSession[session_id].
 		connectedProfile.MDID.mobilityDomain;
 	req_buf->sessionId = session_id;
-	req_buf->nProbes = mac_ctx->roam.configParam.nProbes;
-	req_buf->HomeAwayTime = mac_ctx->roam.configParam.nRoamScanHomeAwayTime;
+	req_buf->nProbes = mac_ctx->mlme_cfg->lfr.roam_scan_n_probes;
+	req_buf->HomeAwayTime = mac_ctx->mlme_cfg->lfr.roam_scan_home_away_time;
 
 	/*
 	 * Home Away Time should be at least equal to (MaxDwell time + (2*RFS)),
@@ -18344,8 +18247,8 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 	dot11_mode = (uint8_t) csr_translate_to_wni_cfg_dot11_mode(mac_ctx,
 				csr_find_best_phy_mode(mac_ctx,
 					mac_ctx->roam.configParam.phyMode));
-	req_buf->allowDFSChannelRoam =
-	mac_ctx->roam.configParam.allowDFSChannelRoam;
+	req_buf->allowDFSChannelRoam = (eSirDFSRoamScanMode)
+	mac_ctx->mlme_cfg->lfr.roaming_dfs_channel;
 	req_buf->early_stop_scan_enable =
 		mac_ctx->mlme_cfg->lfr.early_stop_scan_enable;
 	req_buf->early_stop_scan_min_threshold =
@@ -18797,8 +18700,8 @@ static void ese_populate_addtional_ies(tpAniSirGlobal mac_ctx,
 
 	tspec_ie = (ese_wmm_tspec_ie *)(tspec_ie_buf + SIR_MAC_OUI_WME_HDR_MIN);
 	if (csr_is_wmm_supported(mac_ctx) &&
-		mac_ctx->roam.configParam.isEseIniFeatureEnabled &&
-		csr_roam_is_ese_assoc(mac_ctx, session->sessionId)) {
+	    mac_ctx->mlme_cfg->lfr.ese_enabled &&
+	    csr_roam_is_ese_assoc(mac_ctx, session->sessionId)) {
 		ese_tspec.numTspecs = sme_qos_ese_retrieve_tspec_info(mac_ctx,
 					session->sessionId,
 					(tTspecInfo *) &ese_tspec.tspec[0]);
@@ -18883,7 +18786,7 @@ static void csr_update_driver_assoc_ies(tpAniSirGlobal mac_ctx,
 
 #ifdef FEATURE_WLAN_ESE
 	/* Append ESE version IE if isEseIniFeatureEnabled INI is enabled */
-	if (mac_ctx->roam.configParam.isEseIniFeatureEnabled)
+	if (mac_ctx->mlme_cfg->lfr.ese_enabled)
 		csr_append_assoc_ies(mac_ctx, req_buf, IEEE80211_ELEMID_VENDOR,
 					DOT11F_IE_ESEVERSION_MAX_LEN,
 					ese_ie);

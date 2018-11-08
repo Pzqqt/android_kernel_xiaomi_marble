@@ -770,10 +770,6 @@ QDF_STATUS sme_set_tm_level(mac_handle_t mac_handle, uint16_t newTMLevel,
 void sme_feature_caps_exchange(mac_handle_t mac_handle);
 void sme_disable_feature_capablity(uint8_t feature_index);
 void sme_reset_power_values_for5_g(mac_handle_t mac_handle);
-QDF_STATUS sme_update_roam_prefer5_g_hz(mac_handle_t mac_handle,
-					bool nRoamPrefer5GHz);
-QDF_STATUS sme_set_roam_intra_band(mac_handle_t mac_handle,
-				   const bool nRoamIntraBand);
 QDF_STATUS sme_update_roam_scan_n_probes(mac_handle_t mac_handle,
 					 uint8_t sessionId,
 					 const uint8_t nProbes);
@@ -802,15 +798,11 @@ QDF_STATUS sme_update_is_fast_roam_ini_feature_enabled(mac_handle_t mac_handle,
 QDF_STATUS sme_config_fast_roaming(mac_handle_t mac_handle, uint8_t session_id,
 				   const bool is_fast_roam_enabled);
 
-QDF_STATUS sme_update_is_mawc_ini_feature_enabled(mac_handle_t mac_handle,
-		const bool MAWCEnabled);
 QDF_STATUS sme_stop_roaming(mac_handle_t mac_handle, uint8_t sessionId,
 			    uint8_t reason);
 
 QDF_STATUS sme_start_roaming(mac_handle_t mac_handle, uint8_t sessionId,
 		uint8_t reason);
-QDF_STATUS sme_update_enable_fast_roam_in_concurrency(mac_handle_t mac_handle,
-		bool bFastRoamInConIniFeatureEnabled);
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS sme_update_is_ese_feature_enabled(mac_handle_t mac_handle,
 					     uint8_t sessionId,
@@ -828,8 +820,6 @@ QDF_STATUS sme_set_roam_opportunistic_scan_threshold_diff(
 uint8_t sme_get_roam_opportunistic_scan_threshold_diff(mac_handle_t mac_handle);
 QDF_STATUS sme_set_neighbor_lookup_rssi_threshold(mac_handle_t mac_handle,
 		uint8_t sessionId, uint8_t neighborLookupRssiThreshold);
-QDF_STATUS sme_set_delay_before_vdev_stop(mac_handle_t mac_handle,
-		uint8_t sessionId, uint8_t delay_before_vdev_stop);
 uint8_t sme_get_neighbor_lookup_rssi_threshold(mac_handle_t mac_handle);
 QDF_STATUS sme_set_neighbor_scan_refresh_period(mac_handle_t mac_handle,
 		uint8_t sessionId, uint16_t neighborScanResultsRefreshPeriod);
@@ -868,14 +858,9 @@ QDF_STATUS sme_set_neighbor_scan_min_period(mac_handle_t mac_handle,
 		uint8_t session_id, const uint16_t neighbor_scan_min_period);
 QDF_STATUS sme_set_roam_bmiss_first_bcnt(mac_handle_t mac_handle,
 		uint8_t sessionId, const uint8_t nRoamBmissFirstBcnt);
-uint8_t sme_get_roam_bmiss_first_bcnt(mac_handle_t mac_handle);
 QDF_STATUS sme_set_roam_bmiss_final_bcnt(mac_handle_t mac_handle,
 					 uint8_t sessionId,
 					 const uint8_t nRoamBmissFinalBcnt);
-uint8_t sme_get_roam_bmiss_final_bcnt(mac_handle_t mac_handle);
-QDF_STATUS sme_set_roam_beacon_rssi_weight(mac_handle_t mac_handle,
-					   uint8_t sessionId,
-					   const uint8_t nRoamBeaconRssiWeight);
 uint8_t sme_get_roam_beacon_rssi_weight(mac_handle_t mac_handle);
 uint8_t sme_get_roam_rssi_diff(mac_handle_t mac_handle);
 QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
@@ -895,8 +880,6 @@ bool sme_get_wes_mode(mac_handle_t mac_handle);
 bool sme_get_roam_scan_control(mac_handle_t mac_handle);
 bool sme_get_is_lfr_feature_enabled(mac_handle_t mac_handle);
 bool sme_get_is_ft_feature_enabled(mac_handle_t mac_handle);
-QDF_STATUS sme_update_roam_scan_offload_enabled(mac_handle_t mac_handle,
-		bool nRoamScanOffloadEnabled);
 bool sme_is_feature_supported_by_fw(enum cap_bitmap feature);
 
 QDF_STATUS sme_set_phy_mode(mac_handle_t mac_handle, eCsrPhyMode phyMode);
@@ -1500,11 +1483,6 @@ void sme_setdef_dot11mode(mac_handle_t mac_handle);
 QDF_STATUS sme_handle_set_fcc_channel(mac_handle_t mac_handle,
 				      bool fcc_constraint,
 				      bool scan_pending);
-
-QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(mac_handle_t mac_handle,
-						    uint8_t session_id,
-						    uint32_t notify_id,
-						    int32_t val);
 
 /**
  * sme_update_tx_bfee_supp() - sets the Tx Bfee support

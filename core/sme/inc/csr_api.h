@@ -964,30 +964,6 @@ typedef struct tagCsrRoamConnectedProfile {
 #endif
 } tCsrRoamConnectedProfile;
 
-typedef struct tagCsrNeighborRoamConfigParams {
-
-	uint32_t nNeighborScanTimerPeriod;
-	uint32_t neighbor_scan_min_timer_period;
-	uint8_t nNeighborLookupRssiThreshold;
-	int8_t rssi_thresh_offset_5g;
-	uint16_t nNeighborScanMinChanTime;
-	uint16_t nNeighborScanMaxChanTime;
-	sCsrChannel neighborScanChanList;
-	uint8_t nMaxNeighborRetries;
-	uint16_t nNeighborResultsRefreshPeriod;
-	uint16_t nEmptyScanRefreshPeriod;
-	uint8_t nOpportunisticThresholdDiff;
-	uint8_t nRoamRescanRssiDiff;
-	uint8_t nRoamBmissFirstBcnt;
-	uint8_t nRoamBmissFinalBcnt;
-	uint8_t nRoamBeaconRssiWeight;
-	uint8_t delay_before_vdev_stop;
-	uint32_t nhi_rssi_scan_max_count;
-	uint32_t nhi_rssi_scan_rssi_delta;
-	uint32_t nhi_rssi_scan_delay;
-	int32_t nhi_rssi_scan_rssi_ub;
-} tCsrNeighborRoamConfigParams;
-
 /**
  * enum sta_roam_policy_dfs_mode - state of DFS mode for STA ROME policy
  * @CSR_STA_ROAM_POLICY_NONE: DFS mode attribute is not valid
@@ -1102,10 +1078,6 @@ typedef struct tagCsrConfigParam {
 #endif
 	uint8_t isFastRoamIniFeatureEnabled;
 	struct mawc_params csr_mawc_config;
-	uint8_t isFastTransitionEnabled;
-	uint8_t RoamRssiDiff;
-	bool isWESModeEnabled;
-	tCsrNeighborRoamConfigParams neighborRoamConfig;
 	/*
 	 * Customer wants to optimize the scan time. Avoiding scans(passive)
 	 * on DFS channels while swipping through both bands can save some time
@@ -1124,13 +1096,7 @@ typedef struct tagCsrConfigParam {
 	 * To enable/disable scanning only 2.4Ghz channels on first scan
 	 */
 	bool fFirstScanOnly2GChnl;
-	bool nRoamPrefer5GHz;
-	bool nRoamIntraBand;
-	uint8_t nProbes;
-	uint16_t nRoamScanHomeAwayTime;
 
-	bool isRoamOffloadScanEnabled;
-	bool bFastRoamInConIniFeatureEnabled;
 	uint8_t scanCfgAgingTime;
 	uint8_t disable_high_ht_mcs_2x2;
 	uint32_t ho_delay_for_rx;

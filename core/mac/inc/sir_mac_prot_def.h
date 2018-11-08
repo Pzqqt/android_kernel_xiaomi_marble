@@ -628,7 +628,7 @@
 	((u16value) &= (~(SIR_MAC_SET_ ## bitname(0))))
 
 #define IS_WES_MODE_ENABLED(x) \
-	((x)->roam.configParam.isWESModeEnabled)
+	((x)->mlme_cfg->lfr.wes_mode_enabled)
 
 #define BA_RECIPIENT       1
 #define BA_INITIATOR       2

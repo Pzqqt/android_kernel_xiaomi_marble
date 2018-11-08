@@ -91,6 +91,7 @@
 #include "wlan_cp_stats_mc_ucfg_api.h"
 #include "cfg_nan_api.h"
 #include "wlan_mlme_api.h"
+#include "wlan_mlme_ucfg_api.h"
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -3183,6 +3184,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	void *cds_context;
 	target_resource_config *wlan_res_cfg;
 	enum pmo_wow_enable_type wow_enable;
+	uint8_t delay_before_vdev_stop;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -3359,8 +3361,10 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	for (i = 0; i < wma_handle->max_bssid; ++i) {
 		wma_vdev_init(&wma_handle->interfaces[i]);
+		ucfg_mlme_get_delay_before_vdev_stop(wma_handle->psoc,
+						     &delay_before_vdev_stop);
 		wma_handle->interfaces[i].delay_before_vdev_stop =
-			cds_cfg->delay_before_vdev_stop;
+							delay_before_vdev_stop;
 	}
 	/* Register the debug print event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,

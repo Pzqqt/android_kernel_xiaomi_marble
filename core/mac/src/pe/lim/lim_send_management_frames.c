@@ -1893,7 +1893,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	 * associate to.
 	 */
 	if (pe_session->is_ese_version_ie_present &&
-		mac_ctx->roam.configParam.isEseIniFeatureEnabled)
+		mac_ctx->mlme_cfg->lfr.ese_enabled)
 		populate_dot11f_ese_version(&frm->ESEVersion);
 	/* For ESE Associations fill the ESE IEs */
 	if (pe_session->isESEconnection &&
