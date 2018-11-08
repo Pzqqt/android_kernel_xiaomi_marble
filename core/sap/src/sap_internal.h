@@ -365,23 +365,56 @@ bool sap_dfs_is_channel_in_nol_list(struct sap_context *sapContext,
 				    ePhyChanBondState chanBondState);
 void sap_dfs_cac_timer_callback(void *data);
 
-void sap_cac_reset_notify(mac_handle_t hHal);
+/**
+ * sap_cac_reset_notify() - BSS cleanup notification handler
+ * @mac_handle: Opaque handle to the global MAC context
+ *
+ * This function should be called upon stop bss indication to clean up
+ * DFS global structure.
+ */
+void sap_cac_reset_notify(mac_handle_t mac_handle);
 
 bool
 sap_channel_matrix_check(struct sap_context *sapContext,
 			 ePhyChanBondState cbMode,
 			 uint8_t target_channel);
 
-bool is_concurrent_sap_ready_for_channel_change(mac_handle_t hHal,
+bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
 						struct sap_context *sapContext);
 bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t hal,
 				   struct sap_context *given_sapctx);
-uint8_t sap_get_total_number_sap_intf(mac_handle_t hHal);
+uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle);
 
-bool sap_dfs_is_w53_invalid(mac_handle_t hHal, uint8_t channelID);
+/**
+ * sap_dfs_is_w53_invalid() - Check to see if invalid W53 operation requested
+ * @mac_handle: Opaque handle to the global MAC context
+ * @channel_id: Channel number to be verified
+ *
+ * This function checks if the passed channel is W53 and, if so, if
+ * SAP W53 operation is allowed.
+ *
+ * Return:
+ * * true - operation is invalid because the channel is W53 and W53
+ *          operation has been disabled
+ * * false - operation is valid
+ */
+bool sap_dfs_is_w53_invalid(mac_handle_t mac_handle, uint8_t channel_id);
 
-bool sap_dfs_is_channel_in_preferred_location(mac_handle_t hHal,
-					      uint8_t channelID);
+/**
+ * sap_dfs_is_channel_in_preferred_location() - Verify a channel is valid
+ *	with respect to indoor/outdoor location setting
+ * @mac_handle: Opaque handle to the global MAC context
+ * @channel_id: Channel number to be verified
+ *
+ * This function checks if the passed @channel_id is in accordance
+ * with preferred Channel location settings.
+ *
+ * Return:
+ * * true - Channel location is same as the preferred location
+ * * false - Channel location is not same as the preferred location
+ */
+bool sap_dfs_is_channel_in_preferred_location(mac_handle_t mac_handle,
+					      uint8_t channel_id);
 
 /**
  * sap_channel_sel - Function for initiating scan request for ACS

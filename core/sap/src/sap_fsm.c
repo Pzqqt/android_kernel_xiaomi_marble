@@ -550,27 +550,11 @@ void sap_dfs_set_current_channel(void *ctx)
 	}
 }
 
-/*
- * FUNCTION  sap_dfs_is_w53_invalid
- *
- * DESCRIPTION Checks if the passed channel is W53 and returns if
- *             SAP W53 opearation is allowed.
- *
- * DEPENDENCIES PARAMETERS
- * IN hHAL : HAL pointer
- * channelID: Channel Number to be verified
- *
- * RETURN VALUE  : bool
- *                 true: If W53 operation is disabled
- *                 false: If W53 operation is enabled
- *
- * SIDE EFFECTS
- */
-bool sap_dfs_is_w53_invalid(mac_handle_t hHal, uint8_t channelID)
+bool sap_dfs_is_w53_invalid(mac_handle_t mac_handle, uint8_t channel_id)
 {
 	tpAniSirGlobal pMac;
 
-	pMac = PMAC_STRUCT(hHal);
+	pMac = PMAC_STRUCT(mac_handle);
 	if (NULL == pMac) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("invalid pMac"));
@@ -581,34 +565,19 @@ bool sap_dfs_is_w53_invalid(mac_handle_t hHal, uint8_t channelID)
 	 * Check for JAPAN W53 Channel operation capability
 	 */
 	if (true == pMac->sap.SapDfsInfo.is_dfs_w53_disabled &&
-	    true == IS_CHAN_JAPAN_W53(channelID)) {
+	    true == IS_CHAN_JAPAN_W53(channel_id)) {
 		return true;
 	}
 
 	return false;
 }
 
-/*
- * FUNCTION  sap_dfs_is_channel_in_preferred_location
- *
- * DESCRIPTION Checks if the passed channel is in accordance with preferred
- *          Channel location settings.
- *
- * DEPENDENCIES PARAMETERS
- * IN hHAL : HAL pointer
- * channelID: Channel Number to be verified
- *
- * RETURN VALUE  :bool
- *        true:If Channel location is same as the preferred location
- *        false:If Channel location is not same as the preferred location
- *
- * SIDE EFFECTS
- */
-bool sap_dfs_is_channel_in_preferred_location(mac_handle_t hHal, uint8_t channelID)
+bool sap_dfs_is_channel_in_preferred_location(mac_handle_t mac_handle,
+					      uint8_t channel_id)
 {
 	tpAniSirGlobal pMac;
 
-	pMac = PMAC_STRUCT(hHal);
+	pMac = PMAC_STRUCT(mac_handle);
 	if (NULL == pMac) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("invalid pMac"));
@@ -616,19 +585,19 @@ bool sap_dfs_is_channel_in_preferred_location(mac_handle_t hHal, uint8_t channel
 	}
 	if ((SAP_CHAN_PREFERRED_INDOOR ==
 	     pMac->sap.SapDfsInfo.sap_operating_chan_preferred_location) &&
-	    (true == IS_CHAN_JAPAN_OUTDOOR(channelID))) {
+	    (true == IS_CHAN_JAPAN_OUTDOOR(channel_id))) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
 			  FL
 				  ("CHAN=%d is Outdoor so invalid,preferred Indoor only"),
-			  channelID);
+			  channel_id);
 		return false;
 	} else if ((SAP_CHAN_PREFERRED_OUTDOOR ==
 		    pMac->sap.SapDfsInfo.sap_operating_chan_preferred_location)
-		   && (true == IS_CHAN_JAPAN_INDOOR(channelID))) {
+		   && (true == IS_CHAN_JAPAN_INDOOR(channel_id))) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
 			  FL
 				  ("CHAN=%d is Indoor so invalid,preferred Outdoor only"),
-			  channelID);
+			  channel_id);
 		return false;
 	}
 
@@ -1006,21 +975,21 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	uint8_t *channel_list = NULL;
 	uint8_t num_of_channels = 0;
 #endif
-	mac_handle_t h_hal;
+	mac_handle_t mac_handle;
 	uint8_t con_ch;
 	uint8_t vdev_id;
 	uint32_t scan_id;
 	uint8_t *self_mac;
 
-	h_hal = cds_get_context(QDF_MODULE_ID_SME);
-	if (!h_hal) {
+	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
+	if (!mac_handle) {
 		/* we have a serious problem */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
-			  FL("invalid h_hal"));
+			  FL("invalid mac_handle"));
 		return QDF_STATUS_E_FAULT;
 	}
 
-	mac_ctx = PMAC_STRUCT(h_hal);
+	mac_ctx = PMAC_STRUCT(mac_handle);
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid MAC context"));
@@ -1037,7 +1006,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	     policy_mgr_mode_specific_connection_count(mac_ctx->psoc,
 						       PM_P2P_GO_MODE,
 						       NULL)))) {
-		con_ch = sme_get_concurrent_operation_channel(h_hal);
+		con_ch = sme_get_concurrent_operation_channel(mac_handle);
 #ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
 		if (con_ch)
 			sap_context->dfs_ch_disable = true;
@@ -1112,7 +1081,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 		if (sap_context->acs_cfg->skip_scan_status ==
 		    eSAP_DO_NEW_ACS_SCAN)
 #endif
-			sme_scan_flush_result(h_hal);
+			sme_scan_flush_result(mac_handle);
 		qdf_ret_status = ucfg_scan_start(req);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 			if (qdf_ret_status != QDF_STATUS_SUCCESS) {
@@ -1157,7 +1126,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	if (sap_context->acs_cfg->skip_scan_status == eSAP_SKIP_ACS_SCAN) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("## %s SKIPPED ACS SCAN"), __func__);
-			wlansap_pre_start_bss_acs_scan_callback(h_hal,
+			wlansap_pre_start_bss_acs_scan_callback(mac_handle,
 				sap_context, sap_context->sessionId, 0,
 				eCSR_SCAN_SUCCESS);
 	}
@@ -1865,23 +1834,10 @@ static struct sap_context *sap_find_cac_wait_session(mac_handle_t handle)
 	return NULL;
 }
 
-/*==========================================================================
-   FUNCTION  sap_cac_reset_notify
-
-   DESCRIPTION Function will be called up on stop bss indication to clean up
-   DFS global structure.
-
-   DEPENDENCIES PARAMETERS
-     IN hHAL : HAL pointer
-
-   RETURN VALUE  : void.
-
-   SIDE EFFECTS
-   ============================================================================*/
-void sap_cac_reset_notify(mac_handle_t hHal)
+void sap_cac_reset_notify(mac_handle_t mac_handle)
 {
 	uint8_t intf = 0;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal pMac = PMAC_STRUCT(mac_handle);
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		struct sap_context *sap_context =
@@ -1896,23 +1852,19 @@ void sap_cac_reset_notify(mac_handle_t hHal)
 	}
 }
 
-/*==========================================================================
-   FUNCTION  sap_cac_start_notify
-
-   DESCRIPTION Function will be called to notify eSAP_DFS_CAC_START event
-   to HDD
-
-   DEPENDENCIES PARAMETERS
-     IN hHAL : HAL pointer
-
-   RETURN VALUE  : QDF_STATUS.
-
-   SIDE EFFECTS
-   ============================================================================*/
-static QDF_STATUS sap_cac_start_notify(mac_handle_t hHal)
+/**
+ * sap_cac_start_notify() - Notify CAC start to HDD
+ * @mac_handle: Opaque handle to the global MAC context
+ *
+ * Function will be called to notify eSAP_DFS_CAC_START event to HDD
+ *
+ * Return: QDF_STATUS_SUCCESS if the notification was sent, otherwise
+ *         an appropriate QDF_STATUS error
+ */
+static QDF_STATUS sap_cac_start_notify(mac_handle_t mac_handle)
 {
 	uint8_t intf = 0;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal pMac = PMAC_STRUCT(mac_handle);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
@@ -1994,24 +1946,20 @@ static QDF_STATUS wlansap_update_pre_cac_end(struct sap_context *sap_context,
 	return QDF_STATUS_SUCCESS;
 }
 
-/*==========================================================================
-   FUNCTION  sap_cac_end_notify
-
-   DESCRIPTION Function will be called to notify eSAP_DFS_CAC_END event
-   to HDD
-
-   DEPENDENCIES PARAMETERS
-     IN hHAL : HAL pointer
-
-   RETURN VALUE  : QDF_STATUS.
-
-   SIDE EFFECTS
-   ============================================================================*/
-static QDF_STATUS sap_cac_end_notify(mac_handle_t hHal,
+/**
+ * sap_cac_end_notify() - Notify CAC end to HDD
+ * @mac_handle: Opaque handle to the global MAC context
+ *
+ * Function will be called to notify eSAP_DFS_CAC_END event to HDD
+ *
+ * Return: QDF_STATUS_SUCCESS if the notification was sent, otherwise
+ *         an appropriate QDF_STATUS error
+ */
+static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 				     struct csr_roam_info *roamInfo)
 {
 	uint8_t intf;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal pMac = PMAC_STRUCT(mac_handle);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	/*
@@ -3547,16 +3495,16 @@ void sap_dfs_cac_timer_callback(void *data)
 {
 	struct sap_context *sapContext;
 	tWLAN_SAPEvent sapEvent;
-	mac_handle_t hHal = (mac_handle_t) data;
+	mac_handle_t mac_handle = data;
 	tpAniSirGlobal pMac;
 
-	if (NULL == hHal) {
+	if (NULL == mac_handle) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "In %s invalid hHal", __func__);
+			  "In %s invalid mac_handle", __func__);
 		return;
 	}
-	pMac = PMAC_STRUCT(hHal);
-	sapContext = sap_find_cac_wait_session(hHal);
+	pMac = PMAC_STRUCT(mac_handle);
+	sapContext = sap_find_cac_wait_session(mac_handle);
 	if (NULL == sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"%s: no SAP contexts in wait state", __func__);
@@ -3739,9 +3687,9 @@ QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sap_ctx)
  * This function will calculate how many interfaces
  * have sap persona and returns total number of sap persona.
  */
-uint8_t sap_get_total_number_sap_intf(mac_handle_t hHal)
+uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal pMac = PMAC_STRUCT(mac_handle);
 	uint8_t intf = 0;
 	uint8_t intf_count = 0;
 
@@ -3759,7 +3707,7 @@ uint8_t sap_get_total_number_sap_intf(mac_handle_t hHal)
 /**
  * is_concurrent_sap_ready_for_channel_change() - to check all saps are ready
  *						  for channel change
- * @hHal: HAL pointer
+ * @mac_handle: HAL pointer
  * @sapContext: sap context for which this function has been called
  *
  * This function will find the concurrent sap context apart from
@@ -3768,10 +3716,10 @@ uint8_t sap_get_total_number_sap_intf(mac_handle_t hHal)
  *
  * Return: true if other SAP personas are ready to channel switch else false
  */
-bool is_concurrent_sap_ready_for_channel_change(mac_handle_t hHal,
+bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
 						struct sap_context *sapContext)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal pMac = PMAC_STRUCT(mac_handle);
 	struct sap_context *sap_context;
 	uint8_t intf = 0;
 
