@@ -79,6 +79,7 @@
 #include <wlan_cfg80211_mc_cp_stats.h>
 #include "wlan_p2p_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "wlan_hdd_dsc.h"
 
 /* Preprocessor definitions and constants */
 #ifdef QCA_WIFI_NAPIER_EMULATION
@@ -1657,11 +1658,18 @@ exit_with_code:
 int wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 {
 	int ret;
+	QDF_STATUS status;
+	struct dsc_psoc *dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
+
+	status = dsc_psoc_op_start(dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_resume_wlan(wiphy);
 	cds_ssr_unprotect(__func__);
 
+	dsc_psoc_op_stop(dsc_psoc);
 	return ret;
 }
 
@@ -1851,11 +1859,18 @@ int wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				   struct cfg80211_wowlan *wow)
 {
 	int ret;
+	QDF_STATUS status;
+	struct dsc_psoc *dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
+
+	status = dsc_psoc_op_start(dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_suspend_wlan(wiphy, wow);
 	cds_ssr_unprotect(__func__);
 
+	dsc_psoc_op_stop(dsc_psoc);
 	return ret;
 }
 
@@ -2069,6 +2084,12 @@ int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 				  int mbm)
 {
 	int ret;
+	QDF_STATUS status;
+	struct dsc_psoc *dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
+
+	status = dsc_psoc_op_start(dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_set_txpower(wiphy,
@@ -2076,6 +2097,7 @@ int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 					      type, mbm);
 	cds_ssr_unprotect(__func__);
 
+	dsc_psoc_op_stop(dsc_psoc);
 	return ret;
 }
 
@@ -2163,11 +2185,18 @@ int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 					 int *dbm)
 {
 	int ret;
+	QDF_STATUS status;
+	struct dsc_psoc *dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
+
+	status = dsc_psoc_op_start(dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_get_txpower(wiphy, wdev, dbm);
 	cds_ssr_unprotect(__func__);
 
+	dsc_psoc_op_stop(dsc_psoc);
 	return ret;
 }
 

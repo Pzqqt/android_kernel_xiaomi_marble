@@ -18086,11 +18086,18 @@ static int __wlan_hdd_cfg80211_set_wiphy_params(struct wiphy *wiphy,
 static int wlan_hdd_cfg80211_set_wiphy_params(struct wiphy *wiphy, u32 changed)
 {
 	int ret;
+	QDF_STATUS status;
+	struct dsc_psoc *dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
+
+	status = dsc_psoc_op_start(dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_set_wiphy_params(wiphy, changed);
 	cds_ssr_unprotect(__func__);
 
+	dsc_psoc_op_stop(dsc_psoc);
 	return ret;
 }
 
@@ -19425,11 +19432,18 @@ static int wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 				      void *data, int len)
 {
 	int ret;
+	QDF_STATUS status;
+	struct dsc_psoc *dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
+
+	status = dsc_psoc_op_start(dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_testmode(wiphy, data, len);
 	cds_ssr_unprotect(__func__);
 
+	dsc_psoc_op_stop(dsc_psoc);
 	return ret;
 }
 
@@ -19733,10 +19747,18 @@ static int wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 				       struct cfg80211_chan_def *chandef)
 {
 	int ret;
+	QDF_STATUS status;
+	struct dsc_psoc *dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
+
+	status = dsc_psoc_op_start(dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_set_mon_ch(wiphy, chandef);
 	cds_ssr_unprotect(__func__);
+
+	dsc_psoc_op_stop(dsc_psoc);
 	return ret;
 }
 #endif

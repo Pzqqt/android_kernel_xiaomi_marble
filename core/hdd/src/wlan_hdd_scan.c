@@ -1533,9 +1533,18 @@ static void __wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
 void wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
 				  struct wireless_dev *wdev)
 {
+	QDF_STATUS status;
+	struct dsc_psoc *dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
+
+	status = dsc_psoc_op_start(dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
 	cds_ssr_protect(__func__);
 	__wlan_hdd_cfg80211_abort_scan(wiphy, wdev);
 	cds_ssr_unprotect(__func__);
+
+	dsc_psoc_op_stop(dsc_psoc);
 }
 #endif
 
