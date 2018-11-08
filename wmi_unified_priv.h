@@ -271,6 +271,10 @@ QDF_STATUS (*send_vdev_create_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_vdev_delete_cmd)(wmi_unified_t wmi_handle,
 					  uint8_t if_id);
 
+QDF_STATUS (*send_vdev_nss_chain_params_cmd)(wmi_unified_t wmi_handle,
+					 uint8_t vdev_id,
+					 struct wlan_mlme_nss_chains *user_cfg);
+
 QDF_STATUS (*send_vdev_stop_cmd)(wmi_unified_t wmi,
 					uint8_t vdev_id);
 
