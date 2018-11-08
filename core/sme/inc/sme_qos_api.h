@@ -195,23 +195,26 @@ struct sme_qos_wmmtspecinfo {
 };
 
 /* External APIs */
-typedef QDF_STATUS (*sme_QosCallback)(mac_handle_t hHal, void *HDDcontext,
+typedef QDF_STATUS (*sme_QosCallback)(mac_handle_t mac_handle, void *HDDcontext,
 		struct sme_qos_wmmtspecinfo *pCurrentQoSInfo,
 		enum sme_qos_statustype status, uint32_t QosFlowID);
-enum sme_qos_statustype sme_qos_setup_req(mac_handle_t hHal, uint32_t sessionId,
-		struct sme_qos_wmmtspecinfo *pQoSInfo,
-		sme_QosCallback QoSCallback, void *HDDcontext,
-		enum sme_qos_wmmuptype UPType, uint32_t *pQosFlowID);
-enum sme_qos_statustype sme_qos_modify_req(mac_handle_t hHal,
+enum sme_qos_statustype sme_qos_setup_req(mac_handle_t mac_handle,
+					  uint32_t sessionId,
+					  struct sme_qos_wmmtspecinfo *pQoSInfo,
+					  sme_QosCallback QoSCallback,
+					  void *HDDcontext,
+					  enum sme_qos_wmmuptype UPType,
+					  uint32_t *pQosFlowID);
+enum sme_qos_statustype sme_qos_modify_req(mac_handle_t mac_handle,
 		struct sme_qos_wmmtspecinfo *pQoSInfo, uint32_t QosFlowID);
-enum sme_qos_statustype sme_qos_release_req(mac_handle_t hHal,
+enum sme_qos_statustype sme_qos_release_req(mac_handle_t mac_handle,
 					    uint8_t session_id,
 					    uint32_t QosFlowID);
 bool sme_qos_is_ts_info_ack_policy_valid(mac_handle_t mac_handle,
 					 struct sme_qos_wmmtspecinfo *pQoSInfo,
 					 uint8_t sessionId);
 void sme_qos_update_hand_off(uint8_t sessionId, bool updateHandOff);
-QDF_STATUS sme_update_dsc_pto_up_mapping(mac_handle_t hHal,
+QDF_STATUS sme_update_dsc_pto_up_mapping(mac_handle_t mac_handle,
 		enum sme_qos_wmmuptype *dscpmapping, uint8_t sessionId);
 
 QDF_STATUS sme_offload_qos_process_out_of_uapsd_mode(tpAniSirGlobal mac_ctx,
