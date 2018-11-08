@@ -791,7 +791,7 @@ void target_if_nan_register_rx_ops(struct wlan_nan_rx_ops *rx_ops)
 	rx_ops->nan_datapath_event_rx = nan_datapath_event_handler;
 }
 
-static int target_if_nan_rsp_handler(ol_scn_t scn, uint8_t *data, uint32_t len)
+int target_if_nan_rsp_handler(ol_scn_t scn, uint8_t *data, uint32_t len)
 {
 	struct nan_event_params *nan_rsp, temp_evt_params = {0};
 	struct scheduler_msg msg = {0};
@@ -833,7 +833,7 @@ static int target_if_nan_rsp_handler(ol_scn_t scn, uint8_t *data, uint32_t len)
 	}
 
 	nan_rsp->psoc = psoc;
-	qdf_mem_copy(nan_rsp->buf_ptr, buf_ptr, nan_rsp->buf_len);
+	qdf_mem_copy(nan_rsp->buf, buf_ptr, nan_rsp->buf_len);
 
 	msg.bodyptr = nan_rsp;
 	msg.type = nan_rsp->evt_type;
