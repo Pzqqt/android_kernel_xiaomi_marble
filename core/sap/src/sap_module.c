@@ -1820,73 +1820,33 @@ QDF_STATUS wlansap_dfs_send_csa_ie_request(struct sap_context *sap_ctx)
 				       &pMac->sap.SapDfsInfo.new_ch_params);
 }
 
-/*==========================================================================
-   FUNCTION    wlansap_get_dfs_ignore_cac
-
-   DESCRIPTION
-   This API is used to get the value of ignore_cac value
-
-   DEPENDENCIES
-   NA.
-
-   PARAMETERS
-   IN
-   hHal : HAL pointer
-   pIgnore_cac : pointer to ignore_cac variable
-
-   RETURN VALUE
-   The QDF_STATUS code associated with performing the operation
-
-   QDF_STATUS_SUCCESS:  Success
-
-   SIDE EFFECTS
-   ============================================================================*/
-QDF_STATUS wlansap_get_dfs_ignore_cac(mac_handle_t hHal, uint8_t *pIgnore_cac)
+QDF_STATUS wlansap_get_dfs_ignore_cac(mac_handle_t mac_handle,
+				      uint8_t *ignore_cac)
 {
 	tpAniSirGlobal pMac = NULL;
 
-	if (NULL != hHal) {
-		pMac = PMAC_STRUCT(hHal);
+	if (NULL != mac_handle) {
+		pMac = PMAC_STRUCT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid hHal pointer", __func__);
+			  "%s: Invalid mac_handle pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
-	*pIgnore_cac = pMac->sap.SapDfsInfo.ignore_cac;
+	*ignore_cac = pMac->sap.SapDfsInfo.ignore_cac;
 	return QDF_STATUS_SUCCESS;
 }
 
-/*==========================================================================
-   FUNCTION    wlansap_set_dfs_ignore_cac
-
-   DESCRIPTION
-   This API is used to Set the value of ignore_cac value
-
-   DEPENDENCIES
-   NA.
-
-   PARAMETERS
-   IN
-   hHal : HAL pointer
-   ignore_cac : value to set for ignore_cac variable in DFS global structure.
-
-   RETURN VALUE
-   The QDF_STATUS code associated with performing the operation
-
-   QDF_STATUS_SUCCESS:  Success
-
-   SIDE EFFECTS
-   ============================================================================*/
-QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t hHal, uint8_t ignore_cac)
+QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t mac_handle,
+				      uint8_t ignore_cac)
 {
 	tpAniSirGlobal pMac = NULL;
 
-	if (NULL != hHal) {
-		pMac = PMAC_STRUCT(hHal);
+	if (NULL != mac_handle) {
+		pMac = PMAC_STRUCT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid hHal pointer", __func__);
+			  "%s: Invalid mac_handle pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
@@ -1895,28 +1855,19 @@ QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t hHal, uint8_t ignore_cac)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wlansap_set_dfs_restrict_japan_w53() - enable/disable dfS for japan
- * @hHal : HAL pointer
- * @disable_Dfs_JapanW3 :Indicates if Japan W53 is disabled when set to 1
- *                       Indicates if Japan W53 is enabled when set to 0
- *
- * This API is used to enable or disable Japan W53 Band
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success
- */
 QDF_STATUS
-wlansap_set_dfs_restrict_japan_w53(mac_handle_t hHal, uint8_t disable_Dfs_W53)
+wlansap_set_dfs_restrict_japan_w53(mac_handle_t mac_handle,
+				   uint8_t disable_dfs_w53)
 {
 	tpAniSirGlobal pMac = NULL;
 	QDF_STATUS status;
 	enum dfs_reg dfs_region;
 
-	if (NULL != hHal) {
-		pMac = PMAC_STRUCT(hHal);
+	if (NULL != mac_handle) {
+		pMac = PMAC_STRUCT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid hHal pointer", __func__);
+			  "%s: Invalid mac_handle pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
@@ -1927,7 +1878,7 @@ wlansap_set_dfs_restrict_japan_w53(mac_handle_t hHal, uint8_t disable_Dfs_W53)
 	 * regulatory domain is JAPAN.
 	 */
 	if (DFS_MKK_REGION == dfs_region) {
-		pMac->sap.SapDfsInfo.is_dfs_w53_disabled = disable_Dfs_W53;
+		pMac->sap.SapDfsInfo.is_dfs_w53_disabled = disable_dfs_w53;
 		QDF_TRACE(QDF_MODULE_ID_SAP,
 			  QDF_TRACE_LEVEL_INFO_LOW,
 			  FL("sapdfs: SET DFS JAPAN W53 DISABLED = %d"),
@@ -1985,7 +1936,7 @@ wlan_sap_set_channel_avoidance(mac_handle_t hal, bool sap_channel_avoidance)
 
 /**
  * wlansap_set_dfs_preferred_channel_location() - set dfs preferred channel
- * @hHal : HAL pointer
+ * @mac_handle : HAL pointer
  * @dfs_Preferred_Channels_location :
  *       0 - Indicates No preferred channel location restrictions
  *       1 - Indicates SAP Indoor Channels operation only.
@@ -1999,7 +1950,7 @@ wlan_sap_set_channel_avoidance(mac_handle_t hal, bool sap_channel_avoidance)
  *         QDF_STATUS_SUCCESS:  Success and error code otherwise.
  */
 QDF_STATUS
-wlansap_set_dfs_preferred_channel_location(mac_handle_t hHal,
+wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle,
 					   uint8_t
 					   dfs_Preferred_Channels_location)
 {
@@ -2007,11 +1958,11 @@ wlansap_set_dfs_preferred_channel_location(mac_handle_t hHal,
 	QDF_STATUS status;
 	enum dfs_reg dfs_region;
 
-	if (NULL != hHal) {
-		pMac = PMAC_STRUCT(hHal);
+	if (NULL != mac_handle) {
+		pMac = PMAC_STRUCT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid hHal pointer", __func__);
+			  "%s: Invalid mac_handle pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
@@ -2044,38 +1995,16 @@ wlansap_set_dfs_preferred_channel_location(mac_handle_t hHal,
 	return status;
 }
 
-/*==========================================================================
-   FUNCTION    wlansap_set_dfs_target_chnl
-
-   DESCRIPTION
-   This API is used to set next target chnl as provided channel.
-   you can provide any valid channel to this API.
-
-   DEPENDENCIES
-   NA.
-
-   PARAMETERS
-   IN
-   hHal : HAL pointer
-   target_channel : target channel to be set
-
-   RETURN VALUE
-   The QDF_STATUS code associated with performing the operation
-
-   QDF_STATUS_SUCCESS:  Success
-
-   SIDE EFFECTS
-   ============================================================================*/
-QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t hHal,
+QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t mac_handle,
 				       uint8_t target_channel)
 {
 	tpAniSirGlobal pMac = NULL;
 
-	if (NULL != hHal) {
-		pMac = PMAC_STRUCT(hHal);
+	if (NULL != mac_handle) {
+		pMac = PMAC_STRUCT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid hHal pointer", __func__);
+			  "%s: Invalid mac_handle pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 	if (target_channel > 0) {

@@ -1244,20 +1244,63 @@ QDF_STATUS wlansap_start_beacon_req(struct sap_context *sap_ctx);
  */
 QDF_STATUS wlansap_dfs_send_csa_ie_request(struct sap_context *sap_ctx);
 
-QDF_STATUS wlansap_get_dfs_ignore_cac(mac_handle_t hHal, uint8_t *pIgnore_cac);
-QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t hHal, uint8_t ignore_cac);
-QDF_STATUS wlansap_set_dfs_restrict_japan_w53(mac_handle_t hHal,
-			uint8_t disable_Dfs_JapanW3);
+/**
+ * wlansap_get_dfs_ignore_cac() - Get ignore_cac value
+ * @mac_handle: Opaque handle to the global MAC context
+ * @ignore_cac: Location to store ignore_cac value
+ *
+ * This API is used to Get the value of ignore_cac value
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ */
+QDF_STATUS wlansap_get_dfs_ignore_cac(mac_handle_t mac_handle,
+				      uint8_t *ignore_cac);
+
+/**
+ * wlansap_set_dfs_ignore_cac() - Set ignore_cac value
+ * @mac_handle: Opaque handle to the global MAC context
+ * @ignore_cac: value to set for ignore_cac variable in DFS global structure.
+ *
+ * This API is used to Set the value of ignore_cac value
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ */
+QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t mac_handle,
+				      uint8_t ignore_cac);
+
+/**
+ * wlansap_set_dfs_restrict_japan_w53() - enable/disable dfS for japan
+ * @mac_handle: Opaque handle to the global MAC context
+ * @disable_dfs_w53: Indicates if Japan W53 is disabled when set to 1
+ *                   Indicates if Japan W53 is enabled when set to 0
+ *
+ * This API is used to enable or disable Japan W53 Band
+ * Return: The QDF_STATUS code associated with performing the operation
+ *         QDF_STATUS_SUCCESS:  Success
+ */
+QDF_STATUS wlansap_set_dfs_restrict_japan_w53(mac_handle_t mac_handle,
+					      uint8_t disable_dfs_w53);
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 QDF_STATUS
 wlan_sap_set_channel_avoidance(mac_handle_t hal, bool sap_channel_avoidance);
 #endif
 
-QDF_STATUS wlansap_set_dfs_preferred_channel_location(mac_handle_t hHal,
+QDF_STATUS wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle,
 		uint8_t dfs_Preferred_Channels_location);
-QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t hHal,
-			uint8_t target_channel);
+
+/**
+ * wlansap_set_dfs_target_chnl() - Set target channel
+ * @mac_handle: Opaque handle for the global MAC context
+ * @target_channel: target channel to be set
+ *
+ * This API is used to set next target chnl as provided channel.
+ * you can provide any valid channel to this API.
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ */
+QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t mac_handle,
+				       uint8_t target_channel);
 
 /**
  * wlan_sap_get_roam_profile() - Returns sap roam profile.
