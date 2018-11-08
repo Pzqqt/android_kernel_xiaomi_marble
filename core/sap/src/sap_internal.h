@@ -315,7 +315,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t hal_handle,
 QDF_STATUS SapFsm(struct sap_context *sapContext, ptWLAN_SAPEvent sapEvent,
 			 uint8_t *status);
 
-uint8_t sap_select_channel(tHalHandle halHandle, struct sap_context *sap_ctx,
+uint8_t sap_select_channel(mac_handle_t halHandle, struct sap_context *sap_ctx,
 			   tScanResultHandle pScanResult);
 
 QDF_STATUS
@@ -354,7 +354,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList, uint8_t num_mac,
 		 uint8_t *peerMac, uint8_t *index);
 
 #ifdef FEATURE_WLAN_CH_AVOID
-void sap_update_unsafe_channel_list(tHalHandle hal,
+void sap_update_unsafe_channel_list(mac_handle_t hal,
 				    struct sap_context *sap_ctx);
 #endif /* FEATURE_WLAN_CH_AVOID */
 

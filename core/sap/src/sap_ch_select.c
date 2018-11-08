@@ -321,7 +321,7 @@ sap_check_n_add_overlapped_chnls(struct sap_context *sap_ctx,
  *
  * Return: void
  */
-static void sap_process_avoid_ie(tHalHandle hal,
+static void sap_process_avoid_ie(mac_handle_t hal,
 			  struct sap_context *sap_ctx,
 			  tScanResultHandle scan_result,
 			  tSapChSelSpectInfo *spect_info)
@@ -406,7 +406,7 @@ static void sap_process_avoid_ie(tHalHandle hal,
    RETURN VALUE
     NULL
    ============================================================================*/
-void sap_update_unsafe_channel_list(tHalHandle hal, struct sap_context *sap_ctx)
+void sap_update_unsafe_channel_list(mac_handle_t hal, struct sap_context *sap_ctx)
 {
 	uint16_t i, j;
 	uint16_t unsafe_channel_list[NUM_CHANNELS];
@@ -568,7 +568,7 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
    PARAMETERS
 
     IN
-    halHandle          : Pointer to tHalHandle
+    halHandle          : Pointer to mac_handle_t
    *pSpectInfoParams  : Pointer to tSapChSelSpectInfo structure
      sap_ctx           : Pointer to SAP Context
 
@@ -577,7 +577,7 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
 
    SIDE EFFECTS
    ============================================================================*/
-static bool sap_chan_sel_init(tHalHandle halHandle,
+static bool sap_chan_sel_init(mac_handle_t halHandle,
 			      tSapChSelSpectInfo *pSpectInfoParams,
 			      struct sap_context *sap_ctx)
 {
@@ -1512,7 +1512,7 @@ static bool ch_in_pcl(struct sap_context *sap_ctx, uint8_t channel)
  * and number of BSS
  */
 static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
-				     tHalHandle halHandle,
+				     mac_handle_t halHandle,
 				     tScanResultHandle pResult,
 				     struct sap_context *sap_ctx)
 {
@@ -2541,7 +2541,7 @@ static bool sap_is_ch_non_overlap(struct sap_context *sap_ctx, uint16_t ch)
  *
  * Returns: channel number if success, 0 otherwise
  */
-static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
+static uint8_t sap_select_channel_no_scan_result(mac_handle_t hal,
 						 struct sap_context *sap_ctx)
 {
 	enum channel_state ch_type;
@@ -2607,7 +2607,7 @@ static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
 	return first_safe_ch_in_range;
 }
 #else
-static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
+static uint8_t sap_select_channel_no_scan_result(mac_handle_t hal,
 						 struct sap_context *sap_ctx)
 {
 	uint32_t start_ch_num = sap_ctx->acs_cfg->start_ch;
@@ -2636,7 +2636,7 @@ static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
  *
  * Returns: channel number if success, 0 otherwise
  */
-uint8_t sap_select_channel(tHalHandle hal, struct sap_context *sap_ctx,
+uint8_t sap_select_channel(mac_handle_t hal, struct sap_context *sap_ctx,
 			   tScanResultHandle scan_result)
 {
 	/* DFS param object holding all the data req by the algo */
