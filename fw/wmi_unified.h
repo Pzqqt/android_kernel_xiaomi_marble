@@ -9021,6 +9021,13 @@ typedef enum {
     /** Update dot11ObssNbruToleranceTime in fw. Param value: seconds */
     WMI_VDEV_PARAM_UPDATE_OBSS_RU_TOLERANCE_TIME,         /* 0x90 */
 
+    /** Parameter used when MTU size is sent by the host
+     * In particular, this configuration message is used for cases where the
+     * encapsulation header results in a larger max frame size than the
+     * typical 802.3 + SNAP/LLC frame.
+     */
+    WMI_VDEV_PARAM_MAX_MTU_SIZE,                          /* 0x91 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
