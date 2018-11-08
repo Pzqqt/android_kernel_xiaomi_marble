@@ -249,15 +249,24 @@ enum htt_dbg_ext_stats_type {
      * PARAMS:
      *   - config_param0:
      *      [Bit0]          vdev_id_set:1
-         *      set to 1 if vdev_id is set and vdev stats are requested
+     *          set to 1 if vdev_id is set and vdev stats are requested
      *      [Bit8 : Bit1]   vdev_id:8
      *          note:0xFF to get all active vdevs based on pdev_mask.
      *      [Bit31 : Bit9]  rsvd:22
-
+     *
      * RESP MSG:
      *   - htt_tx_sounding_stats_t
      */
     HTT_DBG_EXT_STATS_TX_SOUNDING_INFO           = 22,
+
+    /* HTT_DBG_EXT_STATS_PDEV_OBSS_PD_STATS
+     * PARAMS:
+     *   - config_param0:
+     *      No params
+     * RESP MSG:
+     *   - htt_pdev_obss_pd_stats_t
+     */
+    HTT_DBG_EXT_STATS_PDEV_OBSS_PD_STATS         = 23,
 
 
     /* keep this last */
@@ -353,6 +362,7 @@ typedef enum {
     HTT_STATS_TX_DE_FW2WBM_RING_FULL_HIST_TAG           = 85,    /* htt_tx_de_fw2wbm_ring_full_hist_tlv */
     HTT_STATS_SCHED_TXQ_SCHED_ORDER_SU_TAG              = 86,    /* htt_sched_txq_sched_order_su_tlv */
     HTT_STATS_SCHED_TXQ_SCHED_INELIGIBILITY_TAG         = 87,    /* htt_sched_txq_sched_eligibility_tlv */
+    HTT_STATS_PDEV_OBSS_PD_TAG                          = 88,    /* htt_pdev_obss_pd_stats_tlv */  
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -3600,5 +3610,19 @@ typedef struct {
     htt_tx_sounding_stats_tlv sounding_tlv;
 } htt_tx_sounding_stats_t;
 
+typedef struct {
+    htt_tlv_hdr_t   tlv_hdr;
+ 
+    A_UINT32        num_obss_tx_ppdu_success;
+    A_UINT32        num_obss_tx_ppdu_failure;
+} htt_pdev_obss_pd_stats_tlv;
+ 
+/* NOTE:
+ * This structure is for documentation, and cannot be safely used directly.
+ * Instead, use the constituent TLV structures to fill/parse.
+ */
+typedef struct {
+    htt_pdev_obss_pd_stats_tlv obss_pd_stat;
+} htt_pdev_obss_pd_stats_t;
 
 #endif /* __HTT_STATS_H__ */
