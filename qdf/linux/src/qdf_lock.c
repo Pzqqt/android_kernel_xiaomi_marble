@@ -855,10 +855,8 @@ void qdf_lock_stats_cookie_destroy(struct lock_stats *stats)
 {
 	struct qdf_lock_cookie *cookie = stats->cookie;
 
-	if (cookie == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Double cookie destroy", __func__);
-		QDF_ASSERT(0);
+	if (!cookie) {
+		QDF_DEBUG_PANIC("Lock destroyed twice or never created");
 		return;
 	}
 
