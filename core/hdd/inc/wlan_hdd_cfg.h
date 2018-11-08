@@ -2387,47 +2387,6 @@ enum hdd_dot11_mode {
 #define CFG_AP_OBSS_PROTECTION_MODE_MAX        (1)
 #define CFG_AP_OBSS_PROTECTION_MODE_DEFAULT    (0)
 
-/*
- * <ini>
- * gDisableIntraBssFwd - Disable intra BSS Rx packets
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to disable forwarding of Intra-BSS Rx packets when
- * ap_isolate=1 in hostapd.conf
- *
- * Related: None.
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_AP_STA_SECURITY_SEPERATION_NAME    "gDisableIntraBssFwd"
-#define CFG_AP_STA_SECURITY_SEPERATION_MIN     (0)
-#define CFG_AP_STA_SECURITY_SEPERATION_MAX     (1)
-#define CFG_AP_STA_SECURITY_SEPERATION_DEFAULT (0)
-
-/*
- * <ini>
- * gDisablePacketFilter - Disabling of packet filter support
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to disable packet filter support when set to 1.
- *
- * Related: None.
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
 #define CFG_DISABLE_PACKET_FILTER		"gDisablePacketFilter"
 #define CFG_DISABLE_PACKET_FILTER_MIN		(0)
 #define CFG_DISABLE_PACKET_FILTER_MAX		(1)
@@ -4050,59 +4009,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_SET_TXPOWER_LIMIT5G_MAX                (30)
 #define CFG_SET_TXPOWER_LIMIT5G_DEFAULT            (30)
 
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-
-/*
- * <ini>
- * TxFlowStopQueueThreshold - Stop queue Threshold to pause
- *                            Netif queues when it reaches
- * @Min: 0
- * @Max: 50
- * @Default: 15
- *
- * This ini specifies the threshold of data packets transmitted
- * before pausing netif queues.
- *
- * Related: TxFlowStartQueueOffset
- *
- * Supported Feature: Dynamic Flow Control
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_LL_TX_FLOW_STOP_QUEUE_TH               "TxFlowStopQueueThreshold"
-#define CFG_LL_TX_FLOW_STOP_QUEUE_TH_DEFAULT       (15)
-#define CFG_LL_TX_FLOW_STOP_QUEUE_TH_MIN           (0)
-#define CFG_LL_TX_FLOW_STOP_QUEUE_TH_MAX           (50)
-
-/*
- * <ini>
- * TxFlowStartQueueOffset - Start queue offset to unpause
- *                          Netif queues
- * @Min: 0
- * @Max: 30
- * @Default: 11
- *
- * This ini specifies the offset to upause the netif queues
- * when they are paused due to insufficient descriptors as guided by
- * ini TxFlowStopQueueThreshold.
- *
- * Related: TxFlowStopQueueThreshold
- *
- * Supported Feature: Dynamic Flow Control
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_LL_TX_FLOW_START_QUEUE_OFFSET          "TxFlowStartQueueOffset"
-#define CFG_LL_TX_FLOW_START_QUEUE_OFFSET_DEFAULT  (10)
-#define CFG_LL_TX_FLOW_START_QUEUE_OFFSET_MIN      (0)
-#define CFG_LL_TX_FLOW_START_QUEUE_OFFSET_MAX      (30)
-
-#endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
-
 #ifdef FEATURE_WLAN_RA_FILTERING
 #define CFG_RA_RATE_LIMIT_INTERVAL_NAME            "gRArateLimitInterval"
 #define CFG_RA_RATE_LIMIT_INTERVAL_MIN             (60)
@@ -4256,29 +4162,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_DFS_RADAR_PRI_MULTIPLIER_DEFAULT       (4)
 #define CFG_DFS_RADAR_PRI_MULTIPLIER_MIN           (0)
 #define CFG_DFS_RADAR_PRI_MULTIPLIER_MAX           (10)
-
-/*
- * <ini>
- * gReorderOffloadSupported - Packet reordering offload to firmware
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set default Packet reordering
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_REORDER_OFFLOAD_SUPPORT_NAME    "gReorderOffloadSupported"
-#define CFG_REORDER_OFFLOAD_SUPPORT_MIN     (0)
-#define CFG_REORDER_OFFLOAD_SUPPORT_MAX     (1)
-#define CFG_REORDER_OFFLOAD_SUPPORT_DEFAULT (1)
 
 #define CFG_ENABLE_SAP_SUSPEND                     "gEnableSapSuspend"
 #define CFG_ENABLE_SAP_SUSPEND_MIN                 (0)
@@ -6633,7 +6516,6 @@ struct hdd_config {
 	bool apProtEnabled;
 	uint16_t apProtection;
 	bool apOBSSProtEnabled;
-	bool apDisableIntraBssFwd;
 	enum station_keepalive_method sta_keepalive_method;
 	uint8_t nTxPowerCap;    /* In dBm */
 	bool allow_tpc_from_ap;
@@ -6840,10 +6722,6 @@ struct hdd_config {
 	uint8_t gDisableDfsJapanW53;
 	bool gEnableOverLapCh;
 	bool fRegChangeDefCountry;
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-	uint32_t TxFlowStopQueueThreshold;
-	uint32_t TxFlowStartQueueOffset;
-#endif
 	bool advertiseConcurrentOperation;
 
 	uint8_t allowDFSChannelRoam;
@@ -6855,7 +6733,6 @@ struct hdd_config {
 	bool enable_sap_mandatory_chan_list;
 
 	int32_t dfsRadarPriMultiplier;
-	uint8_t reorderOffloadSupport;
 
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
 	uint8_t SapSccChanAvoidance;

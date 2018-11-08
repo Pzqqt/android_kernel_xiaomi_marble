@@ -9617,9 +9617,9 @@ static inline void hdd_txrx_populate_cds_config(struct cds_config_info
 						struct hdd_context *hdd_ctx)
 {
 	cds_cfg->tx_flow_stop_queue_th =
-		hdd_ctx->config->TxFlowStopQueueThreshold;
+		cfg_get(hdd_ctx->psoc, CFG_DP_TX_FLOW_STOP_QUEUE_TH);
 	cds_cfg->tx_flow_start_queue_offset =
-		hdd_ctx->config->TxFlowStartQueueOffset;
+		cfg_get(hdd_ctx->psoc, CFG_DP_TX_FLOW_START_QUEUE_OFFSET);
 	/* configuration for DP RX Threads */
 	cds_cfg->enable_dp_rx_threads = hdd_ctx->enable_dp_rx_threads;
 	cds_cfg->num_dp_rx_threads = hdd_ctx->config->num_dp_rx_threads;
@@ -9730,12 +9730,12 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->ap_maxoffload_reorderbuffs = value;
 
 	cds_cfg->ap_disable_intrabss_fwd =
-		hdd_ctx->config->apDisableIntraBssFwd;
+		cfg_get(hdd_ctx->psoc, CFG_DP_AP_STA_SECURITY_SEPERATION);
 
 	cds_cfg->dfs_pri_multiplier =
 		hdd_ctx->config->dfsRadarPriMultiplier;
 	cds_cfg->reorder_offload =
-			hdd_ctx->config->reorderOffloadSupport;
+			cfg_get(hdd_ctx->psoc, CFG_DP_REORDER_OFFLOAD_SUPPORT);
 
 	/* IPA micro controller data path offload resource config item */
 	cds_cfg->uc_offload_enabled = ucfg_ipa_uc_is_enabled();
@@ -13935,9 +13935,10 @@ static int hdd_update_dp_config(struct hdd_context *hdd_ctx)
 	params.lro_enable = cfg_get(hdd_ctx->psoc, CFG_DP_LRO);
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 	params.tx_flow_stop_queue_threshold =
-			hdd_ctx->config->TxFlowStopQueueThreshold;
+			cfg_get(hdd_ctx->psoc, CFG_DP_TX_FLOW_STOP_QUEUE_TH);
 	params.tx_flow_start_queue_offset =
-			hdd_ctx->config->TxFlowStartQueueOffset;
+			cfg_get(hdd_ctx->psoc,
+				CFG_DP_TX_FLOW_START_QUEUE_OFFSET);
 #endif
 	params.flow_steering_enable =
 		cfg_get(hdd_ctx->psoc, CFG_DP_FLOW_STEERING_ENABLED);
