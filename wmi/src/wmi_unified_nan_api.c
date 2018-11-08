@@ -22,6 +22,39 @@
 #include <wmi_unified_priv.h>
 #include <wmi_unified_nan_api.h>
 
+QDF_STATUS wmi_unified_nan_req_cmd(wmi_unified_t wmi_handle,
+				   struct nan_msg_params *nan_msg)
+{
+	if (wmi_handle->ops->send_nan_req_cmd)
+		return wmi_handle->ops->send_nan_req_cmd(wmi_handle,
+							 nan_msg);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_nan_disable_req_cmd(wmi_unified_t wmi_handle,
+					   struct nan_disable_req *nan_msg)
+{
+	if (wmi_handle->ops->send_nan_disable_req_cmd)
+		return wmi_handle->ops->send_nan_disable_req_cmd(wmi_handle,
+								 nan_msg);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_nan_event_rsp(wmi_unified_t wmi_handle, void *evt_buf,
+				     struct nan_event_params *nan_evt_params,
+				     uint8_t **nan_msg_buf)
+{
+	if (wmi_handle->ops->extract_nan_event_rsp)
+		return wmi_handle->ops->extract_nan_event_rsp(wmi_handle,
+							      evt_buf,
+							      nan_evt_params,
+							      nan_msg_buf);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 QDF_STATUS wmi_unified_ndp_initiator_req_cmd_send(void *wmi_hdl,
 					struct nan_datapath_initiator_req *req)
 {

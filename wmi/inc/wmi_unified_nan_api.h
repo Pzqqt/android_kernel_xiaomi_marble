@@ -26,14 +26,35 @@
 #include <nan_public_structs.h>
 
 /**
+ * wmi_unified_nan_req_cmd() - to send nan request to target
+ * @wmi_handle: wmi handle
+ * @nan_req: request data which will be non-null
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_nan_req_cmd(wmi_unified_t wmi_handle,
+				   struct nan_msg_params *nan_req);
+
+/**
+ * wmi_unified_nan_disable_req_cmd() - to send nan disable request to target
+ * @wmi_handle: wmi handle
+ * @nan_req: pointer to NAN Disable request structure
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_nan_disable_req_cmd(wmi_unified_t wmi_handle,
+					   struct nan_disable_req *nan_req);
+
+/**
  * wmi_unified_ndp_initiator_req_cmd_send - api to send initiator request to FW
  * @wmi_hdl: wmi handle
  * @req: pointer to request buffer
  *
  * Return: status of operation
  */
-QDF_STATUS wmi_unified_ndp_initiator_req_cmd_send(void *wmi_hdl,
-				struct nan_datapath_initiator_req *req);
+QDF_STATUS
+wmi_unified_ndp_initiator_req_cmd_send(void *wmi_hdl,
+				       struct nan_datapath_initiator_req *req);
 
 /**
  * wmi_unified_ndp_responder_req_cmd_send - api to send responder request to FW
@@ -42,8 +63,9 @@ QDF_STATUS wmi_unified_ndp_initiator_req_cmd_send(void *wmi_hdl,
  *
  * Return: status of operation
  */
-QDF_STATUS wmi_unified_ndp_responder_req_cmd_send(void *wmi_hdl,
-				struct nan_datapath_responder_req *req);
+QDF_STATUS
+wmi_unified_ndp_responder_req_cmd_send(void *wmi_hdl,
+				       struct nan_datapath_responder_req *req);
 
 /**
  * wmi_unified_ndp_end_req_cmd_send - api to send end request to FW
@@ -63,8 +85,9 @@ QDF_STATUS wmi_unified_ndp_end_req_cmd_send(void *wmi_hdl,
  *
  * Return: status of operation
  */
-QDF_STATUS wmi_extract_ndp_initiator_rsp(wmi_unified_t wmi_handle,
-			uint8_t *data, struct nan_datapath_initiator_rsp *rsp);
+QDF_STATUS
+wmi_extract_ndp_initiator_rsp(wmi_unified_t wmi_handle, uint8_t *data,
+			      struct nan_datapath_initiator_rsp *rsp);
 
 /**
  * wmi_extract_ndp_ind - api to extract ndp indication struct from even buffer
@@ -96,8 +119,9 @@ QDF_STATUS wmi_extract_ndp_confirm(wmi_unified_t wmi_handle, uint8_t *data,
  *
  * Return: status of operation
  */
-QDF_STATUS wmi_extract_ndp_responder_rsp(wmi_unified_t wmi_handle,
-			uint8_t *data, struct nan_datapath_responder_rsp *rsp);
+QDF_STATUS
+wmi_extract_ndp_responder_rsp(wmi_unified_t wmi_handle, uint8_t *data,
+			      struct nan_datapath_responder_rsp *rsp);
 
 /**
  * wmi_extract_ndp_end_rsp - api to extract ndp end rsp from even buffer
@@ -118,7 +142,8 @@ QDF_STATUS wmi_extract_ndp_end_rsp(wmi_unified_t wmi_handle, uint8_t *data,
  *
  * Return: status of operation
  */
-QDF_STATUS wmi_extract_ndp_end_ind(wmi_unified_t wmi_handle, uint8_t *data,
+QDF_STATUS
+wmi_extract_ndp_end_ind(wmi_unified_t wmi_handle, uint8_t *data,
 			struct nan_datapath_end_indication_event **ind);
 
 /**
@@ -129,7 +154,20 @@ QDF_STATUS wmi_extract_ndp_end_ind(wmi_unified_t wmi_handle, uint8_t *data,
  *
  * Return: status of operation
  */
-QDF_STATUS wmi_extract_ndp_sch_update(wmi_unified_t wmi_handle, uint8_t *data,
-				struct nan_datapath_sch_update_event *ind);
+QDF_STATUS
+wmi_extract_ndp_sch_update(wmi_unified_t wmi_handle, uint8_t *data,
+			   struct nan_datapath_sch_update_event *ind);
 
+/**
+ * wmi_extract_nan_event_rsp - api to extract nan event into event parameters
+ * @wmi_hdl: wmi handle
+ * @wvt_buf: pointer to the event buffer
+ * @temp_evt_params: Pointer to a temporary parameters structure to populate
+ * @nan_msg_buf: Pointer to the NAN Message buffer encapsulated in the event
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wmi_extract_nan_event_rsp(wmi_unified_t wmi_handle, void *evt_buf,
+				     struct nan_event_params *temp_evt_params,
+				     uint8_t **nan_msg_buf);
 #endif /* _WMI_UNIFIED_NAN_API_H_ */

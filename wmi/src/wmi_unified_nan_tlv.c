@@ -22,6 +22,272 @@
 #include <wmi_unified_priv.h>
 #include <nan_public_structs.h>
 #include <wmi_unified_nan_api.h>
+#include <wlan_nan_msg_common_v2.h>
+
+static QDF_STATUS
+extract_nan_event_rsp_tlv(wmi_unified_t wmi_handle, void *evt_buf,
+			  struct nan_event_params *evt_params,
+			  uint8_t **msg_buf)
+{
+	WMI_NAN_EVENTID_param_tlvs *event;
+	wmi_nan_event_hdr *nan_rsp_event_hdr;
+	nan_msg_header_t *nan_msg_hdr;
+	wmi_nan_event_info *nan_evt_info;
+
+	/*
+	 * This is how received evt looks like
+	 *
+	 * <-------------------- evt_buf ----------------------------------->
+	 *
+	 * <--wmi_nan_event_hdr--><---WMI_TLV_HDR_SIZE---><----- data -------->
+	 *
+	 * +-----------+---------+-----------------------+--------------------+-
+	 * | tlv_header| data_len| WMITLV_TAG_ARRAY_BYTE | nan_rsp_event_data |
+	 * +-----------+---------+-----------------------+--------------------+-
+	 *
+	 * (Only for NAN Enable Resp)
+	 * <--wmi_nan_event_info-->
+	 * +-----------+-----------+
+	 * | tlv_header| event_info|
+	 * +-----------+-----------+
+	 *
+	 */
+
+	event = (WMI_NAN_EVENTID_param_tlvs *)evt_buf;
+	nan_rsp_event_hdr = event->fixed_param;
+
+	/* Actual data may include some padding, so data_len <= num_data */
+	if (nan_rsp_event_hdr->data_len > event->num_data) {
+		WMI_LOGE("%s: Provided NAN event length(%d) exceeding actual length(%d)!",
+			 __func__, nan_rsp_event_hdr->data_len,
+			 event->num_data);
+		return QDF_STATUS_E_INVAL;
+	}
+	evt_params->buf_len = nan_rsp_event_hdr->data_len;
+	*msg_buf = event->data;
+
+	if (nan_rsp_event_hdr->data_len < sizeof(nan_msg_header_t) ||
+	    nan_rsp_event_hdr->data_len > (WMI_SVC_MSG_MAX_SIZE -
+							    WMI_TLV_HDR_SIZE)) {
+		WMI_LOGE("%s: Invalid NAN event data length(%d)!",  __func__,
+			 nan_rsp_event_hdr->data_len);
+		return QDF_STATUS_E_INVAL;
+	}
+	nan_msg_hdr = (nan_msg_header_t *)event->data;
+
+	if (!wmi_service_enabled(wmi_handle, wmi_service_nan_dbs_support)) {
+		evt_params->evt_type = nan_event_id_generic_rsp;
+		return QDF_STATUS_SUCCESS;
+	}
+
+	switch (nan_msg_hdr->msg_id) {
+	case NAN_MSG_ID_ENABLE_RSP:
+		nan_evt_info = event->event_info;
+		evt_params->evt_type = nan_event_id_enable_rsp;
+		evt_params->mac_id = nan_evt_info->mac_id;
+		evt_params->is_nan_enable_success = (nan_evt_info->status == 0);
+		break;
+	case NAN_MSG_ID_DISABLE_IND:
+		evt_params->evt_type = nan_event_id_disable_ind;
+		break;
+	case NAN_MSG_ID_ERROR_RSP:
+		evt_params->evt_type = nan_event_id_error_rsp;
+		break;
+	default:
+		evt_params->evt_type = nan_event_id_generic_rsp;
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_nan_disable_req_cmd_tlv() - to send nan disable request to target
+ * @wmi_handle: wmi handle
+ * @nan_msg: request data which will be non-null
+ *
+ * Return: CDF status
+ */
+static QDF_STATUS send_nan_disable_req_cmd_tlv(wmi_unified_t wmi_handle,
+					       struct nan_disable_req *nan_msg)
+{
+	QDF_STATUS ret;
+	wmi_nan_cmd_param *cmd;
+	wmi_nan_host_config_param *cfg;
+	wmi_buf_t buf;
+	/* Initialize with minimum length required, which is Scenario 2*/
+	uint16_t len = sizeof(*cmd) + sizeof(*cfg) + 2 * WMI_TLV_HDR_SIZE;
+	uint16_t nan_data_len, nan_data_len_aligned = 0;
+	uint8_t *buf_ptr;
+
+	/*
+	 *  Scenario 1: NAN Disable with NAN msg data from upper layers
+	 *
+	 *    <-----nan cmd param-----><-- WMI_TLV_HDR_SIZE --><--- data ---->
+	 *    +------------+----------+-----------------------+--------------+
+	 *    | tlv_header | data_len | WMITLV_TAG_ARRAY_BYTE | nan_msg_data |
+	 *    +------------+----------+-----------------------+--------------+
+	 *
+	 *    <-- WMI_TLV_HDR_SIZE --><------nan host config params----->
+	 *   -+-----------------------+---------------------------------+
+	 *    | WMITLV_TAG_ARRAY_STRUC| tlv_header | 2g/5g disable flags|
+	 *   -+-----------------------+---------------------------------+
+	 *
+	 * Scenario 2: NAN Disable without any NAN msg data from upper layers
+	 *
+	 *    <------nan cmd param------><--WMI_TLV_HDR_SIZE--><--WMI_TLV_HDR_SI
+	 *    +------------+------------+----------------------+----------------
+	 *    | tlv_header | data_len=0 | WMITLV_TAG_ARRAY_BYTE| WMITLV_TAG_ARRA
+	 *    +------------+------------+----------------------+----------------
+	 *
+	 *    ZE----><------nan host config params----->
+	 *    -------+---------------------------------+
+	 *    Y_STRUC| tlv_header | 2g/5g disable flags|
+	 *    -------+---------------------------------+
+	 */
+
+	if (!nan_msg) {
+		WMI_LOGE("%s:nan req is not valid", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	nan_data_len = nan_msg->params.request_data_len;
+
+	if (nan_data_len) {
+		nan_data_len_aligned = roundup(nan_data_len, sizeof(uint32_t));
+		if (nan_data_len_aligned < nan_data_len) {
+			WMI_LOGE("%s: Int overflow while rounding up data_len",
+				 __func__);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		if (nan_data_len_aligned > WMI_SVC_MSG_MAX_SIZE
+							- WMI_TLV_HDR_SIZE) {
+			WMI_LOGE("%s: nan_data_len exceeding wmi_max_msg_size",
+				 __func__);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		len += nan_data_len_aligned;
+	}
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_nan_cmd_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_nan_cmd_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_nan_cmd_param));
+
+	cmd->data_len = nan_data_len;
+	WMI_LOGD("%s: nan data len value is %u", __func__, nan_data_len);
+	buf_ptr += sizeof(wmi_nan_cmd_param);
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, nan_data_len_aligned);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	if (nan_data_len) {
+		qdf_mem_copy(buf_ptr, nan_msg->params.request_data,
+			     cmd->data_len);
+		buf_ptr += nan_data_len_aligned;
+	}
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_nan_host_config_param));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	cfg = (wmi_nan_host_config_param *)buf_ptr;
+	WMITLV_SET_HDR(&cfg->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_nan_host_config_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_nan_host_config_param));
+	cfg->nan_2g_disc_disable = nan_msg->disable_2g_discovery;
+	cfg->nan_5g_disc_disable = nan_msg->disable_5g_discovery;
+
+	wmi_mtrace(WMI_NAN_CMDID, NO_SESSION, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_NAN_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("%s Failed to send set param command ret = %d",
+			 __func__, ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ * send_nan_req_cmd_tlv() - to send nan request to target
+ * @wmi_handle: wmi handle
+ * @nan_msg: request data which will be non-null
+ *
+ * Return: CDF status
+ */
+static QDF_STATUS send_nan_req_cmd_tlv(wmi_unified_t wmi_handle,
+				       struct nan_msg_params *nan_msg)
+{
+	QDF_STATUS ret;
+	wmi_nan_cmd_param *cmd;
+	wmi_buf_t buf;
+	uint16_t len = sizeof(*cmd);
+	uint16_t nan_data_len, nan_data_len_aligned;
+	uint8_t *buf_ptr;
+
+	/*
+	 *    <----- cmd ------------><-- WMI_TLV_HDR_SIZE --><--- data ---->
+	 *    +------------+----------+-----------------------+--------------+
+	 *    | tlv_header | data_len | WMITLV_TAG_ARRAY_BYTE | nan_msg_data |
+	 *    +------------+----------+-----------------------+--------------+
+	 */
+	if (!nan_msg) {
+		WMI_LOGE("%s:nan req is not valid", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	nan_data_len = nan_msg->request_data_len;
+	nan_data_len_aligned = roundup(nan_msg->request_data_len,
+				       sizeof(uint32_t));
+	if (nan_data_len_aligned < nan_msg->request_data_len) {
+		WMI_LOGE("%s: integer overflow while rounding up data_len",
+			 __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (nan_data_len_aligned > WMI_SVC_MSG_MAX_SIZE - WMI_TLV_HDR_SIZE) {
+		WMI_LOGE("%s: wmi_max_msg_size overflow for given datalen",
+			 __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	len += WMI_TLV_HDR_SIZE + nan_data_len_aligned;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_nan_cmd_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_nan_cmd_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_nan_cmd_param));
+	cmd->data_len = nan_msg->request_data_len;
+	WMI_LOGD("%s: The data len value is %u",  __func__,
+		 nan_msg->request_data_len);
+	buf_ptr += sizeof(wmi_nan_cmd_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, nan_data_len_aligned);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	qdf_mem_copy(buf_ptr, nan_msg->request_data, cmd->data_len);
+
+	wmi_mtrace(WMI_NAN_CMDID, NO_SESSION, 0);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_NAN_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("%s Failed to send set param command ret = %d",
+			 __func__, ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
 
 static QDF_STATUS nan_ndp_initiator_req_tlv(wmi_unified_t wmi_handle,
 				struct nan_datapath_initiator_req *ndp_req)
@@ -846,6 +1112,9 @@ void wmi_nan_attach_tlv(wmi_unified_t wmi_handle)
 {
 	struct wmi_ops *ops = wmi_handle->ops;
 
+	ops->send_nan_req_cmd = send_nan_req_cmd_tlv;
+	ops->send_nan_disable_req_cmd = send_nan_disable_req_cmd_tlv;
+	ops->extract_nan_event_rsp = extract_nan_event_rsp_tlv;
 	ops->send_ndp_initiator_req_cmd = nan_ndp_initiator_req_tlv;
 	ops->send_ndp_responder_req_cmd = nan_ndp_responder_req_tlv;
 	ops->send_ndp_end_req_cmd = nan_ndp_end_req_tlv;
