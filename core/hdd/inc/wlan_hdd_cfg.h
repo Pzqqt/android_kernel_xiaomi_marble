@@ -6841,6 +6841,7 @@ struct hdd_config {
 	uint32_t tcp_delack_thres_low;
 	uint32_t tcp_tx_high_tput_thres;
 	uint32_t tcp_delack_timer_count;
+	bool     enable_tcp_param_update;
 	u8  periodic_stats_disp_time;
 #endif /* MSM_PLATFORM */
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL

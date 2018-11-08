@@ -3695,4 +3695,54 @@ void hdd_update_dynamic_mac(struct hdd_context *hdd_ctx,
 			    struct qdf_mac_addr *curr_mac_addr,
 			    struct qdf_mac_addr *new_mac_addr);
 
+#ifdef MSM_PLATFORM
+/**
+ * wlan_hdd_send_tcp_param_update_event() - Send vendor event to update
+ * TCP parameter through Wi-Fi HAL
+ * @hdd_ctx: Pointer to HDD context
+ * @data: Parameters to update
+ * @dir: Direction(tx/rx) to update
+ *
+ * Return: None
+ */
+void wlan_hdd_send_tcp_param_update_event(struct hdd_context *hdd_ctx,
+					  void *data,
+					  uint8_t dir);
+
+/**
+ * wlan_hdd_update_tcp_rx_param() - update TCP param in RX dir
+ * @hdd_ctx: Pointer to HDD context
+ * @data: Parameters to update
+ *
+ * Return: None
+ */
+void wlan_hdd_update_tcp_rx_param(struct hdd_context *hdd_ctx, void *data);
+
+/**
+ * wlan_hdd_update_tcp_tx_param() - update TCP param in TX dir
+ * @hdd_ctx: Pointer to HDD context
+ * @data: Parameters to update
+ *
+ * Return: None
+ */
+void wlan_hdd_update_tcp_tx_param(struct hdd_context *hdd_ctx, void *data);
+#else
+static inline
+void wlan_hdd_update_tcp_rx_param(struct hdd_context *hdd_ctx, void *data)
+{
+}
+
+static inline
+void wlan_hdd_update_tcp_tx_param(struct hdd_context *hdd_ctx, void *data)
+{
+}
+
+static inline
+void wlan_hdd_send_tcp_param_update_event(struct hdd_context *hdd_ctx,
+					  void *data,
+					  uint8_t dir)
+{
+}
+
+#endif /* MSM_PLATFORM */
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

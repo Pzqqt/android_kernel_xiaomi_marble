@@ -377,6 +377,166 @@ void wlan_hdd_mod_fc_timer(struct hdd_adapter *adapter,
 }
 #endif /* QCA_HL_NETDEV_FLOW_CONTROL */
 
+#ifdef MSM_PLATFORM
+void wlan_hdd_update_tcp_rx_param(struct hdd_context *hdd_ctx, void *data)
+{
+	if (!hdd_ctx) {
+		hdd_err("HDD context is null");
+		return;
+	}
+
+	if (!data) {
+		hdd_err("Data is null");
+		return;
+	}
+	if (hdd_ctx->config->enable_tcp_param_update)
+		wlan_hdd_send_tcp_param_update_event(hdd_ctx, data, 1);
+	else
+		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+					    WLAN_SVC_WLAN_TP_IND,
+					    data,
+					    sizeof(struct wlan_rx_tp_data));
+}
+
+void wlan_hdd_update_tcp_tx_param(struct hdd_context *hdd_ctx, void *data)
+{
+	enum wlan_tp_level next_tx_level;
+	struct wlan_tx_tp_data *tx_tp_data;
+
+	if (!hdd_ctx) {
+		hdd_err("HDD context is null");
+		return;
+	}
+
+	if (!data) {
+		hdd_err("Data is null");
+		return;
+	}
+
+	tx_tp_data = (struct wlan_tx_tp_data *)data;
+	next_tx_level = tx_tp_data->level;
+
+	if (hdd_ctx->config->enable_tcp_param_update)
+		wlan_hdd_send_tcp_param_update_event(hdd_ctx, data, 0);
+	else
+		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+					    WLAN_SVC_WLAN_TP_TX_IND,
+					    &next_tx_level,
+					    sizeof(next_tx_level));
+}
+
+/**
+ * wlan_hdd_send_tcp_param_update_event() - Send vendor event to update
+ * TCP parameter through Wi-Fi HAL
+ * @hdd_ctx: Pointer to HDD context
+ * @data: Parameters to update
+ * @dir: Direction(tx/rx) to update
+ *
+ * Return: None
+ */
+void wlan_hdd_send_tcp_param_update_event(struct hdd_context *hdd_ctx,
+					  void *data,
+					  uint8_t dir)
+{
+	struct sk_buff *vendor_event;
+	uint32_t event_len;
+	bool tcp_limit_output = false;
+	bool tcp_del_ack_ind_enabled = false;
+	bool tcp_adv_win_scl_enabled = false;
+	enum wlan_tp_level next_tp_level = WLAN_SVC_TP_NONE;
+
+	event_len = sizeof(uint8_t) + sizeof(uint8_t) + NLMSG_HDRLEN;
+
+	if (dir == 0) /*TX Flow */ {
+		struct wlan_tx_tp_data *tx_tp_data =
+				(struct wlan_tx_tp_data *)data;
+
+		next_tp_level = tx_tp_data->level;
+
+		if (tx_tp_data->tcp_limit_output) {
+			/* TCP_LIMIT_OUTPUT_BYTES */
+			event_len += sizeof(uint32_t);
+			tcp_limit_output = true;
+		}
+	} else if (dir == 1) /* RX Flow */ {
+		struct wlan_rx_tp_data *rx_tp_data =
+				(struct wlan_rx_tp_data *)data;
+
+		next_tp_level = rx_tp_data->level;
+
+		if (rx_tp_data->rx_tp_flags & TCP_DEL_ACK_IND_MASK) {
+			event_len += sizeof(uint32_t); /* TCP_DELACK_SEG */
+			tcp_del_ack_ind_enabled = true;
+		}
+		if (rx_tp_data->rx_tp_flags & TCP_ADV_WIN_SCL_MASK) {
+			event_len += sizeof(uint32_t); /* TCP_ADV_WIN_SCALE */
+			tcp_adv_win_scl_enabled = true;
+		}
+	} else {
+		hdd_err("Invalid Direction [%d]", dir);
+		return;
+	}
+
+	vendor_event =
+	cfg80211_vendor_event_alloc(
+			hdd_ctx->wiphy,
+			NULL, event_len,
+			QCA_NL80211_VENDOR_SUBCMD_THROUGHPUT_CHANGE_EVENT_INDEX,
+			GFP_KERNEL);
+
+	if (!vendor_event) {
+		hdd_err("cfg80211_vendor_event_alloc failed");
+		return;
+	}
+
+	if (nla_put_u8(
+		vendor_event,
+		QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_DIRECTION,
+		dir))
+		goto tcp_param_change_nla_failed;
+
+	if (nla_put_u8(
+		vendor_event,
+		QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_THROUGHPUT_LEVEL,
+		(next_tp_level == WLAN_SVC_TP_LOW ?
+		QCA_WLAN_THROUGHPUT_LEVEL_LOW :
+		QCA_WLAN_THROUGHPUT_LEVEL_HIGH)))
+		goto tcp_param_change_nla_failed;
+
+	if (tcp_limit_output &&
+	    nla_put_u32(
+		vendor_event,
+		QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_TCP_LIMIT_OUTPUT_BYTES,
+		(next_tp_level == WLAN_SVC_TP_LOW ?
+		 TCP_LIMIT_OUTPUT_BYTES_LOW :
+		 TCP_LIMIT_OUTPUT_BYTES_HI)))
+		goto tcp_param_change_nla_failed;
+
+	if (tcp_del_ack_ind_enabled &&
+	    (nla_put_u32(
+		vendor_event,
+		QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_TCP_DELACK_SEG,
+		(next_tp_level == WLAN_SVC_TP_LOW ?
+		 TCP_DEL_ACK_LOW : TCP_DEL_ACK_HI))))
+		goto tcp_param_change_nla_failed;
+
+	if (tcp_adv_win_scl_enabled &&
+	    (nla_put_u32(
+		vendor_event,
+		QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_TCP_ADV_WIN_SCALE,
+		(next_tp_level == WLAN_SVC_TP_LOW ?
+		 WIN_SCALE_LOW : WIN_SCALE_HI))))
+		goto tcp_param_change_nla_failed;
+
+	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
+	return;
+
+tcp_param_change_nla_failed:
+	hdd_err("nla_put api failed");
+	kfree_skb(vendor_event);
+}
+#endif /* MSM_PLATFORM */
+
 /**
  * wlan_hdd_txrx_pause_cb() - pause callback from txrx layer
  * @vdev_id: vdev_id
@@ -7450,9 +7610,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			rx_tp_data.rx_tp_flags |= TCP_ADV_WIN_SCL;
 
 		rx_tp_data.level = next_rx_level;
-		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
-				WLAN_SVC_WLAN_TP_IND, &rx_tp_data,
-				sizeof(rx_tp_data));
+		wlan_hdd_update_tcp_rx_param(hdd_ctx, &rx_tp_data);
 	}
 
 	/* fine-tuning parameters for TX Flows */
@@ -7465,14 +7623,15 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 	if ((hdd_ctx->config->enable_tcp_limit_output) &&
 	    (hdd_ctx->cur_tx_level != next_tx_level)) {
+		struct wlan_tx_tp_data tx_tp_data = {0};
+
 		hdd_debug("change TCP TX trigger level %d, average_tx: %llu",
 				next_tx_level, temp_tx);
 		hdd_ctx->cur_tx_level = next_tx_level;
 		tx_level_change = true;
-		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
-				WLAN_SVC_WLAN_TP_TX_IND,
-				&next_tx_level,
-				sizeof(next_tx_level));
+		tx_tp_data.level = next_tx_level;
+		tx_tp_data.tcp_limit_output = true;
+		wlan_hdd_update_tcp_tx_param(hdd_ctx, &tx_tp_data);
 	}
 
 	index = hdd_ctx->hdd_txrx_hist_idx;
