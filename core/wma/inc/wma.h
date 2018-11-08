@@ -2019,8 +2019,14 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
  *
  * Return: None
  */
+#ifndef CONFIG_HL_SUPPORT
 void wma_mgmt_nbuf_unmap_cb(struct wlan_objmgr_pdev *pdev,
 			    qdf_nbuf_t buf);
+#else
+static inline void wma_mgmt_nbuf_unmap_cb(struct wlan_objmgr_pdev *pdev,
+					  qdf_nbuf_t buf)
+{}
+#endif
 
 /**
  * wma_chan_info_event_handler() - chan info event handler
