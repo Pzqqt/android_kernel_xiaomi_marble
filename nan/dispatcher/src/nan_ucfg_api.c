@@ -383,9 +383,9 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
-void ucfg_nan_event_handler(struct wlan_objmgr_psoc *psoc,
-			    struct wlan_objmgr_vdev *vdev,
-			    uint32_t type, void *msg)
+void ucfg_nan_datapath_event_handler(struct wlan_objmgr_psoc *psoc,
+				     struct wlan_objmgr_vdev *vdev,
+				     uint32_t type, void *msg)
 {
 	struct nan_psoc_priv_obj *psoc_obj = nan_get_psoc_priv_obj(psoc);
 
@@ -394,15 +394,11 @@ void ucfg_nan_event_handler(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	psoc_obj->cb_obj.os_if_event_handler(psoc, vdev, type, msg);
+	psoc_obj->cb_obj.os_if_ndp_event_handler(psoc, vdev, type, msg);
 }
 
 int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
-				    struct nan_callbacks *cb_obj,
-				    void (os_if_event_handler)(
-				    struct wlan_objmgr_psoc *,
-				    struct wlan_objmgr_vdev *,
-				    uint32_t, void *))
+				    struct nan_callbacks *cb_obj)
 {
 	struct nan_psoc_priv_obj *psoc_obj = nan_get_psoc_priv_obj(psoc);
 
@@ -410,8 +406,6 @@ int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
 		nan_err("nan psoc priv object is NULL");
 		return -EINVAL;
 	}
-
-	psoc_obj->cb_obj.os_if_event_handler = os_if_event_handler;
 
 	psoc_obj->cb_obj.ndi_open = cb_obj->ndi_open;
 	psoc_obj->cb_obj.ndi_start = cb_obj->ndi_start;
@@ -425,6 +419,10 @@ int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
 	psoc_obj->cb_obj.get_peer_idx = cb_obj->get_peer_idx;
 	psoc_obj->cb_obj.new_peer_ind = cb_obj->new_peer_ind;
 	psoc_obj->cb_obj.peer_departed_ind = cb_obj->peer_departed_ind;
+	psoc_obj->cb_obj.os_if_ndp_event_handler =
+				cb_obj->os_if_ndp_event_handler;
+	psoc_obj->cb_obj.os_if_nan_event_handler =
+				cb_obj->os_if_nan_event_handler;
 
 	return 0;
 }

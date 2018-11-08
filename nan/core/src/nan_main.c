@@ -319,8 +319,8 @@ static QDF_STATUS nan_handle_confirm(
 		psoc_nan_obj->cb_obj.delete_peers_by_addr(vdev_id,
 						confirm->peer_ndi_mac_addr);
 	}
-	psoc_nan_obj->cb_obj.os_if_event_handler(psoc, confirm->vdev,
-						 NDP_CONFIRM, confirm);
+	psoc_nan_obj->cb_obj.os_if_ndp_event_handler(psoc, confirm->vdev,
+						     NDP_CONFIRM, confirm);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -345,8 +345,8 @@ static QDF_STATUS nan_handle_initiator_rsp(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	psoc_nan_obj->cb_obj.os_if_event_handler(psoc, rsp->vdev,
-					NDP_INITIATOR_RSP, rsp);
+	psoc_nan_obj->cb_obj.os_if_ndp_event_handler(psoc, rsp->vdev,
+						     NDP_INITIATOR_RSP, rsp);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -389,8 +389,10 @@ static QDF_STATUS nan_handle_ndp_ind(
 		}
 	}
 	if (NAN_DATAPATH_ROLE_RESPONDER == ndp_ind->role)
-		psoc_nan_obj->cb_obj.os_if_event_handler(psoc, ndp_ind->vdev,
-						NDP_INDICATION, ndp_ind);
+		psoc_nan_obj->cb_obj.os_if_ndp_event_handler(psoc,
+							     ndp_ind->vdev,
+							     NDP_INDICATION,
+							     ndp_ind);
 
 	return status;
 }
@@ -425,8 +427,8 @@ static QDF_STATUS nan_handle_responder_rsp(
 			rsp->status = QDF_STATUS_E_FAILURE;
 		}
 	}
-	psoc_nan_obj->cb_obj.os_if_event_handler(psoc, rsp->vdev,
-						 NDP_RESPONDER_RSP, rsp);
+	psoc_nan_obj->cb_obj.os_if_ndp_event_handler(psoc, rsp->vdev,
+						     NDP_RESPONDER_RSP, rsp);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -451,8 +453,8 @@ static QDF_STATUS nan_handle_ndp_end_rsp(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	psoc_nan_obj->cb_obj.os_if_event_handler(psoc, rsp->vdev,
-						NDP_END_RSP, rsp);
+	psoc_nan_obj->cb_obj.os_if_ndp_event_handler(psoc, rsp->vdev,
+						     NDP_END_RSP, rsp);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -476,8 +478,28 @@ static QDF_STATUS nan_handle_end_ind(
 	}
 
 	psoc_nan_obj->cb_obj.ndp_delete_peers(ind->ndp_map, ind->num_ndp_ids);
-	psoc_nan_obj->cb_obj.os_if_event_handler(psoc, ind->vdev,
-						 NDP_END_IND, ind);
+	psoc_nan_obj->cb_obj.os_if_ndp_event_handler(psoc, ind->vdev,
+						     NDP_END_IND, ind);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS nan_handle_enable_rsp(struct nan_event_params *evt_params)
+{
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = evt_params->psoc;
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (evt_params->is_nan_enable_success)
+		nan_set_discovery_state(evt_params->psoc, NAN_DISC_ENABLED);
+	else
+		nan_set_discovery_state(evt_params->psoc, NAN_DISC_DISABLED);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -500,8 +522,51 @@ static QDF_STATUS nan_handle_schedule_update(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	psoc_nan_obj->cb_obj.os_if_event_handler(psoc, ind->vdev,
-						 NDP_SCHEDULE_UPDATE, ind);
+	psoc_nan_obj->cb_obj.os_if_ndp_event_handler(psoc, ind->vdev,
+						     NDP_SCHEDULE_UPDATE, ind);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS nan_discovery_event_handler(struct scheduler_msg *msg)
+{
+	struct nan_event_params *nan_event;
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	if (!msg || !msg->bodyptr) {
+		nan_err("msg body is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	nan_event = msg->bodyptr;
+	if (!nan_event->psoc) {
+		nan_err("psoc is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(nan_event->psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	switch (msg->type) {
+	case nan_event_id_enable_rsp:
+		nan_handle_enable_rsp(nan_event);
+		break;
+	case nan_event_id_disable_ind:
+		nan_set_discovery_state(nan_event->psoc,
+					NAN_DISC_DISABLED);
+		break;
+	case nan_event_id_generic_rsp:
+	case nan_event_id_error_rsp:
+		break;
+	default:
+		nan_err("Unknown event ID type - %d", msg->type);
+		break;
+	}
+
+	psoc_nan_obj->cb_obj.os_if_nan_event_handler(nan_event);
 
 	return QDF_STATUS_SUCCESS;
 }
