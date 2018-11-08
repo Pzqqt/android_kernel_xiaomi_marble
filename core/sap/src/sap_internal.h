@@ -295,7 +295,7 @@ void wlansap_context_put(struct sap_context *ctx);
 
 /**
  * wlansap_pre_start_bss_acs_scan_callback() - callback for scan results
- * @hal_handle:    the hal_handle passed in with the scan request
+ * @mac_handle:    the mac_handle passed in with the scan request
  * @sap_ctx:       the SAP context pointer.
  * @scanid:        scan id passed
  * @sessionid:     session identifier
@@ -306,7 +306,7 @@ void wlansap_context_put(struct sap_context *ctx);
  *
  * Return: The QDF_STATUS code associated with performing the operation
  */
-QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t hal_handle,
+QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 						   struct sap_context *sap_ctx,
 						   uint8_t sessionid,
 						   uint32_t scanid,

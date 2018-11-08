@@ -175,7 +175,7 @@ static const char *acs_scan_done_status_str(eCsrScanStatus status)
 	}
 }
 
-QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t hal_handle,
+QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t mac_handle,
 						   struct sap_context *sap_ctx,
 						   uint8_t sessionid,
 						   uint32_t scanid,
@@ -196,7 +196,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t hal_handle,
 			sap_select_default_oper_chan(sap_ctx->acs_cfg);
 		sap_ctx->channel = oper_channel;
 		sap_ctx->acs_cfg->pri_ch = oper_channel;
-		sap_config_acs_result(hal_handle, sap_ctx,
+		sap_config_acs_result(mac_handle, sap_ctx,
 				      sap_ctx->acs_cfg->ht_sec_ch);
 		sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
 		sap_ctx->sap_status = eSAP_STATUS_SUCCESS;
@@ -210,7 +210,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t hal_handle,
 	* 2. Run channel selection algorithm
 	* select channel and store in sap_context->Channel
 	*/
-	scan_get_result_status = sme_scan_get_result(hal_handle,
+	scan_get_result_status = sme_scan_get_result(mac_handle,
 					sap_ctx->sessionId,
 					NULL, &presult);
 	if ((scan_get_result_status != QDF_STATUS_SUCCESS) &&
@@ -237,7 +237,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t hal_handle,
 				  scanid);
 		}
 #endif
-		oper_channel = sap_select_channel(hal_handle, sap_ctx, presult);
+		oper_channel = sap_select_channel(mac_handle, sap_ctx, presult);
 		sme_scan_result_purge(presult);
 	}
 
@@ -259,7 +259,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(mac_handle_t hal_handle,
 		sap_ctx->acs_cfg->pri_ch = oper_channel;
 		sap_ctx->channel = oper_channel;
 	}
-	sap_config_acs_result(hal_handle, sap_ctx,
+	sap_config_acs_result(mac_handle, sap_ctx,
 			sap_ctx->acs_cfg->ht_sec_ch);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -402,20 +402,20 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
  * wlansap_roam_process_dfs_chansw_update() - handles the case for
  * eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS in wlansap_roam_callback()
  *
- * @hal:           hal global context
+ * @mac_handle:    opaque handle to the global MAC context
  * @sap_ctx:       sap context
  * @ret_status:    update return status
  *
  * Return: void
  */
 static void
-wlansap_roam_process_dfs_chansw_update(mac_handle_t hHal,
-					    struct sap_context *sap_ctx,
-					    QDF_STATUS *ret_status)
+wlansap_roam_process_dfs_chansw_update(mac_handle_t mac_handle,
+				       struct sap_context *sap_ctx,
+				       QDF_STATUS *ret_status)
 {
 	uint8_t intf;
 	QDF_STATUS qdf_status;
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hHal);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
 	uint8_t dfs_beacon_start_req = 0;
 	bool sap_scc_dfs;
 
@@ -430,7 +430,8 @@ wlansap_roam_process_dfs_chansw_update(mac_handle_t hHal,
 		 */
 		dfs_beacon_start_req = true;
 		sap_ctx->pre_cac_complete = false;
-		*ret_status = sme_roam_start_beacon_req(hHal, sap_ctx->bssid,
+		*ret_status = sme_roam_start_beacon_req(mac_handle,
+							sap_ctx->bssid,
 							dfs_beacon_start_req);
 		return;
 	}
@@ -487,8 +488,8 @@ wlansap_roam_process_dfs_chansw_update(mac_handle_t hHal,
 	 * radio limitation.
 	 *
 	 */
-	sap_scc_dfs = sap_is_conc_sap_doing_scc_dfs(hHal, sap_ctx);
-	if (sap_get_total_number_sap_intf(hHal) <= 1 ||
+	sap_scc_dfs = sap_is_conc_sap_doing_scc_dfs(mac_handle, sap_ctx);
+	if (sap_get_total_number_sap_intf(mac_handle) <= 1 ||
 	    policy_mgr_is_current_hwmode_dbs(mac_ctx->psoc) ||
 	    !sap_scc_dfs) {
 		sap_get_cac_dur_dfs_region(sap_ctx,
@@ -522,7 +523,7 @@ wlansap_roam_process_dfs_chansw_update(mac_handle_t hHal,
 	 * which causes some of the stability issues in old platforms.
 	 */
 	if (false ==
-	    is_concurrent_sap_ready_for_channel_change(hHal, sap_ctx)) {
+	    is_concurrent_sap_ready_for_channel_change(mac_handle, sap_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 			  FL("sapdfs: sapctx[%pK] ready but not concurrent sap"),
 			  sap_ctx);
@@ -1238,14 +1239,14 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 	uint8_t session_id;
 	bool success = false;
 	eCsrScanStatus scan_status = eCSR_SCAN_FAILURE;
-	mac_handle_t hal_handle;
+	mac_handle_t mac_handle;
 
 	session_id = wlan_vdev_get_id(vdev);
 	scan_id = event->scan_id;
-	hal_handle = cds_get_context(QDF_MODULE_ID_SME);
-	if (!hal_handle) {
+	mac_handle = cds_get_context(QDF_MODULE_ID_SME);
+	if (!mac_handle) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
-			  FL("invalid h_hal"));
+			  FL("invalid MAC handle"));
 		return;
 	}
 
@@ -1258,7 +1259,7 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 	if (success)
 		scan_status = eCSR_SCAN_SUCCESS;
 
-	wlansap_pre_start_bss_acs_scan_callback(hal_handle,
+	wlansap_pre_start_bss_acs_scan_callback(mac_handle,
 						arg, session_id,
 						scan_id, scan_status);
 }
