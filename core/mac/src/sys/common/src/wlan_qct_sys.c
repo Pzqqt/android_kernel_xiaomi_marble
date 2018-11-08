@@ -124,7 +124,6 @@ QDF_STATUS umac_stop(void)
 
 /**
  * sys_mc_process_msg() - to process system mc thread messages
- * @p_cds_context: pointer to cds context
  * @pMsg: message pointer
  *
  * This API is used to process the message
@@ -135,7 +134,7 @@ static QDF_STATUS sys_mc_process_msg(struct scheduler_msg *pMsg)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	data_stall_detect_cb data_stall_detect_callback;
-	void *hHal;
+	mac_handle_t mac_handle;
 
 	if (NULL == pMsg) {
 		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
@@ -157,16 +156,16 @@ static QDF_STATUS sys_mc_process_msg(struct scheduler_msg *pMsg)
 		case SYS_MSG_ID_UMAC_STOP:
 			QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
 				"Processing SYS MC STOP");
-			hHal = cds_get_context(QDF_MODULE_ID_PE);
-			if (NULL == hHal) {
+			mac_handle = cds_get_context(QDF_MODULE_ID_PE);
+			if (NULL == mac_handle) {
 				QDF_TRACE(QDF_MODULE_ID_SYS,
 					QDF_TRACE_LEVEL_ERROR,
-					"%s: Invalid hHal", __func__);
+					"%s: Invalid mac_handle", __func__);
 				break;
 			}
-			qdf_status = sme_stop(hHal);
+			qdf_status = sme_stop(mac_handle);
 			QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-			qdf_status = mac_stop(hHal);
+			qdf_status = mac_stop(mac_handle);
 			QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 			((sys_rsp_cb) pMsg->callback)(pMsg->bodyptr);
 			qdf_status = QDF_STATUS_SUCCESS;
