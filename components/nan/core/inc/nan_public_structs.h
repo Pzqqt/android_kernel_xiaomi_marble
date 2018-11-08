@@ -472,6 +472,39 @@ struct nan_datapath_end_req {
 };
 
 /**
+ * enum nan_event_id_types - NAN event ID types
+ * @nan_event_id_error_rsp: NAN event indicating error
+ * @nan_event_id_enable_rsp: NAN Enable Response event ID
+ * @nan_event_id_disable_ind: NAN Disable Indication event ID
+ * @nan_event_id_generic_rsp: All remaining NAN events, treated as passthrough
+ */
+enum nan_event_id_types {
+	nan_event_id_error_rsp = 0,
+	nan_event_id_enable_rsp,
+	nan_event_id_disable_ind,
+	nan_event_id_generic_rsp,
+};
+
+/**
+ * struct nan_event_params - NAN event received from the Target
+ * @psoc: Pointer to the psoc object
+ * @evt_type: NAN Discovery event type
+ * @is_nan_enable_success: Status from the NAN Enable Response event
+ * @mac_id: MAC ID associated with NAN Discovery from NAN Enable Response event
+ * @buf_len: Event buffer length
+ * @buf: Event buffer starts here
+ */
+struct nan_event_params {
+	struct wlan_objmgr_psoc *psoc;
+	enum nan_event_id_types evt_type;
+	bool is_nan_enable_success;
+	uint8_t mac_id;
+	uint32_t buf_len;
+	/* Variable length, do not add anything after this */
+	uint8_t buf[];
+};
+
+/**
  * struct nan_msg_params - NAN request params
  * @request_data_len: request data length
  * @request_data: request data
@@ -652,7 +685,8 @@ struct nan_datapath_sch_update_event {
 
 /**
  * struct nan_callbacks - struct containing callback to non-converged driver
- * @os_if_event_handler: OS IF Callback for handling the events
+ * @os_if_nan_event_handler: OS IF Callback for handling NAN Discovery events
+ * @os_if_ndp_event_handler: OS IF Callback for handling NAN Datapath events
  * @ndi_open: HDD callback for creating the NAN Datapath Interface
  * @ndi_start: HDD callback for starting the NAN Datapath Interface
  * @ndi_close: HDD callback for closing the NAN Datapath Interface
@@ -668,10 +702,10 @@ struct nan_datapath_sch_update_event {
  */
 struct nan_callbacks {
 	/* callback to os_if layer from umac */
-	void (*os_if_event_handler)(struct wlan_objmgr_psoc *psoc,
-				    struct wlan_objmgr_vdev *vdev,
-				    uint32_t type, void *msg);
-
+	void (*os_if_nan_event_handler)(struct nan_event_params *nan_event);
+	void (*os_if_ndp_event_handler)(struct wlan_objmgr_psoc *psoc,
+					struct wlan_objmgr_vdev *vdev,
+					uint32_t type, void *msg);
 	int (*ndi_open)(char *iface_name);
 	int (*ndi_start)(char *iface_name, uint16_t);
 	void (*ndi_close)(uint8_t);

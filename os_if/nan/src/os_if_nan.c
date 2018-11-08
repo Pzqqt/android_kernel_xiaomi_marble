@@ -1989,9 +1989,9 @@ ndp_sch_ind_nla_failed:
 	kfree_skb(vendor_event);
 }
 
-void os_if_nan_event_handler(struct wlan_objmgr_psoc *psoc,
-			     struct wlan_objmgr_vdev *vdev,
-			     uint32_t type, void *msg)
+static void os_if_nan_datapath_event_handler(struct wlan_objmgr_psoc *psoc,
+					     struct wlan_objmgr_vdev *vdev,
+					     uint32_t type, void *msg)
 {
 	switch (type) {
 	case NAN_DATAPATH_INF_CREATE_RSP:
@@ -2032,13 +2032,6 @@ void os_if_nan_event_handler(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
-int os_if_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
-				     struct nan_callbacks *cb_obj)
-{
-	return ucfg_nan_register_hdd_callbacks(psoc, cb_obj,
-						os_if_nan_event_handler);
-}
-
 int os_if_nan_register_lim_callbacks(struct wlan_objmgr_psoc *psoc,
 				     struct nan_callbacks *cb_obj)
 {
@@ -2060,13 +2053,15 @@ void os_if_nan_post_ndi_create_rsp(struct wlan_objmgr_psoc *psoc,
 	if (success) {
 		rsp.status = NAN_DATAPATH_RSP_STATUS_SUCCESS;
 		rsp.reason = 0;
-		os_if_nan_event_handler(psoc, vdev,
-					NAN_DATAPATH_INF_CREATE_RSP, &rsp);
+		os_if_nan_datapath_event_handler(psoc, vdev,
+						 NAN_DATAPATH_INF_CREATE_RSP,
+						 &rsp);
 	} else {
 		rsp.status = NAN_DATAPATH_RSP_STATUS_ERROR;
 		rsp.reason = NAN_DATAPATH_NAN_DATA_IFACE_CREATE_FAILED;
-		os_if_nan_event_handler(psoc, vdev,
-					NAN_DATAPATH_INF_CREATE_RSP, &rsp);
+		os_if_nan_datapath_event_handler(psoc, vdev,
+						 NAN_DATAPATH_INF_CREATE_RSP,
+						 &rsp);
 	}
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
 }
@@ -2085,13 +2080,15 @@ void os_if_nan_post_ndi_delete_rsp(struct wlan_objmgr_psoc *psoc,
 	if (success) {
 		rsp.status = NAN_DATAPATH_RSP_STATUS_SUCCESS;
 		rsp.reason = 0;
-		os_if_nan_event_handler(psoc, vdev,
-					NAN_DATAPATH_INF_DELETE_RSP, &rsp);
+		os_if_nan_datapath_event_handler(psoc, vdev,
+						 NAN_DATAPATH_INF_DELETE_RSP,
+						 &rsp);
 	} else {
 		rsp.status = NAN_DATAPATH_RSP_STATUS_ERROR;
 		rsp.reason = NAN_DATAPATH_NAN_DATA_IFACE_DELETE_FAILED;
-		os_if_nan_event_handler(psoc, vdev,
-					NAN_DATAPATH_INF_DELETE_RSP, &rsp);
+		os_if_nan_datapath_event_handler(psoc, vdev,
+						 NAN_DATAPATH_INF_DELETE_RSP,
+						 &rsp);
 	}
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
 }
@@ -2190,6 +2187,61 @@ void os_if_nan_ndi_session_end(struct wlan_objmgr_vdev *vdev)
 	return;
 failure:
 	kfree_skb(vendor_event);
+}
+
+/**
+ * os_if_nan_discovery_event_handler() - NAN Discovery Interface event handler
+ * @nan_evt: NAN Event parameters
+ *
+ * Module sends a NAN related vendor event to the upper layer
+ *
+ * Return: none
+ */
+static void os_if_nan_discovery_event_handler(struct nan_event_params *nan_evt)
+{
+	struct sk_buff *vendor_event;
+	struct wlan_objmgr_pdev *pdev;
+	struct pdev_osif_priv *os_priv;
+
+	/*
+	 * Since Partial Offload chipsets have only one pdev per psoc, the first
+	 * pdev from the pdev list is used.
+	 */
+	pdev = wlan_objmgr_get_pdev_by_id(nan_evt->psoc, 0, WLAN_NAN_ID);
+	if (!pdev) {
+		cfg80211_err("null pdev");
+		return;
+	}
+	os_priv = wlan_pdev_get_ospriv(pdev);
+
+	vendor_event =
+		cfg80211_vendor_event_alloc(os_priv->wiphy, NULL,
+					    nan_evt->buf_len + NLMSG_HDRLEN,
+					    QCA_NL80211_VENDOR_SUBCMD_NAN_INDEX,
+					    GFP_KERNEL);
+
+	if (!vendor_event) {
+		cfg80211_err("cfg80211_vendor_event_alloc failed");
+		goto fail;
+	}
+
+	if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NAN, nan_evt->buf_len,
+		    nan_evt->buf)) {
+		cfg80211_err("QCA_WLAN_VENDOR_ATTR_NAN put failed");
+		goto fail;
+	}
+
+	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
+fail:
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_NAN_ID);
+}
+
+int os_if_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
+				     struct nan_callbacks *cb_obj)
+{
+	cb_obj->os_if_ndp_event_handler = os_if_nan_datapath_event_handler;
+	cb_obj->os_if_nan_event_handler = os_if_nan_discovery_event_handler;
+	return ucfg_nan_register_hdd_callbacks(psoc, cb_obj);
 }
 
 static int os_if_nan_generic_req(struct wlan_objmgr_psoc *psoc,

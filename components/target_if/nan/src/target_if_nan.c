@@ -28,7 +28,44 @@
 #include "wmi_unified_api.h"
 #include "scheduler_api.h"
 
-static QDF_STATUS target_if_nan_event_flush_cb(struct scheduler_msg *msg)
+static void target_if_nan_event_flush_cb(struct scheduler_msg *msg)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!msg || !msg->bodyptr) {
+		target_if_err("Empty message for NAN Discovery event");
+		return;
+	}
+
+	psoc = ((struct nan_event_params *)msg->bodyptr)->psoc;
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_NAN_ID);
+	qdf_mem_free(msg->bodyptr);
+	msg->bodyptr = NULL;
+}
+
+static QDF_STATUS target_if_nan_event_dispatcher(struct scheduler_msg *msg)
+{
+	struct wlan_nan_rx_ops *nan_rx_ops;
+	struct nan_event_params *nan_rsp;
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status;
+
+	nan_rsp = msg->bodyptr;
+	psoc = nan_rsp->psoc;
+
+	nan_rx_ops = nan_psoc_get_rx_ops(psoc);
+	if (!nan_rx_ops) {
+		target_if_err("nan_rx_ops is null");
+		status = QDF_STATUS_E_NULL_VALUE;
+	} else {
+		status = nan_rx_ops->nan_discovery_event_rx(msg);
+	}
+
+	target_if_nan_event_flush_cb(msg);
+	return status;
+}
+
+static QDF_STATUS target_if_ndp_event_flush_cb(struct scheduler_msg *msg)
 {
 	void *ptr = msg->bodyptr;
 	struct wlan_objmgr_vdev *vdev = NULL;
@@ -67,7 +104,7 @@ static QDF_STATUS target_if_nan_event_flush_cb(struct scheduler_msg *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS target_if_nan_event_dispatcher(struct scheduler_msg *msg)
+static QDF_STATUS target_if_ndp_event_dispatcher(struct scheduler_msg *msg)
 {
 	QDF_STATUS status;
 	void *ptr = msg->bodyptr;
@@ -217,15 +254,15 @@ static int target_if_ndp_initiator_rsp_handler(ol_scn_t scn, uint8_t *data,
 
 	msg.bodyptr = rsp;
 	msg.type = NDP_INITIATOR_RSP;
-	msg.callback = target_if_nan_event_dispatcher;
-	msg.flush_callback = target_if_nan_event_flush_cb;
+	msg.callback = target_if_ndp_event_dispatcher;
+	msg.flush_callback = target_if_ndp_event_flush_cb;
 	target_if_debug("NDP_INITIATOR_RSP sent: %d", msg.type);
 	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
-		target_if_nan_event_flush_cb(&msg);
+		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}
 
@@ -268,15 +305,15 @@ static int target_if_ndp_ind_handler(ol_scn_t scn, uint8_t *data,
 
 	msg.bodyptr = rsp;
 	msg.type = NDP_INDICATION;
-	msg.callback = target_if_nan_event_dispatcher;
-	msg.flush_callback = target_if_nan_event_flush_cb;
+	msg.callback = target_if_ndp_event_dispatcher;
+	msg.flush_callback = target_if_ndp_event_flush_cb;
 	target_if_debug("NDP_INDICATION sent: %d", msg.type);
 	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
-		target_if_nan_event_flush_cb(&msg);
+		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}
 
@@ -319,15 +356,15 @@ static int target_if_ndp_confirm_handler(ol_scn_t scn, uint8_t *data,
 
 	msg.bodyptr = rsp;
 	msg.type = NDP_CONFIRM;
-	msg.callback = target_if_nan_event_dispatcher;
-	msg.flush_callback = target_if_nan_event_flush_cb;
+	msg.callback = target_if_ndp_event_dispatcher;
+	msg.flush_callback = target_if_ndp_event_flush_cb;
 	target_if_debug("NDP_CONFIRM sent: %d", msg.type);
 	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
-		target_if_nan_event_flush_cb(&msg);
+		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}
 
@@ -419,15 +456,15 @@ static int target_if_ndp_responder_rsp_handler(ol_scn_t scn, uint8_t *data,
 
 	msg.bodyptr = rsp;
 	msg.type = NDP_RESPONDER_RSP;
-	msg.callback = target_if_nan_event_dispatcher;
-	msg.flush_callback = target_if_nan_event_flush_cb;
+	msg.callback = target_if_ndp_event_dispatcher;
+	msg.flush_callback = target_if_ndp_event_flush_cb;
 	target_if_debug("NDP_INITIATOR_RSP sent: %d", msg.type);
 	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
-		target_if_nan_event_flush_cb(&msg);
+		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}
 
@@ -519,15 +556,15 @@ static int target_if_ndp_end_rsp_handler(ol_scn_t scn, uint8_t *data,
 
 	msg.bodyptr = end_rsp;
 	msg.type = NDP_END_RSP;
-	msg.callback = target_if_nan_event_dispatcher;
-	msg.flush_callback = target_if_nan_event_flush_cb;
+	msg.callback = target_if_ndp_event_dispatcher;
+	msg.flush_callback = target_if_ndp_event_flush_cb;
 	target_if_debug("NDP_END_RSP sent: %d", msg.type);
 	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
-		target_if_nan_event_flush_cb(&msg);
+		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}
 
@@ -571,15 +608,15 @@ static int target_if_ndp_end_ind_handler(ol_scn_t scn, uint8_t *data,
 
 	msg.bodyptr = rsp;
 	msg.type = NDP_END_IND;
-	msg.callback = target_if_nan_event_dispatcher;
-	msg.flush_callback = target_if_nan_event_flush_cb;
+	msg.callback = target_if_ndp_event_dispatcher;
+	msg.flush_callback = target_if_ndp_event_flush_cb;
 	target_if_debug("NDP_END_IND sent: %d", msg.type);
 	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
-		target_if_nan_event_flush_cb(&msg);
+		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}
 
@@ -622,15 +659,15 @@ static int target_if_ndp_sch_update_handler(ol_scn_t scn, uint8_t *data,
 
 	msg.bodyptr = rsp;
 	msg.type = NDP_SCHEDULE_UPDATE;
-	msg.callback = target_if_nan_event_dispatcher;
-	msg.flush_callback = target_if_nan_event_flush_cb;
+	msg.callback = target_if_ndp_event_dispatcher;
+	msg.flush_callback = target_if_ndp_event_flush_cb;
 	target_if_debug("NDP_SCHEDULE_UPDATE sent: %d", msg.type);
 	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
-		target_if_nan_event_flush_cb(&msg);
+		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}
 
@@ -703,7 +740,7 @@ static QDF_STATUS target_if_nan_disable_req(struct nan_disable_req *nan_req)
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return wmi_unified_nan_disable_req_cmd(wmi_handle, nan_req);
 }
 
 static QDF_STATUS target_if_nan_discovery_req(void *req, uint32_t req_type)
@@ -750,8 +787,69 @@ void target_if_nan_register_tx_ops(struct wlan_nan_tx_ops *tx_ops)
 
 void target_if_nan_register_rx_ops(struct wlan_nan_rx_ops *rx_ops)
 {
-	rx_ops->nan_discovery_event_rx = NULL;
+	rx_ops->nan_discovery_event_rx = nan_discovery_event_handler;
 	rx_ops->nan_datapath_event_rx = nan_datapath_event_handler;
+}
+
+static int target_if_nan_rsp_handler(ol_scn_t scn, uint8_t *data, uint32_t len)
+{
+	struct nan_event_params *nan_rsp, temp_evt_params = {0};
+	struct scheduler_msg msg = {0};
+	struct wmi_unified *wmi_handle;
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status;
+	uint8_t *buf_ptr;
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null");
+		return -EINVAL;
+	}
+
+	status = wmi_extract_nan_event_rsp(wmi_handle, data, &temp_evt_params,
+					   &buf_ptr);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("parsing of event failed, %d", status);
+		return -EINVAL;
+	}
+
+	nan_rsp = qdf_mem_malloc(sizeof(*nan_rsp) + temp_evt_params.buf_len);
+	if (!nan_rsp) {
+		target_if_err("malloc failed");
+		return -ENOMEM;
+	}
+	qdf_mem_copy(nan_rsp, &temp_evt_params, sizeof(*nan_rsp));
+
+	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_NAN_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("Failed to obtain psoc ref");
+		return -EACCES;
+	}
+
+	nan_rsp->psoc = psoc;
+	qdf_mem_copy(nan_rsp->buf_ptr, buf_ptr, nan_rsp->buf_len);
+
+	msg.bodyptr = nan_rsp;
+	msg.type = nan_rsp->evt_type;
+	msg.callback = target_if_nan_event_dispatcher;
+	msg.flush_callback = target_if_nan_event_flush_cb;
+	target_if_debug("NAN Event sent: %d", msg.type);
+	status = scheduler_post_message(QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF,
+					QDF_MODULE_ID_TARGET_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("failed to post msg, status: %d", status);
+		target_if_nan_event_flush_cb(&msg);
+		return -EINVAL;
+	}
+
+	return 0;
 }
 
 QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
@@ -763,6 +861,16 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 		target_if_err("handle is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/* Register for nan response event */
+	ret = wmi_unified_register_event_handler(handle, wmi_nan_event_id,
+						 target_if_nan_rsp_handler,
+						 WMI_RX_UMAC_CTX);
+	if (ret) {
+		target_if_err("wmi event registration failed, ret: %d", ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	ret = wmi_unified_register_event_handler(handle,
 		wmi_ndp_initiator_rsp_event_id,
 		target_if_ndp_initiator_rsp_handler,

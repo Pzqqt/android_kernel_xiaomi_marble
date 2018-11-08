@@ -40,19 +40,6 @@ int os_if_nan_process_ndp_cmd(struct wlan_objmgr_psoc *psoc,
 				const void *data, int data_len);
 
 /**
- * os_if_nan_event_handler: os_if handler api for nan response messages
- * @psoc: pointer to psoc object
- * @vdev: pointer to vdev object
- * @type: message type
- * @msg: msg buffer
- *
- * Return: None
- */
-void os_if_nan_event_handler(struct wlan_objmgr_psoc *psoc,
-			     struct wlan_objmgr_vdev *vdev,
-			     uint32_t type, void *msg);
-
-/**
  * os_if_nan_register_hdd_callbacks: os_if api to register hdd callbacks
  * @psoc: pointer to psoc object
  * @cb_obj: struct pointer containing callbacks
@@ -147,7 +134,8 @@ static inline QDF_STATUS os_if_nan_set_ndp_delete_transaction_id(
 }
 
 /**
- * os_if_process_nan_req: os_if api to handle nan request message
+ * os_if_process_nan_req: os_if api to handle NAN requests attached to the
+ * vendor command QCA_NL80211_VENDOR_SUBCMD_NAN_EXT
  * @psoc: pointer to psoc object
  * @data: request data. contains vendor cmd tlvs
  * @data_len: length of data

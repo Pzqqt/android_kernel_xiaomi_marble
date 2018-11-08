@@ -173,8 +173,16 @@ void nan_discovery_flush_callback(struct scheduler_msg *msg);
 QDF_STATUS nan_discovery_scheduled_handler(struct scheduler_msg *msg);
 
 /*
- * nan_datapath_event_handler: function to process events from firmware
- * @msg: message received from lmac
+ * nan_discovery_event_handler: function to process NAN events from firmware
+ * @msg: message received from Target IF
+ *
+ * Return: status of operation
+ */
+QDF_STATUS nan_discovery_event_handler(struct scheduler_msg *msg);
+
+/*
+ * nan_datapath_event_handler: function to process NDP events from firmware
+ * @msg: message received from Target IF
  *
  * Return: status of operation
  */
