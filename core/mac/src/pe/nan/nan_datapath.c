@@ -328,7 +328,8 @@ void lim_process_ndi_del_sta_rsp(struct mac_context *mac_ctx,
 		pe_err("Failed to get vdev from id");
 		goto skip_event;
 	}
-	ucfg_nan_event_handler(psoc, vdev, NDP_PEER_DEPARTED, &peer_ind);
+	ucfg_nan_datapath_event_handler(psoc, vdev, NDP_PEER_DEPARTED,
+					&peer_ind);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
 
 skip_event:
@@ -477,7 +478,7 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(struct mac_context *mac_ctx,
 		     sizeof(tSirMacAddr));
 	new_peer_ind->sta_id = add_sta_rsp->staIdx;
 
-	ucfg_nan_event_handler(psoc, vdev, NDP_NEW_PEER, new_peer_ind);
+	ucfg_nan_datapath_event_handler(psoc, vdev, NDP_NEW_PEER, new_peer_ind);
 	qdf_mem_free(new_peer_ind);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
 	return QDF_STATUS_SUCCESS;

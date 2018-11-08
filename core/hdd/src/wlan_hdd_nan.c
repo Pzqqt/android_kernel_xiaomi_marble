@@ -28,7 +28,6 @@
 #include <net/cfg80211.h>
 #include <ani_global.h>
 #include "sme_api.h"
-#include "nan_api.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_nan.h"
 #include <wlan_hdd_dsc.h>
@@ -67,11 +66,8 @@ bool wlan_hdd_nan_is_supported(struct hdd_context *hdd_ctx)
  */
 static int __wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 					   struct wireless_dev *wdev,
-					   const void *data,
-					   int data_len)
+					   const void *data, int data_len)
 {
-	tNanRequestReq nan_req;
-	QDF_STATUS status;
 	int ret_val;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 
@@ -91,19 +87,11 @@ static int __wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
-	nan_req.request_data_len = data_len;
-	nan_req.request_data = data;
-
-	status = sme_nan_request(&nan_req);
-	if (QDF_STATUS_SUCCESS != status)
-		ret_val = -EINVAL;
-
-	return ret_val;
+	return os_if_nan_legacy_req(hdd_ctx->psoc, data, data_len);
 }
 
 int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
-				  struct wireless_dev *wdev,
-				  const void *data,
+				  struct wireless_dev *wdev, const void *data,
 				  int data_len)
 
 {
@@ -122,41 +110,6 @@ int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 	dsc_psoc_op_stop(dsc_psoc);
 
 	return ret;
-}
-
-void wlan_hdd_cfg80211_nan_callback(hdd_handle_t hdd_handle, tSirNanEvent *msg)
-{
-	struct hdd_context *hdd_ctx = hdd_handle_to_context(hdd_handle);
-	struct sk_buff *vendor_event;
-	int status;
-
-	if (!msg) {
-		hdd_err("msg received here is null");
-		return;
-	}
-
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (status)
-		return;
-
-	vendor_event =
-		cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
-					    NULL,
-					    msg->event_data_len + NLMSG_HDRLEN,
-					    QCA_NL80211_VENDOR_SUBCMD_NAN_INDEX,
-					    GFP_KERNEL);
-
-	if (!vendor_event) {
-		hdd_err("cfg80211_vendor_event_alloc failed");
-		return;
-	}
-	if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NAN,
-		    msg->event_data_len, msg->event_data)) {
-		hdd_err("QCA_WLAN_VENDOR_ATTR_NAN put fail");
-		kfree_skb(vendor_event);
-		return;
-	}
-	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 }
 
 /**

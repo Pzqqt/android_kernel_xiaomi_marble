@@ -460,10 +460,6 @@ SME_CMN_OBJS := $(SME_SRC_DIR)/common/sme_api.o \
 
 SME_RRM_OBJS := $(SME_SRC_DIR)/rrm/sme_rrm.o
 
-ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
-SME_NAN_OBJS = $(SME_SRC_DIR)/nan/nan_api.o
-endif
-
 ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
 SME_NDP_OBJS += $(SME_SRC_DIR)/nan/nan_datapath_api.o
 endif

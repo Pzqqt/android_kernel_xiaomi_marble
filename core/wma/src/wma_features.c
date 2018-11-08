@@ -65,6 +65,9 @@
 #include "wlan_reg_services_api.h"
 #include "wlan_roam_debug.h"
 #include <wlan_cp_stats_mc_ucfg_api.h>
+#ifdef WLAN_FEATURE_NAN
+#include "target_if_nan.h"
+#endif
 
 #ifndef ARRAY_LENGTH
 #define ARRAY_LENGTH(a)         (sizeof(a) / sizeof((a)[0]))
@@ -229,6 +232,28 @@ static inline int wma_wake_reason_nlod(uint8_t vdev_id)
 	return 0;
 }
 #endif /* FEATURE_WLAN_SCAN_PNO */
+
+#ifdef WLAN_FEATURE_NAN
+/**
+ * wma_nan_rsp_handler_callback() - call NAN Discovery event handler
+ * @handle: wma handle
+ * @event: event buffer
+ * @len: buffer length
+ *
+ * Return: 0 for success or error code
+ */
+static int wma_nan_rsp_handler_callback(void *handle, uint8_t *event,
+					uint32_t len)
+{
+	return target_if_nan_rsp_handler(handle, event, len);
+}
+#else
+static inline int wma_nan_rsp_handler_callback(void *handle, uint8_t *event,
+					       uint32_t len)
+{
+	return 0;
+}
+#endif
 
 /**
  * wma_send_snr_request() - send request to fw to get RSSI stats
@@ -1189,87 +1214,6 @@ int wma_unified_csa_offload_enable(tp_wma_handle wma, uint8_t vdev_id)
 	return 0;
 }
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
-
-#ifdef WLAN_FEATURE_NAN
-/**
- * wma_nan_rsp_event_handler() - Function is used to handle nan response
- * @handle: wma handle
- * @event_buf: event buffer
- * @len: length of buffer
- *
- * Return: 0 for success or error code
- */
-int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
-			      uint32_t len)
-{
-	WMI_NAN_EVENTID_param_tlvs *param_buf;
-	tSirNanEvent *nan_rsp_event;
-	wmi_nan_event_hdr *nan_rsp_event_hdr;
-	QDF_STATUS status;
-	struct scheduler_msg message = {0};
-	uint8_t *buf_ptr;
-	uint32_t alloc_len;
-
-	/*
-	 * This is how received event_buf looks like
-	 *
-	 * <-------------------- event_buf ----------------------------------->
-	 *
-	 * <--wmi_nan_event_hdr--><---WMI_TLV_HDR_SIZE---><----- data -------->
-	 *
-	 * +-----------+---------+-----------------------+--------------------+
-	 * | tlv_header| data_len| WMITLV_TAG_ARRAY_BYTE | nan_rsp_event_data |
-	 * +-----------+---------+-----------------------+--------------------+
-	 */
-
-	WMA_LOGD("%s: Posting NaN response event to SME", __func__);
-	param_buf = (WMI_NAN_EVENTID_param_tlvs *) event_buf;
-	if (!param_buf) {
-		WMA_LOGE("%s: Invalid nan response event buf", __func__);
-		return -EINVAL;
-	}
-	nan_rsp_event_hdr = param_buf->fixed_param;
-	buf_ptr = (uint8_t *) nan_rsp_event_hdr;
-	alloc_len = sizeof(tSirNanEvent);
-	alloc_len += nan_rsp_event_hdr->data_len;
-	if (nan_rsp_event_hdr->data_len > ((WMI_SVC_MSG_MAX_SIZE -
-	    WMI_TLV_HDR_SIZE - sizeof(*nan_rsp_event_hdr)) / sizeof(uint8_t)) ||
-	    nan_rsp_event_hdr->data_len > param_buf->num_data) {
-		WMA_LOGE("excess data length:%d, num_data:%d",
-			nan_rsp_event_hdr->data_len, param_buf->num_data);
-		return -EINVAL;
-	}
-	nan_rsp_event = qdf_mem_malloc(alloc_len);
-	if (!nan_rsp_event)
-		return -ENOMEM;
-
-	nan_rsp_event->event_data_len = nan_rsp_event_hdr->data_len;
-	qdf_mem_copy(nan_rsp_event->event_data, buf_ptr +
-		     sizeof(wmi_nan_event_hdr) + WMI_TLV_HDR_SIZE,
-		     nan_rsp_event->event_data_len);
-	message.type = eWNI_SME_NAN_EVENT;
-	message.bodyptr = (void *)nan_rsp_event;
-	message.bodyval = 0;
-
-	status = scheduler_post_message(QDF_MODULE_ID_WMA,
-					QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_SME, &message);
-	if (status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: Failed to post NaN response event to SME",
-			 __func__);
-		qdf_mem_free(nan_rsp_event);
-		return -EFAULT;
-	}
-	WMA_LOGD("%s: NaN response event Posted to SME", __func__);
-	return 0;
-}
-#else
-static int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
-				     uint32_t len)
-{
-	return 0;
-}
-#endif /* WLAN_FEATURE_NAN */
 
 /**
  * wma_csa_offload_handler() - CSA event handler
@@ -2860,7 +2804,8 @@ static int wma_wake_event_piggybacked(
 		break;
 
 	case WOW_REASON_NAN_EVENT:
-		errno = wma_nan_rsp_event_handler(wma, pb_event, pb_event_len);
+		errno = wma_nan_rsp_handler_callback(wma, pb_event,
+						     pb_event_len);
 		break;
 
 	case WOW_REASON_NAN_DATA:
@@ -3894,43 +3839,6 @@ QDF_STATUS wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
 					auto_sh_cmd->timer_val);
 }
 #endif /* FEATURE_WLAN_AUTO_SHUTDOWN */
-
-#ifdef WLAN_FEATURE_NAN
-/**
- * wma_nan_req() - to send nan request to target
- * @wma: wma_handle
- * @nan_req: request data which will be non-null
- *
- * Return: QDF status
- */
-QDF_STATUS wma_nan_req(void *wma_ptr, tpNanRequest nan_req)
-{
-	tp_wma_handle wma_handle = (tp_wma_handle) wma_ptr;
-	struct nan_req_params *params;
-	size_t params_len;
-	QDF_STATUS status;
-
-	if (!wma_handle) {
-		WMA_LOGE("%s: wma handle is NULL", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	params_len = sizeof(*params) + nan_req->request_data_len;
-	params = qdf_mem_malloc(params_len);
-	if (!params)
-		return QDF_STATUS_E_NOMEM;
-
-	params->request_data_len = nan_req->request_data_len;
-	if (params->request_data_len > 0)
-		qdf_mem_copy(params->request_data, nan_req->request_data,
-			     params->request_data_len);
-
-	status = wmi_unified_nan_req_cmd(wma_handle->wmi_handle, params);
-	qdf_mem_free(params);
-
-	return status;
-}
-#endif /* WLAN_FEATURE_NAN */
 
 #ifdef DHCP_SERVER_OFFLOAD
 /**

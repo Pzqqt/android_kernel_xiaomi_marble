@@ -2276,6 +2276,37 @@ static int os_if_nan_generic_req(struct wlan_objmgr_psoc *psoc,
 	return qdf_status_to_os_return(status);
 }
 
+int os_if_nan_legacy_req(struct wlan_objmgr_psoc *psoc, const void *data,
+			 int data_len)
+{
+	struct nan_generic_req *nan_req;
+	QDF_STATUS status;
+
+	if (data_len > NAN_CMD_MAX_SIZE) {
+		cfg80211_err("NAN request exceeding max allowed size");
+		return -EINVAL;
+	}
+
+	nan_req = qdf_mem_malloc(sizeof(*nan_req) + data_len);
+	nan_req->psoc = psoc;
+	nan_req->params.request_data_len = data_len;
+	qdf_mem_copy(nan_req->params.request_data, data, data_len);
+
+	/*
+	 * Send legacy NAN requests with type GENERIC, these will be treated as
+	 * passthrough by the driver. These will not affect the NAN state
+	 * machine or policy manager.
+	 */
+	status = ucfg_nan_discovery_req(nan_req, NAN_GENERIC_REQ);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		cfg80211_err("Failed to post NAN request");
+
+	qdf_mem_free(nan_req);
+
+	return qdf_status_to_os_return(status);
+}
+
 static int os_if_process_nan_disable_req(struct wlan_objmgr_psoc *psoc,
 					 struct nlattr **tb)
 {
@@ -2379,9 +2410,19 @@ int os_if_process_nan_req(struct wlan_objmgr_psoc *psoc,
 		return -EINVAL;
 	}
 
+	/*
+	 * If target does not support NAN DBS, send request with type GENERIC.
+	 * These will be treated as passthrough by the driver. This is to make
+	 * sure that HW mode is not set to DBS by NAN Enable request. NAN state
+	 * machine will remain unaffected in this case.
+	 */
 	if (!ucfg_is_nan_dbs_supported(psoc))
 		return os_if_nan_generic_req(psoc, tb);
 
+	/*
+	 * Send all requests other than Enable/Disable as type GENERIC.
+	 * These will be treated as passthrough by the driver.
+	 */
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NAN_SUBCMD_TYPE])
 		return os_if_nan_generic_req(psoc, tb);
 

@@ -89,4 +89,13 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS target_if_nan_deregister_events(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * target_if_nan_rsp_handler() - Target IF handler for NAN Discovery events
+ * @scn: target handle
+ * @data: event buffer
+ * @len: event buffer length
+ *
+ * Return: 0 for success or error code
+ */
+int target_if_nan_rsp_handler(ol_scn_t scn, uint8_t *data, uint32_t len);
 #endif /* _WIFI_POS_TGT_IF_H_ */

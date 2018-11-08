@@ -36,7 +36,6 @@
 #include "host_diag_core_event.h"
 #include "csr_link_list.h"
 #include "sme_power_save.h"
-#include "nan_api.h"
 
 struct wmi_twt_enable_complete_event_param;
 /*--------------------------------------------------------------------------
@@ -289,9 +288,6 @@ typedef struct tagSmeStruct {
 #ifdef FEATURE_WLAN_EXTSCAN
 	ext_scan_ind_cb ext_scan_ind_cb;
 #endif /* FEATURE_WLAN_EXTSCAN */
-#ifdef WLAN_FEATURE_NAN
-	nan_callback nan_callback;
-#endif
 	csr_link_status_callback link_status_callback;
 	void *link_status_context;
 	int (*get_tsf_cb)(void *pcb_cxt, struct stsf *ptsf);

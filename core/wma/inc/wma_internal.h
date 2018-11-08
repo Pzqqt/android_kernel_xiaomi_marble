@@ -1050,10 +1050,6 @@ void wma_wow_tx_complete(void *wma);
 
 int wma_unified_csa_offload_enable(tp_wma_handle wma, uint8_t vdev_id);
 
-#ifdef WLAN_FEATURE_NAN
-int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf, uint32_t len);
-#endif
-
 #ifdef FEATURE_WLAN_TDLS
 int wma_tdls_event_handler(void *handle, uint8_t *event, uint32_t len);
 #endif
@@ -1189,10 +1185,6 @@ static inline QDF_STATUS wma_set_tsf_gpio_pin(WMA_HANDLE handle, uint32_t pin)
 }
 #endif
 QDF_STATUS wma_set_wisa_params(tp_wma_handle wma, struct sir_wisa_params *wisa);
-
-#ifdef WLAN_FEATURE_NAN
-QDF_STATUS wma_nan_req(void *wma_ptr, tpNanRequest nan_req);
-#endif
 
 #ifdef DHCP_SERVER_OFFLOAD
 int wma_process_dhcpserver_offload(tp_wma_handle wma_handle,

@@ -41,9 +41,6 @@
 #include "cds_utils.h"
 #include "sap_api.h"
 #include "mac_trace.h"
-#ifdef WLAN_FEATURE_NAN
-#include "nan_api.h"
-#endif
 #include "cds_regdomain.h"
 #include "cfg_api.h"
 #include "sme_power_save_api.h"
@@ -2171,16 +2168,6 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		if (pMsg->bodyptr)
 			qdf_mem_free(pMsg->bodyptr);
 		break;
-#ifdef WLAN_FEATURE_NAN
-	case eWNI_SME_NAN_EVENT:
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_WMA_MSG,
-				 NO_SESSION, pMsg->type));
-		if (pMsg->bodyptr) {
-			sme_nan_event(MAC_HANDLE(mac), pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		}
-		break;
-#endif /* WLAN_FEATURE_NAN */
 	case eWNI_SME_LINK_STATUS_IND:
 	{
 		tAniGetLinkStatus *pLinkStatus =

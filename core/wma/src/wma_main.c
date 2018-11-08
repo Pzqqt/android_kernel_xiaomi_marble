@@ -3559,13 +3559,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 				wmi_vdev_install_key_complete_event_id,
 				wma_vdev_install_key_complete_event_handler,
 				WMA_RX_SERIALIZER_CTX);
-#ifdef WLAN_FEATURE_NAN
-	/* register for nan response event */
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   wmi_nan_event_id,
-					   wma_nan_rsp_event_handler,
-					   WMA_RX_SERIALIZER_CTX);
-#endif /* WLAN_FEATURE_NAN */
 
 #ifdef WLAN_FEATURE_STATS_EXT
 	/* register for extended stats event */
@@ -8461,12 +8454,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
-#ifdef WLAN_FEATURE_NAN
-	case WMA_NAN_REQUEST:
-		wma_nan_req(wma_handle, (tNanRequest *) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-#endif /* WLAN_FEATURE_NAN */
 	case SIR_HAL_SET_BASE_MACADDR_IND:
 		wma_set_base_macaddr_indicate(wma_handle,
 					      (tSirMacAddr *) msg->bodyptr);

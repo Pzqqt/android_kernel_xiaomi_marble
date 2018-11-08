@@ -109,7 +109,6 @@
 #include "bmi.h"
 #include <wlan_hdd_regulatory.h>
 #include "wlan_hdd_lpass.h"
-#include "nan_api.h"
 #include "wlan_nan_api.h"
 #include <wlan_hdd_napi.h>
 #include "wlan_hdd_disa.h"
@@ -12121,8 +12120,6 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 	sme_register_mgmt_frame_ind_callback(mac_handle,
 					     hdd_indicate_mgmt_frame);
 	sme_set_tsfcb(mac_handle, hdd_get_tsf_cb, hdd_ctx);
-	sme_nan_register_callback(mac_handle,
-				  wlan_hdd_cfg80211_nan_callback);
 	sme_stats_ext_register_callback(mac_handle,
 					wlan_hdd_cfg80211_stats_ext_callback);
 
@@ -12213,7 +12210,6 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 	sme_stats_ext_register_callback(mac_handle,
 					wlan_hdd_cfg80211_stats_ext_callback);
 
-	sme_nan_deregister_callback(mac_handle);
 	status = sme_reset_tsfcb(mac_handle);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Failed to de-register tsfcb the callback:%d",
