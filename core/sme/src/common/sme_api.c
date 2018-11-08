@@ -12248,7 +12248,7 @@ QDF_STATUS sme_power_debug_stats_req(mac_handle_t hal, void (*callback_fn)
 /**
  * sme_update_roam_key_mgmt_offload_enabled() - enable/disable key mgmt offload
  * This is a synchronous call
- * @hal_ctx: The handle returned by mac_open.
+ * @mac_handle: The handle returned by mac_open.
  * @session_id: Session Identifier
  * @key_mgmt_offload_enabled: key mgmt enable/disable flag
  * @pmkid_modes: PMKID modes of PMKSA caching and OKC
@@ -12256,12 +12256,12 @@ QDF_STATUS sme_power_debug_stats_req(mac_handle_t hal, void (*callback_fn)
  * Other status means SME is failed to update.
  */
 
-QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(mac_handle_t hal_ctx,
+QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(mac_handle_t mac_handle,
 					uint8_t session_id,
 					bool key_mgmt_offload_enabled,
 					struct pmkid_mode_bits *pmkid_modes)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
@@ -15316,9 +15316,9 @@ bool sme_roam_is_ese_assoc(struct csr_roam_info *roam_info)
 }
 #endif
 
-bool sme_neighbor_roam_is11r_assoc(mac_handle_t hal_ctx, uint8_t session_id)
+bool sme_neighbor_roam_is11r_assoc(mac_handle_t mac_handle, uint8_t session_id)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
 
 	return csr_neighbor_roam_is11r_assoc(mac_ctx, session_id);
 }

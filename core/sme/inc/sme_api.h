@@ -1320,7 +1320,7 @@ QDF_STATUS sme_set_wisa_params(mac_handle_t hal,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS sme_update_roam_offload_enabled(mac_handle_t mac_handle,
 		bool nRoamOffloadEnabled);
-QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(mac_handle_t hal_ctx,
+QDF_STATUS sme_update_roam_key_mgmt_offload_enabled(mac_handle_t mac_handle,
 		uint8_t session_id,
 		bool key_mgmt_offload_enabled,
 		struct pmkid_mode_bits *pmkid_modes);
@@ -1893,12 +1893,12 @@ static inline bool sme_roam_is_ese_assoc(struct csr_roam_info *roam_info)
 #endif
 /**
  * sme_neighbor_roam_is11r_assoc() - Check if association type is 11R
- * @hal_ctx: HAL handle
+ * @mac_handle: HAL handle
  * @session_id: session id
  *
  * Return: true if 11r Association, false otherwise.
  */
-bool sme_neighbor_roam_is11r_assoc(mac_handle_t hal_ctx, uint8_t session_id);
+bool sme_neighbor_roam_is11r_assoc(mac_handle_t mac_handle, uint8_t session_id);
 
 /**
  * sme_update_sta_inactivity_timeout(): Update sta_inactivity_timeout to FW
