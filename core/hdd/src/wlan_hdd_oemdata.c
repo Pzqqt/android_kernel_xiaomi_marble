@@ -59,6 +59,8 @@ static int populate_oem_data_cap(struct hdd_adapter *adapter,
 	uint32_t num_chan;
 	uint8_t *chan_list;
 	uint8_t band_capability;
+	uint16_t neighbor_scan_min_chan_time;
+	uint16_t neighbor_scan_max_chan_time;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	config = hdd_ctx->config;
@@ -87,8 +89,12 @@ static int populate_oem_data_cap(struct hdd_adapter *adapter,
 	data_cap->driver_version.minor = QWLAN_VERSION_MINOR;
 	data_cap->driver_version.patch = QWLAN_VERSION_PATCH;
 	data_cap->driver_version.build = QWLAN_VERSION_BUILD;
-	data_cap->allowed_dwell_time_min = config->nNeighborScanMinChanTime;
-	data_cap->allowed_dwell_time_max = config->nNeighborScanMaxChanTime;
+	ucfg_mlme_get_neighbor_scan_max_chan_time(psoc,
+						  &neighbor_scan_max_chan_time);
+	ucfg_mlme_get_neighbor_scan_min_chan_time(psoc,
+						  &neighbor_scan_min_chan_time);
+	data_cap->allowed_dwell_time_min = neighbor_scan_min_chan_time;
+	data_cap->allowed_dwell_time_max = neighbor_scan_max_chan_timee;
 	data_cap->curr_dwell_time_min =
 		sme_get_neighbor_scan_min_chan_time(hdd_ctx->mac_handle,
 						    adapter->session_id);

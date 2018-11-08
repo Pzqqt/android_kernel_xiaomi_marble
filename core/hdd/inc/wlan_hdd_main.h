@@ -2536,7 +2536,11 @@ static inline bool roaming_offload_enabled(struct hdd_context *hdd_ctx)
 #ifdef WLAN_FEATURE_HOST_ROAM
 static inline bool hdd_driver_roaming_supported(struct hdd_context *hdd_ctx)
 {
-	return hdd_ctx->config->isFastRoamIniFeatureEnabled;
+	bool lfr_enabled;
+
+	ucfg_mlme_is_lfr_enabled(hdd_ctx->psoc, &lfr_enabled);
+
+	return lfr_enabled;
 }
 #else
 static inline bool hdd_driver_roaming_supported(struct hdd_context *hdd_ctx)

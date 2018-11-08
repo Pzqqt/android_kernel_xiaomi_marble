@@ -2996,7 +2996,8 @@ static int drv_cmd_set_roam_trigger(struct hdd_adapter *adapter,
 	int ret;
 	uint8_t *value = command;
 	int8_t rssi = 0;
-	uint8_t lookUpThreshold = CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_DEFAULT;
+	uint8_t lookup_threshold = cfg_default(
+					CFG_LFR_NEIGHBOR_LOOKUP_RSSI_THRESHOLD);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* Move pointer to ahead of SETROAMTRIGGER<delimiter> */
@@ -3010,34 +3011,33 @@ static int drv_cmd_set_roam_trigger(struct hdd_adapter *adapter,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed Input value may be out of range[%d - %d]",
-			CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MIN,
-			CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MAX);
+			cfg_min(CFG_LFR_NEIGHBOR_LOOKUP_RSSI_THRESHOLD),
+			cfg_max(CFG_LFR_NEIGHBOR_LOOKUP_RSSI_THRESHOLD));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	lookUpThreshold = abs(rssi);
+	lookup_threshold = abs(rssi);
 
-	if ((lookUpThreshold < CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MIN) ||
-	    (lookUpThreshold > CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MAX)) {
+	if (!cfg_in_range(CFG_LFR_NEIGHBOR_LOOKUP_RSSI_THRESHOLD,
+			  lookup_threshold)) {
 		hdd_err("Neighbor lookup threshold value %d is out of range (Min: %d Max: %d)",
-			  lookUpThreshold,
-			  CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MIN,
-			  CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MAX);
+			  lookup_threshold,
+			  cfg_min(CFG_LFR_NEIGHBOR_LOOKUP_RSSI_THRESHOLD),
+			  cfg_max(CFG_LFR_NEIGHBOR_LOOKUP_RSSI_THRESHOLD));
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_SETROAMTRIGGER_IOCTL,
-			 adapter->session_id, lookUpThreshold));
+			 adapter->session_id, lookup_threshold));
 	hdd_debug("Received Command to Set Roam trigger (Neighbor lookup threshold) = %d",
-		  lookUpThreshold);
+		  lookup_threshold);
 
-	hdd_ctx->config->nNeighborLookupRssiThreshold = lookUpThreshold;
 	status = sme_set_neighbor_lookup_rssi_threshold(hdd_ctx->mac_handle,
 							adapter->session_id,
-							lookUpThreshold);
+							lookup_threshold);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to set roam trigger, try again");
 		ret = -EPERM;
@@ -3055,15 +3055,15 @@ static int drv_cmd_get_roam_trigger(struct hdd_adapter *adapter,
 				    struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	uint8_t lookUpThreshold =
+	uint8_t lookup_threshold =
 		sme_get_neighbor_lookup_rssi_threshold(hdd_ctx->mac_handle);
-	int rssi = (-1) * lookUpThreshold;
+	int rssi = (-1) * lookup_threshold;
 	char extra[32];
 	uint8_t len = 0;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_GETROAMTRIGGER_IOCTL,
-			 adapter->session_id, lookUpThreshold));
+			 adapter->session_id, lookup_threshold));
 
 	len = scnprintf(extra, sizeof(extra), "%s %d", command, rssi);
 	len = QDF_MIN(priv_data->total_len, len + 1);
@@ -3083,9 +3083,9 @@ static int drv_cmd_set_roam_scan_period(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t roamScanPeriod = 0;
-	uint16_t neighborEmptyScanRefreshPeriod =
-		CFG_EMPTY_SCAN_REFRESH_PERIOD_DEFAULT;
+	uint8_t roam_scan_period = 0;
+	uint16_t empty_scan_refresh_period =
+		cfg_default(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD);
 
 	/* input refresh period is in terms of seconds */
 
@@ -3093,41 +3093,39 @@ static int drv_cmd_set_roam_scan_period(struct hdd_adapter *adapter,
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &roamScanPeriod);
+	ret = kstrtou8(value, 10, &roam_scan_period);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed Input value may be out of range[%d - %d]",
-			(CFG_EMPTY_SCAN_REFRESH_PERIOD_MIN / 1000),
-			(CFG_EMPTY_SCAN_REFRESH_PERIOD_MAX / 1000));
+			(cfg_min(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD) / 1000),
+			(cfg_max(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD) / 1000));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((roamScanPeriod < (CFG_EMPTY_SCAN_REFRESH_PERIOD_MIN / 1000))
-	    || (roamScanPeriod > (CFG_EMPTY_SCAN_REFRESH_PERIOD_MAX / 1000))) {
+	if (!cfg_in_range(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD,
+			  roam_scan_period)) {
 		hdd_err("Roam scan period value %d is out of range (Min: %d Max: %d)",
-			roamScanPeriod,
-			(CFG_EMPTY_SCAN_REFRESH_PERIOD_MIN / 1000),
-			(CFG_EMPTY_SCAN_REFRESH_PERIOD_MAX / 1000));
+			roam_scan_period,
+			(cfg_min(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD) / 1000),
+			(cfg_max(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD) / 1000));
 		ret = -EINVAL;
 		goto exit;
 	}
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_SETROAMSCANPERIOD_IOCTL,
-			 adapter->session_id, roamScanPeriod));
-	neighborEmptyScanRefreshPeriod = roamScanPeriod * 1000;
+			 adapter->session_id, roam_scan_period));
+	empty_scan_refresh_period = roam_scan_period * 1000;
 
 	hdd_debug("Received Command to Set roam scan period (Empty Scan refresh period) = %d",
-		  roamScanPeriod);
+		  roam_scan_period);
 
-	hdd_ctx->config->nEmptyScanRefreshPeriod =
-		neighborEmptyScanRefreshPeriod;
 	sme_update_empty_scan_refresh_period(hdd_ctx->mac_handle,
 					     adapter->session_id,
-					     neighborEmptyScanRefreshPeriod);
+					     empty_scan_refresh_period);
 
 exit:
 	return ret;
@@ -3170,51 +3168,49 @@ static int drv_cmd_set_roam_scan_refresh_period(struct hdd_adapter *adapter,
 {
 	int ret;
 	uint8_t *value = command;
-	uint8_t roamScanRefreshPeriod = 0;
-	uint16_t neighborScanRefreshPeriod =
-		CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_DEFAULT;
+	uint8_t roam_scan_refresh_period = 0;
+	uint16_t neighbor_scan_refresh_period =
+		cfg_default(CFG_LFR_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD);
 
 	/* input refresh period is in terms of seconds */
 	/* Move pointer to ahead of SETROAMSCANREFRESHPERIOD<delimiter> */
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &roamScanRefreshPeriod);
+	ret = kstrtou8(value, 10, &roam_scan_refresh_period);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed Input value may be out of range[%d - %d]",
-			CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MIN / 1000,
-			CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MAX / 1000);
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	if ((roamScanRefreshPeriod <
-		(CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MIN / 1000)) ||
-	    (roamScanRefreshPeriod >
-		(CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MAX / 1000))) {
-		hdd_err("Neighbor scan results refresh period value %d is out of range (Min: %d Max: %d)",
-			roamScanRefreshPeriod,
-			(CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MIN
+			(cfg_min(CFG_LFR_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD)
 			 / 1000),
-			(CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MAX
+			(cfg_max(CFG_LFR_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD)
 			 / 1000));
 		ret = -EINVAL;
 		goto exit;
 	}
-	neighborScanRefreshPeriod = roamScanRefreshPeriod * 1000;
+
+	if (!cfg_in_range(CFG_LFR_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD,
+			  roam_scan_refresh_period)) {
+		hdd_err("Neighbor scan results refresh period value %d is out of range (Min: %d Max: %d)",
+			roam_scan_refresh_period,
+			(cfg_min(CFG_LFR_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD)
+			 / 1000),
+			(cfg_max(CFG_LFR_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD)
+			 / 1000));
+		ret = -EINVAL;
+		goto exit;
+	}
+	neighbor_scan_refresh_period = roam_scan_refresh_period * 1000;
 
 	hdd_debug("Received Command to Set roam scan refresh period (Scan refresh period) = %d",
-		  roamScanRefreshPeriod);
+		  neighbor_scan_refresh_period);
 
-	hdd_ctx->config->nNeighborResultsRefreshPeriod =
-				neighborScanRefreshPeriod;
 	sme_set_neighbor_scan_refresh_period(hdd_ctx->mac_handle,
 					     adapter->session_id,
-					     neighborScanRefreshPeriod);
+					     neighbor_scan_refresh_period);
 
 exit:
 	return ret;
@@ -3254,36 +3250,36 @@ static int drv_cmd_set_roam_mode(struct hdd_adapter *adapter,
 	mac_handle_t mac_handle;
 	int ret;
 	uint8_t *value = command;
-	uint8_t roamMode = CFG_LFR_FEATURE_ENABLED_DEFAULT;
+	uint8_t roam_mode = cfg_default(CFG_LFR_FEATURE_ENABLED);
 
 	/* Move pointer to ahead of SETROAMMODE<delimiter> */
 	value = value + SIZE_OF_SETROAMMODE + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &roamMode);
+	ret = kstrtou8(value, 10, &roam_mode);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed range [%d - %d]",
-			CFG_LFR_FEATURE_ENABLED_MIN,
-			CFG_LFR_FEATURE_ENABLED_MAX);
+			cfg_min(CFG_LFR_FEATURE_ENABLED),
+			cfg_max(CFG_LFR_FEATURE_ENABLED));
 		ret = -EINVAL;
 		goto exit;
 	}
-	if ((roamMode < CFG_LFR_FEATURE_ENABLED_MIN) ||
-	    (roamMode > CFG_LFR_FEATURE_ENABLED_MAX)) {
+
+	if (!cfg_in_range(CFG_LFR_FEATURE_ENABLED, roam_mode)) {
 		hdd_err("Roam Mode value %d is out of range (Min: %d Max: %d)",
-			roamMode,
-			CFG_LFR_FEATURE_ENABLED_MIN,
-			CFG_LFR_FEATURE_ENABLED_MAX);
+			roam_mode,
+			cfg_min(CFG_LFR_FEATURE_ENABLED),
+			cfg_max(CFG_LFR_FEATURE_ENABLED));
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	hdd_debug("Received Command to Set Roam Mode = %d",
-		  roamMode);
+		  roam_mode);
 	/*
 	 * Note that
 	 *     SETROAMMODE 0 is to enable LFR while
@@ -3292,27 +3288,29 @@ static int drv_cmd_set_roam_mode(struct hdd_adapter *adapter,
 	 *     enable/disable. So, we have to invert the value
 	 *     to call sme_update_is_fast_roam_ini_feature_enabled.
 	 */
-	if (CFG_LFR_FEATURE_ENABLED_MIN == roamMode)
-		roamMode = CFG_LFR_FEATURE_ENABLED_MAX;  /* Roam enable */
-	else
-		roamMode = CFG_LFR_FEATURE_ENABLED_MIN;  /* Roam disable */
+	if (roam_mode) {
+		/* Roam enable */
+		roam_mode = cfg_min(CFG_LFR_FEATURE_ENABLED);
+	} else {
+		/* Roam disable */
+		roam_mode = cfg_max(CFG_LFR_FEATURE_ENABLED);
+	}
 
-	hdd_ctx->config->isFastRoamIniFeatureEnabled = roamMode;
+	ucfg_mlme_set_lfr_enabled(hdd_ctx->psoc, (bool)roam_mode);
 	mac_handle = hdd_ctx->mac_handle;
-	if (roamMode) {
-		hdd_ctx->config->isRoamOffloadScanEnabled = roamMode;
-		sme_update_roam_scan_offload_enabled(mac_handle, roamMode);
+	if (roam_mode) {
+		ucfg_mlme_set_roam_scan_offload_enabled(hdd_ctx->psoc,
+							(bool)roam_mode);
 		sme_update_is_fast_roam_ini_feature_enabled(mac_handle,
 							    adapter->session_id,
-							    roamMode);
+							    roam_mode);
 	} else {
 		sme_update_is_fast_roam_ini_feature_enabled(mac_handle,
 							    adapter->session_id,
-							    roamMode);
-		hdd_ctx->config->isRoamOffloadScanEnabled = roamMode;
-		sme_update_roam_scan_offload_enabled(mac_handle, roamMode);
+							    roam_mode);
+		ucfg_mlme_set_roam_scan_offload_enabled(hdd_ctx->psoc,
+							roam_mode);
 	}
-
 
 exit:
 	return ret;
@@ -3325,19 +3323,19 @@ static int drv_cmd_get_roam_mode(struct hdd_adapter *adapter,
 				 struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	bool roamMode = sme_get_is_lfr_feature_enabled(hdd_ctx->mac_handle);
+	bool roam_mode = sme_get_is_lfr_feature_enabled(hdd_ctx->mac_handle);
 	char extra[32];
 	uint8_t len;
 
 	/*
 	 * roamMode value shall be inverted because the sementics is different.
 	 */
-	if (CFG_LFR_FEATURE_ENABLED_MIN == roamMode)
-		roamMode = CFG_LFR_FEATURE_ENABLED_MAX;
+	if (roam_mode)
+		roam_mode = cfg_min(CFG_LFR_FEATURE_ENABLED);
 	else
-		roamMode = CFG_LFR_FEATURE_ENABLED_MIN;
+		roam_mode = cfg_max(CFG_LFR_FEATURE_ENABLED);
 
-	len = scnprintf(extra, sizeof(extra), "%s %d", command, roamMode);
+	len = scnprintf(extra, sizeof(extra), "%s %d", command, roam_mode);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (copy_to_user(priv_data->buf, &extra, len)) {
 		hdd_err("failed to copy data to user buffer");
@@ -3355,42 +3353,40 @@ static int drv_cmd_set_roam_delta(struct hdd_adapter *adapter,
 {
 	int ret;
 	uint8_t *value = command;
-	uint8_t roamRssiDiff = CFG_ROAM_RSSI_DIFF_DEFAULT;
+	uint8_t roam_rssi_diff = cfg_default(CFG_LFR_ROAM_RSSI_DIFF);
 
 	/* Move pointer to ahead of SETROAMDELTA<delimiter> */
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &roamRssiDiff);
+	ret = kstrtou8(value, 10, &roam_rssi_diff);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed range [%d - %d]",
-			CFG_ROAM_RSSI_DIFF_MIN,
-			CFG_ROAM_RSSI_DIFF_MAX);
+			cfg_min(CFG_LFR_ROAM_RSSI_DIFF),
+			cfg_max(CFG_LFR_ROAM_RSSI_DIFF));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((roamRssiDiff < CFG_ROAM_RSSI_DIFF_MIN) ||
-	    (roamRssiDiff > CFG_ROAM_RSSI_DIFF_MAX)) {
+	if (!cfg_in_range(CFG_LFR_ROAM_RSSI_DIFF, roam_rssi_diff)) {
 		hdd_err("Roam rssi diff value %d is out of range (Min: %d Max: %d)",
-			roamRssiDiff,
-			CFG_ROAM_RSSI_DIFF_MIN,
-			CFG_ROAM_RSSI_DIFF_MAX);
+			roam_rssi_diff,
+			cfg_min(CFG_LFR_ROAM_RSSI_DIFF),
+			cfg_max(CFG_LFR_ROAM_RSSI_DIFF));
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	hdd_debug("Received Command to Set roam rssi diff = %d",
-		  roamRssiDiff);
+		  roam_rssi_diff);
 
-	hdd_ctx->config->RoamRssiDiff = roamRssiDiff;
 	sme_update_roam_rssi_diff(hdd_ctx->mac_handle,
 				  adapter->session_id,
-				  roamRssiDiff);
+				  roam_rssi_diff);
 
 exit:
 	return ret;
@@ -3641,44 +3637,42 @@ static int drv_cmd_set_roam_scan_channel_min_time(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t minTime = CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_DEFAULT;
+	uint8_t min_time = cfg_default(CFG_LFR_NEIGHBOR_SCAN_MIN_CHAN_TIME);
 
 	/* Move pointer to ahead of SETROAMSCANCHANNELMINTIME<delimiter> */
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &minTime);
+	ret = kstrtou8(value, 10, &min_time);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed range [%d - %d]",
-			CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MIN,
-			CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MAX);
+			cfg_min(CFG_LFR_NEIGHBOR_SCAN_MIN_CHAN_TIME),
+			cfg_max(CFG_LFR_NEIGHBOR_SCAN_MIN_CHAN_TIME));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((minTime < CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MIN) ||
-	    (minTime > CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MAX)) {
+	if (!cfg_in_range(CFG_LFR_NEIGHBOR_SCAN_MIN_CHAN_TIME, min_time)) {
 		hdd_err("scan min channel time value %d is out of range (Min: %d Max: %d)",
-			minTime,
-			CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MIN,
-			CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MAX);
+			min_time,
+			cfg_min(CFG_LFR_NEIGHBOR_SCAN_MIN_CHAN_TIME),
+			cfg_max(CFG_LFR_NEIGHBOR_SCAN_MIN_CHAN_TIME));
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_SETROAMSCANCHANNELMINTIME_IOCTL,
-			 adapter->session_id, minTime));
+			 adapter->session_id, min_time));
 	hdd_debug("Received Command to change channel min time = %d",
-		  minTime);
+		  min_time);
 
-	hdd_ctx->config->nNeighborScanMinChanTime = minTime;
 	sme_set_neighbor_scan_min_chan_time(hdd_ctx->mac_handle,
-					    minTime,
+					    min_time,
 					    adapter->session_id);
 
 exit:
@@ -3732,42 +3726,40 @@ static int drv_cmd_set_scan_channel_time(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint16_t maxTime = CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_DEFAULT;
+	uint16_t max_time = cfg_default(CFG_LFR_NEIGHBOR_SCAN_MAX_CHAN_TIME);
 
 	/* Move pointer to ahead of SETSCANCHANNELTIME<delimiter> */
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou16(value, 10, &maxTime);
+	ret = kstrtou16(value, 10, &max_time);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou16 failed range [%d - %d]",
-			CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MIN,
-			CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MAX);
+			cfg_min(CFG_LFR_NEIGHBOR_SCAN_MAX_CHAN_TIME),
+			cfg_max(CFG_LFR_NEIGHBOR_SCAN_MAX_CHAN_TIME));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((maxTime < CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MIN) ||
-	    (maxTime > CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MAX)) {
+	if (!cfg_in_range(CFG_LFR_NEIGHBOR_SCAN_MAX_CHAN_TIME, max_time)) {
 		hdd_err("lfr mode value %d is out of range (Min: %d Max: %d)",
-			maxTime,
-			CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MIN,
-			CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MAX);
+			max_time,
+			cfg_min(CFG_LFR_NEIGHBOR_SCAN_MAX_CHAN_TIME),
+			cfg_max(CFG_LFR_NEIGHBOR_SCAN_MAX_CHAN_TIME));
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	hdd_debug("Received Command to change channel max time = %d",
-		  maxTime);
+		  max_time);
 
-	hdd_ctx->config->nNeighborScanMaxChanTime = maxTime;
 	sme_set_neighbor_scan_max_chan_time(hdd_ctx->mac_handle,
 					    adapter->session_id,
-					    maxTime);
+					    max_time);
 
 exit:
 	return ret;
@@ -3806,7 +3798,7 @@ static int drv_cmd_set_scan_home_time(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint16_t val = CFG_NEIGHBOR_SCAN_TIMER_PERIOD_DEFAULT;
+	uint16_t val = cfg_default(CFG_LFR_NEIGHBOR_SCAN_TIMER_PERIOD);
 
 	/* Move pointer to ahead of SETSCANHOMETIME<delimiter> */
 	value = value + command_len + 1;
@@ -3819,18 +3811,17 @@ static int drv_cmd_set_scan_home_time(struct hdd_adapter *adapter,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou16 failed range [%d - %d]",
-			CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MIN,
-			CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MAX);
+			cfg_min(CFG_LFR_NEIGHBOR_SCAN_TIMER_PERIOD),
+			cfg_max(CFG_LFR_NEIGHBOR_SCAN_TIMER_PERIOD));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((val < CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MIN) ||
-	    (val > CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MAX)) {
+	if (!cfg_in_range(CFG_LFR_NEIGHBOR_SCAN_TIMER_PERIOD, val)) {
 		hdd_err("scan home time value %d is out of range (Min: %d Max: %d)",
 			val,
-			CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MIN,
-			CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MAX);
+			cfg_min(CFG_LFR_NEIGHBOR_SCAN_TIMER_PERIOD),
+			cfg_max(CFG_LFR_NEIGHBOR_SCAN_TIMER_PERIOD));
 		ret = -EINVAL;
 		goto exit;
 	}
@@ -3838,7 +3829,6 @@ static int drv_cmd_set_scan_home_time(struct hdd_adapter *adapter,
 	hdd_debug("Received Command to change scan home time = %d",
 		  val);
 
-	hdd_ctx->config->nNeighborScanPeriod = val;
 	sme_set_neighbor_scan_period(hdd_ctx->mac_handle,
 				     adapter->session_id, val);
 
@@ -3879,7 +3869,7 @@ static int drv_cmd_set_roam_intra_band(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t val = CFG_ROAM_INTRA_BAND_DEFAULT;
+	uint8_t val = cfg_default(CFG_LFR_ROAM_INTRA_BAND);
 
 	/* Move pointer to ahead of SETROAMINTRABAND<delimiter> */
 	value = value + command_len + 1;
@@ -3892,26 +3882,23 @@ static int drv_cmd_set_roam_intra_band(struct hdd_adapter *adapter,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed range [%d - %d]",
-			CFG_ROAM_INTRA_BAND_MIN,
-			CFG_ROAM_INTRA_BAND_MAX);
+			cfg_min(CFG_LFR_ROAM_INTRA_BAND),
+			cfg_max(CFG_LFR_ROAM_INTRA_BAND));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((val < CFG_ROAM_INTRA_BAND_MIN) ||
-	    (val > CFG_ROAM_INTRA_BAND_MAX)) {
+	if (!cfg_in_range(CFG_LFR_ROAM_INTRA_BAND, val)) {
 		hdd_err("intra band mode value %d is out of range (Min: %d Max: %d)",
-			val,
-			CFG_ROAM_INTRA_BAND_MIN,
-			CFG_ROAM_INTRA_BAND_MAX);
+			val, cfg_min(CFG_LFR_ROAM_INTRA_BAND),
+			cfg_max(CFG_LFR_ROAM_INTRA_BAND));
 		ret = -EINVAL;
 		goto exit;
 	}
 	hdd_debug("Received Command to change intra band = %d",
 		  val);
 
-	hdd_ctx->config->nRoamIntraBand = val;
-	sme_set_roam_intra_band(hdd_ctx->mac_handle, val);
+	ucfg_mlme_set_roam_intra_band(hdd_ctx->psoc, (bool)val);
 
 exit:
 	return ret;
@@ -3948,41 +3935,39 @@ static int drv_cmd_set_scan_n_probes(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t nProbes = CFG_ROAM_SCAN_N_PROBES_DEFAULT;
+	uint8_t nprobes = cfg_default(CFG_LFR_ROAM_SCAN_N_PROBES);
 
 	/* Move pointer to ahead of SETSCANNPROBES<delimiter> */
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &nProbes);
+	ret = kstrtou8(value, 10, &nprobes);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed range [%d - %d]",
-			CFG_ROAM_SCAN_N_PROBES_MIN,
-			CFG_ROAM_SCAN_N_PROBES_MAX);
+			cfg_min(CFG_LFR_ROAM_SCAN_N_PROBES),
+			cfg_max(CFG_LFR_ROAM_SCAN_N_PROBES));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((nProbes < CFG_ROAM_SCAN_N_PROBES_MIN) ||
-	    (nProbes > CFG_ROAM_SCAN_N_PROBES_MAX)) {
+	if (!cfg_in_range(CFG_LFR_ROAM_SCAN_N_PROBES, nprobes)) {
 		hdd_err("NProbes value %d is out of range (Min: %d Max: %d)",
-			nProbes,
-			CFG_ROAM_SCAN_N_PROBES_MIN,
-			CFG_ROAM_SCAN_N_PROBES_MAX);
+			nprobes,
+			cfg_min(CFG_LFR_ROAM_SCAN_N_PROBES),
+			cfg_max(CFG_LFR_ROAM_SCAN_N_PROBES));
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	hdd_debug("Received Command to Set nProbes = %d",
-		  nProbes);
+		  nprobes);
 
-	hdd_ctx->config->nProbes = nProbes;
 	sme_update_roam_scan_n_probes(hdd_ctx->mac_handle,
-				      adapter->session_id, nProbes);
+				      adapter->session_id, nprobes);
 
 exit:
 	return ret;
@@ -4017,7 +4002,8 @@ static int drv_cmd_set_scan_home_away_time(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint16_t homeAwayTime = CFG_ROAM_SCAN_HOME_AWAY_TIME_DEFAULT;
+	uint16_t home_away_time = cfg_default(CFG_LFR_ROAM_SCAN_HOME_AWAY_TIME);
+	uint16_t current_home_away_time;
 
 	/* input value is in units of msec */
 
@@ -4025,38 +4011,36 @@ static int drv_cmd_set_scan_home_away_time(struct hdd_adapter *adapter,
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou16(value, 10, &homeAwayTime);
+	ret = kstrtou16(value, 10, &home_away_time);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed range [%d - %d]",
-			CFG_ROAM_SCAN_HOME_AWAY_TIME_MIN,
-			CFG_ROAM_SCAN_HOME_AWAY_TIME_MAX);
+			cfg_min(CFG_LFR_ROAM_SCAN_HOME_AWAY_TIME),
+			cfg_max(CFG_LFR_ROAM_SCAN_HOME_AWAY_TIME));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((homeAwayTime < CFG_ROAM_SCAN_HOME_AWAY_TIME_MIN) ||
-	    (homeAwayTime > CFG_ROAM_SCAN_HOME_AWAY_TIME_MAX)) {
-		hdd_err("homeAwayTime value %d is out of range (Min: %d Max: %d)",
-			  homeAwayTime,
-			  CFG_ROAM_SCAN_HOME_AWAY_TIME_MIN,
-			  CFG_ROAM_SCAN_HOME_AWAY_TIME_MAX);
+	if (!cfg_in_range(CFG_LFR_ROAM_SCAN_HOME_AWAY_TIME, home_away_time)) {
+		hdd_err("home_away_time value %d is out of range (min: %d max: %d)",
+			home_away_time,
+			cfg_min(CFG_LFR_ROAM_SCAN_HOME_AWAY_TIME),
+			cfg_max(CFG_LFR_ROAM_SCAN_HOME_AWAY_TIME));
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	hdd_debug("Received Command to Set scan away time = %d",
-		  homeAwayTime);
+		  home_away_time);
 
-	if (hdd_ctx->config->nRoamScanHomeAwayTime !=
-	    homeAwayTime) {
-		hdd_ctx->config->nRoamScanHomeAwayTime = homeAwayTime;
+	ucfg_mlme_get_home_away_time(hdd_ctx->psoc, &current_home_away_time);
+	if (current_home_away_time != home_away_time) {
 		sme_update_roam_scan_home_away_time(hdd_ctx->mac_handle,
 						    adapter->session_id,
-						    homeAwayTime,
+						    home_away_time,
 						    true);
 	}
 
@@ -4103,40 +4087,36 @@ static int drv_cmd_set_wes_mode(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t wesMode = CFG_ENABLE_WES_MODE_NAME_DEFAULT;
+	uint8_t wes_mode = cfg_default(CFG_LFR_ENABLE_WES_MODE);
 
 	/* Move pointer to ahead of SETWESMODE<delimiter> */
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &wesMode);
+	ret = kstrtou8(value, 10, &wes_mode);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed range [%d - %d]",
-			  CFG_ENABLE_WES_MODE_NAME_MIN,
-			  CFG_ENABLE_WES_MODE_NAME_MAX);
+			cfg_min(CFG_LFR_ENABLE_WES_MODE),
+			cfg_max(CFG_LFR_ENABLE_WES_MODE));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((wesMode < CFG_ENABLE_WES_MODE_NAME_MIN) ||
-	    (wesMode > CFG_ENABLE_WES_MODE_NAME_MAX)) {
+	if (!cfg_in_range(CFG_LFR_ENABLE_WES_MODE, wes_mode)) {
 		hdd_err("WES Mode value %d is out of range (Min: %d Max: %d)",
-			  wesMode,
-			  CFG_ENABLE_WES_MODE_NAME_MIN,
-			  CFG_ENABLE_WES_MODE_NAME_MAX);
+			wes_mode, cfg_min(CFG_LFR_ENABLE_WES_MODE),
+			cfg_max(CFG_LFR_ENABLE_WES_MODE));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	hdd_debug("Received Command to Set WES Mode rssi diff = %d",
-		  wesMode);
+	hdd_debug("Received Command to Set WES Mode rssi diff = %d", wes_mode);
 
-	hdd_ctx->config->isWESModeEnabled = wesMode;
-	sme_update_wes_mode(hdd_ctx->mac_handle, wesMode, adapter->session_id);
+	sme_update_wes_mode(hdd_ctx->mac_handle, wes_mode, adapter->session_id);
 
 exit:
 	return ret;
@@ -4172,7 +4152,7 @@ static int drv_cmd_set_opportunistic_rssi_diff(struct hdd_adapter *adapter,
 	int ret = 0;
 	uint8_t *value = command;
 	uint8_t nOpportunisticThresholdDiff =
-		CFG_OPPORTUNISTIC_SCAN_THRESHOLD_DIFF_DEFAULT;
+		cfg_default(CFG_LFR_OPPORTUNISTIC_SCAN_THRESHOLD_DIFF);
 
 	/* Move pointer to ahead of SETOPPORTUNISTICRSSIDIFF<delimiter> */
 	value = value + command_len + 1;
@@ -4230,13 +4210,13 @@ static int drv_cmd_set_roam_rescan_rssi_diff(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t nRoamRescanRssiDiff = CFG_ROAM_RESCAN_RSSI_DIFF_DEFAULT;
+	uint8_t rescan_rssi_diff = cfg_default(CFG_LFR_ROAM_RESCAN_RSSI_DIFF);
 
 	/* Move pointer to ahead of SETROAMRESCANRSSIDIFF<delimiter> */
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &nRoamRescanRssiDiff);
+	ret = kstrtou8(value, 10, &rescan_rssi_diff);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
@@ -4248,11 +4228,11 @@ static int drv_cmd_set_roam_rescan_rssi_diff(struct hdd_adapter *adapter,
 	}
 
 	hdd_debug("Received Command to Set Roam Rescan RSSI Diff = %d",
-		  nRoamRescanRssiDiff);
+		  rescan_rssi_diff);
 
 	sme_set_roam_rescan_rssi_diff(hdd_ctx->mac_handle,
 				      adapter->session_id,
-				      nRoamRescanRssiDiff);
+				      rescan_rssi_diff);
 
 exit:
 	return ret;
@@ -4287,42 +4267,40 @@ static int drv_cmd_set_fast_roam(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t lfrMode = CFG_LFR_FEATURE_ENABLED_DEFAULT;
+	uint8_t lfr_mode = cfg_default(CFG_LFR_FEATURE_ENABLED);
 
 	/* Move pointer to ahead of SETFASTROAM<delimiter> */
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &lfrMode);
+	ret = kstrtou8(value, 10, &lfr_mode);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed range [%d - %d]",
-			  CFG_LFR_FEATURE_ENABLED_MIN,
-			  CFG_LFR_FEATURE_ENABLED_MAX);
+			cfg_min(CFG_LFR_FEATURE_ENABLED),
+			cfg_max(CFG_LFR_FEATURE_ENABLED));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((lfrMode < CFG_LFR_FEATURE_ENABLED_MIN) ||
-	    (lfrMode > CFG_LFR_FEATURE_ENABLED_MAX)) {
+	if (!cfg_in_range(CFG_LFR_FEATURE_ENABLED, lfr_mode)) {
 		hdd_err("lfr mode value %d is out of range (Min: %d Max: %d)",
-			  lfrMode,
-			  CFG_LFR_FEATURE_ENABLED_MIN,
-			  CFG_LFR_FEATURE_ENABLED_MAX);
+			lfr_mode, cfg_min(CFG_LFR_FEATURE_ENABLED),
+			cfg_max(CFG_LFR_FEATURE_ENABLED));
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	hdd_debug("Received Command to change lfr mode = %d",
-		  lfrMode);
+		  lfr_mode);
 
-	hdd_ctx->config->isFastRoamIniFeatureEnabled = lfrMode;
+	ucfg_mlme_set_lfr_enabled(hdd_ctx->psoc, (bool)lfr_mode);
 	sme_update_is_fast_roam_ini_feature_enabled(hdd_ctx->mac_handle,
 						    adapter->session_id,
-						    lfrMode);
+						    lfr_mode);
 
 exit:
 	return ret;
@@ -4336,7 +4314,7 @@ static int drv_cmd_set_fast_transition(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t ft = CFG_FAST_TRANSITION_ENABLED_NAME_DEFAULT;
+	uint8_t ft = cfg_default(CFG_LFR_FAST_TRANSITION_ENABLED);
 
 	/* Move pointer to ahead of SETFASTROAM<delimiter> */
 	value = value + command_len + 1;
@@ -4349,26 +4327,23 @@ static int drv_cmd_set_fast_transition(struct hdd_adapter *adapter,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed range [%d - %d]",
-			  CFG_FAST_TRANSITION_ENABLED_NAME_MIN,
-			  CFG_FAST_TRANSITION_ENABLED_NAME_MAX);
+			cfg_min(CFG_LFR_FAST_TRANSITION_ENABLED),
+			cfg_max(CFG_LFR_FAST_TRANSITION_ENABLED));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((ft < CFG_FAST_TRANSITION_ENABLED_NAME_MIN) ||
-	    (ft > CFG_FAST_TRANSITION_ENABLED_NAME_MAX)) {
+	if (!cfg_in_range(CFG_LFR_FAST_TRANSITION_ENABLED, ft)) {
 		hdd_err("ft mode value %d is out of range (Min: %d Max: %d)",
-			  ft,
-			  CFG_FAST_TRANSITION_ENABLED_NAME_MIN,
-			  CFG_FAST_TRANSITION_ENABLED_NAME_MAX);
+			ft, cfg_min(CFG_LFR_FAST_TRANSITION_ENABLED),
+			cfg_max(CFG_LFR_FAST_TRANSITION_ENABLED));
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	hdd_debug("Received Command to change ft mode = %d", ft);
 
-	hdd_ctx->config->isFastTransitionEnabled = ft;
-	sme_update_fast_transition_enabled(hdd_ctx->mac_handle, ft);
+	ucfg_mlme_set_fast_transition_enabled(hdd_ctx->psoc, (bool)ft);
 
 exit:
 	return ret;
@@ -4945,43 +4920,42 @@ static int hdd_parse_setrmcenable_command(uint8_t *pValue,
 }
 
 /* Function header is left blank intentionally */
-static int hdd_parse_setrmcactionperiod_command(uint8_t *pValue,
-						uint32_t *pActionPeriod)
+static int hdd_parse_setrmcactionperiod_command(uint8_t *pvalue,
+						uint32_t *paction_period)
 {
-	uint8_t *inPtr = pValue;
-	int tempInt;
+	uint8_t *inptr = pvalue;
+	int temp_int;
 	int v = 0;
 	char buf[32];
-	*pActionPeriod = 0;
+	*paction_period = 0;
 
-	inPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
+	inptr = strnchr(pvalue, strlen(pvalue), SPACE_ASCII_VALUE);
 
-	if (NULL == inPtr)
+	if (NULL == inptr)
 		return -EINVAL;
-	else if (SPACE_ASCII_VALUE != *inPtr)
+	else if (SPACE_ASCII_VALUE != *inptr)
 		return -EINVAL;
 
-	while ((SPACE_ASCII_VALUE == *inPtr) && ('\0' != *inPtr))
-		inPtr++;
+	while ((SPACE_ASCII_VALUE == *inptr) && ('\0' != *inptr))
+		inptr++;
 
-	if ('\0' == *inPtr)
+	if ('\0' == *inptr)
 		return 0;
 
-	v = sscanf(inPtr, "%31s ", buf);
+	v = sscanf(inptr, "%31s ", buf);
 	if (1 != v)
 		return -EINVAL;
 
-	v = kstrtos32(buf, 10, &tempInt);
+	v = kstrtos32(buf, 10, &temp_int);
 	if (v < 0)
 		return -EINVAL;
 
-	if ((tempInt < cfg_min(CFG_RMC_ACTION_PERIOD_FREQUENCY)) ||
-	    (tempInt > cfg_max(CFG_RMC_ACTION_PERIOD_FREQUENCY)))
+	if (!cfg_in_range(CFG_RMC_ACTION_PERIOD_FREQUENCY, temp_int))
 		return -EINVAL;
 
-	*pActionPeriod = tempInt;
+	*paction_period = temp_int;
 
-	hdd_debug("uActionPeriod: %d", *pActionPeriod);
+	hdd_debug("uActionPeriod: %d", *paction_period);
 
 	return 0;
 }
@@ -5798,7 +5772,7 @@ static int drv_cmd_set_ccx_mode(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t eseMode = CFG_ESE_FEATURE_ENABLED_DEFAULT;
+	uint8_t ese_mode = cfg_default(CFG_LFR_ESE_FEATURE_ENABLED);
 	struct pmkid_mode_bits pmkid_modes;
 	mac_handle_t mac_handle;
 
@@ -5820,34 +5794,31 @@ static int drv_cmd_set_ccx_mode(struct hdd_adapter *adapter,
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &eseMode);
+	ret = kstrtou8(value, 10, &ese_mode);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed range [%d - %d]",
-			  CFG_ESE_FEATURE_ENABLED_MIN,
-			  CFG_ESE_FEATURE_ENABLED_MAX);
+			cfg_min(CFG_LFR_ESE_FEATURE_ENABLED),
+			cfg_max(CFG_LFR_ESE_FEATURE_ENABLED));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((eseMode < CFG_ESE_FEATURE_ENABLED_MIN) ||
-	    (eseMode > CFG_ESE_FEATURE_ENABLED_MAX)) {
+	if (!cfg_in_range(CFG_LFR_ESE_FEATURE_ENABLED, ese_mode)) {
 		hdd_err("Ese mode value %d is out of range (Min: %d Max: %d)",
-			  eseMode,
-			  CFG_ESE_FEATURE_ENABLED_MIN,
-			  CFG_ESE_FEATURE_ENABLED_MAX);
+			ese_mode, cfg_min(CFG_LFR_ESE_FEATURE_ENABLED),
+			cfg_max(CFG_LFR_ESE_FEATURE_ENABLED));
 		ret = -EINVAL;
 		goto exit;
 	}
-	hdd_debug("Received Command to change ese mode = %d", eseMode);
+	hdd_debug("Received Command to change ese mode = %d", ese_mode);
 
-	hdd_ctx->config->isEseIniFeatureEnabled = eseMode;
 	sme_update_is_ese_feature_enabled(mac_handle,
 					  adapter->session_id,
-					  eseMode);
+					  ese_mode);
 
 exit:
 	return ret;
@@ -5930,52 +5901,50 @@ static int drv_cmd_set_dfs_scan_mode(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	uint8_t dfsScanMode = CFG_ROAMING_DFS_CHANNEL_DEFAULT;
+	uint8_t dfs_scan_mode = cfg_default(CFG_LFR_ROAMING_DFS_CHANNEL);
 
 	/* Move pointer to ahead of SETDFSSCANMODE<delimiter> */
 	value = value + command_len + 1;
 
 	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &dfsScanMode);
+	ret = kstrtou8(value, 10, &dfs_scan_mode);
 	if (ret < 0) {
 		/*
 		 * If the input value is greater than max value of datatype,
 		 * then also kstrtou8 fails
 		 */
 		hdd_err("kstrtou8 failed range [%d - %d]",
-			  CFG_ROAMING_DFS_CHANNEL_MIN,
-			  CFG_ROAMING_DFS_CHANNEL_MAX);
+			  cfg_min(CFG_LFR_ROAMING_DFS_CHANNEL),
+			  cfg_max(CFG_LFR_ROAMING_DFS_CHANNEL));
 		ret = -EINVAL;
 		goto exit;
 	}
 
-	if ((dfsScanMode < CFG_ROAMING_DFS_CHANNEL_MIN) ||
-	    (dfsScanMode > CFG_ROAMING_DFS_CHANNEL_MAX)) {
+	if (!cfg_in_range(CFG_LFR_ROAMING_DFS_CHANNEL, dfs_scan_mode)) {
 		hdd_err("dfsScanMode value %d is out of range (Min: %d Max: %d)",
-			  dfsScanMode,
-			  CFG_ROAMING_DFS_CHANNEL_MIN,
-			  CFG_ROAMING_DFS_CHANNEL_MAX);
+			  dfs_scan_mode,
+			  cfg_min(CFG_LFR_ROAMING_DFS_CHANNEL),
+			  cfg_max(CFG_LFR_ROAMING_DFS_CHANNEL));
 		ret = -EINVAL;
 		goto exit;
 	}
 
 	hdd_debug("Received Command to Set DFS Scan Mode = %d",
-		  dfsScanMode);
+		  dfs_scan_mode);
 
 	/* When DFS scanning is disabled, the DFS channels need to be
 	 * removed from the operation of device.
 	 */
 	ret = wlan_hdd_enable_dfs_chan_scan(hdd_ctx,
-			dfsScanMode != CFG_ROAMING_DFS_CHANNEL_DISABLED);
+			dfs_scan_mode != ROAMING_DFS_CHANNEL_DISABLED);
 	if (ret < 0) {
 		/* Some conditions prevented it from disabling DFS channels */
 		hdd_err("disable/enable DFS channel request was denied");
 		goto exit;
 	}
 
-	hdd_ctx->config->allowDFSChannelRoam = dfsScanMode;
 	sme_update_dfs_scan_mode(hdd_ctx->mac_handle, adapter->session_id,
-				 dfsScanMode);
+				 dfs_scan_mode);
 
 exit:
 	return ret;

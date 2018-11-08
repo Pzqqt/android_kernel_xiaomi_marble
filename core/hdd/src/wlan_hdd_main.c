@@ -1438,6 +1438,7 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 {
 	struct hdd_config *config = hdd_ctx->config;
 	bool arp_offload_enable;
+	bool mawc_enabled;
 #ifdef FEATURE_WLAN_TDLS
 	bool tdls_support;
 	bool tdls_off_channel;
@@ -1496,7 +1497,9 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 	   QDF_STATUS_SUCCESS)
 		value &= cfg->get_peer_info_enabled;
 
-	config->MAWCEnabled &= cfg->is_fw_mawc_capable;
+	ucfg_mlme_is_mawc_enabled(hdd_ctx->psoc, &mawc_enabled);
+	ucfg_mlme_set_mawc_enabled(hdd_ctx->psoc,
+				   mawc_enabled & cfg->is_fw_mawc_capable);
 	hdd_update_tdls_config(hdd_ctx);
 	sme_update_tgt_services(hdd_ctx->mac_handle, cfg);
 }
@@ -3076,7 +3079,8 @@ static int hdd_deactivate_wifi_pos(void)
 static void hdd_populate_wifi_pos_cfg(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
-	struct hdd_config *cfg = hdd_ctx->config;
+	uint16_t neighbor_scan_max_chan_time;
+	uint16_t neighbor_scan_min_chan_time;
 
 	wifi_pos_set_oem_target_type(psoc, hdd_ctx->target_type);
 	wifi_pos_set_oem_fw_version(psoc, hdd_ctx->target_fw_version);
@@ -3084,8 +3088,12 @@ static void hdd_populate_wifi_pos_cfg(struct hdd_context *hdd_ctx)
 	wifi_pos_set_drv_ver_minor(psoc, QWLAN_VERSION_MINOR);
 	wifi_pos_set_drv_ver_patch(psoc, QWLAN_VERSION_PATCH);
 	wifi_pos_set_drv_ver_build(psoc, QWLAN_VERSION_BUILD);
-	wifi_pos_set_dwell_time_min(psoc, cfg->nNeighborScanMinChanTime);
-	wifi_pos_set_dwell_time_max(psoc, cfg->nNeighborScanMaxChanTime);
+	ucfg_mlme_get_neighbor_scan_max_chan_time(psoc,
+						  &neighbor_scan_max_chan_time);
+	ucfg_mlme_get_neighbor_scan_min_chan_time(psoc,
+						  &neighbor_scan_min_chan_time);
+	wifi_pos_set_dwell_time_min(psoc, neighbor_scan_min_chan_time);
+	wifi_pos_set_dwell_time_max(psoc, neighbor_scan_max_chan_time);
 }
 #else
 static int hdd_activate_wifi_pos(struct hdd_context *hdd_ctx)
@@ -9797,8 +9805,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 		goto exit;
 
 	cds_cfg->bandcapability = band_capability;
-	cds_cfg->delay_before_vdev_stop =
-		hdd_ctx->config->delay_before_vdev_stop;
 	cds_cfg->num_vdevs = hdd_ctx->config->num_vdevs;
 
 	hdd_ra_populate_cds_config(cds_cfg, hdd_ctx);
@@ -14096,9 +14102,11 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 
 #ifdef FEATURE_WLAN_SCAN_PNO
 static inline void hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
-	struct hdd_config *cfg)
+	struct hdd_context *hdd_ctx)
 {
 	struct nlo_mawc_params *mawc_cfg = &pno_cfg->mawc_params;
+	struct hdd_config *cfg = hdd_ctx->config;
+	bool mawc_enabled;
 
 	pno_cfg->channel_prediction = cfg->pno_channel_prediction;
 	pno_cfg->top_k_num_of_channels = cfg->top_k_num_of_channels;
@@ -14106,7 +14114,9 @@ static inline void hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
 	pno_cfg->adaptive_dwell_mode = cfg->adaptive_dwell_mode_enabled;
 	pno_cfg->channel_prediction_full_scan =
 		cfg->channel_prediction_full_scan;
-	mawc_cfg->enable = cfg->MAWCEnabled && cfg->mawc_nlo_enabled;
+
+	ucfg_mlme_is_mawc_enabled(hdd_ctx->psoc, &mawc_enabled);
+	mawc_cfg->enable = mawc_enabled && cfg->mawc_nlo_enabled;
 	mawc_cfg->exp_backoff_ratio = cfg->mawc_nlo_exp_backoff_ratio;
 	mawc_cfg->init_scan_interval = cfg->mawc_nlo_init_scan_interval;
 	mawc_cfg->max_scan_interval = cfg->mawc_nlo_max_scan_interval;
@@ -14114,7 +14124,7 @@ static inline void hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
 #else
 static inline void
 hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
-		      struct hdd_config *cfg)
+		      struct hdd_context *hdd_ctx)
 {
 }
 #endif
@@ -14261,6 +14271,7 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	QDF_STATUS status;
 	uint8_t scan_bucket_thre;
 	uint8_t select_5ghz_margin;
+	bool roam_prefer_5ghz;
 
 	status = ucfg_mlme_get_select_5ghz_margin(hdd_ctx->psoc,
 						  &select_5ghz_margin);
@@ -14279,7 +14290,8 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	/* convert to ms */
 	scan_cfg.scan_cache_aging_time =
 		cfg->scanAgingTimeout * 1000;
-	scan_cfg.prefer_5ghz = cfg->nRoamPrefer5GHz;
+	ucfg_mlme_is_roam_prefer_5ghz(hdd_ctx->psoc, &roam_prefer_5ghz);
+	scan_cfg.prefer_5ghz = (uint32_t)roam_prefer_5ghz;
 	scan_cfg.select_5ghz_margin = select_5ghz_margin;
 	ucfg_mlme_get_first_scan_bucket_threshold(hdd_ctx->psoc,
 						  &scan_bucket_thre);
@@ -14293,7 +14305,7 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	scan_cfg.enable_mac_spoofing = cfg->enable_mac_spoofing;
 	scan_cfg.sta_miracast_mcc_rest_time =
 				cfg->sta_miracast_mcc_rest_time_val;
-	hdd_update_pno_config(&scan_cfg.pno_cfg, cfg);
+	hdd_update_pno_config(&scan_cfg.pno_cfg, hdd_ctx);
 	hdd_update_ie_whitelist_attr(&scan_cfg.ie_whitelist, hdd_ctx);
 
 	status = hdd_update_score_config(&scan_cfg.score_config, hdd_ctx);

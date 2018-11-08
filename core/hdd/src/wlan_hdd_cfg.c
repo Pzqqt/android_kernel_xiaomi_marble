@@ -48,225 +48,6 @@
 #include "cfg_ucfg_api.h"
 #include "hdd_dp_cfg.h"
 
-static void
-cb_notify_set_roam_prefer5_g_hz(struct hdd_context *hdd_ctx,
-				unsigned long notify_id)
-{
-	sme_update_roam_prefer5_g_hz(hdd_ctx->mac_handle,
-				     hdd_ctx->config->nRoamPrefer5GHz);
-}
-
-static void
-cb_notify_set_roam_rssi_diff(struct hdd_context *hdd_ctx,
-			     unsigned long notify_id)
-{
-	sme_update_roam_rssi_diff(hdd_ctx->mac_handle,
-				  0, hdd_ctx->config->RoamRssiDiff);
-}
-
-static void
-cb_notify_set_fast_transition_enabled(struct hdd_context *hdd_ctx,
-				      unsigned long notify_id)
-{
-	bool enabled = hdd_ctx->config->isFastTransitionEnabled;
-
-	sme_update_fast_transition_enabled(hdd_ctx->mac_handle, enabled);
-}
-
-static void
-cb_notify_set_roam_intra_band(struct hdd_context *hdd_ctx,
-			      unsigned long notify_id)
-{
-	sme_set_roam_intra_band(hdd_ctx->mac_handle,
-				hdd_ctx->config->nRoamIntraBand);
-}
-
-static void cb_notify_set_wes_mode(struct hdd_context *hdd_ctx,
-				   unsigned long notify_id)
-{
-	sme_update_wes_mode(hdd_ctx->mac_handle,
-			    hdd_ctx->config->isWESModeEnabled, 0);
-}
-
-static void
-cb_notify_set_roam_scan_n_probes(struct hdd_context *hdd_ctx,
-				 unsigned long notify_id)
-{
-	sme_update_roam_scan_n_probes(hdd_ctx->mac_handle, 0,
-				      hdd_ctx->config->nProbes);
-}
-
-static void
-cb_notify_set_roam_scan_home_away_time(struct hdd_context *hdd_ctx,
-				       unsigned long notify_id)
-{
-	uint16_t away_time = hdd_ctx->config->nRoamScanHomeAwayTime;
-
-	sme_update_roam_scan_home_away_time(hdd_ctx->mac_handle, 0,
-					    away_time, true);
-}
-
-static void
-notify_is_fast_roam_ini_feature_enabled(struct hdd_context *hdd_ctx,
-					unsigned long notify_id)
-{
-	bool enabled = hdd_ctx->config->isFastRoamIniFeatureEnabled;
-
-	sme_update_is_fast_roam_ini_feature_enabled(hdd_ctx->mac_handle, 0,
-						    enabled);
-}
-
-static void
-notify_is_mawc_ini_feature_enabled(struct hdd_context *hdd_ctx,
-				   unsigned long notify_id)
-{
-	sme_update_is_mawc_ini_feature_enabled(hdd_ctx->mac_handle,
-					       hdd_ctx->config->MAWCEnabled);
-}
-
-#ifdef FEATURE_WLAN_ESE
-static void
-cb_notify_set_ese_feature_enabled(struct hdd_context *hdd_ctx,
-				  unsigned long notify_id)
-{
-	bool enabled = hdd_ctx->config->isEseIniFeatureEnabled;
-
-	sme_update_is_ese_feature_enabled(hdd_ctx->mac_handle, 0, enabled);
-}
-#endif
-
-static void
-cb_notify_set_opportunistic_scan_threshold_diff(struct hdd_context *hdd_ctx,
-						unsigned long notify_id)
-{
-	uint8_t diff = hdd_ctx->config->nOpportunisticThresholdDiff;
-
-	sme_set_roam_opportunistic_scan_threshold_diff(hdd_ctx->mac_handle,
-						       0, diff);
-}
-
-static void cb_notify_set_roam_rescan_rssi_diff(struct hdd_context *hdd_ctx,
-						unsigned long notify_id)
-{
-	sme_set_roam_rescan_rssi_diff(hdd_ctx->mac_handle,
-				      0, hdd_ctx->config->nRoamRescanRssiDiff);
-}
-
-static void
-cb_notify_set_neighbor_lookup_rssi_threshold(struct hdd_context *hdd_ctx,
-					     unsigned long notify_id)
-{
-	uint8_t threshold = hdd_ctx->config->nNeighborLookupRssiThreshold;
-
-	sme_set_neighbor_lookup_rssi_threshold(hdd_ctx->mac_handle, 0,
-					       threshold);
-}
-
-static void
-cb_notify_set_delay_before_vdev_stop(struct hdd_context *hdd_ctx,
-				     unsigned long notify_id)
-{
-	sme_set_delay_before_vdev_stop(hdd_ctx->mac_handle, 0,
-				       hdd_ctx->config->delay_before_vdev_stop);
-}
-
-static void
-cb_notify_set_neighbor_scan_period(struct hdd_context *hdd_ctx,
-				   unsigned long notify_id)
-{
-	sme_set_neighbor_scan_period(hdd_ctx->mac_handle, 0,
-				     hdd_ctx->config->nNeighborScanPeriod);
-}
-
-/*
- * cb_notify_set_neighbor_scan_min_period() - configure min rest
- * time during roaming scan
- *
- * @hdd_ctx: HDD context data structure
- * @notify_id: Identifies 1 of the 4 parameters to be modified
- *
- * Picks up the value from hdd configuration and passes it to SME.
- * Return: void
- */
-static void
-cb_notify_set_neighbor_scan_min_period(struct hdd_context *hdd_ctx,
-				       unsigned long notify_id)
-{
-	uint16_t period = hdd_ctx->config->neighbor_scan_min_period;
-
-	sme_set_neighbor_scan_min_period(hdd_ctx->mac_handle, 0,
-					 period);
-}
-
-static void
-cb_notify_set_neighbor_results_refresh_period(struct hdd_context *hdd_ctx,
-					      unsigned long notify_id)
-{
-	uint16_t period = hdd_ctx->config->nNeighborResultsRefreshPeriod;
-
-	sme_set_neighbor_scan_refresh_period(hdd_ctx->mac_handle, 0,
-					     period);
-}
-
-static void
-cb_notify_set_empty_scan_refresh_period(struct hdd_context *hdd_ctx,
-					unsigned long notify_id)
-{
-	uint16_t period = hdd_ctx->config->nEmptyScanRefreshPeriod;
-
-	sme_update_empty_scan_refresh_period(hdd_ctx->mac_handle, 0,
-					     period);
-}
-
-static void
-cb_notify_set_neighbor_scan_min_chan_time(struct hdd_context *hdd_ctx,
-					  unsigned long notify_id)
-{
-	uint16_t min_chan_time = hdd_ctx->config->nNeighborScanMinChanTime;
-
-	sme_set_neighbor_scan_min_chan_time(hdd_ctx->mac_handle,
-					    min_chan_time, 0);
-}
-
-static void
-cb_notify_set_neighbor_scan_max_chan_time(struct hdd_context *hdd_ctx,
-					  unsigned long notify_id)
-{
-	uint16_t max_chan_time = hdd_ctx->config->nNeighborScanMaxChanTime;
-
-	sme_set_neighbor_scan_max_chan_time(hdd_ctx->mac_handle, 0,
-					    max_chan_time);
-}
-
-static void cb_notify_set_roam_bmiss_first_bcnt(struct hdd_context *hdd_ctx,
-						unsigned long notify_id)
-{
-	sme_set_roam_bmiss_first_bcnt(hdd_ctx->mac_handle,
-				      0, hdd_ctx->config->nRoamBmissFirstBcnt);
-}
-
-static void cb_notify_set_roam_bmiss_final_bcnt(struct hdd_context *hdd_ctx,
-						unsigned long notify_id)
-{
-	sme_set_roam_bmiss_final_bcnt(hdd_ctx->mac_handle, 0,
-				      hdd_ctx->config->nRoamBmissFinalBcnt);
-}
-
-static void cb_notify_set_roam_beacon_rssi_weight(struct hdd_context *hdd_ctx,
-						  unsigned long notify_id)
-{
-	sme_set_roam_beacon_rssi_weight(hdd_ctx->mac_handle, 0,
-					hdd_ctx->config->nRoamBeaconRssiWeight);
-}
-
-static void
-cb_notify_set_dfs_scan_mode(struct hdd_context *hdd_ctx,
-			    unsigned long notify_id)
-{
-	sme_update_dfs_scan_mode(hdd_ctx->mac_handle, 0,
-				 hdd_ctx->config->allowDFSChannelRoam);
-}
-
 static void ch_notify_set_g_disable_dfs_japan_w53(struct hdd_context *hdd_ctx,
 						  unsigned long notify_id)
 {
@@ -274,76 +55,6 @@ static void ch_notify_set_g_disable_dfs_japan_w53(struct hdd_context *hdd_ctx,
 
 	wlansap_set_dfs_restrict_japan_w53(hdd_ctx->mac_handle, disabled);
 }
-
-static void
-cb_notify_update_roam_scan_offload_enabled(struct hdd_context *hdd_ctx,
-					   unsigned long notify_id)
-{
-	bool enabled = hdd_ctx->config->isRoamOffloadScanEnabled;
-
-	sme_update_roam_scan_offload_enabled(hdd_ctx->mac_handle, enabled);
-	if (enabled)
-		return;
-
-	/* fate sharing */
-	hdd_ctx->config->bFastRoamInConIniFeatureEnabled = false;
-	sme_update_enable_fast_roam_in_concurrency(hdd_ctx->mac_handle, false);
-}
-
-static void
-cb_notify_set_enable_fast_roam_in_concurrency(struct hdd_context *hdd_ctx,
-					      unsigned long notify_id)
-{
-	bool enabled = hdd_ctx->config->bFastRoamInConIniFeatureEnabled;
-
-	sme_update_enable_fast_roam_in_concurrency(hdd_ctx->mac_handle,
-						   enabled);
-}
-
-/**
- * cb_notify_set_roam_scan_hi_rssi_scan_params() - configure hi rssi
- * scan params from cfg to sme.
- * @hdd_ctx: HDD context data structure
- * @notify_id: Identifies 1 of the 4 parameters to be modified
- *
- * Picks up the value from hdd configuration and passes it to SME.
- * Return: void
- */
-
-static void
-cb_notify_set_roam_scan_hi_rssi_scan_params(struct hdd_context *hdd_ctx,
-					    unsigned long notify_id)
-{
-	int32_t val;
-
-	if (wlan_hdd_validate_context(hdd_ctx))
-		return;
-
-	switch (notify_id) {
-	case eCSR_HI_RSSI_SCAN_MAXCOUNT_ID:
-		val = hdd_ctx->config->nhi_rssi_scan_max_count;
-		break;
-
-	case eCSR_HI_RSSI_SCAN_RSSI_DELTA_ID:
-		val = hdd_ctx->config->nhi_rssi_scan_rssi_delta;
-		break;
-
-	case eCSR_HI_RSSI_SCAN_DELAY_ID:
-		val = hdd_ctx->config->nhi_rssi_scan_delay;
-		break;
-
-	case eCSR_HI_RSSI_SCAN_RSSI_UB_ID:
-		val = hdd_ctx->config->nhi_rssi_scan_rssi_ub;
-		break;
-
-	default:
-		return;
-	}
-
-	sme_update_roam_scan_hi_rssi_scan_params(hdd_ctx->mac_handle, 0,
-						 notify_id, val);
-}
-
 
 struct reg_table_entry g_registry_table[] = {
 	REG_VARIABLE(CFG_ENABLE_CONNECTED_SCAN_NAME, WLAN_PARAM_Integer,
@@ -620,78 +331,7 @@ struct reg_table_entry g_registry_table[] = {
 
 #ifdef FEATURE_WLAN_ESE
 
-	REG_DYNAMIC_VARIABLE(CFG_ESE_FEATURE_ENABLED_NAME, WLAN_PARAM_Integer,
-			     struct hdd_config, isEseIniFeatureEnabled,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ESE_FEATURE_ENABLED_DEFAULT,
-			     CFG_ESE_FEATURE_ENABLED_MIN,
-			     CFG_ESE_FEATURE_ENABLED_MAX,
-			     cb_notify_set_ese_feature_enabled, 0),
 #endif /* FEATURE_WLAN_ESE */
-
-	/* flag to turn ON/OFF Legacy Fast Roaming */
-	REG_DYNAMIC_VARIABLE(CFG_LFR_FEATURE_ENABLED_NAME, WLAN_PARAM_Integer,
-			     struct hdd_config, isFastRoamIniFeatureEnabled,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_LFR_FEATURE_ENABLED_DEFAULT,
-			     CFG_LFR_FEATURE_ENABLED_MIN,
-			     CFG_LFR_FEATURE_ENABLED_MAX,
-			     notify_is_fast_roam_ini_feature_enabled, 0),
-
-	/* flag to turn ON/OFF Motion assistance for Legacy Fast Roaming */
-	REG_DYNAMIC_VARIABLE(CFG_LFR_MAWC_FEATURE_ENABLED_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config, MAWCEnabled,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_LFR_MAWC_FEATURE_ENABLED_DEFAULT,
-			     CFG_LFR_MAWC_FEATURE_ENABLED_MIN,
-			     CFG_LFR_MAWC_FEATURE_ENABLED_MAX,
-			     notify_is_mawc_ini_feature_enabled, 0),
-
-	/* flag to turn ON/OFF 11r and ESE FastTransition */
-	REG_DYNAMIC_VARIABLE(CFG_FAST_TRANSITION_ENABLED_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config, isFastTransitionEnabled,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_FAST_TRANSITION_ENABLED_NAME_DEFAULT,
-			     CFG_FAST_TRANSITION_ENABLED_NAME_MIN,
-			     CFG_FAST_TRANSITION_ENABLED_NAME_MAX,
-			     cb_notify_set_fast_transition_enabled, 0),
-
-	/* Variable to specify the delta/difference between the
-	 * RSSI of current AP and roamable AP while roaming
-	 */
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_RSSI_DIFF_NAME, WLAN_PARAM_Integer,
-			     struct hdd_config, RoamRssiDiff,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_RSSI_DIFF_DEFAULT,
-			     CFG_ROAM_RSSI_DIFF_MIN,
-			     CFG_ROAM_RSSI_DIFF_MAX,
-			     cb_notify_set_roam_rssi_diff, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_ENABLE_WES_MODE_NAME, WLAN_PARAM_Integer,
-			     struct hdd_config, isWESModeEnabled,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ENABLE_WES_MODE_NAME_DEFAULT,
-			     CFG_ENABLE_WES_MODE_NAME_MIN,
-			     CFG_ENABLE_WES_MODE_NAME_MAX,
-			     cb_notify_set_wes_mode, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_SCAN_OFFLOAD_ENABLED, WLAN_PARAM_Integer,
-			     struct hdd_config, isRoamOffloadScanEnabled,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_SCAN_OFFLOAD_ENABLED_DEFAULT,
-			     CFG_ROAM_SCAN_OFFLOAD_ENABLED_MIN,
-			     CFG_ROAM_SCAN_OFFLOAD_ENABLED_MAX,
-			     cb_notify_update_roam_scan_offload_enabled, 0),
-
 	REG_VARIABLE(CFG_TL_DELAYED_TRGR_FRM_INT_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, DelayedTriggerFrmInt,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -717,198 +357,6 @@ struct reg_table_entry g_registry_table[] = {
 			    struct hdd_config, rm_capability,
 			    VAR_FLAGS_OPTIONAL,
 			    (void *) CFG_RM_CAPABILITY_DEFAULT),
-
-	REG_DYNAMIC_VARIABLE(CFG_NEIGHBOR_SCAN_TIMER_PERIOD_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config, nNeighborScanPeriod,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_NEIGHBOR_SCAN_TIMER_PERIOD_DEFAULT,
-			     CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MIN,
-			     CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MAX,
-			     cb_notify_set_neighbor_scan_period, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_NEIGHBOR_SCAN_MIN_TIMER_PERIOD_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config, neighbor_scan_min_period,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_NEIGHBOR_SCAN_MIN_TIMER_PERIOD_DEFAULT,
-			     CFG_NEIGHBOR_SCAN_MIN_TIMER_PERIOD_MIN,
-			     CFG_NEIGHBOR_SCAN_MIN_TIMER_PERIOD_MAX,
-			     cb_notify_set_neighbor_scan_min_period, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config, nNeighborLookupRssiThreshold,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_DEFAULT,
-			     CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MIN,
-			     CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MAX,
-			     cb_notify_set_neighbor_lookup_rssi_threshold, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_OPPORTUNISTIC_SCAN_THRESHOLD_DIFF_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config, nOpportunisticThresholdDiff,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_OPPORTUNISTIC_SCAN_THRESHOLD_DIFF_DEFAULT,
-			     CFG_OPPORTUNISTIC_SCAN_THRESHOLD_DIFF_MIN,
-			     CFG_OPPORTUNISTIC_SCAN_THRESHOLD_DIFF_MAX,
-			     cb_notify_set_opportunistic_scan_threshold_diff,
-			     0),
-
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_RESCAN_RSSI_DIFF_NAME, WLAN_PARAM_Integer,
-			     struct hdd_config, nRoamRescanRssiDiff,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_RESCAN_RSSI_DIFF_DEFAULT,
-			     CFG_ROAM_RESCAN_RSSI_DIFF_MIN,
-			     CFG_ROAM_RESCAN_RSSI_DIFF_MAX,
-			     cb_notify_set_roam_rescan_rssi_diff, 0),
-
-	REG_VARIABLE_STRING(CFG_NEIGHBOR_SCAN_CHAN_LIST_NAME, WLAN_PARAM_String,
-			    struct hdd_config, neighborScanChanList,
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_NEIGHBOR_SCAN_CHAN_LIST_DEFAULT),
-
-	REG_DYNAMIC_VARIABLE(CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config, nNeighborScanMinChanTime,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_DEFAULT,
-			     CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MIN,
-			     CFG_NEIGHBOR_SCAN_MIN_CHAN_TIME_MAX,
-			     cb_notify_set_neighbor_scan_min_chan_time, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config, nNeighborScanMaxChanTime,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_DEFAULT,
-			     CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MIN,
-			     CFG_NEIGHBOR_SCAN_MAX_CHAN_TIME_MAX,
-			     cb_notify_set_neighbor_scan_max_chan_time, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config, nNeighborResultsRefreshPeriod,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_DEFAULT,
-			     CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MIN,
-			     CFG_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD_MAX,
-			     cb_notify_set_neighbor_results_refresh_period, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_EMPTY_SCAN_REFRESH_PERIOD_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config, nEmptyScanRefreshPeriod,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_EMPTY_SCAN_REFRESH_PERIOD_DEFAULT,
-			     CFG_EMPTY_SCAN_REFRESH_PERIOD_MIN,
-			     CFG_EMPTY_SCAN_REFRESH_PERIOD_MAX,
-			     cb_notify_set_empty_scan_refresh_period, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_BMISS_FIRST_BCNT_NAME, WLAN_PARAM_Integer,
-			     struct hdd_config, nRoamBmissFirstBcnt,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_BMISS_FIRST_BCNT_DEFAULT,
-			     CFG_ROAM_BMISS_FIRST_BCNT_MIN,
-			     CFG_ROAM_BMISS_FIRST_BCNT_MAX,
-			     cb_notify_set_roam_bmiss_first_bcnt, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_BMISS_FINAL_BCNT_NAME, WLAN_PARAM_Integer,
-			     struct hdd_config, nRoamBmissFinalBcnt,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_BMISS_FINAL_BCNT_DEFAULT,
-			     CFG_ROAM_BMISS_FINAL_BCNT_MIN,
-			     CFG_ROAM_BMISS_FINAL_BCNT_MAX,
-			     cb_notify_set_roam_bmiss_final_bcnt, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_BEACON_RSSI_WEIGHT_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config, nRoamBeaconRssiWeight,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_BEACON_RSSI_WEIGHT_DEFAULT,
-			     CFG_ROAM_BEACON_RSSI_WEIGHT_MIN,
-			     CFG_ROAM_BEACON_RSSI_WEIGHT_MAX,
-			     cb_notify_set_roam_beacon_rssi_weight, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_ROAMING_DFS_CHANNEL_NAME, WLAN_PARAM_Integer,
-			     struct hdd_config, allowDFSChannelRoam,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAMING_DFS_CHANNEL_DEFAULT,
-			     CFG_ROAMING_DFS_CHANNEL_MIN,
-			     CFG_ROAMING_DFS_CHANNEL_MAX,
-			     cb_notify_set_dfs_scan_mode, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_DELAY_BEFORE_VDEV_STOP_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config,
-			     delay_before_vdev_stop,
-			     VAR_FLAGS_OPTIONAL |
-				VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_DELAY_BEFORE_VDEV_STOP_DEFAULT,
-			     CFG_DELAY_BEFORE_VDEV_STOP_MIN,
-			     CFG_DELAY_BEFORE_VDEV_STOP_MAX,
-			     cb_notify_set_delay_before_vdev_stop,
-			     0),
-
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_SCAN_HI_RSSI_MAXCOUNT_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config,
-			     nhi_rssi_scan_max_count,
-			     VAR_FLAGS_OPTIONAL |
-				VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_SCAN_HI_RSSI_MAXCOUNT_DEFAULT,
-			     CFG_ROAM_SCAN_HI_RSSI_MAXCOUNT_MIN,
-			     CFG_ROAM_SCAN_HI_RSSI_MAXCOUNT_MAX,
-			     cb_notify_set_roam_scan_hi_rssi_scan_params,
-			     eCSR_HI_RSSI_SCAN_MAXCOUNT_ID),
-
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_SCAN_HI_RSSI_DELTA_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config,
-			     nhi_rssi_scan_rssi_delta,
-			     VAR_FLAGS_OPTIONAL |
-				VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_SCAN_HI_RSSI_DELTA_DEFAULT,
-			     CFG_ROAM_SCAN_HI_RSSI_DELTA_MIN,
-			     CFG_ROAM_SCAN_HI_RSSI_DELTA_MAX,
-			     cb_notify_set_roam_scan_hi_rssi_scan_params,
-			     eCSR_HI_RSSI_SCAN_RSSI_DELTA_ID),
-
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_SCAN_HI_RSSI_DELAY_NAME,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config,
-			     nhi_rssi_scan_delay,
-			     VAR_FLAGS_OPTIONAL |
-				VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_SCAN_HI_RSSI_DELAY_DEFAULT,
-			     CFG_ROAM_SCAN_HI_RSSI_DELAY_MIN,
-			     CFG_ROAM_SCAN_HI_RSSI_DELAY_MAX,
-			     cb_notify_set_roam_scan_hi_rssi_scan_params,
-			     eCSR_HI_RSSI_SCAN_DELAY_ID),
-
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_SCAN_HI_RSSI_UB_NAME,
-			     WLAN_PARAM_SignedInteger,
-			     struct hdd_config,
-			     nhi_rssi_scan_rssi_ub,
-			     VAR_FLAGS_OPTIONAL |
-				VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_SCAN_HI_RSSI_UB_DEFAULT,
-			     CFG_ROAM_SCAN_HI_RSSI_UB_MIN,
-			     CFG_ROAM_SCAN_HI_RSSI_UB_MAX,
-			     cb_notify_set_roam_scan_hi_rssi_scan_params,
-			     eCSR_HI_RSSI_SCAN_RSSI_UB_ID),
 
 #ifdef FEATURE_WLAN_RA_FILTERING
 
@@ -1157,42 +605,6 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_LINK_SPEED_RSSI_LOW_MAX,
 			     NULL, 0),
 
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_PREFER_5GHZ, WLAN_PARAM_Integer,
-			     struct hdd_config, nRoamPrefer5GHz,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_PREFER_5GHZ_DEFAULT,
-			     CFG_ROAM_PREFER_5GHZ_MIN,
-			     CFG_ROAM_PREFER_5GHZ_MAX,
-			     cb_notify_set_roam_prefer5_g_hz, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_INTRA_BAND, WLAN_PARAM_Integer,
-			     struct hdd_config, nRoamIntraBand,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_INTRA_BAND_DEFAULT,
-			     CFG_ROAM_INTRA_BAND_MIN,
-			     CFG_ROAM_INTRA_BAND_MAX,
-			     cb_notify_set_roam_intra_band, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_SCAN_N_PROBES, WLAN_PARAM_Integer,
-			     struct hdd_config, nProbes,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_SCAN_N_PROBES_DEFAULT,
-			     CFG_ROAM_SCAN_N_PROBES_MIN,
-			     CFG_ROAM_SCAN_N_PROBES_MAX,
-			     cb_notify_set_roam_scan_n_probes, 0),
-
-	REG_DYNAMIC_VARIABLE(CFG_ROAM_SCAN_HOME_AWAY_TIME, WLAN_PARAM_Integer,
-			     struct hdd_config, nRoamScanHomeAwayTime,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ROAM_SCAN_HOME_AWAY_TIME_DEFAULT,
-			     CFG_ROAM_SCAN_HOME_AWAY_TIME_MIN,
-			     CFG_ROAM_SCAN_HOME_AWAY_TIME_MAX,
-			     cb_notify_set_roam_scan_home_away_time, 0),
-
 	REG_VARIABLE(CFG_ENABLE_MCC_ENABLED_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enableMCC,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1299,16 +711,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_DISABLE_LDPC_WITH_TXBF_AP_DEFAULT,
 		     CFG_DISABLE_LDPC_WITH_TXBF_AP_MIN,
 		     CFG_DISABLE_LDPC_WITH_TXBF_AP_MAX),
-
-	REG_DYNAMIC_VARIABLE(CFG_ENABLE_FAST_ROAM_IN_CONCURRENCY,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config, bFastRoamInConIniFeatureEnabled,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ENABLE_FAST_ROAM_IN_CONCURRENCY_DEFAULT,
-			     CFG_ENABLE_FAST_ROAM_IN_CONCURRENCY_MIN,
-			     CFG_ENABLE_FAST_ROAM_IN_CONCURRENCY_MAX,
-			     cb_notify_set_enable_fast_roam_in_concurrency, 0),
 
 	REG_VARIABLE(CFG_ENABLE_SNR_MONITORING_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fEnableSNRMonitoring,
@@ -3653,7 +3055,10 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 	uint8_t wmm_mode = 0;
 	bool b80211e_is_enabled;
-
+	bool roam_scan_enabled;
+#ifdef FEATURE_WLAN_ESE
+	bool ese_enabled;
+#endif
 	struct hdd_config *pConfig = hdd_ctx->config;
 
 	smeConfig = qdf_mem_malloc(sizeof(*smeConfig));
@@ -3738,12 +3143,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.Is11hSupportEnabled = pConfig->Is11hSupportEnabled;
 	smeConfig->csrConfig.nTxPowerCap = pConfig->nTxPowerCap;
 	smeConfig->csrConfig.fEnableDFSChnlScan = pConfig->enableDFSChnlScan;
-	smeConfig->csrConfig.nRoamPrefer5GHz = pConfig->nRoamPrefer5GHz;
-	smeConfig->csrConfig.nRoamIntraBand = pConfig->nRoamIntraBand;
-	smeConfig->csrConfig.nProbes = pConfig->nProbes;
 
-	smeConfig->csrConfig.nRoamScanHomeAwayTime =
-		pConfig->nRoamScanHomeAwayTime;
 	smeConfig->csrConfig.fFirstScanOnly2GChnl =
 		pConfig->enableFirstScan2GOnly;
 
@@ -3751,77 +3151,22 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	hdd_set_power_save_offload_config(hdd_ctx);
 
-	smeConfig->csrConfig.isFastRoamIniFeatureEnabled =
-		pConfig->isFastRoamIniFeatureEnabled;
-	smeConfig->csrConfig.csr_mawc_config.mawc_enabled =
-		pConfig->MAWCEnabled;
-
 #ifdef FEATURE_WLAN_ESE
-	smeConfig->csrConfig.isEseIniFeatureEnabled =
-		pConfig->isEseIniFeatureEnabled;
-	if (pConfig->isEseIniFeatureEnabled)
-		pConfig->isFastTransitionEnabled = true;
+	ucfg_mlme_is_ese_enabled(hdd_ctx->psoc, &ese_enabled);
+	if (ese_enabled)
+		ucfg_mlme_set_fast_transition_enabled(hdd_ctx->psoc, true);
 #endif
-	smeConfig->csrConfig.isFastTransitionEnabled =
-		pConfig->isFastTransitionEnabled;
-	smeConfig->csrConfig.RoamRssiDiff = pConfig->RoamRssiDiff;
-	smeConfig->csrConfig.isWESModeEnabled = pConfig->isWESModeEnabled;
-	smeConfig->csrConfig.isRoamOffloadScanEnabled =
-		pConfig->isRoamOffloadScanEnabled;
-	smeConfig->csrConfig.bFastRoamInConIniFeatureEnabled =
-		pConfig->bFastRoamInConIniFeatureEnabled;
 
-	if (0 == smeConfig->csrConfig.isRoamOffloadScanEnabled) {
+	ucfg_mlme_is_roam_scan_offload_enabled(hdd_ctx->psoc,
+					       &roam_scan_enabled);
+
+	if (!roam_scan_enabled) {
 		/* Disable roaming in concurrency if roam scan
 		 * offload is disabled
 		 */
-		smeConfig->csrConfig.bFastRoamInConIniFeatureEnabled = 0;
+		ucfg_mlme_set_fast_roam_in_concurrency_enabled(
+					hdd_ctx->psoc, false);
 	}
-	smeConfig->csrConfig.neighborRoamConfig.nNeighborLookupRssiThreshold =
-		pConfig->nNeighborLookupRssiThreshold;
-	smeConfig->csrConfig.neighborRoamConfig.rssi_thresh_offset_5g =
-		pConfig->rssi_thresh_offset_5g;
-	smeConfig->csrConfig.neighborRoamConfig.delay_before_vdev_stop =
-		pConfig->delay_before_vdev_stop;
-	smeConfig->csrConfig.neighborRoamConfig.nOpportunisticThresholdDiff =
-		pConfig->nOpportunisticThresholdDiff;
-	smeConfig->csrConfig.neighborRoamConfig.nRoamRescanRssiDiff =
-		pConfig->nRoamRescanRssiDiff;
-	smeConfig->csrConfig.neighborRoamConfig.nNeighborScanMaxChanTime =
-		pConfig->nNeighborScanMaxChanTime;
-	smeConfig->csrConfig.neighborRoamConfig.nNeighborScanMinChanTime =
-		pConfig->nNeighborScanMinChanTime;
-	smeConfig->csrConfig.neighborRoamConfig.nNeighborScanTimerPeriod =
-		pConfig->nNeighborScanPeriod;
-	smeConfig->csrConfig.neighborRoamConfig.
-		neighbor_scan_min_timer_period =
-		pConfig->neighbor_scan_min_period;
-	smeConfig->csrConfig.neighborRoamConfig.nNeighborResultsRefreshPeriod =
-		pConfig->nNeighborResultsRefreshPeriod;
-	smeConfig->csrConfig.neighborRoamConfig.nEmptyScanRefreshPeriod =
-		pConfig->nEmptyScanRefreshPeriod;
-	hdd_string_to_u8_array(pConfig->neighborScanChanList,
-			       smeConfig->csrConfig.neighborRoamConfig.
-			       neighborScanChanList.channelList,
-			       &smeConfig->csrConfig.neighborRoamConfig.
-			       neighborScanChanList.numChannels,
-			       WNI_CFG_VALID_CHANNEL_LIST_LEN);
-	smeConfig->csrConfig.neighborRoamConfig.nRoamBmissFirstBcnt =
-		pConfig->nRoamBmissFirstBcnt;
-	smeConfig->csrConfig.neighborRoamConfig.nRoamBmissFinalBcnt =
-		pConfig->nRoamBmissFinalBcnt;
-	smeConfig->csrConfig.neighborRoamConfig.nRoamBeaconRssiWeight =
-		pConfig->nRoamBeaconRssiWeight;
-	smeConfig->csrConfig.neighborRoamConfig.nhi_rssi_scan_max_count =
-		pConfig->nhi_rssi_scan_max_count;
-	smeConfig->csrConfig.neighborRoamConfig.nhi_rssi_scan_rssi_delta =
-		pConfig->nhi_rssi_scan_rssi_delta;
-	smeConfig->csrConfig.neighborRoamConfig.nhi_rssi_scan_delay =
-		pConfig->nhi_rssi_scan_delay;
-	smeConfig->csrConfig.neighborRoamConfig.nhi_rssi_scan_rssi_ub =
-		pConfig->nhi_rssi_scan_rssi_ub;
-
-	smeConfig->csrConfig.allowDFSChannelRoam = pConfig->allowDFSChannelRoam;
 
 	/* Enable/Disable MCC */
 	smeConfig->csrConfig.fEnableMCCMode = pConfig->enableMCC;

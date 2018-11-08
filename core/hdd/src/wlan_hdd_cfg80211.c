@@ -5573,6 +5573,8 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	mac_handle_t mac_handle;
 	bool b_value;
 	struct wlan_objmgr_vdev *vdev;
+	uint8_t bmiss_first_bcnt;
+	uint8_t bmiss_final_bcnt;
 
 	hdd_enter_dev(dev);
 	qdf_mem_zero(&request, sizeof(request));
@@ -6043,14 +6045,17 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TOTAL_BEACON_MISS_COUNT]) {
 		bmiss_bcnt = nla_get_u8(
 		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TOTAL_BEACON_MISS_COUNT]);
-		if (hdd_ctx->config->nRoamBmissFirstBcnt < bmiss_bcnt) {
-			hdd_ctx->config->nRoamBmissFinalBcnt = bmiss_bcnt
-				- hdd_ctx->config->nRoamBmissFirstBcnt;
+		ucfg_mlme_get_roam_bmiss_first_bcnt(hdd_ctx->psoc,
+						    &bmiss_first_bcnt);
+		ucfg_mlme_get_roam_bmiss_final_bcnt(hdd_ctx->psoc,
+						    &bmiss_final_bcnt);
+		if (bmiss_first_bcnt < bmiss_bcnt) {
+			bmiss_final_bcnt = bmiss_bcnt - bmiss_first_bcnt;
 			hdd_debug("Bmiss first cnt(%d), Bmiss final cnt(%d)",
-				hdd_ctx->config->nRoamBmissFirstBcnt,
-				hdd_ctx->config->nRoamBmissFinalBcnt);
+				bmiss_first_bcnt,
+				bmiss_final_bcnt);
 			ret_val = sme_set_roam_bmiss_final_bcnt(mac_handle,
-				0, hdd_ctx->config->nRoamBmissFinalBcnt);
+				0, bmiss_final_bcnt);
 
 			if (ret_val) {
 				hdd_err("Failed to set bmiss final Bcnt");
@@ -6058,8 +6063,8 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 			}
 
 			ret_val = sme_set_bmiss_bcnt(adapter->session_id,
-				hdd_ctx->config->nRoamBmissFirstBcnt,
-				hdd_ctx->config->nRoamBmissFinalBcnt);
+				bmiss_first_bcnt,
+				bmiss_final_bcnt);
 			if (ret_val) {
 				hdd_err("Failed to set bmiss Bcnt");
 				return ret_val;
@@ -6067,7 +6072,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		} else {
 			hdd_err("Bcnt(%d) needs to exceed BmissFirstBcnt(%d)",
 				bmiss_bcnt,
-				hdd_ctx->config->nRoamBmissFirstBcnt);
+				bmiss_first_bcnt);
 			return -EINVAL;
 		}
 	}
@@ -12265,13 +12270,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	wiphy->wowlan.pattern_max_len = WOWL_PTRN_MAX_SIZE;
 #endif
 
-	if (pCfg->isFastTransitionEnabled || pCfg->isFastRoamIniFeatureEnabled
-#ifdef FEATURE_WLAN_ESE
-	    || pCfg->isEseIniFeatureEnabled
-#endif
-	    ) {
-		wiphy->flags |= WIPHY_FLAG_SUPPORTS_FW_ROAM;
-	}
 #ifdef FEATURE_WLAN_TDLS
 	wiphy->flags |= WIPHY_FLAG_SUPPORTS_TDLS
 			| WIPHY_FLAG_TDLS_EXTERNAL_SETUP;
@@ -12568,6 +12566,42 @@ static void wlan_hdd_update_band_cap_in_wiphy(struct hdd_context *hdd_ctx)
 	}
 }
 
+#ifdef FEATURE_WLAN_ESE
+/**
+ * wlan_hdd_update_lfr_wiphy() - update LFR flag based on configures
+ * @hdd_ctx: HDD context
+ *
+ * This function updates the LFR flag based on LFR configures
+ *
+ * Return: void
+ */
+static void wlan_hdd_update_lfr_wiphy(struct hdd_context *hdd_ctx)
+{
+	bool fast_transition_enabled;
+	bool lfr_enabled;
+	bool ese_enabled;
+
+	ucfg_mlme_is_fast_transition_enabled(hdd_ctx->psoc,
+					     &fast_transition_enabled);
+	ucfg_mlme_is_lfr_enabled(hdd_ctx->psoc, &lfr_enabled);
+	ucfg_mlme_is_ese_enabled(hdd_ctx->psoc, &ese_enabled);
+	if (fast_transition_enabled || lfr_enabled || ese_enabled)
+		hdd_ctx->wiphy->flags |= WIPHY_FLAG_SUPPORTS_FW_ROAM;
+}
+#else
+static void wlan_hdd_update_lfr_wiphy(struct hdd_context *hdd_ctx)
+{
+	bool fast_transition_enabled;
+	bool lfr_enabled;
+
+	ucfg_mlme_is_fast_transition_enabled(hdd_ctx->psoc,
+					     &fast_transition_enabled);
+	ucfg_mlme_is_lfr_enabled(hdd_ctx->psoc, &lfr_enabled);
+	if (fast_transition_enabled || lfr_enabled)
+		hdd_ctx->wiphy->flags |= WIPHY_FLAG_SUPPORTS_FW_ROAM;
+}
+#endif
+
 /*
  * In this function, wiphy structure is updated after QDF
  * initialization. In wlan_hdd_cfg80211_init, only the
@@ -12585,6 +12619,7 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
 	hdd_ctx->wiphy->max_ap_assoc_sta = value;
 	wlan_hdd_update_ht_cap(hdd_ctx);
 	wlan_hdd_update_band_cap_in_wiphy(hdd_ctx);
+	wlan_hdd_update_lfr_wiphy(hdd_ctx);
 
 	fils_enabled = 0;
 	status = ucfg_mlme_get_fils_enabled_info(hdd_ctx->psoc,
