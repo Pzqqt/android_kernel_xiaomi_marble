@@ -235,28 +235,6 @@
 
 /*
  * <ini>
- * gRoamOffloadEnabled - enable/disable roam offload feature
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This INI is used to enable/disable roam offload feature
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_LFR3_ROAMING_OFFLOAD CFG_INI_BOOL( \
-	"gRoamOffloadEnabled", \
-	1, \
-	"enable roam offload")
-
-/*
- * <ini>
  * gEnableEarlyStopScan - Set early stop scan
  * @Min: 0
  * @Max: 1
@@ -1141,6 +1119,789 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"Time to wait after sending an preauth or reassoc")
 
+/*
+ * <ini>
+ * FastRoamEnabled - Enable fast roaming
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to inform FW to enable fast roaming
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_FEATURE_ENABLED CFG_INI_BOOL( \
+	"FastRoamEnabled", \
+	0, \
+	"Enable fast roaming")
+
+/*
+ * <ini>
+ * MAWCEnabled - Enable/Disable Motion Aided Wireless Connectivity Global
+ * @Min: 0 - Disabled
+ * @Max: 1 - Enabled
+ * @Default: 0
+ *
+ * This ini is used to controls the MAWC feature globally.
+ * MAWC is Motion Aided Wireless Connectivity.
+ *
+ * Related: mawc_roam_enabled.
+ *
+ * Supported Feature: Roaming and PNO/NLO
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_LFR_MAWC_FEATURE_ENABLED CFG_INI_BOOL( \
+	"MAWCEnabled", \
+	0, \
+	"Enable MAWC")
+
+/*
+ * <ini>
+ * FastTransitionEnabled - Enable fast transition in case of 11r and ese.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to turn ON/OFF the whole neighbor roam, pre-auth, reassoc.
+ * With this turned OFF 11r will completely not work. For 11r this flag has to
+ * be ON. For ESE fastroam will not work.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_FAST_TRANSITION_ENABLED CFG_INI_BOOL( \
+	"FastTransitionEnabled", \
+	1, \
+	"Enable fast transition")
+
+/*
+ * <ini>
+ * RoamRssiDiff - Enable roam based on rssi
+ * @Min: 0
+ * @Max: 30
+ * @Default: 5
+ *
+ * This INI is used to decide whether to Roam or not based on RSSI. AP1 is the
+ * currently associated AP and AP2 is chosen for roaming. The Roaming will
+ * happen only if AP2 has better Signal Quality and it has a RSSI better than
+ * AP2. RoamRssiDiff is the number of units (typically measured in dB) AP2
+ * is better than AP1.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_RSSI_DIFF CFG_INI_UINT( \
+	"RoamRssiDiff", \
+	0, \
+	30, \
+	5, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Enable roam based on rssi")
+
+/*
+ * <ini>
+ * gWESModeEnabled - Enable WES mode
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable Wireless Extended Security mode.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ENABLE_WES_MODE CFG_INI_BOOL( \
+	"gWESModeEnabled", \
+	0, \
+	"Enable WES mode")
+
+/*
+ * <ini>
+ * gRoamScanOffloadEnabled - Enable Roam Scan Offload
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This INI is used to enable Roam Scan Offload in firmware
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_SCAN_OFFLOAD_ENABLED CFG_INI_BOOL( \
+	"gRoamScanOffloadEnabled", \
+	1, \
+	"Enable Roam Scan Offload")
+
+/*
+ * <ini>
+ * gNeighborScanChannelList - Set channels to be scanned
+ * by firmware for LFR scan
+ * @Default: ""
+ *
+ * This ini is used to set the channels to be scanned
+ * by firmware for LFR scan.
+ *
+ * Related: None
+ *
+ * Supported Feature: LFR Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_LFR_NEIGHBOR_SCAN_CHANNEL_LIST CFG_INI_STRING( \
+		"gNeighborScanChanList", \
+		0, \
+		CFG_VALID_CHANNEL_LIST_STRING_LEN, \
+		"", \
+		"Set channels to be scanned")
+
+/*
+ * <ini>
+ * gNeighborScanTimerPeriod - Set neighbor scan timer period
+ * @Min: 3
+ * @Max: 300
+ * @Default: 100
+ *
+ * This ini is used to set the timer period in secs after
+ * which neighbor scan is trigerred.
+ *
+ * Related: None
+ *
+ * Supported Feature: LFR Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_NEIGHBOR_SCAN_TIMER_PERIOD CFG_INI_UINT( \
+	"gNeighborScanTimerPeriod", \
+	3, \
+	300, \
+	100, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Neighbor scan timer period")
+
+/*
+ * <ini>
+ * gRoamRestTimeMin - Set min neighbor scan timer period
+ * @Min: 3
+ * @Max: 300
+ * @Default: 50
+ *
+ * This is the min rest time after which firmware will check for traffic
+ * and if there no traffic it will move to a new channel to scan
+ * else it will stay on the home channel till gNeighborScanTimerPeriod time
+ * and then will move to a new channel to scan.
+ *
+ * Related: None
+ *
+ * Supported Feature: LFR Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_NEIGHBOR_SCAN_MIN_TIMER_PERIOD CFG_INI_UINT( \
+	"gRoamRestTimeMin", \
+	3, \
+	300, \
+	50, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Min neighbor scan timer period")
+
+/*
+ * <ini>
+ * gNeighborLookupThreshold - Set neighbor lookup rssi threshold
+ * @Min: 10
+ * @Max: 120
+ * @Default: 78
+ *
+ * This is used to control the RSSI threshold for neighbor lookup.
+ *
+ * Related: None
+ *
+ * Supported Feature: LFR Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_NEIGHBOR_LOOKUP_RSSI_THRESHOLD CFG_INI_UINT( \
+	"gNeighborLookupThreshold", \
+	10, \
+	120, \
+	78, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Neighbor lookup rssi threshold")
+
+/*
+ * <ini>
+ * gOpportunisticThresholdDiff - Set oppurtunistic threshold diff
+ * @Min: 0
+ * @Max: 127
+ * @Default: 0
+ *
+ * This ini is used to set opportunistic threshold diff.
+ * This parameter is the RSSI diff above neighbor lookup
+ * threshold, when opportunistic scan should be triggered.
+ * MAX value is chosen so that this type of scan can be
+ * always enabled by user.
+ * MIN value will cause opportunistic scan to be triggered
+ * in neighbor lookup RSSI range.
+ *
+ * Related: None
+ *
+ * Supported Feature: LFR Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_OPPORTUNISTIC_SCAN_THRESHOLD_DIFF CFG_INI_UINT( \
+	"gOpportunisticThresholdDiff", \
+	0, \
+	127, \
+	0, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Set oppurtunistic threshold diff")
+
+/*
+ * <ini>
+ * gRoamRescanRssiDiff - Sets RSSI for Scan trigger in firmware
+ * @Min: 0
+ * @Max: 100
+ * @Default: 5
+ *
+ * This INI is the drop in RSSI value that will trigger a precautionary
+ * scan by firmware. Max value is chosen in such a way that this type
+ * of scan can be disabled by user.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_RESCAN_RSSI_DIFF CFG_INI_UINT( \
+	"gRoamRescanRssiDiff", \
+	0, \
+	100, \
+	5, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Sets RSSI for Scan trigger in firmware")
+
+/*
+ * <ini>
+ * gNeighborScanChannelMinTime - Set neighbor scan channel min time
+ * @Min: 10
+ * @Max: 40
+ * @Default: 20
+ *
+ * This ini is used to set the minimum time in secs spent on each
+ * channel in LFR scan inside firmware.
+ *
+ * Related: None
+ *
+ * Supported Feature: LFR Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_NEIGHBOR_SCAN_MIN_CHAN_TIME CFG_INI_UINT( \
+	"gNeighborScanChannelMinTime", \
+	10, \
+	40, \
+	20, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Neighbor scan channel min time")
+
+/*
+ * <ini>
+ * gNeighborScanChannelMaxTime - Set neighbor scan channel max time
+ * @Min: 3
+ * @Max: 300
+ * @Default: 30
+ *
+ * This ini is used to set the maximum time in secs spent on each
+ * channel in LFR scan inside firmware.
+ *
+ * Related: None
+ *
+ * Supported Feature: LFR Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_NEIGHBOR_SCAN_MAX_CHAN_TIME CFG_INI_UINT( \
+	"gNeighborScanChannelMaxTime", \
+	3, \
+	300, \
+	30, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Neighbor scan channel max time")
+
+/*
+ * <ini>
+ * gNeighborScanRefreshPeriod - Set neighbor scan refresh period
+ * @Min: 1000
+ * @Max: 60000
+ * @Default: 20000
+ *
+ * This ini is used by firmware to set scan refresh period
+ * in msecs for lfr scan.
+ *
+ * Related: None
+ *
+ * Supported Feature: LFR Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD CFG_INI_UINT( \
+	"gNeighborScanRefreshPeriod", \
+	1000, \
+	60000, \
+	20000, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Neighbor scan refresh period")
+
+/*
+ * <ini>
+ * gEmptyScanRefreshPeriod - Set empty scan refresh period
+ * @Min: 0
+ * @Max: 60000
+ * @Default: 0
+ *
+ * This ini is used by firmware to set scan period in msecs
+ * following empty scan results.
+ *
+ * Related: None
+ *
+ * Supported Feature: LFR Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD CFG_INI_UINT( \
+	"gEmptyScanRefreshPeriod", \
+	0, \
+	60000, \
+	0, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Empty scan refresh period")
+
+/*
+ * <ini>
+ * gRoamBmissFirstBcnt - Beacon miss count to trigger 1st bmiss event
+ * @Min: 5
+ * @Max: 100
+ * @Default: 10
+ *
+ * This ini used to control how many beacon miss will trigger first bmiss
+ * event. First bmiss event will result in roaming scan.
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_BMISS_FIRST_BCNT CFG_INI_UINT( \
+	"gRoamBmissFirstBcnt", \
+	5, \
+	100, \
+	10, \
+	CFG_VALUE_OR_DEFAULT, \
+	"First beacon miss count")
+
+/*
+ * <ini>
+ * gRoamBmissFinalBcnt - Beacon miss count to trigger final bmiss event
+ * @Min: 5
+ * @Max: 100
+ * @Default: 20
+ *
+ * This ini used to control how many beacon miss will trigger final bmiss
+ * event. Final bmiss event will make roaming take place or cause the
+ * indication of final bmiss event.
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_BMISS_FINAL_BCNT CFG_INI_UINT( \
+	"gRoamBmissFinalBcnt", \
+	5, \
+	100, \
+	20, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Final beacon miss count")
+
+/*
+ * <ini>
+ * gRoamBeaconRssiWeight - Set beacon miss weight
+ * @Min: 5
+ * @Max: 16
+ * @Default: 14
+ *
+ * This ini controls how many beacons' RSSI values will be used to calculate
+ * the average value of RSSI.
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_BEACON_RSSI_WEIGHT CFG_INI_UINT( \
+	"gRoamBeaconRssiWeight", \
+	0, \
+	16, \
+	14, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Beacon miss weight")
+
+/*
+ * <ini>
+ * gAllowDFSChannelRoam - Allow dfs channel in roam
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * This ini is used to set default dfs channel
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAMING_DFS_CHANNEL CFG_INI_UINT( \
+	"gAllowDFSChannelRoam", \
+	0, \
+	2, \
+	0, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Allow dfs channel in roam")
+
+/*
+ * <ini>
+ * gRoamScanHiRssiMaxCount - Sets 5GHz maximum scan count
+ * @Min: 0
+ * @Max: 10
+ * @Default: 3
+ *
+ * This INI is used to set maximum scan count in 5GHz
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_SCAN_HI_RSSI_MAXCOUNT CFG_INI_UINT( \
+	"gRoamScanHiRssiMaxCount", \
+	0, \
+	10, \
+	3, \
+	CFG_VALUE_OR_DEFAULT, \
+	"5GHz maximum scan count")
+
+/*
+ * <ini>
+ * gRoamScanHiRssiDelta - Sets RSSI Delta for scan trigger
+ * @Min: 0
+ * @Max: 16
+ * @Default: 10
+ *
+ * This INI is used to set change in RSSI at which scan is triggered
+ * in 5GHz.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_SCAN_HI_RSSI_DELTA CFG_INI_UINT( \
+	"gRoamScanHiRssiDelta", \
+	0, \
+	16, \
+	10, \
+	CFG_VALUE_OR_DEFAULT, \
+	"RSSI Delta for scan trigger")
+
+/*
+ * <ini>
+ * gRoamScanHiRssiDelay - Sets minimum delay between 5GHz scans
+ * @Min: 5000
+ * @Max: 0x7fffffff
+ * @Default: 15000
+ *
+ * This INI is used to set the minimum delay between 5GHz scans.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_SCAN_HI_RSSI_DELAY CFG_INI_UINT( \
+	"gRoamScanHiRssiDelay", \
+	5000, \
+	0x7fffffff, \
+	15000, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Minimum delay between 5GHz scans")
+
+/*
+ * <ini>
+ * gRoamScanHiRssiUpperBound - Sets upper bound after which 5GHz scan
+ * @Min: -66
+ * @Max: 0
+ * @Default: -30
+ *
+ * This INI is used to set the RSSI upper bound above which the 5GHz scan
+ * will not be performed.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_SCAN_HI_RSSI_UB CFG_INI_INT( \
+	"gRoamScanHiRssiUpperBound", \
+	-66, \
+	0, \
+	-30, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Upper bound after which 5GHz scan")
+
+/*
+ * <ini>
+ * gRoamPrefer5GHz - Prefer roaming to 5GHz Bss
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to inform FW to prefer roaming to 5GHz BSS
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_PREFER_5GHZ CFG_INI_BOOL( \
+	"gRoamPrefer5GHz", \
+	1, \
+	"Prefer roaming to 5GHz Bss")
+
+/*
+ * <ini>
+ * gRoamIntraBand - Prefer roaming within Band
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to inform FW to prefer roaming within band
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_INTRA_BAND CFG_INI_BOOL( \
+	"gRoamIntraBand", \
+	0, \
+	"Prefer roaming within Band")
+
+/*
+ * <ini>
+ * gRoamScanNProbes - Sets the number of probes to be sent for firmware roaming
+ * @Min: 1
+ * @Max: 10
+ * @Default: 2
+ *
+ * This INI is used to set the maximum number of probes the firmware can send
+ * for firmware internal roaming cases.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_SCAN_N_PROBES CFG_INI_UINT( \
+	"gRoamScanNProbes", \
+	1, \
+	10, \
+	2, \
+	CFG_VALUE_OR_DEFAULT, \
+	"The number of probes to be sent for firmware roaming")
+
+/*
+ * <ini>
+ * gRoamScanHomeAwayTime - Sets the Home Away Time to firmware
+ * @Min: 0
+ * @Max: 300
+ * @Default: 0
+ *
+ * Home Away Time should be at least equal to (gNeighborScanChannelMaxTime
+ * + (2*RFS)), where RFS is the RF Switching time(3). It is twice RFS
+ * to consider the time to go off channel and return to the home channel.
+ *
+ * Related: gNeighborScanChannelMaxTime
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_SCAN_HOME_AWAY_TIME CFG_INI_UINT( \
+	"gRoamScanHomeAwayTime", \
+	0, \
+	300, \
+	0, \
+	CFG_VALUE_OR_DEFAULT, \
+	"the home away time to firmware")
+
+/*
+ * <ini>
+ * gDelayBeforeVdevStop - wait time for tx complete before vdev stop
+ * @Min: 2
+ * @Max: 200
+ * @Default: 20
+ *
+ * This INI is used to set wait time for tx complete before vdev stop.
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_DELAY_BEFORE_VDEV_STOP CFG_INI_UINT( \
+	"gDelayBeforeVdevStop", \
+	2, \
+	200, \
+	20, \
+	CFG_VALUE_OR_DEFAULT, \
+	"wait time for tx complete before vdev stop")
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+/*
+ * <ini>
+ * gRoamOffloadEnabled - enable/disable roam offload feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This INI is used to enable/disable roam offload feature
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR3_ROAMING_OFFLOAD CFG_INI_BOOL( \
+	"gRoamOffloadEnabled", \
+	1, \
+	"enable roam offload")
+
+#define ROAM_OFFLOAD_ALL CFG(CFG_LFR3_ROAMING_OFFLOAD)
+#else
+#define ROAM_OFFLOAD_ALL
+#endif
+
+#ifdef FEATURE_WLAN_ESE
+/*
+ * <ini>
+ * EseEnabled - Enable ESE feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable ESE feature
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ESE_FEATURE_ENABLED CFG_INI_BOOL( \
+	"EseEnabled", \
+	0, \
+	"Enable ESE")
+#define LFR_ESE_ALL CFG(CFG_LFR_ESE_FEATURE_ENABLED)
+#else
+#define LFR_ESE_ALL
+#endif
+
 #define CFG_LFR_ALL \
 	CFG(CFG_LFR_MAWC_ROAM_ENABLED) \
 	CFG(CFG_LFR_MAWC_ROAM_TRAFFIC_THRESHOLD) \
@@ -1150,7 +1911,6 @@
 	CFG(CFG_LFR_ROAM_RSSI_ABS_THRESHOLD) \
 	CFG(CFG_LFR_5G_RSSI_THRESHOLD_OFFSET) \
 	CFG(CFG_LFR_ENABLE_FAST_ROAM_IN_CONCURRENCY) \
-	CFG(CFG_LFR3_ROAMING_OFFLOAD) \
 	CFG(CFG_LFR_EARLY_STOP_SCAN_ENABLE) \
 	CFG(CFG_LFR_EARLY_STOP_SCAN_MIN_THRESHOLD) \
 	CFG(CFG_LFR_EARLY_STOP_SCAN_MAX_THRESHOLD) \
@@ -1182,6 +1942,37 @@
 	CFG(CFG_LFR_5G_MAX_RSSI_PENALIZE) \
 	CFG(CFG_LFR_MAX_NUM_PRE_AUTH) \
 	CFG(CFG_LFR3_ROAM_PREAUTH_RETRY_COUNT) \
-	CFG(CFG_LFR3_ROAM_PREAUTH_NO_ACK_TIMEOUT)
+	CFG(CFG_LFR3_ROAM_PREAUTH_NO_ACK_TIMEOUT) \
+	CFG(CFG_LFR_FEATURE_ENABLED) \
+	CFG(CFG_LFR_MAWC_FEATURE_ENABLED) \
+	CFG(CFG_LFR_FAST_TRANSITION_ENABLED) \
+	CFG(CFG_LFR_ROAM_RSSI_DIFF) \
+	CFG(CFG_LFR_ENABLE_WES_MODE) \
+	CFG(CFG_LFR_ROAM_SCAN_OFFLOAD_ENABLED) \
+	CFG(CFG_LFR_NEIGHBOR_SCAN_CHANNEL_LIST) \
+	CFG(CFG_LFR_NEIGHBOR_SCAN_TIMER_PERIOD) \
+	CFG(CFG_LFR_NEIGHBOR_SCAN_MIN_TIMER_PERIOD) \
+	CFG(CFG_LFR_NEIGHBOR_LOOKUP_RSSI_THRESHOLD) \
+	CFG(CFG_LFR_OPPORTUNISTIC_SCAN_THRESHOLD_DIFF) \
+	CFG(CFG_LFR_ROAM_RESCAN_RSSI_DIFF) \
+	CFG(CFG_LFR_NEIGHBOR_SCAN_MIN_CHAN_TIME) \
+	CFG(CFG_LFR_NEIGHBOR_SCAN_MAX_CHAN_TIME) \
+	CFG(CFG_LFR_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD) \
+	CFG(CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD) \
+	CFG(CFG_LFR_ROAM_BMISS_FIRST_BCNT) \
+	CFG(CFG_LFR_ROAM_BMISS_FINAL_BCNT) \
+	CFG(CFG_LFR_ROAM_BEACON_RSSI_WEIGHT) \
+	CFG(CFG_LFR_ROAMING_DFS_CHANNEL) \
+	CFG(CFG_LFR_ROAM_SCAN_HI_RSSI_MAXCOUNT) \
+	CFG(CFG_LFR_ROAM_SCAN_HI_RSSI_DELTA) \
+	CFG(CFG_LFR_ROAM_SCAN_HI_RSSI_DELAY) \
+	CFG(CFG_LFR_ROAM_SCAN_HI_RSSI_UB) \
+	CFG(CFG_LFR_ROAM_PREFER_5GHZ) \
+	CFG(CFG_LFR_ROAM_INTRA_BAND) \
+	CFG(CFG_LFR_ROAM_SCAN_N_PROBES) \
+	CFG(CFG_LFR_ROAM_SCAN_HOME_AWAY_TIME) \
+	CFG(CFG_LFR_DELAY_BEFORE_VDEV_STOP) \
+	ROAM_OFFLOAD_ALL \
+	LFR_ESE_ALL
 
 #endif /* CFG_MLME_LFR_H__ */

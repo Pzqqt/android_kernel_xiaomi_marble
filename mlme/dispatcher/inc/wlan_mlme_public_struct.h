@@ -44,6 +44,8 @@
 #define CFG_STR_DATA_LEN     17
 #define CFG_EDCA_DATA_LEN    17
 
+#define CFG_VALID_CHANNEL_LIST_LEN 100
+#define CFG_VALID_CHANNEL_LIST_STRING_LEN (CFG_VALID_CHANNEL_LIST_LEN * 4)
 /**
  * struct mlme_cfg_str - generic structure for all mlme CFG string items
  *
@@ -1041,6 +1043,18 @@ struct wlan_mlme_sta_cfg {
 	bool allow_tpc_from_ap;
 };
 
+/**
+ * enum roaming_dfs_channel_type - Allow dfs channel in roam
+ * @CFG_ROAMING_DFS_CHANNEL_DISABLED:   Disallow dfs channel in roam
+ * @CFG_ROAMING_DFS_CHANNEL_ENABLED_NORMAL: Allow dfs channel
+ * @CFG_ROAMING_DFS_CHANNEL_ENABLED_ACTIVE: Allow dfs channel with active scan
+ */
+enum roaming_dfs_channel_type {
+	ROAMING_DFS_CHANNEL_DISABLED,
+	ROAMING_DFS_CHANNEL_ENABLED_NORMAL,
+	ROAMING_DFS_CHANNEL_ENABLED_ACTIVE,
+};
+
 /*
  * @mawc_roam_enabled:              Enable/Disable MAWC during roaming
  * @enable_fast_roam_in_concurrency:Enable LFR roaming on STA during concurrency
@@ -1048,6 +1062,11 @@ struct wlan_mlme_sta_cfg {
  * @early_stop_scan_enable:         Set early stop scan
  * @lfr3_enable_subnet_detection:   Enable LFR3 subnet detection
  * @enable_5g_band_pref:            Enable preference for 5G from INI
+ * @ese_enabled:                    Enable ESE feature
+ * @lfr_enabled:                    Enable fast roaming
+ * @mawc_enabled:                   Enable MAWC
+ * @fast_transition_enabled:        Enable fast transition
+ * @wes_mode_enabled:               Enable WES mode
  * @mawc_roam_traffic_threshold:    Configure traffic threshold
  * @mawc_roam_ap_rssi_threshold:    Best AP RSSI threshold
  * @mawc_roam_rssi_high_adjust:     Adjust MAWC roam high RSSI
@@ -1083,14 +1102,49 @@ struct wlan_mlme_sta_cfg {
  * @max_num_pre_auth:               Configure max number of pre-auth
  * @roam_preauth_retry_count:       Configure the max number of preauth retry
  * @roam_preauth_no_ack_timeout:    Configure the no ack timeout period
+ * @roam_rssi_diff:                 Enable roam based on rssi
+ * @roam_scan_offload_enabled:      Enable Roam Scan Offload
+ * @neighbor_scan_timer_period:     Neighbor scan timer period
+ * @neighbor_scan_min_timer_period: Min neighbor scan timer period
+ * @neighbor_lookup_rssi_threshold: Neighbor lookup rssi threshold
+ * @opportunistic_scan_threshold_diff: Set oppurtunistic threshold diff
+ * @roam_rescan_rssi_diff:          Sets RSSI for Scan trigger in firmware
+ * @neighbor_scan_min_chan_time:    Neighbor scan channel min time
+ * @neighbor_scan_max_chan_time:    Neighbor scan channel max time
+ * @neighbor_scan_results_refresh_period: Neighbor scan refresh period
+ * @empty_scan_refresh_period:      Empty scan refresh period
+ * @roam_bmiss_first_bcnt:          First beacon miss count
+ * @roam_bmiss_final_bcnt:          Final beacon miss count
+ * @roam_beacon_rssi_weight:        Beacon miss weight
+ * @roaming_dfs_channel:            Allow dfs channel in roam
+ * @roam_scan_hi_rssi_maxcount:     5GHz maximum scan count
+ * @roam_scan_hi_rssi_delta:        RSSI Delta for scan trigger
+ * @roam_scan_hi_rssi_delay:        Minimum delay between 5GHz scans
+ * @roam_scan_hi_rssi_ub:           Upper bound after which 5GHz scan
+ * @roam_prefer_5ghz:               Prefer roaming to 5GHz Bss
+ * @roam_intra_band:                Prefer roaming within Band
+ * @roam_scan_home_away_time:       The home away time to firmware
+ * @roam_scan_n_probes:    The number of probes to be sent for firmware roaming
+ * @delay_before_vdev_stop:Wait time for tx complete before vdev stop
+ * @neighbor_scan_channel_list:     Neighbor scan channel list
+ * @neighbor_scan_channel_list_num: Neighbor scan channel list number
  */
 struct wlan_mlme_lfr_cfg {
 	bool mawc_roam_enabled;
 	bool enable_fast_roam_in_concurrency;
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	bool lfr3_roaming_offload;
+#endif
 	bool early_stop_scan_enable;
 	bool lfr3_enable_subnet_detection;
 	bool enable_5g_band_pref;
+#ifdef FEATURE_WLAN_ESE
+	bool ese_enabled;
+#endif
+	bool lfr_enabled;
+	bool mawc_enabled;
+	bool fast_transition_enabled;
+	bool wes_mode_enabled;
 	uint32_t mawc_roam_traffic_threshold;
 	uint32_t mawc_roam_ap_rssi_threshold;
 	uint32_t mawc_roam_rssi_high_adjust;
@@ -1126,6 +1180,32 @@ struct wlan_mlme_lfr_cfg {
 	uint32_t max_num_pre_auth;
 	uint32_t roam_preauth_retry_count;
 	uint32_t roam_preauth_no_ack_timeout;
+	uint32_t roam_rssi_diff;
+	bool roam_scan_offload_enabled;
+	uint32_t neighbor_scan_timer_period;
+	uint32_t neighbor_scan_min_timer_period;
+	uint32_t neighbor_lookup_rssi_threshold;
+	uint32_t opportunistic_scan_threshold_diff;
+	uint32_t roam_rescan_rssi_diff;
+	uint16_t neighbor_scan_min_chan_time;
+	uint16_t neighbor_scan_max_chan_time;
+	uint32_t neighbor_scan_results_refresh_period;
+	uint32_t empty_scan_refresh_period;
+	uint8_t roam_bmiss_first_bcnt;
+	uint8_t roam_bmiss_final_bcnt;
+	uint32_t roam_beacon_rssi_weight;
+	enum roaming_dfs_channel_type roaming_dfs_channel;
+	uint32_t roam_scan_hi_rssi_maxcount;
+	uint32_t roam_scan_hi_rssi_delta;
+	uint32_t roam_scan_hi_rssi_delay;
+	uint32_t roam_scan_hi_rssi_ub;
+	bool roam_prefer_5ghz;
+	bool roam_intra_band;
+	uint16_t roam_scan_home_away_time;
+	uint32_t roam_scan_n_probes;
+	uint8_t delay_before_vdev_stop;
+	uint8_t neighbor_scan_channel_list[CFG_VALID_CHANNEL_LIST_LEN];
+	uint8_t neighbor_scan_channel_list_num;
 };
 
 /**

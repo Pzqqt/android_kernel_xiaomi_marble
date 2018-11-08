@@ -1219,21 +1219,55 @@ static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
 	sta->allow_tpc_from_ap = cfg_get(psoc, CFG_TX_POWER_CTRL);
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static void mlme_init_roam_offload_cfg(struct wlan_objmgr_psoc *psoc,
+				       struct wlan_mlme_lfr_cfg *lfr)
+{
+	lfr->lfr3_roaming_offload =
+		cfg_get(psoc, CFG_LFR3_ROAMING_OFFLOAD);
+}
+
+#else
+static void mlme_init_roam_offload_cfg(struct wlan_objmgr_psoc *psoc,
+				       struct wlan_mlme_lfr_cfg *lfr)
+{
+}
+
+#endif
+
+#ifdef FEATURE_WLAN_ESE
+static void mlme_init_ese_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_lfr_cfg *lfr)
+{
+	lfr->ese_enabled = cfg_get(psoc, CFG_LFR_ESE_FEATURE_ENABLED);
+}
+#else
+static void mlme_init_ese_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_lfr_cfg *lfr)
+{
+}
+#endif
+
 static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_lfr_cfg *lfr)
 {
+	qdf_size_t neighbor_scan_chan_list_num;
+
 	lfr->mawc_roam_enabled =
 		cfg_get(psoc, CFG_LFR_MAWC_ROAM_ENABLED);
 	lfr->enable_fast_roam_in_concurrency =
 		cfg_get(psoc, CFG_LFR_ENABLE_FAST_ROAM_IN_CONCURRENCY);
-	lfr->lfr3_roaming_offload =
-		cfg_get(psoc, CFG_LFR3_ROAMING_OFFLOAD);
 	lfr->early_stop_scan_enable =
 		cfg_get(psoc, CFG_LFR_EARLY_STOP_SCAN_ENABLE);
 	lfr->lfr3_enable_subnet_detection =
 		cfg_get(psoc, CFG_LFR3_ENABLE_SUBNET_DETECTION);
 	lfr->enable_5g_band_pref =
 		cfg_get(psoc, CFG_LFR_ENABLE_5G_BAND_PREF);
+	lfr->lfr_enabled = cfg_get(psoc, CFG_LFR_FEATURE_ENABLED);
+	lfr->mawc_enabled = cfg_get(psoc, CFG_LFR_MAWC_FEATURE_ENABLED);
+	lfr->fast_transition_enabled =
+		cfg_get(psoc, CFG_LFR_FAST_TRANSITION_ENABLED);
+	lfr->wes_mode_enabled = cfg_get(psoc, CFG_LFR_ENABLE_WES_MODE);
 	lfr->mawc_roam_traffic_threshold =
 		cfg_get(psoc, CFG_LFR_MAWC_ROAM_TRAFFIC_THRESHOLD);
 	lfr->mawc_roam_ap_rssi_threshold =
@@ -1304,6 +1338,61 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_LFR3_ROAM_PREAUTH_NO_ACK_TIMEOUT);
 	lfr->roam_preauth_retry_count =
 		cfg_get(psoc, CFG_LFR3_ROAM_PREAUTH_RETRY_COUNT);
+	lfr->roam_rssi_diff = cfg_get(psoc, CFG_LFR_ROAM_RSSI_DIFF);
+	lfr->roam_scan_offload_enabled =
+		cfg_get(psoc, CFG_LFR_ROAM_SCAN_OFFLOAD_ENABLED);
+	lfr->neighbor_scan_timer_period =
+		cfg_get(psoc, CFG_LFR_NEIGHBOR_SCAN_TIMER_PERIOD);
+	lfr->neighbor_scan_min_timer_period =
+		cfg_get(psoc, CFG_LFR_NEIGHBOR_SCAN_MIN_TIMER_PERIOD);
+	lfr->neighbor_lookup_rssi_threshold =
+		cfg_get(psoc, CFG_LFR_NEIGHBOR_LOOKUP_RSSI_THRESHOLD);
+	lfr->opportunistic_scan_threshold_diff =
+		cfg_get(psoc, CFG_LFR_OPPORTUNISTIC_SCAN_THRESHOLD_DIFF);
+	lfr->roam_rescan_rssi_diff =
+		cfg_get(psoc, CFG_LFR_ROAM_RESCAN_RSSI_DIFF);
+	lfr->neighbor_scan_min_chan_time =
+		cfg_get(psoc, CFG_LFR_NEIGHBOR_SCAN_MIN_CHAN_TIME);
+	lfr->neighbor_scan_max_chan_time =
+		cfg_get(psoc, CFG_LFR_NEIGHBOR_SCAN_MAX_CHAN_TIME);
+	lfr->neighbor_scan_results_refresh_period =
+		cfg_get(psoc, CFG_LFR_NEIGHBOR_SCAN_RESULTS_REFRESH_PERIOD);
+	lfr->empty_scan_refresh_period =
+		cfg_get(psoc, CFG_LFR_EMPTY_SCAN_REFRESH_PERIOD);
+	lfr->roam_bmiss_first_bcnt =
+		cfg_get(psoc, CFG_LFR_ROAM_BMISS_FIRST_BCNT);
+	lfr->roam_bmiss_final_bcnt =
+		cfg_get(psoc, CFG_LFR_ROAM_BMISS_FINAL_BCNT);
+	lfr->roam_beacon_rssi_weight =
+		cfg_get(psoc, CFG_LFR_ROAM_BEACON_RSSI_WEIGHT);
+	lfr->roaming_dfs_channel =
+		cfg_get(psoc, CFG_LFR_ROAMING_DFS_CHANNEL);
+	lfr->roam_scan_hi_rssi_maxcount =
+		cfg_get(psoc, CFG_LFR_ROAM_SCAN_HI_RSSI_MAXCOUNT);
+	lfr->roam_scan_hi_rssi_delta =
+		cfg_get(psoc, CFG_LFR_ROAM_SCAN_HI_RSSI_DELTA);
+	lfr->roam_scan_hi_rssi_delay =
+		cfg_get(psoc, CFG_LFR_ROAM_SCAN_HI_RSSI_DELAY);
+	lfr->roam_scan_hi_rssi_ub =
+		cfg_get(psoc, CFG_LFR_ROAM_SCAN_HI_RSSI_UB);
+	lfr->roam_prefer_5ghz =
+		cfg_get(psoc, CFG_LFR_ROAM_PREFER_5GHZ);
+	lfr->roam_intra_band =
+		cfg_get(psoc, CFG_LFR_ROAM_INTRA_BAND);
+	lfr->roam_scan_home_away_time =
+		cfg_get(psoc, CFG_LFR_ROAM_SCAN_HOME_AWAY_TIME);
+	lfr->roam_scan_n_probes =
+		cfg_get(psoc, CFG_LFR_ROAM_SCAN_N_PROBES);
+	lfr->delay_before_vdev_stop =
+		cfg_get(psoc, CFG_LFR_DELAY_BEFORE_VDEV_STOP);
+	qdf_uint8_array_parse(cfg_default(CFG_LFR_NEIGHBOR_SCAN_CHANNEL_LIST),
+			      lfr->neighbor_scan_channel_list,
+			      CFG_VALID_CHANNEL_LIST_STRING_LEN,
+			      &neighbor_scan_chan_list_num);
+	lfr->neighbor_scan_channel_list_num =
+				(uint8_t)neighbor_scan_chan_list_num;
+	mlme_init_roam_offload_cfg(psoc, lfr);
+	mlme_init_ese_cfg(psoc, lfr);
 }
 
 static uint32_t

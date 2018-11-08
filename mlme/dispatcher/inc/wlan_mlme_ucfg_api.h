@@ -764,6 +764,7 @@ ucfg_mlme_get_tgt_gtx_usr_cfg(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_is_override_ht20_40_24g(struct wlan_objmgr_psoc *psoc, bool *val);
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * ucfg_mlme_get_roaming_offload() - Get roaming offload setting
  * @psoc: pointer to psoc object
@@ -785,6 +786,7 @@ ucfg_mlme_get_roaming_offload(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_set_roaming_offload(struct wlan_objmgr_psoc *psoc,
 			      bool val);
+#endif
 
 /**
  * ucfg_mlme_get_first_scan_bucket_threshold() - Get first scan bucket thre
@@ -796,6 +798,188 @@ ucfg_mlme_set_roaming_offload(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_get_first_scan_bucket_threshold(struct wlan_objmgr_psoc *psoc,
 					  uint8_t *val);
+
+/**
+ * ucfg_mlme_is_mawc_enabled() - MAWC enabled or not
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_is_mawc_enabled(struct wlan_objmgr_psoc *psoc, bool *val);
+
+/**
+ * ucfg_mlme_set_mawc_enabled() - Set MAWC enable or disable
+ * @psoc: pointer to psoc object
+ * @val:  enable or disable MAWC
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_mawc_enabled(struct wlan_objmgr_psoc *psoc, bool val);
+
+/**
+ * ucfg_mlme_is_fast_transition_enabled() - Fast transition enable or not
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_is_fast_transition_enabled(struct wlan_objmgr_psoc *psoc,
+				     bool *val);
+
+/**
+ * ucfg_mlme_set_fast_transition_enabled() - Set fast transition enable
+ * @psoc: pointer to psoc object
+ * @val:  Fast transition enable or disable
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_fast_transition_enabled(struct wlan_objmgr_psoc *psoc,
+				      bool val);
+
+/**
+ * ucfg_mlme_is_roam_scan_offload_enabled() - Roam scan offload enable or not
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_is_roam_scan_offload_enabled(struct wlan_objmgr_psoc *psoc,
+				       bool *val);
+
+/**
+ * ucfg_mlme_set_roam_scan_offload_enabled() - Set roam scan offload enable
+ * @psoc: pointer to psoc object
+ * @val:  Roam scan offload enable or disable
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_roam_scan_offload_enabled(struct wlan_objmgr_psoc *psoc,
+					bool val);
+
+/**
+ * ucfg_mlme_get_neighbor_scan_max_chan_time() - Get neighbor scan max
+ * channel time
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_neighbor_scan_max_chan_time(struct wlan_objmgr_psoc *psoc,
+					  uint16_t *val);
+
+/**
+ * ucfg_mlme_get_neighbor_scan_min_chan_time() - Get neighbor scan min
+ * channel time
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_neighbor_scan_min_chan_time(struct wlan_objmgr_psoc *psoc,
+					  uint16_t *val);
+
+/**
+ * ucfg_mlme_get_delay_before_vdev_stop() - Get the delay before vdev stop
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_delay_before_vdev_stop(struct wlan_objmgr_psoc *psoc,
+				     uint8_t *val);
+
+/**
+ * ucfg_mlme_get_roam_bmiss_final_bcnt() - Get roam bmiss first count
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_roam_bmiss_final_bcnt(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *val);
+/**
+ * ucfg_mlme_get_roam_bmiss_first_bcnt() - Get roam bmiss final count
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_roam_bmiss_first_bcnt(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *val);
+
+/**
+ * ucfg_mlme_is_lfr_enabled() - LFR enable or not
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_is_lfr_enabled(struct wlan_objmgr_psoc *psoc, bool *val);
+
+/**
+ * ucfg_mlme_set_lfr_enabled() - Enable or disable LFR
+ * @psoc: pointer to psoc object
+ * @val:  Enable or disable LFR
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_lfr_enabled(struct wlan_objmgr_psoc *psoc, bool val);
+
+/**
+ * ucfg_mlme_is_roam_prefer_5ghz() - prefer 5ghz or not
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_is_roam_prefer_5ghz(struct wlan_objmgr_psoc *psoc, bool *val);
+
+/**
+ * ucfg_mlme_set_roam_intra_band() - Set roam intra modes
+ * @psoc: pointer to psoc object
+ * @val:  roam intra modes or not
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_roam_intra_band(struct wlan_objmgr_psoc *psoc, bool val);
+
+/**
+ * ucfg_mlme_get_home_away_time() - Get home away time
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_home_away_time(struct wlan_objmgr_psoc *psoc, uint16_t *val);
+
+/**
+ * ucfg_mlme_set_fast_roam_in_concurrency_enabled() - Enable fast roam in
+ * concurrency
+ * @psoc: pointer to psoc object
+ * @val:  Enable or disable fast roam in concurrency
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_fast_roam_in_concurrency_enabled(struct wlan_objmgr_psoc *psoc,
+					       bool val);
 
 /**
  * ucfg_mlme_get_ps_data_inactivity_timeout() - Get data inactivity timeout
@@ -1962,6 +2146,7 @@ ucfg_mlme_set_supported_mcs_set(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
 QDF_STATUS
 ucfg_mlme_get_current_mcs_set(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
 			      qdf_size_t *len);
+
 /**
  * ucfg_mlme_get_wmm_dir_ac_vi() - Get TSPEC direction
  * for VI
@@ -2467,7 +2652,17 @@ ucfg_mlme_get_inactivity_interval(struct wlan_objmgr_psoc *psoc,
 {
 	wlan_mlme_get_inactivity_interval(psoc, value);
 }
-#endif
+
+/**
+ * ucfg_mlme_is_ese_enabled() - ese feature enable or not
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_is_ese_enabled(struct wlan_objmgr_psoc *psoc, bool *val);
+#endif /* FEATURE_WLAN_ESE */
 
 /**
  * ucfg_mlme_get_is_ts_burst_size_enable() - Get TS burst size flag
