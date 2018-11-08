@@ -566,7 +566,7 @@ void sap_dfs_set_current_channel(void *ctx)
  *
  * SIDE EFFECTS
  */
-bool sap_dfs_is_w53_invalid(tHalHandle hHal, uint8_t channelID)
+bool sap_dfs_is_w53_invalid(mac_handle_t hHal, uint8_t channelID)
 {
 	tpAniSirGlobal pMac;
 
@@ -604,7 +604,7 @@ bool sap_dfs_is_w53_invalid(tHalHandle hHal, uint8_t channelID)
  *
  * SIDE EFFECTS
  */
-bool sap_dfs_is_channel_in_preferred_location(tHalHandle hHal, uint8_t channelID)
+bool sap_dfs_is_channel_in_preferred_location(mac_handle_t hHal, uint8_t channelID)
 {
 	tpAniSirGlobal pMac;
 
@@ -1006,7 +1006,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	uint8_t *channel_list = NULL;
 	uint8_t num_of_channels = 0;
 #endif
-	tHalHandle h_hal;
+	mac_handle_t h_hal;
 	uint8_t con_ch;
 	uint8_t vdev_id;
 	uint32_t scan_id;
@@ -1185,7 +1185,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
  *
  * Return: pointer to sap context of valid concurrent session
  */
-static struct sap_context *sap_find_valid_concurrent_session(tHalHandle hal)
+static struct sap_context *sap_find_valid_concurrent_session(mac_handle_t hal)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	uint8_t intf = 0;
@@ -1206,7 +1206,7 @@ static struct sap_context *sap_find_valid_concurrent_session(tHalHandle hal)
 	return NULL;
 }
 
-static QDF_STATUS sap_clear_global_dfs_param(tHalHandle hal)
+static QDF_STATUS sap_clear_global_dfs_param(mac_handle_t hal)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
@@ -1269,7 +1269,7 @@ void sap_release_vdev_ref(struct sap_context *sap_ctx)
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SAP_ID);
 }
 
-QDF_STATUS sap_set_session_param(tHalHandle hal, struct sap_context *sapctx,
+QDF_STATUS sap_set_session_param(mac_handle_t hal, struct sap_context *sapctx,
 				uint32_t session_id)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
@@ -1307,7 +1307,7 @@ QDF_STATUS sap_set_session_param(tHalHandle hal, struct sap_context *sapctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS sap_clear_session_param(tHalHandle hal, struct sap_context *sapctx,
+QDF_STATUS sap_clear_session_param(mac_handle_t hal, struct sap_context *sapctx,
 				uint32_t session_id)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
@@ -1835,7 +1835,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
  *
  * Return: Valid SAP context on success, else NULL
  */
-static struct sap_context *sap_find_cac_wait_session(tHalHandle handle)
+static struct sap_context *sap_find_cac_wait_session(mac_handle_t handle)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(handle);
 	uint8_t i = 0;
@@ -1878,7 +1878,7 @@ static struct sap_context *sap_find_cac_wait_session(tHalHandle handle)
 
    SIDE EFFECTS
    ============================================================================*/
-void sap_cac_reset_notify(tHalHandle hHal)
+void sap_cac_reset_notify(mac_handle_t hHal)
 {
 	uint8_t intf = 0;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -1909,7 +1909,7 @@ void sap_cac_reset_notify(tHalHandle hHal)
 
    SIDE EFFECTS
    ============================================================================*/
-static QDF_STATUS sap_cac_start_notify(tHalHandle hHal)
+static QDF_STATUS sap_cac_start_notify(mac_handle_t hHal)
 {
 	uint8_t intf = 0;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -2007,7 +2007,7 @@ static QDF_STATUS wlansap_update_pre_cac_end(struct sap_context *sap_context,
 
    SIDE EFFECTS
    ============================================================================*/
-static QDF_STATUS sap_cac_end_notify(tHalHandle hHal,
+static QDF_STATUS sap_cac_end_notify(mac_handle_t hHal,
 				     struct csr_roam_info *roamInfo)
 {
 	uint8_t intf;
@@ -2125,7 +2125,7 @@ static QDF_STATUS sap_cac_end_notify(tHalHandle hHal,
 static QDF_STATUS
 sap_goto_starting(struct sap_context *sap_ctx,
 		  ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
-		  tHalHandle hal)
+		  mac_handle_t hal)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	bool b_leak_chan = false;
@@ -2261,7 +2261,7 @@ sap_goto_starting(struct sap_context *sap_ctx,
 static QDF_STATUS
 sap_fsm_state_init(struct sap_context *sap_ctx,
 		   ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
-		   tHalHandle hal)
+		   mac_handle_t hal)
 {
 	uint32_t msg = sap_event->event;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -2341,7 +2341,7 @@ exit:
  */
 static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
-			tHalHandle hal)
+			mac_handle_t hal)
 {
 	uint32_t msg = sap_event->event;
 	struct csr_roam_info *roam_info =
@@ -2445,7 +2445,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
  */
 static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
-			tHalHandle hal)
+			mac_handle_t hal)
 {
 	uint32_t msg = sap_event->event;
 	struct csr_roam_info *roam_info =
@@ -2775,7 +2775,7 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 static QDF_STATUS
 sap_fsm_state_stopping(struct sap_context *sap_ctx,
 		       ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
-		       tHalHandle hal)
+		       mac_handle_t hal)
 {
 	uint32_t msg = sap_event->event;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -3547,7 +3547,7 @@ void sap_dfs_cac_timer_callback(void *data)
 {
 	struct sap_context *sapContext;
 	tWLAN_SAPEvent sapEvent;
-	tHalHandle hHal = (tHalHandle) data;
+	mac_handle_t hHal = (mac_handle_t) data;
 	tpAniSirGlobal pMac;
 
 	if (NULL == hHal) {
@@ -3739,7 +3739,7 @@ QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sap_ctx)
  * This function will calculate how many interfaces
  * have sap persona and returns total number of sap persona.
  */
-uint8_t sap_get_total_number_sap_intf(tHalHandle hHal)
+uint8_t sap_get_total_number_sap_intf(mac_handle_t hHal)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	uint8_t intf = 0;
@@ -3768,7 +3768,7 @@ uint8_t sap_get_total_number_sap_intf(tHalHandle hHal)
  *
  * Return: true if other SAP personas are ready to channel switch else false
  */
-bool is_concurrent_sap_ready_for_channel_change(tHalHandle hHal,
+bool is_concurrent_sap_ready_for_channel_change(mac_handle_t hHal,
 						struct sap_context *sapContext)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -3812,7 +3812,7 @@ bool is_concurrent_sap_ready_for_channel_change(tHalHandle hHal,
  *
  * Return: true if two or more beaconing entitity doing SCC DFS else false
  */
-bool sap_is_conc_sap_doing_scc_dfs(tHalHandle hal,
+bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t hal,
 				   struct sap_context *given_sapctx)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);

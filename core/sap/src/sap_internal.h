@@ -365,22 +365,22 @@ bool sap_dfs_is_channel_in_nol_list(struct sap_context *sapContext,
 				    ePhyChanBondState chanBondState);
 void sap_dfs_cac_timer_callback(void *data);
 
-void sap_cac_reset_notify(tHalHandle hHal);
+void sap_cac_reset_notify(mac_handle_t hHal);
 
 bool
 sap_channel_matrix_check(struct sap_context *sapContext,
 			 ePhyChanBondState cbMode,
 			 uint8_t target_channel);
 
-bool is_concurrent_sap_ready_for_channel_change(tHalHandle hHal,
+bool is_concurrent_sap_ready_for_channel_change(mac_handle_t hHal,
 						struct sap_context *sapContext);
-bool sap_is_conc_sap_doing_scc_dfs(tHalHandle hal,
+bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t hal,
 				   struct sap_context *given_sapctx);
-uint8_t sap_get_total_number_sap_intf(tHalHandle hHal);
+uint8_t sap_get_total_number_sap_intf(mac_handle_t hHal);
 
-bool sap_dfs_is_w53_invalid(tHalHandle hHal, uint8_t channelID);
+bool sap_dfs_is_w53_invalid(mac_handle_t hHal, uint8_t channelID);
 
-bool sap_dfs_is_channel_in_preferred_location(tHalHandle hHal,
+bool sap_dfs_is_channel_in_preferred_location(mac_handle_t hHal,
 					      uint8_t channelID);
 
 /**
@@ -434,7 +434,7 @@ sap_check_in_avoid_ch_list(struct sap_context *sap_ctx, uint8_t channel);
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sap_set_session_param(tHalHandle hal, struct sap_context *sapctx,
+QDF_STATUS sap_set_session_param(mac_handle_t hal, struct sap_context *sapctx,
 				uint32_t session_id);
 /**
  * sap_clear_session_param() - clear sap related param from sap context
@@ -446,7 +446,7 @@ QDF_STATUS sap_set_session_param(tHalHandle hal, struct sap_context *sapctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sap_clear_session_param(tHalHandle hal, struct sap_context *sapctx,
+QDF_STATUS sap_clear_session_param(mac_handle_t hal, struct sap_context *sapctx,
 				uint32_t session_id);
 
 void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
