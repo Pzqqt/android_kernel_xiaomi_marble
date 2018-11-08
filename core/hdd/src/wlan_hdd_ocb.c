@@ -592,13 +592,20 @@ int iw_set_dot11p_channel_sched(struct net_device *dev,
 				struct iw_request_info *info,
 				union iwreq_data *wrqu, char *extra)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __iw_set_dot11p_channel_sched(dev, info, wrqu, extra);
+	errno = __iw_set_dot11p_channel_sched(dev, info, wrqu, extra);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 #endif /* WLAN_WEXT_SUPPORT_ENABLE */
 
