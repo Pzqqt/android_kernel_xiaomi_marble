@@ -47,17 +47,6 @@ static inline bool wlan_ipa_uc_is_enabled(struct wlan_ipa_config *ipa_cfg)
 }
 
 /**
- * wlan_ipa_is_rm_enabled() - Is IPA RM enabled?
- * @ipa_cfg: IPA config
- *
- * Return: true if IPA RM is enabled, false otherwise
- */
-static inline bool wlan_ipa_is_rm_enabled(struct wlan_ipa_config *ipa_cfg)
-{
-	return WLAN_IPA_IS_CONFIG_ENABLED(ipa_cfg, WLAN_IPA_RM_ENABLE_MASK);
-}
-
-/**
  * wlan_ipa_is_rt_debugging_enabled() - Is IPA RT debugging enabled?
  * @ipa_cfg: IPA config
  *
@@ -144,6 +133,17 @@ struct wlan_ipa_iface_context
 *wlan_ipa_get_iface(struct wlan_ipa_priv *ipa_ctx, uint8_t mode);
 
 #ifndef CONFIG_IPA_WDI_UNIFIED_API
+
+/**
+ * wlan_ipa_is_rm_enabled() - Is IPA RM enabled?
+ * @ipa_cfg: IPA config
+ *
+ * Return: true if IPA RM is enabled, false otherwise
+ */
+static inline bool wlan_ipa_is_rm_enabled(struct wlan_ipa_config *ipa_cfg)
+{
+	return WLAN_IPA_IS_CONFIG_ENABLED(ipa_cfg, WLAN_IPA_RM_ENABLE_MASK);
+}
 
 /**
  * wlan_ipa_is_clk_scaling_enabled() - Is IPA clock scaling enabled?
@@ -238,6 +238,21 @@ int wlan_ipa_wdi_rm_inactivity_timer_destroy(
 bool wlan_ipa_is_rm_released(struct wlan_ipa_priv *ipa_ctx);
 
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
+
+/**
+ * wlan_ipa_is_rm_enabled() - Is IPA RM enabled?
+ * @ipa_cfg: IPA config
+ *
+ * IPA RM is deprecated and IPA PM is involved. WLAN driver
+ * has no control over IPA PM and thus we could regard IPA
+ * RM as always enabled for power efficiency.
+ *
+ * Return: true
+ */
+static inline bool wlan_ipa_is_rm_enabled(struct wlan_ipa_config *ipa_cfg)
+{
+	return true;
+}
 
 /**
  * wlan_ipa_is_clk_scaling_enabled() - Is IPA clock scaling enabled?
