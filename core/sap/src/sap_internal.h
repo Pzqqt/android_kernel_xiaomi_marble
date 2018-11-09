@@ -381,8 +381,10 @@ sap_channel_matrix_check(struct sap_context *sapContext,
 
 bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
 						struct sap_context *sapContext);
-bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t hal,
+
+bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t mac_handle,
 				   struct sap_context *given_sapctx);
+
 uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle);
 
 /**
@@ -457,9 +459,10 @@ sap_validate_chan(struct sap_context *sap_context,
  */
 bool
 sap_check_in_avoid_ch_list(struct sap_context *sap_ctx, uint8_t channel);
+
 /**
  * sap_set_session_param() - set sap related param to sap context and global var
- * @hal: pointer to hardware abstraction layer
+ * @mac_handle: Opaque handle to the global MAC context
  * @sapctx: pointer to sapctx
  * @session_id: session id for sap
  *
@@ -467,11 +470,13 @@ sap_check_in_avoid_ch_list(struct sap_context *sap_ctx, uint8_t channel);
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sap_set_session_param(mac_handle_t hal, struct sap_context *sapctx,
-				uint32_t session_id);
+QDF_STATUS sap_set_session_param(mac_handle_t mac_handle,
+				 struct sap_context *sapctx,
+				 uint32_t session_id);
+
 /**
  * sap_clear_session_param() - clear sap related param from sap context
- * @hal: pointer to hardware abstraction layer
+ * @mac_handle: Opaque handle to the global MAC context
  * @sapctx: pointer to sapctx
  * @session_id: session id for sap
  *
@@ -479,8 +484,9 @@ QDF_STATUS sap_set_session_param(mac_handle_t hal, struct sap_context *sapctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sap_clear_session_param(mac_handle_t hal, struct sap_context *sapctx,
-				uint32_t session_id);
+QDF_STATUS sap_clear_session_param(mac_handle_t mac_handle,
+				   struct sap_context *sapctx,
+				   uint32_t session_id);
 
 void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 			struct scan_event *event, void *arg);

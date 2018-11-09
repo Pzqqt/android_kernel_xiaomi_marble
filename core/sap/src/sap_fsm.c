@@ -1148,15 +1148,16 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 
 /**
  * sap_find_valid_concurrent_session() - to find valid concurrent session
- * @hal: pointer to hal abstration layer
+ * @mac_handle: Opaque handle to the global MAC context
  *
  * This API will check if any valid concurrent SAP session is present
  *
  * Return: pointer to sap context of valid concurrent session
  */
-static struct sap_context *sap_find_valid_concurrent_session(mac_handle_t hal)
+static struct sap_context *
+sap_find_valid_concurrent_session(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
 	uint8_t intf = 0;
 	struct sap_context *sap_ctx;
 
@@ -1175,11 +1176,11 @@ static struct sap_context *sap_find_valid_concurrent_session(mac_handle_t hal)
 	return NULL;
 }
 
-static QDF_STATUS sap_clear_global_dfs_param(mac_handle_t hal)
+static QDF_STATUS sap_clear_global_dfs_param(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
 
-	if (NULL != sap_find_valid_concurrent_session(hal)) {
+	if (NULL != sap_find_valid_concurrent_session(mac_handle)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "conc session exists, no need to clear dfs struct");
 		return QDF_STATUS_SUCCESS;
@@ -1197,7 +1198,7 @@ static QDF_STATUS sap_clear_global_dfs_param(mac_handle_t hal)
 			&mac_ctx->sap.SapDfsInfo.sap_dfs_cac_timer);
 	}
 	mac_ctx->sap.SapDfsInfo.cac_state = eSAP_DFS_DO_NOT_SKIP_CAC;
-	sap_cac_reset_notify(hal);
+	sap_cac_reset_notify(mac_handle);
 	qdf_mem_zero(&mac_ctx->sap, sizeof(mac_ctx->sap));
 
 	return QDF_STATUS_SUCCESS;
@@ -1238,10 +1239,11 @@ void sap_release_vdev_ref(struct sap_context *sap_ctx)
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SAP_ID);
 }
 
-QDF_STATUS sap_set_session_param(mac_handle_t hal, struct sap_context *sapctx,
-				uint32_t session_id)
+QDF_STATUS sap_set_session_param(mac_handle_t mac_handle,
+				 struct sap_context *sapctx,
+				 uint32_t session_id)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
 	int i;
 	QDF_STATUS status;
 
@@ -1276,10 +1278,11 @@ QDF_STATUS sap_set_session_param(mac_handle_t hal, struct sap_context *sapctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS sap_clear_session_param(mac_handle_t hal, struct sap_context *sapctx,
-				uint32_t session_id)
+QDF_STATUS sap_clear_session_param(mac_handle_t mac_handle,
+				   struct sap_context *sapctx,
+				   uint32_t session_id)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
 
 	if (sapctx->sessionId >= SAP_MAX_NUM_SESSION)
 		return QDF_STATUS_E_FAILURE;
@@ -1291,7 +1294,7 @@ QDF_STATUS sap_clear_session_param(mac_handle_t hal, struct sap_context *sapctx,
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sap_context = NULL;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
 		QDF_MAX_NO_OF_MODE;
-	sap_clear_global_dfs_param(hal);
+	sap_clear_global_dfs_param(mac_handle);
 	sap_free_roam_profile(&sapctx->csr_roamProfile);
 	qdf_mem_zero(sapctx, sizeof(*sapctx));
 	sapctx->sessionId = CSR_SESSION_ID_INVALID;
@@ -2063,7 +2066,7 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
  * @sap_ctx: SAP context
  * @sap_event: SAP event buffer
  * @mac_ctx: global MAC context
- * @hal: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  *
  * This function triggers start of softap. Before starting, it can select
  * new channel if given channel has leakage or if given channel in DFS_NOL.
@@ -2073,7 +2076,7 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 static QDF_STATUS
 sap_goto_starting(struct sap_context *sap_ctx,
 		  ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
-		  mac_handle_t hal)
+		  mac_handle_t mac_handle)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	bool b_leak_chan = false;
@@ -2136,7 +2139,7 @@ sap_goto_starting(struct sap_context *sap_ctx,
 	if (policy_mgr_concurrent_beaconing_sessions_running(mac_ctx->psoc)) {
 		uint16_t con_ch;
 
-		con_ch = sme_get_concurrent_operation_channel(hal);
+		con_ch = sme_get_concurrent_operation_channel(mac_handle);
 		if (con_ch && wlan_reg_is_dfs_ch(mac_ctx->pdev, con_ch)) {
 			sap_ctx->channel = con_ch;
 			wlan_reg_set_channel_params(mac_ctx->pdev,
@@ -2185,7 +2188,7 @@ sap_goto_starting(struct sap_context *sap_ctx,
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, "%s: session: %d",
 		  __func__, sap_ctx->sessionId);
 
-	qdf_status = sme_roam_connect(hal, sap_ctx->sessionId,
+	qdf_status = sme_roam_connect(mac_handle, sap_ctx->sessionId,
 				      &sap_ctx->csr_roamProfile,
 				      &sap_ctx->csr_roamId);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
@@ -2200,7 +2203,7 @@ sap_goto_starting(struct sap_context *sap_ctx,
  * @sap_ctx: SAP context
  * @sap_event: SAP event buffer
  * @mac_ctx: global MAC context
- * @hal: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  *
  * This function is called for state transition from "SAP_INIT"
  *
@@ -2209,7 +2212,7 @@ sap_goto_starting(struct sap_context *sap_ctx,
 static QDF_STATUS
 sap_fsm_state_init(struct sap_context *sap_ctx,
 		   ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
-		   mac_handle_t hal)
+		   mac_handle_t mac_handle)
 {
 	uint32_t msg = sap_event->event;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -2237,7 +2240,7 @@ sap_fsm_state_init(struct sap_context *sap_ctx,
 			  sap_ctx->sessionId);
 
 		qdf_status = sap_goto_starting(sap_ctx, sap_event,
-					       mac_ctx, hal);
+					       mac_ctx, mac_handle);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				  QDF_TRACE_LEVEL_ERROR,
@@ -2264,7 +2267,7 @@ sap_fsm_state_init(struct sap_context *sap_ctx,
 			sap_start_dfs_cac_timer(sap_ctx);
 		}
 
-		qdf_status = sap_cac_start_notify(hal);
+		qdf_status = sap_cac_start_notify(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, event msg %d"),
@@ -2281,7 +2284,7 @@ exit:
  * @sap_ctx: SAP context
  * @sap_event: SAP event buffer
  * @mac_ctx: global MAC context
- * @hal: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  *
  * This function is called for state transition from "SAP_DFS_CAC_WAIT"
  *
@@ -2289,7 +2292,7 @@ exit:
  */
 static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
-			mac_handle_t hal)
+			mac_handle_t mac_handle)
 {
 	uint32_t msg = sap_event->event;
 	struct csr_roam_info *roam_info =
@@ -2302,7 +2305,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 			  "SAP_STARTING", "SAP_DFS_CAC_WAIT");
 		if (mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running != true)
 			sap_start_dfs_cac_timer(sap_ctx);
-		qdf_status = sap_cac_start_notify(hal);
+		qdf_status = sap_cac_start_notify(mac_handle);
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_RADAR_FOUND) {
 		uint8_t intf;
 
@@ -2348,7 +2351,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 			}
 		}
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_END) {
-		qdf_status = sap_cac_end_notify(hal, roam_info);
+		qdf_status = sap_cac_end_notify(mac_handle, roam_info);
 	} else if (msg == eSAP_HDD_STOP_INFRA_BSS) {
 		/* Transition from SAP_DFS_CAC_WAIT to SAP_STOPPING */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -2361,7 +2364,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 		 * mulitple APs: incase of multiple APs, make sure that
 		 *               all APs are down.
 		 */
-		if (NULL == sap_find_valid_concurrent_session(hal)) {
+		if (NULL == sap_find_valid_concurrent_session(mac_handle)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				  QDF_TRACE_LEVEL_INFO_MED,
 				  FL("sapdfs: no sessions are valid, stopping timer"));
@@ -2385,7 +2388,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
  * @sap_ctx: SAP context
  * @sap_event: SAP event buffer
  * @mac_ctx: global MAC context
- * @hal: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  *
  * This function is called for state transition from "SAP_STARTING"
  *
@@ -2393,7 +2396,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
  */
 static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
-			mac_handle_t hal)
+			mac_handle_t mac_handle)
 {
 	uint32_t msg = sap_event->event;
 	struct csr_roam_info *roam_info =
@@ -2473,7 +2476,7 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 				if (sap_dfs_info->is_dfs_cac_timer_running !=
 									true)
 					sap_start_dfs_cac_timer(sap_ctx);
-				qdf_status = sap_cac_start_notify(hal);
+				qdf_status = sap_cac_start_notify(mac_handle);
 
 			} else {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
@@ -2502,7 +2505,7 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 			 * mulitple APs: incase of multiple APs, make sure that
 			 *               all APs are down.
 			 */
-			if (!sap_find_valid_concurrent_session(hal)) {
+			if (!sap_find_valid_concurrent_session(mac_handle)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_MED,
 					  FL("sapdfs: no sessions are valid, stopping timer"));
@@ -2593,7 +2596,7 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 			}
 		}
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_END) {
-		qdf_status = sap_cac_end_notify(hal, roam_info);
+		qdf_status = sap_cac_end_notify(mac_handle, roam_info);
 	} else
 #endif
 	{
@@ -2723,7 +2726,7 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 static QDF_STATUS
 sap_fsm_state_stopping(struct sap_context *sap_ctx,
 		       ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
-		       mac_handle_t hal)
+		       mac_handle_t mac_handle)
 {
 	uint32_t msg = sap_event->event;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -3710,7 +3713,7 @@ uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle)
 /**
  * is_concurrent_sap_ready_for_channel_change() - to check all saps are ready
  *						  for channel change
- * @mac_handle: HAL pointer
+ * @mac_handle: Opaque handle to the global MAC context
  * @sapContext: sap context for which this function has been called
  *
  * This function will find the concurrent sap context apart from
@@ -3754,7 +3757,7 @@ bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
 
 /**
  * sap_is_conc_sap_doing_scc_dfs() - check if conc SAPs are doing SCC DFS
- * @hal: pointer to hal
+ * @mac_handle: Opaque handle to the global MAC context
  * @sap_context: current SAP persona's channel
  *
  * If provided SAP's channel is DFS then Loop through each SAP or GO persona and
@@ -3763,10 +3766,10 @@ bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
  *
  * Return: true if two or more beaconing entitity doing SCC DFS else false
  */
-bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t hal,
+bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t mac_handle,
 				   struct sap_context *given_sapctx)
 {
-	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 	struct sap_context *sap_ctx;
 	uint8_t intf = 0, scc_dfs_counter = 0;
 
