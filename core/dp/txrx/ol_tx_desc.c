@@ -800,9 +800,6 @@ void ol_tx_desc_frame_list_free(struct ol_txrx_pdev_t *pdev,
 			if (!qdf_nbuf_ipa_owned_get(msdu))
 				qdf_nbuf_unmap(pdev->osdev, msdu,
 					       QDF_DMA_TO_DEVICE);
-			else if (qdf_mem_smmu_s1_enabled(pdev->osdev))
-				qdf_nbuf_unmap(pdev->osdev, msdu,
-					       QDF_DMA_TO_DEVICE);
 		}
 
 		/* free the tx desc */

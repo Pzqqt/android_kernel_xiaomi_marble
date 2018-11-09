@@ -134,10 +134,6 @@ void ol_txrx_vdev_flush(struct cdp_vdev *pvdev)
 				qdf_nbuf_unmap(vdev->pdev->osdev,
 					       vdev->ll_pause.txq.head,
 					       QDF_DMA_TO_DEVICE);
-			else if (qdf_mem_smmu_s1_enabled(vdev->pdev->osdev))
-				qdf_nbuf_unmap(vdev->pdev->osdev,
-					       vdev->ll_pause.txq.head,
-					       QDF_DMA_TO_DEVICE);
 		}
 		qdf_nbuf_tx_free(vdev->ll_pause.txq.head,
 				 QDF_NBUF_PKT_ERROR);
