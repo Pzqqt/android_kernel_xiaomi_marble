@@ -1389,7 +1389,7 @@ static int adm_process_get_param_response(u32 opcode, u32 idx, u32 *payload,
 	 */
 	if ((payload_size >= struct_size + data_size) &&
 	    (ARRAY_SIZE(adm_get_parameters) > idx) &&
-	    (ARRAY_SIZE(adm_get_parameters) >= idx + 1 + data_size)) {
+	    (ARRAY_SIZE(adm_get_parameters) > idx + 1 + data_size)) {
 		pr_debug("%s: Received parameter data in band\n",
 					__func__);
 		/*
