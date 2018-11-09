@@ -27,6 +27,7 @@
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_cmn.h>
 #include <wlan_mlme_api.h>
+#include <wlan_mlme_vdev_mgr_interface.h>
 
 /**
  * ucfg_mlme_init() - initialize mlme_ctx context.
@@ -1565,6 +1566,36 @@ static inline QDF_STATUS
 ucfg_mlme_get_vht_tx_mcs_2x2(struct wlan_objmgr_psoc *psoc, uint8_t *value)
 {
 	return wlan_mlme_get_vht_tx_mcs_2x2(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_ini_vdev_config() - get the ini capability of vdev
+ * @vdev: pointer to the vdev obj
+ *
+ * This API will get the ini config of the vdev related to
+ * the nss, chains params
+ *
+ * Return: pointer to the nss, chain param ini cfg structure
+ */
+static inline struct wlan_mlme_nss_chains *
+ucfg_mlme_get_ini_vdev_config(struct wlan_objmgr_vdev *vdev)
+{
+	return mlme_get_ini_vdev_config(vdev);
+}
+
+/**
+ * ucfg_mlme_get_dynamic_vdev_config() - get the dynamic capability of vdev
+ * @vdev: pointer to the vdev obj
+ *
+ * This API will get the dynamic config of the vdev related to nss,
+ * chains params
+ *
+ * Return: pointer to the nss, chain param dynamic cfg structure
+ */
+static inline struct wlan_mlme_nss_chains *
+ucfg_mlme_get_dynamic_vdev_config(struct wlan_objmgr_vdev *vdev)
+{
+	return mlme_get_dynamic_vdev_config(vdev);
 }
 
 /**
