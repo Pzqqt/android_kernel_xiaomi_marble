@@ -4875,10 +4875,30 @@ void sme_populate_nss_chain_params(mac_handle_t mac_handle,
 	struct sAniSirGlobal *mac_ctx = MAC_CONTEXT(mac_handle);
 	enum nss_chains_band_info band;
 
-	for (band = BAND_2GHZ; band < BAND_MAX; band++)
+	for (band = NSS_CHAINS_BAND_2GHZ; band < NSS_CHAINS_BAND_MAX; band++)
 		sme_fill_nss_chain_params(mac_ctx, vdev_ini_cfg,
 					  device_mode, band,
 					  rf_chains_supported);
+}
+
+void
+sme_store_nss_chains_cfg_in_vdev(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_mlme_nss_chains *vdev_ini_cfg)
+{
+	struct wlan_mlme_nss_chains *ini_cfg;
+	struct wlan_mlme_nss_chains *dynamic_cfg;
+
+	ini_cfg = mlme_get_ini_vdev_config(vdev);
+	dynamic_cfg = mlme_get_dynamic_vdev_config(vdev);
+
+	if (!ini_cfg || !dynamic_cfg) {
+		sme_err("Nss chains ini/dynamic config NULL vdev_id %d",
+					     vdev->vdev_objmgr.vdev_id);
+		return;
+	}
+
+	*ini_cfg = *vdev_ini_cfg;
+	*dynamic_cfg = *vdev_ini_cfg;
 }
 
 static void
@@ -4991,19 +5011,19 @@ sme_validate_user_nss_chain_params(
 	 */
 
 	if (user_cfg->num_tx_chains_11a >
-	    user_cfg->num_tx_chains[BAND_5GHZ])
+	    user_cfg->num_tx_chains[NSS_CHAINS_BAND_5GHZ])
 		user_cfg->num_tx_chains_11a =
-			user_cfg->num_tx_chains[BAND_5GHZ];
+			user_cfg->num_tx_chains[NSS_CHAINS_BAND_5GHZ];
 
 	if (user_cfg->num_tx_chains_11b >
-	    user_cfg->num_tx_chains[BAND_2GHZ])
+	    user_cfg->num_tx_chains[NSS_CHAINS_BAND_2GHZ])
 		user_cfg->num_tx_chains_11b =
-			user_cfg->num_tx_chains[BAND_2GHZ];
+			user_cfg->num_tx_chains[NSS_CHAINS_BAND_2GHZ];
 
 	if (user_cfg->num_tx_chains_11g >
-	    user_cfg->num_tx_chains[BAND_2GHZ])
+	    user_cfg->num_tx_chains[NSS_CHAINS_BAND_2GHZ])
 		user_cfg->num_tx_chains_11g =
-			user_cfg->num_tx_chains[BAND_2GHZ];
+			user_cfg->num_tx_chains[NSS_CHAINS_BAND_2GHZ];
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5023,7 +5043,7 @@ sme_validate_nss_chains_config(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	for (band = BAND_2GHZ; band < BAND_MAX; band++) {
+	for (band = NSS_CHAINS_BAND_2GHZ; band < NSS_CHAINS_BAND_MAX; band++) {
 		sme_populate_user_config(dynamic_cfg,
 					 user_cfg, band);
 		status = sme_validate_from_ini_config(user_cfg,
@@ -5092,8 +5112,7 @@ sme_nss_chains_update(mac_handle_t mac_handle,
 		goto release_lock;
 	}
 
-	qdf_mem_copy(dynamic_cfg, user_cfg,
-		     sizeof(struct wlan_mlme_nss_chains));
+	*dynamic_cfg = *user_cfg;
 
 release_lock:
 	sme_release_global_lock(&mac_ctx->sme);

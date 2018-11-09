@@ -4411,7 +4411,7 @@ QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 		return status;
 	}
 
-	/**
+	/*
 	 * Reset the dynamic nss chains config to the ini values, as when the
 	 * vdev gets its started again, this would be a fresh connection,
 	 * and we dont want the config of previous connection to affect the

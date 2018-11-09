@@ -1262,29 +1262,32 @@ static void mlme_init_oce_cfg(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_nss_chains(struct wlan_objmgr_psoc *psoc,
 				 struct wlan_mlme_nss_chains *nss_chains)
 {
-	nss_chains->num_rx_chains[BAND_2GHZ] = cfg_get(psoc,
-						       CFG_NUM_RX_CHAINS_2G);
-	nss_chains->num_rx_chains[BAND_5GHZ] = cfg_get(psoc,
-						       CFG_NUM_RX_CHAINS_5G);
-	nss_chains->num_tx_chains[BAND_2GHZ] = cfg_get(psoc,
-						       CFG_NUM_TX_CHAINS_2G);
-	nss_chains->num_tx_chains[BAND_5GHZ] = cfg_get(psoc,
-						       CFG_NUM_TX_CHAINS_5G);
-	nss_chains->tx_nss[BAND_2GHZ] = cfg_get(psoc, CFG_TX_NSS_2G);
-	nss_chains->tx_nss[BAND_5GHZ] = cfg_get(psoc, CFG_TX_NSS_5G);
-	nss_chains->rx_nss[BAND_2GHZ] = cfg_get(psoc, CFG_RX_NSS_2G);
-	nss_chains->rx_nss[BAND_5GHZ] = cfg_get(psoc, CFG_RX_NSS_5G);
+	nss_chains->num_rx_chains[NSS_CHAINS_BAND_2GHZ] =
+					    cfg_get(psoc, CFG_NUM_RX_CHAINS_2G);
+	nss_chains->num_rx_chains[NSS_CHAINS_BAND_5GHZ] =
+					    cfg_get(psoc, CFG_NUM_RX_CHAINS_5G);
+	nss_chains->num_tx_chains[NSS_CHAINS_BAND_2GHZ] =
+					    cfg_get(psoc, CFG_NUM_TX_CHAINS_2G);
+	nss_chains->num_tx_chains[NSS_CHAINS_BAND_5GHZ] =
+					    cfg_get(psoc, CFG_NUM_TX_CHAINS_5G);
+
+	nss_chains->tx_nss[NSS_CHAINS_BAND_2GHZ] = cfg_get(psoc, CFG_TX_NSS_2G);
+	nss_chains->tx_nss[NSS_CHAINS_BAND_5GHZ] = cfg_get(psoc, CFG_TX_NSS_5G);
+	nss_chains->rx_nss[NSS_CHAINS_BAND_2GHZ] = cfg_get(psoc, CFG_RX_NSS_2G);
+	nss_chains->rx_nss[NSS_CHAINS_BAND_5GHZ] = cfg_get(psoc, CFG_RX_NSS_5G);
+
 	nss_chains->num_tx_chains_11b = cfg_get(psoc, CFG_NUM_TX_CHAINS_11b);
 	nss_chains->num_tx_chains_11g = cfg_get(psoc, CFG_NUM_TX_CHAINS_11g);
 	nss_chains->num_tx_chains_11a = cfg_get(psoc, CFG_NUM_TX_CHAINS_11a);
-	nss_chains->disable_rx_mrc[BAND_2GHZ] = cfg_get(psoc,
-							CFG_DISABLE_RX_MRC_2G);
-	nss_chains->disable_rx_mrc[BAND_5GHZ] = cfg_get(psoc,
-							CFG_DISABLE_RX_MRC_5G);
-	nss_chains->disable_tx_mrc[BAND_2GHZ] = cfg_get(psoc,
-							CFG_DISABLE_TX_MRC_2G);
-	nss_chains->disable_tx_mrc[BAND_5GHZ] = cfg_get(psoc,
-							CFG_DISABLE_TX_MRC_5G);
+
+	nss_chains->disable_rx_mrc[NSS_CHAINS_BAND_2GHZ] =
+					   cfg_get(psoc, CFG_DISABLE_RX_MRC_2G);
+	nss_chains->disable_rx_mrc[NSS_CHAINS_BAND_5GHZ] =
+					   cfg_get(psoc, CFG_DISABLE_RX_MRC_5G);
+	nss_chains->disable_tx_mrc[NSS_CHAINS_BAND_2GHZ] =
+					   cfg_get(psoc, CFG_DISABLE_TX_MRC_2G);
+	nss_chains->disable_tx_mrc[NSS_CHAINS_BAND_5GHZ] =
+					   cfg_get(psoc, CFG_DISABLE_TX_MRC_5G);
 }
 static void mlme_init_wep_keys(struct wlan_mlme_wep_cfg *wep_params)
 {

@@ -4049,14 +4049,13 @@ hdd_store_nss_chains_cfg_in_vdev(struct hdd_adapter *adapter)
 	struct wlan_mlme_nss_chains vdev_ini_cfg;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	/* store the ini config in vdev component in mlme priv structure */
+	/* Populate the nss chain params from ini for this vdev type */
 	sme_populate_nss_chain_params(hdd_ctx->mac_handle, &vdev_ini_cfg,
 				      adapter->device_mode,
 				      hdd_ctx->num_rf_chains);
-	qdf_mem_copy(mlme_get_dynamic_vdev_config(adapter->vdev),
-		     &vdev_ini_cfg, sizeof(struct wlan_mlme_nss_chains));
-	qdf_mem_copy(mlme_get_ini_vdev_config(adapter->vdev),
-		     &vdev_ini_cfg, sizeof(struct wlan_mlme_nss_chains));
+
+	/* Store the nss chain config into the vdev */
+	sme_store_nss_chains_cfg_in_vdev(adapter->vdev, &vdev_ini_cfg);
 }
 
 bool hdd_is_vdev_in_conn_state(struct hdd_adapter *adapter)

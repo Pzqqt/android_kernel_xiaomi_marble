@@ -6663,7 +6663,7 @@ hdd_populate_vdev_chains(struct wlan_mlme_nss_chains *nss_chains_cfg,
 	nss_chains_cfg->num_rx_chains[band] = rx_chains;
 	nss_chains_cfg->num_tx_chains[band] = tx_chains;
 
-	dynamic_cfg = mlme_get_dynamic_vdev_config(vdev);
+	dynamic_cfg = ucfg_mlme_get_dynamic_vdev_config(vdev);
 	if (!dynamic_cfg) {
 		hdd_err("nss chain dynamic config NULL");
 		return QDF_STATUS_E_FAILURE;
@@ -6708,7 +6708,7 @@ hdd_set_dynamic_antenna_mode(struct hdd_adapter *adapter,
 	}
 
 	qdf_mem_zero(&user_cfg, sizeof(user_cfg));
-	for (band = BAND_2GHZ; band < BAND_MAX; band++) {
+	for (band = NSS_CHAINS_BAND_2GHZ; band < NSS_CHAINS_BAND_MAX; band++) {
 		status = hdd_populate_vdev_chains(&user_cfg,
 						  num_rx_chains,
 						  num_tx_chains, band,
@@ -6817,6 +6817,7 @@ exit:
 
 	return ret;
 }
+
 /**
  * drv_cmd_set_antenna_mode() - SET ANTENNA MODE driver command
  * handler
@@ -6867,7 +6868,7 @@ hdd_get_dynamic_antenna_mode(uint32_t *antenna_mode,
 	if (!dynamic_nss_chains_support)
 		return;
 
-	nss_chains_dynamic_cfg = mlme_get_dynamic_vdev_config(vdev);
+	nss_chains_dynamic_cfg = ucfg_mlme_get_dynamic_vdev_config(vdev);
 	if (!nss_chains_dynamic_cfg) {
 		hdd_err("nss chain dynamic config NULL");
 		return;
@@ -6876,7 +6877,8 @@ hdd_get_dynamic_antenna_mode(uint32_t *antenna_mode,
 	 * At present, this command doesn't include band, so by default
 	 * it will return the band 2ghz present rf chains.
 	 */
-	*antenna_mode = nss_chains_dynamic_cfg->num_rx_chains[BAND_2GHZ];
+	*antenna_mode =
+		nss_chains_dynamic_cfg->num_rx_chains[NSS_CHAINS_BAND_2GHZ];
 }
 
 /**

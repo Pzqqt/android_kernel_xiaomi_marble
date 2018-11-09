@@ -5924,7 +5924,7 @@ static inline bool lim_get_rx_ldpc(tpAniSirGlobal mac_ctx, enum channel_enum ch)
  * @vdev_id: vdev for which IE is targeted
  * @band: band for which the MCS set has to be updated
  *
- * This funciton updates the MCS set according to vdev nss
+ * This function updates the MCS set according to vdev nss
  *
  * Return: None
  */
@@ -5965,7 +5965,7 @@ end:
  * @vdev_id: vdev for which IE is targeted
  * @band: band for which the MCS set has to be updated
  *
- * This funciton updates the MCS set according to vdev nss
+ * This function updates the MCS set according to vdev nss
  *
  * Return: None
  */
@@ -6052,7 +6052,8 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 		p_ht_cap->supportedChannelWidthSet = 0;
 		p_ht_cap->shortGI40MHz = 0;
 	}
-	lim_populate_mcs_set_ht_per_vdev(mac_ctx, p_ht_cap, vdev_id, BAND_2GHZ);
+	lim_populate_mcs_set_ht_per_vdev(mac_ctx, p_ht_cap, vdev_id,
+					 NSS_CHAINS_BAND_2GHZ);
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HTCAPS,
 		CDS_BAND_2GHZ, &ht_caps[2], DOT11F_IE_HTCAPS_MIN_LEN);
 	/*
@@ -6068,7 +6069,8 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 		p_ht_cap->supportedChannelWidthSet = 0;
 		p_ht_cap->shortGI40MHz = 0;
 	}
-	lim_populate_mcs_set_ht_per_vdev(mac_ctx, p_ht_cap, vdev_id, BAND_5GHZ);
+	lim_populate_mcs_set_ht_per_vdev(mac_ctx, p_ht_cap, vdev_id,
+					 NSS_CHAINS_BAND_5GHZ);
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HTCAPS,
 		CDS_BAND_5GHZ, &ht_caps[2], DOT11F_IE_HTCAPS_MIN_LEN);
 
@@ -6082,7 +6084,7 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 	 */
 	p_vht_cap->ldpcCodingCap = lim_get_rx_ldpc(mac_ctx, CHAN_ENUM_64);
 	lim_populate_mcs_set_vht_per_vdev(mac_ctx, vht_caps,
-					  vdev_id, BAND_5GHZ);
+					  vdev_id, NSS_CHAINS_BAND_5GHZ);
 
 	/* Self VHT channel width for 5G is already negotiated with FW */
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
@@ -6095,7 +6097,7 @@ QDF_STATUS lim_send_ies_per_band(tpAniSirGlobal mac_ctx,
 	p_vht_cap->shortGI80MHz = 0;
 	p_vht_cap->shortGI160and80plus80MHz = 0;
 	lim_populate_mcs_set_vht_per_vdev(mac_ctx, vht_caps,
-					  vdev_id, BAND_2GHZ);
+					  vdev_id, NSS_CHAINS_BAND_2GHZ);
 	lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VHTCAPS,
 			CDS_BAND_2GHZ, &vht_caps[2], DOT11F_IE_VHTCAPS_MIN_LEN);
 

@@ -4376,7 +4376,7 @@ hdd_set_nss_params(struct hdd_adapter *adapter,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	for (band = BAND_2GHZ; band < NUM_OF_BANDS; band++)
+	for (band = NSS_CHAINS_BAND_2GHZ; band < NSS_CHAINS_BAND_MAX; band++)
 		hdd_populate_vdev_nss(&user_cfg, tx_nss,
 				      rx_nss, band);
 	if (QDF_IS_STATUS_ERROR(

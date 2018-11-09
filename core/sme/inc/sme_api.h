@@ -331,7 +331,7 @@ QDF_STATUS sme_stop(mac_handle_t mac_handle);
  * @rf_chains_supported: number of chains supported by fw(updated during
  *                       service ready event)
  *
- * This API will fill the nss chain params for the particlar vdev from ini
+ * This API will fill the nss chain params for the particular vdev from ini
  * configuration for the respective vdev.
  *
  * Return: none
@@ -340,6 +340,20 @@ void sme_populate_nss_chain_params(mac_handle_t mac_handle,
 			     struct wlan_mlme_nss_chains *vdev_ini_cfg,
 			     enum QDF_OPMODE device_mode,
 			     uint8_t rf_chains_supported);
+
+/**
+ * sme_store_nss_chains_cfg_in_vdev() - fill vdev nss chain params from ini
+ * @vdev: Pointer to vdev obj
+ * @vdev_ini_cfg: pointer to the structure the values are to be filled from
+ *
+ * This API will copy the nss chain params for the particular vdev from ini
+ * configuration to the respective vdev's dynamic, and ini config.
+ *
+ * Return: none
+ */
+void
+sme_store_nss_chains_cfg_in_vdev(struct wlan_objmgr_vdev *vdev,
+				 struct wlan_mlme_nss_chains *vdev_ini_cfg);
 
 /**
  * sme_nss_chains_update() - validate and send the user params to fw

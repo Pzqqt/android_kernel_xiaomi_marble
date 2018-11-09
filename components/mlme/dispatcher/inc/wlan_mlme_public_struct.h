@@ -1027,14 +1027,14 @@ enum dot11p_mode {
 
 /**
  * enum nss_chains_band_info - Band info for dynamic nss, chains change feature
- * @BAND_2GHZ: 2.4Ghz band
- * @BAND_5GHZ: 5Ghz band
- * @BAND_MAX: Max bands supported
+ * @NSS_CHAINS_BAND_2GHZ: 2.4Ghz band
+ * @NSS_CHAINS_BAND_5GHZ: 5Ghz band
+ * @NSS_CHAINS_BAND_MAX: Max bands supported
  */
 enum nss_chains_band_info {
-	BAND_2GHZ = 0,
-	BAND_5GHZ,
-	BAND_MAX,
+	NSS_CHAINS_BAND_2GHZ = 0,
+	NSS_CHAINS_BAND_5GHZ,
+	NSS_CHAINS_BAND_MAX,
 };
 
 #define MAX_VDEV_NSS                2
@@ -1053,15 +1053,15 @@ enum nss_chains_band_info {
  * @disable_tx_mrc:                  disable 2 tx chains, in tx nss 1 mode
  */
 struct wlan_mlme_nss_chains {
-	uint32_t num_tx_chains[BAND_MAX];
-	uint32_t num_rx_chains[BAND_MAX];
-	uint32_t tx_nss[BAND_MAX];
-	uint32_t rx_nss[BAND_MAX];
+	uint32_t num_tx_chains[NSS_CHAINS_BAND_MAX];
+	uint32_t num_rx_chains[NSS_CHAINS_BAND_MAX];
+	uint32_t tx_nss[NSS_CHAINS_BAND_MAX];
+	uint32_t rx_nss[NSS_CHAINS_BAND_MAX];
 	uint32_t num_tx_chains_11b;
 	uint32_t num_tx_chains_11g;
 	uint32_t num_tx_chains_11a;
-	bool disable_rx_mrc[BAND_MAX];
-	bool disable_tx_mrc[BAND_MAX];
+	bool disable_rx_mrc[NSS_CHAINS_BAND_MAX];
+	bool disable_tx_mrc[NSS_CHAINS_BAND_MAX];
 };
 
 /**
