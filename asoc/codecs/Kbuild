@@ -98,6 +98,7 @@ ifdef CONFIG_WCD9XXX_CODEC_CORE
 endif
 
 ifdef CONFIG_SND_SOC_WCD9XXX_V2
+	WCD9XXX_OBJS += wcd-clsh.o
 	WCD9XXX_OBJS += wcd9xxx-common-v2.o
 	WCD9XXX_OBJS += wcd9xxx-resmgr-v2.o
 	WCD9XXX_OBJS += wcdcal-hwdep.o
