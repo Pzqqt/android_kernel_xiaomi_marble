@@ -1519,6 +1519,7 @@ enum _ol_ath_param_t {
 #endif
 	OL_ATH_PARAM_ENABLE_PEER_RETRY_STATS = 396,
 	OL_ATH_PARAM_HE_UL_TRIG_INT = 397,
+	OL_ATH_PARAM_DFS_NOL_SUBCHANNEL_MARKING = 398,
 };
 
 /* Enumeration of PDEV Configuration parameter */
