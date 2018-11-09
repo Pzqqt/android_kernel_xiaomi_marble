@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 #include <linux/init.h>
 #include <linux/delay.h>
@@ -275,7 +275,9 @@ struct csra66x0_cluster_device csra_clust_dev_tbl[] = {
 	{NULL, "CSRA_56"},
 	{NULL, "CSRA_78"},
 	{NULL, "CSRA_9A"},
-	{NULL, "CSRA_BC"}
+	{NULL, "CSRA_BC"},
+	{NULL, "CSRA_DE"},
+	{NULL, "CSRA_F0"}
 };
 
 #if IS_ENABLED(CONFIG_DEBUG_FS)
