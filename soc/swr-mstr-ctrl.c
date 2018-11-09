@@ -41,6 +41,8 @@
 			((reg) | ((id) << 16) | ((dev) << 20) | ((data) << 24))
 
 #define SWR_INVALID_PARAM 0xFF
+#define SWR_HSTOP_MAX_VAL 0xF
+#define SWR_HSTART_MIN_VAL 0x0
 
 #define SWRM_INTERRUPT_STATUS_MASK 0x1FDFD
 /* pm runtime auto suspend timer in msecs */
@@ -925,6 +927,10 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 				&& mport->hstop != SWR_INVALID_PARAM) {
 			reg[len] = SWRM_DP_PORT_HCTRL_BANK(i + 1, bank);
 			hparams = (mport->hstart << 4) | mport->hstop;
+			val[len++] = hparams;
+		} else {
+			reg[len] = SWRM_DP_PORT_HCTRL_BANK(i + 1, bank);
+			hparams = (SWR_HSTOP_MAX_VAL << 4) | SWR_HSTART_MIN_VAL;
 			val[len++] = hparams;
 		}
 		if (mport->blk_pack_mode != SWR_INVALID_PARAM) {
