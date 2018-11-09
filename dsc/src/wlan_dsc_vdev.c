@@ -231,20 +231,22 @@ void dsc_vdev_trans_stop(struct dsc_vdev *vdev)
 	dsc_exit();
 }
 
-static void __dsc_vdev_trans_assert(struct dsc_vdev *vdev)
+static void __dsc_vdev_assert_trans_protected(struct dsc_vdev *vdev)
 {
 	if (!dsc_assert(vdev))
 		return;
 
 	__dsc_driver_lock(vdev);
-	dsc_assert(__dsc_trans_active(&vdev->trans));
+	dsc_assert(__dsc_trans_active(&vdev->trans) ||
+		   __dsc_trans_active(&vdev->psoc->trans) ||
+		   __dsc_trans_active(&vdev->psoc->driver->trans));
 	__dsc_driver_unlock(vdev);
 }
 
-void dsc_vdev_trans_assert(struct dsc_vdev *vdev)
+void dsc_vdev_assert_trans_protected(struct dsc_vdev *vdev)
 {
 	dsc_enter();
-	__dsc_vdev_trans_assert(vdev);
+	__dsc_vdev_assert_trans_protected(vdev);
 	dsc_exit();
 }
 

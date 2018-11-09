@@ -260,20 +260,21 @@ void dsc_psoc_trans_stop(struct dsc_psoc *psoc)
 	dsc_exit();
 }
 
-static void __dsc_psoc_trans_assert(struct dsc_psoc *psoc)
+static void __dsc_psoc_assert_trans_protected(struct dsc_psoc *psoc)
 {
 	if (!dsc_assert(psoc))
 		return;
 
 	__dsc_driver_lock(psoc);
-	dsc_assert(__dsc_trans_active(&psoc->trans));
+	dsc_assert(__dsc_trans_active(&psoc->trans) ||
+		   __dsc_trans_active(&psoc->driver->trans));
 	__dsc_driver_unlock(psoc);
 }
 
-void dsc_psoc_trans_assert(struct dsc_psoc *psoc)
+void dsc_psoc_assert_trans_protected(struct dsc_psoc *psoc)
 {
 	dsc_enter();
-	__dsc_psoc_trans_assert(psoc);
+	__dsc_psoc_assert_trans_protected(psoc);
 	dsc_exit();
 }
 
