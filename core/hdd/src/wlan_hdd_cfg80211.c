@@ -17291,7 +17291,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 					return -EINVAL;
 				}
 				ret = dot11f_unpack_ie_wpa(
-						(tpAniSirGlobal) mac_handle,
+						MAC_CONTEXT(mac_handle),
 						(uint8_t *)&ie[2 + 4],
 						ie[1] - 4, &dot11WPAIE, false);
 				if (DOT11F_FAILED(ret)) {

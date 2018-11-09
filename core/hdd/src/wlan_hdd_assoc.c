@@ -5228,8 +5228,9 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 		pRsnIe = gen_ie + 2 + 4;
 		RSNIeLen = gen_ie_len - (2 + 4);
 		/* Unpack the WPA IE */
-		parse_status = dot11f_unpack_ie_wpa((tpAniSirGlobal)mac_handle,
-				     pRsnIe, RSNIeLen, &dot11WPAIE, false);
+		parse_status = dot11f_unpack_ie_wpa(MAC_CONTEXT(mac_handle),
+						    pRsnIe, RSNIeLen,
+						    &dot11WPAIE, false);
 		if (!DOT11F_SUCCEEDED(parse_status)) {
 			hdd_err("Invalid WPA IE: parse status %d",
 				parse_status);

@@ -2667,8 +2667,9 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 		RSNIeLen = gen_ie_len - (2 + 4);
 		/* Unpack the WPA IE */
 		memset(&dot11WPAIE, 0, sizeof(tDot11fIEWPA));
-		ret = dot11f_unpack_ie_wpa((tpAniSirGlobal) mac_handle,
-				     pRsnIe, RSNIeLen, &dot11WPAIE, false);
+		ret = dot11f_unpack_ie_wpa(MAC_CONTEXT(mac_handle),
+					   pRsnIe, RSNIeLen,
+					   &dot11WPAIE, false);
 		if (DOT11F_FAILED(ret)) {
 			hdd_err("unpack failed, ret: 0x%x", ret);
 			return -EINVAL;
@@ -3305,7 +3306,7 @@ static bool wlan_hdd_get_sap_obss(struct hdd_adapter *adapter)
 					beacon->tail, beacon->tail_len);
 	if (ie && ie[1]) {
 		qdf_mem_copy(ht_cap_ie, &ie[2], DOT11F_IE_HTCAPS_MAX_LEN);
-		ret = dot11f_unpack_ie_ht_caps((tpAniSirGlobal)mac_handle,
+		ret = dot11f_unpack_ie_ht_caps(MAC_CONTEXT(mac_handle),
 					       ht_cap_ie, ie[1],
 					       &dot11_ht_cap_ie, false);
 		if (DOT11F_FAILED(ret)) {

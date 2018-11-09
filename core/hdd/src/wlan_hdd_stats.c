@@ -541,7 +541,7 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *sta_ctx;
 	mac_handle_t mac_handle = adapter->hdd_ctx->mac_handle;
 	/* pre-existing layering violation */
-	tpAniSirGlobal pMac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	pInfo->mode = hdd_map_device_to_ll_iface_mode(adapter->device_mode);
 
@@ -588,10 +588,10 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 	}
 
 	qdf_mem_copy(pInfo->countryStr,
-		     pMac->scan.countryCodeCurrent, WNI_CFG_COUNTRY_CODE_LEN);
+		     mac->scan.countryCodeCurrent, WNI_CFG_COUNTRY_CODE_LEN);
 
 	qdf_mem_copy(pInfo->apCountryStr,
-		     pMac->scan.countryCodeCurrent, WNI_CFG_COUNTRY_CODE_LEN);
+		     mac->scan.countryCodeCurrent, WNI_CFG_COUNTRY_CODE_LEN);
 
 	return true;
 }

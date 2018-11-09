@@ -4161,7 +4161,7 @@ static int hdd_we_set_data_inactivity_timeout(struct hdd_adapter *adapter,
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
-	tpAniSirGlobal mac_ctx;
+	struct mac_context *mac_ctx;
 
 	if (!mac_handle)
 		return -EINVAL;
@@ -4171,7 +4171,8 @@ static int hdd_we_set_data_inactivity_timeout(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	mac_ctx = PMAC_STRUCT(mac_handle);
+	/* pre-existing layering violation */
+	mac_ctx = MAC_CONTEXT(mac_handle);
 	mac_ctx->mlme_cfg->timeouts.ps_data_inactivity_timeout = value;
 
 	return 0;
