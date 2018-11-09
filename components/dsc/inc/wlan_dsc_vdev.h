@@ -99,12 +99,14 @@ QDF_STATUS dsc_vdev_trans_start_wait(struct dsc_vdev *vdev, const char *desc);
 void dsc_vdev_trans_stop(struct dsc_vdev *vdev);
 
 /**
- * dsc_vdev_trans_assert() - assert transition in flight on @vdev
- * @vdev: the vdev to assert transition in flight on
+ * dsc_vdev_assert_trans_protected() - assert @vdev is protected by a transition
+ * @vdev: the vdev to check
+ *
+ * The protecting transition may be in flight on @vdev or its ancestors.
  *
  * Return: None
  */
-void dsc_vdev_trans_assert(struct dsc_vdev *vdev);
+void dsc_vdev_assert_trans_protected(struct dsc_vdev *vdev);
 
 /**
  * dsc_vdev_op_start() - start an operation on @vdev

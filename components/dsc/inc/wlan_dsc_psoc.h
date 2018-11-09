@@ -101,12 +101,14 @@ QDF_STATUS dsc_psoc_trans_start_wait(struct dsc_psoc *psoc, const char *desc);
 void dsc_psoc_trans_stop(struct dsc_psoc *psoc);
 
 /**
- * dsc_psoc_trans_assert() - assert transition in flight on @psoc
- * @psoc: the psoc to assert transition in flight on
+ * dsc_psoc_assert_trans_protected() - assert @psoc is protected by a transition
+ * @psoc: the psoc to check
+ *
+ * The protecting transition may be in flight on @psoc or its parent.
  *
  * Return: None
  */
-void dsc_psoc_trans_assert(struct dsc_psoc *psoc);
+void dsc_psoc_assert_trans_protected(struct dsc_psoc *psoc);
 
 /**
  * dsc_psoc_op_start() - start an operation on @psoc

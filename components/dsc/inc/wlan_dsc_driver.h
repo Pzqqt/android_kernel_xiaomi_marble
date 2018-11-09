@@ -96,12 +96,13 @@ dsc_driver_trans_start_wait(struct dsc_driver *driver, const char *desc);
 void dsc_driver_trans_stop(struct dsc_driver *driver);
 
 /**
- * dsc_driver_trans_assert() - assert transition in flight on @driver
- * @driver: the driver to assert transition in flight on
+ * dsc_driver_assert_trans_protected() - assert @driver is protected by a
+ *	transition
+ * @driver: the driver to check
  *
  * Return: None
  */
-void dsc_driver_trans_assert(struct dsc_driver *driver);
+void dsc_driver_assert_trans_protected(struct dsc_driver *driver);
 
 /**
  * dsc_driver_op_start() - start an operation on @driver

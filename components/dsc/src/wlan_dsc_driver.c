@@ -271,7 +271,7 @@ void dsc_driver_trans_stop(struct dsc_driver *driver)
 	dsc_exit();
 }
 
-static void __dsc_driver_trans_assert(struct dsc_driver *driver)
+static void __dsc_driver_assert_trans_protected(struct dsc_driver *driver)
 {
 	if (!dsc_assert(driver))
 		return;
@@ -281,10 +281,10 @@ static void __dsc_driver_trans_assert(struct dsc_driver *driver)
 	__dsc_unlock(driver);
 }
 
-void dsc_driver_trans_assert(struct dsc_driver *driver)
+void dsc_driver_assert_trans_protected(struct dsc_driver *driver)
 {
 	dsc_enter();
-	__dsc_driver_trans_assert(driver);
+	__dsc_driver_assert_trans_protected(driver);
 	dsc_exit();
 }
 
