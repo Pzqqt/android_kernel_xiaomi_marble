@@ -1283,7 +1283,8 @@ QDF_STATUS wlansap_set_dfs_restrict_japan_w53(mac_handle_t mac_handle,
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 QDF_STATUS
-wlan_sap_set_channel_avoidance(mac_handle_t hal, bool sap_channel_avoidance);
+wlan_sap_set_channel_avoidance(mac_handle_t mac_handle,
+			       bool sap_channel_avoidance);
 #endif
 
 QDF_STATUS wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle,
@@ -1367,9 +1368,12 @@ QDF_STATUS wlansap_update_sap_config_add_ie(tsap_config_t *pConfig,
 		eUpdateIEsType updateType);
 QDF_STATUS wlansap_reset_sap_config_add_ie(tsap_config_t *pConfig,
 			eUpdateIEsType updateType);
-void wlansap_extend_to_acs_range(mac_handle_t hal, uint8_t *startChannelNum,
-		uint8_t *endChannelNum, uint8_t *bandStartChannel,
-		uint8_t *bandEndChannel);
+
+void wlansap_extend_to_acs_range(mac_handle_t mac_handle,
+				 uint8_t *startChannelNum,
+				 uint8_t *endChannelNum,
+				 uint8_t *bandStartChannel,
+				 uint8_t *bandEndChannel);
 
 /**
  * wlansap_set_dfs_nol() - Set dfs nol
@@ -1436,14 +1440,14 @@ uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx);
 
 /**
  * wlansap_set_tx_leakage_threshold() - set sap tx leakage threshold.
- * @hal: HAL pointer
+ * @mac_handle: Opaque handle to the global MAC context
  * @tx_leakage_threshold: sap tx leakage threshold
  *
  * This function set sap tx leakage threshold.
  *
  * Return: QDF_STATUS.
  */
-QDF_STATUS wlansap_set_tx_leakage_threshold(mac_handle_t hal,
+QDF_STATUS wlansap_set_tx_leakage_threshold(mac_handle_t mac_handle,
 					    uint16_t tx_leakage_threshold);
 
 /*

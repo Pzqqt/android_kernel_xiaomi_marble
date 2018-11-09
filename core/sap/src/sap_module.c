@@ -598,26 +598,28 @@ void wlan_sap_set_vht_ch_width(struct sap_context *sap_ctx,
 /**
  * wlan_sap_validate_channel_switch() - validate target channel switch w.r.t
  *      concurreny rules set to avoid channel interference.
- * @hal - Hal context
- * @sap_ch - channel to switch
- * @sap_context - sap session context
+ * @mac_handle: Opaque handle to the global MAC context
+ * @sap_ch: channel to switch
+ * @sap_context: sap session context
  *
  * Return: true if there is no channel interference else return false
  */
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-static bool wlan_sap_validate_channel_switch(mac_handle_t hal, uint16_t sap_ch,
-		struct sap_context *sap_context)
+static bool wlan_sap_validate_channel_switch(mac_handle_t mac_handle,
+					     uint16_t sap_ch,
+					     struct sap_context *sap_context)
 {
 	return sme_validate_sap_channel_switch(
-			hal,
+			mac_handle,
 			sap_ch,
 			sap_context->csr_roamProfile.phyMode,
 			sap_context->cc_switch_mode,
 			sap_context->sessionId);
 }
 #else
-static inline bool wlan_sap_validate_channel_switch(mac_handle_t hal,
-		uint16_t sap_ch, struct sap_context *sap_context)
+static bool wlan_sap_validate_channel_switch(mac_handle_t mac_handle,
+					     uint16_t sap_ch,
+					     struct sap_context *sap_context)
 {
 	return true;
 }
@@ -1909,24 +1911,25 @@ bool sap_is_auto_channel_select(struct sap_context *sapcontext)
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 /**
  * wlan_sap_set_channel_avoidance() - sets sap mcc channel avoidance ini param
- * @hal:                        hal handle
- * @sap_channel_avoidance:      ini parameter value
+ * @mac_handle: Opaque handle to the global MAC context
+ * @sap_channel_avoidance: ini parameter value
  *
  * sets sap mcc channel avoidance ini param, to be called in sap_start
  *
  * Return: success of failure of operation
  */
 QDF_STATUS
-wlan_sap_set_channel_avoidance(mac_handle_t hal, bool sap_channel_avoidance)
+wlan_sap_set_channel_avoidance(mac_handle_t mac_handle,
+			       bool sap_channel_avoidance)
 {
 	tpAniSirGlobal mac_ctx = NULL;
 
-	if (NULL != hal) {
-		mac_ctx = PMAC_STRUCT(hal);
+	if (NULL != mac_handle) {
+		mac_ctx = PMAC_STRUCT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP,
 			  QDF_TRACE_LEVEL_ERROR,
-			  FL("hal or mac_ctx pointer NULL"));
+			  FL("mac_handle or mac_ctx pointer NULL"));
 		return QDF_STATUS_E_FAULT;
 	}
 	mac_ctx->sap.sap_channel_avoidance = sap_channel_avoidance;
@@ -1936,7 +1939,7 @@ wlan_sap_set_channel_avoidance(mac_handle_t hal, bool sap_channel_avoidance)
 
 /**
  * wlansap_set_dfs_preferred_channel_location() - set dfs preferred channel
- * @mac_handle : HAL pointer
+ * @mac_handle: Opaque handle to the global MAC context
  * @dfs_Preferred_Channels_location :
  *       0 - Indicates No preferred channel location restrictions
  *       1 - Indicates SAP Indoor Channels operation only.
@@ -2164,9 +2167,11 @@ wlansap_reset_sap_config_add_ie(tsap_config_t *pConfig, eUpdateIEsType updateTyp
 
    SIDE EFFECTS
    ============================================================================*/
-void wlansap_extend_to_acs_range(mac_handle_t hal, uint8_t *startChannelNum,
-		uint8_t *endChannelNum, uint8_t *bandStartChannel,
-		uint8_t *bandEndChannel)
+void wlansap_extend_to_acs_range(mac_handle_t mac_handle,
+				 uint8_t *startChannelNum,
+				 uint8_t *endChannelNum,
+				 uint8_t *bandStartChannel,
+				 uint8_t *bandEndChannel)
 {
 #define ACS_WLAN_20M_CH_INC 4
 #define ACS_2G_EXTEND ACS_WLAN_20M_CH_INC
@@ -2175,7 +2180,7 @@ void wlansap_extend_to_acs_range(mac_handle_t hal, uint8_t *startChannelNum,
 	uint8_t tmp_startChannelNum = 0, tmp_endChannelNum = 0;
 	tpAniSirGlobal mac_ctx;
 
-	mac_ctx = PMAC_STRUCT(hal);
+	mac_ctx = PMAC_STRUCT(mac_handle);
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"%s: Invalid mac_ctx", __func__);
@@ -2416,21 +2421,22 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 
 /**
  * wlan_sap_enable_phy_error_logs() - Enable DFS phy error logs
- * @hal:        global hal handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @enable_log: value to set
  *
  * Since the frequency of DFS phy error is very high, enabling logs for them
  * all the times can cause crash and will also create lot of useless logs
  * causing difficulties in debugging other issue. This function will be called
- * from iwpriv cmd to eanble such logs temporarily.
+ * from iwpriv cmd to enable such logs temporarily.
  *
  * Return: void
  */
-void wlan_sap_enable_phy_error_logs(mac_handle_t hal, uint32_t enable_log)
+void wlan_sap_enable_phy_error_logs(mac_handle_t mac_handle,
+				    uint32_t enable_log)
 {
 	int error;
 
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
 
 	mac_ctx->sap.enable_dfs_phy_error_logs = !!enable_log;
 	tgt_dfs_control(mac_ctx->pdev, DFS_SET_DEBUG_LEVEL, &enable_log,
@@ -2442,18 +2448,18 @@ uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx)
 	return wlan_sap_get_vht_ch_width(sap_ctx);
 }
 
-QDF_STATUS wlansap_set_tx_leakage_threshold(mac_handle_t hal,
-			uint16_t tx_leakage_threshold)
+QDF_STATUS wlansap_set_tx_leakage_threshold(mac_handle_t mac_handle,
+					    uint16_t tx_leakage_threshold)
 {
 	tpAniSirGlobal mac;
 
-	if (NULL == hal) {
+	if (NULL == mac_handle) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			"%s: Invalid hal pointer", __func__);
+			"%s: Invalid mac_handle pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
-	mac = PMAC_STRUCT(hal);
+	mac = PMAC_STRUCT(mac_handle);
 	tgt_dfs_set_tx_leakage_threshold(mac->pdev, tx_leakage_threshold);
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: leakage_threshold %d", __func__,

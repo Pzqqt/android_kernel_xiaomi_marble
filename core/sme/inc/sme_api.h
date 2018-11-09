@@ -1502,7 +1502,8 @@ int sme_update_tx_bfee_supp(mac_handle_t hal, uint8_t session_id,
 int sme_update_tx_bfee_nsts(mac_handle_t hal, uint8_t session_id,
 			    uint8_t usr_cfg_val, uint8_t nsts_val);
 
-void wlan_sap_enable_phy_error_logs(mac_handle_t hal, uint32_t enable_log);
+void wlan_sap_enable_phy_error_logs(mac_handle_t mac_handle,
+				    uint32_t enable_log);
 #ifdef WLAN_FEATURE_DSRC
 QDF_STATUS sme_ocb_set_config(mac_handle_t mac_handle, void *context,
 			      ocb_callback callback,
