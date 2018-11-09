@@ -90,31 +90,6 @@ struct hdd_context;
 #define CFG_ENABLE_CONNECTED_SCAN_MAX         (1)
 #define CFG_ENABLE_CONNECTED_SCAN_DEFAULT     (1)
 
-#ifdef WLAN_NUD_TRACKING
-/*
- * <ini>
- * gEnableNUDTracking - Will enable or disable NUD tracking within driver
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable or disable NUD tracking within driver
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * <ini>
- */
-
-#define CFG_ENABLE_NUD_TRACKING_NAME            "gEnableNUDTracking"
-#define CFG_ENABLE_NUD_TRACKING_MIN             (0)
-#define CFG_ENABLE_NUD_TRACKING_MAX             (1)
-#define CFG_ENABLE_NUD_TRACKING_DEFAULT         (1)
-#endif
-
 /*
  * <ini>
  * gOperatingChannel- Default STA operating channel
@@ -133,7 +108,6 @@ struct hdd_context;
  *
  * <ini>
  */
-
 #define CFG_OPERATING_CHANNEL_NAME             "gOperatingChannel"
 #define CFG_OPERATING_CHANNEL_MIN              (0)
 #define CFG_OPERATING_CHANNEL_MAX              (14)
@@ -4396,23 +4370,7 @@ enum hdd_link_speed_rpt_type {
 
 /* Default verbosity, in case its missing in gDptraceConfig string*/
 #define DP_TRACE_CONFIG_DEFAULT_VERBOSTY QDF_DP_TRACE_VERBOSITY_LOW
-/*
- * Config DPTRACE
- * The sequence of params is important. If some param is missing, defaults are
- * considered.
- * Param 1: Enable/Disable DP Trace live mode (uint8_t)
- * Param 2: DP Trace live mode high bandwidth thresh.(uint8_t)
- *         (packets/second) beyond which DP Trace is disabled. Decimal Val.
- *          MGMT, DHCP, EAPOL, ARP pkts are not counted. ICMP and Data are.
- * Param 3: Default Verbosity (0-4)
- * Param 4: Proto Bitmap (uint8_t). Decimal Value.
- *          (decimal 62 = 0x3e)
- * e.g., to disable live mode, use the following param in the ini file.
- * gDptraceConfig = 0
- * e.g., to enable dptrace live mode and set the thresh as 6,
- * use the following param in the ini file.
- * gDptraceConfig = 1, 6
- */
+
 #define CFG_ENABLE_DP_TRACE_CONFIG		"gDptraceConfig"
 #define CFG_ENABLE_DP_TRACE_CONFIG_DEFAULT	"1, 6, 2, 126"
 #endif
@@ -6159,9 +6117,6 @@ struct hdd_config {
 	DECLARE_BITMAP(bExplicitCfg, MAX_CFG_INI_ITEMS);
 
 	/* Config parameters */
-#ifdef WLAN_NUD_TRACKING
-	bool enable_nud_tracking;
-#endif
 	bool enable_connected_scan;
 	uint8_t OperatingChannel;
 	bool Is11dSupportEnabled;
@@ -6451,10 +6406,6 @@ struct hdd_config {
 	uint32_t roam_bg_scan_client_bitmap;
 
 	bool apf_enabled;
-#ifdef CONFIG_DP_TRACE
-	bool enable_dp_trace;
-	uint8_t dp_trace_config[DP_TRACE_CONFIG_STRING_LENGTH];
-#endif
 	bool adaptive_dwell_mode_enabled;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
 	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;
@@ -6604,6 +6555,13 @@ struct hdd_config {
 	bool multicast_replay_filter;
 	uint32_t rx_wakelock_timeout;
 	uint8_t num_dp_rx_threads;
+#ifdef CONFIG_DP_TRACE
+	bool enable_dp_trace;
+	uint8_t dp_trace_config[DP_TRACE_CONFIG_STRING_LENGTH];
+#endif
+#ifdef WLAN_NUD_TRACKING
+	bool enable_nud_tracking;
+#endif
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

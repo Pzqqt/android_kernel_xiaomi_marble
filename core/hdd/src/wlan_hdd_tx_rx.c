@@ -2782,11 +2782,46 @@ static void hdd_set_rx_mode_value(struct hdd_context *hdd_ctx)
 		  hdd_ctx->rps, hdd_ctx->dynamic_rps);
 }
 
+#ifdef CONFIG_DP_TRACE
+static void
+hdd_dp_dp_trace_cfg_update(struct hdd_config *config,
+			   struct wlan_objmgr_psoc *psoc)
+{
+	qdf_size_t array_out_size;
+
+	config->enable_dp_trace = cfg_get(psoc, CFG_DP_ENABLE_DP_TRACE);
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_DP_DP_TRACE_CONFIG),
+			      config->dp_trace_config,
+			      sizeof(config->dp_trace_config), &array_out_size);
+}
+#else
+static void
+hdd_dp_dp_trace_cfg_update(struct hdd_config *config,
+			   struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
+#ifdef WLAN_NUD_TRACKING
+static void
+hdd_dp_nud_tracking_cfg_update(struct hdd_config *config,
+			       struct wlan_objmgr_psoc *psoc)
+{
+	config->enable_nud_tracking = cfg_get(psoc, CFG_DP_ENABLE_NUD_TRACKING);
+}
+#else
+static void
+hdd_dp_nud_tracking_cfg_update(struct hdd_config *config,
+			       struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
 void hdd_dp_cfg_update(struct wlan_objmgr_psoc *psoc,
 		       struct hdd_context *hdd_ctx)
 {
 	struct hdd_config *config;
-	qdf_size_t cpu_map_list_len;
+	qdf_size_t array_out_size;
 
 	config = hdd_ctx->config;
 	hdd_ini_tx_flow_control(config, psoc);
@@ -2798,7 +2833,7 @@ void hdd_dp_cfg_update(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_DP_RX_THREAD_CPU_MASK);
 	qdf_uint8_array_parse(cfg_get(psoc, CFG_DP_RPS_RX_QUEUE_CPU_MAP_LIST),
 			      config->cpu_map_list,
-			      sizeof(config->cpu_map_list), &cpu_map_list_len);
+			      sizeof(config->cpu_map_list), &array_out_size);
 	config->tx_orphan_enable = cfg_get(psoc, CFG_DP_TX_ORPHAN_ENABLE);
 	config->rx_mode = cfg_get(psoc, CFG_DP_RX_MODE);
 	hdd_set_rx_mode_value(hdd_ctx);
@@ -2807,4 +2842,6 @@ void hdd_dp_cfg_update(struct wlan_objmgr_psoc *psoc,
 	config->rx_wakelock_timeout =
 		cfg_get(psoc, CFG_DP_RX_WAKELOCK_TIMEOUT);
 	config->num_dp_rx_threads = cfg_get(psoc, CFG_DP_NUM_DP_RX_THREADS);
+	hdd_dp_dp_trace_cfg_update(config, psoc);
+	hdd_dp_nud_tracking_cfg_update(config, psoc);
 }

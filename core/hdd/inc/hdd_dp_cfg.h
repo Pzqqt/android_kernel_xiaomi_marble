@@ -831,6 +831,76 @@
 #define CFG_DP_ENABLE_TCP_PARAM_UPDATE \
 		CFG_INI_BOOL("enable_tcp_param_update", \
 		false, "configure TCP param through Wi-Fi HAL")
+/*
+ * <ini>
+ *
+ * Enable/disable DPTRACE
+ * Enabling this might have performace impact.
+ *
+ * Config DPTRACE
+ * The sequence of params is important. If some param is missing, defaults are
+ * considered.
+ * Param 1: Enable/Disable DP Trace live mode (uint8_t)
+ * Param 2: DP Trace live mode high bandwidth thresh.(uint8_t)
+ *         (packets/second) beyond which DP Trace is disabled. Decimal Val.
+ *          MGMT, DHCP, EAPOL, ARP pkts are not counted. ICMP and Data are.
+ * Param 3: Default Verbosity (0-4)
+ * Param 4: Proto Bitmap (uint8_t). Decimal Value.
+ *          (decimal 62 = 0x3e)
+ * e.g., to disable live mode, use the following param in the ini file.
+ * gDptraceConfig = 0
+ * e.g., to enable dptrace live mode and set the thresh as 6,
+ * use the following param in the ini file.
+ * gDptraceConfig = 1, 6
+ *
+ * </ini>
+ */
+#ifdef CONFIG_DP_TRACE
+#define CFG_DP_ENABLE_DP_TRACE \
+			CFG_INI_BOOL("enable_dp_trace", \
+			true, "Ctrl to enable dp trace feature")
+
+#define CFG_DP_DP_TRACE_CONFIG \
+		CFG_INI_STRING( \
+		"gDptraceConfig", \
+		1, \
+		20, \
+		"1, 6, 2, 126", \
+		"dp trace configuration string")
+#define CFG_DP_CONFIG_DP_TRACE_ALL \
+		CFG(CFG_DP_ENABLE_DP_TRACE) \
+		CFG(CFG_DP_DP_TRACE_CONFIG)
+#else
+#define CFG_DP_CONFIG_DP_TRACE_ALL
+#endif
+
+/*
+ * <ini>
+ * gEnableNUDTracking - Will enable or disable NUD tracking within driver
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable or disable NUD tracking within driver
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * <ini>
+ */
+#ifdef WLAN_NUD_TRACKING
+#define CFG_DP_ENABLE_NUD_TRACKING \
+		CFG_INI_BOOL("gEnableNUDTracking", \
+		true, "Ctrl to enable nud tracking")
+
+#define CFG_DP_ENABLE_NUD_TRACKING_ALL \
+			CFG(CFG_DP_ENABLE_NUD_TRACKING)
+#else
+#define CFG_DP_ENABLE_NUD_TRACKING_ALL
+#endif
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 #define CFG_HDD_DP_LEGACY_TX_FLOW \
@@ -864,7 +934,7 @@
 #define CFG_HDD_DP_MSM_PLATFORM
 #endif
 
-#define CFG_HDD_DP \
+#define CFG_HDD_DP_ALL \
 	CFG(CFG_DP_NAPI_CE_CPU_MASK) \
 	CFG(CFG_DP_RX_THREAD_CPU_MASK) \
 	CFG(CFG_DP_RPS_RX_QUEUE_CPU_MAP_LIST) \
@@ -876,9 +946,9 @@
 	CFG(CFG_DP_FILTER_MULTICAST_REPLAY) \
 	CFG(CFG_DP_RX_WAKELOCK_TIMEOUT) \
 	CFG(CFG_DP_NUM_DP_RX_THREADS) \
-	CFG_DP_ENABLE_FASTPATH_ALL
-#define CFG_HDD_DP_ALL \
-	CFG_HDD_DP \
+	CFG_DP_ENABLE_FASTPATH_ALL \
 	CFG_HDD_DP_MSM_PLATFORM \
-	CFG_HDD_DP_LEGACY_TX_FLOW
+	CFG_HDD_DP_LEGACY_TX_FLOW \
+	CFG_DP_ENABLE_NUD_TRACKING_ALL \
+	CFG_DP_CONFIG_DP_TRACE_ALL
 #endif

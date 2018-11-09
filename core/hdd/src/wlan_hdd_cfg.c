@@ -346,15 +346,6 @@ cb_notify_set_roam_scan_hi_rssi_scan_params(struct hdd_context *hdd_ctx,
 
 
 struct reg_table_entry g_registry_table[] = {
-#ifdef WLAN_NUD_TRACKING
-	REG_VARIABLE(CFG_ENABLE_NUD_TRACKING_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_nud_tracking,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_NUD_TRACKING_DEFAULT,
-		     CFG_ENABLE_NUD_TRACKING_MIN,
-		     CFG_ENABLE_NUD_TRACKING_MAX),
-#endif
-
 	REG_VARIABLE(CFG_ENABLE_CONNECTED_SCAN_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_connected_scan,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1769,20 +1760,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_CREATE_BUG_REPORT_FOR_SCAN_DEFAULT,
 		CFG_CREATE_BUG_REPORT_FOR_SCAN_DISABLE,
 		CFG_CREATE_BUG_REPORT_FOR_SCAN_ENABLE),
-
-#ifdef CONFIG_DP_TRACE
-	REG_VARIABLE(CFG_ENABLE_DP_TRACE, WLAN_PARAM_Integer,
-		struct hdd_config, enable_dp_trace,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ENABLE_DP_TRACE_DEFAULT,
-		CFG_ENABLE_DP_TRACE_MIN,
-		CFG_ENABLE_DP_TRACE_MAX),
-
-	REG_VARIABLE_STRING(CFG_ENABLE_DP_TRACE_CONFIG, WLAN_PARAM_String,
-			struct hdd_config, dp_trace_config,
-			VAR_FLAGS_OPTIONAL,
-			(void *) CFG_ENABLE_DP_TRACE_CONFIG_DEFAULT),
-#endif
 
 	REG_VARIABLE(CFG_ADAPTIVE_SCAN_DWELL_MODE_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, scan_adaptive_dwell_mode,
