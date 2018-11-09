@@ -117,23 +117,3 @@ QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 	} /* switch */
 	return status;
 }
-
-bool csr_check_ps_ready(void *pv)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(pv);
-
-	if (pMac->roam.sPendingCommands < 0) {
-		QDF_ASSERT(pMac->roam.sPendingCommands >= 0);
-		return 0;
-	}
-	return pMac->roam.sPendingCommands == 0;
-}
-
-bool csr_check_ps_offload_ready(void *pv, uint32_t sessionId)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(pv);
-
-	QDF_ASSERT(pMac->roam.sPendingCommands >= 0);
-	return pMac->roam.sPendingCommands == 0;
-}
-

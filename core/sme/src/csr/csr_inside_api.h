@@ -383,8 +383,6 @@ void csr_free_connect_bss_desc(tpAniSirGlobal pMac, uint32_t sessionId);
 QDF_STATUS csr_move_bss_to_head_from_bssid(tpAniSirGlobal pMac,
 					   struct qdf_mac_addr *bssid,
 					   tScanResultHandle hScanResult);
-bool csr_check_ps_ready(void *pv);
-bool csr_check_ps_offload_ready(void *pv, uint32_t sessionId);
 
 /* to free memory allocated inside the profile structure */
 void csr_release_profile(tpAniSirGlobal pMac,
