@@ -666,9 +666,8 @@ static inline int32_t hdd_get_hosttime_from_targettime(
 	delta32_target = (int64_t)((target_time & U32_MAX) -
 			(adapter->last_target_time & U32_MAX));
 
-	normal_interval_target =
-		qdf_do_div(WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC *
-			   NSEC_PER_SEC, HOST_TO_TARGET_TIME_RATIO);
+	normal_interval_target = WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC *
+		qdf_do_div(NSEC_PER_SEC, HOST_TO_TARGET_TIME_RATIO);
 
 	if (delta32_target <
 			(normal_interval_target - OVERFLOW_INDICATOR32))
