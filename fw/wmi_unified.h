@@ -21203,7 +21203,22 @@ typedef enum wmi_coex_config_type {
     WMI_COEX_CONFIG_COEX_ENABLE_MCC_TDM = 22, /* config disable/enable COEX TDM for MCC */
     WMI_COEX_CONFIG_LOWRSSI_A2DPOPP_TDM = 23, /* config interval (ms units) (arg1 BT, arg2 WLAN) for STA + A2dp + OPP + LOWRSSI */
     WMI_COEX_CONFIG_BTC_MODE            = 24, /* config BTC mode, arg1 mode: 0 TDD/1 FDD/2 Hybrid*/
-    WMI_COEX_CONFIG_ANTENNA_ISOLATION   = 25, /* config isolation between BT and WLAN antenna, arg1 isolation in db*/
+    WMI_COEX_CONFIG_ANTENNA_ISOLATION   = 25, /* config isolation between BT and WLAN chains
+                                               * The arguments are interpreted differently
+                                               * depending on whether the target suppports
+                                               * WMI_SERVICE_COEX_SUPPORT_UNEQUAL_ISOLATION
+                                               * If (not COEX_SUPPORT_UNEQUAL_ISOLATION) or arg2 == 0:
+                                               *     arg1 => isolation between BT and WLAN chains,
+                                               *             dB units,
+                                               *             same isolation for all chains
+                                               * Else:
+                                               *     arg1 bits  7:0  - chain 0 isolation, in dB
+                                               *     arg1 bits 15:8  - chain 1 isolation, in dB
+                                               *     arg1 bits 23:16 - chain 2 isolation, in dB
+                                               *     arg1 bits 31:24 - chain 3 isolation, in dB
+                                               * arg2 - 0 => Equal isolation b/w BT and each WLAN chain (default)
+                                               *        1 => Different isolation b/w BT and each WLAN chain
+                                               */
     WMI_COEX_CONFIG_BT_LOW_RSSI_THRESHOLD = 26,/*config BT low rssi threshold (dbm units)*/
     WMI_COEX_CONFIG_BT_INTERFERENCE_LEVEL = 27,/*config bt interference level (dbm units)
                                                  arg1 low - lower limit

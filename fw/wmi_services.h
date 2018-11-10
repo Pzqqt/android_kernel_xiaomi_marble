@@ -271,6 +271,7 @@ typedef  enum  {
     WMI_SERVICE_NAN_DISABLE_SUPPORT=175, /* indicates firmware is dependent on host to disable NAN incase of concurrencies */
     WMI_SERVICE_NAN_DISABLE_SUPPORT__prototype = WMI_SERVICE_NAN_DISABLE_SUPPORT, /* alias, to clarify that NAN_DISABLE_SUPPORT is for prototype testing purposes */
     WMI_SERVICE_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN=176, /* indicates FW supports uniformly excluding the HTC header length from the HTT H2T message length */
+    WMI_SERVICE_COEX_SUPPORT_UNEQUAL_ISOLATION=177, /* indicates FW supports FDD coex with unequal isolation between BT and each of the WLAN chains */
 
     /******* ADD NEW SERVICES HERE *******/
 
