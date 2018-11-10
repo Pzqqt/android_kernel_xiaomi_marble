@@ -4842,6 +4842,119 @@ static int hdd_we_set_txpow_5g(struct hdd_adapter *adapter, int value)
 			       value);
 }
 
+static int hdd_we_set_vdev(struct hdd_adapter *adapter,
+			   int id,
+			   const char *id_string,
+			   int value)
+{
+	int errno;
+
+	hdd_debug("%s %d", id_string, value);
+	errno = wma_cli_set_command(adapter->session_id, id, value, VDEV_CMD);
+	if (errno)
+		hdd_err("Failed to set firmware, errno %d", errno);
+
+	return errno;
+}
+
+#define hdd_we_set_vdev(adapter, id, value) \
+			hdd_we_set_vdev(adapter, id, #id, value)
+
+static int hdd_we_set_txrx_fwstats(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_vdev(adapter,
+			       WMA_VDEV_TXRX_FWSTATS_ENABLE_CMDID,
+			       value);
+}
+
+static int hdd_we_txrx_fwstats_reset(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_vdev(adapter,
+			       WMA_VDEV_TXRX_FWSTATS_RESET_CMDID,
+			       value);
+}
+
+static int hdd_we_set_htsmps(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_vdev(adapter,
+			       WMI_STA_SMPS_FORCE_MODE_CMDID,
+			       value);
+}
+
+static int hdd_we_set_early_rx_adjust_enable(struct hdd_adapter *adapter,
+					     int value)
+{
+	if ((value != 0) && (value != 1))
+		return -EINVAL;
+
+	return hdd_we_set_vdev(adapter,
+			       WMI_VDEV_PARAM_EARLY_RX_ADJUST_ENABLE,
+			       value);
+}
+
+static int hdd_we_set_early_rx_tgt_bmiss_num(struct hdd_adapter *adapter,
+					     int value)
+{
+	return hdd_we_set_vdev(adapter,
+			       WMI_VDEV_PARAM_EARLY_RX_TGT_BMISS_NUM,
+			       value);
+}
+
+static int hdd_we_set_early_rx_bmiss_sample_cycle(struct hdd_adapter *adapter,
+						  int value)
+{
+	return hdd_we_set_vdev(adapter,
+			       WMI_VDEV_PARAM_EARLY_RX_BMISS_SAMPLE_CYCLE,
+			       value);
+}
+
+static int hdd_we_set_early_rx_slop_step(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_vdev(adapter,
+			       WMI_VDEV_PARAM_EARLY_RX_SLOP_STEP,
+			       value);
+}
+
+static int hdd_we_set_early_rx_init_slop(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_vdev(adapter,
+			       WMI_VDEV_PARAM_EARLY_RX_INIT_SLOP,
+			       value);
+}
+
+static int hdd_we_set_early_rx_adjust_pause(struct hdd_adapter *adapter,
+					    int value)
+{
+	if ((value != 0) && (value != 1))
+		return -EINVAL;
+
+	return hdd_we_set_vdev(adapter,
+			       WMI_VDEV_PARAM_EARLY_RX_ADJUST_PAUSE,
+			       value);
+}
+
+static int hdd_we_set_early_rx_drift_sample(struct hdd_adapter *adapter,
+					    int value)
+{
+	return hdd_we_set_vdev(adapter,
+			       WMI_VDEV_PARAM_EARLY_RX_DRIFT_SAMPLE,
+			       value);
+}
+
+static int hdd_we_set_dcm(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_vdev(adapter,
+			       WMI_VDEV_PARAM_HE_DCM,
+			       value);
+}
+
+static int hdd_we_set_range_ext(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_vdev(adapter,
+			       WMI_VDEV_PARAM_HE_RANGE_EXT,
+			       value);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -5141,22 +5254,12 @@ static int __iw_setint_getnone(struct net_device *dev,
 	}
 
 	case WE_SET_TXRX_FWSTATS:
-	{
-		hdd_debug("WE_SET_TXRX_FWSTATS val %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMA_VDEV_TXRX_FWSTATS_ENABLE_CMDID,
-					  set_value, VDEV_CMD);
+		ret = hdd_we_set_txrx_fwstats(adapter, set_value);
 		break;
-	}
 
 	case WE_TXRX_FWSTATS_RESET:
-	{
-		hdd_debug("WE_TXRX_FWSTATS_RESET val %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMA_VDEV_TXRX_FWSTATS_RESET_CMDID,
-					  set_value, VDEV_CMD);
+		ret = hdd_we_txrx_fwstats_reset(adapter, set_value);
 		break;
-	}
 
 	case WE_DUMP_STATS:
 	{
@@ -5210,13 +5313,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_HTSMPS:
-	{
-		hdd_debug("WE_SET_HTSMPS val %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_STA_SMPS_FORCE_MODE_CMDID,
-					  set_value, VDEV_CMD);
+		ret = hdd_we_set_htsmps(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_QPOWER_MAX_PSPOLL_COUNT:
 		ret = hdd_we_set_qpower_max_pspoll_count(adapter, set_value);
@@ -5258,74 +5356,36 @@ static int __iw_setint_getnone(struct net_device *dev,
 		sme_update_connect_debug(mac_handle, set_value);
 		break;
 	}
+
 	case WE_SET_EARLY_RX_ADJUST_ENABLE:
-	{
-		hdd_debug("SET early_rx enable val %d", set_value);
-		if ((set_value == 0) || (set_value == 1))
-			ret = wma_cli_set_command(
-					adapter->session_id,
-					WMI_VDEV_PARAM_EARLY_RX_ADJUST_ENABLE,
-					set_value, VDEV_CMD);
-		else
-			ret = -EINVAL;
+		ret = hdd_we_set_early_rx_adjust_enable(adapter, set_value);
 		break;
-	}
+
 	case WE_SET_EARLY_RX_TGT_BMISS_NUM:
-	{
-		hdd_debug("SET early_rx bmiss val %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_EARLY_RX_TGT_BMISS_NUM,
-					  set_value, VDEV_CMD);
+		ret = hdd_we_set_early_rx_tgt_bmiss_num(adapter, set_value);
 		break;
-	}
+
 	case WE_SET_EARLY_RX_BMISS_SAMPLE_CYCLE:
-	{
-		hdd_debug("SET early_rx bmiss sample cycle %d",
-		       set_value);
-		ret = wma_cli_set_command(
-				adapter->session_id,
-				WMI_VDEV_PARAM_EARLY_RX_BMISS_SAMPLE_CYCLE,
-				set_value, VDEV_CMD);
+		ret = hdd_we_set_early_rx_bmiss_sample_cycle(adapter,
+							     set_value);
 		break;
-	}
+
 	case WE_SET_EARLY_RX_SLOP_STEP:
-	{
-		hdd_debug("SET early_rx bmiss slop step val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_EARLY_RX_SLOP_STEP,
-					  set_value, VDEV_CMD);
+		ret = hdd_we_set_early_rx_slop_step(adapter, set_value);
 		break;
-	}
+
 	case WE_SET_EARLY_RX_INIT_SLOP:
-	{
-		hdd_debug("SET early_rx init slop step val %d",
-		       set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_EARLY_RX_INIT_SLOP,
-					  set_value, VDEV_CMD);
+		ret = hdd_we_set_early_rx_init_slop(adapter, set_value);
 		break;
-	}
+
 	case WE_SET_EARLY_RX_ADJUST_PAUSE:
-	{
-		hdd_debug("SET early_rx adjust pause %d", set_value);
-		if ((set_value == 0) || (set_value == 1))
-			ret = wma_cli_set_command(
-					adapter->session_id,
-					WMI_VDEV_PARAM_EARLY_RX_ADJUST_PAUSE,
-					set_value, VDEV_CMD);
-		else
-			ret = -EINVAL;
+		ret = hdd_we_set_early_rx_adjust_pause(adapter, set_value);
 		break;
-	}
+
 	case WE_SET_EARLY_RX_DRIFT_SAMPLE:
-	{
-		hdd_debug("SET early_rx drift sample %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_EARLY_RX_DRIFT_SAMPLE,
-					  set_value, VDEV_CMD);
+		ret = hdd_we_set_early_rx_drift_sample(adapter, set_value);
 		break;
-	}
+
 	case WE_SET_SCAN_DISABLE:
 	{
 		if (!mac_handle)
@@ -5376,18 +5436,15 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_11AX_RATE:
 		ret = hdd_set_11ax_rate(adapter, set_value, NULL);
 		break;
+
 	case WE_SET_DCM:
-		hdd_debug("Set WMI_VDEV_PARAM_HE_DCM: %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_HE_DCM, set_value,
-					  VDEV_CMD);
+		ret = hdd_we_set_dcm(adapter, set_value);
 		break;
+
 	case WE_SET_RANGE_EXT:
-		hdd_debug("Set WMI_VDEV_PARAM_HE_RANGE_EXT: %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_VDEV_PARAM_HE_RANGE_EXT,
-					  set_value, VDEV_CMD);
+		ret = hdd_we_set_range_ext(adapter, set_value);
 		break;
+
 	case WE_SET_PDEV_RESET:
 		ret = hdd_handle_pdev_reset(adapter, set_value);
 		break;
