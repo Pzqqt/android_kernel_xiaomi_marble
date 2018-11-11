@@ -2289,7 +2289,23 @@ int __hdd_validate_adapter(struct hdd_adapter *adapter, const char *func);
 
 int __wlan_hdd_validate_session_id(uint8_t session_id, const char *func);
 
-bool hdd_is_valid_mac_address(const uint8_t *pMacAddr);
+/**
+ * hdd_is_valid_mac_address() - validate MAC address
+ * @mac_addr:	Pointer to the input MAC address
+ *
+ * This function validates whether the given MAC address is valid or not
+ * Expected MAC address is of the format XX:XX:XX:XX:XX:XX
+ * where X is the hexa decimal digit character and separated by ':'
+ * This algorithm works even if MAC address is not separated by ':'
+ *
+ * This code checks given input string mac contains exactly 12 hexadecimal
+ * digits and a separator colon : appears in the input string only after
+ * an even number of hex digits.
+ *
+ * Return: true for valid and false for invalid
+ */
+bool hdd_is_valid_mac_address(const uint8_t *mac_addr);
+
 QDF_STATUS hdd_issta_p2p_clientconnected(struct hdd_context *hdd_ctx);
 bool wlan_hdd_validate_modules_state(struct hdd_context *hdd_ctx);
 

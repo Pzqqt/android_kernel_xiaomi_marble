@@ -1987,39 +1987,24 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 	return true;
 }
 
-/**
- * hdd_is_valid_mac_address() - validate MAC address
- * @pMacAddr:	Pointer to the input MAC address
- *
- * This function validates whether the given MAC address is valid or not
- * Expected MAC address is of the format XX:XX:XX:XX:XX:XX
- * where X is the hexa decimal digit character and separated by ':'
- * This algorithm works even if MAC address is not separated by ':'
- *
- * This code checks given input string mac contains exactly 12 hexadecimal
- * digits and a separator colon : appears in the input string only after
- * an even number of hex digits.
- *
- * Return: 1 for valid and 0 for invalid
- */
-bool hdd_is_valid_mac_address(const uint8_t *pMacAddr)
+bool hdd_is_valid_mac_address(const uint8_t *mac_addr)
 {
 	int xdigit = 0;
 	int separator = 0;
 
-	while (*pMacAddr) {
-		if (isxdigit(*pMacAddr)) {
+	while (*mac_addr) {
+		if (isxdigit(*mac_addr)) {
 			xdigit++;
-		} else if (':' == *pMacAddr) {
+		} else if (':' == *mac_addr) {
 			if (0 == xdigit || ((xdigit / 2) - 1) != separator)
 				break;
 
 			++separator;
 		} else {
 			/* Invalid MAC found */
-			return 0;
+			return false;
 		}
-		++pMacAddr;
+		++mac_addr;
 	}
 	return xdigit == 12 && (separator == 5 || separator == 0);
 }
