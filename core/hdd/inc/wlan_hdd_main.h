@@ -1866,7 +1866,6 @@ struct hdd_context {
 	uint8_t dev_dfs_cac_status;
 
 	bool bt_coex_mode_set;
-	struct fw_log_info fw_log_settings;
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	qdf_mc_timer_t skip_acs_scan_timer;
 	uint8_t skip_acs_scan_status;

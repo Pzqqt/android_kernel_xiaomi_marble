@@ -9122,9 +9122,6 @@ struct hdd_context *hdd_context_create(struct device *dev)
 	if (ret)
 		goto err_hdd_objmgr_destroy;
 
-	/* Uses to enabled logging after SSR */
-	hdd_ctx->fw_log_settings.enable = hdd_ctx->config->enable_fw_log;
-
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		goto skip_multicast_logging;
 

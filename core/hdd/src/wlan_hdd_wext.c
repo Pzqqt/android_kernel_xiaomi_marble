@@ -4955,6 +4955,87 @@ static int hdd_we_set_range_ext(struct hdd_adapter *adapter, int value)
 			       value);
 }
 
+static int hdd_we_set_dbg(struct hdd_adapter *adapter,
+			  int id,
+			  const char *id_string,
+			  int value)
+{
+	int errno;
+
+	hdd_debug("%s %d", id_string, value);
+	errno = wma_cli_set_command(adapter->session_id, id, value, DBG_CMD);
+	if (errno)
+		hdd_err("Failed to set firmware, errno %d", errno);
+
+	return errno;
+}
+
+#define hdd_we_set_dbg(adapter, id, value) \
+			hdd_we_set_dbg(adapter, id, #id, value)
+
+static int hdd_we_dbglog_log_level(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_dbg(adapter,
+			      WMI_DBGLOG_LOG_LEVEL,
+			      value);
+}
+
+static int hdd_we_dbglog_vap_enable(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_dbg(adapter,
+			      WMI_DBGLOG_VAP_ENABLE,
+			      value);
+}
+
+static int hdd_we_dbglog_vap_disable(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_dbg(adapter,
+			      WMI_DBGLOG_VAP_DISABLE,
+			      value);
+}
+
+static int hdd_we_dbglog_module_enable(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_dbg(adapter,
+			      WMI_DBGLOG_MODULE_ENABLE,
+			      value);
+}
+
+static int hdd_we_dbglog_module_disable(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_dbg(adapter,
+			      WMI_DBGLOG_MODULE_DISABLE,
+			      value);
+}
+
+static int hdd_we_dbglog_mod_log_level(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_dbg(adapter,
+			      WMI_DBGLOG_MOD_LOG_LEVEL,
+			      value);
+}
+
+static int hdd_we_dbglog_type(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_dbg(adapter,
+			      WMI_DBGLOG_TYPE,
+			      value);
+}
+
+static int hdd_we_dbglog_report_enable(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_dbg(adapter,
+			      WMI_DBGLOG_REPORT_ENABLE,
+			      value);
+}
+
+static int hdd_we_start_fw_profile(struct hdd_adapter *adapter, int value)
+{
+	return hdd_we_set_dbg(adapter,
+			      WMI_WLAN_PROFILE_TRIGGER_CMDID,
+			      value);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -5166,92 +5247,36 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	/* Firmware debug log */
 	case WE_DBGLOG_LOG_LEVEL:
-	{
-		hdd_debug("WE_DBGLOG_LOG_LEVEL val %d", set_value);
-		hdd_ctx->fw_log_settings.dl_loglevel = set_value;
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_DBGLOG_LOG_LEVEL,
-					  set_value, DBG_CMD);
+		ret = hdd_we_dbglog_log_level(adapter, set_value);
 		break;
-	}
 
 	case WE_DBGLOG_VAP_ENABLE:
-	{
-		hdd_debug("WE_DBGLOG_VAP_ENABLE val %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_DBGLOG_VAP_ENABLE,
-					  set_value, DBG_CMD);
+		ret = hdd_we_dbglog_vap_enable(adapter, set_value);
 		break;
-	}
 
 	case WE_DBGLOG_VAP_DISABLE:
-	{
-		hdd_debug("WE_DBGLOG_VAP_DISABLE val %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_DBGLOG_VAP_DISABLE,
-					  set_value, DBG_CMD);
+		ret = hdd_we_dbglog_vap_disable(adapter, set_value);
 		break;
-	}
 
 	case WE_DBGLOG_MODULE_ENABLE:
-	{
-		hdd_debug("WE_DBGLOG_MODULE_ENABLE val %d",
-		       set_value);
-		hdd_ctx->fw_log_settings.enable = set_value;
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_DBGLOG_MODULE_ENABLE,
-					  set_value, DBG_CMD);
+		ret = hdd_we_dbglog_module_enable(adapter, set_value);
 		break;
-	}
 
 	case WE_DBGLOG_MODULE_DISABLE:
-	{
-		hdd_debug("WE_DBGLOG_MODULE_DISABLE val %d",
-		       set_value);
-		hdd_ctx->fw_log_settings.enable = set_value;
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_DBGLOG_MODULE_DISABLE,
-					  set_value, DBG_CMD);
+		ret = hdd_we_dbglog_module_disable(adapter, set_value);
 		break;
-	}
+
 	case WE_DBGLOG_MOD_LOG_LEVEL:
-	{
-		hdd_debug("WE_DBGLOG_MOD_LOG_LEVEL val %d",
-		       set_value);
-
-		if (hdd_ctx->fw_log_settings.index >= MAX_MOD_LOGLEVEL)
-			hdd_ctx->fw_log_settings.index = 0;
-
-		hdd_ctx->fw_log_settings.
-		dl_mod_loglevel[hdd_ctx->fw_log_settings.index] =
-			set_value;
-		hdd_ctx->fw_log_settings.index++;
-
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_DBGLOG_MOD_LOG_LEVEL,
-					  set_value, DBG_CMD);
+		ret = hdd_we_dbglog_mod_log_level(adapter, set_value);
 		break;
-	}
 
 	case WE_DBGLOG_TYPE:
-	{
-		hdd_debug("WE_DBGLOG_TYPE val %d", set_value);
-		hdd_ctx->fw_log_settings.dl_type = set_value;
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_DBGLOG_TYPE,
-					  set_value, DBG_CMD);
+		ret = hdd_we_dbglog_type(adapter, set_value);
 		break;
-	}
+
 	case WE_DBGLOG_REPORT_ENABLE:
-	{
-		hdd_debug("WE_DBGLOG_REPORT_ENABLE val %d",
-		       set_value);
-		hdd_ctx->fw_log_settings.dl_report = set_value;
-		ret = wma_cli_set_command(adapter->session_id,
-					  WMI_DBGLOG_REPORT_ENABLE,
-					  set_value, DBG_CMD);
+		ret = hdd_we_dbglog_report_enable(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_TXRX_FWSTATS:
 		ret = hdd_we_set_txrx_fwstats(adapter, set_value);
@@ -5395,14 +5420,11 @@ static int __iw_setint_getnone(struct net_device *dev,
 		sme_set_scan_disable(mac_handle, set_value);
 		break;
 	}
+
 	case WE_START_FW_PROFILE:
-	{
-		hdd_debug("WE_START_FW_PROFILE %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					WMI_WLAN_PROFILE_TRIGGER_CMDID,
-					set_value, DBG_CMD);
+		ret = hdd_we_start_fw_profile(adapter, set_value);
 		break;
-	}
+
 	case WE_SET_CHANNEL:
 	{
 		hdd_debug("Set Channel %d Session ID %d mode %d", set_value,
