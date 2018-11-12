@@ -256,7 +256,7 @@
 
 /*
  * <ini>
- * iInfraMinPhyRateAcVi - Set min PHY rate for VI
+ * InfraMinPhyRateAcVi - Set min PHY rate for VI
  * @Min: 0x0
  * @Max: 0xFFFFFFFF
  * @Default: 0x5B8D80
@@ -658,7 +658,7 @@
 
 /*
  * <ini>
- * InfraMinPhyRateAcBke - Set min PHY rate for BK
+ * InfraMinPhyRateAcBk - Set min PHY rate for BK
  * @Min: 0x0
  * @Max: 0xFFFFFFFF
  * @Default: 0x5B8D80
