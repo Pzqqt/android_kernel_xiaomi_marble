@@ -759,24 +759,27 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 			qdf_status = mlme_get_wep_key(wep_params,
 						      (MLME_WEP_DEFAULT_KEY_1 +
 						      key_id), defaultkey, val);
-			if (QDF_IS_STATUS_ERROR(qdf_status))
+			if (QDF_IS_STATUS_ERROR(qdf_status)) {
 				pe_warn("cant retrieve Defaultkey");
 
-			auth_frame->authAlgoNumber =
-				rx_auth_frm_body->authAlgoNumber;
-			auth_frame->authTransactionSeqNumber =
+				auth_frame->authAlgoNumber =
+					rx_auth_frm_body->authAlgoNumber;
+				auth_frame->authTransactionSeqNumber =
 				rx_auth_frm_body->authTransactionSeqNumber + 1;
-			auth_frame->authStatusCode =
-				eSIR_MAC_CHALLENGE_FAILURE_STATUS;
-			lim_send_auth_mgmt_frame(mac_ctx,
-					auth_frame, mac_hdr->sa,
-					LIM_NO_WEP_IN_FC,
-					pe_session);
-			lim_restore_from_auth_state(mac_ctx,
+
+				auth_frame->authStatusCode =
+					eSIR_MAC_CHALLENGE_FAILURE_STATUS;
+
+				lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
+							 mac_hdr->sa,
+							 LIM_NO_WEP_IN_FC,
+							 pe_session);
+				lim_restore_from_auth_state(mac_ctx,
 					eSIR_SME_INVALID_WEP_DEFAULT_KEY,
 					eSIR_MAC_UNSPEC_FAILURE_REASON,
 					pe_session);
-			return;
+				return;
+			}
 		}
 		key_length = val;
 		((tpSirMacAuthFrameBody)plainbody)->authAlgoNumber =
@@ -1360,22 +1363,23 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			qdf_status = mlme_get_wep_key(wep_params,
 						      (MLME_WEP_DEFAULT_KEY_1 +
 						      key_id), defaultkey, val);
-			if (QDF_IS_STATUS_ERROR(qdf_status))
+			if (QDF_IS_STATUS_ERROR(qdf_status)) {
 				pe_warn("could not retrieve Default key");
 
-			/*
-			 * Send Authentication frame
-			 * with challenge failure status code
-			 */
-			auth_frame->authAlgoNumber = eSIR_SHARED_KEY;
-			auth_frame->authTransactionSeqNumber =
-				SIR_MAC_AUTH_FRAME_4;
-			auth_frame->authStatusCode =
-				eSIR_MAC_CHALLENGE_FAILURE_STATUS;
-			lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
-				mac_hdr->sa, LIM_NO_WEP_IN_FC,
-				pe_session);
-			goto free;
+				/*
+				 * Send Authentication frame
+				 * with challenge failure status code
+				 */
+				auth_frame->authAlgoNumber = eSIR_SHARED_KEY;
+				auth_frame->authTransactionSeqNumber =
+							SIR_MAC_AUTH_FRAME_4;
+				auth_frame->authStatusCode =
+					eSIR_MAC_CHALLENGE_FAILURE_STATUS;
+				lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
+						mac_hdr->sa, LIM_NO_WEP_IN_FC,
+						pe_session);
+				goto free;
+			}
 		}
 
 		key_length = val;
