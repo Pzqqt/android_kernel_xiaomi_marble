@@ -366,13 +366,20 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	global_dfs_to_mlme.pdev_component_obj_attach(pdev,
+	status = global_dfs_to_mlme.pdev_component_obj_attach(pdev,
 		WLAN_UMAC_COMP_DFS, (void *)dfs, QDF_STATUS_SUCCESS);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "obj attach failed");
+		dfs_destroy_object(dfs);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	dfs->dfs_pdev_obj = pdev;
 
 	if (!dfs_tx_ops->dfs_is_tgt_offload) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
 			"dfs_is_tgt_offload is null");
+		dfs_destroy_object(dfs);
 		return QDF_STATUS_E_FAILURE;
 	}
 
