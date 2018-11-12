@@ -694,7 +694,6 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 
 	if (ast_entry->next_hop &&
 	    ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC) {
-		TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
 		dp_peer_ast_send_wds_del(soc, ast_entry);
 	} else {
 		/*
@@ -944,6 +943,7 @@ void dp_peer_ast_send_wds_del(struct dp_soc *soc,
 		cdp_soc->ol_ops->peer_del_wds_entry(peer->vdev->osif_vdev,
 						    ast_entry->mac_addr.raw);
 		ast_entry->wmi_sent = true;
+		TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
 	}
 }
 
