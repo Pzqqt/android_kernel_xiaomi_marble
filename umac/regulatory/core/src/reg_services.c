@@ -3220,12 +3220,8 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 		soc_reg->user_ctry_set = false;
 		reg_run_11d_state_machine(psoc);
 	} else {
-		soc_reg->cc_src = SOURCE_DRIVER;
-
-		if (reg_is_world_alpha2(regulat_info->alpha2)) {
-			soc_reg->cc_src = SOURCE_CORE;
-			reg_run_11d_state_machine(psoc);
-		}
+		if (soc_reg->cc_src == SOURCE_UNKNOWN)
+			soc_reg->cc_src = SOURCE_DRIVER;
 
 		qdf_mem_copy(soc_reg->mas_chan_params[phy_id].default_country,
 			     regulat_info->alpha2,
@@ -3236,12 +3232,20 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 		soc_reg->mas_chan_params[phy_id].def_region_domain =
 			regulat_info->reg_dmn_pair;
 
-		qdf_mem_copy(soc_reg->def_country,
-			     regulat_info->alpha2,
-			     REG_ALPHA2_LEN + 1);
+		if (soc_reg->cc_src == SOURCE_DRIVER) {
+			qdf_mem_copy(soc_reg->def_country,
+				     regulat_info->alpha2,
+				     REG_ALPHA2_LEN + 1);
 
-		soc_reg->def_country_code = regulat_info->ctry_code;
-		soc_reg->def_region_domain = regulat_info->reg_dmn_pair;
+			soc_reg->def_country_code = regulat_info->ctry_code;
+			soc_reg->def_region_domain =
+				regulat_info->reg_dmn_pair;
+		}
+
+		if (reg_is_world_alpha2(regulat_info->alpha2)) {
+			soc_reg->cc_src = SOURCE_CORE;
+			reg_run_11d_state_machine(psoc);
+		}
 	}
 
 	pdev = wlan_objmgr_get_pdev_by_id(psoc, phy_id, dbg_id);
