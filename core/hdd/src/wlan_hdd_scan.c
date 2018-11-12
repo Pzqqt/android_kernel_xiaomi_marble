@@ -54,18 +54,6 @@
 #define RATE_MASK 0x7f
 
 /**
- * enum essid_bcast_type - SSID broadcast type
- * @eBCAST_UNKNOWN: Broadcast unknown
- * @eBCAST_NORMAL: Broadcast normal
- * @eBCAST_HIDDEN: Broadcast hidden
- */
-enum essid_bcast_type {
-	eBCAST_UNKNOWN = 0,
-	eBCAST_NORMAL = 1,
-	eBCAST_HIDDEN = 2,
-};
-
-/**
  * hdd_vendor_scan_callback() - Scan completed callback event
  * @hddctx: HDD context
  * @req : Scan request
@@ -159,6 +147,7 @@ nla_put_failure:
 	kfree_skb(skb);
 	qdf_mem_free(req);
 }
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
 /**
  * hdd_cfg80211_scan_done() - Scan completed callback to cfg80211
@@ -1389,7 +1378,6 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct net_device *dev)
 		hdd_err_rl("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
-
 
 	/* The return 0 is intentional when Recovery and Load/Unload in
 	 * progress. We did observe a crash due to a return of
