@@ -246,10 +246,17 @@ enum hdd_wext_control {
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 /*
  * <ini>
- * gWlanAutoShutdown - Wlan auto shutdown
+ * gWlanAutoShutdown - Wlan auto shutdown timer value
  * @Min: 0
  * @Max: 86400
  * @Default: 0
+ *
+ * This ini specifies the seconds of WLAN inactivity firmware has to wait
+ * before indicating WLAN idle event to driver. Upon receiving firmware's
+ * WLAN idle indication, driver may indicate similar event to upper layer
+ * daemons(SCM, or any other components working to achieve the same purpose),
+ * who may choose what to do next, e.g. whether to unload driver module or not.
+ * 0 indicates no auto shutdown will take place.
  *
  * </ini>
  */

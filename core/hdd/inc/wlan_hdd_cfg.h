@@ -115,6 +115,25 @@ struct hdd_context;
 #define CFG_ENABLE_NUD_TRACKING_DEFAULT         (1)
 #endif
 
+/*
+ * <ini>
+ * gOperatingChannel- Default STA operating channel
+ * @Min: 0
+ * @Max: 14
+ * @Default: 1
+ *
+ * This ini is used to specify the default operating channel of a STA during
+ * initialization.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * <ini>
+ */
+
 #define CFG_OPERATING_CHANNEL_NAME             "gOperatingChannel"
 #define CFG_OPERATING_CHANNEL_MIN              (0)
 #define CFG_OPERATING_CHANNEL_MAX              (14)
@@ -143,6 +162,23 @@ struct hdd_context;
 #define CFG_SHORT_SLOT_TIME_ENABLED_MAX        WNI_CFG_SHORT_SLOT_TIME_STAMAX
 #define CFG_SHORT_SLOT_TIME_ENABLED_DEFAULT    WNI_CFG_SHORT_SLOT_TIME_STADEF
 
+/*
+ * <ini>
+ * g11dSupportEnabled - Enable/Disable 11d support
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable or disable 11d support.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 #define CFG_11D_SUPPORT_ENABLED_NAME           "g11dSupportEnabled"
 #define CFG_11D_SUPPORT_ENABLED_MIN            WNI_CFG_11D_ENABLED_STAMIN
 #define CFG_11D_SUPPORT_ENABLED_MAX            WNI_CFG_11D_ENABLED_STAMAX
@@ -167,21 +203,96 @@ struct hdd_context;
  #define CFG_ENABLE_11D_IN_WORLD_MODE_MAX     (1)
  #define CFG_ENABLE_11D_IN_WORLD_MODE_DEFAULT (0)
 
+/*
+ * <ini>
+ * g11hSupportEnabled - Enable/Disable 11h support
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable or disable 11h support.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_11H_SUPPORT_ENABLED_NAME           "g11hSupportEnabled"
 #define CFG_11H_SUPPORT_ENABLED_MIN            (0)
 #define CFG_11H_SUPPORT_ENABLED_MAX            (1)
 #define CFG_11H_SUPPORT_ENABLED_DEFAULT        (1)    /* Default is ON */
 
-/* COUNTRY Code Priority */
+/*
+ * <ini>
+ * gCountryCodePriority - Country code from supplicant preference
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to control whether driver will prefer country code
+ * specified by supplicant. And once country code from supplicant is
+ * respected, 11d will be disabled in effect.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_COUNTRY_CODE_PRIORITY_NAME         "gCountryCodePriority"
 #define CFG_COUNTRY_CODE_PRIORITY_MIN          (0)
 #define CFG_COUNTRY_CODE_PRIORITY_MAX          (1)
 #define CFG_COUNTRY_CODE_PRIORITY_DEFAULT      (0)
 
+/*
+ * <ini>
+ * gRegulatoryChangeCountry - Default world regdmn overriding
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to control whether default regdmn settings should be
+ * overridden when there is no world regdmn configuration available.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_REG_CHANGE_DEF_COUNTRY_NAME          "gRegulatoryChangeCountry"
 #define CFG_REG_CHANGE_DEF_COUNTRY_DEFAULT       (0)
 #define CFG_REG_CHANGE_DEF_COUNTRY_MIN           (0)
 #define CFG_REG_CHANGE_DEF_COUNTRY_MAX           (1)
+
+/*
+ * <ini>
+ * gAdvertiseConcurrentOperation - Iface combination advertising
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to control whether driver should indicate to kernel
+ * wiphy layer the combination of all its interfaces' supportability.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_ADVERTISE_CONCURRENT_OPERATION_NAME    "gAdvertiseConcurrentOperation"
 #define CFG_ADVERTISE_CONCURRENT_OPERATION_DEFAULT (1)
@@ -2082,20 +2193,96 @@ enum hdd_dot11_mode {
 #define CFG_LATENCY_FLAGS_ULTRALOW_MAX     (0xffffffff)
 #define CFG_LATENCY_FLAGS_ULTRALOW_DEFAULT (0xc83)
 
+/*
+ * <ini>
+ * Intf0MacAddress - Default MAC address of VIF0
+ * @Min: 000000000000
+ * @Max: ffffffffffff
+ * @Default: 000AF58989FF
+ *
+ * This ini is used to set the default MAC address of virtual interface 0
+ * created by WLAN driver.
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_INTF0_MAC_ADDR_NAME                  "Intf0MacAddress"
 #define CFG_INTF0_MAC_ADDR_MIN                   "000000000000"
 #define CFG_INTF0_MAC_ADDR_MAX                   "ffffffffffff"
 #define CFG_INTF0_MAC_ADDR_DEFAULT               "000AF58989FF"
+
+/*
+ * <ini>
+ * Intf1MacAddress - Default MAC address of VIF1
+ * @Min: 000000000000
+ * @Max: ffffffffffff
+ * @Default: 000AF58989FE
+ *
+ * This ini is used to set the default MAC address of virtual interface 1
+ * created by WLAN driver.
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_INTF1_MAC_ADDR_NAME                  "Intf1MacAddress"
 #define CFG_INTF1_MAC_ADDR_MIN                   "000000000000"
 #define CFG_INTF1_MAC_ADDR_MAX                   "ffffffffffff"
 #define CFG_INTF1_MAC_ADDR_DEFAULT               "000AF58989FE"
 
+/*
+ * <ini>
+ * Intf2MacAddress - Default MAC address of VIF2
+ * @Min: 000000000000
+ * @Max: ffffffffffff
+ * @Default: 000AF58989FD
+ *
+ * This ini is used to set the default MAC address of virtual interface 2
+ * created by WLAN driver.
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_INTF2_MAC_ADDR_NAME                  "Intf2MacAddress"
 #define CFG_INTF2_MAC_ADDR_MIN                   "000000000000"
 #define CFG_INTF2_MAC_ADDR_MAX                   "ffffffffffff"
 #define CFG_INTF2_MAC_ADDR_DEFAULT               "000AF58989FD"
+
+/*
+ * <ini>
+ * Intf3MacAddress - Default MAC address of VIF3
+ * @Min: 000000000000
+ * @Max: ffffffffffff
+ * @Default: 000AF58989FC
+ *
+ * This ini is used to set the default MAC address of virtual interface 3
+ * created by WLAN driver.
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_INTF3_MAC_ADDR_NAME                  "Intf3MacAddress"
 #define CFG_INTF3_MAC_ADDR_MIN                   "000000000000"
@@ -2246,12 +2433,12 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gDisableIntraBssFwd - Disable intrs BSS Rx packets
+ * gDisableIntraBssFwd - Disable intra BSS Rx packets
  * @Min: 0
  * @Max: 1
  * @Default: 0
  *
- * This ini is used to disbale to forward Intra-BSS Rx packets when
+ * This ini is used to disable forwarding of Intra-BSS Rx packets when
  * ap_isolate=1 in hostapd.conf
  *
  * Related: None.
@@ -2266,6 +2453,24 @@ enum hdd_dot11_mode {
 #define CFG_AP_STA_SECURITY_SEPERATION_MIN     (0)
 #define CFG_AP_STA_SECURITY_SEPERATION_MAX     (1)
 #define CFG_AP_STA_SECURITY_SEPERATION_DEFAULT (0)
+
+/*
+ * <ini>
+ * gDisablePacketFilter - Disabling of packet filter support
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to disable packet filter support when set to 1.
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_DISABLE_PACKET_FILTER		"gDisablePacketFilter"
 #define CFG_DISABLE_PACKET_FILTER_MIN		(0)
