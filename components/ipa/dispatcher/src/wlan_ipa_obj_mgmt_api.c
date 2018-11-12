@@ -38,6 +38,11 @@ ipa_pdev_obj_destroy_notification(struct wlan_objmgr_pdev *pdev,
 	QDF_STATUS status;
 	struct wlan_ipa_priv *ipa_obj;
 
+	if (!ipa_config_is_enabled()) {
+		ipa_debug("IPA is disabled");
+		return QDF_STATUS_SUCCESS;
+	}
+
 	ipa_obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 							WLAN_UMAC_COMP_IPA);
 	if (!ipa_obj) {
@@ -75,9 +80,7 @@ ipa_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 
 	if (!ipa_config_is_enabled()) {
 		ipa_info("IPA is disabled");
-		wlan_objmgr_unregister_pdev_destroy_handler(WLAN_UMAC_COMP_IPA,
-				ipa_pdev_obj_destroy_notification, NULL);
-		return QDF_STATUS_COMP_DISABLED;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	ipa_obj = qdf_mem_malloc(sizeof(*ipa_obj));
