@@ -342,7 +342,7 @@
  * @Max: 7
  * @Default: 7
  *
- * This ini is used to set default MDPU Density
+ * This ini is used to set default MPDU Density
  *
  * Related: None
  *
