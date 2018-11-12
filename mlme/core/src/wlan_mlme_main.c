@@ -40,6 +40,39 @@ struct wlan_mlme_psoc_obj *mlme_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
 }
 
 #ifdef CONFIG_VDEV_SM
+struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
+				struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return NULL;
+	}
+
+	mlme_priv = vdev_mlme->legacy_vdev_ptr;
+
+	return &mlme_priv->dynamic_cfg;
+}
+
+struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
+				struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+	struct mlme_legacy_priv *mlme_priv;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return NULL;
+	}
+
+	mlme_priv = vdev_mlme->legacy_vdev_ptr;
+
+	return &mlme_priv->ini_cfg;
+}
 
 #else
 
@@ -61,6 +94,34 @@ wlan_vdev_mlme_get_priv_obj(struct wlan_objmgr_vdev *vdev)
 	}
 
 	return vdev_mlme;
+}
+
+struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
+				struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_priv_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_priv_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return NULL;
+	}
+
+	return &vdev_mlme->dynamic_cfg;
+}
+
+struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
+				struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_priv_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_priv_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return NULL;
+	}
+
+	return &vdev_mlme->ini_cfg;
 }
 
 QDF_STATUS

@@ -82,8 +82,12 @@ struct mlme_legacy_priv {
 
 /**
  * struct vdev_mlme_obj - VDEV MLME component object
+ * @dynamic_cfg: current configuration of nss, chains for vdev.
+ * @ini_cfg: Max configuration of nss, chains supported for vdev.
  */
 struct vdev_mlme_priv_obj {
+	struct wlan_mlme_nss_chains dynamic_cfg;
+	struct wlan_mlme_nss_chains ini_cfg;
 };
 
 /**
@@ -114,6 +118,24 @@ mlme_vdev_object_destroyed_notification(struct wlan_objmgr_vdev *vdev,
 					void *arg);
 
 #endif
+
+/**
+ * mlme_get_dynamic_vdev_config() - get the vdev dynamic config params
+ * @vdev: vdev pointer
+ *
+ * Return: pointer to the dynamic vdev config structure
+ */
+struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
+					struct wlan_objmgr_vdev *vdev);
+
+/**
+ * mlme_get_ini_vdev_config() - get the vdev ini config params
+ * @vdev: vdev pointer
+ *
+ * Return: pointer to the ini vdev config structure
+ */
+struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
+					struct wlan_objmgr_vdev *vdev);
 
 /**
  * mlme_psoc_object_created_notification(): mlme psoc create handler
