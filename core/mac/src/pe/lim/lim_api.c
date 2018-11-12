@@ -1716,8 +1716,6 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal pMac,
 	       SIR_MAC_GET_ESS(psessionEntry->limCurrentBssCaps)) ||
 	      (SIR_MAC_GET_PRIVACY(apNewCaps.capabilityInfo) !=
 	       SIR_MAC_GET_PRIVACY(psessionEntry->limCurrentBssCaps)) ||
-	      (SIR_MAC_GET_SHORT_PREAMBLE(apNewCaps.capabilityInfo) !=
-	       SIR_MAC_GET_SHORT_PREAMBLE(psessionEntry->limCurrentBssCaps)) ||
 	      (SIR_MAC_GET_QOS(apNewCaps.capabilityInfo) !=
 	       SIR_MAC_GET_QOS(psessionEntry->limCurrentBssCaps)) ||
 	      ((newChannel != psessionEntry->currentOperChannel) &&
