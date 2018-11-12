@@ -69,29 +69,6 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal pMac)
 		pe_err("failed to create Ch Switch timer");
 		return false;
 	}
-	/* Create Quiet Timer
-	 * This is used on the STA to go and shut-off Tx/Rx "after" the
-	 * specified quiteInterval
-	 */
-	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimQuietTimer,
-			    "QUIET TIMER", lim_quiet_timer_handler,
-			    SIR_LIM_QUIET_TIMEOUT, LIM_QUIET_TIMER_TICKS,
-			    0, TX_NO_ACTIVATE) != TX_SUCCESS) {
-		pe_err("failed to create Quiet Begin Timer");
-		return false;
-	}
-	/* Create Quiet BSS Timer
-	 * After the specified quiteInterval, determined by gLimQuietTimer, this
-	 * timer, gLimQuietBssTimer, trigger and put the STA to sleep for the
-	 * specified gLimQuietDuration
-	 */
-	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimQuietBssTimer,
-			    "QUIET BSS TIMER", lim_quiet_bss_timer_handler,
-			    SIR_LIM_QUIET_BSS_TIMEOUT, LIM_QUIET_BSS_TIMER_TICK,
-			    0, TX_NO_ACTIVATE) != TX_SUCCESS) {
-		pe_err("failed to create Quiet Bss Timer");
-		return false;
-	}
 
 	cfgValue = SYS_MS_TO_TICKS(
 			pMac->mlme_cfg->timeouts.join_failure_timeout);
@@ -312,8 +289,6 @@ err_timer:
 	tx_timer_delete(&pMac->lim.limTimers.gLimJoinFailureTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimPeriodicJoinProbeReqTimer);
 	tx_timer_delete(&pMac->lim.limTimers.g_lim_periodic_auth_retry_timer);
-	tx_timer_delete(&pMac->lim.limTimers.gLimQuietBssTimer);
-	tx_timer_delete(&pMac->lim.limTimers.gLimQuietTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimChannelSwitchTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimActiveToPassiveChannelTimer);
 	tx_timer_delete(&pMac->lim.limTimers.sae_auth_timer);
@@ -1000,29 +975,3 @@ void lim_channel_switch_timer_handler(void *pMacGlobal, uint32_t param)
 
 	lim_post_msg_api(pMac, &msg);
 }
-
-void lim_quiet_timer_handler(void *pMacGlobal, uint32_t param)
-{
-	struct scheduler_msg msg = {0};
-	tpAniSirGlobal pMac = (tpAniSirGlobal) pMacGlobal;
-
-	msg.type = SIR_LIM_QUIET_TIMEOUT;
-	msg.bodyval = (uint32_t) param;
-	msg.bodyptr = NULL;
-
-	pe_debug("Post SIR_LIM_QUIET_TIMEOUT msg");
-	lim_post_msg_api(pMac, &msg);
-}
-
-void lim_quiet_bss_timer_handler(void *pMacGlobal, uint32_t param)
-{
-	struct scheduler_msg msg = {0};
-	tpAniSirGlobal pMac = (tpAniSirGlobal) pMacGlobal;
-
-	msg.type = SIR_LIM_QUIET_BSS_TIMEOUT;
-	msg.bodyval = (uint32_t) param;
-	msg.bodyptr = NULL;
-	pe_debug("Post SIR_LIM_QUIET_BSS_TIMEOUT msg");
-	lim_post_msg_api(pMac, &msg);
-}
-

@@ -1104,32 +1104,6 @@ typedef struct tHalIndCB {
 } tHalIndCB, *tpHalIndCB;
 
 /**
- * struct sControlTxParams - control tx parameters
- * @stopTx: stop transmission
- * @fCtrlGlobal:  Master flag to stop or resume all transmission
- * @ctrlSta: If this flag is set, staBitmap
- * @ctrlBss: If this flag is set, bssBitmap and beaconBitmap is valid
- * @bssBitmap: bitmap of BSS indices to be stopped for resumed
- * @beaconBitmap: this bitmap contains bitmap of BSS indices to be
- *                stopped for resumed for beacon transmission
- */
-typedef struct sControlTxParams {
-	bool stopTx;
-	uint8_t fCtrlGlobal;
-	uint8_t ctrlSta;
-	uint8_t ctrlBss;
-	/* When ctrlBss is set, this bitmap contains bitmap of BSS indices to be
-	 * stopped for resumed for transmission.
-	 * This is 32 bit bitmap, not array of bytes.
-	 */
-	uint32_t bssBitmap;
-	/* When ctrlBss is set, this bitmap contains bitmap of BSS indices to be
-	 * stopped for resumed for beacon transmission.
-	 */
-	uint32_t beaconBitmap;
-} tTxControlParams, *tpTxControlParams;
-
-/**
  * struct tMaxTxPowerParams - Max Tx Power parameters
  * @bssId: BSSID is needed to identify which session issued this request
  * @selfStaMacAddr: self mac address

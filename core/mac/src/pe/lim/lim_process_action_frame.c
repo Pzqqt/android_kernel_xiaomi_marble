@@ -88,18 +88,6 @@ void lim_stop_tx_and_switch_channel(tpAniSirGlobal pMac, uint8_t sessionId)
 	pe_debug("Channel switch Mode: %d",
 		       psessionEntry->gLimChannelSwitch.switchMode);
 
-	if (psessionEntry->gLimChannelSwitch.switchMode ==
-	    eSIR_CHANSW_MODE_SILENT
-	    || psessionEntry->gLimChannelSwitch.switchCount <=
-	    SIR_CHANSW_TX_STOP_MAX_COUNT) {
-		/* Freeze the transmission */
-		lim_frame_transmission_control(pMac, eLIM_TX_ALL, eLIM_STOP_TX);
-
-	} else {
-		/* Resume the transmission */
-		lim_frame_transmission_control(pMac, eLIM_TX_ALL, eLIM_RESUME_TX);
-	}
-
 	pMac->lim.limTimers.gLimChannelSwitchTimer.sessionId = sessionId;
 	/* change the channel immediately only if
 	 * the channel switch count is 0
@@ -161,30 +149,6 @@ QDF_STATUS lim_start_channel_switch(tpAniSirGlobal pMac,
 		pe_err("tx_timer_change failed");
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	/* Follow the channel switch, forget about the previous quiet. */
-	/* If quiet is running, chance is there to resume tx on its timeout. */
-	/* so stop timer for a safer side. */
-	if (psessionEntry->gLimSpecMgmt.quietState == eLIM_QUIET_BEGIN) {
-		MTRACE(mac_trace
-			       (pMac, TRACE_CODE_TIMER_DEACTIVATE,
-			       psessionEntry->peSessionId, eLIM_QUIET_TIMER));
-		if (tx_timer_deactivate(&pMac->lim.limTimers.gLimQuietTimer) !=
-		    TX_SUCCESS) {
-			pe_err("tx_timer_deactivate failed");
-			return QDF_STATUS_E_FAILURE;
-		}
-	} else if (psessionEntry->gLimSpecMgmt.quietState == eLIM_QUIET_RUNNING) {
-		MTRACE(mac_trace
-			       (pMac, TRACE_CODE_TIMER_DEACTIVATE,
-			       psessionEntry->peSessionId, eLIM_QUIET_BSS_TIMER));
-		if (tx_timer_deactivate(&pMac->lim.limTimers.gLimQuietBssTimer)
-		    != TX_SUCCESS) {
-			pe_err("tx_timer_deactivate failed");
-			return QDF_STATUS_E_FAILURE;
-		}
-	}
-	psessionEntry->gLimSpecMgmt.quietState = eLIM_QUIET_INIT;
 
 	/* Prepare for 11h channel switch */
 	lim_prepare_for11h_channel_switch(pMac, psessionEntry);

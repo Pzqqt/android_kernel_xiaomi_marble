@@ -298,10 +298,7 @@ QDF_STATUS lim_start_channel_switch(tpAniSirGlobal pMac,
 		tpPESession psessionEntry);
 void lim_update_channel_switch(tpAniSirGlobal, tpSirProbeRespBeacon,
 		tpPESession psessionEntry);
-void lim_process_quiet_timeout(tpAniSirGlobal);
-void lim_process_quiet_bss_timeout(tpAniSirGlobal);
 
-void lim_start_quiet_timer(tpAniSirGlobal pMac, uint8_t sessionId);
 void lim_switch_primary_channel(tpAniSirGlobal, uint8_t, tpPESession);
 void lim_switch_primary_secondary_channel(tpAniSirGlobal pMac,
 					tpPESession psessionEntry,
@@ -319,14 +316,9 @@ void lim_update_sta_run_time_ht_info(struct mac_context *pMac,
 		tpPESession psessionEntry);
 void lim_cancel_dot11h_channel_switch(tpAniSirGlobal pMac,
 		tpPESession psessionEntry);
-void lim_cancel_dot11h_quiet(tpAniSirGlobal pMac, tpPESession psessionEntry);
 bool lim_is_channel_valid_for_channel_switch(tpAniSirGlobal pMac,
 		uint8_t channel);
-void lim_frame_transmission_control(tpAniSirGlobal pMac, tLimQuietTxMode type,
-		tLimControlTx mode);
 QDF_STATUS lim_restore_pre_channel_switch_state(tpAniSirGlobal pMac,
-		tpPESession psessionEntry);
-QDF_STATUS lim_restore_pre_quiet_state(tpAniSirGlobal pMac,
 		tpPESession psessionEntry);
 
 void lim_prepare_for11h_channel_switch(tpAniSirGlobal pMac,

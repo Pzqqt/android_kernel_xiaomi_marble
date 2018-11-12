@@ -48,8 +48,6 @@ enum {
 	eLIM_ADDTS_RSP_TIMER,
 	eLIM_CHANNEL_SWITCH_TIMER,
 	eLIM_LEARN_DURATION_TIMER,
-	eLIM_QUIET_TIMER,
-	eLIM_QUIET_BSS_TIMER,
 	eLIM_WPS_OVERLAP_TIMER,
 	eLIM_FT_PREAUTH_RSP_TIMER,
 	eLIM_REMAIN_CHN_TIMER,
@@ -80,8 +78,6 @@ void lim_activate_auth_rsp_timer(tpAniSirGlobal, tLimPreAuthNode *);
 void lim_update_olbc_cache_timer_handler(void *, uint32_t);
 void lim_addts_response_timer_handler(void *, uint32_t);
 void lim_channel_switch_timer_handler(void *, uint32_t);
-void lim_quiet_timer_handler(void *, uint32_t);
-void lim_quiet_bss_timer_handler(void *, uint32_t);
 void limCBScanIntervalTimerHandler(void *, uint32_t);
 void limCBScanDurationTimerHandler(void *, uint32_t);
 #endif /* __LIM_TIMER_UTILS_H */

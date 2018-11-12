@@ -321,15 +321,6 @@ typedef struct sLimTimers {
 	TX_TIMER gLimUpdateOlbcCacheTimer;
 
 	TX_TIMER gLimChannelSwitchTimer;
-	/* This TIMER is started on the STA, as indicated by the */
-	/* AP in its Quiet BSS IE, for the specified interval */
-	TX_TIMER gLimQuietTimer;
-	/* This TIMER is started on the AP, prior to the AP going */
-	/* into LEARN mode */
-	/* This TIMER is started on the STA, for the specified */
-	/* quiet duration */
-	TX_TIMER gLimQuietBssTimer;
-
 	TX_TIMER gLimFTPreAuthRspTimer;
 
 #ifdef FEATURE_WLAN_ESE

@@ -160,25 +160,6 @@ typedef enum eLimMlmStates {
 	eLIM_MLM_WT_SAE_AUTH_STATE,
 } tLimMlmStates;
 
-/* 11h channel quiet states */
-
-/*
- * This enum indicates in which state the device is in
- * when it receives quiet element in beacon or probe-response.
- * The default quiet state of the device is always INIT
- * eLIM_QUIET_BEGIN - When Quiet period is started
- * eLIM_QUIET_CHANGED - When Quiet period is updated
- * eLIM_QUIET_RUNNING - Between two successive Quiet updates
- * eLIM_QUIET_END - When quiet period ends
- */
-typedef enum eLimQuietStates {
-	eLIM_QUIET_INIT,
-	eLIM_QUIET_BEGIN,
-	eLIM_QUIET_CHANGED,
-	eLIM_QUIET_RUNNING,
-	eLIM_QUIET_END
-} tLimQuietStates;
-
 /* 11h channel switch states */
 
 /*
@@ -518,21 +499,7 @@ typedef struct sLimWscIeInfo {
 
 /* structure to hold all 11h specific data */
 typedef struct sLimSpecMgmtInfo {
-	tLimQuietStates quietState;
-	uint32_t quietCount;
-	/* This is in units of system TICKS */
-	uint32_t quietDuration;
-	/* This is in units of TU, for over the air transmission */
-	uint32_t quietDuration_TU;
-	/* After this timeout, actual quiet starts */
-	uint32_t quietTimeoutValue;
-	/* Used on AP, if quiet is enabled during learning */
-	bool fQuietEnabled;
 	tLimDot11hChanSwStates dot11hChanSwState;
-	/* Radar detected in cur oper chan on AP */
-	bool fRadarDetCurOperChan;
-	/* Whether radar interrupt has been configured */
-	bool fRadarIntrConfigured;
 } tLimSpecMgmtInfo, *tpLimSpecMgmtInfo;
 
 #ifdef FEATURE_WLAN_TDLS
