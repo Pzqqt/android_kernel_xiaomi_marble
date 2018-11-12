@@ -1414,6 +1414,32 @@ handle_irq:
 	return ret;
 }
 
+static irqreturn_t swrm_wakeup_interrupt(int irq, void *dev)
+{
+	struct swr_mstr_ctrl *swrm = dev;
+	int ret = IRQ_HANDLED;
+
+	if (!swrm || !(swrm->dev)) {
+		pr_err("%s: swrm or dev is null\n", __func__);
+		return IRQ_NONE;
+	}
+	mutex_lock(&swrm->devlock);
+	if (!swrm->dev_up) {
+		if (swrm->wake_irq > 0)
+			disable_irq_nosync(swrm->wake_irq);
+		mutex_unlock(&swrm->devlock);
+		return ret;
+	}
+	mutex_unlock(&swrm->devlock);
+	if (swrm->wake_irq > 0)
+		disable_irq_nosync(swrm->wake_irq);
+	pm_runtime_get_sync(swrm->dev);
+	pm_runtime_mark_last_busy(swrm->dev);
+	pm_runtime_put_autosuspend(swrm->dev);
+
+	return ret;
+}
+
 static void swrm_wakeup_work(struct work_struct *work)
 {
 	struct swr_mstr_ctrl *swrm;
@@ -1585,8 +1611,8 @@ static int swrm_event_notify(struct notifier_block *self,
 		schedule_work(&(swrm->dc_presence_work));
 		break;
 	case SWR_WAKE_IRQ_EVENT:
-		if (swrm->wakeup_req && !swrm->wakeup_triggered) {
-			swrm->wakeup_triggered = true;
+		if (swrm->ipc_wakeup && !swrm->ipc_wakeup_triggered) {
+			swrm->ipc_wakeup_triggered = true;
 			schedule_work(&swrm->wakeup_work);
 		}
 		break;
@@ -1762,6 +1788,8 @@ static int swrm_probe(struct platform_device *pdev)
 	swrm->mclk_freq = MCLK_FREQ;
 	swrm->dev_up = true;
 	swrm->state = SWR_MSTR_UP;
+	swrm->ipc_wakeup = false;
+	swrm->ipc_wakeup_triggered = false;
 	init_completion(&swrm->reset);
 	init_completion(&swrm->broadcast);
 	init_completion(&swrm->clk_off_complete);
@@ -1787,11 +1815,6 @@ static int swrm_probe(struct platform_device *pdev)
 			ret = -EINVAL;
 			goto err_pdata_fail;
 		}
-	}
-
-	if (of_property_read_u32(swrm->dev->of_node,
-			"qcom,swr-wakeup-required", &swrm->wakeup_req)) {
-		swrm->wakeup_req = false;
 	}
 
 	if (swrm->reg_irq) {
@@ -1903,6 +1926,9 @@ static int swrm_remove(struct platform_device *pdev)
 				swrm, SWR_IRQ_FREE);
 	else if (swrm->irq)
 		free_irq(swrm->irq, swrm);
+	else if (swrm->wake_irq > 0)
+		free_irq(swrm->wake_irq, swrm);
+
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
 	swr_unregister_master(&swrm->master);
@@ -1944,9 +1970,10 @@ static int swrm_runtime_resume(struct device *dev)
 
 	if ((swrm->state == SWR_MSTR_DOWN) ||
 	    (swrm->state == SWR_MSTR_SSR && swrm->dev_up)) {
-		if (swrm->clk_stop_mode0_supp && swrm->wakeup_req) {
-			msm_aud_evt_blocking_notifier_call_chain(
-				SWR_WAKE_IRQ_DEREGISTER, (void *)swrm);
+		if (swrm->clk_stop_mode0_supp) {
+			if (swrm->ipc_wakeup)
+				msm_aud_evt_blocking_notifier_call_chain(
+					SWR_WAKE_IRQ_DEREGISTER, (void *)swrm);
 		}
 
 		if (swrm_clk_request(swrm, true))
@@ -2025,10 +2052,14 @@ static int swrm_runtime_suspend(struct device *dev)
 		}
 		swrm_clk_request(swrm, false);
 
-		if (swrm->clk_stop_mode0_supp && swrm->wakeup_req) {
-			msm_aud_evt_blocking_notifier_call_chain(
-				SWR_WAKE_IRQ_REGISTER, (void *)swrm);
-			swrm->wakeup_triggered = false;
+		if (swrm->clk_stop_mode0_supp) {
+			if (swrm->wake_irq > 0) {
+				enable_irq(swrm->wake_irq);
+			} else if (swrm->ipc_wakeup) {
+				msm_aud_evt_blocking_notifier_call_chain(
+					SWR_WAKE_IRQ_REGISTER, (void *)swrm);
+				swrm->ipc_wakeup_triggered = false;
+			}
 		}
 
 	}
@@ -2062,6 +2093,35 @@ static int swrm_device_down(struct device *dev)
 	}
 
 	return 0;
+}
+
+int swrm_register_wake_irq(struct swr_mstr_ctrl *swrm)
+{
+	int ret = 0;
+
+	if (!swrm->ipc_wakeup) {
+		swrm->wake_irq = platform_get_irq_byname(swrm->pdev,
+					"swr_wake_irq");
+		if (swrm->wake_irq < 0) {
+			dev_err(swrm->dev,
+				"%s() error getting wake irq handle: %d\n",
+				__func__, swrm->wake_irq);
+			return -EINVAL;
+		}
+
+		ret = request_threaded_irq(swrm->wake_irq, NULL,
+					   swrm_wakeup_interrupt,
+					   IRQF_TRIGGER_HIGH | IRQF_ONESHOT,
+					   "swr_wake_irq", swrm);
+		if (ret) {
+			dev_err(swrm->dev, "%s: Failed to request irq %d\n",
+				__func__, ret);
+			return -EINVAL;
+		}
+		/* Disable wake irq - enable it after clock stop */
+		disable_irq(swrm->wake_irq);
+	}
+	return ret;
 }
 
 /**
@@ -2178,6 +2238,21 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 							__func__);
 				}
 			}
+			mutex_unlock(&swrm->mlock);
+		}
+		break;
+	case SWR_REGISTER_WAKE_IRQ:
+		if (!data) {
+			dev_err(swrm->dev, "%s: reg wake irq data is NULL\n",
+				__func__);
+			ret = -EINVAL;
+		} else {
+			mutex_lock(&swrm->mlock);
+			swrm->ipc_wakeup = *(u32 *)data;
+			ret = swrm_register_wake_irq(swrm);
+			if (ret)
+				dev_err(swrm->dev, "%s: register wake_irq failed\n",
+					__func__);
 			mutex_unlock(&swrm->mlock);
 		}
 		break;

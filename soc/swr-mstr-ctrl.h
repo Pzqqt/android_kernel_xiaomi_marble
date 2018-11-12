@@ -131,6 +131,7 @@ struct swr_mstr_ctrl {
 	int (*reg_irq)(void *handle, irqreturn_t(*irq_handler)(int irq,
 			void *data), void *swr_handle, int type);
 	int irq;
+	int wake_irq;
 	int version;
 	int mclk_freq;
 	u32 num_dev;
@@ -152,9 +153,9 @@ struct swr_mstr_ctrl {
 	int swr_irq;
 	u32 clk_stop_mode0_supp;
 	struct work_struct wakeup_work;
-	u32 wakeup_req;
+	u32 ipc_wakeup;
 	bool dev_up;
-	bool wakeup_triggered;
+	bool ipc_wakeup_triggered;
 };
 
 #endif /* _SWR_WCD_CTRL_H */
