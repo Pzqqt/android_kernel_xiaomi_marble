@@ -1881,6 +1881,7 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 	uint8_t *mac_addr = NULL;
 	struct wma_target_req *del_req;
 	int ret_value = 0;
+	QDF_STATUS qdf_status;
 
 	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
 	if (!vdev) {
@@ -1909,18 +1910,23 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 		return -EINVAL;
 	}
 
-	wma_remove_peer(wma, mac_addr, vdev_id, peer, false);
-	if (wmi_service_enabled(
-	   wma->wmi_handle,
-	   wmi_service_sync_delete_cmds)) {
+	qdf_status = wma_remove_peer(wma, mac_addr, vdev_id, peer, false);
+
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		WMA_LOGE(FL("wma_remove_peer failed"));
+		wma_cleanup_target_req_param(req_msg);
+		return -EINVAL;
+	}
+
+	if (wmi_service_enabled(wma->wmi_handle,
+				wmi_service_sync_delete_cmds)) {
 		WMA_LOGD(FL("Wait for the peer delete. vdev_id %d"),
-				 req_msg->vdev_id);
-		del_req = wma_fill_hold_req(wma,
-				   req_msg->vdev_id,
-				   WMA_DELETE_STA_REQ,
-				   WMA_DELETE_PEER_RSP,
-				   params,
-				   WMA_DELETE_STA_TIMEOUT);
+			 req_msg->vdev_id);
+		del_req = wma_fill_hold_req(wma, req_msg->vdev_id,
+					    WMA_DELETE_STA_REQ,
+					    WMA_DELETE_PEER_RSP,
+					    params,
+					    WMA_DELETE_STA_TIMEOUT);
 		if (!del_req) {
 			WMA_LOGE(FL("Failed to allocate request. vdev_id %d"),
 				 req_msg->vdev_id);
@@ -2133,6 +2139,7 @@ __wma_vdev_stop_resp_handler(wmi_vdev_stopped_event_fixed_param *resp_event)
 	struct wma_txrx_node *iface;
 	int status = 0;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	QDF_STATUS qdf_status;
 
 	if (!wma) {
 		WMA_LOGE("%s: wma is null", __func__);
@@ -2221,8 +2228,15 @@ __wma_vdev_stop_resp_handler(wmi_vdev_stopped_event_fixed_param *resp_event)
 		if (peer) {
 			WMA_LOGP(FL("Deleting peer %pM vdev id %d"),
 				 params->bssid, req_msg->vdev_id);
-			wma_remove_peer(wma, params->bssid, req_msg->vdev_id,
-				peer, false);
+			qdf_status = wma_remove_peer(wma, params->bssid,
+						     req_msg->vdev_id,
+						     peer, false);
+			if (QDF_IS_STATUS_ERROR(qdf_status)) {
+				WMA_LOGE(FL("wma_remove_peer failed"));
+				status = -EINVAL;
+				params->status = QDF_STATUS_E_FAILURE;
+				goto set_link_rsp;
+			}
 			if (wmi_service_enabled(wma->wmi_handle,
 				    wmi_service_sync_delete_cmds)) {
 				WMA_LOGI(FL("Wait for the peer delete. vdev_id %d"),
@@ -2242,6 +2256,8 @@ __wma_vdev_stop_resp_handler(wmi_vdev_stopped_event_fixed_param *resp_event)
 				}
 			}
 		}
+
+set_link_rsp:
 #ifdef CONFIG_VDEV_SM
 		wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
 					      WLAN_VDEV_SM_EV_MLME_DOWN_REQ,
@@ -5309,6 +5325,7 @@ static void wma_delete_sta_req_ap_mode(tp_wma_handle wma,
 	struct wma_target_req *msg;
 	uint8_t *peer_mac_addr;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	QDF_STATUS qdf_status;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
@@ -5328,8 +5345,13 @@ static void wma_delete_sta_req_ap_mode(tp_wma_handle wma,
 	}
 	peer_mac_addr = cdp_peer_get_peer_mac_addr(soc, peer);
 
-	wma_remove_peer(wma, peer_mac_addr, del_sta->smesessionId, peer,
-			false);
+	qdf_status = wma_remove_peer(wma, peer_mac_addr, del_sta->smesessionId,
+				     peer, false);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		WMA_LOGE(FL("wma_remove_peer failed"));
+		del_sta->status = QDF_STATUS_E_FAILURE;
+		goto send_del_rsp;
+	}
 	del_sta->status = QDF_STATUS_SUCCESS;
 
 	if (wmi_service_enabled(wma->wmi_handle,
@@ -5403,6 +5425,7 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	if (status < 0) {
 		WMA_LOGE("%s: wma_update_tdls_peer_state returned failure",
 				__func__);
+		del_sta->status = QDF_STATUS_E_FAILURE;
 		goto send_del_rsp;
 	}
 
