@@ -164,7 +164,7 @@
 
 /*
  * <ini>
- * gLowerrBrssiThresh - Sets Lower threshold for beacon RSSI
+ * gLowerBrssiThresh - Sets Lower threshold for beacon RSSI
  * @Min: 6
  * @Max: 36
  * @Default: 26

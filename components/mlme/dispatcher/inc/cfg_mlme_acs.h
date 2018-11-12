@@ -127,7 +127,7 @@
 
 /*
  * <ini>
- * external_acs_policy - External ACS policy control
+ * acs_policy - External ACS policy control
  * @Min: 0
  * @Max: 1
  * @Default: 0

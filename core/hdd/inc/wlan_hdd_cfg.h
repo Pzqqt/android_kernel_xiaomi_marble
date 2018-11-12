@@ -2900,7 +2900,7 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * enable_bt_chain_separation - Enables/disables bt /wlan chainmask assignment
+ * enableBTChainSeparation - Enables/disables bt /wlan chainmask assignment
  * @Min: 0
  * @Max: 1
  * @Default: 0
@@ -3327,7 +3327,7 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gConfigVCmodeBitmap - Bitmap for operating voltage corner mode
+ * gConfigVCmode - Bitmap for operating voltage corner mode
  * @Min: 0x00000000
  * @Max: 0x0fffffff
  * @Default: 0x0000000a
@@ -5610,7 +5610,7 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * sticky_time - Stick time after roaming to new AP by BTM
+ * btm_sticky_time - Stick time after roaming to new AP by BTM
  * @Min: 0
  * @Max: 0x0000FFFF
  * @Default: 300

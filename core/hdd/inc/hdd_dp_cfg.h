@@ -427,7 +427,7 @@
 
 /*
  * <ini>
- * gEnableTcpLimitOutput - Control to enable TCP limit output byte
+ * gTcpLimitOutputEnable - Control to enable TCP limit output byte
  * @Default: true
  *
  * This ini is used to enable dynamic configuration of TCP limit output bytes
