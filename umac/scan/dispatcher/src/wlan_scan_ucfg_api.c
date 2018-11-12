@@ -1847,6 +1847,9 @@ end:
 	if (scan_freqs)
 		qdf_mem_free(scan_freqs);
 
+	if (reg_chan_list)
+		qdf_mem_free(reg_chan_list);
+
 	return QDF_STATUS_SUCCESS;
 }
 
