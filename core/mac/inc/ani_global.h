@@ -122,27 +122,6 @@ static inline mac_handle_t MAC_HANDLE(tpAniSirGlobal mac)
 /* Minimum size of vendor IE = 3 bytes of oui_data + 1 byte of data */
 #define IE_VENDOR_OUI_SIZE   (4)
 
-/*
- * NSS cfg bit definition.
- * STA          BIT[0:1]
- * SAP          BIT[2:3]
- * P2P_GO       BIT[4:5]
- * P2P_CLIENT   BIT[6:7]
- * IBSS         BIT[8:9]
- * TDLS         BIT[10:11]
- * P2P_DEVICE   BIT[12:13]
- * OCB          BIT[14:15]
- */
-
-#define CFG_STA_NSS(_x)     ((((_x) >> 0) & 0x3) ? (((_x) >> 0) & 0x3) : 1)
-#define CFG_SAP_NSS(_x)     ((((_x) >> 2) & 0x3) ? (((_x) >> 2) & 0x3) : 1)
-#define CFG_P2P_GO_NSS(_x)  ((((_x) >> 4) & 0x3) ? (((_x) >> 4) & 0x3) : 1)
-#define CFG_P2P_CLI_NSS(_x) ((((_x) >> 6) & 0x3) ? (((_x) >> 6) & 0x3) : 1)
-#define CFG_IBSS_NSS(_x)    ((((_x) >> 8) & 0x3) ? (((_x) >> 8) & 0x3) : 1)
-#define CFG_TDLS_NSS(_x)    ((((_x) >> 10) & 0x3) ? (((_x) >> 10) & 0x3) : 1)
-#define CFG_P2P_DEV_NSS(_x) ((((_x) >> 12) & 0x3) ? (((_x) >> 12) & 0x3) : 1)
-#define CFG_OCB_NSS(_x)     ((((_x) >> 14) & 0x3) ? (((_x) >> 14) & 0x3) : 1)
-
 /**
  * enum log_event_type - Type of event initiating bug report
  * @WLAN_LOG_TYPE_NON_FATAL: Non fatal event

@@ -4775,7 +4775,7 @@ QDF_STATUS sme_oem_data_req(mac_handle_t hal, struct oem_data_req *hdd_oem_req)
 #define SAP_NSS_CHAINS_SHIFT               3
 #define P2P_GO_NSS_CHAINS_SHIFT            6
 #define P2P_CLI_CHAINS_SHIFT               9
-#define TDLS_CHAINS_SHIFT                  12
+#define TDLS_NSS_CHAINS_SHIFT              12
 #define IBSS_NSS_CHAINS_SHIFT              15
 #define P2P_DEV_NSS_CHAINS_SHIFT           18
 #define OCB_NSS_CHAINS_SHIFT               21
@@ -4800,6 +4800,8 @@ static uint8_t sme_get_nss_chain_shift(enum QDF_OPMODE device_mode)
 		return P2P_DEV_NSS_CHAINS_SHIFT;
 	case QDF_OCB_MODE:
 		return OCB_NSS_CHAINS_SHIFT;
+	case QDF_TDLS_MODE:
+		return TDLS_NSS_CHAINS_SHIFT;
 
 	default:
 		sme_err("Device mode %d invalid", device_mode);
@@ -14704,7 +14706,6 @@ void sme_set_pdev_ht_vht_ies(mac_handle_t hal, bool enable2x2)
 /**
  * sme_update_vdev_type_nss() - sets the nss per vdev type
  * @hal: Pointer to HAL
- * @max_supp_nss: max_supported Nss
  * @band: 5G or 2.4G band
  *
  * Sets the per band Nss for each vdev type based on INI and configured
@@ -14713,27 +14714,51 @@ void sme_set_pdev_ht_vht_ies(mac_handle_t hal, bool enable2x2)
  * Return: None
  */
 void sme_update_vdev_type_nss(mac_handle_t hal, uint8_t max_supp_nss,
-		uint32_t vdev_type_nss, enum band_info band)
+			      enum nss_chains_band_info band)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct vdev_type_nss *vdev_nss;
 
-	if (BAND_5G == band)
+	struct wlan_mlme_nss_chains *nss_chains_ini_cfg =
+					&mac_ctx->mlme_cfg->nss_chains_ini_cfg;
+
+	if (band == NSS_CHAINS_BAND_5GHZ)
 		vdev_nss = &mac_ctx->vdev_type_nss_5g;
 	else
 		vdev_nss = &mac_ctx->vdev_type_nss_2g;
 
-	vdev_nss->sta = QDF_MIN(max_supp_nss, CFG_STA_NSS(vdev_type_nss));
-	vdev_nss->sap = QDF_MIN(max_supp_nss, CFG_SAP_NSS(vdev_type_nss));
-	vdev_nss->p2p_go = QDF_MIN(max_supp_nss,
-				CFG_P2P_GO_NSS(vdev_type_nss));
-	vdev_nss->p2p_cli = QDF_MIN(max_supp_nss,
-				CFG_P2P_CLI_NSS(vdev_type_nss));
-	vdev_nss->p2p_dev = QDF_MIN(max_supp_nss,
-				CFG_P2P_DEV_NSS(vdev_type_nss));
-	vdev_nss->ibss = QDF_MIN(max_supp_nss, CFG_IBSS_NSS(vdev_type_nss));
-	vdev_nss->tdls = QDF_MIN(max_supp_nss, CFG_TDLS_NSS(vdev_type_nss));
-	vdev_nss->ocb = QDF_MIN(max_supp_nss, CFG_OCB_NSS(vdev_type_nss));
+	vdev_nss->sta = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
+						nss_chains_ini_cfg->
+							num_rx_chains[band],
+						STA_NSS_CHAINS_SHIFT));
+	vdev_nss->sap = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
+						nss_chains_ini_cfg->
+							num_rx_chains[band],
+						SAP_NSS_CHAINS_SHIFT));
+	vdev_nss->p2p_go = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
+						nss_chains_ini_cfg->
+							num_rx_chains[band],
+						P2P_GO_NSS_CHAINS_SHIFT));
+	vdev_nss->p2p_cli = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
+						nss_chains_ini_cfg->
+							num_rx_chains[band],
+						P2P_CLI_CHAINS_SHIFT));
+	vdev_nss->p2p_dev = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
+						nss_chains_ini_cfg->
+							num_rx_chains[band],
+						P2P_DEV_NSS_CHAINS_SHIFT));
+	vdev_nss->ibss = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
+						nss_chains_ini_cfg->
+							num_rx_chains[band],
+						IBSS_NSS_CHAINS_SHIFT));
+	vdev_nss->tdls = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
+						nss_chains_ini_cfg->
+							num_rx_chains[band],
+						TDLS_NSS_CHAINS_SHIFT));
+	vdev_nss->ocb = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
+						nss_chains_ini_cfg->
+							num_rx_chains[band],
+						OCB_NSS_CHAINS_SHIFT));
 
 	sme_debug("band %d NSS:sta %d sap %d cli %d go %d dev %d ibss %d tdls %d ocb %d",
 		band, vdev_nss->sta, vdev_nss->sap, vdev_nss->p2p_cli,

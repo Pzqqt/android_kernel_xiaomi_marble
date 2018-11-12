@@ -1372,13 +1372,18 @@ static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
 	struct tdls_start_params tdls_cfg;
-	struct hdd_config *cfg = hdd_ctx->config;
 	QDF_STATUS status;
+	struct wlan_mlme_nss_chains vdev_ini_cfg;
+
+	/* Populate the nss chain params from ini for this vdev type */
+	sme_populate_nss_chain_params(hdd_ctx->mac_handle, &vdev_ini_cfg,
+				      QDF_TDLS_MODE,
+				      hdd_ctx->num_rf_chains);
 
 	cfg_tdls_set_vdev_nss_2g(hdd_ctx->psoc,
-				 CFG_TDLS_NSS(cfg->vdev_type_nss_2g));
+				 vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_2GHZ]);
 	cfg_tdls_set_vdev_nss_5g(hdd_ctx->psoc,
-				 CFG_TDLS_NSS(cfg->vdev_type_nss_5g));
+				 vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_5GHZ]);
 	tdls_cfg.tdls_send_mgmt_req = eWNI_SME_TDLS_SEND_MGMT_REQ;
 	tdls_cfg.tdls_add_sta_req = eWNI_SME_TDLS_ADD_STA_REQ;
 	tdls_cfg.tdls_del_sta_req = eWNI_SME_TDLS_DEL_STA_REQ;
@@ -1505,7 +1510,6 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
  */
 static void hdd_update_vdev_nss(struct hdd_context *hdd_ctx)
 {
-	struct hdd_config *cfg_ini = hdd_ctx->config;
 	uint8_t max_supp_nss = 1;
 	mac_handle_t mac_handle;
 	QDF_STATUS status;
@@ -1517,16 +1521,15 @@ static void hdd_update_vdev_nss(struct hdd_context *hdd_ctx)
 
 	if (bval && !cds_is_sub_20_mhz_enabled())
 		max_supp_nss = 2;
-	hdd_debug("max nss %d vdev_type_nss_2g %x vdev_type_nss_5g %x",
-		  max_supp_nss, cfg_ini->vdev_type_nss_2g,
-		  cfg_ini->vdev_type_nss_5g);
+
+	hdd_debug("max nss %d", max_supp_nss);
 
 	mac_handle = hdd_ctx->mac_handle;
 	sme_update_vdev_type_nss(mac_handle, max_supp_nss,
-				 cfg_ini->vdev_type_nss_2g, BAND_2G);
+				 NSS_CHAINS_BAND_2GHZ);
 
 	sme_update_vdev_type_nss(mac_handle, max_supp_nss,
-				 cfg_ini->vdev_type_nss_5g, BAND_5G);
+				 NSS_CHAINS_BAND_5GHZ);
 }
 
 /**
@@ -14133,20 +14136,21 @@ QDF_STATUS hdd_update_score_config(
 {
 	struct hdd_config *cfg = hdd_ctx->config;
 	QDF_STATUS status;
+	struct wlan_mlme_nss_chains vdev_ini_cfg;
 	bool bval = false;
+
+	/* Populate the nss chain params from ini for this vdev type */
+	sme_populate_nss_chain_params(hdd_ctx->mac_handle, &vdev_ini_cfg,
+				      QDF_STA_MODE,
+				      hdd_ctx->num_rf_chains);
+
+	score_config->vdev_nss_24g = vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_2GHZ];
+	score_config->vdev_nss_24g = vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_5GHZ];
 
 	sme_update_score_config(hdd_ctx->mac_handle, score_config);
 
 	score_config->cb_mode_24G = cfg->nChannelBondingMode24GHz;
 	score_config->cb_mode_5G = cfg->nChannelBondingMode5GHz;
-
-	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("unable to get vht_enable2x2");
-	score_config->vdev_nss_24g =
-		bval ? CFG_STA_NSS(cfg->vdev_type_nss_2g) : 1;
-	score_config->vdev_nss_5g =
-		bval ? CFG_STA_NSS(cfg->vdev_type_nss_5g) : 1;
 
 	if (cfg->dot11Mode == eHDD_DOT11_MODE_AUTO ||
 	    cfg->dot11Mode == eHDD_DOT11_MODE_11ax ||

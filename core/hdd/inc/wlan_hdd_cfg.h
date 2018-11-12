@@ -3132,98 +3132,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gVdevTypeNss_2g - set Number of streams per VDEV for 2G band.
- * @Min: 0x5555
- * @Max: 0xAAAA
- * @Default: 0xAAAA
- *
- * This ini is  used to set set Number of streams per VDEV for 2G band
- *
- * These Nss parameters will have 32-bit configuration value, 2 bits are
- * allocated for each vdev.
- * Valid values are:
- * Min value – 0x5555
- * Max value – 0xAAAA
- * Default value will be 0xAAAA for both the parameters.
- * Value 0x5555 will configure all vdevs in 1x1 mode in 2.4G band.
- * Value 0xAAAA will configure all vdevs in 2x2 mode in 2.4G band.
- *
- * The max value is defined based on the valid max Nss of the vdev, the valid
- * values for each vdev 2-bits are 0x1 and 0x2. 0x3 and 0x0 are not valid vdev
- * Nss values.
- *
- * NSS cfg bit definition.
- * STA          BIT[0:1]
- * SAP          BIT[2:3]
- * P2P_GO       BIT[4:5]
- * P2P_CLIENT   BIT[6:7]
- * IBSS         BIT[8:9]
- * TDLS         BIT[10:11]
- * P2P_DEVICE   BIT[12:13]
- * OCB          BIT[14:15]
- *
- * Related: NA
- *
- * Supported Feature: Antenna Sharing
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_VDEV_TYPE_NSS_2G         "gVdevTypeNss_2g"
-#define CFG_VDEV_TYPE_NSS_2G_MIN     (0x5555)
-#define CFG_VDEV_TYPE_NSS_2G_MAX     (0xAAAA)
-#define CFG_VDEV_TYPE_NSS_2G_DEFAULT (0xAAAA)
-
-/*
- * <ini>
- * gVdevTypeNss_5g - set Number of streams per VDEV for 5G band.
- * @Min: 0x5555
- * @Max: 0xAAAA
- * @Default: 0xAAAA
- *
- * This ini is  used to set set Number of streams per VDEV for 2G band
- *
- * These Nss parameters will have 32-bit configuration value, 2 bits are
- * allocated for each vdev.
- * Valid values are:
- * Min value – 0x5555
- * Max value – 0xAAAA
- * Default value will be 0xAAAA for both the parameters.
- * Value 0x5555 will configure all vdevs in 1x1 mode in 5 band.
- * Value 0xAAAA will configure all vdevs in 2x2 mode in 5 band.
- *
- * The max value is defined based on the valid max Nss of the vdev, the valid
- * values for each vdev 2-bits are 0x1 and 0x2. 0x3 and 0x0 are not valid vdev
- * Nss values.
- *
- * NSS cfg bit definition.
- * STA          BIT[0:1]
- * SAP          BIT[2:3]
- * P2P_GO       BIT[4:5]
- * P2P_CLIENT   BIT[6:7]
- * IBSS         BIT[8:9]
- * TDLS         BIT[10:11]
- * P2P_DEVICE   BIT[12:13]
- * OCB          BIT[14:15]
- *
- * Related: NA
- *
- * Supported Feature: Antenna Sharing
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_VDEV_TYPE_NSS_5G         "gVdevTypeNss_5g"
-#define CFG_VDEV_TYPE_NSS_5G_MIN     (0x5555)
-#define CFG_VDEV_TYPE_NSS_5G_MAX     (0xAAAA)
-#define CFG_VDEV_TYPE_NSS_5G_DEFAULT (0xAAAA)
-
-/*
- * <ini>
  * gDisableDFSChSwitch - Disable channel switch if radar is found
  * @Min: 0
  * @Max: 1
@@ -6774,8 +6682,6 @@ struct hdd_config {
 	uint32_t bad_peer_tput_ieee80211ac;
 	uint32_t bad_peer_limit_ieee80211ac;
 #endif
-	uint32_t vdev_type_nss_2g;
-	uint32_t vdev_type_nss_5g;
 	bool enableFirstScan2GOnly;
 	uint8_t enable_tx_ldpc;
 	uint8_t enable_rx_ldpc;

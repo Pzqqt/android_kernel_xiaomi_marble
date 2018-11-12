@@ -1773,8 +1773,9 @@ void sme_set_vdev_ies_per_band(mac_handle_t hal, uint8_t vdev_id);
 void sme_set_pdev_ht_vht_ies(mac_handle_t mac_handle, bool enable2x2);
 
 void sme_update_vdev_type_nss(mac_handle_t hal, uint8_t max_supp_nss,
-		uint32_t vdev_type_nss, enum band_info band);
+			      enum nss_chains_band_info band);
 void sme_update_hw_dbs_capable(mac_handle_t hal, uint8_t hw_dbs_capable);
+
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD
 void sme_register_p2p_lo_event(mac_handle_t mac_handle, void *context,
 					p2p_lo_callback callback);
