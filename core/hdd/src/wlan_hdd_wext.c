@@ -4448,6 +4448,15 @@ static int hdd_we_set_vht_rate(struct hdd_adapter *adapter, int rate_code)
 	return errno;
 }
 
+static int hdd_we_set_ampdu(struct hdd_adapter *adapter, int ampdu)
+{
+	hdd_debug("AMPDU %d", ampdu);
+
+	return wma_cli_set_command(adapter->session_id,
+				   GEN_VDEV_PARAM_AMPDU,
+				   ampdu, GEN_CMD);
+}
+
 static int hdd_we_set_amsdu(struct hdd_adapter *adapter, int amsdu)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -5217,13 +5226,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_AMPDU:
-	{
-		hdd_debug("SET AMPDU val %d", set_value);
-		ret = wma_cli_set_command(adapter->session_id,
-					  GEN_VDEV_PARAM_AMPDU,
-					  set_value, GEN_CMD);
+		ret = hdd_we_set_ampdu(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_AMSDU:
 		ret = hdd_we_set_amsdu(adapter, set_value);
