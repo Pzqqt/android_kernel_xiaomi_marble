@@ -5119,6 +5119,21 @@ static int hdd_we_set_scan_disable(struct hdd_adapter *adapter, int value)
 	return 0;
 }
 
+static int hdd_we_set_conc_system_pref(struct hdd_adapter *adapter,
+				       int preference)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	hdd_debug("%d", preference);
+
+	if (!hdd_ctx->psoc)
+		return -EINVAL;
+
+	ucfg_policy_mgr_set_sys_pref(hdd_ctx->psoc, preference);
+
+	return 0;
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -5487,9 +5502,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_CONC_SYSTEM_PREF:
-		hdd_debug("New preference: %d", set_value);
-		ucfg_policy_mgr_set_sys_pref(hdd_ctx->psoc, set_value);
+		ret = hdd_we_set_conc_system_pref(adapter, set_value);
 		break;
+
 	case WE_SET_11AX_RATE:
 		ret = hdd_set_11ax_rate(adapter, set_value, NULL);
 		break;
