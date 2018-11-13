@@ -2162,6 +2162,14 @@ cppflags-y += -DSYNC_IPA_READY
 endif
 
 ifeq ($(CONFIG_ARCH_SDXPOORWILLS), y)
+CONFIG_FEATURE_SG := y
+endif
+
+ifeq ($(CONFIG_ARCH_MSM8996), y)
+CONFIG_FEATURE_SG := y
+endif
+
+ifeq ($(CONFIG_FEATURE_SG), y)
 cppflags-y += -DFEATURE_SG
 endif
 
