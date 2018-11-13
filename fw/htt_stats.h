@@ -362,7 +362,7 @@ typedef enum {
     HTT_STATS_TX_DE_FW2WBM_RING_FULL_HIST_TAG           = 85,    /* htt_tx_de_fw2wbm_ring_full_hist_tlv */
     HTT_STATS_SCHED_TXQ_SCHED_ORDER_SU_TAG              = 86,    /* htt_sched_txq_sched_order_su_tlv */
     HTT_STATS_SCHED_TXQ_SCHED_INELIGIBILITY_TAG         = 87,    /* htt_sched_txq_sched_eligibility_tlv */
-    HTT_STATS_PDEV_OBSS_PD_TAG                          = 88,    /* htt_pdev_obss_pd_stats_tlv */  
+    HTT_STATS_PDEV_OBSS_PD_TAG                          = 88,    /* htt_pdev_obss_pd_stats_tlv */
 
     HTT_STATS_MAX_TAG,
 } htt_tlv_tag_t;
@@ -3612,11 +3612,11 @@ typedef struct {
 
 typedef struct {
     htt_tlv_hdr_t   tlv_hdr;
- 
+
     A_UINT32        num_obss_tx_ppdu_success;
     A_UINT32        num_obss_tx_ppdu_failure;
 } htt_pdev_obss_pd_stats_tlv;
- 
+
 /* NOTE:
  * This structure is for documentation, and cannot be safely used directly.
  * Instead, use the constituent TLV structures to fill/parse.

@@ -403,6 +403,8 @@ typedef enum {
     WMI_PDEV_DMA_RING_CFG_REQ_CMDID,
     /* enable/disable Action frame response as HE TB PPDU */
     WMI_PDEV_HE_TB_ACTION_FRM_CMDID,
+    /** filter packet log based on MAC address */
+    WMI_PDEV_PKTLOG_FILTER_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -5782,6 +5784,11 @@ typedef enum {
     WMI_PKTLOG_ENABLE_FORCE = 1, /* pktlog unconditionally enabled */
 } WMI_PKTLOG_ENABLE;
 
+typedef enum {
+    WMI_PKTLOG_FILTER_IN  = 0, /* capture only for the MAC addresses in pktlog_mac_addr_list*/
+    WMI_PKTLOG_FILTER_OUT = 1, /* capture for all MAC addresses except those in pktlog_mac_addr_list */
+} WMI_PKTLOG_FILTER_TYPE;
+
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_pktlog_enable_cmd_fixed_param */
     /** pdev_id for identifying the MAC
@@ -5799,6 +5806,32 @@ typedef struct {
      */
     A_UINT32 pdev_id;
 } wmi_pdev_pktlog_disable_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
+    *  WMITLV_TAG_STRUC_wmi_pdev_pktlog_filter_info */
+    A_UINT32 tlv_header;
+    /** mac addr of the peer to be filtered */
+    wmi_mac_addr peer_mac_address;
+} wmi_pdev_pktlog_filter_info;
+
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_pktlog_filter_cmd_fixed_param */
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32 pdev_id;
+    /** 0 - disable filtering, 1 - enable filtering */
+    A_UINT32 enable;
+    A_UINT32 filter_type; /* WMI_PKTLOG_FILTER_TYPE */
+    A_UINT32 num_of_mac_addresses;
+    /* This TLV is followed by another TLV of array of structs
+     * wmi_pdev_pktlog_filter_info pdev_pktlog_filter_info[];
+     */
+} wmi_pdev_pktlog_filter_cmd_fixed_param;
+
+
+
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_mib_stats_enable_cmd_fixed_param */
@@ -22566,6 +22599,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_CHAINMASK_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_BCN_OFFLOAD_QUIET_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_NDP_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_PKTLOG_FILTER_CMDID);
     }
 
     return "Invalid WMI cmd";
