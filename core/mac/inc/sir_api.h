@@ -45,6 +45,7 @@ typedef struct mac_context *tpAniSirGlobal;
 #include "wlan_reg_services_api.h"
 #include <dot11f.h>
 #include "wlan_policy_mgr_api.h"
+#include "wlan_tdls_public_structs.h"
 
 #ifndef SIR_MAX_SUPPORTED_BSS
 #define SIR_MAX_SUPPORTED_BSS 5
@@ -3030,12 +3031,6 @@ typedef struct sSirTdlsSendMgmtReq {
 	uint8_t addIe[1];
 } tSirTdlsSendMgmtReq, *tpSirSmeTdlsSendMgmtReq;
 
-typedef enum TdlsAddOper {
-	TDLS_OPER_NONE,
-	TDLS_OPER_ADD,
-	TDLS_OPER_UPDATE
-} eTdlsAddOper;
-
 /* TDLS Request struct SME-->PE */
 typedef struct sSirTdlsAddStaReq {
 	uint16_t messageType;   /* eWNI_SME_TDLS_DISCOVERY_START_REQ */
@@ -3044,7 +3039,7 @@ typedef struct sSirTdlsAddStaReq {
 	uint16_t transactionId; /* Transaction ID for cmd */
 	/* For multi-session, for PE to locate peSession ID */
 	struct qdf_mac_addr bssid;
-	eTdlsAddOper tdlsAddOper;
+	enum tdls_add_oper tdlsAddOper;
 	struct qdf_mac_addr peermac;
 	uint16_t capability;
 	uint8_t extn_capability[SIR_MAC_MAX_EXTN_CAP];
@@ -3067,7 +3062,7 @@ typedef struct sSirTdlsAddStaRsp {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t staId;
 	uint16_t staType;
-	eTdlsAddOper tdlsAddOper;
+	enum tdls_add_oper tdlsAddOper;
 	struct wlan_objmgr_psoc *psoc;
 } tSirTdlsAddStaRsp;
 

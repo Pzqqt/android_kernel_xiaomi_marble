@@ -97,7 +97,7 @@ typedef struct TdlsLinkEstablishInfo {
 } tTdlsLinkEstablishCmdInfo;
 
 typedef struct TdlsAddStaInfo {
-	eTdlsAddOper tdlsAddOper;
+	enum tdls_add_oper tdlsAddOper;
 	struct qdf_mac_addr peermac;
 	uint16_t capability;
 	uint8_t extnCapability[SIR_MAC_MAX_EXTN_CAP];
