@@ -436,6 +436,26 @@
 
 /*
  * <ini>
+ * wake_lock_in_user_scan - use wake lock during user scan
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to define if wake lock is held used during user scan req
+ *
+ * Related: Scan
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_WAKE_LOCK_IN_SCAN CFG_INI_BOOL( \
+				"wake_lock_in_user_scan", \
+				false, \
+				"use wake lock during scan")
+
+/*
+ * <ini>
  * gIdleTimeConc - Data inactivity time in msec.
  * @Min: 0
  * @Max: 25
@@ -464,6 +484,7 @@
 
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
+	CFG(CFG_ENABLE_WAKE_LOCK_IN_SCAN) \
 	CFG(CFG_ACTIVE_MAX_CHANNEL_TIME) \
 	CFG(CFG_ENABLE_DFS_SCAN) \
 	CFG(CFG_INITIAL_NO_DFS_SCAN) \

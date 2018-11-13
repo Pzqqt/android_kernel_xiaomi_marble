@@ -779,6 +779,15 @@ void ucfg_scan_cfg_set_dfs_chan_scan_allowed(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_scan_wake_lock_in_user_scan() - API to determine if wake lock in user
+ * scan is used.
+ * @psoc: pointer to psoc object
+ *
+ * Return: true if wake lock in user scan is required
+ */
+bool ucfg_scan_wake_lock_in_user_scan(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_scan_cfg_get_conc_max_resttime() - API to get max rest time
  * @psoc: pointer to psoc object
  * @rest_time: scan concurrent max resttime

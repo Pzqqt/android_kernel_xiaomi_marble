@@ -1475,6 +1475,8 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 				!cfg_get(psoc, CFG_INITIAL_NO_DFS_SCAN);
 	scan_obj->scan_def.allow_dfs_chan_in_scan =
 				cfg_get(psoc, CFG_ENABLE_DFS_SCAN);
+	scan_obj->scan_def.use_wake_lock_in_user_scan =
+				cfg_get(psoc, CFG_ENABLE_WAKE_LOCK_IN_SCAN);
 	scan_obj->scan_def.active_dwell_2g =
 			 cfg_get(psoc, CFG_ACTIVE_MAX_2G_CHANNEL_TIME);
 	scan_obj->scan_def.passive_dwell =
@@ -2317,6 +2319,17 @@ bool ucfg_scan_get_bt_activity(struct wlan_objmgr_psoc *psoc)
 	}
 
 	return scan_obj->bt_a2dp_enabled;
+}
+
+bool ucfg_scan_wake_lock_in_user_scan(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return false;
+
+	return scan_obj->scan_def.use_wake_lock_in_user_scan;
 }
 
 QDF_STATUS

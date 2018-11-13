@@ -279,6 +279,7 @@ struct extscan_def_config {
  * @active_dwell: default active dwell time
  * @allow_dfs_chan_in_first_scan: first scan should contain dfs channels or not.
  * @allow_dfs_chan_in_scan: Scan DFS channels or not.
+ * @use_wake_lock_in_user_scan: if wake lock will be acquired during user scan
  * @active_dwell_2g: default active dwell time for 2G channels, if it's not zero
  * @passive_dwell:default passive dwell time
  * @max_rest_time: default max rest time
@@ -356,6 +357,7 @@ struct scan_default_params {
 	uint32_t active_dwell;
 	bool allow_dfs_chan_in_first_scan;
 	bool allow_dfs_chan_in_scan;
+	bool use_wake_lock_in_user_scan;
 	uint32_t active_dwell_2g;
 	uint32_t passive_dwell;
 	uint32_t max_rest_time;
