@@ -729,7 +729,7 @@ static int msm_lsm_check_and_set_lab_controls(struct snd_pcm_substream *substrea
 	struct lsm_priv *prtd = runtime->private_data;
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	struct lsm_hw_params *out_hw_params = &prtd->lsm_client->out_hw_params;
-	u8 chmap[out_hw_params->num_chs];
+	u8 *chmap = NULL;
 	u32 ch_idx;
 	int rc = 0, stage_idx = p_info->stage_idx;
 
@@ -740,11 +740,15 @@ static int msm_lsm_check_and_set_lab_controls(struct snd_pcm_substream *substrea
 		return rc;
 	}
 
+	chmap = kzalloc(out_hw_params->num_chs, GFP_KERNEL);
+	if (!chmap)
+		return -ENOMEM;
+
 	rc = q6lsm_lab_control(prtd->lsm_client, enable, p_info);
 	if (rc) {
 		dev_err(rtd->dev, "%s: Failed to set lab_control param, err = %d\n",
 			__func__, rc);
-		return rc;
+		goto fail;
 	} else {
 		if (LSM_IS_LAST_STAGE(prtd->lsm_client, stage_idx)) {
 			rc = msm_lsm_lab_buffer_alloc(prtd,
@@ -753,7 +757,7 @@ static int msm_lsm_check_and_set_lab_controls(struct snd_pcm_substream *substrea
 				dev_err(rtd->dev,
 					"%s: msm_lsm_lab_buffer_alloc failed rc %d for %s\n",
 					__func__, rc, enable ? "ALLOC" : "DEALLOC");
-				return rc;
+				goto fail;
 			} else {
 				/* set client level flag based on last stage control */
 				prtd->lsm_client->lab_enable = enable;
@@ -763,7 +767,6 @@ static int msm_lsm_check_and_set_lab_controls(struct snd_pcm_substream *substrea
 			prtd->lsm_client->stage_cfg[stage_idx].lab_enable = enable;
 	}
 
-	memset(chmap, 0, out_hw_params->num_chs);
 	/*
 	 * First channel to be read from lab is always the
 	 * best channel (0xff). For second channel onwards,
@@ -778,6 +781,8 @@ static int msm_lsm_check_and_set_lab_controls(struct snd_pcm_substream *substrea
 		dev_err(rtd->dev, "%s: Failed to set lab out ch cfg %d\n",
 			__func__, rc);
 
+fail:
+	kfree(chmap);
 	return rc;
 }
 
