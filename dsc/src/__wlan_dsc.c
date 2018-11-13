@@ -20,6 +20,7 @@
 #include "qdf_mem.h"
 #include "qdf_status.h"
 #include "qdf_str.h"
+#include "qdf_threads.h"
 #include "qdf_timer.h"
 #include "__wlan_dsc.h"
 
@@ -28,6 +29,7 @@ static void __dsc_dbg_op_timeout(void *opaque_op)
 {
 	struct dsc_op *op = opaque_op;
 
+	qdf_print_thread_trace(op->thread);
 	QDF_DEBUG_PANIC("Operation '%s' exceeded %ums",
 			op->func, DSC_OP_TIMEOUT_MS);
 }
@@ -70,6 +72,7 @@ static QDF_STATUS __dsc_dbg_ops_insert(struct dsc_ops *ops, const char *func)
 	if (!op)
 		return QDF_STATUS_E_NOMEM;
 
+	op->thread = qdf_get_current_task();
 	status = qdf_timer_init(NULL, &op->timeout_timer, __dsc_dbg_op_timeout,
 				op, QDF_TIMER_TYPE_SW);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -175,6 +178,7 @@ static void __dsc_dbg_trans_timeout(void *opaque_trans)
 {
 	struct dsc_trans *trans = opaque_trans;
 
+	qdf_print_thread_trace(trans->thread);
 	QDF_DEBUG_PANIC("Transition '%s' exceeded %ums",
 			trans->active_desc, DSC_TRANS_TIMEOUT_MS);
 }
@@ -189,6 +193,7 @@ static QDF_STATUS __dsc_dbg_trans_timeout_start(struct dsc_trans *trans)
 {
 	QDF_STATUS status;
 
+	trans->thread = qdf_get_current_task();
 	status = qdf_timer_init(NULL, &trans->timeout_timer,
 				__dsc_dbg_trans_timeout, trans,
 				QDF_TIMER_TYPE_SW);
@@ -216,6 +221,7 @@ static void __dsc_dbg_tran_wait_timeout(void *opaque_tran)
 {
 	struct dsc_tran *tran = opaque_tran;
 
+	qdf_print_thread_trace(tran->thread);
 	QDF_DEBUG_PANIC("Transition '%s' waited more than %ums",
 			tran->desc, DSC_TRANS_WAIT_TIMEOUT_MS);
 }
@@ -230,6 +236,7 @@ static QDF_STATUS __dsc_dbg_tran_wait_timeout_start(struct dsc_tran *tran)
 {
 	QDF_STATUS status;
 
+	tran->thread = qdf_get_current_task();
 	status = qdf_timer_init(NULL, &tran->timeout_timer,
 				__dsc_dbg_tran_wait_timeout, tran,
 				QDF_TIMER_TYPE_SW);

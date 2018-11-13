@@ -25,8 +25,9 @@
 
 #include "qdf_event.h"
 #include "qdf_list.h"
-#include "qdf_trace.h"
+#include "qdf_threads.h"
 #include "qdf_timer.h"
+#include "qdf_trace.h"
 #include "qdf_types.h"
 #include "wlan_dsc.h"
 
@@ -63,11 +64,13 @@ static inline bool __dsc_assert(const bool cond, const char *cond_str,
  * struct dsc_op - list node for operation tracking information
  * @node: list node
  * @timeout_timer: a timer used to detect operation timeouts
+ * @thread: the thread which started the operation
  * @func: name of the function the operation was started from
  */
 struct dsc_op {
 	qdf_list_node_t node;
 	qdf_timer_t timeout_timer;
+	qdf_thread_t *thread;
 	const char *func;
 };
 #endif /* WLAN_DSC_DEBUG */
@@ -93,6 +96,7 @@ struct dsc_ops {
  * @node: list node
  * @event: event used to wait in *_start_trans_wait() APIs
  * @timeout_timer: a timer used to detect transition wait timeouts
+ * @thread: the thread which started the transition wait
  */
 struct dsc_tran {
 	bool abort;
@@ -101,6 +105,7 @@ struct dsc_tran {
 	qdf_event_t event;
 #ifdef WLAN_DSC_DEBUG
 	qdf_timer_t timeout_timer;
+	qdf_thread_t *thread;
 #endif
 };
 
@@ -109,12 +114,14 @@ struct dsc_tran {
  * @active_desc: unique description of the current transition in progress
  * @queue: queue of pending transitions
  * @timeout_timer: a timer used to detect transition timeouts
+ * @thread: the thread which started the transition
  */
 struct dsc_trans {
 	const char *active_desc;
 	qdf_list_t queue;
 #ifdef WLAN_DSC_DEBUG
 	qdf_timer_t timeout_timer;
+	qdf_thread_t *thread;
 #endif
 };
 
