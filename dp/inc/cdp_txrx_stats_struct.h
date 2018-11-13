@@ -258,6 +258,8 @@ struct cdp_tx_stats {
 	uint32_t tx_data_success_last;
 	uint32_t tx_byte_rate;
 	uint32_t tx_data_rate;
+	uint32_t tx_data_ucast_last;
+	uint32_t tx_data_ucast_rate;
 	struct cdp_pkt_type pkt_type[DOT11_MAX];
 	uint32_t sgi_count[MAX_GI];
 

@@ -195,11 +195,6 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 
 	dp_peer_stats_notify(peer);
 
-	if (peer->stats.tx.ucast.num)
-		peer->stats.tx.last_per = ((peer->stats.tx.ucast.num -
-					peer->stats.tx.tx_success.num) * 100) /
-					peer->stats.tx.ucast.num;
-
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, pdev->soc,
 			     &peer->stats, ppdu->peer_id,

@@ -134,6 +134,7 @@ void dp_cal_client_update_peer_stats(struct cdp_peer_stats *peer_stats)
 	uint32_t temp_rx_data = peer_stats->rx.to_stack.num;
 	uint32_t temp_tx_bytes = peer_stats->tx.tx_success.bytes;
 	uint32_t temp_tx_data = peer_stats->tx.tx_success.num;
+	uint32_t temp_tx_ucast_pkts = peer_stats->tx.ucast.num;
 
 	peer_stats->rx.rx_byte_rate = temp_rx_bytes -
 					peer_stats->rx.rx_bytes_success_last;
@@ -143,11 +144,19 @@ void dp_cal_client_update_peer_stats(struct cdp_peer_stats *peer_stats)
 					peer_stats->tx.tx_bytes_success_last;
 	peer_stats->tx.tx_data_rate  = temp_tx_data -
 					peer_stats->tx.tx_data_success_last;
+	peer_stats->tx.tx_data_ucast_rate = temp_tx_ucast_pkts -
+					peer_stats->tx.tx_data_ucast_last;
 
 	peer_stats->rx.rx_bytes_success_last = temp_rx_bytes;
 	peer_stats->rx.rx_data_success_last = temp_rx_data;
 	peer_stats->tx.tx_bytes_success_last = temp_tx_bytes;
 	peer_stats->tx.tx_data_success_last = temp_tx_data;
+	peer_stats->tx.tx_data_ucast_last = temp_tx_ucast_pkts;
+
+	if (peer_stats->tx.tx_data_ucast_rate)
+		peer_stats->tx.last_per = ((peer_stats->tx.tx_data_ucast_last -
+				peer_stats->tx.tx_data_success_last) * 100) /
+				peer_stats->tx.tx_data_ucast_last;
 }
 
 qdf_export_symbol(dp_cal_client_update_peer_stats);
