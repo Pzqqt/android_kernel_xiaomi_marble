@@ -13440,6 +13440,14 @@ static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
 
 	hdd_enter();
 
+	/* This handler will be invoked before module init when the wlan driver
+	 * is loaded using 'insmod wlan.ko con_mode=5' for example. Return
+	 * success in this case, as module init will bring up the correct
+	 * con_mode when it runs.
+	 */
+	if (hdd_driver->state == driver_state_uninit)
+		return 0;
+
 	status = dsc_driver_trans_start_wait(hdd_driver->dsc_driver,
 					     "mode change");
 	if (QDF_IS_STATUS_ERROR(status)) {
