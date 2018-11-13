@@ -171,6 +171,7 @@ struct wmi_unified_attach_params {
 	osdev_t osdev;
 	enum wmi_target_type target_type;
 	bool use_cookie;
+	bool is_async_ep;
 	struct wmi_rx_ops *rx_ops;
 	struct wlan_objmgr_psoc *psoc;
 	uint16_t max_commands;

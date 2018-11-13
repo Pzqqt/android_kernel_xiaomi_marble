@@ -2554,6 +2554,7 @@ void *wmi_unified_attach(void *scn_handle,
 	}
 	wmi_handle->soc = soc;
 	wmi_handle->soc->soc_idx = param->soc_id;
+	wmi_handle->soc->is_async_ep = param->is_async_ep;
 	wmi_handle->event_id = soc->event_id;
 	wmi_handle->event_handler = soc->event_handler;
 	wmi_handle->ctx = soc->ctx;
@@ -2802,7 +2803,8 @@ static int wmi_connect_pdev_htc_service(struct wmi_soc *soc,
 		return status;
 	}
 
-	htc_set_async_ep(soc->htc_handle, response.Endpoint, 1);
+	if (soc->is_async_ep)
+		htc_set_async_ep(soc->htc_handle, response.Endpoint, true);
 
 	soc->wmi_endpoint_id[pdev_idx] = response.Endpoint;
 	soc->max_msg_len[pdev_idx] = response.MaxMsgLength;
