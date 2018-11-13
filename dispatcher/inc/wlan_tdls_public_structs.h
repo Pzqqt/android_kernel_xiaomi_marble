@@ -80,6 +80,19 @@
 #define INVALID_TDLS_PEER_ID 0xFF
 #define TDLS_STA_INDEX_CHECK(sta_id) \
 	(((sta_id) >= 0) && ((sta_id) < 0xFF))
+
+/**
+ * enum tdls_add_oper - add peer type
+ * @TDLS_OPER_NONE: none
+ * @TDLS_OPER_ADD: add new peer
+ * @TDLS_OPER_UPDATE: used to update peer
+ */
+enum tdls_add_oper {
+	TDLS_OPER_NONE,
+	TDLS_OPER_ADD,
+	TDLS_OPER_UPDATE
+};
+
 /**
  * enum tdls_conc_cap - tdls concurrency support
  * @TDLS_SUPPORTED_ONLY_ON_STA: only support sta tdls
