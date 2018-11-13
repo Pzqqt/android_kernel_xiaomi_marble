@@ -29,19 +29,6 @@
 	((TDLS_SETUP_REQUEST <= action) && \
 	(TDLS_SETUP_CONFIRM >= action))
 
-
-/**
- * enum tdls_add_oper - add peer type
- * @TDLS_OPER_NONE: none
- * @TDLS_OPER_ADD: add new peer
- * @TDLS_OPER_UPDATE: used to update peer
- */
-enum tdls_add_oper {
-	TDLS_OPER_NONE,
-	TDLS_OPER_ADD,
-	TDLS_OPER_UPDATE
-};
-
 /**
  * enum legacy_result_code - defined to comply with tSirResultCodes, need refine
  *                           when mlme converged.
