@@ -4075,8 +4075,9 @@ free_config:
 	return errno;
 }
 
-static int hdd_we_set_11d_state(struct hdd_context *hdd_ctx, int state_11d)
+static int hdd_we_set_11d_state(struct hdd_adapter *adapter, int state_11d)
 {
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tSmeConfigParams *sme_config;
 	bool enable_11d;
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
@@ -5173,7 +5174,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 			       union iwreq_data *wrqu, char *extra)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	mac_handle_t mac_handle;
 	struct hdd_context *hdd_ctx;
 	int *value = (int *)extra;
 	int sub_cmd = value[0];
@@ -5191,10 +5191,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 	if (ret)
 		return ret;
 
-	mac_handle = hdd_ctx->mac_handle;
 	switch (sub_cmd) {
 	case WE_SET_11D_STATE:
-		ret = hdd_we_set_11d_state(hdd_ctx, set_value);
+		ret = hdd_we_set_11d_state(adapter, set_value);
 		break;
 
 	case WE_SET_POWER:
