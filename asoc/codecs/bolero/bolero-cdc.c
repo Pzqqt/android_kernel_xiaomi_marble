@@ -18,7 +18,9 @@
 #include <linux/printk.h>
 #include <linux/delay.h>
 #include <linux/kernel.h>
+#include <linux/clk.h>
 #include <soc/snd_event.h>
+#include <linux/pm_runtime.h>
 #include "bolero-cdc.h"
 #include "internal.h"
 
@@ -29,6 +31,9 @@
 #define BOLERO_CDC_STRING_LEN 80
 
 static struct snd_soc_codec_driver bolero;
+
+/* pm runtime auto suspend timer in msecs */
+#define BOLERO_AUTO_SUSPEND_DELAY          1500 /* delay in msec */
 
 /* MCLK_MUX table for all macros */
 static u16 bolero_mclk_mux_tbl[MAX_MACRO][MCLK_MUX_MAX] = {
@@ -67,6 +72,8 @@ static int __bolero_reg_read(struct bolero_priv *priv,
 			"%s: SSR in progress, exit\n", __func__);
 		goto err;
 	}
+
+	pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
 	current_mclk_mux_macro =
 		priv->current_mclk_mux_macro[macro_id];
 	if (!priv->macro_params[current_mclk_mux_macro].mclk_fn) {
@@ -88,6 +95,8 @@ static int __bolero_reg_read(struct bolero_priv *priv,
 	priv->macro_params[current_mclk_mux_macro].mclk_fn(
 			priv->macro_params[current_mclk_mux_macro].dev, false);
 err:
+	pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
+	pm_runtime_put_autosuspend(priv->macro_params[VA_MACRO].dev);
 	mutex_unlock(&priv->clk_lock);
 	return ret;
 }
@@ -104,6 +113,7 @@ static int __bolero_reg_write(struct bolero_priv *priv,
 			"%s: SSR in progress, exit\n", __func__);
 		goto err;
 	}
+	ret = pm_runtime_get_sync(priv->macro_params[VA_MACRO].dev);
 	current_mclk_mux_macro =
 		priv->current_mclk_mux_macro[macro_id];
 	if (!priv->macro_params[current_mclk_mux_macro].mclk_fn) {
@@ -125,6 +135,8 @@ static int __bolero_reg_write(struct bolero_priv *priv,
 	priv->macro_params[current_mclk_mux_macro].mclk_fn(
 			priv->macro_params[current_mclk_mux_macro].dev, false);
 err:
+	pm_runtime_mark_last_busy(priv->macro_params[VA_MACRO].dev);
+	pm_runtime_put_autosuspend(priv->macro_params[VA_MACRO].dev);
 	mutex_unlock(&priv->clk_lock);
 	return ret;
 }
@@ -850,6 +862,7 @@ static int bolero_probe(struct platform_device *pdev)
 	struct bolero_priv *priv;
 	u32 num_macros = 0;
 	int ret;
+	struct clk *lpass_npa_rsc_island = NULL;
 
 	priv = devm_kzalloc(&pdev->dev, sizeof(struct bolero_priv),
 			    GFP_KERNEL);
@@ -898,6 +911,17 @@ static int bolero_probe(struct platform_device *pdev)
 		  bolero_add_child_devices);
 	schedule_work(&priv->bolero_add_child_devices_work);
 
+	/* Register LPASS NPA resource */
+	lpass_npa_rsc_island = devm_clk_get(&pdev->dev, "island_lpass_npa_rsc");
+	if (IS_ERR(lpass_npa_rsc_island)) {
+		ret = PTR_ERR(lpass_npa_rsc_island);
+		dev_dbg(&pdev->dev, "%s: clk get %s failed %d\n",
+			__func__, "island_lpass_npa_rsc", ret);
+		lpass_npa_rsc_island = NULL;
+		ret = 0;
+	}
+	priv->lpass_npa_rsc_island = lpass_npa_rsc_island;
+
 	return 0;
 }
 
@@ -913,6 +937,41 @@ static int bolero_remove(struct platform_device *pdev)
 	mutex_destroy(&priv->clk_lock);
 	return 0;
 }
+
+int bolero_runtime_resume(struct device *dev)
+{
+	struct bolero_priv *priv = dev_get_drvdata(dev->parent);
+	int ret = 0;
+
+	if (priv->lpass_npa_rsc_island == NULL) {
+		dev_dbg(dev, "%s: Invalid lpass npa rsc node\n", __func__);
+		return 0;
+	}
+
+	ret = clk_prepare_enable(priv->lpass_npa_rsc_island);
+	if (ret < 0)
+		dev_err(dev, "%s:lpass npa rsc island enable failed\n",
+			__func__);
+
+	pm_runtime_set_autosuspend_delay(priv->dev, BOLERO_AUTO_SUSPEND_DELAY);
+	return 0;
+}
+EXPORT_SYMBOL(bolero_runtime_resume);
+
+int bolero_runtime_suspend(struct device *dev)
+{
+	struct bolero_priv *priv = dev_get_drvdata(dev->parent);
+
+	mutex_lock(&priv->clk_lock);
+	if (priv->lpass_npa_rsc_island != NULL)
+		clk_disable_unprepare(priv->lpass_npa_rsc_island);
+	else
+		dev_dbg(dev, "%s: Invalid lpass npa rsc node\n",
+			__func__);
+	mutex_unlock(&priv->clk_lock);
+	return 0;
+}
+EXPORT_SYMBOL(bolero_runtime_suspend);
 
 static const struct of_device_id bolero_dt_match[] = {
 	{.compatible = "qcom,bolero-codec"},

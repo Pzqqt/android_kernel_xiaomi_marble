@@ -64,6 +64,7 @@ struct bolero_priv {
 	u16 current_mclk_mux_macro[MAX_MACRO];
 	struct work_struct bolero_add_child_devices_work;
 	u32 version;
+	struct clk *lpass_npa_rsc_island;
 
 	/* Entry for version info */
 	struct snd_info_entry *entry;
