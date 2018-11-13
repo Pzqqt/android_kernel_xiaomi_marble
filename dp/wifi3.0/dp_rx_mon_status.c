@@ -983,50 +983,44 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int ring_id) {
 	struct dp_soc *soc = pdev->soc;
 	union dp_rx_desc_list_elem_t *desc_list = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;
-	struct dp_srng *rxdma_srng;
-	uint32_t rxdma_entries;
+	struct dp_srng *mon_status_ring;
+	uint32_t num_entries;
 	struct rx_desc_pool *rx_desc_pool;
 	QDF_STATUS status;
 	int mac_for_pdev = dp_get_mac_id_for_mac(soc, ring_id);
 
-	rxdma_srng = &pdev->rxdma_mon_status_ring[mac_for_pdev];
+	mon_status_ring = &pdev->rxdma_mon_status_ring[mac_for_pdev];
 
-	rxdma_entries = rxdma_srng->alloc_size/hal_srng_get_entrysize(
-		soc->hal_soc, RXDMA_MONITOR_STATUS);
+	num_entries = mon_status_ring->num_entries;
 
 	rx_desc_pool = &soc->rx_desc_status[ring_id];
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
-			"%s: Mon RX Status Pool[%d] allocation size=%d",
-			__func__, ring_id, rxdma_entries);
+	dp_info("Mon RX Status Pool[%d] entries=%d",
+		ring_id, num_entries);
 
-	status = dp_rx_desc_pool_alloc(soc, ring_id, rxdma_entries+1,
-			rx_desc_pool);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_rx_desc_pool_alloc() failed ", __func__);
+	status = dp_rx_desc_pool_alloc(soc, ring_id, num_entries + 1,
+				       rx_desc_pool);
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
-	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
-			"%s: Mon RX Status Buffers Replenish ring_id=%d",
-			__func__, ring_id);
+	dp_debug("Mon RX Status Buffers Replenish ring_id=%d", ring_id);
 
-	status = dp_rx_mon_status_buffers_replenish(soc, ring_id, rxdma_srng,
-			rx_desc_pool, rxdma_entries, &desc_list, &tail,
-			HAL_RX_BUF_RBM_SW3_BM);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_rx_buffers_replenish() failed ", __func__);
+	status = dp_rx_mon_status_buffers_replenish(soc, ring_id,
+						    mon_status_ring,
+						    rx_desc_pool,
+						    num_entries,
+						    &desc_list, &tail,
+						    HAL_RX_BUF_RBM_SW3_BM);
+
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
-	}
 
 	qdf_nbuf_queue_init(&pdev->rx_status_q);
 
 	pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
 
 	qdf_mem_zero(&(pdev->ppdu_info.rx_status),
-		sizeof(pdev->ppdu_info.rx_status));
+		     sizeof(pdev->ppdu_info.rx_status));
 
 	qdf_mem_zero(&pdev->rx_mon_stats,
 		     sizeof(pdev->rx_mon_stats));

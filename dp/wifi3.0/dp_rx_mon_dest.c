@@ -1131,50 +1131,35 @@ dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev, int mac_id) {
 	struct dp_soc *soc = pdev->soc;
 	union dp_rx_desc_list_elem_t *desc_list = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;
-	struct dp_srng *rxdma_srng;
-	uint32_t rxdma_entries;
+	struct dp_srng *mon_buf_ring;
+	uint32_t num_entries;
 	struct rx_desc_pool *rx_desc_pool;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
+	uint32_t rx_desc_pool_size;
 
-	rxdma_srng = &pdev->rxdma_mon_buf_ring[mac_for_pdev];
+	mon_buf_ring = &pdev->rxdma_mon_buf_ring[mac_for_pdev];
 
-	rxdma_entries = rxdma_srng->alloc_size/hal_srng_get_entrysize(
-				soc->hal_soc,
-				RXDMA_MONITOR_BUF);
+	num_entries = mon_buf_ring->num_entries;
 
 	rx_desc_pool = &soc->rx_desc_mon[mac_id];
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
-			  "%s: Mon RX Desc Pool[%d] allocation size=%d"
-			  , __func__, pdev_id, rxdma_entries*3);
+	dp_debug("Mon RX Desc Pool[%d] entries=%u",
+		 pdev_id, num_entries);
 
-	status = dp_rx_desc_pool_alloc(soc, mac_id,
-			rxdma_entries*3, rx_desc_pool);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_rx_desc_pool_alloc() failed ", __func__);
+	rx_desc_pool_size = DP_RX_DESC_ALLOC_MULTIPLIER * num_entries;
+	status = dp_rx_desc_pool_alloc(soc, mac_id, rx_desc_pool_size,
+				       rx_desc_pool);
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
-	}
 
 	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
-			  "%s: Mon RX Buffers Replenish pdev_id=%d",
-			  __func__, pdev_id);
+	status = dp_rx_buffers_replenish(soc, mac_id, mon_buf_ring,
+					 rx_desc_pool, num_entries,
+					 &desc_list, &tail);
 
-
-	status = dp_rx_buffers_replenish(soc, mac_id, rxdma_srng, rx_desc_pool,
-			rxdma_entries, &desc_list, &tail);
-
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"%s: dp_rx_buffers_replenish() failed",
-				__func__);
-		return status;
-	}
-
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 static QDF_STATUS

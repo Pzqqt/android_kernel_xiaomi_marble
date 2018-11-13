@@ -36,13 +36,13 @@ QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc, uint32_t pool_id,
 	uint32_t i;
 
 	rx_desc_pool->array =
-		qdf_mem_malloc(pool_size*sizeof(union dp_rx_desc_list_elem_t));
+			qdf_mem_malloc(pool_size *
+				       sizeof(union dp_rx_desc_list_elem_t));
 
 	if (!(rx_desc_pool->array)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s: RX Desc Pool[%d] allocation failed",
 			__func__, pool_id);
-
 		return QDF_STATUS_E_NOMEM;
 	}
 

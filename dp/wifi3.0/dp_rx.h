@@ -32,9 +32,25 @@
 
 #ifdef QCA_HOST2FW_RXBUF_RING
 #define DP_WBM2SW_RBM HAL_RX_BUF_RBM_SW1_BM
+
+/**
+ * For MCL cases, allocate as many RX descriptors as buffers in the SW2RXDMA
+ * ring. This value may need to be tuned later.
+ */
+#define DP_RX_DESC_ALLOC_MULTIPLIER 1
 #else
 #define DP_WBM2SW_RBM HAL_RX_BUF_RBM_SW3_BM
-#endif
+
+/**
+ * AP use cases need to allocate more RX Descriptors than the number of
+ * entries avaialable in the SW2RXDMA buffer replenish ring. This is to account
+ * for frames sitting in REO queues, HW-HW DMA rings etc. Hence using a
+ * multiplication factor of 3, to allocate three times as many RX descriptors
+ * as RX buffers.
+ */
+#define DP_RX_DESC_ALLOC_MULTIPLIER 3
+#endif /* QCA_HOST2FW_RXBUF_RING */
+
 #define RX_BUFFER_SIZE			2048
 #define RX_BUFFER_RESERVATION   0
 

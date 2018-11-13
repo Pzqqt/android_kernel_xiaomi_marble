@@ -28,6 +28,7 @@
 #endif
 #include "dp_internal.h"
 #include "dp_rx_mon.h"
+
 #ifdef RX_DESC_DEBUG_CHECK
 static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
 {
@@ -199,10 +200,10 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		dp_rx_desc_prep(&((*desc_list)->rx_desc), rx_netbuf);
 		(*desc_list)->rx_desc.in_use = 1;
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				"rx_netbuf=%pK, buf=%pK, paddr=0x%llx, cookie=%d",
-			rx_netbuf, qdf_nbuf_data(rx_netbuf),
-			(unsigned long long)paddr, (*desc_list)->rx_desc.cookie);
+		dp_debug("rx_netbuf=%pK, buf=%pK, paddr=0x%llx, cookie=%d",
+			 rx_netbuf, qdf_nbuf_data(rx_netbuf),
+			 (unsigned long long)paddr,
+			 (*desc_list)->rx_desc.cookie);
 
 		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
 						(*desc_list)->rx_desc.cookie,
@@ -213,10 +214,8 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 	hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"successfully replenished %d buffers", num_req_buffers);
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"%d rx desc added back to free list", num_desc_to_free);
+	dp_debug("replenished buffers %d, rx desc added back to free list %u",
+		 num_req_buffers, num_desc_to_free);
 
 	DP_STATS_INC_PKT(dp_pdev, replenish.pkts, num_req_buffers,
 			(RX_BUFFER_SIZE * num_req_buffers));
@@ -1817,7 +1816,6 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 {
 	uint8_t pdev_id = pdev->pdev_id;
 	struct dp_soc *soc = pdev->soc;
-	struct dp_srng rxdma_srng;
 	uint32_t rxdma_entries;
 	union dp_rx_desc_list_elem_t *desc_list = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;
@@ -1831,20 +1829,21 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 	}
 
 	pdev = soc->pdev_list[pdev_id];
-	rxdma_srng = pdev->rx_refill_buf_ring;
+	dp_rxdma_srng = &pdev->rx_refill_buf_ring;
+	rxdma_entries = dp_rxdma_srng->num_entries;
+
 	soc->process_rx_status = CONFIG_PROCESS_RX_STATUS;
-	rxdma_entries = rxdma_srng.alloc_size/hal_srng_get_entrysize(
-						     soc->hal_soc, RXDMA_BUF);
 
 	rx_desc_pool = &soc->rx_desc_buf[pdev_id];
-
-	dp_rx_desc_pool_alloc(soc, pdev_id, rxdma_entries*3, rx_desc_pool);
+	dp_rx_desc_pool_alloc(soc, pdev_id,
+			      DP_RX_DESC_ALLOC_MULTIPLIER * rxdma_entries,
+			      rx_desc_pool);
 
 	rx_desc_pool->owner = DP_WBM2SW_RBM;
 	/* For Rx buffers, WBM release ring is SW RING 3,for all pdev's */
-	dp_rxdma_srng = &pdev->rx_refill_buf_ring;
+
 	dp_rx_buffers_replenish(soc, pdev_id, dp_rxdma_srng, rx_desc_pool,
-		0, &desc_list, &tail);
+				0, &desc_list, &tail);
 
 	return QDF_STATUS_SUCCESS;
 }
