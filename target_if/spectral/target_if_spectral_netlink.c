@@ -36,8 +36,6 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 	 *       operation on multi-processor system
 	 */
 
-	int temp_samp_msg_len = 0;
-
 	struct spectral_samp_msg *spec_samp_msg = NULL;
 
 	uint8_t *bin_pwr_data = NULL;
@@ -61,12 +59,6 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		if (spectral->spectral_gen == SPECTRAL_GEN3)
 			save_spectral_report_skb(spectral, spec_samp_msg);
 		p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
-		temp_samp_msg_len = sizeof(struct spectral_samp_msg) -
-		    (MAX_NUM_BINS * sizeof(uint8_t));
-		temp_samp_msg_len += (params->pwr_count * sizeof(uint8_t));
-		if (spectral->ch_width == CH_WIDTH_160MHZ)
-			temp_samp_msg_len +=
-			    (params->pwr_count_sec80 * sizeof(uint8_t));
 		bin_pwr_data = params->bin_pwr_data;
 
 		spec_samp_msg->signature = SPECTRAL_SIGNATURE;
