@@ -5369,6 +5369,14 @@ typedef enum {
      */
     WMI_PDEV_PARAM_USE_NOL,
 
+    /*
+     * Allow / Not Allow RU26 in any user's RU allocation field in UL OFDMA
+     * trigger frames sent by AP
+     *  1 - Allow RU26
+     *  0 - Do not allow RU26
+     */
+    WMI_PDEV_PARAM_UL_RU26_ALLOWED,
+
 } WMI_PDEV_PARAM;
 
 typedef struct {
