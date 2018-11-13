@@ -5105,6 +5105,20 @@ static int hdd_we_set_debug_log(struct hdd_adapter *adapter, int value)
 	return 0;
 }
 
+static int hdd_we_set_scan_disable(struct hdd_adapter *adapter, int value)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	hdd_debug("%d", value);
+
+	if (!hdd_ctx->mac_handle)
+		return -EINVAL;
+
+	sme_set_scan_disable(hdd_ctx->mac_handle, value);
+
+	return 0;
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -5461,14 +5475,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_SCAN_DISABLE:
-	{
-		if (!mac_handle)
-			return -EINVAL;
-
-		hdd_debug("SET SCAN DISABLE %d", set_value);
-		sme_set_scan_disable(mac_handle, set_value);
+		ret = hdd_we_set_scan_disable(adapter, set_value);
 		break;
-	}
 
 	case WE_START_FW_PROFILE:
 		ret = hdd_we_start_fw_profile(adapter, set_value);
