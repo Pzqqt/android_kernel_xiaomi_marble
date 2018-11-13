@@ -1939,6 +1939,7 @@ struct wmi_soc {
 	void *scn_handle;    /* handle to device */
 	qdf_atomic_t num_pdevs;
 	enum wmi_target_type target_type;
+	bool is_async_ep;
 	void *htc_handle;
 	uint32_t event_id[WMI_UNIFIED_MAX_EVENT];
 	wmi_unified_event_handler event_handler[WMI_UNIFIED_MAX_EVENT];
