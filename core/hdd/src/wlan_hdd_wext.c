@@ -5134,6 +5134,11 @@ static int hdd_we_set_conc_system_pref(struct hdd_adapter *adapter,
 	return 0;
 }
 
+static int hdd_we_set_11ax_rate(struct hdd_adapter *adapter, int rate)
+{
+	return hdd_set_11ax_rate(adapter, rate, NULL);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -5506,7 +5511,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_11AX_RATE:
-		ret = hdd_set_11ax_rate(adapter, set_value, NULL);
+		ret = hdd_we_set_11ax_rate(adapter, set_value);
 		break;
 
 	case WE_SET_DCM:
