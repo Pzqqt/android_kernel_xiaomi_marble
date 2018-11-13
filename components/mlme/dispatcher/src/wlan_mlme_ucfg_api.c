@@ -27,6 +27,67 @@
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
 
+#ifdef CONFIG_VDEV_SM
+static QDF_STATUS ucfg_mlme_vdev_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS ucfg_mlme_vdev_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+#else
+static QDF_STATUS ucfg_mlme_vdev_init(void)
+{
+	QDF_STATUS status;
+
+	status = wlan_objmgr_register_vdev_create_handler(
+			WLAN_UMAC_COMP_MLME,
+			mlme_vdev_object_created_notification,
+			NULL);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		mlme_err("unable to register vdev create handle");
+		return status;
+	}
+
+	status = wlan_objmgr_register_vdev_destroy_handler(
+			WLAN_UMAC_COMP_MLME,
+			mlme_vdev_object_destroyed_notification,
+			NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("unable to register vdev create handle");
+
+	return status;
+
+}
+
+static QDF_STATUS ucfg_mlme_vdev_deinit(void)
+{
+	QDF_STATUS status;
+
+	status = wlan_objmgr_unregister_vdev_destroy_handler(
+			WLAN_UMAC_COMP_MLME,
+			mlme_vdev_object_destroyed_notification,
+			NULL);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("unable to unregister vdev destroy handle");
+
+	status = wlan_objmgr_unregister_vdev_create_handler(
+			WLAN_UMAC_COMP_MLME,
+			mlme_vdev_object_created_notification,
+			NULL);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("unable to unregister vdev create handle");
+
+	return status;
+}
+
+#endif
+
 QDF_STATUS ucfg_mlme_init(void)
 {
 	QDF_STATUS status;
@@ -44,8 +105,11 @@ QDF_STATUS ucfg_mlme_init(void)
 			WLAN_UMAC_COMP_MLME,
 			mlme_psoc_object_destroyed_notification,
 			NULL);
-	if (status != QDF_STATUS_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS) {
 		mlme_err("unable to register psoc create handle");
+		return status;
+	}
+	status = ucfg_mlme_vdev_init();
 
 	return status;
 }
@@ -54,21 +118,24 @@ QDF_STATUS ucfg_mlme_deinit(void)
 {
 	QDF_STATUS status;
 
-	status = wlan_objmgr_unregister_psoc_create_handler(
-			WLAN_UMAC_COMP_MLME,
-			mlme_psoc_object_created_notification,
-			NULL);
-	if (status != QDF_STATUS_SUCCESS) {
-		mlme_err("unable to unregister psoc create handle");
-		return status;
-	}
+	status = ucfg_mlme_vdev_deinit();
+	if (QDF_IS_STATUS_ERROR(status))
+		mlme_err("unable to unregister vdev destroy handle");
 
 	status = wlan_objmgr_unregister_psoc_destroy_handler(
 			WLAN_UMAC_COMP_MLME,
 			mlme_psoc_object_destroyed_notification,
 			NULL);
-	if (status != QDF_STATUS_SUCCESS)
+	if (QDF_IS_STATUS_ERROR(status))
 		mlme_err("unable to unregister psoc destroy handle");
+
+	status = wlan_objmgr_unregister_psoc_create_handler(
+			WLAN_UMAC_COMP_MLME,
+			mlme_psoc_object_created_notification,
+			NULL);
+
+	if (status != QDF_STATUS_SUCCESS)
+		mlme_err("unable to unregister psoc create handle");
 
 	return status;
 }

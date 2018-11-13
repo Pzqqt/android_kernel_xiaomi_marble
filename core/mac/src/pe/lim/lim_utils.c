@@ -64,6 +64,7 @@
 #include "cfg_mlme_obss_ht40.h"
 #include "cfg_ucfg_api.h"
 #include "lim_ft.h"
+#include "wlan_mlme_main.h"
 
 #define ASCII_SPACE_CHARACTER 0x20
 

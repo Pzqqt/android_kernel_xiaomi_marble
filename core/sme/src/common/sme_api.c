@@ -60,6 +60,7 @@
 #include <qca_vendor.h>
 #include <wlan_spectral_utils_api.h>
 #include "wlan_mlme_public_struct.h"
+#include "wlan_mlme_main.h"
 
 static tSelfRecoveryStats g_self_recovery_stats;
 
@@ -4807,7 +4808,7 @@ static uint8_t sme_get_nss_chain_shift(enum QDF_OPMODE device_mode)
 }
 
 static void
-sme_fill_nss_chain_params(struct sAniSirGlobal *mac_ctx,
+sme_fill_nss_chain_params(struct mac_context *mac_ctx,
 			  struct wlan_mlme_nss_chains *vdev_ini_cfg,
 			  enum QDF_OPMODE device_mode,
 			  enum nss_chains_band_info band,
@@ -4872,7 +4873,7 @@ void sme_populate_nss_chain_params(mac_handle_t mac_handle,
 				   enum QDF_OPMODE device_mode,
 				   uint8_t rf_chains_supported)
 {
-	struct sAniSirGlobal *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	enum nss_chains_band_info band;
 
 	for (band = NSS_CHAINS_BAND_2GHZ; band < NSS_CHAINS_BAND_MAX; band++)
@@ -5069,7 +5070,7 @@ sme_nss_chains_update(mac_handle_t mac_handle,
 		      struct wlan_mlme_nss_chains *user_cfg,
 		      uint8_t vdev_id)
 {
-	struct sAniSirGlobal *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	QDF_STATUS status;
 	struct wlan_mlme_nss_chains *dynamic_cfg;
 	struct wlan_objmgr_vdev *vdev =

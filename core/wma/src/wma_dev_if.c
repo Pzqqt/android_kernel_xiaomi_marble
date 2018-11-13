@@ -76,6 +76,7 @@
 #include <target_if.h>
 #include "wlan_mlme_public_struct.h"
 #include "wlan_mlme_api.h"
+#include "wlan_mlme_main.h"
 
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address

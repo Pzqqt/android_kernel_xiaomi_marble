@@ -61,6 +61,7 @@
 #include "cds_reg_service.h"
 #include "target_if.h"
 #include <wlan_utility.h>
+#include <wlan_mlme_main.h>
 
 
 /* MCS Based rate table */

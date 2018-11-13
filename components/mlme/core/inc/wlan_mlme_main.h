@@ -26,6 +26,8 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_cmn.h>
+#include <wlan_objmgr_vdev_obj.h>
+
 
 #define mlme_fatal(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_MLME, params)
 #define mlme_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_MLME, params)
@@ -40,6 +42,78 @@
 struct wlan_mlme_psoc_obj {
 	struct wlan_mlme_cfg cfg;
 };
+
+#ifdef CONFIG_VDEV_SM
+
+/**
+ * enum vdev_assoc_type - VDEV associate/reassociate type
+ * @VDEV_ASSOC: associate
+ * @VDEV_REASSOC: reassociate
+ * @VDEV_FT_REASSOC: fast reassociate
+ */
+enum vdev_assoc_type {
+	VDEV_ASSOC,
+	VDEV_REASSOC,
+	VDEV_FT_REASSOC
+};
+
+/**
+ * struct mlme_legacy_priv - VDEV MLME legacy priv object
+ * @chan_switch_in_progress: flag to indicate that channel switch is in progress
+ * @hidden_ssid_restart_in_progress: flag to indicate hidden ssid restart is
+ *                                   in progress
+ * @vdev_start_failed: flag to indicate that vdev start failed.
+ * @connection_fail: flag to indicate connection failed
+ * @assoc_type: vdev associate/reassociate type
+ * @dynamic_cfg: current configuration of nss, chains for vdev.
+ * @ini_cfg: Max configuration of nss, chains supported for vdev.
+ */
+struct mlme_legacy_priv {
+	bool chan_switch_in_progress;
+	bool hidden_ssid_restart_in_progress;
+	bool vdev_start_failed;
+	bool connection_fail;
+	enum vdev_assoc_type assoc_type;
+	struct wlan_mlme_nss_chains dynamic_cfg;
+	struct wlan_mlme_nss_chains ini_cfg;
+};
+
+#else
+
+/**
+ * struct vdev_mlme_obj - VDEV MLME component object
+ */
+struct vdev_mlme_priv_obj {
+};
+
+/**
+ * mlme_vdev_object_created_notification(): mlme vdev create handler
+ * @vdev: vdev which is going to created by objmgr
+ * @arg: argument for vdev create handler
+ *
+ * Register this api with objmgr to detect vdev is created
+ *
+ * Return: QDF_STATUS status in case of success else return error
+ */
+
+QDF_STATUS
+mlme_vdev_object_created_notification(struct wlan_objmgr_vdev *vdev,
+				      void *arg);
+
+/**
+ * mlme_vdev_object_destroyed_notification(): mlme vdev delete handler
+ * @psoc: vdev which is going to delete by objmgr
+ * @arg: argument for vdev delete handler
+ *
+ * Register this api with objmgr to detect vdev is deleted
+ *
+ * Return: QDF_STATUS status in case of success else return error
+ */
+QDF_STATUS
+mlme_vdev_object_destroyed_notification(struct wlan_objmgr_vdev *vdev,
+					void *arg);
+
+#endif
 
 /**
  * mlme_psoc_object_created_notification(): mlme psoc create handler

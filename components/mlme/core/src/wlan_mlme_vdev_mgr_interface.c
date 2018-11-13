@@ -595,40 +595,6 @@ mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val)
 	return QDF_STATUS_SUCCESS;
 }
 
-struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
-				struct wlan_objmgr_vdev *vdev)
-{
-	struct vdev_mlme_obj *vdev_mlme;
-	struct mlme_legacy_priv *mlme_priv;
-
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_err("vdev component object is NULL");
-		return NULL;
-	}
-
-	mlme_priv = vdev_mlme->legacy_vdev_ptr;
-
-	return &mlme_priv->dynamic_cfg;
-}
-
-struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
-				struct wlan_objmgr_vdev *vdev)
-{
-	struct vdev_mlme_obj *vdev_mlme;
-	struct mlme_legacy_priv *mlme_priv;
-
-	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
-	if (!vdev_mlme) {
-		mlme_err("vdev component object is NULL");
-		return NULL;
-	}
-
-	mlme_priv = vdev_mlme->legacy_vdev_ptr;
-
-	return &mlme_priv->ini_cfg;
-}
-
 bool mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev)
 {
 	struct vdev_mlme_obj *vdev_mlme;

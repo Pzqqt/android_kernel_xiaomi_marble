@@ -27,7 +27,7 @@
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_cmn.h>
 #include <wlan_mlme_api.h>
-#include <wlan_mlme_vdev_mgr_interface.h>
+#include <wlan_mlme_main.h>
 
 /**
  * ucfg_mlme_init() - initialize mlme_ctx context.

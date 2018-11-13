@@ -25,39 +25,7 @@
 #ifdef CONFIG_VDEV_SM
 #include <wlan_objmgr_vdev_obj.h>
 #include "include/wlan_vdev_mlme.h"
-
-/**
- * enum vdev_assoc_type - VDEV associate/reassociate type
- * @VDEV_ASSOC: associate
- * @VDEV_REASSOC: reassociate
- * @VDEV_FT_REASSOC: fast reassociate
- */
-enum vdev_assoc_type {
-	VDEV_ASSOC,
-	VDEV_REASSOC,
-	VDEV_FT_REASSOC
-};
-
-/**
- * struct mlme_legacy_priv - VDEV MLME legacy priv object
- * @chan_switch_in_progress: flag to indicate that channel switch is in progress
- * @hidden_ssid_restart_in_progress: flag to indicate hidden ssid restart is
- *                                   in progress
- * @vdev_start_failed: flag to indicate that vdev start failed.
- * @connection_fail: flag to indicate connection failed
- * @assoc_type: vdev associate/reassociate type
- * @dynamic_cfg: current configuration of nss, chains for vdev.
- * @ini_cfg: Max configuration of nss, chains supported for vdev.
- */
-struct mlme_legacy_priv {
-	bool chan_switch_in_progress;
-	bool hidden_ssid_restart_in_progress;
-	bool vdev_start_failed;
-	bool connection_fail;
-	enum vdev_assoc_type assoc_type;
-	struct wlan_mlme_nss_chains dynamic_cfg;
-	struct wlan_mlme_nss_chains ini_cfg;
-};
+#include "wlan_mlme_main.h"
 
 /**
  * mlme_register_vdev_mgr_ops() - Register vdev mgr ops
@@ -144,24 +112,6 @@ bool mlme_is_connection_fail(struct wlan_objmgr_vdev *vdev);
  */
 QDF_STATUS
 mlme_set_connection_fail(struct wlan_objmgr_vdev *vdev, bool val);
-
-/**
- * mlme_get_dynamic_vdev_config() - get the vdev dynamic config params
- * @vdev: vdev pointer
- *
- * Return: pointer to the dynamic vdev config structure
- */
-struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
-					struct wlan_objmgr_vdev *vdev);
-
-/**
- * mlme_get_ini_vdev_config() - get the vdev ini config params
- * @vdev: vdev pointer
- *
- * Return: pointer to the ini vdev config structure
- */
-struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
-					struct wlan_objmgr_vdev *vdev);
 
 /**
  * mlme_get_vdev_start_failed() - get mlme priv vdev restart fail flag
