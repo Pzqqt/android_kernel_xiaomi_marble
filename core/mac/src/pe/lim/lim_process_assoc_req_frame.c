@@ -2310,9 +2310,19 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 	uint8_t maxidx, i;
 	bool wme_enable;
 
+	if (!session_entry->parsedAssocReq) {
+		pe_err(" Parsed Assoc req is NULL");
+		return;
+	}
+
 	/* Get a copy of the already parsed Assoc Request */
 	assoc_req =
 		(tpSirAssocReq) session_entry->parsedAssocReq[sta_ds->assocId];
+
+	if (!assoc_req) {
+		pe_err("assoc req for assoc_id:%d is NULL", sta_ds->assocId);
+		return;
+	}
 
 	/* Get the phy_mode */
 	lim_get_phy_mode(mac_ctx, &phy_mode, session_entry);
