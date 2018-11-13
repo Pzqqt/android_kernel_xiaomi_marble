@@ -5139,6 +5139,26 @@ static int hdd_we_set_11ax_rate(struct hdd_adapter *adapter, int rate)
 	return hdd_set_11ax_rate(adapter, rate, NULL);
 }
 
+static int hdd_we_set_modulated_dtim(struct hdd_adapter *adapter, int value)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	hdd_debug("%d", value);
+
+	if (!hdd_ctx->psoc)
+		return -EINVAL;
+
+	if ((value < cfg_max(CFG_PMO_ENABLE_MODULATED_DTIM)) ||
+	    (value > cfg_max(CFG_PMO_ENABLE_MODULATED_DTIM))) {
+		hdd_err("Invalid value %d", value);
+		return -EINVAL;
+	}
+
+	ucfg_policy_mgr_set_sys_pref(hdd_ctx->psoc, value);
+
+	return 0;
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -5525,16 +5545,11 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_PDEV_RESET:
 		ret = hdd_handle_pdev_reset(adapter, set_value);
 		break;
-	case WE_SET_MODULATED_DTIM:
-		if ((set_value < cfg_max(CFG_PMO_ENABLE_MODULATED_DTIM)) ||
-		    (set_value > cfg_max(CFG_PMO_ENABLE_MODULATED_DTIM))) {
-			hdd_err("Invalid gEnableModuleDTIM value %d",
-				set_value);
-			return -EINVAL;
-		}
 
-		ucfg_pmo_set_sta_mod_dtim(hdd_ctx->psoc, set_value);
+	case WE_SET_MODULATED_DTIM:
+		ret = hdd_we_set_modulated_dtim(adapter, set_value);
 		break;
+
 	default:
 		hdd_debug("Invalid sub command %d", sub_cmd);
 		ret = -EINVAL;
