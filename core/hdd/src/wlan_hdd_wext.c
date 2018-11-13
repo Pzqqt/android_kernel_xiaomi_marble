@@ -5045,6 +5045,36 @@ static int hdd_we_start_fw_profile(struct hdd_adapter *adapter, int value)
 			      value);
 }
 
+static int hdd_we_set_channel(struct hdd_adapter *adapter, int channel)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	QDF_STATUS status;
+
+	hdd_debug("Set Channel %d Session ID %d mode %d", channel,
+		  adapter->session_id, adapter->device_mode);
+
+	if (!hdd_ctx->mac_handle)
+		return -EINVAL;
+
+	switch (adapter->device_mode) {
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+		/* supported */
+		break;
+	default:
+		hdd_err("change channel not supported for device mode %d",
+			adapter->device_mode);
+		return -EINVAL;
+	}
+
+	status = sme_ext_change_channel(hdd_ctx->mac_handle, channel,
+					adapter->session_id);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_err("Error in change channel status %d", status);
+
+	return qdf_status_to_os_return(status);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -5065,7 +5095,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 	int sub_cmd = value[0];
 	int set_value = value[1];
 	int ret;
-	QDF_STATUS status;
 
 	hdd_enter_dev(dev);
 
@@ -5430,31 +5459,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_CHANNEL:
-	{
-		hdd_debug("Set Channel %d Session ID %d mode %d", set_value,
-				  adapter->session_id, adapter->device_mode);
-		if (!mac_handle)
-			return -EINVAL;
-
-
-		if ((QDF_STA_MODE == adapter->device_mode) ||
-		    (QDF_P2P_CLIENT_MODE == adapter->device_mode)) {
-
-			status = sme_ext_change_channel(mac_handle,
-							set_value,
-							adapter->session_id);
-			if (status != QDF_STATUS_SUCCESS) {
-				hdd_err("Error in change channel status %d",
-					status);
-				ret = -EINVAL;
-			}
-		} else {
-			hdd_err("change channel not supported for device mode %d",
-				adapter->device_mode);
-			ret = -EINVAL;
-		}
+		ret = hdd_we_set_channel(adapter, set_value);
 		break;
-	}
+
 	case WE_SET_CONC_SYSTEM_PREF:
 		hdd_debug("New preference: %d", set_value);
 		ucfg_policy_mgr_set_sys_pref(hdd_ctx->psoc, set_value);
