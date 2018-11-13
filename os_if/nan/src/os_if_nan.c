@@ -306,20 +306,22 @@ static int os_if_nan_parse_security_params(struct nlattr **tb,
 			     passphrase->passphrase_len);
 		cfg80211_err("passphrase len: %d", passphrase->passphrase_len);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			passphrase->passphrase, passphrase->passphrase_len);
+				   passphrase->passphrase,
+				   passphrase->passphrase_len);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME]) {
 		service_name->service_name_len =
 			nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME]);
 		qdf_mem_copy(service_name->service_name,
-			nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME]),
-			service_name->service_name_len);
+			     nla_data(
+				     tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME]),
+			     service_name->service_name_len);
 		cfg80211_err("service_name len: %d",
 			     service_name->service_name_len);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				service_name->service_name,
-				service_name->service_name_len);
+				   service_name->service_name,
+				   service_name->service_name_len);
 	}
 
 	return 0;
@@ -379,7 +381,7 @@ static int os_if_nan_process_ndp_initiator_req(struct wlan_objmgr_psoc *psoc,
 	    state == NAN_DATA_NDI_DELETING_STATE ||
 	    state == NAN_DATA_NDI_CREATING_STATE) {
 		cfg80211_err("Data request not allowed in NDI current state: %d",
-			  state);
+			     state);
 		ret = -EINVAL;
 		goto initiator_req_failed;
 	}
@@ -422,8 +424,9 @@ static int os_if_nan_process_ndp_initiator_req(struct wlan_objmgr_psoc *psoc,
 		goto initiator_req_failed;
 	}
 	qdf_mem_copy(req.peer_discovery_mac_addr.bytes,
-		nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR]),
-		QDF_MAC_ADDR_SIZE);
+		     nla_data(
+			  tb[QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR]),
+		     QDF_MAC_ADDR_SIZE);
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]) {
 		req.ndp_info.ndp_app_info_len =
@@ -450,16 +453,18 @@ static int os_if_nan_process_ndp_initiator_req(struct wlan_objmgr_psoc *psoc,
 		       req.is_ipv6_addr_present, req.ipv6_addr);
 
 	if (os_if_nan_parse_security_params(tb, &req.ncs_sk_type, &req.pmk,
-			&req.passphrase, &req.service_name)) {
+					    &req.passphrase,
+					    &req.service_name)) {
 		cfg80211_err("inconsistent security params in request.");
 		ret = -EINVAL;
 		goto initiator_req_failed;
 	}
 
 	cfg80211_debug("vdev_id: %d, transaction_id: %d, channel: %d, service_instance_id: %d, ndp_app_info_len: %d, csid: %d, peer_discovery_mac_addr: %pM",
-		wlan_vdev_get_id(nan_vdev), req.transaction_id, req.channel,
-		req.service_instance_id, req.ndp_info.ndp_app_info_len,
-		req.ncs_sk_type, req.peer_discovery_mac_addr.bytes);
+		       wlan_vdev_get_id(nan_vdev), req.transaction_id,
+		       req.channel, req.service_instance_id,
+		       req.ndp_info.ndp_app_info_len, req.ncs_sk_type,
+		       req.peer_discovery_mac_addr.bytes);
 
 	req.vdev = nan_vdev;
 	status = ucfg_nan_req_processor(nan_vdev, &req, NDP_INITIATOR_REQ);
@@ -1728,15 +1733,17 @@ static void os_if_ndp_iface_create_rsp_handler(struct wlan_objmgr_psoc *psoc,
 	}
 
 	cfg80211_debug("sub command: %d, value: %d",
-		QCA_NL80211_VENDOR_SUBCMD_NDP,
-		QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_CREATE);
+		       QCA_NL80211_VENDOR_SUBCMD_NDP,
+		       QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_CREATE);
 	cfg80211_debug("create transaction id: %d, value: %d",
-		QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID, create_transaction_id);
+		       QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID,
+		       create_transaction_id);
 	cfg80211_debug("status code: %d, value: %d",
-		QCA_WLAN_VENDOR_ATTR_NDP_DRV_RESPONSE_STATUS_TYPE,
-		create_status);
+		       QCA_WLAN_VENDOR_ATTR_NDP_DRV_RESPONSE_STATUS_TYPE,
+		       create_status);
 	cfg80211_debug("Return value: %d, value: %d",
-		QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE, create_reason);
+		       QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE,
+		       create_reason);
 
 	cfg80211_vendor_event(vendor_event, GFP_KERNEL);
 
@@ -1790,7 +1797,7 @@ static void os_if_ndp_iface_delete_rsp_handler(struct wlan_objmgr_psoc *psoc,
 		cfg80211_debug("NDI BSS successfully stopped");
 	else
 		cfg80211_debug("NDI BSS stop failed with reason %d",
-				ndi_rsp->reason);
+			       ndi_rsp->reason);
 
 	ucfg_nan_set_ndi_delete_rsp_reason(vdev, ndi_rsp->reason);
 	ucfg_nan_set_ndi_delete_rsp_status(vdev, ndi_rsp->status);
@@ -1845,9 +1852,9 @@ static QDF_STATUS os_if_ndp_sch_update_pack_ch_info(struct sk_buff *event,
 
 	for (idx = 0; idx < sch_update->num_channels; idx++) {
 		cfg80211_debug("ch[%d]: freq: %d, width: %d, nss: %d",
-				idx, sch_update->ch[idx].channel,
-				sch_update->ch[idx].ch_width,
-				sch_update->ch[idx].nss);
+			       idx, sch_update->ch[idx].channel,
+			       sch_update->ch[idx].ch_width,
+			       sch_update->ch[idx].nss);
 		ch_element = nla_nest_start(event, idx);
 		if (!ch_element)
 			return QDF_STATUS_E_FAULT;
@@ -2141,17 +2148,17 @@ void os_if_nan_ndi_session_end(struct wlan_objmgr_vdev *vdev)
 	}
 
 	cfg80211_debug("sub command: %d, value: %d",
-		QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD,
-		QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_DELETE);
+		       QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD,
+		       QCA_WLAN_VENDOR_ATTR_NDP_INTERFACE_DELETE);
 	cfg80211_debug("delete transaction id: %d, value: %d",
-		QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID,
-		ucfg_nan_get_ndp_delete_transaction_id(vdev));
+		       QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID,
+		       ucfg_nan_get_ndp_delete_transaction_id(vdev));
 	cfg80211_debug("status code: %d, value: %d",
-		QCA_WLAN_VENDOR_ATTR_NDP_DRV_RESPONSE_STATUS_TYPE,
-		ucfg_nan_get_ndi_delete_rsp_status(vdev));
+		       QCA_WLAN_VENDOR_ATTR_NDP_DRV_RESPONSE_STATUS_TYPE,
+		       ucfg_nan_get_ndi_delete_rsp_status(vdev));
 	cfg80211_debug("Return value: %d, value: %d",
-		QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE,
-		ucfg_nan_get_ndi_delete_rsp_reason(vdev));
+		       QCA_WLAN_VENDOR_ATTR_NDP_DRV_RETURN_VALUE,
+		       ucfg_nan_get_ndi_delete_rsp_reason(vdev));
 
 	ucfg_nan_set_ndp_delete_transaction_id(vdev, 0);
 	ucfg_nan_set_ndi_state(vdev, NAN_DATA_NDI_DELETED_STATE);
