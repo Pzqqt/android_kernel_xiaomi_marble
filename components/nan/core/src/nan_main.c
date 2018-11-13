@@ -70,16 +70,19 @@ void nan_release_cmd(void *in_req, uint32_t cmdtype)
 	switch (cmdtype) {
 	case WLAN_SER_CMD_NDP_INIT_REQ: {
 		struct nan_datapath_initiator_req *req = in_req;
+
 		vdev = req->vdev;
 		break;
 	}
 	case WLAN_SER_CMD_NDP_RESP_REQ: {
 		struct nan_datapath_responder_req *req = in_req;
+
 		vdev = req->vdev;
 		break;
 	}
 	case WLAN_SER_CMD_NDP_DATA_END_INIT_REQ: {
 		struct nan_datapath_end_req *req = in_req;
+
 		vdev = req->vdev;
 		break;
 	}
@@ -111,18 +114,21 @@ static void nan_req_activated(void *in_req, uint32_t cmdtype)
 	switch (cmdtype) {
 	case WLAN_SER_CMD_NDP_INIT_REQ: {
 		struct nan_datapath_initiator_req *req = in_req;
+
 		vdev = req->vdev;
 		req_type = NDP_INITIATOR_REQ;
 		break;
 	}
 	case WLAN_SER_CMD_NDP_RESP_REQ: {
 		struct nan_datapath_responder_req *req = in_req;
+
 		vdev = req->vdev;
 		req_type = NDP_RESPONDER_REQ;
 		break;
 	}
 	case WLAN_SER_CMD_NDP_DATA_END_INIT_REQ: {
 		struct nan_datapath_end_req *req = in_req;
+
 		vdev = req->vdev;
 		req_type = NDP_END_REQ;
 		break;
@@ -154,7 +160,7 @@ static void nan_req_activated(void *in_req, uint32_t cmdtype)
 }
 
 static QDF_STATUS nan_serialized_cb(void *cmd,
-				enum wlan_serialization_cb_reason reason)
+				    enum wlan_serialization_cb_reason reason)
 {
 	void *req;
 	struct wlan_serialization_command *ser_cmd = cmd;
@@ -197,18 +203,21 @@ QDF_STATUS nan_scheduled_msg_handler(struct scheduler_msg *msg)
 	switch (msg->type) {
 	case NDP_INITIATOR_REQ: {
 		struct nan_datapath_initiator_req *req = msg->bodyptr;
+
 		cmd.cmd_type = WLAN_SER_CMD_NDP_INIT_REQ;
 		cmd.vdev = req->vdev;
 		break;
 	}
 	case NDP_RESPONDER_REQ: {
 		struct nan_datapath_responder_req *req = msg->bodyptr;
+
 		cmd.cmd_type = WLAN_SER_CMD_NDP_RESP_REQ;
 		cmd.vdev = req->vdev;
 		break;
 	}
 	case NDP_END_REQ: {
 		struct nan_datapath_end_req *req = msg->bodyptr;
+
 		cmd.cmd_type = WLAN_SER_CMD_NDP_DATA_END_INIT_REQ;
 		cmd.vdev = req->vdev;
 		break;
@@ -259,7 +268,7 @@ static QDF_STATUS nan_handle_confirm(
 	}
 
 	if (confirm->rsp_code != NAN_DATAPATH_RESPONSE_ACCEPT &&
-		confirm->num_active_ndps_on_peer == 0) {
+	    confirm->num_active_ndps_on_peer == 0) {
 		/*
 		 * This peer was created at ndp_indication but
 		 * confirm failed, so it needs to be deleted
@@ -329,8 +338,8 @@ static QDF_STATUS nan_handle_ndp_ind(
 		QDF_MAC_ADDR_ARRAY(ndp_ind->peer_mac_addr.bytes));
 
 	if ((ndp_ind->role == NAN_DATAPATH_ROLE_INITIATOR) ||
-	   ((NAN_DATAPATH_ROLE_RESPONDER == ndp_ind->role) &&
-	   (NAN_DATAPATH_ACCEPT_POLICY_ALL == ndp_ind->policy))) {
+	    ((NAN_DATAPATH_ROLE_RESPONDER == ndp_ind->role) &&
+	    (NAN_DATAPATH_ACCEPT_POLICY_ALL == ndp_ind->policy))) {
 		status = psoc_nan_obj->cb_obj.add_ndi_peer(vdev_id,
 						ndp_ind->peer_mac_addr);
 		if (QDF_IS_STATUS_ERROR(status)) {
@@ -367,7 +376,7 @@ static QDF_STATUS nan_handle_responder_rsp(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	if (QDF_IS_STATUS_SUCCESS(rsp->status) && rsp->create_peer == true) {
+	if (QDF_IS_STATUS_SUCCESS(rsp->status) && rsp->create_peer) {
 		status = psoc_nan_obj->cb_obj.add_ndi_peer(
 						wlan_vdev_get_id(rsp->vdev),
 						rsp->peer_mac_addr);

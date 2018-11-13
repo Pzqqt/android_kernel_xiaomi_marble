@@ -95,9 +95,9 @@ static QDF_STATUS nan_psoc_obj_created_notification(
 	}
 
 	qdf_spinlock_create(&nan_obj->lock);
-	status = wlan_objmgr_psoc_component_obj_attach(psoc,
-			WLAN_UMAC_COMP_NAN, nan_obj,
-			QDF_STATUS_SUCCESS);
+	status = wlan_objmgr_psoc_component_obj_attach(psoc, WLAN_UMAC_COMP_NAN,
+						       nan_obj,
+						       QDF_STATUS_SUCCESS);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		nan_alert("obj attach with psoc failed");
 		goto nan_psoc_notif_failed;
@@ -172,8 +172,8 @@ static QDF_STATUS nan_psoc_obj_destroyed_notification(
 				     nan_psoc_delete_vdev,
 				     NULL, 1, WLAN_NAN_ID);
 
-	status = wlan_objmgr_psoc_component_obj_detach(psoc,
-					WLAN_UMAC_COMP_NAN, nan_obj);
+	status = wlan_objmgr_psoc_component_obj_detach(psoc, WLAN_UMAC_COMP_NAN,
+						       nan_obj);
 	if (QDF_IS_STATUS_ERROR(status))
 		nan_err("nan_obj detach failed");
 
@@ -203,9 +203,9 @@ static QDF_STATUS nan_vdev_obj_created_notification(
 	}
 
 	qdf_spinlock_create(&nan_obj->lock);
-	status = wlan_objmgr_vdev_component_obj_attach(vdev,
-			WLAN_UMAC_COMP_NAN, (void *)nan_obj,
-			QDF_STATUS_SUCCESS);
+	status = wlan_objmgr_vdev_component_obj_attach(vdev, WLAN_UMAC_COMP_NAN,
+						       (void *)nan_obj,
+						       QDF_STATUS_SUCCESS);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		nan_alert("obj attach with vdev failed");
 		goto nan_vdev_notif_failed;
@@ -238,8 +238,8 @@ static QDF_STATUS nan_vdev_obj_destroyed_notification(
 		return QDF_STATUS_E_FAULT;
 	}
 
-	status = wlan_objmgr_vdev_component_obj_detach(vdev,
-					WLAN_UMAC_COMP_NAN, nan_obj);
+	status = wlan_objmgr_vdev_component_obj_detach(vdev, WLAN_UMAC_COMP_NAN,
+						       nan_obj);
 	if (QDF_IS_STATUS_ERROR(status))
 		nan_err("nan_obj detach failed");
 

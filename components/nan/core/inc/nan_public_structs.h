@@ -616,21 +616,19 @@ struct nan_datapath_sch_update_event {
 struct nan_callbacks {
 	/* callback to os_if layer from umac */
 	void (*os_if_event_handler)(struct wlan_objmgr_psoc *psoc,
-				   struct wlan_objmgr_vdev *vdev,
-				   uint32_t type, void *msg);
+				    struct wlan_objmgr_vdev *vdev,
+				    uint32_t type, void *msg);
 
 	int (*ndi_open)(char *iface_name);
 	int (*ndi_start)(char *iface_name, uint16_t);
 	void (*ndi_close)(uint8_t);
 	int (*ndi_delete)(uint8_t, char *iface_name, uint16_t transaction_id);
-	void (*drv_ndi_create_rsp_handler)(uint8_t,
-					struct nan_datapath_inf_create_rsp *);
+	void (*drv_ndi_create_rsp_handler)
+				(uint8_t, struct nan_datapath_inf_create_rsp *);
 	void (*drv_ndi_delete_rsp_handler)(uint8_t);
-
 	int (*new_peer_ind)(uint8_t, uint16_t, struct qdf_mac_addr *, bool);
 	int (*get_peer_idx)(uint8_t, struct qdf_mac_addr *);
 	QDF_STATUS (*add_ndi_peer)(uint32_t, struct qdf_mac_addr);
-
 	void (*peer_departed_ind)(uint8_t, uint16_t, struct qdf_mac_addr *,
 				  bool);
 	void (*ndp_delete_peers)(struct peer_nan_datapath_map*, uint8_t);

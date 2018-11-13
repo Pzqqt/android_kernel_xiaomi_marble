@@ -208,12 +208,12 @@ void ucfg_nan_event_handler(struct wlan_objmgr_psoc *psoc,
  *
  * Return: status of operation
  */
-int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
-				    struct nan_callbacks *cb_obj,
-				    void (os_if_event_handler)(
-				    struct wlan_objmgr_psoc *,
-				    struct wlan_objmgr_vdev *,
-				    uint32_t, void *));
+int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *,
+				    struct nan_callbacks *,
+				    void (os_if_event_handler)
+						(struct wlan_objmgr_psoc *,
+						 struct wlan_objmgr_vdev *,
+						 uint32_t, void *));
 
 /*
  * ucfg_nan_register_lim_callbacks: ucfg API to set lim callbacks
