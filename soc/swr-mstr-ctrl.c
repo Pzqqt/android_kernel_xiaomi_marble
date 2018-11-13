@@ -924,7 +924,7 @@ static void swrm_copy_data_port_config(struct swr_master *master, u8 bank)
 		if (mport->hstart != SWR_INVALID_PARAM
 				&& mport->hstop != SWR_INVALID_PARAM) {
 			reg[len] = SWRM_DP_PORT_HCTRL_BANK(i + 1, bank);
-			hparams = (mport->hstart << 4) | mport->hstop;
+			hparams = (mport->hstop << 4) | mport->hstart;
 			val[len++] = hparams;
 		}
 		if (mport->blk_pack_mode != SWR_INVALID_PARAM) {
