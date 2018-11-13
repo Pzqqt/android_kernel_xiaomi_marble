@@ -32,7 +32,7 @@
 
 #define TIMEOUT_MS 1000
 /*
- * AVS bring up in the modem is optimitized for the new
+ * AVS bring up in the modem is optimized for the new
  * Sub System Restart design and 100 milliseconds timeout
  * is sufficient to make sure the Q6 will be ready.
  */
@@ -67,6 +67,8 @@ struct q6core_str {
 	wait_queue_head_t mdf_map_resp_wait;
 	wait_queue_head_t cmd_req_wait;
 	wait_queue_head_t avcs_fwk_ver_req_wait;
+	wait_queue_head_t lpass_npa_rsc_wait;
+	u32 lpass_npa_rsc_rsp_rcvd;
 	u32 bus_bw_resp_received;
 	u32 mdf_map_resp_received;
 	enum cmd_flags {
@@ -84,6 +86,7 @@ struct q6core_str {
 	struct cal_type_data *cal_data[CORE_MAX_CAL];
 	uint32_t mem_map_cal_handle;
 	uint32_t mdf_mem_map_cal_handle;
+	uint32_t npa_client_handle;
 	int32_t adsp_status;
 	int32_t avs_state;
 	struct q6core_avcs_ver_info q6core_avcs_ver_info;
@@ -321,6 +324,15 @@ static int32_t aprv2_core_fn_q(struct apr_client_data *data, void *priv)
 				"AVCS_CMD_UNLOAD_TOPO_MODULES",
 				adsp_err_get_err_str(payload1[1]));
 			break;
+		case AVCS_CMD_DESTROY_LPASS_NPA_CLIENT:
+		case AVCS_CMD_REQUEST_LPASS_NPA_RESOURCES:
+			pr_debug("%s: Cmd = AVCS_CMD_CREATE_LPASS_NPA_CLIENT/AVCS_CMD_DESTROY_LPASS_NPA_CLIENT status[%s]\n",
+				__func__, adsp_err_get_err_str(payload1[1]));
+			/* ADSP status to match Linux error standard */
+			q6core_lcl.adsp_status = -payload1[1];
+			q6core_lcl.lpass_npa_rsc_rsp_rcvd = 1;
+			wake_up(&q6core_lcl.lpass_npa_rsc_wait);
+			break;
 		default:
 			pr_err("%s: Invalid cmd rsp[0x%x][0x%x] opcode %d\n",
 					__func__,
@@ -354,6 +366,15 @@ static int32_t aprv2_core_fn_q(struct apr_client_data *data, void *priv)
 			q6core_lcl.bus_bw_resp_received = 1;
 			wake_up(&q6core_lcl.bus_bw_req_wait);
 		}
+		break;
+	case AVCS_CMDRSP_CREATE_LPASS_NPA_CLIENT:
+		payload1 = data->payload;
+		pr_debug("%s: AVCS_CMDRSP_CREATE_LPASS_NPA_CLIENT handle %d\n",
+			__func__, payload1[1]);
+		q6core_lcl.adsp_status = payload1[0];
+		q6core_lcl.npa_client_handle = payload1[1];
+		q6core_lcl.lpass_npa_rsc_rsp_rcvd = 1;
+		wake_up(&q6core_lcl.lpass_npa_rsc_wait);
 		break;
 	case AVCS_CMDRSP_ADSP_EVENT_GET_STATE:
 		payload1 = data->payload;
@@ -932,6 +953,201 @@ bail:
 	return ret;
 }
 EXPORT_SYMBOL(q6core_is_adsp_ready);
+
+int q6core_create_lpass_npa_client(uint32_t node_id, char *client_name,
+				   uint32_t *client_handle)
+{
+	struct avcs_cmd_create_lpass_npa_client_t create_lpass_npa_client;
+	struct avcs_cmd_create_lpass_npa_client_t *cmd_ptr =
+						&create_lpass_npa_client;
+	int ret = 0;
+
+	if (!client_name) {
+		pr_err("%s: Invalid params\n", __func__);
+		return -EINVAL;
+	}
+
+	mutex_lock(&(q6core_lcl.cmd_lock));
+
+	memset(cmd_ptr, 0, sizeof(create_lpass_npa_client));
+
+	cmd_ptr->hdr.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
+				APR_HDR_LEN(APR_HDR_SIZE),
+				APR_PKT_VER);
+	cmd_ptr->hdr.pkt_size = sizeof(create_lpass_npa_client);
+	cmd_ptr->hdr.src_port = 0;
+	cmd_ptr->hdr.dest_port = 0;
+	cmd_ptr->hdr.token = 0;
+	cmd_ptr->hdr.opcode = AVCS_CMD_CREATE_LPASS_NPA_CLIENT;
+	cmd_ptr->node_id = AVCS_SLEEP_ISLAND_CORE_DRIVER_NODE_ID;
+	strlcpy(cmd_ptr->client_name, client_name,
+			sizeof(cmd_ptr->client_name));
+
+	pr_debug("%s: create lpass npa client opcode[0x%x] node id[0x%x]\n",
+		__func__, cmd_ptr->hdr.opcode, cmd_ptr->node_id);
+
+	*client_handle = 0;
+	q6core_lcl.adsp_status = 0;
+	q6core_lcl.lpass_npa_rsc_rsp_rcvd = 0;
+	ret = apr_send_pkt(q6core_lcl.core_handle_q, (uint32_t *) cmd_ptr);
+	if (ret < 0) {
+		pr_err("%s: create lpass npa client failed %d\n",
+			__func__, ret);
+		ret = -EINVAL;
+		goto done;
+	}
+
+	ret = wait_event_timeout(q6core_lcl.lpass_npa_rsc_wait,
+				(q6core_lcl.lpass_npa_rsc_rsp_rcvd == 1),
+				msecs_to_jiffies(TIMEOUT_MS));
+	if (!ret) {
+		pr_err("%s: timeout. waited for create lpass npa rsc client\n",
+			__func__);
+		ret = -ETIMEDOUT;
+		goto done;
+	} else {
+		/* set ret to 0 as no timeout happened */
+		ret = 0;
+	}
+
+	if (q6core_lcl.adsp_status < 0) {
+		pr_err("%s: DSP returned error %d\n",
+			__func__, q6core_lcl.adsp_status);
+		ret = q6core_lcl.adsp_status;
+		goto done;
+	}
+
+	*client_handle = q6core_lcl.npa_client_handle;
+	pr_debug("%s: q6core_lcl.npa_client_handle %d\n", __func__,
+		q6core_lcl.npa_client_handle);
+done:
+	mutex_unlock(&q6core_lcl.cmd_lock);
+	return ret;
+}
+EXPORT_SYMBOL(q6core_create_lpass_npa_client);
+
+int q6core_destroy_lpass_npa_client(uint32_t client_handle)
+{
+	struct avcs_cmd_destroy_lpass_npa_client_t destroy_lpass_npa_client;
+	struct avcs_cmd_destroy_lpass_npa_client_t *cmd_ptr =
+						&destroy_lpass_npa_client;
+	int ret = 0;
+
+	mutex_lock(&(q6core_lcl.cmd_lock));
+
+	memset(cmd_ptr, 0, sizeof(destroy_lpass_npa_client));
+
+	cmd_ptr->hdr.hdr_field = APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
+				APR_HDR_LEN(APR_HDR_SIZE),
+				APR_PKT_VER);
+	cmd_ptr->hdr.pkt_size = sizeof(destroy_lpass_npa_client);
+	cmd_ptr->hdr.src_port = 0;
+	cmd_ptr->hdr.dest_port = 0;
+	cmd_ptr->hdr.token = 0;
+	cmd_ptr->hdr.opcode = AVCS_CMD_DESTROY_LPASS_NPA_CLIENT;
+	cmd_ptr->client_handle = client_handle;
+
+	pr_debug("%s: dstry lpass npa client opcode[0x%x] client hdl[0x%x]\n",
+		__func__, cmd_ptr->hdr.opcode, cmd_ptr->client_handle);
+
+	q6core_lcl.adsp_status = 0;
+	q6core_lcl.lpass_npa_rsc_rsp_rcvd = 0;
+	ret = apr_send_pkt(q6core_lcl.core_handle_q, (uint32_t *) cmd_ptr);
+	if (ret < 0) {
+		pr_err("%s: destroy lpass npa client failed %d\n",
+			__func__, ret);
+		ret = -EINVAL;
+		goto done;
+	}
+
+	ret = wait_event_timeout(q6core_lcl.lpass_npa_rsc_wait,
+				(q6core_lcl.lpass_npa_rsc_rsp_rcvd == 1),
+				msecs_to_jiffies(TIMEOUT_MS));
+	if (!ret) {
+		pr_err("%s: timeout. waited for destroy lpass npa rsc client\n",
+			__func__);
+		ret = -ETIMEDOUT;
+		goto done;
+	} else {
+		/* set ret to 0 as no timeout happened */
+		ret = 0;
+	}
+
+	if (q6core_lcl.adsp_status < 0) {
+		pr_err("%s: DSP returned error %d\n",
+			__func__, q6core_lcl.adsp_status);
+		ret = q6core_lcl.adsp_status;
+	}
+done:
+	mutex_unlock(&q6core_lcl.cmd_lock);
+	return ret;
+}
+EXPORT_SYMBOL(q6core_destroy_lpass_npa_client);
+
+int q6core_request_island_transition(uint32_t client_handle,
+				     uint32_t island_allow_mode)
+{
+	struct avcs_sleep_node_island_transition_config_t island_tsn_cfg;
+	struct avcs_sleep_node_island_transition_config_t *cmd_ptr =
+						&island_tsn_cfg;
+	int ret = 0;
+
+	mutex_lock(&(q6core_lcl.cmd_lock));
+
+	memset(cmd_ptr, 0, sizeof(island_tsn_cfg));
+
+	cmd_ptr->req_lpass_npa_rsc.hdr.hdr_field =
+				APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
+				APR_HDR_LEN(APR_HDR_SIZE),
+				APR_PKT_VER);
+	cmd_ptr->req_lpass_npa_rsc.hdr.pkt_size = sizeof(island_tsn_cfg);
+	cmd_ptr->req_lpass_npa_rsc.hdr.src_port = 0;
+	cmd_ptr->req_lpass_npa_rsc.hdr.dest_port = 0;
+	cmd_ptr->req_lpass_npa_rsc.hdr.token = 0;
+	cmd_ptr->req_lpass_npa_rsc.hdr.opcode =
+					AVCS_CMD_REQUEST_LPASS_NPA_RESOURCES;
+	cmd_ptr->req_lpass_npa_rsc.client_handle = client_handle;
+	cmd_ptr->req_lpass_npa_rsc.resource_id =
+				AVCS_SLEEP_NODE_ISLAND_TRANSITION_RESOURCE_ID;
+	cmd_ptr->island_allow_mode = island_allow_mode;
+
+	pr_debug("%s: req islnd tnsn opcode[0x%x] island_allow_mode[0x%x]\n",
+		__func__, cmd_ptr->req_lpass_npa_rsc.hdr.opcode,
+		cmd_ptr->island_allow_mode);
+
+	q6core_lcl.adsp_status = 0;
+	q6core_lcl.lpass_npa_rsc_rsp_rcvd = 0;
+	ret = apr_send_pkt(q6core_lcl.core_handle_q, (uint32_t *) cmd_ptr);
+	if (ret < 0) {
+		pr_err("%s: island tnsn cmd send failed %d\n",
+			__func__, ret);
+		ret = -EINVAL;
+		goto done;
+	}
+
+	ret = wait_event_timeout(q6core_lcl.lpass_npa_rsc_wait,
+				(q6core_lcl.lpass_npa_rsc_rsp_rcvd == 1),
+				msecs_to_jiffies(TIMEOUT_MS));
+	if (!ret) {
+		pr_err("%s: timeout. waited for island lpass npa rsc req\n",
+			__func__);
+		ret = -ETIMEDOUT;
+		goto done;
+	} else {
+		/* set ret to 0 as no timeout happened */
+		ret = 0;
+	}
+
+	if (q6core_lcl.adsp_status < 0) {
+		pr_err("%s: DSP returned error %d\n",
+			__func__, q6core_lcl.adsp_status);
+		ret = q6core_lcl.adsp_status;
+	}
+done:
+	mutex_unlock(&q6core_lcl.cmd_lock);
+	return ret;
+}
+EXPORT_SYMBOL(q6core_request_island_transition);
 
 int q6core_map_memory_regions(phys_addr_t *buf_add, uint32_t mempool_id,
 			uint32_t *bufsz, uint32_t bufcnt, uint32_t *map_handle)
@@ -1671,6 +1887,7 @@ int __init core_init(void)
 	init_waitqueue_head(&q6core_lcl.cmd_req_wait);
 	init_waitqueue_head(&q6core_lcl.avcs_fwk_ver_req_wait);
 	init_waitqueue_head(&q6core_lcl.mdf_map_resp_wait);
+	init_waitqueue_head(&q6core_lcl.lpass_npa_rsc_wait);
 	q6core_lcl.cmd_resp_received_flag = FLAG_NONE;
 	mutex_init(&q6core_lcl.cmd_lock);
 	mutex_init(&q6core_lcl.ver_lock);
