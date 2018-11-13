@@ -2452,14 +2452,12 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 			params.std.addr_hi =
 				(uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
 
-			if (sec_type != cdp_sec_type_wapi) {
-				params.u.upd_queue_params.update_pn_valid = 0;
-			} else {
-				/*
-				 * Setting PN valid bit for WAPI sec_type,
-				 * since WAPI PN has to be started with
-				 * predefined value
-				 */
+			if (pn_size) {
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_INFO_HIGH,
+					  "%s PN set for TID:%d pn:%x:%x:%x:%x",
+					  __func__, i, rx_pn[3], rx_pn[2],
+					  rx_pn[1], rx_pn[0]);
 				params.u.upd_queue_params.update_pn_valid = 1;
 				params.u.upd_queue_params.pn_31_0 = rx_pn[0];
 				params.u.upd_queue_params.pn_63_32 = rx_pn[1];
