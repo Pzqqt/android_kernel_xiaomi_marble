@@ -5093,6 +5093,18 @@ static int hdd_we_mcc_config_quota(struct hdd_adapter *adapter, int quota)
 	return wlan_hdd_set_mcc_p2p_quota(adapter, quota);
 }
 
+static int hdd_we_set_debug_log(struct hdd_adapter *adapter, int value)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (!hdd_ctx->mac_handle)
+		return -EINVAL;
+
+	sme_update_connect_debug(hdd_ctx->mac_handle, value);
+
+	return 0;
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -5416,13 +5428,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_SET_DEBUG_LOG:
-	{
-		if (!mac_handle)
-			return -EINVAL;
-
-		sme_update_connect_debug(mac_handle, set_value);
+		ret = hdd_we_set_debug_log(adapter, set_value);
 		break;
-	}
 
 	case WE_SET_EARLY_RX_ADJUST_ENABLE:
 		ret = hdd_we_set_early_rx_adjust_enable(adapter, set_value);
