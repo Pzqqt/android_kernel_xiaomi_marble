@@ -3232,6 +3232,8 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
+	hdd_debug("%d", value);
+
 	switch (value) {
 	case CDP_TXRX_HIST_STATS:
 		wlan_hdd_display_tx_rx_histogram(hdd_ctx);
@@ -5075,6 +5077,22 @@ static int hdd_we_set_channel(struct hdd_adapter *adapter, int channel)
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_we_mcc_config_latency(struct hdd_adapter *adapter, int latency)
+{
+	hdd_debug("MCC latency %d", latency);
+
+	wlan_hdd_set_mcc_latency(adapter, latency);
+
+	return 0;
+}
+
+static int hdd_we_mcc_config_quota(struct hdd_adapter *adapter, int quota)
+{
+	hdd_debug("MCC quota %dms", quota);
+
+	return wlan_hdd_set_mcc_p2p_quota(adapter, quota);
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -5320,11 +5338,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_DUMP_STATS:
-	{
-		hdd_debug("WE_DUMP_STATS val %d", set_value);
 		ret = hdd_wlan_dump_stats(adapter, set_value);
 		break;
-	}
 
 	case WE_CLEAR_STATS:
 		ret = hdd_we_clear_stats(adapter, set_value);
@@ -5393,19 +5408,13 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 
 	case WE_MCC_CONFIG_LATENCY:
-	{
-		wlan_hdd_set_mcc_latency(adapter, set_value);
+		ret = hdd_we_mcc_config_latency(adapter, set_value);
 		break;
-	}
 
 	case WE_MCC_CONFIG_QUOTA:
-	{
-		hdd_debug("iwpriv cmd to set MCC quota with val %dms",
-				set_value);
-		ret = wlan_hdd_set_mcc_p2p_quota(adapter,
-			set_value);
+		ret = hdd_we_mcc_config_quota(adapter, set_value);
 		break;
-	}
+
 	case WE_SET_DEBUG_LOG:
 	{
 		if (!mac_handle)
