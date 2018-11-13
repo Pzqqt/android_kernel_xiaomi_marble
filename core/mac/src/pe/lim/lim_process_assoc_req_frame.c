@@ -1402,13 +1402,18 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			(sta_ds->htSupportedChannelWidthSet) ?
 				session->htSecondaryChannelOffset : 0;
 		if (assoc_req->operMode.present) {
+			enum phy_ch_width ch_width;
+
+			ch_width = assoc_req->operMode.chanWidth;
+			if (session->ch_width < ch_width)
+				ch_width = session->ch_width;
+
 			sta_ds->vhtSupportedChannelWidthSet =
-				(uint8_t) ((assoc_req->operMode.chanWidth ==
-				eHT_CHANNEL_WIDTH_80MHZ) ?
+				(uint8_t) ((ch_width == CH_WIDTH_80MHZ) ?
 				WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ :
 				WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ);
 			sta_ds->htSupportedChannelWidthSet =
-				(uint8_t) (assoc_req->operMode.chanWidth ?
+				(uint8_t) (ch_width ?
 				eHT_CHANNEL_WIDTH_40MHZ :
 				eHT_CHANNEL_WIDTH_20MHZ);
 		} else if ((vht_caps != NULL) && vht_caps->present) {
@@ -1432,6 +1437,11 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			session->htSupportedChannelWidthSet) ?
 			sta_ds->htSupportedChannelWidthSet :
 			session->htSupportedChannelWidthSet;
+
+		if (!sta_ds->htSupportedChannelWidthSet)
+			sta_ds->vhtSupportedChannelWidthSet =
+					WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
+
 		sta_ds->baPolicyFlag = 0xFF;
 		sta_ds->htLdpcCapable =
 			(uint8_t) assoc_req->HTCaps.advCodingCap;
