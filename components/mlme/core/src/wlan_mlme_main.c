@@ -160,6 +160,8 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 				  struct wlan_mlme_generic *gen)
 {
 	gen->rtt3_enabled = cfg_default(CFG_RTT3_ENABLE);
+	gen->rtt_mac_randomization =
+		cfg_get(psoc, CFG_ENABLE_RTT_MAC_RANDOMIZATION);
 	gen->band_capability =
 		cfg_get(psoc, CFG_BAND_CAPABILITY);
 	gen->band = gen->band_capability;

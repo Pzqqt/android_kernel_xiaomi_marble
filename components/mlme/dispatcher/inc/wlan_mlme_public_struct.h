@@ -923,6 +923,7 @@ struct wlan_mlme_chainmask {
  * @pmf_sa_query_max_retries: PMF query max retries for SAP
  * @pmf_sa_query_retry_interval: PMF query retry interval for SAP
  * @dropped_pkt_disconnect_thresh: Threshold for dropped pkts before disconnect
+ * @rtt_mac_randomization: Enable/Disable RTT MAC randomization
  * @rtt3_enabled: RTT3 enable or disable info
  * @prevent_link_down: Enable/Disable prevention of link down
  * @memory_deep_sleep: Enable/Disable memory deep sleep
@@ -945,6 +946,7 @@ struct wlan_mlme_generic {
 	uint8_t pmf_sa_query_max_retries;
 	uint16_t pmf_sa_query_retry_interval;
 	uint16_t dropped_pkt_disconnect_thresh;
+	bool rtt_mac_randomization;
 	bool rtt3_enabled;
 	bool prevent_link_down;
 	bool memory_deep_sleep;

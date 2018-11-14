@@ -6235,22 +6235,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * enable_rtt_mac_randomization - Enable/Disable rtt mac randomization
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_RTT_MAC_RANDOMIZATION_NAME    "enable_rtt_mac_randomization"
-#define CFG_ENABLE_RTT_MAC_RANDOMIZATION_MIN     (0)
-#define CFG_ENABLE_RTT_MAC_RANDOMIZATION_MAX     (1)
-#define CFG_ENABLE_RTT_MAC_RANDOMIZATION_DEFAULT (0)
-
-/*
- * <ini>
  * gEnableSecondaryRate - Enable/Disable Secondary Retry Rate feature subset
  *
  * @Min: 0x0
@@ -6801,7 +6785,6 @@ struct hdd_config {
 	uint32_t enable_secondary_rate;
 	bool is_unit_test_framework_enabled;
 	bool enable_ftopen;
-	bool enable_rtt_mac_randomization;
 	bool roam_force_rssi_trigger;
 	bool enable_change_channel_bandwidth;
 

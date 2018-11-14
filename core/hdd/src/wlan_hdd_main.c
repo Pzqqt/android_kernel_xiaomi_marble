@@ -4026,6 +4026,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 {
 	QDF_STATUS status;
 	int errno;
+	bool bval;
 	struct hdd_context *hdd_ctx;
 	struct sme_session_params sme_session_params = {0};
 
@@ -4097,11 +4098,16 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 	}
 
 	if (adapter->device_mode == QDF_STA_MODE) {
-		hdd_debug("setting RTT mac randomization param: %d",
-			hdd_ctx->config->enable_rtt_mac_randomization);
+		bval = false;
+		status = ucfg_mlme_get_rtt_mac_randomization(hdd_ctx->psoc,
+							     &bval);
+		if (QDF_IS_STATUS_ERROR(status))
+			hdd_err("unable to get RTT MAC randomization value");
+
+		hdd_debug("setting RTT mac randomization param: %d", bval);
 		errno = sme_cli_set_command(adapter->session_id,
 			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_INITIATOR_RANDOM_MAC,
-			hdd_ctx->config->enable_rtt_mac_randomization,
+			bval,
 			VDEV_CMD);
 		if (0 != errno)
 			hdd_err("RTT mac randomization param set failed %d",

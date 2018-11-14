@@ -73,6 +73,22 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"PMF SA query retry interval for SAP")
 
+/*
+ * <ini>
+ * enable_rtt_mac_randomization - Enable/Disable rtt mac randomization
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_RTT_MAC_RANDOMIZATION CFG_INI_BOOL( \
+	"enable_rtt_mac_randomization", \
+	0, \
+	"Enable RTT MAC randomization")
+
 #define CFG_RTT3_ENABLE CFG_BOOL( \
 		"rtt3_enabled", \
 		1, \
@@ -476,6 +492,7 @@
 	CFG(CFG_ENABLE_DEBUG_PACKET_LOG) \
 	CFG(CFG_PMF_SA_QUERY_MAX_RETRIES) \
 	CFG(CFG_PMF_SA_QUERY_RETRY_INTERVAL) \
+	CFG(CFG_ENABLE_RTT_MAC_RANDOMIZATION) \
 	CFG(CFG_RTT3_ENABLE) \
 	CFG(CFG_BAND_CAPABILITY) \
 	CFG(CFG_PREVENT_LINK_DOWN) \
