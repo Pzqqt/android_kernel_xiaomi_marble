@@ -31,6 +31,7 @@
 #include "nan_api.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_nan.h"
+#include <wlan_hdd_dsc.h>
 #include <qca_vendor.h>
 #include "cfg_nan_api.h"
 
@@ -103,10 +104,18 @@ int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 
 {
 	int ret;
+	QDF_STATUS status;
+	struct dsc_psoc *dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
+
+	status = dsc_psoc_op_start(dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_nan_request(wiphy, wdev, data, data_len);
 	cds_ssr_unprotect(__func__);
+
+	dsc_psoc_op_stop(dsc_psoc);
 
 	return ret;
 }

@@ -34,6 +34,7 @@
 #include "wlan_hdd_p2p.h"
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_scan.h"
+#include <wlan_hdd_dsc.h>
 #include "wlan_policy_mgr_api.h"
 #include "wlan_hdd_power.h"
 #include "wma_api.h"
@@ -1236,6 +1237,12 @@ int wlan_hdd_vendor_abort_scan(
 	const void *data, int data_len)
 {
 	int ret;
+	QDF_STATUS status;
+	struct dsc_psoc *dsc_psoc = hdd_dsc_psoc_from_wiphy(wiphy);
+
+	status = dsc_psoc_op_start(dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_vendor_abort_scan(wiphy,
@@ -1243,6 +1250,7 @@ int wlan_hdd_vendor_abort_scan(
 					   data_len);
 	cds_ssr_unprotect(__func__);
 
+	dsc_psoc_op_stop(dsc_psoc);
 	return ret;
 }
 
