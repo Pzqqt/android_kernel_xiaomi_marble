@@ -25,6 +25,7 @@
 
 #include <wlan_cmn.h>
 #include <reg_services_public_struct.h>
+#include <wmi_unified_param.h>
 
 #define CFG_PMKID_MODES_OKC                        (0x1)
 #define CFG_PMKID_MODES_PMKSA_CACHING              (0x2)
@@ -1023,18 +1024,6 @@ enum dot11p_mode {
 	CFG_11P_DISABLED = 0,
 	CFG_11P_STANDALONE,
 	CFG_11P_CONCURRENT,
-};
-
-/**
- * enum nss_chains_band_info - Band info for dynamic nss, chains change feature
- * @NSS_CHAINS_BAND_2GHZ: 2.4Ghz band
- * @NSS_CHAINS_BAND_5GHZ: 5Ghz band
- * @NSS_CHAINS_BAND_MAX: Max bands supported
- */
-enum nss_chains_band_info {
-	NSS_CHAINS_BAND_2GHZ = 0,
-	NSS_CHAINS_BAND_5GHZ,
-	NSS_CHAINS_BAND_MAX,
 };
 
 #define MAX_VDEV_NSS                2

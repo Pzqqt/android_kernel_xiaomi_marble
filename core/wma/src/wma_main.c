@@ -1706,15 +1706,46 @@ wma_vdev_nss_chain_params_send(uint8_t vdev_id,
 			       struct wlan_mlme_nss_chains *user_cfg)
 {
 	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-
+	struct vdev_nss_chains vdev_user_cfg;
 	if (!wma_handle) {
 		WMA_LOGE("%s: wma_handle is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	vdev_user_cfg.disable_rx_mrc[NSS_CHAINS_BAND_2GHZ] =
+				user_cfg->disable_rx_mrc[NSS_CHAINS_BAND_2GHZ];
+	vdev_user_cfg.disable_tx_mrc[NSS_CHAINS_BAND_2GHZ] =
+				user_cfg->disable_tx_mrc[NSS_CHAINS_BAND_2GHZ];
+	vdev_user_cfg.disable_rx_mrc[NSS_CHAINS_BAND_5GHZ] =
+				user_cfg->disable_rx_mrc[NSS_CHAINS_BAND_5GHZ];
+	vdev_user_cfg.disable_tx_mrc[NSS_CHAINS_BAND_5GHZ] =
+				user_cfg->disable_tx_mrc[NSS_CHAINS_BAND_5GHZ];
+
+	vdev_user_cfg.num_rx_chains[NSS_CHAINS_BAND_2GHZ]
+				= user_cfg->num_rx_chains[NSS_CHAINS_BAND_2GHZ];
+	vdev_user_cfg.num_tx_chains[NSS_CHAINS_BAND_2GHZ]
+				= user_cfg->num_tx_chains[NSS_CHAINS_BAND_2GHZ];
+	vdev_user_cfg.num_rx_chains[NSS_CHAINS_BAND_5GHZ] =
+				user_cfg->num_rx_chains[NSS_CHAINS_BAND_5GHZ];
+	vdev_user_cfg.num_tx_chains[NSS_CHAINS_BAND_5GHZ] =
+				user_cfg->num_tx_chains[NSS_CHAINS_BAND_5GHZ];
+
+	vdev_user_cfg.rx_nss[NSS_CHAINS_BAND_2GHZ] =
+				user_cfg->rx_nss[NSS_CHAINS_BAND_2GHZ];
+	vdev_user_cfg.tx_nss[NSS_CHAINS_BAND_2GHZ] =
+				user_cfg->tx_nss[NSS_CHAINS_BAND_2GHZ];
+	vdev_user_cfg.rx_nss[NSS_CHAINS_BAND_5GHZ] =
+				user_cfg->rx_nss[NSS_CHAINS_BAND_5GHZ];
+	vdev_user_cfg.tx_nss[NSS_CHAINS_BAND_5GHZ] =
+				user_cfg->tx_nss[NSS_CHAINS_BAND_5GHZ];
+
+	vdev_user_cfg.num_tx_chains_11a = user_cfg->num_tx_chains_11a;
+	vdev_user_cfg.num_tx_chains_11b = user_cfg->num_tx_chains_11b;
+	vdev_user_cfg.num_tx_chains_11g = user_cfg->num_tx_chains_11g;
+
 	return wmi_unified_vdev_nss_chain_params_send(wma_handle->wmi_handle,
 						      vdev_id,
-						      user_cfg);
+						      &vdev_user_cfg);
 }
 
 /**
