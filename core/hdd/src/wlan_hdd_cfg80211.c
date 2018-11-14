@@ -5572,6 +5572,37 @@ static int wlan_hdd_cfg80211_wifi_set_rx_blocksize(struct hdd_context *hdd_ctx,
 	return ret_val;
 }
 
+static int hdd_config_fine_time_measurement(struct hdd_adapter *adapter,
+					    const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint32_t user_capability;
+	uint32_t target_capability;
+	uint32_t final_capability;
+	QDF_STATUS status;
+
+	user_capability = nla_get_u32(attr);
+	target_capability = hdd_ctx->fine_time_meas_cap_target;
+	final_capability = user_capability & target_capability;
+
+	status = ucfg_mlme_set_fine_time_meas_cap(hdd_ctx->psoc,
+						  final_capability);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Unable to set value, status %d", status);
+		return -EINVAL;
+	}
+
+	sme_update_fine_time_measurement_capab(hdd_ctx->mac_handle,
+					       adapter->session_id,
+					       final_capability);
+	ucfg_wifi_pos_set_ftm_cap(hdd_ctx->psoc, final_capability);
+
+	hdd_debug("user: 0x%x, target: 0x%x, final: 0x%x",
+		  user_capability, target_capability, final_capability);
+
+	return 0;
+}
+
 static int hdd_config_scan_default_ies(struct hdd_adapter *adapter,
 				       const struct nlattr *attr)
 {
@@ -5647,6 +5678,8 @@ struct independent_setters {
 static const struct independent_setters independent_setters[] = {
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_DEFAULT_IES,
 	 hdd_config_scan_default_ies},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_FINE_TIME_MEASUREMENT,
+	 hdd_config_fine_time_measurement},
 };
 
 /**
@@ -5764,7 +5797,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	u16 stats_avg_factor;
 	u32 guard_time;
 	uint8_t set_value;
-	u32 ftm_capab;
 	u8 qpower;
 	QDF_STATUS status;
 	int attr_len;
@@ -5784,7 +5816,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	uint16_t latency_level;
 	mac_handle_t mac_handle;
 	bool b_value;
-	uint32_t fine_time_meas_cap = 0;
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t bmiss_first_bcnt;
 	uint8_t bmiss_final_bcnt;
@@ -5818,31 +5849,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	/* return errno here when all attributes have been refactored */
 
 	mac_handle = hdd_ctx->mac_handle;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_FINE_TIME_MEASUREMENT]) {
-		ftm_capab = nla_get_u32(tb[
-			QCA_WLAN_VENDOR_ATTR_CONFIG_FINE_TIME_MEASUREMENT]);
-		fine_time_meas_cap =
-			hdd_ctx->fine_time_meas_cap_target & ftm_capab;
-
-		qdf_status =
-			ucfg_mlme_set_fine_time_meas_cap(hdd_ctx->psoc,
-							 fine_time_meas_cap);
-		if (QDF_IS_STATUS_ERROR(qdf_status)) {
-			hdd_err("FTM capability:  values 0x%x, 0x%x, 0x%x",
-				ftm_capab, hdd_ctx->fine_time_meas_cap_target,
-				fine_time_meas_cap);
-			return -EINVAL;
-		}
-
-		sme_update_fine_time_measurement_capab(mac_handle,
-						       adapter->session_id,
-						       fine_time_meas_cap);
-		ucfg_wifi_pos_set_ftm_cap(hdd_ctx->psoc, fine_time_meas_cap);
-		hdd_debug("FTM capability: user value: 0x%x, target value: 0x%x, final value: 0x%x",
-			  ftm_capab, hdd_ctx->fine_time_meas_cap_target,
-			  fine_time_meas_cap);
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MODULATED_DTIM]) {
 		modulated_dtim = nla_get_u32(
