@@ -1026,6 +1026,12 @@ static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_NAME);
 	sap_cfg->reduced_beacon_interval =
 		cfg_get(psoc, CFG_REDUCED_BEACON_INTERVAL);
+	sap_cfg->max_li_modulated_dtim_time =
+		cfg_get(psoc, CFG_MAX_LI_MODULATED_DTIM);
+	sap_cfg->country_code_priority =
+		cfg_get(psoc, CFG_COUNTRY_CODE_PRIORITY);
+	sap_cfg->sap_pref_chan_location =
+		cfg_get(psoc, CFG_SAP_PREF_CHANNEL_LOCATION);
 
 }
 

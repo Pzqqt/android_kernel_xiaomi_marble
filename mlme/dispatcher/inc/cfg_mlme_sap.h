@@ -451,6 +451,82 @@
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"reduced beacon interval")
+/*
+ * <ini>
+ * gMaxLIModulatedDTIM - Set MaxLIModulate Dtim
+ * @Min: 1
+ * @Max: 10
+ * @Default: 10
+ *
+ * This ini is used to set default MaxLIModulatedDTIM
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_MAX_LI_MODULATED_DTIM CFG_INI_UINT( \
+			"gMaxLIModulatedDTIM", \
+			1, \
+			10, \
+			10, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Max modulated dtim")
+
+/*
+ * <ini>
+ * gCountryCodePriority - Priority to set country code
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default gCountryCodePriority
+ *
+ * Related: None
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_COUNTRY_CODE_PRIORITY CFG_INI_BOOL( \
+			"gCountryCodePriority", \
+			0, \
+			"Country code priority")
+
+/*
+ * <ini>
+ * gSapPreferredChanLocation - Restrict channel switches between ondoor and
+ * outdoor.
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * This ini is used for restricting channel switches between Indoor and outdoor
+ * channels after radar detection.
+ * 0- No preferred channel location
+ * 1- Use indoor channels only
+ * 2- Use outdoor channels only
+ * Related: NA.
+ *
+ * Supported Feature: DFS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_SAP_PREF_CHANNEL_LOCATION CFG_INI_UINT( \
+			"gSapPreferredChanLocation", \
+			0, \
+			2, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Sap preferred channel location")
+
 
  #define CFG_SAP_ALL \
 	CFG(CFG_SSID) \
@@ -475,6 +551,9 @@
 	CFG(CFG_SAP_CH_SWITCH_MODE) \
 	CFG(CFG_SAP_INTERNAL_RESTART) \
 	CFG(CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_NAME) \
-	CFG(CFG_REDUCED_BEACON_INTERVAL)
+	CFG(CFG_REDUCED_BEACON_INTERVAL) \
+	CFG(CFG_MAX_LI_MODULATED_DTIM) \
+	CFG(CFG_COUNTRY_CODE_PRIORITY) \
+	CFG(CFG_SAP_PREF_CHANNEL_LOCATION)
 
 #endif /* __CFG_MLME_SAP_H */

@@ -582,6 +582,38 @@ QDF_STATUS wlan_mlme_get_sap_chn_switch_mode(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_mlme_get_sap_internal_restart(struct wlan_objmgr_psoc *psoc,
 					      bool *value);
+/**
+ * wlan_mlme_get_sap_max_modulated_dtim() - get the max modulated dtim
+ * restart
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_max_modulated_dtim(struct wlan_objmgr_psoc *psoc,
+						uint8_t *value);
+
+/**
+ * wlan_mlme_get_sap_chan_pref_location() - get the sap chan pref location
+ * restart
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_chan_pref_location(struct wlan_objmgr_psoc *psoc,
+						uint8_t *value);
+
+/**
+ * wlan_mlme_get_sap_country_priority() - get the sap country code priority
+ * restart
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_country_priority(struct wlan_objmgr_psoc *psoc,
+					      bool *value);
 
 /**
  * wlan_mlme_get_sap_reduced_beacon_interval() - get the sap reduced
