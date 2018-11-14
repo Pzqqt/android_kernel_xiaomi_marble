@@ -47,6 +47,8 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 	int idx = 0;
 	struct spectral_samp_data *samp_data;
 	static int samp_msg_index;
+	size_t pwr_count = 0;
+	size_t pwr_count_sec80 = 0;
 
 	if (is_primaryseg_rx_inprog(spectral)) {
 		spec_samp_msg  = (struct spectral_samp_msg *)
@@ -95,7 +97,23 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		samp_data->spectral_nb_upper = params->nb_upper;
 		samp_data->spectral_last_tstamp = params->last_tstamp;
 		samp_data->spectral_max_mag = params->max_mag;
-		samp_data->bin_pwr_count = params->pwr_count;
+
+		/*
+		 * Currently, we compute pwr_count considering the size of the
+		 * samp_data->bin_pwr array rather than the number of elements
+		 * in this array. The reasons are that
+		 * SPECTRAL_MESSAGE_COPY_CHAR_ARRAY() where pwr_count will be
+		 * used maps directly to OS_MEMCPY() on little endian platforms,
+		 * and that samp_data->bin_pwr is an array of u_int8_t elements
+		 * due to which the number of elements in the array == the size
+		 * of the array. In case FFT bin size is increased from 8 bits
+		 * in the future, this code would have to be changed along with
+		 * rest of framework on which it depends.
+		 */
+		pwr_count = qdf_min((size_t)params->pwr_count,
+				    sizeof(samp_data->bin_pwr));
+
+		samp_data->bin_pwr_count = pwr_count;
 		samp_data->lb_edge_extrabins =
 			spectral->lb_edge_extrabins;
 		samp_data->rb_edge_extrabins =
@@ -115,17 +133,17 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		if (spectral->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
 			binptr_32 = (uint32_t *)bin_pwr_data;
-			for (idx = 0; idx < params->pwr_count; idx++)
+			for (idx = 0; idx < pwr_count; idx++)
 				samp_data->bin_pwr[idx] = *(binptr_32++);
 		} else if (spectral->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
 			binptr_16 = (uint16_t *)bin_pwr_data;
-			for (idx = 0; idx < params->pwr_count; idx++)
+			for (idx = 0; idx < pwr_count; idx++)
 				samp_data->bin_pwr[idx] = *(binptr_16++);
 		} else {
 			SPECTRAL_MESSAGE_COPY_CHAR_ARRAY(
 					&samp_data->bin_pwr[0], bin_pwr_data,
-					params->pwr_count);
+					pwr_count);
 		}
 
 		p_sops->get_mac_address(spectral, spec_samp_msg->macaddr);
@@ -158,25 +176,40 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		    params->max_index_sec80;
 		samp_data->spectral_max_mag_sec80 =
 		    params->max_mag_sec80;
-		samp_data->bin_pwr_count_sec80 =
-		    params->pwr_count_sec80;
+
+		/*
+		 * Currently, we compute pwr_count_sec80 considering the size of
+		 * the samp_data->bin_pwr_sec80 array rather than the number of
+		 * elements in this array. The reasons are that
+		 * SPECTRAL_MESSAGE_COPY_CHAR_ARRAY() where pwr_count_sec80 will
+		 * be used maps directly to OS_MEMCPY() on little endian
+		 * platforms, and that samp_data->bin_pwr_sec80 is an array of
+		 * u_int8_t elements due to which the number of elements in the
+		 * array == the size of the array. In case FFT bin size is
+		 * increased from 8 bits in the future, this code would have to
+		 * be changed along with rest of framework on which it depends.
+		 */
+		pwr_count_sec80 = qdf_min((size_t)params->pwr_count_sec80,
+					  sizeof(samp_data->bin_pwr_sec80));
+
+		samp_data->bin_pwr_count_sec80 = pwr_count_sec80;
 
 		bin_pwr_data = params->bin_pwr_data_sec80;
 		if (spectral->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_4BYTE_TO_1BYTE) {
 			binptr_32 = (uint32_t *)bin_pwr_data;
-			for (idx = 0; idx < params->pwr_count_sec80; idx++)
+			for (idx = 0; idx < pwr_count_sec80; idx++)
 				samp_data->bin_pwr_sec80[idx] = *(binptr_32++);
 		} else if (spectral->fftbin_size_war ==
 				SPECTRAL_FFTBIN_SIZE_WAR_2BYTE_TO_1BYTE) {
 			binptr_16 = (uint16_t *)bin_pwr_data;
-			for (idx = 0; idx < params->pwr_count_sec80; idx++)
+			for (idx = 0; idx < pwr_count_sec80; idx++)
 				samp_data->bin_pwr_sec80[idx] = *(binptr_16++);
 		} else {
 			SPECTRAL_MESSAGE_COPY_CHAR_ARRAY(
 					&samp_data->bin_pwr_sec80[0],
 					params->bin_pwr_data_sec80,
-					params->pwr_count_sec80);
+					pwr_count_sec80);
 		}
 	}
 
