@@ -5377,6 +5377,13 @@ typedef enum {
      */
     WMI_PDEV_PARAM_UL_RU26_ALLOWED,
 
+    /*
+     * Enable/Disable sub channel marking
+     *  1 - Enable sub channel marking
+     *  0 - Disable sub channel marking (default value)
+     */
+    WMI_PDEV_PARAM_SUB_CHANNEL_MARKING,
+
 } WMI_PDEV_PARAM;
 
 typedef struct {
