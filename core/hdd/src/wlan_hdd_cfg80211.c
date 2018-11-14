@@ -5703,6 +5703,21 @@ static int hdd_config_stats_avg_factor(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_config_non_agg_retry(struct hdd_adapter *adapter,
+				    const struct nlattr *attr)
+{
+	uint8_t retry;
+	int param_id;
+
+	retry = nla_get_u8(attr);
+	retry = retry > CFG_NON_AGG_RETRY_MAX ?
+		CFG_NON_AGG_RETRY_MAX : retry;
+	param_id = WMI_PDEV_PARAM_NON_AGG_SW_RETRY_TH;
+
+	return wma_cli_set_command(adapter->session_id, param_id,
+				   retry, PDEV_CMD);
+}
+
 static int hdd_config_guard_time(struct hdd_adapter *adapter,
 				 const struct nlattr *attr)
 {
@@ -5809,6 +5824,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_stats_avg_factor},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_GUARD_TIME,
 	 hdd_config_guard_time},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_NON_AGG_RETRY,
+	 hdd_config_non_agg_retry},
 };
 
 /**
@@ -6005,16 +6022,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		access_policy_present = true;
 		hdd_debug("Access policy present. access_policy %d",
 			access_policy);
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_NON_AGG_RETRY]) {
-		retry = nla_get_u8(tb[
-				QCA_WLAN_VENDOR_ATTR_CONFIG_NON_AGG_RETRY]);
-		retry = retry > CFG_NON_AGG_RETRY_MAX ?
-				CFG_NON_AGG_RETRY_MAX : retry;
-		param_id = WMI_PDEV_PARAM_NON_AGG_SW_RETRY_TH;
-		ret_val = wma_cli_set_command(adapter->session_id, param_id,
-					      retry, PDEV_CMD);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_AGG_RETRY]) {
