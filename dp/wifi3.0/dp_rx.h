@@ -398,8 +398,10 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 	uint32_t ret = 0;
 	uint8_t wds_src_mac[IEEE80211_ADDR_LEN];
 	struct dp_peer *sa_peer;
+	struct dp_peer *wds_peer;
 	struct dp_ast_entry *ast;
 	uint16_t sa_idx;
+	bool del_in_progress;
 
 	if (qdf_unlikely(!ta_peer))
 		return;
@@ -459,12 +461,31 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 		 * invalidate this GSE cache entry and new AST entry gets
 		 * cached.
 		 */
-		if (!soc->ast_override_support)
+		if (!soc->ast_override_support) {
+			wds_peer = dp_peer_find_hash_find(soc, wds_src_mac,
+							  0, DP_VDEV_ALL);
+			if (wds_peer) {
+				del_in_progress = wds_peer->delete_in_progress;
+				dp_peer_unref_delete(wds_peer);
+				if (!del_in_progress) {
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						  QDF_TRACE_LEVEL_FATAL,
+						  "wds peer %pM found",
+						  wds_src_mac);
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						  QDF_TRACE_LEVEL_FATAL,
+						  "No AST no Del in progress");
+					QDF_BUG(0);
+				} else {
+					return;
+				}
+			}
 			ret = dp_peer_add_ast(soc,
 					      ta_peer,
 					      wds_src_mac,
 					      CDP_TXRX_AST_TYPE_WDS,
 					      flags);
+		}
 		return;
 	}
 
