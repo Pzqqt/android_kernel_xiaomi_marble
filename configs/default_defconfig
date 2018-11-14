@@ -862,6 +862,9 @@ CONFIG_ENABLE_MTRACE_LOG := y
 #Flag to enable nud tracking feature
 CONFIG_WLAN_NUD_TRACKING := y
 
+#Flag to enable/Disable Function call trace
+CONFIG_FUNC_CALL_MAP := n
+
 #Flag to enable wbuff feature
 CONFIG_WLAN_WBUFF := y
 

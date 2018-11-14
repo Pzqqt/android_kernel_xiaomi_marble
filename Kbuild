@@ -733,6 +733,7 @@ QDF_OBJS := \
 	$(QDF_LINUX_OBJ_DIR)/qdf_delayed_work.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_event.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_file.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_func_tracker.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_idr.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_list.o \
 	$(QDF_LINUX_OBJ_DIR)/qdf_lock.o \
@@ -3196,6 +3197,8 @@ cppflags-$(CONFIG_ENABLE_SMMU_S1_TRANSLATION) += -DENABLE_SMMU_S1_TRANSLATION
 
 #Flag to enable/disable MTRACE feature
 cppflags-$(CONFIG_ENABLE_MTRACE_LOG) += -DENABLE_MTRACE_LOG
+
+cppflags-$(CONFIG_FUNC_CALL_MAP) += -DFUNC_CALL_MAP
 
 #Flag to enable/disable Adaptive 11r feature
 cppflags-$(CONFIG_ADAPTIVE_11R) += -DWLAN_ADAPTIVE_11R
