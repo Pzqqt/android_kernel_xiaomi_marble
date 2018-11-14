@@ -5603,6 +5603,26 @@ static int hdd_config_fine_time_measurement(struct hdd_adapter *adapter,
 	return 0;
 }
 
+static int hdd_config_modulated_dtim(struct hdd_adapter *adapter,
+				     const struct nlattr *attr)
+{
+	struct wlan_objmgr_vdev *vdev;
+	uint32_t modulated_dtim;
+	QDF_STATUS status;
+
+	modulated_dtim = nla_get_u32(attr);
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+
+	status = ucfg_pmo_config_modulated_dtim(vdev, modulated_dtim);
+
+	hdd_objmgr_put_vdev(adapter);
+
+	return qdf_status_to_os_return(status);
+}
+
 static int hdd_config_scan_default_ies(struct hdd_adapter *adapter,
 				       const struct nlattr *attr)
 {
@@ -5680,6 +5700,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_scan_default_ies},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_FINE_TIME_MEASUREMENT,
 	 hdd_config_fine_time_measurement},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_MODULATED_DTIM,
+	 hdd_config_modulated_dtim},
 };
 
 /**
@@ -5793,7 +5815,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	int errno;
 	int ret;
 	int ret_val = 0;
-	u32 modulated_dtim, override_li;
+	u32 override_li;
 	u16 stats_avg_factor;
 	u32 guard_time;
 	uint8_t set_value;
@@ -5849,20 +5871,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	/* return errno here when all attributes have been refactored */
 
 	mac_handle = hdd_ctx->mac_handle;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MODULATED_DTIM]) {
-		modulated_dtim = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MODULATED_DTIM]);
-
-		vdev = hdd_objmgr_get_vdev(adapter);
-		if (!vdev)
-			return -EINVAL;
-		status = ucfg_pmo_config_modulated_dtim(vdev,
-							modulated_dtim);
-		hdd_objmgr_put_vdev(adapter);
-		if (QDF_STATUS_SUCCESS != status)
-			ret_val = -EPERM;
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LISTEN_INTERVAL]) {
 		override_li = nla_get_u32(
