@@ -6018,8 +6018,6 @@ QDF_STATUS populate_dot11f_twt_extended_caps(tpAniSirGlobal mac_ctx,
 					     struct pe_session *pe_session,
 					     tDot11fIEExtCap *dot11f)
 {
-	uint32_t value = 0;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct s_ext_cap *p_ext_cap;
 
 	if (!pe_session->enable_session_twt_support)
@@ -6028,17 +6026,16 @@ QDF_STATUS populate_dot11f_twt_extended_caps(tpAniSirGlobal mac_ctx,
 	dot11f->num_bytes = DOT11F_IE_EXTCAP_MAX_LEN;
 	p_ext_cap = (struct s_ext_cap *)dot11f->bytes;
 
-	if (pe_session->pePersona == QDF_STA_MODE) {
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_TWT_REQUESTOR, value);
-		p_ext_cap->twt_requestor_support = value;
-	}
-	if (pe_session->pePersona == QDF_SAP_MODE) {
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_TWT_RESPONDER, value);
-		p_ext_cap->twt_responder_support = value;
-	}
+	if (pe_session->pePersona == QDF_STA_MODE)
+		p_ext_cap->twt_requestor_support =
+			mac_ctx->mlme_cfg->twt_cfg.is_twt_requestor_enabled;
+	if (pe_session->pePersona == QDF_SAP_MODE)
+		p_ext_cap->twt_responder_support =
+			mac_ctx->mlme_cfg->twt_cfg.is_twt_responder_enabled;
+
 	dot11f->num_bytes = lim_compute_ext_cap_ie_length(dot11f);
 
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 

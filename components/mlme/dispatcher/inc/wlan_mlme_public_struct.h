@@ -944,6 +944,22 @@ struct wlan_mlme_acs {
 	bool is_external_acs_policy;
 };
 
+/*
+ * struct wlan_mlme_cfg_twt - All twt related cfg items
+ * @is_twt_bcast_enabled: twt capability for the session
+ * @is_twt_enabled: global twt configuration
+ * @is_twt_responder_enabled: twt responder
+ * @is_twt_requestor_enabled: twt requestor
+ * @twt_congestion_timeout: congestion timeout value
+ */
+struct wlan_mlme_cfg_twt {
+	bool is_twt_bcast_enabled;
+	bool is_twt_enabled;
+	bool is_twt_responder_enabled;
+	bool is_twt_requestor_enabled;
+	uint32_t twt_congestion_timeout;
+};
+
 /**
  * struct wlan_mlme_obss_ht40 - OBSS HT40 config items
  * @active_dwelltime:        obss active dwelltime
@@ -1585,6 +1601,7 @@ struct wlan_mlme_wep_cfg {
  * @oce: OCE related CFG items
  * @threshold: threshold related cfg items
  * @timeouts: mlme timeout related CFG items
+ * @twt_cfg: TWT CFG Items
  * @acs: ACS related CFG items
  * @feature_flags: Feature flag config items
  * @wep_params:  WEP related config items
@@ -1615,6 +1632,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_oce oce;
 	struct wlan_mlme_threshold threshold;
 	struct wlan_mlme_timeout timeouts;
+	struct wlan_mlme_cfg_twt twt_cfg;
 	struct wlan_mlme_acs acs;
 	struct wlan_mlme_feature_flag feature_flags;
 	struct wlan_mlme_wep_cfg wep_params;

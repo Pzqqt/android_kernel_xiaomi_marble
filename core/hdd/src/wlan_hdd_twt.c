@@ -34,35 +34,39 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 			    struct wma_tgt_cfg *cfg)
 {
 	struct wma_tgt_services *services = &cfg->services;
+	bool enable_twt = false;
 
+	ucfg_mlme_get_enable_twt(hdd_ctx->psoc, &enable_twt);
 	hdd_debug("TWT: enable_twt=%d, tgt Req=%d, Res=%d",
-		  hdd_ctx->config->enable_twt, services->twt_requestor,
+		  enable_twt, services->twt_requestor,
 		  services->twt_responder);
 
-	sme_cfg_set_int(hdd_ctx->mac_handle, WNI_CFG_TWT_REQUESTOR,
-			QDF_MIN(services->twt_requestor,
-				hdd_ctx->config->enable_twt));
+	ucfg_mlme_set_twt_requestor(hdd_ctx->psoc,
+				    QDF_MIN(services->twt_requestor,
+					    enable_twt));
 
-	sme_cfg_set_int(hdd_ctx->mac_handle, WNI_CFG_TWT_RESPONDER,
-			QDF_MIN(services->twt_responder,
-				hdd_ctx->config->enable_twt));
+	ucfg_mlme_set_twt_responder(hdd_ctx->psoc,
+				    QDF_MIN(services->twt_responder,
+					    enable_twt));
 
 	/*
 	 * Currently broadcast TWT is not supported
 	 */
-	sme_cfg_set_int(hdd_ctx->mac_handle, WNI_CFG_BCAST_TWT,
-			QDF_MIN(0, hdd_ctx->config->enable_twt));
+	ucfg_mlme_set_bcast_twt(hdd_ctx->psoc,
+				QDF_MIN(0, enable_twt));
 }
 
 void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 {
 	uint8_t pdev_id = hdd_ctx->pdev->pdev_objmgr.wlan_pdev_id;
-	uint32_t req_val = 0, resp_val = 0, bcast_val = 0;
-	uint32_t congestion_timeout = hdd_ctx->config->twt_congestion_timeout;
+	bool req_val = 0, resp_val = 0, bcast_val = 0;
+	uint32_t congestion_timeout = 0;
 
-	sme_cfg_get_int(hdd_ctx->mac_handle, WNI_CFG_TWT_REQUESTOR, &req_val);
-	sme_cfg_get_int(hdd_ctx->mac_handle, WNI_CFG_TWT_RESPONDER, &resp_val);
-	sme_cfg_get_int(hdd_ctx->mac_handle, WNI_CFG_BCAST_TWT, &bcast_val);
+	ucfg_mlme_get_twt_requestor(hdd_ctx->psoc, &req_val);
+	ucfg_mlme_get_twt_responder(hdd_ctx->psoc, &resp_val);
+	ucfg_mlme_get_bcast_twt(hdd_ctx->psoc, &bcast_val);
+	ucfg_mlme_get_twt_congestion_timeout(hdd_ctx->psoc,
+					     &congestion_timeout);
 
 	hdd_debug("TWT cfg req:%d, responder:%d, bcast:%d, pdev:%d, cong:%d",
 		  req_val, resp_val, bcast_val, pdev_id, congestion_timeout);

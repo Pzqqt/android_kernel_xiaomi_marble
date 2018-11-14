@@ -43,6 +43,7 @@
 #include "cfg_sap_protection.h"
 #include "cfg_mlme_fe_wmm.h"
 #include "cfg_mlme_sap.h"
+#include "cfg_mlme_twt.h"
 #include "cfg_mlme_scoring.h"
 #include "cfg_mlme_oce.h"
 #include "cfg_mlme_threshold.h"
@@ -74,6 +75,7 @@
 	CFG_STA_ALL \
 	CFG_THRESHOLD_ALL \
 	CFG_TIMEOUT_ALL \
+	CFG_TWT_ALL \
 	CFG_VHT_CAPS_ALL \
 	CFG_WEP_PARAMS_ALL \
 	CFG_WPS_ALL

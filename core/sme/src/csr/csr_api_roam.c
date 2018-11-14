@@ -14779,9 +14779,6 @@ static bool csr_enable_twt(tDot11fBeaconIEs *ie)
  */
 static bool csr_enable_uapsd(tpAniSirGlobal mac_ctx, tDot11fBeaconIEs *ie)
 {
-	uint32_t value = 0;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-
 	/* In non-HE case, TWT is enabled only for Q2Q.
 	 * So keed uAPSD enabled for non-Q2Q in this non-HE case.
 	 */
@@ -14793,8 +14790,8 @@ static bool csr_enable_uapsd(tpAniSirGlobal mac_ctx, tDot11fBeaconIEs *ie)
 		return true;
 	}
 
-	CFG_GET_INT(status, mac_ctx, WNI_CFG_TWT_REQUESTOR, value);
-	if ((value || IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) &&
+	if ((mac_ctx->mlme_cfg->twt_cfg.is_twt_requestor_enabled ||
+	     IS_FEATURE_SUPPORTED_BY_FW(DOT11AX)) &&
 	    ie->he_cap.twt_responder) {
 		sme_debug("twt supported, disable uapsd");
 		return false;

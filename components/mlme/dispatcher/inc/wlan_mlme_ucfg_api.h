@@ -700,6 +700,116 @@ ucfg_mlme_set_pmkid_modes(struct wlan_objmgr_psoc *psoc,
 			  uint32_t val);
 
 /**
+ * ucfg_mlme_get_twt_requestor() - Get twt requestor
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_twt_requestor(struct wlan_objmgr_psoc *psoc,
+			    bool *val);
+
+/**
+ * ucfg_mlme_set_twt_requestor() - Set twt requestor
+ * @psoc: pointer to psoc object
+ * @val:  value that needs to set to this config
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_twt_requestor(struct wlan_objmgr_psoc *psoc,
+			    bool val);
+
+/**
+ * ucfg_mlme_get_twt_responder() - Get twt responder
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_twt_responder(struct wlan_objmgr_psoc *psoc,
+			    bool *val);
+
+/**
+ * ucfg_mlme_set_twt_responder() - Set twt responder
+ * @psoc: pointer to psoc object
+ * @val:  value that needs to set to this config
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_twt_responder(struct wlan_objmgr_psoc *psoc,
+			    bool val);
+
+/**
+ * ucfg_mlme_get_bcast_twt() - Get bcast twt
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_bcast_twt(struct wlan_objmgr_psoc *psoc,
+			bool *val);
+
+/**
+ * ucfg_mlme_set_bcast_twt() - Set bcast twt
+ * @psoc: pointer to psoc object
+ * @val:  value that needs to set to this config
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_bcast_twt(struct wlan_objmgr_psoc *psoc,
+			bool val);
+
+/**
+ * ucfg_mlme_get_twt_congestion_timeout() - Get twt congestion timeout
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_twt_congestion_timeout(struct wlan_objmgr_psoc *psoc,
+				     uint32_t *val);
+
+/**
+ * ucfg_mlme_set_twt_congestion_timeout() - Set twt congestion timeout
+ * @psoc: pointer to psoc object
+ * @val:  value that needs to set to this config
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_twt_congestion_timeout(struct wlan_objmgr_psoc *psoc,
+				     uint32_t val);
+
+/**
+ * ucfg_mlme_get_enable_twt() - Get global twt config support
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_enable_twt(struct wlan_objmgr_psoc *psoc,
+			 bool *val);
+
+/**
+ * ucfg_mlme_set_enable_twt() - Set global twt config support
+ * @psoc: pointer to psoc object
+ * @val:  value that needs to set to this config
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_enable_twt(struct wlan_objmgr_psoc *psoc,
+			 bool val);
+
+/**
  * ucfg_mlme_get_dot11p_mode() - Get the setting about 802.11p mode
  * @psoc: pointer to psoc object
  * @out_mode:  Pointer to the mode which will be filled for the caller
