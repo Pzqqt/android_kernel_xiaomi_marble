@@ -194,6 +194,7 @@ QDF_STATUS mac_close(mac_handle_t mac_handle)
 	wlan_objmgr_psoc_release_ref(mac->psoc, WLAN_LEGACY_MAC_ID);
 	mac->mlme_cfg = NULL;
 	mac->psoc = NULL;
+	qdf_mem_zero(mac, sizeof(*mac));
 	mac_free_context_buffer();
 
 	return QDF_STATUS_SUCCESS;
