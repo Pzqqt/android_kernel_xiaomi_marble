@@ -95,7 +95,7 @@ QDF_STATUS wmi_unified_vdev_delete_send(void *wmi_hdl,
 QDF_STATUS
 wmi_unified_vdev_nss_chain_params_send(void *wmi_hdl,
 				       uint8_t vdev_id,
-				       struct wlan_mlme_nss_chains *user_cfg)
+				       struct vdev_nss_chains *user_cfg)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
 

@@ -293,7 +293,7 @@ static QDF_STATUS send_vdev_delete_cmd_tlv(wmi_unified_t wmi_handle,
 static QDF_STATUS
 send_vdev_nss_chain_params_cmd_tlv(wmi_unified_t wmi_handle,
 				   uint8_t vdev_id,
-				   struct wlan_mlme_nss_chains *user_cfg)
+				   struct vdev_nss_chains *user_cfg)
 {
 	wmi_vdev_chainmask_config_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
