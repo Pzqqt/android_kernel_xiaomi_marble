@@ -345,6 +345,7 @@ struct rx_macro_priv {
 	bool is_ear_mode_on;
 	bool dev_up;
 	bool hph_pwr_mode;
+	bool hph_hd2_mode;
 	u16 mclk_mux;
 	struct mutex mclk_lock;
 	struct mutex swr_clk_lock;
@@ -432,6 +433,10 @@ static const char *const rx_macro_mux_text[] = {
 static const char *const rx_macro_ear_mode_text[] = {"OFF", "ON"};
 static const struct soc_enum rx_macro_ear_mode_enum =
 	SOC_ENUM_SINGLE_EXT(2, rx_macro_ear_mode_text);
+
+static const char *const rx_macro_hph_hd2_mode_text[] = {"OFF", "ON"};
+static const struct soc_enum rx_macro_hph_hd2_mode_enum =
+	SOC_ENUM_SINGLE_EXT(2, rx_macro_hph_hd2_mode_text);
 
 static const char *const rx_macro_hph_pwr_mode_text[] = {"ULP", "LoHIFI"};
 static const struct soc_enum rx_macro_hph_pwr_mode_enum =
@@ -1694,6 +1699,34 @@ static int rx_macro_put_ear_mode(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int rx_macro_get_hph_hd2_mode(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct device *rx_dev = NULL;
+	struct rx_macro_priv *rx_priv = NULL;
+
+	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
+	ucontrol->value.integer.value[0] = rx_priv->hph_hd2_mode;
+	return 0;
+}
+
+static int rx_macro_put_hph_hd2_mode(struct snd_kcontrol *kcontrol,
+			       struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+	struct device *rx_dev = NULL;
+	struct rx_macro_priv *rx_priv = NULL;
+
+	if (!rx_macro_get_data(codec, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
+	rx_priv->hph_hd2_mode = ucontrol->value.integer.value[0];
+	return 0;
+}
+
 static int rx_macro_get_hph_pwr_mode(struct snd_kcontrol *kcontrol,
 			       struct snd_ctl_elem_value *ucontrol)
 {
@@ -2010,7 +2043,8 @@ static int rx_macro_enable_interp_clk(struct snd_soc_codec *codec,
 			snd_soc_update_bits(codec, main_reg, 0x20, 0x20);
 			rx_macro_idle_detect_control(codec, rx_priv,
 					interp_idx, event);
-			rx_macro_hd2_control(codec, interp_idx, event);
+			if (rx_priv->hph_hd2_mode)
+				rx_macro_hd2_control(codec, interp_idx, event);
 			rx_macro_hphdelay_lutbypass(codec, rx_priv, interp_idx,
 						       event);
 			rx_macro_config_compander(codec, rx_priv,
@@ -2037,7 +2071,8 @@ static int rx_macro_enable_interp_clk(struct snd_soc_codec *codec,
 							event);
 			rx_macro_hphdelay_lutbypass(codec, rx_priv, interp_idx,
 						       event);
-			rx_macro_hd2_control(codec, interp_idx, event);
+			if (rx_priv->hph_hd2_mode)
+				rx_macro_hd2_control(codec, interp_idx, event);
 			rx_macro_idle_detect_control(codec, rx_priv,
 					interp_idx, event);
 			/* Clk Disable */
@@ -2402,6 +2437,9 @@ static const struct snd_kcontrol_new rx_macro_snd_controls[] = {
 
 	SOC_ENUM_EXT("RX_EAR Mode", rx_macro_ear_mode_enum,
 		rx_macro_get_ear_mode, rx_macro_put_ear_mode),
+
+	SOC_ENUM_EXT("RX_HPH HD2 Mode", rx_macro_hph_hd2_mode_enum,
+		rx_macro_get_hph_hd2_mode, rx_macro_put_hph_hd2_mode),
 
 	SOC_ENUM_EXT("RX_HPH_PWR_MODE", rx_macro_hph_pwr_mode_enum,
 		rx_macro_get_hph_pwr_mode, rx_macro_put_hph_pwr_mode),
