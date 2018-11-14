@@ -33,10 +33,11 @@
 #define NO_REG_FUNCS    4
 
 /* Locking interface for pktlog */
-#define PKTLOG_LOCK_INIT(_pl_info)      spin_lock_init(&(_pl_info)->log_lock)
-#define PKTLOG_LOCK_DESTROY(_pl_info)
-#define PKTLOG_LOCK(_pl_info)           spin_lock(&(_pl_info)->log_lock)
-#define PKTLOG_UNLOCK(_pl_info)         spin_unlock(&(_pl_info)->log_lock)
+#define PKTLOG_LOCK_INIT(_pl_info)    qdf_spinlock_create(&(_pl_info)->log_lock)
+#define PKTLOG_LOCK_DESTROY(_pl_info) \
+				qdf_spinlock_destroy(&(_pl_info)->log_lock)
+#define PKTLOG_LOCK(_pl_info)         qdf_spin_lock_bh(&(_pl_info)->log_lock)
+#define PKTLOG_UNLOCK(_pl_info)       qdf_spin_unlock_bh(&(_pl_info)->log_lock)
 
 #define PKTLOG_MODE_SYSTEM      1
 #define PKTLOG_MODE_ADAPTER     2

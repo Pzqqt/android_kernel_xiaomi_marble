@@ -688,7 +688,7 @@ static int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 
 		}
 
-		spin_lock_bh(&pl_info->log_lock);
+		qdf_spin_lock_bh(&pl_info->log_lock);
 		pl_info->buf->bufhdr.version = CUR_PKTLOG_VER;
 		pl_info->buf->bufhdr.magic_num = PKTLOG_MAGIC_NUM;
 		pl_info->buf->wr_offset = 0;
@@ -697,7 +697,7 @@ static int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 		pl_info->buf->bytes_written = 0;
 		pl_info->buf->msg_index = 1;
 		pl_info->buf->offset = PKTLOG_READ_OFFSET;
-		spin_unlock_bh(&pl_info->log_lock);
+		qdf_spin_unlock_bh(&pl_info->log_lock);
 
 		pl_info->start_time_thruput = os_get_timestamp();
 		pl_info->start_time_per = pl_info->start_time_thruput;
@@ -833,14 +833,14 @@ static int __pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 		return -EINVAL;
 	}
 
-	spin_lock_bh(&pl_info->log_lock);
+	qdf_spin_lock_bh(&pl_info->log_lock);
 	if (pl_info->buf != NULL) {
 		if (pl_dev->is_pktlog_cb_subscribed &&
 			wdi_pktlog_unsubscribe(pdev, pl_info->log_state)) {
 			pl_info->curr_pkt_state =
 				PKTLOG_OPR_NOT_IN_PROGRESS;
+			qdf_spin_unlock_bh(&pl_info->log_lock);
 			qdf_print("Cannot unsubscribe pktlog from the WDI");
-			spin_unlock_bh(&pl_info->log_lock);
 			return -EFAULT;
 		}
 		pktlog_release_buf(scn);
@@ -853,7 +853,7 @@ static int __pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 		pl_info->buf_size = size;
 	}
 	pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
-	spin_unlock_bh(&pl_info->log_lock);
+	qdf_spin_unlock_bh(&pl_info->log_lock);
 	return 0;
 }
 
