@@ -262,6 +262,20 @@ QDF_STATUS ucfg_mlme_get_select_5ghz_margin(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_get_rtt_mac_randomization() - Get the RTT MAC randomization config
+ * @psoc: pointer to psoc object
+ * @rtt_mac_randomization: Pointer to the variable from caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_rtt_mac_randomization(struct wlan_objmgr_psoc *psoc,
+					       bool *rtt_mac_randomization)
+{
+	return wlan_mlme_get_rtt_mac_randomization(psoc, rtt_mac_randomization);
+}
+
+/**
  * ucfg_mlme_get_crash_inject() - Get the crash inject config
  * @psoc: pointer to psoc object
  * @crash_inject: Pointer to the variable from caller
