@@ -5703,6 +5703,21 @@ static int hdd_config_stats_avg_factor(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_config_guard_time(struct hdd_adapter *adapter,
+				 const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint32_t guard_time;
+	QDF_STATUS status;
+
+	guard_time = nla_get_u32(attr);
+	status = sme_configure_guard_time(hdd_ctx->mac_handle,
+					  adapter->session_id,
+					  guard_time);
+
+	return qdf_status_to_os_return(status);
+}
+
 static int hdd_config_scan_default_ies(struct hdd_adapter *adapter,
 				       const struct nlattr *attr)
 {
@@ -5792,6 +5807,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_qpower},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR,
 	 hdd_config_stats_avg_factor},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_GUARD_TIME,
+	 hdd_config_guard_time},
 };
 
 /**
@@ -5905,7 +5922,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	int errno;
 	int ret;
 	int ret_val = 0;
-	u32 guard_time;
 	uint8_t set_value;
 	QDF_STATUS status;
 	int attr_len;
@@ -5957,17 +5973,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	/* return errno here when all attributes have been refactored */
 
 	mac_handle = hdd_ctx->mac_handle;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_GUARD_TIME]) {
-		guard_time = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_GUARD_TIME]);
-		status = sme_configure_guard_time(mac_handle,
-						  adapter->session_id,
-						  guard_time);
-
-		if (QDF_STATUS_SUCCESS != status)
-			ret_val = -EPERM;
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST]) {
 		qdf_mem_zero(&vendor_ie[0], SIR_MAC_MAX_IE_LENGTH + 2);
