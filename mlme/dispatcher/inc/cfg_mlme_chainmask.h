@@ -318,6 +318,32 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"5Ghz Tx Chainmask")
 
+/*
+ * <ini>
+ * enable_bt_chain_separation - Enables/disables bt /wlan chainmask assignment
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini disables/enables chainmask setting on 2x2, mainly used for ROME
+ * BT/WLAN chainmask assignment.
+ *
+ * 0, Disable
+ * 1, Enable
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11n/11ac
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_BT_CHAIN_SEPARATION CFG_INI_BOOL( \
+				"enableBTChainSeparation", \
+				0, \
+				"Enable/disable BT chainmask assignment")
+
 #define CFG_CHAINMASK_ALL \
 	CFG(CFG_VHT_ENABLE_1x1_TX_CHAINMASK) \
 	CFG(CFG_VHT_ENABLE_1x1_RX_CHAINMASK) \
@@ -328,6 +354,7 @@
 	CFG(CFG_TX_CHAIN_MASK_2G) \
 	CFG(CFG_RX_CHAIN_MASK_2G) \
 	CFG(CFG_TX_CHAIN_MASK_5G) \
-	CFG(CFG_RX_CHAIN_MASK_5G)
+	CFG(CFG_RX_CHAIN_MASK_5G) \
+	CFG(CFG_ENABLE_BT_CHAIN_SEPARATION)
 
 #endif /* __CFG_CHAINMASK_H */

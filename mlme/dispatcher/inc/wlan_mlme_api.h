@@ -372,7 +372,6 @@ wlan_mlme_get_acs_support_for_dfs_ltecoex(struct wlan_objmgr_psoc *psoc,
 
 /**
  * wlan_mlme_get_external_acs_policy() - Get the flag for external acs policy
- *
  * @psoc: pointer to psoc object
  * @value: Value that needs to be set from the caller
  *
@@ -405,7 +404,6 @@ QDF_STATUS wlan_mlme_get_ignore_peer_ht_mode(struct wlan_objmgr_psoc *psoc,
 					bool *value);
 /**
  * wlan_mlme_get_tx_chainmask_cck() - Get the tx_chainmask_cfg value
- *
  * @psoc: pointer to psoc object
  * @value: Value that needs to be set from the caller
  *
@@ -416,9 +414,8 @@ QDF_STATUS wlan_mlme_get_tx_chainmask_cck(struct wlan_objmgr_psoc *psoc,
 
 /**
  * wlan_mlme_get_tx_chainmask_1ss() - Get the tx_chainmask_1ss value
- *
  * @psoc: pointer to psoc object
- * @value: Value that needs to be set from the caller
+ * @value: Value that caller needs to get
  *
  * Return: QDF_STATUS_FAILURE or QDF_STATUS_SUCCESS
  */
@@ -427,7 +424,6 @@ QDF_STATUS wlan_mlme_get_tx_chainmask_1ss(struct wlan_objmgr_psoc *psoc,
 
 /**
  * wlan_mlme_get_num_11b_tx_chains() -  Get the number of 11b only tx chains
- *
  * @psoc: pointer to psoc object
  * @value: Value that needs to be set from the caller
  *
@@ -438,9 +434,8 @@ QDF_STATUS wlan_mlme_get_num_11b_tx_chains(struct wlan_objmgr_psoc *psoc,
 
 /**
  * wlan_mlme_get_num_11ag_tx_chains() - get the total number of 11a/g tx chains
- *
  * @psoc: pointer to psoc object
- * @value: Value that needs to be set from the caller
+ * @value: Value that caller needs to get
  *
  * Return: QDF_STATUS_FAILURE or QDF_STATUS_SUCCESS
  */
@@ -448,8 +443,17 @@ QDF_STATUS wlan_mlme_get_num_11ag_tx_chains(struct wlan_objmgr_psoc *psoc,
 					    uint16_t *value);
 
 /**
- * wlan_mlme_configure_chain_mask() - configure chainmask parameters
+ * wlan_mlme_get_bt_chain_separation_flag() - get the enable_bt_chain_separation
+ * flag
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
  *
+ * Return: QDF_STATUS_FAILURE or QDF_STATUS_SUCCESS
+ */
+QDF_STATUS wlan_mlme_get_bt_chain_separation_flag(struct wlan_objmgr_psoc *psoc,
+						  bool *value);
+/**
+ * wlan_mlme_configure_chain_mask() - configure chainmask parameters
  * @psoc: pointer to psoc object
  * @session_id: vdev_id
  *
@@ -736,6 +740,27 @@ QDF_STATUS wlan_mlme_cfg_get_enable_ul_ofdm(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 					  struct wma_tgt_cfg *cfg);
 #endif
+
+/**
+ * wlan_mlme_get_ap_protection_mode() - Get ap_protection_mode value
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which needs to be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_ap_protection_mode(struct wlan_objmgr_psoc *psoc,
+					    uint16_t *value);
+
+/**
+ * wlan_mlme_is_ap_obss_prot_enabled() - Get ap_obss_protection is
+ * enabled/disabled
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which needs to be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_is_ap_obss_prot_enabled(struct wlan_objmgr_psoc *psoc,
+					     bool *value);
 
 /**
  * wlan_mlme_get_rts_threshold() - Get the RTS threshold config
@@ -1794,4 +1819,23 @@ QDF_STATUS mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS mlme_update_nss_vht_cap(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * wlan_mlme_is_sap_uapsd_enabled() - Get if SAP UAPSD is enabled/disabled
+ * @psoc: psoc context
+ * @value: value to be filled for caller
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_is_sap_uapsd_enabled(struct wlan_objmgr_psoc *psoc,
+					  bool *value);
+
+/**
+ * wlan_mlme_set_sap_uapsd_flag() - Enable/Disable SAP UAPSD
+ * @psoc:  psoc context
+ * @value: Enable/Disable control value for sap_uapsd_enabled field
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_mlme_set_sap_uapsd_flag(struct wlan_objmgr_psoc *psoc,
+					bool value);
 #endif /* _WLAN_MLME_API_H_ */

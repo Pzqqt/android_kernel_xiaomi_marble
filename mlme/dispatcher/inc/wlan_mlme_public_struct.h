@@ -697,6 +697,7 @@ struct wlan_mlme_vht_caps {
  * @tx_non_aggr_sw_retry_threshold_vo: non aggr sw retry threshold for VO
  * @sap_max_inactivity_override: Override updating ap_sta_inactivity from
  * hostapd.conf
+ * @sap_uapsd_enabled: Flag to enable/disable UAPSD for SAP
  */
 struct wlan_mlme_qos {
 	uint32_t tx_aggregation_size;
@@ -714,6 +715,7 @@ struct wlan_mlme_qos {
 	uint32_t tx_non_aggr_sw_retry_threshold_vi;
 	uint32_t tx_non_aggr_sw_retry_threshold_vo;
 	bool sap_max_inactivity_override;
+	bool sap_uapsd_enabled;
 };
 
 #ifdef WLAN_FEATURE_11AX
@@ -818,21 +820,22 @@ struct wlan_mlme_feature_flag {
 
 /*
  * struct wlan_mlme_sap_protection_cfg - SAP erp protection config items
- *
- * @protection_enabled:        Force enable protection. static via cfg
- * @protection_force_policy:   Protection force policy. Static via cfg
  * @ignore_peer_ht_opmode:     Ignore the ht opmode of the peer. Dynamic via INI
- *
+ * @enable_ap_obss_protection: enable/disable AP OBSS protection
+ * @protection_force_policy:   Protection force policy. Static via cfg
+ * @ap_protection_mode:        AP protection bitmap
+ * @protection_enabled:        Force enable protection. static via cfg
  */
 struct wlan_mlme_sap_protection {
-	uint32_t protection_enabled;
-	uint8_t protection_force_policy;
 	bool ignore_peer_ht_opmode;
+	bool enable_ap_obss_protection;
+	uint8_t protection_force_policy;
+	uint16_t ap_protection_mode;
+	uint32_t protection_enabled;
 };
 
 /*
  * struct wlan_mlme_chainmask - All chainmask related cfg items
- *
  * @txchainmask1x1:     To set transmit chainmask
  * @rxchainmask1x1:     To set rx chainmask
  * @tx_chain_mask_cck:  Used to enable/disable Cck ChainMask
@@ -843,6 +846,7 @@ struct wlan_mlme_sap_protection {
  * @rx_chain_mask_2g:   Tx chain mask for 2g
  * @tx_chain_mask_5g:   Tx chain mask for 5g
  * @rx_chain_mask_5g:   Rx chain mask for 5g
+ * @enable_bt_chain_separation: Enable/Disable BT/WLAN Host chain seperation
  */
 struct wlan_mlme_chainmask {
 	uint8_t txchainmask1x1;
@@ -855,6 +859,7 @@ struct wlan_mlme_chainmask {
 	uint8_t rx_chain_mask_2g;
 	uint8_t tx_chain_mask_5g;
 	uint8_t rx_chain_mask_5g;
+	bool enable_bt_chain_separation;
 };
 
 /* struct wlan_mlme_generic - Generic CFG config items
