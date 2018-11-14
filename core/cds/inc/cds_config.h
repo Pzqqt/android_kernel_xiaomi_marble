@@ -112,7 +112,6 @@ struct cds_config_info {
 	uint8_t sta_maxlimod_dtim;
 	enum qdf_driver_type driver_type;
 	uint8_t dfs_phyerr_filter_offload;
-	uint8_t ap_disable_intrabss_fwd;
 	uint8_t ap_maxoffload_peers;
 	uint8_t ap_maxoffload_reorderbuffs;
 #ifdef FEATURE_WLAN_RA_FILTERING

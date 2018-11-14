@@ -44,7 +44,7 @@
  */
 struct wma_tgt_services {
 	uint32_t sta_power_save;
-	uint32_t uapsd;
+	bool uapsd;
 	uint32_t ap_dfs;
 	uint32_t en_11ac;
 	uint32_t arp_offload;

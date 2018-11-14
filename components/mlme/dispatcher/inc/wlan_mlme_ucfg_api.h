@@ -627,6 +627,20 @@ QDF_STATUS ucfg_mlme_get_num_11ag_tx_chains(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_get_bt_chain_separation_flag() - bt chain separation enable/disable
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be got for the caller
+ *
+ * Return: QDF_STATUS_FAILURE or QDF_STATUS_SUCCESS
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_bt_chain_separation_flag(struct wlan_objmgr_psoc *psoc,
+						  bool *value)
+{
+	return wlan_mlme_get_bt_chain_separation_flag(psoc, value);
+}
+
+/**
  * ucfg_mlme_configure_chain_mask() - configure chainmask parameters
  *
  * @psoc: pointer to psoc object
@@ -1150,6 +1164,40 @@ QDF_STATUS ucfg_mlme_get_oce_sap_enabled_info(struct wlan_objmgr_psoc *psoc,
 					      bool *value)
 {
 	return wlan_mlme_get_oce_sap_enabled_info(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_ap_protection_mode() - Get ap protection mode info
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * ap protection mode value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_ap_protection_mode(struct wlan_objmgr_psoc *psoc,
+					    uint16_t *value)
+{
+	return wlan_mlme_get_ap_protection_mode(psoc, value);
+}
+
+/**
+ * ucfg_mlme_is_ap_obss_prot_enabled() - Get ap obss protection enable/disable
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * obss protection enable value
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+QDF_STATUS ucfg_mlme_is_ap_obss_prot_enabled(struct wlan_objmgr_psoc *psoc,
+					     bool *value)
+{
+	return wlan_mlme_is_ap_obss_prot_enabled(psoc, value);
 }
 
 /**
@@ -2458,6 +2506,7 @@ ucfg_mlme_get_ts_info_ack_policy(struct wlan_objmgr_psoc *psoc,
  * @psoc: pointer to psoc object
  * @value: Value that needs to be get from the caller
  *
+ *
  * Inline UCFG API to be used by HDD/OSIF callers
  *
  * Return: QDF Status
@@ -2466,6 +2515,36 @@ static inline QDF_STATUS
 ucfg_mlme_get_ts_acm_value_for_ac(struct wlan_objmgr_psoc *psoc, bool *value)
 {
 	return wlan_mlme_get_ts_acm_value_for_ac(psoc, value);
+}
+
+/*
+ * ucfg_mlme_is_sap_uapsd_enabled() - SAP UAPSD enabled status.
+ * @psoc: pointer to psoc object
+ * @value: sap uapsd enabled flag value requested from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_is_sap_uapsd_enabled(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	return wlan_mlme_is_sap_uapsd_enabled(psoc, value);
+}
+
+/*
+ * ucfg_mlme_set_sap_uapsd_flag() - SAP UAPSD enabled status.
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_set_sap_uapsd_flag(struct wlan_objmgr_psoc *psoc, bool value)
+{
+	return wlan_mlme_set_sap_uapsd_flag(psoc, value);
 }
 
 #endif /* _WLAN_MLME_UCFG_API_H_ */

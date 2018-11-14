@@ -267,6 +267,9 @@ static void mlme_init_chainmask_cfg(struct wlan_objmgr_psoc *psoc,
 
 	chainmask_info->rx_chain_mask_5g =
 		cfg_get(psoc, CFG_RX_CHAIN_MASK_5G);
+
+	chainmask_info->enable_bt_chain_separation =
+		cfg_get(psoc, CFG_ENABLE_BT_CHAIN_SEPARATION);
 }
 
 #ifdef WLAN_FEATURE_11W
@@ -690,6 +693,8 @@ static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_TX_NON_AGGR_SW_RETRY_VO);
 	qos_aggr_params->sap_max_inactivity_override =
 				cfg_get(psoc, CFG_SAP_MAX_INACTIVITY_OVERRIDE);
+	qos_aggr_params->sap_uapsd_enabled =
+				cfg_get(psoc, CFG_SAP_QOS_UAPSD);
 }
 
 static void mlme_init_mbo_cfg(struct wlan_objmgr_psoc *psoc,
@@ -877,6 +882,10 @@ static void mlme_init_sap_protection_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_default(CFG_FORCE_POLICY_PROTECTION);
 	sap_protection_params->ignore_peer_ht_opmode =
 				cfg_get(psoc, CFG_IGNORE_PEER_HT_MODE);
+	sap_protection_params->enable_ap_obss_protection =
+				cfg_get(psoc, CFG_AP_OBSS_PROTECTION_ENABLE);
+	sap_protection_params->ap_protection_mode =
+				cfg_get(psoc, CFG_AP_PROTECTION_MODE);
 }
 
 #ifdef WLAN_FEATURE_11AX

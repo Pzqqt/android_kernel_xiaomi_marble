@@ -4609,7 +4609,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	struct ieee80211_mgmt *pMgmt_frame;
 	struct ieee80211_mgmt mgmt;
 	const uint8_t *pIe = NULL;
-	uint16_t capab_info;
+	uint16_t capab_info, ap_prot = cfg_default(CFG_AP_PROTECTION_MODE);
 	eCsrAuthType RSNAuthType;
 	eCsrEncryptionType RSNEncryptType;
 	eCsrEncryptionType mcRSNEncryptType;
@@ -4634,10 +4634,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	bool val;
 	uint32_t auto_channel_select_weight =
 		cfg_default(CFG_AUTO_CHANNEL_SELECT_WEIGHT);
-	bool bval = false;
 	uint8_t pref_chan_location = 0;
 	bool sap_force_11n_for_11ac = 0;
 	bool go_force_11n_for_11ac = 0;
+	bool bval = false, ap_obss_prot = false, sap_uapsd = true;
 
 	hdd_enter();
 
@@ -5194,7 +5194,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	/* ht_capab is not what the name conveys,
 	 * this is used for protection bitmap
 	 */
-	pConfig->ht_capab = iniConfig->apProtection;
+	qdf_status = ucfg_mlme_get_ap_protection_mode(hdd_ctx->psoc, &ap_prot);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		hdd_debug("Get ap protection mode failed using default value");
+	pConfig->ht_capab = ap_prot;
 
 	if (0 != wlan_hdd_cfg80211_update_apies(adapter)) {
 		hdd_err("SAP Not able to set AP IEs");
@@ -5202,9 +5205,17 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		goto error;
 	}
 	/* Uapsd Enabled Bit */
-	pConfig->UapsdEnable = iniConfig->apUapsdEnabled;
+	qdf_status = ucfg_mlme_is_sap_uapsd_enabled(hdd_ctx->psoc, &sap_uapsd);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		hdd_debug("Get ap UAPSD enabled/disabled failed");
+	pConfig->UapsdEnable = sap_uapsd;
+
 	/* Enable OBSS protection */
-	pConfig->obssProtEnabled = iniConfig->apOBSSProtEnabled;
+	qdf_status = ucfg_mlme_is_ap_obss_prot_enabled(hdd_ctx->psoc,
+						       &ap_obss_prot);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		hdd_debug("Get ap obss protection failed");
+	pConfig->obssProtEnabled = ap_obss_prot;
 
 #ifdef WLAN_FEATURE_11W
 	pConfig->mfpCapable = MFPCapable;

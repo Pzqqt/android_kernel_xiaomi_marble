@@ -425,6 +425,28 @@
 			0, \
 			"SAP maximum inactivity override flag")
 
+/*
+ * <ini>
+ * gEnableApUapsd - Enable/disable UAPSD for SoftAP
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to setup setup U-APSD for Acs at association
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_SAP_QOS_UAPSD CFG_INI_BOOL( \
+			"gEnableApUapsd", \
+			1, \
+			"Enable UAPSD for SAP")
+
 #define CFG_QOS_ALL \
 	CFG(CFG_SAP_MAX_INACTIVITY_OVERRIDE) \
 	CFG(CFG_TX_AGGREGATION_SIZE) \
@@ -440,6 +462,7 @@
 	CFG(CFG_TX_NON_AGGR_SW_RETRY_BE) \
 	CFG(CFG_TX_NON_AGGR_SW_RETRY_BK) \
 	CFG(CFG_TX_NON_AGGR_SW_RETRY_VI) \
-	CFG(CFG_TX_NON_AGGR_SW_RETRY_VO)
+	CFG(CFG_TX_NON_AGGR_SW_RETRY_VO) \
+	CFG(CFG_SAP_QOS_UAPSD)
 
 #endif /* __CFG_MLME_QOS_H */

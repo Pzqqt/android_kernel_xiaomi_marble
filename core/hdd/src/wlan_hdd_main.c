@@ -1446,7 +1446,7 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 	bool value;
 #endif
 	/* Set up UAPSD */
-	config->apUapsdEnabled &= cfg->uapsd;
+	ucfg_mlme_set_sap_uapsd_flag(hdd_ctx->psoc, cfg->uapsd);
 
 	/* 11AX mode support */
 	if ((config->dot11Mode == eHDD_DOT11_MODE_11ax ||
@@ -4558,17 +4558,21 @@ static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	struct wma_caps_per_phy non_dbs_phy_cap;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	bool bval = false;
+	bool enable2x2 = false, enable_bt_chain_sep = false;
 
-	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &enable2x2);
+	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("unable to get vht_enable2x2");
 
+	status = ucfg_mlme_get_bt_chain_separation_flag(hdd_ctx->psoc,
+							&enable_bt_chain_sep);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_debug("unable to get BT chain separation. using default");
+
 	hdd_debug("enable2x2: %d, lte_coex: %d, disable_DBS: %d",
-		  bval, hdd_ctx->lte_coex_ant_share,
+		  enable2x2, hdd_ctx->lte_coex_ant_share,
 		  hdd_ctx->config->dual_mac_feature_disable);
-	hdd_debug("enable_bt_chain_separation %d",
-		  hdd_ctx->config->enable_bt_chain_separation);
+	hdd_debug("enable_bt_chain_separation %d", enable_bt_chain_sep);
 
 	status = wma_get_caps_for_phyidx_hwmode(&non_dbs_phy_cap,
 						HW_MODE_DBS_NONE,
@@ -4586,7 +4590,7 @@ static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 		return 0;
 	}
 
-	if (bval && !hdd_ctx->config->enable_bt_chain_separation) {
+	if (enable2x2 && !enable_bt_chain_sep) {
 		hdd_debug("2x2 enabled. skip chain mask programming");
 		return 0;
 	}
@@ -9756,9 +9760,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	ucfg_mlme_get_sap_max_offload_reorder_buffs(hdd_ctx->psoc,
 						    &value);
 	cds_cfg->ap_maxoffload_reorderbuffs = value;
-
-	cds_cfg->ap_disable_intrabss_fwd =
-		cfg_get(hdd_ctx->psoc, CFG_DP_AP_STA_SECURITY_SEPERATION);
 
 	cds_cfg->dfs_pri_multiplier =
 		hdd_ctx->config->dfsRadarPriMultiplier;

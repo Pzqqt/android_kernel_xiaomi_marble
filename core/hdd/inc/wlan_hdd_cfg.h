@@ -2170,28 +2170,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gEnableApUapsd - Enable/disable UAPSD for SoftAP
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to setup setup U-APSD for Acs at association
- *
- * Related: None.
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_AP_QOS_UAPSD_MODE_NAME             "gEnableApUapsd"
-#define CFG_AP_QOS_UAPSD_MODE_MIN              (0)
-#define CFG_AP_QOS_UAPSD_MODE_MAX              (1)
-#define CFG_AP_QOS_UAPSD_MODE_DEFAULT          (1)
-
-/*
- * <ini>
  * gEnableApRandomBssid - Create ramdom BSSID
  * @Min: 0
  * @Max: 1
@@ -2234,58 +2212,6 @@ enum hdd_dot11_mode {
 #define CFG_AP_ENABLE_PROTECTION_MODE_MIN             (0)
 #define CFG_AP_ENABLE_PROTECTION_MODE_MAX             (1)
 #define CFG_AP_ENABLE_PROTECTION_MODE_DEFAULT         (1)
-
-/*
- * <ini>
- * gApProtection - Set AP protection parameter
- * @Min: 0x0
- * @Max: 0xFFFF
- * @Default: 0xBFFF
- *
- * This ini is used to set AP protection parameter
- * Bit map for CFG_AP_PROTECTION_MODE_DEFAULT
- * LOWER byte for associated stations
- * UPPER byte for overlapping stations
- * each byte will have the following info
- * bit15 bit14 bit13     bit12  bit11 bit10    bit9     bit8
- * OBSS  RIFS  LSIG_TXOP NON_GF HT20  FROM_11G FROM_11B FROM_11A
- * bit7  bit6  bit5      bit4   bit3  bit2     bit1     bit0
- * OBSS  RIFS  LSIG_TXOP NON_GF HT_20 FROM_11G FROM_11B FROM_11A
- *
- * Related: None.
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_AP_PROTECTION_MODE_NAME            "gApProtection"
-#define CFG_AP_PROTECTION_MODE_MIN             (0x0)
-#define CFG_AP_PROTECTION_MODE_MAX             (0xFFFF)
-#define CFG_AP_PROTECTION_MODE_DEFAULT         (0xBFFF)
-
-/*
- * <ini>
- * gEnableApOBSSProt - Enable/Disable AP OBSS protection
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable AP OBSS protection
- *
- * Related: None.
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_AP_OBSS_PROTECTION_MODE_NAME       "gEnableApOBSSProt"
-#define CFG_AP_OBSS_PROTECTION_MODE_MIN        (0)
-#define CFG_AP_OBSS_PROTECTION_MODE_MAX        (1)
-#define CFG_AP_OBSS_PROTECTION_MODE_DEFAULT    (0)
 
 #define CFG_DISABLE_PACKET_FILTER		"gDisablePacketFilter"
 #define CFG_DISABLE_PACKET_FILTER_MIN		(0)
@@ -2998,33 +2924,6 @@ enum hdd_link_speed_rpt_type {
 	eHDD_LINK_SPEED_REPORT_MAX = 1,
 	eHDD_LINK_SPEED_REPORT_MAX_SCALED = 2,
 };
-
-/*
- * <ini>
- * enableBTChainSeparation - Enables/disables bt /wlan chainmask assignment
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini disables/enables chainmask setting on 2x2, mainly used for ROME
- * BT/WLAN chainmask assignment.
- *
- * 0, Disable
- * 1, Enable
- *
- * Related: NA
- *
- * Supported Feature: 11n/11ac
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_BT_CHAIN_SEPARATION         "enableBTChainSeparation"
-#define CFG_ENABLE_BT_CHAIN_SEPARATION_MIN     (0)
-#define CFG_ENABLE_BT_CHAIN_SEPARATION_MAX     (1)
-#define CFG_ENABLE_BT_CHAIN_SEPARATION_DEFAULT (0)
 
 /*
  * <ini>
@@ -6026,11 +5925,8 @@ struct hdd_config {
 	uint8_t intfAddrMask;
 	struct qdf_mac_addr intfMacAddr[QDF_MAX_CONCURRENCY_PERSONA];
 
-	bool apUapsdEnabled;
 	bool apRandomBssidEnabled;
 	bool apProtEnabled;
-	uint16_t apProtection;
-	bool apOBSSProtEnabled;
 	enum station_keepalive_method sta_keepalive_method;
 	uint8_t nTxPowerCap;    /* In dBm */
 	bool allow_tpc_from_ap;
@@ -6372,7 +6268,6 @@ struct hdd_config {
 	bool action_oui_enable;
 	uint8_t action_oui_str[ACTION_OUI_MAXIMUM_ID][ACTION_OUI_MAX_STR_LEN];
 	uint16_t wmi_wq_watchdog_timeout;
-	bool enable_bt_chain_separation;
 	uint8_t enable_tx_sch_delay;
 	uint32_t enable_secondary_rate;
 	bool is_unit_test_framework_enabled;
