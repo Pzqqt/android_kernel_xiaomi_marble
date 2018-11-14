@@ -699,6 +699,8 @@ struct wlan_mlme_qos {
 
 #ifdef WLAN_FEATURE_11AX
 #define MLME_HE_PPET_LEN 25
+#define WNI_CFG_HE_OPS_BSS_COLOR_MAX 0x3F
+
 /**
  * struct wlan_mlme_he_caps - HE Capabilities related config items
  */
