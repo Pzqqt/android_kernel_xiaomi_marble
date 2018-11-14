@@ -1631,6 +1631,15 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 
 	swr_master_bulk_write(swrm, reg, value, len);
 
+	/*
+	 * For SWR master version 1.5.1, continue
+	 * execute on command ignore.
+	 */
+	if (swrm->version == SWRM_VERSION_1_5_1)
+		swr_master_write(swrm, SWRM_CMD_FIFO_CFG_ADDR,
+				(swr_master_read(swrm,
+					SWRM_CMD_FIFO_CFG_ADDR) | 0x80000000));
+
 	return ret;
 }
 
