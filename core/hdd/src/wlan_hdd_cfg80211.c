@@ -5648,6 +5648,17 @@ static int hdd_config_listen_interval(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_config_lro(struct hdd_adapter *adapter,
+			  const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t enable_flag;
+
+	enable_flag = nla_get_u8(attr);
+
+	return hdd_lro_set_reset(hdd_ctx, adapter, enable_flag);
+}
+
 static int hdd_config_scan_default_ies(struct hdd_adapter *adapter,
 				       const struct nlattr *attr)
 {
@@ -5729,6 +5740,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_modulated_dtim},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_LISTEN_INTERVAL,
 	 hdd_config_listen_interval},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_LRO,
+	 hdd_config_lro},
 };
 
 /**
@@ -5896,12 +5909,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	/* return errno here when all attributes have been refactored */
 
 	mac_handle = hdd_ctx->mac_handle;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LRO]) {
-		enable_flag = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LRO]);
-		ret_val = hdd_lro_set_reset(hdd_ctx, adapter,
-							 enable_flag);
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_ENABLE]) {
 		enable_flag =
