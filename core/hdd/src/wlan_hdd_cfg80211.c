@@ -5659,6 +5659,23 @@ static int hdd_config_lro(struct hdd_adapter *adapter,
 	return hdd_lro_set_reset(hdd_ctx, adapter, enable_flag);
 }
 
+static int hdd_config_scan_enable(struct hdd_adapter *adapter,
+				  const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t enable_flag;
+
+	enable_flag = nla_get_u8(attr);
+	if (enable_flag)
+		ucfg_scan_psoc_set_enable(hdd_ctx->psoc,
+					  REASON_USER_SPACE);
+	else
+		ucfg_scan_psoc_set_disable(hdd_ctx->psoc,
+					   REASON_USER_SPACE);
+
+	return 0;
+}
+
 static int hdd_config_scan_default_ies(struct hdd_adapter *adapter,
 				       const struct nlattr *attr)
 {
@@ -5742,6 +5759,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_listen_interval},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_LRO,
 	 hdd_config_lro},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_ENABLE,
+	 hdd_config_scan_enable},
 };
 
 /**
@@ -5866,7 +5885,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	bool vendor_ie_present = false, access_policy_present = false;
 	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS qdf_status;
-	uint8_t retry, delay, enable_flag;
+	uint8_t retry, delay;
 	uint32_t abs_delay;
 	int param_id;
 	uint32_t tx_fail_count;
@@ -5909,19 +5928,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	/* return errno here when all attributes have been refactored */
 
 	mac_handle = hdd_ctx->mac_handle;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_ENABLE]) {
-		enable_flag =
-			nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_ENABLE]);
-
-		hdd_debug("scan enable %d", enable_flag);
-		if (enable_flag)
-			ucfg_scan_psoc_set_enable(hdd_ctx->psoc,
-						  REASON_USER_SPACE);
-		else
-			ucfg_scan_psoc_set_disable(hdd_ctx->psoc,
-						   REASON_USER_SPACE);
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER]) {
 		qpower = nla_get_u8(
