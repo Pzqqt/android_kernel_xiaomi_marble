@@ -13106,23 +13106,6 @@ int sme_update_he_mcs(mac_handle_t mac_handle, uint8_t session_id,
 	return 0;
 }
 
-static int sme_update_he_cap(mac_handle_t mac_handle, uint8_t session_id,
-			     uint16_t he_cap, int value)
-{
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
-	struct csr_roam_session *session;
-
-	session = CSR_GET_SESSION(mac_ctx, session_id);
-	if (!session) {
-		sme_err("No session for id %d", session_id);
-		return -EINVAL;
-	}
-	sme_cfg_set_int(mac_handle, he_cap, value);
-	csr_update_session_he_cap(mac_ctx, session);
-
-	return 0;
-}
-
 void sme_set_usr_cfg_mu_edca(mac_handle_t mac_handle, bool val)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
@@ -13214,8 +13197,24 @@ int sme_update_he_trigger_frm_mac_pad(mac_handle_t mac_handle,
 int sme_update_he_om_ctrl_supp(mac_handle_t mac_handle, uint8_t session_id,
 			       uint8_t cfg_val)
 {
-	return sme_update_he_cap(mac_handle, session_id, WNI_CFG_HE_OMI,
-				 cfg_val);
+
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+
+	if (!session) {
+		sme_err("No session for id %d", session_id);
+		return -EINVAL;
+	}
+	if (cfg_in_range(CFG_HE_OMI, cfg_val))
+		mac_ctx->mlme_cfg->he_caps.dot11_he_cap.omi_a_ctrl =
+		cfg_val;
+	else
+		return -EINVAL;
+
+	csr_update_session_he_cap(mac_ctx, session);
+	return 0;
 }
 
 int sme_send_he_om_ctrl_bw_update(mac_handle_t mac_handle, uint8_t session_id,
