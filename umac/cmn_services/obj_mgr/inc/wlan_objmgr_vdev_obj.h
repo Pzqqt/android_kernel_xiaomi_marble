@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -153,6 +153,16 @@
 #define WLAN_VDEV_FEXT_SON_INFO_UPDATE      0x01000000
 	/* CONF: A-MSDU supported */
 #define WLAN_VDEV_FEXT_AMSDU                0x02000000
+	/* VDEV is PSTA*/
+#define WLAN_VDEV_FEXT_PSTA                 0x04000000
+	/* VDEV is MPSTA*/
+#define WLAN_VDEV_FEXT_MPSTA                0x08000000
+	/* VDEV is WRAP*/
+#define WLAN_VDEV_FEXT_WRAP                 0x10000000
+	/* VDEV has MAT enabled*/
+#define WLAN_VDEV_FEXT_MAT                  0x20000000
+	/* VDEV is wired PSTA*/
+#define WLAN_VDEV_FEXT_WIRED_PSTA           0x40000000
 
 /* VDEV OP flags  */
   /* if the vap destroyed by user */
