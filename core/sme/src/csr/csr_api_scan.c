@@ -1811,8 +1811,8 @@ QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal mac_ctx, uint32_t vdev_id,
 
 	/* Get NL global context from objmgr*/
 	if (vdev_id == INVAL_VDEV_ID)
-		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
-				0, WLAN_LEGACY_SME_ID);
+		vdev = wlan_objmgr_pdev_get_first_vdev(mac_ctx->pdev,
+						       WLAN_LEGACY_SME_ID);
 	else
 		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
 				vdev_id, WLAN_LEGACY_SME_ID);
