@@ -1482,8 +1482,7 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (vdev_id == INVAL_VDEV_ID)
-		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev,
-				0, WLAN_OSIF_ID);
+		vdev = wlan_objmgr_pdev_get_first_vdev(pdev, WLAN_OSIF_ID);
 	else
 		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev,
 				vdev_id, WLAN_OSIF_ID);

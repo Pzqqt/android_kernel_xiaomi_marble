@@ -2030,9 +2030,10 @@ ucfg_scan_cancel_pdev_scan(struct wlan_objmgr_pdev *pdev)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, 0, WLAN_OSIF_ID);
+	vdev = wlan_objmgr_pdev_get_first_vdev(pdev, WLAN_SCAN_ID);
 	if (!vdev) {
 		scm_err("Failed to get vdev");
+		qdf_mem_free(req);
 		return QDF_STATUS_E_INVAL;
 	}
 	req->vdev = vdev;
@@ -2043,7 +2044,7 @@ ucfg_scan_cancel_pdev_scan(struct wlan_objmgr_pdev *pdev)
 	status = ucfg_scan_cancel_sync(req);
 	if (QDF_IS_STATUS_ERROR(status))
 		scm_err("Cancel scan request failed");
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_SCAN_ID);
 
 	return status;
 }
