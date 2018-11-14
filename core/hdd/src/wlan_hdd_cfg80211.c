@@ -5688,6 +5688,21 @@ static int hdd_config_qpower(struct hdd_adapter *adapter,
 	return hdd_set_qpower_config(hdd_ctx, adapter, qpower);
 }
 
+static int hdd_config_stats_avg_factor(struct hdd_adapter *adapter,
+				       const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint16_t stats_avg_factor;
+	QDF_STATUS status;
+
+	stats_avg_factor = nla_get_u16(attr);
+	status = sme_configure_stats_avg_factor(hdd_ctx->mac_handle,
+						adapter->session_id,
+						stats_avg_factor);
+
+	return qdf_status_to_os_return(status);
+}
+
 static int hdd_config_scan_default_ies(struct hdd_adapter *adapter,
 				       const struct nlattr *attr)
 {
@@ -5775,6 +5790,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_scan_enable},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER,
 	 hdd_config_qpower},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR,
+	 hdd_config_stats_avg_factor},
 };
 
 /**
@@ -5888,7 +5905,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	int errno;
 	int ret;
 	int ret_val = 0;
-	u16 stats_avg_factor;
 	u32 guard_time;
 	uint8_t set_value;
 	QDF_STATUS status;
@@ -5941,17 +5957,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	/* return errno here when all attributes have been refactored */
 
 	mac_handle = hdd_ctx->mac_handle;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR]) {
-		stats_avg_factor = nla_get_u16(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR]);
-		status = sme_configure_stats_avg_factor(mac_handle,
-							adapter->session_id,
-							stats_avg_factor);
-
-		if (QDF_STATUS_SUCCESS != status)
-			ret_val = -EPERM;
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_GUARD_TIME]) {
 		guard_time = nla_get_u32(
