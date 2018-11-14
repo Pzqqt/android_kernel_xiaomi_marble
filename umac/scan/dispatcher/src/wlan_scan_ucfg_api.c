@@ -2058,6 +2058,7 @@ ucfg_scan_suspend_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int i;
 
+	ucfg_scan_set_enable(psoc, false);
 	/* Check all pdev */
 	for (i = 0; i < WLAN_UMAC_MAX_PDEVS; i++) {
 		pdev = wlan_objmgr_get_pdev_by_id(psoc, i, WLAN_SCAN_ID);
@@ -2079,6 +2080,7 @@ ucfg_scan_suspend_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 static QDF_STATUS
 ucfg_scan_resume_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 {
+	ucfg_scan_set_enable(psoc, true);
 	return QDF_STATUS_SUCCESS;
 }
 

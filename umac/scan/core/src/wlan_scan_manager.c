@@ -396,6 +396,26 @@ scm_scan_start_req(struct scheduler_msg *msg)
 		goto err;
 	}
 
+	if (!scan_obj->enable_scan) {
+		scm_err("scan disabled, rejecting the scan req");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto err;
+	}
+
+	scan_vdev_priv_obj = wlan_get_vdev_scan_obj(req->vdev);
+	if (!scan_vdev_priv_obj) {
+		scm_debug("Couldn't find scan priv object");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto err;
+	}
+
+	if (scan_vdev_priv_obj->is_vdev_delete_in_progress) {
+		scm_err("Can't allow scan on vdev_id:%d",
+			wlan_vdev_get_id(req->vdev));
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto err;
+	}
+
 	cmd.cmd_type = WLAN_SER_CMD_SCAN;
 	cmd.cmd_id = req->scan_req.scan_id;
 	cmd.cmd_cb = (wlan_serialization_cmd_callback)
@@ -413,19 +433,6 @@ scm_scan_start_req(struct scheduler_msg *msg)
 	scm_debug("req: 0x%pK, reqid: %d, scanid: %d, vdevid: %d",
 		  req, req->scan_req.scan_req_id, req->scan_req.scan_id,
 		  req->scan_req.vdev_id);
-
-	scan_vdev_priv_obj = wlan_get_vdev_scan_obj(req->vdev);
-	if (!scan_vdev_priv_obj) {
-		scm_debug("Couldn't find scan priv object");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto err;
-	}
-	if (scan_vdev_priv_obj->is_vdev_delete_in_progress) {
-		scm_err("Can't allow scan on vdev_id:%d",
-			wlan_vdev_get_id(req->vdev));
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto err;
-	}
 
 	qdf_mtrace(QDF_MODULE_ID_SCAN, QDF_MODULE_ID_SERIALIZATION,
 		   WLAN_SER_CMD_SCAN, req->vdev->vdev_objmgr.vdev_id,
