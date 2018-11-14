@@ -25,6 +25,7 @@
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 #include "internal.h"
+#include "wcd937x.h"
 #include "../wcdcal-hwdep.h"
 #include "wcd937x-registers.h"
 #include "../msm-cdc-pinctrl.h"
