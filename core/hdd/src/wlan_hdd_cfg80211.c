@@ -5623,6 +5623,31 @@ static int hdd_config_modulated_dtim(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_config_listen_interval(struct hdd_adapter *adapter,
+				      const struct nlattr *attr)
+{
+	struct wlan_objmgr_vdev *vdev;
+	uint32_t listen_interval;
+	QDF_STATUS status;
+
+	listen_interval = nla_get_u32(attr);
+	if (listen_interval > cfg_max(CFG_PMO_ENABLE_DYNAMIC_DTIM)) {
+		hdd_err_rl("Invalid value for listen interval - %d",
+			   listen_interval);
+		return -EINVAL;
+	}
+
+	vdev = hdd_objmgr_get_vdev(adapter);
+	if (!vdev)
+		return -EINVAL;
+
+	status = ucfg_pmo_config_listen_interval(vdev, listen_interval);
+
+	hdd_objmgr_put_vdev(adapter);
+
+	return qdf_status_to_os_return(status);
+}
+
 static int hdd_config_scan_default_ies(struct hdd_adapter *adapter,
 				       const struct nlattr *attr)
 {
@@ -5702,6 +5727,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_fine_time_measurement},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_MODULATED_DTIM,
 	 hdd_config_modulated_dtim},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_LISTEN_INTERVAL,
+	 hdd_config_listen_interval},
 };
 
 /**
@@ -5815,7 +5842,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	int errno;
 	int ret;
 	int ret_val = 0;
-	u32 override_li;
 	u16 stats_avg_factor;
 	u32 guard_time;
 	uint8_t set_value;
@@ -5838,7 +5864,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	uint16_t latency_level;
 	mac_handle_t mac_handle;
 	bool b_value;
-	struct wlan_objmgr_vdev *vdev;
 	uint8_t bmiss_first_bcnt;
 	uint8_t bmiss_final_bcnt;
 
@@ -5871,26 +5896,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	/* return errno here when all attributes have been refactored */
 
 	mac_handle = hdd_ctx->mac_handle;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LISTEN_INTERVAL]) {
-		override_li = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LISTEN_INTERVAL]);
-
-		if (override_li > cfg_max(CFG_PMO_ENABLE_DYNAMIC_DTIM)) {
-			hdd_err_rl("Invalid value for listen interval - %d",
-				   override_li);
-			return -EINVAL;
-		}
-
-		vdev = hdd_objmgr_get_vdev(adapter);
-		if (!vdev)
-			return -EINVAL;
-		status = ucfg_pmo_config_listen_interval(vdev,
-							 override_li);
-		hdd_objmgr_put_vdev(adapter);
-		if (status != QDF_STATUS_SUCCESS)
-			ret_val = -EPERM;
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LRO]) {
 		enable_flag = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LRO]);
