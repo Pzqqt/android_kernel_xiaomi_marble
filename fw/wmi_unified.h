@@ -22608,6 +22608,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_BCN_OFFLOAD_QUIET_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_NDP_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_PKTLOG_FILTER_CMDID);
+        WMI_RETURN_STRING(WMI_SET_CURRENT_COUNTRY_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -23091,7 +23092,7 @@ typedef enum {
 #define WLM_FLAGS_SCAN_SKIP_DFS  1  /* skip dfs channel operation */
 
 /* bit 2-3: define policy of dwell time/duration of each foreign channel
-   (b2 b3)
+   (b3 b2)
    (0  0 ): Default dwell time
    (0  1 ): WLM_FLAGS_STICK_SCAN_DWELL_TIME : Stick to original active/passive dwell time, but split
    foreign channel dwell times into fitting into min (dl_latency, ul_latency). Note it can increase
@@ -23109,7 +23110,7 @@ typedef enum {
 
 /* bit 6-7 of flags is used for roaming operation */
 /* bit 6-7: define roaming policy:
-   (b6 b7)
+   (b7 b6)
    (0  0 ): WLM_FLAGS_ROAM_ALLOW: Default behavior, allow roaming in all scenarios
    (0  1 ): WLM_FLAGS_ROAM_SUPPRESS: Disallow all roaming
    (1  0 ): WLM_FLAGS_ALLOW_FINAL_BMISS_ROAM: Allow final bmiss roaming only

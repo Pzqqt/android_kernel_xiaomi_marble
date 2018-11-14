@@ -273,6 +273,96 @@ typedef  enum  {
     WMI_SERVICE_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN=176, /* indicates FW supports uniformly excluding the HTC header length from the HTT H2T message length */
     WMI_SERVICE_COEX_SUPPORT_UNEQUAL_ISOLATION=177, /* indicates FW supports FDD coex with unequal isolation between BT and each of the WLAN chains */
 
+    /* WMI_SERVICE_HW_DB2DBM_CONVERSION_SUPPORT:
+     * Support HW+FW db2dbm conversion for RSSI fields in rx descriptors
+     * and host/target messages.
+     * If enabled, HW and FW will convert SNR to RSSI by adding noise floor
+     * and rssi_offset from BDF to RSSI values that formerly had units of
+     * dB w.r.t. noise floor to convert the units to dBm.
+     * MAC beacon RSSI average register return a signed value for RSSI,
+     * as well as hw descriptors.
+     *-------------------------------------------------------------------------
+     * The RSSI field of below WMI messages will be changed to dBm units:
+     * WMI_MGMT_RX_EVENTID:
+     *     wmi_mgmt_rx_hdr.rssi_ctl;
+     * WMI_UPDATE_STATS_EVENTID:
+     *     wmi_rssi_stats.rssi_avg_beacon;
+     *     wmi_rssi_stats.rssi_avg_data;
+     *     wmi_snr_info.bcn_snr;
+     *     wmi_snr_info.dat_snr;
+     *     wmi_vdev_stats.bcn_rssi_history; (NOT USED IN FW)
+     *     wmi_peer_stats.peer_rssi;
+     * WMI_WOW_WAKEUP_HOST_EVENTID:
+     *     wmi_rssi_breach_event_fixed_param.rssi;
+     *     wmi_roam_event_fixed_param.rssi;
+     * WMI_PEER_STA_KICKOUT_EVENTID:
+     *     wmi_peer_sta_kickout_event_fixed_param.rssi;
+     * WMI_PASSPOINT_MATCH_EVENTID:
+     *     wmi_passpoint_event_hdr.rssi;(NOT USED IN FW)
+     * WMI_PEER_INFO_EVENTID:
+     *     wmi_peer_info.rssi;
+     * WMI_ROAM_SYNCH_EVENTID:
+     *     wmi_roam_synch_event_fixed_param.rssi;
+     * WMI_ROAM_SCAN_STATS_EVENTID:
+     *     wmi_roam_scan_stats_event_fixed_param.rssi;
+     *     wmi_pdev_div_rssi_antid_event_id:
+     *     wmi_pdev_div_rssi_antid_event_fixed_param.chain_rssi;
+     *     wmi_rssi_breach_event_id
+     * WMI_INST_RSSI_STATS_EVENTID:
+     *     wmi_inst_rssi_stats_resp_fixed_param.iRSSI;
+     * RSSI thresholds configured by host
+     * WMI_ROAM_SCAN_RSSI_THRESHOLD
+     *     roam_scan_rssi_thresh   snr
+     *     boost_threshold_5g  snr
+     *     penalty_threshold_5g    snr
+     *     good_rssi_threshold snr
+     *     roam_bg_scan_bad_rssi_thresh    snr
+     *     roam_earlystop_thres_min    snr
+     *     roam_earlystop_thres_max    snr
+     * WMI_ROAM_AP_PROFILE
+     *     rssi_abs_thresh snr
+     * WMI_ROAM_CONFIGURE_MAWC_CMDID:
+     *     best_ap_rssi_threshold  Snr
+     *     wmi_ap_profile.rssi_abs_thresh;
+     * WMI_ROAM_SCAN_RSSI_THRESHOLD:
+     *     wmi_roam_scan_extended_threshold_param.boost_threshold_5g;
+     *     wmi_roam_scan_extended_threshold_param.penalty_threshold_5g;
+     *     wmi_roam_scan_extended_threshold_param.good_rssi_threshold;
+     *     wmi_roam_scan_rssi_threshold_fixed_param.roam_scan_rssi_thresh;
+     *     wmi_roam_bg_scan_roaming_param.roam_bg_scan_bad_rssi_thresh;
+     * WMI_VDEV_SPECTRAL_SCAN_CONFIGURE_CMDID:
+     *     wmi_vdev_spectral_configure_cmd_fixed_param.spectral_scan_rssi_rpt_mode;
+     *     wmi_vdev_spectral_configure_cmd_fixed_param.spectral_scan_rssi_thr;
+     * WMI_RSSI_BREACH_MONITOR_CONFIG_CMDID:
+     *     wmi_rssi_breach_monitor_config_fixed_param.low_rssi_breach_threshold;
+     *     wmi_rssi_breach_monitor_config_fixed_param.hi_rssi_breach_threshold;
+     * WMI_STA_SMPS_PARAM_CMDID:
+     *     wmi_sta_smps_param.value of below cmd IDs:
+     *         // RSSI threshold to enter Dynamic SMPS mode from inactive mode
+     *         WMI_STA_SMPS_PARAM_UPPER_RSSI_THRESH = 0,
+     *         // RSSI threshold to enter Stalled-D-SMPS mode from D-SMPS mode
+     *         // or to enter D-SMPS mode from Stalled-D-SMPS mode
+     *         WMI_STA_SMPS_PARAM_STALL_RSSI_THRESH = 1,
+     *         // RSSI threshold to disable SMPS modes
+     *         WMI_STA_SMPS_PARAM_LOWER_RSSI_THRESH = 2,
+     *         // Upper threshold for beacon-RSSI. Used to reduce RX chainmask.
+     *         WMI_STA_SMPS_PARAM_UPPER_BRSSI_THRESH = 3,
+     *         // Lower threshold for beacon-RSSI. Used to increase RX chainmask
+     *         WMI_STA_SMPS_PARAM_LOWER_BRSSI_THRESH = 4,
+     *         // Enable/Disable DTIM 1chRx feature
+     *         WMI_STA_SMPS_PARAM_DTIM_1CHRX_ENABLE = 5
+     * WMI_TDLS_SET_STATE_CMDID:
+     *     wmi_tdls_set_state_cmd_fixed_param.rssi_teardown_threshold;
+     *     wmi_tdls_set_state_cmd_fixed_param.rssi_delta;
+     *-------------------------------------------------------------------------
+     * The RSSI fields of below HTT data type will change to dBm units:
+     * PREPACK struct htt_tx_wbm_completion.ack_frame_rssi;
+     * PREPACK struct htt_tx_wbm_transmit_status.ack_frame_rssi;
+     * htt_ppdu_stats_user_cmpltn_common_tlv.ack_rssi;
+     */
+    WMI_SERVICE_HW_DB2DBM_CONVERSION_SUPPORT = 178,
+
+
     /******* ADD NEW SERVICES HERE *******/
 
     WMI_MAX_EXT_SERVICE
