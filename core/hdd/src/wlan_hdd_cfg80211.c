@@ -5235,6 +5235,7 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[RX_BLOCKSIZE_WINLIMIT] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_LISTEN_INTERVAL] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_LRO] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ENA] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_CHAIN] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST] = {.type = NLA_U32 },
@@ -5676,6 +5677,17 @@ static int hdd_config_scan_enable(struct hdd_adapter *adapter,
 	return 0;
 }
 
+static int hdd_config_qpower(struct hdd_adapter *adapter,
+			     const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t qpower;
+
+	qpower = nla_get_u8(attr);
+
+	return hdd_set_qpower_config(hdd_ctx, adapter, qpower);
+}
+
 static int hdd_config_scan_default_ies(struct hdd_adapter *adapter,
 				       const struct nlattr *attr)
 {
@@ -5761,6 +5773,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_lro},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_ENABLE,
 	 hdd_config_scan_enable},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER,
+	 hdd_config_qpower},
 };
 
 /**
@@ -5877,7 +5891,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	u16 stats_avg_factor;
 	u32 guard_time;
 	uint8_t set_value;
-	u8 qpower;
 	QDF_STATUS status;
 	int attr_len;
 	int access_policy = 0;
@@ -5928,13 +5941,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	/* return errno here when all attributes have been refactored */
 
 	mac_handle = hdd_ctx->mac_handle;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER]) {
-		qpower = nla_get_u8(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER]);
-		if (hdd_set_qpower_config(hdd_ctx, adapter, qpower) != 0)
-			ret_val = -EINVAL;
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_STATS_AVG_FACTOR]) {
 		stats_avg_factor = nla_get_u16(
