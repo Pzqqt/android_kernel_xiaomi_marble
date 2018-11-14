@@ -512,6 +512,9 @@ struct wlan_mlme_wps_params {
  * @sap_ch_switch_mode: Channel switch test mode enable/disable
  * @chan_switch_hostapd_rate_enabled_name: enable/disable skip hostapd rate
  * @reduced_beacon_interval: reduced beacon interval value
+ * @max_li_modulated_dtim_time: Max modulated DTIM time.
+ * @country_code_priority: Country code priority.
+ * @sap_pref_chan_location: SAP Preferred channel location.
  */
 struct wlan_mlme_cfg_sap {
 	uint8_t cfg_ssid[32];
@@ -537,6 +540,9 @@ struct wlan_mlme_cfg_sap {
 	bool sap_ch_switch_mode;
 	bool chan_switch_hostapd_rate_enabled_name;
 	uint8_t reduced_beacon_interval;
+	uint8_t max_li_modulated_dtim_time;
+	bool country_code_priority;
+	uint8_t sap_pref_chan_location;
 };
 
 /**

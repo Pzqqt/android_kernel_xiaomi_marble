@@ -1681,7 +1681,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 		pMac->roam.configParam.BssPreferValue[i] = i;
 	csr_assign_rssi_for_category(pMac, CSR_BEST_RSSI_VALUE,
 			CSR_DEFAULT_RSSI_DB_GAP);
-	pMac->roam.configParam.fSupplicantCountryCodeHasPriority = false;
 	pMac->roam.configParam.nActiveMaxChnTime = CSR_ACTIVE_MAX_CHANNEL_TIME;
 	pMac->roam.configParam.nPassiveMaxChnTime =
 		CSR_PASSIVE_MAX_CHANNEL_TIME;
@@ -2831,8 +2830,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		csr_assign_rssi_for_category(pMac,
 			pMac->mlme_cfg->lfr.first_scan_bucket_threshold,
 			pParam->bCatRssiOffset);
-		pMac->roam.configParam.fSupplicantCountryCodeHasPriority =
-			pParam->fSupplicantCountryCodeHasPriority;
 		pMac->roam.configParam.vccRssiThreshold =
 			pParam->vccRssiThreshold;
 		pMac->roam.configParam.vccUlMacLossThreshold =
@@ -3122,8 +3119,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->idle_time_conc = cfg_params->idle_time_conc;
 	pParam->nScanResultAgeCount = cfg_params->agingCount;
 	pParam->bCatRssiOffset = cfg_params->bCatRssiOffset;
-	pParam->fSupplicantCountryCodeHasPriority =
-		cfg_params->fSupplicantCountryCodeHasPriority;
 	pParam->vccRssiThreshold = cfg_params->vccRssiThreshold;
 	pParam->vccUlMacLossThreshold = cfg_params->vccUlMacLossThreshold;
 	pParam->nTxPowerCap = cfg_params->nTxPowerCap;
@@ -15671,8 +15666,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		if ((csr_is11h_supported(pMac)) &&
 			(WLAN_REG_IS_5GHZ_CH(pBssDescription->channelId)) &&
 			(pIes->Country.present) &&
-			(!pMac->roam.configParam.
-			 fSupplicantCountryCodeHasPriority)) {
+			(!pMac->mlme_cfg->sap_cfg.country_code_priority)) {
 			csr_save_to_channel_power2_g_5_g(pMac,
 				pIes->Country.num_triplets *
 				sizeof(tSirMacChanInfo),

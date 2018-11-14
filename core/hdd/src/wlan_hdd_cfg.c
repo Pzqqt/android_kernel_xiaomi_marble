@@ -273,16 +273,6 @@ static void cb_notify_set_enable_ssr(struct hdd_context *hdd_ctx,
 	sme_update_enable_ssr(hdd_ctx->mac_handle, hdd_ctx->config->enableSSR);
 }
 
-static void
-cb_notify_set_g_sap_preferred_chan_location(struct hdd_context *hdd_ctx,
-					    unsigned long notify_id)
-{
-	uint8_t location = hdd_ctx->config->gSapPreferredChanLocation;
-
-	wlansap_set_dfs_preferred_channel_location(hdd_ctx->mac_handle,
-						   location);
-}
-
 static void ch_notify_set_g_disable_dfs_japan_w53(struct hdd_context *hdd_ctx,
 						  unsigned long notify_id)
 {
@@ -405,13 +395,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_11H_SUPPORT_ENABLED_DEFAULT,
 		     CFG_11H_SUPPORT_ENABLED_MIN,
 		     CFG_11H_SUPPORT_ENABLED_MAX),
-
-	REG_VARIABLE(CFG_COUNTRY_CODE_PRIORITY_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, fSupplicantCountryCodeHasPriority,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_COUNTRY_CODE_PRIORITY_DEFAULT,
-		     CFG_COUNTRY_CODE_PRIORITY_MIN,
-		     CFG_COUNTRY_CODE_PRIORITY_MAX),
 
 	REG_VARIABLE_STRING(CFG_POWER_USAGE_NAME, WLAN_PARAM_String,
 			    struct hdd_config, PowerUsageControl,
@@ -698,13 +681,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_TX_POWER_CTRL_DEFAULT,
 		     CFG_TX_POWER_CTRL_MIN,
 		     CFG_TX_POWER_CTRL_MAX),
-
-	REG_VARIABLE(CFG_MAX_LI_MODULATED_DTIM_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, fMaxLIModulatedDTIM,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MAX_LI_MODULATED_DTIM_DEFAULT,
-		     CFG_MAX_LI_MODULATED_DTIM_MIN,
-		     CFG_MAX_LI_MODULATED_DTIM_MAX),
 
 	REG_VARIABLE(CFG_FW_MCC_RTS_CTS_PROT_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, mcc_rts_cts_prot_enable,
@@ -1414,15 +1390,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_DISABLE_DFS_CH_SWITCH_MIN,
 		     CFG_DISABLE_DFS_CH_SWITCH_MAX),
 
-	REG_DYNAMIC_VARIABLE(CFG_SAP_PREFERRED_CHANNEL_LOCATION,
-			     WLAN_PARAM_Integer,
-			     struct hdd_config, gSapPreferredChanLocation,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_SAP_PREFERRED_CHANNEL_LOCATION_DEFAULT,
-			     CFG_SAP_PREFERRED_CHANNEL_LOCATION_MIN,
-			     CFG_SAP_PREFERRED_CHANNEL_LOCATION_MAX,
-			     cb_notify_set_g_sap_preferred_chan_location, 0),
 	REG_DYNAMIC_VARIABLE(CFG_DISABLE_DFS_JAPAN_W53, WLAN_PARAM_Integer,
 			     struct hdd_config, gDisableDfsJapanW53,
 			     VAR_FLAGS_OPTIONAL |
@@ -3998,8 +3965,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	}
 	smeConfig->csrConfig.nScanResultAgeCount = pConfig->ScanResultAgeCount;
 	smeConfig->csrConfig.AdHocChannel24 = pConfig->OperatingChannel;
-	smeConfig->csrConfig.fSupplicantCountryCodeHasPriority =
-		pConfig->fSupplicantCountryCodeHasPriority;
 	smeConfig->csrConfig.bCatRssiOffset = pConfig->nRssiCatGap;
 	smeConfig->csrConfig.vccRssiThreshold = pConfig->nVccRssiTrigger;
 	smeConfig->csrConfig.vccUlMacLossThreshold =

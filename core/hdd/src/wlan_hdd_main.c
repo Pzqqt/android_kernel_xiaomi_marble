@@ -9684,7 +9684,8 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 		return -ENOMEM;
 
 	cds_cfg->driver_type = QDF_DRIVER_TYPE_PRODUCTION;
-	cds_cfg->sta_maxlimod_dtim = hdd_ctx->config->fMaxLIModulatedDTIM;
+	ucfg_mlme_get_sap_max_modulated_dtim(hdd_ctx->psoc,
+					     &cds_cfg->sta_maxlimod_dtim);
 
 	/*
 	 * Copy the DFS Phyerr Filtering Offload status.
@@ -14041,7 +14042,9 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 	psoc_cfg.packet_filter_enabled = !hdd_ctx->config->disablePacketFilter;
 	psoc_cfg.ap_arpns_support = hdd_ctx->ap_arpns_support;
 	psoc_cfg.d0_wow_supported = wma_d0_wow_is_supported();
-	psoc_cfg.sta_max_li_mod_dtim = hdd_ctx->config->fMaxLIModulatedDTIM;
+	ucfg_mlme_get_sap_max_modulated_dtim(hdd_ctx->psoc,
+					     &psoc_cfg.sta_max_li_mod_dtim);
+
 
 	hdd_ra_populate_pmo_config(&psoc_cfg, hdd_ctx);
 	hdd_lpass_populate_pmo_config(&psoc_cfg, hdd_ctx);

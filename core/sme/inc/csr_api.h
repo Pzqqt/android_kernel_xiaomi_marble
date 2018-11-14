@@ -1074,8 +1074,6 @@ typedef struct tagCsrConfigParam {
 	uint8_t fAllowMCCGODiffBI;
 	tCsr11dinfo Csr11dinfo;
 
-	/* Country Code Priority */
-	bool fSupplicantCountryCodeHasPriority;
 	uint16_t vccRssiThreshold;
 	uint32_t vccUlMacLossThreshold;
 	uint32_t nPassiveMaxChnTime;        /* in units of milliseconds */

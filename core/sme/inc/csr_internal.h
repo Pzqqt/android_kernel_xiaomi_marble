@@ -428,8 +428,6 @@ struct csr_config {
 	 * list. It is an "AND" operation between the default channels and
 	 * the channels in the 802.11d IE.
 	 */
-	/* Country Code Priority */
-	bool fSupplicantCountryCodeHasPriority;
 
 	uint16_t vccRssiThreshold;
 	uint32_t vccUlMacLossThreshold;

@@ -965,6 +965,54 @@ QDF_STATUS ucfg_mlme_get_sap_internal_restart(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_get_sap_max_modulated_dtim() - get sap max modulated dtim
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_sap_max_modulated_dtim(struct wlan_objmgr_psoc *psoc,
+						uint8_t *value)
+{
+	return wlan_mlme_get_sap_max_modulated_dtim(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_pref_chan_location() - get sap pref chan location
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_pref_chan_location(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *value)
+{
+	return wlan_mlme_get_sap_chan_pref_location(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_sap_country_priority() - get sap country code priority
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_sap_country_priority(struct wlan_objmgr_psoc *psoc,
+					      bool *value)
+{
+	return wlan_mlme_get_sap_country_priority(psoc, value);
+}
+
+/**
  * ucfg_mlme_get_sap_reduces_beacon_interval() - get the sap reduces beacon
  * interval
  * @psoc: pointer to psoc object

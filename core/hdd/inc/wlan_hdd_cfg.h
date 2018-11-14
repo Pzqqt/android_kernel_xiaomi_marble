@@ -226,50 +226,6 @@ struct hdd_context;
 #define CFG_11H_SUPPORT_ENABLED_MAX            (1)
 #define CFG_11H_SUPPORT_ENABLED_DEFAULT        (1)    /* Default is ON */
 
-/*
- * <ini>
- * gCountryCodePriority - Country code from supplicant preference
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to control whether driver will prefer country code
- * specified by supplicant. And once country code from supplicant is
- * respected, 11d will be disabled in effect.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_COUNTRY_CODE_PRIORITY_NAME         "gCountryCodePriority"
-#define CFG_COUNTRY_CODE_PRIORITY_MIN          (0)
-#define CFG_COUNTRY_CODE_PRIORITY_MAX          (1)
-#define CFG_COUNTRY_CODE_PRIORITY_DEFAULT      (0)
-
-/*
- * <ini>
- * gRegulatoryChangeCountry - Default world regdmn overriding
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to control whether default regdmn settings should be
- * overridden when there is no world regdmn configuration available.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
 #define CFG_REG_CHANGE_DEF_COUNTRY_NAME          "gRegulatoryChangeCountry"
 #define CFG_REG_CHANGE_DEF_COUNTRY_DEFAULT       (0)
 #define CFG_REG_CHANGE_DEF_COUNTRY_MIN           (0)
@@ -2701,29 +2657,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gMaxLIModulatedDTIM - Set MaxLIModulate Dtim
- * @Min: 1
- * @Max: 10
- * @Default: 10
- *
- * This ini is used to set default MaxLIModulatedDTIM
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_MAX_LI_MODULATED_DTIM_NAME         "gMaxLIModulatedDTIM"
-#define CFG_MAX_LI_MODULATED_DTIM_MIN          (1)
-#define CFG_MAX_LI_MODULATED_DTIM_MAX          (10)
-#define CFG_MAX_LI_MODULATED_DTIM_DEFAULT      (10)
-
-/*
- * <ini>
  * gFWMccRtsCtsProtection - RTS-CTS protection in MCC.
  * @Min: 0
  * @Max: 1
@@ -3338,32 +3271,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_DISABLE_DFS_CH_SWITCH_MIN             (0)
 #define CFG_DISABLE_DFS_CH_SWITCH_MAX             (1)
 #define CFG_DISABLE_DFS_CH_SWITCH_DEFAULT         (0)
-
-/*
- * <ini>
- * gSapPreferredChanLocation - Restrict channel switches between ondoor and
- * outdoor.
- * @Min: 0
- * @Max: 2
- * @Default: 0
- *
- * This ini is used for restricting channel switches between Indoor and outdoor
- * channels after radar detection.
- * 0- No preferred channel location
- * 1- Use indoor channels only
- * 2- Use outdoor channels only
- * Related: NA.
- *
- * Supported Feature: DFS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_SAP_PREFERRED_CHANNEL_LOCATION          "gSapPreferredChanLocation"
-#define CFG_SAP_PREFERRED_CHANNEL_LOCATION_MIN      (0)
-#define CFG_SAP_PREFERRED_CHANNEL_LOCATION_MAX      (2)
-#define CFG_SAP_PREFERRED_CHANNEL_LOCATION_DEFAULT  (0)
 
 /*
  * <ini>
@@ -6717,7 +6624,6 @@ struct hdd_config {
 	bool ShortSlotTimeEnabled;
 	bool Is11dSupportEnabled;
 	bool Is11hSupportEnabled;
-	bool fSupplicantCountryCodeHasPriority;
 	char PowerUsageControl[4];
 	bool fIsImpsEnabled;
 	bool is_ps_enabled;
@@ -6806,7 +6712,6 @@ struct hdd_config {
 	uint32_t       idle_time_conc;
 
 	uint8_t nRssiFilterPeriod;
-	uint8_t fMaxLIModulatedDTIM;
 
 	bool mcc_rts_cts_prot_enable;
 	bool mcc_bcast_prob_resp_enable;
@@ -6950,7 +6855,6 @@ struct hdd_config {
 	uint32_t TxPower2g;
 	uint32_t TxPower5g;
 	bool fDfsPhyerrFilterOffload;
-	uint8_t gSapPreferredChanLocation;
 	uint8_t gDisableDfsJapanW53;
 	bool gEnableOverLapCh;
 	bool fRegChangeDefCountry;

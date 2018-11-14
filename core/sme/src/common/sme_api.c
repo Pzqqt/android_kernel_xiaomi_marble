@@ -764,7 +764,7 @@ QDF_STATUS sme_init_chan_list(mac_handle_t hal, uint8_t *alpha2,
 	tpAniSirGlobal pmac = PMAC_STRUCT(hal);
 
 	if ((cc_src == SOURCE_USERSPACE) &&
-	    (pmac->roam.configParam.fSupplicantCountryCodeHasPriority)) {
+	    (pmac->mlme_cfg->sap_cfg.country_code_priority)) {
 		pmac->roam.configParam.Is11dSupportEnabled = false;
 	}
 
@@ -5950,7 +5950,7 @@ sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	v_REGDOMAIN_t reg_domain_id = 0;
 	bool user_ctry_priority =
-		mac_ctx->roam.configParam.fSupplicantCountryCodeHasPriority;
+		mac_ctx->mlme_cfg->sap_cfg.country_code_priority;
 	tAniGenericChangeCountryCodeReq *msg = pMsgBuf;
 
 	if (SOURCE_11D != mac_ctx->reg_hint_src) {

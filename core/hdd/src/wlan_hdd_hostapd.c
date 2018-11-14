@@ -4603,6 +4603,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	uint32_t auto_channel_select_weight =
 		cfg_default(CFG_AUTO_CHANNEL_SELECT_WEIGHT);
 	bool bval = false;
+	uint8_t pref_chan_location = 0;
 
 	hdd_enter();
 
@@ -4834,8 +4835,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		wlansap_set_dfs_ignore_cac(mac_handle, ignore_cac);
 		wlansap_set_dfs_restrict_japan_w53(mac_handle,
 			iniConfig->gDisableDfsJapanW53);
+		ucfg_mlme_get_pref_chan_location(hdd_ctx->psoc,
+						 &pref_chan_location);
 		wlansap_set_dfs_preferred_channel_location(mac_handle,
-			iniConfig->gSapPreferredChanLocation);
+							   pref_chan_location);
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 		wlan_sap_set_channel_avoidance(mac_handle,
 					iniConfig->sap_channel_avoidance);

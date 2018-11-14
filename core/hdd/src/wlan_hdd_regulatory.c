@@ -209,6 +209,7 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 {
 	uint8_t band_capability = 0;
 	QDF_STATUS status;
+	bool country_priority = 0;
 
 	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -216,8 +217,9 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 
 	config_vars->enable_11d_support = hdd_ctx->config->Is11dSupportEnabled;
 	config_vars->scan_11d_interval = hdd_ctx->config->scan_11d_interval;
-	config_vars->userspace_ctry_priority =
-		hdd_ctx->config->fSupplicantCountryCodeHasPriority;
+	ucfg_mlme_get_sap_country_priority(hdd_ctx->psoc,
+					   &country_priority);
+	config_vars->userspace_ctry_priority = country_priority;
 	config_vars->dfs_enabled = hdd_ctx->config->enableDFSChnlScan;
 	config_vars->indoor_chan_enabled =
 		hdd_ctx->config->indoor_channel_support;
