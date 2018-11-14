@@ -2939,6 +2939,10 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 			open_v8.endpoint_id_2 = 0xFFFF;
 			open_v8.endpoint_id_3 = 0xFFFF;
 
+			if (this_adm.ec_ref_rx && (path != ADM_PATH_PLAYBACK)) {
+				open_v8.endpoint_id_2 = this_adm.ec_ref_rx;
+				this_adm.ec_ref_rx = -1;
+			}
 
 			open_v8.topology_id = topology;
 			open_v8.reserved = 0;
@@ -2969,11 +2973,8 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 			if ((this_adm.num_ec_ref_rx_chans != 0)
 				&& (path != ADM_PATH_PLAYBACK)
 				&& (open_v8.endpoint_id_2 != 0xFFFF)) {
-				open_v8.endpoint_id_2 = this_adm.ec_ref_rx;
-				this_adm.ec_ref_rx = -1;
 				ep2_payload.dev_num_channel =
 					this_adm.num_ec_ref_rx_chans;
-				this_adm.num_ec_ref_rx_chans = 0;
 
 				if (this_adm.ec_ref_rx_bit_width != 0) {
 					ep2_payload.bit_width =
@@ -3019,6 +3020,7 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 			if ((this_adm.num_ec_ref_rx_chans != 0)
 				&& (path != ADM_PATH_PLAYBACK)
 				&& (open_v8.endpoint_id_2 != 0xFFFF)) {
+				this_adm.num_ec_ref_rx_chans = 0;
 				memcpy(adm_params + sizeof(open_v8)
 						+ ep1_payload_size,
 						(void *)&ep2_payload,
