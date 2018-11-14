@@ -5160,6 +5160,114 @@ static int hdd_we_set_modulated_dtim(struct hdd_adapter *adapter, int value)
 	return 0;
 }
 
+typedef int (*setint_getnone_fn)(struct hdd_adapter *adapter, int value);
+static const setint_getnone_fn setint_getnone_cb[] = {
+	[WE_SET_11D_STATE] = hdd_we_set_11d_state,
+	[WE_SET_POWER] = hdd_we_set_power,
+	[WE_SET_MAX_ASSOC] = hdd_we_set_max_assoc,
+	[WE_SET_DATA_INACTIVITY_TO] = hdd_we_set_data_inactivity_timeout,
+	[WE_SET_WOW_DATA_INACTIVITY_TO] =
+				hdd_we_set_wow_data_inactivity_timeout,
+	[WE_SET_MC_RATE] = wlan_hdd_set_mc_rate,
+	[WE_SET_TX_POWER] = hdd_we_set_tx_power,
+	[WE_SET_MAX_TX_POWER] = hdd_we_set_max_tx_power,
+	[WE_SET_MAX_TX_POWER_2_4] = hdd_we_set_max_tx_power_2_4,
+	[WE_SET_MAX_TX_POWER_5_0] = hdd_we_set_max_tx_power_5_0,
+	[WE_SET_TM_LEVEL] = hdd_we_set_tm_level,
+	[WE_SET_PHYMODE] = wlan_hdd_update_phymode,
+	[WE_SET_NSS] = hdd_we_set_nss,
+	[WE_SET_GTX_HT_MCS] = hdd_we_set_gtx_ht_mcs,
+	[WE_SET_GTX_VHT_MCS] = hdd_we_set_gtx_vht_mcs,
+	[WE_SET_GTX_USRCFG] = hdd_we_set_gtx_usrcfg,
+	[WE_SET_GTX_THRE] = hdd_we_set_gtx_thre,
+	[WE_SET_GTX_MARGIN] = hdd_we_set_gtx_margin,
+	[WE_SET_GTX_STEP] = hdd_we_set_gtx_step,
+	[WE_SET_GTX_MINTPC] = hdd_we_set_gtx_mintpc,
+	[WE_SET_GTX_BWMASK] = hdd_we_set_gtx_bwmask,
+	[WE_SET_LDPC] = hdd_set_ldpc,
+	[WE_SET_TX_STBC] = hdd_set_tx_stbc,
+	[WE_SET_RX_STBC] = hdd_set_rx_stbc,
+	[WE_SET_SHORT_GI] = hdd_we_set_short_gi,
+	[WE_SET_RTSCTS] = hdd_we_set_rtscts,
+	[WE_SET_CHWIDTH] = hdd_we_set_ch_width,
+	[WE_SET_ANI_EN_DIS] = hdd_we_set_ani_en_dis,
+	[WE_SET_ANI_POLL_PERIOD] = hdd_we_set_ani_poll_period,
+	[WE_SET_ANI_LISTEN_PERIOD] = hdd_we_set_ani_listen_period,
+	[WE_SET_ANI_OFDM_LEVEL] = hdd_we_set_ani_ofdm_level,
+	[WE_SET_ANI_CCK_LEVEL] = hdd_we_set_ani_cck_level,
+	[WE_SET_DYNAMIC_BW] = hdd_we_set_dynamic_bw,
+	[WE_SET_CTS_CBW] = hdd_we_set_cts_cbw,
+	[WE_SET_11N_RATE] = hdd_we_set_11n_rate,
+	[WE_SET_VHT_RATE] = hdd_we_set_vht_rate,
+	[WE_SET_AMPDU] = hdd_we_set_ampdu,
+	[WE_SET_AMSDU] = hdd_we_set_amsdu,
+	[WE_SET_TX_CHAINMASK] = hdd_we_set_tx_chainmask,
+	[WE_SET_RX_CHAINMASK] = hdd_we_set_rx_chainmask,
+	[WE_SET_TXPOW_2G] = hdd_we_set_txpow_2g,
+	[WE_SET_TXPOW_5G] = hdd_we_set_txpow_5g,
+	[WE_DBGLOG_LOG_LEVEL] = hdd_we_dbglog_log_level,
+	[WE_DBGLOG_VAP_ENABLE] = hdd_we_dbglog_vap_enable,
+	[WE_DBGLOG_VAP_DISABLE] = hdd_we_dbglog_vap_disable,
+	[WE_DBGLOG_MODULE_ENABLE] = hdd_we_dbglog_module_enable,
+	[WE_DBGLOG_MODULE_DISABLE] = hdd_we_dbglog_module_disable,
+	[WE_DBGLOG_MOD_LOG_LEVEL] = hdd_we_dbglog_mod_log_level,
+	[WE_DBGLOG_TYPE] = hdd_we_dbglog_type,
+	[WE_DBGLOG_REPORT_ENABLE] = hdd_we_dbglog_report_enable,
+	[WE_SET_TXRX_FWSTATS] = hdd_we_set_txrx_fwstats,
+	[WE_TXRX_FWSTATS_RESET] = hdd_we_txrx_fwstats_reset,
+	[WE_DUMP_STATS] = hdd_wlan_dump_stats,
+	[WE_CLEAR_STATS] = hdd_we_clear_stats,
+	[WE_PPS_PAID_MATCH] = hdd_we_pps_paid_match,
+	[WE_PPS_GID_MATCH] = hdd_we_pps_gid_match,
+	[WE_PPS_EARLY_TIM_CLEAR] = hdd_we_pps_early_tim_clear,
+	[WE_PPS_EARLY_DTIM_CLEAR] = hdd_we_pps_early_dtim_clear,
+	[WE_PPS_EOF_PAD_DELIM] = hdd_we_pps_eof_pad_delim,
+	[WE_PPS_MACADDR_MISMATCH] = hdd_we_pps_macaddr_mismatch,
+	[WE_PPS_DELIM_CRC_FAIL] = hdd_we_pps_delim_crc_fail,
+	[WE_PPS_GID_NSTS_ZERO] = hdd_we_pps_gid_nsts_zero,
+	[WE_PPS_RSSI_CHECK] = hdd_we_pps_rssi_check,
+	[WE_PPS_5G_EBT] = hdd_we_pps_5g_ebt,
+	[WE_SET_HTSMPS] = hdd_we_set_htsmps,
+	[WE_SET_QPOWER_MAX_PSPOLL_COUNT] = hdd_we_set_qpower_max_pspoll_count,
+	[WE_SET_QPOWER_MAX_TX_BEFORE_WAKE] =
+				hdd_we_set_qpower_max_tx_before_wake,
+	[WE_SET_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL] =
+				hdd_we_set_qpower_spec_pspoll_wake_interval,
+	[WE_SET_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL] =
+				hdd_we_set_qpower_spec_max_spec_nodata_pspoll,
+	[WE_MCC_CONFIG_LATENCY] = hdd_we_mcc_config_latency,
+	[WE_MCC_CONFIG_QUOTA] = hdd_we_mcc_config_quota,
+	[WE_SET_DEBUG_LOG] = hdd_we_set_debug_log,
+	[WE_SET_EARLY_RX_ADJUST_ENABLE] = hdd_we_set_early_rx_adjust_enable,
+	[WE_SET_EARLY_RX_TGT_BMISS_NUM] = hdd_we_set_early_rx_tgt_bmiss_num,
+	[WE_SET_EARLY_RX_BMISS_SAMPLE_CYCLE] =
+				hdd_we_set_early_rx_bmiss_sample_cycle,
+	[WE_SET_EARLY_RX_SLOP_STEP] = hdd_we_set_early_rx_slop_step,
+	[WE_SET_EARLY_RX_INIT_SLOP] = hdd_we_set_early_rx_init_slop,
+	[WE_SET_EARLY_RX_ADJUST_PAUSE] = hdd_we_set_early_rx_adjust_pause,
+	[WE_SET_EARLY_RX_DRIFT_SAMPLE] = hdd_we_set_early_rx_drift_sample,
+	[WE_SET_SCAN_DISABLE] = hdd_we_set_scan_disable,
+	[WE_START_FW_PROFILE] = hdd_we_start_fw_profile,
+	[WE_SET_CHANNEL] = hdd_we_set_channel,
+	[WE_SET_CONC_SYSTEM_PREF] = hdd_we_set_conc_system_pref,
+	[WE_SET_11AX_RATE] = hdd_we_set_11ax_rate,
+	[WE_SET_DCM] = hdd_we_set_dcm,
+	[WE_SET_RANGE_EXT] = hdd_we_set_range_ext,
+	[WE_SET_PDEV_RESET] = hdd_handle_pdev_reset,
+	[WE_SET_MODULATED_DTIM] = hdd_we_set_modulated_dtim,
+};
+
+static setint_getnone_fn hdd_get_setint_getnone_cb(int param)
+{
+	if (param < 0)
+		return NULL;
+
+	if (param >= QDF_ARRAY_SIZE(setint_getnone_cb))
+		return NULL;
+
+	return setint_getnone_cb[param];
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -5175,6 +5283,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
+	setint_getnone_fn cb;
 	int *value = (int *)extra;
 	int sub_cmd = value[0];
 	int set_value = value[1];
@@ -5191,369 +5300,13 @@ static int __iw_setint_getnone(struct net_device *dev,
 	if (ret)
 		return ret;
 
-	switch (sub_cmd) {
-	case WE_SET_11D_STATE:
-		ret = hdd_we_set_11d_state(adapter, set_value);
-		break;
-
-	case WE_SET_POWER:
-		ret = hdd_we_set_power(adapter, set_value);
-		break;
-
-	case WE_SET_MAX_ASSOC:
-		ret = hdd_we_set_max_assoc(adapter, set_value);
-		break;
-
-	case WE_SET_DATA_INACTIVITY_TO:
-		ret = hdd_we_set_data_inactivity_timeout(adapter, set_value);
-		break;
-
-	case WE_SET_WOW_DATA_INACTIVITY_TO:
-		ret = hdd_we_set_wow_data_inactivity_timeout(adapter,
-							     set_value);
-		break;
-
-	case WE_SET_MC_RATE:
-		ret = wlan_hdd_set_mc_rate(adapter, set_value);
-		break;
-
-	case WE_SET_TX_POWER:
-		ret = hdd_we_set_tx_power(adapter, set_value);
-		break;
-
-	case WE_SET_MAX_TX_POWER:
-		ret = hdd_we_set_max_tx_power(adapter, set_value);
-		break;
-
-	case WE_SET_MAX_TX_POWER_2_4:
-		ret = hdd_we_set_max_tx_power_2_4(adapter, set_value);
-		break;
-
-	case WE_SET_MAX_TX_POWER_5_0:
-		ret = hdd_we_set_max_tx_power_5_0(adapter, set_value);
-		break;
-
-	case WE_SET_TM_LEVEL:
-		ret = hdd_we_set_tm_level(adapter, set_value);
-		break;
-
-	case WE_SET_PHYMODE:
-		ret = wlan_hdd_update_phymode(adapter, set_value);
-		break;
-
-	case WE_SET_NSS:
-		ret = hdd_we_set_nss(adapter, set_value);
-		break;
-
-	case WE_SET_GTX_HT_MCS:
-		ret = hdd_we_set_gtx_ht_mcs(adapter, set_value);
-		break;
-
-	case WE_SET_GTX_VHT_MCS:
-		ret = hdd_we_set_gtx_vht_mcs(adapter, set_value);
-		break;
-
-	case WE_SET_GTX_USRCFG:
-		ret = hdd_we_set_gtx_usrcfg(adapter, set_value);
-		break;
-
-	case WE_SET_GTX_THRE:
-		ret = hdd_we_set_gtx_thre(adapter, set_value);
-		break;
-
-	case WE_SET_GTX_MARGIN:
-		ret = hdd_we_set_gtx_margin(adapter, set_value);
-		break;
-
-	case WE_SET_GTX_STEP:
-		ret = hdd_we_set_gtx_step(adapter, set_value);
-		break;
-
-	case WE_SET_GTX_MINTPC:
-		ret = hdd_we_set_gtx_mintpc(adapter, set_value);
-		break;
-
-	case WE_SET_GTX_BWMASK:
-		ret = hdd_we_set_gtx_bwmask(adapter, set_value);
-		break;
-
-	case WE_SET_LDPC:
-		ret = hdd_set_ldpc(adapter, set_value);
-		break;
-
-	case WE_SET_TX_STBC:
-		ret = hdd_set_tx_stbc(adapter, set_value);
-		break;
-
-	case WE_SET_RX_STBC:
-		ret = hdd_set_rx_stbc(adapter, set_value);
-		break;
-
-	case WE_SET_SHORT_GI:
-		ret = hdd_we_set_short_gi(adapter, set_value);
-		break;
-
-	case WE_SET_RTSCTS:
-		ret = hdd_we_set_rtscts(adapter, set_value);
-		break;
-
-	case WE_SET_CHWIDTH:
-		ret = hdd_we_set_ch_width(adapter, set_value);
-		break;
-
-	case WE_SET_ANI_EN_DIS:
-		ret = hdd_we_set_ani_en_dis(adapter, set_value);
-		break;
-
-	case WE_SET_ANI_POLL_PERIOD:
-		ret = hdd_we_set_ani_poll_period(adapter, set_value);
-		break;
-
-	case WE_SET_ANI_LISTEN_PERIOD:
-		ret = hdd_we_set_ani_listen_period(adapter, set_value);
-		break;
-
-	case WE_SET_ANI_OFDM_LEVEL:
-		ret = hdd_we_set_ani_ofdm_level(adapter, set_value);
-		break;
-
-	case WE_SET_ANI_CCK_LEVEL:
-		ret = hdd_we_set_ani_cck_level(adapter, set_value);
-		break;
-
-	case WE_SET_DYNAMIC_BW:
-		ret = hdd_we_set_dynamic_bw(adapter, set_value);
-		break;
-
-	case WE_SET_CTS_CBW:
-		ret = hdd_we_set_cts_cbw(adapter, set_value);
-		break;
-
-	case WE_SET_11N_RATE:
-		ret = hdd_we_set_11n_rate(adapter, set_value);
-		break;
-
-	case WE_SET_VHT_RATE:
-		ret = hdd_we_set_vht_rate(adapter, set_value);
-		break;
-
-	case WE_SET_AMPDU:
-		ret = hdd_we_set_ampdu(adapter, set_value);
-		break;
-
-	case WE_SET_AMSDU:
-		ret = hdd_we_set_amsdu(adapter, set_value);
-		break;
-
-	case WE_SET_TX_CHAINMASK:
-		ret = hdd_we_set_tx_chainmask(adapter, set_value);
-		break;
-
-	case WE_SET_RX_CHAINMASK:
-		ret = hdd_we_set_rx_chainmask(adapter, set_value);
-		break;
-
-	case WE_SET_TXPOW_2G:
-		ret = hdd_we_set_txpow_2g(adapter, set_value);
-		break;
-
-	case WE_SET_TXPOW_5G:
-		ret = hdd_we_set_txpow_5g(adapter, set_value);
-		break;
-
-	/* Firmware debug log */
-	case WE_DBGLOG_LOG_LEVEL:
-		ret = hdd_we_dbglog_log_level(adapter, set_value);
-		break;
-
-	case WE_DBGLOG_VAP_ENABLE:
-		ret = hdd_we_dbglog_vap_enable(adapter, set_value);
-		break;
-
-	case WE_DBGLOG_VAP_DISABLE:
-		ret = hdd_we_dbglog_vap_disable(adapter, set_value);
-		break;
-
-	case WE_DBGLOG_MODULE_ENABLE:
-		ret = hdd_we_dbglog_module_enable(adapter, set_value);
-		break;
-
-	case WE_DBGLOG_MODULE_DISABLE:
-		ret = hdd_we_dbglog_module_disable(adapter, set_value);
-		break;
-
-	case WE_DBGLOG_MOD_LOG_LEVEL:
-		ret = hdd_we_dbglog_mod_log_level(adapter, set_value);
-		break;
-
-	case WE_DBGLOG_TYPE:
-		ret = hdd_we_dbglog_type(adapter, set_value);
-		break;
-
-	case WE_DBGLOG_REPORT_ENABLE:
-		ret = hdd_we_dbglog_report_enable(adapter, set_value);
-		break;
-
-	case WE_SET_TXRX_FWSTATS:
-		ret = hdd_we_set_txrx_fwstats(adapter, set_value);
-		break;
-
-	case WE_TXRX_FWSTATS_RESET:
-		ret = hdd_we_txrx_fwstats_reset(adapter, set_value);
-		break;
-
-	case WE_DUMP_STATS:
-		ret = hdd_wlan_dump_stats(adapter, set_value);
-		break;
-
-	case WE_CLEAR_STATS:
-		ret = hdd_we_clear_stats(adapter, set_value);
-		break;
-
-	case WE_PPS_PAID_MATCH:
-		ret = hdd_we_pps_paid_match(adapter, set_value);
-		break;
-
-	case WE_PPS_GID_MATCH:
-		ret = hdd_we_pps_gid_match(adapter, set_value);
-		break;
-
-	case WE_PPS_EARLY_TIM_CLEAR:
-		ret = hdd_we_pps_early_tim_clear(adapter, set_value);
-		break;
-
-	case WE_PPS_EARLY_DTIM_CLEAR:
-		ret = hdd_we_pps_early_dtim_clear(adapter, set_value);
-		break;
-
-	case WE_PPS_EOF_PAD_DELIM:
-		ret = hdd_we_pps_eof_pad_delim(adapter, set_value);
-		break;
-
-	case WE_PPS_MACADDR_MISMATCH:
-		ret = hdd_we_pps_macaddr_mismatch(adapter, set_value);
-		break;
-
-	case WE_PPS_DELIM_CRC_FAIL:
-		ret = hdd_we_pps_delim_crc_fail(adapter, set_value);
-		break;
-
-	case WE_PPS_GID_NSTS_ZERO:
-		ret = hdd_we_pps_gid_nsts_zero(adapter, set_value);
-		break;
-
-	case WE_PPS_RSSI_CHECK:
-		ret = hdd_we_pps_rssi_check(adapter, set_value);
-		break;
-
-	case WE_PPS_5G_EBT:
-		ret = hdd_we_pps_5g_ebt(adapter, set_value);
-		break;
-
-	case WE_SET_HTSMPS:
-		ret = hdd_we_set_htsmps(adapter, set_value);
-		break;
-
-	case WE_SET_QPOWER_MAX_PSPOLL_COUNT:
-		ret = hdd_we_set_qpower_max_pspoll_count(adapter, set_value);
-		break;
-
-	case WE_SET_QPOWER_MAX_TX_BEFORE_WAKE:
-		ret = hdd_we_set_qpower_max_tx_before_wake(adapter, set_value);
-		break;
-
-	case WE_SET_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL:
-		ret = hdd_we_set_qpower_spec_pspoll_wake_interval(adapter,
-								  set_value);
-		break;
-
-	case WE_SET_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL:
-		ret = hdd_we_set_qpower_spec_max_spec_nodata_pspoll(adapter,
-								    set_value);
-		break;
-
-	case WE_MCC_CONFIG_LATENCY:
-		ret = hdd_we_mcc_config_latency(adapter, set_value);
-		break;
-
-	case WE_MCC_CONFIG_QUOTA:
-		ret = hdd_we_mcc_config_quota(adapter, set_value);
-		break;
-
-	case WE_SET_DEBUG_LOG:
-		ret = hdd_we_set_debug_log(adapter, set_value);
-		break;
-
-	case WE_SET_EARLY_RX_ADJUST_ENABLE:
-		ret = hdd_we_set_early_rx_adjust_enable(adapter, set_value);
-		break;
-
-	case WE_SET_EARLY_RX_TGT_BMISS_NUM:
-		ret = hdd_we_set_early_rx_tgt_bmiss_num(adapter, set_value);
-		break;
-
-	case WE_SET_EARLY_RX_BMISS_SAMPLE_CYCLE:
-		ret = hdd_we_set_early_rx_bmiss_sample_cycle(adapter,
-							     set_value);
-		break;
-
-	case WE_SET_EARLY_RX_SLOP_STEP:
-		ret = hdd_we_set_early_rx_slop_step(adapter, set_value);
-		break;
-
-	case WE_SET_EARLY_RX_INIT_SLOP:
-		ret = hdd_we_set_early_rx_init_slop(adapter, set_value);
-		break;
-
-	case WE_SET_EARLY_RX_ADJUST_PAUSE:
-		ret = hdd_we_set_early_rx_adjust_pause(adapter, set_value);
-		break;
-
-	case WE_SET_EARLY_RX_DRIFT_SAMPLE:
-		ret = hdd_we_set_early_rx_drift_sample(adapter, set_value);
-		break;
-
-	case WE_SET_SCAN_DISABLE:
-		ret = hdd_we_set_scan_disable(adapter, set_value);
-		break;
-
-	case WE_START_FW_PROFILE:
-		ret = hdd_we_start_fw_profile(adapter, set_value);
-		break;
-
-	case WE_SET_CHANNEL:
-		ret = hdd_we_set_channel(adapter, set_value);
-		break;
-
-	case WE_SET_CONC_SYSTEM_PREF:
-		ret = hdd_we_set_conc_system_pref(adapter, set_value);
-		break;
-
-	case WE_SET_11AX_RATE:
-		ret = hdd_we_set_11ax_rate(adapter, set_value);
-		break;
-
-	case WE_SET_DCM:
-		ret = hdd_we_set_dcm(adapter, set_value);
-		break;
-
-	case WE_SET_RANGE_EXT:
-		ret = hdd_we_set_range_ext(adapter, set_value);
-		break;
-
-	case WE_SET_PDEV_RESET:
-		ret = hdd_handle_pdev_reset(adapter, set_value);
-		break;
-
-	case WE_SET_MODULATED_DTIM:
-		ret = hdd_we_set_modulated_dtim(adapter, set_value);
-		break;
-
-	default:
+	cb = hdd_get_setint_getnone_cb(sub_cmd);
+	if (!cb) {
 		hdd_debug("Invalid sub command %d", sub_cmd);
-		ret = -EINVAL;
-		break;
+		return -EINVAL;
 	}
+
+	ret = cb(adapter, set_value);
 
 	hdd_exit();
 
