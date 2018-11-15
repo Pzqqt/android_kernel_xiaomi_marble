@@ -5625,6 +5625,117 @@ static int hdd_config_scan_default_ies(struct hdd_adapter *adapter,
 }
 
 /**
+ * typedef independent_setter_fn - independent attribute handler
+ * @adapter: The adapter being configured
+ * @attr: The nl80211 attribute being applied
+ *
+ * Defines the signature of functions in the independent attribute vtable
+ *
+ * Return: 0 if the attribute was handled successfully, otherwise an errno
+ */
+typedef int (*independent_setter_fn)(struct hdd_adapter *adapter,
+				     const struct nlattr *attr);
+
+/**
+ * struct independent_setters
+ * @id: vendor attribute which this entry handles
+ * @cb: callback function to invoke to process the attribute when present
+ */
+struct independent_setters {
+	uint32_t id;
+	independent_setter_fn cb;
+};
+
+/* vtable for independent setters */
+static const struct independent_setters independent_setters[] = {
+};
+
+/**
+ * hdd_set_independent_configuration() - Handle independent attributes
+ * @adapter: adapter upon which the vendor command was received
+ * @tb: parsed attribute array
+ *
+ * This is a table-driven function which dispatches independent
+ * attributes in a QCA_NL80211_VENDOR_SUBCMD_SET_WIFI_CONFIGURATION
+ * vendor command. An attribute is considered independent if it
+ * doesn't depend upon any other attributes
+ *
+ * Return: 0 if there were no issues, otherwise errno of the last issue
+ */
+static int hdd_set_independent_configuration(struct hdd_adapter *adapter,
+					     struct nlattr **tb)
+{
+	uint32_t i;
+	uint32_t id;
+	struct nlattr *attr;
+	independent_setter_fn cb;
+	int errno = 0;
+	int ret;
+
+	for (i = 0; i < QDF_ARRAY_SIZE(independent_setters); i++) {
+		id = independent_setters[i].id;
+		attr = tb[id];
+		if (!attr)
+			continue;
+
+		cb = independent_setters[i].cb;
+		ret = cb(adapter, attr);
+		if (ret)
+			errno = ret;
+	}
+
+	return errno;
+}
+
+/**
+ * typedef interdependent_setter_fn - interdependent attribute handler
+ * @adapter: The adapter being configured
+ * @tb: The parsed nl80211 attributes being applied
+ *
+ * Defines the signature of functions in the interdependent attribute vtable
+ *
+ * Return: 0 if attributes were handled successfully, otherwise an errno
+ */
+typedef int (*interdependent_setter_fn)(struct hdd_adapter *adapter,
+					struct nlattr **tb);
+
+/* vtable for interdependent setters */
+static const interdependent_setter_fn interdependent_setters[] = {
+};
+
+/**
+ * hdd_set_interdependent_configuration() - Handle interdependent attributes
+ * @adapter: adapter upon which the vendor command was received
+ * @tb: parsed attribute array
+ *
+ * This is a table-driven function which handles interdependent
+ * attributes in a QCA_NL80211_VENDOR_SUBCMD_SET_WIFI_CONFIGURATION
+ * vendor command. A set of attributes is considered interdependent if
+ * they depend upon each other. In the typical case if one of the
+ * attributes is present in the the attribute array, then all of the
+ * attributes must be present.
+ *
+ * Return: 0 if there were no issues, otherwise errno of the last issue
+ */
+static int hdd_set_interdependent_configuration(struct hdd_adapter *adapter,
+						struct nlattr **tb)
+{
+	uint32_t i;
+	interdependent_setter_fn cb;
+	int errno = 0;
+	int ret;
+
+	for (i = 0; i < QDF_ARRAY_SIZE(interdependent_setters); i++) {
+		cb = interdependent_setters[i];
+		ret = cb(adapter, tb);
+		if (ret)
+			errno = ret;
+	}
+
+	return errno;
+}
+
+/**
  * __wlan_hdd_cfg80211_wifi_configuration_set() - Wifi configuration
  * vendor command
  *
@@ -5648,6 +5759,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx  = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1];
 	const struct nlattr *attr;
+	int errno;
 	int ret;
 	int ret_val = 0;
 	u32 modulated_dtim, override_li;
@@ -5687,15 +5799,25 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
-	ret_val = wlan_hdd_validate_context(hdd_ctx);
-	if (ret_val)
-		return ret_val;
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
 
 	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_CONFIG_MAX, data,
 				    data_len, wlan_hdd_wifi_config_policy)) {
 		hdd_err("invalid attr");
 		return -EINVAL;
 	}
+
+	ret = hdd_set_independent_configuration(adapter, tb);
+	if (ret)
+		errno = ret;
+
+	ret = hdd_set_interdependent_configuration(adapter, tb);
+	if (ret)
+		errno = ret;
+
+	/* return errno here when all attributes have been refactored */
 
 	mac_handle = hdd_ctx->mac_handle;
 
@@ -6283,7 +6405,10 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 			hdd_err("Failed to set GTX");
 	}
 
-	return ret_val;
+	if (ret_val)
+		errno = ret_val;
+
+	return errno;
 }
 
 /**
