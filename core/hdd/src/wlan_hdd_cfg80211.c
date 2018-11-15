@@ -12273,6 +12273,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	int len_5g_ch = 0, num_ch, ch_arr_size;
 	int num_dsrc_ch, len_dsrc_ch, num_srd_ch, len_srd_ch;
 	uint32_t *cipher_suites;
+	uint8_t allow_mcc_go_diff_bi = 0;
 
 	hdd_enter();
 
@@ -12329,6 +12330,10 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 				 | BIT(NL80211_IFTYPE_AP)
 				 | BIT(NL80211_IFTYPE_MONITOR);
 
+	if (QDF_STATUS_SUCCESS !=
+	    ucfg_policy_mgr_get_allow_mcc_go_diff_bi(hdd_ctx->psoc,
+						     &allow_mcc_go_diff_bi))
+		hdd_err("can't get mcc_go_diff_bi value, use default");
 	if (pCfg->advertiseConcurrentOperation) {
 		if (pCfg->enableMCC) {
 			int i;
@@ -12336,7 +12341,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 			for (i = 0;
 			     i < ARRAY_SIZE(wlan_hdd_iface_combination);
 			     i++) {
-				if (!pCfg->allowMCCGODiffBI)
+				if (!allow_mcc_go_diff_bi)
 					wlan_hdd_iface_combination[i].
 					beacon_int_infra_match = true;
 			}

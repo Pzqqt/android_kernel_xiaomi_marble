@@ -2718,6 +2718,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	struct hdd_adapter *sta_adapter;
 	struct hdd_station_ctx *sta_ctx;
 	uint8_t conc_rule1 = 0;
+	uint8_t scc_on_lte_coex = 0;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -2790,6 +2791,15 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		qdf_atomic_set(&adapter->dfs_radar_found, 0);
 		return -EINVAL;
 	}
+
+	status =
+	ucfg_policy_mgr_get_sta_sap_scc_lte_coex_chnl(hdd_ctx->psoc,
+						      &scc_on_lte_coex);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("can't get STA-SAP SCC on lte coex channel setting");
+		qdf_atomic_set(&adapter->dfs_radar_found, 0);
+		return -EINVAL;
+	}
 	/*
 	 * Post the Channel Change request to SAP.
 	 */
@@ -2797,7 +2807,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 		(uint32_t)target_channel,
 		target_bw,
-		forced && !(hdd_ctx->config->sta_sap_scc_on_lte_coex_chan));
+		forced && !scc_on_lte_coex);
 
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("SAP set channel failed for channel: %d, bw: %d",
@@ -4081,12 +4091,18 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx,
 	tsap_config_t *sap_config;
 	struct hdd_config *ini_config;
 	mac_handle_t mac_handle;
+	uint8_t is_overlap_enable = 0;
+	QDF_STATUS status;
 
 	mac_handle = hdd_ctx->mac_handle;
 	sap_config = &adapter->session.ap.sap_config;
 	ini_config = hdd_ctx->config;
 
-	sap_config->enOverLapCh = !!hdd_ctx->config->gEnableOverLapCh;
+	status = ucfg_policy_mgr_get_enable_overlap_chnl(hdd_ctx->psoc,
+							 &is_overlap_enable);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_err("can't get overlap channel INI value, using default");
+	sap_config->enOverLapCh = !!is_overlap_enable;
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	hdd_debug("HDD_ACS_SKIP_STATUS = %d", hdd_ctx->skip_acs_scan_status);
@@ -4625,7 +4641,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	enum dfs_mode mode;
 	struct hdd_adapter *sta_adapter;
 	bool ignore_cac = 0;
-	uint8_t beacon_fixed_len;
+	uint8_t is_overlap_enable = 0, scc_on_dfs_chan = 0;
+	uint8_t beacon_fixed_len, indoor_chnl_marking = 0;
 	int value;
 	bool val;
 	uint32_t tx_leakage_threshold = 0;
@@ -4713,8 +4730,12 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		goto free;
 	}
 
+	if (QDF_STATUS_SUCCESS !=
+	    ucfg_policy_mgr_get_indoor_chnl_marking(hdd_ctx->psoc,
+						    &indoor_chnl_marking))
+		hdd_err("can't get indoor channel marking, using default");
 	/* Mark the indoor channel (passive) to disable */
-	if (iniConfig->force_ssc_disable_indoor_channel) {
+	if (indoor_chnl_marking) {
 		hdd_update_indoor_channel(hdd_ctx, true);
 		if (QDF_IS_STATUS_ERROR(
 		    sme_update_channel_list(mac_handle))) {
@@ -4765,9 +4786,13 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		hdd_err("ucfg_mlme_get_auto_channel_weight failed, set def");
 
 	pConfig->auto_channel_select_weight = auto_channel_select_weight;
-	ucfg_mlme_get_sap_chn_switch_bcn_count(hdd_ctx->psoc, &value);
+	status = ucfg_mlme_get_sap_chn_switch_bcn_count(hdd_ctx->psoc, &value);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("ucfg_mlme_get_sap_chn_switch_bcn_count fail, set def");
 	pConfig->sap_chanswitch_beacon_cnt = value;
-	ucfg_mlme_get_sap_channel_switch_mode(hdd_ctx->psoc, &val);
+	status = ucfg_mlme_get_sap_channel_switch_mode(hdd_ctx->psoc, &val);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("ucfg_mlme_get_sap_channel_switch_mode, set def");
 	pConfig->sap_chanswitch_mode = val;
 
 	/* channel is already set in the set_channel Call back */
@@ -4776,7 +4801,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	/* Protection parameter to enable or disable */
 	pConfig->protEnabled = iniConfig->apProtEnabled;
 
-	ucfg_mlme_get_sap_chan_switch_rate_enabled(hdd_ctx->psoc, &val);
+	status = ucfg_mlme_get_sap_chan_switch_rate_enabled(hdd_ctx->psoc,
+							    &val);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("ucfg_mlme_get_sap_chan_switch_rate_enabled, set def");
 	pConfig->chan_switch_hostapd_rate_enabled = val;
 
 	if (QDF_STATUS_SUCCESS ==
@@ -4785,9 +4813,16 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		if (mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE)
 			pConfig->chan_switch_hostapd_rate_enabled = false;
 	}
-	pConfig->enOverLapCh = iniConfig->gEnableOverLapCh;
+	status = ucfg_policy_mgr_get_enable_overlap_chnl(hdd_ctx->psoc,
+							 &is_overlap_enable);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("can't get overlap channel INI value, using default");
+	pConfig->enOverLapCh = is_overlap_enable;
 
-	ucfg_mlme_get_sap_reduces_beacon_interval(hdd_ctx->psoc, &value);
+	status = ucfg_mlme_get_sap_reduces_beacon_interval(hdd_ctx->psoc,
+							   &value);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("ucfg_mlme_get_sap_reduces_beacon_interval fail");
 	pConfig->dtim_period = pBeacon->dtim_period;
 
 	pConfig->reduced_beacon_interval = value;
@@ -4861,10 +4896,20 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			goto error;
 		}
 
-		ucfg_mlme_get_dfs_ignore_cac(hdd_ctx->psoc, &ignore_cac);
+		status = ucfg_mlme_get_dfs_ignore_cac(hdd_ctx->psoc,
+						      &ignore_cac);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("can't get sta-sap scc on dfs chnl, use def");
+		status =
+		ucfg_policy_mgr_get_sta_sap_scc_on_dfs_chnl(hdd_ctx->psoc,
+							    &scc_on_dfs_chan);
+
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("can't get sta-sap scc on dfs chnl, use def");
+
 		if (ignore_cac ||
 		    ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
-		    iniConfig->sta_sap_scc_on_dfs_chan))
+		     scc_on_dfs_chan))
 			ignore_cac = 1;
 
 		wlansap_set_dfs_ignore_cac(mac_handle, ignore_cac);
@@ -5062,7 +5107,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	pConfig->SapMacaddr_acl = eSAP_ACCEPT_UNLESS_DENIED;
 	pConfig->num_accept_mac = 0;
 	pConfig->num_deny_mac = 0;
-	ucfg_policy_mgr_get_conc_rule1(hdd_ctx->psoc, &conc_rule1);
+	status = ucfg_policy_mgr_get_conc_rule1(hdd_ctx->psoc, &conc_rule1);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("can't get ucfg_policy_mgr_get_conc_rule1, use def");
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	/*
 	 * We don't want P2PGO to follow STA's channel
@@ -5344,7 +5391,7 @@ error:
 		wlan_hdd_restore_channels(hdd_ctx, true);
 
 	/* Revert the indoor to passive marking if START BSS fails */
-	if (iniConfig->force_ssc_disable_indoor_channel) {
+	if (indoor_chnl_marking) {
 		hdd_update_indoor_channel(hdd_ctx, false);
 		sme_update_channel_list(mac_handle);
 	}
@@ -5707,7 +5754,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	enum hw_mode_bandwidth channel_width;
 	int status;
 	struct sme_sta_inactivity_timeout  *sta_inactivity_timer;
-	uint8_t channel;
+	uint8_t channel, mandt_chnl_list = 0;
 	bool sta_sap_scc_on_dfs_chan;
 	uint16_t sta_cnt;
 	bool val;
@@ -5758,7 +5805,10 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (policy_mgr_is_sap_mandatory_chan_list_enabled(hdd_ctx->psoc)) {
+	if (QDF_STATUS_SUCCESS !=
+	    ucfg_policy_mgr_get_sap_mandt_chnl(hdd_ctx->psoc, &mandt_chnl_list))
+		hdd_err("can't get mandatory channel list");
+	if (mandt_chnl_list) {
 		if (WLAN_REG_IS_5GHZ_CH(channel)) {
 			hdd_debug("channel %hu, sap mandatory chan list enabled",
 			          channel);

@@ -147,13 +147,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_AP_ENABLE_PROTECTION_MODE_MIN,
 		     CFG_AP_ENABLE_PROTECTION_MODE_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_SAP_MANDATORY_CHAN_LIST, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_sap_mandatory_chan_list,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_DEFAULT,
-		     CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_MIN,
-		     CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_MAX),
-
 	REG_VARIABLE(CFG_DISABLE_PACKET_FILTER, WLAN_PARAM_Integer,
 		     struct hdd_config, disablePacketFilter,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -364,13 +357,6 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_LINK_SPEED_RSSI_LOW_MAX,
 			     NULL, 0),
 
-	REG_VARIABLE(CFG_ALLOW_MCC_GO_DIFF_BI_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, allowMCCGODiffBI,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ALLOW_MCC_GO_DIFF_BI_DEFAULT,
-		     CFG_ALLOW_MCC_GO_DIFF_BI_MIN,
-		     CFG_ALLOW_MCC_GO_DIFF_BI_MAX),
-
 	REG_VARIABLE(CFG_THERMAL_MIGRATION_ENABLE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, thermalMitigationEnable,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -535,13 +521,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MIN,
 		     CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_OVERLAP_CH, WLAN_PARAM_Integer,
-		     struct hdd_config, gEnableOverLapCh,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_ENABLE_OVERLAP_CH_DEFAULT,
-		     CFG_ENABLE_OVERLAP_CH_MIN,
-		     CFG_ENABLE_OVERLAP_CH_MAX),
-
 	REG_VARIABLE(CFG_REG_CHANGE_DEF_COUNTRY_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fRegChangeDefCountry,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -646,27 +625,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_DEF,
 		     CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_MIN,
 		     CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_MAX),
-
-	REG_VARIABLE(CFG_DUAL_MAC_FEATURE_DISABLE, WLAN_PARAM_HexInteger,
-		     struct hdd_config, dual_mac_feature_disable,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_DUAL_MAC_FEATURE_DISABLE_DEFAULT,
-		     CFG_DUAL_MAC_FEATURE_DISABLE_MIN,
-		     CFG_DUAL_MAC_FEATURE_DISABLE_MAX),
-
-	REG_VARIABLE(CFG_STA_SAP_SCC_ON_DFS_CHAN, WLAN_PARAM_HexInteger,
-		     struct hdd_config, sta_sap_scc_on_dfs_chan,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_STA_SAP_SCC_ON_DFS_CHAN_DEFAULT,
-		     CFG_STA_SAP_SCC_ON_DFS_CHAN_MIN,
-		     CFG_STA_SAP_SCC_ON_DFS_CHAN_MAX),
-
-	REG_VARIABLE(CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN, WLAN_PARAM_HexInteger,
-		     struct hdd_config, sta_sap_scc_on_lte_coex_chan,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN_DEFAULT,
-		     CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN_MIN,
-		     CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN_MAX),
 
 #ifdef FEATURE_WLAN_SCAN_PNO
 	REG_VARIABLE(CFG_PNO_CHANNEL_PREDICTION_NAME, WLAN_PARAM_Integer,
@@ -828,14 +786,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_INDOOR_CHANNEL_SUPPORT_MIN,
 		     CFG_INDOOR_CHANNEL_SUPPORT_MAX),
 
-	REG_VARIABLE(CFG_MARK_INDOOR_AS_DISABLE_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, force_ssc_disable_indoor_channel,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MARK_INDOOR_AS_DISABLE_DEFAULT,
-		     CFG_MARK_INDOOR_AS_DISABLE_MIN,
-		     CFG_MARK_INDOOR_AS_DISABLE_MAX),
-
 	REG_VARIABLE(CFG_RESTART_BEACONING_ON_CH_AVOID_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, restart_beaconing_on_chan_avoid_event,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -936,13 +886,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_MAWC_NLO_MAX_SCAN_INTERVAL_DEFAULT,
 		CFG_MAWC_NLO_MAX_SCAN_INTERVAL_MIN,
 		CFG_MAWC_NLO_MAX_SCAN_INTERVAL_MAX),
-
-	REG_VARIABLE(CFG_FORCE_1X1_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, is_force_1x1,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_FORCE_1X1_DEFAULT,
-		CFG_FORCE_1X1_MIN,
-		CFG_FORCE_1X1_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_11D_IN_WORLD_MODE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_11d_in_world_mode,
@@ -2511,10 +2454,6 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("unable to get vht_enable2x2");
 
 	user_cfg->sub_20_mhz_enabled = cds_is_sub_20_mhz_enabled();
-	user_cfg->is_sta_sap_scc_allowed_on_dfs_chan =
-		hdd_ctx->config->sta_sap_scc_on_dfs_chan;
-	user_cfg->sta_sap_scc_on_lte_coex_chan =
-		hdd_ctx->config->sta_sap_scc_on_lte_coex_chan;
 	status = policy_mgr_set_user_cfg(hdd_ctx->psoc, user_cfg);
 	qdf_mem_free(user_cfg);
 
@@ -2568,7 +2507,7 @@ static
 QDF_STATUS hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
 						tSmeConfigParams *sme_cfg)
 {
-	uint8_t mcc_to_scc_switch = 0;
+	uint8_t mcc_to_scc_switch = 0, is_force_1x1 = 0, allow_diff_bi = 0;
 	uint8_t conc_rule1 = 0, conc_rule2 = 0, sta_cxn_5g = 0;
 
 	if (QDF_STATUS_SUCCESS !=
@@ -2602,6 +2541,22 @@ QDF_STATUS hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 	sme_cfg->csrConfig.is_sta_connection_in_5gz_enabled = sta_cxn_5g;
+
+	if (QDF_STATUS_SUCCESS !=
+	    ucfg_policy_mgr_get_force_1x1(hdd_ctx->psoc,
+					  &is_force_1x1)) {
+		hdd_err("can't get force 1x1 flag");
+		return QDF_STATUS_E_FAILURE;
+	}
+	sme_cfg->csrConfig.is_force_1x1 = is_force_1x1;
+
+	if (QDF_STATUS_SUCCESS !=
+	    ucfg_policy_mgr_get_allow_mcc_go_diff_bi(hdd_ctx->psoc,
+						     &allow_diff_bi)) {
+		hdd_err("can't get allow mcc go diff BI flag");
+		return QDF_STATUS_E_FAILURE;
+	}
+	sme_cfg->csrConfig.fAllowMCCGODiffBI = allow_diff_bi;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2738,8 +2693,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 					pConfig->mcc_rts_cts_prot_enable;
 	smeConfig->csrConfig.mcc_bcast_prob_resp_enable =
 					pConfig->mcc_bcast_prob_resp_enable;
-	smeConfig->csrConfig.fAllowMCCGODiffBI = pConfig->allowMCCGODiffBI;
-
 	/* Scan Results Aging Time out value */
 	smeConfig->csrConfig.scanCfgAgingTime = pConfig->scanAgingTimeout;
 
@@ -2802,9 +2755,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->wlm_latency_flags_low;
 	smeConfig->csrConfig.wlm_latency_flags[3] =
 			hdd_ctx->config->wlm_latency_flags_ultralow;
-
-	smeConfig->csrConfig.is_force_1x1 =
-			hdd_ctx->config->is_force_1x1;
 	hdd_set_sme_cfgs_related_to_plcy_mgr(hdd_ctx, smeConfig);
 	hdd_update_11k_offload_params(hdd_ctx->config,
 					&smeConfig->csrConfig);

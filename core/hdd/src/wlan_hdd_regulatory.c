@@ -32,6 +32,7 @@
 #include "cds_utils.h"
 #include "pld_common.h"
 #include <net/cfg80211.h>
+#include "wlan_policy_mgr_ucfg.h"
 
 #define REG_RULE_2412_2462    REG_RULE(2412-10, 2462+10, 40, 0, 20, 0)
 
@@ -207,7 +208,7 @@ void hdd_reset_global_reg_params(void)
 static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 				    struct reg_config_vars *config_vars)
 {
-	uint8_t band_capability = 0;
+	uint8_t band_capability = 0, indoor_chnl_marking = 0;
 	QDF_STATUS status;
 	bool country_priority = 0;
 	bool value = false;
@@ -215,6 +216,11 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to get MLME band cap, defaulting to BAND_ALL");
+
+	status = ucfg_policy_mgr_get_indoor_chnl_marking(hdd_ctx->psoc,
+							 &indoor_chnl_marking);
+	if (QDF_STATUS_SUCCESS != status)
+		hdd_err("can't get indoor channel marking, using default");
 
 	status = ucfg_mlme_is_11d_enabled(hdd_ctx->psoc, &value);
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -228,8 +234,7 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 	config_vars->dfs_enabled = hdd_ctx->config->enableDFSChnlScan;
 	config_vars->indoor_chan_enabled =
 		hdd_ctx->config->indoor_channel_support;
-	config_vars->force_ssc_disable_indoor_channel =
-		hdd_ctx->config->force_ssc_disable_indoor_channel;
+	config_vars->force_ssc_disable_indoor_channel = indoor_chnl_marking;
 	config_vars->band_capability = band_capability;
 	config_vars->restart_beaconing = hdd_ctx->config->
 		restart_beaconing_on_chan_avoid_event;
@@ -424,9 +429,15 @@ static void hdd_process_regulatory_data(struct hdd_context *hdd_ctx,
 	enum channel_enum chan_enum = CHAN_ENUM_1;
 	struct ieee80211_channel *wiphy_chan, *wiphy_chan_144 = NULL;
 	struct regulatory_channel *cds_chan;
-	uint8_t band_capability;
+	uint8_t band_capability, indoor_chnl_marking = 0;
+	QDF_STATUS status;
 
 	band_capability = hdd_ctx->curr_band;
+
+	status = ucfg_policy_mgr_get_indoor_chnl_marking(hdd_ctx->psoc,
+							 &indoor_chnl_marking);
+	if (QDF_STATUS_SUCCESS != status)
+		hdd_err("can't get indoor channel marking, using default");
 
 	for (band_num = 0; band_num < HDD_NUM_NL80211_BANDS; band_num++) {
 
@@ -449,8 +460,8 @@ static void hdd_process_regulatory_data(struct hdd_context *hdd_ctx,
 			if (!reset)
 				hdd_modify_wiphy(wiphy, wiphy_chan);
 
-			if (hdd_ctx->config->force_ssc_disable_indoor_channel &&
-			     (wiphy_chan->flags & IEEE80211_CHAN_INDOOR_ONLY))
+			if (indoor_chnl_marking &&
+			    (wiphy_chan->flags & IEEE80211_CHAN_INDOOR_ONLY))
 				cds_chan->chan_flags |=
 					REGULATORY_CHAN_INDOOR_ONLY;
 

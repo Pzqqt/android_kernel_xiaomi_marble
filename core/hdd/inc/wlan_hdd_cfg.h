@@ -768,29 +768,6 @@ enum hdd_dot11_mode {
 #define CFG_OKC_FEATURE_ENABLED_MAX                        (1)
 #define CFG_OKC_FEATURE_ENABLED_DEFAULT                    (1)
 
-/*
- * <ini>
- * gForce1x1Exception - force 1x1 when connecting to certain peer
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This INI when enabled will force 1x1 connection with certain peer.
- *
- *
- * Related: None
- *
- * Supported Feature: connection
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_FORCE_1X1_NAME      "gForce1x1Exception"
-#define CFG_FORCE_1X1_MIN       (0)
-#define CFG_FORCE_1X1_MAX       (1)
-#define CFG_FORCE_1X1_DEFAULT   (1)
-
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 /*
  * <ini>
@@ -2098,30 +2075,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gEnableOverLapCh - Enables Overlap Channel. If set, allow overlapping
- *                    channels to be selected for the SoftAP
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set Overlap Channel
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_OVERLAP_CH               "gEnableOverLapCh"
-#define CFG_ENABLE_OVERLAP_CH_MIN           (0)
-#define CFG_ENABLE_OVERLAP_CH_MAX           (1)
-#define CFG_ENABLE_OVERLAP_CH_DEFAULT       (0)
-
-/*
- * <ini>
  * gFwDebugModuleLoglevel - modulized firmware debug log level
  * @Min: N/A
  * @Max: N/A
@@ -2171,67 +2124,6 @@ enum hdd_link_speed_rpt_type {
 #define HDD_MCASTBCASTFILTER_FILTER_ALL_MULTICAST_BROADCAST    0x03
 #define HDD_MULTICAST_FILTER_LIST                              0x04
 #define HDD_MULTICAST_FILTER_LIST_CLEAR                        0x05
-
-/*
- * <ini>
- * gEnableSAPManadatoryChanList - Enable SAP Mandatory channel list
- * Options.
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable the SAP manadatory chan list
- * 0 - Disable SAP mandatory chan list
- * 1 - Enable SAP mandatory chan list
- *
- * Supported Feature: SAP
- *
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST       "gEnableSAPManadatoryChanList"
-#define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_MIN   (0)
-#define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_MAX   (1)
-#define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_DEFAULT (0)
-
-/*
- * <ini>
- * gAllowMCCGODiffBI - Allow GO in MCC mode to accept different beacon interval
- * than STA's.
- * @Min: 0
- * @Max: 4
- * @Default: 4
- *
- * This ini is used to allow GO in MCC mode to accept different beacon interval
- * than STA's.
- * Added for Wi-Fi Cert. 5.1.12
- * If gAllowMCCGODiffBI = 1
- *	Set to 1 for WFA certification. GO Beacon interval is not changed.
- *	MCC GO doesn't work well in optimized way. In worst scenario, it may
- *	invite STA disconnection.
- * If gAllowMCCGODiffBI = 2
- *	If set to 2 workaround 1 disassoc all the clients and update beacon
- *	Interval.
- * If gAllowMCCGODiffBI = 3
- *	If set to 3 tear down the P2P link in auto/Non-autonomous -GO case.
- * If gAllowMCCGODiffBI = 4
- *	If set to 4 don't disconnect the P2P client in autonomous/Non-auto-
- *	nomous -GO case update the BI dynamically
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ALLOW_MCC_GO_DIFF_BI_NAME           "gAllowMCCGODiffBI"
-#define CFG_ALLOW_MCC_GO_DIFF_BI_MIN            (0)
-#define CFG_ALLOW_MCC_GO_DIFF_BI_MAX            (4)
-#define CFG_ALLOW_MCC_GO_DIFF_BI_DEFAULT        (4)
 
 #if defined(CONFIG_HL_SUPPORT) && defined(QCA_BAD_PEER_TX_FLOW_CL)
 /*
@@ -2741,91 +2633,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_MAX (1)
 
 /*
- *
- * <ini>
- * gDualMacFeatureDisable - Disable Dual MAC feature.
- * @Min: 0
- * @Max: 4
- * @Default: 0
- *
- * This ini is used to enable/disable dual MAC feature.
- * 0 - enable DBS
- * 1 - disable DBS
- * 2 - disable DBS for connection but keep DBS for scan
- * 3 - disable DBS for connection but keep DBS scan with async
- * scan policy disabled
- * 4 - enable DBS for connection as well as for scan with async
- * scan policy disabled
- * 5 - enable DBS for connection but disable DBS for scan.
- * 6 - enable DBS for connection but disable simultaneous scan
- * from upper layer (DBS scan remains enabled in FW).
- *
- * Note: INI item value should match 'enum dbs_support'
- *
- * Related: None.
- *
- * Supported Feature: DBS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_DUAL_MAC_FEATURE_DISABLE              "gDualMacFeatureDisable"
-#define CFG_DUAL_MAC_FEATURE_DISABLE_MIN          (0)
-#define CFG_DUAL_MAC_FEATURE_DISABLE_MAX          (6)
-#define CFG_DUAL_MAC_FEATURE_DISABLE_DEFAULT      (0)
-
-/*
- * <ini>
- * g_sta_sap_scc_on_dfs_chan - Allow STA+SAP SCC on DFS channel with master
- * mode support disabled.
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to allow STA+SAP SCC on DFS channel with master mode
- * support disabled.
- * 0 - Disallow STA+SAP SCC on DFS channel
- * 1 - Allow STA+SAP SCC on DFS channel with master mode disabled
- *
- * Related: None.
- *
- * Supported Feature: Non-DBS, DBS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_STA_SAP_SCC_ON_DFS_CHAN              "g_sta_sap_scc_on_dfs_chan"
-#define CFG_STA_SAP_SCC_ON_DFS_CHAN_MIN          (0)
-#define CFG_STA_SAP_SCC_ON_DFS_CHAN_MAX          (1)
-#define CFG_STA_SAP_SCC_ON_DFS_CHAN_DEFAULT      (0)
-
-/*
- * <ini>
- * g_sta_sap_scc_on_lte_coex_chan - Allow STA+SAP SCC on LTE coex channel
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to allow STA+SAP SCC on LTE coex channel
- * 0 - Disallow STA+SAP SCC on LTE coex channel
- * 1 - Allow STA+SAP SCC on LTE coex channel
- *
- * Related: None.
- *
- * Supported Feature: Non-DBS, DBS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN              "g_sta_sap_scc_on_lte_coex_chan"
-#define CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN_MIN          (0)
-#define CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN_MAX          (1)
-#define CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN_DEFAULT      (0)
-
-/*
  * gPNOChannelPrediction will allow user to enable/disable the
  * PNO channel prediction feature.
  * In current PNO implementation, scan is always done until all configured
@@ -2998,32 +2805,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_INDOOR_CHANNEL_SUPPORT_MAX      (1)
 #define CFG_INDOOR_CHANNEL_SUPPORT_DEFAULT  (0)
 
-/*
- * <ini>
- * g_mark_sap_indoor_as_disable - Enable/Disable Indoor channel
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to mark the Indoor channel as
- * disable when SAP start and revert it on SAP stop,
- * so SAP will not turn on indoor channel and
- * sta will not scan/associate and roam on indoor
- * channels.
- *
- * Related: If g_mark_sap_indoor_as_disable set, turn the
- * indoor channels to disable and update Wiphy & fw.
- *
- * Supported Feature: SAP/STA
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_MARK_INDOOR_AS_DISABLE_NAME     "g_mark_sap_indoor_as_disable"
-#define CFG_MARK_INDOOR_AS_DISABLE_MIN      (0)
-#define CFG_MARK_INDOOR_AS_DISABLE_MAX      (1)
-#define CFG_MARK_INDOOR_AS_DISABLE_DEFAULT  (0)
 
 /*
  * <ini>
@@ -4228,7 +4009,6 @@ struct hdd_config {
 	int32_t linkSpeedRssiHigh;
 	int32_t linkSpeedRssiMid;
 	int32_t linkSpeedRssiLow;
-	uint8_t allowMCCGODiffBI;
 	uint8_t thermalMitigationEnable;
 	uint32_t throttlePeriod;
 	uint32_t throttle_dutycycle_level0;
@@ -4286,13 +4066,9 @@ struct hdd_config {
 	uint32_t IpaConfig;
 	bool IpaClkScalingEnable;
 	uint8_t gDisableDfsJapanW53;
-	bool gEnableOverLapCh;
 	bool fRegChangeDefCountry;
 	bool advertiseConcurrentOperation;
-
 	uint8_t enableFwModuleLogLevel[FW_MODULE_LOG_LEVEL_STRING_LENGTH];
-
-	bool enable_sap_mandatory_chan_list;
 
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
 	uint8_t SapSccChanAvoidance;
@@ -4310,9 +4086,6 @@ struct hdd_config {
 	uint8_t go_11ac_override;
 	uint8_t max_scan_count;
 	bool etsi13_srd_chan_in_master_mode;
-	uint32_t dual_mac_feature_disable;
-	uint32_t sta_sap_scc_on_dfs_chan;
-	uint32_t sta_sap_scc_on_lte_coex_chan;
 	uint16_t  self_gen_frm_pwr;
 #ifdef FEATURE_WLAN_SCAN_PNO
 	bool pno_channel_prediction;
@@ -4349,8 +4122,6 @@ struct hdd_config {
 	uint8_t adapt_dwell_wifi_act_threshold;
 	bool bug_report_for_no_scan_results;
 	bool indoor_channel_support;
-	/* control marking indoor channel passive to disable */
-	bool force_ssc_disable_indoor_channel;
 	uint16_t sap_tx_leakage_threshold;
 	bool sap_internal_restart;
 	enum restart_beaconing_on_ch_avoid_rule
@@ -4374,7 +4145,6 @@ struct hdd_config {
 	uint32_t mawc_nlo_exp_backoff_ratio;
 	uint32_t mawc_nlo_init_scan_interval;
 	uint32_t mawc_nlo_max_scan_interval;
-	bool is_force_1x1;
 	enum pmo_auto_pwr_detect_failure_mode auto_pwr_save_fail_mode;
 	bool enable_11d_in_world_mode;
 	/* 5G preference parameters for boosting RSSI */
