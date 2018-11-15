@@ -6389,6 +6389,8 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("HAL Ring Access Fail = %d",
 			soc->stats.rx.err.hal_ring_access_fail);
 	DP_PRINT_STATS("RX frags: %d", soc->stats.rx.rx_frags);
+	DP_PRINT_STATS("RX frag wait: %d", soc->stats.rx.rx_frag_wait);
+	DP_PRINT_STATS("RX frag err: %d", soc->stats.rx.rx_frag_err);
 	DP_PRINT_STATS("RX HP out_of_sync: %d", soc->stats.rx.hp_oos);
 
 	for (i = 0; i < HAL_RXDMA_ERR_MAX; i++) {
