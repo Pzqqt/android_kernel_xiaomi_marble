@@ -3006,20 +3006,6 @@ QDF_STATUS policy_mgr_reset_sap_mandatory_channels(
 	return QDF_STATUS_SUCCESS;
 }
 
-void policy_mgr_enable_disable_sap_mandatory_chan_list(
-		struct wlan_objmgr_psoc *psoc, bool val)
-{
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid Context");
-		return;
-	}
-
-	pm_ctx->enable_sap_mandatory_chan_list = val;
-}
-
 void policy_mgr_add_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
 		uint8_t chan)
 {
@@ -3040,20 +3026,6 @@ void policy_mgr_add_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
 	policy_mgr_debug("chan %hu", chan);
 	pm_ctx->sap_mandatory_channels[pm_ctx->sap_mandatory_channels_len++]
 		= chan;
-}
-
-bool policy_mgr_is_sap_mandatory_chan_list_enabled(
-		struct wlan_objmgr_psoc *psoc)
-{
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid Context");
-		return false;
-	}
-
-	return pm_ctx->enable_sap_mandatory_chan_list;
 }
 
 uint32_t policy_mgr_get_sap_mandatory_chan_list_len(

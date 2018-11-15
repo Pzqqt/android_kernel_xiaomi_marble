@@ -288,6 +288,222 @@
 					CFG_VALUE_OR_DEFAULT, \
 					"Enable/Disable STA connection in 5G")
 
+/*
+ * <ini>
+ * gAllowMCCGODiffBI - Allow GO in MCC mode to accept different beacon interval
+ * than STA's.
+ * @Min: 0
+ * @Max: 4
+ * @Default: 4
+ *
+ * This ini is used to allow GO in MCC mode to accept different beacon interval
+ * than STA's.
+ * Added for Wi-Fi Cert. 5.1.12
+ * If gAllowMCCGODiffBI = 1
+ *	Set to 1 for WFA certification. GO Beacon interval is not changed.
+ *	MCC GO doesn't work well in optimized way. In worst scenario, it may
+ *	invite STA disconnection.
+ * If gAllowMCCGODiffBI = 2
+ *	If set to 2 workaround 1 disassoc all the clients and update beacon
+ *	Interval.
+ * If gAllowMCCGODiffBI = 3
+ *	If set to 3 tear down the P2P link in auto/Non-autonomous -GO case.
+ * If gAllowMCCGODiffBI = 4
+ *	If set to 4 don't disconnect the P2P client in autonomous/Non-auto-
+ *	nomous -GO case update the BI dynamically
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ALLOW_MCC_GO_DIFF_BI \
+CFG_INI_UINT("gAllowMCCGODiffBI", 0, 4, 4, CFG_VALUE_OR_DEFAULT, \
+	     "Allow GO in MCC mode to accept different BI than STA's")
+
+/*
+ * <ini>
+ * gEnableOverLapCh - Enables Overlap Channel. If set, allow overlapping
+ *                    channels to be selected for the SoftAP
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set Overlap Channel
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_ENABLE_OVERLAP_CH \
+CFG_INI_UINT("gEnableOverLapCh", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
+	     "Overlap channels are allowed for SAP when flag is set")
+
+/*
+ *
+ * <ini>
+ * gDualMacFeatureDisable - Disable Dual MAC feature.
+ * @Min: 0
+ * @Max: 4
+ * @Default: 0
+ *
+ * This ini is used to enable/disable dual MAC feature.
+ * 0 - enable DBS
+ * 1 - disable DBS
+ * 2 - disable DBS for connection but keep DBS for scan
+ * 3 - disable DBS for connection but keep DBS scan with async
+ * scan policy disabled
+ * 4 - enable DBS for connection as well as for scan with async
+ * scan policy disabled
+ * 5 - enable DBS for connection but disable DBS for scan.
+ * 6 - enable DBS for connection but disable simultaneous scan
+ * from upper layer (DBS scan remains enabled in FW).
+ *
+ * Note: INI item value should match 'enum dbs_support'
+ *
+ * Related: None.
+ *
+ * Supported Feature: DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_DUAL_MAC_FEATURE_DISABLE \
+CFG_INI_UINT("gDualMacFeatureDisable", 0, 6, 0, CFG_VALUE_OR_DEFAULT, \
+	     "This INI is used to enable/disable Dual MAC feature")
+
+/*
+ * <ini>
+ * g_sta_sap_scc_on_dfs_chan - Allow STA+SAP SCC on DFS channel with master
+ * mode support disabled.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to allow STA+SAP SCC on DFS channel with master mode
+ * support disabled.
+ * 0 - Disallow STA+SAP SCC on DFS channel
+ * 1 - Allow STA+SAP SCC on DFS channel with master mode disabled
+ *
+ * Related: None.
+ *
+ * Supported Feature: Non-DBS, DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_STA_SAP_SCC_ON_DFS_CHAN \
+CFG_INI_UINT("g_sta_sap_scc_on_dfs_chan", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
+	     "Allow STA+SAP SCC on DFS channel with master mode disable")
+
+/*
+ * <ini>
+ * gForce1x1Exception - force 1x1 when connecting to certain peer
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This INI when enabled will force 1x1 connection with certain peer.
+ *
+ *
+ * Related: None
+ *
+ * Supported Feature: connection
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_FORCE_1X1_FEATURE \
+CFG_INI_UINT("gForce1x1Exception", 0, 1, 1, CFG_VALUE_OR_DEFAULT, \
+	     "force 1x1 when connecting to certain peer")
+
+/*
+ * <ini>
+ * gEnableSAPManadatoryChanList - Enable SAP Mandatory channel list
+ * Options.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable the SAP manadatory chan list
+ * 0 - Disable SAP mandatory chan list
+ * 1 - Enable SAP mandatory chan list
+ *
+ * Supported Feature: SAP
+ *
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST \
+CFG_INI_UINT("gEnableSAPManadatoryChanList", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
+	     "Enable SAP Mandatory channel list")
+
+/*
+ * <ini>
+ * g_sta_sap_scc_on_lte_coex_chan - Allow STA+SAP SCC on LTE coex channel
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to allow STA+SAP SCC on LTE coex channel
+ * 0 - Disallow STA+SAP SCC on LTE coex channel
+ * 1 - Allow STA+SAP SCC on LTE coex channel
+ *
+ * Related: None.
+ *
+ * Supported Feature: Non-DBS, DBS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN \
+CFG_INI_UINT("g_sta_sap_scc_on_lte_coex_chan", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
+	     "Allow STA+SAP SCC on LTE coex channel")
+
+/*
+ * <ini>
+ * g_mark_sap_indoor_as_disable - Enable/Disable Indoor channel
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to mark the Indoor channel as
+ * disable when SAP start and revert it on SAP stop,
+ * so SAP will not turn on indoor channel and
+ * sta will not scan/associate and roam on indoor
+ * channels.
+ *
+ * Related: If g_mark_sap_indoor_as_disable set, turn the
+ * indoor channels to disable and update Wiphy & fw.
+ *
+ * Supported Feature: SAP/STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_MARK_INDOOR_AS_DISABLE_FEATURE \
+CFG_INI_UINT("g_mark_sap_indoor_as_disable", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
+	     "Enable/Disable Indoor channel")
+
 #define CFG_POLICY_MGR_ALL \
 		CFG(CFG_MCC_TO_SCC_SWITCH) \
 		CFG(CFG_CONC_SYS_PREF) \
@@ -298,5 +514,13 @@
 		CFG(CFG_ENABLE_CONC_RULE1) \
 		CFG(CFG_ENABLE_CONC_RULE2) \
 		CFG(CFG_ENABLE_MCC_ADATIVE_SCH_ENABLED_NAME)\
-		CFG(CFG_ENABLE_STA_CONNECTION_IN_5GHZ)
+		CFG(CFG_ENABLE_STA_CONNECTION_IN_5GHZ)\
+		CFG(CFG_ENABLE_OVERLAP_CH)\
+		CFG(CFG_DUAL_MAC_FEATURE_DISABLE)\
+		CFG(CFG_STA_SAP_SCC_ON_DFS_CHAN)\
+		CFG(CFG_FORCE_1X1_FEATURE)\
+		CFG(CFG_ENABLE_SAP_MANDATORY_CHAN_LIST)\
+		CFG(CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN)\
+		CFG(CFG_MARK_INDOOR_AS_DISABLE_FEATURE)\
+		CFG(CFG_ALLOW_MCC_GO_DIFF_BI)
 #endif

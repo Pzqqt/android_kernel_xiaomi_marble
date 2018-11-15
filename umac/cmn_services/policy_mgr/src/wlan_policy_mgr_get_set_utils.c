@@ -36,6 +36,131 @@
 /* invalid channel id. */
 #define INVALID_CHANNEL_ID 0
 
+QDF_STATUS
+policy_mgr_get_allow_mcc_go_diff_bi(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *allow_mcc_go_diff_bi)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*allow_mcc_go_diff_bi = pm_ctx->cfg.allow_mcc_go_diff_bi;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+policy_mgr_get_enable_overlap_chnl(struct wlan_objmgr_psoc *psoc,
+				   uint8_t *enable_overlap_chnl)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*enable_overlap_chnl = pm_ctx->cfg.enable_overlap_chnl;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS policy_mgr_get_dual_mac_feature(struct wlan_objmgr_psoc *psoc,
+					   uint8_t *dual_mac_feature)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*dual_mac_feature = pm_ctx->cfg.dual_mac_feature;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS policy_mgr_get_force_1x1(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *force_1x1)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*force_1x1 = pm_ctx->cfg.is_force_1x1_enable;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+policy_mgr_get_sta_sap_scc_on_dfs_chnl(struct wlan_objmgr_psoc *psoc,
+				       uint8_t *sta_sap_scc_on_dfs_chnl)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*sta_sap_scc_on_dfs_chnl = pm_ctx->cfg.sta_sap_scc_on_dfs_chnl;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+policy_mgr_get_sta_sap_scc_lte_coex_chnl(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *sta_sap_scc_lte_coex)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*sta_sap_scc_lte_coex = pm_ctx->cfg.sta_sap_scc_on_lte_coex_chnl;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS policy_mgr_get_sap_mandt_chnl(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *sap_mandt_chnl)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*sap_mandt_chnl = pm_ctx->cfg.sap_mandatory_chnl_enable;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+policy_mgr_get_indoor_chnl_marking(struct wlan_objmgr_psoc *psoc,
+				   uint8_t *indoor_chnl_marking)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("pm_ctx is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*indoor_chnl_marking = pm_ctx->cfg.mark_indoor_chnl_disable;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS policy_mgr_get_mcc_scc_switch(struct wlan_objmgr_psoc *psoc,
 					      uint8_t *mcc_scc_switch)
 {
@@ -3138,6 +3263,7 @@ bool policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
 		struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint8_t sta_sap_scc_on_dfs_chnl = 0;
 	bool status = false;
 
 	pm_ctx = policy_mgr_get_context(psoc);
@@ -3146,8 +3272,9 @@ bool policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
 		return status;
 	}
 
-	if (policy_mgr_is_force_scc(psoc) &&
-		pm_ctx->user_cfg.is_sta_sap_scc_allowed_on_dfs_chan)
+	policy_mgr_get_sta_sap_scc_on_dfs_chnl(psoc,
+					       &sta_sap_scc_on_dfs_chnl);
+	if (policy_mgr_is_force_scc(psoc) && sta_sap_scc_on_dfs_chnl)
 		status = true;
 
 	return status;
@@ -3385,13 +3512,16 @@ bool policy_mgr_sta_sap_scc_on_lte_coex_chan(
 	struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint8_t scc_lte_coex = 0;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return false;
 	}
-	return pm_ctx->user_cfg.sta_sap_scc_on_lte_coex_chan;
+	policy_mgr_get_sta_sap_scc_lte_coex_chnl(psoc, &scc_lte_coex);
+
+	return scc_lte_coex;
 }
 
 bool policy_mgr_is_valid_for_channel_switch(struct wlan_objmgr_psoc *psoc,

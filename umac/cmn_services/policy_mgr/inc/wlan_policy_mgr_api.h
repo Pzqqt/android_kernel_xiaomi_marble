@@ -65,6 +65,112 @@ typedef const enum policy_mgr_conc_next_action
 	 PM_FW_MODE_STA_P2P_BIT_POS)
 
 /**
+ * policy_mgr_get_allow_mcc_go_diff_bi() - to get information on whether GO
+ *						can have diff BI than STA in MCC
+ * @psoc: pointer to psoc
+ * @allow_mcc_go_diff_bi: value to be filled
+ *
+ * This API is used to find out whether GO's BI can different than STA in MCC
+ * scenario
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS
+policy_mgr_get_allow_mcc_go_diff_bi(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *allow_mcc_go_diff_bi);
+/**
+ * policy_mgr_get_enable_overlap_chnl() - to find out if overlap channels
+ *					  are enabled for SAP
+ * @psoc: pointer to psoc
+ * @enable_overlap_chnl: value to be filled
+ *
+ * This API is used to find out whether overlap channels are enabled for SAP
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS
+policy_mgr_get_enable_overlap_chnl(struct wlan_objmgr_psoc *psoc,
+				   uint8_t *enable_overlap_chnl);
+/**
+ * policy_mgr_get_dual_mac_feature() - to find out if DUAL MAC feature is
+ *				       enabled
+ * @psoc: pointer to psoc
+ * @dual_mac_feature: value to be filled
+ *
+ * This API is used to find out whether dual mac (dual radio) specific feature
+ * is enabled or not
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_get_dual_mac_feature(struct wlan_objmgr_psoc *psoc,
+					   uint8_t *dual_mac_feature);
+/**
+ * policy_mgr_get_force_1x1() - to find out if 1x1 connection is enforced
+ *
+ * @psoc: pointer to psoc
+ * @force_1x1: value to be filled
+ *
+ * This API is used to find out if 1x1 connection is enforced.
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_get_force_1x1(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *force_1x1);
+/**
+ * policy_mgr_get_sta_sap_scc_on_dfs_chnl() - to find out if STA and SAP
+ *						   SCC is allowed on DFS channel
+ * @psoc: pointer to psoc
+ * @sta_sap_scc_on_dfs_chnl: value to be filled
+ *
+ * This API is used to find out whether STA and SAP SCC is allowed on
+ * DFS channels
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS
+policy_mgr_get_sta_sap_scc_on_dfs_chnl(struct wlan_objmgr_psoc *psoc,
+				       uint8_t *sta_sap_scc_on_dfs_chnl);
+/**
+ * policy_mgr_get_sta_sap_scc_lte_coex_chnl() - to find out if STA & SAP
+ *						     SCC is allowed on LTE COEX
+ * @psoc: pointer to psoc
+ * @sta_sap_scc_lte_coex: value to be filled
+ *
+ * This API is used to find out whether STA and SAP scc is allowed on LTE COEX
+ * channel
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS
+policy_mgr_get_sta_sap_scc_lte_coex_chnl(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *sta_sap_scc_lte_coex);
+/**
+ * policy_mgr_get_sap_mandt_chnl() - to find out if SAP mandatory channel
+ *					  support is enabled
+ * @psoc: pointer to psoc
+ * @sap_mandt_chnl: value to be filled
+ *
+ * This API is used to find out whether SAP's mandatory channel support
+ * is enabled
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS policy_mgr_get_sap_mandt_chnl(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *sap_mandt_chnl);
+/**
+ * policy_mgr_get_indoor_chnl_marking() - to get if indoor channel can be
+ *						marked as disabled
+ * @psoc: pointer to psoc
+ * @indoor_chnl_marking: value to be filled
+ *
+ * This API is used to find out whether indoor channel can be marked as disabled
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS
+policy_mgr_get_indoor_chnl_marking(struct wlan_objmgr_psoc *psoc,
+				   uint8_t *indoor_chnl_marking);
+/**
  * policy_mgr_get_mcc_scc_switch() - To mcc to scc switch setting from INI
  * @psoc: pointer to psoc
  * @mcc_scc_switch: value to be filled
@@ -75,7 +181,7 @@ typedef const enum policy_mgr_conc_next_action
  * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
  */
 QDF_STATUS policy_mgr_get_mcc_scc_switch(struct wlan_objmgr_psoc *psoc,
-					      uint8_t *mcc_scc_switch);
+					 uint8_t *mcc_scc_switch);
 /**
  * policy_mgr_get_sys_pref() - to get system preference
  * @psoc: pointer to psoc
@@ -87,7 +193,7 @@ QDF_STATUS policy_mgr_get_mcc_scc_switch(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
  */
 QDF_STATUS policy_mgr_get_sys_pref(struct wlan_objmgr_psoc *psoc,
-					uint8_t *sys_pref);
+				   uint8_t *sys_pref);
 /**
  * policy_mgr_set_sys_pref() - to set system preference
  * @psoc: pointer to psoc
@@ -110,7 +216,7 @@ QDF_STATUS policy_mgr_set_sys_pref(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
  */
 QDF_STATUS policy_mgr_get_max_conc_cxns(struct wlan_objmgr_psoc *psoc,
-						uint8_t *max_conc_cxns);
+					uint8_t *max_conc_cxns);
 /**
  * policy_mgr_get_conc_rule1() - to find out if conc rule1 is enabled
  * @psoc: pointer to psoc
@@ -121,7 +227,7 @@ QDF_STATUS policy_mgr_get_max_conc_cxns(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
  */
 QDF_STATUS policy_mgr_get_conc_rule1(struct wlan_objmgr_psoc *psoc,
-						uint8_t *conc_rule1);
+				     uint8_t *conc_rule1);
 /**
  * policy_mgr_get_conc_rule2() - to find out if conc rule2 is enabled
  * @psoc: pointer to psoc
@@ -132,7 +238,7 @@ QDF_STATUS policy_mgr_get_conc_rule1(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
  */
 QDF_STATUS policy_mgr_get_conc_rule2(struct wlan_objmgr_psoc *psoc,
-						uint8_t *conc_rule2);
+				     uint8_t *conc_rule2);
 /**
  * policy_mgr_get_dbs_selection_plcy() - DBS HW mode selection setting
  * @psoc: pointer to psoc
@@ -143,7 +249,7 @@ QDF_STATUS policy_mgr_get_conc_rule2(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
  */
 QDF_STATUS policy_mgr_get_dbs_selection_plcy(struct wlan_objmgr_psoc *psoc,
-						uint32_t *dbs_selection_plcy);
+					     uint32_t *dbs_selection_plcy);
 /**
  * policy_mgr_get_vdev_priority_list() - to get vdev priority list
  * @psoc: pointer to psoc
@@ -154,7 +260,7 @@ QDF_STATUS policy_mgr_get_dbs_selection_plcy(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
  */
 QDF_STATUS policy_mgr_get_vdev_priority_list(struct wlan_objmgr_psoc *psoc,
-						uint32_t *vdev_priority_list);
+					     uint32_t *vdev_priority_list);
 /**
  * policy_mgr_get_chnl_select_plcy() - to get channel selection policy
  * @psoc: pointer to psoc
@@ -166,7 +272,7 @@ QDF_STATUS policy_mgr_get_vdev_priority_list(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
  */
 QDF_STATUS policy_mgr_get_chnl_select_plcy(struct wlan_objmgr_psoc *psoc,
-						uint32_t *chnl_select_plcy);
+					   uint32_t *chnl_select_plcy);
 
 /**
  * policy_mgr_get_mcc_adaptive_sch() - to get mcc adaptive scheduler
@@ -192,7 +298,7 @@ QDF_STATUS policy_mgr_get_mcc_adaptive_sch(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
  */
 QDF_STATUS policy_mgr_get_sta_cxn_5g_band(struct wlan_objmgr_psoc *psoc,
-					   uint8_t *enable_sta_cxn_5g_band);
+					  uint8_t *enable_sta_cxn_5g_band);
 /**
  * policy_mgr_set_concurrency_mode() - To set concurrency mode
  * @psoc: PSOC object data
@@ -2457,19 +2563,6 @@ uint8_t policy_mgr_mode_specific_get_channel(
 	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode);
 
 /**
- * policy_mgr_enable_disable_sap_mandatory_chan_list() - Update the value of
- * enable_sap_mandatory_chan_list
- * @psoc: Pointer to soc
- * @val: value of enable_sap_mandatory_chan_list
- *
- * Update the value of enable_sap_mandatory_chan_list
- *
- * Return: void
- */
-void policy_mgr_enable_disable_sap_mandatory_chan_list(
-		struct wlan_objmgr_psoc *psoc, bool val);
-
-/**
  * policy_mgr_add_sap_mandatory_chan() - Add chan to SAP mandatory channel
  * list
  * @psoc: Pointer to soc
@@ -2481,18 +2574,6 @@ void policy_mgr_enable_disable_sap_mandatory_chan_list(
  */
 void policy_mgr_add_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
 		uint8_t chan);
-
-/**
- * policy_mgr_is_sap_mandatory_chan_list_enabled() - Return the SAP mandatory
- * channel list enabled status
- * @psoc: Pointer to soc
- *
- * Get the SAP mandatory channel list enabled status
- *
- * Return: Enable or Disable
- */
-bool policy_mgr_is_sap_mandatory_chan_list_enabled(
-		struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_get_sap_mandatory_chan_list_len() - Return the SAP mandatory
