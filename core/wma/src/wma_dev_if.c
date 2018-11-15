@@ -2797,33 +2797,33 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	params.band_center_freq1 = cds_chan_to_freq(req->chan);
+	params.channel.cfreq1 = cds_chan_to_freq(req->chan);
 	ch_width = req->chan_width;
 	bw_val = wlan_reg_get_bw_value(req->chan_width);
 	if (20 < bw_val) {
 		if (req->ch_center_freq_seg0) {
-			params.band_center_freq1 =
+			params.channel.cfreq1 =
 				cds_chan_to_freq(req->ch_center_freq_seg0);
 		} else {
 			WMA_LOGE("%s: invalid cntr_freq for bw %d, drop to 20",
 					__func__, bw_val);
-			params.band_center_freq1 = cds_chan_to_freq(req->chan);
+			params.channel.cfreq1 = cds_chan_to_freq(req->chan);
 			ch_width = CH_WIDTH_20MHZ;
 			bw_val = 20;
 		}
 	}
 	if (80 < bw_val) {
 		if (req->ch_center_freq_seg1) {
-			params.band_center_freq2 =
+			params.channel.cfreq2 =
 				cds_chan_to_freq(req->ch_center_freq_seg1);
 		} else {
 			WMA_LOGE("%s: invalid cntr_freq for bw %d, drop to 80",
 					__func__, bw_val);
-			params.band_center_freq2 = 0;
+			params.channel.cfreq2 = 0;
 			ch_width = CH_WIDTH_80MHZ;
 		}
 	} else {
-		params.band_center_freq2 = 0;
+		params.channel.cfreq2 = 0;
 	}
 	chan_mode = wma_chan_phy_mode(req->chan, ch_width,
 				      req->dot11_mode);
@@ -2833,19 +2833,19 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!params.band_center_freq1) {
+	if (!params.channel.cfreq1) {
 		WMA_LOGE("%s: invalid center freq1", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (((ch_width == CH_WIDTH_160MHZ) || (ch_width == CH_WIDTH_80P80MHZ))
-				&& !params.band_center_freq2) {
+	if (((ch_width == CH_WIDTH_160MHZ) ||
+	     (ch_width == CH_WIDTH_80P80MHZ)) && !params.channel.cfreq2) {
 		WMA_LOGE("%s: invalid center freq2 for 160MHz", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Fill channel info */
-	params.chan_freq = cds_chan_to_freq(req->chan);
-	params.chan_mode = chan_mode;
+	params.channel.mhz = cds_chan_to_freq(req->chan);
+	params.channel.phy_mode = chan_mode;
 
 	/* For Rome, only supports LFR2, not LFR3, for reassoc, need send vdev
 	 * start cmd to F/W while vdev started first, then send reassoc frame
@@ -2866,7 +2866,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		 req->vdev_id);
 	params.vdev_id = req->vdev_id;
 
-	intr[params.vdev_id].chanmode = params.chan_mode;
+	intr[params.vdev_id].chanmode = params.channel.phy_mode;
 	intr[params.vdev_id].ht_capable = req->ht_capable;
 	intr[params.vdev_id].vht_capable = req->vht_capable;
 	intr[params.vdev_id].config.gtx_info.gtxRTMask[0] =
@@ -2887,17 +2887,17 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		CFG_TGT_DEFAULT_GTX_TPC_MIN;
 	intr[params.vdev_id].config.gtx_info.gtxBWMask =
 		CFG_TGT_DEFAULT_GTX_BW_MASK;
-	intr[params.vdev_id].mhz = params.chan_freq;
+	intr[params.vdev_id].mhz = params.channel.mhz;
 	intr[params.vdev_id].chan_width = ch_width;
 	intr[params.vdev_id].channel = req->chan;
 	wma_copy_txrxnode_he_ops(&intr[params.vdev_id], req);
 
 	temp_chan_info &= 0xffffffc0;
-	temp_chan_info |= params.chan_mode;
+	temp_chan_info |= params.channel.phy_mode;
 
 	/* Set half or quarter rate WMI flags */
-	params.is_half_rate = req->is_half_rate;
-	params.is_quarter_rate = req->is_quarter_rate;
+	params.channel.half_rate = req->is_half_rate;
+	params.channel.quarter_rate = req->is_quarter_rate;
 
 	if (req->is_half_rate)
 		temp_chan_info |=  (1 << WMI_CHAN_FLAG_HALF_RATE);
@@ -2914,21 +2914,19 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	 * If that is ever the case we would insert the decision whether to
 	 * enable the firmware flag here.
 	 */
-
-	params.is_dfs = req->is_dfs;
 	params.is_restart = isRestart;
 	params.cac_duration_ms = req->cac_duration_ms;
 	params.regdomain = req->dfs_regdomain;
 	if ((QDF_GLOBAL_MONITOR_MODE != cds_get_conparam()) && req->is_dfs) {
 		temp_chan_info |=  (1 << WMI_CHAN_FLAG_DFS);
-		params.dis_hw_ack = true;
+		params.disable_hw_ack = true;
 
 		/*
 		 * If channel is DFS and operating in AP mode,
 		 * set the WMI_CHAN_FLAG_DFS flag.
 		 */
 		if (wma_is_vdev_in_ap_mode(wma, params.vdev_id) == true)
-			params.flag_dfs = WMI_CHAN_FLAG_DFS;
+			params.channel.dfs_set = true;
 	}
 
 	params.beacon_intval = req->beacon_intval;
@@ -2947,7 +2945,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	}
 
 	/* FIXME: Find out min, max and regulatory power levels */
-	params.max_txpow = req->max_txpow;
+	params.channel.maxregpower = req->max_txpow;
 	temp_reg_info_1 &= 0xff00ffff;
 	temp_reg_info_1 |= ((req->max_txpow&0xff) << 16);
 
@@ -2996,13 +2994,13 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		intr[req->vdev_id].vdev_restart_params.flags = temp_flags;
 		intr[req->vdev_id].vdev_restart_params.requestor_id = 0;
 		intr[req->vdev_id].vdev_restart_params.disable_hw_ack =
-			params.dis_hw_ack;
+			params.disable_hw_ack;
 		intr[req->vdev_id].vdev_restart_params.chan.mhz =
-			params.chan_freq;
+			params.channel.mhz;
 		intr[req->vdev_id].vdev_restart_params.chan.band_center_freq1 =
-			params.band_center_freq1;
+			params.channel.cfreq1;
 		intr[req->vdev_id].vdev_restart_params.chan.band_center_freq2 =
-			params.band_center_freq2;
+			params.channel.cfreq2;
 		intr[req->vdev_id].vdev_restart_params.chan.info =
 			temp_chan_info;
 		intr[req->vdev_id].vdev_restart_params.chan.reg_info_1 =
