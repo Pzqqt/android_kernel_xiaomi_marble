@@ -5581,9 +5581,6 @@ static int hdd_config_scan_default_ies(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	mac_handle_t mac_handle;
 
-	if (!attr)
-		return 0;
-
 	scan_ie_len = nla_len(attr);
 	hdd_debug("IE len %d session %d device mode %d",
 		  scan_ie_len, adapter->session_id, adapter->device_mode);
@@ -5648,6 +5645,8 @@ struct independent_setters {
 
 /* vtable for independent setters */
 static const struct independent_setters independent_setters[] = {
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_DEFAULT_IES,
+	 hdd_config_scan_default_ies},
 };
 
 /**
@@ -5758,7 +5757,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx  = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1];
-	const struct nlattr *attr;
 	int errno;
 	int ret;
 	int ret_val = 0;
@@ -6059,11 +6057,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		hdd_debug("set_value: %d", set_value);
 		ret_val = hdd_enable_disable_ca_event(hdd_ctx, set_value);
 	}
-
-	attr = tb[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_DEFAULT_IES];
-	ret = hdd_config_scan_default_ies(adapter, attr);
-	if (ret)
-		ret_val = ret;
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION] ||
 	    tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION]) {
