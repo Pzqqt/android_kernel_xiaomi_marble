@@ -403,10 +403,11 @@ static QDF_STATUS fake_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 		"beacon interval %d dtim %d center_chan %d center_freq2 %d "
 		"max_txpow: 0x%x "
 		"Tx SS %d, Rx SS %d, ldpc_rx: %d, cac %d, regd %d, HE ops: %d",
-		__func__, (int)req->vdev_id, req->chan_freq, req->chan_mode,
-		(int)req->is_dfs, req->beacon_intval, req->dtim_period,
-		req->band_center_freq1, req->band_center_freq2,
-		req->max_txpow,
+		__func__, (int)req->vdev_id, req->channel.mhz,
+		req->channel.phy_mode,
+		(int)req->channel.dfs_set, req->beacon_intval, req->dtim_period,
+		req->channel.cfreq1, req->channel.cfreq2,
+		req->channel.maxregpower,
 		req->preferred_tx_streams, req->preferred_rx_streams,
 		(int)req->ldpc_rx_enabled, req->cac_duration_ms,
 		req->regdomain, req->he_ops);
