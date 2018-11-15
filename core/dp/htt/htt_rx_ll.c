@@ -1214,15 +1214,14 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev,
 		}
 	}
 
-	RX_HASH_LOG(qdf_print("rx hash: paddr 0x%x, netbuf %pK, bucket %d\n",
+	RX_HASH_LOG(qdf_print("rx hash: paddr 0x%llx, netbuf %pK, bucket %d\n",
 			      paddr, netbuf, (int)i));
 	HTT_RX_HASH_COUNT_PRINT(pdev->rx_ring.hash_table[i]);
 
 	qdf_spin_unlock_bh(&pdev->rx_ring.rx_hash_lock);
 
 	if (!netbuf) {
-		qdf_print("rx hash: no entry found for %pK!\n",
-			  (void *)paddr);
+		qdf_print("rx hash: no entry found for %llx!\n", paddr);
 		cds_trigger_recovery(QDF_RX_HASH_NO_ENTRY_FOUND);
 	}
 
