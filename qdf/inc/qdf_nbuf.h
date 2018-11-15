@@ -181,6 +181,7 @@
  * @ant_signal_db: Rx packet RSSI
  * @nr_ant: Number of Antennas used for streaming
  * @mcs: MCS index of Rx frame
+ * @ht_mcs: MCS index for HT RX frames
  * @nss: Number of spatial streams
  * @bw: bandwidth of rx frame
  * @is_stbc: Is STBC enabled
@@ -246,6 +247,7 @@ struct mon_rx_status {
 	uint8_t  ant_signal_db;
 	uint8_t  nr_ant;
 	uint8_t  mcs;
+	uint8_t  ht_mcs;
 	uint8_t  nss;
 	uint16_t  tcp_msdu_count;
 	uint16_t  udp_msdu_count;

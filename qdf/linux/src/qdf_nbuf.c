@@ -4141,7 +4141,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 			rtap_buf[rtap_len] |= IEEE80211_RADIOTAP_MCS_BW_20;
 		rtap_len += 1;
 
-		rtap_buf[rtap_len] = rx_status->mcs;
+		rtap_buf[rtap_len] = rx_status->ht_mcs;
 		rtap_len += 1;
 
 		if ((rtap_len - length) > RADIOTAP_HT_FLAGS_LEN) {

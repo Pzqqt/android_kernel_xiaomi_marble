@@ -130,6 +130,7 @@
 #define HE_LTF_4_X 3
 #define HE_LTF_UNKNOWN 0
 #define VHT_SIG_SU_NSS_MASK	0x7
+#define HT_SIG_SU_NSS_SHIFT	0x3
 
 #define HAL_TID_INVALID 31
 #define HAL_AST_IDX_INVALID 0xFFFF

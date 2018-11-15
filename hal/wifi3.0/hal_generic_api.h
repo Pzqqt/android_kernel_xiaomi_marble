@@ -431,11 +431,15 @@ hal_rx_status_get_tlv_info_generic(void *rx_tlv_hdr, void *ppduinfo,
 			1 : 0;
 		ppdu_info->rx_status.mcs = HAL_RX_GET(ht_sig_info,
 				HT_SIG_INFO_0, MCS);
+		ppdu_info->rx_status.ht_mcs = ppdu_info->rx_status.mcs;
 		ppdu_info->rx_status.bw = HAL_RX_GET(ht_sig_info,
 				HT_SIG_INFO_0, CBW);
 		ppdu_info->rx_status.sgi = HAL_RX_GET(ht_sig_info,
 				HT_SIG_INFO_1, SHORT_GI);
 		ppdu_info->rx_status.reception_type = HAL_RX_TYPE_SU;
+		ppdu_info->rx_status.nss = ((ppdu_info->rx_status.mcs) >>
+				HT_SIG_SU_NSS_SHIFT) + 1;
+		ppdu_info->rx_status.mcs &= ((1 << HT_SIG_SU_NSS_SHIFT) - 1);
 		break;
 	}
 
