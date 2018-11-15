@@ -180,14 +180,14 @@ void qdf_debugfs_hexdump(qdf_debugfs_file_t file, const uint8_t *buf,
 			 qdf_size_t len, int rowsize, int groupsize)
 {
 	char *dst;
-	size_t dstlen, readlen;
+	size_t dstlen, readlen, remaining = len;
 	int prefix = 0;
 	size_t commitlen;
 
-	while (len > 0 && (file->size > file->count)) {
+	while (remaining > 0 && (file->size > file->count)) {
 		seq_printf(file, "%.8x: ", prefix);
 
-		readlen = min(len, rowsize);
+		readlen = qdf_min(remaining, (qdf_size_t)rowsize);
 		dstlen = seq_get_buf(file, &dst);
 		hex_dump_to_buffer(buf, readlen, rowsize, groupsize, dst,
 				   dstlen, false);
@@ -195,7 +195,7 @@ void qdf_debugfs_hexdump(qdf_debugfs_file_t file, const uint8_t *buf,
 		seq_commit(file, commitlen);
 		seq_putc(file, '\n');
 
-		len = (len > rowsize) ? len - rowsize : 0;
+		remaining = (remaining > rowsize) ? remaining - rowsize : 0;
 		buf += readlen;
 		prefix += rowsize;
 	}
