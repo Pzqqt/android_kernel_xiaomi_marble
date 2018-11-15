@@ -744,56 +744,31 @@ enum wmi_bcn_tx_rate_code {
 /**
  * struct vdev_start_params - vdev start cmd parameter
  * @vdev_id: vdev id
- * @chan_freq: channel frequency
- * @chan_mode: channel mode
- * @band_center_freq1: center freq 1
- * @band_center_freq2: center freq 2
  * @flags: flags to set like pmf_enabled etc.
- * @is_dfs: flag to check if dfs enabled
  * @beacon_intval: beacon interval
  * @dtim_period: dtim period
- * @max_txpow: max tx power
  * @is_restart: flag to check if it is vdev
- * @ssid: ssid and ssid length info
+ * @disable_hw_ack: to update disable hw ack flag
+ * @hidden_ssid: hidden ssid
+ * @pmf_enabled: pmf enabled
+ * @ssid: ssid MAC
+ * @num_noa_descriptors: number of noa descriptors
  * @preferred_tx_streams: preferred tx streams
  * @preferred_rx_streams: preferred rx streams
- * @intr_update: flag to check if need to update
- *               required wma interface params
- * @intr_ssid: pointer to wma interface ssid
- * @intr_flags: pointer to wma interface flags
- * @requestor_id: to update requestor id
- * @disable_hw_ack: to update disable hw ack flag
- * @info: to update channel info
- * @reg_info_1: to update min power, max power,
- *              reg power and reg class id
- * @reg_info_2: to update antennamax
  * @cac_duration_ms: cac duration in milliseconds
  * @regdomain: Regulatory domain
- * @oper_mode: Operating mode
- * @dfs_pri_multiplier: DFS primary multiplier
- *    allow pulse if they are within multiple of PRI for the radar type
- * @dot11_mode: Phy mode (VHT20/VHT80...)
- * @disable_hw_ack: Disable hw ack if chan is dfs channel for cac
+ * @he_ops: HE ops
  * @channel_param: Channel params required by target.
  * @bcn_tx_rate_code: Beacon tx rate code.
  * @ldpc_rx_enabled: Enable/Disable LDPC RX for this vdev
  */
 struct vdev_start_params {
 	uint8_t vdev_id;
-	uint32_t chan_freq;
-	uint32_t chan_mode;
-	uint32_t band_center_freq1;
-	uint32_t band_center_freq2;
 	uint32_t flags;
-	bool is_dfs;
 	uint32_t beacon_intval;
 	uint32_t dtim_period;
-	int32_t max_txpow;
 	bool is_restart;
-	bool is_half_rate;
-	bool is_quarter_rate;
-	uint32_t dis_hw_ack;
-	uint32_t flag_dfs;
+	uint32_t disable_hw_ack;
 	uint8_t hidden_ssid;
 	uint8_t pmf_enabled;
 	struct mac_ssid ssid;
@@ -803,13 +778,7 @@ struct vdev_start_params {
 	uint32_t cac_duration_ms;
 	uint32_t regdomain;
 	uint32_t he_ops;
-#ifndef CONFIG_MCL
-	uint8_t oper_mode;
-	int32_t dfs_pri_multiplier;
-	uint8_t dot11_mode;
-	uint8_t disable_hw_ack;
 	struct channel_param channel;
-#endif
 	enum wmi_bcn_tx_rate_code bcn_tx_rate_code;
 	bool ldpc_rx_enabled;
 };
