@@ -772,6 +772,29 @@ ucfg_mlme_set_roaming_offload(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_get_first_scan_bucket_threshold(struct wlan_objmgr_psoc *psoc,
 					  uint8_t *val);
+
+/**
+ * ucfg_mlme_get_ps_data_inactivity_timeout() - Get data inactivity timeout
+ * @psoc: pointer to psoc object
+ * @inactivity_timeout: buffer to hold value
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_ps_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
+					 uint32_t *inactivity_timeout);
+
+/**
+ * ucfg_mlme_set_ps_data_inactivity_timeout() - Set data inactivity timeout
+ * @psoc: pointer to psoc object
+ * @inactivity_timeout: value to be set
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_ps_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
+					 uint32_t inactivity_timeout);
+
 /**
  * ucfg_mlme_set_sap_listen_interval() - Set the Sap listen interval
  * @psoc: pointer to psoc object
