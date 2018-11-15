@@ -794,7 +794,7 @@ unlock:
 	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
 
-	dsc_psoc_trans_stop(hdd_psoc->dsc_psoc);
+	/* SSR transition is concluded at the end of soc re-init */
 }
 
 /**
