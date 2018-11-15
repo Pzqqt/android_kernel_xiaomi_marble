@@ -2790,12 +2790,12 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		hdd_err("get_external_acs_policy failed");
 
-	if (is_external_acs_policy) {
+	if (is_external_acs_policy && conc_channel) {
 		if ((conc_channel >= WLAN_REG_CH_NUM(CHAN_ENUM_36) &&
 		     sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211A) ||
 		     (conc_channel <= WLAN_REG_CH_NUM(CHAN_ENUM_14) &&
 		      (sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211B ||
-		       sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211A))) {
+		       sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211G))) {
 			sap_config->acs_cfg.pri_ch = conc_channel;
 			wlan_sap_set_sap_ctx_acs_cfg(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter), sap_config);

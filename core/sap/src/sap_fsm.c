@@ -3226,6 +3226,7 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 	uint8_t loop_count;
 	uint8_t *list;
 	uint8_t ch_count;
+	uint8_t dfs_master_enable;
 	uint8_t start_ch_num, band_start_ch;
 	uint8_t end_ch_num, band_end_ch;
 	uint32_t en_lte_coex;
@@ -3244,6 +3245,7 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 		return QDF_STATUS_E_FAULT;
 	}
 
+	dfs_master_enable = mac_ctx->mlme_cfg->dfs_cfg.dfs_master_capable;
 	start_ch_num = sap_ctx->acs_cfg->start_ch;
 	end_ch_num = sap_ctx->acs_cfg->end_ch;
 	ch_width = sap_ctx->acs_cfg->ch_width;
@@ -3320,8 +3322,9 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 		 */
 		if (wlan_reg_is_dfs_ch(mac_ctx->pdev,
 		    WLAN_REG_CH_NUM(loop_count)) &&
-		    policy_mgr_disallow_mcc(mac_ctx->psoc,
-		    WLAN_REG_CH_NUM(loop_count)))
+		    (policy_mgr_disallow_mcc(mac_ctx->psoc,
+		    WLAN_REG_CH_NUM(loop_count)) ||
+		    !dfs_master_enable))
 			continue;
 
 		/* Dont scan ETSI13 SRD channels if the ETSI13 SRD channels
