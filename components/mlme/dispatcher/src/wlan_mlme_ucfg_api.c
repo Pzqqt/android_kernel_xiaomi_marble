@@ -466,3 +466,45 @@ ucfg_mlme_get_current_mcs_set(struct wlan_objmgr_psoc *psoc,
 				     &mlme_obj->cfg.rates.current_mcs_set,
 				     len);
 }
+
+QDF_STATUS
+ucfg_mlme_get_ps_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
+					 uint32_t *inactivity_timeout)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*inactivity_timeout =
+			cfg_default(CFG_PS_DATA_INACTIVITY_TIMEOUT);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*inactivity_timeout = mlme_obj->cfg.timeouts.ps_data_inactivity_timeout;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_ps_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
+					 uint32_t inactivity_timeout)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!cfg_in_range(CFG_PS_DATA_INACTIVITY_TIMEOUT, inactivity_timeout)) {
+		mlme_err("inactivity timeout set value is invalid %d",
+			 inactivity_timeout);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_obj->cfg.timeouts.ps_data_inactivity_timeout = inactivity_timeout;
+
+	return QDF_STATUS_SUCCESS;
+}

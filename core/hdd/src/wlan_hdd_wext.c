@@ -4160,25 +4160,15 @@ static int hdd_we_set_max_assoc(struct hdd_adapter *adapter, int value)
 }
 
 static int hdd_we_set_data_inactivity_timeout(struct hdd_adapter *adapter,
-					      int value)
+					      int inactivity_timeout)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	mac_handle_t mac_handle = hdd_ctx->mac_handle;
-	struct mac_context *mac_ctx;
+	QDF_STATUS status;
 
-	if (!mac_handle)
-		return -EINVAL;
+	status = ucfg_mlme_set_ps_data_inactivity_timeout(hdd_ctx->psoc,
+							  inactivity_timeout);
 
-	if (!cfg_in_range(CFG_PS_DATA_INACTIVITY_TIMEOUT, value)) {
-		hdd_err_rl("Invalid value %d", value);
-		return -EINVAL;
-	}
-
-	/* pre-existing layering violation */
-	mac_ctx = MAC_CONTEXT(mac_handle);
-	mac_ctx->mlme_cfg->timeouts.ps_data_inactivity_timeout = value;
-
-	return 0;
+	return qdf_status_to_os_return(status);
 }
 
 static int hdd_we_set_wow_data_inactivity_timeout(struct hdd_adapter *adapter,
