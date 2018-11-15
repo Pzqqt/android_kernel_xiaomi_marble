@@ -17958,8 +17958,6 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 						goto fn_end;
 
 					qdf_event_reset(&hapd_state->qdf_sta_disassoc_event);
-					hdd_softap_sta_disassoc(adapter,
-								pDelStaParams);
 					qdf_status =
 						hdd_softap_sta_deauth(adapter,
 							pDelStaParams);
