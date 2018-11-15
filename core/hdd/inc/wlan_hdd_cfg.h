@@ -2652,10 +2652,23 @@ enum hdd_dot11_mode {
 #define CFG_IDLE_TIME_MAX                           (25)
 #define CFG_IDLE_TIME_DEFAULT                       (25)
 
-#define CFG_MAX_PS_POLL_NAME                   "gMaxPsPoll"
-#define CFG_MAX_PS_POLL_MIN                    WNI_CFG_MAX_PS_POLL_STAMIN
-#define CFG_MAX_PS_POLL_MAX                    WNI_CFG_MAX_PS_POLL_STAMAX
-#define CFG_MAX_PS_POLL_DEFAULT                WNI_CFG_MAX_PS_POLL_STADEF
+/*
+ * <ini>
+ * gTxPowerCap - WLAN max tx power
+ * @Min: 0
+ * @Max: 128
+ * @Default: 128
+ *
+ * This ini is used to configure the device max tx power.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_MAX_TX_POWER_NAME                   "gTxPowerCap"
 #define CFG_MAX_TX_POWER_MIN                    WNI_CFG_CURRENT_TX_POWER_LEVEL_STAMIN
@@ -2663,7 +2676,24 @@ enum hdd_dot11_mode {
 /* Not to use CFG default because if no registry setting, this is ignored by SME. */
 #define CFG_MAX_TX_POWER_DEFAULT                WNI_CFG_CURRENT_TX_POWER_LEVEL_STAMAX
 
-/* This ini controls driver to honor/dishonor power constraint from AP */
+/*
+ * <ini>
+ * gAllowTPCfromAP - Support for AP power constraint
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini controls driver to honor/dishonor power constraint from AP.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_TX_POWER_CTRL_NAME                 "gAllowTPCfromAP"
 #define CFG_TX_POWER_CTRL_DEFAULT              (1)
 #define CFG_TX_POWER_CTRL_MIN                  (0)
@@ -2887,10 +2917,47 @@ enum station_keepalive_method {
 #define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_DEFAULT            (0)
 
 #ifdef FEATURE_WLAN_ESE
+
+/*
+ * <ini>
+ * InfraInactivityInterval - WMM inactivity interval
+ * @Min: 0
+ * @Max: 4294967295
+ * @Default: 0
+ *
+ * This ini is used to set the value of inactivity interval for WMM TSPEC.
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM/ESE
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_NAME    "InfraInactivityInterval"
 #define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_MIN      (0)
 #define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_MAX      (4294967295UL)
 #define CFG_QOS_WMM_INFRA_INACTIVITY_INTERVAL_DEFAULT  (0) /* disabled */
+
+/*
+ * <ini>
+ * EseEnabled - Enable ESE
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to control whether ESE is enabled or not.
+ *
+ * Related: None.
+ *
+ * Supported Feature: WMM/ESE
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_ESE_FEATURE_ENABLED_NAME                       "EseEnabled"
 #define CFG_ESE_FEATURE_ENABLED_MIN                         (0)
@@ -2921,16 +2988,49 @@ enum station_keepalive_method {
 #define CFG_LFR_MAWC_FEATURE_ENABLED_MAX                    (1)
 #define CFG_LFR_MAWC_FEATURE_ENABLED_DEFAULT                (0)
 
-/*This parameter is used to set Wireless Extended Security Mode.*/
+/*
+ * <ini>
+ * gWESModeEnabled - Enable/Disable Wireless Extended Security Mode
+ * @Min: 0 - Disabled
+ * @Max: 1 - Enabled
+ * @Default: 0
+ *
+ * This parameter is used to set Wireless Extended Security Mode.
+ *
+ * Related: mawc_roam_enabled.
+ *
+ * Supported Feature: Roaming and PNO/NLO
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_ENABLE_WES_MODE_NAME                            "gWESModeEnabled"
 #define CFG_ENABLE_WES_MODE_NAME_MIN                        (0)
 #define CFG_ENABLE_WES_MODE_NAME_MAX                        (1)
 #define CFG_ENABLE_WES_MODE_NAME_DEFAULT                    (0)
 
-#define CFG_TL_DELAYED_TRGR_FRM_INT_NAME                   "DelayedTriggerFrmInt"
-#define CFG_TL_DELAYED_TRGR_FRM_INT_MIN                     1
-#define CFG_TL_DELAYED_TRGR_FRM_INT_MAX                     (4294967295UL)
-#define CFG_TL_DELAYED_TRGR_FRM_INT_DEFAULT                 3000
+/*
+ * <ini>
+ * DelayedTriggerFrmInt - UAPSD delay interval
+ * @Min: 1
+ * @Max: 4294967295
+ * @Default: 3000
+ *
+ * This parameter controls the delay interval(in ms) of UAPSD auto trigger.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_TL_DELAYED_TRGR_FRM_INT_NAME                 "DelayedTriggerFrmInt"
+#define CFG_TL_DELAYED_TRGR_FRM_INT_MIN                  1
+#define CFG_TL_DELAYED_TRGR_FRM_INT_MAX                  (4294967295UL)
+#define CFG_TL_DELAYED_TRGR_FRM_INT_DEFAULT              3000
 
 /*
  * <ini>
@@ -2982,6 +3082,8 @@ enum station_keepalive_method {
 /*
  * <ini>
  * rm_capability - Configure RM enabled capabilities IE
+ * @Min: N/A
+ * @Max: N/A
  * @Default: 73,10,91,00,04
  *
  * This ini is used to configure RM enabled capabilities IE.
@@ -3003,40 +3105,125 @@ enum station_keepalive_method {
 #define CFG_RM_CAPABILITY_NAME            "rm_capability"
 #define CFG_RM_CAPABILITY_DEFAULT         "73,10,91,00,04"
 
+/*
+ * <ini>
+ * gNeighborLookupThreshold - Neighbor lookup RSSI threshold
+ * @Min: 10
+ * @Max: 120
+ * @Default: 78
+ *
+ * This ini is used to control the RSSI threshold for neighbor lookup.
+ *
+ * Related: None.
+ *
+ * Supported Feature: 11k
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_NAME      "gNeighborLookupThreshold"
 #define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MIN       (10)
 #define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_MAX       (120)
 #define CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_DEFAULT   (78)
+
+/*
+ * <ini>
+ * gDelayBeforeVdevStop - Delay before vdev stop
+ * @Min: 2
+ * @Max: 200
+ * @Default: 20
+ *
+ * This ini is used to control the time driver has to wait for tx to finish
+ * before BSS is to be stopped.
+ *
+ * Related: None.
+ *
+ * Supported Feature: 11k
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_DELAY_BEFORE_VDEV_STOP_NAME              "gDelayBeforeVdevStop"
 #define CFG_DELAY_BEFORE_VDEV_STOP_MIN               (2)
 #define CFG_DELAY_BEFORE_VDEV_STOP_MAX               (200)
 #define CFG_DELAY_BEFORE_VDEV_STOP_DEFAULT           (20)
 
-#define CFG_11R_NEIGHBOR_REQ_MAX_TRIES_NAME           "gMaxNeighborReqTries"
-#define CFG_11R_NEIGHBOR_REQ_MAX_TRIES_MIN            (1)
-#define CFG_11R_NEIGHBOR_REQ_MAX_TRIES_MAX            (4)
-#define CFG_11R_NEIGHBOR_REQ_MAX_TRIES_DEFAULT        (3)
+/*
+ * <ini>
+ * gRoamBmissFirstBcnt - Beacon miss count to trigger 1st bmiss event
+ * @Min: 5
+ * @Max: 100
+ * @Default: 10
+ *
+ * This ini is used to control how many beacon miss will trigger first bmiss
+ * event. First bmiss event will result in roaming scan.
+ *
+ * Related: None.
+ *
+ * Supported Feature: 11k
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_ROAM_BMISS_FIRST_BCNT_NAME                  "gRoamBmissFirstBcnt"
 #define CFG_ROAM_BMISS_FIRST_BCNT_MIN                   (5)
 #define CFG_ROAM_BMISS_FIRST_BCNT_MAX                   (100)
 #define CFG_ROAM_BMISS_FIRST_BCNT_DEFAULT               (10)
 
+/*
+ * <ini>
+ * gRoamBmissFirstBcnt - Beacon miss count to trigger final bmiss event
+ * @Min: 5
+ * @Max: 100
+ * @Default: 20
+ *
+ * This ini is used to control how many beacon miss will trigger final bmiss
+ * event. Final bmiss event will make roaming take place or cause the
+ * indication of final bmiss event.
+ *
+ * Related: None.
+ *
+ * Supported Feature: 11k
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_ROAM_BMISS_FINAL_BCNT_NAME                  "gRoamBmissFinalBcnt"
 #define CFG_ROAM_BMISS_FINAL_BCNT_MIN                   (5)
 #define CFG_ROAM_BMISS_FINAL_BCNT_MAX                   (100)
 #define CFG_ROAM_BMISS_FINAL_BCNT_DEFAULT               (20)
 
+/*
+ * <ini>
+ * gRoamBeaconRssiWeight - Beacon RSSI weight
+ * @Min: 0
+ * @Max: 16
+ * @Default: 14
+ *
+ * This ini controls how many beacons' RSSI values will be used to calculate
+ * the average value of RSSI.
+ *
+ * Related: None.
+ *
+ * Supported Feature: 11k
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_NAME                "gRoamBeaconRssiWeight"
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_MIN                 (0)
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_MAX                 (16)
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_DEFAULT             (14)
-
-#define CFG_AP_DATA_AVAIL_POLL_PERIOD_NAME      "gApDataAvailPollInterval"
-#define CFG_AP_DATA_AVAIL_POLL_PERIOD_MIN       (WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD_STAMIN)
-#define CFG_AP_DATA_AVAIL_POLL_PERIOD_MAX       (WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD_STAMAX)
-#define CFG_AP_DATA_AVAIL_POLL_PERIOD_DEFAULT   (WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD_STADEF)
 
 /*
  * <ini>
@@ -3201,13 +3388,12 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gDisableDfsJapanW53 - Enable dfs phyerror filtering offload in FW
+ * dfsPhyerrFilterOffload - DFS PHY error filter offload
  * @Min: 0
  * @Max: 1
- * @Default: 1
+ * @Default: 0
  *
- * This ini is used to to enable dfs phyerror filtering offload to firmware
- * Enabling it will cause basic phy error to be discarding in firmware.
+ * This ini is used to enable firmware to do DFS PHY error filtering.
  * Related: NA.
  *
  * Supported Feature: DFS
@@ -3221,10 +3407,31 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_MAX        (1)
 #define CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_DEFAULT    (0)
 
-#define CFG_REPORT_MAX_LINK_SPEED                  "gReportMaxLinkSpeed"
-#define CFG_REPORT_MAX_LINK_SPEED_MIN              (eHDD_LINK_SPEED_REPORT_ACTUAL)
-#define CFG_REPORT_MAX_LINK_SPEED_MAX              (eHDD_LINK_SPEED_REPORT_MAX_SCALED)
-#define CFG_REPORT_MAX_LINK_SPEED_DEFAULT          (eHDD_LINK_SPEED_REPORT_ACTUAL)
+/*
+ * <ini>
+ * gReportMaxLinkSpeed - Reporting of max link speed
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * This ini is used to control how max link speed is reported to OS when
+ * driver is handling NL80211_CMD_GET_STATION request.
+ * 0: report actual link speed;
+ * 1: report max possible link speed;
+ * 2: report max possible link speed with RSSI scaling.
+ *
+ * Related: NA.
+ *
+ * Supported Feature SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_REPORT_MAX_LINK_SPEED           "gReportMaxLinkSpeed"
+#define CFG_REPORT_MAX_LINK_SPEED_MIN       (eHDD_LINK_SPEED_REPORT_ACTUAL)
+#define CFG_REPORT_MAX_LINK_SPEED_MAX       (eHDD_LINK_SPEED_REPORT_MAX_SCALED)
+#define CFG_REPORT_MAX_LINK_SPEED_DEFAULT   (eHDD_LINK_SPEED_REPORT_ACTUAL)
 
 /*
  * <ini>
@@ -3345,9 +3552,38 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_OVERLAP_CH_MAX           (1)
 #define CFG_ENABLE_OVERLAP_CH_DEFAULT       (0)
 
-/* For valid values of log levels check enum DBGLOG_LOG_LVL and
+/*
+ * <ini>
+ * gFwDebugModuleLoglevel - modulized firmware debug log level
+ * @Min: N/A
+ * @Max: N/A
+ * @Default: N/A
+ *
+ * This ini is used to set modulized firmware debug log level.
+ * FW module log level input string format looks like below:
+ * gFwDebugModuleLoglevel="<FW Module ID>,<Log Level>,..."
+ * For example:
+ * gFwDebugModuleLoglevel="1,0,2,1,3,2,4,3,5,4,6,5,7,6"
+ * The above input string means:
+ * For FW module ID 1 enable log level 0
+ * For FW module ID 2 enable log level 1
+ * For FW module ID 3 enable log level 2
+ * For FW module ID 4 enable log level 3
+ * For FW module ID 5 enable log level 4
+ * For FW module ID 6 enable log level 5
+ * For FW module ID 7 enable log level 6
+ * For valid values of log levels check enum DBGLOG_LOG_LVL and
  * for valid values of module ids check enum WLAN_MODULE_ID.
+ *
+ * Related: None
+ *
+ * Supported Feature: Debugging
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
+
 #define CFG_ENABLE_FW_MODULE_LOG_LEVEL    "gFwDebugModuleLoglevel"
 #define CFG_ENABLE_FW_MODULE_LOG_DEFAULT  "2,1,3,1,5,1,9,1,13,1,14,1,18,1,19,1,26,1,28,1,29,1,31,1,36,1,38,1,46,1,47,1,50,1,52,1,53,1,56,1,60,1,61,1,4,1"
 

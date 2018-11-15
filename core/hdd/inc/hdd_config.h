@@ -317,7 +317,9 @@ enum hdd_wext_control {
  * gEnablePacketLog - Enale packet log
  * @Min: 0
  * @Max: 1
- * @Default: 1 if feature packet log define, 0 elsewhere
+ * @Default: 1 if packet log code is enabled, 0 otherwise
+ *
+ * This option enables/disables packet log collecting.
  *
  * </ini>
  */

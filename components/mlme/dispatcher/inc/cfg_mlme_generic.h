@@ -184,7 +184,7 @@
  * @Max: 1
  * @Default: 1
  *
- *
+ * This option enables/disables memory deep sleep.
  * Related: None
  *
  * Supported Feature: General
