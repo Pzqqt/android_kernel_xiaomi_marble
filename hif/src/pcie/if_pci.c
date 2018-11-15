@@ -3713,7 +3713,7 @@ QDF_STATUS hif_pci_enable_bus(struct hif_softc *ol_sc,
 	uint32_t hif_type, target_type;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(ol_sc);
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(ol_sc);
-	uint16_t revision_id;
+	uint16_t revision_id = 0;
 	int probe_again = 0;
 	struct pci_dev *pdev = bdev;
 	const struct pci_device_id *id = (const struct pci_device_id *)bid;
