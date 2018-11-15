@@ -409,34 +409,6 @@ static QDF_STATUS send_vdev_down_cmd_tlv(wmi_unified_t wmi, uint8_t vdev_id)
 	return 0;
 }
 
-#ifdef CONFIG_MCL
-static inline void copy_channel_info(
-		wmi_vdev_start_request_cmd_fixed_param * cmd,
-		wmi_channel *chan,
-		struct vdev_start_params *req)
-{
-	chan->mhz = req->chan_freq;
-
-	WMI_SET_CHANNEL_MODE(chan, req->chan_mode);
-
-	chan->band_center_freq1 = req->band_center_freq1;
-	chan->band_center_freq2 = req->band_center_freq2;
-
-	if (req->is_half_rate)
-		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_HALF_RATE);
-	else if (req->is_quarter_rate)
-		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_QUARTER_RATE);
-
-	if (req->is_dfs && req->flag_dfs) {
-		WMI_SET_CHANNEL_FLAG(chan, req->flag_dfs);
-		cmd->disable_hw_ack = req->dis_hw_ack;
-	}
-
-	WMI_SET_CHANNEL_REG_POWER(chan, req->max_txpow);
-	WMI_SET_CHANNEL_MAX_TX_POWER(chan, req->max_txpow);
-
-}
-#else
 static inline void copy_channel_info(
 		wmi_vdev_start_request_cmd_fixed_param * cmd,
 		wmi_channel *chan,
@@ -448,14 +420,11 @@ static inline void copy_channel_info(
 
 	chan->band_center_freq1 = req->channel.cfreq1;
 	chan->band_center_freq2 = req->channel.cfreq2;
-	WMI_LOGI("%s: req->channel.phy_mode: %d ", req->channel.phy_mode);
 
 	if (req->channel.half_rate)
 		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_HALF_RATE);
 	else if (req->channel.quarter_rate)
 		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_QUARTER_RATE);
-
-	WMI_LOGI("%s: req->channel.dfs_set: %d ", req->channel.dfs_set);
 
 	if (req->channel.dfs_set) {
 		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_DFS);
@@ -477,7 +446,7 @@ static inline void copy_channel_info(
 	WMI_SET_CHANNEL_MAX_TX_POWER(chan, req->channel.maxregpower);
 
 }
-#endif
+
 /**
  * send_vdev_start_cmd_tlv() - send vdev start request to fw
  * @wmi_handle: wmi handle
@@ -560,14 +529,14 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 		"reg_info_1: 0x%x reg_info_2: 0x%x, req->max_txpow: 0x%x "
 		"Tx SS %d, Rx SS %d, ldpc_rx: %d, cac %d, regd %d, HE ops: %d"
 		"req->dis_hw_ack: %d ", __func__, req->vdev_id,
-		chan->mhz, req->chan_mode, chan->info,
-		req->is_dfs, req->beacon_intval, cmd->dtim_period,
+		chan->mhz, req->channel.phy_mode, chan->info,
+		req->channel.dfs_set, req->beacon_intval, cmd->dtim_period,
 		chan->band_center_freq1, chan->band_center_freq2,
-		chan->reg_info_1, chan->reg_info_2, req->max_txpow,
+		chan->reg_info_1, chan->reg_info_2, req->channel.maxregpower,
 		req->preferred_tx_streams, req->preferred_rx_streams,
 		req->ldpc_rx_enabled, req->cac_duration_ms,
 		req->regdomain, req->he_ops,
-		req->dis_hw_ack);
+		req->disable_hw_ack);
 
 	if (req->is_restart) {
 		wmi_mtrace(WMI_VDEV_RESTART_REQUEST_CMDID, cmd->vdev_id, 0);
