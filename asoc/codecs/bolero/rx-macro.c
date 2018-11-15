@@ -1540,12 +1540,12 @@ static void rx_macro_hd2_control(struct snd_soc_codec *codec,
 
 	switch (interp_idx) {
 	case INTERP_HPHL:
-		hd2_scale_reg = BOLERO_CDC_RX_RX1_RX_PATH_SEC3;
-		hd2_enable_reg = BOLERO_CDC_RX_RX1_RX_PATH_CFG0;
+		hd2_scale_reg = BOLERO_CDC_RX_RX0_RX_PATH_SEC3;
+		hd2_enable_reg = BOLERO_CDC_RX_RX0_RX_PATH_CFG0;
 		break;
 	case INTERP_HPHR:
-		hd2_scale_reg = BOLERO_CDC_RX_RX2_RX_PATH_SEC3;
-		hd2_enable_reg = BOLERO_CDC_RX_RX2_RX_PATH_CFG0;
+		hd2_scale_reg = BOLERO_CDC_RX_RX1_RX_PATH_SEC3;
+		hd2_enable_reg = BOLERO_CDC_RX_RX1_RX_PATH_CFG0;
 		break;
 	}
 
@@ -1941,18 +1941,15 @@ static void rx_macro_hphdelay_lutbypass(struct snd_soc_codec *codec,
 					struct rx_macro_priv *rx_priv,
 					u16 interp_idx, int event)
 {
-	u8 hph_dly_mask = 0;
 	u16 hph_lut_bypass_reg = 0;
 	u16 hph_comp_ctrl7 = 0;
 
 	switch (interp_idx) {
 	case INTERP_HPHL:
-		hph_dly_mask = 1;
 		hph_lut_bypass_reg = BOLERO_CDC_RX_TOP_HPHL_COMP_LUT;
 		hph_comp_ctrl7 = BOLERO_CDC_RX_COMPANDER0_CTL7;
 		break;
 	case INTERP_HPHR:
-		hph_dly_mask = 2;
 		hph_lut_bypass_reg = BOLERO_CDC_RX_TOP_HPHR_COMP_LUT;
 		hph_comp_ctrl7 = BOLERO_CDC_RX_COMPANDER1_CTL7;
 		break;
@@ -1961,8 +1958,6 @@ static void rx_macro_hphdelay_lutbypass(struct snd_soc_codec *codec,
 	}
 
 	if (hph_lut_bypass_reg && SND_SOC_DAPM_EVENT_ON(event)) {
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_TEST0,
-				    hph_dly_mask, 0x0);
 		if (interp_idx == INTERP_HPHL) {
 			if (rx_priv->is_ear_mode_on)
 				snd_soc_update_bits(codec,
@@ -1982,8 +1977,6 @@ static void rx_macro_hphdelay_lutbypass(struct snd_soc_codec *codec,
 	}
 
 	if (hph_lut_bypass_reg && SND_SOC_DAPM_EVENT_OFF(event)) {
-		snd_soc_update_bits(codec, BOLERO_CDC_RX_CLSH_TEST0,
-				    hph_dly_mask, hph_dly_mask);
 		snd_soc_update_bits(codec, BOLERO_CDC_RX_RX0_RX_PATH_CFG1,
 					0x02, 0x00);
 		snd_soc_update_bits(codec, hph_lut_bypass_reg, 0x80, 0x00);
