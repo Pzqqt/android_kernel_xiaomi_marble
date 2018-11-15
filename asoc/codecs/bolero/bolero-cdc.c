@@ -344,6 +344,9 @@ int bolero_register_macro(struct device *dev, u16 macro_id,
 	priv->macro_params[macro_id].dev = dev;
 	priv->current_mclk_mux_macro[macro_id] =
 				bolero_mclk_mux_tbl[macro_id][MCLK_MUX0];
+	if (macro_id == TX_MACRO)
+		priv->macro_params[macro_id].reg_wake_irq = ops->reg_wake_irq;
+
 	priv->num_dais += ops->num_dais;
 	priv->num_macros_registered++;
 	priv->macros_supported[macro_id] = true;
@@ -403,6 +406,9 @@ void bolero_unregister_macro(struct device *dev, u16 macro_id)
 	priv->macro_params[macro_id].mclk_fn = NULL;
 	priv->macro_params[macro_id].event_handler = NULL;
 	priv->macro_params[macro_id].dev = NULL;
+	if (macro_id == TX_MACRO)
+		priv->macro_params[macro_id].reg_wake_irq = NULL;
+
 	priv->num_dais -= priv->macro_params[macro_id].num_dais;
 	priv->num_macros_registered--;
 
@@ -662,6 +668,37 @@ int bolero_info_create_codec_entry(struct snd_info_entry *codec_root,
 	return 0;
 }
 EXPORT_SYMBOL(bolero_info_create_codec_entry);
+
+/**
+ * bolero_register_wake_irq - Register wake irq of Tx macro
+ *
+ * @codec: codec ptr.
+ * @ipc_wakeup: bool to identify ipc_wakeup to be used or HW interrupt line.
+ *
+ * Return: 0 on success or negative error code on failure.
+ */
+int bolero_register_wake_irq(struct snd_soc_codec *codec, u32 ipc_wakeup)
+{
+	struct bolero_priv *priv = NULL;
+
+	if (!codec)
+		return -EINVAL;
+
+	priv = snd_soc_codec_get_drvdata(codec);
+	if (!priv)
+		return -EINVAL;
+
+	if (!bolero_is_valid_codec_dev(priv->dev)) {
+		dev_err(codec->dev, "%s: invalid codec\n", __func__);
+		return -EINVAL;
+	}
+
+	if (priv->macro_params[TX_MACRO].reg_wake_irq)
+		priv->macro_params[TX_MACRO].reg_wake_irq(codec, ipc_wakeup);
+
+	return 0;
+}
+EXPORT_SYMBOL(bolero_register_wake_irq);
 
 static int bolero_soc_codec_probe(struct snd_soc_codec *codec)
 {
