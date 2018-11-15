@@ -299,12 +299,13 @@
 		"It is used to configure different RTS profiles")
 
 /* <ini>
- * gFwDebugLogLevel: Takes values from enum DBGLOG_LOG_LVL,
- * make default value as DBGLOG_WARN to enable error and
- * warning logs by default.
+ * gFwDebugLogLevel - Firmware debug log level
  * @Min: 0
  * @Max: 255
  * @Default: 3
+ *
+ * This option controls the level of firmware debug log. Default value is
+ * DBGLOG_WARN, which is to enable error and warning logs.
  *
  * Related: None
  *
@@ -323,13 +324,13 @@
 		"enable error and warning logs by default")
 
 /* <ini>
- * gFwDebugLogType: takes values from enum dbglog_process_t,
- * make default value as DBGLOG_PROCESS_NET_RAW to give the
- * logs to net link since cnss_diag service is started at boot
- * time by default.
+ * gFwDebugLogType - Firmware debug log type
  * @Min: 0
  * @Max: 255
  * @Default: 3
+ *
+ * This option controls how driver is to give the firmware logs to net link
+ * when cnss_diag service is started.
  *
  * Related: None
  *

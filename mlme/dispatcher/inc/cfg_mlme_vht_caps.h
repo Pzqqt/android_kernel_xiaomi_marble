@@ -391,11 +391,12 @@
 
 /*
  * <ini>
- * gEnablePAID - Enables VHT paid feature
+ * gEnablePAID - VHT partial AID feature
  * @Min: 0
  * @Max: 1
  * @Default: 0
  *
+ * This option enables/disables VHT partial AID feature.
  * Related: NA
  *
  * Supported Feature: 11AC
@@ -411,11 +412,12 @@
 
 /*
  * <ini>
- * gEnableGID - Enables VHT gid feature
+ * gEnableGID - VHT Group ID feature
  * @Min: 0
  * @Max: 1
  * @Default: 0
  *
+ * This option enables/disables VHT Group ID feature.
  * Related: NA
  *
  * Supported Feature: 11AC
