@@ -2133,6 +2133,13 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 		break;
 	case SWR_DEVICE_UP:
 		dev_dbg(swrm->dev, "%s: swr master up called\n", __func__);
+		mutex_lock(&swrm->devlock);
+		if (!swrm->dev_up) {
+			dev_dbg(swrm->dev, "SSR not complete yet\n");
+			mutex_unlock(&swrm->devlock);
+			return -EBUSY;
+		}
+		mutex_unlock(&swrm->devlock);
 		mutex_lock(&swrm->mlock);
 		pm_runtime_mark_last_busy(&pdev->dev);
 		pm_runtime_get_sync(&pdev->dev);
