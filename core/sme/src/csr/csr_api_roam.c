@@ -72,10 +72,6 @@
 /* 120 seconds, for WPS */
 #define CSR_WAIT_FOR_WPS_KEY_TIMEOUT_PERIOD (120 * QDF_MC_TIMER_TO_SEC_UNIT)
 
-/* OBIWAN recommends [8 10]% : pick 9% */
-#define CSR_VCC_UL_MAC_LOSS_THRESHOLD 9
-/* OBIWAN recommends -85dBm */
-#define CSR_VCC_RSSI_THRESHOLD 80
 #define CSR_MIN_GLOBAL_STAT_QUERY_PERIOD   500  /* ms */
 #define CSR_MIN_GLOBAL_STAT_QUERY_PERIOD_IN_BMPS 2000   /* ms */
 #define CSR_MIN_TL_STAT_QUERY_PERIOD       500  /* ms */
@@ -2638,10 +2634,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		csr_assign_rssi_for_category(pMac,
 			pMac->mlme_cfg->lfr.first_scan_bucket_threshold,
 			pParam->bCatRssiOffset);
-		pMac->roam.configParam.vccRssiThreshold =
-			pParam->vccRssiThreshold;
-		pMac->roam.configParam.vccUlMacLossThreshold =
-			pParam->vccUlMacLossThreshold;
 		pMac->roam.configParam.statsReqPeriodicity =
 			pParam->statsReqPeriodicity;
 		pMac->roam.configParam.statsReqPeriodicityInPS =
@@ -2743,7 +2735,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			nRoamBeaconRssiWeight);
 		pMac->roam.configParam.addTSWhenACMIsOff =
 			pParam->addTSWhenACMIsOff;
-		pMac->scan.fEnableBypass11d = pParam->fEnableBypass11d;
 		pMac->scan.fEnableDFSChnlScan = pParam->fEnableDFSChnlScan;
 		pMac->scan.scanResultCfgAgingTime = pParam->scanCfgAgingTime;
 		pMac->roam.configParam.fScanTwice = pParam->fScanTwice;
@@ -2927,14 +2918,11 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->idle_time_conc = cfg_params->idle_time_conc;
 	pParam->nScanResultAgeCount = cfg_params->agingCount;
 	pParam->bCatRssiOffset = cfg_params->bCatRssiOffset;
-	pParam->vccRssiThreshold = cfg_params->vccRssiThreshold;
-	pParam->vccUlMacLossThreshold = cfg_params->vccUlMacLossThreshold;
 	pParam->nTxPowerCap = cfg_params->nTxPowerCap;
 	pParam->allow_tpc_from_ap = cfg_params->allow_tpc_from_ap;
 	pParam->statsReqPeriodicity = cfg_params->statsReqPeriodicity;
 	pParam->statsReqPeriodicityInPS = cfg_params->statsReqPeriodicityInPS;
 	pParam->addTSWhenACMIsOff = cfg_params->addTSWhenACMIsOff;
-	pParam->fEnableBypass11d = pMac->scan.fEnableBypass11d;
 	pParam->fEnableDFSChnlScan = pMac->scan.fEnableDFSChnlScan;
 	pParam->fScanTwice = cfg_params->fScanTwice;
 	pParam->fFirstScanOnly2GChnl = pMac->scan.fFirstScanOnly2GChnl;
@@ -17055,16 +17043,6 @@ static void csr_roam_link_up(tpAniSirGlobal pMac, struct qdf_mac_addr bssid)
 
 	sme_debug("WLAN link UP with AP= " MAC_ADDRESS_STR,
 		MAC_ADDR_ARRAY(bssid.bytes));
-	/* Check for user misconfig of RSSI trigger threshold */
-	pMac->roam.configParam.vccRssiThreshold =
-		(0 == pMac->roam.configParam.vccRssiThreshold) ?
-		CSR_VCC_RSSI_THRESHOLD :
-		pMac->roam.configParam.vccRssiThreshold;
-	/* Check for user misconfig of UL MAC Loss trigger threshold */
-	pMac->roam.configParam.vccUlMacLossThreshold =
-		(0 == pMac->roam.configParam.vccUlMacLossThreshold) ?
-		CSR_VCC_UL_MAC_LOSS_THRESHOLD : pMac->roam.configParam.
-		vccUlMacLossThreshold;
 	/* Indicate the neighbor roal algorithm about the connect indication */
 	csr_roam_get_session_id_from_bssid(pMac, &bssid,
 					   &sessionId);

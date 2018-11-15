@@ -1074,8 +1074,6 @@ typedef struct tagCsrConfigParam {
 	uint8_t fAllowMCCGODiffBI;
 	tCsr11dinfo Csr11dinfo;
 
-	uint16_t vccRssiThreshold;
-	uint32_t vccUlMacLossThreshold;
 	uint32_t nPassiveMaxChnTime;        /* in units of milliseconds */
 	uint32_t nActiveMaxChnTime;         /* in units of milliseconds */
 	uint32_t nInitialDwellTime;         /* in units of milliseconds */
@@ -1115,13 +1113,6 @@ typedef struct tagCsrConfigParam {
 	 * This is mandated by WMM-AC certification
 	 */
 	bool addTSWhenACMIsOff;
-	/*
-	 * Customer wants to start with an active scan based on the default
-	 * country code. This optimization will minimize the driver load to
-	 * association time. Based on this flag we will bypass the initial
-	 * passive scan needed for 11d to determine the country code & domain
-	 */
-	bool fEnableBypass11d;
 	/*
 	 * Customer wants to optimize the scan time. Avoiding scans(passive)
 	 * on DFS channels while swipping through both bands can save some time

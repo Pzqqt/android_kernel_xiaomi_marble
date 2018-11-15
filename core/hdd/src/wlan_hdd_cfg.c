@@ -577,20 +577,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_DISABLE_PACKET_FILTER_MIN,
 		     CFG_DISABLE_PACKET_FILTER_MAX),
 
-	REG_VARIABLE(CFG_VCC_RSSI_TRIGGER_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nVccRssiTrigger,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_VCC_RSSI_TRIGGER_DEFAULT,
-		     CFG_VCC_RSSI_TRIGGER_MIN,
-		     CFG_VCC_RSSI_TRIGGER_MAX),
-
-	REG_VARIABLE(CFG_VCC_UL_MAC_LOSS_THRESH_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nVccUlMacLossThreshold,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_VCC_UL_MAC_LOSS_THRESH_DEFAULT,
-		     CFG_VCC_UL_MAC_LOSS_THRESH_MIN,
-		     CFG_VCC_UL_MAC_LOSS_THRESH_MAX),
-
 	REG_VARIABLE(CFG_PASSIVE_MAX_CHANNEL_TIME_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, nPassiveMaxChnTime,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1219,13 +1205,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_MTRACE_MIN,
 		     CFG_ENABLE_MTRACE_MAX),
 #endif
-
-	REG_VARIABLE(CFG_ENABLE_BYPASS_11D_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enableBypass11d,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_BYPASS_11D_DEFAULT,
-		     CFG_ENABLE_BYPASS_11D_MIN,
-		     CFG_ENABLE_BYPASS_11D_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_DFS_CHNL_SCAN_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enableDFSChnlScan,
@@ -3966,9 +3945,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.nScanResultAgeCount = pConfig->ScanResultAgeCount;
 	smeConfig->csrConfig.AdHocChannel24 = pConfig->OperatingChannel;
 	smeConfig->csrConfig.bCatRssiOffset = pConfig->nRssiCatGap;
-	smeConfig->csrConfig.vccRssiThreshold = pConfig->nVccRssiTrigger;
-	smeConfig->csrConfig.vccUlMacLossThreshold =
-		pConfig->nVccUlMacLossThreshold;
 	smeConfig->csrConfig.nInitialDwellTime = pConfig->nInitialDwellTime;
 	smeConfig->csrConfig.initial_scan_no_dfs_chnl =
 					pConfig->initial_scan_no_dfs_chnl;
@@ -4022,7 +3998,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.Is11hSupportEnabled = pConfig->Is11hSupportEnabled;
 	smeConfig->csrConfig.nTxPowerCap = pConfig->nTxPowerCap;
 	smeConfig->csrConfig.allow_tpc_from_ap = pConfig->allow_tpc_from_ap;
-	smeConfig->csrConfig.fEnableBypass11d = pConfig->enableBypass11d;
 	smeConfig->csrConfig.fEnableDFSChnlScan = pConfig->enableDFSChnlScan;
 	smeConfig->csrConfig.nRoamPrefer5GHz = pConfig->nRoamPrefer5GHz;
 	smeConfig->csrConfig.nRoamIntraBand = pConfig->nRoamIntraBand;

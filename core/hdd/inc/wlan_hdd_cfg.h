@@ -2433,16 +2433,6 @@ enum hdd_dot11_mode {
 #define CFG_DISABLE_PACKET_FILTER_MAX		(1)
 #define CFG_DISABLE_PACKET_FILTER_DEFAULT	(1)
 
-#define CFG_VCC_RSSI_TRIGGER_NAME             "gVccRssiTrigger"
-#define CFG_VCC_RSSI_TRIGGER_MIN              (0)
-#define CFG_VCC_RSSI_TRIGGER_MAX              (80)
-#define CFG_VCC_RSSI_TRIGGER_DEFAULT          (80)
-
-#define CFG_VCC_UL_MAC_LOSS_THRESH_NAME       "gVccUlMacLossThresh"
-#define CFG_VCC_UL_MAC_LOSS_THRESH_MIN        (0)
-#define CFG_VCC_UL_MAC_LOSS_THRESH_MAX        (9)
-#define CFG_VCC_UL_MAC_LOSS_THRESH_DEFAULT    (9)
-
 /*
  * <ini>
  * gPassiveMaxChannelTimeConc - Maximum passive scan time in milliseconds.
@@ -3190,11 +3180,6 @@ enum station_keepalive_method {
 #define CFG_HW_FILTER_MODE_BITMAP_MIN		(0)
 #define CFG_HW_FILTER_MODE_BITMAP_MAX		(3)
 #define CFG_HW_FILTER_MODE_BITMAP_DEFAULT	(1)
-
-#define CFG_ENABLE_BYPASS_11D_NAME                 "gEnableBypass11d"
-#define CFG_ENABLE_BYPASS_11D_MIN                  (0)
-#define CFG_ENABLE_BYPASS_11D_MAX                  (1)
-#define CFG_ENABLE_BYPASS_11D_DEFAULT              (1)
 
 /*
  * gEnableDFSChnlScan - enable dfs channel scan.
@@ -6691,8 +6676,6 @@ struct hdd_config {
 	int32_t nhi_rssi_scan_rssi_ub;
 
 	/* Additional Handoff params */
-	uint16_t nVccRssiTrigger;
-	uint32_t nVccUlMacLossThreshold;
 	uint32_t nPassiveMaxChnTime;    /* in units of milliseconds */
 	uint32_t nActiveMaxChnTime;     /* in units of milliseconds */
 	uint32_t scan_probe_repeat_time;
@@ -6776,7 +6759,6 @@ struct hdd_config {
 #ifdef ENABLE_MTRACE_LOG
 	bool enable_mtrace;
 #endif
-	uint8_t enableBypass11d;
 	uint8_t enableDFSChnlScan;
 	uint8_t enable_dfs_pno_chnl_scan;
 	uint8_t ShortGI40MhzEnable;
