@@ -534,6 +534,10 @@ static int swrm_read(struct swr_master *master, u8 dev_num, u16 reg_addr,
 		dev_err(&master->dev, "%s: swrm is NULL\n", __func__);
 		return -EINVAL;
 	}
+	if (!dev_num) {
+		dev_err(&master->dev, "%s: invalid slave dev num\n", __func__);
+		return -EINVAL;
+	}
 	mutex_lock(&swrm->devlock);
 	if (!swrm->dev_up) {
 		mutex_unlock(&swrm->devlock);
@@ -542,11 +546,7 @@ static int swrm_read(struct swr_master *master, u8 dev_num, u16 reg_addr,
 	mutex_unlock(&swrm->devlock);
 
 	pm_runtime_get_sync(swrm->dev);
-	if (dev_num)
-		ret = swrm_cmd_fifo_rd_cmd(swrm, &val, dev_num, 0, reg_addr,
-					   len);
-	else
-		val = swr_master_read(swrm, reg_addr);
+	ret = swrm_cmd_fifo_rd_cmd(swrm, &val, dev_num, 0, reg_addr, len);
 
 	if (!ret)
 		*reg_val = (u8)val;
@@ -567,6 +567,10 @@ static int swrm_write(struct swr_master *master, u8 dev_num, u16 reg_addr,
 		dev_err(&master->dev, "%s: swrm is NULL\n", __func__);
 		return -EINVAL;
 	}
+	if (!dev_num) {
+		dev_err(&master->dev, "%s: invalid slave dev num\n", __func__);
+		return -EINVAL;
+	}
 	mutex_lock(&swrm->devlock);
 	if (!swrm->dev_up) {
 		mutex_unlock(&swrm->devlock);
@@ -575,10 +579,7 @@ static int swrm_write(struct swr_master *master, u8 dev_num, u16 reg_addr,
 	mutex_unlock(&swrm->devlock);
 
 	pm_runtime_get_sync(swrm->dev);
-	if (dev_num)
-		ret = swrm_cmd_fifo_wr_cmd(swrm, reg_val, dev_num, 0, reg_addr);
-	else
-		swr_master_write(swrm, reg_addr, reg_val);
+	ret = swrm_cmd_fifo_wr_cmd(swrm, reg_val, dev_num, 0, reg_addr);
 
 	pm_runtime_put_autosuspend(swrm->dev);
 	pm_runtime_mark_last_busy(swrm->dev);
