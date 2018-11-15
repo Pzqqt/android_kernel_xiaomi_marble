@@ -148,6 +148,15 @@ ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len);
 
 struct cdp_vdev *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id);
 
+/**
+ * ol_txrx_get_mon_vdev_from_pdev() - get monitor mode vdev from pdev
+ * @ppdev: the physical device the virtual device belongs to
+ *
+ * Return: vdev handle
+ *         NULL if not found.
+ */
+struct cdp_vdev *ol_txrx_get_mon_vdev_from_pdev(struct cdp_pdev *ppdev);
+
 void *ol_txrx_find_peer_by_addr(struct cdp_pdev *pdev,
 				uint8_t *peer_addr,
 				uint8_t *peer_id);

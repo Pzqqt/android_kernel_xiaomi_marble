@@ -1669,6 +1669,8 @@ ol_txrx_vdev_attach(struct cdp_pdev *ppdev,
 	qdf_status = qdf_event_create(&vdev->wait_delete_comp);
 	/* add this vdev into the pdev's list */
 	TAILQ_INSERT_TAIL(&pdev->vdev_list, vdev, vdev_list_elem);
+	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
+		pdev->monitor_vdev = vdev;
 
 	ol_txrx_dbg(
 		   "Created vdev %pK (%02x:%02x:%02x:%02x:%02x:%02x)\n",
@@ -5145,6 +5147,23 @@ struct cdp_vdev *ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id)
 }
 
 /**
+ * ol_txrx_get_mon_vdev_from_pdev() - get monitor mode vdev from pdev
+ * @ppdev: the physical device the virtual device belongs to
+ *
+ * Return: vdev handle
+ *            NULL if not found.
+ */
+struct cdp_vdev *ol_txrx_get_mon_vdev_from_pdev(struct cdp_pdev *ppdev)
+{
+	struct ol_txrx_pdev_t  *pdev = (struct ol_txrx_pdev_t *)ppdev;
+
+	if (qdf_unlikely(!pdev))
+		return NULL;
+
+	return (struct cdp_vdev *)pdev->monitor_vdev;
+}
+
+/**
  * ol_txrx_set_wisa_mode() - set wisa mode
  * @vdev: vdev handle
  * @enable: enable flag
@@ -5480,6 +5499,7 @@ static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_get_vdev_mac_addr = ol_txrx_get_vdev_mac_addr,
 	.txrx_get_vdev_from_vdev_id = ol_txrx_wrapper_get_vdev_from_vdev_id,
 	.txrx_get_ctrl_pdev_from_vdev = ol_txrx_get_ctrl_pdev_from_vdev,
+	.txrx_get_mon_vdev_from_pdev = ol_txrx_get_mon_vdev_from_pdev,
 	.txrx_mgmt_send_ext = ol_txrx_mgmt_send_ext,
 	.txrx_mgmt_tx_cb_set = ol_txrx_mgmt_tx_cb_set,
 	.txrx_data_tx_cb_set = ol_txrx_data_tx_cb_set,

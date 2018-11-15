@@ -121,11 +121,10 @@ int hdd_enable_monitor_mode(struct net_device *dev)
 {
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
 	hdd_enter_dev(dev);
 
 	return cdp_set_monitor_mode(soc,
-			(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
-			(struct cdp_pdev *)pdev, adapter->session_id), false);
+			(struct cdp_vdev *)cdp_get_mon_vdev_from_pdev(soc,
+			(struct cdp_pdev *)pdev), false);
 }

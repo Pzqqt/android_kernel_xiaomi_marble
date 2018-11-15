@@ -650,6 +650,9 @@ struct ol_txrx_pdev_t {
 	struct pktlog_dev_t *pl_dev;
 #endif /* #ifndef REMOVE_PKT_LOG */
 
+	/* Monitor mode interface*/
+	struct ol_txrx_vdev_t *monitor_vdev;
+
 	enum ol_sec_type sec_types[htt_num_sec_types];
 	/* standard frame type */
 	enum wlan_frm_fmt frame_format;

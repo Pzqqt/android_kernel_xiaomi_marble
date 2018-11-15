@@ -2457,8 +2457,8 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 	txrx_ops.rx.rx = hdd_mon_rx_packet_cbk;
 	hdd_monitor_set_rx_monitor_cb(&txrx_ops, hdd_rx_monitor_callback);
 	cdp_vdev_register(soc,
-		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
-		(struct cdp_pdev *)pdev, adapter->session_id),
+		(struct cdp_vdev *)cdp_get_mon_vdev_from_pdev(soc,
+		(struct cdp_pdev *)pdev),
 		adapter, (struct cdp_ctrl_objmgr_vdev *)adapter->vdev,
 		&txrx_ops);
 	/* peer is created wma_vdev_attach->wma_create_peer */
