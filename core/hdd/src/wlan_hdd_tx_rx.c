@@ -2802,4 +2802,9 @@ void hdd_dp_cfg_update(struct wlan_objmgr_psoc *psoc,
 	config->tx_orphan_enable = cfg_get(psoc, CFG_DP_TX_ORPHAN_ENABLE);
 	config->rx_mode = cfg_get(psoc, CFG_DP_RX_MODE);
 	hdd_set_rx_mode_value(hdd_ctx);
+	config->multicast_replay_filter =
+		cfg_get(psoc, CFG_DP_FILTER_MULTICAST_REPLAY);
+	config->rx_wakelock_timeout =
+		cfg_get(psoc, CFG_DP_RX_WAKELOCK_TIMEOUT);
+	config->num_dp_rx_threads = cfg_get(psoc, CFG_DP_NUM_DP_RX_THREADS);
 }

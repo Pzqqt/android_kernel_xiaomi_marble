@@ -4734,23 +4734,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_RESTART_BEACONING_ON_CH_AVOID_DEFAULT (CH_AVOID_RULE_RESTART)
 
 /*
- * <ini>
- * num_dp_rx_threads - Control to set the number of dp rx threads
- *
- * @Min: 1
- * @Max: 4
- * @Default: 1
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_NUM_DP_RX_THREADS_NAME     "num_dp_rx_threads"
-#define CFG_NUM_DP_RX_THREADS_MIN      (1)
-#define CFG_NUM_DP_RX_THREADS_MAX      (4)
-#define CFG_NUM_DP_RX_THREADS_DEFAULT  (1)
-
-/*
  * Support to start sap in indoor channel
  * Customer can config this item to enable/disable sap in indoor channel
  * Default: Disable
@@ -4810,43 +4793,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_SAP_TX_LEAKAGE_THRESHOLD_MIN     (100)
 #define CFG_SAP_TX_LEAKAGE_THRESHOLD_MAX     (1000)
 #define CFG_SAP_TX_LEAKAGE_THRESHOLD_DEFAULT (310)
-
-
-/*
- * Enable filtering of replayed multicast packets
- * In a typical infrastructure setup, it is quite normal to receive
- * replayed multicast packets. These packets may cause more harm than
- * help if not handled properly. Providing a configuration option
- * to enable filtering of such packets
- */
-#define CFG_FILTER_MULTICAST_REPLAY_NAME    "enable_multicast_replay_filter"
-#define CFG_FILTER_MULTICAST_REPLAY_MIN      (0)
-#define CFG_FILTER_MULTICAST_REPLAY_MAX      (1)
-#define CFG_FILTER_MULTICAST_REPLAY_DEFAULT  (1)
-
-/*
- * <ini>
- * rx_wakelock_timeout - Amount of time to hold wakelock for RX unicast packets
- * @Min: 0
- * @Max: 100
- * @Default: 50
- *
- * This ini item configures the amount of time, in milliseconds, that the driver
- * should prevent system power collapse after receiving an RX unicast packet.
- * A conigured value of 0 disables the RX Wakelock feature completely.
- *
- * Related: None.
- *
- * Supported Feature: RX Wakelock
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_RX_WAKELOCK_TIMEOUT_NAME     "rx_wakelock_timeout"
-#define CFG_RX_WAKELOCK_TIMEOUT_DEFAULT  (50)
-#define CFG_RX_WAKELOCK_TIMEOUT_MIN      (0)
-#define CFG_RX_WAKELOCK_TIMEOUT_MAX      (100)
 
 /*
  * <ini>
@@ -6757,7 +6703,6 @@ struct hdd_config {
 	uint32_t fine_time_meas_cap;
 	uint8_t max_scan_count;
 	bool etsi13_srd_chan_in_master_mode;
-	uint8_t num_dp_rx_threads;
 	uint32_t dual_mac_feature_disable;
 	uint8_t dbs_scan_selection[CFG_DBS_SCAN_PARAM_LENGTH];
 	uint32_t sta_sap_scc_on_dfs_chan;
@@ -6818,8 +6763,6 @@ struct hdd_config {
 	bool sap_force_11n_for_11ac;
 	bool go_force_11n_for_11ac;
 	uint16_t sap_tx_leakage_threshold;
-	bool multicast_replay_filter;
-	uint32_t rx_wakelock_timeout;
 	bool sap_internal_restart;
 	enum restart_beaconing_on_ch_avoid_rule
 		restart_beaconing_on_chan_avoid_event;
@@ -6952,6 +6895,9 @@ struct hdd_config {
 	/* CPU affinity mask for rx_thread */
 	uint32_t rx_thread_affinity_mask;
 	uint8_t cpu_map_list[CFG_DP_RPS_RX_QUEUE_CPU_MAP_LIST_LEN];
+	bool multicast_replay_filter;
+	uint32_t rx_wakelock_timeout;
+	uint8_t num_dp_rx_threads;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

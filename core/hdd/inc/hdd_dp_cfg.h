@@ -752,6 +752,61 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"Control to decide rx mode for packet procesing")
 
+/*
+ * <ini>
+ *
+ * In a typical infrastructure setup, it is quite normal to receive
+ * replayed multicast packets. These packets may cause more harm than
+ * help if not handled properly. Providing a configuration option
+ * to enable filtering of such packets
+ *
+ * </ini>
+ */
+#define CFG_DP_FILTER_MULTICAST_REPLAY \
+	CFG_INI_BOOL("enable_multicast_replay_filter", \
+	true, "Enable filtering of replayed multicast packets")
+
+/*
+ * <ini>
+ * rx_wakelock_timeout - Amount of time to hold wakelock for RX unicast packets
+ * @Min: 0
+ * @Max: 100
+ * @Default: 50
+ *
+ * This ini item configures the amount of time, in milliseconds, that the driver
+ * should prevent system power collapse after receiving an RX unicast packet.
+ * A conigured value of 0 disables the RX Wakelock feature completely.
+ *
+ * Related: None.
+ *
+ * Supported Feature: RX Wakelock
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_DP_RX_WAKELOCK_TIMEOUT \
+	CFG_INI_UINT("rx_wakelock_timeout", \
+	0, 100, 50, CFG_VALUE_OR_DEFAULT, \
+	"Amount of time to hold wakelock for RX unicast packets")
+
+/*
+ * <ini>
+ * num_dp_rx_threads - Control to set the number of dp rx threads
+ *
+ * @Min: 1
+ * @Max: 4
+ * @Default: 1
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DP_NUM_DP_RX_THREADS \
+	CFG_INI_UINT("num_dp_rx_threads", \
+	1, 4, 1, CFG_VALUE_OR_DEFAULT, \
+	"Control to set the number of dp rx threads")
+
 #define CFG_DP_CE_SERVICE_MAX_RX_IND_FLUSH \
 		CFG_INI_UINT("ce_service_max_rx_ind_flush", \
 		1, 32, 32, \
@@ -818,6 +873,9 @@
 	CFG(CFG_DP_CE_SERVICE_MAX_RX_IND_FLUSH) \
 	CFG(CFG_DP_CE_SERVICE_MAX_YIELD_TIME) \
 	CFG(CFG_DP_ENABLE_TCP_PARAM_UPDATE) \
+	CFG(CFG_DP_FILTER_MULTICAST_REPLAY) \
+	CFG(CFG_DP_RX_WAKELOCK_TIMEOUT) \
+	CFG(CFG_DP_NUM_DP_RX_THREADS) \
 	CFG_DP_ENABLE_FASTPATH_ALL
 #define CFG_HDD_DP_ALL \
 	CFG_HDD_DP \
