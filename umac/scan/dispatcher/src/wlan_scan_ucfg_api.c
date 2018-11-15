@@ -1727,8 +1727,10 @@ is_chan_enabled_for_scan(struct regulatory_channel *reg_chan,
 			((reg_chan->center_freq < low_2g) ||
 			(reg_chan->center_freq > high_2g)))
 		return false;
-	else if ((reg_chan->center_freq < low_5g) ||
-			(reg_chan->center_freq > high_5g))
+	else if ((util_scan_scm_chan_to_band(reg_chan->chan_num) ==
+				WLAN_BAND_5_GHZ) &&
+		 ((reg_chan->center_freq < low_5g) ||
+		  (reg_chan->center_freq > high_5g)))
 		return false;
 
 	return true;
