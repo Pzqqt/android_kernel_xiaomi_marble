@@ -58,7 +58,7 @@ enum cfg_fallback_behavior {
 #define CFG_INI_UINT(name, min, max, def, fallback, desc) \
 	(INI, UINT, uint32_t, name, min, max, fallback, desc, def)
 #define CFG_INI_BOOL(name, def, desc) \
-	(INI, BOOL, bool, name, -1, -1, -1, desc, def)
+	(INI, BOOL, bool, name, false, true, -1, desc, def)
 #define CFG_INI_STRING(name, min_len, max_len, def, desc) \
 	(INI, STRING, char *, name, min_len, max_len, -1, desc, def)
 #define CFG_INI_MAC(name, def, desc) \

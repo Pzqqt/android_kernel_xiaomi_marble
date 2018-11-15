@@ -240,6 +240,8 @@ cfg_string_in_range(const char *value, qdf_size_t min_len, qdf_size_t max_len)
 #define __cfg_UINT_in_range(value, min, max) (value >= min && value <= max)
 #define __cfg_STRING_in_range(value, min_len, max_len) \
 	cfg_string_in_range(value, min_len, max_len)
+#define __cfg_BOOL_in_range(value, min, max) \
+	((value == min) || (value == max))
 
 #define __cfg_in_range(id, value, mtype) \
 	__cfg_ ## mtype ## _in_range(value, cfg_min(id), cfg_max(id))
