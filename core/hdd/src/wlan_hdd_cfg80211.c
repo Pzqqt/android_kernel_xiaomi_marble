@@ -5820,6 +5820,18 @@ static int hdd_config_tx_fail_count(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_config_channel_avoidance_ind(struct hdd_adapter *adapter,
+					    const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t set_value;
+
+	set_value = nla_get_u8(attr);
+	hdd_debug("set_value: %d", set_value);
+
+	return hdd_enable_disable_ca_event(hdd_ctx, set_value);
+}
+
 static int hdd_config_guard_time(struct hdd_adapter *adapter,
 				 const struct nlattr *attr)
 {
@@ -5940,6 +5952,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_propagation_abs_delay},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT,
 	 hdd_config_tx_fail_count},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_AVOIDANCE_IND,
+	 hdd_config_channel_avoidance_ind},
 };
 
 /**
@@ -6053,7 +6067,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	int errno;
 	int ret;
 	int ret_val = 0;
-	uint8_t set_value;
 	QDF_STATUS status;
 	int attr_len;
 	int access_policy = 0;
@@ -6150,13 +6163,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 			hdd_err("Failed to set vendor ie and access policy.");
 			return -EINVAL;
 		}
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_AVOIDANCE_IND]) {
-		set_value = nla_get_u8(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_AVOIDANCE_IND]);
-		hdd_debug("set_value: %d", set_value);
-		ret_val = hdd_enable_disable_ca_event(hdd_ctx, set_value);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION] ||
