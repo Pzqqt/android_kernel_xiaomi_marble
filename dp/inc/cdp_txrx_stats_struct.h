@@ -307,6 +307,7 @@ struct cdp_tx_stats {
 	uint32_t failed_retry_count;
 	uint32_t retry_count;
 	uint32_t multiple_retry_count;
+	uint32_t last_tx_rate_used;
 };
 
 /* struct cdp_rx_stats - rx Level Stats
