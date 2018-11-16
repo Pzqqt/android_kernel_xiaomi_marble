@@ -5412,6 +5412,7 @@ static struct snd_soc_dai_link msm_tavil_fe_dai_links[] = {
 		.codec_name = "tavil_codec",
 		.codec_dai_name = "tavil_rx2",
 		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
 		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
 		.ops = &msm_slimbus_2_be_ops,
 	},
