@@ -4784,7 +4784,7 @@ QDF_STATUS wma_get_roam_scan_stats(WMA_HANDLE handle,
 
 void wma_remove_peer_on_add_bss_failure(tpAddBssParams add_bss_params)
 {
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	tp_wma_handle wma;
 	struct cdp_pdev *pdev;
 	void *peer = NULL;
 	uint8_t peer_id;
@@ -4793,21 +4793,26 @@ void wma_remove_peer_on_add_bss_failure(tpAddBssParams add_bss_params)
 	WMA_LOGE("%s: ADD BSS failure %d", __func__, add_bss_params->status);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (NULL == pdev)
+	if (!pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
+		return;
+	}
 
-	if (pdev)
-		peer = cdp_peer_find_by_addr(soc, pdev,
-					     add_bss_params->bssId,
-					     &peer_id);
-
-	if (!peer)
+	peer = cdp_peer_find_by_addr(soc, pdev, add_bss_params->bssId,
+				     &peer_id);
+	if (!peer) {
 		WMA_LOGE("%s Failed to find peer %pM",
 			 __func__, add_bss_params->bssId);
+		return;
+	}
 
-	if (peer)
-		wma_remove_peer(wma, add_bss_params->bssId,
-				add_bss_params->bssIdx, peer, false);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s wma handle is NULL", __func__);
+		return;
+	}
+	wma_remove_peer(wma, add_bss_params->bssId, add_bss_params->bssIdx,
+			peer, false);
 }
 
 #ifdef CONFIG_VDEV_SM
