@@ -5799,6 +5799,27 @@ static int hdd_config_propagation_abs_delay(struct hdd_adapter *adapter,
 				   abs_delay, PDEV_CMD);
 }
 
+static int hdd_config_tx_fail_count(struct hdd_adapter *adapter,
+				    const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint32_t tx_fail_count;
+	QDF_STATUS status;
+
+	tx_fail_count = nla_get_u32(attr);
+	if (!tx_fail_count)
+		return 0;
+
+	status = sme_update_tx_fail_cnt_threshold(hdd_ctx->mac_handle,
+						  adapter->session_id,
+						  tx_fail_count);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("sme_update_tx_fail_cnt_threshold (err=%d)",
+			status);
+
+	return qdf_status_to_os_return(status);
+}
+
 static int hdd_config_guard_time(struct hdd_adapter *adapter,
 				 const struct nlattr *attr)
 {
@@ -5917,6 +5938,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_propagation_delay},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_ABS_DELAY,
 	 hdd_config_propagation_abs_delay},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT,
+	 hdd_config_tx_fail_count},
 };
 
 /**
@@ -6038,7 +6061,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	bool vendor_ie_present = false, access_policy_present = false;
 	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS qdf_status;
-	uint32_t tx_fail_count;
 	uint32_t ant_div_usrcfg;
 	uint32_t antdiv_enable, antdiv_chain;
 	uint32_t antdiv_selftest, antdiv_selftest_intvl;
@@ -6110,20 +6132,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		access_policy_present = true;
 		hdd_debug("Access policy present. access_policy %d",
 			access_policy);
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT]) {
-		tx_fail_count = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT]);
-		if (tx_fail_count) {
-			status = sme_update_tx_fail_cnt_threshold(mac_handle,
-					adapter->session_id, tx_fail_count);
-			if (QDF_STATUS_SUCCESS != status) {
-				hdd_err("sme_update_tx_fail_cnt_threshold (err=%d)",
-					status);
-				return -EINVAL;
-			}
-		}
 	}
 
 	if (vendor_ie_present && access_policy_present) {
