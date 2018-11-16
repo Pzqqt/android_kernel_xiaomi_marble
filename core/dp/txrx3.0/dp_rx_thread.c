@@ -328,10 +328,8 @@ static int dp_rx_thread_sub_loop(struct dp_rx_thread *rx_thread, bool *shutdown)
 			dp_debug("received suspend ind (%s) id %d pid %d",
 				 qdf_get_current_comm(), rx_thread->id,
 				 qdf_get_current_pid());
-			qdf_spin_lock(&rx_thread->lock);
 			qdf_event_reset(&rx_thread->resume_event);
 			qdf_event_set(&rx_thread->suspend_event);
-			qdf_spin_unlock(&rx_thread->lock);
 			dp_debug("waiting for resume (%s) id %d pid %d",
 				 qdf_get_current_comm(), rx_thread->id,
 				 qdf_get_current_pid());

@@ -84,7 +84,6 @@ struct dp_rx_thread_stats {
  */
 struct dp_rx_thread {
 	qdf_thread_t *task;
-	qdf_spinlock_t lock;
 	qdf_event_t start_event;
 	qdf_event_t suspend_event;
 	qdf_event_t resume_event;
