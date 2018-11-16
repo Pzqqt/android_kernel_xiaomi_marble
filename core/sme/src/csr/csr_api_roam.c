@@ -15570,7 +15570,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			csr_join_req->vht_config.mu_beam_formee = 0;
 
 		csr_join_req->enableVhtpAid =
-			pMac->mlme_cfg->vht_caps.vht_cap_info.enable_gid;
+			pMac->mlme_cfg->vht_caps.vht_cap_info.enable_paid;
 
 		csr_join_req->enableVhtGid =
 			pMac->mlme_cfg->vht_caps.vht_cap_info.enable_gid;
