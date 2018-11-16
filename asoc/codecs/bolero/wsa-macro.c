@@ -766,8 +766,7 @@ static int wsa_macro_mclk_enable(struct wsa_macro_priv *wsa_priv,
 
 	mutex_lock(&wsa_priv->mclk_lock);
 	if (mclk_enable) {
-		wsa_priv->wsa_mclk_users++;
-		if (wsa_priv->wsa_mclk_users == 1) {
+		if (wsa_priv->wsa_mclk_users == 0) {
 			ret = bolero_request_clock(wsa_priv->dev,
 					WSA_MACRO, MCLK_MUX0, true);
 			if (ret < 0) {
@@ -790,7 +789,14 @@ static int wsa_macro_mclk_enable(struct wsa_macro_priv *wsa_priv,
 				BOLERO_CDC_WSA_CLK_RST_CTRL_FS_CNT_CONTROL,
 				0x01, 0x01);
 		}
+		wsa_priv->wsa_mclk_users++;
 	} else {
+		if (wsa_priv->wsa_mclk_users <= 0) {
+			dev_err(wsa_priv->dev, "%s: clock already disabled\n",
+			__func__);
+			wsa_priv->wsa_mclk_users = 0;
+			goto exit;
+		}
 		wsa_priv->wsa_mclk_users--;
 		if (wsa_priv->wsa_mclk_users == 0) {
 			regmap_update_bits(regmap,
@@ -2435,6 +2441,7 @@ static int wsa_swrm_clock(void *handle, bool enable)
 {
 	struct wsa_macro_priv *wsa_priv = (struct wsa_macro_priv *) handle;
 	struct regmap *regmap = dev_get_regmap(wsa_priv->dev->parent, NULL);
+	int ret = 0;
 
 	if (regmap == NULL) {
 		dev_err(wsa_priv->dev, "%s: regmap is NULL\n", __func__);
@@ -2446,9 +2453,14 @@ static int wsa_swrm_clock(void *handle, bool enable)
 	dev_dbg(wsa_priv->dev, "%s: swrm clock %s\n",
 		__func__, (enable ? "enable" : "disable"));
 	if (enable) {
-		wsa_priv->swr_clk_users++;
-		if (wsa_priv->swr_clk_users == 1) {
-			wsa_macro_mclk_enable(wsa_priv, 1, true);
+		if (wsa_priv->swr_clk_users == 0) {
+			ret = wsa_macro_mclk_enable(wsa_priv, 1, true);
+			if (ret < 0) {
+				dev_err(wsa_priv->dev,
+					"%s: wsa request clock enable failed\n",
+					__func__);
+				goto exit;
+			}
 			regmap_update_bits(regmap,
 				BOLERO_CDC_WSA_CLK_RST_CTRL_SWR_CONTROL,
 				0x01, 0x01);
@@ -2458,7 +2470,14 @@ static int wsa_swrm_clock(void *handle, bool enable)
 			msm_cdc_pinctrl_select_active_state(
 						wsa_priv->wsa_swr_gpio_p);
 		}
+		wsa_priv->swr_clk_users++;
 	} else {
+		if (wsa_priv->swr_clk_users <= 0) {
+			dev_err(wsa_priv->dev, "%s: clock already disabled\n",
+			__func__);
+			wsa_priv->swr_clk_users = 0;
+			goto exit;
+		}
 		wsa_priv->swr_clk_users--;
 		if (wsa_priv->swr_clk_users == 0) {
 			regmap_update_bits(regmap,
@@ -2471,8 +2490,9 @@ static int wsa_swrm_clock(void *handle, bool enable)
 	}
 	dev_dbg(wsa_priv->dev, "%s: swrm clock users %d\n",
 		__func__, wsa_priv->swr_clk_users);
+exit:
 	mutex_unlock(&wsa_priv->swr_clk_lock);
-	return 0;
+	return ret;
 }
 
 static int wsa_macro_init(struct snd_soc_codec *codec)
