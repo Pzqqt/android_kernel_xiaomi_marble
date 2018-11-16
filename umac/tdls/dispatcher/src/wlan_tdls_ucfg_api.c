@@ -825,7 +825,8 @@ QDF_STATUS ucfg_tdls_notify_sta_connect(
 
 	notify = qdf_mem_malloc(sizeof(*notify));
 	if (!notify) {
-		wlan_objmgr_vdev_release_ref(notify->vdev, WLAN_TDLS_NB_ID);
+		wlan_objmgr_vdev_release_ref(notify_info->vdev,
+					     WLAN_TDLS_NB_ID);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 

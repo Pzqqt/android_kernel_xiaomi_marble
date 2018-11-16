@@ -1123,10 +1123,10 @@ int tdls_set_tdls_offchannelmode(struct wlan_objmgr_vdev *vdev,
 
 static QDF_STATUS tdls_delete_all_tdls_peers_flush_cb(struct scheduler_msg *msg)
 {
-	if (msg && msg->bodyptr)
+	if (msg && msg->bodyptr) {
 		qdf_mem_free(msg->bodyptr);
-
-	msg->bodyptr = NULL;
+		msg->bodyptr = NULL;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
