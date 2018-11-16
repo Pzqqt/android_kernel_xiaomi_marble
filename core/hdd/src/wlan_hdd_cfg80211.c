@@ -6140,6 +6140,41 @@ static int hdd_config_latency_level(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_config_disable_fils(struct hdd_adapter *adapter,
+				   const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t disable_fils;
+	bool enabled;
+	QDF_STATUS status;
+
+	/* ignore unless in STA mode */
+	if (adapter->device_mode != QDF_STA_MODE)
+		return 0;
+
+	disable_fils = nla_get_u8(attr);
+	hdd_debug("%u", disable_fils);
+
+	enabled = !disable_fils;
+	status = ucfg_mlme_set_fils_enabled_info(hdd_ctx->psoc, enabled);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("could not set fils enabled info, %d", status);
+
+	status = ucfg_mlme_set_enable_bcast_probe_rsp(hdd_ctx->psoc, enabled);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("could not set enable bcast probe resp info, %d",
+			status);
+
+	status = wma_cli_set_command(adapter->session_id,
+				     WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE,
+				     !disable_fils, VDEV_CMD);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("failed to set enable bcast probe resp, %d",
+			status);
+
+	return qdf_status_to_os_return(status);
+}
+
 /**
  * typedef independent_setter_fn - independent attribute handler
  * @adapter: The adapter being configured
@@ -6218,6 +6253,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_total_beacon_miss_count},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL,
 	 hdd_config_latency_level},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_DISABLE_FILS,
+	 hdd_config_disable_fils},
 };
 
 /**
@@ -6513,36 +6550,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_wifi_set_rx_blocksize(hdd_ctx, adapter, tb);
 	if (ret_val != 0)
 		return ret_val;
-
-	if (adapter->device_mode == QDF_STA_MODE &&
-	    tb[QCA_WLAN_VENDOR_ATTR_CONFIG_DISABLE_FILS]) {
-		uint8_t disable_fils;
-		bool value;
-
-		disable_fils = nla_get_u8(tb[
-			QCA_WLAN_VENDOR_ATTR_CONFIG_DISABLE_FILS]);
-		hdd_debug("Set disable_fils - %d", disable_fils);
-		value = !disable_fils;
-
-		qdf_status = ucfg_mlme_set_fils_enabled_info(hdd_ctx->psoc,
-							     value);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
-			hdd_err("could not set fils enabled info");
-
-		qdf_status = ucfg_mlme_set_enable_bcast_probe_rsp(hdd_ctx->psoc,
-								  value);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
-			hdd_err("could not set enable bcast probe resp info");
-
-		qdf_status = wma_cli_set_command(
-				(int)adapter->session_id,
-				(int)WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE,
-				!disable_fils, VDEV_CMD);
-		if (qdf_status != QDF_STATUS_SUCCESS) {
-			hdd_err("failed to set enable bcast probe resp");
-			ret_val = -EINVAL;
-		}
-	}
 
 	ucfg_mlme_get_force_rsne_override(hdd_ctx->psoc, &b_value);
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RSN_IE] && b_value) {
