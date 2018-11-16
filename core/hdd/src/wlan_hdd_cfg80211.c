@@ -5973,6 +5973,24 @@ static int hdd_config_ant_div_probe_dwell_time(struct hdd_adapter *adapter,
 	return errno;
 }
 
+static int hdd_config_ant_div_chain(struct hdd_adapter *adapter,
+				    const struct nlattr *attr)
+{
+	uint32_t antdiv_chain;
+	int errno;
+
+	antdiv_chain = nla_get_u32(attr);
+	hdd_debug("antdiv_chain: %d", antdiv_chain);
+
+	errno = wma_cli_set_command(adapter->session_id,
+				    WMI_PDEV_PARAM_FORCE_CHAIN_ANT,
+				    antdiv_chain, PDEV_CMD);
+	if (errno)
+		hdd_err("Failed to set chain, %d", errno);
+
+	return errno;
+}
+
 static int hdd_config_ignore_assoc_disallowed(struct hdd_adapter *adapter,
 					      const struct nlattr *attr)
 {
@@ -6074,6 +6092,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_ant_div_snr_diff},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_PROBE_DWELL_TIME,
 	 hdd_config_ant_div_probe_dwell_time},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_CHAIN,
+	 hdd_config_ant_div_chain},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED,
 	 hdd_config_ignore_assoc_disallowed},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_RESTRICT_OFFCHANNEL,
@@ -6199,7 +6219,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS qdf_status;
 	uint32_t ant_div_usrcfg;
-	uint32_t antdiv_chain;
 	uint32_t antdiv_selftest, antdiv_selftest_intvl;
 	uint8_t bmiss_bcnt;
 	uint16_t latency_level;
@@ -6379,19 +6398,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_wifi_set_rx_blocksize(hdd_ctx, adapter, tb);
 	if (ret_val != 0)
 		return ret_val;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_CHAIN]) {
-		antdiv_chain = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_CHAIN]);
-		hdd_debug("antdiv_chain: %d", antdiv_chain);
-		ret_val = wma_cli_set_command((int)adapter->session_id,
-					(int)WMI_PDEV_PARAM_FORCE_CHAIN_ANT,
-					antdiv_chain, PDEV_CMD);
-		if (ret_val) {
-			hdd_err("Failed to set antdiv_chain");
-			return ret_val;
-		}
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST]) {
 		antdiv_selftest = nla_get_u32(
