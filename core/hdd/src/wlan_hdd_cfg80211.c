@@ -5216,6 +5216,8 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_MGMT_RETRY] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_CTRL_RETRY] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_ABS_DELAY] = {
+		.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT] = {.type = NLA_U32 },
 	[ANT_DIV_PROBE_PERIOD] = {.type = NLA_U32},
 	[ANT_DIV_STAY_PERIOD] = {.type = NLA_U32},
@@ -5784,6 +5786,19 @@ static int hdd_config_propagation_delay(struct hdd_adapter *adapter,
 				    abs_delay, PDEV_CMD);
 }
 
+static int hdd_config_propagation_abs_delay(struct hdd_adapter *adapter,
+					    const struct nlattr *attr)
+{
+	uint32_t abs_delay;
+	int param_id;
+
+	abs_delay = nla_get_u32(attr);
+	param_id = WMI_PDEV_PARAM_PROPAGATION_DELAY;
+
+	return wma_cli_set_command(adapter->session_id, param_id,
+				   abs_delay, PDEV_CMD);
+}
+
 static int hdd_config_guard_time(struct hdd_adapter *adapter,
 				 const struct nlattr *attr)
 {
@@ -5900,6 +5915,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_ctrl_retry},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY,
 	 hdd_config_propagation_delay},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_ABS_DELAY,
+	 hdd_config_propagation_abs_delay},
 };
 
 /**
@@ -6021,8 +6038,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	bool vendor_ie_present = false, access_policy_present = false;
 	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS qdf_status;
-	uint32_t abs_delay;
-	int param_id;
 	uint32_t tx_fail_count;
 	uint32_t ant_div_usrcfg;
 	uint32_t antdiv_enable, antdiv_chain;
@@ -6095,14 +6110,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		access_policy_present = true;
 		hdd_debug("Access policy present. access_policy %d",
 			access_policy);
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_ABS_DELAY]) {
-		abs_delay = nla_get_u8(tb[
-			QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_ABS_DELAY]);
-		param_id = WMI_PDEV_PARAM_PROPAGATION_DELAY;
-		ret_val = wma_cli_set_command(adapter->session_id, param_id,
-					      abs_delay, PDEV_CMD);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT]) {
