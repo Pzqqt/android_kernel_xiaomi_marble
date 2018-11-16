@@ -6064,6 +6064,49 @@ static int hdd_config_restrict_offchannel(struct hdd_adapter *adapter,
 						       restrict_offchan);
 }
 
+static int hdd_config_total_beacon_miss_count(struct hdd_adapter *adapter,
+					      const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t first_miss_count;
+	uint8_t final_miss_count;
+	uint8_t total_miss_count;
+	QDF_STATUS status;
+
+	total_miss_count = nla_get_u8(attr);
+	ucfg_mlme_get_roam_bmiss_first_bcnt(hdd_ctx->psoc,
+					    &first_miss_count);
+	if (total_miss_count <= first_miss_count) {
+		hdd_err("Total %u needs to exceed first %u",
+			total_miss_count, first_miss_count);
+		return -EINVAL;
+	}
+
+	final_miss_count = total_miss_count - first_miss_count;
+
+	hdd_debug("First count %u, final count %u",
+		  first_miss_count, final_miss_count);
+
+	/*****
+	 * TODO: research why is 0 being passed for session ID???
+	 */
+	status = sme_set_roam_bmiss_final_bcnt(hdd_ctx->mac_handle,
+					       0,
+					       final_miss_count);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to set final count, status %u", status);
+		return qdf_status_to_os_return(status);
+	}
+
+	status = sme_set_bmiss_bcnt(adapter->session_id,
+				    first_miss_count,
+				    final_miss_count);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set count, status %u", status);
+
+	return qdf_status_to_os_return(status);
+}
+
 /**
  * typedef independent_setter_fn - independent attribute handler
  * @adapter: The adapter being configured
@@ -6138,6 +6181,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_ignore_assoc_disallowed},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_RESTRICT_OFFCHANNEL,
 	 hdd_config_restrict_offchannel},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_TOTAL_BEACON_MISS_COUNT,
+	 hdd_config_total_beacon_miss_count},
 };
 
 /**
@@ -6259,12 +6304,9 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS qdf_status;
 	uint32_t ant_div_usrcfg;
-	uint8_t bmiss_bcnt;
 	uint16_t latency_level;
 	mac_handle_t mac_handle;
 	bool b_value;
-	uint8_t bmiss_first_bcnt;
-	uint8_t bmiss_final_bcnt;
 
 	hdd_enter_dev(dev);
 	qdf_mem_zero(&request, sizeof(request));
@@ -6437,41 +6479,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_wifi_set_rx_blocksize(hdd_ctx, adapter, tb);
 	if (ret_val != 0)
 		return ret_val;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TOTAL_BEACON_MISS_COUNT]) {
-		bmiss_bcnt = nla_get_u8(
-		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TOTAL_BEACON_MISS_COUNT]);
-		ucfg_mlme_get_roam_bmiss_first_bcnt(hdd_ctx->psoc,
-						    &bmiss_first_bcnt);
-		ucfg_mlme_get_roam_bmiss_final_bcnt(hdd_ctx->psoc,
-						    &bmiss_final_bcnt);
-		if (bmiss_first_bcnt < bmiss_bcnt) {
-			bmiss_final_bcnt = bmiss_bcnt - bmiss_first_bcnt;
-			hdd_debug("Bmiss first cnt(%d), Bmiss final cnt(%d)",
-				bmiss_first_bcnt,
-				bmiss_final_bcnt);
-			ret_val = sme_set_roam_bmiss_final_bcnt(mac_handle,
-				0, bmiss_final_bcnt);
-
-			if (ret_val) {
-				hdd_err("Failed to set bmiss final Bcnt");
-				return ret_val;
-			}
-
-			ret_val = sme_set_bmiss_bcnt(adapter->session_id,
-				bmiss_first_bcnt,
-				bmiss_final_bcnt);
-			if (ret_val) {
-				hdd_err("Failed to set bmiss Bcnt");
-				return ret_val;
-			}
-		} else {
-			hdd_err("Bcnt(%d) needs to exceed BmissFirstBcnt(%d)",
-				bmiss_bcnt,
-				bmiss_first_bcnt);
-			return -EINVAL;
-		}
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL]) {
 		latency_level = nla_get_u16(
