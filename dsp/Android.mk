@@ -3,14 +3,6 @@
 # Assume no targets will be supported
 
 # Check if this driver needs be built for current target
-ifeq ($(call is-board-platform,sdm845),true)
-AUDIO_SELECT  := CONFIG_SND_SOC_SDM845=m
-endif
-
-ifeq ($(call is-board-platform-in-list,msm8953 sdm670 qcs605),true)
-AUDIO_SELECT  := CONFIG_SND_SOC_SDM670=m
-endif
-
 ifeq ($(call is-board-platform,msmnile),true)
 AUDIO_SELECT  := CONFIG_SND_SOC_SM8150=m
 endif
@@ -21,7 +13,7 @@ endif
 
 AUDIO_CHIPSET := audio
 # Build/Package only in case of supported target
-ifeq ($(call is-board-platform-in-list,msm8953 sdm845 sdm670 qcs605 msmnile $(MSMSTEPPE) $(TRINKET)),true)
+ifeq ($(call is-board-platform-in-list,msmnile $(MSMSTEPPE) $(TRINKET)),true)
 
 LOCAL_PATH := $(call my-dir)
 

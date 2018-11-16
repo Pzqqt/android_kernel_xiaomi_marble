@@ -22,8 +22,6 @@
 #include "wcd9335_irq.h"
 #include <asoc/wcd934x_registers.h>
 #include "wcd934x/wcd934x_irq.h"
-#include <asoc/wcd9360-registers.h>
-#include "wcd9360/wcd9360-irq.h"
 
 /* wcd9335 interrupt table  */
 static const struct intr_data wcd9335_intr_table[] = {
@@ -86,25 +84,6 @@ static const struct intr_data wcd934x_intr_table[] = {
 	{WCD934X_IRQ_MAD_ULTRASOUND, false},
 	{WCD934X_IRQ_VBAT_ATTACK, false},
 	{WCD934X_IRQ_VBAT_RESTORE, false},
-};
-
-static const struct intr_data wcd9360_intr_table[] = {
-	{WCD9XXX_IRQ_SLIMBUS, false},
-	{WCD9360_IRQ_MISC, false},
-	{WCD9360_IRQ_LDO_RXTX_SCD, false},
-	{WCD9360_IRQ_EAR_PA_SCD, false},
-	{WCD9360_IRQ_AUX_PA_SCD, false},
-	{WCD9360_IRQ_EAR_PA_CNP_COMPLETE, false},
-	{WCD9360_IRQ_AUX_PA_CNP_COMPLETE, false},
-	{WCD9360_IRQ_RESERVED_3, false},
-	{WCD9360_IRQ_SOUNDWIRE, false},
-	{WCD9360_IRQ_RCO_ERROR, false},
-	{WCD9360_IRQ_CPE_ERROR, false},
-	{WCD9360_IRQ_MAD_AUDIO, false},
-	{WCD9360_IRQ_MAD_BEACON, false},
-	{WCD9360_IRQ_CPE1_INTR, true},
-	{WCD9360_IRQ_RESERVED_4, false},
-	{WCD9360_IRQ_MAD_ULTRASOUND, false},
 };
 
 /*
@@ -405,143 +384,11 @@ version_unknown:
 	return rc;
 }
 
-/*
- * wcd9360_bring_down: Bringdown WCD Codec
- *
- * @wcd9xxx: Pointer to wcd9xxx structure
- *
- * Returns 0 for success or negative error code for failure
- */
-static int wcd9360_bring_down(struct wcd9xxx *wcd9xxx)
-{
-	if (!wcd9xxx || !wcd9xxx->regmap)
-		return -EINVAL;
-
-	regmap_write(wcd9xxx->regmap, WCD9360_CODEC_RPM_PWR_CDC_DIG_HM_CTL,
-		     0x04);
-
-	return 0;
-}
-
-/*
- * wcd9360_bring_up: Bringup WCD Codec
- *
- * @wcd9xxx: Pointer to the wcd9xxx structure
- *
- * Returns 0 for success or negative error code for failure
- */
-static int wcd9360_bring_up(struct wcd9xxx *wcd9xxx)
-{
-	struct regmap *wcd_regmap;
-
-	if (!wcd9xxx)
-		return -EINVAL;
-
-	if (!wcd9xxx->regmap) {
-		dev_err(wcd9xxx->dev, "%s: wcd9xxx regmap is null!\n",
-			__func__);
-		return -EINVAL;
-	}
-	wcd_regmap = wcd9xxx->regmap;
-
-	regmap_write(wcd_regmap, WCD9360_CODEC_RPM_RST_CTL, 0x01);
-	regmap_write(wcd_regmap, WCD9360_SIDO_NEW_VOUT_A_STARTUP, 0x19);
-	regmap_write(wcd_regmap, WCD9360_SIDO_NEW_VOUT_D_STARTUP, 0x15);
-	/* Add 1msec delay for VOUT to settle */
-	usleep_range(1000, 1100);
-	regmap_write(wcd_regmap, WCD9360_CODEC_RPM_PWR_CDC_DIG_HM_CTL, 0x5);
-	regmap_write(wcd_regmap, WCD9360_CODEC_RPM_PWR_CDC_DIG_HM_CTL, 0x7);
-	regmap_write(wcd_regmap, WCD9360_CODEC_RPM_RST_CTL, 0x3);
-	regmap_write(wcd_regmap, WCD9360_CODEC_RPM_RST_CTL, 0x7);
-	regmap_write(wcd_regmap, WCD9360_CODEC_RPM_PWR_CDC_DIG_HM_CTL, 0x3);
-
-	return 0;
-}
-
-/*
- * wcd9360_get_cdc_info: Get codec specific information
- *
- * @wcd9xxx: pointer to wcd9xxx structure
- * @wcd_type: pointer to wcd9xxx_codec_type structure
- *
- * Returns 0 for success or negative error code for failure
- */
-static int wcd9360_get_cdc_info(struct wcd9xxx *wcd9xxx,
-			   struct wcd9xxx_codec_type *wcd_type)
-{
-	u16 id_minor, id_major;
-	struct regmap *wcd_regmap;
-	int rc, version = -1;
-
-	if (!wcd9xxx || !wcd_type)
-		return -EINVAL;
-
-	if (!wcd9xxx->regmap) {
-		dev_err(wcd9xxx->dev, "%s: wcd9xxx regmap is null\n", __func__);
-		return -EINVAL;
-	}
-	wcd_regmap = wcd9xxx->regmap;
-
-	rc = regmap_bulk_read(wcd_regmap, WCD9360_CHIP_TIER_CTRL_CHIP_ID_BYTE0,
-			      (u8 *)&id_minor, sizeof(u16));
-	if (rc)
-		return -EINVAL;
-
-	rc = regmap_bulk_read(wcd_regmap, WCD9360_CHIP_TIER_CTRL_CHIP_ID_BYTE2,
-			      (u8 *)&id_major, sizeof(u16));
-	if (rc)
-		return -EINVAL;
-
-	dev_info(wcd9xxx->dev, "%s: wcd9xxx chip id major 0x%x, minor 0x%x\n",
-		 __func__, id_major, id_minor);
-
-	if (id_major != PAHU_MAJOR)
-		goto version_unknown;
-
-	/*
-	 * As fine version info cannot be retrieved before pahu probe.
-	 * Assign coarse versions for possible future use before Pahu probe.
-	 */
-	if (id_minor == cpu_to_le16(0))
-		version = PAHU_VERSION_1_0;
-
-version_unknown:
-	if (version < 0)
-		dev_err(wcd9xxx->dev, "%s: wcd934x version unknown\n",
-			__func__);
-
-	/* Fill codec type info */
-	wcd_type->id_major = id_major;
-	wcd_type->id_minor = id_minor;
-	wcd_type->num_irqs = WCD9360_NUM_IRQS;
-	wcd_type->version = version;
-	wcd_type->slim_slave_type = WCD9XXX_SLIM_SLAVE_ADDR_TYPE_1;
-	wcd_type->i2c_chip_status = 0x01;
-	wcd_type->intr_tbl = wcd9360_intr_table;
-	wcd_type->intr_tbl_size = ARRAY_SIZE(wcd9360_intr_table);
-
-	wcd_type->intr_reg[WCD9XXX_INTR_STATUS_BASE] =
-						WCD9360_INTR_PIN1_STATUS0;
-	wcd_type->intr_reg[WCD9XXX_INTR_CLEAR_BASE] =
-						WCD9360_INTR_PIN1_CLEAR0;
-	wcd_type->intr_reg[WCD9XXX_INTR_MASK_BASE] =
-						WCD9360_INTR_PIN1_MASK0;
-	wcd_type->intr_reg[WCD9XXX_INTR_LEVEL_BASE] =
-						WCD9360_INTR_LEVEL0;
-	wcd_type->intr_reg[WCD9XXX_INTR_CLR_COMMIT] =
-						WCD9360_INTR_CLR_COMMIT;
-
-	return rc;
-}
-
 codec_bringdown_fn wcd9xxx_bringdown_fn(int type)
 {
 	codec_bringdown_fn cdc_bdown_fn;
 
 	switch (type) {
-	case WCD9360:
-		cdc_bdown_fn = wcd9360_bring_down;
-		break;
 	case WCD934X:
 		cdc_bdown_fn = wcd934x_bring_down;
 		break;
@@ -561,9 +408,6 @@ codec_bringup_fn wcd9xxx_bringup_fn(int type)
 	codec_bringup_fn cdc_bup_fn;
 
 	switch (type) {
-	case WCD9360:
-		cdc_bup_fn = wcd9360_bring_up;
-		break;
 	case WCD934X:
 		cdc_bup_fn = wcd934x_bring_up;
 		break;
@@ -583,9 +427,6 @@ codec_type_fn wcd9xxx_get_codec_info_fn(int type)
 	codec_type_fn cdc_type_fn;
 
 	switch (type) {
-	case WCD9360:
-		cdc_type_fn = wcd9360_get_cdc_info;
-		break;
 	case WCD934X:
 		cdc_type_fn = wcd934x_get_cdc_info;
 		break;

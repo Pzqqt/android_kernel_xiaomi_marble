@@ -14,21 +14,6 @@ ifeq ($(KERNEL_BUILD), 1)
 endif
 
 ifeq ($(KERNEL_BUILD), 0)
-	ifeq ($(CONFIG_ARCH_SDM845), y)
-		include $(AUDIO_ROOT)/config/sdm845auto.conf
-		export
-		INCS    +=  -include $(AUDIO_ROOT)/config/sdm845autoconf.h
-	endif
-	ifeq ($(CONFIG_ARCH_SDM670), y)
-		include $(AUDIO_ROOT)/config/sdm670auto.conf
-		export
-		INCS    +=  -include $(AUDIO_ROOT)/config/sdm670autoconf.h
-	endif
-	ifeq ($(CONFIG_ARCH_SDM450), y)
-		include $(AUDIO_ROOT)/config/sdm670auto.conf
-		export
-		INCS    +=  -include $(AUDIO_ROOT)/config/sdm670autoconf.h
-	endif
 	ifeq ($(CONFIG_ARCH_SM8150), y)
 		include $(AUDIO_ROOT)/config/sm8150auto.conf
 		export
@@ -81,28 +66,6 @@ COMMON_DIR :=	include
 COMMON_INC :=	-I$(AUDIO_ROOT)/$(COMMON_DIR)
 
 ############ ASoC Drivers ############
-
-
-# for SDM6xx sound card driver
-ifdef CONFIG_SND_SOC_SDM670
-	MACHINE_OBJS += sdm660-common.o
-endif
-
-# for SDM6xx sound card driver
-ifdef CONFIG_SND_SOC_INT_CODEC
-	MACHINE_OBJS += sdm660-internal.o
-endif
-
-# for SDM6xx sound card driver
-ifdef CONFIG_SND_SOC_EXT_CODEC
-	MACHINE_OBJS += sdm660-external.o
-	MACHINE_OBJS += sdm660-ext-dai-links.o
-endif
-
-# for SDM845 sound card driver
-ifdef CONFIG_SND_SOC_MACHINE_SDM845
-	MACHINE_OBJS += sdm845.o
-endif
 
 # for SM8150 sound card driver
 ifdef CONFIG_SND_SOC_SM8150
@@ -197,8 +160,6 @@ KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/dsp/Module
 KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/Module.symvers
 KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/wcd934x/Module.symvers
 KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/wcd937x/Module.symvers
-KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/sdm660_cdc/Module.symvers
-KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/msm_sdw/Module.symvers
 endif
 ifeq ($(KERNEL_BUILD), 1)
 	obj-y += codecs/
@@ -207,9 +168,6 @@ endif
 obj-$(CONFIG_SND_SOC_QDSP6V2) += platform_dlkm.o
 platform_dlkm-y := $(PLATFORM_OBJS)
 
-obj-$(CONFIG_SND_SOC_MACHINE_SDM845) += machine_dlkm.o
-machine_dlkm-y := $(MACHINE_OBJS)
-
 obj-$(CONFIG_SND_SOC_SM8150) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
@@ -217,12 +175,6 @@ obj-$(CONFIG_SND_SOC_SM6150) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_QCS405) += machine_dlkm.o
-machine_dlkm-y := $(MACHINE_OBJS)
-
-obj-$(CONFIG_SND_SOC_EXT_CODEC) += machine_dlkm.o
-machine_dlkm-y := $(MACHINE_OBJS)
-
-obj-$(CONFIG_SND_SOC_INT_CODEC) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_CPE) += cpe_lsm_dlkm.o

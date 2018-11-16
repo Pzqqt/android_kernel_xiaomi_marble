@@ -14,21 +14,6 @@ ifeq ($(KERNEL_BUILD), 1)
 endif
 
 ifeq ($(KERNEL_BUILD), 0)
-	ifeq ($(CONFIG_ARCH_SDM845), y)
-		include $(AUDIO_ROOT)/config/sdm845auto.conf
-		export
-		INCS    +=  -include $(AUDIO_ROOT)/config/sdm845autoconf.h
-	endif
-	ifeq ($(CONFIG_ARCH_SDM670), y)
-		include $(AUDIO_ROOT)/config/sdm670auto.conf
-		export
-		INCS    +=  -include $(AUDIO_ROOT)/config/sdm670autoconf.h
-	endif
-	ifeq ($(CONFIG_ARCH_SDM450), y)
-		include $(AUDIO_ROOT)/config/sdm670auto.conf
-		export
-		INCS    +=  -include $(AUDIO_ROOT)/config/sdm670autoconf.h
-	endif
 	ifeq ($(CONFIG_ARCH_SM8150), y)
 		include $(AUDIO_ROOT)/config/sm8150auto.conf
 		export
@@ -94,7 +79,6 @@ ifdef CONFIG_WCD9XXX_CODEC_CORE
 	CORE_OBJS += msm-cdc-supply.o
 	CORE_OBJS += wcd934x/wcd934x-regmap.o
 	CORE_OBJS += wcd934x/wcd934x-tables.o
-	CORE_OBJS += wcd9360/wcd9360-regmap.o
 endif
 
 ifdef CONFIG_SND_SOC_WCD9XXX_V2
@@ -193,9 +177,6 @@ endif
 
 ifeq ($(KERNEL_BUILD), 1)
 	obj-y	+= wcd934x/
-	obj-y	+= sdm660_cdc/
-	obj-y	+= msm_sdw/
-	obj-y	+= wcd9360/
 	obj-y	+= wcd937x/
 endif
 # Module information used by KBuild framework
