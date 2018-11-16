@@ -131,13 +131,11 @@ bool util_is_scan_entry_match(
 
 	if (entry1->cap_info.wlan_caps.ess &&
 	   !qdf_mem_cmp(entry1->bssid.bytes,
-	   entry2->bssid.bytes, QDF_MAC_ADDR_SIZE) &&
-	   util_scan_scm_chan_to_band(
-	   entry1->channel.chan_idx) ==
-	   util_scan_scm_chan_to_band(entry2->channel.chan_idx)) {
+	   entry2->bssid.bytes, QDF_MAC_ADDR_SIZE)) {
 		/* Check for BSS */
 		if (util_is_ssid_match(&entry1->ssid, &entry2->ssid) ||
-		    util_scan_is_null_ssid(&entry1->ssid))
+		    util_scan_is_null_ssid(&entry1->ssid) ||
+		    util_scan_is_null_ssid(&entry2->ssid))
 			return true;
 	} else if (entry1->cap_info.wlan_caps.ibss &&
 	   (entry1->channel.chan_idx ==
