@@ -5913,6 +5913,26 @@ static int hdd_config_ant_div_ena(struct hdd_adapter *adapter,
 	return errno;
 }
 
+static int hdd_config_ignore_assoc_disallowed(struct hdd_adapter *adapter,
+					      const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint8_t ignore_assoc_disallowed;
+
+	ignore_assoc_disallowed = nla_get_u8(attr);
+	hdd_debug("%u", ignore_assoc_disallowed);
+	if ((ignore_assoc_disallowed < QCA_IGNORE_ASSOC_DISALLOWED_DISABLE) ||
+	    (ignore_assoc_disallowed > QCA_IGNORE_ASSOC_DISALLOWED_ENABLE))
+		return -EINVAL;
+
+	sme_update_session_param(hdd_ctx->mac_handle,
+				 adapter->session_id,
+				 SIR_PARAM_IGNORE_ASSOC_DISALLOWED,
+				 ignore_assoc_disallowed);
+
+	return 0;
+}
+
 /**
  * typedef independent_setter_fn - independent attribute handler
  * @adapter: The adapter being configured
@@ -5973,6 +5993,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_channel_avoidance_ind},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ENA,
 	 hdd_config_ant_div_ena},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED,
+	 hdd_config_ignore_assoc_disallowed},
 };
 
 /**
@@ -6216,26 +6238,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 				request.rx_aggregation_size);
 			ret_val = -EINVAL;
 		}
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED]) {
-		uint8_t ignore_assoc_disallowed;
-
-		ignore_assoc_disallowed
-			= nla_get_u8(tb[
-			QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED]);
-		hdd_debug("Set ignore_assoc_disallowed value - %d",
-					ignore_assoc_disallowed);
-		if ((ignore_assoc_disallowed <
-			QCA_IGNORE_ASSOC_DISALLOWED_DISABLE) ||
-			(ignore_assoc_disallowed >
-				QCA_IGNORE_ASSOC_DISALLOWED_ENABLE))
-			return -EPERM;
-
-		sme_update_session_param(mac_handle,
-					 adapter->session_id,
-					 SIR_PARAM_IGNORE_ASSOC_DISALLOWED,
-					 ignore_assoc_disallowed);
 	}
 
 #define ANT_DIV_SET_PERIOD(probe_period, stay_period) \
