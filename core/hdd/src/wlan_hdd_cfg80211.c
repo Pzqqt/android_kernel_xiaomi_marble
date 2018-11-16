@@ -5257,6 +5257,11 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_ENABLE] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RSN_IE] = {.type = NLA_U8},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_GTX] = {.type = NLA_U8},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST] = {
+		.type = NLA_BINARY,
+		.len = SIR_MAC_MAX_IE_LENGTH + 2},
+
 };
 
 static const struct nla_policy
@@ -5583,6 +5588,59 @@ static int wlan_hdd_cfg80211_wifi_set_rx_blocksize(struct hdd_context *hdd_ctx,
 	}
 
 	return ret_val;
+}
+
+static int hdd_config_access_policy(struct hdd_adapter *adapter,
+				    struct nlattr *tb[])
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct nlattr *policy_attr =
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY];
+	struct nlattr *ielist_attr =
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST];
+	uint32_t access_policy;
+	uint8_t ie[SIR_MAC_MAX_IE_LENGTH + 2];
+	QDF_STATUS status;
+
+	/* nothing to do if neither attribute is present */
+	if (!ielist_attr && !policy_attr)
+		return 0;
+
+	/* if one is present, both must be present */
+	if (!ielist_attr || !policy_attr) {
+		hdd_err("Missing attribute for %s",
+			policy_attr ?
+				"ACCESS_POLICY_IE_LIST" : "ACCESS_POLICY");
+		return -EINVAL;
+	}
+
+	/* validate the access policy */
+	access_policy = nla_get_u32(policy_attr);
+	switch (access_policy) {
+	case QCA_ACCESS_POLICY_ACCEPT_UNLESS_LISTED:
+	case QCA_ACCESS_POLICY_DENY_UNLESS_LISTED:
+		/* valid */
+		break;
+	default:
+		hdd_err("Invalid value. access_policy %u", access_policy);
+		return -EINVAL;
+	}
+
+	/*
+	 * ie length is validated by the nla_policy.  need to make a
+	 * copy since SME will always read SIR_MAC_MAX_IE_LENGTH+2 bytes
+	 */
+	nla_memcpy(ie, ielist_attr, sizeof(ie));
+
+	hdd_debug("calling sme_update_access_policy_vendor_ie");
+	status = sme_update_access_policy_vendor_ie(hdd_ctx->mac_handle,
+						    adapter->session_id,
+						    ie, access_policy);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set vendor ie and access policy, %d",
+			status);
+
+	return qdf_status_to_os_return(status);
 }
 
 static int hdd_config_fine_time_measurement(struct hdd_adapter *adapter,
@@ -6351,6 +6409,7 @@ typedef int (*interdependent_setter_fn)(struct hdd_adapter *adapter,
 
 /* vtable for interdependent setters */
 static const interdependent_setter_fn interdependent_setters[] = {
+	hdd_config_access_policy,
 };
 
 /**
@@ -6411,15 +6470,9 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	int errno;
 	int ret;
 	int ret_val = 0;
-	QDF_STATUS status;
-	int attr_len;
-	int access_policy = 0;
-	char vendor_ie[SIR_MAC_MAX_IE_LENGTH + 2];
-	bool vendor_ie_present = false, access_policy_present = false;
 	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS qdf_status;
 	uint32_t ant_div_usrcfg;
-	mac_handle_t mac_handle;
 
 	hdd_enter_dev(dev);
 	qdf_mem_zero(&request, sizeof(request));
@@ -6448,59 +6501,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		errno = ret;
 
 	/* return errno here when all attributes have been refactored */
-
-	mac_handle = hdd_ctx->mac_handle;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST]) {
-		qdf_mem_zero(&vendor_ie[0], SIR_MAC_MAX_IE_LENGTH + 2);
-		attr_len = nla_len(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST]);
-		if (attr_len < 0 || attr_len > SIR_MAC_MAX_IE_LENGTH + 2) {
-			hdd_err("Invalid value. attr_len %d",
-				attr_len);
-			return -EINVAL;
-		}
-
-		nla_memcpy(&vendor_ie,
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY_IE_LIST],
-			attr_len);
-		vendor_ie_present = true;
-		hdd_debug("Access policy vendor ie present.attr_len %d",
-			attr_len);
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY]) {
-		access_policy = (int) nla_get_u32(
-		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ACCESS_POLICY]);
-		if ((access_policy < QCA_ACCESS_POLICY_ACCEPT_UNLESS_LISTED) ||
-			(access_policy >
-				QCA_ACCESS_POLICY_DENY_UNLESS_LISTED)) {
-			hdd_err("Invalid value. access_policy %d",
-				access_policy);
-			return -EINVAL;
-		}
-		access_policy_present = true;
-		hdd_debug("Access policy present. access_policy %d",
-			access_policy);
-	}
-
-	if (vendor_ie_present && access_policy_present) {
-		if (access_policy == QCA_ACCESS_POLICY_DENY_UNLESS_LISTED) {
-			access_policy =
-				WLAN_HDD_VENDOR_IE_ACCESS_ALLOW_IF_LISTED;
-		} else {
-			access_policy = WLAN_HDD_VENDOR_IE_ACCESS_NONE;
-		}
-
-		hdd_debug("calling sme_update_access_policy_vendor_ie");
-		status = sme_update_access_policy_vendor_ie(mac_handle,
-				adapter->session_id, &vendor_ie[0],
-				access_policy);
-		if (QDF_STATUS_SUCCESS != status) {
-			hdd_err("Failed to set vendor ie and access policy.");
-			return -EINVAL;
-		}
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION] ||
 	    tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION]) {
