@@ -4986,6 +4986,81 @@ done:
 }
 EXPORT_SYMBOL(adm_get_source_tracking);
 
+/**
+ * adm_get_doa_tracking_mon -
+ *        Retrieve doa tracking monitor info
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @doa_tracking_data: pointer for doa data to be updated with
+ *
+ * Returns 0 on success or error on failure
+ */
+int adm_get_doa_tracking_mon(int port_id, int copp_idx,
+	struct doa_tracking_mon_param *doa_tracking_data)
+{
+	int ret = 0, i;
+	char *params_value;
+	uint32_t max_param_size = 0;
+	struct adm_param_doa_tracking_mon_t *doa_tracking_params = NULL;
+	struct param_hdr_v3 param_hdr;
+
+	pr_debug("%s: Enter, port_id %d, copp_idx %d\n",
+		 __func__, port_id, copp_idx);
+
+	if (doa_tracking_data == NULL) {
+		pr_err("%s: Received NULL pointer for doa tracking data\n",
+			 __func__);
+		return -EINVAL;
+	}
+
+	max_param_size = sizeof(struct adm_param_doa_tracking_mon_t) +
+			 sizeof(union param_hdrs);
+	params_value = kzalloc(max_param_size, GFP_KERNEL);
+	if (!params_value)
+		return -ENOMEM;
+
+	memset(&param_hdr, 0, sizeof(param_hdr));
+	param_hdr.module_id = AUDPROC_MODULE_ID_FFECNS;
+	param_hdr.instance_id = INSTANCE_ID_0;
+	param_hdr.param_id = AUDPROC_PARAM_ID_FFV_DOA_TRACKING_MONITOR;
+	param_hdr.param_size = max_param_size;
+	ret = adm_get_pp_params(port_id, copp_idx,
+				ADM_CLIENT_ID_DEFAULT, NULL, &param_hdr,
+				params_value);
+	if (ret) {
+		pr_err("%s: get parameters failed ret:%d\n", __func__, ret);
+		goto done;
+	}
+
+	doa_tracking_params =
+		(struct adm_param_doa_tracking_mon_t *)params_value;
+	for (i = 0; i < MAX_DOA_TRACKING_ANGLES; i++) {
+		doa_tracking_data->target_angle_L16[i] =
+			doa_tracking_params->target_angle_L16[i];
+		pr_debug("%s: target angle[%d] = %d\n",
+			 __func__, i, doa_tracking_data->target_angle_L16[i]);
+	}
+
+	for (i = 0; i < MAX_DOA_TRACKING_ANGLES; i++) {
+		doa_tracking_data->interf_angle_L16[i] =
+			doa_tracking_params->interf_angle_L16[i];
+		pr_debug("%s: interference angle[%d] = %d\n",
+			 __func__, i, doa_tracking_data->interf_angle_L16[i]);
+	}
+
+	for (i = 0; i < MAX_POLAR_ACTIVITY_INDICATORS; i++) {
+		doa_tracking_data->polar_activity[i] =
+			doa_tracking_params->polar_activity[i];
+	}
+
+done:
+	pr_debug("%s: Exit, ret = %d\n", __func__, ret);
+	kfree(params_value);
+	return ret;
+}
+EXPORT_SYMBOL(adm_get_doa_tracking_mon);
+
 int __init adm_init(void)
 {
 	int i = 0, j;
