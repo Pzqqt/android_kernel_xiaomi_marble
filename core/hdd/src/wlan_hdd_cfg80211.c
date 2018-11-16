@@ -5896,6 +5896,23 @@ static int hdd_config_scan_default_ies(struct hdd_adapter *adapter,
 	return 0;
 }
 
+static int hdd_config_ant_div_ena(struct hdd_adapter *adapter,
+				  const struct nlattr *attr)
+{
+	uint32_t antdiv_enable;
+	int errno;
+
+	antdiv_enable = nla_get_u32(attr);
+	hdd_debug("antdiv_enable: %d", antdiv_enable);
+	errno = wma_cli_set_command(adapter->session_id,
+				    WMI_PDEV_PARAM_ENA_ANT_DIV,
+				    antdiv_enable, PDEV_CMD);
+	if (errno)
+		hdd_err("Failed to set antdiv_enable, %d", errno);
+
+	return errno;
+}
+
 /**
  * typedef independent_setter_fn - independent attribute handler
  * @adapter: The adapter being configured
@@ -5954,6 +5971,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_tx_fail_count},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_CHANNEL_AVOIDANCE_IND,
 	 hdd_config_channel_avoidance_ind},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ENA,
+	 hdd_config_ant_div_ena},
 };
 
 /**
@@ -6075,7 +6094,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS qdf_status;
 	uint32_t ant_div_usrcfg;
-	uint32_t antdiv_enable, antdiv_chain;
+	uint32_t antdiv_chain;
 	uint32_t antdiv_selftest, antdiv_selftest_intvl;
 	uint8_t bmiss_bcnt;
 	uint16_t latency_level;
@@ -6330,19 +6349,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_wifi_set_rx_blocksize(hdd_ctx, adapter, tb);
 	if (ret_val != 0)
 		return ret_val;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ENA]) {
-		antdiv_enable = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ENA]);
-		hdd_debug("antdiv_enable: %d", antdiv_enable);
-		ret_val = wma_cli_set_command((int)adapter->session_id,
-					(int)WMI_PDEV_PARAM_ENA_ANT_DIV,
-					antdiv_enable, PDEV_CMD);
-		if (ret_val) {
-			hdd_err("Failed to set antdiv_enable");
-			return ret_val;
-		}
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_CHAIN]) {
 		antdiv_chain = nla_get_u32(
