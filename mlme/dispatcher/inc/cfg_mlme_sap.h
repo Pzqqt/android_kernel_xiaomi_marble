@@ -578,7 +578,31 @@
 			"GO force 11n for 11ac")
 
 
+/*
+ * <ini>
+ * gEnableApRandomBssid - Create ramdom BSSID
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to create a random BSSID in SoftAP mode to meet
+ * the Android requirement.
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_AP_ENABLE_RANDOM_BSSID CFG_INI_BOOL( \
+	"gEnableApRandomBssid", \
+	0, \
+	"Create ramdom BSSID")
+
  #define CFG_SAP_ALL \
+	CFG(CFG_AP_ENABLE_RANDOM_BSSID) \
 	CFG(CFG_SSID) \
 	CFG(CFG_BEACON_INTERVAL) \
 	CFG(CFG_DTIM_PERIOD) \
