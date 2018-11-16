@@ -694,9 +694,10 @@ QDF_STATUS wlan_objmgr_vdev_peer_attach(struct wlan_objmgr_vdev *vdev,
 			wlan_vdev_set_bsspeer(vdev, peer);
 	}
 	/* set BSS peer for sta */
-	if ((wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE) &&
-		((wlan_peer_get_peer_type(peer) == WLAN_PEER_AP) ||
-		 (wlan_peer_get_peer_type(peer) == WLAN_PEER_P2P_GO)))
+	if ((wlan_vdev_mlme_get_opmode(vdev) == QDF_STA_MODE ||
+	     wlan_vdev_mlme_get_opmode(vdev) == QDF_P2P_CLIENT_MODE) &&
+	    (wlan_peer_get_peer_type(peer) == WLAN_PEER_AP ||
+	     wlan_peer_get_peer_type(peer) == WLAN_PEER_P2P_GO))
 		wlan_vdev_set_bsspeer(vdev, peer);
 
 	/* Increment vdev ref count to make sure it won't be destroyed before */
