@@ -107,52 +107,29 @@ struct cdp_cmn_ops {
 		uint8_t *mac_addr, enum  cdp_txrx_ast_entry_type type,
 		uint32_t flags);
 
-	void (*txrx_peer_del_ast)
-		(ol_txrx_soc_handle soc, void *ast_hdl);
-
 	int (*txrx_peer_update_ast)
 		(ol_txrx_soc_handle soc, struct cdp_peer *peer_hdl,
 		uint8_t *mac_addr, uint32_t flags);
 
-	void *(*txrx_peer_ast_hash_find_soc)
-		(ol_txrx_soc_handle soc, uint8_t *ast_mac_addr);
-
-	void *(*txrx_peer_ast_hash_find_by_pdevid)
+	bool (*txrx_peer_get_ast_info_by_soc)
 		(ol_txrx_soc_handle soc, uint8_t *ast_mac_addr,
-		 uint8_t pdev_id);
+		 struct cdp_ast_entry_info *ast_entry_info);
 
-	uint8_t (*txrx_peer_ast_get_pdev_id)
-		(ol_txrx_soc_handle soc, void *ast_hdl);
+	bool (*txrx_peer_get_ast_info_by_pdev)
+		(ol_txrx_soc_handle soc, uint8_t *ast_mac_addr,
+		 uint8_t pdev_id,
+		 struct cdp_ast_entry_info *ast_entry_info);
 
-	uint8_t (*txrx_peer_ast_get_next_hop)
-		(ol_txrx_soc_handle soc, void *ast_hdl);
+	QDF_STATUS (*txrx_peer_ast_delete_by_soc)
+		(ol_txrx_soc_handle soc, uint8_t *ast_mac_addr,
+		txrx_ast_free_cb callback,
+		void *cookie);
 
-	void (*txrx_peer_ast_set_type)
-		(ol_txrx_soc_handle soc, void *ast_hdl,
-		enum cdp_txrx_ast_entry_type type);
-#if defined(FEATURE_AST) && defined(AST_HKV1_WORKAROUND)
-	void (*txrx_peer_ast_set_cp_ctx)(ol_txrx_soc_handle soc,
-					 void *ast_entry,
-					 void *cp_ctx);
-
-	void * (*txrx_peer_ast_get_cp_ctx)(ol_txrx_soc_handle soc,
-					   void *ast_entry);
-
-	bool (*txrx_peer_ast_get_wmi_sent)(ol_txrx_soc_handle soc,
-					   void *ast_entry);
-
-	void (*txrx_peer_ast_free_entry)(ol_txrx_soc_handle soc,
-					 void *ast_entry);
-#endif
-
-	enum cdp_txrx_ast_entry_type (*txrx_peer_ast_get_type)
-		(ol_txrx_soc_handle soc, void *ast_hdl);
-
-	struct cdp_peer* (*txrx_peer_ast_get_peer)
-		(ol_txrx_soc_handle soc, void *ast_hdl);
-
-	uint32_t (*txrx_peer_ast_get_nexthop_peer_id)
-		(ol_txrx_soc_handle soc, void *ast_hdl);
+	QDF_STATUS (*txrx_peer_ast_delete_by_pdev)
+		(ol_txrx_soc_handle soc, uint8_t *ast_mac_addr,
+		 uint8_t pdev_id,
+		txrx_ast_free_cb callback,
+		void *cookie);
 
 	void (*txrx_peer_delete)(void *peer, uint32_t bitmap);
 
@@ -887,9 +864,6 @@ struct ol_if_ops {
 			uint32_t flags);
 	void (*peer_del_wds_entry)(void *ol_soc_handle,
 			uint8_t *wds_macaddr);
-#if defined(FEATURE_AST) && defined(AST_HKV1_WORKAROUND)
-	void (*peer_del_wds_cp_ctx)(void *cp_ctx);
-#endif
 	QDF_STATUS
 	(*lro_hash_config)(struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 			   struct cdp_lro_hash_config *rx_offld_hash);

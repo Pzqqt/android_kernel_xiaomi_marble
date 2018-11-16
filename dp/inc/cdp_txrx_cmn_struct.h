@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -326,6 +326,50 @@ enum cdp_txrx_ast_entry_type {
 	CDP_TXRX_AST_TYPE_DA,	/* AST entry based on Destination address */
 	CDP_TXRX_AST_TYPE_WDS_HM_SEC, /* HM WDS entry for secondary radio */
 	CDP_TXRX_AST_TYPE_MAX
+};
+
+/*
+ * cdp_ast_free_status: status passed to callback function before freeing ast
+ * @CDP_TXRX_AST_DELETED - AST is deleted from FW and delete response received
+ * @CDP_TXRX_AST_DELETE_IN_PROGRESS - AST delete command sent to FW and host
+ *                                    is waiting for FW response
+ */
+enum cdp_ast_free_status {
+	CDP_TXRX_AST_DELETED,
+	CDP_TXRX_AST_DELETE_IN_PROGRESS,
+};
+
+/**
+ * txrx_ast_free_cb - callback registered for ast free
+ * @ctrl_soc: control path soc context
+ * @cdp_soc: DP soc context
+ * @cookie: cookie
+ * @cdp_ast_free_status: ast free status
+ */
+typedef void (*txrx_ast_free_cb)(void *ctrl_soc,
+				 void *cdp_soc,
+				 void *cookie,
+				 enum cdp_ast_free_status);
+
+#define CDP_MAC_ADDR_LEN 6
+
+/**
+ *  struct cdp_ast_entry_info - AST entry information
+ *  @peer_mac_addr: mac address of peer on which AST entry is added
+ *  @type: ast entry type
+ *  @vdev_id: vdev_id
+ *  @pdev_id: pdev_id
+ *  @peer_id: peer_id
+ *
+ *  This structure holds the ast entry information
+ *
+ */
+struct cdp_ast_entry_info {
+	uint8_t peer_mac_addr[CDP_MAC_ADDR_LEN];
+	enum cdp_txrx_ast_entry_type type;
+	uint8_t vdev_id;
+	uint8_t pdev_id;
+	uint16_t peer_id;
 };
 
 /**

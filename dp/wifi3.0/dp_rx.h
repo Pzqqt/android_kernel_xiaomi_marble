@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -416,11 +416,9 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 			    uint16_t sa_idx, uint16_t sa_sw_peer_id)
 {
 	struct dp_peer *sa_peer;
-	struct dp_peer *wds_peer;
 	struct dp_ast_entry *ast;
 	uint32_t flags = IEEE80211_NODE_F_WDS_HM;
 	uint32_t ret = 0;
-	bool del_in_progress;
 	struct dp_neighbour_peer *neighbour_peer = NULL;
 	struct dp_pdev *pdev = ta_peer->vdev->pdev;
 
@@ -471,22 +469,6 @@ dp_rx_wds_add_or_update_ast(struct dp_soc *soc, struct dp_peer *ta_peer,
 		 * cached.
 		 */
 		if (!soc->ast_override_support) {
-			wds_peer = dp_peer_find_hash_find(soc, wds_src_mac,
-							  0, DP_VDEV_ALL);
-			if (wds_peer) {
-				del_in_progress = wds_peer->delete_in_progress;
-				dp_peer_unref_delete(wds_peer);
-				if (!del_in_progress) {
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						  QDF_TRACE_LEVEL_DEBUG,
-						  "wds peer %pM found",
-						  wds_src_mac);
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						  QDF_TRACE_LEVEL_DEBUG,
-						  "No AST no Del in progress");
-				}
-				return;
-			}
 			ret = dp_peer_add_ast(soc,
 					      ta_peer,
 					      wds_src_mac,

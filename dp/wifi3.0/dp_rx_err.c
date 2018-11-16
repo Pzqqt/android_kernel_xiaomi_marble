@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -136,7 +136,9 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 			}
 		}
 	} else
-		ase = dp_peer_ast_hash_find_soc(soc, &data[DP_MAC_ADDR_LEN]);
+		ase = dp_peer_ast_hash_find_by_pdevid(soc,
+						      &data[DP_MAC_ADDR_LEN],
+						      vdev->pdev->pdev_id);
 
 	if (ase) {
 

@@ -523,17 +523,6 @@ static int dp_peer_add_ast_wifi3(struct cdp_soc_t *soc_hdl,
 				flags);
 }
 
-static void dp_peer_del_ast_wifi3(struct cdp_soc_t *soc_hdl,
-					 void *ast_entry_hdl)
-{
-	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
-	qdf_spin_lock_bh(&soc->ast_lock);
-	dp_peer_del_ast((struct dp_soc *)soc_hdl,
-			(struct dp_ast_entry *)ast_entry_hdl);
-	qdf_spin_unlock_bh(&soc->ast_lock);
-}
-
-
 static int dp_peer_update_ast_wifi3(struct cdp_soc_t *soc_hdl,
 						struct cdp_peer *peer_hdl,
 						uint8_t *wds_macaddr,
@@ -668,128 +657,208 @@ static void dp_wds_flush_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
 	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 
-static void *dp_peer_ast_hash_find_soc_wifi3(struct cdp_soc_t *soc_hdl,
-					     uint8_t *ast_mac_addr)
+/**
+ * dp_peer_get_ast_info_by_soc_wifi3() - search the soc AST hash table
+ *                                       and return ast entry information
+ *                                       of first ast entry found in the
+ *                                       table with given mac address
+ *
+ * @soc : data path soc handle
+ * @ast_mac_addr : AST entry mac address
+ * @ast_entry_info : ast entry information
+ *
+ * return : true if ast entry found with ast_mac_addr
+ *          false if ast entry not found
+ */
+static bool dp_peer_get_ast_info_by_soc_wifi3
+	(struct cdp_soc_t *soc_hdl,
+	 uint8_t *ast_mac_addr,
+	 struct cdp_ast_entry_info *ast_entry_info)
 {
 	struct dp_ast_entry *ast_entry;
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
+
 	ast_entry = dp_peer_ast_hash_find_soc(soc, ast_mac_addr);
+
+	if (ast_entry && !ast_entry->delete_in_progress) {
+		ast_entry_info->type = ast_entry->type;
+		ast_entry_info->pdev_id = ast_entry->pdev_id;
+		ast_entry_info->vdev_id = ast_entry->vdev_id;
+		ast_entry_info->peer_id = ast_entry->peer->peer_ids[0];
+		qdf_mem_copy(&ast_entry_info->peer_mac_addr[0],
+			     &ast_entry->peer->mac_addr.raw[0],
+			     DP_MAC_ADDR_LEN);
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return true;
+	}
+
 	qdf_spin_unlock_bh(&soc->ast_lock);
-	return (void *)ast_entry;
+	return false;
 }
 
-static void *dp_peer_ast_hash_find_by_pdevid_wifi3(struct cdp_soc_t *soc_hdl,
-						   uint8_t *ast_mac_addr,
-						   uint8_t pdev_id)
+/**
+ * dp_peer_get_ast_info_by_pdevid_wifi3() - search the soc AST hash table
+ *                                          and return ast entry information
+ *                                          if mac address and pdev_id matches
+ *
+ * @soc : data path soc handle
+ * @ast_mac_addr : AST entry mac address
+ * @pdev_id : pdev_id
+ * @ast_entry_info : ast entry information
+ *
+ * return : true if ast entry found with ast_mac_addr
+ *          false if ast entry not found
+ */
+static bool dp_peer_get_ast_info_by_pdevid_wifi3
+		(struct cdp_soc_t *soc_hdl,
+		 uint8_t *ast_mac_addr,
+		 uint8_t pdev_id,
+		 struct cdp_ast_entry_info *ast_entry_info)
 {
 	struct dp_ast_entry *ast_entry;
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
+
 	ast_entry = dp_peer_ast_hash_find_by_pdevid(soc, ast_mac_addr, pdev_id);
+
+	if (ast_entry && !ast_entry->delete_in_progress) {
+		ast_entry_info->type = ast_entry->type;
+		ast_entry_info->pdev_id = ast_entry->pdev_id;
+		ast_entry_info->vdev_id = ast_entry->vdev_id;
+		ast_entry_info->peer_id = ast_entry->peer->peer_ids[0];
+		qdf_mem_copy(&ast_entry_info->peer_mac_addr[0],
+			     &ast_entry->peer->mac_addr.raw[0],
+			     DP_MAC_ADDR_LEN);
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return true;
+	}
+
 	qdf_spin_unlock_bh(&soc->ast_lock);
-	return (void *)ast_entry;
+	return false;
 }
 
-static uint8_t dp_peer_ast_get_pdev_id_wifi3(struct cdp_soc_t *soc_hdl,
-							void *ast_entry_hdl)
-{
-	return dp_peer_ast_get_pdev_id((struct dp_soc *)soc_hdl,
-					(struct dp_ast_entry *)ast_entry_hdl);
-}
+/**
+ * dp_peer_ast_entry_del_by_soc() - delete the ast entry from soc AST hash table
+ *                            with given mac address
+ *
+ * @soc : data path soc handle
+ * @ast_mac_addr : AST entry mac address
+ * @callback : callback function to called on ast delete response from FW
+ * @cookie : argument to be passed to callback
+ *
+ * return : QDF_STATUS_SUCCESS if ast entry found with ast_mac_addr and delete
+ *          is sent
+ *          QDF_STATUS_E_INVAL false if ast entry not found
+ */
+static QDF_STATUS dp_peer_ast_entry_del_by_soc(struct cdp_soc_t *soc_handle,
+					       uint8_t *mac_addr,
+					       txrx_ast_free_cb callback,
+					       void *cookie)
 
-static uint8_t dp_peer_ast_get_next_hop_wifi3(struct cdp_soc_t *soc_hdl,
-							void *ast_entry_hdl)
-{
-	return dp_peer_ast_get_next_hop((struct dp_soc *)soc_hdl,
-					(struct dp_ast_entry *)ast_entry_hdl);
-}
-
-static void dp_peer_ast_set_type_wifi3(
-					struct cdp_soc_t *soc_hdl,
-					void *ast_entry_hdl,
-					enum cdp_txrx_ast_entry_type type)
-{
-	dp_peer_ast_set_type((struct dp_soc *)soc_hdl,
-				(struct dp_ast_entry *)ast_entry_hdl,
-				type);
-}
-
-static enum cdp_txrx_ast_entry_type dp_peer_ast_get_type_wifi3(
-					struct cdp_soc_t *soc_hdl,
-					void *ast_entry_hdl)
-{
-	return ((struct dp_ast_entry *)ast_entry_hdl)->type;
-}
-
-#if defined(FEATURE_AST) && defined(AST_HKV1_WORKAROUND)
-void dp_peer_ast_set_cp_ctx_wifi3(struct cdp_soc_t *soc_handle,
-				  void *ast_entry,
-				  void *cp_ctx)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_handle;
+	struct dp_ast_entry *ast_entry;
+	txrx_ast_free_cb cb = NULL;
+	void *arg = NULL;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
-	dp_peer_ast_set_cp_ctx(soc,
-			       (struct dp_ast_entry *)ast_entry, cp_ctx);
+	ast_entry = dp_peer_ast_hash_find_soc(soc, mac_addr);
+	if (!ast_entry) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return -QDF_STATUS_E_INVAL;
+	}
+
+	if (ast_entry->callback) {
+		cb = ast_entry->callback;
+		arg = ast_entry->cookie;
+	}
+
+	ast_entry->callback = callback;
+	ast_entry->cookie = cookie;
+
+	/*
+	 * if delete_in_progress is set AST delete is sent to target
+	 * and host is waiting for response should not send delete
+	 * again
+	 */
+	if (!ast_entry->delete_in_progress)
+		dp_peer_del_ast(soc, ast_entry);
+
 	qdf_spin_unlock_bh(&soc->ast_lock);
+	if (cb) {
+		cb(soc->ctrl_psoc,
+		   soc,
+		   arg,
+		   CDP_TXRX_AST_DELETE_IN_PROGRESS);
+	}
+	return QDF_STATUS_SUCCESS;
 }
 
-void *dp_peer_ast_get_cp_ctx_wifi3(struct cdp_soc_t *soc_handle,
-				   void *ast_entry)
+/**
+ * dp_peer_ast_entry_del_by_pdev() - delete the ast entry from soc AST hash
+ *                                   table if mac address and pdev_id matches
+ *
+ * @soc : data path soc handle
+ * @ast_mac_addr : AST entry mac address
+ * @pdev_id : pdev id
+ * @callback : callback function to called on ast delete response from FW
+ * @cookie : argument to be passed to callback
+ *
+ * return : QDF_STATUS_SUCCESS if ast entry found with ast_mac_addr and delete
+ *          is sent
+ *          QDF_STATUS_E_INVAL false if ast entry not found
+ */
+
+static QDF_STATUS dp_peer_ast_entry_del_by_pdev(struct cdp_soc_t *soc_handle,
+						uint8_t *mac_addr,
+						uint8_t pdev_id,
+						txrx_ast_free_cb callback,
+						void *cookie)
+
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_handle;
-	void *cp_ctx = NULL;
+	struct dp_ast_entry *ast_entry;
+	txrx_ast_free_cb cb = NULL;
+	void *arg = NULL;
 
 	qdf_spin_lock_bh(&soc->ast_lock);
-	cp_ctx = dp_peer_ast_get_cp_ctx(soc,
-					(struct dp_ast_entry *)ast_entry);
+	ast_entry = dp_peer_ast_hash_find_by_pdevid(soc, mac_addr, pdev_id);
+
+	if (!ast_entry) {
+		qdf_spin_unlock_bh(&soc->ast_lock);
+		return -QDF_STATUS_E_INVAL;
+	}
+
+	if (ast_entry->callback) {
+		cb = ast_entry->callback;
+		arg = ast_entry->cookie;
+	}
+
+	ast_entry->callback = callback;
+	ast_entry->cookie = cookie;
+
+	/*
+	 * if delete_in_progress is set AST delete is sent to target
+	 * and host is waiting for response should not sent delete
+	 * again
+	 */
+	if (!ast_entry->delete_in_progress)
+		dp_peer_del_ast(soc, ast_entry);
+
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
-	return cp_ctx;
+	if (cb) {
+		cb(soc->ctrl_psoc,
+		   soc,
+		   arg,
+		   CDP_TXRX_AST_DELETE_IN_PROGRESS);
+	}
+	return QDF_STATUS_SUCCESS;
 }
 
-bool dp_peer_ast_get_wmi_sent_wifi3(struct cdp_soc_t *soc_handle,
-				    void *ast_entry)
-{
-	struct dp_soc *soc = (struct dp_soc *)soc_handle;
-	bool wmi_sent = false;
-
-	qdf_spin_lock_bh(&soc->ast_lock);
-	wmi_sent = dp_peer_ast_get_del_cmd_sent(soc,
-						(struct dp_ast_entry *)
-						ast_entry);
-	qdf_spin_unlock_bh(&soc->ast_lock);
-
-	return wmi_sent;
-}
-
-void dp_peer_ast_free_entry_wifi3(struct cdp_soc_t *soc_handle,
-				  void *ast_entry)
-{
-	struct dp_soc *soc = (struct dp_soc *)soc_handle;
-
-	qdf_spin_lock_bh(&soc->ast_lock);
-	dp_peer_ast_free_entry(soc, (struct dp_ast_entry *)ast_entry);
-	qdf_spin_unlock_bh(&soc->ast_lock);
-}
-#endif
-
-static struct cdp_peer *dp_peer_ast_get_peer_wifi3(
-					struct cdp_soc_t *soc_hdl,
-					void *ast_entry_hdl)
-{
-	return (struct cdp_peer *)((struct dp_ast_entry *)ast_entry_hdl)->peer;
-}
-
-static uint32_t dp_peer_ast_get_nexhop_peer_id_wifi3(
-					struct cdp_soc_t *soc_hdl,
-					void *ast_entry_hdl)
-{
-	return ((struct dp_ast_entry *)ast_entry_hdl)->peer->peer_ids[0];
-}
 /**
  * dp_srng_find_ring_in_mask() - find which ext_group a ring belongs
  * @ring_num: ring num of the ring being queried
@@ -952,7 +1021,7 @@ static void dp_srng_msi_setup(struct dp_soc *soc, struct hal_srng_params
  * return void
  */
 #ifdef FEATURE_AST
-static void dp_print_ast_stats(struct dp_soc *soc)
+void dp_print_ast_stats(struct dp_soc *soc)
 {
 	uint8_t i;
 	uint8_t num_entries = 0;
@@ -979,27 +1048,29 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 				DP_PEER_ITERATE_ASE_LIST(peer, ase, tmp_ase) {
 					DP_PRINT_STATS("%6d mac_addr = %pM"
 							" peer_mac_addr = %pM"
+							" peer_id = %u"
 							" type = %s"
 							" next_hop = %d"
 							" is_active = %d"
 							" is_bss = %d"
 							" ast_idx = %d"
 							" ast_hash = %d"
+							" delete_in_progress = %d"
 							" pdev_id = %d"
-							" vdev_id = %d"
-							" del_cmd_sent = %d",
+							" vdev_id = %d",
 							++num_entries,
 							ase->mac_addr.raw,
 							ase->peer->mac_addr.raw,
+							ase->peer->peer_ids[0],
 							type[ase->type],
 							ase->next_hop,
 							ase->is_active,
 							ase->is_bss,
 							ase->ast_idx,
 							ase->ast_hash_value,
+							ase->delete_in_progress,
 							ase->pdev_id,
-							ase->vdev_id,
-							ase->del_cmd_sent);
+							ase->vdev_id);
 				}
 			}
 		}
@@ -1008,7 +1079,7 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 #else
-static void dp_print_ast_stats(struct dp_soc *soc)
+void dp_print_ast_stats(struct dp_soc *soc)
 {
 	DP_PRINT_STATS("AST Stats not available.Enable FEATURE_AST");
 	return;
@@ -1031,15 +1102,18 @@ static void dp_print_peer_table(struct dp_vdev *vdev)
 			DP_PRINT_STATS("Invalid Peer");
 			return;
 		}
-		DP_PRINT_STATS("    peer_mac_addr = %pM nawds_enabled = %d",
+		DP_PRINT_STATS("    peer_mac_addr = %pM"
+			       " nawds_enabled = %d"
+			       " bss_peer = %d"
+			       " wapi = %d"
+			       " wds_enabled = %d"
+			       " delete in progress = %d"
+			       " peer id = %d",
 			       peer->mac_addr.raw,
-			       peer->nawds_enabled);
-		DP_PRINT_STATS(" bss_peer = %d wapi = %d wds_enabled = %d",
+			       peer->nawds_enabled,
 			       peer->bss_peer,
 			       peer->wapi,
-			       peer->wds_enabled);
-
-		DP_PRINT_STATS(" delete in progress = %d peer id = %d",
+			       peer->wds_enabled,
 			       peer->delete_in_progress,
 			       peer->peer_ids[0]);
 	}
@@ -4322,9 +4396,10 @@ static void dp_vdev_flush_peers(struct dp_vdev *vdev)
 			 *
 			 */
 			dp_peer_unref_del_find_by_id(peer);
+			dp_rx_peer_unmap_handler(soc, peer_ids[i],
+						 vdev->vdev_id,
+						 peer->mac_addr.raw, 0);
 		}
-		dp_rx_peer_unmap_handler(soc, peer_ids[i], vdev->vdev_id,
-					 NULL, 0);
 	}
 
 	qdf_mem_free(peer_ids);
@@ -4439,7 +4514,6 @@ static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
 		dp_peer_del_ast(soc, ast_entry);
 
 	peer->self_ast_entry = NULL;
-	TAILQ_INIT(&peer->ast_entry_list);
 	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 #else
@@ -4485,8 +4559,7 @@ static inline struct dp_peer *dp_peer_can_reuse(struct dp_vdev *vdev,
 }
 #endif
 
-#if defined(FEATURE_AST)
-#if !defined(AST_HKV1_WORKAROUND)
+#ifdef FEATURE_AST
 static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
 					       uint8_t *peer_mac_addr)
 {
@@ -4494,29 +4567,12 @@ static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
 
 	qdf_spin_lock_bh(&soc->ast_lock);
 	ast_entry = dp_peer_ast_hash_find_soc(soc, peer_mac_addr);
-	if (ast_entry && ast_entry->next_hop)
-		dp_peer_del_ast(soc, ast_entry);
-	qdf_spin_unlock_bh(&soc->ast_lock);
-}
-#else
-static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
-					       uint8_t *peer_mac_addr)
-{
-	struct dp_ast_entry *ast_entry;
 
-	if (soc->ast_override_support) {
-		qdf_spin_lock_bh(&soc->ast_lock);
-		ast_entry = dp_peer_ast_hash_find_soc(soc, peer_mac_addr);
-		if (ast_entry && ast_entry->next_hop)
-			dp_peer_del_ast(soc, ast_entry);
-		qdf_spin_unlock_bh(&soc->ast_lock);
-	}
-}
-#endif
-#else
-static inline void dp_peer_ast_handle_roam_del(struct dp_soc *soc,
-					       uint8_t *peer_mac_addr)
-{
+	if (ast_entry && ast_entry->next_hop &&
+	    !ast_entry->delete_in_progress)
+		dp_peer_del_ast(soc, ast_entry);
+
+	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 #endif
 
@@ -5082,6 +5138,12 @@ static void dp_reset_and_release_peer_mem(struct dp_soc *soc,
 		}
 	}
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
+
+	/*
+	 * Peer AST list hast to be empty here
+	 */
+	DP_AST_ASSERT(TAILQ_EMPTY(&peer->ast_entry_list));
+
 	qdf_mem_free(peer);
 }
 
@@ -8710,9 +8772,9 @@ static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
  *
  * Return: 0 for success. nonzero for failure.
  */
-QDF_STATUS  dp_vdev_get_neighbour_rssi(struct cdp_vdev *vdev_hdl,
-				       char *mac_addr,
-				       uint8_t *rssi)
+static QDF_STATUS  dp_vdev_get_neighbour_rssi(struct cdp_vdev *vdev_hdl,
+					      char *mac_addr,
+					      uint8_t *rssi)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_hdl;
 	struct dp_pdev *pdev = vdev->pdev;
@@ -8889,24 +8951,14 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_peer_teardown = NULL,
 #endif
 	.txrx_peer_add_ast = dp_peer_add_ast_wifi3,
-	.txrx_peer_del_ast = dp_peer_del_ast_wifi3,
 	.txrx_peer_update_ast = dp_peer_update_ast_wifi3,
-	.txrx_peer_ast_hash_find_soc = dp_peer_ast_hash_find_soc_wifi3,
-	.txrx_peer_ast_hash_find_by_pdevid =
-		dp_peer_ast_hash_find_by_pdevid_wifi3,
-	.txrx_peer_ast_get_pdev_id = dp_peer_ast_get_pdev_id_wifi3,
-	.txrx_peer_ast_get_next_hop = dp_peer_ast_get_next_hop_wifi3,
-	.txrx_peer_ast_set_type = dp_peer_ast_set_type_wifi3,
-	.txrx_peer_ast_get_type = dp_peer_ast_get_type_wifi3,
-	.txrx_peer_ast_get_peer = dp_peer_ast_get_peer_wifi3,
-	.txrx_peer_ast_get_nexthop_peer_id =
-		dp_peer_ast_get_nexhop_peer_id_wifi3,
-#if defined(FEATURE_AST) && defined(AST_HKV1_WORKAROUND)
-	.txrx_peer_ast_set_cp_ctx = dp_peer_ast_set_cp_ctx_wifi3,
-	.txrx_peer_ast_get_cp_ctx = dp_peer_ast_get_cp_ctx_wifi3,
-	.txrx_peer_ast_get_wmi_sent = dp_peer_ast_get_wmi_sent_wifi3,
-	.txrx_peer_ast_free_entry = dp_peer_ast_free_entry_wifi3,
-#endif
+	.txrx_peer_get_ast_info_by_soc = dp_peer_get_ast_info_by_soc_wifi3,
+	.txrx_peer_get_ast_info_by_pdev =
+		dp_peer_get_ast_info_by_pdevid_wifi3,
+	.txrx_peer_ast_delete_by_soc =
+		dp_peer_ast_entry_del_by_soc,
+	.txrx_peer_ast_delete_by_pdev =
+		dp_peer_ast_entry_del_by_pdev,
 	.txrx_peer_delete = dp_peer_delete_wifi3,
 	.txrx_vdev_register = dp_vdev_register_wifi3,
 	.txrx_soc_detach = dp_soc_detach_wifi3,

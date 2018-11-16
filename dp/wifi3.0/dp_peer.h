@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -87,6 +87,7 @@ dp_peer_find_by_id(struct dp_soc *soc,
 }
 #endif /* PEER_LOCK_REF_PROTECT */
 
+void dp_print_ast_stats(struct dp_soc *soc);
 void dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id,
 			    uint16_t hw_peer_id, uint8_t vdev_id,
 			    uint8_t *peer_mac_addr, uint16_t ast_hash,
@@ -134,24 +135,13 @@ void dp_peer_ast_set_type(struct dp_soc *soc,
 				struct dp_ast_entry *ast_entry,
 				enum cdp_txrx_ast_entry_type type);
 
-#if defined(FEATURE_AST) && defined(AST_HKV1_WORKAROUND)
-void dp_peer_ast_set_cp_ctx(struct dp_soc *soc,
-			    struct dp_ast_entry *ast_entry,
-			    void *cp_ctx);
-
-void *dp_peer_ast_get_cp_ctx(struct dp_soc *soc,
-			     struct dp_ast_entry *ast_entry);
-
 void dp_peer_ast_send_wds_del(struct dp_soc *soc,
 			      struct dp_ast_entry *ast_entry);
 
-bool dp_peer_ast_get_del_cmd_sent(struct dp_soc *soc,
-				  struct dp_ast_entry *ast_entry);
-
-void dp_peer_ast_free_entry(struct dp_soc *soc,
-			    struct dp_ast_entry *ast_entry);
-
-#endif
+void dp_peer_free_hmwds_cb(void *ctrl_psoc,
+			   void *dp_soc,
+			   void *cookie,
+			   enum cdp_ast_free_status status);
 
 /*
  * dp_get_vdev_from_soc_vdev_id_wifi3() -
@@ -198,4 +188,13 @@ dp_get_vdev_from_soc_vdev_id_wifi3(struct dp_soc *soc,
  * Return: true if peer exists of false otherwise
  */
 bool dp_peer_find_by_id_valid(struct dp_soc *soc, uint16_t peer_id);
+
+#define DP_AST_ASSERT(_condition) \
+	do { \
+		if (!(_condition)) { \
+			dp_print_ast_stats(soc);\
+			QDF_BUG(_condition); \
+		} \
+	} while (0)
+
 #endif /* _DP_PEER_H_ */

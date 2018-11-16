@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -642,6 +642,22 @@ union dp_align_mac_addr {
 	} align4_2;
 };
 
+/**
+ * struct dp_ast_free_cb_params - HMWDS free callback cookie
+ * @mac_addr: ast mac address
+ * @peer_mac_addr: mac address of peer
+ * @type: ast entry type
+ * @vdev_id: vdev_id
+ * @flags: ast flags
+ */
+struct dp_ast_free_cb_params {
+	union dp_align_mac_addr mac_addr;
+	union dp_align_mac_addr peer_mac_addr;
+	enum cdp_txrx_ast_entry_type type;
+	uint8_t vdev_id;
+	uint32_t flags;
+};
+
 /*
  * dp_ast_entry
  *
@@ -661,13 +677,14 @@ union dp_align_mac_addr {
  * @ast_hash_value: hast value in HW
  * @ref_cnt: reference count
  * @type: flag to indicate type of the entry(static/WDS/MEC)
- * @del_cmd_sent: Flag to identify if WMI to del ast is sent
- * @cp_ctx: Opaque context used by control path (AST_HKV1_WORKAROUND)
+ * @delete_in_progress: Flag to indicate that delete commands send to FW
+ *                      and host is waiting for response from FW
+ * @callback: ast free/unmap callback
+ * @cookie: argument to callback
  * @hash_list_elem: node in soc AST hash list (mac address used as hash)
  */
 struct dp_ast_entry {
 	uint16_t ast_idx;
-	/* MAC address */
 	union dp_align_mac_addr mac_addr;
 	struct dp_peer *peer;
 	bool next_hop;
@@ -679,8 +696,9 @@ struct dp_ast_entry {
 	uint16_t ast_hash_value;
 	qdf_atomic_t ref_cnt;
 	enum cdp_txrx_ast_entry_type type;
-	bool del_cmd_sent;
-	void *cp_ctx;
+	bool delete_in_progress;
+	txrx_ast_free_cb callback;
+	void *cookie;
 	TAILQ_ENTRY(dp_ast_entry) ase_list_elem;
 	TAILQ_ENTRY(dp_ast_entry) hash_list_elem;
 };
