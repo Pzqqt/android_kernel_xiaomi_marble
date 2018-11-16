@@ -1116,6 +1116,10 @@ typedef struct _htt_rx_peer_rate_stats_tlv {
     /* Counters to track number of rx packets in each GI in each mcs (0-11) */
     A_UINT32 rx_gi[HTT_RX_PEER_STATS_NUM_GI_COUNTERS][HTT_RX_PEER_STATS_NUM_MCS_COUNTERS];
 
+    A_UINT32 rx_ulofdma_non_data_ppdu; /* ppdu level */
+    A_UINT32 rx_ulofdma_data_ppdu;     /* ppdu level */
+    A_UINT32 rx_ulofdma_mpdu_ok;       /* mpdu level */
+    A_UINT32 rx_ulofdma_mpdu_fail;     /* mpdu level */
 } htt_rx_peer_rate_stats_tlv;
 
 typedef enum {
@@ -2861,6 +2865,7 @@ typedef struct {
 #define HTT_RX_PDEV_STATS_NUM_BW_COUNTERS          4
 #define HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS      8
 #define HTT_RX_PDEV_STATS_NUM_PREAMBLE_TYPES       HTT_STATS_PREAM_COUNT
+#define HTT_RX_PDEV_MAX_OFDMA_NUM_USER             8
 
 #define HTT_RX_PDEV_RATE_STATS_MAC_ID_M     0x000000ff
 #define HTT_RX_PDEV_RATE_STATS_MAC_ID_S              0
@@ -2913,6 +2918,21 @@ typedef struct {
     A_UINT32 rx_legacy_ofdm_rate[HTT_RX_PDEV_STATS_NUM_LEGACY_OFDM_STATS];
     A_UINT32 rx_active_dur_us_low;
     A_UINT32 rx_active_dur_us_high;
+
+    A_UINT32 rx_11ax_ul_ofdma;
+
+    A_UINT32 ul_ofdma_rx_mcs[HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ul_ofdma_rx_gi[HTT_TX_PDEV_STATS_NUM_GI_COUNTERS][HTT_RX_PDEV_STATS_NUM_MCS_COUNTERS];
+    A_UINT32 ul_ofdma_rx_nss[HTT_TX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_UINT32 ul_ofdma_rx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
+    A_UINT32 ul_ofdma_rx_stbc;
+    A_UINT32 ul_ofdma_rx_ldpc;
+ 
+    /* record the stats for each user index */
+    A_UINT32 rx_ulofdma_non_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER]; /* ppdu level */
+    A_UINT32 rx_ulofdma_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];     /* ppdu level */
+    A_UINT32 rx_ulofdma_mpdu_ok[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];       /* mpdu level */
+    A_UINT32 rx_ulofdma_mpdu_fail[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];     /* mpdu level */
 } htt_rx_pdev_rate_stats_tlv;
 
 
