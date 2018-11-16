@@ -6107,6 +6107,39 @@ static int hdd_config_total_beacon_miss_count(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_config_latency_level(struct hdd_adapter *adapter,
+				    const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint16_t latency_level;
+	QDF_STATUS status;
+
+	latency_level = nla_get_u16(attr);
+	switch (latency_level) {
+	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_NORMAL:
+	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_MODERATE:
+	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_LOW:
+	case QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_ULTRALOW:
+		/* valid values */
+		break;
+	default:
+		hdd_err("Invalid value %u", latency_level);
+		return -EINVAL;
+	}
+
+	/* Map the latency value to the level which fw expected
+	 * 0 - normal, 1 - moderate, 2 - low, 3 - ultralow
+	 */
+	latency_level = latency_level - 1;
+	status = sme_set_wlm_latency_level(hdd_ctx->mac_handle,
+					   adapter->session_id,
+					   latency_level);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("set latency level failed, %u", status);
+
+	return qdf_status_to_os_return(status);
+}
+
 /**
  * typedef independent_setter_fn - independent attribute handler
  * @adapter: The adapter being configured
@@ -6183,6 +6216,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_restrict_offchannel},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_TOTAL_BEACON_MISS_COUNT,
 	 hdd_config_total_beacon_miss_count},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL,
+	 hdd_config_latency_level},
 };
 
 /**
@@ -6304,7 +6339,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS qdf_status;
 	uint32_t ant_div_usrcfg;
-	uint16_t latency_level;
 	mac_handle_t mac_handle;
 	bool b_value;
 
@@ -6479,31 +6513,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_wifi_set_rx_blocksize(hdd_ctx, adapter, tb);
 	if (ret_val != 0)
 		return ret_val;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL]) {
-		latency_level = nla_get_u16(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL]);
-
-		if ((latency_level >
-		    QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_MAX) ||
-		    (latency_level ==
-		    QCA_WLAN_VENDOR_ATTR_CONFIG_LATENCY_LEVEL_INVALID)) {
-			hdd_err("Invalid Wlan latency level value");
-			return -EINVAL;
-		}
-
-		/* Mapping the latency value to the level which fw expected
-		 * 0 - normal, 1 - moderate, 2 - low, 3 - ultralow
-		 */
-		latency_level = latency_level - 1;
-		qdf_status = sme_set_wlm_latency_level(mac_handle,
-						       adapter->session_id,
-						       latency_level);
-		if (qdf_status != QDF_STATUS_SUCCESS) {
-			hdd_err("set Wlan latency level failed");
-			ret_val = -EINVAL;
-		}
-	}
 
 	if (adapter->device_mode == QDF_STA_MODE &&
 	    tb[QCA_WLAN_VENDOR_ATTR_CONFIG_DISABLE_FILS]) {
