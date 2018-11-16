@@ -5993,6 +5993,23 @@ static int hdd_config_ignore_assoc_disallowed(struct hdd_adapter *adapter,
 	return 0;
 }
 
+static int hdd_config_restrict_offchannel(struct hdd_adapter *adapter,
+					  const struct nlattr *attr)
+{
+	uint8_t restrict_offchan;
+
+	restrict_offchan = nla_get_u8(attr);
+	hdd_debug("%u", restrict_offchan);
+
+	if (restrict_offchan > 1) {
+		hdd_err("Invalid value %u", restrict_offchan);
+		return -EINVAL;
+	}
+
+	return wlan_hdd_handle_restrict_offchan_config(adapter,
+						       restrict_offchan);
+}
+
 /**
  * typedef independent_setter_fn - independent attribute handler
  * @adapter: The adapter being configured
@@ -6059,6 +6076,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_ant_div_probe_dwell_time},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED,
 	 hdd_config_ignore_assoc_disallowed},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_RESTRICT_OFFCHANNEL,
+	 hdd_config_restrict_offchannel},
 };
 
 /**
@@ -6348,21 +6367,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		if (ret_val) {
 			hdd_err("Failed to set ant div weight");
 			return ret_val;
-		}
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RESTRICT_OFFCHANNEL]) {
-		u8 restrict_offchan = nla_get_u8(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RESTRICT_OFFCHANNEL]);
-
-		hdd_debug("Restrict offchannel:%d", restrict_offchan);
-		if (restrict_offchan <= 1)
-			ret_val =
-			wlan_hdd_handle_restrict_offchan_config(adapter,
-							restrict_offchan);
-		else {
-			ret_val = -EINVAL;
-			hdd_err("Invalid RESTRICT_OFFCHAN setting");
 		}
 	}
 
