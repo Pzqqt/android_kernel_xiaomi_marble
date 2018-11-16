@@ -31,25 +31,32 @@ QDF_STATUS init_deinit_chainmask_table_alloc(
 {
 	int i;
 	uint32_t alloc_size;
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (ser_ext_par->num_chainmask_tables > 0) {
-		status = QDF_STATUS_SUCCESS;
-		for (i = 0; i < ser_ext_par->num_chainmask_tables; i++) {
-			alloc_size =
-			(sizeof(struct wlan_psoc_host_chainmask_capabilities) *
-			ser_ext_par->chainmask_table[i].num_valid_chainmasks);
+	if (ser_ext_par->num_chainmask_tables == 0)
+		return QDF_STATUS_E_NOSUPPORT;
 
-			ser_ext_par->chainmask_table[i].cap_list =
-				qdf_mem_alloc_outline(NULL, alloc_size);
-			if (!ser_ext_par->chainmask_table[i].cap_list) {
-				init_deinit_chainmask_table_free(ser_ext_par);
-				status = QDF_STATUS_E_NOMEM;
-				break;
-			}
+	for (i = 0; i < ser_ext_par->num_chainmask_tables; i++) {
+		if (ser_ext_par->chainmask_table[i].num_valid_chainmasks >
+		    (UINT_MAX / sizeof(
+		     struct wlan_psoc_host_chainmask_capabilities))) {
+			target_if_err("invalid valid chanmask num %d",
+				      ser_ext_par->chainmask_table[i].
+				      num_valid_chainmasks);
+			status = QDF_STATUS_E_FAILURE;
+			break;
 		}
-	} else {
-		status = QDF_STATUS_E_NOSUPPORT;
+		alloc_size =
+			(sizeof(struct wlan_psoc_host_chainmask_capabilities) *
+			 ser_ext_par->chainmask_table[i].num_valid_chainmasks);
+
+		ser_ext_par->chainmask_table[i].cap_list =
+			qdf_mem_alloc_outline(NULL, alloc_size);
+		if (!ser_ext_par->chainmask_table[i].cap_list) {
+			init_deinit_chainmask_table_free(ser_ext_par);
+			status = QDF_STATUS_E_NOMEM;
+			break;
+		}
 	}
 
 	return status;
