@@ -5643,6 +5643,51 @@ static int hdd_config_access_policy(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_config_mpdu_aggregation(struct hdd_adapter *adapter,
+				       struct nlattr *tb[])
+{
+	struct nlattr *tx_attr =
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION];
+	struct nlattr *rx_attr =
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION];
+	uint8_t tx_size, rx_size;
+	struct sir_set_tx_rx_aggregation_size request;
+	QDF_STATUS status;
+
+	/* nothing to do if neither attribute is present */
+	if (!tx_attr && !rx_attr)
+		return 0;
+
+	/* if one is present, both must be present */
+	if (!tx_attr || !rx_attr) {
+		hdd_err("Missing attribute for %s",
+			tx_attr ? "RX" : "TX");
+		return -EINVAL;
+	}
+
+	tx_size = nla_get_u8(tx_attr);
+	rx_size = nla_get_u8(rx_attr);
+	if (!cfg_in_range(CFG_TX_AGGREGATION_SIZE, tx_size) ||
+	    !cfg_in_range(CFG_RX_AGGREGATION_SIZE, rx_size)) {
+		hdd_err("TX %d RX %d MPDU aggr size not in range",
+			tx_size, rx_size);
+
+		return -EINVAL;
+	}
+
+	qdf_mem_zero(&request, sizeof(request));
+	request.tx_aggregation_size = tx_size;
+	request.rx_aggregation_size = rx_size;
+	request.vdev_id = adapter->session_id;
+	request.aggr_type = WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU;
+
+	status = wma_set_tx_rx_aggregation_size(&request);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("failed to set aggr sizes err %d", status);
+
+	return qdf_status_to_os_return(status);
+}
+
 static int hdd_config_fine_time_measurement(struct hdd_adapter *adapter,
 					    const struct nlattr *attr)
 {
@@ -6410,6 +6455,7 @@ typedef int (*interdependent_setter_fn)(struct hdd_adapter *adapter,
 /* vtable for interdependent setters */
 static const interdependent_setter_fn interdependent_setters[] = {
 	hdd_config_access_policy,
+	hdd_config_mpdu_aggregation,
 };
 
 /**
@@ -6470,12 +6516,9 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	int errno;
 	int ret;
 	int ret_val = 0;
-	struct sir_set_tx_rx_aggregation_size request;
-	QDF_STATUS qdf_status;
 	uint32_t ant_div_usrcfg;
 
 	hdd_enter_dev(dev);
-	qdf_mem_zero(&request, sizeof(request));
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -6501,40 +6544,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		errno = ret;
 
 	/* return errno here when all attributes have been refactored */
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION] ||
-	    tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION]) {
-		/* if one is specified, both must be specified */
-		if (!tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION] ||
-		    !tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION]) {
-			hdd_err("Both TX and RX MPDU Aggregation required");
-			return -EINVAL;
-		}
-
-		request.tx_aggregation_size = nla_get_u8(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_MPDU_AGGREGATION]);
-		request.rx_aggregation_size = nla_get_u8(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RX_MPDU_AGGREGATION]);
-		request.vdev_id = adapter->session_id;
-		request.aggr_type = WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU;
-
-		if (cfg_in_range(CFG_TX_AGGREGATION_SIZE,
-				 request.tx_aggregation_size) &&
-		    cfg_in_range(CFG_RX_AGGREGATION_SIZE,
-				 request.rx_aggregation_size)) {
-			qdf_status = wma_set_tx_rx_aggregation_size(&request);
-			if (qdf_status != QDF_STATUS_SUCCESS) {
-				hdd_err("failed to set aggr sizes err %d",
-					qdf_status);
-				ret_val = -EPERM;
-			}
-		} else {
-			hdd_err("TX %d RX %d MPDU aggr size not in range",
-				request.tx_aggregation_size,
-				request.rx_aggregation_size);
-			ret_val = -EINVAL;
-		}
-	}
 
 	if (tb[ANT_DIV_PROBE_PERIOD] ||
 	    tb[ANT_DIV_STAY_PERIOD]) {
