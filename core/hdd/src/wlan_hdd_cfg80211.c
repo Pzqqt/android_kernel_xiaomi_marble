@@ -6009,6 +6009,24 @@ static int hdd_config_ant_div_selftest(struct hdd_adapter *adapter,
 	return errno;
 }
 
+static int hdd_config_ant_div_selftest_intvl(struct hdd_adapter *adapter,
+					     const struct nlattr *attr)
+{
+	uint32_t antdiv_selftest_intvl;
+	int errno;
+
+	antdiv_selftest_intvl = nla_get_u32(attr);
+	hdd_debug("antdiv_selftest_intvl: %d", antdiv_selftest_intvl);
+
+	errno = wma_cli_set_command(adapter->session_id,
+				    WMI_PDEV_PARAM_ANT_DIV_SELFTEST_INTVL,
+				    antdiv_selftest_intvl, PDEV_CMD);
+	if (errno)
+		hdd_err("Failed to set selftest interval, %d", errno);
+
+	return errno;
+}
+
 static int hdd_config_ignore_assoc_disallowed(struct hdd_adapter *adapter,
 					      const struct nlattr *attr)
 {
@@ -6114,6 +6132,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_ant_div_chain},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST,
 	 hdd_config_ant_div_selftest},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST_INTVL,
+	 hdd_config_ant_div_selftest_intvl},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED,
 	 hdd_config_ignore_assoc_disallowed},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_RESTRICT_OFFCHANNEL,
@@ -6239,7 +6259,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS qdf_status;
 	uint32_t ant_div_usrcfg;
-	uint32_t antdiv_selftest_intvl;
 	uint8_t bmiss_bcnt;
 	uint16_t latency_level;
 	mac_handle_t mac_handle;
@@ -6418,20 +6437,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_wifi_set_rx_blocksize(hdd_ctx, adapter, tb);
 	if (ret_val != 0)
 		return ret_val;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST_INTVL]) {
-		antdiv_selftest_intvl = nla_get_u32(
-			tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST_INTVL]);
-		hdd_debug("antdiv_selftest_intvl: %d",
-			antdiv_selftest_intvl);
-		ret_val = wma_cli_set_command((int)adapter->session_id,
-				(int)WMI_PDEV_PARAM_ANT_DIV_SELFTEST_INTVL,
-				antdiv_selftest_intvl, PDEV_CMD);
-		if (ret_val) {
-			hdd_err("Failed to set antdiv_selftest_intvl");
-			return ret_val;
-		}
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_TOTAL_BEACON_MISS_COUNT]) {
 		bmiss_bcnt = nla_get_u8(
