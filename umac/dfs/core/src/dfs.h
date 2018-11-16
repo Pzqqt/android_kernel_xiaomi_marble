@@ -1142,8 +1142,8 @@ struct wlan_dfs {
 	int            dfs_status_timeout_override;
 #endif
 	bool           dfs_is_stadfs_enabled;
-	uint32_t       dfs_min_sidx;
-	uint32_t       dfs_max_sidx;
+	int32_t        dfs_min_sidx;
+	int32_t        dfs_max_sidx;
 	uint8_t        dfs_seg_id;
 	uint8_t        dfs_is_chirp;
 	uint8_t        dfs_bw_reduced;
