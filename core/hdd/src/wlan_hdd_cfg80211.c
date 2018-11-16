@@ -5767,6 +5767,23 @@ static int hdd_config_ctrl_retry(struct hdd_adapter *adapter,
 				   retry, PDEV_CMD);
 }
 
+static int hdd_config_propagation_delay(struct hdd_adapter *adapter,
+					const struct nlattr *attr)
+{
+	uint8_t delay;
+	uint32_t abs_delay;
+	int param_id;
+
+	delay = nla_get_u8(attr);
+	delay = delay > CFG_PROPAGATION_DELAY_MAX ?
+				CFG_PROPAGATION_DELAY_MAX : delay;
+	abs_delay = delay + CFG_PROPAGATION_DELAY_BASE;
+	param_id = WMI_PDEV_PARAM_PROPAGATION_DELAY;
+
+	return  wma_cli_set_command(adapter->session_id, param_id,
+				    abs_delay, PDEV_CMD);
+}
+
 static int hdd_config_guard_time(struct hdd_adapter *adapter,
 				 const struct nlattr *attr)
 {
@@ -5881,6 +5898,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_mgmt_retry},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_CTRL_RETRY,
 	 hdd_config_ctrl_retry},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY,
+	 hdd_config_propagation_delay},
 };
 
 /**
@@ -6002,7 +6021,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	bool vendor_ie_present = false, access_policy_present = false;
 	struct sir_set_tx_rx_aggregation_size request;
 	QDF_STATUS qdf_status;
-	uint8_t delay;
 	uint32_t abs_delay;
 	int param_id;
 	uint32_t tx_fail_count;
@@ -6077,17 +6095,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		access_policy_present = true;
 		hdd_debug("Access policy present. access_policy %d",
 			access_policy);
-	}
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY]) {
-		delay = nla_get_u8(tb[
-				QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_DELAY]);
-		delay = delay > CFG_PROPAGATION_DELAY_MAX ?
-				CFG_PROPAGATION_DELAY_MAX : delay;
-		abs_delay = delay + CFG_PROPAGATION_DELAY_BASE;
-		param_id = WMI_PDEV_PARAM_PROPAGATION_DELAY;
-		ret_val = wma_cli_set_command(adapter->session_id, param_id,
-					      abs_delay, PDEV_CMD);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_ABS_DELAY]) {
