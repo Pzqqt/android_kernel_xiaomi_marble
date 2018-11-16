@@ -4452,12 +4452,18 @@ typedef struct {
 /*
  * START_STOP flag value: 1 - Start, 0 - Stop
  */
-#define WMI_OFFLOAD_QUIET_FLAG_START_STOP   0x00000001
+#define WMI_OFFLOAD_QUIET_FLAG_START_STOP              0x00000001
 /*
  * ONE_SHOT flag value: 1 - One shot, 0 - Repeat
  * This flag is only relevant if the START_STOP flag == 1 (start).
  */
-#define WMI_OFFLOAD_QUIET_FLAG_ONE_SHOT     0x00000002
+#define WMI_OFFLOAD_QUIET_FLAG_ONE_SHOT                0x00000002
+/*
+ * Enable/Disable sending Quiet IE info in SWBA event from the target
+ * 0 - Don't include Quiet IE in WMI SWBA Event
+ * 1 - Include Quiet IE in WMI SWBA Event
+ */
+#define WMI_OFFLOAD_QUIET_FLAG_INFO_IN_SWBA_START_STOP 0x00000004
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_bcn_offload_quiet_config_cmd_fixed_param */
@@ -9970,6 +9976,15 @@ typedef struct {
     A_UINT32 vdev_id;
 } wmi_p2p_noa_info;
 
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_quiet_offload_info  */
+    A_UINT32 vdev_id;   /* unique id identifying the VDEV */
+    A_UINT8  tbttcount; /* quiet start */
+    A_UINT8  period;    /* beacon intervals between quiets */
+    A_UINT16 duration;  /* TUs of each quiet */
+    A_UINT16 offset;    /* TUs of from TBTT of quiet start */
+} wmi_quiet_offload_info;
+
 #define WMI_UNIFIED_NOA_ATTR_MODIFIED       0x1
 #define WMI_UNIFIED_NOA_ATTR_MODIFIED_S     0
 
@@ -10040,6 +10055,7 @@ typedef struct {
 /* This TLV is followed by tim_info and p2p_noa_info for each vdev:
  *     wmi_tim_info tim_info[];
  *     wmi_p2p_noa_info p2p_noa_info[];
+ *     wmi_quiet_offload_info quiet_offload_info[0/1];
  *
  */
 } wmi_host_swba_event_fixed_param;

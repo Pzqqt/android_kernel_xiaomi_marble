@@ -2927,7 +2927,7 @@ typedef struct {
     A_UINT32 ul_ofdma_rx_bw[HTT_TX_PDEV_STATS_NUM_BW_COUNTERS];
     A_UINT32 ul_ofdma_rx_stbc;
     A_UINT32 ul_ofdma_rx_ldpc;
- 
+
     /* record the stats for each user index */
     A_UINT32 rx_ulofdma_non_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER]; /* ppdu level */
     A_UINT32 rx_ulofdma_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];     /* ppdu level */
