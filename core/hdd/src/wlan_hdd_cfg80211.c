@@ -6199,6 +6199,27 @@ static int hdd_config_rsn_ie(struct hdd_adapter *adapter,
 	return 0;
 }
 
+static int hdd_config_gtx(struct hdd_adapter *adapter,
+			  const struct nlattr *attr)
+{
+	uint8_t config_gtx;
+	int errno;
+
+	config_gtx = nla_get_u8(attr);
+	if (config_gtx > 1) {
+		hdd_err_rl("Invalid config_gtx value %d", config_gtx);
+		return -EINVAL;
+	}
+
+	errno = sme_cli_set_command(adapter->session_id,
+				    WMI_VDEV_PARAM_GTX_ENABLE,
+				    config_gtx, VDEV_CMD);
+	if (errno)
+		hdd_err("Failed to set GTX, %d", errno);
+
+	return errno;
+}
+
 /**
  * typedef independent_setter_fn - independent attribute handler
  * @adapter: The adapter being configured
@@ -6281,6 +6302,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_disable_fils},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_RSN_IE,
 	 hdd_config_rsn_ie},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_GTX,
+	 hdd_config_gtx},
 };
 
 /**
@@ -6575,21 +6598,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_wifi_set_rx_blocksize(hdd_ctx, adapter, tb);
 	if (ret_val != 0)
 		return ret_val;
-
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_GTX]) {
-		uint8_t config_gtx;
-
-		config_gtx = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_GTX]);
-		if (config_gtx > 1) {
-			hdd_err_rl("Invalid config_gtx value %d", config_gtx);
-			return -EINVAL;
-		}
-		ret_val = sme_cli_set_command(adapter->session_id,
-					      WMI_VDEV_PARAM_GTX_ENABLE,
-					      config_gtx, VDEV_CMD);
-		if (ret_val)
-			hdd_err("Failed to set GTX");
-	}
 
 	if (ret_val)
 		errno = ret_val;
