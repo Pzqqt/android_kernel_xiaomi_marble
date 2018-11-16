@@ -753,6 +753,8 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 	int errno;
 	struct csr_roam_profile *roam_profile;
 	struct in_ifaddr *ifa;
+	enum station_keepalive_method val;
+	QDF_STATUS status;
 
 	hdd_enter();
 
@@ -768,7 +770,11 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 
 	hdd_enable_arp_offload(adapter, pmo_ipv4_change_notify);
 
-	if (hdd_ctx->config->sta_keepalive_method == HDD_STA_KEEPALIVE_GRAT_ARP)
+	status = ucfg_mlme_get_sta_keepalive_method(hdd_ctx->psoc, &val);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto exit;
+
+	if (val == MLME_STA_KEEPALIVE_GRAT_ARP)
 		hdd_set_grat_arp_keepalive(adapter);
 
 	hdd_debug("FILS Roaming support: %d",
@@ -1730,7 +1736,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				wlan_hdd_inc_suspend_stats(hdd_ctx,
 							   SUSPEND_FAIL_RADAR);
 				return -EAGAIN;
-			} else if (!hdd_ctx->config->enable_sap_suspend) {
+			} else if (!ucfg_pmo_get_enable_sap_suspend(
+				   hdd_ctx->psoc)) {
 				/* return -EOPNOTSUPP if SAP does not support
 				 * suspend
 				 */
@@ -1738,7 +1745,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				return -EOPNOTSUPP;
 			}
 		} else if (QDF_P2P_GO_MODE == adapter->device_mode) {
-			if (!hdd_ctx->config->enable_sap_suspend) {
+			if (!!ucfg_pmo_get_enable_sap_suspend(
+				   hdd_ctx->psoc)) {
 				/* return -EOPNOTSUPP if GO does not support
 				 * suspend
 				 */

@@ -393,7 +393,7 @@
 
 #ifdef DHCP_SERVER_OFFLOAD
 /* <ini>
- * gEnableDeauthToDisassocMap
+ * gDHCPServerOffloadEnable
  * @Min: 0
  * @Max: 1
  * @Default: 0
@@ -407,7 +407,7 @@
  * </ini>
  */
 #define CFG_DHCP_SERVER_OFFLOAD_SUPPORT CFG_INI_BOOL( \
-		"gEnableDeauthToDisassocMap", \
+		"gDHCPServerOffloadEnable", \
 		0, \
 		"DHCP Server offload support")
 

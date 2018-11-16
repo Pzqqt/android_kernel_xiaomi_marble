@@ -568,6 +568,7 @@ struct wlan_mlme_cfg_sap {
 	uint8_t sap_pref_chan_location;
 	bool sap_force_11n_for_11ac;
 	bool go_force_11n_for_11ac;
+	bool ap_random_bssid_enable;
 };
 
 /**
@@ -935,6 +936,7 @@ struct wlan_mlme_generic {
 	uint8_t debug_packet_log;
 	bool enabled_11h;
 	bool enabled_11d;
+	bool enable_deauth_to_disassoc_map;
 };
 
 /*
@@ -1047,6 +1049,19 @@ struct wlan_mlme_nss_chains {
 };
 
 /**
+ * enum station_keepalive_method - available keepalive methods for stations
+ * @MLME_STA_KEEPALIVE_NULL_DATA: null data packet
+ * @MLME_STA_KEEPALIVE_GRAT_ARP: gratuitous ARP packet
+ * @MLME_STA_KEEPALIVE_COUNT: number of method options available
+ */
+enum station_keepalive_method {
+	MLME_STA_KEEPALIVE_NULL_DATA,
+	MLME_STA_KEEPALIVE_GRAT_ARP,
+	/* keep at the end */
+	MLME_STA_KEEPALIVE_COUNT
+};
+
+/**
  * struct wlan_mlme_sta_cfg - MLME STA configuration items
  * @sta_keep_alive_period:          Sends NULL frame to AP period
  * @tgt_gtx_usr_cfg:                Target gtx user config
@@ -1082,6 +1097,7 @@ struct wlan_mlme_sta_cfg {
 	bool force_rsne_override;
 	bool single_tid;
 	bool allow_tpc_from_ap;
+	enum station_keepalive_method sta_keepalive_method;
 };
 
 /**

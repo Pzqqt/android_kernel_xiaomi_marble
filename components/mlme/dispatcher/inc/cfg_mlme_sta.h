@@ -397,6 +397,33 @@
 	1, \
 	"Support for AP power constraint")
 
+/*
+ * <ini>
+ * gStaKeepAliveMethod - Which keepalive method to use
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini determines which keepalive method to use for station interfaces
+ *	 1) Use null data packets
+ *	 2) Use gratuitous ARP packets
+ *
+ * Related: gStaKeepAlivePeriod, gApKeepAlivePeriod, gGoKeepAlivePeriod
+ *
+ * Supported Feature: STA, Keepalive
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_STA_KEEPALIVE_METHOD CFG_INI_INT( \
+			"gStaKeepAliveMethod", \
+			MLME_STA_KEEPALIVE_NULL_DATA, \
+			MLME_STA_KEEPALIVE_COUNT - 1, \
+			MLME_STA_KEEPALIVE_GRAT_ARP, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Which keepalive method to use")
+
 #define CFG_STA_ALL \
 	CFG(CFG_INFRA_STA_KEEP_ALIVE_PERIOD) \
 	CFG(CFG_TGT_GTX_USR_CFG) \
@@ -411,6 +438,7 @@
 	CFG(CFG_FILS_MAX_CHAN_GUARD_TIME) \
 	CFG(CFG_FORCE_RSNE_OVERRIDE) \
 	CFG(CFG_SINGLE_TID_RC) \
+	CFG(CFG_STA_KEEPALIVE_METHOD) \
 	CFG(CFG_WT_CNF_TIMEOUT) \
 	CFG(CFG_CURRENT_RSSI) \
 	CFG(CFG_TX_POWER_CTRL)

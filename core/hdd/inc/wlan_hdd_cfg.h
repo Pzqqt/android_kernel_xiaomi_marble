@@ -1615,29 +1615,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gEnableApRandomBssid - Create ramdom BSSID
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to create a random BSSID in SoftAP mode to meet
- * the Android requirement.
- *
- * Related: None.
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_AP_ENABLE_RANDOM_BSSID_NAME            "gEnableApRandomBssid"
-#define CFG_AP_ENABLE_RANDOM_BSSID_MIN             (0)
-#define CFG_AP_ENABLE_RANDOM_BSSID_MAX             (1)
-#define CFG_AP_ENABLE_RANDOM_BSSID_DEFAULT         (0)
-
-/*
- * <ini>
  * gEnableApProt - Enable/Disable AP protection
  * @Min: 0
  * @Max: 1
@@ -1918,43 +1895,6 @@ enum hdd_dot11_mode {
 #define CFG_WOW_DATA_INACTIVITY_TIMEOUT_MIN      (1)
 #define CFG_WOW_DATA_INACTIVITY_TIMEOUT_MAX      (255)
 #define CFG_WOW_DATA_INACTIVITY_TIMEOUT_DEFAULT  (50)
-
-/**
- * enum station_keepalive_method - available keepalive methods for stations
- * @HDD_STA_KEEPALIVE_NULL_DATA: null data packet
- * @HDD_STA_KEEPALIVE_GRAT_ARP: gratuitous ARP packet
- * @HDD_STA_KEEPALIVE_COUNT: number of method options available
- */
-enum station_keepalive_method {
-	HDD_STA_KEEPALIVE_NULL_DATA,
-	HDD_STA_KEEPALIVE_GRAT_ARP,
-	/* keep at the end */
-	HDD_STA_KEEPALIVE_COUNT
-};
-
-/*
- * <ini>
- * gStaKeepAliveMethod - Which keepalive method to use
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini determines which keepalive method to use for station interfaces
- *       1) Use null data packets
- *       2) Use gratuitous ARP packets
- *
- * Related: gStaKeepAlivePeriod, gApKeepAlivePeriod, gGoKeepAlivePeriod
- *
- * Supported Feature: STA, Keepalive
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_STA_KEEPALIVE_METHOD_NAME              "gStaKeepAliveMethod"
-#define CFG_STA_KEEPALIVE_METHOD_MIN               (HDD_STA_KEEPALIVE_NULL_DATA)
-#define CFG_STA_KEEPALIVE_METHOD_MAX               (HDD_STA_KEEPALIVE_COUNT - 1)
-#define CFG_STA_KEEPALIVE_METHOD_DEFAULT           (HDD_STA_KEEPALIVE_GRAT_ARP)
 
 /* WMM configuration */
 /*
@@ -2330,52 +2270,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gConfigVCmode - Bitmap for operating voltage corner mode
- * @Min: 0x00000000
- * @Max: 0x0fffffff
- * @Default: 0x0000000a
- * This ini is used to set operating voltage corner mode for differenet
- * phymode and bw configurations. Every 2 bits till BIT27 are dedicated
- * for a specific configuration. Bit values decide the type of voltage
- * corner mode. All the details below -
- *
- * Configure operating voltage corner mode based on phymode and bw.
- * bit 0-1 -   operating voltage corner mode for 11a/b.
- * bit 2-3 -   operating voltage corner mode for 11g.
- * bit 4-5 -   operating voltage corner mode for 11n, 20MHz, 1x1.
- * bit 6-7 -   operating voltage corner mode for 11n, 20MHz, 2x2.
- * bit 8-9 -   operating voltage corner mode for 11n, 40MHz, 1x1.
- * bit 10-11 - operating voltage corner mode for 11n, 40MHz, 2x2.
- * bit 12-13 - operating voltage corner mode for 11ac, 20MHz, 1x1.
- * bit 14-15 - operating voltage corner mode for 11ac, 20MHz, 2x2.
- * bit 16-17 - operating voltage corner mode for 11ac, 40MHz, 1x1.
- * bit 18-19 - operating voltage corner mode for 11ac, 40MHz, 2x2.
- * bit 20-21 - operating voltage corner mode for 11ac, 80MHz, 1x1.
- * bit 22-23 - operating voltage corner mode for 11ac, 80MHz, 2x2.
- * bit 24-25 - operating voltage corner mode for 11ac, 160MHz, 1x1.
- * bit 26-27 - operating voltage corner mode for 11ac, 160MHz, 2x2.
- * ---------------------------------------------
- * 00 - Static voltage corner SVS
- * 01 - static voltage corner LOW SVS
- * 10 - Dynamic voltage corner selection based on TPUT
- * 11 - Dynamic voltage corner selection based on TPUT and Tx Flush counters
-
- * Related: None
- *
- * Supported Feature: None
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_VC_MODE_BITMAP                  "gConfigVCmode"
-#define CFG_VC_MODE_BITMAP_MIN              (0x00000000)
-#define CFG_VC_MODE_BITMAP_MAX              (0x0fffffff)
-#define CFG_VC_MODE_BITMAP_DEFAULT          (0x00000005)
-
-/*
- * <ini>
  * gEnableSAPManadatoryChanList - Enable SAP Mandatory channel list
  * Options.
  * @Min: 0
@@ -2397,28 +2291,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_MIN   (0)
 #define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_MAX   (1)
 #define CFG_ENABLE_SAP_MANDATORY_CHAN_LIST_DEFAULT (0)
-
-/*
- * <ini>
- * gEnableMCCMode - Enable/Disable MCC feature.
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable MCC feature.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_MCC_ENABLED_NAME             "gEnableMCCMode"
-#define CFG_ENABLE_MCC_ENABLED_MIN              (0)
-#define CFG_ENABLE_MCC_ENABLED_MAX              (1)
-#define CFG_ENABLE_MCC_ENABLED_DEFAULT          (1)
 
 /*
  * <ini>
@@ -2822,34 +2694,6 @@ enum hdd_link_speed_rpt_type {
 
 #endif /* MSM_PLATFORM */
 
-#define CFG_ENABLE_SAP_SUSPEND                     "gEnableSapSuspend"
-#define CFG_ENABLE_SAP_SUSPEND_MIN                 (0)
-#define CFG_ENABLE_SAP_SUSPEND_MAX                 (1)
-#define CFG_ENABLE_SAP_SUSPEND_DEFAULT             (1)
-
-/*
- * <ini>
- * gEnableDeauthToDisassocMap - Enables deauth to disassoc map
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set default  disassoc map
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_DEAUTH_TO_DISASSOC_MAP_NAME    "gEnableDeauthToDisassocMap"
-#define CFG_ENABLE_DEAUTH_TO_DISASSOC_MAP_MIN     (0)
-#define CFG_ENABLE_DEAUTH_TO_DISASSOC_MAP_MAX     (1)
-#define CFG_ENABLE_DEAUTH_TO_DISASSOC_MAP_DEFAULT (0)
-
 #ifdef DHCP_SERVER_OFFLOAD
 #define CFG_DHCP_SERVER_IP_NAME     "gDHCPServerIP"
 #define CFG_DHCP_SERVER_IP_DEFAULT  ""
@@ -3111,15 +2955,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_STATIONARY_THRESHOLD_MIN       (0)
 #define CFG_STATIONARY_THRESHOLD_MAX       (100)
 #define CFG_STATIONARY_THRESHOLD_DEFAULT   (10)
-
-/* Option to report rssi in cfg80211_inform_bss_frame()
- * 0 = use rssi value based on noise floor = -96 dBm
- * 1 = use rssi value based on actual noise floor in hardware
- */
-#define CFG_INFORM_BSS_RSSI_RAW_NAME               "gInformBssRssiRaw"
-#define CFG_INFORM_BSS_RSSI_RAW_MIN                (0)
-#define CFG_INFORM_BSS_RSSI_RAW_MAX                (1)
-#define CFG_INFORM_BSS_RSSI_RAW_DEFAULT            (1)
 
 #ifdef WLAN_FEATURE_TSF_PLUS
 /* PTP options */
@@ -3578,30 +3413,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_BMPS_MAXIMUM_LI_MIN                (1)
 #define CFG_BMPS_MAXIMUM_LI_MAX                (65535)
 #define CFG_BMPS_MAXIMUM_LI_DEFAULT            (1)
-
-#ifdef FEATURE_RUNTIME_PM
-/*
- * <ini>
- * gRuntimePM - enable runtime suspend
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable runtime_suspend
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_RUNTIME_PM                  "gRuntimePM"
-#define CFG_ENABLE_RUNTIME_PM_MIN              (0)
-#define CFG_ENABLE_RUNTIME_PM_MAX              (1)
-#define CFG_ENABLE_RUNTIME_PM_DEFAULT          (0)
-#endif
 
 /*
  * <ini>
@@ -4780,9 +4591,7 @@ struct hdd_config {
 	uint8_t intfAddrMask;
 	struct qdf_mac_addr intfMacAddr[QDF_MAX_CONCURRENCY_PERSONA];
 
-	bool apRandomBssidEnabled;
 	bool apProtEnabled;
-	enum station_keepalive_method sta_keepalive_method;
 	uint8_t nTxPowerCap;    /* In dBm */
 	uint8_t disablePacketFilter;
 	bool fRrmEnable;
@@ -4830,10 +4639,6 @@ struct hdd_config {
 
 	uint32_t DelayedTriggerFrmInt;
 
-#ifdef FEATURE_RUNTIME_PM
-	bool runtime_pm;
-#endif
-
 #ifdef FEATURE_WLAN_RA_FILTERING
 	uint16_t RArateLimitInterval;
 #endif
@@ -4849,7 +4654,6 @@ struct hdd_config {
 	int32_t linkSpeedRssiHigh;
 	int32_t linkSpeedRssiMid;
 	int32_t linkSpeedRssiLow;
-	uint8_t enableMCC;
 	uint8_t allowMCCGODiffBI;
 	uint8_t thermalMitigationEnable;
 	uint32_t throttlePeriod;
@@ -4920,9 +4724,6 @@ struct hdd_config {
 	uint8_t SapSccChanAvoidance;
 #endif /* FEATURE_WLAN_FORCE_SAP_SCC */
 
-	bool enable_sap_suspend;
-
-	bool gEnableDeauthToDisassocMap;
 #ifdef DHCP_SERVER_OFFLOAD
 	uint8_t dhcpServerIP[IPADDR_STRING_LENGTH];
 #endif /* DHCP_SERVER_OFFLOAD */
@@ -4952,7 +4753,6 @@ struct hdd_config {
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 	bool enable_lfr_subnet_detection;
 #endif
-	uint8_t inform_bss_rssi_raw;
 #ifdef WLAN_FEATURE_TSF
 #ifdef WLAN_FEATURE_TSF_PLUS
 	uint8_t tsf_ptp_options;
@@ -5116,6 +4916,11 @@ struct hdd_config {
 	uint8_t enable_concurrent_sta[CFG_CONCURRENT_IFACE_MAX_LEN];
 	uint8_t dbs_scan_selection[CFG_DBS_SCAN_PARAM_LENGTH];
 	uint8_t remove_time_stamp_sync_cmd;
+#ifdef FEATURE_RUNTIME_PM
+	bool runtime_pm;
+#endif
+	uint8_t enableMCC;
+	uint8_t inform_bss_rssi_raw;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

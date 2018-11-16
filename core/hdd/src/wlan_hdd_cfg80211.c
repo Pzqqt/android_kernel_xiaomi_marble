@@ -13248,6 +13248,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx;
 	bool iff_up = ndev->flags & IFF_UP;
 	enum QDF_OPMODE new_mode;
+	bool ap_random_bssid_enabled;
 	QDF_STATUS status;
 	int errno;
 
@@ -13333,8 +13334,14 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 			memset(&adapter->session, 0, sizeof(adapter->session));
 			adapter->device_mode = new_mode;
 
+			status = ucfg_mlme_get_ap_random_bssid_enable(
+						hdd_ctx->psoc,
+						&ap_random_bssid_enabled);
+			if (QDF_IS_STATUS_ERROR(status))
+				return qdf_status_to_os_return(status);
+
 			if (adapter->device_mode == QDF_SAP_MODE &&
-			    hdd_ctx->config->apRandomBssidEnabled) {
+			    ap_random_bssid_enabled) {
 				/* To meet Android requirements create
 				 * a randomized MAC address of the
 				 * form 02:1A:11:Fx:xx:xx
@@ -17266,6 +17273,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct wlan_objmgr_vdev *vdev;
+	bool enable_deauth_to_disassoc_map;
 
 	hdd_enter();
 
@@ -17322,9 +17330,14 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 			break;
 
 		case WLAN_REASON_DEAUTH_LEAVING:
+			status = ucfg_mlme_get_enable_deauth_to_disassoc_map(
+						hdd_ctx->psoc,
+						&enable_deauth_to_disassoc_map);
+			if (QDF_IS_STATUS_ERROR(status))
+				return -EINVAL;
+
 			reasonCode =
-				hdd_ctx->config->
-				gEnableDeauthToDisassocMap ?
+				enable_deauth_to_disassoc_map ?
 				eCSR_DISCONNECT_REASON_STA_HAS_LEFT :
 				eCSR_DISCONNECT_REASON_DEAUTH;
 			qdf_dp_trace_dump_all(

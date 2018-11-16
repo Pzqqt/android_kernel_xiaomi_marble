@@ -2474,6 +2474,17 @@ ucfg_mlme_get_current_mcs_set(struct wlan_objmgr_psoc *psoc, uint8_t *buf,
 			      qdf_size_t *len);
 
 /**
+ * ucfg_mlme_get_sta_keepalive_method() - Get sta_keepalive_method
+ * @psoc: pointer to psoc object
+ * @val:  Value to pass to the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_sta_keepalive_method(struct wlan_objmgr_psoc *psoc,
+				   enum station_keepalive_method *val);
+
+/**
  * ucfg_mlme_get_wmm_dir_ac_vi() - Get TSPEC direction
  * for VI
  * @psoc: pointer to psoc object
@@ -3067,5 +3078,31 @@ ucfg_mlme_set_sap_uapsd_flag(struct wlan_objmgr_psoc *psoc, bool value)
 {
 	return wlan_mlme_set_sap_uapsd_flag(psoc, value);
 }
+
+/**
+ * ucfg_mlme_get_enable_deauth_to_disassoc_map() - Enable deauth_to_disassoc_map
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_enable_deauth_to_disassoc_map(struct wlan_objmgr_psoc *psoc,
+					    bool *value);
+
+/**
+ * ucfg_mlme_get_ap_random_bssid_enable() - Enable random bssid
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_ap_random_bssid_enable(struct wlan_objmgr_psoc *psoc,
+				     bool *value);
 
 #endif /* _WLAN_MLME_UCFG_API_H_ */

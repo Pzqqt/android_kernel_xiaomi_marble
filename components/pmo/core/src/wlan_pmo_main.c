@@ -175,6 +175,7 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 	wlan_pmo_runtime_pm_init_cfg(psoc, psoc_cfg);
 	psoc_cfg->auto_power_save_fail_mode =
 			cfg_get(psoc, CFG_PMO_PWR_FAILURE);
+	psoc_cfg->enable_sap_suspend = cfg_get(psoc, CFG_ENABLE_SAP_SUSPEND);
 }
 
 QDF_STATUS pmo_psoc_open(struct wlan_objmgr_psoc *psoc)
