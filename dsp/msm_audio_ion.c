@@ -49,6 +49,7 @@ struct msm_audio_ion_private {
 	struct mutex list_mutex;
 	u64 smmu_sid_bits;
 	u32 smmu_version;
+	u32 iova_start_addr;
 };
 
 struct msm_audio_alloc_data {
@@ -665,7 +666,7 @@ static int msm_audio_smmu_init(struct device *dev)
 	int ret;
 
 	mapping = arm_iommu_create_mapping(&platform_bus_type,
-					   MSM_AUDIO_ION_VA_START,
+					   msm_audio_ion_data.iova_start_addr,
 					   MSM_AUDIO_ION_VA_LEN);
 	if (IS_ERR(mapping))
 		return PTR_ERR(mapping);
@@ -701,6 +702,7 @@ static int msm_audio_ion_probe(struct platform_device *pdev)
 	u64 smmu_sid_mask = 0;
 	const char *msm_audio_ion_dt = "qcom,smmu-enabled";
 	const char *msm_audio_ion_smmu = "qcom,smmu-version";
+	const char *msm_audio_ion_iova_start_addr = "qcom,iova-start-addr";
 	const char *msm_audio_ion_smmu_sid_mask = "qcom,smmu-sid-mask";
 	bool smmu_enabled;
 	enum apr_subsys_state q6_state;
@@ -746,6 +748,18 @@ static int msm_audio_ion_probe(struct platform_device *pdev)
 	dev_dbg(dev, "%s: SMMU is Enabled. SMMU version is (%d)",
 		__func__, msm_audio_ion_data.smmu_version);
 
+	rc = of_property_read_u32(dev->of_node,
+				msm_audio_ion_iova_start_addr,
+				&msm_audio_ion_data.iova_start_addr);
+	if (rc) {
+		dev_dbg(dev,
+			"%s: qcom,iova_start_addr missing in DT node, initialize with default val\n",
+			__func__);
+		msm_audio_ion_data.iova_start_addr = MSM_AUDIO_ION_VA_START;
+	} else {
+		dev_dbg(dev, "%s:IOVA start addr: 0x%x\n",
+			__func__, msm_audio_ion_data.iova_start_addr);
+	}
 	/* Get SMMU SID information from Devicetree */
 	rc = of_property_read_u64(dev->of_node,
 				  msm_audio_ion_smmu_sid_mask,
