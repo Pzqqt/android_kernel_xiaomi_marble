@@ -613,7 +613,7 @@ QDF_STATUS wma_form_unit_test_cmd_and_send(uint32_t vdev_id,
 	QDF_STATUS status;
 
 	WMA_LOGD(FL("enter"));
-	if (arg_count >= WMA_MAX_NUM_ARGS) {
+	if (arg_count > WMA_MAX_NUM_ARGS) {
 		WMA_LOGE(FL("arg_count is crossed the boundary"));
 		return QDF_STATUS_E_FAILURE;
 	}
