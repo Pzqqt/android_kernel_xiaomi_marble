@@ -108,8 +108,10 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 	}
 
 out:
-	if (rv)
+	if (rv) {
+		qdf_mem_free(read_buffer);
 		return -EIO;
+	}
 
 	if (copy_to_user(buf, read_buffer, count)) {
 		qdf_mem_free(read_buffer);
