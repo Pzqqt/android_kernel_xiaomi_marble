@@ -6175,6 +6175,30 @@ static int hdd_config_disable_fils(struct hdd_adapter *adapter,
 	return qdf_status_to_os_return(status);
 }
 
+static int hdd_config_rsn_ie(struct hdd_adapter *adapter,
+			     const struct nlattr *attr)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	bool override_enabled;
+	uint8_t force_rsne_override;
+
+	/* ignore unless support explicitly enabled */
+	ucfg_mlme_get_force_rsne_override(hdd_ctx->psoc, &override_enabled);
+	if (!override_enabled)
+		return 0;
+
+	force_rsne_override = nla_get_u8(attr);
+	if (force_rsne_override > 1) {
+		hdd_err("Invalid value %d", force_rsne_override);
+		return -EINVAL;
+	}
+
+	hdd_ctx->force_rsne_override = force_rsne_override;
+	hdd_debug("force_rsne_override - %d", force_rsne_override);
+
+	return 0;
+}
+
 /**
  * typedef independent_setter_fn - independent attribute handler
  * @adapter: The adapter being configured
@@ -6255,6 +6279,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_latency_level},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_DISABLE_FILS,
 	 hdd_config_disable_fils},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_RSN_IE,
+	 hdd_config_rsn_ie},
 };
 
 /**
@@ -6377,7 +6403,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	QDF_STATUS qdf_status;
 	uint32_t ant_div_usrcfg;
 	mac_handle_t mac_handle;
-	bool b_value;
 
 	hdd_enter_dev(dev);
 	qdf_mem_zero(&request, sizeof(request));
@@ -6550,22 +6575,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		wlan_hdd_cfg80211_wifi_set_rx_blocksize(hdd_ctx, adapter, tb);
 	if (ret_val != 0)
 		return ret_val;
-
-	ucfg_mlme_get_force_rsne_override(hdd_ctx->psoc, &b_value);
-	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RSN_IE] && b_value) {
-		uint8_t force_rsne_override;
-
-		force_rsne_override =
-			nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_RSN_IE]);
-		if (force_rsne_override > 1) {
-			hdd_err("Invalid test_mode %d", force_rsne_override);
-			ret_val = -EINVAL;
-		}
-
-		hdd_ctx->force_rsne_override = force_rsne_override;
-		hdd_debug("force_rsne_override - %d",
-			   hdd_ctx->force_rsne_override);
-	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_GTX]) {
 		uint8_t config_gtx;
