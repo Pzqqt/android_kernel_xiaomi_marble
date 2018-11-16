@@ -4213,22 +4213,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_DEFAULT   (0)
 
 /*
- * <ini>
- * Max number of MSDUs per HTT RX IN ORDER INDICATION msg.
- * Note that this has a direct impact on the size of source CE rings.
- * It is possible to go below 8, but would require testing; so we are
- * restricting the lower limit to 8 artificially
- *
- * It is recommended that this value is a POWER OF 2.
- *
- * Values lower than 8 are for experimental purposes only.
- */
-#define CFG_MAX_MSDUS_PER_RXIND_NAME          "maxMSDUsPerRxInd"
-#define CFG_MAX_MSDUS_PER_RXIND_MIN           (4)
-#define CFG_MAX_MSDUS_PER_RXIND_MAX           (32)
-#define CFG_MAX_MSDUS_PER_RXIND_DEFAULT       (32)
-
-/*
  * set the self gen power value from
  * 0 to 0xffff
  */
@@ -4455,58 +4439,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_SET_TSF_DBG_FS                        (0x8)
 #define CFG_SET_TSF_PTP_OPT_DEFAULT               (0xf)
 #endif
-
-/*
- * <ini>
- * gEnableTxSchedWrrVO - Set TX sched parameters for VO
- * @Default:
- *
- * This key is mapping to VO defined in data path module through
- * OL_TX_SCHED_WRR_ADV_CAT_CFG_SPEC. The user can tune the
- * WRR TX sched parameters such as skip, credit, limit, credit, disc for VO.
- * e.g., gEnableTxSchedWrrVO = 10, 9, 8, 1, 8
- */
-#define CFG_ENABLE_TX_SCHED_WRR_VO_NAME     "gEnableTxSchedWrrVO"
-#define CFG_ENABLE_TX_SCHED_WRR_VO_DEFAULT  ""
-
-/*
- * <ini>
- * gEnableTxSchedWrrVI - Set TX sched parameters for VI
- * @Default:
- *
- * This key is mapping to VI defined in data path module through
- * OL_TX_SCHED_WRR_ADV_CAT_CFG_SPEC. The user can tune the
- * WRR TX sched parameters such as skip, credit, limit, credit, disc for VI.
- * e.g., gEnableTxSchedWrrVI = 10, 9, 8, 1, 8
- */
-#define CFG_ENABLE_TX_SCHED_WRR_VI_NAME     "gEnableTxSchedWrrVI"
-#define CFG_ENABLE_TX_SCHED_WRR_VI_DEFAULT  ""
-
-/*
- * <ini>
- * gEnableTxSchedWrrBE - Set TX sched parameters for BE
- * @Default:
- *
- * This key is mapping to BE defined in data path module through
- * OL_TX_SCHED_WRR_ADV_CAT_CFG_SPEC. The user can tune the
- * WRR TX sched parameters such as skip, credit, limit, credit, disc for BE.
- * e.g., gEnableTxSchedWrrBE = 10, 9, 8, 1, 8
- */
-#define CFG_ENABLE_TX_SCHED_WRR_BE_NAME     "gEnableTxSchedWrrBE"
-#define CFG_ENABLE_TX_SCHED_WRR_BE_DEFAULT  ""
-
-/*
- * <ini>
- * gEnableTxSchedWrrBK - Set TX sched parameters for BK
- * @Default:
- *
- * This key is mapping to BK defined in data path module through
- * OL_TX_SCHED_WRR_ADV_CAT_CFG_SPEC. The user can tune the
- * WRR TX sched parameters such as skip, credit, limit, credit, disc for BK.
- * e.g., gEnableTxSchedWrrBK = 10, 9, 8, 1, 8
- */
-#define CFG_ENABLE_TX_SCHED_WRR_BK_NAME     "gEnableTxSchedWrrBK"
-#define CFG_ENABLE_TX_SCHED_WRR_BK_DEFAULT  ""
 
 #ifdef CONFIG_DP_TRACE
 /*
@@ -6585,7 +6517,6 @@ struct hdd_config {
 	uint8_t sap_11ac_override;
 	uint8_t go_11ac_override;
 	uint8_t prefer_non_dfs_on_radar;
-	uint8_t max_msdus_per_rxinorderind;
 	/* parameter for defer timer for enabling TDLS on p2p listen */
 	uint32_t fine_time_meas_cap;
 	uint8_t max_scan_count;
@@ -6618,15 +6549,6 @@ struct hdd_config {
 	uint32_t min_delay_btw_roam_scans;
 	uint32_t roam_trigger_reason_bitmask;
 	uint32_t roam_bg_scan_client_bitmap;
-
-	/* Tuning TX sched parameters for VO (skip credit limit credit disc) */
-	uint8_t  tx_sched_wrr_vo[TX_SCHED_WRR_PARAM_STRING_LENGTH];
-	/* Tuning TX sched parameters for VI (skip credit limit credit disc) */
-	uint8_t  tx_sched_wrr_vi[TX_SCHED_WRR_PARAM_STRING_LENGTH];
-	/* Tuning TX sched parameters for BE (skip credit limit credit disc) */
-	uint8_t  tx_sched_wrr_be[TX_SCHED_WRR_PARAM_STRING_LENGTH];
-	/* Tuning TX sched parameters for BK (skip credit limit credit disc) */
-	uint8_t  tx_sched_wrr_bk[TX_SCHED_WRR_PARAM_STRING_LENGTH];
 
 	bool apf_enabled;
 #ifdef CONFIG_DP_TRACE

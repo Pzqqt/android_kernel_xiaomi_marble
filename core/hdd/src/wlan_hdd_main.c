@@ -2488,9 +2488,8 @@ void hdd_update_hw_sw_info(struct hdd_context *hdd_ctx)
 static void
 hdd_update_cds_ac_specs_params(struct hdd_context *hdd_ctx)
 {
-	uint8_t num_entries = 0;
-	uint8_t tx_sched_wrr_param[TX_SCHED_WRR_PARAMS_NUM];
-	uint8_t *tx_sched_wrr_ac;
+	uint8_t tx_sched_wrr_param[TX_SCHED_WRR_PARAMS_NUM] = {0};
+	qdf_size_t out_size = 0;
 	int i;
 	struct cds_context *cds_ctx;
 
@@ -2513,28 +2512,42 @@ hdd_update_cds_ac_specs_params(struct hdd_context *hdd_ctx)
 	for (i = 0; i < OL_TX_NUM_WMM_AC; i++) {
 		switch (i) {
 		case OL_TX_WMM_AC_BE:
-			tx_sched_wrr_ac = hdd_ctx->config->tx_sched_wrr_be;
+			qdf_uint8_array_parse(
+				cfg_get(hdd_ctx->psoc,
+					CFG_DP_ENABLE_TX_SCHED_WRR_BE),
+				tx_sched_wrr_param,
+				sizeof(tx_sched_wrr_param),
+				&out_size);
 			break;
 		case OL_TX_WMM_AC_BK:
-			tx_sched_wrr_ac = hdd_ctx->config->tx_sched_wrr_bk;
+			qdf_uint8_array_parse(
+				cfg_get(hdd_ctx->psoc,
+					CFG_DP_ENABLE_TX_SCHED_WRR_BK),
+				tx_sched_wrr_param,
+				sizeof(tx_sched_wrr_param),
+				&out_size);
 			break;
 		case OL_TX_WMM_AC_VI:
-			tx_sched_wrr_ac = hdd_ctx->config->tx_sched_wrr_vi;
+			qdf_uint8_array_parse(
+				cfg_get(hdd_ctx->psoc,
+					CFG_DP_ENABLE_TX_SCHED_WRR_VI),
+				tx_sched_wrr_param,
+				sizeof(tx_sched_wrr_param),
+				&out_size);
 			break;
 		case OL_TX_WMM_AC_VO:
-			tx_sched_wrr_ac = hdd_ctx->config->tx_sched_wrr_vo;
+			qdf_uint8_array_parse(
+				cfg_get(hdd_ctx->psoc,
+					CFG_DP_ENABLE_TX_SCHED_WRR_VO),
+				tx_sched_wrr_param,
+				sizeof(tx_sched_wrr_param),
+				&out_size);
 			break;
 		default:
-			tx_sched_wrr_ac = NULL;
 			break;
 		}
 
-		hdd_string_to_u8_array(tx_sched_wrr_ac,
-				tx_sched_wrr_param,
-				&num_entries,
-				sizeof(tx_sched_wrr_param));
-
-		if (num_entries == TX_SCHED_WRR_PARAMS_NUM) {
+		if (out_size == TX_SCHED_WRR_PARAMS_NUM) {
 			cds_ctx->ac_specs[i].wrr_skip_weight =
 						tx_sched_wrr_param[0];
 			cds_ctx->ac_specs[i].credit_threshold =
@@ -2547,7 +2560,7 @@ hdd_update_cds_ac_specs_params(struct hdd_context *hdd_ctx)
 						tx_sched_wrr_param[4];
 		}
 
-		num_entries = 0;
+		out_size = 0;
 	}
 }
 
@@ -9751,7 +9764,7 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->max_station = value;
 	cds_cfg->sub_20_channel_width = WLAN_SUB_20_CH_WIDTH_NONE;
 	cds_cfg->max_msdus_per_rxinorderind =
-		hdd_ctx->config->max_msdus_per_rxinorderind;
+		cfg_get(hdd_ctx->psoc, CFG_DP_MAX_MSDUS_PER_RXIND);
 	cds_cfg->self_recovery_enabled = self_recovery;
 	cds_cfg->fw_timeout_crash = fw_timeout_crash;
 	cds_cfg->active_uc_apf_mode = hdd_ctx->config->active_uc_apf_mode;

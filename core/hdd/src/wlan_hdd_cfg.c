@@ -1649,13 +1649,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MIN,
 		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MAX),
 
-	REG_VARIABLE(CFG_MAX_MSDUS_PER_RXIND_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, max_msdus_per_rxinorderind,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MAX_MSDUS_PER_RXIND_DEFAULT,
-		     CFG_MAX_MSDUS_PER_RXIND_MIN,
-		     CFG_MAX_MSDUS_PER_RXIND_MAX),
-
 	REG_VARIABLE(CFG_FINE_TIME_MEAS_CAPABILITY, WLAN_PARAM_HexInteger,
 		struct hdd_config, fine_time_meas_cap,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1797,30 +1790,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_ROAM_SCAN_TRIGGER_REASON_BITMASK_DEFAULT,
 		CFG_ROAM_SCAN_TRIGGER_REASON_BITMASK_MIN,
 		CFG_ROAM_SCAN_TRIGGER_REASON_BITMASK_MAX),
-
-	REG_VARIABLE_STRING(CFG_ENABLE_TX_SCHED_WRR_VO_NAME,
-			WLAN_PARAM_String,
-			struct hdd_config, tx_sched_wrr_vo,
-			VAR_FLAGS_OPTIONAL,
-			(void *) CFG_ENABLE_TX_SCHED_WRR_VO_DEFAULT),
-
-	REG_VARIABLE_STRING(CFG_ENABLE_TX_SCHED_WRR_VI_NAME,
-			WLAN_PARAM_String,
-			struct hdd_config, tx_sched_wrr_vi,
-			VAR_FLAGS_OPTIONAL,
-			(void *) CFG_ENABLE_TX_SCHED_WRR_VI_DEFAULT),
-
-	REG_VARIABLE_STRING(CFG_ENABLE_TX_SCHED_WRR_BE_NAME,
-			WLAN_PARAM_String,
-			struct hdd_config, tx_sched_wrr_be,
-			VAR_FLAGS_OPTIONAL,
-			(void *) CFG_ENABLE_TX_SCHED_WRR_BE_DEFAULT),
-
-	REG_VARIABLE_STRING(CFG_ENABLE_TX_SCHED_WRR_BK_NAME,
-			WLAN_PARAM_String,
-			struct hdd_config, tx_sched_wrr_bk,
-			VAR_FLAGS_OPTIONAL,
-			(void *) CFG_ENABLE_TX_SCHED_WRR_BK_DEFAULT),
 
 	REG_VARIABLE(CFG_CREATE_BUG_REPORT_FOR_SCAN, WLAN_PARAM_Integer,
 		struct hdd_config, bug_report_for_no_scan_results,
