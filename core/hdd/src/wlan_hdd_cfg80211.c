@@ -5198,8 +5198,6 @@ nla_put_failure:
 	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_PROBE_PERIOD
 #define ANT_DIV_STAY_PERIOD \
 	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_STAY_PERIOD
-#define ANT_DIV_PROBE_DWELL_TIME \
-	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_PROBE_DWELL_TIME
 #define ANT_DIV_MGMT_SNR_WEIGHT \
 	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_MGMT_SNR_WEIGHT
 #define ANT_DIV_DATA_SNR_WEIGHT \
@@ -5239,7 +5237,8 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[ANT_DIV_PROBE_PERIOD] = {.type = NLA_U32},
 	[ANT_DIV_STAY_PERIOD] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SNR_DIFF] = {.type = NLA_U32},
-	[ANT_DIV_PROBE_DWELL_TIME] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_PROBE_DWELL_TIME] = {
+		.type = NLA_U32},
 	[ANT_DIV_MGMT_SNR_WEIGHT] = {.type = NLA_U32},
 	[ANT_DIV_DATA_SNR_WEIGHT] = {.type = NLA_U32},
 	[ANT_DIV_ACK_SNR_WEIGHT] = {.type = NLA_U32},
@@ -5952,6 +5951,28 @@ static int hdd_config_ant_div_snr_diff(struct hdd_adapter *adapter,
 	return errno;
 }
 
+static int hdd_config_ant_div_probe_dwell_time(struct hdd_adapter *adapter,
+					       const struct nlattr *attr)
+{
+	uint32_t dwell_time;
+	uint32_t ant_div_usrcfg;
+	int errno;
+
+	dwell_time = nla_get_u32(attr);
+	hdd_debug("dwell time: %x", dwell_time);
+
+	ant_div_usrcfg = ANT_DIV_SET_PROBE_DWELL_TIME(dwell_time);
+	hdd_debug("usrcfg: %x", ant_div_usrcfg);
+
+	errno = wma_cli_set_command(adapter->session_id,
+				    WMI_PDEV_PARAM_ANT_DIV_USRCFG,
+				    ant_div_usrcfg, PDEV_CMD);
+	if (errno)
+		hdd_err("Failed to set probe dwell time, %d", errno);
+
+	return errno;
+}
+
 static int hdd_config_ignore_assoc_disallowed(struct hdd_adapter *adapter,
 					      const struct nlattr *attr)
 {
@@ -6034,6 +6055,8 @@ static const struct independent_setters independent_setters[] = {
 	 hdd_config_ant_div_ena},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SNR_DIFF,
 	 hdd_config_ant_div_snr_diff},
+	{QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_PROBE_DWELL_TIME,
+	 hdd_config_ant_div_probe_dwell_time},
 	{QCA_WLAN_VENDOR_ATTR_CONFIG_IGNORE_ASSOC_DISALLOWED,
 	 hdd_config_ignore_assoc_disallowed},
 };
@@ -6299,20 +6322,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 					ant_div_usrcfg, PDEV_CMD);
 		if (ret_val) {
 			hdd_err("Failed to set ant div period");
-			return ret_val;
-		}
-	}
-
-	if (tb[ANT_DIV_PROBE_DWELL_TIME]) {
-		ant_div_usrcfg = ANT_DIV_SET_PROBE_DWELL_TIME(
-			nla_get_u32(tb[ANT_DIV_PROBE_DWELL_TIME]));
-		hdd_debug("ant div set probe dewll time: %x",
-					ant_div_usrcfg);
-		ret_val = wma_cli_set_command((int)adapter->session_id,
-					(int)WMI_PDEV_PARAM_ANT_DIV_USRCFG,
-					ant_div_usrcfg, PDEV_CMD);
-		if (ret_val) {
-			hdd_err("Failed to set ant div probe dewll time");
 			return ret_val;
 		}
 	}
