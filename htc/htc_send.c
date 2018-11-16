@@ -2080,6 +2080,7 @@ void htc_flush_endpoint_txlookupQ(HTC_TARGET *target,
 	if (!endpoint && endpoint->service_id == 0)
 		return;
 
+	LOCK_HTC_TX(target);
 	while (HTC_PACKET_QUEUE_DEPTH(&endpoint->TxLookupQueue)) {
 		packet = htc_packet_dequeue(&endpoint->TxLookupQueue);
 
@@ -2092,6 +2093,7 @@ void htc_flush_endpoint_txlookupQ(HTC_TARGET *target,
 			}
 		}
 	}
+	UNLOCK_HTC_TX(target);
 }
 
 /* HTC API to flush an endpoint's TX queue*/
