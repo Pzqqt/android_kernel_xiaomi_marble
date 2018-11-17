@@ -2560,75 +2560,75 @@ static char *i_trim(char *str)
 /**
  * hdd_cfg_get_config() - get the configuration content
  * @reg_table: pointer to configuration table
- * @cRegTableEntries: number of the configuration entries
- * @ini_struct: pointer to the hdd config knob
+ * @reg_table_count: number of @reg_table entries
+ * @ini_struct: pointer to the hdd config blob
  * @hdd_ctx: pointer to hdd context
  * @print_fn: print function pointer
  *
  * Return: none
  */
 static void hdd_cfg_get_config(struct reg_table_entry *reg_table,
-			       unsigned long cRegTableEntries,
+			       unsigned long reg_table_count,
 			       uint8_t *ini_struct, struct hdd_context *hdd_ctx,
 			       void (*print_fn)(const char *))
 {
 	unsigned int idx;
-	struct reg_table_entry *pRegEntry = reg_table;
+	struct reg_table_entry *reg_entry = reg_table;
 	uint32_t value;
-	char valueStr[CFG_VALUE_MAX_LEN];
+	char value_str[CFG_VALUE_MAX_LEN];
 	char config_str[CFG_ENTRY_MAX_LEN];
 	char *fmt;
-	void *pField;
-	struct qdf_mac_addr *pMacAddr;
+	void *field;
+	struct qdf_mac_addr *mac_addr;
 	int curlen;
 
-	for (idx = 0; idx < cRegTableEntries; idx++, pRegEntry++) {
-		pField = ini_struct + pRegEntry->VarOffset;
+	for (idx = 0; idx < reg_table_count; idx++, reg_entry++) {
+		field = ini_struct + reg_entry->VarOffset;
 
-		if ((WLAN_PARAM_Integer == pRegEntry->RegType) ||
-		    (WLAN_PARAM_SignedInteger == pRegEntry->RegType) ||
-		    (WLAN_PARAM_HexInteger == pRegEntry->RegType)) {
+		if ((WLAN_PARAM_Integer == reg_entry->RegType) ||
+		    (WLAN_PARAM_SignedInteger == reg_entry->RegType) ||
+		    (WLAN_PARAM_HexInteger == reg_entry->RegType)) {
 			value = 0;
 
-			if ((pRegEntry->VarSize > sizeof(value)) ||
-			    (pRegEntry->VarSize == 0)) {
+			if ((reg_entry->VarSize > sizeof(value)) ||
+			    (reg_entry->VarSize == 0)) {
 				pr_warn("Invalid length of %s: %d",
-					pRegEntry->RegName, pRegEntry->VarSize);
+					reg_entry->RegName, reg_entry->VarSize);
 				continue;
 			}
 
-			memcpy(&value, pField, pRegEntry->VarSize);
-			if (WLAN_PARAM_HexInteger == pRegEntry->RegType) {
+			memcpy(&value, field, reg_entry->VarSize);
+			if (WLAN_PARAM_HexInteger == reg_entry->RegType) {
 				fmt = "%x";
 			} else if (WLAN_PARAM_SignedInteger ==
-				   pRegEntry->RegType) {
+				   reg_entry->RegType) {
 				fmt = "%d";
 				value = sign_extend32(
 						value,
-						pRegEntry->VarSize * 8 - 1);
+						reg_entry->VarSize * 8 - 1);
 			} else {
 				fmt = "%u";
 			}
-			snprintf(valueStr, CFG_VALUE_MAX_LEN, fmt, value);
-		} else if (WLAN_PARAM_String == pRegEntry->RegType) {
-			snprintf(valueStr, CFG_VALUE_MAX_LEN, "%s",
-				 (char *)pField);
-		} else if (WLAN_PARAM_MacAddr == pRegEntry->RegType) {
-			pMacAddr = (struct qdf_mac_addr *) pField;
-			snprintf(valueStr, CFG_VALUE_MAX_LEN,
+			snprintf(value_str, CFG_VALUE_MAX_LEN, fmt, value);
+		} else if (WLAN_PARAM_String == reg_entry->RegType) {
+			snprintf(value_str, CFG_VALUE_MAX_LEN, "%s",
+				 (char *)field);
+		} else if (WLAN_PARAM_MacAddr == reg_entry->RegType) {
+			mac_addr = (struct qdf_mac_addr *) field;
+			snprintf(value_str, CFG_VALUE_MAX_LEN,
 				 "%02x:%02x:%02x:%02x:%02x:%02x",
-				 pMacAddr->bytes[0],
-				 pMacAddr->bytes[1],
-				 pMacAddr->bytes[2],
-				 pMacAddr->bytes[3],
-				 pMacAddr->bytes[4], pMacAddr->bytes[5]);
+				 mac_addr->bytes[0],
+				 mac_addr->bytes[1],
+				 mac_addr->bytes[2],
+				 mac_addr->bytes[3],
+				 mac_addr->bytes[4], mac_addr->bytes[5]);
 		} else {
-			snprintf(valueStr, CFG_VALUE_MAX_LEN, "(unhandled)");
+			snprintf(value_str, CFG_VALUE_MAX_LEN, "(unhandled)");
 		}
 		curlen = scnprintf(config_str, CFG_ENTRY_MAX_LEN,
 				   "%s=%s%s\n",
-				   pRegEntry->RegName,
-				   valueStr,
+				   reg_entry->RegName,
+				   value_str,
 				   test_bit(idx,
 					    (void *)&hdd_ctx->config->
 					    bExplicitCfg) ? "*" : "");
