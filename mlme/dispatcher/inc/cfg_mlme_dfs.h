@@ -25,6 +25,136 @@
 
 /*
  * <ini>
+ * gsap_tx_leakage_threshold - sap tx leakage threshold
+ * @Min: 100
+ * @Max: 1000
+ * @Default: 310
+ *
+ * customer can set this value from 100 to 1000 which means
+ * sap tx leakage threshold is -10db to -100db
+ *
+ * Related: none
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SAP_TX_LEAKAGE_THRESHOLD CFG_INI_UINT( \
+			"gsap_tx_leakage_threshold", \
+			100, \
+			1000, \
+			310, \
+			CFG_VALUE_OR_DEFAULT, \
+			"sap tx leakage threshold")
+
+/*
+ * <ini>
+ * gDfsBeaconTxEnhanced - beacon tx enhanced
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enhance dfs beacon tx
+ *
+ * Related: none
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DFS_BEACON_TX_ENHANCED CFG_INI_BOOL( \
+			"gDfsBeaconTxEnhanced", \
+			0, \
+			"beacon tx enhanced")
+
+/*
+ * <ini>
+ * gPreferNonDfsChanOnRadar - During random channel selection prefer non dfs
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * During random channel selection prefer non dfs.
+ *
+ * Related: none
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_NON_DFS_CHAN_ON_RADAR CFG_INI_BOOL( \
+			"gPreferNonDfsChanOnRadar", \
+			0, \
+			"channel selection prefer non dfs")
+
+/*
+ * <ini>
+ * dfsPhyerrFilterOffload - Enable dfs phyerror filtering offload in FW
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to to enable dfs phyerror filtering offload to firmware
+ * Enabling it will cause basic phy error to be discarding in firmware.
+ * Related: NA.
+ *
+ * Supported Feature: DFS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD CFG_INI_BOOL( \
+			"dfsPhyerrFilterOffload", \
+			0, \
+			"dfs phyerror filtering offload")
+
+/*
+ * <ini>
+ * gIgnoreCAC - Used to ignore CAC
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default CAC
+ *
+ * Related: None
+ *
+ * Supported Feature: DFS
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_IGNORE_CAC CFG_INI_BOOL( \
+			"gIgnoreCAC", \
+			0, \
+			"ignore CAC on DFS channel")
+
+/*
+ * <ini>
+ * gDisableDFSChSwitch - Disable channel switch if radar is found
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to disable channel switch if radar is found
+ * on that channel.
+ * Related: NA.
+ *
+ * Supported Feature: DFS
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_DISABLE_DFS_CH_SWITCH CFG_INI_BOOL( \
+			"gDisableDFSChSwitch", \
+			0, \
+			"Disable channel switch on radar")
+
+/*
+ * <ini>
  * gEnableDFSMasterCap - Enable DFS master capability
  * @Min: 0
  * @Max: 1
@@ -47,6 +177,12 @@
 			"DFS master mode capability")
 
 #define CFG_DFS_ALL \
-	CFG(CFG_ENABLE_DFS_MASTER_CAPABILITY)
+	CFG(CFG_IGNORE_CAC) \
+	CFG(CFG_DISABLE_DFS_CH_SWITCH) \
+	CFG(CFG_DFS_BEACON_TX_ENHANCED) \
+	CFG(CFG_SAP_TX_LEAKAGE_THRESHOLD) \
+	CFG(CFG_ENABLE_NON_DFS_CHAN_ON_RADAR) \
+	CFG(CFG_ENABLE_DFS_MASTER_CAPABILITY) \
+	CFG(CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD)
 
 #endif /* __CFG_MLME_DFS_H */

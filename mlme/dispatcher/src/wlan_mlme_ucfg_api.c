@@ -207,6 +207,153 @@ ucfg_mlme_get_dfs_master_capability(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
+ucfg_mlme_get_dfs_disable_channel_switch(struct wlan_objmgr_psoc *psoc,
+					 bool *dfs_disable_channel_switch)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*dfs_disable_channel_switch =
+			cfg_default(CFG_DISABLE_DFS_CH_SWITCH);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*dfs_disable_channel_switch =
+		mlme_obj->cfg.dfs_cfg.dfs_disable_channel_switch;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_dfs_disable_channel_switch(struct wlan_objmgr_psoc *psoc,
+					 bool dfs_disable_channel_switch)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_obj->cfg.dfs_cfg.dfs_disable_channel_switch =
+		dfs_disable_channel_switch;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_dfs_ignore_cac(struct wlan_objmgr_psoc *psoc,
+			     bool *dfs_ignore_cac)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*dfs_ignore_cac = cfg_default(CFG_IGNORE_CAC);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*dfs_ignore_cac = mlme_obj->cfg.dfs_cfg.dfs_ignore_cac;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_dfs_ignore_cac(struct wlan_objmgr_psoc *psoc,
+			     bool dfs_ignore_cac)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_obj->cfg.dfs_cfg.dfs_ignore_cac = dfs_ignore_cac;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_sap_tx_leakage_threshold(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *sap_tx_leakage_threshold)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*sap_tx_leakage_threshold =
+			cfg_default(CFG_SAP_TX_LEAKAGE_THRESHOLD);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*sap_tx_leakage_threshold =
+		mlme_obj->cfg.dfs_cfg.sap_tx_leakage_threshold;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_sap_tx_leakage_threshold(struct wlan_objmgr_psoc *psoc,
+				       uint32_t sap_tx_leakage_threshold)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_obj->cfg.dfs_cfg.sap_tx_leakage_threshold =
+		sap_tx_leakage_threshold;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_dfs_filter_offload(struct wlan_objmgr_psoc *psoc,
+				 bool *dfs_filter_offload)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*dfs_filter_offload =
+			cfg_default(CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*dfs_filter_offload = mlme_obj->cfg.dfs_cfg.dfs_filter_offload;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_dfs_filter_offload(struct wlan_objmgr_psoc *psoc,
+				 bool dfs_filter_offload)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_obj->cfg.dfs_cfg.dfs_filter_offload = dfs_filter_offload;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 ucfg_mlme_get_pmkid_modes(struct wlan_objmgr_psoc *psoc,
 			  uint32_t *val)
 {

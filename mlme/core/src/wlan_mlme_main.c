@@ -850,8 +850,19 @@ static void mlme_init_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_dfs_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_dfs_cfg *dfs_cfg)
 {
-	dfs_cfg->dfs_master_capable = cfg_get(psoc,
-					      CFG_ENABLE_DFS_MASTER_CAPABILITY);
+	dfs_cfg->dfs_ignore_cac = cfg_get(psoc, CFG_IGNORE_CAC);
+	dfs_cfg->dfs_master_capable =
+		cfg_get(psoc, CFG_ENABLE_DFS_MASTER_CAPABILITY);
+	dfs_cfg->dfs_disable_channel_switch =
+		cfg_get(psoc, CFG_DISABLE_DFS_CH_SWITCH);
+	dfs_cfg->dfs_filter_offload =
+		cfg_get(psoc, CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD);
+	dfs_cfg->dfs_prefer_non_dfs =
+		cfg_get(psoc, CFG_ENABLE_NON_DFS_CHAN_ON_RADAR);
+	dfs_cfg->dfs_beacon_tx_enhanced =
+		cfg_get(psoc, CFG_DFS_BEACON_TX_ENHANCED);
+	dfs_cfg->sap_tx_leakage_threshold =
+		cfg_get(psoc, CFG_SAP_TX_LEAKAGE_THRESHOLD);
 }
 
 static void mlme_init_feature_flag_in_cfg(

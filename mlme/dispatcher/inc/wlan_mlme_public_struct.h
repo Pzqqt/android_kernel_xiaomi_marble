@@ -573,9 +573,21 @@ struct wlan_mlme_cfg_sap {
 /**
  * struct wlan_mlme_dfs_cfg - DFS Capabilities related config items
  * @dfs_master_capable: Is DFS master mode support enabled
+ * @dfs_disable_channel_switch: disable channel switch on radar detection
+ * @dfs_ignore_cac: Disable cac
+ * @dfs_filter_offload: dfs filter offloaad
+ * @dfs_beacon_tx_enhanced: enhance dfs beacon tx
+ * @dfs_prefer_non_dfs: perefer non dfs channel after radar
+ * @sap_tx_leakage_threshold: sap tx leakage threshold
  */
 struct wlan_mlme_dfs_cfg {
 	bool dfs_master_capable;
+	bool dfs_disable_channel_switch;
+	bool dfs_ignore_cac;
+	bool dfs_filter_offload;
+	bool dfs_beacon_tx_enhanced;
+	bool dfs_prefer_non_dfs;
+	uint32_t sap_tx_leakage_threshold;
 };
 
 /**
