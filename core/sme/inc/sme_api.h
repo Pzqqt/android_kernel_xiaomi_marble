@@ -466,7 +466,6 @@ QDF_STATUS sme_issue_stored_joinreq(mac_handle_t mac_handle,
 		uint32_t *roam_id,
 		uint32_t session_id);
 QDF_STATUS sme_scan_flush_result(mac_handle_t mac_handle);
-QDF_STATUS sme_filter_scan_results(mac_handle_t mac_handle, uint8_t sessionId);
 QDF_STATUS sme_scan_flush_p2p_result(mac_handle_t mac_handle,
 				     uint8_t sessionId);
 tCsrScanResultInfo *sme_scan_result_get_first(mac_handle_t,

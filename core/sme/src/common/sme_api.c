@@ -2903,32 +2903,6 @@ QDF_STATUS sme_scan_flush_result(mac_handle_t mac_handle)
 	return status;
 }
 
-/*
- * sme_filter_scan_results() -
- * A wrapper function to request CSR to clear scan results.
- *   This is a synchronous call
- *
- * mac_handle: Opaque handle to the global MAC context
- * sessionId - session id
- * Return QDF_STATUS
- */
-QDF_STATUS sme_filter_scan_results(mac_handle_t mac_handle, uint8_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(mac_handle);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_MSG_SCAN_FLUSH_RESULTS,
-			 sessionId, 0));
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		csr_scan_filter_results(pMac);
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-}
-
 QDF_STATUS sme_scan_flush_p2p_result(mac_handle_t mac_handle, uint8_t sessionId)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
