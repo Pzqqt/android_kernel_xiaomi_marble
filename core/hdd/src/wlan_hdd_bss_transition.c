@@ -115,6 +115,7 @@ __wlan_hdd_cfg80211_fetch_bss_transition_status(struct wiphy *wiphy,
 	struct hdd_station_ctx *hdd_sta_ctx =
 					WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	mac_handle_t mac_handle;
+	QDF_STATUS status;
 
 	const struct nla_policy
 	btm_params_policy[QCA_WLAN_VENDOR_ATTR_MAX + 1] = {
@@ -199,12 +200,12 @@ __wlan_hdd_cfg80211_fetch_bss_transition_status(struct wiphy *wiphy,
 	is_bt_in_progress = wlan_hdd_is_bt_in_progress(hdd_ctx);
 
 	mac_handle = hdd_ctx->mac_handle;
-	ret = sme_get_bss_transition_status(mac_handle, transition_reason,
-					    &hdd_sta_ctx->conn_info.bssId,
-					    candidate_info,
-					    nof_candidates,
-					    is_bt_in_progress);
-	if (ret)
+	status = sme_get_bss_transition_status(mac_handle, transition_reason,
+					       &hdd_sta_ctx->conn_info.bssId,
+					       candidate_info,
+					       nof_candidates,
+					       is_bt_in_progress);
+	if (QDF_IS_STATUS_ERROR(status))
 		return -EINVAL;
 
 	/* Prepare the reply and send it to userspace */

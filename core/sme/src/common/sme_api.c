@@ -16386,23 +16386,12 @@ static bool sme_get_status_for_candidate(mac_handle_t mac_handle,
 	return false;
 }
 
-/**
- * sme_get_bss_transition_status() - get bss transition status all cadidates
- * @mac_context: Opaque handle to the global MAC context
- * @transition_reason: Transition reason
- * @bssid: connected BSSID
- * @info: bss candidate information
- * @n_candidates: number of candidates
- * @is_bt_in_progress: bt activity indicator
- *
- * Return: 0 on success otherwise errno
- */
-int sme_get_bss_transition_status(mac_handle_t mac_handle,
-				  uint8_t transition_reason,
-				  struct qdf_mac_addr *bssid,
-				  struct bss_candidate_info *info,
-				  uint16_t n_candidates,
-				  bool is_bt_in_progress)
+QDF_STATUS sme_get_bss_transition_status(mac_handle_t mac_handle,
+					 uint8_t transition_reason,
+					 struct qdf_mac_addr *bssid,
+					 struct bss_candidate_info *info,
+					 uint16_t n_candidates,
+					 bool is_bt_in_progress)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirBssDescription *bss_desc, *conn_bss_desc;

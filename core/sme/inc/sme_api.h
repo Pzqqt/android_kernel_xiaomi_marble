@@ -2540,14 +2540,14 @@ QDF_STATUS sme_scan_get_result_for_bssid(mac_handle_t mac_handle,
  * @n_candidates : number of candidates
  * @is_bt_in_progress: bt activity indicator
  *
- * Return : 0 on success otherwise errno
+ * Return: QDF_STATUS_SUCCESS on success otherwise a QDF_STATUS error
  */
-int sme_get_bss_transition_status(mac_handle_t mac_handle,
-				  uint8_t transition_reason,
-				  struct qdf_mac_addr *bssid,
-				  struct bss_candidate_info *info,
-				  uint16_t n_candidates,
-				  bool is_bt_in_progress);
+QDF_STATUS sme_get_bss_transition_status(mac_handle_t mac_handle,
+					 uint8_t transition_reason,
+					 struct qdf_mac_addr *bssid,
+					 struct bss_candidate_info *info,
+					 uint16_t n_candidates,
+					 bool is_bt_in_progress);
 
 /**
  * sme_unpack_rsn_ie: wrapper to unpack RSN IE and update def RSN params
