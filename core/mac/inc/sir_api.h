@@ -2556,19 +2556,6 @@ typedef struct {
 } tSirAppType2Params, *tpSirAppType2Params;
 #endif
 
-#define ANI_MAX_IBSS_ROUTE_TABLE_ENTRY   100
-
-typedef struct sAniDestIpNextHopMacPair {
-	uint8_t destIpv4Addr[QDF_IPV4_ADDR_SIZE];
-	uint8_t nextHopMacAddr[QDF_MAC_ADDR_SIZE];
-} tAniDestIpNextHopMacPair;
-
-typedef struct sAniIbssRouteTable {
-	uint8_t sessionId;
-	uint16_t numEntries;
-	tAniDestIpNextHopMacPair destIpNextHopPair[1];
-} tAniIbssRouteTable;
-
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 typedef struct {
 	uint8_t acvo_uapsd:1;
