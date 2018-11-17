@@ -485,7 +485,7 @@ QDF_STATUS sme_roam_connect_to_last_profile(mac_handle_t mac_handle,
 
 /**
  * sme_roam_disconnect() - API to request CSR to disconnect
- * @mac_handle: HAL context
+ * @mac_handle: Opaque handle to the global MAC context
  * @session: SME session identifier
  * @reason: Reason to disconnect
  *
@@ -535,7 +535,7 @@ QDF_STATUS sme_roam_set_psk_pmk(mac_handle_t mac_handle, uint8_t sessionId,
 
 /**
  * sme_roam_get_wpa_rsn_req_ie() - Retrieve WPA/RSN Request IE
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: ID of the specific session
  * @len: Caller allocated memory that has the length of @buf as input.
  *	Upon returned, @len has the length of the IE store in @buf
@@ -555,7 +555,7 @@ QDF_STATUS sme_roam_get_wpa_rsn_req_ie(mac_handle_t mac_handle,
 
 /**
  * sme_roam_get_wpa_rsn_rsp_ie() - Retrieve WPA/RSN Response IE
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: ID of the specific session
  * @len: Caller allocated memory that has the length of @buf as input.
  *	Upon returned, @len has the length of the IE store in @buf
@@ -661,7 +661,7 @@ QDF_STATUS sme_generic_change_country_code(mac_handle_t mac_handle,
 /**
  * sme_update_channel_list() - Update configured channel list to fwr
  * This is a synchronous API.
- * @mac_handle: HAL handle returned by mac_open.
+ * @mac_handle: Opaque handle to the global MAC context.
  *
  * Return: QDF_STATUS  SUCCESS.
  * FAILURE or RESOURCES  The API finished and failed.
@@ -1490,7 +1490,7 @@ QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(mac_handle_t mac_handle,
 
 /**
  * sme_update_tx_bfee_supp() - sets the Tx Bfee support
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @cfg_val: Tx Bfee config value
  *
@@ -1639,7 +1639,7 @@ QDF_STATUS sme_deregister_for_dcc_stats_event(mac_handle_t mac_handle)
 
 /**
  * sme_set_etsi13_srd_ch_in_master_mode() - master mode UNI-III band ch support
- * @mac_handle: HAL pointer
+ * @mac_handle: Opaque handle to the global MAC context
  * @srd_chan_support: ETSI SRD channel support
  *
  * This function set master ETSI SRD channel support
@@ -1707,7 +1707,7 @@ QDF_STATUS sme_remove_beacon_filter(mac_handle_t mac_handle,
 #ifdef FEATURE_WLAN_APF
 /**
  * sme_get_apf_capabilities() - Get APF capabilities
- * @mac_handle: Global HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @callback: Callback function to be called with the result
  * @context: Opaque context to be used by the caller to associate the
  *   request with the response
@@ -1723,7 +1723,7 @@ QDF_STATUS sme_get_apf_capabilities(mac_handle_t mac_handle,
 
 /**
  * sme_set_apf_instructions() - Set APF apf filter instructions.
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @apf_set_offload: struct to set apf filter instructions.
  *
  * APFv2 (Legacy APF) API to set the APF packet filter.
@@ -1736,7 +1736,7 @@ QDF_STATUS sme_set_apf_instructions(mac_handle_t mac_handle,
 
 /**
  * sme_set_apf_enable_disable - Send apf enable/disable cmd
- * @mac_handle: global hal handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @vdev_id: vdev id
  * @apf_enable: true: Enable APF Int., false: Disable APF Int.
  *
@@ -1749,7 +1749,7 @@ QDF_STATUS sme_set_apf_enable_disable(mac_handle_t mac_handle, uint8_t vdev_id,
 
 /**
  * sme_apf_write_work_memory - Write into the apf work memory
- * @mac_handle: global hal handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @write_params: APF parameters for the write operation
  *
  * API for writing into the APF work memory.
@@ -1762,7 +1762,7 @@ QDF_STATUS sme_apf_write_work_memory(mac_handle_t mac_handle,
 
 /**
  * sme_apf_read_work_memory - Read part of apf work memory
- * @mac_handle: global hal handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @read_params: APF parameters for the get operation
  * @callback: callback to handle the the read response
  *
@@ -1858,7 +1858,7 @@ QDF_STATUS sme_set_default_scan_ie(mac_handle_t mac_handle, uint16_t session_id,
 				uint8_t *ie_data, uint16_t ie_len);
 /**
  * sme_update_session_param() - API to update PE session param
- * @mac_handle: HAL handle for device
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: Session ID
  * @param_type: Param type to be updated
  * @param_val: Param value to be update
@@ -1872,7 +1872,7 @@ QDF_STATUS sme_update_session_param(mac_handle_t mac_handle, uint8_t session_id,
 #ifdef WLAN_FEATURE_FIPS
 /**
  * sme_fips_request() - Perform a FIPS certification operation
- * @mac_handle: Hal handle for the object being certified
+ * @mac_handle: Opaque handle to the global MAC context
  * @param: The FIPS certification parameters
  * @callback: Callback function to invoke with the results
  * @context: Opaque context to pass back to caller in the callback
@@ -1893,7 +1893,7 @@ QDF_STATUS sme_fips_request(mac_handle_t mac_handle, struct fips_params *param,
 
 /**
  * sme_set_cts2self_for_p2p_go() - sme function to set ini parms to FW.
- * @mac_handle:                    reference to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  *
  * Return: QDF_STATUS
  */
@@ -1956,7 +1956,7 @@ QDF_STATUS sme_set_lost_link_info_cb(mac_handle_t mac_handle,
 
 /**
  * sme_update_new_channel_event() - update new channel event for sapFsm
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: session id
  *
  * Return: QDF_STATUS_SUCCESS or non-zero on failure.
@@ -1973,7 +1973,7 @@ QDF_STATUS sme_power_debug_stats_req(
 
 /**
  * sme_get_sar_power_limits() - get SAR limits
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @callback: Callback function to invoke with the results
  * @context: Opaque context to pass back to caller in the callback
  *
@@ -1985,7 +1985,7 @@ QDF_STATUS sme_get_sar_power_limits(mac_handle_t mac_handle,
 
 /**
  * sme_set_sar_power_limits() - set sar limits
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @sar_limit_cmd: struct to send sar limit cmd.
  *
  * Return: QDF_STATUS enumeration.
@@ -2083,7 +2083,7 @@ QDF_STATUS sme_fast_reassoc(mac_handle_t mac_handle,
 #endif
 /**
  * sme_congestion_register_callback() - registers congestion callback
- * @mac_handle: handler for HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @congestion_cb: congestion callback
  *
  * Return: QDF_STATUS
@@ -2176,7 +2176,7 @@ QDF_STATUS sme_ipa_uc_stat_request(mac_handle_t mac_handle,
 /**
  * sme_set_reorder_timeout() - set reorder timeout value
  * including Voice,Video,Besteffort,Background parameters
- * @mac_handle: hal handle for getting global mac struct
+ * @mac_handle: Opaque handle to the global MAC context
  * @reg: struct sir_set_rx_reorder_timeout_val
  *
  * Return: QDF_STATUS_SUCCESS or non-zero on failure.
@@ -2187,7 +2187,7 @@ QDF_STATUS sme_set_reorder_timeout(mac_handle_t mac_handle,
 /**
  * sme_set_rx_set_blocksize() - set blocksize value
  * including mac_addr and win_limit parameters
- * @mac_handle: hal handle for getting global mac struct
+ * @mac_handle: Opaque handle to the global MAC context
  * @reg: struct sir_peer_set_rx_blocksize
  *
  * Return: QDF_STATUS_SUCCESS or non-zero on failure.
@@ -2286,7 +2286,7 @@ QDF_STATUS sme_get_peer_stats(tpAniSirGlobal mac,
 
 /**
  * sme_get_peer_info() - sme api to get peer info
- * @mac_handle: hal handle for getting global mac struct
+ * @mac_handle: Opaque handle to the global MAC context
  * @req: peer info request struct send to wma
  * @context: context of callback function
  * @callbackfn: hdd callback function when receive response
@@ -2303,7 +2303,7 @@ QDF_STATUS sme_get_peer_info(mac_handle_t mac_handle,
 
 /**
  * sme_get_peer_info_ext() - sme api to get peer ext info
- * @mac_handle: hal handle for getting global mac struct
+ * @mac_handle: Opaque handle to the global MAC context
  * @req: peer ext info request struct send to wma
  * @context: context of callback function
  * @callbackfn: hdd callback function when receive response
@@ -2320,7 +2320,7 @@ QDF_STATUS sme_get_peer_info_ext(mac_handle_t mac_handle,
 
 /**
  * sme_get_chain_rssi() - Get chain rssi
- * @mac_handle: Global HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @input: get chain rssi req params
  * @callback: Callback function to be called with the result
  * @context: Opaque context to be used by the caller to associate the
@@ -2360,7 +2360,7 @@ tpAniSirGlobal sme_get_mac_context(void);
 
 /**
  * sme_display_disconnect_stats() - Display per session Disconnect stats
- * @mac_handle: hal global context
+ * @mac_handle: Opaque handle to the global MAC context
  * session_id: SME session id
  *
  * Return: None
@@ -2392,7 +2392,7 @@ QDF_STATUS sme_set_bmiss_bcnt(uint32_t vdev_id, uint32_t first_cnt,
 
 /**
  * sme_send_limit_off_channel_params() - send limit off channel parameters
- * @mac_handle: global hal handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @vdev_id: vdev id
  * @is_tos_active: tos active or inactive
  * @max_off_chan_time: max off channel time
@@ -2424,7 +2424,7 @@ QDF_STATUS sme_set_vc_mode_config(uint32_t vc_bitmap);
 
 /**
  * sme_set_del_pmkid_cache() - API to update PMKID cache
- * @mac_handle: HAL handle for device
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: Session id
  * @pmk_cache_info: Pointer to PMK cache info
  * @is_add: boolean that implies whether to add or delete PMKID entry
@@ -2437,7 +2437,7 @@ QDF_STATUS sme_set_del_pmkid_cache(mac_handle_t mac_handle, uint8_t session_id,
 
 /**
  * sme_send_hlp_ie_info() - API to send HLP IE info to fw
- * @mac_handle: HAL handle for device
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: Session id
  * @profile: CSR Roam profile
  * @if_addr: IP address
@@ -2453,7 +2453,7 @@ void sme_send_hlp_ie_info(mac_handle_t mac_handle, uint8_t session_id,
 #if defined(WLAN_FEATURE_FILS_SK)
 /**
  * sme_update_fils_config - Update FILS config to CSR roam session
- * @mac_handle: HAL handle for device
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: session id
  * @src_profile: Source profile having latest FILS config
  *
@@ -2509,7 +2509,7 @@ QDF_STATUS sme_set_he_bss_color(mac_handle_t mac_handle, uint8_t session_id,
 
 /**
  * sme_is_conn_state_connected() -- check if SME connection state is connected
- * @mac_handle: global hal handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: current Session Id
  *
  * This API checks if the current SME connection state is connected for the
@@ -2635,7 +2635,7 @@ QDF_STATUS sme_handle_sae_msg(mac_handle_t mac_handle, uint8_t session_id,
 
 /**
  * sme_set_ba_buff_size() - sets BA buffer size
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @buff_size: BA buffer size
  *
@@ -2646,7 +2646,7 @@ int sme_set_ba_buff_size(mac_handle_t mac_handle, uint8_t session_id,
 
 /**
  * sme_send_addba_req() - send ADDBA request with user config
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @tid: tid val for BA session
  * @buff_size: BA buffer size
@@ -2658,7 +2658,7 @@ int sme_send_addba_req(mac_handle_t mac_handle, uint8_t session_id, uint8_t tid,
 
 /**
  * sme_set_no_ack_policy() - Sets no ack policy for AC
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @val: no ack policy value
  * @ac: access category
@@ -2670,7 +2670,7 @@ int sme_set_no_ack_policy(mac_handle_t mac_handle, uint8_t session_id,
 
 /**
  * sme_set_auto_rate_he_sgi() - Sets SGI for auto rate
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @cfg_val: SGI configuration value
  *
@@ -2681,7 +2681,7 @@ int sme_set_auto_rate_he_sgi(mac_handle_t mac_handle, uint8_t session_id,
 
 /**
  * sme_set_auto_rate_he_ltf() - Sets HE LTF for auto rate
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @cfg_val: LTF configuration value
  *
@@ -2705,7 +2705,7 @@ void sme_update_tgt_he_cap(mac_handle_t mac_handle,
 
 /**
  * sme_update_he_cap_nss() - sets the nss based on user request
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @nss: no.of spatial streams value
  *
@@ -2716,7 +2716,7 @@ void sme_update_he_cap_nss(mac_handle_t mac_handle, uint8_t session_id,
 
 /**
  * sme_update_he_tx_bfee_supp() - sets the HE Tx Bfee support
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @cfg_val: Tx Bfee config value
  *
@@ -2755,7 +2755,7 @@ void sme_config_su_ppdu_queue(uint8_t session_id, bool enable);
 
 /**
  * sme_update_he_mcs() - sets the HE MCS based on user request
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @he_mcs: HE MCS value
  *
@@ -2766,7 +2766,7 @@ int sme_update_he_mcs(mac_handle_t mac_handle, uint8_t session_id,
 
 /**
  * sme_update_he_trigger_frm_mac_pad() - sets the HE MAC padding capability
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @cfg_val: HE MAC padding duration value
  *
@@ -2778,7 +2778,7 @@ int sme_update_he_trigger_frm_mac_pad(mac_handle_t mac_handle,
 
 /**
  * sme_update_he_om_ctrl_supp() - sets the HE OM control capability
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @cfg_val: HE OM control config
  *
@@ -2804,7 +2804,7 @@ void sme_reset_he_om_ctrl(mac_handle_t mac_handle);
 
 /**
  * sme_set_usr_cfg_mu_edca() - sets the user cfg MU EDCA params flag
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @val: value to be set
  *
  * Return: none
@@ -2813,7 +2813,7 @@ void sme_set_usr_cfg_mu_edca(mac_handle_t mac_handle, bool val);
 
 /**
  * sme_set_he_mu_edca_def_cfg() - sets the default MU EDCA params values
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  *
  * Return: none
  */
@@ -2821,7 +2821,7 @@ void sme_set_he_mu_edca_def_cfg(mac_handle_t mac_handle);
 
 /**
  * sme_update_mu_edca_params() - updates MU EDCA params values
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  *
  * Return: 0 on success else err code
@@ -2830,7 +2830,7 @@ int sme_update_mu_edca_params(mac_handle_t mac_handle, uint8_t session_id);
 
 /**
  * sme_update_he_tx_stbc_cap() - Sets the HE Tx STBC capability
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @value: set value
  *
@@ -2841,7 +2841,7 @@ int sme_update_he_tx_stbc_cap(mac_handle_t mac_handle, uint8_t session_id,
 
 /**
  * sme_update_he_rx_stbc_cap() - Sets the HE Rx STBC capability
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @value: set value
  *
@@ -2852,7 +2852,7 @@ int sme_update_he_rx_stbc_cap(mac_handle_t mac_handle, uint8_t session_id,
 
 /**
  * sme_update_he_frag_supp() - sets the HE fragmentation support
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @he_frag: HE fragmention support value
  *
@@ -2863,7 +2863,7 @@ int sme_update_he_frag_supp(mac_handle_t mac_handle, uint8_t session_id,
 
 /**
  * sme_update_he_ldpc_supp() - sets the HE LDPC support
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: SME session id
  * @he_ldpc: HE LDPC support value
  *
@@ -2986,7 +2986,7 @@ static inline void sme_config_su_ppdu_queue(uint8_t session_id, bool enable)
  * sme_is_sta_key_exchange_in_progress() - checks whether the STA/P2P client
  * session has key exchange in progress
  *
- * @mac_handle: global hal handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: session id
  *
  * Return: true - if key exchange in progress
@@ -2997,7 +2997,7 @@ bool sme_is_sta_key_exchange_in_progress(mac_handle_t mac_handle,
 
 /*
  * sme_validate_channel_list() - Validate the given channel list
- * @mac_handle: handle to global hal context
+ * @mac_handle: Opaque handle to the global MAC context
  * @chan_list: Pointer to the channel list
  * @num_channels: number of channels present in the chan_list
  *
@@ -3010,7 +3010,7 @@ bool sme_validate_channel_list(mac_handle_t mac_handle,
 			       uint8_t num_channels);
 /**
  * sme_set_amsdu() - set amsdu enable/disable based on user cfg
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @enable: enable or disable
  *
  * Return: None
@@ -3052,7 +3052,7 @@ QDF_STATUS sme_register_twt_disable_complete_cb(mac_handle_t mac_handle,
 
 /**
  * sme_deregister_twt_enable_complete_cb() - TWT enable deregistrar
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  *
  * Return: QDF Status
  */
@@ -3060,7 +3060,7 @@ QDF_STATUS sme_deregister_twt_enable_complete_cb(mac_handle_t mac_handle);
 
 /**
  * sme_deregister_twt_disable_complete_cb - TWT disable deregistrar
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  *
  * Return: QDF Status
  */
@@ -3122,7 +3122,7 @@ sme_get_sta_cxn_info(mac_handle_t mac_handle, uint32_t session_id,
 /**
  * sme_find_session_by_bssid() - checks whether has session
  * with given bssid
- * @mac_handle: global hal handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @bssid: bssid
  * Return: true - if has the session
  *         false - if not has the session

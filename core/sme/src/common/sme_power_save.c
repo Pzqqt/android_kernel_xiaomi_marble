@@ -361,7 +361,7 @@ QDF_STATUS sme_enable_sta_ps_check(tpAniSirGlobal mac_ctx, uint32_t session_id)
 
 /**
  * sme_ps_enable_disable(): function to enable/disable PS.
- * @mac_handle: global hal_handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: session id
  * sme_ps_cmd: power save message
  *
@@ -451,7 +451,7 @@ QDF_STATUS sme_ps_timer_flush_sync(mac_handle_t mac_handle, uint8_t session_id)
 
 /**
  * sme_ps_uapsd_enable(): function to enable UAPSD.
- * @mac_handle: global hal_handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: session id
  *
  * Return: QDF_STATUS
@@ -475,7 +475,7 @@ QDF_STATUS sme_ps_uapsd_enable(mac_handle_t mac_handle, uint32_t session_id)
 
 /**
  * sme_ps_uapsd_disable(): function to disable UAPSD.
- * @mac_handle: global hal_handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: session id
  *
  * Return: QDF_STATUS
@@ -583,7 +583,7 @@ void sme_set_tspec_uapsd_mask_per_session(tpAniSirGlobal mac_ctx,
 
 /**
  * sme_ps_start_uapsd(): function to start UAPSD.
- * @mac_handle: global hal_handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: session id
  *
  * Return: QDF_STATUS

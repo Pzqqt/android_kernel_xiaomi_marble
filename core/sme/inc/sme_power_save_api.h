@@ -64,7 +64,7 @@ QDF_STATUS sme_post_pe_message(tpAniSirGlobal mac_ctx,
 
 /**
  * sme_ps_enable_auto_ps_timer(): Enable power-save auto timer with timeout
- * @mac_handle:       HAL context
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id:    adapter session Id
  * @timeout:       timeout period in ms
  *

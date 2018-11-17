@@ -810,7 +810,7 @@ QDF_STATUS sme_set11dinfo(mac_handle_t mac_handle,
 
 /**
  * sme_set_scan_disable() - Dynamically enable/disable scan
- * @mac_handle: Handle to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  *
  * This command gives the user an option to dynamically
  * enable or disable scans.
@@ -857,7 +857,7 @@ QDF_STATUS sme_get_soft_ap_domain(mac_handle_t mac_handle,
 /**
  * sme_update_fine_time_measurement_capab() - Update the FTM capabitlies from
  * incoming val
- * @mac_handle: Handle for Hal layer
+ * @mac_handle: Opaque handle to the global MAC context
  * @val: New FTM capability value
  *
  * Return: None
@@ -992,7 +992,7 @@ static void sme_update_scan_roam_params(tpAniSirGlobal mac_ctx)
 
 /**
  * sme_update_roam_params() - Store/Update the roaming params
- * @mac_handle:                      Handle for Hal layer
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id:               SME Session ID
  * @roam_params_src:          The source buffer to copy
  * @update_param:             Type of parameter to be updated
@@ -1448,7 +1448,7 @@ static QDF_STATUS sme_extended_change_channel_ind(tpAniSirGlobal mac_ctx,
 #ifdef FEATURE_WLAN_ESE
 /**
  * sme_update_is_ese_feature_enabled() - enable/disable ESE support at runtime
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @sessionId: session id
  * @isEseIniFeatureEnabled: ese ini enabled
  *
@@ -1501,7 +1501,7 @@ QDF_STATUS sme_update_is_ese_feature_enabled(mac_handle_t mac_handle,
 
 /**
  * sme_set_plm_request() - set plm request
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @pPlmReq: Pointer to input plm request
  *
  * Return: QDF_STATUS enumeration
@@ -1621,7 +1621,7 @@ static QDF_STATUS sme_tsm_ie_ind(tpAniSirGlobal mac,
 
 /**
  * sme_set_cckm_ie() - set cckm ie
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @sessionId: session id
  * @pCckmIe: Pointer to CCKM Ie
  * @cckmIeLen: Length of @pCckmIe
@@ -1647,7 +1647,7 @@ QDF_STATUS sme_set_cckm_ie(mac_handle_t mac_handle, uint8_t sessionId,
 
 /**
  * sme_set_ese_beacon_request() - set ese beacon request
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @sessionId: session id
  * @pEseBcnReq: Ese beacon report
  *
@@ -1717,7 +1717,7 @@ QDF_STATUS sme_set_ese_beacon_request(mac_handle_t mac_handle,
 
 /**
  * sme_get_tsm_stats() - SME get tsm stats
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @callback: SME sends back the requested stats using the callback
  * @staId: The station ID for which the stats is requested for
  * @bssId: bssid
@@ -1748,7 +1748,7 @@ QDF_STATUS sme_get_tsm_stats(mac_handle_t mac_handle,
 
 /**
  * sme_set_ese_roam_scan_channel_list() - To set ese roam scan channel list
- * @mac_handle: pointer HAL handle returned by mac_open
+ * @mac_handle: Opaque handle to the global MAC context
  * @sessionId: sme session id
  * @pChannelList: Output channel list
  * @numChannels: Output number of channels
@@ -2572,7 +2572,7 @@ QDF_STATUS sme_close(mac_handle_t mac_handle)
 /**
  * sme_remove_bssid_from_scan_list() - wrapper to remove the bssid from
  * scan list
- * @mac_handle: hal context.
+ * @mac_handle: Opaque handle to the global MAC context.
  * @bssid: bssid to be removed
  *
  * This function remove the given bssid from scan list.
@@ -2770,7 +2770,7 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 /**
  * sme_store_joinreq_param() - This function will pass station's join
  * request to store to csr.
- * @mac_handle: pointer to hal context.
+ * @mac_handle: Opaque handle to the global MAC context.
  * @profile: pointer to station's roam profile.
  * @scan_cache: pointer to station's scan cache.
  * @roam_id: reference to roam_id variable being passed.
@@ -2810,7 +2810,7 @@ bool sme_store_joinreq_param(mac_handle_t mac_handle,
 /**
  * sme_clear_joinreq_param() - This function will pass station's clear
  * the join request to csr.
- * @mac_handle: pointer to hal context.
+ * @mac_handle: Opaque handle to the global MAC context.
  * @session_id: station's session id.
  *
  * This function will pass station's clear join request further down to csr
@@ -2844,7 +2844,7 @@ bool sme_clear_joinreq_param(mac_handle_t mac_handle,
 /**
  * sme_issue_stored_joinreq() - This function will issues station's stored
  * the join request to csr.
- * @mac_handle: pointer to hal context.
+ * @mac_handle: Opaque handle to the global MAC context.
  * @roam_id: reference to roam_id variable being passed.
  * @session_id: station's session id.
  *
@@ -2908,7 +2908,7 @@ QDF_STATUS sme_scan_flush_result(mac_handle_t mac_handle)
  * A wrapper function to request CSR to clear scan results.
  *   This is a synchronous call
  *
- * mac_handle_t - HAL context handle
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - session id
  * Return QDF_STATUS
  */
@@ -3037,7 +3037,7 @@ eCsrPhyMode sme_get_phy_mode(mac_handle_t mac_handle)
 /*
  * sme_get_channel_bonding_mode5_g() - get the channel bonding mode for 5G band
  *
- * mac_handle - HAL handle
+ * mac_handle: Opaque handle to the global MAC context
  * mode - channel bonding mode
  *
  * Return QDF_STATUS
@@ -3074,7 +3074,7 @@ QDF_STATUS sme_get_channel_bonding_mode5_g(mac_handle_t mac_handle,
  * sme_get_channel_bonding_mode24_g() - get the channel bonding mode for 2.4G
  * band
  *
- * mac_handle - HAL handle
+ * mac_handle: Opaque handle to the global MAC context
  * mode - channel bonding mode
  *
  * Return QDF_STATUS
@@ -3267,7 +3267,7 @@ QDF_STATUS sme_roam_disconnect(mac_handle_t mac_handle, uint8_t session_id,
 }
 
 /* sme_dhcp_done_ind() - send dhcp done ind
- * @mac_handle: hal context
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: session id
  *
  * Return: void.
@@ -3774,7 +3774,7 @@ QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
 
 /**
  * sme_cfg_set_int() - Sets the cfg parameter value.
- * @mac_handle:	Handle to hal.
+ * @mac_handle:	Opaque handle to the global MAC context.
  * @cfg_id:	Configuration parameter ID.
  * @value:	value to be saved in the cfg parameter.
  *
@@ -3796,7 +3796,7 @@ QDF_STATUS sme_cfg_set_int(mac_handle_t mac_handle, uint16_t cfg_id,
 
 /**
  * sme_cfg_set_str() - Sets the cfg parameter string.
- * @mac_handle:	Handle to hal.
+ * @mac_handle:	Opaque handle to the global MAC context.
  * @cfg_id:	Configuration parameter ID.
  * @str:	Pointer to the string buffer.
  * @length:	Length of the string.
@@ -3819,7 +3819,7 @@ QDF_STATUS sme_cfg_set_str(mac_handle_t mac_handle, uint16_t cfg_id,
 
 /**
  * sme_cfg_get_int() -  Gets the cfg parameter value.
- * @mac_handle:	Handle to hal.
+ * @mac_handle:	Opaque handle to the global MAC context.
  * @cfg_id:	Configuration parameter ID.
  * @cfg_value:	Pointer to variable in which cfg value
  *		will be saved.
@@ -3842,7 +3842,7 @@ QDF_STATUS sme_cfg_get_int(mac_handle_t mac_handle, uint16_t cfg_id,
 
 /**
  * sme_cfg_get_str() - Gets the cfg parameter string.
- * @mac_handle:	Handle to hal.
+ * @mac_handle:	Opaque handle to the global MAC context.
  * @cfg_id:	Configuration parameter ID.
  * @str:	Pointer to the string buffer.
  * @length:	Pointer to length of the string.
@@ -4091,7 +4091,7 @@ QDF_STATUS sme_roam_set_key(mac_handle_t mac_handle,  uint8_t session_id,
 
 /**
  * sme_roam_set_default_key_index - To set default wep key idx
- * @mac_handle: pointer to hal handler
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: session id
  * @default_idx: default wep key index
  *
@@ -4133,7 +4133,7 @@ QDF_STATUS sme_roam_set_default_key_index(mac_handle_t mac_handle,
 
 /**
  * sme_get_rssi() - API to retrieve current RSSI
- * @mac_handle: HAL handle for device
+ * @mac_handle: Opaque handle to the global MAC context
  * @callback: SME sends back the requested stats using the callback
  * @staId: The station ID for which the RSSI is requested for
  * @bssid: The bssid of the connected session
@@ -4386,7 +4386,7 @@ QDF_STATUS sme_generic_change_country_code(mac_handle_t mac_handle,
  * sme_dhcp_start_ind() -
  * API to signal the FW about the DHCP Start event.
  *
- * mac_handle - HAL handle for device.
+ * mac_handle: Opaque handle to the global MAC context.
  * device_mode - mode(AP,SAP etc) of the device.
  * macAddr - MAC address of the adapter.
  * sessionId - session ID.
@@ -4452,7 +4452,7 @@ QDF_STATUS sme_dhcp_start_ind(mac_handle_t mac_handle,
  * sme_dhcp_stop_ind() -
  * API to signal the FW about the DHCP complete event.
  *
- * mac_handle - HAL handle for device.
+ * mac_handle: Opaque handle to the global MAC context.
  * device_mode - mode(AP, SAP etc) of the device.
  * macAddr - MAC address of the adapter.
  * sessionId - session ID.
@@ -4732,7 +4732,7 @@ QDF_STATUS sme_get_wcnss_hardware_version(mac_handle_t mac_handle,
 #ifdef FEATURE_OEM_DATA_SUPPORT
 /**
  * sme_oem_data_req() - send oem data request to WMA
- * @mac_handle: HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @hdd_oem_req: OEM data request from HDD
  *
  * Return: QDF_STATUS
@@ -5351,7 +5351,7 @@ QDF_STATUS sme_get_operation_channel(mac_handle_t mac_handle,
  * sme_register_mgmt_frame_ind_callback() - Register a callback for
  * management frame indication to PE.
  *
- * @mac_handle: hal pointer
+ * @mac_handle: Opaque handle to the global MAC context
  * @callback: callback pointer to be registered
  *
  * This function is used to register a callback for management
@@ -6485,7 +6485,7 @@ QDF_STATUS sme_set_tm_level(mac_handle_t mac_handle,
  * sme_feature_caps_exchange() - SME interface to exchange capabilities between
  *  Host and FW.
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * Return NONE
  */
 void sme_feature_caps_exchange(mac_handle_t mac_handle)
@@ -6499,7 +6499,7 @@ void sme_feature_caps_exchange(mac_handle_t mac_handle)
  * sme_disable_feature_capablity() - SME interface to disable Active mode
  * offload capablity in Host.
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * Return NONE
  */
 void sme_disable_feature_capablity(uint8_t feature_index)
@@ -6510,7 +6510,7 @@ void sme_disable_feature_capablity(uint8_t feature_index)
  * sme_reset_power_values_for5_g
  * Reset the power values for 5G band with default power values.
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * Return NONE
  */
 void sme_reset_power_values_for5_g(mac_handle_t mac_handle)
@@ -6530,7 +6530,7 @@ void sme_reset_power_values_for5_g(mac_handle_t mac_handle)
  *	    This function is called through dynamic setConfig callback function
  *	    to configure the Roam prefer 5G runtime option
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * nRoamPrefer5GHz Enable/Disable Roam prefer 5G runtime option
  * Return Success or failure
  */
@@ -6561,7 +6561,7 @@ QDF_STATUS sme_update_roam_prefer5_g_hz(mac_handle_t mac_handle,
  * enable/disable Intra band roaming
  *	    This function is called through dynamic setConfig callback function
  *	    to configure the intra band roaming
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * nRoamIntraBand Enable/Disable Intra band roaming
  * Return Success or failure
  */
@@ -6591,7 +6591,7 @@ QDF_STATUS sme_set_roam_intra_band(mac_handle_t mac_handle,
  * Function to update roam scan N probes
  *	    This function is called through dynamic setConfig callback function
  *	    to update roam scan N probes
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
  * nProbes number of probe requests to be sent out
  * Return Success or failure
@@ -6629,7 +6629,7 @@ QDF_STATUS sme_update_roam_scan_n_probes(mac_handle_t mac_handle,
  *	    This function is called through dynamic setConfig callback function
  *	    to update roam scan home away time
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
  * nRoamScanAwayTime Scan home away time
  * bSendOffloadCmd If true then send offload command to firmware
@@ -6672,7 +6672,7 @@ QDF_STATUS sme_update_roam_scan_home_away_time(
 /**
  * sme_ext_change_channel()- function to post send ECSA
  * action frame to csr.
- * @mac_handle: Hal context
+ * @mac_handle: Opaque handle to the global MAC context
  * @channel: new channel to switch
  * @session_id: senssion it should be sent on.
  *
@@ -6712,7 +6712,7 @@ QDF_STATUS sme_ext_change_channel(mac_handle_t mac_handle, uint32_t channel,
  * sme_get_roam_intra_band() -
  * get Intra band roaming
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * Return Success or failure
  */
 bool sme_get_roam_intra_band(mac_handle_t mac_handle)
@@ -6728,7 +6728,7 @@ bool sme_get_roam_intra_band(mac_handle_t mac_handle)
  * sme_get_roam_scan_n_probes() -
  * get N Probes
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * Return Success or failure
  */
 uint8_t sme_get_roam_scan_n_probes(mac_handle_t mac_handle)
@@ -6742,7 +6742,7 @@ uint8_t sme_get_roam_scan_n_probes(mac_handle_t mac_handle)
  * sme_get_roam_scan_home_away_time() -
  * get Roam scan home away time
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * Return Success or failure
  */
 uint16_t sme_get_roam_scan_home_away_time(mac_handle_t mac_handle)
@@ -6759,7 +6759,7 @@ uint16_t sme_get_roam_scan_home_away_time(mac_handle_t mac_handle)
  *	    to configure RoamRssiDiff
  *	    Usage: adb shell iwpriv wlan0 setConfig RoamRssiDiff=[0 .. 125]
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
  * RoamRssiDiff - minimum rssi difference between potential
  *	    candidate and current AP.
@@ -6987,7 +6987,7 @@ QDF_STATUS sme_update_fast_transition_enabled(mac_handle_t mac_handle,
  *	    This function is called through dynamic setConfig callback function
  *	    to configure isWESModeEnabled
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * isWESModeEnabled - WES mode
  * sessionId - Session Identifier
  * Return QDF_STATUS_SUCCESS - SME update isWESModeEnabled config successfully.
@@ -7029,7 +7029,7 @@ QDF_STATUS sme_update_wes_mode(mac_handle_t mac_handle, bool isWESModeEnabled,
  *	    This function is called to set roam scan control
  *	    if roam scan control is set to 0, roaming scan cache is cleared
  *	    any value other than 0 is treated as invalid value
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
  * Return QDF_STATUS_SUCCESS - SME update config successfully.
  *	    Other status means SME failure to update
@@ -7337,7 +7337,7 @@ QDF_STATUS sme_update_enable_fast_roam_in_concurrency(mac_handle_t mac_handle,
  *	This function is called through dynamic setConfig callback function
  *	to configure  nOpportunisticThresholdDiff
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
  * nOpportunisticThresholdDiff - Opportunistic Scan threshold diff
  * Return QDF_STATUS_SUCCESS - SME update nOpportunisticThresholdDiff config
@@ -7388,7 +7388,7 @@ uint8_t sme_get_roam_opportunistic_scan_threshold_diff(mac_handle_t mac_handle)
  * This function is called through dynamic setConfig callback function
  * to configure  nRoamRescanRssiDiff
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
  * nRoamRescanRssiDiff - roam rescan rssi diff
  * Return QDF_STATUS_SUCCESS - SME update nRoamRescanRssiDiff config
@@ -7436,7 +7436,7 @@ uint8_t sme_get_roam_rescan_rssi_diff(mac_handle_t mac_handle)
  * Update Roam count for first beacon miss
  *	    This function is called through dynamic setConfig callback function
  *	    to configure nRoamBmissFirstBcnt
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
  * nRoamBmissFirstBcnt - Roam first bmiss count
  * Return QDF_STATUS_SUCCESS - SME update nRoamBmissFirstBcnt
@@ -7483,7 +7483,7 @@ uint8_t sme_get_roam_bmiss_first_bcnt(mac_handle_t mac_handle)
  * Update Roam count for final beacon miss
  *	    This function is called through dynamic setConfig callback function
  *	    to configure nRoamBmissFinalBcnt
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
  * nRoamBmissFinalBcnt - Roam final bmiss count
  * Return QDF_STATUS_SUCCESS - SME update nRoamBmissFinalBcnt
@@ -7532,7 +7532,7 @@ uint8_t sme_get_roam_bmiss_final_bcnt(mac_handle_t mac_handle)
  *	    This function is called through dynamic setConfig callback function
  *	    to configure nRoamBeaconRssiWeight
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
  * nRoamBeaconRssiWeight - Roam beacon rssi weight
  * Return QDF_STATUS_SUCCESS - SME update nRoamBeaconRssiWeight config
@@ -7787,7 +7787,7 @@ uint16_t sme_get_empty_scan_refresh_period(mac_handle_t mac_handle)
  *	    Usage: adb shell iwpriv wlan0 setConfig
  *			nEmptyScanRefreshPeriod=[0 .. 60]
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
  * nEmptyScanRefreshPeriod - scan period following empty scan results.
  * Return Success or failure
@@ -7846,7 +7846,7 @@ QDF_STATUS sme_update_empty_scan_refresh_period(mac_handle_t mac_handle,
  *	    Usage: adb shell iwpriv wlan0 setConfig
  *			gNeighborScanChannelMinTime=[0 .. 60]
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * nNeighborScanMinChanTime - Channel minimum dwell time
  * sessionId - Session Identifier
  * Return Success or failure
@@ -7895,7 +7895,7 @@ QDF_STATUS sme_set_neighbor_scan_min_chan_time(mac_handle_t mac_handle,
  *	    Usage: adb shell iwpriv wlan0 setConfig
  *			gNeighborScanChannelMaxTime=[0 .. 60]
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
  * nNeighborScanMinChanTime - Channel maximum dwell time
  * Return Success or failure
@@ -8130,7 +8130,7 @@ uint16_t sme_get_neighbor_scan_max_chan_time(mac_handle_t mac_handle,
  *	    Usage: adb shell iwpriv wlan0 setConfig
  *			nNeighborScanPeriod=[0 .. 1000]
  *
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
  * nNeighborScanPeriod - neighbor scan period
  * Return Success or failure
@@ -8208,7 +8208,7 @@ uint16_t sme_get_neighbor_scan_period(mac_handle_t mac_handle,
  *          This function is called through dynamic setConfig callback function
  *          to configure neighbor_scan_min_period
  *
- * @mac_handle - HAL handle for device
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id - Session Identifier
  * @neighbor_scan_min_period - neighbor scan min period
  *
@@ -8269,7 +8269,7 @@ uint8_t sme_get_roam_rssi_diff(mac_handle_t mac_handle)
 
 /**
  * sme_change_roam_scan_channel_list() - to change scan channel list
- * @mac_handle: pointer HAL handle returned by mac_open
+ * @mac_handle: Opaque handle to the global MAC context
  * @sessionId: sme session id
  * @pChannelList: Output channel list
  * @numChannels: Output number of channels
@@ -8349,7 +8349,7 @@ QDF_STATUS sme_change_roam_scan_channel_list(mac_handle_t mac_handle,
 
 /**
  * sme_get_roam_scan_channel_list() - To get roam scan channel list
- * @mac_handle: HAL pointer
+ * @mac_handle: Opaque handle to the global MAC context
  * @pChannelList: Output channel list
  * @pNumChannels: Output number of channels
  * @sessionId: Session Identifier
@@ -8738,7 +8738,7 @@ QDF_STATUS sme_is_sta_p2p_client_connected(mac_handle_t mac_handle)
 
 /**
  * sme_add_periodic_tx_ptrn() - Add Periodic TX Pattern
- * @mac_handle: global hal handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @addPeriodicTxPtrnParams: request message
  *
  * Return: QDF_STATUS enumeration
@@ -8787,7 +8787,7 @@ sme_add_periodic_tx_ptrn(mac_handle_t mac_handle,
 
 /**
  * sme_del_periodic_tx_ptrn() - Delete Periodic TX Pattern
- * @mac_handle: global hal handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @delPeriodicTxPtrnParams: request message
  *
  * Return: QDF_STATUS enumeration
@@ -8837,7 +8837,7 @@ sme_del_periodic_tx_ptrn(mac_handle_t mac_handle,
 #ifdef FEATURE_WLAN_RMC
 /*
  * sme_enable_rmc() - enables RMC
- * @mac_handle : Pointer to global HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @sessionId : Session ID
  *
  * Return: QDF_STATUS
@@ -8872,7 +8872,7 @@ QDF_STATUS sme_enable_rmc(mac_handle_t mac_handle, uint32_t sessionId)
 
 /*
  * sme_disable_rmc() - disables RMC
- * @mac_handle : Pointer to global HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @sessionId : Session ID
  *
  * Return: QDF_STATUS
@@ -8907,7 +8907,7 @@ QDF_STATUS sme_disable_rmc(mac_handle_t mac_handle, uint32_t sessionId)
 
 /*
  * sme_send_rmc_action_period() - sends RMC action period param to target
- * @mac_handle : Pointer to global HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @sessionId : Session ID
  *
  * Return: QDF_STATUS
@@ -8943,7 +8943,7 @@ QDF_STATUS sme_send_rmc_action_period(mac_handle_t mac_handle,
 
 /*
  * sme_request_ibss_peer_info() -  request ibss peer info
- * @mac_handle : Pointer to global HAL handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @pUserData : Pointer to user data
  * @peerInfoCbk : Peer info callback
  * @allPeerInfoReqd : All peer info required or not
@@ -9151,7 +9151,7 @@ static struct sir_ocb_config *sme_copy_sir_ocb_config(
 
 /**
  * sme_ocb_set_config() - Set the OCB configuration
- * @mac_handle: reference to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @context: the context of the call
  * @callback: the callback to hdd
  * @config: the OCB configuration
@@ -9215,7 +9215,7 @@ end:
 
 /**
  * sme_ocb_set_utc_time() - Set the OCB UTC time
- * @mac_handle: reference to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @utc: the UTC time struct
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
@@ -9261,7 +9261,7 @@ end:
 
 /**
  * sme_ocb_start_timing_advert() - Start sending timing advert frames
- * @mac_handle: reference to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @timing_advert: the timing advertisement struct
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
@@ -9313,7 +9313,7 @@ end:
 
 /**
  * sme_ocb_stop_timing_advert() - Stop sending timing advert frames on a channel
- * @mac_handle: reference to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @timing_advert: the timing advertisement struct
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
@@ -9358,7 +9358,7 @@ end:
 
 /**
  * sme_ocb_gen_timing_advert_frame() - generate TA frame and populate the buffer
- * @mac_handle: reference to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @self_addr: the self MAC address
  * @buf: the buffer that will contain the frame
  * @timestamp_offset: return for the offset of the timestamp field
@@ -9381,7 +9381,7 @@ int sme_ocb_gen_timing_advert_frame(mac_handle_t mac_handle,
 }
 /**
  * sme_ocb_get_tsf_timer() - Get the TSF timer value
- * @mac_handle: reference to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @context: the context of the call
  * @callback: the callback to hdd
  * @request: the TSF timer request
@@ -9438,7 +9438,7 @@ end:
 
 /**
  * sme_dcc_get_stats() - Get the DCC stats
- * @mac_handle: reference to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @context: the context of the call
  * @callback: the callback to hdd
  * @request: the get DCC stats request
@@ -9498,7 +9498,7 @@ end:
 
 /**
  * sme_dcc_clear_stats() - Clear the DCC stats
- * @mac_handle: reference to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @vdev_id: vdev id for OCB interface
  * @dcc_stats_bitmap: the entries in the stats to clear
  *
@@ -9547,7 +9547,7 @@ end:
 
 /**
  * sme_dcc_update_ndl() - Update the DCC settings
- * @mac_handle: reference to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @context: the context of the call
  * @callback: the callback to hdd
  * @request: the update DCC request
@@ -9616,7 +9616,7 @@ end:
 /**
  * sme_register_for_dcc_stats_event() - Register for the periodic DCC stats
  *                                      event
- * @mac_handle: reference to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @context: the context of the call
  * @callback: the callback to hdd
  *
@@ -9640,7 +9640,7 @@ QDF_STATUS sme_register_for_dcc_stats_event(mac_handle_t mac_handle,
 /**
  * sme_deregister_for_dcc_stats_event() - De-Register for the periodic DCC stats
  *					  event
- * @mac_handle: Hal Handle
+ * @mac_handle: Opaque handle to the global MAC context
  *
  * This function de-registers the DCC perioc stats callback
  *
@@ -10385,7 +10385,7 @@ QDF_STATUS sme_update_sta_inactivity_timeout(mac_handle_t mac_handle,
 
 /**
  * sme_get_reg_info() - To get registration info
- * @mac_handle: HAL context
+ * @mac_handle: Opaque handle to the global MAC context
  * @chanId: channel id
  * @regInfo1: first reg info to fill
  * @regInfo2: second reg info to fill
@@ -10885,7 +10885,7 @@ void sme_add_set_thermal_level_callback(mac_handle_t mac_handle,
 
 /**
  * sme_set_thermal_level() - SME API to set the thermal mitigation level
- * @mac_handle:         Handler to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @level:       Thermal mitigation level
  *
  * Return: QDF_STATUS
@@ -11132,7 +11132,7 @@ static QDF_STATUS sme_stats_ext_event(tpAniSirGlobal mac,
  * Update DFS roam scan mode
  *	    This function is called through dynamic setConfig callback function
  *	    to configure allowDFSChannelRoam.
- * mac_handle - HAL handle for device
+ * mac_handle: Opaque handle to the global MAC context
  * sessionId - Session Identifier
  * allowDFSChannelRoam - DFS roaming scan mode 0 (disable),
  *	    1 (passive), 2 (active)
@@ -11240,7 +11240,7 @@ QDF_STATUS sme_update_add_ie(mac_handle_t mac_handle,
 
 /**
  * sme_update_dsc_pto_up_mapping()
- * @mac_handle: HAL context
+ * @mac_handle: Opaque handle to the global MAC context
  * @dscpmapping: pointer to DSCP mapping structure
  * @sessionId: SME session id
  *
@@ -11348,7 +11348,7 @@ QDF_STATUS sme_abort_roam_scan(mac_handle_t mac_handle, uint8_t sessionId)
 #ifdef FEATURE_WLAN_EXTSCAN
 /**
  * sme_get_valid_channels_by_band() - to fetch valid channels filtered by band
- * @mac_handle: HAL context
+ * @mac_handle: Opaque handle to the global MAC context
  * @wifiBand: RF band information
  * @aValidChannels: output array to store channel info
  * @pNumChannels: output number of channels
@@ -11888,7 +11888,7 @@ QDF_STATUS sme_ext_scan_register_callback(mac_handle_t mac_handle,
 
 /**
  * sme_send_wisa_params(): Pass WISA mode to WMA
- * @mac_handle: HAL context
+ * @mac_handle: Opaque handle to the global MAC context
  * @wisa_params: pointer to WISA params struct
  * @sessionId: SME session id
  *
@@ -12130,7 +12130,7 @@ sme_set_link_layer_ext_cb(mac_handle_t mac_handle,
 /**
  * sme_reset_link_layer_stats_ind_cb() - SME API to reset link layer stats
  *					 indication
- * @mac_handle: Hal Handle
+ * @mac_handle: Opaque handle to the global MAC context
  *
  * This function reset's the link layer stats indication
  *
@@ -12162,7 +12162,7 @@ QDF_STATUS sme_reset_link_layer_stats_ind_cb(mac_handle_t mac_handle)
 
 /**
  * sme_ll_stats_set_thresh - set threshold for mac counters
- * @mac_handle, hal layer handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @threshold, threshold for mac counters
  *
  * Return: QDF_STATUS Enumeration
@@ -12538,7 +12538,7 @@ QDF_STATUS sme_enable_dfs_chan_scan(mac_handle_t mac_handle, uint8_t dfs_flag)
 /**
  * sme_validate_sap_channel_switch() - validate target channel switch w.r.t
  *      concurreny rules set to avoid channel interference.
- * @mac_handle - Hal context
+ * @mac_handle: Opaque handle to the global MAC context
  * @sap_ch - channel to switch
  * @sap_phy_mode - phy mode of SAP
  * @cc_switch_mode - concurreny switch mode
@@ -12581,7 +12581,7 @@ bool sme_validate_sap_channel_switch(mac_handle_t mac_handle,
 
 /**
  * sme_configure_stats_avg_factor() - function to config avg. stats factor
- * @mac_handle: hal
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: session ID
  * @stats_avg_factor: average stats factor
  *
@@ -12636,7 +12636,7 @@ QDF_STATUS sme_configure_stats_avg_factor(mac_handle_t mac_handle,
 
 /**
  * sme_configure_guard_time() - function to configure guard time
- * @mac_handle: hal
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: session id
  * @guard_time: guard time
  *
@@ -12691,7 +12691,7 @@ QDF_STATUS sme_configure_guard_time(mac_handle_t mac_handle, uint8_t session_id,
 /*
  * sme_wifi_start_logger() - Send the start/stop logging command to WMA
  * to either start/stop logging
- * @mac_handle: HAL context
+ * @mac_handle: Opaque handle to the global MAC context
  * @start_log: Structure containing the wifi start logger params
  *
  * This function sends the start/stop logging command to WMA
@@ -12953,7 +12953,7 @@ QDF_STATUS sme_update_nss(mac_handle_t mac_handle, uint8_t nss)
 
 /**
  * sme_update_user_configured_nss() - sets the nss based on user request
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @nss: number of streams
  *
  * Return: None
@@ -13518,7 +13518,7 @@ int sme_update_he_ldpc_supp(mac_handle_t mac_handle, uint8_t session_id,
 
 /**
  * sme_set_nud_debug_stats_cb() - set nud debug stats callback
- * @mac_handle: global hal handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @cb: callback function pointer
  * @context: callback context
  *
@@ -13599,7 +13599,7 @@ QDF_STATUS sme_set_chip_pwr_save_fail_cb(mac_handle_t mac_handle,
 #ifdef FEATURE_RSSI_MONITOR
 /**
  * sme_set_rssi_monitoring() - set rssi monitoring
- * @mac_handle: global hal handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @input: request message
  *
  * This function constructs the vos message and fill in message type,
@@ -13932,7 +13932,7 @@ QDF_STATUS sme_soc_set_dual_mac_config(struct policy_mgr_dual_mac_config msg)
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 /**
  * sme_gateway_param_update() - to update gateway parameters with WMA
- * @mac_handle: hal handle
+ * @mac_handle: Opaque handle to the global MAC context
  * @gw_params: request parameters from HDD
  *
  * Return: QDF_STATUS
@@ -14045,7 +14045,7 @@ QDF_STATUS sme_set_peer_authorized(uint8_t *peer_addr,
 
 /*
  * sme_handle_set_fcc_channel() - set spec. tx power for non-fcc channel
- * @mac_handle: HAL pointer
+ * @mac_handle: Opaque handle to the global MAC context
  * @fcc_constraint: flag to enable/disable the constraint
  * @scan_pending: whether there is pending scan
  *
@@ -14183,7 +14183,7 @@ QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(mac_handle_t mac_handle,
 
 /**
  * sme_update_tgt_services() - update the target services config.
- * @mac_handle: HAL pointer.
+ * @mac_handle: Opaque handle to the global MAC context.
  * @cfg: wma_tgt_services parameters.
  *
  * update the target services config.
@@ -14213,7 +14213,7 @@ void sme_update_tgt_services(mac_handle_t mac_handle,
 
 /**
  * sme_is_session_id_valid() - Check if the session id is valid
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: Session id
  *
  * Checks if the session id is valid or not
@@ -14242,7 +14242,7 @@ bool sme_is_session_id_valid(mac_handle_t mac_handle, uint32_t session_id)
 
 /**
  * sme_get_opclass() - determine operating class
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @channel: channel id
  * @bw_offset: bandwidth offset
  * @opclass: pointer to operating class
@@ -14475,7 +14475,7 @@ QDF_STATUS sme_remove_beacon_filter(mac_handle_t mac_handle,
 
 /**
  * sme_send_disassoc_req_frame - send disassoc req
- * @mac_handle: handler to hal
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: session id
  * @peer_mac: peer mac address
  * @reason: reason for disassociation
@@ -14678,7 +14678,7 @@ sme_apf_read_work_memory(mac_handle_t mac_handle,
 
 /**
  * sme_get_wni_dot11_mode() - return configured wni dot11mode
- * @mac_handle: hal pointer
+ * @mac_handle: Opaque handle to the global MAC context
  *
  * Return: wni dot11 mode.
  */
@@ -14693,7 +14693,7 @@ uint32_t sme_get_wni_dot11_mode(mac_handle_t mac_handle)
 /**
  * sme_create_mon_session() - post message to create PE session for monitormode
  * operation
- * @mac_handle: Handle to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @bssid: pointer to bssid
  * @vdev_id: sme session id
  *
@@ -14770,7 +14770,7 @@ QDF_STATUS sme_set_adaptive_dwelltime_config(mac_handle_t mac_handle,
 
 /**
  * sme_set_vdev_ies_per_band() - sends the per band IEs to vdev
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @vdev_id: vdev_id for which IE is targeted
  *
  * Return: None
@@ -14796,7 +14796,7 @@ void sme_set_vdev_ies_per_band(mac_handle_t mac_handle, uint8_t vdev_id)
 
 /**
  * sme_set_pdev_ht_vht_ies() - sends the set pdev IE req
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @enable2x2: 1x1 or 2x2 mode.
  *
  * Sends the set pdev IE req with Nss value.
@@ -14941,7 +14941,7 @@ QDF_STATUS sme_set_he_bss_color(mac_handle_t mac_handle, uint8_t session_id,
 
 /**
  * sme_update_hw_dbs_capable() - sets the HW DBS capability
- * @mac_handle: Pointer to HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @hw_dbs_capable: HW DBS capability
  *
  * Sets HW DBS capability based on INI and fw capability.
@@ -14958,7 +14958,7 @@ void sme_update_hw_dbs_capable(mac_handle_t mac_handle, uint8_t hw_dbs_capable)
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD
 /**
  * sme_register_p2p_lo_event() - Register for the p2p lo event
- * @mac_handle: reference to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @context: the context of the call
  * @callback: the callback to hdd
  *
@@ -15051,7 +15051,7 @@ void sme_get_vdev_type_nss(enum QDF_OPMODE dev_mode,
 /**
  * sme_update_sta_roam_policy() - update sta roam policy for
  * unsafe and DFS channels.
- * @mac_handle: hal handle for getting global mac struct
+ * @mac_handle: Opaque handle to the global MAC context
  * @dfs_mode: dfs mode which tell if dfs channel needs to be
  * skipped or not
  * @skip_unsafe_channels: Param to tell if driver needs to
@@ -15120,7 +15120,7 @@ QDF_STATUS sme_update_sta_roam_policy(mac_handle_t mac_handle,
 
 /**
  * sme_enable_disable_chanavoidind_event - configure ca event ind
- * @mac_handle: handler to hal
+ * @mac_handle: Opaque handle to the global MAC context
  * @set_value: enable/disable
  *
  * function to enable/disable chan avoidance indication
@@ -15156,7 +15156,7 @@ QDF_STATUS sme_enable_disable_chanavoidind_event(mac_handle_t mac_handle,
 
 /*
  * sme_set_default_scan_ie() - API to send default scan IE to LIM
- * @mac_handle: reference to the HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @session_id: current session ID
  * @ie_data: Pointer to Scan IE data
  * @ie_len: Length of @ie_data
@@ -15756,7 +15756,7 @@ send_flush_cmd:
 
 /**
  * sme_set_nud_debug_stats() - sme api to set nud debug stats
- * @mac_handle: handle to hal
+ * @mac_handle: Opaque handle to the global MAC context
  * @set_stats_param: pointer to set stats param
  *
  * Return: Return QDF_STATUS.
@@ -15792,7 +15792,7 @@ QDF_STATUS sme_set_nud_debug_stats(mac_handle_t mac_handle,
 
 /**
  * sme_get_nud_debug_stats() - sme api to get nud debug stats
- * @mac_handle: handle to hal
+ * @mac_handle: Opaque handle to the global MAC context
  * @get_stats_param: pointer to set stats param
  *
  * Return: Return QDF_STATUS.
@@ -16313,7 +16313,7 @@ uint32_t sme_unpack_rsn_ie(mac_handle_t mac_handle, uint8_t *buf,
 #ifdef FEATURE_BSS_TRANSITION
 /**
  * sme_get_status_for_candidate() - Get bss transition status for candidate
- * @mac_handle: Handle for HAL
+ * @mac_handle: Opaque handle to the global MAC context
  * @conn_bss_desc: connected bss descriptor
  * @bss_desc: candidate bss descriptor
  * @info: candiadate bss information
