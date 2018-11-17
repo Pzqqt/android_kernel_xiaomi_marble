@@ -5458,16 +5458,17 @@ static int wlan_hdd_handle_restrict_offchan_config(struct hdd_adapter *adapter,
 }
 
 /**
- * wlan_hdd_cfg80211_wifi_set_reorder_timeout - set reorder timeout
- * @hdd_ctx: hdd context
+ * wlan_hdd_cfg80211_wifi_set_reorder_timeout() - set reorder timeout
+ * @adapter: Pointer to HDD adapter
  * @tb: array of pointer to struct nlattr
  *
  * Return: 0 on success; error number otherwise
  */
 static
-int wlan_hdd_cfg80211_wifi_set_reorder_timeout(struct hdd_context *hdd_ctx,
+int wlan_hdd_cfg80211_wifi_set_reorder_timeout(struct hdd_adapter *adapter,
 					       struct nlattr *tb[])
 {
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret_val = 0;
 	QDF_STATUS qdf_status;
 	struct sir_set_rx_reorder_timeout_val reorder_timeout;
@@ -6521,6 +6522,7 @@ static const interdependent_setter_fn interdependent_setters[] = {
 	hdd_config_mpdu_aggregation,
 	hdd_config_ant_div_period,
 	hdd_config_ant_div_snr_weight,
+	wlan_hdd_cfg80211_wifi_set_reorder_timeout,
 };
 
 /**
@@ -6608,11 +6610,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		errno = ret;
 
 	/* return errno here when all attributes have been refactored */
-
-	ret_val =
-		wlan_hdd_cfg80211_wifi_set_reorder_timeout(hdd_ctx, tb);
-	if (ret_val != 0)
-		return ret_val;
 
 	ret_val =
 		wlan_hdd_cfg80211_wifi_set_rx_blocksize(hdd_ctx, adapter, tb);
