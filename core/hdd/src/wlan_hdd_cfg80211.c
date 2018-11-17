@@ -5526,18 +5526,16 @@ int wlan_hdd_cfg80211_wifi_set_reorder_timeout(struct hdd_adapter *adapter,
 }
 
 /**
- * wlan_hdd_cfg80211_wifi_set_rx_blocksize - set rx blocksize
- *
- * @hdd_ctx: hdd context
+ * wlan_hdd_cfg80211_wifi_set_rx_blocksize() - set rx blocksize
  * @adapter: hdd adapter
  * @tb: array of pointer to struct nlattr
  *
  * Return: 0 on success; error number otherwise
  */
-static int wlan_hdd_cfg80211_wifi_set_rx_blocksize(struct hdd_context *hdd_ctx,
-						   struct hdd_adapter *adapter,
+static int wlan_hdd_cfg80211_wifi_set_rx_blocksize(struct hdd_adapter *adapter,
 						   struct nlattr *tb[])
 {
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret_val = 0;
 	uint32_t set_value;
 	QDF_STATUS qdf_status;
@@ -6523,6 +6521,7 @@ static const interdependent_setter_fn interdependent_setters[] = {
 	hdd_config_ant_div_period,
 	hdd_config_ant_div_snr_weight,
 	wlan_hdd_cfg80211_wifi_set_reorder_timeout,
+	wlan_hdd_cfg80211_wifi_set_rx_blocksize,
 };
 
 /**
@@ -6582,7 +6581,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1];
 	int errno;
 	int ret;
-	int ret_val = 0;
 
 	hdd_enter_dev(dev);
 
@@ -6608,16 +6606,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	ret = hdd_set_interdependent_configuration(adapter, tb);
 	if (ret)
 		errno = ret;
-
-	/* return errno here when all attributes have been refactored */
-
-	ret_val =
-		wlan_hdd_cfg80211_wifi_set_rx_blocksize(hdd_ctx, adapter, tb);
-	if (ret_val != 0)
-		return ret_val;
-
-	if (ret_val)
-		errno = ret_val;
 
 	return errno;
 }
