@@ -5188,12 +5188,6 @@ nla_put_failure:
 	 (((data_snr_weight) & 0xff) << 8) | \
 	 ((ack_snr_weight) & 0xff))
 
-#define ANT_DIV_MGMT_SNR_WEIGHT \
-	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_MGMT_SNR_WEIGHT
-#define ANT_DIV_DATA_SNR_WEIGHT \
-	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_DATA_SNR_WEIGHT
-#define ANT_DIV_ACK_SNR_WEIGHT \
-	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ACK_SNR_WEIGHT
 #define RX_REORDER_TIMEOUT_VOICE \
 	QCA_WLAN_VENDOR_ATTR_CONFIG_RX_REORDER_TIMEOUT_VOICE
 #define RX_REORDER_TIMEOUT_VIDEO \
@@ -5229,9 +5223,12 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SNR_DIFF] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_PROBE_DWELL_TIME] = {
 		.type = NLA_U32},
-	[ANT_DIV_MGMT_SNR_WEIGHT] = {.type = NLA_U32},
-	[ANT_DIV_DATA_SNR_WEIGHT] = {.type = NLA_U32},
-	[ANT_DIV_ACK_SNR_WEIGHT] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_MGMT_SNR_WEIGHT] = {
+		.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_DATA_SNR_WEIGHT] = {
+		.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ACK_SNR_WEIGHT] = {
+		.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RESTRICT_OFFCHANNEL] = {.type = NLA_U8},
 	[RX_REORDER_TIMEOUT_VOICE] = {.type = NLA_U32},
 	[RX_REORDER_TIMEOUT_VIDEO] = {.type = NLA_U32},
@@ -5714,6 +5711,42 @@ static int hdd_config_ant_div_period(struct hdd_adapter *adapter,
 				    ant_div_usrcfg, PDEV_CMD);
 	if (errno)
 		hdd_err("Failed to set ant div period, %d", errno);
+
+	return errno;
+}
+
+static int hdd_config_ant_div_snr_weight(struct hdd_adapter *adapter,
+					 struct nlattr *tb[])
+{
+	struct nlattr *mgmt_attr =
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_MGMT_SNR_WEIGHT];
+	struct nlattr *data_attr =
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_DATA_SNR_WEIGHT];
+	struct nlattr *ack_attr =
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ACK_SNR_WEIGHT];
+	uint32_t mgmt_snr, data_snr, ack_snr, ant_div_usrcfg;
+	int errno;
+
+	/* nothing to do if none of the attributes are present */
+	if (!mgmt_attr && !data_attr && !ack_attr)
+		return 0;
+
+	/* if one is present, all must be present */
+	if (!mgmt_attr || !data_attr || !ack_attr) {
+		hdd_err("Missing attribute");
+		return -EINVAL;
+	}
+
+	mgmt_snr = nla_get_u32(mgmt_attr);
+	data_snr = nla_get_u32(data_attr);
+	ack_snr = nla_get_u32(ack_attr);
+	ant_div_usrcfg = ANT_DIV_SET_WEIGHT(mgmt_snr, data_snr, ack_snr);
+	hdd_debug("ant div set weight: %x", ant_div_usrcfg);
+	errno = wma_cli_set_command(adapter->session_id,
+				    WMI_PDEV_PARAM_ANT_DIV_USRCFG,
+				    ant_div_usrcfg, PDEV_CMD);
+	if (errno)
+		hdd_err("Failed to set ant div weight, %d", errno);
 
 	return errno;
 }
@@ -6487,6 +6520,7 @@ static const interdependent_setter_fn interdependent_setters[] = {
 	hdd_config_access_policy,
 	hdd_config_mpdu_aggregation,
 	hdd_config_ant_div_period,
+	hdd_config_ant_div_snr_weight,
 };
 
 /**
@@ -6547,7 +6581,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	int errno;
 	int ret;
 	int ret_val = 0;
-	uint32_t ant_div_usrcfg;
 
 	hdd_enter_dev(dev);
 
@@ -6575,31 +6608,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		errno = ret;
 
 	/* return errno here when all attributes have been refactored */
-
-	if (tb[ANT_DIV_MGMT_SNR_WEIGHT] ||
-	    tb[ANT_DIV_DATA_SNR_WEIGHT] ||
-	    tb[ANT_DIV_ACK_SNR_WEIGHT]) {
-
-		if (!tb[ANT_DIV_MGMT_SNR_WEIGHT] ||
-		    !tb[ANT_DIV_DATA_SNR_WEIGHT] ||
-		    !tb[ANT_DIV_ACK_SNR_WEIGHT]) {
-			hdd_err("Mgmt snr, data snr and ack snr weight are required");
-			return -EINVAL;
-		}
-
-		ant_div_usrcfg = ANT_DIV_SET_WEIGHT(
-			nla_get_u32(tb[ANT_DIV_MGMT_SNR_WEIGHT]),
-			nla_get_u32(tb[ANT_DIV_DATA_SNR_WEIGHT]),
-			nla_get_u32(tb[ANT_DIV_ACK_SNR_WEIGHT]));
-		hdd_debug("ant div set weight: %x", ant_div_usrcfg);
-		ret_val = wma_cli_set_command((int)adapter->session_id,
-					(int)WMI_PDEV_PARAM_ANT_DIV_USRCFG,
-					ant_div_usrcfg, PDEV_CMD);
-		if (ret_val) {
-			hdd_err("Failed to set ant div weight");
-			return ret_val;
-		}
-	}
 
 	ret_val =
 		wlan_hdd_cfg80211_wifi_set_reorder_timeout(hdd_ctx, tb);
