@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -21,11 +21,15 @@
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/types.h>
+#include <linux/clk.h>
 #include <soc/snd_event.h>
+#include <linux/pm_runtime.h>
 #include <dsp/audio_notifier.h>
 
 #include "core.h"
 #include "pinctrl-utils.h"
+
+#define LPI_AUTO_SUSPEND_DELAY          1500 /* delay in msec */
 
 #define LPI_ADDRESS_SIZE			0x20000
 
@@ -97,6 +101,7 @@ struct lpi_gpio_state {
 	struct pinctrl_dev *ctrl;
 	struct gpio_chip chip;
 	char __iomem	*base;
+	struct clk *lpass_npa_rsc_island;
 };
 
 static const char *const lpi_gpio_groups[] = {
@@ -128,11 +133,14 @@ static int lpi_gpio_read(struct lpi_gpio_pad *pad, unsigned int addr)
 				   __func__);
 		return 0;
 	}
+	pm_runtime_get_sync(lpi_dev);
 
 	ret = ioread32(pad->base + pad->offset + addr);
 	if (ret < 0)
 		pr_err("%s: read 0x%x failed\n", __func__, addr);
 
+	pm_runtime_mark_last_busy(lpi_dev);
+	pm_runtime_put_autosuspend(lpi_dev);
 	return ret;
 }
 
@@ -144,8 +152,12 @@ static int lpi_gpio_write(struct lpi_gpio_pad *pad, unsigned int addr,
 				   __func__);
 		return 0;
 	}
+	pm_runtime_get_sync(lpi_dev);
 
 	iowrite32(val, pad->base + pad->offset + addr);
+
+	pm_runtime_mark_last_busy(lpi_dev);
+	pm_runtime_put_autosuspend(lpi_dev);
 	return 0;
 }
 
@@ -499,6 +511,7 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 	int ret, npins, i;
 	char __iomem *lpi_base;
 	u32 reg;
+	struct clk *lpass_npa_rsc_island = NULL;
 
 	ret = of_property_read_u32(dev->of_node, "reg", &reg);
 	if (ret < 0) {
@@ -608,6 +621,22 @@ static int lpi_pinctrl_probe(struct platform_device *pdev)
 		goto err_snd_evt;
 	}
 
+	/* Register LPASS NPA resource */
+	lpass_npa_rsc_island = devm_clk_get(&pdev->dev, "island_lpass_npa_rsc");
+	if (IS_ERR(lpass_npa_rsc_island)) {
+		ret = PTR_ERR(lpass_npa_rsc_island);
+		dev_dbg(&pdev->dev, "%s: clk get %s failed %d\n",
+			__func__, "island_lpass_npa_rsc", ret);
+		lpass_npa_rsc_island = NULL;
+		ret = 0;
+	}
+	state->lpass_npa_rsc_island = lpass_npa_rsc_island;
+
+	pm_runtime_set_autosuspend_delay(&pdev->dev, LPI_AUTO_SUSPEND_DELAY);
+	pm_runtime_use_autosuspend(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
+	pm_runtime_enable(&pdev->dev);
+
 	return 0;
 
 err_snd_evt:
@@ -621,6 +650,8 @@ err_chip:
 static int lpi_pinctrl_remove(struct platform_device *pdev)
 {
 	struct lpi_gpio_state *state = platform_get_drvdata(pdev);
+	pm_runtime_disable(&pdev->dev);
+	pm_runtime_set_suspended(&pdev->dev);
 
 	snd_event_client_deregister(&pdev->dev);
 	audio_notifier_deregister("lpi_tlmm");
@@ -635,9 +666,49 @@ static const struct of_device_id lpi_pinctrl_of_match[] = {
 
 MODULE_DEVICE_TABLE(of, lpi_pinctrl_of_match);
 
+int lpi_pinctrl_runtime_resume(struct device *dev)
+{
+	struct lpi_gpio_state *state = dev_get_drvdata(dev);
+	int ret = 0;
+
+	if (state->lpass_npa_rsc_island == NULL) {
+		dev_dbg(dev, "%s: Invalid lpass npa rsc node\n", __func__);
+		return 0;
+	}
+
+	ret = clk_prepare_enable(state->lpass_npa_rsc_island);
+	if (ret < 0) {
+		dev_err(dev, "%s:lpass npa rsc island enable failed\n",
+			__func__);
+	}
+	pm_runtime_set_autosuspend_delay(dev, LPI_AUTO_SUSPEND_DELAY);
+	return 0;
+}
+
+int lpi_pinctrl_runtime_suspend(struct device *dev)
+{
+	struct lpi_gpio_state *state = dev_get_drvdata(dev);
+
+	if (state->lpass_npa_rsc_island == NULL) {
+		dev_dbg(dev, "%s: Invalid lpass npa rsc node\n", __func__);
+		return 0;
+	}
+	clk_disable_unprepare(state->lpass_npa_rsc_island);
+	return 0;
+}
+
+static const struct dev_pm_ops lpi_pinctrl_dev_pm_ops = {
+	SET_RUNTIME_PM_OPS(
+		lpi_pinctrl_runtime_suspend,
+		lpi_pinctrl_runtime_resume,
+		NULL
+	)
+};
+
 static struct platform_driver lpi_pinctrl_driver = {
 	.driver = {
 		   .name = "qcom-lpi-pinctrl",
+		   .pm = &lpi_pinctrl_dev_pm_ops,
 		   .of_match_table = lpi_pinctrl_of_match,
 	},
 	.probe = lpi_pinctrl_probe,
