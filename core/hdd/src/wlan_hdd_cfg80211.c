@@ -5188,10 +5188,6 @@ nla_put_failure:
 	 (((data_snr_weight) & 0xff) << 8) | \
 	 ((ack_snr_weight) & 0xff))
 
-#define ANT_DIV_PROBE_PERIOD \
-	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_PROBE_PERIOD
-#define ANT_DIV_STAY_PERIOD \
-	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_STAY_PERIOD
 #define ANT_DIV_MGMT_SNR_WEIGHT \
 	QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_MGMT_SNR_WEIGHT
 #define ANT_DIV_DATA_SNR_WEIGHT \
@@ -5228,8 +5224,8 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_PROPAGATION_ABS_DELAY] = {
 		.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_TX_FAIL_COUNT] = {.type = NLA_U32 },
-	[ANT_DIV_PROBE_PERIOD] = {.type = NLA_U32},
-	[ANT_DIV_STAY_PERIOD] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_PROBE_PERIOD] = {.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_STAY_PERIOD] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SNR_DIFF] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_PROBE_DWELL_TIME] = {
 		.type = NLA_U32},
@@ -5686,6 +5682,40 @@ static int hdd_config_mpdu_aggregation(struct hdd_adapter *adapter,
 		hdd_err("failed to set aggr sizes err %d", status);
 
 	return qdf_status_to_os_return(status);
+}
+
+static int hdd_config_ant_div_period(struct hdd_adapter *adapter,
+				     struct nlattr *tb[])
+{
+	struct nlattr *probe_attr =
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_PROBE_PERIOD];
+	struct nlattr *stay_attr =
+		tb[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_STAY_PERIOD];
+	uint32_t probe_period, stay_period, ant_div_usrcfg;
+	int errno;
+
+	/* nothing to do if neither attribute is present */
+	if (!probe_attr && !stay_attr)
+		return 0;
+
+	/* if one is present, both must be present */
+	if (!probe_attr || !stay_attr) {
+		hdd_err("Missing attribute for %s",
+			probe_attr ? "STAY" : "PROBE");
+		return -EINVAL;
+	}
+
+	probe_period = nla_get_u32(probe_attr);
+	stay_period = nla_get_u32(stay_attr);
+	ant_div_usrcfg = ANT_DIV_SET_PERIOD(probe_period, stay_period);
+	hdd_debug("ant div set period: %x", ant_div_usrcfg);
+	errno = wma_cli_set_command(adapter->session_id,
+				    WMI_PDEV_PARAM_ANT_DIV_USRCFG,
+				    ant_div_usrcfg, PDEV_CMD);
+	if (errno)
+		hdd_err("Failed to set ant div period, %d", errno);
+
+	return errno;
 }
 
 static int hdd_config_fine_time_measurement(struct hdd_adapter *adapter,
@@ -6456,6 +6486,7 @@ typedef int (*interdependent_setter_fn)(struct hdd_adapter *adapter,
 static const interdependent_setter_fn interdependent_setters[] = {
 	hdd_config_access_policy,
 	hdd_config_mpdu_aggregation,
+	hdd_config_ant_div_period,
 };
 
 /**
@@ -6544,28 +6575,6 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		errno = ret;
 
 	/* return errno here when all attributes have been refactored */
-
-	if (tb[ANT_DIV_PROBE_PERIOD] ||
-	    tb[ANT_DIV_STAY_PERIOD]) {
-
-		if (!tb[ANT_DIV_PROBE_PERIOD] ||
-		    !tb[ANT_DIV_STAY_PERIOD]) {
-			hdd_err("Both probe and stay period required");
-			return -EINVAL;
-		}
-
-		ant_div_usrcfg = ANT_DIV_SET_PERIOD(
-			nla_get_u32(tb[ANT_DIV_PROBE_PERIOD]),
-			nla_get_u32(tb[ANT_DIV_STAY_PERIOD]));
-		hdd_debug("ant div set period: %x", ant_div_usrcfg);
-		ret_val = wma_cli_set_command((int)adapter->session_id,
-					(int)WMI_PDEV_PARAM_ANT_DIV_USRCFG,
-					ant_div_usrcfg, PDEV_CMD);
-		if (ret_val) {
-			hdd_err("Failed to set ant div period");
-			return ret_val;
-		}
-	}
 
 	if (tb[ANT_DIV_MGMT_SNR_WEIGHT] ||
 	    tb[ANT_DIV_DATA_SNR_WEIGHT] ||
