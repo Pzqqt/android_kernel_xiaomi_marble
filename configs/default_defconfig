@@ -75,6 +75,10 @@ ifeq ($(CONFIG_ARCH_SDX20), y)
 CONFIG_MOBILE_ROUTER := y
 endif
 
+ifeq ($(CONFIG_ARCH_SDXPRAIRIE), y)
+CONFIG_MOBILE_ROUTER := y
+endif
+
 ifeq ($(CONFIG_ARCH_MSM8917), y)
 	ifeq ($(CONFIG_ROME_IF), sdio)
 		CONFIG_WLAN_SYNC_TSF_PLUS := y
