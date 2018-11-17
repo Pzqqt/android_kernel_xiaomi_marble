@@ -2126,15 +2126,18 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
 	struct hdd_ap_ctx *ap_ctx;
+	bool dfs_disable_channel_switch = false;
 
 	if (!hdd_ctx) {
 		hdd_info("Couldn't get hdd_ctx");
 		return true;
 	}
 
-	if (hdd_ctx->config->disableDFSChSwitch) {
+	ucfg_mlme_get_dfs_disable_channel_switch(hdd_ctx->psoc,
+						 &dfs_disable_channel_switch);
+	if (dfs_disable_channel_switch) {
 		hdd_info("skip tx block hdd_ctx=%pK, disableDFSChSwitch=%d",
-			 hdd_ctx, hdd_ctx->config->disableDFSChSwitch);
+			 hdd_ctx, dfs_disable_channel_switch);
 		return true;
 	}
 
@@ -9712,14 +9715,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	ucfg_mlme_get_sap_max_modulated_dtim(hdd_ctx->psoc,
 					     &cds_cfg->sta_maxlimod_dtim);
 
-	/*
-	 * Copy the DFS Phyerr Filtering Offload status.
-	 * This parameter reflects the value of the
-	 * dfs_phyerr_filter_offload flag as set in the ini.
-	 */
-	cds_cfg->dfs_phyerr_filter_offload =
-		hdd_ctx->config->fDfsPhyerrFilterOffload;
-
 	status = ucfg_mlme_get_crash_inject(hdd_ctx->psoc, &crash_inject);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to get crash inject ini config");
@@ -9754,8 +9749,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 						    &value);
 	cds_cfg->ap_maxoffload_reorderbuffs = value;
 
-	cds_cfg->dfs_pri_multiplier =
-		hdd_ctx->config->dfsRadarPriMultiplier;
 	cds_cfg->reorder_offload =
 			cfg_get(hdd_ctx->psoc, CFG_DP_REORDER_OFFLOAD_SUPPORT);
 
@@ -14229,11 +14222,11 @@ QDF_STATUS hdd_update_score_config(
 static int hdd_update_dfs_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
-	struct hdd_config *cfg = hdd_ctx->config;
 	struct dfs_user_config dfs_cfg;
 	QDF_STATUS status;
 
-	dfs_cfg.dfs_is_phyerr_filter_offload = !!cfg->fDfsPhyerrFilterOffload;
+	ucfg_mlme_get_dfs_filter_offload(hdd_ctx->psoc,
+					 &dfs_cfg.dfs_is_phyerr_filter_offload);
 	status = ucfg_dfs_update_config(psoc, &dfs_cfg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed dfs psoc configuration");

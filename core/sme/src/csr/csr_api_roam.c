@@ -2721,9 +2721,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal mac,
 			pParam->sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-		mac->f_prefer_non_dfs_on_radar =
-			pParam->f_prefer_non_dfs_on_radar;
-
 		mac->sme.ps_global_info.ps_enabled =
 			pParam->is_ps_enabled;
 		mac->sme.ps_global_info.auto_bmps_timer_val =
@@ -2888,8 +2885,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal mac, tCsrConfigParam *pParam)
 	pParam->sap_channel_avoidance = mac->sap.sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	pParam->max_intf_count = mac->sme.max_intf_count;
-	pParam->f_prefer_non_dfs_on_radar =
-		mac->f_prefer_non_dfs_on_radar;
 	pParam->dual_mac_feature_disable =
 		mac->dual_mac_feature_disable;
 	pParam->sta_sap_scc_on_dfs_chan =

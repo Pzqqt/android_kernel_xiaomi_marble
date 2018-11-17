@@ -63,7 +63,6 @@ enum active_apf_mode {
  * @sta_maxlimod_dtim: station max listen interval
  * @driver_type: Enumeration of Driver Type whether FTM or Mission mode
  * currently rest of bits are not used
- * @dfs_phyerr_filter_offload: DFS Phyerror Filtering offload status from ini
  * Indicates whether support is enabled or not
  * @ap_disable_intrabss_fwd: pass intra-bss-fwd info to txrx module
  * @ap_maxoffload_peers: max offload peer
@@ -110,7 +109,6 @@ struct cds_config_info {
 	uint16_t max_bssid;
 	uint8_t sta_maxlimod_dtim;
 	enum qdf_driver_type driver_type;
-	uint8_t dfs_phyerr_filter_offload;
 	uint8_t ap_maxoffload_peers;
 	uint8_t ap_maxoffload_reorderbuffs;
 #ifdef FEATURE_WLAN_RA_FILTERING
@@ -118,7 +116,6 @@ struct cds_config_info {
 	bool is_ra_ratelimit_enabled;
 #endif
 	uint8_t reorder_offload;
-	int32_t dfs_pri_multiplier;
 	uint8_t uc_offload_enabled;
 	uint32_t uc_txbuf_count;
 	uint32_t uc_txbuf_size;

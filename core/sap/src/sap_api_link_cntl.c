@@ -419,7 +419,7 @@ wlansap_roam_process_dfs_chansw_update(mac_handle_t mac_handle,
 	uint8_t dfs_beacon_start_req = 0;
 	bool sap_scc_dfs;
 
-	if (sap_ctx->csr_roamProfile.disableDFSChSwitch) {
+	if (mac_ctx->mlme_cfg->dfs_cfg.dfs_disable_channel_switch) {
 		QDF_TRACE(QDF_MODULE_ID_SAP,
 			  QDF_TRACE_LEVEL_ERROR,
 			  FL("sapdfs: DFS channel switch disabled"));
@@ -582,7 +582,7 @@ wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
 	tWLAN_SAPEvent sap_event;
 
 	if (sap_is_dfs_cac_wait_state(sap_ctx)) {
-		if (sap_ctx->csr_roamProfile.disableDFSChSwitch) {
+		if (mac_ctx->mlme_cfg->dfs_cfg.dfs_disable_channel_switch) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				QDF_TRACE_LEVEL_ERROR,
 				"sapdfs: DFS channel switch disabled");

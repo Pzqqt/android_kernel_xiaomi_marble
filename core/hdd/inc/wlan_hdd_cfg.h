@@ -2203,70 +2203,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gDisableDFSChSwitch - Disable channel switch if radar is found
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to disable channel switch if radar is found
- * on that channel.
- * Related: NA.
- *
- * Supported Feature: DFS
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_DISABLE_DFS_CH_SWITCH                 "gDisableDFSChSwitch"
-#define CFG_DISABLE_DFS_CH_SWITCH_MIN             (0)
-#define CFG_DISABLE_DFS_CH_SWITCH_MAX             (1)
-#define CFG_DISABLE_DFS_CH_SWITCH_DEFAULT         (0)
-
-/*
- * <ini>
- * gDisableDfsJapanW53 - Block W53 channels in random channel selection
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to block W53 Japan channel in random channel selection
- * Related: NA.
- *
- * Supported Feature: DFS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_DISABLE_DFS_JAPAN_W53                      "gDisableDfsJapanW53"
-#define CFG_DISABLE_DFS_JAPAN_W53_MIN                  (0)
-#define CFG_DISABLE_DFS_JAPAN_W53_MAX                  (1)
-#define CFG_DISABLE_DFS_JAPAN_W53_DEFAULT              (0)
-
-/*
- * <ini>
- * dfsPhyerrFilterOffload - DFS PHY error filter offload
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable firmware to do DFS PHY error filtering.
- * Related: NA.
- *
- * Supported Feature: DFS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_NAME       "dfsPhyerrFilterOffload"
-#define CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_MIN        (0)
-#define CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_MAX        (1)
-#define CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_DEFAULT    (0)
-
-/*
- * <ini>
  * gReportMaxLinkSpeed - Reporting of max link speed
  * @Min: 0
  * @Max: 2
@@ -2936,34 +2872,6 @@ enum hdd_link_speed_rpt_type {
 
 #endif /* MSM_PLATFORM */
 
-/*
- * <ini>
- * gIgnoreCAC - Used to ignore CAC
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set default CAC
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_IGNORE_CAC_NAME                        "gIgnoreCAC"
-#define CFG_IGNORE_CAC_MIN                         (0)
-#define CFG_IGNORE_CAC_MAX                         (1)
-#define CFG_IGNORE_CAC_DEFAULT                     (0)
-
-#define CFG_DFS_RADAR_PRI_MULTIPLIER_NAME          "gDFSradarMappingPriMultiplier"
-#define CFG_DFS_RADAR_PRI_MULTIPLIER_DEFAULT       (4)
-#define CFG_DFS_RADAR_PRI_MULTIPLIER_MIN           (0)
-#define CFG_DFS_RADAR_PRI_MULTIPLIER_MAX           (10)
-
 #define CFG_ENABLE_SAP_SUSPEND                     "gEnableSapSuspend"
 #define CFG_ENABLE_SAP_SUSPEND_MIN                 (0)
 #define CFG_ENABLE_SAP_SUSPEND_MAX                 (1)
@@ -3100,11 +3008,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_GO_11AC_OVERRIDE_MIN              (0)
 #define CFG_GO_11AC_OVERRIDE_MAX              (1)
 #define CFG_GO_11AC_OVERRIDE_DEFAULT          (1)
-
-#define CFG_ENABLE_NON_DFS_CHAN_ON_RADAR           "gPreferNonDfsChanOnRadar"
-#define CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MIN       (0)
-#define CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MAX       (1)
-#define CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_DEFAULT   (0)
 
 /*
  * set the self gen power value from
@@ -3460,16 +3363,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_MARK_INDOOR_AS_DISABLE_MIN      (0)
 #define CFG_MARK_INDOOR_AS_DISABLE_MAX      (1)
 #define CFG_MARK_INDOOR_AS_DISABLE_DEFAULT  (0)
-
-/*
- * sap tx leakage threshold
- * customer can set this value from 100 to 1000 which means
- * sap tx leakage threshold is -10db to -100db
- */
-#define CFG_SAP_TX_LEAKAGE_THRESHOLD_NAME    "gsap_tx_leakage_threshold"
-#define CFG_SAP_TX_LEAKAGE_THRESHOLD_MIN     (100)
-#define CFG_SAP_TX_LEAKAGE_THRESHOLD_MAX     (1000)
-#define CFG_SAP_TX_LEAKAGE_THRESHOLD_DEFAULT (310)
 
 /*
  * <ini>
@@ -4230,26 +4123,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_PACKET_FILTERS_MIN      (0)
 #define CFG_ENABLE_PACKET_FILTERS_MAX      (63)
 #endif /* WLAN_FEATURE_PACKET_FILTERING */
-
-/*
- * <ini>
- * gDfsBeaconTxEnhanced - beacon tx enhanced
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enhance dfs beacon tx
- *
- * Related: none
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_DFS_BEACON_TX_ENHANCED         "gDfsBeaconTxEnhanced"
-#define CFG_DFS_BEACON_TX_ENHANCED_MIN     (0)
-#define CFG_DFS_BEACON_TX_ENHANCED_MAX     (1)
-#define CFG_DFS_BEACON_TX_ENHANCED_DEFAULT (0)
 
 /*
  * <ini>
@@ -5241,8 +5114,6 @@ struct hdd_config {
 	uint32_t ibssPs1RxChainInAtimEnable;
 	uint32_t IpaConfig;
 	bool IpaClkScalingEnable;
-	uint8_t disableDFSChSwitch;
-	bool fDfsPhyerrFilterOffload;
 	uint8_t gDisableDfsJapanW53;
 	bool gEnableOverLapCh;
 	bool fRegChangeDefCountry;
@@ -5250,11 +5121,7 @@ struct hdd_config {
 
 	uint8_t enableFwModuleLogLevel[FW_MODULE_LOG_LEVEL_STRING_LENGTH];
 
-	uint8_t ignoreCAC;
-
 	bool enable_sap_mandatory_chan_list;
-
-	int32_t dfsRadarPriMultiplier;
 
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
 	uint8_t SapSccChanAvoidance;
@@ -5273,7 +5140,6 @@ struct hdd_config {
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	uint8_t sap_11ac_override;
 	uint8_t go_11ac_override;
-	uint8_t prefer_non_dfs_on_radar;
 	/* parameter for defer timer for enabling TDLS on p2p listen */
 	uint32_t fine_time_meas_cap;
 	uint8_t max_scan_count;
@@ -5367,7 +5233,6 @@ struct hdd_config {
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 	uint8_t packet_filters_bitmap;
 #endif
-	uint8_t dfs_beacon_tx_enhanced;
 	uint32_t btm_offload_config;
 #ifdef WLAN_FEATURE_SAE
 	bool is_sae_enabled;

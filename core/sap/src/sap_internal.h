@@ -388,21 +388,6 @@ bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t mac_handle,
 uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle);
 
 /**
- * sap_dfs_is_w53_invalid() - Check to see if invalid W53 operation requested
- * @mac_handle: Opaque handle to the global MAC context
- * @channel_id: Channel number to be verified
- *
- * This function checks if the passed channel is W53 and, if so, if
- * SAP W53 operation is allowed.
- *
- * Return:
- * * true - operation is invalid because the channel is W53 and W53
- *          operation has been disabled
- * * false - operation is valid
- */
-bool sap_dfs_is_w53_invalid(mac_handle_t mac_handle, uint8_t channel_id);
-
-/**
  * sap_dfs_is_channel_in_preferred_location() - Verify a channel is valid
  *	with respect to indoor/outdoor location setting
  * @mac_handle: Opaque handle to the global MAC context

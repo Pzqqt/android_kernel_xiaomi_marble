@@ -834,7 +834,6 @@ struct mac_context {
 	uint8_t beacon_offload;
 	bool pmf_offload;
 	bool is_fils_roaming_supported;
-	uint8_t f_prefer_non_dfs_on_radar;
 	uint32_t f_sta_miracast_mcc_rest_time_val;
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 	csr_readyToExtWoWCallback readyToExtWoWCallback;
