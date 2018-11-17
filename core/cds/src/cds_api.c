@@ -2343,7 +2343,6 @@ QDF_STATUS cds_flush_logs(uint32_t is_fatal,
 		bool dump_mac_trace,
 		bool recovery_needed)
 {
-	uint32_t ret;
 	QDF_STATUS status;
 
 	struct cds_context *p_cds_context;
@@ -2387,8 +2386,8 @@ QDF_STATUS cds_flush_logs(uint32_t is_fatal,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	ret = sme_send_flush_logs_cmd_to_fw(p_cds_context->mac_context);
-	if (0 != ret) {
+	status = sme_send_flush_logs_cmd_to_fw();
+	if (QDF_IS_STATUS_ERROR(status)) {
 		cds_err("Failed to send flush FW log");
 		cds_init_log_completion();
 		return QDF_STATUS_E_FAILURE;

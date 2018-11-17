@@ -1368,15 +1368,27 @@ QDF_STATUS sme_wifi_start_logger(mac_handle_t mac_handle,
 bool sme_neighbor_middle_of_roaming(mac_handle_t mac_handle,
 				    uint8_t sessionId);
 
-/*
+/**
  * sme_is_any_session_in_middle_of_roaming() - check if roaming is in progress
  * @mac_handle: MAC Handle
  *
  * Checks if any SME session is in middle of roaming
  *
- * Return : true if roaming is in progress else false
+ * Return: true if roaming is in progress else false
  */
 bool sme_is_any_session_in_middle_of_roaming(mac_handle_t mac_handle);
+
+/**
+ * sme_send_flush_logs_cmd_to_fw() - Initiate command to FW to flush logs
+ *
+ * This function will initiate a command to firmware to flush their logs.
+ * This should normally be done in response to an anomaly detected by the
+ * host.
+ *
+ * Return: QDF_STATUS_SUCCESS if the command was sent, otherwise an
+ *         appropriate QDF_STATUS error
+ */
+QDF_STATUS sme_send_flush_logs_cmd_to_fw(void);
 
 /**
  * sme_enable_uapsd_for_ac() - enable uapsd for access category request to WMA

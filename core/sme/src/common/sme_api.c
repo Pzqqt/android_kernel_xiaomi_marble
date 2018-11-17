@@ -12759,14 +12759,13 @@ bool sme_is_any_session_in_middle_of_roaming(mac_handle_t mac_handle)
 
 /*
  * sme_send_flush_logs_cmd_to_fw() - Flush FW logs
- * @mac: MAC handle
  *
  * This function is used to send the command that will
  * be used to flush the logs in the firmware
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_send_flush_logs_cmd_to_fw(tpAniSirGlobal mac)
+QDF_STATUS sme_send_flush_logs_cmd_to_fw(void)
 {
 	QDF_STATUS status;
 	struct scheduler_msg message = {0};
