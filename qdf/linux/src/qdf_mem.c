@@ -30,6 +30,7 @@
 #include <qdf_trace.h>
 #include "qdf_atomic.h"
 #include "qdf_str.h"
+#include "qdf_talloc.h"
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 #include <linux/string.h>
@@ -272,12 +273,12 @@ static struct __qdf_mem_stat {
 	qdf_atomic_t skb;
 } qdf_mem_stat;
 
-static inline void qdf_mem_kmalloc_inc(qdf_size_t size)
+void qdf_mem_kmalloc_inc(qdf_size_t size)
 {
 	qdf_atomic_add(size, &qdf_mem_stat.kmalloc);
 }
 
-static inline void qdf_mem_dma_inc(qdf_size_t size)
+static void qdf_mem_dma_inc(qdf_size_t size)
 {
 	qdf_atomic_add(size, &qdf_mem_stat.dma);
 }
@@ -287,7 +288,7 @@ void qdf_mem_skb_inc(qdf_size_t size)
 	qdf_atomic_add(size, &qdf_mem_stat.skb);
 }
 
-static inline void qdf_mem_kmalloc_dec(qdf_size_t size)
+void qdf_mem_kmalloc_dec(qdf_size_t size)
 {
 	qdf_atomic_sub(size, &qdf_mem_stat.kmalloc);
 }
@@ -648,11 +649,8 @@ static QDF_STATUS qdf_mem_debugfs_init(void)
 
 #else /* WLAN_DEBUGFS */
 
-static inline void qdf_mem_kmalloc_inc(qdf_size_t size) {}
 static inline void qdf_mem_dma_inc(qdf_size_t size) {}
-static inline void qdf_mem_kmalloc_dec(qdf_size_t size) {}
 static inline void qdf_mem_dma_dec(qdf_size_t size) {}
-
 
 static QDF_STATUS qdf_mem_debugfs_init(void)
 {
@@ -1092,6 +1090,8 @@ void qdf_mem_free_debug(void *ptr, const char *file, uint32_t line)
 
 	if (qdf_unlikely((qdf_size_t)ptr <= sizeof(*header)))
 		panic("Failed to free invalid memory location %pK", ptr);
+
+	qdf_talloc_assert_no_children_fl(ptr, file, line);
 
 	qdf_spin_lock_irqsave(&qdf_mem_list_lock);
 	header = qdf_mem_get_header(ptr);
@@ -1775,6 +1775,8 @@ void qdf_mem_free_consistent_debug(qdf_device_t osdev, void *dev,
 	/* freeing a null pointer is valid */
 	if (qdf_unlikely(!vaddr))
 		return;
+
+	qdf_talloc_assert_no_children_fl(vaddr, file, line);
 
 	qdf_spin_lock_irqsave(&qdf_mem_dma_list_lock);
 	/* For DMA buffers we only add trailers, this function will retrieve

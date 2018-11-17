@@ -465,6 +465,32 @@ void qdf_mem_multi_pages_free(qdf_device_t osdev,
 int qdf_mem_multi_page_link(qdf_device_t osdev,
 		struct qdf_mem_multi_page_t *pages,
 		uint32_t elem_size, uint32_t elem_count, uint8_t cacheable);
+
+#ifdef WLAN_DEBUGFS
+
+/**
+ * qdf_mem_kmalloc_inc() - increment kmalloc allocated bytes count
+ * @size: number of bytes to increment by
+ *
+ * Return: None
+ */
+void qdf_mem_kmalloc_inc(qdf_size_t size);
+
+/**
+ * qdf_mem_kmalloc_dec() - decrement kmalloc allocated bytes count
+ * @size: number of bytes to decrement by
+ *
+ * Return: None
+ */
+void qdf_mem_kmalloc_dec(qdf_size_t size);
+
+#else
+
+static inline void qdf_mem_kmalloc_inc(qdf_size_t size) { }
+static inline void qdf_mem_kmalloc_dec(qdf_size_t size) { }
+
+#endif /* WLAN_DEBUGFS */
+
 /**
  * qdf_mem_skb_inc() - increment total skb allocation size
  * @size: size to be added
