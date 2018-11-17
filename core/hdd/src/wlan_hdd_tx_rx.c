@@ -1173,24 +1173,16 @@ netdev_tx_t hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	return ret;
 }
 
-/**
- * hdd_get_peer_sta_id() - Get the StationID using the Peer Mac address
- * @sta_ctx: pointer to HDD Station Context
- * @pMacAddress: pointer to Peer Mac address
- * @staID: pointer to returned Station Index
- *
- * Return: QDF_STATUS_SUCCESS/QDF_STATUS_E_FAILURE
- */
-
 QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
-			       struct qdf_mac_addr *pMacAddress, uint8_t *staId)
+			       struct qdf_mac_addr *mac_address,
+			       uint8_t *sta_id)
 {
 	uint8_t idx;
 
 	for (idx = 0; idx < MAX_PEERS; idx++) {
 		if (!qdf_mem_cmp(&sta_ctx->conn_info.peerMacAddress[idx],
-				    pMacAddress, QDF_MAC_ADDR_SIZE)) {
-			*staId = sta_ctx->conn_info.staId[idx];
+				 mac_address, QDF_MAC_ADDR_SIZE)) {
+			*sta_id = sta_ctx->conn_info.staId[idx];
 			return QDF_STATUS_SUCCESS;
 		}
 	}
