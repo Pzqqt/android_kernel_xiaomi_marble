@@ -1745,9 +1745,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case WMA_ADD_TS_RSP:
 		lim_process_hal_add_ts_rsp(mac_ctx, msg);
 		break;
-	case SIR_LIM_DEL_TS_IND:
-		lim_process_del_ts_ind(mac_ctx, msg);
-		break;
 	case SIR_LIM_BEACON_GEN_IND:
 		if (mac_ctx->lim.gLimSystemRole != eLIM_AP_ROLE)
 			sch_process_pre_beacon_ind(mac_ctx,

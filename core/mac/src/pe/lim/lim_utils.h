@@ -432,12 +432,6 @@ void lim_util_count_sta_del(tpAniSirGlobal pMac, tpDphHashNode pSta,
 uint8_t lim_get_ht_capability(tpAniSirGlobal, uint32_t, tpPESession);
 QDF_STATUS lim_tx_complete(void *context, qdf_nbuf_t buf, bool free);
 
-/**
- * This function will be registered with HAL for callback when TSPEC inactivity
- * timer fires.
- */
-
-void lim_process_del_ts_ind(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
 QDF_STATUS lim_validate_delts_req(tpAniSirGlobal pMac,
 		tpSirDeltsReq pDeltsReq,
 		tSirMacAddr peerMacAddr,
