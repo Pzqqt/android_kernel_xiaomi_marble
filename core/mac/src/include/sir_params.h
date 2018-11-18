@@ -706,8 +706,7 @@ struct sir_mgmt_msg {
 /* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 5) */
 /* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 6) */
 /* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 7) */
-/* Message from ISR upon SP's Invalid key ID interrupt */
-#define SIR_LIM_KEY_ID_INTERRUPT_MSG       (SIR_LIM_ITC_MSG_TYPES_BEGIN + 8)
+/* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 8) */
 /* Message from ISR upon SP's Replay threshold reached interrupt */
 #define SIR_LIM_REPLAY_THRES_INTERRUPT_MSG (SIR_LIM_ITC_MSG_TYPES_BEGIN + 9)
 /* Message from HDD after the TD dummy packet is cleaned up */
