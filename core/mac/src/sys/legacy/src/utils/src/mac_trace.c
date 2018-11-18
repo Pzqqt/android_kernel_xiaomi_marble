@@ -671,7 +671,6 @@ uint8_t *mac_trace_get_wma_msg_string(uint16_t wma_msg)
 uint8_t *mac_trace_get_lim_msg_string(uint16_t lim_msg)
 {
 	switch (lim_msg) {
-		CASE_RETURN_STRING(SIR_LIM_RETRY_INTERRUPT_MSG);
 		CASE_RETURN_STRING(SIR_BB_XPORT_MGMT_MSG);
 		CASE_RETURN_STRING(SIR_LIM_INV_KEY_INTERRUPT_MSG);
 		CASE_RETURN_STRING(SIR_LIM_KEY_ID_INTERRUPT_MSG);

@@ -697,15 +697,14 @@ struct sir_mgmt_msg {
 /* LIM message types */
 #define SIR_LIM_MSG_TYPES_BEGIN        (SIR_LIM_MODULE_ID << 8)
 #define SIR_LIM_ITC_MSG_TYPES_BEGIN    (SIR_LIM_MSG_TYPES_BEGIN+0xB0)
-
-/* Messages to/from HAL */
-/* Removed as part of moving HAL down to FW */
-
-/* Message from ISR upon TFP retry interrupt */
-#define SIR_LIM_RETRY_INTERRUPT_MSG        (SIR_LIM_ITC_MSG_TYPES_BEGIN + 3)
+/* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0) */
+/* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 1) */
+/* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 2) */
+/* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 3) */
 /* Message from BB Transport */
-#define SIR_BB_XPORT_MGMT_MSG              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 4)
-/* UNUSED                                  SIR_LIM_ITC_MSG_TYPES_BEGIN + 6 */
+#define SIR_BB_XPORT_MGMT_MSG          (SIR_LIM_ITC_MSG_TYPES_BEGIN + 4)
+/* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 5) */
+/* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 6) */
 /* Message from ISR upon SP's Invalid session key interrupt */
 #define SIR_LIM_INV_KEY_INTERRUPT_MSG      (SIR_LIM_ITC_MSG_TYPES_BEGIN + 7)
 /* Message from ISR upon SP's Invalid key ID interrupt */
