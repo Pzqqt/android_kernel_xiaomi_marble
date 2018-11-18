@@ -705,8 +705,7 @@ struct sir_mgmt_msg {
 #define SIR_BB_XPORT_MGMT_MSG          (SIR_LIM_ITC_MSG_TYPES_BEGIN + 4)
 /* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 5) */
 /* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 6) */
-/* Message from ISR upon SP's Invalid session key interrupt */
-#define SIR_LIM_INV_KEY_INTERRUPT_MSG      (SIR_LIM_ITC_MSG_TYPES_BEGIN + 7)
+/* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 7) */
 /* Message from ISR upon SP's Invalid key ID interrupt */
 #define SIR_LIM_KEY_ID_INTERRUPT_MSG       (SIR_LIM_ITC_MSG_TYPES_BEGIN + 8)
 /* Message from ISR upon SP's Replay threshold reached interrupt */

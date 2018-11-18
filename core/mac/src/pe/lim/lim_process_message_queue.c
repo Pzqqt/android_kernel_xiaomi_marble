@@ -1797,9 +1797,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		/* Does not receive CNF or dummy packet */
 		lim_handle_cnf_wait_timeout(mac_ctx, (uint16_t) msg->bodyval);
 		break;
-	case SIR_LIM_INV_KEY_INTERRUPT_MSG:
-		/* Message from ISR upon SP's Invalid session key interrupt */
-		break;
 	case SIR_LIM_KEY_ID_INTERRUPT_MSG:
 		/* Message from ISR upon SP's Invalid key ID interrupt */
 		break;
