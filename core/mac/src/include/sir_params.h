@@ -710,14 +710,15 @@ struct sir_mgmt_msg {
 /* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xB) */
 /* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xC) */
 /* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xD) */
-/* Message from Hal to send out a DEL-TS indication */
-#define SIR_LIM_DEL_TS_IND                  (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xE)
+/* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xE) */
+/* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xF) */
+/* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0x10) */
 /* Indication from HAL to delete Station context */
-#define SIR_LIM_DELETE_STA_CONTEXT_IND      (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0x11)
+#define SIR_LIM_DELETE_STA_CONTEXT_IND (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0x11)
 /* Indication from HAL to delete BA */
-#define SIR_LIM_UPDATE_BEACON               (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0x13)
+#define SIR_LIM_UPDATE_BEACON          (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0x13)
 /* Indication from HAL to handle RX invalid peer */
-#define SIR_LIM_RX_INVALID_PEER            (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0x15)
+#define SIR_LIM_RX_INVALID_PEER        (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0x15)
 
 /* LIM Timeout messages */
 #define SIR_LIM_TIMEOUT_MSG_START      ((SIR_LIM_MODULE_ID << 8) + 0xD0)
