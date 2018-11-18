@@ -4147,44 +4147,6 @@ void lim_update_sta_run_time_ht_info(tpAniSirGlobal pMac,
 
 } /* End lim_update_sta_run_time_ht_info. */
 
-/** -------------------------------------------------------------
-   \fn lim_process_hal_ind_messages
-   \brief callback function for HAL indication
-   \param   tpAniSirGlobal pMac
-   \param    uint32_t mesgId
-   \param    void *mesgParam
-   \return tSirRetStatu - status
-   -------------------------------------------------------------*/
-
-QDF_STATUS lim_process_hal_ind_messages(tpAniSirGlobal pMac, uint32_t msgId,
-					   void *msgParam)
-{
-	/* its PE's responsibility to free msgparam when its done extracting the message parameters. */
-	struct scheduler_msg msg = {0};
-
-	switch (msgId) {
-	case SIR_LIM_DEL_TS_IND:
-	case SIR_LIM_DELETE_STA_CONTEXT_IND:
-	case SIR_LIM_BEACON_GEN_IND:
-		msg.type = (uint16_t) msgId;
-		msg.bodyptr = msgParam;
-		msg.bodyval = 0;
-		break;
-
-	default:
-		qdf_mem_free(msgParam);
-		pe_err("invalid message id: %d received", msgId);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (lim_post_msg_api(pMac, &msg) != QDF_STATUS_SUCCESS) {
-		qdf_mem_free(msgParam);
-		pe_err("lim_post_msg_api failed for msgid: %d", msg.type);
-		return QDF_STATUS_E_FAILURE;
-	}
-	return QDF_STATUS_SUCCESS;
-}
-
 /**
  * lim_validate_delts_req() - This function validates DelTs req
  * @mac_ctx: pointer to Global Mac structure
@@ -4312,36 +4274,6 @@ lim_validate_delts_req(tpAniSirGlobal mac_ctx, tpSirDeltsReq delts_req,
 		}
 	}
 	return QDF_STATUS_SUCCESS;
-}
-
-/** -------------------------------------------------------------
-   \fn lim_register_hal_ind_call_back
-   \brief registers callback function to HAL for any indication.
-   \param   tpAniSirGlobal pMac
-   \return none.
-   -------------------------------------------------------------*/
-void lim_register_hal_ind_call_back(tpAniSirGlobal pMac)
-{
-	struct scheduler_msg msg = {0};
-	tpHalIndCB pHalCB;
-
-	pHalCB = qdf_mem_malloc(sizeof(tHalIndCB));
-	if (!pHalCB)
-		return;
-
-	pHalCB->pHalIndCB = lim_process_hal_ind_messages;
-
-	msg.type = WMA_REGISTER_PE_CALLBACK;
-	msg.bodyptr = pHalCB;
-	msg.bodyval = 0;
-
-	MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msg.type));
-	if (QDF_STATUS_SUCCESS != wma_post_ctrl_msg(pMac, &msg)) {
-		qdf_mem_free(pHalCB);
-		pe_err("wma_post_ctrl_msg() failed");
-	}
-
-	return;
 }
 
 /**

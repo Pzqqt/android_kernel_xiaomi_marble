@@ -438,15 +438,11 @@ QDF_STATUS lim_tx_complete(void *context, qdf_nbuf_t buf, bool free);
  */
 
 void lim_process_del_ts_ind(tpAniSirGlobal pMac, struct scheduler_msg *limMsg);
-QDF_STATUS lim_process_hal_ind_messages(tpAniSirGlobal pMac, uint32_t mesgId,
-		void *mesgParam);
 QDF_STATUS lim_validate_delts_req(tpAniSirGlobal pMac,
 		tpSirDeltsReq pDeltsReq,
 		tSirMacAddr peerMacAddr,
 		tpPESession psessionEntry);
 
-/* callback function registration to HAL for any indication. */
-void lim_register_hal_ind_call_back(tpAniSirGlobal pMac);
 void lim_pkt_free(tpAniSirGlobal pMac,
 		eFrameType frmType, uint8_t *pBD, void *body);
 

@@ -917,8 +917,7 @@ QDF_STATUS pe_start(tpAniSirGlobal pMac)
 		lim_cleanup_mlm(pMac);
 		return QDF_STATUS_E_FAILURE;
 	}
-	/* Initialize the configurations needed by PE */
-	lim_register_hal_ind_call_back(pMac);
+
 	return status;
 }
 

@@ -1096,14 +1096,6 @@ typedef struct sUapsdParams {
 } tUapsdParams, *tpUapsdParams;
 
 /**
- * struct tHalIndCB - hal message indication callback
- * @pHalIndCB: hal message indication callabck
- */
-typedef struct tHalIndCB {
-	tHalMsgCallback pHalIndCB;
-} tHalIndCB, *tpHalIndCB;
-
-/**
  * struct tMaxTxPowerParams - Max Tx Power parameters
  * @bssId: BSSID is needed to identify which session issued this request
  * @selfStaMacAddr: self mac address
