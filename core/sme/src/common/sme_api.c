@@ -4806,6 +4806,17 @@ static uint8_t sme_get_nss_chain_shift(enum QDF_OPMODE device_mode)
 }
 
 static void
+sme_check_nss_chain_ini_param(struct wlan_mlme_nss_chains *vdev_ini_cfg,
+			      uint8_t rf_chains_supported,
+			      enum nss_chains_band_info band)
+{
+	vdev_ini_cfg->rx_nss[band] = QDF_MIN(vdev_ini_cfg->rx_nss[band],
+					     rf_chains_supported);
+	vdev_ini_cfg->tx_nss[band] = QDF_MIN(vdev_ini_cfg->tx_nss[band],
+					     rf_chains_supported);
+}
+
+static void
 sme_fill_nss_chain_params(struct mac_context *mac_ctx,
 			  struct wlan_mlme_nss_chains *vdev_ini_cfg,
 			  enum QDF_OPMODE device_mode,
@@ -4864,6 +4875,14 @@ sme_fill_nss_chain_params(struct mac_context *mac_ctx,
 
 	vdev_ini_cfg->disable_tx_mrc[band] =
 				nss_chains_ini_cfg->disable_tx_mrc[band];
+	/*
+	 * Check whether the rx/tx nss is greater than the number of rf chains
+	 * supported by FW, if so downgrade the nss to the number of chains
+	 * supported, as higher nss cannot be supported with less chains.
+	 */
+	sme_check_nss_chain_ini_param(vdev_ini_cfg, rf_chains_supported,
+				      band);
+
 }
 
 void sme_populate_nss_chain_params(mac_handle_t mac_handle,
