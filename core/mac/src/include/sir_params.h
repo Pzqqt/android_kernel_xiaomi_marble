@@ -710,10 +710,8 @@ struct sir_mgmt_msg {
 /* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 9) */
 /* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xA) */
 /* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xB) */
-/* Message from ISR upon Radar Detection */
-#define SIR_LIM_RADAR_DETECT_IND           (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xC)
-/* Message id 0xD available */
-
+/* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xC) */
+/* UNUSED                              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xD) */
 /* Message from Hal to send out a DEL-TS indication */
 #define SIR_LIM_DEL_TS_IND                  (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xE)
 /* Indication from HAL to delete Station context */
