@@ -1797,9 +1797,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		/* Does not receive CNF or dummy packet */
 		lim_handle_cnf_wait_timeout(mac_ctx, (uint16_t) msg->bodyval);
 		break;
-	case SIR_LIM_REPLAY_THRES_INTERRUPT_MSG:
-		/* Message from ISR upon SP's Replay threshold interrupt */
-		break;
 	case SIR_LIM_CHANNEL_SWITCH_TIMEOUT:
 		lim_process_channel_switch_timeout(mac_ctx);
 		break;
