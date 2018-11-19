@@ -55,6 +55,7 @@
 #include "cfg_mlme_btm.h"
 #include "cfg_mlme_fe_wlm.h"
 #include "cfg_mlme_fe_rrm.h"
+#include "cfg_mlme_mwc.h"
 
 /* Please Maintain Alphabetic Order here */
 #define CFG_MLME_ALL \
@@ -73,13 +74,13 @@
 	CFG_MBO_ALL \
 	CFG_MLME_POWER_ALL \
 	CFG_MLME_PRODUCT_DETAILS_ALL \
+	CFG_MWC_ALL \
 	CFG_NSS_CHAINS_ALL \
 	CFG_OBSS_HT40_ALL \
 	CFG_OCE_ALL \
 	CFG_POWERSAVE_ALL \
 	CFG_QOS_ALL \
 	CFG_RATES_ALL \
-	CFG_WMM_PARAMS_ALL\
 	CFG_SAP_ALL \
 	CFG_SAP_PROTECTION_ALL \
 	CFG_SCORING_ALL \
@@ -90,6 +91,7 @@
 	CFG_VHT_CAPS_ALL \
 	CFG_WEP_PARAMS_ALL \
 	CFG_WIFI_POS_ALL \
+	CFG_WMM_PARAMS_ALL\
 	CFG_WPS_ALL
 
 #endif /* __CFG_MLME_H */

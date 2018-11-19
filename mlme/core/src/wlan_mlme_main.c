@@ -1920,6 +1920,22 @@ static void mlme_init_powersave_params(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_DTIM_SELECTION_DIVERSITY);
 }
 
+#ifdef MWS_COEX
+static void mlme_init_mwc_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_mwc *mwc)
+{
+	mwc->mws_coex_4g_quick_tdm =
+		cfg_get(psoc, CFG_MWS_COEX_4G_QUICK_FTDM);
+	mwc->mws_coex_5g_nr_pwr_limit =
+		cfg_get(psoc, CFG_MWS_COEX_5G_NR_PWR_LIMIT);
+}
+#else
+static void mlme_init_mwc_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_mwc *mwc)
+{
+}
+#endif
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -1966,6 +1982,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_btm_cfg(&mlme_cfg->btm);
 	mlme_init_fe_wlm_in_cfg(psoc, &mlme_cfg->wlm_config);
 	mlme_init_fe_rrm_in_cfg(psoc, &mlme_cfg->rrm_config);
+	mlme_init_mwc_cfg(psoc, &mlme_cfg->mwc);
 
 	return status;
 }
