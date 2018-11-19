@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2231,6 +2231,7 @@ lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 	uint16_t ft_ies_length = 0;
 	bool challenge_req = false;
 	enum rateid min_rid = RATEID_DEFAULT;
+	uint16_t ch_freq_tx_frame = 0;
 
 	if (NULL == session) {
 		pe_err("Error: psession Entry is NULL");
@@ -2510,12 +2511,18 @@ alloc_packet:
 	min_rid = lim_get_min_session_txrate(session);
 	lim_diag_mgmt_tx_event_report(mac_ctx, mac_hdr,
 				      session, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
+
+	if (session->ftPEContext.pFTPreAuthReq != NULL)
+		ch_freq_tx_frame = cds_chan_to_freq(
+			session->ftPEContext.pFTPreAuthReq->preAuthchannelNum);
+
 	qdf_status = wma_tx_frameWithTxComplete(mac_ctx, packet,
 				 (uint16_t)frame_len,
 				 TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS,
 				 7, lim_tx_complete, frame,
 				 lim_auth_tx_complete_cnf,
-				 tx_flag, sme_sessionid, false, 0, min_rid);
+				 tx_flag, sme_sessionid, false,
+				 ch_freq_tx_frame, min_rid);
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 		session->peSessionId, qdf_status));
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
