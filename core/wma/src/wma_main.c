@@ -8516,10 +8516,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	case WDA_APF_GET_CAPABILITIES_REQ:
 		wma_get_apf_capabilities(wma_handle);
 		break;
-	case WDA_APF_SET_INSTRUCTIONS_REQ:
-		wma_set_apf_instructions(wma_handle, msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
 	case SIR_HAL_POWER_DBG_CMD:
 		wma_process_hal_pwr_dbg_cmd(wma_handle,
 					    msg->bodyptr);

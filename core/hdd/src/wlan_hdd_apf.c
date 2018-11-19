@@ -221,7 +221,7 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 				     struct nlattr **tb,
 				     struct hdd_adapter *adapter)
 {
-	struct sir_apf_set_offload *apf_set_offload;
+	struct sir_apf_set_offload apf_set_offload = {0};
 	QDF_STATUS status;
 	int prog_len;
 	int ret = 0;
@@ -234,19 +234,15 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 		return -ENOTSUPP;
 	}
 
-	apf_set_offload = qdf_mem_malloc(sizeof(*apf_set_offload));
-	if (!apf_set_offload)
-		return -ENOMEM;
-
 	/* Parse and fetch apf packet size */
 	if (!tb[APF_PACKET_SIZE]) {
 		hdd_err("attr apf packet size failed");
 		ret = -EINVAL;
 		goto fail;
 	}
-	apf_set_offload->total_length = nla_get_u32(tb[APF_PACKET_SIZE]);
+	apf_set_offload.total_length = nla_get_u32(tb[APF_PACKET_SIZE]);
 
-	if (!apf_set_offload->total_length) {
+	if (!apf_set_offload.total_length) {
 		hdd_debug("APF reset packet filter received");
 		goto post_sme;
 	}
@@ -259,20 +255,20 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 	}
 
 	prog_len = nla_len(tb[APF_PROGRAM]);
-	apf_set_offload->program = qdf_mem_malloc(sizeof(uint8_t) * prog_len);
+	apf_set_offload.program = qdf_mem_malloc(sizeof(uint8_t) * prog_len);
 
-	if (!apf_set_offload->program) {
+	if (!apf_set_offload.program) {
 		ret = -ENOMEM;
 		goto fail;
 	}
 
-	apf_set_offload->current_length = prog_len;
-	nla_memcpy(apf_set_offload->program, tb[APF_PROGRAM], prog_len);
-	apf_set_offload->session_id = adapter->session_id;
+	apf_set_offload.current_length = prog_len;
+	nla_memcpy(apf_set_offload.program, tb[APF_PROGRAM], prog_len);
+	apf_set_offload.session_id = adapter->session_id;
 
 	hdd_debug("APF set instructions");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
-			   apf_set_offload->program, prog_len);
+			   apf_set_offload.program, prog_len);
 
 	/* Parse and fetch filter Id */
 	if (!tb[APF_FILTER_ID]) {
@@ -280,7 +276,7 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 		ret = -EINVAL;
 		goto fail;
 	}
-	apf_set_offload->filter_id = nla_get_u32(tb[APF_FILTER_ID]);
+	apf_set_offload.filter_id = nla_get_u32(tb[APF_FILTER_ID]);
 
 	/* Parse and fetch current offset */
 	if (!tb[APF_CURRENT_OFFSET]) {
@@ -288,16 +284,17 @@ static int hdd_set_reset_apf_offload(struct hdd_context *hdd_ctx,
 		ret = -EINVAL;
 		goto fail;
 	}
-	apf_set_offload->current_offset = nla_get_u32(tb[APF_CURRENT_OFFSET]);
+	apf_set_offload.current_offset = nla_get_u32(tb[APF_CURRENT_OFFSET]);
 
 post_sme:
 	hdd_debug("Posting APF SET/RESET to SME, session_id: %d APF Version: %d filter ID: %d total_length: %d current_length: %d current offset: %d",
-		  apf_set_offload->session_id, apf_set_offload->version,
-		  apf_set_offload->filter_id, apf_set_offload->total_length,
-		  apf_set_offload->current_length,
-		  apf_set_offload->current_offset);
+		  apf_set_offload.session_id, apf_set_offload.version,
+		  apf_set_offload.filter_id, apf_set_offload.total_length,
+		  apf_set_offload.current_length,
+		  apf_set_offload.current_offset);
 
-	status = sme_set_apf_instructions(hdd_ctx->mac_handle, apf_set_offload);
+	status = sme_set_apf_instructions(hdd_ctx->mac_handle,
+					  &apf_set_offload);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_set_apf_instructions failed(err=%d)", status);
 		ret = -EINVAL;
@@ -306,9 +303,8 @@ post_sme:
 	hdd_exit();
 
 fail:
-	if (apf_set_offload->current_length)
-		qdf_mem_free(apf_set_offload->program);
-	qdf_mem_free(apf_set_offload);
+	if (apf_set_offload.current_length)
+		qdf_mem_free(apf_set_offload.program);
 
 	if (!ret)
 		hdd_ctx->apf_enabled_v2 = true;
