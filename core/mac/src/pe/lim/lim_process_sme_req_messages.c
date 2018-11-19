@@ -491,7 +491,7 @@ static bool __lim_process_sme_sys_ready_ind(tpAniSirGlobal mac, uint32_t *pMsgBu
  * Return: None.
  */
 static void
-lim_configure_ap_start_bss_session(tpAniSirGlobal mac_ctx, tpPESession session,
+lim_configure_ap_start_bss_session(tpAniSirGlobal mac_ctx, struct pe_session *session,
 			tpSirSmeStartBssReq sme_start_bss_req)
 {
 	session->limSystemRole = eLIM_AP_ROLE;
@@ -537,7 +537,7 @@ lim_configure_ap_start_bss_session(tpAniSirGlobal mac_ctx, tpPESession session,
  */
 #ifdef CONFIG_VDEV_SM
 static QDF_STATUS
-lim_send_start_vdev_req(tpPESession session, tLimMlmStartReq *mlm_start_req)
+lim_send_start_vdev_req(struct pe_session *session, tLimMlmStartReq *mlm_start_req)
 {
 	return wlan_vdev_mlme_sm_deliver_evt(session->vdev,
 					     WLAN_VDEV_SM_EV_START,
@@ -546,7 +546,7 @@ lim_send_start_vdev_req(tpPESession session, tLimMlmStartReq *mlm_start_req)
 }
 #else
 static QDF_STATUS
-lim_send_start_vdev_req(tpPESession session, tLimMlmStartReq *mlm_start_req)
+lim_send_start_vdev_req(struct pe_session *session, tLimMlmStartReq *mlm_start_req)
 {
 	lim_process_mlm_start_req(session->mac_ctx, mlm_start_req);
 
@@ -577,7 +577,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	/* Flag Used in case of IBSS to Auto generate BSSID. */
 	uint32_t auto_gen_bssid = false;
 	uint8_t session_id;
-	tpPESession session = NULL;
+	struct pe_session *session = NULL;
 	uint8_t sme_session_id = 0xFF;
 	uint16_t sme_transaction_id = 0xFF;
 	uint32_t chanwidth;
@@ -1165,7 +1165,7 @@ static void __lim_process_clear_dfs_channel_list(tpAniSirGlobal mac,
  *
  * Return: None
  */
-static void lim_update_sae_config(tpPESession session,
+static void lim_update_sae_config(struct pe_session *session,
 		tpSirSmeJoinReq sme_join_req)
 {
 	session->sae_pmk_cached = sme_join_req->sae_pmk_cached;
@@ -1175,7 +1175,7 @@ static void lim_update_sae_config(tpPESession session,
 		MAC_ADDR_ARRAY(sme_join_req->bssDescription.bssId));
 }
 #else
-static inline void lim_update_sae_config(tpPESession session,
+static inline void lim_update_sae_config(struct pe_session *session,
 		tpSirSmeJoinReq sme_join_req)
 {}
 #endif
@@ -1189,7 +1189,7 @@ static inline void lim_update_sae_config(tpPESession session,
  */
 
 #ifdef CONFIG_VDEV_SM
-static QDF_STATUS lim_send_join_req(tpPESession session,
+static QDF_STATUS lim_send_join_req(struct pe_session *session,
 				    tLimMlmJoinReq *mlm_join_req)
 {
 	QDF_STATUS status;
@@ -1204,7 +1204,7 @@ static QDF_STATUS lim_send_join_req(tpPESession session,
 					     mlm_join_req);
 }
 #else
-static QDF_STATUS lim_send_join_req(tpPESession session,
+static QDF_STATUS lim_send_join_req(struct pe_session *session,
 				    tLimMlmJoinReq *mlm_join_req)
 {
 	lim_process_mlm_join_req(session->mac_ctx, mlm_join_req);
@@ -1222,7 +1222,7 @@ static QDF_STATUS lim_send_join_req(tpPESession session,
  */
 
 #ifdef CONFIG_VDEV_SM
-static QDF_STATUS lim_send_reassoc_req(tpPESession session,
+static QDF_STATUS lim_send_reassoc_req(struct pe_session *session,
 				       tLimMlmReassocReq *reassoc_req)
 {
 	QDF_STATUS status;
@@ -1237,7 +1237,7 @@ static QDF_STATUS lim_send_reassoc_req(tpPESession session,
 					     reassoc_req);
 }
 #else
-static QDF_STATUS lim_send_reassoc_req(tpPESession session,
+static QDF_STATUS lim_send_reassoc_req(struct pe_session *session,
 				       tLimMlmReassocReq *reassoc_req)
 {
 	lim_process_mlm_reassoc_req(session->mac_ctx, reassoc_req);
@@ -1255,7 +1255,7 @@ static QDF_STATUS lim_send_reassoc_req(tpPESession session,
  */
 
 #ifdef CONFIG_VDEV_SM
-static QDF_STATUS lim_send_ft_reassoc_req(tpPESession session,
+static QDF_STATUS lim_send_ft_reassoc_req(struct pe_session *session,
 					  tLimMlmReassocReq *reassoc_req)
 {
 	QDF_STATUS status;
@@ -1270,7 +1270,7 @@ static QDF_STATUS lim_send_ft_reassoc_req(tpPESession session,
 					     reassoc_req);
 }
 #else
-static QDF_STATUS lim_send_ft_reassoc_req(tpPESession session,
+static QDF_STATUS lim_send_ft_reassoc_req(struct pe_session *session,
 					  tLimMlmReassocReq *reassoc_req)
 {
 	lim_process_mlm_ft_reassoc_req(session->mac_ctx, reassoc_req);
@@ -1298,7 +1298,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	uint32_t val = 0;
 	uint16_t n_size;
 	uint8_t session_id;
-	tpPESession session = NULL;
+	struct pe_session *session = NULL;
 	uint8_t sme_session_id = 0;
 	uint16_t sme_transaction_id = 0;
 	int8_t local_power_constraint = 0, reg_max = 0;
@@ -1827,7 +1827,7 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 	tpSirSmeJoinReq reassoc_req = NULL;
 	tLimMlmReassocReq *mlm_reassoc_req;
 	tSirResultCodes ret_code = eSIR_SME_SUCCESS;
-	tpPESession session_entry = NULL;
+	struct pe_session *session_entry = NULL;
 	uint8_t session_id;
 	uint8_t sme_session_id;
 	uint16_t transaction_id;
@@ -2139,7 +2139,7 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal mac, uint32_t *pMsgBuf
 	tLimMlmDisassocReq *pMlmDisassocReq;
 	tSirResultCodes retCode = eSIR_SME_SUCCESS;
 	tSirSmeDisassocReq smeDisassocReq;
-	tpPESession psessionEntry = NULL;
+	struct pe_session *psessionEntry = NULL;
 	uint8_t sessionId;
 	uint8_t smesessionId;
 	uint16_t smetransactionId;
@@ -2351,7 +2351,7 @@ void __lim_process_sme_disassoc_cnf(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 	tSirSmeDisassocCnf smeDisassocCnf;
 	uint16_t aid;
 	tpDphHashNode pStaDs;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	uint8_t sessionId;
 	uint32_t *msg = NULL;
 	QDF_STATUS status;
@@ -2507,7 +2507,7 @@ static void __lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 	tLimMlmDeauthReq *mlm_deauth_req;
 	tSirSmeDeauthReq sme_deauth_req;
 	tSirResultCodes ret_code = eSIR_SME_SUCCESS;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	uint8_t session_id;      /* PE sessionId */
 	uint8_t sme_session_id;
 	uint16_t sme_transaction_id;
@@ -2706,7 +2706,7 @@ __lim_process_sme_set_context_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 {
 	tpSirSmeSetContextReq set_context_req;
 	tLimMlmSetKeysReq *mlm_set_key_req;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	uint8_t session_id;      /* PE sessionID */
 	uint8_t sme_session_id;
 	uint16_t sme_transaction_id;
@@ -2847,7 +2847,7 @@ static void lim_process_sme_get_assoc_sta_info(tpAniSirGlobal mac_ctx,
 {
 	tSirSmeGetAssocSTAsReq get_assoc_stas_req;
 	tpDphHashNode sta_ds = NULL;
-	tpPESession session_entry = NULL;
+	struct pe_session *session_entry = NULL;
 	tSap_Event sap_event;
 	tpWLAN_SAPEventCB sap_event_cb = NULL;
 	tpSap_AssocMacAddr assoc_sta_tmp = NULL;
@@ -2952,7 +2952,7 @@ lim_assoc_sta_end:
  * @return None
  */
 
-static void __lim_counter_measures(tpAniSirGlobal mac, tpPESession psessionEntry)
+static void __lim_counter_measures(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 	tSirMacAddr mac_addr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
@@ -2962,7 +2962,7 @@ static void __lim_counter_measures(tpAniSirGlobal mac, tpPESession psessionEntry
 };
 
 void lim_send_stop_bss_failure_resp(tpAniSirGlobal mac_ctx,
-				    tpPESession session)
+				    struct pe_session *session)
 {
 	session->limSmeState = session->limPrevSmeState;
 
@@ -2974,7 +2974,7 @@ void lim_send_stop_bss_failure_resp(tpAniSirGlobal mac_ctx,
 			 session->transactionId);
 }
 
-void lim_delete_all_peers(tpPESession session)
+void lim_delete_all_peers(struct pe_session *session)
 {
 	uint8_t i = 0;
 	tpAniSirGlobal mac_ctx = session->mac_ctx;
@@ -3011,7 +3011,7 @@ void lim_delete_all_peers(tpPESession session)
 
 }
 
-QDF_STATUS lim_sta_send_del_bss(tpPESession session)
+QDF_STATUS lim_sta_send_del_bss(struct pe_session *session)
 {
 	tpAniSirGlobal mac_ctx = session->mac_ctx;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -3032,7 +3032,7 @@ end:
 	return status;
 }
 
-QDF_STATUS lim_send_vdev_stop(tpPESession session)
+QDF_STATUS lim_send_vdev_stop(struct pe_session *session)
 {
 	tpAniSirGlobal mac_ctx = session->mac_ctx;
 	QDF_STATUS status;
@@ -3054,7 +3054,7 @@ QDF_STATUS lim_send_vdev_stop(tpPESession session)
  * Return None
  */
 #ifdef CONFIG_VDEV_SM
-static void lim_delete_peers_and_send_vdev_stop(tpPESession session)
+static void lim_delete_peers_and_send_vdev_stop(struct pe_session *session)
 {
 	tpAniSirGlobal mac_ctx = session->mac_ctx;
 	QDF_STATUS status;
@@ -3077,7 +3077,7 @@ static void lim_delete_peers_and_send_vdev_stop(tpPESession session)
 	}
 }
 #else
-static void lim_delete_peers_and_send_vdev_stop(tpPESession session)
+static void lim_delete_peers_and_send_vdev_stop(struct pe_session *session)
 {
 	lim_delete_all_peers(session);
 	/* send a delBss to HAL and wait for a response */
@@ -3090,7 +3090,7 @@ __lim_handle_sme_stop_bss_request(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 {
 	tSirSmeStopBssReq stopBssReq;
 	tLimSmeStates prevState;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	uint8_t smesessionId;
 	uint8_t sessionId;
 	uint16_t smetransactionId;
@@ -3227,7 +3227,7 @@ static bool __lim_process_sme_stop_bss_req(tpAniSirGlobal mac,
 } /*** end __lim_process_sme_stop_bss_req() ***/
 
 void lim_process_sme_del_bss_rsp(tpAniSirGlobal mac,
-				 uint32_t body, tpPESession psessionEntry)
+				 uint32_t body, struct pe_session *psessionEntry)
 {
 
 	(void)body;
@@ -3259,7 +3259,7 @@ void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 {
 	tSirSmeAssocCnf assoc_cnf;
 	tpDphHashNode sta_ds = NULL;
-	tpPESession session_entry = NULL;
+	struct pe_session *session_entry = NULL;
 	uint8_t session_id;
 	tpSirAssocReq assoc_req;
 
@@ -3390,7 +3390,7 @@ static void __lim_process_sme_addts_req(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 	tSirMacAddr peerMac;
 	tpSirAddtsReq pSirAddts;
 	uint32_t timeout;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	uint8_t sessionId;      /* PE sessionId */
 	uint8_t smesessionId;
 	uint16_t smetransactionId;
@@ -3538,7 +3538,7 @@ static void __lim_process_sme_delts_req(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 	tSirMacTSInfo *pTsinfo;
 	tpSirDeltsReq pDeltsReq = (tpSirDeltsReq) pMsgBuf;
 	tpDphHashNode pStaDs = NULL;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	uint8_t sessionId;
 	uint32_t status = QDF_STATUS_SUCCESS;
 	uint8_t smesessionId;
@@ -3639,7 +3639,7 @@ end:
 void lim_process_sme_addts_rsp_timeout(tpAniSirGlobal mac, uint32_t param)
 {
 	/* fetch the sessionEntry based on the sessionId */
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 
 	psessionEntry = pe_find_session_by_session_id(mac,
 				mac->lim.limTimers.gLimAddtsRspTimer.
@@ -3763,7 +3763,7 @@ static void lim_process_sme_set_addba_accept(tpAniSirGlobal mac_ctx,
 static void lim_process_sme_update_edca_params(tpAniSirGlobal mac_ctx,
 					       uint32_t sme_session_id)
 {
-	tpPESession pe_session;
+	struct pe_session *pe_session;
 	tpDphHashNode sta_ds_ptr;
 
 	pe_session = pe_find_session_by_sme_session_id(mac_ctx, sme_session_id);
@@ -3792,7 +3792,7 @@ static void lim_process_sme_update_edca_params(tpAniSirGlobal mac_ctx,
 static void lim_process_sme_update_mu_edca_params(tpAniSirGlobal mac_ctx,
 						  uint32_t sme_session_id)
 {
-	tpPESession pe_session;
+	struct pe_session *pe_session;
 	tpDphHashNode sta_ds_ptr;
 
 	pe_session = pe_find_session_by_sme_session_id(mac_ctx, sme_session_id);
@@ -3825,7 +3825,7 @@ lim_process_sme_cfg_action_frm_in_tb_ppdu(struct mac_context *mac_ctx,
 static void lim_process_sme_update_config(tpAniSirGlobal mac_ctx,
 					  struct update_config *msg)
 {
-	tpPESession pe_session;
+	struct pe_session *pe_session;
 
 	pe_debug("received eWNI_SME_UPDATE_HT_CONFIG message");
 	if (msg == NULL) {
@@ -3866,7 +3866,7 @@ static void lim_process_sme_update_config(tpAniSirGlobal mac_ctx,
 
 void
 lim_send_vdev_restart(tpAniSirGlobal mac,
-		      tpPESession psessionEntry, uint8_t sessionId)
+		      struct pe_session *psessionEntry, uint8_t sessionId)
 {
 	tpHalHiddenSsidVdevRestart pHalHiddenSsidVdevRestart = NULL;
 	struct scheduler_msg msgQ = {0};
@@ -3907,7 +3907,7 @@ lim_send_vdev_restart(tpAniSirGlobal mac,
 static void __lim_process_roam_scan_offload_req(tpAniSirGlobal mac_ctx,
 						uint32_t *msg_buf)
 {
-	tpPESession pe_session;
+	struct pe_session *pe_session;
 	struct scheduler_msg wma_msg = {0};
 	QDF_STATUS status;
 	tSirRoamOffloadScanReq *req_buffer;
@@ -3994,7 +3994,7 @@ static void lim_process_roam_invoke(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 static void lim_handle_update_ssid_hidden(tpAniSirGlobal mac_ctx,
-				tpPESession session, uint8_t ssid_hidden)
+				struct pe_session *session, uint8_t ssid_hidden)
 {
 	pe_debug("rcvd HIDE_SSID message old HIDE_SSID: %d new HIDE_SSID: %d",
 			session->ssidHidden, ssid_hidden);
@@ -4032,7 +4032,7 @@ static void __lim_process_sme_session_update(tpAniSirGlobal mac_ctx,
 						uint32_t *msg_buf)
 {
 	struct sir_update_session_param *msg;
-	tpPESession session;
+	struct pe_session *session;
 
 	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
@@ -4069,7 +4069,7 @@ static void __lim_process_sme_session_update(tpAniSirGlobal mac_ctx,
 static void __lim_process_sme_change_bi(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 {
 	tpSirChangeBIParams pChangeBIParams;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	uint8_t sessionId = 0;
 	tUpdateBeaconParams beaconParams;
 
@@ -4129,7 +4129,7 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal mac,
 					      uint32_t *pMsgBuf)
 {
 	tpSirSetHT2040Mode pSetHT2040Mode;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	uint8_t sessionId = 0;
 	struct scheduler_msg msg = {0};
 	tUpdateVHTOpMode *pHtOpMode = NULL;
@@ -4279,7 +4279,7 @@ static void __lim_process_report_message(tpAniSirGlobal mac,
  */
 QDF_STATUS
 lim_send_set_max_tx_power_req(tpAniSirGlobal mac, int8_t txPower,
-			      tpPESession pSessionEntry)
+			      struct pe_session *pSessionEntry)
 {
 	tpMaxTxPowerParams pMaxTxParams = NULL;
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -4408,7 +4408,7 @@ static void
 __lim_process_sme_reset_ap_caps_change(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 {
 	tpSirResetAPCapsChange pResetCapsChange;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	uint8_t sessionId = 0;
 
 	if (pMsgBuf == NULL) {
@@ -4471,7 +4471,7 @@ static void __lim_process_send_disassoc_frame(tpAniSirGlobal mac_ctx,
 {
 	struct sme_send_disassoc_frm_req sme_send_disassoc_frame_req;
 	QDF_STATUS status;
-	tpPESession session_entry = NULL;
+	struct pe_session *session_entry = NULL;
 	uint8_t sme_session_id;
 	uint16_t sme_trans_id;
 
@@ -4810,7 +4810,7 @@ static void lim_process_sme_disassoc_cnf(tpAniSirGlobal mac_ctx,
 {
 #ifdef CONFIG_VDEV_SM
 	tSirSmeDisassocCnf sme_disassoc_cnf;
-	tpPESession session;
+	struct pe_session *session;
 	uint8_t session_id;
 	QDF_STATUS status;
 
@@ -4840,7 +4840,7 @@ static void lim_process_sme_disassoc_req(tpAniSirGlobal mac_ctx,
 {
 #ifdef CONFIG_VDEV_SM
 	tSirSmeDisassocReq disassoc_req;
-	tpPESession session;
+	struct pe_session *session;
 	uint8_t session_id;
 	QDF_STATUS status;
 
@@ -4868,7 +4868,7 @@ static void lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 {
 #ifdef CONFIG_VDEV_SM
 	tSirSmeDeauthReq sme_deauth_req;
-	tpPESession session;
+	struct pe_session *session;
 	uint8_t session_id;
 	QDF_STATUS status;
 
@@ -5161,7 +5161,7 @@ bool lim_process_sme_req_messages(tpAniSirGlobal mac,
 static void lim_process_sme_start_beacon_req(tpAniSirGlobal mac, uint32_t *pMsg)
 {
 	tpSirStartBeaconIndication pBeaconStartInd;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	uint8_t sessionId;      /* PE sessionID */
 
 	if (pMsg == NULL) {
@@ -5217,7 +5217,7 @@ static void lim_process_sme_channel_change_request(tpAniSirGlobal mac_ctx,
 		uint32_t *msg_buf)
 {
 	tpSirChanChangeRequest ch_change_req;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	uint8_t session_id;      /* PE session_id */
 	int8_t max_tx_pwr;
 	uint32_t val = 0;
@@ -5511,7 +5511,7 @@ static void lim_process_modify_add_ies(tpAniSirGlobal mac_ctx,
 		uint32_t *msg_buf)
 {
 	tpSirModifyIEsInd modify_add_ies;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	uint8_t session_id;
 	bool ret = false;
 	tSirAddIeParams *add_ie_params;
@@ -5602,7 +5602,7 @@ static void lim_process_update_add_ies(tpAniSirGlobal mac_ctx,
 {
 	tpSirUpdateIEsInd update_add_ies = (tpSirUpdateIEsInd)msg_buf;
 	uint8_t session_id;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	tSirAddIeParams *addn_ie;
 	uint16_t new_length = 0;
 	uint8_t *new_ptr = NULL;
@@ -5735,7 +5735,7 @@ end:
 
 static void send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 				uint16_t new_channel, uint8_t ch_bandwidth,
-						tpPESession session_entry)
+						struct pe_session *session_entry)
 {
 	uint16_t op_class;
 	uint8_t switch_mode = 0, i;
@@ -5776,7 +5776,7 @@ static void send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 void lim_send_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 				       uint16_t new_channel,
 				       uint8_t ch_bandwidth,
-				       tpPESession session_entry)
+				       struct pe_session *session_entry)
 {
 	uint16_t op_class;
 	uint8_t switch_mode = 0, i;
@@ -5834,7 +5834,7 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 		uint32_t *msg_buf)
 {
 	tpSirDfsCsaIeRequest dfs_csa_ie_req;
-	tpPESession session_entry = NULL;
+	struct pe_session *session_entry = NULL;
 	uint8_t session_id;
 	tLimWiderBWChannelSwitchInfo *wider_bw_ch_switch;
 	enum offset_t ch_offset;
@@ -5979,7 +5979,7 @@ static void lim_process_ext_change_channel(tpAniSirGlobal mac_ctx,
 {
 	struct sir_sme_ext_cng_chan_req *ext_chng_channel =
 				(struct sir_sme_ext_cng_chan_req *) msg;
-	tpPESession session_entry = NULL;
+	struct pe_session *session_entry = NULL;
 
 	if (NULL == msg) {
 		pe_err("Buffer is Pointing to NULL");
@@ -6067,7 +6067,7 @@ static void lim_process_nss_update_request(tpAniSirGlobal mac_ctx,
 		uint32_t *msg_buf)
 {
 	struct sir_nss_update_request *nss_update_req_ptr;
-	tpPESession session_entry = NULL;
+	struct pe_session *session_entry = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint8_t vdev_id;
 
@@ -6165,7 +6165,7 @@ static void lim_process_set_ie_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
  * Return: None
  */
 static void obss_color_collision_process_color_disable(tpAniSirGlobal mac_ctx,
-						       tpPESession session)
+						       struct pe_session *session)
 {
 	tUpdateBeaconParams beacon_params;
 
@@ -6225,7 +6225,7 @@ static void obss_color_collision_process_color_disable(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 static void obss_color_collision_process_color_change(tpAniSirGlobal mac_ctx,
-		tpPESession session,
+		struct pe_session *session,
 		struct wmi_obss_color_collision_info *obss_color_info)
 {
 	int i, num_bss_color = 0;
@@ -6312,7 +6312,7 @@ static void obss_color_collision_process_color_change(tpAniSirGlobal mac_ctx,
 void lim_process_set_he_bss_color(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 {
 	struct sir_set_he_bss_color *bss_color;
-	tpPESession session_entry = NULL;
+	struct pe_session *session_entry = NULL;
 	tUpdateBeaconParams beacon_params;
 
 	if (!msg_buf) {
@@ -6362,7 +6362,7 @@ void lim_process_set_he_bss_color(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 }
 
 void lim_send_obss_color_collision_cfg(tpAniSirGlobal mac_ctx,
-				       tpPESession session,
+				       struct pe_session *session,
 				       enum wmi_obss_color_collision_evt_type
 				       event_type)
 {
@@ -6422,7 +6422,7 @@ void lim_process_obss_color_collision_info(tpAniSirGlobal mac_ctx,
 					   uint32_t *msg_buf)
 {
 	struct wmi_obss_color_collision_info *obss_color_info;
-	tpPESession session;
+	struct pe_session *session;
 
 	if (!msg_buf) {
 		pe_err("Buffer is Pointing to NULL");
@@ -6491,7 +6491,7 @@ void lim_process_obss_color_collision_info(tpAniSirGlobal mac_ctx,
 #ifdef CONFIG_VDEV_SM
 void lim_send_csa_restart_req(tpAniSirGlobal mac_ctx, uint8_t vdev_id)
 {
-	tpPESession session;
+	struct pe_session *session;
 
 	session = pe_find_session_by_sme_session_id(mac_ctx, vdev_id);
 
