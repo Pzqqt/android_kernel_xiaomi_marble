@@ -628,7 +628,7 @@ static void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
 static void pe_shutdown_notifier_cb(void *ctx)
 {
 	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)ctx;
-	tpPESession session;
+	struct pe_session *session;
 	uint8_t i;
 
 	lim_deactivate_timers(mac_ctx);
@@ -661,7 +661,7 @@ static bool is_mgmt_protected(uint32_t vdev_id,
 {
 	uint16_t aid;
 	tpDphHashNode sta_ds;
-	tpPESession session;
+	struct pe_session *session;
 	bool protected = false;
 	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 
@@ -1425,7 +1425,7 @@ uint8_t lim_is_system_in_scan_state(tpAniSirGlobal pMac)
 
 void
 lim_received_hb_handler(tpAniSirGlobal pMac, uint8_t channelId,
-			tpPESession psessionEntry)
+			struct pe_session *psessionEntry)
 {
 	if ((channelId == 0)
 	    || (channelId == psessionEntry->currentOperChannel))
@@ -1499,7 +1499,7 @@ lim_update_overlap_sta_param(tpAniSirGlobal pMac, tSirMacAddr bssId,
  * @return true if encryption type is matched; false otherwise
  */
 static bool lim_ibss_enc_type_matched(tpSchBeaconStruct pBeacon,
-					  tpPESession pSession)
+					  struct pe_session *pSession)
 {
 	if (!pBeacon || !pSession)
 		return false;
@@ -1551,7 +1551,7 @@ static bool lim_ibss_enc_type_matched(tpSchBeaconStruct pBeacon,
 QDF_STATUS
 lim_handle_ibss_coalescing(tpAniSirGlobal pMac,
 			   tpSchBeaconStruct pBeacon,
-			   uint8_t *pRxPacketInfo, tpPESession psessionEntry)
+			   uint8_t *pRxPacketInfo, struct pe_session *psessionEntry)
 {
 	tpSirMacMgmtHdr pHdr;
 	QDF_STATUS retCode;
@@ -1604,7 +1604,7 @@ lim_handle_ibss_coalescing(tpAniSirGlobal pMac,
 static bool
 lim_enc_type_matched(tpAniSirGlobal mac_ctx,
 		     tpSchBeaconStruct bcn,
-		     tpPESession session)
+		     struct pe_session *session)
 {
 	if (!bcn || !session)
 		return false;
@@ -1695,7 +1695,7 @@ lim_enc_type_matched(tpAniSirGlobal mac_ctx,
 void
 lim_detect_change_in_ap_capabilities(tpAniSirGlobal pMac,
 				     tpSirProbeRespBeacon pBeacon,
-				     tpPESession psessionEntry)
+				     struct pe_session *psessionEntry)
 {
 	uint8_t len;
 	tSirSmeApNewCaps apNewCaps;
@@ -1822,7 +1822,7 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal pMac,
 QDF_STATUS lim_update_short_slot(tpAniSirGlobal pMac,
 				    tpSirProbeRespBeacon pBeacon,
 				    tpUpdateBeaconParams pBeaconParams,
-				    tpPESession psessionEntry)
+				    struct pe_session *psessionEntry)
 {
 
 	tSirSmeApNewCaps apNewCaps;
@@ -1879,7 +1879,7 @@ QDF_STATUS lim_update_short_slot(tpAniSirGlobal pMac,
 
 
 void lim_send_heart_beat_timeout_ind(tpAniSirGlobal pMac,
-				     tpPESession psessionEntry)
+				     struct pe_session *psessionEntry)
 {
 	QDF_STATUS status;
 	struct scheduler_msg msg = {0};
@@ -1913,7 +1913,7 @@ void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal pMac,
 {
 	tpSirSmeMissedBeaconInd pSirMissedBeaconInd =
 		(tpSirSmeMissedBeaconInd) pMsg->bodyptr;
-	tpPESession psessionEntry =
+	struct pe_session *psessionEntry =
 		pe_find_session_by_bss_idx(pMac, pSirMissedBeaconInd->bssIdx);
 
 	if (!psessionEntry) {
@@ -1938,7 +1938,7 @@ void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal pMac,
  *
  * Return: None
  */
-void lim_fill_join_rsp_ht_caps(tpPESession session, tpSirSmeJoinRsp join_rsp)
+void lim_fill_join_rsp_ht_caps(struct pe_session *session, tpSirSmeJoinRsp join_rsp)
 {
 	tSirSmeHTProfile *ht_profile;
 
@@ -2153,7 +2153,7 @@ lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
  *
  * Return: None
  */
-static void lim_copy_and_free_hlp_data_from_session(tpPESession session_ptr,
+static void lim_copy_and_free_hlp_data_from_session(struct pe_session *session_ptr,
 				    roam_offload_synch_ind *roam_sync_ind_ptr)
 {
 	if (session_ptr->hlp_data && session_ptr->hlp_data_len) {
@@ -2172,7 +2172,7 @@ static void lim_copy_and_free_hlp_data_from_session(tpPESession session_ptr,
 }
 #else
 static inline void lim_copy_and_free_hlp_data_from_session(
-					tpPESession session_ptr,
+					struct pe_session *session_ptr,
 					roam_offload_synch_ind
 					*roam_sync_ind_ptr)
 {}
@@ -2195,8 +2195,8 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	roam_offload_synch_ind *roam_sync_ind_ptr,
 	tpSirBssDescription  bss_desc, enum sir_roam_op_code reason)
 {
-	tpPESession session_ptr;
-	tpPESession ft_session_ptr;
+	struct pe_session *session_ptr;
+	struct pe_session *ft_session_ptr;
 	uint8_t session_id;
 	tpDphHashNode curr_sta_ds;
 	uint16_t aid;
@@ -2444,7 +2444,7 @@ static bool lim_is_beacon_miss_scenario(tpAniSirGlobal pMac,
 {
 	tpSirMacMgmtHdr pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 	uint8_t sessionId;
-	tpPESession psessionEntry =
+	struct pe_session *psessionEntry =
 		pe_find_session_by_bssid(pMac, pHdr->bssId, &sessionId);
 
 	if (psessionEntry && psessionEntry->pmmOffloadInfo.bcnmiss)
@@ -2477,7 +2477,7 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal pMac,
 	uint8_t *pBody;
 	tSirMacCapabilityInfo capabilityInfo;
 	tpSirMacMgmtHdr pHdr = NULL;
-	tpPESession psessionEntry = NULL;
+	struct pe_session *psessionEntry = NULL;
 	uint8_t sessionId;
 
 	/*
@@ -2597,7 +2597,7 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal pMac,
 	return eMGMT_DROP_NO_DROP;
 }
 
-void lim_update_lost_link_info(tpAniSirGlobal mac, tpPESession session,
+void lim_update_lost_link_info(tpAniSirGlobal mac, struct pe_session *session,
 				int32_t rssi)
 {
 	struct sir_lost_link_info *lost_link_info;
@@ -2661,7 +2661,7 @@ QDF_STATUS pe_release_global_lock(tAniSirLim *psPe)
 void lim_mon_init_session(tpAniSirGlobal mac_ptr,
 			  struct sir_create_session *msg)
 {
-	tpPESession psession_entry;
+	struct pe_session *psession_entry;
 	uint8_t session_id;
 
 	psession_entry = pe_create_session(mac_ptr, msg->bss_id.bytes,

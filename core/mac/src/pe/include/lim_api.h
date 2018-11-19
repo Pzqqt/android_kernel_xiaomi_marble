@@ -200,23 +200,23 @@ extern uint8_t lim_is_system_in_scan_state(tpAniSirGlobal);
  */
 extern QDF_STATUS lim_handle_ibss_coalescing(tpAniSirGlobal,
 						tpSchBeaconStruct,
-						uint8_t *, tpPESession);
+						uint8_t *, struct pe_session *);
 /* / Function used by other Sirius modules to read global SME state */
 static inline tLimSmeStates lim_get_sme_state(tpAniSirGlobal pMac)
 {
 	return pMac->lim.gLimSmeState;
 }
 
-extern void lim_received_hb_handler(tpAniSirGlobal, uint8_t, tpPESession);
+extern void lim_received_hb_handler(tpAniSirGlobal, uint8_t, struct pe_session *);
 extern void limCheckAndQuietBSS(tpAniSirGlobal);
 /* / Function that triggers STA context deletion */
 extern void lim_trigger_sta_deletion(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
-				     tpPESession psessionEntry);
+				     struct pe_session *psessionEntry);
 
 #ifdef FEATURE_WLAN_TDLS
 /* Function that sends TDLS Del Sta indication to SME */
 extern void lim_send_sme_tdls_del_sta_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
-					  tpPESession psessionEntry,
+					  struct pe_session *psessionEntry,
 					  uint16_t reasonCode);
 /**
  * lim_set_tdls_flags() - update tdls flags based on newer STA connection
@@ -229,25 +229,25 @@ extern void lim_send_sme_tdls_del_sta_ind(tpAniSirGlobal pMac, tpDphHashNode pSt
  * Return: None
  */
 void lim_set_tdls_flags(roam_offload_synch_ind *roam_sync_ind_ptr,
-		   tpPESession ft_session_ptr);
+		   struct pe_session *ft_session_ptr);
 #else
 static inline void lim_set_tdls_flags(roam_offload_synch_ind *roam_sync_ind_ptr,
-		   tpPESession ft_session_ptr)
+		   struct pe_session *ft_session_ptr)
 {
 }
 #endif
 
 /* / Function that checks for change in AP's capabilties on STA */
 extern void lim_detect_change_in_ap_capabilities(tpAniSirGlobal,
-						 tpSirProbeRespBeacon, tpPESession);
+						 tpSirProbeRespBeacon, struct pe_session *);
 QDF_STATUS lim_update_short_slot(tpAniSirGlobal pMac,
 				    tpSirProbeRespBeacon pBeacon,
 				    tpUpdateBeaconParams pBeaconParams,
-				    tpPESession);
+				    struct pe_session *);
 
 void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal pMac,
 					     struct scheduler_msg *pMsg);
-void lim_send_heart_beat_timeout_ind(tpAniSirGlobal pMac, tpPESession psessionEntry);
+void lim_send_heart_beat_timeout_ind(tpAniSirGlobal pMac, struct pe_session *psessionEntry);
 tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal pMac,
 						 uint8_t *pRxPacketInfo,
 						 uint32_t subType);
@@ -272,7 +272,7 @@ static inline QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_update_lost_link_info(tpAniSirGlobal mac, tpPESession session,
+void lim_update_lost_link_info(tpAniSirGlobal mac, struct pe_session *session,
 				int32_t rssi);
 
 /**
@@ -291,7 +291,7 @@ void lim_mon_init_session(tpAniSirGlobal mac_ptr,
 #define limGet11dMode(psessionEntry, pVal) (*(pVal) = (psessionEntry)->lim11dEnabled)
 /* ----------------------------------------------------------------------- */
 static inline void lim_get_phy_mode(tpAniSirGlobal pMac, uint32_t *phyMode,
-				    tpPESession psessionEntry)
+				    struct pe_session *psessionEntry)
 {
 	*phyMode =
 		psessionEntry ? psessionEntry->gLimPhyMode : pMac->lim.gLimPhyMode;
@@ -300,7 +300,7 @@ static inline void lim_get_phy_mode(tpAniSirGlobal pMac, uint32_t *phyMode,
 /* ----------------------------------------------------------------------- */
 static inline void lim_get_rf_band_new(tpAniSirGlobal pMac,
 				       enum band_info *band,
-				       tpPESession psessionEntry)
+				       struct pe_session *psessionEntry)
 {
 	*band = psessionEntry ? psessionEntry->limRFBand : BAND_UNKNOWN;
 }
@@ -372,9 +372,9 @@ void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal, uint32_t, uint32_t *);
  */
 void lim_process_sme_addts_rsp_timeout(tpAniSirGlobal pMac, uint32_t param);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-void lim_fill_join_rsp_ht_caps(tpPESession session, tpSirSmeJoinRsp rsp);
+void lim_fill_join_rsp_ht_caps(struct pe_session *session, tpSirSmeJoinRsp rsp);
 #else
-static inline void lim_fill_join_rsp_ht_caps(tpPESession session,
+static inline void lim_fill_join_rsp_ht_caps(struct pe_session *session,
 	tpSirSmeJoinRsp rsp)
 {}
 #endif
