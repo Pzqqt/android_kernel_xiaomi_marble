@@ -45,7 +45,7 @@ uint32_t limComputeAvg(tpAniSirGlobal, uint32_t, uint32_t);
 
 /* / Function to extract AP's HCF capability from IE fields */
 void lim_extract_ap_capability(tpAniSirGlobal, uint8_t *, uint16_t, uint8_t *,
-			       uint16_t *, uint8_t *, int8_t *, tpPESession);
+			       uint16_t *, uint8_t *, int8_t *, struct pe_session *);
 
 ePhyChanBondState lim_get_htcb_state(ePhyChanBondState aniCBMode);
 

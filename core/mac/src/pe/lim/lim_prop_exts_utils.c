@@ -62,7 +62,7 @@
 static void get_local_power_constraint_probe_response(
 		tpSirProbeRespBeacon beacon_struct,
 		int8_t *local_constraint,
-		tpPESession session)
+		struct pe_session *session)
 {
 	if (beacon_struct->eseTxPwr.present)
 		*local_constraint =
@@ -79,7 +79,7 @@ static void get_local_power_constraint_probe_response(
  */
 static void get_ese_version_ie_probe_response(tpAniSirGlobal mac_ctx,
 					tpSirProbeRespBeacon beacon_struct,
-					tpPESession session)
+					struct pe_session *session)
 {
 	if (mac_ctx->roam.configParam.isEseIniFeatureEnabled)
 		session->is_ese_version_ie_present =
@@ -89,20 +89,20 @@ static void get_ese_version_ie_probe_response(tpAniSirGlobal mac_ctx,
 static void get_local_power_constraint_probe_response(
 		tpSirProbeRespBeacon beacon_struct,
 		int8_t *local_constraint,
-		tpPESession session)
+		struct pe_session *session)
 {
 
 }
 
 static inline void get_ese_version_ie_probe_response(tpAniSirGlobal mac_ctx,
 					tpSirProbeRespBeacon beacon_struct,
-					tpPESession session)
+					struct pe_session *session)
 {
 }
 #endif
 
 #ifdef WLAN_FEATURE_11AX
-static void lim_extract_he_op(tpPESession session,
+static void lim_extract_he_op(struct pe_session *session,
 		tSirProbeRespBeacon *beacon_struct)
 {
 	if (session->he_capable && beacon_struct->he_op.present) {
@@ -113,7 +113,7 @@ static void lim_extract_he_op(tpPESession session,
 	}
 }
 
-static bool lim_check_he_80_mcs11_supp(tpPESession session,
+static bool lim_check_he_80_mcs11_supp(struct pe_session *session,
 		tSirProbeRespBeacon *beacon_struct) {
 	uint8_t rx_mcs_map;
 	uint8_t tx_mcs_map;
@@ -132,7 +132,7 @@ static bool lim_check_he_80_mcs11_supp(tpPESession session,
 	return false;
 }
 
-static void lim_check_he_ldpc_cap(tpPESession session,
+static void lim_check_he_ldpc_cap(struct pe_session *session,
 		tSirProbeRespBeacon *beacon_struct)
 {
 	if (session->he_capable && beacon_struct->he_cap.present) {
@@ -154,10 +154,10 @@ static void lim_check_he_ldpc_cap(tpPESession session,
 	}
 }
 #else
-static inline void lim_extract_he_op(tpPESession session,
+static inline void lim_extract_he_op(struct pe_session *session,
 		tSirProbeRespBeacon *beacon_struct)
 {}
-static void lim_check_he_ldpc_cap(tpPESession session,
+static void lim_check_he_ldpc_cap(struct pe_session *session,
 		tSirProbeRespBeacon *beacon_struct)
 {}
 #endif
@@ -197,7 +197,7 @@ static void lim_objmgr_update_vdev_nss(struct wlan_objmgr_psoc *psoc,
 void
 lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	uint16_t ie_len, uint8_t *qos_cap, uint16_t *prop_cap, uint8_t *uapsd,
-	int8_t *local_constraint, tpPESession session)
+	int8_t *local_constraint, struct pe_session *session)
 {
 	tSirProbeRespBeacon *beacon_struct;
 	uint8_t ap_bcon_ch_width;
