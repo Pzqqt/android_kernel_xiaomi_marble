@@ -13226,11 +13226,11 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		struct wlan_objmgr_vdev *vdev;
 
 		vdev = hdd_objmgr_get_vdev(adapter);
-		if (!vdev)
-			return -EINVAL;
-		hdd_debug("Disable tdls; new interface is coming up");
-		hdd_notify_teardown_tdls_links(vdev);
-		hdd_objmgr_put_vdev(adapter);
+		if (vdev) {
+			hdd_debug("Disable tdls; new interface is coming up");
+			hdd_notify_teardown_tdls_links(vdev);
+			hdd_objmgr_put_vdev(adapter);
+		}
 	}
 
 	if (hdd_is_client_mode(adapter->device_mode)) {
