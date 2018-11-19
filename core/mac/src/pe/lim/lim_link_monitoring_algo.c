@@ -58,7 +58,7 @@
  * Return: None.
  */
 static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
-				tpPESession session_entry)
+				struct pe_session *session_entry)
 {
 	tpDphHashNode stads;
 
@@ -197,7 +197,7 @@ void lim_delete_sta_context(tpAniSirGlobal mac_ctx,
 			    struct scheduler_msg *lim_msg)
 {
 	tpDeleteStaContext msg = (tpDeleteStaContext) lim_msg->bodyptr;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	tpDphHashNode sta_ds;
 
 	if (NULL == msg) {
@@ -293,7 +293,7 @@ void lim_delete_sta_context(tpAniSirGlobal mac_ctx,
  */
 void
 lim_trigger_sta_deletion(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
-			 tpPESession session_entry)
+			 struct pe_session *session_entry)
 {
 	tLimMlmDisassocInd mlm_disassoc_ind;
 
@@ -360,7 +360,7 @@ lim_tear_down_link_with_ap(tpAniSirGlobal mac, uint8_t sessionId,
 	tpDphHashNode pStaDs = NULL;
 
 	/* tear down the following sessionEntry */
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 
 	psessionEntry = pe_find_session_by_session_id(mac, sessionId);
 	if (psessionEntry == NULL) {
@@ -452,7 +452,7 @@ lim_tear_down_link_with_ap(tpAniSirGlobal mac, uint8_t sessionId,
  */
 
 void lim_handle_heart_beat_failure(tpAniSirGlobal mac_ctx,
-				   tpPESession session)
+				   struct pe_session *session)
 {
 	uint8_t curr_chan;
 	tpSirAddie scan_ie = NULL;
@@ -567,7 +567,7 @@ void lim_rx_invalid_peer_process(tpAniSirGlobal mac_ctx,
 {
 	struct ol_rx_inv_peer_params *msg =
 			(struct ol_rx_inv_peer_params *)lim_msg->bodyptr;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	uint16_t reason_code =
 		eSIR_MAC_CLASS3_FRAME_FROM_NON_ASSOC_STA_REASON;
 
