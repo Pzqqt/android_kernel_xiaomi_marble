@@ -472,16 +472,14 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 				dp_peer_unref_delete(wds_peer);
 				if (!del_in_progress) {
 					QDF_TRACE(QDF_MODULE_ID_DP,
-						  QDF_TRACE_LEVEL_FATAL,
+						  QDF_TRACE_LEVEL_DEBUG,
 						  "wds peer %pM found",
 						  wds_src_mac);
 					QDF_TRACE(QDF_MODULE_ID_DP,
-						  QDF_TRACE_LEVEL_FATAL,
+						  QDF_TRACE_LEVEL_DEBUG,
 						  "No AST no Del in progress");
-					QDF_BUG(0);
-				} else {
-					return;
 				}
+				return;
 			}
 			ret = dp_peer_add_ast(soc,
 					      ta_peer,
