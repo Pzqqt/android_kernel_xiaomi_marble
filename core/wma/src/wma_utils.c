@@ -4486,6 +4486,12 @@ int wma_rcpi_event_handler(void *handle, uint8_t *cmd_param_info,
 	if (status == QDF_STATUS_E_INVAL)
 		return -EINVAL;
 
+	if (res.vdev_id >= wma_handle->max_bssid) {
+		WMA_LOGE("%s: received invalid vdev_id %d",
+			 __func__, res.vdev_id);
+		return -EINVAL;
+	}
+
 	iface = &wma_handle->interfaces[res.vdev_id];
 	if (!iface->rcpi_req) {
 		WMI_LOGE("rcpi_req buffer not available");
