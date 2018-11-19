@@ -285,14 +285,6 @@ static void wlan_ipa_send_pkt_to_tl(
 	} else {
 		ipa_ctx->stats.num_tx_desc_error++;
 		qdf_spin_unlock_bh(&ipa_ctx->q_lock);
-
-		if (qdf_mem_smmu_s1_enabled(osdev)) {
-			if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config))
-				qdf_nbuf_mapped_paddr_set(skb, paddr);
-
-			qdf_nbuf_unmap(osdev, skb, QDF_DMA_TO_DEVICE);
-		}
-
 		qdf_ipa_free_skb(ipa_tx_desc);
 		wlan_ipa_wdi_rm_try_release(ipa_ctx);
 		return;
@@ -1211,26 +1203,10 @@ static void wlan_ipa_nbuf_cb(qdf_nbuf_t skb)
 	qdf_ipa_rx_data_t *ipa_tx_desc;
 	struct wlan_ipa_tx_desc *tx_desc;
 	uint16_t id;
-	struct wlan_objmgr_pdev *pdev = ipa_ctx->pdev;
-	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
-	qdf_device_t osdev = wlan_psoc_get_qdf_dev(psoc);
 
 	if (!qdf_nbuf_ipa_owned_get(skb)) {
 		dev_kfree_skb_any(skb);
 		return;
-	}
-
-	if (osdev && qdf_mem_smmu_s1_enabled(osdev)) {
-		if (wlan_ipa_uc_sta_is_enabled(ipa_ctx->config)) {
-			qdf_dma_addr_t paddr = QDF_NBUF_CB_PADDR(skb);
-
-			qdf_nbuf_mapped_paddr_set(skb,
-						  paddr -
-						  WLAN_IPA_WLAN_FRAG_HEADER -
-						  WLAN_IPA_WLAN_IPA_HEADER);
-		}
-
-		qdf_nbuf_unmap(osdev, skb, QDF_DMA_TO_DEVICE);
 	}
 
 	/* Get Tx desc pointer from SKB CB */
