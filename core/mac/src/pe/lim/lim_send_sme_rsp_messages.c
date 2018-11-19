@@ -58,7 +58,7 @@
 #include "wma.h"
 
 static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
-	tpPESession session_entry, tSirResultCodes result_code,
+	struct pe_session *session_entry, tSirResultCodes result_code,
 	tpSirSmeJoinRsp sme_join_rsp);
 
 /**
@@ -249,7 +249,7 @@ static void lim_send_sme_join_reassoc_rsp_after_resume(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
-	tpPESession session_entry, tSirResultCodes result_code,
+	struct pe_session *session_entry, tSirResultCodes result_code,
 	tpSirSmeJoinRsp sme_join_rsp)
 {
 	uint16_t bss_ie_len;
@@ -442,14 +442,14 @@ static void lim_add_bss_info(tpDphHashNode sta_ds, tpSirSmeJoinRsp sme_join_rsp)
 
 #ifdef WLAN_FEATURE_FILS_SK
 static void lim_update_fils_seq_num(tpSirSmeJoinRsp sme_join_rsp,
-				    tpPESession session_entry)
+				    struct pe_session *session_entry)
 {
 	sme_join_rsp->fils_seq_num =
 		session_entry->fils_info->sequence_number;
 }
 #else
 static inline void lim_update_fils_seq_num(tpSirSmeJoinRsp sme_join_rsp,
-					   tpPESession session_entry)
+					   struct pe_session *session_entry)
 {}
 #endif
 /**
@@ -473,7 +473,7 @@ static inline void lim_update_fils_seq_num(tpSirSmeJoinRsp sme_join_rsp,
 void
 lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 	tSirResultCodes result_code, uint16_t prot_status_code,
-	tpPESession session_entry, uint8_t sme_session_id,
+	struct pe_session *session_entry, uint8_t sme_session_id,
 	uint16_t sme_transaction_id)
 {
 	tpSirSmeJoinRsp sme_join_rsp;
@@ -603,7 +603,7 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 void
 lim_send_sme_start_bss_rsp(tpAniSirGlobal mac,
 			   uint16_t msgType, tSirResultCodes resultCode,
-			   tpPESession psessionEntry, uint8_t smesessionId,
+			   struct pe_session *psessionEntry, uint8_t smesessionId,
 			   uint16_t smetransactionId)
 {
 
@@ -780,7 +780,7 @@ lim_send_sme_disassoc_ntf(tpAniSirGlobal mac,
 			  uint16_t disassocTrigger,
 			  uint16_t aid,
 			  uint8_t smesessionId,
-			  uint16_t smetransactionId, tpPESession psessionEntry)
+			  uint16_t smetransactionId, struct pe_session *psessionEntry)
 {
 
 	uint8_t *pBuf;
@@ -788,7 +788,7 @@ lim_send_sme_disassoc_ntf(tpAniSirGlobal mac,
 	tSirSmeDisassocInd *pSirSmeDisassocInd;
 	uint32_t *pMsg = NULL;
 	bool failure = false;
-	tpPESession session = NULL;
+	struct pe_session *session = NULL;
 	uint16_t i, assoc_id;
 	tpDphHashNode sta_ds = NULL;
 	QDF_STATUS status;
@@ -956,7 +956,7 @@ error:
    ----------------------------------------------------------------- */
 void
 lim_send_sme_disassoc_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
-			  tpPESession psessionEntry)
+			  struct pe_session *psessionEntry)
 {
 	struct scheduler_msg mmhMsg = {0};
 	tSirSmeDisassocInd *pSirSmeDisassocInd;
@@ -1010,7 +1010,7 @@ lim_send_sme_disassoc_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
    ----------------------------------------------------------------- */
 void
 lim_send_sme_deauth_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
-			tpPESession psessionEntry)
+			struct pe_session *psessionEntry)
 {
 	struct scheduler_msg mmhMsg = {0};
 	tSirSmeDeauthInd *pSirSmeDeauthInd;
@@ -1081,7 +1081,7 @@ lim_send_sme_deauth_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
  */
 void
 lim_send_sme_tdls_del_sta_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
-			      tpPESession psessionEntry, uint16_t reasonCode)
+			      struct pe_session *psessionEntry, uint16_t reasonCode)
 {
 	struct tdls_event_info info;
 
@@ -1225,7 +1225,7 @@ lim_send_sme_deauth_ntf(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
 	uint8_t *pBuf;
 	tSirSmeDeauthRsp *pSirSmeDeauthRsp;
 	tSirSmeDeauthInd *pSirSmeDeauthInd;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	uint8_t sessionId;
 	uint32_t *pMsg = NULL;
 	QDF_STATUS status;
@@ -1424,7 +1424,7 @@ void
 lim_send_sme_set_context_rsp(tpAniSirGlobal mac,
 			     struct qdf_mac_addr peer_macaddr, uint16_t aid,
 			     tSirResultCodes resultCode,
-			     tpPESession psessionEntry, uint8_t smesessionId,
+			     struct pe_session *psessionEntry, uint8_t smesessionId,
 			     uint16_t smetransactionId)
 {
 	struct scheduler_msg mmhMsg = {0};
@@ -1475,7 +1475,7 @@ lim_send_sme_set_context_rsp(tpAniSirGlobal mac,
    ----------------------------------------------------------------- */
 void
 lim_send_sme_addts_rsp(tpAniSirGlobal mac, uint8_t rspReqd, uint32_t status,
-		       tpPESession psessionEntry, tSirMacTspecIE tspec,
+		       struct pe_session *psessionEntry, tSirMacTspecIE tspec,
 		       uint8_t smesessionId, uint16_t smetransactionId)
 {
 	tpSirAddtsRsp rsp;
@@ -1517,7 +1517,7 @@ lim_send_sme_addts_rsp(tpAniSirGlobal mac, uint8_t rspReqd, uint32_t status,
 
 void
 lim_send_sme_delts_rsp(tpAniSirGlobal mac, tpSirDeltsReq delts, uint32_t status,
-		       tpPESession psessionEntry, uint8_t smesessionId,
+		       struct pe_session *psessionEntry, uint8_t smesessionId,
 		       uint16_t smetransactionId)
 {
 	tpSirDeltsRsp rsp;
@@ -1569,7 +1569,7 @@ lim_send_sme_delts_rsp(tpAniSirGlobal mac, tpSirDeltsReq delts, uint32_t status,
 
 void
 lim_send_sme_delts_ind(tpAniSirGlobal mac, tpSirDeltsReqInfo delts, uint16_t aid,
-		       tpPESession psessionEntry)
+		       struct pe_session *psessionEntry)
 {
 	tpSirDeltsRsp rsp;
 	struct scheduler_msg mmhMsg = {0};
@@ -1636,7 +1636,7 @@ lim_send_sme_pe_statistics_rsp(tpAniSirGlobal mac, uint16_t msgType, void *stats
 	struct scheduler_msg mmhMsg = {0};
 	uint8_t sessionId;
 	tAniGetPEStatsRsp *pPeStats = (tAniGetPEStatsRsp *) stats;
-	tpPESession pPeSessionEntry;
+	struct pe_session *pPeSessionEntry;
 
 	/* Get the Session Id based on Sta Id */
 	pPeSessionEntry =
@@ -1681,7 +1681,7 @@ void lim_send_sme_pe_ese_tsm_rsp(tpAniSirGlobal mac,
 	struct scheduler_msg mmhMsg = {0};
 	uint8_t sessionId;
 	tAniGetTsmStatsRsp *pPeStats = (tAniGetTsmStatsRsp *) pStats;
-	tpPESession pPeSessionEntry = NULL;
+	struct pe_session *pPeSessionEntry = NULL;
 
 	/* Get the Session Id based on Sta Id */
 	pPeSessionEntry =
@@ -1762,7 +1762,7 @@ lim_send_sme_ibss_peer_ind(tpAniSirGlobal mac,
 static QDF_STATUS lim_process_csa_wbw_ie(tpAniSirGlobal mac_ctx,
 		struct csa_offload_params *csa_params,
 		tLimWiderBWChannelSwitchInfo *chnl_switch_info,
-		tpPESession session_entry)
+		struct pe_session *session_entry)
 {
 	struct ch_params ch_params = {0};
 	uint8_t ap_new_ch_width;
@@ -1894,7 +1894,7 @@ prnt_log:
 void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
 				struct scheduler_msg *msg)
 {
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	struct scheduler_msg mmh_msg = {0};
 	struct csa_offload_params *csa_params =
 				(struct csa_offload_params *) (msg->bodyptr);
@@ -2166,7 +2166,7 @@ err:
 
 void lim_handle_delete_bss_rsp(tpAniSirGlobal mac, struct scheduler_msg *MsgQ)
 {
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	tpDeleteBssParams pDelBss = (tpDeleteBssParams) (MsgQ->bodyptr);
 
 	psessionEntry =
@@ -2262,7 +2262,7 @@ void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal mac, tSirMacAddr peerMac
    --------------------------------------------------------------------*/
 void
 lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal mac,
-				    tpPESession psessionEntry,
+				    struct pe_session *psessionEntry,
 				    tpSwitchChannelParams pChnlParams)
 {
 	struct scheduler_msg mmhMsg = {0};
@@ -2343,7 +2343,7 @@ lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal mac,
  */
 static void
 lim_send_bss_color_change_ie_update(tpAniSirGlobal mac_ctx,
-						tpPESession session)
+						struct pe_session *session)
 {
 	/* Update the beacon template and send to FW */
 	if (sch_set_fixed_beacon_fields(mac_ctx, session) != QDF_STATUS_SUCCESS) {
@@ -2359,7 +2359,7 @@ lim_send_bss_color_change_ie_update(tpAniSirGlobal mac_ctx,
 
 static void
 lim_handle_bss_color_change_ie(tpAniSirGlobal mac_ctx,
-					tpPESession session)
+					struct pe_session *session)
 {
 	tUpdateBeaconParams beacon_params;
 
@@ -2396,7 +2396,7 @@ lim_handle_bss_color_change_ie(tpAniSirGlobal mac_ctx,
 #else
 static void
 lim_handle_bss_color_change_ie(tpAniSirGlobal mac_ctx,
-					tpPESession session)
+					struct pe_session *session)
 {
 }
 #endif
@@ -2405,7 +2405,7 @@ void
 lim_process_beacon_tx_success_ind(tpAniSirGlobal mac_ctx, uint16_t msgType,
 				  void *event)
 {
-	tpPESession session;
+	struct pe_session *session;
 	tpSirFirstBeaconTxCompleteInd bcn_ind =
 		(tSirFirstBeaconTxCompleteInd *) event;
 
