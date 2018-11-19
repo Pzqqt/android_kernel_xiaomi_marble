@@ -43,6 +43,7 @@
 #include "cfg_mlme_sta.h"
 #include "cfg_sap_protection.h"
 #include "cfg_mlme_fe_wmm.h"
+#include "cfg_mlme_powersave.h"
 #include "cfg_mlme_sap.h"
 #include "cfg_mlme_twt.h"
 #include "cfg_mlme_scoring.h"
@@ -75,6 +76,7 @@
 	CFG_NSS_CHAINS_ALL \
 	CFG_OBSS_HT40_ALL \
 	CFG_OCE_ALL \
+	CFG_POWERSAVE_ALL \
 	CFG_QOS_ALL \
 	CFG_RATES_ALL \
 	CFG_WMM_PARAMS_ALL\

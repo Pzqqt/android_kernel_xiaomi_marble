@@ -1903,6 +1903,18 @@ static void mlme_init_fe_rrm_in_cfg(struct wlan_objmgr_psoc *psoc,
 	}
 }
 
+static void mlme_init_powersave_params(struct wlan_objmgr_psoc *psoc,
+				       struct wlan_mlme_powersave *ps_cfg)
+{
+	ps_cfg->is_imps_enabled = cfg_get(psoc, CFG_ENABLE_IMPS);
+	ps_cfg->is_bmps_enabled = cfg_get(psoc, CFG_ENABLE_PS);
+	ps_cfg->auto_bmps_timer_val = cfg_get(psoc, CFG_AUTO_BMPS_ENABLE_TIMER);
+	ps_cfg->bmps_min_listen_interval = cfg_get(psoc, CFG_BMPS_MINIMUM_LI);
+	ps_cfg->bmps_max_listen_interval = cfg_get(psoc, CFG_BMPS_MAXIMUM_LI);
+	ps_cfg->dtim_selection_diversity =
+				cfg_get(psoc, CFG_DTIM_SELECTION_DIVERSITY);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -1933,6 +1945,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_he_cap_in_cfg(psoc, mlme_cfg);
 	mlme_init_obss_ht40_cfg(psoc, &mlme_cfg->obss_ht40);
 	mlme_init_product_details_cfg(&mlme_cfg->product_details);
+	mlme_init_powersave_params(psoc, &mlme_cfg->ps_params);
 	mlme_init_sta_cfg(psoc, &mlme_cfg->sta);
 	mlme_init_twt_cfg(psoc, &mlme_cfg->twt_cfg);
 	mlme_init_lfr_cfg(psoc, &mlme_cfg->lfr);

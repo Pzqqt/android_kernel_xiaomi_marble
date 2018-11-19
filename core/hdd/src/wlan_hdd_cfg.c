@@ -77,15 +77,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_AUTO_PS_ENABLE_TIMER_MIN,
 		     CFG_AUTO_PS_ENABLE_TIMER_MAX),
 
-#ifdef WLAN_ICMP_DISABLE_PS
-	REG_VARIABLE(CFG_ICMP_DISABLE_PS_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, icmp_disable_ps_val,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ICMP_DISABLE_PS_DEFAULT,
-		     CFG_ICMP_DISABLE_PS_MIN,
-		     CFG_ICMP_DISABLE_PS_MAX),
-#endif
-
 	REG_VARIABLE(CFG_BMPS_MINIMUM_LI_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, nBmpsMinListenInterval,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,

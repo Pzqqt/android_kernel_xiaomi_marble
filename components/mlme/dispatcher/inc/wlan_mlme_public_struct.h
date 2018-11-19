@@ -598,16 +598,37 @@ struct wlan_mlme_dfs_cfg {
 
 /**
  * struct wlan_mlme_mbo - Multiband Operation related ini configs
- * @mbo_candidate_rssi_thres:
- * @mbo_current_rssi_thres:
- * @mbo_current_rssi_mcc_thres:
- * @mbo_candidate_rssi_btc_thres:
+ * @mbo_candidate_rssi_thres: candidate AP's min rssi to accept it
+ * @mbo_current_rssi_thres: Connected AP's rssi threshold below which
+ * transition is considered
+ * @mbo_current_rssi_mcc_thres: connected AP's RSSI threshold value to prefer
+ * against MCC
+ * @mbo_candidate_rssi_btc_thres: Candidate AP's minimum RSSI threshold to
+ * prefer it even in BT coex.
  */
 struct wlan_mlme_mbo {
 	int8_t mbo_candidate_rssi_thres;
 	int8_t mbo_current_rssi_thres;
 	int8_t mbo_current_rssi_mcc_thres;
 	int8_t mbo_candidate_rssi_btc_thres;
+};
+
+/**
+ * struct wlan_mlme_powersave - Powersave related ini configs
+ * @is_imps_enabled: flag to enable/disable IMPS
+ * @is_bmps_enabled: flag to enable/disable BMPS
+ * @auto_bmps_timer: auto BMPS timer value
+ * @bmps_min_listen_interval: BMPS listen inteval minimum value
+ * @bmps_max_listen_interval: BMPS listen interval maximum value
+ * @dtim_selection_diversity: dtim selection diversity value to be sent to fw
+ */
+struct wlan_mlme_powersave {
+	bool is_imps_enabled;
+	bool is_bmps_enabled;
+	uint32_t auto_bmps_timer_val;
+	uint32_t bmps_min_listen_interval;
+	uint32_t bmps_max_listen_interval;
+	uint32_t dtim_selection_diversity;
 };
 
 /**
@@ -1753,6 +1774,7 @@ struct wlan_mlme_fe_rrm {
  * @wlan_mlme_power: power related items
  * @acs: ACS related CFG items
  * @feature_flags: Feature flag config items
+ * @ps_params: Powersave related ini configs
  * @wep_params:  WEP related config items
  * @wifi_pos_cfg: WIFI POS config
  * @wmm_params: WMM related CFG & INI Items
@@ -1789,6 +1811,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_power power;
 	struct wlan_mlme_acs acs;
 	struct wlan_mlme_feature_flag feature_flags;
+	struct wlan_mlme_powersave ps_params;
 	struct wlan_mlme_wep_cfg wep_params;
 	struct wlan_mlme_wifi_pos_cfg wifi_pos_cfg;
 	struct wlan_mlme_wmm_params wmm_params;
