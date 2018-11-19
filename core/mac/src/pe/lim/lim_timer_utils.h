@@ -73,7 +73,7 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal, uint32_t);
 void limDummyPktExpTimerHandler(void *, uint32_t);
 void lim_cnf_wait_tmer_handler(void *, uint32_t);
 void lim_deactivate_and_change_per_sta_id_timer(tpAniSirGlobal, uint32_t, uint16_t);
-void lim_activate_cnf_timer(tpAniSirGlobal, uint16_t, tpPESession);
+void lim_activate_cnf_timer(tpAniSirGlobal, uint16_t, struct pe_session *);
 void lim_activate_auth_rsp_timer(tpAniSirGlobal, tLimPreAuthNode *);
 void lim_update_olbc_cache_timer_handler(void *, uint32_t);
 void lim_addts_response_timer_handler(void *, uint32_t);

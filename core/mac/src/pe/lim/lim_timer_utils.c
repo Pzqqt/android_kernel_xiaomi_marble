@@ -432,7 +432,7 @@ void lim_assoc_failure_timer_handler(void *mac_global, uint32_t param)
 {
 	struct scheduler_msg msg = {0};
 	tpAniSirGlobal mac_ctx = (tpAniSirGlobal) mac_global;
-	tpPESession session = NULL;
+	struct pe_session *session = NULL;
 
 	session = mac_ctx->lim.pSessionEntry;
 	if (LIM_REASSOC == param && NULL != session
@@ -522,7 +522,7 @@ void lim_update_olbc_cache_timer_handler(void *pMacGlobal, uint32_t param)
 void lim_deactivate_and_change_timer(tpAniSirGlobal mac, uint32_t timerId)
 {
 	uint32_t val = 0;
-	tpPESession  session_entry;
+	struct pe_session * session_entry;
 
 	switch (timerId) {
 	case eLIM_REASSOC_FAIL_TIMER:
@@ -889,7 +889,7 @@ lim_deactivate_and_change_per_sta_id_timer(tpAniSirGlobal mac, uint32_t timerId,
  */
 
 void lim_activate_cnf_timer(tpAniSirGlobal mac, uint16_t staId,
-			    tpPESession psessionEntry)
+			    struct pe_session *psessionEntry)
 {
 	mac->lim.limTimers.gpLimCnfWaitTimer[staId].sessionId =
 		psessionEntry->peSessionId;
