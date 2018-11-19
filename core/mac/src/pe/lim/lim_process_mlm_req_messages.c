@@ -60,7 +60,7 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal);
  */
 static void lim_process_sae_auth_timeout(tpAniSirGlobal mac_ctx)
 {
-	tpPESession session;
+	struct pe_session *session;
 
 	session = pe_find_session_by_session_id(mac_ctx,
 			mac_ctx->lim.limTimers.sae_auth_timer.sessionId);
@@ -291,7 +291,7 @@ void lim_set_dfs_channel_list(tpAniSirGlobal mac_ctx, uint8_t chan_num,
  * Return: None
  */
 static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
-		uint8_t *bssid, uint8_t ht_capable, tpPESession session_entry)
+		uint8_t *bssid, uint8_t ht_capable, struct pe_session *session_entry)
 {
 	uint32_t val;
 	uint32_t self_dot11mode = 0;
@@ -412,7 +412,7 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
  */
 tSirResultCodes
 lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
-		tLimMlmStartReq *mlm_start_req, tpPESession session)
+		tLimMlmStartReq *mlm_start_req, struct pe_session *session)
 {
 	struct scheduler_msg msg_buf = {0};
 	tpAddBssParams addbss_param = NULL;
@@ -603,7 +603,7 @@ void lim_process_mlm_start_req(tpAniSirGlobal mac_ctx,
 			       tLimMlmStartReq *mlm_start_req)
 {
 	tLimMlmStartCnf mlm_start_cnf;
-	tpPESession session = NULL;
+	struct pe_session *session = NULL;
 
 	if (!mlm_start_req) {
 		pe_err("Buffer is Pointing to NULL");
@@ -669,7 +669,7 @@ static void lim_post_join_set_link_state_callback(tpAniSirGlobal mac,
 					(struct session_params *)callback_arg;
 	tLimMlmJoinCnf mlm_join_cnf;
 
-	tpPESession session_entry = pe_find_session_by_session_id(mac,
+	struct pe_session *session_entry = pe_find_session_by_session_id(mac,
 					session_cb_param->session_id);
 	if (!session_entry) {
 		pe_err("sessionId:%d does not exist",
@@ -745,7 +745,7 @@ lim_process_mlm_post_join_suspend_link(tpAniSirGlobal mac_ctx,
 				       uint32_t *ctx)
 {
 	tLimMlmJoinCnf mlm_join_cnf;
-	tpPESession session = (tpPESession) ctx;
+	struct pe_session *session = (struct pe_session *) ctx;
 	tSirLinkState lnk_state;
 	struct session_params *pe_session_param = NULL;
 
@@ -825,7 +825,7 @@ void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx,
 {
 	tLimMlmJoinCnf mlmjoin_cnf;
 	uint8_t sessionid;
-	tpPESession session;
+	struct pe_session *session;
 
 	sessionid = mlm_join_req->sessionId;
 
@@ -903,7 +903,7 @@ error:
  * Return: true if expected and false otherwise
  */
 static bool lim_is_auth_req_expected(tpAniSirGlobal mac_ctx,
-				     tpPESession session)
+				     struct pe_session *session)
 {
 	bool flag = false;
 
@@ -943,7 +943,7 @@ static bool lim_is_auth_req_expected(tpAniSirGlobal mac_ctx,
  * Return: true if exists and false otherwise
  */
 static bool lim_is_preauth_ctx_exists(tpAniSirGlobal mac_ctx,
-				      tpPESession session,
+				      struct pe_session *session,
 				      struct tLimPreAuthNode **preauth_node_ptr)
 {
 	bool fl = false;
@@ -984,7 +984,7 @@ static bool lim_is_preauth_ctx_exists(tpAniSirGlobal mac_ctx,
  * Return: QDF_STATUS
  */
 static QDF_STATUS lim_process_mlm_auth_req_sae(tpAniSirGlobal mac_ctx,
-		tpPESession session)
+		struct pe_session *session)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct sir_sae_info *sae_info;
@@ -1043,7 +1043,7 @@ static QDF_STATUS lim_process_mlm_auth_req_sae(tpAniSirGlobal mac_ctx,
 }
 #else
 static QDF_STATUS lim_process_mlm_auth_req_sae(tpAniSirGlobal mac_ctx,
-		tpPESession session)
+		struct pe_session *session)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
@@ -1068,7 +1068,7 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	tLimMlmAuthCnf mlm_auth_cnf;
 	struct tLimPreAuthNode *preauth_node = NULL;
 	uint8_t session_id;
-	tpPESession session;
+	struct pe_session *session;
 
 	if (msg == NULL) {
 		pe_err("Buffer is Pointing to NULL");
@@ -1238,7 +1238,7 @@ static void lim_process_mlm_assoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	tSirMacAddr curr_bssId;
 	tLimMlmAssocReq *mlm_assoc_req;
 	tLimMlmAssocCnf mlm_assoc_cnf;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 
 	if (msg_buf == NULL) {
 		pe_err("Buffer is Pointing to NULL");
@@ -1346,7 +1346,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 	tpDphHashNode stads;
 	tLimMlmDisassocReq *mlm_disassocreq;
 	tLimMlmDisassocCnf mlm_disassoccnf;
-	tpPESession session;
+	struct pe_session *session;
 	extern bool send_disassoc_frame;
 	tLimMlmStates mlm_state;
 	tSirSmeDisassocRsp *sme_disassoc_rsp;
@@ -1687,7 +1687,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 	struct tLimPreAuthNode *auth_node;
 	tLimMlmDeauthReq *mlm_deauth_req;
 	tLimMlmDeauthCnf mlm_deauth_cnf;
-	tpPESession session;
+	struct pe_session *session;
 	tSirSmeDeauthRsp *sme_deauth_rsp;
 
 	if (QDF_STATUS_SUCCESS != suspend_status)
@@ -1941,7 +1941,7 @@ void lim_process_deauth_ack_timeout(tpAniSirGlobal mac_ctx)
 void lim_process_mlm_deauth_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 {
 	tLimMlmDeauthReq *mlm_deauth_req;
-	tpPESession session;
+	struct pe_session *session;
 
 	if (msg_buf == NULL) {
 		pe_err("Buffer is Pointing to NULL");
@@ -1987,7 +1987,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	tpDphHashNode sta_ds;
 	tLimMlmSetKeysReq *mlm_set_keys_req;
 	tLimMlmSetKeysCnf mlm_set_keys_cnf;
-	tpPESession session;
+	struct pe_session *session;
 
 	if (msg_buf == NULL) {
 		pe_err("Buffer is Pointing to NULL");
@@ -2165,7 +2165,7 @@ void lim_process_join_failure_timeout(tpAniSirGlobal mac_ctx)
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
 	host_log_rssi_pkt_type *rssi_log = NULL;
 #endif
-	tpPESession session;
+	struct pe_session *session;
 
 	session = pe_find_session_by_session_id(mac_ctx,
 			mac_ctx->lim.limTimers.gLimJoinFailureTimer.sessionId);
@@ -2228,7 +2228,7 @@ void lim_process_join_failure_timeout(tpAniSirGlobal mac_ctx)
  */
 static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal mac_ctx)
 {
-	tpPESession session;
+	struct pe_session *session;
 	tSirMacSSid ssid;
 
 	session = pe_find_session_by_session_id(mac_ctx,
@@ -2273,7 +2273,7 @@ static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal mac_ctx)
 
 static void lim_process_auth_retry_timer(tpAniSirGlobal mac_ctx)
 {
-	tpPESession  session_entry;
+	struct pe_session * session_entry;
 
 	session_entry =
 	  pe_find_session_by_session_id(mac_ctx,
@@ -2326,7 +2326,7 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal mac_ctx)
 void lim_process_auth_failure_timeout(tpAniSirGlobal mac_ctx)
 {
 	/* fetch the sessionEntry based on the sessionId */
-	tpPESession session;
+	struct pe_session *session;
 	uint32_t val;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
 	host_log_rssi_pkt_type *rssi_log = NULL;
@@ -2404,7 +2404,7 @@ static void
 lim_process_auth_rsp_timeout(tpAniSirGlobal mac_ctx, uint32_t auth_idx)
 {
 	struct tLimPreAuthNode *auth_node;
-	tpPESession session;
+	struct pe_session *session;
 	uint8_t session_id;
 
 	auth_node = lim_get_pre_auth_node_from_index(mac_ctx,
@@ -2451,7 +2451,7 @@ void lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx,
 {
 
 	tLimMlmAssocCnf mlm_assoc_cnf;
-	tpPESession session;
+	struct pe_session *session;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
 	host_log_rssi_pkt_type *rssi_log = NULL;
 #endif
@@ -2591,7 +2591,7 @@ void lim_set_channel(tpAniSirGlobal mac_ctx, uint8_t channel,
 		     uint8_t pe_session_id, uint32_t cac_duration_ms,
 		     uint32_t dfs_regdomain)
 {
-	tpPESession pe_session;
+	struct pe_session *pe_session;
 
 	pe_session = pe_find_session_by_session_id(mac_ctx, pe_session_id);
 
