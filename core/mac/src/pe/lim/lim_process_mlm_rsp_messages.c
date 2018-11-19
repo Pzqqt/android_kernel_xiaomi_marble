@@ -152,7 +152,7 @@ lim_process_mlm_rsp_messages(tpAniSirGlobal mac, uint32_t msgType,
  */
 void lim_process_mlm_start_cnf(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 {
-	tpPESession psessionEntry = NULL;
+	struct pe_session *psessionEntry = NULL;
 	tLimMlmStartCnf *pLimMlmStartCnf;
 	uint8_t smesessionId;
 	uint16_t smetransactionId;
@@ -269,7 +269,7 @@ void lim_process_mlm_join_cnf(tpAniSirGlobal mac_ctx,
 {
 	tSirResultCodes result_code;
 	tLimMlmJoinCnf *join_cnf;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 
 	join_cnf = (tLimMlmJoinCnf *) msg;
 	session_entry = pe_find_session_by_session_id(mac_ctx,
@@ -326,7 +326,7 @@ void lim_process_mlm_join_cnf(tpAniSirGlobal mac_ctx,
  */
 
 static void lim_send_mlm_assoc_req(tpAniSirGlobal mac_ctx,
-	tpPESession session_entry)
+	struct pe_session *session_entry)
 {
 	tLimMlmAssocReq *assoc_req;
 	uint32_t val;
@@ -431,7 +431,7 @@ void lim_pmf_comeback_timer_callback(void *context)
 {
 	struct comeback_timer_info *info = context;
 	tpAniSirGlobal mac_ctx = info->mac;
-	tpPESession psessionEntry = &mac_ctx->lim.gpSession[info->session_id];
+	struct pe_session *psessionEntry = &mac_ctx->lim.gpSession[info->session_id];
 
 	pe_err("comeback later timer expired. sending MLM ASSOC req");
 	/* set MLM state such that ASSOC REQ packet will be sent out */
@@ -456,7 +456,7 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	tAniAuthType auth_type, auth_mode;
 	tLimMlmAuthReq *auth_req;
 	tLimMlmAuthCnf *auth_cnf;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 
 	if (msg == NULL) {
 		pe_err("Buffer is Pointing to NULL");
@@ -593,7 +593,7 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 void lim_process_mlm_assoc_cnf(tpAniSirGlobal mac_ctx,
 	uint32_t *msg)
 {
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	tLimMlmAssocCnf *assoc_cnf;
 
 	if (msg == NULL) {
@@ -681,7 +681,7 @@ void lim_process_mlm_assoc_cnf(tpAniSirGlobal mac_ctx,
 static void
 lim_fill_assoc_ind_params(tpAniSirGlobal mac_ctx,
 	tpLimMlmAssocInd assoc_ind, tSirSmeAssocInd *sme_assoc_ind,
-	tpPESession session_entry)
+	struct pe_session *session_entry)
 {
 	sme_assoc_ind->length = sizeof(tSirSmeAssocInd);
 	sme_assoc_ind->sessionId = session_entry->smeSessionId;
@@ -784,7 +784,7 @@ void lim_process_mlm_assoc_ind(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 	struct scheduler_msg msg = {0};
 	tSirSmeAssocInd *pSirSmeAssocInd;
 	tpDphHashNode pStaDs = 0;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 
 	if (pMsgBuf == NULL) {
 		pe_err("Buffer is Pointing to NULL");
@@ -863,7 +863,7 @@ void lim_process_mlm_assoc_ind(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 void lim_process_mlm_disassoc_ind(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 {
 	tLimMlmDisassocInd *pMlmDisassocInd;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 
 	pMlmDisassocInd = (tLimMlmDisassocInd *) pMsgBuf;
 	psessionEntry = pe_find_session_by_session_id(mac,
@@ -905,7 +905,7 @@ void lim_process_mlm_disassoc_cnf(tpAniSirGlobal mac_ctx,
 {
 	tSirResultCodes result_code;
 	tLimMlmDisassocCnf *disassoc_cnf;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 
 	disassoc_cnf = (tLimMlmDisassocCnf *) msg;
 
@@ -984,7 +984,7 @@ void lim_process_mlm_disassoc_cnf(tpAniSirGlobal mac_ctx,
 static void lim_process_mlm_deauth_ind(tpAniSirGlobal mac_ctx,
 				       tLimMlmDeauthInd *deauth_ind)
 {
-	tpPESession session;
+	struct pe_session *session;
 	uint8_t session_id;
 	enum eLimSystemRole role;
 
@@ -1033,7 +1033,7 @@ void lim_process_mlm_deauth_cnf(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 	uint16_t aid;
 	tSirResultCodes resultCode;
 	tLimMlmDeauthCnf *pMlmDeauthCnf;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 
 	if (pMsgBuf == NULL) {
 		pe_err("Buffer is Pointing to NULL");
@@ -1110,7 +1110,7 @@ void lim_process_mlm_purge_sta_ind(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 {
 	tSirResultCodes resultCode;
 	tpLimMlmPurgeStaInd pMlmPurgeStaInd;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 
 	if (pMsgBuf == NULL) {
 		pe_err("Buffer is Pointing to NULL");
@@ -1196,7 +1196,7 @@ void lim_process_mlm_set_keys_cnf(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 {
 	/* Prepare and send SME_SETCONTEXT_RSP message */
 	tLimMlmSetKeysCnf *pMlmSetKeysCnf;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	uint16_t aid;
 	tpDphHashNode sta_ds;
 
@@ -1253,7 +1253,7 @@ static void lim_join_result_callback(tpAniSirGlobal mac, void *param,
 				     bool status)
 {
 	join_params *link_state_params = (join_params *) param;
-	tpPESession session;
+	struct pe_session *session;
 	uint8_t sme_session_id;
 	uint16_t sme_trans_id;
 
@@ -1280,7 +1280,7 @@ static void lim_join_result_callback(tpAniSirGlobal mac, void *param,
 #ifdef CONFIG_VDEV_SM
 QDF_STATUS lim_sta_send_down_link(join_params *param)
 {
-	tpPESession session;
+	struct pe_session *session;
 	tpAniSirGlobal mac_ctx;
 	tpDphHashNode sta_ds = NULL;
 
@@ -1383,7 +1383,7 @@ error:
  */
 void lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
 	tSirResultCodes result_code, uint16_t prot_status_code,
-	tpPESession session)
+	struct pe_session *session)
 {
 	join_params param;
 	QDF_STATUS status;
@@ -1412,7 +1412,7 @@ void lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
 #else
 void lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
 	tSirResultCodes result_code, uint16_t prot_status_code,
-	tpPESession session_entry)
+	struct pe_session *session_entry)
 {
 	tpDphHashNode sta_ds = NULL;
 	uint8_t sme_session_id;
@@ -1513,7 +1513,7 @@ error:
  */
 void lim_process_mlm_add_sta_rsp(tpAniSirGlobal mac,
 				 struct scheduler_msg *limMsgQ,
-				 tpPESession psessionEntry)
+				 struct pe_session *psessionEntry)
 {
 	/* we need to process the deferred message since the initiating req. there might be nested request. */
 	/* in the case of nested request the new request initiated from the response will take care of resetting */
@@ -1539,13 +1539,13 @@ void lim_process_mlm_add_sta_rsp(tpAniSirGlobal mac,
  */
 
 void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal mac_ctx,
-	struct scheduler_msg *msg, tpPESession session_entry)
+	struct scheduler_msg *msg, struct pe_session *session_entry)
 {
 	tLimMlmAssocCnf mlm_assoc_cnf;
 	tpDphHashNode sta_ds;
 	uint32_t msg_type = LIM_MLM_ASSOC_CNF;
 	tpAddStaParams add_sta_params = (tpAddStaParams) msg->bodyptr;
-	tpPESession ft_session = NULL;
+	struct pe_session *ft_session = NULL;
 	uint8_t ft_session_id;
 
 	if (NULL == add_sta_params) {
@@ -1687,7 +1687,7 @@ end:
 
 void lim_process_mlm_del_bss_rsp(tpAniSirGlobal mac,
 				 struct scheduler_msg *limMsgQ,
-				 tpPESession psessionEntry)
+				 struct pe_session *psessionEntry)
 {
 	/* we need to process the deferred message since the initiating req. there might be nested request. */
 	/* in the case of nested request the new request initiated from the response will take care of resetting */
@@ -1714,7 +1714,7 @@ void lim_process_mlm_del_bss_rsp(tpAniSirGlobal mac,
 
 void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal mac,
 				     struct scheduler_msg *limMsgQ,
-				     tpPESession psessionEntry)
+				     struct pe_session *psessionEntry)
 {
 	tpDeleteBssParams pDelBssParams = (tpDeleteBssParams) limMsgQ->bodyptr;
 	tpDphHashNode pStaDs =
@@ -1782,7 +1782,7 @@ end:
 
 void lim_process_ap_mlm_del_bss_rsp(tpAniSirGlobal mac,
 				    struct scheduler_msg *limMsgQ,
-				    tpPESession psessionEntry)
+				    struct pe_session *psessionEntry)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
 	QDF_STATUS status;
@@ -1866,7 +1866,7 @@ void lim_process_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	 * initiated from the response will take care of resetting
 	 * the deffered flag.
 	 */
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	tpDeleteStaParams del_sta_params;
 
 	del_sta_params = (tpDeleteStaParams) msg->bodyptr;
@@ -1915,7 +1915,7 @@ void lim_process_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
  */
 void lim_process_ap_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
 					   struct scheduler_msg *msg,
-					   tpPESession session_entry)
+					   struct pe_session *session_entry)
 {
 	tpDeleteStaParams del_sta_params = (tpDeleteStaParams) msg->bodyptr;
 	tpDphHashNode sta_ds;
@@ -2009,7 +2009,7 @@ end:
 
 void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal mac,
 				     struct scheduler_msg *limMsgQ,
-				     tpPESession psessionEntry)
+				     struct pe_session *psessionEntry)
 {
 	tSirResultCodes statusCode = eSIR_SME_SUCCESS;
 	tpDeleteStaParams pDelStaParams = (tpDeleteStaParams) limMsgQ->bodyptr;
@@ -2087,7 +2087,7 @@ end:
 
 void lim_process_ap_mlm_add_sta_rsp(tpAniSirGlobal mac,
 				    struct scheduler_msg *limMsgQ,
-				    tpPESession psessionEntry)
+				    struct pe_session *psessionEntry)
 {
 	tpAddStaParams pAddStaParams = (tpAddStaParams) limMsgQ->bodyptr;
 	tpDphHashNode pStaDs = NULL;
@@ -2185,7 +2185,7 @@ static void lim_process_ap_mlm_add_bss_rsp(tpAniSirGlobal mac,
 					   struct scheduler_msg *limMsgQ)
 {
 	tLimMlmStartCnf mlmStartCnf;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	uint8_t isWepEnabled = false;
 	tpAddBssParams pAddBssParams = (tpAddBssParams) limMsgQ->bodyptr;
 
@@ -2330,7 +2330,7 @@ end:
 static void
 lim_process_ibss_mlm_add_bss_rsp(tpAniSirGlobal mac,
 				 struct scheduler_msg *limMsgQ,
-				 tpPESession psessionEntry)
+				 struct pe_session *psessionEntry)
 {
 	tLimMlmStartCnf mlmStartCnf;
 	tpAddBssParams pAddBssParams = (tpAddBssParams) limMsgQ->bodyptr;
@@ -2400,7 +2400,7 @@ end:
  *
  * Return: None
  */
-static void lim_update_fils_auth_mode(tpPESession session_entry,
+static void lim_update_fils_auth_mode(struct pe_session *session_entry,
 			tAniAuthType *auth_mode)
 {
 	if (!session_entry->fils_info)
@@ -2410,7 +2410,7 @@ static void lim_update_fils_auth_mode(tpPESession session_entry,
 		*auth_mode = session_entry->fils_info->auth;
 }
 #else
-static void lim_update_fils_auth_mode(tpPESession session_entry,
+static void lim_update_fils_auth_mode(struct pe_session *session_entry,
 			tAniAuthType *auth_mode)
 { }
 #endif
@@ -2428,7 +2428,7 @@ static void lim_update_fils_auth_mode(tpPESession session_entry,
  */
 static void
 lim_process_sta_add_bss_rsp_pre_assoc(tpAniSirGlobal mac_ctx,
-	struct scheduler_msg *msg, tpPESession session_entry)
+	struct scheduler_msg *msg, struct pe_session *session_entry)
 {
 	tpAddBssParams pAddBssParams = (tpAddBssParams) msg->bodyptr;
 	tAniAuthType cfgAuthType, authMode;
@@ -2532,7 +2532,7 @@ joinFailure:
  */
 static void
 lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
-	struct scheduler_msg *msg, tpPESession session_entry)
+	struct scheduler_msg *msg, struct pe_session *session_entry)
 {
 	tpAddBssParams add_bss_params = (tpAddBssParams) msg->bodyptr;
 	tLimMlmAssocCnf mlm_assoc_cnf;
@@ -2691,7 +2691,7 @@ void lim_process_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 	struct scheduler_msg *msg)
 {
 	tLimMlmStartCnf mlm_start_cnf;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	tpAddBssParams add_bss_param = (tpAddBssParams) (msg->bodyptr);
 	tSirBssType bss_type;
 
@@ -2767,7 +2767,7 @@ void lim_process_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 void lim_process_mlm_update_hidden_ssid_rsp(tpAniSirGlobal mac_ctx,
 	struct scheduler_msg *msg)
 {
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	tpHalHiddenSsidVdevRestart hidden_ssid_vdev_restart;
 
 	hidden_ssid_vdev_restart = (tpHalHiddenSsidVdevRestart)(msg->bodyptr);
@@ -2833,7 +2833,7 @@ void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal mac_ctx,
 	struct sLimMlmSetKeysCnf mlm_set_key_cnf;
 	uint8_t session_id = 0;
 	uint8_t sme_session_id;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	uint16_t key_len;
 	uint16_t result_status;
 
@@ -2918,7 +2918,7 @@ void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal mac_ctx,
 	uint16_t result_status;
 	uint8_t session_id = 0;
 	uint8_t sme_session_id;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	tpLimMlmSetKeysReq set_key_req;
 	uint16_t key_len;
 
@@ -3019,7 +3019,7 @@ void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal mac_ctx,
  * @return None
  */
 static void lim_process_switch_channel_re_assoc_req(tpAniSirGlobal mac,
-						    tpPESession psessionEntry,
+						    struct pe_session *psessionEntry,
 						    QDF_STATUS status)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
@@ -3086,7 +3086,7 @@ end:
  * Return None
  */
 static void lim_process_switch_channel_join_req(
-	tpAniSirGlobal mac_ctx, tpPESession session_entry,
+	tpAniSirGlobal mac_ctx, struct pe_session *session_entry,
 	QDF_STATUS status)
 {
 	tSirMacSSid ssId;
@@ -3237,7 +3237,7 @@ void lim_process_switch_channel_rsp(tpAniSirGlobal mac, void *body)
 	QDF_STATUS status;
 	uint16_t channelChangeReasonCode;
 	uint8_t peSessionId;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	/* we need to process the deferred message since the initiating req. there might be nested request. */
 	/* in the case of nested request the new request initiated from the response will take care of resetting */
 	/* the deffered flag. */
@@ -3320,7 +3320,7 @@ free:
 	qdf_mem_free(body);
 }
 
-QDF_STATUS lim_send_beacon_ind(tpAniSirGlobal mac, tpPESession psessionEntry,
+QDF_STATUS lim_send_beacon_ind(tpAniSirGlobal mac, struct pe_session *psessionEntry,
 			       enum sir_bcn_update_reason reason)
 {
 	tBeaconGenParams *pBeaconGenParams = NULL;
