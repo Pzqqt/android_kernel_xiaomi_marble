@@ -56,7 +56,7 @@
 
 void
 lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
-			 tpPESession session)
+			 struct pe_session *session)
 {
 	tpSirMacMgmtHdr mac_hdr;
 	tSchBeaconStruct *bcn_ptr;
