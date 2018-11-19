@@ -1147,7 +1147,8 @@ struct cdp_ipa_ops {
 		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
 		uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
 		uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle,
-		bool is_smmu_enabled, qdf_ipa_sys_connect_params_t *sys_in);
+		bool is_smmu_enabled, qdf_ipa_sys_connect_params_t *sys_in,
+		bool over_gsi);
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
 	QDF_STATUS (*ipa_setup)(struct cdp_pdev *pdev, void *ipa_i2w_cb,
 		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,

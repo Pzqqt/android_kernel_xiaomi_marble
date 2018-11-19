@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -648,7 +648,7 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 			uint32_t ipa_desc_size, void *ipa_priv,
 			bool is_rm_enabled, uint32_t *tx_pipe_handle,
 			uint32_t *rx_pipe_handle, bool is_smmu_enabled,
-			qdf_ipa_sys_connect_params_t *sys_in)
+			qdf_ipa_sys_connect_params_t *sys_in, bool over_gsi)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
 	struct dp_soc *soc = pdev->soc;
@@ -712,7 +712,10 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 			return QDF_STATUS_E_FAILURE;
 	}
 
-	QDF_IPA_WDI_SETUP_INFO_CLIENT(tx) = IPA_CLIENT_WLAN1_CONS;
+	if (over_gsi)
+		QDF_IPA_WDI_SETUP_INFO_CLIENT(tx) = IPA_CLIENT_WLAN2_CONS;
+	else
+		QDF_IPA_WDI_SETUP_INFO_CLIENT(tx) = IPA_CLIENT_WLAN1_CONS;
 	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(tx) =
 		ipa_res->tx_comp_ring_base_paddr;
 	QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_SIZE(tx) =
@@ -776,7 +779,12 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 			  "%s: SMMU is not implementation on host", __func__);
 			return QDF_STATUS_E_FAILURE;
 	} else {
-		QDF_IPA_WDI_SETUP_INFO_CLIENT(rx) = IPA_CLIENT_WLAN1_PROD;
+		if (over_gsi)
+			QDF_IPA_WDI_SETUP_INFO_CLIENT(rx) =
+						IPA_CLIENT_WLAN2_PROD;
+		else
+			QDF_IPA_WDI_SETUP_INFO_CLIENT(rx) =
+						IPA_CLIENT_WLAN1_PROD;
 		QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_BASE_PA(rx) =
 			ipa_res->rx_rdy_ring_base_paddr;
 		QDF_IPA_WDI_SETUP_INFO_TRANSFER_RING_SIZE(rx) =
