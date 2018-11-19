@@ -566,8 +566,6 @@ struct pe_session {
 	uint32_t dfs_regdomain;
 };
 
-typedef struct pe_session *tpPESession;
-
 struct session_params {
 	uint16_t session_id;
 };
