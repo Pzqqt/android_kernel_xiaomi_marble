@@ -97,7 +97,7 @@ int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal pMac,
 
 /* / Get capability info */
 QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
-				   tpPESession psessionEntry);
+				   struct pe_session *psessionEntry);
 
 /* / Set capability info */
 void cfg_set_capability_info(tpAniSirGlobal, uint16_t);
