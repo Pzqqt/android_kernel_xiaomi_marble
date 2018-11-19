@@ -594,7 +594,7 @@ sir_convert_assoc_req_frame2_struct(struct mac_context *pMac,
 
 QDF_STATUS
 sir_convert_assoc_resp_frame2_struct(struct mac_context *pMac,
-				tpPESession session_entry,
+				struct pe_session *session_entry,
 				uint8_t *frame, uint32_t len,
 				tpSirAssocRsp assoc);
 
@@ -667,7 +667,7 @@ sir_convert_meas_req_frame2_struct(struct mac_context *, uint8_t *,
 QDF_STATUS
 populate_dot11f_capabilities(tpAniSirGlobal pMac,
 			tDot11fFfCapabilities *pDot11f,
-			tpPESession psessionEntry);
+			struct pe_session *psessionEntry);
 
 /**
  * \brief Populated a tDot11fFfCapabilities
@@ -694,29 +694,29 @@ QDF_STATUS
 populate_dot11f_capabilities2(tpAniSirGlobal pMac,
 			tDot11fFfCapabilities *pDot11f,
 			struct sDphHashNode *pSta,
-			tpPESession psessionEntry);
+			struct pe_session *psessionEntry);
 
 /* / Populate a tDot11fIEChanSwitchAnn */
 void
 populate_dot11f_chan_switch_ann(tpAniSirGlobal pMac,
 				tDot11fIEChanSwitchAnn *pDot11f,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 
 void
 populate_dot_11_f_ext_chann_switch_ann(tpAniSirGlobal mac_ptr,
 				tDot11fIEext_chan_switch_ann *dot_11_ptr,
-				tpPESession session_entry);
+				struct pe_session *session_entry);
 
 /* / Populate a tDot11fIEChannelSwitchWrapper */
 void
 populate_dot11f_chan_switch_wrapper(tpAniSirGlobal pMac,
 				tDot11fIEChannelSwitchWrapper *pDot11f,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 
 /* / Populate a tDot11fIECountry */
 QDF_STATUS
 populate_dot11f_country(tpAniSirGlobal pMac,
-			tDot11fIECountry *pDot11f, tpPESession psessionEntry);
+			tDot11fIECountry *pDot11f, struct pe_session *psessionEntry);
 
 /* Populated a populate_dot11f_ds_params */
 QDF_STATUS
@@ -727,16 +727,16 @@ populate_dot11f_ds_params(tpAniSirGlobal pMac,
 void
 populate_dot11f_edca_param_set(tpAniSirGlobal pMac,
 			tDot11fIEEDCAParamSet *pDot11f,
-			tpPESession psessionEntry);
+			struct pe_session *psessionEntry);
 
 QDF_STATUS
 populate_dot11f_erp_info(tpAniSirGlobal pMac,
-			tDot11fIEERPInfo *pDot11f, tpPESession psessionEntry);
+			tDot11fIEERPInfo *pDot11f, struct pe_session *psessionEntry);
 
 QDF_STATUS
 populate_dot11f_ext_supp_rates(tpAniSirGlobal pMac,
 			uint8_t nChannelNum, tDot11fIEExtSuppRates *pDot11f,
-			tpPESession psessionEntry);
+			struct pe_session *psessionEntry);
 
 /**
  * populate_dot11f_beacon_report() - Populate the Beacon Report IE
@@ -776,15 +776,15 @@ populate_dot11f_ext_supp_rates1(tpAniSirGlobal pMac,
 
 QDF_STATUS
 populate_dot11f_ht_caps(tpAniSirGlobal pMac,
-			tpPESession psessionEntry, tDot11fIEHTCaps *pDot11f);
+			struct pe_session *psessionEntry, tDot11fIEHTCaps *pDot11f);
 
 QDF_STATUS
 populate_dot11f_ht_info(tpAniSirGlobal pMac,
-			tDot11fIEHTInfo *pDot11f, tpPESession psessionEntry);
+			tDot11fIEHTInfo *pDot11f, struct pe_session *psessionEntry);
 
 void populate_dot11f_ibss_params(tpAniSirGlobal pMac,
 				tDot11fIEIBSSParams *pDot11f,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 
 #ifdef ANI_SUPPORT_11H
 QDF_STATUS
@@ -809,7 +809,7 @@ populate_dot11f_measurement_report2(tpAniSirGlobal pMac,
 void
 populate_dot11f_power_caps(tpAniSirGlobal pMac,
 			tDot11fIEPowerCaps *pCaps,
-			uint8_t nAssocType, tpPESession psessionEntry);
+			uint8_t nAssocType, struct pe_session *psessionEntry);
 
 /* / Populate a tDot11fIEPowerConstraints */
 QDF_STATUS
@@ -819,10 +819,10 @@ populate_dot11f_power_constraints(tpAniSirGlobal pMac,
 void
 populate_dot11f_qos_caps_ap(tpAniSirGlobal pMac,
 			tDot11fIEQOSCapsAp *pDot11f,
-			tpPESession psessionEntry);
+			struct pe_session *psessionEntry);
 
 void
-populate_dot11f_qos_caps_station(tpAniSirGlobal pMac, tpPESession session,
+populate_dot11f_qos_caps_station(tpAniSirGlobal pMac, struct pe_session *session,
 				tDot11fIEQOSCapsStation *pDot11f);
 
 QDF_STATUS
@@ -874,7 +874,7 @@ populate_dot11f_schedule(tSirMacScheduleIE *pSchedule,
 void
 populate_dot11f_supp_channels(tpAniSirGlobal pMac,
 			tDot11fIESuppChannels *pDot11f,
-			uint8_t nAssocType, tpPESession psessionEntry);
+			uint8_t nAssocType, struct pe_session *psessionEntry);
 
 /**
  * \brief Populated a tDot11fIESuppRates
@@ -902,7 +902,7 @@ populate_dot11f_supp_channels(tpAniSirGlobal pMac,
 QDF_STATUS
 populate_dot11f_supp_rates(tpAniSirGlobal pMac,
 			uint8_t nChannelNum,
-			tDot11fIESuppRates *pDot11f, tpPESession);
+			tDot11fIESuppRates *pDot11f, struct pe_session *);
 
 QDF_STATUS
 populate_dot11f_rates_tdls(tpAniSirGlobal p_mac,
@@ -912,7 +912,7 @@ populate_dot11f_rates_tdls(tpAniSirGlobal p_mac,
 
 QDF_STATUS populate_dot11f_tpc_report(tpAniSirGlobal pMac,
 					tDot11fIETPCReport *pDot11f,
-					tpPESession psessionEntry);
+					struct pe_session *psessionEntry);
 
 /* / Populate a tDot11FfTSInfo */
 void populate_dot11f_ts_info(tSirMacTSInfo *pInfo, tDot11fFfTSInfo *pDot11f);
@@ -920,7 +920,7 @@ void populate_dot11f_ts_info(tSirMacTSInfo *pInfo, tDot11fFfTSInfo *pDot11f);
 void populate_dot11f_wmm(tpAniSirGlobal pMac,
 			tDot11fIEWMMInfoAp *pInfo,
 			tDot11fIEWMMParams *pParams,
-			tDot11fIEWMMCaps *pCaps, tpPESession psessionEntry);
+			tDot11fIEWMMCaps *pCaps, struct pe_session *psessionEntry);
 
 void populate_dot11f_wmm_caps(tDot11fIEWMMCaps *pCaps);
 
@@ -940,7 +940,7 @@ void populate_dot11_tsrsie(tpAniSirGlobal pMac,
 			uint8_t rate_length);
 void populate_dot11f_re_assoc_tspec(tpAniSirGlobal pMac,
 				tDot11fReAssocRequest *pReassoc,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 QDF_STATUS
 sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
 		uint8_t *pPayload, const uint32_t payloadLength,
@@ -963,15 +963,15 @@ void ese_populate_wmm_tspec(tSirMacTspecIE *source, ese_wmm_tspec_ie *dest);
 
 void populate_dot11f_wmm_info_ap(tpAniSirGlobal pMac,
 				tDot11fIEWMMInfoAp *pInfo,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 
 void populate_dot11f_wmm_info_station_per_session(tpAniSirGlobal pMac,
-					tpPESession psessionEntry,
+					struct pe_session *psessionEntry,
 					tDot11fIEWMMInfoStation *pInfo);
 
 void populate_dot11f_wmm_params(tpAniSirGlobal pMac,
 				tDot11fIEWMMParams *pParams,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 
 /**
  * \brief Populate a tDot11fIEWMMSchedule
@@ -1021,13 +1021,13 @@ QDF_STATUS de_populate_dot11f_wsc_registrar_info(tpAniSirGlobal pMac,
 
 QDF_STATUS populate_dot11f_probe_res_wpsi_es(tpAniSirGlobal pMac,
 						tDot11fIEWscProbeRes *pDot11f,
-						tpPESession psessionEntry);
+						struct pe_session *psessionEntry);
 QDF_STATUS populate_dot11f_assoc_res_wpsi_es(tpAniSirGlobal pMac,
 						tDot11fIEWscAssocRes *pDot11f,
-						tpPESession psessionEntry);
+						struct pe_session *psessionEntry);
 QDF_STATUS populate_dot11f_beacon_wpsi_es(tpAniSirGlobal pMac,
 					tDot11fIEWscBeacon *pDot11f,
-					tpPESession psessionEntry);
+					struct pe_session *psessionEntry);
 
 QDF_STATUS populate_dot11f_wsc_in_probe_res(tpAniSirGlobal pMac,
 					tDot11fIEWscProbeRes *pDot11f);
@@ -1057,7 +1057,7 @@ QDF_STATUS populate_dot11f_wfatpc(tpAniSirGlobal pMac,
 
 QDF_STATUS populate_dot11f_rrm_ie(tpAniSirGlobal pMac,
 				tDot11fIERRMEnabledCap *pDot11f,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 
 void populate_mdie(tpAniSirGlobal pMac,
 		tDot11fIEMobilityDomain * pDot11f, uint8_t mdie[]);
@@ -1073,17 +1073,17 @@ int find_ie_location(tpAniSirGlobal pMac, tpSirRSNie pRsnIe, uint8_t EID);
 void lim_log_vht_cap(tpAniSirGlobal pMac, tDot11fIEVHTCaps *pDot11f);
 
 QDF_STATUS
-populate_dot11f_vht_caps(tpAniSirGlobal pMac, tpPESession psessionEntry,
+populate_dot11f_vht_caps(tpAniSirGlobal pMac, struct pe_session *psessionEntry,
 			tDot11fIEVHTCaps *pDot11f);
 
 QDF_STATUS
 populate_dot11f_vht_operation(tpAniSirGlobal pMac,
-			tpPESession psessionEntry,
+			struct pe_session *psessionEntry,
 			tDot11fIEVHTOperation *pDot11f);
 
 QDF_STATUS
 populate_dot11f_ext_cap(tpAniSirGlobal pMac, bool isVHTEnabled,
-			tDot11fIEExtCap *pDot11f, tpPESession psessionEntry);
+			tDot11fIEExtCap *pDot11f, struct pe_session *psessionEntry);
 
 void populate_dot11f_qcn_ie(tDot11fIEQCN_IE *pDot11f);
 
@@ -1100,23 +1100,23 @@ void populate_dot11f_qcn_ie(tDot11fIEQCN_IE *pDot11f);
  */
 void populate_dot11f_fils_params(tpAniSirGlobal mac_ctx,
 				 tDot11fAssocRequest * frm,
-				 tpPESession pe_session);
+				 struct pe_session *pe_session);
 #else
 static inline void populate_dot11f_fils_params(tpAniSirGlobal mac_ctx,
 				 tDot11fAssocRequest *frm,
-				 tpPESession pe_session)
+				 struct pe_session *pe_session)
 { }
 #endif
 
 QDF_STATUS
 populate_dot11f_operating_mode(tpAniSirGlobal pMac,
 			tDot11fIEOperatingMode *pDot11f,
-			tpPESession psessionEntry);
+			struct pe_session *psessionEntry);
 
 void
 populate_dot11f_wider_bw_chan_switch_ann(tpAniSirGlobal pMac,
 					tDot11fIEWiderBWChanSwitchAnn *pDot11f,
-					tpPESession psessionEntry);
+					struct pe_session *psessionEntry);
 
 void populate_dot11f_timeout_interval(tpAniSirGlobal pMac,
 				tDot11fIETimeoutInterval *pDot11f,
@@ -1127,13 +1127,13 @@ void populate_dot11f_timeout_interval(tpAniSirGlobal pMac,
 void
 populate_dot11f_avoid_channel_ie(tpAniSirGlobal mac_ctx,
 				tDot11fIEQComVendorIE *dot11f,
-				tpPESession session_entry);
+				struct pe_session *session_entry);
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 QDF_STATUS populate_dot11f_timing_advert_frame(tpAniSirGlobal pMac,
 	tDot11fTimingAdvertisementFrame *frame);
 void populate_dot11_supp_operating_classes(tpAniSirGlobal mac_ptr,
-	tDot11fIESuppOperatingClasses *dot_11_ptr, tpPESession session_entry);
+	tDot11fIESuppOperatingClasses *dot_11_ptr, struct pe_session *session_entry);
 
 QDF_STATUS
 sir_validate_and_rectify_ies(tpAniSirGlobal mac_ctx,
@@ -1166,18 +1166,18 @@ void update_fils_data(struct sir_fils_indication *fils_ind,
 				 tDot11fIEfils_indication * fils_indication);
 #endif
 #ifdef WLAN_FEATURE_11AX
-QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal, tpPESession,
+QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal, struct pe_session *,
 				   tDot11fIEhe_cap *);
-QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal, tpPESession,
+QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal, struct pe_session *,
 					tDot11fIEhe_op *);
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 QDF_STATUS populate_dot11f_he_bss_color_change(tpAniSirGlobal mac_ctx,
-				tpPESession session,
+				struct pe_session *session,
 				tDot11fIEbss_color_change *bss_color);
 #else
 static inline QDF_STATUS populate_dot11f_he_bss_color_change(
 				tpAniSirGlobal mac_ctx,
-				tpPESession session,
+				struct pe_session *session,
 				tDot11fIEbss_color_change *bss_color)
 {
 	return QDF_STATUS_SUCCESS;
@@ -1185,20 +1185,20 @@ static inline QDF_STATUS populate_dot11f_he_bss_color_change(
 #endif
 #else
 static inline QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx,
-			tpPESession session, tDot11fIEhe_cap *he_cap)
+			struct pe_session *session, tDot11fIEhe_cap *he_cap)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal mac_ctx,
-			tpPESession session, tDot11fIEhe_op *he_op)
+			struct pe_session *session, tDot11fIEhe_op *he_op)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS populate_dot11f_he_bss_color_change(
 				tpAniSirGlobal mac_ctx,
-				tpPESession session,
+				struct pe_session *session,
 				tDot11fIEbss_color_change *bss_color)
 {
 	return QDF_STATUS_SUCCESS;
@@ -1217,12 +1217,12 @@ static inline QDF_STATUS populate_dot11f_he_bss_color_change(
  * Return: QDF_STATUS Success or Failure
  */
 QDF_STATUS populate_dot11f_twt_extended_caps(tpAniSirGlobal mac_ctx,
-					     tpPESession pe_session,
+					     struct pe_session *pe_session,
 					     tDot11fIEExtCap *dot11f);
 #else
 static inline
 QDF_STATUS populate_dot11f_twt_extended_caps(tpAniSirGlobal mac_ctx,
-					     tpPESession pe_session,
+					     struct pe_session *pe_session,
 					     tDot11fIEExtCap *dot11f)
 {
 	return QDF_STATUS_SUCCESS;
