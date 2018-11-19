@@ -682,10 +682,11 @@ add_ast_entry:
 				(struct cdp_peer *)peer,
 				mac_addr,
 				next_node_mac,
-				flags))
+				flags)) {
 			if (peer_ref_cnt)
 				dp_peer_unref_delete(peer);
 			return 0;
+		}
 	}
 
 	if (peer_ref_cnt)
