@@ -48,6 +48,8 @@ enum {
 
 enum {
 	ALLOW_BUCK_DISABLE,
+	HPH_COMP_DELAY,
+	HPH_PA_DELAY,
 };
 
 static const DECLARE_TLV_DB_SCALE(line_gain, 0, 7, 1);
@@ -392,6 +394,7 @@ static int wcd937x_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 				    0x04, 0x04);
 		snd_soc_update_bits(codec, WCD937X_HPH_RDAC_CLK_CTL1,
 				    0x80, 0x00);
+		set_bit(HPH_COMP_DELAY, &wcd937x->status_mask);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		if (hph_mode == CLS_AB_HIFI || hph_mode == CLS_H_HIFI)
@@ -408,6 +411,22 @@ static int wcd937x_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 					0x02, 0x02);
 			snd_soc_update_bits(codec,
 					WCD937X_HPH_L_EN, 0x20, 0x00);
+			if (wcd937x->comp2_enable) {
+				snd_soc_update_bits(codec,
+					WCD937X_DIGITAL_CDC_COMP_CTL_0,
+					0x01, 0x01);
+				snd_soc_update_bits(codec,
+					WCD937X_HPH_R_EN, 0x20, 0x00);
+			}
+			/*
+			 * 5ms sleep is required after COMP is enabled as per
+			 * HW requirement
+			 */
+			if (test_bit(HPH_COMP_DELAY, &wcd937x->status_mask)) {
+				usleep_range(5000, 5100);
+				clear_bit(HPH_COMP_DELAY,
+					&wcd937x->status_mask);
+			}
 		} else {
 			snd_soc_update_bits(codec,
 					WCD937X_DIGITAL_CDC_COMP_CTL_0,
@@ -415,7 +434,6 @@ static int wcd937x_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 			snd_soc_update_bits(codec,
 					WCD937X_HPH_L_EN, 0x20, 0x20);
 		}
-		usleep_range(5000, 5010);
 		snd_soc_update_bits(codec, WCD937X_HPH_NEW_INT_HPH_TIMER1,
 				    0x02, 0x00);
 		break;
@@ -449,6 +467,7 @@ static int wcd937x_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 				    0x08, 0x08);
 		snd_soc_update_bits(codec, WCD937X_HPH_RDAC_CLK_CTL1,
 				    0x80, 0x00);
+		set_bit(HPH_COMP_DELAY, &wcd937x->status_mask);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
 		if (hph_mode == CLS_AB_HIFI || hph_mode == CLS_H_HIFI)
@@ -465,6 +484,22 @@ static int wcd937x_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 					0x01, 0x01);
 			snd_soc_update_bits(codec,
 					WCD937X_HPH_R_EN, 0x20, 0x00);
+			if (wcd937x->comp1_enable) {
+				snd_soc_update_bits(codec,
+					WCD937X_DIGITAL_CDC_COMP_CTL_0,
+					0x02, 0x02);
+				snd_soc_update_bits(codec,
+					WCD937X_HPH_L_EN, 0x20, 0x00);
+			}
+			/*
+			 * 5ms sleep is required after COMP is enabled as per
+			 * HW requirement
+			 */
+			if (test_bit(HPH_COMP_DELAY, &wcd937x->status_mask)) {
+				usleep_range(5000, 5100);
+				clear_bit(HPH_COMP_DELAY,
+					&wcd937x->status_mask);
+			}
 		} else {
 			snd_soc_update_bits(codec,
 					WCD937X_DIGITAL_CDC_COMP_CTL_0,
@@ -472,7 +507,6 @@ static int wcd937x_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 			snd_soc_update_bits(codec,
 					WCD937X_HPH_R_EN, 0x20, 0x20);
 		}
-		usleep_range(5000, 5010);
 		snd_soc_update_bits(codec, WCD937X_HPH_NEW_INT_HPH_TIMER1,
 				    0x02, 0x00);
 		break;
@@ -592,9 +626,22 @@ static int wcd937x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 			     hph_mode);
 		snd_soc_update_bits(codec, WCD937X_ANA_HPH, 0x10, 0x10);
 		usleep_range(100, 110);
+		set_bit(HPH_PA_DELAY, &wcd937x->status_mask);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
-		usleep_range(7000, 7010);
+		/*
+		 * 7ms sleep is required after PA is enabled as per
+		 * HW requirement. If compander is disabled, then
+		 * 20ms delay is required.
+		 */
+		if (test_bit(HPH_PA_DELAY, &wcd937x->status_mask)) {
+			if (!wcd937x->comp2_enable)
+				usleep_range(20000, 20100);
+			else
+				usleep_range(7000, 7100);
+			clear_bit(HPH_PA_DELAY, &wcd937x->status_mask);
+		}
+
 		snd_soc_update_bits(codec, WCD937X_HPH_NEW_INT_HPH_TIMER1,
 				    0x02, 0x02);
 		if (hph_mode == CLS_AB || hph_mode == CLS_AB_HIFI)
@@ -652,9 +699,22 @@ static int wcd937x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 			     hph_mode);
 		snd_soc_update_bits(codec, WCD937X_ANA_HPH, 0x20, 0x20);
 		usleep_range(100, 110);
+		set_bit(HPH_PA_DELAY, &wcd937x->status_mask);
 		break;
 	case SND_SOC_DAPM_POST_PMU:
-		usleep_range(7000, 7010);
+		/*
+		 * 7ms sleep is required after PA is enabled as per
+		 * HW requirement. If compander is disabled, then
+		 * 20ms delay is required.
+		 */
+		if (test_bit(HPH_PA_DELAY, &wcd937x->status_mask)) {
+			if (!wcd937x->comp1_enable)
+				usleep_range(20000, 20100);
+			else
+				usleep_range(7000, 7100);
+			clear_bit(HPH_PA_DELAY, &wcd937x->status_mask);
+		}
+
 		snd_soc_update_bits(codec, WCD937X_HPH_NEW_INT_HPH_TIMER1,
 				    0x02, 0x02);
 		if (hph_mode == CLS_AB || hph_mode == CLS_AB_HIFI)
