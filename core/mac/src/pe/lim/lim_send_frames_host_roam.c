@@ -66,7 +66,7 @@
  */
 void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	tLimMlmReassocReq *mlm_reassoc_req,
-	tpPESession pe_session)
+	struct pe_session *pe_session)
 {
 	tDot11fReAssocRequest *frm;
 	uint16_t caps;
@@ -477,7 +477,7 @@ err:
  */
 void lim_send_retry_reassoc_req_frame(tpAniSirGlobal mac,
 				      tLimMlmReassocReq *pMlmReassocReq,
-				      tpPESession psessionEntry)
+				      struct pe_session *psessionEntry)
 {
 	tLimMlmReassocCnf mlmReassocCnf;        /* keep sme */
 	tLimMlmReassocReq *pTmpMlmReassocReq = NULL;
@@ -541,7 +541,7 @@ end:
  */
 void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac,
 				tLimMlmReassocReq *pMlmReassocReq,
-				tpPESession psessionEntry)
+				struct pe_session *psessionEntry)
 {
 	tDot11fReAssocRequest *frm;
 	uint16_t caps;
