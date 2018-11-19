@@ -2528,33 +2528,14 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 }
 #endif
 
-static int hif_mark_wake_irq_wakeable(struct hif_softc *scn)
-{
-	int errno;
-
-	errno = enable_irq_wake(scn->wake_irq);
-	if (errno) {
-		HIF_ERROR("%s: Failed to mark wake IRQ: %d", __func__, errno);
-		return errno;
-	}
-
-	return 0;
-}
-
 /**
  * hif_pci_bus_suspend(): prepare hif for suspend
  *
- * Enables pci bus wake irq based on link suspend voting.
- *
- * Return: 0 for success and non-zero error code for failure
+ * Return: Errno
  */
 int hif_pci_bus_suspend(struct hif_softc *scn)
 {
-	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
-		return 0;
-
-	/* pci link is staying up; enable wake irq */
-	return hif_mark_wake_irq_wakeable(scn);
+	return 0;
 }
 
 /**
@@ -2596,39 +2577,14 @@ static int __hif_check_link_status(struct hif_softc *scn)
 	return -EACCES;
 }
 
-static int hif_unmark_wake_irq_wakeable(struct hif_softc *scn)
-{
-	int errno;
-
-	errno = disable_irq_wake(scn->wake_irq);
-	if (errno) {
-		HIF_ERROR("%s: Failed to unmark wake IRQ: %d", __func__, errno);
-		return errno;
-	}
-
-	return 0;
-}
-
 /**
  * hif_pci_bus_resume(): prepare hif for resume
  *
- * Disables pci bus wake irq based on link suspend voting.
- *
- * Return: 0 for success and non-zero error code for failure
+ * Return: Errno
  */
 int hif_pci_bus_resume(struct hif_softc *scn)
 {
-	int ret;
-
-	ret = __hif_check_link_status(scn);
-	if (ret)
-		return ret;
-
-	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
-		return 0;
-
-	/* pci link is up; disable wake irq */
-	return hif_unmark_wake_irq_wakeable(scn);
+	return __hif_check_link_status(scn);
 }
 
 /**
