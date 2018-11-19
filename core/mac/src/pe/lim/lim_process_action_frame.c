@@ -71,7 +71,7 @@ static last_processed_msg rrm_link_action_frm;
    -----------------------------------------------------------------*/
 void lim_stop_tx_and_switch_channel(tpAniSirGlobal mac, uint8_t sessionId)
 {
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 
 	psessionEntry = pe_find_session_by_session_id(mac, sessionId);
 
@@ -118,7 +118,7 @@ void lim_stop_tx_and_switch_channel(tpAniSirGlobal mac, uint8_t sessionId)
    \return NONE
    ------------------------------------------------------------*/
 QDF_STATUS lim_start_channel_switch(tpAniSirGlobal mac,
-				       tpPESession psessionEntry)
+				       struct pe_session *psessionEntry)
 {
 	pe_debug("Starting the channel switch");
 
@@ -170,7 +170,7 @@ QDF_STATUS lim_start_channel_switch(tpAniSirGlobal mac,
  */
 
 static void __lim_process_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
-			  uint8_t *rx_pkt_info, tpPESession session)
+			  uint8_t *rx_pkt_info, struct pe_session *session)
 {
 	tpSirMacMgmtHdr mac_hdr;
 	uint8_t *body_ptr;
@@ -305,7 +305,7 @@ static void __lim_process_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
  */
 static void
 lim_process_ext_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
-		uint8_t *rx_packet_info, tpPESession session_entry)
+		uint8_t *rx_packet_info, struct pe_session *session_entry)
 {
 
 	tpSirMacMgmtHdr         hdr;
@@ -398,7 +398,7 @@ lim_process_ext_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
-			uint8_t *rx_pkt_info, tpPESession session)
+			uint8_t *rx_pkt_info, struct pe_session *session)
 {
 
 	tpSirMacMgmtHdr mac_hdr;
@@ -541,7 +541,7 @@ end:
  * Return: none
  */
 static void __lim_process_gid_management_action_frame(tpAniSirGlobal mac_ctx,
-			uint8_t *rx_pkt_info, tpPESession session)
+			uint8_t *rx_pkt_info, struct pe_session *session)
 {
 
 	uint8_t *body_ptr;
@@ -628,7 +628,7 @@ out:
 
 static void
 __lim_process_add_ts_req(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-			 tpPESession psessionEntry)
+			 struct pe_session *psessionEntry)
 {
 }
 
@@ -643,7 +643,7 @@ __lim_process_add_ts_req(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
  * Return: none
  */
 static void __lim_process_add_ts_rsp(tpAniSirGlobal mac_ctx,
-		uint8_t *rx_pkt_info, tpPESession session)
+		uint8_t *rx_pkt_info, struct pe_session *session)
 {
 	tSirAddtsRspInfo addts;
 	QDF_STATUS retval;
@@ -884,7 +884,7 @@ static void __lim_process_add_ts_rsp(tpAniSirGlobal mac_ctx,
  * Return: none
  */
 static void __lim_process_del_ts_req(tpAniSirGlobal mac_ctx,
-		uint8_t *rx_pkt_info, tpPESession session)
+		uint8_t *rx_pkt_info, struct pe_session *session)
 {
 	QDF_STATUS retval;
 	tSirDeltsReqInfo delts;
@@ -1029,7 +1029,7 @@ static void __lim_process_del_ts_req(tpAniSirGlobal mac_ctx,
  * Return: none
  */
 static void __lim_process_qos_map_configure_frame(tpAniSirGlobal mac_ctx,
-			uint8_t *rx_pkt_info, tpPESession session)
+			uint8_t *rx_pkt_info, struct pe_session *session)
 {
 	tpSirMacMgmtHdr mac_hdr;
 	uint32_t frame_len;
@@ -1056,7 +1056,7 @@ static void __lim_process_qos_map_configure_frame(tpAniSirGlobal mac_ctx,
 static void
 __lim_process_basic_meas_req(tpAniSirGlobal mac,
 			     tpSirMacMeasReqActionFrame pMeasReqFrame,
-			     tSirMacAddr peerMacAddr, tpPESession psessionEntry)
+			     tSirMacAddr peerMacAddr, struct pe_session *psessionEntry)
 {
 	if (lim_send_meas_report_frame(mac, pMeasReqFrame,
 				       peerMacAddr, psessionEntry) !=
@@ -1068,7 +1068,7 @@ __lim_process_basic_meas_req(tpAniSirGlobal mac,
 static void
 __lim_process_cca_meas_req(tpAniSirGlobal mac,
 			   tpSirMacMeasReqActionFrame pMeasReqFrame,
-			   tSirMacAddr peerMacAddr, tpPESession psessionEntry)
+			   tSirMacAddr peerMacAddr, struct pe_session *psessionEntry)
 {
 	if (lim_send_meas_report_frame(mac, pMeasReqFrame,
 				       peerMacAddr, psessionEntry) !=
@@ -1080,7 +1080,7 @@ __lim_process_cca_meas_req(tpAniSirGlobal mac,
 static void
 __lim_process_rpi_meas_req(tpAniSirGlobal mac,
 			   tpSirMacMeasReqActionFrame pMeasReqFrame,
-			   tSirMacAddr peerMacAddr, tpPESession psessionEntry)
+			   tSirMacAddr peerMacAddr, struct pe_session *psessionEntry)
 {
 	if (lim_send_meas_report_frame(mac, pMeasReqFrame,
 				       peerMacAddr, psessionEntry) !=
@@ -1092,7 +1092,7 @@ __lim_process_rpi_meas_req(tpAniSirGlobal mac,
 static void
 __lim_process_measurement_request_frame(tpAniSirGlobal mac,
 					uint8_t *pRxPacketInfo,
-					tpPESession psessionEntry)
+					struct pe_session *psessionEntry)
 {
 	tpSirMacMgmtHdr pHdr;
 	uint8_t *pBody;
@@ -1133,7 +1133,7 @@ __lim_process_measurement_request_frame(tpAniSirGlobal mac,
 } /*** end limProcessMeasurementRequestFrame ***/
 static void
 __lim_process_tpc_request_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-				tpPESession psessionEntry)
+				struct pe_session *psessionEntry)
 {
 	tpSirMacMgmtHdr pHdr;
 	uint8_t *pBody;
@@ -1165,7 +1165,7 @@ __lim_process_tpc_request_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 
 static void
 __lim_process_sm_power_save_update(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-				   tpPESession psessionEntry)
+				   struct pe_session *psessionEntry)
 {
 
 	tpSirMacMgmtHdr pHdr;
@@ -1237,7 +1237,7 @@ __lim_process_sm_power_save_update(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 
 static void
 __lim_process_radio_measure_request(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-				    tpPESession psessionEntry)
+				    struct pe_session *psessionEntry)
 {
 	tpSirMacMgmtHdr pHdr;
 	tDot11fRadioMeasurementRequest *frm;
@@ -1297,7 +1297,7 @@ err:
 
 static QDF_STATUS
 __lim_process_link_measurement_req(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-				   tpPESession psessionEntry)
+				   struct pe_session *psessionEntry)
 {
 	tpSirMacMgmtHdr pHdr;
 	tDot11fLinkMeasurementRequest frm;
@@ -1336,7 +1336,7 @@ __lim_process_link_measurement_req(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 
 static void
 __lim_process_neighbor_report(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-			      tpPESession psessionEntry)
+			      struct pe_session *psessionEntry)
 {
 	tpSirMacMgmtHdr pHdr;
 	tDot11fNeighborReportResponse *pFrm;
@@ -1401,7 +1401,7 @@ __lim_process_neighbor_report(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
  */
 static void __lim_process_sa_query_request_action_frame(tpAniSirGlobal mac,
 							uint8_t *pRxPacketInfo,
-							tpPESession psessionEntry)
+							struct pe_session *psessionEntry)
 {
 	tpSirMacMgmtHdr pHdr;
 	uint8_t *pBody;
@@ -1468,7 +1468,7 @@ static void __lim_process_sa_query_request_action_frame(tpAniSirGlobal mac,
  */
 static void __lim_process_sa_query_response_action_frame(tpAniSirGlobal mac,
 							 uint8_t *pRxPacketInfo,
-							 tpPESession psessionEntry)
+							 struct pe_session *psessionEntry)
 {
 	tpSirMacMgmtHdr pHdr;
 	uint32_t frame_len;
@@ -1564,7 +1564,7 @@ static void __lim_process_sa_query_response_action_frame(tpAniSirGlobal mac,
  */
 
 static bool
-lim_drop_unprotected_action_frame(tpAniSirGlobal mac, tpPESession psessionEntry,
+lim_drop_unprotected_action_frame(tpAniSirGlobal mac, struct pe_session *psessionEntry,
 				  tpSirMacMgmtHdr pHdr, uint8_t category)
 {
 	uint16_t aid;
@@ -1601,7 +1601,7 @@ lim_drop_unprotected_action_frame(tpAniSirGlobal mac, tpPESession psessionEntry,
  * Return: None
  */
 static void lim_process_addba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
-				  tpPESession session)
+				  struct pe_session *session)
 {
 	tpSirMacMgmtHdr mac_hdr;
 	uint8_t *body_ptr;
@@ -1683,7 +1683,7 @@ error:
  * Return: None
  */
 static void lim_process_delba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
-				  tpPESession session)
+				  struct pe_session *session)
 {
 	tpSirMacMgmtHdr mac_hdr;
 	uint8_t *body_ptr;
@@ -1756,7 +1756,7 @@ error:
  */
 
 void lim_process_action_frame(tpAniSirGlobal mac_ctx,
-		uint8_t *rx_pkt_info, tpPESession session)
+		uint8_t *rx_pkt_info, struct pe_session *session)
 {
 	uint8_t *body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 	tpSirMacActionFrameHdr action_hdr = (tpSirMacActionFrameHdr) body_ptr;
