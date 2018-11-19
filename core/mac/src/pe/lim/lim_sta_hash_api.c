@@ -52,7 +52,7 @@
  */
 
 QDF_STATUS lim_get_sta_hash_bssidx(tpAniSirGlobal mac, uint16_t assocId,
-				      uint8_t *bssidx, tpPESession psessionEntry)
+				      uint8_t *bssidx, struct pe_session *psessionEntry)
 {
 	tpDphHashNode pSta =
 		dph_get_hash_entry(mac, assocId, &psessionEntry->dph.dphHashTable);
