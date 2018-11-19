@@ -38,22 +38,22 @@ QDF_STATUS lim_send_cf_params(tpAniSirGlobal mac, uint8_t bssIdx,
 				 uint8_t cfpCount, uint8_t cfpPeriod);
 QDF_STATUS lim_send_beacon_params(tpAniSirGlobal mac,
 				     tpUpdateBeaconParams pUpdatedBcnParams,
-				     tpPESession psessionEntry);
+				     struct pe_session *psessionEntry);
 /* QDF_STATUS lim_send_beacon_params(tpAniSirGlobal mac, tpUpdateBeaconParams pUpdatedBcnParams); */
 QDF_STATUS lim_send_mode_update(tpAniSirGlobal mac,
 				   tUpdateVHTOpMode *tempParam,
-				   tpPESession psessionEntry);
+				   struct pe_session *psessionEntry);
 QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal mac,
 				     tUpdateRxNss *tempParam,
-				     tpPESession psessionEntry);
+				     struct pe_session *psessionEntry);
 
 QDF_STATUS lim_set_membership(tpAniSirGlobal mac,
 				 tUpdateMembership *pTempParam,
-				 tpPESession psessionEntry);
+				 struct pe_session *psessionEntry);
 
 QDF_STATUS lim_set_user_pos(tpAniSirGlobal mac,
 			       tUpdateUserPos *pTempParam,
-			       tpPESession psessionEntry);
+			       struct pe_session *psessionEntry);
 QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal mac,
 					  uint8_t chnlNumber,
 					  uint8_t ch_center_freq_seg0,
@@ -75,10 +75,10 @@ QDF_STATUS lim_set_link_state(tpAniSirGlobal mac, tSirLinkState state,
 extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal mac, tSirLinkState
 					   state, tSirMacAddr bssId,
 					   tSirMacAddr selfMacAddr, int ft,
-					   tpPESession psessionEntry);
+					   struct pe_session *psessionEntry);
 void lim_set_active_edca_params(tpAniSirGlobal mac,
 				tSirMacEdcaParamRecord *plocalEdcaParams,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 #define CAPABILITY_FILTER_MASK  0x73CF
 #define ERP_FILTER_MASK         0xF8
 #define EDCA_FILTER_MASK        0xF0
@@ -92,10 +92,10 @@ void lim_set_active_edca_params(tpAniSirGlobal mac,
 #ifdef WLAN_FEATURE_11W
 QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal mac,
 					     bool excludeUnenc,
-					     tpPESession psessionEntry);
+					     struct pe_session *psessionEntry);
 #endif
 QDF_STATUS lim_send_ht40_obss_scanind(tpAniSirGlobal mac_ctx,
-						tpPESession session);
+						struct pe_session *session);
 void lim_handle_sme_join_result(tpAniSirGlobal,
-		tSirResultCodes, uint16_t, tpPESession);
+		tSirResultCodes, uint16_t, struct pe_session *);
 #endif

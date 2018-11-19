@@ -100,7 +100,7 @@ QDF_STATUS lim_send_cf_params(tpAniSirGlobal mac, uint8_t bssIdx,
  */
 QDF_STATUS lim_send_beacon_params(tpAniSirGlobal mac,
 				     tpUpdateBeaconParams pUpdatedBcnParams,
-				     tpPESession psessionEntry)
+				     struct pe_session *psessionEntry)
 {
 	tpUpdateBeaconParams pBcnParams = NULL;
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -171,7 +171,7 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal mac,
 {
 	tpSwitchChannelParams pChnlParams = NULL;
 	struct scheduler_msg msgQ = {0};
-	tpPESession pSessionEntry;
+	struct pe_session *pSessionEntry;
 
 	pSessionEntry = pe_find_session_by_session_id(mac, peSessionId);
 	if (pSessionEntry == NULL) {
@@ -327,7 +327,7 @@ QDF_STATUS lim_send_edca_params(tpAniSirGlobal mac,
 
 void lim_set_active_edca_params(tpAniSirGlobal mac_ctx,
 				tSirMacEdcaParamRecord *edca_params,
-				tpPESession pe_session)
+				struct pe_session *pe_session)
 {
 	uint8_t ac, new_ac, i;
 	uint8_t ac_admitted;
@@ -469,7 +469,7 @@ QDF_STATUS lim_set_link_state(tpAniSirGlobal mac, tSirLinkState state,
 extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal mac, tSirLinkState
 					   state, tSirMacAddr bssId,
 					   tSirMacAddr selfMacAddr, int ft,
-					   tpPESession psessionEntry)
+					   struct pe_session *psessionEntry)
 {
 	struct scheduler_msg msgQ = {0};
 	QDF_STATUS retCode;
@@ -507,7 +507,7 @@ extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal mac, tSirLinkState
 
 QDF_STATUS lim_send_mode_update(tpAniSirGlobal mac,
 				   tUpdateVHTOpMode *pTempParam,
-				   tpPESession psessionEntry)
+				   struct pe_session *psessionEntry)
 {
 	tUpdateVHTOpMode *pVhtOpMode = NULL;
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -542,7 +542,7 @@ QDF_STATUS lim_send_mode_update(tpAniSirGlobal mac,
 
 QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal mac,
 				     tUpdateRxNss *pTempParam,
-				     tpPESession psessionEntry)
+				     struct pe_session *psessionEntry)
 {
 	tUpdateRxNss *pRxNss = NULL;
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -575,7 +575,7 @@ QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal mac,
 
 QDF_STATUS lim_set_membership(tpAniSirGlobal mac,
 				 tUpdateMembership *pTempParam,
-				 tpPESession psessionEntry)
+				 struct pe_session *psessionEntry)
 {
 	tUpdateMembership *pMembership = NULL;
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -610,7 +610,7 @@ QDF_STATUS lim_set_membership(tpAniSirGlobal mac,
 
 QDF_STATUS lim_set_user_pos(tpAniSirGlobal mac,
 			       tUpdateUserPos *pTempParam,
-			       tpPESession psessionEntry)
+			       struct pe_session *psessionEntry)
 {
 	tUpdateUserPos *pUserPos = NULL;
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -656,7 +656,7 @@ QDF_STATUS lim_set_user_pos(tpAniSirGlobal mac,
  */
 QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal mac,
 					     bool excludeUnenc,
-					     tpPESession psessionEntry)
+					     struct pe_session *psessionEntry)
 {
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 	struct scheduler_msg msgQ = {0};
