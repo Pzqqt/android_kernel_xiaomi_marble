@@ -46,7 +46,7 @@ void
 lim_send_sme_probe_req_ind(tpAniSirGlobal mac,
 			   tSirMacAddr peerMacAddr,
 			   uint8_t *pProbeReqIE,
-			   uint32_t ProbeReqIELen, tpPESession psessionEntry);
+			   uint32_t ProbeReqIELen, struct pe_session *psessionEntry);
 
 /**
  * lim_get_wpspbc_sessions() - to get wps pbs sessions
@@ -63,7 +63,7 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal mac,
 
 void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, struct qdf_mac_addr addr,
 		uint8_t *uuid_e, eWPSPBCOverlap *overlap,
-		tpPESession session)
+		struct pe_session *session)
 {
 	int count = 0;
 	tSirWPSPBCSession *pbc;
@@ -138,7 +138,7 @@ static void lim_remove_timeout_pbc_sessions(tpAniSirGlobal mac,
  * Return: none
  */
 void lim_remove_pbc_sessions(tpAniSirGlobal mac, struct qdf_mac_addr remove_mac,
-			     tpPESession session_entry)
+			     struct pe_session *session_entry)
 {
 	tSirWPSPBCSession *pbc, *prev = NULL;
 
@@ -183,7 +183,7 @@ void lim_remove_pbc_sessions(tpAniSirGlobal mac, struct qdf_mac_addr remove_mac,
 
 static void lim_update_pbc_session_entry(tpAniSirGlobal mac,
 					 uint8_t *addr, uint8_t *uuid_e,
-					 tpPESession psessionEntry)
+					 struct pe_session *psessionEntry)
 {
 	tSirWPSPBCSession *pbc, *prev = NULL;
 
@@ -268,7 +268,7 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal mac,
  * @return None
  */
 
-void lim_wpspbc_close(tpAniSirGlobal mac, tpPESession psessionEntry)
+void lim_wpspbc_close(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 
 	lim_remove_timeout_pbc_sessions(mac, psessionEntry->pAPWPSPBCSession);
@@ -328,7 +328,7 @@ static bool lim_check11b_rates(uint8_t rate)
 
 void
 lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
-		tpPESession session)
+		struct pe_session *session)
 {
 	uint8_t *body_ptr;
 	tpSirMacMgmtHdr mac_hdr;
@@ -533,7 +533,7 @@ multipleSSIDcheck:
 
 static void
 lim_indicate_probe_req_to_hdd(tpAniSirGlobal mac, uint8_t *pBd,
-			      tpPESession psessionEntry)
+			      struct pe_session *psessionEntry)
 {
 	tpSirMacMgmtHdr pHdr;
 	uint32_t frameLen;
@@ -569,7 +569,7 @@ lim_indicate_probe_req_to_hdd(tpAniSirGlobal mac, uint8_t *pBd,
  */
 void
 lim_process_probe_req_frame_multiple_bss(tpAniSirGlobal mac_ctx,
-			uint8_t *buf_descr, tpPESession session)
+			uint8_t *buf_descr, struct pe_session *session)
 {
 	uint8_t i;
 
@@ -626,7 +626,7 @@ void
 lim_send_sme_probe_req_ind(tpAniSirGlobal mac,
 			   tSirMacAddr peerMacAddr,
 			   uint8_t *pProbeReqIE,
-			   uint32_t ProbeReqIELen, tpPESession psessionEntry)
+			   uint32_t ProbeReqIELen, struct pe_session *psessionEntry)
 {
 	tSirSmeProbeReqInd *pSirSmeProbeReqInd;
 	struct scheduler_msg msgQ = {0};
