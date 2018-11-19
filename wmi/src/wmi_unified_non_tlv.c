@@ -667,7 +667,7 @@ send_peer_chan_width_switch_cmd_non_tlv(wmi_unified_t wmi_handle,
 					max_peers_per_command : pending_peers;
 
 		cmd_peer_list = (struct chan_width_peer_list *)
-							(cmd + sizeof(*cmd));
+						&(cmd->chan_width_peer_info[0]);
 
 		for (ix = 0; ix < cmd->num_peers; ix++) {
 			WMI_CHAR_ARRAY_TO_MAC_ADDR(param_peer_list[ix].mac_addr,
