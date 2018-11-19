@@ -33,7 +33,7 @@
 static struct snd_soc_codec_driver bolero;
 
 /* pm runtime auto suspend timer in msecs */
-#define BOLERO_AUTO_SUSPEND_DELAY          1500 /* delay in msec */
+#define BOLERO_AUTO_SUSPEND_DELAY          100 /* delay in msec */
 
 /* MCLK_MUX table for all macros */
 static u16 bolero_mclk_mux_tbl[MAX_MACRO][MCLK_MUX_MAX] = {
