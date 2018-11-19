@@ -62,7 +62,7 @@
  */
 void
 lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-			   tpPESession psessionEntry)
+			   struct pe_session *psessionEntry)
 {
 	uint8_t *pBody;
 	uint16_t aid, reasonCode;
@@ -316,7 +316,7 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 
 #ifdef FEATURE_WLAN_TDLS
 void lim_disassoc_tdls_peers(tpAniSirGlobal mac_ctx,
-				    tpPESession pe_session, tSirMacAddr addr)
+				    struct pe_session *pe_session, tSirMacAddr addr)
 {
 	tpDphHashNode sta_ds;
 	uint16_t aid;
@@ -342,7 +342,7 @@ void lim_disassoc_tdls_peers(tpAniSirGlobal mac_ctx,
 #endif
 
 void lim_perform_disassoc(tpAniSirGlobal mac_ctx, int32_t frame_rssi,
-			  uint16_t rc, tpPESession pe_session, tSirMacAddr addr)
+			  uint16_t rc, struct pe_session *pe_session, tSirMacAddr addr)
 {
 	tLimMlmDisassocInd mlmDisassocInd;
 	uint16_t aid;
