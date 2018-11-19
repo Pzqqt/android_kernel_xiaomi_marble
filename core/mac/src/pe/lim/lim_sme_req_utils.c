@@ -216,7 +216,7 @@ lim_is_addie_valid_in_sme_req_message(tpAniSirGlobal mac, tpSirAddie pAddie)
 uint8_t
 lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal mac_ctx,
 						    tpSirRSNie rsn_ie,
-						    tpPESession session)
+						    struct pe_session *session)
 {
 	uint32_t ret;
 	uint8_t wpa_idx = 0;
@@ -567,7 +567,7 @@ end:
 uint8_t
 lim_is_sme_disassoc_req_valid(tpAniSirGlobal mac,
 			      tpSirSmeDisassocReq pDisassocReq,
-			      tpPESession psessionEntry)
+			      struct pe_session *psessionEntry)
 {
 	if (qdf_is_macaddr_group(&pDisassocReq->peer_macaddr) &&
 	    !qdf_is_macaddr_broadcast(&pDisassocReq->peer_macaddr))
@@ -600,7 +600,7 @@ lim_is_sme_disassoc_req_valid(tpAniSirGlobal mac,
 uint8_t
 lim_is_sme_disassoc_cnf_valid(tpAniSirGlobal mac,
 			      tpSirSmeDisassocCnf pDisassocCnf,
-			      tpPESession psessionEntry)
+			      struct pe_session *psessionEntry)
 {
 	if (qdf_is_macaddr_group(&pDisassocCnf->peer_macaddr))
 		return false;
@@ -630,7 +630,7 @@ lim_is_sme_disassoc_cnf_valid(tpAniSirGlobal mac,
 
 uint8_t
 lim_is_sme_deauth_req_valid(tpAniSirGlobal mac, tpSirSmeDeauthReq pDeauthReq,
-			    tpPESession psessionEntry)
+			    struct pe_session *psessionEntry)
 {
 	if (qdf_is_macaddr_group(&pDeauthReq->peer_macaddr) &&
 	    !qdf_is_macaddr_broadcast(&pDeauthReq->peer_macaddr))

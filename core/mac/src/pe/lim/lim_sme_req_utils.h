@@ -35,15 +35,15 @@
 /* LIM SME request messages related utility functions */
 uint8_t lim_is_sme_start_bss_req_valid(tpAniSirGlobal, tpSirSmeStartBssReq);
 uint8_t lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal,
-							    tpSirRSNie, tpPESession);
+							    tpSirRSNie, struct pe_session *);
 uint8_t lim_is_sme_join_req_valid(tpAniSirGlobal, tpSirSmeJoinReq);
 uint8_t lim_is_sme_disassoc_req_valid(tpAniSirGlobal, tpSirSmeDisassocReq,
-				      tpPESession);
-uint8_t lim_is_sme_deauth_req_valid(tpAniSirGlobal, tpSirSmeDeauthReq, tpPESession);
+				      struct pe_session *);
+uint8_t lim_is_sme_deauth_req_valid(tpAniSirGlobal, tpSirSmeDeauthReq, struct pe_session *);
 uint8_t lim_is_sme_set_context_req_valid(tpAniSirGlobal, tpSirSmeSetContextReq);
 uint8_t lim_is_sme_stop_bss_req_valid(uint32_t *);
 uint8_t *lim_get_bss_id_from_sme_join_req_msg(uint8_t *);
 uint8_t lim_is_sme_disassoc_cnf_valid(tpAniSirGlobal, tpSirSmeDisassocCnf,
-				      tpPESession);
+				      struct pe_session *);
 
 #endif /* __LIM_SME_REQ_UTILS_H */
