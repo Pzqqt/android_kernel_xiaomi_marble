@@ -37,9 +37,9 @@
 #include "sch_api.h"
 #include "rrm_api.h"
 
-static void lim_update_config(tpAniSirGlobal mac, tpPESession psessionEntry);
+static void lim_update_config(tpAniSirGlobal mac, struct pe_session *psessionEntry);
 
-void lim_set_cfg_protection(tpAniSirGlobal mac, tpPESession pesessionEntry)
+void lim_set_cfg_protection(tpAniSirGlobal mac, struct pe_session *pesessionEntry)
 {
 	uint32_t val = 0;
 	struct wlan_mlme_cfg *mlme_cfg = mac->mlme_cfg;
@@ -157,7 +157,7 @@ void lim_handle_param_update(tpAniSirGlobal mac, eUpdateIEsType cfgId)
  * @return None
  */
 
-void lim_apply_configuration(tpAniSirGlobal mac, tpPESession psessionEntry)
+void lim_apply_configuration(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 	uint32_t val = 0, phyMode;
 
@@ -211,7 +211,7 @@ void lim_apply_configuration(tpAniSirGlobal mac, tpPESession psessionEntry)
  * @return None
  */
 
-static void lim_update_config(tpAniSirGlobal mac, tpPESession psessionEntry)
+static void lim_update_config(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 	uint32_t val;
 	bool enabled;
