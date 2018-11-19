@@ -210,7 +210,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint8_t *frame;
 	void *packet;
 	QDF_STATUS qdf_status;
-	tpPESession pesession;
+	struct pe_session *pesession;
 	uint8_t sessionid;
 	const uint8_t *p2pie = NULL;
 	uint8_t txflag = 0;
@@ -533,7 +533,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 			      tpAniSSID ssid,
 			      short n_staid,
 			      uint8_t keepalive,
-			      tpPESession pe_session, uint8_t preq_p2pie)
+			      struct pe_session *pe_session, uint8_t preq_p2pie)
 {
 	tDot11fProbeResponse *frm;
 	QDF_STATUS sir_status;
@@ -870,7 +870,7 @@ err_ret:
 void
 lim_send_addts_req_action_frame(tpAniSirGlobal mac,
 				tSirMacAddr peerMacAddr,
-				tSirAddtsReqInfo *pAddTS, tpPESession psessionEntry)
+				tSirAddtsReqInfo *pAddTS, struct pe_session *psessionEntry)
 {
 	uint16_t i;
 	uint8_t *pFrame;
@@ -1087,7 +1087,7 @@ lim_send_addts_req_action_frame(tpAniSirGlobal mac,
 void
 lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint16_t status_code, uint16_t aid, tSirMacAddr peer_addr,
-	uint8_t subtype, tpDphHashNode sta, tpPESession pe_session)
+	uint8_t subtype, tpDphHashNode sta, struct pe_session *pe_session)
 {
 	static tDot11fAssocResponse frm;
 	uint8_t *frame;
@@ -1429,7 +1429,7 @@ lim_send_delts_req_action_frame(tpAniSirGlobal mac,
 				tSirMacAddr peer,
 				uint8_t wmmTspecPresent,
 				tSirMacTSInfo *pTsinfo,
-				tSirMacTspecIE *pTspecIe, tpPESession psessionEntry)
+				tSirMacTspecIE *pTspecIe, struct pe_session *psessionEntry)
 {
 	uint8_t *pFrame;
 	tpSirMacMgmtHdr pMacHdr;
@@ -1612,7 +1612,7 @@ static QDF_STATUS lim_assoc_tx_complete_cnf(void *context,
 void
 lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			      tLimMlmAssocReq *mlm_assoc_req,
-			      tpPESession pe_session)
+			      struct pe_session *pe_session)
 {
 	int ret;
 	tDot11fAssocRequest *frm;
@@ -2258,7 +2258,7 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 			 tpSirMacAuthFrameBody auth_frame,
 			 tSirMacAddr peer_addr,
 			 uint8_t wep_challenge_len,
-			 tpPESession session)
+			 struct pe_session *session)
 {
 	uint8_t *frame, *body;
 	uint32_t frame_len = 0, body_len = 0;
@@ -2574,7 +2574,7 @@ QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal mac_ctx)
 	tpDphHashNode sta_ds;
 	tLimMlmDeauthReq *deauth_req;
 	tLimMlmDeauthCnf deauth_cnf;
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 
 	deauth_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
 	if (deauth_req) {
@@ -2672,7 +2672,7 @@ QDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 	uint16_t aid;
 	tpDphHashNode sta_ds;
 	tLimMlmDisassocCnf disassoc_cnf;
-	tpPESession pe_session;
+	struct pe_session *pe_session;
 	tLimMlmDisassocReq *disassoc_req;
 
 	disassoc_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq;
@@ -2833,7 +2833,7 @@ void
 lim_send_disassoc_mgmt_frame(tpAniSirGlobal mac,
 			     uint16_t nReason,
 			     tSirMacAddr peer,
-			     tpPESession psessionEntry, bool waitForAck)
+			     struct pe_session *psessionEntry, bool waitForAck)
 {
 	tDot11fDisassociation frm;
 	uint8_t *pFrame;
@@ -3006,7 +3006,7 @@ void
 lim_send_deauth_mgmt_frame(tpAniSirGlobal mac,
 			   uint16_t nReason,
 			   tSirMacAddr peer,
-			   tpPESession psessionEntry, bool waitForAck)
+			   struct pe_session *psessionEntry, bool waitForAck)
 {
 	tDot11fDeAuth frm;
 	uint8_t *pFrame;
@@ -3214,7 +3214,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal mac,
 QDF_STATUS
 lim_send_meas_report_frame(tpAniSirGlobal mac,
 			   tpSirMacMeasReqActionFrame pMeasReqFrame,
-			   tSirMacAddr peer, tpPESession psessionEntry)
+			   tSirMacAddr peer, struct pe_session *psessionEntry)
 {
 	tDot11fMeasurementReport frm;
 	uint8_t *pFrame;
@@ -3339,7 +3339,7 @@ lim_send_meas_report_frame(tpAniSirGlobal mac,
 
 void
 lim_send_tpc_request_frame(tpAniSirGlobal mac,
-			   tSirMacAddr peer, tpPESession psessionEntry)
+			   tSirMacAddr peer, struct pe_session *psessionEntry)
 {
 	tDot11fTPCRequest frm;
 	uint8_t *pFrame;
@@ -3437,7 +3437,7 @@ lim_send_tpc_request_frame(tpAniSirGlobal mac,
 QDF_STATUS
 lim_send_tpc_report_frame(tpAniSirGlobal mac,
 			  tpSirMacTpcReqActionFrame pTpcReqFrame,
-			  tSirMacAddr peer, tpPESession psessionEntry)
+			  tSirMacAddr peer, struct pe_session *psessionEntry)
 {
 	tDot11fTPCReport frm;
 	uint8_t *pFrame;
@@ -3550,7 +3550,7 @@ lim_send_channel_switch_mgmt_frame(tpAniSirGlobal mac,
 				   tSirMacAddr peer,
 				   uint8_t nMode,
 				   uint8_t nNewChannel,
-				   uint8_t nCount, tpPESession psessionEntry)
+				   uint8_t nCount, struct pe_session *psessionEntry)
 {
 	tDot11fChannelSwitch frm;
 	uint8_t *pFrame;
@@ -3668,7 +3668,7 @@ lim_send_channel_switch_mgmt_frame(tpAniSirGlobal mac,
 QDF_STATUS
 lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 		tSirMacAddr peer, uint8_t mode, uint8_t new_op_class,
-		uint8_t new_channel, uint8_t count, tpPESession session_entry)
+		uint8_t new_channel, uint8_t count, struct pe_session *session_entry)
 {
 	tDot11fext_channel_switch_action_frame frm;
 	uint8_t                  *frame;
@@ -3838,7 +3838,7 @@ static QDF_STATUS lim_oper_chan_change_confirm_tx_complete_cnf(
 
 QDF_STATUS
 lim_p2p_oper_chan_change_confirm_action_frame(tpAniSirGlobal mac_ctx,
-		tSirMacAddr peer, tpPESession session_entry)
+		tSirMacAddr peer, struct pe_session *session_entry)
 {
 	tDot11fp2p_oper_chan_change_confirm frm;
 	uint8_t                  *frame;
@@ -3953,7 +3953,7 @@ lim_p2p_oper_chan_change_confirm_action_frame(tpAniSirGlobal mac_ctx,
 QDF_STATUS
 lim_send_vht_opmode_notification_frame(tpAniSirGlobal mac,
 				       tSirMacAddr peer,
-				       uint8_t nMode, tpPESession psessionEntry)
+				       uint8_t nMode, struct pe_session *psessionEntry)
 {
 	tDot11fOperatingMode frm;
 	uint8_t *pFrame;
@@ -4073,7 +4073,7 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal mac,
 QDF_STATUS
 lim_send_neighbor_report_request_frame(tpAniSirGlobal mac,
 				       tpSirMacNeighborReportReq pNeighborReq,
-				       tSirMacAddr peer, tpPESession psessionEntry)
+				       tSirMacAddr peer, struct pe_session *psessionEntry)
 {
 	QDF_STATUS statusCode = QDF_STATUS_SUCCESS;
 	tDot11fNeighborReportRequest frm;
@@ -4210,7 +4210,7 @@ returnAfterError:
 QDF_STATUS
 lim_send_link_report_action_frame(tpAniSirGlobal mac,
 				  tpSirMacLinkReport pLinkReport,
-				  tSirMacAddr peer, tpPESession psessionEntry)
+				  tSirMacAddr peer, struct pe_session *psessionEntry)
 {
 	QDF_STATUS statusCode = QDF_STATUS_SUCCESS;
 	tDot11fLinkMeasurementReport frm;
@@ -4342,7 +4342,7 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal mac,
 				bool is_last_frame,
 				tpSirMacRadioMeasureReport pRRMReport,
 				tSirMacAddr peer,
-				tpPESession psessionEntry)
+				struct pe_session *psessionEntry)
 {
 	QDF_STATUS statusCode = QDF_STATUS_SUCCESS;
 	uint8_t *pFrame;
@@ -4532,7 +4532,7 @@ returnAfterError:
 
 QDF_STATUS lim_send_sa_query_request_frame(tpAniSirGlobal mac, uint8_t *transId,
 					      tSirMacAddr peer,
-					      tpPESession psessionEntry)
+					      struct pe_session *psessionEntry)
 {
 
 	tDot11fSaQueryReq frm;  /* SA query request action frame */
@@ -4662,7 +4662,7 @@ returnAfterError:
 
 QDF_STATUS lim_send_sa_query_response_frame(tpAniSirGlobal mac,
 					       uint8_t *transId, tSirMacAddr peer,
-					       tpPESession psessionEntry)
+					       struct pe_session *psessionEntry)
 {
 
 	tDot11fSaQueryRsp frm;  /* SA query response action frame */
@@ -4793,7 +4793,7 @@ returnAfterError:
  */
 QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 		tSirMacAddr peer_mac, uint16_t tid,
-		tpPESession session, uint8_t addba_extn_present,
+		struct pe_session *session, uint8_t addba_extn_present,
 		uint8_t amsdu_support)
 {
 
@@ -4991,7 +4991,7 @@ static void lim_tx_mgmt_frame(tpAniSirGlobal mac_ctx,
 	tpSirMacFrameCtl fc = (tpSirMacFrameCtl) mb_msg->data;
 	QDF_STATUS qdf_status;
 	uint8_t sme_session_id = 0;
-	tpPESession session;
+	struct pe_session *session;
 	uint16_t auth_ack_status;
 	enum rateid min_rid = RATEID_DEFAULT;
 
