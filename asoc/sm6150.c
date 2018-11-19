@@ -9302,7 +9302,18 @@ static struct platform_driver sm6150_asoc_machine_driver = {
 	.probe = msm_asoc_machine_probe,
 	.remove = msm_asoc_machine_remove,
 };
-module_platform_driver(sm6150_asoc_machine_driver);
+
+int __init sm6150_init(void)
+{
+	pr_debug("%s\n", __func__);
+	return platform_driver_register(&sm6150_asoc_machine_driver);
+}
+
+void sm6150_exit(void)
+{
+	pr_debug("%s\n", __func__);
+	platform_driver_unregister(&sm6150_asoc_machine_driver);
+}
 
 MODULE_DESCRIPTION("ALSA SoC SM6150 Machine driver");
 MODULE_LICENSE("GPL v2");
