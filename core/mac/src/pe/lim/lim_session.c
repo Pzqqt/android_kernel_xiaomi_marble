@@ -82,14 +82,14 @@ struct sDphHashNode *pe_get_session_dph_node_array(uint8_t session_id)
 
    \brief pe_init_beacon_params() - Initialize the beaconParams structure
 
-   \param tpPESession          - pointer to the session context or NULL if session can not be created.
+   \param struct pe_session *         - pointer to the session context or NULL if session can not be created.
    \return void
    \sa
 
    --------------------------------------------------------------------------*/
 
 static void pe_init_beacon_params(tpAniSirGlobal mac,
-				  tpPESession psessionEntry)
+				  struct pe_session *psessionEntry)
 {
 	psessionEntry->beaconParams.beaconInterval = 0;
 	psessionEntry->beaconParams.fShortPreamble = 0;
@@ -133,7 +133,7 @@ static void pe_init_beacon_params(tpAniSirGlobal mac,
  */
 static void pe_reset_protection_callback(void *ptr)
 {
-	tpPESession pe_session_entry = (tpPESession)ptr;
+	struct pe_session *pe_session_entry = (struct pe_session *)ptr;
 	tpAniSirGlobal mac_ctx = pe_session_entry->mac_ctx;
 	int8_t i = 0;
 	tUpdateBeaconParams beacon_params;
@@ -279,7 +279,7 @@ restart_timer:
  * Return: void
  */
 static void pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx,
-tpPESession session, uint8_t session_id)
+struct pe_session *session, uint8_t session_id)
 {
 	QDF_STATUS status;
 
@@ -294,7 +294,7 @@ tpPESession session, uint8_t session_id)
 #else
 static inline void
 pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx,
-	tpPESession session, uint8_t session_id)
+	struct pe_session *session, uint8_t session_id)
 {
 }
 #endif
@@ -306,7 +306,7 @@ pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx,
  *
  * Return: void
  */
-void pe_delete_fils_info(tpPESession session)
+void pe_delete_fils_info(struct pe_session *session)
 {
 	struct pe_fils_session *fils_info;
 
@@ -350,7 +350,7 @@ void pe_delete_fils_info(tpPESession session)
  *
  * Return: void
  */
-static void pe_init_fils_info(tpPESession session)
+static void pe_init_fils_info(struct pe_session *session)
 {
 	struct pe_fils_session *fils_info;
 
@@ -374,8 +374,8 @@ static void pe_init_fils_info(tpPESession session)
 	fils_info->auth_info.domain_name = NULL;
 }
 #else
-static void pe_delete_fils_info(tpPESession session) { }
-static void pe_init_fils_info(tpPESession session) { }
+static void pe_delete_fils_info(struct pe_session *session) { }
+static void pe_init_fils_info(struct pe_session *session) { }
 #endif
 
 /**
@@ -413,7 +413,7 @@ lim_get_peer_idxpool_size(uint16_t num_sta, tSirBssType bss_type)
 #endif
 
 void lim_set_bcn_probe_filter(tpAniSirGlobal mac_ctx,
-				tpPESession session,
+				struct pe_session *session,
 				tSirMacSSid *ibss_ssid,
 				uint8_t sap_channel)
 {
@@ -474,7 +474,7 @@ done:
 }
 
 void lim_reset_bcn_probe_filter(tpAniSirGlobal mac_ctx,
-				tpPESession session)
+				struct pe_session *session)
 {
 	struct mgmt_beacon_probe_filter *filter;
 	tSirBssType bss_type;
@@ -522,7 +522,7 @@ void lim_reset_bcn_probe_filter(tpAniSirGlobal mac_ctx,
 }
 
 void lim_update_bcn_probe_filter(tpAniSirGlobal mac_ctx,
-					tpPESession session)
+					struct pe_session *session)
 {
 	struct mgmt_beacon_probe_filter *filter;
 	tSirBssType bss_type;
@@ -558,7 +558,7 @@ void lim_update_bcn_probe_filter(tpAniSirGlobal mac_ctx,
 		filter->num_sap_sessions);
 }
 
-tpPESession pe_create_session(tpAniSirGlobal mac,
+struct pe_session *pe_create_session(tpAniSirGlobal mac,
 			      uint8_t *bssid,
 			      uint8_t *sessionId,
 			      uint16_t numSta, tSirBssType bssType,
@@ -566,7 +566,7 @@ tpPESession pe_create_session(tpAniSirGlobal mac,
 {
 	QDF_STATUS status;
 	uint8_t i;
-	tpPESession session_ptr;
+	struct pe_session *session_ptr;
 	struct wlan_objmgr_vdev *vdev;
 
 	for (i = 0; i < mac->lim.maxBssId; i++) {
@@ -740,11 +740,11 @@ free_dp_hash_table:
    \param bssid                   - BSSID of the session
    \param sessionId             -session ID is returned here, if session is found.
 
-   \return tpPESession          - pointer to the session context or NULL if session is not found.
+   \return struct pe_session *         - pointer to the session context or NULL if session is not found.
 
    \sa
    --------------------------------------------------------------------------*/
-tpPESession pe_find_session_by_bssid(tpAniSirGlobal mac, uint8_t *bssid,
+struct pe_session *pe_find_session_by_bssid(tpAniSirGlobal mac, uint8_t *bssid,
 				     uint8_t *sessionId)
 {
 	uint8_t i;
@@ -770,10 +770,10 @@ tpPESession pe_find_session_by_bssid(tpAniSirGlobal mac, uint8_t *bssid,
    corresponding to the given bssIdx is found in the PE session table.
    \param mac                   - pointer to global adapter context
    \param bssIdx                   - bss index of the session
-   \return tpPESession          - pointer to the session context or NULL if session is not found.
+   \return struct pe_session *         - pointer to the session context or NULL if session is not found.
    \sa
    --------------------------------------------------------------------------*/
-tpPESession pe_find_session_by_bss_idx(tpAniSirGlobal mac, uint8_t bssIdx)
+struct pe_session *pe_find_session_by_bss_idx(tpAniSirGlobal mac, uint8_t bssIdx)
 {
 	uint8_t i;
 
@@ -797,11 +797,11 @@ tpPESession pe_find_session_by_bss_idx(tpAniSirGlobal mac, uint8_t bssIdx)
    \param mac                   - pointer to global adapter context
    \param sessionId             -session ID for which session context needs to be looked up.
 
-   \return tpPESession          - pointer to the session context or NULL if session is not found.
+   \return struct pe_session *         - pointer to the session context or NULL if session is not found.
 
    \sa
    --------------------------------------------------------------------------*/
-tpPESession pe_find_session_by_session_id(tpAniSirGlobal mac,
+struct pe_session *pe_find_session_by_session_id(tpAniSirGlobal mac,
 					  uint8_t sessionId)
 {
 	if (sessionId >= mac->lim.maxBssId) {
@@ -826,13 +826,13 @@ tpPESession pe_find_session_by_session_id(tpAniSirGlobal mac,
  *
  * Return: session pointer
  */
-tpPESession
+struct pe_session *
 pe_find_session_by_sta_id(tpAniSirGlobal mac_ctx,
 			  uint8_t staid,
 			  uint8_t *session_id)
 {
 	uint8_t i, j;
-	tpPESession session_ptr;
+	struct pe_session *session_ptr;
 	dphHashTableClass *dph_ptr;
 
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
@@ -863,7 +863,7 @@ pe_find_session_by_sta_id(tpAniSirGlobal mac_ctx,
  *
  * Return: void
  */
-void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
+void pe_delete_session(tpAniSirGlobal mac_ctx, struct pe_session *session)
 {
 	uint16_t i = 0;
 	uint16_t n;
@@ -1064,12 +1064,12 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
    \param sa                       - Peer STA Address of the session
    \param sessionId             -session ID is returned here, if session is found.
 
-   \return tpPESession          - pointer to the session context or NULL if session is not found.
+   \return struct pe_session *         - pointer to the session context or NULL if session is not found.
 
    \sa
    --------------------------------------------------------------------------*/
 
-tpPESession pe_find_session_by_peer_sta(tpAniSirGlobal mac, uint8_t *sa,
+struct pe_session *pe_find_session_by_peer_sta(tpAniSirGlobal mac, uint8_t *sa,
 					uint8_t *sessionId)
 {
 	uint8_t i;
@@ -1104,7 +1104,7 @@ tpPESession pe_find_session_by_peer_sta(tpAniSirGlobal mac, uint8_t *sa,
  *
  * Return: pe session entry for given sme session if found else NULL
  */
-tpPESession pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
+struct pe_session *pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
 					      uint8_t sme_session_id)
 {
 	uint8_t i;
@@ -1128,7 +1128,7 @@ tpPESession pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
  *
  * Return: pe session entry for given scan id if found else NULL
  */
-tpPESession pe_find_session_by_scan_id(tpAniSirGlobal mac_ctx,
+struct pe_session *pe_find_session_by_scan_id(tpAniSirGlobal mac_ctx,
 				       uint32_t scan_id)
 {
 	uint8_t i;

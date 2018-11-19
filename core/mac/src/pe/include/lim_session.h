@@ -616,7 +616,7 @@ static inline void pe_free_dph_node_array_buffer(void)
  *
  * Return: ptr to the session context or NULL if session can not be created.
  */
-tpPESession pe_create_session(tpAniSirGlobal mac,
+struct pe_session *pe_create_session(tpAniSirGlobal mac,
 			      uint8_t *bssid,
 			      uint8_t *sessionId,
 			      uint16_t numSta, tSirBssType bssType,
@@ -634,7 +634,7 @@ tpPESession pe_create_session(tpAniSirGlobal mac,
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-tpPESession pe_find_session_by_bssid(tpAniSirGlobal mac, uint8_t *bssid,
+struct pe_session *pe_find_session_by_bssid(tpAniSirGlobal mac, uint8_t *bssid,
 				     uint8_t *sessionId);
 
 /**
@@ -648,7 +648,7 @@ tpPESession pe_find_session_by_bssid(tpAniSirGlobal mac, uint8_t *bssid,
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-tpPESession pe_find_session_by_bss_idx(tpAniSirGlobal mac, uint8_t bssIdx);
+struct pe_session *pe_find_session_by_bss_idx(tpAniSirGlobal mac, uint8_t bssIdx);
 
 /**
  * pe_find_session_by_peer_sta() - looks up the PE session given the Peer
@@ -664,7 +664,7 @@ tpPESession pe_find_session_by_bss_idx(tpAniSirGlobal mac, uint8_t bssIdx);
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-tpPESession pe_find_session_by_peer_sta(tpAniSirGlobal mac, uint8_t *sa,
+struct pe_session *pe_find_session_by_peer_sta(tpAniSirGlobal mac, uint8_t *sa,
 					uint8_t *sessionId);
 
 /**
@@ -679,7 +679,7 @@ tpPESession pe_find_session_by_peer_sta(tpAniSirGlobal mac, uint8_t *sa,
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-tpPESession pe_find_session_by_session_id(tpAniSirGlobal mac,
+struct pe_session *pe_find_session_by_session_id(tpAniSirGlobal mac,
 					  uint8_t sessionId);
 
 /**
@@ -694,7 +694,7 @@ tpPESession pe_find_session_by_session_id(tpAniSirGlobal mac,
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-tpPESession pe_find_session_by_sta_id(tpAniSirGlobal mac, uint8_t staid,
+struct pe_session *pe_find_session_by_sta_id(tpAniSirGlobal mac, uint8_t staid,
 				      uint8_t *sessionId);
 
 /**
@@ -705,7 +705,7 @@ tpPESession pe_find_session_by_sta_id(tpAniSirGlobal mac, uint8_t staid,
  *
  * Return: void
  */
-void pe_delete_session(tpAniSirGlobal mac, tpPESession psessionEntry);
+void pe_delete_session(tpAniSirGlobal mac, struct pe_session *psessionEntry);
 
 
 /**
@@ -718,7 +718,7 @@ void pe_delete_session(tpAniSirGlobal mac, tpPESession psessionEntry);
  *
  * Return: pe session entry for given sme session if found else NULL
  */
-tpPESession pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
+struct pe_session *pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
 					      uint8_t sme_session_id);
 
 /**
@@ -730,7 +730,7 @@ tpPESession pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
  *
  * Return: pe session entry for given scan id if found else NULL
  */
-tpPESession pe_find_session_by_scan_id(tpAniSirGlobal mac_ctx,
+struct pe_session *pe_find_session_by_scan_id(tpAniSirGlobal mac_ctx,
 				       uint32_t scan_id);
 
 uint8_t pe_get_active_session_count(tpAniSirGlobal mac_ctx);
@@ -741,7 +741,7 @@ uint8_t pe_get_active_session_count(tpAniSirGlobal mac_ctx);
  *
  * Return: void
  */
-void pe_delete_fils_info(tpPESession session);
+void pe_delete_fils_info(struct pe_session *session);
 #endif
 
 /**
@@ -758,7 +758,7 @@ void pe_delete_fils_info(tpPESession session);
  * Return: None
  */
 void lim_set_bcn_probe_filter(tpAniSirGlobal mac_ctx,
-				tpPESession session,
+				struct pe_session *session,
 				tSirMacSSid *ibss_ssid,
 				uint8_t sap_channel);
 
@@ -770,7 +770,7 @@ void lim_set_bcn_probe_filter(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_reset_bcn_probe_filter(tpAniSirGlobal mac_ctx, tpPESession session);
+void lim_reset_bcn_probe_filter(tpAniSirGlobal mac_ctx, struct pe_session *session);
 
 /**
  * lim_update_bcn_probe_filter - Update the beacon/probe filter in mac context
@@ -783,6 +783,6 @@ void lim_reset_bcn_probe_filter(tpAniSirGlobal mac_ctx, tpPESession session);
  *
  * Return: None
  */
-void lim_update_bcn_probe_filter(tpAniSirGlobal mac_ctx, tpPESession session);
+void lim_update_bcn_probe_filter(tpAniSirGlobal mac_ctx, struct pe_session *session);
 
 #endif /* #if !defined( __LIM_SESSION_H ) */
