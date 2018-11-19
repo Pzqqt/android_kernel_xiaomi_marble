@@ -37,7 +37,7 @@
  *
  * Return: None
  */
-void ibss_bss_add(tpAniSirGlobal mac_ctx, tpPESession session);
+void ibss_bss_add(tpAniSirGlobal mac_ctx, struct pe_session *session);
 
 /**
  * ibss_bss_delete()- delete the current BSS
@@ -46,7 +46,7 @@ void ibss_bss_add(tpAniSirGlobal mac_ctx, tpPESession session);
  *
  * Return: None
  */
-void ibss_bss_delete(tpAniSirGlobal mac_ctx, tpPESession session);
+void ibss_bss_delete(tpAniSirGlobal mac_ctx, struct pe_session *session);
 
 /**
  * lim_ibss_delete_all_peers: delete all IBSS peers.
@@ -55,15 +55,15 @@ void ibss_bss_delete(tpAniSirGlobal mac_ctx, tpPESession session);
  *
  * Return: None
  */
-void lim_ibss_delete_all_peers(tpAniSirGlobal mac_ctx, tpPESession session);
+void lim_ibss_delete_all_peers(tpAniSirGlobal mac_ctx, struct pe_session *session);
 
 void lim_ibss_init(tpAniSirGlobal);
-void lim_ibss_delete(tpAniSirGlobal, tpPESession psessionEntry);
+void lim_ibss_delete(tpAniSirGlobal, struct pe_session *psessionEntry);
 QDF_STATUS lim_ibss_coalesce(tpAniSirGlobal, tpSirMacMgmtHdr,
 				tpSchBeaconStruct, uint8_t *, uint32_t, uint16_t,
-				tpPESession);
-QDF_STATUS lim_ibss_sta_add(tpAniSirGlobal, void *, tpPESession);
-QDF_STATUS lim_ibss_add_sta_rsp(tpAniSirGlobal, void *, tpPESession);
+				struct pe_session *);
+QDF_STATUS lim_ibss_sta_add(tpAniSirGlobal, void *, struct pe_session *);
+QDF_STATUS lim_ibss_add_sta_rsp(tpAniSirGlobal, void *, struct pe_session *);
 
 /**
  * lim_process_ibss_del_sta_rsp()- Handle ibss delete
@@ -78,14 +78,14 @@ QDF_STATUS lim_ibss_add_sta_rsp(tpAniSirGlobal, void *, tpPESession);
  */
 void lim_process_ibss_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	struct scheduler_msg *lim_msg,
-	tpPESession pe_session);
+	struct pe_session *pe_session);
 tLimIbssPeerNode *lim_ibss_peer_find(tpAniSirGlobal mac, tSirMacAddr macAddr);
-void lim_ibss_del_bss_rsp(tpAniSirGlobal, void *, tpPESession);
-void lim_ibss_del_bss_rsp_when_coalescing(tpAniSirGlobal, void *, tpPESession);
+void lim_ibss_del_bss_rsp(tpAniSirGlobal, void *, struct pe_session *);
+void lim_ibss_del_bss_rsp_when_coalescing(tpAniSirGlobal, void *, struct pe_session *);
 void lim_ibss_add_bss_rsp_when_coalescing(tpAniSirGlobal mac, void *msg,
-					  tpPESession pSessionEntry);
+					  struct pe_session *pSessionEntry);
 void lim_ibss_decide_protection_on_delete(tpAniSirGlobal mac, tpDphHashNode pStaDs,
 					  tpUpdateBeaconParams pBeaconParams,
-					  tpPESession pSessionEntry);
-void lim_ibss_heart_beat_handle(tpAniSirGlobal mac, tpPESession psessionEntry);
+					  struct pe_session *pSessionEntry);
+void lim_ibss_heart_beat_handle(tpAniSirGlobal mac, struct pe_session *psessionEntry);
 void lim_process_ibss_peer_inactivity(tpAniSirGlobal mac, void *buf);

@@ -148,7 +148,7 @@ static void
 ibss_peer_collect(tpAniSirGlobal mac,
 		  tpSchBeaconStruct pBeacon,
 		  tpSirMacMgmtHdr pHdr,
-		  tLimIbssPeerNode *pPeer, tpPESession psessionEntry)
+		  tLimIbssPeerNode *pPeer, struct pe_session *psessionEntry)
 {
 	qdf_mem_copy(pPeer->peerMacAddr, pHdr->sa, sizeof(tSirMacAddr));
 
@@ -216,7 +216,7 @@ ibss_peer_collect(tpAniSirGlobal mac,
 /* handle change in peer qos/wme capabilities */
 static void
 ibss_sta_caps_update(tpAniSirGlobal mac,
-		     tLimIbssPeerNode *pPeerNode, tpPESession psessionEntry)
+		     tLimIbssPeerNode *pPeerNode, struct pe_session *psessionEntry)
 {
 	uint16_t peerIdx;
 	tpDphHashNode pStaDs;
@@ -318,7 +318,7 @@ ibss_sta_caps_update(tpAniSirGlobal mac,
 static void
 ibss_sta_rates_update(tpAniSirGlobal mac,
 		      tpDphHashNode pStaDs,
-		      tLimIbssPeerNode *pPeer, tpPESession psessionEntry)
+		      tLimIbssPeerNode *pPeer, struct pe_session *psessionEntry)
 {
 	lim_populate_matching_rate_set(mac, pStaDs, &pPeer->supportedRates,
 				       &pPeer->extendedRates,
@@ -350,7 +350,7 @@ ibss_sta_rates_update(tpAniSirGlobal mac,
 static void
 ibss_sta_info_update(tpAniSirGlobal mac,
 		     tpDphHashNode pStaDs,
-		     tLimIbssPeerNode *pPeer, tpPESession psessionEntry)
+		     tLimIbssPeerNode *pPeer, struct pe_session *psessionEntry)
 {
 	pStaDs->staType = STA_ENTRY_PEER;
 	ibss_sta_caps_update(mac, pPeer, psessionEntry);
@@ -399,7 +399,7 @@ ibss_coalesce_save(tpAniSirGlobal mac,
 static QDF_STATUS
 ibss_dph_entry_add(tpAniSirGlobal mac,
 		   tSirMacAddr peerAddr,
-		   tpDphHashNode *ppSta, tpPESession psessionEntry)
+		   tpDphHashNode *ppSta, struct pe_session *psessionEntry)
 {
 	uint16_t peerIdx;
 	tpDphHashNode pStaDs;
@@ -475,7 +475,7 @@ ibss_status_chg_notify(tpAniSirGlobal mac, tSirMacAddr peerAddr,
 	}
 }
 
-void ibss_bss_add(tpAniSirGlobal mac, tpPESession psessionEntry)
+void ibss_bss_add(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 	tLimMlmStartReq mlmStartReq;
 	uint32_t cfg;
@@ -587,7 +587,7 @@ void ibss_bss_add(tpAniSirGlobal mac, tpPESession psessionEntry)
 
 }
 
-void ibss_bss_delete(tpAniSirGlobal mac_ctx, tpPESession session)
+void ibss_bss_delete(tpAniSirGlobal mac_ctx, struct pe_session *session)
 {
 	QDF_STATUS status;
 
@@ -645,7 +645,7 @@ void lim_ibss_init(tpAniSirGlobal mac)
  * @return None
  */
 void lim_ibss_delete_all_peers(tpAniSirGlobal mac,
-			       tpPESession psessionEntry)
+			       struct pe_session *psessionEntry)
 {
 	tLimIbssPeerNode *pCurrNode, *pTempNode;
 	tpDphHashNode pStaDs;
@@ -729,7 +729,7 @@ void lim_ibss_delete_all_peers(tpAniSirGlobal mac,
  * Return: none
  */
 
-void lim_ibss_delete(tpAniSirGlobal mac, tpPESession psessionEntry)
+void lim_ibss_delete(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 #ifndef CONFIG_VDEV_SM
 	lim_ibss_delete_all_peers(mac, psessionEntry);
@@ -749,7 +749,7 @@ void lim_ibss_delete(tpAniSirGlobal mac, tpPESession psessionEntry)
 static void
 lim_ibss_set_protection(tpAniSirGlobal mac, uint8_t enable,
 			tpUpdateBeaconParams pBeaconParams,
-			tpPESession psessionEntry)
+			struct pe_session *psessionEntry)
 {
 
 	if (!mac->lim.cfgProtection.fromllb) {
@@ -793,7 +793,7 @@ static void
 lim_ibss_update_protection_params(tpAniSirGlobal mac,
 				  tSirMacAddr peerMacAddr,
 				  tLimProtStaCacheType protStaCacheType,
-				  tpPESession psessionEntry)
+				  struct pe_session *psessionEntry)
 {
 	uint32_t i;
 
@@ -850,7 +850,7 @@ lim_ibss_update_protection_params(tpAniSirGlobal mac,
 static void
 lim_ibss_decide_protection(tpAniSirGlobal mac, tpDphHashNode pStaDs,
 			   tpUpdateBeaconParams pBeaconParams,
-			   tpPESession psessionEntry)
+			   struct pe_session *psessionEntry)
 {
 	enum band_info rfBand = BAND_UNKNOWN;
 	uint32_t phyMode;
@@ -937,7 +937,7 @@ tLimIbssPeerNode *lim_ibss_peer_find(tpAniSirGlobal mac, tSirMacAddr macAddr)
  */
 
 QDF_STATUS
-lim_ibss_sta_add(tpAniSirGlobal mac, void *pBody, tpPESession psessionEntry)
+lim_ibss_sta_add(tpAniSirGlobal mac, void *pBody, struct pe_session *psessionEntry)
 {
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 	tpDphHashNode pStaDs;
@@ -1023,7 +1023,7 @@ lim_ibss_sta_add(tpAniSirGlobal mac, void *pBody, tpPESession psessionEntry)
  */
 static void
 lim_ibss_search_and_delete_peer(tpAniSirGlobal mac_ctx,
-			tpPESession session_entry, tSirMacAddr mac_addr)
+			struct pe_session *session_entry, tSirMacAddr mac_addr)
 {
 	tLimIbssPeerNode *temp_node, *prev_node;
 	tLimIbssPeerNode *temp_next_node = NULL;
@@ -1085,7 +1085,7 @@ lim_ibss_search_and_delete_peer(tpAniSirGlobal mac_ctx,
  */
 static void
 lim_ibss_delete_peer(tpAniSirGlobal mac_ctx,
-			tpPESession session_entry, tSirMacAddr mac_addr)
+			struct pe_session *session_entry, tSirMacAddr mac_addr)
 {
 	tpDphHashNode sta = NULL;
 	uint16_t peer_idx = 0;
@@ -1125,7 +1125,7 @@ lim_ibss_delete_peer(tpAniSirGlobal mac_ctx,
 
 void lim_process_ibss_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	struct scheduler_msg *lim_msg,
-	tpPESession pe_session)
+	struct pe_session *pe_session)
 {
 	tpDphHashNode sta_ds = NULL;
 	tpDeleteStaParams del_sta_params = (tpDeleteStaParams) lim_msg->bodyptr;
@@ -1180,7 +1180,7 @@ skip_event:
 
 /* handle the response from HAL for an ADD STA request */
 QDF_STATUS
-lim_ibss_add_sta_rsp(tpAniSirGlobal mac, void *msg, tpPESession psessionEntry)
+lim_ibss_add_sta_rsp(tpAniSirGlobal mac, void *msg, struct pe_session *psessionEntry)
 {
 	tpDphHashNode pStaDs;
 	uint16_t peerIdx;
@@ -1230,7 +1230,7 @@ lim_ibss_add_sta_rsp(tpAniSirGlobal mac, void *msg, tpPESession psessionEntry)
 }
 
 void lim_ibss_del_bss_rsp_when_coalescing(tpAniSirGlobal mac, void *msg,
-					  tpPESession psessionEntry)
+					  struct pe_session *psessionEntry)
 {
 	tpDeleteBssParams pDelBss = (tpDeleteBssParams) msg;
 
@@ -1259,7 +1259,7 @@ end:
 }
 
 void lim_ibss_add_bss_rsp_when_coalescing(tpAniSirGlobal mac, void *msg,
-					  tpPESession pSessionEntry)
+					  struct pe_session *pSessionEntry)
 {
 	uint8_t infoLen;
 	tSirSmeNewBssInfo newBssInfo;
@@ -1298,7 +1298,7 @@ end:
 	ibss_coalesce_free(mac);
 }
 
-void lim_ibss_del_bss_rsp(tpAniSirGlobal mac, void *msg, tpPESession psessionEntry)
+void lim_ibss_del_bss_rsp(tpAniSirGlobal mac, void *msg, struct pe_session *psessionEntry)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
 	tpDeleteBssParams pDelBss = (tpDeleteBssParams) msg;
@@ -1401,7 +1401,7 @@ lim_ibss_coalesce(tpAniSirGlobal mac,
 		  tpSirMacMgmtHdr pHdr,
 		  tpSchBeaconStruct pBeacon,
 		  uint8_t *pIEs,
-		  uint32_t ieLen, uint16_t fTsfLater, tpPESession psessionEntry)
+		  uint32_t ieLen, uint16_t fTsfLater, struct pe_session *psessionEntry)
 {
 	uint16_t peerIdx;
 	tSirMacAddr currentBssId;
@@ -1572,7 +1572,7 @@ lim_ibss_coalesce(tpAniSirGlobal mac,
  *
  * Return: None.
  */
-void lim_ibss_heart_beat_handle(tpAniSirGlobal mac_ctx, tpPESession session)
+void lim_ibss_heart_beat_handle(tpAniSirGlobal mac_ctx, struct pe_session *session)
 {
 	tLimIbssPeerNode *tempnode, *prevnode;
 	tLimIbssPeerNode *temp_next = NULL;
@@ -1702,7 +1702,7 @@ void lim_ibss_heart_beat_handle(tpAniSirGlobal mac_ctx, tpPESession session)
 void lim_ibss_decide_protection_on_delete(tpAniSirGlobal mac_ctx,
 					  tpDphHashNode stads,
 					  tpUpdateBeaconParams bcn_param,
-					  tpPESession session)
+					  struct pe_session *session)
 {
 	uint32_t phymode;
 	tHalBitVal erpenabled = eHAL_CLEAR;
@@ -1749,13 +1749,13 @@ void lim_ibss_decide_protection_on_delete(tpAniSirGlobal mac_ctx,
    \brief Internal function. Deletes FW indicated peer which is inactive
  \
    \param  tpAniSirGlobal    mac
-   \param  tpPESession       psessionEntry
+   \param  struct pe_session *      psessionEntry
    \param  tpSirIbssPeerInactivityInd peerInactivityInd
    \return None
    -----------------------------------------------------------------*/
 static void
 __lim_ibss_peer_inactivity_handler(tpAniSirGlobal mac,
-				   tpPESession psessionEntry,
+				   struct pe_session *psessionEntry,
 				   tpSirIbssPeerInactivityInd peerInactivityInd)
 {
 	if (psessionEntry->limMlmState != eLIM_MLM_BSS_STARTED_STATE) {
