@@ -36,21 +36,21 @@
 
 /* update only the broadcast qos params */
 void sch_qos_update_broadcast(tpAniSirGlobal mac,
-			      tpPESession psessionEntry);
+			      struct pe_session *psessionEntry);
 
 /* fill in the default local edca parameter into gLimEdcaParams[] */
-void sch_set_default_edca_params(tpAniSirGlobal mac, tpPESession psessionE);
+void sch_set_default_edca_params(tpAniSirGlobal mac, struct pe_session *psessionE);
 
 /* update only local qos params */
-void sch_qos_update_local(tpAniSirGlobal mac, tpPESession psessionEntry);
+void sch_qos_update_local(tpAniSirGlobal mac, struct pe_session *psessionEntry);
 
 /* update the edca profile parameters */
 void sch_edca_profile_update(tpAniSirGlobal mac,
-			     tpPESession psessionEntry);
+			     struct pe_session *psessionEntry);
 
 /* / Set the fixed fields in a beacon frame */
 QDF_STATUS sch_set_fixed_beacon_fields(tpAniSirGlobal mac,
-				       tpPESession psessionEntry);
+				       struct pe_session *psessionEntry);
 
 /* / Process the scheduler messages */
 void sch_process_message(tpAniSirGlobal mac,
@@ -73,15 +73,15 @@ QDF_STATUS sch_post_message(tpAniSirGlobal mac,
 			    struct scheduler_msg *pMsg);
 
 void sch_beacon_process(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-			tpPESession psessionEntry);
+			struct pe_session *psessionEntry);
 
 QDF_STATUS sch_beacon_edca_process(tpAniSirGlobal mac,
 				   tSirMacEdcaParamSetIE *edca,
-				   tpPESession psessionEntry);
+				   struct pe_session *psessionEntry);
 
 void sch_generate_tim(tpAniSirGlobal, uint8_t **, uint16_t *, uint8_t);
 
-void sch_set_beacon_interval(tpAniSirGlobal mac, tpPESession psessionEntry);
+void sch_set_beacon_interval(tpAniSirGlobal mac, struct pe_session *psessionEntry);
 
 /**
  * sch_send_beacon_req() - send beacon update req to wma
@@ -94,13 +94,13 @@ void sch_set_beacon_interval(tpAniSirGlobal mac, tpPESession psessionEntry);
  * return: success: QDF_STATUS_SUCCESS failure: QDF_STATUS_E_FAILURE
  */
 QDF_STATUS sch_send_beacon_req(tpAniSirGlobal mac_ctx, uint8_t *bcn_payload,
-			       uint16_t size, tpPESession session,
+			       uint16_t size, struct pe_session *session,
 			       enum sir_bcn_update_reason reason);
 
 
 QDF_STATUS lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal,
 							   tDot11fBeacon1 *,
-							   tpPESession
+							   struct pe_session *
 							   psessionEntry);
 void lim_update_probe_rsp_template_ie_bitmap_beacon2(tpAniSirGlobal,
 						     tDot11fBeacon2 *,
@@ -108,7 +108,7 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(tpAniSirGlobal,
 						     tDot11fProbeResponse *);
 void set_probe_rsp_ie_bitmap(uint32_t *, uint32_t);
 uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal,
-					    tpPESession,
+					    struct pe_session *,
 					    uint32_t *);
 
 int sch_gen_timing_advert_frame(tpAniSirGlobal mac, tSirMacAddr self_addr,

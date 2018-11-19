@@ -44,7 +44,7 @@ get_wmm_local_params(tpAniSirGlobal mac,
 static void
 set_sch_edca_params(tpAniSirGlobal mac,
 		    uint32_t params[][CFG_EDCA_DATA_LEN],
-		    tpPESession psessionEntry);
+		    struct pe_session *psessionEntry);
 
 /* -------------------------------------------------------------------- */
 /**
@@ -62,7 +62,7 @@ set_sch_edca_params(tpAniSirGlobal mac,
  * @return None
  */
 
-void sch_set_beacon_interval(tpAniSirGlobal mac, tpPESession psessionEntry)
+void sch_set_beacon_interval(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 	uint32_t bi;
 
@@ -80,7 +80,7 @@ void sch_set_beacon_interval(tpAniSirGlobal mac, tpPESession psessionEntry)
 static void sch_edca_profile_update_all(tpAniSirGlobal pmac)
 {
 	uint32_t i;
-	tpPESession psession_entry;
+	struct pe_session *psession_entry;
 
 	for (i = 0; i < pmac->lim.maxBssId; i++) {
 		psession_entry = &pmac->lim.gpSession[i];
@@ -236,10 +236,10 @@ sch_get_params(tpAniSirGlobal mac,
  */
 static bool
 broadcast_wmm_of_concurrent_sta_session(tpAniSirGlobal mac_ctx,
-					tpPESession session)
+					struct pe_session *session)
 {
 	uint8_t i, j;
-	tpPESession concurrent_session = NULL;
+	struct pe_session *concurrent_session = NULL;
 
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 		/*
@@ -293,7 +293,7 @@ broadcast_wmm_of_concurrent_sta_session(tpAniSirGlobal mac_ctx,
 	return true;
 }
 
-void sch_qos_update_broadcast(tpAniSirGlobal mac, tpPESession psessionEntry)
+void sch_qos_update_broadcast(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 	uint32_t params[4][CFG_EDCA_DATA_LEN];
 	uint32_t cwminidx, cwmaxidx, txopidx;
@@ -381,7 +381,7 @@ void sch_qos_update_broadcast(tpAniSirGlobal mac, tpPESession psessionEntry)
 		pe_err("Unable to set beacon fields!");
 }
 
-void sch_qos_update_local(tpAniSirGlobal mac, tpPESession psessionEntry)
+void sch_qos_update_local(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 
 	uint32_t params[4][CFG_EDCA_DATA_LEN];
@@ -408,7 +408,7 @@ void sch_qos_update_local(tpAniSirGlobal mac, tpPESession psessionEntry)
  *
  * return none
  */
-void sch_set_default_edca_params(tpAniSirGlobal mac, tpPESession psessionEntry)
+void sch_set_default_edca_params(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 	uint32_t params[4][CFG_EDCA_DATA_LEN];
 
@@ -433,7 +433,7 @@ void sch_set_default_edca_params(tpAniSirGlobal mac, tpPESession psessionEntry)
 static void
 set_sch_edca_params(tpAniSirGlobal mac,
 		    uint32_t params[][CFG_EDCA_DATA_LEN],
-		    tpPESession psessionEntry)
+		    struct pe_session *psessionEntry)
 {
 	uint32_t i;
 	uint32_t cwminidx, cwmaxidx, txopidx;
@@ -531,7 +531,7 @@ get_wmm_local_params(tpAniSirGlobal mac_ctx,
  *
  * Return  none
  */
-void sch_edca_profile_update(tpAniSirGlobal mac, tpPESession psessionEntry)
+void sch_edca_profile_update(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 	if (LIM_IS_AP_ROLE(psessionEntry) ||
 	    LIM_IS_IBSS_ROLE(psessionEntry)) {

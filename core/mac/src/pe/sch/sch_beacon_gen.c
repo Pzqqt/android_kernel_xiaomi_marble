@@ -98,7 +98,7 @@ static QDF_STATUS sch_get_p2p_ie_offset(uint8_t *pextra_ie,
  * Return: status of operation
  */
 static QDF_STATUS
-sch_append_addn_ie(tpAniSirGlobal mac_ctx, tpPESession session,
+sch_append_addn_ie(tpAniSirGlobal mac_ctx, struct pe_session *session,
 		   uint8_t *frm, uint32_t max_bcn_size, uint32_t *num_bytes,
 		   uint8_t *addn_ie, uint16_t addn_ielen)
 {
@@ -222,7 +222,7 @@ static void sch_get_csa_ecsa_count_offset(uint8_t *ie, uint32_t ie_len,
  */
 
 QDF_STATUS
-sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
+sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, struct pe_session *session)
 {
 	tpAniBeaconStruct bcn_struct = (tpAniBeaconStruct)
 						session->pSchBeaconFrameBegin;
@@ -650,7 +650,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 QDF_STATUS
 lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal mac,
 						tDot11fBeacon1 *beacon1,
-						tpPESession psessionEntry)
+						struct pe_session *psessionEntry)
 {
 	uint32_t *DefProbeRspIeBitmap;
 	tDot11fProbeResponse *prb_rsp;
@@ -901,7 +901,7 @@ void set_probe_rsp_ie_bitmap(uint32_t *IeBitmap, uint32_t pos)
  */
 static QDF_STATUS write_beacon_to_memory(tpAniSirGlobal mac, uint16_t size,
 					 uint16_t length,
-					 tpPESession psessionEntry,
+					 struct pe_session *psessionEntry,
 					 enum sir_bcn_update_reason reason)
 {
 	uint16_t i;
@@ -1002,7 +1002,7 @@ QDF_STATUS sch_process_pre_beacon_ind(tpAniSirGlobal mac,
 {
 	tpBeaconGenParams pMsg = (tpBeaconGenParams) limMsg->bodyptr;
 	uint32_t beaconSize;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	uint8_t sessionId;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 

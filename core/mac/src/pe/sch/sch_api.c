@@ -77,7 +77,7 @@ QDF_STATUS sch_post_message(tpAniSirGlobal mac, struct scheduler_msg *pMsg)
 }
 
 QDF_STATUS sch_send_beacon_req(tpAniSirGlobal mac, uint8_t *beaconPayload,
-			       uint16_t size, tpPESession psessionEntry,
+			       uint16_t size, struct pe_session *psessionEntry,
 			       enum sir_bcn_update_reason reason)
 {
 	struct scheduler_msg msgQ = {0};
@@ -184,7 +184,7 @@ QDF_STATUS sch_send_beacon_req(tpAniSirGlobal mac, uint8_t *beaconPayload,
 }
 
 static uint32_t lim_remove_p2p_ie_from_add_ie(tpAniSirGlobal mac,
-					      tpPESession psessionEntry,
+					      struct pe_session *psessionEntry,
 					      uint8_t *addIeWoP2pIe,
 					      uint32_t *addnIELenWoP2pIe)
 {
@@ -224,7 +224,7 @@ static uint32_t lim_remove_p2p_ie_from_add_ie(tpAniSirGlobal mac,
 }
 
 uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal mac,
-					    tpPESession psessionEntry,
+					    struct pe_session *psessionEntry,
 					    uint32_t *IeBitmap)
 {
 	struct scheduler_msg msgQ = {0};
