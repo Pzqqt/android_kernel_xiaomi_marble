@@ -70,6 +70,7 @@ QDF_STATUS wmi_extract_wlan_radar_event_info(void *wmi_hdl,
 		uint32_t len);
 #endif
 
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
 /**
  * wmi_send_usenol_pdev_param() - function to send usenol pdev param.
  * @wmi_hdl: wmi handle
@@ -78,13 +79,34 @@ QDF_STATUS wmi_extract_wlan_radar_event_info(void *wmi_hdl,
  *
  * Return: QDF_STATUS
  */
-#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
 QDF_STATUS wmi_send_usenol_pdev_param(void *wmi_hdl, bool usenol,
 				      struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wmi_send_subchan_marking_pdev_param() - Function to send subchannel
+ * marking pdev param.
+ * @wmi_hdl: WMI handle.
+ * @subchanmark: Value of use subchannel marking.
+ * @pdev: Pointer to objmgr_pdev structure.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wmi_send_subchan_marking_pdev_param(void *wmi_hdl,
+				    bool subchanmark,
+				    struct wlan_objmgr_pdev *pdev);
 #else
 static inline QDF_STATUS
 wmi_send_usenol_pdev_param(void *wmi_hdl, bool usenol,
 			   struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+wmi_send_subchan_marking_pdev_param(void *wmi_hdl,
+				    bool subchanmark,
+				    struct wlan_objmgr_pdev *pdev)
 {
 	return QDF_STATUS_SUCCESS;
 }
