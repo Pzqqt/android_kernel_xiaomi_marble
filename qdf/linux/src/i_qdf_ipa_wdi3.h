@@ -57,6 +57,8 @@ typedef struct ipa_wdi_init_out_params __qdf_ipa_wdi_init_out_params_t;
 	(((struct ipa_wdi_init_out_params *)(out_params))->is_uC_ready)
 #define __QDF_IPA_WDI_INIT_OUT_PARAMS_IS_SMMU_ENABLED(out_params)	\
 	(((struct ipa_wdi_init_out_params *)(out_params))->is_smmu_enabled)
+#define QDF_IPA_WDI_INIT_OUT_PARAMS_IS_OVER_GSI(out_params)	\
+	(((struct ipa_wdi_init_out_params *)(out_params))->is_over_gsi)
 
 /**
  * __qdf_ipa_wdi_hdr_info_t - Header to install on IPA HW
