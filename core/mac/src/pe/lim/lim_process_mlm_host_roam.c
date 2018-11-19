@@ -44,7 +44,7 @@
 #include "wma_if.h"
 #include "rrm_api.h"
 static void lim_handle_sme_reaasoc_result(tpAniSirGlobal, tSirResultCodes,
-		uint16_t, tpPESession);
+		uint16_t, struct pe_session *);
 /**
  * lim_process_mlm_reassoc_req() - process mlm reassoc request.
  *
@@ -62,7 +62,7 @@ void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx,
 	uint8_t channel, sec_ch_offset;
 	struct tLimPreAuthNode *auth_node;
 	tLimMlmReassocCnf reassoc_cnf;
-	tpPESession session;
+	struct pe_session *session;
 
 	session = pe_find_session_by_session_id(mac_ctx,
 			reassoc_req->sessionId);
@@ -175,7 +175,7 @@ end:
  */
 static void lim_handle_sme_reaasoc_result(tpAniSirGlobal mac,
 		tSirResultCodes resultCode, uint16_t protStatusCode,
-		tpPESession psessionEntry)
+		struct pe_session *psessionEntry)
 {
 	tpDphHashNode pStaDs = NULL;
 	uint8_t smesessionId;
@@ -234,7 +234,7 @@ error:
  */
 void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 {
-	tpPESession session;
+	struct pe_session *session;
 	tLimMlmReassocCnf *lim_mlm_reassoc_cnf;
 
 	if (msg_buf == NULL) {
@@ -347,7 +347,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
  *Return: None
  */
 void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal mac,
-		struct scheduler_msg *limMsgQ, tpPESession psessionEntry)
+		struct scheduler_msg *limMsgQ, struct pe_session *psessionEntry)
 {
 	tLimMlmReassocCnf mlmReassocCnf; /* keep sme */
 	tpDphHashNode pStaDs = NULL;
@@ -567,7 +567,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal mac,
 				    tLimMlmReassocReq *reassoc_req)
 {
 	uint8_t chanNum = 0;
-	tpPESession session;
+	struct pe_session *session;
 	uint16_t caps;
 	uint32_t val;
 	struct scheduler_msg msgQ = {0};
