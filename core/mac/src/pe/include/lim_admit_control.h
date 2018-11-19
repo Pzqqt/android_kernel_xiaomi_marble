@@ -53,7 +53,7 @@ extern QDF_STATUS lim_admit_control_add_ts(tpAniSirGlobal mac,
 				tSirMacScheduleIE *pSch,
 				/* index to the lim tspec table. */
 				uint8_t *pTspecIdx,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 
 static inline QDF_STATUS
 lim_admit_control_add_sta(tpAniSirGlobal mac, uint8_t *staAddr, uint8_t alloc)

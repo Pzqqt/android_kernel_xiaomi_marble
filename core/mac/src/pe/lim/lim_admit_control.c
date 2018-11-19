@@ -58,24 +58,24 @@
 static QDF_STATUS
 lim_calculate_svc_int(tpAniSirGlobal, tSirMacTspecIE *, uint32_t *);
 static QDF_STATUS
-lim_validate_tspec_edca(tpAniSirGlobal, tSirMacTspecIE *, tpPESession);
+lim_validate_tspec_edca(tpAniSirGlobal, tSirMacTspecIE *, struct pe_session *);
 static QDF_STATUS
-lim_validate_tspec(tpAniSirGlobal, tSirMacTspecIE *, tpPESession);
+lim_validate_tspec(tpAniSirGlobal, tSirMacTspecIE *, struct pe_session *);
 static void
 lim_compute_mean_bw_used(tpAniSirGlobal, uint32_t *, uint32_t, tpLimTspecInfo,
-			 tpPESession);
+			 struct pe_session *);
 static void lim_get_available_bw(tpAniSirGlobal, uint32_t *, uint32_t *, uint32_t,
 				 uint32_t);
 static QDF_STATUS lim_admit_policy_oversubscription(tpAniSirGlobal,
 						       tSirMacTspecIE *,
 						       tpLimAdmitPolicyInfo,
 						       tpLimTspecInfo,
-						       tpPESession);
+						       struct pe_session *);
 static QDF_STATUS lim_tspec_find_by_sta_addr(tpAniSirGlobal, uint8_t *,
 						tSirMacTspecIE *, tpLimTspecInfo,
 						tpLimTspecInfo *);
 static QDF_STATUS lim_validate_access_policy(tpAniSirGlobal, uint8_t, uint16_t,
-						tpPESession);
+						struct pe_session *);
 
 /** -------------------------------------------------------------
    \fn lim_calculate_svc_int
@@ -145,7 +145,7 @@ lim_calculate_svc_int(tpAniSirGlobal mac,
  **/
 static QDF_STATUS
 lim_validate_tspec_edca(tpAniSirGlobal mac_ctx,
-			tSirMacTspecIE *tspec, tpPESession session_entry)
+			tSirMacTspecIE *tspec, struct pe_session *session_entry)
 {
 	uint32_t max_phy_rate, min_phy_rate;
 	uint32_t phy_mode;
@@ -181,7 +181,7 @@ lim_validate_tspec_edca(tpAniSirGlobal mac_ctx,
 
 static QDF_STATUS
 lim_validate_tspec(tpAniSirGlobal mac,
-		   tSirMacTspecIE *pTspec, tpPESession psessionEntry)
+		   tSirMacTspecIE *pTspec, struct pe_session *psessionEntry)
 {
 	QDF_STATUS retval = QDF_STATUS_SUCCESS;
 
@@ -221,7 +221,7 @@ static void
 lim_compute_mean_bw_used(tpAniSirGlobal mac,
 			 uint32_t *pBw,
 			 uint32_t phyMode,
-			 tpLimTspecInfo pTspecInfo, tpPESession psessionEntry)
+			 tpLimTspecInfo pTspecInfo, struct pe_session *psessionEntry)
 {
 	uint32_t ctspec;
 	*pBw = 0;
@@ -299,7 +299,7 @@ lim_admit_policy_oversubscription(tpAniSirGlobal mac_ctx,
 				  tSirMacTspecIE *tspec,
 				  tpLimAdmitPolicyInfo admit_policy,
 				  tpLimTspecInfo tspec_info,
-				  tpPESession session_entry)
+				  struct pe_session *session_entry)
 {
 	uint32_t totalbw, minbw, usedbw;
 	uint32_t phy_mode;
@@ -335,7 +335,7 @@ lim_admit_policy_oversubscription(tpAniSirGlobal mac_ctx,
 
 static QDF_STATUS lim_admit_policy(tpAniSirGlobal mac,
 				      tSirMacTspecIE *pTspec,
-				      tpPESession psessionEntry)
+				      struct pe_session *psessionEntry)
 {
 	QDF_STATUS retval = QDF_STATUS_E_FAILURE;
 	tpLimAdmitPolicyInfo pAdmitPolicy = &mac->lim.admitPolicyInfo;
@@ -605,7 +605,7 @@ QDF_STATUS lim_tspec_add(tpAniSirGlobal mac,
 static QDF_STATUS
 lim_validate_access_policy(tpAniSirGlobal mac,
 			   uint8_t accessPolicy,
-			   uint16_t assocId, tpPESession psessionEntry)
+			   uint16_t assocId, struct pe_session *psessionEntry)
 {
 	QDF_STATUS retval = QDF_STATUS_E_FAILURE;
 	tpDphHashNode pSta =
@@ -658,7 +658,7 @@ lim_validate_access_policy(tpAniSirGlobal mac,
 QDF_STATUS lim_admit_control_add_ts(tpAniSirGlobal mac, uint8_t *pAddr,
 		tSirAddtsReqInfo *pAddts, tSirMacQosCapabilityStaIE *pQos,
 		uint16_t assocId, uint8_t alloc, tSirMacScheduleIE *pSch,
-		uint8_t *pTspecIdx, tpPESession psessionEntry)
+		uint8_t *pTspecIdx, struct pe_session *psessionEntry)
 {
 	tpLimTspecInfo pTspecInfo;
 	QDF_STATUS retval;
@@ -844,7 +844,7 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal mac,
 	struct scheduler_msg msg = {0};
 	tpAddTsParams pAddTsParam;
 
-	tpPESession psessionEntry = pe_find_session_by_session_id(mac, sessionId);
+	struct pe_session *psessionEntry = pe_find_session_by_session_id(mac, sessionId);
 
 	if (psessionEntry == NULL) {
 		pe_err("Unable to get Session for session Id: %d",
@@ -908,7 +908,7 @@ lim_send_hal_msg_del_ts(tpAniSirGlobal mac,
 {
 	struct scheduler_msg msg = {0};
 	tpDelTsParams pDelTsParam;
-	tpPESession psessionEntry = NULL;
+	struct pe_session *psessionEntry = NULL;
 
 	pDelTsParam = qdf_mem_malloc(sizeof(tDelTsParams));
 	if (!pDelTsParam)
@@ -973,7 +973,7 @@ void lim_process_hal_add_ts_rsp(tpAniSirGlobal mac,
 	uint16_t assocId = 0;
 	tSirMacAddr peerMacAddr;
 	uint8_t rspReqd = 1;
-	tpPESession psessionEntry = NULL;
+	struct pe_session *psessionEntry = NULL;
 
 	/* Need to process all the deferred messages enqueued
 	 * since sending the WMA_ADD_TS_REQ.
