@@ -267,4 +267,31 @@ QDF_STATUS target_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
 		target_if_err("dfs: usenol_pdev_param send failed %d", status);
 	return status;
 }
+
+QDF_STATUS
+target_send_subchan_marking_pdev_param(struct wlan_objmgr_pdev *pdev,
+				       bool subchanmark)
+{
+	QDF_STATUS status;
+	wmi_unified_t wmi_handle;
+
+	if (!pdev) {
+		target_if_err("null pdev");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_pdev(pdev);
+	if (!wmi_handle) {
+		target_if_err("null wmi_handle");
+		return QDF_STATUS_E_FAILURE;
+	}
+	status = wmi_send_subchan_marking_pdev_param(wmi_handle,
+						     subchanmark, pdev);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		target_if_err("dfs: subchan_marking_pdev_param send failed %d",
+			      status);
+
+	return status;
+}
 #endif

@@ -417,6 +417,8 @@ bool tgt_dfs_is_stadfs_enabled(struct wlan_objmgr_pdev *pdev);
  * Return: true if the pdev supports 5GHz, else false.
  */
 bool tgt_dfs_is_pdev_5ghz(struct wlan_objmgr_pdev *pdev);
+
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
 /**
  * tgt_dfs_send_usenol_pdev_param() - Send usenol pdev param to FW.
  * @pdev: Pointer to pdev object.
@@ -424,13 +426,28 @@ bool tgt_dfs_is_pdev_5ghz(struct wlan_objmgr_pdev *pdev);
  *
  * Return: QDF_STATUS
  */
-#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
 QDF_STATUS tgt_dfs_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
 					  bool usenol);
+
+/**
+ * tgt_dfs_send_subchan_marking() - Send subchannel marking pdev param to FW.
+ * @pdev: Pointer to pdev object.
+ * @subchanmark: Value of subchannel_marking.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_dfs_send_subchan_marking(struct wlan_objmgr_pdev *pdev,
+					bool subchanmark);
 #else
 static inline
 QDF_STATUS tgt_dfs_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
 					  bool usenol)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+tgt_dfs_send_subchan_marking(struct wlan_objmgr_pdev *pdev, bool subchanmark)
 {
 	return QDF_STATUS_SUCCESS;
 }

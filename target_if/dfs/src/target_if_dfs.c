@@ -380,5 +380,7 @@ QDF_STATUS target_if_register_dfs_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 
 	dfs_tx_ops->dfs_send_usenol_pdev_param =
 		&target_send_usenol_pdev_param;
+	dfs_tx_ops->dfs_send_subchan_marking_pdev_param =
+		&target_send_subchan_marking_pdev_param;
 	return QDF_STATUS_SUCCESS;
 }

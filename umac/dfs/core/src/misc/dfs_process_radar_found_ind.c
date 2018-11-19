@@ -27,6 +27,7 @@
 #include "../dfs_process_radar_found_ind.h"
 #include <wlan_reg_services_api.h>
 #include <wlan_dfs_utils_api.h>
+#include <wlan_dfs_tgt_api.h>
 #include "wlan_dfs_mlme_api.h"
 #include "../dfs_internal.h"
 /**
@@ -122,14 +123,18 @@
 int dfs_set_nol_subchannel_marking(struct wlan_dfs *dfs,
 				   bool nol_subchannel_marking)
 {
+	QDF_STATUS status;
+
 	if (!dfs)
 		return -EIO;
 
 	dfs->dfs_use_nol_subchannel_marking = nol_subchannel_marking;
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "NOL subchannel marking is %s ",
 		 (nol_subchannel_marking) ? "set" : "disabled");
+	status = tgt_dfs_send_subchan_marking(dfs->dfs_pdev_obj,
+					      nol_subchannel_marking);
 
-	return 0;
+	return qdf_status_to_os_return(status);
 }
 
 int dfs_get_nol_subchannel_marking(struct wlan_dfs *dfs,

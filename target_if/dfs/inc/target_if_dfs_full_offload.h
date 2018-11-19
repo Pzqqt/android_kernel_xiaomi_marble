@@ -60,6 +60,7 @@ static QDF_STATUS target_process_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
+#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
 /**
  * target_send_usenol_pdev_param - send usenol pdev param to FW.
  * @pdev: Pointer to pdev object.
@@ -67,13 +68,32 @@ static QDF_STATUS target_process_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
  *
  * Return: QDF_STATUS
  */
-#if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
 QDF_STATUS target_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
 					 bool usenol);
+
+/**
+ * target_send_subchan_marking_pdev_param - Send subchannel marking
+ * pdev param to FW.
+ * @pdev: Pointer to pdev object.
+ * @subchanmark: Value of user configured subchannel_marking.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+target_send_subchan_marking_pdev_param(struct wlan_objmgr_pdev *pdev,
+				       bool subchanmark);
+
 #else
 static inline QDF_STATUS
 target_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
 			      bool usenol)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS
+target_send_subchan_marking_pdev_param(struct wlan_objmgr_pdev *pdev,
+				       bool subchanmark)
 {
 	return QDF_STATUS_SUCCESS;
 }

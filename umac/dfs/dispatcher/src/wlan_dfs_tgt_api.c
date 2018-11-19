@@ -609,6 +609,37 @@ QDF_STATUS tgt_dfs_send_usenol_pdev_param(struct wlan_objmgr_pdev *pdev,
 }
 
 qdf_export_symbol(tgt_dfs_send_usenol_pdev_param);
+
+QDF_STATUS tgt_dfs_send_subchan_marking(struct wlan_objmgr_pdev *pdev,
+					bool subchanmark)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS, "psoc is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_tx_ops = wlan_psoc_get_dfs_txops(psoc);
+	if (!dfs_tx_ops) {
+		dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			  "dfs_tx_ops=%pK", dfs_tx_ops);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (dfs_tx_ops->dfs_send_subchan_marking_pdev_param)
+		return dfs_tx_ops->dfs_send_subchan_marking_pdev_param(
+				pdev, subchanmark);
+
+	dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS,
+		  "dfs_send_subchan_marking_pdev_param is null");
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+qdf_export_symbol(tgt_dfs_send_subchan_marking);
 #endif
 
 void tgt_dfs_enable_stadfs(struct wlan_objmgr_pdev *pdev, bool val)
