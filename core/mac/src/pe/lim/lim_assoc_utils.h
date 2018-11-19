@@ -39,30 +39,30 @@
 #define SIZE_OF_NOA_DESCRIPTOR 13
 #define MAX_NOA_PERIOD_IN_MICROSECS 3000000
 
-uint32_t lim_cmp_ssid(tSirMacSSid *, tpPESession);
+uint32_t lim_cmp_ssid(tSirMacSSid *, struct pe_session *);
 uint8_t lim_compare_capabilities(tpAniSirGlobal,
 				 tSirAssocReq *,
-				 tSirMacCapabilityInfo *, tpPESession);
-uint8_t lim_check_rx_basic_rates(tpAniSirGlobal, tSirMacRateSet, tpPESession);
+				 tSirMacCapabilityInfo *, struct pe_session *);
+uint8_t lim_check_rx_basic_rates(tpAniSirGlobal, tSirMacRateSet, struct pe_session *);
 uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
 				  tDot11fIERSN * const rx_rsn_ie,
-				  tpPESession session_entry, uint8_t sta_is_ht,
+				  struct pe_session *session_entry, uint8_t sta_is_ht,
 				  bool *pmf_connection);
-uint8_t lim_check_rx_wpa_ie_match(tpAniSirGlobal, tDot11fIEWPA *, tpPESession,
+uint8_t lim_check_rx_wpa_ie_match(tpAniSirGlobal, tDot11fIEWPA *, struct pe_session *,
 				  uint8_t);
 uint8_t lim_check_mcs_set(tpAniSirGlobal mac, uint8_t *supportedMCSSet);
 void limPostDummyToTmRing(tpAniSirGlobal, tpDphHashNode);
 void limPostPacketToTdRing(tpAniSirGlobal, tpDphHashNode, uint8_t);
-QDF_STATUS lim_cleanup_rx_path(tpAniSirGlobal, tpDphHashNode, tpPESession);
+QDF_STATUS lim_cleanup_rx_path(tpAniSirGlobal, tpDphHashNode, struct pe_session *);
 void lim_reject_association(tpAniSirGlobal, tSirMacAddr, uint8_t,
 			    uint8_t, tAniAuthType, uint16_t, uint8_t,
-			    enum eSirMacStatusCodes, tpPESession);
+			    enum eSirMacStatusCodes, struct pe_session *);
 
 QDF_STATUS lim_populate_peer_rate_set(tpAniSirGlobal mac,
 					 tpSirSupportedRates pRates,
 					 uint8_t *pSupportedMCSSet,
 					 uint8_t basicOnly,
-					 tpPESession psessionEntry,
+					 struct pe_session *psessionEntry,
 					 tDot11fIEVHTCaps *pVHTCaps,
 					 tDot11fIEhe_cap *he_caps);
 
@@ -70,7 +70,7 @@ QDF_STATUS lim_populate_own_rate_set(tpAniSirGlobal mac,
 					tpSirSupportedRates pRates,
 					uint8_t *pSupportedMCSSet,
 					uint8_t basicOnly,
-					tpPESession psessionEntry,
+					struct pe_session *psessionEntry,
 					tDot11fIEVHTCaps *pVHTCaps,
 					tDot11fIEhe_cap *he_caps);
 
@@ -80,68 +80,68 @@ lim_populate_matching_rate_set(tpAniSirGlobal mac,
 			       tSirMacRateSet *pOperRateSet,
 			       tSirMacRateSet *pExtRateSet,
 			       uint8_t *pSupportedMCSSet,
-			       tpPESession psessionEntry,
+			       struct pe_session *psessionEntry,
 			       tDot11fIEVHTCaps *pVHTCaps,
 			       tDot11fIEhe_cap *he_caps);
 
-QDF_STATUS lim_add_sta(tpAniSirGlobal, tpDphHashNode, uint8_t, tpPESession);
-QDF_STATUS lim_del_bss(tpAniSirGlobal, tpDphHashNode, uint16_t, tpPESession);
-QDF_STATUS lim_del_sta(tpAniSirGlobal, tpDphHashNode, bool, tpPESession);
-QDF_STATUS lim_add_sta_self(tpAniSirGlobal, uint16_t, uint8_t, tpPESession);
+QDF_STATUS lim_add_sta(tpAniSirGlobal, tpDphHashNode, uint8_t, struct pe_session *);
+QDF_STATUS lim_del_bss(tpAniSirGlobal, tpDphHashNode, uint16_t, struct pe_session *);
+QDF_STATUS lim_del_sta(tpAniSirGlobal, tpDphHashNode, bool, struct pe_session *);
+QDF_STATUS lim_add_sta_self(tpAniSirGlobal, uint16_t, uint8_t, struct pe_session *);
 
-void lim_teardown_infra_bss(tpAniSirGlobal, tpPESession);
+void lim_teardown_infra_bss(tpAniSirGlobal, struct pe_session *);
 #ifdef WLAN_FEATURE_HOST_ROAM
 void lim_restore_pre_reassoc_state(tpAniSirGlobal,
-				   tSirResultCodes, uint16_t, tpPESession);
+				   tSirResultCodes, uint16_t, struct pe_session *);
 void lim_post_reassoc_failure(tpAniSirGlobal,
-			      tSirResultCodes, uint16_t, tpPESession);
-bool lim_is_reassoc_in_progress(tpAniSirGlobal, tpPESession);
+			      tSirResultCodes, uint16_t, struct pe_session *);
+bool lim_is_reassoc_in_progress(tpAniSirGlobal, struct pe_session *);
 
 void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal mac,
-		tpDphHashNode pStaDs, tpPESession psessionEntry);
+		tpDphHashNode pStaDs, struct pe_session *psessionEntry);
 void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal mac,
-		   tpDphHashNode pStaDs, tpPESession psessionEntry);
+		   tpDphHashNode pStaDs, struct pe_session *psessionEntry);
 void lim_send_retry_reassoc_req_frame(tpAniSirGlobal mac,
-	      tLimMlmReassocReq *pMlmReassocReq, tpPESession psessionEntry);
+	      tLimMlmReassocReq *pMlmReassocReq, struct pe_session *psessionEntry);
 QDF_STATUS lim_add_ft_sta_self(tpAniSirGlobal mac, uint16_t assocId,
-				  tpPESession psessionEntry);
+				  struct pe_session *psessionEntry);
 #else
 static inline void lim_restore_pre_reassoc_state(tpAniSirGlobal mac_ctx,
 			tSirResultCodes res_code, uint16_t prot_status,
-			tpPESession pe_session)
+			struct pe_session *pe_session)
 {}
 static inline void lim_post_reassoc_failure(tpAniSirGlobal mac_ctx,
 			      tSirResultCodes res_code, uint16_t prot_status,
-			      tpPESession pe_session)
+			      struct pe_session *pe_session)
 {}
 static inline void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal mac,
-		tpDphHashNode pStaDs, tpPESession psessionEntry)
+		tpDphHashNode pStaDs, struct pe_session *psessionEntry)
 {}
 static inline void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal mac,
-		   tpDphHashNode pStaDs, tpPESession psessionEntry)
+		   tpDphHashNode pStaDs, struct pe_session *psessionEntry)
 {}
 static inline void lim_send_retry_reassoc_req_frame(tpAniSirGlobal mac,
-	      tLimMlmReassocReq *pMlmReassocReq, tpPESession psessionEntry)
+	      tLimMlmReassocReq *pMlmReassocReq, struct pe_session *psessionEntry)
 {}
 static inline bool lim_is_reassoc_in_progress(tpAniSirGlobal mac_ctx,
-		tpPESession pe_session)
+		struct pe_session *pe_session)
 {
 	return false;
 }
 static inline QDF_STATUS lim_add_ft_sta_self(tpAniSirGlobal mac,
-		uint16_t assocId, tpPESession psessionEntry)
+		uint16_t assocId, struct pe_session *psessionEntry)
 {
 	return QDF_STATUS_SUCCESS;
 }
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-static inline bool lim_is_roam_synch_in_progress(tpPESession pe_session)
+static inline bool lim_is_roam_synch_in_progress(struct pe_session *pe_session)
 {
 	return pe_session->bRoamSynchInProgress;
 }
 #else
-static inline bool lim_is_roam_synch_in_progress(tpPESession pe_session)
+static inline bool lim_is_roam_synch_in_progress(struct pe_session *pe_session)
 {
 	return false;
 }
@@ -150,30 +150,30 @@ static inline bool lim_is_roam_synch_in_progress(tpPESession pe_session)
 void
 lim_send_del_sta_cnf(tpAniSirGlobal mac, struct qdf_mac_addr sta_dsaddr,
 		     uint16_t staDsAssocId, tLimMlmStaContext mlmStaContext,
-		     tSirResultCodes statusCode, tpPESession psessionEntry);
+		     tSirResultCodes statusCode, struct pe_session *psessionEntry);
 
 void lim_handle_cnf_wait_timeout(tpAniSirGlobal mac, uint16_t staId);
-void lim_delete_dph_hash_entry(tpAniSirGlobal, tSirMacAddr, uint16_t, tpPESession);
+void lim_delete_dph_hash_entry(tpAniSirGlobal, tSirMacAddr, uint16_t, struct pe_session *);
 void lim_check_and_announce_join_success(tpAniSirGlobal,
 					 tSirProbeRespBeacon *,
-					 tpSirMacMgmtHdr, tpPESession);
+					 tpSirMacMgmtHdr, struct pe_session *);
 void lim_update_re_assoc_globals(tpAniSirGlobal mac,
 				 tpSirAssocRsp pAssocRsp,
-				 tpPESession psessionEntry);
+				 struct pe_session *psessionEntry);
 
 void lim_update_assoc_sta_datas(tpAniSirGlobal mac,
 				tpDphHashNode pStaDs, tpSirAssocRsp pAssocRsp,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 
 QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal mac, tpSirAssocRsp pAssocRsp,
 				   tpSchBeaconStruct pBeaconStruct,
 				   tpSirBssDescription bssDescription,
-				   uint8_t updateEntry, tpPESession psessionEntry);
+				   uint8_t updateEntry, struct pe_session *psessionEntry);
 QDF_STATUS lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal mac, uint8_t updateEntry,
-					     tpPESession psessionEntry);
+					     struct pe_session *psessionEntry);
 
 void lim_prepare_and_send_del_sta_cnf(tpAniSirGlobal mac, tpDphHashNode pStaDs,
-				      tSirResultCodes statusCode, tpPESession);
+				      tSirResultCodes statusCode, struct pe_session *);
 QDF_STATUS lim_extract_ap_capabilities(tpAniSirGlobal mac, uint8_t *pIE,
 					  uint16_t ieLen,
 					  tpSirProbeRespBeacon beaconStruct);
@@ -193,7 +193,7 @@ QDF_STATUS lim_is_dot11h_supported_channels_valid(tpAniSirGlobal mac,
 /* Util API to check if the txpower supported by STA is within range */
 QDF_STATUS lim_is_dot11h_power_capabilities_in_range(tpAniSirGlobal mac,
 							tSirAssocReq *assoc,
-							tpPESession);
+							struct pe_session *);
 /* API to fill in RX Highest Supported data Rate */
 void lim_fill_rx_highest_supported_rate(tpAniSirGlobal mac,
 					uint16_t *rxHighestRate,
@@ -202,15 +202,15 @@ void lim_fill_rx_highest_supported_rate(tpAniSirGlobal mac,
 void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal mac, uint8_t frameType,
 					     uint8_t *frame, uint32_t frameLen,
 					     uint16_t sessionId,
-					     tpPESession psessionEntry);
+					     struct pe_session *psessionEntry);
 #endif
 
 #ifdef FEATURE_WLAN_ESE
-void lim_send_sme_tsm_ie_ind(tpAniSirGlobal mac, tpPESession psessionEntry,
+void lim_send_sme_tsm_ie_ind(tpAniSirGlobal mac, struct pe_session *psessionEntry,
 			     uint8_t tid, uint8_t state, uint16_t measInterval);
 #else
 static inline void lim_send_sme_tsm_ie_ind(tpAniSirGlobal mac,
-	tpPESession psessionEntry, uint8_t tid,
+	struct pe_session *psessionEntry, uint8_t tid,
 	uint8_t state, uint16_t measInterval)
 {}
 #endif /* FEATURE_WLAN_ESE */
@@ -218,7 +218,7 @@ static inline void lim_send_sme_tsm_ie_ind(tpAniSirGlobal mac,
 QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac,
 				       tpSirSupportedRates pRates,
 				       tDot11fIEVHTCaps *pPeerVHTCaps,
-				       tpPESession psessionEntry,
+				       struct pe_session *psessionEntry,
 				       uint8_t nss);
 
 #endif /* __LIM_ASSOC_UTILS_H */

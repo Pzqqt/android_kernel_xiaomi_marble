@@ -72,7 +72,7 @@
  *
  * Return: zero if SSID matched, non-zero otherwise.
  */
-uint32_t lim_cmp_ssid(tSirMacSSid *rx_ssid, tpPESession session_entry)
+uint32_t lim_cmp_ssid(tSirMacSSid *rx_ssid, struct pe_session *session_entry)
 {
 	return qdf_mem_cmp(rx_ssid, &session_entry->ssId,
 				session_entry->ssId.length);
@@ -105,7 +105,7 @@ uint8_t
 lim_compare_capabilities(tpAniSirGlobal mac,
 			 tSirAssocReq *pAssocReq,
 			 tSirMacCapabilityInfo *pLocalCapabs,
-			 tpPESession psessionEntry)
+			 struct pe_session *psessionEntry)
 {
 	if (LIM_IS_AP_ROLE(psessionEntry) &&
 	    (pAssocReq->capabilityInfo.ibss)) {
@@ -182,7 +182,7 @@ lim_compare_capabilities(tpAniSirGlobal mac,
 
 uint8_t
 lim_check_rx_basic_rates(tpAniSirGlobal mac, tSirMacRateSet rxRateSet,
-			 tpPESession psessionEntry)
+			 struct pe_session *psessionEntry)
 {
 	tSirMacRateSet *pRateSet, basicRate;
 	uint8_t i, j, k, match;
@@ -340,7 +340,7 @@ static inline bool is_non_rsn_cipher(uint8_t cipher_suite)
 
 uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
 				  tDot11fIERSN * const rx_rsn_ie,
-				  tpPESession session_entry, uint8_t sta_is_ht,
+				  struct pe_session *session_entry, uint8_t sta_is_ht,
 				  bool *pmf_connection)
 {
 	tDot11fIERSN *rsn_ie;
@@ -457,7 +457,7 @@ uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
 
 uint8_t
 lim_check_rx_wpa_ie_match(tpAniSirGlobal mac, tDot11fIEWPA *rx_wpaie,
-			  tpPESession session_entry, uint8_t sta_is_ht)
+			  struct pe_session *session_entry, uint8_t sta_is_ht)
 {
 	tDot11fIEWPA *wpa_ie;
 	uint8_t i, j, match, only_non_ht_cipher = 1;
@@ -547,7 +547,7 @@ lim_check_rx_wpa_ie_match(tpAniSirGlobal mac, tDot11fIEWPA *rx_wpaie,
 
 QDF_STATUS
 lim_cleanup_rx_path(tpAniSirGlobal mac, tpDphHashNode pStaDs,
-		    tpPESession psessionEntry)
+		    struct pe_session *psessionEntry)
 {
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 
@@ -647,7 +647,7 @@ lim_cleanup_rx_path(tpAniSirGlobal mac, tpDphHashNode pStaDs,
 void
 lim_send_del_sta_cnf(tpAniSirGlobal mac, struct qdf_mac_addr sta_dsaddr,
 		     uint16_t staDsAssocId, tLimMlmStaContext mlmStaContext,
-		     tSirResultCodes statusCode, tpPESession psessionEntry)
+		     tSirResultCodes statusCode, struct pe_session *psessionEntry)
 {
 	tLimMlmDisassocCnf mlmDisassocCnf;
 	tLimMlmDeauthCnf mlmDeauthCnf;
@@ -854,7 +854,7 @@ lim_reject_association(tpAniSirGlobal mac_ctx, tSirMacAddr peer_addr,
 			uint8_t sub_type, uint8_t add_pre_auth_context,
 			tAniAuthType auth_type, uint16_t sta_id,
 			uint8_t delete_sta, enum eSirMacStatusCodes result_code,
-			tpPESession session_entry)
+			struct pe_session *session_entry)
 {
 	tpDphHashNode sta_ds;
 
@@ -951,7 +951,7 @@ static void
 lim_decide_ap_protection_on_ht20_delete(tpAniSirGlobal mac_ctx,
 					tpDphHashNode sta_ds,
 					tpUpdateBeaconParams beacon_params,
-					tpPESession session_entry)
+					struct pe_session *session_entry)
 {
 	uint32_t i = 0;
 
@@ -998,7 +998,7 @@ void
 lim_decide_ap_protection_on_delete(tpAniSirGlobal mac_ctx,
 				   tpDphHashNode sta_ds,
 				   tpUpdateBeaconParams beacon_params,
-				   tpPESession session_entry)
+				   struct pe_session *session_entry)
 {
 	uint32_t phy_mode;
 	tHalBitVal erp_enabled = eHAL_CLEAR;
@@ -1183,7 +1183,7 @@ lim_decide_ap_protection_on_delete(tpAniSirGlobal mac_ctx,
 static void lim_decide_short_preamble(tpAniSirGlobal mac_ctx,
 				      tpDphHashNode sta_ds,
 				      tpUpdateBeaconParams beacon_params,
-				      tpPESession session_entry)
+				      struct pe_session *session_entry)
 {
 	uint32_t i;
 
@@ -1236,7 +1236,7 @@ static void lim_decide_short_preamble(tpAniSirGlobal mac_ctx,
 static void
 lim_decide_short_slot(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 		      tpUpdateBeaconParams beacon_params,
-		      tpPESession session_entry)
+		      struct pe_session *session_entry)
 {
 	uint32_t i, val, non_short_slot_sta_count;
 
@@ -1335,7 +1335,7 @@ lim_decide_short_slot(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 				       tpSirSupportedRates rates,
 				       tDot11fIEVHTCaps *peer_vht_caps,
-				       tpPESession session_entry,
+				       struct pe_session *session_entry,
 				       uint8_t nss)
 {
 	uint32_t self_sta_dot11mode = 0;
@@ -1479,7 +1479,7 @@ QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 QDF_STATUS
 lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 		tpSirSupportedRates rates, uint8_t *supported_mcs_set,
-		uint8_t basic_only, tpPESession session_entry,
+		uint8_t basic_only, struct pe_session *session_entry,
 		struct sDot11fIEVHTCaps *vht_caps,
 		struct sDot11fIEhe_cap *he_caps)
 {
@@ -1616,12 +1616,12 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void lim_calculate_he_nss(tpSirSupportedRates rates, tpPESession session)
+static void lim_calculate_he_nss(tpSirSupportedRates rates, struct pe_session *session)
 {
 	HE_GET_NSS(rates->rx_he_mcs_map_lt_80, session->nss);
 }
 #else
-static void lim_calculate_he_nss(tpSirSupportedRates rates, tpPESession session)
+static void lim_calculate_he_nss(tpSirSupportedRates rates, struct pe_session *session)
 {
 }
 #endif
@@ -1629,7 +1629,7 @@ static void lim_calculate_he_nss(tpSirSupportedRates rates, tpPESession session)
 QDF_STATUS
 lim_populate_peer_rate_set(tpAniSirGlobal mac,
 		tpSirSupportedRates pRates, uint8_t *pSupportedMCSSet,
-		uint8_t basicOnly, tpPESession psessionEntry,
+		uint8_t basicOnly, struct pe_session *psessionEntry,
 		tDot11fIEVHTCaps *pVHTCaps, tDot11fIEhe_cap *he_caps)
 {
 	tSirMacRateSet tempRateSet;
@@ -1815,7 +1815,7 @@ QDF_STATUS lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 					     tSirMacRateSet *oper_rate_set,
 					     tSirMacRateSet *ext_rate_set,
 					     uint8_t *supported_mcs_set,
-					     tpPESession session_entry,
+					     struct pe_session *session_entry,
 					     tDot11fIEVHTCaps *vht_caps,
 					     tDot11fIEhe_cap *he_caps)
 {
@@ -2107,7 +2107,7 @@ static void lim_update_he_stbc_capable(tpAddStaParams add_sta_params)
 
 QDF_STATUS
 lim_add_sta(tpAniSirGlobal mac_ctx,
-	tpDphHashNode sta_ds, uint8_t update_entry, tpPESession session_entry)
+	tpDphHashNode sta_ds, uint8_t update_entry, struct pe_session *session_entry)
 {
 	tpAddStaParams add_sta_params = NULL;
 	struct scheduler_msg msg_q = {0};
@@ -2563,7 +2563,7 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 
 QDF_STATUS
 lim_del_sta(tpAniSirGlobal mac,
-	    tpDphHashNode pStaDs, bool fRespReqd, tpPESession psessionEntry)
+	    tpDphHashNode pStaDs, bool fRespReqd, struct pe_session *psessionEntry)
 {
 	tpDeleteStaParams pDelStaParams = NULL;
 	struct scheduler_msg msgQ = {0};
@@ -2708,7 +2708,7 @@ lim_del_sta(tpAniSirGlobal mac,
 
 QDF_STATUS
 lim_add_sta_self(tpAniSirGlobal mac, uint16_t staIdx, uint8_t updateSta,
-		 tpPESession psessionEntry)
+		 struct pe_session *psessionEntry)
 {
 	tpAddStaParams pAddStaParams = NULL;
 	struct scheduler_msg msgQ = {0};
@@ -2932,7 +2932,7 @@ lim_add_sta_self(tpAniSirGlobal mac, uint16_t staIdx, uint8_t updateSta,
  * @return None
  */
 
-void lim_teardown_infra_bss(tpAniSirGlobal mac, tpPESession psessionEntry)
+void lim_teardown_infra_bss(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 	tSirMacAddr bcAddr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
@@ -2966,7 +2966,7 @@ void lim_teardown_infra_bss(tpAniSirGlobal mac, tpPESession psessionEntry)
 void lim_handle_cnf_wait_timeout(tpAniSirGlobal mac, uint16_t staId)
 {
 	tpDphHashNode pStaDs;
-	tpPESession psessionEntry = NULL;
+	struct pe_session *psessionEntry = NULL;
 
 	psessionEntry = pe_find_session_by_session_id(mac,
 			mac->lim.limTimers.gpLimCnfWaitTimer[staId].sessionId);
@@ -3019,7 +3019,7 @@ void lim_handle_cnf_wait_timeout(tpAniSirGlobal mac, uint16_t staId)
 
 void
 lim_delete_dph_hash_entry(tpAniSirGlobal mac_ctx, tSirMacAddr sta_addr,
-				 uint16_t sta_id, tpPESession session_entry)
+				 uint16_t sta_id, struct pe_session *session_entry)
 {
 	uint16_t aid;
 	tpDphHashNode sta_ds;
@@ -3125,7 +3125,7 @@ lim_delete_dph_hash_entry(tpAniSirGlobal mac_ctx, tSirMacAddr sta_addr,
 void
 lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
 		tSirProbeRespBeacon *beacon_probe_rsp, tpSirMacMgmtHdr header,
-		tpPESession session_entry)
+		struct pe_session *session_entry)
 {
 	tSirMacSSid current_ssid;
 	tLimMlmJoinCnf mlm_join_cnf;
@@ -3361,7 +3361,7 @@ QDF_STATUS lim_extract_ap_capabilities(tpAniSirGlobal mac,
 
 QDF_STATUS
 lim_del_bss(tpAniSirGlobal mac, tpDphHashNode pStaDs, uint16_t bssIdx,
-	    tpPESession psessionEntry)
+	    struct pe_session *psessionEntry)
 {
 	tpDeleteBssParams pDelBssParams = NULL;
 	struct scheduler_msg msgQ = {0};
@@ -3438,7 +3438,7 @@ lim_del_bss(tpAniSirGlobal mac, tpDphHashNode pStaDs, uint16_t bssIdx,
  */
 static void lim_update_vhtcaps_assoc_resp(tpAniSirGlobal mac_ctx,
 		tpAddBssParams pAddBssParams,
-		tDot11fIEVHTCaps *vht_caps, tpPESession psessionEntry)
+		tDot11fIEVHTCaps *vht_caps, struct pe_session *psessionEntry)
 {
 	pAddBssParams->staContext.vht_caps =
 		((vht_caps->maxMPDULen <<
@@ -3500,7 +3500,7 @@ static void lim_update_vhtcaps_assoc_resp(tpAniSirGlobal mac_ctx,
  */
 static void lim_update_vht_oper_assoc_resp(tpAniSirGlobal mac_ctx,
 		tpAddBssParams pAddBssParams,
-		tDot11fIEVHTOperation *vht_oper, tpPESession psessionEntry)
+		tDot11fIEVHTOperation *vht_oper, struct pe_session *psessionEntry)
 {
 	if (vht_oper->chanWidth &&
 			psessionEntry->ch_width) {
@@ -3523,14 +3523,14 @@ static void lim_update_vht_oper_assoc_resp(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void lim_set_sta_ctx_twt(tAddStaParams *sta_ctx, tpPESession session)
+static void lim_set_sta_ctx_twt(tAddStaParams *sta_ctx, struct pe_session *session)
 {
 	sta_ctx->twt_requestor = session->peer_twt_requestor;
 	sta_ctx->twt_responder = session->peer_twt_responder;
 }
 #else
 static inline void lim_set_sta_ctx_twt(tAddStaParams *sta_ctx,
-				       tpPESession session)
+				       struct pe_session *session)
 {
 }
 #endif
@@ -3565,7 +3565,7 @@ static inline void lim_set_sta_ctx_twt(tAddStaParams *sta_ctx,
 QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal mac, tpSirAssocRsp pAssocRsp,
 				   tpSchBeaconStruct pBeaconStruct,
 				   tpSirBssDescription bssDescription,
-				   uint8_t updateEntry, tpPESession psessionEntry)
+				   uint8_t updateEntry, struct pe_session *psessionEntry)
 {
 	struct scheduler_msg msgQ = {0};
 	tpAddBssParams pAddBssParams = NULL;
@@ -4098,7 +4098,7 @@ returnFailure:
 }
 
 QDF_STATUS lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal mac, uint8_t updateEntry,
-					     tpPESession psessionEntry)
+					     struct pe_session *psessionEntry)
 {
 	struct scheduler_msg msgQ = {0};
 	tpAddBssParams pAddBssParams = NULL;
@@ -4596,7 +4596,7 @@ returnFailure:
 void
 lim_prepare_and_send_del_sta_cnf(tpAniSirGlobal mac, tpDphHashNode pStaDs,
 				 tSirResultCodes statusCode,
-				 tpPESession psessionEntry)
+				 struct pe_session *psessionEntry)
 {
 	uint16_t staDsAssocId = 0;
 	struct qdf_mac_addr sta_dsaddr;
@@ -4722,7 +4722,7 @@ QDF_STATUS lim_is_dot11h_supported_channels_valid(tpAniSirGlobal mac,
 /* Util API to check if the txpower supported by STA is within range */
 QDF_STATUS lim_is_dot11h_power_capabilities_in_range(tpAniSirGlobal mac,
 							tSirAssocReq *assoc,
-							tpPESession psessionEntry)
+							struct pe_session *psessionEntry)
 {
 	int8_t localMaxTxPower;
 	uint32_t localPwrConstraint;
@@ -4792,7 +4792,7 @@ void lim_fill_rx_highest_supported_rate(tpAniSirGlobal mac,
 void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal mac, uint8_t frameType,
 					     uint8_t *frame, uint32_t frameLen,
 					     uint16_t sessionId,
-					     tpPESession psessionEntry)
+					     struct pe_session *psessionEntry)
 {
 	struct scheduler_msg mmhMsg = {0};
 	tSirSmeUnprotMgmtFrameInd *pSirSmeMgmtFrame = NULL;
@@ -4830,7 +4830,7 @@ void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal mac, uint8_t frameTy
    \param  measurementInterval - measurement interval
    \return none
    -------------------------------------------------------------*/
-void lim_send_sme_tsm_ie_ind(tpAniSirGlobal mac, tpPESession psessionEntry,
+void lim_send_sme_tsm_ie_ind(tpAniSirGlobal mac, struct pe_session *psessionEntry,
 			     uint8_t tid, uint8_t state, uint16_t measInterval)
 {
 	struct scheduler_msg mmhMsg = {0};
