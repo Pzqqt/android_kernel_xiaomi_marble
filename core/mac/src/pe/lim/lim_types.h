@@ -947,10 +947,6 @@ void lim_remove_pbc_sessions(tpAniSirGlobal pMac,
 				tpPESession psessionEntry);
 
 #define LIM_WPS_OVERLAP_TIMER_MS                 10000
-void
-lim_change_channel_with_callback(tpAniSirGlobal pMac, uint8_t newChannel,
-				 CHANGE_CHANNEL_CALLBACK callback,
-				 uint32_t *cbdata, tpPESession psessionEntry);
 
 void lim_process_remain_on_chn_timeout(tpAniSirGlobal pMac);
 void lim_send_p2p_action_frame(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);

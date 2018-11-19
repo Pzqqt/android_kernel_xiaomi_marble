@@ -170,39 +170,6 @@ void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx,
 }
 
 /**
- * lim_change_channel_with_callback() - change channel and register callback
- * @mac_ctx: global MAC context
- * @new_chan: new channel to switch
- * @callback: Callback function
- * @cbdata: callback data
- * @session_entry: PE session pointer
- *
- * This function is called to change channel and perform off channel operation
- * if required. The caller registers a callback to be called at the end of the
- * channel change.
- *
- * Return: None
- */
-void
-lim_change_channel_with_callback(tpAniSirGlobal mac_ctx, uint8_t new_chan,
-				 CHANGE_CHANNEL_CALLBACK callback,
-				 uint32_t *cbdata, tpPESession session_entry)
-{
-	pe_debug("Switching channel to %d", new_chan);
-	session_entry->channelChangeReasonCode =
-		LIM_SWITCH_CHANNEL_OPERATION;
-
-	mac_ctx->lim.gpchangeChannelCallback = callback;
-	mac_ctx->lim.gpchangeChannelData = cbdata;
-
-	lim_send_switch_chnl_params(mac_ctx, new_chan, 0, 0,
-		CH_WIDTH_20MHZ, session_entry->maxTxPower,
-		session_entry->peSessionId, false, 0, 0);
-
-	return;
-}
-
-/**
  * lim_covert_channel_scan_type() - switch between ACTIVE and PASSIVE scan type
  * @mac_ctx: global MAC context
  * @chan_num: channel number to change the scan type
