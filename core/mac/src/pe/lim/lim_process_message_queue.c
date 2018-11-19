@@ -76,7 +76,7 @@ static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
 static void lim_process_sae_msg(tpAniSirGlobal mac, struct sir_sae_msg *body)
 {
 	struct sir_sae_msg *sae_msg = body;
-	tpPESession session;
+	struct pe_session *session;
 
 	if (!sae_msg) {
 		pe_err("SAE msg is NULL");
@@ -685,7 +685,7 @@ __lim_process_ext_scan_beacon_probe_rsp(tpAniSirGlobal pmac,
  */
 static void
 __lim_handle_beacon(tpAniSirGlobal mac, struct scheduler_msg *pMsg,
-		    tpPESession psessionEntry)
+		    struct pe_session *psessionEntry)
 {
 	uint8_t *pRxPacketInfo;
 
@@ -925,7 +925,7 @@ uint32_t lim_defer_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg)
  * Return:      None.
  */
 static void lim_handle_unknown_a2_index_frames(tpAniSirGlobal mac_ctx,
-	void *rx_pkt_buffer, tpPESession session_entry)
+	void *rx_pkt_buffer, struct pe_session *session_entry)
 {
 #ifdef FEATURE_WLAN_TDLS
 	tpSirMacDataHdr3a mac_hdr;
@@ -972,7 +972,7 @@ static void lim_handle_unknown_a2_index_frames(tpAniSirGlobal mac_ctx,
  */
 static bool
 lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
-				 tpPESession session_entry)
+				 struct pe_session *session_entry)
 {
 	tSirMacFrameCtl fc;
 	tpSirMacMgmtHdr hdr;
@@ -1121,7 +1121,7 @@ lim_handle80211_frames(tpAniSirGlobal mac, struct scheduler_msg *limMsg,
 	uint8_t *pRxPacketInfo = NULL;
 	tSirMacFrameCtl fc;
 	tpSirMacMgmtHdr pHdr = NULL;
-	tpPESession psessionEntry = NULL;
+	struct pe_session *psessionEntry = NULL;
 	uint8_t sessionId;
 	bool isFrmFt = false;
 	uint8_t channel;
@@ -1455,7 +1455,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	tUpdateBeaconParams beacon_params;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	uint8_t i;
-	tpPESession session_entry = NULL;
+	struct pe_session *session_entry = NULL;
 	uint8_t defer_msg = false;
 	tLinkStateParams *link_state_param;
 	uint16_t pkt_len = 0;
@@ -1780,9 +1780,9 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		if (NULL == msg->bodyptr)
 			pe_err("Can't Process HB TO - bodyptr is Null");
 		else {
-			session_entry = (tpPESession) msg->bodyptr;
+			session_entry = (struct pe_session *) msg->bodyptr;
 			pe_err("SIR_LIM_HEART_BEAT_TIMEOUT, Session %d",
-				((tpPESession) msg->bodyptr)->peSessionId);
+				((struct pe_session *) msg->bodyptr)->peSessionId);
 			limResetHBPktCount(session_entry);
 			lim_handle_heart_beat_timeout_for_session(mac_ctx,
 							session_entry);
@@ -2193,7 +2193,7 @@ static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
 
 void
 handle_ht_capabilityand_ht_info(struct mac_context *mac,
-				tpPESession psessionEntry)
+				struct pe_session *psessionEntry)
 {
 	struct mlme_ht_capabilities_info *ht_cap_info;
 
