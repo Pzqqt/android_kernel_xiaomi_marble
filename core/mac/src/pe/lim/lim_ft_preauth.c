@@ -45,9 +45,9 @@
  * Return: None
  */
 void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal mac,
-		tpPESession psessionEntry)
+		struct pe_session *psessionEntry)
 {
-	tpPESession pReAssocSessionEntry = NULL;
+	struct pe_session *pReAssocSessionEntry = NULL;
 	uint8_t sessionId = 0;
 
 	if (!psessionEntry) {
@@ -127,7 +127,7 @@ int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx,
 				struct scheduler_msg *msg)
 {
 	int buf_consumed = false;
-	tpPESession session;
+	struct pe_session *session;
 	uint8_t session_id;
 	tpSirFTPreAuthReq ft_pre_auth_req = (tSirFTPreAuthReq *) msg->bodyptr;
 
@@ -222,7 +222,7 @@ int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 void lim_perform_ft_pre_auth(tpAniSirGlobal mac, QDF_STATUS status,
-			     uint32_t *data, tpPESession psessionEntry)
+			     uint32_t *data, struct pe_session *psessionEntry)
 {
 	tSirMacAuthFrameBody authFrame;
 	unsigned int session_id;
@@ -314,9 +314,9 @@ preauth_fail:
  * Return: Success or Failure Status
  */
 QDF_STATUS lim_ft_setup_auth_session(tpAniSirGlobal mac,
-					tpPESession psessionEntry)
+					struct pe_session *psessionEntry)
 {
-	tpPESession pftSessionEntry = NULL;
+	struct pe_session *pftSessionEntry = NULL;
 	uint8_t sessionId = 0;
 
 	pftSessionEntry =
@@ -356,7 +356,7 @@ QDF_STATUS lim_ft_setup_auth_session(tpAniSirGlobal mac,
  * Return: None
  */
 static void lim_ft_process_pre_auth_result(tpAniSirGlobal mac,
-					   tpPESession psessionEntry)
+					   struct pe_session *psessionEntry)
 {
 	if (NULL == psessionEntry ||
 	    NULL == psessionEntry->ftPEContext.pFTPreAuthReq)
@@ -398,9 +398,9 @@ static void lim_ft_process_pre_auth_result(tpAniSirGlobal mac,
  */
 void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal mac, QDF_STATUS status,
 				uint8_t *auth_rsp, uint16_t auth_rsp_length,
-				tpPESession psessionEntry)
+				struct pe_session *psessionEntry)
 {
-	tpPESession pftSessionEntry = NULL;
+	struct pe_session *pftSessionEntry = NULL;
 	uint8_t sessionId = 0;
 	tpSirBssDescription pbssDescription = NULL;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -514,7 +514,7 @@ send_rsp:
  */
 void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal mac_ctx)
 {
-	tpPESession session;
+	struct pe_session *session;
 
 	/*
 	 * We have failed pre auth. We need to resume link and get back on
@@ -591,7 +591,7 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
 			      QDF_STATUS status,
 			      uint8_t *auth_rsp,
 			      uint16_t auth_rsp_length,
-			      tpPESession session)
+			      struct pe_session *session)
 {
 	tpSirFTPreAuthRsp ft_pre_auth_rsp;
 	struct scheduler_msg mmh_msg = {0};
@@ -667,7 +667,7 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
  * Return: Status of sending message to scan module.
  */
 QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
-					 tpPESession session_entry,
+					 struct pe_session *session_entry,
 					 tSirFTPreAuthReq *ft_preauth_req)
 {
 	struct scan_start_request *req;
@@ -754,7 +754,7 @@ void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
 				uint8_t session_id,
 				uint32_t scan_id)
 {
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 
 	session_entry = pe_find_session_by_scan_id(mac_ctx, scan_id);
 	/* Pre-auth request is sent */

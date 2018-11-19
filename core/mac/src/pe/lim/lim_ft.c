@@ -43,12 +43,12 @@ extern void lim_send_set_sta_key_req(tpAniSirGlobal mac,
 				     tLimMlmSetKeysReq * pMlmSetKeysReq,
 				     uint16_t staIdx,
 				     uint8_t defWEPIdx,
-				     tpPESession sessionEntry, bool sendRsp);
+				     struct pe_session *sessionEntry, bool sendRsp);
 
 /*--------------------------------------------------------------------------
    Initialize the FT variables.
    ------------------------------------------------------------------------*/
-void lim_ft_open(tpAniSirGlobal mac, tpPESession psessionEntry)
+void lim_ft_open(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 	if (psessionEntry)
 		qdf_mem_set(&psessionEntry->ftPEContext, sizeof(tftPEContext),
@@ -68,7 +68,7 @@ void lim_ft_cleanup_all_ft_sessions(tpAniSirGlobal mac)
 	}
 }
 
-void lim_ft_cleanup(tpAniSirGlobal mac, tpPESession psessionEntry)
+void lim_ft_cleanup(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 	if (NULL == psessionEntry) {
 		pe_err("psessionEntry is NULL");
@@ -119,7 +119,7 @@ void lim_ft_cleanup(tpAniSirGlobal mac, tpPESession psessionEntry)
  *
  *------------------------------------------------------------------*/
 void lim_ft_prepare_add_bss_req(tpAniSirGlobal mac,
-		uint8_t updateEntry, tpPESession pftSessionEntry,
+		uint8_t updateEntry, struct pe_session *pftSessionEntry,
 		tpSirBssDescription bssDescription)
 {
 	tpAddBssParams pAddBssParams = NULL;
@@ -480,7 +480,7 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal mac,
  * Return: none
  */
 static void lim_fill_dot11mode(tpAniSirGlobal mac_ctx,
-			tpPESession pftSessionEntry, tpPESession psessionEntry)
+			struct pe_session *pftSessionEntry, struct pe_session *psessionEntry)
 {
 	uint32_t self_dot11_mode;
 
@@ -506,7 +506,7 @@ static void lim_fill_dot11mode(tpAniSirGlobal mac_ctx,
  * Return: none
  */
 static void lim_fill_dot11mode(tpAniSirGlobal mac_ctx,
-			tpPESession pftSessionEntry, tpPESession psessionEntry)
+			struct pe_session *pftSessionEntry, struct pe_session *psessionEntry)
 {
 	pftSessionEntry->dot11mode =
 			psessionEntry->ftPEContext.pFTPreAuthReq->dot11mode;
@@ -522,7 +522,7 @@ static void lim_fill_dot11mode(tpAniSirGlobal mac_ctx,
  *------------------------------------------------------------------*/
 void lim_fill_ft_session(tpAniSirGlobal mac,
 			 tpSirBssDescription pbssDescription,
-			 tpPESession pftSessionEntry, tpPESession psessionEntry)
+			 struct pe_session *pftSessionEntry, struct pe_session *psessionEntry)
 {
 	uint8_t currentBssUapsd;
 	int8_t localPowerConstraint;
@@ -740,7 +740,7 @@ bool lim_process_ft_update_key(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 {
 	tAddBssParams *pAddBssParams;
 	tSirFTUpdateKeyInfo *pKeyInfo;
-	tpPESession psessionEntry;
+	struct pe_session *psessionEntry;
 	uint8_t sessionId;
 
 	/* Sanity Check */
@@ -865,7 +865,7 @@ void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal mac,
 	uint16_t assocId = 0;
 	tSirMacAddr peerMacAddr;
 	uint8_t rspReqd = 1;
-	tpPESession psessionEntry = NULL;
+	struct pe_session *psessionEntry = NULL;
 	int i = 0;
 
 	pe_debug(" Received AGGR_QOS_RSP from HAL");
@@ -925,7 +925,7 @@ QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 	struct scheduler_msg msg = {0};
 	tSirAggrQosReq *aggrQosReq = (tSirAggrQosReq *) pMsgBuf;
 	tpAggrAddTsParams pAggrAddTsParam;
-	tpPESession psessionEntry = NULL;
+	struct pe_session *psessionEntry = NULL;
 	tpLimTspecInfo tspecInfo;
 	uint8_t ac;
 	tpDphHashNode pSta;
