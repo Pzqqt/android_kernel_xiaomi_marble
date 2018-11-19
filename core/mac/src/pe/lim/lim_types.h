@@ -418,7 +418,7 @@ typedef struct sLimMlmLinkTestStopReq {
 bool lim_process_sme_req_messages(tpAniSirGlobal, struct scheduler_msg *);
 void lim_process_mlm_req_messages(tpAniSirGlobal, struct scheduler_msg *);
 void lim_process_mlm_rsp_messages(tpAniSirGlobal, uint32_t, uint32_t *);
-void lim_process_sme_del_bss_rsp(tpAniSirGlobal, uint32_t, tpPESession);
+void lim_process_sme_del_bss_rsp(tpAniSirGlobal, uint32_t, struct pe_session *);
 
 /**
  * lim_process_mlm_start_cnf(): called to processes MLM_START_CNF message from
@@ -434,12 +434,12 @@ void lim_get_random_bssid(tpAniSirGlobal mac, uint8_t *data);
 
 /* Function to handle HT and HT IE CFG parameter intializations */
 void handle_ht_capabilityand_ht_info(struct mac_context *mac,
-				     tpPESession psessionEntry);
+				     struct pe_session *psessionEntry);
 
 void lim_handle_param_update(tpAniSirGlobal mac, eUpdateIEsType cfgId);
 
 /* Function to apply CFG parameters before join/reassoc/start BSS */
-void lim_apply_configuration(tpAniSirGlobal, tpPESession);
+void lim_apply_configuration(tpAniSirGlobal, struct pe_session *);
 
 /**
  * lim_set_cfg_protection() - sets lim global cfg cache from the config
@@ -448,7 +448,7 @@ void lim_apply_configuration(tpAniSirGlobal, tpPESession);
  *
  * Return none
  */
-void lim_set_cfg_protection(tpAniSirGlobal mac, tpPESession pesessionEntry);
+void lim_set_cfg_protection(tpAniSirGlobal mac, struct pe_session *pesessionEntry);
 
 /* Function to Initialize MLM state machine on STA */
 QDF_STATUS lim_init_mlm(tpAniSirGlobal);
@@ -457,23 +457,23 @@ QDF_STATUS lim_init_mlm(tpAniSirGlobal);
 void lim_cleanup_mlm(tpAniSirGlobal);
 
 /* Management frame handling functions */
-void lim_process_beacon_frame(tpAniSirGlobal, uint8_t *, tpPESession);
-void lim_process_probe_req_frame(tpAniSirGlobal, uint8_t *, tpPESession);
-void lim_process_probe_rsp_frame(tpAniSirGlobal, uint8_t *, tpPESession);
+void lim_process_beacon_frame(tpAniSirGlobal, uint8_t *, struct pe_session *);
+void lim_process_probe_req_frame(tpAniSirGlobal, uint8_t *, struct pe_session *);
+void lim_process_probe_rsp_frame(tpAniSirGlobal, uint8_t *, struct pe_session *);
 void lim_process_probe_req_frame_multiple_bss(tpAniSirGlobal, uint8_t *,
-					      tpPESession);
+					      struct pe_session *);
 
 /* Process Auth frame when we have a session in progress. */
-void lim_process_auth_frame(tpAniSirGlobal, uint8_t *, tpPESession);
+void lim_process_auth_frame(tpAniSirGlobal, uint8_t *, struct pe_session *);
 QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal mac, uint8_t *,
 						void *body);
 
-void lim_process_assoc_req_frame(tpAniSirGlobal, uint8_t *, uint8_t, tpPESession);
+void lim_process_assoc_req_frame(tpAniSirGlobal, uint8_t *, uint8_t, struct pe_session *);
 void lim_send_mlm_assoc_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
-			    tpPESession psessionEntry);
+			    struct pe_session *psessionEntry);
 
-void lim_process_assoc_rsp_frame(tpAniSirGlobal, uint8_t *, uint8_t, tpPESession);
-void lim_process_disassoc_frame(tpAniSirGlobal, uint8_t *, tpPESession);
+void lim_process_assoc_rsp_frame(tpAniSirGlobal, uint8_t *, uint8_t, struct pe_session *);
+void lim_process_disassoc_frame(tpAniSirGlobal, uint8_t *, struct pe_session *);
 /*
  * lim_perform_disassoc() - Actual action taken after receiving disassoc
  * @mac_ctx: Global MAC context
@@ -485,7 +485,7 @@ void lim_process_disassoc_frame(tpAniSirGlobal, uint8_t *, tpPESession);
  * Return: None
  */
 void lim_perform_disassoc(tpAniSirGlobal mac_ctx, int32_t frame_rssi,
-			  uint16_t rc, tpPESession pe_session,
+			  uint16_t rc, struct pe_session *pe_session,
 			  tSirMacAddr addr);
 /*
  * lim_disassoc_tdls_peers() - Disassoc action for tdls peers
@@ -497,14 +497,14 @@ void lim_perform_disassoc(tpAniSirGlobal mac_ctx, int32_t frame_rssi,
  */
 #ifdef FEATURE_WLAN_TDLS
 void lim_disassoc_tdls_peers(tpAniSirGlobal mac_ctx,
-				    tpPESession pe_session, tSirMacAddr addr);
+				    struct pe_session *pe_session, tSirMacAddr addr);
 #else
 static inline void lim_disassoc_tdls_peers(tpAniSirGlobal mac_ctx,
-				    tpPESession pe_session, tSirMacAddr addr)
+				    struct pe_session *pe_session, tSirMacAddr addr)
 {
 }
 #endif
-void lim_process_deauth_frame(tpAniSirGlobal, uint8_t *, tpPESession);
+void lim_process_deauth_frame(tpAniSirGlobal, uint8_t *, struct pe_session *);
 /*
  * lim_perform_deauth() - Actual action taken after receiving deauth
  * @mac_ctx: Global MAC context
@@ -515,9 +515,9 @@ void lim_process_deauth_frame(tpAniSirGlobal, uint8_t *, tpPESession);
  *
  * Return: None
  */
-void lim_perform_deauth(tpAniSirGlobal mac_ctx, tpPESession pe_session,
+void lim_perform_deauth(tpAniSirGlobal mac_ctx, struct pe_session *pe_session,
 			uint16_t rc, tSirMacAddr addr, int32_t frame_rssi);
-void lim_process_action_frame(tpAniSirGlobal, uint8_t *, tpPESession);
+void lim_process_action_frame(tpAniSirGlobal, uint8_t *, struct pe_session *);
 void lim_process_action_frame_no_session(tpAniSirGlobal mac, uint8_t *pRxMetaInfo);
 
 void lim_populate_p2p_mac_header(tpAniSirGlobal, uint8_t *);
@@ -527,15 +527,15 @@ QDF_STATUS lim_send_probe_req_mgmt_frame(tpAniSirGlobal, tSirMacSSid *,
 					    tSirMacAddr, uint8_t, tSirMacAddr,
 					    uint32_t, uint16_t *, uint8_t *);
 void lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal, tSirMacAddr, tpAniSSID, short,
-				   uint8_t, tpPESession, uint8_t);
+				   uint8_t, struct pe_session *, uint8_t);
 void lim_send_auth_mgmt_frame(tpAniSirGlobal, tSirMacAuthFrameBody *, tSirMacAddr,
-			      uint8_t, tpPESession);
-void lim_send_assoc_req_mgmt_frame(tpAniSirGlobal, tLimMlmAssocReq *, tpPESession);
+			      uint8_t, struct pe_session *);
+void lim_send_assoc_req_mgmt_frame(tpAniSirGlobal, tLimMlmAssocReq *, struct pe_session *);
 #ifdef WLAN_FEATURE_HOST_ROAM
 void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac,
-		tLimMlmReassocReq *pMlmReassocReq, tpPESession psessionEntry);
+		tLimMlmReassocReq *pMlmReassocReq, struct pe_session *psessionEntry);
 void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal, tLimMlmReassocReq *,
-				     tpPESession);
+				     struct pe_session *);
 /**
  * lim_process_rx_scan_handler() -
  *	process the event for scan which is issued by LIM
@@ -550,10 +550,10 @@ void lim_process_rx_scan_handler(struct wlan_objmgr_vdev *vdev,
 #else
 static inline void lim_send_reassoc_req_with_ft_ies_mgmt_frame(
 		tpAniSirGlobal mac, tLimMlmReassocReq *pMlmReassocReq,
-		tpPESession psessionEntry)
+		struct pe_session *psessionEntry)
 {}
 static inline void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
-		tLimMlmReassocReq *reassoc_req, tpPESession pe_session)
+		tLimMlmReassocReq *reassoc_req, struct pe_session *pe_session)
 {}
 static inline void lim_process_rx_scan_handler(struct wlan_objmgr_vdev *vdev,
 				 struct scan_event *event, void *arg)
@@ -590,7 +590,7 @@ void lim_process_obss_color_collision_info(tpAniSirGlobal mac_ctx,
  * Return: void
  */
 void lim_send_obss_color_collision_cfg(tpAniSirGlobal mac_ctx,
-				       tpPESession session,
+				       struct pe_session *session,
 				       enum wmi_obss_color_collision_evt_type
 				       event_type);
 #else
@@ -601,7 +601,7 @@ static inline void lim_process_obss_color_collision_info(tpAniSirGlobal mac_ctx,
 							 uint32_t *msg_buf)
 {}
 static inline void lim_send_obss_color_collision_cfg(tpAniSirGlobal mac_ctx,
-			tpPESession session,
+			struct pe_session *session,
 			enum wmi_obss_color_collision_evt_type event_type)
 {}
 #endif
@@ -609,47 +609,47 @@ void lim_send_delts_req_action_frame(tpAniSirGlobal mac, tSirMacAddr peer,
 				     uint8_t wmmTspecPresent,
 				     tSirMacTSInfo * pTsinfo,
 				     tSirMacTspecIE * pTspecIe,
-				     tpPESession psessionEntry);
+				     struct pe_session *psessionEntry);
 void lim_send_addts_req_action_frame(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
-				     tSirAddtsReqInfo *addts, tpPESession);
+				     tSirAddtsReqInfo *addts, struct pe_session *);
 void lim_send_addts_rsp_action_frame(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
 				     uint16_t statusCode, tSirAddtsReqInfo *addts,
-				     tSirMacScheduleIE *pSchedule, tpPESession);
+				     tSirMacScheduleIE *pSchedule, struct pe_session *);
 
 void lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal, uint16_t, uint16_t, tSirMacAddr,
-				   uint8_t, tpDphHashNode pSta, tpPESession);
+				   uint8_t, tpDphHashNode pSta, struct pe_session *);
 
 void lim_send_disassoc_mgmt_frame(tpAniSirGlobal, uint16_t, tSirMacAddr,
-				  tpPESession, bool waitForAck);
-void lim_send_deauth_mgmt_frame(tpAniSirGlobal, uint16_t, tSirMacAddr, tpPESession,
+				  struct pe_session *, bool waitForAck);
+void lim_send_deauth_mgmt_frame(tpAniSirGlobal, uint16_t, tSirMacAddr, struct pe_session *,
 				bool waitForAck);
 
 void lim_process_mlm_update_hidden_ssid_rsp(tpAniSirGlobal mac_ctx,
 		struct scheduler_msg *msg);
 
 tSirResultCodes lim_mlm_add_bss(tpAniSirGlobal, tLimMlmStartReq *,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 
 QDF_STATUS lim_send_channel_switch_mgmt_frame(tpAniSirGlobal, tSirMacAddr,
 						 uint8_t, uint8_t, uint8_t,
-						 tpPESession);
+						 struct pe_session *);
 
 QDF_STATUS lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 	tSirMacAddr peer, uint8_t mode, uint8_t new_op_class,
-	uint8_t new_channel, uint8_t count, tpPESession session_entry);
+	uint8_t new_channel, uint8_t count, struct pe_session *session_entry);
 QDF_STATUS lim_p2p_oper_chan_change_confirm_action_frame(
 	tpAniSirGlobal mac_ctx, tSirMacAddr peer,
-	tpPESession session_entry);
+	struct pe_session *session_entry);
 
 QDF_STATUS lim_send_vht_opmode_notification_frame(tpAniSirGlobal mac,
 						     tSirMacAddr peer, uint8_t nMode,
-						     tpPESession psessionEntry);
+						     struct pe_session *psessionEntry);
 
 QDF_STATUS lim_send_neighbor_report_request_frame(tpAniSirGlobal,
 						     tpSirMacNeighborReportReq,
-						     tSirMacAddr, tpPESession);
+						     tSirMacAddr, struct pe_session *);
 QDF_STATUS lim_send_link_report_action_frame(tpAniSirGlobal, tpSirMacLinkReport,
-						tSirMacAddr, tpPESession);
+						tSirMacAddr, struct pe_session *);
 
 /**
  * lim_send_radio_measure_report_action_frame - Send RRM report action frame
@@ -670,10 +670,10 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal mac,
 				bool is_last_frame,
 				tpSirMacRadioMeasureReport pRRMReport,
 				tSirMacAddr peer,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 
 #ifdef FEATURE_WLAN_TDLS
-void lim_init_tdls_data(tpAniSirGlobal, tpPESession);
+void lim_init_tdls_data(tpAniSirGlobal, struct pe_session *);
 QDF_STATUS lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac,
 						 uint32_t *pMsgBuf);
 QDF_STATUS lim_process_sme_tdls_add_sta_req(tpAniSirGlobal mac,
@@ -685,19 +685,19 @@ void lim_send_sme_mgmt_tx_completion(
 		uint32_t sme_session_id,
 		uint32_t txCompleteStatus);
 QDF_STATUS lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
-				    tpPESession session_entry);
-QDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal mac, void *msg, tpPESession);
+				    struct pe_session *session_entry);
+QDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal mac, void *msg, struct pe_session *);
 void lim_process_tdls_del_sta_rsp(tpAniSirGlobal mac_ctx,
 				  struct scheduler_msg *lim_msg,
-				  tpPESession session_entry);
+				  struct pe_session *session_entry);
 #else
 static inline QDF_STATUS lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
-						tpPESession session_entry)
+						struct pe_session *session_entry)
 {
 	return QDF_STATUS_SUCCESS;
 }
 static inline void lim_init_tdls_data(tpAniSirGlobal mac,
-					tpPESession pSessionEntry)
+					struct pe_session *pSessionEntry)
 {
 
 }
@@ -705,7 +705,7 @@ static inline void lim_init_tdls_data(tpAniSirGlobal mac,
 
 /* Algorithms & Link Monitoring related functions */
 /* / Function that handles heartbeat failure */
-void lim_handle_heart_beat_failure(tpAniSirGlobal, tpPESession);
+void lim_handle_heart_beat_failure(tpAniSirGlobal, struct pe_session *);
 
 /* / Function that triggers link tear down with AP upon HB failure */
 void lim_tear_down_link_with_ap(tpAniSirGlobal, uint8_t, tSirMacReasonCodes);
@@ -727,37 +727,37 @@ void lim_set_channel(tpAniSirGlobal mac, uint8_t channel,
 #ifdef ANI_SUPPORT_11H
 /* / Function that sends Measurement Report action frame */
 QDF_STATUS lim_send_meas_report_frame(tpAniSirGlobal, tpSirMacMeasReqActionFrame,
-					 tSirMacAddr, tpPESession psessionEntry);
+					 tSirMacAddr, struct pe_session *psessionEntry);
 
 /* / Function that sends TPC Report action frame */
 QDF_STATUS lim_send_tpc_report_frame(tpAniSirGlobal, tpSirMacTpcReqActionFrame,
-					tSirMacAddr, tpPESession psessionEntry);
+					tSirMacAddr, struct pe_session *psessionEntry);
 #endif
 
 /* / Function that sends TPC Request action frame */
 void lim_send_tpc_request_frame(tpAniSirGlobal, tSirMacAddr,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 
 /* Function(s) to handle responses received from HAL */
 void lim_process_mlm_add_bss_rsp(tpAniSirGlobal mac,
 				 struct scheduler_msg *limMsgQ);
 void lim_process_mlm_add_sta_rsp(tpAniSirGlobal mac,
 				struct scheduler_msg *limMsgQt,
-				 tpPESession psessionEntry);
+				 struct pe_session *psessionEntry);
 void lim_process_mlm_del_sta_rsp(tpAniSirGlobal mac,
 				 struct scheduler_msg *limMsgQ);
 void lim_process_mlm_del_bss_rsp(tpAniSirGlobal mac,
 				 struct scheduler_msg *limMsgQ,
-				 tpPESession);
+				 struct pe_session *);
 void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal mac,
 				     struct scheduler_msg *limMsgQ,
-				     tpPESession psessionEntry);
+				     struct pe_session *psessionEntry);
 void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal mac,
 				     struct scheduler_msg *limMsgQ,
-				     tpPESession psessionEntry);
+				     struct pe_session *psessionEntry);
 void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal mac,
 				     struct scheduler_msg *limMsgQ,
-				     tpPESession psessionEntry);
+				     struct pe_session *psessionEntry);
 void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal mac,
 				     struct scheduler_msg *limMsgQ);
 void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal mac,
@@ -777,11 +777,11 @@ QDF_STATUS lim_sta_send_down_link(join_params *param);
 /* 11w send SA query request action frame */
 QDF_STATUS lim_send_sa_query_request_frame(tpAniSirGlobal mac, uint8_t *transId,
 					      tSirMacAddr peer,
-					      tpPESession psessionEntry);
+					      struct pe_session *psessionEntry);
 /* 11w SA query request action frame handler */
 QDF_STATUS lim_send_sa_query_response_frame(tpAniSirGlobal mac,
 					       uint8_t *transId, tSirMacAddr peer,
-					       tpPESession psessionEntry);
+					       struct pe_session *psessionEntry);
 #endif
 
 /* Inline functions */
@@ -929,21 +929,21 @@ lim_get_ielen_from_bss_description(tpSirBssDescription pBssDescr)
  *
  * return: success: QDF_STATUS_SUCCESS failure: QDF_STATUS_E_FAILURE
  */
-QDF_STATUS lim_send_beacon_ind(tpAniSirGlobal mac_ctx, tpPESession session,
+QDF_STATUS lim_send_beacon_ind(tpAniSirGlobal mac_ctx, struct pe_session *session,
 			       enum sir_bcn_update_reason reason);
 
 void
-lim_send_vdev_restart(tpAniSirGlobal mac, tpPESession psessionEntry,
+lim_send_vdev_restart(tpAniSirGlobal mac, struct pe_session *psessionEntry,
 		      uint8_t sessionId);
 
 void lim_get_wpspbc_sessions(tpAniSirGlobal mac, struct qdf_mac_addr addr,
 			uint8_t *uuid_e, eWPSPBCOverlap *overlap,
-			tpPESession psessionEntry);
-void limWPSPBCTimeout(tpAniSirGlobal mac, tpPESession psessionEntry);
-void lim_wpspbc_close(tpAniSirGlobal mac, tpPESession psessionEntry);
+			struct pe_session *psessionEntry);
+void limWPSPBCTimeout(tpAniSirGlobal mac, struct pe_session *psessionEntry);
+void lim_wpspbc_close(tpAniSirGlobal mac, struct pe_session *psessionEntry);
 void lim_remove_pbc_sessions(tpAniSirGlobal mac,
 				struct qdf_mac_addr pRemoveMac,
-				tpPESession psessionEntry);
+				struct pe_session *psessionEntry);
 
 #define LIM_WPS_OVERLAP_TIMER_MS                 10000
 
@@ -1038,7 +1038,7 @@ enum {
 
 QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 					 tSirMacAddr peer_mac, uint16_t tid,
-					 tpPESession session,
+					 struct pe_session *session,
 					 uint8_t addba_extn_present,
 					 uint8_t amsdu_support);
 /**
