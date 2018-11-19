@@ -321,7 +321,7 @@ static inline QDF_STATUS wlan_ipa_wdi_setup(struct wlan_ipa_priv *ipa_ctx,
 			     &ipa_ctx->tx_pipe_handle,
 			     &ipa_ctx->rx_pipe_handle,
 			     wlan_ipa_wdi_is_smmu_enabled(ipa_ctx, osdev),
-			     sys_in);
+			     sys_in, ipa_ctx->over_gsi);
 }
 
 #ifdef FEATURE_METERING
@@ -373,13 +373,18 @@ static inline QDF_STATUS wlan_ipa_wdi_init(struct wlan_ipa_priv *ipa_ctx)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	ipa_ctx->over_gsi =
+		QDF_IPA_WDI_INIT_OUT_PARAMS_IS_OVER_GSI(&out);
+	ipa_ctx->is_smmu_enabled =
+		QDF_IPA_WDI_INIT_OUT_PARAMS_IS_SMMU_ENABLED(&out);
+	ipa_info("ipa_over_gsi: %d, is_smmu_enabled: %d",
+		 ipa_ctx->over_gsi, ipa_ctx->is_smmu_enabled);
+
 	if (QDF_IPA_WDI_INIT_OUT_PARAMS_IS_UC_READY(&out)) {
 		ipa_debug("IPA uC READY");
 		ipa_ctx->uc_loaded = true;
-		ipa_ctx->is_smmu_enabled =
-			QDF_IPA_WDI_INIT_OUT_PARAMS_IS_SMMU_ENABLED(&out);
-		ipa_debug("is_smmu_enabled=%d", ipa_ctx->is_smmu_enabled);
 	} else {
+		ipa_info("IPA uc not ready");
 		return QDF_STATUS_E_BUSY;
 	}
 
@@ -2254,7 +2259,7 @@ static int wlan_ipa_setup_tx_sys_pipe(struct wlan_ipa_priv *ipa_ctx,
 #else
 /**
  * wlan_ipa_setup_tx_sys_pipe() - Setup IPA Tx system pipes
- * @ipa_ctx: Global IPA IPA context
+ * @ipa_ctx: IPA context
  * @desc_fifo_sz: Number of descriptors
  *
  * Return: 0 on success, negative errno on error
@@ -2267,6 +2272,27 @@ static int wlan_ipa_setup_tx_sys_pipe(struct wlan_ipa_priv *ipa_ctx,
 	 * is enabled, where per vdev descriptors are supported in firmware.
 	 */
 	return 0;
+}
+#endif
+
+#ifdef CONFIG_IPA_WDI_UNIFIED_API
+/**
+ * wlan_ipa_get_rx_ipa_client() - Get IPA RX ipa client
+ * @ipa_ctx: IPA context
+ *
+ * Return: rx ipa sys client
+ */
+static inline uint8_t wlan_ipa_get_rx_ipa_client(struct wlan_ipa_priv *ipa_ctx)
+{
+	if (ipa_ctx->over_gsi)
+		return IPA_CLIENT_WLAN2_PROD;
+	else
+		return IPA_CLIENT_WLAN1_PROD;
+}
+#else
+static inline uint8_t wlan_ipa_get_rx_ipa_client(struct wlan_ipa_priv *ipa_ctx)
+{
+	return IPA_CLIENT_WLAN1_PROD;
 }
 #endif
 
@@ -2290,8 +2316,7 @@ static int wlan_ipa_setup_rx_sys_pipe(struct wlan_ipa_priv *ipa_ctx,
 	 */
 	ipa = &ipa_ctx->sys_pipe[WLAN_IPA_RX_PIPE].ipa_sys_params;
 
-	ipa->client = IPA_CLIENT_WLAN1_PROD;
-
+	ipa->client = wlan_ipa_get_rx_ipa_client(ipa_ctx);
 	ipa->desc_fifo_sz = desc_fifo_sz;
 	ipa->priv = ipa_ctx;
 	ipa->notify = wlan_ipa_w2i_cb;

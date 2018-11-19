@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -128,7 +128,8 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_pdev *pdev, void *ipa_i2w_cb,
 		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
 		uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
 		uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle,
-		bool is_smmu_enabled, qdf_ipa_sys_connect_params_t *sys_in);
+		bool is_smmu_enabled, qdf_ipa_sys_connect_params_t *sys_in,
+		bool over_gsi);
 #else /* CONFIG_IPA_WDI_UNIFIED_API */
 QDF_STATUS ol_txrx_ipa_setup(struct cdp_pdev *pdev, void *ipa_i2w_cb,
 		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,

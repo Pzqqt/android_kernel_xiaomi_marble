@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -482,6 +482,7 @@ static inline void ol_txrx_ipa_wdi_rx_params(
  * @p_rx_pipe_handle: pointer to Rx pipe handle
  * @is_smmu_enabled: Is SMMU enabled or not
  * @sys_in: parameters to setup sys pipe in mcc mode
+ * @over_gsi: is ipa ver gsi fw
  *
  * Return: QDF_STATUS
  */
@@ -490,7 +491,8 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 			     uint32_t ipa_desc_size, void *ipa_priv,
 			     bool is_rm_enabled, uint32_t *p_tx_pipe_handle,
 			     uint32_t *p_rx_pipe_handle, bool is_smmu_enabled,
-			     qdf_ipa_sys_connect_params_t *sys_in)
+			     qdf_ipa_sys_connect_params_t *sys_in,
+			     bool over_gsi)
 {
 	ol_txrx_pdev_handle pdev = (ol_txrx_pdev_handle)ppdev;
 	struct ol_txrx_ipa_resources *ipa_res = &pdev->ipa_resource;

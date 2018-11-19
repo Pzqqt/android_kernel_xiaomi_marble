@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -627,6 +627,7 @@ struct wlan_ipa_priv {
 	qdf_ipa_wdi_in_params_t prod_pipe_in;
 	bool uc_loaded;
 	bool wdi_enabled;
+	bool over_gsi;
 	qdf_mc_timer_t rt_debug_fill_timer;
 	qdf_mutex_t rt_debug_lock;
 	qdf_mutex_t ipa_lock;
