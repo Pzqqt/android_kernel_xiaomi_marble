@@ -1750,6 +1750,21 @@ struct wlan_mlme_fe_rrm {
 	uint8_t rm_capability[MLME_RMENABLEDCAP_MAX_LEN];
 };
 
+#ifdef MWS_COEX
+/*
+ * struct wlan_mlme_mwc - MWC related configs
+ * @mws_coex_4g_quick_tdm:  bitmap to set mws-coex 5g-nr power limit
+ * @mws_coex_5g_nr_pwr_limit: bitmap to set mws-coex 5g-nr power limit
+ **/
+struct wlan_mlme_mwc {
+	uint32_t mws_coex_4g_quick_tdm;
+	uint32_t mws_coex_5g_nr_pwr_limit;
+};
+#else
+struct wlan_mlme_mwc {
+};
+#endif
+
 /**
  * struct wlan_mlme_cfg - MLME config items
  * @chainmask_cfg: VHT chainmask related cfg items
@@ -1785,6 +1800,7 @@ struct wlan_mlme_fe_rrm {
  * @btm: BTM related CFG itmes
  * @wlm_config: WLM related CFG items
  * @rrm_config: RRM related CFG items
+ * @mwc: MWC related CFG items
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_chainmask chainmask_cfg;
@@ -1822,6 +1838,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_btm btm;
 	struct wlan_mlme_fe_wlm wlm_config;
 	struct wlan_mlme_fe_rrm rrm_config;
+	struct wlan_mlme_mwc mwc;
 };
 
 #endif

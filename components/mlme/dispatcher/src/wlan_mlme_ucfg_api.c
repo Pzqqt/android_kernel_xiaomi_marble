@@ -1210,3 +1210,41 @@ ucfg_mlme_get_latency_enable(struct wlan_objmgr_psoc *psoc, bool *value)
 	*value = mlme_obj->cfg.wlm_config.latency_enable;
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef MWS_COEX
+QDF_STATUS
+ucfg_mlme_get_mws_coex_4g_quick_tdm(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_MWS_COEX_4G_QUICK_FTDM);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.mwc.mws_coex_4g_quick_tdm;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_mws_coex_5g_nr_pwr_limit(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_MWS_COEX_5G_NR_PWR_LIMIT);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.mwc.mws_coex_5g_nr_pwr_limit;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif

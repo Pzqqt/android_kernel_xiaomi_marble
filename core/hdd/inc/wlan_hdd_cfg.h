@@ -3224,58 +3224,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_SECONDARY_RATE_MAX           (0x3F)
 #define CFG_ENABLE_SECONDARY_RATE_DEFAULT       (0x17)
 
-#ifdef MWS_COEX
-/*
- * <ini>
- * gMwsCoex4gQuickTdm - Bitmap to control MWS-COEX 4G quick FTDM policy
- * @Min: 0x00000000
- * @Max: 0xFFFFFFFF
- * @Default: 0x00000000
- *
- * It is a 32 bit value such that the various bits represent as below:
- * Bit-0 : 0 - Don't allow quick FTDM policy (Default)
- *        1 - Allow quick FTDM policy
- * Bit 1-31 : reserved for future use
- *
- * It is used to enable or disable MWS-COEX 4G (LTE) Quick FTDM
- *
- * Usage: Internal
- *
- * </ini>
- */
-
-#define CFG_MWS_COEX_4G_QUICK_FTDM_NAME      "gMwsCoex4gQuickTdm"
-#define CFG_MWS_COEX_4G_QUICK_FTDM_MIN       (0x00000000)
-#define CFG_MWS_COEX_4G_QUICK_FTDM_MAX       (0xFFFFFFFF)
-#define CFG_MWS_COEX_4G_QUICK_FTDM_DEFAULT   (0x00000000)
-
-/*
- * <ini>
- * gMwsCoex5gnrPwrLimit - Bitmap to set MWS-COEX 5G-NR power limit
- * @Min: 0x00000000
- * @Max: 0xFFFFFFFF
- * @Default: 0x00000000
- *
- * It is a 32 bit value such that the various bits represent as below:
- * Bit-0 : Don't apply user specific power limit,
- *        use internal power limit (Default)
- * Bit 1-2 : Invalid value (Ignored)
- * Bit 3-21 : Apply the specified value as the external power limit, in dBm
- * Bit 22-31 : Invalid value (Ignored)
- *
- * It is used to set MWS-COEX 5G-NR power limit
- *
- * Usage: Internal
- *
- * </ini>
- */
-
-#define CFG_MWS_COEX_5G_NR_PWR_LIMIT_NAME      "gMwsCoex5gnrPwrLimit"
-#define CFG_MWS_COEX_5G_NR_PWR_LIMIT_MIN       (0x00000000)
-#define CFG_MWS_COEX_5G_NR_PWR_LIMIT_MAX       (0xFFFFFFFF)
-#define CFG_MWS_COEX_5G_NR_PWR_LIMIT_DEFAULT   (0x00000000)
-#endif
-
 /*
  * <ini>
  * gEnableChangeChannelBandWidth - Enable/Disable change
@@ -3345,14 +3293,6 @@ struct hdd_config {
 #ifdef FEATURE_WLAN_DYNAMIC_CVM
 	/* Bitmap for operating voltage corner mode */
 	uint32_t vc_mode_cfg_bitmap;
-#endif
-
-#ifdef MWS_COEX
-	/* Bitmap for MWS-COEX 4G Quick FTDM */
-	uint32_t mws_coex_4g_quick_tdm;
-
-	/* Bitmap for MWS-COEX 5G-NR power limit */
-	uint32_t mws_coex_5g_nr_pwr_limit;
 #endif
 
 	/* Additional Handoff params */

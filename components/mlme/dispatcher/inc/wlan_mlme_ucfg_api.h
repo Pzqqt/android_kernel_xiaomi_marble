@@ -3333,4 +3333,28 @@ ucfg_mlme_override_bmps_imps(struct wlan_objmgr_psoc *psoc)
 	return wlan_mlme_override_bmps_imps(psoc);
 }
 
+#ifdef MWS_COEX
+/**
+ * ucfg_mlme_get_mws_coex_4g_quick_tdm() - Get mws coex 4g quick tdm
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_mws_coex_4g_quick_tdm(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *val);
+
+/**
+ * ucfg_mlme_get_mws_coex_5g_nr_pwr_limit() - Get mws coex 5g nr pwr limit
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_mws_coex_5g_nr_pwr_limit(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *val);
+#endif
+
 #endif /* _WLAN_MLME_UCFG_API_H_ */

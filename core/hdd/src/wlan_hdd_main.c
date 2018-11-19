@@ -10863,22 +10863,30 @@ static int hdd_set_auto_shutdown_cb(struct hdd_context *hdd_ctx)
 static int hdd_init_mws_coex(struct hdd_context *hdd_ctx)
 {
 	int ret = 0;
+	uint32_t mws_coex_4g_quick_tdm = 0, mws_coex_5g_nr_pwr_limit = 0;
+
+	ucfg_mlme_get_mws_coex_4g_quick_tdm(hdd_ctx->psoc,
+					    &mws_coex_4g_quick_tdm);
 
 	ret = sme_cli_set_command(0, WMI_PDEV_PARAM_MWSCOEX_4G_ALLOW_QUICK_FTDM,
-				  hdd_ctx->config->mws_coex_4g_quick_tdm,
+				  mws_coex_4g_quick_tdm,
 				  PDEV_CMD);
 	if (ret) {
 		hdd_warn("Unable to send MWS-COEX 4G quick FTDM policy");
 		return ret;
 	}
 
+	ucfg_mlme_get_mws_coex_5g_nr_pwr_limit(hdd_ctx->psoc,
+					       &mws_coex_5g_nr_pwr_limit);
+
 	ret = sme_cli_set_command(0, WMI_PDEV_PARAM_MWSCOEX_SET_5GNR_PWR_LIMIT,
-				  hdd_ctx->config->mws_coex_5g_nr_pwr_limit,
+				  mws_coex_5g_nr_pwr_limit,
 				  PDEV_CMD);
 	if (ret) {
 		hdd_warn("Unable to send MWS-COEX 4G quick FTDM policy");
 		return ret;
 	}
+
 	return ret;
 }
 #else
