@@ -140,26 +140,6 @@ struct reg_table_entry g_registry_table[] = {
 			    VAR_FLAGS_OPTIONAL,
 			    (void *)CFG_IBSS_BSSID_DEFAULT),
 
-	REG_VARIABLE_STRING(CFG_INTF0_MAC_ADDR_NAME, WLAN_PARAM_MacAddr,
-			    struct hdd_config, intfMacAddr[0],
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_INTF0_MAC_ADDR_DEFAULT),
-
-	REG_VARIABLE_STRING(CFG_INTF1_MAC_ADDR_NAME, WLAN_PARAM_MacAddr,
-			    struct hdd_config, intfMacAddr[1],
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_INTF1_MAC_ADDR_DEFAULT),
-
-	REG_VARIABLE_STRING(CFG_INTF2_MAC_ADDR_NAME, WLAN_PARAM_MacAddr,
-			    struct hdd_config, intfMacAddr[2],
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_INTF2_MAC_ADDR_DEFAULT),
-
-	REG_VARIABLE_STRING(CFG_INTF3_MAC_ADDR_NAME, WLAN_PARAM_MacAddr,
-			    struct hdd_config, intfMacAddr[3],
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_INTF3_MAC_ADDR_DEFAULT),
-
 	REG_VARIABLE(CFG_AP_ENABLE_PROTECTION_MODE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, apProtEnabled,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -977,47 +957,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_LPRx_DEFAULT,
 		CFG_LPRx_MIN,
 		CFG_LPRx_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_ACTION_OUI, WLAN_PARAM_Integer,
-		     struct hdd_config, action_oui_enable,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_ACTION_OUI_DEFAULT,
-		     CFG_ENABLE_ACTION_OUI_MIN,
-		     CFG_ENABLE_ACTION_OUI_MAX),
-
-	REG_VARIABLE_STRING(CFG_ACTION_OUI_CONNECT_1X1_NAME, WLAN_PARAM_String,
-			    struct hdd_config, action_oui_str[0],
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_ACTION_OUI_CONNECT_1X1_DEFAULT),
-
-	REG_VARIABLE_STRING(CFG_ACTION_OUI_ITO_EXTENSION_NAME,
-			    WLAN_PARAM_String,
-			    struct hdd_config, action_oui_str[1],
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_ACTION_OUI_ITO_EXTENSION_DEFAULT),
-
-	REG_VARIABLE_STRING(CFG_ACTION_OUI_CCKM_1X1_NAME, WLAN_PARAM_String,
-			    struct hdd_config, action_oui_str[2],
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_ACTION_OUI_CCKM_1X1_DEFAULT),
-
-	REG_VARIABLE_STRING(CFG_ACTION_OUI_ITO_ALTERNATE_NAME,
-			    WLAN_PARAM_String,
-			    struct hdd_config, action_oui_str[3],
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_ACTION_OUI_ITO_ALTERNATE_DEFAULT),
-	REG_VARIABLE_STRING(CFG_ACTION_OUI_SWITCH_TO_11N_MODE_NAME,
-			    WLAN_PARAM_String,
-			    struct hdd_config, action_oui_str[4],
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_ACTION_OUI_SWITCH_TO_11N_MODE_DEFAULT),
-
-	REG_VARIABLE_STRING(CFG_ACTION_OUI_CONNECT_1X1_WITH_1_CHAIN_NAME,
-			    WLAN_PARAM_String,
-			    struct hdd_config, action_oui_str[5],
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)
-			    CFG_ACTION_OUI_CONNECT_1X1_WITH_1_CHAIN_DEFAULT),
 
 	REG_VARIABLE(CFG_SCAN_11D_INTERVAL_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, scan_11d_interval,
