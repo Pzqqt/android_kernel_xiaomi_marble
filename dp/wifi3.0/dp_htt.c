@@ -2480,11 +2480,10 @@ void dp_ppdu_desc_deliver(struct dp_pdev *pdev,
 			dp_tx_stats_update(pdev->soc, peer,
 					&ppdu_desc->user[i],
 					ppdu_desc->ack_rssi);
-
-			dp_peer_unref_del_find_by_id(peer);
 		}
 
 		dp_tx_rate_stats_update(peer, &ppdu_desc->user[i]);
+		dp_peer_unref_del_find_by_id(peer);
 	}
 
 	/*

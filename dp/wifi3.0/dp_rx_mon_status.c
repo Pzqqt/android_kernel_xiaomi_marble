@@ -416,16 +416,16 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 				sizeof(struct cdp_rx_indication_ppdu));
 		cdp_rx_ppdu = (struct cdp_rx_indication_ppdu *)ppdu_nbuf->data;
 		peer = dp_peer_find_by_id(soc, cdp_rx_ppdu->peer_id);
-		if (cdp_rx_ppdu->peer_id != HTT_INVALID_PEER) {
-			if (peer) {
-				dp_rx_stats_update(pdev, peer, cdp_rx_ppdu);
-				dp_wdi_event_handler(WDI_EVENT_RX_PPDU_DESC,
-					soc, ppdu_nbuf, cdp_rx_ppdu->peer_id,
-					WDI_NO_VAL, pdev->pdev_id);
-				dp_peer_unref_del_find_by_id(peer);
-			}
-		} else if (pdev->mcopy_mode) {
+		if (peer) {
 			dp_rx_stats_update(pdev, peer, cdp_rx_ppdu);
+			dp_peer_unref_del_find_by_id(peer);
+		}
+		if (cdp_rx_ppdu->peer_id != HTT_INVALID_PEER) {
+			dp_wdi_event_handler(WDI_EVENT_RX_PPDU_DESC,
+					     soc, ppdu_nbuf,
+					     cdp_rx_ppdu->peer_id,
+					     WDI_NO_VAL, pdev->pdev_id);
+		} else if (pdev->mcopy_mode) {
 			dp_wdi_event_handler(WDI_EVENT_RX_PPDU_DESC, soc,
 					ppdu_nbuf, HTT_INVALID_PEER,
 					WDI_NO_VAL, pdev->pdev_id);
