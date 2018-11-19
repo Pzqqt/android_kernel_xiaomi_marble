@@ -72,7 +72,7 @@
  */
 uint8_t
 lim_is_auth_algo_supported(tpAniSirGlobal mac, tAniAuthType authType,
-			   tpPESession psessionEntry)
+			   struct pe_session *psessionEntry)
 {
 	bool algoEnable, privacyOptImp;
 	struct wlan_mlme_wep_cfg *wep_params = &mac->mlme_cfg->wep_params;
@@ -412,7 +412,7 @@ void lim_delete_pre_auth_node(tpAniSirGlobal mac, tSirMacAddr macAddr)
 
 void
 lim_restore_from_auth_state(tpAniSirGlobal mac, tSirResultCodes resultCode,
-			    uint16_t protStatusCode, tpPESession sessionEntry)
+			    uint16_t protStatusCode, struct pe_session *sessionEntry)
 {
 	tSirMacAddr currentBssId;
 	tLimMlmAuthCnf mlmAuthCnf;
@@ -764,7 +764,7 @@ void lim_post_sme_set_keys_cnf(tpAniSirGlobal mac,
  */
 void lim_send_set_bss_key_req(tpAniSirGlobal mac,
 			      tLimMlmSetKeysReq *pMlmSetKeysReq,
-			      tpPESession psessionEntry)
+			      struct pe_session *psessionEntry)
 {
 	struct scheduler_msg msgQ = {0};
 	tpSetBssKeyParams pSetBssKeyParams = NULL;
@@ -866,7 +866,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal mac,
 			      tLimMlmSetKeysReq *pMlmSetKeysReq,
 			      uint16_t staIdx,
 			      uint8_t defWEPIdx,
-			      tpPESession sessionEntry, bool sendRsp)
+			      struct pe_session *sessionEntry, bool sendRsp)
 {
 	struct scheduler_msg msgQ = {0};
 	tpSetStaKeyParams pSetStaKeyParams = NULL;

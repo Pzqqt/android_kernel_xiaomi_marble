@@ -49,7 +49,7 @@
 
 struct tLimPreAuthNode;
 
-uint8_t lim_is_auth_algo_supported(tpAniSirGlobal, tAniAuthType, tpPESession);
+uint8_t lim_is_auth_algo_supported(tpAniSirGlobal, tAniAuthType, struct pe_session *);
 
 /* MAC based authentication related functions */
 void lim_init_pre_auth_list(tpAniSirGlobal);
@@ -59,7 +59,7 @@ void lim_add_pre_auth_node(tpAniSirGlobal, struct tLimPreAuthNode *);
 void lim_delete_pre_auth_node(tpAniSirGlobal, tSirMacAddr);
 void lim_release_pre_auth_node(tpAniSirGlobal mac, tpLimPreAuthNode pAuthNode);
 void lim_restore_from_auth_state(tpAniSirGlobal,
-				 tSirResultCodes, uint16_t, tpPESession);
+				 tSirResultCodes, uint16_t, struct pe_session *);
 uint8_t lim_delete_open_auth_pre_auth_node(tpAniSirGlobal mac_ctx);
 
 /* Encryption/Decryption related functions */
@@ -70,9 +70,9 @@ void lim_encrypt_auth_frame(tpAniSirGlobal, uint8_t, uint8_t *, uint8_t *,
 uint8_t lim_decrypt_auth_frame(tpAniSirGlobal, uint8_t *, uint8_t *, uint8_t *,
 			       uint32_t, uint16_t);
 
-void lim_send_set_bss_key_req(tpAniSirGlobal, tLimMlmSetKeysReq *, tpPESession);
+void lim_send_set_bss_key_req(tpAniSirGlobal, tLimMlmSetKeysReq *, struct pe_session *);
 void lim_send_set_sta_key_req(tpAniSirGlobal, tLimMlmSetKeysReq *, uint16_t, uint8_t,
-			      tpPESession, bool sendRsp);
+			      struct pe_session *, bool sendRsp);
 void lim_post_sme_set_keys_cnf(tpAniSirGlobal, tLimMlmSetKeysReq *,
 			       tLimMlmSetKeysCnf *);
 
