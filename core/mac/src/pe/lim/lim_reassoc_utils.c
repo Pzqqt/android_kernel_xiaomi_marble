@@ -59,7 +59,7 @@
  */
 
 void lim_update_re_assoc_globals(tpAniSirGlobal mac, tpSirAssocRsp pAssocRsp,
-				 tpPESession psessionEntry)
+				 struct pe_session *psessionEntry)
 {
 	/* Update the current Bss Information */
 	qdf_mem_copy(psessionEntry->bssId,
@@ -109,7 +109,7 @@ void lim_update_re_assoc_globals(tpAniSirGlobal mac, tpSirAssocRsp pAssocRsp,
  * Return: None
  */
 void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal mac,
-		tpDphHashNode pStaDs, tpPESession psessionEntry)
+		tpDphHashNode pStaDs, struct pe_session *psessionEntry)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
 	tpSirBssDescription bss_desc;
@@ -242,7 +242,7 @@ error:
  * Return: None
  */
 void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal mac,
-		tpDphHashNode pStaDs, tpPESession psessionEntry)
+		tpDphHashNode pStaDs, struct pe_session *psessionEntry)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
 	/** Skipped the DeleteDPH Hash Entry as we need it for the new BSS*/
@@ -357,7 +357,7 @@ Error:
  * Return: true  When STA is waiting for Reassoc response from AP
  *         else false
  */
-bool lim_is_reassoc_in_progress(tpAniSirGlobal mac, tpPESession psessionEntry)
+bool lim_is_reassoc_in_progress(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 {
 	if (psessionEntry == NULL)
 		return false;
@@ -386,7 +386,7 @@ bool lim_is_reassoc_in_progress(tpAniSirGlobal mac, tpPESession psessionEntry)
  * Return: QDF_STATUS_SUCCESS on success else QDF_STATUS failure codes
  */
 QDF_STATUS lim_add_ft_sta_self(tpAniSirGlobal mac_ctx, uint16_t assoc_id,
-				tpPESession session_entry)
+				struct pe_session *session_entry)
 {
 	tpAddStaParams add_sta_params = NULL;
 	QDF_STATUS ret_code = QDF_STATUS_SUCCESS;
@@ -440,7 +440,7 @@ QDF_STATUS lim_add_ft_sta_self(tpAniSirGlobal mac_ctx, uint16_t assoc_id,
 void
 lim_restore_pre_reassoc_state(tpAniSirGlobal mac,
 		tSirResultCodes resultCode, uint16_t protStatusCode,
-		tpPESession psessionEntry)
+		struct pe_session *psessionEntry)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
 
@@ -483,7 +483,7 @@ lim_restore_pre_reassoc_state(tpAniSirGlobal mac,
  */
 void lim_post_reassoc_failure(tpAniSirGlobal mac,
 		tSirResultCodes resultCode, uint16_t protStatusCode,
-		tpPESession psessionEntry)
+		struct pe_session *psessionEntry)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
 
