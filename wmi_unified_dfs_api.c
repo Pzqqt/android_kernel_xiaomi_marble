@@ -93,4 +93,25 @@ QDF_STATUS wmi_send_usenol_pdev_param(void *wmi_hdl, bool usenol,
 
 	return wmi_unified_pdev_param_send(wmi_handle, &pparam, pdev_idx);
 }
+
+QDF_STATUS
+wmi_send_subchan_marking_pdev_param(void *wmi_hdl,
+				    bool subchanmark,
+				    struct wlan_objmgr_pdev *pdev)
+{
+	struct pdev_params pparam;
+	int pdev_idx;
+	struct wmi_unified *wmi_handle = (struct wmi_unified *)wmi_hdl;
+
+	pdev_idx = lmac_get_pdev_idx(pdev);
+	if (pdev_idx < 0)
+		return QDF_STATUS_E_FAILURE;
+
+	qdf_mem_set(&pparam, sizeof(pparam), 0);
+	pparam.param_id = wmi_pdev_param_sub_channel_marking;
+	pparam.param_value = subchanmark;
+
+	return wmi_unified_pdev_param_send(wmi_handle, &pparam, pdev_idx);
+}
+
 #endif
