@@ -250,7 +250,7 @@ enum wifi_logging_ring_id {
 /* Change channel generic scheme */
 typedef void (*CHANGE_CHANNEL_CALLBACK)(tpAniSirGlobal pMac, QDF_STATUS status,
 					uint32_t *data,
-					tpPESession psessionEntry);
+					struct pe_session *psessionEntry);
 
 /* / LIM global definitions */
 typedef struct sAniSirLimIbss {
@@ -701,7 +701,7 @@ typedef struct sAniSirLim {
 
 	/* wsc info required to form the wsc IE */
 	tLimWscIeInfo wscIeInfo;
-	tpPESession gpSession;  /* Pointer to  session table */
+	struct pe_session *gpSession;  /* Pointer to  session table */
 	/*
 	 * sessionID and transactionID from SME is stored here for those messages, for which
 	 * there is no session context in PE, e.g. Scan related messages.
@@ -714,7 +714,7 @@ typedef struct sAniSirLim {
 	uint32_t mgmtFrameSessionId;
 	uint32_t tdls_frm_session_id;
 
-	tpPESession pSessionEntry;
+	struct pe_session *pSessionEntry;
 	uint8_t reAssocRetryAttempt;
 	tLimDisassocDeauthCnfReq limDisassocDeauthCnfReq;
 	uint8_t deferredMsgCnt;
