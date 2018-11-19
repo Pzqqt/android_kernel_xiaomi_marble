@@ -1994,7 +1994,7 @@ static void csr_send_ese_adjacent_ap_rep_ind(tpAniSirGlobal pMac,
 {
 	uint32_t roamTS2 = 0;
 	struct csr_roam_info roamInfo;
-	tpPESession pSessionEntry = NULL;
+	struct pe_session *pSessionEntry = NULL;
 	uint8_t sessionId = CSR_SESSION_ID_INVALID;
 
 	if (NULL == pSession) {
@@ -20741,7 +20741,7 @@ csr_find_session_by_type(tpAniSirGlobal mac_ctx, enum QDF_OPMODE type)
 bool
 csr_find_session_by_bssid(tpAniSirGlobal mac_ctx, uint8_t *bssid)
 {
-	tpPESession session_entry;
+	struct pe_session *session_entry;
 	uint8_t session_id;      /* PE session_id */
 
 	session_entry = pe_find_session_by_bssid(mac_ctx,

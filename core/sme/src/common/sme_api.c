@@ -11223,7 +11223,7 @@ QDF_STATUS sme_update_dsc_pto_up_mapping(mac_handle_t mac_handle,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t i, j, peSessionId;
 	struct csr_roam_session *pCsrSession = NULL;
-	tpPESession pSession = NULL;
+	struct pe_session *pSession = NULL;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status))
