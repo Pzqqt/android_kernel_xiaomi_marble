@@ -223,8 +223,6 @@ bool csr_is_nullssid(uint8_t *pBssSsid, uint8_t len);
 bool csr_is_infra_bss_desc(tSirBssDescription *pSirBssDesc);
 bool csr_is_ibss_bss_desc(tSirBssDescription *pSirBssDesc);
 bool csr_is_privacy(tSirBssDescription *pSirBssDesc);
-tSirResultCodes csr_get_disassoc_rsp_status_code(tSirSmeDisassocRsp *
-		pSmeDisassocRsp);
 tSirResultCodes csr_get_de_auth_rsp_status_code(tSirSmeDeauthRsp *pSmeRsp);
 uint32_t csr_get_frag_thresh(tpAniSirGlobal mac_ctx);
 uint32_t csr_get_rts_thresh(tpAniSirGlobal mac_ctx);

@@ -5983,20 +5983,6 @@ void csr_free_connect_bss_desc(tpAniSirGlobal pMac, uint32_t sessionId)
 	}
 }
 
-tSirResultCodes csr_get_disassoc_rsp_status_code(tSirSmeDisassocRsp *
-						 pSmeDisassocRsp)
-{
-	uint8_t *pBuffer = (uint8_t *) pSmeDisassocRsp;
-	uint32_t ret;
-
-	pBuffer += (sizeof(uint16_t) + sizeof(uint16_t) + sizeof(tSirMacAddr));
-	/* tSirResultCodes is an enum, assuming is 32bit */
-	/* If we cannot make this assumption, use copymemory */
-	qdf_get_u32(pBuffer, &ret);
-
-	return (tSirResultCodes) ret;
-}
-
 tSirResultCodes csr_get_de_auth_rsp_status_code(tSirSmeDeauthRsp *pSmeRsp)
 {
 	uint8_t *pBuffer = (uint8_t *) pSmeRsp;
