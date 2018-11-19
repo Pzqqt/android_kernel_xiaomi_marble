@@ -582,7 +582,7 @@ tpPESession pe_create_session(tpAniSirGlobal pMac,
 	}
 
 	session_ptr = &pMac->lim.gpSession[i];
-	qdf_mem_set((void *)session_ptr, sizeof(tPESession), 0);
+	qdf_mem_set((void *)session_ptr, sizeof(struct pe_session), 0);
 	/* Allocate space for Station Table for this session. */
 	session_ptr->dph.dphHashTable.pHashTable =
 		qdf_mem_malloc(sizeof(tpDphHashNode) * (numSta + 1));

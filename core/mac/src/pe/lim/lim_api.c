@@ -808,7 +808,7 @@ QDF_STATUS pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 	}
 
 	pMac->lim.gpSession =
-		qdf_mem_malloc(sizeof(tPESession) * pMac->lim.maxBssId);
+		qdf_mem_malloc(sizeof(struct pe_session) * pMac->lim.maxBssId);
 	if (!pMac->lim.gpSession) {
 		status = QDF_STATUS_E_NOMEM;
 		goto pe_open_psession_fail;
