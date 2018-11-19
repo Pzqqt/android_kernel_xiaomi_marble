@@ -329,7 +329,7 @@ lim_default_hmac_sha256_kdf(uint8_t *secret, uint32_t secret_len,
  *
  * Return: remaining length
  */
-static uint32_t lim_process_fils_eap_tlv(tpPESession pe_session,
+static uint32_t lim_process_fils_eap_tlv(struct pe_session *pe_session,
 				uint8_t *wrapped_data, uint32_t data_len)
 {
 	struct fils_eap_tlv *tlv;
@@ -438,7 +438,7 @@ static QDF_STATUS lim_generate_key_data(struct pe_fils_session *fils_info,
  *
  * Return: None
  */
-static void lim_generate_ap_key_auth(tpPESession pe_session)
+static void lim_generate_ap_key_auth(struct pe_session *pe_session)
 {
 	uint8_t *buf, *addr[1];
 	uint32_t len;
@@ -480,7 +480,7 @@ static void lim_generate_ap_key_auth(tpPESession pe_session)
  *
  * Return: None
  */
-static void lim_generate_key_auth(tpPESession pe_session)
+static void lim_generate_key_auth(struct pe_session *pe_session)
 {
 	uint8_t *buf, *addr[1];
 	uint32_t len;
@@ -527,7 +527,7 @@ static void lim_generate_key_auth(tpPESession pe_session)
  *
  * Return: None
  */
-static void lim_get_keys(tpPESession pe_session)
+static void lim_get_keys(struct pe_session *pe_session)
 {
 	uint8_t key_label[] = PTK_KEY_LABEL;
 	uint8_t *data;
@@ -585,7 +585,7 @@ static void lim_get_keys(tpPESession pe_session)
  *
  * Return: None
  */
-static void lim_generate_pmkid(tpPESession pe_session)
+static void lim_generate_pmkid(struct pe_session *pe_session)
 {
 	uint8_t hash[SHA384_DIGEST_SIZE];
 	struct pe_fils_session *fils_info = pe_session->fils_info;
@@ -608,7 +608,7 @@ static void lim_generate_pmkid(tpPESession pe_session)
  *
  * Return: None
  */
-static void lim_generate_pmk(tpPESession pe_session)
+static void lim_generate_pmk(struct pe_session *pe_session)
 {
 	uint8_t nounce[2 * SIR_FILS_NONCE_LENGTH] = {0};
 	uint8_t nounce_len = 2 * SIR_FILS_NONCE_LENGTH;
@@ -651,7 +651,7 @@ static void lim_generate_pmk(tpPESession pe_session)
  *
  * Return: None
  */
-static void lim_generate_rmsk_data(tpPESession pe_session)
+static void lim_generate_rmsk_data(struct pe_session *pe_session)
 {
 	uint8_t optional_data[4] = {0};
 	uint8_t rmsk_label[] = RMSK_LABEL;
@@ -688,7 +688,7 @@ static void lim_generate_rmsk_data(tpPESession pe_session)
  *
  * Return: None
  */
-static QDF_STATUS lim_process_auth_wrapped_data(tpPESession pe_session,
+static QDF_STATUS lim_process_auth_wrapped_data(struct pe_session *pe_session,
 			uint8_t *wrapped_data, uint32_t data_len)
 {
 	uint8_t code;
@@ -792,7 +792,7 @@ static QDF_STATUS lim_process_auth_wrapped_data(tpPESession pe_session,
  * Return: true if frame is valid or fils is disable, false otherwise
  */
 bool lim_is_valid_fils_auth_frame(tpAniSirGlobal mac_ctx,
-		tpPESession pe_session,
+		struct pe_session *pe_session,
 		tSirMacAuthFrameBody *rx_auth_frm_body)
 {
 	if (!pe_session->fils_info)
@@ -980,7 +980,7 @@ static int lim_create_fils_wrapper_data(struct pe_fils_session *fils_info)
  *
  * Return: None
  */
-void lim_add_fils_data_to_auth_frame(tpPESession session,
+void lim_add_fils_data_to_auth_frame(struct pe_session *session,
 		uint8_t *body)
 {
 	struct pe_fils_session *fils_info;
@@ -1060,7 +1060,7 @@ void lim_add_fils_data_to_auth_frame(tpPESession session,
  * Return: true if fils data needs to be processed else false
  */
 bool lim_process_fils_auth_frame2(tpAniSirGlobal mac_ctx,
-		tpPESession pe_session,
+		struct pe_session *pe_session,
 		tSirMacAuthFrameBody *rx_auth_frm_body)
 {
 	int i;
@@ -1113,7 +1113,7 @@ bool lim_process_fils_auth_frame2(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_update_fils_config(tpPESession session,
+void lim_update_fils_config(struct pe_session *session,
 		tpSirSmeJoinReq sme_join_req)
 {
 	struct pe_fils_session *csr_fils_info;
@@ -1203,7 +1203,7 @@ void lim_update_fils_config(tpPESession session,
  */
 uint32_t lim_create_fils_auth_data(tpAniSirGlobal mac_ctx,
 		tpSirMacAuthFrameBody auth_frame,
-		tpPESession session)
+		struct pe_session *session)
 {
 	uint32_t frame_len = 0;
 	int32_t wrapped_data_len;
@@ -1239,7 +1239,7 @@ uint32_t lim_create_fils_auth_data(tpAniSirGlobal mac_ctx,
 }
 
 void populate_fils_connect_params(tpAniSirGlobal mac_ctx,
-				  tpPESession session,
+				  struct pe_session *session,
 				  tpSirSmeJoinRsp sme_join_rsp)
 {
 	struct fils_join_rsp_params *fils_join_rsp;
@@ -1408,7 +1408,7 @@ static QDF_STATUS lim_parse_kde_elements(tpAniSirGlobal mac_ctx,
 }
 
 bool lim_verify_fils_params_assoc_rsp(tpAniSirGlobal mac_ctx,
-				      tpPESession session_entry,
+				      struct pe_session *session_entry,
 				      tpSirAssocRsp assoc_rsp,
 				      tLimMlmAssocCnf *assoc_cnf)
 {
@@ -1613,7 +1613,7 @@ error:
 }
 
 QDF_STATUS aead_encrypt_assoc_req(tpAniSirGlobal mac_ctx,
-				  tpPESession pe_session,
+				  struct pe_session *pe_session,
 				  uint8_t *frm, uint32_t *frm_len)
 {
 	uint8_t *plain_text = NULL, *data;
@@ -1771,7 +1771,7 @@ error:
 }
 
 QDF_STATUS aead_decrypt_assoc_rsp(tpAniSirGlobal mac_ctx,
-				  tpPESession session,
+				  struct pe_session *session,
 				  tDot11fAssocResponse *ar,
 				  uint8_t *p_frame, uint32_t *n_frame)
 {
@@ -1810,7 +1810,7 @@ QDF_STATUS aead_decrypt_assoc_rsp(tpAniSirGlobal mac_ctx,
 	return status;
 }
 
-void lim_update_fils_rik(tpPESession pe_session,
+void lim_update_fils_rik(struct pe_session *pe_session,
 			 tSirRoamOffloadScanReq *req_buffer)
 {
 	struct pe_fils_session *pe_fils_info = pe_session->fils_info;

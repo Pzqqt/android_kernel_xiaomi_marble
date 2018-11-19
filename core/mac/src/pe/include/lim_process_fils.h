@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,7 +32,7 @@
  * Return: true if fils data needs to be processed else false
  */
 bool lim_process_fils_auth_frame2(tpAniSirGlobal mac_ctx,
-				tpPESession pe_session,
+				struct pe_session *pe_session,
 				tSirMacAuthFrameBody * rx_auth_frm_body);
 
 /**
@@ -47,7 +47,7 @@ bool lim_process_fils_auth_frame2(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_add_fils_data_to_auth_frame(tpPESession session, uint8_t *body);
+void lim_add_fils_data_to_auth_frame(struct pe_session *session, uint8_t *body);
 
 /**
  * lim_is_valid_fils_auth_frame()- This API checks whether auth frame is a
@@ -59,7 +59,7 @@ void lim_add_fils_data_to_auth_frame(tpPESession session, uint8_t *body);
  * Return: true if frame is valid or fils is disable, false otherwise
  */
 bool lim_is_valid_fils_auth_frame(tpAniSirGlobal mac_ctx,
-	tpPESession pe_session, tSirMacAuthFrameBody *rx_auth_frm_body);
+	struct pe_session *pe_session, tSirMacAuthFrameBody *rx_auth_frm_body);
 
 /**
  * lim_create_fils_rik()- This API create rik using rrk coming from
@@ -88,7 +88,7 @@ QDF_STATUS lim_create_fils_rik(uint8_t *rrk, uint8_t rrk_len,
  *
  * Return: None
  */
-void lim_update_fils_config(tpPESession session, tpSirSmeJoinReq sme_join_req);
+void lim_update_fils_config(struct pe_session *session, tpSirSmeJoinReq sme_join_req);
 
 /**
  * lim_create_fils_auth_data()- This API creates the fils auth data
@@ -100,7 +100,7 @@ void lim_update_fils_config(tpPESession session, tpSirSmeJoinReq sme_join_req);
  * Return: length of fils data
  */
 uint32_t lim_create_fils_auth_data(tpAniSirGlobal mac_ctx,
-		tpSirMacAuthFrameBody auth_frame, tpPESession session);
+		tpSirMacAuthFrameBody auth_frame, struct pe_session *session);
 
 /**
  * lim_increase_fils_sequence_number: this API increases fils sequence number in
@@ -109,7 +109,7 @@ uint32_t lim_create_fils_auth_data(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static inline void lim_increase_fils_sequence_number(tpPESession session_entry)
+static inline void lim_increase_fils_sequence_number(struct pe_session *session_entry)
 {
 	if (!session_entry->fils_info)
 		return;
@@ -129,7 +129,7 @@ static inline void lim_increase_fils_sequence_number(tpPESession session_entry)
  * Return: None
  */
 void populate_fils_connect_params(tpAniSirGlobal mac_ctx,
-				  tpPESession session,
+				  struct pe_session *session,
 				  tpSirSmeJoinRsp sme_join_rsp);
 
 /**
@@ -145,7 +145,7 @@ void populate_fils_connect_params(tpAniSirGlobal mac_ctx,
  * Return: QDF_STATUS
  */
 QDF_STATUS aead_encrypt_assoc_req(tpAniSirGlobal mac_ctx,
-				  tpPESession pe_session,
+				  struct pe_session *pe_session,
 				  uint8_t *frame, uint32_t *payload);
 
 /**
@@ -162,7 +162,7 @@ QDF_STATUS aead_encrypt_assoc_req(tpAniSirGlobal mac_ctx,
  * Return: QDF_STATUS
  */
 QDF_STATUS aead_decrypt_assoc_rsp(tpAniSirGlobal mac_ctx,
-				  tpPESession session,
+				  struct pe_session *session,
 				  tDot11fAssocResponse *ar,
 				  uint8_t *p_frame, uint32_t *n_frame);
 /**
@@ -173,7 +173,7 @@ QDF_STATUS aead_decrypt_assoc_rsp(tpAniSirGlobal mac_ctx,
  *
  * Return: True if FILS connection, false if not
  */
-static inline bool lim_is_fils_connection(tpPESession pe_session)
+static inline bool lim_is_fils_connection(struct pe_session *pe_session)
 {
 	if (pe_session->fils_info->is_fils_connection)
 		return true;
@@ -193,7 +193,7 @@ static inline bool lim_is_fils_connection(tpPESession pe_session)
  * Return: True, if successfully matches. False, otherwise
  */
 bool lim_verify_fils_params_assoc_rsp(tpAniSirGlobal mac_ctx,
-				      tpPESession session_entry,
+				      struct pe_session *session_entry,
 				      tpSirAssocRsp assoc_rsp,
 				      tLimMlmAssocCnf * assoc_cnf);
 
@@ -207,52 +207,52 @@ bool lim_verify_fils_params_assoc_rsp(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_update_fils_rik(tpPESession pe_session,
+void lim_update_fils_rik(struct pe_session *pe_session,
 			 tSirRoamOffloadScanReq *req_buffer);
 #else
 static inline bool lim_process_fils_auth_frame2(tpAniSirGlobal mac_ctx,
-		tpPESession pe_session, tSirMacAuthFrameBody *rx_auth_frm_body)
+		struct pe_session *pe_session, tSirMacAuthFrameBody *rx_auth_frm_body)
 {
 	return false;
 }
 
 static inline void
-lim_increase_fils_sequence_number(tpPESession session_entry)
+lim_increase_fils_sequence_number(struct pe_session *session_entry)
 { }
 
 static inline void
-lim_add_fils_data_to_auth_frame(tpPESession session, uint8_t *body)
+lim_add_fils_data_to_auth_frame(struct pe_session *session, uint8_t *body)
 {
 }
 
 static inline bool lim_is_valid_fils_auth_frame(tpAniSirGlobal mac_ctx,
-	tpPESession pe_session, tSirMacAuthFrameBody *rx_auth_frm_body)
+	struct pe_session *pe_session, tSirMacAuthFrameBody *rx_auth_frm_body)
 {
 	return true;
 }
 
 static inline void
-lim_update_fils_config(tpPESession session, tpSirSmeJoinReq sme_join_req)
+lim_update_fils_config(struct pe_session *session, tpSirSmeJoinReq sme_join_req)
 { }
 
 static inline uint32_t lim_create_fils_auth_data(tpAniSirGlobal mac_ctx,
-		tpSirMacAuthFrameBody auth_frame, tpPESession session)
+		tpSirMacAuthFrameBody auth_frame, struct pe_session *session)
 {
 	return 0;
 }
 
-static inline bool lim_is_fils_connection(tpPESession pe_session)
+static inline bool lim_is_fils_connection(struct pe_session *pe_session)
 {
 	return false;
 }
 
 static inline void populate_fils_connect_params(tpAniSirGlobal mac_ctx,
-						tpPESession session,
+						struct pe_session *session,
 						tpSirSmeJoinRsp sme_join_rsp)
 { }
 
 static inline QDF_STATUS aead_encrypt_assoc_req(tpAniSirGlobal mac_ctx,
-						tpPESession pe_session,
+						struct pe_session *pe_session,
 						uint8_t *frame,
 						uint32_t *payload)
 {
@@ -260,7 +260,7 @@ static inline QDF_STATUS aead_encrypt_assoc_req(tpAniSirGlobal mac_ctx,
 }
 
 static inline QDF_STATUS aead_decrypt_assoc_rsp(tpAniSirGlobal mac_ctx,
-				  tpPESession session,
+				  struct pe_session *session,
 				  tDot11fAssocResponse *ar,
 				  uint8_t *p_frame, uint32_t *n_frame)
 {
@@ -268,7 +268,7 @@ static inline QDF_STATUS aead_decrypt_assoc_rsp(tpAniSirGlobal mac_ctx,
 }
 
 static inline bool lim_verify_fils_params_assoc_rsp(tpAniSirGlobal mac_ctx,
-			tpPESession session_entry,
+			struct pe_session *session_entry,
 			tpSirAssocRsp assoc_rsp,
 			tLimMlmAssocCnf *assoc_cnf)
 
@@ -276,7 +276,7 @@ static inline bool lim_verify_fils_params_assoc_rsp(tpAniSirGlobal mac_ctx,
 	return true;
 }
 
-static inline void lim_update_fils_rik(tpPESession pe_session,
+static inline void lim_update_fils_rik(struct pe_session *pe_session,
 				       tSirRoamOffloadScanReq *req_buffer)
 { }
 #endif
