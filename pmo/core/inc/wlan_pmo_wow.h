@@ -301,10 +301,20 @@ static inline uint8_t pmo_get_wow_user_ptrn(
 }
 
 void pmo_dump_wow_ptrn(struct pmo_wow_add_pattern *ptrn);
+/**
+ * pmo_core_del_wow_pattern() - Function which will delete the WoWL pattern
+ * @vdev: pointer to the vdev
+ *
+ * This function deletes all the user WoWl patterns and default WoWl patterns
+ *
+ * Return: error if any errors encountered, QDF_STATUS_SUCCESS otherwise
+ */
+
+QDF_STATUS pmo_core_del_wow_pattern(struct wlan_objmgr_vdev *vdev);
 
 /**
- * pmo_core_add_wow_pattern() - Function which will add the WoWL pattern to be
- *			 used when PBM filtering is enabled
+ * pmo_core_add_wow_user_pattern() - Function which will add the WoWL pattern
+ *			 to be used when PBM filtering is enabled
  * @vdev: pointer to the vdev
  * @ptrn: pointer to the pattern string to be added
  *
@@ -314,7 +324,7 @@ QDF_STATUS pmo_core_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 			struct pmo_wow_add_pattern *ptrn);
 
 /**
- * pmo_core_del_wow_pattern() - Function which will delete the WoWL pattern
+ * pmo_core_del_wow_user_pattern() - Function which will delete the WoWL pattern
  * @vdev: pointer to the vdev
  * @ptrn: pointer to the pattern string to be delete
  *

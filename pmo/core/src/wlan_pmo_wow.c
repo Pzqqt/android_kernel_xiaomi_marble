@@ -44,6 +44,35 @@ void pmo_set_wow_event_bitmap(WOW_WAKE_EVENT_TYPE event,
 	bitmask[idx] |= 1 << bit_idx;
 }
 
+QDF_STATUS pmo_core_del_wow_pattern(struct wlan_objmgr_vdev *vdev)
+{
+	QDF_STATUS status;
+	uint8_t id;
+	uint8_t pattern_count;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	pmo_enter();
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto out;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	pattern_count = pmo_get_wow_default_ptrn(vdev_ctx);
+	/* clear all default patterns cofigured by pmo */
+	for (id = 0; id < pattern_count; id++)
+		status = pmo_tgt_del_wow_pattern(vdev, id, false);
+
+	/* clear all user patterns cofigured by pmo */
+	pattern_count = pmo_get_wow_user_ptrn(vdev_ctx);
+	for (id = 0; id < pattern_count; id++)
+		status = pmo_tgt_del_wow_pattern(vdev, id, true);
+
+	pmo_vdev_put_ref(vdev);
+out:
+	pmo_exit();
+	return status;
+}
+
 QDF_STATUS pmo_core_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 		struct pmo_wow_add_pattern *ptrn)
 {

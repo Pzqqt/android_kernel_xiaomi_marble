@@ -415,6 +415,12 @@ ucfg_pmo_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 }
 
 QDF_STATUS
+ucfg_pmo_del_wow_pattern(struct wlan_objmgr_vdev *vdev)
+{
+	return  pmo_core_del_wow_pattern(vdev);
+}
+
+QDF_STATUS
 ucfg_pmo_del_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 			      uint8_t pattern_id)
 {
