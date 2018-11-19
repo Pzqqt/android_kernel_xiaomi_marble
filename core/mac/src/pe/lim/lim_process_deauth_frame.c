@@ -59,12 +59,12 @@
 
 void
 lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-			 tpPESession psessionEntry)
+			 struct pe_session *psessionEntry)
 {
 	uint8_t *pBody;
 	uint16_t reasonCode;
 	tpSirMacMgmtHdr pHdr;
-	tpPESession pRoamSessionEntry = NULL;
+	struct pe_session *pRoamSessionEntry = NULL;
 	uint8_t roamSessionId;
 #ifdef WLAN_FEATURE_11W
 	uint32_t frameLen;
@@ -319,7 +319,7 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 
 } /*** end lim_process_deauth_frame() ***/
 
-void lim_perform_deauth(tpAniSirGlobal mac_ctx, tpPESession pe_session,
+void lim_perform_deauth(tpAniSirGlobal mac_ctx, struct pe_session *pe_session,
 			uint16_t rc, tSirMacAddr addr, int32_t frame_rssi)
 {
 	tLimMlmDeauthInd mlmDeauthInd;
