@@ -1410,7 +1410,7 @@ fail:
 static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
 					  struct scheduler_msg *msg)
 {
-	struct sPESession *session;
+	struct pe_session *session;
 	uint8_t session_id;
 	struct sme_obss_ht40_scanind_msg *ht40_scanind;
 

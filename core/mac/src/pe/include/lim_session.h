@@ -117,8 +117,7 @@ struct obss_detection_cfg {
 	uint8_t obss_ht_20mhz_detect_mode;
 };
 
-typedef struct sPESession       /* Added to Support BT-AMP */
-{
+struct pe_session {
 	/* To check session table is in use or free */
 	uint8_t available;
 	uint16_t peSessionId;
@@ -565,7 +564,9 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	bool enable_session_twt_support;
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
-} tPESession, *tpPESession;
+};
+
+typedef struct pe_session tPESession, *tpPESession;
 
 struct session_params {
 	uint16_t session_id;

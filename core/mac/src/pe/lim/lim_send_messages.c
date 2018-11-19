@@ -698,7 +698,7 @@ QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal pMac,
  * Return: status of operation
  */
 QDF_STATUS lim_send_ht40_obss_scanind(tpAniSirGlobal mac_ctx,
-						struct sPESession *session)
+						struct pe_session *session)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	struct obss_ht40_scanind *ht40_obss_scanind;

@@ -4726,7 +4726,7 @@ static void lim_process_sme_update_access_policy_vendor_ie(
 						uint32_t *msg)
 {
 	struct sme_update_access_policy_vendor_ie *update_vendor_ie;
-	struct sPESession *pe_session_entry;
+	struct pe_session *pe_session_entry;
 	uint16_t num_bytes;
 
 	if (!msg) {
