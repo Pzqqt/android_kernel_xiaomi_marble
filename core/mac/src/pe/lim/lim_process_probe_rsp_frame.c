@@ -99,7 +99,7 @@ lim_validate_ie_information_in_probe_rsp_frame(tpAniSirGlobal mac_ctx,
  */
 void
 lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
-			    tpPESession session_entry)
+			    struct pe_session *session_entry)
 {
 	uint8_t *body;
 	uint32_t frame_len = 0;
