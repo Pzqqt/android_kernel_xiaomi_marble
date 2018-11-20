@@ -3022,7 +3022,7 @@ static void rx_macro_init_bcl_pmic_reg(struct snd_soc_codec *codec)
 			rx_priv->bcl_pmic_params.ppid);
 		break;
 	default:
-		dev_err(rx_dev, "%s: PMIC ID is invalid\n",
+		dev_err(rx_dev, "%s: PMIC ID is invalid %d\n",
 		       __func__, rx_priv->bcl_pmic_params.id);
 		break;
 	}
