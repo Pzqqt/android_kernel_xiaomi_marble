@@ -18,7 +18,7 @@
 
 /**
  * DOC: qal_streamfs
- * Qualcomm abstraction layer (QAL) stream file system APIs
+ * stream file system APIs
  */
 
 #if !defined(__QAL_STREAMFS_H)
