@@ -2440,7 +2440,7 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 		qdf_create_work(0, &wmi_handle->rx_event_work,
 				wmi_rx_event_work, wmi_handle);
 		wmi_handle->wmi_rx_work_queue =
-			qdf_create_workqueue("wmi_rx_event_work_queue");
+			qdf_alloc_unbound_workqueue("wmi_rx_event_work_queue");
 		if (NULL == wmi_handle->wmi_rx_work_queue) {
 			WMI_LOGE("failed to create wmi_rx_event_work_queue");
 			goto error;
@@ -2570,7 +2570,7 @@ void *wmi_unified_attach(void *scn_handle,
 	qdf_create_work(0, &wmi_handle->rx_event_work,
 			wmi_rx_event_work, wmi_handle);
 	wmi_handle->wmi_rx_work_queue =
-		qdf_create_workqueue("wmi_rx_event_work_queue");
+		qdf_alloc_unbound_workqueue("wmi_rx_event_work_queue");
 	if (NULL == wmi_handle->wmi_rx_work_queue) {
 		WMI_LOGE("failed to create wmi_rx_event_work_queue");
 		goto error;
