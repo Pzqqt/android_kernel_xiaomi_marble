@@ -2224,6 +2224,20 @@ static inline void wmi_sta_attach_tlv(struct wmi_unified *wmi_handle)
 }
 #endif
 
+#ifdef WLAN_FEATURE_NAN
+/**
+ * wmi_nan_feature_attach_tlv() - set NAN feature wmi callback
+ * @wmi_handle: wmi handle
+ *
+ * Return: none
+ */
+void wmi_nan_feature_attach_tlv(struct wmi_unified *wmi_handle);
+#else
+static inline void wmi_nan_feature_attach_tlv(struct wmi_unified *wmi_handle)
+{
+}
+#endif
+
 /**
  * wmi_align() - provides word aligned parameter
  * @param: parameter to be aligned

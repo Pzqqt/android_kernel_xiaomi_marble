@@ -502,6 +502,7 @@ static QDF_STATUS send_wlm_latency_level_cmd_tlv(wmi_unified_t wmi_handle,
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_NAN
 /**
  * send_nan_req_cmd_tlv() - to send nan request to target
  * @wmi_handle: wmi handle
@@ -573,6 +574,14 @@ static QDF_STATUS send_nan_req_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return ret;
 }
+
+void wmi_nan_feature_attach_tlv(struct wmi_unified *wmi_handle)
+{
+	struct wmi_ops *ops = wmi_handle->ops;
+
+	ops->send_nan_req_cmd = send_nan_req_cmd_tlv;
+}
+#endif /* WLAN_FEATURE_NAN */
 
 #ifdef CONVERGED_TDLS_ENABLE
 /**
@@ -2471,7 +2480,6 @@ void wmi_sta_attach_tlv(wmi_unified_t wmi_handle)
 	ops->send_fw_profiling_cmd = send_fw_profiling_cmd_tlv;
 	ops->send_nat_keepalive_en_cmd = send_nat_keepalive_en_cmd_tlv;
 	ops->send_wlm_latency_level_cmd = send_wlm_latency_level_cmd_tlv;
-	ops->send_nan_req_cmd = send_nan_req_cmd_tlv;
 	ops->send_process_set_ie_info_cmd = send_process_set_ie_info_cmd_tlv;
 	ops->send_set_base_macaddr_indicate_cmd =
 		 send_set_base_macaddr_indicate_cmd_tlv;
@@ -2504,5 +2512,6 @@ void wmi_sta_attach_tlv(wmi_unified_t wmi_handle)
 	wmi_tdls_attach_tlv(wmi_handle);
 	wmi_disa_attach_tlv(wmi_handle);
 	wmi_policy_mgr_attach_tlv(wmi_handle);
+	wmi_nan_feature_attach_tlv(wmi_handle);
 }
 

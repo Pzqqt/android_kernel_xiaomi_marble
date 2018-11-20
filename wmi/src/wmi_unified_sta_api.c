@@ -123,6 +123,7 @@ QDF_STATUS wmi_unified_wlm_latency_level_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_FEATURE_NAN
 QDF_STATUS wmi_unified_nan_req_cmd(void *wmi_hdl,
 			struct nan_req_params *nan_req)
 {
@@ -134,6 +135,7 @@ QDF_STATUS wmi_unified_nan_req_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+#endif
 
 QDF_STATUS wmi_unified_process_set_ie_info_cmd(void *wmi_hdl,
 				   struct vdev_ie_info_param *ie_info)

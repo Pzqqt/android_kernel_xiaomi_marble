@@ -64,9 +64,7 @@ struct oem_data_rsp;
 struct direct_buf_rx_data;
 #endif
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
 struct scheduler_msg;
-#endif
 
 #ifdef CONVERGED_TDLS_ENABLE
 #include "wlan_tdls_public_structs.h"
