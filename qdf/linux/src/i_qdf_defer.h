@@ -217,6 +217,17 @@ static inline __qdf_workqueue_t *__qdf_create_singlethread_workqueue(char *name)
 }
 
 /**
+ * __qdf_alloc_unbound_workqueue - alloc an unbound workqueue
+ * @name: string
+ *
+ * Return: pointer of type qdf_workqueue_t
+ */
+static inline __qdf_workqueue_t *__qdf_alloc_unbound_workqueue(char *name)
+{
+	return alloc_workqueue(name, WQ_UNBOUND, 0);
+}
+
+/**
  * __qdf_flush_workqueue - flush the workqueue
  * @wqueue: pointer to workqueue
  * Return: none
