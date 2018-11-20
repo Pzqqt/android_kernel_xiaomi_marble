@@ -3091,6 +3091,16 @@ static const char *wma_get_status_str(uint32_t status)
 	}
 }
 
+#ifdef CONFIG_HL_SUPPORT
+static inline void wma_mgmt_unmap_buf(tp_wma_handle wma_handle, qdf_nbuf_t buf)
+{
+}
+#else
+static inline void wma_mgmt_unmap_buf(tp_wma_handle wma_handle, qdf_nbuf_t buf)
+{
+	qdf_nbuf_unmap_single(wma_handle->qdf_dev, buf, QDF_DMA_TO_DEVICE);
+}
+#endif
 /**
  * wma_process_mgmt_tx_completion() - process mgmt completion
  * @wma_handle: wma handle
@@ -3126,8 +3136,7 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	vdev_id = mgmt_txrx_get_vdev_id(pdev, desc_id);
 
 	if (buf)
-		qdf_nbuf_unmap_single(wma_handle->qdf_dev, buf,
-					  QDF_DMA_TO_DEVICE);
+		wma_mgmt_unmap_buf(wma_handle, buf);
 
 	packetdump_cb = wma_handle->wma_mgmt_tx_packetdump_cb;
 	if (packetdump_cb)
