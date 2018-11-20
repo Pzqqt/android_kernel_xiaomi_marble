@@ -1450,11 +1450,10 @@ populate_dot11f_ssid(tpAniSirGlobal pMac,
 
 QDF_STATUS populate_dot11f_ssid2(tpAniSirGlobal pMac, tDot11fIESSID *pDot11f)
 {
-	uint32_t nCfg;
-	QDF_STATUS nSirStatus;
 
-	CFG_GET_STR(nSirStatus, pMac, WNI_CFG_SSID, pDot11f->ssid, nCfg, 32);
-	pDot11f->num_ssid = (uint8_t) nCfg;
+	qdf_mem_copy(pDot11f->ssid, pMac->mlme_cfg->sap_cfg.cfg_ssid,
+		     pMac->mlme_cfg->sap_cfg.cfg_ssid_len);
+	pDot11f->num_ssid = pMac->mlme_cfg->sap_cfg.cfg_ssid_len;
 	pDot11f->present = 1;
 	return QDF_STATUS_SUCCESS;
 } /* End populate_dot11f_ssid2. */

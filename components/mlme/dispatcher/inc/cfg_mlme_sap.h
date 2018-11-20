@@ -23,11 +23,14 @@
 #ifndef __CFG_MLME_SAP_H
 #define __CFG_MLME_SAP_H
 
+#define STR_SSID_DEFAULT "1234567890"
+#define STR_SSID_DEFAULT_LEN sizeof(STR_SSID_DEFAULT)
+
 #define CFG_SSID CFG_STRING( \
 			"cfg_ssid", \
 			0, \
-			32, \
-			"1,2,3,4,5,6,7,8,9,0", \
+			STR_SSID_DEFAULT_LEN, \
+			STR_SSID_DEFAULT, \
 			"CFG_SSID")
 
 #define CFG_BEACON_INTERVAL CFG_INI_UINT( \
@@ -526,6 +529,53 @@
 			0, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Sap preferred channel location")
+/*
+ * <ini>
+ * gSapForce11NFor11AC - Restrict SAP to 11n if set 1 even though
+ * hostapd.conf request for 11ac.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Restrict SAP to 11n if set 1 even though hostapd.conf request for 11ac.
+ *
+ * 0- Do not force 11n for 11ac.
+ * 1- Force 11n for 11ac.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_SAP_FORCE_11N_FOR_11AC CFG_INI_BOOL( \
+			"gSapForce11NFor11AC", \
+			0, \
+			"Sap force 11n for 11ac")
+
+/*
+ * <ini>
+ * gGoForce11NFor11AC - Restrict GO to 11n if set 1 even though
+ * hostapd.conf request for 11ac.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Restrict GO to 11n if set 1 even though hostapd.conf request for 11ac.
+ *
+ * 0- Do not force 11n for 11ac.
+ * 1- Force 11n for 11ac.
+ *
+ * Supported Feature: GO
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_GO_FORCE_11N_FOR_11AC CFG_INI_BOOL( \
+			"gGoForce11NFor11AC", \
+			0, \
+			"GO force 11n for 11ac")
 
 
  #define CFG_SAP_ALL \
@@ -554,6 +604,8 @@
 	CFG(CFG_REDUCED_BEACON_INTERVAL) \
 	CFG(CFG_MAX_LI_MODULATED_DTIM) \
 	CFG(CFG_COUNTRY_CODE_PRIORITY) \
-	CFG(CFG_SAP_PREF_CHANNEL_LOCATION)
+	CFG(CFG_SAP_PREF_CHANNEL_LOCATION) \
+	CFG(CFG_SAP_FORCE_11N_FOR_11AC) \
+	CFG(CFG_GO_FORCE_11N_FOR_11AC)
 
 #endif /* __CFG_MLME_SAP_H */

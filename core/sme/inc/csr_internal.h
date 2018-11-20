@@ -231,7 +231,7 @@ struct scan_profile       {
 	uint8_t *pChannelList;
 	tSirScanType scanType;
 	eCsrRoamBssType bssType;
-	uint8_t ssid[WNI_CFG_SSID_LEN];
+	uint8_t ssid[MLME_CFG_SSID_LEN];
 	uint8_t bReturnAfter1stMatch;
 	uint8_t fUniqueResult;
 	uint8_t freshScan;

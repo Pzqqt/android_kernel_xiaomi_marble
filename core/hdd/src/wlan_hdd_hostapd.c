@@ -4217,6 +4217,13 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 	uint8_t ch_width;
 	uint8_t sub_20_chan_width;
 	QDF_STATUS status;
+	bool sap_force_11n_for_11ac = 0;
+	bool go_force_11n_for_11ac = 0;
+
+	ucfg_mlme_get_sap_force_11n_for_11ac(hdd_ctx->psoc,
+					     &sap_force_11n_for_11ac);
+	ucfg_mlme_get_go_force_11n_for_11ac(hdd_ctx->psoc,
+					    &go_force_11n_for_11ac);
 
 	/* Fixed channel 11AC override:
 	 * 11AC override in qcacld is introduced for following reasons:
@@ -4245,10 +4252,10 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 	    sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ax ||
 	    sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ax_ONLY) &&
 	    ((ap_adapter->device_mode == QDF_SAP_MODE &&
-	    !hdd_ctx->config->sap_force_11n_for_11ac &&
+	    !sap_force_11n_for_11ac &&
 	    hdd_ctx->config->sap_11ac_override) ||
 	    (ap_adapter->device_mode == QDF_P2P_GO_MODE &&
-	    !hdd_ctx->config->go_force_11n_for_11ac &&
+	    !go_force_11n_for_11ac &&
 	    hdd_ctx->config->go_11ac_override))) {
 		hdd_debug("** Driver force 11AC override for SAP/Go **");
 
@@ -4629,10 +4636,17 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		cfg_default(CFG_AUTO_CHANNEL_SELECT_WEIGHT);
 	bool bval = false;
 	uint8_t pref_chan_location = 0;
+	bool sap_force_11n_for_11ac = 0;
+	bool go_force_11n_for_11ac = 0;
 
 	hdd_enter();
 
 	hdd_notify_teardown_tdls_links(adapter->vdev);
+
+	ucfg_mlme_get_sap_force_11n_for_11ac(hdd_ctx->psoc,
+					     &sap_force_11n_for_11ac);
+	ucfg_mlme_get_go_force_11n_for_11ac(hdd_ctx->psoc,
+					    &go_force_11n_for_11ac);
 
 	if (policy_mgr_is_hw_mode_change_in_progress(hdd_ctx->psoc)) {
 		status = policy_mgr_wait_for_connection_update(
@@ -5131,9 +5145,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		pConfig->SapHw_mode = eCSR_DOT11_MODE_11ac;
 
 	if (((adapter->device_mode == QDF_SAP_MODE) &&
-	     (hdd_ctx->config->sap_force_11n_for_11ac)) ||
+	     (sap_force_11n_for_11ac)) ||
 	     ((adapter->device_mode == QDF_P2P_GO_MODE) &&
-	     (hdd_ctx->config->go_force_11n_for_11ac))) {
+	     (go_force_11n_for_11ac))) {
 		if (pConfig->SapHw_mode == eCSR_DOT11_MODE_11ac ||
 		    pConfig->SapHw_mode == eCSR_DOT11_MODE_11ac_ONLY)
 			pConfig->SapHw_mode = eCSR_DOT11_MODE_11n;
@@ -5156,9 +5170,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	sme_update_config(mac_handle, sme_config);
 
 	if (!((adapter->device_mode == QDF_SAP_MODE) &&
-	     (hdd_ctx->config->sap_force_11n_for_11ac)) ||
+	     (sap_force_11n_for_11ac)) ||
 	     ((adapter->device_mode == QDF_P2P_GO_MODE) &&
-	     (hdd_ctx->config->go_force_11n_for_11ac))) {
+	     (go_force_11n_for_11ac))) {
 		pConfig->ch_width_orig =
 			hdd_map_nl_chan_width(pConfig->ch_width_orig);
 	} else {

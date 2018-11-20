@@ -4703,20 +4703,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_MARK_INDOOR_AS_DISABLE_DEFAULT  (0)
 
 /*
- * Force softap to 11n, when gSapForce11NFor11AC is set to 1 from ini
- * despite of hostapd.conf request for 11ac
- */
-#define CFG_SAP_FORCE_11N_FOR_11AC_NAME    "gSapForce11NFor11AC"
-#define CFG_SAP_FORCE_11N_FOR_11AC_MIN     (0)
-#define CFG_SAP_FORCE_11N_FOR_11AC_MAX     (1)
-#define CFG_SAP_FORCE_11N_FOR_11AC_DEFAULT (0)
-
-#define CFG_GO_FORCE_11N_FOR_11AC_NAME    "gGoForce11NFor11AC"
-#define CFG_GO_FORCE_11N_FOR_11AC_MIN     (0)
-#define CFG_GO_FORCE_11N_FOR_11AC_MAX     (1)
-#define CFG_GO_FORCE_11N_FOR_11AC_DEFAULT (0)
-
-/*
  * sap tx leakage threshold
  * customer can set this value from 100 to 1000 which means
  * sap tx leakage threshold is -10db to -100db
@@ -6686,9 +6672,6 @@ struct hdd_config {
 	bool indoor_channel_support;
 	/* control marking indoor channel passive to disable */
 	bool force_ssc_disable_indoor_channel;
-	/* parameter to force sap into 11n */
-	bool sap_force_11n_for_11ac;
-	bool go_force_11n_for_11ac;
 	uint16_t sap_tx_leakage_threshold;
 	bool sap_internal_restart;
 	enum restart_beaconing_on_ch_avoid_rule

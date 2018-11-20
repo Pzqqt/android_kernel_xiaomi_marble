@@ -638,6 +638,28 @@ QDF_STATUS wlan_mlme_get_sap_chan_switch_rate_enabled(struct wlan_objmgr_psoc
 						      *psoc, bool *value);
 
 /**
+ * wlan_mlme_get_sap_force_11n_for_11ac() - get the sap 11n for 11ac
+ *
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_sap_force_11n_for_11ac(struct wlan_objmgr_psoc
+						*psoc, bool *value);
+
+/**
+ * wlan_mlme_get_go_force_11n_for_11ac() - get the go 11n for 11ac
+ *
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_get_go_force_11n_for_11ac(struct wlan_objmgr_psoc
+					       *psoc, bool *value);
+
+/**
  * wlan_mlme_get_oce_sta_enabled_info() - Get the OCE feature enable
  * info for STA
  * @psoc: pointer to psoc object

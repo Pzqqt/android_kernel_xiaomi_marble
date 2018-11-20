@@ -2504,6 +2504,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		cfg_default(CFG_USER_AUTO_CHANNEL_SELECTION);
 	bool is_external_acs_policy =
 		cfg_default(CFG_EXTERNAL_ACS_POLICY);
+	bool sap_force_11n_for_11ac = 0;
+	bool go_force_11n_for_11ac = 0;
 
 	/* ***Note*** Donot set SME config related to ACS operation here because
 	 * ACS operation is not synchronouse and ACS for Second AP may come when
@@ -2523,6 +2525,11 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
 		return ret;
+
+	ucfg_mlme_get_sap_force_11n_for_11ac(hdd_ctx->psoc,
+					     &sap_force_11n_for_11ac);
+	ucfg_mlme_get_go_force_11n_for_11ac(hdd_ctx->psoc,
+					    &go_force_11n_for_11ac);
 
 	hdd_debug("current country is %s", hdd_ctx->reg.alpha2);
 
@@ -2579,9 +2586,9 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		vht_enabled = 0;
 
 	if (((adapter->device_mode == QDF_SAP_MODE) &&
-	     (hdd_ctx->config->sap_force_11n_for_11ac)) ||
-	     ((adapter->device_mode == QDF_P2P_GO_MODE) &&
-	     (hdd_ctx->config->go_force_11n_for_11ac))) {
+	      sap_force_11n_for_11ac) ||
+	    ((adapter->device_mode == QDF_P2P_GO_MODE) &&
+	      go_force_11n_for_11ac)) {
 		vht_enabled = 0;
 		hdd_info("VHT is Disabled in ACS");
 	}
@@ -2731,10 +2738,10 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	if (ht_enabled &&
 	    sap_config->acs_cfg.end_ch >= WLAN_REG_CH_NUM(CHAN_ENUM_36) &&
 	    ((adapter->device_mode == QDF_SAP_MODE &&
-	      !hdd_ctx->config->sap_force_11n_for_11ac &&
+	      !sap_force_11n_for_11ac &&
 	      hdd_ctx->config->sap_11ac_override) ||
 	      (adapter->device_mode == QDF_P2P_GO_MODE &&
-	      !hdd_ctx->config->go_force_11n_for_11ac &&
+	      !go_force_11n_for_11ac &&
 	      hdd_ctx->config->go_11ac_override))) {
 		vht_enabled = 1;
 		sap_config->acs_cfg.hw_mode = eCSR_DOT11_MODE_11ac;

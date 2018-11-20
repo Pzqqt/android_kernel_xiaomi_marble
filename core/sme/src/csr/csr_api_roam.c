@@ -4654,9 +4654,15 @@ static void csr_set_cfg_ssid(tpAniSirGlobal pMac, tSirMacSSid *pSSID)
 {
 	uint32_t len = 0;
 
-	if (pSSID->length <= WNI_CFG_SSID_LEN)
+	if (pSSID->length <= MLME_CFG_SSID_LEN)
 		len = pSSID->length;
-	cfg_set_str(pMac, WNI_CFG_SSID, (uint8_t *) pSSID->ssId, len);
+	else
+		len = MLME_CFG_SSID_LEN;
+
+	qdf_mem_copy(pMac->mlme_cfg->sap_cfg.cfg_ssid,
+		     (uint8_t *)pSSID->ssId, len);
+	pMac->mlme_cfg->sap_cfg.cfg_ssid_len = len;
+
 }
 
 static QDF_STATUS csr_set_qos_to_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
