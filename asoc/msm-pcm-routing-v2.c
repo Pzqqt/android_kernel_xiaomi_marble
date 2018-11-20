@@ -17494,7 +17494,11 @@ static int msm_audio_get_copp_idx_from_port_id(int port_id, int session_type,
 	}
 
 	for_each_set_bit(i, &msm_bedais[be_idx].fe_sessions[0],
-			 MSM_FRONTEND_DAI_MM_SIZE) {
+			 MSM_FRONTEND_DAI_MAX) {
+		if (!(is_mm_lsm_fe_id(i) &&
+				route_check_fe_id_adm_support(i)))
+			continue;
+
 		for (idx = 0; idx < MAX_COPPS_PER_PORT; idx++) {
 			copp = session_copp_map[i]
 				[session_type][be_idx];
@@ -17506,7 +17510,7 @@ static int msm_audio_get_copp_idx_from_port_id(int port_id, int session_type,
 		else
 			break;
 	}
-	if (i >= MSM_FRONTEND_DAI_MM_SIZE) {
+	if (i >= MSM_FRONTEND_DAI_MAX) {
 		pr_debug("%s: Invalid FE, exiting\n", __func__);
 
 		ret = -EINVAL;
@@ -17692,6 +17696,59 @@ done:
 	return ret;
 }
 
+static int msm_doa_tracking_mon_info(struct snd_kcontrol *kcontrol,
+				    struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_BYTES;
+	uinfo->count = sizeof(struct doa_tracking_mon_param);
+
+	return 0;
+}
+
+static int msm_doa_tracking_mon_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	int ret = 0;
+	struct doa_tracking_mon_param doa_tracking_data;
+	int port_id, copp_idx;
+
+	memset(&doa_tracking_data, 0, sizeof(struct doa_tracking_mon_param));
+	ret = msm_audio_sound_focus_derive_port_id(kcontrol,
+				"Doa Tracking Monitor Listen ", &port_id);
+	if (ret) {
+		pr_err("%s: Error in deriving port id, err=%d\n",
+			  __func__, ret);
+		ret = -EINVAL;
+		goto done;
+	}
+
+	/*
+	 * If copp id exists for given port id, query adm to get doa data.
+	 * Else query afe for doa tracking params.
+	 * This is to support in cases where LSM directly connects to
+	 * AFE for FFNS.
+	 */
+	ret = msm_audio_get_copp_idx_from_port_id(port_id, SESSION_TYPE_TX,
+					    &copp_idx);
+	if (!ret)
+		ret = adm_get_doa_tracking_mon(port_id, copp_idx,
+					&doa_tracking_data);
+	else
+		ret = afe_get_doa_tracking_mon(port_id, &doa_tracking_data);
+
+	if (ret) {
+		pr_err("%s: Error getting Doa Tracking Params, err=%d\n",
+			  __func__, ret);
+		ret = -EINVAL;
+		goto done;
+	}
+
+	memcpy(ucontrol->value.bytes.data, (void *)&doa_tracking_data,
+		sizeof(struct doa_tracking_mon_param));
+done:
+	return ret;
+}
+
 static const struct snd_kcontrol_new msm_source_tracking_controls[] = {
 	{
 		.access = SNDRV_CTL_ELEM_ACCESS_READWRITE,
@@ -17872,6 +17929,13 @@ static const struct snd_kcontrol_new msm_source_tracking_controls[] = {
 		.name	= "Source Tracking Audio Tx QUIN_TDM_TX_0",
 		.info	= msm_source_tracking_info,
 		.get	= msm_audio_source_tracking_get,
+	},
+	{
+		.access = SNDRV_CTL_ELEM_ACCESS_READ,
+		.iface	= SNDRV_CTL_ELEM_IFACE_MIXER,
+		.name	= "Doa Tracking Monitor Listen VA_CDC_DMA_TX_0",
+		.info	= msm_doa_tracking_mon_info,
+		.get	= msm_doa_tracking_mon_get,
 	},
 };
 
