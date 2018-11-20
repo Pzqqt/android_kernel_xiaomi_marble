@@ -1423,6 +1423,12 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
+
+#ifdef WLAN_FEATURE_HOST_ROAM
+QDF_STATUS csr_continue_lfr2_connect(struct mac_context *mac,
+				     uint32_t session_id);
+#endif
+
 typedef void (*csr_readyToSuspendCallback)(void *pContext, bool suspended);
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 typedef void (*csr_readyToExtWoWCallback)(void *pContext, bool status);

@@ -8086,7 +8086,8 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 				channel_id = first_ap_profile->channelId;
 
 			status = policy_mgr_handle_conc_multiport(mac->psoc,
-					sessionId, channel_id);
+					sessionId, channel_id,
+					POLICY_MGR_UPDATE_REASON_NORMAL_STA);
 			if ((QDF_IS_STATUS_SUCCESS(status)) &&
 				(!csr_wait_for_connection_update(mac, true))) {
 					sme_debug("conn update error");
@@ -9269,7 +9270,7 @@ static void
 csr_post_roam_failure(struct mac_context *mac_ctx,
 		      uint32_t session_id,
 		      struct csr_roam_info *roam_info,
-		      tCsrScanResultFilter *scan_filter,
+		      struct tagCsrScanResultFilter *scan_filter,
 		      struct csr_roam_profile *cur_roam_profile)
 {
 	QDF_STATUS status;
@@ -9347,19 +9348,198 @@ csr_check_profile_in_scan_cache(struct mac_context *mac_ctx,
 	return true;
 }
 
+#ifdef WLAN_FEATURE_HOST_ROAM
+static
+QDF_STATUS csr_roam_lfr2_issue_connect(struct mac_context *mac,
+				uint32_t session_id,
+				struct scan_result_list *hbss_list,
+				uint32_t roam_id)
+{
+	struct csr_roam_profile *cur_roam_profile = NULL;
+	struct csr_roam_session *session;
+	QDF_STATUS status;
+
+	session = CSR_GET_SESSION(mac, session_id);
+	if (!session) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"session is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	/*
+	 * Copy the connected profile to apply the same for this
+	 * connection as well
+	 */
+	cur_roam_profile = qdf_mem_malloc(sizeof(*cur_roam_profile));
+	if (cur_roam_profile) {
+		/*
+		 * notify sub-modules like QoS etc. that handoff
+		 * happening
+		 */
+		sme_qos_csr_event_ind(mac, session_id,
+				      SME_QOS_CSR_HANDOFF_ASSOC_REQ,
+				      NULL);
+		csr_roam_copy_profile(mac, cur_roam_profile,
+				      session->pCurRoamProfile);
+		/*
+		 * After ensuring that the roam profile is in the scan
+		 * result list, and session->pCurRoamProfile is saved,
+		 * dequeue the command from the active list.
+		 */
+		csr_dequeue_command(mac);
+		/* make sure to put it at the head of the cmd queue */
+		status = csr_roam_issue_connect(mac, session_id,
+				cur_roam_profile, hbss_list,
+				eCsrSmeIssuedAssocToSimilarAP,
+				roam_id, true, false);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			sme_err(
+				"issue_connect failed. status %d",
+				status);
+
+		csr_release_profile(mac, cur_roam_profile);
+		qdf_mem_free(cur_roam_profile);
+		return QDF_STATUS_SUCCESS;
+	} else {
+		QDF_ASSERT(0);
+		csr_dequeue_command(mac);
+	}
+	return QDF_STATUS_E_NOMEM;
+}
+
+QDF_STATUS csr_continue_lfr2_connect(struct mac_context *mac,
+				      uint32_t session_id)
+{
+	uint32_t roam_id = 0;
+	struct csr_roam_info *roam_info;
+	struct scan_result_list *scan_handle_roam_ap;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	roam_info = qdf_mem_malloc(sizeof(*roam_info));
+	if (!roam_info)
+		return QDF_STATUS_E_NOMEM;
+
+	scan_handle_roam_ap =
+		mac->roam.neighborRoamInfo[session_id].scan_res_lfr2_roam_ap;
+	if (!scan_handle_roam_ap)
+		goto POST_ROAM_FAILURE;
+
+	status = csr_roam_lfr2_issue_connect(mac, session_id,
+						scan_handle_roam_ap,
+						roam_id);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		qdf_mem_free(roam_info);
+		return status;
+	}
+	csr_scan_result_purge(mac, scan_handle_roam_ap);
+
+POST_ROAM_FAILURE:
+	csr_post_roam_failure(mac, session_id, roam_info,
+			      NULL, NULL);
+	qdf_mem_free(roam_info);
+	return status;
+}
+
+static
+void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
+{
+	uint32_t roam_id = 0;
+	struct csr_roam_info *roam_info;
+	struct tagCsrScanResultFilter *scan_filter = NULL;
+	struct sCsrNeighborRoamControlInfo *neighbor_roam_info = NULL;
+	struct scan_result_list *scan_handle_roam_ap;
+	struct sCsrNeighborRoamBSSInfo *bss_node;
+	QDF_STATUS status;
+
+	roam_info = qdf_mem_malloc(sizeof(*roam_info));
+	if (!roam_info)
+		return;
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+		 "CSR SmeDisassocReq due to HO on session %d", session_id);
+	neighbor_roam_info = &mac->roam.neighborRoamInfo[session_id];
+
+	/*
+	 * First ensure if the roam profile is in the scan cache.
+	 * If not, post a reassoc failure and disconnect.
+	 */
+	if (!csr_check_profile_in_scan_cache(mac, &scan_filter,
+			     neighbor_roam_info,
+			     (tScanResultHandle *)&scan_handle_roam_ap))
+		goto POST_ROAM_FAILURE;
+
+	/* notify HDD about handoff and provide the BSSID too */
+	roam_info->reasonCode = eCsrRoamReasonBetterAP;
+
+	qdf_copy_macaddr(&roam_info->bssid,
+		 neighbor_roam_info->csrNeighborRoamProfile.BSSIDs.bssid);
+
+	/*
+	 * For LFR2, removal of policy mgr entry for disassociated
+	 * AP is handled in eCSR_ROAM_ROAMING_START.
+	 * eCSR_ROAM_RESULT_NOT_ASSOCIATED is sent to differentiate
+	 * eCSR_ROAM_ROAMING_START sent after FT preauth success
+	 */
+	csr_roam_call_callback(mac, session_id, roam_info, 0,
+			       eCSR_ROAM_ROAMING_START,
+			       eCSR_ROAM_RESULT_NOT_ASSOCIATED);
+
+	bss_node = csr_neighbor_roam_next_roamable_ap(mac,
+		&neighbor_roam_info->FTRoamInfo.preAuthDoneList,
+		NULL);
+	if (!bss_node) {
+		sme_debug("LFR2DBG: bss_node is NULL");
+		goto POST_ROAM_FAILURE;
+	}
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+		  "LFR2DBG: preauthed bss_node->pBssDescription BSSID"\
+		  MAC_ADDRESS_STR",Ch:%d",
+		  MAC_ADDR_ARRAY(bss_node->pBssDescription->bssId),
+		  (int)bss_node->pBssDescription->channelId);
+
+	status = policy_mgr_handle_conc_multiport(mac->psoc, session_id,
+					bss_node->pBssDescription->channelId,
+					POLICY_MGR_UPDATE_REASON_LFR2_ROAM);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->roam.neighborRoamInfo[session_id].scan_res_lfr2_roam_ap =
+							scan_handle_roam_ap;
+		/*if hw_mode change is required then handle roam
+		* issue connect in mode change response handler
+		*/
+		csr_free_scan_filter(mac, scan_filter);
+		qdf_mem_free(scan_filter);
+		qdf_mem_free(roam_info);
+		return;
+	} else if (status != QDF_STATUS_E_NOSUPPORT)
+		goto POST_ROAM_FAILURE;
+
+	status = csr_roam_lfr2_issue_connect(mac, session_id,
+					     scan_handle_roam_ap,
+					     roam_id);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		csr_free_scan_filter(mac, scan_filter);
+		qdf_mem_free(scan_filter);
+		qdf_mem_free(roam_info);
+		return;
+	}
+	csr_scan_result_purge(mac, scan_handle_roam_ap);
+
+POST_ROAM_FAILURE:
+	csr_post_roam_failure(mac, session_id, roam_info, scan_filter, NULL);
+	qdf_mem_free(roam_info);
+}
+#else
+static
+void csr_handle_disassoc_ho(struct mac_context *mac, uint32_t session_id)
+{
+	return;
+}
+#endif
+
 static
 void csr_roam_roaming_state_disassoc_rsp_processor(struct mac_context *mac,
 						   struct disassoc_rsp *rsp)
 {
-	tScanResultHandle hBSSList;
-	struct csr_roam_info *roamInfo;
-	tCsrScanResultFilter *pScanFilter = NULL;
-	uint32_t roamId = 0;
-	struct csr_roam_profile *pCurRoamProfile = NULL;
-	QDF_STATUS status;
 	uint32_t sessionId;
 	struct csr_roam_session *pSession;
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 
 	sessionId = rsp->sessionId;
 	sme_debug("sessionId %d", sessionId);
@@ -9375,9 +9555,6 @@ void csr_roam_roaming_state_disassoc_rsp_processor(struct mac_context *mac,
 		return;
 	}
 
-	roamInfo = qdf_mem_malloc(sizeof(*roamInfo));
-	if (!roamInfo)
-		return;
 
 	if (CSR_IS_ROAM_SUBSTATE_DISASSOC_NO_JOIN(mac, sessionId)) {
 		sme_debug("***eCsrNothingToJoin***");
@@ -9393,80 +9570,7 @@ void csr_roam_roaming_state_disassoc_rsp_processor(struct mac_context *mac,
 		}
 		csr_roam_complete(mac, eCsrNothingToJoin, NULL, sessionId);
 	} else if (CSR_IS_ROAM_SUBSTATE_DISASSOC_HO(mac, sessionId)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			 "CSR SmeDisassocReq due to HO on session %d",
-			  sessionId);
-		pNeighborRoamInfo = &mac->roam.neighborRoamInfo[sessionId];
-		/*
-		 * First ensure if the roam profile is in the scan cache.
-		 * If not, post a reassoc failure and disconnect.
-		 */
-		if (!csr_check_profile_in_scan_cache(mac, &pScanFilter,
-						pNeighborRoamInfo, &hBSSList))
-			goto POST_ROAM_FAILURE;
-
-		/* notify HDD about handoff and provide the BSSID too */
-		roamInfo->reasonCode = eCsrRoamReasonBetterAP;
-
-		qdf_copy_macaddr(&roamInfo->bssid,
-			pNeighborRoamInfo->csrNeighborRoamProfile.BSSIDs.bssid);
-
-		/*
-		 * For LFR2, removal of policy mgr entry for disassociated
-		 * AP is handled in eCSR_ROAM_ROAMING_START.
-		 * eCSR_ROAM_RESULT_NOT_ASSOCIATED is sent to differentiate
-		 * eCSR_ROAM_ROAMING_START sent after FT preauth success
-		 */
-		csr_roam_call_callback(mac, sessionId, roamInfo, 0,
-				       eCSR_ROAM_ROAMING_START,
-				       eCSR_ROAM_RESULT_NOT_ASSOCIATED);
-
-		/*
-		 * Copy the connected profile to apply the same for this
-		 * connection as well
-		 */
-		pCurRoamProfile = qdf_mem_malloc(sizeof(*pCurRoamProfile));
-		if (pCurRoamProfile) {
-			/*
-			 * notify sub-modules like QoS etc. that handoff
-			 * happening
-			 */
-			sme_qos_csr_event_ind(mac, sessionId,
-					      SME_QOS_CSR_HANDOFF_ASSOC_REQ,
-					      NULL);
-			csr_roam_copy_profile(mac, pCurRoamProfile,
-					      pSession->pCurRoamProfile);
-			/*
-			 * After ensuring that the roam profile is in the scan
-			 * result list, and pSession->pCurRoamProfile is saved,
-			 * dequeue the command from the active list.
-			 */
-			csr_dequeue_command(mac);
-			/* make sure to put it at the head of the cmd queue */
-			status = csr_roam_issue_connect(mac, sessionId,
-					pCurRoamProfile, hBSSList,
-					eCsrSmeIssuedAssocToSimilarAP,
-					roamId, true, false);
-			if (!QDF_IS_STATUS_SUCCESS(status))
-				sme_err(
-					"issue_connect failed. status %d",
-					status);
-
-			csr_release_profile(mac, pCurRoamProfile);
-			qdf_mem_free(pCurRoamProfile);
-			csr_free_scan_filter(mac, pScanFilter);
-			qdf_mem_free(pScanFilter);
-			qdf_mem_free(roamInfo);
-			return;
-		} else {
-			QDF_ASSERT(0);
-			csr_dequeue_command(mac);
-		}
-		csr_scan_result_purge(mac, hBSSList);
-
-POST_ROAM_FAILURE:
-		csr_post_roam_failure(mac, sessionId, roamInfo,
-			      pScanFilter, pCurRoamProfile);
+		csr_handle_disassoc_ho(mac, sessionId);
 	} /* else if ( CSR_IS_ROAM_SUBSTATE_DISASSOC_HO( mac ) ) */
 	else if (CSR_IS_ROAM_SUBSTATE_REASSOC_FAIL(mac, sessionId)) {
 		/* Disassoc due to Reassoc failure falls into this codepath */
@@ -9493,7 +9597,6 @@ POST_ROAM_FAILURE:
 		/* We are not done yet. Get the data and continue roaming */
 		csr_roam_reissue_roam_command(mac, sessionId);
 	}
-	qdf_mem_free(roamInfo);
 }
 
 static void csr_roam_roaming_state_deauth_rsp_processor(struct mac_context *mac,
