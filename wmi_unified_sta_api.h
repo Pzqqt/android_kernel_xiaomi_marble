@@ -146,6 +146,7 @@ QDF_STATUS wmi_unified_nat_keepalive_en_cmd(void *wmi_hdl, uint8_t vdev_id);
 QDF_STATUS wmi_unified_wlm_latency_level_cmd(void *wmi_hdl,
 					struct wlm_latency_level_param *param);
 
+#ifdef WLAN_FEATURE_NAN
 /**
  * wmi_unified_nan_req_cmd() - to send nan request to target
  * @wmi_handle: wmi handle
@@ -155,6 +156,7 @@ QDF_STATUS wmi_unified_wlm_latency_level_cmd(void *wmi_hdl,
  */
 QDF_STATUS wmi_unified_nan_req_cmd(void *wmi_hdl,
 				   struct nan_req_params *nan_req);
+#endif
 
 /**
  * wmi_unified_process_set_ie_info_cmd() - Function to send IE info to firmware
