@@ -1058,6 +1058,12 @@ static void mlme_init_he_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_cfg_sap *sap_cfg)
 {
+	uint8_t *ssid;
+
+	ssid = cfg_default(CFG_SSID);
+	qdf_mem_zero(sap_cfg->cfg_ssid, MLME_CFG_SSID_LEN);
+	sap_cfg->cfg_ssid_len = STR_SSID_DEFAULT_LEN;
+	qdf_mem_copy(sap_cfg->cfg_ssid, ssid, STR_SSID_DEFAULT_LEN);
 	sap_cfg->beacon_interval = cfg_get(psoc, CFG_BEACON_INTERVAL);
 	sap_cfg->dtim_interval = cfg_default(CFG_DTIM_PERIOD);
 	sap_cfg->listen_interval = cfg_default(CFG_LISTEN_INTERVAL);
@@ -1094,6 +1100,10 @@ static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_COUNTRY_CODE_PRIORITY);
 	sap_cfg->sap_pref_chan_location =
 		cfg_get(psoc, CFG_SAP_PREF_CHANNEL_LOCATION);
+	sap_cfg->sap_force_11n_for_11ac =
+		cfg_get(psoc, CFG_SAP_FORCE_11N_FOR_11AC);
+	sap_cfg->go_force_11n_for_11ac =
+		cfg_get(psoc, CFG_GO_FORCE_11N_FOR_11AC);
 
 }
 

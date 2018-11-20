@@ -498,6 +498,8 @@ struct wlan_mlme_wps_params {
 #define MLME_CFG_TX_MGMT_RATE_DEF       0xFF
 #define MLME_CFG_TX_MGMT_2G_RATE_DEF    0xFF
 #define MLME_CFG_TX_MGMT_5G_RATE_DEF    0xFF
+#define MLME_CFG_SSID_LEN               32
+
 /**
  * struct wlan_mlme_cfg_sap - SAP related config items
  * @cfg_ssid: SSID to be configured
@@ -528,7 +530,8 @@ struct wlan_mlme_wps_params {
  * @sap_pref_chan_location: SAP Preferred channel location.
  */
 struct wlan_mlme_cfg_sap {
-	uint8_t cfg_ssid[32];
+	uint8_t cfg_ssid[MLME_CFG_SSID_LEN];
+	uint8_t cfg_ssid_len;
 	uint16_t beacon_interval;
 	uint16_t dtim_interval;
 	uint16_t listen_interval;
@@ -554,6 +557,8 @@ struct wlan_mlme_cfg_sap {
 	uint8_t max_li_modulated_dtim_time;
 	bool country_code_priority;
 	uint8_t sap_pref_chan_location;
+	bool sap_force_11n_for_11ac;
+	bool go_force_11n_for_11ac;
 };
 
 /**

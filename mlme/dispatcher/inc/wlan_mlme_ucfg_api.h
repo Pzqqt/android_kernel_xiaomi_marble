@@ -1071,6 +1071,40 @@ QDF_STATUS ucfg_mlme_get_sap_chan_switch_rate_enabled(struct wlan_objmgr_psoc
 }
 
 /**
+ * ucfg_mlme_get_sap_force_11n_for_11ac() - get the sap 11n for 11ac
+ *
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_sap_force_11n_for_11ac(struct wlan_objmgr_psoc
+						*psoc, bool *value)
+{
+	return wlan_mlme_get_sap_force_11n_for_11ac(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_go_force_11n_for_11ac() - get the GO 11n for 11ac
+ *
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_get_go_force_11n_for_11ac(struct wlan_objmgr_psoc
+					       *psoc, bool *value)
+{
+	return wlan_mlme_get_go_force_11n_for_11ac(psoc, value);
+}
+
+/**
  * ucfg_mlme_get_oce_sta_enabled_info() - Get OCE feature enable/disable
  * info for STA
  *
