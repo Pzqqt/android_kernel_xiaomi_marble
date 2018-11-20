@@ -361,6 +361,7 @@ bool policy_mgr_check_for_session_conc(
  * policy_mgr_handle_conc_multiport() - to handle multiport concurrency
  * @session_id: Session ID
  * @channel: Channel number
+ * @reason: reason for connection update
  *
  * This routine will handle STA side concurrency when policy manager
  * is enabled.
@@ -368,7 +369,8 @@ bool policy_mgr_check_for_session_conc(
  * Return: QDF_STATUS
  */
 QDF_STATUS policy_mgr_handle_conc_multiport(
-	struct wlan_objmgr_psoc *psoc, uint8_t session_id, uint8_t channel);
+	struct wlan_objmgr_psoc *psoc, uint8_t session_id, uint8_t channel,
+	enum policy_mgr_conn_update_reason reason);
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 /**

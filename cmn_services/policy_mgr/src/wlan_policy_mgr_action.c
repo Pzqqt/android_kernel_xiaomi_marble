@@ -1186,7 +1186,8 @@ QDF_STATUS policy_mgr_next_actions(
 }
 
 QDF_STATUS policy_mgr_handle_conc_multiport(struct wlan_objmgr_psoc *psoc,
-		uint8_t session_id, uint8_t channel)
+		uint8_t session_id, uint8_t channel,
+		enum policy_mgr_conn_update_reason reason)
 {
 	QDF_STATUS status;
 
@@ -1201,8 +1202,7 @@ QDF_STATUS policy_mgr_handle_conc_multiport(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_err("clearing event failed");
 
 	status = policy_mgr_current_connections_update(psoc, session_id,
-			channel,
-			POLICY_MGR_UPDATE_REASON_NORMAL_STA);
+			channel, reason);
 	if (QDF_STATUS_E_FAILURE == status) {
 		policy_mgr_err("connections update failed");
 		return status;
