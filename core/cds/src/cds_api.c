@@ -36,6 +36,7 @@
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_tsf.h"
 #include <linux/vmalloc.h>
+#include <scheduler_core.h>
 
 #include "pld_common.h"
 #include "sap_api.h"
@@ -1050,6 +1051,7 @@ QDF_STATUS cds_post_disable(void)
 	tp_wma_handle wma_handle;
 	struct hif_opaque_softc *hif_ctx;
 	struct cdp_pdev *txrx_pdev;
+	struct scheduler_ctx *sched_ctx;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma_handle) {
@@ -1068,6 +1070,11 @@ QDF_STATUS cds_post_disable(void)
 		cds_err("Failed to get txrx pdev!");
 		return QDF_STATUS_E_INVAL;
 	}
+
+	/* flush any unprocessed scheduler messages */
+	sched_ctx = scheduler_get_context();
+	if (sched_ctx)
+		scheduler_queues_flush(sched_ctx);
 
 	/*
 	 * With new state machine changes cds_close can be invoked without
