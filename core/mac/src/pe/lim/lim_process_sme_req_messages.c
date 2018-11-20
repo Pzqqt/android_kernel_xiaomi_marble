@@ -2954,11 +2954,11 @@ lim_assoc_sta_end:
 
 static void __lim_counter_measures(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
-	tSirMacAddr mac = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+	tSirMacAddr mac_addr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
 	if (LIM_IS_AP_ROLE(psessionEntry))
 		lim_send_disassoc_mgmt_frame(pMac, eSIR_MAC_MIC_FAILURE_REASON,
-					     mac, psessionEntry, false);
+					     mac_addr, psessionEntry, false);
 };
 
 void lim_send_stop_bss_failure_resp(tpAniSirGlobal mac_ctx,
