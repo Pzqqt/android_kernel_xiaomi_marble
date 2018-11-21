@@ -1725,7 +1725,7 @@ static void wma_read_cfg_wepkey(tp_wma_handle wma_handle,
 				uint8_t *num_keys)
 {
 	QDF_STATUS status;
-	uint32_t val = SIR_MAC_KEY_LENGTH;
+	qdf_size_t val = SIR_MAC_KEY_LENGTH;
 	uint8_t i, j;
 	tpAniSirGlobal mac_ctx = wma_handle->mac_context;
 
@@ -1737,7 +1737,7 @@ static void wma_read_cfg_wepkey(tp_wma_handle wma_handle,
 	for (i = 0, j = 0; i < SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS; i++) {
 		status = mlme_get_wep_key(&mac_ctx->mlme_cfg->wep_params,
 					  (MLME_WEP_DEFAULT_KEY_1 +
-					  i), key_info[j].key, val);
+					  i), key_info[j].key, &val);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("WEP key is not configured at :%d", i);
 		} else {

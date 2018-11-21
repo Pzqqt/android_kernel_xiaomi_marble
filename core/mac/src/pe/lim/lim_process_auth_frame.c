@@ -564,7 +564,8 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		tpPESession pe_session)
 {
 	uint8_t key_id, cfg_privacy_opt_imp;
-	uint32_t val, key_length = 8;
+	uint32_t key_length = 8;
+	qdf_size_t val;
 	uint8_t defaultkey[SIR_MAC_KEY_LENGTH];
 	struct tLimPreAuthNode *auth_node;
 	uint8_t *encr_auth_frame;
@@ -758,7 +759,8 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		} else {
 			qdf_status = mlme_get_wep_key(wep_params,
 						      (MLME_WEP_DEFAULT_KEY_1 +
-						      key_id), defaultkey, val);
+						       key_id), defaultkey,
+						      &val);
 			if (QDF_IS_STATUS_ERROR(qdf_status)) {
 				pe_warn("cant retrieve Defaultkey");
 
@@ -1121,7 +1123,8 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	uint8_t *plainbody = NULL;
 	uint8_t decrypt_result;
 	uint16_t frame_len, curr_seq_num = 0, auth_alg;
-	uint32_t val, key_length = 8;
+	uint32_t key_length = 8;
+	qdf_size_t val;
 	tSirMacAuthFrameBody *rx_auth_frm_body, *rx_auth_frame, *auth_frame;
 	tpSirMacMgmtHdr mac_hdr;
 	struct tLimPreAuthNode *auth_node;
@@ -1362,7 +1365,8 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		} else {
 			qdf_status = mlme_get_wep_key(wep_params,
 						      (MLME_WEP_DEFAULT_KEY_1 +
-						      key_id), defaultkey, val);
+						      key_id), defaultkey,
+						      &val);
 			if (QDF_IS_STATUS_ERROR(qdf_status)) {
 				pe_warn("could not retrieve Default key");
 
