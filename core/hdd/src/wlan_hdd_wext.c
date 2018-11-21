@@ -5099,10 +5099,13 @@ static int hdd_we_set_scan_disable(struct hdd_adapter *adapter, int value)
 
 	hdd_debug("%d", value);
 
-	if (!hdd_ctx->mac_handle)
+	if (!hdd_ctx->psoc)
 		return -EINVAL;
 
-	sme_set_scan_disable(hdd_ctx->mac_handle, value);
+	if (value)
+		ucfg_scan_psoc_set_disable(hdd_ctx->psoc, REASON_USER_SPACE);
+	else
+		ucfg_scan_psoc_set_enable(hdd_ctx->psoc, REASON_USER_SPACE);
 
 	return 0;
 }

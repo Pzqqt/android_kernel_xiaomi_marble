@@ -1477,7 +1477,6 @@ QDF_STATUS sme_soc_set_dual_mac_config(struct policy_mgr_dual_mac_config msg);
 QDF_STATUS sme_soc_set_antenna_mode(mac_handle_t mac_handle,
 				    struct sir_antenna_mode_param *msg);
 
-void sme_set_scan_disable(mac_handle_t mac_handle, int value);
 void sme_setdef_dot11mode(mac_handle_t mac_handle);
 
 QDF_STATUS sme_handle_set_fcc_channel(mac_handle_t mac_handle,

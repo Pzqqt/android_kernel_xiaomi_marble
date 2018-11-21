@@ -5682,7 +5682,14 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_ENABLE]) {
 		enable_flag =
 			nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_ENABLE]);
-		sme_set_scan_disable(mac_handle, !enable_flag);
+
+		hdd_debug("scan enable %d", enable_flag);
+		if (enable_flag)
+			ucfg_scan_psoc_set_enable(hdd_ctx->psoc,
+						  REASON_USER_SPACE);
+		else
+			ucfg_scan_psoc_set_disable(hdd_ctx->psoc,
+						   REASON_USER_SPACE);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_QPOWER]) {

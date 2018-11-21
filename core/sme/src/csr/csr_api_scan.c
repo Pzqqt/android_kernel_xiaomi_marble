@@ -110,7 +110,8 @@ QDF_STATUS csr_scan_close(struct mac_context *mac)
 	csr_purge_channel_power(mac, &mac->scan.channelPowerInfoList5G);
 	csr_ll_close(&mac->scan.channelPowerInfoList24);
 	csr_ll_close(&mac->scan.channelPowerInfoList5G);
-	ucfg_scan_set_enable(mac->psoc, false);
+	ucfg_scan_psoc_set_disable(mac->psoc, REASON_SYSTEM_DOWN);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1438,10 +1439,8 @@ QDF_STATUS csr_scan_for_ssid(struct mac_context *mac_ctx, uint32_t session_id,
 		return status;
 	}
 
-	if (!ucfg_scan_get_enable(mac_ctx->psoc) && (num_ssid != 1)) {
-		sme_err(
-			"cannot scan because scanEnable (%d) or numSSID (%d) is invalid",
-			ucfg_scan_get_enable(mac_ctx->psoc), profile->SSIDs.numOfSSIDs);
+	if (num_ssid != 1) {
+		sme_err("numSSID (%d) is invalid", profile->SSIDs.numOfSSIDs);
 		return status;
 	}
 

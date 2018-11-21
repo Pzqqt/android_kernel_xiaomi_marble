@@ -1243,7 +1243,6 @@ QDF_STATUS csr_start(struct mac_context *mac)
 		mac->scan.requester_id = ucfg_scan_register_requester(
 						mac->psoc,
 						"CSR", csr_scan_callback, mac);
-		ucfg_scan_set_enable(mac->psoc, true);
 	} while (0);
 	return status;
 }
@@ -1252,7 +1251,7 @@ QDF_STATUS csr_stop(struct mac_context *mac)
 {
 	uint32_t sessionId;
 
-	ucfg_scan_set_enable(mac->psoc, false);
+	ucfg_scan_psoc_set_disable(mac->psoc, REASON_SYSTEM_DOWN);
 	ucfg_scan_unregister_requester(mac->psoc, mac->scan.requester_id);
 
 	/*

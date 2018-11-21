@@ -821,22 +821,6 @@ QDF_STATUS sme_set11dinfo(mac_handle_t mac_handle,
 	return status;
 }
 
-/**
- * sme_set_scan_disable() - Dynamically enable/disable scan
- * @mac_handle: Opaque handle to the global MAC context
- *
- * This command gives the user an option to dynamically
- * enable or disable scans.
- *
- * Return: None
- */
-void sme_set_scan_disable(mac_handle_t mac_handle, int value)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-
-	sme_info("scan disable %d", value);
-	ucfg_scan_set_enable(mac_ctx->psoc, !value);
-}
 /*
  * sme_get_soft_ap_domain() - Get the current regulatory domain of softAp.
  * This is a synchronous call

@@ -4026,7 +4026,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 
 	ucfg_pmo_del_wow_pattern(vdev);
 	status = ucfg_reg_11d_vdev_delete_update(vdev);
-	ucfg_scan_set_vdev_del_in_progress(vdev);
+	ucfg_scan_vdev_set_disable(vdev, REASON_VDEV_DOWN);
 	hdd_objmgr_put_vdev(adapter);
 
 	/* close sme session (destroy vdev in firmware via legacy API) */
