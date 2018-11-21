@@ -389,15 +389,15 @@ static QDF_STATUS target_if_dbr_fill_ring(struct wlan_objmgr_pdev *pdev,
 	dbr_buf_pool = mod_param->dbr_buf_pool;
 
 	for (idx = 0; idx < dbr_ring_cfg->num_ptr - 1; idx++) {
-		buf = qdf_mem_malloc(dbr_ring_cap->min_buf_size +
-				dbr_ring_cap->min_buf_align - 1);
-		if (!buf) {
-			direct_buf_rx_err("dir buf rx ring buf alloc failed");
+		buf_aligned = qdf_aligned_malloc(dbr_ring_cap->min_buf_size,
+						 dbr_ring_cap->min_buf_align,
+						 &buf);
+		if (!buf_aligned) {
+			direct_buf_rx_err(
+					"dir buf rx ring buf_aligned alloc failed");
 			return QDF_STATUS_E_NOMEM;
 		}
 		dbr_buf_pool[idx].vaddr = buf;
-		buf_aligned = (void *)(uintptr_t)qdf_roundup(
-				(uint64_t)(uintptr_t)buf, DBR_RING_BASE_ALIGN);
 		dbr_buf_pool[idx].offset = buf_aligned - buf;
 		dbr_buf_pool[idx].cookie = idx;
 		status = target_if_dbr_replenish_ring(pdev, mod_param,
