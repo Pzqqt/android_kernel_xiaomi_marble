@@ -22,6 +22,7 @@
 
 #include "nan_ucfg_api.h"
 #include "nan_public_structs.h"
+#include "wlan_nan_api.h"
 #include "../../core/src/nan_main_i.h"
 #include "scheduler_api.h"
 #include "wlan_objmgr_psoc_obj.h"

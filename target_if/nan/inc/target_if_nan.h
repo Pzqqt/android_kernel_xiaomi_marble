@@ -33,12 +33,9 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_scan_tgt_api.h>
 #include <target_if.h>
-#include <target_if_scan.h>
+#include "nan_public_structs.h"
 
 struct wlan_objmgr_psoc;
-struct wlan_lmac_if_rx_ops;
-struct wlan_lmac_if_tx_ops;
-struct wlan_lmac_if_nan_rx_ops;
 
 /**
  * target_if_nan_get_tx_ops() - retrieve the nan tx_ops
@@ -48,8 +45,7 @@ struct wlan_lmac_if_nan_rx_ops;
  *
  * Return: nan tx_ops pointer
  */
-struct wlan_lmac_if_nan_tx_ops *target_if_nan_get_tx_ops(
-						struct wlan_objmgr_psoc *psoc);
+struct wlan_nan_tx_ops *target_if_nan_get_tx_ops(struct wlan_objmgr_psoc *psoc);
 
 /**
  * target_if_nan_get_rx_ops() - retrieve the nan rx_ops
@@ -59,8 +55,7 @@ struct wlan_lmac_if_nan_tx_ops *target_if_nan_get_tx_ops(
  *
  * Return: nan rx_ops pointer
  */
-struct wlan_lmac_if_nan_rx_ops *target_if_nan_get_rx_ops(
-						struct wlan_objmgr_psoc *psoc);
+struct wlan_nan_rx_ops *target_if_nan_get_rx_ops(struct wlan_objmgr_psoc *psoc);
 
 /**
  * target_if_nan_register_tx_ops() - registers nan tx ops
@@ -68,7 +63,7 @@ struct wlan_lmac_if_nan_rx_ops *target_if_nan_get_rx_ops(
  *
  * Return: none
  */
-void target_if_nan_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
+void target_if_nan_register_tx_ops(struct wlan_nan_tx_ops *tx_ops);
 
 /**
  * target_if_nan_register_rx_ops() - registers nan rx ops
@@ -76,7 +71,7 @@ void target_if_nan_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
  *
  * Return: none
  */
-void target_if_nan_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops);
+void target_if_nan_register_rx_ops(struct wlan_nan_rx_ops *rx_ops);
 
 /**
  * target_if_nan_register_events() - registers with NDP events

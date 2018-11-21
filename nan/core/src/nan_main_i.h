@@ -21,6 +21,7 @@
  * used in NAN modules
  */
 
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #ifndef _WLAN_NAN_MAIN_I_H_
 #define _WLAN_NAN_MAIN_I_H_
 
@@ -88,6 +89,8 @@ struct nan_psoc_priv_obj {
 	qdf_spinlock_t lock;
 	struct nan_callbacks cb_obj;
 	struct nan_cfg_params cfg_param;
+	struct wlan_nan_tx_ops tx_ops;
+	struct wlan_nan_rx_ops rx_ops;
 };
 
 /**
@@ -112,22 +115,6 @@ struct nan_vdev_priv_obj {
 	uint32_t ndi_delete_rsp_reason;
 	uint32_t ndi_delete_rsp_status;
 };
-
-/**
- * nan_get_vdev_priv_obj: get NAN priv object from vdev object
- * @vdev: pointer to vdev object
- *
- * Return: pointer to NAN vdev private object
- */
-struct nan_vdev_priv_obj *nan_get_vdev_priv_obj(struct wlan_objmgr_vdev *vdev);
-
-/**
- * nan_get_psoc_priv_obj: get NAN priv object from psoc object
- * @psoc: pointer to psoc object
- *
- * Return: pointer to NAN psoc private object
- */
-struct nan_psoc_priv_obj *nan_get_psoc_priv_obj(struct wlan_objmgr_psoc *psoc);
 
 /**
  * nan_release_cmd: frees resources for NAN command.
@@ -155,4 +142,5 @@ QDF_STATUS nan_scheduled_msg_handler(struct scheduler_msg *msg);
  */
 QDF_STATUS nan_event_handler(struct scheduler_msg *msg);
 
-#endif
+#endif /* _WLAN_NAN_MAIN_I_H_ */
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */

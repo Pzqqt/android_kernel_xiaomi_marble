@@ -26,6 +26,7 @@
 
 #include "qdf_types.h"
 #include "qdf_status.h"
+#include "scheduler_api.h"
 
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;
@@ -133,7 +134,6 @@ enum nan_datapath_reason_code {
  * @NAN_DATAPATH_RESPONSE_REJECT: ndp request rejected
  * @NAN_DATAPATH_RESPONSE_DEFER: ndp request deferred until later (response to
  * follow any time later)
- *
  */
 enum nan_datapath_response_code {
 	NAN_DATAPATH_RESPONSE_ACCEPT = 0,
@@ -145,7 +145,6 @@ enum nan_datapath_response_code {
  * enum nan_datapath_accept_policy - nan data path accept policy
  * @NAN_DATAPATH_ACCEPT_POLICY_NONE: the framework will decide the policy
  * @NAN_DATAPATH_ACCEPT_POLICY_ALL: accept policy offloaded to fw
- *
  */
 enum nan_datapath_accept_policy {
 	NAN_DATAPATH_ACCEPT_POLICY_NONE = 0,
@@ -156,7 +155,6 @@ enum nan_datapath_accept_policy {
  * enum nan_datapath_self_role - nan data path role
  * @NAN_DATAPATH_ROLE_INITIATOR: initiator of nan data path request
  * @NAN_DATAPATH_ROLE_RESPONDER: responder to nan data path request
- *
  */
 enum nan_datapath_self_role {
 	NAN_DATAPATH_ROLE_INITIATOR = 0,
@@ -168,7 +166,6 @@ enum nan_datapath_self_role {
  * @NAN_DATAPATH_END_TYPE_UNSPECIFIED: type is unspecified
  * @NAN_DATAPATH_END_TYPE_PEER_UNAVAILABLE: type is peer unavailable
  * @NAN_DATAPATH_END_TYPE_OTA_FRAME: NDP end frame received from peer
- *
  */
 enum nan_datapath_end_type {
 	NAN_DATAPATH_END_TYPE_UNSPECIFIED = 0x00,
@@ -182,7 +179,6 @@ enum nan_datapath_end_type {
  * @NAN_DATAPATH_END_REASON_INACTIVITY: reason is peer inactivity
  * @NAN_DATAPATH_END_REASON_PEER_DATA_END: data end indication received from
  * peer
- *
  */
 enum nan_datapath_end_reason_code {
 	NAN_DATAPATH_END_REASON_UNSPECIFIED = 0x00,
@@ -190,7 +186,8 @@ enum nan_datapath_end_reason_code {
 	NAN_DATAPATH_END_REASON_PEER_DATA_END = 0x02,
 };
 
-/** enum nan_datapath_state - NAN datapath states
+/**
+ * enum nan_datapath_state - NAN datapath states
  * @NAN_DATA_NDI_CREATING_STATE: NDI create is in progress
  * @NAN_DATA_NDI_CREATED_STATE: NDI successfully crated
  * @NAN_DATA_NDI_DELETING_STATE: NDI delete is in progress
@@ -220,7 +217,6 @@ enum nan_datapath_state {
  * struct nan_datapath_app_info - application info shared during ndp setup
  * @ndp_app_info_len: ndp app info length
  * @ndp_app_info: variable length application information
- *
  */
 struct nan_datapath_app_info {
 	uint32_t ndp_app_info_len;
@@ -231,7 +227,6 @@ struct nan_datapath_app_info {
  * struct nan_datapath_cfg - ndp configuration
  * @ndp_cfg_len: ndp configuration length
  * @ndp_cfg: variable length ndp configuration
- *
  */
 struct nan_datapath_cfg {
 	uint32_t ndp_cfg_len;
@@ -242,7 +237,6 @@ struct nan_datapath_cfg {
  * struct nan_datapath_pmk - structure to hold pairwise master key
  * @pmk_len: length of pairwise master key
  * @pmk: buffer containing pairwise master key
- *
  */
 struct nan_datapath_pmk {
 	uint32_t pmk_len;
@@ -253,7 +247,6 @@ struct nan_datapath_pmk {
  * struct nan_datapath_scid - structure to hold sceurity context identifier
  * @scid_len: length of scid
  * @scid: scid
- *
  */
 struct nan_datapath_scid {
 	uint32_t scid_len;
@@ -264,7 +257,6 @@ struct nan_datapath_scid {
  * struct ndp_passphrase - structure to hold passphrase
  * @passphrase_len: length of passphrase
  * @passphrase: buffer containing passphrase
- *
  */
 struct ndp_passphrase {
 	uint32_t passphrase_len;
@@ -275,7 +267,6 @@ struct ndp_passphrase {
  * struct ndp_service_name - structure to hold service_name
  * @service_name_len: length of service_name
  * @service_name: buffer containing service_name
- *
  */
 struct ndp_service_name {
 	uint32_t service_name_len;
@@ -290,7 +281,6 @@ struct ndp_service_name {
  * @type: NDP end indication type
  * @reason_code: NDP end indication reason code
  * @ndp_instance_id: NDP instance ID
- *
  */
 struct peer_nan_datapath_map {
 	uint32_t vdev_id;
@@ -306,7 +296,6 @@ struct peer_nan_datapath_map {
  * @channel: channel freq in mhz of the ndp connection
  * @ch_width: channel width (wmi_channel_width) of the ndp connection
  * @nss: nss used for ndp connection
- *
  */
 struct nan_datapath_channel_info {
 	uint32_t channel;
@@ -321,18 +310,16 @@ struct nan_datapath_channel_info {
  * struct nan_datapath_inf_create_req - ndi create request params
  * @transaction_id: unique identifier
  * @iface_name: interface name
- *
  */
 struct nan_datapath_inf_create_req {
 	uint32_t transaction_id;
 	char  iface_name[IFACE_NAME_SIZE];
 };
 
-/*
+/**
  * struct nan_datapath_inf_create_rsp - ndi create response params
  * @status: request status
  * @reason: reason if any
- *
  */
 struct nan_datapath_inf_create_rsp {
 	uint32_t status;
@@ -344,7 +331,6 @@ struct nan_datapath_inf_create_rsp {
  * struct nan_datapath_inf_delete_rsp - ndi delete response params
  * @status: request status
  * @reason: reason if any
- *
  */
 struct nan_datapath_inf_delete_rsp {
 	uint32_t status;
@@ -394,7 +380,6 @@ struct nan_datapath_initiator_req {
  * @ndp_instance_id: locally created NDP instance ID
  * @status: status of the ndp request
  * @reason: reason for failure if any
- *
  */
 struct nan_datapath_initiator_rsp {
 	struct wlan_objmgr_vdev *vdev;
@@ -423,7 +408,6 @@ struct nan_datapath_initiator_rsp {
  * @port: port specified by for this NDP
  * @is_protocol_present: indicates if following protocol is valid
  * @protocol: protocol used by this NDP
- *
  */
 struct nan_datapath_responder_req {
 	struct wlan_objmgr_vdev *vdev;
@@ -468,7 +452,6 @@ struct nan_datapath_responder_rsp {
  * @transaction_id: unique transaction identifier
  * @num_ndp_instances: number of ndp instances to be terminated
  * @ndp_ids: array of ndp_instance_id to be terminated
- *
  */
 struct nan_datapath_end_req {
 	struct wlan_objmgr_vdev *vdev;
@@ -483,7 +466,6 @@ struct nan_datapath_end_req {
  * @transaction_id: unique identifier for the request
  * @status: status of operation
  * @reason: reason(opaque to host driver)
- *
  */
 struct nan_datapath_end_rsp_event {
 	struct wlan_objmgr_vdev *vdev;
@@ -498,7 +480,6 @@ struct nan_datapath_end_rsp_event {
  * @vdev: pointer to vdev object
  * @num_ndp_ids: number of NDP ids
  * @ndp_map: mapping of NDP instances to peer and vdev
- *
  */
 struct nan_datapath_end_indication_event {
 	struct wlan_objmgr_vdev *vdev;
@@ -523,7 +504,6 @@ struct nan_datapath_end_indication_event {
  * @port: port specified by for this NDP
  * @is_protocol_present: indicates if following protocol is valid
  * @protocol: protocol used by this NDP
- *
  */
 struct nan_datapath_confirm_event {
 	struct wlan_objmgr_vdev *vdev;
@@ -559,7 +539,6 @@ struct nan_datapath_confirm_event {
  * @scid: security context identifier
  * @is_ipv6_addr_present: indicates if following ipv6 address is valid
  * @ipv6_addr: ipv6 address address used by ndp
- *
  */
 struct nan_datapath_indication_event {
 	struct wlan_objmgr_vdev *vdev;
@@ -597,7 +576,6 @@ struct nan_datapath_peer_ind {
  * @num_ndp_instances: num of ndp instances
  * @ch: channel info array
  * @ndp_instances: array of ndp instances
- *
  */
 struct nan_datapath_sch_update_event {
 	struct wlan_objmgr_vdev *vdev;
@@ -611,7 +589,19 @@ struct nan_datapath_sch_update_event {
 
 /**
  * struct nan_callbacks - struct containing callback to non-converged driver
- *
+ * @os_if_event_handler: OS IF Callback for handling the events
+ * @ndi_open: HDD callback for creating the NAN Datapath Interface
+ * @ndi_start: HDD callback for starting the NAN Datapath Interface
+ * @ndi_close: HDD callback for closing the NAN Datapath Interface
+ * @ndi_delete: HDD callback for deleting the NAN Datapath Interface
+ * @drv_ndi_create_rsp_handler: HDD callback for handling NDI interface creation
+ * @drv_ndi_delete_rsp_handler: HDD callback for handling NDI interface deletion
+ * @new_peer_ind: HDD callback for handling new NDP peer
+ * @get_peer_idx: HDD callback for getting NDP peer index
+ * @add_ndi_peer: LIM callback for adding NDP peer
+ * @peer_departed_ind: HDD callback for handling departing of NDP peer
+ * @ndp_delete_peers: LIM callback for deleting NDP peer
+ * @delete_peers_by_addr: LIM callback for deleting peer by MAC address
  */
 struct nan_callbacks {
 	/* callback to os_if layer from umac */
@@ -633,6 +623,22 @@ struct nan_callbacks {
 				  bool);
 	void (*ndp_delete_peers)(struct peer_nan_datapath_map*, uint8_t);
 	void (*delete_peers_by_addr)(uint8_t, struct qdf_mac_addr);
+};
+
+/**
+ * struct wlan_nan_tx_ops - structure of tx function pointers for nan component
+ * @nan_req_tx: Message handler for TX operations for the NAN Datapath
+ */
+struct wlan_nan_tx_ops {
+	QDF_STATUS (*nan_req_tx)(void *req, uint32_t req_id);
+};
+
+/**
+ * struct wlan_nan_rx_ops - structure of rx function pointers for nan component
+ * @nan_event_rx: Event handler for RX operations for the NAN Datapath
+ */
+struct wlan_nan_rx_ops {
+	QDF_STATUS (*nan_event_rx)(struct scheduler_msg *event);
 };
 
 #endif
