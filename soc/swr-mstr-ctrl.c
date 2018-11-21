@@ -977,6 +977,7 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 		pr_err("%s: swrm is null\n", __func__);
 		return -EFAULT;
 	}
+
 	mutex_lock(&swrm->mlock);
 
 	bank = get_inactive_bank_num(swrm);
@@ -996,7 +997,7 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 			return -EINVAL;
 		}
 		swr_master_write(swrm, SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN,
-					SWRM_INTERRUPT_STATUS_MASK);
+				 SWRM_INTERRUPT_STATUS_MASK);
 		/* apply the new port config*/
 		swrm_apply_port_config(master);
 	} else {
@@ -1257,7 +1258,7 @@ static int swrm_check_slave_change_status(struct swr_mstr_ctrl *swrm,
 static irqreturn_t swr_mstr_interrupt(int irq, void *dev)
 {
 	struct swr_mstr_ctrl *swrm = dev;
-	u32 value, intr_sts, intr_mask;
+	u32 value, intr_sts, intr_sts_masked;
 	u32 temp = 0;
 	u32 status, chg_sts, i;
 	u8 devnum = 0;
@@ -1275,11 +1276,10 @@ static irqreturn_t swr_mstr_interrupt(int irq, void *dev)
 	mutex_unlock(&swrm->reslock);
 
 	intr_sts = swr_master_read(swrm, SWRM_INTERRUPT_STATUS);
-	intr_mask = swr_master_read(swrm, SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN);
-	intr_sts &= intr_mask;
+	intr_sts_masked = intr_sts & swrm->intr_mask;
 handle_irq:
 	for (i = 0; i < SWRM_INTERRUPT_MAX; i++) {
-		value = intr_sts & (1 << i);
+		value = intr_sts_masked & (1 << i);
 		if (!value)
 			continue;
 
@@ -1371,16 +1371,16 @@ handle_irq:
 			break;
 		case SWRM_INTERRUPT_STATUS_DOUT_PORT_COLLISION:
 			dev_err_ratelimited(swrm->dev, "SWR Port collision detected\n");
-			intr_mask &= ~SWRM_INTERRUPT_STATUS_DOUT_PORT_COLLISION;
+			swrm->intr_mask &= ~SWRM_INTERRUPT_STATUS_DOUT_PORT_COLLISION;
 			swr_master_write(swrm,
-				SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, intr_mask);
+				SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, swrm->intr_mask);
 			break;
 		case SWRM_INTERRUPT_STATUS_READ_EN_RD_VALID_MISMATCH:
 			dev_dbg(swrm->dev, "SWR read enable valid mismatch\n");
-			intr_mask &=
+			swrm->intr_mask &=
 				~SWRM_INTERRUPT_STATUS_READ_EN_RD_VALID_MISMATCH;
 			swr_master_write(swrm,
-				 SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, intr_mask);
+				 SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, swrm->intr_mask);
 			break;
 		case SWRM_INTERRUPT_STATUS_SPECIAL_CMD_ID_FINISHED:
 			complete(&swrm->broadcast);
@@ -1408,9 +1408,9 @@ handle_irq:
 	swr_master_write(swrm, SWRM_INTERRUPT_CLEAR, 0x0);
 
 	intr_sts = swr_master_read(swrm, SWRM_INTERRUPT_STATUS);
-	intr_sts &= intr_mask;
+	intr_sts_masked = intr_sts & swrm->intr_mask;
 
-	if (intr_sts) {
+	if (intr_sts_masked) {
 		dev_dbg(swrm->dev, "%s: new interrupt received\n", __func__);
 		goto handle_irq;
 	}
@@ -1630,12 +1630,13 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	reg[len] = SWRM_INTERRUPT_CLEAR;
 	value[len++] = 0xFFFFFFFF;
 
+	swrm->intr_mask = SWRM_INTERRUPT_STATUS_MASK;
 	/* Mask soundwire interrupts */
 	reg[len] = SWRM_INTERRUPT_MASK_ADDR;
-	value[len++] = 0x1FFFD;
+	value[len++] = swrm->intr_mask;
 
 	reg[len] = SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN;
-	value[len++] = SWRM_INTERRUPT_STATUS_MASK;
+	value[len++] = swrm->intr_mask;
 
 	swr_master_bulk_write(swrm, reg, value, len);
 

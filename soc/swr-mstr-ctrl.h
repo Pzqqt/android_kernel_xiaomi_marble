@@ -162,6 +162,7 @@ struct swr_mstr_ctrl {
 	enum swrm_pm_state pm_state;
 	wait_queue_head_t pm_wq;
 	int wlock_holders;
+	u32 intr_mask;
 };
 
 #endif /* _SWR_WCD_CTRL_H */
