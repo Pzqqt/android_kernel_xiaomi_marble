@@ -412,10 +412,7 @@ ucfg_scan_update_pno_config(struct pno_def_config *pno,
  *
  * Non-DBS scan is requested if any of the below case is met:
  *     1. HW is DBS incapable
- *     2. Directed scan
- *     3. Channel list has only few channels
- *     4. Channel list has single band channels
- *     5. A high accuracy scan request is sent by kernel.
+ *     2. A high accuracy scan request is sent by kernel.
  *
  * DBS scan is enabled for these conditions:
  *     1. A low power or low span scan request is sent by kernel.
@@ -425,63 +422,27 @@ ucfg_scan_update_pno_config(struct pno_def_config *pno,
 static void
 ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 {
-	uint32_t num_chan;
 	struct wlan_objmgr_psoc *psoc;
 	uint32_t scan_dbs_policy = SCAN_DBS_POLICY_DEFAULT;
-	uint32_t conn_cnt;
 
 	psoc = wlan_vdev_get_psoc(req->vdev);
 
-	if ((DISABLE_DBS_CXN_AND_SCAN ==
-	     wlan_objmgr_psoc_get_dual_mac_disable(psoc)) ||
-	    (ENABLE_DBS_CXN_AND_DISABLE_DBS_SCAN ==
-	     wlan_objmgr_psoc_get_dual_mac_disable(psoc)))
+	if (!policy_mgr_is_hw_dbs_capable(psoc)) {
+		scm_debug("dbs disabled, going for non-dbs scan");
+		scan_dbs_policy = SCAN_DBS_POLICY_FORCE_NONDBS;
 		goto end;
+	}
 
-	if (req->scan_req.scan_policy_high_accuracy)
+	if (req->scan_req.scan_policy_high_accuracy) {
+		scm_debug("high accuracy scan received, going for non-dbs scan");
+		scan_dbs_policy = SCAN_DBS_POLICY_FORCE_NONDBS;
 		goto end;
-
+	}
 	if ((req->scan_req.scan_policy_low_power) ||
 	    (req->scan_req.scan_policy_low_span)) {
+		scm_debug("low power/span scan received, going for dbs scan");
 		scan_dbs_policy = SCAN_DBS_POLICY_IGNORE_DUTY;
 		goto end;
-	}
-
-	conn_cnt = policy_mgr_get_connection_count(psoc);
-	if (conn_cnt > 0) {
-		scm_debug("%d active connections, go for DBS scan",
-				conn_cnt);
-		scan_dbs_policy = SCAN_DBS_POLICY_DEFAULT;
-		goto end;
-	}
-
-	if (req->scan_req.num_ssids) {
-		scm_debug("directed SSID");
-		goto end;
-	}
-
-	if (req->scan_req.num_bssid) {
-		scm_debug("directed BSSID");
-		goto end;
-	}
-
-	num_chan = req->scan_req.chan_list.num_chan;
-
-	/* num_chan=0 means all channels */
-	if (!num_chan)
-		scan_dbs_policy = SCAN_DBS_POLICY_DEFAULT;
-
-	if (num_chan < SCAN_MIN_CHAN_DBS_SCAN_THRESHOLD)
-		goto end;
-
-	while (num_chan > 1) {
-		if (!WLAN_REG_IS_SAME_BAND_CHANNELS(
-			req->scan_req.chan_list.chan[0].freq,
-			req->scan_req.chan_list.chan[num_chan-1].freq)) {
-			scan_dbs_policy = SCAN_DBS_POLICY_DEFAULT;
-			break;
-		}
-		num_chan--;
 	}
 
 end:
