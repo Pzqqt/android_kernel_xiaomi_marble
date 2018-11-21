@@ -34,9 +34,6 @@
 #ifdef WIFI_POS_CONVERGED
 #include "target_if_wifi_pos.h"
 #endif /* WIFI_POS_CONVERGED */
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
-#include "target_if_nan.h"
-#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 #include "wlan_reg_tgt_api.h"
 #ifdef CONVERGED_P2P_ENABLE
 #include "wlan_p2p_tgt_api.h"
@@ -242,17 +239,6 @@ static void wlan_lmac_if_umac_rx_ops_register_wifi_pos(
 {
 }
 #endif /* WIFI_POS_CONVERGED */
-
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
-static void wlan_lmac_if_register_nan_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
-{
-	target_if_nan_register_rx_ops(rx_ops);
-}
-#else
-static void wlan_lmac_if_register_nan_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
-{
-}
-#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
 static void wlan_lmac_if_umac_reg_rx_ops_register(
 	struct wlan_lmac_if_rx_ops *rx_ops)
@@ -507,8 +493,6 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	/* tdls rx ops */
 	wlan_lmac_if_umac_tdls_rx_ops_register(rx_ops);
-
-	wlan_lmac_if_register_nan_rx_ops(rx_ops);
 
 	wlan_lmac_if_umac_reg_rx_ops_register(rx_ops);
 

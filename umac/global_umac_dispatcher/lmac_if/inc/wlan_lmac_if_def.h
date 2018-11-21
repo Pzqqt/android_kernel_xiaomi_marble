@@ -64,8 +64,6 @@ struct oem_data_rsp;
 struct direct_buf_rx_data;
 #endif
 
-struct scheduler_msg;
-
 #ifdef CONVERGED_TDLS_ENABLE
 #include "wlan_tdls_public_structs.h"
 #endif
@@ -511,17 +509,6 @@ struct wlan_lmac_if_tdls_rx_ops {
 };
 #endif
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
-/**
- * struct wlan_lmac_if_nan_tx_ops - structure of firwware tx function
- * pointers for nan component
- * @data_req_tx: function pointer to send nan req to firmware
- */
-struct wlan_lmac_if_nan_tx_ops {
-	QDF_STATUS (*nan_req_tx)(void *req, uint32_t req_id);
-};
-#endif
-
 /**
  * struct wlan_lmac_if_ftm_rx_ops  - south bound rx function pointers for FTM
  * @ftm_ev_handler: function to handle FTM event
@@ -747,9 +734,6 @@ struct wlan_lmac_if_tx_ops {
 
 #ifdef WIFI_POS_CONVERGED
 	struct wlan_lmac_if_wifi_pos_tx_ops wifi_pos_tx_ops;
-#endif
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
-	struct wlan_lmac_if_nan_tx_ops nan_tx_ops;
 #endif
 	struct wlan_lmac_if_reg_tx_ops reg_ops;
 	struct wlan_lmac_if_dfs_tx_ops dfs_tx_ops;
@@ -1059,17 +1043,6 @@ struct wlan_lmac_if_wifi_pos_rx_ops {
 };
 #endif
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
-/**
- * struct wlan_lmac_if_nan_rx_ops - structure of rx function
- * pointers for nan component
- * @oem_rsp_event_rx: callback for WMI_OEM_RESPONSE_EVENTID
- */
-struct wlan_lmac_if_nan_rx_ops {
-	QDF_STATUS (*nan_event_rx)(struct scheduler_msg *event);
-};
-#endif
-
 /**
  * struct wlan_lmac_if_dfs_rx_ops - Function pointers to call dfs functions
  *                                  from lmac/offload.
@@ -1317,9 +1290,6 @@ struct wlan_lmac_if_rx_ops {
 #endif
 #ifdef WIFI_POS_CONVERGED
 	struct wlan_lmac_if_wifi_pos_rx_ops wifi_pos_rx_ops;
-#endif
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
-	struct wlan_lmac_if_nan_rx_ops nan_rx_ops;
 #endif
 	struct wlan_lmac_if_reg_rx_ops reg_rx_ops;
 	struct wlan_lmac_if_dfs_rx_ops dfs_rx_ops;
