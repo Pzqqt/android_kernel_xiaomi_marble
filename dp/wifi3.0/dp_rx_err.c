@@ -600,10 +600,10 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	msdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
 	pkt_len = msdu_len + l2_hdr_offset + RX_PKT_TLVS_LEN;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		  FL("Len %d Extn list %pK "),
-				(uint32_t)qdf_nbuf_len(nbuf),
-				qdf_nbuf_get_ext_list(nbuf));
+	QDF_TRACE_ERROR_RL(QDF_MODULE_ID_DP,
+			   "Len %d Extn list %pK ",
+			   (uint32_t)qdf_nbuf_len(nbuf),
+			   qdf_nbuf_get_ext_list(nbuf));
 	/* Set length in nbuf */
 	if (!qdf_nbuf_get_ext_list(nbuf))
 		qdf_nbuf_set_pktlen(nbuf, pkt_len);
