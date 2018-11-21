@@ -778,10 +778,9 @@ static void dp_rx_frag_pull_hdr(qdf_nbuf_t nbuf, uint16_t hdrsize)
 	qdf_nbuf_pull_head(nbuf,
 			RX_PKT_TLVS_LEN + hdrsize);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s: final pktlen %d .11len %d",
-			__func__,
-			(uint32_t)qdf_nbuf_len(nbuf), hdrsize);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: final pktlen %d .11len %d",
+		  __func__, (uint32_t)qdf_nbuf_len(nbuf), hdrsize);
 }
 
 /*
@@ -811,12 +810,12 @@ dp_rx_construct_fraglist(struct dp_peer *peer,
 	qdf_nbuf_append_ext_list(head, rx_nbuf, len);
 	qdf_nbuf_set_next(head, NULL);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s: head len %d ext len %d data len %d ",
-			__func__,
-			(uint32_t)qdf_nbuf_len(head),
-			(uint32_t)qdf_nbuf_len(rx_nbuf),
-			(uint32_t)(head->data_len));
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: head len %d ext len %d data len %d ",
+		  __func__,
+		  (uint32_t)qdf_nbuf_len(head),
+		  (uint32_t)qdf_nbuf_len(rx_nbuf),
+		  (uint32_t)(head->data_len));
 }
 
 /**
@@ -1114,8 +1113,8 @@ dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf, uint16_t hdrsize)
 	hal_srng_access_end(soc->hal_soc, hal_srng);
 
 	DP_STATS_INC(soc, rx.reo_reinject, 1);
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				"%s: reinjection done !", __func__);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: reinjection done !", __func__);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1157,9 +1156,9 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 	}
 	cur = frag_list_head;
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-			"%s: index %d Security type: %d", __func__,
-			index, peer->security[index].sec_type);
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: index %d Security type: %d", __func__,
+		  index, peer->security[index].sec_type);
 
 	switch (peer->security[index].sec_type) {
 	case cdp_sec_type_tkip:
@@ -1536,8 +1535,8 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-		"All fragments received for sequence: %d", rxseq);
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+		  "All fragments received for sequence: %d", rxseq);
 
 	/* Process the fragments */
 	status = dp_rx_defrag(peer, tid, rx_reorder_array_elem->head,
@@ -1567,8 +1566,8 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		rx_reorder_array_elem->head = NULL;
 		rx_reorder_array_elem->tail = NULL;
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-		"Fragmented sequence successfully reinjected");
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			  "Fragmented sequence successfully reinjected");
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		"Fragmented sequence reinjection failed");
