@@ -545,6 +545,22 @@ QDF_STATUS wmi_unified_wow_remove_wakeup_pattern_send(void *wmi_hdl,
 #ifndef CONFIG_MCL
 QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
 			WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT, uint8_t mac_id);
+
+/**
+ *  wmi_unified_peer_based_pktlog_send() - WMI request enable peer
+ *  based filtering
+ *  @wmi_handle: handle to WMI.
+ *  @macaddr: PEER mac address to be filtered
+ *  @mac_id: Mac id
+ *  @enb_dsb: Enable or Disable peer based pktlog
+ *            filtering
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_peer_based_pktlog_send(void *wmi_hdl,
+					      uint8_t *macaddr,
+					      uint8_t mac_id,
+					      uint8_t enb_dsb);
 #else
 QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
