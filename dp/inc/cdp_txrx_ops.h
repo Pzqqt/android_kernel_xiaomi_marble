@@ -618,6 +618,9 @@ struct cdp_ctrl_ops {
 
 	uint32_t (*txrx_get_vdev_param)(struct cdp_vdev *vdev,
 					enum cdp_vdev_param_type param);
+	int (*enable_peer_based_pktlog)(struct cdp_pdev
+			*txrx_pdev_handle, char *macaddr, uint8_t enb_dsb);
+
 };
 
 struct cdp_me_ops {

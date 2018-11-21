@@ -1338,6 +1338,10 @@ struct dp_pdev {
 
 	union dp_rx_desc_list_elem_t *free_list_head;
 	union dp_rx_desc_list_elem_t *free_list_tail;
+	/* Pdev level flag to check peer based pktlog enabled or
+	 * disabled
+	 */
+	uint8_t dp_peer_based_pktlog;
 };
 
 struct dp_peer;
@@ -1604,6 +1608,10 @@ struct dp_peer {
 	 */
 	uint8_t kill_256_sessions;
 	qdf_atomic_t is_default_route_set;
+	/* Peer level flag to check peer based pktlog enabled or
+	 * disabled
+	 */
+	uint8_t peer_based_pktlog_filter;
 };
 
 #ifdef CONFIG_WIN

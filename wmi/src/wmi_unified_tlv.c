@@ -1710,6 +1710,70 @@ static QDF_STATUS send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 #ifdef CONFIG_WIN
+
+/**
+ *  send_peer_based_pktlog_cmd() - Send WMI command to enable packet-log
+ *  @wmi_handle: handle to WMI.
+ *  @macaddr: Peer mac address to be filter
+ *  @mac_id: mac id to have radio context
+ *  @enb_dsb: Enable MAC based filtering or Disable
+ *
+ *  Return: QDF_STATUS
+ */
+static QDF_STATUS send_peer_based_pktlog_cmd(wmi_unified_t wmi_handle,
+					     uint8_t *macaddr,
+					     uint8_t mac_id,
+					     uint8_t enb_dsb)
+{
+	int32_t ret;
+	wmi_pdev_pktlog_filter_cmd_fixed_param *cmd;
+	wmi_pdev_pktlog_filter_info *mac_info;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	uint16_t len = sizeof(wmi_pdev_pktlog_filter_cmd_fixed_param) +
+			sizeof(wmi_pdev_pktlog_filter_info) + WMI_TLV_HDR_SIZE;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_pdev_pktlog_filter_cmd_fixed_param *)buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_pktlog_filter_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_pdev_pktlog_filter_cmd_fixed_param));
+	cmd->pdev_id = mac_id;
+	cmd->enable = enb_dsb;
+	cmd->num_of_mac_addresses = 1;
+	wmi_mtrace(WMI_PDEV_PKTLOG_FILTER_CMDID, cmd->pdev_id, 0);
+
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_pdev_pktlog_filter_info));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	mac_info = (wmi_pdev_pktlog_filter_info *)(buf_ptr);
+
+	WMITLV_SET_HDR(&mac_info->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_pktlog_filter_info,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_pdev_pktlog_filter_info));
+
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &mac_info->peer_mac_address);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_PDEV_PKTLOG_FILTER_CMDID);
+	if (ret) {
+		WMI_LOGE("Failed to send peer based pktlog command to FW =%d"
+			 , ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
 /**
  *  send_packet_log_enable_cmd_tlv() - Send WMI command to enable packet-log
  *  @param wmi_handle      : handle to WMI.
@@ -1795,13 +1859,30 @@ static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
  *  @param macaddr	: MAC address
  *  @param param    : pointer to hold stats request parameter
  *
- *  Return: 0  on success and -ve on failure.
+ *  Return: QDF_STATUS.
  */
 static QDF_STATUS send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct packet_enable_params *param)
 {
-	return 0;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ *  send_peer_based_pktlog_cmd() - Send WMI command to enable packet-log
+ *  @wmi_handle: handle to WMI.
+ *  @macaddr: Peer mac address to be filter
+ *  @mac_id: mac id to have radio context
+ *  @enb_dsb: Enable MAC based filtering or Disable
+ *
+ *  Return: QDF_STATUS
+ */
+static QDF_STATUS send_peer_based_pktlog_cmd(wmi_unified_t wmi_handle,
+					     uint8_t *macaddr,
+					     uint8_t mac_id,
+					     uint8_t enb_dsb)
+{
+	return QDF_STATUS_SUCCESS;
 }
 /**
  *  send_packet_log_disable_cmd_tlv() - Send WMI command to disable
@@ -1809,12 +1890,12 @@ static QDF_STATUS send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
  *  @param wmi_handle      : handle to WMI.
  *  @mac_id: mac id to have radio context
  *
- *  Return: 0  on success and -ve on failure.
+ *  Return: QDF_STATUS.
  */
 static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
 				uint8_t mac_id)
 {
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -11120,6 +11201,7 @@ struct wmi_ops tlv_ops =  {
 	.send_vdev_set_param_cmd = send_vdev_set_param_cmd_tlv,
 	.send_stats_request_cmd = send_stats_request_cmd_tlv,
 	.send_packet_log_enable_cmd = send_packet_log_enable_cmd_tlv,
+	.send_peer_based_pktlog_cmd = send_peer_based_pktlog_cmd,
 	.send_time_stamp_sync_cmd = send_time_stamp_sync_cmd_tlv,
 	.send_packet_log_disable_cmd = send_packet_log_disable_cmd_tlv,
 	.send_beacon_tmpl_send_cmd = send_beacon_tmpl_send_cmd_tlv,

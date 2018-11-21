@@ -8694,6 +8694,37 @@ static QDF_STATUS dp_config_for_nac_rssi(struct cdp_vdev *vdev_handle,
 }
 #endif
 
+/**
+ * dp_enable_peer_based_pktlog() - Set Flag for peer based filtering
+ * for pktlog
+ * @txrx_pdev_handle: cdp_pdev handle
+ * @enb_dsb: Enable or disable peer based filtering
+ *
+ * Return: QDF_STATUS
+ */
+static int
+dp_enable_peer_based_pktlog(
+	struct cdp_pdev *txrx_pdev_handle,
+	char *mac_addr, uint8_t enb_dsb)
+{
+	struct dp_peer *peer;
+	uint8_t local_id;
+	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev_handle;
+
+	peer = (struct dp_peer *)dp_find_peer_by_addr(txrx_pdev_handle,
+			mac_addr, &local_id);
+
+	if (!peer) {
+		dp_err("Invalid Peer");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	peer->peer_based_pktlog_filter = enb_dsb;
+	pdev->dp_peer_based_pktlog = enb_dsb;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
 					   uint32_t max_peers,
 					   bool peer_map_unmap_v2)
@@ -8894,6 +8925,7 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 #endif
 	.set_key = dp_set_michael_key,
 	.txrx_get_vdev_param = dp_get_vdev_param,
+	.enable_peer_based_pktlog = dp_enable_peer_based_pktlog,
 };
 
 static struct cdp_me_ops dp_ops_me = {

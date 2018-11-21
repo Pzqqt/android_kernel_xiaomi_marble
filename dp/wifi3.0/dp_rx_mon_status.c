@@ -443,6 +443,43 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 #endif
 
 /**
+* dp_rx_process_peer_based_pktlog() - Process Rx pktlog if peer based
+* filtering enabled
+* @soc: core txrx main context
+* @ppdu_info: Structure for rx ppdu info
+* @status_nbuf: Qdf nbuf abstraction for linux skb
+* @mac_id: mac_id/pdev_id correspondinggly for MCL and WIN
+*
+* Return: none
+*/
+static inline void
+dp_rx_process_peer_based_pktlog(struct dp_soc *soc,
+				struct hal_rx_ppdu_info *ppdu_info,
+				qdf_nbuf_t status_nbuf, uint32_t mac_id)
+{
+	struct dp_peer *peer;
+	struct dp_ast_entry *ast_entry;
+	uint32_t ast_index;
+
+	ast_index = ppdu_info->rx_status.ast_index;
+	if (ast_index < (WLAN_UMAC_PSOC_MAX_PEERS * 2)) {
+		ast_entry = soc->ast_table[ast_index];
+		if (ast_entry) {
+			peer = ast_entry->peer;
+			if (peer && (peer->peer_ids[0] != HTT_INVALID_PEER)) {
+				if (peer->peer_based_pktlog_filter) {
+					dp_wdi_event_handler(
+							WDI_EVENT_RX_DESC, soc,
+							status_nbuf,
+							peer->peer_ids[0],
+							WDI_NO_VAL, mac_id);
+				}
+			}
+		}
+	}
+}
+
+/**
 * dp_rx_mon_status_process_tlv() - Process status TLV in status
 *	buffer on Rx status Queue posted by status SRNG processing.
 * @soc: core txrx main context
@@ -476,12 +513,6 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 		rx_tlv = qdf_nbuf_data(status_nbuf);
 		rx_tlv_start = rx_tlv;
 
-#ifndef REMOVE_PKT_LOG
-#if defined(WDI_EVENT_ENABLE)
-		dp_wdi_event_handler(WDI_EVENT_RX_DESC, soc,
-			status_nbuf, HTT_INVALID_PEER, WDI_NO_VAL, mac_id);
-#endif
-#endif
 		if ((pdev->monitor_vdev != NULL) || (pdev->enhanced_stats_en) ||
 				pdev->mcopy_mode) {
 
@@ -499,7 +530,14 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 
 			} while (tlv_status == HAL_TLV_STATUS_PPDU_NOT_DONE);
 		}
-
+		if (pdev->dp_peer_based_pktlog) {
+			dp_rx_process_peer_based_pktlog(soc, ppdu_info,
+							status_nbuf, mac_id);
+		} else {
+			dp_wdi_event_handler(WDI_EVENT_RX_DESC, soc,
+					     status_nbuf, HTT_INVALID_PEER,
+					     WDI_NO_VAL, mac_id);
+		}
 		if (ppdu_info->rx_status.monitor_direct_used && pdev->neighbour_peers_added
 		    && pdev->monitor_vdev) {
 			smart_mesh_status = dp_rx_handle_smart_mesh_mode(soc,

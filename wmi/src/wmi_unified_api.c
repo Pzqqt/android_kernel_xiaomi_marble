@@ -735,6 +735,30 @@ QDF_STATUS wmi_unified_packet_log_enable_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+/**
+ *  wmi_unified_peer_based_pktlog_send() - WMI request enable peer
+ *  based filtering
+ *  @wmi_handle: handle to WMI.
+ *  @macaddr: PEER mac address to be filtered
+ *  @mac_id: Mac id
+ *  @enb_dsb: Enable or Disable peer based pktlog
+ *            filtering
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_peer_based_pktlog_send(void *wmi_hdl,
+					      uint8_t *macaddr,
+					      uint8_t mac_id,
+					      uint8_t enb_dsb)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_peer_based_pktlog_cmd)
+		return wmi_handle->ops->send_peer_based_pktlog_cmd
+			(wmi_handle, macaddr, mac_id, enb_dsb);
+
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
 /**
  *  wmi_unified_packet_log_disable__send() - WMI pktlog disable function

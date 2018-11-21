@@ -486,6 +486,40 @@ static inline void cdp_txrx_set_pdev_param(ol_txrx_soc_handle soc,
 }
 
 /**
+ * cdp_enable_peer_based_pktlog()- Set flag in peer structure
+ *
+ * @soc: pointer to the soc
+ * @pdev: the data physical device object
+ * @enable: enable or disable peer based filter based pktlog
+ * @peer_macaddr: Mac address of peer which needs to be
+ * filtered
+ *
+ * This function will set flag in peer structure if peer based filtering
+ * is enabled for pktlog
+ *
+ * Return: int
+ */
+static inline int
+cdp_enable_peer_based_pktlog(ol_txrx_soc_handle soc,
+			     struct cdp_pdev *pdev, char *peer_macaddr,
+			     uint8_t enable)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE_ERROR(QDF_MODULE_ID_DP,
+				"%s invalid instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->enable_peer_based_pktlog)
+		return 0;
+
+	return soc->ops->ctrl_ops->enable_peer_based_pktlog
+			(pdev, peer_macaddr, enable);
+}
+
+/**
  * @brief Subscribe to a specified WDI event.
  * @details
  *  This function adds the provided wdi_event_subscribe object to a list of
