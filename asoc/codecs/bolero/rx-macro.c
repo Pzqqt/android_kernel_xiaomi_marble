@@ -1122,7 +1122,7 @@ static int rx_macro_mclk_ctrl(struct device *dev, bool enable)
 static int rx_macro_event_handler(struct snd_soc_codec *codec, u16 event,
 				  u32 data)
 {
-	u16 reg = 0, reg_mix = 0, rx_idx = 0, mute = 0x0;
+	u16 reg = 0, reg_mix = 0, rx_idx = 0, mute = 0x0, val = 0;
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 
@@ -1133,12 +1133,13 @@ static int rx_macro_event_handler(struct snd_soc_codec *codec, u16 event,
 	case BOLERO_MACRO_EVT_RX_MUTE:
 		rx_idx = data >> 0x10;
 		mute = data & 0xffff;
+		val = mute ? 0x10 : 0x00;
 		reg = BOLERO_CDC_RX_RX0_RX_PATH_CTL + (rx_idx *
 					RX_MACRO_RX_PATH_OFFSET);
 		reg_mix = BOLERO_CDC_RX_RX0_RX_PATH_MIX_CTL + (rx_idx *
 					RX_MACRO_RX_PATH_OFFSET);
-		snd_soc_update_bits(codec, reg, 0x10, mute << 0x10);
-		snd_soc_update_bits(codec, reg_mix, 0x10, mute << 0x10);
+		snd_soc_update_bits(codec, reg, 0x10, val);
+		snd_soc_update_bits(codec, reg_mix, 0x10, val);
 		break;
 	case BOLERO_MACRO_EVT_IMPED_TRUE:
 		rx_macro_wcd_clsh_imped_config(codec, data, true);

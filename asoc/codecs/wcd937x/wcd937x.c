@@ -1295,6 +1295,11 @@ static int wcd937x_event_notify(struct notifier_block *block,
 			mask = 0x20;
 		snd_soc_update_bits(codec, reg, mask, 0x00);
 		break;
+	case BOLERO_WCD_EVT_PA_OFF_PRE_SSR:
+		snd_soc_update_bits(codec, WCD937X_ANA_HPH, 0xC0, 0x00);
+		snd_soc_update_bits(codec, WCD937X_ANA_EAR, 0x80, 0x00);
+		snd_soc_update_bits(codec, WCD937X_AUX_AUXPA, 0x80, 0x00);
+		break;
 	case BOLERO_WCD_EVT_SSR_DOWN:
 		wcd937x_reset_low(wcd937x->dev);
 		break;

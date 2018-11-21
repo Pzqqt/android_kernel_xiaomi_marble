@@ -599,6 +599,7 @@ static void bolero_ssr_disable(struct device *dev, void *data)
 	struct bolero_priv *priv = data;
 	int macro_idx;
 
+	bolero_cdc_notifier_call(priv, BOLERO_WCD_EVT_PA_OFF_PRE_SSR);
 	regcache_cache_only(priv->regmap, true);
 
 	mutex_lock(&priv->clk_lock);
