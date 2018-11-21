@@ -12746,6 +12746,10 @@ int wlan_hdd_cfg80211_register_frames(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 
 	hdd_enter();
+	if (adapter->device_mode == QDF_FTM_MODE) {
+		hdd_info("No need to register frames in FTM mode");
+		return 0;
+	}
 
 	/* Register frame indication call back */
 	status = sme_register_mgmt_frame_ind_callback(mac_handle,
