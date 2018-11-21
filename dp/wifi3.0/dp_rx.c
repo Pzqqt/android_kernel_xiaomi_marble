@@ -1415,6 +1415,11 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 			if (!ring_desc)
 				break;
 			DP_STATS_INC(soc, rx.hp_oos, 1);
+			/*
+			 * update TP here in case loop takes long,
+			 * then the ring is easily full.
+			 */
+			hal_srng_access_end_unlocked(hal_soc, hal_ring);
 		}
 
 		error = HAL_RX_ERROR_STATUS_GET(ring_desc);
