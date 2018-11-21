@@ -73,7 +73,7 @@ QDF_STATUS wlan_mlme_get_edca_params(struct wlan_mlme_edca_params *edca_params,
  */
 QDF_STATUS mlme_get_wep_key(struct wlan_mlme_wep_cfg *wep_params,
 			    enum wep_key_id wep_keyid, uint8_t *default_key,
-			    qdf_size_t key_len);
+			    qdf_size_t *key_len);
 
 /**
  * mlme_set_wep_key() - set the wep keys during auth
