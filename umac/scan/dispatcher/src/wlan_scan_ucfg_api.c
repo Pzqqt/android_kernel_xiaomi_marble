@@ -879,17 +879,17 @@ ucfg_scan_start(struct scan_start_request *req)
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
+	if (!scm_is_scan_allowed(req->vdev)) {
+		scm_err("scan disabled, rejecting the scan req");
+		scm_scan_free_scan_request_mem(req);
+		return QDF_STATUS_E_AGAIN;
+	}
+
 	scan_obj = wlan_pdev_get_scan_obj(pdev);
 	if (!scan_obj) {
 		scm_err("Failed to get scan object");
 		scm_scan_free_scan_request_mem(req);
 		return QDF_STATUS_E_NULL_VALUE;
-	}
-
-	if (!scan_obj->enable_scan) {
-		scm_err("scan disabled, rejecting the scan req");
-		scm_scan_free_scan_request_mem(req);
-		return QDF_STATUS_E_AGAIN;
 	}
 
 	scm_debug("reqid: %d, scanid: %d, vdevid: %d",
@@ -932,7 +932,8 @@ ucfg_scan_start(struct scan_start_request *req)
 	return status;
 }
 
-QDF_STATUS ucfg_scan_set_enable(struct wlan_objmgr_psoc *psoc, bool enable)
+QDF_STATUS ucfg_scan_psoc_set_enable(struct wlan_objmgr_psoc *psoc,
+				     enum scan_disable_reason reason)
 {
 	struct wlan_scan_obj *scan_obj;
 
@@ -941,23 +942,68 @@ QDF_STATUS ucfg_scan_set_enable(struct wlan_objmgr_psoc *psoc, bool enable)
 		scm_err("Failed to get scan object");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-	scan_obj->enable_scan = enable;
-	scm_debug("set enable_scan to %d", scan_obj->enable_scan);
+
+	scan_obj->scan_disabled &= ~reason;
+	scm_debug("Psoc scan_disabled %x", scan_obj->scan_disabled);
 
 	return QDF_STATUS_SUCCESS;
 }
 
-bool ucfg_scan_get_enable(struct wlan_objmgr_psoc *psoc)
+QDF_STATUS ucfg_scan_psoc_set_disable(struct wlan_objmgr_psoc *psoc,
+				      enum scan_disable_reason reason)
 {
 	struct wlan_scan_obj *scan_obj;
 
 	scan_obj = wlan_psoc_get_scan_obj(psoc);
 	if (!scan_obj) {
 		scm_err("Failed to get scan object");
-		return false;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
-	return scan_obj->enable_scan;
+
+	scan_obj->scan_disabled |= reason;
+
+	scm_debug("Psoc scan_disabled %x", scan_obj->scan_disabled);
+
+	return QDF_STATUS_SUCCESS;
 }
+
+
+QDF_STATUS ucfg_scan_vdev_set_enable(struct wlan_objmgr_vdev *vdev,
+				     enum scan_disable_reason reason)
+{
+	struct scan_vdev_obj *scan_vdev_obj;
+
+	scan_vdev_obj = wlan_get_vdev_scan_obj(vdev);
+	if (!scan_vdev_obj) {
+		scm_err("null scan_vdev_obj");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	scan_vdev_obj->scan_disabled &= ~reason;
+
+	scm_debug("Vdev scan_disabled %x", scan_vdev_obj->scan_disabled);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_scan_vdev_set_disable(struct wlan_objmgr_vdev *vdev,
+				      enum scan_disable_reason reason)
+{
+	struct scan_vdev_obj *scan_vdev_obj;
+
+	scan_vdev_obj = wlan_get_vdev_scan_obj(vdev);
+	if (!scan_vdev_obj) {
+		scm_err("null scan_vdev_obj");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	scan_vdev_obj->scan_disabled |= reason;
+
+	scm_debug("Vdev scan_disabled %x", scan_vdev_obj->scan_disabled);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 
 QDF_STATUS ucfg_scan_set_miracast(
 	struct wlan_objmgr_psoc *psoc, bool enable)
@@ -1359,7 +1405,7 @@ static QDF_STATUS
 wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 		      struct wlan_scan_obj *scan_obj)
 {
-	scan_obj->enable_scan = true;
+	scan_obj->scan_disabled = 0;
 	scan_obj->drop_bcn_on_chan_mismatch = true;
 	scan_obj->disable_timeout = false;
 	scan_obj->scan_def.active_dwell =
@@ -1980,7 +2026,7 @@ ucfg_scan_suspend_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int i;
 
-	ucfg_scan_set_enable(psoc, false);
+	ucfg_scan_psoc_set_disable(psoc, REASON_SUSPEND);
 	/* Check all pdev */
 	for (i = 0; i < WLAN_UMAC_MAX_PDEVS; i++) {
 		pdev = wlan_objmgr_get_pdev_by_id(psoc, i, WLAN_SCAN_ID);
@@ -2002,7 +2048,7 @@ ucfg_scan_suspend_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 static QDF_STATUS
 ucfg_scan_resume_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 {
-	ucfg_scan_set_enable(psoc, true);
+	ucfg_scan_psoc_set_enable(psoc, REASON_SUSPEND);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2227,38 +2273,6 @@ bool ucfg_scan_get_bt_activity(struct wlan_objmgr_psoc *psoc)
 	}
 
 	return scan_obj->bt_a2dp_enabled;
-}
-
-void ucfg_scan_set_vdev_del_in_progress(struct wlan_objmgr_vdev *vdev)
-{
-	struct scan_vdev_obj *scan_vdev_obj;
-
-	if (!vdev) {
-		scm_err("invalid vdev");
-		return;
-	}
-	scan_vdev_obj = wlan_get_vdev_scan_obj(vdev);
-	if (!scan_vdev_obj) {
-		scm_err("null scan_vdev_obj");
-		return;
-	}
-	scan_vdev_obj->is_vdev_delete_in_progress = true;
-}
-
-void ucfg_scan_clear_vdev_del_in_progress(struct wlan_objmgr_vdev *vdev)
-{
-	struct scan_vdev_obj *scan_vdev_obj;
-
-	if (!vdev) {
-		scm_err("invalid vdev");
-		return;
-	}
-	scan_vdev_obj = wlan_get_vdev_scan_obj(vdev);
-	if (!scan_vdev_obj) {
-		scm_err("null scan_vdev_obj");
-		return;
-	}
-	scan_vdev_obj->is_vdev_delete_in_progress = false;
 }
 
 QDF_STATUS

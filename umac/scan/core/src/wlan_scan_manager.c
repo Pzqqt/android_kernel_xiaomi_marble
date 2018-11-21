@@ -367,6 +367,44 @@ scm_scan_serialize_callback(struct wlan_serialization_command *cmd,
 	return status;
 }
 
+bool scm_is_scan_allowed(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_scan_obj *scan_psoc_obj;
+	struct scan_vdev_obj *scan_vdev_obj;
+
+	if (!vdev) {
+		scm_err("vdev is NULL");
+		return false;
+	}
+
+	scan_psoc_obj = wlan_vdev_get_scan_obj(vdev);
+	if (!scan_psoc_obj) {
+		scm_err("Couldn't find scan psoc object");
+		return false;
+	}
+
+	if (scan_psoc_obj->scan_disabled) {
+		scm_err_rl("scan disabled %x, for psoc",
+			   scan_psoc_obj->scan_disabled);
+		return false;
+	}
+
+	scan_vdev_obj = wlan_get_vdev_scan_obj(vdev);
+	if (!scan_vdev_obj) {
+		scm_err("Couldn't find scan vdev object");
+		return false;
+	}
+
+	if (scan_vdev_obj->scan_disabled) {
+		scm_err_rl("scan disabled %x on vdev_id:%d",
+			   scan_vdev_obj->scan_disabled,
+			   wlan_vdev_get_id(vdev));
+		return false;
+	}
+
+	return true;
+}
+
 QDF_STATUS
 scm_scan_start_req(struct scheduler_msg *msg)
 {
@@ -374,7 +412,6 @@ scm_scan_start_req(struct scheduler_msg *msg)
 	enum wlan_serialization_status ser_cmd_status;
 	struct scan_start_request *req = NULL;
 	struct wlan_scan_obj *scan_obj;
-	struct scan_vdev_obj *scan_vdev_priv_obj;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!msg) {
@@ -389,29 +426,16 @@ scm_scan_start_req(struct scheduler_msg *msg)
 	}
 
 	req = msg->bodyptr;
-	scan_obj = wlan_vdev_get_scan_obj(req->vdev);
-	if (!scan_obj) {
-		scm_debug("Couldn't find scan object");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto err;
-	}
 
-	if (!scan_obj->enable_scan) {
+	if (!scm_is_scan_allowed(req->vdev)) {
 		scm_err("scan disabled, rejecting the scan req");
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto err;
 	}
 
-	scan_vdev_priv_obj = wlan_get_vdev_scan_obj(req->vdev);
-	if (!scan_vdev_priv_obj) {
-		scm_debug("Couldn't find scan priv object");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto err;
-	}
-
-	if (scan_vdev_priv_obj->is_vdev_delete_in_progress) {
-		scm_err("Can't allow scan on vdev_id:%d",
-			wlan_vdev_get_id(req->vdev));
+	scan_obj = wlan_vdev_get_scan_obj(req->vdev);
+	if (!scan_obj) {
+		scm_debug("Couldn't find scan object");
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto err;
 	}

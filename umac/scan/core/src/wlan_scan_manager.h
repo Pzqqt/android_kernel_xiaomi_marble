@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,6 +43,14 @@ struct scan_event_listeners {
 	uint32_t count;
 	struct cb_handler cb[MAX_SCAN_EVENT_LISTENERS];
 };
+
+/**
+ * scm_is_scan_allowed() - check if scan is allowed
+ * @vdev: vdev for which scan allowed is check
+ *
+ * Return: true if scan is allowed else false
+ */
+bool scm_is_scan_allowed(struct wlan_objmgr_vdev *vdev);
 
 /**
  * scm_scan_start_req() - scan start req core api

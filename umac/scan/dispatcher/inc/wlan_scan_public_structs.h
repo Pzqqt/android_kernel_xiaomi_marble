@@ -577,6 +577,19 @@ struct scan_filter {
 	struct qdf_mac_addr bssid_hint;
 };
 
+/**
+ * enum scan_disable_reason - scan enable/disable reason
+ * @REASON_SUSPEND: reason is suspend
+ * @REASON_SYSTEM_DOWN: reason is system going down
+ * @REASON_USER_SPACE: reason is user space initiated
+ * @REASON_VDEV_DOWN: reason is vdev going down
+ */
+enum scan_disable_reason {
+	REASON_SUSPEND  = 0x1,
+	REASON_SYSTEM_DOWN = 0x2,
+	REASON_USER_SPACE = 0x4,
+	REASON_VDEV_DOWN = 0x8,
+};
 
 /**
  * enum scan_priority - scan priority definitions

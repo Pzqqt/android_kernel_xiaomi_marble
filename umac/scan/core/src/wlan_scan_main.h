@@ -238,12 +238,12 @@ struct pdev_scan_info {
  * struct scan_vdev_obj - scan vdev obj
  * @pno_match_evt_received: pno match received
  * @pno_in_progress: pno in progress
- * @is_vdev_delete_in_progress: flag to indicate if vdev del is in progress
+ * @scan_disabled: if scan is disabled for this vdev
  */
 struct scan_vdev_obj {
 	bool pno_match_evt_received;
 	bool pno_in_progress;
-	bool is_vdev_delete_in_progress;
+	uint32_t scan_disabled;
 };
 
 /**
@@ -461,7 +461,7 @@ struct scan_cb {
 
 /**
  * struct wlan_scan_obj - scan object definition
- * @enable_scan: if scan is enabled
+ * @scan_disabled: if scan is disabled
  * @scan_db:    scan cache data base
  * @cc_db:      pointer of country code data base
  * @lock:       spin lock
@@ -482,7 +482,7 @@ struct scan_cb {
  *      scan config to event handlers
  */
 struct wlan_scan_obj {
-	bool enable_scan;
+	uint32_t scan_disabled;
 	qdf_spinlock_t lock;
 	qdf_atomic_t scan_ids;
 	struct scan_dbs scan_db[WLAN_UMAC_MAX_PDEVS];
