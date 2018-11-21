@@ -108,6 +108,7 @@
 #include <wlan_hdd_regulatory.h>
 #include "wlan_hdd_lpass.h"
 #include "nan_api.h"
+#include "wlan_nan_api.h"
 #include <wlan_hdd_napi.h>
 #include "wlan_hdd_disa.h"
 #include <dispatcher_init_deinit.h>
@@ -12905,8 +12906,14 @@ static QDF_STATUS hdd_component_init(void)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto ipa_deinit;
 
+	status = nan_init();
+	if (QDF_IS_STATUS_ERROR(status))
+		goto action_oui_deinit;
+
 	return QDF_STATUS_SUCCESS;
 
+action_oui_deinit:
+	ucfg_action_oui_deinit();
 ipa_deinit:
 	ipa_deinit();
 ocb_deinit:
@@ -12933,6 +12940,7 @@ dispatcher_deinit:
 static void hdd_component_deinit(void)
 {
 	/* deinitialize non-converged components */
+	nan_deinit();
 	ucfg_action_oui_deinit();
 	ipa_deinit();
 	ucfg_ocb_deinit();
@@ -12989,10 +12997,12 @@ void hdd_component_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	ocb_psoc_enable(psoc);
 	disa_psoc_enable(psoc);
+	nan_psoc_enable(psoc);
 }
 
 void hdd_component_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
+	nan_psoc_disable(psoc);
 	disa_psoc_disable(psoc);
 	ocb_psoc_disable(psoc);
 }

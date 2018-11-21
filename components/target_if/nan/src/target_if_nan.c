@@ -20,10 +20,11 @@
  * DOC: contains nan target if functions
  */
 
-#include "../../../umac/nan/core/src/nan_main_i.h"
+#include "../../../nan/core/src/nan_main_i.h"
 #include "nan_public_structs.h"
 #include "nan_ucfg_api.h"
 #include "target_if_nan.h"
+#include "wlan_nan_api.h"
 #include "wmi_unified_api.h"
 #include "scheduler_api.h"
 
@@ -72,7 +73,7 @@ static QDF_STATUS target_if_nan_event_dispatcher(struct scheduler_msg *msg)
 	void *ptr = msg->bodyptr;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev = NULL;
-	struct wlan_lmac_if_nan_rx_ops *nan_rx_ops;
+	struct wlan_nan_rx_ops *nan_rx_ops;
 
 	switch (msg->type) {
 	case NDP_INITIATOR_RSP:
@@ -115,7 +116,7 @@ static QDF_STATUS target_if_nan_event_dispatcher(struct scheduler_msg *msg)
 		goto free_res;
 	}
 
-	nan_rx_ops = target_if_nan_get_rx_ops(psoc);
+	nan_rx_ops = nan_psoc_get_rx_ops(psoc);
 	if (!nan_rx_ops) {
 		target_if_err("nan_rx_ops is null");
 		status = QDF_STATUS_E_NULL_VALUE;
@@ -138,7 +139,7 @@ static QDF_STATUS target_if_nan_ndp_initiator_req(
 	struct wmi_unified *wmi_handle;
 	struct wlan_objmgr_psoc *psoc;
 	struct scheduler_msg pe_msg = {0};
-	struct wlan_lmac_if_nan_rx_ops *nan_rx_ops;
+	struct wlan_nan_rx_ops *nan_rx_ops;
 	struct nan_datapath_initiator_rsp ndp_rsp = {0};
 
 	if (!ndp_req) {
@@ -158,7 +159,7 @@ static QDF_STATUS target_if_nan_ndp_initiator_req(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	nan_rx_ops = target_if_nan_get_rx_ops(psoc);
+	nan_rx_ops = nan_psoc_get_rx_ops(psoc);
 	if (!nan_rx_ops) {
 		target_if_err("nan_rx_ops is null.");
 		return QDF_STATUS_E_INVAL;
@@ -340,7 +341,7 @@ static QDF_STATUS target_if_nan_ndp_responder_req(
 	struct wmi_unified *wmi_handle;
 	struct wlan_objmgr_psoc *psoc;
 	struct scheduler_msg pe_msg = {0};
-	struct wlan_lmac_if_nan_rx_ops *nan_rx_ops;
+	struct wlan_nan_rx_ops *nan_rx_ops;
 	struct nan_datapath_responder_rsp rsp = {0};
 
 	if (!req) {
@@ -360,7 +361,7 @@ static QDF_STATUS target_if_nan_ndp_responder_req(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	nan_rx_ops = target_if_nan_get_rx_ops(psoc);
+	nan_rx_ops = nan_psoc_get_rx_ops(psoc);
 	if (!nan_rx_ops) {
 		target_if_err("nan_rx_ops is null.");
 		return QDF_STATUS_E_NULL_VALUE;
@@ -439,7 +440,7 @@ static QDF_STATUS target_if_nan_ndp_end_req(struct nan_datapath_end_req *req)
 	struct wmi_unified *wmi_handle;
 	struct wlan_objmgr_psoc *psoc;
 	struct scheduler_msg msg = {0};
-	struct wlan_lmac_if_nan_rx_ops *nan_rx_ops;
+	struct wlan_nan_rx_ops *nan_rx_ops;
 	struct nan_datapath_end_rsp_event end_rsp = {0};
 
 	if (!req) {
@@ -459,7 +460,7 @@ static QDF_STATUS target_if_nan_ndp_end_req(struct nan_datapath_end_req *req)
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	nan_rx_ops = target_if_nan_get_rx_ops(psoc);
+	nan_rx_ops = nan_psoc_get_rx_ops(psoc);
 	if (!nan_rx_ops) {
 		target_if_err("nan_rx_ops is null.");
 		return QDF_STATUS_E_NULL_VALUE;
@@ -656,36 +657,14 @@ static QDF_STATUS target_if_nan_req(void *req, uint32_t req_type)
 	return QDF_STATUS_SUCCESS;
 }
 
-void target_if_nan_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
+void target_if_nan_register_tx_ops(struct wlan_nan_tx_ops *tx_ops)
 {
-	tx_ops->nan_tx_ops.nan_req_tx = target_if_nan_req;
+	tx_ops->nan_req_tx = target_if_nan_req;
 }
 
-void target_if_nan_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+void target_if_nan_register_rx_ops(struct wlan_nan_rx_ops *rx_ops)
 {
-	rx_ops->nan_rx_ops.nan_event_rx = nan_event_handler;
-}
-
-inline struct wlan_lmac_if_nan_tx_ops *target_if_nan_get_tx_ops(
-				struct wlan_objmgr_psoc *psoc)
-{
-	if (!psoc) {
-		target_if_err("psoc is null");
-		return NULL;
-	}
-
-	return &psoc->soc_cb.tx_ops.nan_tx_ops;
-}
-
-inline struct wlan_lmac_if_nan_rx_ops *target_if_nan_get_rx_ops(
-				struct wlan_objmgr_psoc *psoc)
-{
-	if (!psoc) {
-		target_if_err("psoc is null");
-		return NULL;
-	}
-
-	return &psoc->soc_cb.rx_ops.nan_rx_ops;
+	rx_ops->nan_event_rx = nan_event_handler;
 }
 
 QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)

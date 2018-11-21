@@ -105,6 +105,8 @@ static QDF_STATUS nan_psoc_obj_created_notification(
 
 	nan_cfg_init(psoc, nan_obj);
 	nan_cfg_dp_init(psoc, nan_obj);
+	target_if_nan_register_tx_ops(&nan_obj->tx_ops);
+	target_if_nan_register_rx_ops(&nan_obj->rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 

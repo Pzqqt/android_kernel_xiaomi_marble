@@ -138,6 +138,8 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 
 #endif
 
+struct scheduler_msg;
+
 /**
  * enum sir_roam_op_code - Operation to be done by the callback.
  * @SIR_ROAM_SYNCH_PROPAGATION: Propagate the new BSS info after roaming.

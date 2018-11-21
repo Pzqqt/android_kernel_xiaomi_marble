@@ -20,7 +20,6 @@
  * DOC: contains core nan function definitions
  */
 
-#include "nan_main_i.h"
 #include "nan_ucfg_api.h"
 #include "wlan_nan_api.h"
 #include "target_if_nan.h"
@@ -32,33 +31,6 @@
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
 
-struct nan_vdev_priv_obj *nan_get_vdev_priv_obj(
-				struct wlan_objmgr_vdev *vdev)
-{
-	struct nan_vdev_priv_obj *obj;
-
-	if (!vdev) {
-		nan_err("vdev is null");
-		return NULL;
-	}
-	obj = wlan_objmgr_vdev_get_comp_private_obj(vdev, WLAN_UMAC_COMP_NAN);
-
-	return obj;
-}
-
-struct nan_psoc_priv_obj *nan_get_psoc_priv_obj(
-				struct wlan_objmgr_psoc *psoc)
-{
-	struct nan_psoc_priv_obj *obj;
-
-	if (!psoc) {
-		nan_err("psoc is null");
-		return NULL;
-	}
-	obj = wlan_objmgr_psoc_get_comp_private_obj(psoc, WLAN_UMAC_COMP_NAN);
-
-	return obj;
-}
 
 void nan_release_cmd(void *in_req, uint32_t cmdtype)
 {
@@ -109,7 +81,8 @@ static void nan_req_activated(void *in_req, uint32_t cmdtype)
 	uint32_t req_type;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_vdev *vdev;
-	struct wlan_lmac_if_nan_tx_ops *tx_ops;
+	struct wlan_nan_tx_ops *tx_ops;
+	struct nan_psoc_priv_obj *psoc_nan_obj;
 
 	switch (cmdtype) {
 	case WLAN_SER_CMD_NDP_INIT_REQ: {
@@ -149,7 +122,13 @@ static void nan_req_activated(void *in_req, uint32_t cmdtype)
 		return;
 	}
 
-	tx_ops = target_if_nan_get_tx_ops(psoc);
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is null");
+		return;
+	}
+
+	tx_ops = &psoc_nan_obj->tx_ops;
 	if (!tx_ops) {
 		nan_alert("tx_ops is null");
 		return;

@@ -1365,19 +1365,19 @@ CP_STATS_OBJS := $(CP_STATS_TGT_SRC)/target_if_mc_cp_stats.o                 \
 endif
 
 ######################### NAN #########################
-NAN_CORE_DIR := $(WLAN_COMMON_ROOT)/umac/nan/core/src
-NAN_CORE_INC := -I$(WLAN_COMMON_INC)/umac/nan/core/inc
-NAN_UCFG_DIR := $(WLAN_COMMON_ROOT)/umac/nan/dispatcher/src
-NAN_UCFG_INC := -I$(WLAN_COMMON_INC)/umac/nan/dispatcher/inc
-NAN_TGT_DIR  := $(WLAN_COMMON_ROOT)/target_if/nan/src
-NAN_TGT_INC  := -I$(WLAN_COMMON_INC)/target_if/nan/inc
-NAN_OS_IF_DIR  := $(WLAN_COMMON_ROOT)/os_if/linux/nan/src
-NAN_OS_IF_INC  := -I$(WLAN_COMMON_INC)/os_if/linux/nan/inc
+NAN_CORE_DIR := components/nan/core/src
+NAN_CORE_INC := -I$(WLAN_ROOT)/components/nan/core/inc
+NAN_UCFG_DIR := components/nan/dispatcher/src
+NAN_UCFG_INC := -I$(WLAN_ROOT)/components/nan/dispatcher/inc
+NAN_TGT_DIR  := components/target_if/nan/src
+NAN_TGT_INC  := -I$(WLAN_ROOT)/components/target_if/nan/inc
+
+NAN_OS_IF_DIR  := os_if/nan/src
+NAN_OS_IF_INC  := -I$(WLAN_ROOT)/os_if/nan/inc
 
 ifeq ($(CONFIG_NAN_CONVERGENCE), y)
 WLAN_NAN_OBJS := $(NAN_CORE_DIR)/nan_main.o \
 		 $(NAN_CORE_DIR)/nan_api.o \
-		 $(NAN_CORE_DIR)/nan_utils.o \
 		 $(NAN_UCFG_DIR)/nan_ucfg_api.o \
 		 $(NAN_UCFG_DIR)/cfg_nan.o \
 		 $(NAN_TGT_DIR)/target_if_nan.o \
