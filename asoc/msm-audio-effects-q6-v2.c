@@ -141,6 +141,7 @@ int msm_audio_effects_virtualizer_handler(struct audio_client *ac,
 	pr_debug("%s: device: %d\n", __func__, devices);
 	updt_params = (u8 *) params;
 	/* Set MID and IID once at top and only update param specific fields*/
+	memset(&param_hdr, 0, sizeof(param_hdr));
 	param_hdr.module_id = AUDPROC_MODULE_ID_VIRTUALIZER;
 	param_hdr.instance_id = INSTANCE_ID_0;
 	for (i = 0; i < num_commands; i++) {
