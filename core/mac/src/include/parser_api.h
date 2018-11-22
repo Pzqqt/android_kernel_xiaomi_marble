@@ -537,36 +537,36 @@ struct s_ext_cap {
 	uint8_t twt_responder_support:1;
 };
 
-uint8_t sirIsPropCapabilityEnabled(struct mac_context *pMac, uint32_t bitnum);
+uint8_t sirIsPropCapabilityEnabled(struct mac_context *mac, uint32_t bitnum);
 
-#define CFG_GET_INT(nStatus, pMac, nItem, cfg)  do { \
-		(nStatus) = wlan_cfg_get_int((pMac), (nItem), &(cfg)); \
+#define CFG_GET_INT(nStatus, mac, nItem, cfg)  do { \
+		(nStatus) = wlan_cfg_get_int((mac), (nItem), &(cfg)); \
 		if (QDF_STATUS_SUCCESS != (nStatus)) { \
 			pe_err("Failed to retrieve nItem from CFG status: %d", (nStatus)); \
 			return nStatus; \
 		} \
 } while (0)
 
-#define CFG_GET_INT_NO_STATUS(nStatus, pMac, nItem, cfg) do { \
-		(nStatus) = wlan_cfg_get_int((pMac), (nItem), &(cfg)); \
+#define CFG_GET_INT_NO_STATUS(nStatus, mac, nItem, cfg) do { \
+		(nStatus) = wlan_cfg_get_int((mac), (nItem), &(cfg)); \
 		if (QDF_STATUS_SUCCESS != (nStatus)) { \
 			pe_err("Failed to retrieve nItem from CFG status: %d", (nStatus)); \
 			return; \
 		} \
 } while (0)
 
-#define CFG_GET_STR(nStatus, pMac, nItem, cfg, nCfg, nMaxCfg) do { \
+#define CFG_GET_STR(nStatus, mac, nItem, cfg, nCfg, nMaxCfg) do { \
 		(nCfg) = (nMaxCfg); \
-		(nStatus) = wlan_cfg_get_str((pMac), (nItem), (cfg), &(nCfg)); \
+		(nStatus) = wlan_cfg_get_str((mac), (nItem), (cfg), &(nCfg)); \
 		if (QDF_STATUS_SUCCESS != (nStatus)) { \
 			pe_err("Failed to retrieve nItem from CFG status: %d", (nStatus)); \
 			return nStatus; \
 		} \
 } while (0)
 
-#define CFG_GET_STR_NO_STATUS(nStatus, pMac, nItem, cfg, nCfg, nMaxCfg) do { \
+#define CFG_GET_STR_NO_STATUS(nStatus, mac, nItem, cfg, nCfg, nMaxCfg) do { \
 		(nCfg) = (nMaxCfg); \
-		(nStatus) = wlan_cfg_get_str((pMac), (nItem), (cfg), &(nCfg)); \
+		(nStatus) = wlan_cfg_get_str((mac), (nItem), (cfg), &(nCfg)); \
 		if (QDF_STATUS_SUCCESS != (nStatus)) { \
 			pe_err("Failed to retrieve nItem from CFG status: %d", (nStatus)); \
 			return; \
@@ -579,61 +579,61 @@ void swap_bit_field16(uint16_t in, uint16_t *out);
 /* generated code: */
 
 QDF_STATUS
-sir_convert_probe_req_frame2_struct(struct mac_context *pMac,
+sir_convert_probe_req_frame2_struct(struct mac_context *mac,
 				uint8_t *frame, uint32_t len,
 				tpSirProbeReq probe);
 
 QDF_STATUS
-sir_convert_probe_frame2_struct(struct mac_context *pMac, uint8_t *frame,
+sir_convert_probe_frame2_struct(struct mac_context *mac, uint8_t *frame,
 				uint32_t len, tpSirProbeRespBeacon probe);
 
 QDF_STATUS
-sir_convert_assoc_req_frame2_struct(struct mac_context *pMac,
+sir_convert_assoc_req_frame2_struct(struct mac_context *mac,
 				uint8_t *frame, uint32_t len,
 				tpSirAssocReq assoc);
 
 QDF_STATUS
-sir_convert_assoc_resp_frame2_struct(struct mac_context *pMac,
+sir_convert_assoc_resp_frame2_struct(struct mac_context *mac,
 				struct pe_session *session_entry,
 				uint8_t *frame, uint32_t len,
 				tpSirAssocRsp assoc);
 
 QDF_STATUS
-sir_convert_reassoc_req_frame2_struct(struct mac_context *pMac,
+sir_convert_reassoc_req_frame2_struct(struct mac_context *mac,
 				uint8_t *frame, uint32_t len,
 				tpSirAssocReq assoc);
 
 QDF_STATUS
-sir_parse_beacon_ie(struct mac_context *pMac,
+sir_parse_beacon_ie(struct mac_context *mac,
 		tpSirProbeRespBeacon pBeaconStruct,
 		uint8_t *pPayload, uint32_t payloadLength);
 
 QDF_STATUS
-sir_convert_beacon_frame2_struct(struct mac_context *pMac,
+sir_convert_beacon_frame2_struct(struct mac_context *mac,
 				uint8_t *pBeaconFrame,
 				tpSirProbeRespBeacon pBeaconStruct);
 
 QDF_STATUS
-sir_convert_auth_frame2_struct(struct mac_context *pMac,
+sir_convert_auth_frame2_struct(struct mac_context *mac,
 			uint8_t *frame, uint32_t len,
 			tpSirMacAuthFrameBody auth);
 
 QDF_STATUS
-sir_convert_addts_req2_struct(struct mac_context *pMac,
+sir_convert_addts_req2_struct(struct mac_context *mac,
 			uint8_t *frame, uint32_t len,
 			tSirAddtsReqInfo *addTs);
 
 QDF_STATUS
-sir_convert_addts_rsp2_struct(struct mac_context *pMac,
+sir_convert_addts_rsp2_struct(struct mac_context *mac,
 			uint8_t *frame, uint32_t len,
 			tSirAddtsRspInfo *addts);
 
 QDF_STATUS
-sir_convert_delts_req2_struct(struct mac_context *pMac,
+sir_convert_delts_req2_struct(struct mac_context *mac,
 			uint8_t *frame, uint32_t len,
 			tSirDeltsReqInfo *delTs);
 QDF_STATUS
-sir_convert_qos_map_configure_frame2_struct(tpAniSirGlobal pMac,
+sir_convert_qos_map_configure_frame2_struct(tpAniSirGlobal mac,
 					uint8_t *pFrame, uint32_t nFrame,
 					tSirQosMapSet *pQosMapSet);
 
@@ -653,7 +653,7 @@ sir_convert_meas_req_frame2_struct(struct mac_context *, uint8_t *,
  * \sa PopulatedDot11fCapabilities2
  *
  *
- * \param pMac Pointer to the global MAC data structure
+ * \param mac Pointer to the global MAC data structure
  *
  * \param pDot11f Address of a tDot11fFfCapabilities to be filled in
  *
@@ -665,7 +665,7 @@ sir_convert_meas_req_frame2_struct(struct mac_context *, uint8_t *,
  */
 
 QDF_STATUS
-populate_dot11f_capabilities(tpAniSirGlobal pMac,
+populate_dot11f_capabilities(tpAniSirGlobal mac,
 			tDot11fFfCapabilities *pDot11f,
 			struct pe_session *psessionEntry);
 
@@ -675,7 +675,7 @@ populate_dot11f_capabilities(tpAniSirGlobal pMac,
  * \sa PopulatedDot11fCapabilities2
  *
  *
- * \param pMac Pointer to the global MAC data structure
+ * \param mac Pointer to the global MAC data structure
  *
  * \param pDot11f Address of a tDot11fFfCapabilities to be filled in
  *
@@ -691,14 +691,14 @@ populate_dot11f_capabilities(tpAniSirGlobal pMac,
 struct sDphHashNode;
 
 QDF_STATUS
-populate_dot11f_capabilities2(tpAniSirGlobal pMac,
+populate_dot11f_capabilities2(tpAniSirGlobal mac,
 			tDot11fFfCapabilities *pDot11f,
 			struct sDphHashNode *pSta,
 			struct pe_session *psessionEntry);
 
 /* / Populate a tDot11fIEChanSwitchAnn */
 void
-populate_dot11f_chan_switch_ann(tpAniSirGlobal pMac,
+populate_dot11f_chan_switch_ann(tpAniSirGlobal mac,
 				tDot11fIEChanSwitchAnn *pDot11f,
 				struct pe_session *psessionEntry);
 
@@ -709,38 +709,38 @@ populate_dot_11_f_ext_chann_switch_ann(tpAniSirGlobal mac_ptr,
 
 /* / Populate a tDot11fIEChannelSwitchWrapper */
 void
-populate_dot11f_chan_switch_wrapper(tpAniSirGlobal pMac,
+populate_dot11f_chan_switch_wrapper(tpAniSirGlobal mac,
 				tDot11fIEChannelSwitchWrapper *pDot11f,
 				struct pe_session *psessionEntry);
 
 /* / Populate a tDot11fIECountry */
 QDF_STATUS
-populate_dot11f_country(tpAniSirGlobal pMac,
+populate_dot11f_country(tpAniSirGlobal mac,
 			tDot11fIECountry *pDot11f, struct pe_session *psessionEntry);
 
 /* Populated a populate_dot11f_ds_params */
 QDF_STATUS
-populate_dot11f_ds_params(tpAniSirGlobal pMac,
+populate_dot11f_ds_params(tpAniSirGlobal mac,
 			tDot11fIEDSParams *pDot11f, uint8_t channel);
 
 /* / Populated a tDot11fIEEDCAParamSet */
 void
-populate_dot11f_edca_param_set(tpAniSirGlobal pMac,
+populate_dot11f_edca_param_set(tpAniSirGlobal mac,
 			tDot11fIEEDCAParamSet *pDot11f,
 			struct pe_session *psessionEntry);
 
 QDF_STATUS
-populate_dot11f_erp_info(tpAniSirGlobal pMac,
+populate_dot11f_erp_info(tpAniSirGlobal mac,
 			tDot11fIEERPInfo *pDot11f, struct pe_session *psessionEntry);
 
 QDF_STATUS
-populate_dot11f_ext_supp_rates(tpAniSirGlobal pMac,
+populate_dot11f_ext_supp_rates(tpAniSirGlobal mac,
 			uint8_t nChannelNum, tDot11fIEExtSuppRates *pDot11f,
 			struct pe_session *psessionEntry);
 
 /**
  * populate_dot11f_beacon_report() - Populate the Beacon Report IE
- * @pMac: Pointer to the global MAC context
+ * @mac: Pointer to the global MAC context
  * @pDot11f: Pointer to the measurement report structure
  * @pBeaconReport: Pointer to the Beacon Report structure
  * @is_last_frame: is the current report last or more reports to follow
@@ -748,7 +748,7 @@ populate_dot11f_ext_supp_rates(tpAniSirGlobal pMac,
  * Return: Ret Status
  */
 QDF_STATUS
-populate_dot11f_beacon_report(tpAniSirGlobal pMac,
+populate_dot11f_beacon_report(tpAniSirGlobal mac,
 			tDot11fIEMeasurementReport *pDot11f,
 			tSirMacBeaconReport *pBeaconReport,
 			bool is_last_frame);
@@ -757,7 +757,7 @@ populate_dot11f_beacon_report(tpAniSirGlobal pMac,
  * \brief Populate a tDot11fIEExtSuppRates
  *
  *
- * \param pMac Pointer to the global MAC data structure
+ * \param mac Pointer to the global MAC data structure
  *
  * \param nChannelNum Channel on which the enclosing frame will be going out
  *
@@ -770,76 +770,76 @@ populate_dot11f_beacon_report(tpAniSirGlobal pMac,
  */
 
 QDF_STATUS
-populate_dot11f_ext_supp_rates1(tpAniSirGlobal pMac,
+populate_dot11f_ext_supp_rates1(tpAniSirGlobal mac,
 				uint8_t nChannelNum,
 				tDot11fIEExtSuppRates *pDot11f);
 
 QDF_STATUS
-populate_dot11f_ht_caps(tpAniSirGlobal pMac,
+populate_dot11f_ht_caps(tpAniSirGlobal mac,
 			struct pe_session *psessionEntry, tDot11fIEHTCaps *pDot11f);
 
 QDF_STATUS
-populate_dot11f_ht_info(tpAniSirGlobal pMac,
+populate_dot11f_ht_info(tpAniSirGlobal mac,
 			tDot11fIEHTInfo *pDot11f, struct pe_session *psessionEntry);
 
-void populate_dot11f_ibss_params(tpAniSirGlobal pMac,
+void populate_dot11f_ibss_params(tpAniSirGlobal mac,
 				tDot11fIEIBSSParams *pDot11f,
 				struct pe_session *psessionEntry);
 
 #ifdef ANI_SUPPORT_11H
 QDF_STATUS
-populate_dot11f_measurement_report0(tpAniSirGlobal pMac,
+populate_dot11f_measurement_report0(tpAniSirGlobal mac,
 				tpSirMacMeasReqActionFrame pReq,
 				tDot11fIEMeasurementReport *pDot11f);
 
 /* / Populate a tDot11fIEMeasurementReport when the report type is CCA */
 QDF_STATUS
-populate_dot11f_measurement_report1(tpAniSirGlobal pMac,
+populate_dot11f_measurement_report1(tpAniSirGlobal mac,
 				tpSirMacMeasReqActionFrame pReq,
 				tDot11fIEMeasurementReport *pDot11f);
 
 /* / Populate a tDot11fIEMeasurementReport when the report type is RPI Hist */
 QDF_STATUS
-populate_dot11f_measurement_report2(tpAniSirGlobal pMac,
+populate_dot11f_measurement_report2(tpAniSirGlobal mac,
 				tpSirMacMeasReqActionFrame pReq,
 				tDot11fIEMeasurementReport *pDot11f);
 #endif /* ANI_SUPPORT_11H */
 
 /* / Populate a tDot11fIEPowerCaps */
 void
-populate_dot11f_power_caps(tpAniSirGlobal pMac,
+populate_dot11f_power_caps(tpAniSirGlobal mac,
 			tDot11fIEPowerCaps *pCaps,
 			uint8_t nAssocType, struct pe_session *psessionEntry);
 
 /* / Populate a tDot11fIEPowerConstraints */
 QDF_STATUS
-populate_dot11f_power_constraints(tpAniSirGlobal pMac,
+populate_dot11f_power_constraints(tpAniSirGlobal mac,
 				tDot11fIEPowerConstraints *pDot11f);
 
 void
-populate_dot11f_qos_caps_ap(tpAniSirGlobal pMac,
+populate_dot11f_qos_caps_ap(tpAniSirGlobal mac,
 			tDot11fIEQOSCapsAp *pDot11f,
 			struct pe_session *psessionEntry);
 
 void
-populate_dot11f_qos_caps_station(tpAniSirGlobal pMac, struct pe_session *session,
+populate_dot11f_qos_caps_station(tpAniSirGlobal mac, struct pe_session *session,
 				tDot11fIEQOSCapsStation *pDot11f);
 
 QDF_STATUS
-populate_dot11f_rsn(tpAniSirGlobal pMac,
+populate_dot11f_rsn(tpAniSirGlobal mac,
 		tpSirRSNie pRsnIe, tDot11fIERSN *pDot11f);
 
 QDF_STATUS
-populate_dot11f_rsn_opaque(tpAniSirGlobal pMac,
+populate_dot11f_rsn_opaque(tpAniSirGlobal mac,
 		tpSirRSNie pRsnIe, tDot11fIERSNOpaque *pDot11f);
 
 #if defined(FEATURE_WLAN_WAPI)
 
 QDF_STATUS
-populate_dot11f_wapi(tpAniSirGlobal pMac,
+populate_dot11f_wapi(tpAniSirGlobal mac,
 		tpSirRSNie pRsnIe, tDot11fIEWAPI *pDot11f);
 
-QDF_STATUS populate_dot11f_wapi_opaque(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_wapi_opaque(tpAniSirGlobal mac,
 					tpSirRSNie pRsnIe,
 					tDot11fIEWAPIOpaque *pDot11f);
 
@@ -847,11 +847,11 @@ QDF_STATUS populate_dot11f_wapi_opaque(tpAniSirGlobal pMac,
 
 /* / Populate a tDot11fIESSID given a tSirMacSSid */
 void
-populate_dot11f_ssid(tpAniSirGlobal pMac,
+populate_dot11f_ssid(tpAniSirGlobal mac,
 		tSirMacSSid *pInternal, tDot11fIESSID *pDot11f);
 
 /* / Populate a tDot11fIESSID from CFG */
-QDF_STATUS populate_dot11f_ssid2(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_ssid2(tpAniSirGlobal mac,
 				tDot11fIESSID *pDot11f);
 
 /**
@@ -872,7 +872,7 @@ populate_dot11f_schedule(tSirMacScheduleIE *pSchedule,
 			tDot11fIESchedule *pDot11f);
 
 void
-populate_dot11f_supp_channels(tpAniSirGlobal pMac,
+populate_dot11f_supp_channels(tpAniSirGlobal mac,
 			tDot11fIESuppChannels *pDot11f,
 			uint8_t nAssocType, struct pe_session *psessionEntry);
 
@@ -880,7 +880,7 @@ populate_dot11f_supp_channels(tpAniSirGlobal pMac,
  * \brief Populated a tDot11fIESuppRates
  *
  *
- * \param pMac Pointer to the global MAC data structure
+ * \param mac Pointer to the global MAC data structure
  *
  * \param nChannelNum Channel the enclosing frame will be going out on; see
  * below
@@ -900,7 +900,7 @@ populate_dot11f_supp_channels(tpAniSirGlobal pMac,
 #define POPULATE_DOT11F_RATES_OPERATIONAL (0xff)
 
 QDF_STATUS
-populate_dot11f_supp_rates(tpAniSirGlobal pMac,
+populate_dot11f_supp_rates(tpAniSirGlobal mac,
 			uint8_t nChannelNum,
 			tDot11fIESuppRates *pDot11f, struct pe_session *);
 
@@ -910,14 +910,14 @@ populate_dot11f_rates_tdls(tpAniSirGlobal p_mac,
 			tDot11fIEExtSuppRates *p_ext_supp_rates,
 			uint8_t curr_oper_channel);
 
-QDF_STATUS populate_dot11f_tpc_report(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_tpc_report(tpAniSirGlobal mac,
 					tDot11fIETPCReport *pDot11f,
 					struct pe_session *psessionEntry);
 
 /* / Populate a tDot11FfTSInfo */
 void populate_dot11f_ts_info(tSirMacTSInfo *pInfo, tDot11fFfTSInfo *pDot11f);
 
-void populate_dot11f_wmm(tpAniSirGlobal pMac,
+void populate_dot11f_wmm(tpAniSirGlobal mac,
 			tDot11fIEWMMInfoAp *pInfo,
 			tDot11fIEWMMParams *pParams,
 			tDot11fIEWMMCaps *pCaps, struct pe_session *psessionEntry);
@@ -930,19 +930,19 @@ void populate_dot11f_ese_version(tDot11fIEESEVersion *pESEVersion);
 /* Fill the Radio Management Capability */
 void populate_dot11f_ese_rad_mgmt_cap(tDot11fIEESERadMgmtCap *pESERadMgmtCap);
 /* Fill the CCKM IE */
-QDF_STATUS populate_dot11f_ese_cckm_opaque(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_ese_cckm_opaque(tpAniSirGlobal mac,
 					tpSirCCKMie pCCKMie,
 					tDot11fIEESECckmOpaque *pDot11f);
 
-void populate_dot11_tsrsie(tpAniSirGlobal pMac,
+void populate_dot11_tsrsie(tpAniSirGlobal mac,
 			tSirMacESETSRSIE *pOld,
 			tDot11fIEESETrafStrmRateSet *pDot11f,
 			uint8_t rate_length);
-void populate_dot11f_re_assoc_tspec(tpAniSirGlobal pMac,
+void populate_dot11f_re_assoc_tspec(tpAniSirGlobal mac,
 				tDot11fReAssocRequest *pReassoc,
 				struct pe_session *psessionEntry);
 QDF_STATUS
-sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
+sir_beacon_ie_ese_bcn_report(tpAniSirGlobal mac,
 		uint8_t *pPayload, const uint32_t payloadLength,
 		uint8_t **outIeBuf, uint32_t *pOutIeLen);
 
@@ -961,15 +961,15 @@ void ese_populate_wmm_tspec(tSirMacTspecIE *source, ese_wmm_tspec_ie *dest);
 
 #endif
 
-void populate_dot11f_wmm_info_ap(tpAniSirGlobal pMac,
+void populate_dot11f_wmm_info_ap(tpAniSirGlobal mac,
 				tDot11fIEWMMInfoAp *pInfo,
 				struct pe_session *psessionEntry);
 
-void populate_dot11f_wmm_info_station_per_session(tpAniSirGlobal pMac,
+void populate_dot11f_wmm_info_station_per_session(tpAniSirGlobal mac,
 					struct pe_session *psessionEntry,
 					tDot11fIEWMMInfoStation *pInfo);
 
-void populate_dot11f_wmm_params(tpAniSirGlobal pMac,
+void populate_dot11f_wmm_params(tpAniSirGlobal mac,
 				tDot11fIEWMMParams *pParams,
 				struct pe_session *psessionEntry);
 
@@ -991,11 +991,11 @@ populate_dot11f_wmm_schedule(tSirMacScheduleIE *pSchedule,
 			tDot11fIEWMMSchedule *pDot11f);
 
 QDF_STATUS
-populate_dot11f_wpa(tpAniSirGlobal pMac,
+populate_dot11f_wpa(tpAniSirGlobal mac,
 		tpSirRSNie pRsnIe, tDot11fIEWPA *pDot11f);
 
 QDF_STATUS
-populate_dot11f_wpa_opaque(tpAniSirGlobal pMac,
+populate_dot11f_wpa_opaque(tpAniSirGlobal mac,
 			tpSirRSNie pRsnIe, tDot11fIEWPAOpaque *pDot11f);
 
 void populate_dot11f_tspec(tSirMacTspecIE *pOld, tDot11fIETSPEC *pDot11f);
@@ -1003,86 +1003,86 @@ void populate_dot11f_tspec(tSirMacTspecIE *pOld, tDot11fIETSPEC *pDot11f);
 void populate_dot11f_wmmtspec(tSirMacTspecIE *pOld, tDot11fIEWMMTSPEC *pDot11f);
 
 QDF_STATUS
-populate_dot11f_tclas(tpAniSirGlobal pMac,
+populate_dot11f_tclas(tpAniSirGlobal mac,
 		tSirTclasInfo *pOld, tDot11fIETCLAS *pDot11f);
 
 QDF_STATUS
-populate_dot11f_wmmtclas(tpAniSirGlobal pMac,
+populate_dot11f_wmmtclas(tpAniSirGlobal mac,
 			tSirTclasInfo *pOld, tDot11fIEWMMTCLAS *pDot11f);
 
-QDF_STATUS populate_dot11f_wsc(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_wsc(tpAniSirGlobal mac,
 			tDot11fIEWscBeacon *pDot11f);
 
-QDF_STATUS populate_dot11f_wsc_registrar_info(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_wsc_registrar_info(tpAniSirGlobal mac,
 						tDot11fIEWscBeacon *pDot11f);
 
-QDF_STATUS de_populate_dot11f_wsc_registrar_info(tpAniSirGlobal pMac,
+QDF_STATUS de_populate_dot11f_wsc_registrar_info(tpAniSirGlobal mac,
 						tDot11fIEWscBeacon *pDot11f);
 
-QDF_STATUS populate_dot11f_probe_res_wpsi_es(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_probe_res_wpsi_es(tpAniSirGlobal mac,
 						tDot11fIEWscProbeRes *pDot11f,
 						struct pe_session *psessionEntry);
-QDF_STATUS populate_dot11f_assoc_res_wpsi_es(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_assoc_res_wpsi_es(tpAniSirGlobal mac,
 						tDot11fIEWscAssocRes *pDot11f,
 						struct pe_session *psessionEntry);
-QDF_STATUS populate_dot11f_beacon_wpsi_es(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_beacon_wpsi_es(tpAniSirGlobal mac,
 					tDot11fIEWscBeacon *pDot11f,
 					struct pe_session *psessionEntry);
 
-QDF_STATUS populate_dot11f_wsc_in_probe_res(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_wsc_in_probe_res(tpAniSirGlobal mac,
 					tDot11fIEWscProbeRes *pDot11f);
 
 QDF_STATUS
-populate_dot11f_wsc_registrar_info_in_probe_res(tpAniSirGlobal pMac,
+populate_dot11f_wsc_registrar_info_in_probe_res(tpAniSirGlobal mac,
 					tDot11fIEWscProbeRes *pDot11f);
 
 QDF_STATUS
-de_populate_dot11f_wsc_registrar_info_in_probe_res(tpAniSirGlobal pMac,
+de_populate_dot11f_wsc_registrar_info_in_probe_res(tpAniSirGlobal mac,
 						tDot11fIEWscProbeRes *pDot11f);
 
-QDF_STATUS populate_dot11f_assoc_res_wsc_ie(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_assoc_res_wsc_ie(tpAniSirGlobal mac,
 					tDot11fIEWscAssocRes *pDot11f,
 					tpSirAssocReq pRcvdAssocReq);
 
-QDF_STATUS populate_dot11_assoc_res_p2p_ie(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11_assoc_res_p2p_ie(tpAniSirGlobal mac,
 					tDot11fIEP2PAssocRes *pDot11f,
 					tpSirAssocReq pRcvdAssocReq);
 
-QDF_STATUS populate_dot11f_wscInAssocRes(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_wscInAssocRes(tpAniSirGlobal mac,
 					tDot11fIEWscAssocRes *pDot11f);
 
-QDF_STATUS populate_dot11f_wfatpc(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_wfatpc(tpAniSirGlobal mac,
 				tDot11fIEWFATPC *pDot11f, uint8_t txPower,
 				uint8_t linkMargin);
 
-QDF_STATUS populate_dot11f_rrm_ie(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_rrm_ie(tpAniSirGlobal mac,
 				tDot11fIERRMEnabledCap *pDot11f,
 				struct pe_session *psessionEntry);
 
-void populate_mdie(tpAniSirGlobal pMac,
+void populate_mdie(tpAniSirGlobal mac,
 		tDot11fIEMobilityDomain * pDot11f, uint8_t mdie[]);
-void populate_ft_info(tpAniSirGlobal pMac, tDot11fIEFTInfo *pDot11f);
+void populate_ft_info(tpAniSirGlobal mac, tDot11fIEFTInfo *pDot11f);
 
-void populate_dot11f_assoc_rsp_rates(tpAniSirGlobal pMac,
+void populate_dot11f_assoc_rsp_rates(tpAniSirGlobal mac,
 				tDot11fIESuppRates *pSupp,
 				tDot11fIEExtSuppRates *pExt,
 				uint16_t *_11bRates, uint16_t *_11aRates);
 
-int find_ie_location(tpAniSirGlobal pMac, tpSirRSNie pRsnIe, uint8_t EID);
+int find_ie_location(tpAniSirGlobal mac, tpSirRSNie pRsnIe, uint8_t EID);
 
-void lim_log_vht_cap(tpAniSirGlobal pMac, tDot11fIEVHTCaps *pDot11f);
+void lim_log_vht_cap(tpAniSirGlobal mac, tDot11fIEVHTCaps *pDot11f);
 
 QDF_STATUS
-populate_dot11f_vht_caps(tpAniSirGlobal pMac, struct pe_session *psessionEntry,
+populate_dot11f_vht_caps(tpAniSirGlobal mac, struct pe_session *psessionEntry,
 			tDot11fIEVHTCaps *pDot11f);
 
 QDF_STATUS
-populate_dot11f_vht_operation(tpAniSirGlobal pMac,
+populate_dot11f_vht_operation(tpAniSirGlobal mac,
 			struct pe_session *psessionEntry,
 			tDot11fIEVHTOperation *pDot11f);
 
 QDF_STATUS
-populate_dot11f_ext_cap(tpAniSirGlobal pMac, bool isVHTEnabled,
+populate_dot11f_ext_cap(tpAniSirGlobal mac, bool isVHTEnabled,
 			tDot11fIEExtCap *pDot11f, struct pe_session *psessionEntry);
 
 void populate_dot11f_qcn_ie(tDot11fIEQCN_IE *pDot11f);
@@ -1109,16 +1109,16 @@ static inline void populate_dot11f_fils_params(tpAniSirGlobal mac_ctx,
 #endif
 
 QDF_STATUS
-populate_dot11f_operating_mode(tpAniSirGlobal pMac,
+populate_dot11f_operating_mode(tpAniSirGlobal mac,
 			tDot11fIEOperatingMode *pDot11f,
 			struct pe_session *psessionEntry);
 
 void
-populate_dot11f_wider_bw_chan_switch_ann(tpAniSirGlobal pMac,
+populate_dot11f_wider_bw_chan_switch_ann(tpAniSirGlobal mac,
 					tDot11fIEWiderBWChanSwitchAnn *pDot11f,
 					struct pe_session *psessionEntry);
 
-void populate_dot11f_timeout_interval(tpAniSirGlobal pMac,
+void populate_dot11f_timeout_interval(tpAniSirGlobal mac,
 				tDot11fIETimeoutInterval *pDot11f,
 				uint8_t type, uint32_t value);
 
@@ -1130,7 +1130,7 @@ populate_dot11f_avoid_channel_ie(tpAniSirGlobal mac_ctx,
 				struct pe_session *session_entry);
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-QDF_STATUS populate_dot11f_timing_advert_frame(tpAniSirGlobal pMac,
+QDF_STATUS populate_dot11f_timing_advert_frame(tpAniSirGlobal mac,
 	tDot11fTimingAdvertisementFrame *frame);
 void populate_dot11_supp_operating_classes(tpAniSirGlobal mac_ptr,
 	tDot11fIESuppOperatingClasses *dot_11_ptr, struct pe_session *session_entry);
