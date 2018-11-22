@@ -53,10 +53,10 @@
  * @return Pointer to peer node if found, else NULL
  */
 
-static tLimIbssPeerNode *ibss_peer_find(tpAniSirGlobal pMac,
+static tLimIbssPeerNode *ibss_peer_find(tpAniSirGlobal mac,
 					tSirMacAddr macAddr)
 {
-	tLimIbssPeerNode *pTempNode = pMac->lim.gLimIbssPeerList;
+	tLimIbssPeerNode *pTempNode = mac->lim.gLimIbssPeerList;
 
 	while (pTempNode != NULL) {
 		if (!qdf_mem_cmp((uint8_t *) macAddr,
@@ -82,26 +82,26 @@ static tLimIbssPeerNode *ibss_peer_find(tpAniSirGlobal pMac,
  *
  ***NOTE:
  *
- * @param  pMac      - Pointer to Global MAC structure
+ * @param  mac      - Pointer to Global MAC structure
  * @param  pPeerNode - Pointer to peer node to be added to the list.
  *
  * @return None
  */
 
 static QDF_STATUS
-ibss_peer_add(tpAniSirGlobal pMac, tLimIbssPeerNode *pPeerNode)
+ibss_peer_add(tpAniSirGlobal mac, tLimIbssPeerNode *pPeerNode)
 {
 #ifdef ANI_SIR_IBSS_PEER_CACHING
-	uint32_t numIbssPeers = (2 * pMac->lim.maxStation);
+	uint32_t numIbssPeers = (2 * mac->lim.maxStation);
 
-	if (pMac->lim.gLimNumIbssPeers >= numIbssPeers) {
+	if (mac->lim.gLimNumIbssPeers >= numIbssPeers) {
 		/**
 		 * Reached max number of peers to be maintained.
 		 * Delete last entry & add new entry at the beginning.
 		 */
 		tLimIbssPeerNode *pTemp, *pPrev;
 
-		pTemp = pPrev = pMac->lim.gLimIbssPeerList;
+		pTemp = pPrev = mac->lim.gLimIbssPeerList;
 		while (pTemp->next != NULL) {
 			pPrev = pTemp;
 			pTemp = pTemp->next;
@@ -114,10 +114,10 @@ ibss_peer_add(tpAniSirGlobal pMac, tLimIbssPeerNode *pPeerNode)
 		pPrev->next = NULL;
 	} else
 #endif
-	pMac->lim.gLimNumIbssPeers++;
+	mac->lim.gLimNumIbssPeers++;
 
-	pPeerNode->next = pMac->lim.gLimIbssPeerList;
-	pMac->lim.gLimIbssPeerList = pPeerNode;
+	pPeerNode->next = mac->lim.gLimIbssPeerList;
+	mac->lim.gLimIbssPeerList = pPeerNode;
 
 	return QDF_STATUS_SUCCESS;
 
@@ -136,7 +136,7 @@ ibss_peer_add(tpAniSirGlobal pMac, tLimIbssPeerNode *pPeerNode)
  *
  ***NOTE:
  *
- * @param  pMac    - Pointer to Global MAC structure
+ * @param  mac    - Pointer to Global MAC structure
  * @param  pBeacon - Parsed Beacon Frame structure
  * @param  pBD     - Pointer to received BD
  * @param  pPeer   - Pointer to IBSS peer node
@@ -145,7 +145,7 @@ ibss_peer_add(tpAniSirGlobal pMac, tLimIbssPeerNode *pPeerNode)
  */
 
 static void
-ibss_peer_collect(tpAniSirGlobal pMac,
+ibss_peer_collect(tpAniSirGlobal mac,
 		  tpSchBeaconStruct pBeacon,
 		  tpSirMacMgmtHdr pHdr,
 		  tLimIbssPeerNode *pPeer, tpPESession psessionEntry)
@@ -215,7 +215,7 @@ ibss_peer_collect(tpAniSirGlobal pMac,
 
 /* handle change in peer qos/wme capabilities */
 static void
-ibss_sta_caps_update(tpAniSirGlobal pMac,
+ibss_sta_caps_update(tpAniSirGlobal mac,
 		     tLimIbssPeerNode *pPeerNode, tpPESession psessionEntry)
 {
 	uint16_t peerIdx;
@@ -224,7 +224,7 @@ ibss_sta_caps_update(tpAniSirGlobal pMac,
 	pPeerNode->beaconHBCount++;     /* Update beacon count. */
 
 	/* if the peer node exists, update its qos capabilities */
-	pStaDs = dph_lookup_hash_entry(pMac, pPeerNode->peerMacAddr, &peerIdx,
+	pStaDs = dph_lookup_hash_entry(mac, pPeerNode->peerMacAddr, &peerIdx,
 				       &psessionEntry->dph.dphHashTable);
 	if (pStaDs == NULL)
 		return;
@@ -277,7 +277,7 @@ ibss_sta_caps_update(tpAniSirGlobal pMac,
 		pStaDs->wmeEnabled = 0;
 		if (!pStaDs->lleEnabled) {
 			pStaDs->lleEnabled = 1;
-			/* dphSetACM(pMac, pStaDs); */
+			/* dphSetACM(mac, pStaDs); */
 		}
 		return;
 	}
@@ -316,11 +316,11 @@ ibss_sta_caps_update(tpAniSirGlobal pMac,
 }
 
 static void
-ibss_sta_rates_update(tpAniSirGlobal pMac,
+ibss_sta_rates_update(tpAniSirGlobal mac,
 		      tpDphHashNode pStaDs,
 		      tLimIbssPeerNode *pPeer, tpPESession psessionEntry)
 {
-	lim_populate_matching_rate_set(pMac, pStaDs, &pPeer->supportedRates,
+	lim_populate_matching_rate_set(mac, pStaDs, &pPeer->supportedRates,
 				       &pPeer->extendedRates,
 				       pPeer->supportedMCSSet, psessionEntry,
 				       &pPeer->VHTCaps, NULL);
@@ -340,7 +340,7 @@ ibss_sta_rates_update(tpAniSirGlobal pMac,
  *
  ***NOTE:
  *
- * @param  pMac   - Pointer to Global MAC structure
+ * @param  mac   - Pointer to Global MAC structure
  * @param  pStaDs - Pointer to DPH node
  * @param  pPeer  - Pointer to IBSS peer node
  *
@@ -348,48 +348,48 @@ ibss_sta_rates_update(tpAniSirGlobal pMac,
  */
 
 static void
-ibss_sta_info_update(tpAniSirGlobal pMac,
+ibss_sta_info_update(tpAniSirGlobal mac,
 		     tpDphHashNode pStaDs,
 		     tLimIbssPeerNode *pPeer, tpPESession psessionEntry)
 {
 	pStaDs->staType = STA_ENTRY_PEER;
-	ibss_sta_caps_update(pMac, pPeer, psessionEntry);
-	ibss_sta_rates_update(pMac, pStaDs, pPeer, psessionEntry);
+	ibss_sta_caps_update(mac, pPeer, psessionEntry);
+	ibss_sta_rates_update(mac, pStaDs, pPeer, psessionEntry);
 } /*** end ibss_sta_info_update() ***/
 
-static void ibss_coalesce_free(tpAniSirGlobal pMac)
+static void ibss_coalesce_free(tpAniSirGlobal mac)
 {
-	if (pMac->lim.ibssInfo.pHdr != NULL)
-		qdf_mem_free(pMac->lim.ibssInfo.pHdr);
-	if (pMac->lim.ibssInfo.pBeacon != NULL)
-		qdf_mem_free(pMac->lim.ibssInfo.pBeacon);
+	if (mac->lim.ibssInfo.pHdr != NULL)
+		qdf_mem_free(mac->lim.ibssInfo.pHdr);
+	if (mac->lim.ibssInfo.pBeacon != NULL)
+		qdf_mem_free(mac->lim.ibssInfo.pBeacon);
 
-	pMac->lim.ibssInfo.pHdr = NULL;
-	pMac->lim.ibssInfo.pBeacon = NULL;
+	mac->lim.ibssInfo.pHdr = NULL;
+	mac->lim.ibssInfo.pBeacon = NULL;
 }
 
 /*
  * save the beacon params for use when adding the bss
  */
 static void
-ibss_coalesce_save(tpAniSirGlobal pMac,
+ibss_coalesce_save(tpAniSirGlobal mac,
 		   tpSirMacMgmtHdr pHdr, tpSchBeaconStruct pBeacon)
 {
 	/* get rid of any saved info */
-	ibss_coalesce_free(pMac);
+	ibss_coalesce_free(mac);
 
-	pMac->lim.ibssInfo.pHdr = qdf_mem_malloc(sizeof(*pHdr));
-	if (!pMac->lim.ibssInfo.pHdr)
+	mac->lim.ibssInfo.pHdr = qdf_mem_malloc(sizeof(*pHdr));
+	if (!mac->lim.ibssInfo.pHdr)
 		return;
 
-	pMac->lim.ibssInfo.pBeacon = qdf_mem_malloc(sizeof(*pBeacon));
-	if (!pMac->lim.ibssInfo.pBeacon) {
-		ibss_coalesce_free(pMac);
+	mac->lim.ibssInfo.pBeacon = qdf_mem_malloc(sizeof(*pBeacon));
+	if (!mac->lim.ibssInfo.pBeacon) {
+		ibss_coalesce_free(mac);
 		return;
 	}
 
-	qdf_mem_copy(pMac->lim.ibssInfo.pHdr, pHdr, sizeof(*pHdr));
-	qdf_mem_copy(pMac->lim.ibssInfo.pBeacon, pBeacon, sizeof(*pBeacon));
+	qdf_mem_copy(mac->lim.ibssInfo.pHdr, pHdr, sizeof(*pHdr));
+	qdf_mem_copy(mac->lim.ibssInfo.pBeacon, pBeacon, sizeof(*pBeacon));
 }
 
 /*
@@ -397,7 +397,7 @@ ibss_coalesce_save(tpAniSirGlobal pMac,
  * if necessary, an existing entry is eliminated
  */
 static QDF_STATUS
-ibss_dph_entry_add(tpAniSirGlobal pMac,
+ibss_dph_entry_add(tpAniSirGlobal mac,
 		   tSirMacAddr peerAddr,
 		   tpDphHashNode *ppSta, tpPESession psessionEntry)
 {
@@ -407,12 +407,12 @@ ibss_dph_entry_add(tpAniSirGlobal pMac,
 	*ppSta = NULL;
 
 	pStaDs =
-		dph_lookup_hash_entry(pMac, peerAddr, &peerIdx,
+		dph_lookup_hash_entry(mac, peerAddr, &peerIdx,
 				      &psessionEntry->dph.dphHashTable);
 	if (pStaDs != NULL) {
 		/* Trying to add context for already existing STA in IBSS */
 		pe_err("STA exists already");
-		lim_print_mac_addr(pMac, peerAddr, LOGE);
+		lim_print_mac_addr(mac, peerAddr, LOGE);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -421,25 +421,25 @@ ibss_dph_entry_add(tpAniSirGlobal pMac,
 	 * AID and then add an entry to hash table maintained
 	 * by DPH module.
 	 */
-	peerIdx = lim_assign_peer_idx(pMac, psessionEntry);
+	peerIdx = lim_assign_peer_idx(mac, psessionEntry);
 
 	pStaDs =
-		dph_get_hash_entry(pMac, peerIdx, &psessionEntry->dph.dphHashTable);
+		dph_get_hash_entry(mac, peerIdx, &psessionEntry->dph.dphHashTable);
 	if (pStaDs) {
-		(void)lim_del_sta(pMac, pStaDs, false /*asynchronous */,
+		(void)lim_del_sta(mac, pStaDs, false /*asynchronous */,
 				  psessionEntry);
-		lim_delete_dph_hash_entry(pMac, pStaDs->staAddr, peerIdx,
+		lim_delete_dph_hash_entry(mac, pStaDs->staAddr, peerIdx,
 					  psessionEntry);
 	}
 
 	pStaDs =
-		dph_add_hash_entry(pMac, peerAddr, peerIdx,
+		dph_add_hash_entry(mac, peerAddr, peerIdx,
 				   &psessionEntry->dph.dphHashTable);
 	if (pStaDs == NULL) {
 		/* Could not add hash table entry */
 		pe_err("could not add hash entry at DPH for peerIdx/aid: %d MACaddr:",
 			       peerIdx);
-		lim_print_mac_addr(pMac, peerAddr, LOGE);
+		lim_print_mac_addr(mac, peerAddr, LOGE);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -449,7 +449,7 @@ ibss_dph_entry_add(tpAniSirGlobal pMac,
 
 /* send a status change notification */
 static void
-ibss_status_chg_notify(tpAniSirGlobal pMac, tSirMacAddr peerAddr,
+ibss_status_chg_notify(tpAniSirGlobal mac, tSirMacAddr peerAddr,
 		       uint16_t staIndex, uint16_t status, uint8_t sessionId)
 {
 
@@ -457,7 +457,7 @@ ibss_status_chg_notify(tpAniSirGlobal pMac, tSirMacAddr peerAddr,
 	uint8_t *beacon = NULL;
 	uint16_t bcnLen = 0;
 
-	peerNode = ibss_peer_find(pMac, peerAddr);
+	peerNode = ibss_peer_find(mac, peerAddr);
 	if (peerNode != NULL) {
 		if (peerNode->beacon == NULL)
 			peerNode->beaconLen = 0;
@@ -467,7 +467,7 @@ ibss_status_chg_notify(tpAniSirGlobal pMac, tSirMacAddr peerAddr,
 		peerNode->beaconLen = 0;
 	}
 
-	lim_send_sme_ibss_peer_ind(pMac, peerAddr, staIndex,
+	lim_send_sme_ibss_peer_ind(mac, peerAddr, staIndex,
 				   beacon, bcnLen, status, sessionId);
 
 	if (beacon != NULL) {
@@ -475,13 +475,13 @@ ibss_status_chg_notify(tpAniSirGlobal pMac, tSirMacAddr peerAddr,
 	}
 }
 
-void ibss_bss_add(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void ibss_bss_add(tpAniSirGlobal mac, tpPESession psessionEntry)
 {
 	tLimMlmStartReq mlmStartReq;
 	uint32_t cfg;
-	tpSirMacMgmtHdr pHdr = (tpSirMacMgmtHdr) pMac->lim.ibssInfo.pHdr;
+	tpSirMacMgmtHdr pHdr = (tpSirMacMgmtHdr) mac->lim.ibssInfo.pHdr;
 	tpSchBeaconStruct pBeacon =
-		(tpSchBeaconStruct) pMac->lim.ibssInfo.pBeacon;
+		(tpSchBeaconStruct) mac->lim.ibssInfo.pBeacon;
 	qdf_size_t num_ext_rates = 0;
 
 	if ((pHdr == NULL) || (pBeacon == NULL)) {
@@ -528,7 +528,7 @@ void ibss_bss_add(tpAniSirGlobal pMac, tpPESession psessionEntry)
 		num_ext_rates = pBeacon->extendedRates.numRates;
 	if (wlan_mlme_set_cfg_str(
 		(uint8_t *)&pBeacon->extendedRates.rate,
-		&pMac->mlme_cfg->rates.ext_opr_rate_set,
+		&mac->mlme_cfg->rates.ext_opr_rate_set,
 		num_ext_rates) != QDF_STATUS_SUCCESS) {
 		pe_err("could not update ExtendedOperRateset at CFG");
 		return;
@@ -553,8 +553,8 @@ void ibss_bss_add(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	mlmStartReq.beaconPeriod = pBeacon->beaconInterval;
 	mlmStartReq.nwType = psessionEntry->pLimStartBssReq->nwType;    /* psessionEntry->nwType is also OK???? */
 	mlmStartReq.htCapable = psessionEntry->htCapability;
-	mlmStartReq.htOperMode = pMac->lim.gHTOperMode;
-	mlmStartReq.dualCTSProtection = pMac->lim.gHTDualCTSProtection;
+	mlmStartReq.htOperMode = mac->lim.gHTOperMode;
+	mlmStartReq.dualCTSProtection = mac->lim.gHTDualCTSProtection;
 	mlmStartReq.txChannelWidthSet = psessionEntry->htRecommendedTxWidthSet;
 
 	/* reading the channel num from session Table */
@@ -573,14 +573,14 @@ void ibss_bss_add(tpAniSirGlobal pMac, tpPESession psessionEntry)
 				      WLAN_VDEV_SM_EV_START,
 				      sizeof(mlmStartReq), &mlmStartReq);
 #else
-	if (lim_mlm_add_bss(pMac, &mlmStartReq, psessionEntry) !=
+	if (lim_mlm_add_bss(mac, &mlmStartReq, psessionEntry) !=
 	    eSIR_SME_SUCCESS) {
 		pe_err("AddBss failure");
 		return;
 	}
 #endif
 	/* Update fields in Beacon */
-	if (sch_set_fixed_beacon_fields(pMac, psessionEntry) != QDF_STATUS_SUCCESS) {
+	if (sch_set_fixed_beacon_fields(mac, psessionEntry) != QDF_STATUS_SUCCESS) {
 		pe_err("Unable to set fixed Beacon fields");
 		return;
 	}
@@ -615,18 +615,18 @@ void ibss_bss_delete(tpAniSirGlobal mac_ctx, tpPESession session)
  *
  ***NOTE:
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @return None
  */
 
-void lim_ibss_init(tpAniSirGlobal pMac)
+void lim_ibss_init(tpAniSirGlobal mac)
 {
-	pMac->lim.gLimIbssCoalescingHappened = 0;
-	pMac->lim.gLimIbssPeerList = NULL;
-	pMac->lim.gLimNumIbssPeers = 0;
+	mac->lim.gLimIbssCoalescingHappened = 0;
+	mac->lim.gLimIbssPeerList = NULL;
+	mac->lim.gLimNumIbssPeers = 0;
 
 	/* ibss info - params for which ibss to join while coalescing */
-	qdf_mem_set(&pMac->lim.ibssInfo, sizeof(tAniSirLimIbss), 0);
+	qdf_mem_set(&mac->lim.ibssInfo, sizeof(tAniSirLimIbss), 0);
 } /*** end lim_ibss_init() ***/
 
 /**
@@ -641,10 +641,10 @@ void lim_ibss_init(tpAniSirGlobal pMac)
  *
  ***NOTE:
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @return None
  */
-void lim_ibss_delete_all_peers(tpAniSirGlobal pMac,
+void lim_ibss_delete_all_peers(tpAniSirGlobal mac,
 			       tpPESession psessionEntry)
 {
 	tLimIbssPeerNode *pCurrNode, *pTempNode;
@@ -654,10 +654,10 @@ void lim_ibss_delete_all_peers(tpAniSirGlobal pMac,
 	QDF_STATUS status;
 #endif
 
-	pCurrNode = pTempNode = pMac->lim.gLimIbssPeerList;
+	pCurrNode = pTempNode = mac->lim.gLimIbssPeerList;
 
 	while (pCurrNode != NULL) {
-		if (!pMac->lim.gLimNumIbssPeers) {
+		if (!mac->lim.gLimNumIbssPeers) {
 			pe_err("Number of peers in the list is zero and node present");
 			return;
 		}
@@ -666,17 +666,17 @@ void lim_ibss_delete_all_peers(tpAniSirGlobal pMac,
 		 * no need to do any beacon related params i.e., dont call lim_delete_dph_hash_entry
 		 */
 		pStaDs =
-			dph_lookup_hash_entry(pMac, pCurrNode->peerMacAddr, &peerIdx,
+			dph_lookup_hash_entry(mac, pCurrNode->peerMacAddr, &peerIdx,
 					      &psessionEntry->dph.dphHashTable);
 		if (pStaDs) {
 
-			ibss_status_chg_notify(pMac, pCurrNode->peerMacAddr,
+			ibss_status_chg_notify(mac, pCurrNode->peerMacAddr,
 					       pStaDs->staIndex,
 					       eWNI_SME_IBSS_PEER_DEPARTED_IND,
 					       psessionEntry->smeSessionId);
-			lim_del_sta(pMac, pStaDs, false, psessionEntry);
-			lim_release_peer_idx(pMac, peerIdx, psessionEntry);
-			dph_delete_hash_entry(pMac, pStaDs->staAddr, peerIdx,
+			lim_del_sta(mac, pStaDs, false, psessionEntry);
+			lim_release_peer_idx(mac, peerIdx, psessionEntry);
+			dph_delete_hash_entry(mac, pStaDs->staAddr, peerIdx,
 					      &psessionEntry->dph.dphHashTable);
 		}
 
@@ -689,33 +689,33 @@ void lim_ibss_delete_all_peers(tpAniSirGlobal pMac,
 		 * after each iteration in this while loop since one by one peers are deleted (freed) in this
 		 * loop causing the lim.gLimIbssPeerList to point to some freed memory.
 		 */
-		pMac->lim.gLimIbssPeerList = pTempNode;
+		mac->lim.gLimIbssPeerList = pTempNode;
 
 		if (pCurrNode->beacon) {
 			qdf_mem_free(pCurrNode->beacon);
 		}
 		qdf_mem_free(pCurrNode);
-		if (pMac->lim.gLimNumIbssPeers > 0) /* be paranoid */
-			pMac->lim.gLimNumIbssPeers--;
+		if (mac->lim.gLimNumIbssPeers > 0) /* be paranoid */
+			mac->lim.gLimNumIbssPeers--;
 		pCurrNode = pTempNode;
 	}
 
-	if (pMac->lim.gLimNumIbssPeers)
+	if (mac->lim.gLimNumIbssPeers)
 		pe_err("Number of peers: %d in the list is non-zero",
-			pMac->lim.gLimNumIbssPeers);
+			mac->lim.gLimNumIbssPeers);
 
-	pMac->lim.gLimNumIbssPeers = 0;
-	pMac->lim.gLimIbssPeerList = NULL;
+	mac->lim.gLimNumIbssPeers = 0;
+	mac->lim.gLimIbssPeerList = NULL;
 #ifdef CONFIG_VDEV_SM
 	status =
 	   wlan_vdev_mlme_sm_deliver_evt(psessionEntry->vdev,
 					 WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE,
 					 sizeof(*psessionEntry), psessionEntry);
-	if (!pMac->lim.gLimIbssCoalescingHappened &&
+	if (!mac->lim.gLimIbssCoalescingHappened &&
 	    QDF_IS_STATUS_ERROR(status)) {
 		pe_err("failed to post WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE for vdevid %d",
 		       psessionEntry->smeSessionId);
-		lim_send_stop_bss_failure_resp(pMac, psessionEntry);
+		lim_send_stop_bss_failure_resp(mac, psessionEntry);
 	}
 #endif
 }
@@ -723,18 +723,18 @@ void lim_ibss_delete_all_peers(tpAniSirGlobal pMac,
 /**
  * lim_ibss_delete() - This function is called while tearing down an IBSS
  *
- * @pMac: Pointer to Global MAC structure
+ * @mac: Pointer to Global MAC structure
  * @psessionEntry: Pointer to session entry
  *
  * Return: none
  */
 
-void lim_ibss_delete(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void lim_ibss_delete(tpAniSirGlobal mac, tpPESession psessionEntry)
 {
 #ifndef CONFIG_VDEV_SM
-	lim_ibss_delete_all_peers(pMac, psessionEntry);
+	lim_ibss_delete_all_peers(mac, psessionEntry);
 #endif
-	ibss_coalesce_free(pMac);
+	ibss_coalesce_free(mac);
 }
 
 /** -------------------------------------------------------------
@@ -747,12 +747,12 @@ void lim_ibss_delete(tpAniSirGlobal pMac, tpPESession psessionEntry)
    \return None
    -------------------------------------------------------------*/
 static void
-lim_ibss_set_protection(tpAniSirGlobal pMac, uint8_t enable,
+lim_ibss_set_protection(tpAniSirGlobal mac, uint8_t enable,
 			tpUpdateBeaconParams pBeaconParams,
 			tpPESession psessionEntry)
 {
 
-	if (!pMac->lim.cfgProtection.fromllb) {
+	if (!mac->lim.cfgProtection.fromllb) {
 		pe_err("protection from 11b is disabled");
 		return;
 	}
@@ -761,7 +761,7 @@ lim_ibss_set_protection(tpAniSirGlobal pMac, uint8_t enable,
 		psessionEntry->gLim11bParams.protectionEnabled = true;
 		if (false ==
 		    psessionEntry->beaconParams.
-		    llbCoexist /*pMac->lim.llbCoexist */) {
+		    llbCoexist /*mac->lim.llbCoexist */) {
 			pe_debug("=> IBSS: Enable Protection");
 			pBeaconParams->llbCoexist =
 				psessionEntry->beaconParams.llbCoexist = true;
@@ -770,7 +770,7 @@ lim_ibss_set_protection(tpAniSirGlobal pMac, uint8_t enable,
 		}
 	} else if (true ==
 		   psessionEntry->beaconParams.
-		   llbCoexist /*pMac->lim.llbCoexist */) {
+		   llbCoexist /*mac->lim.llbCoexist */) {
 		psessionEntry->gLim11bParams.protectionEnabled = false;
 		pe_debug("===> IBSS: Disable protection");
 		pBeaconParams->llbCoexist =
@@ -790,7 +790,7 @@ lim_ibss_set_protection(tpAniSirGlobal pMac, uint8_t enable,
    \return None
    -------------------------------------------------------------*/
 static void
-lim_ibss_update_protection_params(tpAniSirGlobal pMac,
+lim_ibss_update_protection_params(tpAniSirGlobal mac,
 				  tSirMacAddr peerMacAddr,
 				  tLimProtStaCacheType protStaCacheType,
 				  tpPESession psessionEntry)
@@ -798,15 +798,15 @@ lim_ibss_update_protection_params(tpAniSirGlobal pMac,
 	uint32_t i;
 
 	pe_debug("STA is associated Addr :");
-	lim_print_mac_addr(pMac, peerMacAddr, LOGD);
+	lim_print_mac_addr(mac, peerMacAddr, LOGD);
 
 	for (i = 0; i < LIM_PROT_STA_CACHE_SIZE; i++) {
-		if (pMac->lim.protStaCache[i].active) {
+		if (mac->lim.protStaCache[i].active) {
 			pe_debug("Addr:");
 			lim_print_mac_addr
-				(pMac, pMac->lim.protStaCache[i].addr, LOGD);
+				(mac, mac->lim.protStaCache[i].addr, LOGD);
 
-			if (!qdf_mem_cmp(pMac->lim.protStaCache[i].addr,
+			if (!qdf_mem_cmp(mac->lim.protStaCache[i].addr,
 					    peerMacAddr,
 					    sizeof(tSirMacAddr))) {
 				pe_debug("matching cache entry at: %d already active",
@@ -817,7 +817,7 @@ lim_ibss_update_protection_params(tpAniSirGlobal pMac,
 	}
 
 	for (i = 0; i < LIM_PROT_STA_CACHE_SIZE; i++) {
-		if (!pMac->lim.protStaCache[i].active)
+		if (!mac->lim.protStaCache[i].active)
 			break;
 	}
 
@@ -826,11 +826,11 @@ lim_ibss_update_protection_params(tpAniSirGlobal pMac,
 		return;
 	}
 
-	qdf_mem_copy(pMac->lim.protStaCache[i].addr,
+	qdf_mem_copy(mac->lim.protStaCache[i].addr,
 		     peerMacAddr, sizeof(tSirMacAddr));
 
-	pMac->lim.protStaCache[i].protStaCacheType = protStaCacheType;
-	pMac->lim.protStaCache[i].active = true;
+	mac->lim.protStaCache[i].protStaCacheType = protStaCacheType;
+	mac->lim.protStaCache[i].active = true;
 	if (eLIM_PROT_STA_CACHE_TYPE_llB == protStaCacheType) {
 		psessionEntry->gLim11bParams.numSta++;
 	} else if (eLIM_PROT_STA_CACHE_TYPE_llG == protStaCacheType) {
@@ -848,7 +848,7 @@ lim_ibss_update_protection_params(tpAniSirGlobal pMac,
    \return None
    -------------------------------------------------------------*/
 static void
-lim_ibss_decide_protection(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
+lim_ibss_decide_protection(tpAniSirGlobal mac, tpDphHashNode pStaDs,
 			   tpUpdateBeaconParams pBeaconParams,
 			   tpPESession psessionEntry)
 {
@@ -864,9 +864,9 @@ lim_ibss_decide_protection(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 		return;
 	}
 
-	lim_get_rf_band_new(pMac, &rfBand, psessionEntry);
+	lim_get_rf_band_new(mac, &rfBand, psessionEntry);
 	if (BAND_2G == rfBand) {
-		lim_get_phy_mode(pMac, &phyMode, psessionEntry);
+		lim_get_phy_mode(mac, &phyMode, psessionEntry);
 
 		/* We are 11G or 11n. Check if we need protection from 11b Stations. */
 		if ((phyMode == WNI_CFG_PHY_MODE_11G)
@@ -879,13 +879,13 @@ lim_ibss_decide_protection(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 			    (!pStaDs->mlmStaContext.htCapability)) {
 				protStaCacheType = eLIM_PROT_STA_CACHE_TYPE_llB;
 				pe_err("Enable protection from 11B");
-				lim_ibss_set_protection(pMac, true,
+				lim_ibss_set_protection(mac, true,
 							pBeaconParams,
 							psessionEntry);
 			}
 		}
 	}
-	lim_ibss_update_protection_params(pMac, pStaDs->staAddr, protStaCacheType,
+	lim_ibss_update_protection_params(mac, pStaDs->staAddr, protStaCacheType,
 					  psessionEntry);
 	return;
 }
@@ -909,9 +909,9 @@ lim_ibss_decide_protection(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
  *
  * @return Pointer to peer node if found, else NULL
  */
-tLimIbssPeerNode *lim_ibss_peer_find(tpAniSirGlobal pMac, tSirMacAddr macAddr)
+tLimIbssPeerNode *lim_ibss_peer_find(tpAniSirGlobal mac, tSirMacAddr macAddr)
 {
-	return ibss_peer_find(pMac, macAddr);
+	return ibss_peer_find(mac, macAddr);
 }
 
 /**
@@ -930,14 +930,14 @@ tLimIbssPeerNode *lim_ibss_peer_find(tpAniSirGlobal pMac, tSirMacAddr macAddr)
  ***NOTE:
  * NA
  *
- * @param  pMac       Pointer to Global MAC structure
+ * @param  mac       Pointer to Global MAC structure
  * @param  peerAdddr  MAC address of the peer being added
  * @return retCode    Indicates success or failure return code
  * @return
  */
 
 QDF_STATUS
-lim_ibss_sta_add(tpAniSirGlobal pMac, void *pBody, tpPESession psessionEntry)
+lim_ibss_sta_add(tpAniSirGlobal mac, void *pBody, tpPESession psessionEntry)
 {
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 	tpDphHashNode pStaDs;
@@ -954,51 +954,51 @@ lim_ibss_sta_add(tpAniSirGlobal pMac, void *pBody, tpPESession psessionEntry)
 	}
 
 	pe_debug("Rx Add-Ibss-Sta for MAC:");
-	lim_print_mac_addr(pMac, *pPeerAddr, LOGD);
+	lim_print_mac_addr(mac, *pPeerAddr, LOGD);
 
-	pPeerNode = ibss_peer_find(pMac, *pPeerAddr);
+	pPeerNode = ibss_peer_find(mac, *pPeerAddr);
 	if (NULL != pPeerNode) {
 		retCode =
-			ibss_dph_entry_add(pMac, *pPeerAddr, &pStaDs,
+			ibss_dph_entry_add(mac, *pPeerAddr, &pStaDs,
 					   psessionEntry);
 		if (QDF_STATUS_SUCCESS == retCode) {
 			prevState = pStaDs->mlmStaContext.mlmState;
 			pStaDs->erpEnabled = pPeerNode->erpIePresent;
 
-			ibss_sta_info_update(pMac, pStaDs, pPeerNode,
+			ibss_sta_info_update(mac, pStaDs, pPeerNode,
 					     psessionEntry);
 			pe_debug("initiating ADD STA for the IBSS peer");
 			retCode =
-				lim_add_sta(pMac, pStaDs, false, psessionEntry);
+				lim_add_sta(mac, pStaDs, false, psessionEntry);
 			if (retCode != QDF_STATUS_SUCCESS) {
 				pe_err("ibss-sta-add failed (reason %x)",
 					       retCode);
-				lim_print_mac_addr(pMac, *pPeerAddr, LOGE);
+				lim_print_mac_addr(mac, *pPeerAddr, LOGE);
 				pStaDs->mlmStaContext.mlmState = prevState;
-				dph_delete_hash_entry(pMac, pStaDs->staAddr,
+				dph_delete_hash_entry(mac, pStaDs->staAddr,
 						      pStaDs->assocId,
 						      &psessionEntry->dph.
 						      dphHashTable);
 			} else {
-				if (pMac->lim.gLimProtectionControl !=
+				if (mac->lim.gLimProtectionControl !=
 				    MLME_FORCE_POLICY_PROTECTION_DISABLE)
-					lim_ibss_decide_protection(pMac, pStaDs,
+					lim_ibss_decide_protection(mac, pStaDs,
 								   &beaconParams,
 								   psessionEntry);
 
 				if (beaconParams.paramChangeBitmap) {
 					pe_debug("---> Update Beacon Params");
-					sch_set_fixed_beacon_fields(pMac,
+					sch_set_fixed_beacon_fields(mac,
 								    psessionEntry);
 					beaconParams.bssIdx =
 						psessionEntry->bssIdx;
-					lim_send_beacon_params(pMac, &beaconParams,
+					lim_send_beacon_params(mac, &beaconParams,
 							       psessionEntry);
 				}
 			}
 		} else {
 			pe_err("hashTblAdd failed reason: %x", retCode);
-			lim_print_mac_addr(pMac, *pPeerAddr, LOGE);
+			lim_print_mac_addr(mac, *pPeerAddr, LOGE);
 		}
 	} else {
 		retCode = QDF_STATUS_E_FAILURE;
@@ -1180,20 +1180,20 @@ skip_event:
 
 /* handle the response from HAL for an ADD STA request */
 QDF_STATUS
-lim_ibss_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession psessionEntry)
+lim_ibss_add_sta_rsp(tpAniSirGlobal mac, void *msg, tpPESession psessionEntry)
 {
 	tpDphHashNode pStaDs;
 	uint16_t peerIdx;
 	tpAddStaParams pAddStaParams = (tpAddStaParams) msg;
 
-	SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
+	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 	if (pAddStaParams == NULL) {
 		pe_err("IBSS: ADD_STA_RSP with no body!");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	pStaDs =
-		dph_lookup_hash_entry(pMac, pAddStaParams->staMac, &peerIdx,
+		dph_lookup_hash_entry(mac, pAddStaParams->staMac, &peerIdx,
 				      &psessionEntry->dph.dphHashTable);
 	if (pStaDs == NULL) {
 		pe_err("IBSS: ADD_STA_RSP for unknown MAC addr: "MAC_ADDRESS_STR,
@@ -1206,7 +1206,7 @@ lim_ibss_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession psessionEntry)
 		pe_err("IBSS: ADD_STA_RSP error: %x for MAC:"MAC_ADDRESS_STR,
 			pAddStaParams->status,
 			MAC_ADDR_ARRAY(pAddStaParams->staMac));
-		lim_ibss_delete_peer(pMac,
+		lim_ibss_delete_peer(mac,
 			psessionEntry, pAddStaParams->staMac);
 		qdf_mem_free(pAddStaParams);
 		return QDF_STATUS_E_FAILURE;
@@ -1219,7 +1219,7 @@ lim_ibss_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession psessionEntry)
 
 	pe_debug("IBSS: sending IBSS_NEW_PEER msg to SME!");
 
-	ibss_status_chg_notify(pMac, pAddStaParams->staMac,
+	ibss_status_chg_notify(mac, pAddStaParams->staMac,
 			       pStaDs->staIndex,
 			       eWNI_SME_IBSS_NEW_PEER_IND,
 			       psessionEntry->smeSessionId);
@@ -1229,7 +1229,7 @@ lim_ibss_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession psessionEntry)
 	return QDF_STATUS_SUCCESS;
 }
 
-void lim_ibss_del_bss_rsp_when_coalescing(tpAniSirGlobal pMac, void *msg,
+void lim_ibss_del_bss_rsp_when_coalescing(tpAniSirGlobal mac, void *msg,
 					  tpPESession psessionEntry)
 {
 	tpDeleteBssParams pDelBss = (tpDeleteBssParams) msg;
@@ -1249,16 +1249,16 @@ void lim_ibss_del_bss_rsp_when_coalescing(tpAniSirGlobal pMac, void *msg,
 
 #ifndef CONFIG_VDEV_SM
 	/* Delete peer entries. */
-	lim_ibss_delete_all_peers(pMac, psessionEntry);
+	lim_ibss_delete_all_peers(mac, psessionEntry);
 #endif
 	/* add the new bss */
-	ibss_bss_add(pMac, psessionEntry);
+	ibss_bss_add(mac, psessionEntry);
 end:
 	if (pDelBss != NULL)
 		qdf_mem_free(pDelBss);
 }
 
-void lim_ibss_add_bss_rsp_when_coalescing(tpAniSirGlobal pMac, void *msg,
+void lim_ibss_add_bss_rsp_when_coalescing(tpAniSirGlobal mac, void *msg,
 					  tpPESession pSessionEntry)
 {
 	uint8_t infoLen;
@@ -1266,9 +1266,9 @@ void lim_ibss_add_bss_rsp_when_coalescing(tpAniSirGlobal pMac, void *msg,
 
 	tpAddBssParams pAddBss = (tpAddBssParams) msg;
 
-	tpSirMacMgmtHdr pHdr = (tpSirMacMgmtHdr) pMac->lim.ibssInfo.pHdr;
+	tpSirMacMgmtHdr pHdr = (tpSirMacMgmtHdr) mac->lim.ibssInfo.pHdr;
 	tpSchBeaconStruct pBeacon =
-		(tpSchBeaconStruct) pMac->lim.ibssInfo.pBeacon;
+		(tpSchBeaconStruct) mac->lim.ibssInfo.pBeacon;
 
 	if ((pHdr == NULL) || (pBeacon == NULL)) {
 		pe_err("Unable to handle AddBssRspWhenCoalescing (no cached BSS info)");
@@ -1286,32 +1286,32 @@ void lim_ibss_add_bss_rsp_when_coalescing(tpAniSirGlobal pMac, void *msg,
 
 	pe_debug("Sending JOINED_NEW_BSS notification to SME");
 
-	lim_send_sme_wm_status_change_ntf(pMac, eSIR_SME_JOINED_NEW_BSS,
+	lim_send_sme_wm_status_change_ntf(mac, eSIR_SME_JOINED_NEW_BSS,
 					  (uint32_t *) &newBssInfo,
 					  infoLen, pSessionEntry->smeSessionId);
 	{
 		/* Configure beacon and send beacons to HAL */
-		lim_send_beacon(pMac, pSessionEntry);
+		lim_send_beacon(mac, pSessionEntry);
 	}
 
 end:
-	ibss_coalesce_free(pMac);
+	ibss_coalesce_free(mac);
 }
 
-void lim_ibss_del_bss_rsp(tpAniSirGlobal pMac, void *msg, tpPESession psessionEntry)
+void lim_ibss_del_bss_rsp(tpAniSirGlobal mac, void *msg, tpPESession psessionEntry)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
 	tpDeleteBssParams pDelBss = (tpDeleteBssParams) msg;
 	tSirMacAddr nullBssid = { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 };
 
-	SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
+	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 	if (pDelBss == NULL) {
 		pe_err("IBSS: DEL_BSS_RSP with no body!");
 		rc = eSIR_SME_REFUSED;
 		goto end;
 	}
 
-	psessionEntry = pe_find_session_by_session_id(pMac, pDelBss->sessionId);
+	psessionEntry = pe_find_session_by_session_id(mac, pDelBss->sessionId);
 	if (psessionEntry == NULL) {
 		pe_err("Session Does not exist for given sessionID");
 		goto end;
@@ -1323,9 +1323,9 @@ void lim_ibss_del_bss_rsp(tpAniSirGlobal pMac, void *msg, tpPESession psessionEn
 	 * If delBss was issued as a result of trigger from SME_STOP_BSS Request, then limSme state changes to
 	 * 'IDLE' and gLimIbssCoalescingHappened flag will be false. In this case STOP BSS RSP has to be sent to SME.
 	 */
-	if (true == pMac->lim.gLimIbssCoalescingHappened) {
+	if (true == mac->lim.gLimIbssCoalescingHappened) {
 
-		lim_ibss_del_bss_rsp_when_coalescing(pMac, msg, psessionEntry);
+		lim_ibss_del_bss_rsp_when_coalescing(mac, msg, psessionEntry);
 		return;
 	}
 
@@ -1336,7 +1336,7 @@ void lim_ibss_del_bss_rsp(tpAniSirGlobal pMac, void *msg, tpPESession psessionEn
 		goto end;
 	}
 
-	if (lim_set_link_state(pMac, eSIR_LINK_IDLE_STATE, nullBssid,
+	if (lim_set_link_state(mac, eSIR_LINK_IDLE_STATE, nullBssid,
 			       psessionEntry->selfMacAddr, NULL,
 			       NULL) != QDF_STATUS_SUCCESS) {
 		pe_err("IBSS: DEL_BSS_RSP setLinkState failed");
@@ -1344,15 +1344,15 @@ void lim_ibss_del_bss_rsp(tpAniSirGlobal pMac, void *msg, tpPESession psessionEn
 		goto end;
 	}
 
-	lim_ibss_delete(pMac, psessionEntry);
+	lim_ibss_delete(mac, psessionEntry);
 
-	dph_hash_table_class_init(pMac, &psessionEntry->dph.dphHashTable);
-	lim_delete_pre_auth_list(pMac);
+	dph_hash_table_class_init(mac, &psessionEntry->dph.dphHashTable);
+	lim_delete_pre_auth_list(mac);
 
 	psessionEntry->limMlmState = eLIM_MLM_IDLE_STATE;
 
 	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_MLM_STATE, psessionEntry->peSessionId,
+		       (mac, TRACE_CODE_MLM_STATE, psessionEntry->peSessionId,
 		       psessionEntry->limMlmState));
 
 	psessionEntry->limSystemRole = eLIM_STA_ROLE;
@@ -1368,10 +1368,10 @@ end:
 		qdf_mem_free(pDelBss);
 	/* Delete PE session once BSS is deleted */
 	if (NULL != psessionEntry) {
-		lim_send_sme_rsp(pMac, eWNI_SME_STOP_BSS_RSP, rc,
+		lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP, rc,
 				 psessionEntry->smeSessionId,
 				 psessionEntry->transactionId);
-		pe_delete_session(pMac, psessionEntry);
+		pe_delete_session(mac, psessionEntry);
 		psessionEntry = NULL;
 	}
 }
@@ -1389,7 +1389,7 @@ end:
  *
  ***NOTE:
  *
- * @param  pMac    - Pointer to Global MAC structure
+ * @param  mac    - Pointer to Global MAC structure
  * @param  pBeacon - Parsed Beacon Frame structure
  * @param  pBD     - Pointer to received BD
  *
@@ -1397,7 +1397,7 @@ end:
  */
 
 QDF_STATUS
-lim_ibss_coalesce(tpAniSirGlobal pMac,
+lim_ibss_coalesce(tpAniSirGlobal mac,
 		  tpSirMacMgmtHdr pHdr,
 		  tpSchBeaconStruct pBeacon,
 		  uint8_t *pIEs,
@@ -1430,9 +1430,9 @@ lim_ibss_coalesce(tpAniSirGlobal pMac,
 		 * the BSSID matches then, invoke delSta() to cleanup the entries. We will
 		 * let the peer coalesce when we receive next beacon from the peer
 		 */
-		pPeerNode = ibss_peer_find(pMac, pHdr->sa);
+		pPeerNode = ibss_peer_find(mac, pHdr->sa);
 		if (NULL != pPeerNode) {
-			lim_ibss_delete_peer(pMac, psessionEntry,
+			lim_ibss_delete_peer(mac, psessionEntry,
 							  pHdr->sa);
 			pe_warn("Peer attempting to reconnect before HB timeout, deleted");
 			return QDF_STATUS_E_INVAL;
@@ -1447,8 +1447,8 @@ lim_ibss_coalesce(tpAniSirGlobal pMac,
 		 * save the received beacon, and delete the current BSS. The rest of the
 		 * processing will be done in the delBss response processing
 		 */
-		pMac->lim.gLimIbssCoalescingHappened = true;
-		ibss_coalesce_save(pMac, pHdr, pBeacon);
+		mac->lim.gLimIbssCoalescingHappened = true;
+		ibss_coalesce_save(mac, pHdr, pBeacon);
 		pe_debug("IBSS Coalescing happened Delete BSSID :" MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(currentBssId));
 #ifdef CONFIG_VDEV_SM
@@ -1457,7 +1457,7 @@ lim_ibss_coalesce(tpAniSirGlobal pMac,
 					      sizeof(*psessionEntry),
 					      psessionEntry);
 #else
-		ibss_bss_delete(pMac, psessionEntry);
+		ibss_bss_delete(mac, psessionEntry);
 #endif
 		return QDF_STATUS_SUCCESS;
 	} else {
@@ -1467,7 +1467,7 @@ lim_ibss_coalesce(tpAniSirGlobal pMac,
 	}
 
 	/* STA in IBSS mode and SSID matches with ours */
-	pPeerNode = ibss_peer_find(pMac, pHdr->sa);
+	pPeerNode = ibss_peer_find(mac, pHdr->sa);
 	if (pPeerNode == NULL) {
 		/* Peer not in the list - Collect BSS description & add to the list */
 		uint32_t frameLen;
@@ -1476,17 +1476,17 @@ lim_ibss_coalesce(tpAniSirGlobal pMac,
 		/*
 		 * Limit the Max number of IBSS Peers allowed as the max
 		 * number of STA's allowed
-		 * pMac->lim.gLimNumIbssPeers will be increamented after exiting
+		 * mac->lim.gLimNumIbssPeers will be increamented after exiting
 		 * this function. so we will add additional 1 to compare against
-		 * pMac->lim.gLimIbssStaLimit
+		 * mac->lim.gLimIbssStaLimit
 		 */
-		if ((pMac->lim.gLimNumIbssPeers + 1) >=
-		    pMac->lim.gLimIbssStaLimit) {
+		if ((mac->lim.gLimNumIbssPeers + 1) >=
+		    mac->lim.gLimIbssStaLimit) {
 			/*Print every 100th time */
-			if (pMac->lim.ibss_retry_cnt % 100 == 0) {
+			if (mac->lim.ibss_retry_cnt % 100 == 0) {
 				pe_debug("**** MAX STA LIMIT HAS REACHED ****");
 			}
-			pMac->lim.ibss_retry_cnt++;
+			mac->lim.ibss_retry_cnt++;
 			return QDF_STATUS_E_NOSPC;
 		}
 		pe_debug("IBSS Peer node does not exist, adding it");
@@ -1500,50 +1500,50 @@ lim_ibss_coalesce(tpAniSirGlobal pMac,
 		pPeerNode->beacon = NULL;
 		pPeerNode->beaconLen = 0;
 
-		ibss_peer_collect(pMac, pBeacon, pHdr, pPeerNode,
+		ibss_peer_collect(mac, pBeacon, pHdr, pPeerNode,
 				  psessionEntry);
 		pPeerNode->beacon = qdf_mem_malloc(ieLen);
 		if (pPeerNode->beacon) {
 			qdf_mem_copy(pPeerNode->beacon, pIEs, ieLen);
 			pPeerNode->beaconLen = (uint16_t) ieLen;
 		}
-		ibss_peer_add(pMac, pPeerNode);
+		ibss_peer_add(mac, pPeerNode);
 
 		pStaDs =
-			dph_lookup_hash_entry(pMac, pPeerNode->peerMacAddr, &peerIdx,
+			dph_lookup_hash_entry(mac, pPeerNode->peerMacAddr, &peerIdx,
 					      &psessionEntry->dph.dphHashTable);
 		if (pStaDs != NULL) {
 			/* / DPH node already exists for the peer */
 			pe_warn("DPH Node present for just learned peer");
-			lim_print_mac_addr(pMac, pPeerNode->peerMacAddr, LOGD);
-			ibss_sta_info_update(pMac, pStaDs, pPeerNode,
+			lim_print_mac_addr(mac, pPeerNode->peerMacAddr, LOGD);
+			ibss_sta_info_update(mac, pStaDs, pPeerNode,
 					     psessionEntry);
 			return QDF_STATUS_SUCCESS;
 		}
 		retCode =
-			lim_ibss_sta_add(pMac, pPeerNode->peerMacAddr, psessionEntry);
+			lim_ibss_sta_add(mac, pPeerNode->peerMacAddr, psessionEntry);
 		if (retCode != QDF_STATUS_SUCCESS) {
 			pe_err("lim-ibss-sta-add failed reason: %x", retCode);
-			lim_print_mac_addr(pMac, pPeerNode->peerMacAddr, LOGE);
+			lim_print_mac_addr(mac, pPeerNode->peerMacAddr, LOGE);
 			return retCode;
 		}
 		/* Decide protection mode */
 		pStaDs =
-			dph_lookup_hash_entry(pMac, pPeerNode->peerMacAddr, &peerIdx,
+			dph_lookup_hash_entry(mac, pPeerNode->peerMacAddr, &peerIdx,
 					      &psessionEntry->dph.dphHashTable);
-		if (pMac->lim.gLimProtectionControl !=
+		if (mac->lim.gLimProtectionControl !=
 		    MLME_FORCE_POLICY_PROTECTION_DISABLE)
-			lim_ibss_decide_protection(pMac, pStaDs, &beaconParams,
+			lim_ibss_decide_protection(mac, pStaDs, &beaconParams,
 						   psessionEntry);
 
 		if (beaconParams.paramChangeBitmap) {
 			pe_err("beaconParams.paramChangeBitmap=1 ---> Update Beacon Params");
-			sch_set_fixed_beacon_fields(pMac, psessionEntry);
+			sch_set_fixed_beacon_fields(mac, psessionEntry);
 			beaconParams.bssIdx = psessionEntry->bssIdx;
-			lim_send_beacon_params(pMac, &beaconParams, psessionEntry);
+			lim_send_beacon_params(mac, &beaconParams, psessionEntry);
 		}
 	} else
-		ibss_sta_caps_update(pMac, pPeerNode, psessionEntry);
+		ibss_sta_caps_update(mac, pPeerNode, psessionEntry);
 
 	if (psessionEntry->limSmeState != eLIM_SME_NORMAL_STATE)
 		return QDF_STATUS_SUCCESS;
@@ -1555,7 +1555,7 @@ lim_ibss_coalesce(tpAniSirGlobal pMac,
 		limResetHBPktCount(psessionEntry);
 		pe_warn("Partner joined our IBSS, Sending IBSS_ACTIVE Notification to SME");
 		psessionEntry->limIbssActive = true;
-		lim_send_sme_wm_status_change_ntf(pMac, eSIR_SME_IBSS_ACTIVE, NULL, 0,
+		lim_send_sme_wm_status_change_ntf(mac, eSIR_SME_IBSS_ACTIVE, NULL, 0,
 						  psessionEntry->smeSessionId);
 	}
 
@@ -1754,7 +1754,7 @@ void lim_ibss_decide_protection_on_delete(tpAniSirGlobal mac_ctx,
    \return None
    -----------------------------------------------------------------*/
 static void
-__lim_ibss_peer_inactivity_handler(tpAniSirGlobal pMac,
+__lim_ibss_peer_inactivity_handler(tpAniSirGlobal mac,
 				   tpPESession psessionEntry,
 				   tpSirIbssPeerInactivityInd peerInactivityInd)
 {
@@ -1763,7 +1763,7 @@ __lim_ibss_peer_inactivity_handler(tpAniSirGlobal pMac,
 	}
 
 	/* delete the peer for which heartbeat is observed */
-	lim_ibss_delete_peer(pMac, psessionEntry,
+	lim_ibss_delete_peer(mac, psessionEntry,
 					  peerInactivityInd->peer_addr.bytes);
 }
 
@@ -1775,7 +1775,7 @@ __lim_ibss_peer_inactivity_handler(tpAniSirGlobal pMac,
    \param  void*             buf
    \return None
    -------------------------------------------------------------*/
-void lim_process_ibss_peer_inactivity(tpAniSirGlobal pMac, void *buf)
+void lim_process_ibss_peer_inactivity(tpAniSirGlobal mac, void *buf)
 {
 	/*
 	 * --------------- HEARTBEAT OFFLOAD CASE ------------------
@@ -1792,21 +1792,21 @@ void lim_process_ibss_peer_inactivity(tpAniSirGlobal pMac, void *buf)
 	 * If IBSS is not started or heartbeat offload is not enabled
 	 * we should not handle this request
 	 */
-	if (eLIM_STA_IN_IBSS_ROLE != pMac->lim.gLimSystemRole &&
+	if (eLIM_STA_IN_IBSS_ROLE != mac->lim.gLimSystemRole &&
 	    !IS_IBSS_HEARTBEAT_OFFLOAD_FEATURE_ENABLE) {
 		return;
 	}
 
 	/** If LinkMonitor is Disabled */
-	if (!pMac->sys.gSysEnableLinkMonitorMode) {
+	if (!mac->sys.gSysEnableLinkMonitorMode) {
 		return;
 	}
 
-	for (i = 0; i < pMac->lim.maxBssId; i++) {
-		if (true == pMac->lim.gpSession[i].valid &&
-		    eSIR_IBSS_MODE == pMac->lim.gpSession[i].bssType) {
-			__lim_ibss_peer_inactivity_handler(pMac,
-							   &pMac->lim.gpSession[i],
+	for (i = 0; i < mac->lim.maxBssId; i++) {
+		if (true == mac->lim.gpSession[i].valid &&
+		    eSIR_IBSS_MODE == mac->lim.gpSession[i].bssType) {
+			__lim_ibss_peer_inactivity_handler(mac,
+							   &mac->lim.gpSession[i],
 							   peerInactivityInd);
 			break;
 		}
