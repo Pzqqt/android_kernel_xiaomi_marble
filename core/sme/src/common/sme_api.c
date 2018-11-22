@@ -8627,25 +8627,6 @@ QDF_STATUS sme_get_peer_info_ext(mac_handle_t mac_handle,
 	return status;
 }
 
-/*
- * SME API to enable/disable WLAN driver initiated SSR
- */
-void sme_update_enable_ssr(mac_handle_t mac_handle, bool enableSSR)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		sme_debug("SSR level is changed %d", enableSSR);
-		/* not serializing this message, as this is only going
-		 * to set a variable in WMA/WDI
-		 */
-		WMA_SetEnableSSR(enableSSR);
-		sme_release_global_lock(&pMac->sme);
-	}
-}
-
 /*convert the ini value to the ENUM used in csr and MAC for CB state*/
 ePhyChanBondState sme_get_cb_phy_state_from_cb_ini_value(uint32_t cb_ini_value)
 {

@@ -890,10 +890,6 @@ QDF_STATUS sme_update_roam_scan_offload_enabled(mac_handle_t mac_handle,
 		bool nRoamScanOffloadEnabled);
 bool sme_is_feature_supported_by_fw(enum cap_bitmap feature);
 
-/*
- * SME API to enable/disable WLAN driver initiated SSR
- */
-void sme_update_enable_ssr(mac_handle_t mac_handle, bool enableSSR);
 QDF_STATUS sme_set_phy_mode(mac_handle_t mac_handle, eCsrPhyMode phyMode);
 eCsrPhyMode sme_get_phy_mode(mac_handle_t mac_handle);
 QDF_STATUS sme_handoff_request(mac_handle_t mac_handle, uint8_t sessionId,

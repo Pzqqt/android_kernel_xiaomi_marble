@@ -497,9 +497,6 @@
 		      (channel_freq), \
 		      (rid)))
 
-
-#define WMA_SetEnableSSR(enable_ssr) ((void)enable_ssr)
-
 /**
  * struct sUapsd_Params - Powersave Offload Changes
  * @bkDeliveryEnabled: BK delivery enabled flag

@@ -3288,31 +3288,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gEnableSSR - Enable/Disable SSR
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable System Self Recovery at the times of
- * System crash or fatal errors
- * gEnableSSR = 0 Disabled
- * gEnableSSR = 1 wlan shutdown and re-init happens
- *
- * Related: None
- *
- * Supported Feature: SSR
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_SSR                      "gEnableSSR"
-#define CFG_ENABLE_SSR_MIN                  (0)
-#define CFG_ENABLE_SSR_MAX                  (1)
-#define CFG_ENABLE_SSR_DEFAULT              (1)
-
-/*
- * <ini>
  * gEnableOverLapCh - Enables Overlap Channel. If set, allow overlapping
  *                    channels to be selected for the SoftAP
  * @Min: 0
@@ -6552,7 +6527,6 @@ struct hdd_config {
 	bool prevent_link_down;
 	uint8_t scanAgingTimeout;
 	uint8_t disableLDPCWithTxbfAP;
-	bool enableSSR;
 	bool bFastRoamInConIniFeatureEnabled;
 	bool fEnableSNRMonitoring;
 	/*PNO related parameters */

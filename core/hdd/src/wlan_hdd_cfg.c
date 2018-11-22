@@ -267,12 +267,6 @@ cb_notify_set_dfs_scan_mode(struct hdd_context *hdd_ctx,
 				 hdd_ctx->config->allowDFSChannelRoam);
 }
 
-static void cb_notify_set_enable_ssr(struct hdd_context *hdd_ctx,
-				     unsigned long notify_id)
-{
-	sme_update_enable_ssr(hdd_ctx->mac_handle, hdd_ctx->config->enableSSR);
-}
-
 static void ch_notify_set_g_disable_dfs_japan_w53(struct hdd_context *hdd_ctx,
 						  unsigned long notify_id)
 {
@@ -1391,15 +1385,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_DISABLE_LDPC_WITH_TXBF_AP_DEFAULT,
 		     CFG_DISABLE_LDPC_WITH_TXBF_AP_MIN,
 		     CFG_DISABLE_LDPC_WITH_TXBF_AP_MAX),
-
-	REG_DYNAMIC_VARIABLE(CFG_ENABLE_SSR, WLAN_PARAM_Integer,
-			     struct hdd_config, enableSSR,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_ENABLE_SSR_DEFAULT,
-			     CFG_ENABLE_SSR_MIN,
-			     CFG_ENABLE_SSR_MAX,
-			     cb_notify_set_enable_ssr, 0),
 
 	REG_DYNAMIC_VARIABLE(CFG_ENABLE_FAST_ROAM_IN_CONCURRENCY,
 			     WLAN_PARAM_Integer,
@@ -4006,8 +3991,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	smeConfig->csrConfig.isCoalesingInIBSSAllowed =
 		hdd_ctx->config->isCoalesingInIBSSAllowed;
-	/* update SSR config */
-	sme_update_enable_ssr(mac_handle, hdd_ctx->config->enableSSR);
 
 	/* Update maximum interfaces information */
 	smeConfig->csrConfig.max_intf_count = hdd_ctx->max_intf_count;
