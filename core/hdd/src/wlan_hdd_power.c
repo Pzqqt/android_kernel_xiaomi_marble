@@ -1269,6 +1269,11 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	 * increment their counts from 0.
 	 */
 	hdd_reset_all_adapters_connectivity_stats(hdd_ctx);
+	/*
+	 * Purge all active and pending list to avoid vdev destroy timeout and
+	 * thus avoid peer/vdev refcount leak.
+	 */
+	sme_purge_pdev_all_ser_cmd_list(hdd_ctx->mac_handle);
 
 	hdd_reset_all_adapters(hdd_ctx);
 

@@ -261,6 +261,19 @@ static QDF_STATUS sme_process_hw_mode_trans_ind(tpAniSirGlobal mac,
 	return QDF_STATUS_SUCCESS;
 }
 
+void sme_purge_pdev_all_ser_cmd_list(mac_handle_t mac_handle)
+{
+	QDF_STATUS status;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	csr_purge_pdev_all_ser_cmd_list(mac_ctx);
+	sme_release_global_lock(&mac_ctx->sme);
+}
+
 /**
  * free_sme_cmds() - This function frees memory allocated for SME commands
  * @mac_ctx:      Pointer to Global MAC structure
