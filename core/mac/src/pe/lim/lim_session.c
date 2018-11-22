@@ -283,8 +283,8 @@ tpPESession session, uint8_t session_id)
 {
 	QDF_STATUS status;
 
-	session->pmfComebackTimerInfo.pMac = mac_ctx;
-	session->pmfComebackTimerInfo.sessionID = session_id;
+	session->pmfComebackTimerInfo.mac = mac_ctx;
+	session->pmfComebackTimerInfo.session_id = session_id;
 	status = qdf_mc_timer_init(&session->pmfComebackTimer,
 			QDF_TIMER_TYPE_SW, lim_pmf_comeback_timer_callback,
 			(void *)&session->pmfComebackTimerInfo);

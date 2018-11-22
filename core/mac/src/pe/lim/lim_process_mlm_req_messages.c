@@ -1287,9 +1287,9 @@ static void lim_process_mlm_assoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	 * TRY_AGAIN_LATER return code.
 	 */
 	if (session_entry->limRmfEnabled) {
-		session_entry->pmfComebackTimerInfo.limPrevMlmState =
+		session_entry->pmfComebackTimerInfo.lim_prev_mlm_state =
 			session_entry->limPrevMlmState;
-		session_entry->pmfComebackTimerInfo.limMlmState =
+		session_entry->pmfComebackTimerInfo.lim_mlm_state =
 			session_entry->limMlmState;
 	}
 #endif /* WLAN_FEATURE_11W */

@@ -429,14 +429,14 @@ static void lim_send_mlm_assoc_req(tpAniSirGlobal mac_ctx,
  */
 void lim_pmf_comeback_timer_callback(void *context)
 {
-	tComebackTimerInfo *info = (tComebackTimerInfo *) context;
-	tpAniSirGlobal mac_ctx = info->pMac;
-	tpPESession psessionEntry = &mac_ctx->lim.gpSession[info->sessionID];
+	struct comeback_timer_info *info = context;
+	tpAniSirGlobal mac_ctx = info->mac;
+	tpPESession psessionEntry = &mac_ctx->lim.gpSession[info->session_id];
 
 	pe_err("comeback later timer expired. sending MLM ASSOC req");
 	/* set MLM state such that ASSOC REQ packet will be sent out */
-	psessionEntry->limPrevMlmState = info->limPrevMlmState;
-	psessionEntry->limMlmState = info->limMlmState;
+	psessionEntry->limPrevMlmState = info->lim_prev_mlm_state;
+	psessionEntry->limMlmState = info->lim_mlm_state;
 	lim_send_mlm_assoc_req(mac_ctx, psessionEntry);
 }
 #endif /* WLAN_FEATURE_11W */

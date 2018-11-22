@@ -42,12 +42,12 @@ typedef struct sPowersaveoffloadInfo {
 } tPowersaveoffloadInfo, tpPowersaveoffloadInfo;
 
 #ifdef WLAN_FEATURE_11W
-typedef struct tagComebackTimerInfo {
-	tpAniSirGlobal pMac;
-	uint8_t sessionID;
-	tLimMlmStates limPrevMlmState;  /* Previous MLM State */
-	tLimMlmStates limMlmState;      /* MLM State */
-} tComebackTimerInfo;
+struct comeback_timer_info {
+	tpAniSirGlobal mac;
+	uint8_t session_id;
+	tLimMlmStates lim_prev_mlm_state;  /* Previous MLM State */
+	tLimMlmStates lim_mlm_state;       /* MLM State */
+};
 #endif /* WLAN_FEATURE_11W */
 /*--------------------------------------------------------------------------
    Include Files
@@ -471,7 +471,7 @@ struct pe_session {
 	bool isNonRoamReassoc;
 #ifdef WLAN_FEATURE_11W
 	qdf_mc_timer_t pmfComebackTimer;
-	tComebackTimerInfo pmfComebackTimerInfo;
+	struct comeback_timer_info pmfComebackTimerInfo;
 #endif /* WLAN_FEATURE_11W */
 	uint8_t  is_key_installed;
 	/* timer for resetting protection fileds at regular intervals */
