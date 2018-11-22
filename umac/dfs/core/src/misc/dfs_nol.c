@@ -249,6 +249,8 @@ static os_timer_func(dfs_remove_from_nol)
 
 	dfs_mlme_nol_timeout_notification(dfs->dfs_pdev_obj);
 	chan = utils_dfs_freq_to_chan(delfreq);
+	utils_dfs_deliver_event(dfs->dfs_pdev_obj, delfreq,
+				WLAN_EV_NOL_FINISHED);
 	dfs_debug(dfs, WLAN_DEBUG_DFS_NOL,
 		    "remove channel %d from nol", chan);
 	utils_dfs_add_to_etsi_precac_required_list(dfs->dfs_pdev_obj,

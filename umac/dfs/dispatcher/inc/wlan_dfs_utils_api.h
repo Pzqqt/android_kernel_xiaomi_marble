@@ -726,7 +726,7 @@ bool utils_dfs_check_for_cac_start(struct wlan_objmgr_pdev *pdev,
 bool utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
 			      struct wlan_channel *wlan_chan);
 /**
- * utils_dfs_get_disable_radar_marking - Retrieve the value of disable radar
+ * utils_dfs_get_disable_radar_marking() - Retrieve the value of disable radar.
  * marking.
  * @pdev: Pointer to DFS pdev object.
  * @dis_radar_marking: pointer to retrieve the value of disable_radar_marking.
@@ -742,6 +742,15 @@ QDF_STATUS utils_dfs_get_disable_radar_marking(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * utils_dfs_deliver_event() - Deliver DFS event to userspace.
+ * @pdev: Pointer to DFS pdev object
+ * @chan: channel radar hit on
+ * @event: event being sent
+ */
+void utils_dfs_deliver_event(struct wlan_objmgr_pdev *pdev, uint16_t freq,
+			     enum WLAN_DFS_EVENTS event);
 
 /**
  * utils_dfs_clear_cac_started_chan() - Clear dfs cac started channel.

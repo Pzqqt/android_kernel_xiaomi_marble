@@ -1211,3 +1211,10 @@ bool utils_is_dfs_cfreq2_ch(struct wlan_objmgr_pdev *pdev)
 
 qdf_export_symbol(utils_is_dfs_cfreq2_ch);
 #endif
+
+void utils_dfs_deliver_event(struct wlan_objmgr_pdev *pdev, uint16_t freq,
+			     enum WLAN_DFS_EVENTS event)
+{
+	if (global_dfs_to_mlme.mlme_dfs_deliver_event)
+		global_dfs_to_mlme.mlme_dfs_deliver_event(pdev, freq, event);
+}

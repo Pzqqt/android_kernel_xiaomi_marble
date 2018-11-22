@@ -27,6 +27,7 @@
 
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include <wlan_dfs_ioctl.h>
 
 /**
  * struct dfs_to_mlme - These are MLME function pointer used by DFS component.
@@ -62,6 +63,7 @@
  *                                     list or not.
  * @mlme_update_scan_channel_list:     Update the scan channel list sent to FW.
  * @mlme_bringdown_vaps:               Bringdown vaps if no chans is present.
+ * @mlme_dfs_deliver_event:            Deliver DFS events to user space
  */
 struct dfs_to_mlme {
 	QDF_STATUS (*pdev_component_obj_attach)(struct wlan_objmgr_pdev *pdev,
@@ -148,6 +150,10 @@ struct dfs_to_mlme {
 			(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_bringdown_vaps)
 			(struct wlan_objmgr_pdev *pdev);
+	void (*mlme_dfs_deliver_event)
+			(struct wlan_objmgr_pdev *pdev,
+			 uint16_t freq,
+			 enum WLAN_DFS_EVENTS event);
 };
 
 extern struct dfs_to_mlme global_dfs_to_mlme;

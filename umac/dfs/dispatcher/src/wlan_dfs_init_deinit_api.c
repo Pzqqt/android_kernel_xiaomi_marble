@@ -110,6 +110,8 @@ void register_dfs_callbacks(void)
 		mlme_dfs_update_scan_channel_list;
 	tmp_dfs_to_mlme->mlme_bringdown_vaps =
 		mlme_dfs_bringdown_vaps;
+	tmp_dfs_to_mlme->mlme_dfs_deliver_event =
+		mlme_dfs_deliver_event;
 
 	/*
 	 * Register precac auto channel switch feature related callbacks

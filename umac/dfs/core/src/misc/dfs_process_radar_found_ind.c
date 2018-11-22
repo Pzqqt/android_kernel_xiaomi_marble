@@ -189,6 +189,10 @@ static QDF_STATUS dfs_radar_add_channel_list_to_nol(struct wlan_dfs *dfs,
 				(uint16_t)utils_dfs_chan_to_freq(channels[i]),
 				dfs->wlan_dfs_nol_timeout);
 		nollist[num_ch++] = last_chan;
+		utils_dfs_deliver_event(dfs->dfs_pdev_obj,
+					(uint16_t)
+					utils_dfs_chan_to_freq(channels[i]),
+					WLAN_EV_NOL_STARTED);
 		dfs_info(dfs, WLAN_DEBUG_DFS_NOL, "ch=%d Added to NOL",
 			 last_chan);
 	}
@@ -744,6 +748,10 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 			 utils_dfs_freq_to_chan(radarfound_freq),
 			 radarfound_freq, dfs->dfs_curchan->dfs_ch_ieee,
 			 dfs->dfs_curchan->dfs_ch_freq);
+
+	utils_dfs_deliver_event(dfs->dfs_pdev_obj,
+				radarfound_freq,
+				WLAN_EV_RADAR_DETECTED);
 
 	if (!dfs->dfs_use_nol) {
 		dfs_reset_bangradar(dfs);
