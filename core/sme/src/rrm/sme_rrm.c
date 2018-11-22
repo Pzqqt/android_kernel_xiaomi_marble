@@ -66,7 +66,7 @@ uint64_t rrm_scan_timer;
 /**
  * rrm_ll_purge_neighbor_cache() -Purges all the entries in the neighbor cache
  *
- * @pMac: Pointer to the Hal Handle.
+ * @mac: Pointer to the Hal Handle.
  * @pList: Pointer the List that should be purged.
  *
  * This function purges all the entries in the neighbor cache and frees up all
@@ -74,7 +74,7 @@ uint64_t rrm_scan_timer;
  *
  * Return: void
  */
-static void rrm_ll_purge_neighbor_cache(tpAniSirGlobal pMac,
+static void rrm_ll_purge_neighbor_cache(tpAniSirGlobal mac,
 	tDblLinkList *pList)
 {
 	tListElem *pEntry;
@@ -93,7 +93,7 @@ static void rrm_ll_purge_neighbor_cache(tpAniSirGlobal pMac,
 /**
  * rrm_indicate_neighbor_report_result() -calls the callback registered for
  *                                                      neighbor report
- * @pMac: Pointer to the Hal Handle.
+ * @mac: Pointer to the Hal Handle.
  * @qdf_status - QDF_STATUS_SUCCESS/QDF_STATUS_FAILURE based on whether a valid
  *                       report is received or neighbor timer expired
  *
@@ -103,41 +103,41 @@ static void rrm_ll_purge_neighbor_cache(tpAniSirGlobal pMac,
  *
  * Return: void
  */
-static void rrm_indicate_neighbor_report_result(tpAniSirGlobal pMac,
+static void rrm_indicate_neighbor_report_result(tpAniSirGlobal mac,
 						QDF_STATUS qdf_status)
 {
 	NeighborReportRspCallback callback;
 	void *callbackContext;
 
 	/* Reset the neighbor response pending status */
-	pMac->rrm.rrmSmeContext.neighborReqControlInfo.isNeighborRspPending =
+	mac->rrm.rrmSmeContext.neighborReqControlInfo.isNeighborRspPending =
 		false;
 
 	/* Stop the timer if it is already running.
 	 *  The timer should be running only in the SUCCESS case.
 	 */
 	if (QDF_TIMER_STATE_RUNNING ==
-	    qdf_mc_timer_get_current_state(&pMac->rrm.rrmSmeContext.
+	    qdf_mc_timer_get_current_state(&mac->rrm.rrmSmeContext.
 					   neighborReqControlInfo.
 					   neighborRspWaitTimer)) {
 		sme_debug("No entry in neighbor report cache");
-		qdf_mc_timer_stop(&pMac->rrm.rrmSmeContext.
+		qdf_mc_timer_stop(&mac->rrm.rrmSmeContext.
 				  neighborReqControlInfo.neighborRspWaitTimer);
 	}
 	callback =
-		pMac->rrm.rrmSmeContext.neighborReqControlInfo.
+		mac->rrm.rrmSmeContext.neighborReqControlInfo.
 		neighborRspCallbackInfo.neighborRspCallback;
 	callbackContext =
-		pMac->rrm.rrmSmeContext.neighborReqControlInfo.
+		mac->rrm.rrmSmeContext.neighborReqControlInfo.
 		neighborRspCallbackInfo.neighborRspCallbackContext;
 
 	/* Reset the callback and the callback context before calling the
 	 * callback. It is very likely that there may be a registration in
 	 * callback itself.
 	 */
-	pMac->rrm.rrmSmeContext.neighborReqControlInfo.neighborRspCallbackInfo.
+	mac->rrm.rrmSmeContext.neighborReqControlInfo.neighborRspCallbackInfo.
 	neighborRspCallback = NULL;
-	pMac->rrm.rrmSmeContext.neighborReqControlInfo.neighborRspCallbackInfo.
+	mac->rrm.rrmSmeContext.neighborReqControlInfo.neighborRspCallbackInfo.
 	neighborRspCallbackContext = NULL;
 
 	/* Call the callback with the status received from caller */
@@ -632,8 +632,8 @@ static QDF_STATUS sme_rrm_scan_request_callback(mac_handle_t mac_handle,
 						eCsrScanStatus status)
 {
 	uint16_t interval;
-	tpAniSirGlobal pMac = MAC_CONTEXT(mac_handle);
-	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	tpRrmSMEContext pSmeRrmContext = &mac->rrm.rrmSmeContext;
 	uint32_t time_tick;
 
 	/* if any more channels are pending, start a timer of a random value
@@ -641,7 +641,7 @@ static QDF_STATUS sme_rrm_scan_request_callback(mac_handle_t mac_handle,
 	 */
 	if ((pSmeRrmContext->currentIndex + 1) <
 	    pSmeRrmContext->channelList.numOfChannels) {
-		sme_rrm_send_scan_result(pMac, 1,
+		sme_rrm_send_scan_result(mac, 1,
 					 &pSmeRrmContext->channelList.
 					 ChannelList[pSmeRrmContext
 					->currentIndex],
@@ -663,7 +663,7 @@ static QDF_STATUS sme_rrm_scan_request_callback(mac_handle_t mac_handle,
 		/* Done with the measurement. Clean up all context and send a
 		 * message to PE with measurement done flag set.
 		 */
-		sme_rrm_send_scan_result(pMac, 1,
+		sme_rrm_send_scan_result(mac, 1,
 					 &pSmeRrmContext->channelList.
 					 ChannelList[pSmeRrmContext
 					->currentIndex],
@@ -910,7 +910,7 @@ free_ch_lst:
 
 /**
  * sme_rrm_process_beacon_report_req_ind() -Process beacon report request
- * @pMac:- Global Mac structure
+ * @mac:- Global Mac structure
  * @pMsgBuf:- a pointer to a buffer that maps to various structures base
  *                  on the message type.The beginning of the buffer can always
  *                  map to tSirSmeRsp.
@@ -920,11 +920,11 @@ free_ch_lst:
  *
  * Return : QDF_STATUS_SUCCESS - Validation is successful.
  */
-QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
+QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal mac,
 						void *pMsgBuf)
 {
 	tpSirBeaconReportReqInd pBeaconReq = (tpSirBeaconReportReqInd) pMsgBuf;
-	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
+	tpRrmSMEContext pSmeRrmContext = &mac->rrm.rrmSmeContext;
 	uint32_t len = 0, i = 0;
 
 	sme_debug("Received Beacon report request ind Channel = %d",
@@ -943,12 +943,12 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
 	    ((pBeaconReq->channelInfo.channelNum == 255)
 	     && (pBeaconReq->channelList.numChannels == 0))) {
 		/* Add all the channel in the regulatory domain. */
-		wlan_cfg_get_str_len(pMac, WNI_CFG_VALID_CHANNEL_LIST, &len);
+		wlan_cfg_get_str_len(mac, WNI_CFG_VALID_CHANNEL_LIST, &len);
 		pSmeRrmContext->channelList.ChannelList = qdf_mem_malloc(len);
 		if (!pSmeRrmContext->channelList.ChannelList)
 			return QDF_STATUS_E_NOMEM;
 
-		csr_get_cfg_valid_channels(pMac, pSmeRrmContext->channelList.
+		csr_get_cfg_valid_channels(mac, pSmeRrmContext->channelList.
 					ChannelList, &len);
 		pSmeRrmContext->channelList.numOfChannels = (uint8_t) len;
 	} else {
@@ -970,7 +970,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
 
 		if (pBeaconReq->channelInfo.channelNum != 255) {
 			if (csr_roam_is_channel_valid
-				    (pMac, pBeaconReq->channelInfo.channelNum))
+				    (mac, pBeaconReq->channelInfo.channelNum))
 				pSmeRrmContext->channelList.
 				ChannelList[pSmeRrmContext->channelList.
 					    numOfChannels++] =
@@ -981,7 +981,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
 		}
 
 		for (i = 0; i < pBeaconReq->channelList.numChannels; i++) {
-			if (csr_roam_is_channel_valid(pMac, pBeaconReq->
+			if (csr_roam_is_channel_valid(mac, pBeaconReq->
 					channelList.channelNumber[i])) {
 				pSmeRrmContext->channelList.
 					ChannelList[pSmeRrmContext->channelList.
@@ -1022,7 +1022,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
 		pSmeRrmContext->token, pSmeRrmContext->regClass,
 		pSmeRrmContext->randnIntvl, pSmeRrmContext->msgSource);
 
-	return sme_rrm_issue_scan_req(pMac);
+	return sme_rrm_issue_scan_req(mac);
 }
 
 /**
@@ -1035,7 +1035,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
  *
  * Return: QDF_STATUS_SUCCESS - Validation is successful.
  */
-QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t
+QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal mac, uint8_t
 					sessionId, tpRrmNeighborReq
 					pNeighborReq,
 					tpRrmNeighborRspCallbackInfo
@@ -1046,15 +1046,15 @@ QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t
 	struct csr_roam_session *pSession;
 
 	sme_debug("Request to send Neighbor report request received ");
-	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
+	if (!CSR_IS_SESSION_VALID(mac, sessionId)) {
 		sme_err("Invalid session %d", sessionId);
 		return QDF_STATUS_E_INVAL;
 	}
-	pSession = CSR_GET_SESSION(pMac, sessionId);
+	pSession = CSR_GET_SESSION(mac, sessionId);
 
 	/* If already a report is pending, return failure */
 	if (true ==
-	    pMac->rrm.rrmSmeContext.neighborReqControlInfo.
+	    mac->rrm.rrmSmeContext.neighborReqControlInfo.
 	    isNeighborRspPending) {
 		sme_err("Neighbor request already pending.. Not allowed");
 		return QDF_STATUS_E_AGAIN;
@@ -1064,8 +1064,8 @@ QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t
 	if (!pMsg)
 		return QDF_STATUS_E_NOMEM;
 
-	rrm_ll_purge_neighbor_cache(pMac,
-			    &pMac->rrm.rrmSmeContext.neighborReportCache);
+	rrm_ll_purge_neighbor_cache(mac,
+			    &mac->rrm.rrmSmeContext.neighborReportCache);
 
 	pMsg->messageType = eWNI_SME_NEIGHBOR_REPORT_REQ_IND;
 	pMsg->length = sizeof(tSirNeighborReportReqInd);
@@ -1081,16 +1081,16 @@ QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t
 	/* Neighbor report request message sent successfully to PE.
 	 * Now register the callbacks
 	 */
-	pMac->rrm.rrmSmeContext.neighborReqControlInfo.neighborRspCallbackInfo.
+	mac->rrm.rrmSmeContext.neighborReqControlInfo.neighborRspCallbackInfo.
 	neighborRspCallback = callbackInfo->neighborRspCallback;
-	pMac->rrm.rrmSmeContext.neighborReqControlInfo.neighborRspCallbackInfo.
+	mac->rrm.rrmSmeContext.neighborReqControlInfo.neighborRspCallbackInfo.
 	neighborRspCallbackContext =
 		callbackInfo->neighborRspCallbackContext;
-	pMac->rrm.rrmSmeContext.neighborReqControlInfo.isNeighborRspPending =
+	mac->rrm.rrmSmeContext.neighborReqControlInfo.isNeighborRspPending =
 		true;
 
 	/* Start neighbor response wait timer now */
-	qdf_mc_timer_start(&pMac->rrm.rrmSmeContext.neighborReqControlInfo.
+	qdf_mc_timer_start(&mac->rrm.rrmSmeContext.neighborReqControlInfo.
 			   neighborRspWaitTimer, callbackInfo->timeout);
 
 	return QDF_STATUS_SUCCESS;
@@ -1192,10 +1192,10 @@ check_11r_assoc:
  *
  * Return: void.
  */
-static void rrm_store_neighbor_rpt_by_roam_score(tpAniSirGlobal pMac,
+static void rrm_store_neighbor_rpt_by_roam_score(tpAniSirGlobal mac,
 				tpRrmNeighborReportDesc pNeighborReportDesc)
 {
-	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
+	tpRrmSMEContext pSmeRrmContext = &mac->rrm.rrmSmeContext;
 	tListElem *pEntry;
 	tRrmNeighborReportDesc *pTempNeighborReportDesc;
 
@@ -1253,7 +1253,7 @@ static void rrm_store_neighbor_rpt_by_roam_score(tpAniSirGlobal pMac,
 /**
  * sme_rrm_process_neighbor_report() -Process the Neighbor report received
  *                                                     from PE
- * @pMac - Global MAC structure
+ * @mac - Global MAC structure
  * @pMsgBuf - a pointer to a buffer that maps to various structures base
  *                  on the message type.
  *                  The beginning of the buffer can always map to tSirSmeRsp.
@@ -1261,7 +1261,7 @@ static void rrm_store_neighbor_rpt_by_roam_score(tpAniSirGlobal pMac,
  *
  * Return: QDF_STATUS_SUCCESS - Validation is successful
  */
-static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac,
+static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal mac,
 						  void *pMsgBuf)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1273,15 +1273,15 @@ static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac,
 
 	/* Get the session id */
 	status =
-		csr_roam_get_session_id_from_bssid(pMac,
+		csr_roam_get_session_id_from_bssid(mac,
 			   (struct qdf_mac_addr *) pNeighborRpt->bssId,
 			   &sessionId);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 #ifdef FEATURE_WLAN_ESE
 		/* Clear the cache for ESE. */
-		if (csr_roam_is_ese_assoc(pMac, sessionId)) {
-			rrm_ll_purge_neighbor_cache(pMac,
-						    &pMac->rrm.rrmSmeContext.
+		if (csr_roam_is_ese_assoc(mac, sessionId)) {
+			rrm_ll_purge_neighbor_cache(mac,
+						    &mac->rrm.rrmSmeContext.
 						    neighborReportCache);
 		}
 #endif
@@ -1312,10 +1312,10 @@ static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac,
 			MAC_ADDR_ARRAY(
 			       pNeighborRpt->sNeighborBssDescription[i].bssId));
 
-		rrm_calculate_neighbor_ap_roam_score(pMac, pNeighborReportDesc);
+		rrm_calculate_neighbor_ap_roam_score(mac, pNeighborReportDesc);
 
 		if (pNeighborReportDesc->roamScore > 0) {
-			rrm_store_neighbor_rpt_by_roam_score(pMac,
+			rrm_store_neighbor_rpt_by_roam_score(mac,
 				     pNeighborReportDesc);
 		} else {
 			sme_err("Roam score of BSSID  " MAC_ADDRESS_STR
@@ -1331,16 +1331,16 @@ static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac,
 	}
 end:
 
-	if (!csr_ll_count(&pMac->rrm.rrmSmeContext.neighborReportCache))
+	if (!csr_ll_count(&mac->rrm.rrmSmeContext.neighborReportCache))
 		qdf_status = QDF_STATUS_E_FAILURE;
 
-	rrm_indicate_neighbor_report_result(pMac, qdf_status);
+	rrm_indicate_neighbor_report_result(mac, qdf_status);
 	return status;
 }
 
 /**
  * sme_rrm_msg_processor()-Process RRM message
- * @pMac - Pointer to the global MAC parameter structure.
+ * @mac - Pointer to the global MAC parameter structure.
  * @msg_type - the type of msg passed by PE as defined in wni_api.h
  * @pMsgBuf - a pointer to a buffer that maps to various structures base
  *                  on the message type.
@@ -1350,7 +1350,7 @@ end:
  *
  * Return: QDF_STATUS_SUCCESS - Validation is successful.
  */
-QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
+QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal mac, uint16_t msg_type,
 				 void *pMsgBuf)
 {
 	sme_debug("Msg = %d for RRM measurement", msg_type);
@@ -1358,11 +1358,11 @@ QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 	/* switch on the msg type & make the state transition accordingly */
 	switch (msg_type) {
 	case eWNI_SME_NEIGHBOR_REPORT_IND:
-		sme_rrm_process_neighbor_report(pMac, pMsgBuf);
+		sme_rrm_process_neighbor_report(mac, pMsgBuf);
 		break;
 
 	case eWNI_SME_BEACON_REPORT_REQ_IND:
-		sme_rrm_process_beacon_report_req_ind(pMac, pMsgBuf);
+		sme_rrm_process_beacon_report_req_ind(mac, pMsgBuf);
 		break;
 
 	default:
@@ -1375,7 +1375,7 @@ QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 
 /**
  * rrm_iter_meas_timer_handle() - Timer handler to handlet the timeout
- * @ pMac - The handle returned by mac_open.
+ * @ mac - The handle returned by mac_open.
  *
  * Timer handler to handlet the timeout condition when a specific BT
  * stop event does not come back, in which case to restore back the
@@ -1385,15 +1385,15 @@ QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
  */
 static void rrm_iter_meas_timer_handle(void *userData)
 {
-	tpAniSirGlobal pMac = (tpAniSirGlobal) userData;
+	tpAniSirGlobal mac = (tpAniSirGlobal) userData;
 
 	sme_warn("Randomization timer expired...send on next channel");
 	/* Issue a scan req for next channel. */
-	sme_rrm_issue_scan_req(pMac);
+	sme_rrm_issue_scan_req(mac);
 }
 /**
  * rrm_neighbor_rsp_timeout_handler() - Timer handler to handlet the timeout
- * @pMac - The handle returned by mac_open.
+ * @mac - The handle returned by mac_open.
  *
  * Timer handler to handle the timeout condition when a neighbor request is sent
  * and no neighbor response is received from the AP
@@ -1402,25 +1402,25 @@ static void rrm_iter_meas_timer_handle(void *userData)
  */
 static void rrm_neighbor_rsp_timeout_handler(void *userData)
 {
-	tpAniSirGlobal pMac = (tpAniSirGlobal) userData;
+	tpAniSirGlobal mac = (tpAniSirGlobal) userData;
 
 	sme_warn("Neighbor Response timed out");
-	rrm_indicate_neighbor_report_result(pMac, QDF_STATUS_E_FAILURE);
+	rrm_indicate_neighbor_report_result(mac, QDF_STATUS_E_FAILURE);
 }
 
 /**
  * rrm_open() - Initialze all RRM module
- * @ pMac: The handle returned by mac_open.
+ * @ mac: The handle returned by mac_open.
  *
  * Initialze all RRM module.
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS rrm_open(tpAniSirGlobal pMac)
+QDF_STATUS rrm_open(tpAniSirGlobal mac)
 {
 
 	QDF_STATUS qdf_status;
-	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
+	tpRrmSMEContext pSmeRrmContext = &mac->rrm.rrmSmeContext;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 
 	pSmeRrmContext->rrmConfig.max_randn_interval = 50;        /* ms */
@@ -1428,7 +1428,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 	qdf_status = qdf_mc_timer_init(&pSmeRrmContext->IterMeasTimer,
 				       QDF_TIMER_TYPE_SW,
 				       rrm_iter_meas_timer_handle,
-					(void *)pMac);
+					(void *)mac);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		sme_err("Fail to init measurement timer");
@@ -1439,7 +1439,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 		qdf_mc_timer_init(&pSmeRrmContext->neighborReqControlInfo.
 				  neighborRspWaitTimer, QDF_TIMER_TYPE_SW,
 				  rrm_neighbor_rsp_timeout_handler,
-					(void *)pMac);
+					(void *)mac);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		sme_err("Fail to init neighbor rsp wait timer");
@@ -1459,7 +1459,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 
 /**
  * rrm_close() - Release all RRM modules and their resources.
- * @pMac - The handle returned by mac_open.
+ * @mac - The handle returned by mac_open.
  *
  * Release all RRM modules and their resources.
  *
@@ -1468,11 +1468,11 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
  *           QDF_STATUS_SUCCESS  failure
  */
 
-QDF_STATUS rrm_close(tpAniSirGlobal pMac)
+QDF_STATUS rrm_close(tpAniSirGlobal mac)
 {
 
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
+	tpRrmSMEContext pSmeRrmContext = &mac->rrm.rrmSmeContext;
 
 	if (QDF_TIMER_STATE_RUNNING ==
 	    qdf_mc_timer_get_current_state(&pSmeRrmContext->IterMeasTimer)) {
@@ -1513,7 +1513,7 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 
 	}
 
-	rrm_ll_purge_neighbor_cache(pMac, &pSmeRrmContext->neighborReportCache);
+	rrm_ll_purge_neighbor_cache(mac, &pSmeRrmContext->neighborReportCache);
 
 	csr_ll_close(&pSmeRrmContext->neighborReportCache);
 
@@ -1523,16 +1523,16 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 
 /**
  * rrm_change_default_config_param() - Changing default config param to new
- * @pMac - The handle returned by mac_open.
+ * @mac - The handle returned by mac_open.
  * param  pRrmConfig - pointer to new rrm configs.
  *
  * Return: QDF_STATUS
  *           QDF_STATUS_SUCCESS  success
  */
-QDF_STATUS rrm_change_default_config_param(tpAniSirGlobal pMac,
+QDF_STATUS rrm_change_default_config_param(tpAniSirGlobal mac,
 					   struct rrm_config_param *rrm_config)
 {
-	qdf_mem_copy(&pMac->rrm.rrmSmeContext.rrmConfig, rrm_config,
+	qdf_mem_copy(&mac->rrm.rrmSmeContext.rrmConfig, rrm_config,
 		     sizeof(struct rrm_config_param));
 
 	return QDF_STATUS_SUCCESS;

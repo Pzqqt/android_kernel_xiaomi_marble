@@ -46,7 +46,7 @@
 #define MAX_RRM_TX_PWR_CAP 22
 
 uint8_t
-rrm_get_min_of_max_tx_power(tpAniSirGlobal pMac,
+rrm_get_min_of_max_tx_power(tpAniSirGlobal mac,
 			    int8_t regMax, int8_t apTxPower)
 {
 	uint8_t maxTxPower = 0;
@@ -80,13 +80,13 @@ rrm_get_min_of_max_tx_power(tpAniSirGlobal pMac,
  * @return None
  */
 void
-rrm_cache_mgmt_tx_power(tpAniSirGlobal pMac, int8_t txPower,
+rrm_cache_mgmt_tx_power(tpAniSirGlobal mac, int8_t txPower,
 			tpPESession pSessionEntry)
 {
 	pe_debug("Cache Mgmt Tx Power: %d", txPower);
 
 	if (pSessionEntry == NULL)
-		pMac->rrm.rrmPEContext.txMgmtPower = txPower;
+		mac->rrm.rrmPEContext.txMgmtPower = txPower;
 	else
 		pSessionEntry->txMgmtPower = txPower;
 }
@@ -106,10 +106,10 @@ rrm_cache_mgmt_tx_power(tpAniSirGlobal pMac, int8_t txPower,
  * @param pSessionEntry session entry.
  * @return txPower
  */
-int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal pMac, tpPESession pSessionEntry)
+int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal mac, tpPESession pSessionEntry)
 {
 	if (pSessionEntry == NULL)
-		return pMac->rrm.rrmPEContext.txMgmtPower;
+		return mac->rrm.rrmPEContext.txMgmtPower;
 
 	pe_debug("tx mgmt pwr %d", pSessionEntry->txMgmtPower);
 
@@ -133,7 +133,7 @@ int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal pMac, tpPESession pSessionEntry)
  * @return None
  */
 QDF_STATUS
-rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
+rrm_send_set_max_tx_power_req(tpAniSirGlobal mac, int8_t txPower,
 			      tpPESession pSessionEntry)
 {
 	tpMaxTxPowerParams pMaxTxParams;
@@ -163,8 +163,8 @@ rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 	pe_debug("Sending WMA_SET_MAX_TX_POWER_REQ with power(%d) to HAL",
 		txPower);
 
-	MTRACE(mac_trace_msg_tx(pMac, pSessionEntry->peSessionId, msgQ.type));
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	MTRACE(mac_trace_msg_tx(mac, pSessionEntry->peSessionId, msgQ.type));
+	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		pe_err("Posting WMA_SET_MAX_TX_POWER_REQ to HAL failed, reason=%X",
 			retCode);
@@ -190,7 +190,7 @@ rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
  * @param pSessionEntry session entry.
  * @return None
  */
-QDF_STATUS rrm_set_max_tx_power_rsp(tpAniSirGlobal pMac,
+QDF_STATUS rrm_set_max_tx_power_rsp(tpAniSirGlobal mac,
 				    struct scheduler_msg *limMsgQ)
 {
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -199,21 +199,21 @@ QDF_STATUS rrm_set_max_tx_power_rsp(tpAniSirGlobal pMac,
 	uint8_t sessionId, i;
 
 	if (qdf_is_macaddr_broadcast(&pMaxTxParams->bssId)) {
-		for (i = 0; i < pMac->lim.maxBssId; i++) {
-			if (pMac->lim.gpSession[i].valid == true) {
-				pSessionEntry = &pMac->lim.gpSession[i];
-				rrm_cache_mgmt_tx_power(pMac, pMaxTxParams->power,
+		for (i = 0; i < mac->lim.maxBssId; i++) {
+			if (mac->lim.gpSession[i].valid == true) {
+				pSessionEntry = &mac->lim.gpSession[i];
+				rrm_cache_mgmt_tx_power(mac, pMaxTxParams->power,
 							pSessionEntry);
 			}
 		}
 	} else {
-		pSessionEntry = pe_find_session_by_bssid(pMac,
+		pSessionEntry = pe_find_session_by_bssid(mac,
 							 pMaxTxParams->bssId.bytes,
 							 &sessionId);
 		if (pSessionEntry == NULL) {
 			retCode = QDF_STATUS_E_FAILURE;
 		} else {
-			rrm_cache_mgmt_tx_power(pMac, pMaxTxParams->power,
+			rrm_cache_mgmt_tx_power(mac, pMaxTxParams->power,
 						pSessionEntry);
 		}
 	}
@@ -241,7 +241,7 @@ QDF_STATUS rrm_set_max_tx_power_rsp(tpAniSirGlobal pMac,
  * @return None
  */
 QDF_STATUS
-rrm_process_link_measurement_request(tpAniSirGlobal pMac,
+rrm_process_link_measurement_request(tpAniSirGlobal mac,
 				     uint8_t *pRxPacketInfo,
 				     tDot11fLinkMeasurementRequest *pLinkReq,
 				     tpPESession pSessionEntry)
@@ -260,11 +260,11 @@ rrm_process_link_measurement_request(tpAniSirGlobal pMac,
 
 	LinkReport.txPower = lim_get_max_tx_power(pSessionEntry->def_max_tx_pwr,
 						pLinkReq->MaxTxPower.maxTxPower,
-						  pMac->roam.configParam.
+						  mac->roam.configParam.
 						  nTxPowerCap);
 
 	if ((LinkReport.txPower != (uint8_t) (pSessionEntry->maxTxPower)) &&
-	    (QDF_STATUS_SUCCESS == rrm_send_set_max_tx_power_req(pMac,
+	    (QDF_STATUS_SUCCESS == rrm_send_set_max_tx_power_req(mac,
 							   LinkReport.txPower,
 							   pSessionEntry))) {
 		pe_warn("maxTx power in link report is not same as local..."
@@ -295,7 +295,7 @@ rrm_process_link_measurement_request(tpAniSirGlobal pMac,
 
 	pe_debug("Sending Link report frame");
 
-	return lim_send_link_report_action_frame(pMac, &LinkReport, pHdr->sa,
+	return lim_send_link_report_action_frame(mac, &LinkReport, pHdr->sa,
 						 pSessionEntry);
 }
 
@@ -316,7 +316,7 @@ rrm_process_link_measurement_request(tpAniSirGlobal pMac,
  * @return None
  */
 QDF_STATUS
-rrm_process_neighbor_report_response(tpAniSirGlobal pMac,
+rrm_process_neighbor_report_response(tpAniSirGlobal mac,
 				     tDot11fNeighborReportResponse *pNeighborRep,
 				     tpPESession pSessionEntry)
 {
@@ -334,7 +334,7 @@ rrm_process_neighbor_report_response(tpAniSirGlobal pMac,
 	pe_debug("Neighbor report response received");
 
 	/* Dialog token */
-	if (pMac->rrm.rrmPEContext.DialogToken !=
+	if (mac->rrm.rrmPEContext.DialogToken !=
 	    pNeighborRep->DialogToken.token) {
 		pe_err("Dialog token mismatch in the received Neighbor report");
 		return QDF_STATUS_E_FAILURE;
@@ -409,9 +409,9 @@ rrm_process_neighbor_report_response(tpAniSirGlobal pMac,
 	/* Send request to SME. */
 	mmhMsg.type = pSmeNeighborRpt->messageType;
 	mmhMsg.bodyptr = pSmeNeighborRpt;
-	MTRACE(mac_trace(pMac, TRACE_CODE_TX_SME_MSG,
+	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 			 pSessionEntry->peSessionId, mmhMsg.type));
-	status = lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
+	status = lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
 
 	return status;
 
@@ -433,7 +433,7 @@ rrm_process_neighbor_report_response(tpAniSirGlobal pMac,
  * @return None
  */
 QDF_STATUS
-rrm_process_neighbor_report_req(tpAniSirGlobal pMac,
+rrm_process_neighbor_report_req(tpAniSirGlobal mac,
 				tpSirNeighborReportReqInd pNeighborReq)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -445,7 +445,7 @@ rrm_process_neighbor_report_req(tpAniSirGlobal pMac,
 		pe_err("NeighborReq is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
-	pSessionEntry = pe_find_session_by_bssid(pMac, pNeighborReq->bssId,
+	pSessionEntry = pe_find_session_by_bssid(mac, pNeighborReq->bssId,
 						 &sessionId);
 	if (pSessionEntry == NULL) {
 		pe_err("session does not exist for given bssId");
@@ -456,7 +456,7 @@ rrm_process_neighbor_report_req(tpAniSirGlobal pMac,
 
 	qdf_mem_set(&NeighborReportReq, sizeof(tSirMacNeighborReportReq), 0);
 
-	NeighborReportReq.dialogToken = ++pMac->rrm.rrmPEContext.DialogToken;
+	NeighborReportReq.dialogToken = ++mac->rrm.rrmPEContext.DialogToken;
 	NeighborReportReq.ssid_present = !pNeighborReq->noSSID;
 	if (NeighborReportReq.ssid_present) {
 		qdf_mem_copy(&NeighborReportReq.ssid, &pNeighborReq->ucSSID,
@@ -468,7 +468,7 @@ rrm_process_neighbor_report_req(tpAniSirGlobal pMac,
 	}
 
 	status =
-		lim_send_neighbor_report_request_frame(pMac, &NeighborReportReq,
+		lim_send_neighbor_report_request_frame(mac, &NeighborReportReq,
 						       pNeighborReq->bssId,
 						       pSessionEntry);
 
@@ -494,7 +494,7 @@ rrm_process_neighbor_report_req(tpAniSirGlobal pMac,
  * @return None
  */
 static tRrmRetStatus
-rrm_process_beacon_report_req(tpAniSirGlobal pMac,
+rrm_process_beacon_report_req(tpAniSirGlobal mac,
 			      tpRRMReq pCurrentReq,
 			      tDot11fIEMeasurementRequest *pBeaconReq,
 			      tpPESession pSessionEntry)
@@ -528,7 +528,7 @@ rrm_process_beacon_report_req(tpAniSirGlobal pMac,
 	   maxMeasurementDuration = 2^(nonOperatingChanMax - 4) * BeaconInterval
 	 */
 	maxDuration =
-		pMac->rrm.rrmPEContext.rrmEnabledCaps.nonOperatingChanMax - 4;
+		mac->rrm.rrmPEContext.rrmEnabledCaps.nonOperatingChanMax - 4;
 	sign = (maxDuration < 0) ? 1 : 0;
 	maxDuration = (1L << ABS(maxDuration));
 	if (!sign)
@@ -656,10 +656,10 @@ rrm_process_beacon_report_req(tpAniSirGlobal pMac,
 	/* Send request to SME. */
 	mmhMsg.type = eWNI_SME_BEACON_REPORT_REQ_IND;
 	mmhMsg.bodyptr = pSmeBcnReportReq;
-	MTRACE(mac_trace(pMac, TRACE_CODE_TX_SME_MSG,
+	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 			 pSessionEntry->peSessionId, mmhMsg.type));
 	if (QDF_STATUS_SUCCESS !=
-	    lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT))
+	    lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT))
 		return eRRM_FAILURE;
 	return eRRM_SUCCESS;
 }
@@ -688,7 +688,7 @@ rrm_process_beacon_report_req(tpAniSirGlobal pMac,
  *	    in pIes.
  */
 static uint8_t
-rrm_fill_beacon_ies(tpAniSirGlobal pMac,
+rrm_fill_beacon_ies(tpAniSirGlobal mac,
 		    uint8_t *pIes, uint8_t *pNumIes, uint8_t pIesMaxSize,
 		    uint8_t *eids, uint8_t numEids, uint8_t start_offset,
 		    tpSirBssDescription pBssDesc)
@@ -1003,13 +1003,13 @@ end:
 	return status;
 }
 
-static void rrm_process_beacon_request_failure(tpAniSirGlobal pMac,
+static void rrm_process_beacon_request_failure(tpAniSirGlobal mac,
 					       tpPESession pSessionEntry,
 					       tSirMacAddr peer,
 					       tRrmRetStatus status)
 {
 	tpSirMacRadioMeasureReport pReport = NULL;
-	tpRRMReq pCurrentReq = pMac->rrm.rrmPEContext.pCurrentReq;
+	tpRRMReq pCurrentReq = mac->rrm.rrmPEContext.pCurrentReq;
 
 	pReport = qdf_mem_malloc(sizeof(tSirMacRadioMeasureReport));
 	if (!pReport)
@@ -1033,7 +1033,7 @@ static void rrm_process_beacon_request_failure(tpAniSirGlobal pMac,
 		return;
 	}
 
-	lim_send_radio_measure_report_action_frame(pMac,
+	lim_send_radio_measure_report_action_frame(mac,
 						   pCurrentReq->dialog_token,
 						   1, true,
 						   pReport, peer,
@@ -1256,10 +1256,10 @@ end:
  * @param startTSF - TSF value at the start of measurement.
  * @return None
  */
-void rrm_update_start_tsf(tpAniSirGlobal pMac, uint32_t startTSF[2])
+void rrm_update_start_tsf(tpAniSirGlobal mac, uint32_t startTSF[2])
 {
-	pMac->rrm.rrmPEContext.startTSF[0] = startTSF[0];
-	pMac->rrm.rrmPEContext.startTSF[1] = startTSF[1];
+	mac->rrm.rrmPEContext.startTSF[0] = startTSF[0];
+	mac->rrm.rrmPEContext.startTSF[1] = startTSF[1];
 }
 
 /* -------------------------------------------------------------------- */
@@ -1277,10 +1277,10 @@ void rrm_update_start_tsf(tpAniSirGlobal pMac, uint32_t startTSF[2])
  * @param startTSF - store star TSF in this buffer.
  * @return txPower
  */
-void rrm_get_start_tsf(tpAniSirGlobal pMac, uint32_t *pStartTSF)
+void rrm_get_start_tsf(tpAniSirGlobal mac, uint32_t *pStartTSF)
 {
-	pStartTSF[0] = pMac->rrm.rrmPEContext.startTSF[0];
-	pStartTSF[1] = pMac->rrm.rrmPEContext.startTSF[1];
+	pStartTSF[0] = mac->rrm.rrmPEContext.startTSF[0];
+	pStartTSF[1] = mac->rrm.rrmPEContext.startTSF[1];
 
 }
 
@@ -1300,9 +1300,9 @@ void rrm_get_start_tsf(tpAniSirGlobal pMac, uint32_t *pStartTSF)
  * @param pSessionEntry
  * @return pointer to tRRMCaps
  */
-tpRRMCaps rrm_get_capabilities(tpAniSirGlobal pMac, tpPESession pSessionEntry)
+tpRRMCaps rrm_get_capabilities(tpAniSirGlobal mac, tpPESession pSessionEntry)
 {
-	return &pMac->rrm.rrmPEContext.rrmEnabledCaps;
+	return &mac->rrm.rrmPEContext.rrmEnabledCaps;
 }
 
 /* -------------------------------------------------------------------- */
@@ -1321,16 +1321,16 @@ tpRRMCaps rrm_get_capabilities(tpAniSirGlobal pMac, tpPESession pSessionEntry)
  * @return None
  */
 
-QDF_STATUS rrm_initialize(tpAniSirGlobal pMac)
+QDF_STATUS rrm_initialize(tpAniSirGlobal mac)
 {
-	tpRRMCaps pRRMCaps = &pMac->rrm.rrmPEContext.rrmEnabledCaps;
+	tpRRMCaps pRRMCaps = &mac->rrm.rrmPEContext.rrmEnabledCaps;
 
-	pMac->rrm.rrmPEContext.pCurrentReq = NULL;
-	pMac->rrm.rrmPEContext.txMgmtPower = 0;
-	pMac->rrm.rrmPEContext.DialogToken = 0;
+	mac->rrm.rrmPEContext.pCurrentReq = NULL;
+	mac->rrm.rrmPEContext.txMgmtPower = 0;
+	mac->rrm.rrmPEContext.DialogToken = 0;
 
-	pMac->rrm.rrmPEContext.rrmEnable = 0;
-	pMac->rrm.rrmPEContext.prev_rrm_report_seq_num = 0xFFFF;
+	mac->rrm.rrmPEContext.rrmEnable = 0;
+	mac->rrm.rrmPEContext.prev_rrm_report_seq_num = 0xFFFF;
 
 	qdf_mem_set(pRRMCaps, sizeof(tRRMCaps), 0);
 	pRRMCaps->LinkMeasurement = 1;
@@ -1366,19 +1366,19 @@ QDF_STATUS rrm_initialize(tpAniSirGlobal pMac)
  * @return None
  */
 
-QDF_STATUS rrm_cleanup(tpAniSirGlobal pMac)
+QDF_STATUS rrm_cleanup(tpAniSirGlobal mac)
 {
-	if (pMac->rrm.rrmPEContext.pCurrentReq) {
-		if (pMac->rrm.rrmPEContext.pCurrentReq->request.Beacon.reqIes.
+	if (mac->rrm.rrmPEContext.pCurrentReq) {
+		if (mac->rrm.rrmPEContext.pCurrentReq->request.Beacon.reqIes.
 		    pElementIds) {
-			qdf_mem_free(pMac->rrm.rrmPEContext.pCurrentReq->
+			qdf_mem_free(mac->rrm.rrmPEContext.pCurrentReq->
 				     request.Beacon.reqIes.pElementIds);
 		}
 
-		qdf_mem_free(pMac->rrm.rrmPEContext.pCurrentReq);
+		qdf_mem_free(mac->rrm.rrmPEContext.pCurrentReq);
 	}
 
-	pMac->rrm.rrmPEContext.pCurrentReq = NULL;
+	mac->rrm.rrmPEContext.pCurrentReq = NULL;
 	return QDF_STATUS_SUCCESS;
 }
 

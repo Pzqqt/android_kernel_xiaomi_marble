@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,16 +37,16 @@
 #include "sme_internal.h"
 #include "sme_rrm_internal.h"
 
-QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
+QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal mac, uint16_t msg_type,
 		void *pMsgBuf);
-QDF_STATUS rrm_close(tpAniSirGlobal pMac);
-QDF_STATUS rrm_open(tpAniSirGlobal pMac);
-QDF_STATUS rrm_change_default_config_param(tpAniSirGlobal pMac,
+QDF_STATUS rrm_close(tpAniSirGlobal mac);
+QDF_STATUS rrm_open(tpAniSirGlobal mac);
+QDF_STATUS rrm_change_default_config_param(tpAniSirGlobal mac,
 		struct rrm_config_param *rrm_config);
-QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac,
+QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal mac,
 		uint8_t sessionId, tpRrmNeighborReq pNeighborReq,
 		tpRrmNeighborRspCallbackInfo callbackInfo);
-QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
+QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal mac,
 		void *pMsgBuf);
 
 /**

@@ -35,59 +35,59 @@
 #define RRM_BCN_RPT_NO_BSS_INFO    0
 #define RRM_BCN_RPT_MIN_RPT        1
 
-uint8_t rrm_get_min_of_max_tx_power(tpAniSirGlobal pMac, int8_t regMax,
+uint8_t rrm_get_min_of_max_tx_power(tpAniSirGlobal mac, int8_t regMax,
 				    int8_t apTxPower);
 
-QDF_STATUS rrm_initialize(tpAniSirGlobal pMac);
+QDF_STATUS rrm_initialize(tpAniSirGlobal mac);
 
-QDF_STATUS rrm_cleanup(tpAniSirGlobal pMac);
+QDF_STATUS rrm_cleanup(tpAniSirGlobal mac);
 
-QDF_STATUS rrm_process_link_measurement_request(tpAniSirGlobal pMac,
+QDF_STATUS rrm_process_link_measurement_request(tpAniSirGlobal mac,
 						uint8_t *pRxPacketInfo,
 						tDot11fLinkMeasurementRequest
 							  *pLinkReq,
 						tpPESession
 							  pSessionEntry);
 
-QDF_STATUS rrm_process_radio_measurement_request(tpAniSirGlobal pMac,
+QDF_STATUS rrm_process_radio_measurement_request(tpAniSirGlobal mac,
 						 tSirMacAddr peer,
 						 tDot11fRadioMeasurementRequest
 							   *pRRMReq,
 						 tpPESession
 							   pSessionEntry);
 
-QDF_STATUS rrm_process_neighbor_report_response(tpAniSirGlobal pMac,
+QDF_STATUS rrm_process_neighbor_report_response(tpAniSirGlobal mac,
 						tDot11fNeighborReportResponse
 							  *pNeighborRep,
 						tpPESession
 							  pSessionEntry);
 
-QDF_STATUS rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac,
+QDF_STATUS rrm_send_set_max_tx_power_req(tpAniSirGlobal mac,
 					 int8_t txPower,
 					 tpPESession pSessionEntry);
 
-int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal pMac,
+int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal mac,
 			     tpPESession pSessionEntry);
 
-void rrm_cache_mgmt_tx_power(tpAniSirGlobal pMac,
+void rrm_cache_mgmt_tx_power(tpAniSirGlobal mac,
 			     int8_t txPower, tpPESession pSessionEntry);
 
-tpRRMCaps rrm_get_capabilities(tpAniSirGlobal pMac,
+tpRRMCaps rrm_get_capabilities(tpAniSirGlobal mac,
 			       tpPESession pSessionEntry);
 
-void rrm_get_start_tsf(tpAniSirGlobal pMac, uint32_t *pStartTSF);
+void rrm_get_start_tsf(tpAniSirGlobal mac, uint32_t *pStartTSF);
 
-void rrm_update_start_tsf(tpAniSirGlobal pMac, uint32_t startTSF[2]);
+void rrm_update_start_tsf(tpAniSirGlobal mac, uint32_t startTSF[2]);
 
-QDF_STATUS rrm_set_max_tx_power_rsp(tpAniSirGlobal pMac,
+QDF_STATUS rrm_set_max_tx_power_rsp(tpAniSirGlobal mac,
 				    struct scheduler_msg *limMsgQ);
 
 QDF_STATUS
-rrm_process_neighbor_report_req(tpAniSirGlobal pMac,
+rrm_process_neighbor_report_req(tpAniSirGlobal mac,
 				tpSirNeighborReportReqInd pNeighborReq);
 
 QDF_STATUS
-rrm_process_beacon_report_xmit(tpAniSirGlobal pMac,
+rrm_process_beacon_report_xmit(tpAniSirGlobal mac,
 			       tpSirBeaconReportXmitInd pBcnReport);
 
 void lim_update_rrm_capability(tpAniSirGlobal mac_ctx,
