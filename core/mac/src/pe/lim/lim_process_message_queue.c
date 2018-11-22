@@ -61,7 +61,7 @@
 #include <wlan_scan_ucfg_api.h>
 #include "wlan_mlme_public_struct.h"
 
-void lim_log_session_states(tpAniSirGlobal pMac);
+void lim_log_session_states(tpAniSirGlobal mac);
 static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
 	struct scheduler_msg *msg, uint8_t rsp_reqd);
 
@@ -684,24 +684,24 @@ __lim_process_ext_scan_beacon_probe_rsp(tpAniSirGlobal pmac,
  * Not Scanning,
  */
 static void
-__lim_handle_beacon(tpAniSirGlobal pMac, struct scheduler_msg *pMsg,
+__lim_handle_beacon(tpAniSirGlobal mac, struct scheduler_msg *pMsg,
 		    tpPESession psessionEntry)
 {
 	uint8_t *pRxPacketInfo;
 
-	lim_get_b_dfrom_rx_packet(pMac, pMsg->bodyptr,
+	lim_get_b_dfrom_rx_packet(mac, pMsg->bodyptr,
 				  (uint32_t **) &pRxPacketInfo);
 
 	/* This function should not be called if beacon is received in scan state. */
 	/* So not doing any checks for the global state. */
 
 	if (psessionEntry == NULL) {
-		sch_beacon_process(pMac, pRxPacketInfo, NULL);
+		sch_beacon_process(mac, pRxPacketInfo, NULL);
 	} else if ((psessionEntry->limSmeState == eLIM_SME_LINK_EST_STATE) ||
 		   (psessionEntry->limSmeState == eLIM_SME_NORMAL_STATE)) {
-		sch_beacon_process(pMac, pRxPacketInfo, psessionEntry);
+		sch_beacon_process(mac, pRxPacketInfo, psessionEntry);
 	} else
-		lim_process_beacon_frame(pMac, pRxPacketInfo, psessionEntry);
+		lim_process_beacon_frame(mac, pRxPacketInfo, psessionEntry);
 
 	return;
 }
@@ -888,25 +888,25 @@ void lim_handle_sap_beacon(struct wlan_objmgr_pdev *pdev,
  ***NOTE:
  * NA
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @param  pMsg of type struct scheduler_msg - Pointer to the message structure
  * @return None
  */
 
-uint32_t lim_defer_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+uint32_t lim_defer_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg)
 {
 	uint32_t retCode = TX_SUCCESS;
 
-	retCode = lim_write_deferred_msg_q(pMac, pMsg);
+	retCode = lim_write_deferred_msg_q(mac, pMsg);
 
 	if (retCode == TX_SUCCESS) {
 		MTRACE(mac_trace_msg_rx
-			(pMac, NO_SESSION,
+			(mac, NO_SESSION,
 			LIM_TRACE_MAKE_RXMSG(pMsg->type, LIM_MSG_DEFERRED)));
 	} else {
 		pe_err("Dropped lim message (0x%X) Message %s", pMsg->type, lim_msg_str(pMsg->type));
 		MTRACE(mac_trace_msg_rx
-			(pMac, NO_SESSION,
+			(mac, NO_SESSION,
 			LIM_TRACE_MAKE_RXMSG(pMsg->type, LIM_MSG_DROPPED)));
 	}
 
@@ -1109,13 +1109,13 @@ lim_is_mgmt_frame_loggable(uint8_t type, uint8_t subtype)
  ***NOTE:
  * NA
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @param  pMsg of type struct scheduler_msg - Pointer to the message structure
  * @return None
  */
 
 static void
-lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
+lim_handle80211_frames(tpAniSirGlobal mac, struct scheduler_msg *limMsg,
 		       uint8_t *pDeferMsg)
 {
 	uint8_t *pRxPacketInfo = NULL;
@@ -1128,7 +1128,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 	bool is_hw_sbs_capable = false;
 
 	*pDeferMsg = false;
-	lim_get_b_dfrom_rx_packet(pMac, limMsg->bodyptr,
+	lim_get_b_dfrom_rx_packet(mac, limMsg->bodyptr,
 				  (uint32_t **) &pRxPacketInfo);
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
@@ -1137,12 +1137,12 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 	fc = pHdr->fc;
 
 	is_hw_sbs_capable =
-		policy_mgr_is_hw_sbs_capable(pMac->psoc);
+		policy_mgr_is_hw_sbs_capable(mac->psoc);
 	if (IS_5G_CH(channel) &&
 	   (!is_hw_sbs_capable ||
-	   (is_hw_sbs_capable && wlan_reg_is_dfs_ch(pMac->pdev, channel))) &&
-	    pMac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
-		psessionEntry = pe_find_session_by_bssid(pMac,
+	   (is_hw_sbs_capable && wlan_reg_is_dfs_ch(mac->pdev, channel))) &&
+	    mac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
+		psessionEntry = pe_find_session_by_bssid(mac,
 					pHdr->bssId, &sessionId);
 		if (psessionEntry &&
 		    (QDF_SAP_MODE == psessionEntry->pePersona)) {
@@ -1158,7 +1158,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR, pHdr,
 			   WMA_GET_RX_MPDU_HEADER_LEN(pRxPacketInfo));
 #endif
-	if (pMac->mlme_cfg->gen.debug_packet_log & 0x1) {
+	if (mac->mlme_cfg->gen.debug_packet_log & 0x1) {
 		if ((fc.type == SIR_MAC_MGMT_FRAME) &&
 		    (fc.subType != SIR_MAC_MGMT_PROBE_REQ) &&
 		    (fc.subType != SIR_MAC_MGMT_PROBE_RSP) &&
@@ -1176,7 +1176,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 		WMA_IS_EPNO_SCAN_SRC(pRxPacketInfo)) {
 		if (fc.subType == SIR_MAC_MGMT_BEACON ||
 		    fc.subType == SIR_MAC_MGMT_PROBE_RSP) {
-			__lim_process_ext_scan_beacon_probe_rsp(pMac,
+			__lim_process_ext_scan_beacon_probe_rsp(mac,
 								pRxPacketInfo,
 								fc.subType);
 		} else {
@@ -1188,16 +1188,16 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 	}
 #endif
 	/* Added For BT-AMP Support */
-	psessionEntry = pe_find_session_by_bssid(pMac, pHdr->bssId,
+	psessionEntry = pe_find_session_by_bssid(mac, pHdr->bssId,
 						 &sessionId);
 	if (psessionEntry == NULL) {
 		if (fc.subType == SIR_MAC_MGMT_AUTH) {
 			pe_debug("ProtVersion %d, Type %d, Subtype %d rateIndex=%d",
 				fc.protVer, fc.type, fc.subType,
 				WMA_GET_RX_MAC_RATE_IDX(pRxPacketInfo));
-			lim_print_mac_addr(pMac, pHdr->bssId, LOGD);
+			lim_print_mac_addr(mac, pHdr->bssId, LOGD);
 			if (lim_process_auth_frame_no_session
-				    (pMac, pRxPacketInfo,
+				    (mac, pRxPacketInfo,
 				    limMsg->bodyptr) == QDF_STATUS_SUCCESS) {
 				goto end;
 			}
@@ -1208,11 +1208,11 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 		    (fc.subType != SIR_MAC_MGMT_PROBE_REQ)
 		    && (fc.subType != SIR_MAC_MGMT_ACTION)) {
 
-			psessionEntry = pe_find_session_by_peer_sta(pMac,
+			psessionEntry = pe_find_session_by_peer_sta(mac,
 						pHdr->sa, &sessionId);
 			if (psessionEntry == NULL) {
 				pe_debug("session does not exist for bssId");
-				lim_print_mac_addr(pMac, pHdr->sa, LOGD);
+				lim_print_mac_addr(mac, pHdr->sa, LOGD);
 				goto end;
 			} else {
 				pe_debug("SessionId:%d exists for given Bssid",
@@ -1223,12 +1223,12 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 		/*  BSSID will be SA and session will be present with DA only */
 		if (fc.subType == SIR_MAC_MGMT_ACTION) {
 			psessionEntry =
-				pe_find_session_by_bssid(pMac, pHdr->da, &sessionId);
+				pe_find_session_by_bssid(mac, pHdr->da, &sessionId);
 		}
 	}
 
 	/* Check if frame is registered by HDD */
-	if (lim_check_mgmt_registered_frames(pMac, pRxPacketInfo, psessionEntry)) {
+	if (lim_check_mgmt_registered_frames(mac, pRxPacketInfo, psessionEntry)) {
 		pe_debug("Received frame is passed to SME");
 		goto end;
 	}
@@ -1236,10 +1236,10 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 	if (fc.protVer != SIR_MAC_PROTOCOL_VERSION) {   /* Received Frame with non-zero Protocol Version */
 		pe_err("Unexpected frame with protVersion %d received",
 			fc.protVer);
-		lim_pkt_free(pMac, TXRX_FRM_802_11_MGMT, pRxPacketInfo,
+		lim_pkt_free(mac, TXRX_FRM_802_11_MGMT, pRxPacketInfo,
 			     (void *)limMsg->bodyptr);
 #ifdef WLAN_DEBUG
-		pMac->lim.numProtErr++;
+		mac->lim.numProtErr++;
 #endif
 		goto end;
 	}
@@ -1247,7 +1247,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 /* Chance of crashing : to be done BT-AMP ........happens when broadcast probe req is received */
 
 #ifdef WLAN_DEBUG
-	pMac->lim.numMAC[fc.type][fc.subType]++;
+	mac->lim.numMAC[fc.type][fc.subType]++;
 #endif
 
 	switch (fc.type) {
@@ -1258,20 +1258,20 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 		case SIR_MAC_MGMT_ASSOC_REQ:
 			/* Make sure the role supports Association */
 			if (LIM_IS_AP_ROLE(psessionEntry))
-				lim_process_assoc_req_frame(pMac,
+				lim_process_assoc_req_frame(mac,
 							    pRxPacketInfo,
 							    LIM_ASSOC,
 							    psessionEntry);
 			else {
 				pe_err("unexpected message received %X",
 					limMsg->type);
-				lim_print_msg_name(pMac, LOGE,
+				lim_print_msg_name(mac, LOGE,
 						   limMsg->type);
 			}
 			break;
 
 		case SIR_MAC_MGMT_ASSOC_RSP:
-			lim_process_assoc_rsp_frame(pMac, pRxPacketInfo,
+			lim_process_assoc_rsp_frame(mac, pRxPacketInfo,
 						    LIM_ASSOC,
 						    psessionEntry);
 			break;
@@ -1279,68 +1279,68 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 		case SIR_MAC_MGMT_REASSOC_REQ:
 			/* Make sure the role supports Reassociation */
 			if (LIM_IS_AP_ROLE(psessionEntry)) {
-				lim_process_assoc_req_frame(pMac,
+				lim_process_assoc_req_frame(mac,
 							    pRxPacketInfo,
 							    LIM_REASSOC,
 							    psessionEntry);
 			} else {
 				pe_err("unexpected message received %X",
 					limMsg->type);
-				lim_print_msg_name(pMac, LOGE,
+				lim_print_msg_name(mac, LOGE,
 					limMsg->type);
 			}
 			break;
 
 		case SIR_MAC_MGMT_REASSOC_RSP:
-			lim_process_assoc_rsp_frame(pMac, pRxPacketInfo,
+			lim_process_assoc_rsp_frame(mac, pRxPacketInfo,
 						    LIM_REASSOC,
 						    psessionEntry);
 			break;
 
 		case SIR_MAC_MGMT_PROBE_REQ:
-			lim_process_probe_req_frame_multiple_bss(pMac,
+			lim_process_probe_req_frame_multiple_bss(mac,
 								 pRxPacketInfo,
 								 psessionEntry);
 			break;
 
 		case SIR_MAC_MGMT_PROBE_RSP:
 			if (psessionEntry)
-				lim_process_probe_rsp_frame(pMac,
+				lim_process_probe_rsp_frame(mac,
 							    pRxPacketInfo,
 							    psessionEntry);
 			break;
 
 		case SIR_MAC_MGMT_BEACON:
-			__lim_handle_beacon(pMac, limMsg, psessionEntry);
+			__lim_handle_beacon(mac, limMsg, psessionEntry);
 			break;
 
 		case SIR_MAC_MGMT_DISASSOC:
-			lim_process_disassoc_frame(pMac, pRxPacketInfo,
+			lim_process_disassoc_frame(mac, pRxPacketInfo,
 						   psessionEntry);
 			break;
 
 		case SIR_MAC_MGMT_AUTH:
-			lim_process_auth_frame(pMac, pRxPacketInfo,
+			lim_process_auth_frame(mac, pRxPacketInfo,
 					       psessionEntry);
 			break;
 
 		case SIR_MAC_MGMT_DEAUTH:
-			lim_process_deauth_frame(pMac, pRxPacketInfo,
+			lim_process_deauth_frame(mac, pRxPacketInfo,
 						 psessionEntry);
 			break;
 
 		case SIR_MAC_MGMT_ACTION:
 			if (psessionEntry == NULL)
-				lim_process_action_frame_no_session(pMac,
+				lim_process_action_frame_no_session(mac,
 								    pRxPacketInfo);
 			else {
 				if (WMA_GET_RX_UNKNOWN_UCAST
 					    (pRxPacketInfo))
 					lim_handle_unknown_a2_index_frames
-						(pMac, pRxPacketInfo,
+						(mac, pRxPacketInfo,
 						psessionEntry);
 				else
-					lim_process_action_frame(pMac,
+					lim_process_action_frame(mac,
 								 pRxPacketInfo,
 								 psessionEntry);
 			}
@@ -1362,11 +1362,11 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 
 	} /* switch (fc.type) */
 	if (lim_is_mgmt_frame_loggable(fc.type, fc.subType))
-		lim_diag_mgmt_rx_event_report(pMac, pHdr,
+		lim_diag_mgmt_rx_event_report(mac, pHdr,
 					      psessionEntry,
 					      QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 end:
-	lim_pkt_free(pMac, TXRX_FRM_802_11_MGMT, pRxPacketInfo,
+	lim_pkt_free(mac, TXRX_FRM_802_11_MGMT, pRxPacketInfo,
 		     (void *)limMsg->bodyptr);
 	return;
 } /*** end lim_handle80211_frames() ***/
@@ -2057,11 +2057,11 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
  * mode. This function fetches messages posted to the LIM
  * deferred message queue limDeferredMsgQ.
  *
- * @pMac: Pointer to Global MAC structure
+ * @mac: Pointer to Global MAC structure
  * @return None
  */
 
-static void lim_process_deferred_message_queue(tpAniSirGlobal pMac)
+static void lim_process_deferred_message_queue(tpAniSirGlobal mac)
 {
 	struct scheduler_msg limMsg = {0};
 	struct scheduler_msg *readMsg;
@@ -2070,18 +2070,18 @@ static void lim_process_deferred_message_queue(tpAniSirGlobal pMac)
 	/*
 	** check any deferred messages need to be processed
 	**/
-	size = pMac->lim.gLimDeferredMsgQ.size;
+	size = mac->lim.gLimDeferredMsgQ.size;
 	if (size > 0) {
-		while ((readMsg = lim_read_deferred_msg_q(pMac)) != NULL) {
+		while ((readMsg = lim_read_deferred_msg_q(mac)) != NULL) {
 			qdf_mem_copy((uint8_t *) &limMsg,
 				     (uint8_t *) readMsg,
 				     sizeof(struct scheduler_msg));
 			size--;
-			lim_process_messages(pMac, &limMsg);
+			lim_process_messages(mac, &limMsg);
 
-			if ((lim_is_system_in_scan_state(pMac))
-			    || (true != GET_LIM_PROCESS_DEFD_MESGS(pMac))
-			    ||  pMac->lim.gLimAddtsSent)
+			if ((lim_is_system_in_scan_state(mac))
+			    || (true != GET_LIM_PROCESS_DEFD_MESGS(mac))
+			    ||  mac->lim.gLimAddtsSent)
 				break;
 		}
 	}
@@ -2192,53 +2192,53 @@ static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
 }
 
 void
-handle_ht_capabilityand_ht_info(struct mac_context *pMac,
+handle_ht_capabilityand_ht_info(struct mac_context *mac,
 				tpPESession psessionEntry)
 {
 	struct mlme_ht_capabilities_info *ht_cap_info;
 
-	ht_cap_info = &pMac->mlme_cfg->ht_caps.ht_cap_info;
-	pMac->lim.gHTLsigTXOPProtection =
+	ht_cap_info = &mac->mlme_cfg->ht_caps.ht_cap_info;
+	mac->lim.gHTLsigTXOPProtection =
 		(uint8_t)ht_cap_info->l_sig_tx_op_protection;
-	pMac->lim.gHTMIMOPSState =
+	mac->lim.gHTMIMOPSState =
 		(tSirMacHTMIMOPowerSaveState)ht_cap_info->mimo_power_save;
-	pMac->lim.gHTGreenfield = (uint8_t)ht_cap_info->green_field;
-	pMac->lim.gHTMaxAmsduLength =
+	mac->lim.gHTGreenfield = (uint8_t)ht_cap_info->green_field;
+	mac->lim.gHTMaxAmsduLength =
 		(uint8_t)ht_cap_info->maximal_amsdu_size;
-	pMac->lim.gHTShortGI20Mhz = (uint8_t)ht_cap_info->short_gi_20_mhz;
-	pMac->lim.gHTShortGI40Mhz = (uint8_t)ht_cap_info->short_gi_40_mhz;
-	pMac->lim.gHTPSMPSupport = (uint8_t)ht_cap_info->psmp;
-	pMac->lim.gHTDsssCckRate40MHzSupport =
+	mac->lim.gHTShortGI20Mhz = (uint8_t)ht_cap_info->short_gi_20_mhz;
+	mac->lim.gHTShortGI40Mhz = (uint8_t)ht_cap_info->short_gi_40_mhz;
+	mac->lim.gHTPSMPSupport = (uint8_t)ht_cap_info->psmp;
+	mac->lim.gHTDsssCckRate40MHzSupport =
 		(uint8_t)ht_cap_info->dsss_cck_mode_40_mhz;
 
-	pMac->lim.gHTAMpduDensity =
-		(uint8_t)pMac->mlme_cfg->ht_caps.ampdu_params.mpdu_density;
-	pMac->lim.gHTMaxRxAMpduFactor =
-		(uint8_t)pMac->mlme_cfg->ht_caps.ampdu_params.
+	mac->lim.gHTAMpduDensity =
+		(uint8_t)mac->mlme_cfg->ht_caps.ampdu_params.mpdu_density;
+	mac->lim.gHTMaxRxAMpduFactor =
+		(uint8_t)mac->mlme_cfg->ht_caps.ampdu_params.
 		max_rx_ampdu_factor;
 
 	/* Get HT IE Info */
-	pMac->lim.gHTServiceIntervalGranularity =
-		(uint8_t)pMac->mlme_cfg->ht_caps.info_field_1.
+	mac->lim.gHTServiceIntervalGranularity =
+		(uint8_t)mac->mlme_cfg->ht_caps.info_field_1.
 		service_interval_granularity;
-	pMac->lim.gHTControlledAccessOnly =
-		(uint8_t)pMac->mlme_cfg->ht_caps.info_field_1.
+	mac->lim.gHTControlledAccessOnly =
+		(uint8_t)mac->mlme_cfg->ht_caps.info_field_1.
 		controlled_access_only;
-	pMac->lim.gHTRifsMode = (uint8_t)pMac->mlme_cfg->ht_caps.info_field_1.
+	mac->lim.gHTRifsMode = (uint8_t)mac->mlme_cfg->ht_caps.info_field_1.
 		rifs_mode;
 
-	pMac->lim.gHTOperMode = (tSirMacHTOperatingMode)pMac->mlme_cfg->ht_caps.
+	mac->lim.gHTOperMode = (tSirMacHTOperatingMode)mac->mlme_cfg->ht_caps.
 		info_field_2.op_mode;
 
-	pMac->lim.gHTPCOActive = (uint8_t)pMac->mlme_cfg->ht_caps.info_field_3.
+	mac->lim.gHTPCOActive = (uint8_t)mac->mlme_cfg->ht_caps.info_field_3.
 								pco_active;
-	pMac->lim.gHTPCOPhase = (uint8_t)pMac->mlme_cfg->ht_caps.info_field_3.
+	mac->lim.gHTPCOPhase = (uint8_t)mac->mlme_cfg->ht_caps.info_field_3.
 								pco_phase;
-	pMac->lim.gHTSecondaryBeacon =
-		(uint8_t)pMac->mlme_cfg->ht_caps.info_field_3.secondary_beacon;
-	pMac->lim.gHTDualCTSProtection = (uint8_t)pMac->mlme_cfg->ht_caps.
+	mac->lim.gHTSecondaryBeacon =
+		(uint8_t)mac->mlme_cfg->ht_caps.info_field_3.secondary_beacon;
+	mac->lim.gHTDualCTSProtection = (uint8_t)mac->mlme_cfg->ht_caps.
 					info_field_3.dual_cts_protection;
-	pMac->lim.gHTSTBCBasicMCS = (uint8_t)pMac->mlme_cfg->ht_caps.
+	mac->lim.gHTSTBCBasicMCS = (uint8_t)mac->mlme_cfg->ht_caps.
 					info_field_3.basic_stbc_mcs;
 
 	/* The lim globals for channelwidth and secondary chnl have been removed and should not be used during no session;
@@ -2250,9 +2250,9 @@ handle_ht_capabilityand_ht_info(struct mac_context *pMac,
 		psessionEntry->htCapability =
 			IS_DOT11_MODE_HT(psessionEntry->dot11mode);
 		psessionEntry->beaconParams.fLsigTXOPProtectionFullSupport =
-			(uint8_t)pMac->mlme_cfg->ht_caps.info_field_3.
+			(uint8_t)mac->mlme_cfg->ht_caps.info_field_3.
 			lsig_txop_protection_full_support;
-		lim_init_obss_params(pMac, psessionEntry);
+		lim_init_obss_params(mac, psessionEntry);
 	}
 }
 
