@@ -60,7 +60,7 @@
  *
  */
 void
-cfg_send_host_msg(tpAniSirGlobal pMac, uint16_t msgType, uint32_t msgLen,
+cfg_send_host_msg(tpAniSirGlobal mac, uint16_t msgType, uint32_t msgLen,
 		  uint32_t paramNum, uint32_t *pParamList, uint32_t dataLen,
 		  uint32_t *pData)
 {
@@ -116,7 +116,7 @@ cfg_send_host_msg(tpAniSirGlobal pMac, uint16_t msgType, uint32_t msgLen,
 	}
 
 	/* Ship it */
-	MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, mmhMsg.type));
-	sys_process_mmh_msg(pMac, &mmhMsg);
+	MTRACE(mac_trace_msg_tx(mac, NO_SESSION, mmhMsg.type));
+	sys_process_mmh_msg(mac, &mmhMsg);
 
 } /*** end cfg_send_host_msg() ***/

@@ -58,8 +58,8 @@ typedef struct {
 /* CFG function prototypes                                             */
 /*---------------------------------------------------------------------*/
 
-uint32_t cfg_need_restart(tpAniSirGlobal pMac, uint16_t cfgId);
-uint32_t cfg_need_reload(tpAniSirGlobal pMac, uint16_t cfgId);
+uint32_t cfg_need_restart(tpAniSirGlobal mac, uint16_t cfgId);
+uint32_t cfg_need_reload(tpAniSirGlobal mac, uint16_t cfgId);
 
 /* / Process host message */
 void cfg_process_mb_msg(tpAniSirGlobal, tSirMbMsg *);
@@ -92,18 +92,18 @@ QDF_STATUS wlan_cfg_get_str_max_len(tpAniSirGlobal, uint16_t, uint32_t *);
 QDF_STATUS wlan_cfg_get_str_len(tpAniSirGlobal, uint16_t, uint32_t *);
 
 /* / Get the regulatory tx power on given channel */
-int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal pMac,
+int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal mac,
 					     uint8_t channel);
 
 /* / Get capability info */
-QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
+QDF_STATUS cfg_get_capability_info(tpAniSirGlobal mac, uint16_t *pCap,
 				   struct pe_session *psessionEntry);
 
 /* / Set capability info */
 void cfg_set_capability_info(tpAniSirGlobal, uint16_t);
 
 /* / Cleanup CFG module */
-void cfg_cleanup(tpAniSirGlobal pMac);
+void cfg_cleanup(tpAniSirGlobal mac);
 
 const char *cfg_get_string(uint16_t cfg_id);
 

@@ -52,16 +52,16 @@ extern cfgstatic_string cfg_static_string[CFG_MAX_STATIC_STRING];
 extern cgstatic cfg_static[CFG_PARAM_MAX_NUM];
 
 /* --------------------------------------------------------------------- */
-uint32_t cfg_need_restart(tpAniSirGlobal pMac, uint16_t cfgId)
+uint32_t cfg_need_restart(tpAniSirGlobal mac, uint16_t cfgId)
 {
-	if (!pMac->cfg.gCfgEntry) {
+	if (!mac->cfg.gCfgEntry) {
 		pe_err("gCfgEntry is NULL");
 		return 0;
 	}
-	return !!(pMac->cfg.gCfgEntry[cfgId].control & CFG_CTL_RESTART);
+	return !!(mac->cfg.gCfgEntry[cfgId].control & CFG_CTL_RESTART);
 }
 
-static void cfg_get_strindex(tpAniSirGlobal pMac, uint16_t cfgId)
+static void cfg_get_strindex(tpAniSirGlobal mac, uint16_t cfgId)
 {
 	uint16_t i = 0;
 
@@ -77,17 +77,17 @@ static void cfg_get_strindex(tpAniSirGlobal pMac, uint16_t cfgId)
 	cfg_static[cfgId].pStrData = &cfg_static_string[i];
 }
 /* --------------------------------------------------------------------- */
-uint32_t cfg_need_reload(tpAniSirGlobal pMac, uint16_t cfgId)
+uint32_t cfg_need_reload(tpAniSirGlobal mac, uint16_t cfgId)
 {
-	if (!pMac->cfg.gCfgEntry) {
+	if (!mac->cfg.gCfgEntry) {
 		pe_err("gCfgEntry is NULL");
 		return 0;
 	}
-	return !!(pMac->cfg.gCfgEntry[cfgId].control & CFG_CTL_RELOAD);
+	return !!(mac->cfg.gCfgEntry[cfgId].control & CFG_CTL_RELOAD);
 }
 
 /* --------------------------------------------------------------------- */
-QDF_STATUS cfg_init(tpAniSirGlobal pMac)
+QDF_STATUS cfg_init(tpAniSirGlobal mac)
 {
 	uint16_t i = 0;
 	uint16_t combined_buff_size = 0;
@@ -95,13 +95,13 @@ QDF_STATUS cfg_init(tpAniSirGlobal pMac)
 	uint32_t    max_s_count = 0;
 	cfgstatic_string *str_cfg;
 
-	pMac->cfg.gSBuffer = __g_s_buffer;
-	pMac->cfg.gCfgEntry = __g_cfg_entry;
-	pMac->cfg.gParamList = __g_param_list;
+	mac->cfg.gSBuffer = __g_s_buffer;
+	mac->cfg.gCfgEntry = __g_cfg_entry;
+	mac->cfg.gParamList = __g_param_list;
 
 	for (i = 0; i < CFG_PARAM_MAX_NUM; i++) {
 		if (!(cfg_static[i].control & CFG_CTL_INT)) {
-			cfg_get_strindex(pMac, i);
+			cfg_get_strindex(mac, i);
 		} else {
 			cfg_static[i].pStrData = NULL;
 		}
@@ -121,8 +121,8 @@ QDF_STATUS cfg_init(tpAniSirGlobal pMac)
 		}
 	}
 
-	pMac->cfg.gCfgMaxIBufSize = max_i_count;
-	pMac->cfg.gCfgMaxSBufSize = max_s_count;
+	mac->cfg.gCfgMaxIBufSize = max_i_count;
+	mac->cfg.gCfgMaxSBufSize = max_s_count;
 
 	/* Allocate a combined memory */
 	combined_buff_size = max_s_count + (3 * sizeof(uint32_t) * max_i_count);
@@ -136,32 +136,32 @@ QDF_STATUS cfg_init(tpAniSirGlobal pMac)
 		pe_err("Mem alloc request too big");
 		return QDF_STATUS_E_NOMEM;
 	}
-	/* at this point pMac->cfg.gCfgSBuf starts */
-	pMac->cfg.gCfgSBuf = qdf_mem_malloc(combined_buff_size);
-	if (!pMac->cfg.gCfgSBuf)
+	/* at this point mac->cfg.gCfgSBuf starts */
+	mac->cfg.gCfgSBuf = qdf_mem_malloc(combined_buff_size);
+	if (!mac->cfg.gCfgSBuf)
 		return QDF_STATUS_E_NOMEM;
 
-	/* at offset max_s_count, pMac->cfg.gCfgIBuf starts */
-	pMac->cfg.gCfgIBuf = (uint32_t *)&pMac->cfg.gCfgSBuf[max_s_count];
-	/* after max_i_count integers, pMac->cfg.gCfgIBufMin starts */
-	pMac->cfg.gCfgIBufMin = &pMac->cfg.gCfgIBuf[max_i_count];
-	/* after max_i_count integers, pMac->cfg.gCfgIBufMax starts */
-	pMac->cfg.gCfgIBufMax = &pMac->cfg.gCfgIBufMin[max_i_count];
+	/* at offset max_s_count, mac->cfg.gCfgIBuf starts */
+	mac->cfg.gCfgIBuf = (uint32_t *)&mac->cfg.gCfgSBuf[max_s_count];
+	/* after max_i_count integers, mac->cfg.gCfgIBufMin starts */
+	mac->cfg.gCfgIBufMin = &mac->cfg.gCfgIBuf[max_i_count];
+	/* after max_i_count integers, mac->cfg.gCfgIBufMax starts */
+	mac->cfg.gCfgIBufMax = &mac->cfg.gCfgIBufMin[max_i_count];
 
 	return QDF_STATUS_SUCCESS;
 }
 
 /* ---------------------------------------------------------------------- */
-void cfg_de_init(tpAniSirGlobal pMac)
+void cfg_de_init(tpAniSirGlobal mac)
 {
-	qdf_mem_free(pMac->cfg.gCfgSBuf);
-	pMac->cfg.gCfgIBufMin = NULL;
-	pMac->cfg.gCfgIBufMax = NULL;
-	pMac->cfg.gCfgIBuf = NULL;
-	pMac->cfg.gCfgSBuf = NULL;
-	pMac->cfg.gSBuffer = NULL;
-	pMac->cfg.gCfgEntry = NULL;
-	pMac->cfg.gParamList = NULL;
+	qdf_mem_free(mac->cfg.gCfgSBuf);
+	mac->cfg.gCfgIBufMin = NULL;
+	mac->cfg.gCfgIBufMax = NULL;
+	mac->cfg.gCfgIBuf = NULL;
+	mac->cfg.gCfgSBuf = NULL;
+	mac->cfg.gSBuffer = NULL;
+	mac->cfg.gCfgEntry = NULL;
+	mac->cfg.gParamList = NULL;
 }
 
 /* --------------------------------------------------------------------- */
@@ -182,7 +182,7 @@ void cfg_de_init(tpAniSirGlobal pMac)
  * @return QDF_STATUS_SUCCESS:  request completed successfully
  * @return QDF_STATUS_E_INVAL:  invalid CFG parameter ID
  */
-QDF_STATUS cfg_check_valid(tpAniSirGlobal pMac, uint16_t cfgId,
+QDF_STATUS cfg_check_valid(tpAniSirGlobal mac, uint16_t cfgId,
 			   uint32_t *index)
 {
 	uint32_t control;
@@ -191,12 +191,12 @@ QDF_STATUS cfg_check_valid(tpAniSirGlobal pMac, uint16_t cfgId,
 		pe_warn("Invalid cfg id: %d", cfgId);
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!pMac->cfg.gCfgEntry) {
+	if (!mac->cfg.gCfgEntry) {
 		pe_warn("gCfgEntry is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	control = pMac->cfg.gCfgEntry[cfgId].control;
+	control = mac->cfg.gCfgEntry[cfgId].control;
 
 	/* Check if parameter is valid */
 	if ((control & CFG_CTL_VALID) == 0) {
@@ -206,7 +206,7 @@ QDF_STATUS cfg_check_valid(tpAniSirGlobal pMac, uint16_t cfgId,
 
 	*index = control & CFG_BUF_INDX_MASK;
 
-	if (*index >= pMac->cfg.gCfgMaxSBufSize) {
+	if (*index >= mac->cfg.gCfgMaxSBufSize) {
 		pe_warn("cfg index out of bounds: %d", *index);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -242,37 +242,37 @@ QDF_STATUS cfg_check_valid(tpAniSirGlobal pMac, uint16_t cfgId,
  * @return QDF_STATUS_E_INVAL:  invalid CFG parameter ID
  */
 
-QDF_STATUS cfg_set_int(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t value)
+QDF_STATUS cfg_set_int(tpAniSirGlobal mac, uint16_t cfgId, uint32_t value)
 {
 	uint32_t index;
 	uint32_t control;
 	uint32_t mask;
 	QDF_STATUS status;
 
-	status = cfg_check_valid(pMac, cfgId, &index);
+	status = cfg_check_valid(mac, cfgId, &index);
 
 	if (QDF_STATUS_SUCCESS != status)
 		return status;
 
-	if ((pMac->cfg.gCfgIBufMin[index] > value) ||
-			(pMac->cfg.gCfgIBufMax[index] < value)) {
+	if ((mac->cfg.gCfgIBufMin[index] > value) ||
+			(mac->cfg.gCfgIBufMax[index] < value)) {
 		pe_warn("Value: %d out of range: [%d,%d] cfg id: %d, %s",
-				value, pMac->cfg.gCfgIBufMin[index],
-				pMac->cfg.gCfgIBufMax[index], cfgId,
+				value, mac->cfg.gCfgIBufMin[index],
+				mac->cfg.gCfgIBufMax[index], cfgId,
 				cfg_get_string(cfgId));
 		return QDF_STATUS_E_INVAL;
 	} else {
 		/* Write integer value */
-		pMac->cfg.gCfgIBuf[index] = value;
+		mac->cfg.gCfgIBuf[index] = value;
 
-		control = pMac->cfg.gCfgEntry[cfgId].control;
+		control = mac->cfg.gCfgEntry[cfgId].control;
 		/* Update hardware if necessary */
 		mask = control & CFG_CTL_NTF_MASK;
 		if ((mask & CFG_CTL_NTF_HW) != 0)
 			pe_debug("CFG notify HW not supported!!!");
 			/* notify other modules if necessary */
 			if ((mask & CFG_CTL_NTF_MASK) != 0)
-				notify(pMac, cfgId, mask);
+				notify(mac, cfgId, mask);
 	}
 	return status;
 } /*** end cfg_set_int ***/
@@ -297,19 +297,19 @@ QDF_STATUS cfg_set_int(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t value)
  * @return QDF_STATUS_E_INVAL:  invalid CFG parameter ID
  */
 
-QDF_STATUS wlan_cfg_get_int(tpAniSirGlobal pMac, uint16_t cfgId,
+QDF_STATUS wlan_cfg_get_int(tpAniSirGlobal mac, uint16_t cfgId,
 			    uint32_t *pValue)
 {
 	uint32_t index;
 	QDF_STATUS status;
 
-	status = cfg_check_valid(pMac, cfgId, &index);
+	status = cfg_check_valid(mac, cfgId, &index);
 
 	if (QDF_STATUS_SUCCESS != status)
 		return status;
 
 	/* Get integer value */
-	*pValue = pMac->cfg.gCfgIBuf[index];
+	*pValue = mac->cfg.gCfgIBuf[index];
 
 	return QDF_STATUS_SUCCESS;
 } /*** end wlan_cfg_get_int() ***/
@@ -343,10 +343,10 @@ QDF_STATUS wlan_cfg_get_int(tpAniSirGlobal pMac, uint16_t cfgId,
  *
  */
 
-QDF_STATUS cfg_set_str(tpAniSirGlobal pMac, uint16_t cfgId, uint8_t *pStr,
+QDF_STATUS cfg_set_str(tpAniSirGlobal mac, uint16_t cfgId, uint8_t *pStr,
 		       uint32_t length)
 {
-	return cfg_set_str_notify(pMac, cfgId, pStr, length, true);
+	return cfg_set_str_notify(mac, cfgId, pStr, length, true);
 }
 
 /* --------------------------------------------------------------------- */
@@ -377,7 +377,7 @@ QDF_STATUS cfg_set_str(tpAniSirGlobal pMac, uint16_t cfgId, uint8_t *pStr,
  *
  */
 
-QDF_STATUS cfg_set_str_notify(tpAniSirGlobal pMac, uint16_t cfgId,
+QDF_STATUS cfg_set_str_notify(tpAniSirGlobal mac, uint16_t cfgId,
 			      uint8_t *pStr, uint32_t length,
 			      int notifyMod)
 {
@@ -386,14 +386,14 @@ QDF_STATUS cfg_set_str_notify(tpAniSirGlobal pMac, uint16_t cfgId,
 	uint32_t control;
 	QDF_STATUS status;
 
-	status = cfg_check_valid(pMac, cfgId, &index);
+	status = cfg_check_valid(mac, cfgId, &index);
 
 	if (QDF_STATUS_SUCCESS != status)
 		return status;
 
-	pDst = &pMac->cfg.gCfgSBuf[index];
+	pDst = &mac->cfg.gCfgSBuf[index];
 	paramLen = *pDst++;
-	control = pMac->cfg.gCfgEntry[cfgId].control;
+	control = mac->cfg.gCfgEntry[cfgId].control;
 	if (length > paramLen) {
 		pe_warn("Invalid length: %d (>%d) cfg id: %d",
 			length, paramLen, cfgId);
@@ -412,7 +412,7 @@ QDF_STATUS cfg_set_str_notify(tpAniSirGlobal pMac, uint16_t cfgId,
 			}
 			/* notify other modules if necessary */
 			if ((mask & CFG_CTL_NTF_MASK) != 0) {
-				notify(pMac, cfgId, mask);
+				notify(mac, cfgId, mask);
 			}
 		}
 	}
@@ -445,20 +445,20 @@ QDF_STATUS cfg_set_str_notify(tpAniSirGlobal pMac, uint16_t cfgId,
  *
  */
 
-QDF_STATUS wlan_cfg_get_str(tpAniSirGlobal pMac, uint16_t cfgId,
+QDF_STATUS wlan_cfg_get_str(tpAniSirGlobal mac, uint16_t cfgId,
 			    uint8_t *pBuf, uint32_t *pLength)
 {
 	uint8_t *pSrc, *pSrcEnd;
 	uint32_t index;
 	QDF_STATUS status;
 
-	status = cfg_check_valid(pMac, cfgId, &index);
+	status = cfg_check_valid(mac, cfgId, &index);
 
 	if (QDF_STATUS_SUCCESS != status)
 		return status;
 
 	/* Get string */
-	pSrc = &pMac->cfg.gCfgSBuf[index];
+	pSrc = &mac->cfg.gCfgSBuf[index];
 	pSrc++;         /* skip over max length */
 	if (*pLength < *pSrc) {
 		pe_warn("Invalid length: %d (<%d) cfg id: %d",
@@ -496,18 +496,18 @@ QDF_STATUS wlan_cfg_get_str(tpAniSirGlobal pMac, uint16_t cfgId,
  *
  */
 
-QDF_STATUS wlan_cfg_get_str_max_len(tpAniSirGlobal pMac, uint16_t cfgId,
+QDF_STATUS wlan_cfg_get_str_max_len(tpAniSirGlobal mac, uint16_t cfgId,
 				    uint32_t *pLength)
 {
 	uint32_t index;
 	QDF_STATUS status;
 
-	status = cfg_check_valid(pMac, cfgId, &index);
+	status = cfg_check_valid(mac, cfgId, &index);
 
 	if (QDF_STATUS_SUCCESS != status)
 		return status;
 
-	*pLength = pMac->cfg.gCfgSBuf[index];
+	*pLength = mac->cfg.gCfgSBuf[index];
 
 	return status;
 } /*** end wlan_cfg_get_str_max_len() ***/
@@ -535,18 +535,18 @@ QDF_STATUS wlan_cfg_get_str_max_len(tpAniSirGlobal pMac, uint16_t cfgId,
  *
  */
 
-QDF_STATUS wlan_cfg_get_str_len(tpAniSirGlobal pMac, uint16_t cfgId,
+QDF_STATUS wlan_cfg_get_str_len(tpAniSirGlobal mac, uint16_t cfgId,
 				uint32_t *pLength)
 {
 	uint32_t index;
 	QDF_STATUS status;
 
-	status = cfg_check_valid(pMac, cfgId, &index);
+	status = cfg_check_valid(mac, cfgId, &index);
 
 	if (QDF_STATUS_SUCCESS != status)
 		return status;
 
-	*pLength = pMac->cfg.gCfgSBuf[index + 1];
+	*pLength = mac->cfg.gCfgSBuf[index + 1];
 
 	return status;
 
@@ -554,7 +554,7 @@ QDF_STATUS wlan_cfg_get_str_len(tpAniSirGlobal pMac, uint16_t cfgId,
 
 /**
  * cfg_get_dot11d_transmit_power() - regulatory max transmit power
- * @pMac: pointer to mac data
+ * @mac: pointer to mac data
  * @cfgId: configuration ID
  * @cfgLength: configuration length
  * @channel: channel number
@@ -562,7 +562,7 @@ QDF_STATUS wlan_cfg_get_str_len(tpAniSirGlobal pMac, uint16_t cfgId,
  * Return:  int8_t - power
  */
 static int8_t
-cfg_get_dot11d_transmit_power(tpAniSirGlobal pMac, uint16_t cfgId,
+cfg_get_dot11d_transmit_power(tpAniSirGlobal mac, uint16_t cfgId,
 			      uint32_t cfgLength, uint8_t channel)
 {
 	uint8_t *pCountryInfo = NULL;
@@ -583,7 +583,7 @@ cfg_get_dot11d_transmit_power(tpAniSirGlobal pMac, uint16_t cfgId,
 	/* The CSR will always update this CFG. The contents will be from country IE if regulatory domain
 	 * is enabled on AP else will contain EEPROM contents
 	 */
-	if (wlan_cfg_get_str(pMac, cfgId, pCountryInfo, &cfgLength) !=
+	if (wlan_cfg_get_str(mac, cfgId, pCountryInfo, &cfgLength) !=
 							QDF_STATUS_SUCCESS) {
 		qdf_mem_free(pCountryInfo);
 		pCountryInfo = NULL;
@@ -621,7 +621,7 @@ error:
    \param  channel
    \param  rfBand
    -----------------------------------------------------------------------*/
-int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal pMac,
+int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal mac,
 					     uint8_t channel)
 {
 	uint32_t cfgLength = 0;
@@ -655,7 +655,7 @@ int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal pMac,
 		return WMA_MAX_TXPOWER_INVALID;         /* Its return, not break. */
 	}
 
-	maxTxPwr = cfg_get_dot11d_transmit_power(pMac, cfgId, cfgLength, channel);
+	maxTxPwr = cfg_get_dot11d_transmit_power(mac, cfgId, cfgLength, channel);
 
 	return maxTxPwr;
 }
@@ -676,7 +676,7 @@ int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal pMac,
  * @return None
  */
 
-QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
+QDF_STATUS cfg_get_capability_info(tpAniSirGlobal mac, uint16_t *pCap,
 				   struct pe_session *sessionEntry)
 {
 	uint32_t val = 0;
@@ -701,15 +701,15 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 		val = sessionEntry->privacy;
 	} else {
 		/* PRIVACY bit */
-		val = pMac->mlme_cfg->wep_params.is_privacy_enabled;
+		val = mac->mlme_cfg->wep_params.is_privacy_enabled;
 	}
 	if (val)
 		pCapInfo->privacy = 1;
 
 	/* Short preamble bit */
-	if (pMac->mlme_cfg->ht_caps.short_preamble)
+	if (mac->mlme_cfg->ht_caps.short_preamble)
 		pCapInfo->shortPreamble =
-			pMac->mlme_cfg->ht_caps.short_preamble;
+			mac->mlme_cfg->ht_caps.short_preamble;
 
 	/* PBCC bit */
 	pCapInfo->pbcc = 0;
@@ -738,7 +738,7 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 		 * deleting the previous IBSS or in start BSS as part
 		 * of coalescing
 		 */
-		if (pMac->mlme_cfg->feature_flags.enable_short_slot_time_11g) {
+		if (mac->mlme_cfg->feature_flags.enable_short_slot_time_11g) {
 			pCapInfo->shortSlotTime =
 				sessionEntry->shortSlotTimeSupported;
 		}
@@ -746,7 +746,7 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 
 	/* Spectrum Management bit */
 	if (!LIM_IS_IBSS_ROLE(sessionEntry) && sessionEntry->lim11hEnable) {
-		if (wlan_cfg_get_int(pMac, WNI_CFG_11H_ENABLED, &val) !=
+		if (wlan_cfg_get_int(mac, WNI_CFG_11H_ENABLED, &val) !=
 		    QDF_STATUS_SUCCESS) {
 			pe_err("cfg get WNI_CFG_11H_ENABLED failed");
 			return QDF_STATUS_E_FAILURE;
@@ -755,11 +755,11 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 			pCapInfo->spectrumMgt = 1;
 	}
 	/* QoS bit */
-	if (pMac->mlme_cfg->wmm_params.qos_enabled)
+	if (mac->mlme_cfg->wmm_params.qos_enabled)
 		pCapInfo->qos = 1;
 
 	/* APSD bit */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_APSD_ENABLED, &val) !=
+	if (wlan_cfg_get_int(mac, WNI_CFG_APSD_ENABLED, &val) !=
 							QDF_STATUS_SUCCESS) {
 		pe_err("cfg get WNI_CFG_APSD_ENABLED failed");
 		return QDF_STATUS_E_FAILURE;
@@ -767,13 +767,13 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 	if (val)
 		pCapInfo->apsd = 1;
 
-	pCapInfo->rrm = pMac->rrm.rrmSmeContext.rrmConfig.rrm_enabled;
+	pCapInfo->rrm = mac->rrm.rrmSmeContext.rrmConfig.rrm_enabled;
 	pe_debug("RRM: %d", pCapInfo->rrm);
 	/* DSSS-OFDM */
 	/* FIXME : no config defined yet. */
 
 	/* Block ack bit */
-	val = pMac->mlme_cfg->feature_flags.enable_block_ack;
+	val = mac->mlme_cfg->feature_flags.enable_block_ack;
 	pCapInfo->delayedBA =
 		(uint16_t) ((val >> WNI_CFG_BLOCK_ACK_ENABLED_DELAYED) & 1);
 	pCapInfo->immediateBA =
@@ -798,12 +798,12 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
  *       2. Since PBCC, Channel agility and Extended capabilities
  *          are not supported, they're not set at CFG
  *
- * @param  pMac   Pointer to global MAC structure
+ * @param  mac   Pointer to global MAC structure
  * @param  caps   16-bit Capability Info field
  * @return None
  */
 
-void cfg_set_capability_info(tpAniSirGlobal pMac, uint16_t caps)
+void cfg_set_capability_info(tpAniSirGlobal mac, uint16_t caps)
 {
 }
 
@@ -828,10 +828,10 @@ void cfg_set_capability_info(tpAniSirGlobal pMac, uint16_t caps)
  *
  */
 
-void cfg_cleanup(tpAniSirGlobal pMac)
+void cfg_cleanup(tpAniSirGlobal mac)
 {
 	/* Set status to not-ready */
-	pMac->cfg.gCfgStatus = CFG_INCOMPLETE;
+	mac->cfg.gCfgStatus = CFG_INCOMPLETE;
 
 } /*** end CfgCleanup() ***/
 
@@ -855,7 +855,7 @@ void cfg_cleanup(tpAniSirGlobal pMac)
  *
  */
 
-static void notify(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t ntfMask)
+static void notify(tpAniSirGlobal mac, uint16_t cfgId, uint32_t ntfMask)
 {
 
 	struct scheduler_msg mmhMsg = {0};
@@ -865,13 +865,13 @@ static void notify(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t ntfMask)
 	mmhMsg.bodyptr = NULL;
 
 	if ((ntfMask & CFG_CTL_NTF_SCH) != 0)
-		sch_post_message(pMac, &mmhMsg);
+		sch_post_message(mac, &mmhMsg);
 
 	if ((ntfMask & CFG_CTL_NTF_LIM) != 0)
-		lim_post_msg_api(pMac, &mmhMsg);
+		lim_post_msg_api(mac, &mmhMsg);
 
 	if ((ntfMask & CFG_CTL_NTF_TARGET) != 0)
-		wma_post_ctrl_msg(pMac, &mmhMsg);
+		wma_post_ctrl_msg(mac, &mmhMsg);
 
 	/* notify ARQ */
 

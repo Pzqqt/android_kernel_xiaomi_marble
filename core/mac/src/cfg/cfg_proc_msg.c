@@ -245,7 +245,7 @@ void (*g_cfg_func[])(tpAniSirGlobal, uint16_t, uint32_t *) = {
  * @return None.
  *
  */
-void cfg_process_mb_msg(tpAniSirGlobal pMac, tSirMbMsg *pMsg)
+void cfg_process_mb_msg(tpAniSirGlobal mac, tSirMbMsg *pMsg)
 {
 	uint16_t index;
 	uint16_t len;
@@ -262,7 +262,7 @@ void cfg_process_mb_msg(tpAniSirGlobal pMac, tSirMbMsg *pMsg)
 	pParam = ((uint32_t *) pMsg) + 1;
 
 	/* Call processing function */
-	g_cfg_func[index] (pMac, len, pParam);
+	g_cfg_func[index] (mac, len, pParam);
 
 	/* Free up buffer */
 	qdf_mem_free(pMsg);
@@ -287,7 +287,7 @@ void cfg_process_mb_msg(tpAniSirGlobal pMac, tSirMbMsg *pMsg)
  * @return None
  *
  */
-static void proc_dnld_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam)
+static void proc_dnld_rsp(tpAniSirGlobal mac, uint16_t length, uint32_t *pParam)
 {
 	int32_t i;
 
@@ -321,17 +321,17 @@ static void proc_dnld_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam
 	pParam += (sizeof(tCfgBinHdr) >> 2);
 	pe_debug("CFG hdr totParams: %d intParams: %d strBufSize: %d/%d",
 		       pHdr->controlSize, pHdr->iBufSize, pHdr->sBufSize,
-		       pMac->cfg.gCfgMaxSBufSize);
+		       mac->cfg.gCfgMaxSBufSize);
 
 	if (pHdr->sBufSize > (UINT_MAX -
-		(((CFG_PARAM_MAX_NUM + 3 * pMac->cfg.gCfgMaxIBufSize) << 2) +
+		(((CFG_PARAM_MAX_NUM + 3 * mac->cfg.gCfgMaxIBufSize) << 2) +
 		sizeof(tCfgBinHdr)))) {
 		pe_warn("Invalid sBufSize coming from fw: %d", pHdr->sBufSize);
 		retVal = WNI_CFG_INVALID_LEN;
 		goto end;
 	}
 	expLen =
-		((CFG_PARAM_MAX_NUM + 3 * pMac->cfg.gCfgMaxIBufSize) << 2) +
+		((CFG_PARAM_MAX_NUM + 3 * mac->cfg.gCfgMaxIBufSize) << 2) +
 		pHdr->sBufSize + sizeof(tCfgBinHdr);
 
 	if (length != expLen) {
@@ -347,62 +347,62 @@ static void proc_dnld_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam
 		goto end;
 	}
 
-	if (pHdr->iBufSize != pMac->cfg.gCfgMaxIBufSize) {
+	if (pHdr->iBufSize != mac->cfg.gCfgMaxIBufSize) {
 		pe_warn("<CFG> Integer parameter count mismatch");
 		retVal = WNI_CFG_INVALID_LEN;
 		goto end;
 	}
 	/* Copy control array */
-	pDst = (uint32_t *) pMac->cfg.gCfgEntry;
+	pDst = (uint32_t *) mac->cfg.gCfgEntry;
 	pDstEnd = pDst + CFG_PARAM_MAX_NUM;
 	pSrc = pParam;
 	while (pDst < pDstEnd) {
 		*pDst++ = *pSrc++;
 	}
 	/* Copy default values */
-	pDst = pMac->cfg.gCfgIBuf;
-	pDstEnd = pDst + pMac->cfg.gCfgMaxIBufSize;
+	pDst = mac->cfg.gCfgIBuf;
+	pDstEnd = pDst + mac->cfg.gCfgMaxIBufSize;
 	while (pDst < pDstEnd) {
 		*pDst++ = *pSrc++;
 	}
 
 	/* Copy min values */
-	pDst = pMac->cfg.gCfgIBufMin;
-	pDstEnd = pDst + pMac->cfg.gCfgMaxIBufSize;
+	pDst = mac->cfg.gCfgIBufMin;
+	pDstEnd = pDst + mac->cfg.gCfgMaxIBufSize;
 	while (pDst < pDstEnd) {
 		*pDst++ = *pSrc++;
 	}
 
 	/* Copy max values */
-	pDst = pMac->cfg.gCfgIBufMax;
-	pDstEnd = pDst + pMac->cfg.gCfgMaxIBufSize;
+	pDst = mac->cfg.gCfgIBufMax;
+	pDstEnd = pDst + mac->cfg.gCfgMaxIBufSize;
 	while (pDst < pDstEnd) {
 		*pDst++ = *pSrc++;
 	}
 
-	for (i = 0; i < pMac->cfg.gCfgMaxIBufSize; i++)
-		if (pMac->cfg.gCfgIBuf[i] < pMac->cfg.gCfgIBufMin[i] ||
-		    pMac->cfg.gCfgIBuf[i] > pMac->cfg.gCfgIBufMax[i]) {
+	for (i = 0; i < mac->cfg.gCfgMaxIBufSize; i++)
+		if (mac->cfg.gCfgIBuf[i] < mac->cfg.gCfgIBufMin[i] ||
+		    mac->cfg.gCfgIBuf[i] > mac->cfg.gCfgIBufMax[i]) {
 			pe_debug("cfg id: %d Invalid def value: %d min: %d max: %d",
-					i, pMac->cfg.gCfgIBuf[i],
-				       pMac->cfg.gCfgIBufMin[i],
-				       pMac->cfg.gCfgIBufMax[i]);
+					i, mac->cfg.gCfgIBuf[i],
+				       mac->cfg.gCfgIBufMin[i],
+				       mac->cfg.gCfgIBufMax[i]);
 		}
 	/* Calculate max string buffer lengths for all string parameters */
-	bufEnd = pMac->cfg.gCfgMaxSBufSize;
+	bufEnd = mac->cfg.gCfgMaxSBufSize;
 	for (i = CFG_PARAM_MAX_NUM - 1; i >= 0; i--) {
-		if ((pMac->cfg.gCfgEntry[i].control & CFG_CTL_INT) != 0)
+		if ((mac->cfg.gCfgEntry[i].control & CFG_CTL_INT) != 0)
 			continue;
 
-		if ((pMac->cfg.gCfgEntry[i].control & CFG_CTL_VALID) == 0)
+		if ((mac->cfg.gCfgEntry[i].control & CFG_CTL_VALID) == 0)
 			continue;
 
-		bufStart = pMac->cfg.gCfgEntry[i].control & CFG_BUF_INDX_MASK;
-		pMac->cfg.gCfgSBuf[bufStart] =
+		bufStart = mac->cfg.gCfgEntry[i].control & CFG_BUF_INDX_MASK;
+		mac->cfg.gCfgSBuf[bufStart] =
 			(uint8_t) (bufEnd - bufStart - 2);
 
 		pe_debug("id: %d max: %d bufStart: %d bufEnd: %d", i,
-			       pMac->cfg.gCfgSBuf[bufStart], bufStart, bufEnd);
+			       mac->cfg.gCfgSBuf[bufStart], bufStart, bufEnd);
 		bufEnd = bufStart;
 	}
 
@@ -443,7 +443,7 @@ static void proc_dnld_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam
 
 		pe_debug("set str id: %d len: %d", paramId, paramLen);
 
-		if (cfg_set_str(pMac, (uint16_t) paramId, pStr, paramLen) !=
+		if (cfg_set_str(mac, (uint16_t) paramId, pStr, paramLen) !=
 		    QDF_STATUS_SUCCESS) {
 			pe_warn("setting str default param %d len %d",
 				       paramId, paramLen);
@@ -453,27 +453,27 @@ static void proc_dnld_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam
 	}
 
 	/* Set status to READY */
-	pMac->cfg.gCfgStatus = CFG_SUCCESS;
+	mac->cfg.gCfgStatus = CFG_SUCCESS;
 	retVal = WNI_CFG_SUCCESS;
 	pe_debug("<CFG> Completed successfully");
 
 end:
 
 	if (retVal != WNI_CFG_SUCCESS)
-		pMac->cfg.gCfgStatus = CFG_FAILURE;
+		mac->cfg.gCfgStatus = CFG_FAILURE;
 
 	/* Send response message to host */
-	pMac->cfg.gParamList[WNI_CFG_DNLD_CNF_RES] = retVal;
-	cfg_send_host_msg(pMac, WNI_CFG_DNLD_CNF, WNI_CFG_DNLD_CNF_LEN,
-			  WNI_CFG_DNLD_CNF_NUM, pMac->cfg.gParamList, 0, 0);
+	mac->cfg.gParamList[WNI_CFG_DNLD_CNF_RES] = retVal;
+	cfg_send_host_msg(mac, WNI_CFG_DNLD_CNF, WNI_CFG_DNLD_CNF_LEN,
+			  WNI_CFG_DNLD_CNF_NUM, mac->cfg.gParamList, 0, 0);
 
 	/* notify WMA that the config has downloaded */
 	mmhMsg.type = SIR_CFG_DOWNLOAD_COMPLETE_IND;
 	mmhMsg.bodyptr = NULL;
 	mmhMsg.bodyval = 0;
 
-	MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, mmhMsg.type));
-	if (wma_post_ctrl_msg(pMac, &mmhMsg) != QDF_STATUS_SUCCESS) {
+	MTRACE(mac_trace_msg_tx(mac, NO_SESSION, mmhMsg.type));
+	if (wma_post_ctrl_msg(mac, &mmhMsg) != QDF_STATUS_SUCCESS) {
 		pe_err("WMAPostMsgApi failed!");
 	}
 
@@ -499,7 +499,7 @@ end:
  * @return None
  *
  */
-static void proc_get_req(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam)
+static void proc_get_req(tpAniSirGlobal mac, uint16_t length, uint32_t *pParam)
 {
 	uint16_t cfgId, i;
 	uint32_t value, valueLen, result;
@@ -509,16 +509,16 @@ static void proc_get_req(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam)
 	for (i = 0; i < length / 4; i++)
 		pe_debug("[%2d] 0x%08x", i, pParam[i]);
 
-		if (!pMac->cfg.gCfgStatus) {
+		if (!mac->cfg.gCfgStatus) {
 			cfgId = (uint16_t) sir_read_u32_n((uint8_t *) pParam);
 			pe_debug("CFG not ready, param %d", cfgId);
-			pMac->cfg.gParamList[WNI_CFG_GET_RSP_RES] =
+			mac->cfg.gParamList[WNI_CFG_GET_RSP_RES] =
 				WNI_CFG_NOT_READY;
-			pMac->cfg.gParamList[WNI_CFG_GET_RSP_PID] = cfgId;
-			pMac->cfg.gParamList[WNI_CFG_GET_RSP_PLEN] = 0;
-			cfg_send_host_msg(pMac, WNI_CFG_GET_RSP,
+			mac->cfg.gParamList[WNI_CFG_GET_RSP_PID] = cfgId;
+			mac->cfg.gParamList[WNI_CFG_GET_RSP_PLEN] = 0;
+			cfg_send_host_msg(mac, WNI_CFG_GET_RSP,
 					  WNI_CFG_GET_RSP_PARTIAL_LEN, WNI_CFG_GET_RSP_NUM,
-					  pMac->cfg.gParamList, 0, 0);
+					  mac->cfg.gParamList, 0, 0);
 		} else {
 			/* Process all parameter ID's on the list */
 			while (length >= sizeof(uint32_t)) {
@@ -529,13 +529,13 @@ static void proc_get_req(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam)
 				pe_debug("Cfg get param %d", cfgId);
 				/* Check for valid parameter ID, etc... */
 				if (check_param
-					    (pMac, cfgId, CFG_CTL_RE, WNI_CFG_WO_PARAM,
+					    (mac, cfgId, CFG_CTL_RE, WNI_CFG_WO_PARAM,
 					    &result)) {
-					if ((pMac->cfg.gCfgEntry[cfgId].
+					if ((mac->cfg.gCfgEntry[cfgId].
 					     control & CFG_CTL_INT) != 0) {
 						/* Get integer parameter */
 						result =
-							(wlan_cfg_get_int(pMac, cfgId, &value)
+							(wlan_cfg_get_int(mac, cfgId, &value)
 							 ==
 							 QDF_STATUS_SUCCESS ? WNI_CFG_SUCCESS :
 							 WNI_CFG_OTHER_ERROR);
@@ -543,15 +543,15 @@ static void proc_get_req(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam)
 						valueLen = sizeof(uint32_t);
 					} else {
 						/* Get string parameter */
-						valueLen = sizeof(pMac->cfg.gSBuffer);
+						valueLen = sizeof(mac->cfg.gSBuffer);
 						result =
 							(wlan_cfg_get_str
-								 (pMac, cfgId, pMac->cfg.gSBuffer,
+								 (mac, cfgId, mac->cfg.gSBuffer,
 								 &valueLen)
 							 == QDF_STATUS_SUCCESS ? WNI_CFG_SUCCESS :
 							 WNI_CFG_OTHER_ERROR);
 						pValue =
-							(uint32_t *) pMac->cfg.gSBuffer;
+							(uint32_t *) mac->cfg.gSBuffer;
 					}
 				} else {
 					pe_warn("Check param failed, param %d",
@@ -560,16 +560,16 @@ static void proc_get_req(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam)
 				}
 
 				/* Send response message to host */
-				pMac->cfg.gParamList[WNI_CFG_GET_RSP_RES] = result;
-				pMac->cfg.gParamList[WNI_CFG_GET_RSP_PID] = cfgId;
-				pMac->cfg.gParamList[WNI_CFG_GET_RSP_PLEN] = valueLen;
+				mac->cfg.gParamList[WNI_CFG_GET_RSP_RES] = result;
+				mac->cfg.gParamList[WNI_CFG_GET_RSP_PID] = cfgId;
+				mac->cfg.gParamList[WNI_CFG_GET_RSP_PLEN] = valueLen;
 
 				/* We need to round up buffer length to word-increment */
 				valueLen = (((valueLen + 3) >> 2) << 2);
-				cfg_send_host_msg(pMac, WNI_CFG_GET_RSP,
+				cfg_send_host_msg(mac, WNI_CFG_GET_RSP,
 						  WNI_CFG_GET_RSP_PARTIAL_LEN + valueLen,
 						  WNI_CFG_GET_RSP_NUM,
-						  pMac->cfg.gParamList, valueLen, pValue);
+						  mac->cfg.gParamList, valueLen, pValue);
 
 				/* Decrement length */
 				length -= sizeof(uint32_t);
@@ -604,7 +604,7 @@ static void proc_get_req(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam)
  *
  */
 static uint8_t
-check_param(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t flag,
+check_param(tpAniSirGlobal mac, uint16_t cfgId, uint32_t flag,
 	    uint32_t failedResult, uint32_t *pResult)
 {
 	/* Check if parameter ID is out of bound */
@@ -613,15 +613,15 @@ check_param(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t flag,
 		*pResult = WNI_CFG_INVALID_PID;
 	} else {
 		/* Check if parameter is valid */
-		if ((pMac->cfg.gCfgEntry[cfgId].control & CFG_CTL_VALID) == 0) {
+		if ((mac->cfg.gCfgEntry[cfgId].control & CFG_CTL_VALID) == 0) {
 			pe_warn("Param id: %d not valid", cfgId);
 			*pResult = WNI_CFG_INVALID_PID;
 		} else {
 			/* Check control field against flag */
-			if ((pMac->cfg.gCfgEntry[cfgId].control & flag) == 0) {
+			if ((mac->cfg.gCfgEntry[cfgId].control & flag) == 0) {
 				pe_debug("Param id: %d wrong permissions: %x",
 					       cfgId,
-					       pMac->cfg.gCfgEntry[cfgId].control);
+					       mac->cfg.gCfgEntry[cfgId].control);
 				*pResult = failedResult;
 			} else
 				return true;
@@ -644,14 +644,14 @@ check_param(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t flag,
  *
  * NOTE:
  *
- * @param pMac: Pointer to Mac Structure
+ * @param mac: Pointer to Mac Structure
  *
  * @return None
  *
  */
 
 void
-process_cfg_download_req(tpAniSirGlobal pMac)
+process_cfg_download_req(tpAniSirGlobal mac)
 {
 	int32_t i;
 	uint32_t    index;
@@ -682,46 +682,46 @@ process_cfg_download_req(tpAniSirGlobal pMac)
 		} else {
 			index = 0;
 		}
-		pMac->cfg.gCfgEntry[i].control = cfg_static[i].control | index;
+		mac->cfg.gCfgEntry[i].control = cfg_static[i].control | index;
 	}
 
 	/*Fill the SBUF wih maxLength*/
-	bufEnd = pMac->cfg.gCfgMaxSBufSize;
+	bufEnd = mac->cfg.gCfgMaxSBufSize;
 	for (i = CFG_PARAM_MAX_NUM - 1; i >= 0; i--) {
-		if ((pMac->cfg.gCfgEntry[i].control & CFG_CTL_INT) != 0)
+		if ((mac->cfg.gCfgEntry[i].control & CFG_CTL_INT) != 0)
 			continue;
 
-		if ((pMac->cfg.gCfgEntry[i].control & CFG_CTL_VALID) == 0)
+		if ((mac->cfg.gCfgEntry[i].control & CFG_CTL_VALID) == 0)
 			continue;
 
-		bufStart = pMac->cfg.gCfgEntry[i].control & CFG_BUF_INDX_MASK;
-		pMac->cfg.gCfgSBuf[bufStart] = (uint8_t)(bufEnd - bufStart - 2);
+		bufStart = mac->cfg.gCfgEntry[i].control & CFG_BUF_INDX_MASK;
+		mac->cfg.gCfgSBuf[bufStart] = (uint8_t)(bufEnd - bufStart - 2);
 
 		pe_debug("id: %d max: %d bufStart: %d bufEnd: %d",
-					i, pMac->cfg.gCfgSBuf[bufStart],
+					i, mac->cfg.gCfgSBuf[bufStart],
 						bufStart, bufEnd);
 			bufEnd = bufStart;
 	}
 
 	for (i = 0; i < CFG_PARAM_MAX_NUM ; i++) {
-		index = pMac->cfg.gCfgEntry[i].control & CFG_BUF_INDX_MASK;
+		index = mac->cfg.gCfgEntry[i].control & CFG_BUF_INDX_MASK;
 
-		if ((pMac->cfg.gCfgEntry[i].control & CFG_CTL_INT) != 0) {
-			pMac->cfg.gCfgIBufMin[index] = cfg_static[i].cfgIMin;
-			pMac->cfg.gCfgIBufMax[index] = cfg_static[i].cfgIMax;
-			pMac->cfg.gCfgIBuf[index]    = cfg_static[i].cfgIVal;
+		if ((mac->cfg.gCfgEntry[i].control & CFG_CTL_INT) != 0) {
+			mac->cfg.gCfgIBufMin[index] = cfg_static[i].cfgIMin;
+			mac->cfg.gCfgIBufMax[index] = cfg_static[i].cfgIMax;
+			mac->cfg.gCfgIBuf[index]    = cfg_static[i].cfgIVal;
 		} else {
 			uint8_t maxSavedLen;
 
-			if ((pMac->cfg.gCfgEntry[i].control & CFG_CTL_VALID) == 0)
+			if ((mac->cfg.gCfgEntry[i].control & CFG_CTL_VALID) == 0)
 				continue;
-			if (index >= pMac->cfg.gCfgMaxSBufSize) {
+			if (index >= mac->cfg.gCfgMaxSBufSize) {
 				pe_debug("No space id:%d BufSize:%d index:%d",
-					 i, pMac->cfg.gCfgMaxSBufSize, index);
+					 i, mac->cfg.gCfgMaxSBufSize, index);
 				continue;
 			}
 
-			pDstTest = &pMac->cfg.gCfgSBuf[index];
+			pDstTest = &mac->cfg.gCfgSBuf[index];
 			pStrCfg = (cfgstatic_string*)cfg_static[i].pStrData;
 			pSrcTest = pStrCfg->data;
 			if ((pDstTest == NULL) || (pStrCfg == NULL) ||
@@ -741,10 +741,10 @@ process_cfg_download_req(tpAniSirGlobal pMac)
 	}
 
 	/* Set status to READY */
-	pMac->cfg.gCfgStatus = CFG_SUCCESS;
+	mac->cfg.gCfgStatus = CFG_SUCCESS;
 	retVal = WNI_CFG_SUCCESS;
 	pe_debug("<CFG> Completed successfully");
 
-	pMac->cfg.gParamList[WNI_CFG_DNLD_CNF_RES] = retVal;
+	mac->cfg.gParamList[WNI_CFG_DNLD_CNF_RES] = retVal;
 
 } /*** end ProcessDownloadReq() ***/
