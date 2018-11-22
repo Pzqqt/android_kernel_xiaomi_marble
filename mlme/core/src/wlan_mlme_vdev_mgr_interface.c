@@ -124,7 +124,8 @@ static QDF_STATUS sta_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 					     uint16_t event_data_len,
 					     void *event_data)
 {
-	return QDF_STATUS_SUCCESS;
+	return lim_sta_mlme_vdev_restart_send(vdev_mlme, event_data_len,
+					    event_data);
 }
 
 /**
