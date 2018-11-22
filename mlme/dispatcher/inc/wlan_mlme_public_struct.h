@@ -946,6 +946,7 @@ struct wlan_mlme_acs {
  * @active_per_channel:      obss scan active total duration per channel
  * @width_trans_delay:       obss width transition delay
  * @scan_activity_threshold: obss scan activity threshold
+ * @is_override_ht20_40_24g: use channel bonding in 2.4 GHz
  */
 struct wlan_mlme_obss_ht40 {
 	uint32_t active_dwelltime;
@@ -955,6 +956,7 @@ struct wlan_mlme_obss_ht40 {
 	uint32_t active_per_channel;
 	uint32_t width_trans_delay;
 	uint32_t scan_activity_threshold;
+	bool is_override_ht20_40_24g;
 };
 
 /**

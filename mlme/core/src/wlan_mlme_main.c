@@ -1127,7 +1127,10 @@ static void mlme_init_obss_ht40_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_default(CFG_OBSS_HT40_WIDTH_CH_TRANSITION_DELAY);
 	obss_ht40->scan_activity_threshold = (uint32_t)
 		cfg_default(CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD);
+	obss_ht40->is_override_ht20_40_24g =
+		cfg_get(psoc, CFG_OBSS_HT40_OVERRIDE_HT40_20_24GHZ);
 }
+
 static void mlme_init_threshold_cfg(struct wlan_objmgr_psoc *psoc,
 				    struct wlan_mlme_threshold *threshold)
 {

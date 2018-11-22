@@ -196,6 +196,29 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"obss ht40 width transition delay")
 
+/*
+ * <ini>
+ * override_ht20_40_24g - Use channel bonding in 2.4GHz from supplicant
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini used to set whether use channel Bonding in 2.4GHz from supplicant
+ * if gChannelBondingMode24GHz is set
+ *
+ * Related: gChannelBondingMode24GHz
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_OBSS_HT40_OVERRIDE_HT40_20_24GHZ CFG_INI_BOOL( \
+		"override_ht20_40_24g", \
+		0, \
+		"Use channel bonding in 24 GHz")
+
 #define CFG_OBSS_HT40_ALL \
 	CFG(CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME) \
 	CFG(CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME) \
@@ -203,6 +226,7 @@
 	CFG(CFG_OBSS_HT40_SCAN_PASSIVE_TOTAL_PER_CHANNEL) \
 	CFG(CFG_OBSS_HT40_SCAN_ACTIVE_TOTAL_PER_CHANNEL) \
 	CFG(CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD) \
-	CFG(CFG_OBSS_HT40_WIDTH_CH_TRANSITION_DELAY)
+	CFG(CFG_OBSS_HT40_WIDTH_CH_TRANSITION_DELAY) \
+	CFG(CFG_OBSS_HT40_OVERRIDE_HT40_20_24GHZ)
 
 #endif /* CFG_MLME_OBSS_HT40_H__ */
