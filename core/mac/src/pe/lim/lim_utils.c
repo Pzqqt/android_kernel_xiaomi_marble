@@ -1943,7 +1943,7 @@ lim_decide_sta_protection(tpAniSirGlobal mac_ctx,
 }
 
 /**
- * lim_process_channel_switch_timeout()
+ * __lim_process_channel_switch_timeout()
  *
  ***FUNCTION:
  * This function is invoked when Channel Switch Timer expires at
@@ -1955,7 +1955,7 @@ lim_decide_sta_protection(tpAniSirGlobal mac_ctx,
  * @param  mac           - Pointer to Global MAC structure
  * @return None
  */
-void lim_process_channel_switch_timeout(tpAniSirGlobal mac)
+static void __lim_process_channel_switch_timeout(tpAniSirGlobal mac)
 {
 	struct pe_session *psessionEntry = NULL;
 	uint8_t channel; /* This is received and stored from channelSwitch Action frame */
@@ -2050,6 +2050,34 @@ void lim_process_channel_switch_timeout(tpAniSirGlobal mac)
 		return; /* Please note, this is 'return' and not 'break' */
 	}
 }
+
+#ifdef CONFIG_VDEV_SM
+void lim_process_channel_switch_timeout(tpAniSirGlobal mac_ctx)
+{
+	tpPESession session_entry = NULL;
+	QDF_STATUS status;
+
+	session_entry = pe_find_session_by_session_id(
+		mac_ctx,
+		mac_ctx->lim.limTimers.gLimChannelSwitchTimer.sessionId);
+	mlme_set_chan_switch_in_progress(session_entry->vdev, true);
+	status = wlan_vdev_mlme_sm_deliver_evt(
+					session_entry->vdev,
+					WLAN_VDEV_SM_EV_FW_VDEV_RESTART,
+					sizeof(*mac_ctx),
+					mac_ctx);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Failed to post WLAN_VDEV_SM_EV_FW_VDEV_RESTART for vdevid %d",
+		       session_entry->smeSessionId);
+		mlme_set_chan_switch_in_progress(session_entry->vdev, false);
+	}
+}
+#else
+void lim_process_channel_switch_timeout(tpAniSirGlobal mac)
+{
+	__lim_process_channel_switch_timeout(mac);
+}
+#endif
 
 /**
  * lim_update_channel_switch() - This Function updates channel switch
@@ -2261,6 +2289,9 @@ void lim_switch_channel_cback(tpAniSirGlobal mac, QDF_STATUS status,
 {
 	struct scheduler_msg mmhMsg = { 0 };
 	tSirSmeSwitchChannelInd *pSirSmeSwitchChInd;
+#ifdef CONFIG_VDEV_SM
+	QDF_STATUS evt_status;
+#endif
 
 	psessionEntry->currentOperChannel = psessionEntry->currentReqChannel;
 
@@ -2307,6 +2338,16 @@ void lim_switch_channel_cback(tpAniSirGlobal mac, QDF_STATUS status,
 			 psessionEntry->peSessionId, mmhMsg.type));
 
 	sys_process_mmh_msg(mac, &mmhMsg);
+#ifdef CONFIG_VDEV_SM
+	evt_status = wlan_vdev_mlme_sm_deliver_evt(
+				psessionEntry->vdev,
+				WLAN_VDEV_SM_EV_START_SUCCESS,
+				sizeof(*psessionEntry), psessionEntry);
+	if (QDF_IS_STATUS_ERROR(evt_status)) {
+		pe_err("Failed to post WLAN_VDEV_SM_EV_START_SUCCESS for vdevid %d",
+		       psessionEntry->smeSessionId);
+	}
+#endif
 }
 
 /**
@@ -7977,12 +8018,33 @@ QDF_STATUS lim_sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS lim_sta_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
+					  uint16_t data_len, void *data)
+{
+	if (!vdev_mlme) {
+		pe_err("vdev_mlme is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	if (!data) {
+		pe_err("event_data is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	if (mlme_is_chan_switch_in_progress(vdev_mlme->vdev))
+		__lim_process_channel_switch_timeout((tpAniSirGlobal)data);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS lim_sta_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data)
 {
 	QDF_STATUS status;
 	bool connection_fail;
 
+	if (!vdev_mlme) {
+		pe_err("vdev_mlme is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 	if (!data) {
 		pe_err("event_data is NULL");
 		return QDF_STATUS_E_INVAL;

@@ -4826,12 +4826,36 @@ void wma_remove_peer_on_add_bss_failure(tpAddBssParams add_bss_params)
 QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 				uint16_t data_len, void *data)
 {
-	struct vdev_up_params *param;
+	struct vdev_up_params param;
+	uint8_t vdev_id;
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+	QDF_STATUS status;
+	struct wma_txrx_node *iface;
 
-	param = (struct vdev_up_params *)data;
-	wma_send_vdev_up_to_fw(wma, param,
-			       wma->interfaces[param->vdev_id].bssid);
+	if (!wma) {
+		WMA_LOGE("%s wma handle is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+	vdev_id = wlan_vdev_get_id(vdev_mlme->vdev);
+	param.vdev_id = vdev_id;
+	iface = &wma->interfaces[vdev_id];
+	param.assoc_id = iface->aid;
+
+	status = wma_send_vdev_up_to_fw(wma, &param, iface->bssid);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("%s: Failed to send vdev up cmd: vdev %d bssid %pM",
+			 __func__, vdev_id, iface->bssid);
+		policy_mgr_set_do_hw_mode_change_flag(
+			wma->psoc, false);
+		status = QDF_STATUS_E_FAILURE;
+	} else {
+		wma_set_vdev_mgmt_rate(wma, vdev_id);
+		if (iface->beacon_filter_enabled)
+			wma_add_beacon_filter(
+					wma,
+					&iface->beacon_filter);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4859,6 +4883,13 @@ QDF_STATUS wma_sta_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	enum vdev_assoc_type assoc_type;
+
+	if (mlme_is_chan_switch_in_progress(vdev_mlme->vdev)) {
+		wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
+					   data, 0);
+		mlme_set_chan_switch_in_progress(vdev_mlme->vdev, false);
+		return QDF_STATUS_SUCCESS;
+	}
 
 	assoc_type = mlme_get_assoc_type(vdev_mlme->vdev);
 	switch (assoc_type) {

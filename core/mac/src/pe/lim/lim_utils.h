@@ -1535,6 +1535,34 @@ QDF_STATUS lim_sta_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data);
 
 /**
+ * lim_sta_mlme_vdev_start_send() - send VDEV start
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes vdev start
+ *
+ * Return: SUCCESS on successful completion of vdev start
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS lim_sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
+					uint16_t data_len, void *data);
+
+/**
+ * lim_sta_mlme_vdev_restart_send() - send VDEV restart
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @data_len: data size
+ * @data: event data
+ *
+ * API invokes vdev restart
+ *
+ * Return: SUCCESS on successful completion of vdev restart
+ *         FAILURE, if it fails due to any
+ */
+QDF_STATUS lim_sta_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
+					  uint16_t data_len, void *data);
+
+/**
  * lim_ap_mlme_vdev_start_send() - Invokes VDEV start operation
  * @vdev_mlme_obj:  VDEV MLME comp object
  * @data_len: data size
@@ -1547,21 +1575,6 @@ QDF_STATUS lim_sta_mlme_vdev_stop_send(struct vdev_mlme_obj *vdev_mlme,
  */
 QDF_STATUS lim_ap_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *event);
-
-/**
- * lim_sta_mlme_vdev_start_send() - Invokes VDEV start operation
- * @vdev_mlme_obj:  VDEV MLME comp object
- * @data_len: data size
- * @data: event data
- *
- * API invokes VDEV start operation
- *
- * Return: SUCCESS on successful completion of start operation
- *         FAILURE, if it fails due to any
- */
-QDF_STATUS lim_sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
-					uint16_t data_len, void *data);
-
 /*
  * lim_ap_mlme_vdev_update_beacon() - Updates beacon
  * @vdev_mlme_obj:  VDEV MLME comp object

@@ -1250,7 +1250,6 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	struct wma_target_req *req_msg;
 	struct wma_txrx_node *iface;
 	struct vdev_up_params param = {0};
-	QDF_STATUS status;
 	int err;
 	wmi_host_channel_width chanwidth;
 	target_resource_config *wlan_res_cfg;
@@ -1260,6 +1259,8 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 #endif
 #ifdef CONFIG_VDEV_SM
 	enum wlan_vdev_sm_evt  event;
+#else
+	QDF_STATUS status;
 #endif
 	if (!psoc) {
 		WMA_LOGE("%s: psoc is NULL", __func__);
@@ -1425,7 +1426,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			WMA_LOGD("%s:vdev_id %d chanwidth %d status %d",
 				__func__, resp_event->vdev_id,
 				chanwidth, err);
-
+#ifndef CONFIG_VDEV_SM
 			param.vdev_id = resp_event->vdev_id;
 			param.assoc_id = iface->aid;
 			status = wma_send_vdev_up_to_fw(wma, &param,
@@ -1433,24 +1434,24 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			if (QDF_IS_STATUS_ERROR(status)) {
 				WMA_LOGE("%s:vdev_up failed vdev_id %d",
 					 __func__, resp_event->vdev_id);
-#ifndef CONFIG_VDEV_SM
+
 				wma_vdev_set_mlme_state(wma,
 					resp_event->vdev_id, WLAN_VDEV_S_STOP);
-#endif
+
 				policy_mgr_set_do_hw_mode_change_flag(
 					wma->psoc, false);
 			} else {
-#ifndef CONFIG_VDEV_SM
 				wma_vdev_set_mlme_state(wma,
 					resp_event->vdev_id, WLAN_VDEV_S_RUN);
-#endif
 				if (iface->beacon_filter_enabled)
 					wma_add_beacon_filter(wma,
 							&iface->beacon_filter);
 			}
+#endif
 		}
 #ifdef CONFIG_VDEV_SM
-		if (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id))
+		if (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id) ||
+		    mlme_is_chan_switch_in_progress(iface->vdev))
 			event = WLAN_VDEV_SM_EV_RESTART_RESP;
 		else
 			event = WLAN_VDEV_SM_EV_START_RESP;
@@ -5370,10 +5371,9 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 #ifdef CONFIG_VDEV_SM
 	status = wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
 					       WLAN_VDEV_SM_EV_START_SUCCESS,
-					       sizeof(param), (void *)&param);
+					       0, NULL);
 #else
 	status = wma_send_vdev_up_to_fw(wma, &param, params->bssId);
-#endif
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("%s: Failed to send vdev up cmd: vdev %d bssid %pM",
 			 __func__, params->smesessionId, params->bssId);
@@ -5382,12 +5382,10 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		status = QDF_STATUS_E_FAILURE;
 	} else {
 		wma_set_vdev_mgmt_rate(wma, params->smesessionId);
-#ifndef CONFIG_VDEV_SM
 		wma_vdev_set_mlme_state(wma, params->smesessionId,
 				WLAN_VDEV_S_RUN);
-#endif
 	}
-
+#endif
 	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STARTED);
 	WMA_LOGD("%s: STA mode (type %d subtype %d) BSS is started",
 		 __func__, iface->type, iface->sub_type);
