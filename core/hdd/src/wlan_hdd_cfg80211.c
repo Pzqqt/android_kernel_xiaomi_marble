@@ -16765,18 +16765,21 @@ wlan_hdd_check_ht20_ht40_ind(struct hdd_context *hdd_ctx,
 			     struct cfg80211_connect_params *req)
 {
 	struct csr_roam_profile *roam_profile;
+	bool is_override_ht20_40_24g;
 
 	roam_profile = hdd_roam_profile(adapter);
 
 	roam_profile->force_24ghz_in_ht20 = false;
 
-	if (hdd_ctx->config->override_ht20_40_24g &&
+	ucfg_mlme_is_override_ht20_40_24g(hdd_ctx->psoc,
+					  &is_override_ht20_40_24g);
+	if (is_override_ht20_40_24g &&
 	    !(req->ht_capa.cap_info & IEEE80211_HT_CAP_SUP_WIDTH_20_40))
 		roam_profile->force_24ghz_in_ht20 = true;
 
 	hdd_debug("req->ht_capa.cap_info %x override_ht20_40_24g %d",
 		  req->ht_capa.cap_info,
-		  hdd_ctx->config->override_ht20_40_24g);
+		  is_override_ht20_40_24g);
 }
 #else
 static inline void

@@ -332,6 +332,22 @@ ucfg_mlme_get_tgt_gtx_usr_cfg(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
+ucfg_mlme_is_override_ht20_40_24g(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_OBSS_HT40_OVERRIDE_HT40_20_24GHZ);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+	*val = mlme_obj->cfg.obss_ht40.is_override_ht20_40_24g;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 ucfg_mlme_get_roaming_offload(struct wlan_objmgr_psoc *psoc,
 			      bool *val)
 {
