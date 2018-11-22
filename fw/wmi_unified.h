@@ -10438,6 +10438,25 @@ typedef struct {
  *               (value 1 is enabled, value 0 is disabled)
  *               bits 1:5 are for ring 32 (i.e. ring id value
  *               selected from 0 to 31 values)
+ *               bit 8 for peer based ring selection enabled or not
+ *               (value 1 is enabled, value 0 is disabled
+ *                bits 9-15 are valid when bit 8 is set to 1)
+ *               bit 9 is for ring selection enabled for filter-pass
+ *               unicast or not (value 1 is enabled, value 0 is disabled)
+ *               bit 10 is for ring selection enabled for filter-pass
+ *               mcast or not (value 1 is enabled, value 0 is disabled)
+ *               bit 11 is for ring selection enabled for filter-pass
+ *               BAR or not (value 1 is enabled, value 0 is disabled)
+ *               bit 12-13 is for source ring selection value
+ *               (value 0 for wbm2rxdma buf ring,
+ *                value 1 for fw2rxdma buf ring,
+ *                value 2 for sw2rxdma buf ring,
+ *                value 3 for no buf ring)
+ *               bit 14-15 is for destination ring selection value
+ *               (value 0 for wbm release ring,
+ *                value 1 for rxdma2fw ring,
+ *                value 2 for rxdma2sw ring,
+ *                value 3 for rxdma2reo ring)
  */
 #define WMI_PEER_SET_DEFAULT_ROUTING                    0x13
 /* peer NSS for VHT160 - Extended NSS support */

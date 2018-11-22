@@ -173,9 +173,10 @@
  * 3.56 Fix HTT_RX_RING_SELECTION_CFG_PKT_TYPE_ENABLE bit-mask defs
  * 3.57 Add support for in-band data within HTT_T2H_MSG_TYPE_CFR_DUMP_COMPL_IND
  * 3.58 Add optional MSDU ack RSSI array to end of HTT_T2H TX_COMPL_IND msg
+ * 3.59 Add HTT_RXDMA_HOST_BUF_RING2 def
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 58
+#define HTT_CURRENT_VERSION_MINOR 59
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -4389,6 +4390,7 @@ enum htt_srng_ring_id {
     HTT_HOST1_TO_FW_RXBUF_RING,    /* (mobile only) used by host to provide remote RX buffers */
     HTT_HOST2_TO_FW_RXBUF_RING,    /* (mobile only) second ring used by host to provide remote RX buffers */
     HTT_RXDMA_NON_MONITOR_DEST_RING, /* Per MDPU indication to host for non-monitor RxDMA traffic upload */
+    HTT_RXDMA_HOST_BUF_RING2,      /* Second ring used by FW to feed removed buffers and update removed packets */
     /* Add Other SRING which can't be directly configured by host software above this line */
 };
 
