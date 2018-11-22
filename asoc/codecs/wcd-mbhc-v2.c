@@ -777,7 +777,7 @@ void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
 	enum snd_jack_types jack_type;
 
 	if (mbhc->deinit_in_progress) {
-		pr_info("%s: mbhc deinit in progess: ignore report\n");
+		pr_info("%s: mbhc deinit in progess: ignore report\n", __func__);
 		return;
 	}
 
