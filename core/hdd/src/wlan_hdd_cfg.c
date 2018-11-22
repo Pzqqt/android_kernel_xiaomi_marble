@@ -369,13 +369,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_OPERATING_CHANNEL_MIN,
 		     CFG_OPERATING_CHANNEL_MAX),
 
-	REG_VARIABLE(CFG_SHORT_SLOT_TIME_ENABLED_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, ShortSlotTimeEnabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_SHORT_SLOT_TIME_ENABLED_DEFAULT,
-		     CFG_SHORT_SLOT_TIME_ENABLED_MIN,
-		     CFG_SHORT_SLOT_TIME_ENABLED_MAX),
-
 	REG_VARIABLE(CFG_11D_SUPPORT_ENABLED_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, Is11dSupportEnabled,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
@@ -1179,13 +1172,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_DFS_PNO_CHNL_SCAN_MIN,
 		     CFG_ENABLE_DFS_PNO_CHNL_SCAN_MAX),
 
-	REG_VARIABLE(CFG_SHORT_GI_40MHZ_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, ShortGI40MhzEnable,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_SHORT_GI_40MHZ_DEFAULT,
-		     CFG_SHORT_GI_40MHZ_MIN,
-		     CFG_SHORT_GI_40MHZ_MAX),
-
 	REG_DYNAMIC_VARIABLE(CFG_REPORT_MAX_LINK_SPEED, WLAN_PARAM_Integer,
 			     struct hdd_config, reportMaxLinkSpeed,
 			     VAR_FLAGS_OPTIONAL |
@@ -1350,20 +1336,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_SCAN_AGING_PARAM_DEFAULT,
 		     CFG_SCAN_AGING_PARAM_MIN,
 		     CFG_SCAN_AGING_PARAM_MAX),
-
-	REG_VARIABLE(CFG_TX_LDPC_ENABLE_FEATURE, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_tx_ldpc,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TX_LDPC_ENABLE_FEATURE_DEFAULT,
-		     CFG_TX_LDPC_ENABLE_FEATURE_MIN,
-		     CFG_TX_LDPC_ENABLE_FEATURE_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_RX_LDPC, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_rx_ldpc,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_RX_LDPC_DEFAULT,
-		     CFG_ENABLE_RX_LDPC_MIN,
-		     CFG_ENABLE_RX_LDPC_MAX),
 
 	REG_VARIABLE(CFG_IBSS_ADHOC_CHANNEL_5GHZ_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, AdHocChannel5G,
@@ -3783,7 +3755,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	/* Config params obtained from the registry
 	 * To Do: set regulatory information here
 	 */
-	smeConfig->csrConfig.shortSlotTime = pConfig->ShortSlotTimeEnabled;
 	smeConfig->csrConfig.Is11dSupportEnabled = pConfig->Is11dSupportEnabled;
 
 	smeConfig->csrConfig.phyMode =
@@ -3954,9 +3925,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	/* Scan Results Aging Time out value */
 	smeConfig->csrConfig.scanCfgAgingTime = pConfig->scanAgingTimeout;
-
-	smeConfig->csrConfig.enable_tx_ldpc = pConfig->enable_tx_ldpc;
-	smeConfig->csrConfig.enable_rx_ldpc = pConfig->enable_rx_ldpc;
 
 	smeConfig->csrConfig.isCoalesingInIBSSAllowed =
 		hdd_ctx->config->isCoalesingInIBSSAllowed;

@@ -1050,7 +1050,6 @@ typedef struct tagCsrConfigParam {
 	bool Is11eSupportEnabled;
 	bool Is11dSupportEnabled;
 	bool Is11hSupportEnabled;
-	bool shortSlotTime;
 	bool ProprietaryRatesEnabled;
 	uint8_t AdHocChannel24;
 	uint8_t AdHocChannel5G;
@@ -1134,8 +1133,6 @@ typedef struct tagCsrConfigParam {
 	bool isRoamOffloadScanEnabled;
 	bool bFastRoamInConIniFeatureEnabled;
 	uint8_t scanCfgAgingTime;
-	uint8_t enable_tx_ldpc;
-	uint8_t enable_rx_ldpc;
 	uint8_t disable_high_ht_mcs_2x2;
 	uint32_t ho_delay_for_rx;
 	uint32_t min_delay_btw_roam_scans;

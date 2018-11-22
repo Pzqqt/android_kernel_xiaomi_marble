@@ -141,29 +141,6 @@ struct hdd_context;
 
 /*
  * <ini>
- * gShortSlotTimeEnabled - It will set slot timing slot.
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to set default timing slot.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_SHORT_SLOT_TIME_ENABLED_NAME       "gShortSlotTimeEnabled"
-#define CFG_SHORT_SLOT_TIME_ENABLED_MIN        WNI_CFG_SHORT_SLOT_TIME_STAMIN
-#define CFG_SHORT_SLOT_TIME_ENABLED_MAX        WNI_CFG_SHORT_SLOT_TIME_STAMAX
-#define CFG_SHORT_SLOT_TIME_ENABLED_DEFAULT    WNI_CFG_SHORT_SLOT_TIME_STADEF
-
-/*
- * <ini>
  * g11dSupportEnabled - Enable/Disable 11d support
  * @Min: 0
  * @Max: 1
@@ -3504,29 +3481,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gShortGI40Mhz - It will check gShortGI20Mhz and
- * gShortGI40Mhz from session entry
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to set default gShortGI40Mhz
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_SHORT_GI_40MHZ_NAME                "gShortGI40Mhz"
-#define CFG_SHORT_GI_40MHZ_MIN                 0
-#define CFG_SHORT_GI_40MHZ_MAX                 1
-#define CFG_SHORT_GI_40MHZ_DEFAULT             1
-
-/*
- * <ini>
  * gEnableMCCMode - Enable/Disable MCC feature.
  * @Min: 0
  * @Max: 1
@@ -3825,56 +3779,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_TX_STBC_MIN                   (0)
 #define CFG_ENABLE_TX_STBC_MAX                   (1)
 #define CFG_ENABLE_TX_STBC_DEFAULT               (0)
-
-/*
- * <ini>
- * gTxLdpcEnable - Config Param to enable Tx LDPC capability
- * @Min: 0
- * @Max: 3
- * @Default: 3
- *
- * This ini is used to enable/disable Tx LDPC capability
- * 0 - disable
- * 1 - HT LDPC enable
- * 2 - VHT LDPC enable
- * 3 - HT & VHT LDPC enable
- *
- * Related: STA/SAP/P2P/IBSS/NAN.
- *
- * Supported Feature: Concurrency/Standalone
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_TX_LDPC_ENABLE_FEATURE         "gTxLdpcEnable"
-#define CFG_TX_LDPC_ENABLE_FEATURE_MIN     (0)
-#define CFG_TX_LDPC_ENABLE_FEATURE_MAX     (3)
-#define CFG_TX_LDPC_ENABLE_FEATURE_DEFAULT (3)
-
-/*
- * <ini>
- * gEnableRXLDPC - Config Param to enable Rx LDPC capability
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable Rx LDPC capability
- *
- * Related: STA/SAP/P2P/IBSS/NAN.
- *
- * Supported Feature: Concurrency/Standalone
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_RX_LDPC                       "gEnableRXLDPC"
-#define CFG_ENABLE_RX_LDPC_MIN                   (0)
-#define CFG_ENABLE_RX_LDPC_MAX                   (1)
-#define CFG_ENABLE_RX_LDPC_DEFAULT               (0)
-
 
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP             "gDisableLDPCWithTxbfAP"
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP_MIN         (0)
@@ -6260,7 +6164,6 @@ struct hdd_config {
 #endif
 	bool enable_connected_scan;
 	uint8_t OperatingChannel;
-	bool ShortSlotTimeEnabled;
 	bool Is11dSupportEnabled;
 	bool Is11hSupportEnabled;
 	char PowerUsageControl[4];
@@ -6409,7 +6312,6 @@ struct hdd_config {
 #endif
 	uint8_t enableDFSChnlScan;
 	uint8_t enable_dfs_pno_chnl_scan;
-	uint8_t ShortGI40MhzEnable;
 	enum hdd_link_speed_rpt_type reportMaxLinkSpeed;
 	int32_t linkSpeedRssiHigh;
 	int32_t linkSpeedRssiMid;
@@ -6454,8 +6356,6 @@ struct hdd_config {
 	uint32_t bad_peer_limit_ieee80211ac;
 #endif
 	bool enableFirstScan2GOnly;
-	uint8_t enable_tx_ldpc;
-	uint8_t enable_rx_ldpc;
 	bool prevent_link_down;
 	uint8_t scanAgingTimeout;
 	uint8_t disableLDPCWithTxbfAP;

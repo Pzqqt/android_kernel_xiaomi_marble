@@ -1670,7 +1670,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.Is11dSupportEnabled = false;
 	pMac->roam.configParam.Is11eSupportEnabled = true;
 	pMac->roam.configParam.Is11hSupportEnabled = true;
-	pMac->roam.configParam.shortSlotTime = true;
 	pMac->roam.configParam.WMMSupportMode = eCsrRoamWmmAuto;
 	pMac->roam.configParam.ProprietaryRatesEnabled = true;
 	for (i = 0; i < CSR_NUM_RSSI_CAT; i++)
@@ -2559,7 +2558,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			csr_convert_cb_ini_value_to_phy_cb_state(pParam->
 							channelBondingMode5GHz);
 		pMac->roam.configParam.phyMode = pParam->phyMode;
-		pMac->roam.configParam.shortSlotTime = pParam->shortSlotTime;
 		pMac->roam.configParam.HeartbeatThresh24 =
 			pMac->mlme_cfg->timeouts.heart_beat_threshold;
 		pMac->roam.configParam.HeartbeatThresh50 =
@@ -2751,8 +2749,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.doBMPSWorkaround = 0;
 		pMac->roam.configParam.send_smps_action =
 			pParam->send_smps_action;
-		pMac->roam.configParam.tx_ldpc_enable = pParam->enable_tx_ldpc;
-		pMac->roam.configParam.rx_ldpc_enable = pParam->enable_rx_ldpc;
 		pMac->roam.configParam.disable_high_ht_mcs_2x2 =
 					pParam->disable_high_ht_mcs_2x2;
 		pMac->roam.configParam.ho_delay_for_rx =
@@ -2899,7 +2895,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->channelBondingMode5GHz = csr_convert_phy_cb_state_to_ini_value(
 					cfg_params->channelBondingMode5GHz);
 	pParam->phyMode = cfg_params->phyMode;
-	pParam->shortSlotTime = cfg_params->shortSlotTime;
 	pParam->HeartbeatThresh50 = cfg_params->HeartbeatThresh50;
 	pParam->ProprietaryRatesEnabled = cfg_params->ProprietaryRatesEnabled;
 	pParam->AdHocChannel24 = cfg_params->AdHocChannel24;
@@ -2959,8 +2954,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	pParam->cc_switch_mode = cfg_params->cc_switch_mode;
 #endif
-	pParam->enable_tx_ldpc = cfg_params->tx_ldpc_enable;
-	pParam->enable_rx_ldpc = cfg_params->rx_ldpc_enable;
 	pParam->wep_tkip_in_he = cfg_params->wep_tkip_in_he;
 	pParam->disable_high_ht_mcs_2x2 = cfg_params->disable_high_ht_mcs_2x2;
 	pParam->ho_delay_for_rx = cfg_params->ho_delay_for_rx;
@@ -4292,7 +4285,7 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 	/* short slot time */
 	if (eCSR_CFG_DOT11_MODE_11B != cfgDot11Mode)
 		pBssConfig->uShortSlotTime =
-			pMac->roam.configParam.shortSlotTime;
+			pMac->mlme_cfg->ht_caps.short_slot_time_enabled;
 	else
 		pBssConfig->uShortSlotTime = 0;
 
@@ -4433,7 +4426,7 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	/* short slot time */
 	if (WNI_CFG_PHY_MODE_11B != pBssConfig->uCfgDot11Mode) {
 		pBssConfig->uShortSlotTime =
-			pMac->roam.configParam.shortSlotTime;
+			pMac->mlme_cfg->ht_caps.short_slot_time_enabled;
 	} else {
 		pBssConfig->uShortSlotTime = 0;
 	}
@@ -15542,7 +15535,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			csr_join_req->isFastRoamIniFeatureEnabled = false;
 
 		csr_join_req->txLdpcIniFeatureEnabled =
-			(uint8_t) pMac->roam.configParam.tx_ldpc_enable;
+			(uint8_t)pMac->mlme_cfg->ht_caps.tx_ldpc_enable;
 
 		if ((csr_is11h_supported(pMac)) &&
 			(WLAN_REG_IS_5GHZ_CH(pBssDescription->channelId)) &&
@@ -15563,8 +15556,9 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		if (eSIR_INFRASTRUCTURE_MODE == csr_join_req->bsstype ||
 		    !policy_mgr_is_dbs_enable(pMac->psoc))
 			csr_set_ldpc_exception(pMac, pSession,
-					pBssDescription->channelId,
-					pMac->roam.configParam.rx_ldpc_enable);
+					       pBssDescription->channelId,
+					       pMac->mlme_cfg->ht_caps.
+					       ht_cap_info.adv_coding_cap);
 		qdf_mem_copy(&csr_join_req->htConfig,
 				&pSession->htConfig, sizeof(tSirHTConfig));
 		qdf_mem_copy(&csr_join_req->vht_config, &pSession->vht_config,
@@ -16422,7 +16416,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 	pMsg->wps_state = pParam->wps_state;
 	pMsg->isCoalesingInIBSSAllowed = pMac->isCoalesingInIBSSAllowed;
 	pMsg->bssPersona = pParam->bssPersona;
-	pMsg->txLdpcIniFeatureEnabled = pMac->roam.configParam.tx_ldpc_enable;
+	pMsg->txLdpcIniFeatureEnabled = pMac->mlme_cfg->ht_caps.tx_ldpc_enable;
 
 	/*
 	 * If RX LDPC has been disabled for 2.4GHz channels and enabled
@@ -16432,8 +16426,9 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 	if (eSIR_IBSS_MODE == pMsg->bssType ||
 		!policy_mgr_is_dbs_enable(pMac->psoc))
 		csr_set_ldpc_exception(pMac, pSession,
-				pMsg->channelId,
-				pMac->roam.configParam.rx_ldpc_enable);
+				       pMsg->channelId,
+				       pMac->mlme_cfg->ht_caps.
+				       ht_cap_info.adv_coding_cap);
 
 	qdf_mem_copy(&pMsg->vht_config,
 		     &pSession->vht_config,

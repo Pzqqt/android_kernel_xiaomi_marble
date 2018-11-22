@@ -652,7 +652,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 
 	pftSessionEntry->limCurrentBssCaps = pbssDescription->capabilityInfo;
 	pftSessionEntry->limReassocBssCaps = pbssDescription->capabilityInfo;
-	if (pMac->roam.configParam.shortSlotTime &&
+	if (pMac->mlme_cfg->ht_caps.short_slot_time_enabled &&
 	    SIR_MAC_GET_SHORT_SLOT_TIME(pftSessionEntry->limReassocBssCaps)) {
 		pftSessionEntry->shortSlotTimeSupported = true;
 	}

@@ -3432,7 +3432,6 @@ int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 	int ret;
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_config *config = hdd_ctx->config;
 	struct mlme_ht_capabilities_info ht_cap_info;
 
 	hdd_debug("%d", value);
@@ -3442,16 +3441,6 @@ int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 		return -EINVAL;
 	}
 
-	if (value) {
-		/* make sure HT capabilities allow this */
-		if (!config->enable_rx_ldpc) {
-			hdd_err("LDCP not supported");
-			return -EINVAL;
-		}
-	} else if (!config->enable_rx_ldpc) {
-		hdd_err("LDCP is already disabled");
-		return 0;
-	}
 	status = ucfg_mlme_get_ht_cap_info(hdd_ctx->psoc, &ht_cap_info);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to get HT capability info");
@@ -3464,8 +3453,7 @@ int hdd_set_ldpc(struct hdd_adapter *adapter, int value)
 		hdd_err("Failed to set HT capability info");
 		return -EIO;
 	}
-	status =
-		ucfg_mlme_cfg_set_vht_ldpc_coding_cap(hdd_ctx->psoc, value);
+	status = ucfg_mlme_cfg_set_vht_ldpc_coding_cap(hdd_ctx->psoc, value);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to set VHT LDPC capability info");
 		return -EIO;

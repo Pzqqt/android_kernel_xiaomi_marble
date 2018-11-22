@@ -652,6 +652,9 @@ static void mlme_init_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
 	ht_caps->enable_smps = cfg_get(psoc, CFG_ENABLE_HT_SMPS);
 	ht_caps->smps = cfg_get(psoc, CFG_HT_SMPS_MODE);
 	ht_caps->max_num_amsdu = cfg_get(psoc, CFG_MAX_AMSDU_NUM);
+	ht_caps->tx_ldpc_enable = cfg_get(psoc, CFG_TX_LDPC_ENABLE);
+	ht_caps->short_slot_time_enabled =
+		cfg_get(psoc, CFG_SHORT_SLOT_TIME_ENABLED);
 }
 
 static void mlme_init_qos_cfg(struct wlan_objmgr_psoc *psoc,

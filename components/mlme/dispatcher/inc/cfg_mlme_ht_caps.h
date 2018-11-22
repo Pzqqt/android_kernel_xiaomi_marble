@@ -370,6 +370,28 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"MPDU Density")
 
+/*
+ * <ini>
+ * gShortSlotTimeEnabled - It will set slot timing slot.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set default timing slot.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_SHORT_SLOT_TIME_ENABLED CFG_INI_BOOL( \
+	"gShortSlotTimeEnabled", \
+	1, \
+	"Short Slot Time Enabled")
+
 #define CFG_HT_CAPS_ALL \
 	CFG(CFG_HT_CAP_INFO) \
 	CFG(CFG_TX_LDPC_ENABLE) \
@@ -388,6 +410,7 @@
 	CFG(CFG_HT_SMPS_MODE) \
 	CFG(CFG_MAX_AMSDU_NUM) \
 	CFG(CFG_MAX_RX_AMPDU_FACTOR) \
-	CFG(CFG_MPDU_DENSITY)
+	CFG(CFG_MPDU_DENSITY) \
+	CFG(CFG_SHORT_SLOT_TIME_ENABLED)
 
 #endif /* __CFG_MLME_HT_CAPS_H */

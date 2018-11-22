@@ -411,7 +411,6 @@ struct csr_config {
 	bool Is11eSupportEnabled;
 	bool Is11dSupportEnabled;
 	bool Is11hSupportEnabled;
-	bool shortSlotTime;
 	bool ProprietaryRatesEnabled;
 	bool fenableMCCMode;
 	bool mcc_rts_cts_prot_enable;
@@ -481,8 +480,6 @@ struct csr_config {
 	bool fScanTwice;
 	uint32_t nVhtChannelWidth;
 	bool send_smps_action;
-	uint8_t tx_ldpc_enable;
-	uint8_t rx_ldpc_enable;
 	uint8_t disable_high_ht_mcs_2x2;
 	/*
 	 * Enable/Disable heartbeat offload

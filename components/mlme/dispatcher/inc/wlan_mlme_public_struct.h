@@ -455,6 +455,8 @@ struct mlme_ht_info_field_3 {
  * @enable_smps: Enabled SM Power Save
  * @smps : SM Power Save mode
  * @max_num_amsdu: Max number of AMSDU
+ * @tx_ldpc_enable: Enable Tx LDPC
+ * @short_slot_time_enabled: Enabled/disable short slot time
  */
 struct wlan_mlme_ht_caps {
 	struct mlme_ht_capabilities_info ht_cap_info;
@@ -468,6 +470,8 @@ struct wlan_mlme_ht_caps {
 	bool enable_smps;
 	uint8_t smps;
 	uint8_t max_num_amsdu;
+	uint8_t tx_ldpc_enable;
+	bool short_slot_time_enabled;
 };
 
 /*

@@ -9881,7 +9881,6 @@ int sme_update_ht_config(mac_handle_t mac_handle, uint8_t sessionId,
 	switch (htCapab) {
 	case WNI_CFG_HT_CAP_INFO_ADVANCE_CODING:
 		pSession->htConfig.ht_rx_ldpc = value;
-		pMac->roam.configParam.rx_ldpc_enable = value;
 		break;
 	case WNI_CFG_HT_CAP_INFO_TX_STBC:
 		pSession->htConfig.ht_tx_stbc = value;

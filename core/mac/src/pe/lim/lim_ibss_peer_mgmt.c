@@ -31,6 +31,7 @@
 #include "lim_ibss_peer_mgmt.h"
 #include "lim_types.h"
 #include "wlan_mlme_api.h"
+#include "cfg_ucfg_api.h"
 
 /**
  * ibss_peer_find
@@ -1359,7 +1360,8 @@ void lim_ibss_del_bss_rsp(tpAniSirGlobal pMac, void *msg, tpPESession psessionEn
 	/* Change the short slot operating mode to Default (which is 1 for now) so that when IBSS starts next time with Libra
 	 * as originator, it picks up the default. This enables us to remove hard coding of short slot = 1 from lim_apply_configuration
 	 */
-	psessionEntry->shortSlotTimeSupported = WNI_CFG_SHORT_SLOT_TIME_STADEF;
+	psessionEntry->shortSlotTimeSupported =
+		cfg_default(CFG_SHORT_SLOT_TIME_ENABLED);
 
 end:
 	if (pDelBss != NULL)
