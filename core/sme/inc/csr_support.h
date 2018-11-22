@@ -198,10 +198,15 @@ typedef struct tagCsrWapiIe {
 } qdf_packed tCsrWapiIe;
 #endif /* FEATURE_WLAN_WAPI */
 
-typedef struct tagRoamingTimerInfo {
-	tpAniSirGlobal pMac;
-	uint8_t sessionId;
-} tCsrTimerInfo;
+/**
+ * struct csr_timer_info - CSR-specific timer context
+ * @mac: Global MAC context associated with the timer
+ * @session_id: Session associated with the timer
+ */
+struct csr_timer_info {
+	struct mac_context *mac;
+	uint8_t session_id;
+};
 
 #define CSR_IS_11A_BSS(pBssDesc)    (eSIR_11A_NW_TYPE == (pBssDesc)->nwType)
 #define CSR_IS_BASIC_RATE(rate)     ((rate) & CSR_DOT11_BASIC_RATE_MASK)

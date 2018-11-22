@@ -793,7 +793,7 @@ struct csr_roam_session {
 	uint8_t *pAddIEScan;
 	uint32_t nAddIEAssocLength;     /* the byte count for pAddIeAssocIE */
 	uint8_t *pAddIEAssoc;
-	tCsrTimerInfo roamingTimerInfo;
+	struct csr_timer_info roamingTimerInfo;
 	enum csr_roaming_reason roamingReason;
 	bool fCancelRoaming;
 	qdf_mc_timer_t hTimerRoaming;
@@ -884,7 +884,7 @@ struct csr_roamstruct {
 	tDblLinkList peStatsReqList;
 	struct csr_tlstats_reqinfo tlStatsReqInfo;
 #endif
-	tCsrTimerInfo WaitForKeyTimerInfo;
+	struct csr_timer_info WaitForKeyTimerInfo;
 	struct csr_roam_session *roamSession;
 	uint32_t transactionId;  /* Current transaction ID for internal use. */
 	tCsrNeighborRoamControlInfo neighborRoamInfo[CSR_ROAM_SESSION_MAX];
