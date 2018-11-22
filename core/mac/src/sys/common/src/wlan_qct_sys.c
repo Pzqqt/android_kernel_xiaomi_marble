@@ -205,14 +205,14 @@ QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg)
 
 /**
  * sys_process_mmh_msg() - this api to process mmh message
- * @pMac: pointer to mac context
+ * @mac: pointer to mac context
  * @pMsg: pointer to message
  *
  * This API is used to process mmh message
  *
  * Return: none
  */
-void sys_process_mmh_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+void sys_process_mmh_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg)
 {
 	QDF_MODULE_ID targetMQ = QDF_MODULE_ID_SYS;
 

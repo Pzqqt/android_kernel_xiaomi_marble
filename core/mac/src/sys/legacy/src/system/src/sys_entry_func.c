@@ -62,12 +62,12 @@
  * @return None
  */
 
-QDF_STATUS sys_init_globals(tpAniSirGlobal pMac)
+QDF_STATUS sys_init_globals(tpAniSirGlobal mac)
 {
 
-	qdf_mem_set((uint8_t *) &pMac->sys, sizeof(pMac->sys), 0);
+	qdf_mem_set((uint8_t *) &mac->sys, sizeof(mac->sys), 0);
 
-	pMac->sys.gSysEnableLinkMonitorMode = 0;
+	mac->sys.gSysEnableLinkMonitorMode = 0;
 
 	return QDF_STATUS_SUCCESS;
 }

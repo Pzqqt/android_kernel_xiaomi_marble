@@ -106,11 +106,11 @@ typedef struct TX_TIMER_STRUCT {
 
 	/* Pointer to the MAC global structure, which stores the context for the NIC, */
 	/* for which this timer is supposed to operate. */
-	void *pMac;
+	void *mac;
 
 } TX_TIMER;
 
-#define TX_TIMER_VALID(timer) (timer.pMac != 0)
+#define TX_TIMER_VALID(timer) (timer.mac != 0)
 
 extern uint64_t tx_time_get(void);
 extern uint32_t tx_timer_activate(TX_TIMER *);
