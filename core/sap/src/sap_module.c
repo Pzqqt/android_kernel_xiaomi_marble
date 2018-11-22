@@ -1788,7 +1788,7 @@ QDF_STATUS wlansap_start_beacon_req(struct sap_context *sap_ctx)
 
 QDF_STATUS wlansap_dfs_send_csa_ie_request(struct sap_context *sap_ctx)
 {
-	struct mac_context *pMac;
+	struct mac_context *mac;
 
 	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1796,63 +1796,63 @@ QDF_STATUS wlansap_dfs_send_csa_ie_request(struct sap_context *sap_ctx)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	pMac = sap_get_mac_context();
-	if (!pMac) {
+	mac = sap_get_mac_context();
+	if (!mac) {
 		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid MAC context");
 		return QDF_STATUS_E_FAULT;
 	}
 
-	pMac->sap.SapDfsInfo.new_ch_params.ch_width =
-				pMac->sap.SapDfsInfo.new_chanWidth;
-	wlan_reg_set_channel_params(pMac->pdev,
-			pMac->sap.SapDfsInfo.target_channel,
-			0, &pMac->sap.SapDfsInfo.new_ch_params);
+	mac->sap.SapDfsInfo.new_ch_params.ch_width =
+				mac->sap.SapDfsInfo.new_chanWidth;
+	wlan_reg_set_channel_params(mac->pdev,
+			mac->sap.SapDfsInfo.target_channel,
+			0, &mac->sap.SapDfsInfo.new_ch_params);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			"%s: chan:%d req:%d width:%d off:%d",
-			__func__, pMac->sap.SapDfsInfo.target_channel,
-			pMac->sap.SapDfsInfo.csaIERequired,
-			pMac->sap.SapDfsInfo.new_ch_params.ch_width,
-			pMac->sap.SapDfsInfo.new_ch_params.sec_ch_offset);
+			__func__, mac->sap.SapDfsInfo.target_channel,
+			mac->sap.SapDfsInfo.csaIERequired,
+			mac->sap.SapDfsInfo.new_ch_params.ch_width,
+			mac->sap.SapDfsInfo.new_ch_params.sec_ch_offset);
 
-	return sme_roam_csa_ie_request(MAC_HANDLE(pMac),
+	return sme_roam_csa_ie_request(MAC_HANDLE(mac),
 				       sap_ctx->bssid,
-				       pMac->sap.SapDfsInfo.target_channel,
-				       pMac->sap.SapDfsInfo.csaIERequired,
-				       &pMac->sap.SapDfsInfo.new_ch_params);
+				       mac->sap.SapDfsInfo.target_channel,
+				       mac->sap.SapDfsInfo.csaIERequired,
+				       &mac->sap.SapDfsInfo.new_ch_params);
 }
 
 QDF_STATUS wlansap_get_dfs_ignore_cac(mac_handle_t mac_handle,
 				      uint8_t *ignore_cac)
 {
-	tpAniSirGlobal pMac = NULL;
+	tpAniSirGlobal mac = NULL;
 
 	if (NULL != mac_handle) {
-		pMac = PMAC_STRUCT(mac_handle);
+		mac = PMAC_STRUCT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid mac_handle pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
-	*ignore_cac = pMac->sap.SapDfsInfo.ignore_cac;
+	*ignore_cac = mac->sap.SapDfsInfo.ignore_cac;
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t mac_handle,
 				      uint8_t ignore_cac)
 {
-	tpAniSirGlobal pMac = NULL;
+	tpAniSirGlobal mac = NULL;
 
 	if (NULL != mac_handle) {
-		pMac = PMAC_STRUCT(mac_handle);
+		mac = PMAC_STRUCT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid mac_handle pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
-	pMac->sap.SapDfsInfo.ignore_cac = (ignore_cac >= true) ?
+	mac->sap.SapDfsInfo.ignore_cac = (ignore_cac >= true) ?
 					  true : false;
 	return QDF_STATUS_SUCCESS;
 }
@@ -1861,30 +1861,30 @@ QDF_STATUS
 wlansap_set_dfs_restrict_japan_w53(mac_handle_t mac_handle,
 				   uint8_t disable_dfs_w53)
 {
-	tpAniSirGlobal pMac = NULL;
+	tpAniSirGlobal mac = NULL;
 	QDF_STATUS status;
 	enum dfs_reg dfs_region;
 
 	if (NULL != mac_handle) {
-		pMac = PMAC_STRUCT(mac_handle);
+		mac = PMAC_STRUCT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid mac_handle pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
-	wlan_reg_get_dfs_region(pMac->pdev, &dfs_region);
+	wlan_reg_get_dfs_region(mac->pdev, &dfs_region);
 
 	/*
 	 * Set the JAPAN W53 restriction only if the current
 	 * regulatory domain is JAPAN.
 	 */
 	if (DFS_MKK_REGION == dfs_region) {
-		pMac->sap.SapDfsInfo.is_dfs_w53_disabled = disable_dfs_w53;
+		mac->sap.SapDfsInfo.is_dfs_w53_disabled = disable_dfs_w53;
 		QDF_TRACE(QDF_MODULE_ID_SAP,
 			  QDF_TRACE_LEVEL_INFO_LOW,
 			  FL("sapdfs: SET DFS JAPAN W53 DISABLED = %d"),
-			  pMac->sap.SapDfsInfo.is_dfs_w53_disabled);
+			  mac->sap.SapDfsInfo.is_dfs_w53_disabled);
 
 		status = QDF_STATUS_SUCCESS;
 	} else {
@@ -1957,19 +1957,19 @@ wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle,
 					   uint8_t
 					   dfs_Preferred_Channels_location)
 {
-	tpAniSirGlobal pMac = NULL;
+	tpAniSirGlobal mac = NULL;
 	QDF_STATUS status;
 	enum dfs_reg dfs_region;
 
 	if (NULL != mac_handle) {
-		pMac = PMAC_STRUCT(mac_handle);
+		mac = PMAC_STRUCT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid mac_handle pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
-	wlan_reg_get_dfs_region(pMac->pdev, &dfs_region);
+	wlan_reg_get_dfs_region(mac->pdev, &dfs_region);
 
 	/*
 	 * The Indoor/Outdoor only random channel selection
@@ -1977,13 +1977,13 @@ wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle,
 	 * JAPAN regulatory domain.
 	 */
 	if (DFS_MKK_REGION == dfs_region) {
-		pMac->sap.SapDfsInfo.sap_operating_chan_preferred_location =
+		mac->sap.SapDfsInfo.sap_operating_chan_preferred_location =
 			dfs_Preferred_Channels_location;
 		QDF_TRACE(QDF_MODULE_ID_SAP,
 			  QDF_TRACE_LEVEL_INFO_LOW,
 			  FL
 				  ("sapdfs:Set Preferred Operating Channel location=%d"),
-			  pMac->sap.SapDfsInfo.
+			  mac->sap.SapDfsInfo.
 			  sap_operating_chan_preferred_location);
 
 		status = QDF_STATUS_SUCCESS;
@@ -2001,20 +2001,20 @@ wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle,
 QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t mac_handle,
 				       uint8_t target_channel)
 {
-	tpAniSirGlobal pMac = NULL;
+	tpAniSirGlobal mac = NULL;
 
 	if (NULL != mac_handle) {
-		pMac = PMAC_STRUCT(mac_handle);
+		mac = PMAC_STRUCT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid mac_handle pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 	if (target_channel > 0) {
-		pMac->sap.SapDfsInfo.user_provided_target_channel =
+		mac->sap.SapDfsInfo.user_provided_target_channel =
 			target_channel;
 	} else {
-		pMac->sap.SapDfsInfo.user_provided_target_channel = 0;
+		mac->sap.SapDfsInfo.user_provided_target_channel = 0;
 	}
 
 	return QDF_STATUS_SUCCESS;

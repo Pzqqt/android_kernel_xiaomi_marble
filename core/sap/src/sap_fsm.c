@@ -552,19 +552,19 @@ void sap_dfs_set_current_channel(void *ctx)
 
 bool sap_dfs_is_w53_invalid(mac_handle_t mac_handle, uint8_t channel_id)
 {
-	tpAniSirGlobal pMac;
+	tpAniSirGlobal mac;
 
-	pMac = PMAC_STRUCT(mac_handle);
-	if (NULL == pMac) {
+	mac = PMAC_STRUCT(mac_handle);
+	if (NULL == mac) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("invalid pMac"));
+			  FL("invalid mac"));
 		return false;
 	}
 
 	/*
 	 * Check for JAPAN W53 Channel operation capability
 	 */
-	if (true == pMac->sap.SapDfsInfo.is_dfs_w53_disabled &&
+	if (true == mac->sap.SapDfsInfo.is_dfs_w53_disabled &&
 	    true == IS_CHAN_JAPAN_W53(channel_id)) {
 		return true;
 	}
@@ -575,16 +575,16 @@ bool sap_dfs_is_w53_invalid(mac_handle_t mac_handle, uint8_t channel_id)
 bool sap_dfs_is_channel_in_preferred_location(mac_handle_t mac_handle,
 					      uint8_t channel_id)
 {
-	tpAniSirGlobal pMac;
+	tpAniSirGlobal mac;
 
-	pMac = PMAC_STRUCT(mac_handle);
-	if (NULL == pMac) {
+	mac = PMAC_STRUCT(mac_handle);
+	if (NULL == mac) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("invalid pMac"));
+			  FL("invalid mac"));
 		return true;
 	}
 	if ((SAP_CHAN_PREFERRED_INDOOR ==
-	     pMac->sap.SapDfsInfo.sap_operating_chan_preferred_location) &&
+	     mac->sap.SapDfsInfo.sap_operating_chan_preferred_location) &&
 	    (true == IS_CHAN_JAPAN_OUTDOOR(channel_id))) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
 			  FL
@@ -592,7 +592,7 @@ bool sap_dfs_is_channel_in_preferred_location(mac_handle_t mac_handle,
 			  channel_id);
 		return false;
 	} else if ((SAP_CHAN_PREFERRED_OUTDOOR ==
-		    pMac->sap.SapDfsInfo.sap_operating_chan_preferred_location)
+		    mac->sap.SapDfsInfo.sap_operating_chan_preferred_location)
 		   && (true == IS_CHAN_JAPAN_INDOOR(channel_id))) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
 			  FL
@@ -1840,15 +1840,15 @@ static struct sap_context *sap_find_cac_wait_session(mac_handle_t handle)
 void sap_cac_reset_notify(mac_handle_t mac_handle)
 {
 	uint8_t intf = 0;
-	tpAniSirGlobal pMac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		struct sap_context *sap_context =
-			pMac->sap.sapCtxList[intf].sap_context;
-		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
+			mac->sap.sapCtxList[intf].sap_context;
+		if (((QDF_SAP_MODE == mac->sap.sapCtxList[intf].sapPersona)
 		    ||
-		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona))
-		    && pMac->sap.sapCtxList[intf].sap_context != NULL) {
+		    (QDF_P2P_GO_MODE == mac->sap.sapCtxList[intf].sapPersona))
+		    && mac->sap.sapCtxList[intf].sap_context != NULL) {
 			sap_context->isCacStartNotified = false;
 			sap_context->isCacEndNotified = false;
 		}
@@ -1867,22 +1867,22 @@ void sap_cac_reset_notify(mac_handle_t mac_handle)
 static QDF_STATUS sap_cac_start_notify(mac_handle_t mac_handle)
 {
 	uint8_t intf = 0;
-	tpAniSirGlobal pMac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		struct sap_context *sap_context =
-			pMac->sap.sapCtxList[intf].sap_context;
+			mac->sap.sapCtxList[intf].sap_context;
 		struct csr_roam_profile *profile;
 
-		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
+		if (((QDF_SAP_MODE == mac->sap.sapCtxList[intf].sapPersona)
 		    ||
-		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona))
-		    && pMac->sap.sapCtxList[intf].sap_context != NULL &&
+		    (QDF_P2P_GO_MODE == mac->sap.sapCtxList[intf].sapPersona))
+		    && mac->sap.sapCtxList[intf].sap_context != NULL &&
 		    (false == sap_context->isCacStartNotified)) {
 			/* Don't start CAC for non-dfs channel, its violation */
 			profile = &sap_context->csr_roamProfile;
-			if (!wlan_reg_is_dfs_ch(pMac->pdev,
+			if (!wlan_reg_is_dfs_ch(mac->pdev,
 						profile->operationChannel))
 				continue;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
@@ -1962,7 +1962,7 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 				     struct csr_roam_info *roamInfo)
 {
 	uint8_t intf;
-	tpAniSirGlobal pMac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	/*
@@ -1973,19 +1973,19 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 	 */
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		struct sap_context *sap_context =
-			pMac->sap.sapCtxList[intf].sap_context;
+			mac->sap.sapCtxList[intf].sap_context;
 		struct csr_roam_profile *profile;
 
-		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
+		if (((QDF_SAP_MODE == mac->sap.sapCtxList[intf].sapPersona)
 		    ||
-		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona))
-		    && pMac->sap.sapCtxList[intf].sap_context != NULL &&
+		    (QDF_P2P_GO_MODE == mac->sap.sapCtxList[intf].sapPersona))
+		    && mac->sap.sapCtxList[intf].sap_context != NULL &&
 		    (false == sap_context->isCacEndNotified) &&
 		    sap_is_dfs_cac_wait_state(sap_context)) {
-			sap_context = pMac->sap.sapCtxList[intf].sap_context;
+			sap_context = mac->sap.sapCtxList[intf].sap_context;
 			/* Don't check CAC for non-dfs channel */
 			profile = &sap_context->csr_roamProfile;
-			if (!wlan_reg_is_dfs_ch(pMac->pdev,
+			if (!wlan_reg_is_dfs_ch(mac->pdev,
 						profile->operationChannel))
 				continue;
 
@@ -1996,7 +1996,7 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 			 */
 			if (sap_context->is_pre_cac_on) {
 				qdf_status = wlansap_update_pre_cac_end(
-						sap_context, pMac, intf);
+						sap_context, mac, intf);
 				if (QDF_IS_STATUS_ERROR(qdf_status))
 					return qdf_status;
 				/* pre CAC is not allowed with any concurrency.
@@ -2017,7 +2017,7 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 				return qdf_status;
 			}
 			sap_context->isCacEndNotified = true;
-			pMac->sap.SapDfsInfo.sap_radar_found_status = false;
+			mac->sap.SapDfsInfo.sap_radar_found_status = false;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
 				  "sapdfs: Start beacon request on sapctx[%pK]",
 				  sap_context);
@@ -2057,7 +2057,7 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 	 * AP2 is already beaconing on this channel. This case will be handled
 	 * by checking against eSAP_DFS_SKIP_CAC while starting the timer.
 	 */
-	pMac->sap.SapDfsInfo.cac_state = eSAP_DFS_SKIP_CAC;
+	mac->sap.SapDfsInfo.cac_state = eSAP_DFS_SKIP_CAC;
 	return qdf_status;
 }
 
@@ -3502,14 +3502,14 @@ void sap_dfs_cac_timer_callback(void *data)
 	struct sap_context *sapContext;
 	tWLAN_SAPEvent sapEvent;
 	mac_handle_t mac_handle = data;
-	tpAniSirGlobal pMac;
+	tpAniSirGlobal mac;
 
 	if (NULL == mac_handle) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "In %s invalid mac_handle", __func__);
 		return;
 	}
-	pMac = PMAC_STRUCT(mac_handle);
+	mac = PMAC_STRUCT(mac_handle);
 	sapContext = sap_find_cac_wait_session(mac_handle);
 	if (NULL == sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -3522,11 +3522,11 @@ void sap_dfs_cac_timer_callback(void *data)
 	 * if following flag is set, then timer is in initialized state,
 	 * destroy timer here.
 	 */
-	if (pMac->sap.SapDfsInfo.is_dfs_cac_timer_running == true) {
+	if (mac->sap.SapDfsInfo.is_dfs_cac_timer_running == true) {
 		if (!sapContext->dfs_cac_offload)
 			qdf_mc_timer_destroy(
-				&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
-		pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
+				&mac->sap.SapDfsInfo.sap_dfs_cac_timer);
+		mac->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
 	}
 
 	/*
@@ -3695,15 +3695,15 @@ QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sap_ctx)
  */
 uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 	uint8_t intf = 0;
 	uint8_t intf_count = 0;
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
+		if (((QDF_SAP_MODE == mac->sap.sapCtxList[intf].sapPersona)
 		    ||
-		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona))
-		    && pMac->sap.sapCtxList[intf].sap_context != NULL) {
+		    (QDF_P2P_GO_MODE == mac->sap.sapCtxList[intf].sapPersona))
+		    && mac->sap.sapCtxList[intf].sap_context != NULL) {
 			intf_count++;
 		}
 	}
@@ -3725,17 +3725,17 @@ uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle)
 bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
 						struct sap_context *sapContext)
 {
-	tpAniSirGlobal pMac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 	struct sap_context *sap_context;
 	uint8_t intf = 0;
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-		if (((QDF_SAP_MODE == pMac->sap.sapCtxList[intf].sapPersona)
+		if (((QDF_SAP_MODE == mac->sap.sapCtxList[intf].sapPersona)
 		    ||
-		    (QDF_P2P_GO_MODE == pMac->sap.sapCtxList[intf].sapPersona))
-		    && pMac->sap.sapCtxList[intf].sap_context != NULL) {
+		    (QDF_P2P_GO_MODE == mac->sap.sapCtxList[intf].sapPersona))
+		    && mac->sap.sapCtxList[intf].sap_context != NULL) {
 			sap_context =
-				pMac->sap.sapCtxList[intf].sap_context;
+				mac->sap.sapCtxList[intf].sap_context;
 			if (sap_context == sapContext) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_ERROR,

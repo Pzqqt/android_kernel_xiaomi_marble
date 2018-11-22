@@ -574,7 +574,7 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 	tSapSpectChInfo *pSpectCh = NULL;
 	uint8_t *pChans = NULL;
 	uint16_t channelnum = 0;
-	tpAniSirGlobal pMac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
 	bool chSafe = true;
 #ifdef FEATURE_WLAN_CH_AVOID
 	uint16_t i;
@@ -582,13 +582,13 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 	bool include_dfs_ch = true;
 	uint8_t chan_num;
 	bool sta_sap_scc_on_dfs_chan =
-		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(pMac->psoc);
+		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(mac->psoc);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH, "In %s",
 		  __func__);
 
 	pSpectInfoParams->numSpectChans =
-		pMac->scan.base_channels.numChannels;
+		mac->scan.base_channels.numChannels;
 
 	/* Allocate memory for weight computation of 2.4GHz */
 	pSpectCh = qdf_mem_malloc((pSpectInfoParams->numSpectChans) *
@@ -599,13 +599,13 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 	/* Initialize the pointers in the DfsParams to the allocated memory */
 	pSpectInfoParams->pSpectCh = pSpectCh;
 
-	pChans = pMac->scan.base_channels.channelList;
+	pChans = mac->scan.base_channels.channelList;
 
 #if defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
 	if (sap_ctx->dfs_ch_disable == true)
 		include_dfs_ch = false;
 #endif
-	if (!pMac->mlme_cfg->dfs_cfg.dfs_master_capable ||
+	if (!mac->mlme_cfg->dfs_cfg.dfs_master_capable ||
 	    ACS_DFS_MODE_DISABLE == sap_ctx->dfs_mode)
 		include_dfs_ch = false;
 
@@ -635,7 +635,7 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 		}
 
 		if (!include_dfs_ch || sta_sap_scc_on_dfs_chan) {
-			if (wlan_reg_is_dfs_ch(pMac->pdev, *pChans)) {
+			if (wlan_reg_is_dfs_ch(mac->pdev, *pChans)) {
 				chSafe = false;
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
@@ -667,11 +667,11 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 		}
 
 		/* Skip DSRC channels */
-		if (wlan_reg_is_dsrc_chan(pMac->pdev, *pChans))
+		if (wlan_reg_is_dsrc_chan(mac->pdev, *pChans))
 			continue;
 
-		if (!pMac->sap.enable_etsi13_srd_chan_support &&
-		    wlan_reg_is_etsi13_srd_chan(pMac->pdev, *pChans))
+		if (!mac->sap.enable_etsi13_srd_chan_support &&
+		    wlan_reg_is_etsi13_srd_chan(mac->pdev, *pChans))
 			continue;
 
 		if (true == chSafe) {
@@ -1521,7 +1521,7 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 	uint16_t vhtSupport;
 	uint32_t ieLen = 0;
 	tSirProbeRespBeacon *pBeaconStruct;
-	tpAniSirGlobal pMac = MAC_CONTEXT(mac_handle);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	tSapSpectChInfo *spectch_start = pSpectInfoParams->pSpectCh;
 	tSapSpectChInfo *spectch_end = pSpectInfoParams->pSpectCh +
 		pSpectInfoParams->numSpectChans;
@@ -1556,7 +1556,7 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 
 
 		if ((sir_parse_beacon_ie
-		     (pMac, pBeaconStruct, (uint8_t *)
+		     (mac, pBeaconStruct, (uint8_t *)
 		      (pScanResult->BssDescriptor.ieFields),
 		      ieLen)) == QDF_STATUS_SUCCESS)
 			sap_upd_chan_spec_params(
@@ -1699,7 +1699,7 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 				SAPDFS_NORMALISE_1000 *
 				(sapweight_rssi_count(sap_ctx, rssi,
 				pSpectCh->bssCount) + sap_weight_channel_status(
-				sap_ctx, sap_get_channel_status(pMac,
+				sap_ctx, sap_get_channel_status(mac,
 							 pSpectCh->chNum)));
 		else {
 			pSpectCh->weight = SAP_ACS_WEIGHT_MAX;
@@ -1725,7 +1725,7 @@ debug_info:
 		/* ------ Debug Info ------ */
 		pSpectCh++;
 	}
-	sap_clear_channel_status(pMac);
+	sap_clear_channel_status(mac);
 	qdf_mem_free(pBeaconStruct);
 }
 
