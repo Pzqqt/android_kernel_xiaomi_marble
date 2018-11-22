@@ -962,7 +962,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 	int vid = privcmd->param_vdev_id, pps_val = 0;
 	QDF_STATUS ret;
 	struct wma_txrx_node *intr = wma->interfaces;
-	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 	struct qpower_params *qparams = &intr[vid].config.qpower_params;
 	struct pdev_params pdev_param;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -972,8 +972,8 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 	WMA_LOGD("wmihandle %pK", wma->wmi_handle);
 	qdf_mem_zero(&aggr, sizeof(aggr));
 
-	if (NULL == pMac) {
-		WMA_LOGE("%s: Failed to get pMac", __func__);
+	if (NULL == mac) {
+		WMA_LOGE("%s: Failed to get mac", __func__);
 		return;
 	}
 
@@ -1535,11 +1535,11 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			break;
 		case WMI_PDEV_PARAM_TXPOWER_LIMIT2G:
 			wma->pdevconfig.txpow2g = privcmd->param_value;
-			if ((pMac->mlme_cfg->gen.band_capability ==
+			if ((mac->mlme_cfg->gen.band_capability ==
 			     BAND_ALL) ||
-			    (pMac->mlme_cfg->gen.band_capability ==
+			    (mac->mlme_cfg->gen.band_capability ==
 			     BAND_2G)) {
-				if (cfg_set_int(pMac,
+				if (cfg_set_int(mac,
 						WNI_CFG_CURRENT_TX_POWER_LEVEL,
 						privcmd->param_value) !=
 				    QDF_STATUS_SUCCESS)
@@ -1551,11 +1551,11 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			break;
 		case WMI_PDEV_PARAM_TXPOWER_LIMIT5G:
 			wma->pdevconfig.txpow5g = privcmd->param_value;
-			if ((pMac->mlme_cfg->gen.band_capability ==
+			if ((mac->mlme_cfg->gen.band_capability ==
 			     BAND_ALL) ||
-			    (pMac->mlme_cfg->gen.band_capability ==
+			    (mac->mlme_cfg->gen.band_capability ==
 			     BAND_5G)) {
-				if (cfg_set_int(pMac,
+				if (cfg_set_int(mac,
 						WNI_CFG_CURRENT_TX_POWER_LEVEL,
 						privcmd->param_value) !=
 				    QDF_STATUS_SUCCESS)

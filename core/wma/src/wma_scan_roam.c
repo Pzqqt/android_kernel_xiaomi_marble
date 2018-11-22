@@ -934,7 +934,7 @@ void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
 /**
  * wma_roam_scan_scan_params() - fill roam scan params
  * @wma_handle: wma handle
- * @pMac: Mac ptr
+ * @mac: Mac ptr
  * @scan_params: scan parameters
  * @roam_req: NULL if this routine is called before connect
  *            It will be non-NULL if called after assoc.
@@ -944,7 +944,7 @@ void wma_process_set_pdev_vht_ie_req(tp_wma_handle wma,
  * Return: none
  */
 void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
-				    tpAniSirGlobal pMac,
+				    tpAniSirGlobal mac,
 				    tSirRoamOffloadScanReq *roam_req,
 				    wmi_start_scan_cmd_fixed_param *
 				    scan_params)
@@ -952,8 +952,8 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 	uint8_t channels_per_burst = 0;
 	uint32_t val = 0;
 
-	if (NULL == pMac) {
-		WMA_LOGE("%s: pMac is NULL", __func__);
+	if (NULL == mac) {
+		WMA_LOGE("%s: mac is NULL", __func__);
 		return;
 	}
 
@@ -989,7 +989,7 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 		 */
 
 		if (wlan_cfg_get_int
-			    (pMac, WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
+			    (mac, WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
 			    &val) != QDF_STATUS_SUCCESS) {
 			/*
 			 * Could not get max channel value from CFG. Log error.
@@ -1409,12 +1409,12 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_start_scan_cmd_fixed_param scan_params;
-	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t mode = 0;
 	struct wma_txrx_node *intr = NULL;
 
-	if (NULL == pMac) {
-		WMA_LOGE("%s: pMac is NULL", __func__);
+	if (NULL == mac) {
+		WMA_LOGE("%s: mac is NULL", __func__);
 		qdf_mem_free(roam_req);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1510,7 +1510,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 			break;
 
 
-		wma_roam_scan_fill_scan_params(wma_handle, pMac, roam_req,
+		wma_roam_scan_fill_scan_params(wma_handle, mac, roam_req,
 					       &scan_params);
 		qdf_status =
 			wma_roam_scan_offload_mode(wma_handle, &scan_params,
@@ -1607,7 +1607,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		if (wma_handle->roam_offload_enabled) {
 			uint32_t mode;
 
-			wma_roam_scan_fill_scan_params(wma_handle, pMac,
+			wma_roam_scan_fill_scan_params(wma_handle, mac,
 						       NULL, &scan_params);
 
 			if (roam_req->reason == REASON_ROAM_STOP_ALL ||
@@ -1615,7 +1615,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 			    roam_req->reason == REASON_ROAM_SYNCH_FAILED) {
 				mode = WMI_ROAM_SCAN_MODE_NONE;
 			} else {
-				if (csr_roamIsRoamOffloadEnabled(pMac))
+				if (csr_roamIsRoamOffloadEnabled(mac))
 					mode = WMI_ROAM_SCAN_MODE_NONE |
 						WMI_ROAM_SCAN_MODE_ROAMOFFLOAD;
 				else
@@ -1710,7 +1710,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		wma_handle->suitable_ap_hb_failure = false;
 
 		if (roam_req->RoamScanOffloadEnabled) {
-			wma_roam_scan_fill_scan_params(wma_handle, pMac,
+			wma_roam_scan_fill_scan_params(wma_handle, mac,
 						       roam_req, &scan_params);
 			qdf_status =
 				wma_roam_scan_offload_mode(
@@ -1795,7 +1795,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		if (!roam_req->RoamScanOffloadEnabled)
 			break;
 
-		wma_roam_scan_fill_scan_params(wma_handle, pMac, roam_req,
+		wma_roam_scan_fill_scan_params(wma_handle, mac, roam_req,
 					       &scan_params);
 		qdf_status =
 			wma_roam_scan_offload_mode(wma_handle, &scan_params,
@@ -2648,7 +2648,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 					tSirRoamOffloadScanReq *roam_req)
 {
 	qdf_size_t val_len;
-	struct mac_context *pMac = NULL;
+	struct mac_context *mac = NULL;
 	tSirMacCapabilityInfo selfCaps;
 	uint32_t val = 0;
 	uint32_t nCfgValue;
@@ -2660,9 +2660,9 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	/* Roaming is done only for INFRA STA type.
 	 * So, ess will be one and ibss will be Zero
 	 */
-	pMac = cds_get_context(QDF_MODULE_ID_PE);
-	if (!pMac) {
-		WMA_LOGE("%s:NULL pMac ptr. Exiting", __func__);
+	mac = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac) {
+		WMA_LOGE("%s:NULL mac ptr. Exiting", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2670,19 +2670,19 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	selfCaps.ess = 1;
 	selfCaps.ibss = 0;
 
-	val = pMac->mlme_cfg->wep_params.is_privacy_enabled;
+	val = mac->mlme_cfg->wep_params.is_privacy_enabled;
 	if (val)
 		selfCaps.privacy = 1;
 
-	if (pMac->mlme_cfg->ht_caps.short_preamble)
+	if (mac->mlme_cfg->ht_caps.short_preamble)
 		selfCaps.shortPreamble = 1;
 
 	selfCaps.pbcc = 0;
 	selfCaps.channelAgility = 0;
 
-	if (pMac->mlme_cfg->feature_flags.enable_short_slot_time_11g)
+	if (mac->mlme_cfg->feature_flags.enable_short_slot_time_11g)
 		selfCaps.shortSlotTime = 1;
-	if (wlan_cfg_get_int(pMac, WNI_CFG_11H_ENABLED, &val) !=
+	if (wlan_cfg_get_int(mac, WNI_CFG_11H_ENABLED, &val) !=
 							QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_11H_ENABLED");
@@ -2691,10 +2691,10 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	if (val)
 		selfCaps.spectrumMgt = 1;
 
-	if (pMac->mlme_cfg->wmm_params.qos_enabled)
+	if (mac->mlme_cfg->wmm_params.qos_enabled)
 		selfCaps.qos = 1;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_APSD_ENABLED, &val) !=
+	if (wlan_cfg_get_int(mac, WNI_CFG_APSD_ENABLED, &val) !=
 							QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_APSD_ENABLED");
@@ -2703,9 +2703,9 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	if (val)
 		selfCaps.apsd = 1;
 
-	selfCaps.rrm = pMac->rrm.rrmSmeContext.rrmConfig.rrm_enabled;
+	selfCaps.rrm = mac->rrm.rrmSmeContext.rrmConfig.rrm_enabled;
 
-	val = pMac->mlme_cfg->feature_flags.enable_block_ack;
+	val = mac->mlme_cfg->feature_flags.enable_block_ack;
 	selfCaps.delayedBA =
 		(uint16_t) ((val >> WNI_CFG_BLOCK_ACK_ENABLED_DELAYED) & 1);
 	selfCaps.immediateBA =
@@ -2726,24 +2726,24 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	roam_offload_params->capability |= ((*pCfgValue16) & 0xFFFF);
 
 	roam_offload_params->ht_caps_info =
-		*(uint32_t *)&pMac->mlme_cfg->ht_caps.ht_cap_info;
+		*(uint32_t *)&mac->mlme_cfg->ht_caps.ht_cap_info;
 
 	roam_offload_params->ampdu_param =
-		*(uint32_t *)&pMac->mlme_cfg->ht_caps.ampdu_params;
+		*(uint32_t *)&mac->mlme_cfg->ht_caps.ampdu_params;
 
 	roam_offload_params->ht_ext_cap =
-		*(uint32_t *)&pMac->mlme_cfg->ht_caps.ext_cap_info;
+		*(uint32_t *)&mac->mlme_cfg->ht_caps.ext_cap_info;
 
 	val_len = ROAM_OFFLOAD_NUM_MCS_SET;
 	if (wlan_mlme_get_cfg_str((uint8_t *)roam_offload_params->mcsset,
-				  &pMac->mlme_cfg->rates.supported_mcs_set,
+				  &mac->mlme_cfg->rates.supported_mcs_set,
 				  &val_len) != QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get CFG_SUPPORTED_MCS_SET");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_TX_BF_CAP, &nCfgValue) !=
+	if (wlan_cfg_get_int(mac, WNI_CFG_TX_BF_CAP, &nCfgValue) !=
 							QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_TX_BF_CAP");
@@ -2752,7 +2752,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	/* tSirMacTxBFCapabilityInfo */
 	nCfgValue8 = (uint8_t) nCfgValue;
 	roam_offload_params->ht_txbf = nCfgValue8 & 0xFF;
-	if (wlan_cfg_get_int(pMac, WNI_CFG_AS_CAP, &nCfgValue) !=
+	if (wlan_cfg_get_int(mac, WNI_CFG_AS_CAP, &nCfgValue) !=
 							QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_AS_CAP");
@@ -2763,7 +2763,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	roam_offload_params->asel_cap = nCfgValue8 & 0xFF;
 
 	/* QOS Info */
-	nCfgValue8 = pMac->mlme_cfg->wmm_params.max_sp_length;
+	nCfgValue8 = mac->mlme_cfg->wmm_params.max_sp_length;
 	macQosInfoSta.maxSpLen = nCfgValue8;
 	macQosInfoSta.moreDataAck = 0;
 	macQosInfoSta.qack = 0;
@@ -3403,13 +3403,13 @@ int wma_extscan_start_stop_event_handler(void *handle,
 	wmi_extscan_start_stop_event_fixed_param *event;
 	struct sir_extscan_generic_response   *extscan_ind;
 	uint16_t event_type;
-	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (!pMac) {
-		WMA_LOGE("%s: Invalid pMac", __func__);
+	if (!mac) {
+		WMA_LOGE("%s: Invalid mac", __func__);
 		return -EINVAL;
 	}
-	if (!pMac->sme.ext_scan_ind_cb) {
+	if (!mac->sme.ext_scan_ind_cb) {
 		WMA_LOGE("%s: Callback not registered", __func__);
 		return -EINVAL;
 	}
@@ -3474,7 +3474,7 @@ int wma_extscan_start_stop_event_handler(void *handle,
 		qdf_mem_free(extscan_ind);
 		return -EINVAL;
 	}
-	pMac->sme.ext_scan_ind_cb(pMac->hdd_handle, event_type, extscan_ind);
+	mac->sme.ext_scan_ind_cb(mac->hdd_handle, event_type, extscan_ind);
 	WMA_LOGD("%s: sending event to umac for requestid %u with status %d",
 		__func__, extscan_ind->request_id, extscan_ind->status);
 	qdf_mem_free(extscan_ind);
@@ -3501,13 +3501,13 @@ int wma_extscan_operations_event_handler(void *handle,
 	wmi_extscan_operation_event_fixed_param *oprn_event;
 	tSirExtScanOnScanEventIndParams *oprn_ind;
 	uint32_t cnt;
-	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (!pMac) {
-		WMA_LOGE("%s: Invalid pMac", __func__);
+	if (!mac) {
+		WMA_LOGE("%s: Invalid mac", __func__);
 		return -EINVAL;
 	}
-	if (!pMac->sme.ext_scan_ind_cb) {
+	if (!mac->sme.ext_scan_ind_cb) {
 		WMA_LOGE("%s: Callback not registered", __func__);
 		return -EINVAL;
 	}
@@ -3588,7 +3588,7 @@ int wma_extscan_operations_event_handler(void *handle,
 		qdf_mem_free(oprn_ind);
 		return -EINVAL;
 	}
-	pMac->sme.ext_scan_ind_cb(pMac->hdd_handle,
+	mac->sme.ext_scan_ind_cb(mac->hdd_handle,
 				eSIR_EXTSCAN_SCAN_PROGRESS_EVENT_IND, oprn_ind);
 	WMA_LOGI("%s: sending scan progress event to hdd", __func__);
 exit_handler:
@@ -3614,13 +3614,13 @@ int wma_extscan_table_usage_event_handler(void *handle,
 	WMI_EXTSCAN_TABLE_USAGE_EVENTID_param_tlvs *param_buf;
 	wmi_extscan_table_usage_event_fixed_param *event;
 	tSirExtScanResultsAvailableIndParams *tbl_usg_ind;
-	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (!pMac) {
-		WMA_LOGE("%s: Invalid pMac", __func__);
+	if (!mac) {
+		WMA_LOGE("%s: Invalid mac", __func__);
 		return -EINVAL;
 	}
-	if (!pMac->sme.ext_scan_ind_cb) {
+	if (!mac->sme.ext_scan_ind_cb) {
 		WMA_LOGE("%s: Callback not registered", __func__);
 		return -EINVAL;
 	}
@@ -3637,7 +3637,7 @@ int wma_extscan_table_usage_event_handler(void *handle,
 
 	tbl_usg_ind->requestId = event->request_id;
 	tbl_usg_ind->numResultsAvailable = event->entries_in_use;
-	pMac->sme.ext_scan_ind_cb(pMac->hdd_handle,
+	mac->sme.ext_scan_ind_cb(mac->hdd_handle,
 				eSIR_EXTSCAN_SCAN_RES_AVAILABLE_IND,
 				tbl_usg_ind);
 	WMA_LOGI("%s: sending scan_res available event to hdd", __func__);
@@ -3666,13 +3666,13 @@ int wma_extscan_capabilities_event_handler(void *handle,
 	wmi_extscan_hotlist_monitor_capabilities *src_hotlist;
 	wmi_extscan_wlan_change_monitor_capabilities *src_change;
 	struct ext_scan_capabilities_response  *dest_capab;
-	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (!pMac) {
-		WMA_LOGE("%s: Invalid pMac", __func__);
+	if (!mac) {
+		WMA_LOGE("%s: Invalid mac", __func__);
 		return -EINVAL;
 	}
-	if (!pMac->sme.ext_scan_ind_cb) {
+	if (!mac->sme.ext_scan_ind_cb) {
 		WMA_LOGE("%s: Callback not registered", __func__);
 		return -EINVAL;
 	}
@@ -3742,7 +3742,7 @@ int wma_extscan_capabilities_event_handler(void *handle,
 		__func__, dest_capab->max_number_of_white_listed_ssid,
 		dest_capab->max_number_of_black_listed_bssid);
 
-	pMac->sme.ext_scan_ind_cb(pMac->hdd_handle,
+	mac->sme.ext_scan_ind_cb(mac->hdd_handle,
 				eSIR_EXTSCAN_GET_CAPABILITIES_IND, dest_capab);
 	qdf_mem_free(dest_capab);
 	return 0;
@@ -3771,13 +3771,13 @@ int wma_extscan_hotlist_match_event_handler(void *handle,
 	uint32_t numap;
 	int j, ap_found = 0;
 	uint32_t buf_len;
-	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
-	if (!pMac) {
-		WMA_LOGE("%s: Invalid pMac", __func__);
+	if (!mac) {
+		WMA_LOGE("%s: Invalid mac", __func__);
 		return -EINVAL;
 	}
-	if (!pMac->sme.ext_scan_ind_cb) {
+	if (!mac->sme.ext_scan_ind_cb) {
 		WMA_LOGE("%s: Callback not registered", __func__);
 		return -EINVAL;
 	}
@@ -3861,7 +3861,7 @@ int wma_extscan_hotlist_match_event_handler(void *handle,
 		src_hotlist++;
 	}
 	dest_hotlist->ap_found = ap_found;
-	pMac->sme.ext_scan_ind_cb(pMac->hdd_handle,
+	mac->sme.ext_scan_ind_cb(mac->hdd_handle,
 				eSIR_EXTSCAN_HOTLIST_MATCH_IND, dest_hotlist);
 	WMA_LOGI("%s: sending hotlist match event to hdd", __func__);
 	qdf_mem_free(dest_hotlist);
@@ -4069,15 +4069,15 @@ int wma_extscan_cached_results_event_handler(void *handle,
 	wmi_extscan_wlan_descriptor *src_hotlist;
 	wmi_extscan_rssi_info *src_rssi;
 	int i, moredata, scan_ids_cnt, buf_len, status;
-	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t total_len;
 	bool excess_data = false;
 
-	if (!pMac) {
-		WMA_LOGE("%s: Invalid pMac", __func__);
+	if (!mac) {
+		WMA_LOGE("%s: Invalid mac", __func__);
 		return -EINVAL;
 	}
-	if (!pMac->sme.ext_scan_ind_cb) {
+	if (!mac->sme.ext_scan_ind_cb) {
 		WMA_LOGE("%s: Callback not registered", __func__);
 		return -EINVAL;
 	}
@@ -4167,7 +4167,7 @@ int wma_extscan_cached_results_event_handler(void *handle,
 
 	status = wma_group_num_bss_to_scan_id(cmd_param_info, dest_cachelist);
 	if (!status)
-	pMac->sme.ext_scan_ind_cb(pMac->hdd_handle,
+	mac->sme.ext_scan_ind_cb(mac->hdd_handle,
 				eSIR_EXTSCAN_CACHED_RESULTS_IND,
 				dest_cachelist);
 	else
@@ -4188,7 +4188,7 @@ noresults:
 	empty_cachelist.more_data = 0;
 	empty_cachelist.num_scan_ids = 0;
 
-	pMac->sme.ext_scan_ind_cb(pMac->hdd_handle,
+	mac->sme.ext_scan_ind_cb(mac->hdd_handle,
 				eSIR_EXTSCAN_CACHED_RESULTS_IND,
 				&empty_cachelist);
 	return 0;
@@ -4221,15 +4221,15 @@ int wma_extscan_change_results_event_handler(void *handle,
 	int count = 0;
 	int moredata;
 	uint32_t rssi_num = 0;
-	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t buf_len;
 	bool excess_data = false;
 
-	if (!pMac) {
-		WMA_LOGE("%s: Invalid pMac", __func__);
+	if (!mac) {
+		WMA_LOGE("%s: Invalid mac", __func__);
 		return -EINVAL;
 	}
-	if (!pMac->sme.ext_scan_ind_cb) {
+	if (!mac->sme.ext_scan_ind_cb) {
 		WMA_LOGE("%s: Callback not registered", __func__);
 		return -EINVAL;
 	}
@@ -4329,7 +4329,7 @@ int wma_extscan_change_results_event_handler(void *handle,
 	dest_chglist->moreData = moredata;
 	dest_chglist->numResults = numap;
 
-	pMac->sme.ext_scan_ind_cb(pMac->hdd_handle,
+	mac->sme.ext_scan_ind_cb(mac->hdd_handle,
 			eSIR_EXTSCAN_SIGNIFICANT_WIFI_CHANGE_RESULTS_IND,
 			dest_chglist);
 	WMA_LOGI("%s: sending change monitor results", __func__);

@@ -4412,12 +4412,12 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	struct wma_txrx_node *iface;
 	int pps_val = 0;
 	bool roam_synch_in_progress = false;
-	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 	struct policy_mgr_hw_mode_params hw_mode = {0};
 	bool peer_assoc_sent = false;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	if (NULL == pMac) {
+	if (NULL == mac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
 		goto send_fail_resp;
 	}
@@ -4603,7 +4603,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 
 		wmi_unified_send_txbf(wma, &add_bss->staContext);
 
-		pps_val = ((pMac->mlme_cfg->sta.enable_5g_ebt << 31) &
+		pps_val = ((mac->mlme_cfg->sta.enable_5g_ebt << 31) &
 			   0xffff0000) | (PKT_PWR_SAVE_5G_EBT & 0xffff);
 		status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 						WMI_VDEV_PARAM_PACKET_POWERSAVE,

@@ -1066,7 +1066,7 @@ QDF_STATUS wma_set_mcc_channel_time_latency(tp_wma_handle wma,
 	uint32_t mcc_channel, uint32_t mcc_channel_time_latency)
 {
 	uint32_t cfg_val = 0;
-	struct mac_context *pMac = NULL;
+	struct mac_context *mac = NULL;
 	uint32_t channel1 = mcc_channel;
 	uint32_t chan1_freq = cds_chan_to_freq(channel1);
 
@@ -1075,21 +1075,21 @@ QDF_STATUS wma_set_mcc_channel_time_latency(tp_wma_handle wma,
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
-	pMac = cds_get_context(QDF_MODULE_ID_PE);
-	if (!pMac) {
-		WMA_LOGE("%s:NULL pMac ptr. Exiting", __func__);
+	mac = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac) {
+		WMA_LOGE("%s:NULL mac ptr. Exiting", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* First step is to confirm if MCC is active */
-	if (!lim_is_in_mcc(pMac)) {
+	if (!lim_is_in_mcc(mac)) {
 		WMA_LOGE("%s: MCC is not active. Exiting", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Confirm MCC adaptive scheduler feature is disabled */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
+	if (wlan_cfg_get_int(mac, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
 			     &cfg_val) == QDF_STATUS_SUCCESS) {
 		if (cfg_val == WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED_STAMAX) {
 			WMA_LOGD("%s: Can't set channel latency while MCC ADAPTIVE SCHED is enabled. Exit",
@@ -1129,7 +1129,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota(tp_wma_handle wma,
 		uint32_t adapter_2_chan_number)
 {
 	uint32_t cfg_val = 0;
-	struct mac_context *pMac = NULL;
+	struct mac_context *mac = NULL;
 	uint32_t chan1_freq = cds_chan_to_freq(adapter_1_chan_number);
 	uint32_t chan2_freq = cds_chan_to_freq(adapter_2_chan_number);
 
@@ -1138,22 +1138,22 @@ QDF_STATUS wma_set_mcc_channel_time_quota(tp_wma_handle wma,
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
-	pMac = cds_get_context(QDF_MODULE_ID_PE);
-	if (!pMac) {
-		WMA_LOGE("%s:NULL pMac ptr. Exiting", __func__);
+	mac = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac) {
+		WMA_LOGE("%s:NULL mac ptr. Exiting", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* First step is to confirm if MCC is active */
-	if (!lim_is_in_mcc(pMac)) {
+	if (!lim_is_in_mcc(mac)) {
 		WMA_LOGD("%s: MCC is not active. Exiting", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Confirm MCC adaptive scheduler feature is disabled */
-	if (wlan_cfg_get_int(pMac, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
+	if (wlan_cfg_get_int(mac, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
 			     &cfg_val) == QDF_STATUS_SUCCESS) {
 		if (cfg_val == WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED_STAMAX) {
 			WMA_LOGD("%s: Can't set channel quota while MCC_ADAPTIVE_SCHED is enabled. Exit",
@@ -2395,7 +2395,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	uint16_t newFrmLen = 0;
 #endif /* WLAN_FEATURE_11W */
 	struct wma_txrx_node *iface;
-	tpAniSirGlobal pMac;
+	tpAniSirGlobal mac;
 	tpSirMacMgmtHdr mHdr;
 	struct wmi_mgmt_params mgmt_param = {0};
 	struct cdp_cfg *ctrl_pdev;
@@ -2435,9 +2435,9 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pMac = cds_get_context(QDF_MODULE_ID_PE);
-	if (!pMac) {
-		WMA_LOGE("pMac Handle is NULL");
+	mac = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac) {
+		WMA_LOGE("mac Handle is NULL");
 		cds_packet_free((void *)tx_frame);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2742,7 +2742,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	} else {
 		chanfreq = 0;
 	}
-	if (pMac->mlme_cfg->gen.debug_packet_log & 0x1) {
+	if (mac->mlme_cfg->gen.debug_packet_log & 0x1) {
 		if ((pFc->type == SIR_MAC_MGMT_FRAME) &&
 		    (pFc->subType != SIR_MAC_MGMT_PROBE_REQ) &&
 		    (pFc->subType != SIR_MAC_MGMT_PROBE_RSP)) {

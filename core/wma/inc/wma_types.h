@@ -580,7 +580,7 @@ typedef struct sDisableUapsdParams {
 
 /**
  * wma_tx_dwnld_comp_callback - callback function for TX dwnld complete
- * @context: global pMac pointer
+ * @context: global mac pointer
  * @buf: buffer
  * @bFreeData: to free/not free the buffer
  *
@@ -593,7 +593,7 @@ typedef QDF_STATUS (*wma_tx_dwnld_comp_callback)(void *context, qdf_nbuf_t buf,
 
 /**
  * wma_tx_ota_comp_callback - callback function for TX complete
- * @context: global pMac pointer
+ * @context: global mac pointer
  * @buf: buffer
  * @status: tx completion status
  * @params: tx completion params
@@ -671,7 +671,7 @@ enum rateid {
 	RATEID_DEFAULT
 };
 
-QDF_STATUS wma_post_ctrl_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
+QDF_STATUS wma_post_ctrl_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg);
 
 QDF_STATUS u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb);
 

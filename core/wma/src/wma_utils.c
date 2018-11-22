@@ -1455,7 +1455,7 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {
-		WMA_LOGD("%s: NULL pMac ptr. Exiting", __func__);
+		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
 		return -EINVAL;
 	}
 
@@ -3445,7 +3445,7 @@ QDF_STATUS wma_send_link_speed(uint32_t link_speed)
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac_ctx) {
-		WMA_LOGD("%s: NULL pMac ptr. Exiting", __func__);
+		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 

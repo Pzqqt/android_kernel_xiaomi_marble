@@ -934,7 +934,7 @@ typedef struct {
 	uint16_t reduced_beacon_interval;
 } tSwitchChannelParams, *tpSwitchChannelParams;
 
-typedef void (*tpSetLinkStateCallback)(tpAniSirGlobal pMac, void *msgParam,
+typedef void (*tpSetLinkStateCallback)(tpAniSirGlobal mac, void *msgParam,
 		bool status);
 
 /**
@@ -1029,7 +1029,7 @@ typedef struct {
 } tAggrAddTsParams, *tpAggrAddTsParams;
 
 
-typedef QDF_STATUS (*tHalMsgCallback)(tpAniSirGlobal pMac, uint32_t mesgId,
+typedef QDF_STATUS (*tHalMsgCallback)(tpAniSirGlobal mac, uint32_t mesgId,
 				      void *mesgParam);
 
 /**
@@ -1386,7 +1386,7 @@ typedef struct tHalHiddenSsidVdevRestart {
 } tHalHiddenSsidVdevRestart, *tpHalHiddenSsidVdevRestart;
 
 
-extern void sys_process_mmh_msg(tpAniSirGlobal pMac,
+extern void sys_process_mmh_msg(tpAniSirGlobal mac,
 				struct scheduler_msg *pMsg);
 
 /**
