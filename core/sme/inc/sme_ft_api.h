@@ -40,7 +40,7 @@ typedef enum eFTIEState {
 
 /* FT neighbor roam callback user context */
 typedef struct sFTRoamCallbackUsrCtx {
-	tpAniSirGlobal pMac;
+	tpAniSirGlobal mac;
 	uint8_t sessionId;
 } tFTRoamCallbackUsrCtx, *tpFTRoamCallbackUsrCtx;
 

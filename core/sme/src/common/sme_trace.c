@@ -27,7 +27,7 @@
 #include "sme_trace.h"
 #include "sme_internal.h"
 #ifndef SME_TRACE_RECORD
-void sme_trace_init(tpAniSirGlobal pMac)
+void sme_trace_init(tpAniSirGlobal mac)
 {
 
 }
@@ -209,7 +209,7 @@ static void sme_trace_dump(void *mac_ctx, tp_qdf_trace_record record,
 	}
 }
 
-void sme_trace_init(tpAniSirGlobal pMac)
+void sme_trace_init(tpAniSirGlobal mac)
 {
 	qdf_trace_register(QDF_MODULE_ID_SME, &sme_trace_dump);
 }

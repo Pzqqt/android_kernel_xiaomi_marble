@@ -453,7 +453,7 @@ void sme_purge_pdev_all_ser_cmd_list(mac_handle_t mac_handle);
  * Return: QDF_STATUS_SUCCESS - SME successfully processed the message.
  * Other status means SME failed to process the message to HAL.
  */
-QDF_STATUS sme_process_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
+QDF_STATUS sme_process_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg);
 
 QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg);
 QDF_STATUS sme_scan_get_result(mac_handle_t mac_handle, uint8_t sessionId,

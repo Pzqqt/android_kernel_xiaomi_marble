@@ -67,8 +67,8 @@ typedef enum eSmeState {
 	SME_STATE_READY,
 } eSmeState;
 
-#define SME_IS_START(pMac)  (SME_STATE_STOP != (pMac)->sme.state)
-#define SME_IS_READY(pMac)  (SME_STATE_READY == (pMac)->sme.state)
+#define SME_IS_START(mac)  (SME_STATE_STOP != (mac)->sme.state)
+#define SME_IS_READY(mac)  (SME_STATE_READY == (mac)->sme.state)
 
 /* HDD Callback function */
 typedef void (*pIbssPeerInfoCb)(void *pUserData,
