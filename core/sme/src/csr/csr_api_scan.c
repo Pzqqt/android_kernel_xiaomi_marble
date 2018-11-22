@@ -74,20 +74,20 @@
 #define PCL_ADVANTAGE 30
 #define PCL_RSSI_THRESHOLD -75
 
-static void csr_set_cfg_valid_channel_list(tpAniSirGlobal pMac, uint8_t
+static void csr_set_cfg_valid_channel_list(tpAniSirGlobal mac, uint8_t
 					*pChannelList, uint8_t NumChannels);
-static void csr_save_tx_power_to_cfg(tpAniSirGlobal pMac, tDblLinkList *pList,
+static void csr_save_tx_power_to_cfg(tpAniSirGlobal mac, tDblLinkList *pList,
 			      uint32_t cfgId);
-static void csr_set_cfg_country_code(tpAniSirGlobal pMac, uint8_t *countryCode);
-static void csr_purge_channel_power(tpAniSirGlobal pMac, tDblLinkList
+static void csr_set_cfg_country_code(tpAniSirGlobal mac, uint8_t *countryCode);
+static void csr_purge_channel_power(tpAniSirGlobal mac, tDblLinkList
 							*pChannelList);
-static bool csr_roam_is_valid_channel(tpAniSirGlobal pMac, uint8_t channel);
+static bool csr_roam_is_valid_channel(tpAniSirGlobal mac, uint8_t channel);
 
 #define CSR_IS_SOCIAL_CHANNEL(channel) \
 	(((channel) == 1) || ((channel) == 6) || ((channel) == 11))
 
 /* pResult is invalid calling this function. */
-void csr_free_scan_result_entry(tpAniSirGlobal pMac, struct tag_csrscan_result
+void csr_free_scan_result_entry(tpAniSirGlobal mac, struct tag_csrscan_result
 				*pResult)
 {
 	if (NULL != pResult->Result.pvIes)
@@ -96,7 +96,7 @@ void csr_free_scan_result_entry(tpAniSirGlobal pMac, struct tag_csrscan_result
 	qdf_mem_free(pResult);
 }
 
-static QDF_STATUS csr_ll_scan_purge_result(tpAniSirGlobal pMac,
+static QDF_STATUS csr_ll_scan_purge_result(tpAniSirGlobal mac,
 					   tDblLinkList *pList)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -108,7 +108,7 @@ static QDF_STATUS csr_ll_scan_purge_result(tpAniSirGlobal pMac,
 	while ((pEntry = csr_ll_remove_head(pList, LL_ACCESS_NOLOCK)) != NULL) {
 		pBssDesc = GET_BASE_ADDR(pEntry, struct tag_csrscan_result,
 					Link);
-		csr_free_scan_result_entry(pMac, pBssDesc);
+		csr_free_scan_result_entry(mac, pBssDesc);
 	}
 
 	csr_ll_unlock(pList);
@@ -124,13 +124,13 @@ QDF_STATUS csr_scan_open(tpAniSirGlobal mac_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS csr_scan_close(tpAniSirGlobal pMac)
+QDF_STATUS csr_scan_close(tpAniSirGlobal mac)
 {
-	csr_purge_channel_power(pMac, &pMac->scan.channelPowerInfoList24);
-	csr_purge_channel_power(pMac, &pMac->scan.channelPowerInfoList5G);
-	csr_ll_close(&pMac->scan.channelPowerInfoList24);
-	csr_ll_close(&pMac->scan.channelPowerInfoList5G);
-	ucfg_scan_set_enable(pMac->psoc, false);
+	csr_purge_channel_power(mac, &mac->scan.channelPowerInfoList24);
+	csr_purge_channel_power(mac, &mac->scan.channelPowerInfoList5G);
+	csr_ll_close(&mac->scan.channelPowerInfoList24);
+	csr_ll_close(&mac->scan.channelPowerInfoList5G);
+	ucfg_scan_set_enable(mac->psoc, false);
 	return QDF_STATUS_SUCCESS;
 }
 QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac_ctx,
@@ -338,7 +338,7 @@ roam_completion:
 	return status;
 }
 
-QDF_STATUS csr_scan_result_purge(tpAniSirGlobal pMac,
+QDF_STATUS csr_scan_result_purge(tpAniSirGlobal mac,
 				 tScanResultHandle hScanList)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
@@ -346,7 +346,7 @@ QDF_STATUS csr_scan_result_purge(tpAniSirGlobal pMac,
 				(struct scan_result_list *) hScanList;
 
 	if (pScanList) {
-		status = csr_ll_scan_purge_result(pMac, &pScanList->List);
+		status = csr_ll_scan_purge_result(mac, &pScanList->List);
 		csr_ll_close(&pScanList->List);
 		qdf_mem_free(pScanList);
 	}
@@ -354,7 +354,7 @@ QDF_STATUS csr_scan_result_purge(tpAniSirGlobal pMac,
 }
 
 /* Add the channel to the occupiedChannels array */
-static void csr_scan_add_to_occupied_channels(tpAniSirGlobal pMac,
+static void csr_scan_add_to_occupied_channels(tpAniSirGlobal mac,
 					struct tag_csrscan_result *pResult,
 					uint8_t sessionId,
 					struct csr_channel *occupied_ch,
@@ -367,12 +367,12 @@ static void csr_scan_add_to_occupied_channels(tpAniSirGlobal pMac,
 	uint8_t *occupied_ch_lst = occupied_ch->channelList;
 
 	ch = pResult->Result.BssDescriptor.channelId;
-	if (!csr_neighbor_roam_connected_profile_match(pMac,
+	if (!csr_neighbor_roam_connected_profile_match(mac,
 						sessionId, pResult, pIes))
 		return;
 
 	if (is_init_list)
-		pMac->scan.roam_candidate_count[sessionId]++;
+		mac->scan.roam_candidate_count[sessionId]++;
 
 	if (csr_is_channel_present_in_list(occupied_ch_lst,
 					   num_occupied_ch, ch))
@@ -467,20 +467,20 @@ static void csr_scan_add_result(tpAniSirGlobal mac_ctx,
  * csr_scan_get_result returns with a failure because
  * of not being able to find the roaming BSS.
  */
-static bool csr_scan_flush_denied(tpAniSirGlobal pMac)
+static bool csr_scan_flush_denied(tpAniSirGlobal mac)
 {
 	uint8_t sessionId;
 
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++) {
-		if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
-			if (csr_neighbor_middle_of_roaming(pMac, sessionId))
+		if (CSR_IS_SESSION_VALID(mac, sessionId)) {
+			if (csr_neighbor_middle_of_roaming(mac, sessionId))
 				return 1;
 		}
 	}
 	return 0;
 }
 
-static bool csr_scan_save_bss_description(tpAniSirGlobal pMac,
+static bool csr_scan_save_bss_description(tpAniSirGlobal mac,
 						     tSirBssDescription *
 						     pBSSDescription)
 {
@@ -500,7 +500,7 @@ static bool csr_scan_save_bss_description(tpAniSirGlobal pMac,
 		return false;
 
 	pCsrBssDescription->AgingCount =
-		(int32_t) pMac->roam.configParam.agingCount;
+		(int32_t) mac->roam.configParam.agingCount;
 	sme_debug(
 		"Set Aging Count = %d for BSS " MAC_ADDRESS_STR " ",
 		pCsrBssDescription->AgingCount,
@@ -508,21 +508,21 @@ static bool csr_scan_save_bss_description(tpAniSirGlobal pMac,
 			       bssId));
 	qdf_mem_copy(&pCsrBssDescription->Result.BssDescriptor,
 		     pBSSDescription, cbBSSDesc);
-	csr_scan_add_result(pMac, pCsrBssDescription);
-	csr_free_scan_result_entry(pMac, pCsrBssDescription);
+	csr_scan_add_result(mac, pCsrBssDescription);
+	csr_free_scan_result_entry(mac, pCsrBssDescription);
 
 	return true;
 }
 
 /* Append a Bss Description... */
-bool csr_scan_append_bss_description(tpAniSirGlobal pMac,
+bool csr_scan_append_bss_description(tpAniSirGlobal mac,
 				     tSirBssDescription *pSirBssDescription)
 {
-	return csr_scan_save_bss_description(pMac,
+	return csr_scan_save_bss_description(mac,
 					pSirBssDescription);
 }
 
-static void csr_purge_channel_power(tpAniSirGlobal pMac, tDblLinkList
+static void csr_purge_channel_power(tpAniSirGlobal mac, tDblLinkList
 					*pChannelList)
 {
 	struct csr_channel_powerinfo *pChannelSet;
@@ -548,7 +548,7 @@ static void csr_purge_channel_power(tpAniSirGlobal pMac, tDblLinkList
  * Input: pCountryInfo -- the country code (e.g. "USI"), channel list, and power
  * limit are all stored inside this data structure
  */
-QDF_STATUS csr_save_to_channel_power2_g_5_g(tpAniSirGlobal pMac,
+QDF_STATUS csr_save_to_channel_power2_g_5_g(tpAniSirGlobal mac,
 					    uint32_t tableSize,
 					    tSirMacChanInfo *channelTable)
 {
@@ -591,18 +591,18 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(tpAniSirGlobal pMac,
 			return QDF_STATUS_E_FAILURE;
 		}
 		pChannelSet->txPower = QDF_MIN(pChannelInfo->maxTxPower,
-					pMac->roam.configParam.nTxPowerCap);
+					mac->roam.configParam.nTxPowerCap);
 		if (f2GHzInfoFound) {
 			if (!f2GListPurged) {
 				/* purge previous results if found new */
-				csr_purge_channel_power(pMac,
-							&pMac->scan.
+				csr_purge_channel_power(mac,
+							&mac->scan.
 							channelPowerInfoList24);
 				f2GListPurged = true;
 			}
-			if (CSR_IS_OPERATING_BG_BAND(pMac)) {
+			if (CSR_IS_OPERATING_BG_BAND(mac)) {
 				/* add to the list of 2.4 GHz channel sets */
-				csr_ll_insert_tail(&pMac->scan.
+				csr_ll_insert_tail(&mac->scan.
 						   channelPowerInfoList24,
 						   &pChannelSet->link,
 						   LL_ACCESS_LOCK);
@@ -616,14 +616,14 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(tpAniSirGlobal pMac,
 			/* 5GHz info found */
 			if (!f5GListPurged) {
 				/* purge previous results if found new */
-				csr_purge_channel_power(pMac,
-							&pMac->scan.
+				csr_purge_channel_power(mac,
+							&mac->scan.
 							channelPowerInfoList5G);
 				f5GListPurged = true;
 			}
-			if (CSR_IS_OPERATING_A_BAND(pMac)) {
+			if (CSR_IS_OPERATING_A_BAND(mac)) {
 				/* add to the list of 5GHz channel sets */
-				csr_ll_insert_tail(&pMac->scan.
+				csr_ll_insert_tail(&mac->scan.
 						   channelPowerInfoList5G,
 						   &pChannelSet->link,
 						   LL_ACCESS_LOCK);
@@ -639,7 +639,7 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(tpAniSirGlobal pMac,
 	return QDF_STATUS_SUCCESS;
 }
 
-static void csr_clear_dfs_channel_list(tpAniSirGlobal pMac)
+static void csr_clear_dfs_channel_list(tpAniSirGlobal mac)
 {
 	tSirMbMsg *pMsg;
 	uint16_t msgLen;
@@ -653,12 +653,12 @@ static void csr_clear_dfs_channel_list(tpAniSirGlobal pMac)
 	}
 }
 
-void csr_apply_power2_current(tpAniSirGlobal pMac)
+void csr_apply_power2_current(tpAniSirGlobal mac)
 {
 	sme_debug("Updating Cfg with power settings");
-	csr_save_tx_power_to_cfg(pMac, &pMac->scan.channelPowerInfoList24,
+	csr_save_tx_power_to_cfg(mac, &mac->scan.channelPowerInfoList24,
 				 WNI_CFG_MAX_TX_POWER_2_4);
-	csr_save_tx_power_to_cfg(pMac, &pMac->scan.channelPowerInfoList5G,
+	csr_save_tx_power_to_cfg(mac, &mac->scan.channelPowerInfoList5G,
 				 WNI_CFG_MAX_TX_POWER_5);
 }
 
@@ -698,7 +698,7 @@ void csr_apply_channel_power_info_to_fw(tpAniSirGlobal mac_ctx,
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-static void csr_diag_reset_country_information(tpAniSirGlobal pMac)
+static void csr_diag_reset_country_information(tpAniSirGlobal mac)
 {
 
 	host_log_802_11d_pkt_type *p11dLog;
@@ -710,21 +710,21 @@ static void csr_diag_reset_country_information(tpAniSirGlobal pMac)
 		return;
 
 	p11dLog->eventId = WLAN_80211D_EVENT_RESET;
-	qdf_mem_copy(p11dLog->countryCode, pMac->scan.countryCodeCurrent, 3);
-	p11dLog->numChannel = pMac->scan.base_channels.numChannels;
+	qdf_mem_copy(p11dLog->countryCode, mac->scan.countryCodeCurrent, 3);
+	p11dLog->numChannel = mac->scan.base_channels.numChannels;
 	if (p11dLog->numChannel <= HOST_LOG_MAX_NUM_CHANNEL) {
 		qdf_mem_copy(p11dLog->Channels,
-			     pMac->scan.base_channels.channelList,
+			     mac->scan.base_channels.channelList,
 			     p11dLog->numChannel);
 		for (Index = 0;
-		     Index < pMac->scan.base_channels.numChannels;
+		     Index < mac->scan.base_channels.numChannels;
 		     Index++) {
 			p11dLog->TxPwr[Index] = QDF_MIN(
-				pMac->scan.defaultPowerTable[Index].tx_power,
-				pMac->roam.configParam.nTxPowerCap);
+				mac->scan.defaultPowerTable[Index].tx_power,
+				mac->roam.configParam.nTxPowerCap);
 		}
 	}
-	if (!pMac->roam.configParam.Is11dSupportEnabled)
+	if (!mac->roam.configParam.Is11dSupportEnabled)
 		p11dLog->supportMultipleDomain = WLAN_80211D_DISABLED;
 	else
 		p11dLog->supportMultipleDomain =
@@ -735,32 +735,32 @@ static void csr_diag_reset_country_information(tpAniSirGlobal pMac)
 
 /**
  * csr_apply_channel_power_info_wrapper() - sends channel info to fw
- * @pMac: main MAC data structure
+ * @mac: main MAC data structure
  *
  * This function sends the channel power info to firmware
  *
  * Return: none
  */
-void csr_apply_channel_power_info_wrapper(tpAniSirGlobal pMac)
+void csr_apply_channel_power_info_wrapper(tpAniSirGlobal mac)
 {
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-	csr_diag_reset_country_information(pMac);
+	csr_diag_reset_country_information(mac);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
-	csr_prune_channel_list_for_mode(pMac, &pMac->scan.base_channels);
-	csr_save_channel_power_for_band(pMac, false);
-	csr_save_channel_power_for_band(pMac, true);
+	csr_prune_channel_list_for_mode(mac, &mac->scan.base_channels);
+	csr_save_channel_power_for_band(mac, false);
+	csr_save_channel_power_for_band(mac, true);
 	/* apply the channel list, power settings, and the country code. */
-	csr_apply_channel_power_info_to_fw(pMac,
-		&pMac->scan.base_channels, pMac->scan.countryCodeCurrent);
+	csr_apply_channel_power_info_to_fw(mac,
+		&mac->scan.base_channels, mac->scan.countryCodeCurrent);
 	/* clear the 11d channel list */
-	qdf_mem_set(&pMac->scan.channels11d, sizeof(pMac->scan.channels11d), 0);
+	qdf_mem_set(&mac->scan.channels11d, sizeof(mac->scan.channels11d), 0);
 }
 
-void csr_clear_votes_for_country_info(tpAniSirGlobal pMac)
+void csr_clear_votes_for_country_info(tpAniSirGlobal mac)
 {
-	pMac->scan.countryCodeCount = 0;
-	qdf_mem_set(pMac->scan.votes11d,
+	mac->scan.countryCodeCount = 0;
+	qdf_mem_set(mac->scan.votes11d,
 		    sizeof(struct csr_votes11d) * CSR_MAX_NUM_COUNTRY_CODE, 0);
 }
 
@@ -768,7 +768,7 @@ void csr_clear_votes_for_country_info(tpAniSirGlobal pMac)
 /* caller allocated memory for pNumChn and pChnPowerInfo */
 /* As input, *pNumChn has the size of the array of pChnPowerInfo */
 /* Upon return, *pNumChn has the number of channels assigned. */
-static void csr_get_channel_power_info(tpAniSirGlobal pMac, tDblLinkList *list,
+static void csr_get_channel_power_info(tpAniSirGlobal mac, tDblLinkList *list,
 				       uint32_t *num_ch,
 				       struct channel_power *chn_pwr_info)
 {
@@ -845,42 +845,42 @@ diag_end:
 
 /**
  * csr_apply_country_information() - apply country code information
- * @pMac: core MAC data structure
+ * @mac: core MAC data structure
  *
  * This function programs the new country code
  *
  * Return: none
  */
-void csr_apply_country_information(tpAniSirGlobal pMac)
+void csr_apply_country_information(tpAniSirGlobal mac)
 {
 	v_REGDOMAIN_t domainId;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (!wlan_reg_11d_enabled_on_host(pMac->psoc))
+	if (!wlan_reg_11d_enabled_on_host(mac->psoc))
 		return;
-	status = csr_get_regulatory_domain_for_country(pMac,
-			pMac->scan.countryCode11d, &domainId, SOURCE_QUERY);
+	status = csr_get_regulatory_domain_for_country(mac,
+			mac->scan.countryCode11d, &domainId, SOURCE_QUERY);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return;
 	/* Check whether we need to enforce default domain */
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-	csr_diag_apply_country_info(pMac);
+	csr_diag_apply_country_info(mac);
 #endif /* #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR */
 
-	if (pMac->scan.domainIdCurrent != domainId)
+	if (mac->scan.domainIdCurrent != domainId)
 		return;
-	if (pMac->scan.domainIdCurrent != domainId) {
+	if (mac->scan.domainIdCurrent != domainId) {
 		sme_debug("Domain Changed Old %d, new %d",
-			pMac->scan.domainIdCurrent, domainId);
+			mac->scan.domainIdCurrent, domainId);
 		if (domainId >= REGDOMAIN_COUNT)
 			sme_err("fail to set regId %d", domainId);
 	}
-	pMac->scan.domainIdCurrent = domainId;
+	mac->scan.domainIdCurrent = domainId;
 	/* switch to active scans using this new channel list */
-	pMac->scan.curScanType = eSIR_ACTIVE_SCAN;
+	mac->scan.curScanType = eSIR_ACTIVE_SCAN;
 }
 
-void csr_save_channel_power_for_band(tpAniSirGlobal pMac, bool fill_5f)
+void csr_save_channel_power_for_band(tpAniSirGlobal mac, bool fill_5f)
 {
 	uint32_t idx, count = 0;
 	tSirMacChanInfo *chan_info;
@@ -890,9 +890,9 @@ void csr_save_channel_power_for_band(tpAniSirGlobal pMac, bool fill_5f)
 	uint8_t ch = 0;
 
 	max_ch_idx =
-		(pMac->scan.base_channels.numChannels <
+		(mac->scan.base_channels.numChannels <
 		WNI_CFG_VALID_CHANNEL_LIST_LEN) ?
-		pMac->scan.base_channels.numChannels :
+		mac->scan.base_channels.numChannels :
 		WNI_CFG_VALID_CHANNEL_LIST_LEN;
 
 	chan_info = qdf_mem_malloc(sizeof(tSirMacChanInfo) *
@@ -902,7 +902,7 @@ void csr_save_channel_power_for_band(tpAniSirGlobal pMac, bool fill_5f)
 
 	ch_info_start = chan_info;
 	for (idx = 0; idx < max_ch_idx; idx++) {
-		ch = pMac->scan.defaultPowerTable[idx].chan_num;
+		ch = mac->scan.defaultPowerTable[idx].chan_num;
 		tmp_bool = (fill_5f && WLAN_REG_IS_5GHZ_CH(ch)) ||
 			(!fill_5f && WLAN_REG_IS_24GHZ_CH(ch));
 		if (!tmp_bool)
@@ -914,29 +914,29 @@ void csr_save_channel_power_for_band(tpAniSirGlobal pMac, bool fill_5f)
 		}
 
 		chan_info->firstChanNum =
-			pMac->scan.defaultPowerTable[idx].chan_num;
+			mac->scan.defaultPowerTable[idx].chan_num;
 		chan_info->numChannels = 1;
 		chan_info->maxTxPower =
-			QDF_MIN(pMac->scan.defaultPowerTable[idx].tx_power,
-				pMac->roam.configParam.nTxPowerCap);
+			QDF_MIN(mac->scan.defaultPowerTable[idx].tx_power,
+				mac->roam.configParam.nTxPowerCap);
 		chan_info++;
 		count++;
 	}
 	if (count) {
-		csr_save_to_channel_power2_g_5_g(pMac,
+		csr_save_to_channel_power2_g_5_g(mac,
 				count * sizeof(tSirMacChanInfo), ch_info_start);
 	}
 	qdf_mem_free(ch_info_start);
 }
 
-bool csr_is_supported_channel(tpAniSirGlobal pMac, uint8_t channelId)
+bool csr_is_supported_channel(tpAniSirGlobal mac, uint8_t channelId)
 {
 	bool fRet = false;
 	uint32_t i;
 
-	for (i = 0; i < pMac->scan.base_channels.numChannels; i++) {
+	for (i = 0; i < mac->scan.base_channels.numChannels; i++) {
 		if (channelId ==
-		    pMac->scan.base_channels.channelList[i]) {
+		    mac->scan.base_channels.channelList[i]) {
 			fRet = true;
 			break;
 		}
@@ -949,7 +949,7 @@ bool csr_is_supported_channel(tpAniSirGlobal pMac, uint8_t channelId)
  * 802.11D only: Gather 11d IE via beacon or Probe response and store them in
  * pAdapter->channels11d
  */
-bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
+bool csr_learn_11dcountry_information(tpAniSirGlobal mac,
 				   tSirBssDescription *pSirBssDesc,
 				   tDot11fBeaconIEs *pIes, bool fForce)
 {
@@ -964,20 +964,20 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 		useVoting = true;
 
 	/* check if .11d support is enabled */
-	if (!wlan_reg_11d_enabled_on_host(pMac->psoc))
+	if (!wlan_reg_11d_enabled_on_host(mac->psoc))
 		goto free_ie;
 
 	if (false == useVoting) {
 		if (!pIesLocal &&
 		   (!QDF_IS_STATUS_SUCCESS(
 			csr_get_parsed_bss_description_ies(
-				pMac, pSirBssDesc, &pIesLocal))))
+				mac, pSirBssDesc, &pIesLocal))))
 			goto free_ie;
 		/* check if country information element is present */
 		if (!pIesLocal->Country.present)
 			/* No country info */
 			goto free_ie;
-		status = csr_get_regulatory_domain_for_country(pMac,
+		status = csr_get_regulatory_domain_for_country(mac,
 				pIesLocal->Country.country, &domainId,
 				SOURCE_QUERY);
 		if (QDF_IS_STATUS_SUCCESS(status)
@@ -988,18 +988,18 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 	if (false == useVoting)
 		pCountryCodeSelected = pIesLocal->Country.country;
 	else
-		pCountryCodeSelected = pMac->scan.countryCodeElected;
+		pCountryCodeSelected = mac->scan.countryCodeElected;
 
-	if (qdf_mem_cmp(pCountryCodeSelected, pMac->scan.countryCodeCurrent,
+	if (qdf_mem_cmp(pCountryCodeSelected, mac->scan.countryCodeCurrent,
 			CDS_COUNTRY_CODE_LEN) == 0) {
-		qdf_mem_copy(pMac->scan.countryCode11d,
-			     pMac->scan.countryCodeCurrent,
+		qdf_mem_copy(mac->scan.countryCode11d,
+			     mac->scan.countryCodeCurrent,
 			     CDS_COUNTRY_CODE_LEN);
 		goto free_ie;
 	}
 
-	pMac->reg_hint_src = SOURCE_11D;
-	status = csr_get_regulatory_domain_for_country(pMac,
+	mac->reg_hint_src = SOURCE_11D;
+	status = csr_get_regulatory_domain_for_country(mac,
 				pCountryCodeSelected, &domainId, SOURCE_11D);
 	if (status != QDF_STATUS_SUCCESS) {
 		sme_err("fail to get regId %d", domainId);
@@ -1336,7 +1336,7 @@ void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
 
 }
 
-tCsrScanResultInfo *csr_scan_result_get_first(tpAniSirGlobal pMac,
+tCsrScanResultInfo *csr_scan_result_get_first(tpAniSirGlobal mac,
 					      tScanResultHandle hScanResult)
 {
 	tListElem *pEntry;
@@ -1360,7 +1360,7 @@ tCsrScanResultInfo *csr_scan_result_get_first(tpAniSirGlobal pMac,
 	return pRet;
 }
 
-tCsrScanResultInfo *csr_scan_result_get_next(tpAniSirGlobal pMac,
+tCsrScanResultInfo *csr_scan_result_get_next(tpAniSirGlobal mac,
 					     tScanResultHandle hScanResult)
 {
 	tListElem *pEntry = NULL;
@@ -1393,7 +1393,7 @@ tCsrScanResultInfo *csr_scan_result_get_next(tpAniSirGlobal pMac,
  * This function moves the first BSS that matches the bssid to the
  * head of the result
  */
-QDF_STATUS csr_move_bss_to_head_from_bssid(tpAniSirGlobal pMac,
+QDF_STATUS csr_move_bss_to_head_from_bssid(tpAniSirGlobal mac,
 					   struct qdf_mac_addr *bssid,
 					   tScanResultHandle hScanResult)
 {
@@ -1578,7 +1578,7 @@ error:
 	return status;
 }
 
-static void csr_set_cfg_valid_channel_list(tpAniSirGlobal pMac,
+static void csr_set_cfg_valid_channel_list(tpAniSirGlobal mac,
 				uint8_t *pChannelList, uint8_t NumChannels)
 {
 	uint32_t dataLen = sizeof(uint8_t) * NumChannels;
@@ -1589,7 +1589,7 @@ static void csr_set_cfg_valid_channel_list(tpAniSirGlobal pMac,
 		  __func__, NumChannels);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			   pChannelList, NumChannels);
-	cfg_set_str(pMac, WNI_CFG_VALID_CHANNEL_LIST, pChannelList,
+	cfg_set_str(mac, WNI_CFG_VALID_CHANNEL_LIST, pChannelList,
 			dataLen);
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -1598,8 +1598,8 @@ static void csr_set_cfg_valid_channel_list(tpAniSirGlobal pMac,
 	 * disable fcc constraint since new country code
 	 * is being set
 	 */
-	pMac->scan.fcc_constraint = false;
-	status = csr_update_channel_list(pMac);
+	mac->scan.fcc_constraint = false;
+	status = csr_update_channel_list(mac);
 	if (QDF_STATUS_SUCCESS != status) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "failed to update the supported channel list");
@@ -1609,7 +1609,7 @@ static void csr_set_cfg_valid_channel_list(tpAniSirGlobal pMac,
 /*
  * The Tx power limits are saved in the cfg for future usage.
  */
-static void csr_save_tx_power_to_cfg(tpAniSirGlobal pMac, tDblLinkList *pList,
+static void csr_save_tx_power_to_cfg(tpAniSirGlobal mac, tDblLinkList *pList,
 			      uint32_t cfgId)
 {
 	tListElem *pEntry;
@@ -1666,7 +1666,7 @@ static void csr_save_tx_power_to_cfg(tpAniSirGlobal pMac, tDblLinkList *pList,
 				ch_pwr_set->numChannels = 1;
 				ch_pwr_set->maxTxPower =
 					QDF_MIN(ch_set->txPower,
-					pMac->roam.configParam.nTxPowerCap);
+					mac->roam.configParam.nTxPowerCap);
 				sme_debug(
 					"Setting Max Transmit Power %d",
 					ch_pwr_set->maxTxPower);
@@ -1688,23 +1688,23 @@ static void csr_save_tx_power_to_cfg(tpAniSirGlobal pMac, tDblLinkList *pList,
 				ch_pwr_set->firstChanNum);
 			ch_pwr_set->numChannels = ch_set->numChannels;
 			ch_pwr_set->maxTxPower = QDF_MIN(ch_set->txPower,
-					pMac->roam.configParam.nTxPowerCap);
+					mac->roam.configParam.nTxPowerCap);
 			sme_debug(
 				"Setting Max Tx Power %d, nTxPower %d",
 				ch_pwr_set->maxTxPower,
-				pMac->roam.configParam.nTxPowerCap);
+				mac->roam.configParam.nTxPowerCap);
 			cbLen += sizeof(tSirMacChanInfo);
 			ch_pwr_set++;
 		}
 		pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_LOCK);
 	}
 	if (cbLen)
-		cfg_set_str(pMac, cfgId, (uint8_t *) pBuf, cbLen);
+		cfg_set_str(mac, cfgId, (uint8_t *) pBuf, cbLen);
 
 	qdf_mem_free(pBuf);
 }
 
-static void csr_set_cfg_country_code(tpAniSirGlobal pMac, uint8_t *countryCode)
+static void csr_set_cfg_country_code(tpAniSirGlobal mac, uint8_t *countryCode)
 {
 	uint8_t cc[WNI_CFG_COUNTRY_CODE_LEN];
 	/* v_REGDOMAIN_t DomainId */
@@ -1727,7 +1727,7 @@ static void csr_set_cfg_country_code(tpAniSirGlobal pMac, uint8_t *countryCode)
 		 */
 		cc[1] = 'R';
 	}
-	cfg_set_str(pMac, WNI_CFG_COUNTRY_CODE, cc, WNI_CFG_COUNTRY_CODE_LEN);
+	cfg_set_str(mac, WNI_CFG_COUNTRY_CODE, cc, WNI_CFG_COUNTRY_CODE_LEN);
 
 	/*
 	 * Need to let HALPHY know about the current domain so it can apply some
@@ -1735,7 +1735,7 @@ static void csr_set_cfg_country_code(tpAniSirGlobal pMac, uint8_t *countryCode)
 	 */
 }
 
-QDF_STATUS csr_get_country_code(tpAniSirGlobal pMac, uint8_t *pBuf,
+QDF_STATUS csr_get_country_code(tpAniSirGlobal mac, uint8_t *pBuf,
 				uint8_t *pbLen)
 {
 	QDF_STATUS status;
@@ -1743,7 +1743,7 @@ QDF_STATUS csr_get_country_code(tpAniSirGlobal pMac, uint8_t *pBuf,
 
 	if (pBuf && pbLen && (*pbLen >= WNI_CFG_COUNTRY_CODE_LEN)) {
 		len = *pbLen;
-		status = wlan_cfg_get_str(pMac, WNI_CFG_COUNTRY_CODE, pBuf,
+		status = wlan_cfg_get_str(mac, WNI_CFG_COUNTRY_CODE, pBuf,
 					&len);
 		if (status == QDF_STATUS_SUCCESS) {
 			*pbLen = (uint8_t) len;
@@ -1754,7 +1754,7 @@ QDF_STATUS csr_get_country_code(tpAniSirGlobal pMac, uint8_t *pBuf,
 	return QDF_STATUS_E_INVAL;
 }
 
-void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,
+void csr_set_cfg_scan_control_list(tpAniSirGlobal mac, uint8_t *countryCode,
 				   struct csr_channel *pChannelList)
 {
 	uint8_t i, j;
@@ -1764,7 +1764,7 @@ void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,
 
 	pControlList = qdf_mem_malloc(WNI_CFG_SCAN_CONTROL_LIST_LEN);
 	if (pControlList != NULL) {
-		if (QDF_IS_STATUS_SUCCESS(wlan_cfg_get_str(pMac,
+		if (QDF_IS_STATUS_SUCCESS(wlan_cfg_get_str(mac,
 					WNI_CFG_SCAN_CONTROL_LIST,
 					pControlList, &len))) {
 			for (i = 0; i < pChannelList->numChannels; i++) {
@@ -1779,7 +1779,7 @@ void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,
 				if (found) {
 					/* insert a pair(channel#, flag) */
 					pControlList[j + 1] =
-						csr_get_scan_type(pMac,
+						csr_get_scan_type(mac,
 							pControlList[j]);
 					found = false;  /* reset the flag */
 				}
@@ -1791,7 +1791,7 @@ void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,
 					   QDF_TRACE_LEVEL_DEBUG, pControlList,
 					   len);
 
-			cfg_set_str(pMac, WNI_CFG_SCAN_CONTROL_LIST,
+			cfg_set_str(mac, WNI_CFG_SCAN_CONTROL_LIST,
 					pControlList, len);
 		} /* Successfully getting scan control list */
 		qdf_mem_free(pControlList);
@@ -1842,7 +1842,7 @@ QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal mac_ctx, uint32_t vdev_id,
 
 	return status;
 }
-QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal pMac,
+QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal mac,
 						uint8_t sessionId,
 						eSmeCommandType commandType)
 {
@@ -1858,8 +1858,8 @@ QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal pMac,
 		return status;
 	}
 
-	csr_nonscan_pending_ll_lock(pMac);
-	pEntry = csr_nonscan_pending_ll_peek_head(pMac, LL_ACCESS_NOLOCK);
+	csr_nonscan_pending_ll_lock(mac);
+	pEntry = csr_nonscan_pending_ll_peek_head(mac, LL_ACCESS_NOLOCK);
 
 	/*
 	 * Have to make sure we don't loop back to the head of the list,
@@ -1867,7 +1867,7 @@ QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal pMac,
 	 */
 	while (pEntry) {
 		pEntryToRemove = pEntry;
-		pEntry = csr_nonscan_pending_ll_next(pMac,
+		pEntry = csr_nonscan_pending_ll_next(mac,
 					pEntry, LL_ACCESS_NOLOCK);
 		pCommand = GET_BASE_ADDR(pEntryToRemove, tSmeCmd, Link);
 
@@ -1879,26 +1879,26 @@ QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal pMac,
 			status = QDF_STATUS_SUCCESS;
 		}
 	}
-	csr_nonscan_pending_ll_unlock(pMac);
+	csr_nonscan_pending_ll_unlock(mac);
 
 	while ((pEntry = csr_ll_remove_head(&localList, LL_ACCESS_NOLOCK))) {
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 		sme_debug("Sending abort for command ID %d",
 			sessionId);
-		csr_release_command(pMac, pCommand);
+		csr_release_command(mac, pCommand);
 	}
 
 	csr_ll_close(&localList);
 	return status;
 }
-bool csr_roam_is_valid_channel(tpAniSirGlobal pMac, uint8_t channel)
+bool csr_roam_is_valid_channel(tpAniSirGlobal mac, uint8_t channel)
 {
 	bool fValid = false;
 	uint32_t idx_valid_ch;
-	uint32_t len = pMac->roam.numValidChannels;
+	uint32_t len = mac->roam.numValidChannels;
 
 	for (idx_valid_ch = 0; (idx_valid_ch < len); idx_valid_ch++) {
-		if (channel == pMac->roam.validChannelList[idx_valid_ch]) {
+		if (channel == mac->roam.validChannelList[idx_valid_ch]) {
 			fValid = true;
 			break;
 		}
@@ -1906,13 +1906,13 @@ bool csr_roam_is_valid_channel(tpAniSirGlobal pMac, uint8_t channel)
 	return fValid;
 }
 
-QDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
+QDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal mac,
 					       uint32_t sessionId,
 					       struct qdf_mac_addr bssid,
 					       uint8_t channel)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
 	tSirBssDescription *pNewBssDescriptor = NULL;
 	uint32_t size = 0;
 
@@ -1939,7 +1939,7 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 	qdf_mem_copy(pNewBssDescriptor->bssId, bssid.bytes,
 			sizeof(tSirMacAddr));
 	pNewBssDescriptor->channelId = channel;
-	if (!csr_scan_append_bss_description(pMac, pNewBssDescriptor)) {
+	if (!csr_scan_append_bss_description(mac, pNewBssDescriptor)) {
 		sme_err("csr_scan_append_bss_description failed");
 		status = QDF_STATUS_E_FAILURE;
 		goto free_mem;
@@ -1973,14 +1973,14 @@ void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
  * The beacon or the probe response is parsed and is also
  * saved into the scan cache
  *
- * @param  pMac Pointer to Global Mac
+ * @param  mac Pointer to Global Mac
  * @param  roam_sync_ind_ptr Roam Synch Indication from
  *         firmware which also contains the beacon/probe
  *         response
  * @return Status
  */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
+QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_sync_ind_ptr,
 		tpSirBssDescription  bss_desc_ptr)
 {
@@ -2000,8 +2000,8 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 
 	sme_debug("LFR3:Add BSSID to scan cache" MAC_ADDRESS_STR,
 		MAC_ADDR_ARRAY(scan_res_ptr->Result.BssDescriptor.bssId));
-	csr_scan_add_result(pMac, scan_res_ptr);
-	csr_free_scan_result_entry(pMac, scan_res_ptr);
+	csr_scan_add_result(mac, scan_res_ptr);
+	csr_free_scan_result_entry(mac, scan_res_ptr);
 	return QDF_STATUS_SUCCESS;
 }
 #endif
