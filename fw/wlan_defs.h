@@ -525,6 +525,13 @@ typedef struct {
    A_UINT32 ptr;
    /** size of the chunk */
    A_UINT32 size;
+    /** ptr_high
+     * most significant bits of physical address of the memory chunk
+     * Only applicable for addressing more than 32 bit.
+     * This will only be non-zero if the target has set
+     * WMI_SERVICE_SUPPORT_EXTEND_ADDRESS flag.
+     */
+   A_UINT32 ptr_high;
 } wlan_host_memory_chunk;
 
 #define NUM_UNITS_IS_NUM_VDEVS        0x1

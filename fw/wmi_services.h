@@ -361,6 +361,7 @@ typedef  enum  {
      * htt_ppdu_stats_user_cmpltn_common_tlv.ack_rssi;
      */
     WMI_SERVICE_HW_DB2DBM_CONVERSION_SUPPORT = 178,
+    WMI_SERVICE_SUPPORT_EXTEND_ADDRESS=179, /* indicates firmware supports host memory addresses larger than 32 bit */
 
 
     /******* ADD NEW SERVICES HERE *******/
