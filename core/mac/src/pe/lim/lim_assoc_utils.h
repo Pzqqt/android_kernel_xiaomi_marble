@@ -50,7 +50,7 @@ uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
 				  bool *pmf_connection);
 uint8_t lim_check_rx_wpa_ie_match(tpAniSirGlobal, tDot11fIEWPA *, tpPESession,
 				  uint8_t);
-uint8_t lim_check_mcs_set(tpAniSirGlobal pMac, uint8_t *supportedMCSSet);
+uint8_t lim_check_mcs_set(tpAniSirGlobal mac, uint8_t *supportedMCSSet);
 void limPostDummyToTmRing(tpAniSirGlobal, tpDphHashNode);
 void limPostPacketToTdRing(tpAniSirGlobal, tpDphHashNode, uint8_t);
 QDF_STATUS lim_cleanup_rx_path(tpAniSirGlobal, tpDphHashNode, tpPESession);
@@ -58,7 +58,7 @@ void lim_reject_association(tpAniSirGlobal, tSirMacAddr, uint8_t,
 			    uint8_t, tAniAuthType, uint16_t, uint8_t,
 			    enum eSirMacStatusCodes, tpPESession);
 
-QDF_STATUS lim_populate_peer_rate_set(tpAniSirGlobal pMac,
+QDF_STATUS lim_populate_peer_rate_set(tpAniSirGlobal mac,
 					 tpSirSupportedRates pRates,
 					 uint8_t *pSupportedMCSSet,
 					 uint8_t basicOnly,
@@ -66,7 +66,7 @@ QDF_STATUS lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 					 tDot11fIEVHTCaps *pVHTCaps,
 					 tDot11fIEhe_cap *he_caps);
 
-QDF_STATUS lim_populate_own_rate_set(tpAniSirGlobal pMac,
+QDF_STATUS lim_populate_own_rate_set(tpAniSirGlobal mac,
 					tpSirSupportedRates pRates,
 					uint8_t *pSupportedMCSSet,
 					uint8_t basicOnly,
@@ -75,7 +75,7 @@ QDF_STATUS lim_populate_own_rate_set(tpAniSirGlobal pMac,
 					tDot11fIEhe_cap *he_caps);
 
 QDF_STATUS
-lim_populate_matching_rate_set(tpAniSirGlobal pMac,
+lim_populate_matching_rate_set(tpAniSirGlobal mac,
 			       tpDphHashNode pStaDs,
 			       tSirMacRateSet *pOperRateSet,
 			       tSirMacRateSet *pExtRateSet,
@@ -97,13 +97,13 @@ void lim_post_reassoc_failure(tpAniSirGlobal,
 			      tSirResultCodes, uint16_t, tpPESession);
 bool lim_is_reassoc_in_progress(tpAniSirGlobal, tpPESession);
 
-void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal pMac,
+void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal mac,
 		tpDphHashNode pStaDs, tpPESession psessionEntry);
-void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal pMac,
+void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal mac,
 		   tpDphHashNode pStaDs, tpPESession psessionEntry);
-void lim_send_retry_reassoc_req_frame(tpAniSirGlobal pMac,
+void lim_send_retry_reassoc_req_frame(tpAniSirGlobal mac,
 	      tLimMlmReassocReq *pMlmReassocReq, tpPESession psessionEntry);
-QDF_STATUS lim_add_ft_sta_self(tpAniSirGlobal pMac, uint16_t assocId,
+QDF_STATUS lim_add_ft_sta_self(tpAniSirGlobal mac, uint16_t assocId,
 				  tpPESession psessionEntry);
 #else
 static inline void lim_restore_pre_reassoc_state(tpAniSirGlobal mac_ctx,
@@ -114,13 +114,13 @@ static inline void lim_post_reassoc_failure(tpAniSirGlobal mac_ctx,
 			      tSirResultCodes res_code, uint16_t prot_status,
 			      tpPESession pe_session)
 {}
-static inline void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal pMac,
+static inline void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal mac,
 		tpDphHashNode pStaDs, tpPESession psessionEntry)
 {}
-static inline void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal pMac,
+static inline void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal mac,
 		   tpDphHashNode pStaDs, tpPESession psessionEntry)
 {}
-static inline void lim_send_retry_reassoc_req_frame(tpAniSirGlobal pMac,
+static inline void lim_send_retry_reassoc_req_frame(tpAniSirGlobal mac,
 	      tLimMlmReassocReq *pMlmReassocReq, tpPESession psessionEntry)
 {}
 static inline bool lim_is_reassoc_in_progress(tpAniSirGlobal mac_ctx,
@@ -128,7 +128,7 @@ static inline bool lim_is_reassoc_in_progress(tpAniSirGlobal mac_ctx,
 {
 	return false;
 }
-static inline QDF_STATUS lim_add_ft_sta_self(tpAniSirGlobal pMac,
+static inline QDF_STATUS lim_add_ft_sta_self(tpAniSirGlobal mac,
 		uint16_t assocId, tpPESession psessionEntry)
 {
 	return QDF_STATUS_SUCCESS;
@@ -148,74 +148,74 @@ static inline bool lim_is_roam_synch_in_progress(tpPESession pe_session)
 #endif
 
 void
-lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct qdf_mac_addr sta_dsaddr,
+lim_send_del_sta_cnf(tpAniSirGlobal mac, struct qdf_mac_addr sta_dsaddr,
 		     uint16_t staDsAssocId, tLimMlmStaContext mlmStaContext,
 		     tSirResultCodes statusCode, tpPESession psessionEntry);
 
-void lim_handle_cnf_wait_timeout(tpAniSirGlobal pMac, uint16_t staId);
+void lim_handle_cnf_wait_timeout(tpAniSirGlobal mac, uint16_t staId);
 void lim_delete_dph_hash_entry(tpAniSirGlobal, tSirMacAddr, uint16_t, tpPESession);
 void lim_check_and_announce_join_success(tpAniSirGlobal,
 					 tSirProbeRespBeacon *,
 					 tpSirMacMgmtHdr, tpPESession);
-void lim_update_re_assoc_globals(tpAniSirGlobal pMac,
+void lim_update_re_assoc_globals(tpAniSirGlobal mac,
 				 tpSirAssocRsp pAssocRsp,
 				 tpPESession psessionEntry);
 
-void lim_update_assoc_sta_datas(tpAniSirGlobal pMac,
+void lim_update_assoc_sta_datas(tpAniSirGlobal mac,
 				tpDphHashNode pStaDs, tpSirAssocRsp pAssocRsp,
 				tpPESession psessionEntry);
 
-QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
+QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal mac, tpSirAssocRsp pAssocRsp,
 				   tpSchBeaconStruct pBeaconStruct,
 				   tpSirBssDescription bssDescription,
 				   uint8_t updateEntry, tpPESession psessionEntry);
-QDF_STATUS lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t updateEntry,
+QDF_STATUS lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal mac, uint8_t updateEntry,
 					     tpPESession psessionEntry);
 
-void lim_prepare_and_send_del_sta_cnf(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
+void lim_prepare_and_send_del_sta_cnf(tpAniSirGlobal mac, tpDphHashNode pStaDs,
 				      tSirResultCodes statusCode, tpPESession);
-QDF_STATUS lim_extract_ap_capabilities(tpAniSirGlobal pMac, uint8_t *pIE,
+QDF_STATUS lim_extract_ap_capabilities(tpAniSirGlobal mac, uint8_t *pIE,
 					  uint16_t ieLen,
 					  tpSirProbeRespBeacon beaconStruct);
-void lim_init_pre_auth_timer_table(tpAniSirGlobal pMac,
+void lim_init_pre_auth_timer_table(tpAniSirGlobal mac,
 				   tpLimPreAuthTable pPreAuthTimerTable);
-tpLimPreAuthNode lim_acquire_free_pre_auth_node(tpAniSirGlobal pMac,
+tpLimPreAuthNode lim_acquire_free_pre_auth_node(tpAniSirGlobal mac,
 						tpLimPreAuthTable
 						pPreAuthTimerTable);
-tpLimPreAuthNode lim_get_pre_auth_node_from_index(tpAniSirGlobal pMac,
+tpLimPreAuthNode lim_get_pre_auth_node_from_index(tpAniSirGlobal mac,
 						  tpLimPreAuthTable pAuthTable,
 						  uint32_t authNodeIdx);
 
 /* Util API to check if the channels supported by STA is within range */
-QDF_STATUS lim_is_dot11h_supported_channels_valid(tpAniSirGlobal pMac,
+QDF_STATUS lim_is_dot11h_supported_channels_valid(tpAniSirGlobal mac,
 						     tSirAssocReq *assoc);
 
 /* Util API to check if the txpower supported by STA is within range */
-QDF_STATUS lim_is_dot11h_power_capabilities_in_range(tpAniSirGlobal pMac,
+QDF_STATUS lim_is_dot11h_power_capabilities_in_range(tpAniSirGlobal mac,
 							tSirAssocReq *assoc,
 							tpPESession);
 /* API to fill in RX Highest Supported data Rate */
-void lim_fill_rx_highest_supported_rate(tpAniSirGlobal pMac,
+void lim_fill_rx_highest_supported_rate(tpAniSirGlobal mac,
 					uint16_t *rxHighestRate,
 					uint8_t *pSupportedMCSSet);
 #ifdef WLAN_FEATURE_11W
-void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
+void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal mac, uint8_t frameType,
 					     uint8_t *frame, uint32_t frameLen,
 					     uint16_t sessionId,
 					     tpPESession psessionEntry);
 #endif
 
 #ifdef FEATURE_WLAN_ESE
-void lim_send_sme_tsm_ie_ind(tpAniSirGlobal pMac, tpPESession psessionEntry,
+void lim_send_sme_tsm_ie_ind(tpAniSirGlobal mac, tpPESession psessionEntry,
 			     uint8_t tid, uint8_t state, uint16_t measInterval);
 #else
-static inline void lim_send_sme_tsm_ie_ind(tpAniSirGlobal pMac,
+static inline void lim_send_sme_tsm_ie_ind(tpAniSirGlobal mac,
 	tpPESession psessionEntry, uint8_t tid,
 	uint8_t state, uint16_t measInterval)
 {}
 #endif /* FEATURE_WLAN_ESE */
 
-QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal pMac,
+QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac,
 				       tpSirSupportedRates pRates,
 				       tDot11fIEVHTCaps *pPeerVHTCaps,
 				       tpPESession psessionEntry,
