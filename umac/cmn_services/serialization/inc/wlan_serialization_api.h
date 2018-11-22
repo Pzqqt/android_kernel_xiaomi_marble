@@ -638,6 +638,10 @@ enum wlan_serialization_cmd_type {
  * @WLAN_SER_CANCEL_SINGLE_SCAN: Cancel a single scan with a given ID
  * @WLAN_SER_CANCEL_PDEV_SCANS: Cancel all the scans on a given pdev
  * @WLAN_SER_CANCEL_VDEV_SCANS: Cancel all the scans on given vdev
+ * @WLAN_SER_CANCEL_PDEV_NON_SCAN_CMD: Cancel all non scans on a given pdev
+ * @WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD: Cancel all non scans on a given vdev
+ * @WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD_TYPE: Cancel all non scans on a given vdev
+ * and matching cmd type
  * @WLAN_SER_CANCEL_NON_SCAN_CMD: Cancel the given non scan command
  */
 enum wlan_serialization_cancel_type {
@@ -646,6 +650,7 @@ enum wlan_serialization_cancel_type {
 	WLAN_SER_CANCEL_VDEV_SCANS,
 	WLAN_SER_CANCEL_PDEV_NON_SCAN_CMD,
 	WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD,
+	WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD_TYPE,
 	WLAN_SER_CANCEL_NON_SCAN_CMD,
 	WLAN_SER_CANCEL_MAX,
 };

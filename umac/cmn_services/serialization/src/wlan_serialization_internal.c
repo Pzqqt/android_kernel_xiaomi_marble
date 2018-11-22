@@ -756,57 +756,48 @@ wlan_serialization_find_and_cancel_cmd(
 	switch (req_type) {
 	case WLAN_SER_CANCEL_SINGLE_SCAN:
 		/* remove scan cmd which matches the given cmd struct */
-		status =  wlan_serialization_cmd_cancel_handler(ser_obj,
-								cmd,
-								NULL,
-								NULL,
-								cmd->cmd_type,
-								queue_type);
+		status = wlan_serialization_cmd_cancel_handler(
+				ser_obj, cmd, NULL, NULL,
+				WLAN_SER_CMD_SCAN, queue_type);
 		break;
 	case WLAN_SER_CANCEL_PDEV_SCANS:
 		/* remove all scan cmds which matches the pdev object */
 		status = wlan_serialization_cmd_cancel_handler(
-				ser_obj,
-				NULL,
-				wlan_vdev_get_pdev(cmd->vdev),
-				NULL,
-				cmd->cmd_type,
-				queue_type);
+				ser_obj, NULL, pdev, NULL,
+				WLAN_SER_CMD_SCAN, queue_type);
 		break;
 	case WLAN_SER_CANCEL_VDEV_SCANS:
 		/* remove all scan cmds which matches the vdev object */
-		status = wlan_serialization_cmd_cancel_handler(ser_obj,
-							       NULL, NULL,
-							       cmd->vdev,
-							       cmd->cmd_type,
-							       queue_type);
+		status = wlan_serialization_cmd_cancel_handler(
+				ser_obj, NULL, NULL, cmd->vdev,
+				WLAN_SER_CMD_SCAN, queue_type);
 		break;
 	case WLAN_SER_CANCEL_NON_SCAN_CMD:
 		/* remove nonscan cmd which matches the given cmd */
-		status = wlan_serialization_cmd_cancel_handler(ser_obj,
-							       cmd,
-							       NULL,
-							       NULL,
-							       cmd->cmd_type,
-							       queue_type);
+		status = wlan_serialization_cmd_cancel_handler(
+				ser_obj, cmd, NULL, NULL,
+				WLAN_SER_CMD_NONSCAN, queue_type);
 		break;
 	case WLAN_SER_CANCEL_PDEV_NON_SCAN_CMD:
 		/* remove all non scan cmds which matches the pdev object */
 		status = wlan_serialization_cmd_cancel_handler(
-				ser_obj,
-				NULL,
-				wlan_vdev_get_pdev(cmd->vdev),
-				NULL,
-				cmd->cmd_type,
-				queue_type);
+				ser_obj, NULL, pdev, NULL,
+				WLAN_SER_CMD_NONSCAN, queue_type);
 		break;
 	case WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD:
 		/* remove all non scan cmds which matches the vdev object */
-		status = wlan_serialization_cmd_cancel_handler(ser_obj,
-							       NULL, NULL,
-							       cmd->vdev,
-							       cmd->cmd_type,
-							       queue_type);
+		status = wlan_serialization_cmd_cancel_handler(
+				ser_obj, NULL, NULL, cmd->vdev,
+				WLAN_SER_CMD_NONSCAN, queue_type);
+		break;
+	case WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD_TYPE:
+		/*
+		 * remove all non scan cmds which matches the vdev
+		 * and given cmd type
+		 */
+		status = wlan_serialization_cmd_cancel_handler(
+				ser_obj, NULL, NULL, cmd->vdev,
+				cmd->cmd_type, queue_type);
 		break;
 	default:
 		ser_err("Invalid request");

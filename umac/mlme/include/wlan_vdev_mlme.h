@@ -91,6 +91,8 @@ enum vdev_cmd_type {
  *                                      of legacy vdev object
  * @mlme_vdev_ext_hdl_destroy:          callback to invoke destroy of legacy
  *                                      vdev object
+ * @mlme_vdev_enqueue_exp_cmd:          callback to enqueue exception command
+ *                                      required by serialization
  */
 struct vdev_mlme_ops {
 	QDF_STATUS (*mlme_vdev_validate_basic_params)(
@@ -155,6 +157,9 @@ struct vdev_mlme_ops {
 				struct vdev_mlme_obj *vdev_mlme);
 	QDF_STATUS (*mlme_vdev_ext_hdl_destroy)(
 				struct vdev_mlme_obj *vdev_mlme);
+	QDF_STATUS (*mlme_vdev_enqueue_exp_cmd)(
+				struct vdev_mlme_obj *vdev_mlme,
+				uint8_t cmd_type);
 
 };
 
@@ -674,6 +679,29 @@ static inline QDF_STATUS mlme_vdev_ext_hdl_destroy(
 	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_ext_hdl_destroy)
 		ret = vdev_mlme->ops->mlme_vdev_ext_hdl_destroy(vdev_mlme);
 
+	return ret;
+}
+
+/**
+ * mlme_vdev_enqueue_exp_ser_cmd - Enqueue exception serialization cmd
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ * @cmd_type: Serialization command type
+ *
+ * API to enqueue the exception serialization command, used by
+ * mlme-serialization wrapper layer
+ *
+ * Return: SUCCESS on successful enqueuing the command
+ *         Else FAILURE
+ */
+static inline QDF_STATUS
+mlme_vdev_enqueue_exp_ser_cmd(struct vdev_mlme_obj *vdev_mlme,
+			      uint8_t cmd_type)
+{
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
+
+	if (vdev_mlme->ops && vdev_mlme->ops->mlme_vdev_enqueue_exp_cmd)
+		ret = vdev_mlme->ops->mlme_vdev_enqueue_exp_cmd(vdev_mlme,
+								cmd_type);
 	return ret;
 }
 

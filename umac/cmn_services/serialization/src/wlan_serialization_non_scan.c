@@ -486,6 +486,15 @@ wlan_ser_cancel_non_scan_cmd(
 			continue;
 		}
 
+		if (cmd_type > WLAN_SER_CMD_NONSCAN && vdev &&
+		    (!wlan_serialization_match_cmd_type(nnode, cmd_type,
+							WLAN_SER_PDEV_NODE) ||
+		    !wlan_serialization_match_cmd_vdev(nnode, vdev,
+						       WLAN_SER_PDEV_NODE))) {
+			pnode = nnode;
+			continue;
+		}
+
 		/*
 		 * active queue can't be removed directly, requester needs to
 		 * wait for active command response and send remove request for
