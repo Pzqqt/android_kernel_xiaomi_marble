@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -155,4 +155,41 @@ void qdf_register_recovering_state_query_callback(
  * Return: true if driver is doing recovering else false
  */
 bool qdf_is_recovering(void);
+
+/**
+ * qdf_psoc_start_callback() - callback for starting the psoc operation
+ *
+ * Return: true if driver psoc operation can be started else false
+ */
+typedef QDF_STATUS (*qdf_psoc_start_callback)(void);
+
+/**
+ * qdf_psoc_stop_callback - callback for stopping the psoc operation
+ *
+ * Return: None
+ */
+typedef void (*qdf_psoc_stop_callback)(void);
+
+/**
+ * qdf_psoc_op_start() - start DSC psoc operation
+ *
+ * Return: Success for starting psoc operation or failure
+ */
+QDF_STATUS qdf_psoc_op_start(void);
+
+/**
+ * qdf_psoc_op_stop() - stop DSC psoc operation
+ * @context: Context information
+ *
+ * Return: None
+ */
+void qdf_psoc_op_stop(void);
+
+/**
+ * qdf_register_dsc_psoc_callbacks() - register dsc psoc start/stop callbacks
+ *
+ * Return: None
+ */
+void qdf_register_dsc_psoc_callbacks(qdf_psoc_start_callback protect,
+				     qdf_psoc_stop_callback unprotect);
 #endif /*_QDF_PLATFORM_H*/
