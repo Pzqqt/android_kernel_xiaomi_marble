@@ -1851,6 +1851,10 @@ QDF_STATUS
 		wmi_unified_t wmi_handle,
 		void *evt_buf,
 		struct wmi_host_pdev_ctl_failsafe_event *param);
+
+QDF_STATUS (*send_peer_del_all_wds_entries_cmd)(wmi_unified_t wmi_handle,
+		struct peer_del_all_wds_entries_params *param);
+
 };
 
 /* Forward declartion for psoc*/

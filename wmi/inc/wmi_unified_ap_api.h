@@ -236,4 +236,15 @@ QDF_STATUS wmi_extract_channel_hopping_event(void *wmi_hdl, void *evt_buf,
 
 QDF_STATUS wmi_unified_peer_chan_width_switch_cmd_send(void *wmi_hdl,
 			struct peer_chan_width_switch_params *param);
+
+/**
+ * wmi_unified_peer_del_all_wds_entries_cmd_send() - send delete
+ * all wds entries cmd to fw
+ * @wmi_hdl: wmi handle
+ * @param:   delete all wds entries params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_unified_peer_del_all_wds_entries_cmd_send(void *wmi_hdl,
+		struct peer_del_all_wds_entries_params *param);
 #endif /* _WMI_UNIFIED_AP_API_H_ */

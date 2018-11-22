@@ -8860,6 +8860,40 @@ extract_dfs_status_from_fw_non_tlv(wmi_unified_t wmi_handle,
 #endif
 
 /**
+ * send_peer_del_all_wds_entries_cmd_non_tlv()-send peer delete
+ * WDS entries cmd to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer holding peer details
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS send_peer_del_all_wds_entries_cmd_non_tlv(wmi_unified_t wmi_handle,
+				struct peer_del_all_wds_entries_params *param)
+{
+	wmi_peer_remove_all_wds_entries_cmd *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(wmi_peer_remove_all_wds_entries_cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	/* wmi_buf_alloc returns zeroed command buffer */
+	cmd = (wmi_peer_remove_all_wds_entries_cmd *)wmi_buf_data(buf);
+	cmd->flags = (param->flags) ? WMI_WDS_DELETE_ALL_FLAG_STATIC : 0;
+	if (param->wds_macaddr)
+		WMI_CHAR_ARRAY_TO_MAC_ADDR(param->wds_macaddr,
+						&cmd->wds_macaddr);
+	if (param->peer_macaddr)
+		WMI_CHAR_ARRAY_TO_MAC_ADDR(param->peer_macaddr,
+						&cmd->peer_macaddr);
+	return wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PEER_REMOVE_ALL_WDS_ENTRIES_CMDID);
+}
+
+/**
  * wmi_non_tlv_pdev_id_conversion_enable() - Enable pdev_id conversion
  *
  * Return None.
@@ -9128,6 +9162,8 @@ struct wmi_ops non_tlv_ops =  {
 				extract_esp_estimation_ev_param_non_tlv,
 	.extract_ctl_failsafe_check_ev_param =
 			extract_ctl_failsafe_check_ev_param_non_tlv,
+	.send_peer_del_all_wds_entries_cmd =
+			send_peer_del_all_wds_entries_cmd_non_tlv,
 };
 
 /**
