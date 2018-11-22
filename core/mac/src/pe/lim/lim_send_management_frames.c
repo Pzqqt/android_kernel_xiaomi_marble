@@ -63,29 +63,29 @@
  * \brief This function is called to add the sequence number to the
  * management frames
  *
- * \param  pMac Pointer to Global MAC structure
+ * \param  mac Pointer to Global MAC structure
  *
  * \param  pMacHdr Pointer to MAC management header
  *
  * The pMacHdr argument points to the MAC management header. The
- * sequence number stored in the pMac structure will be incremented
+ * sequence number stored in the mac structure will be incremented
  * and updated to the MAC management header. The start sequence
  * number is WLAN_HOST_SEQ_NUM_MIN and the end value is
  * WLAN_HOST_SEQ_NUM_MAX. After reaching the MAX value, the sequence
  * number will roll over.
  *
  */
-static void lim_add_mgmt_seq_num(tpAniSirGlobal pMac, tpSirMacMgmtHdr pMacHdr)
+static void lim_add_mgmt_seq_num(tpAniSirGlobal mac, tpSirMacMgmtHdr pMacHdr)
 {
-	if (pMac->mgmtSeqNum >= WLAN_HOST_SEQ_NUM_MAX) {
-		pMac->mgmtSeqNum = WLAN_HOST_SEQ_NUM_MIN - 1;
+	if (mac->mgmtSeqNum >= WLAN_HOST_SEQ_NUM_MAX) {
+		mac->mgmtSeqNum = WLAN_HOST_SEQ_NUM_MIN - 1;
 	}
 
-	pMac->mgmtSeqNum++;
+	mac->mgmtSeqNum++;
 
-	pMacHdr->seqControl.seqNumLo = (pMac->mgmtSeqNum & LOW_SEQ_NUM_MASK);
+	pMacHdr->seqControl.seqNumLo = (mac->mgmtSeqNum & LOW_SEQ_NUM_MASK);
 	pMacHdr->seqControl.seqNumHi =
-		((pMac->mgmtSeqNum & HIGH_SEQ_NUM_MASK) >> HIGH_SEQ_NUM_OFFSET);
+		((mac->mgmtSeqNum & HIGH_SEQ_NUM_MASK) >> HIGH_SEQ_NUM_OFFSET);
 }
 
 /**
@@ -93,19 +93,19 @@ static void lim_add_mgmt_seq_num(tpAniSirGlobal pMac, tpSirMacMgmtHdr pMacHdr)
  * \brief This function is called before sending a p2p action frame
  * inorder to add sequence numbers to action packets
  *
- * \param  pMac Pointer to Global MAC structure
+ * \param  mac Pointer to Global MAC structure
  *
  * \param pBD Pointer to the frame buffer that needs to be populate
  *
  * The pMacHdr argument points to the MAC management header. The
- * sequence number stored in the pMac structure will be incremented
+ * sequence number stored in the mac structure will be incremented
  * and updated to the MAC management header. The start sequence
  * number is WLAN_HOST_SEQ_NUM_MIN and the end value is
  * WLAN_HOST_SEQ_NUM_MAX. After reaching the MAX value, the sequence
  * number will roll over.
  *
  */
-void lim_populate_p2p_mac_header(tpAniSirGlobal pMac, uint8_t *pBD)
+void lim_populate_p2p_mac_header(tpAniSirGlobal mac, uint8_t *pBD)
 {
 	tpSirMacMgmtHdr pMacHdr;
 
@@ -113,10 +113,10 @@ void lim_populate_p2p_mac_header(tpAniSirGlobal pMac, uint8_t *pBD)
 	pMacHdr = (tpSirMacMgmtHdr) (pBD);
 
 	/* Prepare sequence number */
-	lim_add_mgmt_seq_num(pMac, pMacHdr);
+	lim_add_mgmt_seq_num(mac, pMacHdr);
 	pe_debug("seqNumLo=%d, seqNumHi=%d, mgmtSeqNum=%d",
 		pMacHdr->seqControl.seqNumLo,
-		pMacHdr->seqControl.seqNumHi, pMac->mgmtSeqNum);
+		pMacHdr->seqControl.seqNumHi, mac->mgmtSeqNum);
 }
 
 /**
@@ -461,7 +461,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_SUCCESS;
 } /* End lim_send_probe_req_mgmt_frame. */
 
-static QDF_STATUS lim_get_addn_ie_for_probe_resp(tpAniSirGlobal pMac,
+static QDF_STATUS lim_get_addn_ie_for_probe_resp(tpAniSirGlobal mac,
 					     uint8_t *addIE, uint16_t *addnIELen,
 					     uint8_t probeReqP2pIe)
 {
@@ -868,7 +868,7 @@ err_ret:
 } /* End lim_send_probe_rsp_mgmt_frame. */
 
 void
-lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
+lim_send_addts_req_action_frame(tpAniSirGlobal mac,
 				tSirMacAddr peerMacAddr,
 				tSirAddtsReqInfo *pAddTS, tpPESession psessionEntry)
 {
@@ -909,14 +909,14 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 			AddTSReq.num_WMMTCLAS = 0;
 			AddTSReq.num_TCLAS = pAddTS->numTclas;
 			for (i = 0; i < pAddTS->numTclas; ++i) {
-				populate_dot11f_tclas(pMac, &pAddTS->tclasInfo[i],
+				populate_dot11f_tclas(mac, &pAddTS->tclasInfo[i],
 						      &AddTSReq.TCLAS[i]);
 			}
 		} else {
 			AddTSReq.num_TCLAS = 0;
 			AddTSReq.num_WMMTCLAS = pAddTS->numTclas;
 			for (i = 0; i < pAddTS->numTclas; ++i) {
-				populate_dot11f_wmmtclas(pMac,
+				populate_dot11f_wmmtclas(mac,
 							 &pAddTS->tclasInfo[i],
 							 &AddTSReq.WMMTCLAS[i]);
 			}
@@ -936,7 +936,7 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 		}
 
 		nStatus =
-			dot11f_get_packed_add_ts_request_size(pMac, &AddTSReq, &nPayload);
+			dot11f_get_packed_add_ts_request_size(mac, &AddTSReq, &nPayload);
 		if (DOT11F_FAILED(nStatus)) {
 			pe_err("Failed to calculate the packed size for an Add TS Request (0x%08x)",
 				nStatus);
@@ -958,7 +958,7 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 
 		populate_dot11f_wmmtspec(&pAddTS->tspec, &WMMAddTSReq.WMMTSPEC);
 #ifdef FEATURE_WLAN_ESE
-		lim_get_phy_mode(pMac, &phyMode, psessionEntry);
+		lim_get_phy_mode(mac, &phyMode, psessionEntry);
 
 		if (phyMode == WNI_CFG_PHY_MODE_11G
 		    || phyMode == WNI_CFG_PHY_MODE_11A) {
@@ -966,14 +966,14 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 		} else {
 			pAddTS->tsrsIE.rates[0] = TSRS_11B_RATE_5_5MBPS;
 		}
-		populate_dot11_tsrsie(pMac, &pAddTS->tsrsIE,
+		populate_dot11_tsrsie(mac, &pAddTS->tsrsIE,
 				      &WMMAddTSReq.ESETrafStrmRateSet,
 				      sizeof(uint8_t));
 #endif
 		/* fillWmeTspecIE */
 
 		nStatus =
-			dot11f_get_packed_wmm_add_ts_request_size(pMac, &WMMAddTSReq,
+			dot11f_get_packed_wmm_add_ts_request_size(mac, &WMMAddTSReq,
 								  &nPayload);
 		if (DOT11F_FAILED(nStatus)) {
 			pe_err("Failed to calculate the packed size for a WMM Add TS Request (0x%08x)",
@@ -999,17 +999,17 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peerMacAddr, psessionEntry->selfMacAddr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-	lim_set_protected_bit(pMac, psessionEntry, peerMacAddr, pMacHdr);
+	lim_set_protected_bit(mac, psessionEntry, peerMacAddr, pMacHdr);
 
 	/* That done, pack the struct: */
 	if (!pAddTS->wmeTspecPresent) {
-		nStatus = dot11f_pack_add_ts_request(pMac, &AddTSReq,
+		nStatus = dot11f_pack_add_ts_request(mac, &AddTSReq,
 						     pFrame +
 						     sizeof(tSirMacMgmtHdr),
 						     nPayload, &nPayload);
@@ -1023,7 +1023,7 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 				nStatus);
 		}
 	} else {
-		nStatus = dot11f_pack_wmm_add_ts_request(pMac, &WMMAddTSReq,
+		nStatus = dot11f_pack_wmm_add_ts_request(mac, &WMMAddTSReq,
 							 pFrame +
 							 sizeof(tSirMacMgmtHdr),
 							 nPayload, &nPayload);
@@ -1039,7 +1039,7 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 	}
 
 	pe_debug("Sending an Add TS Request frame to");
-	lim_print_mac_addr(pMac, peerMacAddr, LOGD);
+	lim_print_mac_addr(mac, peerMacAddr, LOGD);
 
 	if ((BAND_5G ==
 	     lim_get_rf_band(psessionEntry->currentOperChannel))
@@ -1051,12 +1051,12 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+	lim_diag_mgmt_tx_event_report(mac, pMacHdr,
 				      psessionEntry, QDF_STATUS_SUCCESS,
 				      QDF_STATUS_SUCCESS);
 
 	/* Queue Addts Response frame in high priority WQ */
-	qdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
 				7, lim_tx_complete, pFrame, txFlag,
@@ -1425,7 +1425,7 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 }
 
 void
-lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
+lim_send_delts_req_action_frame(tpAniSirGlobal mac,
 				tSirMacAddr peer,
 				uint8_t wmmTspecPresent,
 				tSirMacTSInfo *pTsinfo,
@@ -1454,7 +1454,7 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 		DelTS.Action.action = SIR_MAC_QOS_DEL_TS_REQ;
 		populate_dot11f_ts_info(pTsinfo, &DelTS.TSInfo);
 
-		nStatus = dot11f_get_packed_del_ts_size(pMac, &DelTS, &nPayload);
+		nStatus = dot11f_get_packed_del_ts_size(mac, &DelTS, &nPayload);
 		if (DOT11F_FAILED(nStatus)) {
 			pe_err("Failed to calculate the packed size for a Del TS (0x%08x)", nStatus);
 			/* We'll fall back on the worst case scenario: */
@@ -1472,7 +1472,7 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 		WMMDelTS.StatusCode.statusCode = 0;
 		populate_dot11f_wmmtspec(pTspecIe, &WMMDelTS.WMMTSPEC);
 		nStatus =
-			dot11f_get_packed_wmm_del_ts_size(pMac, &WMMDelTS, &nPayload);
+			dot11f_get_packed_wmm_del_ts_size(mac, &WMMDelTS, &nPayload);
 		if (DOT11F_FAILED(nStatus)) {
 			pe_err("Failed to calculate the packed size for a WMM Del TS (0x%08x)", nStatus);
 			/* We'll fall back on the worst case scenario: */
@@ -1497,17 +1497,17 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer, psessionEntry->selfMacAddr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
+	lim_set_protected_bit(mac, psessionEntry, peer, pMacHdr);
 
 	/* That done, pack the struct: */
 	if (!wmmTspecPresent) {
-		nStatus = dot11f_pack_del_ts(pMac, &DelTS,
+		nStatus = dot11f_pack_del_ts(mac, &DelTS,
 					     pFrame + sizeof(tSirMacMgmtHdr),
 					     nPayload, &nPayload);
 		if (DOT11F_FAILED(nStatus)) {
@@ -1520,7 +1520,7 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 				nStatus);
 		}
 	} else {
-		nStatus = dot11f_pack_wmm_del_ts(pMac, &WMMDelTS,
+		nStatus = dot11f_pack_wmm_del_ts(mac, &WMMDelTS,
 						 pFrame + sizeof(tSirMacMgmtHdr),
 						 nPayload, &nPayload);
 		if (DOT11F_FAILED(nStatus)) {
@@ -1535,7 +1535,7 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 	}
 
 	pe_debug("Sending DELTS REQ (size %d) to ", nBytes);
-	lim_print_mac_addr(pMac, pMacHdr->da, LOGD);
+	lim_print_mac_addr(mac, pMacHdr->da, LOGD);
 
 	if ((BAND_5G ==
 	     lim_get_rf_band(psessionEntry->currentOperChannel))
@@ -1547,10 +1547,10 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+	lim_diag_mgmt_tx_event_report(mac, pMacHdr,
 				      psessionEntry, QDF_STATUS_SUCCESS,
 				      QDF_STATUS_SUCCESS);
-	qdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
 				7, lim_tx_complete, pFrame, txFlag,
@@ -2818,7 +2818,7 @@ static QDF_STATUS lim_deauth_tx_complete_cnf_handler(void *context,
  * \brief This function is called to send Disassociate frame.
  *
  *
- * \param pMac Pointer to Global MAC structure
+ * \param mac Pointer to Global MAC structure
  *
  * \param nReason Indicates the reason that need to be sent in
  * Disassociation frame
@@ -2830,7 +2830,7 @@ static QDF_STATUS lim_deauth_tx_complete_cnf_handler(void *context,
  */
 
 void
-lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
+lim_send_disassoc_mgmt_frame(tpAniSirGlobal mac,
 			     uint16_t nReason,
 			     tSirMacAddr peer,
 			     tpPESession psessionEntry, bool waitForAck)
@@ -2855,7 +2855,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 	 */
 	if (((psessionEntry->pePersona == QDF_SAP_MODE) ||
 	    (psessionEntry->pePersona == QDF_P2P_GO_MODE)) &&
-	    (true == pMac->sap.SapDfsInfo.is_dfs_cac_timer_running)) {
+	    (true == mac->sap.SapDfsInfo.is_dfs_cac_timer_running)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL
 				  ("CAC timer is running, drop disassoc from going out"));
@@ -2867,7 +2867,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 
 	frm.Reason.code = nReason;
 
-	nStatus = dot11f_get_packed_disassociation_size(pMac, &frm, &nPayload);
+	nStatus = dot11f_get_packed_disassociation_size(mac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to calculate the packed size for a Disassociation (0x%08x)",
 			nStatus);
@@ -2891,16 +2891,16 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_DISASSOC, peer, psessionEntry->selfMacAddr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	/* Prepare the BSSID */
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
+	lim_set_protected_bit(mac, psessionEntry, peer, pMacHdr);
 
-	nStatus = dot11f_pack_disassociation(pMac, &frm, pFrame +
+	nStatus = dot11f_pack_disassociation(mac, &frm, pFrame +
 					     sizeof(tSirMacMgmtHdr),
 					     nPayload, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
@@ -2932,13 +2932,13 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 		MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 				 psessionEntry->peSessionId,
 				 pMacHdr->fc.subType));
-		lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+		lim_diag_mgmt_tx_event_report(mac, pMacHdr,
 					      psessionEntry, QDF_STATUS_SUCCESS,
 					      QDF_STATUS_SUCCESS);
 		/* Queue Disassociation frame in high priority WQ */
 		/* get the duration from the request */
 		qdf_status =
-			wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
+			wma_tx_frameWithTxComplete(mac, pPacket, (uint16_t) nBytes,
 					 TXRX_FRM_802_11_MGMT,
 					 ANI_TXDIR_TODS, 7, lim_tx_complete,
 					 pFrame, lim_disassoc_tx_complete_cnf_handler,
@@ -2951,15 +2951,15 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 		val = SYS_MS_TO_TICKS(LIM_DISASSOC_DEAUTH_ACK_TIMEOUT);
 
 		if (tx_timer_change
-			    (&pMac->lim.limTimers.gLimDisassocAckTimer, val, 0)
+			    (&mac->lim.limTimers.gLimDisassocAckTimer, val, 0)
 		    != TX_SUCCESS) {
 			pe_err("Unable to change Disassoc ack Timer val");
 			return;
 		} else if (TX_SUCCESS !=
-			   tx_timer_activate(&pMac->lim.limTimers.
+			   tx_timer_activate(&mac->lim.limTimers.
 					     gLimDisassocAckTimer)) {
 			pe_err("Unable to activate Disassoc ack Timer");
-			lim_deactivate_and_change_timer(pMac,
+			lim_deactivate_and_change_timer(mac,
 							eLIM_DISASSOC_ACK_TIMER);
 			return;
 		}
@@ -2967,11 +2967,11 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 		MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 				 psessionEntry->peSessionId,
 				 pMacHdr->fc.subType));
-		lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+		lim_diag_mgmt_tx_event_report(mac, pMacHdr,
 					      psessionEntry,
 					      QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 		/* Queue Disassociation frame in high priority WQ */
-		qdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+		qdf_status = wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
 					TXRX_FRM_802_11_MGMT,
 					ANI_TXDIR_TODS,
 					7,
@@ -2992,7 +2992,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
  * \brief This function is called to send a Deauthenticate frame
  *
  *
- * \param pMac Pointer to global MAC structure
+ * \param mac Pointer to global MAC structure
  *
  * \param nReason Indicates the reason that need to be sent in the
  * Deauthenticate frame
@@ -3003,7 +3003,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
  */
 
 void
-lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
+lim_send_deauth_mgmt_frame(tpAniSirGlobal mac,
 			   uint16_t nReason,
 			   tSirMacAddr peer,
 			   tpPESession psessionEntry, bool waitForAck)
@@ -3032,7 +3032,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 	 */
 	if (((psessionEntry->pePersona == QDF_SAP_MODE) ||
 	    (psessionEntry->pePersona == QDF_P2P_GO_MODE)) &&
-	    (true == pMac->sap.SapDfsInfo.is_dfs_cac_timer_running)) {
+	    (true == mac->sap.SapDfsInfo.is_dfs_cac_timer_running)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL
 				  ("CAC timer is running, drop the deauth from going out"));
@@ -3044,7 +3044,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 
 	frm.Reason.code = nReason;
 
-	nStatus = dot11f_get_packed_de_auth_size(pMac, &frm, &nPayload);
+	nStatus = dot11f_get_packed_de_auth_size(mac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to calculate the packed size for a De-Authentication (0x%08x)",
 			nStatus);
@@ -3068,16 +3068,16 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_DEAUTH, peer, psessionEntry->selfMacAddr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	/* Prepare the BSSID */
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
+	lim_set_protected_bit(mac, psessionEntry, peer, pMacHdr);
 
-	nStatus = dot11f_pack_de_auth(pMac, &frm, pFrame +
+	nStatus = dot11f_pack_de_auth(mac, &frm, pFrame +
 				      sizeof(tSirMacMgmtHdr), nPayload, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to pack a DeAuthentication (0x%08x)",
@@ -3105,7 +3105,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 	txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 #ifdef FEATURE_WLAN_TDLS
 	pStaDs =
-		dph_lookup_hash_entry(pMac, peer, &aid,
+		dph_lookup_hash_entry(mac, peer, &aid,
 				      &psessionEntry->dph.dphHashTable);
 #endif
 
@@ -3113,12 +3113,12 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 		MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 				 psessionEntry->peSessionId,
 				 pMacHdr->fc.subType));
-		lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+		lim_diag_mgmt_tx_event_report(mac, pMacHdr,
 					      psessionEntry,
 					      QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 		/* Queue Disassociation frame in high priority WQ */
 		qdf_status =
-			wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
+			wma_tx_frameWithTxComplete(mac, pPacket, (uint16_t) nBytes,
 					 TXRX_FRM_802_11_MGMT,
 					 ANI_TXDIR_TODS, 7, lim_tx_complete,
 					 pFrame, lim_deauth_tx_complete_cnf_handler,
@@ -3135,22 +3135,22 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 			/* Call lim_process_deauth_ack_timeout which will send
 			 * DeauthCnf for this frame
 			 */
-			lim_process_deauth_ack_timeout(pMac);
+			lim_process_deauth_ack_timeout(mac);
 			return;
 		}
 
 		val = SYS_MS_TO_TICKS(LIM_DISASSOC_DEAUTH_ACK_TIMEOUT);
 
 		if (tx_timer_change
-			    (&pMac->lim.limTimers.gLimDeauthAckTimer, val, 0)
+			    (&mac->lim.limTimers.gLimDeauthAckTimer, val, 0)
 		    != TX_SUCCESS) {
 			pe_err("Unable to change Deauth ack Timer val");
 			return;
 		} else if (TX_SUCCESS !=
-			   tx_timer_activate(&pMac->lim.limTimers.
+			   tx_timer_activate(&mac->lim.limTimers.
 					     gLimDeauthAckTimer)) {
 			pe_err("Unable to activate Deauth ack Timer");
-			lim_deactivate_and_change_timer(pMac,
+			lim_deactivate_and_change_timer(mac,
 							eLIM_DEAUTH_ACK_TIMER);
 			return;
 		}
@@ -3162,24 +3162,24 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 		if ((NULL != pStaDs)
 		    && (STA_ENTRY_TDLS_PEER == pStaDs->staType)) {
 			/* Queue Disassociation frame in high priority WQ */
-			lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+			lim_diag_mgmt_tx_event_report(mac, pMacHdr,
 						      psessionEntry,
 						      QDF_STATUS_SUCCESS,
 						      QDF_STATUS_SUCCESS);
 			qdf_status =
-				wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+				wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
 					   TXRX_FRM_802_11_MGMT, ANI_TXDIR_IBSS,
 					   7, lim_tx_complete, pFrame, txFlag,
 					   smeSessionId, 0, RATEID_DEFAULT);
 		} else {
 #endif
-		lim_diag_mgmt_tx_event_report(pMac, pMacHdr,
+		lim_diag_mgmt_tx_event_report(mac, pMacHdr,
 					      psessionEntry,
 					      QDF_STATUS_SUCCESS,
 					      QDF_STATUS_SUCCESS);
 		/* Queue Disassociation frame in high priority WQ */
 		qdf_status =
-			wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+			wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
 				   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS,
 				   7, lim_tx_complete, pFrame, txFlag,
 				   smeSessionId, 0, RATEID_DEFAULT);
@@ -3202,7 +3202,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
  * \brief Send a Measurement Report Action frame
  *
  *
- * \param pMac Pointer to the global MAC structure
+ * \param mac Pointer to the global MAC structure
  *
  * \param pMeasReqFrame Address of a tSirMacMeasReqActionFrame
  *
@@ -3212,7 +3212,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
  */
 
 QDF_STATUS
-lim_send_meas_report_frame(tpAniSirGlobal pMac,
+lim_send_meas_report_frame(tpAniSirGlobal mac,
 			   tpSirMacMeasReqActionFrame pMeasReqFrame,
 			   tSirMacAddr peer, tpPESession psessionEntry)
 {
@@ -3233,17 +3233,17 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
 	switch (pMeasReqFrame->measReqIE.measType) {
 	case SIR_MAC_BASIC_MEASUREMENT_TYPE:
 		nSirStatus =
-			populate_dot11f_measurement_report0(pMac, pMeasReqFrame,
+			populate_dot11f_measurement_report0(mac, pMeasReqFrame,
 							    &frm.MeasurementReport);
 		break;
 	case SIR_MAC_CCA_MEASUREMENT_TYPE:
 		nSirStatus =
-			populate_dot11f_measurement_report1(pMac, pMeasReqFrame,
+			populate_dot11f_measurement_report1(mac, pMeasReqFrame,
 							    &frm.MeasurementReport);
 		break;
 	case SIR_MAC_RPI_MEASUREMENT_TYPE:
 		nSirStatus =
-			populate_dot11f_measurement_report2(pMac, pMeasReqFrame,
+			populate_dot11f_measurement_report2(mac, pMeasReqFrame,
 							    &frm.MeasurementReport);
 		break;
 	default:
@@ -3256,7 +3256,7 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
 	if (QDF_STATUS_SUCCESS != nSirStatus)
 		return QDF_STATUS_E_FAILURE;
 
-	nStatus = dot11f_get_packed_measurement_report_size(pMac, &frm, &nPayload);
+	nStatus = dot11f_get_packed_measurement_report_size(mac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to calculate the packed size for a Measurement Report (0x%08x)",
 			nStatus);
@@ -3270,7 +3270,7 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
 	qdf_status =
-		cds_packet_alloc(pMac->hdd_handle, TXRX_FRM_802_11_MGMT,
+		cds_packet_alloc(mac->hdd_handle, TXRX_FRM_802_11_MGMT,
 				 (uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -3282,21 +3282,21 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
 	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	qdf_mem_copy(pMacHdr->bssId, psessionEntry->bssId, sizeof(tSirMacAddr));
 
-	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
+	lim_set_protected_bit(mac, psessionEntry, peer, pMacHdr);
 
-	nStatus = dot11f_pack_measurement_report(pMac, &frm, pFrame +
+	nStatus = dot11f_pack_measurement_report(mac, &frm, pFrame +
 						 sizeof(tSirMacMgmtHdr),
 						 nPayload, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to pack a Measurement Report (0x%08x)",
 			nStatus);
-		cds_packet_free(pMac->hdd_handle, TXRX_FRM_802_11_MGMT,
+		cds_packet_free(mac->hdd_handle, TXRX_FRM_802_11_MGMT,
 				(void *)pFrame, (void *)pPacket);
 		return QDF_STATUS_E_FAILURE;    /* allocated! */
 	} else if (DOT11F_WARNED(nStatus)) {
@@ -3308,7 +3308,7 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
 			 ((psessionEntry) ? psessionEntry->
 			  peSessionId : NO_SESSION), pMacHdr->fc.subType));
 	qdf_status =
-		wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+		wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 			   lim_tx_complete, pFrame, 0, 0, RATEID_DEFAULT);
 	MTRACE(qdf_trace
@@ -3330,7 +3330,7 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
  * \brief Send a TPC Request Action frame
  *
  *
- * \param pMac Pointer to the global MAC datastructure
+ * \param mac Pointer to the global MAC datastructure
  *
  * \param peer MAC address to which the frame should be sent
  *
@@ -3338,7 +3338,7 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
  */
 
 void
-lim_send_tpc_request_frame(tpAniSirGlobal pMac,
+lim_send_tpc_request_frame(tpAniSirGlobal mac,
 			   tSirMacAddr peer, tpPESession psessionEntry)
 {
 	tDot11fTPCRequest frm;
@@ -3355,7 +3355,7 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
 	frm.DialogToken.token = 1;
 	frm.TPCRequest.present = 1;
 
-	nStatus = dot11f_get_packed_tpc_request_size(pMac, &frm, &nPayload);
+	nStatus = dot11f_get_packed_tpc_request_size(mac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to calculate the packed size for a TPC Request (0x%08x)", nStatus);
 		/* We'll fall back on the worst case scenario: */
@@ -3368,7 +3368,7 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
 	qdf_status =
-		cds_packet_alloc(pMac->hdd_handle, TXRX_FRM_802_11_MGMT,
+		cds_packet_alloc(mac->hdd_handle, TXRX_FRM_802_11_MGMT,
 				 (uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -3380,21 +3380,21 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
 	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	qdf_mem_copy(pMacHdr->bssId, psessionEntry->bssId, sizeof(tSirMacAddr));
 
-	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
+	lim_set_protected_bit(mac, psessionEntry, peer, pMacHdr);
 
-	nStatus = dot11f_pack_tpc_request(pMac, &frm, pFrame +
+	nStatus = dot11f_pack_tpc_request(mac, &frm, pFrame +
 					  sizeof(tSirMacMgmtHdr),
 					  nPayload, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to pack a TPC Request (0x%08x)",
 			nStatus);
-		cds_packet_free(pMac->hdd_handle, TXRX_FRM_802_11_MGMT,
+		cds_packet_free(mac->hdd_handle, TXRX_FRM_802_11_MGMT,
 				(void *)pFrame, (void *)pPacket);
 		return;         /* allocated! */
 	} else if (DOT11F_WARNED(nStatus)) {
@@ -3406,7 +3406,7 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
 			 ((psessionEntry) ? psessionEntry->
 			  peSessionId : NO_SESSION), pMacHdr->fc.subType));
 	qdf_status =
-		wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+		wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 			   lim_tx_complete, pFrame, 0, 0, RATEID_DEFAULT);
 	MTRACE(qdf_trace
@@ -3425,7 +3425,7 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
  * \brief Send a TPC Report Action frame
  *
  *
- * \param pMac Pointer to the global MAC datastructure
+ * \param mac Pointer to the global MAC datastructure
  *
  * \param pTpcReqFrame Pointer to the received TPC Request
  *
@@ -3435,7 +3435,7 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
  */
 
 QDF_STATUS
-lim_send_tpc_report_frame(tpAniSirGlobal pMac,
+lim_send_tpc_report_frame(tpAniSirGlobal mac,
 			  tpSirMacTpcReqActionFrame pTpcReqFrame,
 			  tSirMacAddr peer, tpPESession psessionEntry)
 {
@@ -3456,7 +3456,7 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
 	frm.TPCReport.link_margin = 0;
 	frm.TPCReport.present = 1;
 
-	nStatus = dot11f_get_packed_tpc_report_size(pMac, &frm, &nPayload);
+	nStatus = dot11f_get_packed_tpc_report_size(mac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to calculate the packed size for a TPC Report (0x%08x)", nStatus);
 		/* We'll fall back on the worst case scenario: */
@@ -3469,7 +3469,7 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
 	qdf_status =
-		cds_packet_alloc(pMac->hdd_handle, TXRX_FRM_802_11_MGMT,
+		cds_packet_alloc(mac->hdd_handle, TXRX_FRM_802_11_MGMT,
 				 (uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -3481,22 +3481,22 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
 	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer);
 
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	qdf_mem_copy(pMacHdr->bssId, psessionEntry->bssId, sizeof(tSirMacAddr));
 
-	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
+	lim_set_protected_bit(mac, psessionEntry, peer, pMacHdr);
 
-	nStatus = dot11f_pack_tpc_report(pMac, &frm, pFrame +
+	nStatus = dot11f_pack_tpc_report(mac, &frm, pFrame +
 					 sizeof(tSirMacMgmtHdr),
 					 nPayload, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to pack a TPC Report (0x%08x)",
 			nStatus);
-		cds_packet_free(pMac->hdd_handle, TXRX_FRM_802_11_MGMT,
+		cds_packet_free(mac->hdd_handle, TXRX_FRM_802_11_MGMT,
 				(void *)pFrame, (void *)pPacket);
 		return QDF_STATUS_E_FAILURE;    /* allocated! */
 	} else if (DOT11F_WARNED(nStatus)) {
@@ -3507,7 +3507,7 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
 			 ((psessionEntry) ? psessionEntry->
 			  peSessionId : NO_SESSION), pMacHdr->fc.subType));
 	qdf_status =
-		wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+		wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 			   lim_tx_complete, pFrame, 0, 0, RATEID_DEFAULT);
 	MTRACE(qdf_trace
@@ -3530,7 +3530,7 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
  * \brief Send a Channel Switch Announcement
  *
  *
- * \param pMac Pointer to the global MAC datastructure
+ * \param mac Pointer to the global MAC datastructure
  *
  * \param peer MAC address to which this frame will be sent
  *
@@ -3546,7 +3546,7 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
  */
 
 QDF_STATUS
-lim_send_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
+lim_send_channel_switch_mgmt_frame(tpAniSirGlobal mac,
 				   tSirMacAddr peer,
 				   uint8_t nMode,
 				   uint8_t nNewChannel,
@@ -3577,7 +3577,7 @@ lim_send_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
 	frm.ChanSwitchAnn.switchCount = nCount;
 	frm.ChanSwitchAnn.present = 1;
 
-	nStatus = dot11f_get_packed_channel_switch_size(pMac, &frm, &nPayload);
+	nStatus = dot11f_get_packed_channel_switch_size(mac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to calculate the packed size for a Channel Switch (0x%08x)",
 			nStatus);
@@ -3601,16 +3601,16 @@ lim_send_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
 	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer,
 		psessionEntry->selfMacAddr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 	qdf_mem_copy((uint8_t *) pMacHdr->bssId,
 		     (uint8_t *) psessionEntry->bssId, sizeof(tSirMacAddr));
 
-	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
+	lim_set_protected_bit(mac, psessionEntry, peer, pMacHdr);
 
-	nStatus = dot11f_pack_channel_switch(pMac, &frm, pFrame +
+	nStatus = dot11f_pack_channel_switch(mac, &frm, pFrame +
 					     sizeof(tSirMacMgmtHdr),
 					     nPayload, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
@@ -3632,7 +3632,7 @@ lim_send_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	qdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
 				7, lim_tx_complete, pFrame, txFlag,
@@ -3951,7 +3951,7 @@ lim_p2p_oper_chan_change_confirm_action_frame(tpAniSirGlobal mac_ctx,
 
 
 QDF_STATUS
-lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
+lim_send_vht_opmode_notification_frame(tpAniSirGlobal mac,
 				       tSirMacAddr peer,
 				       uint8_t nMode, tpPESession psessionEntry)
 {
@@ -3979,7 +3979,7 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 	frm.OperatingMode.rxNSS = 0;
 	frm.OperatingMode.rxNSSType = 0;
 
-	nStatus = dot11f_get_packed_operating_mode_size(pMac, &frm, &nPayload);
+	nStatus = dot11f_get_packed_operating_mode_size(mac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to calculate the packed size for a Operating Mode (0x%08x)",
 			nStatus);
@@ -4005,17 +4005,17 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 
 	/* Next, we fill out the buffer descriptor: */
 	if (psessionEntry->pePersona == QDF_SAP_MODE)
-		lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+		lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 			SIR_MAC_MGMT_ACTION, peer,
 			psessionEntry->selfMacAddr);
 	else
-		lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+		lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 			SIR_MAC_MGMT_ACTION, psessionEntry->bssId,
 			psessionEntry->selfMacAddr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 	qdf_mem_copy((uint8_t *) pMacHdr->bssId,
 		     (uint8_t *) psessionEntry->bssId, sizeof(tSirMacAddr));
-	nStatus = dot11f_pack_operating_mode(pMac, &frm, pFrame +
+	nStatus = dot11f_pack_operating_mode(mac, &frm, pFrame +
 					     sizeof(tSirMacMgmtHdr),
 					     nPayload, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
@@ -4036,7 +4036,7 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	qdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frame(mac, pPacket, (uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
 				7, lim_tx_complete, pFrame, txFlag,
@@ -4057,7 +4057,7 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
  * \brief Send a Neighbor Report Request Action frame
  *
  *
- * \param pMac Pointer to the global MAC structure
+ * \param mac Pointer to the global MAC structure
  *
  * \param pNeighborReq Address of a tSirMacNeighborReportReq
  *
@@ -4071,7 +4071,7 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
  */
 
 QDF_STATUS
-lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
+lim_send_neighbor_report_request_frame(tpAniSirGlobal mac,
 				       tpSirMacNeighborReportReq pNeighborReq,
 				       tSirMacAddr peer, tpPESession psessionEntry)
 {
@@ -4097,11 +4097,11 @@ lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
 	frm.DialogToken.token = pNeighborReq->dialogToken;
 
 	if (pNeighborReq->ssid_present) {
-		populate_dot11f_ssid(pMac, &pNeighborReq->ssid, &frm.SSID);
+		populate_dot11f_ssid(mac, &pNeighborReq->ssid, &frm.SSID);
 	}
 
 	nStatus =
-		dot11f_get_packed_neighbor_report_request_size(pMac, &frm, &nPayload);
+		dot11f_get_packed_neighbor_report_request_size(mac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to calculate the packed size for a Neighbor Report Request(0x%08x)",
 			nStatus);
@@ -4126,7 +4126,7 @@ lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
 	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Copy necessary info to BD */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer, psessionEntry->selfMacAddr);
 
 	/* Update A3 with the BSSID */
@@ -4134,10 +4134,10 @@ lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
 
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
+	lim_set_protected_bit(mac, psessionEntry, peer, pMacHdr);
 
 	/* Now, we're ready to "pack" the frames */
-	nStatus = dot11f_pack_neighbor_report_request(pMac,
+	nStatus = dot11f_pack_neighbor_report_request(mac,
 						      &frm,
 						      pFrame +
 						      sizeof(tSirMacMgmtHdr),
@@ -4156,7 +4156,7 @@ lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
 	}
 
 	pe_debug("Sending a Neighbor Report Request to");
-	lim_print_mac_addr(pMac, peer, LOGD);
+	lim_print_mac_addr(mac, peer, LOGD);
 
 	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
@@ -4167,7 +4167,7 @@ lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	qdf_status = wma_tx_frame(pMac,
+	qdf_status = wma_tx_frame(mac,
 				pPacket,
 				(uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
@@ -4194,7 +4194,7 @@ returnAfterError:
  * \brief Send a Link Report Action frame
  *
  *
- * \param pMac Pointer to the global MAC structure
+ * \param mac Pointer to the global MAC structure
  *
  * \param pLinkReport Address of a tSirMacLinkReport
  *
@@ -4208,7 +4208,7 @@ returnAfterError:
  */
 
 QDF_STATUS
-lim_send_link_report_action_frame(tpAniSirGlobal pMac,
+lim_send_link_report_action_frame(tpAniSirGlobal mac,
 				  tpSirMacLinkReport pLinkReport,
 				  tSirMacAddr peer, tpPESession psessionEntry)
 {
@@ -4249,7 +4249,7 @@ lim_send_link_report_action_frame(tpAniSirGlobal pMac,
 	frm.RSNI.rsni = pLinkReport->rsni;
 
 	nStatus =
-		dot11f_get_packed_link_measurement_report_size(pMac, &frm, &nPayload);
+		dot11f_get_packed_link_measurement_report_size(mac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to calculate the packed size for a Link Report (0x%08x)", nStatus);
 		/* We'll fall back on the worst case scenario: */
@@ -4273,7 +4273,7 @@ lim_send_link_report_action_frame(tpAniSirGlobal pMac,
 	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Copy necessary info to BD */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer, psessionEntry->selfMacAddr);
 
 	/* Update A3 with the BSSID */
@@ -4281,10 +4281,10 @@ lim_send_link_report_action_frame(tpAniSirGlobal pMac,
 
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
+	lim_set_protected_bit(mac, psessionEntry, peer, pMacHdr);
 
 	/* Now, we're ready to "pack" the frames */
-	nStatus = dot11f_pack_link_measurement_report(pMac,
+	nStatus = dot11f_pack_link_measurement_report(mac,
 						      &frm,
 						      pFrame +
 						      sizeof(tSirMacMgmtHdr),
@@ -4302,7 +4302,7 @@ lim_send_link_report_action_frame(tpAniSirGlobal pMac,
 	}
 
 	pe_warn("Sending a Link Report to");
-	lim_print_mac_addr(pMac, peer, LOGW);
+	lim_print_mac_addr(mac, peer, LOGW);
 
 	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
@@ -4312,7 +4312,7 @@ lim_send_link_report_action_frame(tpAniSirGlobal pMac,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	qdf_status = wma_tx_frame(pMac,
+	qdf_status = wma_tx_frame(mac,
 				pPacket,
 				(uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
@@ -4336,7 +4336,7 @@ returnAfterError:
 } /* End lim_send_link_report_action_frame. */
 
 QDF_STATUS
-lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
+lim_send_radio_measure_report_action_frame(tpAniSirGlobal mac,
 				uint8_t dialog_token,
 				uint8_t num_report,
 				bool is_last_frame,
@@ -4394,7 +4394,7 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 			    (i == (frm->num_MeasurementReport - 1)))
 				is_last_report = true;
 
-			populate_dot11f_beacon_report(pMac,
+			populate_dot11f_beacon_report(mac,
 						     &frm->MeasurementReport[i],
 						     &pRRMReport[i].report.
 						     beaconReport,
@@ -4416,7 +4416,7 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 	}
 
 	nStatus =
-		dot11f_get_packed_radio_measurement_report_size(pMac, frm, &nPayload);
+		dot11f_get_packed_radio_measurement_report_size(mac, frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to calculate the packed size for a Radio Measure Report (0x%08x)",
 			nStatus);
@@ -4444,7 +4444,7 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Copy necessary info to BD */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer, psessionEntry->selfMacAddr);
 
 	/* Update A3 with the BSSID */
@@ -4452,10 +4452,10 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
 
-	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
+	lim_set_protected_bit(mac, psessionEntry, peer, pMacHdr);
 
 	/* Now, we're ready to "pack" the frames */
-	nStatus = dot11f_pack_radio_measurement_report(pMac,
+	nStatus = dot11f_pack_radio_measurement_report(mac,
 						       frm,
 						       pFrame +
 						       sizeof(tSirMacMgmtHdr),
@@ -4474,7 +4474,7 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 	}
 
 	pe_warn("Sending a Radio Measure Report to");
-	lim_print_mac_addr(pMac, peer, LOGW);
+	lim_print_mac_addr(mac, peer, LOGW);
 
 	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
@@ -4485,7 +4485,7 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	qdf_status = wma_tx_frame(pMac,
+	qdf_status = wma_tx_frame(mac,
 				pPacket,
 				(uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
@@ -4518,7 +4518,7 @@ returnAfterError:
  * \sa lim_send_sa_query_request_frame
  *
  *
- * \param pMac    The global tpAniSirGlobal object
+ * \param mac    The global tpAniSirGlobal object
  *
  * \param transId Transaction identifier
  *
@@ -4530,7 +4530,7 @@ returnAfterError:
  *         QDF_STATUS_E_FAILURE is some problem is encountered
  */
 
-QDF_STATUS lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *transId,
+QDF_STATUS lim_send_sa_query_request_frame(tpAniSirGlobal mac, uint8_t *transId,
 					      tSirMacAddr peer,
 					      tpPESession psessionEntry)
 {
@@ -4554,7 +4554,7 @@ QDF_STATUS lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *transId
 	/* 11w SA Query Request transId */
 	qdf_mem_copy(&frm.TransactionId.transId[0], &transId[0], 2);
 
-	nStatus = dot11f_get_packed_sa_query_req_size(pMac, &frm, &nPayload);
+	nStatus = dot11f_get_packed_sa_query_req_size(mac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to calculate the packed size for an SA Query Request (0x%08x)",
 			nStatus);
@@ -4577,7 +4577,7 @@ QDF_STATUS lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *transId
 	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Copy necessary info to BD */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer, psessionEntry->selfMacAddr);
 
 	/* Update A3 with the BSSID */
@@ -4587,10 +4587,10 @@ QDF_STATUS lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *transId
 
 	/* Since this is a SA Query Request, set the "protect" (aka WEP) bit */
 	/* in the FC */
-	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
+	lim_set_protected_bit(mac, psessionEntry, peer, pMacHdr);
 
 	/* Pack 11w SA Query Request frame */
-	nStatus = dot11f_pack_sa_query_req(pMac,
+	nStatus = dot11f_pack_sa_query_req(mac,
 					   &frm,
 					   pFrame + sizeof(tSirMacMgmtHdr),
 					   nPayload, &nPayload);
@@ -4607,9 +4607,9 @@ QDF_STATUS lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *transId
 	}
 
 	pe_debug("Sending an SA Query Request to");
-	lim_print_mac_addr(pMac, peer, LOGD);
+	lim_print_mac_addr(mac, peer, LOGD);
 	pe_debug("Sending an SA Query Request from ");
-	lim_print_mac_addr(pMac, psessionEntry->selfMacAddr, LOGD);
+	lim_print_mac_addr(mac, psessionEntry->selfMacAddr, LOGD);
 
 	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 #ifdef WLAN_FEATURE_P2P
@@ -4621,7 +4621,7 @@ QDF_STATUS lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *transId
 	}
 	smeSessionId = psessionEntry->smeSessionId;
 
-	qdf_status = wma_tx_frame(pMac,
+	qdf_status = wma_tx_frame(mac,
 				pPacket,
 				(uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
@@ -4648,7 +4648,7 @@ returnAfterError:
  * \sa lim_send_sa_query_response_frame
  *
  *
- * \param pMac    The global tpAniSirGlobal object
+ * \param mac    The global tpAniSirGlobal object
  *
  * \param transId Transaction identifier received in SA query request action frame
  *
@@ -4660,7 +4660,7 @@ returnAfterError:
  *         QDF_STATUS_E_FAILURE is some problem is encountered
  */
 
-QDF_STATUS lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_sa_query_response_frame(tpAniSirGlobal mac,
 					       uint8_t *transId, tSirMacAddr peer,
 					       tpPESession psessionEntry)
 {
@@ -4687,7 +4687,7 @@ QDF_STATUS lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 	   SA query request transId */
 	qdf_mem_copy(&frm.TransactionId.transId[0], &transId[0], 2);
 
-	nStatus = dot11f_get_packed_sa_query_rsp_size(pMac, &frm, &nPayload);
+	nStatus = dot11f_get_packed_sa_query_rsp_size(mac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to calculate the packed size for a SA Query Response (0x%08x)",
 			nStatus);
@@ -4710,7 +4710,7 @@ QDF_STATUS lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Copy necessary info to BD */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer, psessionEntry->selfMacAddr);
 
 	/* Update A3 with the BSSID */
@@ -4720,10 +4720,10 @@ QDF_STATUS lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 
 	/* Since this is a SA Query Response, set the "protect" (aka WEP) bit */
 	/* in the FC */
-	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
+	lim_set_protected_bit(mac, psessionEntry, peer, pMacHdr);
 
 	/* Pack 11w SA query response frame */
-	nStatus = dot11f_pack_sa_query_rsp(pMac,
+	nStatus = dot11f_pack_sa_query_rsp(mac,
 					   &frm,
 					   pFrame + sizeof(tSirMacMgmtHdr),
 					   nPayload, &nPayload);
@@ -4740,7 +4740,7 @@ QDF_STATUS lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 	}
 
 	pe_debug("Sending a SA Query Response to");
-	lim_print_mac_addr(pMac, peer, LOGD);
+	lim_print_mac_addr(mac, peer, LOGD);
 
 	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 #ifdef WLAN_FEATURE_P2P
@@ -4753,7 +4753,7 @@ QDF_STATUS lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	qdf_status = wma_tx_frame(pMac,
+	qdf_status = wma_tx_frame(mac,
 				pPacket,
 				(uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
