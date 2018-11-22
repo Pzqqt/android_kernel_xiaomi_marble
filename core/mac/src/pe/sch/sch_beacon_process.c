@@ -280,15 +280,15 @@ ap_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
  *
 
  */
-static void __sch_beacon_process_no_session(tpAniSirGlobal pMac,
+static void __sch_beacon_process_no_session(tpAniSirGlobal mac,
 					    tpSchBeaconStruct pBeacon,
 					    uint8_t *pRxPacketInfo)
 {
 	tpPESession psessionEntry = NULL;
 
-	psessionEntry = lim_is_ibss_session_active(pMac);
+	psessionEntry = lim_is_ibss_session_active(mac);
 	if (psessionEntry != NULL) {
-		lim_handle_ibss_coalescing(pMac, pBeacon, pRxPacketInfo,
+		lim_handle_ibss_coalescing(mac, pBeacon, pRxPacketInfo,
 					   psessionEntry);
 	}
 	return;
@@ -1112,7 +1112,7 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
  * @return status of operation
  */
 QDF_STATUS
-sch_beacon_edca_process(tpAniSirGlobal pMac, tSirMacEdcaParamSetIE *edca,
+sch_beacon_edca_process(tpAniSirGlobal mac, tSirMacEdcaParamSetIE *edca,
 			tpPESession session)
 {
 	uint8_t i;
@@ -1120,7 +1120,7 @@ sch_beacon_edca_process(tpAniSirGlobal pMac, tSirMacEdcaParamSetIE *edca,
 	host_log_qos_edca_pkt_type *log_ptr = NULL;
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-	if (!(pMac->mlme_cfg)) {
+	if (!(mac->mlme_cfg)) {
 		pe_err("invalid mlme cfg");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1134,33 +1134,33 @@ sch_beacon_edca_process(tpAniSirGlobal pMac, tSirMacEdcaParamSetIE *edca,
 	session->gLimEdcaParams[EDCA_AC_VI] = edca->acvi;
 	session->gLimEdcaParams[EDCA_AC_VO] = edca->acvo;
 
-	if (pMac->mlme_cfg->edca_params.enable_edca_params) {
+	if (mac->mlme_cfg->edca_params.enable_edca_params) {
 		session->gLimEdcaParams[EDCA_AC_VO].aci.aifsn =
-			pMac->mlme_cfg->edca_params.edca_ac_vo.vo_aifs;
+			mac->mlme_cfg->edca_params.edca_ac_vo.vo_aifs;
 		session->gLimEdcaParams[EDCA_AC_VI].aci.aifsn =
-			pMac->mlme_cfg->edca_params.edca_ac_vi.vi_aifs;
+			mac->mlme_cfg->edca_params.edca_ac_vi.vi_aifs;
 		session->gLimEdcaParams[EDCA_AC_BK].aci.aifsn =
-			pMac->mlme_cfg->edca_params.edca_ac_bk.bk_aifs;
+			mac->mlme_cfg->edca_params.edca_ac_bk.bk_aifs;
 		session->gLimEdcaParams[EDCA_AC_BE].aci.aifsn =
-			pMac->mlme_cfg->edca_params.edca_ac_be.be_aifs;
+			mac->mlme_cfg->edca_params.edca_ac_be.be_aifs;
 
 		session->gLimEdcaParams[EDCA_AC_VO].cw.min =
-			pMac->mlme_cfg->edca_params.edca_ac_vo.vo_cwmin;
+			mac->mlme_cfg->edca_params.edca_ac_vo.vo_cwmin;
 		session->gLimEdcaParams[EDCA_AC_VI].cw.min =
-			pMac->mlme_cfg->edca_params.edca_ac_vi.vi_cwmin;
+			mac->mlme_cfg->edca_params.edca_ac_vi.vi_cwmin;
 		session->gLimEdcaParams[EDCA_AC_BK].cw.min =
-			pMac->mlme_cfg->edca_params.edca_ac_bk.bk_cwmin;
+			mac->mlme_cfg->edca_params.edca_ac_bk.bk_cwmin;
 		session->gLimEdcaParams[EDCA_AC_BE].cw.min =
-			pMac->mlme_cfg->edca_params.edca_ac_be.be_cwmin;
+			mac->mlme_cfg->edca_params.edca_ac_be.be_cwmin;
 
 		session->gLimEdcaParams[EDCA_AC_VO].cw.max =
-			pMac->mlme_cfg->edca_params.edca_ac_vo.vo_cwmax;
+			mac->mlme_cfg->edca_params.edca_ac_vo.vo_cwmax;
 		session->gLimEdcaParams[EDCA_AC_VI].cw.max =
-			pMac->mlme_cfg->edca_params.edca_ac_vi.vi_cwmax;
+			mac->mlme_cfg->edca_params.edca_ac_vi.vi_cwmax;
 		session->gLimEdcaParams[EDCA_AC_BK].cw.max =
-			pMac->mlme_cfg->edca_params.edca_ac_bk.bk_cwmax;
+			mac->mlme_cfg->edca_params.edca_ac_bk.bk_cwmax;
 		session->gLimEdcaParams[EDCA_AC_BE].cw.max =
-			pMac->mlme_cfg->edca_params.edca_ac_be.be_cwmax;
+			mac->mlme_cfg->edca_params.edca_ac_be.be_cwmax;
 	}
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	WLAN_HOST_DIAG_LOG_ALLOC(log_ptr, host_log_qos_edca_pkt_type,
@@ -1197,7 +1197,7 @@ sch_beacon_edca_process(tpAniSirGlobal pMac, tSirMacEdcaParamSetIE *edca,
 	WLAN_HOST_DIAG_LOG_REPORT(log_ptr);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 	pe_debug("Edca param enabled in ini %d. Updating Local EDCA Params(gLimEdcaParams) to: ",
-		 pMac->mlme_cfg->edca_params.enable_edca_params);
+		 mac->mlme_cfg->edca_params.enable_edca_params);
 	for (i = 0; i < MAX_NUM_AC; i++) {
 		pe_debug("AC[%d]:  AIFSN: %d, ACM %d, CWmin %d, CWmax %d, TxOp %d",
 		       i, session->gLimEdcaParams[i].aci.aifsn,

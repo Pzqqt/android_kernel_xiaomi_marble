@@ -69,14 +69,14 @@
  * @return None
  */
 
-QDF_STATUS sch_post_message(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
+QDF_STATUS sch_post_message(tpAniSirGlobal mac, struct scheduler_msg *pMsg)
 {
-	sch_process_message(pMac, pMsg);
+	sch_process_message(mac, pMsg);
 
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
+QDF_STATUS sch_send_beacon_req(tpAniSirGlobal mac, uint8_t *beaconPayload,
 			       uint16_t size, tpPESession psessionEntry,
 			       enum sir_bcn_update_reason reason)
 {
@@ -88,8 +88,8 @@ QDF_STATUS sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 		size, reason);
 
 	if (LIM_IS_AP_ROLE(psessionEntry) &&
-	   (pMac->sch.schObject.fBeaconChanged)) {
-		retCode = lim_send_probe_rsp_template_to_hal(pMac,
+	   (mac->sch.schObject.fBeaconChanged)) {
+		retCode = lim_send_probe_rsp_template_to_hal(mac,
 				psessionEntry,
 				&psessionEntry->DefProbeRspIeBitmap[0]);
 		if (QDF_STATUS_SUCCESS != retCode)
@@ -116,9 +116,9 @@ QDF_STATUS sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 		beaconParams->timIeOffset = psessionEntry->schBeaconOffsetBegin;
 		if (psessionEntry->dfsIncludeChanSwIe) {
 			beaconParams->csa_count_offset =
-				pMac->sch.schObject.csa_count_offset;
+				mac->sch.schObject.csa_count_offset;
 			beaconParams->ecsa_count_offset =
-				pMac->sch.schObject.ecsa_count_offset;
+				mac->sch.schObject.ecsa_count_offset;
 			pe_debug("csa_count_offset %d ecsa_count_offset %d",
 				 beaconParams->csa_count_offset,
 				 beaconParams->ecsa_count_offset);
@@ -129,16 +129,16 @@ QDF_STATUS sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 	beaconParams->reason = reason;
 
 	/* p2pIeOffset should be atleast greater than timIeOffset */
-	if ((pMac->sch.schObject.p2pIeOffset != 0) &&
-	    (pMac->sch.schObject.p2pIeOffset <
+	if ((mac->sch.schObject.p2pIeOffset != 0) &&
+	    (mac->sch.schObject.p2pIeOffset <
 	     psessionEntry->schBeaconOffsetBegin)) {
 		pe_err("Invalid p2pIeOffset:[%d]",
-			pMac->sch.schObject.p2pIeOffset);
+			mac->sch.schObject.p2pIeOffset);
 		QDF_ASSERT(0);
 		qdf_mem_free(beaconParams);
 		return QDF_STATUS_E_FAILURE;
 	}
-	beaconParams->p2pIeOffset = pMac->sch.schObject.p2pIeOffset;
+	beaconParams->p2pIeOffset = mac->sch.schObject.p2pIeOffset;
 #ifdef WLAN_SOFTAP_FW_BEACON_TX_PRNT_LOG
 	pe_err("TimIeOffset:[%d]", beaconParams->TimIeOffset);
 #endif
@@ -172,8 +172,8 @@ QDF_STATUS sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 		psessionEntry->bcnLen = size;
 	}
 
-	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	MTRACE(mac_trace_msg_tx(mac, psessionEntry->peSessionId, msgQ.type));
+	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode)
 		pe_err("Posting SEND_BEACON_REQ to HAL failed, reason=%X",
 			retCode);
@@ -183,7 +183,7 @@ QDF_STATUS sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 	return retCode;
 }
 
-static uint32_t lim_remove_p2p_ie_from_add_ie(tpAniSirGlobal pMac,
+static uint32_t lim_remove_p2p_ie_from_add_ie(tpAniSirGlobal mac,
 					      tpPESession psessionEntry,
 					      uint8_t *addIeWoP2pIe,
 					      uint32_t *addnIELenWoP2pIe)
@@ -223,7 +223,7 @@ static uint32_t lim_remove_p2p_ie_from_add_ie(tpAniSirGlobal pMac,
 	return QDF_STATUS_SUCCESS;
 }
 
-uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
+uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal mac,
 					    tpPESession psessionEntry,
 					    uint32_t *IeBitmap)
 {
@@ -264,7 +264,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 			return QDF_STATUS_E_NOMEM;
 		}
 
-		retStatus = lim_remove_p2p_ie_from_add_ie(pMac, psessionEntry,
+		retStatus = lim_remove_p2p_ie_from_add_ie(mac, psessionEntry,
 					addIeWoP2pIe, &addnIELenWoP2pIe);
 		if (retStatus != QDF_STATUS_SUCCESS) {
 			qdf_mem_free(addIeWoP2pIe);
@@ -289,7 +289,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 
 		qdf_mem_zero((uint8_t *)&extracted_extcap,
 			     sizeof(tDot11fIEExtCap));
-		status = lim_strip_extcap_update_struct(pMac, addIE,
+		status = lim_strip_extcap_update_struct(mac, addIE,
 				&addn_ielen, &extracted_extcap);
 		if (QDF_STATUS_SUCCESS != status) {
 			pe_debug("extcap not extracted");
@@ -316,7 +316,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 					&extracted_extcap,
 					true);
 
-	nStatus = dot11f_get_packed_probe_response_size(pMac,
+	nStatus = dot11f_get_packed_probe_response_size(mac,
 			&psessionEntry->probeRespFrame, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		pe_err("Failed to calculate the packed size for a Probe Response (0x%08x)",
@@ -341,7 +341,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 	qdf_mem_set(pFrame2Hal, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
-	lim_populate_mac_header(pMac, pFrame2Hal, SIR_MAC_MGMT_FRAME,
+	lim_populate_mac_header(mac, pFrame2Hal, SIR_MAC_MGMT_FRAME,
 					     SIR_MAC_MGMT_PROBE_RSP,
 					     psessionEntry->selfMacAddr,
 					     psessionEntry->selfMacAddr);
@@ -352,7 +352,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 
 	/* That done, pack the Probe Response: */
 	nStatus =
-		dot11f_pack_probe_response(pMac, &psessionEntry->probeRespFrame,
+		dot11f_pack_probe_response(mac, &psessionEntry->probeRespFrame,
 					   pFrame2Hal + sizeof(tSirMacMgmtHdr),
 					   nPayload, &nPayload);
 
@@ -389,7 +389,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 		msgQ.bodyptr = pprobeRespParams;
 		msgQ.bodyval = 0;
 
-		retCode = wma_post_ctrl_msg(pMac, &msgQ);
+		retCode = wma_post_ctrl_msg(mac, &msgQ);
 		if (QDF_STATUS_SUCCESS != retCode) {
 			pe_err("FAIL bytes %d retcode[%X]", nBytes, retCode);
 			qdf_mem_free(pprobeRespParams);
@@ -404,7 +404,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 
 /**
  * sch_gen_timing_advert_frame() - Generate the TA frame and populate the buffer
- * @pMac: the global MAC context
+ * @mac: the global MAC context
  * @self_addr: the self MAC address
  * @buf: the buffer that will contain the frame
  * @timestamp_offset: return for the offset of the timestamp field

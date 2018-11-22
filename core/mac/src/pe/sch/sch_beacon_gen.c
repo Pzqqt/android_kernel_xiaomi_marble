@@ -648,7 +648,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 }
 
 QDF_STATUS
-lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal pMac,
+lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal mac,
 						tDot11fBeacon1 *beacon1,
 						tpPESession psessionEntry)
 {
@@ -670,7 +670,7 @@ lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal pMac,
 	if (beacon1->SSID.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, SIR_MAC_SSID_EID);
 		/* populating it, because probe response has to go with SSID even in hidden case */
-		populate_dot11f_ssid(pMac, &psessionEntry->ssId, &prb_rsp->SSID);
+		populate_dot11f_ssid(mac, &psessionEntry->ssId, &prb_rsp->SSID);
 	}
 	/* supported rates */
 	if (beacon1->SuppRates.present) {
@@ -694,7 +694,7 @@ lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal pMac,
 	return QDF_STATUS_SUCCESS;
 }
 
-void lim_update_probe_rsp_template_ie_bitmap_beacon2(tpAniSirGlobal pMac,
+void lim_update_probe_rsp_template_ie_bitmap_beacon2(tpAniSirGlobal mac,
 						     tDot11fBeacon2 *beacon2,
 						     uint32_t *DefProbeRspIeBitmap,
 						     tDot11fProbeResponse *prb_rsp)
@@ -891,7 +891,7 @@ void set_probe_rsp_ie_bitmap(uint32_t *IeBitmap, uint32_t pos)
 
 /**
  * write_beacon_to_memory() - send the beacon to the wma
- * @pMac: pointer to mac structure
+ * @mac: pointer to mac structure
  * @size: Size of the beacon to write to memory
  * @length: Length field of the beacon to write to memory
  * @psessionEntry: pe session
@@ -899,7 +899,7 @@ void set_probe_rsp_ie_bitmap(uint32_t *IeBitmap, uint32_t pos)
  *
  * return: success: QDF_STATUS_SUCCESS failure: QDF_STATUS_E_FAILURE
  */
-static QDF_STATUS write_beacon_to_memory(tpAniSirGlobal pMac, uint16_t size,
+static QDF_STATUS write_beacon_to_memory(tpAniSirGlobal mac, uint16_t size,
 					 uint16_t length,
 					 tpPESession psessionEntry,
 					 enum sir_bcn_update_reason reason)
@@ -924,7 +924,7 @@ static QDF_STATUS write_beacon_to_memory(tpAniSirGlobal pMac, uint16_t size,
 	} else
 		pBeacon->beaconLength = (uint32_t) size - sizeof(uint32_t);
 
-	if (!pMac->sch.schObject.fBeaconChanged)
+	if (!mac->sch.schObject.fBeaconChanged)
 		return QDF_STATUS_E_FAILURE;
 
 	/*
@@ -933,12 +933,12 @@ static QDF_STATUS write_beacon_to_memory(tpAniSirGlobal pMac, uint16_t size,
 	 */
 
 	size = (size + 3) & (~3);
-	status = sch_send_beacon_req(pMac, psessionEntry->pSchBeaconFrameBegin,
+	status = sch_send_beacon_req(mac, psessionEntry->pSchBeaconFrameBegin,
 				     size, psessionEntry, reason);
 	if (QDF_IS_STATUS_ERROR(status))
 		pe_err("sch_send_beacon_req() returned an error %d, size %d",
 		       status, size);
-	pMac->sch.schObject.fBeaconChanged = 0;
+	mac->sch.schObject.fBeaconChanged = 0;
 
 	return status;
 }
@@ -955,12 +955,12 @@ static QDF_STATUS write_beacon_to_memory(tpAniSirGlobal pMac, uint16_t size,
  *
  * NOTE:
  *
- * @param pMac pointer to global mac structure
+ * @param mac pointer to global mac structure
  * @param **pPtr pointer to the buffer, where the TIM bit is to be written.
  * @param *timLength pointer to limLength, which needs to be returned.
  * @return None
  */
-void sch_generate_tim(tpAniSirGlobal pMac, uint8_t **pPtr, uint16_t *timLength,
+void sch_generate_tim(tpAniSirGlobal mac, uint8_t **pPtr, uint16_t *timLength,
 		      uint8_t dtimPeriod)
 {
 	uint8_t *ptr = *pPtr;
@@ -996,7 +996,7 @@ void sch_generate_tim(tpAniSirGlobal pMac, uint8_t **pPtr, uint16_t *timLength,
 	*pPtr = ptr;
 }
 
-QDF_STATUS sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
+QDF_STATUS sch_process_pre_beacon_ind(tpAniSirGlobal mac,
 				      struct scheduler_msg *limMsg,
 				      enum sir_bcn_update_reason reason)
 {
@@ -1006,7 +1006,7 @@ QDF_STATUS sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
 	uint8_t sessionId;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	psessionEntry = pe_find_session_by_bssid(pMac, pMsg->bssId, &sessionId);
+	psessionEntry = pe_find_session_by_bssid(mac, pMsg->bssId, &sessionId);
 	if (!psessionEntry) {
 		pe_err("session lookup fails");
 		goto end;
@@ -1027,7 +1027,7 @@ QDF_STATUS sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
 		/* generate IBSS parameter set */
 		if (psessionEntry->statypeForBss == STA_ENTRY_SELF)
 			status =
-			    write_beacon_to_memory(pMac, (uint16_t) beaconSize,
+			    write_beacon_to_memory(mac, (uint16_t) beaconSize,
 						   (uint16_t) beaconSize,
 						   psessionEntry, reason);
 		else
@@ -1041,11 +1041,11 @@ QDF_STATUS sch_process_pre_beacon_ind(tpAniSirGlobal pMac,
 		uint16_t timLength = 0;
 
 		if (psessionEntry->statypeForBss == STA_ENTRY_SELF) {
-			sch_generate_tim(pMac, &ptr, &timLength,
+			sch_generate_tim(mac, &ptr, &timLength,
 					 psessionEntry->dtimPeriod);
 			beaconSize += 2 + timLength;
 			status =
-			    write_beacon_to_memory(pMac, (uint16_t) beaconSize,
+			    write_beacon_to_memory(mac, (uint16_t) beaconSize,
 						   (uint16_t) beaconSize,
 						   psessionEntry, reason);
 		} else

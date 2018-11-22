@@ -39,10 +39,10 @@
 
 /* local functions */
 static QDF_STATUS
-get_wmm_local_params(tpAniSirGlobal pMac,
+get_wmm_local_params(tpAniSirGlobal mac,
 		     uint32_t params[][CFG_EDCA_DATA_LEN]);
 static void
-set_sch_edca_params(tpAniSirGlobal pMac,
+set_sch_edca_params(tpAniSirGlobal mac,
 		    uint32_t params[][CFG_EDCA_DATA_LEN],
 		    tpPESession psessionEntry);
 
@@ -62,7 +62,7 @@ set_sch_edca_params(tpAniSirGlobal pMac,
  * @return None
  */
 
-void sch_set_beacon_interval(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void sch_set_beacon_interval(tpAniSirGlobal mac, tpPESession psessionEntry)
 {
 	uint32_t bi;
 
@@ -74,7 +74,7 @@ void sch_set_beacon_interval(tpAniSirGlobal pMac, tpPESession psessionEntry)
 		return;
 	}
 
-	pMac->sch.schObject.gSchBeaconInterval = (uint16_t) bi;
+	mac->sch.schObject.gSchBeaconInterval = (uint16_t) bi;
 }
 
 static void sch_edca_profile_update_all(tpAniSirGlobal pmac)
@@ -105,14 +105,14 @@ static void sch_edca_profile_update_all(tpAniSirGlobal pmac)
  * @return None
  */
 
-void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg)
+void sch_process_message(tpAniSirGlobal mac, struct scheduler_msg *pSchMsg)
 {
 	switch (pSchMsg->type) {
 	case SIR_CFG_PARAM_UPDATE_IND:
 		switch (pSchMsg->bodyval) {
 		case WNI_CFG_COUNTRY_CODE:
 			pe_debug("sch: WNI_CFG_COUNTRY_CODE changed");
-			sch_edca_profile_update_all(pMac);
+			sch_edca_profile_update_all(mac);
 			break;
 
 		default:
@@ -132,7 +132,7 @@ void sch_process_message(tpAniSirGlobal pMac, struct scheduler_msg *pSchMsg)
  * sepcified in the config params are delivered in this order: BE, BK, VI, VO
  */
 static QDF_STATUS
-sch_get_params(tpAniSirGlobal pMac,
+sch_get_params(tpAniSirGlobal mac,
 	       uint32_t params[][CFG_EDCA_DATA_LEN],
 	       uint8_t local)
 {
@@ -160,16 +160,16 @@ sch_get_params(tpAniSirGlobal pMac,
 
 	uint32_t etsi_b[] = {edca_etsi_acbe_bcast, edca_etsi_acbk_bcast,
 			     edca_etsi_acvi_bcast, edca_etsi_acvo_bcast};
-	edca_params = &pMac->mlme_cfg->edca_params;
+	edca_params = &mac->mlme_cfg->edca_params;
 
-	if (wlan_cfg_get_str(pMac, WNI_CFG_COUNTRY_CODE, country_code_str,
+	if (wlan_cfg_get_str(mac, WNI_CFG_COUNTRY_CODE, country_code_str,
 			     &country_code_len) == QDF_STATUS_SUCCESS &&
 	    cds_is_etsi_europe_country(country_code_str)) {
 		val = WNI_CFG_EDCA_PROFILE_ETSI_EUROPE;
 		pe_debug("switch to ETSI EUROPE profile country code %c%c",
 			 country_code_str[0], country_code_str[1]);
 	} else {
-		val = pMac->mlme_cfg->wmm_params.edca_profile;
+		val = mac->mlme_cfg->wmm_params.edca_profile;
 	}
 	if (val >= WNI_CFG_EDCA_PROFILE_MAX) {
 		pe_warn("Invalid EDCA_PROFILE %d, using %d instead", val,
@@ -293,7 +293,7 @@ broadcast_wmm_of_concurrent_sta_session(tpAniSirGlobal mac_ctx,
 	return true;
 }
 
-void sch_qos_update_broadcast(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void sch_qos_update_broadcast(tpAniSirGlobal mac, tpPESession psessionEntry)
 {
 	uint32_t params[4][CFG_EDCA_DATA_LEN];
 	uint32_t cwminidx, cwmaxidx, txopidx;
@@ -302,11 +302,11 @@ void sch_qos_update_broadcast(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	bool updated = false;
 	QDF_STATUS status;
 
-	if (sch_get_params(pMac, params, false) != QDF_STATUS_SUCCESS) {
+	if (sch_get_params(mac, params, false) != QDF_STATUS_SUCCESS) {
 		pe_debug("QosUpdateBroadcast: failed");
 		return;
 	}
-	lim_get_phy_mode(pMac, &phyMode, psessionEntry);
+	lim_get_phy_mode(mac, &phyMode, psessionEntry);
 
 	pe_debug("QosUpdBcast: mode %d", phyMode);
 
@@ -371,67 +371,67 @@ void sch_qos_update_broadcast(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	 * params to broadcast in beacons. WFA Wifi Direct test plan
 	 * 6.1.14 requirement
 	 */
-	if (broadcast_wmm_of_concurrent_sta_session(pMac, psessionEntry))
+	if (broadcast_wmm_of_concurrent_sta_session(mac, psessionEntry))
 		updated = true;
 	if (updated)
 		psessionEntry->gLimEdcaParamSetCount++;
 
-	status = sch_set_fixed_beacon_fields(pMac, psessionEntry);
+	status = sch_set_fixed_beacon_fields(mac, psessionEntry);
 	if (QDF_IS_STATUS_ERROR(status))
 		pe_err("Unable to set beacon fields!");
 }
 
-void sch_qos_update_local(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void sch_qos_update_local(tpAniSirGlobal mac, tpPESession psessionEntry)
 {
 
 	uint32_t params[4][CFG_EDCA_DATA_LEN];
 	QDF_STATUS status;
 
-	status = sch_get_params(pMac, params, true /*local */);
+	status = sch_get_params(mac, params, true /*local */);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("sch_get_params(local) failed");
 		return;
 	}
 
-	set_sch_edca_params(pMac, params, psessionEntry);
+	set_sch_edca_params(mac, params, psessionEntry);
 
 	/* For AP, the bssID is stored in LIM Global context. */
-	lim_send_edca_params(pMac, psessionEntry->gLimEdcaParams,
+	lim_send_edca_params(mac, psessionEntry->gLimEdcaParams,
 			     psessionEntry->bssIdx, false);
 }
 
 /**
  * sch_set_default_edca_params() - This function sets the gLimEdcaParams to the
  * default local wmm profile.
- * @pMac - Global mac context
+ * @mac - Global mac context
  * @psessionEntry - PE session
  *
  * return none
  */
-void sch_set_default_edca_params(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void sch_set_default_edca_params(tpAniSirGlobal mac, tpPESession psessionEntry)
 {
 	uint32_t params[4][CFG_EDCA_DATA_LEN];
 
-	if (get_wmm_local_params(pMac, params) != QDF_STATUS_SUCCESS) {
+	if (get_wmm_local_params(mac, params) != QDF_STATUS_SUCCESS) {
 		pe_err("get_wmm_local_params() failed");
 		return;
 	}
 
-	set_sch_edca_params(pMac, params, psessionEntry);
+	set_sch_edca_params(mac, params, psessionEntry);
 	return;
 }
 
 /**
  * set_sch_edca_params() - This function fills in the gLimEdcaParams structure
  * with the given edca params.
- * @pMac - global mac context
+ * @mac - global mac context
  * @psessionEntry - PE session
  * @params - EDCA parameters
  *
  * Return  none
  */
 static void
-set_sch_edca_params(tpAniSirGlobal pMac,
+set_sch_edca_params(tpAniSirGlobal mac,
 		    uint32_t params[][CFG_EDCA_DATA_LEN],
 		    tpPESession psessionEntry)
 {
@@ -439,16 +439,16 @@ set_sch_edca_params(tpAniSirGlobal pMac,
 	uint32_t cwminidx, cwmaxidx, txopidx;
 	uint32_t phyMode;
 
-	lim_get_phy_mode(pMac, &phyMode, psessionEntry);
+	lim_get_phy_mode(mac, &phyMode, psessionEntry);
 
 	pe_debug("lim_get_phy_mode() = %d", phyMode);
-	/* if (pMac->lim.gLimPhyMode == WNI_CFG_PHY_MODE_11G) */
+	/* if (mac->lim.gLimPhyMode == WNI_CFG_PHY_MODE_11G) */
 	if (phyMode == WNI_CFG_PHY_MODE_11G) {
 		cwminidx = CFG_EDCA_PROFILE_CWMING_IDX;
 		cwmaxidx = CFG_EDCA_PROFILE_CWMAXG_IDX;
 		txopidx = CFG_EDCA_PROFILE_TXOPG_IDX;
 	}
-	/* else if (pMac->lim.gLimPhyMode == WNI_CFG_PHY_MODE_11B) */
+	/* else if (mac->lim.gLimPhyMode == WNI_CFG_PHY_MODE_11B) */
 	else if (phyMode == WNI_CFG_PHY_MODE_11B) {
 		cwminidx = CFG_EDCA_PROFILE_CWMINB_IDX;
 		cwmaxidx = CFG_EDCA_PROFILE_CWMAXB_IDX;
@@ -527,16 +527,16 @@ get_wmm_local_params(tpAniSirGlobal mac_ctx,
  * EDCA params in the gLimEdcaParams structure. It also updates the
  * edcaParamSetCount.
  *
- * @pMac - global mac context
+ * @mac - global mac context
  *
  * Return  none
  */
-void sch_edca_profile_update(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void sch_edca_profile_update(tpAniSirGlobal mac, tpPESession psessionEntry)
 {
 	if (LIM_IS_AP_ROLE(psessionEntry) ||
 	    LIM_IS_IBSS_ROLE(psessionEntry)) {
-		sch_qos_update_local(pMac, psessionEntry);
-		sch_qos_update_broadcast(pMac, psessionEntry);
+		sch_qos_update_local(mac, psessionEntry);
+		sch_qos_update_broadcast(mac, psessionEntry);
 	}
 }
 
