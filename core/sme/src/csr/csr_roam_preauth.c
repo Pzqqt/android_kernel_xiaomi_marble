@@ -414,14 +414,14 @@ static QDF_STATUS csr_neighbor_roam_add_preauth_fail(tpAniSirGlobal mac_ctx,
  *
  * Return: true if preauth candidate, false otherwise
  */
-bool csr_neighbor_roam_is_preauth_candidate(tpAniSirGlobal pMac,
+bool csr_neighbor_roam_is_preauth_candidate(tpAniSirGlobal mac,
 		    uint8_t sessionId, tSirMacAddr bssId)
 {
 	uint8_t i = 0;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
-		&pMac->roam.neighborRoamInfo[sessionId];
+		&mac->roam.neighborRoamInfo[sessionId];
 
-	if (csr_roam_is_roam_offload_scan_enabled(pMac))
+	if (csr_roam_is_roam_offload_scan_enabled(mac))
 		return true;
 	if (0 == pNeighborRoamInfo->FTRoamInfo.preAuthFailList.numMACAddress)
 		return true;

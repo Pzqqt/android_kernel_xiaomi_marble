@@ -1194,11 +1194,11 @@ typedef struct tagCsrUpdateConfigParam {
 	tCsr11dinfo Csr11dinfo;
 } tCsrUpdateConfigParam;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#define csr_roamIsRoamOffloadEnabled(pMac) \
-	(pMac->mlme_cfg->lfr.lfr3_roaming_offload)
+#define csr_roamIsRoamOffloadEnabled(mac) \
+	(mac->mlme_cfg->lfr.lfr3_roaming_offload)
 #define DEFAULT_REASSOC_FAILURE_TIMEOUT 1000
 #else
-#define csr_roamIsRoamOffloadEnabled(pMac)  false
+#define csr_roamIsRoamOffloadEnabled(mac)  false
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -1580,7 +1580,7 @@ typedef QDF_STATUS (*csr_session_close_cb)(uint8_t session_id);
 #define CSR_IS_AUTH_TYPE_SAE(auth_type) (false)
 #endif
 
-QDF_STATUS csr_set_channels(tpAniSirGlobal pMac, tCsrConfigParam *pParam);
+QDF_STATUS csr_set_channels(tpAniSirGlobal mac, tCsrConfigParam *pParam);
 
 /* enum to string conversion for debug output */
 const char *get_e_roam_cmd_status_str(eRoamCmdStatus val);

@@ -234,12 +234,12 @@ uint32_t csr_get_rts_thresh(tpAniSirGlobal mac_ctx);
 eCsrPhyMode csr_get_phy_mode_from_bssDesc(tSirBssDescription *pSirBssDesc);
 uint32_t csr_get11h_power_constraint(tpAniSirGlobal mac_ctx,
 				     tDot11fIEPowerConstraints *constraints);
-uint8_t csr_construct_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
+uint8_t csr_construct_rsn_ie(tpAniSirGlobal mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrRSNIe *pRSNIe);
 
-uint8_t csr_construct_wpa_ie(tpAniSirGlobal pMac, uint8_t session_id,
+uint8_t csr_construct_wpa_ie(tpAniSirGlobal mac, uint8_t session_id,
 			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
@@ -252,12 +252,12 @@ bool csr_is_profile_wapi(struct csr_roam_profile *pProfile);
  * Or else construct one from the BSS Caller allocated memory for pWpaIe and
  * guarrantee it can contain a max length WPA IE
  */
-uint8_t csr_retrieve_wpa_ie(tpAniSirGlobal pMac, uint8_t session_id,
+uint8_t csr_retrieve_wpa_ie(tpAniSirGlobal mac, uint8_t session_id,
 			    struct csr_roam_profile *pProfile,
 			    tSirBssDescription *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe);
 
-bool csr_is_ssid_equal(tpAniSirGlobal pMac,
+bool csr_is_ssid_equal(tpAniSirGlobal mac,
 		       tSirBssDescription *pSirBssDesc1,
 		       tSirBssDescription *pSirBssDesc2,
 		       tDot11fBeaconIEs *pIes2);
@@ -271,7 +271,7 @@ bool csr_is_profile_rsn(struct csr_roam_profile *pProfile);
  * else construct one from the BSS Caller allocated memory for pWpaIe and
  * guarantee it can contain a max length WPA IE
  */
-uint8_t csr_retrieve_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
+uint8_t csr_retrieve_rsn_ie(tpAniSirGlobal mac, uint32_t sessionId,
 			    struct csr_roam_profile *pProfile,
 			    tSirBssDescription *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrRSNIe *pRsnIe);
@@ -281,7 +281,7 @@ uint8_t csr_retrieve_rsn_ie(tpAniSirGlobal pMac, uint32_t sessionId,
  * Or else construct one from the BSS. Caller allocated memory for pWapiIe and
  * guarrantee it can contain a max length WAPI IE
  */
-uint8_t csr_retrieve_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
+uint8_t csr_retrieve_wapi_ie(tpAniSirGlobal mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
@@ -323,9 +323,9 @@ QDF_STATUS csr_get_parsed_bss_description_ies(tpAniSirGlobal mac_ctx,
 					      tSirBssDescription *pBssDesc,
 					      tDot11fBeaconIEs **ppIEStruct);
 
-tSirScanType csr_get_scan_type(tpAniSirGlobal pMac, uint8_t chnId);
+tSirScanType csr_get_scan_type(tpAniSirGlobal mac, uint8_t chnId);
 uint8_t csr_to_upper(uint8_t ch);
-QDF_STATUS csr_get_phy_mode_from_bss(tpAniSirGlobal pMac,
+QDF_STATUS csr_get_phy_mode_from_bss(tpAniSirGlobal mac,
 		tSirBssDescription *pBSSDescription,
 		eCsrPhyMode *pPhyMode, tDot11fBeaconIEs *pIes);
 /*
@@ -335,12 +335,12 @@ QDF_STATUS csr_get_phy_mode_from_bss(tpAniSirGlobal pMac,
  * the user wants. There may be discrepency in it. UAPSD-bypass logic should
  * decide if it needs to reassoc
  */
-QDF_STATUS csr_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
+QDF_STATUS csr_reassoc(tpAniSirGlobal mac, uint32_t sessionId,
 		tCsrRoamModifyProfileFields *pModProfileFields,
 		uint32_t *pRoamId, bool fForce);
 
 /* BeaconInterval validation for MCC support */
-QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channelId,
+QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal mac, uint8_t channelId,
 		uint16_t *beaconInterval, uint32_t cursessionId,
 		enum QDF_OPMODE currBssPersona);
 bool csr_is_profile11r(tpAniSirGlobal mac, struct csr_roam_profile *pProfile);
