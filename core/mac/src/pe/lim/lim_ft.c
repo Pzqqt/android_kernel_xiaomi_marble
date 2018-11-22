@@ -39,7 +39,7 @@
 #include "wmm_apsd.h"
 #include "wma.h"
 
-extern void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
+extern void lim_send_set_sta_key_req(tpAniSirGlobal mac,
 				     tLimMlmSetKeysReq * pMlmSetKeysReq,
 				     uint16_t staIdx,
 				     uint8_t defWEPIdx,
@@ -48,27 +48,27 @@ extern void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 /*--------------------------------------------------------------------------
    Initialize the FT variables.
    ------------------------------------------------------------------------*/
-void lim_ft_open(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void lim_ft_open(tpAniSirGlobal mac, tpPESession psessionEntry)
 {
 	if (psessionEntry)
 		qdf_mem_set(&psessionEntry->ftPEContext, sizeof(tftPEContext),
 			    0);
 }
 
-void lim_ft_cleanup_all_ft_sessions(tpAniSirGlobal pMac)
+void lim_ft_cleanup_all_ft_sessions(tpAniSirGlobal mac)
 {
 	/* Wrapper function to cleanup all FT sessions */
 	int i;
 
-	for (i = 0; i < pMac->lim.maxBssId; i++) {
-		if (true == pMac->lim.gpSession[i].valid) {
+	for (i = 0; i < mac->lim.maxBssId; i++) {
+		if (true == mac->lim.gpSession[i].valid) {
 			/* The session is valid, may have FT data */
-			lim_ft_cleanup(pMac, &pMac->lim.gpSession[i]);
+			lim_ft_cleanup(mac, &mac->lim.gpSession[i]);
 		}
 	}
 }
 
-void lim_ft_cleanup(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void lim_ft_cleanup(tpAniSirGlobal mac, tpPESession psessionEntry)
 {
 	if (NULL == psessionEntry) {
 		pe_err("psessionEntry is NULL");
@@ -118,7 +118,7 @@ void lim_ft_cleanup(tpAniSirGlobal pMac, tpPESession psessionEntry)
  * The newly created ft Session entry is passed to this function
  *
  *------------------------------------------------------------------*/
-void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
+void lim_ft_prepare_add_bss_req(tpAniSirGlobal mac,
 		uint8_t updateEntry, tpPESession pftSessionEntry,
 		tpSirBssDescription bssDescription)
 {
@@ -144,13 +144,13 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 		return;
 	}
 
-	lim_extract_ap_capabilities(pMac, (uint8_t *) bssDescription->ieFields,
+	lim_extract_ap_capabilities(mac, (uint8_t *) bssDescription->ieFields,
 			lim_get_ielen_from_bss_description(bssDescription),
 			pBeaconStruct);
 
-	if (pMac->lim.gLimProtectionControl !=
+	if (mac->lim.gLimProtectionControl !=
 	    MLME_FORCE_POLICY_PROTECTION_DISABLE)
-		lim_decide_sta_protection_on_assoc(pMac, pBeaconStruct,
+		lim_decide_sta_protection_on_assoc(mac, pBeaconStruct,
 						   pftSessionEntry);
 
 	qdf_mem_copy(pAddBssParams->bssId, bssDescription->bssId,
@@ -219,7 +219,7 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 			pAddBssParams->dualCTSProtection =
 				(uint8_t) pBeaconStruct->HTInfo.dualCTSProtection;
 
-			chanWidthSupp = lim_get_ht_capability(pMac,
+			chanWidthSupp = lim_get_ht_capability(mac,
 							      eHT_SUPPORTED_CHANNEL_WIDTH_SET,
 							      pftSessionEntry);
 			if ((pBeaconStruct->HTCaps.supportedChannelWidthSet) &&
@@ -422,7 +422,7 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 		    && (pftSessionEntry->isOSENConnection))
 			pAddBssParams->staContext.wpa_rsn = 1;
 		/* Update the rates */
-		lim_populate_peer_rate_set(pMac,
+		lim_populate_peer_rate_set(mac,
 					   &pAddBssParams->staContext.
 					   supportedRates,
 					   pBeaconStruct->HTCaps.supportedMCSSet,
@@ -452,7 +452,7 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 		pftSessionEntry->limMlmState =
 			eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE;
 		MTRACE(mac_trace
-			(pMac, TRACE_CODE_MLM_STATE,
+			(mac, TRACE_CODE_MLM_STATE,
 			pftSessionEntry->peSessionId,
 			eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE));
 	}
@@ -520,7 +520,7 @@ static void lim_fill_dot11mode(tpAniSirGlobal mac_ctx,
  * Return the newly created session entry.
  *
  *------------------------------------------------------------------*/
-void lim_fill_ft_session(tpAniSirGlobal pMac,
+void lim_fill_ft_session(tpAniSirGlobal mac,
 			 tpSirBssDescription pbssDescription,
 			 tpPESession pftSessionEntry, tpPESession psessionEntry)
 {
@@ -546,7 +546,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	pftSessionEntry->smeSessionId = psessionEntry->smeSessionId;
 	pftSessionEntry->transactionId = 0;
 
-	lim_extract_ap_capabilities(pMac, (uint8_t *) pbssDescription->ieFields,
+	lim_extract_ap_capabilities(mac, (uint8_t *) pbssDescription->ieFields,
 			lim_get_ielen_from_bss_description(pbssDescription),
 			pBeaconStruct);
 
@@ -565,7 +565,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	pftSessionEntry->ssId.length = pBeaconStruct->ssId.length;
 	qdf_mem_copy(pftSessionEntry->ssId.ssId, pBeaconStruct->ssId.ssId,
 		     pftSessionEntry->ssId.length);
-	lim_fill_dot11mode(pMac, pftSessionEntry, psessionEntry);
+	lim_fill_dot11mode(mac, pftSessionEntry, psessionEntry);
 
 	pe_debug("dot11mode: %d", pftSessionEntry->dot11mode);
 	pftSessionEntry->vhtCapability =
@@ -583,9 +583,9 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 				pftSessionEntry->currentOperChannel);
 
 	if (pftSessionEntry->limRFBand == BAND_2G) {
-		cbEnabledMode = pMac->roam.configParam.channelBondingMode24GHz;
+		cbEnabledMode = mac->roam.configParam.channelBondingMode24GHz;
 	} else {
-		cbEnabledMode = pMac->roam.configParam.channelBondingMode5GHz;
+		cbEnabledMode = mac->roam.configParam.channelBondingMode5GHz;
 	}
 	pftSessionEntry->htSupportedChannelWidthSet =
 	    (pBeaconStruct->HTInfo.present) ?
@@ -652,16 +652,16 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 
 	pftSessionEntry->limCurrentBssCaps = pbssDescription->capabilityInfo;
 	pftSessionEntry->limReassocBssCaps = pbssDescription->capabilityInfo;
-	if (pMac->mlme_cfg->ht_caps.short_slot_time_enabled &&
+	if (mac->mlme_cfg->ht_caps.short_slot_time_enabled &&
 	    SIR_MAC_GET_SHORT_SLOT_TIME(pftSessionEntry->limReassocBssCaps)) {
 		pftSessionEntry->shortSlotTimeSupported = true;
 	}
 
-	regMax = cfg_get_regulatory_max_transmit_power(pMac,
+	regMax = cfg_get_regulatory_max_transmit_power(mac,
 						       pftSessionEntry->
 						       currentOperChannel);
 	localPowerConstraint = regMax;
-	lim_extract_ap_capability(pMac, (uint8_t *) pbssDescription->ieFields,
+	lim_extract_ap_capability(mac, (uint8_t *) pbssDescription->ieFields,
 		lim_get_ielen_from_bss_description(pbssDescription),
 		&pftSessionEntry->limCurrentBssQosCaps,
 		&pftSessionEntry->limCurrentBssPropCap, &currentBssUapsd,
@@ -687,19 +687,19 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 #ifdef FEATURE_WLAN_ESE
 	pftSessionEntry->maxTxPower =
 		lim_get_max_tx_power(regMax, localPowerConstraint,
-				     pMac->roam.configParam.nTxPowerCap);
+				     mac->roam.configParam.nTxPowerCap);
 #else
 	pftSessionEntry->maxTxPower = QDF_MIN(regMax, (localPowerConstraint));
 #endif
 
 	pe_debug("Reg max: %d local pwr: %d, ini tx pwr: %d max tx pwr: %d",
 		regMax, localPowerConstraint,
-		pMac->roam.configParam.nTxPowerCap,
+		mac->roam.configParam.nTxPowerCap,
 		pftSessionEntry->maxTxPower);
 	if (!lim_is_roam_synch_in_progress(psessionEntry)) {
 		pftSessionEntry->limPrevSmeState = pftSessionEntry->limSmeState;
 		pftSessionEntry->limSmeState = eLIM_SME_WT_REASSOC_STATE;
-		MTRACE(mac_trace(pMac,
+		MTRACE(mac_trace(mac,
 				TRACE_CODE_SME_STATE,
 				pftSessionEntry->peSessionId,
 				pftSessionEntry->limSmeState));
@@ -711,7 +711,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	if ((pftSessionEntry->limRFBand == BAND_2G) &&
 		(pftSessionEntry->htSupportedChannelWidthSet ==
 		eHT_CHANNEL_WIDTH_40MHZ))
-		lim_init_obss_params(pMac, pftSessionEntry);
+		lim_init_obss_params(mac, pftSessionEntry);
 
 	pftSessionEntry->enableHtSmps = psessionEntry->enableHtSmps;
 	pftSessionEntry->htSmpsvalue = psessionEntry->htSmpsvalue;
@@ -736,7 +736,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
  * This function is called to process the update key request from SME
  *
  *------------------------------------------------------------------*/
-bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
+bool lim_process_ft_update_key(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 {
 	tAddBssParams *pAddBssParams;
 	tSirFTUpdateKeyInfo *pKeyInfo;
@@ -744,18 +744,18 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	uint8_t sessionId;
 
 	/* Sanity Check */
-	if (pMac == NULL || pMsgBuf == NULL) {
+	if (mac == NULL || pMsgBuf == NULL) {
 		return false;
 	}
 
 	pKeyInfo = (tSirFTUpdateKeyInfo *) pMsgBuf;
 
-	psessionEntry = pe_find_session_by_bssid(pMac, pKeyInfo->bssid.bytes,
+	psessionEntry = pe_find_session_by_bssid(mac, pKeyInfo->bssid.bytes,
 						 &sessionId);
 	if (NULL == psessionEntry) {
 		pe_err("%s: Unable to find session for the following bssid",
 			       __func__);
-		lim_print_mac_addr(pMac, pKeyInfo->bssid.bytes, LOGE);
+		lim_print_mac_addr(mac, pKeyInfo->bssid.bytes, LOGE);
 		return false;
 	}
 
@@ -787,7 +787,7 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 
 		if (psessionEntry->ftPEContext.pAddStaReq == NULL) {
 			pe_err("pAddStaReq is NULL");
-			lim_send_set_sta_key_req(pMac, pMlmSetKeysReq, 0, 0,
+			lim_send_set_sta_key_req(mac, pMlmSetKeysReq, 0, 0,
 						 psessionEntry, false);
 			psessionEntry->ftPEContext.PreAuthKeyInfo.
 			extSetStaKeyParamValid = false;
@@ -804,7 +804,7 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			     sizeof(tSirKeys));
 
 		pAddBssParams->extSetStaKeyParam.singleTidRc =
-			(uint8_t)pMac->mlme_cfg->sta.single_tid;
+			(uint8_t)mac->mlme_cfg->sta.single_tid;
 		pe_debug("Key valid: %d keyLength: %d",
 			pAddBssParams->extSetStaKeyParamValid,
 			pAddBssParams->extSetStaKeyParam.key[0].keyLength);
@@ -824,7 +824,7 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 }
 
 static void
-lim_ft_send_aggr_qos_rsp(tpAniSirGlobal pMac, uint8_t rspReqd,
+lim_ft_send_aggr_qos_rsp(tpAniSirGlobal mac, uint8_t rspReqd,
 			 tpAggrAddTsParams aggrQosRsp, uint8_t smesessionId)
 {
 	tpSirAggrQosRsp rsp;
@@ -852,11 +852,11 @@ lim_ft_send_aggr_qos_rsp(tpAniSirGlobal pMac, uint8_t rspReqd,
 			rsp->aggrInfo.aggrRsp[i].tspec = aggrQosRsp->tspec[i];
 		}
 	}
-	lim_send_sme_aggr_qos_rsp(pMac, rsp, smesessionId);
+	lim_send_sme_aggr_qos_rsp(mac, rsp, smesessionId);
 	return;
 }
 
-void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac,
+void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal mac,
 				  struct scheduler_msg *limMsg)
 {
 	tpAggrAddTsParams pAggrQosRspMsg = NULL;
@@ -869,14 +869,14 @@ void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac,
 	int i = 0;
 
 	pe_debug(" Received AGGR_QOS_RSP from HAL");
-	SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
+	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 	pAggrQosRspMsg = (tpAggrAddTsParams) (limMsg->bodyptr);
 	if (NULL == pAggrQosRspMsg) {
 		pe_err("NULL pAggrQosRspMsg");
 		return;
 	}
 	psessionEntry =
-		pe_find_session_by_session_id(pMac, pAggrQosRspMsg->sessionId);
+		pe_find_session_by_session_id(mac, pAggrQosRspMsg->sessionId);
 	if (NULL == psessionEntry) {
 		pe_err("Cant find session entry for %s", __func__);
 		if (pAggrQosRspMsg != NULL) {
@@ -896,15 +896,15 @@ void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac,
 			addTsParam.sessionId = pAggrQosRspMsg->sessionId;
 			addTsParam.tspec = pAggrQosRspMsg->tspec[i];
 			addTsParam.tspecIdx = pAggrQosRspMsg->tspecIdx;
-			lim_send_delts_req_action_frame(pMac, peerMacAddr, rspReqd,
+			lim_send_delts_req_action_frame(mac, peerMacAddr, rspReqd,
 							&addTsParam.tspec.tsinfo,
 							&addTsParam.tspec,
 							psessionEntry);
 			pSta =
-				dph_lookup_assoc_id(pMac, addTsParam.staIdx, &assocId,
+				dph_lookup_assoc_id(mac, addTsParam.staIdx, &assocId,
 						    &psessionEntry->dph.dphHashTable);
 			if (pSta != NULL) {
-				lim_admit_control_delete_ts(pMac, assocId,
+				lim_admit_control_delete_ts(mac, assocId,
 							    &addTsParam.tspec.
 							    tsinfo, NULL,
 							    (uint8_t *) &
@@ -912,7 +912,7 @@ void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac,
 			}
 		}
 	}
-	lim_ft_send_aggr_qos_rsp(pMac, rspReqd, pAggrQosRspMsg,
+	lim_ft_send_aggr_qos_rsp(mac, rspReqd, pAggrQosRspMsg,
 				 psessionEntry->smeSessionId);
 	if (pAggrQosRspMsg != NULL) {
 		qdf_mem_free(pAggrQosRspMsg);
@@ -920,7 +920,7 @@ void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac,
 	return;
 }
 
-QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
+QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 {
 	struct scheduler_msg msg = {0};
 	tSirAggrQosReq *aggrQosReq = (tSirAggrQosReq *) pMsgBuf;
@@ -937,7 +937,7 @@ QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	if (!pAggrAddTsParam)
 		return QDF_STATUS_E_NOMEM;
 
-	psessionEntry = pe_find_session_by_bssid(pMac, aggrQosReq->bssid.bytes,
+	psessionEntry = pe_find_session_by_bssid(mac, aggrQosReq->bssid.bytes,
 						 &sessionId);
 
 	if (psessionEntry == NULL) {
@@ -954,7 +954,7 @@ QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pSta = dph_lookup_hash_entry(pMac, aggrQosReq->bssid.bytes, &aid,
+	pSta = dph_lookup_hash_entry(mac, aggrQosReq->bssid.bytes, &aid,
 				     &psessionEntry->dph.dphHashTable);
 	if (pSta == NULL) {
 		pe_err("Station context not found - ignoring AddTsRsp");
@@ -982,13 +982,13 @@ QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			 * is set to 1 in the bi-direction field.
 			 */
 			if (pTspec->tsinfo.traffic.psb == 1) {
-				lim_set_tspec_uapsd_mask_per_session(pMac,
+				lim_set_tspec_uapsd_mask_per_session(mac,
 								     psessionEntry,
 								     &pTspec->
 								     tsinfo,
 								     SET_UAPSD_MASK);
 			} else {
-				lim_set_tspec_uapsd_mask_per_session(pMac,
+				lim_set_tspec_uapsd_mask_per_session(mac,
 								     psessionEntry,
 								     &pTspec->
 								     tsinfo,
@@ -1025,19 +1025,19 @@ QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 					[SIR_MAC_DIRECTION_DNLINK] |=
 					(1 << ac);
 			}
-			lim_set_active_edca_params(pMac,
+			lim_set_active_edca_params(mac,
 						   psessionEntry->gLimEdcaParams,
 						   psessionEntry);
 
-				lim_send_edca_params(pMac,
+				lim_send_edca_params(mac,
 					     psessionEntry->gLimEdcaParamsActive,
 					     pSta->bssId, false);
 
 			if (QDF_STATUS_SUCCESS !=
-			    lim_tspec_add(pMac, pSta->staAddr, pSta->assocId,
+			    lim_tspec_add(mac, pSta->staAddr, pSta->assocId,
 					  pTspec, 0, &tspecInfo)) {
 				pe_err("Adding entry in lim Tspec Table failed");
-				pMac->lim.gLimAddtsSent = false;
+				mac->lim.gLimAddtsSent = false;
 				qdf_mem_free(pAggrAddTsParam);
 				return QDF_STATUS_E_FAILURE;
 			}
@@ -1048,8 +1048,8 @@ QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	}
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (!pMac->mlme_cfg->lfr.lfr3_roaming_offload ||
-	    (pMac->mlme_cfg->lfr.lfr3_roaming_offload &&
+	if (!mac->mlme_cfg->lfr.lfr3_roaming_offload ||
+	    (mac->mlme_cfg->lfr.lfr3_roaming_offload &&
 	     !psessionEntry->is11Rconnection))
 #endif
 	{
@@ -1060,12 +1060,12 @@ QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	/* We need to defer any incoming messages until we get a
 	 * WMA_AGGR_QOS_RSP from HAL.
 	 */
-	SET_LIM_PROCESS_DEFD_MESGS(pMac, false);
-	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msg.type));
+	SET_LIM_PROCESS_DEFD_MESGS(mac, false);
+	MTRACE(mac_trace_msg_tx(mac, psessionEntry->peSessionId, msg.type));
 
-	if (QDF_STATUS_SUCCESS != wma_post_ctrl_msg(pMac, &msg)) {
+	if (QDF_STATUS_SUCCESS != wma_post_ctrl_msg(mac, &msg)) {
 			pe_warn("wma_post_ctrl_msg() failed");
-			SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
+			SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 			qdf_mem_free(pAggrAddTsParam);
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -1077,7 +1077,7 @@ QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		 * already has the RIC IEs */
 
 		/* Send the Aggr QoS response to SME */
-		lim_ft_send_aggr_qos_rsp(pMac, true, pAggrAddTsParam,
+		lim_ft_send_aggr_qos_rsp(mac, true, pAggrAddTsParam,
 					 psessionEntry->smeSessionId);
 		if (pAggrAddTsParam != NULL) {
 			qdf_mem_free(pAggrAddTsParam);
