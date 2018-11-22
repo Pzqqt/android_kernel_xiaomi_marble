@@ -38,6 +38,7 @@
 #include "osif_sync.h"
 #include <wlan_hdd_includes.h>
 #include <qc_sap_ioctl.h>
+#include "osif_sync.h"
 #include <wlan_hdd_hostapd.h>
 #include <wlan_hdd_hostapd_wext.h>
 #include <wlan_hdd_green_ap.h>
@@ -5870,13 +5871,20 @@ static enum hw_mode_bandwidth wlan_hdd_get_channel_bw(
 int wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 				struct net_device *dev)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_stop_ap(wiphy, dev);
+	errno = __wlan_hdd_cfg80211_stop_ap(wiphy, dev);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)) || \
@@ -6290,13 +6298,20 @@ int wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 				struct net_device *dev,
 				struct cfg80211_ap_settings *params)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_start_ap(wiphy, dev, params);
+	errno = __wlan_hdd_cfg80211_start_ap(wiphy, dev, params);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -6380,13 +6395,20 @@ int wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 				struct net_device *dev,
 				struct cfg80211_beacon_data *params)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_change_beacon(wiphy, dev, params);
+	errno = __wlan_hdd_cfg80211_change_beacon(wiphy, dev, params);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**

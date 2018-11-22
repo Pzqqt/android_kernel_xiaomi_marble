@@ -28,6 +28,7 @@
 #include <linux/pm.h>
 #include <linux/wait.h>
 #include <linux/cpu.h>
+#include "osif_sync.h"
 #include <wlan_hdd_includes.h>
 #if defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
 #include <linux/wakelock.h>
@@ -78,7 +79,6 @@
 #include <wlan_cfg80211_mc_cp_stats.h>
 #include "wlan_p2p_ucfg_api.h"
 #include "wlan_mlme_ucfg_api.h"
-#include "osif_sync.h"
 
 /* Preprocessor definitions and constants */
 #ifdef QCA_WIFI_NAPIER_EMULATION
@@ -1986,14 +1986,21 @@ int wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 				     bool allow_power_save,
 				     int timeout)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_set_power_mgmt(wiphy, dev,
-		allow_power_save, timeout);
+	errno = __wlan_hdd_cfg80211_set_power_mgmt(wiphy, dev, allow_power_save,
+						   timeout);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**

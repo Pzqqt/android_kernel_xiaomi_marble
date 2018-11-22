@@ -594,36 +594,43 @@ int wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 #endif
 #endif
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
 #if TDLS_MGMT_VERSION2
-	ret = __wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer, action_code,
-						dialog_token, status_code,
-						peer_capability, buf, len);
+	errno = __wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer, action_code,
+					      dialog_token, status_code,
+					      peer_capability, buf, len);
 #else /* TDLS_MGMT_VERSION2 */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)) || defined(WITH_BACKPORTS)
-	ret = __wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer, action_code,
-					dialog_token, status_code,
-					peer_capability, initiator,
-					buf, len);
+	errno = __wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer, action_code,
+					      dialog_token, status_code,
+					      peer_capability, initiator,
+					      buf, len);
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0))
-	ret = __wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer, action_code,
-					dialog_token, status_code,
-					peer_capability, buf, len);
+	errno = __wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer, action_code,
+					      dialog_token, status_code,
+					      peer_capability, buf, len);
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
-	ret = __wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer, action_code,
-					dialog_token, status_code,
-					peer_capability, buf, len);
+	errno = __wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer, action_code,
+					      dialog_token, status_code,
+					      peer_capability, buf, len);
 #else
-	ret = __wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer, action_code,
-					dialog_token, status_code, buf, len);
+	errno = __wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer, action_code,
+					      dialog_token, status_code,
+					      buf, len);
 #endif
 #endif
-
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -714,13 +721,20 @@ int wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 				enum nl80211_tdls_operation oper)
 #endif
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_tdls_oper(wiphy, dev, peer, oper);
+	errno = __wlan_hdd_cfg80211_tdls_oper(wiphy, dev, peer, oper);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 int hdd_set_tdls_offchannel(struct hdd_context *hdd_ctx,

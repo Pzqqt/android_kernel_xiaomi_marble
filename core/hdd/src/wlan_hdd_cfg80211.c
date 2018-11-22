@@ -13630,13 +13630,20 @@ static int wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 					struct net_device *dev,
 					struct bss_parameters *params)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_change_bss(wiphy, dev, params);
+	errno = __wlan_hdd_cfg80211_change_bss(wiphy, dev, params);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -14094,13 +14101,20 @@ static int wlan_hdd_change_station(struct wiphy *wiphy,
 				   struct station_parameters *params)
 #endif
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_change_station(wiphy, dev, mac, params);
+	errno = __wlan_hdd_change_station(wiphy, dev, mac, params);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 #ifdef CRYPTO_SET_KEY_CONVERGED
@@ -14661,14 +14675,21 @@ static int wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 				     const u8 *mac_addr,
 				     struct key_params *params)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(ndev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_add_key(wiphy, ndev, key_index, pairwise,
-					  mac_addr, params);
+	errno = __wlan_hdd_cfg80211_add_key(wiphy, ndev, key_index, pairwise,
+					    mac_addr, params);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /*
@@ -14778,14 +14799,21 @@ static int wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 						      struct key_params *)
 				     )
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(ndev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_get_key(wiphy, ndev, key_index, pairwise,
-					  mac_addr, cookie, callback);
+	errno = __wlan_hdd_cfg80211_get_key(wiphy, ndev, key_index, pairwise,
+					    mac_addr, cookie, callback);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -14836,14 +14864,21 @@ static int wlan_hdd_cfg80211_del_key(struct wiphy *wiphy,
 					u8 key_index,
 					bool pairwise, const u8 *mac_addr)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_del_key(wiphy, dev, key_index,
-					  pairwise, mac_addr);
+	errno = __wlan_hdd_cfg80211_del_key(wiphy, dev, key_index,
+					    pairwise, mac_addr);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 #ifndef CRYPTO_SET_KEY_CONVERGED
@@ -15090,15 +15125,21 @@ static int wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 					     u8 key_index,
 					     bool unicast, bool multicast)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(ndev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret =
-		__wlan_hdd_cfg80211_set_default_key(wiphy, ndev, key_index, unicast,
-						    multicast);
+	errno = __wlan_hdd_cfg80211_set_default_key(wiphy, ndev, key_index,
+						    unicast, multicast);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /*
@@ -17925,13 +17966,20 @@ static int wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 				     struct net_device *ndev,
 				     struct cfg80211_connect_params *req)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(ndev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_connect(wiphy, ndev, req);
+	errno = __wlan_hdd_cfg80211_connect(wiphy, ndev, req);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
@@ -18270,13 +18318,20 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 static int wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 					struct net_device *dev, u16 reason)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_disconnect(wiphy, dev, reason);
+	errno = __wlan_hdd_cfg80211_disconnect(wiphy, dev, reason);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -18577,13 +18632,20 @@ static int wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 				       struct net_device *dev,
 				       struct cfg80211_ibss_params *params)
 {
-	int ret = 0;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_join_ibss(wiphy, dev, params);
+	errno = __wlan_hdd_cfg80211_join_ibss(wiphy, dev, params);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -18690,13 +18752,20 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 static int wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 					struct net_device *dev)
 {
-	int ret = 0;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_leave_ibss(wiphy, dev);
+	errno = __wlan_hdd_cfg80211_leave_ibss(wiphy, dev);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -18834,13 +18903,20 @@ static int wlan_hdd_set_default_mgmt_key(struct wiphy *wiphy,
 					   struct net_device *netdev,
 					   u8 key_index)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(netdev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_set_default_mgmt_key(wiphy, netdev, key_index);
+	errno = __wlan_hdd_set_default_mgmt_key(wiphy, netdev, key_index);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -18871,13 +18947,20 @@ static int wlan_hdd_set_txq_params(struct wiphy *wiphy,
 				   struct net_device *dev,
 				   struct ieee80211_txq_params *params)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_set_txq_params(wiphy, dev, params);
+	errno = __wlan_hdd_set_txq_params(wiphy, dev, params);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -19062,57 +19145,72 @@ void wlan_hdd_del_station(struct hdd_adapter *adapter)
 }
 #endif
 
-#if defined(USE_CFG80211_DEL_STA_V2)
 /**
- * wlan_hdd_cfg80211_del_station() - delete station v2
+ * wlan_hdd_cfg80211_del_station() - delete station entry handler
  * @wiphy: Pointer to wiphy
- * @param: Pointer to delete station parameter
+ * @dev: net_device to operate against
+ * @mac: binary mac address
+ * @reason_code: reason for the deauthorization/disassociation
+ * @subtype: management frame subtype to indicate removal
  *
- * Return: 0 for success, non-zero for failure
+ * Return: Errno
  */
+static int _wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
+					  struct net_device *dev,
+					  const uint8_t *mac,
+					  uint16_t reason_code,
+					  uint8_t subtype)
+{
+	int errno;
+	struct csr_del_sta_params delStaParams;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
+
+	cds_ssr_protect(__func__);
+	wlansap_populate_del_sta_params(mac, reason_code, subtype,
+					&delStaParams);
+	errno = __wlan_hdd_cfg80211_del_station(wiphy, dev, &delStaParams);
+	cds_ssr_unprotect(__func__);
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
+}
+
+#ifdef USE_CFG80211_DEL_STA_V2
 int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 				  struct net_device *dev,
 				  struct station_del_parameters *param)
-#else
-/**
- * wlan_hdd_cfg80211_del_station() - delete station
- * @wiphy: Pointer to wiphy
- * @mac: Pointer to station mac address
- *
- * Return: 0 for success, non-zero for failure
- */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0))
-int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
-				  struct net_device *dev,
-				  const uint8_t *mac)
-#else
-int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
-				  struct net_device *dev,
-				  uint8_t *mac)
-#endif
-#endif
 {
-	int ret;
-	struct csr_del_sta_params delStaParams;
-
-	cds_ssr_protect(__func__);
-#if defined(USE_CFG80211_DEL_STA_V2)
-	if (NULL == param) {
-		hdd_err("Invalid argument passed");
+	if (!param)
 		return -EINVAL;
-	}
-	wlansap_populate_del_sta_params(param->mac, param->reason_code,
-					param->subtype, &delStaParams);
-#else
-	wlansap_populate_del_sta_params(mac, eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
-					(SIR_MAC_MGMT_DEAUTH >> 4),
-					&delStaParams);
-#endif
-	ret = __wlan_hdd_cfg80211_del_station(wiphy, dev, &delStaParams);
-	cds_ssr_unprotect(__func__);
 
-	return ret;
+	return _wlan_hdd_cfg80211_del_station(wiphy, dev, param->mac,
+					      param->reason_code,
+					      param->subtype);
 }
+#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0))
+int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy, struct net_device *dev,
+				  const uint8_t *mac)
+{
+	uint16_t reason = eSIR_MAC_DEAUTH_LEAVING_BSS_REASON;
+	uint8_t subtype = SIR_MAC_MGMT_DEAUTH >> 4;
+
+	return _wlan_hdd_cfg80211_del_station(wiphy, dev, mac, reason, subtype);
+}
+#else
+int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy, struct net_device *dev,
+				  uint8_t *mac)
+{
+	uint16_t reason = eSIR_MAC_DEAUTH_LEAVING_BSS_REASON;
+	uint8_t subtype = SIR_MAC_MGMT_DEAUTH >> 4;
+
+	return _wlan_hdd_cfg80211_del_station(wiphy, dev, mac, reason, subtype);
+}
+#endif
 
 /**
  * __wlan_hdd_cfg80211_add_station() - add station
@@ -19193,13 +19291,20 @@ static int wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 					 struct station_parameters *params)
 #endif
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_add_station(wiphy, dev, mac, params);
+	errno = __wlan_hdd_cfg80211_add_station(wiphy, dev, mac, params);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 #if defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
@@ -19395,13 +19500,20 @@ static int wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 				       struct net_device *dev,
 				       struct cfg80211_pmksa *pmksa)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_set_pmksa(wiphy, dev, pmksa);
+	errno = __wlan_hdd_cfg80211_set_pmksa(wiphy, dev, pmksa);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 /**
@@ -19483,13 +19595,20 @@ static int wlan_hdd_cfg80211_del_pmksa(struct wiphy *wiphy,
 				       struct net_device *dev,
 				       struct cfg80211_pmksa *pmksa)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_del_pmksa(wiphy, dev, pmksa);
+	errno = __wlan_hdd_cfg80211_del_pmksa(wiphy, dev, pmksa);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 
 }
 
@@ -19551,13 +19670,20 @@ static int __wlan_hdd_cfg80211_flush_pmksa(struct wiphy *wiphy,
 static int wlan_hdd_cfg80211_flush_pmksa(struct wiphy *wiphy,
 					 struct net_device *dev)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_flush_pmksa(wiphy, dev);
+	errno = __wlan_hdd_cfg80211_flush_pmksa(wiphy, dev);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 #if defined(KERNEL_SUPPORT_11R_CFG80211)
@@ -19628,13 +19754,20 @@ wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 				struct net_device *dev,
 				struct cfg80211_update_ft_ies_params *ftie)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_update_ft_ies(wiphy, dev, ftie);
+	errno = __wlan_hdd_cfg80211_update_ft_ies(wiphy, dev, ftie);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 #endif
 
@@ -19802,13 +19935,20 @@ int wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 				     struct net_device *dev,
 				     struct cfg80211_gtk_rekey_data *data)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_set_rekey_data(wiphy, dev, data);
+	errno = __wlan_hdd_cfg80211_set_rekey_data(wiphy, dev, data);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 #endif /* WLAN_FEATURE_GTK_OFFLOAD */
 
@@ -19944,13 +20084,20 @@ wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 			      struct net_device *dev,
 			      const struct cfg80211_acl_data *params)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_set_mac_acl(wiphy, dev, params);
+	errno = __wlan_hdd_cfg80211_set_mac_acl(wiphy, dev, params);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 
 #ifdef WLAN_NL80211_TESTMODE
@@ -20218,13 +20365,20 @@ wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 				       struct net_device *dev,
 				       struct cfg80211_chan_def *chandef)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_set_ap_channel_width(wiphy, dev, chandef);
+	errno = __wlan_hdd_cfg80211_set_ap_channel_width(wiphy, dev, chandef);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 #endif
 
@@ -20291,12 +20445,20 @@ static int wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 				struct net_device *dev,
 				struct cfg80211_csa_settings *csa_params)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_channel_switch(wiphy, dev, csa_params);
+	errno = __wlan_hdd_cfg80211_channel_switch(wiphy, dev, csa_params);
 	cds_ssr_unprotect(__func__);
-	return ret;
+
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 #endif
 
@@ -20653,14 +20815,21 @@ wlan_hdd_cfg80211_update_connect_params(struct wiphy *wiphy,
 					struct cfg80211_connect_params *req,
 					uint32_t changed)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_update_connect_params(wiphy, dev,
-							req, changed);
+	errno = __wlan_hdd_cfg80211_update_connect_params(wiphy, dev,
+							  req, changed);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 #endif
 
@@ -20717,13 +20886,20 @@ wlan_hdd_cfg80211_external_auth(struct wiphy *wiphy,
 				struct net_device *dev,
 				struct cfg80211_external_auth_params *params)
 {
-	int ret;
+	int errno;
+	struct osif_vdev_sync *vdev_sync;
+
+	errno = osif_vdev_sync_op_start(dev, &vdev_sync);
+	if (errno)
+		return errno;
 
 	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_external_auth(wiphy, dev, params);
+	errno = __wlan_hdd_cfg80211_external_auth(wiphy, dev, params);
 	cds_ssr_unprotect(__func__);
 
-	return ret;
+	osif_vdev_sync_op_stop(vdev_sync);
+
+	return errno;
 }
 #endif
 
