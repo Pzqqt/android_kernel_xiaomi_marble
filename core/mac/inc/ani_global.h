@@ -79,7 +79,7 @@ static inline mac_handle_t MAC_HANDLE(tpAniSirGlobal mac)
 	return (mac_handle_t)mac;
 }
 
-#define ANI_DRIVER_TYPE(pMac)     (((tpAniSirGlobal)(pMac))->gDriverType)
+#define ANI_DRIVER_TYPE(mac)     (((tpAniSirGlobal)(mac))->gDriverType)
 
 /* ------------------------------------------------------------------- */
 /* Bss Qos Caps bit map definition */
@@ -248,7 +248,7 @@ enum wifi_logging_ring_id {
 
 /* ------------------------------------------------------------------- */
 /* Change channel generic scheme */
-typedef void (*CHANGE_CHANNEL_CALLBACK)(tpAniSirGlobal pMac, QDF_STATUS status,
+typedef void (*CHANGE_CHANNEL_CALLBACK)(tpAniSirGlobal mac, QDF_STATUS status,
 					uint32_t *data,
 					struct pe_session *psessionEntry);
 
