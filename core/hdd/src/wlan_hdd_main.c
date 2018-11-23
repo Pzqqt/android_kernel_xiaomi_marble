@@ -4579,9 +4579,6 @@ static QDF_STATUS hdd_check_for_existing_macaddr(struct hdd_context *hdd_ctx,
 static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
 				  struct hdd_adapter *adapter)
 {
-	uint8_t count = 0, numentries = 0,
-			moduleloglevel[FW_MODULE_LOG_LEVEL_STRING_LENGTH];
-	uint32_t value = 0;
 	QDF_STATUS status;
 	uint16_t enable_fw_log_level, enable_fw_log_type;
 	int ret;
@@ -4617,51 +4614,8 @@ static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
 		hdd_err("Failed to enable FW log level ret %d",
 			ret);
 
-	hdd_string_to_u8_array(
-		hdd_ctx->config->enableFwModuleLogLevel,
-		moduleloglevel,
-		&numentries,
-		FW_MODULE_LOG_LEVEL_STRING_LENGTH);
-
-	while (count < numentries) {
-		/*
-		 * FW module log level input string looks like
-		 * below:
-		 * gFwDebugModuleLoglevel=<FW Module ID>,
-		 * <Log Level>,...
-		 * For example:
-		 * gFwDebugModuleLoglevel=
-		 * 1,0,2,1,3,2,4,3,5,4,6,5,7,6
-		 * Above input string means :
-		 * For FW module ID 1 enable log level 0
-		 * For FW module ID 2 enable log level 1
-		 * For FW module ID 3 enable log level 2
-		 * For FW module ID 4 enable log level 3
-		 * For FW module ID 5 enable log level 4
-		 * For FW module ID 6 enable log level 5
-		 * For FW module ID 7 enable log level 6
-		 */
-
-		if ((moduleloglevel[count] > WLAN_MODULE_ID_MAX)
-			|| (moduleloglevel[count + 1] > DBGLOG_LVL_MAX)) {
-			hdd_err("Module id %d and dbglog level %d input length is more than max",
-				moduleloglevel[count],
-				moduleloglevel[count + 1]);
-			return;
-		}
-
-		value = moduleloglevel[count] << 16;
-		value |= moduleloglevel[count + 1];
-		ret = sme_cli_set_command(adapter->session_id,
-				WMI_DBGLOG_MOD_LOG_LEVEL,
-				value, DBG_CMD);
-		if (ret != 0)
-			hdd_err("Failed to enable FW module log level %d ret %d",
-				value, ret);
-
-		count += 2;
-	}
-
+	sme_enable_fw_module_log_level(hdd_ctx->mac_handle,
+				       adapter->session_id);
 }
 #else
 static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,

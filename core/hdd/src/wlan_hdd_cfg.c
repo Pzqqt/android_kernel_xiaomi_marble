@@ -470,11 +470,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_PERIODIC_STATS_DISPLAY_TIME_MAX),
 #endif
 
-	REG_VARIABLE_STRING(CFG_ENABLE_FW_MODULE_LOG_LEVEL, WLAN_PARAM_String,
-			    struct hdd_config, enableFwModuleLogLevel,
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_ENABLE_FW_MODULE_LOG_DEFAULT),
-
 #ifdef DHCP_SERVER_OFFLOAD
 	REG_VARIABLE_STRING(CFG_DHCP_SERVER_IP_NAME, WLAN_PARAM_String,
 			    struct hdd_config, dhcpServerIP,

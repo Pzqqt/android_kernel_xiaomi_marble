@@ -3167,4 +3167,13 @@ sme_get_roam_scan_stats(mac_handle_t mac_handle, roam_scan_stats_cb cb,
  */
 void sme_update_score_config(mac_handle_t mac_handle,
 			     struct scoring_config *score_config);
+
+/**
+ * sme_enable_fw_module_log_level() - enable fw module log level
+ * @mac_handle: handle returned by mac_open
+ * @vdev_id: vdev id
+ *
+ * Return: None
+ */
+void sme_enable_fw_module_log_level(mac_handle_t mac_handle, int vdev_id);
 #endif /* #if !defined( __SME_API_H ) */

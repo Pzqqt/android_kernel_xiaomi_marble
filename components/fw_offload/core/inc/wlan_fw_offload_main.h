@@ -127,6 +127,8 @@ struct wlan_fwol_ie_whitelist {
  * @get_rts_profile: Set the RTS profile
  * @enable_fw_log_level: Set the FW log level
  * @enable_fw_log_type: Set the FW log type
+ * @enable_fw_module_log_level: enable fw module log level
+ * @enable_fw_module_log_level_num: enablefw module log level num
  * @is_rate_limit_enabled: Enable/disable RA rate limited
  * @tsf_gpio_pin: TSF GPIO Pin config
  * @enable_dhcp_server_offload: DHCP Offload is enabled or not
@@ -150,6 +152,8 @@ struct wlan_fwol_cfg {
 	uint16_t get_rts_profile;
 	uint16_t enable_fw_log_level;
 	uint16_t enable_fw_log_type;
+	uint8_t enable_fw_module_log_level[FW_MODULE_LOG_LEVEL_STRING_LENGTH];
+	uint8_t enable_fw_module_log_level_num;
 #ifdef FEATURE_WLAN_RA_FILTERING
 	bool is_rate_limit_enabled;
 #endif

@@ -1750,41 +1750,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_LINK_SPEED_RSSI_LOW_MAX                (0)
 #define CFG_LINK_SPEED_RSSI_LOW_DEFAULT            (-80)
 
-/*
- * <ini>
- * gFwDebugModuleLoglevel - modulized firmware debug log level
- * @Min: N/A
- * @Max: N/A
- * @Default: N/A
- *
- * This ini is used to set modulized firmware debug log level.
- * FW module log level input string format looks like below:
- * gFwDebugModuleLoglevel="<FW Module ID>,<Log Level>,..."
- * For example:
- * gFwDebugModuleLoglevel="1,0,2,1,3,2,4,3,5,4,6,5,7,6"
- * The above input string means:
- * For FW module ID 1 enable log level 0
- * For FW module ID 2 enable log level 1
- * For FW module ID 3 enable log level 2
- * For FW module ID 4 enable log level 3
- * For FW module ID 5 enable log level 4
- * For FW module ID 6 enable log level 5
- * For FW module ID 7 enable log level 6
- * For valid values of log levels check enum DBGLOG_LOG_LVL and
- * for valid values of module ids check enum WLAN_MODULE_ID.
- *
- * Related: None
- *
- * Supported Feature: Debugging
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_FW_MODULE_LOG_LEVEL    "gFwDebugModuleLoglevel"
-#define CFG_ENABLE_FW_MODULE_LOG_DEFAULT  "2,1,3,1,5,1,9,1,13,1,14,1,18,1,19,1,26,1,28,1,29,1,31,1,36,1,38,1,46,1,47,1,50,1,52,1,53,1,56,1,60,1,61,1,4,1"
-
 #ifdef ENABLE_MTRACE_LOG
 /*
  * Enable MTRACE for all modules
@@ -3641,7 +3606,6 @@ struct hdd_config {
 	bool IpaClkScalingEnable;
 	bool fRegChangeDefCountry;
 	bool advertiseConcurrentOperation;
-	uint8_t enableFwModuleLogLevel[FW_MODULE_LOG_LEVEL_STRING_LENGTH];
 
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
 	uint8_t SapSccChanAvoidance;

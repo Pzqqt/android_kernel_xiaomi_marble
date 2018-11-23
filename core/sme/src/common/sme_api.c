@@ -16462,3 +16462,59 @@ void sme_update_score_config(mac_handle_t mac_handle,
 	score_config->oce_wan_scoring.score_pcnt15_to_12 =
 		mlme_scoring_cfg->oce_wan_scoring.score_pcnt15_to_12;
 }
+
+void sme_enable_fw_module_log_level(mac_handle_t mac_handle, int vdev_id)
+{
+	QDF_STATUS status;
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	uint8_t *enable_fw_module_log_level;
+	uint8_t enable_fw_module_log_level_num;
+	uint8_t count = 0;
+	uint32_t value = 0;
+	int ret;
+
+	status = ucfg_fwol_get_enable_fw_module_log_level(
+			mac_ctx->psoc, &enable_fw_module_log_level,
+			&enable_fw_module_log_level_num);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
+	while (count < enable_fw_module_log_level_num) {
+		/*
+		 * FW module log level input array looks like
+		 * below:
+		 * enable_fw_module_log_level = {<FW Module ID>,
+		 * <Log Level>,...}
+		 * For example:
+		 * enable_fw_module_log_level=
+		 * {1,0,2,1,3,2,4,3,5,4,6,5,7,6}
+		 * Above input array means :
+		 * For FW module ID 1 enable log level 0
+		 * For FW module ID 2 enable log level 1
+		 * For FW module ID 3 enable log level 2
+		 * For FW module ID 4 enable log level 3
+		 * For FW module ID 5 enable log level 4
+		 * For FW module ID 6 enable log level 5
+		 * For FW module ID 7 enable log level 6
+		 */
+
+		if ((enable_fw_module_log_level[count] > WLAN_MODULE_ID_MAX) ||
+		    (enable_fw_module_log_level[count + 1] > DBGLOG_LVL_MAX)) {
+			sme_err("Module id %d or dbglog level %d input value is more than max",
+				enable_fw_module_log_level[count],
+				enable_fw_module_log_level[count + 1]);
+			continue;
+		}
+
+		value = enable_fw_module_log_level[count] << 16;
+		value |= enable_fw_module_log_level[count + 1];
+		ret = sme_cli_set_command(vdev_id,
+					  WMI_DBGLOG_MOD_LOG_LEVEL,
+					  value, DBG_CMD);
+		if (ret != 0)
+			sme_err("Failed to enable FW module log level %d ret %d",
+				value, ret);
+
+		count += 2;
+	}
+}

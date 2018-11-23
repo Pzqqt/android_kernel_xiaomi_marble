@@ -236,6 +236,21 @@ QDF_STATUS ucfg_fwol_get_enable_fw_log_level(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS ucfg_fwol_get_enable_fw_log_type(struct wlan_objmgr_psoc *psoc,
 					    uint16_t *enable_fw_log_type);
+/**
+ * ucfg_fwol_get_enable_fw_module_log_level() - Assigns
+ * enable_fw_module_log_level string
+ * @psoc: pointer to the psoc object
+ * @enable_fw_module_log_level:
+ * pointer to enable_fw_module_log_level array
+ * @enable_fw_module_log_level_num:
+ * pointer to enable_fw_module_log_leve array element num
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_enable_fw_module_log_level(
+				struct wlan_objmgr_psoc *psoc,
+				uint8_t **enable_fw_module_log_level,
+				uint8_t *enable_fw_module_log_level_num);
 
 #ifdef FEATURE_WLAN_RA_FILTERING
 /**
