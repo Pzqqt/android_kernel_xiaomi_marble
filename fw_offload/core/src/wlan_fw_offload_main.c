@@ -267,6 +267,7 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_fwol_psoc_obj *fwol_obj;
 	struct wlan_fwol_cfg *fwol_cfg;
+	qdf_size_t enable_fw_module_log_level_num;
 
 	fwol_obj = fwol_get_psoc_obj(psoc);
 	if (!fwol_obj) {
@@ -296,6 +297,12 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	fwol_cfg->enable_fw_log_level =
 				cfg_get(psoc, CFG_ENABLE_FW_DEBUG_LOG_LEVEL);
 	fwol_cfg->enable_fw_log_type = cfg_get(psoc, CFG_ENABLE_FW_LOG_TYPE);
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_ENABLE_FW_MODULE_LOG_LEVEL),
+			      fwol_cfg->enable_fw_module_log_level,
+			      FW_MODULE_LOG_LEVEL_STRING_LENGTH,
+			      &enable_fw_module_log_level_num);
+	fwol_cfg->enable_fw_module_log_level_num =
+				(uint8_t)enable_fw_module_log_level_num;
 	ucfg_fwol_fetch_ra_filter(psoc, fwol_cfg);
 	ucfg_fwol_fetch_tsf_gpio_pin(psoc, fwol_cfg);
 	ucfg_fwol_fetch_dhcp_server_settings(psoc, fwol_cfg);
