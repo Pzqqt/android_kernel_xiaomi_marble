@@ -71,7 +71,7 @@
 
 static inline unsigned int is_auth_valid(tpAniSirGlobal mac,
 					 tpSirMacAuthFrameBody auth,
-					 tpPESession sessionEntry)
+					 struct pe_session *sessionEntry)
 {
 	unsigned int valid = 1;
 
@@ -98,7 +98,7 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,
 		tSirMacAuthFrameBody *rx_auth_frm_body,
 		tSirMacAuthFrameBody *auth_frame,
-		tpPESession pe_session)
+		struct pe_session *pe_session)
 {
 	uint32_t val;
 	uint8_t cfg_privacy_opt_imp;
@@ -239,7 +239,7 @@ static void lim_process_auth_open_system_algo(tpAniSirGlobal mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,
 		tSirMacAuthFrameBody *rx_auth_frm_body,
 		tSirMacAuthFrameBody *auth_frame,
-		tpPESession pe_session)
+		struct pe_session *pe_session)
 {
 	struct tLimPreAuthNode *auth_node;
 
@@ -287,7 +287,7 @@ static void lim_process_auth_open_system_algo(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 static void lim_process_sae_auth_frame(tpAniSirGlobal mac_ctx,
-		uint8_t *rx_pkt_info, tpPESession pe_session)
+		uint8_t *rx_pkt_info, struct pe_session *pe_session)
 {
 	tpSirMacMgmtHdr mac_hdr;
 	uint32_t frame_len;
@@ -312,7 +312,7 @@ static void lim_process_sae_auth_frame(tpAniSirGlobal mac_ctx,
 }
 #else
 static inline void  lim_process_sae_auth_frame(tpAniSirGlobal mac_ctx,
-		uint8_t *rx_pkt_info, tpPESession pe_session)
+		uint8_t *rx_pkt_info, struct pe_session *pe_session)
 {}
 #endif
 
@@ -320,7 +320,7 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,
 		tSirMacAuthFrameBody *rx_auth_frm_body,
 		uint8_t *rx_pkt_info, uint16_t curr_seq_num,
-		tSirMacAuthFrameBody *auth_frame, tpPESession pe_session)
+		tSirMacAuthFrameBody *auth_frame, struct pe_session *pe_session)
 {
 	tpDphHashNode sta_ds_ptr = NULL;
 	struct tLimPreAuthNode *auth_node;
@@ -561,7 +561,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		tSirMacAuthFrameBody *auth_frame,
 		uint8_t *plainbody,
 		uint8_t *body_ptr, uint16_t frame_len,
-		tpPESession pe_session)
+		struct pe_session *pe_session)
 {
 	uint8_t key_id, cfg_privacy_opt_imp;
 	uint32_t key_length = 8;
@@ -824,7 +824,7 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,
 		tSirMacAuthFrameBody *rx_auth_frm_body,
 		tSirMacAuthFrameBody *auth_frame,
-		tpPESession pe_session)
+		struct pe_session *pe_session)
 {
 	struct tLimPreAuthNode *auth_node;
 
@@ -984,7 +984,7 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,
 		tSirMacAuthFrameBody *rx_auth_frm_body,
-		tpPESession pe_session)
+		struct pe_session *pe_session)
 {
 	struct tLimPreAuthNode *auth_node;
 
@@ -1116,7 +1116,7 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
  */
 void
 lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
-		       tpPESession pe_session)
+		       struct pe_session *pe_session)
 {
 	uint8_t *body_ptr, key_id, cfg_privacy_opt_imp;
 	uint8_t defaultkey[SIR_MAC_KEY_LENGTH];
@@ -1512,7 +1512,7 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal mac, uint8_t *pBd,
 						void *body)
 {
 	tpSirMacMgmtHdr pHdr;
-	tpPESession psessionEntry = NULL;
+	struct pe_session *psessionEntry = NULL;
 	uint8_t *pBody;
 	uint16_t frameLen;
 	tSirMacAuthFrameBody rxAuthFrame;
