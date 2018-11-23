@@ -68,6 +68,8 @@ struct wcd937x_priv {
 	struct wcd_irq_info irq_info;
 	u32 rx_clk_cnt;
 	int num_irq_regs;
+	/* to track the status */
+	unsigned long status_mask;
 
 	u8 num_tx_ports;
 	u8 num_rx_ports;
