@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015, 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,7 +57,7 @@ void lim_delete_pre_auth_list(tpAniSirGlobal);
 struct tLimPreAuthNode *lim_search_pre_auth_list(tpAniSirGlobal, tSirMacAddr);
 void lim_add_pre_auth_node(tpAniSirGlobal, struct tLimPreAuthNode *);
 void lim_delete_pre_auth_node(tpAniSirGlobal, tSirMacAddr);
-void lim_release_pre_auth_node(tpAniSirGlobal pMac, tpLimPreAuthNode pAuthNode);
+void lim_release_pre_auth_node(tpAniSirGlobal mac, tpLimPreAuthNode pAuthNode);
 void lim_restore_from_auth_state(tpAniSirGlobal,
 				 tSirResultCodes, uint16_t, tpPESession);
 uint8_t lim_delete_open_auth_pre_auth_node(tpAniSirGlobal mac_ctx);

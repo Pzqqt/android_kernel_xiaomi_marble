@@ -71,11 +71,11 @@
  * @return true if passed authType is enabled else false
  */
 uint8_t
-lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
+lim_is_auth_algo_supported(tpAniSirGlobal mac, tAniAuthType authType,
 			   tpPESession psessionEntry)
 {
 	bool algoEnable, privacyOptImp;
-	struct wlan_mlme_wep_cfg *wep_params = &pMac->mlme_cfg->wep_params;
+	struct wlan_mlme_wep_cfg *wep_params = &mac->mlme_cfg->wep_params;
 
 	if (authType == eSIR_OPEN_SYSTEM) {
 
@@ -127,13 +127,13 @@ lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
  *
  ***NOTE:
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @return None
  */
 
-void lim_init_pre_auth_list(tpAniSirGlobal pMac)
+void lim_init_pre_auth_list(tpAniSirGlobal mac)
 {
-	pMac->lim.pLimPreAuthList = NULL;
+	mac->lim.pLimPreAuthList = NULL;
 
 } /*** end lim_init_pre_auth_list() ***/
 
@@ -150,22 +150,22 @@ void lim_init_pre_auth_list(tpAniSirGlobal pMac)
  *
  ***NOTE:
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @return None
  */
 
-void lim_delete_pre_auth_list(tpAniSirGlobal pMac)
+void lim_delete_pre_auth_list(tpAniSirGlobal mac)
 {
 	struct tLimPreAuthNode *pCurrNode, *pTempNode;
 
-	pCurrNode = pTempNode = pMac->lim.pLimPreAuthList;
+	pCurrNode = pTempNode = mac->lim.pLimPreAuthList;
 	while (pCurrNode != NULL) {
 		pTempNode = pCurrNode->next;
-		lim_release_pre_auth_node(pMac, pCurrNode);
+		lim_release_pre_auth_node(mac, pCurrNode);
 
 		pCurrNode = pTempNode;
 	}
-	pMac->lim.pLimPreAuthList = NULL;
+	mac->lim.pLimPreAuthList = NULL;
 } /*** end lim_delete_pre_auth_list() ***/
 
 /**
@@ -189,10 +189,10 @@ void lim_delete_pre_auth_list(tpAniSirGlobal pMac)
  * @return Pointer to pre-auth node if found, else NULL
  */
 
-struct tLimPreAuthNode *lim_search_pre_auth_list(tpAniSirGlobal pMac,
+struct tLimPreAuthNode *lim_search_pre_auth_list(tpAniSirGlobal mac,
 						 tSirMacAddr macAddr)
 {
-	struct tLimPreAuthNode *pTempNode = pMac->lim.pLimPreAuthList;
+	struct tLimPreAuthNode *pTempNode = mac->lim.pLimPreAuthList;
 
 	while (pTempNode != NULL) {
 		if (!qdf_mem_cmp((uint8_t *) macAddr,
@@ -270,19 +270,19 @@ lim_delete_open_auth_pre_auth_node(tpAniSirGlobal mac_ctx)
  *
  ***NOTE:
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @param  pAuthNode - Pointer to pre-auth node to be added to the list.
  *
  * @return None
  */
 
-void lim_add_pre_auth_node(tpAniSirGlobal pMac, struct tLimPreAuthNode *pAuthNode)
+void lim_add_pre_auth_node(tpAniSirGlobal mac, struct tLimPreAuthNode *pAuthNode)
 {
-	pMac->lim.gLimNumPreAuthContexts++;
+	mac->lim.gLimNumPreAuthContexts++;
 
-	pAuthNode->next = pMac->lim.pLimPreAuthList;
+	pAuthNode->next = mac->lim.pLimPreAuthList;
 
-	pMac->lim.pLimPreAuthList = pAuthNode;
+	mac->lim.pLimPreAuthList = pAuthNode;
 } /*** end lim_add_pre_auth_node() ***/
 
 /**
@@ -298,19 +298,19 @@ void lim_add_pre_auth_node(tpAniSirGlobal pMac, struct tLimPreAuthNode *pAuthNod
  *
  ***NOTE:
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @param  pAuthNode - Pointer to Pre Auth node to be released
  * @return None
  */
 
-void lim_release_pre_auth_node(tpAniSirGlobal pMac, tpLimPreAuthNode pAuthNode)
+void lim_release_pre_auth_node(tpAniSirGlobal mac, tpLimPreAuthNode pAuthNode)
 {
 	pAuthNode->fFree = 1;
 	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_TIMER_DEACTIVATE, NO_SESSION,
+		       (mac, TRACE_CODE_TIMER_DEACTIVATE, NO_SESSION,
 		       eLIM_PRE_AUTH_CLEANUP_TIMER));
 	tx_timer_deactivate(&pAuthNode->timer);
-	pMac->lim.gLimNumPreAuthContexts--;
+	mac->lim.gLimNumPreAuthContexts--;
 } /*** end lim_release_pre_auth_node() ***/
 
 /**
@@ -329,18 +329,18 @@ void lim_release_pre_auth_node(tpAniSirGlobal pMac, tpLimPreAuthNode pAuthNode)
  *
  ***NOTE:
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @param  peerMacAddr - MAC address of the STA that need to be deleted
  *                       from pre-auth node list.
  *
  * @return None
  */
 
-void lim_delete_pre_auth_node(tpAniSirGlobal pMac, tSirMacAddr macAddr)
+void lim_delete_pre_auth_node(tpAniSirGlobal mac, tSirMacAddr macAddr)
 {
 	struct tLimPreAuthNode *pPrevNode, *pTempNode;
 
-	pTempNode = pPrevNode = pMac->lim.pLimPreAuthList;
+	pTempNode = pPrevNode = mac->lim.pLimPreAuthList;
 
 	if (pTempNode == NULL)
 		return;
@@ -350,12 +350,12 @@ void lim_delete_pre_auth_node(tpAniSirGlobal pMac, tSirMacAddr macAddr)
 			    sizeof(tSirMacAddr))) {
 		/* First node to be deleted */
 
-		pMac->lim.pLimPreAuthList = pTempNode->next;
+		mac->lim.pLimPreAuthList = pTempNode->next;
 
 		pe_debug("first node to delete, Release data entry: %pK id %d peer",
 			       pTempNode, pTempNode->authNodeIdx);
-		lim_print_mac_addr(pMac, macAddr, LOGD);
-		lim_release_pre_auth_node(pMac, pTempNode);
+		lim_print_mac_addr(mac, macAddr, LOGD);
+		lim_release_pre_auth_node(mac, pTempNode);
 
 		return;
 	}
@@ -372,8 +372,8 @@ void lim_delete_pre_auth_node(tpAniSirGlobal pMac, tSirMacAddr macAddr)
 
 			pe_debug("subsequent node to delete, Release data entry: %pK id %d peer",
 				       pTempNode, pTempNode->authNodeIdx);
-			       lim_print_mac_addr(pMac, macAddr, LOG1);
-			lim_release_pre_auth_node(pMac, pTempNode);
+			       lim_print_mac_addr(mac, macAddr, LOG1);
+			lim_release_pre_auth_node(mac, pTempNode);
 
 			return;
 		}
@@ -383,7 +383,7 @@ void lim_delete_pre_auth_node(tpAniSirGlobal pMac, tSirMacAddr macAddr)
 	}
 
 	pe_err("peer not found in pre-auth list, addr= ");
-	lim_print_mac_addr(pMac, macAddr, LOGE);
+	lim_print_mac_addr(mac, macAddr, LOGE);
 
 } /*** end lim_delete_pre_auth_node() ***/
 
@@ -405,27 +405,27 @@ void lim_delete_pre_auth_node(tpAniSirGlobal pMac, tSirMacAddr macAddr)
  *
  ***NOTE:
  *
- * @param  pMac       - Pointer to Global MAC structure
+ * @param  mac       - Pointer to Global MAC structure
  * @param  resultCode - result of authentication attempt
  * @return None
  */
 
 void
-lim_restore_from_auth_state(tpAniSirGlobal pMac, tSirResultCodes resultCode,
+lim_restore_from_auth_state(tpAniSirGlobal mac, tSirResultCodes resultCode,
 			    uint16_t protStatusCode, tpPESession sessionEntry)
 {
 	tSirMacAddr currentBssId;
 	tLimMlmAuthCnf mlmAuthCnf;
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
-	lim_diag_event_report(pMac, WLAN_PE_DIAG_AUTH_COMP_EVENT, sessionEntry,
+	lim_diag_event_report(mac, WLAN_PE_DIAG_AUTH_COMP_EVENT, sessionEntry,
 			      resultCode, protStatusCode);
 #endif
 
 	qdf_mem_copy((uint8_t *) &mlmAuthCnf.peerMacAddr,
-		     (uint8_t *) &pMac->lim.gpLimMlmAuthReq->peerMacAddr,
+		     (uint8_t *) &mac->lim.gpLimMlmAuthReq->peerMacAddr,
 		     sizeof(tSirMacAddr));
-	mlmAuthCnf.authType = pMac->lim.gpLimMlmAuthReq->authType;
+	mlmAuthCnf.authType = mac->lim.gpLimMlmAuthReq->authType;
 	mlmAuthCnf.resultCode = resultCode;
 	mlmAuthCnf.protStatusCode = protStatusCode;
 
@@ -433,14 +433,14 @@ lim_restore_from_auth_state(tpAniSirGlobal pMac, tSirResultCodes resultCode,
 	mlmAuthCnf.sessionId = sessionEntry->peSessionId;
 
 	/* / Free up buffer allocated */
-	/* / for pMac->lim.gLimMlmAuthReq */
-	qdf_mem_free(pMac->lim.gpLimMlmAuthReq);
-	pMac->lim.gpLimMlmAuthReq = NULL;
+	/* / for mac->lim.gLimMlmAuthReq */
+	qdf_mem_free(mac->lim.gpLimMlmAuthReq);
+	mac->lim.gpLimMlmAuthReq = NULL;
 
 	sessionEntry->limMlmState = sessionEntry->limPrevMlmState;
 
 	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_MLM_STATE, sessionEntry->peSessionId,
+		       (mac, TRACE_CODE_MLM_STATE, sessionEntry->peSessionId,
 		       sessionEntry->limMlmState));
 
 	/*
@@ -448,26 +448,26 @@ lim_restore_from_auth_state(tpAniSirGlobal pMac, tSirResultCodes resultCode,
 	 * host have received the auth rsp and no longer auth
 	 * retry is needed also cancel the auth rety timer
 	 */
-	pMac->auth_ack_status = LIM_AUTH_ACK_RCD_SUCCESS;
+	mac->auth_ack_status = LIM_AUTH_ACK_RCD_SUCCESS;
 
 	/* Auth retry and AUth failure timers are not started for SAE */
 	/* 'Change' timer for future activations */
-	if (tx_timer_running(&pMac->lim.limTimers.
+	if (tx_timer_running(&mac->lim.limTimers.
 	    g_lim_periodic_auth_retry_timer))
-		lim_deactivate_and_change_timer(pMac,
+		lim_deactivate_and_change_timer(mac,
 				eLIM_AUTH_RETRY_TIMER);
 	/* 'Change' timer for future activations */
-	if (tx_timer_running(&pMac->lim.limTimers.gLimAuthFailureTimer))
-		lim_deactivate_and_change_timer(pMac,
+	if (tx_timer_running(&mac->lim.limTimers.gLimAuthFailureTimer))
+		lim_deactivate_and_change_timer(mac,
 				eLIM_AUTH_FAIL_TIMER);
 
 	sir_copy_mac_addr(currentBssId, sessionEntry->bssId);
 
 	if (sessionEntry->limSmeState == eLIM_SME_WT_PRE_AUTH_STATE) {
-		pMac->lim.gLimPreAuthChannelNumber = 0;
+		mac->lim.gLimPreAuthChannelNumber = 0;
 	}
 
-	lim_post_sme_message(pMac, LIM_MLM_AUTH_CNF, (uint32_t *) &mlmAuthCnf);
+	lim_post_sme_message(mac, LIM_MLM_AUTH_CNF, (uint32_t *) &mlmAuthCnf);
 } /*** end lim_restore_from_auth_state() ***/
 
 /**
@@ -485,7 +485,7 @@ lim_restore_from_auth_state(tpAniSirGlobal pMac, tSirResultCodes resultCode,
  ***NOTE:
  * NA
  *
- * @param  pMac           Pointer to Global MAC structure
+ * @param  mac           Pointer to Global MAC structure
  * @param  keyId          key id to used
  * @param  pKey           Pointer to the key to be used for encryption
  * @param  pPlainText     Pointer to the body to be encrypted
@@ -495,7 +495,7 @@ lim_restore_from_auth_state(tpAniSirGlobal pMac, tSirResultCodes resultCode,
  */
 
 void
-lim_encrypt_auth_frame(tpAniSirGlobal pMac, uint8_t keyId, uint8_t *pKey,
+lim_encrypt_auth_frame(tpAniSirGlobal mac, uint8_t keyId, uint8_t *pKey,
 		       uint8_t *pPlainText, uint8_t *pEncrBody,
 		       uint32_t keyLength)
 {
@@ -671,7 +671,7 @@ lim_rc4(uint8_t *pDest, uint8_t *pSrc, uint8_t *seed, uint32_t keyLength,
  ***NOTE:
  * NA
  *
- * @param pMac       Pointer to Global MAC structure
+ * @param mac       Pointer to Global MAC structure
  * @param pKey       Pointer to the key to be used for decryption
  * @param pEncrBody  Pointer to the body to be decrypted
  * @param pPlainBody Pointer to the decrypted body
@@ -684,7 +684,7 @@ lim_rc4(uint8_t *pDest, uint8_t *pSrc, uint8_t *seed, uint32_t keyLength,
  */
 
 uint8_t
-lim_decrypt_auth_frame(tpAniSirGlobal pMac, uint8_t *pKey, uint8_t *pEncrBody,
+lim_decrypt_auth_frame(tpAniSirGlobal mac, uint8_t *pKey, uint8_t *pEncrBody,
 		       uint8_t *pPlainBody, uint32_t keyLength, uint16_t frameLen)
 {
 	uint8_t seed[LIM_SEED_LENGTH], icv[SIR_MAC_WEP_ICV_LENGTH];
@@ -726,7 +726,7 @@ lim_decrypt_auth_frame(tpAniSirGlobal pMac, uint8_t *pKey, uint8_t *pEncrBody,
  *
  * A utility API to send MLM_SETKEYS_CNF to SME
  */
-void lim_post_sme_set_keys_cnf(tpAniSirGlobal pMac,
+void lim_post_sme_set_keys_cnf(tpAniSirGlobal mac,
 			       tLimMlmSetKeysReq *pMlmSetKeysReq,
 			       tLimMlmSetKeysCnf *mlmSetKeysCnf)
 {
@@ -736,9 +736,9 @@ void lim_post_sme_set_keys_cnf(tpAniSirGlobal pMac,
 
 	/* Free up buffer allocated for mlmSetKeysReq */
 	qdf_mem_free(pMlmSetKeysReq);
-	pMac->lim.gpLimMlmSetKeysReq = NULL;
+	mac->lim.gpLimMlmSetKeysReq = NULL;
 
-	lim_post_sme_message(pMac,
+	lim_post_sme_message(mac,
 			     LIM_MLM_SETKEYS_CNF, (uint32_t *) mlmSetKeysCnf);
 }
 
@@ -758,11 +758,11 @@ void lim_post_sme_set_keys_cnf(tpAniSirGlobal pMac,
  ***NOTE:
  * NA
  *
- * @param pMac           Pointer to Global MAC structure
+ * @param mac           Pointer to Global MAC structure
  * @param pMlmSetKeysReq Pointer to MLM_SETKEYS_REQ buffer
  * @return none
  */
-void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
+void lim_send_set_bss_key_req(tpAniSirGlobal mac,
 			      tLimMlmSetKeysReq *pMlmSetKeysReq,
 			      tpPESession psessionEntry)
 {
@@ -793,7 +793,7 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 	pSetBssKeyParams->encType = pMlmSetKeysReq->edType;
 
 	pSetBssKeyParams->singleTidRc =
-		(uint8_t)(pMac->mlme_cfg->sta.single_tid);
+		(uint8_t)(mac->mlme_cfg->sta.single_tid);
 	/* Update PE session Id */
 	pSetBssKeyParams->sessionId = psessionEntry->peSessionId;
 
@@ -818,15 +818,15 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 			     sizeof(tSirKeys) * pMlmSetKeysReq->numKeys);
 	}
 
-	SET_LIM_PROCESS_DEFD_MESGS(pMac, false);
+	SET_LIM_PROCESS_DEFD_MESGS(mac, false);
 	msgQ.type = WMA_SET_BSSKEY_REQ;
 	msgQ.reserved = 0;
 	msgQ.bodyptr = pSetBssKeyParams;
 	msgQ.bodyval = 0;
 
 	pe_debug("Sending WMA_SET_BSSKEY_REQ...");
-	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	MTRACE(mac_trace_msg_tx(mac, psessionEntry->peSessionId, msgQ.type));
+	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		pe_err("Posting SET_BSSKEY to HAL failed, reason=%X",
 			retCode);
@@ -837,7 +837,7 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 		return;         /* Continue after WMA_SET_BSSKEY_RSP... */
 
 end:
-	lim_post_sme_set_keys_cnf(pMac, pMlmSetKeysReq, &mlmSetKeysCnf);
+	lim_post_sme_set_keys_cnf(mac, pMlmSetKeysReq, &mlmSetKeysCnf);
 
 }
 
@@ -856,13 +856,13 @@ end:
  ***NOTE:
  * NA
  *
- * @param pMac           Pointer to Global MAC structure
+ * @param mac           Pointer to Global MAC structure
  * @param pMlmSetKeysReq Pointer to MLM_SETKEYS_REQ buffer
  * @param staIdx         STA index for which the keys are being set
  * @param defWEPIdx      The default WEP key index [0..3]
  * @return none
  */
-void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
+void lim_send_set_sta_key_req(tpAniSirGlobal mac,
 			      tLimMlmSetKeysReq *pMlmSetKeysReq,
 			      uint16_t staIdx,
 			      uint8_t defWEPIdx,
@@ -883,7 +883,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	pSetStaKeyParams->encType = pMlmSetKeysReq->edType;
 
 	pSetStaKeyParams->singleTidRc =
-		(uint8_t)(pMac->mlme_cfg->sta.single_tid);
+		(uint8_t)(mac->mlme_cfg->sta.single_tid);
 	/* Update  PE session ID */
 	pSetStaKeyParams->sessionId = sessionEntry->peSessionId;
 
@@ -904,7 +904,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	if (sendRsp == true) {
 		/** Store the Previous MlmState*/
 		sessionEntry->limPrevMlmState = sessionEntry->limMlmState;
-		SET_LIM_PROCESS_DEFD_MESGS(pMac, false);
+		SET_LIM_PROCESS_DEFD_MESGS(mac, false);
 	}
 
 	if (LIM_IS_IBSS_ROLE(sessionEntry)
@@ -920,7 +920,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 		msgQ.type = WMA_SET_STAKEY_REQ;
 	}
 	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_MLM_STATE, sessionEntry->peSessionId,
+		       (mac, TRACE_CODE_MLM_STATE, sessionEntry->peSessionId,
 		       sessionEntry->limMlmState));
 
 	/**
@@ -945,7 +945,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 			sessionEntry->limMlmState =
 				eLIM_MLM_WT_SET_STA_KEY_STATE;
 			MTRACE(mac_trace
-				       (pMac, TRACE_CODE_MLM_STATE,
+				       (mac, TRACE_CODE_MLM_STATE,
 				       sessionEntry->peSessionId,
 				       sessionEntry->limMlmState));
 		} else {
@@ -989,8 +989,8 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	msgQ.bodyval = 0;
 
 	pe_debug("Sending WMA_SET_STAKEY_REQ...");
-	MTRACE(mac_trace_msg_tx(pMac, sessionEntry->peSessionId, msgQ.type));
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	MTRACE(mac_trace_msg_tx(mac, sessionEntry->peSessionId, msgQ.type));
+	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		pe_err("Posting SET_STAKEY to HAL failed, reason=%X",
 			retCode);
@@ -1004,5 +1004,5 @@ fail:
 	/* Respond to SME with LIM_MLM_SETKEYS_CNF */
 	mlmSetKeysCnf.resultCode = eSIR_SME_HAL_SEND_MESSAGE_FAIL;
 	if (sendRsp == true)
-		lim_post_sme_set_keys_cnf(pMac, pMlmSetKeysReq, &mlmSetKeysCnf);
+		lim_post_sme_set_keys_cnf(mac, pMlmSetKeysReq, &mlmSetKeysCnf);
 }
