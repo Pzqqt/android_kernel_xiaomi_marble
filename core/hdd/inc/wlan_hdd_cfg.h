@@ -4048,109 +4048,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * btm_offload_config - Configure BTM
- * @Min: 0x00000000
- * @Max: 0xFFFFFFFF
- * @Default: 0x00000000
- *
- * This ini is used to configure BTM
- *
- * Bit 0: Enable/Disable the BTM offload. Set this to 1 will
- * enable and 0 will disable BTM offload.
- *
- * BIT 2, 1: Action on non matching candidate with cache. If a BTM request
- * is received from AP then the candidate AP's may/may-not be present in
- * the firmware scan cache . Based on below config firmware will decide
- * whether to forward BTM frame to host or consume with firmware and proceed
- * with Roaming to candidate AP.
- * 00 scan and consume
- * 01 no scan and forward to host
- * 10, 11 reserved
- *
- * BIT 5, 4, 3: Roaming handoff decisions on multiple candidates match
- * 000 match if exact BSSIDs are found
- * 001 match if at least one top priority BSSID only
- * 010, 011, 100, 101, 110, 111 reserved
- *
- * BIT 6: Set this to 1 will send BTM query frame and 0 not sent.
- *
- * BIT 7-31: Reserved
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_BTM_ENABLE_NAME      "btm_offload_config"
-#define CFG_BTM_ENABLE_MIN       (0x00000000)
-#define CFG_BTM_ENABLE_MAX       (0xffffffff)
-#define CFG_BTM_ENABLE_DEFAULT   (0x00000001)
-
-/*
- * <ini>
- * btm_solicited_timeout - timeout value for waiting BTM request
- * @Min: 1
- * @Max: 10000
- * @Default: 100
- *
- * This ini is used to configure timeout value for waiting BTM request.
- * Unit: millionsecond
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_BTM_SOLICITED_TIMEOUT           "btm_solicited_timeout"
-#define CFG_BTM_SOLICITED_TIMEOUT_MIN       (1)
-#define CFG_BTM_SOLICITED_TIMEOUT_MAX       (10000)
-#define CFG_BTM_SOLICITED_TIMEOUT_DEFAULT   (100)
-
-/*
- * <ini>
- * btm_max_attempt_cnt - Maximum attempt for sending BTM query to ESS
- * @Min: 1
- * @Max: 0xFFFFFFFF
- * @Default: 3
- *
- * This ini is used to configure maximum attempt for sending BTM query to ESS.
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_BTM_MAX_ATTEMPT_CNT           "btm_max_attempt_cnt"
-#define CFG_BTM_MAX_ATTEMPT_CNT_MIN       (0x00000001)
-#define CFG_BTM_MAX_ATTEMPT_CNT_MAX       (0xFFFFFFFF)
-#define CFG_BTM_MAX_ATTEMPT_CNT_DEFAULT   (0x00000003)
-
-/*
- * <ini>
- * btm_sticky_time - Stick time after roaming to new AP by BTM
- * @Min: 0
- * @Max: 0x0000FFFF
- * @Default: 300
- *
- * This ini is used to configure Stick time after roaming to new AP by BTM.
- * Unit: seconds
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_BTM_STICKY_TIME           "btm_sticky_time"
-#define CFG_BTM_STICKY_TIME_MIN       (0x00000000)
-#define CFG_BTM_STICKY_TIME_MAX       (0x0000FFFF)
-#define CFG_BTM_STICKY_TIME_DEFAULT   (300)
-
-/*
- * <ini>
  * gcmp_enabled - ini to enable/disable GCMP
  * @Min: 0
  * @Max: 1
@@ -5127,16 +5024,12 @@ struct hdd_config {
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 	uint8_t packet_filters_bitmap;
 #endif
-	uint32_t btm_offload_config;
 #ifdef WLAN_FEATURE_SAE
 	bool is_sae_enabled;
 #endif
 	bool enable_dtim_selection_diversity;
 	bool gcmp_enabled;
 	bool is_11k_offload_supported;
-	uint32_t btm_solicited_timeout;
-	uint32_t btm_max_attempt_cnt;
-	uint32_t btm_sticky_time;
 	uint32_t offload_11k_enable_bitmask;
 	uint32_t neighbor_report_offload_params_bitmask;
 	uint32_t neighbor_report_offload_time_offset;

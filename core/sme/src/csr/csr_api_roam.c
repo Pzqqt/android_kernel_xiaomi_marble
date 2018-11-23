@@ -2739,15 +2739,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 		mac->roam.configParam.roam_force_rssi_trigger =
 			pParam->roam_force_rssi_trigger;
 
-		mac->roam.configParam.btm_offload_config =
-						     pParam->btm_offload_config;
-		mac->roam.configParam.btm_solicited_timeout =
-			pParam->btm_solicited_timeout;
-		mac->roam.configParam.btm_max_attempt_cnt =
-			pParam->btm_max_attempt_cnt;
-		mac->roam.configParam.btm_sticky_time =
-			pParam->btm_sticky_time;
-
 		csr_update_he_config_param(mac, pParam);
 		csr_set_11k_offload_config_param(&mac->roam.configParam,
 						 pParam);
@@ -2890,12 +2881,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 	pParam->oce_feature_bitmap =
 		mac->roam.configParam.oce_feature_bitmap;
 	pParam->roam_force_rssi_trigger = cfg_params->roam_force_rssi_trigger;
-	pParam->btm_offload_config = mac->roam.configParam.btm_offload_config;
-	pParam->btm_solicited_timeout =
-		mac->roam.configParam.btm_solicited_timeout;
-	pParam->btm_max_attempt_cnt =
-		mac->roam.configParam.btm_max_attempt_cnt;
-	pParam->btm_sticky_time = mac->roam.configParam.btm_sticky_time;
 
 	csr_get_he_config_param(pParam, mac);
 
@@ -18252,14 +18237,14 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		req_buf->btm_offload_config = 0;
 	else
 		req_buf->btm_offload_config =
-			mac_ctx->roam.configParam.btm_offload_config;
+			mac_ctx->mlme_cfg->btm.btm_offload_config;
 
 	req_buf->btm_solicited_timeout =
-		mac_ctx->roam.configParam.btm_solicited_timeout;
+		mac_ctx->mlme_cfg->btm.btm_solicited_timeout;
 	req_buf->btm_max_attempt_cnt =
-		mac_ctx->roam.configParam.btm_max_attempt_cnt;
+		mac_ctx->mlme_cfg->btm.btm_max_attempt_cnt;
 	req_buf->btm_sticky_time =
-		mac_ctx->roam.configParam.btm_sticky_time;
+		mac_ctx->mlme_cfg->btm.btm_sticky_time;
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,

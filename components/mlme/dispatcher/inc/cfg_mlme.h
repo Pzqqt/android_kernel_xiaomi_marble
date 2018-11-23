@@ -51,10 +51,12 @@
 #include "cfg_mlme_feature_flag.h"
 #include "cfg_mlme_wep_params.h"
 #include "cfg_mlme_wifi_pos.h"
+#include "cfg_mlme_btm.h"
 
 /* Please Maintain Alphabetic Order here */
 #define CFG_MLME_ALL \
 	CFG_ACS_ALL \
+	CFG_BTM_ALL \
 	CFG_CHAINMASK_ALL \
 	CFG_DFS_ALL \
 	CFG_EDCA_PARAMS_ALL \
