@@ -8985,11 +8985,19 @@ QDF_STATUS csr_roam_save_connected_information(tpAniSirGlobal mac,
 #endif
 	/* save ssid */
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (pIesTemp->SSID.present) {
+		if (pIesTemp->SSID.present &&
+		    !csr_is_nullssid(pIesTemp->SSID.ssid,
+				     pIesTemp->SSID.num_ssid)) {
 			pConnectProfile->SSID.length = pIesTemp->SSID.num_ssid;
 			qdf_mem_copy(pConnectProfile->SSID.ssId,
 				     pIesTemp->SSID.ssid,
 				     pIesTemp->SSID.num_ssid);
+		} else if (pProfile->SSIDs.SSIDList) {
+			pConnectProfile->SSID.length =
+					pProfile->SSIDs.SSIDList[0].SSID.length;
+			qdf_mem_copy(pConnectProfile->SSID.ssId,
+				     pProfile->SSIDs.SSIDList[0].SSID.ssId,
+				     pConnectProfile->SSID.length);
 		}
 		/* Save the bss desc */
 		status = csr_roam_save_connected_bss_desc(mac, sessionId,
@@ -15022,16 +15030,25 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal mac, uint32_t sessionId,
 		csr_join_req->length = msgLen;
 		csr_join_req->sessionId = (uint8_t) sessionId;
 		csr_join_req->transactionId = 0;
-		if (pIes->SSID.present && pIes->SSID.num_ssid) {
+		if (pIes->SSID.present &&
+		    !csr_is_nullssid(pIes->SSID.ssid,
+				     pIes->SSID.num_ssid)) {
 			csr_join_req->ssId.length = pIes->SSID.num_ssid;
 			qdf_mem_copy(&csr_join_req->ssId.ssId, pIes->SSID.ssid,
 				     pIes->SSID.num_ssid);
-		} else
+		} else if (pProfile->SSIDs.SSIDList) {
+			csr_join_req->ssId.length =
+					pProfile->SSIDs.SSIDList[0].SSID.length;
+			qdf_mem_copy(&csr_join_req->ssId.ssId,
+				     pProfile->SSIDs.SSIDList[0].SSID.ssId,
+				     csr_join_req->ssId.length);
+		} else {
 			csr_join_req->ssId.length = 0;
+		}
 		qdf_mem_copy(&csr_join_req->selfMacAddr, &pSession->selfMacAddr,
 			     sizeof(tSirMacAddr));
 		sme_err("Connecting to ssid:%.*s bssid: "MAC_ADDRESS_STR" rssi: %d channel: %d country_code: %c%c",
-			pIes->SSID.num_ssid, pIes->SSID.ssid,
+			csr_join_req->ssId.length, csr_join_req->ssId.ssId,
 			MAC_ADDR_ARRAY(pBssDescription->bssId),
 			pBssDescription->rssi, pBssDescription->channelId,
 			mac->scan.countryCodeCurrent[0],
