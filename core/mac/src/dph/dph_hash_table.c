@@ -53,7 +53,7 @@
  * @return None
  */
 
-void dph_hash_table_class_init(tpAniSirGlobal pMac,
+void dph_hash_table_class_init(tpAniSirGlobal mac,
 			       dphHashTableClass *pDphHashTable)
 {
 	uint16_t i;
@@ -87,7 +87,7 @@ void dph_hash_table_class_init(tpAniSirGlobal pMac,
  * @return None
  */
 
-static uint16_t hash_function(tpAniSirGlobal pMac, uint8_t staAddr[],
+static uint16_t hash_function(tpAniSirGlobal mac, uint8_t staAddr[],
 			      uint16_t numSta)
 {
 	int i;
@@ -118,12 +118,12 @@ static uint16_t hash_function(tpAniSirGlobal pMac, uint8_t staAddr[],
  *         NULL if lookup was a failure
  */
 
-tpDphHashNode dph_lookup_hash_entry(tpAniSirGlobal pMac, uint8_t staAddr[],
+tpDphHashNode dph_lookup_hash_entry(tpAniSirGlobal mac, uint8_t staAddr[],
 				    uint16_t *pAssocId,
 				    dphHashTableClass *pDphHashTable)
 {
 	tpDphHashNode ptr = NULL;
-	uint16_t index = hash_function(pMac, staAddr, pDphHashTable->size);
+	uint16_t index = hash_function(mac, staAddr, pDphHashTable->size);
 
 	if (!pDphHashTable->pHashTable) {
 		pe_err("pHashTable is NULL");
@@ -157,7 +157,7 @@ tpDphHashNode dph_lookup_hash_entry(tpAniSirGlobal pMac, uint8_t staAddr[],
  *         NULL if lookup was a failure
  */
 
-tpDphHashNode dph_get_hash_entry(tpAniSirGlobal pMac, uint16_t peerIdx,
+tpDphHashNode dph_get_hash_entry(tpAniSirGlobal mac, uint16_t peerIdx,
 				 dphHashTableClass *pDphHashTable)
 {
 	if (peerIdx < pDphHashTable->size) {
@@ -170,7 +170,7 @@ tpDphHashNode dph_get_hash_entry(tpAniSirGlobal pMac, uint16_t peerIdx,
 
 }
 
-static inline tpDphHashNode get_node(tpAniSirGlobal pMac, uint8_t assocId,
+static inline tpDphHashNode get_node(tpAniSirGlobal mac, uint8_t assocId,
 				     dphHashTableClass *pDphHashTable)
 {
 	return &pDphHashTable->pDphNodeArray[assocId];
@@ -189,12 +189,12 @@ static inline tpDphHashNode get_node(tpAniSirGlobal pMac, uint8_t assocId,
  *
  * NOTE:
  *
- * @param pMac pointer to global Mac structure.
+ * @param mac pointer to global Mac structure.
  * @param staIdx station ID
  * @param *assocId pointer to associd to be returned by this function.
  * @return pointer to the dph node.
  */
-tpDphHashNode dph_lookup_assoc_id(tpAniSirGlobal pMac, uint16_t staIdx,
+tpDphHashNode dph_lookup_assoc_id(tpAniSirGlobal mac, uint16_t staIdx,
 				  uint16_t *assocId,
 				  dphHashTableClass *pDphHashTable)
 {
@@ -226,7 +226,7 @@ tpDphHashNode dph_lookup_assoc_id(tpAniSirGlobal pMac, uint16_t staIdx,
    \return tpDphHashNode - DPH hash node if found.
    -------------------------------------------------------------*/
 
-tpDphHashNode dph_init_sta_state(tpAniSirGlobal pMac, tSirMacAddr staAddr,
+tpDphHashNode dph_init_sta_state(tpAniSirGlobal mac, tSirMacAddr staAddr,
 				 uint16_t assocId, uint8_t validStaIdx,
 				 dphHashTableClass *pDphHashTable)
 {
@@ -240,7 +240,7 @@ tpDphHashNode dph_init_sta_state(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 		return NULL;
 	}
 
-	pStaDs = get_node(pMac, (uint8_t) assocId, pDphHashTable);
+	pStaDs = get_node(mac, (uint8_t) assocId, pDphHashTable);
 	staIdx = pStaDs->staIndex;
 	pnext = pStaDs->next;
 
@@ -259,7 +259,7 @@ tpDphHashNode dph_init_sta_state(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 	qdf_mem_copy(pStaDs->staAddr, staAddr, sizeof(tSirMacAddr));
 
 	/* Initialize fragmentation threshold */
-	if (wlan_mlme_get_frag_threshold(pMac->psoc, &val) !=
+	if (wlan_mlme_get_frag_threshold(mac->psoc, &val) !=
 					 QDF_STATUS_SUCCESS)
 		pe_warn("could not retrieve fragmentation threshold");
 	else
@@ -293,12 +293,12 @@ tpDphHashNode dph_init_sta_state(tpAniSirGlobal pMac, tSirMacAddr staAddr,
  * @return Pointer to STA hash entry
  */
 
-tpDphHashNode dph_add_hash_entry(tpAniSirGlobal pMac, tSirMacAddr staAddr,
+tpDphHashNode dph_add_hash_entry(tpAniSirGlobal mac, tSirMacAddr staAddr,
 				 uint16_t assocId,
 				 dphHashTableClass *pDphHashTable)
 {
 	tpDphHashNode ptr, node;
-	uint16_t index = hash_function(pMac, staAddr, pDphHashTable->size);
+	uint16_t index = hash_function(mac, staAddr, pDphHashTable->size);
 
 	pe_debug("assocId %d index %d STA addr",
 		       assocId, index);
@@ -332,7 +332,7 @@ tpDphHashNode dph_add_hash_entry(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 		return NULL;
 	} else {
 		if (dph_init_sta_state
-			    (pMac, staAddr, assocId, false, pDphHashTable) == NULL) {
+			    (mac, staAddr, assocId, false, pDphHashTable) == NULL) {
 			pe_err("could not Init STA id: %d", assocId);
 			return NULL;
 		}
@@ -366,12 +366,12 @@ tpDphHashNode dph_add_hash_entry(tpAniSirGlobal pMac, tSirMacAddr staAddr,
  *         QDF_STATUS_E_FAILURE otherwise
  */
 
-QDF_STATUS dph_delete_hash_entry(tpAniSirGlobal pMac, tSirMacAddr staAddr,
+QDF_STATUS dph_delete_hash_entry(tpAniSirGlobal mac, tSirMacAddr staAddr,
 				 uint16_t assocId,
 				 dphHashTableClass *pDphHashTable)
 {
 	tpDphHashNode ptr, prev;
-	uint16_t index = hash_function(pMac, staAddr, pDphHashTable->size);
+	uint16_t index = hash_function(mac, staAddr, pDphHashTable->size);
 
 	pe_debug("assocId %d index %d STA addr", assocId, index);
 	pe_debug(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(staAddr));

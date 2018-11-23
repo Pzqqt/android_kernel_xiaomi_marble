@@ -56,32 +56,32 @@ typedef struct {
 /* The hash table object */
 extern dphHashTableClass dphHashTable;
 
-tpDphHashNode dph_lookup_hash_entry(tpAniSirGlobal pMac, uint8_t staAddr[],
+tpDphHashNode dph_lookup_hash_entry(tpAniSirGlobal mac, uint8_t staAddr[],
 				    uint16_t *pStaId,
 				    dphHashTableClass *pDphHashTable);
-tpDphHashNode dph_lookup_assoc_id(tpAniSirGlobal pMac, uint16_t staIdx,
+tpDphHashNode dph_lookup_assoc_id(tpAniSirGlobal mac, uint16_t staIdx,
 				  uint16_t *assocId,
 				  dphHashTableClass *pDphHashTable);
 
 /* Get a pointer to the hash node */
-extern tpDphHashNode dph_get_hash_entry(tpAniSirGlobal pMac, uint16_t staId,
+extern tpDphHashNode dph_get_hash_entry(tpAniSirGlobal mac, uint16_t staId,
 					dphHashTableClass *pDphHashTable);
 
 /* Add an entry to the hash table */
-extern tpDphHashNode dph_add_hash_entry(tpAniSirGlobal pMac,
+extern tpDphHashNode dph_add_hash_entry(tpAniSirGlobal mac,
 					tSirMacAddr staAddr,
 					uint16_t staId,
 					dphHashTableClass *pDphHashTable);
 
 /* Delete an entry from the hash table */
-QDF_STATUS dph_delete_hash_entry(tpAniSirGlobal pMac,
+QDF_STATUS dph_delete_hash_entry(tpAniSirGlobal mac,
 				 tSirMacAddr staAddr, uint16_t staId,
 				 dphHashTableClass *pDphHashTable);
 
-void dph_hash_table_class_init(tpAniSirGlobal pMac,
+void dph_hash_table_class_init(tpAniSirGlobal mac,
 			       dphHashTableClass *pDphHashTable);
 /* Initialize STA state */
-extern tpDphHashNode dph_init_sta_state(tpAniSirGlobal pMac,
+extern tpDphHashNode dph_init_sta_state(tpAniSirGlobal mac,
 					tSirMacAddr staAddr,
 					uint16_t staId, uint8_t validStaIdx,
 					dphHashTableClass *pDphHashTable);
