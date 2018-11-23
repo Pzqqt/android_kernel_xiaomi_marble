@@ -34,27 +34,27 @@
 #include "lim_types.h"
 #include "wma_if.h"
 #include "sir_params.h"
-QDF_STATUS lim_send_cf_params(tpAniSirGlobal pMac, uint8_t bssIdx,
+QDF_STATUS lim_send_cf_params(tpAniSirGlobal mac, uint8_t bssIdx,
 				 uint8_t cfpCount, uint8_t cfpPeriod);
-QDF_STATUS lim_send_beacon_params(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_beacon_params(tpAniSirGlobal mac,
 				     tpUpdateBeaconParams pUpdatedBcnParams,
 				     tpPESession psessionEntry);
-/* QDF_STATUS lim_send_beacon_params(tpAniSirGlobal pMac, tpUpdateBeaconParams pUpdatedBcnParams); */
-QDF_STATUS lim_send_mode_update(tpAniSirGlobal pMac,
+/* QDF_STATUS lim_send_beacon_params(tpAniSirGlobal mac, tpUpdateBeaconParams pUpdatedBcnParams); */
+QDF_STATUS lim_send_mode_update(tpAniSirGlobal mac,
 				   tUpdateVHTOpMode *tempParam,
 				   tpPESession psessionEntry);
-QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal mac,
 				     tUpdateRxNss *tempParam,
 				     tpPESession psessionEntry);
 
-QDF_STATUS lim_set_membership(tpAniSirGlobal pMac,
+QDF_STATUS lim_set_membership(tpAniSirGlobal mac,
 				 tUpdateMembership *pTempParam,
 				 tpPESession psessionEntry);
 
-QDF_STATUS lim_set_user_pos(tpAniSirGlobal pMac,
+QDF_STATUS lim_set_user_pos(tpAniSirGlobal mac,
 			       tUpdateUserPos *pTempParam,
 			       tpPESession psessionEntry);
-QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal mac,
 					  uint8_t chnlNumber,
 					  uint8_t ch_center_freq_seg0,
 					  uint8_t ch_center_freq_seg1,
@@ -65,18 +65,18 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 					  uint32_t cac_duration_ms,
 					  uint32_t dfs_regdomain);
 
-QDF_STATUS lim_send_edca_params(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_edca_params(tpAniSirGlobal mac,
 				   tSirMacEdcaParamRecord *pUpdatedEdcaParams,
 				   uint16_t bssIdx, bool mu_edca);
-QDF_STATUS lim_set_link_state(tpAniSirGlobal pMac, tSirLinkState state,
+QDF_STATUS lim_set_link_state(tpAniSirGlobal mac, tSirLinkState state,
 				 tSirMacAddr bssId, tSirMacAddr selfMac,
 				 tpSetLinkStateCallback callback,
 				 void *callbackArg);
-extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal pMac, tSirLinkState
+extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal mac, tSirLinkState
 					   state, tSirMacAddr bssId,
 					   tSirMacAddr selfMacAddr, int ft,
 					   tpPESession psessionEntry);
-void lim_set_active_edca_params(tpAniSirGlobal pMac,
+void lim_set_active_edca_params(tpAniSirGlobal mac,
 				tSirMacEdcaParamRecord *plocalEdcaParams,
 				tpPESession psessionEntry);
 #define CAPABILITY_FILTER_MASK  0x73CF
@@ -90,7 +90,7 @@ void lim_set_active_edca_params(tpAniSirGlobal pMac,
 #define VHTOP_CHWIDTH_MASK      0xFC
 
 #ifdef WLAN_FEATURE_11W
-QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal mac,
 					     bool excludeUnenc,
 					     tpPESession psessionEntry);
 #endif

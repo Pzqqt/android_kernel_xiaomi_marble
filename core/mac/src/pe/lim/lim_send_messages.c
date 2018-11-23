@@ -50,14 +50,14 @@
  ***NOTE:
  * NA
  *
- * @param pMac  pointer to Global Mac structure.
+ * @param mac  pointer to Global Mac structure.
  * @param bssIdx Bss Index of the BSS to which STA is associated.
  * @param cfpCount CFP Count, if that is changed.
  * @param cfpPeriod CFP Period if that is changed.
  *
  * @return success if message send is ok, else false.
  */
-QDF_STATUS lim_send_cf_params(tpAniSirGlobal pMac, uint8_t bssIdx,
+QDF_STATUS lim_send_cf_params(tpAniSirGlobal mac, uint8_t bssIdx,
 				 uint8_t cfpCount, uint8_t cfpPeriod)
 {
 	tpUpdateCFParams pCFParams = NULL;
@@ -76,8 +76,8 @@ QDF_STATUS lim_send_cf_params(tpAniSirGlobal pMac, uint8_t bssIdx,
 	msgQ.bodyptr = pCFParams;
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_CF_IND");
-	MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msgQ.type));
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
+	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		qdf_mem_free(pCFParams);
 		pe_err("Posting WMA_UPDATE_CF_IND failed, reason=%X",
@@ -89,7 +89,7 @@ QDF_STATUS lim_send_cf_params(tpAniSirGlobal pMac, uint8_t bssIdx,
 /**
  * lim_send_beacon_params() - updates bcn params to WMA
  *
- * @pMac                 : pointer to Global Mac structure.
+ * @mac                 : pointer to Global Mac structure.
  * @tpUpdateBeaconParams : pointer to the structure, which contains the beacon
  * parameters which are changed.
  *
@@ -98,7 +98,7 @@ QDF_STATUS lim_send_cf_params(tpAniSirGlobal pMac, uint8_t bssIdx,
  *
  * @return success if message send is ok, else false.
  */
-QDF_STATUS lim_send_beacon_params(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_beacon_params(tpAniSirGlobal mac,
 				     tpUpdateBeaconParams pUpdatedBcnParams,
 				     tpPESession psessionEntry)
 {
@@ -119,21 +119,21 @@ QDF_STATUS lim_send_beacon_params(tpAniSirGlobal pMac,
 	       pUpdatedBcnParams->paramChangeBitmap);
 	if (NULL == psessionEntry) {
 		qdf_mem_free(pBcnParams);
-		MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msgQ.type));
+		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 		return QDF_STATUS_E_FAILURE;
 	} else {
-		MTRACE(mac_trace_msg_tx(pMac,
+		MTRACE(mac_trace_msg_tx(mac,
 					psessionEntry->peSessionId,
 					msgQ.type));
 	}
 	pBcnParams->smeSessionId = psessionEntry->smeSessionId;
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		qdf_mem_free(pBcnParams);
 		pe_err("Posting WMA_UPDATE_BEACON_IND, reason=%X",
 			retCode);
 	}
-	lim_send_beacon_ind(pMac, psessionEntry, REASON_DEFAULT);
+	lim_send_beacon_ind(mac, psessionEntry, REASON_DEFAULT);
 	return retCode;
 }
 
@@ -151,14 +151,14 @@ QDF_STATUS lim_send_beacon_params(tpAniSirGlobal pMac,
  ***NOTE:
  * NA
  *
- * @param pMac  pointer to Global Mac structure.
+ * @param mac  pointer to Global Mac structure.
  * @param chnlNumber New Channel Number to be switched to.
  * @param ch_width an enum for channel width.
  * @param localPowerConstraint 11h local power constraint value
  *
  * @return success if message send is ok, else false.
  */
-QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal mac,
 					  uint8_t chnlNumber,
 					  uint8_t ch_center_freq_seg0,
 					  uint8_t ch_center_freq_seg1,
@@ -173,7 +173,7 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 	struct scheduler_msg msgQ = {0};
 	tpPESession pSessionEntry;
 
-	pSessionEntry = pe_find_session_by_session_id(pMac, peSessionId);
+	pSessionEntry = pe_find_session_by_session_id(mac, peSessionId);
 	if (pSessionEntry == NULL) {
 		pe_err("Unable to get Session for session Id %d",
 				peSessionId);
@@ -194,7 +194,7 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 	pChnlParams->peSessionId = peSessionId;
 	pChnlParams->vhtCapable = pSessionEntry->vhtCapability;
 	if (lim_is_session_he_capable(pSessionEntry))
-		lim_update_chan_he_capable(pMac, pChnlParams);
+		lim_update_chan_he_capable(mac, pChnlParams);
 	pChnlParams->dot11_mode = pSessionEntry->dot11mode;
 	pChnlParams->nss = pSessionEntry->nss;
 	pe_debug("dot11mode: %d, vht_capable: %d nss value: %d",
@@ -206,15 +206,15 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 		pChnlParams->isDfsChannel = true;
 	} else if (ch_width == CH_WIDTH_80P80MHZ) {
 		pChnlParams->isDfsChannel = false;
-		if (wlan_reg_get_channel_state(pMac->pdev, chnlNumber) ==
+		if (wlan_reg_get_channel_state(mac->pdev, chnlNumber) ==
 				CHANNEL_STATE_DFS ||
-		    wlan_reg_get_channel_state(pMac->pdev,
+		    wlan_reg_get_channel_state(mac->pdev,
 			    pChnlParams->ch_center_freq_seg1 -
 				SIR_80MHZ_START_CENTER_CH_DIFF) ==
 							CHANNEL_STATE_DFS)
 			pChnlParams->isDfsChannel = true;
 	} else {
-		if (wlan_reg_get_channel_state(pMac->pdev, chnlNumber) ==
+		if (wlan_reg_get_channel_state(mac->pdev, chnlNumber) ==
 				CHANNEL_STATE_DFS)
 			pChnlParams->isDfsChannel = true;
 		else
@@ -225,7 +225,7 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 	pChnlParams->cac_duration_ms = cac_duration_ms;
 	pChnlParams->dfs_regdomain = dfs_regdomain;
 	pChnlParams->reduced_beacon_interval =
-		pMac->sap.SapDfsInfo.reduced_beacon_interval;
+		mac->sap.SapDfsInfo.reduced_beacon_interval;
 
 	if (cds_is_5_mhz_enabled())
 		pChnlParams->ch_width = CH_WIDTH_5MHZ;
@@ -235,7 +235,7 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 	/* we need to defer the message until we
 	 * get the response back from WMA
 	 */
-	SET_LIM_PROCESS_DEFD_MESGS(pMac, false);
+	SET_LIM_PROCESS_DEFD_MESGS(mac, false);
 	msgQ.type = WMA_CHNL_SWITCH_REQ;
 	msgQ.reserved = 0;
 	msgQ.bodyptr = pChnlParams;
@@ -243,8 +243,8 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 	pe_debug("Sending CH_SWITCH_REQ, ch_width %d, ch_num %d, maxTxPower %d",
 		       pChnlParams->ch_width,
 		       pChnlParams->channelNumber, pChnlParams->maxTxPower);
-	MTRACE(mac_trace_msg_tx(pMac, peSessionId, msgQ.type));
-	if (QDF_STATUS_SUCCESS != wma_post_ctrl_msg(pMac, &msgQ)) {
+	MTRACE(mac_trace_msg_tx(mac, peSessionId, msgQ.type));
+	if (QDF_STATUS_SUCCESS != wma_post_ctrl_msg(mac, &msgQ)) {
 		qdf_mem_free(pChnlParams);
 		pe_err("Posting  CH_SWITCH_REQ to WMA failed");
 		return QDF_STATUS_E_FAILURE;
@@ -268,14 +268,14 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal pMac,
  ***NOTE:
  * NA
  *
- * @param pMac  pointer to Global Mac structure.
+ * @param mac  pointer to Global Mac structure.
  * @param tpUpdatedEdcaParams pointer to the structure which contains
  *                                       dynamically changing EDCA parameters.
  * @param highPerformance  If the peer is Airgo (taurus) then switch to highPerformance is true.
  *
  * @return success if message send is ok, else false.
  */
-QDF_STATUS lim_send_edca_params(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_edca_params(tpAniSirGlobal mac,
 				   tSirMacEdcaParamRecord *pUpdatedEdcaParams,
 				   uint16_t bssIdx, bool mu_edca)
 {
@@ -297,8 +297,8 @@ QDF_STATUS lim_send_edca_params(tpAniSirGlobal pMac,
 	msgQ.bodyptr = pEdcaParams;
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_EDCA_PROFILE_IND");
-	MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msgQ.type));
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
+	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		qdf_mem_free(pEdcaParams);
 		pe_err("Posting WMA_UPDATE_EDCA_PROFILE_IND failed, reason=%X",
@@ -430,7 +430,7 @@ void lim_set_active_edca_params(tpAniSirGlobal mac_ctx,
    \param   tSirLinkState      state
    \return  None
    -----------------------------------------------------------*/
-QDF_STATUS lim_set_link_state(tpAniSirGlobal pMac, tSirLinkState state,
+QDF_STATUS lim_set_link_state(tpAniSirGlobal mac, tSirLinkState state,
 				 tSirMacAddr bssId, tSirMacAddr selfMacAddr,
 				 tpSetLinkStateCallback callback,
 				 void *callbackArg)
@@ -455,9 +455,9 @@ QDF_STATUS lim_set_link_state(tpAniSirGlobal pMac, tSirLinkState state,
 	msgQ.bodyptr = pLinkStateParams;
 	msgQ.bodyval = 0;
 
-	MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msgQ.type));
+	MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 
-	retCode = (uint32_t) wma_post_ctrl_msg(pMac, &msgQ);
+	retCode = (uint32_t) wma_post_ctrl_msg(mac, &msgQ);
 	if (retCode != QDF_STATUS_SUCCESS) {
 		qdf_mem_free(pLinkStateParams);
 		pe_err("Posting link state %d failed, reason = %x", state,
@@ -466,7 +466,7 @@ QDF_STATUS lim_set_link_state(tpAniSirGlobal pMac, tSirLinkState state,
 	return retCode;
 }
 
-extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal pMac, tSirLinkState
+extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal mac, tSirLinkState
 					   state, tSirMacAddr bssId,
 					   tSirMacAddr selfMacAddr, int ft,
 					   tpPESession psessionEntry)
@@ -490,13 +490,13 @@ extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal pMac, tSirLinkState
 	msgQ.bodyptr = pLinkStateParams;
 	msgQ.bodyval = 0;
 	if (NULL == psessionEntry) {
-		MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msgQ.type));
+		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	} else {
 		MTRACE(mac_trace_msg_tx
-			       (pMac, psessionEntry->peSessionId, msgQ.type));
+			       (mac, psessionEntry->peSessionId, msgQ.type));
 	}
 
-	retCode = (uint32_t) wma_post_ctrl_msg(pMac, &msgQ);
+	retCode = (uint32_t) wma_post_ctrl_msg(mac, &msgQ);
 	if (retCode != QDF_STATUS_SUCCESS) {
 		qdf_mem_free(pLinkStateParams);
 		pe_err("Posting link state %d failed, reason = %x", state,
@@ -505,7 +505,7 @@ extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal pMac, tSirLinkState
 	return retCode;
 }
 
-QDF_STATUS lim_send_mode_update(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_mode_update(tpAniSirGlobal mac,
 				   tUpdateVHTOpMode *pTempParam,
 				   tpPESession psessionEntry)
 {
@@ -525,12 +525,12 @@ QDF_STATUS lim_send_mode_update(tpAniSirGlobal pMac,
 	pe_debug("Sending WMA_UPDATE_OP_MODE, op_mode %d, sta_id %d",
 			pVhtOpMode->opMode, pVhtOpMode->staId);
 	if (NULL == psessionEntry)
-		MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msgQ.type));
+		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	else
-		MTRACE(mac_trace_msg_tx(pMac,
+		MTRACE(mac_trace_msg_tx(mac,
 					psessionEntry->peSessionId,
 					msgQ.type));
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		qdf_mem_free(pVhtOpMode);
 		pe_err("Posting WMA_UPDATE_OP_MODE failed, reason=%X",
@@ -540,7 +540,7 @@ QDF_STATUS lim_send_mode_update(tpAniSirGlobal pMac,
 	return retCode;
 }
 
-QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal mac,
 				     tUpdateRxNss *pTempParam,
 				     tpPESession psessionEntry)
 {
@@ -558,12 +558,12 @@ QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal pMac,
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_RX_NSS");
 	if (NULL == psessionEntry)
-		MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msgQ.type));
+		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	else
-		MTRACE(mac_trace_msg_tx(pMac,
+		MTRACE(mac_trace_msg_tx(mac,
 					psessionEntry->peSessionId,
 					msgQ.type));
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		qdf_mem_free(pRxNss);
 		pe_err("Posting WMA_UPDATE_RX_NSS failed, reason=%X",
@@ -573,7 +573,7 @@ QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal pMac,
 	return retCode;
 }
 
-QDF_STATUS lim_set_membership(tpAniSirGlobal pMac,
+QDF_STATUS lim_set_membership(tpAniSirGlobal mac,
 				 tUpdateMembership *pTempParam,
 				 tpPESession psessionEntry)
 {
@@ -593,12 +593,12 @@ QDF_STATUS lim_set_membership(tpAniSirGlobal pMac,
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_MEMBERSHIP");
 	if (NULL == psessionEntry)
-		MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msgQ.type));
+		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	else
-		MTRACE(mac_trace_msg_tx(pMac,
+		MTRACE(mac_trace_msg_tx(mac,
 					psessionEntry->peSessionId,
 					msgQ.type));
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		qdf_mem_free(pMembership);
 		pe_err("Posting WMA_UPDATE_MEMBERSHIP failed, reason=%X",
@@ -608,7 +608,7 @@ QDF_STATUS lim_set_membership(tpAniSirGlobal pMac,
 	return retCode;
 }
 
-QDF_STATUS lim_set_user_pos(tpAniSirGlobal pMac,
+QDF_STATUS lim_set_user_pos(tpAniSirGlobal mac,
 			       tUpdateUserPos *pTempParam,
 			       tpPESession psessionEntry)
 {
@@ -627,12 +627,12 @@ QDF_STATUS lim_set_user_pos(tpAniSirGlobal pMac,
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_USERPOS");
 	if (NULL == psessionEntry)
-		MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msgQ.type));
+		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	else
-		MTRACE(mac_trace_msg_tx(pMac,
+		MTRACE(mac_trace_msg_tx(mac,
 					psessionEntry->peSessionId,
 					msgQ.type));
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		qdf_mem_free(pUserPos);
 		pe_err("Posting WMA_UPDATE_USERPOS failed, reason=%X",
@@ -645,7 +645,7 @@ QDF_STATUS lim_set_user_pos(tpAniSirGlobal pMac,
 #ifdef WLAN_FEATURE_11W
 /**
  * lim_send_exclude_unencrypt_ind() - sends WMA_EXCLUDE_UNENCRYPTED_IND to HAL
- * @pMac:          mac global context
+ * @mac:          mac global context
  * @excludeUnenc:  true: ignore, false: indicate
  * @psessionEntry: session context
  *
@@ -654,7 +654,7 @@ QDF_STATUS lim_set_user_pos(tpAniSirGlobal pMac,
  *
  * Return: status of operation
  */
-QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal mac,
 					     bool excludeUnenc,
 					     tpPESession psessionEntry)
 {
@@ -676,8 +676,8 @@ QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal pMac,
 	msgQ.bodyptr = pExcludeUnencryptParam;
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_EXCLUDE_UNENCRYPTED_IND");
-	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	MTRACE(mac_trace_msg_tx(mac, psessionEntry->peSessionId, msgQ.type));
+	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		qdf_mem_free(pExcludeUnencryptParam);
 		pe_err("Posting WMA_EXCLUDE_UNENCRYPTED_IND failed, reason=%X",
