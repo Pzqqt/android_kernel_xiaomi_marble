@@ -44,7 +44,7 @@
 #include "lim_send_messages.h"
 #include "lim_process_fils.h"
 
-extern QDF_STATUS sch_beacon_edca_process(tpAniSirGlobal pMac,
+extern QDF_STATUS sch_beacon_edca_process(tpAniSirGlobal mac,
 	tSirMacEdcaParamSetIE *edca, tpPESession psessionEntry);
 
 /**

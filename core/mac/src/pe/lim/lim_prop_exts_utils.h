@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014, 2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,7 +35,7 @@
 void limQuietBss(tpAniSirGlobal, uint32_t);
 void lim_cleanupMeasData(tpAniSirGlobal);
 void limDeleteMeasTimers(tpAniSirGlobal);
-void limStopMeasTimers(tpAniSirGlobal pMac);
+void limStopMeasTimers(tpAniSirGlobal mac);
 void lim_cleanupMeasResources(tpAniSirGlobal);
 void limRestorePreLearnState(tpAniSirGlobal);
 void limCollectMeasurementData(tpAniSirGlobal, uint32_t *, tpSchBeaconStruct);

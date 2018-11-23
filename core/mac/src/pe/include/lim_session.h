@@ -604,7 +604,7 @@ static inline void pe_free_dph_node_array_buffer(void)
 
 /**
  * pe_create_session() - Creates a new PE session given the BSSID
- * @pMac: pointer to global adapter context
+ * @mac: pointer to global adapter context
  * @bssid: BSSID of the new session
  * @sessionId: PE session ID is returned here, if PE session is created.
  * @numSta: number of stations
@@ -616,7 +616,7 @@ static inline void pe_free_dph_node_array_buffer(void)
  *
  * Return: ptr to the session context or NULL if session can not be created.
  */
-tpPESession pe_create_session(tpAniSirGlobal pMac,
+tpPESession pe_create_session(tpAniSirGlobal mac,
 			      uint8_t *bssid,
 			      uint8_t *sessionId,
 			      uint16_t numSta, tSirBssType bssType,
@@ -625,7 +625,7 @@ tpPESession pe_create_session(tpAniSirGlobal pMac,
 /**
  * pe_find_session_by_bssid() - looks up the PE session given the BSSID.
  *
- * @pMac:          pointer to global adapter context
+ * @mac:          pointer to global adapter context
  * @bssid:         BSSID of the new session
  * @sessionId:     session ID is returned here, if session is created.
  *
@@ -634,13 +634,13 @@ tpPESession pe_create_session(tpAniSirGlobal pMac,
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-tpPESession pe_find_session_by_bssid(tpAniSirGlobal pMac, uint8_t *bssid,
+tpPESession pe_find_session_by_bssid(tpAniSirGlobal mac, uint8_t *bssid,
 				     uint8_t *sessionId);
 
 /**
  * pe_find_session_by_bss_idx() - looks up the PE session given the bssIdx.
  *
- * @pMac:          pointer to global adapter context
+ * @mac:          pointer to global adapter context
  * @bssIdx:        bss index of the session
  *
  * This function returns the session context  if the session
@@ -648,13 +648,13 @@ tpPESession pe_find_session_by_bssid(tpAniSirGlobal pMac, uint8_t *bssid,
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-tpPESession pe_find_session_by_bss_idx(tpAniSirGlobal pMac, uint8_t bssIdx);
+tpPESession pe_find_session_by_bss_idx(tpAniSirGlobal mac, uint8_t bssIdx);
 
 /**
  * pe_find_session_by_peer_sta() - looks up the PE session given the Peer
  * Station Address.
  *
- * @pMac:          pointer to global adapter context
+ * @mac:          pointer to global adapter context
  * @sa:            Peer STA Address of the session
  * @sessionId:     session ID is returned here, if session is found.
  *
@@ -664,14 +664,14 @@ tpPESession pe_find_session_by_bss_idx(tpAniSirGlobal pMac, uint8_t bssIdx);
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-tpPESession pe_find_session_by_peer_sta(tpAniSirGlobal pMac, uint8_t *sa,
+tpPESession pe_find_session_by_peer_sta(tpAniSirGlobal mac, uint8_t *sa,
 					uint8_t *sessionId);
 
 /**
  * pe_find_session_by_session_id() - looks up the PE session given the session
  * ID.
  *
- * @pMac:          pointer to global adapter context
+ * @mac:          pointer to global adapter context
  * @sessionId:     session ID for which session context needs to be looked up.
  *
  * This function returns the session context  if the session corresponding to
@@ -679,13 +679,13 @@ tpPESession pe_find_session_by_peer_sta(tpAniSirGlobal pMac, uint8_t *sa,
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-tpPESession pe_find_session_by_session_id(tpAniSirGlobal pMac,
+tpPESession pe_find_session_by_session_id(tpAniSirGlobal mac,
 					  uint8_t sessionId);
 
 /**
  * pe_find_session_by_bssid() - looks up the PE session given staid.
  *
- * @pMac:          pointer to global adapter context
+ * @mac:          pointer to global adapter context
  * @staid:         StaId of the session
  * @sessionId:     session ID is returned here, if session is found.
  *
@@ -694,18 +694,18 @@ tpPESession pe_find_session_by_session_id(tpAniSirGlobal pMac,
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-tpPESession pe_find_session_by_sta_id(tpAniSirGlobal pMac, uint8_t staid,
+tpPESession pe_find_session_by_sta_id(tpAniSirGlobal mac, uint8_t staid,
 				      uint8_t *sessionId);
 
 /**
  * pe_delete_session() - deletes the PE session given the session ID.
  *
- * @pMac:          pointer to global adapter context
+ * @mac:          pointer to global adapter context
  * @sessionId:     session ID to delete.
  *
  * Return: void
  */
-void pe_delete_session(tpAniSirGlobal pMac, tpPESession psessionEntry);
+void pe_delete_session(tpAniSirGlobal mac, tpPESession psessionEntry);
 
 
 /**

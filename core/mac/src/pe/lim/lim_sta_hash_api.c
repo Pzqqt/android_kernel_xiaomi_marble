@@ -44,18 +44,18 @@
  ***NOTE:
  * NA
  *
- * @param pMac  pointer to Global Mac structure.
+ * @param mac  pointer to Global Mac structure.
  * @param assocId AssocID of the Station.
  * @param bssidx pointer to the bss index, which will be returned by the function.
  *
  * @return success if GET operation is ok, else Failure.
  */
 
-QDF_STATUS lim_get_sta_hash_bssidx(tpAniSirGlobal pMac, uint16_t assocId,
+QDF_STATUS lim_get_sta_hash_bssidx(tpAniSirGlobal mac, uint16_t assocId,
 				      uint8_t *bssidx, tpPESession psessionEntry)
 {
 	tpDphHashNode pSta =
-		dph_get_hash_entry(pMac, assocId, &psessionEntry->dph.dphHashTable);
+		dph_get_hash_entry(mac, assocId, &psessionEntry->dph.dphHashTable);
 
 	if (pSta == NULL) {
 		pe_err("invalid STA: %d", assocId);

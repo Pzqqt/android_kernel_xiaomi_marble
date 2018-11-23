@@ -35,7 +35,7 @@
 #include "ani_global.h"
 #include "lim_types.h"
 
-QDF_STATUS lim_get_sta_hash_bssidx(tpAniSirGlobal pMac, uint16_t assocId,
+QDF_STATUS lim_get_sta_hash_bssidx(tpAniSirGlobal mac, uint16_t assocId,
 				      uint8_t *bssidx, tpPESession psessionEntry);
 
 #endif

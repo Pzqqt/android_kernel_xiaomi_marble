@@ -87,7 +87,7 @@ static QDF_STATUS lim_validate_access_policy(tpAniSirGlobal, uint8_t, uint16_t,
    -------------------------------------------------------------*/
 
 static QDF_STATUS
-lim_calculate_svc_int(tpAniSirGlobal pMac,
+lim_calculate_svc_int(tpAniSirGlobal mac,
 		      tSirMacTspecIE *pTspec, uint32_t *pSvcInt)
 {
 	uint32_t msduSz, dataRate;
@@ -180,14 +180,14 @@ lim_validate_tspec_edca(tpAniSirGlobal mac_ctx,
    -------------------------------------------------------------*/
 
 static QDF_STATUS
-lim_validate_tspec(tpAniSirGlobal pMac,
+lim_validate_tspec(tpAniSirGlobal mac,
 		   tSirMacTspecIE *pTspec, tpPESession psessionEntry)
 {
 	QDF_STATUS retval = QDF_STATUS_SUCCESS;
 
 	switch (pTspec->tsinfo.traffic.accessPolicy) {
 	case SIR_MAC_ACCESSPOLICY_EDCA:
-		retval = lim_validate_tspec_edca(pMac, pTspec, psessionEntry);
+		retval = lim_validate_tspec_edca(mac, pTspec, psessionEntry);
 		if (retval != QDF_STATUS_SUCCESS)
 			pe_warn("EDCA tspec invalid");
 			break;
@@ -218,7 +218,7 @@ lim_validate_tspec(tpAniSirGlobal pMac,
    -------------------------------------------------------------*/
 
 static void
-lim_compute_mean_bw_used(tpAniSirGlobal pMac,
+lim_compute_mean_bw_used(tpAniSirGlobal mac,
 			 uint32_t *pBw,
 			 uint32_t phyMode,
 			 tpLimTspecInfo pTspecInfo, tpPESession psessionEntry)
@@ -228,7 +228,7 @@ lim_compute_mean_bw_used(tpAniSirGlobal pMac,
 	for (ctspec = 0; ctspec < LIM_NUM_TSPEC_MAX; ctspec++, pTspecInfo++) {
 		if (pTspecInfo->inuse) {
 			tpDphHashNode pSta =
-				dph_get_hash_entry(pMac, pTspecInfo->assocId,
+				dph_get_hash_entry(mac, pTspecInfo->assocId,
 						   &psessionEntry->dph.dphHashTable);
 			if (pSta == NULL) {
 				/* maybe we should delete the tspec?? */
@@ -254,7 +254,7 @@ lim_compute_mean_bw_used(tpAniSirGlobal pMac,
    -------------------------------------------------------------*/
 
 static void
-lim_get_available_bw(tpAniSirGlobal pMac,
+lim_get_available_bw(tpAniSirGlobal mac,
 		     uint32_t *pMaxBw,
 		     uint32_t *pMinBw, uint32_t phyMode, uint32_t bw_factor)
 {
@@ -333,12 +333,12 @@ lim_admit_policy_oversubscription(tpAniSirGlobal mac_ctx,
    \return QDF_STATUS - status
    -------------------------------------------------------------*/
 
-static QDF_STATUS lim_admit_policy(tpAniSirGlobal pMac,
+static QDF_STATUS lim_admit_policy(tpAniSirGlobal mac,
 				      tSirMacTspecIE *pTspec,
 				      tpPESession psessionEntry)
 {
 	QDF_STATUS retval = QDF_STATUS_E_FAILURE;
-	tpLimAdmitPolicyInfo pAdmitPolicy = &pMac->lim.admitPolicyInfo;
+	tpLimAdmitPolicyInfo pAdmitPolicy = &mac->lim.admitPolicyInfo;
 
 	switch (pAdmitPolicy->type) {
 	case WNI_CFG_ADMIT_POLICY_ADMIT_ALL:
@@ -346,10 +346,10 @@ static QDF_STATUS lim_admit_policy(tpAniSirGlobal pMac,
 		break;
 
 	case WNI_CFG_ADMIT_POLICY_BW_FACTOR:
-		retval = lim_admit_policy_oversubscription(pMac, pTspec,
-							   &pMac->lim.
+		retval = lim_admit_policy_oversubscription(mac, pTspec,
+							   &mac->lim.
 							   admitPolicyInfo,
-							   &pMac->lim.tspecInfo[0],
+							   &mac->lim.tspecInfo[0],
 							   psessionEntry);
 		if (retval != QDF_STATUS_SUCCESS)
 			pe_err("rejected by BWFactor policy");
@@ -378,7 +378,7 @@ static QDF_STATUS lim_admit_policy(tpAniSirGlobal pMac,
 
 /* ----------------------------------------------------------------------------- */
 /* delete the specified tspec */
-static void lim_tspec_delete(tpAniSirGlobal pMac, tpLimTspecInfo pInfo)
+static void lim_tspec_delete(tpAniSirGlobal mac, tpLimTspecInfo pInfo)
 {
 	if (pInfo == NULL)
 		return;
@@ -402,7 +402,7 @@ static void lim_tspec_delete(tpAniSirGlobal pMac, tpLimTspecInfo pInfo)
 
 /* find the specified tspec in the list */
 static QDF_STATUS
-lim_tspec_find_by_sta_addr(tpAniSirGlobal pMac,
+lim_tspec_find_by_sta_addr(tpAniSirGlobal mac,
 			   uint8_t *pAddr,
 			   tSirMacTspecIE *pTspecIE,
 			   tpLimTspecInfo pTspecList, tpLimTspecInfo *ppInfo)
@@ -439,7 +439,7 @@ lim_tspec_find_by_sta_addr(tpAniSirGlobal pMac,
    -------------------------------------------------------------*/
 
 QDF_STATUS
-lim_tspec_find_by_assoc_id(tpAniSirGlobal pMac,
+lim_tspec_find_by_assoc_id(tpAniSirGlobal mac,
 			   uint16_t assocId,
 			   tSirMacTspecIE *pTspecIE,
 			   tpLimTspecInfo pTspecList, tpLimTspecInfo *ppInfo)
@@ -478,7 +478,7 @@ lim_tspec_find_by_assoc_id(tpAniSirGlobal pMac,
    -------------------------------------------------------------*/
 
 static QDF_STATUS
-lim_find_tspec(tpAniSirGlobal pMac,
+lim_find_tspec(tpAniSirGlobal mac,
 	       uint16_t assocId,
 	       tSirMacTSInfo *pTsInfo,
 	       tpLimTspecInfo pTspecList, tpLimTspecInfo *ppInfo)
@@ -517,17 +517,17 @@ lim_find_tspec(tpAniSirGlobal pMac,
    \return QDF_STATUS - status of the comparison
    -------------------------------------------------------------*/
 
-QDF_STATUS lim_tspec_add(tpAniSirGlobal pMac,
+QDF_STATUS lim_tspec_add(tpAniSirGlobal mac,
 			    uint8_t *pAddr,
 			    uint16_t assocId,
 			    tSirMacTspecIE *pTspec,
 			    uint32_t interval, tpLimTspecInfo *ppInfo)
 {
-	tpLimTspecInfo pTspecList = &pMac->lim.tspecInfo[0];
+	tpLimTspecInfo pTspecList = &mac->lim.tspecInfo[0];
 	*ppInfo = NULL;
 
 	/* validate the assocId */
-	if (assocId >= pMac->lim.maxStation) {
+	if (assocId >= mac->lim.maxStation) {
 		pe_err("Invalid assocId 0x%x", assocId);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -536,7 +536,7 @@ QDF_STATUS lim_tspec_add(tpAniSirGlobal pMac,
 		*ppInfo = NULL;
 
 		if (QDF_STATUS_SUCCESS ==
-		    lim_find_tspec(pMac, assocId, &pTspec->tsinfo, pTspecList,
+		    lim_find_tspec(mac, assocId, &pTspec->tsinfo, pTspecList,
 				   ppInfo)) {
 			/* update this entry. */
 			pe_debug("updating TSPEC table entry: %d",
@@ -547,7 +547,7 @@ QDF_STATUS lim_tspec_add(tpAniSirGlobal pMac,
 			 */
 			uint8_t ctspec = 0;
 
-			for (ctspec = 0, pTspecList = &pMac->lim.tspecInfo[0];
+			for (ctspec = 0, pTspecList = &mac->lim.tspecInfo[0];
 			     ctspec < LIM_NUM_TSPEC_MAX;
 			     ctspec++, pTspecList++) {
 				if (!pTspecList->inuse) {
@@ -603,13 +603,13 @@ QDF_STATUS lim_tspec_add(tpAniSirGlobal pMac,
    -------------------------------------------------------------*/
 
 static QDF_STATUS
-lim_validate_access_policy(tpAniSirGlobal pMac,
+lim_validate_access_policy(tpAniSirGlobal mac,
 			   uint8_t accessPolicy,
 			   uint16_t assocId, tpPESession psessionEntry)
 {
 	QDF_STATUS retval = QDF_STATUS_E_FAILURE;
 	tpDphHashNode pSta =
-		dph_get_hash_entry(pMac, assocId, &psessionEntry->dph.dphHashTable);
+		dph_get_hash_entry(mac, assocId, &psessionEntry->dph.dphHashTable);
 
 	if ((pSta == NULL) || (!pSta->valid)) {
 		pe_err("invalid station address passed");
@@ -640,7 +640,7 @@ lim_validate_access_policy(tpAniSirGlobal pMac,
 
 /**
  * lim_admit_control_add_ts() -        Check if STA can be admitted
- * @pMac:               Global MAC context
+ * @mac:               Global MAC context
  * @pAddr:              Address
  * @pAddts:             ADD TS
  * @pQos:               QOS fields
@@ -655,7 +655,7 @@ lim_validate_access_policy(tpAniSirGlobal pMac,
  *
  * Return: status
  **/
-QDF_STATUS lim_admit_control_add_ts(tpAniSirGlobal pMac, uint8_t *pAddr,
+QDF_STATUS lim_admit_control_add_ts(tpAniSirGlobal mac, uint8_t *pAddr,
 		tSirAddtsReqInfo *pAddts, tSirMacQosCapabilityStaIE *pQos,
 		uint16_t assocId, uint8_t alloc, tSirMacScheduleIE *pSch,
 		uint8_t *pTspecIdx, tpPESession psessionEntry)
@@ -678,29 +678,29 @@ QDF_STATUS lim_admit_control_add_ts(tpAniSirGlobal pMac, uint8_t *pAddr,
 
 	/* check for duplicate tspec */
 	retval = (alloc)
-		 ? lim_tspec_find_by_assoc_id(pMac, assocId, &pAddts->tspec,
-					      &pMac->lim.tspecInfo[0], &pTspecInfo)
-		 : lim_tspec_find_by_sta_addr(pMac, pAddr, &pAddts->tspec,
-					      &pMac->lim.tspecInfo[0], &pTspecInfo);
+		 ? lim_tspec_find_by_assoc_id(mac, assocId, &pAddts->tspec,
+					      &mac->lim.tspecInfo[0], &pTspecInfo)
+		 : lim_tspec_find_by_sta_addr(mac, pAddr, &pAddts->tspec,
+					      &mac->lim.tspecInfo[0], &pTspecInfo);
 
 	if (retval == QDF_STATUS_SUCCESS) {
 		pe_err("duplicate tspec index: %d", pTspecInfo->idx);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* check that the tspec's are well formed and acceptable */
-	if (lim_validate_tspec(pMac, &pAddts->tspec, psessionEntry) !=
+	if (lim_validate_tspec(mac, &pAddts->tspec, psessionEntry) !=
 	    QDF_STATUS_SUCCESS) {
 		pe_warn("tspec validation failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* determine a service interval for the tspec */
-	if (lim_calculate_svc_int(pMac, &pAddts->tspec, &svcInterval) !=
+	if (lim_calculate_svc_int(mac, &pAddts->tspec, &svcInterval) !=
 	    QDF_STATUS_SUCCESS) {
 		pe_warn("SvcInt calculate failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* determine if the tspec can be admitted or not based on current policy */
-	if (lim_admit_policy(pMac, &pAddts->tspec, psessionEntry) != QDF_STATUS_SUCCESS) {
+	if (lim_admit_policy(mac, &pAddts->tspec, psessionEntry) != QDF_STATUS_SUCCESS) {
 		pe_warn("tspec rejected by admit control policy");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -722,7 +722,7 @@ QDF_STATUS lim_admit_control_add_ts(tpAniSirGlobal pMac, uint8_t *pAddr,
 
 	/* check that we are in the proper mode to deal with the tspec type */
 	if (lim_validate_access_policy
-		    (pMac, (uint8_t) pAddts->tspec.tsinfo.traffic.accessPolicy, assocId,
+		    (mac, (uint8_t) pAddts->tspec.tsinfo.traffic.accessPolicy, assocId,
 		    psessionEntry) != QDF_STATUS_SUCCESS) {
 		pe_warn("AccessPolicy: %d is not valid in current mode",
 			pAddts->tspec.tsinfo.traffic.accessPolicy);
@@ -730,7 +730,7 @@ QDF_STATUS lim_admit_control_add_ts(tpAniSirGlobal pMac, uint8_t *pAddr,
 	}
 	/* add tspec to list */
 	if (lim_tspec_add
-		    (pMac, pAddr, assocId, &pAddts->tspec, svcInterval, &pTspecInfo)
+		    (mac, pAddr, assocId, &pAddts->tspec, svcInterval, &pTspecInfo)
 	    != QDF_STATUS_SUCCESS) {
 		pe_err("no space in tspec list");
 		return QDF_STATUS_E_FAILURE;
@@ -753,7 +753,7 @@ QDF_STATUS lim_admit_control_add_ts(tpAniSirGlobal pMac, uint8_t *pAddr,
    -------------------------------------------------------------*/
 
 QDF_STATUS
-lim_admit_control_delete_ts(tpAniSirGlobal pMac,
+lim_admit_control_delete_ts(tpAniSirGlobal mac,
 			    uint16_t assocId,
 			    tSirMacTSInfo *pTsInfo,
 			    uint8_t *pTsStatus, uint8_t *ptspecIdx)
@@ -764,13 +764,13 @@ lim_admit_control_delete_ts(tpAniSirGlobal pMac,
 		*pTsStatus = 0;
 
 	if (lim_find_tspec
-		    (pMac, assocId, pTsInfo, &pMac->lim.tspecInfo[0],
+		    (mac, assocId, pTsInfo, &mac->lim.tspecInfo[0],
 		    &pTspecInfo) == QDF_STATUS_SUCCESS) {
 		if (pTspecInfo != NULL) {
 			pe_debug("Tspec entry: %d found", pTspecInfo->idx);
 
 			*ptspecIdx = pTspecInfo->idx;
-			lim_tspec_delete(pMac, pTspecInfo);
+			lim_tspec_delete(mac, pTspecInfo);
 			return QDF_STATUS_SUCCESS;
 		}
 	}
@@ -785,14 +785,14 @@ lim_admit_control_delete_ts(tpAniSirGlobal pMac,
    \return QDF_STATUS - status
    -------------------------------------------------------------*/
 
-QDF_STATUS lim_admit_control_delete_sta(tpAniSirGlobal pMac, uint16_t assocId)
+QDF_STATUS lim_admit_control_delete_sta(tpAniSirGlobal mac, uint16_t assocId)
 {
-	tpLimTspecInfo pTspecInfo = &pMac->lim.tspecInfo[0];
+	tpLimTspecInfo pTspecInfo = &mac->lim.tspecInfo[0];
 	int ctspec;
 
 	for (ctspec = 0; ctspec < LIM_NUM_TSPEC_MAX; ctspec++, pTspecInfo++) {
 		if (assocId == pTspecInfo->assocId) {
-			lim_tspec_delete(pMac, pTspecInfo);
+			lim_tspec_delete(mac, pTspecInfo);
 			pe_debug("Deleting TSPEC: %d for assocId: %d", ctspec,
 				assocId);
 		}
@@ -808,9 +808,9 @@ QDF_STATUS lim_admit_control_delete_sta(tpAniSirGlobal pMac, uint16_t assocId)
    \param   tpAniSirGlobal pMac
    \return QDF_STATUS - status
    -------------------------------------------------------------*/
-QDF_STATUS lim_admit_control_init(tpAniSirGlobal pMac)
+QDF_STATUS lim_admit_control_init(tpAniSirGlobal mac)
 {
-	qdf_mem_set(pMac->lim.tspecInfo,
+	qdf_mem_set(mac->lim.tspecInfo,
 		    LIM_NUM_TSPEC_MAX * sizeof(tLimTspecInfo), 0);
 	return QDF_STATUS_SUCCESS;
 }
@@ -829,14 +829,14 @@ QDF_STATUS lim_admit_control_init(tpAniSirGlobal pMac)
    -------------------------------------------------------------*/
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS
-lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
+lim_send_hal_msg_add_ts(tpAniSirGlobal mac,
 			uint16_t staIdx,
 			uint8_t tspecIdx,
 			tSirMacTspecIE tspecIE,
 			uint8_t sessionId, uint16_t tsm_interval)
 #else
 QDF_STATUS
-lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
+lim_send_hal_msg_add_ts(tpAniSirGlobal mac,
 			uint16_t staIdx,
 			uint8_t tspecIdx, tSirMacTspecIE tspecIE, uint8_t sessionId)
 #endif
@@ -844,7 +844,7 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
 	struct scheduler_msg msg = {0};
 	tpAddTsParams pAddTsParam;
 
-	tpPESession psessionEntry = pe_find_session_by_session_id(pMac, sessionId);
+	tpPESession psessionEntry = pe_find_session_by_session_id(mac, sessionId);
 
 	if (psessionEntry == NULL) {
 		pe_err("Unable to get Session for session Id: %d",
@@ -866,7 +866,7 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
 	pAddTsParam->tsm_interval = tsm_interval;
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (pMac->mlme_cfg->lfr.lfr3_roaming_offload &&
+	if (mac->mlme_cfg->lfr.lfr3_roaming_offload &&
 	    psessionEntry->is11Rconnection)
 		pAddTsParam->setRICparams = 1;
 #endif
@@ -878,12 +878,12 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
 	/* We need to defer any incoming messages until we get a
 	 * WMA_ADD_TS_RSP from HAL.
 	 */
-	SET_LIM_PROCESS_DEFD_MESGS(pMac, false);
-	MTRACE(mac_trace_msg_tx(pMac, sessionId, msg.type));
+	SET_LIM_PROCESS_DEFD_MESGS(mac, false);
+	MTRACE(mac_trace_msg_tx(mac, sessionId, msg.type));
 
-	if (QDF_STATUS_SUCCESS != wma_post_ctrl_msg(pMac, &msg)) {
+	if (QDF_STATUS_SUCCESS != wma_post_ctrl_msg(mac, &msg)) {
 		pe_warn("wma_post_ctrl_msg() failed");
-		SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
+		SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 		qdf_mem_free(pAddTsParam);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -901,7 +901,7 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
    -------------------------------------------------------------*/
 
 QDF_STATUS
-lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
+lim_send_hal_msg_del_ts(tpAniSirGlobal mac,
 			uint16_t staIdx,
 			uint8_t tspecIdx,
 			tSirDeltsReqInfo delts, uint8_t sessionId, uint8_t *bssId)
@@ -923,7 +923,7 @@ lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
 	pDelTsParam->tspecIdx = tspecIdx;
 	qdf_mem_copy(&pDelTsParam->bssId, bssId, sizeof(tSirMacAddr));
 
-	psessionEntry = pe_find_session_by_session_id(pMac, sessionId);
+	psessionEntry = pe_find_session_by_session_id(mac, sessionId);
 	if (psessionEntry == NULL) {
 		pe_err("Session does Not exist with given sessionId: %d",
 			       sessionId);
@@ -935,16 +935,16 @@ lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
 			delts.tsinfo.traffic.userPrio;
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (pMac->mlme_cfg->lfr.lfr3_roaming_offload &&
+	if (mac->mlme_cfg->lfr.lfr3_roaming_offload &&
 	    psessionEntry->is11Rconnection) {
 		qdf_mem_copy(&pDelTsParam->delTsInfo, &delts,
 			     sizeof(tSirDeltsReqInfo));
 		pDelTsParam->setRICparams = 1;
 	}
 #endif
-	MTRACE(mac_trace_msg_tx(pMac, sessionId, msg.type));
+	MTRACE(mac_trace_msg_tx(mac, sessionId, msg.type));
 
-	if (QDF_STATUS_SUCCESS != wma_post_ctrl_msg(pMac, &msg)) {
+	if (QDF_STATUS_SUCCESS != wma_post_ctrl_msg(mac, &msg)) {
 		pe_warn("wma_post_ctrl_msg() failed");
 		goto err;
 	}
@@ -965,7 +965,7 @@ err:
    \param  tpAniSirGlobal  pMac
    \param  struct scheduler_msg *limMsg
    -------------------------------------------------------------*/
-void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac,
+void lim_process_hal_add_ts_rsp(tpAniSirGlobal mac,
 				struct scheduler_msg *limMsg)
 {
 	tpAddTsParams pAddTsRspMsg = NULL;
@@ -978,7 +978,7 @@ void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac,
 	/* Need to process all the deferred messages enqueued
 	 * since sending the WMA_ADD_TS_REQ.
 	 */
-	SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
+	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 
 	if (NULL == limMsg->bodyptr) {
 		pe_err("Received WMA_ADD_TS_RSP with NULL");
@@ -989,22 +989,22 @@ void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac,
 
 	/* 090803: Use pe_find_session_by_session_id() to obtain the PE session context */
 	/* from the sessionId in the Rsp Msg from HAL */
-	psessionEntry = pe_find_session_by_session_id(pMac, pAddTsRspMsg->sessionId);
+	psessionEntry = pe_find_session_by_session_id(mac, pAddTsRspMsg->sessionId);
 
 	if (psessionEntry == NULL) {
 		pe_err("Session does Not exist with given sessionId: %d",
 			       pAddTsRspMsg->sessionId);
-		lim_send_sme_addts_rsp(pMac, rspReqd, eSIR_SME_ADDTS_RSP_FAILED,
+		lim_send_sme_addts_rsp(mac, rspReqd, eSIR_SME_ADDTS_RSP_FAILED,
 				       psessionEntry, pAddTsRspMsg->tspec,
-				       pMac->lim.gLimAddtsReq.sessionId,
-				       pMac->lim.gLimAddtsReq.transactionId);
+				       mac->lim.gLimAddtsReq.sessionId,
+				       mac->lim.gLimAddtsReq.transactionId);
 		goto end;
 	}
 
 	if (pAddTsRspMsg->status == QDF_STATUS_SUCCESS) {
 		pe_debug("Received successful ADDTS response from HAL");
 		/* Use the smesessionId and smetransactionId from the PE session context */
-		lim_send_sme_addts_rsp(pMac, rspReqd, eSIR_SME_SUCCESS,
+		lim_send_sme_addts_rsp(mac, rspReqd, eSIR_SME_SUCCESS,
 				       psessionEntry, pAddTsRspMsg->tspec,
 				       psessionEntry->smeSessionId,
 				       psessionEntry->transactionId);
@@ -1016,16 +1016,16 @@ void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac,
 		sir_copy_mac_addr(peerMacAddr, psessionEntry->bssId);
 
 		/* 090803: Add the SME Session ID */
-		lim_send_delts_req_action_frame(pMac, peerMacAddr, rspReqd,
+		lim_send_delts_req_action_frame(mac, peerMacAddr, rspReqd,
 						&pAddTsRspMsg->tspec.tsinfo,
 						&pAddTsRspMsg->tspec, psessionEntry);
 
 		/* Delete TSPEC */
 		/* 090803: Pull the hash table from the session */
-		pSta = dph_lookup_assoc_id(pMac, pAddTsRspMsg->staIdx, &assocId,
+		pSta = dph_lookup_assoc_id(mac, pAddTsRspMsg->staIdx, &assocId,
 					   &psessionEntry->dph.dphHashTable);
 		if (pSta != NULL)
-			lim_admit_control_delete_ts(pMac, assocId,
+			lim_admit_control_delete_ts(mac, assocId,
 						    &pAddTsRspMsg->tspec.tsinfo,
 						    NULL,
 						    (uint8_t *) &pAddTsRspMsg->
@@ -1033,7 +1033,7 @@ void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac,
 
 		/* Send SME_ADDTS_RSP */
 		/* 090803: Use the smesessionId and smetransactionId from the PE session context */
-		lim_send_sme_addts_rsp(pMac, rspReqd, eSIR_SME_ADDTS_RSP_FAILED,
+		lim_send_sme_addts_rsp(mac, rspReqd, eSIR_SME_ADDTS_RSP_FAILED,
 				       psessionEntry, pAddTsRspMsg->tspec,
 				       psessionEntry->smeSessionId,
 				       psessionEntry->transactionId);

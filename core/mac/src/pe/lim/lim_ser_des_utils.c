@@ -44,14 +44,14 @@
  \          uint16_t   messageLength
  \          uint8_t    sessionId
  \          uint16_t   transactionId
-   \param  pMac          - pMac global structure
+   \param  mac          - mac global structure
    \param  *pBuf         - pointer to the message buffer
    \param  sessionId     - returned session id value
    \param  transactionId - returned transaction ID value
    \return None
    ------------------------------------------------------------------*/
 void
-lim_get_session_info(tpAniSirGlobal pMac, uint8_t *pBuf, uint8_t *sessionId,
+lim_get_session_info(tpAniSirGlobal mac, uint8_t *pBuf, uint8_t *sessionId,
 		     uint16_t *transactionId)
 {
 	if (!pBuf) {

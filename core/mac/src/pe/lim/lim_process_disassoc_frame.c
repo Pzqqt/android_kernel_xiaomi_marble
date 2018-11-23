@@ -56,12 +56,12 @@
  *
  ***NOTE:
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @param  *pRxPacketInfo - A pointer to Rx packet info structure
  * @return None
  */
 void
-lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
+lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 			   tpPESession psessionEntry)
 {
 	uint8_t *pBody;
@@ -90,7 +90,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		pe_err("received Disassoc frame for a MC address");
 		return;
 	}
-	if (!lim_validate_received_frame_a1_addr(pMac,
+	if (!lim_validate_received_frame_a1_addr(mac,
 			pHdr->da, psessionEntry)) {
 		pe_err("rx frame doesn't have valid a1 address, drop it");
 		return;
@@ -99,13 +99,13 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	if (LIM_IS_STA_ROLE(psessionEntry) &&
 		((eLIM_SME_WT_DISASSOC_STATE == psessionEntry->limSmeState) ||
 		(eLIM_SME_WT_DEAUTH_STATE == psessionEntry->limSmeState))) {
-		if (!(pMac->lim.disassocMsgCnt & 0xF)) {
+		if (!(mac->lim.disassocMsgCnt & 0xF)) {
 			pe_debug("received Disassoc frame in %s"
 				"already processing previously received Disassoc frame, dropping this %d",
 				 lim_sme_state_str(psessionEntry->limSmeState),
-				 ++pMac->lim.disassocMsgCnt);
+				 ++mac->lim.disassocMsgCnt);
 		} else {
-			pMac->lim.disassocMsgCnt++;
+			mac->lim.disassocMsgCnt++;
 		}
 		return;
 	}
@@ -119,7 +119,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		 * When 11w offload is enabled then
 		 * firmware should not fwd this frame
 		 */
-		if (LIM_IS_STA_ROLE(psessionEntry) &&  pMac->pmf_offload) {
+		if (LIM_IS_STA_ROLE(psessionEntry) &&  mac->pmf_offload) {
 			pe_err("11w offload is enable,unprotected disassoc is not expected");
 			return;
 		}
@@ -127,7 +127,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		/* If the frame received is unprotected, forward it to the supplicant to initiate */
 		/* an SA query */
 		/* send the unprotected frame indication to SME */
-		lim_send_sme_unprotected_mgmt_frame_ind(pMac, pHdr->fc.subType,
+		lim_send_sme_unprotected_mgmt_frame_ind(mac, pHdr->fc.subType,
 							(uint8_t *) pHdr,
 							(frame_len +
 							 sizeof(tSirMacMgmtHdr)),
@@ -152,10 +152,10 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		 lim_mlm_state_str(psessionEntry->limMlmState),
 		 psessionEntry->limSmeState, frame_rssi, reasonCode,
 		 lim_dot11_reason_str(reasonCode), MAC_ADDR_ARRAY(pHdr->sa));
-	lim_diag_event_report(pMac, WLAN_PE_DIAG_DISASSOC_FRAME_EVENT,
+	lim_diag_event_report(mac, WLAN_PE_DIAG_DISASSOC_FRAME_EVENT,
 		psessionEntry, 0, reasonCode);
 
-	if (pMac->mlme_cfg->gen.fatal_event_trigger &&
+	if (mac->mlme_cfg->gen.fatal_event_trigger &&
 	    (reasonCode != eSIR_MAC_UNSPEC_FAILURE_REASON &&
 	    reasonCode != eSIR_MAC_DEAUTH_LEAVING_BSS_REASON &&
 	    reasonCode != eSIR_MAC_DISASSOC_LEAVING_BSS_REASON)) {
@@ -169,7 +169,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	 * This is maintained by DPH and created by LIM.
 	 */
 	pStaDs =
-		dph_lookup_hash_entry(pMac, pHdr->sa, &aid,
+		dph_lookup_hash_entry(mac, pHdr->sa, &aid,
 				      &psessionEntry->dph.dphHashTable);
 
 	if (pStaDs == NULL) {
@@ -183,25 +183,25 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		return;
 	}
 
-	if (lim_check_disassoc_deauth_ack_pending(pMac, (uint8_t *) pHdr->sa)) {
+	if (lim_check_disassoc_deauth_ack_pending(mac, (uint8_t *) pHdr->sa)) {
 		pe_err("Ignore the DisAssoc received, while waiting for ack of disassoc/deauth");
-		lim_clean_up_disassoc_deauth_req(pMac, (uint8_t *) pHdr->sa, 1);
+		lim_clean_up_disassoc_deauth_req(mac, (uint8_t *) pHdr->sa, 1);
 		return;
 	}
 
-	if (pMac->lim.disassocMsgCnt != 0) {
-		pMac->lim.disassocMsgCnt = 0;
+	if (mac->lim.disassocMsgCnt != 0) {
+		mac->lim.disassocMsgCnt = 0;
 	}
 
 	/** If we are in the Wait for ReAssoc Rsp state */
-	if (lim_is_reassoc_in_progress(pMac, psessionEntry)) {
+	if (lim_is_reassoc_in_progress(mac, psessionEntry)) {
 		/*
 		 * For LFR3, the roaming bssid is not known during ROAM_START,
 		 * so check if the disassoc is received from current AP when
 		 * roaming is being done in the firmware
 		 */
 		if (psessionEntry->fw_roaming_started &&
-		    IS_CURRENT_BSSID(pMac, pHdr->sa, psessionEntry)) {
+		    IS_CURRENT_BSSID(mac, pHdr->sa, psessionEntry)) {
 			pe_debug("Dropping disassoc frame from connected AP");
 			psessionEntry->recvd_disassoc_while_roaming = true;
 			psessionEntry->deauth_disassoc_rc = reasonCode;
@@ -212,16 +212,16 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		 *     b. Unknown AP
 		 *   drop/ignore the DisAssoc received
 		 */
-		if (!IS_REASSOC_BSSID(pMac, pHdr->sa, psessionEntry)) {
+		if (!IS_REASSOC_BSSID(mac, pHdr->sa, psessionEntry)) {
 			pe_err("Ignore DisAssoc while Processing ReAssoc");
 			return;
 		}
 		/** If the Disassoc is received from the new AP to which we tried to ReAssociate
 		 *  Drop ReAssoc and Restore the Previous context( current connected AP).
 		 */
-		if (!IS_CURRENT_BSSID(pMac, pHdr->sa, psessionEntry)) {
+		if (!IS_CURRENT_BSSID(mac, pHdr->sa, psessionEntry)) {
 			pe_debug("received Disassoc from the New AP to which ReAssoc is sent");
-			lim_restore_pre_reassoc_state(pMac,
+			lim_restore_pre_reassoc_state(mac,
 						      eSIR_SME_REASSOC_REFUSED,
 						      reasonCode,
 						      psessionEntry);
@@ -293,7 +293,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		return;
 	}
 	pStaDs->sta_deletion_in_progress = true;
-	lim_disassoc_tdls_peers(pMac, psessionEntry, pHdr->sa);
+	lim_disassoc_tdls_peers(mac, psessionEntry, pHdr->sa);
 	if (pStaDs->mlmStaContext.mlmState != eLIM_MLM_LINK_ESTABLISHED_STATE) {
 		/**
 		 * Requesting STA is in some 'transient' state?
@@ -309,7 +309,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 	} /* if (pStaDs->mlmStaContext.mlmState != eLIM_MLM_LINK_ESTABLISHED_STATE) */
 
-	lim_perform_disassoc(pMac, frame_rssi, reasonCode,
+	lim_perform_disassoc(mac, frame_rssi, reasonCode,
 			     psessionEntry, pHdr->sa);
 
 } /*** end lim_process_disassoc_frame() ***/

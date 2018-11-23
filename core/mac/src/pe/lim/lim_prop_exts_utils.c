@@ -436,7 +436,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
  *
  ***NOTE:
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @return The corresponding HT enumeration
  */
 ePhyChanBondState lim_get_htcb_state(ePhyChanBondState aniCBMode)

@@ -70,20 +70,20 @@ enum {
 	TRACE_CODE_INFO_LOG
 };
 
-void lim_trace_init(tpAniSirGlobal pMac);
-void limTraceReset(tpAniSirGlobal pMac);
-void limTraceUpdateMgmtStat(tpAniSirGlobal pMac, uint8_t subtype);
-void lim_trace_dumpMgmtStat(tpAniSirGlobal pMac, uint8_t subtype);
+void lim_trace_init(tpAniSirGlobal mac);
+void limTraceReset(tpAniSirGlobal mac);
+void limTraceUpdateMgmtStat(tpAniSirGlobal mac, uint8_t subtype);
+void lim_trace_dumpMgmtStat(tpAniSirGlobal mac, uint8_t subtype);
 uint8_t *lim_trace_get_mlm_state_string(uint32_t mlmState);
 uint8_t *lim_trace_get_sme_state_string(uint32_t smeState);
-void lim_trace_dump(void *pMac, tp_qdf_trace_record pRecord,
+void lim_trace_dump(void *mac, tp_qdf_trace_record pRecord,
 		    uint16_t recIndex);
-void mac_trace_msg_tx(tpAniSirGlobal pMac, uint8_t session, uint32_t data);
-void mac_trace_msg_rx(tpAniSirGlobal pMac, uint8_t session, uint32_t data);
+void mac_trace_msg_tx(tpAniSirGlobal mac, uint8_t session, uint32_t data);
+void mac_trace_msg_rx(tpAniSirGlobal mac, uint8_t session, uint32_t data);
 
-void mac_trace_msg_rx_new(tpAniSirGlobal pMac, uint8_t module, uint8_t session,
+void mac_trace_msg_rx_new(tpAniSirGlobal mac, uint8_t module, uint8_t session,
 			  uint32_t data);
-void mac_trace_msg_tx_new(tpAniSirGlobal pMac, uint8_t module, uint8_t session,
+void mac_trace_msg_tx_new(tpAniSirGlobal mac, uint8_t module, uint8_t session,
 			  uint32_t data);
 #endif /* endof LIM_TRACE_RECORD MACRO */
 

@@ -167,13 +167,13 @@ lim_is_rsn_ie_valid_in_sme_req_message(tpAniSirGlobal mac_ctx,
  *
  ***NOTE:
  *
- * @param  pMac   Pointer to Global MAC structure
+ * @param  mac   Pointer to Global MAC structure
  * @param  pWSCie Pointer to received WSC IE
  * @return true when WSC IE is valid, false otherwise
  */
 
 static uint8_t
-lim_is_addie_valid_in_sme_req_message(tpAniSirGlobal pMac, tpSirAddie pAddie)
+lim_is_addie_valid_in_sme_req_message(tpAniSirGlobal mac, tpSirAddie pAddie)
 {
 	int left = pAddie->length;
 	uint8_t *ptr = pAddie->addIEdata;
@@ -336,13 +336,13 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal mac_ctx,
  *
  ***NOTE:
  *
- * @param  pMac      Pointer to Global MAC structure
+ * @param  mac      Pointer to Global MAC structure
  * @param  pBssDescr Pointer to received Bss Descritipion
  * @return true when BSS description is valid, false otherwise
  */
 
 static uint8_t
-lim_is_bss_descr_valid_in_sme_req_message(tpAniSirGlobal pMac,
+lim_is_bss_descr_valid_in_sme_req_message(tpAniSirGlobal mac,
 					  tpSirBssDescription pBssDescr)
 {
 	uint8_t valid = true;
@@ -482,13 +482,13 @@ lim_is_sme_start_bss_req_valid(tpAniSirGlobal mac_ctx,
  *
  ***NOTE:
  *
- * @param  pMac       Pointer to Global MAC structure
+ * @param  mac       Pointer to Global MAC structure
  * @param  pJoinReq   Pointer to received SME_JOIN_REQ message
  * @return true  when received SME_JOIN_REQ is formatted correctly
  *         false otherwise
  */
 
-uint8_t lim_is_sme_join_req_valid(tpAniSirGlobal pMac, tpSirSmeJoinReq pJoinReq)
+uint8_t lim_is_sme_join_req_valid(tpAniSirGlobal mac, tpSirSmeJoinReq pJoinReq)
 {
 	uint8_t valid = true;
 
@@ -498,25 +498,25 @@ uint8_t lim_is_sme_join_req_valid(tpAniSirGlobal pMac, tpSirSmeJoinReq pJoinReq)
 	 * validity is not required.
 	 */
 	if (!pJoinReq->force_rsne_override &&
-	    !lim_is_rsn_ie_valid_in_sme_req_message(pMac, &pJoinReq->rsnIE)) {
+	    !lim_is_rsn_ie_valid_in_sme_req_message(mac, &pJoinReq->rsnIE)) {
 		pe_err("received SME_JOIN_REQ with invalid RSNIE");
 		valid = false;
 		goto end;
 	}
 
-	if (!lim_is_addie_valid_in_sme_req_message(pMac, &pJoinReq->addIEScan)) {
+	if (!lim_is_addie_valid_in_sme_req_message(mac, &pJoinReq->addIEScan)) {
 		pe_err("received SME_JOIN_REQ with invalid additional IE for scan");
 		valid = false;
 		goto end;
 	}
 
-	if (!lim_is_addie_valid_in_sme_req_message(pMac, &pJoinReq->addIEAssoc)) {
+	if (!lim_is_addie_valid_in_sme_req_message(mac, &pJoinReq->addIEAssoc)) {
 		pe_err("received SME_JOIN_REQ with invalid additional IE for assoc");
 		valid = false;
 		goto end;
 	}
 
-	if (!lim_is_bss_descr_valid_in_sme_req_message(pMac, &pJoinReq->bssDescription)) {
+	if (!lim_is_bss_descr_valid_in_sme_req_message(mac, &pJoinReq->bssDescription)) {
 		/* / Received eWNI_SME_JOIN_REQ with invalid BSS Info */
 		/* Log the event */
 		pe_err("received SME_JOIN_REQ with invalid bssInfo");
@@ -557,7 +557,7 @@ end:
  *
  ***NOTE:
  *
- * @param  pMac         Pointer to Global MAC structure
+ * @param  mac         Pointer to Global MAC structure
  * @param  pDisassocReq Pointer to received SME_DISASSOC_REQ message
  * @return true         When received SME_DISASSOC_REQ is formatted
  *                      correctly
@@ -565,7 +565,7 @@ end:
  */
 
 uint8_t
-lim_is_sme_disassoc_req_valid(tpAniSirGlobal pMac,
+lim_is_sme_disassoc_req_valid(tpAniSirGlobal mac,
 			      tpSirSmeDisassocReq pDisassocReq,
 			      tpPESession psessionEntry)
 {
@@ -590,7 +590,7 @@ lim_is_sme_disassoc_req_valid(tpAniSirGlobal pMac,
  *
  ***NOTE:
  *
- * @param  pMac         Pointer to Global MAC structure
+ * @param  mac         Pointer to Global MAC structure
  * @param  pDisassocCnf Pointer to received SME_DISASSOC_REQ message
  * @return true         When received SME_DISASSOC_CNF is formatted
  *                      correctly
@@ -598,7 +598,7 @@ lim_is_sme_disassoc_req_valid(tpAniSirGlobal pMac,
  */
 
 uint8_t
-lim_is_sme_disassoc_cnf_valid(tpAniSirGlobal pMac,
+lim_is_sme_disassoc_cnf_valid(tpAniSirGlobal mac,
 			      tpSirSmeDisassocCnf pDisassocCnf,
 			      tpPESession psessionEntry)
 {
@@ -622,14 +622,14 @@ lim_is_sme_disassoc_cnf_valid(tpAniSirGlobal pMac,
  *
  ***NOTE:
  *
- * @param  pMac       Pointer to Global MAC structure
+ * @param  mac       Pointer to Global MAC structure
  * @param  pDeauthReq Pointer to received SME_DEAUTH_REQ message
  * @return true       When received SME_DEAUTH_REQ is formatted correctly
  *         false      otherwise
  */
 
 uint8_t
-lim_is_sme_deauth_req_valid(tpAniSirGlobal pMac, tpSirSmeDeauthReq pDeauthReq,
+lim_is_sme_deauth_req_valid(tpAniSirGlobal mac, tpSirSmeDeauthReq pDeauthReq,
 			    tpPESession psessionEntry)
 {
 	if (qdf_is_macaddr_group(&pDeauthReq->peer_macaddr) &&
@@ -659,7 +659,7 @@ lim_is_sme_deauth_req_valid(tpAniSirGlobal pMac, tpSirSmeDeauthReq pDeauthReq,
  */
 
 uint8_t
-lim_is_sme_set_context_req_valid(tpAniSirGlobal pMac,
+lim_is_sme_set_context_req_valid(tpAniSirGlobal mac,
 				 tpSirSmeSetContextReq pSetContextReq)
 {
 	uint8_t i = 0;
@@ -710,7 +710,7 @@ lim_is_sme_set_context_req_valid(tpAniSirGlobal pMac,
 	} else if (pSetContextReq->keyMaterial.edType > eSIR_ED_NONE) {
 		bool privacy;
 
-		privacy = pMac->mlme_cfg->wep_params.is_privacy_enabled;
+		privacy = mac->mlme_cfg->wep_params.is_privacy_enabled;
 
 		if (!privacy) {
 			/**

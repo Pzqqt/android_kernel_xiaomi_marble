@@ -37,7 +37,7 @@
 #include "lim_types.h"
 #include "lim_prop_exts_utils.h"
 
-void lim_get_session_info(tpAniSirGlobal pMac, uint8_t *,
+void lim_get_session_info(tpAniSirGlobal mac, uint8_t *,
 			  uint8_t *, uint16_t *);
 
 /* Byte String <--> uint16_t/uint32_t copy functions */

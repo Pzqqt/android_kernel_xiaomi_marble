@@ -43,7 +43,7 @@
 
 void
 
-lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
+lim_send_sme_probe_req_ind(tpAniSirGlobal mac,
 			   tSirMacAddr peerMacAddr,
 			   uint8_t *pProbeReqIE,
 			   uint32_t ProbeReqIELen, tpPESession psessionEntry);
@@ -103,7 +103,7 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, struct qdf_mac_addr addr,
 
 /**
  * lim_remove_timeout_pbc_sessions() - remove pbc probe req entries.
- * @pMac - Pointer to Global MAC structure
+ * @mac - Pointer to Global MAC structure
  * @pbc - The beginning entry in WPS PBC probe request link list
  *
  * This function is called to remove the WPS PBC probe request entries from
@@ -111,7 +111,7 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, struct qdf_mac_addr addr,
  *
  * Return - None
  */
-static void lim_remove_timeout_pbc_sessions(tpAniSirGlobal pMac,
+static void lim_remove_timeout_pbc_sessions(tpAniSirGlobal mac,
 					    tSirWPSPBCSession *pbc)
 {
 	tSirWPSPBCSession *prev;
@@ -173,7 +173,7 @@ void lim_remove_pbc_sessions(tpAniSirGlobal mac, struct qdf_mac_addr remove_mac,
  *
  ***NOTE:
  *
- * @param  pMac   Pointer to Global MAC structure
+ * @param  mac   Pointer to Global MAC structure
  * @param  addr   A pointer to probe request source MAC address
  * @param  uuid_e A pointer to UUIDE element of WPS IE
  * @param  psessionEntry   A pointer to station PE session
@@ -181,7 +181,7 @@ void lim_remove_pbc_sessions(tpAniSirGlobal mac, struct qdf_mac_addr remove_mac,
  * @return None
  */
 
-static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
+static void lim_update_pbc_session_entry(tpAniSirGlobal mac,
 					 uint8_t *addr, uint8_t *uuid_e,
 					 tpPESession psessionEntry)
 {
@@ -240,7 +240,7 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
 	while (pbc) {
 		if (curTime > pbc->timestamp + SIR_WPS_PBC_WALK_TIME) {
 			prev->next = NULL;
-			lim_remove_timeout_pbc_sessions(pMac, pbc);
+			lim_remove_timeout_pbc_sessions(mac, pbc);
 			break;
 		}
 		prev = pbc;
@@ -262,16 +262,16 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
  *
  ***NOTE:
  *
- * @param  pMac   Pointer to Global MAC structure
+ * @param  mac   Pointer to Global MAC structure
  * @param  psessionEntry   A pointer to station PE session
  *
  * @return None
  */
 
-void lim_wpspbc_close(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void lim_wpspbc_close(tpAniSirGlobal mac, tpPESession psessionEntry)
 {
 
-	lim_remove_timeout_pbc_sessions(pMac, psessionEntry->pAPWPSPBCSession);
+	lim_remove_timeout_pbc_sessions(mac, psessionEntry->pAPWPSPBCSession);
 
 }
 
@@ -524,7 +524,7 @@ multipleSSIDcheck:
  * This function processes received Probe Request frame and Pass
  * Probe Request Frame to HDD.
  *
- * @param  pMac              Pointer to Global MAC structure
+ * @param  mac              Pointer to Global MAC structure
  * @param  *pBd              A pointer to Buffer descriptor + associated PDUs
  * @param  psessionEntry     A pointer to PE session
  *
@@ -532,7 +532,7 @@ multipleSSIDcheck:
  */
 
 static void
-lim_indicate_probe_req_to_hdd(tpAniSirGlobal pMac, uint8_t *pBd,
+lim_indicate_probe_req_to_hdd(tpAniSirGlobal mac, uint8_t *pBd,
 			      tpPESession psessionEntry)
 {
 	tpSirMacMgmtHdr pHdr;
@@ -544,7 +544,7 @@ lim_indicate_probe_req_to_hdd(tpAniSirGlobal pMac, uint8_t *pBd,
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pBd);
 
 	/* send the probe req to SME. */
-	lim_send_sme_mgmt_frame_ind(pMac, pHdr->fc.subType,
+	lim_send_sme_mgmt_frame_ind(mac, pHdr->fc.subType,
 				    (uint8_t *) pHdr,
 				    (frameLen + sizeof(tSirMacMgmtHdr)),
 				    psessionEntry->smeSessionId, WMA_GET_RX_CH(pBd),
@@ -623,7 +623,7 @@ lim_process_probe_req_frame_multiple_bss(tpAniSirGlobal mac_ctx,
  * @return None
  */
 void
-lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
+lim_send_sme_probe_req_ind(tpAniSirGlobal mac,
 			   tSirMacAddr peerMacAddr,
 			   uint8_t *pProbeReqIE,
 			   uint32_t ProbeReqIELen, tpPESession psessionEntry)
@@ -648,7 +648,7 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 	qdf_mem_copy(pSirSmeProbeReqInd->WPSPBCProbeReq.peer_macaddr.bytes,
 		     peerMacAddr, QDF_MAC_ADDR_SIZE);
 
-	MTRACE(mac_trace(pMac, TRACE_CODE_TX_SME_MSG,
+	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 				psessionEntry->peSessionId, msgQ.type));
 
 	if (ProbeReqIELen > sizeof(pSirSmeProbeReqInd->WPSPBCProbeReq.
@@ -662,7 +662,7 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 	qdf_mem_copy(pSirSmeProbeReqInd->WPSPBCProbeReq.probeReqIE, pProbeReqIE,
 		     ProbeReqIELen);
 
-	if (lim_sys_process_mmh_msg_api(pMac, &msgQ, ePROT) != QDF_STATUS_SUCCESS)
+	if (lim_sys_process_mmh_msg_api(mac, &msgQ, ePROT) != QDF_STATUS_SUCCESS)
 		pe_err("couldnt send the probe req to hdd");
 
 } /*** end lim_send_sme_probe_req_ind() ***/

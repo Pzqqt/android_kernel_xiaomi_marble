@@ -349,12 +349,12 @@ lim_trigger_sta_deletion(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
  *
  ***NOTE:
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @return None
  */
 
 void
-lim_tear_down_link_with_ap(tpAniSirGlobal pMac, uint8_t sessionId,
+lim_tear_down_link_with_ap(tpAniSirGlobal mac, uint8_t sessionId,
 			   tSirMacReasonCodes reasonCode)
 {
 	tpDphHashNode pStaDs = NULL;
@@ -362,7 +362,7 @@ lim_tear_down_link_with_ap(tpAniSirGlobal pMac, uint8_t sessionId,
 	/* tear down the following sessionEntry */
 	tpPESession psessionEntry;
 
-	psessionEntry = pe_find_session_by_session_id(pMac, sessionId);
+	psessionEntry = pe_find_session_by_session_id(mac, sessionId);
 	if (psessionEntry == NULL) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
@@ -380,7 +380,7 @@ lim_tear_down_link_with_ap(tpAniSirGlobal pMac, uint8_t sessionId,
 	/* and cleanup by sending SME_DISASSOC_REQ to SME */
 
 	pStaDs =
-		dph_get_hash_entry(pMac, DPH_STA_HASH_INDEX_PEER,
+		dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 				   &psessionEntry->dph.dphHashTable);
 
 	if (pStaDs != NULL) {
@@ -388,7 +388,7 @@ lim_tear_down_link_with_ap(tpAniSirGlobal pMac, uint8_t sessionId,
 
 #ifdef FEATURE_WLAN_TDLS
 		/* Delete all TDLS peers connected before leaving BSS */
-		lim_delete_tdls_peers(pMac, psessionEntry);
+		lim_delete_tdls_peers(mac, psessionEntry);
 #endif
 
 		pStaDs->mlmStaContext.disassocReason = reasonCode;
@@ -404,20 +404,20 @@ lim_tear_down_link_with_ap(tpAniSirGlobal pMac, uint8_t sessionId,
 	* buffer. This MAC will be used to send Deauth before
 	* connection, if we connect to same AP after HB failure.
 	*/
-	if (pMac->mlme_cfg->sta.deauth_before_connection &&
+	if (mac->mlme_cfg->sta.deauth_before_connection &&
 	    eSIR_BEACON_MISSED == reasonCode) {
-		int apCount = pMac->lim.gLimHeartBeatApMacIndex;
+		int apCount = mac->lim.gLimHeartBeatApMacIndex;
 
-		if (pMac->lim.gLimHeartBeatApMacIndex)
-			pMac->lim.gLimHeartBeatApMacIndex = 0;
+		if (mac->lim.gLimHeartBeatApMacIndex)
+			mac->lim.gLimHeartBeatApMacIndex = 0;
 		else
-			pMac->lim.gLimHeartBeatApMacIndex = 1;
+			mac->lim.gLimHeartBeatApMacIndex = 1;
 
 		pe_debug("HB Failure on MAC "
 			MAC_ADDRESS_STR" Store it on Index %d",
 			MAC_ADDR_ARRAY(pStaDs->staAddr), apCount);
 
-		sir_copy_mac_addr(pMac->lim.gLimHeartBeatApMac[apCount],
+		sir_copy_mac_addr(mac->lim.gLimHeartBeatApMac[apCount],
 							pStaDs->staAddr);
 	}
 
@@ -427,15 +427,15 @@ lim_tear_down_link_with_ap(tpAniSirGlobal pMac, uint8_t sessionId,
 			pStaDs->mlmStaContext.cleanupTrigger;
 
 		if (LIM_IS_STA_ROLE(psessionEntry))
-			lim_post_sme_message(pMac, LIM_MLM_DEAUTH_IND,
+			lim_post_sme_message(mac, LIM_MLM_DEAUTH_IND,
 				     (uint32_t *) &mlmDeauthInd);
-		if (pMac->mlme_cfg->gen.fatal_event_trigger)
+		if (mac->mlme_cfg->gen.fatal_event_trigger)
 			cds_flush_logs(WLAN_LOG_TYPE_FATAL,
 					WLAN_LOG_INDICATOR_HOST_DRIVER,
 					WLAN_LOG_REASON_HB_FAILURE,
 					false, false);
 
-		lim_send_sme_deauth_ind(pMac, pStaDs, psessionEntry);
+		lim_send_sme_deauth_ind(mac, pStaDs, psessionEntry);
 	}
 } /*** lim_tear_down_link_with_ap() ***/
 

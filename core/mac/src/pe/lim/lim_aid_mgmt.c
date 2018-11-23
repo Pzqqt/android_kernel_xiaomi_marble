@@ -42,7 +42,7 @@
 
 /**
  * lim_init_peer_idxpool() -- initializes peer index pool
- * @pMac: mac context
+ * @mac: mac context
  * @pSessionEntry: session entry
  *
  * This function is called while starting a BSS at AP
@@ -53,10 +53,10 @@
  * Return: None
  */
 
-void lim_init_peer_idxpool(tpAniSirGlobal pMac, tpPESession pSessionEntry)
+void lim_init_peer_idxpool(tpAniSirGlobal mac, tpPESession pSessionEntry)
 {
 	uint8_t i;
-	uint8_t maxAssocSta = pMac->lim.maxStation;
+	uint8_t maxAssocSta = mac->lim.maxStation;
 
 	pSessionEntry->gpLimPeerIdxpool[0] = 0;
 
@@ -105,18 +105,18 @@ void lim_init_peer_idxpool(tpAniSirGlobal pMac, tpPESession pSessionEntry)
  *
  ***NOTE:
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @return peerIdx  - assigned peer Station IDx for STA
  */
 
-uint16_t lim_assign_peer_idx(tpAniSirGlobal pMac, tpPESession pSessionEntry)
+uint16_t lim_assign_peer_idx(tpAniSirGlobal mac, tpPESession pSessionEntry)
 {
 	uint16_t peerId;
 
 	/* make sure we haven't exceeded the configurable limit on associations */
 	/* This count is global to ensure that it doesn't exceed the hardware limits. */
-	if (pe_get_current_stas_count(pMac) >=
-	    pMac->mlme_cfg->sap_cfg.assoc_sta_limit) {
+	if (pe_get_current_stas_count(mac) >=
+	    mac->mlme_cfg->sap_cfg.assoc_sta_limit) {
 		/* too many associations already active */
 		return 0;
 	}
@@ -152,14 +152,14 @@ uint16_t lim_assign_peer_idx(tpAniSirGlobal pMac, tpPESession pSessionEntry)
  *
  ***NOTE:
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @param  peerIdx - peer station index that need to return to free pool
  *
  * @return None
  */
 
 void
-lim_release_peer_idx(tpAniSirGlobal pMac, uint16_t peerIdx,
+lim_release_peer_idx(tpAniSirGlobal mac, uint16_t peerIdx,
 		     tpPESession pSessionEntry)
 {
 	pSessionEntry->gLimNumOfCurrentSTAs--;

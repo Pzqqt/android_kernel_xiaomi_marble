@@ -37,12 +37,12 @@
 #include "sch_api.h"
 #include "rrm_api.h"
 
-static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry);
+static void lim_update_config(tpAniSirGlobal mac, tpPESession psessionEntry);
 
-void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry)
+void lim_set_cfg_protection(tpAniSirGlobal mac, tpPESession pesessionEntry)
 {
 	uint32_t val = 0;
-	struct wlan_mlme_cfg *mlme_cfg = pMac->mlme_cfg;
+	struct wlan_mlme_cfg *mlme_cfg = mac->mlme_cfg;
 
 	if (pesessionEntry != NULL && LIM_IS_AP_ROLE(pesessionEntry)) {
 		if (pesessionEntry->gLimProtectionControl ==
@@ -63,32 +63,32 @@ void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry)
 				pesessionEntry->cfgProtection.obss);
 		}
 	} else {
-		pMac->lim.gLimProtectionControl =
+		mac->lim.gLimProtectionControl =
 			mlme_cfg->sap_protection_cfg.protection_force_policy;
 
 
-		if (pMac->lim.gLimProtectionControl ==
+		if (mac->lim.gLimProtectionControl ==
 		    MLME_FORCE_POLICY_PROTECTION_DISABLE)
-			qdf_mem_set((void *)&pMac->lim.cfgProtection,
+			qdf_mem_set((void *)&mac->lim.cfgProtection,
 				    sizeof(tCfgProtection), 0);
 		else {
 			val = mlme_cfg->sap_protection_cfg.protection_enabled;
 
-			pMac->lim.cfgProtection.fromlla =
+			mac->lim.cfgProtection.fromlla =
 				(val >> MLME_PROTECTION_ENABLED_FROM_llA) & 1;
-			pMac->lim.cfgProtection.fromllb =
+			mac->lim.cfgProtection.fromllb =
 				(val >> MLME_PROTECTION_ENABLED_FROM_llB) & 1;
-			pMac->lim.cfgProtection.fromllg =
+			mac->lim.cfgProtection.fromllg =
 				(val >> MLME_PROTECTION_ENABLED_FROM_llG) & 1;
-			pMac->lim.cfgProtection.ht20 =
+			mac->lim.cfgProtection.ht20 =
 				(val >> MLME_PROTECTION_ENABLED_HT_20) & 1;
-			pMac->lim.cfgProtection.nonGf =
+			mac->lim.cfgProtection.nonGf =
 				(val >> MLME_PROTECTION_ENABLED_NON_GF) & 1;
-			pMac->lim.cfgProtection.lsigTxop =
+			mac->lim.cfgProtection.lsigTxop =
 				(val >> MLME_PROTECTION_ENABLED_LSIG_TXOP) & 1;
-			pMac->lim.cfgProtection.rifs =
+			mac->lim.cfgProtection.rifs =
 				(val >> MLME_PROTECTION_ENABLED_RIFS) & 1;
-			pMac->lim.cfgProtection.obss =
+			mac->lim.cfgProtection.obss =
 				(val >> MLME_PROTECTION_ENABLED_OBSS) & 1;
 
 		}
@@ -111,11 +111,11 @@ void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry)
  *
  ***NOTE:
  *
- * @param  pMac  - Pointer to Global MAC structure
+ * @param  mac  - Pointer to Global MAC structure
  * @param  cfgId - ID of CFG parameter that got updated
  * @return None
  */
-void lim_handle_param_update(tpAniSirGlobal pMac, eUpdateIEsType cfgId)
+void lim_handle_param_update(tpAniSirGlobal mac, eUpdateIEsType cfgId)
 {
 	struct scheduler_msg msg = { 0 };
 	QDF_STATUS status;
@@ -126,7 +126,7 @@ void lim_handle_param_update(tpAniSirGlobal pMac, eUpdateIEsType cfgId)
 	case eUPDATE_IE_PROBE_BCN:
 	{
 		msg.type = SIR_LIM_UPDATE_BEACON;
-		status = lim_post_msg_api(pMac, &msg);
+		status = lim_post_msg_api(mac, &msg);
 
 		if (status != QDF_STATUS_SUCCESS)
 			pe_err("Failed lim_post_msg_api %u", status);
@@ -153,11 +153,11 @@ void lim_handle_param_update(tpAniSirGlobal pMac, eUpdateIEsType cfgId)
  *
  ***NOTE:
  *
- * @param  pMac  - Pointer to Global MAC structure
+ * @param  mac  - Pointer to Global MAC structure
  * @return None
  */
 
-void lim_apply_configuration(tpAniSirGlobal pMac, tpPESession psessionEntry)
+void lim_apply_configuration(tpAniSirGlobal mac, tpPESession psessionEntry)
 {
 	uint32_t val = 0, phyMode;
 
@@ -165,14 +165,14 @@ void lim_apply_configuration(tpAniSirGlobal pMac, tpPESession psessionEntry)
 
 	psessionEntry->limSentCapsChangeNtf = false;
 
-	lim_get_phy_mode(pMac, &phyMode, psessionEntry);
+	lim_get_phy_mode(mac, &phyMode, psessionEntry);
 
-	lim_update_config(pMac, psessionEntry);
+	lim_update_config(mac, psessionEntry);
 
-	lim_get_short_slot_from_phy_mode(pMac, psessionEntry, phyMode,
+	lim_get_short_slot_from_phy_mode(mac, psessionEntry, phyMode,
 					 &psessionEntry->shortSlotTimeSupported);
 
-	lim_set_cfg_protection(pMac, psessionEntry);
+	lim_set_cfg_protection(mac, psessionEntry);
 
 	/* Added for BT - AMP Support */
 	if (LIM_IS_AP_ROLE(psessionEntry) ||
@@ -182,12 +182,12 @@ void lim_apply_configuration(tpAniSirGlobal pMac, tpPESession psessionEntry)
 
 		if (psessionEntry->statypeForBss == STA_ENTRY_SELF) {
 			pe_debug("Initializing BT-AMP beacon generation");
-			sch_set_beacon_interval(pMac, psessionEntry);
-			sch_set_fixed_beacon_fields(pMac, psessionEntry);
+			sch_set_beacon_interval(mac, psessionEntry);
+			sch_set_fixed_beacon_fields(mac, psessionEntry);
 		}
 	}
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_SCAN_IN_POWERSAVE, &val) !=
+	if (wlan_cfg_get_int(mac, WNI_CFG_SCAN_IN_POWERSAVE, &val) !=
 	    QDF_STATUS_SUCCESS) {
 		pe_err("could not retrieve WNI_CFG_SCAN_IN_POWERSAVE");
 		return;
@@ -211,21 +211,21 @@ void lim_apply_configuration(tpAniSirGlobal pMac, tpPESession psessionEntry)
  * @return None
  */
 
-static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry)
+static void lim_update_config(tpAniSirGlobal mac, tpPESession psessionEntry)
 {
 	uint32_t val;
 	bool enabled;
 
 	psessionEntry->beaconParams.fShortPreamble =
-					pMac->mlme_cfg->ht_caps.short_preamble;
+					mac->mlme_cfg->ht_caps.short_preamble;
 
 	/* In STA case this parameter is filled during the join request */
 	if (LIM_IS_AP_ROLE(psessionEntry) ||
 		LIM_IS_IBSS_ROLE(psessionEntry)) {
-		enabled = pMac->mlme_cfg->wmm_params.wme_enabled;
+		enabled = mac->mlme_cfg->wmm_params.wme_enabled;
 		psessionEntry->limWmeEnabled = enabled;
 	}
-	enabled = pMac->mlme_cfg->wmm_params.wsm_enabled;
+	enabled = mac->mlme_cfg->wmm_params.wsm_enabled;
 	psessionEntry->limWsmEnabled = enabled;
 
 	if ((!psessionEntry->limWmeEnabled) && (psessionEntry->limWsmEnabled)) {
@@ -234,17 +234,17 @@ static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	}
 	/* In STA , this parameter is filled during the join request */
 	if (LIM_IS_AP_ROLE(psessionEntry) || LIM_IS_IBSS_ROLE(psessionEntry)) {
-		enabled = pMac->mlme_cfg->wmm_params.qos_enabled;
+		enabled = mac->mlme_cfg->wmm_params.qos_enabled;
 		psessionEntry->limQosEnabled = enabled;
 	}
-	psessionEntry->limHcfEnabled = pMac->mlme_cfg->feature_flags.enable_hcf;
+	psessionEntry->limHcfEnabled = mac->mlme_cfg->feature_flags.enable_hcf;
 
 	/* AP: WSM should enable HCF as well, for STA enable WSM only after */
 	/* association response is received */
 	if (psessionEntry->limWsmEnabled && LIM_IS_AP_ROLE(psessionEntry))
 		psessionEntry->limHcfEnabled = 1;
 
-	if (wlan_cfg_get_int(pMac, WNI_CFG_11D_ENABLED, &val) != QDF_STATUS_SUCCESS)
+	if (wlan_cfg_get_int(mac, WNI_CFG_11D_ENABLED, &val) != QDF_STATUS_SUCCESS)
 		pe_err("cfg get 11d enabled failed");
 	psessionEntry->lim11dEnabled = (val) ? 1 : 0;
 

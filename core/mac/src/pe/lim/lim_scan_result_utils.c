@@ -52,7 +52,7 @@
  ***NOTE:
  * NA
  *
- * @param  pMac - Pointer to Global MAC structure
+ * @param  mac - Pointer to Global MAC structure
  * @param  pBPR - Pointer to parsed Beacon/Probe Response structure
  * @param  pRxPacketInfo  - Pointer to Received frame's BD
  * @param  fScanning - flag to indicate if it is during scan.
@@ -61,7 +61,7 @@
  * @return None
  */
 void
-lim_collect_bss_description(tpAniSirGlobal pMac,
+lim_collect_bss_description(tpAniSirGlobal mac,
 			    tSirBssDescription *pBssDescr,
 			    tpSirProbeRespBeacon pBPR,
 			    uint8_t *pRxPacketInfo, uint8_t fScanning)
@@ -131,7 +131,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	 * This fix will work for 5Ghz 11n devices, but for 11a devices, we have to rely on RXP routing flag to get the correct channel.
 	 * So The problem of incorrect channel reporting in 5Ghz will still remain for 11a devices.
 	 */
-	pBssDescr->channelId = lim_get_channel_from_beacon(pMac, pBPR);
+	pBssDescr->channelId = lim_get_channel_from_beacon(mac, pBPR);
 
 	pBssDescr->channelIdSelf = pBssDescr->channelId;
 	pBssDescr->rx_channel = rxChannel;
@@ -139,7 +139,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	/* set the network type in bss description */
 	channelNum = pBssDescr->channelId;
 	pBssDescr->nwType =
-		lim_get_nw_type(pMac, channelNum, SIR_MAC_MGMT_FRAME, pBPR);
+		lim_get_nw_type(mac, channelNum, SIR_MAC_MGMT_FRAME, pBPR);
 
 	/* Copy RSSI & SINR from BD */
 	pBssDescr->rssi = (int8_t) WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo);
@@ -162,7 +162,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 		 pBPR->ssId.length, pBPR->ssId.ssId, pBssDescr->rssi_raw);
 
 	if (fScanning) {
-		rrm_get_start_tsf(pMac, pBssDescr->startTSF);
+		rrm_get_start_tsf(mac, pBssDescr->startTSF);
 		pBssDescr->parentTSF = WMA_GET_RX_TIMESTAMP(pRxPacketInfo);
 	}
 
@@ -194,7 +194,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 
 	/*set channel number in beacon in case it is not present */
 	pBPR->channelNumber = pBssDescr->channelId;
-	pMac->lim.beacon_probe_rsp_cnt_per_scan++;
+	mac->lim.beacon_probe_rsp_cnt_per_scan++;
 
 	return;
 } /*** end lim_collect_bss_description() ***/

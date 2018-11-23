@@ -162,7 +162,7 @@ end:
 
 /**
  * lim_handle_sme_reaasoc_result() - Handle the reassoc result
- * @pMac: Global MAC Context
+ * @mac: Global MAC Context
  * @resultCode: Result code
  * @protStatusCode: Protocol Status Code
  * @psessionEntry: PE Session
@@ -173,7 +173,7 @@ end:
  *
  * Return: None
  */
-static void lim_handle_sme_reaasoc_result(tpAniSirGlobal pMac,
+static void lim_handle_sme_reaasoc_result(tpAniSirGlobal mac,
 		tSirResultCodes resultCode, uint16_t protStatusCode,
 		tpPESession psessionEntry)
 {
@@ -189,7 +189,7 @@ static void lim_handle_sme_reaasoc_result(tpAniSirGlobal pMac,
 	smetransactionId = psessionEntry->transactionId;
 	if (resultCode != eSIR_SME_SUCCESS) {
 		pStaDs =
-			dph_get_hash_entry(pMac, DPH_STA_HASH_INDEX_PEER,
+			dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
 					   &psessionEntry->dph.dphHashTable);
 		if (pStaDs != NULL) {
 			pStaDs->mlmStaContext.disassocReason =
@@ -198,10 +198,10 @@ static void lim_handle_sme_reaasoc_result(tpAniSirGlobal pMac,
 				eLIM_JOIN_FAILURE;
 			pStaDs->mlmStaContext.resultCode = resultCode;
 			pStaDs->mlmStaContext.protStatusCode = protStatusCode;
-			lim_cleanup_rx_path(pMac, pStaDs, psessionEntry);
+			lim_cleanup_rx_path(mac, pStaDs, psessionEntry);
 			/* Cleanup if add bss failed */
 			if (psessionEntry->add_bss_failed) {
-				dph_delete_hash_entry(pMac,
+				dph_delete_hash_entry(mac,
 					 pStaDs->staAddr, pStaDs->assocId,
 					 &psessionEntry->dph.dphHashTable);
 				goto error;
@@ -213,11 +213,11 @@ error:
 	/* Delete the session if REASSOC failure occurred. */
 	if (resultCode != eSIR_SME_SUCCESS) {
 		if (NULL != psessionEntry) {
-			pe_delete_session(pMac, psessionEntry);
+			pe_delete_session(mac, psessionEntry);
 			psessionEntry = NULL;
 		}
 	}
-	lim_send_sme_join_reassoc_rsp(pMac, eWNI_SME_REASSOC_RSP, resultCode,
+	lim_send_sme_join_reassoc_rsp(mac, eWNI_SME_REASSOC_RSP, resultCode,
 		protStatusCode, psessionEntry, smesessionId, smetransactionId);
 }
 
@@ -337,7 +337,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 /**
  * lim_process_sta_mlm_add_bss_rsp_ft() - Handle the ADD BSS response
- * @pMac: Global MAC context
+ * @mac: Global MAC context
  * @limMsgQ: ADD BSS Parameters
  * @psessionEntry: PE Session
  *
@@ -346,7 +346,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
  *
  *Return: None
  */
-void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
+void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal mac,
 		struct scheduler_msg *limMsgQ, tpPESession psessionEntry)
 {
 	tLimMlmReassocCnf mlmReassocCnf; /* keep sme */
@@ -367,13 +367,13 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 		goto end;
 	}
 
-	pStaDs = dph_add_hash_entry(pMac, pAddBssParams->bssId,
+	pStaDs = dph_add_hash_entry(mac, pAddBssParams->bssId,
 					DPH_STA_HASH_INDEX_PEER,
 					&psessionEntry->dph.dphHashTable);
 	if (pStaDs == NULL) {
 		/* Could not add hash table entry */
 		pe_err("could not add hash entry at DPH for");
-		lim_print_mac_addr(pMac, pAddBssParams->staContext.staMac,
+		lim_print_mac_addr(mac, pAddBssParams->staContext.staMac,
 				   LOGE);
 		goto end;
 	}
@@ -382,14 +382,14 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (psessionEntry->bRoamSynchInProgress != true) {
 #endif
-		pMac->lim.limTimers.gLimReassocFailureTimer.sessionId =
+		mac->lim.limTimers.gLimReassocFailureTimer.sessionId =
 			psessionEntry->peSessionId;
 		/* / Start reassociation failure timer */
 		MTRACE(mac_trace
-			(pMac, TRACE_CODE_TIMER_ACTIVATE,
+			(mac, TRACE_CODE_TIMER_ACTIVATE,
 			 psessionEntry->peSessionId, eLIM_REASSOC_FAIL_TIMER));
 		if (tx_timer_activate
-			(&pMac->lim.limTimers.gLimReassocFailureTimer)
+			(&mac->lim.limTimers.gLimReassocFailureTimer)
 			!= TX_SUCCESS) {
 			/* / Could not start reassoc failure timer. */
 			/* Log error */
@@ -402,20 +402,20 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 				eSIR_MAC_UNSPEC_FAILURE_STATUS;
 			goto end;
 		}
-		pMac->lim.pSessionEntry = psessionEntry;
-		if (NULL == pMac->lim.pSessionEntry->pLimMlmReassocRetryReq) {
+		mac->lim.pSessionEntry = psessionEntry;
+		if (NULL == mac->lim.pSessionEntry->pLimMlmReassocRetryReq) {
 			/* Take a copy of reassoc request for retrying */
-			pMac->lim.pSessionEntry->pLimMlmReassocRetryReq =
+			mac->lim.pSessionEntry->pLimMlmReassocRetryReq =
 				qdf_mem_malloc(sizeof(tLimMlmReassocReq));
-			if (!pMac->lim.pSessionEntry->pLimMlmReassocRetryReq)
+			if (!mac->lim.pSessionEntry->pLimMlmReassocRetryReq)
 				goto end;
-			qdf_mem_copy(pMac->lim.pSessionEntry->
+			qdf_mem_copy(mac->lim.pSessionEntry->
 					pLimMlmReassocRetryReq,
 					psessionEntry->pLimMlmReassocReq,
 					sizeof(tLimMlmReassocReq));
 		}
-		pMac->lim.reAssocRetryAttempt = 0;
-		lim_send_reassoc_req_with_ft_ies_mgmt_frame(pMac,
+		mac->lim.reAssocRetryAttempt = 0;
+		lim_send_reassoc_req_with_ft_ies_mgmt_frame(mac,
 				psessionEntry->
 				pLimMlmReassocReq,
 				psessionEntry);
@@ -427,7 +427,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 	psessionEntry->limPrevMlmState = psessionEntry->limMlmState;
 	psessionEntry->limMlmState = eLIM_MLM_WT_FT_REASSOC_RSP_STATE;
 	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_MLM_STATE, psessionEntry->peSessionId,
+		       (mac, TRACE_CODE_MLM_STATE, psessionEntry->peSessionId,
 		       eLIM_MLM_WT_FT_REASSOC_RSP_STATE));
 	pe_debug("Set the mlm state: %d session: %d",
 		       psessionEntry->limMlmState, psessionEntry->peSessionId);
@@ -439,7 +439,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 	/* STA Index(genr by HAL) for the BSS entry is stored here */
 	pStaDs->staIndex = pAddBssParams->staContext.staIdx;
 
-	rrm_cache_mgmt_tx_power(pMac, pAddBssParams->txMgmtPower,
+	rrm_cache_mgmt_tx_power(mac, pAddBssParams->txMgmtPower,
 			psessionEntry);
 
 	pAddStaParams = qdf_mem_malloc(sizeof(tAddStaParams));
@@ -471,7 +471,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 
 	pAddStaParams->shortPreambleSupported =
 		(uint8_t) psessionEntry->beaconParams.fShortPreamble;
-	lim_populate_peer_rate_set(pMac, &pAddStaParams->supportedRates, NULL,
+	lim_populate_peer_rate_set(mac, &pAddStaParams->supportedRates, NULL,
 				   false, psessionEntry, NULL, NULL);
 
 	if (psessionEntry->htCapability) {
@@ -479,44 +479,44 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 		pAddStaParams->vhtCapable = psessionEntry->vhtCapability;
 		pAddStaParams->ch_width = psessionEntry->ch_width;
 		pAddStaParams->greenFieldCapable =
-			lim_get_ht_capability(pMac, eHT_GREENFIELD,
+			lim_get_ht_capability(mac, eHT_GREENFIELD,
 					      psessionEntry);
 		pAddStaParams->mimoPS =
-			lim_get_ht_capability(pMac, eHT_MIMO_POWER_SAVE,
+			lim_get_ht_capability(mac, eHT_MIMO_POWER_SAVE,
 					      psessionEntry);
 		pAddStaParams->rifsMode =
-			lim_get_ht_capability(pMac, eHT_RIFS_MODE,
+			lim_get_ht_capability(mac, eHT_RIFS_MODE,
 					psessionEntry);
 		pAddStaParams->lsigTxopProtection =
-			lim_get_ht_capability(pMac, eHT_LSIG_TXOP_PROTECTION,
+			lim_get_ht_capability(mac, eHT_LSIG_TXOP_PROTECTION,
 					      psessionEntry);
 		pAddStaParams->maxAmpduDensity =
-			lim_get_ht_capability(pMac, eHT_MPDU_DENSITY,
+			lim_get_ht_capability(mac, eHT_MPDU_DENSITY,
 					psessionEntry);
 		pAddStaParams->maxAmpduSize =
-			lim_get_ht_capability(pMac, eHT_MAX_RX_AMPDU_FACTOR,
+			lim_get_ht_capability(mac, eHT_MAX_RX_AMPDU_FACTOR,
 					      psessionEntry);
 		pAddStaParams->maxAmsduSize =
-			lim_get_ht_capability(pMac, eHT_MAX_AMSDU_LENGTH,
+			lim_get_ht_capability(mac, eHT_MAX_AMSDU_LENGTH,
 					      psessionEntry);
 		pAddStaParams->max_amsdu_num =
-			lim_get_ht_capability(pMac, eHT_MAX_AMSDU_NUM,
+			lim_get_ht_capability(mac, eHT_MAX_AMSDU_NUM,
 					      psessionEntry);
 		pAddStaParams->fDsssCckMode40Mhz =
-			lim_get_ht_capability(pMac, eHT_DSSS_CCK_MODE_40MHZ,
+			lim_get_ht_capability(mac, eHT_DSSS_CCK_MODE_40MHZ,
 					      psessionEntry);
 		pAddStaParams->fShortGI20Mhz =
-			lim_get_ht_capability(pMac, eHT_SHORT_GI_20MHZ,
+			lim_get_ht_capability(mac, eHT_SHORT_GI_20MHZ,
 					psessionEntry);
 		pAddStaParams->fShortGI40Mhz =
-			lim_get_ht_capability(pMac, eHT_SHORT_GI_40MHZ,
+			lim_get_ht_capability(mac, eHT_SHORT_GI_40MHZ,
 					psessionEntry);
 	}
 
-	listenInterval = pMac->mlme_cfg->sap_cfg.listen_interval;
+	listenInterval = mac->mlme_cfg->sap_cfg.listen_interval;
 	pAddStaParams->listenInterval = (uint16_t) listenInterval;
 
-	wlan_cfg_get_int(pMac, WNI_CFG_DOT11_MODE, &selfStaDot11Mode);
+	wlan_cfg_get_int(mac, WNI_CFG_DOT11_MODE, &selfStaDot11Mode);
 	pAddStaParams->encryptType = psessionEntry->encryptType;
 	pAddStaParams->maxTxPower = psessionEntry->maxTxPower;
 
@@ -531,7 +531,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (psessionEntry->bRoamSynchInProgress) {
 		pe_debug("LFR3:Prep and save AddStaReq for post-assoc-rsp");
-		lim_process_assoc_rsp_frame(pMac, pMac->roam.pReassocResp,
+		lim_process_assoc_rsp_frame(mac, mac->roam.pReassocResp,
 					    LIM_REASSOC, psessionEntry);
 	}
 #endif
@@ -559,11 +559,11 @@ end:
 	else
 		mlmReassocCnf.sessionId = 0;
 
-	lim_post_sme_message(pMac, LIM_MLM_REASSOC_CNF,
+	lim_post_sme_message(mac, LIM_MLM_REASSOC_CNF,
 			     (uint32_t *) &mlmReassocCnf);
 }
 
-void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
+void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal mac,
 				    tLimMlmReassocReq *reassoc_req)
 {
 	uint8_t chanNum = 0;
@@ -579,7 +579,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
 		return;
 	}
 
-	session = pe_find_session_by_session_id(pMac, reassoc_req->sessionId);
+	session = pe_find_session_by_session_id(mac, reassoc_req->sessionId);
 	if (!session) {
 		pe_err("session Does not exist for given session Id");
 		qdf_mem_free(reassoc_req);
@@ -589,7 +589,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
 	chanNum = session->currentOperChannel;
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
-	lim_diag_event_report(pMac, WLAN_PE_DIAG_REASSOCIATING,
+	lim_diag_event_report(mac, WLAN_PE_DIAG_REASSOCIATING,
 			session, 0, 0);
 #endif
 
@@ -608,7 +608,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
 	qdf_mem_copy(reassoc_req->peerMacAddr,
 		     session->bssId, sizeof(tSirMacAddr));
 
-	if (cfg_get_capability_info(pMac, &caps, session) !=
+	if (cfg_get_capability_info(mac, &caps, session) !=
 			QDF_STATUS_SUCCESS) {
 		/**
 		 * Could not get Capabilities value
@@ -619,7 +619,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
 		return;
 	}
 
-	lim_update_caps_info_for_bss(pMac, &caps,
+	lim_update_caps_info_for_bss(mac, &caps,
 		session->pLimReAssocReq->bssDescription.capabilityInfo);
 	pe_debug("Capabilities info FT Reassoc: 0x%X", caps);
 
@@ -628,14 +628,14 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
 	/* If telescopic beaconing is enabled, set listen interval
 	   to CFG_TELE_BCN_MAX_LI
 	 */
-	teleBcnEn = pMac->mlme_cfg->sap_cfg.tele_bcn_wakeup_en;
+	teleBcnEn = mac->mlme_cfg->sap_cfg.tele_bcn_wakeup_en;
 	if (teleBcnEn)
-		val = pMac->mlme_cfg->sap_cfg.tele_bcn_max_li;
+		val = mac->mlme_cfg->sap_cfg.tele_bcn_max_li;
 	else
-		val = pMac->mlme_cfg->sap_cfg.listen_interval;
+		val = mac->mlme_cfg->sap_cfg.listen_interval;
 
 	if (lim_set_link_state
-		    (pMac, eSIR_LINK_PREASSOC_STATE, session->bssId,
+		    (mac, eSIR_LINK_PREASSOC_STATE, session->bssId,
 		    session->selfMacAddr, NULL, NULL) != QDF_STATUS_SUCCESS) {
 		qdf_mem_free(reassoc_req);
 		return;
@@ -645,7 +645,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
 	session->pLimMlmReassocReq = reassoc_req;
 
 	/* we need to defer the message until we get response back from HAL */
-	SET_LIM_PROCESS_DEFD_MESGS(pMac, false);
+	SET_LIM_PROCESS_DEFD_MESGS(mac, false);
 
 	msgQ.type = SIR_HAL_ADD_BSS_REQ;
 	msgQ.reserved = 0;
@@ -653,8 +653,8 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
 	msgQ.bodyval = 0;
 
 	pe_debug("Sending SIR_HAL_ADD_BSS_REQ");
-	MTRACE(mac_trace_msg_tx(pMac, session->peSessionId, msgQ.type));
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	MTRACE(mac_trace_msg_tx(mac, session->peSessionId, msgQ.type));
+	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		qdf_mem_free(session->ftPEContext.pAddBssReq);
 		pe_err("Posting ADD_BSS_REQ to HAL failed, reason: %X",

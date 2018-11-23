@@ -69,7 +69,7 @@
  * @return 0 or 1 (Valid)
  */
 
-static inline unsigned int is_auth_valid(tpAniSirGlobal pMac,
+static inline unsigned int is_auth_valid(tpAniSirGlobal mac,
 					 tpSirMacAuthFrameBody auth,
 					 tpPESession sessionEntry)
 {
@@ -1508,7 +1508,7 @@ free:
  * is received we will have a session in progress. !!!!!
  ***----------------------------------------------------------------------
  */
-QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd,
+QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal mac, uint8_t *pBd,
 						void *body)
 {
 	tpSirMacMgmtHdr pHdr;
@@ -1531,14 +1531,14 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd,
 	/* Auth frame has come on a new BSS, however, we need to find the session
 	 * from where the auth-req was sent to the new AP
 	 */
-	for (i = 0; i < pMac->lim.maxBssId; i++) {
+	for (i = 0; i < mac->lim.maxBssId; i++) {
 		/* Find first free room in session table */
-		if (pMac->lim.gpSession[i].valid == true &&
-		    pMac->lim.gpSession[i].ftPEContext.ftPreAuthSession ==
+		if (mac->lim.gpSession[i].valid == true &&
+		    mac->lim.gpSession[i].ftPEContext.ftPreAuthSession ==
 		    true) {
 			/* Found the session */
-			psessionEntry = &pMac->lim.gpSession[i];
-			pMac->lim.gpSession[i].ftPEContext.ftPreAuthSession =
+			psessionEntry = &mac->lim.gpSession[i];
+			mac->lim.gpSession[i].ftPEContext.ftPreAuthSession =
 				false;
 		}
 	}
@@ -1558,8 +1558,8 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd,
 		pe_err("Error: Frame len = 0");
 		return QDF_STATUS_E_FAILURE;
 	}
-	lim_print_mac_addr(pMac, pHdr->bssId, LOGD);
-	lim_print_mac_addr(pMac,
+	lim_print_mac_addr(mac, pHdr->bssId, LOGD);
+	lim_print_mac_addr(mac,
 			   psessionEntry->ftPEContext.pFTPreAuthReq->preAuthbssId,
 			   LOGD);
 	pe_debug("seqControl: 0x%X",
@@ -1610,13 +1610,13 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd,
 
 	/* Stopping timer now, that we have our unicast from the AP */
 	/* of our choice. */
-	lim_deactivate_and_change_timer(pMac, eLIM_FT_PREAUTH_RSP_TIMER);
+	lim_deactivate_and_change_timer(mac, eLIM_FT_PREAUTH_RSP_TIMER);
 
 	/* Save off the auth resp. */
-	if ((sir_convert_auth_frame2_struct(pMac, pBody, frameLen, &rxAuthFrame) !=
+	if ((sir_convert_auth_frame2_struct(mac, pBody, frameLen, &rxAuthFrame) !=
 	     QDF_STATUS_SUCCESS)) {
 		pe_err("failed to convert Auth frame to struct");
-		lim_handle_ft_pre_auth_rsp(pMac, QDF_STATUS_E_FAILURE, NULL, 0,
+		lim_handle_ft_pre_auth_rsp(mac, QDF_STATUS_E_FAILURE, NULL, 0,
 					   psessionEntry);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1626,7 +1626,7 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd,
 		       (uint32_t) pRxAuthFrameBody->authAlgoNumber,
 		       (uint32_t) pRxAuthFrameBody->authTransactionSeqNumber,
 		       (uint32_t) pRxAuthFrameBody->authStatusCode,
-		       (uint32_t) pMac->lim.gLimNumPreAuthContexts);
+		       (uint32_t) mac->lim.gLimNumPreAuthContexts);
 	switch (pRxAuthFrameBody->authTransactionSeqNumber) {
 	case SIR_MAC_AUTH_FRAME_2:
 		if (pRxAuthFrameBody->authStatusCode != eSIR_MAC_SUCCESS_STATUS) {
@@ -1647,7 +1647,7 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd,
 	}
 
 	/* Send the Auth response to SME */
-	lim_handle_ft_pre_auth_rsp(pMac, ret_status, pBody, frameLen, psessionEntry);
+	lim_handle_ft_pre_auth_rsp(mac, ret_status, pBody, frameLen, psessionEntry);
 
 	return ret_status;
 }

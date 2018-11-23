@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,7 +35,7 @@
 uint8_t lim_scan_hash_function(tSirMacAddr);
 void lim_restore_pre_scan_state(tpAniSirGlobal);
 void lim_copy_scan_result(tpAniSirGlobal, uint8_t *);
-void lim_collect_bss_description(tpAniSirGlobal pMac,
+void lim_collect_bss_description(tpAniSirGlobal mac,
 			    tSirBssDescription *pBssDescr,
 			    tpSirProbeRespBeacon pBPR,
 			    uint8_t *pRxPacketInfo, uint8_t fScanning);
