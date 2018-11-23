@@ -71,7 +71,12 @@ static void dp_ppdu_ring_reset(struct dp_pdev *pdev);
 static void dp_ppdu_ring_cfg(struct dp_pdev *pdev);
 
 #define DP_INTR_POLL_TIMER_MS	10
-#define DP_WDS_AGING_TIMER_DEFAULT_MS	120000
+/* Generic AST entry aging timer value */
+#define DP_AST_AGING_TIMER_DEFAULT_MS	1000
+/* WDS AST entry aging timer value */
+#define DP_WDS_AST_AGING_TIMER_DEFAULT_MS	120000
+#define DP_WDS_AST_AGING_TIMER_CNT \
+((DP_WDS_AST_AGING_TIMER_DEFAULT_MS / DP_AST_AGING_TIMER_DEFAULT_MS) - 1)
 #define DP_MCS_LENGTH (6*MAX_MCS)
 #define DP_NSS_LENGTH (6*SS_COUNT)
 #define DP_RXDMA_ERR_LENGTH (6*HAL_RXDMA_ERR_MAX)
@@ -980,6 +985,12 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 }
 #endif
 
+/**
+ *  dp_print_peer_table() - Dump all Peer stats
+ * @vdev: Datapath Vdev handle
+ *
+ * return void
+ */
 static void dp_print_peer_table(struct dp_vdev *vdev)
 {
 	struct dp_peer *peer = NULL;
@@ -990,18 +1001,17 @@ static void dp_print_peer_table(struct dp_vdev *vdev)
 			DP_PRINT_STATS("Invalid Peer");
 			return;
 		}
-		DP_PRINT_STATS("    peer_mac_addr = %pM"
-			" nawds_enabled = %d"
-			" bss_peer = %d"
-			" wapi = %d"
-			" wds_enabled = %d"
-			" delete in progress = %d",
-			peer->mac_addr.raw,
-			peer->nawds_enabled,
-			peer->bss_peer,
-			peer->wapi,
-			peer->wds_enabled,
-			peer->delete_in_progress);
+		DP_PRINT_STATS("    peer_mac_addr = %pM nawds_enabled = %d",
+			       peer->mac_addr.raw,
+			       peer->nawds_enabled);
+		DP_PRINT_STATS(" bss_peer = %d wapi = %d wds_enabled = %d",
+			       peer->bss_peer,
+			       peer->wapi,
+			       peer->wds_enabled);
+
+		DP_PRINT_STATS(" delete in progress = %d peer id = %d",
+			       peer->delete_in_progress,
+			       peer->peer_ids[0]);
 	}
 }
 
@@ -1976,14 +1986,14 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 #endif /* IPA_OFFLOAD */
 
 /*
- * dp_wds_aging_timer_fn() - Timer callback function for WDS aging
+ * dp_ast_aging_timer_fn() - Timer callback function for WDS aging
  * @soc: Datapath SOC handle
  *
  * This is a timer function used to age out stale AST nodes from
  * AST table
  */
 #ifdef FEATURE_WDS
-static void dp_wds_aging_timer_fn(void *soc_hdl)
+static void dp_ast_aging_timer_fn(void *soc_hdl)
 {
 	struct dp_soc *soc = (struct dp_soc *) soc_hdl;
 	struct dp_pdev *pdev;
@@ -1991,7 +2001,12 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
 	struct dp_peer *peer;
 	struct dp_ast_entry *ase, *temp_ase;
 	int i;
+	bool check_wds_ase = false;
 
+	if (soc->wds_ast_aging_timer_cnt++ >= DP_WDS_AST_AGING_TIMER_CNT) {
+		soc->wds_ast_aging_timer_cnt = 0;
+		check_wds_ase = true;
+	}
 	qdf_spin_lock_bh(&soc->ast_lock);
 
 	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
@@ -2006,16 +2021,38 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
 					 */
 					if (ase->type !=
 					    CDP_TXRX_AST_TYPE_WDS &&
-					    ase->type != CDP_TXRX_AST_TYPE_MEC)
+					    ase->type !=
+					    CDP_TXRX_AST_TYPE_MEC &&
+					    ase->type !=
+					    CDP_TXRX_AST_TYPE_DA)
 						continue;
 
-					if (ase->is_active) {
+					/* Expire MEC entry every n sec.
+					 * This needs to be expired in
+					 * case if STA backbone is made as
+					 * AP backbone, In this case it needs
+					 * to be re-added as a WDS entry.
+					 */
+					if (ase->is_active && ase->type ==
+					    CDP_TXRX_AST_TYPE_MEC) {
+						ase->is_active = FALSE;
+						continue;
+					} else if (ase->is_active &&
+						   check_wds_ase) {
 						ase->is_active = FALSE;
 						continue;
 					}
 
-					DP_STATS_INC(soc, ast.aged_out, 1);
-					dp_peer_del_ast(soc, ase);
+					if (ase->type ==
+					    CDP_TXRX_AST_TYPE_MEC) {
+						DP_STATS_INC(soc,
+							     ast.aged_out, 1);
+						dp_peer_del_ast(soc, ase);
+					} else if (check_wds_ase) {
+						DP_STATS_INC(soc,
+							     ast.aged_out, 1);
+						dp_peer_del_ast(soc, ase);
+					}
 				}
 			}
 		}
@@ -2025,7 +2062,8 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 	if (qdf_atomic_read(&soc->cmn_init_done))
-		qdf_timer_mod(&soc->wds_aging_timer, DP_WDS_AGING_TIMER_DEFAULT_MS);
+		qdf_timer_mod(&soc->ast_aging_timer,
+			      DP_AST_AGING_TIMER_DEFAULT_MS);
 }
 
 
@@ -2037,11 +2075,12 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
  */
 static void dp_soc_wds_attach(struct dp_soc *soc)
 {
-	qdf_timer_init(soc->osdev, &soc->wds_aging_timer,
-			dp_wds_aging_timer_fn, (void *)soc,
-			QDF_TIMER_TYPE_WAKE_APPS);
+	soc->wds_ast_aging_timer_cnt = 0;
+	qdf_timer_init(soc->osdev, &soc->ast_aging_timer,
+		       dp_ast_aging_timer_fn, (void *)soc,
+		       QDF_TIMER_TYPE_WAKE_APPS);
 
-	qdf_timer_mod(&soc->wds_aging_timer, DP_WDS_AGING_TIMER_DEFAULT_MS);
+	qdf_timer_mod(&soc->ast_aging_timer, DP_AST_AGING_TIMER_DEFAULT_MS);
 }
 
 /*
@@ -2052,8 +2091,8 @@ static void dp_soc_wds_attach(struct dp_soc *soc)
  */
 static void dp_soc_wds_detach(struct dp_soc *soc)
 {
-	qdf_timer_stop(&soc->wds_aging_timer);
-	qdf_timer_free(&soc->wds_aging_timer);
+	qdf_timer_stop(&soc->ast_aging_timer);
+	qdf_timer_free(&soc->ast_aging_timer);
 }
 #else
 static void dp_soc_wds_attach(struct dp_soc *soc)
@@ -7435,9 +7474,9 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 		break;
 	case CDP_CFG_WDS_AGING_TIMER:
 		if (val == 0)
-			qdf_timer_stop(&vdev->pdev->soc->wds_aging_timer);
+			qdf_timer_stop(&vdev->pdev->soc->ast_aging_timer);
 		else if (val != vdev->wds_aging_timer_val)
-			qdf_timer_mod(&vdev->pdev->soc->wds_aging_timer, val);
+			qdf_timer_mod(&vdev->pdev->soc->ast_aging_timer, val);
 
 		vdev->wds_aging_timer_val = val;
 		break;

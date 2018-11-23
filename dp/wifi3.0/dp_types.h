@@ -896,7 +896,11 @@ struct dp_soc {
 	} ast_hash;
 
 	qdf_spinlock_t ast_lock;
-	qdf_timer_t wds_aging_timer;
+	/*Timer for AST entry ageout maintainance */
+	qdf_timer_t ast_aging_timer;
+
+	/*Timer counter for WDS AST entry ageout*/
+	uint8_t wds_ast_aging_timer_cnt;
 
 	/*interrupt timer*/
 	qdf_timer_t mon_reap_timer;
