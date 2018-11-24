@@ -142,6 +142,28 @@ void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev);
 QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc);
 QDF_STATUS dp_tx_soc_detach(struct dp_soc *soc);
 
+/**
+ * dp_tso_attach() - TSO Attach handler
+ * @txrx_soc: Opaque Dp handle
+ *
+ * Reserve TSO descriptor buffers
+ *
+ * Return: QDF_STATUS_E_FAILURE on failure or
+ * QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS dp_tso_soc_attach(void *txrx_soc);
+
+/**
+ * dp_tso_detach() - TSO Detach handler
+ * @txrx_soc: Opaque Dp handle
+ *
+ * Deallocate TSO descriptor buffers
+ *
+ * Return: QDF_STATUS_E_FAILURE on failure or
+ * QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS dp_tso_soc_detach(void *txrx_soc);
+
 QDF_STATUS dp_tx_pdev_detach(struct dp_pdev *pdev);
 QDF_STATUS dp_tx_pdev_attach(struct dp_pdev *pdev);
 

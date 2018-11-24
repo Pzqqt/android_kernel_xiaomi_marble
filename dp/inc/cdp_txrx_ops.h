@@ -83,6 +83,15 @@ struct cdp_cmn_ops {
 
 	void (*txrx_pdev_detach)(struct cdp_pdev *pdev, int force);
 
+	/**
+	 * txrx_pdev_deinit() - Deinitialize pdev and dp ring memory
+	 * @pdev: Dp pdev handle
+	 * @force: Force deinit or not
+	 *
+	 * Return: None
+	 */
+	void (*txrx_pdev_deinit)(struct cdp_pdev *pdev, int force);
+
 	void *(*txrx_peer_create)
 		(struct cdp_vdev *vdev, uint8_t *peer_mac_addr,
 		 struct cdp_ctrl_objmgr_peer *ctrl_peer);
@@ -289,6 +298,43 @@ struct cdp_cmn_ops {
 
 	void (*txrx_soc_detach)(void *soc);
 
+	/**
+	 * txrx_soc_deinit() - Deinitialize dp soc and dp ring memory
+	 * @soc: Opaque Dp handle
+	 *
+	 * Return: None
+	 */
+	void (*txrx_soc_deinit)(void *soc);
+
+	/**
+	 * txrx_soc_init() - Initialize dp soc and dp ring memory
+	 * @soc: Opaque Dp handle
+	 * @htchdl: Opaque htc handle
+	 * @hifhdl: Opaque hif handle
+	 *
+	 * Return: None
+	 */
+	void *(*txrx_soc_init)(void *soc, void *ctrl_psoc, void *hif_handle,
+			       HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+			       struct ol_if_ops *ol_ops, uint16_t device_id);
+
+	/**
+	 * txrx_tso_soc_attach() - TSO attach handler triggered during
+	 * dynamic tso activation
+	 * @soc: Opaque Dp handle
+	 *
+	 * Return: QDF status
+	 */
+	QDF_STATUS (*txrx_tso_soc_attach)(void *soc);
+
+	/**
+	 * txrx_tso_soc_detach() - TSO detach handler triggered during
+	 * dynamic tso de-activation
+	 * @soc: Opaque Dp handle
+	 *
+	 * Return: QDF status
+	 */
+	QDF_STATUS (*txrx_tso_soc_detach)(void *soc);
 	int (*addba_resp_tx_completion)(void *peer_handle, uint8_t tid,
 					int status);
 

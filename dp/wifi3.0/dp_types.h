@@ -696,6 +696,10 @@ struct htt_t2h_stats {
 
 /* SOC level structure for data path */
 struct dp_soc {
+	/**
+	 * re-use memory section starts
+	 */
+
 	/* Common base structure - Should be the first member */
 	struct cdp_soc_t cdp_soc;
 
@@ -732,6 +736,12 @@ struct dp_soc {
 	/*number of hw dscp tid map*/
 	uint8_t num_hw_dscp_tid_map;
 
+	/* HAL SOC handle */
+	void *hal_soc;
+
+	/* Device ID coming from Bus sub-system */
+	uint32_t device_id;
+
 	/* Link descriptor memory banks */
 	struct {
 		void *base_vaddr_unaligned;
@@ -748,13 +758,7 @@ struct dp_soc {
 	 */
 	qdf_dma_addr_t wbm_idle_scatter_buf_base_paddr[MAX_IDLE_SCATTER_BUFS];
 	void *wbm_idle_scatter_buf_base_vaddr[MAX_IDLE_SCATTER_BUFS];
-	uint32_t wbm_idle_scatter_buf_size;
 
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-	qdf_spinlock_t flow_pool_array_lock;
-	tx_pause_callback pause_cb;
-	struct dp_txrx_pool_stats pool_stats;
-#endif /* !QCA_LL_TX_FLOW_CONTROL_V2 */
 	/* Tx SW descriptor pool */
 	struct dp_tx_desc_pool_s tx_desc[MAX_TXDESC_POOLS];
 
@@ -767,29 +771,8 @@ struct dp_soc {
 	/* Tx TSO Num of segments pool */
 	struct dp_tx_tso_num_seg_pool_s tx_tso_num_seg[MAX_TXDESC_POOLS];
 
-	/* Tx H/W queues lock */
-	qdf_spinlock_t tx_queue_lock[MAX_TX_HW_QUEUES];
-
-	/* Rx SW descriptor pool for RXDMA buffer */
-	struct rx_desc_pool rx_desc_buf[MAX_RXDESC_POOLS];
-
-	/* Rx SW descriptor pool for RXDMA monitor buffer */
-	struct rx_desc_pool rx_desc_mon[MAX_RXDESC_POOLS];
-
-	/* Rx SW descriptor pool for RXDMA status buffer */
-	struct rx_desc_pool rx_desc_status[MAX_RXDESC_POOLS];
-
-	/* HAL SOC handle */
-	void *hal_soc;
-
-	/* DP Interrupts */
-	struct dp_intr intr_ctx[WLAN_CFG_INT_NUM_CONTEXTS];
-
 	/* REO destination rings */
 	struct dp_srng reo_dest_ring[MAX_REO_DEST_RINGS];
-
-	/* Number of REO destination rings */
-	uint8_t num_reo_dest_rings;
 
 	/* REO exception ring - See if should combine this with reo_dest_ring */
 	struct dp_srng reo_exception_ring;
@@ -806,11 +789,11 @@ struct dp_soc {
 	/* WBM Rx release ring */
 	struct dp_srng rx_rel_ring;
 
-	/* Number of TCL data rings */
-	uint8_t num_tcl_data_rings;
-
 	/* TCL data ring */
 	struct dp_srng tcl_data_ring[MAX_TCL_DATA_RINGS];
+
+	/* Number of TCL data rings */
+	uint8_t num_tcl_data_rings;
 
 	/* TCL command ring */
 	struct dp_srng tcl_cmd_ring;
@@ -823,6 +806,39 @@ struct dp_soc {
 
 	/* Common WBM link descriptor release ring (SW to WBM) */
 	struct dp_srng wbm_desc_rel_ring;
+
+	/* DP Interrupts */
+	struct dp_intr intr_ctx[WLAN_CFG_INT_NUM_CONTEXTS];
+
+	/* Rx SW descriptor pool for RXDMA monitor buffer */
+	struct rx_desc_pool rx_desc_mon[MAX_RXDESC_POOLS];
+
+	/* Rx SW descriptor pool for RXDMA status buffer */
+	struct rx_desc_pool rx_desc_status[MAX_RXDESC_POOLS];
+
+	/* Rx SW descriptor pool for RXDMA buffer */
+	struct rx_desc_pool rx_desc_buf[MAX_RXDESC_POOLS];
+
+	/* Number of REO destination rings */
+	uint8_t num_reo_dest_rings;
+	/*
+	 * re-use memory section ends
+	 * reuse memory indicator
+	 *
+	 * DO NOT CHANGE NAME OR MOVE THIS VARIABLE
+	 */
+	bool dp_soc_reinit;
+
+	uint32_t wbm_idle_scatter_buf_size;
+
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+	qdf_spinlock_t flow_pool_array_lock;
+	tx_pause_callback pause_cb;
+	struct dp_txrx_pool_stats pool_stats;
+#endif /* !QCA_LL_TX_FLOW_CONTROL_V2 */
+
+	/* Tx H/W queues lock */
+	qdf_spinlock_t tx_queue_lock[MAX_TX_HW_QUEUES];
 
 	/* Tx ring map for interrupt processing */
 	uint8_t tx_ring_map[WLAN_CFG_INT_NUM_CONTEXTS];
@@ -950,8 +966,6 @@ struct dp_soc {
 		qdf_dma_addr_t ipa_rx_refill_buf_hp_paddr;
 	} ipa_uc_rx_rsc;
 #endif
-	/* Device ID coming from Bus sub-system */
-	uint32_t device_id;
 
 	/* Smart monitor capability for HKv2 */
 	uint8_t hw_nac_monitor_support;
@@ -1057,6 +1071,9 @@ struct ppdu_info {
 
 /* PDEV level structure for data path */
 struct dp_pdev {
+	/**
+	 * Re-use Memory Section Starts
+	 */
 	/* PDEV handle from OSIF layer TBD: see if we really need osif_pdev */
 	struct cdp_ctrl_objmgr_pdev *ctrl_pdev;
 
@@ -1072,26 +1089,6 @@ struct dp_pdev {
 	/* Ring used to replenish rx buffers (maybe to the firmware of MAC) */
 	struct dp_srng rx_refill_buf_ring;
 
-	/* Second ring used to replenish rx buffers */
-	struct dp_srng rx_refill_buf_ring2;
-
-	/* Empty ring used by firmware to post rx buffers to the MAC */
-	struct dp_srng rx_mac_buf_ring[MAX_RX_MAC_RINGS];
-
-	/* wlan_cfg pdev ctxt*/
-	 struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_ctx;
-
-	/* RXDMA monitor buffer replenish ring */
-	struct dp_srng rxdma_mon_buf_ring[NUM_RXDMA_RINGS_PER_PDEV];
-
-	/* RXDMA monitor destination ring */
-	struct dp_srng rxdma_mon_dst_ring[NUM_RXDMA_RINGS_PER_PDEV];
-
-	/* RXDMA monitor status ring. TBD: Check format of this ring */
-	struct dp_srng rxdma_mon_status_ring[NUM_RXDMA_RINGS_PER_PDEV];
-
-	struct dp_srng rxdma_mon_desc_ring[NUM_RXDMA_RINGS_PER_PDEV];
-
 	/* RXDMA error destination ring */
 	struct dp_srng rxdma_err_dst_ring[NUM_RXDMA_RINGS_PER_PDEV];
 
@@ -1104,6 +1101,33 @@ struct dp_pdev {
 		uint32_t size;
 	} link_desc_banks[NUM_RXDMA_RINGS_PER_PDEV][MAX_MON_LINK_DESC_BANKS];
 
+	/* RXDMA monitor buffer replenish ring */
+	struct dp_srng rxdma_mon_buf_ring[NUM_RXDMA_RINGS_PER_PDEV];
+
+	/* RXDMA monitor destination ring */
+	struct dp_srng rxdma_mon_dst_ring[NUM_RXDMA_RINGS_PER_PDEV];
+
+	/* RXDMA monitor status ring. TBD: Check format of this ring */
+	struct dp_srng rxdma_mon_status_ring[NUM_RXDMA_RINGS_PER_PDEV];
+
+	struct dp_srng rxdma_mon_desc_ring[NUM_RXDMA_RINGS_PER_PDEV];
+
+	/*
+	 * re-use memory section ends
+	 * reuse memory/deinit indicator
+	 *
+	 * DO NOT CHANGE NAME OR MOVE THIS VARIABLE
+	 */
+	bool pdev_deinit;
+
+	/* Second ring used to replenish rx buffers */
+	struct dp_srng rx_refill_buf_ring2;
+
+	/* Empty ring used by firmware to post rx buffers to the MAC */
+	struct dp_srng rx_mac_buf_ring[MAX_RX_MAC_RINGS];
+
+	/* wlan_cfg pdev ctxt*/
+	 struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_ctx;
 
 	/**
 	 * TODO: See if we need a ring map here for LMAC rings.

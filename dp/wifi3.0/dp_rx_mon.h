@@ -43,6 +43,18 @@ QDF_STATUS dp_rx_pdev_mon_detach(struct dp_pdev *pdev);
 QDF_STATUS dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int mac_id);
 QDF_STATUS dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id);
 
+/**
+ * dp_mon_link_free() - free monitor link desc pool
+ * @pdev: core txrx pdev context
+ *
+ * This function will release DP link desc pool for monitor mode from
+ * main device context.
+ *
+ * Return: QDF_STATUS_SUCCESS: success
+ *         QDF_STATUS_E_RESOURCES: Error return
+ */
+QDF_STATUS dp_mon_link_free(struct dp_pdev *pdev);
+
 
 uint32_t dp_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota);
 QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,

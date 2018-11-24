@@ -3243,80 +3243,79 @@ htt_htc_soc_attach(struct htt_soc *soc)
 }
 
 /*
- * htt_soc_attach() - SOC level HTT initialization
- * @dp_soc:	Opaque Data path SOC handle
- * @ctrl_psoc:	Opaque ctrl SOC handle
- * @htc_soc:	SOC level HTC handle
- * @hal_soc:	Opaque HAL SOC handle
- * @osdev:	QDF device
+ * htt_soc_initialize() - SOC level HTT initialization
+ * @htt_soc: Opaque htt SOC handle
+ * @ctrl_psoc: Opaque ctrl SOC handle
+ * @htc_soc: SOC level HTC handle
+ * @hal_soc: Opaque HAL SOC handle
+ * @osdev: QDF device
  *
  * Return: HTT handle on success; NULL on failure
  */
 void *
-htt_soc_attach(void *dp_soc, void *ctrl_psoc, HTC_HANDLE htc_soc,
-	void *hal_soc, qdf_device_t osdev)
+htt_soc_initialize(void *htt_soc, void *ctrl_psoc, HTC_HANDLE htc_soc,
+		   void *hal_soc, qdf_device_t osdev)
 {
-	struct htt_soc *soc;
-	int i;
-
-	soc = qdf_mem_malloc(sizeof(*soc));
-
-	if (!soc)
-		goto fail1;
+	struct htt_soc *soc = (struct htt_soc *)htt_soc;
 
 	soc->osdev = osdev;
 	soc->ctrl_psoc = ctrl_psoc;
-	soc->dp_soc = dp_soc;
 	soc->htc_soc = htc_soc;
 	soc->hal_soc = hal_soc;
-
-	/* TODO: See if any NSS related context is required in htt_soc */
-
-	soc->htt_htc_pkt_freelist = NULL;
 
 	if (htt_htc_soc_attach(soc))
 		goto fail2;
 
-	/* TODO: See if any Rx data specific intialization is required. For
-	 * MCL use cases, the data will be received as single packet and
-	 * should not required any descriptor or reorder handling
-	 */
+	return soc;
+
+fail2:
+	return NULL;
+}
+
+/*
+ * htt_soc_htc_prealloc() - HTC memory prealloc
+ * @htt_soc: SOC level HTT handle
+ *
+ * Return: QDF_STATUS_SUCCESS on Success or
+ * QDF_STATUS_E_NOMEM on allocation failure
+ */
+QDF_STATUS
+htt_soc_htc_prealloc(struct htt_soc *soc)
+{
+	int i;
 
 	HTT_TX_MUTEX_INIT(&soc->htt_tx_mutex);
 
+	soc->htt_htc_pkt_freelist = NULL;
 	/* pre-allocate some HTC_PACKET objects */
 	for (i = 0; i < HTT_HTC_PKT_POOL_INIT_SIZE; i++) {
 		struct dp_htt_htc_pkt_union *pkt;
 		pkt = qdf_mem_malloc(sizeof(*pkt));
 		if (!pkt)
-			break;
+			return QDF_STATUS_E_NOMEM;
 
 		htt_htc_pkt_free(soc, &pkt->u.pkt);
 	}
-
-	return soc;
-
-fail2:
-	qdf_mem_free(soc);
-
-fail1:
-	return NULL;
+	return QDF_STATUS_SUCCESS;
 }
-
 
 /*
  * htt_soc_detach() - Detach SOC level HTT
- * @htt_soc:	HTT SOC handle
+ * @htt_soc: HTT SOC handle
  */
 void
 htt_soc_detach(void *htt_soc)
 {
 	struct htt_soc *soc = (struct htt_soc *)htt_soc;
+	struct dp_soc *dpsoc = soc->dp_soc;
 
-	htt_htc_misc_pkt_pool_free(soc);
-	htt_htc_pkt_pool_free(soc);
-	HTT_TX_MUTEX_DESTROY(&soc->htt_tx_mutex);
-	qdf_mem_free(soc);
+	if (dpsoc->dp_soc_reinit) {
+		htt_htc_misc_pkt_pool_free(soc);
+		htt_htc_pkt_pool_free(soc);
+	} else {
+		HTT_TX_MUTEX_DESTROY(&soc->htt_tx_mutex);
+		qdf_mem_free(soc);
+	}
 }
 
 /**

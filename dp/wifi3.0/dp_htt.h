@@ -137,9 +137,29 @@ struct htt_rx_ring_tlv_filter {
 	u_int16_t md_ctrl_filter;
 };
 
+/*
+ * htt_soc_initialize() - SOC level HTT initialization
+ * @htt_soc: Opaque htt SOC handle
+ * @ctrl_psoc: Opaque ctrl SOC handle
+ * @htc_soc: SOC level HTC handle
+ * @hal_soc: Opaque HAL SOC handle
+ * @osdev: QDF device
+ *
+ * Return: HTT handle on success; NULL on failure
+ */
 void *
-htt_soc_attach(void *txrx_soc, void *ctrl_psoc, HTC_HANDLE htc_soc,
-	void *hal_soc, qdf_device_t osdev);
+htt_soc_initialize(void *htt_soc, void *ctrl_psoc, HTC_HANDLE htc_soc,
+		   void *hal_soc, qdf_device_t osdev);
+
+/*
+ * htt_soc_htc_prealloc() - HTC memory prealloc
+ * @htt_soc: SOC level HTT handle
+ *
+ * Return: QDF_STATUS_SUCCESS on success or
+ * QDF_STATUS_E_NO_MEM on allocation failure
+ */
+QDF_STATUS
+htt_soc_htc_prealloc(struct htt_soc *htt_soc);
 
 void htt_soc_detach(void *soc);
 

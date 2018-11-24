@@ -273,6 +273,23 @@ cdp_pdev_detach(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, int force)
 	soc->ops->cmn_drv_ops->txrx_pdev_detach(pdev, force);
 }
 
+static inline void
+cdp_pdev_deinit(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, int force)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_pdev_deinit)
+		return;
+
+	soc->ops->cmn_drv_ops->txrx_pdev_deinit(pdev, force);
+}
+
 static inline void *cdp_peer_create
 	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	uint8_t *peer_mac_addr, struct cdp_ctrl_objmgr_peer *ctrl_peer)
@@ -1159,6 +1176,115 @@ cdp_soc_detach(ol_txrx_soc_handle soc)
 		return;
 
 	soc->ops->cmn_drv_ops->txrx_soc_detach((void *)soc);
+}
+
+/**
+ * cdp_soc_init() - Initialize txrx SOC
+ * @soc: ol_txrx_soc_handle handle
+ * @devid: Device ID
+ * @hif_handle: Opaque HIF handle
+ * @psoc: Opaque Objmgr handle
+ * @htc_handle: Opaque HTC handle
+ * @qdf_dev: QDF device
+ * @dp_ol_if_ops: Offload Operations
+ *
+ * Return: DP SOC handle on success, NULL on failure
+ */
+static inline ol_txrx_soc_handle
+cdp_soc_init(ol_txrx_soc_handle soc, u_int16_t devid, void *hif_handle,
+	     void *psoc, void *htc_handle, qdf_device_t qdf_dev,
+	     struct ol_if_ops *dp_ol_if_ops)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_soc_init)
+		return NULL;
+
+	return soc->ops->cmn_drv_ops->txrx_soc_init(soc, psoc,
+						    hif_handle,
+						    htc_handle, qdf_dev,
+						    dp_ol_if_ops, devid);
+}
+
+/**
+ * cdp_soc_deinit() - Deinitialize txrx SOC
+ * @soc: Opaque DP SOC handle
+ *
+ * Return: None
+ */
+static inline void
+cdp_soc_deinit(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_soc_deinit)
+		return;
+
+	soc->ops->cmn_drv_ops->txrx_soc_deinit((void *)soc);
+}
+
+/**
+ * cdp_tso_soc_attach() - TSO attach function
+ * @soc: ol_txrx_soc_handle handle
+ *
+ * Reserve TSO descriptor buffers
+ *
+ * Return: QDF_STATUS_SUCCESS on Success or
+ * QDF_STATUS_E_FAILURE on failure
+ */
+static inline QDF_STATUS
+cdp_tso_soc_attach(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_tso_soc_attach)
+		return 0;
+
+	return soc->ops->cmn_drv_ops->txrx_tso_soc_attach((void *)soc);
+}
+
+/**
+ * cdp_tso_soc_detach() - TSO detach function
+ * @soc: ol_txrx_soc_handle handle
+ *
+ * Release TSO descriptor buffers
+ *
+ * Return: QDF_STATUS_SUCCESS on Success or
+ * QDF_STATUS_E_FAILURE on failure
+ */
+static inline QDF_STATUS
+cdp_tso_soc_detach(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_tso_soc_detach)
+		return 0;
+
+	return soc->ops->cmn_drv_ops->txrx_tso_soc_detach((void *)soc);
 }
 
 /**

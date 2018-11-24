@@ -62,6 +62,11 @@ extern int con_mode_monitor;
 #include <pktlog_ac.h>
 #endif
 #endif
+void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle, void *hif_handle);
+static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force);
+static struct dp_soc *
+dp_soc_attach(void *ctrl_psoc, HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+	      struct ol_if_ops *ol_ops, uint16_t device_id);
 static void dp_pktlogmod_exit(struct dp_pdev *handle);
 static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 				uint8_t *peer_mac_addr,
@@ -1037,9 +1042,14 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	srng->hal_srng = NULL;
 	srng->alloc_size = (num_entries * entry_size) + ring_base_align - 1;
 	srng->num_entries = num_entries;
-	srng->base_vaddr_unaligned = qdf_mem_alloc_consistent(
-		soc->osdev, soc->osdev->dev, srng->alloc_size,
-		&(srng->base_paddr_unaligned));
+
+	if (!soc->dp_soc_reinit) {
+		srng->base_vaddr_unaligned =
+			qdf_mem_alloc_consistent(soc->osdev,
+						 soc->osdev->dev,
+						 srng->alloc_size,
+						 &srng->base_paddr_unaligned);
+	}
 
 	if (!srng->base_vaddr_unaligned) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1124,6 +1134,20 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	return 0;
 }
 
+/*
+ * dp_srng_deinit() - Internal function to deinit SRNG rings used by data path
+ * @soc: DP SOC handle
+ * @srng: source ring structure
+ * @ring_type: type of ring
+ * @ring_num: ring number
+ *
+ * Return: None
+ */
+static void dp_srng_deinit(struct dp_soc *soc, struct dp_srng *srng,
+			   int ring_type, int ring_num)
+{
+}
+
 /**
  * dp_srng_cleanup - Internal function to cleanup SRNG rings used by data path
  * Any buffers allocated and attached to ring entries are expected to be freed
@@ -1182,8 +1206,8 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 					remaining_quota);
 
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				"tx mask 0x%x ring %d, budget %d, work_done %d",
-				tx_mask, ring, budget, work_done);
+				  "tx mask 0x%x ring %d, budget %d, work_done %d",
+				  tx_mask, ring, budget, work_done);
 
 			budget -= work_done;
 			if (budget <= 0)
@@ -1677,6 +1701,7 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 	uint32_t entry_size, num_entries;
 	int i;
 	uint32_t desc_id = 0;
+	qdf_dma_addr_t *baseaddr = NULL;
 
 	/* Only Tx queue descriptors are allocated from common link descriptor
 	 * pool Rx queue descriptors are not included in this because (REO queue
@@ -1726,10 +1751,15 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 		total_mem_size, num_link_desc_banks);
 
 	for (i = 0; i < num_link_desc_banks; i++) {
-		soc->link_desc_banks[i].base_vaddr_unaligned =
-			qdf_mem_alloc_consistent(soc->osdev, soc->osdev->dev,
-			max_alloc_size,
-			&(soc->link_desc_banks[i].base_paddr_unaligned));
+		if (!soc->dp_soc_reinit) {
+			baseaddr = &soc->link_desc_banks[i].
+					base_paddr_unaligned;
+			soc->link_desc_banks[i].base_vaddr_unaligned =
+				qdf_mem_alloc_consistent(soc->osdev,
+							 soc->osdev->dev,
+							 max_alloc_size,
+							 baseaddr);
+		}
 		soc->link_desc_banks[i].size = max_alloc_size;
 
 		soc->link_desc_banks[i].base_vaddr = (void *)((unsigned long)(
@@ -1755,10 +1785,15 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 		/* Allocate last bank in case total memory required is not exact
 		 * multiple of max_alloc_size
 		 */
-		soc->link_desc_banks[i].base_vaddr_unaligned =
-			qdf_mem_alloc_consistent(soc->osdev, soc->osdev->dev,
-			last_bank_size,
-			&(soc->link_desc_banks[i].base_paddr_unaligned));
+		if (!soc->dp_soc_reinit) {
+			baseaddr = &soc->link_desc_banks[i].
+					base_paddr_unaligned;
+			soc->link_desc_banks[i].base_vaddr_unaligned =
+				qdf_mem_alloc_consistent(soc->osdev,
+							 soc->osdev->dev,
+							 last_bank_size,
+							 baseaddr);
+		}
 		soc->link_desc_banks[i].size = last_bank_size;
 
 		soc->link_desc_banks[i].base_vaddr = (void *)((unsigned long)
@@ -1822,6 +1857,7 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 		uint32_t rem_entries;
 		uint8_t *scatter_buf_ptr;
 		uint16_t scatter_buf_num;
+		uint32_t buf_size = 0;
 
 		soc->wbm_idle_scatter_buf_size =
 			hal_idle_list_scatter_buf_size(soc->hal_soc);
@@ -1838,15 +1874,20 @@ static int dp_hw_link_desc_pool_setup(struct dp_soc *soc)
 		}
 
 		for (i = 0; i < num_scatter_bufs; i++) {
-			soc->wbm_idle_scatter_buf_base_vaddr[i] =
-				qdf_mem_alloc_consistent(soc->osdev,
-							soc->osdev->dev,
-				soc->wbm_idle_scatter_buf_size,
-				&(soc->wbm_idle_scatter_buf_base_paddr[i]));
+			baseaddr = &soc->wbm_idle_scatter_buf_base_paddr[i];
+			if (!soc->dp_soc_reinit) {
+				buf_size = soc->wbm_idle_scatter_buf_size;
+				soc->wbm_idle_scatter_buf_base_vaddr[i] =
+					qdf_mem_alloc_consistent(soc->osdev,
+								 soc->osdev->
+								 dev,
+								 buf_size,
+								 baseaddr);
+			}
 			if (soc->wbm_idle_scatter_buf_base_vaddr[i] == NULL) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_ERROR,
-					FL("Scatter list memory alloc failed"));
+					  QDF_TRACE_LEVEL_ERROR,
+					  FL("Scatter lst memory alloc fail"));
 				goto fail;
 			}
 		}
@@ -2447,7 +2488,6 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		goto fail1;
 	}
 
-
 	soc->num_tcl_data_rings = 0;
 	/* Tx data rings */
 	if (!wlan_cfg_per_pdev_tx_ring(soc_cfg_ctx)) {
@@ -2971,7 +3011,12 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	int nss_cfg;
 
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
-	struct dp_pdev *pdev = qdf_mem_malloc(sizeof(*pdev));
+	struct dp_pdev *pdev = NULL;
+
+	if (soc->dp_soc_reinit)
+		pdev = soc->pdev_list[pdev_id];
+	else
+		pdev = qdf_mem_malloc(sizeof(*pdev));
 
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -2979,6 +3024,11 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		goto fail0;
 	}
 
+	/*
+	 * Variable to prevent double pdev deinitialization during
+	 * radio detach execution .i.e. in the absence of any vdev.
+	 */
+	pdev->pdev_deinit = 0;
 	pdev->invalid_peer = qdf_mem_malloc(sizeof(struct dp_peer));
 
 	if (!pdev->invalid_peer) {
@@ -3010,8 +3060,9 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	pdev->soc = soc;
 	pdev->ctrl_pdev = ctrl_pdev;
 	pdev->pdev_id = pdev_id;
-	pdev->lmac_id = wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, pdev_id);
 	soc->pdev_list[pdev_id] = pdev;
+
+	pdev->lmac_id = wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, pdev_id);
 	soc->pdev_count++;
 
 	TAILQ_INIT(&pdev->vdev_list);
@@ -3170,7 +3221,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	return (struct cdp_pdev *)pdev;
 
 fail1:
-	dp_pdev_detach_wifi3((struct cdp_pdev *)pdev, 0);
+	dp_pdev_detach((struct cdp_pdev *)pdev, 0);
 
 fail0:
 	return NULL;
@@ -3249,18 +3300,10 @@ static void dp_htt_ppdu_stats_detach(struct dp_pdev *pdev)
 }
 
 #if !defined(DISABLE_MON_CONFIG)
-/**
- * dp_mon_ring_deinit() - Cleanup Monitor rings
- *
- * @soc: soc handle
- * @pdev: datapath physical dev handle
- * @mac_id: mac number
- *
- * Return: None
- */
+
 static
-void dp_mon_ring_deinit(struct dp_soc *soc, struct dp_pdev *pdev,
-			int mac_id)
+void dp_mon_ring_cleanup(struct dp_soc *soc, struct dp_pdev *pdev,
+			 int mac_id)
 {
 		if (soc->wlan_cfg_ctx->rxdma1_enable) {
 			dp_srng_cleanup(soc,
@@ -3294,34 +3337,79 @@ void dp_mon_ring_deinit(struct dp_soc *soc, struct dp_pdev *pdev,
 
 }
 #else
-static void dp_mon_ring_deinit(struct dp_soc *soc, struct dp_pdev *pdev,
-			       int mac_id)
+static void dp_mon_ring_cleanup(struct dp_soc *soc, struct dp_pdev *pdev,
+				int mac_id)
 {
 }
 #endif
 
-/*
-* dp_pdev_detach_wifi3() - detach txrx pdev
-* @txrx_pdev: Datapath PDEV handle
-* @force: Force detach
-*
-*/
-static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
+/**
+ * dp_mon_ring_deinit() - Placeholder to deinitialize Monitor rings
+ *
+ * @soc: soc handle
+ * @pdev: datapath physical dev handle
+ * @mac_id: mac number
+ *
+ * Return: None
+ */
+static void dp_mon_ring_deinit(struct dp_soc *soc, struct dp_pdev *pdev,
+			       int mac_id)
+{
+}
+
+/**
+ * dp_pdev_mem_reset() - Reset txrx pdev memory
+ * @pdev: dp pdev handle
+ *
+ * Return: None
+ */
+static void dp_pdev_mem_reset(struct dp_pdev *pdev)
+{
+	uint16_t len = 0;
+	uint8_t *dp_pdev_offset = (uint8_t *)pdev;
+
+	len = sizeof(struct dp_pdev) -
+		offsetof(struct dp_pdev, pdev_deinit) -
+		sizeof(pdev->pdev_deinit);
+	dp_pdev_offset = dp_pdev_offset +
+			 offsetof(struct dp_pdev, pdev_deinit) +
+			 sizeof(pdev->pdev_deinit);
+
+	qdf_mem_zero(dp_pdev_offset, len);
+}
+
+/**
+ * dp_pdev_deinit() - Deinit txrx pdev
+ * @txrx_pdev: Datapath PDEV handle
+ * @force: Force deinit
+ *
+ * Return: None
+ */
+static void dp_pdev_deinit(struct cdp_pdev *txrx_pdev, int force)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 	struct dp_soc *soc = pdev->soc;
 	qdf_nbuf_t curr_nbuf, next_nbuf;
 	int mac_id;
 
+	/*
+	 * Prevent double pdev deinitialization during radio detach
+	 * execution .i.e. in the absence of any vdev
+	 */
+	if (pdev->pdev_deinit)
+		return;
+
+	pdev->pdev_deinit = 1;
+
 	dp_wdi_event_detach(pdev);
 
 	dp_tx_pdev_detach(pdev);
 
 	if (wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
-		dp_srng_cleanup(soc, &soc->tcl_data_ring[pdev->pdev_id],
-			TCL_DATA, pdev->pdev_id);
-		dp_srng_cleanup(soc, &soc->tx_comp_ring[pdev->pdev_id],
-			WBM2SW_RELEASE, pdev->pdev_id);
+		dp_srng_deinit(soc, &soc->tcl_data_ring[pdev->pdev_id],
+			       TCL_DATA, pdev->pdev_id);
+		dp_srng_deinit(soc, &soc->tx_comp_ring[pdev->pdev_id],
+			       WBM2SW_RELEASE, pdev->pdev_id);
 	}
 
 	dp_pktlogmod_exit(pdev);
@@ -3338,18 +3426,18 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 
 	/* Cleanup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
-		dp_srng_cleanup(soc, &soc->reo_dest_ring[pdev->pdev_id],
-			REO_DST, pdev->pdev_id);
+		dp_srng_deinit(soc, &soc->reo_dest_ring[pdev->pdev_id],
+			       REO_DST, pdev->pdev_id);
 	}
 
-	dp_srng_cleanup(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0);
+	dp_srng_deinit(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0);
 
 	dp_rxdma_ring_cleanup(soc, pdev);
 
 	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 		dp_mon_ring_deinit(soc, pdev, mac_id);
-		dp_srng_cleanup(soc, &pdev->rxdma_err_dst_ring[mac_id],
-			RXDMA_DST, 0);
+		dp_srng_deinit(soc, &pdev->rxdma_err_dst_ring[mac_id],
+			       RXDMA_DST, 0);
 	}
 
 	curr_nbuf = pdev->invalid_peer_head_msdu;
@@ -3358,18 +3446,92 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 		qdf_nbuf_free(curr_nbuf);
 		curr_nbuf = next_nbuf;
 	}
+	pdev->invalid_peer_head_msdu = NULL;
+	pdev->invalid_peer_tail_msdu = NULL;
 
 	dp_htt_ppdu_stats_detach(pdev);
 
 	qdf_nbuf_free(pdev->sojourn_buf);
 
 	dp_cal_client_detach(&pdev->cal_client_ctx);
-	soc->pdev_list[pdev->pdev_id] = NULL;
+
 	soc->pdev_count--;
 	wlan_cfg_pdev_detach(pdev->wlan_cfg_ctx);
 	qdf_mem_free(pdev->invalid_peer);
 	qdf_mem_free(pdev->dp_txrx_handle);
+	dp_pdev_mem_reset(pdev);
+}
+
+/**
+ * dp_pdev_deinit_wifi3() - Deinit txrx pdev
+ * @txrx_pdev: Datapath PDEV handle
+ * @force: Force deinit
+ *
+ * Return: None
+ */
+static void dp_pdev_deinit_wifi3(struct cdp_pdev *txrx_pdev, int force)
+{
+	dp_pdev_deinit(txrx_pdev, force);
+}
+
+/*
+ * dp_pdev_detach() - Complete rest of pdev detach
+ * @txrx_pdev: Datapath PDEV handle
+ * @force: Force deinit
+ *
+ * Return: None
+ */
+static void dp_pdev_detach(struct cdp_pdev *txrx_pdev, int force)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
+	struct dp_soc *soc = pdev->soc;
+	int mac_id;
+
+	if (wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
+		dp_srng_cleanup(soc, &soc->tcl_data_ring[pdev->pdev_id],
+				TCL_DATA, pdev->pdev_id);
+		dp_srng_cleanup(soc, &soc->tx_comp_ring[pdev->pdev_id],
+				WBM2SW_RELEASE, pdev->pdev_id);
+	}
+
+	dp_mon_link_free(pdev);
+
+	/* Cleanup per PDEV REO rings if configured */
+	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
+		dp_srng_cleanup(soc, &soc->reo_dest_ring[pdev->pdev_id],
+				REO_DST, pdev->pdev_id);
+	}
+
+	dp_srng_cleanup(soc, &pdev->rx_refill_buf_ring, RXDMA_BUF, 0);
+
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		dp_mon_ring_cleanup(soc, pdev, mac_id);
+		dp_srng_cleanup(soc, &pdev->rxdma_err_dst_ring[mac_id],
+				RXDMA_DST, 0);
+	}
+
+	soc->pdev_list[pdev->pdev_id] = NULL;
 	qdf_mem_free(pdev);
+}
+
+/*
+ * dp_pdev_detach_wifi3() - detach txrx pdev
+ * @txrx_pdev: Datapath PDEV handle
+ * @force: Force detach
+ *
+ * Return: None
+ */
+static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
+	struct dp_soc *soc = pdev->soc;
+
+	if (soc->dp_soc_reinit) {
+		dp_pdev_detach(txrx_pdev, force);
+	} else {
+		dp_pdev_deinit(txrx_pdev, force);
+		dp_pdev_detach(txrx_pdev, force);
+	}
 }
 
 /*
@@ -3397,16 +3559,45 @@ static inline void dp_reo_desc_freelist_destroy(struct dp_soc *soc)
 	qdf_spinlock_destroy(&soc->reo_desc_freelist_lock);
 }
 
-/*
- * dp_soc_detach_wifi3() - Detach txrx SOC
- * @txrx_soc: DP SOC handle, struct cdp_soc_t is first element of struct dp_soc.
+/**
+ * dp_soc_mem_reset() - Reset Dp Soc memory
+ * @soc: DP handle
+ *
+ * Return: None
  */
-static void dp_soc_detach_wifi3(void *txrx_soc)
+static void dp_soc_mem_reset(struct dp_soc *soc)
+{
+	uint16_t len = 0;
+	uint8_t *dp_soc_offset = (uint8_t *)soc;
+
+	len = sizeof(struct dp_soc) -
+		offsetof(struct dp_soc, dp_soc_reinit) -
+		sizeof(soc->dp_soc_reinit);
+	dp_soc_offset = dp_soc_offset +
+			offsetof(struct dp_soc, dp_soc_reinit) +
+			sizeof(soc->dp_soc_reinit);
+
+	qdf_mem_zero(dp_soc_offset, len);
+}
+
+/**
+ * dp_soc_deinit() - Deinitialize txrx SOC
+ * @txrx_soc: Opaque DP SOC handle
+ *
+ * Return: None
+ */
+static void dp_soc_deinit(void *txrx_soc)
 {
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	int i;
 
 	qdf_atomic_set(&soc->cmn_init_done, 0);
+
+	for (i = 0; i < MAX_PDEV_CNT; i++) {
+		if (soc->pdev_list[i])
+			dp_pdev_deinit((struct cdp_pdev *)
+					soc->pdev_list[i], 1);
+	}
 
 	qdf_flush_work(&soc->htt_stats.work);
 	qdf_disable_work(&soc->htt_stats.work);
@@ -3416,23 +3607,114 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 
 	dp_reo_cmdlist_destroy(soc);
 
-	for (i = 0; i < MAX_PDEV_CNT; i++) {
-		if (soc->pdev_list[i])
-			dp_pdev_detach_wifi3(
-				(struct cdp_pdev *)soc->pdev_list[i], 1);
+	dp_peer_find_detach(soc);
+
+	/* Free the ring memories */
+	/* Common rings */
+	dp_srng_deinit(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE, 0);
+
+	/* Tx data rings */
+	if (!wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
+		for (i = 0; i < soc->num_tcl_data_rings; i++) {
+			dp_srng_deinit(soc, &soc->tcl_data_ring[i],
+				       TCL_DATA, i);
+			dp_srng_deinit(soc, &soc->tx_comp_ring[i],
+				       WBM2SW_RELEASE, i);
+		}
 	}
 
-	dp_peer_find_detach(soc);
+	/* TCL command and status rings */
+	dp_srng_deinit(soc, &soc->tcl_cmd_ring, TCL_CMD, 0);
+	dp_srng_deinit(soc, &soc->tcl_status_ring, TCL_STATUS, 0);
+
+	/* Rx data rings */
+	if (!wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
+		soc->num_reo_dest_rings =
+			wlan_cfg_num_reo_dest_rings(soc->wlan_cfg_ctx);
+		for (i = 0; i < soc->num_reo_dest_rings; i++) {
+			/* TODO: Get number of rings and ring sizes
+			 * from wlan_cfg
+			 */
+			dp_srng_deinit(soc, &soc->reo_dest_ring[i],
+				       REO_DST, i);
+		}
+	}
+	/* REO reinjection ring */
+	dp_srng_deinit(soc, &soc->reo_reinject_ring, REO_REINJECT, 0);
+
+	/* Rx release ring */
+	dp_srng_deinit(soc, &soc->rx_rel_ring, WBM2SW_RELEASE, 0);
+
+	/* Rx exception ring */
+	/* TODO: Better to store ring_type and ring_num in
+	 * dp_srng during setup
+	 */
+	dp_srng_deinit(soc, &soc->reo_exception_ring, REO_EXCEPTION, 0);
+
+	/* REO command and status rings */
+	dp_srng_deinit(soc, &soc->reo_cmd_ring, REO_CMD, 0);
+	dp_srng_deinit(soc, &soc->reo_status_ring, REO_STATUS, 0);
+
+	qdf_spinlock_destroy(&soc->peer_ref_mutex);
+	qdf_spinlock_destroy(&soc->htt_stats.lock);
+
+	htt_soc_detach(soc->htt_handle);
+
+	qdf_spinlock_destroy(&soc->rx.defrag.defrag_lock);
+
+	dp_reo_cmdlist_destroy(soc);
+	qdf_spinlock_destroy(&soc->rx.reo_cmd_lock);
+	dp_reo_desc_freelist_destroy(soc);
+
+	dp_soc_wds_detach(soc);
+	qdf_spinlock_destroy(&soc->ast_lock);
+
+	dp_soc_mem_reset(soc);
+}
+
+/**
+ * dp_soc_deinit_wifi3() - Deinitialize txrx SOC
+ * @txrx_soc: Opaque DP SOC handle
+ *
+ * Return: None
+ */
+static void dp_soc_deinit_wifi3(void *txrx_soc)
+{
+	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+
+	soc->dp_soc_reinit = 1;
+	dp_soc_deinit(txrx_soc);
+}
+
+/*
+ * dp_soc_detach() - Detach rest of txrx SOC
+ * @txrx_soc: DP SOC handle, struct cdp_soc_t is first element of struct dp_soc.
+ *
+ * Return: None
+ */
+static void dp_soc_detach(void *txrx_soc)
+{
+	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+	int i;
+
+	qdf_atomic_set(&soc->cmn_init_done, 0);
 
 	/* TBD: Call Tx and Rx cleanup functions to free buffers and
 	 * SW descriptors
 	 */
+
+	for (i = 0; i < MAX_PDEV_CNT; i++) {
+		if (soc->pdev_list[i])
+			dp_pdev_detach((struct cdp_pdev *)
+					     soc->pdev_list[i], 1);
+	}
 
 	/* Free the ring memories */
 	/* Common rings */
 	dp_srng_cleanup(soc, &soc->wbm_desc_rel_ring, SW2WBM_RELEASE, 0);
 
 	dp_tx_soc_detach(soc);
+
 	/* Tx data rings */
 	if (!wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
 		for (i = 0; i < soc->num_tcl_data_rings; i++) {
@@ -3476,22 +3758,31 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	dp_srng_cleanup(soc, &soc->reo_status_ring, REO_STATUS, 0);
 	dp_hw_link_desc_pool_cleanup(soc);
 
-	qdf_spinlock_destroy(&soc->peer_ref_mutex);
-	qdf_spinlock_destroy(&soc->htt_stats.lock);
-
+	soc->dp_soc_reinit = 0;
 	htt_soc_detach(soc->htt_handle);
-
-	qdf_spinlock_destroy(&soc->rx.defrag.defrag_lock);
-
-	qdf_spinlock_destroy(&soc->rx.reo_cmd_lock);
-	dp_reo_desc_freelist_destroy(soc);
 
 	wlan_cfg_soc_detach(soc->wlan_cfg_ctx);
 
-	dp_soc_wds_detach(soc);
-	qdf_spinlock_destroy(&soc->ast_lock);
-
 	qdf_mem_free(soc);
+}
+
+/*
+ * dp_soc_detach_wifi3() - Detach txrx SOC
+ * @txrx_soc: DP SOC handle, struct cdp_soc_t is first element of struct dp_soc.
+ *
+ * Return: None
+ */
+static void dp_soc_detach_wifi3(void *txrx_soc)
+{
+	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+
+	if (soc->dp_soc_reinit) {
+		dp_soc_detach(txrx_soc);
+	} else {
+		dp_soc_deinit(txrx_soc);
+		dp_soc_detach(txrx_soc);
+	}
+
 }
 
 #if !defined(DISABLE_MON_CONFIG)
@@ -8473,6 +8764,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_vdev_detach = dp_vdev_detach_wifi3,
 	.txrx_pdev_attach = dp_pdev_attach_wifi3,
 	.txrx_pdev_detach = dp_pdev_detach_wifi3,
+	.txrx_pdev_deinit = dp_pdev_deinit_wifi3,
 	.txrx_peer_create = dp_peer_create_wifi3,
 	.txrx_peer_setup = dp_peer_setup_wifi3,
 #ifdef FEATURE_AST
@@ -8502,6 +8794,10 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_peer_delete = dp_peer_delete_wifi3,
 	.txrx_vdev_register = dp_vdev_register_wifi3,
 	.txrx_soc_detach = dp_soc_detach_wifi3,
+	.txrx_soc_deinit = dp_soc_deinit_wifi3,
+	.txrx_soc_init = dp_soc_init_wifi3,
+	.txrx_tso_soc_attach = dp_tso_soc_attach,
+	.txrx_tso_soc_detach = dp_tso_soc_detach,
 	.txrx_get_vdev_mac_addr = dp_get_vdev_mac_addr_wifi3,
 	.txrx_get_vdev_from_vdev_id = dp_get_vdev_from_vdev_id_wifi3,
 	.txrx_get_mon_vdev_from_pdev = dp_get_mon_vdev_from_pdev_wifi3,
@@ -8883,14 +9179,17 @@ static void dp_soc_set_txrx_ring_map(struct dp_soc *soc)
 }
 
 #ifdef QCA_WIFI_QCA8074
+
+#ifndef QCA_MEM_ATTACH_ON_WIFI3
+
 /**
  * dp_soc_attach_wifi3() - Attach txrx SOC
- * @ctrl_psoc:	Opaque SOC handle from control plane
- * @htc_handle:	Opaque HTC handle
- * @hif_handle:	Opaque HIF handle
- * @qdf_osdev:	QDF device
- * @ol_ops:	Offload Operations
- * @device_id:	Device ID
+ * @ctrl_psoc: Opaque SOC handle from control plane
+ * @htc_handle: Opaque HTC handle
+ * @hif_handle: Opaque HIF handle
+ * @qdf_osdev: QDF device
+ * @ol_ops: Offload Operations
+ * @device_id: Device ID
  *
  * Return: DP SOC handle on success, NULL on failure
  */
@@ -8898,13 +9197,66 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 			  HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
 			  struct ol_if_ops *ol_ops, uint16_t device_id)
 {
-	struct dp_soc *soc = qdf_mem_malloc(sizeof(*soc));
-	int target_type;
+	struct dp_soc *dp_soc =  NULL;
+
+	dp_soc = dp_soc_attach(ctrl_psoc, htc_handle, qdf_osdev,
+			       ol_ops, device_id);
+	if (!dp_soc)
+		return NULL;
+
+	if (!dp_soc_init(dp_soc, htc_handle, hif_handle))
+		return NULL;
+
+	return (void *)dp_soc;
+}
+#else
+
+/**
+ * dp_soc_attach_wifi3() - Attach txrx SOC
+ * @ctrl_psoc: Opaque SOC handle from control plane
+ * @htc_handle: Opaque HTC handle
+ * @hif_handle: Opaque HIF handle
+ * @qdf_osdev: QDF device
+ * @ol_ops: Offload Operations
+ * @device_id: Device ID
+ *
+ * Return: DP SOC handle on success, NULL on failure
+ */
+void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
+			  HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+			  struct ol_if_ops *ol_ops, uint16_t device_id)
+{
+	struct dp_soc *dp_soc = NULL;
+
+	dp_soc = dp_soc_attach(ctrl_psoc, htc_handle, qdf_osdev,
+			       ol_ops, device_id);
+	return (void *)dp_soc;
+}
+
+#endif
+
+/**
+ * dp_soc_attach() - Attach txrx SOC
+ * @ctrl_psoc: Opaque SOC handle from control plane
+ * @htc_handle: Opaque HTC handle
+ * @qdf_osdev: QDF device
+ * @ol_ops: Offload Operations
+ * @device_id: Device ID
+ *
+ * Return: DP SOC handle on success, NULL on failure
+ */
+static struct dp_soc *
+dp_soc_attach(void *ctrl_psoc, HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+	      struct ol_if_ops *ol_ops, uint16_t device_id)
+{
 	int int_ctx;
+	struct dp_soc *soc =  NULL;
+	struct htt_soc *htt_soc = NULL;
+
+	soc = qdf_mem_malloc(sizeof(*soc));
 
 	if (!soc) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("DP SOC memory allocation failed"));
+		dp_err("DP SOC memory allocation failed");
 		goto fail0;
 	}
 
@@ -8914,25 +9266,57 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 	soc->cdp_soc.ol_ops = ol_ops;
 	soc->ctrl_psoc = ctrl_psoc;
 	soc->osdev = qdf_osdev;
-	soc->hif_handle = hif_handle;
-
-	soc->hal_soc = hif_get_hal_handle(hif_handle);
-	soc->htt_handle = htt_soc_attach(soc, ctrl_psoc, htc_handle,
-		soc->hal_soc, qdf_osdev);
 	soc->num_hw_dscp_tid_map = HAL_MAX_HW_DSCP_TID_MAPS;
-
-	if (!soc->htt_handle) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("HTT attach failed"));
-		goto fail1;
-	}
 
 	soc->wlan_cfg_ctx = wlan_cfg_soc_attach(soc->ctrl_psoc);
 	if (!soc->wlan_cfg_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("wlan_cfg_soc_attach failed"));
-		goto fail2;
+		dp_err("wlan_cfg_ctx failed\n");
+		goto fail1;
 	}
+	htt_soc = qdf_mem_malloc(sizeof(*htt_soc));
+	if (!htt_soc) {
+		dp_err("HTT attach failed");
+		goto fail1;
+	}
+	soc->htt_handle = htt_soc;
+	htt_soc->dp_soc = soc;
+	htt_soc->htc_soc = htc_handle;
+
+	if (htt_soc_htc_prealloc(htt_soc) != QDF_STATUS_SUCCESS)
+		goto fail2;
+
+	return (void *)soc;
+fail2:
+	qdf_mem_free(htt_soc);
+fail1:
+	qdf_mem_free(soc);
+fail0:
+	return NULL;
+}
+
+/**
+ * dp_soc_init() - Initialize txrx SOC
+ * @dp_soc: Opaque DP SOC handle
+ * @htc_handle: Opaque HTC handle
+ * @hif_handle: Opaque HIF handle
+ *
+ * Return: DP SOC handle on success, NULL on failure
+ */
+void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle, void *hif_handle)
+{
+	int target_type;
+	struct dp_soc *soc = (struct dp_soc *)dpsoc;
+	struct htt_soc *htt_soc = (struct htt_soc *)soc->htt_handle;
+
+	htt_soc->htc_soc = htc_handle;
+	soc->hif_handle = hif_handle;
+
+	soc->hal_soc = hif_get_hal_handle(soc->hif_handle);
+	if (!soc->hal_soc)
+		return NULL;
+
+	htt_soc_initialize(soc->htt_handle, soc->ctrl_psoc, htt_soc->htc_soc,
+			   soc->hal_soc, soc->osdev);
 	target_type = hal_get_target_type(soc->hal_soc);
 	switch (target_type) {
 	case TARGET_TYPE_QCA6290:
@@ -8978,7 +9362,7 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 	}
 
 	wlan_cfg_set_rx_hash(soc->wlan_cfg_ctx,
-			     cfg_get(ctrl_psoc, CFG_DP_RX_HASH));
+			     cfg_get(soc->ctrl_psoc, CFG_DP_RX_HASH));
 	soc->cce_disable = false;
 
 	if (soc->cdp_soc.ol_ops->get_dp_cfg_param) {
@@ -9007,15 +9391,29 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 	/* initialize work queue for stats processing */
 	qdf_create_work(0, &soc->htt_stats.work, htt_t2h_stats_handler, soc);
 
-	return (void *)soc;
+	return soc;
 
-fail2:
-	htt_soc_detach(soc->htt_handle);
-fail1:
-	qdf_mem_free(soc);
-fail0:
-	return NULL;
 }
+
+/**
+ * dp_soc_init_wifi3() - Initialize txrx SOC
+ * @dp_soc: Opaque DP SOC handle
+ * @ctrl_psoc: Opaque SOC handle from control plane(Unused)
+ * @hif_handle: Opaque HIF handle
+ * @htc_handle: Opaque HTC handle
+ * @qdf_osdev: QDF device (Unused)
+ * @ol_ops: Offload Operations (Unused)
+ * @device_id: Device ID (Unused)
+ *
+ * Return: DP SOC handle on success, NULL on failure
+ */
+void *dp_soc_init_wifi3(void *dpsoc, void *ctrl_psoc, void *hif_handle,
+			HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
+			struct ol_if_ops *ol_ops, uint16_t device_id)
+{
+	return dp_soc_init(dpsoc, htc_handle, hif_handle);
+}
+
 #endif
 
 /*
@@ -9066,12 +9464,13 @@ void dp_is_hw_dbs_enable(struct dp_soc *soc,
 int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 	bool enable)
 {
-	struct dp_soc *soc = pdev->soc;
+	struct dp_soc *soc = NULL;
 	struct htt_rx_ring_tlv_filter htt_tlv_filter = {0};
 	int max_mac_rings = wlan_cfg_get_num_mac_rings
 					(pdev->wlan_cfg_ctx);
 	uint8_t mac_id = 0;
 
+	soc = pdev->soc;
 	dp_is_hw_dbs_enable(soc, &max_mac_rings);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,

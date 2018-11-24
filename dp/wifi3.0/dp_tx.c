@@ -3484,6 +3484,117 @@ static void dp_tx_delete_static_pools(struct dp_soc *soc, int num_pool)
 
 #endif /* !QCA_LL_TX_FLOW_CONTROL_V2 */
 
+#ifndef QCA_MEM_ATTACH_ON_WIFI3
+/**
+ * dp_tso_attach_wifi3() - TSO attach handler
+ * @txrx_soc: Opaque Dp handle
+ *
+ * Reserve TSO descriptor buffers
+ *
+ * Return: QDF_STATUS_E_FAILURE on failure or
+ * QDF_STATUS_SUCCESS on success
+ */
+static
+QDF_STATUS dp_tso_attach_wifi3(void *txrx_soc)
+{
+	return dp_tso_soc_attach(txrx_soc);
+}
+
+/**
+ * dp_tso_detach_wifi3() - TSO Detach handler
+ * @txrx_soc: Opaque Dp handle
+ *
+ * Deallocate TSO descriptor buffers
+ *
+ * Return: QDF_STATUS_E_FAILURE on failure or
+ * QDF_STATUS_SUCCESS on success
+ */
+static
+QDF_STATUS dp_tso_detach_wifi3(void *txrx_soc)
+{
+	return dp_tso_soc_detach(txrx_soc);
+}
+#else
+static
+QDF_STATUS dp_tso_attach_wifi3(void *txrx_soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static
+QDF_STATUS dp_tso_detach_wifi3(void *txrx_soc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+QDF_STATUS dp_tso_soc_detach(void *txrx_soc)
+{
+	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+	uint8_t i;
+	uint8_t num_pool;
+	uint32_t num_desc;
+
+	num_pool = wlan_cfg_get_num_tx_desc_pool(soc->wlan_cfg_ctx);
+	num_desc = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
+
+	for (i = 0; i < num_pool; i++)
+		dp_tx_tso_desc_pool_free(soc, i);
+
+	dp_info("%s TSO Desc Pool %d Free descs = %d",
+		__func__, num_pool, num_desc);
+
+	for (i = 0; i < num_pool; i++)
+		dp_tx_tso_num_seg_pool_free(soc, i);
+
+	dp_info("%s TSO Num of seg Desc Pool %d Free descs = %d",
+		__func__, num_pool, num_desc);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_tso_attach() - TSO attach handler
+ * @txrx_soc: Opaque Dp handle
+ *
+ * Reserve TSO descriptor buffers
+ *
+ * Return: QDF_STATUS_E_FAILURE on failure or
+ * QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS dp_tso_soc_attach(void *txrx_soc)
+{
+	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+	uint8_t i;
+	uint8_t num_pool;
+	uint32_t num_desc;
+
+	num_pool = wlan_cfg_get_num_tx_desc_pool(soc->wlan_cfg_ctx);
+	num_desc = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
+
+	for (i = 0; i < num_pool; i++) {
+		if (dp_tx_tso_desc_pool_alloc(soc, i, num_desc)) {
+			dp_err("TSO Desc Pool alloc %d failed %pK",
+			       i, soc);
+
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+
+	dp_info("%s TSO Desc Alloc %d, descs = %d",
+		__func__, num_pool, num_desc);
+
+	for (i = 0; i < num_pool; i++) {
+		if (dp_tx_tso_num_seg_pool_alloc(soc, i, num_desc)) {
+			dp_err("TSO Num of seg Pool alloc %d failed %pK",
+			       i, soc);
+
+			return QDF_STATUS_E_FAILURE;
+		}
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * dp_tx_soc_detach() - detach soc from dp tx
  * @soc: core txrx main context
@@ -3500,6 +3611,7 @@ QDF_STATUS dp_tx_soc_detach(struct dp_soc *soc)
 	uint16_t num_desc;
 	uint16_t num_ext_desc;
 	uint8_t i;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	num_pool = wlan_cfg_get_num_tx_desc_pool(soc->wlan_cfg_ctx);
 	num_desc = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
@@ -3525,22 +3637,9 @@ QDF_STATUS dp_tx_soc_detach(struct dp_soc *soc)
 			"%s MSDU Ext Desc Pool %d Free descs = %d",
 			__func__, num_pool, num_ext_desc);
 
-	for (i = 0; i < num_pool; i++) {
-		dp_tx_tso_desc_pool_free(soc, i);
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s TSO Desc Pool %d Free descs = %d",
-			__func__, num_pool, num_desc);
-
-
-	for (i = 0; i < num_pool; i++)
-		dp_tx_tso_num_seg_pool_free(soc, i);
-
-
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		"%s TSO Num of seg Desc Pool %d Free descs = %d",
-		__func__, num_pool, num_desc);
+	status = dp_tso_detach_wifi3(soc);
+	if (status != QDF_STATUS_SUCCESS)
+		return status;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3561,6 +3660,7 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 	uint8_t num_pool;
 	uint32_t num_desc;
 	uint32_t num_ext_desc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	num_pool = wlan_cfg_get_num_tx_desc_pool(soc->wlan_cfg_ctx);
 	num_desc = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
@@ -3590,33 +3690,10 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 			"%s MSDU Ext Desc Alloc %d, descs = %d",
 			__func__, num_pool, num_ext_desc);
 
-	for (i = 0; i < num_pool; i++) {
-		if (dp_tx_tso_desc_pool_alloc(soc, i, num_desc)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"TSO Desc Pool alloc %d failed %pK",
-				i, soc);
+	status = dp_tso_attach_wifi3((void *)soc);
+	if (status != QDF_STATUS_SUCCESS)
+		goto fail;
 
-			goto fail;
-		}
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s TSO Desc Alloc %d, descs = %d",
-			__func__, num_pool, num_desc);
-
-	for (i = 0; i < num_pool; i++) {
-		if (dp_tx_tso_num_seg_pool_alloc(soc, i, num_desc)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"TSO Num of seg Pool alloc %d failed %pK",
-				i, soc);
-
-			goto fail;
-		}
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s TSO Num of seg pool Alloc %d, descs = %d",
-			__func__, num_pool, num_desc);
 
 	/* Initialize descriptors in TCL Rings */
 	if (!wlan_cfg_per_pdev_tx_ring(soc->wlan_cfg_ctx)) {
