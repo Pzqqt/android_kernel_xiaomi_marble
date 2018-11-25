@@ -157,8 +157,7 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 
 	mutex_lock(&va_priv->mclk_lock);
 	if (mclk_enable) {
-		va_priv->va_mclk_users++;
-		if (va_priv->va_mclk_users == 1) {
+		if (va_priv->va_mclk_users == 0) {
 			ret = bolero_request_clock(va_priv->dev,
 						VA_MACRO, MCLK_MUX0, true);
 			if (ret < 0) {
@@ -181,8 +180,16 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 				BOLERO_CDC_VA_TOP_CSR_TOP_CFG0,
 				0x02, 0x02);
 		}
+		va_priv->va_mclk_users++;
 	} else {
-		if (va_priv->va_mclk_users == 1) {
+		if (va_priv->va_mclk_users <= 0) {
+			dev_err(va_priv->dev, "%s: clock already disabled\n",
+			__func__);
+			va_priv->va_mclk_users = 0;
+			goto exit;
+		}
+		va_priv->va_mclk_users--;
+		if (va_priv->va_mclk_users == 0) {
 			regmap_update_bits(regmap,
 				BOLERO_CDC_VA_TOP_CSR_TOP_CFG0,
 				0x02, 0x00);
@@ -195,7 +202,6 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 			bolero_request_clock(va_priv->dev,
 					VA_MACRO, MCLK_MUX0, false);
 		}
-		va_priv->va_mclk_users--;
 	}
 exit:
 	mutex_unlock(&va_priv->mclk_lock);
