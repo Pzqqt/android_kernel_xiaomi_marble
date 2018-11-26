@@ -561,6 +561,7 @@ static inline void dfs_reset_bangradar(struct wlan_dfs *dfs)
 {
 	dfs->dfs_bangradar  = 0;
 	dfs->dfs_second_segment_bangradar = 0;
+	dfs->dfs_enh_bangradar = false;
 }
 
 /* dfs_prepare_nol_ie_bitmap: Create a Bitmap from the radar found subchannels

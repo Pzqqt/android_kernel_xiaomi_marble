@@ -383,6 +383,13 @@ int dfs_control(struct wlan_dfs *dfs,
 		bangradar_enh_params =
 				      (struct dfs_bangradar_enh_params *)indata;
 		if (bangradar_enh_params) {
+			if (abs(bangradar_enh_params->freq_offset) >
+			    FREQ_OFFSET_BOUNDARY_FOR_80MHZ) {
+				dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					 "Frequency Offset out of bound");
+				error = -EINVAL;
+				break;
+			}
 			dfs->dfs_seg_id = bangradar_enh_params->seg_id;
 			dfs->dfs_is_chirp = bangradar_enh_params->is_chirp;
 			dfs->dfs_freq_offset =
@@ -393,7 +400,8 @@ int dfs_control(struct wlan_dfs *dfs,
 							(dfs, SEG_ID_PRIMARY,
 							 &dfs_unit_test);
 			} else {
-				dfs->dfs_bangradar = 1;
+				dfs->dfs_enh_bangradar = true;
+				dfs->dfs_bangradar = 0;
 				error = dfs_start_host_based_bangradar(dfs);
 			}
 		} else {

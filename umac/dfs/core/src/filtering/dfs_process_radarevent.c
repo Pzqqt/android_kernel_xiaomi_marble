@@ -588,13 +588,20 @@ static inline int dfs_handle_bangradar(
 	int *retval)
 {
 
-	if (dfs->dfs_bangradar) {
+	if (dfs->dfs_enh_bangradar || dfs->dfs_bangradar) {
 		/*
-		 * Bangradar will always simulate radar found on the primary
-		 * channel.
-		 */
+		* Bangradar will always simulate radar found on
+		* the primary channel.
+		*
+		* Enhanced Bangradar will save the params in dfs
+		* and simulate radar on given frequency
+		*/
 		*rs = &dfs->dfs_radar[dfs->dfs_curchan_radindex];
-		dfs_debug(dfs, WLAN_DEBUG_DFS, "bangradar");
+		if (dfs->dfs_enh_bangradar)
+			*seg_id = dfs->dfs_seg_id;
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			  "bangradar %d, Enhanced Bangradar %d",
+			  dfs->dfs_bangradar, dfs->dfs_enh_bangradar);
 		*retval = 1;
 		return 1;
 	}

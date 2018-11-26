@@ -884,6 +884,8 @@ struct dfs_event_log {
 
 #define MIN_DFS_SUBCHAN_BW 20 /* Minimum bandwidth of each subchannel. */
 
+#define FREQ_OFFSET_BOUNDARY_FOR_80MHZ 40
+
 /**
  * struct wlan_dfs -                 The main dfs structure.
  * @dfs_debug_mask:                  Current debug bitmask.
@@ -920,6 +922,9 @@ struct dfs_event_log {
  * @wlan_dfswaittimer:               Dfs wait timer.
  * @wlan_dfstesttimer:               Dfs mute test timer.
  * @wlan_dfs_debug_timer:            Dfs debug timer.
+ * @dfs_bangradar:                   Radar simulation on entire segment.
+ * @dfs_enh_bangradar:               Radar (Chirp or non-chirp) simulation on
+ *                                   particular frequency.
  * @dfs_second_segment_bangradar:    Bangaradar on second segment of
  *                                   VHT80_80/160.
  * @is_radar_found_on_secondary_seg: Radar on second segment.
@@ -1069,6 +1074,7 @@ struct wlan_dfs {
 	os_timer_t     wlan_dfstesttimer;
 	os_timer_t     wlan_dfs_debug_timer;
 	uint8_t        dfs_bangradar;
+	bool           dfs_enh_bangradar;
 	bool           dfs_second_segment_bangradar;
 	bool           is_radar_found_on_secondary_seg;
 	bool           dfs_radar_found_for_fo;
