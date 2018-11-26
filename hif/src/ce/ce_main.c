@@ -73,14 +73,14 @@ QDF_STATUS hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info);
 #define BYPASS_QMI 0
 #endif
 
-#ifdef CONFIG_WIN
-#if ENABLE_10_4_FW_HDR
+#ifdef ENABLE_10_4_FW_HDR
+#if (ENABLE_10_4_FW_HDR == 1)
 #define WDI_IPA_SERVICE_GROUP 5
 #define WDI_IPA_TX_SVC MAKE_SERVICE_ID(WDI_IPA_SERVICE_GROUP, 0)
 #define HTT_DATA2_MSG_SVC MAKE_SERVICE_ID(HTT_SERVICE_GROUP, 1)
 #define HTT_DATA3_MSG_SVC MAKE_SERVICE_ID(HTT_SERVICE_GROUP, 2)
+#endif /* ENABLE_10_4_FW_HDR == 1 */
 #endif /* ENABLE_10_4_FW_HDR */
-#endif
 
 QDF_STATUS hif_post_recv_buffers(struct hif_softc *scn);
 static void hif_config_rri_on_ddr(struct hif_softc *scn);
@@ -515,7 +515,7 @@ static struct service_to_pipe target_service_to_ce_map_qcn7605[] = {
 #endif
 
 #if (defined(QCA_WIFI_QCA6290))
-#ifdef CONFIG_WIN
+#ifdef QCA_6290_AP_MODE
 static struct service_to_pipe target_service_to_ce_map_qca6290[] = {
 	{ WMI_DATA_VO_SVC, PIPEDIR_OUT, 3, },
 	{ WMI_DATA_VO_SVC, PIPEDIR_IN , 2, },

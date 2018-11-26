@@ -24,10 +24,8 @@
 #ifndef __HIF_PCI_INTERNAL_H__
 #define __HIF_PCI_INTERNAL_H__
 
-#ifndef CONFIG_WIN
 #ifndef PEER_CACHEING_HOST_ENABLE
 #define PEER_CACHEING_HOST_ENABLE 0
-#endif
 #endif
 
 #define HIF_PCI_DEBUG   ATH_DEBUG_MAKE_MODULE_MASK(0)
@@ -69,10 +67,6 @@ static void hif_target_dump_access_log(void);
 
 #define EPPING_CE_FLAGS_POLL \
 	(CE_ATTR_DISABLE_INTR|CE_ATTR_ENABLE_POLL|CE_ATTR_FLAGS)
-
-#ifdef CONFIG_WIN
-#define PIPEDIR_INOUT_H2H 4
-#endif
 
 #define CE_ATTR_DIAG_FLAGS \
 	(CE_ATTR_FLAGS | CE_ATTR_DIAG)
@@ -791,7 +785,7 @@ static struct CE_pipe_config target_ce_config_wlan_qca8074_pci[] = {
 };
 
 #define QCA_6290_CE_COUNT 9
-#ifdef CONFIG_WIN
+#ifdef QCA_6290_AP_MODE
 static struct CE_attr host_ce_config_wlan_qca6290[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 2048, 0, NULL,},

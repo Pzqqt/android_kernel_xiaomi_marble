@@ -29,6 +29,10 @@
 #include "cepci.h"
 #include "ce_main.h"
 
+#ifdef QCA_HIF_HIA_EXTND
+extern int32_t frac, intval, ar900b_20_targ_clk, qca9888_20_targ_clk;
+#endif
+
 /* An address (e.g. of a buffer) in Copy Engine space. */
 
 #define HIF_MAX_TASKLET_NUM 11

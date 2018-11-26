@@ -62,10 +62,6 @@
  */
 #define CPU_WARM_RESET_WAR
 
-#ifdef CONFIG_WIN
-extern int32_t frac, intval, ar900b_20_targ_clk, qca9888_20_targ_clk;
-#endif
-
 /*
  * Top-level interrupt handler for all PCI interrupts from a Target.
  * When a block of MSI interrupts is allocated, this top-level handler
@@ -1498,7 +1494,8 @@ static void hif_sleep_entry(void *arg)
 #define HIF_HIA_MAX_POLL_LOOP    1000000
 #define HIF_HIA_POLLING_DELAY_MS 10
 
-#ifdef CONFIG_WIN
+#ifdef QCA_HIF_HIA_EXTND
+
 static void hif_set_hia_extnd(struct hif_softc *scn)
 {
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);

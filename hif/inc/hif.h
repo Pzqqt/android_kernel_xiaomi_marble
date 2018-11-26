@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -129,16 +129,15 @@ struct CE_state;
 #ifndef NAPI_YIELD_BUDGET_BASED
 #ifdef HIF_CONFIG_SLUB_DEBUG_ON
 #define QCA_NAPI_DEF_SCALE_BIN_SHIFT 1
-#else  /* PERF build */
-#ifdef CONFIG_WIN
-#define QCA_NAPI_DEF_SCALE_BIN_SHIFT 1
 #else
-#define QCA_NAPI_DEF_SCALE_BIN_SHIFT 4
-#endif /* CONFIG_WIN */
+#ifndef QCA_NAPI_DEF_SCALE_BIN_SHIFT
+#define QCA_NAPI_DEF_SCALE_BIN_SHIFT   4
+#endif
 #endif /* SLUB_DEBUG_ON */
 #else  /* NAPI_YIELD_BUDGET_BASED */
 #define QCA_NAPI_DEF_SCALE_BIN_SHIFT 2
 #endif /* NAPI_YIELD_BUDGET_BASED */
+
 #define QCA_NAPI_BUDGET    64
 #define QCA_NAPI_DEF_SCALE  \
 	(1 << QCA_NAPI_DEF_SCALE_BIN_SHIFT)
@@ -295,6 +294,7 @@ struct hif_config_info {
  * @target_type: Target Type
  * @target_revision: Target Revision
  * @soc_version: SOC Version
+ * @hw_name: pointer to hardware name
  *
  * Structure to hold target information.
  */
