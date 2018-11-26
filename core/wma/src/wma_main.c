@@ -4673,7 +4673,8 @@ QDF_STATUS wma_wmi_service_close(void)
 	/* free the wma_handle */
 	cds_free_context(QDF_MODULE_ID_WMA, wma_handle);
 
-	qdf_mem_free(((struct cds_context *) cds_ctx)->cfg_ctx);
+	if (((struct cds_context *)cds_ctx)->cfg_ctx)
+		qdf_mem_free(((struct cds_context *)cds_ctx)->cfg_ctx);
 	((struct cds_context *)cds_ctx)->cfg_ctx = NULL;
 	WMA_LOGD("%s: Exit", __func__);
 	return QDF_STATUS_SUCCESS;
