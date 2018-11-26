@@ -608,6 +608,8 @@ static void lim_register_debug_callback(void)
 {
 }
 #endif /* WLAN_FEATURE_MEMDUMP_ENABLE */
+
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
 static void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
 {
 	struct nan_callbacks cb_obj = {0};
@@ -618,6 +620,11 @@ static void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
 
 	ucfg_nan_register_lim_callbacks(mac_ctx->psoc, &cb_obj);
 }
+#else
+static inline void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
+{
+}
+#endif
 
 /*
  * pe_shutdown_notifier_cb - Shutdown notifier callback

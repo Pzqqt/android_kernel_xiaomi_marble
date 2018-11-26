@@ -2724,6 +2724,7 @@ static void hdd_register_policy_manager_callback(
 }
 #endif
 
+#ifdef WLAN_FEATURE_NAN_DATAPATH
 static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 {
 	struct nan_callbacks cb_obj = {0};
@@ -2741,6 +2742,11 @@ static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 
 	os_if_nan_register_hdd_callbacks(hdd_ctx->psoc, &cb_obj);
 }
+#else
+static inline void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
+{
+}
+#endif
 
 #ifdef CONFIG_LEAK_DETECTION
 /**
