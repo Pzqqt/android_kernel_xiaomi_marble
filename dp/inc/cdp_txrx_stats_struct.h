@@ -26,9 +26,6 @@
 #ifndef CONFIG_WIN
 #include <wlan_defs.h>
 #endif
-#if defined(WDI_EVENT_ENABLE) && defined(CONFIG_MCL)
-#include <wdi_event.h>
-#endif
 #define TXRX_STATS_LEVEL_OFF   0
 #define TXRX_STATS_LEVEL_BASIC 1
 #define TXRX_STATS_LEVEL_FULL  2
@@ -108,11 +105,7 @@
 #define CDP_PPDU_STATS_MAX_TAG 14
 #define CDP_MAX_DATA_TIDS 9
 
-#ifdef CONFIG_MCL
 #define CDP_WDI_NUM_EVENTS WDI_NUM_EVENTS
-#else
-#define CDP_WDI_NUM_EVENTS 26
-#endif
 
 #define CDP_FCTL_RETRY 0x0800
 #define CDP_FC_IS_RETRY_SET(_fc) \
@@ -120,6 +113,7 @@
 
 #define INVALID_RSSI 255
 
+#define WDI_EVENT_BASE 0x100
 /* Different Packet Types */
 enum cdp_packet_type {
 	DOT11_A = 0,
@@ -128,6 +122,45 @@ enum cdp_packet_type {
 	DOT11_AC = 3,
 	DOT11_AX = 4,
 	DOT11_MAX = 5,
+};
+
+enum WDI_EVENT {
+	WDI_EVENT_TX_STATUS = WDI_EVENT_BASE,
+	WDI_EVENT_OFFLOAD_ALL,
+	WDI_EVENT_RX_DESC_REMOTE,
+	WDI_EVENT_RX_PEER_INVALID,
+	WDI_EVENT_DBG_PRINT, /* NEED to integrate pktlog changes*/
+	WDI_EVENT_RX_CBF_REMOTE,
+	WDI_EVENT_RATE_FIND,
+	WDI_EVENT_RATE_UPDATE,
+	WDI_EVENT_SW_EVENT,
+	WDI_EVENT_RX_DESC,
+	WDI_EVENT_LITE_T2H,
+	WDI_EVENT_LITE_RX,
+	WDI_EVENT_RX_PPDU_DESC,
+	WDI_EVENT_TX_PPDU_DESC,
+	WDI_EVENT_TX_MSDU_DESC,
+	WDI_EVENT_TX_DATA,
+	WDI_EVENT_RX_DATA,
+	WDI_EVENT_TX_MGMT_CTRL,
+	WDI_EVENT_HTT_STATS,
+	WDI_EVENT_TX_BEACON,
+	WDI_EVENT_PEER_STATS,
+	WDI_EVENT_TX_SOJOURN_STAT,
+	WDI_EVENT_UPDATE_DP_STATS,
+	WDI_EVENT_RX_MGMT_CTRL,
+	WDI_EVENT_PEER_CREATE,
+	WDI_EVENT_PEER_DESTROY,
+	WDI_EVENT_PEER_FLUSH_RATE_STATS,
+	WDI_EVENT_FLUSH_RATE_STATS_REQ,
+	WDI_EVENT_RX_MPDU,
+	/* End of new event items */
+	WDI_EVENT_LAST
+};
+
+#define WDI_NUM_EVENTS WDI_EVENT_LAST - WDI_EVENT_BASE
+
+struct cdp_stats_extd {
 };
 
 /* TID level Tx/Rx stats
@@ -1233,198 +1266,7 @@ struct cdp_pdev_stats {
 	struct cdp_tid_stats tid_stats;
 };
 
-#ifndef BIG_ENDIAN_HOST
-typedef struct {
-	uint64_t pkts;
-	uint64_t bytes;
-} ol_txrx_stats_elem;
-#else
-struct ol_txrx_elem_t {
-	uint64_t pkts;
-	uint64_t bytes;
-};
-typedef struct ol_txrx_elem_t ol_txrx_stats_elem;
-#endif
-
 #ifndef CONFIG_MCL
-/**
- * @brief data stats published by the host txrx layer
- */
-struct ol_txrx_stats {
-	struct {
-		/* MSDUs received from the stack */
-		ol_txrx_stats_elem from_stack;
-		/* MSDUs successfully sent across the WLAN */
-		ol_txrx_stats_elem delivered;
-		struct {
-			/* MSDUs that the host did not accept */
-			ol_txrx_stats_elem host_reject;
-			/* MSDUs which could not be downloaded to the target */
-			ol_txrx_stats_elem download_fail;
-			/*
-			 * MSDUs which the target discarded
-			 * (lack of mem or old age)
-			 */
-			ol_txrx_stats_elem target_discard;
-			/*
-			 * MSDUs which the target sent but couldn't get
-			 * an ack for
-			 */
-			ol_txrx_stats_elem no_ack;
-			/* MSDUs dropped in NSS-FW */
-			ol_txrx_stats_elem nss_ol_dropped;
-		} dropped;
-		u_int32_t desc_in_use;
-		u_int32_t desc_alloc_fails;
-		u_int32_t ce_ring_full;
-		u_int32_t dma_map_error;
-		/* MSDUs given to the txrx layer by the management stack */
-		ol_txrx_stats_elem mgmt;
-		struct {
-			/* TSO applied jumbo packets received from NW Stack */
-			ol_txrx_stats_elem tso_pkts;
-			/* Non - TSO packets */
-			ol_txrx_stats_elem non_tso_pkts;
-			/* TSO packets : Dropped during TCP segmentation*/
-			ol_txrx_stats_elem tso_dropped;
-			/* TSO Descriptors */
-			u_int32_t tso_desc_cnt;
-		} tso;
-
-		struct {
-			/* TSO applied jumbo packets received from NW Stack */
-			ol_txrx_stats_elem sg_pkts;
-			/* Non - TSO packets */
-			ol_txrx_stats_elem non_sg_pkts;
-			/* TSO packets : Dropped during TCP segmentation*/
-			ol_txrx_stats_elem sg_dropped;
-			/* TSO Descriptors */
-			u_int32_t sg_desc_cnt;
-		} sg;
-		struct {
-			/* packets enqueued for flow control */
-			u_int32_t fl_ctrl_enqueue;
-			/* packets discarded for flow control is full */
-			u_int32_t fl_ctrl_discard;
-			/* packets sent to CE without flow control */
-			u_int32_t fl_ctrl_avoid;
-		} fl_ctrl;
-	} tx;
-	struct {
-		/* MSDUs given to the OS shim */
-		ol_txrx_stats_elem delivered;
-		/* MSDUs forwarded from the rx path to the tx path */
-		ol_txrx_stats_elem forwarded;
-		/* MSDUs in which ipv4 chksum error detected by HW */
-		ol_txrx_stats_elem ipv4_cksum_err;
-		/* MSDUs in which tcp chksum error detected by HW */
-		ol_txrx_stats_elem tcp_ipv4_cksum_err;
-		/* MSDUs in which udp chksum error detected by HW */
-		ol_txrx_stats_elem udp_ipv4_cksum_err;
-		/* MSDUs in which tcp V6 chksum error detected by HW */
-		ol_txrx_stats_elem tcp_ipv6_cksum_err;
-		/* MSDUs in which UDP V6 chksum error detected by HW */
-		ol_txrx_stats_elem udp_ipv6_cksum_err;
-	} rx;
-	struct {
-		/* Number of mcast received for conversion */
-		u_int32_t num_me_rcvd;
-		/* Number of unicast sent as part of mcast conversion */
-		u_int32_t num_me_ucast;
-		/* Number of multicast frames dropped due to dma_map failure */
-		u_int32_t num_me_dropped_m;
-		/*
-		 * Number of multicast frames dropped due to allocation
-		 * failure
-		 */
-		u_int32_t num_me_dropped_a;
-		/* Number of multicast frames dropped due to internal failure */
-		u_int32_t num_me_dropped_i;
-		/* Number of me buf currently in use */
-		u_int32_t num_me_buf;
-		/* Number of me buf frames to self mac address  */
-		u_int32_t num_me_dropped_s;
-		/* Number of me buf in use in non pool based allocation*/
-		u_int32_t num_me_nonpool;
-		/* Number of me buf allocated using non pool based allocation*/
-		u_int32_t num_me_nonpool_count;
-	} mcast_enhance;
-};
-
-struct ol_ath_dbg_rx_rssi {
-	uint8_t     rx_rssi_pri20;
-	uint8_t     rx_rssi_sec20;
-	uint8_t     rx_rssi_sec40;
-	uint8_t     rx_rssi_sec80;
-};
-
-struct ol_ath_radiostats {
-	uint64_t    tx_beacon;
-	uint32_t    tx_buf_count;
-	int32_t     tx_mgmt;
-	int32_t     rx_mgmt;
-	uint32_t    rx_num_mgmt;
-	uint32_t    rx_num_ctl;
-	uint32_t    tx_rssi;
-	uint32_t    rx_rssi_comb;
-	struct      ol_ath_dbg_rx_rssi rx_rssi_chain0;
-	struct      ol_ath_dbg_rx_rssi rx_rssi_chain1;
-	struct      ol_ath_dbg_rx_rssi rx_rssi_chain2;
-	struct      ol_ath_dbg_rx_rssi rx_rssi_chain3;
-	uint32_t    rx_overrun;
-	uint32_t    rx_phyerr;
-	uint32_t    ackRcvBad;
-	uint32_t    rtsBad;
-	uint32_t    rtsGood;
-	uint32_t    fcsBad;
-	uint32_t    noBeacons;
-	uint32_t    mib_int_count;
-	uint32_t    rx_looplimit_start;
-	uint32_t    rx_looplimit_end;
-	uint8_t     ap_stats_tx_cal_enable;
-	uint8_t     self_bss_util;
-	uint8_t     obss_util;
-	uint8_t     ap_rx_util;
-	uint8_t     free_medium;
-	uint8_t     ap_tx_util;
-	uint8_t     obss_rx_util;
-	uint8_t     non_wifi_util;
-	uint32_t    tgt_asserts;
-	int16_t     chan_nf;
-	int16_t     chan_nf_sec80;
-	uint64_t    wmi_tx_mgmt;
-	uint64_t    wmi_tx_mgmt_completions;
-	uint32_t    wmi_tx_mgmt_completion_err;
-	uint32_t    peer_delete_req;
-	uint32_t    peer_delete_resp;
-	uint32_t    rx_mgmt_rssi_drop;
-	uint32_t    tx_frame_count;
-	uint32_t    rx_frame_count;
-	uint32_t    rx_clear_count;
-	uint32_t    cycle_count;
-	uint32_t    phy_err_count;
-	uint32_t    chan_tx_pwr;
-	uint32_t    be_nobuf;
-	uint32_t    tx_packets;
-	uint32_t    rx_packets;
-	uint32_t    tx_num_data;
-	uint32_t    rx_num_data;
-	uint32_t    tx_mcs[10];
-	uint32_t    rx_mcs[10];
-	uint64_t    rx_bytes;
-	uint64_t    tx_bytes;
-	uint32_t    tx_compaggr;
-	uint32_t    rx_aggr;
-	uint32_t    tx_bawadv;
-	uint32_t    tx_compunaggr;
-	uint32_t    rx_badcrypt;
-	uint32_t    rx_badmic;
-	uint32_t    rx_crcerr;
-	uint32_t    rx_last_msdu_unset_cnt;
-	uint32_t    rx_data_bytes;
-	uint32_t    tx_retries;
-};
-
 /*
  * Enumeration of PDEV Configuration parameter
  */
@@ -1753,13 +1595,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_WIFI_DOWN_IND = 408,
 	OL_ATH_PARAM_TX_CAPTURE = 409,
 };
-
-/* Enumeration of PDEV Configuration parameter */
-enum _ol_hal_param_t {
-	OL_HAL_CONFIG_DMA_BEACON_RESPONSE_TIME         = 0
-};
 #endif
-
 /* Bitmasks for stats that can block */
 #define EXT_TXRX_FW_STATS		0x0001
 #endif

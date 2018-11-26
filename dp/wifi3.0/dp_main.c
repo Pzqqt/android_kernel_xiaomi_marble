@@ -8000,7 +8000,7 @@ static int dp_get_total_per(struct cdp_pdev *pdev_handle)
  * Return: int
  */
 static int
-dp_txrx_stats_publish(struct cdp_pdev *pdev_handle, void *buf)
+dp_txrx_stats_publish(struct cdp_pdev *pdev_handle, struct cdp_stats_extd *buf)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	struct cdp_pdev_stats *buffer = (struct cdp_pdev_stats *) buf;

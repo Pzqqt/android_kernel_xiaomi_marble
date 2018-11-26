@@ -24,6 +24,7 @@
 #ifndef _CDP_TXRX_HOST_STATS_H_
 #define _CDP_TXRX_HOST_STATS_H_
 #include "cdp_txrx_handle.h"
+#include "cdp_txrx_extd_struct.h"
 /**
  * cdp_host_stats_get: cdp call to get host stats
  * @soc: SOC handle
@@ -121,7 +122,7 @@ cdp_host_ce_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 
 static inline int cdp_stats_publish
 	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
-	struct ol_txrx_stats *buf)
+	struct cdp_stats_extd *buf)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,

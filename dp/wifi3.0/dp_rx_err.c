@@ -26,8 +26,6 @@
 #include "qdf_nbuf.h"
 #ifdef CONFIG_MCL
 #include <cds_ieee80211_common.h>
-#else
-#include <linux/ieee80211.h>
 #endif
 #include "dp_rx_defrag.h"
 #include <enet.h>	/* LLC_SNAP_HDR_LEN */

@@ -731,7 +731,7 @@ struct cdp_host_stats_ops {
 	void (*txrx_host_ce_stats)(struct cdp_vdev *vdev);
 
 	int (*txrx_stats_publish)(struct cdp_pdev *pdev,
-			void *buf);
+			struct cdp_stats_extd *buf);
 	/**
 	 * @brief Enable enhanced stats functionality.
 	 *

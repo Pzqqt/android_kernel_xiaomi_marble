@@ -32,8 +32,6 @@
 #include <cdp_txrx_cmn.h>
 #ifdef CONFIG_MCL
 #include <cds_ieee80211_common.h>
-#else
-#include <linux/ieee80211.h>
 #endif
 
 #ifndef CONFIG_WIN

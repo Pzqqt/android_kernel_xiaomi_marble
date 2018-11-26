@@ -23,8 +23,6 @@
 
 #ifdef CONFIG_MCL
 #include <cds_ieee80211_common.h>
-#else
-#include <linux/ieee80211.h>
 #endif
 
 #define DEFRAG_IEEE80211_KEY_LEN	8
