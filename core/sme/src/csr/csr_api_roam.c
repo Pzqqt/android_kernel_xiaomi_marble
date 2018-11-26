@@ -1691,7 +1691,6 @@ static void init_config_param(tpAniSirGlobal mac)
 	mac->roam.configParam.min_rest_time_conc =  CSR_MIN_REST_TIME_CONC;
 	mac->roam.configParam.idle_time_conc = CSR_IDLE_TIME_CONC;
 	mac->roam.configParam.nTxPowerCap = CSR_MAX_TX_POWER;
-	mac->roam.configParam.allow_tpc_from_ap = true;
 	mac->roam.configParam.statsReqPeriodicity =
 		CSR_MIN_GLOBAL_STAT_QUERY_PERIOD;
 	mac->roam.configParam.statsReqPeriodicityInPS =
@@ -2637,8 +2636,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal mac,
 			pParam->statsReqPeriodicityInPS;
 		/* Assign this before calling csr_init11d_info */
 		mac->roam.configParam.nTxPowerCap = pParam->nTxPowerCap;
-		mac->roam.configParam.allow_tpc_from_ap =
-				pParam->allow_tpc_from_ap;
 		if (wlan_reg_11d_enabled_on_host(mac->psoc))
 			status = csr_init11d_info(mac, &pParam->Csr11dinfo);
 		else
@@ -2911,7 +2908,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal mac, tCsrConfigParam *pParam)
 	pParam->nScanResultAgeCount = cfg_params->agingCount;
 	pParam->bCatRssiOffset = cfg_params->bCatRssiOffset;
 	pParam->nTxPowerCap = cfg_params->nTxPowerCap;
-	pParam->allow_tpc_from_ap = cfg_params->allow_tpc_from_ap;
 	pParam->statsReqPeriodicity = cfg_params->statsReqPeriodicity;
 	pParam->statsReqPeriodicityInPS = cfg_params->statsReqPeriodicityInPS;
 	pParam->fEnableDFSChnlScan = mac->scan.fEnableDFSChnlScan;

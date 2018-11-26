@@ -2409,29 +2409,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gAllowTPCfromAP - Support for AP power constraint
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini controls driver to honor/dishonor power constraint from AP.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_TX_POWER_CTRL_NAME                 "gAllowTPCfromAP"
-#define CFG_TX_POWER_CTRL_DEFAULT              (1)
-#define CFG_TX_POWER_CTRL_MIN                  (0)
-#define CFG_TX_POWER_CTRL_MAX                  (1)
-
-/*
- * <ini>
  * gFWMccRtsCtsProtection - RTS-CTS protection in MCC.
  * @Min: 0
  * @Max: 1
@@ -5929,7 +5906,6 @@ struct hdd_config {
 	bool apProtEnabled;
 	enum station_keepalive_method sta_keepalive_method;
 	uint8_t nTxPowerCap;    /* In dBm */
-	bool allow_tpc_from_ap;
 	uint8_t disablePacketFilter;
 	bool fRrmEnable;
 	uint16_t nRrmRandnIntvl;

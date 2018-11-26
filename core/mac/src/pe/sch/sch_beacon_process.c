@@ -863,7 +863,7 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 
 	local_constraint = regMax;
 
-	if (mac_ctx->roam.configParam.allow_tpc_from_ap) {
+	if (mac_ctx->mlme_cfg->sta.allow_tpc_from_ap) {
 		get_local_power_constraint_beacon(bcn, &local_constraint);
 		pe_debug("ESE localPowerConstraint = %d,",
 				local_constraint);

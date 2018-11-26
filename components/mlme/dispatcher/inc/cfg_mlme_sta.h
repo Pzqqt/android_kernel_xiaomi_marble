@@ -375,6 +375,28 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"Current RSSI")
 
+/*
+ * <ini>
+ * gAllowTPCfromAP - Support for AP power constraint
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini controls driver to honor/dishonor power constraint from AP.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_TX_POWER_CTRL CFG_INI_BOOL( \
+	"gAllowTPCfromAP", \
+	1, \
+	"Support for AP power constraint")
+
 #define CFG_STA_ALL \
 	CFG(CFG_INFRA_STA_KEEP_ALIVE_PERIOD) \
 	CFG(CFG_TGT_GTX_USR_CFG) \
@@ -390,6 +412,7 @@
 	CFG(CFG_FORCE_RSNE_OVERRIDE) \
 	CFG(CFG_SINGLE_TID_RC) \
 	CFG(CFG_WT_CNF_TIMEOUT) \
-	CFG(CFG_CURRENT_RSSI)
+	CFG(CFG_CURRENT_RSSI) \
+	CFG(CFG_TX_POWER_CTRL)
 
 #endif /* CFG_MLME_STA_H__ */

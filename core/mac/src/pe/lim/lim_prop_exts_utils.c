@@ -384,7 +384,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	if (beacon_struct->wmeEdcaPresent)
 		*uapsd = beacon_struct->edcaParams.qosInfo.uapsd;
 
-	if (mac_ctx->roam.configParam.allow_tpc_from_ap) {
+	if (mac_ctx->mlme_cfg->sta.allow_tpc_from_ap) {
 		if (beacon_struct->powerConstraintPresent) {
 			*local_constraint -=
 				beacon_struct->localPowerConstraint.

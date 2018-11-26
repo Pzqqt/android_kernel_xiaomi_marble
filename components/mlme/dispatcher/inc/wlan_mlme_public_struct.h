@@ -1020,6 +1020,7 @@ struct wlan_mlme_nss_chains {
  * @qcn_ie_support:                 QCN IE support
  * @force_rsne_override:            Force rsnie override from user
  * @single_tid:                     Set replay counter for all TID
+ * @allow_tpc_from_ap:              Support for AP power constraint
  */
 struct wlan_mlme_sta_cfg {
 	uint32_t sta_keep_alive_period;
@@ -1037,6 +1038,7 @@ struct wlan_mlme_sta_cfg {
 	bool qcn_ie_support;
 	bool force_rsne_override;
 	bool single_tid;
+	bool allow_tpc_from_ap;
 };
 
 /*

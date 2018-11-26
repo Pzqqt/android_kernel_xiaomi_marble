@@ -597,13 +597,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_MAX_TX_POWER_MIN,
 		     CFG_MAX_TX_POWER_MAX),
 
-	REG_VARIABLE(CFG_TX_POWER_CTRL_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, allow_tpc_from_ap,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TX_POWER_CTRL_DEFAULT,
-		     CFG_TX_POWER_CTRL_MIN,
-		     CFG_TX_POWER_CTRL_MAX),
-
 	REG_VARIABLE(CFG_FW_MCC_RTS_CTS_PROT_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, mcc_rts_cts_prot_enable,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -3744,7 +3737,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.HeartbeatThresh50 = 40;
 	smeConfig->csrConfig.Is11hSupportEnabled = pConfig->Is11hSupportEnabled;
 	smeConfig->csrConfig.nTxPowerCap = pConfig->nTxPowerCap;
-	smeConfig->csrConfig.allow_tpc_from_ap = pConfig->allow_tpc_from_ap;
 	smeConfig->csrConfig.fEnableDFSChnlScan = pConfig->enableDFSChnlScan;
 	smeConfig->csrConfig.nRoamPrefer5GHz = pConfig->nRoamPrefer5GHz;
 	smeConfig->csrConfig.nRoamIntraBand = pConfig->nRoamIntraBand;
