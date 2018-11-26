@@ -2342,10 +2342,13 @@ static int32_t q6asm_callback(struct apr_client_data *data, void *priv)
 		break;
 	case ASM_STREAM_PP_EVENT:
 	case ASM_STREAM_CMD_ENCDEC_EVENTS:
-	case ASM_STREAM_CMD_REGISTER_IEC_61937_FMT_UPDATE:
+	case ASM_IEC_61937_MEDIA_FMT_EVENT:
 		if (data->payload_size >= 2 * sizeof(uint32_t))
 			pr_debug("%s: ASM_STREAM_EVENT payload[0][0x%x] payload[1][0x%x]",
 					 __func__, payload[0], payload[1]);
+		else if (data->payload_size >= sizeof(uint32_t))
+			pr_debug("%s: ASM_STREAM_EVENT payload[0][0x%x]",
+				__func__, payload[0]);
 		else
 			pr_debug("%s: payload size of %x is less than expected.\n",
 				__func__, data->payload_size);
@@ -2380,6 +2383,34 @@ static int32_t q6asm_callback(struct apr_client_data *data, void *priv)
 		pp_event_package->payload_len = payload_size;
 		memcpy((void *)pp_event_package->payload,
 			data->payload, payload_size);
+		if ((data->opcode == ASM_IEC_61937_MEDIA_FMT_EVENT) &&
+		    (payload_size == 4)) {
+			switch (payload[0]) {
+			case ASM_MEDIA_FMT_AC3:
+				((uint32_t *)pp_event_package->payload)[0] =
+					SND_AUDIOCODEC_AC3;
+				break;
+			case ASM_MEDIA_FMT_EAC3:
+				((uint32_t *)pp_event_package->payload)[0] =
+					SND_AUDIOCODEC_EAC3;
+				break;
+			case ASM_MEDIA_FMT_DTS:
+				((uint32_t *)pp_event_package->payload)[0] =
+					SND_AUDIOCODEC_DTS;
+				break;
+			case ASM_MEDIA_FMT_TRUEHD:
+				((uint32_t *)pp_event_package->payload)[0] =
+					SND_AUDIOCODEC_TRUEHD;
+				break;
+			case ASM_MEDIA_FMT_AAC_V2:
+				((uint32_t *)pp_event_package->payload)[0] =
+					SND_AUDIOCODEC_AAC;
+				break;
+			default:
+				pr_debug("%s: Event with unknown media_fmt 0x%x\n",
+					__func__, payload[0]);
+			}
+		}
 		ac->cb(data->opcode, data->token,
 			(void *)pp_event_package, ac->priv);
 		kfree(pp_event_package);
