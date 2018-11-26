@@ -40,7 +40,12 @@
 #include <cdp_txrx_handle.h>
 
 #ifndef OL_TXRX_NUM_LOCAL_PEER_IDS
-#define OL_TXRX_NUM_LOCAL_PEER_IDS 33   /* default */
+/*
+ * Each AP will occupy one ID, so it will occupy two IDs for AP-AP mode.
+ * Clients will be assigned max 32 IDs.
+ * STA(associated)/P2P DEV(self-PEER) will get one ID.
+ */
+#define OL_TXRX_NUM_LOCAL_PEER_IDS (32 + 1 + 1 + 1)
 #endif
 
 #define CDP_BA_256_BIT_MAP_SIZE_DWORDS 8
