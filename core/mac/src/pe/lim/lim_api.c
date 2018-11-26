@@ -265,10 +265,12 @@ static void __lim_init_ht_vars(tpAniSirGlobal mac)
 
 static QDF_STATUS __lim_init_config(tpAniSirGlobal mac)
 {
+	struct mlme_ht_capabilities_info *ht_cap_info;
+#ifdef FEATURE_WLAN_TDLS
+	QDF_STATUS status;
 	uint32_t val1;
 	bool valb;
-	struct mlme_ht_capabilities_info *ht_cap_info;
-	QDF_STATUS status;
+#endif
 
 	/* Read all the CFGs here that were updated before pe_start is called */
 	/* All these CFG READS/WRITES are only allowed in init, at start when there is no session

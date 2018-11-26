@@ -1385,10 +1385,7 @@ static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
 				 vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_2GHZ]);
 	cfg_tdls_set_vdev_nss_5g(hdd_ctx->psoc,
 				 vdev_ini_cfg.rx_nss[NSS_CHAINS_BAND_5GHZ]);
-	tdls_cfg.tdls_send_mgmt_req = eWNI_SME_TDLS_SEND_MGMT_REQ;
-	tdls_cfg.tdls_add_sta_req = eWNI_SME_TDLS_ADD_STA_REQ;
-	tdls_cfg.tdls_del_sta_req = eWNI_SME_TDLS_DEL_STA_REQ;
-	tdls_cfg.tdls_update_peer_state = WMA_UPDATE_TDLS_PEER_STATE;
+	hdd_init_tdls_config(&tdls_cfg);
 	tdls_cfg.tdls_del_all_peers = eWNI_SME_DEL_ALL_TDLS_PEERS;
 	tdls_cfg.tdls_update_dp_vdev_flags = CDP_UPDATE_TDLS_FLAGS;
 	tdls_cfg.tdls_event_cb = wlan_cfg80211_tdls_event_callback;
@@ -1444,8 +1441,9 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 	bool tdls_off_channel;
 	bool tdls_buffer_sta;
 	uint32_t tdls_uapsd_mask;
-	bool value;
 #endif
+	bool value;
+
 	/* Set up UAPSD */
 	ucfg_mlme_set_sap_uapsd_flag(hdd_ctx->psoc, cfg->uapsd);
 

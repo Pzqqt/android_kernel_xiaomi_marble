@@ -827,7 +827,27 @@ wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 
 	return ret;
 }
-#endif
+
+static uint8_t hdd_get_bw_offset(uint32_t ch_width)
+{
+	uint8_t bw_offset = 0;
+
+	if (ch_width == CH_WIDTH_40MHZ)
+		bw_offset = 1 << BW_40_OFFSET_BIT;
+	else if (ch_width == CH_WIDTH_20MHZ)
+		bw_offset = 1 << BW_20_OFFSET_BIT;
+
+	return bw_offset;
+}
+
+#else /* !FEATURE_WLAN_TDLS */
+
+static inline uint8_t hdd_get_bw_offset(uint32_t ch_width)
+{
+	return 0;
+}
+
+#endif /* FEATURE_WLAN_TDLS */
 
 #ifdef QCA_HT_2040_COEX
 static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work);
@@ -1918,10 +1938,6 @@ static int hdd_update_reg_chan_info(struct hdd_adapter *adapter,
 		if (chan == 0)
 			continue;
 
-		if (sap_config->acs_cfg.ch_width == CH_WIDTH_40MHZ)
-			bw_offset = 1 << BW_40_OFFSET_BIT;
-		else if (sap_config->acs_cfg.ch_width == CH_WIDTH_20MHZ)
-			bw_offset = 1 << BW_20_OFFSET_BIT;
 		icv->freq = wlan_reg_get_channel_freq(hdd_ctx->pdev, chan);
 		icv->ieee_chan_number = chan;
 		icv->max_reg_power = wlan_reg_get_channel_reg_power(
@@ -1933,6 +1949,7 @@ static int hdd_update_reg_chan_info(struct hdd_adapter *adapter,
 		/* not supported in current driver */
 		icv->max_antenna_gain = 0;
 
+		bw_offset = hdd_get_bw_offset(sap_config->acs_cfg.ch_width);
 		icv->reg_class_id =
 			wlan_hdd_find_opclass(mac_handle, chan, bw_offset);
 

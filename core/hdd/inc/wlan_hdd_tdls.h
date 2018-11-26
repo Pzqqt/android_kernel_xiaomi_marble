@@ -257,6 +257,14 @@ QDF_STATUS hdd_tdls_register_peer(void *userdata, uint32_t vdev_id,
 QDF_STATUS hdd_tdls_deregister_peer(void *userdata, uint32_t vdev_id,
 				    uint8_t sta_id);
 
+/**
+ * hdd_init_tdls_config() - initialize tdls config
+ * @tdls_cfg: pointer to tdls_start_params structure
+ *
+ * Return: none
+ */
+void hdd_init_tdls_config(struct tdls_start_params *tdls_cfg);
+
 #else
 
 static inline int wlan_hdd_tdls_antenna_switch(struct hdd_context *hdd_ctx,
@@ -283,14 +291,21 @@ hdd_tdls_notify_p2p_roc(struct hdd_context *hdd_ctx,
 static inline
 QDF_STATUS hdd_tdls_register_peer(void *userdata, uint32_t vdev_id,
 				  const uint8_t *mac, uint16_t sta_id,
-				  uint8_t qos);
+				  uint8_t qos)
 {
+	return QDF_STATUS_SUCCESS;
 }
 
 static inline
 QDF_STATUS hdd_tdls_deregister_peer(void *userdata, uint32_t vdev_id,
 				    uint8_t sta_id)
 {
+	return QDF_STATUS_SUCCESS;
 }
+
+static inline void hdd_init_tdls_config(struct tdls_start_params *tdls_cfg)
+{
+}
+
 #endif /* End of FEATURE_WLAN_TDLS */
 #endif /* __HDD_TDLS_H */

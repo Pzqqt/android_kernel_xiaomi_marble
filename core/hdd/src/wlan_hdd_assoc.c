@@ -1399,11 +1399,14 @@ static void hdd_send_association_event(struct net_device *dev,
 						pCsrRoamInfo->timingMeasCap,
 						adapter->session_id, &chan_info,
 						adapter->device_mode);
+
+#ifdef FEATURE_WLAN_TDLS
 		/* Update tdls module about connection event */
 		hdd_notify_sta_connect(adapter->session_id,
 				       pCsrRoamInfo->tdls_chan_swit_prohibited,
 				       pCsrRoamInfo->tdls_prohibited,
 				       adapter->vdev);
+#endif
 
 #ifdef MSM_PLATFORM
 		/* start timer in sta/p2p_cli */

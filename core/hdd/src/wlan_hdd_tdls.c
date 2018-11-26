@@ -920,3 +920,11 @@ QDF_STATUS hdd_tdls_deregister_peer(void *userdata, uint32_t vdev_id,
 
 	return hdd_roam_deregister_tdlssta(adapter, sta_id);
 }
+
+void hdd_init_tdls_config(struct tdls_start_params *tdls_cfg)
+{
+	tdls_cfg->tdls_send_mgmt_req = eWNI_SME_TDLS_SEND_MGMT_REQ;
+	tdls_cfg->tdls_add_sta_req = eWNI_SME_TDLS_ADD_STA_REQ;
+	tdls_cfg->tdls_del_sta_req = eWNI_SME_TDLS_DEL_STA_REQ;
+	tdls_cfg->tdls_update_peer_state = WMA_UPDATE_TDLS_PEER_STATE;
+}

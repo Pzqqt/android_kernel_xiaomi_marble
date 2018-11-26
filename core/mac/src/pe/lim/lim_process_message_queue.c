@@ -1462,9 +1462,9 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	cds_pkt_t *body_ptr = NULL;
 	QDF_STATUS qdf_status;
 	struct scheduler_msg new_msg = {0};
-	uint8_t session_id;
 
 #ifdef FEATURE_WLAN_TDLS
+	uint8_t session_id;
 	tSirTdlsInd *tdls_ind = NULL;
 	tpDphHashNode sta_ds = NULL;
 #endif
