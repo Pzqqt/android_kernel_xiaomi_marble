@@ -1216,6 +1216,7 @@ static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
 		(uint32_t)cfg_default(CFG_WT_CNF_TIMEOUT);
 	sta->current_rssi =
 		(uint32_t)cfg_default(CFG_CURRENT_RSSI);
+	sta->allow_tpc_from_ap = cfg_get(psoc, CFG_TX_POWER_CTRL);
 }
 
 static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
