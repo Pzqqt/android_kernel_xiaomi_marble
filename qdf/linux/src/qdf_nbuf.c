@@ -2898,15 +2898,15 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 	int j = 0; /* skb fragment index */
 
 	memset(&tso_cmn_info, 0x0, sizeof(tso_cmn_info));
+	total_num_seg = tso_info->tso_num_seg_list;
+	curr_seg = tso_info->tso_seg_list;
+	total_num_seg->num_seg.tso_cmn_num_seg = 0;
 
 	if (qdf_unlikely(__qdf_nbuf_get_tso_cmn_seg_info(osdev,
 						skb, &tso_cmn_info))) {
 		qdf_warn("TSO: error getting common segment info");
 		return 0;
 	}
-
-	total_num_seg = tso_info->tso_num_seg_list;
-	curr_seg = tso_info->tso_seg_list;
 
 	/* length of the first chunk of data in the skb */
 	skb_frag_len = skb_headlen(skb);
@@ -2937,7 +2937,6 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 	num_seg = tso_info->num_segs;
 	tso_info->num_segs = 0;
 	tso_info->is_tso = 1;
-	total_num_seg->num_seg.tso_cmn_num_seg = 0;
 
 	while (num_seg && curr_seg) {
 		int i = 1; /* tso fragment index */
@@ -3097,6 +3096,14 @@ void __qdf_nbuf_unmap_tso_segment(qdf_device_t osdev,
 
 	/*Num of frags in a tso seg cannot be less than 2 */
 	if (num_frags < 1) {
+		/*
+		 * If Num of frags is 1 in a tso seg but is_last_seg true,
+		 * this may happen when qdf_nbuf_get_tso_info failed,
+		 * do dma unmap for the 0th frag in this seg.
+		 */
+		if (is_last_seg && tso_seg->seg.num_frags == 1)
+			goto last_seg_free_first_frag;
+
 		qdf_assert(0);
 		qdf_err("ERROR: num of frags in a tso segment is %d",
 			(num_frags + 1));
@@ -3120,6 +3127,7 @@ void __qdf_nbuf_unmap_tso_segment(qdf_device_t osdev,
 		qdf_tso_seg_dbg_record(tso_seg, TSOSEG_LOC_UNMAPTSO);
 	}
 
+last_seg_free_first_frag:
 	if (is_last_seg) {
 		/*Do dma unmap for the tso seg 0th frag */
 		if (0 ==  tso_seg->seg.tso_frags[0].paddr) {

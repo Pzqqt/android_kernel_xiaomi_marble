@@ -109,34 +109,34 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
  * dp_tx_tso_unmap_segment() - Unmap TSO segment
  *
  * @soc - core txrx main context
- * @tx_desc - Tx software descriptor
+ * @seg_desc - tso segment descriptor
+ * @num_seg_desc - tso number segment descriptor
  */
-static void dp_tx_tso_unmap_segment(struct dp_soc *soc,
-				    struct dp_tx_desc_s *tx_desc)
+static void dp_tx_tso_unmap_segment(
+		struct dp_soc *soc,
+		struct qdf_tso_seg_elem_t *seg_desc,
+		struct qdf_tso_num_seg_elem_t *num_seg_desc)
 {
 	TSO_DEBUG("%s: Unmap the tso segment", __func__);
-	if (qdf_unlikely(!tx_desc->tso_desc)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s %d TSO desc is NULL!",
-			  __func__, __LINE__);
+	if (qdf_unlikely(!seg_desc)) {
+		DP_TRACE(ERROR, "%s %d TSO desc is NULL!",
+			 __func__, __LINE__);
 		qdf_assert(0);
-	} else if (qdf_unlikely(!tx_desc->tso_num_desc)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s %d TSO num desc is NULL!",
-			  __func__, __LINE__);
+	} else if (qdf_unlikely(!num_seg_desc)) {
+		DP_TRACE(ERROR, "%s %d TSO num desc is NULL!",
+			 __func__, __LINE__);
 		qdf_assert(0);
 	} else {
 		bool is_last_seg;
-		struct qdf_tso_num_seg_elem_t *tso_num_desc =
-			(struct qdf_tso_num_seg_elem_t *)tx_desc->tso_num_desc;
+		/* no tso segment left to do dma unmap */
+		if (num_seg_desc->num_seg.tso_cmn_num_seg < 1)
+			return;
 
-		if (tso_num_desc->num_seg.tso_cmn_num_seg > 1)
-			is_last_seg = false;
-		else
-			is_last_seg = true;
-		tso_num_desc->num_seg.tso_cmn_num_seg--;
+		is_last_seg = (num_seg_desc->num_seg.tso_cmn_num_seg == 1) ?
+					true : false;
 		qdf_nbuf_unmap_tso_segment(soc->osdev,
-					   tx_desc->tso_desc, is_last_seg);
+					   seg_desc, is_last_seg);
+		num_seg_desc->num_seg.tso_cmn_num_seg--;
 	}
 }
 
@@ -179,8 +179,10 @@ static void dp_tx_tso_desc_release(struct dp_soc *soc,
 	}
 }
 #else
-static void dp_tx_tso_unmap_segment(struct dp_soc *soc,
-				    struct dp_tx_desc_s *tx_desc)
+static void dp_tx_tso_unmap_segment(
+		struct dp_soc *soc,
+		struct qdf_tso_seg_elem_t *seg_desc,
+		struct qdf_tso_num_seg_elem_t *num_seg_desc)
 
 {
 }
@@ -352,8 +354,8 @@ static void dp_tx_prepare_tso_ext_desc(struct qdf_tso_seg_t *tso_seg,
 
 #if defined(FEATURE_TSO)
 /**
- * dp_tx_free_tso_seg() - Loop through the tso segments
- *                        allocated and free them
+ * dp_tx_free_tso_seg_list() - Loop through the tso segments
+ *                             allocated and free them
  *
  * @soc: soc handle
  * @free_seg: list of tso segments
@@ -361,43 +363,105 @@ static void dp_tx_prepare_tso_ext_desc(struct qdf_tso_seg_t *tso_seg,
  *
  * Return - void
  */
-static void dp_tx_free_tso_seg(struct dp_soc *soc,
-	struct qdf_tso_seg_elem_t *free_seg,
-	struct dp_tx_msdu_info_s *msdu_info)
+static void dp_tx_free_tso_seg_list(
+		struct dp_soc *soc,
+		struct qdf_tso_seg_elem_t *free_seg,
+		struct dp_tx_msdu_info_s *msdu_info)
 {
 	struct qdf_tso_seg_elem_t *next_seg;
 
 	while (free_seg) {
 		next_seg = free_seg->next;
 		dp_tx_tso_desc_free(soc,
-			msdu_info->tx_queue.desc_pool_id,
-			free_seg);
+				    msdu_info->tx_queue.desc_pool_id,
+				    free_seg);
 		free_seg = next_seg;
 	}
 }
 
 /**
- * dp_tx_free_tso_num_seg() - Loop through the tso num segments
- *                            allocated and free them
+ * dp_tx_free_tso_num_seg_list() - Loop through the tso num segments
+ *                                 allocated and free them
  *
  * @soc:  soc handle
- * @free_seg: list of tso segments
+ * @free_num_seg: list of tso number segments
  * @msdu_info: msdu descriptor
  * Return - void
  */
-static void dp_tx_free_tso_num_seg(struct dp_soc *soc,
-	struct qdf_tso_num_seg_elem_t *free_seg,
-	struct dp_tx_msdu_info_s *msdu_info)
+static void dp_tx_free_tso_num_seg_list(
+		struct dp_soc *soc,
+		struct qdf_tso_num_seg_elem_t *free_num_seg,
+		struct dp_tx_msdu_info_s *msdu_info)
 {
-	struct qdf_tso_num_seg_elem_t *next_seg;
+	struct qdf_tso_num_seg_elem_t *next_num_seg;
+
+	while (free_num_seg) {
+		next_num_seg = free_num_seg->next;
+		dp_tso_num_seg_free(soc,
+				    msdu_info->tx_queue.desc_pool_id,
+				    free_num_seg);
+		free_num_seg = next_num_seg;
+	}
+}
+
+/**
+ * dp_tx_unmap_tso_seg_list() - Loop through the tso segments
+ *                              do dma unmap for each segment
+ *
+ * @soc: soc handle
+ * @free_seg: list of tso segments
+ * @num_seg_desc: tso number segment descriptor
+ *
+ * Return - void
+ */
+static void dp_tx_unmap_tso_seg_list(
+		struct dp_soc *soc,
+		struct qdf_tso_seg_elem_t *free_seg,
+		struct qdf_tso_num_seg_elem_t *num_seg_desc)
+{
+	struct qdf_tso_seg_elem_t *next_seg;
+
+	if (qdf_unlikely(!num_seg_desc)) {
+		DP_TRACE(ERROR, "TSO number seg desc is NULL!");
+		return;
+	}
 
 	while (free_seg) {
 		next_seg = free_seg->next;
-		dp_tso_num_seg_free(soc,
-			msdu_info->tx_queue.desc_pool_id,
-			free_seg);
+		dp_tx_tso_unmap_segment(soc, free_seg, num_seg_desc);
 		free_seg = next_seg;
 	}
+}
+
+/**
+ * dp_tx_free_remaining_tso_desc() - do dma unmap for tso segments if any,
+ *				     free the tso segments descriptor and
+ *				     tso num segments descriptor
+ *
+ * @soc:  soc handle
+ * @msdu_info: msdu descriptor
+ * @tso_seg_unmap: flag to show if dma unmap is necessary
+ *
+ * Return - void
+ */
+static void dp_tx_free_remaining_tso_desc(struct dp_soc *soc,
+					  struct dp_tx_msdu_info_s *msdu_info,
+					  bool tso_seg_unmap)
+{
+	struct qdf_tso_info_t *tso_info = &msdu_info->u.tso_info;
+	struct qdf_tso_seg_elem_t *free_seg = tso_info->tso_seg_list;
+	struct qdf_tso_num_seg_elem_t *tso_num_desc =
+					tso_info->tso_num_seg_list;
+
+	/* do dma unmap for each segment */
+	if (tso_seg_unmap)
+		dp_tx_unmap_tso_seg_list(soc, free_seg, tso_num_desc);
+
+	/* free all tso number segment descriptor though looks only have 1 */
+	dp_tx_free_tso_num_seg_list(soc, tso_num_desc, msdu_info);
+
+	/* free all tso segment descriptor */
+	dp_tx_free_tso_seg_list(soc, free_seg, msdu_info);
 }
 
 /**
@@ -434,10 +498,9 @@ static QDF_STATUS dp_tx_prepare_tso(struct dp_vdev *vdev,
 			tso_info->tso_seg_list = tso_seg;
 			num_seg--;
 		} else {
-			struct qdf_tso_seg_elem_t *free_seg =
-				tso_info->tso_seg_list;
-
-			dp_tx_free_tso_seg(soc, free_seg, msdu_info);
+			DP_TRACE(ERROR, "%s: Failed to alloc tso seg desc",
+				 __func__);
+			dp_tx_free_remaining_tso_desc(soc, msdu_info, false);
 
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -452,14 +515,9 @@ static QDF_STATUS dp_tx_prepare_tso(struct dp_vdev *vdev,
 		tso_num_seg->next = tso_info->tso_num_seg_list;
 		tso_info->tso_num_seg_list = tso_num_seg;
 	} else {
-		/* Bug: free tso_num_seg and tso_seg */
-		/* Free the already allocated num of segments */
-		struct qdf_tso_seg_elem_t *free_seg =
-					tso_info->tso_seg_list;
-
-		TSO_DEBUG(" %s: Failed alloc - Number of segs for a TSO packet",
-			__func__);
-		dp_tx_free_tso_seg(soc, free_seg, msdu_info);
+		DP_TRACE(ERROR, "%s: Failed to alloc - Number of segs desc",
+			 __func__);
+		dp_tx_free_remaining_tso_desc(soc, msdu_info, false);
 
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -471,9 +529,13 @@ static QDF_STATUS dp_tx_prepare_tso(struct dp_vdev *vdev,
 			msdu_info->num_seg);
 
 	if (!(msdu_info->num_seg)) {
-		dp_tx_free_tso_seg(soc, tso_info->tso_seg_list, msdu_info);
-		dp_tx_free_tso_num_seg(soc, tso_info->tso_num_seg_list,
-					msdu_info);
+		/*
+		 * Free allocated TSO seg desc and number seg desc,
+		 * do unmap for segments if dma map has done.
+		 */
+		DP_TRACE(ERROR, "%s: Failed to get tso info", __func__);
+		dp_tx_free_remaining_tso_desc(soc, msdu_info, true);
+
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -2445,7 +2507,8 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 		if (hal_tx_ext_desc_get_tso_enable(
 					desc->msdu_ext_desc->vaddr)) {
 			/* unmap eash TSO seg before free the nbuf */
-			dp_tx_tso_unmap_segment(soc, desc);
+			dp_tx_tso_unmap_segment(soc, desc->tso_desc,
+						desc->tso_num_desc);
 			qdf_nbuf_free(nbuf);
 			return;
 		}
