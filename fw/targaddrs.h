@@ -370,6 +370,14 @@ PREPACK64 struct host_interest_s {
 #define HI_OPTION_BE_LATENCY_OPTIMIZE    0x100 /* This bit is to enable BE low latency for some customers. The side effect is TCP DL will be 8Mbps decreased (673Mbps -> 665Mbps).*/
 #define HT_OPTION_GPIO_WAKEUP_SUPPORT    0x200 /* GPIO wake up support */
 
+/*
+ * If both SDIO_CRASH_DUMP_ENHANCEMENT_HOST and SDIO_CRASH_DUMP_ENHANCEMENT_FW
+ * flags are set, then crashdump upload will be done using the BMI host/target
+ * communication channel.
+ */
+#define HI_OPTION_SDIO_CRASH_DUMP_ENHANCEMENT_HOST 0x400 /* HOST to support using BMI dump FW memory when hit assert */
+#define HI_OPTION_SDIO_CRASH_DUMP_ENHANCEMENT_FW   0x800 /* FW to support using BMI dump FW memory when hit assert */
+
 #define GPIO_WAKEUP_ENABLED() \
     (HOST_INTEREST->hi_option_flag2 & HT_OPTION_GPIO_WAKEUP_SUPPORT)
 
