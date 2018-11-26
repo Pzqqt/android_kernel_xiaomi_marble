@@ -2037,7 +2037,7 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(tpAniSirGlobal mac,
 	tSirMacTxBFCapabilityInfo *pTxBFCapabilityInfo;
 	tSirMacASCapabilityInfo *pASCapabilityInfo;
 
-	nCfgValue = pTdlsAddStaReq->htCap.capInfo;
+	nCfgValue = pTdlsAddStaReq->htCap.hc_cap;
 
 	uHTCapabilityInfo.nCfgValue16 = nCfgValue & 0xFFFF;
 
@@ -2086,7 +2086,7 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(tpAniSirGlobal mac,
 		pDot11f->shortGI40MHz,
 		pDot11f->dsssCckMode40MHz);
 
-	nCfgValue = pTdlsAddStaReq->htCap.ampduParamsInfo;
+	nCfgValue = pTdlsAddStaReq->htCap.ampdu_param;
 
 	nCfgValue8 = (uint8_t) nCfgValue;
 	pHTParametersInfo = (tSirMacHTParametersInfo *) &nCfgValue8;
@@ -2096,11 +2096,10 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(tpAniSirGlobal mac,
 	pDot11f->reserved1 = pHTParametersInfo->reserved;
 
 	pe_debug("AMPDU Param: %x", nCfgValue);
-
-	qdf_mem_copy(pDot11f->supportedMCSSet, pTdlsAddStaReq->htCap.suppMcsSet,
+	qdf_mem_copy(pDot11f->supportedMCSSet, pTdlsAddStaReq->htCap.mcsset,
 		     SIZE_OF_SUPPORTED_MCS_SET);
 
-	nCfgValue = pTdlsAddStaReq->htCap.extendedHtCapInfo;
+	nCfgValue = pTdlsAddStaReq->htCap.extcap;
 
 	uHTCapabilityInfo.nCfgValue16 = nCfgValue & 0xFFFF;
 
@@ -2108,7 +2107,7 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(tpAniSirGlobal mac,
 	pDot11f->transitionTime = uHTCapabilityInfo.extHtCapInfo.transitionTime;
 	pDot11f->mcsFeedback = uHTCapabilityInfo.extHtCapInfo.mcsFeedback;
 
-	nCfgValue = pTdlsAddStaReq->htCap.txBFCapInfo;
+	nCfgValue = pTdlsAddStaReq->htCap.txbf_cap;
 
 	pTxBFCapabilityInfo = (tSirMacTxBFCapabilityInfo *) &nCfgValue;
 	pDot11f->txBF = pTxBFCapabilityInfo->txBF;
@@ -2133,7 +2132,7 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(tpAniSirGlobal mac,
 	pDot11f->compressedSteeringMatrixBFAntennae =
 		pTxBFCapabilityInfo->compressedSteeringMatrixBFAntennae;
 
-	nCfgValue = pTdlsAddStaReq->htCap.antennaSelectionInfo;
+	nCfgValue = pTdlsAddStaReq->htCap.antenna;
 
 	nCfgValue8 = (uint8_t) nCfgValue;
 
@@ -2475,7 +2474,7 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal mac,
 						   htCaps->supportedMCSSet);
 		pStaDs->baPolicyFlag = 0xFF;
 		mac->lim.gLimTdlsLinkMode = TDLS_LINK_MODE_N;
-		pStaDs->ht_caps = pTdlsAddStaReq->htCap.capInfo;
+		pStaDs->ht_caps = pTdlsAddStaReq->htCap.hc_cap;
 	} else {
 		pStaDs->mlmStaContext.htCapability = 0;
 		mac->lim.gLimTdlsLinkMode = TDLS_LINK_MODE_BG;
@@ -2548,9 +2547,11 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal mac,
 	 */
 	lim_tdls_populate_matching_rate_set(mac, pStaDs,
 					    pTdlsAddStaReq->supported_rates,
-					    pTdlsAddStaReq->supported_rates_length,
-					    (uint8_t *) pTdlsAddStaReq->htCap.
-					    suppMcsSet, psessionEntry, pVhtCaps);
+					    pTdlsAddStaReq->
+					    supported_rates_length,
+					    (uint8_t *)pTdlsAddStaReq->
+					    htCap.mcsset,
+					    psessionEntry, pVhtCaps);
 
 	/*  TDLS Dummy AddSTA does not have right capability , is it OK ??
 	 */

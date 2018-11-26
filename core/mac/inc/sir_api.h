@@ -3033,7 +3033,7 @@ typedef struct sSirTdlsAddStaReq {
 	uint8_t supported_rates_length;
 	uint8_t supported_rates[SIR_MAC_MAX_SUPP_RATES];
 	uint8_t htcap_present;
-	tSirHTCap htCap;
+	struct htcap_cmn_ie htCap;
 	uint8_t vhtcap_present;
 	tSirVHTCap vhtCap;
 	uint8_t uapsd_queues;
