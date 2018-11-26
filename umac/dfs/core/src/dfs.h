@@ -2537,6 +2537,20 @@ void dfs_get_rcsa_flags(struct wlan_dfs *dfs, bool *is_rcsa_ie_sent,
 			bool *is_nol_ie_sent);
 
 /**
+ * dfs_process_nol_ie_bitmap() - Update NOL with external radar information.
+ * @dfs               - Pointer to wlan_dfs structure.
+ * @nol_ie_bandwidth  - Minimum subchannel bandwidth.
+ * @nol_ie_starfreq   - Radar affected channel list's first subchannel's
+ *                    - centre frequency.
+ * @nol_ie_bitmap     - Bitmap denoting radar affected subchannels.
+ *
+ * Return: True if NOL IE should be propagated, else false.
+ */
+bool dfs_process_nol_ie_bitmap(struct wlan_dfs *dfs, uint8_t nol_ie_bandwidth,
+			       uint16_t nol_ie_startfreq,
+			       uint8_t nol_ie_bitmap);
+
+/**
  * dfs_check_for_cac_start() - Check for DFS CAC start conditions.
  * @dfs: Pointer to wlan_dfs structure.
  * @continue_current_cac: If AP can start CAC then this variable indicates

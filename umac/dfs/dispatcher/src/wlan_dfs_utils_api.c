@@ -409,10 +409,24 @@ QDF_STATUS utils_dfs_get_rcsa_flags(struct wlan_objmgr_pdev *pdev,
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
 	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
-
 	dfs_get_rcsa_flags(dfs, is_rcsa_ie_sent, is_nol_ie_sent);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+bool utils_dfs_process_nol_ie_bitmap(struct wlan_objmgr_pdev *pdev,
+				     uint8_t nol_ie_bandwidth,
+				     uint16_t nol_ie_startfreq,
+				     uint8_t nol_ie_bitmap)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs)
+		return  false;
+	return dfs_process_nol_ie_bitmap(dfs, nol_ie_bandwidth,
+					 nol_ie_startfreq,
+					 nol_ie_bitmap);
 }
 
 QDF_STATUS utils_dfs_set_cac_timer_running(struct wlan_objmgr_pdev *pdev,

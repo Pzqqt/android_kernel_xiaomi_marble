@@ -354,6 +354,22 @@ QDF_STATUS utils_dfs_get_rcsa_flags(struct wlan_objmgr_pdev *pdev,
 				    bool *is_nol_ie_sent);
 
 /**
+ * utils_dfs_process_nol_ie_bitmap() - Update NOL with external radar
+ * information.
+ * pdev: Pointer to DFS pdev object.
+ * nol_ie_bandwidth: Minimum DFS subchannel Bandwidth.
+ * nol_ie_startfreq: Radar affected channel list start channel's
+ * centre frequency.
+ * nol_ie_bitmap: Bitmap of radar affected subchannels.
+ *
+ * Return: True if NOL IE should be propagated, else false.
+ */
+bool utils_dfs_process_nol_ie_bitmap(struct wlan_objmgr_pdev *pdev,
+				     uint8_t nol_ie_bandwidth,
+				     uint16_t nol_ie_startfreq,
+				     uint8_t nol_ie_bitmap);
+
+/**
  * utils_dfs_set_cac_timer_running() - Sets the cac timer running.
  * @pdev: Pointer to DFS pdev object.
  * @val: Set this value to dfs_cac_timer_running variable.

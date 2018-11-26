@@ -636,6 +636,50 @@ void dfs_set_rcsa_flags(struct wlan_dfs *dfs, bool is_rcsa_ie_sent,
 	dfs->dfs_is_nol_ie_sent = is_nol_ie_sent;
 }
 
+bool dfs_process_nol_ie_bitmap(struct wlan_dfs *dfs, uint8_t nol_ie_bandwidth,
+			       uint16_t nol_ie_startfreq, uint8_t nol_ie_bitmap)
+{
+	uint8_t num_subchans;
+	uint8_t bits = 0x01;
+	uint8_t radar_subchans[NUM_CHANNELS_160MHZ];
+	bool should_nol_ie_be_sent = true;
+
+	qdf_mem_zero(radar_subchans, sizeof(radar_subchans));
+	if (!dfs->dfs_use_nol_subchannel_marking) {
+		/* Since subchannel marking is disabled, disregard
+		 * NOL IE and set NOL IE flag as false, so it
+		 * can't be sent to uplink.
+		 */
+		num_subchans =
+			dfs_get_bonding_channels(dfs,
+						 dfs->dfs_curchan,
+						 dfs->dfs_curchan->dfs_ch_freq,
+						 radar_subchans);
+		should_nol_ie_be_sent = false;
+	} else {
+		/* Add the NOL IE information in DFS structure so that RCSA
+		 * and NOL IE can be sent to uplink if uplink exists.
+		 */
+		uint32_t frequency = (uint32_t)nol_ie_startfreq;
+
+		dfs->dfs_nol_ie_bandwidth = nol_ie_bandwidth;
+		dfs->dfs_nol_ie_startfreq = nol_ie_startfreq;
+		dfs->dfs_nol_ie_bitmap = nol_ie_bitmap;
+		for (num_subchans = 0; num_subchans < NUM_CHANNELS_160MHZ;
+			num_subchans++) {
+			if (nol_ie_bitmap & bits) {
+				radar_subchans[num_subchans] =
+					utils_dfs_freq_to_chan(frequency);
+			}
+			bits <<= 1;
+			frequency += nol_ie_bandwidth;
+		}
+	}
+
+	dfs_radar_add_channel_list_to_nol(dfs, radar_subchans, num_subchans);
+	return should_nol_ie_be_sent;
+}
+
 QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 				 struct radar_found_info *radar_found)
 {
