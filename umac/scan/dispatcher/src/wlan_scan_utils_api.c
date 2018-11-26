@@ -358,6 +358,9 @@ util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
 	struct extn_ie_header *extn_ie = (struct extn_ie_header *) ie;
 
 	switch (extn_ie->ie_extn_id) {
+	case WLAN_EXTN_ELEMID_MAX_CHAN_SWITCH_TIME:
+		scan_params->ie_list.mcst  = (uint8_t *)ie;
+		break;
 	case WLAN_EXTN_ELEMID_SRP:
 		scan_params->ie_list.srp   = (uint8_t *)ie;
 		break;

@@ -127,6 +127,7 @@ struct element_info {
  * @ds_param:   pointer to ds params
  * @csa:        pointer to csa ie
  * @xcsa:       pointer to extended csa ie
+ * @mcst:       pointer to maximum channel switch time ie
  * @wpa:        pointer to wpa ie
  * @wcn:        pointer to wcn ie
  * @rsn:        pointer to rsn ie
@@ -167,6 +168,7 @@ struct ie_list {
 	uint8_t *ds_param;
 	uint8_t *csa;
 	uint8_t *xcsa;
+	uint8_t *mcst;
 	uint8_t *wpa;
 	uint8_t *wcn;
 	uint8_t *rsn;

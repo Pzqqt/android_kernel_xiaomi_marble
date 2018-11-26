@@ -657,6 +657,19 @@ void utils_dfs_reg_update_nol_history_ch(struct wlan_objmgr_pdev *pdev,
 bool utils_dfs_check_for_cac_start(struct wlan_objmgr_pdev *pdev,
 				   bool *continue_current_cac);
 
+/** utils_dfs_is_precac_done() - Check if precac has been done in chosen channel
+ * @pdev: Pointer to DFS pdev object.
+ * @wlan_chan: Pointer to wlan channel object that can be accessed by other
+ * components.
+ * Wrapper function for dfs_is_precac_done(). This API is called from outside
+ * the dfs component.
+ *
+ * Return:
+ * * True :If precac is done on channel.
+ * * False:If precac is not done on channel.
+ */
+bool utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
+			      struct wlan_channel *wlan_chan);
 /**
  * utils_dfs_get_disable_radar_marking - Retrieve the value of disable radar
  * marking.

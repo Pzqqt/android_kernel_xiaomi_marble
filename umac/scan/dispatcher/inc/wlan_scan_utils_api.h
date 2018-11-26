@@ -636,6 +636,7 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 	ie_lst->ds_param = conv_ptr(ie_lst->ds_param, old_ptr, new_ptr);
 	ie_lst->csa = conv_ptr(ie_lst->csa, old_ptr, new_ptr);
 	ie_lst->xcsa = conv_ptr(ie_lst->xcsa, old_ptr, new_ptr);
+	ie_lst->mcst = conv_ptr(ie_lst->mcst, old_ptr, new_ptr);
 	ie_lst->secchanoff = conv_ptr(ie_lst->secchanoff, old_ptr, new_ptr);
 	ie_lst->wpa = conv_ptr(ie_lst->wpa, old_ptr, new_ptr);
 	ie_lst->wcn = conv_ptr(ie_lst->wcn, old_ptr, new_ptr);
@@ -1354,6 +1355,20 @@ static inline struct mlme_info*
 util_scan_entry_mlme_info(struct scan_cache_entry *scan_entry)
 {
 	return &(scan_entry->mlme_info);
+}
+
+/**
+* util_scan_entry_mcst() - function to read mcst IE
+* @scan_entry:scan entry
+*
+* API, function to read mcst IE
+*
+* Return: mcst or NULL if ie is not present
+*/
+static inline uint8_t*
+util_scan_entry_mcst(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.mcst;
 }
 
 /**
