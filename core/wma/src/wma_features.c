@@ -176,7 +176,7 @@ static inline void qdf_wma_wow_wakeup_stats_event(tp_wma_handle wma)
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 /**
- * wma_post_auto_shutdown_msg() - to post auto shutdown event to sme
+ * wma_wake_reason_auto_shutdown() - to post auto shutdown event to sme
  *
  * Return: 0 for success or error code
  */
@@ -3868,7 +3868,7 @@ int wma_auto_shutdown_event_handler(void *handle, uint8_t *event,
 
 	WMA_LOGD("%s:%d: Auto Shutdown Evt: %d", __func__, __LINE__,
 		 wmi_auto_sh_evt->shutdown_reason);
-	return wma_post_auto_shutdown_msg();
+	return wma_wake_reason_auto_shutdown();
 }
 
 /**

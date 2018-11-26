@@ -2471,7 +2471,21 @@ static uint16_t ol_txrx_set_ibss_vdev_heart_beat_timer(struct cdp_vdev *pvdev,
 
 	return old_timer_value;
 }
-#endif
+#else /* !QCA_IBSS_SUPPORT */
+static inline int16_t
+ol_txrx_update_ibss_add_peer_num_of_vdev(struct cdp_vdev *pvdev,
+					 int16_t peer_num_delta)
+{
+	return 0;
+}
+
+static inline uint16_t
+ol_txrx_set_ibss_vdev_heart_beat_timer(struct cdp_vdev *pvdev,
+				       uint16_t timer_value_sec)
+{
+	return 0;
+}
+#endif /* QCA_IBSS_SUPPORT */
 
 /**
  * ol_txrx_remove_peers_for_vdev() - remove all vdev peers with lock held

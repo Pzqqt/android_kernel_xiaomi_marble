@@ -43,6 +43,7 @@
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 #include "lim_utils.h"
 #include "parser_api.h"
+#include <wlan_utility.h>
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 #include "cds_utils.h"
 #include "pld_common.h"
@@ -327,7 +328,7 @@ static void sap_process_avoid_ie(mac_handle_t mac_handle,
 			  tSapChSelSpectInfo *spect_info)
 {
 	uint32_t total_ie_len = 0;
-	uint8_t *temp_ptr = NULL;
+	const uint8_t *temp_ptr = NULL;
 	uint8_t i = 0;
 	struct sAvoidChannelIE *avoid_ch_ie;
 	tCsrScanResultInfo *node = NULL;
