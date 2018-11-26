@@ -91,6 +91,9 @@ typedef union {
  *   5. "ext_cb_pt" must be the first member in both TX and RX unions
  *      for the priv_cb_w since it must be at same offset for both
  *      TX and RX union
+ *   6. "ipa.owned" bit must be first member in both TX and RX unions
+ *      for the priv_cb_m since it must be at same offset for both
+ *      TX and RX union.
  *
  * @paddr   : physical addressed retrieved by dma_map of nbuf->data
  *
@@ -104,6 +107,7 @@ typedef union {
  * @rx.dev.priv_cb_m.lro_ctx: LRO context
  * @rx.dev.priv_cb_m.map_index:
  * @rx.dev.priv_cb_m.peer_local_id: peer_local_id for RX pkt
+ * @rx.dev.priv_cb_m.ipa_owned: packet owned by IPA
  *
  * @rx.lro_eligible: flag to indicate whether the MSDU is LRO eligible
  * @rx.peer_cached_buf_frm: peer cached buffer
@@ -196,11 +200,17 @@ struct qdf_nbuf_cb {
 					uint32_t reserved2;
 				} priv_cb_w;
 				struct {
+					/* ipa_owned bit is common between rx
+					 * control block and tx control block.
+					 * Do not change location of this bit.
+					 */
+					uint32_t ipa_owned:1,
+						 reserved:15,
+						 peer_local_id:16;
 					uint32_t tcp_seq_num;
 					uint32_t tcp_ack_num;
-					unsigned char *lro_ctx;
 					uint32_t map_index;
-					uint32_t peer_local_id;
+					unsigned char *lro_ctx;
 				} priv_cb_m;
 			} dev;
 			uint32_t lro_eligible:1,
@@ -239,11 +249,15 @@ struct qdf_nbuf_cb {
 					void *fctx;
 				} priv_cb_w;
 				struct {
-					uint32_t data_attr;
+					/* ipa_owned bit is common between rx
+					 * control block and tx control block.
+					 * Do not change location of this bit.
+					 */
 					struct {
 						uint32_t owned:1,
 							priv:31;
 					} ipa;
+					uint32_t data_attr;
 					uint16_t desc_id;
 					uint16_t mgmt_desc_id;
 					struct {

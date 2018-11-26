@@ -74,7 +74,7 @@
  * Return: void
  */
 static inline void qdf_nbuf_cb_update_peer_local_id(struct sk_buff *skb,
-						    uint32_t peer_local_id)
+						    uint16_t peer_local_id)
 {
 	/* Does not apply to WIN */
 }
