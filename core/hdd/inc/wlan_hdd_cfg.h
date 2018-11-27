@@ -5099,6 +5099,24 @@ enum hdd_link_speed_rpt_type {
 #define CFG_CHANGE_CHANNEL_BANDWIDTH_DEFAULT (0)
 
 /*
+ * <ini>
+ * gRemoveTimeStampSyncCmd - Enable/Disable to remove time stamp sync cmd
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable the removal of time stamp sync cmd
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_REMOVE_TIME_STAMP_SYNC_CMD_NAME    "gRemoveTimeStampSyncCmd"
+#define CFG_REMOVE_TIME_STAMP_SYNC_CMD_MIN     (0)
+#define CFG_REMOVE_TIME_STAMP_SYNC_CMD_MAX     (1)
+#define CFG_REMOVE_TIME_STAMP_SYNC_CMD_DEFAULT (0)
+
+/*
  * Type declarations
  */
 
@@ -5481,6 +5499,7 @@ struct hdd_config {
 	uint8_t num_vdevs;
 	uint8_t enable_concurrent_sta[CFG_CONCURRENT_IFACE_MAX_LEN];
 	uint8_t dbs_scan_selection[CFG_DBS_SCAN_PARAM_LENGTH];
+	uint8_t remove_time_stamp_sync_cmd;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

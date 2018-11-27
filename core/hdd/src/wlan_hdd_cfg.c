@@ -1434,6 +1434,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_MWS_COEX_5G_NR_PWR_LIMIT_MIN,
 		     CFG_MWS_COEX_5G_NR_PWR_LIMIT_MAX),
 #endif
+
+	REG_VARIABLE(CFG_REMOVE_TIME_STAMP_SYNC_CMD_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, remove_time_stamp_sync_cmd,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_REMOVE_TIME_STAMP_SYNC_CMD_DEFAULT,
+		     CFG_REMOVE_TIME_STAMP_SYNC_CMD_MIN,
+		     CFG_REMOVE_TIME_STAMP_SYNC_CMD_MAX),
 };
 
 
@@ -2753,6 +2760,15 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED to CFG");
 	}
+
+	if (sme_cfg_set_int(mac_handle,
+				WNI_CFG_REMOVE_TIME_SYNC_CMD,
+				config->remove_time_stamp_sync_cmd)
+				== QDF_STATUS_E_FAILURE) {
+		status = false;
+		hdd_err("Couldn't pass on WNI_CFG_REMOVE_TIME_SYNC_CMD to CFG");
+	}
+
 	return status;
 }
 

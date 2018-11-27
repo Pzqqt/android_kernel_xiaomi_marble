@@ -4298,6 +4298,8 @@ QDF_STATUS wma_start(void)
 	tp_wma_handle wma_handle;
 	int status;
 	struct wmi_unified *wmi_handle;
+	struct mac_context *mac = NULL;
+	uint32_t cfg_val;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -4313,6 +4315,12 @@ QDF_STATUS wma_start(void)
 	if (!wmi_handle) {
 		WMA_LOGE("%s: Invalid wmi handle", __func__);
 		qdf_status = QDF_STATUS_E_INVAL;
+		goto end;
+	}
+
+	mac = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac) {
+		WMA_LOGE("%s: Invalid mac context", __func__);
 		goto end;
 	}
 
@@ -4455,22 +4463,25 @@ QDF_STATUS wma_start(void)
 		goto end;
 	}
 
-	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
-		/* Initialize firmware time stamp sync timer */
-		qdf_status =
-			qdf_mc_timer_init(&wma_handle->wma_fw_time_sync_timer,
-					  QDF_TIMER_TYPE_SW,
-					  wma_send_time_stamp_sync_cmd,
-					  wma_handle);
-		if (QDF_IS_STATUS_ERROR(qdf_status)) {
-			WMA_LOGE(FL("Failed to initialize firmware time stamp sync timer"));
-			goto end;
+	if (wlan_cfg_get_int(mac, WNI_CFG_REMOVE_TIME_SYNC_CMD,
+		&cfg_val) == QDF_STATUS_SUCCESS) {
+		if (cfg_val == 0 && cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
+			/* Initialize firmware time stamp sync timer */
+			qdf_status =
+				qdf_mc_timer_init(
+					&wma_handle->wma_fw_time_sync_timer,
+					QDF_TIMER_TYPE_SW,
+					wma_send_time_stamp_sync_cmd,
+					wma_handle);
+			if (QDF_IS_STATUS_ERROR(qdf_status)) {
+				WMA_LOGE("Failed to init fw time sync timer");
+				goto end;
+			}
+
+			/* Start firmware time stamp sync timer */
+			wma_send_time_stamp_sync_cmd(wma_handle);
 		}
-
-		/* Start firmware time stamp sync timer */
-		wma_send_time_stamp_sync_cmd(wma_handle);
 	}
-
 	/* Initialize log completion timeout */
 	qdf_status = qdf_mc_timer_init(&wma_handle->log_completion_timer,
 			QDF_TIMER_TYPE_SW,
@@ -4570,6 +4581,8 @@ QDF_STATUS wma_stop(void)
 	tp_wma_handle wma_handle;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int i;
+	struct mac_context *mac = NULL;
+	uint32_t cfg_val;
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	WMA_LOGD("%s: Enter", __func__);
@@ -4577,6 +4590,11 @@ QDF_STATUS wma_stop(void)
 	if (NULL == wma_handle) {
 		WMA_LOGE("%s: Invalid handle", __func__);
 		qdf_status = QDF_STATUS_E_INVAL;
+		goto end;
+	}
+	mac = cds_get_context(QDF_MODULE_ID_PE);
+	if (!mac) {
+		WMA_LOGE("%s: Invalid mac context", __func__);
 		goto end;
 	}
 #ifdef QCA_WIFI_FTM
@@ -4611,12 +4629,15 @@ QDF_STATUS wma_stop(void)
 		}
 	}
 
-	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
-		/* Destroy firmware time stamp sync timer */
-		qdf_status = qdf_mc_timer_destroy(
+	if (wlan_cfg_get_int(mac, WNI_CFG_REMOVE_TIME_SYNC_CMD,
+		&cfg_val) == QDF_STATUS_SUCCESS) {
+		if (cfg_val == 0 && cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
+			/* Destroy firmware time stamp sync timer */
+			qdf_status = qdf_mc_timer_destroy(
 					&wma_handle->wma_fw_time_sync_timer);
-		if (QDF_IS_STATUS_ERROR(qdf_status))
-			WMA_LOGE(FL("Failed to destroy the fw time sync timer"));
+			if (QDF_IS_STATUS_ERROR(qdf_status))
+				WMA_LOGE("Failed to destory fw sync timer");
+		}
 	}
 
 	qdf_status = wma_tx_detach(wma_handle);
