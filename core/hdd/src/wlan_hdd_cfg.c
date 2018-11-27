@@ -353,13 +353,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_CONNECTED_SCAN_MIN,
 		     CFG_ENABLE_CONNECTED_SCAN_MAX),
 
-	REG_VARIABLE(CFG_OPERATING_CHANNEL_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, OperatingChannel,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_OPERATING_CHANNEL_DEFAULT,
-		     CFG_OPERATING_CHANNEL_MIN,
-		     CFG_OPERATING_CHANNEL_MAX),
-
 	REG_VARIABLE(CFG_11D_SUPPORT_ENABLED_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, Is11dSupportEnabled,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
@@ -1525,11 +1518,6 @@ struct reg_table_entry g_registry_table[] = {
 			    VAR_FLAGS_OPTIONAL,
 			    (void *)CFG_ENABLE_FW_MODULE_LOG_DEFAULT),
 
-	REG_VARIABLE_STRING(CFG_ENABLE_CONCURRENT_STA, WLAN_PARAM_String,
-			    struct hdd_config, enableConcurrentSTA,
-			    VAR_FLAGS_NONE,
-			    (void *)CFG_ENABLE_CONCURRENT_STA_DEFAULT),
-
 	REG_VARIABLE(CFG_IGNORE_CAC_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, ignoreCAC,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1639,11 +1627,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_DUAL_MAC_FEATURE_DISABLE_DEFAULT,
 		     CFG_DUAL_MAC_FEATURE_DISABLE_MIN,
 		     CFG_DUAL_MAC_FEATURE_DISABLE_MAX),
-
-	REG_VARIABLE_STRING(CFG_DBS_SCAN_SELECTION_NAME, WLAN_PARAM_String,
-		     struct hdd_config, dbs_scan_selection,
-		     VAR_FLAGS_OPTIONAL,
-		     (void *)CFG_DBS_SCAN_SELECTION_DEFAULT),
 
 	REG_VARIABLE(CFG_STA_SAP_SCC_ON_DFS_CHAN, WLAN_PARAM_HexInteger,
 		     struct hdd_config, sta_sap_scc_on_dfs_chan,
@@ -2231,14 +2214,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ROAM_FORCE_RSSI_TRIGGER_DEFAULT,
 		     CFG_ROAM_FORCE_RSSI_TRIGGER_MIN,
 		     CFG_ROAM_FORCE_RSSI_TRIGGER_MAX),
-
-	REG_VARIABLE(CFG_NUM_VDEV_ENABLE_NAME,
-		     WLAN_PARAM_HexInteger,
-		     struct hdd_config, num_vdevs,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_NUM_VDEV_ENABLE_DEFAULT,
-		     CFG_NUM_VDEV_ENABLE_MIN,
-		     CFG_NUM_VDEV_ENABLE_MAX),
 
 	REG_VARIABLE(CFG_CHANGE_CHANNEL_BANDWIDTH_NAME,
 		     WLAN_PARAM_Integer,
@@ -3751,7 +3726,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 			pConfig->nChannelBondingMode5GHz;
 	}
 	smeConfig->csrConfig.nScanResultAgeCount = pConfig->ScanResultAgeCount;
-	smeConfig->csrConfig.AdHocChannel24 = pConfig->OperatingChannel;
 	smeConfig->csrConfig.bCatRssiOffset = pConfig->nRssiCatGap;
 	smeConfig->csrConfig.nInitialDwellTime = pConfig->nInitialDwellTime;
 	smeConfig->csrConfig.initial_scan_no_dfs_chnl =

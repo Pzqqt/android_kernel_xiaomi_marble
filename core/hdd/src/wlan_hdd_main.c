@@ -4253,7 +4253,7 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 					 true);
 	/* Set the default operation channel */
 	sta_ctx->conn_info.operationChannel =
-		hdd_ctx->config->OperatingChannel;
+		hdd_ctx->config->operating_channel;
 
 	/* Make the default Auth Type as OPEN */
 	sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
@@ -9309,6 +9309,15 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	config->timer_multiplier = cfg_get(psoc, CFG_TIMER_MULTIPLIER);
 	config->enablefwprint = cfg_get(psoc, CFG_ENABLE_FW_UART_PRINT);
 	config->enable_fw_log = cfg_get(psoc, CFG_ENABLE_FW_LOG);
+	config->operating_channel = cfg_get(psoc, CFG_OPERATING_CHANNEL);
+	config->num_vdevs = cfg_get(psoc, CFG_NUM_VDEV_ENABLE);
+
+	qdf_str_lcopy(config->enable_concurrent_sta,
+		      cfg_get(psoc, CFG_ENABLE_CONCURRENT_STA),
+		      CFG_CONCURRENT_IFACE_MAX_LEN);
+	qdf_str_lcopy(config->dbs_scan_selection,
+		      cfg_get(psoc, CFG_DBS_SCAN_SELECTION),
+		      CFG_DBS_SCAN_PARAM_LENGTH);
 
 	hdd_init_wlan_auto_shutdown(config, psoc);
 	hdd_init_wlan_logging_params(config, psoc);
@@ -9498,11 +9507,11 @@ static QDF_STATUS hdd_open_concurrent_interface(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
 
-	if (qdf_str_eq(hdd_ctx->config->enableConcurrentSTA, ""))
+	if (qdf_str_eq(hdd_ctx->config->enable_concurrent_sta, ""))
 		return QDF_STATUS_SUCCESS;
 
 	adapter = hdd_open_adapter(hdd_ctx, QDF_STA_MODE,
-				   hdd_ctx->config->enableConcurrentSTA,
+				   hdd_ctx->config->enable_concurrent_sta,
 				   wlan_hdd_get_intf_addr(hdd_ctx),
 				   NET_NAME_UNKNOWN, true);
 	if (!adapter) {

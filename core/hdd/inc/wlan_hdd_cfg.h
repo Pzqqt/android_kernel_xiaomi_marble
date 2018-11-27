@@ -53,12 +53,8 @@ struct hdd_context;
 #define IPADDR_STRING_LENGTH   (16)
 #endif
 
-#define CFG_DBS_SCAN_PARAM_LENGTH          (42)
-
 /* Number of items that can be configured */
 #define MAX_CFG_INI_ITEMS   1024
-
-#define CFG_CONCURRENT_IFACE_MAX_LEN 16
 
 #define CFG_TX_AGGREGATION_SIZE_MIN  0
 #define CFG_TX_AGGREGATION_SIZE_MAX  64
@@ -89,29 +85,6 @@ struct hdd_context;
 #define CFG_ENABLE_CONNECTED_SCAN_MIN         (0)
 #define CFG_ENABLE_CONNECTED_SCAN_MAX         (1)
 #define CFG_ENABLE_CONNECTED_SCAN_DEFAULT     (1)
-
-/*
- * <ini>
- * gOperatingChannel- Default STA operating channel
- * @Min: 0
- * @Max: 14
- * @Default: 1
- *
- * This ini is used to specify the default operating channel of a STA during
- * initialization.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * <ini>
- */
-#define CFG_OPERATING_CHANNEL_NAME             "gOperatingChannel"
-#define CFG_OPERATING_CHANNEL_MIN              (0)
-#define CFG_OPERATING_CHANNEL_MAX              (14)
-#define CFG_OPERATING_CHANNEL_DEFAULT          (1)
 
 /*
  * <ini>
@@ -3297,24 +3270,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_FW_MODULE_LOG_DEFAULT  "2,1,3,1,5,1,9,1,13,1,14,1,18,1,19,1,26,1,28,1,29,1,31,1,36,1,38,1,46,1,47,1,50,1,52,1,53,1,56,1,60,1,61,1,4,1"
 
 /*
- * <ini>
- * gEnableConcurrentSTA - This will control the creation of concurrent STA
- * interface
- * @Default: NULL
- *
- * This ini is used for providing control to create a concurrent STA session
- * along with the creation of wlan0 and p2p0. The name of the interface is
- * specified as the parameter
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_CONCURRENT_STA           "gEnableConcurrentSTA"
-#define CFG_ENABLE_CONCURRENT_STA_DEFAULT   ""
-
-/*
  * QDF Trace Enable Control
  * Notes:
  *  the MIN/MAX/DEFAULT values apply for all modules
@@ -4185,32 +4140,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_DUAL_MAC_FEATURE_DISABLE_MIN          (0)
 #define CFG_DUAL_MAC_FEATURE_DISABLE_MAX          (6)
 #define CFG_DUAL_MAC_FEATURE_DISABLE_DEFAULT      (0)
-
-/*
- * <ini>
- * gdbs_scan_selection - DBS Scan Selection.
- * @Default: ""
- *
- * This ini is used to enable DBS scan selection.
- * Example
- * @Value: "5,2,2,16,2,2"
- * 1st argument is module_id, 2nd argument is number of DBS scan,
- * 3rd argument is number of non-DBS scan,
- * and other arguments follows.
- * 5,2,2,16,2,2 means:
- * 5 is module id, 2 is num of DBS scan, 2 is num of non-DBS scan.
- * 16 is module id, 2 is num of DBS scan, 2 is num of non-DBS scan.
- *
- * Related: None.
- *
- * Supported Feature: DBS Scan
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_DBS_SCAN_SELECTION_NAME          "gdbs_scan_selection"
-#define CFG_DBS_SCAN_SELECTION_DEFAULT       ""
 
 /*
  * <ini>
@@ -6015,23 +5944,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_SECONDARY_RATE_MAX           (0x3F)
 #define CFG_ENABLE_SECONDARY_RATE_DEFAULT       (0x17)
 
-/*
- * <ini>
- * gNumVdevs - max number of VDEVs supported
- *
- * @Min: 0x1
- * @Max: 0x4
- * @Default: CFG_TGT_NUM_VDEV
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_NUM_VDEV_ENABLE_NAME      "gNumVdevs"
-#define CFG_NUM_VDEV_ENABLE_MIN       (0x1)
-#define CFG_NUM_VDEV_ENABLE_MAX       (0x4)
-#define CFG_NUM_VDEV_ENABLE_DEFAULT   (CFG_TGT_NUM_VDEV)
-
 #ifdef MWS_COEX
 /*
  * <ini>
@@ -6118,7 +6030,6 @@ struct hdd_config {
 
 	/* Config parameters */
 	bool enable_connected_scan;
-	uint8_t OperatingChannel;
 	bool Is11dSupportEnabled;
 	bool Is11hSupportEnabled;
 	char PowerUsageControl[4];
@@ -6223,8 +6134,6 @@ struct hdd_config {
 	bool isRoamOffloadScanEnabled;
 
 	uint32_t DelayedTriggerFrmInt;
-
-	char enableConcurrentSTA[CFG_CONCURRENT_IFACE_MAX_LEN];
 
 #ifdef FEATURE_RUNTIME_PM
 	bool runtime_pm;
@@ -6377,7 +6286,6 @@ struct hdd_config {
 	uint8_t max_scan_count;
 	bool etsi13_srd_chan_in_master_mode;
 	uint32_t dual_mac_feature_disable;
-	uint8_t dbs_scan_selection[CFG_DBS_SCAN_PARAM_LENGTH];
 	uint32_t sta_sap_scc_on_dfs_chan;
 	uint32_t sta_sap_scc_on_lte_coex_chan;
 	uint16_t  self_gen_frm_pwr;
@@ -6478,7 +6386,6 @@ struct hdd_config {
 	uint32_t btm_solicited_timeout;
 	uint32_t btm_max_attempt_cnt;
 	uint32_t btm_sticky_time;
-	uint32_t num_vdevs;
 	uint32_t offload_11k_enable_bitmask;
 	uint32_t neighbor_report_offload_params_bitmask;
 	uint32_t neighbor_report_offload_time_offset;
@@ -6562,6 +6469,10 @@ struct hdd_config {
 #ifdef WLAN_NUD_TRACKING
 	bool enable_nud_tracking;
 #endif
+	uint8_t operating_channel;
+	uint8_t num_vdevs;
+	uint8_t enable_concurrent_sta[CFG_CONCURRENT_IFACE_MAX_LEN];
+	uint8_t dbs_scan_selection[CFG_DBS_SCAN_PARAM_LENGTH];
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

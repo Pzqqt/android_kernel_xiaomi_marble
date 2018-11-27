@@ -23,6 +23,8 @@
 #ifndef __HDD_CONFIG_H
 #define __HDD_CONFIG_H
 
+#include "wlan_tgt_def_config_hl.h"
+
 /**
  * enum hdd_wext_control - knob for wireless extensions
  * @hdd_wext_disabled - interface is completely disabled. An access
@@ -334,16 +336,119 @@ enum hdd_wext_control {
 #define CFG_ENABLE_PACKET_LOG_ALL
 #endif
 
+/*
+ * <ini>
+ * gOperatingChannel- Default STA operating channel
+ * @Min: 0
+ * @Max: 14
+ * @Default: 1
+ *
+ * This ini is used to specify the default operating channel of a STA during
+ * initialization.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * <ini>
+ */
+#define CFG_OPERATING_CHANNEL CFG_INI_UINT( \
+			"gOperatingChannel", \
+			0, \
+			14, \
+			1, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Default Operating Channel")
+
+/*
+ * <ini>
+ * gNumVdevs - max number of VDEVs supported
+ *
+ * @Min: 0x1
+ * @Max: 0x4
+ * @Default: CFG_TGT_NUM_VDEV
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_NUM_VDEV_ENABLE CFG_INI_UINT( \
+		"gNumVdevs", \
+		1, \
+		4, \
+		CFG_TGT_NUM_VDEV, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Number of VDEVs")
+
+#define CFG_CONCURRENT_IFACE_MAX_LEN 16
+/*
+ * <ini>
+ * gEnableConcurrentSTA - This will control the creation of concurrent STA
+ * interface
+ * @Default: NULL
+ *
+ * This ini is used for providing control to create a concurrent STA session
+ * along with the creation of wlan0 and p2p0. The name of the interface is
+ * specified as the parameter
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_CONCURRENT_STA CFG_INI_STRING( \
+		"gEnableConcurrentSTA", \
+		0, \
+		CFG_CONCURRENT_IFACE_MAX_LEN, \
+		"", \
+		"Enable Concurrent STA")
+
+#define CFG_DBS_SCAN_PARAM_LENGTH 42
+/*
+ * <ini>
+ * gdbs_scan_selection - DBS Scan Selection.
+ * @Default: ""
+ *
+ * This ini is used to enable DBS scan selection.
+ * Example
+ * @Value: "5,2,2,16,2,2"
+ * 1st argument is module_id, 2nd argument is number of DBS scan,
+ * 3rd argument is number of non-DBS scan,
+ * and other arguments follows.
+ * 5,2,2,16,2,2 means:
+ * 5 is module id, 2 is num of DBS scan, 2 is num of non-DBS scan.
+ * 16 is module id, 2 is num of DBS scan, 2 is num of non-DBS scan.
+ *
+ * Related: None.
+ *
+ * Supported Feature: DBS Scan
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_DBS_SCAN_SELECTION CFG_INI_STRING( \
+			"gdbs_scan_selection", \
+			0, \
+			CFG_DBS_SCAN_PARAM_LENGTH, \
+			"", \
+			"DBS Scan Selection")
+
 #define CFG_HDD_ALL \
 	CFG_ENABLE_PACKET_LOG_ALL \
 	CFG_WLAN_AUTO_SHUTDOWN_ALL \
 	CFG_WLAN_LOGGING_SUPPORT_ALL \
 	CFG(CFG_BUG_ON_REINIT_FAILURE) \
+	CFG(CFG_DBS_SCAN_SELECTION) \
+	CFG(CFG_ENABLE_CONCURRENT_STA) \
 	CFG(CFG_ENABLE_FW_LOG) \
 	CFG(CFG_ENABLE_FW_UART_PRINT) \
 	CFG(CFG_ENABLE_RAMDUMP_COLLECTION) \
 	CFG(CFG_INTERFACE_CHANGE_WAIT) \
 	CFG(CFG_MULTICAST_HOST_FW_MSGS) \
+	CFG(CFG_NUM_VDEV_ENABLE) \
+	CFG(CFG_OPERATING_CHANNEL) \
 	CFG(CFG_PRIVATE_WEXT_CONTROL) \
 	CFG(CFG_TIMER_MULTIPLIER)
 #endif
