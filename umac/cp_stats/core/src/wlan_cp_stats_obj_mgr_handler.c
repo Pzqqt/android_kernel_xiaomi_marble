@@ -27,7 +27,6 @@
 #include "wlan_cp_stats_obj_mgr_handler.h"
 #include "wlan_cp_stats_defs.h"
 #include "wlan_cp_stats_ol_api.h"
-#include "wlan_cp_stats_defs.h"
 #include <wlan_cp_stats_ucfg_api.h>
 #include "wlan_cp_stats_utils_api.h"
 
