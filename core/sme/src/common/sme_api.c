@@ -62,6 +62,7 @@
 #include "wlan_mlme_public_struct.h"
 #include "wlan_mlme_main.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_fwol_ucfg_api.h"
 
 static tSelfRecoveryStats g_self_recovery_stats;
 
@@ -10445,45 +10446,50 @@ QDF_STATUS sme_roam_csa_ie_request(mac_handle_t mac_handle,
  * thermalParam : thermal mitigation parameters
  * Return QDF_STATUS
  */
-QDF_STATUS sme_init_thermal_info(mac_handle_t mac_handle, tSmeThermalParams
-				thermalParam)
+QDF_STATUS sme_init_thermal_info(mac_handle_t mac_handle)
 {
 	t_thermal_mgmt *pWmaParam;
 	struct scheduler_msg msg = {0};
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	struct wlan_fwol_thermal_temp thermal_temp = {0};
+	QDF_STATUS status;
 
 	pWmaParam = qdf_mem_malloc(sizeof(t_thermal_mgmt));
 	if (!pWmaParam)
 		return QDF_STATUS_E_NOMEM;
 
-	pWmaParam->thermalMgmtEnabled = thermalParam.smeThermalMgmtEnabled;
-	pWmaParam->throttlePeriod = thermalParam.smeThrottlePeriod;
+	status = ucfg_fwol_get_thermal_temp(mac->psoc, &thermal_temp);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	pWmaParam->thermalMgmtEnabled = thermal_temp.thermal_mitigation_enable;
+	pWmaParam->throttlePeriod = thermal_temp.throttle_period;
 
 	pWmaParam->throttle_duty_cycle_tbl[0] =
-		thermalParam.sme_throttle_duty_cycle_tbl[0];
+				thermal_temp.throttle_dutycycle_level[0];
 	pWmaParam->throttle_duty_cycle_tbl[1] =
-		thermalParam.sme_throttle_duty_cycle_tbl[1];
+				thermal_temp.throttle_dutycycle_level[1];
 	pWmaParam->throttle_duty_cycle_tbl[2] =
-		thermalParam.sme_throttle_duty_cycle_tbl[2];
+				thermal_temp.throttle_dutycycle_level[2];
 	pWmaParam->throttle_duty_cycle_tbl[3] =
-		thermalParam.sme_throttle_duty_cycle_tbl[3];
+				thermal_temp.throttle_dutycycle_level[3];
 
 	pWmaParam->thermalLevels[0].minTempThreshold =
-		thermalParam.smeThermalLevels[0].smeMinTempThreshold;
+				thermal_temp.thermal_temp_min_level[0];
 	pWmaParam->thermalLevels[0].maxTempThreshold =
-		thermalParam.smeThermalLevels[0].smeMaxTempThreshold;
+				thermal_temp.thermal_temp_max_level[0];
 	pWmaParam->thermalLevels[1].minTempThreshold =
-		thermalParam.smeThermalLevels[1].smeMinTempThreshold;
+				thermal_temp.thermal_temp_min_level[1];
 	pWmaParam->thermalLevels[1].maxTempThreshold =
-		thermalParam.smeThermalLevels[1].smeMaxTempThreshold;
+				thermal_temp.thermal_temp_max_level[1];
 	pWmaParam->thermalLevels[2].minTempThreshold =
-		thermalParam.smeThermalLevels[2].smeMinTempThreshold;
+				thermal_temp.thermal_temp_min_level[2];
 	pWmaParam->thermalLevels[2].maxTempThreshold =
-		thermalParam.smeThermalLevels[2].smeMaxTempThreshold;
+				thermal_temp.thermal_temp_max_level[2];
 	pWmaParam->thermalLevels[3].minTempThreshold =
-		thermalParam.smeThermalLevels[3].smeMinTempThreshold;
+				thermal_temp.thermal_temp_min_level[3];
 	pWmaParam->thermalLevels[3].maxTempThreshold =
-		thermalParam.smeThermalLevels[3].smeMaxTempThreshold;
+				thermal_temp.thermal_temp_max_level[3];
 
 	if (QDF_STATUS_SUCCESS == sme_acquire_global_lock(&mac->sme)) {
 		msg.type = WMA_INIT_THERMAL_INFO_CMD;

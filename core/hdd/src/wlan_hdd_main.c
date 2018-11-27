@@ -9944,47 +9944,10 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
  */
 static int hdd_init_thermal_info(struct hdd_context *hdd_ctx)
 {
-	tSmeThermalParams thermal_param;
 	QDF_STATUS status;
-	mac_handle_t mac_handle;
-	struct wlan_fwol_thermal_temp thermal_temp = {0};
+	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 
-	thermal_param.smeThermalMgmtEnabled =
-		hdd_ctx->config->thermalMitigationEnable;
-	thermal_param.smeThrottlePeriod = hdd_ctx->config->throttlePeriod;
-
-	thermal_param.sme_throttle_duty_cycle_tbl[0] =
-		hdd_ctx->config->throttle_dutycycle_level0;
-	thermal_param.sme_throttle_duty_cycle_tbl[1] =
-		hdd_ctx->config->throttle_dutycycle_level1;
-	thermal_param.sme_throttle_duty_cycle_tbl[2] =
-		hdd_ctx->config->throttle_dutycycle_level2;
-	thermal_param.sme_throttle_duty_cycle_tbl[3] =
-		hdd_ctx->config->throttle_dutycycle_level3;
-
-	status = ucfg_fwol_get_thermal_temp(hdd_ctx->psoc, &thermal_temp);
-	if (QDF_IS_STATUS_ERROR(status))
-		return qdf_status_to_os_return(status);
-
-	thermal_param.smeThermalLevels[0].smeMinTempThreshold =
-					thermal_temp.thermal_temp_min_level0;
-	thermal_param.smeThermalLevels[0].smeMaxTempThreshold =
-					thermal_temp.thermal_temp_max_level0;
-	thermal_param.smeThermalLevels[1].smeMinTempThreshold =
-					thermal_temp.thermal_temp_min_level1;
-	thermal_param.smeThermalLevels[1].smeMaxTempThreshold =
-					thermal_temp.thermal_temp_max_level1;
-	thermal_param.smeThermalLevels[2].smeMinTempThreshold =
-					thermal_temp.thermal_temp_min_level2;
-	thermal_param.smeThermalLevels[2].smeMaxTempThreshold =
-					thermal_temp.thermal_temp_max_level2;
-	thermal_param.smeThermalLevels[3].smeMinTempThreshold =
-					thermal_temp.thermal_temp_min_level3;
-	thermal_param.smeThermalLevels[3].smeMaxTempThreshold =
-					thermal_temp.thermal_temp_max_level3;
-
-	mac_handle = hdd_ctx->mac_handle;
-	status = sme_init_thermal_info(mac_handle, thermal_param);
+	status = sme_init_thermal_info(mac_handle);
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return qdf_status_to_os_return(status);

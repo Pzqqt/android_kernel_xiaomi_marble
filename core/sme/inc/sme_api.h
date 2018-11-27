@@ -188,17 +188,6 @@ typedef struct {
 	uint16_t smeMaxTempThreshold;
 } tSmeThermalLevelInfo;
 
-#define SME_MAX_THERMAL_LEVELS (4)
-#define SME_MAX_THROTTLE_LEVELS (4)
-
-typedef struct {
-	/* Array of thermal levels */
-	tSmeThermalLevelInfo smeThermalLevels[SME_MAX_THERMAL_LEVELS];
-	uint8_t smeThermalMgmtEnabled;
-	uint32_t smeThrottlePeriod;
-	uint8_t sme_throttle_duty_cycle_tbl[SME_MAX_THROTTLE_LEVELS];
-} tSmeThermalParams;
-
 typedef enum {
 	SME_AC_BK = 0,
 	SME_AC_BE = 1,
@@ -1009,8 +998,7 @@ QDF_STATUS sme_roam_csa_ie_request(mac_handle_t mac_handle,
 int sme_set_addba_accept(mac_handle_t mac_handle, uint8_t session_id,
 			 int value);
 
-QDF_STATUS sme_init_thermal_info(mac_handle_t mac_handle,
-				 tSmeThermalParams thermalParam);
+QDF_STATUS sme_init_thermal_info(mac_handle_t mac_handle);
 
 QDF_STATUS sme_set_thermal_level(mac_handle_t mac_handle, uint8_t level);
 QDF_STATUS sme_txpower_limit(mac_handle_t mac_handle, tSirTxPowerLimit *psmetx);

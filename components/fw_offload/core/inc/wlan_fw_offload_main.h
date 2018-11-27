@@ -63,26 +63,22 @@ struct wlan_fwol_coex_config {
 	int16_t bt_interference_high_ul;
 };
 
+#define FWOL_THERMAL_LEVEL_MAX 4
+#define FWOL_THERMAL_THROTTLE_LEVEL_MAX 4
 /*
  * struct wlan_fwol_thermal_temp - Thermal temperature config items
- * @thermal_temp_min_level0: Thermal temperature minimum level 0
- * @thermal_temp_max_level0: Thermal temperature maximum level 0
- * @thermal_temp_min_level1: Thermal temperature minimum level 1
- * @thermal_temp_max_level1: Thermal temperature maximum level 1
- * @thermal_temp_min_level2: Thermal temperature minimum level 2
- * @thermal_temp_max_level2: Thermal temperature maximum level 2
- * @thermal_temp_min_level3: Thermal temperature minimum level 3
- * @thermal_temp_max_level3: Thermal temperature maximum level 3
+ * @thermal_temp_min_level: Array of temperature minimum levels
+ * @thermal_temp_max_level: Array of temperature maximum levels
+ * @thermal_mitigation_enable: Control for Thermal mitigation feature
+ * @throttle_period: Thermal throttle period value
+ * @throttle_dutycycle_level: Array of throttle duty cycle levels
  */
 struct wlan_fwol_thermal_temp {
-	uint16_t thermal_temp_min_level0;
-	uint16_t thermal_temp_max_level0;
-	uint16_t thermal_temp_min_level1;
-	uint16_t thermal_temp_max_level1;
-	uint16_t thermal_temp_min_level2;
-	uint16_t thermal_temp_max_level2;
-	uint16_t thermal_temp_min_level3;
-	uint16_t thermal_temp_max_level3;
+	bool     thermal_mitigation_enable;
+	uint32_t throttle_period;
+	uint16_t thermal_temp_min_level[FWOL_THERMAL_LEVEL_MAX];
+	uint16_t thermal_temp_max_level[FWOL_THERMAL_LEVEL_MAX];
+	uint32_t throttle_dutycycle_level[FWOL_THERMAL_THROTTLE_LEVEL_MAX];
 };
 
 /**
