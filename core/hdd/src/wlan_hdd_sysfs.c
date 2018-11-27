@@ -34,6 +34,7 @@
 #include <wlan_osif_request_manager.h>
 #include <qdf_mem.h>
 #include <sir_api.h>
+#include <wlan_hdd_dsc.h>
 
 #define MAX_PSOC_ID_SIZE 10
 
@@ -48,9 +49,7 @@ static struct kobject *driver_kobject;
 static struct kobject *fw_kobject;
 static struct kobject *psoc_kobject;
 
-static ssize_t __show_driver_version(struct kobject *kobj,
-				     struct kobj_attribute *attr,
-				     char *buf)
+static ssize_t __show_driver_version(char *buf)
 {
 	return scnprintf(buf, PAGE_SIZE, QWLAN_VERSIONSTR);
 }
@@ -60,28 +59,34 @@ static ssize_t show_driver_version(struct kobject *kobj,
 				   char *buf)
 {
 	ssize_t ret_val;
-
-	cds_ssr_protect(__func__);
-	ret_val = __show_driver_version(kobj, attr, buf);
-	cds_ssr_unprotect(__func__);
-
-	return ret_val;
-}
-
-static ssize_t __show_fw_version(struct kobject *kobj,
-				 struct kobj_attribute *attr,
-				 char *buf)
-{
-	uint32_t major_spid = 0, minor_spid = 0, siid = 0, crmid = 0;
-	uint32_t sub_id = 0;
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	int ret;
+	QDF_STATUS status;
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct dsc_psoc *dsc_psoc;
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret) {
 		hdd_err("hdd ctx is invalid");
 		return ret;
 	}
+
+	dsc_psoc = hdd_dsc_psoc_from_wiphy(hdd_ctx->wiphy);
+	status = dsc_psoc_op_start(dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
+
+	cds_ssr_protect(__func__);
+	ret_val = __show_driver_version(buf);
+	cds_ssr_unprotect(__func__);
+	dsc_psoc_op_stop(dsc_psoc);
+	return ret_val;
+}
+
+static ssize_t __show_fw_version(struct hdd_context *hdd_ctx,
+				 char *buf)
+{
+	uint32_t major_spid = 0, minor_spid = 0, siid = 0, crmid = 0;
+	uint32_t sub_id = 0;
 
 	hdd_debug("Rcvd req for FW version");
 	hdd_get_fw_version(hdd_ctx, &major_spid, &minor_spid, &siid,
@@ -104,11 +109,26 @@ static ssize_t show_fw_version(struct kobject *kobj,
 			       char *buf)
 {
 	ssize_t ret_val;
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	int ret;
+	QDF_STATUS status;
+	struct dsc_psoc *dsc_psoc;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret) {
+		hdd_err("hdd ctx is invalid");
+		return ret;
+	}
+
+	dsc_psoc = hdd_dsc_psoc_from_wiphy(hdd_ctx->wiphy);
+	status = dsc_psoc_op_start(dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
 
 	cds_ssr_protect(__func__);
-	ret_val = __show_fw_version(kobj, attr, buf);
+	ret_val = __show_fw_version(hdd_ctx, buf);
 	cds_ssr_unprotect(__func__);
-
+	dsc_psoc_op_stop(dsc_psoc);
 	return ret_val;
 };
 
@@ -165,11 +185,9 @@ static void hdd_power_debugstats_cb(struct power_stats_response *response,
 	hdd_exit();
 }
 
-static ssize_t __show_device_power_stats(struct kobject *kobj,
-					 struct kobj_attribute *attr,
+static ssize_t __show_device_power_stats(struct hdd_context *hdd_ctx,
 					 char *buf)
 {
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	QDF_STATUS status;
 	struct power_stats_response *chip_power_stats;
 	ssize_t ret_cnt = 0;
@@ -184,10 +202,6 @@ static ssize_t __show_device_power_stats(struct kobject *kobj,
 	};
 
 	hdd_enter();
-
-	ret_cnt = wlan_hdd_validate_context(hdd_ctx);
-	if (ret_cnt)
-		return ret_cnt;
 
 	request = osif_request_alloc(&params);
 	if (!request) {
@@ -250,11 +264,26 @@ static ssize_t show_device_power_stats(struct kobject *kobj,
 				       char *buf)
 {
 	ssize_t ret_val;
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	int ret;
+	QDF_STATUS status;
+	struct dsc_psoc *dsc_psoc;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret) {
+		hdd_err("hdd ctx is invalid");
+		return ret;
+	}
+
+	dsc_psoc = hdd_dsc_psoc_from_wiphy(hdd_ctx->wiphy);
+	status = dsc_psoc_op_start(dsc_psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		return qdf_status_to_os_return(status);
 
 	cds_ssr_protect(__func__);
-	ret_val = __show_device_power_stats(kobj, attr, buf);
+	ret_val = __show_device_power_stats(hdd_ctx, buf);
 	cds_ssr_unprotect(__func__);
-
+	dsc_psoc_op_stop(dsc_psoc);
 	return ret_val;
 }
 
