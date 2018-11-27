@@ -236,6 +236,7 @@ struct scan_vdev_obj {
 
 /**
  * struct pno_def_config - def configuration for PNO
+ * @pno_offload_enabled: flag to check if PNO offload is enabled/disabled
  * @channel_prediction: config PNO channel prediction feature status
  * @top_k_num_of_channels: def top K number of channels are used for tanimoto
  * distance calculation.
@@ -243,16 +244,27 @@ struct scan_vdev_obj {
  * @pnoscan_adaptive_dwell_mode: def adaptive dwelltime mode for pno scan
  * @channel_prediction_full_scan: def periodic timer upon which full scan needs
  * to be triggered.
+ * @dfs_chnl_scan_enable: Enable dfs channel PNO scan
+ * @scan_support_enabled: PNO scan support enabled/disabled
+ * @scan_timer_repeat_value: PNO scan timer repeat value
+ * @slow_scan_multiplier: PNO slow scan timer multiplier
+ * @scan_backoff_multiplier: Scan banckoff multiplier
  * @pno_wake_lock: pno wake lock
  * @pno_cb: callback to call on PNO completion
  * @mawc_params: Configuration parameters for NLO MAWC.
  */
 struct pno_def_config {
+	bool pno_offload_enabled;
 	bool channel_prediction;
 	uint8_t top_k_num_of_channels;
 	uint8_t stationary_thresh;
 	enum scan_dwelltime_adaptive_mode adaptive_dwell_mode;
 	uint32_t channel_prediction_full_scan;
+	bool dfs_chnl_scan_enabled;
+	bool scan_support_enabled;
+	uint32_t scan_timer_repeat_value;
+	uint32_t slow_scan_multiplier;
+	uint8_t scan_backoff_multiplier;
 	qdf_wake_lock_t pno_wake_lock;
 	struct cb_handler pno_cb;
 	struct nlo_mawc_params mawc_params;

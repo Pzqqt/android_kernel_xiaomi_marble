@@ -330,13 +330,387 @@
 			1, 7200, 3600, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Max sched scan plan interval")
+#endif
+
+/*
+ * <ini>
+ * gEnableDFSPnoChnlScan - enable dfs channels in PNO scan
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable dfs channels in PNO scan request,
+ * enabling this ini enables driver to include dfs channels in its
+ * PNO scan request
+ * Related: NA
+ *
+ * Supported Feature: DFS, PNO
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_DFS_PNO_CHNL_SCAN CFG_INI_BOOL( \
+			"gEnableDFSPnoChnlScan", \
+			true, \
+			"Enable dfs channels in PNO Scan")
+
+#ifdef FEATURE_WLAN_SCAN_PNO
+/*
+ * <ini>
+ * gPNOScanSupport - Enable or Disable PNO scan
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to Enable or Disable PNO scan
+ *
+ * Related: None
+ *
+ * Supported Feature: Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PNO_SCAN_SUPPORT CFG_INI_BOOL( \
+			"gPNOScanSupport", \
+			true, \
+			"Enable/Disable PNO scan")
+
+/*
+ * <ini>
+ * gPNOScanTimerRepeatValue - Set PNO scan timer repeat value
+ * @Min: 0
+ * @Max: 0xffffffff
+ * @Default: 30
+ *
+ * This ini is used by firmware to set fast scan max cycles
+ * equal to gPNOScanTimerRepeatValue. Taking power consumption
+ * into account firmware after gPNOScanTimerRepeatValue times
+ * fast_scan_period switches to slow_scan_period.
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PNO_SCAN_TIMER_REPEAT_VALUE CFG_INI_UINT( \
+			"gPNOScanTimerRepeatValue", \
+			0, \
+			0xffffffff, \
+			30, \
+			CFG_VALUE_OR_DEFAULT, \
+			"PNO scan timer repeat value")
+
+/*
+ * <ini>
+ * gPNOSlowScanMultiplier - Set PNO slow scan multiplier
+ * @Min: 0
+ * @Max: 30
+ * @Default: 6
+ *
+ * This ini is used by firmware to set slow scan period
+ * as gPNOSlowScanMultiplier times fast_scan_period.
+ *
+ * Related: None
+ *
+ * Supported Feature: Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PNO_SLOW_SCAN_MULTIPLIER CFG_INI_UINT( \
+			"gPNOSlowScanMultiplier", \
+			0, \
+			30, \
+			6, \
+			CFG_VALUE_OR_DEFAULT, \
+			"PNO slow scan multiplier")
+#endif
+
+/*
+ * <ini>
+ * gPNOChannelPrediction - Enable/disable the PNO channel
+ * prediction feature.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * In current PNO implementation, scan is always done until all configured
+ * channels are scanned. If we can determine DUT is stationary based on
+ * scanning a subset of channels, we may cancel the remaining channels.
+ * Hence, we can save additional power consumption.
+ *
+ * Related: None
+ *
+ * Supported Feature: Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PNO_CHANNEL_PREDICTION CFG_INI_BOOL( \
+			"gPNOChannelPrediction", \
+			false, \
+			"enable/disable PNO channel prediction feature")
+
+/*
+ * <ini>
+ * gTopKNumOfChannels - top K number of channels are used for tanimoto distance
+ * @Min: 1
+ * @Max: 5
+ * @Default: 3
+ *
+ * These are the top channels on which the probability of finding the AP's is
+ * extremely high. This number is intended for tweaking the internal algorithm
+ * for experiments. This should not be changed externally.
+ *
+ * Related: None
+ *
+ * Supported Feature: Scan
+ *
+ * Usage: External
+ *
+ */
+#define CFG_TOP_K_NUM_OF_CHANNELS CFG_INI_UINT( \
+			"gTopKNumOfChannels", \
+			1, \
+			5, \
+			3, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Top K number of channels")
+/*
+ * <ini>
+ * gStationaryThreshold - STA threshold value to determine if it is stationary
+ * @Min: 0
+ * @Max: 100
+ * @Default: 10
+ *
+ * This is the threshold value to determine that the STA is
+ * stationary. If the tanimoto distance is less than this
+ * value, then the device is considered to be stationary.
+ * This parameter is intended to tweak the internal algorithm
+ * for experiments. This should not be changed externally.
+ *
+ *
+ * Related: None
+ *
+ * Supported Feature: Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_STATIONARY_THRESHOLD CFG_INI_UINT( \
+			"gStationaryThreshold", \
+			0, \
+			100, \
+			10, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Threshold to determine if sta is stationary")
+
+/*
+ * <ini>
+ * gChPredictionFullScanMs - Set periodic timer for channel prediction
+ * @Min: 3000
+ * @Max: 0x7fffffff
+ * @Default: 60000
+ *
+ * This ini is used to set the periodic timer upon which
+ * a full scan needs to be triggered when PNO channel
+ * prediction feature is enabled. This parameter is intended
+ * to tweak the internal algortihm for experiments.
+ *
+ * Related: None
+ *
+ * Supported Feature: Scan
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_CHANNEL_PREDICTION_SCAN_TIMER CFG_INI_UINT( \
+			"gChPredictionFullScanMs", \
+			3000, \
+			0x7fffffff, \
+			60000, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Timer value for channel prediction")
+
+/*
+ * <ini>
+ * pnoscan_adaptive_dwell_mode - Enable adaptive dwell mode
+ * during pno scan
+ * @Min: 0
+ * @Max: 4
+ * @Default: 1
+ *
+ * This ini will set the algo used in dwell time optimization
+ * during pno scan. see enum scan_dwelltime_adaptive_mode.
+ * Acceptable values for this:
+ * 0: Default (Use firmware default mode)
+ * 1: Conservative optimization
+ * 2: Moderate optimization
+ * 3: Aggressive optimization
+ * 4: Static
+ *
+ * Related: None
+ *
+ * Supported Feature: Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ADAPTIVE_PNOSCAN_DWELL_MODE CFG_INI_UINT( \
+			"pnoscan_adaptive_dwell_mode", \
+			0, \
+			4, \
+			1, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Algorithm used in dwell time optimization")
+
+/*
+ * <ini>
+ * gScanBackoffMultiplier - For NLO/PNO, multiply fast scan period by this every
+ *      max cycles
+ * @Min: 0
+ * @Max: 255
+ * @Default: 0
+ *
+ * For Network Listen Offload and Perfered Network Offload, multiply the fast
+ * scan period by this value after max cycles have occurred. Setting this to 0
+ * disables the feature.
+ *
+ * @E.g.
+ *      # Disable scan backoff multiplier
+ *      gScanBackoffMultiplier=0
+ *      # Effectively the same
+ *      gScanBackoffMultiplier=1
+ *      # Double the scan period after each max cycles have occurred
+ *      gScanBackoffMultiplier=2
+ *
+ * Related: NLO, PNO
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_SCAN_BACKOFF_MULTIPLIER CFG_INI_UINT( \
+			"gScanBackoffMultiplier", \
+			0, \
+			255, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Scan backoff multiplier")
+
+/*
+ * <ini>
+ * mawc_nlo_enabled - For NLO/PNO, enable MAWC based scan
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * Enable/Disable the Motion Aided Wireless Connectivity
+ * based NLO using this parameter
+ *
+ * Related: NLO, PNO
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_MAWC_NLO_ENABLED CFG_INI_BOOL( \
+			"mawc_nlo_enabled", \
+			1, \
+			"Enable MAWC based scan")
+
+/*
+ * <ini>
+ * mawc_nlo_exp_backoff_ratio - Exponential back off ratio
+ * @Min: 0
+ * @Max: 300
+ * @Default: 3
+ *
+ * Configure the exponential back off ratio using this
+ * parameter for MAWC based NLO
+ * ratio of exponential backoff, next = current + current*ratio/100
+ *
+ * Related: NLO, PNO
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_MAWC_NLO_EXP_BACKOFF_RATIO CFG_INI_UINT( \
+			"mawc_nlo_exp_backoff_ratio", \
+			0, \
+			300, \
+			3, \
+			CFG_VALUE_OR_DEFAULT, \
+			"MWAC based NLO exponential ratio")
+
+/*
+ * <ini>
+ * mawc_nlo_init_scan_interval - Initial Scan Interval
+ * @Min: 1000
+ * @Max: 0xFFFFFFFF
+ * @Default: 10000
+ *
+ * Configure the initial scan interval  using this
+ * parameter for MAWC based NLO (Units in Milliseconds)
+ *
+ * Related: NLO, PNO
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_MAWC_NLO_INIT_SCAN_INTERVAL CFG_INI_UINT( \
+			"mawc_nlo_init_scan_interval", \
+			1000, \
+			0xFFFFFFFF, \
+			10000, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Initial Scan Interval")
+
+/*
+ * <ini>
+ * mawc_nlo_max_scan_interval - Maximum Scan Interval
+ * @Min: 1000
+ * @Max: 0xFFFFFFFF
+ * @Default: 60000
+ *
+ * Configure the maximum scan interval  using this
+ * parameter for MAWC based NLO (Units in Milliseconds)
+ *
+ * Related: NLO, PNO
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_MAWC_NLO_MAX_SCAN_INTERVAL CFG_INI_UINT( \
+			"mawc_nlo_max_scan_interval", \
+			1000, \
+			0xFFFFFFFF, \
+			60000, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Maximum Scan Interval")
+
+#ifdef FEATURE_WLAN_SCAN_PNO
 
 #define CFG_SCAN_PNO \
 	CFG(CFG_MAX_SCHED_SCAN_PLAN_ITERATIONS) \
-	CFG(CFG_MAX_SCHED_SCAN_PLAN_INTERVAL)
+	CFG(CFG_MAX_SCHED_SCAN_PLAN_INTERVAL) \
+	CFG(CFG_PNO_SCAN_SUPPORT) \
+	CFG(CFG_PNO_SCAN_TIMER_REPEAT_VALUE) \
+	CFG(CFG_PNO_SLOW_SCAN_MULTIPLIER)
+
 #else
 #define CFG_SCAN_PNO
-#endif
+#endif  /* FEATURE_WLAN_SCAN_PNO */
 
 /*
  * <ini>
@@ -495,11 +869,21 @@
 	CFG(CFG_ADAPTIVE_SCAN_DWELL_MODE) \
 	CFG(CFG_ADAPTIVE_SCAN_DWELL_MODE_NC) \
 	CFG(CFG_IS_BSSID_HINT_PRIORITY) \
-	CFG_SCAN_PNO \
 	CFG(CFG_PASSIVE_MAX_CHANNEL_TIME_CONC) \
 	CFG(CFG_ACTIVE_MAX_CHANNEL_TIME_CONC) \
 	CFG(CFG_MAX_REST_TIME_CONC) \
 	CFG(CFG_MIN_REST_TIME_CONC) \
-	CFG(CFG_IDLE_TIME_CONC)
-
-#endif
+	CFG(CFG_IDLE_TIME_CONC) \
+	CFG(CFG_ENABLE_DFS_PNO_CHNL_SCAN) \
+	CFG(CFG_PNO_CHANNEL_PREDICTION) \
+	CFG(CFG_TOP_K_NUM_OF_CHANNELS) \
+	CFG(CFG_STATIONARY_THRESHOLD) \
+	CFG(CFG_CHANNEL_PREDICTION_SCAN_TIMER) \
+	CFG(CFG_ADAPTIVE_PNOSCAN_DWELL_MODE) \
+	CFG(CFG_SCAN_BACKOFF_MULTIPLIER) \
+	CFG(CFG_MAWC_NLO_ENABLED) \
+	CFG(CFG_MAWC_NLO_EXP_BACKOFF_RATIO) \
+	CFG(CFG_MAWC_NLO_INIT_SCAN_INTERVAL) \
+	CFG(CFG_MAWC_NLO_MAX_SCAN_INTERVAL) \
+	CFG_SCAN_PNO
+#endif /* __CONFIG_SCAN_H */

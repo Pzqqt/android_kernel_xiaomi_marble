@@ -316,5 +316,43 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev,
 				      struct net_device *dev);
 
+/**
+ * wlan_hdd_cfg80211_add_connected_pno_support() - Set connected PNO support
+ * @wiphy: Pointer to wireless phy
+ *
+ * This function is used to set connected PNO support to kernel
+ *
+ * Return: None
+ */
+#if defined(CFG80211_REPORT_BETTER_BSS_IN_SCHED_SCAN) || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
+void wlan_scan_cfg80211_add_connected_pno_support(struct wiphy *wiphy);
+
+#else
+static inline
+void wlan_scan_cfg80211_add_connected_pno_support(struct wiphy *wiphy)
+{
+}
+#endif
+
+#if ((LINUX_VERSION_CODE > KERNEL_VERSION(4, 4, 0)) || \
+		defined(CFG80211_MULTI_SCAN_PLAN_BACKPORT)) && \
+		defined(FEATURE_WLAN_SCAN_PNO)
+/**
+ * hdd_config_sched_scan_plans_to_wiphy() - configure sched scan plans to wiphy
+ * @wiphy: pointer to wiphy
+ * @config: pointer to config
+ *
+ * Return: None
+ */
+void wlan_config_sched_scan_plans_to_wiphy(struct wiphy *wiphy,
+					   struct wlan_objmgr_psoc *psoc);
+#else
+static inline
+void wlan_config_sched_scan_plans_to_wiphy(struct wiphy *wiphy,
+					   struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif /* FEATURE_WLAN_SCAN_PNO */
 
 #endif

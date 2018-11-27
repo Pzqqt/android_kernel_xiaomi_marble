@@ -1154,22 +1154,12 @@ enum scan_cb_type {
 #define SCAN_PNO_DEF_SLOW_SCAN_MULTIPLIER 6
 #define SCAN_PNO_DEF_SCAN_TIMER_REPEAT 20
 #define SCAN_PNO_MATCH_WAKE_LOCK_TIMEOUT         (5 * 1000)     /* in msec */
+#define SCAN_MAX_IE_LENGTH 255
 #ifdef CONFIG_SLUB_DEBUG_ON
 #define SCAN_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT (2 * 1000)     /* in msec */
 #else
 #define SCAN_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT (1 * 1000)     /* in msec */
 #endif /* CONFIG_SLUB_DEBUG_ON */
-
-#define SCAN_PNO_CHANNEL_PREDICTION 0
-#define SCAN_TOP_K_NUM_OF_CHANNELS 3
-#define SCAN_STATIONARY_THRESHOLD 10
-#define SCAN_CHANNEL_PREDICTION_FULL_SCAN_MS 60000
-#define SCAN_ADAPTIVE_PNOSCAN_DWELL_MODE 0
-#define SCAN_MAWC_NLO_ENABLED 1
-#define SCAN_MAWC_NLO_EXP_BACKOFF_RATIO 3
-#define SCAN_MAWC_NLO_INIT_SCAN_INTERVAL 10000
-#define SCAN_MAWC_NLO_MAX_SCAN_INTERVAL 60000
-
 
 /**
  * enum ssid_bc_type - SSID broadcast type
@@ -1290,30 +1280,9 @@ struct pno_scan_req_params {
 };
 
 /**
- * struct pno_user_cfg - user configuration required for PNO
- * @channel_prediction: config PNO channel prediction feature status
- * @top_k_num_of_channels: def top K number of channels are used for tanimoto
- * distance calculation.
- * @stationary_thresh: def threshold val to determine that STA is stationary.
- * @pnoscan_adaptive_dwell_mode: def adaptive dwelltime mode for pno scan
- * @channel_prediction_full_scan: def periodic timer upon which full scan needs
- * to be triggered.
- * @mawc_params: Configuration parameters for NLO MAWC.
- */
-struct pno_user_cfg {
-	bool channel_prediction;
-	uint8_t top_k_num_of_channels;
-	uint8_t stationary_thresh;
-	enum scan_dwelltime_adaptive_mode adaptive_dwell_mode;
-	uint32_t channel_prediction_full_scan;
-	struct nlo_mawc_params mawc_params;
-};
-
-/**
  * struct scan_user_cfg - user configuration required for for scan
  * @scan_cache_aging_time: default scan cache aging time
  * @is_snr_monitoring_enabled: whether snr monitoring enabled or not
- * @pno_cfg: Pno related config params
  * @ie_whitelist: probe req IE whitelist attrs
  * @enable_mac_spoofing: enable mac address spoof in scan
  * @sta_miracast_mcc_rest_time: sta miracast mcc rest time
@@ -1322,7 +1291,6 @@ struct pno_user_cfg {
 struct scan_user_cfg {
 	uint32_t scan_cache_aging_time;
 	bool is_snr_monitoring_enabled;
-	struct pno_user_cfg pno_cfg;
 	struct probe_req_whitelist_attr ie_whitelist;
 	bool enable_mac_spoofing;
 	uint32_t sta_miracast_mcc_rest_time;

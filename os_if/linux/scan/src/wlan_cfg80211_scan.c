@@ -34,6 +34,7 @@
 #include <wlan_cfg80211_scan.h>
 #include <qdf_mem.h>
 #include <wlan_utility.h>
+#include "cfg_ucfg_api.h"
 #ifdef WLAN_POLICY_MGR_ENABLE
 #include <wlan_policy_mgr_api.h>
 #endif
@@ -48,20 +49,6 @@ struct nla_policy scan_policy[QCA_WLAN_VENDOR_ATTR_SCAN_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_SCAN_TX_NO_CCK_RATE] = {.type = NLA_FLAG},
 	[QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE] = {.type = NLA_U64},
 };
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
-static uint32_t hdd_config_sched_scan_start_delay(
-		struct cfg80211_sched_scan_request *request)
-{
-	return request->delay;
-}
-#else
-static uint32_t hdd_config_sched_scan_start_delay(
-		struct cfg80211_sched_scan_request *request)
-{
-	return 0;
-}
-#endif
 
 #if defined(CFG80211_SCAN_RANDOM_MAC_ADDR) || \
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
@@ -161,8 +148,9 @@ static void wlan_scan_rand_attrs(struct wlan_objmgr_vdev *vdev,
  *
  * Return: None
  */
-static void wlan_config_sched_scan_plan(struct pno_scan_req_params *pno_req,
-	struct cfg80211_sched_scan_request *request)
+static void
+wlan_config_sched_scan_plan(struct pno_scan_req_params *pno_req,
+			    struct cfg80211_sched_scan_request *request)
 {
 	/*
 	 * As of now max 2 scan plans were supported by firmware
@@ -193,14 +181,25 @@ static void wlan_config_sched_scan_plan(struct pno_scan_req_params *pno_req,
 	}
 }
 #else
-static void wlan_config_sched_scan_plan(struct pno_scan_req_params *pno_req,
-	struct cfg80211_sched_scan_request *request)
+#define wlan_config_sched_scan_plan(pno_req, request) \
+	__wlan_config_sched_scan_plan(pno_req, request, psoc)
+
+static void
+__wlan_config_sched_scan_plan(struct pno_scan_req_params *pno_req,
+			      struct cfg80211_sched_scan_request *request,
+			      struct wlan_objmgr_psoc *psoc)
 {
+	uint32_t scan_timer_repeat_value, slow_scan_multiplier;
+
+	scan_timer_repeat_value = ucfg_scan_get_scan_timer_repeat_value(psoc);
+	slow_scan_multiplier = ucfg_scan_get_slow_scan_multiplier(psoc);
+
 	pno_req->fast_scan_period = request->interval;
-	pno_req->fast_scan_max_cycles = SCAN_PNO_DEF_SCAN_TIMER_REPEAT;
+	pno_req->fast_scan_max_cycles = scan_timer_repeat_value;
 	pno_req->slow_scan_period =
-		SCAN_PNO_DEF_SLOW_SCAN_MULTIPLIER *
-		pno_req->fast_scan_period;
+		(slow_scan_multiplier * pno_req->fast_scan_period);
+	cfg80211_debug("Base scan interval: %d sec PNO Scan Timer Repeat Value: %d",
+		  (request->interval / 1000), scan_timer_repeat_value);
 }
 #endif
 
@@ -373,6 +372,22 @@ static inline void wlan_hdd_sched_scan_update_relative_rssi(
 }
 #endif
 
+#ifdef FEATURE_WLAN_SCAN_PNO
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+static uint32_t wlan_config_sched_scan_start_delay(
+		struct cfg80211_sched_scan_request *request)
+{
+	return request->delay;
+}
+#else
+static uint32_t wlan_config_sched_scan_start_delay(
+		struct cfg80211_sched_scan_request *request)
+{
+	return 0;
+}
+#endif /*(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)) */
+#endif /* FEATURE_WLAN_SCAN_PNO */
+
 int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 				   struct cfg80211_sched_scan_request *request,
 				   uint8_t scan_backoff_multiplier)
@@ -384,6 +399,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 	struct wlan_objmgr_psoc *psoc;
 	uint32_t valid_ch[SCAN_PNO_MAX_NETW_CHANNELS_EX] = {0};
+	bool enable_dfs_pno_chnl_scan;
 
 	if (ucfg_scan_get_pno_in_progress(vdev)) {
 		cfg80211_debug("pno is already in progress");
@@ -429,6 +445,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 		goto error;
 	}
 
+	enable_dfs_pno_chnl_scan = ucfg_scan_is_dfs_chnl_scan_enabled(psoc);
 	if (request->n_channels) {
 		char chl[(request->n_channels * 5) + 1];
 		int len = 0;
@@ -436,6 +453,12 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 
 		for (i = 0; i < request->n_channels; i++) {
 			channel = request->channels[i]->hw_value;
+			if ((!enable_dfs_pno_chnl_scan) &&
+			    (wlan_reg_is_dfs_ch(pdev, channel))) {
+				cfg80211_debug("Dropping DFS channel :%d",
+					       channel);
+				continue;
+			}
 			if (wlan_reg_is_dsrc_chan(pdev, channel))
 				continue;
 
@@ -543,7 +566,7 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 	 *   shall be in slow_scan_period mode until next PNO Start.
 	 */
 	wlan_config_sched_scan_plan(req, request);
-	req->delay_start_time = hdd_config_sched_scan_start_delay(request);
+	req->delay_start_time = wlan_config_sched_scan_start_delay(request);
 	req->scan_backoff_multiplier = scan_backoff_multiplier;
 	cfg80211_notice("Base scan interval: %d sec, scan cycles: %d, slow scan interval %d",
 		req->fast_scan_period, req->fast_scan_max_cycles,
@@ -1868,3 +1891,63 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 
 	qdf_mem_free(bss_data.mgmt);
 }
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
+/*
+ * wlan_scan_wiphy_set_max_sched_scans() - set maximum number of scheduled scans to
+ * wiphy.
+ * @wiphy: pointer to wiphy
+ * @max_scans: max num scans to be configured
+ *
+ */
+static inline void
+wlan_scan_wiphy_set_max_sched_scans(struct wiphy *wiphy, uint8_t max_scans)
+{
+	if (max_scans == 0)
+		wiphy->flags &= ~WIPHY_FLAG_SUPPORTS_SCHED_SCAN;
+	else
+		wiphy->flags |= WIPHY_FLAG_SUPPORTS_SCHED_SCAN;
+}
+#else
+static inline void
+wlan_scan_wiphy_set_max_sched_scans(struct wiphy *wiphy, uint8_t max_scans)
+{
+	wiphy->max_sched_scan_reqs = max_scans;
+}
+#endif /* KERNEL_VERSION(4, 12, 0) */
+
+#if defined(CFG80211_REPORT_BETTER_BSS_IN_SCHED_SCAN) || \
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
+void wlan_scan_cfg80211_add_connected_pno_support(struct wiphy *wiphy)
+{
+	wiphy_ext_feature_set(wiphy,
+			      NL80211_EXT_FEATURE_SCHED_SCAN_RELATIVE_RSSI);
+}
+#endif
+
+#if ((LINUX_VERSION_CODE > KERNEL_VERSION(4, 4, 0)) || \
+		defined(CFG80211_MULTI_SCAN_PLAN_BACKPORT)) && \
+		defined(FEATURE_WLAN_SCAN_PNO)
+void wlan_config_sched_scan_plans_to_wiphy(struct wiphy *wiphy,
+					   struct wlan_objmgr_psoc *psoc)
+{
+	if (ucfg_scan_get_pno_scan_support(psoc)) {
+		wlan_scan_wiphy_set_max_sched_scans(wiphy, 1);
+		wiphy->max_sched_scan_ssids = SCAN_PNO_MAX_SUPP_NETWORKS;
+		wiphy->max_match_sets = SCAN_PNO_MAX_SUPP_NETWORKS;
+		wiphy->max_sched_scan_ie_len = SCAN_MAX_IE_LENGTH;
+		wiphy->max_sched_scan_plans = SCAN_PNO_MAX_PLAN_REQUEST;
+
+		/*
+		 * Exception: Using cfg_get() here because these two
+		 * schedule scan params are used only at this place
+		 * to copy to wiphy structure
+		 */
+		wiphy->max_sched_scan_plan_interval =
+			cfg_get(psoc, CFG_MAX_SCHED_SCAN_PLAN_INTERVAL);
+
+		wiphy->max_sched_scan_plan_iterations =
+			cfg_get(psoc, CFG_MAX_SCHED_SCAN_PLAN_ITERATIONS);
+	}
+}
+#endif

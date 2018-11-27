@@ -815,4 +815,107 @@ void ucfg_scan_cfg_get_conc_min_resttime(struct wlan_objmgr_psoc *psoc,
 	return wlan_scan_cfg_get_conc_min_resttime(psoc, rest_time);
 }
 
+#ifdef FEATURE_WLAN_SCAN_PNO
+/**
+ * ucfg_scan_is_pno_offload_enabled() - Check if pno offload is enabled
+ * @psoc: pointer to psoc object
+ *
+ * Return: pno_offload_enabled flag
+ */
+bool ucfg_scan_is_pno_offload_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_scan_set_pno_offload() - API to set pno offload flag based on the
+ * capability received from the firmware.
+ * @psoc: pointer to psoc object
+ * @rest_time: scan concurrent min rest time
+ *
+ * Return: scan concurrent min rest time
+ */
+void ucfg_scan_set_pno_offload(struct wlan_objmgr_psoc *psoc, bool value);
+
+/**
+ * ucfg_scan_get_pno_scan_support() - Check if pno scan support is enabled
+ * @psoc: pointer to psoc object
+ *
+ * Return: scan_support_enabled flag
+ */
+bool ucfg_scan_get_pno_scan_support(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_get_scan_backoff_multiplier() - get scan backoff multiplier value
+ * @psoc: pointer to psoc object
+ *
+ * Return: scan_support_enabled flag
+ */
+uint8_t ucfg_get_scan_backoff_multiplier(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_scan_is_dfs_chnl_scan_enabled() - Check if PNO dfs channel scan support
+ * is enabled
+ * @psoc: pointer to psoc object
+ *
+ * Return: dfs_chnl_scan_enabled flag
+ */
+bool ucfg_scan_is_dfs_chnl_scan_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_scan_get_scan_timer_repeat_value() - API to get PNO scan timer repeat
+ * value
+ * @psoc: pointer to psoc object
+ *
+ * Return: scan_timer_repeat_value
+ */
+uint32_t ucfg_scan_get_scan_timer_repeat_value(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_scan_get_slow_scan_multiplier() - API to get PNO slow scan multiplier
+ * value
+ * @psoc: pointer to psoc object
+ *
+ * Return: slow_scan_multiplier value
+ */
+uint32_t ucfg_scan_get_slow_scan_multiplier(struct wlan_objmgr_psoc *psoc);
+#else
+static inline
+bool ucfg_scan_is_pno_offload_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline
+void ucfg_scan_set_pno_offload(struct wlan_objmgr_psoc *psoc, bool value)
+{
+}
+
+static inline
+bool ucfg_scan_get_pno_scan_support(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline
+uint8_t ucfg_get_scan_backoff_multiplier(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline
+bool ucfg_scan_is_dfs_chnl_scan_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline
+uint32_t ucfg_scan_get_scan_timer_repeat_value(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+
+static inline
+uint32_t ucfg_scan_get_slow_scan_multiplier(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
+#endif /* FEATURE_WLAN_SCAN_PNO */
 #endif
