@@ -110,9 +110,11 @@ struct direct_buf_rx_cfg_req {
  * struct direct_buf_rx_metadata: direct buffer metadata
  *
  * @noisefloor: noisefloor
+ * @reset_delay: reset delay
  */
 struct direct_buf_rx_metadata {
 	int32_t noisefloor[WMI_HOST_MAX_NUM_CHAINS];
+	uint32_t reset_delay;
 };
 
 /**
