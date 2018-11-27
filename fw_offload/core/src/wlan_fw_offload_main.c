@@ -57,22 +57,34 @@ static void
 fwol_init_thermal_temp_in_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_fwol_thermal_temp *thermal_temp)
 {
-	thermal_temp->thermal_temp_min_level0 =
+	thermal_temp->thermal_temp_min_level[0] =
 				cfg_get(psoc, CFG_THERMAL_TEMP_MIN_LEVEL0);
-	thermal_temp->thermal_temp_max_level0 =
+	thermal_temp->thermal_temp_max_level[0] =
 				cfg_get(psoc, CFG_THERMAL_TEMP_MAX_LEVEL0);
-	thermal_temp->thermal_temp_min_level1 =
+	thermal_temp->thermal_temp_min_level[1] =
 				cfg_get(psoc, CFG_THERMAL_TEMP_MIN_LEVEL1);
-	thermal_temp->thermal_temp_max_level1 =
+	thermal_temp->thermal_temp_max_level[1] =
 				cfg_get(psoc, CFG_THERMAL_TEMP_MAX_LEVEL1);
-	thermal_temp->thermal_temp_min_level2 =
+	thermal_temp->thermal_temp_min_level[2] =
 				cfg_get(psoc, CFG_THERMAL_TEMP_MIN_LEVEL2);
-	thermal_temp->thermal_temp_max_level2 =
+	thermal_temp->thermal_temp_max_level[2] =
 				cfg_get(psoc, CFG_THERMAL_TEMP_MAX_LEVEL2);
-	thermal_temp->thermal_temp_min_level3 =
+	thermal_temp->thermal_temp_min_level[3] =
 				cfg_get(psoc, CFG_THERMAL_TEMP_MIN_LEVEL3);
-	thermal_temp->thermal_temp_max_level3 =
+	thermal_temp->thermal_temp_max_level[3] =
 				cfg_get(psoc, CFG_THERMAL_TEMP_MAX_LEVEL3);
+
+	thermal_temp->thermal_mitigation_enable =
+				cfg_get(psoc, CFG_THERMAL_MITIGATION_ENABLE);
+	thermal_temp->throttle_period = cfg_get(psoc, CFG_THROTTLE_PERIOD);
+	thermal_temp->throttle_dutycycle_level[0] =
+				cfg_get(psoc, CFG_THROTTLE_DUTY_CYCLE_LEVEL0);
+	thermal_temp->throttle_dutycycle_level[1]=
+				cfg_get(psoc, CFG_THROTTLE_DUTY_CYCLE_LEVEL1);
+	thermal_temp->throttle_dutycycle_level[2]=
+				cfg_get(psoc, CFG_THROTTLE_DUTY_CYCLE_LEVEL2);
+	thermal_temp->throttle_dutycycle_level[3]=
+				cfg_get(psoc, CFG_THROTTLE_DUTY_CYCLE_LEVEL3);
 }
 
 /**
