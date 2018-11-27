@@ -153,10 +153,17 @@ void dp_cal_client_update_peer_stats(struct cdp_peer_stats *peer_stats)
 	peer_stats->tx.tx_data_success_last = temp_tx_data;
 	peer_stats->tx.tx_data_ucast_last = temp_tx_ucast_pkts;
 
-	if (peer_stats->tx.tx_data_ucast_rate)
-		peer_stats->tx.last_per = ((peer_stats->tx.tx_data_ucast_last -
-				peer_stats->tx.tx_data_success_last) * 100) /
-				peer_stats->tx.tx_data_ucast_last;
+	if (peer_stats->tx.tx_data_ucast_rate) {
+		if (peer_stats->tx.tx_data_ucast_rate >
+				peer_stats->tx.tx_data_rate)
+			peer_stats->tx.last_per =
+				((peer_stats->tx.tx_data_ucast_rate -
+					peer_stats->tx.tx_data_rate) * 100) /
+				peer_stats->tx.tx_data_ucast_rate;
+		else
+			peer_stats->tx.last_per = 0;
+	}
+
 }
 
 qdf_export_symbol(dp_cal_client_update_peer_stats);
