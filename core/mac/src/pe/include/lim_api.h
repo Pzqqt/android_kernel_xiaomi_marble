@@ -208,7 +208,6 @@ static inline tLimSmeStates lim_get_sme_state(tpAniSirGlobal mac)
 }
 
 extern void lim_received_hb_handler(tpAniSirGlobal, uint8_t, struct pe_session *);
-extern void limCheckAndQuietBSS(tpAniSirGlobal);
 /* / Function that triggers STA context deletion */
 extern void lim_trigger_sta_deletion(tpAniSirGlobal mac, tpDphHashNode pStaDs,
 				     struct pe_session *psessionEntry);
