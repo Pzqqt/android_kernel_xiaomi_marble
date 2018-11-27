@@ -1670,6 +1670,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		       pSapEvent->sapevt.sapStartBssCompleteEvent.
 		       operatingChannel,
 		       pSapEvent->sapevt.sapStartBssCompleteEvent.staId);
+		ap_ctx->operating_channel =
+			pSapEvent->sapevt.sapStartBssCompleteEvent
+			.operatingChannel;
 
 		adapter->session_id =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.sessionId;
@@ -1677,13 +1680,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		sap_config->channel =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.
 			operatingChannel;
-
 		sap_config->ch_params.ch_width =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.ch_width;
 
-		wlan_reg_set_channel_params(hdd_ctx->pdev,
-					    sap_config->channel, 0,
-					    &sap_config->ch_params);
+		sap_config->ch_params = ap_ctx->sap_context->ch_params;
+		sap_config->sec_ch = ap_ctx->sap_context->secondary_ch;
 
 		hostapd_state->qdf_status =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.status;
@@ -1768,9 +1769,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
 #endif
-		ap_ctx->operating_channel =
-			pSapEvent->sapevt.sapStartBssCompleteEvent.operatingChannel;
-
 		hdd_hostapd_channel_prevent_suspend(adapter,
 						    ap_ctx->operating_channel);
 
@@ -2888,6 +2886,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	struct hdd_station_ctx *hdd_sta_ctx;
 	struct hdd_adapter *sta_adapter;
 	uint8_t mcc_to_scc_switch = 0;
+	struct ch_params ch_params;
 	struct hdd_adapter *ap_adapter = wlan_hdd_get_adapter_from_vdev(
 					psoc, vdev_id);
 	if (!ap_adapter) {
@@ -2972,21 +2971,22 @@ sap_restart:
 
 	hdd_info("SAP restart orig chan: %d, new chan: %d",
 		 hdd_ap_ctx->sap_config.channel, intf_ch);
-	hdd_ap_ctx->sap_config.channel = intf_ch;
-	hdd_ap_ctx->sap_config.ch_params.ch_width = CH_WIDTH_MAX;
+	ch_params.ch_width = CH_WIDTH_MAX;
 	hdd_ap_ctx->bss_stop_reason = BSS_STOP_DUE_TO_MCC_SCC_SWITCH;
 
 	wlan_reg_set_channel_params(hdd_ctx->pdev,
-				    hdd_ap_ctx->sap_config.channel,
-				    hdd_ap_ctx->sap_config.sec_ch,
-				    &hdd_ap_ctx->sap_config.ch_params);
-	*channel = hdd_ap_ctx->sap_config.channel;
-	*sec_ch = hdd_ap_ctx->sap_config.sec_ch;
+				    intf_ch,
+				    0,
+				    &ch_params);
+
+	wlansap_get_sec_channel(ch_params.sec_ch_offset, intf_ch, sec_ch);
+
+	*channel = intf_ch;
 
 	hdd_info("SAP channel change with CSA/ECSA");
 	hdd_sap_restart_chan_switch_cb(psoc, vdev_id,
-		hdd_ap_ctx->sap_config.channel,
-		hdd_ap_ctx->sap_config.ch_params.ch_width, false);
+		intf_ch,
+		ch_params.ch_width, false);
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -1600,6 +1600,25 @@ QDF_STATUS wlan_sap_get_pre_cac_vdev_id(mac_handle_t handle, uint8_t *vdev_id)
 	return QDF_STATUS_E_FAILURE;
 }
 
+void wlansap_get_sec_channel(uint8_t sec_ch_offset,
+			     uint8_t op_channel,
+			     uint8_t *sec_channel)
+{
+	switch (sec_ch_offset) {
+	case LOW_PRIMARY_CH:
+		*sec_channel = op_channel + 4;
+		break;
+	case HIGH_PRIMARY_CH:
+		*sec_channel = op_channel - 4;
+		break;
+	default:
+		*sec_channel = 0;
+	}
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: sec channel offset %d, sec channel %d",
+		  __func__, sec_ch_offset, *sec_channel);
+}
+
 QDF_STATUS wlansap_channel_change_request(struct sap_context *sapContext,
 					  uint8_t target_channel)
 {
@@ -1658,11 +1677,13 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sapContext,
 	ch_params = &mac_ctx->sap.SapDfsInfo.new_ch_params;
 	wlan_reg_set_channel_params(mac_ctx->pdev, target_channel,
 			0, ch_params);
-	sapContext->ch_params.ch_width = ch_params->ch_width;
+	sapContext->ch_params = *ch_params;
 	/* Update the channel as this will be used to
 	 * send event to supplicant
 	 */
 	sapContext->channel = target_channel;
+	wlansap_get_sec_channel(ch_params->sec_ch_offset, target_channel,
+				(uint8_t *)(&sapContext->secondary_ch));
 	sapContext->csr_roamProfile.ch_params.ch_width = ch_params->ch_width;
 	sapContext->csr_roamProfile.ch_params.sec_ch_offset =
 						ch_params->sec_ch_offset;

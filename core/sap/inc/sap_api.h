@@ -1177,6 +1177,22 @@ QDF_STATUS wlansap_channel_change_request(struct sap_context *sapContext,
 					  uint8_t target_channel);
 
 /**
+ * wlansap_get_sec_channel() - get the secondary sap channel
+ * @sec_ch_offset: secondary channel offset.
+ * @op_channel: Operating sap channel.
+ * @sec_channel: channel to be filled.
+ *
+ * This API will get the secondary sap channel from the offset, and
+ * operating channel.
+ *
+ * Return: None
+ *
+ */
+void wlansap_get_sec_channel(uint8_t sec_ch_offset,
+			     uint8_t op_channel,
+			     uint8_t *sec_channel);
+
+/**
  * wlansap_start_beacon_req() - Send Start Beaconing Request
  * @sap_ctx: Pointer to the SAP context
  *

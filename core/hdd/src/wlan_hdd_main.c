@@ -8638,16 +8638,8 @@ void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	hdd_ap_ctx->sap_config.channel = channel;
-	hdd_ap_ctx->sap_config.ch_params.ch_width = CH_WIDTH_MAX;
-
 	hdd_debug("chan:%d width:%d",
 		channel, hdd_ap_ctx->sap_config.ch_width_orig);
-
-	wlan_reg_set_channel_params(hdd_ctx->pdev,
-				    hdd_ap_ctx->sap_config.channel,
-				    hdd_ap_ctx->sap_config.sec_ch,
-				    &hdd_ap_ctx->sap_config.ch_params);
 
 	policy_mgr_change_sap_channel_with_csa(hdd_ctx->psoc,
 		adapter->session_id, channel,
