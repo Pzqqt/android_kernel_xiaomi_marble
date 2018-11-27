@@ -1973,6 +1973,8 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		spectral->inband_fftbin_size_adj = 0;
 		spectral->null_fftbin_adj = 0;
 	}
+	spectral->last_fft_timestamp = 0;
+	spectral->timestamp_war_offset = 0;
 
 	if ((target_type == TARGET_TYPE_QCA8074) ||
 	    (target_type == TARGET_TYPE_QCA8074V2) ||
@@ -2562,6 +2564,8 @@ target_if_spectral_scan_enable_params(struct target_if_spectral *spectral,
 	if (!p_sops->is_spectral_active(spectral)) {
 		p_sops->configure_spectral(spectral, spectral_params);
 		p_sops->start_spectral_scan(spectral);
+		spectral->timestamp_war_offset = 0;
+		spectral->last_fft_timestamp = 0;
 	} else {
 	}
 

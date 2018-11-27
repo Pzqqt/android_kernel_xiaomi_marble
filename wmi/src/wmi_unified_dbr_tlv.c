@@ -154,7 +154,10 @@ static QDF_STATUS extract_dbr_buf_metadata_tlv(
 	}
 
 	qdf_mem_copy(param->noisefloor, entry->noise_floor,
-		     sizeof(entry->noise_floor));
+		     qdf_min(sizeof(entry->noise_floor),
+			     sizeof(param->noisefloor)));
+	param->reset_delay = entry->reset_delay;
+
 	return QDF_STATUS_SUCCESS;
 }
 

@@ -1577,9 +1577,17 @@ target_if_consume_spectral_report_gen3(
 			}
 		}
 
-		tsf64 = p_fft_report->fft_timestamp;
 		target_if_process_sfft_report_gen3(p_fft_report, p_sfft);
 		detector_id = p_sfft->fft_detector_id;
+
+		if (report->reset_delay) {
+			spectral->timestamp_war_offset += (report->reset_delay +
+					spectral->last_fft_timestamp);
+		}
+		tsf64 = p_sfft->timestamp;
+		spectral->last_fft_timestamp = p_sfft->timestamp;
+		tsf64 += spectral->timestamp_war_offset;
+
 		/* Agile detector is not supported */
 		if (detector_id >= SPECTRAL_DETECTOR_AGILE) {
 			spectral->diag_stats.spectral_invalid_detector_id++;
@@ -1805,9 +1813,12 @@ int target_if_spectral_process_report_gen3(
 	}
 
 	report.data = payload->vaddr;
-	if (payload->meta_data_valid)
-		qdf_mem_copy(report.noisefloor, &payload->meta_data,
-			     sizeof(payload->meta_data));
+	if (payload->meta_data_valid) {
+		qdf_mem_copy(report.noisefloor, payload->meta_data.noisefloor,
+			     qdf_min(sizeof(report.noisefloor),
+				     sizeof(payload->meta_data.noisefloor)));
+		report.reset_delay = payload->meta_data.reset_delay;
+	}
 
 	if (spectral_debug_level & (DEBUG_SPECTRAL2 | DEBUG_SPECTRAL4)) {
 		spectral_debug("Printing the spectral phyerr buffer for debug");
