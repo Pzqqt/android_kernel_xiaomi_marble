@@ -55,6 +55,7 @@
 #include "qdf_debug_domain.h"
 #endif
 #include "qdf_str.h"
+#include "qdf_talloc.h"
 #include "qdf_trace.h"
 #include "qdf_types.h"
 #include <cdp_txrx_peer_ops.h>
@@ -13242,10 +13243,16 @@ static QDF_STATUS hdd_qdf_init(void)
 	qdf_mc_timer_manager_init();
 	qdf_event_list_init();
 
+	status = qdf_talloc_feature_init();
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to init talloc; status:%u", status);
+		goto event_deinit;
+	}
+
 	status = qdf_cpuhp_init();
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to init cpuhp; status:%u", status);
-		goto event_deinit;
+		goto talloc_deinit;
 	}
 
 	status = qdf_trace_spin_lock_init();
@@ -13261,6 +13268,8 @@ static QDF_STATUS hdd_qdf_init(void)
 
 cpuhp_deinit:
 	qdf_cpuhp_deinit();
+talloc_deinit:
+	qdf_talloc_feature_deinit();
 event_deinit:
 	qdf_event_list_destroy();
 	qdf_mc_timer_manager_exit();
@@ -13283,6 +13292,7 @@ static void hdd_qdf_deinit(void)
 	/* currently, no trace spinlock deinit */
 
 	qdf_cpuhp_deinit();
+	qdf_talloc_feature_deinit();
 	qdf_event_list_destroy();
 	qdf_mc_timer_manager_exit();
 	qdf_mem_exit();

@@ -554,6 +554,7 @@ QDF_OBJS := \
 	$(QDF_OBJ_DIR)/qdf_parse.o \
 	$(QDF_OBJ_DIR)/qdf_platform.o \
 	$(QDF_OBJ_DIR)/qdf_str.o \
+	$(QDF_OBJ_DIR)/qdf_talloc.o \
 	$(QDF_OBJ_DIR)/qdf_types.o \
 
 ifeq ($(CONFIG_WLAN_DEBUGFS), y)
@@ -576,10 +577,13 @@ endif
 
 ifeq ($(CONFIG_QDF_TEST), y)
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_hashtable_test.o
+	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_talloc_test.o
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_types_test.o
 endif
 
+cppflags-$(CONFIG_TALLOC_DEBUG) += -DWLAN_TALLOC_DEBUG
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_HASHTABLE_TEST
+cppflags-$(CONFIG_QDF_TEST) += -DWLAN_TALLOC_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_TYPES_TEST
 
 ############ WBUFF ############
