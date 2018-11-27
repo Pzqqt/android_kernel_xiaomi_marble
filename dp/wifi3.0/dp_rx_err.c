@@ -818,7 +818,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			qdf_nbuf_set_next(nbuf, NULL);
 			DP_STATS_INC_PKT(peer, rx.to_stack, 1,
 					 qdf_nbuf_len(nbuf));
-			vdev->osif_rx(vdev->osif_vdev, nbuf);
+
 			if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(
 						rx_tlv_hdr) &&
 					 (vdev->rx_decap_type ==
@@ -832,6 +832,9 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 							 qdf_nbuf_len(nbuf));
 				}
 			}
+
+			vdev->osif_rx(vdev->osif_vdev, nbuf);
+
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("INVALID vdev %pK OR osif_rx"), vdev);
