@@ -87,6 +87,35 @@ fwol_init_thermal_temp_in_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_THROTTLE_DUTY_CYCLE_LEVEL3);
 }
 
+QDF_STATUS fwol_init_neighbor_report_cfg(struct wlan_objmgr_psoc *psoc,
+					 struct wlan_fwol_neighbor_report_cfg
+					 *fwol_neighbor_report_cfg)
+{
+	if (!fwol_neighbor_report_cfg) {
+		fwol_err("Neighbor report config pointer null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	fwol_neighbor_report_cfg->enable_bitmask =
+		cfg_get(psoc, CFG_OFFLOAD_11K_ENABLE_BITMASK);
+	fwol_neighbor_report_cfg->params_bitmask =
+		cfg_get(psoc, CFG_OFFLOAD_NEIGHBOR_REPORT_PARAMS_BITMASK);
+	fwol_neighbor_report_cfg->time_offset =
+		cfg_get(psoc, CFG_OFFLOAD_NEIGHBOR_REPORT_TIME_OFFSET);
+	fwol_neighbor_report_cfg->low_rssi_offset =
+		cfg_get(psoc, CFG_OFFLOAD_NEIGHBOR_REPORT_LOW_RSSI_OFFSET);
+	fwol_neighbor_report_cfg->bmiss_count_trigger =
+		cfg_get(psoc, CFG_OFFLOAD_NEIGHBOR_REPORT_BMISS_COUNT_TRIGGER);
+	fwol_neighbor_report_cfg->per_threshold_offset =
+		cfg_get(psoc, CFG_OFFLOAD_NEIGHBOR_REPORT_PER_THRESHOLD_OFFSET);
+	fwol_neighbor_report_cfg->cache_timeout =
+		cfg_get(psoc, CFG_OFFLOAD_NEIGHBOR_REPORT_CACHE_TIMEOUT);
+	fwol_neighbor_report_cfg->max_req_cap =
+		cfg_get(psoc, CFG_OFFLOAD_NEIGHBOR_REPORT_MAX_REQ_CAP);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * fwol_parse_probe_req_ouis - form ouis from ini gProbeReqOUIs
  * @psoc: Pointer to struct wlan_objmgr_psoc context
@@ -280,6 +309,7 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	fwol_init_coex_config_in_cfg(psoc, &fwol_cfg->coex_config);
 	fwol_init_thermal_temp_in_cfg(psoc, &fwol_cfg->thermal_temp_cfg);
 	fwol_init_ie_whiltelist_in_cfg(psoc, &fwol_cfg->ie_whitelist_cfg);
+	fwol_init_neighbor_report_cfg(psoc, &fwol_cfg->neighbor_report_cfg);
 	fwol_cfg->ani_enabled = cfg_get(psoc, CFG_ENABLE_ANI);
 	fwol_cfg->enable_rts_sifsbursting =
 				cfg_get(psoc, CFG_SET_RTS_FOR_SIFS_BURSTING);
