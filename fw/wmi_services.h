@@ -362,6 +362,7 @@ typedef  enum  {
      */
     WMI_SERVICE_HW_DB2DBM_CONVERSION_SUPPORT = 178,
     WMI_SERVICE_SUPPORT_EXTEND_ADDRESS=179, /* indicates firmware supports host memory addresses larger than 32 bit */
+    WMI_SERVICE_BEACON_RECEPTION_STATS=180, /* Support per vdev beacon stats info */
 
 
     /******* ADD NEW SERVICES HERE *******/

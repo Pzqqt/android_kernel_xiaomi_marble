@@ -944,6 +944,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_pktlog_filter_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_pktlog_filter_info,
     WMITLV_TAG_STRUC_wmi_quiet_offload_info,
+    WMITLV_TAG_STRUC_wmi_get_bcn_recv_stats_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vdev_bcn_recv_stats_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1331,6 +1333,7 @@ typedef enum {
     OP(WMI_VDEV_BCN_OFFLOAD_QUIET_CONFIG_CMDID) \
     OP(WMI_NDP_CMDID) \
     OP(WMI_PDEV_PKTLOG_FILTER_CMDID) \
+    OP(WMI_VDEV_GET_BCN_RECEPTION_STATS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1543,6 +1546,7 @@ typedef enum {
     OP(WMI_ESP_ESTIMATE_EVENTID) \
     OP(WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID) \
     OP(WMI_NDP_EVENTID) \
+    OP(WMI_VDEV_BCN_RECEPTION_STATS_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3602,6 +3606,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MNT_FILTER_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_get_chip_power_stats_cmd_fixed_param, wmi_pdev_get_chip_power_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_CHIP_POWER_STATS_CMDID);
 
+/* WLAN GET beacon reception Stats*/
+#define WMITLV_TABLE_WMI_VDEV_GET_BCN_RECEPTION_STATS_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_get_bcn_recv_stats_fixed_param, wmi_vdev_get_bcn_recv_stats_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_GET_BCN_RECEPTION_STATS_CMDID);
+
 /* pdev set stats threshold cmd*/
 #define WMITLV_TABLE_WMI_PDEV_SET_STATS_THRESHOLD_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_stats_threshold_cmd_fixed_param, wmi_pdev_set_stats_threshold_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
@@ -4844,6 +4853,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_CHIP_POWER_SAVE_FAILURE_DETECTED_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_chip_power_stats_event_fixed_param, wmi_pdev_chip_power_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, debug_registers, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_CHIP_POWER_STATS_EVENTID);
+
+#define WMITLV_TABLE_WMI_VDEV_BCN_RECEPTION_STATS_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_bcn_recv_stats_event_fixed_param, wmi_vdev_bcn_recv_stats_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_BCN_RECEPTION_STATS_EVENTID);
 
 #define WMITLV_TABLE_WMI_PDEV_ANI_OFDM_LEVEL_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_ani_ofdm_event_fixed_param, wmi_ani_ofdm_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)

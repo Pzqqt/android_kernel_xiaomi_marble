@@ -473,6 +473,8 @@ typedef enum {
     /** To set chainmask configuration for vdev */
     WMI_VDEV_CHAINMASK_CONFIG_CMDID,
 
+    WMI_VDEV_GET_BCN_RECEPTION_STATS_CMDID,
+
     /* peer specific commands */
 
     /** create a peer */
@@ -1304,6 +1306,8 @@ typedef enum {
 
     /** get tx power event in response to VDEV_GET_TX_POWER request */
     WMI_VDEV_GET_TX_POWER_EVENTID,
+
+    WMI_VDEV_BCN_RECEPTION_STATS_EVENTID,
 
     /* peer specific events */
     /** FW reauet to kick out the station for reasons like inactivity,lack of response ..etc */
@@ -21118,6 +21122,12 @@ typedef struct {
 } wmi_pdev_get_chip_power_stats_cmd_fixed_param;
 
 typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_get_bcn_recv_stats_cmd_fixed_param */
+    /** VDEV identifier */
+    A_UINT32 vdev_id;
+} wmi_vdev_get_bcn_recv_stats_cmd_fixed_param;
+
+typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_tpc_event_fixed_param */
     /** pdev_id for identifying the MAC
      * See macros starting with WMI_PDEV_ID_ for values.
@@ -21208,6 +21218,31 @@ typedef struct {
      *    A_UINT32 debug_registers[num_debug_registers];
      */
 } wmi_pdev_chip_power_stats_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header;  /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_get_bcn_recv_stats_fixed_param */
+    A_UINT32 vdev_id;
+    /* total_bcn_cnt
+     * total beacon count (tbtt instances)
+     * After this value reaches 255 it saturates and stays at 255.
+     * This field is used to determine which of the 256 bits in the
+     * bmiss_bitmap field are valid.
+     */
+    A_UINT32 total_bcn_cnt;
+    /* total_bmiss_cnt
+     * Total beacon miss count in last 255 beacons, max value is 255.
+     * This value is the number of bits set within bmiss_bitmap.
+     */
+    A_UINT32 total_bmiss_cnt;
+    /* bmiss_bitmap
+     * This bitmap indicates the status of the last 255 beacons.
+     * If a bit is set, that means the corresponding beacon was missed.
+     * Bit 0 of bmiss_bitmap[0] represents the most recent beacon.
+     * The total_bcn_cnt field indicates how many bits within bmiss_bitmap
+     * are valid.
+     */
+    A_UINT32 bmiss_bitmap[8];
+} wmi_vdev_bcn_recv_stats_fixed_param;
 
 typedef enum wmi_chip_power_save_failure_reason_code_type {
     WMI_PROTOCOL_POWER_SAVE_FAILURE_REASON,
@@ -22651,6 +22686,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_NDP_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_PKTLOG_FILTER_CMDID);
         WMI_RETURN_STRING(WMI_SET_CURRENT_COUNTRY_CMDID);
+        WMI_RETURN_STRING(WMI_VDEV_GET_BCN_RECEPTION_STATS_CMDID);
     }
 
     return "Invalid WMI cmd";
