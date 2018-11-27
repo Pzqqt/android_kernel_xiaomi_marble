@@ -26,8 +26,10 @@
 #include "cfg_thermal_temp.h"
 #include "cfg_ie_whitelist.h"
 #include "cfg_fwol_generic.h"
+#include "cfg_neighbor_roam.h"
 
 #define CFG_FWOL_ALL \
+	CFG_11K_ALL \
 	CFG_COEX_ALL \
 	CFG_FWOL_GENERIC_ALL \
 	CFG_IE_WHITELIST \

@@ -111,6 +111,7 @@
 #include "cfg_mlme_threshold.h"
 #include "wlan_pmo_cfg.h"
 #include "wlan_pmo_ucfg_api.h"
+#include "wlan_fwol_ucfg_api.h"
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_INT_GET_NONE    (SIOCIWFIRSTPRIV + 0)
@@ -5483,6 +5484,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 	struct hdd_adapter *adapter = (netdev_priv(dev));
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct iw_point s_priv_data;
+	bool neighbor_report_req_support = false;
 
 	hdd_enter_dev(dev);
 
@@ -5559,9 +5561,13 @@ static int __iw_setchar_getnone(struct net_device *dev,
 			 * If 11k offload is supported by FW and enabled
 			 * in the ini, set the offload to true
 			 */
+			if (QDF_IS_STATUS_ERROR(
+			    ucfg_fwol_is_neighbor_report_req_supported(
+			    hdd_ctx->psoc, &neighbor_report_req_support)))
+				hdd_err("Neighbor report req bit get fail");
+
 			if (hdd_ctx->config->is_11k_offload_supported &&
-			    (hdd_ctx->config->offload_11k_enable_bitmask &
-			    OFFLOAD_11K_BITMASK_NEIGHBOR_REPORT_REQUEST)) {
+			    neighbor_report_req_support) {
 				hdd_debug("Neighbor report offloaded to FW");
 				neighborReq.neighbor_report_offload = true;
 			}

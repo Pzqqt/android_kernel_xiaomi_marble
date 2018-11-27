@@ -27,8 +27,6 @@
 #include <wlan_cmn.h>
 #include "wlan_fw_offload_main.h"
 
-#include "wlan_fw_offload_main.h"
-
 /**
  * ucfg_fwol_psoc_open() - FWOL component Open
  * @psoc: pointer to psoc object
@@ -88,6 +86,29 @@ ucfg_fwol_get_coex_config_params(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_fwol_get_thermal_temp(struct wlan_objmgr_psoc *psoc,
 			   struct wlan_fwol_thermal_temp *thermal_temp);
+
+/**
+ * ucfg_fwol_get_neighbor_report_cfg() - Get neighbor report config params
+ * @psoc: Pointer to psoc object
+ * @fwol_neighbor_report_cfg: Pointer to return neighbor report config
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_fwol_get_neighbor_report_cfg(struct wlan_objmgr_psoc *psoc,
+				  struct wlan_fwol_neighbor_report_cfg
+				  *fwol_neighbor_report_cfg);
+
+/**
+ * ucfg_fwol_get_neighbor_report_req() - Get neighbor report request bit
+ * @psoc: Pointer to psoc object
+ * @neighbor_report_req: Pointer to return value
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_fwol_is_neighbor_report_req_supported(struct wlan_objmgr_psoc *psoc,
+					   bool *neighbor_report_req);
 
 /**
  * ucfg_fwol_get_ie_whitelist() - Get IE whitelist param value

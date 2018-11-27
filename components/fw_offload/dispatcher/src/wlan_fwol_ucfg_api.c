@@ -183,6 +183,52 @@ ucfg_fwol_get_thermal_temp(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
+ucfg_fwol_get_neighbor_report_cfg(struct wlan_objmgr_psoc *psoc,
+				  struct wlan_fwol_neighbor_report_cfg
+				  *fwol_neighbor_report_cfg)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!fwol_neighbor_report_cfg)
+		return QDF_STATUS_E_FAILURE;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		fwol_init_neighbor_report_cfg(psoc, fwol_neighbor_report_cfg);
+		status =  QDF_STATUS_E_FAILURE;
+	} else {
+		fwol_neighbor_report_cfg = &fwol_obj->cfg.neighbor_report_cfg;
+	}
+
+	return status;
+}
+
+QDF_STATUS
+ucfg_fwol_is_neighbor_report_req_supported(struct wlan_objmgr_psoc *psoc,
+					   bool *neighbor_report_req)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		*neighbor_report_req =
+			 !!(cfg_get(psoc,
+			    CFG_OFFLOAD_11K_ENABLE_BITMASK) &
+			    OFFLOAD_11K_BITMASK_NEIGHBOR_REPORT_REQUEST);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*neighbor_report_req =
+		!!(fwol_obj->cfg.neighbor_report_cfg.enable_bitmask &
+		   OFFLOAD_11K_BITMASK_NEIGHBOR_REPORT_REQUEST);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 ucfg_fwol_get_ie_whitelist(struct wlan_objmgr_psoc *psoc, bool *ie_whitelist)
 {
 	struct wlan_fwol_psoc_obj *fwol_obj;

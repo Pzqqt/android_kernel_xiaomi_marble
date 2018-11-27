@@ -110,10 +110,33 @@ struct wlan_fwol_ie_whitelist {
 };
 
 /**
+ * struct wlan_fwol_neighbor_report_cfg - Neighbor report config params
+ * @enable_bitmask: Neighbor report offload bitmask control
+ * @params_bitmask: Param validity bitmask
+ * @time_offset: Neighbor report frame time offset
+ * @low_rssi_offset: Low RSSI offset
+ * @bmiss_count_trigger: Beacon miss trigger count
+ * @per_threshold_offset: PER Threshold offset
+ * @cache_timeout: Cache timeout
+ * @max_req_cap: Max request per peer
+ */
+struct wlan_fwol_neighbor_report_cfg {
+	uint32_t enable_bitmask;
+	uint32_t params_bitmask;
+	uint32_t time_offset;
+	uint32_t low_rssi_offset;
+	uint32_t bmiss_count_trigger;
+	uint32_t per_threshold_offset;
+	uint32_t cache_timeout;
+	uint32_t max_req_cap;
+};
+
+/**
  * struct wlan_fwol_cfg - fwol config items
- * coex_config: coex config items
- * thermal_temp_cfg: Thermal temperature related config items
- * ie_whitelist_cfg: IE Whitelist related config items
+ * @coex_config: coex config items
+ * @thermal_temp_cfg: Thermal temperature related config items
+ * @ie_whitelist_cfg: IE Whitelist related config items
+ * @neighbor_report_cfg: 11K neighbor report config
  * @ani_enabled: ANI enable/disable
  * @enable_rts_sifsbursting: Enable RTS SIFS Bursting
  * @max_mpdus_inampdu: Max number of MPDUS
@@ -139,6 +162,7 @@ struct wlan_fwol_cfg {
 	struct wlan_fwol_coex_config coex_config;
 	struct wlan_fwol_thermal_temp thermal_temp_cfg;
 	struct wlan_fwol_ie_whitelist ie_whitelist_cfg;
+	struct wlan_fwol_neighbor_report_cfg neighbor_report_cfg;
 	bool ani_enabled;
 	bool enable_rts_sifsbursting;
 	uint8_t max_mpdus_inampdu;
@@ -201,4 +225,15 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc);
  * Return: QDF_STATUS
  */
 QDF_STATUS fwol_cfg_on_psoc_disable(struct wlan_objmgr_psoc *psoc);
+
+/*
+ * fwol_init_neighbor_report_cfg() - Populate default neighbor report CFG values
+ * @psoc: pointer to the psoc object
+ * @fwol_neighbor_report_cfg: Pointer to Neighbor report config data structure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS fwol_init_neighbor_report_cfg(struct wlan_objmgr_psoc *psoc,
+					 struct wlan_fwol_neighbor_report_cfg
+					 *fwol_neighbor_report_cfg);
 #endif

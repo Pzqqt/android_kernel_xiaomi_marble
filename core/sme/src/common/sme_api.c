@@ -858,6 +858,43 @@ void sme_update_fine_time_measurement_capab(mac_handle_t mac_handle,
 	}
 }
 
+/**
+ * sme_update_neighbor_report_config() - Update CSR config for 11k params
+ * @mac_handle: Pointer to MAC context
+ * @csr_config: Pointer to CSR config data structure
+ *
+ * Return: None
+ */
+static void sme_update_neighbor_report_config(struct mac_context *mac,
+					      tCsrConfigParam *csr_config)
+{
+	struct wlan_fwol_neighbor_report_cfg fwol_neighbor_report_cfg = {0};
+	QDF_STATUS status;
+
+	status = ucfg_fwol_get_neighbor_report_cfg(mac->psoc,
+						   &fwol_neighbor_report_cfg);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		sme_err("Using defaults for 11K offload params: Error: %d",
+			status);
+
+	csr_config->offload_11k_enable_bitmask =
+				fwol_neighbor_report_cfg.enable_bitmask;
+	csr_config->neighbor_report_offload.params_bitmask =
+				fwol_neighbor_report_cfg.params_bitmask;
+	csr_config->neighbor_report_offload.time_offset =
+				fwol_neighbor_report_cfg.time_offset;
+	csr_config->neighbor_report_offload.low_rssi_offset =
+				fwol_neighbor_report_cfg.low_rssi_offset;
+	csr_config->neighbor_report_offload.bmiss_count_trigger =
+				fwol_neighbor_report_cfg.bmiss_count_trigger;
+	csr_config->neighbor_report_offload.per_threshold_offset =
+				fwol_neighbor_report_cfg.per_threshold_offset;
+	csr_config->neighbor_report_offload.neighbor_report_cache_timeout =
+				fwol_neighbor_report_cfg.cache_timeout;
+	csr_config->neighbor_report_offload.max_neighbor_report_req_cap =
+				fwol_neighbor_report_cfg.max_req_cap;
+}
+
 /*
  * sme_update_config() - Change configurations for all SME moduels
  * The function updates some configuration for modules in SME, CSR, etc
@@ -884,7 +921,7 @@ QDF_STATUS sme_update_config(mac_handle_t mac_handle, tpSmeConfigParams
 		sme_err("SME config params empty");
 		return status;
 	}
-
+	sme_update_neighbor_report_config(mac, &pSmeConfigParams->csrConfig);
 	status = csr_change_default_config_param(mac, &pSmeConfigParams->
 						csrConfig);
 
