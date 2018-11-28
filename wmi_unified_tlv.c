@@ -12111,9 +12111,8 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 				WMI_PDEV_PARAM_ESP_AIRTIME_FRACTION;
 	pdev_param[wmi_pdev_param_esp_ppdu_duration] =
 				WMI_PDEV_PARAM_ESP_PPDU_DURATION;
-#ifdef WLAN_RU26_SUPPORT
-	pdev_param[wmi_pdev_param_ru26_allowed] = WMI_PDEV_PARAM_RU26_ALLOWED;
-#endif
+	pdev_param[wmi_pdev_param_ru26_allowed] =
+				WMI_PDEV_PARAM_UL_RU26_ALLOWED;
 	pdev_param[wmi_pdev_param_use_nol] = WMI_PDEV_PARAM_USE_NOL;
 	/* Trigger interval for all trigger types. */
 	pdev_param[wmi_pdev_param_ul_trig_int] =
