@@ -1204,6 +1204,28 @@ ucfg_mlme_set_fast_roam_in_concurrency_enabled(struct wlan_objmgr_psoc *psoc,
 					       bool val);
 
 /**
+ * ucfg_mlme_get_wmi_wq_watchdog_timeout() - Get timeout for wmi watchdog bite
+ * @psoc: pointer to psoc object
+ * @wmi_wq_watchdog_timeout: buffer to hold value
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_wmi_wq_watchdog_timeout(struct wlan_objmgr_psoc *psoc,
+				      uint32_t *wmi_wq_watchdog_timeout);
+
+/**
+ * ucfg_mlme_set_wmi_wq_watchdog_timeout() - Set timeout for wmi watchdog bite
+ * @psoc: pointer to psoc object
+ * @wmi_wq_watchdog_timeout: value to be set
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_wmi_wq_watchdog_timeout(struct wlan_objmgr_psoc *psoc,
+				      uint32_t wmi_wq_watchdog_timeout);
+
+/**
  * ucfg_mlme_get_ps_data_inactivity_timeout() - Get data inactivity timeout
  * @psoc: pointer to psoc object
  * @inactivity_timeout: buffer to hold value

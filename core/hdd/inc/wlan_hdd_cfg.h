@@ -4436,29 +4436,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * wmi_wq_watchdog - Sets timeout period for wmi watchdog bite
- * @Min: 0
- * @Max: 30
- * @Default: 20
- *
- * This ini is used to set timeout period for wmi watchdog bite. If it is
- * 0 then wmi watchdog bite is disabled.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_WMI_WQ_WATCHDOG          "wmi_wq_watchdog"
-#define CFG_WMI_WQ_WATCHDOG_MIN      (0)
-#define CFG_WMI_WQ_WATCHDOG_MAX      (30) /* 30s */
-#define CFG_WMI_WQ_WATCHDOG_DEFAULT  (20) /* 20s */
-
-/*
- * <ini>
  * gEnableDTIMSelectionDiversity - Enable/Disable chain
  * selection optimization for one chain dtim
  * @Min: 0
@@ -5253,7 +5230,6 @@ struct hdd_config {
 	uint32_t neighbor_report_offload_max_req_cap;
 	bool action_oui_enable;
 	uint8_t action_oui_str[ACTION_OUI_MAXIMUM_ID][ACTION_OUI_MAX_STR_LEN];
-	uint16_t wmi_wq_watchdog_timeout;
 	uint8_t enable_tx_sch_delay;
 	uint32_t enable_secondary_rate;
 	bool is_unit_test_framework_enabled;

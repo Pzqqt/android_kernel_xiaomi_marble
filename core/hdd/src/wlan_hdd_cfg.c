@@ -1272,13 +1272,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_OFFLOAD_NEIGHBOR_REPORT_MAX_REQ_CAP_MIN,
 		     CFG_OFFLOAD_NEIGHBOR_REPORT_MAX_REQ_CAP_MAX),
 
-	REG_VARIABLE(CFG_WMI_WQ_WATCHDOG, WLAN_PARAM_Integer,
-		     struct hdd_config, wmi_wq_watchdog_timeout,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_WMI_WQ_WATCHDOG_DEFAULT,
-		     CFG_WMI_WQ_WATCHDOG_MIN,
-		     CFG_WMI_WQ_WATCHDOG_MAX),
-
 	REG_VARIABLE(CFG_DTIM_SELECTION_DIVERSITY_NAME,
 		     WLAN_PARAM_Integer,
 		     struct hdd_config, enable_dtim_selection_diversity,
