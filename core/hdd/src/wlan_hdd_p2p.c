@@ -687,7 +687,8 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 					   name_assign_type, true);
 	} else {
 		adapter = hdd_open_adapter(hdd_ctx, mode, name,
-					   wlan_hdd_get_intf_addr(hdd_ctx),
+					   wlan_hdd_get_intf_addr(hdd_ctx,
+								  mode),
 					   name_assign_type, true);
 	}
 

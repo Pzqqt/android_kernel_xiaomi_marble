@@ -442,6 +442,24 @@ static inline uint8_t *pld_get_wlan_mac_address(struct device *dev,
 {
 	return cnss_utils_get_wlan_mac_address(dev, num);
 }
+
+/**
+ * pld_get_wlan_derived_mac_address() - API to query derived MAC address
+ * from platform Driver
+ * @dev: Device Structure
+ * @num: Pointer to number of MAC address supported
+ *
+ * Platform Driver can have MAC address stored. This API needs to be used
+ * to get those MAC address
+ *
+ * Return: Pointer to the list of MAC address
+ */
+static inline uint8_t *pld_get_wlan_derived_mac_address(struct device *dev,
+							uint32_t *num)
+{
+	return cnss_utils_get_wlan_derived_mac_address(dev, num);
+}
+
 /**
  * pld_increment_driver_load_cnt() - Maintain driver load count
  * @dev: device
@@ -496,6 +514,14 @@ static inline uint8_t *pld_get_wlan_mac_address(struct device *dev,
 	*num = 0;
 	return NULL;
 }
+
+static inline uint8_t *pld_get_wlan_derived_mac_address(struct device *dev,
+							uint32_t *num)
+{
+	*num = 0;
+	return NULL;
+}
+
 static inline void pld_increment_driver_load_cnt(struct device *dev) {}
 static inline int pld_get_driver_load_cnt(struct device *dev)
 {

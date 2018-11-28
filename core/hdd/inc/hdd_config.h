@@ -547,86 +547,97 @@ enum hdd_wext_control {
 			"", \
 			"DBS Scan Selection")
 
-
 /*
- * <ini>
- * Intf0MacAddress - Interface address
- * @Default: 000AF58989FF
+ * </ini>
+ * enable_mac_provision - Enable/disable MAC address provisioning feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
  *
- * Related: None
+ * This ini is used to enable/disable MAC address provisioning feature
  *
- * Supported Feature: N/A
+ * Supported Feature: STA/SAP/P2P
  *
  * Usage: External
  *
  * </ini>
  */
-#define __CFG_INTF0_MAC_ADDR_DEFAULT \
-	{.bytes = {0x00, 0x0a, 0xf5, 0x89, 0x89, 0xff} }
-#define CFG_INTF0_MAC_ADDR CFG_INI_MAC( \
-	"Intf0MacAddress", \
-	__CFG_INTF0_MAC_ADDR_DEFAULT, \
-	"Interface 0 MAC Address")
+#define CFG_ENABLE_MAC_PROVISION CFG_INI_BOOL( \
+	"enable_mac_provision", \
+	0, \
+	"enable/disable MAC address provisioning feature")
 
 /*
  * <ini>
- * Intf1MacAddress - Interface address
- * @Default: 000AF58989FE
+ * provisioned_intf_pool - It is bit mask value of Interfaces
+ * @Min: 0
+ * @Max: 0xffffffff
+ * @Default: 0xffffffff
  *
- * Related: None
+ * This ini will contain the bitmask of all the interfaces
+ * which can use addresses from provisioned list. Using enum QDF_OPMODE
+ * for deciding the bit positions corresponding to each interface.
+ * Bit 0 : QDF_STA_MODE
+ * Bit 1 : QDF_SAP_MODE
+ * Bit 2 : QDF_P2P_CLIENT_MODE
+ * Bit 3 : QDF_P2P_GO_MODE
+ * Bit 4 : QDF_FTM_MODE
+ * Bit 5 : QDF_IBSS_MODE
+ * Bit 6 : QDF_MONITOR_MODE
+ * Bit 7 : QDF_P2P_DEVICE_MODE
+ * Bit 8 : QDF_OCB_MODE
+ * Bit 9 : QDF_EPPING_MODE
+ * Bit 10 : QDF_QVIT_MODE
+ * Bit 11 : QDF_NDI_MODE
+ * Bit 12 : QDF_MAX_NO_OF_MODE
+ * For example :
+ * If Bit 0 represents STA
+ * Bit 1 represents SAP
+ * Bit 2 represents P2PGO
+ * If only STA and SAP can use addresses from provisioned list then the value
+ * of ini should be 3 (00000011) as first and second bit should be set.
+ * If only STA and P2PGO can use addresses from provisioned list then the value
+ * of ini should be 5 (00000101) as first and third bit should be set.
+ * Similarly, for only SAP and P2PGO ini should be 6 (00000110)
  *
- * Supported Feature: N/A
+ * Supported Feature: STA/SAP/P2P
  *
  * Usage: External
  *
  * </ini>
  */
-#define __CFG_INTF1_MAC_ADDR_DEFAULT \
-	{.bytes = {0x00, 0x0a, 0xf5, 0x89, 0x89, 0xfe} }
-#define CFG_INTF1_MAC_ADDR CFG_INI_MAC( \
-	"Intf1MacAddress", \
-	__CFG_INTF1_MAC_ADDR_DEFAULT, \
-	"Interface 1 MAC Address")
+#define CFG_PROVISION_INTERFACE_POOL CFG_INI_UINT( \
+			"provisioned_intf_pool", \
+			0, \
+			0xffffffff, \
+			0xffffffff, \
+			CFG_VALUE_OR_DEFAULT, \
+			"It is bit mask value of Interfaces")
 
 /*
  * <ini>
- * Intf2MacAddress - Interface address
- * @Default: 000AF58989FD
+ * deriveded_intf_pool - It is bit mask value of Interfaces
+ * @Min: 0
+ * @Max: 0xffffffff
+ * @Default: 0xffffffff
  *
- * Related: None
+ * This ini will contain the bitmask of all the interfaces
+ * which can use addresses from derived list
  *
- * Supported Feature: N/A
+ *
+ * Supported Feature: STA/SAP/P2P
  *
  * Usage: External
  *
  * </ini>
  */
-#define __CFG_INTF2_MAC_ADDR_DEFAULT \
-	{.bytes = {0x00, 0x0a, 0xf5, 0x89, 0x89, 0xfd} }
-#define CFG_INTF2_MAC_ADDR CFG_INI_MAC( \
-	"Intf2MacAddress", \
-	__CFG_INTF2_MAC_ADDR_DEFAULT, \
-	"Interface 2 MAC Address")
-
-/*
- * <ini>
- * Intf3MacAddress - Interface address
- * @Default: 000AF58989FC
- *
- * Related: None
- *
- * Supported Feature: N/A
- *
- * Usage: External
- *
- * </ini>
- */
-#define __CFG_INTF3_MAC_ADDR_DEFAULT \
-	{.bytes = {0x00, 0x0a, 0xf5, 0x89, 0x89, 0xfc} }
-#define CFG_INTF3_MAC_ADDR CFG_INI_MAC( \
-	"Intf3MacAddress", \
-	__CFG_INTF3_MAC_ADDR_DEFAULT, \
-	"Interface 3 MAC Address")
+#define CFG_DERIVED_INTERFACE_POOL CFG_INI_UINT( \
+				"derived_intf_pool", \
+				0, \
+				0xffffffff, \
+				0xffffffff, \
+				CFG_VALUE_OR_DEFAULT, \
+				"It is bit mask value of Interfaces")
 
 /*
  * Start of action oui inis
@@ -1040,20 +1051,19 @@ enum hdd_wext_control {
 	CFG(CFG_ACTION_OUI_SWITCH_TO_11N_MODE) \
 	CFG(CFG_BUG_ON_REINIT_FAILURE) \
 	CFG(CFG_DBS_SCAN_SELECTION) \
+	CFG(CFG_DERIVED_INTERFACE_POOL) \
 	CFG(CFG_ENABLE_CONCURRENT_STA) \
 	CFG(CFG_ENABLE_ACTION_OUI) \
 	CFG(CFG_ENABLE_FW_LOG) \
 	CFG(CFG_ENABLE_FW_UART_PRINT) \
+	CFG(CFG_ENABLE_MAC_PROVISION) \
 	CFG(CFG_ENABLE_RAMDUMP_COLLECTION) \
 	CFG(CFG_INTERFACE_CHANGE_WAIT) \
 	CFG(CFG_INFORM_BSS_RSSI_RAW) \
-	CFG(CFG_INTF0_MAC_ADDR) \
-	CFG(CFG_INTF1_MAC_ADDR) \
-	CFG(CFG_INTF2_MAC_ADDR) \
-	CFG(CFG_INTF3_MAC_ADDR) \
 	CFG(CFG_MULTICAST_HOST_FW_MSGS) \
 	CFG(CFG_NUM_VDEV_ENABLE) \
 	CFG(CFG_OPERATING_CHANNEL) \
 	CFG(CFG_PRIVATE_WEXT_CONTROL) \
+	CFG(CFG_PROVISION_INTERFACE_POOL) \
 	CFG(CFG_TIMER_MULTIPLIER)
 #endif

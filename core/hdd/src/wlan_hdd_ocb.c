@@ -524,7 +524,8 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 			qdf_copy_macaddr(&curr_chan->mac_address,
 				     &adapter->mac_addr);
 		} else {
-			mac_addr = wlan_hdd_get_intf_addr(hdd_ctx);
+			mac_addr = wlan_hdd_get_intf_addr(hdd_ctx,
+							  adapter->device_mode);
 			if (mac_addr == NULL) {
 				hdd_err("Cannot obtain mac address");
 				rc = -EINVAL;
@@ -869,7 +870,8 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 			qdf_copy_macaddr(&config->channels[i].mac_address,
 				&adapter->mac_addr);
 		} else {
-			mac_addr = wlan_hdd_get_intf_addr(hdd_ctx);
+			mac_addr = wlan_hdd_get_intf_addr(hdd_ctx,
+							  adapter->device_mode);
 			if (mac_addr == NULL) {
 				hdd_err("Cannot obtain mac address");
 				goto fail;

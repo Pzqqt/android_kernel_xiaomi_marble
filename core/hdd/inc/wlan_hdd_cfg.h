@@ -3533,7 +3533,6 @@ struct hdd_config {
 	struct qdf_mac_addr IbssBssid;
 	uint32_t AdHocChannel5G;
 	uint32_t AdHocChannel24G;
-	uint8_t intfAddrMask;
 
 	bool apProtEnabled;
 	uint8_t nTxPowerCap;    /* In dBm */
@@ -3828,7 +3827,10 @@ struct hdd_config {
 	bool runtime_pm;
 #endif
 	uint8_t inform_bss_rssi_raw;
-	struct qdf_mac_addr intfMacAddr[QDF_MAX_CONCURRENCY_PERSONA];
+
+	bool mac_provision;
+	uint32_t provisioned_intf_pool;
+	uint32_t derived_intf_pool;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
