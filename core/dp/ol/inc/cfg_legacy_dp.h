@@ -118,6 +118,19 @@
 		CFG_INI_BOOL("gCEClassifyEnable", \
 		true, "enable CE classify")
 
+/*
+ * <ini>
+ * gEnablePeerUnmapConfSupport - Set PEER UNMAP confirmation support
+ * Default: false
+ * 1 - enable  0 - disable
+ *
+ * Enable peer unmap confirmation support in the Host. Host will send
+ * this support to the FW only if FW support is enabled.
+ */
+#define CFG_DP_ENABLE_PEER_UMAP_CONF_SUPPORT \
+		CFG_INI_BOOL("gEnablePeerUnmapConfSupport", \
+		false, "enable PEER UNMAP CONF support")
+
 #define CFG_LEGACY_DP_ALL \
 	CFG(CFG_DP_FLOW_STEERING_ENABLED) \
 	CFG(CFG_DP_CE_CLASSIFY_ENABLE) \
@@ -125,6 +138,7 @@
 	CFG(CFG_DP_ENABLE_TX_SCHED_WRR_VO) \
 	CFG(CFG_DP_ENABLE_TX_SCHED_WRR_VI) \
 	CFG(CFG_DP_ENABLE_TX_SCHED_WRR_BE) \
-	CFG(CFG_DP_ENABLE_TX_SCHED_WRR_BK)
+	CFG(CFG_DP_ENABLE_TX_SCHED_WRR_BK) \
+	CFG(CFG_DP_ENABLE_PEER_UMAP_CONF_SUPPORT)
 
 #endif
