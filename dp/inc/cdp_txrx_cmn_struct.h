@@ -373,6 +373,13 @@ typedef struct cdp_soc_t *ol_txrx_soc_handle;
 typedef void (*ol_txrx_vdev_delete_cb)(void *context);
 
 /**
+ * ol_txrx_peer_unmap_sync_cb - callback registered during peer detach sync
+ */
+typedef QDF_STATUS(*ol_txrx_peer_unmap_sync_cb)(uint8_t vdev_id,
+						 uint32_t peer_id_cnt,
+						 uint16_t *peer_id_list);
+
+/**
  * ol_txrx_pkt_direction - Packet Direction
  * @rx_direction: rx path packet
  * @tx_direction: tx path packet

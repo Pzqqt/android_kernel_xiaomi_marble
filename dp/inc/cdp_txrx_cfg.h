@@ -333,4 +333,55 @@ cdp_cfg_set_new_htt_msg_format(ol_txrx_soc_handle soc,
 	soc->ops->cfg_ops->set_new_htt_msg_format(val);
 }
 
+/**
+ * cdp_cfg_set_peer_unmap_conf_support() - set peer unmap conf feature
+ * @soc - datapath soc handle
+ * @val - enable or disable peer unmap conf feature
+ *
+ * Set if peer unmap confirmation feature is supported by both FW and in INI
+ *
+ * return NONE
+ */
+static inline void
+cdp_cfg_set_peer_unmap_conf_support(ol_txrx_soc_handle soc, bool val)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s invalid instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cfg_ops ||
+	    !soc->ops->cfg_ops->set_peer_unmap_conf_support)
+		return;
+
+	soc->ops->cfg_ops->set_peer_unmap_conf_support(val);
+}
+
+/**
+ * cdp_cfg_get_peer_unmap_conf_support() - check peer unmap conf feature
+ * @soc - datapath soc handle
+ *
+ * Check if peer unmap confirmation feature is enabled
+ *
+ * return true is peer unmap confirmation feature is enabled else false
+ */
+static inline bool
+cdp_cfg_get_peer_unmap_conf_support(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s invalid instance", __func__);
+		QDF_BUG(0);
+		return false;
+	}
+
+	if (!soc->ops->cfg_ops ||
+	    !soc->ops->cfg_ops->get_peer_unmap_conf_support)
+		return false;
+
+	return soc->ops->cfg_ops->get_peer_unmap_conf_support();
+}
+
 #endif /* _CDP_TXRX_CFG_H_ */

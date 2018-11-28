@@ -702,6 +702,30 @@ cdp_peer_delete(ol_txrx_soc_handle soc, void *peer, uint32_t bitmap)
 	soc->ops->cmn_drv_ops->txrx_peer_delete(peer, bitmap);
 }
 
+static inline void
+cdp_peer_delete_sync(ol_txrx_soc_handle soc, void *peer,
+		     QDF_STATUS(*delete_cb)(
+				uint8_t vdev_id,
+				uint32_t peerid_cnt,
+				uint16_t *peerid_list),
+		     uint32_t bitmap)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_peer_delete_sync)
+		return;
+
+	soc->ops->cmn_drv_ops->txrx_peer_delete_sync(peer,
+						     delete_cb,
+						     bitmap);
+}
+
 static inline int
 cdp_set_monitor_mode(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 			uint8_t smart_monitor)
