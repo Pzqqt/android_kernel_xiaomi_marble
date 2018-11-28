@@ -197,7 +197,10 @@ void dp_rx_defrag_waitlist_flush(struct dp_soc *soc)
 		peer =
 			container_of(rx_reorder, struct dp_peer,
 				     rx_tid[rx_reorder->tid]);
+
+		qdf_spin_lock_bh(&rx_reorder->tid_lock);
 		dp_rx_reorder_flush_frag(peer, rx_reorder->tid);
+		qdf_spin_unlock_bh(&rx_reorder->tid_lock);
 	}
 }
 
