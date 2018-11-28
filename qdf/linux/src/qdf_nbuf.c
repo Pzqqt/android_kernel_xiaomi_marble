@@ -601,40 +601,34 @@ static void qdf_nbuf_map_tracking_init(void)
 	qdf_spinlock_create(&qdf_nbuf_map_lock);
 }
 
-void qdf_nbuf_map_check_for_leaks(void)
+static void qdf_nbuf_map_leaks_print(void)
 {
 	struct qdf_nbuf_map_metadata *meta;
 	int bucket;
 	uint32_t count = 0;
-	bool is_empty;
 
+	QDF_BUG(qdf_spin_is_locked(&qdf_nbuf_map_lock));
+
+	qdf_nofl_alert("Nbuf map-no-unmap events detected!");
+	qdf_nofl_alert("-----------------------------------------------------");
+
+	hash_for_each(qdf_nbuf_map_ht, bucket, meta, node) {
+		count++;
+		qdf_nofl_alert("0x%zx @ %s:%u",
+			       (uintptr_t)meta->nbuf, meta->file, meta->line);
+	}
+
+	QDF_DEBUG_PANIC("%u fatal nbuf map-no-unmap events detected!", count);
+}
+
+void qdf_nbuf_map_check_for_leaks(void)
+{
 	qdf_flex_mem_release(&qdf_nbuf_map_pool);
 
 	qdf_spin_lock_irqsave(&qdf_nbuf_map_lock);
-	is_empty = hash_empty(qdf_nbuf_map_ht);
+	if (!hash_empty(qdf_nbuf_map_ht))
+		qdf_nbuf_map_leaks_print();
 	qdf_spin_unlock_irqrestore(&qdf_nbuf_map_lock);
-
-	if (is_empty)
-		return;
-
-	qdf_err("Nbuf map without unmap events detected!");
-	qdf_err("------------------------------------------------------------");
-
-	/* Hold the lock for the entire iteration for safe list/meta access. We
-	 * are explicitly preferring the chance to watchdog on the print, over
-	 * the posibility of invalid list/memory access. Since we are going to
-	 * panic anyway, the worst case is loading up the crash dump to find out
-	 * what was in the hash table.
-	 */
-	qdf_spin_lock_irqsave(&qdf_nbuf_map_lock);
-	hash_for_each(qdf_nbuf_map_ht, bucket, meta, node) {
-		count++;
-		qdf_err("0x%pk @ %s:%u",
-			meta->nbuf, meta->file, meta->line);
-	}
-	qdf_spin_unlock_irqrestore(&qdf_nbuf_map_lock);
-
-	panic("%u fatal nbuf map without unmap events detected!", count);
 }
 
 static void qdf_nbuf_map_tracking_deinit(void)
