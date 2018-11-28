@@ -1119,6 +1119,49 @@ ucfg_mlme_get_current_mcs_set(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
+ucfg_mlme_get_wmi_wq_watchdog_timeout(struct wlan_objmgr_psoc *psoc,
+				      uint32_t *wmi_wq_watchdog_timeout)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*wmi_wq_watchdog_timeout = cfg_default(CFG_WMI_WQ_WATCHDOG);
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*wmi_wq_watchdog_timeout =
+		mlme_obj->cfg.timeouts.wmi_wq_watchdog_timeout;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_wmi_wq_watchdog_timeout(struct wlan_objmgr_psoc *psoc,
+				      uint32_t wmi_wq_watchdog_timeout)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!cfg_in_range(CFG_WMI_WQ_WATCHDOG, wmi_wq_watchdog_timeout)) {
+		mlme_err("wmi watchdog bite timeout is invalid %d",
+			 wmi_wq_watchdog_timeout);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mlme_obj->cfg.timeouts.wmi_wq_watchdog_timeout =
+		wmi_wq_watchdog_timeout;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 ucfg_mlme_get_ps_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *inactivity_timeout)
 {
