@@ -1722,6 +1722,19 @@ QDF_STATUS (*send_set_country_cmd)(wmi_unified_t wmi_handle,
 uint32_t (*convert_pdev_id_host_to_target)(uint32_t pdev_id);
 uint32_t (*convert_pdev_id_target_to_host)(uint32_t pdev_id);
 
+/*
+ * For MCL, convert_pdev_id_host_to_target returns legacy pdev id value.
+ * But in converged firmware, WMI_SET_CURRENT_COUNTRY_CMDID expects target
+ * mapping of pdev_id to give only one WMI_REG_CHAN_LIST_CC_EVENTID.
+ * wmi_pdev_id_conversion_enable cannot be used since it overwrites
+ * convert_pdev_id_host_to_target which effects legacy cases.
+ * Below two commands: convert_host_pdev_id_to_target and
+ * convert_target_pdev_id_to_host should be used for any WMI
+ * command/event where FW expects target/host mapping of pdev_id respectively.
+ */
+uint32_t (*convert_host_pdev_id_to_target)(uint32_t pdev_id);
+uint32_t (*convert_target_pdev_id_to_host)(uint32_t pdev_id);
+
 QDF_STATUS (*send_user_country_code_cmd)(wmi_unified_t wmi_handle,
 		uint8_t pdev_id, struct cc_regdmn_s *rd);
 
