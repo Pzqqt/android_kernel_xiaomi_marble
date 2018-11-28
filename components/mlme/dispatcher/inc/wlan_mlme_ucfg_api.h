@@ -790,6 +790,28 @@ ucfg_mlme_set_dfs_filter_offload(struct wlan_objmgr_psoc *psoc,
 				 bool dfs_filter_offload);
 
 /**
+ * ucfg_mlme_get_fine_time_meas_cap() - Get fine timing measurement capability
+ * @psoc: pointer to psoc object
+ * @fine_time_meas_cap: Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_fine_time_meas_cap(struct wlan_objmgr_psoc *psoc,
+				 uint32_t *fine_time_meas_cap);
+
+/**
+ * ucfg_mlme_set_fine_time_meas_cap() - Set fine timing measurement capability
+ * @psoc: pointer to psoc object
+ * @fine_time_meas_cap:  Value to be set
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_fine_time_meas_cap(struct wlan_objmgr_psoc *psoc,
+				 uint32_t fine_time_meas_cap);
+
+/**
  * ucfg_mlme_get_pmkid_modes() - Get PMKID modes
  * @psoc: pointer to psoc object
  * @val:  Pointer to the value which will be filled for the caller

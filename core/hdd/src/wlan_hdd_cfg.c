@@ -727,13 +727,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_GO_11AC_OVERRIDE_MIN,
 		     CFG_GO_11AC_OVERRIDE_MAX),
 
-	REG_VARIABLE(CFG_FINE_TIME_MEAS_CAPABILITY, WLAN_PARAM_HexInteger,
-		struct hdd_config, fine_time_meas_cap,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_FINE_TIME_MEAS_CAPABILITY_DEFAULT,
-		CFG_FINE_TIME_MEAS_CAPABILITY_MIN,
-		CFG_FINE_TIME_MEAS_CAPABILITY_MAX),
-
 	REG_VARIABLE(CFG_MAX_SCAN_COUNT_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, max_scan_count,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2464,16 +2457,11 @@ QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *hdd_ctx, bool val)
  */
 static void hdd_set_fine_time_meas_cap(struct hdd_context *hdd_ctx)
 {
-	struct hdd_config *config = hdd_ctx->config;
-	uint32_t capability = config->fine_time_meas_cap;
+	uint32_t capability = 0;
 
-	/* Make sure only supported capabilities are enabled in INI */
-	capability &= CFG_FINE_TIME_MEAS_CAPABILITY_MAX;
+	ucfg_mlme_get_fine_time_meas_cap(hdd_ctx->psoc, &capability);
 	ucfg_wifi_pos_set_ftm_cap(hdd_ctx->psoc, capability);
-
-	hdd_debug("fine time meas capability - INI: %04x Enabled: %04x",
-		config->fine_time_meas_cap,
-		capability);
+	hdd_debug("fine time meas capability - Enabled: %04x", capability);
 }
 
 /**

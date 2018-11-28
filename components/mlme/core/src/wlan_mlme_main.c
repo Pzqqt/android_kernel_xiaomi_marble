@@ -28,13 +28,16 @@
 
 #define NUM_OF_SOUNDING_DIMENSIONS     1 /*Nss - 1, (Nss = 2 for 2x2)*/
 
-struct wlan_mlme_psoc_obj *mlme_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
+struct wlan_mlme_psoc_obj *mlme_get_psoc_obj_fl(struct wlan_objmgr_psoc *psoc,
+						const char *func, uint32_t line)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
 	mlme_obj = (struct wlan_mlme_psoc_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 						      WLAN_UMAC_COMP_MLME);
+	if (!mlme_obj)
+		mlme_err("mlme obj is null, %s:%d", func, line);
 
 	return mlme_obj;
 }
@@ -1700,6 +1703,13 @@ static void mlme_init_wep_cfg(struct wlan_mlme_wep_cfg *wep_params)
 	mlme_init_wep_keys(wep_params);
 }
 
+static void mlme_init_wifi_pos_cfg(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_mlme_wifi_pos_cfg *wifi_pos_cfg)
+{
+	wifi_pos_cfg->fine_time_meas_cap =
+		cfg_get(psoc, CFG_FINE_TIME_MEAS_CAPABILITY);
+}
+
 #ifdef FEATURE_WLAN_ESE
 static void mlme_init_inactivity_intv(struct wlan_objmgr_psoc *psoc,
 				      struct wlan_mlme_wmm_params *wmm_params)
@@ -1857,6 +1867,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_power_cfg(psoc, &mlme_cfg->power);
 	mlme_init_oce_cfg(psoc, &mlme_cfg->oce);
 	mlme_init_wep_cfg(&mlme_cfg->wep_params);
+	mlme_init_wifi_pos_cfg(psoc, &mlme_cfg->wifi_pos_cfg);
 	mlme_init_wps_params_cfg(psoc, &mlme_cfg->wps_params);
 
 	return status;

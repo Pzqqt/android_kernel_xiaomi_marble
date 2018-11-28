@@ -5589,6 +5589,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	uint16_t latency_level;
 	mac_handle_t mac_handle;
 	bool b_value;
+	uint32_t fine_time_meas_cap = 0;
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t bmiss_first_bcnt;
 	uint8_t bmiss_final_bcnt;
@@ -5616,16 +5617,26 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_FINE_TIME_MEASUREMENT]) {
 		ftm_capab = nla_get_u32(tb[
 			QCA_WLAN_VENDOR_ATTR_CONFIG_FINE_TIME_MEASUREMENT]);
-		hdd_ctx->config->fine_time_meas_cap =
+		fine_time_meas_cap =
 			hdd_ctx->fine_time_meas_cap_target & ftm_capab;
+
+		qdf_status =
+			ucfg_mlme_set_fine_time_meas_cap(hdd_ctx->psoc,
+							 fine_time_meas_cap);
+		if (QDF_IS_STATUS_ERROR(qdf_status)) {
+			hdd_err("FTM capability:  values 0x%x, 0x%x, 0x%x",
+				ftm_capab, hdd_ctx->fine_time_meas_cap_target,
+				fine_time_meas_cap);
+			return -EINVAL;
+		}
+
 		sme_update_fine_time_measurement_capab(mac_handle,
-			adapter->session_id,
-			hdd_ctx->config->fine_time_meas_cap);
-		ucfg_wifi_pos_set_ftm_cap(hdd_ctx->psoc,
-			hdd_ctx->config->fine_time_meas_cap);
+						       adapter->session_id,
+						       fine_time_meas_cap);
+		ucfg_wifi_pos_set_ftm_cap(hdd_ctx->psoc, fine_time_meas_cap);
 		hdd_debug("FTM capability: user value: 0x%x, target value: 0x%x, final value: 0x%x",
-			 ftm_capab, hdd_ctx->fine_time_meas_cap_target,
-			 hdd_ctx->config->fine_time_meas_cap);
+			  ftm_capab, hdd_ctx->fine_time_meas_cap_target,
+			  fine_time_meas_cap);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_MODULATED_DTIM]) {

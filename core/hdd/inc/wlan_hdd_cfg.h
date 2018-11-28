@@ -3019,34 +3019,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_SELF_GEN_FRM_PWR_DEFAULT  (0)
 
 /*
- * fine timing measurement capability information
- *
- * <----- fine_time_meas_cap (in bits) ----->
- *+----------+-----+-----+------+------+-------+-------+-----+-----+
- *|   8-31   |  7  |  6  |   5  |   4  |   3   |   2   |  1  |  0  |
- *+----------+-----+-----+------+------+-------+-------+-----+-----+
- *| reserved | SAP | SAP |P2P-GO|P2P-GO|P2P-CLI|P2P-CLI| STA | STA |
- *|          |resp |init |resp  |init  |resp   |init   |resp |init |
- *+----------+-----+-----+------+------+-------+-------+-----+-----+
- *
- * resp - responder role; init- initiator role
- *
- * CFG_FINE_TIME_MEAS_CAPABILITY_MAX computed based on the table
- * +-----------------+-----------------+-----------+
- * |  Device Role    |   Initiator     | Responder |
- * +-----------------+-----------------+-----------+
- * |   Station       |       Y         |     N     |
- * |   P2P-CLI       |       Y         |     Y     |
- * |   P2P-GO        |       Y         |     Y     |
- * |   SAP           |       N         |     Y     |
- * +-----------------+-----------------+-----------+
- */
-#define CFG_FINE_TIME_MEAS_CAPABILITY              "gfine_time_meas_cap"
-#define CFG_FINE_TIME_MEAS_CAPABILITY_MIN          (0x0000)
-#define CFG_FINE_TIME_MEAS_CAPABILITY_MAX          (0x00BD)
-#define CFG_FINE_TIME_MEAS_CAPABILITY_DEFAULT      (0x000D)
-
-/*
  * <ini>
  * etsi13_srd_chan_in_master_mode - Enable/disable ETSI SRD channels in
  * master mode PCL and ACS functionality
@@ -5117,8 +5089,6 @@ struct hdd_config {
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	uint8_t sap_11ac_override;
 	uint8_t go_11ac_override;
-	/* parameter for defer timer for enabling TDLS on p2p listen */
-	uint32_t fine_time_meas_cap;
 	uint8_t max_scan_count;
 	bool etsi13_srd_chan_in_master_mode;
 	uint32_t dual_mac_feature_disable;
