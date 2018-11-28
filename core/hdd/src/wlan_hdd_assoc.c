@@ -241,15 +241,6 @@ hdd_conn_set_authenticated(struct hdd_adapter *adapter, uint8_t auth_state)
 
 }
 
-/**
- * hdd_conn_set_connection_state() - set connection state
- * @adapter: pointer to the adapter
- * @conn_state: connection state
- *
- * This function updates the global HDD station context connection state.
- *
- * Return: none
- */
 void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 				   eConnectionState conn_state)
 {

@@ -296,8 +296,6 @@ void wlan_hdd_cfg80211_deregister_frames(struct hdd_adapter *adapter);
 void hdd_reg_notifier(struct wiphy *wiphy,
 				 struct regulatory_request *request);
 
-extern void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
-					  eConnectionState connState);
 QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 					       int channel);
 #ifdef FEATURE_WLAN_TDLS

@@ -234,6 +234,18 @@ bool hdd_is_connecting(struct hdd_station_ctx *hdd_sta_ctx);
 bool hdd_is_fils_connection(struct hdd_adapter *adapter);
 
 /**
+ * hdd_conn_set_connection_state() - set connection state
+ * @adapter: pointer to the adapter
+ * @conn_state: connection state
+ *
+ * This function updates the global HDD station context connection state.
+ *
+ * Return: none
+ */
+void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
+				   eConnectionState conn_state);
+
+/**
  * hdd_conn_is_connected() - Function to check connection status
  * @sta_ctx:    pointer to global HDD Station context
  *
