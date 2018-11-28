@@ -9908,10 +9908,13 @@ static QDF_STATUS extract_reg_chan_list_update_event_tlv(
 	reg_info->min_bw_5g = chan_list_event_hdr->min_bw_5g;
 	reg_info->max_bw_5g = chan_list_event_hdr->max_bw_5g;
 
-	WMI_LOGD("%s:cc %s dsf %d BW: min_2g %d max_2g %d min_5g %d max_5g %d",
-			__func__, reg_info->alpha2, reg_info->dfs_region,
-			reg_info->min_bw_2g, reg_info->max_bw_2g,
-			reg_info->min_bw_5g, reg_info->max_bw_5g);
+	WMI_LOGD(FL("num_phys = %u and phy_id = %u"),
+		 reg_info->num_phy, reg_info->phy_id);
+
+	WMI_LOGD("%s:cc %s dfs %d BW: min_2g %d max_2g %d min_5g %d max_5g %d",
+		 __func__, reg_info->alpha2, reg_info->dfs_region,
+		 reg_info->min_bw_2g, reg_info->max_bw_2g,
+		 reg_info->min_bw_5g, reg_info->max_bw_5g);
 
 	WMI_LOGD("%s: num_2g_reg_rules %d num_5g_reg_rules %d", __func__,
 			num_2g_reg_rules, num_5g_reg_rules);
@@ -10323,6 +10326,7 @@ static QDF_STATUS send_set_country_cmd_tlv(wmi_unified_t wmi_handle,
 	QDF_STATUS qdf_status;
 	wmi_set_current_country_cmd_fixed_param *cmd;
 	uint16_t len = sizeof(*cmd);
+	uint8_t pdev_id = params->pdev_id;
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -10337,11 +10341,11 @@ static QDF_STATUS send_set_country_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_set_current_country_cmd_fixed_param));
 
-	WMI_LOGD("setting cuurnet country to  %s", params->country);
+	cmd->pdev_id = wmi_handle->ops->convert_host_pdev_id_to_target(pdev_id);
+	WMI_LOGD("setting current country to  %s and target pdev_id = %u",
+		 params->country, cmd->pdev_id);
 
 	qdf_mem_copy((uint8_t *)&cmd->new_alpha2, params->country, 3);
-
-	cmd->pdev_id = params->pdev_id;
 
 	wmi_mtrace(WMI_SET_CURRENT_COUNTRY_CMDID, NO_SESSION, 0);
 	qdf_status = wmi_unified_cmd_send(wmi_handle,
@@ -11390,6 +11394,11 @@ struct wmi_ops tlv_ops =  {
 		convert_host_pdev_id_to_target_pdev_id_legacy,
 	.convert_pdev_id_target_to_host =
 		convert_target_pdev_id_to_host_pdev_id_legacy,
+
+	.convert_host_pdev_id_to_target =
+		convert_host_pdev_id_to_target_pdev_id,
+	.convert_target_pdev_id_to_host =
+		convert_target_pdev_id_to_host_pdev_id,
 
 	.send_start_11d_scan_cmd = send_start_11d_scan_cmd_tlv,
 	.send_stop_11d_scan_cmd = send_stop_11d_scan_cmd_tlv,
