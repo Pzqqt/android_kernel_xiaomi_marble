@@ -2398,7 +2398,7 @@ typedef struct sSirUpdateAPWPARSNIEsReq {
 #define SIR_ROAM_SCAN_RESERVED_BYTES     61
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#define SIR_ROAM_SCAN_PSK_SIZE    32
+#define SIR_ROAM_SCAN_PSK_SIZE    48
 #define SIR_ROAM_R0KH_ID_MAX_LEN  48
 #endif
 /* SME -> HAL - This is the host offload request. */
