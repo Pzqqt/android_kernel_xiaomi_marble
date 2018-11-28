@@ -107,6 +107,7 @@ struct hal_hw_txrx_ops qca6018_hal_hw_txrx_ops = {
 	/* init and setup */
 	hal_srng_dst_hw_init_generic,
 	hal_srng_src_hw_init_generic,
+	hal_get_hw_hptp_generic,
 	hal_reo_setup_generic,
 	hal_setup_link_idle_list_generic,
 
