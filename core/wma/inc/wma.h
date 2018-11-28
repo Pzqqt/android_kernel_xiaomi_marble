@@ -1918,6 +1918,10 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 			   u_int32_t peer_type, u_int8_t vdev_id,
 			   bool roam_synch_in_progress);
 
+QDF_STATUS wma_peer_unmap_conf_cb(uint8_t vdev_id,
+				  uint32_t peer_id_cnt,
+				  uint16_t *peer_id_list);
+
 /**
  * wma_get_cca_stats() - send request to fw to get CCA
  * @wmi_hdl: wma handle

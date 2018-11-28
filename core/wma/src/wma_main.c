@@ -92,6 +92,7 @@
 #include "cfg_nan_api.h"
 #include "wlan_mlme_api.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "cfg_ucfg_api.h"
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -6728,6 +6729,16 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	} else {
 		cdp_cfg_set_new_htt_msg_format(soc, 0);
 		wlan_res_cfg->new_htt_msg_format = false;
+	}
+
+	if (cfg_get(wma_handle->psoc, CFG_DP_ENABLE_PEER_UMAP_CONF_SUPPORT) &&
+	    wmi_service_enabled(wmi_handle,
+				wmi_service_peer_unmap_cnf_support)) {
+		wlan_res_cfg->peer_unmap_conf_support = true;
+		cdp_cfg_set_peer_unmap_conf_support(soc, true);
+	} else {
+		wlan_res_cfg->peer_unmap_conf_support = false;
+		cdp_cfg_set_peer_unmap_conf_support(soc, false);
 	}
 
 	return 0;
