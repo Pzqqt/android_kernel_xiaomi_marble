@@ -23,7 +23,11 @@
 #ifndef __HDD_CONFIG_H
 #define __HDD_CONFIG_H
 
+#if defined(CONFIG_HL_SUPPORT)
 #include "wlan_tgt_def_config_hl.h"
+#else
+#include "wlan_tgt_def_config.h"
+#endif
 
 /**
  * enum hdd_wext_control - knob for wireless extensions
