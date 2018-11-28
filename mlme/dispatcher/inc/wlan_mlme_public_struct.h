@@ -1645,6 +1645,14 @@ struct wlan_mlme_wep_cfg {
 };
 
 /**
+ * struct wlan_mlme_wifi_pos_cfg - WIFI POS configs
+ * @fine_time_meas_cap: fine timing measurement capability information
+ */
+struct wlan_mlme_wifi_pos_cfg {
+	uint32_t fine_time_meas_cap;
+};
+
+/**
  * struct wlan_mlme_cfg - MLME config items
  * @chainmask_cfg: VHT chainmask related cfg items
  * @edca_params: edca related CFG items
@@ -1672,6 +1680,7 @@ struct wlan_mlme_wep_cfg {
  * @acs: ACS related CFG items
  * @feature_flags: Feature flag config items
  * @wep_params:  WEP related config items
+ * @wifi_pos_cfg: WIFI POS config
  * @wmm_params: WMM related CFG & INI Items
  * @wps_params: WPS related CFG itmes
  */
@@ -1704,6 +1713,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_acs acs;
 	struct wlan_mlme_feature_flag feature_flags;
 	struct wlan_mlme_wep_cfg wep_params;
+	struct wlan_mlme_wifi_pos_cfg wifi_pos_cfg;
 	struct wlan_mlme_wmm_params wmm_params;
 	struct wlan_mlme_wps_params wps_params;
 };

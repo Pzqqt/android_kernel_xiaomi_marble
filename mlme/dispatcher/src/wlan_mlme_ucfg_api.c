@@ -207,6 +207,39 @@ ucfg_mlme_get_dfs_master_capability(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
+ucfg_mlme_get_fine_time_meas_cap(struct wlan_objmgr_psoc *psoc,
+				 uint32_t *fine_time_meas_cap)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*fine_time_meas_cap =
+			cfg_default(CFG_FINE_TIME_MEAS_CAPABILITY);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*fine_time_meas_cap = mlme_obj->cfg.wifi_pos_cfg.fine_time_meas_cap;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_fine_time_meas_cap(struct wlan_objmgr_psoc *psoc,
+				 uint32_t fine_time_meas_cap)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj->cfg.wifi_pos_cfg.fine_time_meas_cap = fine_time_meas_cap;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
 ucfg_mlme_get_dfs_disable_channel_switch(struct wlan_objmgr_psoc *psoc,
 					 bool *dfs_disable_channel_switch)
 {

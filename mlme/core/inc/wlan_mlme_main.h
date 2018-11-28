@@ -181,6 +181,9 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc);
  *
  * Return: pointer to MLME object
  */
-struct wlan_mlme_psoc_obj *mlme_get_psoc_obj(struct wlan_objmgr_psoc *psoc);
+#define mlme_get_psoc_obj(psoc) mlme_get_psoc_obj_fl(psoc, __func__, __LINE__)
+struct wlan_mlme_psoc_obj *mlme_get_psoc_obj_fl(struct wlan_objmgr_psoc *psoc,
+						const char *func,
+						uint32_t line);
 
 #endif
