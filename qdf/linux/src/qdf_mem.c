@@ -1174,13 +1174,37 @@ void *qdf_mem_malloc_atomic_fl(size_t size, const char *func, uint32_t line)
 }
 qdf_export_symbol(qdf_mem_malloc_atomic_fl);
 
+/**
+ * qdf_mem_free() - free QDF memory
+ * @ptr: Pointer to the starting address of the memory to be free'd.
+ *
+ * This function will free the memory pointed to by 'ptr'.
+ *
+ * Return: None
+ */
+void qdf_mem_free(void *ptr)
+{
+	if (!ptr)
+		return;
+
+	if (qdf_mem_prealloc_put(ptr))
+		return;
+
+	qdf_mem_kmalloc_dec(ksize(ptr));
+
+	kfree(ptr);
+}
+
+qdf_export_symbol(qdf_mem_free);
+#endif
+
 void *qdf_aligned_malloc_fl(qdf_size_t size, uint32_t ring_base_align,
 			    void **vaddr_unaligned,
 			    const char *func, uint32_t line)
 {
 	void *vaddr_aligned;
 
-	*vaddr_unaligned = qdf_mem_malloc(size);
+	*vaddr_unaligned = qdf_mem_malloc_fl(size, func, line);
 	if (!*vaddr_unaligned) {
 		qdf_warn("Failed to alloc %zuB @ %s:%d", size, func, line);
 		return NULL;
@@ -1188,7 +1212,8 @@ void *qdf_aligned_malloc_fl(qdf_size_t size, uint32_t ring_base_align,
 
 	if ((unsigned long)(*vaddr_unaligned) % ring_base_align) {
 		qdf_mem_free(*vaddr_unaligned);
-		*vaddr_unaligned = qdf_mem_malloc(size + ring_base_align - 1);
+		*vaddr_unaligned = qdf_mem_malloc_fl(size + ring_base_align - 1,
+						  func, line);
 		if (!*vaddr_unaligned) {
 			qdf_warn("Failed to alloc %zuB @ %s:%d",
 				 size, func, line);
@@ -1202,29 +1227,6 @@ void *qdf_aligned_malloc_fl(qdf_size_t size, uint32_t ring_base_align,
 	return vaddr_aligned;
 }
 qdf_export_symbol(qdf_aligned_malloc_fl);
-
-/**
- * qdf_mem_free() - free QDF memory
- * @ptr: Pointer to the starting address of the memory to be free'd.
- *
- * This function will free the memory pointed to by 'ptr'.
- *
- * Return: None
- */
-void qdf_mem_free(void *ptr)
-{
-	if (ptr == NULL)
-		return;
-
-	if (qdf_mem_prealloc_put(ptr))
-		return;
-
-	qdf_mem_kmalloc_dec(ksize(ptr));
-
-	kfree(ptr);
-}
-qdf_export_symbol(qdf_mem_free);
-#endif
 
 /**
  * qdf_mem_multi_pages_alloc() - allocate large size of kernel memory
