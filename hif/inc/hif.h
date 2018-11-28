@@ -147,6 +147,7 @@ struct CE_state;
  * but this does not change the number of buckets
  */
 #define QCA_NAPI_NUM_BUCKETS 4
+
 /**
  * qca_napi_stat - stats structure for execution contexts
  * @napi_schedules - number of times the schedule function is called
@@ -158,8 +159,8 @@ struct CE_state;
  * @napi_budget_uses - histogram of work done per execution run
  * @time_limit_reache - count of yields due to time limit threshholds
  * @rxpkt_thresh_reached - count of yields due to a work limit
+ * @poll_time_buckets - histogram of poll times for the napi
  *
- * needs to be renamed
  */
 struct qca_napi_stat {
 	uint32_t napi_schedules;
@@ -171,6 +172,9 @@ struct qca_napi_stat {
 	uint32_t time_limit_reached;
 	uint32_t rxpkt_thresh_reached;
 	unsigned long long napi_max_poll_time;
+#ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
+	uint32_t poll_time_buckets[QCA_NAPI_NUM_BUCKETS];
+#endif
 };
 
 
@@ -275,10 +279,13 @@ struct qca_napi_data {
 };
 
 /**
- * struct hif_config_info - Place Holder for hif confiruation
+ * struct hif_config_info - Place Holder for HIF configuration
  * @enable_self_recovery: Self Recovery
+ * @enable_runtime_pm: Enable Runtime PM
+ * @runtime_pm_delay: Runtime PM Delay
+ * @rx_softirq_max_yield_duration_ns: Max Yield time duration for RX Softirq
  *
- * Structure for holding hif ini parameters.
+ * Structure for holding HIF ini parameters.
  */
 struct hif_config_info {
 	bool enable_self_recovery;
@@ -286,6 +293,7 @@ struct hif_config_info {
 	bool enable_runtime_pm;
 	u_int32_t runtime_pm_delay;
 #endif
+	uint64_t rx_softirq_max_yield_duration_ns;
 };
 
 /**
@@ -697,6 +705,27 @@ void hif_offld_flush_cb_register(struct hif_opaque_softc *scn,
 void hif_offld_flush_cb_deregister(struct hif_opaque_softc *scn);
 #endif
 
+#ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
+/**
+ * hif_exec_should_yield() - Check if hif napi context should yield
+ * @hif_ctx - HIF opaque context
+ * @grp_id - grp_id of the napi for which check needs to be done
+ *
+ * The function uses grp_id to look for NAPI and checks if NAPI needs to
+ * yield. HIF_EXT_GROUP_MAX_YIELD_DURATION_NS is the duration used for
+ * yield decision.
+ *
+ * Return: true if NAPI needs to yield, else false
+ */
+bool hif_exec_should_yield(struct hif_opaque_softc *hif_ctx, uint grp_id);
+#else
+static inline bool hif_exec_should_yield(struct hif_opaque_softc *hif_ctx,
+					 uint grp_id)
+{
+	return false;
+}
+#endif
+
 void hif_disable_isr(struct hif_opaque_softc *hif_ctx);
 void hif_reset_soc(struct hif_opaque_softc *hif_ctx);
 void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
@@ -915,6 +944,18 @@ enum hif_exec_type {
 };
 
 typedef uint32_t (*ext_intr_handler)(void *, uint32_t);
+
+/**
+ * hif_get_int_ctx_irq_num() - retrieve an irq num for an interrupt context id
+ * @softc: hif opaque context owning the exec context
+ * @id: the id of the interrupt context
+ *
+ * Return: IRQ number of the first (zero'th) IRQ within the interrupt context ID
+ *         'id' registered with the OS
+ */
+int32_t hif_get_int_ctx_irq_num(struct hif_opaque_softc *softc,
+				uint8_t id);
+
 uint32_t hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx);
 uint32_t  hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 		uint32_t numirq, uint32_t irq[], ext_intr_handler handler,
@@ -928,6 +969,12 @@ void hif_update_pipe_callback(struct hif_opaque_softc *osc,
 				u_int8_t pipeid,
 				struct hif_msg_callbacks *callbacks);
 
+/**
+ * hif_print_napi_stats() - Display HIF NAPI stats
+ * @hif_ctx - HIF opaque context
+ *
+ * Return: None
+ */
 void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx);
 
 /* hif_clear_napi_stats() - function clears the stats of the

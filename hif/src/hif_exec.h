@@ -68,6 +68,12 @@ struct hif_execution_ops {
  * @irq_disable: called before scheduling the context.
  * @irq_enable: called when the context leaves polling mode
  * @irq_name: pointer to function to return irq name/string mapped to irq number
+ * @irq_lock: spinlock used while enabling/disabling IRQs
+ * @type: type of execution context
+ * @poll_start_time: hif napi poll start time in nanoseconds
+ * @force_break: flag to indicate if HIF execution context was forced to return
+ *		 to HIF. This means there is more work to be done. Hence do not
+ *		 call napi_complete.
  */
 struct hif_exec_context {
 	struct hif_execution_ops *sched_ops;
@@ -96,6 +102,9 @@ struct hif_exec_context {
 	bool irq_requested;
 	bool irq_enabled;
 	qdf_spinlock_t irq_lock;
+	enum hif_exec_type type;
+	unsigned long long poll_start_time;
+	bool force_break;
 };
 
 /**
@@ -109,7 +118,7 @@ struct hif_tasklet_exec_context {
 };
 
 /**
- * struct hif_napi_exec_context - exec_context for tasklets
+ * struct hif_napi_exec_context - exec_context for NAPI
  * @exec_ctx: inherited data type
  * @netdev: dummy net device associated with the napi context
  * @napi: napi structure used in scheduling

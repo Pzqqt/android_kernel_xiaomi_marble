@@ -204,6 +204,7 @@ enum htt_cmn_dbg_stats_type {
  * @TXRX_SOC_CFG_PARAMS: Print soc cfg params info
  * @TXRX_PDEV_CFG_PARAMS: Print pdev cfg params info
  * @TXRX_NAPI_STATS: Print NAPI scheduling statistics
+ * @TXRX_SOC_INTERRUPT_STATS: Print soc interrupt stats
  */
 enum cdp_host_txrx_stats {
 	TXRX_HOST_STATS_INVALID  = -1,
@@ -219,6 +220,7 @@ enum cdp_host_txrx_stats {
 	TXRX_SOC_CFG_PARAMS   = 9,
 	TXRX_PDEV_CFG_PARAMS  = 10,
 	TXRX_NAPI_STATS       = 11,
+	TXRX_SOC_INTERRUPT_STATS = 12,
 	TXRX_HOST_STATS_MAX,
 };
 
@@ -1042,6 +1044,7 @@ typedef void (*data_stall_detect_cb)(struct data_stall_event_info *);
  * @CDP_TXRX_STATS_28: Host Peer entry stats
  * @CDP_TXRX_STATS_29: Host Soc config params info
  * @CDP_TXRX_STATS_30: Host Pdev config params info
+ * @CDP_TXRX_STATS_31: Host DP Interrupt Stats
  */
 enum cdp_stats {
 	CDP_TXRX_STATS_0  = 0,
@@ -1075,6 +1078,7 @@ enum cdp_stats {
 	CDP_TXRX_STATS_28,
 	CDP_TXRX_STATS_29,
 	CDP_TXRX_STATS_30,
+	CDP_TXRX_STATS_31,
 	CDP_TXRX_STATS_HTT_MAX = 256,
 	CDP_TXRX_MAX_STATS = 265,
 };
@@ -1536,6 +1540,9 @@ struct cdp_rx_indication_msdu {
  * @tx_flow_stop_queue_threshold: Value to Pause tx queues
  * @tx_flow_start_queue_offset: Available Tx descriptors to unpause
  *				tx queue
+ * @tx_comp_loop_pkt_limit: Max # of packets to be processed in 1 tx comp loop
+ * @rx_reap_loop_pkt_limit: Max # of packets to be processed in 1 rx reap loop
+ * @rx_hp_oos_update_limit: Max # of HP OOS (out of sync) updates
  */
 struct cdp_config_params {
 	unsigned int tso_enable:1;
@@ -1548,6 +1555,9 @@ struct cdp_config_params {
 	/* Set when QCA_LL_TX_FLOW_CONTROL_V2 is enabled */
 	uint8_t tx_flow_stop_queue_threshold;
 	uint8_t tx_flow_start_queue_offset;
+	uint32_t tx_comp_loop_pkt_limit;
+	uint32_t rx_reap_loop_pkt_limit;
+	uint32_t rx_hp_oos_update_limit;
 
 };
 

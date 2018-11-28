@@ -628,24 +628,77 @@ static inline void *hal_srng_dst_get_next_hp(void *hal_soc, void *hal_ring)
 }
 
 /**
- * hal_srng_dst_peek - Get next entry from a ring without moving tail pointer.
- * hal_srng_dst_get_next should be called subsequently to move the tail pointer
- * TODO: See if we need an optimized version of get_next that doesn't check for
- * loop_cnt
- *
+ * hal_srng_dst_peek - Check if there are any entries in the ring (peek)
  * @hal_soc: Opaque HAL SOC handle
  * @hal_ring: Destination ring pointer
  *
+ * Caller takes responsibility for any locking needs.
+ *
  * Return: Opaque pointer for next ring entry; NULL on failire
  */
-static inline void *hal_srng_dst_peek(void *hal_soc, void *hal_ring)
+static inline
+void *hal_srng_dst_peek(void *hal_soc, void *hal_ring)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+
+	if (srng->u.dst_ring.tp != srng->u.dst_ring.cached_hp)
+		return (void *)(&srng->ring_base_vaddr[srng->u.dst_ring.tp]);
+
+	return NULL;
+}
+
+/**
+ * hal_srng_dst_peek_sync - Check if there are any entries in the ring (peek)
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring: Destination ring pointer
+ *
+ * Sync cached head pointer with HW.
+ * Caller takes responsibility for any locking needs.
+ *
+ * Return: Opaque pointer for next ring entry; NULL on failire
+ */
+static inline
+void *hal_srng_dst_peek_sync(void *hal_soc, void *hal_ring)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+
+	srng->u.dst_ring.cached_hp =
+		*(volatile uint32_t *)(srng->u.dst_ring.hp_addr);
 
 	if (srng->u.dst_ring.tp != srng->u.dst_ring.cached_hp)
 		return (void *)(&(srng->ring_base_vaddr[srng->u.dst_ring.tp]));
 
 	return NULL;
+}
+
+/**
+ * hal_srng_dst_peek_sync_locked - Peek for any entries in the ring
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring: Destination ring pointer
+ *
+ * Sync cached head pointer with HW.
+ * This function takes up SRNG_LOCK. Should not be called with SRNG lock held.
+ *
+ * Return: Opaque pointer for next ring entry; NULL on failire
+ */
+static inline
+void *hal_srng_dst_peek_sync_locked(void *hal_soc, void *hal_ring)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	void *ring_desc_ptr = NULL;
+
+	if (qdf_unlikely(!hal_ring)) {
+		qdf_print("Error: Invalid hal_ring\n");
+		return  NULL;
+	}
+
+	SRNG_LOCK(&srng->lock);
+
+	ring_desc_ptr = hal_srng_dst_peek_sync(hal_soc, hal_ring);
+
+	SRNG_UNLOCK(&srng->lock);
+
+	return ring_desc_ptr;
 }
 
 /**

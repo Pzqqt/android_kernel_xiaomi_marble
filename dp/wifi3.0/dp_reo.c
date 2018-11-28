@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -85,22 +85,24 @@ QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc, enum hal_reo_cmd_type type,
 	return QDF_STATUS_SUCCESS;
 }
 
-void dp_reo_status_ring_handler(struct dp_soc *soc)
+uint32_t dp_reo_status_ring_handler(struct dp_soc *soc)
 {
 	uint32_t *reo_desc;
 	struct dp_reo_cmd_info *reo_cmd = NULL;
 	union hal_reo_status reo_status;
 	int num;
+	int processed_count = 0;
 
 	if (hal_srng_access_start(soc->hal_soc,
 		soc->reo_status_ring.hal_srng)) {
-		return;
+		return processed_count;
 	}
 	reo_desc = hal_srng_dst_get_next(soc->hal_soc,
 					soc->reo_status_ring.hal_srng);
 
 	while (reo_desc) {
 		uint16_t tlv = HAL_GET_TLV(reo_desc);
+		processed_count++;
 
 		switch (tlv) {
 		case HAL_REO_QUEUE_STATS_STATUS_TLV:
@@ -173,6 +175,7 @@ next:
 	} /* while */
 
 	hal_srng_access_end(soc->hal_soc, soc->reo_status_ring.hal_srng);
+	return processed_count;
 }
 
 /**

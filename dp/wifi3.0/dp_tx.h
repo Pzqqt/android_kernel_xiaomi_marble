@@ -177,7 +177,21 @@ qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
 		enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
 #endif
 
-uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota);
+/**
+ * dp_tx_comp_handler() - Tx completion handler
+ * @int_ctx: pointer to DP interrupt context
+ * @soc: core txrx main context
+ * @ring_id: completion ring id
+ * @quota: No. of packets/descriptors that can be serviced in one loop
+ *
+ * This function will collect hardware release ring element contents and
+ * handle descriptor contents. Based on contents, free packet or handle error
+ * conditions
+ *
+ * Return: Number of TX completions processed
+ */
+uint32_t dp_tx_comp_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
+			    void *hal_srng, uint32_t quota);
 
 QDF_STATUS
 dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);

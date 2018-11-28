@@ -21,7 +21,6 @@
 #include <hif_irq_affinity.h>
 #include "qdf_module.h"
 #include "qdf_net_if.h"
-
 /* mapping NAPI budget 0 to internal budget 0
  * NAPI budget 1 to internal budget [1,scaler -1]
  * NAPI budget 2 to internal budget [scaler, 2 * scaler - 1], etc
@@ -32,32 +31,6 @@
 	(((n) + 1) >> (s))
 
 static struct hif_exec_context *hif_exec_tasklet_create(void);
-
-/**
- * hif_clear_napi_stats() - reset NAPI stats
- * @hif_ctx: hif context
- *
- * return: void
- */
-void hif_clear_napi_stats(struct hif_opaque_softc *hif_ctx)
-{
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
-	struct hif_exec_context *hif_ext_group;
-	size_t i;
-
-	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
-		hif_ext_group = hif_state->hif_ext_group[i];
-
-		if (!hif_ext_group)
-			return;
-
-		qdf_mem_set(hif_ext_group->sched_latency_stats,
-			    sizeof(hif_ext_group->sched_latency_stats),
-			    0x0);
-	}
-}
-
-qdf_export_symbol(hif_clear_napi_stats);
 
 /**
  * hif_print_napi_latency_stats() - print NAPI scheduling latency stats
@@ -127,11 +100,209 @@ static void hif_print_napi_latency_stats(struct HIF_CE_state *hif_state)
 #endif
 
 /**
- * hif_print_napi_stats() - print NAPI stats
+ * hif_clear_napi_stats() - reset NAPI stats
  * @hif_ctx: hif context
  *
  * return: void
  */
+void hif_clear_napi_stats(struct hif_opaque_softc *hif_ctx)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
+	struct hif_exec_context *hif_ext_group;
+	size_t i;
+
+	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
+		hif_ext_group = hif_state->hif_ext_group[i];
+
+		if (!hif_ext_group)
+			return;
+
+		qdf_mem_set(hif_ext_group->sched_latency_stats,
+			    sizeof(hif_ext_group->sched_latency_stats),
+			    0x0);
+	}
+}
+
+qdf_export_symbol(hif_clear_napi_stats);
+
+#ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
+/**
+ * hif_get_poll_times_hist_str() - Get HIF poll times histogram string
+ * @stats: NAPI stats to get poll time buckets
+ * @buf: buffer to fill histogram string
+ * @buf_len: length of the buffer
+ *
+ * Return: void
+ */
+static void hif_get_poll_times_hist_str(struct qca_napi_stat *stats, char *buf,
+					uint8_t buf_len)
+{
+	int i;
+	int str_index = 0;
+
+	for (i = 0; i < QCA_NAPI_NUM_BUCKETS; i++)
+		str_index += qdf_scnprintf(buf + str_index, buf_len - str_index,
+					   "%u|", stats->poll_time_buckets[i]);
+}
+
+/**
+ * hif_exec_fill_poll_time_histogram() - fills poll time histogram for a NAPI
+ * @hif_ext_group: hif_ext_group of type NAPI
+ *
+ * The function is called at the end of a NAPI poll to calculate poll time
+ * buckets.
+ *
+ * Return: void
+ */
+static
+void hif_exec_fill_poll_time_histogram(struct hif_exec_context *hif_ext_group)
+{
+	struct qca_napi_stat *napi_stat;
+	unsigned long long poll_time_ns;
+	uint32_t poll_time_us;
+	uint32_t bucket_size_us = 500;
+	uint32_t bucket;
+	uint32_t cpu_id = qdf_get_cpu();
+
+	poll_time_ns = sched_clock() - hif_ext_group->poll_start_time;
+	poll_time_us = poll_time_ns / 1000;
+
+	napi_stat = &hif_ext_group->stats[cpu_id];
+	if (poll_time_ns > hif_ext_group->stats[cpu_id].napi_max_poll_time)
+		hif_ext_group->stats[cpu_id].napi_max_poll_time = poll_time_ns;
+
+	bucket = poll_time_us / bucket_size_us;
+	if (bucket >= QCA_NAPI_NUM_BUCKETS)
+		bucket = QCA_NAPI_NUM_BUCKETS - 1;
+	++napi_stat->poll_time_buckets[bucket];
+}
+
+/**
+ * hif_exec_poll_should_yield() - Local function deciding if NAPI should yield
+ * @hif_ext_group: hif_ext_group of type NAPI
+ *
+ * Return: true if NAPI needs to yield, else false
+ */
+static bool hif_exec_poll_should_yield(struct hif_exec_context *hif_ext_group)
+{
+	bool time_limit_reached = false;
+	unsigned long long poll_time_ns;
+	int cpu_id = qdf_get_cpu();
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ext_group->hif);
+	struct hif_config_info *cfg = &scn->hif_config;
+
+	poll_time_ns = sched_clock() - hif_ext_group->poll_start_time;
+	time_limit_reached =
+		poll_time_ns > cfg->rx_softirq_max_yield_duration_ns ? 1 : 0;
+
+	if (time_limit_reached) {
+		hif_ext_group->stats[cpu_id].time_limit_reached++;
+		hif_ext_group->force_break = true;
+	}
+
+	return time_limit_reached;
+}
+
+bool hif_exec_should_yield(struct hif_opaque_softc *hif_ctx, uint grp_id)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_exec_context *hif_ext_group;
+	bool ret_val = false;
+
+	if (!(grp_id < hif_state->hif_num_extgroup) ||
+	    !(grp_id < HIF_MAX_GROUP))
+		return false;
+
+	hif_ext_group = hif_state->hif_ext_group[grp_id];
+
+	if (hif_ext_group->type == HIF_EXEC_NAPI_TYPE)
+		ret_val = hif_exec_poll_should_yield(hif_ext_group);
+
+	return ret_val;
+}
+
+/**
+ * hif_exec_update_service_start_time() - Update NAPI poll start time
+ * @hif_ext_group: hif_ext_group of type NAPI
+ *
+ * The function is called at the beginning of a NAPI poll to record the poll
+ * start time.
+ *
+ * Return: None
+ */
+static inline
+void hif_exec_update_service_start_time(struct hif_exec_context *hif_ext_group)
+{
+	hif_ext_group->poll_start_time = sched_clock();
+}
+
+void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
+	struct hif_exec_context *hif_ext_group;
+	struct qca_napi_stat *napi_stats;
+	int i, j;
+
+	/*
+	 * Max value of uint_32 (poll_time_bucket) = 4294967295
+	 * Thus we need 10 chars + 1 space =11 chars for each bucket value.
+	 * +1 space for '\0'.
+	 */
+	char hist_str[(QCA_NAPI_NUM_BUCKETS * 11) + 1] = {'\0'};
+
+	QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_ERROR,
+		  "NAPI[#]CPU[#] |scheds |polls  |comps  |dones  |t-lim  |max(us)|hist(500us buckets)");
+
+	for (i = 0;
+	     (i < hif_state->hif_num_extgroup && hif_state->hif_ext_group[i]);
+	     i++) {
+		hif_ext_group = hif_state->hif_ext_group[i];
+		for (j = 0; j < num_possible_cpus(); j++) {
+			napi_stats = &hif_ext_group->stats[j];
+			if (!napi_stats->napi_schedules)
+				continue;
+
+			hif_get_poll_times_hist_str(napi_stats,
+						    hist_str,
+						    sizeof(hist_str));
+			QDF_TRACE(QDF_MODULE_ID_HIF,
+				  QDF_TRACE_LEVEL_ERROR,
+				  "NAPI[%d]CPU[%d]: %7u %7u %7u %7u %7u %7llu %s",
+				  i, j,
+				  napi_stats->napi_schedules,
+				  napi_stats->napi_polls,
+				  napi_stats->napi_completes,
+				  napi_stats->napi_workdone,
+				  napi_stats->time_limit_reached,
+				  (napi_stats->napi_max_poll_time / 1000),
+				  hist_str);
+		}
+	}
+
+	hif_print_napi_latency_stats(hif_state);
+}
+
+qdf_export_symbol(hif_print_napi_stats);
+
+#else
+
+static inline
+void hif_get_poll_times_hist_str(struct qca_napi_stat *stats, char *buf,
+				 uint8_t buf_len)
+{
+}
+
+static inline
+void hif_exec_update_service_start_time(struct hif_exec_context *hif_ext_group)
+{
+}
+
+static inline
+void hif_exec_fill_poll_time_histogram(struct hif_exec_context *hif_ext_group)
+{
+}
+
 void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
@@ -164,6 +335,7 @@ void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx)
 	hif_print_napi_latency_stats(hif_state);
 }
 qdf_export_symbol(hif_print_napi_stats);
+#endif /* WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT */
 
 static void hif_exec_tasklet_schedule(struct hif_exec_context *ctx)
 {
@@ -258,22 +430,26 @@ static void hif_latency_profile_start(struct hif_exec_context *hif_ext_group)
 #endif
 
 /**
- * hif_exec_poll() - napi pool
+ * hif_exec_poll() - napi poll
  * napi: napi struct
  * budget: budget for napi
  *
- * return: mapping of internal budget to napi
+ * Return: mapping of internal budget to napi
  */
 static int hif_exec_poll(struct napi_struct *napi, int budget)
 {
-	struct hif_napi_exec_context *exec_ctx =
+	struct hif_napi_exec_context *napi_exec_ctx =
 		    qdf_container_of(napi, struct hif_napi_exec_context, napi);
-	struct hif_exec_context *hif_ext_group = &exec_ctx->exec_ctx;
+	struct hif_exec_context *hif_ext_group = &napi_exec_ctx->exec_ctx;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ext_group->hif);
 	int work_done;
 	int normalized_budget = 0;
+	int actual_dones;
 	int shift = hif_ext_group->scale_bin_shift;
 	int cpu = smp_processor_id();
+
+	hif_ext_group->force_break = false;
+	hif_exec_update_service_start_time(hif_ext_group);
 
 	if (budget)
 		normalized_budget = NAPI_BUDGET_TO_INTERNAL_BUDGET(budget, shift);
@@ -283,7 +459,9 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 	work_done = hif_ext_group->handler(hif_ext_group->context,
 					   normalized_budget);
 
-	if (work_done < normalized_budget) {
+	actual_dones = work_done;
+
+	if (!hif_ext_group->force_break && work_done < normalized_budget) {
 		napi_complete(napi);
 		qdf_atomic_dec(&scn->active_grp_tasklet_cnt);
 		hif_ext_group->irq_enable(hif_ext_group);
@@ -295,11 +473,13 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 	}
 
 	hif_ext_group->stats[cpu].napi_polls++;
-	hif_ext_group->stats[cpu].napi_workdone += work_done;
+	hif_ext_group->stats[cpu].napi_workdone += actual_dones;
 
 	/* map internal budget to NAPI budget */
 	if (work_done)
 		work_done = INTERNAL_BUDGET_TO_NAPI_BUDGET(work_done, shift);
+
+	hif_exec_fill_poll_time_histogram(hif_ext_group);
 
 	return work_done;
 }
@@ -436,13 +616,18 @@ struct hif_exec_context *hif_exec_get_ctx(struct hif_opaque_softc *softc,
 	return NULL;
 }
 
-/**
- * hif_configure_ext_group_interrupts() - API to configure external group
- * interrpts
- * @hif_ctx : HIF Context
- *
- * Return: status
- */
+int32_t hif_get_int_ctx_irq_num(struct hif_opaque_softc *softc,
+				uint8_t id)
+{
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(softc);
+
+	if (id < hif_state->hif_num_extgroup)
+		return hif_state->hif_ext_group[id]->os_irq[0];
+	return -EINVAL;
+}
+
+qdf_export_symbol(hif_get_int_ctx_irq_num);
+
 uint32_t hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
@@ -474,6 +659,7 @@ uint32_t hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
 
 	return QDF_STATUS_SUCCESS;
 }
+
 qdf_export_symbol(hif_configure_ext_group_interrupts);
 
 #ifdef WLAN_SUSPEND_RESUME_TEST
@@ -610,6 +796,7 @@ uint32_t hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 	hif_ext_group->grp_id = hif_state->hif_num_extgroup;
 	hif_ext_group->hif = hif_ctx;
 	hif_ext_group->context_name = context_name;
+	hif_ext_group->type = type;
 
 	hif_state->hif_num_extgroup++;
 	return QDF_STATUS_SUCCESS;

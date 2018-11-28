@@ -1619,6 +1619,57 @@ static inline void dp_rx_desc_nbuf_sanity_check(void *ring_desc,
 }
 #endif
 
+#ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
+static inline
+bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped)
+{
+	bool limit_hit = false;
+	struct wlan_cfg_dp_soc_ctxt *cfg = soc->wlan_cfg_ctx;
+
+	limit_hit =
+		(num_reaped >= cfg->rx_reap_loop_pkt_limit) ? true : false;
+
+	if (limit_hit)
+		DP_STATS_INC(soc, rx.reap_loop_pkt_limit_hit, 1)
+
+	return limit_hit;
+}
+
+static inline
+bool dp_rx_hp_oos_update_limit_hit(struct dp_soc *soc, int hp_oos_updates)
+{
+	bool limit_hit = false;
+	struct wlan_cfg_dp_soc_ctxt *cfg = soc->wlan_cfg_ctx;
+
+	limit_hit =
+		(hp_oos_updates >= cfg->rx_hp_oos_update_limit) ? true : false;
+	return limit_hit;
+}
+
+static inline bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
+{
+	return soc->wlan_cfg_ctx->rx_enable_eol_data_check;
+}
+
+#else
+static inline
+bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped)
+{
+	return false;
+}
+
+static inline
+bool dp_rx_hp_oos_update_limit_hit(struct dp_soc *soc, int hp_oos_updates)
+{
+	return false;
+}
+
+static inline bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
+{
+	return false;
+}
+
+#endif /* WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT */
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
  *		     Called from the bottom half (tasklet/NET_RX_SOFTIRQ)
@@ -1639,21 +1690,21 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 	void *ring_desc;
 	struct dp_rx_desc *rx_desc = NULL;
 	qdf_nbuf_t nbuf, next;
-	union dp_rx_desc_list_elem_t *head[MAX_PDEV_CNT] = { NULL };
-	union dp_rx_desc_list_elem_t *tail[MAX_PDEV_CNT] = { NULL };
+	union dp_rx_desc_list_elem_t *head[MAX_PDEV_CNT];
+	union dp_rx_desc_list_elem_t *tail[MAX_PDEV_CNT];
 	uint32_t rx_bufs_used = 0, rx_buf_cookie;
 	uint32_t l2_hdr_offset = 0;
 	uint16_t msdu_len = 0;
 	uint16_t peer_id;
-	struct dp_peer *peer = NULL;
-	struct dp_vdev *vdev = NULL;
+	struct dp_peer *peer;
+	struct dp_vdev *vdev;
 	uint32_t pkt_len = 0;
-	struct hal_rx_mpdu_desc_info mpdu_desc_info = { 0 };
-	struct hal_rx_msdu_desc_info msdu_desc_info = { 0 };
+	struct hal_rx_mpdu_desc_info mpdu_desc_info;
+	struct hal_rx_msdu_desc_info msdu_desc_info;
 	enum hal_reo_error_status error;
 	uint32_t peer_mdata;
 	uint8_t *rx_tlv_hdr;
-	uint32_t rx_bufs_reaped[MAX_PDEV_CNT] = { 0 };
+	uint32_t rx_bufs_reaped[MAX_PDEV_CNT];
 	uint8_t mac_id = 0;
 	struct dp_pdev *pdev;
 	struct dp_pdev *rx_pdev;
@@ -1662,24 +1713,41 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 	struct dp_soc *soc = int_ctx->soc;
 	uint8_t ring_id = 0;
 	uint8_t core_id = 0;
-	qdf_nbuf_t nbuf_head = NULL;
-	qdf_nbuf_t nbuf_tail = NULL;
-	qdf_nbuf_t deliver_list_head = NULL;
-	qdf_nbuf_t deliver_list_tail = NULL;
-	int32_t tid = 0;
-	uint32_t dst_num_valid = 0;
 	struct cdp_tid_rx_stats *tid_stats;
-
+	qdf_nbuf_t nbuf_head;
+	qdf_nbuf_t nbuf_tail;
+	qdf_nbuf_t deliver_list_head;
+	qdf_nbuf_t deliver_list_tail;
+	uint32_t num_rx_bufs_reaped = 0;
+	uint32_t intr_id;
+	struct hif_opaque_softc *scn;
+	uint32_t hp_oos_updates = 0;
+	int32_t tid = 0;
 	DP_HIST_INIT();
-	/* Debug -- Remove later */
-	qdf_assert(soc && hal_ring);
 
+	qdf_assert_always(soc && hal_ring);
 	hal_soc = soc->hal_soc;
-
-	/* Debug -- Remove later */
-	qdf_assert(hal_soc);
+	qdf_assert_always(hal_soc);
 
 	hif_pm_runtime_mark_last_busy(soc->osdev->dev);
+	scn = soc->hif_handle;
+	intr_id = int_ctx->dp_intr_id;
+
+more_data:
+	/* reset local variables here to be re-used in the function */
+	nbuf_head = NULL;
+	nbuf_tail = NULL;
+	deliver_list_head = NULL;
+	deliver_list_tail = NULL;
+	peer = NULL;
+	vdev = NULL;
+	num_rx_bufs_reaped = 0;
+
+	qdf_mem_zero(rx_bufs_reaped, sizeof(rx_bufs_reaped));
+	qdf_mem_zero(&mpdu_desc_info, sizeof(mpdu_desc_info));
+	qdf_mem_zero(&msdu_desc_info, sizeof(msdu_desc_info));
+	qdf_mem_zero(head, sizeof(head));
+	qdf_mem_zero(tail, sizeof(tail));
 
 	if (qdf_unlikely(hal_srng_access_start(hal_soc, hal_ring))) {
 
@@ -1699,6 +1767,7 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 	 * them in per vdev queue.
 	 * Process the received pkts in a different per vdev loop.
 	 */
+	hp_oos_updates = 0;
 	while (qdf_likely(quota)) {
 		ring_desc = hal_srng_dst_get_next(hal_soc, hal_ring);
 
@@ -1716,10 +1785,12 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 		 * complete mpdu in one reap.
 		 */
 		if (qdf_unlikely(!ring_desc)) {
-			dst_num_valid = hal_srng_dst_num_valid(hal_soc,
-							       hal_ring,
-							       true);
-			if (dst_num_valid) {
+			if (dp_rx_hp_oos_update_limit_hit(soc,
+							  hp_oos_updates)) {
+				break;
+			}
+			hp_oos_updates++;
+			if (hal_srng_dst_peek_sync(hal_soc, hal_ring)) {
 				DP_STATS_INC(soc, rx.hp_oos, 1);
 				hal_srng_access_end_unlocked(hal_soc,
 							     hal_ring);
@@ -1834,6 +1905,10 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 		dp_rx_add_to_free_desc_list(&head[rx_desc->pool_id],
 						&tail[rx_desc->pool_id],
 						rx_desc);
+
+		num_rx_bufs_reaped++;
+		if (dp_rx_reap_loop_pkt_limit_hit(soc, num_rx_bufs_reaped))
+			break;
 	}
 done:
 	hal_srng_access_end(hal_soc, hal_ring);
@@ -1858,6 +1933,7 @@ done:
 					&head[mac_id], &tail[mac_id]);
 	}
 
+	dp_verbose_debug("replenished %u\n", rx_bufs_reaped[0]);
 	/* Peer can be NULL is case of LFR */
 	if (qdf_likely(peer))
 		vdev = NULL;
@@ -2069,16 +2145,6 @@ done:
 			dp_rx_fill_mesh_stats(vdev, nbuf, rx_tlv_hdr, peer);
 		}
 
-#ifdef QCA_WIFI_NAPIER_EMULATION_DBG /* Debug code, remove later */
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"p_id %d msdu_len %d hdr_off %d",
-			peer_id, msdu_len, l2_hdr_offset);
-
-		print_hex_dump(KERN_ERR,
-			       "\t Pkt Data:", DUMP_PREFIX_NONE, 32, 4,
-				qdf_nbuf_data(nbuf), 128, false);
-#endif /* NAPIER_EMULATION */
-
 		if (qdf_likely(vdev->rx_decap_type ==
 			       htt_cmn_pkt_type_ethernet) &&
 		    qdf_likely(!vdev->mesh_vdev)) {
@@ -2133,12 +2199,20 @@ done:
 		dp_peer_unref_del_find_by_id(peer);
 	}
 
-	/* Update histogram statistics by looping through pdev's */
-	DP_RX_HIST_STATS_PER_PDEV();
-
 	if (deliver_list_head)
 		dp_rx_deliver_to_stack(vdev, peer, deliver_list_head,
 				       deliver_list_tail);
+
+	if (dp_rx_enable_eol_data_check(soc)) {
+		if (quota &&
+		    hal_srng_dst_peek_sync_locked(soc, hal_ring)) {
+			DP_STATS_INC(soc, rx.hp_oos2, 1);
+			if (!hif_exec_should_yield(scn, intr_id))
+				goto more_data;
+		}
+	}
+	/* Update histogram statistics by looping through pdev's */
+	DP_RX_HIST_STATS_PER_PDEV();
 
 	return rx_bufs_used; /* Assume no scale factor for now */
 }

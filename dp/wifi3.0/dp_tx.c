@@ -3205,7 +3205,6 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 	struct dp_peer *peer;
 	qdf_nbuf_t netbuf;
 
-	DP_HIST_INIT();
 	desc = comp_head;
 
 	while (desc) {
@@ -3223,15 +3222,12 @@ dp_tx_comp_process_desc_list(struct dp_soc *soc,
 		if (peer)
 			dp_peer_unref_del_find_by_id(peer);
 
-		DP_HIST_PACKET_COUNT_INC(desc->pdev->pdev_id);
-
 		next = desc->next;
 
 		dp_tx_desc_release(desc, desc->pool_id);
 		desc = next;
 	}
 
-	DP_TX_HIST_STATS_PER_PDEV();
 }
 
 /**
@@ -3342,19 +3338,41 @@ void dp_tx_process_htt_completion(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	}
 }
 
-/**
- * dp_tx_comp_handler() - Tx completion handler
- * @soc: core txrx main context
- * @ring_id: completion ring id
- * @quota: No. of packets/descriptors that can be serviced in one loop
- *
- * This function will collect hardware release ring element contents and
- * handle descriptor contents. Based on contents, free packet or handle error
- * conditions
- *
- * Return: none
- */
-uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
+#ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
+static inline
+bool dp_tx_comp_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped)
+{
+	bool limit_hit = false;
+	struct wlan_cfg_dp_soc_ctxt *cfg = soc->wlan_cfg_ctx;
+
+	limit_hit =
+		(num_reaped >= cfg->tx_comp_loop_pkt_limit) ? true : false;
+
+	if (limit_hit)
+		DP_STATS_INC(soc, tx.tx_comp_loop_pkt_limit_hit, 1);
+
+	return limit_hit;
+}
+
+static inline bool dp_tx_comp_enable_eol_data_check(struct dp_soc *soc)
+{
+	return soc->wlan_cfg_ctx->tx_comp_enable_eol_data_check;
+}
+#else
+static inline
+bool dp_tx_comp_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped)
+{
+	return false;
+}
+
+static inline bool dp_tx_comp_enable_eol_data_check(struct dp_soc *soc)
+{
+	return false;
+}
+#endif
+
+uint32_t dp_tx_comp_handler(struct dp_intr *int_ctx, struct dp_soc *soc,
+			    void *hal_srng, uint32_t quota)
 {
 	void *tx_comp_hal_desc;
 	uint8_t buffer_src;
@@ -3363,18 +3381,22 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 	struct dp_tx_desc_s *tx_desc = NULL;
 	struct dp_tx_desc_s *head_desc = NULL;
 	struct dp_tx_desc_s *tail_desc = NULL;
-	uint32_t num_processed;
-	uint32_t count;
+	uint32_t num_processed = 0;
+	uint32_t count = 0;
+	bool force_break = false;
 
+	DP_HIST_INIT();
+
+more_data:
+	/* Re-initialize local variables to be re-used */
+		head_desc = NULL;
+		tail_desc = NULL;
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"%s %d : HAL RING Access Failed -- %pK",
 				__func__, __LINE__, hal_srng);
 		return 0;
 	}
-
-	num_processed = 0;
-	count = 0;
 
 	/* Find head descriptor from completion ring */
 	while (qdf_likely(tx_comp_hal_desc =
@@ -3466,6 +3488,8 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 			tx_desc->next = NULL;
 			tail_desc = tx_desc;
 
+			DP_HIST_PACKET_COUNT_INC(tx_desc->pdev->pdev_id);
+
 			/* Collect hw completion contents */
 			hal_tx_comp_desc_sync(tx_comp_hal_desc,
 					&tx_desc->comp, 1);
@@ -3478,10 +3502,15 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 		 * Processed packet count is more than given quota
 		 * stop to processing
 		 */
-		if ((num_processed >= quota))
+		if (num_processed >= quota) {
+			force_break = true;
 			break;
+		}
 
 		count++;
+
+		if (dp_tx_comp_loop_pkt_limit_hit(soc, count))
+			break;
 	}
 
 	hal_srng_access_end(soc->hal_soc, hal_srng);
@@ -3489,6 +3518,17 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 	/* Process the reaped descriptors */
 	if (head_desc)
 		dp_tx_comp_process_desc_list(soc, head_desc);
+
+	if (dp_tx_comp_enable_eol_data_check(soc)) {
+		if (!force_break &&
+		    hal_srng_dst_peek_sync_locked(soc, hal_srng)) {
+			DP_STATS_INC(soc, tx.hp_oos2, 1);
+			if (!hif_exec_should_yield(soc->hif_handle,
+						   int_ctx->dp_intr_id))
+				goto more_data;
+		}
+	}
+	DP_TX_HIST_STATS_PER_PDEV();
 
 	return num_processed;
 }

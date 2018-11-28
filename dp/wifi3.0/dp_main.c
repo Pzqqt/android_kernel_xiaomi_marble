@@ -285,6 +285,7 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 	{TXRX_FW_STATS_INVALID, TXRX_REO_QUEUE_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_SOC_CFG_PARAMS},
 	{TXRX_FW_STATS_INVALID, TXRX_PDEV_CFG_PARAMS},
+	{TXRX_FW_STATS_INVALID, TXRX_SOC_INTERRUPT_STATS},
 };
 
 /* MCL specific functions */
@@ -1273,6 +1274,7 @@ void *hif_get_hal_handle(void *hif_handle);
 static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 {
 	struct dp_intr *int_ctx = (struct dp_intr *)dp_ctx;
+	struct dp_intr_stats *intr_stats = &int_ctx->intr_stats;
 	struct dp_soc *soc = int_ctx->soc;
 	int ring = 0;
 	uint32_t work_done  = 0;
@@ -1286,15 +1288,27 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	struct dp_pdev *pdev = NULL;
 	int mac_id;
 
+	dp_verbose_debug("tx %x rx %x rx_err %x rx_wbm_rel %x reo_status %x rx_mon_ring %x host2rxdma %x rxdma2host %x\n",
+			 tx_mask, rx_mask, rx_err_mask, rx_wbm_rel_mask,
+			 reo_status_mask,
+			 int_ctx->rx_mon_ring_mask,
+			 int_ctx->host2rxdma_ring_mask,
+			 int_ctx->rxdma2host_ring_mask);
+
 	/* Process Tx completion interrupts first to return back buffers */
 	while (tx_mask) {
 		if (tx_mask & 0x1) {
-			work_done = dp_tx_comp_handler(soc,
-					soc->tx_comp_ring[ring].hal_srng,
-					remaining_quota);
+			work_done = dp_tx_comp_handler(int_ctx,
+						       soc,
+						       soc->tx_comp_ring[ring].hal_srng,
+						       remaining_quota);
 
-			dp_verbose_debug("tx mask 0x%x ring %d, budget %d, work_done %d",
-					 tx_mask, ring, budget, work_done);
+			if (work_done) {
+				intr_stats->num_tx_ring_masks[ring]++;
+				dp_verbose_debug("tx mask 0x%x ring %d, budget %d, work_done %d",
+						 tx_mask, ring, budget,
+						 work_done);
+			}
 
 			budget -= work_done;
 			if (budget <= 0)
@@ -1306,15 +1320,17 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 		ring++;
 	}
 
-
 	/* Process REO Exception ring interrupt */
 	if (rx_err_mask) {
 		work_done = dp_rx_err_process(soc,
 				soc->reo_exception_ring.hal_srng,
 				remaining_quota);
 
-		dp_verbose_debug("REO Exception Ring: work_done %d budget %d",
-				 work_done, budget);
+		if (work_done) {
+			intr_stats->num_rx_err_ring_masks++;
+			dp_verbose_debug("REO Exception Ring: work_done %d budget %d",
+					 work_done, budget);
+		}
 
 		budget -=  work_done;
 		if (budget <= 0) {
@@ -1328,8 +1344,11 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 		work_done = dp_rx_wbm_err_process(soc,
 				soc->rx_rel_ring.hal_srng, remaining_quota);
 
-		dp_verbose_debug("WBM Release Ring: work_done %d budget %d",
-				 work_done, budget);
+		if (work_done) {
+			intr_stats->num_rx_wbm_rel_ring_masks++;
+			dp_verbose_debug("WBM Release Ring: work_done %d budget %d",
+					 work_done, budget);
+		}
 
 		budget -=  work_done;
 		if (budget <= 0) {
@@ -1341,16 +1360,17 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	/* Process Rx interrupts */
 	if (rx_mask) {
 		for (ring = 0; ring < soc->num_reo_dest_rings; ring++) {
-			if (rx_mask & (1 << ring)) {
-				work_done = dp_rx_process(int_ctx,
-					    soc->reo_dest_ring[ring].hal_srng,
-					    ring,
-					    remaining_quota);
-
+			if (!(rx_mask & (1 << ring)))
+				continue;
+			work_done = dp_rx_process(int_ctx,
+						  soc->reo_dest_ring[ring].hal_srng,
+						  ring,
+						  remaining_quota);
+			if (work_done) {
+				intr_stats->num_rx_ring_masks[ring]++;
 				dp_verbose_debug("rx mask 0x%x ring %d, work_done %d budget %d",
 						 rx_mask, ring,
 						 work_done, budget);
-
 				budget -=  work_done;
 				if (budget <= 0)
 					goto budget_done;
@@ -1359,8 +1379,10 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 		}
 	}
 
-	if (reo_status_mask)
-		dp_reo_status_ring_handler(soc);
+	if (reo_status_mask) {
+		if (dp_reo_status_ring_handler(soc))
+			int_ctx->intr_stats.num_reo_status_ring_masks++;
+	}
 
 	/* Process LMAC interrupts */
 	for  (ring = 0 ; ring < MAX_PDEV_CNT; ring++) {
@@ -1372,7 +1394,9 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 								pdev->pdev_id);
 			if (int_ctx->rx_mon_ring_mask & (1 << mac_for_pdev)) {
 				work_done = dp_mon_process(soc, mac_for_pdev,
-						remaining_quota);
+							   remaining_quota);
+				if (work_done)
+					intr_stats->num_rx_mon_ring_masks++;
 				budget -= work_done;
 				if (budget <= 0)
 					goto budget_done;
@@ -1382,8 +1406,10 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 			if (int_ctx->rxdma2host_ring_mask &
 					(1 << mac_for_pdev)) {
 				work_done = dp_rxdma_err_process(soc,
-							mac_for_pdev,
-							remaining_quota);
+								 mac_for_pdev,
+								 remaining_quota);
+				if (work_done)
+					intr_stats->num_rxdma2host_ring_masks++;
 				budget -=  work_done;
 				if (budget <= 0)
 					goto budget_done;
@@ -1397,17 +1423,19 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 				struct dp_srng *rx_refill_buf_ring =
 					&pdev->rx_refill_buf_ring;
 
+				intr_stats->num_host2rxdma_ring_masks++;
 				DP_STATS_INC(pdev, replenish.low_thresh_intrs,
 						1);
 				dp_rx_buffers_replenish(soc, mac_for_pdev,
-					rx_refill_buf_ring,
-					&soc->rx_desc_buf[mac_for_pdev], 0,
-					&desc_list, &tail);
+							rx_refill_buf_ring,
+							&soc->rx_desc_buf[mac_for_pdev],
+							0, &desc_list, &tail);
 			}
 		}
 	}
 
 	qdf_lro_flush(int_ctx->lro_ctx);
+	intr_stats->num_masks++;
 
 budget_done:
 	return dp_budget - budget;
@@ -6920,7 +6948,44 @@ dp_print_soc_tx_stats(struct dp_soc *soc)
 			soc->stats.tx.tcl_ring_full[2]);
 	DP_PRINT_STATS("Tx invalid completion release = %d",
 		       soc->stats.tx.invalid_release_source);
+	DP_PRINT_STATS("Tx comp loop pkt limit hit = %d",
+		       soc->stats.tx.tx_comp_loop_pkt_limit_hit);
+	DP_PRINT_STATS("Tx comp HP out of sync2 = %d",
+		       soc->stats.tx.hp_oos2);
 }
+
+/**
+ * dp_print_soc_interrupt_stats() - Print interrupt stats for the soc
+ * @soc: dp_soc handle
+ *
+ * Return: None
+ */
+static void dp_print_soc_interrupt_stats(struct dp_soc *soc)
+{
+	int i = 0;
+	struct dp_intr_stats *intr_stats;
+
+	DP_PRINT_STATS("INT:     Total  |txComps|reo[0] |reo[1] |reo[2] |reo[3] |mon    |rx_err | wbm   |reo_sta|rxdm2hst|hst2rxdm|");
+	for (i = 0; i < WLAN_CFG_INT_NUM_CONTEXTS; i++) {
+		intr_stats = &soc->intr_ctx[i].intr_stats;
+		DP_PRINT_STATS("%3u[%d]: %7u %7u %7u %7u %7u %7u %7u %7u %7u %7u %8u %8u",
+			       i,
+			       hif_get_int_ctx_irq_num(soc->hif_handle, i),
+			       intr_stats->num_masks,
+			       intr_stats->num_tx_ring_masks[0],
+			       intr_stats->num_rx_ring_masks[0],
+			       intr_stats->num_rx_ring_masks[1],
+			       intr_stats->num_rx_ring_masks[2],
+			       intr_stats->num_rx_ring_masks[3],
+			       intr_stats->num_rx_mon_ring_masks,
+			       intr_stats->num_rx_err_ring_masks,
+			       intr_stats->num_rx_wbm_rel_ring_masks,
+			       intr_stats->num_reo_status_ring_masks,
+			       intr_stats->num_rxdma2host_ring_masks,
+			       intr_stats->num_host2rxdma_ring_masks);
+		}
+}
+
 /**
  * dp_print_soc_rx_stats: Print SOC level Rx stats
  * @soc: DP_SOC Handle
@@ -6962,7 +7027,11 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("RX frags: %d", soc->stats.rx.rx_frags);
 	DP_PRINT_STATS("RX frag wait: %d", soc->stats.rx.rx_frag_wait);
 	DP_PRINT_STATS("RX frag err: %d", soc->stats.rx.rx_frag_err);
-	DP_PRINT_STATS("RX HP out_of_sync: %d", soc->stats.rx.hp_oos);
+
+	DP_PRINT_STATS("RX HP out_of_sync: %d %d", soc->stats.rx.hp_oos,
+		       soc->stats.rx.hp_oos2);
+	DP_PRINT_STATS("RX Reap Loop Pkt Limit Hit: %d",
+		       soc->stats.rx.reap_loop_pkt_limit_hit);
 	DP_PRINT_STATS("RX DESC invalid magic: %u",
 		       soc->stats.rx.err.rx_desc_invalid_magic);
 	DP_PRINT_STATS("RX DUP DESC: %d",
@@ -7211,6 +7280,8 @@ dp_print_host_stats(struct cdp_vdev *vdev_handle,
 		break;
 	case TXRX_NAPI_STATS:
 		dp_print_napi_stats(pdev->soc);
+	case TXRX_SOC_INTERRUPT_STATS:
+		dp_print_soc_interrupt_stats(pdev->soc);
 		break;
 	default:
 		dp_info("Wrong Input For TxRx Host Stats");
@@ -8148,6 +8219,7 @@ static QDF_STATUS dp_txrx_dump_stats(void *psoc, uint16_t value,
 	switch (value) {
 	case CDP_TXRX_PATH_STATS:
 		dp_txrx_path_stats(soc);
+		dp_print_soc_interrupt_stats(soc);
 		break;
 
 	case CDP_RX_RING_STATS:
@@ -8205,6 +8277,50 @@ void dp_update_flow_control_parameters(struct dp_soc *soc,
 }
 #endif
 
+#ifdef WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT
+/* Max packet limit for TX Comp packet loop (dp_tx_comp_handler) */
+#define DP_TX_COMP_LOOP_PKT_LIMIT_MAX 1024
+
+/* Max packet limit for RX REAP Loop (dp_rx_process) */
+#define DP_RX_REAP_LOOP_PKT_LIMIT_MAX 1024
+
+static
+void dp_update_rx_soft_irq_limit_params(struct dp_soc *soc,
+					struct cdp_config_params *params)
+{
+	soc->wlan_cfg_ctx->tx_comp_loop_pkt_limit =
+				params->tx_comp_loop_pkt_limit;
+
+	if (params->tx_comp_loop_pkt_limit < DP_TX_COMP_LOOP_PKT_LIMIT_MAX)
+		soc->wlan_cfg_ctx->tx_comp_enable_eol_data_check = true;
+	else
+		soc->wlan_cfg_ctx->tx_comp_enable_eol_data_check = false;
+
+	soc->wlan_cfg_ctx->rx_reap_loop_pkt_limit =
+				params->rx_reap_loop_pkt_limit;
+
+	if (params->rx_reap_loop_pkt_limit < DP_RX_REAP_LOOP_PKT_LIMIT_MAX)
+		soc->wlan_cfg_ctx->rx_enable_eol_data_check = true;
+	else
+		soc->wlan_cfg_ctx->rx_enable_eol_data_check = false;
+
+	soc->wlan_cfg_ctx->rx_hp_oos_update_limit =
+				params->rx_hp_oos_update_limit;
+
+	dp_info("tx_comp_loop_pkt_limit %u tx_comp_enable_eol_data_check %u rx_reap_loop_pkt_limit %u rx_enable_eol_data_check %u rx_hp_oos_update_limit %u",
+		soc->wlan_cfg_ctx->tx_comp_loop_pkt_limit,
+		soc->wlan_cfg_ctx->tx_comp_enable_eol_data_check,
+		soc->wlan_cfg_ctx->rx_reap_loop_pkt_limit,
+		soc->wlan_cfg_ctx->rx_enable_eol_data_check,
+		soc->wlan_cfg_ctx->rx_hp_oos_update_limit);
+}
+#else
+static inline
+void dp_update_rx_soft_irq_limit_params(struct dp_soc *soc,
+					struct cdp_config_params *params)
+{ }
+#endif /* WLAN_FEATURE_RX_SOFTIRQ_TIME_LIMIT */
+
 /**
  * dp_update_config_parameters() - API to store datapath
  *                            config parameters
@@ -8234,6 +8350,7 @@ QDF_STATUS dp_update_config_parameters(struct cdp_soc *psoc,
 	soc->wlan_cfg_ctx->ipa_enabled = params->ipa_enable;
 	soc->wlan_cfg_ctx->gro_enabled = params->gro_enable;
 
+	dp_update_rx_soft_irq_limit_params(soc, params);
 	dp_update_flow_control_parameters(soc, params);
 
 	return QDF_STATUS_SUCCESS;

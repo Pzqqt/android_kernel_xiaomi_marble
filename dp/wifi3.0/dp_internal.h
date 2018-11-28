@@ -816,7 +816,14 @@ extern QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc,
 	void (*callback_fn), void *data);
 
 extern void dp_reo_cmdlist_destroy(struct dp_soc *soc);
-extern void dp_reo_status_ring_handler(struct dp_soc *soc);
+
+/**
+ * dp_reo_status_ring_handler - Handler for REO Status ring
+ * @soc: DP Soc handle
+ *
+ * Returns: Number of descriptors reaped
+ */
+uint32_t dp_reo_status_ring_handler(struct dp_soc *soc);
 void dp_aggregate_vdev_stats(struct dp_vdev *vdev,
 			     struct cdp_vdev_stats *vdev_stats);
 void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,

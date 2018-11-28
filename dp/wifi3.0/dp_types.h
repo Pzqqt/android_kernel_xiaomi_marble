@@ -576,6 +576,34 @@ struct dp_rx_tid {
 
 };
 
+/**
+ * struct dp_intr_stats - DP Interrupt Stats for an interrupt context
+ * @num_tx_ring_masks: interrupts with tx_ring_mask set
+ * @num_rx_ring_masks: interrupts with rx_ring_mask set
+ * @num_rx_mon_ring_masks: interrupts with rx_mon_ring_mask set
+ * @num_rx_err_ring_masks: interrupts with rx_err_ring_mask set
+ * @num_rx_wbm_rel_ring_masks: interrupts with rx_wbm_rel_ring_mask set
+ * @num_reo_status_ring_masks: interrupts with reo_status_ring_mask set
+ * @num_rxdma2host_ring_masks: interrupts with rxdma2host_ring_mask set
+ * @num_host2rxdma_ring_masks: interrupts with host2rxdma_ring_mask set
+ * @num_host2rxdma_ring_masks: interrupts with host2rxdma_ring_mask set
+ * @num_masks: total number of times the interrupt was received
+ *
+ * Counter for individual masks are incremented only if there are any packets
+ * on that ring.
+ */
+struct dp_intr_stats {
+	uint32_t num_tx_ring_masks[MAX_TCL_DATA_RINGS];
+	uint32_t num_rx_ring_masks[MAX_REO_DEST_RINGS];
+	uint32_t num_rx_mon_ring_masks;
+	uint32_t num_rx_err_ring_masks;
+	uint32_t num_rx_wbm_rel_ring_masks;
+	uint32_t num_reo_status_ring_masks;
+	uint32_t num_rxdma2host_ring_masks;
+	uint32_t num_host2rxdma_ring_masks;
+	uint32_t num_masks;
+};
+
 /* per interrupt context  */
 struct dp_intr {
 	uint8_t tx_ring_mask;   /* WBM Tx completion rings (0-2)
@@ -594,6 +622,9 @@ struct dp_intr {
 				to get DMA ring handles */
 	qdf_lro_ctx_t lro_ctx;
 	uint8_t dp_intr_id;
+
+	/* Interrupt Stats for individual masks */
+	struct dp_intr_stats intr_stats;
 };
 
 #define REO_DESC_FREELIST_SIZE 64
@@ -624,6 +655,10 @@ struct dp_soc_stats {
 		uint32_t dropped_fw_removed;
 		/* tx completion release_src != TQM or FW */
 		uint32_t invalid_release_source;
+		/* TX Comp loop packet limit hit */
+		uint32_t tx_comp_loop_pkt_limit_hit;
+		/* Head pointer Out of sync at the end of dp_tx_comp_handler */
+		uint32_t hp_oos2;
 	} tx;
 
 	/* SOC level RX stats */
@@ -639,8 +674,13 @@ struct dp_soc_stats {
 		uint32_t rx_frag_err;
 		/* No of reinjected packets */
 		uint32_t reo_reinject;
-		/* Head pointer Out of sync */
+
+		/* Reap loop packet limit hit */
+		uint32_t reap_loop_pkt_limit_hit;
+		/* Head pointer Out of sync during reap loop*/
 		uint32_t hp_oos;
+		/* Head pointer Out of sync at the end of dp_rx_process */
+		uint32_t hp_oos2;
 		struct {
 			/* Invalid RBM error count */
 			uint32_t invalid_rbm;
