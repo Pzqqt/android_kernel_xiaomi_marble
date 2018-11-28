@@ -2511,7 +2511,7 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
 	int errno;
 
-	HIF_DBG("wlan: %s pcie power collapse", flag ? "disable" : "enable");
+	HIF_INFO("wlan: %s pcie power collapse", flag ? "disable" : "enable");
 	hif_runtime_prevent_linkdown(scn, flag);
 
 	errno = pld_wlan_pm_control(scn->qdf_dev->dev, flag);
@@ -2522,8 +2522,7 @@ void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 #else
 void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
-	HIF_DBG("wlan: %s pcie power collapse",
-			(flag ? "disable" : "enable"));
+	HIF_INFO("wlan: %s pcie power collapse", (flag ? "disable" : "enable"));
 	hif_runtime_prevent_linkdown(scn, flag);
 }
 #endif
