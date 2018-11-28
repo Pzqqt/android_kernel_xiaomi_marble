@@ -555,6 +555,15 @@ struct wlan_regulatory_psoc_priv_obj *reg_get_psoc_obj(
 		struct wlan_objmgr_psoc *psoc);
 
 /**
+ * reg_reset_ctry_pending_hints() - Reset all country pending hints
+ * @soc_reg: regulatory private object
+ *
+ * Return: None
+ */
+void
+reg_reset_ctry_pending_hints(struct wlan_regulatory_psoc_priv_obj *soc_reg);
+
+/**
  * reg_set_regdb_offloaded() - set/clear regulatory offloaded flag
  *
  * @psoc: psoc pointer

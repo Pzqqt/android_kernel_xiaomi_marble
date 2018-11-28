@@ -57,6 +57,18 @@
 #define reg_nofl_debug(params...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_REGULATORY, params)
 
+/**
+ * struct wlan_regulatory_psoc_priv_obj - wlan regulatory psoc private object
+ * @new_user_ctry_pending: In this array, element[phy_id] is true if any user
+ *	country update is pending for pdev (phy_id), used in case of MCL.
+ * @new_init_ctry_pending: In this array, element[phy_id] is true if any user
+ *	country update is pending for pdev (phy_id), used in case of WIN.
+ * @new_11d_ctry_pending: In this array, element[phy_id] is true if any 11d
+ *	country update is pending for pdev (phy_id).
+ * @world_country_pending: In this array, element[phy_id] is true if any world
+ *	country update is pending for pdev (phy_id).
+ * @def_pdev_id: Default pdev id, used in case of MCL
+ */
 struct wlan_regulatory_psoc_priv_obj {
 	struct mas_chan_params mas_chan_params[PSOC_MAX_PHY_REG_CAP];
 	bool offload_enabled;
@@ -67,9 +79,10 @@ struct wlan_regulatory_psoc_priv_obj {
 	uint16_t def_region_domain;
 	enum country_src cc_src;
 	struct wlan_objmgr_psoc *psoc_ptr;
-	bool new_user_ctry_pending;
-	bool new_11d_ctry_pending;
-	bool world_country_pending;
+	bool new_user_ctry_pending[PSOC_MAX_PHY_REG_CAP];
+	bool new_init_ctry_pending[PSOC_MAX_PHY_REG_CAP];
+	bool new_11d_ctry_pending[PSOC_MAX_PHY_REG_CAP];
+	bool world_country_pending[PSOC_MAX_PHY_REG_CAP];
 	bool dfs_enabled;
 	enum band_info band_capability;
 	bool indoor_chan_enabled;
@@ -100,6 +113,7 @@ struct wlan_regulatory_psoc_priv_obj {
 	bool force_ssc_disable_indoor_channel;
 	bool enable_srd_chan_in_master_mode;
 	bool enable_11d_in_world_mode;
+	int8_t def_pdev_id;
 	qdf_spinlock_t cbk_list_lock;
 };
 

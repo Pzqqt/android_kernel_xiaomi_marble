@@ -423,6 +423,18 @@ QDF_STATUS regulatory_pdev_open(struct wlan_objmgr_pdev *pdev)
 
 QDF_STATUS regulatory_pdev_close(struct wlan_objmgr_pdev *pdev)
 {
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	soc_reg = reg_get_psoc_obj(psoc);
+	if (!soc_reg) {
+		reg_err("reg psoc private obj is NULL");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	reg_reset_ctry_pending_hints(soc_reg);
+
 	return QDF_STATUS_SUCCESS;
 }
 
