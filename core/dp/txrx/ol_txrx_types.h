@@ -1048,6 +1048,7 @@ struct ol_txrx_pdev_t {
 	struct ol_txrx_ipa_resources ipa_resource;
 #endif /* IPA_UC_OFFLOAD */
 	bool new_htt_msg_format;
+	bool enable_peer_unmap_conf_support;
 };
 
 struct ol_txrx_vdev_t {
@@ -1277,10 +1278,13 @@ struct ol_txrx_peer_t {
 	/* Wrapper around the cached_bufq list */
 	struct ol_txrx_cached_bufq_t bufq_info;
 
+	ol_txrx_peer_unmap_sync_cb peer_unmap_sync_cb;
+
 	ol_tx_filter_func tx_filter;
 
 	/* peer ID(s) for this peer */
 	uint16_t peer_ids[MAX_NUM_PEER_ID_PER_PEER];
+	uint16_t map_unmap_peer_ids[MAX_NUM_PEER_ID_PER_PEER];
 #ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
 	uint16_t local_id;
 #endif

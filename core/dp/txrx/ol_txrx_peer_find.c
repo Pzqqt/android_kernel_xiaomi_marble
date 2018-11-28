@@ -375,11 +375,16 @@ static inline void ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 	int i;
 	uint32_t peer_id_ref_cnt;
 	uint32_t peer_ref_cnt;
+	u8 check_valid = 0;
+
+	if (pdev->enable_peer_unmap_conf_support)
+		check_valid = 1;
 
 	/* check if there's already a peer object with this MAC address */
 	peer =
 		ol_txrx_peer_find_hash_find_get_ref(pdev, peer_mac_addr,
-						    1 /* is aligned */, 0,
+						    1 /* is aligned */,
+						    check_valid,
 						    PEER_DEBUG_ID_OL_PEER_MAP);
 
 	if (!peer || peer_id == HTT_INVALID_PEER) {
@@ -613,11 +618,22 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 
 	if (qdf_atomic_dec_and_test
 		(&pdev->peer_id_to_obj_map[peer_id].peer_id_ref_cnt)) {
+		bool peer_id_matched = false;
 		pdev->peer_id_to_obj_map[peer_id].peer = NULL;
 		for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
 			if (peer->peer_ids[i] == peer_id) {
 				peer->peer_ids[i] = HTT_INVALID_PEER;
+				peer_id_matched = true;
 				break;
+			}
+		}
+		if (pdev->enable_peer_unmap_conf_support && peer_id_matched) {
+			for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
+				if (peer->map_unmap_peer_ids[i] ==
+							HTT_INVALID_PEER) {
+					peer->map_unmap_peer_ids[i] = peer_id;
+					break;
+				}
 			}
 		}
 	}
