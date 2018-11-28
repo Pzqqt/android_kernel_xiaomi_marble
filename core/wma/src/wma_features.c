@@ -1644,6 +1644,7 @@ static bool wma_wow_reason_has_stats(enum wake_reason_e reason)
 	case WOW_REASON_ACTION_FRAME_RECV:
 	case WOW_REASON_BPF_ALLOW:
 	case WOW_REASON_PATTERN_MATCH_FOUND:
+	case WOW_REASON_PACKET_FILTER_MATCH:
 	case WOW_REASON_RA_MATCH:
 	case WOW_REASON_NLOD:
 	case WOW_REASON_NLO_SCAN_COMPLETE:
@@ -1755,6 +1756,7 @@ static void wma_print_wow_stats(t_wma_handle *wma,
 	switch (wake_info->wake_reason) {
 	case WOW_REASON_BPF_ALLOW:
 	case WOW_REASON_PATTERN_MATCH_FOUND:
+	case WOW_REASON_PACKET_FILTER_MATCH:
 	case WOW_REASON_RA_MATCH:
 	case WOW_REASON_NLOD:
 	case WOW_REASON_NLO_SCAN_COMPLETE:
@@ -2686,6 +2688,7 @@ static int wma_wake_event_packet(
 	case WOW_REASON_PATTERN_MATCH_FOUND:
 	case WOW_REASON_RA_MATCH:
 	case WOW_REASON_RECV_MAGIC_PATTERN:
+	case WOW_REASON_PACKET_FILTER_MATCH:
 		WMA_LOGD("Wake event packet:");
 		qdf_trace_hex_dump(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 				   packet, packet_len);
