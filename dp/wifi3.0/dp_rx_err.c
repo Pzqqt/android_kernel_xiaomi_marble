@@ -758,7 +758,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 }
 
 /**
- * dp_rx_err_deliver() - Function to deliver error frames to OS
+ * dp_rx_process_err_unencrypted() - Function to deliver rxdma unencrypted_err
+ *				     frames to OS
  * @soc: core DP main context
  * @nbuf: buffer pointer
  * @rx_tlv_hdr: start of rx tlv header
@@ -767,8 +768,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
  * Return: None
  */
 static void
-dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
-		  struct dp_peer *peer)
+dp_rx_process_err_unencrypted(struct dp_soc *soc, qdf_nbuf_t nbuf,
+			      uint8_t *rx_tlv_hdr, struct dp_peer *peer)
 {
 	uint32_t pkt_len, l2_hdr_offset;
 	uint16_t msdu_len;
@@ -821,18 +822,38 @@ dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 		return;
 	}
 
+	/*
+	 * Advance the packet start pointer by total size of
+	 * pre-header TLV's
+	 */
+	qdf_nbuf_pull_head(nbuf, l2_hdr_offset + RX_PKT_TLVS_LEN);
+
+	/*
+	 * WAPI cert AP sends rekey frames as unencrypted.
+	 * Thus RXDMA will report unencrypted frame error.
+	 * To pass WAPI cert case, SW needs to pass unencrypted
+	 * rekey frame to stack.
+	 */
+	if (qdf_nbuf_is_ipv4_wapi_pkt(nbuf)) {
+		qdf_nbuf_cb_update_peer_local_id(nbuf, peer->local_id);
+
+		if (qdf_likely(vdev->osif_rx)) {
+			DP_STATS_INC(peer, rx.to_stack.num, 1);
+			vdev->osif_rx(vdev->osif_vdev, nbuf);
+		} else {
+			qdf_nbuf_free(nbuf);
+			DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
+		}
+
+		return;
+	}
+
 	/* Drop & free packet if mesh mode not enabled */
 	if (!vdev->mesh_vdev) {
 		qdf_nbuf_free(nbuf);
 		DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
 		return;
 	}
-
-	/*
-	 * Advance the packet start pointer by total size of
-	 * pre-header TLV's
-	 */
-	qdf_nbuf_pull_head(nbuf, (l2_hdr_offset + RX_PKT_TLVS_LEN));
 
 	if (dp_rx_filter_mesh_packets(vdev, nbuf, rx_tlv_hdr)
 							== QDF_STATUS_SUCCESS) {
@@ -1330,8 +1351,9 @@ done:
 
 				switch (wbm_err_info.rxdma_err_code) {
 				case HAL_RXDMA_ERR_UNENCRYPTED:
-					dp_rx_err_deliver(soc, nbuf,
-							  rx_tlv_hdr, peer);
+					dp_rx_process_err_unencrypted(
+							soc, nbuf,
+							rx_tlv_hdr, peer);
 					nbuf = next;
 					if (peer)
 						dp_peer_unref_del_find_by_id(
