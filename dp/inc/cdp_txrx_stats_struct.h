@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1536,6 +1536,8 @@ enum _ol_ath_param_t {
 	 */
 	OL_ATH_PARAM_BAND_INFO = 399,
 	OL_ATH_PARAM_BW_REDUCE = 400,
+	/* Enable/disable Spatial Reuse */
+	OL_ATH_PARAM_HE_SR = 401,
 };
 
 /* Enumeration of PDEV Configuration parameter */
