@@ -681,7 +681,7 @@ enum sme_qos_statustype sme_qos_setup_req(mac_handle_t mac_handle,
 {
 	struct sme_qos_sessioninfo *pSession;
 	QDF_STATUS lock_status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	enum sme_qos_statustype status;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -755,7 +755,7 @@ enum sme_qos_statustype sme_qos_modify_req(mac_handle_t mac_handle,
 					uint32_t QosFlowID)
 {
 	QDF_STATUS lock_status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	enum sme_qos_statustype status;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -798,7 +798,7 @@ enum sme_qos_statustype sme_qos_release_req(mac_handle_t mac_handle,
 					    uint32_t QosFlowID)
 {
 	QDF_STATUS lock_status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	enum sme_qos_statustype status;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,

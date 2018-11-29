@@ -554,7 +554,7 @@ bool sap_dfs_is_w53_invalid(mac_handle_t mac_handle, uint8_t channel_id)
 {
 	tpAniSirGlobal mac;
 
-	mac = PMAC_STRUCT(mac_handle);
+	mac = MAC_CONTEXT(mac_handle);
 	if (NULL == mac) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("invalid mac"));
@@ -577,7 +577,7 @@ bool sap_dfs_is_channel_in_preferred_location(mac_handle_t mac_handle,
 {
 	tpAniSirGlobal mac;
 
-	mac = PMAC_STRUCT(mac_handle);
+	mac = MAC_CONTEXT(mac_handle);
 	if (NULL == mac) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("invalid mac"));
@@ -989,7 +989,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	mac_ctx = PMAC_STRUCT(mac_handle);
+	mac_ctx = MAC_CONTEXT(mac_handle);
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid MAC context"));
@@ -1157,7 +1157,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 static struct sap_context *
 sap_find_valid_concurrent_session(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 	uint8_t intf = 0;
 	struct sap_context *sap_ctx;
 
@@ -1178,7 +1178,7 @@ sap_find_valid_concurrent_session(mac_handle_t mac_handle)
 
 static QDF_STATUS sap_clear_global_dfs_param(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 
 	if (NULL != sap_find_valid_concurrent_session(mac_handle)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
@@ -1243,7 +1243,7 @@ QDF_STATUS sap_set_session_param(mac_handle_t mac_handle,
 				 struct sap_context *sapctx,
 				 uint32_t session_id)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 	int i;
 	QDF_STATUS status;
 
@@ -1282,7 +1282,7 @@ QDF_STATUS sap_clear_session_param(mac_handle_t mac_handle,
 				   struct sap_context *sapctx,
 				   uint32_t session_id)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 
 	if (sapctx->sessionId >= SAP_MAX_NUM_SESSION)
 		return QDF_STATUS_E_FAILURE;
@@ -1809,7 +1809,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
  */
 static struct sap_context *sap_find_cac_wait_session(mac_handle_t handle)
 {
-	tpAniSirGlobal mac = PMAC_STRUCT(handle);
+	tpAniSirGlobal mac = MAC_CONTEXT(handle);
 	uint8_t i = 0;
 	struct sap_context *sap_ctx;
 
@@ -1840,7 +1840,7 @@ static struct sap_context *sap_find_cac_wait_session(mac_handle_t handle)
 void sap_cac_reset_notify(mac_handle_t mac_handle)
 {
 	uint8_t intf = 0;
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		struct sap_context *sap_context =
@@ -1867,7 +1867,7 @@ void sap_cac_reset_notify(mac_handle_t mac_handle)
 static QDF_STATUS sap_cac_start_notify(mac_handle_t mac_handle)
 {
 	uint8_t intf = 0;
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
@@ -1962,7 +1962,7 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 				     struct csr_roam_info *roamInfo)
 {
 	uint8_t intf;
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	/*
@@ -3509,7 +3509,7 @@ void sap_dfs_cac_timer_callback(void *data)
 			  "In %s invalid mac_handle", __func__);
 		return;
 	}
-	mac = PMAC_STRUCT(mac_handle);
+	mac = MAC_CONTEXT(mac_handle);
 	sapContext = sap_find_cac_wait_session(mac_handle);
 	if (NULL == sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -3695,7 +3695,7 @@ QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sap_ctx)
  */
 uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	uint8_t intf = 0;
 	uint8_t intf_count = 0;
 
@@ -3725,7 +3725,7 @@ uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle)
 bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
 						struct sap_context *sapContext)
 {
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	struct sap_context *sap_context;
 	uint8_t intf = 0;
 
@@ -3769,7 +3769,7 @@ bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
 bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t mac_handle,
 				   struct sap_context *given_sapctx)
 {
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	struct sap_context *sap_ctx;
 	uint8_t intf = 0, scc_dfs_counter = 0;
 

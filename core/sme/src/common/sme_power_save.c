@@ -371,7 +371,7 @@ QDF_STATUS sme_ps_enable_disable(mac_handle_t mac_handle, uint32_t session_id,
 				 enum sme_ps_cmd command)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 
 	status =  sme_enable_sta_ps_check(mac_ctx, session_id);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -393,7 +393,7 @@ QDF_STATUS sme_ps_enable_disable(mac_handle_t mac_handle, uint32_t session_id,
 QDF_STATUS sme_ps_timer_flush_sync(mac_handle_t mac_handle, uint8_t session_id)
 {
 	QDF_STATUS status;
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 	struct ps_params *ps_parm;
 	enum ps_state ps_state;
 	QDF_TIMER_STATE tstate;
@@ -460,7 +460,7 @@ QDF_STATUS sme_ps_uapsd_enable(mac_handle_t mac_handle, uint32_t session_id)
 {
 
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 
 	status =  sme_enable_sta_ps_check(mac_ctx, session_id);
 	if (status != QDF_STATUS_SUCCESS)
@@ -484,7 +484,7 @@ QDF_STATUS sme_ps_uapsd_disable(mac_handle_t mac_handle, uint32_t session_id)
 {
 
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 
 	status = sme_enable_sta_ps_check(mac_ctx, session_id);
 	if (status != QDF_STATUS_SUCCESS)
@@ -611,7 +611,7 @@ QDF_STATUS sme_set_ps_host_offload(mac_handle_t mac_handle,
 {
 	tpSirHostOffloadReq request_buf;
 	struct scheduler_msg msg = {0};
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -667,7 +667,7 @@ QDF_STATUS sme_set_ps_ns_offload(mac_handle_t mac_handle,
 				 tpSirHostOffloadReq request,
 				 uint8_t session_id)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 	tpSirHostOffloadReq request_buf;
 	struct scheduler_msg msg = {0};
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
@@ -741,7 +741,7 @@ QDF_STATUS sme_post_pe_message(tpAniSirGlobal mac_ctx,
 QDF_STATUS sme_ps_enable_auto_ps_timer(mac_handle_t mac_handle,
 				       uint32_t session_id, uint32_t timeout)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
 	QDF_STATUS qdf_status;
@@ -770,7 +770,7 @@ QDF_STATUS sme_ps_enable_auto_ps_timer(mac_handle_t mac_handle,
 QDF_STATUS sme_ps_disable_auto_ps_timer(mac_handle_t mac_handle,
 					uint32_t session_id)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
 	/*
@@ -805,7 +805,7 @@ QDF_STATUS sme_ps_open(mac_handle_t mac_handle)
 
 QDF_STATUS sme_ps_open_per_session(mac_handle_t mac_handle, uint32_t session_id)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
 
@@ -863,7 +863,7 @@ QDF_STATUS sme_ps_close_per_session(mac_handle_t mac_handle,
 				    uint32_t session_id)
 {
 
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -886,7 +886,7 @@ QDF_STATUS sme_ps_close_per_session(mac_handle_t mac_handle,
 bool sme_is_auto_ps_timer_running(mac_handle_t mac_handle,
 				  uint32_t session_id)
 {
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
 	bool status = false;

@@ -1556,7 +1556,7 @@ bool wlan_sap_is_pre_cac_active(mac_handle_t handle)
 	tpAniSirGlobal mac = NULL;
 	int i;
 
-	mac = PMAC_STRUCT(handle);
+	mac = MAC_CONTEXT(handle);
 	if (!mac) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			"%s: Invalid mac context", __func__);
@@ -1586,7 +1586,7 @@ QDF_STATUS wlan_sap_get_pre_cac_vdev_id(mac_handle_t handle, uint8_t *vdev_id)
 	tpAniSirGlobal mac = NULL;
 	uint8_t i;
 
-	mac = PMAC_STRUCT(handle);
+	mac = MAC_CONTEXT(handle);
 	if (!mac) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			"%s: Invalid mac context", __func__);
@@ -1828,7 +1828,7 @@ QDF_STATUS wlansap_get_dfs_ignore_cac(mac_handle_t mac_handle,
 	tpAniSirGlobal mac = NULL;
 
 	if (NULL != mac_handle) {
-		mac = PMAC_STRUCT(mac_handle);
+		mac = MAC_CONTEXT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid mac_handle pointer", __func__);
@@ -1845,7 +1845,7 @@ QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t mac_handle,
 	tpAniSirGlobal mac = NULL;
 
 	if (NULL != mac_handle) {
-		mac = PMAC_STRUCT(mac_handle);
+		mac = MAC_CONTEXT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid mac_handle pointer", __func__);
@@ -1866,7 +1866,7 @@ wlansap_set_dfs_restrict_japan_w53(mac_handle_t mac_handle,
 	enum dfs_reg dfs_region;
 
 	if (NULL != mac_handle) {
-		mac = PMAC_STRUCT(mac_handle);
+		mac = MAC_CONTEXT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid mac_handle pointer", __func__);
@@ -1925,7 +1925,7 @@ wlan_sap_set_channel_avoidance(mac_handle_t mac_handle,
 	tpAniSirGlobal mac_ctx = NULL;
 
 	if (NULL != mac_handle) {
-		mac_ctx = PMAC_STRUCT(mac_handle);
+		mac_ctx = MAC_CONTEXT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP,
 			  QDF_TRACE_LEVEL_ERROR,
@@ -1962,7 +1962,7 @@ wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle,
 	enum dfs_reg dfs_region;
 
 	if (NULL != mac_handle) {
-		mac = PMAC_STRUCT(mac_handle);
+		mac = MAC_CONTEXT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid mac_handle pointer", __func__);
@@ -2004,7 +2004,7 @@ QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t mac_handle,
 	tpAniSirGlobal mac = NULL;
 
 	if (NULL != mac_handle) {
-		mac = PMAC_STRUCT(mac_handle);
+		mac = MAC_CONTEXT(mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid mac_handle pointer", __func__);
@@ -2180,7 +2180,7 @@ void wlansap_extend_to_acs_range(mac_handle_t mac_handle,
 	uint8_t tmp_startChannelNum = 0, tmp_endChannelNum = 0;
 	tpAniSirGlobal mac_ctx;
 
-	mac_ctx = PMAC_STRUCT(mac_handle);
+	mac_ctx = MAC_CONTEXT(mac_handle);
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"%s: Invalid mac_ctx", __func__);
@@ -2436,7 +2436,7 @@ void wlan_sap_enable_phy_error_logs(mac_handle_t mac_handle,
 {
 	int error;
 
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 
 	mac_ctx->sap.enable_dfs_phy_error_logs = !!enable_log;
 	tgt_dfs_control(mac_ctx->pdev, DFS_SET_DEBUG_LEVEL, &enable_log,
@@ -2459,7 +2459,7 @@ QDF_STATUS wlansap_set_tx_leakage_threshold(mac_handle_t mac_handle,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	mac = PMAC_STRUCT(mac_handle);
+	mac = MAC_CONTEXT(mac_handle);
 	tgt_dfs_set_tx_leakage_threshold(mac->pdev, tx_leakage_threshold);
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: leakage_threshold %d", __func__,

@@ -335,7 +335,7 @@ static void sap_process_avoid_ie(mac_handle_t mac_handle,
 	tpAniSirGlobal mac_ctx = NULL;
 	tSapSpectChInfo *spect_ch = NULL;
 
-	mac_ctx = PMAC_STRUCT(mac_handle);
+	mac_ctx = MAC_CONTEXT(mac_handle);
 	spect_ch = spect_info->pSpectCh;
 	node = sme_scan_result_get_first(mac_handle, scan_result);
 
@@ -422,7 +422,7 @@ void sap_update_unsafe_channel_list(mac_handle_t mac_handle,
 			  "qdf_ctx is NULL");
 		return;
 	}
-	mac_ctx = PMAC_STRUCT(mac_handle);
+	mac_ctx = MAC_CONTEXT(mac_handle);
 
 	/* Flush, default set all channel safe */
 	for (i = 0; i < NUM_CHANNELS; i++) {
@@ -575,7 +575,7 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 	tSapSpectChInfo *pSpectCh = NULL;
 	uint8_t *pChans = NULL;
 	uint16_t channelnum = 0;
-	tpAniSirGlobal mac = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
 	bool chSafe = true;
 #ifdef FEATURE_WLAN_CH_AVOID
 	uint16_t i;
@@ -2541,7 +2541,7 @@ static uint8_t sap_select_channel_no_scan_result(mac_handle_t mac_handle,
 	uint32_t end_ch_num = sap_ctx->acs_cfg->end_ch;
 	tpAniSirGlobal mac_ctx = NULL;
 
-	mac_ctx = PMAC_STRUCT(mac_handle);
+	mac_ctx = MAC_CONTEXT(mac_handle);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("start - end: %d - %d"), start_ch_num, end_ch_num);
@@ -2644,7 +2644,7 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 #endif
 	tpAniSirGlobal mac_ctx;
 
-	mac_ctx = PMAC_STRUCT(mac_handle);
+	mac_ctx = MAC_CONTEXT(mac_handle);
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "In %s, Running SAP Ch Select", __func__);
 

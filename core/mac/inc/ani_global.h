@@ -60,9 +60,6 @@ static inline tpAniSirGlobal MAC_CONTEXT(mac_handle_t handle)
 	return (tpAniSirGlobal)handle;
 }
 
-/* legacy definition */
-#define PMAC_STRUCT(handle)  MAC_CONTEXT(handle)
-
 /**
  * MAC_HANDLE() - Convert a mac context into an opaque mac handle
  * @mac: MAC context to be converted
@@ -70,7 +67,7 @@ static inline tpAniSirGlobal MAC_CONTEXT(mac_handle_t handle)
  * Given a mac context this function will return the opaque mac handle
  * that is associated with that handle.
  *
- * This is the inverse function of PMAC_STRUCT()
+ * This is the inverse function of MAC_CONTEXT()
  *
  * Return: opaque handle for @mac
  */

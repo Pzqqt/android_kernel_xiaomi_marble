@@ -98,7 +98,7 @@ void sap_config_acs_result(mac_handle_t mac_handle,
 {
 	uint32_t channel = sap_ctx->acs_cfg->pri_ch;
 	struct ch_params ch_params = {0};
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 
 	ch_params.ch_width = sap_ctx->acs_cfg->ch_width;
 	wlan_reg_set_channel_params(mac_ctx->pdev, channel, sec_ch,
@@ -415,7 +415,7 @@ wlansap_roam_process_dfs_chansw_update(mac_handle_t mac_handle,
 {
 	uint8_t intf;
 	QDF_STATUS qdf_status;
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(mac_handle);
+	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
 	uint8_t dfs_beacon_start_req = 0;
 	bool sap_scc_dfs;
 
