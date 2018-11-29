@@ -751,6 +751,7 @@ static inline void dp_print_tx_peer_rate_stats_tlv(uint32_t *tag_buf)
 				" %d:%d,", i, dp_stats_buf->tx_bw[i]);
 	}
 	DP_TRACE_STATS(FATAL, "tx_bw = %s ", str_buf);
+	index = 0;
 	qdf_mem_set(str_buf, DP_MAX_STRING_LEN, 0x0);
 	for (i = 0; i <  HTT_TX_PDEV_STATS_NUM_MCS_COUNTERS; i++) {
 		index += qdf_snprint(&str_buf[index],
