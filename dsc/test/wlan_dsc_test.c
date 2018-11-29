@@ -552,21 +552,12 @@ uint32_t dsc_unit_test(void)
 {
 	uint32_t errors = 0;
 
-	dsc_debug("Starting dsc component tests");
-
 	errors += dsc_test_create_destroy();
 	errors += dsc_test_driver_trans_blocks();
 	errors += dsc_test_psoc_trans_blocks();
 	errors += dsc_test_vdev_trans_blocks();
 	errors += dsc_test_trans_wait();
 
-	if (errors) {
-		dsc_err("FAIL: %u dsc component tests failed!", errors);
-		return errors;
-	}
-
-	dsc_info("PASS: dsc component tests passed successfully");
-
-	return 0;
+	return errors;
 }
 
