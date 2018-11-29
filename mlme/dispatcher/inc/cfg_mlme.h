@@ -26,6 +26,7 @@
 #include "cfg_mlme_chainmask.h"
 #include "cfg_mlme_edca_params.h"
 #include "cfg_mlme_generic.h"
+#include "cfg_mlme_ibss.h"
 #include "cfg_mlme_acs.h"
 #include "cfg_mlme_power.h"
 #include "cfg_mlme_ht_caps.h"
@@ -72,6 +73,7 @@
 	CFG_GENERIC_ALL \
 	CFG_HT_CAPS_ALL \
 	CFG_HE_CAPS_ALL \
+	CFG_IBSS_ALL \
 	CFG_LFR_ALL \
 	CFG_MBO_ALL \
 	CFG_MLME_POWER_ALL \
