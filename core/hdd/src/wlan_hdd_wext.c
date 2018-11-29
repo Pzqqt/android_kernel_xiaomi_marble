@@ -5388,32 +5388,73 @@ static int iw_setnone_get_threeint(struct net_device *dev,
 }
 
 #ifdef WLAN_UNIT_TEST
-static int hdd_we_unit_test(struct hdd_context *hdd_ctx, const char *component)
+typedef uint32_t (*hdd_ut_callback)(void);
+
+struct hdd_ut_entry {
+	const hdd_ut_callback callback;
+	const char *name;
+};
+
+struct hdd_ut_entry hdd_ut_entries[] = {
+	{ .name = "dsc", .callback = dsc_unit_test },
+};
+
+#define hdd_for_each_ut_entry(cursor) \
+	for (cursor = hdd_ut_entries; \
+	     cursor < hdd_ut_entries + ARRAY_SIZE(hdd_ut_entries); \
+	     cursor++)
+
+static struct hdd_ut_entry *hdd_ut_lookup(const char *name)
 {
-	uint32_t errors = 0;
-	bool all = !component || !component[0];
+	struct hdd_ut_entry *entry;
 
-	if (all)
-		hdd_info("Starting unit tests for all components");
-	else
-		hdd_info("Starting unit tests for component '%s'", component);
-
-	if (all || qdf_str_eq(component, "dsc"))
-		errors += dsc_unit_test();
-
-	/* add future tests here */
-
-	if (errors) {
-		hdd_err("Unit tests failed with %u errors", errors);
-		return -EPERM;
+	hdd_for_each_ut_entry(entry) {
+		if (qdf_str_eq(entry->name, name))
+			return entry;
 	}
 
-	hdd_info("Unit tests passed successfully");
+	return NULL;
+}
 
-	return 0;
+static uint32_t hdd_ut_single(const struct hdd_ut_entry *entry)
+{
+	uint32_t errors;
+
+	hdd_nofl_info("START: '%s'", entry->name);
+
+	errors = entry->callback();
+	if (errors)
+		hdd_nofl_err("FAIL: '%s' with %u errors", entry->name, errors);
+	else
+		hdd_nofl_info("PASS: '%s'", entry->name);
+
+	return errors;
+}
+
+static int hdd_we_unit_test(struct hdd_context *hdd_ctx, const char *name)
+{
+	struct hdd_ut_entry *entry;
+	uint32_t errors = 0;
+
+	hdd_nofl_info("Unit tests begin");
+
+	if (!name || !name[0] || qdf_str_eq(name, "all")) {
+		hdd_for_each_ut_entry(entry)
+			errors += hdd_ut_single(entry);
+	} else {
+		entry = hdd_ut_lookup(name);
+		if (entry)
+			errors += hdd_ut_single(entry);
+		else
+			hdd_nofl_err("Unit test '%s' not found", name);
+	}
+
+	hdd_nofl_info("Unit tests complete");
+
+	return errors ? -EPERM : 0;
 }
 #else
-static int hdd_we_unit_test(struct hdd_context *hdd_ctx, const char *component)
+static int hdd_we_unit_test(struct hdd_context *hdd_ctx, const char *name)
 {
 	return -EOPNOTSUPP;
 }
