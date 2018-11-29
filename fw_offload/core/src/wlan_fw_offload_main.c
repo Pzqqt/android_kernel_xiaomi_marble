@@ -272,6 +272,46 @@ static void ucfg_fwol_fetch_tsf_gpio_pin(struct wlan_objmgr_psoc *psoc,
 #endif
 
 /**
+ * ucfg_fwol_init_tsf_ptp_options: Populate the tsf_ptp_options from cfg
+ * @psoc: The global psoc handler
+ * @fwol_cfg: The cfg structure
+ *
+ * Return: none
+ */
+#if defined(WLAN_FEATURE_TSF) && defined(WLAN_FEATURE_TSF_PLUS)
+static void ucfg_fwol_init_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
+					   struct wlan_fwol_cfg *fwol_cfg)
+{
+	fwol_cfg->tsf_ptp_options = cfg_get(psoc, CFG_SET_TSF_PTP_OPT);
+}
+#else
+static void ucfg_fwol_init_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
+					   struct wlan_fwol_cfg *fwol_cfg)
+{
+}
+#endif
+
+/**
+ * ucfg_fwol_init_sae_cfg: Populate the sae control config from cfg
+ * @psoc: The global psoc handler
+ * @fwol_cfg: The cfg structure
+ *
+ * Return: none
+ */
+#ifdef WLAN_FEATURE_SAE
+static void ucfg_fwol_init_sae_cfg(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_fwol_cfg *fwol_cfg)
+{
+	fwol_cfg->sae_enable = cfg_get(psoc, CFG_IS_SAE_ENABLED);
+}
+#else
+static void ucfg_fwol_init_sae_cfg(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_fwol_cfg *fwol_cfg)
+{
+}
+#endif
+
+/**
  * ucfg_fwol_fetch_ra_filter: Populate the RA filter enabled or not from cfg
  * @psoc: The global psoc handler
  * @fwol_cfg: The cfg structure
@@ -333,6 +373,13 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 			      &enable_fw_module_log_level_num);
 	fwol_cfg->enable_fw_module_log_level_num =
 				(uint8_t)enable_fw_module_log_level_num;
+	ucfg_fwol_init_tsf_ptp_options(psoc, fwol_cfg);
+	ucfg_fwol_init_sae_cfg(psoc, fwol_cfg);
+	fwol_cfg->lprx_enable = cfg_get(psoc, CFG_LPRX);
+	fwol_cfg->gcmp_enable = cfg_get(psoc, CFG_ENABLE_GCMP);
+	fwol_cfg->enable_tx_sch_delay = cfg_get(psoc, CFG_TX_SCH_DELAY);
+	fwol_cfg->enable_secondary_rate = cfg_get(psoc,
+						  CFG_ENABLE_SECONDARY_RATE);
 	ucfg_fwol_fetch_ra_filter(psoc, fwol_cfg);
 	ucfg_fwol_fetch_tsf_gpio_pin(psoc, fwol_cfg);
 	ucfg_fwol_fetch_dhcp_server_settings(psoc, fwol_cfg);
