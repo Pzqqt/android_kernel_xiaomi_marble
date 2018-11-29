@@ -1966,6 +1966,22 @@ QDF_STATUS sme_power_debug_stats_req(
 		void *power_stats_context);
 #endif
 
+#ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
+/**
+ * sme_beacon_debug_stats_req() - SME API to collect beacon debug stats
+ * @vdev_id: Vdev id on which stats is being requested
+ * @callback_fn: Pointer to the callback function for beacon stats event
+ * @beacon_stats_context: Pointer to context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_beacon_debug_stats_req(
+		mac_handle_t mac_handle, uint32_t vdev_id,
+		void (*callback_fn)(struct bcn_reception_stats_rsp
+				    *response, void *context),
+		void *beacon_stats_context);
+#endif
+
 /**
  * sme_get_sar_power_limits() - get SAR limits
  * @mac_handle: Opaque handle to the global MAC context

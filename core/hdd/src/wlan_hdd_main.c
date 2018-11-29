@@ -4436,6 +4436,8 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx,
 	qdf_spinlock_destroy(&adapter->vdev_lock);
 
 	wlan_hdd_debugfs_csr_deinit(adapter);
+	if (adapter->device_mode == QDF_STA_MODE)
+		hdd_sysfs_destroy_adapter_root_obj(adapter);
 
 	hdd_debugfs_exit(adapter);
 
@@ -5105,7 +5107,9 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 					WLAN_CONTROL_PATH);
 
 		hdd_nud_init_tracking(adapter);
-
+		if (adapter->device_mode == QDF_STA_MODE ||
+		    adapter->device_mode == QDF_P2P_DEVICE_MODE)
+			hdd_sysfs_create_adapter_root_obj(adapter);
 		qdf_mutex_create(&adapter->disconnection_status_lock);
 
 		break;

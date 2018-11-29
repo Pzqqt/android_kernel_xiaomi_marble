@@ -5376,6 +5376,66 @@ int wma_unified_power_debug_stats_event_handler(void *handle,
 	return 0;
 }
 #endif
+#ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
+int wma_unified_beacon_debug_stats_event_handler(void *handle,
+						 uint8_t *cmd_param_info,
+						 uint32_t len)
+{
+	WMI_VDEV_BCN_RECEPTION_STATS_EVENTID_param_tlvs *param_tlvs;
+	struct bcn_reception_stats_rsp *bcn_reception_stats;
+	wmi_vdev_bcn_recv_stats_fixed_param *param_buf;
+	struct mac_context *mac =
+			(struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
+
+	param_tlvs =
+	   (WMI_VDEV_BCN_RECEPTION_STATS_EVENTID_param_tlvs *)cmd_param_info;
+	if (!param_tlvs) {
+		WMA_LOGA("%s: Invalid stats event", __func__);
+		return -EINVAL;
+	}
+
+	param_buf = (wmi_vdev_bcn_recv_stats_fixed_param *)
+		param_tlvs->fixed_param;
+	if (!param_buf || !mac || !mac->sme.beacon_stats_resp_callback) {
+		WMA_LOGD("%s: NULL mac ptr or HDD callback is null", __func__);
+		return -EINVAL;
+	}
+
+	if (!param_buf) {
+		WMA_LOGD("%s: NULL beacon stats event fixed param", __func__);
+		return -EINVAL;
+	}
+
+	bcn_reception_stats = qdf_mem_malloc(sizeof(*bcn_reception_stats));
+	if (!bcn_reception_stats)
+		return -ENOMEM;
+
+	bcn_reception_stats->total_bcn_cnt = param_buf->total_bcn_cnt;
+	bcn_reception_stats->total_bmiss_cnt = param_buf->total_bmiss_cnt;
+	bcn_reception_stats->vdev_id = param_buf->vdev_id;
+
+	WMA_LOGD("Total beacon count %d total beacon miss count %d vdev_id %d",
+		 param_buf->total_bcn_cnt,
+		 param_buf->total_bmiss_cnt,
+		 param_buf->vdev_id);
+
+	qdf_mem_copy(bcn_reception_stats->bmiss_bitmap,
+		     param_buf->bmiss_bitmap,
+		     MAX_BCNMISS_BITMAP * sizeof(uint32_t));
+
+	mac->sme.beacon_stats_resp_callback(bcn_reception_stats,
+			mac->sme.beacon_stats_context);
+	qdf_mem_free(bcn_reception_stats);
+	return 0;
+}
+#else
+int wma_unified_beacon_debug_stats_event_handler(void *handle,
+						 uint8_t *cmd_param_info,
+						  uint32_t len)
+{
+	return 0;
+}
+#endif
 
 int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 				uint32_t len)

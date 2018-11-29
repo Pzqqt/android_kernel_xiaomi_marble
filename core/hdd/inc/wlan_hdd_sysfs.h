@@ -91,4 +91,31 @@ void hdd_sysfs_destroy_powerstats_interface(void)
 {
 }
 #endif
+
+#ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
+/**
+ * hdd_sysfs_create_adapter_root_obj() - create adapter sysfs entries
+ * @adapter: HDD adapter
+ *
+ * Return: none
+ */
+void hdd_sysfs_create_adapter_root_obj(struct hdd_adapter *adapter);
+/**
+ * hdd_sysfs_destroy_adapter_root_obj() - Destroy adapter sysfs entries
+ * @adapter: HDD adapter
+ *
+ * Return: none
+ */
+void hdd_sysfs_destroy_adapter_root_obj(struct hdd_adapter *adapter);
+#else
+static inline
+void hdd_sysfs_create_adapter_root_obj(struct hdd_adapter *adapter)
+{
+}
+
+static inline
+void hdd_sysfs_destroy_adapter_root_obj(struct hdd_adapter *adapter)
+{
+}
+#endif
 #endif

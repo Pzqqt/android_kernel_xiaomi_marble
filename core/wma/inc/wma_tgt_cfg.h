@@ -41,6 +41,7 @@
  * @is_fw_mawc_capable: Motion Aided Wireless Connectivity feature
  * @twt_requestor: TWT requestor capability
  * @twt_responder: TWT responder capability
+ * @bcn_reception_stats: Beacon Reception stats capability
  */
 struct wma_tgt_services {
 	uint32_t sta_power_save;
@@ -72,6 +73,7 @@ struct wma_tgt_services {
 	bool twt_requestor;
 	bool twt_responder;
 	bool obss_scan_offload;
+	bool bcn_reception_stats;
 };
 
 /**

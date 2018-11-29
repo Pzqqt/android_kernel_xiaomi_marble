@@ -3912,6 +3912,26 @@ struct power_stats_response {
 };
 #endif
 
+#ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
+#define MAX_BCNMISS_BITMAP 8
+/**
+ * struct bcn_reception_stats_rsp - beacon stats response
+ * @total_bcn_cnt: total beacon count (tbtt instances)
+ * @total_bmiss_cnt: Total beacon miss count in last 255 beacons, max 255
+ * @bmiss_bitmap: This bitmap indicates the status of the last 255 beacons.
+ * If a bit is set, that means the corresponding beacon was missed.
+ * Bit 0 of bmiss_bitmap[0] represents the most recent beacon.
+ * The total_bcn_cnt field indicates how many bits within bmiss_bitmap
+ * are valid.
+ */
+struct bcn_reception_stats_rsp {
+	uint32_t vdev_id;
+	uint32_t total_bcn_cnt;
+	uint32_t total_bmiss_cnt;
+	uint32_t bmiss_bitmap[MAX_BCNMISS_BITMAP];
+};
+#endif
+
 /**
  * struct lfr_firmware_status - LFR status in firmware
  * @is_disabled: Is LFR disabled in FW

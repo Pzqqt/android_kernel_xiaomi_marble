@@ -721,3 +721,5 @@ ifeq ($(CONFIG_CMN_VDEV_MLME_SM), y)
 #Enable STATE MACHINE HISTORY
 CONFIG_SM_ENG_HIST := n
 endif
+#Enable Beacon Reception Stats
+CONFIG_FEATURE_BECN_STATS := y

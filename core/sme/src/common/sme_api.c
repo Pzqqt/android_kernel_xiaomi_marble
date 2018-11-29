@@ -11904,6 +11904,56 @@ QDF_STATUS sme_power_debug_stats_req(
 }
 #endif
 
+#ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
+QDF_STATUS sme_beacon_debug_stats_req(
+		mac_handle_t mac_handle, uint32_t vdev_id,
+		void (*callback_fn)(struct bcn_reception_stats_rsp
+				    *response, void *context),
+		void *beacon_stats_context)
+{
+	QDF_STATUS status;
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	uint32_t *val;
+	struct scheduler_msg msg = {0};
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		if (!callback_fn) {
+			sme_err("Indication callback did not registered");
+			sme_release_global_lock(&mac_ctx->sme);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		if (!mac_ctx->bcn_reception_stats) {
+			sme_err("Beacon Reception stats not supported by FW");
+			sme_release_global_lock(&mac_ctx->sme);
+			return QDF_STATUS_E_NOSUPPORT;
+		}
+
+		val = qdf_mem_malloc(sizeof(*val));
+		if (!val) {
+			sme_release_global_lock(&mac_ctx->sme);
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		*val = vdev_id;
+		mac_ctx->sme.beacon_stats_context = beacon_stats_context;
+		mac_ctx->sme.beacon_stats_resp_callback = callback_fn;
+		msg.bodyptr = val;
+		msg.type = WMA_BEACON_DEBUG_STATS_REQ;
+		status = scheduler_post_message(QDF_MODULE_ID_SME,
+						QDF_MODULE_ID_WMA,
+						QDF_MODULE_ID_WMA, &msg);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			sme_err("not able to post WMA_BEACON_DEBUG_STATS_REQ");
+			qdf_mem_free(val);
+		}
+		sme_release_global_lock(&mac_ctx->sme);
+	}
+	return status;
+}
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * sme_update_roam_key_mgmt_offload_enabled() - enable/disable key mgmt offload
@@ -13794,6 +13844,7 @@ void sme_update_tgt_services(mac_handle_t mac_handle,
 	sme_debug("pmf_offload: %d fils_roam support %d 11k_offload %d",
 		  mac_ctx->pmf_offload, mac_ctx->is_fils_roaming_supported,
 		  mac_ctx->is_11k_offload_supported);
+	mac_ctx->bcn_reception_stats = cfg->bcn_reception_stats;
 }
 
 /**

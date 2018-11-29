@@ -882,6 +882,7 @@ struct mac_context {
 	tDot11fIEhe_cap he_cap_5g;
 #endif
 	bool obss_scan_offload;
+	bool bcn_reception_stats;
 };
 
 #ifdef FEATURE_WLAN_TDLS

@@ -3471,6 +3471,13 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 				wma_unified_power_debug_stats_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 #endif
+#ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
+	/* register for beacon stats event */
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+				wmi_vdev_bcn_reception_stats_event_id,
+				wma_unified_beacon_debug_stats_event_handler,
+				WMA_RX_SERIALIZER_CTX);
+#endif
 
 	/* register for linkspeed response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -4996,6 +5003,8 @@ static inline void wma_update_target_services(struct wmi_unified *wmi_handle,
 		cfg->twt_responder = true;
 	if (wmi_service_enabled(wmi_handle, wmi_service_obss_scan))
 		cfg->obss_scan_offload = true;
+	if (wmi_service_enabled(wmi_handle, wmi_service_beacon_reception_stats))
+		cfg->bcn_reception_stats = true;
 }
 
 /**
@@ -7498,6 +7507,55 @@ static QDF_STATUS wma_process_power_debug_stats_req(tp_wma_handle wma_handle)
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+#ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
+static QDF_STATUS wma_process_beacon_debug_stats_req(tp_wma_handle wma_handle,
+						     uint32_t *vdev_id)
+{
+	wmi_vdev_get_bcn_recv_stats_cmd_fixed_param *cmd;
+	int32_t len;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	int ret;
+
+	WMA_LOGD("%s: Enter", __func__);
+	if (!wma_handle) {
+		WMA_LOGE("%s: input pointer is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
+	if (!buf)
+		return QDF_STATUS_E_NOMEM;
+
+	buf_ptr = (u_int8_t *)wmi_buf_data(buf);
+	cmd = (wmi_vdev_get_bcn_recv_stats_cmd_fixed_param *)buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_get_bcn_recv_stats_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+			wmi_vdev_get_bcn_recv_stats_cmd_fixed_param));
+	cmd->vdev_id = *vdev_id;
+
+	WMA_LOGD("BEACON_DEBUG_STATS - Get Request Params; vdev id - %d",
+		 cmd->vdev_id);
+	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
+				   WMI_VDEV_GET_BCN_RECEPTION_STATS_CMDID);
+	if (ret) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	WMA_LOGD("%s: Exit", __func__);
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS wma_process_beacon_debug_stats_req(tp_wma_handle wma_handle,
+						     uint32_t *vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * wma_set_arp_req_stats() - process set arp stats request command to fw
@@ -8572,6 +8630,10 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 	case SIR_HAL_POWER_DEBUG_STATS_REQ:
 		wma_process_power_debug_stats_req(wma_handle);
+		break;
+	case WMA_BEACON_DEBUG_STATS_REQ:
+		wma_process_beacon_debug_stats_req(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_GET_RCPI_REQ:
 		wma_get_rcpi_req(wma_handle,

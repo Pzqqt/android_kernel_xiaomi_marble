@@ -201,7 +201,7 @@ static ssize_t __show_device_power_stats(struct kobject *kobj,
 					   cookie);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("chip power stats request failed");
-		ret_cnt = -EINVAL;
+		ret_cnt = qdf_status_to_os_return(status);
 		goto cleanup;
 	}
 
@@ -257,6 +257,154 @@ static ssize_t show_device_power_stats(struct kobject *kobj,
 
 	return ret_val;
 }
+
+#ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
+struct beacon_reception_stats_priv {
+	struct bcn_reception_stats_rsp beacon_stats;
+};
+
+static void hdd_beacon_debugstats_cb(struct bcn_reception_stats_rsp
+				     *response,
+				     void *context)
+{
+	struct osif_request *request;
+	struct beacon_reception_stats_priv *priv;
+
+	hdd_enter();
+
+	request = osif_request_get(context);
+	if (!request) {
+		hdd_err("Obsolete request");
+		return;
+	}
+
+	priv = osif_request_priv(request);
+
+	/* copy fixed-sized data */
+	priv->beacon_stats = *response;
+
+	osif_request_complete(request);
+	osif_request_put(request);
+	hdd_exit();
+}
+
+static ssize_t __show_beacon_reception_stats(struct device *dev, char *buf)
+{
+	struct net_device *netdev =
+			qdf_container_of(dev, struct net_device, dev);
+	struct hdd_adapter *adapter = (netdev_priv(netdev));
+	struct bcn_reception_stats_rsp *beacon_stats;
+	int ret_val, j;
+	void *cookie;
+	struct osif_request *request;
+	struct beacon_reception_stats_priv *priv;
+	static const struct osif_request_params params = {
+		.priv_size = sizeof(*priv),
+		.timeout_ms = WLAN_WAIT_TIME_STATS,
+	};
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	QDF_STATUS status;
+
+	ret_val = wlan_hdd_validate_context(hdd_ctx);
+	if (ret_val) {
+		hdd_err("hdd ctx is invalid");
+		return ret_val;
+	}
+
+	if (!adapter || adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
+		hdd_err("Invalid adapter or adapter has invalid magic");
+		return -EINVAL;
+	}
+
+	if (!test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags)) {
+		hdd_err("Interface is not enabled");
+		return -EINVAL;
+	}
+
+	if (!(adapter->device_mode == QDF_STA_MODE ||
+	      adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
+		hdd_err("Beacon Reception Stats only supported in STA or P2P CLI modes!");
+		return -ENOTSUPP;
+	}
+
+	if (!hdd_adapter_is_connected_sta(adapter)) {
+		hdd_err("Adapter is not in connected state");
+		return -EINVAL;
+	}
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		return -ENOMEM;
+	}
+	cookie = osif_request_cookie(request);
+
+	status = sme_beacon_debug_stats_req(hdd_ctx->mac_handle,
+					    adapter->session_id,
+					   hdd_beacon_debugstats_cb,
+					   cookie);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("chip power stats request failed");
+		ret_val = -EINVAL;
+		goto cleanup;
+	}
+
+	ret_val = osif_request_wait_for_response(request);
+	if (ret_val) {
+		hdd_err("Target response timed out Power stats");
+		ret_val = -ETIMEDOUT;
+		goto cleanup;
+	}
+	priv = osif_request_priv(request);
+	beacon_stats = &priv->beacon_stats;
+
+	ret_val += scnprintf(buf, PAGE_SIZE,
+			"BEACON RECEPTION STATS\n=================\n"
+			"vdev id: %u\n"
+			"Total Beacon Count: %u\n"
+			"Total Beacon Miss Count: %u\n",
+			beacon_stats->vdev_id,
+			beacon_stats->total_bcn_cnt,
+			beacon_stats->total_bmiss_cnt);
+
+	ret_val += scnprintf(buf + ret_val, PAGE_SIZE - ret_val,
+			     "Beacon Miss Bit map ");
+
+	for (j = 0; j < MAX_BCNMISS_BITMAP; j++) {
+		if ((PAGE_SIZE - ret_val) > 0) {
+			ret_val += scnprintf(buf + ret_val,
+					     PAGE_SIZE - ret_val,
+					     "[0x%x] ",
+					     beacon_stats->bmiss_bitmap[j]);
+		}
+	}
+
+	if ((PAGE_SIZE - ret_val) > 0)
+		ret_val += scnprintf(buf + ret_val,
+				     PAGE_SIZE - ret_val,
+				     "\n");
+cleanup:
+	osif_request_put(request);
+	hdd_exit();
+	return ret_val;
+}
+
+static ssize_t show_beacon_reception_stats(struct device *dev,
+					   struct device_attribute *attr,
+					   char *buf)
+{
+	ssize_t ret_val;
+
+	cds_ssr_protect(__func__);
+	ret_val = __show_beacon_reception_stats(dev, buf);
+	cds_ssr_unprotect(__func__);
+
+	return ret_val;
+}
+
+static DEVICE_ATTR(beacon_stats, 0444,
+		   show_beacon_reception_stats, NULL);
+#endif
 
 static struct kobj_attribute dr_ver_attribute =
 	__ATTR(driver_version, 0440, show_driver_version, NULL);
@@ -375,3 +523,33 @@ void hdd_sysfs_destroy_driver_root_obj(void)
 		driver_kobject = NULL;
 	}
 }
+
+#ifdef WLAN_FEATURE_BEACON_RECEPTION_STATS
+static int hdd_sysfs_create_bcn_reception_interface(struct hdd_adapter
+						     *adapter)
+{
+	int error;
+
+	error = device_create_file(&adapter->dev->dev, &dev_attr_beacon_stats);
+	if (error)
+		hdd_err("could not create beacon stats sysfs file");
+
+	return error;
+}
+
+void hdd_sysfs_create_adapter_root_obj(struct hdd_adapter *adapter)
+{
+	hdd_sysfs_create_bcn_reception_interface(adapter);
+}
+
+static void hdd_sysfs_destroy_bcn_reception_interface(struct hdd_adapter
+						      *adapter)
+{
+	device_remove_file(&adapter->dev->dev, &dev_attr_beacon_stats);
+}
+
+void hdd_sysfs_destroy_adapter_root_obj(struct hdd_adapter *adapter)
+{
+	hdd_sysfs_destroy_bcn_reception_interface(adapter);
+}
+#endif
