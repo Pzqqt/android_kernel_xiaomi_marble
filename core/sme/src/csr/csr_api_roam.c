@@ -19774,22 +19774,24 @@ static enum wlan_serialization_cmd_type csr_get_roam_cmd_type(
 
 	switch (sme_cmd->u.roamCmd.roamReason) {
 	case eCsrForcedDisassoc:
-		cmd_type = WLAN_SER_CMD_FORCE_DISASSOC;
+	case eCsrForcedDeauth:
+	case eCsrForcedDisassocMICFailure:
+		cmd_type = WLAN_SER_CMD_VDEV_DISCONNECT;
 		break;
 	case eCsrHddIssued:
-		cmd_type = WLAN_SER_CMD_HDD_ISSUED;
-		break;
-	case eCsrForcedDisassocMICFailure:
-		cmd_type = WLAN_SER_CMD_FORCE_DISASSOC_MIC_FAIL;
+		if (csr_is_bss_type_ibss(
+			sme_cmd->u.roamCmd.roamProfile.BSSType) ||
+		    CSR_IS_INFRA_AP(&sme_cmd->u.roamCmd.roamProfile) ||
+		    CSR_IS_NDI(&sme_cmd->u.roamCmd.roamProfile))
+			cmd_type = WLAN_SER_CMD_VDEV_START_BSS;
+		else
+			cmd_type = WLAN_SER_CMD_VDEV_CONNECT;
 		break;
 	case eCsrHddIssuedReassocToSameAP:
 		cmd_type = WLAN_SER_CMD_HDD_ISSUE_REASSOC_SAME_AP;
 		break;
 	case eCsrSmeIssuedReassocToSameAP:
 		cmd_type = WLAN_SER_CMD_SME_ISSUE_REASSOC_SAME_AP;
-		break;
-	case eCsrForcedDeauth:
-		cmd_type = WLAN_SER_CMD_FORCE_DEAUTH;
 		break;
 	case eCsrSmeIssuedDisassocForHandoff:
 		cmd_type =
@@ -19918,8 +19920,7 @@ QDF_STATUS csr_set_serialization_params_to_cmd(tpAniSirGlobal mac_ctx,
 	 * is set to 10 seconds. For all other commands its 30 seconds
 	 */
 	if ((cmd->vdev->vdev_mlme.vdev_opmode == QDF_SAP_MODE) &&
-	    ((cmd->cmd_type == WLAN_SER_CMD_HDD_ISSUED) ||
-	    (cmd->cmd_type == WLAN_SER_CMD_VDEV_STOP_BSS)))
+	    (cmd->cmd_type == WLAN_SER_CMD_VDEV_STOP_BSS))
 		cmd->cmd_timeout_duration = SME_START_STOP_BSS_CMD_TIMEOUT;
 	else if (cmd->cmd_type == WLAN_SER_CMD_DEL_STA_SESSION)
 		cmd->cmd_timeout_duration = SME_VDEV_DELETE_CMD_TIMEOUT;
