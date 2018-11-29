@@ -4863,7 +4863,12 @@ enum hdd_link_speed_rpt_type {
  *   OUI data Len : 00
  *   Info Mask : 35 - Check for NSS, VHT Caps and Band
  *   Capabilities: 6C - (NSS == 3 or 4) && VHT Caps Preset && Band == 2G
- *
+ * OUI 5 : 001018
+ *   OUI data Len : 06
+ *   OUI Data : 02FF009C0000
+ *   OUI data Mask: BC - 10111100
+ *   Info Mask : 25 - Check for NSS and Band
+ *   Capabilities: 48 - NSS == 4 && Band == 2G
  * This ini is used to specify the AP OUIs with which only 1x1 connection
  * is allowed.
  *
@@ -4876,7 +4881,7 @@ enum hdd_link_speed_rpt_type {
  * </ini>
  */
 #define CFG_ACTION_OUI_CONNECT_1X1_NAME    "gActionOUIConnect1x1"
-#define CFG_ACTION_OUI_CONNECT_1X1_DEFAULT "000C43 00 25 42 001018 06 02FFF02C0000 BC 25 42 001018 06 02FF040C0000 BC 25 42 00037F 00 35 6C"
+#define CFG_ACTION_OUI_CONNECT_1X1_DEFAULT "000C43 00 25 42 001018 06 02FFF02C0000 BC 25 42 001018 06 02FF040C0000 BC 25 42 00037F 00 35 6C 001018 06 02FF009C0000 BC 25 48"
 
 /*
  * <ini>
