@@ -323,6 +323,64 @@ ucfg_fwol_get_enable_dhcp_server_offload(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS ucfg_fwol_get_dhcp_max_num_clients(struct wlan_objmgr_psoc *psoc,
 					      uint32_t *dhcp_max_num_clients);
-
 #endif
+
+/**
+ * ucfg_fwol_get_tsf_ptp_options() - Get TSF Plus feature options
+ * @psoc: pointer to the psoc object
+ * @tsf_ptp_options: Pointer to return tsf ptp options
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
+					 uint32_t *tsf_ptp_options);
+/**
+ * ucfg_fwol_get_lprx_enable() - Get LPRx feature enable status
+ * @psoc: pointer to the psoc object
+ * @lprx_enable: Pointer to return LPRX feature enable status
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_lprx_enable(struct wlan_objmgr_psoc *psoc,
+				     bool *lprx_enable);
+
+/**
+ * ucfg_fwol_get_sae_enable() - Get SAE feature enable status
+ * @psoc: pointer to the psoc object
+ * @sae_enable: Pointer to return SAE feature enable status
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_sae_enable(struct wlan_objmgr_psoc *psoc,
+				    bool *sae_enable);
+
+/**
+ * ucfg_fwol_get_gcmp_enable() - Get GCMP feature enable status
+ * @psoc: pointer to the psoc object
+ * @gcmp_enable: Pointer to return GCMP feature enable status
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_gcmp_enable(struct wlan_objmgr_psoc *psoc,
+				     bool *gcmp_enable);
+
+/**
+ * ucfg_fwol_get_enable_tx_sch_delay() - Get enable tx sch delay
+ * @psoc: pointer to the psoc object
+ * @enable_tx_sch_delay: Pointer to return enable_tx_sch_delay value
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_enable_tx_sch_delay(struct wlan_objmgr_psoc *psoc,
+					     uint8_t *enable_tx_sch_delay);
+
+/**
+ * ucfg_fwol_get_enable_secondary_rate() - Get enable secondary rate
+ * @psoc: pointer to the psoc object
+ * @enable_tx_sch_delay: Pointer to return enable secondary rate value
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_enable_secondary_rate(struct wlan_objmgr_psoc *psoc,
+					       uint32_t *enable_secondary_rate);
 #endif /* _WLAN_FWOL_UCFG_API_H_ */

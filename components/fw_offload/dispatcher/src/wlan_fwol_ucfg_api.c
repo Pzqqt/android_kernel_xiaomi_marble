@@ -540,13 +540,119 @@ QDF_STATUS ucfg_fwol_get_tsf_gpio_pin(struct wlan_objmgr_psoc *psoc,
 	*tsf_gpio_pin = fwol_obj->cfg.tsf_gpio_pin;
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef WLAN_FEATURE_TSF_PLUS
+QDF_STATUS ucfg_fwol_get_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
+					 uint32_t *tsf_ptp_options)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*tsf_ptp_options = fwol_obj->cfg.tsf_ptp_options;
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #else
 QDF_STATUS ucfg_fwol_get_tsf_gpio_pin(struct wlan_objmgr_psoc *psoc,
 				      uint32_t *tsf_gpio_pin)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS ucfg_fwol_get_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
+					 uint32_t *tsf_ptp_options)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 #endif
+
+QDF_STATUS ucfg_fwol_get_lprx_enable(struct wlan_objmgr_psoc *psoc,
+				     bool *lprx_enable)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*lprx_enable = fwol_obj->cfg.lprx_enable;
+	return QDF_STATUS_SUCCESS;
+}
+
+#ifdef WLAN_FEATURE_SAE
+QDF_STATUS ucfg_fwol_get_sae_enable(struct wlan_objmgr_psoc *psoc,
+				    bool *sae_enable)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*sae_enable = fwol_obj->cfg.sae_enable;
+	return QDF_STATUS_SUCCESS;
+}
+#else
+QDF_STATUS ucfg_fwol_get_sae_enable(struct wlan_objmgr_psoc *psoc,
+				    bool *sae_enable)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+
+QDF_STATUS ucfg_fwol_get_gcmp_enable(struct wlan_objmgr_psoc *psoc,
+				     bool *gcmp_enable)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*gcmp_enable = fwol_obj->cfg.gcmp_enable;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_fwol_get_enable_tx_sch_delay(struct wlan_objmgr_psoc *psoc,
+					     uint8_t *enable_tx_sch_delay)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*enable_tx_sch_delay = fwol_obj->cfg.enable_tx_sch_delay;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_fwol_get_enable_secondary_rate(struct wlan_objmgr_psoc *psoc,
+					       uint32_t *enable_secondary_rate)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*enable_secondary_rate = fwol_obj->cfg.enable_secondary_rate;
+	return QDF_STATUS_SUCCESS;
+}
 
 #ifdef DHCP_SERVER_OFFLOAD
 QDF_STATUS

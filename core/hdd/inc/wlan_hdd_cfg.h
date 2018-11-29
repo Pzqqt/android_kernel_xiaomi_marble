@@ -1235,18 +1235,6 @@ enum hdd_dot11_mode {
 #define CFG_STATIONARY_THRESHOLD_MAX       (100)
 #define CFG_STATIONARY_THRESHOLD_DEFAULT   (10)
 
-#ifdef WLAN_FEATURE_TSF_PLUS
-/* PTP options */
-#define CFG_SET_TSF_PTP_OPT_NAME                  "gtsf_ptp_options"
-#define CFG_SET_TSF_PTP_OPT_MIN                   (0)
-#define CFG_SET_TSF_PTP_OPT_MAX                   (0xff)
-#define CFG_SET_TSF_PTP_OPT_RX                    (0x1)
-#define CFG_SET_TSF_PTP_OPT_TX                    (0x2)
-#define CFG_SET_TSF_PTP_OPT_RAW                   (0x4)
-#define CFG_SET_TSF_DBG_FS                        (0x8)
-#define CFG_SET_TSF_PTP_OPT_DEFAULT               (0xf)
-#endif
-
 #ifdef CONFIG_DP_TRACE
 /* Max length of gDptraceConfig string. e.g.- "1, 6, 1, 62" */
 #define DP_TRACE_CONFIG_STRING_LENGTH		(20)
@@ -1588,89 +1576,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gEnableLPRx - Enable/Disable LPRx
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini Enables or disables the LPRx in FW
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_LPRx_NAME       "gEnableLPRx"
-#define CFG_LPRx_MIN         (0)
-#define CFG_LPRx_MAX         (1)
-#define CFG_LPRx_DEFAULT     (1)
-
-/*
- * <ini>
- * sae_enabled - Enable/Disable SAE support in driver
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable SAE support in driver
- * Driver will update config to supplicant based on this config.
- *
- * Related: None
- *
- * Supported Feature: SAE
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_IS_SAE_ENABLED_NAME    "sae_enabled"
-#define CFG_IS_SAE_ENABLED_DEFAULT (1)
-#define CFG_IS_SAE_ENABLED_MIN     (0)
-#define CFG_IS_SAE_ENABLED_MAX     (1)
-
-/*
- * <ini>
- * gcmp_enabled - ini to enable/disable GCMP
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * Currently Firmware update the sequence number for each TID with 2^3
- * because of security issues. But with this PN mechanism, throughput drop
- * is observed. With this ini FW takes the decision to trade off between
- * security and throughput
- *
- * Supported Feature: STA/SAP/P2P
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_GCMP_NAME    "gcmp_enabled"
-#define CFG_ENABLE_GCMP_MIN     (0)
-#define CFG_ENABLE_GCMP_MAX     (1)
-#define CFG_ENABLE_GCMP_DEFAULT (1)
-
-/*
- * <ini>
- * gTxSchDelay - Enable/Disable Tx sch delay
- * @Min: 0
- * @Max: 5
- * @Default: 0
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_TX_SCH_DELAY_NAME          "gTxSchDelay"
-#define CFG_TX_SCH_DELAY_MIN           (0)
-#define CFG_TX_SCH_DELAY_MAX           (5)
-#define CFG_TX_SCH_DELAY_DEFAULT       (0)
-
-/*
- * <ini>
  * gEnableUnitTestFramework - Enable/Disable unit test framework
  * @Min: 0
  * @Max: 1
@@ -1684,31 +1589,6 @@ enum hdd_dot11_mode {
 #define CFG_ENABLE_UNIT_TEST_FRAMEWORK_MIN     (0)
 #define CFG_ENABLE_UNIT_TEST_FRAMEWORK_MAX     (1)
 #define CFG_ENABLE_UINT_TEST_FRAMEWORK_DEFAULT (0)
-
-/*
- * <ini>
- * gEnableSecondaryRate - Enable/Disable Secondary Retry Rate feature subset
- *
- * @Min: 0x0
- * @Max: 0x3F
- * @Default: 0x17
- *
- * It is a 32 bit value such that the various bits represent as below -
- * Bit-0 : is Enable/Disable Control for "PPDU Secondary Retry Support"
- * Bit-1 : is Enable/Disable Control for "RTS Black/White-listing Support"
- * Bit-2 : is Enable/Disable Control for "Higher MCS retry restriction
- *         on XRETRY failures"
- * Bit 3-5 : is "Xretry threshold" to use
- * Bit 3~31 : reserved for future use.
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_SECONDARY_RATE_NAME          "gEnableSecondaryRate"
-#define CFG_ENABLE_SECONDARY_RATE_MIN           (0)
-#define CFG_ENABLE_SECONDARY_RATE_MAX           (0x3F)
-#define CFG_ENABLE_SECONDARY_RATE_DEFAULT       (0x17)
 
 /*
  * <ini>
@@ -1829,11 +1709,6 @@ struct hdd_config {
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 	bool enable_lfr_subnet_detection;
 #endif
-#ifdef WLAN_FEATURE_TSF
-#ifdef WLAN_FEATURE_TSF_PLUS
-	uint8_t tsf_ptp_options;
-#endif /* WLAN_FEATURE_TSF_PLUS */
-#endif
 	uint32_t ho_delay_for_rx;
 	uint32_t min_delay_btw_roam_scans;
 	uint32_t roam_trigger_reason_bitmask;
@@ -1863,16 +1738,9 @@ struct hdd_config {
 	uint32_t mawc_nlo_init_scan_interval;
 	uint32_t mawc_nlo_max_scan_interval;
 	bool enable_11d_in_world_mode;
-	bool enable_lprx;
-#ifdef WLAN_FEATURE_SAE
-	bool is_sae_enabled;
-#endif
-	bool gcmp_enabled;
 	bool is_11k_offload_supported;
 	bool action_oui_enable;
 	uint8_t action_oui_str[ACTION_OUI_MAXIMUM_ID][ACTION_OUI_MAX_STR_LEN];
-	uint8_t enable_tx_sch_delay;
-	uint32_t enable_secondary_rate;
 	bool is_unit_test_framework_enabled;
 	bool enable_ftopen;
 	bool roam_force_rssi_trigger;

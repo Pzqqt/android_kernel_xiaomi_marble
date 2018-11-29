@@ -152,30 +152,46 @@ bool hdd_tsf_is_ptp_enabled(struct hdd_context *hdd)
 
 bool hdd_tsf_is_tx_set(struct hdd_context *hdd)
 {
-	return (hdd && (hdd->config) &&
-		((hdd->config->tsf_ptp_options)
-		& CFG_SET_TSF_PTP_OPT_TX));
+	uint32_t tsf_ptp_options;
+
+	if (hdd && QDF_IS_STATUS_SUCCESS(
+	    ucfg_fwol_get_tsf_ptp_options(hdd->psoc, &tsf_ptp_options)))
+		return tsf_ptp_options & CFG_SET_TSF_PTP_OPT_TX;
+	else
+		return false;
 }
 
 bool hdd_tsf_is_rx_set(struct hdd_context *hdd)
 {
-	return (hdd && (hdd->config) &&
-		((hdd->config->tsf_ptp_options)
-		& CFG_SET_TSF_PTP_OPT_RX));
+	uint32_t tsf_ptp_options;
+
+	if (hdd && QDF_IS_STATUS_SUCCESS(
+	    ucfg_fwol_get_tsf_ptp_options(hdd->psoc, &tsf_ptp_options)))
+		return tsf_ptp_options & CFG_SET_TSF_PTP_OPT_RX;
+	else
+		return false;
 }
 
 bool hdd_tsf_is_raw_set(struct hdd_context *hdd)
 {
-	return (hdd && (hdd->config) &&
-		((hdd->config->tsf_ptp_options)
-		& CFG_SET_TSF_PTP_OPT_RAW));
+	uint32_t tsf_ptp_options;
+
+	if (hdd && QDF_IS_STATUS_SUCCESS(
+	    ucfg_fwol_get_tsf_ptp_options(hdd->psoc, &tsf_ptp_options)))
+		return tsf_ptp_options & CFG_SET_TSF_PTP_OPT_RAW;
+	else
+		return false;
 }
 
 bool hdd_tsf_is_dbg_fs_set(struct hdd_context *hdd)
 {
-	return (hdd && (hdd->config) &&
-		((hdd->config->tsf_ptp_options)
-		& CFG_SET_TSF_DBG_FS));
+	uint32_t tsf_ptp_options;
+
+	if (hdd && QDF_IS_STATUS_SUCCESS(
+	    ucfg_fwol_get_tsf_ptp_options(hdd->psoc, &tsf_ptp_options)))
+		return tsf_ptp_options & CFG_SET_TSF_DBG_FS;
+	else
+		return false;
 }
 
 #else

@@ -154,6 +154,12 @@ struct wlan_fwol_neighbor_report_cfg {
  * @enable_fw_module_log_level_num: enablefw module log level num
  * @is_rate_limit_enabled: Enable/disable RA rate limited
  * @tsf_gpio_pin: TSF GPIO Pin config
+ * @tsf_ptp_options: TSF Plus feature options config
+ * @lprx_enable: LPRx feature enable config
+ * @sae_enable: SAE feature enable config
+ * @gcmp_enable: GCMP feature enable config
+ * @enable_tx_sch_delay: Enable TX SCH delay value config
+ * @enable_secondary_rate: Enable secondary retry rate config
  * @enable_dhcp_server_offload: DHCP Offload is enabled or not
  * @dhcp_max_num_clients: Max number of DHCP client supported
  */
@@ -183,7 +189,17 @@ struct wlan_fwol_cfg {
 #endif
 #ifdef WLAN_FEATURE_TSF
 	uint32_t tsf_gpio_pin;
+#ifdef WLAN_FEATURE_TSF_PLUS
+	uint32_t tsf_ptp_options;
 #endif
+#endif
+	bool lprx_enable;
+#ifdef WLAN_FEATURE_SAE
+	bool sae_enable;
+#endif
+	bool gcmp_enable;
+	uint8_t enable_tx_sch_delay;
+	uint32_t enable_secondary_rate;
 #ifdef DHCP_SERVER_OFFLOAD
 	bool enable_dhcp_server_offload;
 	uint32_t dhcp_max_num_clients;

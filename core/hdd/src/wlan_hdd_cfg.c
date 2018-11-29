@@ -361,17 +361,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_LFR_SUBNET_MAX),
 #endif
 
-#ifdef WLAN_FEATURE_TSF
-#ifdef WLAN_FEATURE_TSF_PLUS
-	REG_VARIABLE(CFG_SET_TSF_PTP_OPT_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, tsf_ptp_options,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_SET_TSF_PTP_OPT_DEFAULT,
-		     CFG_SET_TSF_PTP_OPT_MIN,
-		     CFG_SET_TSF_PTP_OPT_MAX),
-#endif /* WLAN_FEATURE_TSF_PLUS */
-#endif
-
 	REG_VARIABLE(CFG_ROAM_HO_DELAY_FOR_RX_NAME,
 		WLAN_PARAM_Integer, struct hdd_config,
 		ho_delay_for_rx,
@@ -523,37 +512,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_11D_IN_WORLD_MODE_MIN,
 		     CFG_ENABLE_11D_IN_WORLD_MODE_MAX),
 
-	REG_VARIABLE(CFG_LPRx_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, enable_lprx,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_LPRx_DEFAULT,
-		CFG_LPRx_MIN,
-		CFG_LPRx_MAX),
-
-#ifdef WLAN_FEATURE_SAE
-	REG_VARIABLE(CFG_IS_SAE_ENABLED_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, is_sae_enabled,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_IS_SAE_ENABLED_DEFAULT,
-		CFG_IS_SAE_ENABLED_MIN,
-		CFG_IS_SAE_ENABLED_MAX),
-#endif
-
-	REG_VARIABLE(CFG_ENABLE_GCMP_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, gcmp_enabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_GCMP_DEFAULT,
-		     CFG_ENABLE_GCMP_MIN,
-		     CFG_ENABLE_GCMP_MAX),
-
-	REG_VARIABLE(CFG_TX_SCH_DELAY_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, enable_tx_sch_delay,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TX_SCH_DELAY_DEFAULT,
-		     CFG_TX_SCH_DELAY_MIN,
-		     CFG_TX_SCH_DELAY_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_UNIT_TEST_FRAMEWORK_NAME,
 		     WLAN_PARAM_Integer,
 		     struct hdd_config, is_unit_test_framework_enabled,
@@ -568,14 +526,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ROAM_FT_OPEN_ENABLE_DEFAULT,
 		     CFG_ROAM_FT_OPEN_ENABLE_MIN,
 		     CFG_ROAM_FT_OPEN_ENABLE_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_SECONDARY_RATE_NAME,
-		     WLAN_PARAM_HexInteger,
-		     struct hdd_config, enable_secondary_rate,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_SECONDARY_RATE_DEFAULT,
-		     CFG_ENABLE_SECONDARY_RATE_MIN,
-		     CFG_ENABLE_SECONDARY_RATE_MAX),
 
 	REG_VARIABLE(CFG_ROAM_FORCE_RSSI_TRIGGER_NAME,
 		     WLAN_PARAM_Integer, struct hdd_config,

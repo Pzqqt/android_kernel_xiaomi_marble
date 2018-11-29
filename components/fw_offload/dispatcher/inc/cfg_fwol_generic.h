@@ -432,6 +432,41 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"GPIO pin to toggle when capture tsf")
 
+#if defined(WLAN_FEATURE_TSF) && defined(WLAN_FEATURE_TSF_PLUS)
+/* <ini>
+ * gtsf_ptp_options: TSF Plus feature options
+ * @Min: 0
+ * @Max: 0xff
+ * @Default: 0xf
+ *
+ * CFG_SET_TSF_PTP_OPT_RX                    (0x1)
+ * CFG_SET_TSF_PTP_OPT_TX                    (0x2)
+ * CFG_SET_TSF_PTP_OPT_RAW                   (0x4)
+ * CFG_SET_TSF_DBG_FS                        (0x8)
+ *
+ * Related: None
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_SET_TSF_PTP_OPT_RX                    (0x1)
+#define CFG_SET_TSF_PTP_OPT_TX                    (0x2)
+#define CFG_SET_TSF_PTP_OPT_RAW                   (0x4)
+#define CFG_SET_TSF_DBG_FS                        (0x8)
+
+#define CFG_SET_TSF_PTP_OPT CFG_INI_UINT( \
+		"gtsf_ptp_options", \
+		0, \
+		0xff, \
+		0xf, \
+		CFG_VALUE_OR_DEFAULT, \
+		"TSF Plus feature options")
+#define __CFG_SET_TSF_PTP_OPT CFG(CFG_SET_TSF_PTP_OPT)
+#else
+#define __CFG_SET_TSF_PTP_OPT
+#endif
+
 #ifdef DHCP_SERVER_OFFLOAD
 /* <ini>
  * gDHCPServerOffloadEnable
@@ -482,6 +517,124 @@
 #define CFG_FWOL_DHCP
 #endif
 
+/*
+ * <ini>
+ * gEnableLPRx - Enable/Disable LPRx
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini Enables or disables the LPRx in FW
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_LPRX CFG_INI_BOOL( \
+		"gEnableLPRx", \
+		1, \
+		"LPRx control")
+
+#ifdef WLAN_FEATURE_SAE
+/*
+ * <ini>
+ * sae_enabled - Enable/Disable SAE support in driver
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable SAE support in driver
+ * Driver will update config to supplicant based on this config.
+ *
+ * Related: None
+ *
+ * Supported Feature: SAE
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_IS_SAE_ENABLED CFG_INI_BOOL( \
+		"sae_enabled", \
+		1, \
+		"SAE feature control")
+#define __CFG_IS_SAE_ENABLED CFG(CFG_IS_SAE_ENABLED)
+#else
+#define __CFG_IS_SAE_ENABLED
+#endif
+
+/*
+ * <ini>
+ * gcmp_enabled - ini to enable/disable GCMP
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * Currently Firmware update the sequence number for each TID with 2^3
+ * because of security issues. But with this PN mechanism, throughput drop
+ * is observed. With this ini FW takes the decision to trade off between
+ * security and throughput
+ *
+ * Supported Feature: STA/SAP/P2P
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_ENABLE_GCMP CFG_INI_BOOL( \
+		"gcmp_enabled", \
+		1, \
+		"GCMP Feature control param")
+
+/*
+ * <ini>
+ * gTxSchDelay - Enable/Disable Tx sch delay
+ * @Min: 0
+ * @Max: 5
+ * @Default: 0
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_TX_SCH_DELAY CFG_INI_UINT( \
+		"gTxSchDelay", \
+		0, \
+		5, \
+		0, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Enable/Disable Tx sch delay")
+
+/*
+ * <ini>
+ * gEnableSecondaryRate - Enable/Disable Secondary Retry Rate feature subset
+ *
+ * @Min: 0x0
+ * @Max: 0x3F
+ * @Default: 0x17
+ *
+ * It is a 32 bit value such that the various bits represent as below -
+ * Bit-0 : is Enable/Disable Control for "PPDU Secondary Retry Support"
+ * Bit-1 : is Enable/Disable Control for "RTS Black/White-listing Support"
+ * Bit-2 : is Enable/Disable Control for "Higher MCS retry restriction
+ *         on XRETRY failures"
+ * Bit 3-5 : is "Xretry threshold" to use
+ * Bit 3~31 : reserved for future use.
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_SECONDARY_RATE CFG_INI_UINT( \
+		"gEnableSecondaryRate", \
+		0, \
+		0x3f, \
+		0x17, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Secondary Retry Rate feature subset control")
+
 #define CFG_FWOL_GENERIC_ALL \
 	CFG_FWOL_DHCP \
 	CFG(CFG_ENABLE_ANI) \
@@ -499,6 +652,12 @@
 	CFG(CFG_ENABLE_FW_LOG_TYPE) \
 	CFG(CFG_ENABLE_FW_MODULE_LOG_LEVEL) \
 	CFG(CFG_RA_FILTER_ENABLE) \
-	CFG(CFG_SET_TSF_GPIO_PIN)
+	CFG(CFG_SET_TSF_GPIO_PIN) \
+	__CFG_SET_TSF_PTP_OPT \
+	CFG(CFG_LPRX) \
+	__CFG_IS_SAE_ENABLED \
+	CFG(CFG_ENABLE_GCMP) \
+	CFG(CFG_TX_SCH_DELAY) \
+	CFG(CFG_ENABLE_SECONDARY_RATE)
 
 #endif

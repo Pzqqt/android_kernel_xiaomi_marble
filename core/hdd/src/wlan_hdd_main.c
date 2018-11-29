@@ -4832,8 +4832,8 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
 	bool bval = false;
-	uint8_t max_amsdu_len;
-	uint32_t dtim_sel_diversity;
+	uint8_t max_amsdu_len, enable_tx_sch_delay;
+	uint32_t dtim_sel_diversity, enable_secondary_rate;
 
 	hdd_enter_dev(adapter->dev);
 
@@ -4846,9 +4846,13 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 		return 0;
 	}
 
-	ret = sme_cli_set_command(adapter->session_id,
-				WMI_PDEV_PARAM_DTIM_SYNTH,
-				hdd_ctx->config->enable_lprx, PDEV_CMD);
+	ret = -1;
+	if (QDF_IS_STATUS_SUCCESS(ucfg_fwol_get_lprx_enable(hdd_ctx->psoc,
+							    &bval))) {
+		ret = sme_cli_set_command(adapter->session_id,
+					  WMI_PDEV_PARAM_DTIM_SYNTH,
+					  bval, PDEV_CMD);
+	}
 	if (ret) {
 		hdd_err("Failed to set LPRx");
 		goto error;
@@ -4866,21 +4870,25 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 		goto error;
 	}
 
-	ret = sme_cli_set_command(
-			adapter->session_id,
-			WMI_PDEV_PARAM_TX_SCH_DELAY,
-			hdd_ctx->config->enable_tx_sch_delay,
-			PDEV_CMD);
+	ret = -1;
+	if (QDF_IS_STATUS_SUCCESS(ucfg_fwol_get_enable_tx_sch_delay(
+				  hdd_ctx->psoc, &enable_tx_sch_delay))) {
+		ret = sme_cli_set_command(adapter->session_id,
+					  WMI_PDEV_PARAM_TX_SCH_DELAY,
+					  enable_tx_sch_delay, PDEV_CMD);
+	}
 	if (ret) {
 		hdd_err("Failed to set WMI_PDEV_PARAM_TX_SCH_DELAY");
 		goto error;
 	}
 
-	ret = sme_cli_set_command(
-			adapter->session_id,
-			WMI_PDEV_PARAM_SECONDARY_RETRY_ENABLE,
-			hdd_ctx->config->enable_secondary_rate,
-			PDEV_CMD);
+	ret = -1;
+	if (QDF_IS_STATUS_SUCCESS(ucfg_fwol_get_enable_secondary_rate(
+				  hdd_ctx->psoc, &enable_secondary_rate))) {
+		ret = sme_cli_set_command(adapter->session_id,
+					  WMI_PDEV_PARAM_SECONDARY_RETRY_ENABLE,
+					  enable_secondary_rate, PDEV_CMD);
+	}
 	if (ret) {
 		hdd_err("Failed to set WMI_PDEV_PARAM_SECONDARY_RETRY_ENABLE");
 		goto error;
@@ -11295,8 +11303,13 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	if (0 != wlan_hdd_set_wow_pulse(hdd_ctx, true))
 		hdd_debug("Failed to set wow pulse");
 
+	bval = false;
+	if (QDF_IS_STATUS_ERROR(ucfg_fwol_get_gcmp_enable(hdd_ctx->psoc,
+							  &bval)))
+		hdd_err("Unable to get GCMP enable config param");
+
 	sme_cli_set_command(0, WMI_PDEV_PARAM_GCMP_SUPPORT_ENABLE,
-			    hdd_ctx->config->gcmp_enabled, PDEV_CMD);
+			    bval, PDEV_CMD);
 
 	auto_power_fail_mode =
 		ucfg_pmo_get_auto_power_fail_mode(hdd_ctx->psoc);
