@@ -691,7 +691,15 @@ static int cds_ol_rx_thread(void *arg)
 	bool shutdown = false;
 	int status;
 
+#ifdef RX_THREAD_PRIORITY
+	struct sched_param scheduler_params = {0};
+
+	scheduler_params.sched_priority = 1;
+	sched_setscheduler(current, SCHED_FIFO, &scheduler_params);
+#else
 	set_user_nice(current, -1);
+#endif
+
 #ifdef MSM_PLATFORM
 	set_wake_up_idle(true);
 #endif
