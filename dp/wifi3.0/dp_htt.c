@@ -114,7 +114,8 @@ dp_tx_rate_stats_update(struct dp_peer *peer,
 	if (!ratekbps)
 		return;
 
-	dp_ath_rate_lpf(peer->stats.tx.avg_tx_rate, ratekbps);
+	peer->stats.tx.avg_tx_rate =
+		dp_ath_rate_lpf(peer->stats.tx.avg_tx_rate, ratekbps);
 	ppdu_tx_rate = dp_ath_rate_out(peer->stats.tx.avg_tx_rate);
 	DP_STATS_UPD(peer, tx.rnd_avg_tx_rate, ppdu_tx_rate);
 
