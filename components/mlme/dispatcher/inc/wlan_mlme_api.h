@@ -1885,6 +1885,16 @@ QDF_STATUS
 wlan_mlme_is_11d_enabled(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
+ * wlan_mlme_ibss_power_save_setup() - Set IBSS power save params
+ * @psoc: pointer to psoc object
+ * @vdev_id: IBSS Vdev ID
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS wlan_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
+					   uint32_t vdev_id);
+
+/**
  * wlan_mlme_set_11d_enabled() - Set the 11h flag
  * @psoc: psoc context
  *
@@ -2071,5 +2081,4 @@ wlan_mlme_get_wps_uuid(struct wlan_mlme_wps_params *wps_params, uint8_t *data);
 QDF_STATUS
 wlan_mlme_get_self_gen_frm_pwr(struct wlan_objmgr_psoc *psoc,
 			       uint32_t *value);
-
 #endif /* _WLAN_MLME_API_H_ */

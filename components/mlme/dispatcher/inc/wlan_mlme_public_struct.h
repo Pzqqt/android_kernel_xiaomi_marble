@@ -1835,6 +1835,38 @@ struct wlan_mlme_reg {
 };
 
 /**
+ * struct wlan_mlme_ibss_cfg - IBSS config params
+ * @auto_bssid: Enable Auto BSSID for IBSS
+ * @atim_win_size: Set IBSS ATIM window size
+ * @adhoc_ch_5g: Default 5Ghz IBSS channel if not provided by supplicant
+ * @adhoc_ch_2g: Default 2.4Ghz IBSS channel if not provided by supplicant
+ * @coalesing_enable: IBSS coalesing control param
+ * @power_save_allow: IBSS Power Save control
+ * @power_collapse_allow: IBSS Power collapse control
+ * @awake_on_tx_rx: IBSS sta power save mode on TX/RX activity
+ * @inactivity_bcon_count: No of Beacons of data inactivity for power save
+ * @txsp_end_timeout: TX service period inactivity timeout
+ * @ps_warm_up_time: IBSS Power save skip time
+ * @ps_1rx_chain_atim_win: Control IBSS Power save in 1RX chain during ATIM
+ * @bssid: BSSID Mac address: IBSS BSSID if not provided by supplicant
+ */
+struct wlan_mlme_ibss_cfg {
+	bool auto_bssid;
+	uint32_t atim_win_size;
+	uint32_t adhoc_ch_5g;
+	uint32_t adhoc_ch_2g;
+	bool coalesing_enable;
+	bool power_save_allow;
+	bool power_collapse_allow;
+	bool awake_on_tx_rx;
+	uint32_t inactivity_bcon_count;
+	uint32_t txsp_end_timeout;
+	uint32_t ps_warm_up_time;
+	uint32_t ps_1rx_chain_atim_win;
+	struct qdf_mac_addr bssid;
+};
+
+/**
  * struct wlan_mlme_cfg - MLME config items
  * @chainmask_cfg: VHT chainmask related cfg items
  * @edca_params: edca related CFG items
@@ -1842,6 +1874,7 @@ struct wlan_mlme_reg {
  * @ht_caps: HT related CFG Items
  * @he_caps: HE related cfg items
  * @lfr: LFR related CFG Items
+ * @ibss: IBSS related CFG items
  * @obss_ht40:obss ht40 CFG Items
  * @mbo_cfg: Multiband Operation related CFG items
  * @vht_caps: VHT related CFG Items
@@ -1882,6 +1915,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_he_caps he_caps;
 #endif
 	struct wlan_mlme_lfr_cfg lfr;
+	struct wlan_mlme_ibss_cfg ibss;
 	struct wlan_mlme_obss_ht40 obss_ht40;
 	struct wlan_mlme_mbo mbo_cfg;
 	struct wlan_mlme_vht_caps vht_caps;

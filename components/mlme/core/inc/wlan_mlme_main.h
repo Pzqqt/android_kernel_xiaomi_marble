@@ -186,4 +186,14 @@ struct wlan_mlme_psoc_obj *mlme_get_psoc_obj_fl(struct wlan_objmgr_psoc *psoc,
 						const char *func,
 						uint32_t line);
 
+/**
+ * mlme_init_ibss_cfg() - Init IBSS config data structure with default CFG value
+ * @psoc: pointer to the psoc object
+ * @ibss_cfg: Pointer to IBSS cfg data structure to return values
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_init_ibss_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_ibss_cfg *ibss_cfg);
+
 #endif

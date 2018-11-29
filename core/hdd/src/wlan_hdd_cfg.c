@@ -77,11 +77,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_CHANNEL_BONDING_MODE_MIN,
 		     CFG_CHANNEL_BONDING_MODE_MAX),
 
-	REG_VARIABLE_STRING(CFG_IBSS_BSSID_NAME, WLAN_PARAM_MacAddr,
-			    struct hdd_config, IbssBssid,
-			    VAR_FLAGS_OPTIONAL,
-			    (void *)CFG_IBSS_BSSID_DEFAULT),
-
 	REG_VARIABLE(CFG_AP_ENABLE_PROTECTION_MODE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, apProtEnabled,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -160,20 +155,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_SCAN_AGING_PARAM_MIN,
 		     CFG_SCAN_AGING_PARAM_MAX),
 
-	REG_VARIABLE(CFG_IBSS_ADHOC_CHANNEL_5GHZ_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, AdHocChannel5G,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_IBSS_ADHOC_CHANNEL_5GHZ_DEFAULT,
-		     CFG_IBSS_ADHOC_CHANNEL_5GHZ_MIN,
-		     CFG_IBSS_ADHOC_CHANNEL_5GHZ_MAX),
-
-	REG_VARIABLE(CFG_IBSS_ADHOC_CHANNEL_24GHZ_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, AdHocChannel24G,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_IBSS_ADHOC_CHANNEL_24GHZ_DEFAULT,
-		     CFG_IBSS_ADHOC_CHANNEL_24GHZ_MIN,
-		     CFG_IBSS_ADHOC_CHANNEL_24GHZ_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_SNR_MONITORING_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fEnableSNRMonitoring,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
@@ -203,70 +184,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_PNO_SLOW_SCAN_MULTIPLIER_MIN,
 		     CFG_PNO_SLOW_SCAN_MULTIPLIER_MAX),
 #endif
-	REG_VARIABLE(CFG_COALESING_IN_IBSS_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, isCoalesingInIBSSAllowed,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_COALESING_IN_IBSS_DEFAULT,
-		     CFG_COALESING_IN_IBSS_MIN,
-		     CFG_COALESING_IN_IBSS_MAX),
-
-	REG_VARIABLE(CFG_IBSS_ATIM_WIN_SIZE_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, ibssATIMWinSize,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_IBSS_ATIM_WIN_SIZE_DEFAULT,
-		     CFG_IBSS_ATIM_WIN_SIZE_MIN,
-		     CFG_IBSS_ATIM_WIN_SIZE_MAX),
-
-	REG_VARIABLE(CFG_IBSS_IS_POWER_SAVE_ALLOWED_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, isIbssPowerSaveAllowed,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_IBSS_IS_POWER_SAVE_ALLOWED_DEFAULT,
-		     CFG_IBSS_IS_POWER_SAVE_ALLOWED_MIN,
-		     CFG_IBSS_IS_POWER_SAVE_ALLOWED_MAX),
-
-	REG_VARIABLE(CFG_IBSS_IS_POWER_COLLAPSE_ALLOWED_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, isIbssPowerCollapseAllowed,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_IBSS_IS_POWER_COLLAPSE_ALLOWED_DEFAULT,
-		     CFG_IBSS_IS_POWER_COLLAPSE_ALLOWED_MIN,
-		     CFG_IBSS_IS_POWER_COLLAPSE_ALLOWED_MAX),
-
-	REG_VARIABLE(CFG_IBSS_AWAKE_ON_TX_RX_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, isIbssAwakeOnTxRx,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_IBSS_AWAKE_ON_TX_RX_DEFAULT,
-		     CFG_IBSS_AWAKE_ON_TX_RX_MIN,
-		     CFG_IBSS_AWAKE_ON_TX_RX_MAX),
-
-	REG_VARIABLE(CFG_IBSS_INACTIVITY_TIME_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, ibssInactivityCount,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_IBSS_INACTIVITY_TIME_DEFAULT,
-		     CFG_IBSS_INACTIVITY_TIME_MIN,
-		     CFG_IBSS_INACTIVITY_TIME_MAX),
-
-	REG_VARIABLE(CFG_IBSS_TXSP_END_INACTIVITY_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, ibssTxSpEndInactivityTime,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_IBSS_TXSP_END_INACTIVITY_DEFAULT,
-		     CFG_IBSS_TXSP_END_INACTIVITY_MIN,
-		     CFG_IBSS_TXSP_END_INACTIVITY_MAX),
-
-	REG_VARIABLE(CFG_IBSS_PS_WARMUP_TIME_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, ibssPsWarmupTime,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_IBSS_PS_WARMUP_TIME_DEFAULT,
-		     CFG_IBSS_PS_WARMUP_TIME_MIN,
-		     CFG_IBSS_PS_WARMUP_TIME_MAX),
-
-	REG_VARIABLE(CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, ibssPs1RxChainInAtimEnable,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_DEFAULT,
-		     CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MIN,
-		     CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MAX),
 
 	REG_VARIABLE(CFG_ADVERTISE_CONCURRENT_OPERATION_NAME,
 		     WLAN_PARAM_Integer,
@@ -1815,13 +1732,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Fail to pass WNI_CFG_PS_WOW_DATA_INACTIVITY_TO CFG");
 	}
 
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_IBSS_ATIM_WIN_SIZE,
-			    config->ibssATIMWinSize) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_IBSS_ATIM_WIN_SIZE to CFG");
-	}
-
 	ucfg_policy_mgr_get_mcc_adaptive_sch(hdd_ctx->psoc,
 					     &mcc_adaptive_sch);
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
@@ -2043,7 +1953,15 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 #ifdef FEATURE_WLAN_ESE
 	bool ese_enabled;
 #endif
+	struct wlan_mlme_ibss_cfg ibss_cfg = {0};
+
 	struct hdd_config *pConfig = hdd_ctx->config;
+
+	if (QDF_IS_STATUS_ERROR(ucfg_mlme_get_ibss_cfg(
+				hdd_ctx->psoc, &ibss_cfg))) {
+		hdd_err("Unable to get IBSS config params");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	smeConfig = qdf_mem_malloc(sizeof(*smeConfig));
 	if (NULL == smeConfig) {
@@ -2075,8 +1993,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	 */
 	/* This param cannot be configured from INI */
 	smeConfig->csrConfig.send_smps_action = true;
-	smeConfig->csrConfig.AdHocChannel5G = pConfig->AdHocChannel5G;
-	smeConfig->csrConfig.AdHocChannel24 = pConfig->AdHocChannel24G;
+	smeConfig->csrConfig.AdHocChannel5G = ibss_cfg.adhoc_ch_5g;
+	smeConfig->csrConfig.AdHocChannel24 = ibss_cfg.adhoc_ch_2g;
 	smeConfig->csrConfig.ProprietaryRatesEnabled = 0;
 	smeConfig->csrConfig.HeartbeatThresh50 = 40;
 	smeConfig->csrConfig.nTxPowerCap = pConfig->nTxPowerCap;
@@ -2104,7 +2022,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	}
 
 	smeConfig->csrConfig.isCoalesingInIBSSAllowed =
-		hdd_ctx->config->isCoalesingInIBSSAllowed;
+						ibss_cfg.coalesing_enable;
 
 	/* Update maximum interfaces information */
 	smeConfig->csrConfig.max_intf_count = hdd_ctx->max_intf_count;

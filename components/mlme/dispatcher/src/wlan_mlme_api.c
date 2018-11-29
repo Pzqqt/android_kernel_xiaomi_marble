@@ -3038,3 +3038,90 @@ wlan_mlme_get_self_gen_frm_pwr(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS wlan_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
+					   uint32_t vdev_id)
+{
+	struct wlan_mlme_ibss_cfg *ibss_cfg;
+	int ret;
+	struct wlan_mlme_psoc_obj *mlme_obj = mlme_get_psoc_obj(psoc);
+
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	ibss_cfg = &mlme_obj->cfg.ibss;
+
+	ret = wma_cli_set_command(vdev_id,
+				  WMA_VDEV_IBSS_SET_ATIM_WINDOW_SIZE,
+				  ibss_cfg->atim_win_size,
+				  VDEV_CMD);
+	if (ret) {
+		mlme_err("atim window set failed: %d", ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ret = wma_cli_set_command(vdev_id,
+				  WMA_VDEV_IBSS_SET_POWER_SAVE_ALLOWED,
+				  ibss_cfg->power_save_allow,
+				  VDEV_CMD);
+	if (ret) {
+		mlme_err("power save allow failed %d", ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ret = wma_cli_set_command(vdev_id,
+				  WMA_VDEV_IBSS_SET_POWER_COLLAPSE_ALLOWED,
+				  ibss_cfg->power_collapse_allow,
+				  VDEV_CMD);
+	if (ret) {
+		mlme_err("power collapse allow failed %d", ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ret = wma_cli_set_command(vdev_id,
+				  WMA_VDEV_IBSS_SET_AWAKE_ON_TX_RX,
+				  ibss_cfg->awake_on_tx_rx,
+				  VDEV_CMD);
+	if (ret) {
+		mlme_err("set awake on tx/rx failed %d", ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ret = wma_cli_set_command(vdev_id,
+				  WMA_VDEV_IBSS_SET_INACTIVITY_TIME,
+				  ibss_cfg->inactivity_bcon_count,
+				  VDEV_CMD);
+	if (ret) {
+		mlme_err("set inactivity time failed %d", ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ret = wma_cli_set_command(vdev_id,
+				  WMA_VDEV_IBSS_SET_TXSP_END_INACTIVITY_TIME,
+				  ibss_cfg->txsp_end_timeout,
+				  VDEV_CMD);
+	if (ret) {
+		mlme_err("set txsp end failed %d", ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ret = wma_cli_set_command(vdev_id,
+				  WMA_VDEV_IBSS_PS_SET_WARMUP_TIME_SECS,
+				  ibss_cfg->ps_warm_up_time,
+				  VDEV_CMD);
+	if (ret) {
+		mlme_err("set ps warmup failed %d", ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ret = wma_cli_set_command(vdev_id,
+				  WMA_VDEV_IBSS_PS_SET_1RX_CHAIN_IN_ATIM_WINDOW,
+				  ibss_cfg->ps_1rx_chain_atim_win,
+				  VDEV_CMD);
+	if (ret) {
+		mlme_err("set 1rx chain atim failed %d", ret);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}

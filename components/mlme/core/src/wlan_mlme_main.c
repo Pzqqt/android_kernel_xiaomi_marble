@@ -1209,6 +1209,35 @@ static void mlme_init_acs_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_EXTERNAL_ACS_POLICY);
 }
 
+QDF_STATUS mlme_init_ibss_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_ibss_cfg *ibss_cfg)
+{
+	if (!ibss_cfg)
+		return QDF_STATUS_E_FAILURE;
+
+	ibss_cfg->auto_bssid = cfg_default(CFG_IBSS_AUTO_BSSID);
+	ibss_cfg->atim_win_size = cfg_get(psoc, CFG_IBSS_ATIM_WIN_SIZE);
+	ibss_cfg->adhoc_ch_5g = cfg_get(psoc, CFG_IBSS_ADHOC_CHANNEL_5GHZ);
+	ibss_cfg->adhoc_ch_2g = cfg_get(psoc, CFG_IBSS_ADHOC_CHANNEL_24GHZ);
+	ibss_cfg->coalesing_enable = cfg_get(psoc, CFG_IBSS_COALESING);
+	ibss_cfg->power_save_allow = cfg_get(psoc,
+					     CFG_IBSS_IS_POWER_SAVE_ALLOWED);
+	ibss_cfg->power_collapse_allow =
+			 cfg_get(psoc, CFG_IBSS_IS_POWER_COLLAPSE_ALLOWED);
+	ibss_cfg->awake_on_tx_rx = cfg_get(psoc, CFG_IBSS_AWAKE_ON_TX_RX);
+	ibss_cfg->inactivity_bcon_count =
+			 cfg_get(psoc, CFG_IBSS_INACTIVITY_TIME);
+	ibss_cfg->txsp_end_timeout =
+			 cfg_get(psoc, CFG_IBSS_TXSP_END_INACTIVITY);
+	ibss_cfg->ps_warm_up_time = cfg_get(psoc, CFG_IBSS_PS_WARMUP_TIME);
+	ibss_cfg->ps_1rx_chain_atim_win =
+			 cfg_get(psoc, CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW);
+	qdf_copy_macaddr(&ibss_cfg->bssid, (struct qdf_mac_addr *)
+			 &cfg_get(psoc, CFG_IBSS_BSSID));
+
+	return QDF_STATUS_SUCCESS;
+}
+
 static void
 mlme_init_product_details_cfg(struct wlan_mlme_product_details_cfg
 			      *product_details)
@@ -2031,6 +2060,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_stats_cfg(psoc, &mlme_cfg->stats);
 	mlme_init_twt_cfg(psoc, &mlme_cfg->twt_cfg);
 	mlme_init_lfr_cfg(psoc, &mlme_cfg->lfr);
+	mlme_init_ibss_cfg(psoc, &mlme_cfg->ibss);
 	mlme_init_feature_flag_in_cfg(psoc, &mlme_cfg->feature_flags);
 	mlme_init_scoring_cfg(psoc, &mlme_cfg->scoring);
 	mlme_init_threshold_cfg(psoc, &mlme_cfg->threshold);

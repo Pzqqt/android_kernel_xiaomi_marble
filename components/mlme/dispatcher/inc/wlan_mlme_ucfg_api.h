@@ -2543,6 +2543,40 @@ bool
 ucfg_mlme_stats_is_link_speed_report_max_scaled(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_mlme_get_ibss_cfg() - Get IBSS config params data structure
+ * @psoc: pointer to psoc object
+ * @auto_bssid: Pointer to return the IBSS config data structure
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_mlme_get_ibss_cfg(struct wlan_objmgr_psoc *psoc,
+				  struct wlan_mlme_ibss_cfg *ibss_cfg);
+
+/**
+ * ucfg_mlme_set_ibss_auto_bssid() - Set IBSS Auto BSSID config
+ * @psoc: pointer to psoc object
+ * @auto_bssid: IBSS Auto BSSID config value
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_mlme_set_ibss_auto_bssid(struct wlan_objmgr_psoc *psoc,
+					 uint32_t auto_bssid);
+
+/**
+ * ucfg_mlme_ibss_power_save_setup() - Set IBSS power save params
+ * @psoc: pointer to psoc object
+ * @vdev_id: IBSS Vdev ID
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
+					   uint32_t vdev_id)
+{
+	return wlan_mlme_ibss_power_save_setup(psoc, vdev_id);
+}
+
+/**
  * ucfg_mlme_get_wmm_dir_ac_vi() - Get TSPEC direction
  * for VI
  * @psoc: pointer to psoc object

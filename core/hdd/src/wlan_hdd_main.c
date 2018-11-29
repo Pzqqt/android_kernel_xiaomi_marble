@@ -1199,7 +1199,6 @@ bool wlan_hdd_validate_modules_state(struct hdd_context *hdd_ctx)
  */
 QDF_STATUS hdd_set_ibss_power_save_params(struct hdd_adapter *adapter)
 {
-	int ret;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	if (hdd_ctx == NULL) {
@@ -1207,84 +1206,8 @@ QDF_STATUS hdd_set_ibss_power_save_params(struct hdd_adapter *adapter)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	ret = sme_cli_set_command(adapter->session_id,
-				  WMA_VDEV_IBSS_SET_ATIM_WINDOW_SIZE,
-				  hdd_ctx->config->ibssATIMWinSize,
-				  VDEV_CMD);
-	if (0 != ret) {
-		hdd_err("atim window set failed %d", ret);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	ret = sme_cli_set_command(adapter->session_id,
-				  WMA_VDEV_IBSS_SET_POWER_SAVE_ALLOWED,
-				  hdd_ctx->config->isIbssPowerSaveAllowed,
-				  VDEV_CMD);
-	if (0 != ret) {
-		hdd_err("power save allow failed %d",
-			ret);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	ret = sme_cli_set_command(adapter->session_id,
-				  WMA_VDEV_IBSS_SET_POWER_COLLAPSE_ALLOWED,
-				  hdd_ctx->config->
-				  isIbssPowerCollapseAllowed, VDEV_CMD);
-	if (0 != ret) {
-		hdd_err("power collapse allow failed %d",
-			ret);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	ret = sme_cli_set_command(adapter->session_id,
-				  WMA_VDEV_IBSS_SET_AWAKE_ON_TX_RX,
-				  hdd_ctx->config->isIbssAwakeOnTxRx,
-				  VDEV_CMD);
-	if (0 != ret) {
-		hdd_err("set awake on tx/rx failed %d", ret);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	ret = sme_cli_set_command(adapter->session_id,
-				  WMA_VDEV_IBSS_SET_INACTIVITY_TIME,
-				  hdd_ctx->config->ibssInactivityCount,
-				  VDEV_CMD);
-	if (0 != ret) {
-		hdd_err("set inactivity time failed %d", ret);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	ret = sme_cli_set_command(adapter->session_id,
-				  WMA_VDEV_IBSS_SET_TXSP_END_INACTIVITY_TIME,
-				  hdd_ctx->config->ibssTxSpEndInactivityTime,
-				  VDEV_CMD);
-	if (0 != ret) {
-		hdd_err("set txsp end failed %d",
-			ret);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	ret = sme_cli_set_command(adapter->session_id,
-				  WMA_VDEV_IBSS_PS_SET_WARMUP_TIME_SECS,
-				  hdd_ctx->config->ibssPsWarmupTime,
-				  VDEV_CMD);
-	if (0 != ret) {
-		hdd_err("set ps warmup failed %d",
-			ret);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	ret = sme_cli_set_command(adapter->session_id,
-				  WMA_VDEV_IBSS_PS_SET_1RX_CHAIN_IN_ATIM_WINDOW,
-				  hdd_ctx->config->ibssPs1RxChainInAtimEnable,
-				  VDEV_CMD);
-	if (0 != ret) {
-		hdd_err("set 1rx chain atim failed %d",
-			ret);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
+	return ucfg_mlme_ibss_power_save_setup(hdd_ctx->psoc,
+					       adapter->session_id);
 }
 
 #ifdef FEATURE_RUNTIME_PM

@@ -1190,19 +1190,10 @@ populate_dot11f_ibss_params(struct mac_context *mac,
 			    tDot11fIEIBSSParams *pDot11f,
 			    struct pe_session *pe_session)
 {
-	uint32_t val = 0;
-
 	if (LIM_IS_IBSS_ROLE(pe_session)) {
-		if (wlan_cfg_get_int(mac,
-				     WNI_CFG_IBSS_ATIM_WIN_SIZE,
-				     &val) != QDF_STATUS_SUCCESS) {
-			pe_err("could not retrieve IBSS ATIM WIN size");
-		}
+		pDot11f->atim = mac->mlme_cfg->ibss.atim_win_size;
 		pDot11f->present = 1;
-		/* ATIM duration is always set to 0 */
-		pDot11f->atim = val;
 	}
-
 } /* End populate_dot11f_ibss_params. */
 
 #ifdef ANI_SUPPORT_11H

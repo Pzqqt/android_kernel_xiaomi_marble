@@ -54,7 +54,6 @@
 #include "cds_regdomain.h"
 #include "lim_process_fils.h"
 #include "wlan_utility.h"
-
 /*
  * This overhead is time for sending NOA start to host in case of GO/sending
  * NULL data & receiving ACK in case of P2P Client and starting actual scanning
@@ -569,7 +568,6 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 {
 	uint16_t size;
 	uint32_t val = 0;
-	QDF_STATUS ret_status;
 	tSirMacChanNum channel_number;
 	tLimMlmStartReq *mlm_start_req = NULL;
 	tpSirSmeStartBssReq sme_start_bss_req = NULL;
@@ -915,16 +913,7 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		} else {
 			/* ibss mode */
 			mac_ctx->lim.gLimIbssCoalescingHappened = false;
-
-			ret_status = wlan_cfg_get_int(mac_ctx,
-					WNI_CFG_IBSS_AUTO_BSSID,
-					&auto_gen_bssid);
-			if (ret_status != QDF_STATUS_SUCCESS) {
-				pe_err("Get Auto Gen BSSID fail,Status: %d",
-					ret_status);
-				ret_code = eSIR_LOGE_EXCEPTION;
-				goto free;
-			}
+			auto_gen_bssid = mac_ctx->mlme_cfg->ibss.auto_bssid;
 
 			if (!auto_gen_bssid) {
 				/*

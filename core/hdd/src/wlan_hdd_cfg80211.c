@@ -18001,6 +18001,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	struct qdf_mac_addr bssid;
 	u8 channelNum = 0;
 	mac_handle_t mac_handle;
+	struct wlan_mlme_ibss_cfg ibss_cfg = {0};
 
 	hdd_enter();
 
@@ -18022,6 +18023,11 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 
 	if (0 != status)
 		return status;
+
+	if (QDF_IS_STATUS_ERROR(ucfg_mlme_get_ibss_cfg(hdd_ctx->psoc,
+						       &ibss_cfg))) {
+		return -EINVAL;
+	}
 
 	mac_handle = hdd_ctx->mac_handle;
 	if (NULL !=
@@ -18100,28 +18106,21 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	/* enable selected protection checks in IBSS mode */
 	roam_profile->cfg_protection = IBSS_CFG_PROTECTION_ENABLE_MASK;
 
-	if (QDF_STATUS_E_FAILURE == sme_cfg_set_int(mac_handle,
-						    WNI_CFG_IBSS_ATIM_WIN_SIZE,
-						    hdd_ctx->config->
-						    ibssATIMWinSize)) {
-		hdd_err("Could not pass on WNI_CFG_IBSS_ATIM_WIN_SIZE to CCM");
-	}
-
 	/* BSSID is provided by upper layers hence no need to AUTO generate */
 	if (NULL != params->bssid) {
-		if (sme_cfg_set_int(mac_handle, WNI_CFG_IBSS_AUTO_BSSID, 0)
+		if (ucfg_mlme_set_ibss_auto_bssid(hdd_ctx->psoc, 0)
 				== QDF_STATUS_E_FAILURE) {
-			hdd_err("ccmCfgStInt failed for WNI_CFG_IBSS_AUTO_BSSID");
+			hdd_err("Unable to update MLME IBSS Auto BSSID config");
 			return -EIO;
 		}
 		qdf_mem_copy(bssid.bytes, params->bssid, QDF_MAC_ADDR_SIZE);
-	} else if (hdd_ctx->config->isCoalesingInIBSSAllowed == 0) {
-		if (sme_cfg_set_int(mac_handle, WNI_CFG_IBSS_AUTO_BSSID, 0)
+	} else if (ibss_cfg.coalesing_enable == 0) {
+		if (ucfg_mlme_set_ibss_auto_bssid(hdd_ctx->psoc, 0)
 				== QDF_STATUS_E_FAILURE) {
-			hdd_err("ccmCfgStInt failed for WNI_CFG_IBSS_AUTO_BSSID");
+			hdd_err("Unable to update MLME IBSS Auto BSSID config");
 			return -EIO;
 		}
-		qdf_copy_macaddr(&bssid, &hdd_ctx->config->IbssBssid);
+		qdf_copy_macaddr(&bssid, &ibss_cfg.bssid);
 	}
 
 	if (cfg_in_range(CFG_BEACON_INTERVAL, params->beacon_interval))
