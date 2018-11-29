@@ -482,6 +482,14 @@ static netdev_tx_t __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	if (ap_ctx->dfs_cac_block_tx)
 		goto drop_pkt;
 
+	if (ap_ctx->hostapd_state.bss_state != BSS_START) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
+			  "%s: SAP is not in START state (%d). Ignore!!!",
+			  __func__,
+			  ap_ctx->hostapd_state.bss_state);
+		goto drop_pkt;
+	}
+
 	/*
 	 * If a transmit function is not registered, drop packet
 	 */
