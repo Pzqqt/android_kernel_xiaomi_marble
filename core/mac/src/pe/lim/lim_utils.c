@@ -76,7 +76,7 @@
 /** -------------------------------------------------------------
    \fn lim_delete_dialogue_token_list
    \brief deletes the complete lim dialogue token linked list.
-   \param     tpAniSirGlobal    pMac
+   \param     tpAniSirGlobal    mac
    \return     None
    -------------------------------------------------------------*/
 void lim_delete_dialogue_token_list(tpAniSirGlobal mac)
@@ -1132,7 +1132,7 @@ uint8_t lim_is_null_ssid(tSirMacSSid *ssid)
 /** -------------------------------------------------------------
    \fn lim_update_prot_sta_params
    \brief updates protection related counters.
-   \param      tpAniSirGlobal    pMac
+   \param      tpAniSirGlobal    mac
    \param      tSirMacAddr peerMacAddr
    \param      tLimProtStaCacheType protStaCacheType
    \param      tHalBitVal gfSupported
@@ -1209,7 +1209,7 @@ lim_update_prot_sta_params(tpAniSirGlobal mac,
    \brief Decides all the protection related staiton coexistence and also sets
  \        short preamble and short slot appropriately. This function will be called
  \        when AP is ready to send assocRsp tp the station joining right now.
-   \param      tpAniSirGlobal    pMac
+   \param      tpAniSirGlobal    mac
    \param      tSirMacAddr peerMacAddr
    \return      None
    -------------------------------------------------------------*/
@@ -1327,7 +1327,7 @@ lim_decide_ap_protection(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
 /** -------------------------------------------------------------
    \fn lim_enable_overlap11g_protection
    \brief wrapper function for setting overlap 11g protection.
-   \param      tpAniSirGlobal    pMac
+   \param      tpAniSirGlobal    mac
    \param      tpUpdateBeaconParams pBeaconParams
    \param      tpSirMacMgmtHdr         pMh
    \return      None
@@ -1594,7 +1594,7 @@ lim_update_short_slot_time(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
 /** -------------------------------------------------------------
    \fn lim_decide_sta_protection_on_assoc
    \brief Decide protection related settings on Sta while association.
-   \param      tpAniSirGlobal    pMac
+   \param      tpAniSirGlobal    mac
    \param      tpSchBeaconStruct pBeaconStruct
    \return      None
    -------------------------------------------------------------*/
@@ -4563,7 +4563,7 @@ lim_prepare_for11h_channel_switch(tpAniSirGlobal mac, tpPESession psessionEntry)
    \fn        lim_get_nw_type
 
    \brief    Get type of the network from data packet or beacon
-   \param pMac
+   \param mac
    \param channelNum - Channel number
    \param type - Type of packet.
    \param pBeacon - Pointer to beacon or probe response
@@ -4612,7 +4612,7 @@ tSirNwType lim_get_nw_type(tpAniSirGlobal mac, uint8_t channelNum, uint32_t type
    \fn        lim_get_channel_from_beacon
    \brief    To extract channel number from beacon
 
-   \param pMac
+   \param mac
    \param pBeacon - Pointer to beacon or probe rsp
    \return channel number
    -----------------------------------------------------------*/
@@ -4925,7 +4925,7 @@ tpPESession lim_is_ap_session_active(tpAniSirGlobal mac)
 /**---------------------------------------------------------
    \fn        lim_handle_defer_msg_error
    \brief    handles error scenario, when the msg can not be deferred.
-   \param pMac
+   \param mac
    \param pLimMsg LIM msg, which could not be deferred.
    \return void
    -----------------------------------------------------------*/
@@ -4948,7 +4948,7 @@ void lim_handle_defer_msg_error(tpAniSirGlobal mac,
 /**---------------------------------------------------------
    \fn    lim_diag_event_report
    \brief This function reports Diag event
-   \param pMac
+   \param mac
    \param eventType
    \param bssid
    \param status

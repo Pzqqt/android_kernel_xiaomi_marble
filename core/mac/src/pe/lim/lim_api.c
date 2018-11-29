@@ -781,7 +781,7 @@ static QDF_STATUS lim_unregister_sap_bcn_callback(tpAniSirGlobal mac_ctx)
 /** -------------------------------------------------------------
    \fn pe_open
    \brief will be called in Open sequence from mac_open
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param   tHalOpenParameters *pHalOpenParam
    \return  QDF_STATUS
    -------------------------------------------------------------*/
@@ -863,7 +863,7 @@ pe_open_timer_fail:
 /** -------------------------------------------------------------
    \fn pe_close
    \brief will be called in close sequence from mac_close
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \return  QDF_STATUS
    -------------------------------------------------------------*/
 
@@ -905,7 +905,7 @@ QDF_STATUS pe_close(tpAniSirGlobal mac)
 /** -------------------------------------------------------------
    \fn pe_start
    \brief will be called in start sequence from mac_start
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \return QDF_STATUS_SUCCESS on success, other QDF_STATUS on error
    -------------------------------------------------------------*/
 
@@ -931,7 +931,7 @@ QDF_STATUS pe_start(tpAniSirGlobal mac)
 /** -------------------------------------------------------------
    \fn pe_stop
    \brief will be called in stop sequence from mac_stop
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \return none
    -------------------------------------------------------------*/
 
@@ -961,7 +961,7 @@ static void pe_free_nested_messages(struct scheduler_msg *msg)
  \      to free a given PE message on the TX and MC thread.
  \      This happens when there are messages pending in the PE
  \      queue when system is being stopped and reset.
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param   struct scheduler_msg       pMsg
    \return none
    -----------------------------------------------------------------*/
@@ -1444,7 +1444,7 @@ lim_received_hb_handler(tpAniSirGlobal mac, uint8_t channelId,
 /** -------------------------------------------------------------
    \fn lim_update_overlap_sta_param
    \brief Updates overlap cache and param data structure
-   \param      tpAniSirGlobal    pMac
+   \param      tpAniSirGlobal    mac
    \param      tSirMacAddr bssId
    \param      tpLimProtStaParams pStaParams
    \return      None

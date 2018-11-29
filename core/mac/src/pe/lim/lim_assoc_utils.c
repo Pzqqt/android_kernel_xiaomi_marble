@@ -4631,7 +4631,7 @@ lim_prepare_and_send_del_sta_cnf(tpAniSirGlobal mac, tpDphHashNode pStaDs,
    \fn lim_init_pre_auth_timer_table
    \brief Initialize the Pre Auth Tanle and creates the timer for
        each node for the timeout value got from cfg.
-   \param     tpAniSirGlobal    pMac
+   \param     tpAniSirGlobal    mac
    \param     tpLimPreAuthTable pPreAuthTimerTable
    \return none
    -------------------------------------------------------------*/
@@ -4663,7 +4663,7 @@ void lim_init_pre_auth_timer_table(tpAniSirGlobal mac,
 /** -------------------------------------------------------------
    \fn lim_acquire_free_pre_auth_node
    \brief Retrives a free Pre Auth node from Pre Auth Table.
-   \param     tpAniSirGlobal    pMac
+   \param     tpAniSirGlobal    mac
    \param     tpLimPreAuthTable pPreAuthTimerTable
    \return none
    -------------------------------------------------------------*/
@@ -4686,7 +4686,7 @@ tLimPreAuthNode *lim_acquire_free_pre_auth_node(tpAniSirGlobal mac,
 /** -------------------------------------------------------------
    \fn lim_get_pre_auth_node_from_index
    \brief Depending on the Index this retrieves the pre auth node.
-   \param     tpAniSirGlobal    pMac
+   \param     tpAniSirGlobal    mac
    \param     tpLimPreAuthTable pAuthTable
    \param     uint32_t authNodeIdx
    \return none
@@ -4756,7 +4756,7 @@ QDF_STATUS lim_is_dot11h_power_capabilities_in_range(tpAniSirGlobal mac,
    \fn     lim_fill_rx_highest_supported_rate
    \brief  Fills in the Rx Highest Supported Data Rate field from
  \       the 'supported MCS set' field in HT capability element.
-   \param  tpAniSirGlobal    pMac
+   \param  tpAniSirGlobal    mac
    \param  tpSirSupportedRates  pRates
    \param  uint8_t*  pSupportedMCSSet
    \return none
@@ -4782,7 +4782,7 @@ void lim_fill_rx_highest_supported_rate(tpAniSirGlobal mac,
 /** -------------------------------------------------------------
    \fn     lim_send_sme_unprotected_mgmt_frame_ind
    \brief  Forwards the unprotected management frame to SME.
-   \param  tpAniSirGlobal    pMac
+   \param  tpAniSirGlobal    mac
    \param  frameType - 802.11 frame type
    \param  frame - frame buffer
    \param  sessionId - id for the current session
@@ -4823,7 +4823,7 @@ void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal mac, uint8_t frameTy
 /** -------------------------------------------------------------
    \fn     lim_send_sme_tsm_ie_ind
    \brief  Forwards the TSM IE information to SME.
-   \param  tpAniSirGlobal    pMac
+   \param  tpAniSirGlobal    mac
    \param  psessionEntry - PE session context
    \param  tid - traffic id
    \param  state - tsm state (enabled/disabled)

@@ -323,7 +323,7 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg);
  \      to free a given PE message on the TX and MC thread.
  \      This happens when there are messages pending in the PE
  \      queue when system is being stopped and reset.
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param   struct scheduler_msg       pMsg
    \return none
    -----------------------------------------------------------------*/

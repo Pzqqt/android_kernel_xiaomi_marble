@@ -485,7 +485,7 @@ set_sch_edca_params(tpAniSirGlobal mac,
 
 /**
  * get_wmm_local_params() - This function gets the WMM local edca parameters.
- * @pMac
+ * @mac
  * @params[][WNI_CFG_EDCA_ANI_ACBK_LOCAL_LEN]
  *
  * Return  none

@@ -403,7 +403,7 @@ static void lim_process_hw_mode_trans_ind(tpAniSirGlobal mac, void *body)
 /** -------------------------------------------------------------
    \fn def_msg_decision
    \brief The function decides whether to defer a message or not in limProcessMessage function
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param       struct scheduler_msg  limMsg
    \param       tSirMacTspecIE   *ppInfo
    \return none

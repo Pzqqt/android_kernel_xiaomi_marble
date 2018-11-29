@@ -66,7 +66,7 @@ static last_processed_msg rrm_link_action_frm;
    \brief  Stops the transmission if channel switch mode is silent and
    starts the channel switch timer.
 
-   \param  pMac
+   \param  mac
    \return NONE
    -----------------------------------------------------------------*/
 void lim_stop_tx_and_switch_channel(tpAniSirGlobal mac, uint8_t sessionId)
@@ -113,7 +113,7 @@ void lim_stop_tx_and_switch_channel(tpAniSirGlobal mac, uint8_t sessionId)
    starts the timer for channel switch and stops BG scan
    and heartbeat timer tempororily.
 
-   \param  pMac
+   \param  mac
    \param  psessionEntry
    \return NONE
    ------------------------------------------------------------*/

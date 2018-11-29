@@ -80,7 +80,7 @@ static QDF_STATUS lim_validate_access_policy(tpAniSirGlobal, uint8_t, uint16_t,
 /** -------------------------------------------------------------
    \fn lim_calculate_svc_int
    \brief TSPEC validation and servcie interval determination
-   \param     tpAniSirGlobal    pMac
+   \param     tpAniSirGlobal    mac
    \param         tSirMacTspecIE *pTspec
    \param         uint32_t            *pSvcInt
    \return QDF_STATUS - status of the comparison
@@ -174,7 +174,7 @@ lim_validate_tspec_edca(tpAniSirGlobal mac_ctx,
 /** -------------------------------------------------------------
    \fn lim_validate_tspec
    \brief validate the offered tspec
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param         tSirMacTspecIE *pTspec
    \return QDF_STATUS - status
    -------------------------------------------------------------*/
@@ -210,7 +210,7 @@ lim_validate_tspec(tpAniSirGlobal mac,
 /** -------------------------------------------------------------
    \fn lim_compute_mean_bw_used
    \brief determime the used/allocated bandwidth
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param       uint32_t              *pBw
    \param       uint32_t               phyMode
    \param       tpLimTspecInfo    pTspecInfo
@@ -245,7 +245,7 @@ lim_compute_mean_bw_used(tpAniSirGlobal mac,
    \fn lim_get_available_bw
    \brief based on the phy mode and the bw_factor, determine the total bandwidth that
        can be supported
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param       uint32_t              *pMaxBw
    \param       uint32_t              *pMinBw
    \param       uint32_t               phyMode
@@ -328,7 +328,7 @@ lim_admit_policy_oversubscription(tpAniSirGlobal mac_ctx,
 /** -------------------------------------------------------------
    \fn lim_admit_policy
    \brief determine the current admit control policy and apply it for the offered tspec
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param         tSirMacTspecIE   *pTspec
    \return QDF_STATUS - status
    -------------------------------------------------------------*/
@@ -371,7 +371,7 @@ static QDF_STATUS lim_admit_policy(tpAniSirGlobal mac,
 /** -------------------------------------------------------------
    \fn lim_tspec_delete
    \brief delete the specified tspec
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param     tpLimTspecInfo pInfo
    \return void
    -------------------------------------------------------------*/
@@ -392,7 +392,7 @@ static void lim_tspec_delete(tpAniSirGlobal mac, tpLimTspecInfo pInfo)
 /** -------------------------------------------------------------
    \fn lim_tspec_find_by_sta_addr
    \brief Send halMsg_AddTs to HAL
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param   \param       uint8_t               *pAddr
    \param       tSirMacTspecIE    *pTspecIE
    \param       tpLimTspecInfo    pTspecList
@@ -430,7 +430,7 @@ lim_tspec_find_by_sta_addr(tpAniSirGlobal mac,
 /** -------------------------------------------------------------
    \fn lim_tspec_find_by_assoc_id
    \brief find tspec with matchin staid and Tspec
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param       uint32_t               staid
    \param       tSirMacTspecIE    *pTspecIE
    \param       tpLimTspecInfo    pTspecList
@@ -470,7 +470,7 @@ lim_tspec_find_by_assoc_id(tpAniSirGlobal mac,
    \fn lim_find_tspec
    \brief finding a TSPEC entry with assocId, tsinfo.direction and tsinfo.tsid
    \param    uint16_t               assocId
-   \param     tpAniSirGlobal    pMac
+   \param     tpAniSirGlobal    mac
    \param     tSirMacTSInfo   *pTsInfo
    \param         tpLimTspecInfo    pTspecList
    \param         tpLimTspecInfo   *ppInfo
@@ -507,7 +507,7 @@ lim_find_tspec(tpAniSirGlobal mac,
 /** -------------------------------------------------------------
    \fn lim_tspec_add
    \brief add or update the specified tspec to the tspec list
-   \param tpAniSirGlobal    pMac
+   \param tpAniSirGlobal    mac
    \param uint8_t               *pAddr
    \param uint16_t               assocId
    \param tSirMacTspecIE   *pTspec
@@ -596,7 +596,7 @@ QDF_STATUS lim_tspec_add(tpAniSirGlobal mac,
 /** -------------------------------------------------------------
    \fn lim_validate_access_policy
    \brief Validates Access policy
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param       uint8_t              accessPolicy
    \param       uint16_t             assocId
    \return QDF_STATUS - status
@@ -744,7 +744,7 @@ QDF_STATUS lim_admit_control_add_ts(tpAniSirGlobal mac, uint8_t *pAddr,
 /** -------------------------------------------------------------
    \fn lim_admit_control_delete_ts
    \brief Delete the specified Tspec for the specified STA
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param       uint16_t               assocId
    \param       tSirMacTSInfo    *pTsInfo
    \param       uint8_t               *pTsStatus
@@ -780,7 +780,7 @@ lim_admit_control_delete_ts(tpAniSirGlobal mac,
 /** -------------------------------------------------------------
    \fn lim_admit_control_delete_sta
    \brief Delete all TSPEC for the specified STA
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param     uint16_t assocId
    \return QDF_STATUS - status
    -------------------------------------------------------------*/
@@ -805,7 +805,7 @@ QDF_STATUS lim_admit_control_delete_sta(tpAniSirGlobal mac, uint16_t assocId)
 /** -------------------------------------------------------------
    \fn lim_admit_control_init
    \brief init tspec table
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \return QDF_STATUS - status
    -------------------------------------------------------------*/
 QDF_STATUS lim_admit_control_init(tpAniSirGlobal mac)
@@ -818,7 +818,7 @@ QDF_STATUS lim_admit_control_init(tpAniSirGlobal mac)
 /** -------------------------------------------------------------
    \fn lim_send_hal_msg_add_ts
    \brief Send halMsg_AddTs to HAL
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param     uint16_t        staIdx
    \param     uint8_t         tspecIdx
    \param       tSirMacTspecIE tspecIE
@@ -893,7 +893,7 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal mac,
 /** -------------------------------------------------------------
    \fn lim_send_hal_msg_del_ts
    \brief Send halMsg_AddTs to HAL
-   \param   tpAniSirGlobal pMac
+   \param   tpAniSirGlobal mac
    \param     uint16_t        staIdx
    \param     uint8_t         tspecIdx
    \param     tSirAddtsReqInfo addts
@@ -962,7 +962,7 @@ err:
  \       Otherwise, send DELTS action frame to peer and then
  \       then send back SME_ADDTS_RSP.
  \
-   \param  tpAniSirGlobal  pMac
+   \param  tpAniSirGlobal  mac
    \param  struct scheduler_msg *limMsg
    -------------------------------------------------------------*/
 void lim_process_hal_add_ts_rsp(tpAniSirGlobal mac,

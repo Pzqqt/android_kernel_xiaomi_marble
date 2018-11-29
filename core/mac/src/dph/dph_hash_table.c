@@ -218,7 +218,7 @@ tpDphHashNode dph_lookup_assoc_id(tpAniSirGlobal mac, uint16_t staIdx,
    \fn dph_init_sta_state
    \brief Initialize STA state. this function saves the staId from the current entry in the DPH table with given assocId
  \ if validStaIdx flag is set. Otherwise it sets the staId to invalid.
-   \param  tpAniSirGlobal    pMac
+   \param  tpAniSirGlobal    mac
    \param  tSirMacAddr staAddr
    \param  uint16_t assocId
    \param  uint8_t validStaIdx -   true ==> the staId in the DPH entry with given assocId is valid and restore it back.

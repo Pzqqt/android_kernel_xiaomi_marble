@@ -741,7 +741,7 @@ void lim_ibss_delete(tpAniSirGlobal mac, tpPESession psessionEntry)
    \fn lim_ibss_set_protection
    \brief Decides all the protection related information.
  \
-   \param  tpAniSirGlobal    pMac
+   \param  tpAniSirGlobal    mac
    \param  tSirMacAddr peerMacAddr
    \param  tpUpdateBeaconParams pBeaconParams
    \return None
@@ -784,7 +784,7 @@ lim_ibss_set_protection(tpAniSirGlobal mac, uint8_t enable,
    \fn lim_ibss_update_protection_params
    \brief Decides all the protection related information.
  \
-   \param  tpAniSirGlobal    pMac
+   \param  tpAniSirGlobal    mac
    \param  tSirMacAddr peerMacAddr
    \param  tpUpdateBeaconParams pBeaconParams
    \return None
@@ -842,7 +842,7 @@ lim_ibss_update_protection_params(tpAniSirGlobal mac,
    \fn lim_ibss_decide_protection
    \brief Decides all the protection related information.
  \
-   \param  tpAniSirGlobal    pMac
+   \param  tpAniSirGlobal    mac
    \param  tSirMacAddr peerMacAddr
    \param  tpUpdateBeaconParams pBeaconParams
    \return None
@@ -1748,7 +1748,7 @@ void lim_ibss_decide_protection_on_delete(tpAniSirGlobal mac_ctx,
    \fn __lim_ibss_peer_inactivity_handler
    \brief Internal function. Deletes FW indicated peer which is inactive
  \
-   \param  tpAniSirGlobal    pMac
+   \param  tpAniSirGlobal    mac
    \param  tpPESession       psessionEntry
    \param  tpSirIbssPeerInactivityInd peerInactivityInd
    \return None
@@ -1771,7 +1771,7 @@ __lim_ibss_peer_inactivity_handler(tpAniSirGlobal mac,
    \fn lim_process_ibss_peer_inactivity
    \brief Peer inactivity message handler
  \
-   \param  tpAniSirGlobal    pMac
+   \param  tpAniSirGlobal    mac
    \param  void*             buf
    \return None
    -------------------------------------------------------------*/

@@ -617,7 +617,7 @@ error:
 
    \brief  Gets regulatory tx power on the current channel.
 
-   \param  pMac
+   \param  mac
    \param  channel
    \param  rfBand
    -----------------------------------------------------------------------*/

@@ -426,7 +426,7 @@ void lim_set_active_edca_params(tpAniSirGlobal mac_ctx,
 /** ---------------------------------------------------------
    \fn      lim_set_link_state
    \brief   LIM sends a message to WMA to set the link state
-   \param   tpAniSirGlobal  pMac
+   \param   tpAniSirGlobal  mac
    \param   tSirLinkState      state
    \return  None
    -----------------------------------------------------------*/
