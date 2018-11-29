@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -201,29 +201,31 @@ ret:
 /**
  * dp_txrx_ext_dump_stats() - dump txrx external module stats
  * @soc: ol_txrx_soc_handle object
- *
+ * @stats_id: id  for the module whose stats are needed
  *
  * Return: QDF_STATUS_SUCCESS on success, error qdf status on failure
  */
-static inline QDF_STATUS dp_txrx_ext_dump_stats(ol_txrx_soc_handle soc)
+static inline QDF_STATUS dp_txrx_ext_dump_stats(ol_txrx_soc_handle soc,
+						uint8_t stats_id)
 {
 	struct dp_txrx_handle *dp_ext_hdl;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status;
 
 	if (!soc) {
-		qdf_status = QDF_STATUS_E_INVAL;
 		dp_err("invalid input params soc %pK", soc);
-		goto ret;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	dp_ext_hdl = cdp_soc_get_dp_txrx_handle(soc);
 	if (!dp_ext_hdl) {
-		qdf_status = QDF_STATUS_E_FAULT;
-		goto ret;
+		return QDF_STATUS_E_FAULT;
 	}
 
-	qdf_status = dp_rx_tm_dump_stats(&dp_ext_hdl->rx_tm_hdl);
-ret:
+	if (stats_id == CDP_DP_RX_THREAD_STATS)
+		qdf_status = dp_rx_tm_dump_stats(&dp_ext_hdl->rx_tm_hdl);
+	else
+		qdf_status = QDF_STATUS_E_INVAL;
+
 	return qdf_status;
 }
 
@@ -285,7 +287,8 @@ QDF_STATUS dp_rx_enqueue_pkt(ol_txrx_soc_handle soc, qdf_nbuf_t nbuf_list)
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS dp_txrx_ext_dump_stats(ol_txrx_soc_handle soc)
+static inline QDF_STATUS dp_txrx_ext_dump_stats(ol_txrx_soc_handle soc,
+						uint8_t stats_id)
 {
 	return QDF_STATUS_SUCCESS;
 }

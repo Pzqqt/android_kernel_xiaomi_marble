@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -98,6 +98,10 @@ static void dp_rx_tm_thread_dump_stats(struct dp_rx_thread *rx_thread)
 				     sizeof(nbuf_queued_string) - off,
 				     "reo[%u]:%u ", reo_ring_num, temp);
 	}
+
+	if (!total_queued)
+		return;
+
 	dp_info("thread:%u - qlen:%u queued:(total:%u %s) dequeued:%u stack:%u max_len:%u invalid(peer:%u vdev:%u others:%u)",
 		rx_thread->id,
 		qdf_nbuf_queue_head_qlen(&rx_thread->nbuf_queue),

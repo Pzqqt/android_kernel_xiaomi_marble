@@ -1625,7 +1625,6 @@ QDF_STATUS hdd_gro_rx_dp_thread(struct hdd_adapter *adapter,
 			QDF_NBUF_CB_RX_FLUSH_IND(skb) = 1;
 			adapter->hdd_stats.tx_rx_stats.rx_gro_force_flushes++;
 		} else {
-			hdd_err_rl("GRO disabled - return");
 			status = QDF_STATUS_E_FAILURE;
 			return status;
 		}

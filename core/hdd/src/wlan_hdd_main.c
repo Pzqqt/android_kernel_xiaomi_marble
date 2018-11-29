@@ -7635,7 +7635,7 @@ static void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
 		periodic_stats_disp_time * 1000) {
 		if (data_in_time_period) {
 			wlan_hdd_display_txrx_stats(hdd_ctx);
-			dp_txrx_ext_dump_stats(soc);
+			dp_txrx_ext_dump_stats(soc, CDP_DP_RX_THREAD_STATS);
 			cdp_display_stats(soc,
 					  CDP_RX_RING_STATS,
 					  QDF_STATS_VERBOSITY_LEVEL_LOW);
