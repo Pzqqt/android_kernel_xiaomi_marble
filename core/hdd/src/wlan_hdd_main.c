@@ -3567,7 +3567,6 @@ void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,
 	}
 }
 
-#ifdef WLAN_FEATURE_PACKET_FILTERING
 /**
  * __hdd_set_multicast_list() - set the multicast address list
  * @dev:	Pointer to the WLAN device.
@@ -3678,7 +3677,6 @@ static void hdd_set_multicast_list(struct net_device *dev)
 	__hdd_set_multicast_list(dev);
 	cds_ssr_unprotect(__func__);
 }
-#endif
 
 /**
  * hdd_select_queue() - used by Linux OS to decide which queue to use first
@@ -3712,9 +3710,7 @@ static const struct net_device_ops wlan_drv_ops = {
 	.ndo_do_ioctl = hdd_ioctl,
 	.ndo_set_mac_address = hdd_set_mac_address,
 	.ndo_select_queue = hdd_select_queue,
-#ifdef WLAN_FEATURE_PACKET_FILTERING
 	.ndo_set_rx_mode = hdd_set_multicast_list,
-#endif
 };
 
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
