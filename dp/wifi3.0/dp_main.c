@@ -9331,6 +9331,8 @@ void *dp_soc_init(void *dpsoc, HTC_HANDLE htc_handle, void *hif_handle)
 		wlan_cfg_set_raw_mode_war(soc->wlan_cfg_ctx, true);
 		soc->ast_override_support = 1;
 		if (con_mode_monitor == QDF_GLOBAL_MONITOR_MODE) {
+			int int_ctx;
+
 			for (int_ctx = 0; int_ctx < WLAN_CFG_INT_NUM_CONTEXTS; int_ctx++) {
 				soc->wlan_cfg_ctx->int_rx_ring_mask[int_ctx] = 0;
 				soc->wlan_cfg_ctx->int_rxdma2host_ring_mask[int_ctx] = 0;
