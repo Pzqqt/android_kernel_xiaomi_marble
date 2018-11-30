@@ -588,10 +588,16 @@ int dp_peer_add_ast(struct dp_soc *soc,
 			/* Modify an already existing AST entry from type
 			 * WDS to MEC on promption. This serves as a fix when
 			 * backbone of interfaces are interchanged wherein
-			 * wds entr becomes its own MEC.
+			 * wds entr becomes its own MEC. The entry should be
+			 * replaced only when the ast_entry peer matches the
+			 * peer received in mec event. This additional check
+			 * is needed in wds repeater cases where a multicast
+			 * packet from station to the root via the repeater
+			 * should not remove the wds entry.
 			 */
 			if ((ast_entry->type == CDP_TXRX_AST_TYPE_WDS) &&
-			    (type == CDP_TXRX_AST_TYPE_MEC)) {
+			    (type == CDP_TXRX_AST_TYPE_MEC) &&
+			    (ast_entry->peer == peer)) {
 				ast_entry->is_active = FALSE;
 				dp_peer_del_ast(soc, ast_entry);
 			}
