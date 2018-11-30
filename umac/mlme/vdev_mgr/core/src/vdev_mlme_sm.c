@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1851,6 +1851,8 @@ QDF_STATUS mlme_vdev_sm_create(struct vdev_mlme_obj *vdev_mlme)
 
 	mlme_vdev_sm_spinlock_create(vdev_mlme);
 
+	mlme_vdev_cmd_mutex_create(vdev_mlme);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1873,12 +1875,16 @@ QDF_STATUS mlme_vdev_sm_create(struct vdev_mlme_obj *vdev_mlme)
 
 	mlme_vdev_sm_spinlock_create(vdev_mlme);
 
+	mlme_vdev_cmd_mutex_create(vdev_mlme);
+
 	return QDF_STATUS_SUCCESS;
 }
 #endif
 
 QDF_STATUS mlme_vdev_sm_destroy(struct vdev_mlme_obj *vdev_mlme)
 {
+	mlme_vdev_cmd_mutex_destroy(vdev_mlme);
+
 	mlme_vdev_sm_spinlock_destroy(vdev_mlme);
 
 	wlan_sm_delete(vdev_mlme->sm_hdl);

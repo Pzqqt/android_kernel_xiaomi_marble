@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -175,6 +175,7 @@ struct vdev_mlme_obj {
 	struct vdev_mlme_proto vdev_proto;
 #ifdef VDEV_SM_LOCK_SUPPORT
 	qdf_spinlock_t sm_lock;
+	qdf_mutex_t vdev_cmd_lock;
 #endif
 	struct wlan_sm *sm_hdl;
 	struct wlan_objmgr_vdev *vdev;

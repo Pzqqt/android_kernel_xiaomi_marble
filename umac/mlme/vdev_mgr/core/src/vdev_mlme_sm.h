@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -131,6 +131,60 @@ static inline void mlme_vdev_sm_spin_unlock(struct vdev_mlme_obj *vdev_mlme)
 	qdf_spin_unlock_bh(&vdev_mlme->sm_lock);
 }
 
+/**
+ * mlme_vdev_cmd_mutex_create - Create VDEV MLME cmd mutex
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ *
+ * Creates VDEV MLME cmd mutex
+ *
+ * Return: void
+ */
+static inline void
+mlme_vdev_cmd_mutex_create(struct vdev_mlme_obj *vdev_mlme)
+{
+	qdf_mutex_create(&vdev_mlme->vdev_cmd_lock);
+}
+
+/**
+ * mlme_vdev_cmd_mutex_destroy - Destroy VDEV MLME cmd mutex
+ * @vdev_mlme_obj:  VDEV MLME comp object
+ *
+ * Destroy VDEV MLME cmd mutex
+ *
+ * Return: void
+ */
+static inline void
+mlme_vdev_cmd_mutex_destroy(struct vdev_mlme_obj *vdev_mlme)
+{
+	qdf_mutex_destroy(&vdev_mlme->vdev_cmd_lock);
+}
+
+/**
+ * mlme_vdev_cmd_mutex_acquire - acquire mutex
+ * @vdev_mlme_obj:  vdev mlme comp object
+ *
+ * acquire vdev mlme cmd mutex
+ *
+ * return: void
+ */
+static inline void mlme_vdev_cmd_mutex_acquire(struct vdev_mlme_obj *vdev_mlme)
+{
+	qdf_mutex_acquire(&vdev_mlme->vdev_cmd_lock);
+}
+
+/**
+ * mlme_vdev_cmd_mutex_release - release mutex
+ * @vdev_mlme_obj:  vdev mlme comp object
+ *
+ * release vdev mlme cmd mutex
+ *
+ * return: void
+ */
+static inline void mlme_vdev_cmd_mutex_release(struct vdev_mlme_obj *vdev_mlme)
+{
+	qdf_mutex_release(&vdev_mlme->vdev_cmd_lock);
+}
+
 #else
 static inline void mlme_vdev_sm_spinlock_create(struct vdev_mlme_obj *vdev_mlme)
 {
@@ -148,6 +202,26 @@ static inline void mlme_vdev_sm_spin_lock(struct vdev_mlme_obj *vdev_mlme)
 }
 
 static inline void mlme_vdev_sm_spin_unlock(struct vdev_mlme_obj *vdev_mlme)
+{
+}
+
+static inline void
+mlme_vdev_cmd_mutex_create(struct vdev_mlme_obj *vdev_mlme)
+{
+	mlme_info("VDEV CMD lock is disabled!!!");
+}
+
+static inline void
+mlme_vdev_cmd_mutex_destroy(struct vdev_mlme_obj *vdev_mlme)
+{
+	mlme_info("VDEV CMD lock is disabled!!!");
+}
+
+static inline void mlme_vdev_cmd_mutex_acquire(struct vdev_mlme_obj *vdev_mlme)
+{
+}
+
+static inline void mlme_vdev_cmd_mutex_release(struct vdev_mlme_obj *vdev_mlme)
 {
 }
 #endif

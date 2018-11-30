@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -177,4 +177,31 @@ QDF_STATUS wlan_vdev_is_going_down(struct wlan_objmgr_vdev *vdev)
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+void wlan_vdev_mlme_cmd_lock(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return;
+	}
+
+	mlme_vdev_cmd_mutex_acquire(vdev_mlme);
+}
+
+void wlan_vdev_mlme_cmd_unlock(struct wlan_objmgr_vdev *vdev)
+{
+	struct vdev_mlme_obj *vdev_mlme;
+
+	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
+	if (!vdev_mlme) {
+		mlme_err("vdev component object is NULL");
+		return;
+	}
+
+	mlme_vdev_cmd_mutex_release(vdev_mlme);
+}
+
 #endif
