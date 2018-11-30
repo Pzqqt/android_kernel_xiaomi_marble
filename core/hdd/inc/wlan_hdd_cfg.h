@@ -2420,58 +2420,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_FW_MODULE_LOG_LEVEL    "gFwDebugModuleLoglevel"
 #define CFG_ENABLE_FW_MODULE_LOG_DEFAULT  "2,1,3,1,5,1,9,1,13,1,14,1,18,1,19,1,26,1,28,1,29,1,31,1,36,1,38,1,46,1,47,1,50,1,52,1,53,1,56,1,60,1,61,1,4,1"
 
-/*
- * QDF Trace Enable Control
- * Notes:
- *  the MIN/MAX/DEFAULT values apply for all modules
- *  the DEFAULT value is outside the valid range.  if the DEFAULT
- *    value is not overridden, then no change will be made to the
- *    "built in" default values compiled into the code
- *  values are a bitmap indicating which log levels are to enabled
- *    (must match order of qdf_trace_level enumerations)
- *    00000001  FATAL
- *    00000010  ERROR
- *    00000100  WARN
- *    00001000  INFO
- *    00010000  INFO HIGH
- *    00100000  INFO MED
- *    01000000  INFO LOW
- *    10000000  DEBUG
- *
- *  hence a value of 0xFF would set all bits (enable all logs)
- */
-
-#define CFG_QDF_TRACE_ENABLE_WDI_NAME     "qdf_trace_enable_wdi"
-#define CFG_QDF_TRACE_ENABLE_HDD_NAME     "qdf_trace_enable_hdd"
-#define CFG_QDF_TRACE_ENABLE_SME_NAME     "qdf_trace_enable_sme"
-#define CFG_QDF_TRACE_ENABLE_PE_NAME      "qdf_trace_enable_pe"
-#define CFG_QDF_TRACE_ENABLE_PMC_NAME     "qdf_trace_enable_pmc"
-#define CFG_QDF_TRACE_ENABLE_WMA_NAME     "qdf_trace_enable_wma"
-#define CFG_QDF_TRACE_ENABLE_SYS_NAME     "qdf_trace_enable_sys"
-#define CFG_QDF_TRACE_ENABLE_QDF_NAME     "qdf_trace_enable_qdf"
-#define CFG_QDF_TRACE_ENABLE_SAP_NAME     "qdf_trace_enable_sap"
-#define CFG_QDF_TRACE_ENABLE_HDD_SAP_NAME "qdf_trace_enable_hdd_sap"
-#define CFG_QDF_TRACE_ENABLE_BMI_NAME     "qdf_trace_enable_bmi"
-#define CFG_QDF_TRACE_ENABLE_CFG_NAME     "qdf_trace_enable_cfg"
-#define CFG_QDF_TRACE_ENABLE_EPPING       "qdf_trace_enable_epping"
-#define CFG_QDF_TRACE_ENABLE_QDF_DEVICES  "qdf_trace_enable_qdf_devices"
-#define CFG_QDF_TRACE_ENABLE_TXRX_NAME    "qdf_trace_enable_txrx"
-#define CFG_QDF_TRACE_ENABLE_DP_NAME      "qdf_trace_enable_dp"
-#define CFG_QDF_TRACE_ENABLE_HTC_NAME     "qdf_trace_enable_htc"
-#define CFG_QDF_TRACE_ENABLE_HIF_NAME     "qdf_trace_enable_hif"
-#define CFG_CDR_TRACE_ENABLE_HDD_SAP_DATA_NAME   "qdf_trace_enable_hdd_sap_data"
-#define CFG_QDF_TRACE_ENABLE_HDD_DATA_NAME       "qdf_trace_enable_hdd_data"
-#define CFG_QDF_TRACE_ENABLE_WIFI_POS     "qdf_trace_enable_wifi_pos"
-#define CFG_QDF_TRACE_ENABLE_NAN          "qdf_trace_enable_nan"
-#define CFG_QDF_TRACE_ENABLE_REGULATORY   "qdf_trace_enable_regulatory"
-#define CFG_QDF_TRACE_ENABLE_CP_STATS     "qdf_trace_enable_cp_stats"
-
-#define CFG_QDF_TRACE_ENABLE_MIN          (0)
-#define CFG_QDF_TRACE_ENABLE_MAX          (0xff)
-#define CFG_QDF_TRACE_ENABLE_DEFAULT      (0xffff)
-/* disable debug logs for DP by default */
-#define CFG_QDF_TRACE_ENABLE_DP_DEFAULT   (0x7f)
-
 #ifdef ENABLE_MTRACE_LOG
 /*
  * Enable MTRACE for all modules
@@ -5240,32 +5188,6 @@ struct hdd_config {
 #ifdef FEATURE_WLAN_SCAN_PNO
 	bool PnoOffload;
 #endif
-
-/* QDF Trace Control*/
-	uint16_t qdf_trace_enable_wdi;
-	uint16_t qdf_trace_enable_hdd;
-	uint16_t qdf_trace_enable_sme;
-	uint16_t qdf_trace_enable_pe;
-	uint16_t qdf_trace_enable_pmc;
-	uint16_t qdf_trace_enable_wma;
-	uint16_t qdf_trace_enable_sys;
-	uint16_t qdf_trace_enable_qdf;
-	uint16_t qdf_trace_enable_sap;
-	uint16_t qdf_trace_enable_hdd_sap;
-	uint16_t qdf_trace_enable_bmi;
-	uint16_t qdf_trace_enable_cfg;
-	uint16_t qdf_trace_enable_txrx;
-	uint16_t qdf_trace_enable_dp;
-	uint16_t qdf_trace_enable_htc;
-	uint16_t qdf_trace_enable_hif;
-	uint16_t qdf_trace_enable_hdd_sap_data;
-	uint16_t qdf_trace_enable_hdd_data;
-	uint16_t qdf_trace_enable_epping;
-	uint16_t qdf_trace_enable_qdf_devices;
-	uint16_t qdf_trace_enable_wifi_pos;
-	uint16_t qdf_trace_enable_nan;
-	uint16_t qdf_trace_enable_regulatory;
-	uint16_t qdf_trace_enable_cp_stats;
 #ifdef ENABLE_MTRACE_LOG
 	bool enable_mtrace;
 #endif

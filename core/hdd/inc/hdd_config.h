@@ -29,6 +29,8 @@
 #include "wlan_tgt_def_config.h"
 #endif
 
+#define CFG_QDF_TRACE_ENABLE_DEFAULT (0xffff)
+
 /**
  * enum hdd_wext_control - knob for wireless extensions
  * @hdd_wext_disabled - interface is completely disabled. An access

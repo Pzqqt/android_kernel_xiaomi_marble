@@ -9061,52 +9061,7 @@ static void hdd_set_mtrace_for_each(struct hdd_context *hdd_ctx)
  */
 static void hdd_set_trace_level_for_each(struct hdd_context *hdd_ctx)
 {
-	hdd_qdf_trace_enable(QDF_MODULE_ID_WMI,
-			     hdd_ctx->config->qdf_trace_enable_wdi);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_HDD,
-			     hdd_ctx->config->qdf_trace_enable_hdd);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_SME,
-			     hdd_ctx->config->qdf_trace_enable_sme);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_PE,
-			     hdd_ctx->config->qdf_trace_enable_pe);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_WMA,
-			     hdd_ctx->config->qdf_trace_enable_wma);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_SYS,
-			     hdd_ctx->config->qdf_trace_enable_sys);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_QDF,
-			     hdd_ctx->config->qdf_trace_enable_qdf);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_SAP,
-			     hdd_ctx->config->qdf_trace_enable_sap);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_HDD_SOFTAP,
-			     hdd_ctx->config->qdf_trace_enable_hdd_sap);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_BMI,
-				hdd_ctx->config->qdf_trace_enable_bmi);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_CFG,
-				hdd_ctx->config->qdf_trace_enable_cfg);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_EPPING,
-				hdd_ctx->config->qdf_trace_enable_epping);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_QDF_DEVICE,
-				hdd_ctx->config->qdf_trace_enable_qdf_devices);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_TXRX,
-				hdd_ctx->config->qdf_trace_enable_txrx);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_DP,
-				hdd_ctx->config->qdf_trace_enable_dp);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_HTC,
-				hdd_ctx->config->qdf_trace_enable_htc);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_HIF,
-				hdd_ctx->config->qdf_trace_enable_hif);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_HDD_SAP_DATA,
-				hdd_ctx->config->qdf_trace_enable_hdd_sap_data);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_HDD_DATA,
-				hdd_ctx->config->qdf_trace_enable_hdd_data);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_WIFIPOS,
-				hdd_ctx->config->qdf_trace_enable_wifi_pos);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_NAN,
-				hdd_ctx->config->qdf_trace_enable_nan);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_REGULATORY,
-				hdd_ctx->config->qdf_trace_enable_regulatory);
-	hdd_qdf_trace_enable(QDF_MODULE_ID_CP_STATS,
-				hdd_ctx->config->qdf_trace_enable_cp_stats);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_DP, 0x7f);
 	hdd_qdf_trace_enable(QDF_MODULE_ID_MLME, 0xffff);
 	hdd_qdf_trace_enable(QDF_MODULE_ID_FWOL, 0xffff);
 	hdd_qdf_trace_enable(QDF_MODULE_ID_CRYPTO, 0xffff);
