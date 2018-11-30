@@ -3334,11 +3334,6 @@ void dp_tx_vdev_update_search_flags(struct dp_vdev *vdev)
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
-static void dp_tx_desc_flush(struct dp_vdev *vdev)
-{
-}
-#else /* QCA_LL_TX_FLOW_CONTROL_V2! */
-
 /* dp_tx_desc_flush() - release resources associated
  *                      to tx_desc
  * @vdev: virtual device instance
@@ -3347,12 +3342,51 @@ static void dp_tx_desc_flush(struct dp_vdev *vdev)
  * including ME buffer for which either free during
  * completion didn't happened or completion is not
  * received.
-*/
+ */
+static void dp_tx_desc_flush(struct dp_vdev *vdev)
+{
+	uint8_t i;
+	uint32_t j;
+	uint32_t num_desc, page_id, offset;
+	uint16_t num_desc_per_page;
+	struct dp_soc *soc = vdev->pdev->soc;
+	struct dp_tx_desc_s *tx_desc = NULL;
+	struct dp_tx_desc_pool_s *tx_desc_pool = NULL;
+
+	for (i = 0; i < MAX_TXDESC_POOLS; i++) {
+		tx_desc_pool = &soc->tx_desc[i];
+		if (!(tx_desc_pool->pool_size) ||
+		    IS_TX_DESC_POOL_STATUS_INACTIVE(tx_desc_pool) ||
+		    !(tx_desc_pool->desc_pages.cacheable_pages))
+			continue;
+
+		num_desc = tx_desc_pool->pool_size;
+		num_desc_per_page =
+			tx_desc_pool->desc_pages.num_element_per_page;
+		for (j = 0; j < num_desc; j++) {
+			page_id = j / num_desc_per_page;
+			offset = j % num_desc_per_page;
+
+			if (qdf_unlikely(!(tx_desc_pool->
+					 desc_pages.cacheable_pages)))
+				break;
+
+			tx_desc = dp_tx_desc_find(soc, i, page_id, offset);
+			if (tx_desc && (tx_desc->vdev == vdev) &&
+			    (tx_desc->flags & DP_TX_DESC_FLAG_ALLOCATED)) {
+				dp_tx_comp_free_buf(soc, tx_desc);
+				dp_tx_desc_release(tx_desc, i);
+			}
+		}
+	}
+}
+#else /* QCA_LL_TX_FLOW_CONTROL_V2! */
 static void dp_tx_desc_flush(struct dp_vdev *vdev)
 {
 	uint8_t i, num_pool;
 	uint32_t j;
-	uint32_t num_desc;
+	uint32_t num_desc, page_id, offset;
+	uint16_t num_desc_per_page;
 	struct dp_soc *soc = vdev->pdev->soc;
 	struct dp_tx_desc_s *tx_desc = NULL;
 	struct dp_tx_desc_pool_s *tx_desc_pool = NULL;
@@ -3361,21 +3395,21 @@ static void dp_tx_desc_flush(struct dp_vdev *vdev)
 	num_pool = wlan_cfg_get_num_tx_desc_pool(soc->wlan_cfg_ctx);
 
 	for (i = 0; i < num_pool; i++) {
-		for (j = 0; j < num_desc; j++) {
-			tx_desc_pool = &((soc)->tx_desc[(i)]);
-			if (tx_desc_pool &&
-				tx_desc_pool->desc_pages.cacheable_pages) {
-				tx_desc = dp_tx_desc_find(soc, i,
-					(j & DP_TX_DESC_ID_PAGE_MASK) >>
-					DP_TX_DESC_ID_PAGE_OS,
-					(j & DP_TX_DESC_ID_OFFSET_MASK) >>
-					DP_TX_DESC_ID_OFFSET_OS);
+		tx_desc_pool = &soc->tx_desc[i];
+		if (!tx_desc_pool->desc_pages.cacheable_pages)
+			continue;
 
-				if (tx_desc && (tx_desc->vdev == vdev) &&
-					(tx_desc->flags & DP_TX_DESC_FLAG_ALLOCATED)) {
-					dp_tx_comp_free_buf(soc, tx_desc);
-					dp_tx_desc_release(tx_desc, i);
-				}
+		num_desc_per_page =
+			tx_desc_pool->desc_pages.num_element_per_page;
+		for (j = 0; j < num_desc; j++) {
+			page_id = j / num_desc_per_page;
+			offset = j % num_desc_per_page;
+			tx_desc = dp_tx_desc_find(soc, i, page_id, offset);
+
+			if (tx_desc && (tx_desc->vdev == vdev) &&
+			    (tx_desc->flags & DP_TX_DESC_FLAG_ALLOCATED)) {
+				dp_tx_comp_free_buf(soc, tx_desc);
+				dp_tx_desc_release(tx_desc, i);
 			}
 		}
 	}
