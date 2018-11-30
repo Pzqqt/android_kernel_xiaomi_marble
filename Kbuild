@@ -575,9 +575,11 @@ ifeq ($(CONFIG_LEAK_DETECTION), y)
 endif
 
 ifeq ($(CONFIG_QDF_TEST), y)
+	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_hashtable_test.o
 	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_types_test.o
 endif
 
+cppflags-$(CONFIG_QDF_TEST) += -DWLAN_HASHTABLE_TEST
 cppflags-$(CONFIG_QDF_TEST) += -DWLAN_TYPES_TEST
 
 ############ WBUFF ############

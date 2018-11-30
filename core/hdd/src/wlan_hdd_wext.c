@@ -66,6 +66,7 @@
 #include "qc_sap_ioctl.h"
 #include "sme_api.h"
 #include "wma_types.h"
+#include "qdf_hashtable_test.h"
 #include "qdf_str.h"
 #include "qdf_trace.h"
 #include "qdf_types_test.h"
@@ -5391,6 +5392,7 @@ struct hdd_ut_entry {
 
 struct hdd_ut_entry hdd_ut_entries[] = {
 	{ .name = "dsc", .callback = dsc_unit_test },
+	{ .name = "ht", .callback = qdf_ht_unit_test },
 	{ .name = "types", .callback = qdf_types_unit_test },
 };
 
