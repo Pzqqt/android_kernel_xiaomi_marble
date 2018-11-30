@@ -1327,6 +1327,7 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				__func__, __LINE__, hal_srng);
 		DP_STATS_INC(vdev, tx_i.dropped.ring_full, 1);
 		dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
+		qdf_nbuf_unmap(vdev->osdev, nbuf, QDF_DMA_TO_DEVICE);
 		goto fail_return;
 	}
 
@@ -1355,6 +1356,7 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			  "%s Tx_hw_enqueue Fail tx_desc %pK queue %d",
 			  __func__, tx_desc, tx_q->ring_id);
 		dp_tx_desc_release(tx_desc, tx_q->desc_pool_id);
+		qdf_nbuf_unmap(vdev->osdev, nbuf, QDF_DMA_TO_DEVICE);
 		goto fail_return;
 	}
 
