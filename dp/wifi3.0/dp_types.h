@@ -821,21 +821,28 @@ struct dp_soc {
 
 	/* Number of REO destination rings */
 	uint8_t num_reo_dest_rings;
+
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+	/* lock to control access to soc TX descriptors */
+	qdf_spinlock_t flow_pool_array_lock;
+
+	/* pause callback to pause TX queues as per flow control */
+	tx_pause_callback pause_cb;
+
+	/* flow pool related statistics */
+	struct dp_txrx_pool_stats pool_stats;
+#endif /* !QCA_LL_TX_FLOW_CONTROL_V2 */
+
 	/*
-	 * re-use memory section ends
-	 * reuse memory indicator
-	 *
-	 * DO NOT CHANGE NAME OR MOVE THIS VARIABLE
+	 * Re-use memory section ends. reuse memory indicator.
+	 * Everything above this variable "dp_soc_reinit" is retained across
+	 * WiFi up/down for AP use-cases.
+	 * Everything below this variable "dp_soc_reinit" is reset during
+	 * dp_soc_deinit.
 	 */
 	bool dp_soc_reinit;
 
 	uint32_t wbm_idle_scatter_buf_size;
-
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-	qdf_spinlock_t flow_pool_array_lock;
-	tx_pause_callback pause_cb;
-	struct dp_txrx_pool_stats pool_stats;
-#endif /* !QCA_LL_TX_FLOW_CONTROL_V2 */
 
 	/* Tx H/W queues lock */
 	qdf_spinlock_t tx_queue_lock[MAX_TX_HW_QUEUES];

@@ -3658,7 +3658,7 @@ static void dp_soc_deinit(void *txrx_soc)
 	qdf_spinlock_destroy(&soc->peer_ref_mutex);
 	qdf_spinlock_destroy(&soc->htt_stats.lock);
 
-	htt_soc_detach(soc->htt_handle);
+	htt_soc_htc_dealloc(soc->htt_handle);
 
 	qdf_spinlock_destroy(&soc->rx.defrag.defrag_lock);
 
@@ -3758,8 +3758,8 @@ static void dp_soc_detach(void *txrx_soc)
 	dp_srng_cleanup(soc, &soc->reo_status_ring, REO_STATUS, 0);
 	dp_hw_link_desc_pool_cleanup(soc);
 
-	soc->dp_soc_reinit = 0;
 	htt_soc_detach(soc->htt_handle);
+	soc->dp_soc_reinit = 0;
 
 	wlan_cfg_soc_detach(soc->wlan_cfg_ctx);
 

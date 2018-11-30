@@ -3272,6 +3272,12 @@ fail2:
 	return NULL;
 }
 
+void htt_soc_htc_dealloc(struct htt_soc *htt_handle)
+{
+	htt_htc_misc_pkt_pool_free(htt_handle);
+	htt_htc_pkt_pool_free(htt_handle);
+}
+
 /*
  * htt_soc_htc_prealloc() - HTC memory prealloc
  * @htt_soc: SOC level HTT handle
@@ -3279,8 +3285,7 @@ fail2:
  * Return: QDF_STATUS_SUCCESS on Success or
  * QDF_STATUS_E_NOMEM on allocation failure
  */
-QDF_STATUS
-htt_soc_htc_prealloc(struct htt_soc *soc)
+QDF_STATUS htt_soc_htc_prealloc(struct htt_soc *soc)
 {
 	int i;
 
@@ -3300,22 +3305,15 @@ htt_soc_htc_prealloc(struct htt_soc *soc)
 }
 
 /*
- * htt_soc_detach() - Detach SOC level HTT
- * @htt_soc: HTT SOC handle
+ * htt_soc_detach() - Free SOC level HTT handle
+ * @htt_hdl: HTT SOC handle
  */
-void
-htt_soc_detach(void *htt_soc)
+void htt_soc_detach(void *htt_hdl)
 {
-	struct htt_soc *soc = (struct htt_soc *)htt_soc;
-	struct dp_soc *dpsoc = soc->dp_soc;
+	struct htt_soc *htt_handle = (struct htt_soc *)htt_hdl;
 
-	if (dpsoc->dp_soc_reinit) {
-		htt_htc_misc_pkt_pool_free(soc);
-		htt_htc_pkt_pool_free(soc);
-	} else {
-		HTT_TX_MUTEX_DESTROY(&soc->htt_tx_mutex);
-		qdf_mem_free(soc);
-	}
+	HTT_TX_MUTEX_DESTROY(&htt_handle->htt_tx_mutex);
+	qdf_mem_free(htt_handle);
 }
 
 /**

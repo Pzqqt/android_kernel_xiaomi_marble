@@ -152,14 +152,21 @@ htt_soc_initialize(void *htt_soc, void *ctrl_psoc, HTC_HANDLE htc_soc,
 		   void *hal_soc, qdf_device_t osdev);
 
 /*
+ * htt_soc_htc_dealloc() - HTC memory de-alloc
+ * @htt_soc: SOC level HTT handle
+ *
+ * Return: None
+ */
+void htt_soc_htc_dealloc(struct htt_soc *htt_handle);
+
+/*
  * htt_soc_htc_prealloc() - HTC memory prealloc
  * @htt_soc: SOC level HTT handle
  *
  * Return: QDF_STATUS_SUCCESS on success or
  * QDF_STATUS_E_NO_MEM on allocation failure
  */
-QDF_STATUS
-htt_soc_htc_prealloc(struct htt_soc *htt_soc);
+QDF_STATUS htt_soc_htc_prealloc(struct htt_soc *htt_soc);
 
 void htt_soc_detach(void *soc);
 
