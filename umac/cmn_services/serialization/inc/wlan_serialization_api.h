@@ -677,6 +677,7 @@ enum wlan_serialization_cancel_type {
  * @WLAN_SER_CMD_DENIED_RULES_FAILED: Command denied as the rules fail
  * @WLAN_SER_CMD_DENIED_LIST_FULL: Command denied as the pending list is full
  * @WLAN_SER_CMD_QUEUE_DISABLED: Command denied as the queue is disabled
+ * @WLAN_SER_CMD_ALREADY_EXISTS: Command already exists in the queue
  * @WLAN_SER_CMD_DENIED_UNSPECIFIED: Command denied due to unknown reason
  */
 enum wlan_serialization_status {
@@ -685,6 +686,7 @@ enum wlan_serialization_status {
 	WLAN_SER_CMD_DENIED_RULES_FAILED,
 	WLAN_SER_CMD_DENIED_LIST_FULL,
 	WLAN_SER_CMD_QUEUE_DISABLED,
+	WLAN_SER_CMD_ALREADY_EXISTS,
 	WLAN_SER_CMD_DENIED_UNSPECIFIED,
 };
 

@@ -472,6 +472,25 @@ QDF_STATUS scheduler_timer_q_mq_handler(struct scheduler_msg *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS scheduler_mlme_mq_handler(struct scheduler_msg *msg)
+{
+	scheduler_msg_process_fn_t mlme_msg_handler;
+
+	QDF_BUG(msg);
+	if (!msg)
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_msg_handler = msg->callback;
+
+	QDF_BUG(mlme_msg_handler);
+	if (!mlme_msg_handler)
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_msg_handler(msg);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS scheduler_scan_mq_handler(struct scheduler_msg *msg)
 {
 	QDF_STATUS (*scan_q_msg_handler)(struct scheduler_msg *);

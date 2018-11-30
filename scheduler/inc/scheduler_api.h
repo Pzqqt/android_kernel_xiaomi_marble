@@ -273,6 +273,15 @@ QDF_STATUS scheduler_os_if_mq_handler(struct scheduler_msg *msg);
 QDF_STATUS scheduler_timer_q_mq_handler(struct scheduler_msg *msg);
 
 /**
+ * scheduler_mlme_mq_handler() - top level message queue handler for
+ *                               mlme queue
+ * @msg: pointer to actual message being handled
+ *
+ * Return: QDF status
+ */
+QDF_STATUS scheduler_mlme_mq_handler(struct scheduler_msg *msg);
+
+/**
  * scheduler_scan_mq_handler() - top level message queue handler for
  *                               scan queue
  * @msg: pointer to actual message being handled
