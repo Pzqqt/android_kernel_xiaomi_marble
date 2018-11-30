@@ -804,6 +804,13 @@ struct cdp_htt_tx_pdev_stats_cmn_tlv {
      * (acked, no ack, flush, TTL, etc)
      */
     uint32_t local_data_freed;
+
+	/* Num MPDUs tried by SW */
+	uint32_t mpdu_tried;
+	/* Num of waiting seq posted in isr completion handler */
+	uint32_t isr_wait_seq_posted;
+	uint32_t tx_active_dur_us_low;
+	uint32_t tx_active_dur_us_high;
 };
 
 struct cdp_htt_tx_pdev_stats_urrn_tlv_v {

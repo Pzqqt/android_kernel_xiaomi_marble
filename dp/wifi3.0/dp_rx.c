@@ -357,7 +357,10 @@ dp_rx_da_learn(struct dp_soc *soc,
 	if (qdf_likely(soc->ast_override_support))
 		return;
 
-	if (ta_peer && (ta_peer->vdev->opmode != wlan_op_mode_ap))
+	if (qdf_unlikely(!ta_peer))
+		return;
+
+	if (qdf_unlikely(ta_peer->vdev->opmode != wlan_op_mode_ap))
 		return;
 
 	if (qdf_unlikely(!hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr) &&
