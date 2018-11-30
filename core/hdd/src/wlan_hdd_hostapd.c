@@ -4875,19 +4875,16 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 				goto error;
 			}
 
-			pConfig->ieee80211d = 1;
-			qdf_mem_copy(pConfig->countryCode, &pIe[2], 3);
-			status = ucfg_reg_set_country(hdd_ctx->pdev,
-						      pConfig->countryCode);
-			if (QDF_IS_STATUS_ERROR(status)) {
-				hdd_err("Failed to set country");
+			if (!qdf_mem_cmp(hdd_ctx->reg.alpha2, &pIe[2],
+					 REG_ALPHA2_LEN))
+				pConfig->ieee80211d = 1;
+			else
 				pConfig->ieee80211d = 0;
-			}
-		} else {
-			pConfig->countryCode[0] = hdd_ctx->reg.alpha2[0];
-			pConfig->countryCode[1] = hdd_ctx->reg.alpha2[1];
+		} else
 			pConfig->ieee80211d = 0;
-		}
+
+		pConfig->countryCode[0] = hdd_ctx->reg.alpha2[0];
+		pConfig->countryCode[1] = hdd_ctx->reg.alpha2[1];
 
 		ret = wlan_hdd_sap_cfg_dfs_override(adapter);
 		if (ret < 0)
