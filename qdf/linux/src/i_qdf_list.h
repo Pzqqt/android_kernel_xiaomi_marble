@@ -104,6 +104,4 @@ static inline void __qdf_init_list_head(__qdf_list_node_t *list_head)
 {
 	INIT_LIST_HEAD(list_head);
 }
-
-bool qdf_list_has_node(__qdf_list_t *list, __qdf_list_node_t *node);
 #endif

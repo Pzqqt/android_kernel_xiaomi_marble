@@ -115,7 +115,7 @@ QDF_STATUS qdf_list_remove_front(qdf_list_t *list, qdf_list_node_t **node2)
 
 	listptr = list->anchor.next;
 	*node2 = listptr;
-	list_del(list->anchor.next);
+	list_del_init(list->anchor.next);
 	list->count--;
 
 	return QDF_STATUS_SUCCESS;
@@ -138,23 +138,13 @@ QDF_STATUS qdf_list_remove_back(qdf_list_t *list, qdf_list_node_t **node2)
 
 	listptr = list->anchor.prev;
 	*node2 = listptr;
-	list_del(list->anchor.prev);
+	list_del_init(list->anchor.prev);
 	list->count--;
 
 	return QDF_STATUS_SUCCESS;
 }
 qdf_export_symbol(qdf_list_remove_back);
 
-/**
- * qdf_list_has_node() - check if a node is in a list
- * @list: pointer to the list being searched
- * @node: pointer to the node to search for
- *
- * It is expected that the list being checked is locked
- * when this function is being called.
- *
- * Return: true if the node is in the list
- */
 bool qdf_list_has_node(qdf_list_t *list, qdf_list_node_t *node)
 {
 	qdf_list_node_t *tmp;
@@ -163,6 +153,7 @@ bool qdf_list_has_node(qdf_list_t *list, qdf_list_node_t *node)
 		if (tmp == node)
 			return true;
 	}
+
 	return false;
 }
 
@@ -183,7 +174,7 @@ QDF_STATUS qdf_list_remove_node(qdf_list_t *list,
 	if (list_empty(&list->anchor))
 		return QDF_STATUS_E_EMPTY;
 
-	list_del(node_to_remove);
+	list_del_init(node_to_remove);
 	list->count--;
 
 	return QDF_STATUS_SUCCESS;
@@ -206,6 +197,7 @@ QDF_STATUS qdf_list_peek_front(qdf_list_t *list, qdf_list_node_t **node2)
 
 	listptr = list->anchor.next;
 	*node2 = listptr;
+
 	return QDF_STATUS_SUCCESS;
 }
 qdf_export_symbol(qdf_list_peek_front);
@@ -248,3 +240,25 @@ bool qdf_list_empty(qdf_list_t *list)
 	return list_empty(&list->anchor);
 }
 qdf_export_symbol(qdf_list_empty);
+
+bool qdf_list_node_in_any_list(const qdf_list_node_t *node)
+{
+	const struct list_head *linux_node = (const struct list_head *)node;
+
+	if (!linux_node)
+		return false;
+
+	/* if the node is an empty list, it is not tied to an anchor node */
+	if (list_empty(linux_node))
+		return false;
+
+	if (!linux_node->prev || !linux_node->next)
+		return false;
+
+	if (linux_node->prev->next != linux_node ||
+	    linux_node->next->prev != linux_node)
+		return false;
+
+	return true;
+}
+

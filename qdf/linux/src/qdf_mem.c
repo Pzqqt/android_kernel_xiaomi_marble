@@ -169,32 +169,6 @@ enum qdf_mem_validation_bitmap {
 	QDF_MEM_WRONG_DOMAIN = 1 << 7,
 };
 
-/**
- * qdf_mem_validate_list_node() - validate that the node is in a list
- * @qdf_node: node to check for being in a list
- *
- * Return: true if the node validly linked in an anchored doubly linked list
- */
-static bool qdf_mem_validate_list_node(qdf_list_node_t *qdf_node)
-{
-	struct list_head *node = qdf_node;
-
-	/*
-	 * if the node is an empty list, it is not tied to an anchor node
-	 * and must have been removed with list_del_init
-	 */
-	if (list_empty(node))
-		return false;
-
-	if (!node->prev || !node->next)
-		return false;
-
-	if (node->prev->next != node || node->next->prev != node)
-		return false;
-
-	return true;
-}
-
 static enum qdf_mem_validation_bitmap
 qdf_mem_trailer_validate(struct qdf_mem_header *header)
 {
@@ -222,7 +196,7 @@ qdf_mem_header_validate(struct qdf_mem_header *header,
 	else if (header->freed)
 		error_bitmap |= QDF_MEM_BAD_FREED;
 
-	if (!qdf_mem_validate_list_node(&header->node))
+	if (!qdf_list_node_in_any_list(&header->node))
 		error_bitmap |= QDF_MEM_BAD_NODE;
 
 	if (header->domain < QDF_DEBUG_DOMAIN_INIT ||
@@ -1126,8 +1100,8 @@ void qdf_mem_free_debug(void *ptr, const char *file, uint32_t line)
 
 	if (!error_bitmap) {
 		header->freed = true;
-		list_del_init(&header->node);
-		qdf_mem_list_get(header->domain)->count--;
+		qdf_list_remove_node(qdf_mem_list_get(header->domain),
+				     &header->node);
 	}
 	qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
 
@@ -1760,8 +1734,8 @@ void qdf_mem_free_consistent_debug(qdf_device_t osdev, void *dev,
 	error_bitmap = qdf_mem_header_validate(header, domain);
 	if (!error_bitmap) {
 		header->freed = true;
-		list_del_init(&header->node);
-		qdf_mem_dma_list(header->domain)->count--;
+		qdf_list_remove_node(qdf_mem_dma_list(header->domain),
+				     &header->node);
 	}
 	qdf_spin_unlock_irqrestore(&qdf_mem_dma_list_lock);
 
