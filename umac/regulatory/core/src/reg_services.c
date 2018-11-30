@@ -863,7 +863,7 @@ enum channel_enum reg_get_chan_enum(uint32_t chan_num)
 		if (channel_map[count].chan_num == chan_num)
 			return count;
 
-	reg_err("invalid channel number %d", chan_num);
+	reg_debug_rl("invalid channel %d", chan_num);
 
 	return INVALID_CHANNEL;
 }
