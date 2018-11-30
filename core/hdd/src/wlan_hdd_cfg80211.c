@@ -8431,6 +8431,8 @@ static int hdd_validate_avoid_freq_chanlist(
 		     ch_idx <= channel_list->
 					avoid_freq_range[range_idx].end_freq;
 		     ch_idx++) {
+			 if (INVALID_CHANNEL == reg_get_chan_enum(ch_idx))
+				continue;
 			for (unsafe_channel_index = 0;
 			     unsafe_channel_index < unsafe_channel_count;
 			     unsafe_channel_index++) {
