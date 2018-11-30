@@ -1795,6 +1795,8 @@ static int q6core_is_avs_up(int32_t *avs_state)
 	timeout = jiffies +
 		msecs_to_jiffies(ADSP_STATE_READY_TIMEOUT_MS);
 
+	/* sleep for 100ms before querying AVS up */
+	msleep(100);
 	do {
 		adsp_ready = q6core_is_adsp_ready();
 		pr_debug("%s: ADSP Audio is %s\n", __func__,
