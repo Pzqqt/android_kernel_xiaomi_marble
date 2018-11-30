@@ -68,6 +68,7 @@
 #include "wma_types.h"
 #include "qdf_str.h"
 #include "qdf_trace.h"
+#include "qdf_types_test.h"
 #include "wlan_hdd_assoc.h"
 #include "wlan_hdd_ioctl.h"
 #include "wlan_hdd_scan.h"
@@ -5390,6 +5391,7 @@ struct hdd_ut_entry {
 
 struct hdd_ut_entry hdd_ut_entries[] = {
 	{ .name = "dsc", .callback = dsc_unit_test },
+	{ .name = "types", .callback = qdf_types_unit_test },
 };
 
 #define hdd_for_each_ut_entry(cursor) \

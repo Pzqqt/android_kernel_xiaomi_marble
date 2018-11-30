@@ -525,30 +525,35 @@ QDF_OS_SRC_DIR := $(QDF_OS_DIR)/src
 QDF_OS_LINUX_SRC_DIR := $(QDF_OS_DIR)/linux/src
 QDF_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(QDF_OS_SRC_DIR)
 QDF_LINUX_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(QDF_OS_LINUX_SRC_DIR)
+QDF_TEST_DIR := $(QDF_OS_DIR)/test
+QDF_TEST_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(QDF_TEST_DIR)
 
-QDF_INC :=	-I$(WLAN_COMMON_INC)/$(QDF_OS_INC_DIR) \
-		-I$(WLAN_COMMON_INC)/$(QDF_OS_LINUX_SRC_DIR)
+QDF_INC := \
+	-I$(WLAN_COMMON_INC)/$(QDF_OS_INC_DIR) \
+	-I$(WLAN_COMMON_INC)/$(QDF_OS_LINUX_SRC_DIR) \
+	-I$(WLAN_COMMON_INC)/$(QDF_TEST_DIR)
 
-QDF_OBJS := 	$(QDF_LINUX_OBJ_DIR)/qdf_crypto.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_defer.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_dev.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_event.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_file.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_idr.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_list.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_lock.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_mc_timer.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_mem.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_nbuf.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_net_if.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_threads.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_trace.o \
-		$(QDF_LINUX_OBJ_DIR)/qdf_vfs.o \
-		$(QDF_OBJ_DIR)/qdf_flex_mem.o \
-		$(QDF_OBJ_DIR)/qdf_parse.o \
-		$(QDF_OBJ_DIR)/qdf_platform.o \
-		$(QDF_OBJ_DIR)/qdf_str.o \
-		$(QDF_OBJ_DIR)/qdf_types.o \
+QDF_OBJS := \
+	$(QDF_LINUX_OBJ_DIR)/qdf_crypto.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_defer.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_dev.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_event.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_file.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_idr.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_list.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_lock.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_mc_timer.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_mem.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_nbuf.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_net_if.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_threads.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_trace.o \
+	$(QDF_LINUX_OBJ_DIR)/qdf_vfs.o \
+	$(QDF_OBJ_DIR)/qdf_flex_mem.o \
+	$(QDF_OBJ_DIR)/qdf_parse.o \
+	$(QDF_OBJ_DIR)/qdf_platform.o \
+	$(QDF_OBJ_DIR)/qdf_str.o \
+	$(QDF_OBJ_DIR)/qdf_types.o \
 
 ifeq ($(CONFIG_WLAN_DEBUGFS), y)
 QDF_OBJS += $(QDF_LINUX_OBJ_DIR)/qdf_debugfs.o
@@ -567,6 +572,12 @@ endif
 ifeq ($(CONFIG_LEAK_DETECTION), y)
 	QDF_OBJS += $(QDF_OBJ_DIR)/qdf_debug_domain.o
 endif
+
+ifeq ($(CONFIG_QDF_TEST), y)
+	QDF_OBJS += $(QDF_TEST_OBJ_DIR)/qdf_types_test.o
+endif
+
+cppflags-$(CONFIG_QDF_TEST) += -DWLAN_TYPES_TEST
 
 ############ WBUFF ############
 WBUFF_OS_DIR :=	wbuff
