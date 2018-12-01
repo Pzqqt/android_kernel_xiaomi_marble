@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
- /**
+/**
  * DOC: target_if_dfs_partial_offload.h
  * This file contains dfs target interface for partial offload.
  */

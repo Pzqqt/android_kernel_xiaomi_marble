@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
- /**
+/**
  * DOC: target_if_dfs.c
  * This file contains dfs target interface
  */
@@ -111,7 +111,7 @@ static bool target_if_is_dfs_3(uint32_t target_type)
  * @datalen: radar event buffer length
  *
  * Return: 0 on success; error code otherwise
-*/
+ */
 static int target_if_radar_event_handler(
 	ol_scn_t scn, uint8_t *data, uint32_t datalen)
 {
