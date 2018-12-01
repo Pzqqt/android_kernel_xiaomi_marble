@@ -1830,7 +1830,7 @@ void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
 	 * to occupy the medium during non channel occupancy period. So resume the transmission after
 	 * HAL gives back the response.
 	 */
-	dph_hash_table_class_init(mac, &pe_session->dph.dphHashTable);
+	dph_hash_table_init(mac, &pe_session->dph.dphHashTable);
 	lim_delete_pre_auth_list(mac);
 	/* Initialize number of associated stations during cleanup */
 	pe_session->gLimNumOfCurrentSTAs = 0;

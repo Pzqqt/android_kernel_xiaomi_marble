@@ -3222,7 +3222,7 @@ void lim_process_sme_del_bss_rsp(struct mac_context *mac,
 	(void)body;
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 	lim_ibss_delete(mac, pe_session);
-	dph_hash_table_class_init(mac, &pe_session->dph.dphHashTable);
+	dph_hash_table_init(mac, &pe_session->dph.dphHashTable);
 	lim_delete_pre_auth_list(mac);
 	lim_send_sme_rsp(mac, eWNI_SME_STOP_BSS_RSP, eSIR_SME_SUCCESS,
 			 pe_session->smeSessionId,
