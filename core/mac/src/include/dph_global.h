@@ -62,37 +62,11 @@
 #define DPH_SA_QUERY_TIMED_OUT            3
 #endif
 
-typedef struct sDphRateBasedCtr {
-	uint32_t hi;
-	uint32_t lo;
-} tDphRateBasedCtr;
-
-typedef struct sDphPhyRates {
-	uint8_t dataRateX2;
-	uint8_t ackRateX2;
-	uint8_t rtsRateX2;
-} tDphPhyRates;
-
-typedef struct sDphIFSValues {
-	uint8_t sifs;
-	uint8_t pifs;
-	uint8_t difs;
-	uint8_t preamble;
-} tDphIFSValues;
-
 typedef struct sDphQosParams {
 	uint8_t addtsPresent;
 	tSirAddtsReqInfo addts;
 	tSirMacQosCapabilityStaIE capability;
 } tDphQosParams;
-
-/* Queue attribute structure */
-typedef struct sDphQueueAttr {
-	uint16_t valid:1;
-	uint16_t seqNum:12;
-	uint16_t ackPolicy:2;
-	uint16_t rsvd:1;
-} tDphQueueAttr, *tpDphQueueAttr;
 
 /**
  * struct parsed_ies: Parsed IE's of BSS capability
