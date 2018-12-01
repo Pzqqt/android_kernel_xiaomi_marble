@@ -139,7 +139,7 @@ ibss_peer_add(tpAniSirGlobal mac, tLimIbssPeerNode *pPeerNode)
  * @param  mac    - Pointer to Global MAC structure
  * @param  pBeacon - Parsed Beacon Frame structure
  * @param  pBD     - Pointer to received BD
- * @param  pPeer   - Pointer to IBSS peer node
+ * @param  peer   - Pointer to IBSS peer node
  *
  * @return None
  */
@@ -148,69 +148,69 @@ static void
 ibss_peer_collect(tpAniSirGlobal mac,
 		  tpSchBeaconStruct pBeacon,
 		  tpSirMacMgmtHdr pHdr,
-		  tLimIbssPeerNode *pPeer, struct pe_session *psessionEntry)
+		  tLimIbssPeerNode *peer, struct pe_session *psessionEntry)
 {
-	qdf_mem_copy(pPeer->peerMacAddr, pHdr->sa, sizeof(tSirMacAddr));
+	qdf_mem_copy(peer->peerMacAddr, pHdr->sa, sizeof(tSirMacAddr));
 
-	pPeer->capabilityInfo = pBeacon->capabilityInfo;
-	pPeer->extendedRatesPresent = pBeacon->extendedRatesPresent;
-	pPeer->edcaPresent = pBeacon->edcaPresent;
-	pPeer->wmeEdcaPresent = pBeacon->wmeEdcaPresent;
-	pPeer->wmeInfoPresent = pBeacon->wmeInfoPresent;
+	peer->capabilityInfo = pBeacon->capabilityInfo;
+	peer->extendedRatesPresent = pBeacon->extendedRatesPresent;
+	peer->edcaPresent = pBeacon->edcaPresent;
+	peer->wmeEdcaPresent = pBeacon->wmeEdcaPresent;
+	peer->wmeInfoPresent = pBeacon->wmeInfoPresent;
 
 	if (pBeacon->IBSSParams.present) {
-		pPeer->atimIePresent = pBeacon->IBSSParams.present;
-		pPeer->peerAtimWindowLength = pBeacon->IBSSParams.atim;
+		peer->atimIePresent = pBeacon->IBSSParams.present;
+		peer->peerAtimWindowLength = pBeacon->IBSSParams.atim;
 	}
 
 	if (IS_DOT11_MODE_HT(psessionEntry->dot11mode) &&
 	    (pBeacon->HTCaps.present)) {
-		pPeer->htCapable = pBeacon->HTCaps.present;
-		qdf_mem_copy((uint8_t *) pPeer->supportedMCSSet,
+		peer->htCapable = pBeacon->HTCaps.present;
+		qdf_mem_copy((uint8_t *) peer->supportedMCSSet,
 			     (uint8_t *) pBeacon->HTCaps.supportedMCSSet,
-			     sizeof(pPeer->supportedMCSSet));
-		pPeer->htGreenfield = (uint8_t) pBeacon->HTCaps.greenField;
-		pPeer->htSupportedChannelWidthSet =
+			     sizeof(peer->supportedMCSSet));
+		peer->htGreenfield = (uint8_t) pBeacon->HTCaps.greenField;
+		peer->htSupportedChannelWidthSet =
 			(uint8_t) pBeacon->HTCaps.supportedChannelWidthSet;
-		pPeer->htMIMOPSState =
+		peer->htMIMOPSState =
 			(tSirMacHTMIMOPowerSaveState) pBeacon->HTCaps.mimoPowerSave;
-		pPeer->htMaxAmsduLength =
+		peer->htMaxAmsduLength =
 			(uint8_t) pBeacon->HTCaps.maximalAMSDUsize;
-		pPeer->htAMpduDensity = pBeacon->HTCaps.mpduDensity;
-		pPeer->htDsssCckRate40MHzSupport =
+		peer->htAMpduDensity = pBeacon->HTCaps.mpduDensity;
+		peer->htDsssCckRate40MHzSupport =
 			(uint8_t) pBeacon->HTCaps.dsssCckMode40MHz;
-		pPeer->htShortGI20Mhz = (uint8_t) pBeacon->HTCaps.shortGI20MHz;
-		pPeer->htShortGI40Mhz = (uint8_t) pBeacon->HTCaps.shortGI40MHz;
-		pPeer->htMaxRxAMpduFactor = pBeacon->HTCaps.maxRxAMPDUFactor;
-		pPeer->htSecondaryChannelOffset =
+		peer->htShortGI20Mhz = (uint8_t) pBeacon->HTCaps.shortGI20MHz;
+		peer->htShortGI40Mhz = (uint8_t) pBeacon->HTCaps.shortGI40MHz;
+		peer->htMaxRxAMpduFactor = pBeacon->HTCaps.maxRxAMPDUFactor;
+		peer->htSecondaryChannelOffset =
 			pBeacon->HTInfo.secondaryChannelOffset;
-		pPeer->htLdpcCapable = (uint8_t) pBeacon->HTCaps.advCodingCap;
+		peer->htLdpcCapable = (uint8_t) pBeacon->HTCaps.advCodingCap;
 	}
 
 	/* Collect peer VHT capabilities based on the received beacon from the peer */
 	if (pBeacon->VHTCaps.present) {
-		pPeer->vhtSupportedChannelWidthSet =
+		peer->vhtSupportedChannelWidthSet =
 			pBeacon->VHTOperation.chanWidth;
-		pPeer->vhtCapable = pBeacon->VHTCaps.present;
+		peer->vhtCapable = pBeacon->VHTCaps.present;
 
 		/* Collect VHT capabilities from beacon */
-		qdf_mem_copy((uint8_t *) &pPeer->VHTCaps,
+		qdf_mem_copy((uint8_t *) &peer->VHTCaps,
 			     (uint8_t *) &pBeacon->VHTCaps,
 			     sizeof(tDot11fIEVHTCaps));
 	}
-	pPeer->erpIePresent = pBeacon->erpPresent;
+	peer->erpIePresent = pBeacon->erpPresent;
 
-	qdf_mem_copy((uint8_t *) &pPeer->supportedRates,
+	qdf_mem_copy((uint8_t *) &peer->supportedRates,
 		     (uint8_t *) &pBeacon->supportedRates,
 		     pBeacon->supportedRates.numRates + 1);
-	if (pPeer->extendedRatesPresent)
-		qdf_mem_copy((uint8_t *) &pPeer->extendedRates,
+	if (peer->extendedRatesPresent)
+		qdf_mem_copy((uint8_t *) &peer->extendedRates,
 			     (uint8_t *) &pBeacon->extendedRates,
 			     pBeacon->extendedRates.numRates + 1);
 	else
-		pPeer->extendedRates.numRates = 0;
+		peer->extendedRates.numRates = 0;
 
-	pPeer->next = NULL;
+	peer->next = NULL;
 } /*** end ibss_peer_collect() ***/
 
 /* handle change in peer qos/wme capabilities */
@@ -318,13 +318,13 @@ ibss_sta_caps_update(tpAniSirGlobal mac,
 static void
 ibss_sta_rates_update(tpAniSirGlobal mac,
 		      tpDphHashNode pStaDs,
-		      tLimIbssPeerNode *pPeer, struct pe_session *psessionEntry)
+		      tLimIbssPeerNode *peer, struct pe_session *psessionEntry)
 {
-	lim_populate_matching_rate_set(mac, pStaDs, &pPeer->supportedRates,
-				       &pPeer->extendedRates,
-				       pPeer->supportedMCSSet, psessionEntry,
-				       &pPeer->VHTCaps, NULL);
-	pStaDs->mlmStaContext.capabilityInfo = pPeer->capabilityInfo;
+	lim_populate_matching_rate_set(mac, pStaDs, &peer->supportedRates,
+				       &peer->extendedRates,
+				       peer->supportedMCSSet, psessionEntry,
+				       &peer->VHTCaps, NULL);
+	pStaDs->mlmStaContext.capabilityInfo = peer->capabilityInfo;
 } /*** end ibss_sta_info_update() ***/
 
 /**
@@ -342,7 +342,7 @@ ibss_sta_rates_update(tpAniSirGlobal mac,
  *
  * @param  mac   - Pointer to Global MAC structure
  * @param  pStaDs - Pointer to DPH node
- * @param  pPeer  - Pointer to IBSS peer node
+ * @param  peer  - Pointer to IBSS peer node
  *
  * @return None
  */
@@ -350,11 +350,11 @@ ibss_sta_rates_update(tpAniSirGlobal mac,
 static void
 ibss_sta_info_update(tpAniSirGlobal mac,
 		     tpDphHashNode pStaDs,
-		     tLimIbssPeerNode *pPeer, struct pe_session *psessionEntry)
+		     tLimIbssPeerNode *peer, struct pe_session *psessionEntry)
 {
 	pStaDs->staType = STA_ENTRY_PEER;
-	ibss_sta_caps_update(mac, pPeer, psessionEntry);
-	ibss_sta_rates_update(mac, pStaDs, pPeer, psessionEntry);
+	ibss_sta_caps_update(mac, peer, psessionEntry);
+	ibss_sta_rates_update(mac, pStaDs, peer, psessionEntry);
 } /*** end ibss_sta_info_update() ***/
 
 static void ibss_coalesce_free(tpAniSirGlobal mac)
