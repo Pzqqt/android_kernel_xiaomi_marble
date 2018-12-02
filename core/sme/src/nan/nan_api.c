@@ -27,7 +27,7 @@
 
 void sme_nan_register_callback(mac_handle_t mac_handle, nan_callback callback)
 {
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	if (!mac) {
 		sme_err("Invalid MAC handle");
@@ -38,7 +38,7 @@ void sme_nan_register_callback(mac_handle_t mac_handle, nan_callback callback)
 
 void sme_nan_deregister_callback(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	if (!mac) {
 		sme_err("Invalid MAC handle");
@@ -82,7 +82,7 @@ QDF_STATUS sme_nan_request(tpNanRequestReq input)
 
 void sme_nan_event(mac_handle_t mac_handle, tSirNanEvent *event)
 {
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	sme_debug("Received eWNI_SME_NAN_EVENT");
 

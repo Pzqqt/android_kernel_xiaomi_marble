@@ -36,7 +36,7 @@
  *
  * Return: Success or failure code
  */
-QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session,
+QDF_STATUS csr_roam_start_ndi(struct mac_context *mac_ctx, uint32_t session,
 			struct csr_roam_profile *profile)
 {
 	QDF_STATUS status;
@@ -75,7 +75,7 @@ QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session,
  *
  * Return: None
  */
-void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
+void csr_roam_save_ndi_connected_info(struct mac_context *mac_ctx,
 				      uint32_t session_id,
 				      struct csr_roam_profile *roam_profile,
 				      tSirBssDescription *bssdesc)
@@ -124,7 +124,7 @@ void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
  *
  * Results: None
  */
-void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
+void csr_roam_update_ndp_return_params(struct mac_context *mac_ctx,
 					uint32_t result,
 					uint32_t *roam_status,
 					uint32_t *roam_result,

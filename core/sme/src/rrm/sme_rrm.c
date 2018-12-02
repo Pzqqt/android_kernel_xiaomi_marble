@@ -74,7 +74,7 @@ uint64_t rrm_scan_timer;
  *
  * Return: void
  */
-static void rrm_ll_purge_neighbor_cache(tpAniSirGlobal mac,
+static void rrm_ll_purge_neighbor_cache(struct mac_context *mac,
 	tDblLinkList *pList)
 {
 	tListElem *pEntry;
@@ -103,7 +103,7 @@ static void rrm_ll_purge_neighbor_cache(tpAniSirGlobal mac,
  *
  * Return: void
  */
-static void rrm_indicate_neighbor_report_result(tpAniSirGlobal mac,
+static void rrm_indicate_neighbor_report_result(struct mac_context *mac,
 						QDF_STATUS qdf_status)
 {
 	NeighborReportRspCallback callback;
@@ -160,7 +160,7 @@ static void rrm_indicate_neighbor_report_result(tpAniSirGlobal mac,
  */
 
 static QDF_STATUS
-sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
+sme_rrm_send_beacon_report_xmit_ind(struct mac_context *mac_ctx,
 	tCsrScanResultInfo **result_arr, uint8_t msrmnt_status,
 	uint8_t bss_count)
 {
@@ -265,7 +265,7 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
  * Return: status
  */
 static QDF_STATUS sme_ese_send_beacon_req_scan_results(
-	tpAniSirGlobal mac_ctx, uint32_t session_id,
+	struct mac_context *mac_ctx, uint32_t session_id,
 	uint8_t channel, tCsrScanResultInfo **result_arr,
 	uint8_t msrmnt_status, uint8_t bss_count)
 {
@@ -406,7 +406,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_rrm_send_scan_result(struct mac_context *mac_ctx,
 					   uint8_t num_chan,
 					   uint8_t *chan_list,
 					   uint8_t measurementdone)
@@ -632,7 +632,7 @@ static QDF_STATUS sme_rrm_scan_request_callback(mac_handle_t mac_handle,
 						eCsrScanStatus status)
 {
 	uint16_t interval;
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	tpRrmSMEContext pSmeRrmContext = &mac->rrm.rrmSmeContext;
 	uint32_t time_tick;
 
@@ -717,7 +717,7 @@ static void sme_rrm_scan_event_callback(struct wlan_objmgr_vdev *vdev,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
+static QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpRrmSMEContext sme_rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
@@ -920,7 +920,7 @@ free_ch_lst:
  *
  * Return : QDF_STATUS_SUCCESS - Validation is successful.
  */
-QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal mac,
+QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 						void *pMsgBuf)
 {
 	tpSirBeaconReportReqInd pBeaconReq = (tpSirBeaconReportReqInd) pMsgBuf;
@@ -1035,7 +1035,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal mac,
  *
  * Return: QDF_STATUS_SUCCESS - Validation is successful.
  */
-QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal mac, uint8_t
+QDF_STATUS sme_rrm_neighbor_report_request(struct mac_context *mac, uint8_t
 					sessionId, tpRrmNeighborReq
 					pNeighborReq,
 					tpRrmNeighborRspCallbackInfo
@@ -1109,7 +1109,7 @@ QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal mac, uint8_t
  * Return: void
  */
 static void
-rrm_calculate_neighbor_ap_roam_score(tpAniSirGlobal mac_ctx,
+rrm_calculate_neighbor_ap_roam_score(struct mac_context *mac_ctx,
 				tpRrmNeighborReportDesc nbr_report_desc)
 {
 	tpSirNeighborBssDescripton nbr_bss_desc;
@@ -1192,7 +1192,7 @@ check_11r_assoc:
  *
  * Return: void.
  */
-static void rrm_store_neighbor_rpt_by_roam_score(tpAniSirGlobal mac,
+static void rrm_store_neighbor_rpt_by_roam_score(struct mac_context *mac,
 				tpRrmNeighborReportDesc pNeighborReportDesc)
 {
 	tpRrmSMEContext pSmeRrmContext = &mac->rrm.rrmSmeContext;
@@ -1261,7 +1261,7 @@ static void rrm_store_neighbor_rpt_by_roam_score(tpAniSirGlobal mac,
  *
  * Return: QDF_STATUS_SUCCESS - Validation is successful
  */
-static QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal mac,
+static QDF_STATUS sme_rrm_process_neighbor_report(struct mac_context *mac,
 						  void *pMsgBuf)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1350,7 +1350,7 @@ end:
  *
  * Return: QDF_STATUS_SUCCESS - Validation is successful.
  */
-QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal mac, uint16_t msg_type,
+QDF_STATUS sme_rrm_msg_processor(struct mac_context *mac, uint16_t msg_type,
 				 void *pMsgBuf)
 {
 	sme_debug("Msg = %d for RRM measurement", msg_type);
@@ -1385,7 +1385,7 @@ QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal mac, uint16_t msg_type,
  */
 static void rrm_iter_meas_timer_handle(void *userData)
 {
-	tpAniSirGlobal mac = (tpAniSirGlobal) userData;
+	struct mac_context *mac = (struct mac_context *) userData;
 
 	sme_warn("Randomization timer expired...send on next channel");
 	/* Issue a scan req for next channel. */
@@ -1402,7 +1402,7 @@ static void rrm_iter_meas_timer_handle(void *userData)
  */
 static void rrm_neighbor_rsp_timeout_handler(void *userData)
 {
-	tpAniSirGlobal mac = (tpAniSirGlobal) userData;
+	struct mac_context *mac = (struct mac_context *) userData;
 
 	sme_warn("Neighbor Response timed out");
 	rrm_indicate_neighbor_report_result(mac, QDF_STATUS_E_FAILURE);
@@ -1416,7 +1416,7 @@ static void rrm_neighbor_rsp_timeout_handler(void *userData)
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS rrm_open(tpAniSirGlobal mac)
+QDF_STATUS rrm_open(struct mac_context *mac)
 {
 
 	QDF_STATUS qdf_status;
@@ -1468,7 +1468,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal mac)
  *           QDF_STATUS_SUCCESS  failure
  */
 
-QDF_STATUS rrm_close(tpAniSirGlobal mac)
+QDF_STATUS rrm_close(struct mac_context *mac)
 {
 
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -1529,7 +1529,7 @@ QDF_STATUS rrm_close(tpAniSirGlobal mac)
  * Return: QDF_STATUS
  *           QDF_STATUS_SUCCESS  success
  */
-QDF_STATUS rrm_change_default_config_param(tpAniSirGlobal mac,
+QDF_STATUS rrm_change_default_config_param(struct mac_context *mac,
 					   struct rrm_config_param *rrm_config)
 {
 	qdf_mem_copy(&mac->rrm.rrmSmeContext.rrmConfig, rrm_config,
@@ -1538,7 +1538,7 @@ QDF_STATUS rrm_change_default_config_param(tpAniSirGlobal mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS rrm_start(tpAniSirGlobal mac_ctx)
+QDF_STATUS rrm_start(struct mac_context *mac_ctx)
 {
 	tpRrmSMEContext smerrmctx = &mac_ctx->rrm.rrmSmeContext;
 
@@ -1551,7 +1551,7 @@ QDF_STATUS rrm_start(tpAniSirGlobal mac_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS rrm_stop(tpAniSirGlobal mac_ctx)
+QDF_STATUS rrm_stop(struct mac_context *mac_ctx)
 {
 	tpRrmSMEContext smerrmctx = &mac_ctx->rrm.rrmSmeContext;
 

@@ -34,13 +34,13 @@ QDF_STATUS sme_ps_uapsd_enable(mac_handle_t mac_handle, uint32_t session_id);
 QDF_STATUS sme_ps_uapsd_disable(mac_handle_t mac_handle, uint32_t session_id);
 
 /* Condition check if driver is ready to enter in PS */
-QDF_STATUS sme_enable_sta_ps_check(tpAniSirGlobal mac_ctx, uint32_t session_id);
+QDF_STATUS sme_enable_sta_ps_check(struct mac_context *mac_ctx, uint32_t session_id);
 
-QDF_STATUS sme_ps_process_command(tpAniSirGlobal mac_ctx,
+QDF_STATUS sme_ps_process_command(struct mac_context *mac_ctx,
 		uint32_t session_id,
 		enum sme_ps_cmd command);
 
-void sme_set_tspec_uapsd_mask_per_session(tpAniSirGlobal mac_ctx,
+void sme_set_tspec_uapsd_mask_per_session(struct mac_context *mac_ctx,
 		tSirMacTSInfo *ts_info,
 		uint8_t session_id);
 /* Full Power Req Callback */
@@ -59,7 +59,7 @@ QDF_STATUS sme_set_ps_ns_offload(mac_handle_t mac_handle,
 
 #endif /* WLAN_NS_OFFLOAD */
 /* / Post a message to PE module */
-QDF_STATUS sme_post_pe_message(tpAniSirGlobal mac_ctx,
+QDF_STATUS sme_post_pe_message(struct mac_context *mac_ctx,
 			       struct scheduler_msg *pMsg);
 
 /**

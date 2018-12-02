@@ -22,12 +22,12 @@
  *
  * Author Kiran Kumar Reddy CH L V
  */
-#include "ani_global.h"          /* for tpAniSirGlobal */
+#include "ani_global.h"          /* for struct mac_context **/
 #include "mac_trace.h"
 #include "sme_trace.h"
 #include "sme_internal.h"
 #ifndef SME_TRACE_RECORD
-void sme_trace_init(tpAniSirGlobal mac)
+void sme_trace_init(struct mac_context *mac)
 {
 
 }
@@ -209,7 +209,7 @@ static void sme_trace_dump(void *mac_ctx, tp_qdf_trace_record record,
 	}
 }
 
-void sme_trace_init(tpAniSirGlobal mac)
+void sme_trace_init(struct mac_context *mac)
 {
 	qdf_trace_register(QDF_MODULE_ID_SME, &sme_trace_dump);
 }

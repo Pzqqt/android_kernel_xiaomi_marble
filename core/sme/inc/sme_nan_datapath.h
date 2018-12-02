@@ -29,15 +29,15 @@
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 /* Start NDI BSS */
-QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session_id,
+QDF_STATUS csr_roam_start_ndi(struct mac_context *mac_ctx, uint32_t session_id,
 			      struct csr_roam_profile *profile);
 
-void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
+void csr_roam_save_ndi_connected_info(struct mac_context *mac_ctx,
 				      uint32_t session_id,
 				      struct csr_roam_profile *roam_profile,
 				      tSirBssDescription *bss_desc);
 
-void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
+void csr_roam_update_ndp_return_params(struct mac_context *mac_ctx,
 					uint32_t result,
 					uint32_t *roam_status,
 					uint32_t *roam_result,
@@ -45,21 +45,21 @@ void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 
 #else
 /* Start NDI BSS */
-static inline QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx,
+static inline QDF_STATUS csr_roam_start_ndi(struct mac_context *mac_ctx,
 					uint32_t session_id,
 					struct csr_roam_profile *profile)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
+static inline void csr_roam_save_ndi_connected_info(struct mac_context *mac_ctx,
 					uint32_t session_id,
 					struct csr_roam_profile *roam_profile,
 					tSirBssDescription *bss_desc)
 {
 }
 
-static inline void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
+static inline void csr_roam_update_ndp_return_params(struct mac_context *mac_ctx,
 					uint32_t result,
 					uint32_t *roam_status,
 					uint32_t *roam_result,

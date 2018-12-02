@@ -193,15 +193,15 @@ enum wlan_serialization_cmd_type csr_get_cmd_type(tSmeCmd *sme_cmd);
  *
  * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
  */
-QDF_STATUS csr_set_serialization_params_to_cmd(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_set_serialization_params_to_cmd(struct mac_context *mac_ctx,
 		tSmeCmd *sme_cmd, struct wlan_serialization_command *cmd,
 		uint8_t high_priority);
-tSmeCmd *sme_get_command_buffer(tpAniSirGlobal mac);
-void sme_release_command(tpAniSirGlobal mac, tSmeCmd *pCmd);
-bool qos_process_command(tpAniSirGlobal mac, tSmeCmd *pCommand);
-void qos_release_command(tpAniSirGlobal mac, tSmeCmd *pCommand);
-QDF_STATUS csr_process_scan_command(tpAniSirGlobal mac, tSmeCmd *pCommand);
-QDF_STATUS csr_roam_process_command(tpAniSirGlobal mac, tSmeCmd *pCommand);
+tSmeCmd *sme_get_command_buffer(struct mac_context *mac);
+void sme_release_command(struct mac_context *mac, tSmeCmd *pCmd);
+bool qos_process_command(struct mac_context *mac, tSmeCmd *pCommand);
+void qos_release_command(struct mac_context *mac, tSmeCmd *pCommand);
+QDF_STATUS csr_process_scan_command(struct mac_context *mac, tSmeCmd *pCommand);
+QDF_STATUS csr_roam_process_command(struct mac_context *mac, tSmeCmd *pCommand);
 
 /**
  * csr_roam_wm_status_change_complete() - Remove WM status change command
@@ -214,9 +214,9 @@ QDF_STATUS csr_roam_process_command(tpAniSirGlobal mac, tSmeCmd *pCommand);
  *
  * Return: void
  */
-void csr_roam_wm_status_change_complete(tpAniSirGlobal mac_ctx,
+void csr_roam_wm_status_change_complete(struct mac_context *mac_ctx,
 					uint8_t session_id);
-void csr_roam_process_wm_status_change_command(tpAniSirGlobal mac,
+void csr_roam_process_wm_status_change_command(struct mac_context *mac,
 		tSmeCmd *pCommand);
 /**
  * csr_process_del_sta_session_command() - Post WMA_DEL_STA_SELF_REQ to wma
@@ -228,41 +228,41 @@ void csr_roam_process_wm_status_change_command(tpAniSirGlobal mac,
  *
  * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
  */
-QDF_STATUS csr_process_del_sta_session_command(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_process_del_sta_session_command(struct mac_context *mac_ctx,
 					       tSmeCmd *sme_command);
-void csr_reinit_roam_cmd(tpAniSirGlobal mac, tSmeCmd *pCommand);
-void csr_reinit_wm_status_change_cmd(tpAniSirGlobal mac, tSmeCmd *pCommand);
-QDF_STATUS csr_roam_send_set_key_cmd(tpAniSirGlobal mac_ctx,
+void csr_reinit_roam_cmd(struct mac_context *mac, tSmeCmd *pCommand);
+void csr_reinit_wm_status_change_cmd(struct mac_context *mac, tSmeCmd *pCommand);
+QDF_STATUS csr_roam_send_set_key_cmd(struct mac_context *mac_ctx,
 		uint32_t session_id, struct setkey_cmd *set_key_cmd);
-QDF_STATUS csr_is_valid_channel(tpAniSirGlobal mac, uint8_t chnNum);
+QDF_STATUS csr_is_valid_channel(struct mac_context *mac, uint8_t chnNum);
 
 QDF_STATUS sme_acquire_global_lock(tSmeStruct *psSme);
 QDF_STATUS sme_release_global_lock(tSmeStruct *psSme);
 
-QDF_STATUS csr_process_add_sta_session_rsp(tpAniSirGlobal mac, uint8_t *pMsg);
-QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal mac, uint8_t *pMsg);
+QDF_STATUS csr_process_add_sta_session_rsp(struct mac_context *mac, uint8_t *pMsg);
+QDF_STATUS csr_process_del_sta_session_rsp(struct mac_context *mac, uint8_t *pMsg);
 
-bool csr_roamGetConcurrencyConnectStatusForBmps(tpAniSirGlobal mac);
+bool csr_roamGetConcurrencyConnectStatusForBmps(struct mac_context *mac);
 
-QDF_STATUS csr_flush_cfg_bg_scan_roam_channel_list(tpAniSirGlobal mac,
+QDF_STATUS csr_flush_cfg_bg_scan_roam_channel_list(struct mac_context *mac,
 		uint8_t sessionId);
-QDF_STATUS csr_create_bg_scan_roam_channel_list(tpAniSirGlobal mac,
+QDF_STATUS csr_create_bg_scan_roam_channel_list(struct mac_context *mac,
 		uint8_t sessionId, const uint8_t *pChannelList,
 		const uint8_t numChannels);
 
 #ifdef FEATURE_WLAN_ESE
-QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal mac,
+QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 		uint8_t sessionId,
 		uint8_t *pChannelList,
 		uint8_t numChannels,
 		const enum band_info eBand);
 #endif
 
-QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal mac,
+QDF_STATUS p2p_process_remain_on_channel_cmd(struct mac_context *mac,
 					     tSmeCmd *p2pRemainonChn);
 ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
-void csr_process_set_dual_mac_config(tpAniSirGlobal mac, tSmeCmd *command);
-void csr_process_set_antenna_mode(tpAniSirGlobal mac, tSmeCmd *command);
-void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command);
-void csr_process_nss_update_req(tpAniSirGlobal mac, tSmeCmd *command);
+void csr_process_set_dual_mac_config(struct mac_context *mac, tSmeCmd *command);
+void csr_process_set_antenna_mode(struct mac_context *mac, tSmeCmd *command);
+void csr_process_set_hw_mode(struct mac_context *mac, tSmeCmd *command);
+void csr_process_nss_update_req(struct mac_context *mac, tSmeCmd *command);
 #endif /* #if !defined( __SMEINSIDE_H ) */

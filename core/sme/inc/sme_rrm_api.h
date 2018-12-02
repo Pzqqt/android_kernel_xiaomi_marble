@@ -37,16 +37,16 @@
 #include "sme_internal.h"
 #include "sme_rrm_internal.h"
 
-QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal mac, uint16_t msg_type,
+QDF_STATUS sme_rrm_msg_processor(struct mac_context *mac, uint16_t msg_type,
 		void *pMsgBuf);
-QDF_STATUS rrm_close(tpAniSirGlobal mac);
-QDF_STATUS rrm_open(tpAniSirGlobal mac);
-QDF_STATUS rrm_change_default_config_param(tpAniSirGlobal mac,
+QDF_STATUS rrm_close(struct mac_context *mac);
+QDF_STATUS rrm_open(struct mac_context *mac);
+QDF_STATUS rrm_change_default_config_param(struct mac_context *mac,
 		struct rrm_config_param *rrm_config);
-QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal mac,
+QDF_STATUS sme_rrm_neighbor_report_request(struct mac_context *mac,
 		uint8_t sessionId, tpRrmNeighborReq pNeighborReq,
 		tpRrmNeighborRspCallbackInfo callbackInfo);
-QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal mac,
+QDF_STATUS sme_rrm_process_beacon_report_req_ind(struct mac_context *mac,
 		void *pMsgBuf);
 
 /**
@@ -56,7 +56,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal mac,
  * Return: QDF_STATUS
  *           QDF_STATUS_SUCCESS  success
  */
-QDF_STATUS rrm_start(tpAniSirGlobal mac_ctx);
+QDF_STATUS rrm_start(struct mac_context *mac_ctx);
 
 /**
  * rrm_stop() - stop the RRM module
@@ -65,6 +65,6 @@ QDF_STATUS rrm_start(tpAniSirGlobal mac_ctx);
  * Return: QDF_STATUS
  *           QDF_STATUS_SUCCESS  success
  */
-QDF_STATUS rrm_stop(tpAniSirGlobal mac_ctx);
+QDF_STATUS rrm_stop(struct mac_context *mac_ctx);
 
 #endif

@@ -141,5 +141,5 @@ enum {
 	TRACE_CODE_SME_RX_WMA_MSG,
 };
 
-void sme_trace_init(tpAniSirGlobal mac);
+void sme_trace_init(struct mac_context *mac);
 #endif /* __SME_TRACE_H__ */
