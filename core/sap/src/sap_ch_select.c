@@ -332,7 +332,7 @@ static void sap_process_avoid_ie(mac_handle_t mac_handle,
 	uint8_t i = 0;
 	struct sAvoidChannelIE *avoid_ch_ie;
 	tCsrScanResultInfo *node = NULL;
-	tpAniSirGlobal mac_ctx = NULL;
+	struct mac_context *mac_ctx = NULL;
 	tSapSpectChInfo *spect_ch = NULL;
 
 	mac_ctx = MAC_CONTEXT(mac_handle);
@@ -413,7 +413,7 @@ void sap_update_unsafe_channel_list(mac_handle_t mac_handle,
 	uint16_t i, j;
 	uint16_t unsafe_channel_list[NUM_CHANNELS];
 	uint16_t unsafe_channel_count = 0;
-	tpAniSirGlobal mac_ctx = NULL;
+	struct mac_context *mac_ctx = NULL;
 
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
@@ -521,7 +521,7 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
 				tSapChSelSpectInfo *spectinfo_param)
 {
 	uint8_t i = 0;
-	tpAniSirGlobal mac_ctx = sme_get_mac_context();
+	struct mac_context *mac_ctx = sme_get_mac_context();
 
 	if (NULL == mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -575,7 +575,7 @@ static bool sap_chan_sel_init(mac_handle_t mac_handle,
 	tSapSpectChInfo *pSpectCh = NULL;
 	uint8_t *pChans = NULL;
 	uint16_t channelnum = 0;
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	bool chSafe = true;
 #ifdef FEATURE_WLAN_CH_AVOID
 	uint16_t i;
@@ -766,7 +766,7 @@ uint32_t sapweight_rssi_count(struct sap_context *sap_ctx, int8_t rssi,
  * Return: chan status info
  */
 static struct lim_channel_status *sap_get_channel_status
-	(tpAniSirGlobal p_mac, uint32_t channel_id)
+	(struct mac_context *p_mac, uint32_t channel_id)
 {
 	return csr_get_channel_status(p_mac, channel_id);
 }
@@ -777,7 +777,7 @@ static struct lim_channel_status *sap_get_channel_status
  *
  * Return: none
  */
-static void sap_clear_channel_status(tpAniSirGlobal p_mac)
+static void sap_clear_channel_status(struct mac_context *p_mac)
 {
 	csr_clear_channel_status(p_mac);
 }
@@ -1522,7 +1522,7 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 	uint16_t vhtSupport;
 	uint32_t ieLen = 0;
 	tSirProbeRespBeacon *pBeaconStruct;
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	tSapSpectChInfo *spectch_start = pSpectInfoParams->pSpectCh;
 	tSapSpectChInfo *spectch_end = pSpectInfoParams->pSpectCh +
 		pSpectInfoParams->numSpectChans;
@@ -2539,7 +2539,7 @@ static uint8_t sap_select_channel_no_scan_result(mac_handle_t mac_handle,
 	uint8_t i, first_safe_ch_in_range = SAP_CHANNEL_NOT_SELECTED;
 	uint32_t start_ch_num = sap_ctx->acs_cfg->start_ch;
 	uint32_t end_ch_num = sap_ctx->acs_cfg->end_ch;
-	tpAniSirGlobal mac_ctx = NULL;
+	struct mac_context *mac_ctx = NULL;
 
 	mac_ctx = MAC_CONTEXT(mac_handle);
 
@@ -2642,7 +2642,7 @@ uint8_t sap_select_channel(mac_handle_t mac_handle,
 	uint8_t count;
 	uint32_t start_ch_num, end_ch_num, tmp_ch_num, operating_band = 0;
 #endif
-	tpAniSirGlobal mac_ctx;
+	struct mac_context *mac_ctx;
 
 	mac_ctx = MAC_CONTEXT(mac_handle);
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,

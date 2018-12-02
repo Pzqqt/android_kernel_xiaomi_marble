@@ -557,7 +557,7 @@ void sap_dfs_set_current_channel(void *ctx)
 bool sap_dfs_is_channel_in_preferred_location(mac_handle_t mac_handle,
 					      uint8_t channel_id)
 {
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 
 	mac = MAC_CONTEXT(mac_handle);
 	if (NULL == mac) {
@@ -760,7 +760,7 @@ sap_validate_chan(struct sap_context *sap_context,
 		  bool check_for_connection_update)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac_ctx;
+	struct mac_context *mac_ctx;
 	bool is_dfs;
 	bool is_safe;
 	mac_handle_t mac_handle;
@@ -947,7 +947,7 @@ sap_validate_chan(struct sap_context *sap_context,
 QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 {
 	QDF_STATUS qdf_ret_status;
-	tpAniSirGlobal mac_ctx;
+	struct mac_context *mac_ctx;
 	struct scan_start_request *req;
 	struct wlan_objmgr_vdev *vdev;
 	uint8_t i;
@@ -1139,7 +1139,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 static struct sap_context *
 sap_find_valid_concurrent_session(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	uint8_t intf = 0;
 	struct sap_context *sap_ctx;
 
@@ -1160,7 +1160,7 @@ sap_find_valid_concurrent_session(mac_handle_t mac_handle)
 
 static QDF_STATUS sap_clear_global_dfs_param(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
 	if (NULL != sap_find_valid_concurrent_session(mac_handle)) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
@@ -1186,7 +1186,7 @@ static QDF_STATUS sap_clear_global_dfs_param(mac_handle_t mac_handle)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS sap_acquire_vdev_ref(tpAniSirGlobal mac,
+QDF_STATUS sap_acquire_vdev_ref(struct mac_context *mac,
 				struct sap_context *sap_ctx,
 				uint8_t session_id)
 {
@@ -1225,7 +1225,7 @@ QDF_STATUS sap_set_session_param(mac_handle_t mac_handle,
 				 struct sap_context *sapctx,
 				 uint32_t session_id)
 {
-	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	int i;
 	QDF_STATUS status;
 
@@ -1264,7 +1264,7 @@ QDF_STATUS sap_clear_session_param(mac_handle_t mac_handle,
 				   struct sap_context *sapctx,
 				   uint32_t session_id)
 {
-	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
 	if (sapctx->sessionId >= SAP_MAX_NUM_SESSION)
 		return QDF_STATUS_E_FAILURE;
@@ -1791,7 +1791,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
  */
 static struct sap_context *sap_find_cac_wait_session(mac_handle_t handle)
 {
-	tpAniSirGlobal mac = MAC_CONTEXT(handle);
+	struct mac_context *mac = MAC_CONTEXT(handle);
 	uint8_t i = 0;
 	struct sap_context *sap_ctx;
 
@@ -1822,7 +1822,7 @@ static struct sap_context *sap_find_cac_wait_session(mac_handle_t handle)
 void sap_cac_reset_notify(mac_handle_t mac_handle)
 {
 	uint8_t intf = 0;
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		struct sap_context *sap_context =
@@ -1849,7 +1849,7 @@ void sap_cac_reset_notify(mac_handle_t mac_handle)
 static QDF_STATUS sap_cac_start_notify(mac_handle_t mac_handle)
 {
 	uint8_t intf = 0;
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
@@ -1899,7 +1899,7 @@ static QDF_STATUS sap_cac_start_notify(mac_handle_t mac_handle)
  * Return: QDF_STATUS
  */
 static QDF_STATUS wlansap_update_pre_cac_end(struct sap_context *sap_context,
-		tpAniSirGlobal mac, uint8_t intf)
+		struct mac_context *mac, uint8_t intf)
 {
 	QDF_STATUS qdf_status;
 
@@ -1944,7 +1944,7 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
 				     struct csr_roam_info *roamInfo)
 {
 	uint8_t intf;
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	/*
@@ -2057,7 +2057,7 @@ static QDF_STATUS sap_cac_end_notify(mac_handle_t mac_handle,
  */
 static QDF_STATUS
 sap_goto_starting(struct sap_context *sap_ctx,
-		  ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
+		  ptWLAN_SAPEvent sap_event, struct mac_context *mac_ctx,
 		  mac_handle_t mac_handle)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -2193,7 +2193,7 @@ sap_goto_starting(struct sap_context *sap_ctx,
  */
 static QDF_STATUS
 sap_fsm_state_init(struct sap_context *sap_ctx,
-		   ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
+		   ptWLAN_SAPEvent sap_event, struct mac_context *mac_ctx,
 		   mac_handle_t mac_handle)
 {
 	uint32_t msg = sap_event->event;
@@ -2273,7 +2273,7 @@ exit:
  * Return: QDF_STATUS
  */
 static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
-			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
+			ptWLAN_SAPEvent sap_event, struct mac_context *mac_ctx,
 			mac_handle_t mac_handle)
 {
 	uint32_t msg = sap_event->event;
@@ -2377,7 +2377,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
  * Return: QDF_STATUS
  */
 static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
-			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
+			ptWLAN_SAPEvent sap_event, struct mac_context *mac_ctx,
 			mac_handle_t mac_handle)
 {
 	uint32_t msg = sap_event->event;
@@ -2601,7 +2601,7 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
  * Return: QDF_STATUS
  */
 static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
-			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx)
+			ptWLAN_SAPEvent sap_event, struct mac_context *mac_ctx)
 {
 	uint32_t msg = sap_event->event;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -2707,7 +2707,7 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
  */
 static QDF_STATUS
 sap_fsm_state_stopping(struct sap_context *sap_ctx,
-		       ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
+		       ptWLAN_SAPEvent sap_event, struct mac_context *mac_ctx,
 		       mac_handle_t mac_handle)
 {
 	uint32_t msg = sap_event->event;
@@ -3483,7 +3483,7 @@ void sap_dfs_cac_timer_callback(void *data)
 	struct sap_context *sapContext;
 	tWLAN_SAPEvent sapEvent;
 	mac_handle_t mac_handle = data;
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 
 	if (NULL == mac_handle) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -3676,7 +3676,7 @@ QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sap_ctx)
  */
 uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	uint8_t intf = 0;
 	uint8_t intf_count = 0;
 
@@ -3706,7 +3706,7 @@ uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle)
 bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
 						struct sap_context *sapContext)
 {
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct sap_context *sap_context;
 	uint8_t intf = 0;
 
@@ -3750,7 +3750,7 @@ bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
 bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t mac_handle,
 				   struct sap_context *given_sapctx)
 {
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct sap_context *sap_ctx;
 	uint8_t intf = 0, scc_dfs_counter = 0;
 

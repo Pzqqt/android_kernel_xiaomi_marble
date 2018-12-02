@@ -1125,7 +1125,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 QDF_STATUS wlansap_disassoc_sta(struct sap_context *sap_ctx,
 				struct csr_del_sta_params *params)
 {
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1549,7 +1549,7 @@ QDF_STATUS wlan_sap_set_pre_cac_complete_status(struct sap_context *sap_ctx,
  */
 bool wlan_sap_is_pre_cac_active(mac_handle_t handle)
 {
-	tpAniSirGlobal mac = NULL;
+	struct mac_context *mac = NULL;
 	int i;
 
 	mac = MAC_CONTEXT(handle);
@@ -1579,7 +1579,7 @@ bool wlan_sap_is_pre_cac_active(mac_handle_t handle)
  */
 QDF_STATUS wlan_sap_get_pre_cac_vdev_id(mac_handle_t handle, uint8_t *vdev_id)
 {
-	tpAniSirGlobal mac = NULL;
+	struct mac_context *mac = NULL;
 	uint8_t i;
 
 	mac = MAC_CONTEXT(handle);
@@ -1821,7 +1821,7 @@ QDF_STATUS wlansap_dfs_send_csa_ie_request(struct sap_context *sap_ctx)
 QDF_STATUS wlansap_get_dfs_ignore_cac(mac_handle_t mac_handle,
 				      uint8_t *ignore_cac)
 {
-	tpAniSirGlobal mac = NULL;
+	struct mac_context *mac = NULL;
 
 	if (NULL != mac_handle) {
 		mac = MAC_CONTEXT(mac_handle);
@@ -1838,7 +1838,7 @@ QDF_STATUS wlansap_get_dfs_ignore_cac(mac_handle_t mac_handle,
 QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t mac_handle,
 				      uint8_t ignore_cac)
 {
-	tpAniSirGlobal mac = NULL;
+	struct mac_context *mac = NULL;
 
 	if (NULL != mac_handle) {
 		mac = MAC_CONTEXT(mac_handle);
@@ -1877,7 +1877,7 @@ QDF_STATUS
 wlan_sap_set_channel_avoidance(mac_handle_t mac_handle,
 			       bool sap_channel_avoidance)
 {
-	tpAniSirGlobal mac_ctx = NULL;
+	struct mac_context *mac_ctx = NULL;
 
 	if (NULL != mac_handle) {
 		mac_ctx = MAC_CONTEXT(mac_handle);
@@ -1912,7 +1912,7 @@ wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle,
 					   uint8_t
 					   dfs_Preferred_Channels_location)
 {
-	tpAniSirGlobal mac = NULL;
+	struct mac_context *mac = NULL;
 	QDF_STATUS status;
 	enum dfs_reg dfs_region;
 
@@ -1956,7 +1956,7 @@ wlansap_set_dfs_preferred_channel_location(mac_handle_t mac_handle,
 QDF_STATUS wlansap_set_dfs_target_chnl(mac_handle_t mac_handle,
 				       uint8_t target_channel)
 {
-	tpAniSirGlobal mac = NULL;
+	struct mac_context *mac = NULL;
 
 	if (NULL != mac_handle) {
 		mac = MAC_CONTEXT(mac_handle);
@@ -2133,7 +2133,7 @@ void wlansap_extend_to_acs_range(mac_handle_t mac_handle,
 #define ACS_5G_EXTEND (ACS_WLAN_20M_CH_INC * 3)
 
 	uint8_t tmp_startChannelNum = 0, tmp_endChannelNum = 0;
-	tpAniSirGlobal mac_ctx;
+	struct mac_context *mac_ctx;
 
 	mac_ctx = MAC_CONTEXT(mac_handle);
 	if (!mac_ctx) {
@@ -2391,7 +2391,7 @@ void wlan_sap_enable_phy_error_logs(mac_handle_t mac_handle,
 {
 	int error;
 
-	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
 	mac_ctx->sap.enable_dfs_phy_error_logs = !!enable_log;
 	tgt_dfs_control(mac_ctx->pdev, DFS_SET_DEBUG_LEVEL, &enable_log,

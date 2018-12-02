@@ -98,7 +98,7 @@ void sap_config_acs_result(mac_handle_t mac_handle,
 {
 	uint32_t channel = sap_ctx->acs_cfg->pri_ch;
 	struct ch_params ch_params = {0};
-	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 
 	ch_params.ch_width = sap_ctx->acs_cfg->ch_width;
 	wlan_reg_set_channel_params(mac_ctx->pdev, channel, sec_ch,
@@ -295,7 +295,7 @@ close_session:
  * Return: void
  */
 static void
-wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
+wlansap_roam_process_ch_change_success(struct mac_context *mac_ctx,
 				      struct sap_context *sap_ctx,
 				      struct csr_roam_info *csr_roam_info,
 				      QDF_STATUS *ret_status)
@@ -415,7 +415,7 @@ wlansap_roam_process_dfs_chansw_update(mac_handle_t mac_handle,
 {
 	uint8_t intf;
 	QDF_STATUS qdf_status;
-	tpAniSirGlobal mac_ctx = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	uint8_t dfs_beacon_start_req = 0;
 	bool sap_scc_dfs;
 
@@ -574,7 +574,7 @@ wlansap_roam_process_dfs_chansw_update(mac_handle_t mac_handle,
  * Return: result of operation
  */
 static void
-wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
+wlansap_roam_process_dfs_radar_found(struct mac_context *mac_ctx,
 				     struct sap_context *sap_ctx,
 				     QDF_STATUS *ret_status)
 {
@@ -713,7 +713,7 @@ wlansap_roam_process_infra_assoc_ind(struct sap_context *sap_ctx,
 	return;
 }
 
-static void wlansap_update_vendor_acs_chan(tpAniSirGlobal mac_ctx,
+static void wlansap_update_vendor_acs_chan(struct mac_context *mac_ctx,
 				struct sap_context *sap_ctx)
 {
 	int intf;

@@ -572,7 +572,7 @@ sap_chan_bond_dfs_sub_chan(struct sap_context *sap_context,
  * Return: QDF_STATUS_SUCCESS - If able to get vdev object reference
  *				else qdf status failure codes
  */
-QDF_STATUS sap_acquire_vdev_ref(tpAniSirGlobal mac,
+QDF_STATUS sap_acquire_vdev_ref(struct mac_context *mac,
 				struct sap_context *sap_ctx,
 				uint8_t session_id);
 
