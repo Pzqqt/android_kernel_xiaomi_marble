@@ -316,13 +316,13 @@ preauth_fail:
 QDF_STATUS lim_ft_setup_auth_session(tpAniSirGlobal mac,
 					struct pe_session *psessionEntry)
 {
-	struct pe_session *pftSessionEntry = NULL;
+	struct pe_session *ft_session = NULL;
 	uint8_t sessionId = 0;
 
-	pftSessionEntry =
+	ft_session =
 		pe_find_session_by_bssid(mac, psessionEntry->limReAssocbssId,
 					 &sessionId);
-	if (pftSessionEntry == NULL) {
+	if (ft_session == NULL) {
 		pe_err("No session found for bssid");
 		lim_print_mac_addr(mac, psessionEntry->limReAssocbssId, LOGE);
 		return QDF_STATUS_E_FAILURE;
@@ -338,10 +338,10 @@ QDF_STATUS lim_ft_setup_auth_session(tpAniSirGlobal mac,
 	    psessionEntry->ftPEContext.pFTPreAuthReq->pbssDescription) {
 		lim_fill_ft_session(mac,
 				    psessionEntry->ftPEContext.pFTPreAuthReq->
-				    pbssDescription, pftSessionEntry,
+				    pbssDescription, ft_session,
 				    psessionEntry);
 
-		lim_ft_prepare_add_bss_req(mac, false, pftSessionEntry,
+		lim_ft_prepare_add_bss_req(mac, false, ft_session,
 		     psessionEntry->ftPEContext.pFTPreAuthReq->pbssDescription);
 	}
 
@@ -400,7 +400,7 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal mac, QDF_STATUS status,
 				uint8_t *auth_rsp, uint16_t auth_rsp_length,
 				struct pe_session *psessionEntry)
 {
-	struct pe_session *pftSessionEntry = NULL;
+	struct pe_session *ft_session = NULL;
 	uint8_t sessionId = 0;
 	tpSirBssDescription pbssDescription = NULL;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -438,47 +438,47 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal mac, QDF_STATUS status,
 	if (psessionEntry->ftPEContext.ftPreAuthStatus == QDF_STATUS_SUCCESS) {
 		pbssDescription =
 		      psessionEntry->ftPEContext.pFTPreAuthReq->pbssDescription;
-		pftSessionEntry =
+		ft_session =
 			pe_create_session(mac, pbssDescription->bssId,
 					  &sessionId, mac->lim.maxStation,
 					  psessionEntry->bssType,
 					  psessionEntry->smeSessionId);
-		if (!pftSessionEntry) {
+		if (!ft_session) {
 			pe_err("Session not created for pre-auth 11R AP");
 			status = QDF_STATUS_E_FAILURE;
 			psessionEntry->ftPEContext.ftPreAuthStatus = status;
 			goto send_rsp;
 		}
 
-		sir_copy_mac_addr(pftSessionEntry->selfMacAddr,
+		sir_copy_mac_addr(ft_session->selfMacAddr,
 				  psessionEntry->selfMacAddr);
-		sir_copy_mac_addr(pftSessionEntry->limReAssocbssId,
+		sir_copy_mac_addr(ft_session->limReAssocbssId,
 				  pbssDescription->bssId);
 
 		/* Update the beacon/probe filter in mac_ctx */
 		lim_set_bcn_probe_filter(mac,
-					 pftSessionEntry,
+					 ft_session,
 					 NULL, 0);
 
-		if (pftSessionEntry->bssType == eSIR_INFRASTRUCTURE_MODE)
-			pftSessionEntry->limSystemRole = eLIM_STA_ROLE;
+		if (ft_session->bssType == eSIR_INFRASTRUCTURE_MODE)
+			ft_session->limSystemRole = eLIM_STA_ROLE;
 		else
 			pe_err("Invalid bss type");
 
-		pftSessionEntry->limPrevSmeState = pftSessionEntry->limSmeState;
-		qdf_mem_copy(&(pftSessionEntry->htConfig),
+		ft_session->limPrevSmeState = ft_session->limSmeState;
+		qdf_mem_copy(&(ft_session->htConfig),
 			     &(psessionEntry->htConfig),
 			     sizeof(psessionEntry->htConfig));
-		pftSessionEntry->limSmeState = eLIM_SME_WT_REASSOC_STATE;
+		ft_session->limSmeState = eLIM_SME_WT_REASSOC_STATE;
 
 		if (IS_5G_CH(psessionEntry->ftPEContext.pFTPreAuthReq->
 			preAuthchannelNum))
-			pftSessionEntry->vdev_nss = mac->vdev_type_nss_5g.sta;
+			ft_session->vdev_nss = mac->vdev_type_nss_5g.sta;
 		else
-			pftSessionEntry->vdev_nss = mac->vdev_type_nss_2g.sta;
+			ft_session->vdev_nss = mac->vdev_type_nss_2g.sta;
 
 		pe_debug("created session (%pK) with id = %d",
-			pftSessionEntry, pftSessionEntry->peSessionId);
+			ft_session, ft_session->peSessionId);
 
 		/* Update the ReAssoc BSSID of the current session */
 		sir_copy_mac_addr(psessionEntry->limReAssocbssId,

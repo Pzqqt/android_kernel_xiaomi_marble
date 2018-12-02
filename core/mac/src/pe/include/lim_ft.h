@@ -111,21 +111,21 @@ static inline int lim_process_ft_pre_auth_req(tpAniSirGlobal mac,
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 void lim_fill_ft_session(tpAniSirGlobal mac,
 		tpSirBssDescription pbssDescription,
-		struct pe_session *pftSessionEntry,
+		struct pe_session *ft_session,
 		struct pe_session *psessionEntry);
 void lim_ft_prepare_add_bss_req(tpAniSirGlobal mac, uint8_t updateEntry,
-		struct pe_session *pftSessionEntry,
+		struct pe_session *ft_session,
 		tpSirBssDescription bssDescription);
 QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 		struct pe_session *session_entry, tSirFTPreAuthReq *ft_preauth_req);
 #else
 static inline void lim_fill_ft_session(tpAniSirGlobal mac,
 		tpSirBssDescription pbssDescription,
-		struct pe_session *pftSessionEntry,
+		struct pe_session *ft_session,
 		struct pe_session *psessionEntry)
 {}
 static inline void lim_ft_prepare_add_bss_req(tpAniSirGlobal mac,
-		uint8_t updateEntry, struct pe_session *pftSessionEntry,
+		uint8_t updateEntry, struct pe_session *ft_session,
 		tpSirBssDescription bssDescription)
 {}
 #endif
