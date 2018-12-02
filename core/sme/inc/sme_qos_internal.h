@@ -103,23 +103,23 @@ typedef struct {
 /*--------------------------------------------------------------------------
   External APIs for CSR - Internal to SME
   ------------------------------------------------------------------------*/
-QDF_STATUS sme_qos_open(tpAniSirGlobal mac);
-QDF_STATUS sme_qos_close(tpAniSirGlobal mac);
-QDF_STATUS sme_qos_msg_processor(tpAniSirGlobal mac, uint16_t msg_type,
+QDF_STATUS sme_qos_open(struct mac_context *mac);
+QDF_STATUS sme_qos_close(struct mac_context *mac);
+QDF_STATUS sme_qos_msg_processor(struct mac_context *mac, uint16_t msg_type,
 		void *pMsgBuf);
 
 /*--------------------------------------------------------------------------
   Internal APIs for CSR
   ------------------------------------------------------------------------*/
-QDF_STATUS sme_qos_validate_params(tpAniSirGlobal mac,
+QDF_STATUS sme_qos_validate_params(struct mac_context *mac,
 		tSirBssDescription *pBssDesc);
-QDF_STATUS sme_qos_csr_event_ind(tpAniSirGlobal mac,
+QDF_STATUS sme_qos_csr_event_ind(struct mac_context *mac,
 		uint8_t sessionId,
 		sme_qos_csr_event_indType ind, void *pEvent_info);
-uint8_t sme_qos_get_acm_mask(tpAniSirGlobal mac,
+uint8_t sme_qos_get_acm_mask(struct mac_context *mac,
 		tSirBssDescription *pSirBssDesc, tDot11fBeaconIEs *pIes);
 #ifdef FEATURE_WLAN_ESE
-uint8_t sme_qos_ese_retrieve_tspec_info(tpAniSirGlobal mac, uint8_t sessionId,
+uint8_t sme_qos_ese_retrieve_tspec_info(struct mac_context *mac, uint8_t sessionId,
 		tTspecInfo * pTspecInfo);
 #endif
 

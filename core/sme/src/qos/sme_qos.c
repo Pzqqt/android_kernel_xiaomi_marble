@@ -207,7 +207,7 @@ struct sme_qos_releasecmdinfo {
  */
 struct sme_qos_cmdinfo {
 	enum sme_qos_cmdtype command;
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 	uint8_t sessionId;
 	union {
 		struct sme_qos_setupcmdinfo setupCmdInfo;
@@ -313,10 +313,10 @@ struct sme_qos_searchinfo {
 	uint8_t tspec_mask;
 };
 
-typedef QDF_STATUS (*sme_QosProcessSearchEntry)(tpAniSirGlobal mac,
+typedef QDF_STATUS (*sme_QosProcessSearchEntry)(struct mac_context *mac,
 						tListElem *pEntry);
 
-static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal mac,
+static enum sme_qos_statustype sme_qos_internal_setup_req(struct mac_context *mac,
 					  uint8_t sessionId,
 					  struct sme_qos_wmmtspecinfo *pQoSInfo,
 					  sme_QosCallback QoSCallback,
@@ -324,62 +324,62 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal mac,
 					  enum sme_qos_wmmuptype UPType,
 					  uint32_t QosFlowID,
 					  bool buffered_cmd, bool hoRenewal);
-static enum sme_qos_statustype sme_qos_internal_modify_req(tpAniSirGlobal mac,
+static enum sme_qos_statustype sme_qos_internal_modify_req(struct mac_context *mac,
 					  struct sme_qos_wmmtspecinfo *pQoSInfo,
 					  uint32_t QosFlowID,
 					  bool buffered_cmd);
-static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal mac,
+static enum sme_qos_statustype sme_qos_internal_release_req(struct mac_context *mac,
 					       uint8_t session_id,
 					       uint32_t QosFlowID,
 					       bool buffered_cmd);
-static enum sme_qos_statustype sme_qos_setup(tpAniSirGlobal mac,
+static enum sme_qos_statustype sme_qos_setup(struct mac_context *mac,
 				uint8_t sessionId,
 				struct sme_qos_wmmtspecinfo *pTspec_Info,
 				sme_QosEdcaAcType ac);
-static QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_add_ts_req(struct mac_context *mac,
 			      uint8_t sessionId,
 			      struct sme_qos_wmmtspecinfo *pTspec_Info,
 			      sme_QosEdcaAcType ac);
-static QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_del_ts_req(struct mac_context *mac,
 			      uint8_t sessionId,
 			      sme_QosEdcaAcType ac, uint8_t tspec_mask);
-static QDF_STATUS sme_qos_process_add_ts_rsp(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_add_ts_rsp(struct mac_context *mac,
 						void *pMsgBuf);
-static QDF_STATUS sme_qos_process_del_ts_ind(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_del_ts_ind(struct mac_context *mac,
 						void *pMsgBuf);
-static QDF_STATUS sme_qos_process_del_ts_rsp(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_del_ts_rsp(struct mac_context *mac,
 						void *pMsgBuf);
-static QDF_STATUS sme_qos_process_assoc_complete_ev(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_assoc_complete_ev(struct mac_context *mac,
 					uint8_t sessionId, void *pEvent_info);
-static QDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_reassoc_req_ev(struct mac_context *mac,
 					uint8_t sessionId, void *pEvent_info);
-static QDF_STATUS sme_qos_process_reassoc_success_ev(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_reassoc_success_ev(struct mac_context *mac,
 					  uint8_t sessionId, void *pEvent_info);
-static QDF_STATUS sme_qos_process_reassoc_failure_ev(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_reassoc_failure_ev(struct mac_context *mac,
 					  uint8_t sessionId, void *pEvent_info);
-static QDF_STATUS sme_qos_process_disconnect_ev(tpAniSirGlobal mac, uint8_t
+static QDF_STATUS sme_qos_process_disconnect_ev(struct mac_context *mac, uint8_t
 					sessionId, void *pEvent_info);
-static QDF_STATUS sme_qos_process_join_req_ev(tpAniSirGlobal mac, uint8_t
+static QDF_STATUS sme_qos_process_join_req_ev(struct mac_context *mac, uint8_t
 						sessionId, void *pEvent_info);
-static QDF_STATUS sme_qos_process_handoff_assoc_req_ev(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_handoff_assoc_req_ev(struct mac_context *mac,
 						uint8_t sessionId,
 						void *pEvent_info);
-static QDF_STATUS sme_qos_process_handoff_success_ev(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_handoff_success_ev(struct mac_context *mac,
 					  uint8_t sessionId, void *pEvent_info);
-static QDF_STATUS sme_qos_process_preauth_success_ind(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_preauth_success_ind(struct mac_context *mac,
 					       uint8_t sessionId,
 					       void *pEvent_info);
-static QDF_STATUS sme_qos_process_set_key_success_ind(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_set_key_success_ind(struct mac_context *mac,
 					       uint8_t sessionId,
 						void *pEvent_info);
-static QDF_STATUS sme_qos_process_aggr_qos_rsp(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_aggr_qos_rsp(struct mac_context *mac,
 						void *pMsgBuf);
-static QDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac, uint8_t
+static QDF_STATUS sme_qos_ft_aggr_qos_req(struct mac_context *mac, uint8_t
 					sessionId);
-static QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
 					      uint8_t sessionId,
 					      tSirAddtsRspInfo *pRsp);
-static QDF_STATUS sme_qos_process_add_ts_failure_rsp(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_add_ts_failure_rsp(struct mac_context *mac,
 					      uint8_t sessionId,
 					      tSirAddtsRspInfo *pRsp);
 static QDF_STATUS sme_qos_aggregate_params(
@@ -391,11 +391,11 @@ static QDF_STATUS sme_qos_update_params(uint8_t sessionId,
 				      uint8_t tspec_mask,
 				      struct sme_qos_wmmtspecinfo *pTspec_Info);
 static sme_QosEdcaAcType sme_qos_up_to_ac(enum sme_qos_wmmuptype up);
-static bool sme_qos_is_acm(tpAniSirGlobal mac, tSirBssDescription *pSirBssDesc,
+static bool sme_qos_is_acm(struct mac_context *mac, tSirBssDescription *pSirBssDesc,
 		    sme_QosEdcaAcType ac, tDot11fBeaconIEs *pIes);
 static tListElem *sme_qos_find_in_flow_list(struct sme_qos_searchinfo
 						search_key);
-static QDF_STATUS sme_qos_find_all_in_flow_list(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_find_all_in_flow_list(struct mac_context *mac,
 					 struct sme_qos_searchinfo search_key,
 					 sme_QosProcessSearchEntry fnp);
 static void sme_qos_state_transition(uint8_t sessionId,
@@ -406,45 +406,45 @@ static QDF_STATUS sme_qos_buffer_cmd(struct sme_qos_cmdinfo *pcmd, bool
 static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t sessionId);
 static QDF_STATUS sme_qos_save_assoc_info(struct sme_qos_sessioninfo *pSession,
 				   sme_QosAssocInfo *pAssoc_info);
-static QDF_STATUS sme_qos_setup_fnp(tpAniSirGlobal mac, tListElem *pEntry);
-static QDF_STATUS sme_qos_modification_notify_fnp(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_setup_fnp(struct mac_context *mac, tListElem *pEntry);
+static QDF_STATUS sme_qos_modification_notify_fnp(struct mac_context *mac,
 					   tListElem *pEntry);
-static QDF_STATUS sme_qos_modify_fnp(tpAniSirGlobal mac, tListElem *pEntry);
-static QDF_STATUS sme_qos_del_ts_ind_fnp(tpAniSirGlobal mac, tListElem
+static QDF_STATUS sme_qos_modify_fnp(struct mac_context *mac, tListElem *pEntry);
+static QDF_STATUS sme_qos_del_ts_ind_fnp(struct mac_context *mac, tListElem
 					*pEntry);
-static QDF_STATUS sme_qos_reassoc_success_ev_fnp(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_reassoc_success_ev_fnp(struct mac_context *mac,
 					tListElem *pEntry);
-static QDF_STATUS sme_qos_add_ts_failure_fnp(tpAniSirGlobal mac, tListElem
+static QDF_STATUS sme_qos_add_ts_failure_fnp(struct mac_context *mac, tListElem
 						*pEntry);
-static QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac, tListElem
+static QDF_STATUS sme_qos_add_ts_success_fnp(struct mac_context *mac, tListElem
 						*pEntry);
 static bool sme_qos_is_rsp_pending(uint8_t sessionId, sme_QosEdcaAcType ac);
 static bool sme_qos_is_uapsd_active(void);
 
-static QDF_STATUS sme_qos_buffer_existing_flows(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_buffer_existing_flows(struct mac_context *mac,
 						uint8_t sessionId);
-static QDF_STATUS sme_qos_delete_existing_flows(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_delete_existing_flows(struct mac_context *mac,
 						uint8_t sessionId);
-static void sme_qos_cleanup_ctrl_blk_for_handoff(tpAniSirGlobal mac,
+static void sme_qos_cleanup_ctrl_blk_for_handoff(struct mac_context *mac,
 						 uint8_t sessionId);
-static QDF_STATUS sme_qos_delete_buffered_requests(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_delete_buffered_requests(struct mac_context *mac,
 						   uint8_t sessionId);
-static bool sme_qos_validate_requested_params(tpAniSirGlobal mac,
+static bool sme_qos_validate_requested_params(struct mac_context *mac,
 				       struct sme_qos_wmmtspecinfo *pQoSInfo,
 				       uint8_t sessionId);
 
-static QDF_STATUS qos_issue_command(tpAniSirGlobal mac, uint8_t sessionId,
+static QDF_STATUS qos_issue_command(struct mac_context *mac, uint8_t sessionId,
 				    eSmeCommandType cmdType,
 				    struct sme_qos_wmmtspecinfo *pQoSInfo,
 				    sme_QosEdcaAcType ac, uint8_t tspec_mask);
 /* sme_qos_re_request_add_ts to re-send AddTS for the combined QoS request */
-static enum sme_qos_statustype sme_qos_re_request_add_ts(tpAniSirGlobal mac,
+static enum sme_qos_statustype sme_qos_re_request_add_ts(struct mac_context *mac,
 					  uint8_t sessionId,
 					  struct sme_qos_wmmtspecinfo *pQoSInfo,
 					  sme_QosEdcaAcType ac,
 					  uint8_t tspecMask);
-static void sme_qos_init_a_cs(tpAniSirGlobal mac, uint8_t sessionId);
-static QDF_STATUS sme_qos_request_reassoc(tpAniSirGlobal mac,
+static void sme_qos_init_a_cs(struct mac_context *mac, uint8_t sessionId);
+static QDF_STATUS sme_qos_request_reassoc(struct mac_context *mac,
 					uint8_t sessionId,
 					  tCsrRoamModifyProfileFields *
 					  pModFields, bool fForce);
@@ -460,7 +460,7 @@ static QDF_STATUS sme_qos_update_tspec_mask(uint8_t sessionId,
  */
 struct sme_qos_cb_s {
 	/* global Mac pointer */
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 	/* All Session Info */
 	struct sme_qos_sessioninfo *sessionInfo;
 	/* All FLOW info */
@@ -536,7 +536,7 @@ static inline void sme_qos_free_control_block_buffer(void)
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_qos_open(tpAniSirGlobal mac)
+QDF_STATUS sme_qos_open(struct mac_context *mac)
 {
 	struct sme_qos_sessioninfo *pSession;
 	uint8_t sessionId;
@@ -596,7 +596,7 @@ QDF_STATUS sme_qos_open(tpAniSirGlobal mac)
  * mac - Pointer to the global MAC parameter structure.
  * Return QDF_STATUS
  */
-QDF_STATUS sme_qos_close(tpAniSirGlobal mac)
+QDF_STATUS sme_qos_close(struct mac_context *mac)
 {
 	struct sme_qos_sessioninfo *pSession;
 	sme_QosEdcaAcType ac;
@@ -681,7 +681,7 @@ enum sme_qos_statustype sme_qos_setup_req(mac_handle_t mac_handle,
 {
 	struct sme_qos_sessioninfo *pSession;
 	QDF_STATUS lock_status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	enum sme_qos_statustype status;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -755,7 +755,7 @@ enum sme_qos_statustype sme_qos_modify_req(mac_handle_t mac_handle,
 					uint32_t QosFlowID)
 {
 	QDF_STATUS lock_status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	enum sme_qos_statustype status;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -798,7 +798,7 @@ enum sme_qos_statustype sme_qos_release_req(mac_handle_t mac_handle,
 					    uint32_t QosFlowID)
 {
 	QDF_STATUS lock_status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	enum sme_qos_statustype status;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -822,7 +822,7 @@ enum sme_qos_statustype sme_qos_release_req(mac_handle_t mac_handle,
 	return status;
 }
 
-void qos_release_command(tpAniSirGlobal mac, tSmeCmd *pCommand)
+void qos_release_command(struct mac_context *mac, tSmeCmd *pCommand)
 {
 	qdf_mem_zero(&pCommand->u.qosCmd, sizeof(tGenericQosCmd));
 	csr_release_command(mac, pCommand);
@@ -839,7 +839,7 @@ void qos_release_command(tpAniSirGlobal mac, tSmeCmd *pCommand)
  *
  * Return: QDF_STATUS enumeration.
  */
-QDF_STATUS sme_qos_msg_processor(tpAniSirGlobal mac_ctx,
+QDF_STATUS sme_qos_msg_processor(struct mac_context *mac_ctx,
 	uint16_t msg_type, void *msg)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -905,7 +905,7 @@ QDF_STATUS sme_qos_msg_processor(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_qos_validate_params(tpAniSirGlobal mac,
+QDF_STATUS sme_qos_validate_params(struct mac_context *mac,
 				   tSirBssDescription *pBssDesc)
 {
 	tDot11fBeaconIEs *pIes = NULL;
@@ -960,7 +960,7 @@ QDF_STATUS sme_qos_validate_params(tpAniSirGlobal mac,
  * pEvent_info - Information related to the event
  * Return QDF_STATUS
  */
-QDF_STATUS sme_qos_csr_event_ind(tpAniSirGlobal mac,
+QDF_STATUS sme_qos_csr_event_ind(struct mac_context *mac,
 				 uint8_t sessionId,
 			sme_qos_csr_event_indType ind, void *pEvent_info)
 {
@@ -1046,7 +1046,7 @@ QDF_STATUS sme_qos_csr_event_ind(tpAniSirGlobal mac,
  * pSirBssDesc - The event occurred of type sme_qos_csr_event_indType.
  * Return a bit mask indicating for which ACs AP has ACM set to 1
  */
-uint8_t sme_qos_get_acm_mask(tpAniSirGlobal mac, tSirBssDescription
+uint8_t sme_qos_get_acm_mask(struct mac_context *mac, tSirBssDescription
 				*pSirBssDesc, tDot11fBeaconIEs *pIes)
 {
 	sme_QosEdcaAcType ac;
@@ -1095,7 +1095,7 @@ uint8_t sme_qos_get_acm_mask(tpAniSirGlobal mac, tSirBssDescription
  *  Return: QDF_STATUS_SUCCESS - Setup is successful.
  *          Other status means Setup request failed
  */
-static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal mac,
+static enum sme_qos_statustype sme_qos_internal_setup_req(struct mac_context *mac,
 					  uint8_t sessionId,
 					  struct sme_qos_wmmtspecinfo *pQoSInfo,
 					  sme_QosCallback QoSCallback,
@@ -1689,7 +1689,7 @@ static enum sme_qos_statustype sme_qos_internal_setup_req(tpAniSirGlobal mac,
  * Return: SME_QOS_STATUS_SETUP_SUCCESS_RSP - Modification is successful.
  *         Other status means request failed
  */
-static enum sme_qos_statustype sme_qos_internal_modify_req(tpAniSirGlobal mac,
+static enum sme_qos_statustype sme_qos_internal_modify_req(struct mac_context *mac,
 					  struct sme_qos_wmmtspecinfo *pQoSInfo,
 					  uint32_t QosFlowID,
 					  bool buffered_cmd)
@@ -2016,7 +2016,7 @@ static enum sme_qos_statustype sme_qos_internal_modify_req(tpAniSirGlobal mac,
 
  * Return: QDF_STATUS_SUCCESS - Release is successful.
  */
-static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal mac,
+static enum sme_qos_statustype sme_qos_internal_release_req(struct mac_context *mac,
 					       uint8_t sessionId,
 					       uint32_t QosFlowID,
 					       bool buffered_cmd)
@@ -2686,7 +2686,7 @@ static enum sme_qos_statustype sme_qos_internal_release_req(tpAniSirGlobal mac,
  *
  * Return: SME_QOS_STATUS_SETUP_SUCCESS_RSP if the setup is successful'
  */
-static enum sme_qos_statustype sme_qos_setup(tpAniSirGlobal mac,
+static enum sme_qos_statustype sme_qos_setup(struct mac_context *mac,
 				uint8_t sessionId,
 				struct sme_qos_wmmtspecinfo *pTspec_Info,
 				sme_QosEdcaAcType ac)
@@ -2909,7 +2909,7 @@ static enum sme_qos_statustype sme_qos_setup(tpAniSirGlobal mac,
  * not required as we are ok with tspec getting programmed before set_key
  * as the roam timings are measured without tspec in reassoc!
  */
-static QDF_STATUS sme_qos_process_set_key_success_ind(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_set_key_success_ind(struct mac_context *mac,
 					   uint8_t sessionId, void *pEvent_info)
 {
 	sme_debug("Set Key complete");
@@ -2933,7 +2933,7 @@ static QDF_STATUS sme_qos_process_set_key_success_ind(tpAniSirGlobal mac,
  * Return: QDF_STATUS_SUCCESS - Release is successful.
  */
 static QDF_STATUS
-sme_qos_ese_save_tspec_response(tpAniSirGlobal mac, uint8_t sessionId,
+sme_qos_ese_save_tspec_response(struct mac_context *mac, uint8_t sessionId,
 				tDot11fIEWMMTSPEC *pTspec, uint8_t ac,
 				uint8_t tspecIndex)
 {
@@ -2980,7 +2980,7 @@ sme_qos_ese_save_tspec_response(tpAniSirGlobal mac, uint8_t sessionId,
  * Return: QDF_STATUS_SUCCESS - Release is successful.
  */
 static
-QDF_STATUS sme_qos_ese_process_reassoc_tspec_rsp(tpAniSirGlobal mac,
+QDF_STATUS sme_qos_ese_process_reassoc_tspec_rsp(struct mac_context *mac,
 						 uint8_t sessionId,
 						 void *pEvent_info)
 {
@@ -3079,7 +3079,7 @@ QDF_STATUS sme_qos_ese_process_reassoc_tspec_rsp(tpAniSirGlobal mac,
  *
  * Return: None
  */
-static void sme_qos_copy_tspec_info(tpAniSirGlobal mac,
+static void sme_qos_copy_tspec_info(struct mac_context *mac,
 				    struct sme_qos_wmmtspecinfo *pTspec_Info,
 				    tSirMacTspecIE *pTspec)
 {
@@ -3139,7 +3139,7 @@ static void sme_qos_copy_tspec_info(tpAniSirGlobal mac,
  *
  * Return: uint8_t - number of existing negotiated TSPECs
  */
-uint8_t sme_qos_ese_retrieve_tspec_info(tpAniSirGlobal mac_ctx,
+uint8_t sme_qos_ese_retrieve_tspec_info(struct mac_context *mac_ctx,
 	 uint8_t session_id, tTspecInfo *tspec_info)
 {
 	struct sme_qos_sessioninfo *session;
@@ -3196,7 +3196,7 @@ uint8_t sme_qos_ese_retrieve_tspec_info(tpAniSirGlobal mac_ctx,
 #endif
 
 static
-QDF_STATUS sme_qos_create_tspec_ricie(tpAniSirGlobal mac,
+QDF_STATUS sme_qos_create_tspec_ricie(struct mac_context *mac,
 				      struct sme_qos_wmmtspecinfo *pTspec_Info,
 				      uint8_t *pRICBuffer, uint32_t *pRICLength,
 				      uint8_t *pRICIdentifier)
@@ -3469,7 +3469,7 @@ static void sme_qos_fill_aggr_info(int ac_id, int ts_id,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t
+static QDF_STATUS sme_qos_ft_aggr_qos_req(struct mac_context *mac_ctx, uint8_t
 					session_id)
 {
 	tSirAggrQosReq *aggr_req = NULL;
@@ -3534,7 +3534,7 @@ static QDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t
 }
 
 static
-QDF_STATUS sme_qos_process_ftric_response(tpAniSirGlobal mac,
+QDF_STATUS sme_qos_process_ftric_response(struct mac_context *mac,
 					  uint8_t sessionId,
 					  tDot11fIERICDataDesc *pRicDataDesc,
 					  uint8_t ac, uint8_t tspecIndex)
@@ -3602,7 +3602,7 @@ QDF_STATUS sme_qos_process_ftric_response(tpAniSirGlobal mac,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_aggr_qos_rsp(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_qos_process_aggr_qos_rsp(struct mac_context *mac_ctx,
 					void *msgbuf)
 {
 	tpSirAggrQosRsp rsp = (tpSirAggrQosRsp) msgbuf;
@@ -3669,7 +3669,7 @@ static QDF_STATUS sme_qos_process_aggr_qos_rsp(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sme_qos_find_matching_tspec(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_qos_find_matching_tspec(struct mac_context *mac_ctx,
 		uint8_t sessionid, uint8_t ac, struct sme_qos_acinfo *ac_info,
 		tDot11fIERICDataDesc *ric_data_desc, uint32_t *ric_rsplen)
 {
@@ -3743,7 +3743,7 @@ static QDF_STATUS sme_qos_find_matching_tspec(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sme_qos_find_matching_tspec_lfr3(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_qos_find_matching_tspec_lfr3(struct mac_context *mac_ctx,
 		uint8_t sessionid, uint8_t ac, struct sme_qos_sessioninfo
 		*qos_session,
 		tDot11fIERICDataDesc *ric_data_desc, uint32_t ric_rsplen)
@@ -3812,7 +3812,7 @@ sme_qos_next_ric:
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 static
-QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(tpAniSirGlobal mac_ctx,
+QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(struct mac_context *mac_ctx,
 				uint8_t sessionid, void *event_info)
 {
 	struct sme_qos_sessioninfo *qos_session;
@@ -3899,7 +3899,7 @@ QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_add_ts_req(struct mac_context *mac,
 			      uint8_t sessionId,
 			      struct sme_qos_wmmtspecinfo *pTspec_Info,
 			      sme_QosEdcaAcType ac)
@@ -4020,7 +4020,7 @@ static QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal mac,
  * tspec_mask - on which tspec per AC, the delts is requested
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_del_ts_req(struct mac_context *mac,
 			      uint8_t sessionId,
 			      sme_QosEdcaAcType ac, uint8_t tspec_mask)
 {
@@ -4120,7 +4120,7 @@ static QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal mac,
  * pMsgBuf - Pointer to the msg buffer came from PE.
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_add_ts_rsp(tpAniSirGlobal mac, void *pMsgBuf)
+static QDF_STATUS sme_qos_process_add_ts_rsp(struct mac_context *mac, void *pMsgBuf)
 {
 	tpSirAddtsRsp paddts_rsp = (tpSirAddtsRsp) pMsgBuf;
 	struct sme_qos_sessioninfo *pSession;
@@ -4188,7 +4188,7 @@ static QDF_STATUS sme_qos_process_add_ts_rsp(tpAniSirGlobal mac, void *pMsgBuf)
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_del_ts_rsp(tpAniSirGlobal mac, void *pMsgBuf)
+static QDF_STATUS sme_qos_process_del_ts_rsp(struct mac_context *mac, void *pMsgBuf)
 {
 	tpSirDeltsRsp pDeltsRsp = (tpSirDeltsRsp) pMsgBuf;
 	struct sme_qos_sessioninfo *pSession;
@@ -4215,7 +4215,7 @@ static QDF_STATUS sme_qos_process_del_ts_rsp(tpAniSirGlobal mac, void *pMsgBuf)
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_del_ts_ind(tpAniSirGlobal mac, void *pMsgBuf)
+static QDF_STATUS sme_qos_process_del_ts_ind(struct mac_context *mac, void *pMsgBuf)
 {
 	tpSirDeltsRsp pdeltsind = (tpSirDeltsRsp) pMsgBuf;
 	struct sme_qos_sessioninfo *pSession;
@@ -4280,7 +4280,7 @@ static QDF_STATUS sme_qos_process_del_ts_ind(tpAniSirGlobal mac, void *pMsgBuf)
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_assoc_complete_ev(tpAniSirGlobal mac, uint8_t
+static QDF_STATUS sme_qos_process_assoc_complete_ev(struct mac_context *mac, uint8_t
 						sessionId, void *pEvent_info)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -4377,7 +4377,7 @@ static QDF_STATUS sme_qos_process_assoc_complete_ev(tpAniSirGlobal mac, uint8_t
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal mac, uint8_t
+static QDF_STATUS sme_qos_process_reassoc_req_ev(struct mac_context *mac, uint8_t
 						sessionId, void *pEvent_info)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -4521,7 +4521,7 @@ static QDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal mac, uint8_t
  * Return: QDF_STATUS
  */
 static
-QDF_STATUS sme_qos_handle_handoff_state(tpAniSirGlobal mac_ctx,
+QDF_STATUS sme_qos_handle_handoff_state(struct mac_context *mac_ctx,
 		struct sme_qos_sessioninfo *qos_session,
 		struct sme_qos_acinfo *ac_info,
 		sme_QosEdcaAcType ac, uint8_t sessionid)
@@ -4613,7 +4613,7 @@ QDF_STATUS sme_qos_handle_handoff_state(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_reassoc_success_ev(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_qos_process_reassoc_success_ev(struct mac_context *mac_ctx,
 				uint8_t sessionid, void *event_info)
 {
 
@@ -4729,7 +4729,7 @@ static QDF_STATUS sme_qos_process_reassoc_success_ev(tpAniSirGlobal mac_ctx,
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_reassoc_failure_ev(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_reassoc_failure_ev(struct mac_context *mac,
 					   uint8_t sessionId, void *pEvent_info)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -4793,7 +4793,7 @@ static QDF_STATUS sme_qos_process_reassoc_failure_ev(tpAniSirGlobal mac,
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_handoff_assoc_req_ev(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_handoff_assoc_req_ev(struct mac_context *mac,
 					uint8_t sessionId, void *pEvent_info)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -4860,7 +4860,7 @@ static QDF_STATUS sme_qos_process_handoff_assoc_req_ev(tpAniSirGlobal mac,
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_handoff_success_ev(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_handoff_success_ev(struct mac_context *mac,
 					   uint8_t sessionId, void *pEvent_info)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -4922,7 +4922,7 @@ static QDF_STATUS sme_qos_process_handoff_success_ev(tpAniSirGlobal mac,
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_disconnect_ev(tpAniSirGlobal mac, uint8_t
+static QDF_STATUS sme_qos_process_disconnect_ev(struct mac_context *mac, uint8_t
 					sessionId, void *pEvent_info)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -4981,7 +4981,7 @@ static QDF_STATUS sme_qos_process_disconnect_ev(tpAniSirGlobal mac, uint8_t
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_join_req_ev(tpAniSirGlobal mac, uint8_t
+static QDF_STATUS sme_qos_process_join_req_ev(struct mac_context *mac, uint8_t
 						sessionId, void *pEvent_info)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -5033,7 +5033,7 @@ static QDF_STATUS sme_qos_process_join_req_ev(tpAniSirGlobal mac, uint8_t
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_preauth_success_ind(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_qos_process_preauth_success_ind(struct mac_context *mac_ctx,
 				uint8_t sessionid, void *event_info)
 {
 	struct sme_qos_sessioninfo *qos_session;
@@ -5163,7 +5163,7 @@ add_next_ric:
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_add_ts_failure_rsp(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_add_ts_failure_rsp(struct mac_context *mac,
 					      uint8_t sessionId,
 					      tSirAddtsRspInfo *pRsp)
 {
@@ -5321,7 +5321,7 @@ static QDF_STATUS sme_qos_update_tspec_mask(uint8_t sessionid,
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_process_add_ts_success_rsp(struct mac_context *mac,
 					      uint8_t sessionId,
 					      tSirAddtsRspInfo *pRsp)
 {
@@ -5949,7 +5949,7 @@ static tListElem *sme_qos_find_in_flow_list(struct sme_qos_searchinfo
  *
  * Return: None
  */
-static QDF_STATUS sme_qos_find_all_in_flow_list(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_qos_find_all_in_flow_list(struct mac_context *mac_ctx,
 					 struct sme_qos_searchinfo search_key,
 					 sme_QosProcessSearchEntry fnp)
 {
@@ -6017,7 +6017,7 @@ static QDF_STATUS sme_qos_find_all_in_flow_list(tpAniSirGlobal mac_ctx,
  *
  * Return true if the AC mandates Admission Control
  */
-static bool sme_qos_is_acm(tpAniSirGlobal mac, tSirBssDescription *pSirBssDesc,
+static bool sme_qos_is_acm(struct mac_context *mac, tSirBssDescription *pSirBssDesc,
 		    sme_QosEdcaAcType ac, tDot11fBeaconIEs *pIes)
 {
 	bool ret_val = false;
@@ -6092,7 +6092,7 @@ static bool sme_qos_is_acm(tpAniSirGlobal mac, tSirBssDescription *pSirBssDesc,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS sme_qos_buffer_existing_flows(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_qos_buffer_existing_flows(struct mac_context *mac_ctx,
 						uint8_t sessionid)
 {
 	tListElem *list_entry = NULL, *list_nextentry = NULL;
@@ -6201,7 +6201,7 @@ static QDF_STATUS sme_qos_buffer_existing_flows(tpAniSirGlobal mac_ctx,
  *
  *  Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_delete_existing_flows(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_delete_existing_flows(struct mac_context *mac,
 						uint8_t sessionId)
 {
 	tListElem *pEntry = NULL, *pNextEntry = NULL;
@@ -6397,7 +6397,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_delete_buffered_requests(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_delete_buffered_requests(struct mac_context *mac,
 						   uint8_t sessionId)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -6488,7 +6488,7 @@ static QDF_STATUS sme_qos_save_assoc_info(struct sme_qos_sessioninfo *pSession,
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_setup_fnp(tpAniSirGlobal mac, tListElem *pEntry)
+static QDF_STATUS sme_qos_setup_fnp(struct mac_context *mac, tListElem *pEntry)
 {
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
@@ -6528,7 +6528,7 @@ static QDF_STATUS sme_qos_setup_fnp(tpAniSirGlobal mac, tListElem *pEntry)
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_modification_notify_fnp(tpAniSirGlobal mac, tListElem
+static QDF_STATUS sme_qos_modification_notify_fnp(struct mac_context *mac, tListElem
 					*pEntry)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -6569,7 +6569,7 @@ static QDF_STATUS sme_qos_modification_notify_fnp(tpAniSirGlobal mac, tListElem
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_modify_fnp(tpAniSirGlobal mac, tListElem *pEntry)
+static QDF_STATUS sme_qos_modify_fnp(struct mac_context *mac, tListElem *pEntry)
 {
 	struct sme_qos_flowinfoentry *flow_info = NULL;
 
@@ -6614,7 +6614,7 @@ static QDF_STATUS sme_qos_modify_fnp(tpAniSirGlobal mac, tListElem *pEntry)
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_del_ts_ind_fnp(tpAniSirGlobal mac, tListElem *pEntry)
+static QDF_STATUS sme_qos_del_ts_ind_fnp(struct mac_context *mac, tListElem *pEntry)
 {
 	struct sme_qos_sessioninfo *pSession;
 	struct sme_qos_acinfo *pACInfo;
@@ -6668,7 +6668,7 @@ static QDF_STATUS sme_qos_del_ts_ind_fnp(tpAniSirGlobal mac, tListElem *pEntry)
  * Return:  QDF_STATUS enumaration
  */
 static QDF_STATUS
-sme_qos_reassoc_success_ev_fnp(tpAniSirGlobal mac_ctx,
+sme_qos_reassoc_success_ev_fnp(struct mac_context *mac_ctx,
 		tListElem *entry)
 {
 	struct sme_qos_sessioninfo *qos_session;
@@ -6791,7 +6791,7 @@ sme_qos_reassoc_success_ev_fnp(tpAniSirGlobal mac_ctx,
  *
  *  Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_add_ts_failure_fnp(tpAniSirGlobal mac, tListElem
+static QDF_STATUS sme_qos_add_ts_failure_fnp(struct mac_context *mac, tListElem
 						*pEntry)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -6886,7 +6886,7 @@ static QDF_STATUS sme_qos_add_ts_failure_fnp(tpAniSirGlobal mac, tListElem
  * Return: Status
  */
 
-static QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
+static QDF_STATUS sme_qos_add_ts_success_fnp(struct mac_context *mac_ctx,
 		tListElem *entry)
 {
 	struct sme_qos_sessioninfo *qos_session;
@@ -7107,7 +7107,7 @@ static bool sme_qos_is_uapsd_active(void)
 	return false;
 }
 
-QDF_STATUS sme_offload_qos_process_out_of_uapsd_mode(tpAniSirGlobal mac,
+QDF_STATUS sme_offload_qos_process_out_of_uapsd_mode(struct mac_context *mac,
 						     uint32_t sessionId)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -7146,7 +7146,7 @@ QDF_STATUS sme_offload_qos_process_out_of_uapsd_mode(tpAniSirGlobal mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS sme_offload_qos_process_into_uapsd_mode(tpAniSirGlobal mac,
+QDF_STATUS sme_offload_qos_process_into_uapsd_mode(struct mac_context *mac,
 						   uint32_t sessionId)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -7185,7 +7185,7 @@ QDF_STATUS sme_offload_qos_process_into_uapsd_mode(tpAniSirGlobal mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-void sme_qos_cleanup_ctrl_blk_for_handoff(tpAniSirGlobal mac,
+void sme_qos_cleanup_ctrl_blk_for_handoff(struct mac_context *mac,
 					uint8_t sessionId)
 {
 	struct sme_qos_sessioninfo *pSession;
@@ -7234,7 +7234,7 @@ bool sme_qos_is_ts_info_ack_policy_valid(mac_handle_t mac_handle,
 	tDot11fBeaconIEs *pIes = NULL;
 	struct sme_qos_sessioninfo *pSession;
 	QDF_STATUS hstatus;
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	if (!CSR_IS_SESSION_VALID(mac, sessionId)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -7286,7 +7286,7 @@ bool sme_qos_is_ts_info_ack_policy_valid(mac_handle_t mac_handle,
 	return true;
 }
 
-static bool sme_qos_validate_requested_params(tpAniSirGlobal mac,
+static bool sme_qos_validate_requested_params(struct mac_context *mac,
 				       struct sme_qos_wmmtspecinfo *qos_info,
 				       uint8_t session_id)
 {
@@ -7299,7 +7299,7 @@ static bool sme_qos_validate_requested_params(tpAniSirGlobal mac,
 	return true;
 }
 
-static QDF_STATUS qos_issue_command(tpAniSirGlobal mac, uint8_t sessionId,
+static QDF_STATUS qos_issue_command(struct mac_context *mac, uint8_t sessionId,
 				    eSmeCommandType cmdType,
 				    struct sme_qos_wmmtspecinfo *pQoSInfo,
 				    sme_QosEdcaAcType ac, uint8_t tspec_mask)
@@ -7352,7 +7352,7 @@ static QDF_STATUS qos_issue_command(tpAniSirGlobal mac, uint8_t sessionId,
 	return status;
 }
 
-bool qos_process_command(tpAniSirGlobal mac, tSmeCmd *pCommand)
+bool qos_process_command(struct mac_context *mac, tSmeCmd *pCommand)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	bool fRemoveCmd = true;
@@ -7401,7 +7401,7 @@ bool qos_process_command(tpAniSirGlobal mac, tSmeCmd *pCommand)
  * Return: status
  */
 static
-enum sme_qos_statustype sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
+enum sme_qos_statustype sme_qos_re_request_add_ts(struct mac_context *mac_ctx,
 		uint8_t session_id, struct sme_qos_wmmtspecinfo *qos_info,
 		sme_QosEdcaAcType ac, uint8_t tspec_mask)
 {
@@ -7515,7 +7515,7 @@ enum sme_qos_statustype sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 	return status;
 }
 
-static void sme_qos_init_a_cs(tpAniSirGlobal mac, uint8_t sessionId)
+static void sme_qos_init_a_cs(struct mac_context *mac, uint8_t sessionId)
 {
 	struct sme_qos_sessioninfo *pSession;
 	sme_QosEdcaAcType ac;
@@ -7528,7 +7528,7 @@ static void sme_qos_init_a_cs(tpAniSirGlobal mac, uint8_t sessionId)
 	}
 }
 
-static QDF_STATUS sme_qos_request_reassoc(tpAniSirGlobal mac,
+static QDF_STATUS sme_qos_request_reassoc(struct mac_context *mac,
 					uint8_t sessionId,
 					  tCsrRoamModifyProfileFields *
 					  pModFields, bool fForce)

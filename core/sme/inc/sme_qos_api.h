@@ -217,9 +217,9 @@ void sme_qos_update_hand_off(uint8_t sessionId, bool updateHandOff);
 QDF_STATUS sme_update_dsc_pto_up_mapping(mac_handle_t mac_handle,
 		enum sme_qos_wmmuptype *dscpmapping, uint8_t sessionId);
 
-QDF_STATUS sme_offload_qos_process_out_of_uapsd_mode(tpAniSirGlobal mac_ctx,
+QDF_STATUS sme_offload_qos_process_out_of_uapsd_mode(struct mac_context *mac_ctx,
 		uint32_t session_id);
-QDF_STATUS sme_offload_qos_process_into_uapsd_mode(tpAniSirGlobal mac_ctx,
+QDF_STATUS sme_offload_qos_process_into_uapsd_mode(struct mac_context *mac_ctx,
 		uint32_t session_id);
 
 
