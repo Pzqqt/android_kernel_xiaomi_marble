@@ -107,14 +107,14 @@ typedef enum eMgmtFrmDropReason {
  * Function to initialize LIM state machines.
  * This called upon LIM thread creation.
  */
-extern QDF_STATUS lim_initialize(tpAniSirGlobal);
-QDF_STATUS pe_open(tpAniSirGlobal mac, struct cds_config_info *cds_cfg);
-QDF_STATUS pe_close(tpAniSirGlobal mac);
-void pe_register_tl_handle(tpAniSirGlobal mac);
-QDF_STATUS lim_start(tpAniSirGlobal mac);
-QDF_STATUS pe_start(tpAniSirGlobal mac);
-void pe_stop(tpAniSirGlobal mac);
-QDF_STATUS peProcessMsg(tpAniSirGlobal mac, struct scheduler_msg *limMsg);
+extern QDF_STATUS lim_initialize(struct mac_context *);
+QDF_STATUS pe_open(struct mac_context *mac, struct cds_config_info *cds_cfg);
+QDF_STATUS pe_close(struct mac_context *mac);
+void pe_register_tl_handle(struct mac_context *mac);
+QDF_STATUS lim_start(struct mac_context *mac);
+QDF_STATUS pe_start(struct mac_context *mac);
+void pe_stop(struct mac_context *mac);
+QDF_STATUS peProcessMsg(struct mac_context *mac, struct scheduler_msg *limMsg);
 
 /**
  * pe_register_mgmt_rx_frm_callback() - registers callback for receiving
@@ -126,7 +126,7 @@ QDF_STATUS peProcessMsg(tpAniSirGlobal mac, struct scheduler_msg *limMsg);
  *
  * Return: None
  */
-void pe_register_mgmt_rx_frm_callback(tpAniSirGlobal mac_ctx);
+void pe_register_mgmt_rx_frm_callback(struct mac_context *mac_ctx);
 
 /**
  * pe_deregister_mgmt_rx_frm_callback() - degisters callback for receiving
@@ -139,7 +139,7 @@ void pe_register_mgmt_rx_frm_callback(tpAniSirGlobal mac_ctx);
  *
  * Return: None
  */
-void pe_deregister_mgmt_rx_frm_callback(tpAniSirGlobal mac_ctx);
+void pe_deregister_mgmt_rx_frm_callback(struct mac_context *mac_ctx);
 
 /**
  * pe_register_callbacks_with_wma() - register SME and PE callback functions to
@@ -149,14 +149,14 @@ void pe_deregister_mgmt_rx_frm_callback(tpAniSirGlobal mac_ctx);
  *
  * Return: None
  */
-void pe_register_callbacks_with_wma(tpAniSirGlobal mac,
+void pe_register_callbacks_with_wma(struct mac_context *mac,
 				    tSirSmeReadyReq *ready_req);
 
 /**
  * Function to cleanup LIM state.
  * This called upon reset/persona change etc
  */
-extern void lim_cleanup(tpAniSirGlobal);
+extern void lim_cleanup(struct mac_context *);
 
 /**
  * lim_post_msg_api() - post normal priority PE message
@@ -169,7 +169,7 @@ extern void lim_cleanup(tpAniSirGlobal);
  *
  * Return: QDF_STATUS_SUCCESS on success, other QDF_STATUS on error
  */
-QDF_STATUS lim_post_msg_api(tpAniSirGlobal mac, struct scheduler_msg *msg);
+QDF_STATUS lim_post_msg_api(struct mac_context *mac, struct scheduler_msg *msg);
 
 /**
  * lim_post_msg_high_priority() - post high priority PE message
@@ -182,39 +182,39 @@ QDF_STATUS lim_post_msg_api(tpAniSirGlobal mac, struct scheduler_msg *msg);
  *
  * Return: QDF_STATUS_SUCCESS on success, other QDF_STATUS on error
  */
-QDF_STATUS lim_post_msg_high_priority(tpAniSirGlobal mac,
+QDF_STATUS lim_post_msg_high_priority(struct mac_context *mac,
 				      struct scheduler_msg *msg);
 
 /**
  * Function to process messages posted to LIM thread
  * and dispatch to various sub modules within LIM module.
  */
-extern void lim_message_processor(tpAniSirGlobal, struct scheduler_msg *);
+extern void lim_message_processor(struct mac_context *, struct scheduler_msg *);
 /**
  * Function to check the LIM state if system is in Scan/Learn state.
  */
-extern uint8_t lim_is_system_in_scan_state(tpAniSirGlobal);
+extern uint8_t lim_is_system_in_scan_state(struct mac_context *);
 /**
  * Function to handle IBSS coalescing.
  * Beacon Processing module to call this.
  */
-extern QDF_STATUS lim_handle_ibss_coalescing(tpAniSirGlobal,
+extern QDF_STATUS lim_handle_ibss_coalescing(struct mac_context *,
 						tpSchBeaconStruct,
 						uint8_t *, struct pe_session *);
 /* / Function used by other Sirius modules to read global SME state */
-static inline tLimSmeStates lim_get_sme_state(tpAniSirGlobal mac)
+static inline tLimSmeStates lim_get_sme_state(struct mac_context *mac)
 {
 	return mac->lim.gLimSmeState;
 }
 
-extern void lim_received_hb_handler(tpAniSirGlobal, uint8_t, struct pe_session *);
+extern void lim_received_hb_handler(struct mac_context *, uint8_t, struct pe_session *);
 /* / Function that triggers STA context deletion */
-extern void lim_trigger_sta_deletion(tpAniSirGlobal mac, tpDphHashNode pStaDs,
+extern void lim_trigger_sta_deletion(struct mac_context *mac, tpDphHashNode pStaDs,
 				     struct pe_session *pe_session);
 
 #ifdef FEATURE_WLAN_TDLS
 /* Function that sends TDLS Del Sta indication to SME */
-extern void lim_send_sme_tdls_del_sta_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
+extern void lim_send_sme_tdls_del_sta_ind(struct mac_context *mac, tpDphHashNode pStaDs,
 					  struct pe_session *pe_session,
 					  uint16_t reasonCode);
 /**
@@ -237,25 +237,25 @@ static inline void lim_set_tdls_flags(roam_offload_synch_ind *roam_sync_ind_ptr,
 #endif
 
 /* / Function that checks for change in AP's capabilties on STA */
-extern void lim_detect_change_in_ap_capabilities(tpAniSirGlobal,
+extern void lim_detect_change_in_ap_capabilities(struct mac_context *,
 						 tpSirProbeRespBeacon, struct pe_session *);
-QDF_STATUS lim_update_short_slot(tpAniSirGlobal mac,
+QDF_STATUS lim_update_short_slot(struct mac_context *mac,
 				    tpSirProbeRespBeacon pBeacon,
 				    tpUpdateBeaconParams pBeaconParams,
 				    struct pe_session *);
 
-void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal mac,
+void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
 					     struct scheduler_msg *pMsg);
-void lim_send_heart_beat_timeout_ind(tpAniSirGlobal mac, struct pe_session *pe_session);
-tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal mac,
+void lim_send_heart_beat_timeout_ind(struct mac_context *mac, struct pe_session *pe_session);
+tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
 						 uint8_t *pRxPacketInfo,
 						 uint32_t subType);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
+QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 	struct sSirSmeRoamOffloadSynchInd *roam_sync_ind_ptr,
 	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason);
 #else
-static inline QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
+static inline QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 	struct sSirSmeRoamOffloadSynchInd *roam_sync_ind_ptr,
 	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason)
 {
@@ -271,7 +271,7 @@ static inline QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_update_lost_link_info(tpAniSirGlobal mac, struct pe_session *session,
+void lim_update_lost_link_info(struct mac_context *mac, struct pe_session *session,
 				int32_t rssi);
 
 /**
@@ -281,7 +281,7 @@ void lim_update_lost_link_info(tpAniSirGlobal mac, struct pe_session *session,
  *
  * Return: NONE
  */
-void lim_mon_init_session(tpAniSirGlobal mac_ptr,
+void lim_mon_init_session(struct mac_context *mac_ptr,
 			  struct sir_create_session *msg);
 
 #define limGetQosMode(pe_session, pVal) (*(pVal) = (pe_session)->limQosEnabled)
@@ -289,7 +289,7 @@ void lim_mon_init_session(tpAniSirGlobal mac_ptr,
 #define limGetWsmMode(pe_session, pVal) (*(pVal) = (pe_session)->limWsmEnabled)
 #define limGet11dMode(pe_session, pVal) (*(pVal) = (pe_session)->lim11dEnabled)
 /* ----------------------------------------------------------------------- */
-static inline void lim_get_phy_mode(tpAniSirGlobal mac, uint32_t *phyMode,
+static inline void lim_get_phy_mode(struct mac_context *mac, uint32_t *phyMode,
 				    struct pe_session *pe_session)
 {
 	*phyMode =
@@ -297,7 +297,7 @@ static inline void lim_get_phy_mode(tpAniSirGlobal mac, uint32_t *phyMode,
 }
 
 /* ----------------------------------------------------------------------- */
-static inline void lim_get_rf_band_new(tpAniSirGlobal mac,
+static inline void lim_get_rf_band_new(struct mac_context *mac,
 				       enum band_info *band,
 				       struct pe_session *pe_session)
 {
@@ -323,11 +323,11 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg);
  \      to free a given PE message on the TX and MC thread.
  \      This happens when there are messages pending in the PE
  \      queue when system is being stopped and reset.
-   \param   tpAniSirGlobal mac
+   \param   struct mac_context *mac
    \param   struct scheduler_msg       pMsg
    \return none
    -----------------------------------------------------------------*/
-void pe_free_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg);
+void pe_free_msg(struct mac_context *mac, struct scheduler_msg *pMsg);
 
 /*--------------------------------------------------------------------------
 
@@ -342,7 +342,7 @@ void pe_free_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg);
    \return  void
 
    --------------------------------------------------------------------------*/
-void lim_remain_on_chn_rsp(tpAniSirGlobal mac, QDF_STATUS status, uint32_t *data);
+void lim_remain_on_chn_rsp(struct mac_context *mac, QDF_STATUS status, uint32_t *data);
 
 /**
  * lim_process_abort_scan_ind() - abort the scan which is presently being run
@@ -354,10 +354,10 @@ void lim_remain_on_chn_rsp(tpAniSirGlobal mac, QDF_STATUS status, uint32_t *data
  *
  * @return: None
  */
-void lim_process_abort_scan_ind(tpAniSirGlobal mac, uint8_t vdev_id,
+void lim_process_abort_scan_ind(struct mac_context *mac, uint8_t vdev_id,
 	uint32_t scan_id, uint32_t scan_requestor_id);
 
-void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal, uint32_t, uint32_t *);
+void __lim_process_sme_assoc_cnf_new(struct mac_context *, uint32_t, uint32_t *);
 
 /**
  * lim_process_sme_addts_rsp_timeout(): Send addts rsp timeout to SME
@@ -369,7 +369,7 @@ void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal, uint32_t, uint32_t *);
  *
  * Return: None
  */
-void lim_process_sme_addts_rsp_timeout(tpAniSirGlobal mac, uint32_t param);
+void lim_process_sme_addts_rsp_timeout(struct mac_context *mac, uint32_t param);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 void lim_fill_join_rsp_ht_caps(struct pe_session *session, tpSirSmeJoinRsp rsp);
 #else
@@ -377,7 +377,7 @@ static inline void lim_fill_join_rsp_ht_caps(struct pe_session *session,
 	tpSirSmeJoinRsp rsp)
 {}
 #endif
-QDF_STATUS lim_update_ext_cap_ie(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_update_ext_cap_ie(struct mac_context *mac_ctx,
 	uint8_t *ie_data, uint8_t *local_ie_buf, uint16_t *local_ie_len);
 
 /**

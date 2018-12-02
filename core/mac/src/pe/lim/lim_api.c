@@ -75,12 +75,12 @@
 #include "cfg_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
 
-static void __lim_init_scan_vars(tpAniSirGlobal mac)
+static void __lim_init_scan_vars(struct mac_context *mac)
 {
 	qdf_mem_set(&mac->lim.dfschannelList, sizeof(tSirDFSChannelList), 0);
 }
 
-static void __lim_init_bss_vars(tpAniSirGlobal mac)
+static void __lim_init_bss_vars(struct mac_context *mac)
 {
 	qdf_mem_set((void *)mac->lim.gpSession,
 		    sizeof(*mac->lim.gpSession) * mac->lim.maxBssId, 0);
@@ -89,7 +89,7 @@ static void __lim_init_bss_vars(tpAniSirGlobal mac)
 	mac->lim.gpLimMlmSetKeysReq = NULL;
 }
 
-static void __lim_init_stats_vars(tpAniSirGlobal mac)
+static void __lim_init_stats_vars(struct mac_context *mac)
 {
 	mac->lim.gLimNumBeaconsRcvd = 0;
 	mac->lim.gLimNumBeaconsIgnored = 0;
@@ -134,7 +134,7 @@ static void __lim_init_stats_vars(tpAniSirGlobal mac)
 #endif
 }
 
-static void __lim_init_states(tpAniSirGlobal mac)
+static void __lim_init_states(struct mac_context *mac)
 {
 	/* Counts Heartbeat failures */
 	mac->lim.gLimHBfailureCntInLinkEstState = 0;
@@ -169,7 +169,7 @@ static void __lim_init_states(tpAniSirGlobal mac)
 	mac->lim.gLimProbeRespDisableFlag = 0; /* control over probe resp */
 }
 
-static void __lim_init_vars(tpAniSirGlobal mac)
+static void __lim_init_vars(struct mac_context *mac)
 {
 	/* Place holder for Measurement Req/Rsp/Ind related info */
 
@@ -205,7 +205,7 @@ static void __lim_init_vars(tpAniSirGlobal mac)
 	qdf_mem_set(&mac->lim.admitPolicyInfo, sizeof(tLimAdmitPolicyInfo), 0);
 }
 
-static void __lim_init_assoc_vars(tpAniSirGlobal mac)
+static void __lim_init_assoc_vars(struct mac_context *mac)
 {
 	mac->lim.gLimIbssStaLimit = 0;
 	/* Place holder for current authentication request */
@@ -237,7 +237,7 @@ static void __lim_init_assoc_vars(tpAniSirGlobal mac)
 
 }
 
-static void __lim_init_ht_vars(tpAniSirGlobal mac)
+static void __lim_init_ht_vars(struct mac_context *mac)
 {
 	mac->lim.htCapabilityPresentInBeacon = 0;
 	mac->lim.gHTGreenfield = 0;
@@ -263,7 +263,7 @@ static void __lim_init_ht_vars(tpAniSirGlobal mac)
 	mac->lim.gHTSTBCBasicMCS = 0;
 }
 
-static QDF_STATUS __lim_init_config(tpAniSirGlobal mac)
+static QDF_STATUS __lim_init_config(struct mac_context *mac)
 {
 	struct mlme_ht_capabilities_info *ht_cap_info;
 #ifdef FEATURE_WLAN_TDLS
@@ -361,7 +361,7 @@ static QDF_STATUS __lim_init_config(tpAniSirGlobal mac)
    This function is to replace the __lim_process_sme_start_req since there is no
    eWNI_SME_START_REQ post to PE.
  */
-QDF_STATUS lim_start(tpAniSirGlobal mac)
+QDF_STATUS lim_start(struct mac_context *mac)
 {
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 
@@ -418,7 +418,7 @@ QDF_STATUS lim_start(tpAniSirGlobal mac)
  * @return None
  */
 
-QDF_STATUS lim_initialize(tpAniSirGlobal mac)
+QDF_STATUS lim_initialize(struct mac_context *mac)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -486,7 +486,7 @@ QDF_STATUS lim_initialize(tpAniSirGlobal mac)
  * @return None
  */
 
-void lim_cleanup(tpAniSirGlobal mac)
+void lim_cleanup(struct mac_context *mac)
 {
 	uint8_t i;
 	qdf_list_node_t *lst_node;
@@ -612,7 +612,7 @@ static void lim_register_debug_callback(void)
 #endif /* WLAN_FEATURE_MEMDUMP_ENABLE */
 
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
-static void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
+static void lim_nan_register_callbacks(struct mac_context *mac_ctx)
 {
 	struct nan_callbacks cb_obj = {0};
 
@@ -623,7 +623,7 @@ static void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
 	ucfg_nan_register_lim_callbacks(mac_ctx->psoc, &cb_obj);
 }
 #else
-static inline void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
+static inline void lim_nan_register_callbacks(struct mac_context *mac_ctx)
 {
 }
 #endif
@@ -636,7 +636,7 @@ static inline void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
  */
 static void pe_shutdown_notifier_cb(void *ctx)
 {
-	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)ctx;
+	struct mac_context *mac_ctx = (struct mac_context *)ctx;
 	struct pe_session *session;
 	uint8_t i;
 
@@ -672,7 +672,7 @@ static bool is_mgmt_protected(uint32_t vdev_id,
 	tpDphHashNode sta_ds;
 	struct pe_session *session;
 	bool protected = false;
-	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac_ctx)
 		return false;
@@ -725,7 +725,7 @@ static bool is_mgmt_protected(uint32_t vdev_id,
 }
 #endif
 
-static void p2p_register_callbacks(tpAniSirGlobal mac_ctx)
+static void p2p_register_callbacks(struct mac_context *mac_ctx)
 {
 	struct p2p_protocol_callbacks p2p_cb = {0};
 
@@ -742,7 +742,7 @@ static void p2p_register_callbacks(tpAniSirGlobal mac_ctx)
  *
  * Return: QDF Status
  */
-static QDF_STATUS lim_register_sap_bcn_callback(tpAniSirGlobal mac_ctx)
+static QDF_STATUS lim_register_sap_bcn_callback(struct mac_context *mac_ctx)
 {
 	QDF_STATUS status;
 
@@ -766,7 +766,7 @@ static QDF_STATUS lim_register_sap_bcn_callback(tpAniSirGlobal mac_ctx)
  *
  * Return: QDF Status
  */
-static QDF_STATUS lim_unregister_sap_bcn_callback(tpAniSirGlobal mac_ctx)
+static QDF_STATUS lim_unregister_sap_bcn_callback(struct mac_context *mac_ctx)
 {
 	QDF_STATUS status;
 
@@ -783,12 +783,12 @@ static QDF_STATUS lim_unregister_sap_bcn_callback(tpAniSirGlobal mac_ctx)
 /** -------------------------------------------------------------
    \fn pe_open
    \brief will be called in Open sequence from mac_open
-   \param   tpAniSirGlobal mac
+   \param   struct mac_context *mac
    \param   tHalOpenParameters *pHalOpenParam
    \return  QDF_STATUS
    -------------------------------------------------------------*/
 
-QDF_STATUS pe_open(tpAniSirGlobal mac, struct cds_config_info *cds_cfg)
+QDF_STATUS pe_open(struct mac_context *mac, struct cds_config_info *cds_cfg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -865,11 +865,11 @@ pe_open_timer_fail:
 /** -------------------------------------------------------------
    \fn pe_close
    \brief will be called in close sequence from mac_close
-   \param   tpAniSirGlobal mac
+   \param   struct mac_context *mac
    \return  QDF_STATUS
    -------------------------------------------------------------*/
 
-QDF_STATUS pe_close(tpAniSirGlobal mac)
+QDF_STATUS pe_close(struct mac_context *mac)
 {
 	uint8_t i;
 
@@ -907,11 +907,11 @@ QDF_STATUS pe_close(tpAniSirGlobal mac)
 /** -------------------------------------------------------------
    \fn pe_start
    \brief will be called in start sequence from mac_start
-   \param   tpAniSirGlobal mac
+   \param   struct mac_context *mac
    \return QDF_STATUS_SUCCESS on success, other QDF_STATUS on error
    -------------------------------------------------------------*/
 
-QDF_STATUS pe_start(tpAniSirGlobal mac)
+QDF_STATUS pe_start(struct mac_context *mac)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	status = lim_start(mac);
@@ -933,11 +933,11 @@ QDF_STATUS pe_start(tpAniSirGlobal mac)
 /** -------------------------------------------------------------
    \fn pe_stop
    \brief will be called in stop sequence from mac_stop
-   \param   tpAniSirGlobal mac
+   \param   struct mac_context *mac
    \return none
    -------------------------------------------------------------*/
 
-void pe_stop(tpAniSirGlobal mac)
+void pe_stop(struct mac_context *mac)
 {
 	lim_cleanup_mlm(mac);
 	pe_debug(" PE STOP: Set LIM state to eLIM_MLM_OFFLINE_STATE");
@@ -963,11 +963,11 @@ static void pe_free_nested_messages(struct scheduler_msg *msg)
  \      to free a given PE message on the TX and MC thread.
  \      This happens when there are messages pending in the PE
  \      queue when system is being stopped and reset.
-   \param   tpAniSirGlobal mac
+   \param   struct mac_context *mac
    \param   struct scheduler_msg       pMsg
    \return none
    -----------------------------------------------------------------*/
-void pe_free_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg)
+void pe_free_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 {
 	if (pMsg != NULL) {
 		if (NULL != pMsg->bodyptr) {
@@ -986,14 +986,14 @@ void pe_free_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg)
 	return;
 }
 
-QDF_STATUS lim_post_msg_api(tpAniSirGlobal mac, struct scheduler_msg *msg)
+QDF_STATUS lim_post_msg_api(struct mac_context *mac, struct scheduler_msg *msg)
 {
 	return scheduler_post_message(QDF_MODULE_ID_PE,
 				      QDF_MODULE_ID_PE,
 				      QDF_MODULE_ID_PE, msg);
 }
 
-QDF_STATUS lim_post_msg_high_priority(tpAniSirGlobal mac,
+QDF_STATUS lim_post_msg_high_priority(struct mac_context *mac,
 				      struct scheduler_msg *msg)
 {
 	return scheduler_post_msg_by_priority(QDF_MODULE_ID_PE,
@@ -1002,7 +1002,7 @@ QDF_STATUS lim_post_msg_high_priority(tpAniSirGlobal mac,
 
 QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
 {
-	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (mac_ctx == NULL)
 		return QDF_STATUS_E_FAILURE;
@@ -1033,7 +1033,7 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg)
  *
  * Return: QDF_STATUS_SUCCESS on success or QDF_STATUS_E_FAILURE on failure
  */
-static QDF_STATUS pe_drop_pending_rx_mgmt_frames(tpAniSirGlobal mac_ctx,
+static QDF_STATUS pe_drop_pending_rx_mgmt_frames(struct mac_context *mac_ctx,
 				tpSirMacMgmtHdr hdr, cds_pkt_t *cds_pkt)
 {
 	qdf_spin_lock(&mac_ctx->sys.bbt_mgmt_lock);
@@ -1115,7 +1115,7 @@ static inline bool pe_is_ext_scan_bcn(tpSirMacMgmtHdr hdr,
  *
  * Return: true if frame is allowed, false if frame is to be dropped.
  */
-static bool pe_filter_bcn_probe_frame(tpAniSirGlobal mac_ctx,
+static bool pe_filter_bcn_probe_frame(struct mac_context *mac_ctx,
 					tpSirMacMgmtHdr hdr,
 					uint8_t *rx_pkt_info)
 {
@@ -1187,7 +1187,7 @@ static bool pe_filter_bcn_probe_frame(tpAniSirGlobal mac_ctx,
 	return false;
 }
 
-static QDF_STATUS pe_handle_probe_req_frames(tpAniSirGlobal mac_ctx,
+static QDF_STATUS pe_handle_probe_req_frames(struct mac_context *mac_ctx,
 					cds_pkt_t *pkt)
 {
 	QDF_STATUS status;
@@ -1238,7 +1238,7 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 			struct mgmt_rx_event_params *mgmt_rx_params,
 			uint32_t frm_type)
 {
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 	tpSirMacMgmtHdr mHdr;
 	struct scheduler_msg msg = {0};
 	cds_pkt_t *pVosPkt;
@@ -1331,7 +1331,7 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-void pe_register_mgmt_rx_frm_callback(tpAniSirGlobal mac_ctx)
+void pe_register_mgmt_rx_frm_callback(struct mac_context *mac_ctx)
 {
 	QDF_STATUS status;
 	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info;
@@ -1348,7 +1348,7 @@ void pe_register_mgmt_rx_frm_callback(tpAniSirGlobal mac_ctx)
 	wma_register_mgmt_frm_client();
 }
 
-void pe_deregister_mgmt_rx_frm_callback(tpAniSirGlobal mac_ctx)
+void pe_deregister_mgmt_rx_frm_callback(struct mac_context *mac_ctx)
 {
 	QDF_STATUS status;
 	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info;
@@ -1371,7 +1371,7 @@ void pe_deregister_mgmt_rx_frm_callback(tpAniSirGlobal mac_ctx)
  * WMA.
  * (function documentation in lim_api.h)
  */
-void pe_register_callbacks_with_wma(tpAniSirGlobal mac,
+void pe_register_callbacks_with_wma(struct mac_context *mac,
 				    tSirSmeReadyReq *ready_req)
 {
 	QDF_STATUS status;
@@ -1403,7 +1403,7 @@ void pe_register_callbacks_with_wma(tpAniSirGlobal mac,
  *         false - System is NOT in Scan/Learn state
  */
 
-uint8_t lim_is_system_in_scan_state(tpAniSirGlobal mac)
+uint8_t lim_is_system_in_scan_state(struct mac_context *mac)
 {
 	switch (mac->lim.gLimSmeState) {
 	case eLIM_SME_CHANNEL_SCAN_STATE:
@@ -1433,7 +1433,7 @@ uint8_t lim_is_system_in_scan_state(tpAniSirGlobal mac)
  */
 
 void
-lim_received_hb_handler(tpAniSirGlobal mac, uint8_t channelId,
+lim_received_hb_handler(struct mac_context *mac, uint8_t channelId,
 			struct pe_session *pe_session)
 {
 	if ((channelId == 0)
@@ -1446,13 +1446,13 @@ lim_received_hb_handler(tpAniSirGlobal mac, uint8_t channelId,
 /** -------------------------------------------------------------
    \fn lim_update_overlap_sta_param
    \brief Updates overlap cache and param data structure
-   \param      tpAniSirGlobal    mac
+   \param      struct mac_context *   mac
    \param      tSirMacAddr bssId
    \param      tpLimProtStaParams pStaParams
    \return      None
    -------------------------------------------------------------*/
 void
-lim_update_overlap_sta_param(tpAniSirGlobal mac, tSirMacAddr bssId,
+lim_update_overlap_sta_param(struct mac_context *mac, tSirMacAddr bssId,
 			     tpLimProtStaParams pStaParams)
 {
 	int i;
@@ -1558,7 +1558,7 @@ static bool lim_ibss_enc_type_matched(tpSchBeaconStruct pBeacon,
  */
 
 QDF_STATUS
-lim_handle_ibss_coalescing(tpAniSirGlobal mac,
+lim_handle_ibss_coalescing(struct mac_context *mac,
 			   tpSchBeaconStruct pBeacon,
 			   uint8_t *pRxPacketInfo, struct pe_session *pe_session)
 {
@@ -1611,7 +1611,7 @@ lim_handle_ibss_coalescing(tpAniSirGlobal mac,
  * @return true if matched, false otherwise
  */
 static bool
-lim_enc_type_matched(tpAniSirGlobal mac_ctx,
+lim_enc_type_matched(struct mac_context *mac_ctx,
 		     tpSchBeaconStruct bcn,
 		     struct pe_session *session)
 {
@@ -1702,7 +1702,7 @@ lim_enc_type_matched(tpAniSirGlobal mac_ctx,
  */
 
 void
-lim_detect_change_in_ap_capabilities(tpAniSirGlobal mac,
+lim_detect_change_in_ap_capabilities(struct mac_context *mac,
 				     tpSirProbeRespBeacon pBeacon,
 				     struct pe_session *pe_session)
 {
@@ -1828,7 +1828,7 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal mac,
  * @return None
  */
 
-QDF_STATUS lim_update_short_slot(tpAniSirGlobal mac,
+QDF_STATUS lim_update_short_slot(struct mac_context *mac,
 				    tpSirProbeRespBeacon pBeacon,
 				    tpUpdateBeaconParams pBeaconParams,
 				    struct pe_session *pe_session)
@@ -1887,7 +1887,7 @@ QDF_STATUS lim_update_short_slot(tpAniSirGlobal mac,
 }
 
 
-void lim_send_heart_beat_timeout_ind(tpAniSirGlobal mac,
+void lim_send_heart_beat_timeout_ind(struct mac_context *mac,
 				     struct pe_session *pe_session)
 {
 	QDF_STATUS status;
@@ -1917,7 +1917,7 @@ void lim_send_heart_beat_timeout_ind(tpAniSirGlobal mac,
  *
  * Return: void
  */
-void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal mac,
+void lim_ps_offload_handle_missed_beacon_ind(struct mac_context *mac,
 					     struct scheduler_msg *pMsg)
 {
 	tpSirSmeMissedBeaconInd pSirMissedBeaconInd =
@@ -1986,7 +1986,7 @@ void lim_fill_join_rsp_ht_caps(struct pe_session *session, tpSirSmeJoinRsp join_
  * @beacon_struct: Beacon/Probe Response structure
  * @buf: Fixed Fields buffer
  */
-static void sir_parse_bcn_fixed_fields(tpAniSirGlobal mac_ctx,
+static void sir_parse_bcn_fixed_fields(struct mac_context *mac_ctx,
 					tpSirProbeRespBeacon beacon_struct,
 					uint8_t *buf)
 {
@@ -2005,7 +2005,7 @@ static void sir_parse_bcn_fixed_fields(tpAniSirGlobal mac_ctx,
 }
 
 static QDF_STATUS
-lim_roam_fill_bss_descr(tpAniSirGlobal mac,
+lim_roam_fill_bss_descr(struct mac_context *mac,
 			roam_offload_synch_ind *roam_offload_synch_ind_ptr,
 			tpSirBssDescription  bss_desc_ptr)
 {
@@ -2200,7 +2200,7 @@ static inline void lim_copy_and_free_hlp_data_from_session(
  *
  * Return: Success or Failure status
  */
-QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
+QDF_STATUS pe_roam_synch_callback(struct mac_context *mac_ctx,
 	roam_offload_synch_ind *roam_sync_ind_ptr,
 	tpSirBssDescription  bss_desc, enum sir_roam_op_code reason)
 {
@@ -2448,7 +2448,7 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 }
 #endif
 
-static bool lim_is_beacon_miss_scenario(tpAniSirGlobal mac,
+static bool lim_is_beacon_miss_scenario(struct mac_context *mac,
 					uint8_t *pRxPacketInfo)
 {
 	tpSirMacMgmtHdr pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
@@ -2478,7 +2478,7 @@ static bool lim_is_beacon_miss_scenario(tpAniSirGlobal mac,
    \sa
    ----------------------------------------------------------------- */
 
-tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal mac,
+tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
 						 uint8_t *pRxPacketInfo,
 						 uint32_t subType)
 {
@@ -2606,7 +2606,7 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal mac,
 	return eMGMT_DROP_NO_DROP;
 }
 
-void lim_update_lost_link_info(tpAniSirGlobal mac, struct pe_session *session,
+void lim_update_lost_link_info(struct mac_context *mac, struct pe_session *session,
 				int32_t rssi)
 {
 	struct sir_lost_link_info *lost_link_info;
@@ -2667,7 +2667,7 @@ QDF_STATUS pe_release_global_lock(tAniSirLim *psPe)
  *
  * Return: NONE
  */
-void lim_mon_init_session(tpAniSirGlobal mac_ptr,
+void lim_mon_init_session(struct mac_context *mac_ptr,
 			  struct sir_create_session *msg)
 {
 	struct pe_session *psession_entry;
@@ -2697,7 +2697,7 @@ void lim_mon_init_session(tpAniSirGlobal mac_ptr,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS lim_update_ext_cap_ie(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_update_ext_cap_ie(struct mac_context *mac_ctx,
 		uint8_t *ie_data, uint8_t *local_ie_buf, uint16_t *local_ie_len)
 {
 	uint32_t dot11mode;
