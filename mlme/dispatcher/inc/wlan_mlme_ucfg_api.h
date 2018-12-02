@@ -3219,4 +3219,118 @@ QDF_STATUS ucfg_wlan_mlme_get_rrm_enabled(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS
 ucfg_mlme_get_latency_enable(struct wlan_objmgr_psoc *psoc, bool *value);
 
+/**
+ * ucfg_mlme_get_dtim_selection_diversity() - get dtim selection diversity
+ * bitmap
+ * @psoc: pointer to psoc object
+ * @dtim_selection_div: value that is requested by the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_dtim_selection_diversity(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *dtim_selection_div)
+{
+	return wlan_mlme_get_dtim_selection_diversity(psoc, dtim_selection_div);
+}
+
+/**
+ * ucfg_mlme_get_bmps_min_listen_interval() - get beacon mode powersave
+ * minimum listen interval value
+ * @psoc: pointer to psoc object
+ * @value: value that is requested by the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_bmps_min_listen_interval(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *value)
+{
+	return wlan_mlme_get_bmps_min_listen_interval(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_bmps_max_listen_interval() - get beacon mode powersave
+ * maximum listen interval value
+ * @psoc: pointer to psoc object
+ * @value: value that is requested by the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_bmps_max_listen_interval(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *value)
+{
+	return wlan_mlme_get_bmps_max_listen_interval(psoc, value);
+}
+
+/**
+ * ucfg_mlme_get_auto_bmps_timer_value() - get bmps timer value
+ * minimum listen interval value
+ * @psoc: pointer to psoc object
+ * @value: value that is requested by the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static inline QDF_STATUS
+ucfg_mlme_get_auto_bmps_timer_value(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *value)
+{
+	return wlan_mlme_get_auto_bmps_timer_value(psoc, value);
+}
+
+/**
+ * ucfg_mlme_is_bmps_enabled() - check if beacon mode powersave is
+ * enabled/disabled
+ * @psoc: pointer to psoc object
+ * @value: value that is requested by the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static inline QDF_STATUS
+ucfg_mlme_is_bmps_enabled(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	return wlan_mlme_is_bmps_enabled(psoc, value);
+}
+
+/**
+ * ucfg_mlme_is_imps_enabled() - check if idle mode powersave is
+ * enabled/disabled
+ * @psoc: pointer to psoc object
+ * @value: value that is requested by the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static inline QDF_STATUS
+ucfg_mlme_is_imps_enabled(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	return wlan_mlme_is_imps_enabled(psoc, value);
+}
+
+/**
+ * ucfg_mlme_override_bmps_imps() - disable imps/bmps as part of
+ * override to disable all ps features
+ * @psoc: pointer to psoc object
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static inline QDF_STATUS
+ucfg_mlme_override_bmps_imps(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_mlme_override_bmps_imps(psoc);
+}
+
 #endif /* _WLAN_MLME_UCFG_API_H_ */

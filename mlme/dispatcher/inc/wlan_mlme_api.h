@@ -1973,4 +1973,81 @@ wlan_mlme_get_mcc_feature(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_mlme_get_rrm_enabled(struct wlan_objmgr_psoc *psoc,
 				     bool *value);
+
+/*
+ * wlan_mlme_get_dtim_selection_diversity() - get dtim selection diversity
+ * bitmap
+ * @psoc: pointer to psoc object
+ * @dtim_selection_div: value that is requested by the caller
+ * This function gets the dtim selection diversity bitmap to be
+ * sent to the firmware
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mlme_get_dtim_selection_diversity(struct wlan_objmgr_psoc *psoc,
+						  uint32_t *dtim_selection_div);
+
+/**
+ * wlan_mlme_get_bmps_min_listen_interval() - get beacon mode powersave
+ * minimum listen interval value
+ * @psoc: pointer to psoc object
+ * @value: value that is requested by the caller
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mlme_get_bmps_min_listen_interval(struct wlan_objmgr_psoc *psoc,
+						  uint32_t *value);
+
+/**
+ * wlan_mlme_get_bmps_max_listen_interval() - get beacon mode powersave
+ * maximum listen interval value
+ * @psoc: pointer to psoc object
+ * @value: value that is requested by the caller
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mlme_get_bmps_max_listen_interval(struct wlan_objmgr_psoc *psoc,
+						  uint32_t *value);
+
+/**
+ * wlan_mlme_get_auto_bmps_timer_value() - get bmps timer value
+ * @psoc: pointer to psoc object
+ * @value: value that is requested by the caller
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mlme_get_auto_bmps_timer_value(struct wlan_objmgr_psoc *psoc,
+					       uint32_t *value);
+
+/**
+ * wlan_mlme_is_bmps_enabled() - check if beacon mode powersave is
+ * enabled/disabled
+ * @psoc: pointer to psoc object
+ * @value: value that is requested by the caller
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mlme_is_bmps_enabled(struct wlan_objmgr_psoc *psoc,
+				     bool *value);
+
+/**
+ * wlan_mlme_override_bmps_imps() - disable imps/bmps
+ * @psoc: pointer to psoc object
+ * @value: value that is requested by the caller
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mlme_override_bmps_imps(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mlme_is_imps_enabled() - check if idle mode powersave is
+ * enabled/disabled
+ * @psoc: pointer to psoc object
+ * @value: value that is requested by the caller
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mlme_is_imps_enabled(struct wlan_objmgr_psoc *psoc,
+				     bool *value);
+
 #endif /* _WLAN_MLME_API_H_ */
