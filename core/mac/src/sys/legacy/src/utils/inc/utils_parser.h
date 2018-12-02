@@ -35,58 +35,58 @@
 #include "dot11f.h"
 #include "utils_api.h"
 
-void convert_ssid(tpAniSirGlobal, tSirMacSSid *, tDot11fIESSID *);
-void convert_supp_rates(tpAniSirGlobal, tSirMacRateSet *, tDot11fIESuppRates *);
-void convert_fh_params(tpAniSirGlobal, tSirMacFHParamSet *,
+void convert_ssid(struct mac_context *, tSirMacSSid *, tDot11fIESSID *);
+void convert_supp_rates(struct mac_context *, tSirMacRateSet *, tDot11fIESuppRates *);
+void convert_fh_params(struct mac_context *, tSirMacFHParamSet *,
 		       tDot11fIEFHParamSet *);
-void convert_ext_supp_rates(tpAniSirGlobal, tSirMacRateSet *,
+void convert_ext_supp_rates(struct mac_context *, tSirMacRateSet *,
 			    tDot11fIEExtSuppRates *);
-void convert_qos_caps(tpAniSirGlobal, tSirMacQosCapabilityIE *,
+void convert_qos_caps(struct mac_context *, tSirMacQosCapabilityIE *,
 		      tDot11fIEQOSCapsAp *);
-void convert_qos_caps_station(tpAniSirGlobal, tSirMacQosCapabilityStaIE *,
+void convert_qos_caps_station(struct mac_context *, tSirMacQosCapabilityStaIE *,
 			      tDot11fIEQOSCapsStation *);
-QDF_STATUS convert_wpa(tpAniSirGlobal, tSirMacWpaInfo *, tDot11fIEWPA *);
-QDF_STATUS convert_wpa_opaque(tpAniSirGlobal, tSirMacWpaInfo *,
+QDF_STATUS convert_wpa(struct mac_context *, tSirMacWpaInfo *, tDot11fIEWPA *);
+QDF_STATUS convert_wpa_opaque(struct mac_context *, tSirMacWpaInfo *,
 			      tDot11fIEWPAOpaque *);
-QDF_STATUS convert_wapi_opaque(tpAniSirGlobal, tSirMacWapiInfo *,
+QDF_STATUS convert_wapi_opaque(struct mac_context *, tSirMacWapiInfo *,
 			       tDot11fIEWAPIOpaque *);
-QDF_STATUS convert_rsn(tpAniSirGlobal, tSirMacRsnInfo *, tDot11fIERSN *);
-QDF_STATUS convert_rsn_opaque(tpAniSirGlobal, tSirMacRsnInfo *,
+QDF_STATUS convert_rsn(struct mac_context *, tSirMacRsnInfo *, tDot11fIERSN *);
+QDF_STATUS convert_rsn_opaque(struct mac_context *, tSirMacRsnInfo *,
 			      tDot11fIERSNOpaque *);
-void convert_power_caps(tpAniSirGlobal, tSirMacPowerCapabilityIE *,
+void convert_power_caps(struct mac_context *, tSirMacPowerCapabilityIE *,
 			tDot11fIEPowerCaps *);
-void convert_supp_channels(tpAniSirGlobal, tSirMacSupportedChannelIE *,
+void convert_supp_channels(struct mac_context *, tSirMacSupportedChannelIE *,
 			   tDot11fIESuppChannels *);
-void convert_cf_params(tpAniSirGlobal, tSirMacCfParamSet *, tDot11fIECFParams *);
-void convert_tim(tpAniSirGlobal, tSirMacTim *, tDot11fIETIM *);
-void convert_country(tpAniSirGlobal, tSirCountryInformation *,
+void convert_cf_params(struct mac_context *, tSirMacCfParamSet *, tDot11fIECFParams *);
+void convert_tim(struct mac_context *, tSirMacTim *, tDot11fIETIM *);
+void convert_country(struct mac_context *, tSirCountryInformation *,
 		     tDot11fIECountry *);
-void convert_wmm_params(tpAniSirGlobal, tSirMacEdcaParamSetIE *,
+void convert_wmm_params(struct mac_context *, tSirMacEdcaParamSetIE *,
 			tDot11fIEWMMParams *);
-void convert_erp_info(tpAniSirGlobal, tSirMacErpInfo *, tDot11fIEERPInfo *);
-void convert_edca_param(tpAniSirGlobal, tSirMacEdcaParamSetIE *,
+void convert_erp_info(struct mac_context *, tSirMacErpInfo *, tDot11fIEERPInfo *);
+void convert_edca_param(struct mac_context *, tSirMacEdcaParamSetIE *,
 			tDot11fIEEDCAParamSet *);
-void convert_mu_edca_param(tpAniSirGlobal mac_ctx,
+void convert_mu_edca_param(struct mac_context * mac_ctx,
 			tSirMacEdcaParamSetIE *mu_edca,
 			tDot11fIEmu_edca_param_set *ie);
-void convert_tspec(tpAniSirGlobal, tSirMacTspecIE *, tDot11fIETSPEC *);
-QDF_STATUS convert_tclas(tpAniSirGlobal, tSirTclasInfo *, tDot11fIETCLAS *);
-void convert_wmmtspec(tpAniSirGlobal, tSirMacTspecIE *, tDot11fIEWMMTSPEC *);
-QDF_STATUS convert_wmmtclas(tpAniSirGlobal, tSirTclasInfo *,
+void convert_tspec(struct mac_context *, tSirMacTspecIE *, tDot11fIETSPEC *);
+QDF_STATUS convert_tclas(struct mac_context *, tSirTclasInfo *, tDot11fIETCLAS *);
+void convert_wmmtspec(struct mac_context *, tSirMacTspecIE *, tDot11fIEWMMTSPEC *);
+QDF_STATUS convert_wmmtclas(struct mac_context *, tSirTclasInfo *,
 			    tDot11fIEWMMTCLAS *);
-void convert_ts_delay(tpAniSirGlobal, tSirMacTsDelayIE *, tDot11fIETSDelay *);
-void convert_schedule(tpAniSirGlobal, tSirMacScheduleIE *, tDot11fIESchedule *);
-void convert_wmm_schedule(tpAniSirGlobal, tSirMacScheduleIE *,
+void convert_ts_delay(struct mac_context *, tSirMacTsDelayIE *, tDot11fIETSDelay *);
+void convert_schedule(struct mac_context *, tSirMacScheduleIE *, tDot11fIESchedule *);
+void convert_wmm_schedule(struct mac_context *, tSirMacScheduleIE *,
 			  tDot11fIEWMMSchedule *);
-QDF_STATUS convert_wsc_opaque(tpAniSirGlobal, tSirAddie *,
+QDF_STATUS convert_wsc_opaque(struct mac_context *, tSirAddie *,
 			      tDot11fIEWscIEOpaque *);
-QDF_STATUS convert_p2p_opaque(tpAniSirGlobal, tSirAddie *,
+QDF_STATUS convert_p2p_opaque(struct mac_context *, tSirAddie *,
 			      tDot11fIEP2PIEOpaque *);
 #ifdef WLAN_FEATURE_WFD
-QDF_STATUS convert_wfd_opaque(tpAniSirGlobal, tSirAddie *,
+QDF_STATUS convert_wfd_opaque(struct mac_context *, tSirAddie *,
 			      tDot11fIEWFDIEOpaque *);
 #endif
-void convert_qos_mapset_frame(tpAniSirGlobal, tSirQosMapSet *,
+void convert_qos_mapset_frame(struct mac_context *, tSirQosMapSet *,
 			      tDot11fIEQosMapSet *);
 
 #endif
