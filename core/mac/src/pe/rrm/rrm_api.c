@@ -46,7 +46,7 @@
 #define MAX_RRM_TX_PWR_CAP 22
 
 uint8_t
-rrm_get_min_of_max_tx_power(tpAniSirGlobal mac,
+rrm_get_min_of_max_tx_power(struct mac_context *mac,
 			    int8_t regMax, int8_t apTxPower)
 {
 	uint8_t maxTxPower = 0;
@@ -80,7 +80,7 @@ rrm_get_min_of_max_tx_power(tpAniSirGlobal mac,
  * @return None
  */
 void
-rrm_cache_mgmt_tx_power(tpAniSirGlobal mac, int8_t txPower,
+rrm_cache_mgmt_tx_power(struct mac_context *mac, int8_t txPower,
 			struct pe_session *pe_session)
 {
 	pe_debug("Cache Mgmt Tx Power: %d", txPower);
@@ -106,7 +106,7 @@ rrm_cache_mgmt_tx_power(tpAniSirGlobal mac, int8_t txPower,
  * @param pe_session session entry.
  * @return txPower
  */
-int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal mac, struct pe_session *pe_session)
+int8_t rrm_get_mgmt_tx_power(struct mac_context *mac, struct pe_session *pe_session)
 {
 	if (pe_session == NULL)
 		return mac->rrm.rrmPEContext.txMgmtPower;
@@ -133,7 +133,7 @@ int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal mac, struct pe_session *pe_session)
  * @return None
  */
 QDF_STATUS
-rrm_send_set_max_tx_power_req(tpAniSirGlobal mac, int8_t txPower,
+rrm_send_set_max_tx_power_req(struct mac_context *mac, int8_t txPower,
 			      struct pe_session *pe_session)
 {
 	tpMaxTxPowerParams pMaxTxParams;
@@ -190,7 +190,7 @@ rrm_send_set_max_tx_power_req(tpAniSirGlobal mac, int8_t txPower,
  * @param pe_session session entry.
  * @return None
  */
-QDF_STATUS rrm_set_max_tx_power_rsp(tpAniSirGlobal mac,
+QDF_STATUS rrm_set_max_tx_power_rsp(struct mac_context *mac,
 				    struct scheduler_msg *limMsgQ)
 {
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -241,7 +241,7 @@ QDF_STATUS rrm_set_max_tx_power_rsp(tpAniSirGlobal mac,
  * @return None
  */
 QDF_STATUS
-rrm_process_link_measurement_request(tpAniSirGlobal mac,
+rrm_process_link_measurement_request(struct mac_context *mac,
 				     uint8_t *pRxPacketInfo,
 				     tDot11fLinkMeasurementRequest *pLinkReq,
 				     struct pe_session *pe_session)
@@ -316,7 +316,7 @@ rrm_process_link_measurement_request(tpAniSirGlobal mac,
  * @return None
  */
 QDF_STATUS
-rrm_process_neighbor_report_response(tpAniSirGlobal mac,
+rrm_process_neighbor_report_response(struct mac_context *mac,
 				     tDot11fNeighborReportResponse *pNeighborRep,
 				     struct pe_session *pe_session)
 {
@@ -433,7 +433,7 @@ rrm_process_neighbor_report_response(tpAniSirGlobal mac,
  * @return None
  */
 QDF_STATUS
-rrm_process_neighbor_report_req(tpAniSirGlobal mac,
+rrm_process_neighbor_report_req(struct mac_context *mac,
 				tpSirNeighborReportReqInd pNeighborReq)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -494,7 +494,7 @@ rrm_process_neighbor_report_req(tpAniSirGlobal mac,
  * @return None
  */
 static tRrmRetStatus
-rrm_process_beacon_report_req(tpAniSirGlobal mac,
+rrm_process_beacon_report_req(struct mac_context *mac,
 			      tpRRMReq pCurrentReq,
 			      tDot11fIEMeasurementRequest *pBeaconReq,
 			      struct pe_session *pe_session)
@@ -688,7 +688,7 @@ rrm_process_beacon_report_req(tpAniSirGlobal mac,
  *	    in pIes.
  */
 static uint8_t
-rrm_fill_beacon_ies(tpAniSirGlobal mac,
+rrm_fill_beacon_ies(struct mac_context *mac,
 		    uint8_t *pIes, uint8_t *pNumIes, uint8_t pIesMaxSize,
 		    uint8_t *eids, uint8_t numEids, uint8_t start_offset,
 		    tpSirBssDescription pBssDesc)
@@ -800,7 +800,7 @@ rrm_fill_beacon_ies(tpAniSirGlobal mac,
  * Return: QDF_STATUS
  */
 QDF_STATUS
-rrm_process_beacon_report_xmit(tpAniSirGlobal mac_ctx,
+rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
 			       tpSirBeaconReportXmitInd beacon_xmit_ind)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1003,7 +1003,7 @@ end:
 	return status;
 }
 
-static void rrm_process_beacon_request_failure(tpAniSirGlobal mac,
+static void rrm_process_beacon_request_failure(struct mac_context *mac,
 					       struct pe_session *pe_session,
 					       tSirMacAddr peer,
 					       tRrmRetStatus status)
@@ -1060,7 +1060,7 @@ static void rrm_process_beacon_request_failure(tpAniSirGlobal mac,
  * Return: QDF_STATUS
  */
 static
-QDF_STATUS rrm_process_beacon_req(tpAniSirGlobal mac_ctx, tSirMacAddr peer,
+QDF_STATUS rrm_process_beacon_req(struct mac_context *mac_ctx, tSirMacAddr peer,
 				  struct pe_session *session_entry, tpRRMReq curr_req,
 				  tpSirMacRadioMeasureReport *radiomes_report,
 				  tDot11fRadioMeasurementRequest *rrm_req,
@@ -1125,7 +1125,7 @@ QDF_STATUS rrm_process_beacon_req(tpAniSirGlobal mac_ctx, tSirMacAddr peer,
  * Return: QDF_STATUS
  */
 static
-QDF_STATUS update_rrm_report(tpAniSirGlobal mac_ctx,
+QDF_STATUS update_rrm_report(struct mac_context *mac_ctx,
 			     tpSirMacRadioMeasureReport report,
 			     tDot11fRadioMeasurementRequest *rrm_req,
 			     uint8_t *num_report, int index)
@@ -1164,7 +1164,7 @@ QDF_STATUS update_rrm_report(tpAniSirGlobal mac_ctx,
  * Return: QDF_STATUS
  */
 QDF_STATUS
-rrm_process_radio_measurement_request(tpAniSirGlobal mac_ctx,
+rrm_process_radio_measurement_request(struct mac_context *mac_ctx,
 				      tSirMacAddr peer,
 				      tDot11fRadioMeasurementRequest *rrm_req,
 				      struct pe_session *session_entry)
@@ -1256,7 +1256,7 @@ end:
  * @param startTSF - TSF value at the start of measurement.
  * @return None
  */
-void rrm_update_start_tsf(tpAniSirGlobal mac, uint32_t startTSF[2])
+void rrm_update_start_tsf(struct mac_context *mac, uint32_t startTSF[2])
 {
 	mac->rrm.rrmPEContext.startTSF[0] = startTSF[0];
 	mac->rrm.rrmPEContext.startTSF[1] = startTSF[1];
@@ -1277,7 +1277,7 @@ void rrm_update_start_tsf(tpAniSirGlobal mac, uint32_t startTSF[2])
  * @param startTSF - store star TSF in this buffer.
  * @return txPower
  */
-void rrm_get_start_tsf(tpAniSirGlobal mac, uint32_t *pStartTSF)
+void rrm_get_start_tsf(struct mac_context *mac, uint32_t *pStartTSF)
 {
 	pStartTSF[0] = mac->rrm.rrmPEContext.startTSF[0];
 	pStartTSF[1] = mac->rrm.rrmPEContext.startTSF[1];
@@ -1300,7 +1300,7 @@ void rrm_get_start_tsf(tpAniSirGlobal mac, uint32_t *pStartTSF)
  * @param pe_session
  * @return pointer to tRRMCaps
  */
-tpRRMCaps rrm_get_capabilities(tpAniSirGlobal mac, struct pe_session *pe_session)
+tpRRMCaps rrm_get_capabilities(struct mac_context *mac, struct pe_session *pe_session)
 {
 	return &mac->rrm.rrmPEContext.rrmEnabledCaps;
 }
@@ -1321,7 +1321,7 @@ tpRRMCaps rrm_get_capabilities(tpAniSirGlobal mac, struct pe_session *pe_session
  * @return None
  */
 
-QDF_STATUS rrm_initialize(tpAniSirGlobal mac)
+QDF_STATUS rrm_initialize(struct mac_context *mac)
 {
 	tpRRMCaps pRRMCaps = &mac->rrm.rrmPEContext.rrmEnabledCaps;
 
@@ -1366,7 +1366,7 @@ QDF_STATUS rrm_initialize(tpAniSirGlobal mac)
  * @return None
  */
 
-QDF_STATUS rrm_cleanup(tpAniSirGlobal mac)
+QDF_STATUS rrm_cleanup(struct mac_context *mac)
 {
 	if (mac->rrm.rrmPEContext.pCurrentReq) {
 		if (mac->rrm.rrmPEContext.pCurrentReq->request.Beacon.reqIes.
@@ -1391,7 +1391,7 @@ QDF_STATUS rrm_cleanup(tpAniSirGlobal mac)
  *
  * Return: None
  */
-void lim_update_rrm_capability(tpAniSirGlobal mac_ctx,
+void lim_update_rrm_capability(struct mac_context *mac_ctx,
 			       tpSirSmeJoinReq join_req)
 {
 	mac_ctx->rrm.rrmPEContext.rrmEnable = join_req->rrm_config.rrm_enabled;

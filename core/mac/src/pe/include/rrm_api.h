@@ -35,61 +35,61 @@
 #define RRM_BCN_RPT_NO_BSS_INFO    0
 #define RRM_BCN_RPT_MIN_RPT        1
 
-uint8_t rrm_get_min_of_max_tx_power(tpAniSirGlobal mac, int8_t regMax,
+uint8_t rrm_get_min_of_max_tx_power(struct mac_context *mac, int8_t regMax,
 				    int8_t apTxPower);
 
-QDF_STATUS rrm_initialize(tpAniSirGlobal mac);
+QDF_STATUS rrm_initialize(struct mac_context *mac);
 
-QDF_STATUS rrm_cleanup(tpAniSirGlobal mac);
+QDF_STATUS rrm_cleanup(struct mac_context *mac);
 
-QDF_STATUS rrm_process_link_measurement_request(tpAniSirGlobal mac,
+QDF_STATUS rrm_process_link_measurement_request(struct mac_context *mac,
 						uint8_t *pRxPacketInfo,
 						tDot11fLinkMeasurementRequest
 							  *pLinkReq,
 						struct pe_session *
 							  pe_session);
 
-QDF_STATUS rrm_process_radio_measurement_request(tpAniSirGlobal mac,
+QDF_STATUS rrm_process_radio_measurement_request(struct mac_context *mac,
 						 tSirMacAddr peer,
 						 tDot11fRadioMeasurementRequest
 							   *pRRMReq,
 						 struct pe_session *
 							   pe_session);
 
-QDF_STATUS rrm_process_neighbor_report_response(tpAniSirGlobal mac,
+QDF_STATUS rrm_process_neighbor_report_response(struct mac_context *mac,
 						tDot11fNeighborReportResponse
 							  *pNeighborRep,
 						struct pe_session *
 							  pe_session);
 
-QDF_STATUS rrm_send_set_max_tx_power_req(tpAniSirGlobal mac,
+QDF_STATUS rrm_send_set_max_tx_power_req(struct mac_context *mac,
 					 int8_t txPower,
 					 struct pe_session *pe_session);
 
-int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal mac,
+int8_t rrm_get_mgmt_tx_power(struct mac_context *mac,
 			     struct pe_session *pe_session);
 
-void rrm_cache_mgmt_tx_power(tpAniSirGlobal mac,
+void rrm_cache_mgmt_tx_power(struct mac_context *mac,
 			     int8_t txPower, struct pe_session *pe_session);
 
-tpRRMCaps rrm_get_capabilities(tpAniSirGlobal mac,
+tpRRMCaps rrm_get_capabilities(struct mac_context *mac,
 			       struct pe_session *pe_session);
 
-void rrm_get_start_tsf(tpAniSirGlobal mac, uint32_t *pStartTSF);
+void rrm_get_start_tsf(struct mac_context *mac, uint32_t *pStartTSF);
 
-void rrm_update_start_tsf(tpAniSirGlobal mac, uint32_t startTSF[2]);
+void rrm_update_start_tsf(struct mac_context *mac, uint32_t startTSF[2]);
 
-QDF_STATUS rrm_set_max_tx_power_rsp(tpAniSirGlobal mac,
+QDF_STATUS rrm_set_max_tx_power_rsp(struct mac_context *mac,
 				    struct scheduler_msg *limMsgQ);
 
 QDF_STATUS
-rrm_process_neighbor_report_req(tpAniSirGlobal mac,
+rrm_process_neighbor_report_req(struct mac_context *mac,
 				tpSirNeighborReportReqInd pNeighborReq);
 
 QDF_STATUS
-rrm_process_beacon_report_xmit(tpAniSirGlobal mac,
+rrm_process_beacon_report_xmit(struct mac_context *mac,
 			       tpSirBeaconReportXmitInd pBcnReport);
 
-void lim_update_rrm_capability(tpAniSirGlobal mac_ctx,
+void lim_update_rrm_capability(struct mac_context *mac_ctx,
 			       tpSirSmeJoinReq join_req);
 #endif
