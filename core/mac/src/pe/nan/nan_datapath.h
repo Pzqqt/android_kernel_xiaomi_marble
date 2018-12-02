@@ -100,17 +100,17 @@ struct ndp_peer_node {
 #endif
 };
 
-void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
+void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 				     struct scheduler_msg *lim_msg_q,
 				     struct pe_session *session_entry);
 /* Handler for DEL BSS resp for NDI interface */
-void lim_ndi_del_bss_rsp(tpAniSirGlobal  mac_ctx,
+void lim_ndi_del_bss_rsp(struct mac_context * mac_ctx,
 			void *msg, struct pe_session *session_entry);
 
-void lim_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx, struct pe_session *session_entry,
+void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx, struct pe_session *session_entry,
 			 tAddStaParams *add_sta_rsp);
 
-void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
+void lim_process_ndi_del_sta_rsp(struct mac_context *mac_ctx,
 				 struct scheduler_msg *lim_msg,
 				 struct pe_session *pe_session);
 
@@ -124,22 +124,22 @@ void lim_ndp_delete_peers_by_addr_converged(uint8_t vdev_id,
 					struct qdf_mac_addr peer_ndi_mac_addr);
 
 #else
-static inline void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
+static inline void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 					struct scheduler_msg *lim_msg_q,
 					struct pe_session *session_entry)
 {
 }
-static inline void lim_ndi_del_bss_rsp(tpAniSirGlobal mac_ctx,
+static inline void lim_ndi_del_bss_rsp(struct mac_context *mac_ctx,
 					void *msg, struct pe_session *session_entry)
 {
 }
-static inline void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
+static inline void lim_process_ndi_del_sta_rsp(struct mac_context *mac_ctx,
 				struct scheduler_msg *lim_msg,
 				struct pe_session *pe_session)
 {
 }
 
-static inline void lim_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
+static inline void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx,
 					struct pe_session *session_entry,
 					tAddStaParams *add_sta_rsp)
 {
@@ -147,7 +147,7 @@ static inline void lim_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 
 #endif /* WLAN_FEATURE_NAN_DATAPATH || WLAN_FEATURE_NAN_CONVERGENCE */
 
-static inline QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
+static inline QDF_STATUS lim_handle_ndp_event_message(struct mac_context *mac_ctx,
 						      struct scheduler_msg *msg)
 {
 	return QDF_STATUS_SUCCESS;

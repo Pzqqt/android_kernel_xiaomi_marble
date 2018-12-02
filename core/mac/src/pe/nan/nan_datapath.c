@@ -41,7 +41,7 @@
  *
  * Return: QDF_STATUS_SUCCESS on success; error number otherwise
  */
-static QDF_STATUS lim_add_ndi_peer(tpAniSirGlobal mac_ctx,
+static QDF_STATUS lim_add_ndi_peer(struct mac_context *mac_ctx,
 	uint32_t vdev_id, struct qdf_mac_addr peer_mac_addr)
 {
 	struct pe_session *session;
@@ -105,7 +105,7 @@ static QDF_STATUS lim_add_ndi_peer(tpAniSirGlobal mac_ctx,
 QDF_STATUS lim_add_ndi_peer_converged(uint32_t vdev_id,
 				struct qdf_mac_addr peer_mac_addr)
 {
-	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac_ctx)
 		return QDF_STATUS_E_NULL_VALUE;
@@ -122,7 +122,7 @@ QDF_STATUS lim_add_ndi_peer_converged(uint32_t vdev_id,
  *
  * Return: None
  */
-static void lim_ndp_delete_peer_by_addr(tpAniSirGlobal mac_ctx, uint8_t vdev_id,
+static void lim_ndp_delete_peer_by_addr(struct mac_context *mac_ctx, uint8_t vdev_id,
 					struct qdf_mac_addr peer_ndi_mac_addr)
 {
 	struct pe_session *session;
@@ -167,7 +167,7 @@ static void lim_ndp_delete_peer_by_addr(tpAniSirGlobal mac_ctx, uint8_t vdev_id,
 void lim_ndp_delete_peers_by_addr_converged(uint8_t vdev_id,
 					struct qdf_mac_addr peer_ndi_mac_addr)
 {
-	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac_ctx)
 		return;
@@ -184,7 +184,7 @@ void lim_ndp_delete_peers_by_addr_converged(uint8_t vdev_id,
  *
  * Return: None
  */
-static void lim_ndp_delete_peers(tpAniSirGlobal mac_ctx,
+static void lim_ndp_delete_peers(struct mac_context *mac_ctx,
 				struct peer_ndp_map *ndp_map, uint8_t num_peers)
 {
 	tpDphHashNode sta_ds = NULL;
@@ -257,7 +257,7 @@ static void lim_ndp_delete_peers(tpAniSirGlobal mac_ctx,
 void lim_ndp_delete_peers_converged(struct peer_nan_datapath_map *ndp_map,
 				    uint8_t num_peers)
 {
-	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac_ctx)
 		return;
@@ -274,7 +274,7 @@ void lim_ndp_delete_peers_converged(struct peer_nan_datapath_map *ndp_map,
  *
  * Return: None
  */
-void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
+void lim_process_ndi_del_sta_rsp(struct mac_context *mac_ctx,
 				 struct scheduler_msg *lim_msg,
 				 struct pe_session *pe_session)
 {
@@ -344,7 +344,7 @@ skip_event:
  *
  * Return: None
  */
-void lim_process_ndi_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
+void lim_process_ndi_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 				     struct scheduler_msg *lim_msgq,
 				     struct pe_session *session_entry)
 {
@@ -392,7 +392,7 @@ end:
  *
  * Return: None
  */
-void lim_ndi_del_bss_rsp(tpAniSirGlobal  mac_ctx,
+void lim_ndi_del_bss_rsp(struct mac_context * mac_ctx,
 			void *msg, struct pe_session *session_entry)
 {
 	tSirResultCodes rc = eSIR_SME_SUCCESS;
@@ -441,7 +441,7 @@ end:
 	}
 }
 
-static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
+static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(struct mac_context *mac_ctx,
 						struct pe_session *session,
 						tAddStaParams *add_sta_rsp)
 {
@@ -491,7 +491,7 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx, struct pe_session *session,
+void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx, struct pe_session *session,
 			 tAddStaParams *add_sta_rsp)
 {
 	tpDphHashNode sta_ds;
