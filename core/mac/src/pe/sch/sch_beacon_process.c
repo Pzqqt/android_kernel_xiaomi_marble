@@ -58,7 +58,7 @@
 #define CW_GET(cw) (((cw) == 0) ? 1 : ((1 << (cw)) - 1))
 
 static void
-ap_beacon_process_5_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
+ap_beacon_process_5_ghz(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			tpSchBeaconStruct bcn_struct,
 			tpUpdateBeaconParams bcn_prm, struct pe_session *session,
 			uint32_t phy_mode)
@@ -101,7 +101,7 @@ ap_beacon_process_5_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 }
 
 static void
-ap_beacon_process_24_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
+ap_beacon_process_24_ghz(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 			 tpSchBeaconStruct bcn_struct,
 			 tpUpdateBeaconParams bcn_prm, struct pe_session *session,
 			 uint32_t phy_mode)
@@ -227,7 +227,7 @@ ap_beacon_process_24_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
  * Return: void
  */
 static void
-ap_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
+ap_beacon_process(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		  tpSchBeaconStruct bcn_struct,
 		  tpUpdateBeaconParams bcn_prm, struct pe_session *session)
 {
@@ -280,7 +280,7 @@ ap_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
  *
 
  */
-static void __sch_beacon_process_no_session(tpAniSirGlobal mac,
+static void __sch_beacon_process_no_session(struct mac_context *mac,
 					    tpSchBeaconStruct pBeacon,
 					    uint8_t *pRxPacketInfo)
 {
@@ -342,7 +342,7 @@ static tSirMacHTChannelWidth get_operating_channel_width(tpDphHashNode stads)
  * Return: success of failure of operation
  */
 static bool
-sch_bcn_process_sta(tpAniSirGlobal mac_ctx,
+sch_bcn_process_sta(struct mac_context *mac_ctx,
 			       tpSchBeaconStruct bcn,
 			       uint8_t *rx_pkt_info,
 			       struct pe_session *session, uint8_t *bssIdx,
@@ -478,7 +478,7 @@ sch_bcn_process_sta(tpAniSirGlobal mac_ctx,
  *
  * Return: none
  */
-static void update_nss(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
+static void update_nss(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 		       tpSchBeaconStruct beacon, struct pe_session *session_entry,
 		       tpSirMacMgmtHdr mgmt_hdr)
 {
@@ -497,7 +497,7 @@ static void update_nss(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 static void
-sch_bcn_update_he_ies(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
+sch_bcn_update_he_ies(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 				struct pe_session *session, tpSchBeaconStruct bcn,
 				tpSirMacMgmtHdr mac_hdr)
 {
@@ -534,7 +534,7 @@ sch_bcn_update_he_ies(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 }
 #else
 static void
-sch_bcn_update_he_ies(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
+sch_bcn_update_he_ies(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 				struct pe_session *session, tpSchBeaconStruct bcn,
 				tpSirMacMgmtHdr mac_hdr)
 {
@@ -543,7 +543,7 @@ sch_bcn_update_he_ies(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 #endif
 
 static void
-sch_bcn_update_opmode_change(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
+sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 				struct pe_session *session, tpSchBeaconStruct bcn,
 				tpSirMacMgmtHdr mac_hdr, uint8_t cb_mode)
 {
@@ -706,7 +706,7 @@ sch_bcn_update_opmode_change(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
  * Return: void
  */
 static void
-sch_bcn_process_sta_ibss(tpAniSirGlobal mac_ctx,
+sch_bcn_process_sta_ibss(struct mac_context *mac_ctx,
 				    tpSchBeaconStruct bcn,
 				    uint8_t *rx_pkt_info,
 				    struct pe_session *session, uint8_t *bssIdx,
@@ -801,7 +801,7 @@ static void get_local_power_constraint_beacon(
  *
  * Return: void
  */
-static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
+static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 					     tpSchBeaconStruct bcn,
 					     uint8_t *rx_pkt_info,
 					     struct pe_session *session)
@@ -930,7 +930,7 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 }
 
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
-static void ap_update_bss_color_info(tpAniSirGlobal mac_ctx,
+static void ap_update_bss_color_info(struct mac_context *mac_ctx,
 						struct pe_session *session,
 						uint8_t bss_color)
 {
@@ -947,7 +947,7 @@ static void ap_update_bss_color_info(tpAniSirGlobal mac_ctx,
 					qdf_get_system_timestamp();
 }
 
-static uint8_t ap_get_new_bss_color(tpAniSirGlobal mac_ctx, struct pe_session *session)
+static uint8_t ap_get_new_bss_color(struct mac_context *mac_ctx, struct pe_session *session)
 {
 	int i;
 	uint8_t new_bss_color;
@@ -978,7 +978,7 @@ static uint8_t ap_get_new_bss_color(tpAniSirGlobal mac_ctx, struct pe_session *s
 	return new_bss_color;
 }
 
-static void sch_check_bss_color_ie(tpAniSirGlobal mac_ctx,
+static void sch_check_bss_color_ie(struct mac_context *mac_ctx,
 					struct pe_session *ap_session,
 					tSchBeaconStruct *bcn,
 					tUpdateBeaconParams *bcn_prm)
@@ -1013,7 +1013,7 @@ static void sch_check_bss_color_ie(tpAniSirGlobal mac_ctx,
 }
 
 #else
-static void  sch_check_bss_color_ie(tpAniSirGlobal mac_ctx,
+static void  sch_check_bss_color_ie(struct mac_context *mac_ctx,
 					struct pe_session *ap_session,
 					tSchBeaconStruct *bcn,
 					tUpdateBeaconParams *bcn_prm)
@@ -1021,7 +1021,7 @@ static void  sch_check_bss_color_ie(tpAniSirGlobal mac_ctx,
 }
 #endif
 
-void sch_beacon_process_for_ap(tpAniSirGlobal mac_ctx,
+void sch_beacon_process_for_ap(struct mac_context *mac_ctx,
 				uint8_t session_id,
 				uint8_t *rx_pkt_info,
 				tSchBeaconStruct *bcn)
@@ -1078,7 +1078,7 @@ void sch_beacon_process_for_ap(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 void
-sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
+sch_beacon_process(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		   struct pe_session *session)
 {
 	static tSchBeaconStruct bcn;
@@ -1112,7 +1112,7 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
  * @return status of operation
  */
 QDF_STATUS
-sch_beacon_edca_process(tpAniSirGlobal mac, tSirMacEdcaParamSetIE *edca,
+sch_beacon_edca_process(struct mac_context *mac, tSirMacEdcaParamSetIE *edca,
 			struct pe_session *session)
 {
 	uint8_t i;
@@ -1209,7 +1209,7 @@ sch_beacon_edca_process(tpAniSirGlobal mac, tSirMacEdcaParamSetIE *edca,
 	return QDF_STATUS_SUCCESS;
 }
 
-void lim_enable_obss_detection_config(tpAniSirGlobal mac_ctx,
+void lim_enable_obss_detection_config(struct mac_context *mac_ctx,
 				      struct pe_session *session)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -1254,7 +1254,7 @@ void lim_enable_obss_detection_config(tpAniSirGlobal mac_ctx,
 	}
 }
 
-QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_obss_generate_detection_config(struct mac_context *mac_ctx,
 					      struct pe_session *session,
 					      struct obss_detection_cfg *cfg)
 {
@@ -1401,7 +1401,7 @@ QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS lim_obss_send_detection_cfg(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_obss_send_detection_cfg(struct mac_context *mac_ctx,
 				       struct pe_session *session, bool force)
 {
 	QDF_STATUS status;
@@ -1480,7 +1480,7 @@ QDF_STATUS lim_obss_send_detection_cfg(tpAniSirGlobal mac_ctx,
 	return status;
 }
 
-QDF_STATUS lim_process_obss_detection_ind(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_process_obss_detection_ind(struct mac_context *mac_ctx,
 					  struct wmi_obss_detect_info
 					  *obss_detection)
 {

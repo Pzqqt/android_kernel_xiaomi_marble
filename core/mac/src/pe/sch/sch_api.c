@@ -69,14 +69,14 @@
  * @return None
  */
 
-QDF_STATUS sch_post_message(tpAniSirGlobal mac, struct scheduler_msg *pMsg)
+QDF_STATUS sch_post_message(struct mac_context *mac, struct scheduler_msg *pMsg)
 {
 	sch_process_message(mac, pMsg);
 
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS sch_send_beacon_req(tpAniSirGlobal mac, uint8_t *beaconPayload,
+QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 			       uint16_t size, struct pe_session *pe_session,
 			       enum sir_bcn_update_reason reason)
 {
@@ -183,7 +183,7 @@ QDF_STATUS sch_send_beacon_req(tpAniSirGlobal mac, uint8_t *beaconPayload,
 	return retCode;
 }
 
-static uint32_t lim_remove_p2p_ie_from_add_ie(tpAniSirGlobal mac,
+static uint32_t lim_remove_p2p_ie_from_add_ie(struct mac_context *mac,
 					      struct pe_session *pe_session,
 					      uint8_t *addIeWoP2pIe,
 					      uint32_t *addnIELenWoP2pIe)
@@ -223,7 +223,7 @@ static uint32_t lim_remove_p2p_ie_from_add_ie(tpAniSirGlobal mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal mac,
+uint32_t lim_send_probe_rsp_template_to_hal(struct mac_context *mac,
 					    struct pe_session *pe_session,
 					    uint32_t *IeBitmap)
 {
@@ -412,7 +412,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal mac,
  *
  * Return: the length of the buffer.
  */
-int sch_gen_timing_advert_frame(tpAniSirGlobal mac_ctx, tSirMacAddr self_addr,
+int sch_gen_timing_advert_frame(struct mac_context *mac_ctx, tSirMacAddr self_addr,
 	uint8_t **buf, uint32_t *timestamp_offset, uint32_t *time_value_offset)
 {
 	tDot11fTimingAdvertisementFrame frame;

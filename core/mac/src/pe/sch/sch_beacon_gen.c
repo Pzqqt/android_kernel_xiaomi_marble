@@ -98,7 +98,7 @@ static QDF_STATUS sch_get_p2p_ie_offset(uint8_t *pextra_ie,
  * Return: status of operation
  */
 static QDF_STATUS
-sch_append_addn_ie(tpAniSirGlobal mac_ctx, struct pe_session *session,
+sch_append_addn_ie(struct mac_context *mac_ctx, struct pe_session *session,
 		   uint8_t *frm, uint32_t max_bcn_size, uint32_t *num_bytes,
 		   uint8_t *addn_ie, uint16_t addn_ielen)
 {
@@ -222,7 +222,7 @@ static void sch_get_csa_ecsa_count_offset(uint8_t *ie, uint32_t ie_len,
  */
 
 QDF_STATUS
-sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, struct pe_session *session)
+sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *session)
 {
 	tpAniBeaconStruct bcn_struct = (tpAniBeaconStruct)
 						session->pSchBeaconFrameBegin;
@@ -648,7 +648,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, struct pe_session *session)
 }
 
 QDF_STATUS
-lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal mac,
+lim_update_probe_rsp_template_ie_bitmap_beacon1(struct mac_context *mac,
 						tDot11fBeacon1 *beacon1,
 						struct pe_session *pe_session)
 {
@@ -694,7 +694,7 @@ lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-void lim_update_probe_rsp_template_ie_bitmap_beacon2(tpAniSirGlobal mac,
+void lim_update_probe_rsp_template_ie_bitmap_beacon2(struct mac_context *mac,
 						     tDot11fBeacon2 *beacon2,
 						     uint32_t *DefProbeRspIeBitmap,
 						     tDot11fProbeResponse *prb_rsp)
@@ -899,7 +899,7 @@ void set_probe_rsp_ie_bitmap(uint32_t *IeBitmap, uint32_t pos)
  *
  * return: success: QDF_STATUS_SUCCESS failure: QDF_STATUS_E_FAILURE
  */
-static QDF_STATUS write_beacon_to_memory(tpAniSirGlobal mac, uint16_t size,
+static QDF_STATUS write_beacon_to_memory(struct mac_context *mac, uint16_t size,
 					 uint16_t length,
 					 struct pe_session *pe_session,
 					 enum sir_bcn_update_reason reason)
@@ -960,7 +960,7 @@ static QDF_STATUS write_beacon_to_memory(tpAniSirGlobal mac, uint16_t size,
  * @param *timLength pointer to limLength, which needs to be returned.
  * @return None
  */
-void sch_generate_tim(tpAniSirGlobal mac, uint8_t **pPtr, uint16_t *timLength,
+void sch_generate_tim(struct mac_context *mac, uint8_t **pPtr, uint16_t *timLength,
 		      uint8_t dtimPeriod)
 {
 	uint8_t *ptr = *pPtr;
@@ -996,7 +996,7 @@ void sch_generate_tim(tpAniSirGlobal mac, uint8_t **pPtr, uint16_t *timLength,
 	*pPtr = ptr;
 }
 
-QDF_STATUS sch_process_pre_beacon_ind(tpAniSirGlobal mac,
+QDF_STATUS sch_process_pre_beacon_ind(struct mac_context *mac,
 				      struct scheduler_msg *limMsg,
 				      enum sir_bcn_update_reason reason)
 {

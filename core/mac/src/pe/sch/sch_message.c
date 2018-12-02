@@ -39,10 +39,10 @@
 
 /* local functions */
 static QDF_STATUS
-get_wmm_local_params(tpAniSirGlobal mac,
+get_wmm_local_params(struct mac_context *mac,
 		     uint32_t params[][CFG_EDCA_DATA_LEN]);
 static void
-set_sch_edca_params(tpAniSirGlobal mac,
+set_sch_edca_params(struct mac_context *mac,
 		    uint32_t params[][CFG_EDCA_DATA_LEN],
 		    struct pe_session *pe_session);
 
@@ -62,7 +62,7 @@ set_sch_edca_params(tpAniSirGlobal mac,
  * @return None
  */
 
-void sch_set_beacon_interval(tpAniSirGlobal mac, struct pe_session *pe_session)
+void sch_set_beacon_interval(struct mac_context *mac, struct pe_session *pe_session)
 {
 	uint32_t bi;
 
@@ -77,7 +77,7 @@ void sch_set_beacon_interval(tpAniSirGlobal mac, struct pe_session *pe_session)
 	mac->sch.schObject.gSchBeaconInterval = (uint16_t) bi;
 }
 
-static void sch_edca_profile_update_all(tpAniSirGlobal pmac)
+static void sch_edca_profile_update_all(struct mac_context *pmac)
 {
 	uint32_t i;
 	struct pe_session *psession_entry;
@@ -105,7 +105,7 @@ static void sch_edca_profile_update_all(tpAniSirGlobal pmac)
  * @return None
  */
 
-void sch_process_message(tpAniSirGlobal mac, struct scheduler_msg *pSchMsg)
+void sch_process_message(struct mac_context *mac, struct scheduler_msg *pSchMsg)
 {
 	switch (pSchMsg->type) {
 	case SIR_CFG_PARAM_UPDATE_IND:
@@ -132,7 +132,7 @@ void sch_process_message(tpAniSirGlobal mac, struct scheduler_msg *pSchMsg)
  * sepcified in the config params are delivered in this order: BE, BK, VI, VO
  */
 static QDF_STATUS
-sch_get_params(tpAniSirGlobal mac,
+sch_get_params(struct mac_context *mac,
 	       uint32_t params[][CFG_EDCA_DATA_LEN],
 	       uint8_t local)
 {
@@ -235,7 +235,7 @@ sch_get_params(tpAniSirGlobal mac,
  * Return: true if wmm param updated, false if wmm param not updated
  */
 static bool
-broadcast_wmm_of_concurrent_sta_session(tpAniSirGlobal mac_ctx,
+broadcast_wmm_of_concurrent_sta_session(struct mac_context *mac_ctx,
 					struct pe_session *session)
 {
 	uint8_t i, j;
@@ -293,7 +293,7 @@ broadcast_wmm_of_concurrent_sta_session(tpAniSirGlobal mac_ctx,
 	return true;
 }
 
-void sch_qos_update_broadcast(tpAniSirGlobal mac, struct pe_session *pe_session)
+void sch_qos_update_broadcast(struct mac_context *mac, struct pe_session *pe_session)
 {
 	uint32_t params[4][CFG_EDCA_DATA_LEN];
 	uint32_t cwminidx, cwmaxidx, txopidx;
@@ -381,7 +381,7 @@ void sch_qos_update_broadcast(tpAniSirGlobal mac, struct pe_session *pe_session)
 		pe_err("Unable to set beacon fields!");
 }
 
-void sch_qos_update_local(tpAniSirGlobal mac, struct pe_session *pe_session)
+void sch_qos_update_local(struct mac_context *mac, struct pe_session *pe_session)
 {
 
 	uint32_t params[4][CFG_EDCA_DATA_LEN];
@@ -408,7 +408,7 @@ void sch_qos_update_local(tpAniSirGlobal mac, struct pe_session *pe_session)
  *
  * return none
  */
-void sch_set_default_edca_params(tpAniSirGlobal mac, struct pe_session *pe_session)
+void sch_set_default_edca_params(struct mac_context *mac, struct pe_session *pe_session)
 {
 	uint32_t params[4][CFG_EDCA_DATA_LEN];
 
@@ -431,7 +431,7 @@ void sch_set_default_edca_params(tpAniSirGlobal mac, struct pe_session *pe_sessi
  * Return  none
  */
 static void
-set_sch_edca_params(tpAniSirGlobal mac,
+set_sch_edca_params(struct mac_context *mac,
 		    uint32_t params[][CFG_EDCA_DATA_LEN],
 		    struct pe_session *pe_session)
 {
@@ -491,7 +491,7 @@ set_sch_edca_params(tpAniSirGlobal mac,
  * Return  none
  */
 static QDF_STATUS
-get_wmm_local_params(tpAniSirGlobal mac_ctx,
+get_wmm_local_params(struct mac_context *mac_ctx,
 		     uint32_t params[][CFG_EDCA_DATA_LEN])
 {
 	uint32_t i, idx;
@@ -531,7 +531,7 @@ get_wmm_local_params(tpAniSirGlobal mac_ctx,
  *
  * Return  none
  */
-void sch_edca_profile_update(tpAniSirGlobal mac, struct pe_session *pe_session)
+void sch_edca_profile_update(struct mac_context *mac, struct pe_session *pe_session)
 {
 	if (LIM_IS_AP_ROLE(pe_session) ||
 	    LIM_IS_IBSS_ROLE(pe_session)) {
