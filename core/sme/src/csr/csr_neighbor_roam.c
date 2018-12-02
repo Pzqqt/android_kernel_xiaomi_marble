@@ -52,7 +52,7 @@ static const char *lfr_get_config_item_string(uint8_t reason)
 static void csr_neighbor_roam_reset_channel_info(tpCsrNeighborRoamChannelInfo
 						 rChInfo);
 
-void csr_neighbor_roam_state_transition(tpAniSirGlobal mac_ctx,
+void csr_neighbor_roam_state_transition(struct mac_context *mac_ctx,
 		uint8_t newstate, uint8_t session)
 {
 	mac_ctx->roam.neighborRoamInfo[session].prevNeighborRoamState =
@@ -95,7 +95,7 @@ uint8_t *csr_neighbor_roam_state_to_string(uint8_t state)
  */
 
 void csr_neighbor_roam_send_lfr_metric_event(
-				tpAniSirGlobal mac_ctx,
+				struct mac_context *mac_ctx,
 				uint8_t session_id,
 				tSirMacAddr bssid,
 				eRoamCmdStatus status)
@@ -123,7 +123,7 @@ void csr_neighbor_roam_send_lfr_metric_event(
  *
  * Return: None
  */
-QDF_STATUS csr_neighbor_roam_update_fast_roaming_enabled(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_neighbor_roam_update_fast_roaming_enabled(struct mac_context *mac_ctx,
 						uint8_t session_id,
 						const bool fast_roam_enabled)
 {
@@ -161,7 +161,7 @@ QDF_STATUS csr_neighbor_roam_update_fast_roaming_enabled(tpAniSirGlobal mac_ctx,
 	}
 	return qdf_status;
 }
-QDF_STATUS csr_neighbor_roam_update_config(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_neighbor_roam_update_config(struct mac_context *mac_ctx,
 		uint8_t session_id, uint8_t value, uint8_t reason)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
@@ -263,7 +263,7 @@ static void csr_neighbor_roam_reset_channel_info(tpCsrNeighborRoamChannelInfo
  * Return: None
  */
 static void csr_neighbor_roam_reset_connected_state_control_info(
-							tpAniSirGlobal mac,
+							struct mac_context *mac,
 							uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
@@ -289,7 +289,7 @@ static void csr_neighbor_roam_reset_connected_state_control_info(
 }
 
 static void csr_neighbor_roam_reset_report_scan_state_control_info(
-							tpAniSirGlobal mac,
+							struct mac_context *mac,
 							uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
@@ -319,7 +319,7 @@ static void csr_neighbor_roam_reset_report_scan_state_control_info(
  *
  * Return: None
  */
-static void csr_neighbor_roam_reset_init_state_control_info(tpAniSirGlobal mac,
+static void csr_neighbor_roam_reset_init_state_control_info(struct mac_context *mac,
 							    uint8_t sessionId)
 {
 	csr_neighbor_roam_reset_connected_state_control_info(mac, sessionId);
@@ -343,7 +343,7 @@ static void csr_neighbor_roam_reset_init_state_control_info(tpAniSirGlobal mac,
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE otherwise
  */
 QDF_STATUS
-csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal mac,
+csr_neighbor_roam_prepare_scan_profile_filter(struct mac_context *mac,
 					      tCsrScanResultFilter *pScanFilter,
 					      uint8_t sessionId)
 {
@@ -510,7 +510,7 @@ enum band_info csr_get_rf_band(uint8_t channel)
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE otherwise
  */
-QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(tpAniSirGlobal
+QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(struct mac_context *
 						mac,
 						uint8_t sessionId,
 						uint8_t *pInputChannelList,
@@ -572,7 +572,7 @@ QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(tpAniSirGlobal
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE otherwise
  */
-QDF_STATUS csr_neighbor_roam_merge_channel_lists(tpAniSirGlobal mac,
+QDF_STATUS csr_neighbor_roam_merge_channel_lists(struct mac_context *mac,
 						 uint8_t *pInputChannelList,
 						 uint8_t inputNumOfChannels,
 						 uint8_t *pOutputChannelList,
@@ -650,7 +650,7 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(tpAniSirGlobal mac,
  *
  * Return: bool
  */
-static bool csr_neighbor_roam_is_ssid_and_security_match(tpAniSirGlobal mac,
+static bool csr_neighbor_roam_is_ssid_and_security_match(struct mac_context *mac,
 		tCsrRoamConnectedProfile *pCurProfile,
 		tSirBssDescription *pBssDesc, tDot11fBeaconIEs *pIes,
 		uint8_t session_id)
@@ -710,7 +710,7 @@ static bool csr_neighbor_roam_is_ssid_and_security_match(tpAniSirGlobal mac,
 
 }
 
-bool csr_neighbor_roam_is_new_connected_profile(tpAniSirGlobal mac,
+bool csr_neighbor_roam_is_new_connected_profile(struct mac_context *mac,
 						uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
@@ -749,7 +749,7 @@ bool csr_neighbor_roam_is_new_connected_profile(tpAniSirGlobal mac,
 	return fNew;
 }
 
-bool csr_neighbor_roam_connected_profile_match(tpAniSirGlobal mac,
+bool csr_neighbor_roam_connected_profile_match(struct mac_context *mac,
 					       uint8_t sessionId,
 					       struct tag_csrscan_result
 						*pResult,
@@ -781,7 +781,7 @@ bool csr_neighbor_roam_connected_profile_match(tpAniSirGlobal mac,
  *
  * Return: VOID
  */
-void csr_roam_reset_roam_params(tpAniSirGlobal mac_ctx)
+void csr_roam_reset_roam_params(struct mac_context *mac_ctx)
 {
 	struct roam_ext_params *roam_params = NULL;
 
@@ -809,7 +809,7 @@ void csr_roam_reset_roam_params(tpAniSirGlobal mac_ctx)
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal mac,
+QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 						 uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
@@ -948,7 +948,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal mac,
  * Return: QDF status
  */
 static void csr_neighbor_roam_info_ctx_init(
-		tpAniSirGlobal mac,
+		struct mac_context *mac,
 		uint8_t session_id)
 {
 	tpCsrNeighborRoamControlInfo ngbr_roam_info =
@@ -1076,7 +1076,7 @@ static void csr_neighbor_roam_info_ctx_init(
  * Return: QDF status
  */
 QDF_STATUS csr_neighbor_roam_indicate_connect(
-		tpAniSirGlobal mac, uint8_t session_id,
+		struct mac_context *mac, uint8_t session_id,
 		QDF_STATUS qdf_status)
 {
 	tpCsrNeighborRoamControlInfo ngbr_roam_info =
@@ -1170,7 +1170,7 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
  *
  * return QDF_STATUS_SUCCESS on success, corresponding error code otherwise
  */
-static QDF_STATUS csr_neighbor_roam_init11r_assoc_info(tpAniSirGlobal mac)
+static QDF_STATUS csr_neighbor_roam_init11r_assoc_info(struct mac_context *mac)
 {
 	QDF_STATUS status;
 	uint8_t i;
@@ -1216,7 +1216,7 @@ static QDF_STATUS csr_neighbor_roam_init11r_assoc_info(tpAniSirGlobal mac)
  *
  * Return QDF_STATUS_SUCCESS on success, corresponding error code otherwise
  */
-QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal mac, uint8_t sessionId)
+QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId)
 {
 	QDF_STATUS status;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
@@ -1345,7 +1345,7 @@ QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal mac, uint8_t sessionId)
  *
  * Return VOID
  */
-void csr_neighbor_roam_close(tpAniSirGlobal mac, uint8_t sessionId)
+void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&mac->roam.neighborRoamInfo[sessionId];
@@ -1409,7 +1409,7 @@ void csr_neighbor_roam_close(tpAniSirGlobal mac, uint8_t sessionId)
  *
  * Return: true if 11r Association, false otherwise.
  */
-bool csr_neighbor_roam_is11r_assoc(tpAniSirGlobal mac_ctx, uint8_t session_id)
+bool csr_neighbor_roam_is11r_assoc(struct mac_context *mac_ctx, uint8_t session_id)
 {
 	return mac_ctx->roam.neighborRoamInfo[session_id].is11rAssoc;
 }
@@ -1423,7 +1423,7 @@ bool csr_neighbor_roam_is11r_assoc(tpAniSirGlobal mac_ctx, uint8_t session_id)
  *
  * Return bool
  */
-bool csr_neighbor_middle_of_roaming(tpAniSirGlobal mac, uint8_t sessionId)
+bool csr_neighbor_middle_of_roaming(struct mac_context *mac, uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&mac->roam.neighborRoamInfo[sessionId];
@@ -1448,7 +1448,7 @@ bool csr_neighbor_middle_of_roaming(tpAniSirGlobal mac, uint8_t sessionId)
  * Return: status
  */
 static QDF_STATUS csr_neighbor_roam_process_handoff_req(
-			tpAniSirGlobal mac_ctx,
+			struct mac_context *mac_ctx,
 			uint8_t session_id)
 {
 	tpCsrNeighborRoamControlInfo roam_ctrl_info =
@@ -1562,7 +1562,7 @@ end:
  *
  * Return QDF_STATUS_SUCCESS on success, corresponding error code otherwise
  */
-QDF_STATUS csr_neighbor_roam_sssid_scan_done(tpAniSirGlobal mac,
+QDF_STATUS csr_neighbor_roam_sssid_scan_done(struct mac_context *mac,
 					   uint8_t sessionId, QDF_STATUS status)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
@@ -1618,7 +1618,7 @@ QDF_STATUS csr_neighbor_roam_sssid_scan_done(tpAniSirGlobal mac,
  * Return: status
  */
 QDF_STATUS csr_neighbor_roam_handoff_req_hdlr(
-			tpAniSirGlobal mac_ctx, void *msg)
+			struct mac_context *mac_ctx, void *msg)
 {
 	tAniHandoffReq *handoff_req = (tAniHandoffReq *) msg;
 	uint32_t session_id = handoff_req->sessionId;
@@ -1675,7 +1675,7 @@ QDF_STATUS csr_neighbor_roam_handoff_req_hdlr(
  *
  * Return: QDF_STATUS_SUCCESS on success, corresponding error code otherwise
  */
-QDF_STATUS csr_neighbor_roam_proceed_with_handoff_req(tpAniSirGlobal mac,
+QDF_STATUS csr_neighbor_roam_proceed_with_handoff_req(struct mac_context *mac,
 						      uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
@@ -1711,7 +1711,7 @@ QDF_STATUS csr_neighbor_roam_proceed_with_handoff_req(tpAniSirGlobal mac,
  *
  * Return QDF_STATUS_SUCCESS on success, corresponding error code otherwise
  */
-QDF_STATUS csr_neighbor_roam_start_lfr_scan(tpAniSirGlobal mac,
+QDF_STATUS csr_neighbor_roam_start_lfr_scan(struct mac_context *mac,
 						uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =

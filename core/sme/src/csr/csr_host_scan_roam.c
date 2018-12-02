@@ -44,7 +44,7 @@
  *
  * Return: Success or Failure
  */
-QDF_STATUS csr_roam_issue_reassociate(tpAniSirGlobal mac,
+QDF_STATUS csr_roam_issue_reassociate(struct mac_context *mac,
 	uint32_t sessionId, tSirBssDescription *pSirBssDesc,
 	tDot11fBeaconIEs *pIes, struct csr_roam_profile *pProfile)
 {
@@ -66,7 +66,7 @@ QDF_STATUS csr_roam_issue_reassociate(tpAniSirGlobal mac,
  *
  * Return: Success or Failure status
  */
-QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal mac,
+QDF_STATUS csr_roam_issue_reassociate_cmd(struct mac_context *mac,
 		uint32_t sessionId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -159,7 +159,7 @@ QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal mac,
  * Return: void
  */
 
-void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
+void csr_neighbor_roam_process_scan_results(struct mac_context *mac_ctx,
 		uint8_t sessionid, tScanResultHandle *scan_results_list)
 {
 	tCsrScanResultInfo *scan_result;
@@ -382,7 +382,7 @@ void csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void csr_neighbor_roam_trigger_handoff(tpAniSirGlobal mac_ctx,
+void csr_neighbor_roam_trigger_handoff(struct mac_context *mac_ctx,
 				      uint8_t session_id)
 {
 	if (csr_roam_is_fast_roam_enabled(mac_ctx, session_id))
@@ -398,7 +398,7 @@ void csr_neighbor_roam_trigger_handoff(tpAniSirGlobal mac_ctx,
  *
  * Return: Success or Failure
  */
-QDF_STATUS csr_neighbor_roam_process_scan_complete(tpAniSirGlobal mac,
+QDF_STATUS csr_neighbor_roam_process_scan_complete(struct mac_context *mac,
 		uint8_t sessionId)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
@@ -466,7 +466,7 @@ QDF_STATUS csr_neighbor_roam_process_scan_complete(tpAniSirGlobal mac,
  *
  * Return: QDF_STATUS_SUCCESS on success, corresponding error code otherwise
  */
-QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(tpAniSirGlobal mac,
+QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(struct mac_context *mac,
 		void *pMsg)
 {
 	tSirSmeCandidateFoundInd *pSirSmeCandidateFoundInd =
@@ -512,7 +512,7 @@ QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(tpAniSirGlobal mac,
  *
  * Return: none
  */
-void csr_neighbor_roam_free_roamable_bss_list(tpAniSirGlobal mac_ctx,
+void csr_neighbor_roam_free_roamable_bss_list(struct mac_context *mac_ctx,
 					      tDblLinkList *llist)
 {
 	tpCsrNeighborRoamBSSInfo result = NULL;
@@ -543,7 +543,7 @@ void csr_neighbor_roam_free_roamable_bss_list(tpAniSirGlobal mac_ctx,
  *
  * Return: true if successfully removed, else false
  */
-bool csr_neighbor_roam_remove_roamable_ap_list_entry(tpAniSirGlobal mac,
+bool csr_neighbor_roam_remove_roamable_ap_list_entry(struct mac_context *mac,
 						     tDblLinkList *pList,
 						     tpCsrNeighborRoamBSSInfo
 						     pNeighborEntry)
@@ -571,7 +571,7 @@ bool csr_neighbor_roam_remove_roamable_ap_list_entry(tpAniSirGlobal mac,
  * Return: Neighbor Roam BSS Node to be returned
  */
 tpCsrNeighborRoamBSSInfo csr_neighbor_roam_next_roamable_ap(
-				tpAniSirGlobal mac_ctx, tDblLinkList *llist,
+				struct mac_context *mac_ctx, tDblLinkList *llist,
 				tpCsrNeighborRoamBSSInfo neighbor_entry)
 {
 	tListElem *entry = NULL;
@@ -603,7 +603,7 @@ tpCsrNeighborRoamBSSInfo csr_neighbor_roam_next_roamable_ap(
  *
  * Return: none
  */
-void csr_neighbor_roam_request_handoff(tpAniSirGlobal mac_ctx,
+void csr_neighbor_roam_request_handoff(struct mac_context *mac_ctx,
 		uint8_t session_id)
 {
 	struct csr_roam_info roam_info;
@@ -702,7 +702,7 @@ void csr_neighbor_roam_request_handoff(tpAniSirGlobal mac_ctx,
  * Return: true if able find handoff AP, false otherwise
  */
 
-bool csr_neighbor_roam_get_handoff_ap_info(tpAniSirGlobal mac,
+bool csr_neighbor_roam_get_handoff_ap_info(struct mac_context *mac,
 			tpCsrNeighborRoamBSSInfo hand_off_node,
 			uint8_t session_id)
 {
@@ -770,7 +770,7 @@ bool csr_neighbor_roam_get_handoff_ap_info(tpAniSirGlobal mac,
  *
  * Return: true if reassoc in progress, false otherwise
  */
-bool csr_neighbor_roam_is_handoff_in_progress(tpAniSirGlobal mac,
+bool csr_neighbor_roam_is_handoff_in_progress(struct mac_context *mac,
 		uint8_t sessionId)
 {
 	if (eCSR_NEIGHBOR_ROAM_STATE_REASSOCIATING ==
@@ -791,7 +791,7 @@ bool csr_neighbor_roam_is_handoff_in_progress(tpAniSirGlobal mac,
  *
  * Return: None
  */
-void csr_neighbor_roam_free_neighbor_roam_bss_node(tpAniSirGlobal mac,
+void csr_neighbor_roam_free_neighbor_roam_bss_node(struct mac_context *mac,
 						   tpCsrNeighborRoamBSSInfo
 						   neighborRoamBSSNode)
 {

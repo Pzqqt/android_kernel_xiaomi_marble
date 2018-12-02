@@ -35,7 +35,7 @@
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
+QDF_STATUS csr_msg_processor(struct mac_context *mac_ctx, void *msg_buf)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirSmeRsp *sme_rsp = (tSirSmeRsp *) msg_buf;

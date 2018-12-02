@@ -1543,7 +1543,7 @@ typedef QDF_STATUS (*csr_session_close_cb)(uint8_t session_id);
 #define CSR_IS_AUTH_TYPE_SAE(auth_type) (false)
 #endif
 
-QDF_STATUS csr_set_channels(tpAniSirGlobal mac, tCsrConfigParam *pParam);
+QDF_STATUS csr_set_channels(struct mac_context *mac, tCsrConfigParam *pParam);
 
 /* enum to string conversion for debug output */
 const char *get_e_roam_cmd_status_str(eRoamCmdStatus val);
@@ -1567,12 +1567,12 @@ typedef void (*tCsrSnrCallback)(int8_t snr, uint32_t staId, void *pContext);
  * Return: Success or Failure
  */
 #ifdef WLAN_FEATURE_HOST_ROAM
-QDF_STATUS csr_roam_issue_ft_preauth_req(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 					 uint32_t session_id,
 					 tpSirBssDescription bss_desc);
 #else
 static inline
-QDF_STATUS csr_roam_issue_ft_preauth_req(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 					 uint32_t session_id,
 					 tpSirBssDescription bss_desc)
 {
@@ -1586,11 +1586,11 @@ typedef void (*csr_readyToExtWoWCallback)(void *pContext, bool status);
 #endif
 typedef void (*csr_link_status_callback)(uint8_t status, void *context);
 #ifdef FEATURE_WLAN_TDLS
-void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx,
+void csr_roam_fill_tdls_info(struct mac_context *mac_ctx,
 			     struct csr_roam_info *roam_info,
 			     tpSirSmeJoinRsp join_rsp);
 #else
-static inline void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx,
+static inline void csr_roam_fill_tdls_info(struct mac_context *mac_ctx,
 					   struct csr_roam_info *roam_info,
 					   tpSirSmeJoinRsp join_rsp)
 {}
@@ -1614,7 +1614,7 @@ void csr_packetdump_timer_stop(void);
  * Return: chan status info
  */
 struct lim_channel_status *
-csr_get_channel_status(tpAniSirGlobal mac, uint32_t channel_id);
+csr_get_channel_status(struct mac_context *mac, uint32_t channel_id);
 
 /**
  * csr_clear_channel_status() - clear chan info
@@ -1622,5 +1622,5 @@ csr_get_channel_status(tpAniSirGlobal mac, uint32_t channel_id);
  *
  * Return: none
  */
-void csr_clear_channel_status(tpAniSirGlobal mac);
+void csr_clear_channel_status(struct mac_context *mac);
 #endif

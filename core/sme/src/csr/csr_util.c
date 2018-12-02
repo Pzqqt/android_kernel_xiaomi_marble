@@ -608,7 +608,7 @@ bool csr_is_bss_id_equal(tSirBssDescription *pSirBssDesc1,
 	return fEqual;
 }
 
-static bool csr_is_conn_state(tpAniSirGlobal mac_ctx, uint32_t session_id,
+static bool csr_is_conn_state(struct mac_context *mac_ctx, uint32_t session_id,
 			      eCsrConnectState state)
 {
 	QDF_BUG(session_id < CSR_ROAM_SESSION_MAX);
@@ -618,53 +618,53 @@ static bool csr_is_conn_state(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	return mac_ctx->roam.roamSession[session_id].connectState == state;
 }
 
-bool csr_is_conn_state_connected_ibss(tpAniSirGlobal mac_ctx,
+bool csr_is_conn_state_connected_ibss(struct mac_context *mac_ctx,
 				      uint32_t session_id)
 {
 	return csr_is_conn_state(mac_ctx, session_id,
 				 eCSR_ASSOC_STATE_TYPE_IBSS_CONNECTED);
 }
 
-bool csr_is_conn_state_disconnected_ibss(tpAniSirGlobal mac_ctx,
+bool csr_is_conn_state_disconnected_ibss(struct mac_context *mac_ctx,
 					 uint32_t session_id)
 {
 	return csr_is_conn_state(mac_ctx, session_id,
 				 eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED);
 }
 
-bool csr_is_conn_state_connected_infra(tpAniSirGlobal mac_ctx,
+bool csr_is_conn_state_connected_infra(struct mac_context *mac_ctx,
 				       uint32_t session_id)
 {
 	return csr_is_conn_state(mac_ctx, session_id,
 				 eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED);
 }
 
-bool csr_is_conn_state_connected(tpAniSirGlobal mac, uint32_t sessionId)
+bool csr_is_conn_state_connected(struct mac_context *mac, uint32_t sessionId)
 {
 	return csr_is_conn_state_connected_ibss(mac, sessionId) ||
 		csr_is_conn_state_connected_infra(mac, sessionId) ||
 		csr_is_conn_state_connected_wds(mac, sessionId);
 }
 
-bool csr_is_conn_state_infra(tpAniSirGlobal mac, uint32_t sessionId)
+bool csr_is_conn_state_infra(struct mac_context *mac, uint32_t sessionId)
 {
 	return csr_is_conn_state_connected_infra(mac, sessionId);
 }
 
-bool csr_is_conn_state_ibss(tpAniSirGlobal mac, uint32_t sessionId)
+bool csr_is_conn_state_ibss(struct mac_context *mac, uint32_t sessionId)
 {
 	return csr_is_conn_state_connected_ibss(mac, sessionId) ||
 	       csr_is_conn_state_disconnected_ibss(mac, sessionId);
 }
 
-bool csr_is_conn_state_connected_wds(tpAniSirGlobal mac_ctx,
+bool csr_is_conn_state_connected_wds(struct mac_context *mac_ctx,
 				     uint32_t session_id)
 {
 	return csr_is_conn_state(mac_ctx, session_id,
 				 eCSR_ASSOC_STATE_TYPE_WDS_CONNECTED);
 }
 
-bool csr_is_conn_state_connected_infra_ap(tpAniSirGlobal mac_ctx,
+bool csr_is_conn_state_connected_infra_ap(struct mac_context *mac_ctx,
 					  uint32_t session_id)
 {
 	return csr_is_conn_state(mac_ctx, session_id,
@@ -673,20 +673,20 @@ bool csr_is_conn_state_connected_infra_ap(tpAniSirGlobal mac_ctx,
 				  eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTED);
 }
 
-bool csr_is_conn_state_disconnected_wds(tpAniSirGlobal mac_ctx,
+bool csr_is_conn_state_disconnected_wds(struct mac_context *mac_ctx,
 					uint32_t session_id)
 {
 	return csr_is_conn_state(mac_ctx, session_id,
 				 eCSR_ASSOC_STATE_TYPE_WDS_DISCONNECTED);
 }
 
-bool csr_is_conn_state_wds(tpAniSirGlobal mac, uint32_t sessionId)
+bool csr_is_conn_state_wds(struct mac_context *mac, uint32_t sessionId)
 {
 	return csr_is_conn_state_connected_wds(mac, sessionId) ||
 	       csr_is_conn_state_disconnected_wds(mac, sessionId);
 }
 
-static bool csr_is_conn_state_ap(tpAniSirGlobal mac, uint32_t sessionId)
+static bool csr_is_conn_state_ap(struct mac_context *mac, uint32_t sessionId)
 {
 	struct csr_roam_session *pSession;
 
@@ -698,7 +698,7 @@ static bool csr_is_conn_state_ap(tpAniSirGlobal mac, uint32_t sessionId)
 	return false;
 }
 
-bool csr_is_any_session_in_connect_state(tpAniSirGlobal mac)
+bool csr_is_any_session_in_connect_state(struct mac_context *mac)
 {
 	uint32_t i;
 	bool fRc = false;
@@ -716,7 +716,7 @@ bool csr_is_any_session_in_connect_state(tpAniSirGlobal mac)
 	return fRc;
 }
 
-int8_t csr_get_infra_session_id(tpAniSirGlobal mac)
+int8_t csr_get_infra_session_id(struct mac_context *mac)
 {
 	uint8_t i;
 	int8_t sessionid = -1;
@@ -732,7 +732,7 @@ int8_t csr_get_infra_session_id(tpAniSirGlobal mac)
 	return sessionid;
 }
 
-uint8_t csr_get_infra_operation_channel(tpAniSirGlobal mac, uint8_t sessionId)
+uint8_t csr_get_infra_operation_channel(struct mac_context *mac, uint8_t sessionId)
 {
 	uint8_t channel;
 
@@ -746,7 +746,7 @@ uint8_t csr_get_infra_operation_channel(tpAniSirGlobal mac, uint8_t sessionId)
 	return channel;
 }
 
-bool csr_is_session_client_and_connected(tpAniSirGlobal mac, uint8_t sessionId)
+bool csr_is_session_client_and_connected(struct mac_context *mac, uint8_t sessionId)
 {
 	struct csr_roam_session *pSession = NULL;
 
@@ -774,7 +774,7 @@ bool csr_is_session_client_and_connected(tpAniSirGlobal mac, uint8_t sessionId)
  *
  * Return: uint8_t
  */
-uint8_t csr_get_concurrent_operation_channel(tpAniSirGlobal mac_ctx)
+uint8_t csr_get_concurrent_operation_channel(struct mac_context *mac_ctx)
 {
 	struct csr_roam_session *session = NULL;
 	uint8_t i = 0;
@@ -828,7 +828,7 @@ uint8_t csr_get_concurrent_operation_channel(tpAniSirGlobal mac_ctx)
  *
  * Return: none
  */
-static void csr_get_ch_from_ht_profile(tpAniSirGlobal mac,
+static void csr_get_ch_from_ht_profile(struct mac_context *mac,
 				       tCsrRoamHTProfile *htp,
 				       uint16_t och, uint16_t *cfreq,
 				       uint16_t *hbw)
@@ -900,7 +900,7 @@ ret:
  *
  * Return: none
  */
-static void csr_calc_chb_for_sap_phymode(tpAniSirGlobal mac_ctx,
+static void csr_calc_chb_for_sap_phymode(struct mac_context *mac_ctx,
 		uint16_t *sap_ch, eCsrPhyMode *sap_phymode,
 		uint16_t *sap_cch, uint16_t *sap_hbw, uint8_t *chb)
 {
@@ -973,7 +973,7 @@ static void csr_calc_chb_for_sap_phymode(tpAniSirGlobal mac_ctx,
  *
  * Return: none
  */
-static void csr_handle_conc_chnl_overlap_for_sap_go(tpAniSirGlobal mac_ctx,
+static void csr_handle_conc_chnl_overlap_for_sap_go(struct mac_context *mac_ctx,
 		struct csr_roam_session *session,
 		uint16_t *sap_ch, uint16_t *sap_hbw, uint16_t *sap_cfreq,
 		uint16_t *intf_ch, uint16_t *intf_hbw, uint16_t *intf_cfreq)
@@ -1019,7 +1019,7 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(tpAniSirGlobal mac_ctx,
  *
  * Return: uint16_t
  */
-uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
+uint16_t csr_check_concurrent_channel_overlap(struct mac_context *mac_ctx,
 			uint16_t sap_ch, eCsrPhyMode sap_phymode,
 			uint8_t cc_switch_mode)
 {
@@ -1155,7 +1155,7 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 }
 #endif
 
-bool csr_is_all_session_disconnected(tpAniSirGlobal mac)
+bool csr_is_all_session_disconnected(struct mac_context *mac)
 {
 	uint32_t i;
 	bool fRc = true;
@@ -1180,7 +1180,7 @@ bool csr_is_all_session_disconnected(tpAniSirGlobal mac)
  *
  * Return: true or false
  */
-bool csr_is_sta_session_connected(tpAniSirGlobal mac_ctx)
+bool csr_is_sta_session_connected(struct mac_context *mac_ctx)
 {
 	uint32_t i;
 	struct csr_roam_session *pSession = NULL;
@@ -1209,7 +1209,7 @@ bool csr_is_sta_session_connected(tpAniSirGlobal mac_ctx)
  *
  * Return: true or false
  */
-bool csr_is_p2p_session_connected(tpAniSirGlobal mac)
+bool csr_is_p2p_session_connected(struct mac_context *mac)
 {
 	uint32_t i;
 	struct csr_roam_session *pSession = NULL;
@@ -1235,7 +1235,7 @@ bool csr_is_p2p_session_connected(tpAniSirGlobal mac)
 	return false;
 }
 
-bool csr_is_any_session_connected(tpAniSirGlobal mac)
+bool csr_is_any_session_connected(struct mac_context *mac)
 {
 	uint32_t i, count;
 	bool fRc = false;
@@ -1252,7 +1252,7 @@ bool csr_is_any_session_connected(tpAniSirGlobal mac)
 	return fRc;
 }
 
-bool csr_is_infra_connected(tpAniSirGlobal mac)
+bool csr_is_infra_connected(struct mac_context *mac)
 {
 	uint32_t i;
 	bool fRc = false;
@@ -1268,7 +1268,7 @@ bool csr_is_infra_connected(tpAniSirGlobal mac)
 	return fRc;
 }
 
-uint8_t csr_get_connected_infra(tpAniSirGlobal mac_ctx)
+uint8_t csr_get_connected_infra(struct mac_context *mac_ctx)
 {
 	uint32_t i;
 	uint8_t connected_session = CSR_SESSION_ID_INVALID;
@@ -1285,7 +1285,7 @@ uint8_t csr_get_connected_infra(tpAniSirGlobal mac_ctx)
 }
 
 
-bool csr_is_concurrent_infra_connected(tpAniSirGlobal mac)
+bool csr_is_concurrent_infra_connected(struct mac_context *mac)
 {
 	uint32_t i, noOfConnectedInfra = 0;
 
@@ -1304,7 +1304,7 @@ bool csr_is_concurrent_infra_connected(tpAniSirGlobal mac)
 	return fRc;
 }
 
-bool csr_is_ibss_started(tpAniSirGlobal mac)
+bool csr_is_ibss_started(struct mac_context *mac)
 {
 	uint32_t i;
 	bool fRc = false;
@@ -1320,7 +1320,7 @@ bool csr_is_ibss_started(tpAniSirGlobal mac)
 	return fRc;
 }
 
-bool csr_is_concurrent_session_running(tpAniSirGlobal mac)
+bool csr_is_concurrent_session_running(struct mac_context *mac)
 {
 	uint32_t sessionId, noOfCocurrentSession = 0;
 	eCsrConnectState connectState;
@@ -1348,7 +1348,7 @@ bool csr_is_concurrent_session_running(tpAniSirGlobal mac)
 	return fRc;
 }
 
-bool csr_is_infra_ap_started(tpAniSirGlobal mac)
+bool csr_is_infra_ap_started(struct mac_context *mac)
 {
 	uint32_t sessionId;
 	bool fRc = false;
@@ -1366,7 +1366,7 @@ bool csr_is_infra_ap_started(tpAniSirGlobal mac)
 
 }
 
-bool csr_is_conn_state_disconnected(tpAniSirGlobal mac, uint32_t sessionId)
+bool csr_is_conn_state_disconnected(struct mac_context *mac, uint32_t sessionId)
 {
 	return eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED ==
 	       mac->roam.roamSession[sessionId].connectState;
@@ -1382,7 +1382,7 @@ bool csr_is_conn_state_disconnected(tpAniSirGlobal mac, uint32_t sessionId)
  *
  * Return: true or false
  */
-bool csr_is_valid_mc_concurrent_session(tpAniSirGlobal mac_ctx,
+bool csr_is_valid_mc_concurrent_session(struct mac_context *mac_ctx,
 		uint32_t session_id,
 		tSirBssDescription *bss_descr)
 {
@@ -1445,28 +1445,28 @@ bool csr_is_privacy(tSirBssDescription *pSirBssDesc)
 	return (bool) dot11Caps.privacy;
 }
 
-bool csr_is11d_supported(tpAniSirGlobal mac)
+bool csr_is11d_supported(struct mac_context *mac)
 {
 	return mac->roam.configParam.Is11dSupportEnabled;
 }
 
-bool csr_is11h_supported(tpAniSirGlobal mac)
+bool csr_is11h_supported(struct mac_context *mac)
 {
 	return mac->roam.configParam.Is11hSupportEnabled;
 }
 
-bool csr_is11e_supported(tpAniSirGlobal mac)
+bool csr_is11e_supported(struct mac_context *mac)
 {
 	return mac->roam.configParam.Is11eSupportEnabled;
 }
 
-bool csr_is_mcc_supported(tpAniSirGlobal mac)
+bool csr_is_mcc_supported(struct mac_context *mac)
 {
 	return mac->roam.configParam.fenableMCCMode;
 
 }
 
-bool csr_is_wmm_supported(tpAniSirGlobal mac)
+bool csr_is_wmm_supported(struct mac_context *mac)
 {
 	if (eCsrRoamWmmNoQos == mac->roam.configParam.WMMSupportMode)
 		return false;
@@ -1475,7 +1475,7 @@ bool csr_is_wmm_supported(tpAniSirGlobal mac)
 }
 
 /* pIes is the IEs for pSirBssDesc2 */
-bool csr_is_ssid_equal(tpAniSirGlobal mac,
+bool csr_is_ssid_equal(struct mac_context *mac,
 		       tSirBssDescription *pSirBssDesc1,
 		       tSirBssDescription *pSirBssDesc2,
 		       tDot11fBeaconIEs *pIes2)
@@ -1523,7 +1523,7 @@ bool csr_is_ssid_equal(tpAniSirGlobal mac,
 }
 
 /* pIes can be passed in as NULL if the caller doesn't have one prepared */
-static bool csr_is_bss_description_wme(tpAniSirGlobal mac,
+static bool csr_is_bss_description_wme(struct mac_context *mac,
 				       tSirBssDescription *pSirBssDesc,
 				       tDot11fBeaconIEs *pIes)
 {
@@ -1557,7 +1557,7 @@ static bool csr_is_bss_description_wme(tpAniSirGlobal mac,
 	return fWme;
 }
 
-eCsrMediaAccessType csr_get_qos_from_bss_desc(tpAniSirGlobal mac_ctx,
+eCsrMediaAccessType csr_get_qos_from_bss_desc(struct mac_context *mac_ctx,
 					      tSirBssDescription *pSirBssDesc,
 					      tDot11fBeaconIEs *pIes)
 {
@@ -1597,7 +1597,7 @@ eCsrMediaAccessType csr_get_qos_from_bss_desc(tpAniSirGlobal mac_ctx,
 }
 
 /* Caller allocates memory for pIEStruct */
-QDF_STATUS csr_parse_bss_description_ies(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_parse_bss_description_ies(struct mac_context *mac_ctx,
 					 tSirBssDescription *pBssDesc,
 					 tDot11fBeaconIEs *pIEStruct)
 {
@@ -1620,7 +1620,7 @@ QDF_STATUS csr_parse_bss_description_ies(tpAniSirGlobal mac_ctx,
  * Caller must free the memory after it is done with the data only if
  * this function succeeds
  */
-QDF_STATUS csr_get_parsed_bss_description_ies(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_get_parsed_bss_description_ies(struct mac_context *mac_ctx,
 					      tSirBssDescription *pBssDesc,
 					      tDot11fBeaconIEs **ppIEStruct)
 {
@@ -1684,18 +1684,18 @@ bool csr_is_nullssid(uint8_t *pBssSsid, uint8_t len)
 	return fNullSsid;
 }
 
-uint32_t csr_get_frag_thresh(tpAniSirGlobal mac_ctx)
+uint32_t csr_get_frag_thresh(struct mac_context *mac_ctx)
 {
 	return mac_ctx->mlme_cfg->threshold.frag_threshold;
 }
 
-uint32_t csr_get_rts_thresh(tpAniSirGlobal mac_ctx)
+uint32_t csr_get_rts_thresh(struct mac_context *mac_ctx)
 {
 	return mac_ctx->mlme_cfg->threshold.rts_threshold;
 }
 
 static eCsrPhyMode
-csr_translate_to_phy_mode_from_bss_desc(tpAniSirGlobal mac_ctx,
+csr_translate_to_phy_mode_from_bss_desc(struct mac_context *mac_ctx,
 					tSirBssDescription *pSirBssDesc,
 					tDot11fBeaconIEs *ies)
 {
@@ -1743,7 +1743,7 @@ csr_translate_to_phy_mode_from_bss_desc(tpAniSirGlobal mac_ctx,
 	return phyMode;
 }
 
-uint32_t csr_translate_to_wni_cfg_dot11_mode(tpAniSirGlobal mac,
+uint32_t csr_translate_to_wni_cfg_dot11_mode(struct mac_context *mac,
 					     enum csr_cfgdot11mode csrDot11Mode)
 {
 	uint32_t ret;
@@ -1828,7 +1828,7 @@ uint32_t csr_translate_to_wni_cfg_dot11_mode(tpAniSirGlobal mac,
  *
  * Return: success
  **/
-QDF_STATUS csr_get_phy_mode_from_bss(tpAniSirGlobal mac,
+QDF_STATUS csr_get_phy_mode_from_bss(struct mac_context *mac,
 		tSirBssDescription *pBSSDescription,
 		eCsrPhyMode *pPhyMode, tDot11fBeaconIEs *pIes)
 {
@@ -1865,7 +1865,7 @@ QDF_STATUS csr_get_phy_mode_from_bss(tpAniSirGlobal mac,
  *
  * Return: true or false
  */
-static bool csr_get_phy_mode_in_use(tpAniSirGlobal mac_ctx,
+static bool csr_get_phy_mode_in_use(struct mac_context *mac_ctx,
 				    eCsrPhyMode phyModeIn,
 				    eCsrPhyMode bssPhyMode,
 				    bool f5GhzBand,
@@ -2078,7 +2078,7 @@ static bool csr_get_phy_mode_in_use(tpAniSirGlobal mac_ctx,
  *
  * Return: true or false based on mode that fits the criteria
  */
-bool csr_is_phy_mode_match(tpAniSirGlobal mac, uint32_t phyMode,
+bool csr_is_phy_mode_match(struct mac_context *mac, uint32_t phyMode,
 			   tSirBssDescription *pSirBssDesc,
 			   struct csr_roam_profile *pProfile,
 			   enum csr_cfgdot11mode *pReturnCfgDot11Mode,
@@ -2174,7 +2174,7 @@ bool csr_is_phy_mode_match(tpAniSirGlobal mac, uint32_t phyMode,
 	return fMatch;
 }
 
-enum csr_cfgdot11mode csr_find_best_phy_mode(tpAniSirGlobal mac,
+enum csr_cfgdot11mode csr_find_best_phy_mode(struct mac_context *mac,
 			uint32_t phyMode)
 {
 	enum csr_cfgdot11mode cfgDot11ModeToUse;
@@ -2221,7 +2221,7 @@ enum csr_cfgdot11mode csr_find_best_phy_mode(tpAniSirGlobal mac,
 	return cfgDot11ModeToUse;
 }
 
-uint32_t csr_get11h_power_constraint(tpAniSirGlobal mac_ctx,
+uint32_t csr_get11h_power_constraint(struct mac_context *mac_ctx,
 				     tDot11fIEPowerConstraints *constraints)
 {
 	uint32_t localPowerConstraint = 0;
@@ -2342,7 +2342,7 @@ bool csr_is_profile_rsn(struct csr_roam_profile *pProfile)
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS csr_update_mcc_p2p_beacon_interval(tpAniSirGlobal mac_ctx)
+static QDF_STATUS csr_update_mcc_p2p_beacon_interval(struct mac_context *mac_ctx)
 {
 	uint32_t session_id = 0;
 	struct csr_roam_session *roam_session;
@@ -2386,7 +2386,7 @@ static QDF_STATUS csr_update_mcc_p2p_beacon_interval(tpAniSirGlobal mac_ctx)
 	return QDF_STATUS_E_FAILURE;
 }
 
-static uint16_t csr_calculate_mcc_beacon_interval(tpAniSirGlobal mac,
+static uint16_t csr_calculate_mcc_beacon_interval(struct mac_context *mac,
 						  uint16_t sta_bi,
 						  uint16_t go_gbi)
 {
@@ -2455,7 +2455,7 @@ static uint16_t csr_calculate_mcc_beacon_interval(tpAniSirGlobal mac,
  *
  * Return: bool
  */
-static bool csr_validate_p2pcli_bcn_intrvl(tpAniSirGlobal mac_ctx,
+static bool csr_validate_p2pcli_bcn_intrvl(struct mac_context *mac_ctx,
 		uint8_t chnl_id, uint16_t *bcn_interval, uint32_t session_id,
 		QDF_STATUS *status)
 {
@@ -2493,7 +2493,7 @@ static bool csr_validate_p2pcli_bcn_intrvl(tpAniSirGlobal mac_ctx,
  *
  * Return: bool
  */
-static bool csr_validate_p2pgo_bcn_intrvl(tpAniSirGlobal mac_ctx,
+static bool csr_validate_p2pgo_bcn_intrvl(struct mac_context *mac_ctx,
 		uint8_t chnl_id, uint16_t *bcn_interval,
 		uint32_t session_id, QDF_STATUS *status)
 {
@@ -2557,7 +2557,7 @@ static bool csr_validate_p2pgo_bcn_intrvl(tpAniSirGlobal mac_ctx,
  *
  * Return: bool
  */
-static bool csr_validate_sta_bcn_intrvl(tpAniSirGlobal mac_ctx,
+static bool csr_validate_sta_bcn_intrvl(struct mac_context *mac_ctx,
 			uint8_t chnl_id, uint16_t *bcn_interval,
 			uint32_t session_id, QDF_STATUS *status)
 {
@@ -2667,7 +2667,7 @@ static bool csr_validate_sta_bcn_intrvl(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_validate_mcc_beacon_interval(struct mac_context *mac_ctx,
 					uint8_t chnl_id,
 					uint16_t *bcn_interval,
 					uint32_t cur_session_id,
@@ -2732,7 +2732,7 @@ QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal mac_ctx,
  *
  * Return: true if is 11R auth type, false otherwise
  */
-bool csr_is_auth_type11r(tpAniSirGlobal mac, eCsrAuthType auth_type,
+bool csr_is_auth_type11r(struct mac_context *mac, eCsrAuthType auth_type,
 			uint8_t mdie_present)
 {
 	switch (auth_type) {
@@ -2751,7 +2751,7 @@ bool csr_is_auth_type11r(tpAniSirGlobal mac, eCsrAuthType auth_type,
 }
 
 /* Function to return true if the profile is 11r */
-bool csr_is_profile11r(tpAniSirGlobal mac,
+bool csr_is_profile11r(struct mac_context *mac,
 			struct csr_roam_profile *pProfile)
 {
 	return csr_is_auth_type11r(mac, pProfile->negotiatedAuthType,
@@ -2810,13 +2810,13 @@ bool csr_is_profile_wapi(struct csr_roam_profile *pProfile)
 	return fWapiProfile;
 }
 
-static bool csr_is_wapi_oui_equal(tpAniSirGlobal mac, uint8_t *Oui1,
+static bool csr_is_wapi_oui_equal(struct mac_context *mac, uint8_t *Oui1,
 				  uint8_t *Oui2)
 {
 	return !qdf_mem_cmp(Oui1, Oui2, CSR_WAPI_OUI_SIZE);
 }
 
-static bool csr_is_wapi_oui_match(tpAniSirGlobal mac,
+static bool csr_is_wapi_oui_match(struct mac_context *mac,
 				  uint8_t AllCyphers[][CSR_WAPI_OUI_SIZE],
 				  uint8_t cAllCyphers, uint8_t Cypher[],
 				  uint8_t Oui[])
@@ -2838,13 +2838,13 @@ static bool csr_is_wapi_oui_match(tpAniSirGlobal mac,
 }
 #endif /* FEATURE_WLAN_WAPI */
 
-static bool csr_is_wpa_oui_equal(tpAniSirGlobal mac, uint8_t *Oui1,
+static bool csr_is_wpa_oui_equal(struct mac_context *mac, uint8_t *Oui1,
 				 uint8_t *Oui2)
 {
 	return !qdf_mem_cmp(Oui1, Oui2, CSR_WPA_OUI_SIZE);
 }
 
-static bool csr_is_oui_match(tpAniSirGlobal mac,
+static bool csr_is_oui_match(struct mac_context *mac,
 			     uint8_t AllCyphers[][CSR_WPA_OUI_SIZE],
 			   uint8_t cAllCyphers, uint8_t Cypher[], uint8_t Oui[])
 {
@@ -2864,7 +2864,7 @@ static bool csr_is_oui_match(tpAniSirGlobal mac,
 	return fYes;
 }
 
-static bool csr_match_rsnoui_index(tpAniSirGlobal mac,
+static bool csr_match_rsnoui_index(struct mac_context *mac,
 				   uint8_t AllCyphers[][CSR_RSN_OUI_SIZE],
 				   uint8_t cAllCyphers, uint8_t ouiIndex,
 				   uint8_t Oui[])
@@ -2875,7 +2875,7 @@ static bool csr_match_rsnoui_index(tpAniSirGlobal mac,
 }
 
 #ifdef FEATURE_WLAN_WAPI
-static bool csr_match_wapi_oui_index(tpAniSirGlobal mac,
+static bool csr_match_wapi_oui_index(struct mac_context *mac,
 				     uint8_t AllCyphers[][CSR_WAPI_OUI_SIZE],
 				     uint8_t cAllCyphers, uint8_t ouiIndex,
 				     uint8_t Oui[])
@@ -2887,7 +2887,7 @@ static bool csr_match_wapi_oui_index(tpAniSirGlobal mac,
 #endif /* FEATURE_WLAN_WAPI */
 
 #ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
-static bool csr_match_wpaoui_index(tpAniSirGlobal mac,
+static bool csr_match_wpaoui_index(struct mac_context *mac,
 				   uint8_t AllCyphers[][CSR_RSN_OUI_SIZE],
 				   uint8_t cAllCyphers, uint8_t ouiIndex,
 				   uint8_t Oui[])
@@ -2902,7 +2902,7 @@ static bool csr_match_wpaoui_index(tpAniSirGlobal mac,
 #endif
 
 #ifdef FEATURE_WLAN_WAPI
-static bool csr_is_auth_wapi_cert(tpAniSirGlobal mac,
+static bool csr_is_auth_wapi_cert(struct mac_context *mac,
 				  uint8_t AllSuites[][CSR_WAPI_OUI_SIZE],
 				  uint8_t cAllSuites, uint8_t Oui[])
 {
@@ -2910,7 +2910,7 @@ static bool csr_is_auth_wapi_cert(tpAniSirGlobal mac,
 		(mac, AllSuites, cAllSuites, csr_wapi_oui[1], Oui);
 }
 
-static bool csr_is_auth_wapi_psk(tpAniSirGlobal mac,
+static bool csr_is_auth_wapi_psk(struct mac_context *mac,
 				 uint8_t AllSuites[][CSR_WAPI_OUI_SIZE],
 				 uint8_t cAllSuites, uint8_t Oui[])
 {
@@ -2924,7 +2924,7 @@ static bool csr_is_auth_wapi_psk(tpAniSirGlobal mac,
  * Function for 11R FT Authentication. We match the FT Authentication Cipher
  * suite here. This matches for FT Auth with the 802.1X exchange.
  */
-static bool csr_is_ft_auth_rsn(tpAniSirGlobal mac,
+static bool csr_is_ft_auth_rsn(struct mac_context *mac,
 			       uint8_t AllSuites[][CSR_RSN_OUI_SIZE],
 			       uint8_t cAllSuites, uint8_t Oui[])
 {
@@ -2936,7 +2936,7 @@ static bool csr_is_ft_auth_rsn(tpAniSirGlobal mac,
  * Function for 11R FT Authentication. We match the FT Authentication Cipher
  * suite here. This matches for FT Auth with the PSK.
  */
-static bool csr_is_ft_auth_rsn_psk(tpAniSirGlobal mac,
+static bool csr_is_ft_auth_rsn_psk(struct mac_context *mac,
 				   uint8_t AllSuites[][CSR_RSN_OUI_SIZE],
 				   uint8_t cAllSuites, uint8_t Oui[])
 {
@@ -2952,7 +2952,7 @@ static bool csr_is_ft_auth_rsn_psk(tpAniSirGlobal mac,
  * Authentication Key Management suite here. This matches for CCKM AKM Auth
  * with the 802.1X exchange.
  */
-static bool csr_is_ese_cckm_auth_rsn(tpAniSirGlobal mac,
+static bool csr_is_ese_cckm_auth_rsn(struct mac_context *mac,
 				     uint8_t AllSuites[][CSR_RSN_OUI_SIZE],
 				     uint8_t cAllSuites, uint8_t Oui[])
 {
@@ -2961,7 +2961,7 @@ static bool csr_is_ese_cckm_auth_rsn(tpAniSirGlobal mac,
 }
 
 #ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
-static bool csr_is_ese_cckm_auth_wpa(tpAniSirGlobal mac,
+static bool csr_is_ese_cckm_auth_wpa(struct mac_context *mac,
 				     uint8_t AllSuites[][CSR_WPA_OUI_SIZE],
 				     uint8_t cAllSuites, uint8_t Oui[])
 {
@@ -2972,7 +2972,7 @@ static bool csr_is_ese_cckm_auth_wpa(tpAniSirGlobal mac,
 
 #endif
 
-static bool csr_is_auth_rsn(tpAniSirGlobal mac,
+static bool csr_is_auth_rsn(struct mac_context *mac,
 			    uint8_t AllSuites[][CSR_RSN_OUI_SIZE],
 			    uint8_t cAllSuites, uint8_t Oui[])
 {
@@ -2980,7 +2980,7 @@ static bool csr_is_auth_rsn(tpAniSirGlobal mac,
 		(mac, AllSuites, cAllSuites, csr_rsn_oui[01], Oui);
 }
 
-static bool csr_is_auth_rsn_psk(tpAniSirGlobal mac,
+static bool csr_is_auth_rsn_psk(struct mac_context *mac,
 				uint8_t AllSuites[][CSR_RSN_OUI_SIZE],
 				uint8_t cAllSuites, uint8_t Oui[])
 {
@@ -2989,14 +2989,14 @@ static bool csr_is_auth_rsn_psk(tpAniSirGlobal mac,
 }
 
 #ifdef WLAN_FEATURE_11W
-static bool csr_is_auth_rsn_psk_sha256(tpAniSirGlobal mac,
+static bool csr_is_auth_rsn_psk_sha256(struct mac_context *mac,
 				       uint8_t AllSuites[][CSR_RSN_OUI_SIZE],
 				       uint8_t cAllSuites, uint8_t Oui[])
 {
 	return csr_is_oui_match
 		(mac, AllSuites, cAllSuites, csr_rsn_oui[07], Oui);
 }
-static bool csr_is_auth_rsn8021x_sha256(tpAniSirGlobal mac,
+static bool csr_is_auth_rsn8021x_sha256(struct mac_context *mac,
 					uint8_t AllSuites[][CSR_RSN_OUI_SIZE],
 					uint8_t cAllSuites, uint8_t Oui[])
 {
@@ -3015,7 +3015,7 @@ static bool csr_is_auth_rsn8021x_sha256(tpAniSirGlobal mac,
  *
  * Return: True if OUI is FILS SHA256, false otherwise
  */
-static bool csr_is_auth_fils_sha256(tpAniSirGlobal mac,
+static bool csr_is_auth_fils_sha256(struct mac_context *mac,
 					uint8_t all_suites[][CSR_RSN_OUI_SIZE],
 					uint8_t suite_count, uint8_t oui[])
 {
@@ -3032,7 +3032,7 @@ static bool csr_is_auth_fils_sha256(tpAniSirGlobal mac,
  *
  * Return: True if OUI is FILS SHA384, false otherwise
  */
-static bool csr_is_auth_fils_sha384(tpAniSirGlobal mac,
+static bool csr_is_auth_fils_sha384(struct mac_context *mac,
 					uint8_t all_suites[][CSR_RSN_OUI_SIZE],
 					uint8_t suite_count, uint8_t oui[])
 {
@@ -3049,7 +3049,7 @@ static bool csr_is_auth_fils_sha384(tpAniSirGlobal mac,
  *
  * Return: True if OUI is FT FILS SHA256, false otherwise
  */
-static bool csr_is_auth_fils_ft_sha256(tpAniSirGlobal mac,
+static bool csr_is_auth_fils_ft_sha256(struct mac_context *mac,
 					uint8_t all_suites[][CSR_RSN_OUI_SIZE],
 					uint8_t suite_count, uint8_t oui[])
 {
@@ -3066,7 +3066,7 @@ static bool csr_is_auth_fils_ft_sha256(tpAniSirGlobal mac,
  *
  * Return: True if OUI is FT FILS SHA384, false otherwise
  */
-static bool csr_is_auth_fils_ft_sha384(tpAniSirGlobal mac,
+static bool csr_is_auth_fils_ft_sha384(struct mac_context *mac,
 					uint8_t all_suites[][CSR_RSN_OUI_SIZE],
 					uint8_t suite_count, uint8_t oui[])
 {
@@ -3084,7 +3084,7 @@ static bool csr_is_auth_fils_ft_sha384(tpAniSirGlobal mac,
  *
  * Return: True if OUI is dpp rsn, false otherwise
  */
-static bool csr_is_auth_dpp_rsn(tpAniSirGlobal mac,
+static bool csr_is_auth_dpp_rsn(struct mac_context *mac,
 					uint8_t all_suites[][CSR_RSN_OUI_SIZE],
 					uint8_t suite_count, uint8_t oui[])
 {
@@ -3101,7 +3101,7 @@ static bool csr_is_auth_dpp_rsn(tpAniSirGlobal mac,
  *
  * Return: True if OUI is OWE, false otherwise
  */
-static bool csr_is_auth_wpa_owe(tpAniSirGlobal mac,
+static bool csr_is_auth_wpa_owe(struct mac_context *mac,
 			       uint8_t all_suites[][CSR_RSN_OUI_SIZE],
 			       uint8_t suite_count, uint8_t oui[])
 {
@@ -3118,7 +3118,7 @@ static bool csr_is_auth_wpa_owe(tpAniSirGlobal mac,
  *
  * Return: True if OUI is SuiteB EAP256, false otherwise
  */
-static bool csr_is_auth_suiteb_eap_256(tpAniSirGlobal mac,
+static bool csr_is_auth_suiteb_eap_256(struct mac_context *mac,
 			       uint8_t all_suites[][CSR_RSN_OUI_SIZE],
 			       uint8_t suite_count, uint8_t oui[])
 {
@@ -3135,7 +3135,7 @@ static bool csr_is_auth_suiteb_eap_256(tpAniSirGlobal mac,
  *
  * Return: True if OUI is SuiteB EAP384, false otherwise
  */
-static bool csr_is_auth_suiteb_eap_384(tpAniSirGlobal mac,
+static bool csr_is_auth_suiteb_eap_384(struct mac_context *mac,
 			       uint8_t all_suites[][CSR_RSN_OUI_SIZE],
 			       uint8_t suite_count, uint8_t oui[])
 {
@@ -3153,7 +3153,7 @@ static bool csr_is_auth_suiteb_eap_384(tpAniSirGlobal mac,
  *
  * Return: True if OUI is SAE, false otherwise
  */
-static bool csr_is_auth_wpa_sae(tpAniSirGlobal mac,
+static bool csr_is_auth_wpa_sae(struct mac_context *mac,
 			       uint8_t all_suites[][CSR_RSN_OUI_SIZE],
 			       uint8_t suite_count, uint8_t oui[])
 {
@@ -3163,7 +3163,7 @@ static bool csr_is_auth_wpa_sae(tpAniSirGlobal mac,
 #endif
 
 #ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
-static bool csr_is_auth_wpa(tpAniSirGlobal mac,
+static bool csr_is_auth_wpa(struct mac_context *mac,
 			    uint8_t AllSuites[][CSR_WPA_OUI_SIZE],
 			    uint8_t cAllSuites, uint8_t Oui[])
 {
@@ -3171,7 +3171,7 @@ static bool csr_is_auth_wpa(tpAniSirGlobal mac,
 		(mac, AllSuites, cAllSuites, csr_wpa_oui[01], Oui);
 }
 
-static bool csr_is_auth_wpa_psk(tpAniSirGlobal mac,
+static bool csr_is_auth_wpa_psk(struct mac_context *mac,
 				uint8_t AllSuites[][CSR_WPA_OUI_SIZE],
 				uint8_t cAllSuites, uint8_t Oui[])
 {
@@ -3189,7 +3189,7 @@ static bool csr_is_auth_wpa_psk(tpAniSirGlobal mac,
  *
  * Return: True if OUI is GMAC_128, false otherwise
  */
-static bool csr_is_group_mgmt_gmac_128(tpAniSirGlobal mac,
+static bool csr_is_group_mgmt_gmac_128(struct mac_context *mac,
 				uint8_t AllSuites[][CSR_RSN_OUI_SIZE],
 				uint8_t cAllSuites, uint8_t Oui[])
 {
@@ -3206,7 +3206,7 @@ static bool csr_is_group_mgmt_gmac_128(tpAniSirGlobal mac,
  *
  * Return: True if OUI is GMAC_256, false otherwise
  */
-static bool csr_is_group_mgmt_gmac_256(tpAniSirGlobal mac,
+static bool csr_is_group_mgmt_gmac_256(struct mac_context *mac,
 				uint8_t AllSuites[][CSR_RSN_OUI_SIZE],
 				uint8_t cAllSuites, uint8_t Oui[])
 {
@@ -3268,7 +3268,7 @@ static uint8_t csr_get_oui_index_from_cipher(eCsrEncryptionType enType)
  *
  * Return: None
  */
-static void csr_is_fils_auth(tpAniSirGlobal mac_ctx,
+static void csr_is_fils_auth(struct mac_context *mac_ctx,
 	uint8_t authsuites[][CSR_RSN_OUI_SIZE], uint8_t c_auth_suites,
 	uint8_t authentication[], tCsrAuthList *auth_type,
 	uint8_t index, eCsrAuthType *neg_authtype)
@@ -3307,7 +3307,7 @@ static void csr_is_fils_auth(tpAniSirGlobal mac_ctx,
 	sme_debug("negotiated auth type is %d", *neg_authtype);
 }
 #else
-static void csr_is_fils_auth(tpAniSirGlobal mac_ctx,
+static void csr_is_fils_auth(struct mac_context *mac_ctx,
 	uint8_t authsuites[][CSR_RSN_OUI_SIZE], uint8_t c_auth_suites,
 	uint8_t authentication[], tCsrAuthList *auth_type,
 	uint8_t index, eCsrAuthType *neg_authtype)
@@ -3328,7 +3328,7 @@ static void csr_is_fils_auth(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void csr_check_sae_auth(tpAniSirGlobal mac_ctx,
+static void csr_check_sae_auth(struct mac_context *mac_ctx,
 	uint8_t authsuites[][CSR_RSN_OUI_SIZE], uint8_t c_auth_suites,
 	uint8_t authentication[], tCsrAuthList *auth_type,
 	uint8_t index, eCsrAuthType *neg_authtype)
@@ -3342,7 +3342,7 @@ static void csr_check_sae_auth(tpAniSirGlobal mac_ctx,
 	sme_debug("negotiated auth type is %d", *neg_authtype);
 }
 #else
-static void csr_check_sae_auth(tpAniSirGlobal mac_ctx,
+static void csr_check_sae_auth(struct mac_context *mac_ctx,
 	uint8_t authsuites[][CSR_RSN_OUI_SIZE], uint8_t c_auth_suites,
 	uint8_t authentication[], tCsrAuthList *auth_type,
 	uint8_t index, eCsrAuthType *neg_authtype)
@@ -3370,7 +3370,7 @@ static void csr_check_sae_auth(tpAniSirGlobal mac_ctx,
  *
  * Return: bool
  */
-static bool csr_get_rsn_information(tpAniSirGlobal mac_ctx,
+static bool csr_get_rsn_information(struct mac_context *mac_ctx,
 				    tCsrAuthList *auth_type,
 				    eCsrEncryptionType encr_type,
 				    tCsrEncryptionList *mc_encryption,
@@ -3640,7 +3640,7 @@ end:
  *           to make connection with it. Else we will return false
  **/
 static bool
-csr_is_pmf_capabilities_in_rsn_match(tpAniSirGlobal mac,
+csr_is_pmf_capabilities_in_rsn_match(struct mac_context *mac,
 				     bool *pFilterMFPEnabled,
 				     uint8_t *pFilterMFPRequired,
 				     uint8_t *pFilterMFPCapable,
@@ -3683,7 +3683,7 @@ csr_is_pmf_capabilities_in_rsn_match(tpAniSirGlobal mac,
 }
 #endif
 
-static bool csr_is_rsn_match(tpAniSirGlobal mac_ctx, tCsrAuthList *pAuthType,
+static bool csr_is_rsn_match(struct mac_context *mac_ctx, tCsrAuthList *pAuthType,
 			     eCsrEncryptionType enType,
 			     tCsrEncryptionList *pEnMcType,
 			     bool *pMFPEnabled, uint8_t *pMFPRequired,
@@ -3724,7 +3724,7 @@ static bool csr_is_rsn_match(tpAniSirGlobal mac_ctx, tCsrAuthList *pAuthType,
  *
  * Return: true if pmkid is found else false
  */
-static bool csr_lookup_pmkid_using_ssid(tpAniSirGlobal mac,
+static bool csr_lookup_pmkid_using_ssid(struct mac_context *mac,
 					struct csr_roam_session *session,
 					tPmkidCacheInfo *pmk_cache,
 					uint32_t *index)
@@ -3756,7 +3756,7 @@ static bool csr_lookup_pmkid_using_ssid(tpAniSirGlobal mac,
 }
 #endif
 
-bool csr_lookup_pmkid_using_bssid(tpAniSirGlobal mac,
+bool csr_lookup_pmkid_using_bssid(struct mac_context *mac,
 					struct csr_roam_session *session,
 					tPmkidCacheInfo *pmk_cache,
 					uint32_t *index)
@@ -3791,7 +3791,7 @@ bool csr_lookup_pmkid_using_bssid(tpAniSirGlobal mac,
  *
  * Return: true if pmkid is found else false
  */
-static bool csr_lookup_pmkid(tpAniSirGlobal mac, uint32_t sessionId,
+static bool csr_lookup_pmkid(struct mac_context *mac, uint32_t sessionId,
 				tPmkidCacheInfo *pmk_cache)
 {
 	bool fRC = false, fMatchFound = false;
@@ -3906,7 +3906,7 @@ static inline void csr_update_pmksa_to_profile(struct csr_roam_profile *profile,
 #endif
 
 #ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
-uint8_t csr_construct_rsn_ie(tpAniSirGlobal mac, uint32_t sessionId,
+uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrRSNIe *pRSNIe)
@@ -3953,7 +3953,7 @@ static inline void csr_update_session_pmk(struct csr_roam_session *session,
 }
 #endif
 
-uint8_t csr_construct_rsn_ie(tpAniSirGlobal mac, uint32_t sessionId,
+uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrRSNIe *pRSNIe)
@@ -4168,7 +4168,7 @@ uint8_t csr_construct_rsn_ie(tpAniSirGlobal mac, uint32_t sessionId,
  *
  * Return: bool
  */
-static bool csr_get_wapi_information(tpAniSirGlobal mac_ctx,
+static bool csr_get_wapi_information(struct mac_context *mac_ctx,
 				     tCsrAuthList *auth_type,
 				     eCsrEncryptionType encr_type,
 				     tCsrEncryptionList *mc_encryption,
@@ -4283,7 +4283,7 @@ end:
 	return acceptable_cipher;
 }
 
-static bool csr_is_wapi_match(tpAniSirGlobal mac_ctx, tCsrAuthList *pAuthType,
+static bool csr_is_wapi_match(struct mac_context *mac_ctx, tCsrAuthList *pAuthType,
 			      eCsrEncryptionType enType,
 			      tCsrEncryptionList *pEnMcType,
 			      tDot11fBeaconIEs *pIes,
@@ -4305,7 +4305,7 @@ static bool csr_is_wapi_match(tpAniSirGlobal mac_ctx, tCsrAuthList *pAuthType,
 }
 
 #ifndef WLAN_CONV_CRYPTO_IE_SUPPORT
-static bool csr_lookup_bkid(tpAniSirGlobal mac, uint32_t sessionId,
+static bool csr_lookup_bkid(struct mac_context *mac, uint32_t sessionId,
 			    uint8_t *pBSSId, uint8_t *pBKId)
 {
 	bool fRC = false, fMatchFound = false;
@@ -4347,7 +4347,7 @@ static bool csr_lookup_bkid(tpAniSirGlobal mac, uint32_t sessionId,
 #endif
 
 #ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
-uint8_t csr_construct_wapi_ie(tpAniSirGlobal mac, uint32_t sessionId,
+uint8_t csr_construct_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 			      struct csr_roam_profile *pProfile,
 			      tSirBssDescription *pSirBssDesc,
 			      tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe)
@@ -4372,7 +4372,7 @@ uint8_t csr_construct_wapi_ie(tpAniSirGlobal mac, uint32_t sessionId,
 	return ie_len;
 }
 #else
-uint8_t csr_construct_wapi_ie(tpAniSirGlobal mac, uint32_t sessionId,
+uint8_t csr_construct_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 			      struct csr_roam_profile *pProfile,
 			      tSirBssDescription *pSirBssDesc,
 			      tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe)
@@ -4498,7 +4498,7 @@ uint8_t csr_construct_wapi_ie(tpAniSirGlobal mac, uint32_t sessionId,
  *
  * Return: bool
  */
-static bool csr_get_wpa_cyphers(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
+static bool csr_get_wpa_cyphers(struct mac_context *mac_ctx, tCsrAuthList *auth_type,
 				eCsrEncryptionType encr_type,
 				tCsrEncryptionList *mc_encryption,
 				tDot11fIEWPA *wpa_ie, uint8_t *ucast_cipher,
@@ -4628,7 +4628,7 @@ end:
 	return acceptable_cipher;
 }
 
-static bool csr_is_wpa_encryption_match(tpAniSirGlobal mac,
+static bool csr_is_wpa_encryption_match(struct mac_context *mac,
 					tCsrAuthList *pAuthType,
 					eCsrEncryptionType enType,
 					tCsrEncryptionList *pEnMcType,
@@ -4652,7 +4652,7 @@ static bool csr_is_wpa_encryption_match(tpAniSirGlobal mac,
 #endif
 
 #ifdef WLAN_CONV_CRYPTO_IE_SUPPORT
-uint8_t csr_construct_wpa_ie(tpAniSirGlobal mac, uint8_t session_id,
+uint8_t csr_construct_wpa_ie(struct mac_context *mac, uint8_t session_id,
 			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe)
@@ -4677,7 +4677,7 @@ uint8_t csr_construct_wpa_ie(tpAniSirGlobal mac, uint8_t session_id,
 	return ie_len;
 }
 #else
-uint8_t csr_construct_wpa_ie(tpAniSirGlobal mac, uint8_t session_id,
+uint8_t csr_construct_wpa_ie(struct mac_context *mac, uint8_t session_id,
 			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe)
@@ -4764,7 +4764,7 @@ uint8_t csr_construct_wpa_ie(tpAniSirGlobal mac, uint8_t session_id,
  * one from the BSS Caller allocated memory for pWpaIe and guarrantee
  * it can contain a max length WPA IE
  */
-uint8_t csr_retrieve_wpa_ie(tpAniSirGlobal mac, uint8_t session_id,
+uint8_t csr_retrieve_wpa_ie(struct mac_context *mac, uint8_t session_id,
 			    struct csr_roam_profile *pProfile,
 			    tSirBssDescription *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrWpaIe *pWpaIe)
@@ -4797,7 +4797,7 @@ uint8_t csr_retrieve_wpa_ie(tpAniSirGlobal mac, uint8_t session_id,
  * one from the BSS Caller allocated memory for pWpaIe and guarrantee
  * it can contain a max length WPA IE
  */
-uint8_t csr_retrieve_rsn_ie(tpAniSirGlobal mac, uint32_t sessionId,
+uint8_t csr_retrieve_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 			    struct csr_roam_profile *pProfile,
 			    tSirBssDescription *pSirBssDesc,
 			    tDot11fBeaconIEs *pIes, tCsrRSNIe *pRsnIe)
@@ -4834,7 +4834,7 @@ uint8_t csr_retrieve_rsn_ie(tpAniSirGlobal mac, uint32_t sessionId,
  * one from the BSS Caller allocated memory for pWapiIe and guarrantee
  * it can contain a max length WAPI IE
  */
-uint8_t csr_retrieve_wapi_ie(tpAniSirGlobal mac, uint32_t sessionId,
+uint8_t csr_retrieve_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 			     struct csr_roam_profile *pProfile,
 			     tSirBssDescription *pSirBssDesc,
 			     tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe)
@@ -4981,7 +4981,7 @@ tAniEdType csr_translate_encrypt_type_to_ed_type(eCsrEncryptionType EncryptType)
  *
  * Return: bool
  */
-static bool csr_validate_wep(tpAniSirGlobal mac_ctx,
+static bool csr_validate_wep(struct mac_context *mac_ctx,
 			     eCsrEncryptionType uc_encry_type,
 			     tCsrAuthList *auth_list,
 			     tCsrEncryptionList *mc_encryption_list,
@@ -5145,7 +5145,7 @@ static bool csr_validate_open_none(tSirBssDescription *bss_desc,
  *
  * Return: Boolean value to tell if matched or not.
  */
-static bool csr_validate_any_default(tpAniSirGlobal mac_ctx,
+static bool csr_validate_any_default(struct mac_context *mac_ctx,
 				     tCsrAuthList *auth_type,
 				     tCsrEncryptionList *mc_enc_type,
 				     bool *mfp_enabled,
@@ -5244,7 +5244,7 @@ static bool csr_validate_any_default(tpAniSirGlobal mac_ctx,
  *
  * Return: Boolean value to tell if matched or not.
  */
-bool csr_is_security_match(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
+bool csr_is_security_match(struct mac_context *mac_ctx, tCsrAuthList *auth_type,
 			   tCsrEncryptionList *uc_enc_type,
 			   tCsrEncryptionList *mc_enc_type, bool *mfp_enabled,
 			   uint8_t *mfp_required, uint8_t *mfp_capable,
@@ -5369,7 +5369,7 @@ bool csr_is_security_match(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
 	return match;
 }
 
-bool csr_is_ssid_match(tpAniSirGlobal mac, uint8_t *ssid1, uint8_t ssid1Len,
+bool csr_is_ssid_match(struct mac_context *mac, uint8_t *ssid1, uint8_t ssid1Len,
 		       uint8_t *bssSsid, uint8_t bssSsidLen, bool fSsidRequired)
 {
 	bool fMatch = false;
@@ -5508,7 +5508,7 @@ bool csr_is_bss_type_ibss(eCsrRoamBssType bssType)
  * Return: true if  the adapter is currently capable of supporting this rate
  */
 
-static bool csr_is_aggregate_rate_supported(tpAniSirGlobal mac_ctx,
+static bool csr_is_aggregate_rate_supported(struct mac_context *mac_ctx,
 			uint16_t rate)
 {
 	bool supported = false;
@@ -5749,7 +5749,7 @@ bool csr_check_rate_bitmap(uint8_t rate, uint16_t rateBitmap)
 	return !!rateBitmap;
 }
 
-bool csr_rates_is_dot11_rate_supported(tpAniSirGlobal mac_ctx, uint8_t rate)
+bool csr_rates_is_dot11_rate_supported(struct mac_context *mac_ctx, uint8_t rate)
 {
 	uint16_t n = BITS_OFF(rate, CSR_DOT11_BASIC_RATE_MASK);
 
@@ -5901,7 +5901,7 @@ static inline void csr_free_fils_profile_info(struct csr_roam_profile *profile)
 { }
 #endif
 
-void csr_release_profile(tpAniSirGlobal mac, struct csr_roam_profile *pProfile)
+void csr_release_profile(struct mac_context *mac, struct csr_roam_profile *pProfile)
 {
 	if (pProfile) {
 		if (pProfile->BSSIDs.bssid) {
@@ -5945,7 +5945,7 @@ void csr_release_profile(tpAniSirGlobal mac, struct csr_roam_profile *pProfile)
 	}
 }
 
-void csr_free_scan_filter(tpAniSirGlobal mac, tCsrScanResultFilter
+void csr_free_scan_filter(struct mac_context *mac, tCsrScanResultFilter
 						*pScanFilter)
 {
 	if (pScanFilter->BSSIDs.bssid) {
@@ -5962,7 +5962,7 @@ void csr_free_scan_filter(tpAniSirGlobal mac, tCsrScanResultFilter
 	}
 }
 
-void csr_free_roam_profile(tpAniSirGlobal mac, uint32_t sessionId)
+void csr_free_roam_profile(struct mac_context *mac, uint32_t sessionId)
 {
 	struct csr_roam_session *pSession = &mac->roam.roamSession[sessionId];
 
@@ -5973,7 +5973,7 @@ void csr_free_roam_profile(tpAniSirGlobal mac, uint32_t sessionId)
 	}
 }
 
-void csr_free_connect_bss_desc(tpAniSirGlobal mac, uint32_t sessionId)
+void csr_free_connect_bss_desc(struct mac_context *mac, uint32_t sessionId)
 {
 	struct csr_roam_session *pSession = &mac->roam.roamSession[sessionId];
 
@@ -5998,7 +5998,7 @@ tSirResultCodes csr_get_de_auth_rsp_status_code(tSirSmeDeauthRsp *pSmeRsp)
 	return (tSirResultCodes) ret;
 }
 
-tSirScanType csr_get_scan_type(tpAniSirGlobal mac, uint8_t chnId)
+tSirScanType csr_get_scan_type(struct mac_context *mac, uint8_t chnId)
 {
 	tSirScanType scanType = eSIR_PASSIVE_SCAN;
 	enum channel_state channelEnabledType;
@@ -6128,7 +6128,7 @@ csr_get_cfg_dot11_mode_from_csr_phy_mode(struct csr_roam_profile *pProfile,
 	return cfgDot11Mode;
 }
 
-QDF_STATUS csr_get_regulatory_domain_for_country(tpAniSirGlobal mac,
+QDF_STATUS csr_get_regulatory_domain_for_country(struct mac_context *mac,
 						 uint8_t *pCountry,
 						 v_REGDOMAIN_t *pDomainId,
 						 enum country_src source)
@@ -6159,7 +6159,7 @@ QDF_STATUS csr_get_regulatory_domain_for_country(tpAniSirGlobal mac,
 	return status;
 }
 
-QDF_STATUS csr_get_modify_profile_fields(tpAniSirGlobal mac,
+QDF_STATUS csr_get_modify_profile_fields(struct mac_context *mac,
 					uint32_t sessionId,
 					 tCsrRoamModifyProfileFields *
 					 pModifyProfileFields)
@@ -6174,7 +6174,7 @@ QDF_STATUS csr_get_modify_profile_fields(tpAniSirGlobal mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS csr_set_modify_profile_fields(tpAniSirGlobal mac,
+QDF_STATUS csr_set_modify_profile_fields(struct mac_context *mac,
 					uint32_t sessionId,
 					 tCsrRoamModifyProfileFields *
 					 pModifyProfileFields)
@@ -6188,7 +6188,7 @@ QDF_STATUS csr_set_modify_profile_fields(tpAniSirGlobal mac,
 }
 
 
-bool csr_is_set_key_allowed(tpAniSirGlobal mac, uint32_t sessionId)
+bool csr_is_set_key_allowed(struct mac_context *mac, uint32_t sessionId)
 {
 	bool fRet = true;
 	struct csr_roam_session *pSession;
@@ -6230,7 +6230,7 @@ uint16_t sme_chn_to_freq(uint8_t chanNum)
 }
 
 struct lim_channel_status *
-csr_get_channel_status(tpAniSirGlobal mac, uint32_t channel_id)
+csr_get_channel_status(struct mac_context *mac, uint32_t channel_id)
 {
 	uint8_t i;
 	struct lim_scan_channel_status *channel_status;
@@ -6250,7 +6250,7 @@ csr_get_channel_status(tpAniSirGlobal mac, uint32_t channel_id)
 	return NULL;
 }
 
-void csr_clear_channel_status(tpAniSirGlobal mac)
+void csr_clear_channel_status(struct mac_context *mac)
 {
 	struct lim_scan_channel_status *channel_status;
 
@@ -6331,7 +6331,7 @@ QDF_STATUS csr_add_to_channel_list_front(uint8_t *pChannelList,
  *
  * Return: True if the wait was successful, false otherwise
  */
-bool csr_wait_for_connection_update(tpAniSirGlobal mac,
+bool csr_wait_for_connection_update(struct mac_context *mac,
 		bool do_release_reacquire_lock)
 {
 	QDF_STATUS status, ret;
@@ -6371,7 +6371,7 @@ bool csr_wait_for_connection_update(tpAniSirGlobal mac,
  *
  * Reture: enum QDF_OPMODE persona
  */
-enum QDF_OPMODE csr_get_session_persona(tpAniSirGlobal pmac,
+enum QDF_OPMODE csr_get_session_persona(struct mac_context *pmac,
 					uint32_t session_id)
 {
 	struct csr_roam_session *session = NULL;
@@ -6390,7 +6390,7 @@ enum QDF_OPMODE csr_get_session_persona(tpAniSirGlobal pmac,
  *
  * returns: true if NDI is started, false otherwise
  */
-bool csr_is_ndi_started(tpAniSirGlobal mac_ctx, uint32_t session_id)
+bool csr_is_ndi_started(struct mac_context *mac_ctx, uint32_t session_id)
 {
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
@@ -6400,7 +6400,7 @@ bool csr_is_ndi_started(tpAniSirGlobal mac_ctx, uint32_t session_id)
 	return eCSR_CONNECT_STATE_TYPE_NDI_STARTED == session->connectState;
 }
 
-bool csr_is_mcc_channel(tpAniSirGlobal mac_ctx, uint8_t channel)
+bool csr_is_mcc_channel(struct mac_context *mac_ctx, uint8_t channel)
 {
 	struct csr_roam_session *session;
 	enum QDF_OPMODE oper_mode;

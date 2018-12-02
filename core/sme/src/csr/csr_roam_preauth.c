@@ -35,7 +35,7 @@
 #include "wlan_policy_mgr_api.h"
 #include "sir_api.h"
 
-static QDF_STATUS csr_neighbor_roam_add_preauth_fail(tpAniSirGlobal mac_ctx,
+static QDF_STATUS csr_neighbor_roam_add_preauth_fail(struct mac_context *mac_ctx,
 			uint8_t session_id, tSirMacAddr bssid);
 
 /**
@@ -45,7 +45,7 @@ static QDF_STATUS csr_neighbor_roam_add_preauth_fail(tpAniSirGlobal mac_ctx,
  *
  * Return: True if the state id preauth done, false otherwise
  */
-bool csr_neighbor_roam_state_preauth_done(tpAniSirGlobal mac_ctx,
+bool csr_neighbor_roam_state_preauth_done(struct mac_context *mac_ctx,
 		uint8_t session_id)
 {
 	return mac_ctx->roam.neighborRoamInfo[session_id].neighborRoamState ==
@@ -68,7 +68,7 @@ bool csr_neighbor_roam_state_preauth_done(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
-		tpAniSirGlobal mac_ctx, uint8_t session_id)
+		struct mac_context *mac_ctx, uint8_t session_id)
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&mac_ctx->roam.neighborRoamInfo[session_id];
@@ -101,7 +101,7 @@ void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
  *
  * Return: Success if queued properly, false otherwise.
  */
-QDF_STATUS csr_roam_enqueue_preauth(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_roam_enqueue_preauth(struct mac_context *mac_ctx,
 		uint32_t session_id, tpSirBssDescription bss_desc,
 		enum csr_roam_reason reason, bool immediate)
 {
@@ -137,7 +137,7 @@ QDF_STATUS csr_roam_enqueue_preauth(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void csr_neighbor_roam_purge_preauth_failed_list(tpAniSirGlobal mac_ctx)
+void csr_neighbor_roam_purge_preauth_failed_list(struct mac_context *mac_ctx)
 {
 	uint8_t i;
 	uint8_t j;
@@ -163,7 +163,7 @@ void csr_neighbor_roam_purge_preauth_failed_list(tpAniSirGlobal mac_ctx)
  *
  * Return: None
  */
-void csr_neighbor_roam_reset_preauth_control_info(tpAniSirGlobal mac_ctx,
+void csr_neighbor_roam_reset_preauth_control_info(struct mac_context *mac_ctx,
 		uint8_t session_id)
 {
 	tpCsrNeighborRoamControlInfo neigh_roam_info =
@@ -202,7 +202,7 @@ void csr_neighbor_roam_reset_preauth_control_info(tpAniSirGlobal mac_ctx,
  * Return: QDF_STATUS_SUCCESS on success (i.e. pre-auth processed),
  *         QDF_STATUS_E_FAILURE otherwise
  */
-QDF_STATUS csr_neighbor_roam_preauth_rsp_handler(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_neighbor_roam_preauth_rsp_handler(struct mac_context *mac_ctx,
 						 uint8_t session_id,
 						 QDF_STATUS lim_status)
 {
@@ -368,7 +368,7 @@ DEQ_PREAUTH:
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE otherwise
  */
-static QDF_STATUS csr_neighbor_roam_add_preauth_fail(tpAniSirGlobal mac_ctx,
+static QDF_STATUS csr_neighbor_roam_add_preauth_fail(struct mac_context *mac_ctx,
 			uint8_t session_id, tSirMacAddr bssid)
 {
 	uint8_t i = 0;
@@ -414,7 +414,7 @@ static QDF_STATUS csr_neighbor_roam_add_preauth_fail(tpAniSirGlobal mac_ctx,
  *
  * Return: true if preauth candidate, false otherwise
  */
-bool csr_neighbor_roam_is_preauth_candidate(tpAniSirGlobal mac,
+bool csr_neighbor_roam_is_preauth_candidate(struct mac_context *mac,
 		    uint8_t sessionId, tSirMacAddr bssId)
 {
 	uint8_t i = 0;
@@ -449,7 +449,7 @@ bool csr_neighbor_roam_is_preauth_candidate(tpAniSirGlobal mac,
  *
  * Return: dot11mode
  */
-static uint32_t csr_get_dot11_mode(tpAniSirGlobal mac_ctx,
+static uint32_t csr_get_dot11_mode(struct mac_context *mac_ctx,
 				   uint32_t session_id,
 				   tpSirBssDescription bss_desc)
 {
@@ -508,7 +508,7 @@ static uint32_t csr_get_dot11_mode(tpAniSirGlobal mac_ctx,
 	return dot11mode;
 }
 
-QDF_STATUS csr_roam_issue_ft_preauth_req(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_roam_issue_ft_preauth_req(struct mac_context *mac_ctx,
 					 uint32_t session_id,
 					 tpSirBssDescription bss_desc)
 {
@@ -580,7 +580,7 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(tpAniSirGlobal mac_ctx,
 	return status;
 }
 
-void csr_roam_ft_pre_auth_rsp_processor(tpAniSirGlobal mac_ctx,
+void csr_roam_ft_pre_auth_rsp_processor(struct mac_context *mac_ctx,
 					tpSirFTPreAuthRsp preauth_rsp)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -721,7 +721,7 @@ void csr_roam_ft_pre_auth_rsp_processor(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE otherwise
  */
-QDF_STATUS csr_neighbor_roam_issue_preauth_req(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_neighbor_roam_issue_preauth_req(struct mac_context *mac_ctx,
 						      uint8_t session_id)
 {
 	tpCsrNeighborRoamControlInfo neighbor_roam_info =

@@ -588,7 +588,7 @@ struct csr_pestats_reqinfo {
 	bool rspPending;
 	uint8_t staId;
 	uint8_t numClient;
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 	uint8_t sessionId;
 };
 
@@ -602,7 +602,7 @@ struct csr_statsclient_reqinfo {
 	uint8_t staId;
 	qdf_mc_timer_t timer;
 	bool timerExpired;
-	tpAniSirGlobal mac;    /* TODO: Confirm this change BTAMP */
+	struct mac_context *mac;    /* TODO: Confirm this change BTAMP */
 	uint8_t sessionId;
 };
 
@@ -1014,42 +1014,42 @@ struct csr_roamstruct {
 #define CSR_GET_SUBNET_STATUS(roam_reason) (0)
 #endif
 
-QDF_STATUS csr_get_channel_and_power_list(tpAniSirGlobal mac);
+QDF_STATUS csr_get_channel_and_power_list(struct mac_context *mac);
 
-QDF_STATUS csr_scan_filter_results(tpAniSirGlobal mac);
+QDF_STATUS csr_scan_filter_results(struct mac_context *mac);
 
-QDF_STATUS csr_set_modify_profile_fields(tpAniSirGlobal mac,
+QDF_STATUS csr_set_modify_profile_fields(struct mac_context *mac,
 		uint32_t sessionId, tCsrRoamModifyProfileFields *
 		pModifyProfileFields);
-QDF_STATUS csr_get_modify_profile_fields(tpAniSirGlobal mac,
+QDF_STATUS csr_get_modify_profile_fields(struct mac_context *mac,
 		uint32_t sessionId, tCsrRoamModifyProfileFields *
 		pModifyProfileFields);
-void csr_set_global_cfgs(tpAniSirGlobal mac);
-void csr_set_default_dot11_mode(tpAniSirGlobal mac);
-bool csr_is_conn_state_disconnected(tpAniSirGlobal mac,
+void csr_set_global_cfgs(struct mac_context *mac);
+void csr_set_default_dot11_mode(struct mac_context *mac);
+bool csr_is_conn_state_disconnected(struct mac_context *mac,
 						   uint32_t sessionId);
-bool csr_is_conn_state_connected_ibss(tpAniSirGlobal mac,
+bool csr_is_conn_state_connected_ibss(struct mac_context *mac,
 						      uint32_t sessionId);
-bool csr_is_conn_state_disconnected_ibss(tpAniSirGlobal mac,
+bool csr_is_conn_state_disconnected_ibss(struct mac_context *mac,
 							   uint32_t sessionId);
-bool csr_is_conn_state_connected_infra(tpAniSirGlobal mac,
+bool csr_is_conn_state_connected_infra(struct mac_context *mac,
 							uint32_t sessionId);
-bool csr_is_conn_state_connected(tpAniSirGlobal mac,
+bool csr_is_conn_state_connected(struct mac_context *mac,
 					       uint32_t sessionId);
-bool csr_is_conn_state_infra(tpAniSirGlobal mac,
+bool csr_is_conn_state_infra(struct mac_context *mac,
 					uint32_t sessionId);
-bool csr_is_conn_state_ibss(tpAniSirGlobal mac, uint32_t sessionId);
-bool csr_is_conn_state_wds(tpAniSirGlobal mac, uint32_t sessionId);
-bool csr_is_conn_state_connected_wds(tpAniSirGlobal mac,
+bool csr_is_conn_state_ibss(struct mac_context *mac, uint32_t sessionId);
+bool csr_is_conn_state_wds(struct mac_context *mac, uint32_t sessionId);
+bool csr_is_conn_state_connected_wds(struct mac_context *mac,
 						    uint32_t sessionId);
-bool csr_is_conn_state_disconnected_wds(tpAniSirGlobal mac,
+bool csr_is_conn_state_disconnected_wds(struct mac_context *mac,
 		uint32_t sessionId);
-bool csr_is_any_session_in_connect_state(tpAniSirGlobal mac);
-bool csr_is_all_session_disconnected(tpAniSirGlobal mac);
-bool csr_is_sta_session_connected(tpAniSirGlobal mac);
-bool csr_is_p2p_session_connected(tpAniSirGlobal mac);
-bool csr_is_any_session_connected(tpAniSirGlobal mac);
-bool csr_is_infra_connected(tpAniSirGlobal mac);
+bool csr_is_any_session_in_connect_state(struct mac_context *mac);
+bool csr_is_all_session_disconnected(struct mac_context *mac);
+bool csr_is_sta_session_connected(struct mac_context *mac);
+bool csr_is_p2p_session_connected(struct mac_context *mac);
+bool csr_is_any_session_connected(struct mac_context *mac);
+bool csr_is_infra_connected(struct mac_context *mac);
 
 /**
  * csr_get_connected_infra() - get the session id of the connected infra
@@ -1061,78 +1061,78 @@ bool csr_is_infra_connected(tpAniSirGlobal mac);
  *
  * Return: session id of the connected infra
  */
-uint8_t csr_get_connected_infra(tpAniSirGlobal mac_ctx);
-bool csr_is_concurrent_infra_connected(tpAniSirGlobal mac);
-bool csr_is_concurrent_session_running(tpAniSirGlobal mac);
-bool csr_is_infra_ap_started(tpAniSirGlobal mac);
-bool csr_is_ibss_started(tpAniSirGlobal mac);
-bool csr_is_valid_mc_concurrent_session(tpAniSirGlobal mac,
+uint8_t csr_get_connected_infra(struct mac_context *mac_ctx);
+bool csr_is_concurrent_infra_connected(struct mac_context *mac);
+bool csr_is_concurrent_session_running(struct mac_context *mac);
+bool csr_is_infra_ap_started(struct mac_context *mac);
+bool csr_is_ibss_started(struct mac_context *mac);
+bool csr_is_valid_mc_concurrent_session(struct mac_context *mac,
 							 uint32_t sessionId,
 						tSirBssDescription *pBssDesc);
-bool csr_is_conn_state_connected_infra_ap(tpAniSirGlobal mac,
+bool csr_is_conn_state_connected_infra_ap(struct mac_context *mac,
 		uint32_t sessionId);
-QDF_STATUS csr_get_statistics(tpAniSirGlobal mac,
+QDF_STATUS csr_get_statistics(struct mac_context *mac,
 		eCsrStatsRequesterType requesterId,
 		uint32_t statsMask, tCsrStatsCallback callback,
 		uint8_t staId, void *pContext, uint8_t sessionId);
-QDF_STATUS csr_get_rssi(tpAniSirGlobal mac, tCsrRssiCallback callback,
+QDF_STATUS csr_get_rssi(struct mac_context *mac, tCsrRssiCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, int8_t lastRSSI,
 		void *pContext);
-QDF_STATUS csr_get_snr(tpAniSirGlobal mac, tCsrSnrCallback callback,
+QDF_STATUS csr_get_snr(struct mac_context *mac, tCsrSnrCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, void *pContext);
-QDF_STATUS csr_get_config_param(tpAniSirGlobal mac,
+QDF_STATUS csr_get_config_param(struct mac_context *mac,
 					  tCsrConfigParam *pParam);
-QDF_STATUS csr_change_default_config_param(tpAniSirGlobal mac,
+QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 		tCsrConfigParam *pParam);
-QDF_STATUS csr_msg_processor(tpAniSirGlobal mac, void *pMsgBuf);
-QDF_STATUS csr_open(tpAniSirGlobal mac);
-QDF_STATUS csr_init_chan_list(tpAniSirGlobal mac, uint8_t *alpha2);
-QDF_STATUS csr_close(tpAniSirGlobal mac);
-QDF_STATUS csr_start(tpAniSirGlobal mac);
-QDF_STATUS csr_stop(tpAniSirGlobal mac);
-QDF_STATUS csr_ready(tpAniSirGlobal mac);
+QDF_STATUS csr_msg_processor(struct mac_context *mac, void *pMsgBuf);
+QDF_STATUS csr_open(struct mac_context *mac);
+QDF_STATUS csr_init_chan_list(struct mac_context *mac, uint8_t *alpha2);
+QDF_STATUS csr_close(struct mac_context *mac);
+QDF_STATUS csr_start(struct mac_context *mac);
+QDF_STATUS csr_stop(struct mac_context *mac);
+QDF_STATUS csr_ready(struct mac_context *mac);
 
 #ifdef FEATURE_WLAN_WAPI
-QDF_STATUS csr_roam_get_wapi_req_ie(tpAniSirGlobal mac,
+QDF_STATUS csr_roam_get_wapi_req_ie(struct mac_context *mac,
 		uint32_t sessionId, uint32_t *pLen, uint8_t *pBuf);
-QDF_STATUS csr_roam_get_wapi_rsp_ie(tpAniSirGlobal mac,
+QDF_STATUS csr_roam_get_wapi_rsp_ie(struct mac_context *mac,
 						uint32_t sessionId,
 		uint32_t *pLen, uint8_t *pBuf);
-uint8_t csr_construct_wapi_ie(tpAniSirGlobal mac, uint32_t sessionId,
+uint8_t csr_construct_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 		struct csr_roam_profile *pProfile,
 		tSirBssDescription *pSirBssDesc,
 		tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
 #endif /* FEATURE_WLAN_WAPI */
 
-void csr_set_cfg_privacy(tpAniSirGlobal mac,
+void csr_set_cfg_privacy(struct mac_context *mac,
 			 struct csr_roam_profile *pProfile,
 			 bool fPrivacy);
-int8_t csr_get_infra_session_id(tpAniSirGlobal mac);
-uint8_t csr_get_infra_operation_channel(tpAniSirGlobal mac,
+int8_t csr_get_infra_session_id(struct mac_context *mac);
+uint8_t csr_get_infra_operation_channel(struct mac_context *mac,
 							uint8_t sessionId);
-bool csr_is_session_client_and_connected(tpAniSirGlobal mac,
+bool csr_is_session_client_and_connected(struct mac_context *mac,
 		uint8_t sessionId);
 uint8_t csr_get_concurrent_operation_channel(
-	tpAniSirGlobal mac);
+	struct mac_context *mac);
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 uint16_t csr_check_concurrent_channel_overlap(
-		tpAniSirGlobal mac,
+		struct mac_context *mac,
 		uint16_t sap_ch, eCsrPhyMode sap_phymode,
 		uint8_t cc_switch_mode);
 #endif
-QDF_STATUS csr_roam_copy_connect_profile(tpAniSirGlobal mac,
+QDF_STATUS csr_roam_copy_connect_profile(struct mac_context *mac,
 		uint32_t sessionId, tCsrRoamConnectedProfile *pProfile);
-bool csr_is_set_key_allowed(tpAniSirGlobal mac, uint32_t sessionId);
+bool csr_is_set_key_allowed(struct mac_context *mac, uint32_t sessionId);
 
 /* Returns whether the current association is a 11r assoc or not */
-bool csr_roam_is11r_assoc(tpAniSirGlobal mac, uint8_t sessionId);
+bool csr_roam_is11r_assoc(struct mac_context *mac, uint8_t sessionId);
 
 #ifdef FEATURE_WLAN_ESE
 /* Returns whether the current association is a ESE assoc or not */
-bool csr_roam_is_ese_assoc(tpAniSirGlobal mac, uint32_t sessionId);
-bool csr_roam_is_ese_ini_feature_enabled(tpAniSirGlobal mac);
-QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal mac,
+bool csr_roam_is_ese_assoc(struct mac_context *mac, uint32_t sessionId);
+bool csr_roam_is_ese_ini_feature_enabled(struct mac_context *mac);
+QDF_STATUS csr_get_tsm_stats(struct mac_context *mac,
 		tCsrTsmStatsCallback callback,
 		uint8_t staId,
 		struct qdf_mac_addr bssId,
@@ -1140,10 +1140,10 @@ QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal mac,
 #endif
 
 /* Returns whether "Legacy Fast Roaming" is enabled...or not */
-bool csr_roam_is_fast_roam_enabled(tpAniSirGlobal mac,
+bool csr_roam_is_fast_roam_enabled(struct mac_context *mac,
 						uint32_t sessionId);
 bool csr_roam_is_roam_offload_scan_enabled(
-	tpAniSirGlobal mac);
+	struct mac_context *mac);
 bool csr_is_channel_present_in_list(uint8_t *pChannelList,
 						   int numChannels,
 						   uint8_t channel);
@@ -1151,73 +1151,73 @@ QDF_STATUS csr_add_to_channel_list_front(uint8_t *pChannelList,
 							int numChannels,
 		uint8_t channel);
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
-QDF_STATUS csr_roam_offload_scan_rsp_hdlr(tpAniSirGlobal mac,
+QDF_STATUS csr_roam_offload_scan_rsp_hdlr(struct mac_context *mac,
 		tpSirRoamOffloadScanRsp scanOffloadRsp);
 #else
 static inline QDF_STATUS csr_roam_offload_scan_rsp_hdlr(
-		tpAniSirGlobal mac,
+		struct mac_context *mac,
 		tpSirRoamOffloadScanRsp scanOffloadRsp)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
-QDF_STATUS csr_handoff_request(tpAniSirGlobal mac, uint8_t sessionId,
+QDF_STATUS csr_handoff_request(struct mac_context *mac, uint8_t sessionId,
 		tCsrHandoffRequest
 		*pHandoffInfo);
-bool csr_roam_is_sta_mode(tpAniSirGlobal mac, uint32_t sessionId);
+bool csr_roam_is_sta_mode(struct mac_context *mac, uint32_t sessionId);
 
 /* Post Channel Change Indication */
-QDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal mac,
+QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,
 					struct qdf_mac_addr
 				       bssid, struct ch_params *ch_params,
 				       struct csr_roam_profile *profile);
 
 /* Post Beacon Tx Start Indication */
-QDF_STATUS csr_roam_start_beacon_req(tpAniSirGlobal mac,
+QDF_STATUS csr_roam_start_beacon_req(struct mac_context *mac,
 		struct qdf_mac_addr bssid, uint8_t dfsCacWaitStatus);
 
-QDF_STATUS csr_roam_send_chan_sw_ie_request(tpAniSirGlobal mac,
+QDF_STATUS csr_roam_send_chan_sw_ie_request(struct mac_context *mac,
 					    struct qdf_mac_addr bssid,
 					    uint8_t targetChannel,
 					    uint8_t csaIeReqd,
 					    struct ch_params *ch_params);
-QDF_STATUS csr_roam_modify_add_ies(tpAniSirGlobal mac,
+QDF_STATUS csr_roam_modify_add_ies(struct mac_context *mac,
 					tSirModifyIE *pModifyIE,
 				   eUpdateIEsType updateType);
 QDF_STATUS
-csr_roam_update_add_ies(tpAniSirGlobal mac,
+csr_roam_update_add_ies(struct mac_context *mac,
 		tSirUpdateIE *pUpdateIE, eUpdateIEsType updateType);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(
-		tpAniSirGlobal mac,
+		struct mac_context *mac,
 		struct sSirSmeRoamOffloadSynchInd *roam_synch_ind_ptr,
 		tpSirBssDescription  bss_desc_ptr);
-void csr_process_ho_fail_ind(tpAniSirGlobal mac, void *pMsgBuf);
+void csr_process_ho_fail_ind(struct mac_context *mac, void *pMsgBuf);
 #endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-void csr_roaming_report_diag_event(tpAniSirGlobal mac_ctx,
+void csr_roaming_report_diag_event(struct mac_context *mac_ctx,
 		roam_offload_synch_ind *roam_synch_ind_ptr,
 		enum csr_diagwlan_status_eventreason reason);
 #else
 static inline void csr_roaming_report_diag_event(
-		tpAniSirGlobal mac_ctx,
+		struct mac_context *mac_ctx,
 		roam_offload_synch_ind *roam_synch_ind_ptr,
 		enum csr_diagwlan_status_eventreason reason)
 {}
 #endif
 
-bool csr_store_joinreq_param(tpAniSirGlobal mac_ctx,
+bool csr_store_joinreq_param(struct mac_context *mac_ctx,
 		struct csr_roam_profile *profile,
 		tScanResultHandle scan_cache,
 		uint32_t *roam_id,
 		uint32_t session_id);
-bool csr_find_session_by_bssid(tpAniSirGlobal mac_ctx, uint8_t *bssid);
-bool csr_clear_joinreq_param(tpAniSirGlobal mac_ctx,
+bool csr_find_session_by_bssid(struct mac_context *mac_ctx, uint8_t *bssid);
+bool csr_clear_joinreq_param(struct mac_context *mac_ctx,
 		uint32_t session_id);
-QDF_STATUS csr_issue_stored_joinreq(tpAniSirGlobal mac_ctx,
+QDF_STATUS csr_issue_stored_joinreq(struct mac_context *mac_ctx,
 		uint32_t *roam_id,
 		uint32_t session_id);
-QDF_STATUS csr_get_channels_and_power(tpAniSirGlobal mac);
+QDF_STATUS csr_get_channels_and_power(struct mac_context *mac);
 
 void csr_nonscan_pending_ll_unlock(struct mac_context *mac_ctx);
 void csr_nonscan_active_ll_unlock(struct mac_context *mac_ctx);
@@ -1303,24 +1303,24 @@ void csr_purge_vdev_all_scan_ser_cmd_list(struct mac_context *mac_ctx,
  */
 void csr_purge_pdev_all_ser_cmd_list(struct mac_context *mac_ctx);
 
-bool csr_wait_for_connection_update(tpAniSirGlobal mac,
+bool csr_wait_for_connection_update(struct mac_context *mac,
 		bool do_release_reacquire_lock);
-enum QDF_OPMODE csr_get_session_persona(tpAniSirGlobal pmac,
+enum QDF_OPMODE csr_get_session_persona(struct mac_context *pmac,
 					uint32_t session_id);
 void csr_roam_substate_change(
-			tpAniSirGlobal mac, enum csr_roam_substate
+			struct mac_context *mac, enum csr_roam_substate
 					NewSubstate, uint32_t sessionId);
 
 void csr_neighbor_roam_process_scan_results(
-		tpAniSirGlobal mac_ctx,
+		struct mac_context *mac_ctx,
 		uint8_t sessionid, tScanResultHandle *scan_results_list);
 
-void csr_neighbor_roam_trigger_handoff(tpAniSirGlobal mac_ctx,
+void csr_neighbor_roam_trigger_handoff(struct mac_context *mac_ctx,
 					uint8_t session_id);
-bool csr_is_ndi_started(tpAniSirGlobal mac_ctx, uint32_t session_id);
+bool csr_is_ndi_started(struct mac_context *mac_ctx, uint32_t session_id);
 
 QDF_STATUS csr_roam_update_config(
-			tpAniSirGlobal mac_ctx, uint8_t session_id,
+			struct mac_context *mac_ctx, uint8_t session_id,
 				  uint16_t capab, uint32_t value);
 
 /**
@@ -1330,5 +1330,5 @@ QDF_STATUS csr_roam_update_config(
  *
  * Return : true if channel causes MCC, else false
  */
-bool csr_is_mcc_channel(tpAniSirGlobal mac_ctx, uint8_t channel);
+bool csr_is_mcc_channel(struct mac_context *mac_ctx, uint8_t channel);
 #endif
