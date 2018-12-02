@@ -51,7 +51,7 @@ int wma_twt_en_complete_event_handler(void *handle,
 	struct wmi_twt_enable_complete_event_param param;
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	wmi_unified_t wmi_handle;
-	tpAniSirGlobal mac = (tpAniSirGlobal)cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = (struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
 	int status = -EINVAL;
 
 	if (!wma_handle) {

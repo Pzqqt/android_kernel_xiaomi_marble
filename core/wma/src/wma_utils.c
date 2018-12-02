@@ -1087,11 +1087,11 @@ static int wma_ll_stats_evt_handler(void *handle, u_int8_t *event,
 	struct sir_wifi_peer_signal_stats *peer_signal;
 	uint8_t *result;
 	uint32_t i, peer_num, result_size, dst_len;
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 	struct scheduler_msg sme_msg = { 0 };
 	QDF_STATUS qdf_status;
 
-	mac = (tpAniSirGlobal)cds_get_context(QDF_MODULE_ID_PE);
+	mac = (struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac) {
 		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
 		return -EINVAL;
@@ -1258,7 +1258,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	bool excess_data = false;
 	uint32_t buf_len = 0;
 
-	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {
 		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
@@ -1452,7 +1452,7 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 	uint32_t max_total_num_tx_power_levels = MAX_TPC_LEVELS * NUM_OF_BANDS *
 						MAX_SPATIAL_STREAM_ANY_V3;
 
-	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {
 		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
@@ -1622,7 +1622,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	tSirWifiRadioStat *rs_results;
 	tSirWifiChannelStats *chn_results;
 
-	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {
 		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
@@ -1838,7 +1838,7 @@ static int wma_peer_ps_evt_handler(void *handle, u_int8_t *event,
 	cds_msg_t sme_msg = { 0 };
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
-	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {
 		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
@@ -2091,7 +2091,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	size_t link_stats_results_size, offload_stats_size;
 	size_t total_ac_size, total_offload_size;
 
-	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {
 		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
@@ -3060,7 +3060,7 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 	uint32_t buf_len = 0;
 	bool excess_data = false;
 	wmi_congestion_stats *congestion_stats;
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 
 	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *) cmd_param_info;
 	if (!param_buf) {
@@ -3440,7 +3440,7 @@ int wma_peer_info_event_handler(void *handle, u_int8_t *cmd_param_info,
  */
 QDF_STATUS wma_send_link_speed(uint32_t link_speed)
 {
-	tpAniSirGlobal mac_ctx;
+	struct mac_context *mac_ctx;
 	tSirLinkSpeedInfo *ls_ind;
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
@@ -4636,7 +4636,7 @@ int wma_chip_power_save_failure_detected_handler(void *handle,
 	WMI_PDEV_CHIP_POWER_SAVE_FAILURE_DETECTED_EVENTID_param_tlvs *param_buf;
 	wmi_chip_power_save_failure_detected_fixed_param  *event;
 	struct chip_pwr_save_fail_detected_params  pwr_save_fail_params;
-	tpAniSirGlobal mac = (tpAniSirGlobal)cds_get_context(
+	struct mac_context *mac = (struct mac_context *)cds_get_context(
 						QDF_MODULE_ID_PE);
 	if (wma == NULL) {
 		WMA_LOGE("%s: wma_handle is NULL", __func__);

@@ -171,7 +171,7 @@ void *wma_get_beacon_buffer_by_vdev_id(uint8_t vdev_id, uint32_t *buffer_size);
 bool wma_get_fw_wlan_feat_caps(enum cap_bitmap feature);
 void wma_set_fw_wlan_feat_caps(enum cap_bitmap feature);
 
-QDF_STATUS wma_post_ctrl_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg);
+QDF_STATUS wma_post_ctrl_msg(struct mac_context *mac, struct scheduler_msg *pMsg);
 
 void wma_register_wow_wakeup_events(WMA_HANDLE handle, uint8_t vdev_id,
 					uint8_t vdev_type, uint8_t sub_type);

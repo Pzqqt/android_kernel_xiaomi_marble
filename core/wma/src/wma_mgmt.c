@@ -1727,7 +1727,7 @@ static void wma_read_cfg_wepkey(tp_wma_handle wma_handle,
 	QDF_STATUS status;
 	qdf_size_t val = SIR_MAC_KEY_LENGTH;
 	uint8_t i, j;
-	tpAniSirGlobal mac_ctx = wma_handle->mac_context;
+	struct mac_context *mac_ctx = wma_handle->mac_context;
 
 	WMA_LOGD("Reading WEP keys from cfg");
 
@@ -3074,7 +3074,7 @@ void wma_set_keepalive_req(tp_wma_handle wma,
 void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 {
 	tSirSmeMissedBeaconInd *beacon_miss_ind;
-	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	beacon_miss_ind = (tSirSmeMissedBeaconInd *) qdf_mem_malloc
 				  (sizeof(tSirSmeMissedBeaconInd));
@@ -4297,11 +4297,11 @@ QDF_STATUS wma_de_register_mgmt_frm_client(void)
  * Return: Success or Failure Status
  */
 QDF_STATUS wma_register_roaming_callbacks(
-	QDF_STATUS (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+	QDF_STATUS (*csr_roam_synch_cb)(struct mac_context *mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr,
 		enum sir_roam_op_code reason),
-	QDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+	QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr,
 		enum sir_roam_op_code reason))

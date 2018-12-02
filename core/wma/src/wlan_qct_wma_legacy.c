@@ -45,7 +45,7 @@
  * Return: Success or Failure
  */
 
-QDF_STATUS wma_post_ctrl_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg)
+QDF_STATUS wma_post_ctrl_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 {
 	if (QDF_STATUS_SUCCESS !=
 	    scheduler_post_message(QDF_MODULE_ID_WMA,
@@ -64,7 +64,7 @@ QDF_STATUS wma_post_ctrl_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg)
  * Return: Success or Failure
  */
 
-static QDF_STATUS wma_post_cfg_msg(tpAniSirGlobal mac,
+static QDF_STATUS wma_post_cfg_msg(struct mac_context *mac,
 				   struct scheduler_msg *pMsg)
 {
 	QDF_STATUS rc = QDF_STATUS_SUCCESS;
@@ -103,7 +103,7 @@ QDF_STATUS u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 {
 	struct scheduler_msg msg = {0};
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac = (tpAniSirGlobal) pSirGlobal;
+	struct mac_context *mac = (struct mac_context *) pSirGlobal;
 
 	msg.type = pMb->type;
 	msg.bodyval = 0;

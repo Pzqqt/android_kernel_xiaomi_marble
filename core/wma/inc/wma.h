@@ -1252,11 +1252,11 @@ typedef struct {
 	bool tx_chain_mask_cck;
 	qdf_mc_timer_t service_ready_ext_timer;
 
-	QDF_STATUS (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+	QDF_STATUS (*csr_roam_synch_cb)(struct mac_context *mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr,
 		enum sir_roam_op_code reason);
-	QDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+	QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr,
 		enum sir_roam_op_code reason);
@@ -1267,7 +1267,7 @@ typedef struct {
 	struct wma_ini_config ini_config;
 	struct wma_valid_channels saved_chan;
 	bool nan_datapath_enabled;
-	QDF_STATUS (*pe_ndp_event_handler)(tpAniSirGlobal mac_ctx,
+	QDF_STATUS (*pe_ndp_event_handler)(struct mac_context *mac_ctx,
 					   struct scheduler_msg *msg);
 	bool fw_timeout_crash;
 	bool sub_20_support;

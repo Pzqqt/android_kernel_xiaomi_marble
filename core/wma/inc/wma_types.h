@@ -671,7 +671,7 @@ enum rateid {
 	RATEID_DEFAULT
 };
 
-QDF_STATUS wma_post_ctrl_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg);
+QDF_STATUS wma_post_ctrl_msg(struct mac_context *mac, struct scheduler_msg *pMsg);
 
 QDF_STATUS u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb);
 
@@ -741,21 +741,21 @@ QDF_STATUS wma_register_mgmt_frm_client(void);
 QDF_STATUS wma_de_register_mgmt_frm_client(void);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS wma_register_roaming_callbacks(
-		QDF_STATUS (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+		QDF_STATUS (*csr_roam_synch_cb)(struct mac_context *mac,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr,
 			enum sir_roam_op_code reason),
-		QDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+		QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr,
 			enum sir_roam_op_code reason));
 #else
 static inline QDF_STATUS wma_register_roaming_callbacks(
-		QDF_STATUS (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+		QDF_STATUS (*csr_roam_synch_cb)(struct mac_context *mac,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr,
 			enum sir_roam_op_code reason),
-		QDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+		QDF_STATUS (*pe_roam_synch_cb)(struct mac_context *mac,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr,
 			enum sir_roam_op_code reason))

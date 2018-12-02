@@ -1255,7 +1255,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	target_resource_config *wlan_res_cfg;
 	struct wlan_objmgr_psoc *psoc = wma->psoc;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 #endif
 #ifdef CONFIG_VDEV_SM
 	enum wlan_vdev_sm_evt  event;
@@ -2152,7 +2152,7 @@ static QDF_STATUS wma_config_active_apf_mode(t_wma_handle *wma, uint8_t vdev_id)
 static void
 wma_check_and_find_mcc_ap(tp_wma_handle wma, uint8_t vdev_id)
 {
-	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (NULL == mac_ctx) {
 		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
@@ -2917,7 +2917,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	struct vdev_start_params params = { 0 };
 	wmi_vdev_start_request_cmd_fixed_param *cmd;
 	struct wma_txrx_node *intr = wma->interfaces;
-	tpAniSirGlobal mac_ctx = NULL;
+	struct mac_context *mac_ctx = NULL;
 	uint32_t temp_ssid_len = 0;
 	uint32_t temp_flags = 0;
 	uint32_t temp_chan_info = 0;
@@ -3704,7 +3704,7 @@ void wma_vdev_resp_timer(void *data)
 	struct wma_txrx_node *iface;
 	struct del_sta_self_params *del_sta_self_params;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	tpAniSirGlobal mac_ctx;
+	struct mac_context *mac_ctx;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
@@ -4442,7 +4442,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	struct wma_txrx_node *iface;
 	int pps_val = 0;
 	bool roam_synch_in_progress = false;
-	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	struct policy_mgr_hw_mode_params hw_mode = {0};
 	bool peer_assoc_sent = false;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);

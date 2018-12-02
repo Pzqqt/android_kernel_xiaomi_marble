@@ -860,7 +860,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 
 	/* Call the Ack Cb registered by UMAC */
 	if (ack_cb)
-		ack_cb((tpAniSirGlobal) (wma_handle->mac_context), NULL,
+		ack_cb((struct mac_context *) (wma_handle->mac_context), NULL,
 			work->status ? 0 : 1, NULL);
 	else
 		WMA_LOGE("Data Tx Ack Cb is NULL");
@@ -2395,7 +2395,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	uint16_t newFrmLen = 0;
 #endif /* WLAN_FEATURE_11W */
 	struct wma_txrx_node *iface;
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 	tpSirMacMgmtHdr mHdr;
 	struct wmi_mgmt_params mgmt_param = {0};
 	struct cdp_cfg *ctrl_pdev;
@@ -2798,7 +2798,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	}
 
 	status = wlan_mgmt_txrx_mgmt_frame_tx(peer,
-			(tpAniSirGlobal)wma_handle->mac_context,
+			(struct mac_context *)wma_handle->mac_context,
 			(qdf_nbuf_t)tx_frame,
 			NULL, tx_frm_ota_comp_cb,
 			WLAN_UMAC_COMP_MLME, &mgmt_param);

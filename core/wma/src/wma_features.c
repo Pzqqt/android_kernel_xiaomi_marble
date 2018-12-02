@@ -1389,7 +1389,7 @@ int wma_oem_data_response_handler(void *handle,
 	uint8_t *data;
 	uint32_t datalen;
 	struct oem_data_rsp *oem_rsp;
-	tpAniSirGlobal pmac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *pmac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!pmac) {
 		WMA_LOGE(FL("Invalid pmac"));
@@ -4400,7 +4400,7 @@ int wma_get_apf_caps_event_handler(void *handle, u_int8_t *cmd_param_info,
 	WMI_BPF_CAPABILIY_INFO_EVENTID_param_tlvs  *param_buf;
 	wmi_bpf_capability_info_evt_fixed_param *event;
 	struct sir_apf_get_offload *apf_get_offload;
-	tpAniSirGlobal pmac = (tpAniSirGlobal)cds_get_context(
+	struct mac_context *pmac = (struct mac_context *)cds_get_context(
 				QDF_MODULE_ID_PE);
 
 	if (!pmac) {
@@ -4619,7 +4619,7 @@ int wma_apf_read_work_memory_event_handler(void *handle, uint8_t *evt_buf,
 	wmi_unified_t wmi_handle;
 	struct wmi_apf_read_memory_resp_event_params evt_params = {0};
 	QDF_STATUS status;
-	tpAniSirGlobal pmac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *pmac = cds_get_context(QDF_MODULE_ID_PE);
 
 	WMA_LOGD(FL("handle:%pK event:%pK len:%u"), handle, evt_buf, len);
 
@@ -5086,7 +5086,7 @@ int wma_p2p_lo_event_handler(void *handle, uint8_t *event_buf,
 	struct sir_p2p_lo_event *event;
 	WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID_param_tlvs *param_tlvs;
 	wmi_p2p_lo_stopped_event_fixed_param *fix_param;
-	tpAniSirGlobal p_mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *p_mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA Context", __func__);
@@ -5416,7 +5416,7 @@ int wma_get_arp_stats_handler(void *handle, uint8_t *data,
 	wmi_vdev_get_connectivity_check_stats *connect_stats_event;
 	uint8_t *buf_ptr;
 	struct rsp_stats rsp = {0};
-	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {
 		WMA_LOGE("%s: Invalid mac context", __func__);
@@ -5493,7 +5493,7 @@ int wma_unified_power_debug_stats_event_handler(void *handle,
 	wmi_pdev_chip_power_stats_event_fixed_param *param_buf;
 	uint32_t power_stats_len, stats_registers_len, *debug_registers;
 
-	tpAniSirGlobal mac = (tpAniSirGlobal)cds_get_context(QDF_MODULE_ID_PE);
+	struct mac_context *mac = (struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
 
 	param_tlvs =
 		(WMI_PDEV_CHIP_POWER_STATS_EVENTID_param_tlvs *) cmd_param_info;
@@ -5573,13 +5573,13 @@ int wma_chan_info_event_handler(void *handle, uint8_t *event_buf,
 	WMI_CHAN_INFO_EVENTID_param_tlvs *param_buf;
 	wmi_chan_info_event_fixed_param *event;
 	struct scan_chan_info buf;
-	tpAniSirGlobal mac = NULL;
+	struct mac_context *mac = NULL;
 	struct lim_channel_status *channel_status;
 
 	WMA_LOGD("%s: Enter", __func__);
 
 	if (wma != NULL && wma->cds_context != NULL)
-		mac = (tpAniSirGlobal)cds_get_context(QDF_MODULE_ID_PE);
+		mac = (struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {
 		WMA_LOGE("%s: Invalid mac context", __func__);
@@ -5667,9 +5667,9 @@ int wma_rx_aggr_failure_event_handler(void *handle, u_int8_t *event_buf,
 	wmi_rx_aggr_failure_event_fixed_param *rx_aggr_failure_info;
 	wmi_rx_aggr_failure_info *hole_info;
 	uint32_t i, alloc_len;
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 
-	mac = (tpAniSirGlobal)cds_get_context(QDF_MODULE_ID_PE);
+	mac = (struct mac_context *)cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac || !mac->sme.stats_ext2_cb) {
 		WMA_LOGD("%s: NULL mac ptr or HDD callback is null", __func__);
 		return -EINVAL;
@@ -5770,7 +5770,7 @@ int wma_pdev_div_info_evt_handler(void *handle, u_int8_t *event_buf,
 	u_int32_t i;
 	u_int8_t macaddr[IEEE80211_ADDR_LEN];
 
-	tpAniSirGlobal pmac = (tpAniSirGlobal)cds_get_context(
+	struct mac_context *pmac = (struct mac_context *)cds_get_context(
 					QDF_MODULE_ID_PE);
 	if (!pmac) {
 		WMA_LOGE(FL("Invalid pmac"));
