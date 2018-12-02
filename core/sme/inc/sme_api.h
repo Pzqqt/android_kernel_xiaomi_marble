@@ -453,7 +453,7 @@ void sme_purge_pdev_all_ser_cmd_list(mac_handle_t mac_handle);
  * Return: QDF_STATUS_SUCCESS - SME successfully processed the message.
  * Other status means SME failed to process the message to HAL.
  */
-QDF_STATUS sme_process_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg);
+QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg);
 
 QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg);
 QDF_STATUS sme_scan_get_result(mac_handle_t mac_handle, uint8_t sessionId,
@@ -988,7 +988,7 @@ QDF_STATUS sme_roam_start_beacon_req(mac_handle_t mac_handle,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_csa_restart(tpAniSirGlobal mac_ctx, uint8_t session_id);
+QDF_STATUS sme_csa_restart(struct mac_context *mac_ctx, uint8_t session_id);
 #endif
 
 QDF_STATUS sme_roam_csa_ie_request(mac_handle_t mac_handle,
@@ -2277,7 +2277,7 @@ QDF_STATUS sme_set_smps_cfg(uint32_t vdev_id, uint32_t param_id,
  * Return: QDF_STATUS_SUCCESS or non-zero on failure
  */
 
-QDF_STATUS sme_get_peer_stats(tpAniSirGlobal mac,
+QDF_STATUS sme_get_peer_stats(struct mac_context *mac,
 			      struct sir_peer_info_req req);
 
 /**
@@ -2352,7 +2352,7 @@ QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len);
  *
  * Return: pointer to pmac context
  */
-tpAniSirGlobal sme_get_mac_context(void);
+struct mac_context *sme_get_mac_context(void);
 
 /**
  * sme_display_disconnect_stats() - Display per session Disconnect stats
@@ -2372,7 +2372,7 @@ void sme_display_disconnect_stats(mac_handle_t mac_handle, uint8_t session_id);
  *
  * Return: QDF_STATUS enumeration.
  */
-QDF_STATUS sme_process_msg_callback(tpAniSirGlobal mac,
+QDF_STATUS sme_process_msg_callback(struct mac_context *mac,
 				    struct scheduler_msg *msg);
 
 /**
