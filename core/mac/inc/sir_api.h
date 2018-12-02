@@ -417,7 +417,7 @@ typedef struct sSirSmeReadyReq {
 	void *csr_roam_synch_cb;
 	void *pe_roam_synch_cb;
 	void *stop_roaming_cb;
-	QDF_STATUS (*sme_msg_cb)(tpAniSirGlobal mac,
+	QDF_STATUS (*sme_msg_cb)(struct mac_context *mac,
 				 struct scheduler_msg *msg);
 } tSirSmeReadyReq, *tpSirSmeReadyReq;
 
