@@ -56,38 +56,38 @@ struct dph_hash_table {
 
 tpDphHashNode dph_lookup_hash_entry(struct mac_context *mac, uint8_t staAddr[],
 				    uint16_t *pStaId,
-				    struct dph_hash_table *pDphHashTable);
+				    struct dph_hash_table *hash_table);
 tpDphHashNode dph_lookup_assoc_id(struct mac_context *mac, uint16_t staIdx,
 				  uint16_t *assocId,
-				  struct dph_hash_table *pDphHashTable);
+				  struct dph_hash_table *hash_table);
 
 /* Get a pointer to the hash node */
-extern tpDphHashNode dph_get_hash_entry(struct mac_context *mac, uint16_t staId,
-					struct dph_hash_table *pDphHashTable);
+tpDphHashNode dph_get_hash_entry(struct mac_context *mac, uint16_t staId,
+				 struct dph_hash_table *hash_table);
 
 /* Add an entry to the hash table */
-extern tpDphHashNode dph_add_hash_entry(struct mac_context *mac,
-					tSirMacAddr staAddr,
-					uint16_t staId,
-					struct dph_hash_table *pDphHashTable);
+tpDphHashNode dph_add_hash_entry(struct mac_context *mac,
+				 tSirMacAddr staAddr,
+				 uint16_t staId,
+				 struct dph_hash_table *hash_table);
 
 /* Delete an entry from the hash table */
 QDF_STATUS dph_delete_hash_entry(struct mac_context *mac,
 				 tSirMacAddr staAddr, uint16_t staId,
-				 struct dph_hash_table *pDphHashTable);
+				 struct dph_hash_table *hash_table);
 
 /**
  * dph_hash_table_init - Initialize a DPH Hash Table
  * @mac: Global MAC Context
- * @pDphHashTable: Pointer to the Hash Table to initialize
+ * @hash_table: Pointer to the Hash Table to initialize
  */
 void dph_hash_table_init(struct mac_context *mac,
-			 struct dph_hash_table *pDphHashTable);
+			 struct dph_hash_table *hash_table);
 
 /* Initialize STA state */
 tpDphHashNode dph_init_sta_state(struct mac_context *mac,
 				 tSirMacAddr staAddr,
 				 uint16_t staId, uint8_t validStaIdx,
-				 struct dph_hash_table *pDphHashTable);
+				 struct dph_hash_table *hash_table);
 
 #endif

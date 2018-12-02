@@ -37,18 +37,18 @@
 #include "wlan_mlme_api.h"
 
 void dph_hash_table_init(struct mac_context *mac,
-			 struct dph_hash_table *pDphHashTable)
+			 struct dph_hash_table *hash_table)
 {
 	uint16_t i;
 
-	for (i = 0; i < pDphHashTable->size; i++) {
-		pDphHashTable->pHashTable[i] = 0;
+	for (i = 0; i < hash_table->size; i++) {
+		hash_table->pHashTable[i] = 0;
 	}
 
-	for (i = 0; i < pDphHashTable->size; i++) {
-		pDphHashTable->pDphNodeArray[i].valid = 0;
-		pDphHashTable->pDphNodeArray[i].added = 0;
-		pDphHashTable->pDphNodeArray[i].assocId = i;
+	for (i = 0; i < hash_table->size; i++) {
+		hash_table->pDphNodeArray[i].valid = 0;
+		hash_table->pDphNodeArray[i].added = 0;
+		hash_table->pDphNodeArray[i].assocId = i;
 	}
 
 }
@@ -103,17 +103,17 @@ static uint16_t hash_function(struct mac_context *mac, uint8_t staAddr[],
 
 tpDphHashNode dph_lookup_hash_entry(struct mac_context *mac, uint8_t staAddr[],
 				    uint16_t *pAssocId,
-				    struct dph_hash_table *pDphHashTable)
+				    struct dph_hash_table *hash_table)
 {
 	tpDphHashNode ptr = NULL;
-	uint16_t index = hash_function(mac, staAddr, pDphHashTable->size);
+	uint16_t index = hash_function(mac, staAddr, hash_table->size);
 
-	if (!pDphHashTable->pHashTable) {
+	if (!hash_table->pHashTable) {
 		pe_err("pHashTable is NULL");
 		return ptr;
 	}
 
-	for (ptr = pDphHashTable->pHashTable[index]; ptr; ptr = ptr->next) {
+	for (ptr = hash_table->pHashTable[index]; ptr; ptr = ptr->next) {
 		if (dph_compare_mac_addr(staAddr, ptr->staAddr)) {
 			*pAssocId = ptr->assocId;
 			break;
@@ -141,11 +141,11 @@ tpDphHashNode dph_lookup_hash_entry(struct mac_context *mac, uint8_t staAddr[],
  */
 
 tpDphHashNode dph_get_hash_entry(struct mac_context *mac, uint16_t peerIdx,
-				 struct dph_hash_table *pDphHashTable)
+				 struct dph_hash_table *hash_table)
 {
-	if (peerIdx < pDphHashTable->size) {
-		if (pDphHashTable->pDphNodeArray[peerIdx].added)
-			return &pDphHashTable->pDphNodeArray[peerIdx];
+	if (peerIdx < hash_table->size) {
+		if (hash_table->pDphNodeArray[peerIdx].added)
+			return &hash_table->pDphNodeArray[peerIdx];
 		else
 			return NULL;
 	} else
@@ -154,9 +154,9 @@ tpDphHashNode dph_get_hash_entry(struct mac_context *mac, uint16_t peerIdx,
 }
 
 static inline tpDphHashNode get_node(struct mac_context *mac, uint8_t assocId,
-				     struct dph_hash_table *pDphHashTable)
+				     struct dph_hash_table *hash_table)
 {
-	return &pDphHashTable->pDphNodeArray[assocId];
+	return &hash_table->pDphNodeArray[assocId];
 }
 
 /* --------------------------------------------------------------------- */
@@ -179,21 +179,21 @@ static inline tpDphHashNode get_node(struct mac_context *mac, uint8_t assocId,
  */
 tpDphHashNode dph_lookup_assoc_id(struct mac_context *mac, uint16_t staIdx,
 				  uint16_t *assocId,
-				  struct dph_hash_table *pDphHashTable)
+				  struct dph_hash_table *hash_table)
 {
 	uint8_t i;
 
-	for (i = 0; i < pDphHashTable->size; i++) {
-		if ((pDphHashTable->pDphNodeArray[i].added) &&
-		    (pDphHashTable->pDphNodeArray[i].staIndex == staIdx)) {
+	for (i = 0; i < hash_table->size; i++) {
+		if ((hash_table->pDphNodeArray[i].added) &&
+		    (hash_table->pDphNodeArray[i].staIndex == staIdx)) {
 			*assocId = i;
 			break;
 		}
 
 	}
-	if (i == pDphHashTable->size)
+	if (i == hash_table->size)
 		return NULL;
-	return &pDphHashTable->pDphNodeArray[i];
+	return &hash_table->pDphNodeArray[i];
 
 }
 
@@ -211,19 +211,19 @@ tpDphHashNode dph_lookup_assoc_id(struct mac_context *mac, uint16_t staIdx,
 
 tpDphHashNode dph_init_sta_state(struct mac_context *mac, tSirMacAddr staAddr,
 				 uint16_t assocId, uint8_t validStaIdx,
-				 struct dph_hash_table *pDphHashTable)
+				 struct dph_hash_table *hash_table)
 {
 	uint32_t val;
 
 	tpDphHashNode pStaDs, pnext;
 	uint16_t staIdx = STA_INVALID_IDX;
 
-	if (assocId >= pDphHashTable->size) {
+	if (assocId >= hash_table->size) {
 		pe_err("Invalid Assoc Id %d", assocId);
 		return NULL;
 	}
 
-	pStaDs = get_node(mac, (uint8_t) assocId, pDphHashTable);
+	pStaDs = get_node(mac, (uint8_t) assocId, hash_table);
 	staIdx = pStaDs->staIndex;
 	pnext = pStaDs->next;
 
@@ -278,26 +278,26 @@ tpDphHashNode dph_init_sta_state(struct mac_context *mac, tSirMacAddr staAddr,
 
 tpDphHashNode dph_add_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 				 uint16_t assocId,
-				 struct dph_hash_table *pDphHashTable)
+				 struct dph_hash_table *hash_table)
 {
 	tpDphHashNode ptr, node;
-	uint16_t index = hash_function(mac, staAddr, pDphHashTable->size);
+	uint16_t index = hash_function(mac, staAddr, hash_table->size);
 
 	pe_debug("assocId %d index %d STA addr",
 		       assocId, index);
 	pe_debug(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(staAddr));
 
-	if (assocId >= pDphHashTable->size) {
+	if (assocId >= hash_table->size) {
 		pe_err("invalid STA id %d", assocId);
 		return NULL;
 	}
 
-	if (pDphHashTable->pDphNodeArray[assocId].added) {
+	if (hash_table->pDphNodeArray[assocId].added) {
 		pe_err("already added STA %d", assocId);
 		return NULL;
 	}
 
-	for (ptr = pDphHashTable->pHashTable[index]; ptr; ptr = ptr->next) {
+	for (ptr = hash_table->pHashTable[index]; ptr; ptr = ptr->next) {
 		if (ptr == ptr->next) {
 			pe_err("Infinite Loop");
 			return NULL;
@@ -315,17 +315,17 @@ tpDphHashNode dph_add_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 		return NULL;
 	} else {
 		if (dph_init_sta_state
-			    (mac, staAddr, assocId, false, pDphHashTable) == NULL) {
+			    (mac, staAddr, assocId, false, hash_table) == NULL) {
 			pe_err("could not Init STA id: %d", assocId);
 			return NULL;
 		}
 		/* Add the node to the link list */
-		pDphHashTable->pDphNodeArray[assocId].next =
-			pDphHashTable->pHashTable[index];
-		pDphHashTable->pHashTable[index] =
-			&pDphHashTable->pDphNodeArray[assocId];
+		hash_table->pDphNodeArray[assocId].next =
+			hash_table->pHashTable[index];
+		hash_table->pHashTable[index] =
+			&hash_table->pDphNodeArray[assocId];
 
-		node = pDphHashTable->pHashTable[index];
+		node = hash_table->pHashTable[index];
 		return node;
 	}
 }
@@ -351,25 +351,25 @@ tpDphHashNode dph_add_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 
 QDF_STATUS dph_delete_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 				 uint16_t assocId,
-				 struct dph_hash_table *pDphHashTable)
+				 struct dph_hash_table *hash_table)
 {
 	tpDphHashNode ptr, prev;
-	uint16_t index = hash_function(mac, staAddr, pDphHashTable->size);
+	uint16_t index = hash_function(mac, staAddr, hash_table->size);
 
 	pe_debug("assocId %d index %d STA addr", assocId, index);
 	pe_debug(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(staAddr));
 
-	if (assocId >= pDphHashTable->size) {
+	if (assocId >= hash_table->size) {
 		pe_err("invalid STA id %d", assocId);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (pDphHashTable->pDphNodeArray[assocId].added == 0) {
+	if (hash_table->pDphNodeArray[assocId].added == 0) {
 		pe_err("STA %d never added", assocId);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	for (prev = 0, ptr = pDphHashTable->pHashTable[index];
+	for (prev = 0, ptr = hash_table->pHashTable[index];
 	     ptr; prev = ptr, ptr = ptr->next) {
 		if (dph_compare_mac_addr(staAddr, ptr->staAddr))
 			break;
@@ -384,7 +384,7 @@ QDF_STATUS dph_delete_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 		ptr->valid = 0;
 		memset(ptr->staAddr, 0, sizeof(ptr->staAddr));
 		if (prev == 0)
-			pDphHashTable->pHashTable[index] = ptr->next;
+			hash_table->pHashTable[index] = ptr->next;
 		else
 			prev->next = ptr->next;
 		ptr->added = 0;
