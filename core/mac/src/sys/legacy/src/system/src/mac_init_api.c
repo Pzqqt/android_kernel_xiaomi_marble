@@ -43,7 +43,7 @@
 #ifdef WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY
 static struct mac_context *global_mac_context;
 
-static inline tpAniSirGlobal mac_allocate_context_buffer(void)
+static inline struct mac_context *mac_allocate_context_buffer(void)
 {
 	global_mac_context = qdf_mem_malloc(sizeof(*global_mac_context));
 
@@ -58,7 +58,7 @@ static inline void mac_free_context_buffer(void)
 #else /* WLAN_ALLOCATE_GLOBAL_BUFFERS_DYNAMICALLY */
 static struct mac_context global_mac_context;
 
-static inline tpAniSirGlobal mac_allocate_context_buffer(void)
+static inline struct mac_context *mac_allocate_context_buffer(void)
 {
 	return &global_mac_context;
 }
@@ -72,7 +72,7 @@ QDF_STATUS mac_start(mac_handle_t mac_handle,
 		     struct mac_start_params *params)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	if (!mac || !params) {
 		QDF_ASSERT(0);
@@ -90,7 +90,7 @@ QDF_STATUS mac_start(mac_handle_t mac_handle,
 
 QDF_STATUS mac_stop(mac_handle_t mac_handle)
 {
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	pe_stop(mac);
 	cfg_cleanup(mac);
@@ -101,7 +101,7 @@ QDF_STATUS mac_stop(mac_handle_t mac_handle)
 QDF_STATUS mac_open(struct wlan_objmgr_psoc *psoc, mac_handle_t *mac_handle,
 		    hdd_handle_t hdd_handle, struct cds_config_info *cds_cfg)
 {
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 	QDF_STATUS status;
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -177,7 +177,7 @@ free_mac_context:
 QDF_STATUS mac_close(mac_handle_t mac_handle)
 {
 
-	tpAniSirGlobal mac = MAC_CONTEXT(mac_handle);
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 
 	if (!mac)
 		return QDF_STATUS_E_FAILURE;

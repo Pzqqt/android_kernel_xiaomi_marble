@@ -60,7 +60,7 @@
  *
  */
 void
-cfg_send_host_msg(tpAniSirGlobal mac, uint16_t msgType, uint32_t msgLen,
+cfg_send_host_msg(struct mac_context *mac, uint16_t msgType, uint32_t msgLen,
 		  uint32_t paramNum, uint32_t *pParamList, uint32_t dataLen,
 		  uint32_t *pData)
 {

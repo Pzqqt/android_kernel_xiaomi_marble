@@ -38,8 +38,8 @@ typedef enum eBssSystemRole {
 	eSYSTEM_MULTI_BSS_ROLE = eSYSTEM_LAST_ROLE
 } tBssSystemRole;
 
-QDF_STATUS cfg_init(tpAniSirGlobal);
-void cfg_de_init(tpAniSirGlobal);
+QDF_STATUS cfg_init(struct mac_context *);
+void cfg_de_init(struct mac_context *);
 
 /**
  * sir_swap_u16()

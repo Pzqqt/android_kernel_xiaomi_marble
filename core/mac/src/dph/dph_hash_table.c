@@ -53,7 +53,7 @@
  * @return None
  */
 
-void dph_hash_table_class_init(tpAniSirGlobal mac,
+void dph_hash_table_class_init(struct mac_context *mac,
 			       dphHashTableClass *pDphHashTable)
 {
 	uint16_t i;
@@ -87,7 +87,7 @@ void dph_hash_table_class_init(tpAniSirGlobal mac,
  * @return None
  */
 
-static uint16_t hash_function(tpAniSirGlobal mac, uint8_t staAddr[],
+static uint16_t hash_function(struct mac_context *mac, uint8_t staAddr[],
 			      uint16_t numSta)
 {
 	int i;
@@ -118,7 +118,7 @@ static uint16_t hash_function(tpAniSirGlobal mac, uint8_t staAddr[],
  *         NULL if lookup was a failure
  */
 
-tpDphHashNode dph_lookup_hash_entry(tpAniSirGlobal mac, uint8_t staAddr[],
+tpDphHashNode dph_lookup_hash_entry(struct mac_context *mac, uint8_t staAddr[],
 				    uint16_t *pAssocId,
 				    dphHashTableClass *pDphHashTable)
 {
@@ -157,7 +157,7 @@ tpDphHashNode dph_lookup_hash_entry(tpAniSirGlobal mac, uint8_t staAddr[],
  *         NULL if lookup was a failure
  */
 
-tpDphHashNode dph_get_hash_entry(tpAniSirGlobal mac, uint16_t peerIdx,
+tpDphHashNode dph_get_hash_entry(struct mac_context *mac, uint16_t peerIdx,
 				 dphHashTableClass *pDphHashTable)
 {
 	if (peerIdx < pDphHashTable->size) {
@@ -170,7 +170,7 @@ tpDphHashNode dph_get_hash_entry(tpAniSirGlobal mac, uint16_t peerIdx,
 
 }
 
-static inline tpDphHashNode get_node(tpAniSirGlobal mac, uint8_t assocId,
+static inline tpDphHashNode get_node(struct mac_context *mac, uint8_t assocId,
 				     dphHashTableClass *pDphHashTable)
 {
 	return &pDphHashTable->pDphNodeArray[assocId];
@@ -194,7 +194,7 @@ static inline tpDphHashNode get_node(tpAniSirGlobal mac, uint8_t assocId,
  * @param *assocId pointer to associd to be returned by this function.
  * @return pointer to the dph node.
  */
-tpDphHashNode dph_lookup_assoc_id(tpAniSirGlobal mac, uint16_t staIdx,
+tpDphHashNode dph_lookup_assoc_id(struct mac_context *mac, uint16_t staIdx,
 				  uint16_t *assocId,
 				  dphHashTableClass *pDphHashTable)
 {
@@ -218,7 +218,7 @@ tpDphHashNode dph_lookup_assoc_id(tpAniSirGlobal mac, uint16_t staIdx,
    \fn dph_init_sta_state
    \brief Initialize STA state. this function saves the staId from the current entry in the DPH table with given assocId
  \ if validStaIdx flag is set. Otherwise it sets the staId to invalid.
-   \param  tpAniSirGlobal    mac
+   \param  struct mac_context *   mac
    \param  tSirMacAddr staAddr
    \param  uint16_t assocId
    \param  uint8_t validStaIdx -   true ==> the staId in the DPH entry with given assocId is valid and restore it back.
@@ -226,7 +226,7 @@ tpDphHashNode dph_lookup_assoc_id(tpAniSirGlobal mac, uint16_t staIdx,
    \return tpDphHashNode - DPH hash node if found.
    -------------------------------------------------------------*/
 
-tpDphHashNode dph_init_sta_state(tpAniSirGlobal mac, tSirMacAddr staAddr,
+tpDphHashNode dph_init_sta_state(struct mac_context *mac, tSirMacAddr staAddr,
 				 uint16_t assocId, uint8_t validStaIdx,
 				 dphHashTableClass *pDphHashTable)
 {
@@ -293,7 +293,7 @@ tpDphHashNode dph_init_sta_state(tpAniSirGlobal mac, tSirMacAddr staAddr,
  * @return Pointer to STA hash entry
  */
 
-tpDphHashNode dph_add_hash_entry(tpAniSirGlobal mac, tSirMacAddr staAddr,
+tpDphHashNode dph_add_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 				 uint16_t assocId,
 				 dphHashTableClass *pDphHashTable)
 {
@@ -366,7 +366,7 @@ tpDphHashNode dph_add_hash_entry(tpAniSirGlobal mac, tSirMacAddr staAddr,
  *         QDF_STATUS_E_FAILURE otherwise
  */
 
-QDF_STATUS dph_delete_hash_entry(tpAniSirGlobal mac, tSirMacAddr staAddr,
+QDF_STATUS dph_delete_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 				 uint16_t assocId,
 				 dphHashTableClass *pDphHashTable)
 {

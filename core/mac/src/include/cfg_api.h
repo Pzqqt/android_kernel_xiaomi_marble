@@ -58,52 +58,52 @@ typedef struct {
 /* CFG function prototypes                                             */
 /*---------------------------------------------------------------------*/
 
-uint32_t cfg_need_restart(tpAniSirGlobal mac, uint16_t cfgId);
-uint32_t cfg_need_reload(tpAniSirGlobal mac, uint16_t cfgId);
+uint32_t cfg_need_restart(struct mac_context *mac, uint16_t cfgId);
+uint32_t cfg_need_reload(struct mac_context *mac, uint16_t cfgId);
 
 /* / Process host message */
-void cfg_process_mb_msg(tpAniSirGlobal, tSirMbMsg *);
+void cfg_process_mb_msg(struct mac_context *, tSirMbMsg *);
 
 /* / Set integer parameter value */
-QDF_STATUS cfg_set_int(tpAniSirGlobal, uint16_t, uint32_t);
+QDF_STATUS cfg_set_int(struct mac_context *, uint16_t, uint32_t);
 
 /* / Check if the parameter is valid */
-QDF_STATUS cfg_check_valid(tpAniSirGlobal, uint16_t, uint32_t *);
+QDF_STATUS cfg_check_valid(struct mac_context *, uint16_t, uint32_t *);
 
 /* / Get integer parameter value */
-QDF_STATUS wlan_cfg_get_int(tpAniSirGlobal, uint16_t, uint32_t *);
+QDF_STATUS wlan_cfg_get_int(struct mac_context *, uint16_t, uint32_t *);
 
 /* / Set string parameter value */
-QDF_STATUS cfg_set_str(tpAniSirGlobal, uint16_t, uint8_t *, uint32_t);
+QDF_STATUS cfg_set_str(struct mac_context *, uint16_t, uint8_t *, uint32_t);
 
-QDF_STATUS cfg_set_str_notify(tpAniSirGlobal, uint16_t, uint8_t *, uint32_t,
+QDF_STATUS cfg_set_str_notify(struct mac_context *, uint16_t, uint8_t *, uint32_t,
 			      int);
 
 /* Cfg Download function for Prima or Integrated solutions. */
-void process_cfg_download_req(tpAniSirGlobal);
+void process_cfg_download_req(struct mac_context *);
 
 /* / Get string parameter value */
-QDF_STATUS wlan_cfg_get_str(tpAniSirGlobal, uint16_t, uint8_t *, uint32_t *);
+QDF_STATUS wlan_cfg_get_str(struct mac_context *, uint16_t, uint8_t *, uint32_t *);
 
 /* / Get string parameter maximum length */
-QDF_STATUS wlan_cfg_get_str_max_len(tpAniSirGlobal, uint16_t, uint32_t *);
+QDF_STATUS wlan_cfg_get_str_max_len(struct mac_context *, uint16_t, uint32_t *);
 
 /* / Get string parameter maximum length */
-QDF_STATUS wlan_cfg_get_str_len(tpAniSirGlobal, uint16_t, uint32_t *);
+QDF_STATUS wlan_cfg_get_str_len(struct mac_context *, uint16_t, uint32_t *);
 
 /* / Get the regulatory tx power on given channel */
-int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal mac,
+int8_t cfg_get_regulatory_max_transmit_power(struct mac_context *mac,
 					     uint8_t channel);
 
 /* / Get capability info */
-QDF_STATUS cfg_get_capability_info(tpAniSirGlobal mac, uint16_t *pCap,
+QDF_STATUS cfg_get_capability_info(struct mac_context *mac, uint16_t *pCap,
 				   struct pe_session *pe_session);
 
 /* / Set capability info */
-void cfg_set_capability_info(tpAniSirGlobal, uint16_t);
+void cfg_set_capability_info(struct mac_context *, uint16_t);
 
 /* / Cleanup CFG module */
-void cfg_cleanup(tpAniSirGlobal mac);
+void cfg_cleanup(struct mac_context *mac);
 
 const char *cfg_get_string(uint16_t cfg_id);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -75,7 +75,7 @@ typedef struct sCfgBinHdr {
 /* CFG function prototypes                                            */
 /*--------------------------------------------------------------------*/
 
-extern void cfg_send_host_msg(tpAniSirGlobal, uint16_t, uint32_t, uint32_t,
+extern void cfg_send_host_msg(struct mac_context *, uint16_t, uint32_t, uint32_t,
 			      uint32_t *, uint32_t, uint32_t *);
 
 #endif /* __CFGPRIV_H */

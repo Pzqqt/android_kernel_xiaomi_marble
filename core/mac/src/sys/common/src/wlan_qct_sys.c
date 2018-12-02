@@ -212,7 +212,7 @@ QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg)
  *
  * Return: none
  */
-void sys_process_mmh_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg)
+void sys_process_mmh_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 {
 	QDF_MODULE_ID targetMQ = QDF_MODULE_ID_SYS;
 

@@ -40,7 +40,7 @@ static uint8_t __g_s_buffer[CFG_MAX_STR_LEN];
 static uint32_t __g_param_list[WNI_CFG_MAX_PARAM_NUM +
 			     WNI_CFG_GET_PER_STA_STAT_RSP_NUM];
 
-static void notify(tpAniSirGlobal, uint16_t, uint32_t);
+static void notify(struct mac_context *, uint16_t, uint32_t);
 
 typedef enum {
 	eRF_BAND_UNKNOWN = 0,
@@ -52,7 +52,7 @@ extern cfgstatic_string cfg_static_string[CFG_MAX_STATIC_STRING];
 extern cgstatic cfg_static[CFG_PARAM_MAX_NUM];
 
 /* --------------------------------------------------------------------- */
-uint32_t cfg_need_restart(tpAniSirGlobal mac, uint16_t cfgId)
+uint32_t cfg_need_restart(struct mac_context *mac, uint16_t cfgId)
 {
 	if (!mac->cfg.gCfgEntry) {
 		pe_err("gCfgEntry is NULL");
@@ -61,7 +61,7 @@ uint32_t cfg_need_restart(tpAniSirGlobal mac, uint16_t cfgId)
 	return !!(mac->cfg.gCfgEntry[cfgId].control & CFG_CTL_RESTART);
 }
 
-static void cfg_get_strindex(tpAniSirGlobal mac, uint16_t cfgId)
+static void cfg_get_strindex(struct mac_context *mac, uint16_t cfgId)
 {
 	uint16_t i = 0;
 
@@ -77,7 +77,7 @@ static void cfg_get_strindex(tpAniSirGlobal mac, uint16_t cfgId)
 	cfg_static[cfgId].pStrData = &cfg_static_string[i];
 }
 /* --------------------------------------------------------------------- */
-uint32_t cfg_need_reload(tpAniSirGlobal mac, uint16_t cfgId)
+uint32_t cfg_need_reload(struct mac_context *mac, uint16_t cfgId)
 {
 	if (!mac->cfg.gCfgEntry) {
 		pe_err("gCfgEntry is NULL");
@@ -87,7 +87,7 @@ uint32_t cfg_need_reload(tpAniSirGlobal mac, uint16_t cfgId)
 }
 
 /* --------------------------------------------------------------------- */
-QDF_STATUS cfg_init(tpAniSirGlobal mac)
+QDF_STATUS cfg_init(struct mac_context *mac)
 {
 	uint16_t i = 0;
 	uint16_t combined_buff_size = 0;
@@ -152,7 +152,7 @@ QDF_STATUS cfg_init(tpAniSirGlobal mac)
 }
 
 /* ---------------------------------------------------------------------- */
-void cfg_de_init(tpAniSirGlobal mac)
+void cfg_de_init(struct mac_context *mac)
 {
 	qdf_mem_free(mac->cfg.gCfgSBuf);
 	mac->cfg.gCfgIBufMin = NULL;
@@ -182,7 +182,7 @@ void cfg_de_init(tpAniSirGlobal mac)
  * @return QDF_STATUS_SUCCESS:  request completed successfully
  * @return QDF_STATUS_E_INVAL:  invalid CFG parameter ID
  */
-QDF_STATUS cfg_check_valid(tpAniSirGlobal mac, uint16_t cfgId,
+QDF_STATUS cfg_check_valid(struct mac_context *mac, uint16_t cfgId,
 			   uint32_t *index)
 {
 	uint32_t control;
@@ -242,7 +242,7 @@ QDF_STATUS cfg_check_valid(tpAniSirGlobal mac, uint16_t cfgId,
  * @return QDF_STATUS_E_INVAL:  invalid CFG parameter ID
  */
 
-QDF_STATUS cfg_set_int(tpAniSirGlobal mac, uint16_t cfgId, uint32_t value)
+QDF_STATUS cfg_set_int(struct mac_context *mac, uint16_t cfgId, uint32_t value)
 {
 	uint32_t index;
 	uint32_t control;
@@ -297,7 +297,7 @@ QDF_STATUS cfg_set_int(tpAniSirGlobal mac, uint16_t cfgId, uint32_t value)
  * @return QDF_STATUS_E_INVAL:  invalid CFG parameter ID
  */
 
-QDF_STATUS wlan_cfg_get_int(tpAniSirGlobal mac, uint16_t cfgId,
+QDF_STATUS wlan_cfg_get_int(struct mac_context *mac, uint16_t cfgId,
 			    uint32_t *pValue)
 {
 	uint32_t index;
@@ -343,7 +343,7 @@ QDF_STATUS wlan_cfg_get_int(tpAniSirGlobal mac, uint16_t cfgId,
  *
  */
 
-QDF_STATUS cfg_set_str(tpAniSirGlobal mac, uint16_t cfgId, uint8_t *pStr,
+QDF_STATUS cfg_set_str(struct mac_context *mac, uint16_t cfgId, uint8_t *pStr,
 		       uint32_t length)
 {
 	return cfg_set_str_notify(mac, cfgId, pStr, length, true);
@@ -377,7 +377,7 @@ QDF_STATUS cfg_set_str(tpAniSirGlobal mac, uint16_t cfgId, uint8_t *pStr,
  *
  */
 
-QDF_STATUS cfg_set_str_notify(tpAniSirGlobal mac, uint16_t cfgId,
+QDF_STATUS cfg_set_str_notify(struct mac_context *mac, uint16_t cfgId,
 			      uint8_t *pStr, uint32_t length,
 			      int notifyMod)
 {
@@ -445,7 +445,7 @@ QDF_STATUS cfg_set_str_notify(tpAniSirGlobal mac, uint16_t cfgId,
  *
  */
 
-QDF_STATUS wlan_cfg_get_str(tpAniSirGlobal mac, uint16_t cfgId,
+QDF_STATUS wlan_cfg_get_str(struct mac_context *mac, uint16_t cfgId,
 			    uint8_t *pBuf, uint32_t *pLength)
 {
 	uint8_t *pSrc, *pSrcEnd;
@@ -496,7 +496,7 @@ QDF_STATUS wlan_cfg_get_str(tpAniSirGlobal mac, uint16_t cfgId,
  *
  */
 
-QDF_STATUS wlan_cfg_get_str_max_len(tpAniSirGlobal mac, uint16_t cfgId,
+QDF_STATUS wlan_cfg_get_str_max_len(struct mac_context *mac, uint16_t cfgId,
 				    uint32_t *pLength)
 {
 	uint32_t index;
@@ -535,7 +535,7 @@ QDF_STATUS wlan_cfg_get_str_max_len(tpAniSirGlobal mac, uint16_t cfgId,
  *
  */
 
-QDF_STATUS wlan_cfg_get_str_len(tpAniSirGlobal mac, uint16_t cfgId,
+QDF_STATUS wlan_cfg_get_str_len(struct mac_context *mac, uint16_t cfgId,
 				uint32_t *pLength)
 {
 	uint32_t index;
@@ -560,7 +560,7 @@ QDF_STATUS wlan_cfg_get_str_len(tpAniSirGlobal mac, uint16_t cfgId,
  * Return:  int8_t - power
  */
 static int8_t
-cfg_get_dot11d_transmit_power(tpAniSirGlobal pMac, uint8_t channel)
+cfg_get_dot11d_transmit_power(struct mac_context *pMac, uint8_t channel)
 {
 	uint32_t cfg_length = 0;
 	int8_t max_tx_pwr = 0;
@@ -618,7 +618,7 @@ error:
    \param  channel
    \param  rfBand
    -----------------------------------------------------------------------*/
-int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal mac,
+int8_t cfg_get_regulatory_max_transmit_power(struct mac_context *mac,
 					     uint8_t channel)
 {
 	return cfg_get_dot11d_transmit_power(mac, channel);
@@ -640,7 +640,7 @@ int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal mac,
  * @return None
  */
 
-QDF_STATUS cfg_get_capability_info(tpAniSirGlobal mac, uint16_t *pCap,
+QDF_STATUS cfg_get_capability_info(struct mac_context *mac, uint16_t *pCap,
 				   struct pe_session *pe_session)
 {
 	uint32_t val = 0;
@@ -767,7 +767,7 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal mac, uint16_t *pCap,
  * @return None
  */
 
-void cfg_set_capability_info(tpAniSirGlobal mac, uint16_t caps)
+void cfg_set_capability_info(struct mac_context *mac, uint16_t caps)
 {
 }
 
@@ -792,7 +792,7 @@ void cfg_set_capability_info(tpAniSirGlobal mac, uint16_t caps)
  *
  */
 
-void cfg_cleanup(tpAniSirGlobal mac)
+void cfg_cleanup(struct mac_context *mac)
 {
 	/* Set status to not-ready */
 	mac->cfg.gCfgStatus = CFG_INCOMPLETE;
@@ -819,7 +819,7 @@ void cfg_cleanup(tpAniSirGlobal mac)
  *
  */
 
-static void notify(tpAniSirGlobal mac, uint16_t cfgId, uint32_t ntfMask)
+static void notify(struct mac_context *mac, uint16_t cfgId, uint32_t ntfMask)
 {
 
 	struct scheduler_msg mmhMsg = {0};

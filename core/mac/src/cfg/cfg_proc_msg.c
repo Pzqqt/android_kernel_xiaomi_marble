@@ -182,17 +182,17 @@ cfgstatic_string cfg_static_string[CFG_MAX_STATIC_STRING] = {
 /*--------------------------------------------------------------------*/
 /* Static function prototypes                                         */
 /*--------------------------------------------------------------------*/
-static void proc_dnld_rsp(tpAniSirGlobal, uint16_t, uint32_t *);
-static void proc_get_req(tpAniSirGlobal, uint16_t, uint32_t *);
+static void proc_dnld_rsp(struct mac_context *, uint16_t, uint32_t *);
+static void proc_get_req(struct mac_context *, uint16_t, uint32_t *);
 
-static uint8_t check_param(tpAniSirGlobal, uint16_t, uint32_t, uint32_t,
+static uint8_t check_param(struct mac_context *, uint16_t, uint32_t, uint32_t,
 			   uint32_t *);
 /*--------------------------------------------------------------------*/
 /* Module global variables                                            */
 /*--------------------------------------------------------------------*/
 
 /* CFG function table */
-void (*g_cfg_func[])(tpAniSirGlobal, uint16_t, uint32_t *) = {
+void (*g_cfg_func[])(struct mac_context *, uint16_t, uint32_t *) = {
 	proc_dnld_rsp, proc_get_req
 };
 
@@ -214,7 +214,7 @@ void (*g_cfg_func[])(tpAniSirGlobal, uint16_t, uint32_t *) = {
  * @return None.
  *
  */
-void cfg_process_mb_msg(tpAniSirGlobal mac, tSirMbMsg *pMsg)
+void cfg_process_mb_msg(struct mac_context *mac, tSirMbMsg *pMsg)
 {
 	uint16_t index;
 	uint16_t len;
@@ -256,7 +256,7 @@ void cfg_process_mb_msg(tpAniSirGlobal mac, tSirMbMsg *pMsg)
  * @return None
  *
  */
-static void proc_dnld_rsp(tpAniSirGlobal mac, uint16_t length, uint32_t *pParam)
+static void proc_dnld_rsp(struct mac_context *mac, uint16_t length, uint32_t *pParam)
 {
 	int32_t i;
 
@@ -468,7 +468,7 @@ end:
  * @return None
  *
  */
-static void proc_get_req(tpAniSirGlobal mac, uint16_t length, uint32_t *pParam)
+static void proc_get_req(struct mac_context *mac, uint16_t length, uint32_t *pParam)
 {
 	uint16_t cfgId, i;
 	uint32_t value, valueLen, result;
@@ -573,7 +573,7 @@ static void proc_get_req(tpAniSirGlobal mac, uint16_t length, uint32_t *pParam)
  *
  */
 static uint8_t
-check_param(tpAniSirGlobal mac, uint16_t cfgId, uint32_t flag,
+check_param(struct mac_context *mac, uint16_t cfgId, uint32_t flag,
 	    uint32_t failedResult, uint32_t *pResult)
 {
 	/* Check if parameter ID is out of bound */
@@ -620,7 +620,7 @@ check_param(tpAniSirGlobal mac, uint16_t cfgId, uint32_t flag,
  */
 
 void
-process_cfg_download_req(tpAniSirGlobal mac)
+process_cfg_download_req(struct mac_context *mac)
 {
 	int32_t i;
 	uint32_t    index;

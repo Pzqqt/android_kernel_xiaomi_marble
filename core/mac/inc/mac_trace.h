@@ -39,9 +39,9 @@
 #define eLOG_NODROP_MISSED_BEACON_SCENARIO 0
 #define eLOG_PROC_DEAUTH_FRAME_SCENARIO 1
 
-void mac_trace(tpAniSirGlobal mac, uint8_t code, uint16_t session,
+void mac_trace(struct mac_context *mac, uint8_t code, uint16_t session,
 	       uint32_t data);
-void mac_trace_new(tpAniSirGlobal mac, uint8_t module, uint8_t code,
+void mac_trace_new(struct mac_context *mac, uint8_t module, uint8_t code,
 		   uint16_t session, uint32_t data);
 uint8_t *mac_trace_get_cfg_msg_string(uint16_t cfgMsg);
 uint8_t *mac_trace_get_lim_msg_string(uint16_t limMsg);

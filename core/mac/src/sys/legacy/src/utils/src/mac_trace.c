@@ -784,7 +784,7 @@ uint8_t *mac_trace_get_info_log_string(uint16_t info_log)
  *
  * Return: None
  **/
-void mac_trace(tpAniSirGlobal mac_ctx, uint8_t code,
+void mac_trace(struct mac_context *mac_ctx, uint8_t code,
 		uint16_t session, uint32_t data)
 {
 	/*
@@ -803,7 +803,7 @@ void mac_trace(tpAniSirGlobal mac_ctx, uint8_t code,
  *
  * Return: None
  **/
-void mac_trace_new(tpAniSirGlobal mac_ctx, uint8_t module, uint8_t code,
+void mac_trace_new(struct mac_context *mac_ctx, uint8_t module, uint8_t code,
 		   uint16_t session, uint32_t data)
 {
 	qdf_trace(module, code, session, data);

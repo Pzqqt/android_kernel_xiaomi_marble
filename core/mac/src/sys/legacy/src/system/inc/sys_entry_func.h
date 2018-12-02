@@ -30,7 +30,7 @@
 
 #include "ani_global.h"
 
-extern QDF_STATUS sys_init_globals(tpAniSirGlobal);
+extern QDF_STATUS sys_init_globals(struct mac_context *);
 extern void sysBbtEntry(uint32_t dummy);
 extern void sysSchEntry(uint32_t dummy);
 extern void sysPmmEntry(uint32_t dummy);

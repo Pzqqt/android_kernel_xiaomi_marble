@@ -58,11 +58,11 @@
  *
  * NOTE:
  *
- * @param tpAniSirGlobal Sirius software parameter struct pointer
+ * @param struct mac_context *Sirius software parameter struct pointer
  * @return None
  */
 
-QDF_STATUS sys_init_globals(tpAniSirGlobal mac)
+QDF_STATUS sys_init_globals(struct mac_context *mac)
 {
 
 	qdf_mem_set((uint8_t *) &mac->sys, sizeof(mac->sys), 0);

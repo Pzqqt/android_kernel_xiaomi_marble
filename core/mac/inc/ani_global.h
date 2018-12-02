@@ -55,9 +55,9 @@
  *
  * Return: mac context for @handle
  */
-static inline tpAniSirGlobal MAC_CONTEXT(mac_handle_t handle)
+static inline struct mac_context *MAC_CONTEXT(mac_handle_t handle)
 {
-	return (tpAniSirGlobal)handle;
+	return (struct mac_context *)handle;
 }
 
 /**
@@ -71,12 +71,12 @@ static inline tpAniSirGlobal MAC_CONTEXT(mac_handle_t handle)
  *
  * Return: opaque handle for @mac
  */
-static inline mac_handle_t MAC_HANDLE(tpAniSirGlobal mac)
+static inline mac_handle_t MAC_HANDLE(struct mac_context *mac)
 {
 	return (mac_handle_t)mac;
 }
 
-#define ANI_DRIVER_TYPE(mac)     (((tpAniSirGlobal)(mac))->gDriverType)
+#define ANI_DRIVER_TYPE(mac)     (((struct mac_context *)(mac))->gDriverType)
 
 /* ------------------------------------------------------------------- */
 /* Bss Qos Caps bit map definition */
@@ -245,7 +245,7 @@ enum wifi_logging_ring_id {
 
 /* ------------------------------------------------------------------- */
 /* Change channel generic scheme */
-typedef void (*CHANGE_CHANNEL_CALLBACK)(tpAniSirGlobal mac, QDF_STATUS status,
+typedef void (*CHANGE_CHANNEL_CALLBACK)(struct mac_context *mac, QDF_STATUS status,
 					uint32_t *data,
 					struct pe_session *pe_session);
 
@@ -724,9 +724,9 @@ typedef struct sAniSirLim {
 	uint8_t gLimDfsChanSwTxCount;
 	uint8_t gLimDfsTargetChanNum;
 	QDF_STATUS(*sme_msg_callback)
-		(tpAniSirGlobal mac, struct scheduler_msg *msg);
+		(struct mac_context *mac, struct scheduler_msg *msg);
 	QDF_STATUS(*stop_roaming_callback)
-		(tpAniSirGlobal mac, uint8_t session_id, uint8_t reason);
+		(struct mac_context *mac, uint8_t session_id, uint8_t reason);
 	uint8_t retry_packet_cnt;
 	uint8_t beacon_probe_rsp_cnt_per_scan;
 	wlan_scan_requester req_id;
