@@ -791,7 +791,7 @@ static QDF_STATUS lim_process_auth_wrapped_data(struct pe_session *pe_session,
  *
  * Return: true if frame is valid or fils is disable, false otherwise
  */
-bool lim_is_valid_fils_auth_frame(tpAniSirGlobal mac_ctx,
+bool lim_is_valid_fils_auth_frame(struct mac_context *mac_ctx,
 		struct pe_session *pe_session,
 		tSirMacAuthFrameBody *rx_auth_frm_body)
 {
@@ -1059,7 +1059,7 @@ void lim_add_fils_data_to_auth_frame(struct pe_session *session,
  *
  * Return: true if fils data needs to be processed else false
  */
-bool lim_process_fils_auth_frame2(tpAniSirGlobal mac_ctx,
+bool lim_process_fils_auth_frame2(struct mac_context *mac_ctx,
 		struct pe_session *pe_session,
 		tSirMacAuthFrameBody *rx_auth_frm_body)
 {
@@ -1201,7 +1201,7 @@ void lim_update_fils_config(struct pe_session *session,
  *
  * Return: length of fils data
  */
-uint32_t lim_create_fils_auth_data(tpAniSirGlobal mac_ctx,
+uint32_t lim_create_fils_auth_data(struct mac_context *mac_ctx,
 		tpSirMacAuthFrameBody auth_frame,
 		struct pe_session *session)
 {
@@ -1238,7 +1238,7 @@ uint32_t lim_create_fils_auth_data(tpAniSirGlobal mac_ctx,
 	return frame_len;
 }
 
-void populate_fils_connect_params(tpAniSirGlobal mac_ctx,
+void populate_fils_connect_params(struct mac_context *mac_ctx,
 				  struct pe_session *session,
 				  tpSirSmeJoinRsp sme_join_rsp)
 {
@@ -1321,7 +1321,7 @@ void populate_fils_connect_params(tpAniSirGlobal mac_ctx,
  * Return: QDF_STATUS_SUCCESS if we parse GTK successfully,
  *         QDF_STATUS_E_FAILURE otherwise
  */
-static QDF_STATUS lim_parse_kde_elements(tpAniSirGlobal mac_ctx,
+static QDF_STATUS lim_parse_kde_elements(struct mac_context *mac_ctx,
 					 struct pe_fils_session *fils_info,
 					 uint8_t *kde_list,
 					 uint8_t kde_list_len)
@@ -1407,7 +1407,7 @@ static QDF_STATUS lim_parse_kde_elements(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-bool lim_verify_fils_params_assoc_rsp(tpAniSirGlobal mac_ctx,
+bool lim_verify_fils_params_assoc_rsp(struct mac_context *mac_ctx,
 				      struct pe_session *session_entry,
 				      tpSirAssocRsp assoc_rsp,
 				      tLimMlmAssocCnf *assoc_cnf)
@@ -1484,7 +1484,7 @@ verify_fils_params_fails:
  *
  * Return: QDF_STATUS_SUCCESS if found, else QDF_STATUS_E_FAILURE
  */
-static QDF_STATUS find_ie_data_after_fils_session_ie(tpAniSirGlobal mac_ctx,
+static QDF_STATUS find_ie_data_after_fils_session_ie(struct mac_context *mac_ctx,
 						     uint8_t *buf,
 						     uint32_t buf_len,
 						     uint8_t **ie,
@@ -1612,7 +1612,7 @@ error:
 	return ret;
 }
 
-QDF_STATUS aead_encrypt_assoc_req(tpAniSirGlobal mac_ctx,
+QDF_STATUS aead_encrypt_assoc_req(struct mac_context *mac_ctx,
 				  struct pe_session *pe_session,
 				  uint8_t *frm, uint32_t *frm_len)
 {
@@ -1770,7 +1770,7 @@ error:
 	return ret;
 }
 
-QDF_STATUS aead_decrypt_assoc_rsp(tpAniSirGlobal mac_ctx,
+QDF_STATUS aead_decrypt_assoc_rsp(struct mac_context *mac_ctx,
 				  struct pe_session *session,
 				  tDot11fAssocResponse *ar,
 				  uint8_t *p_frame, uint32_t *n_frame)

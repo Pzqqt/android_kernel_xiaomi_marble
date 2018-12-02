@@ -102,7 +102,7 @@ uint32_t lim_cmp_ssid(tSirMacSSid *rx_ssid, struct pe_session *session_entry)
  */
 
 uint8_t
-lim_compare_capabilities(tpAniSirGlobal mac,
+lim_compare_capabilities(struct mac_context *mac,
 			 tSirAssocReq *pAssocReq,
 			 tSirMacCapabilityInfo *pLocalCapabs,
 			 struct pe_session *pe_session)
@@ -181,7 +181,7 @@ lim_compare_capabilities(tpAniSirGlobal mac,
  */
 
 uint8_t
-lim_check_rx_basic_rates(tpAniSirGlobal mac, tSirMacRateSet rxRateSet,
+lim_check_rx_basic_rates(struct mac_context *mac, tSirMacRateSet rxRateSet,
 			 struct pe_session *pe_session)
 {
 	tSirMacRateSet *pRateSet, basicRate;
@@ -255,7 +255,7 @@ lim_check_rx_basic_rates(tpAniSirGlobal mac, tSirMacRateSet rxRateSet,
  *                  received rateset else false.
  */
 
-uint8_t lim_check_mcs_set(tpAniSirGlobal mac, uint8_t *supportedMCSSet)
+uint8_t lim_check_mcs_set(struct mac_context *mac, uint8_t *supportedMCSSet)
 {
 	uint8_t basicMCSSet[SIZE_OF_BASIC_MCS_SET] = { 0 };
 	qdf_size_t cfg_len = 0;
@@ -338,7 +338,7 @@ static inline bool is_non_rsn_cipher(uint8_t cipher_suite)
  *                  received rsn IE else failure status.
  */
 
-uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
+uint8_t lim_check_rx_rsn_ie_match(struct mac_context *mac_ctx,
 				  tDot11fIERSN * const rx_rsn_ie,
 				  struct pe_session *session_entry, uint8_t sta_is_ht,
 				  bool *pmf_connection)
@@ -456,7 +456,7 @@ uint8_t lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx,
  */
 
 uint8_t
-lim_check_rx_wpa_ie_match(tpAniSirGlobal mac, tDot11fIEWPA *rx_wpaie,
+lim_check_rx_wpa_ie_match(struct mac_context *mac, tDot11fIEWPA *rx_wpaie,
 			  struct pe_session *session_entry, uint8_t sta_is_ht)
 {
 	tDot11fIEWPA *wpa_ie;
@@ -546,7 +546,7 @@ lim_check_rx_wpa_ie_match(tpAniSirGlobal mac, tDot11fIEWPA *rx_wpaie,
  */
 
 QDF_STATUS
-lim_cleanup_rx_path(tpAniSirGlobal mac, tpDphHashNode pStaDs,
+lim_cleanup_rx_path(struct mac_context *mac, tpDphHashNode pStaDs,
 		    struct pe_session *pe_session)
 {
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -645,7 +645,7 @@ lim_cleanup_rx_path(tpAniSirGlobal mac, tpDphHashNode pStaDs,
  * Return: None
  */
 void
-lim_send_del_sta_cnf(tpAniSirGlobal mac, struct qdf_mac_addr sta_dsaddr,
+lim_send_del_sta_cnf(struct mac_context *mac, struct qdf_mac_addr sta_dsaddr,
 		     uint16_t staDsAssocId, tLimMlmStaContext mlmStaContext,
 		     tSirResultCodes statusCode, struct pe_session *pe_session)
 {
@@ -850,7 +850,7 @@ lim_send_del_sta_cnf(tpAniSirGlobal mac, struct qdf_mac_addr sta_dsaddr,
  */
 
 void
-lim_reject_association(tpAniSirGlobal mac_ctx, tSirMacAddr peer_addr,
+lim_reject_association(struct mac_context *mac_ctx, tSirMacAddr peer_addr,
 			uint8_t sub_type, uint8_t add_pre_auth_context,
 			tAniAuthType auth_type, uint16_t sta_id,
 			uint8_t delete_sta, enum eSirMacStatusCodes result_code,
@@ -948,7 +948,7 @@ lim_reject_association(tpAniSirGlobal mac_ctx, tSirMacAddr peer_addr,
  * Return: none
  */
 static void
-lim_decide_ap_protection_on_ht20_delete(tpAniSirGlobal mac_ctx,
+lim_decide_ap_protection_on_ht20_delete(struct mac_context *mac_ctx,
 					tpDphHashNode sta_ds,
 					tpUpdateBeaconParams beacon_params,
 					struct pe_session *session_entry)
@@ -995,7 +995,7 @@ lim_decide_ap_protection_on_ht20_delete(tpAniSirGlobal mac_ctx,
  * Return: none
  */
 void
-lim_decide_ap_protection_on_delete(tpAniSirGlobal mac_ctx,
+lim_decide_ap_protection_on_delete(struct mac_context *mac_ctx,
 				   tpDphHashNode sta_ds,
 				   tpUpdateBeaconParams beacon_params,
 				   struct pe_session *session_entry)
@@ -1180,7 +1180,7 @@ lim_decide_ap_protection_on_delete(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void lim_decide_short_preamble(tpAniSirGlobal mac_ctx,
+static void lim_decide_short_preamble(struct mac_context *mac_ctx,
 				      tpDphHashNode sta_ds,
 				      tpUpdateBeaconParams beacon_params,
 				      struct pe_session *session_entry)
@@ -1234,7 +1234,7 @@ static void lim_decide_short_preamble(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 static void
-lim_decide_short_slot(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
+lim_decide_short_slot(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 		      tpUpdateBeaconParams beacon_params,
 		      struct pe_session *session_entry)
 {
@@ -1332,7 +1332,7 @@ lim_decide_short_slot(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
  *
  * Return: QDF_STATUS_SUCCESS on success else QDF_STATUS_E_FAILURE
  */
-QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 				       tpSirSupportedRates rates,
 				       tDot11fIEVHTCaps *peer_vht_caps,
 				       struct pe_session *session_entry,
@@ -1477,7 +1477,7 @@ QDF_STATUS lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
  * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE.
  */
 QDF_STATUS
-lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
+lim_populate_own_rate_set(struct mac_context *mac_ctx,
 		tpSirSupportedRates rates, uint8_t *supported_mcs_set,
 		uint8_t basic_only, struct pe_session *session_entry,
 		struct sDot11fIEVHTCaps *vht_caps,
@@ -1627,7 +1627,7 @@ static void lim_calculate_he_nss(tpSirSupportedRates rates, struct pe_session *s
 #endif
 
 QDF_STATUS
-lim_populate_peer_rate_set(tpAniSirGlobal mac,
+lim_populate_peer_rate_set(struct mac_context *mac,
 		tpSirSupportedRates pRates, uint8_t *pSupportedMCSSet,
 		uint8_t basicOnly, struct pe_session *pe_session,
 		tDot11fIEVHTCaps *pVHTCaps, tDot11fIEhe_cap *he_caps)
@@ -1810,7 +1810,7 @@ lim_populate_peer_rate_set(tpAniSirGlobal mac,
  *
  * Return: QDF_STATUS_SUCCESS on success else QDF_STATUS_E_FAILURE
  */
-QDF_STATUS lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
 					     tpDphHashNode sta_ds,
 					     tSirMacRateSet *oper_rate_set,
 					     tSirMacRateSet *ext_rate_set,
@@ -2106,7 +2106,7 @@ static void lim_update_he_stbc_capable(tpAddStaParams add_sta_params)
  */
 
 QDF_STATUS
-lim_add_sta(tpAniSirGlobal mac_ctx,
+lim_add_sta(struct mac_context *mac_ctx,
 	tpDphHashNode sta_ds, uint8_t update_entry, struct pe_session *session_entry)
 {
 	tpAddStaParams add_sta_params = NULL;
@@ -2562,7 +2562,7 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
  */
 
 QDF_STATUS
-lim_del_sta(tpAniSirGlobal mac,
+lim_del_sta(struct mac_context *mac,
 	    tpDphHashNode pStaDs, bool fRespReqd, struct pe_session *pe_session)
 {
 	tpDeleteStaParams pDelStaParams = NULL;
@@ -2707,7 +2707,7 @@ lim_del_sta(tpAniSirGlobal mac,
  */
 
 QDF_STATUS
-lim_add_sta_self(tpAniSirGlobal mac, uint16_t staIdx, uint8_t updateSta,
+lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 		 struct pe_session *pe_session)
 {
 	tpAddStaParams pAddStaParams = NULL;
@@ -2932,7 +2932,7 @@ lim_add_sta_self(tpAniSirGlobal mac, uint16_t staIdx, uint8_t updateSta,
  * @return None
  */
 
-void lim_teardown_infra_bss(tpAniSirGlobal mac, struct pe_session *pe_session)
+void lim_teardown_infra_bss(struct mac_context *mac, struct pe_session *pe_session)
 {
 	tSirMacAddr bcAddr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
@@ -2963,7 +2963,7 @@ void lim_teardown_infra_bss(tpAniSirGlobal mac, struct pe_session *pe_session)
  * @return None
  */
 
-void lim_handle_cnf_wait_timeout(tpAniSirGlobal mac, uint16_t staId)
+void lim_handle_cnf_wait_timeout(struct mac_context *mac, uint16_t staId)
 {
 	tpDphHashNode pStaDs;
 	struct pe_session *pe_session = NULL;
@@ -3018,7 +3018,7 @@ void lim_handle_cnf_wait_timeout(tpAniSirGlobal mac, uint16_t staId)
  */
 
 void
-lim_delete_dph_hash_entry(tpAniSirGlobal mac_ctx, tSirMacAddr sta_addr,
+lim_delete_dph_hash_entry(struct mac_context *mac_ctx, tSirMacAddr sta_addr,
 				 uint16_t sta_id, struct pe_session *session_entry)
 {
 	uint16_t aid;
@@ -3123,7 +3123,7 @@ lim_delete_dph_hash_entry(tpAniSirGlobal mac_ctx, tSirMacAddr sta_addr,
  */
 
 void
-lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
+lim_check_and_announce_join_success(struct mac_context *mac_ctx,
 		tSirProbeRespBeacon *beacon_probe_rsp, tpSirMacMgmtHdr header,
 		struct pe_session *session_entry)
 {
@@ -3315,7 +3315,7 @@ lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
  *                       populated
  * @return  status       A status reporting QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
  */
-QDF_STATUS lim_extract_ap_capabilities(tpAniSirGlobal mac,
+QDF_STATUS lim_extract_ap_capabilities(struct mac_context *mac,
 					  uint8_t *pIE,
 					  uint16_t ieLen,
 					  tpSirProbeRespBeacon beaconStruct)
@@ -3360,7 +3360,7 @@ QDF_STATUS lim_extract_ap_capabilities(tpAniSirGlobal mac,
  */
 
 QDF_STATUS
-lim_del_bss(tpAniSirGlobal mac, tpDphHashNode pStaDs, uint16_t bssIdx,
+lim_del_bss(struct mac_context *mac, tpDphHashNode pStaDs, uint16_t bssIdx,
 	    struct pe_session *pe_session)
 {
 	tpDeleteBssParams pDelBssParams = NULL;
@@ -3436,7 +3436,7 @@ lim_del_bss(tpAniSirGlobal mac, tpDphHashNode pStaDs, uint16_t bssIdx,
  *
  * Return : void
  */
-static void lim_update_vhtcaps_assoc_resp(tpAniSirGlobal mac_ctx,
+static void lim_update_vhtcaps_assoc_resp(struct mac_context *mac_ctx,
 		tpAddBssParams pAddBssParams,
 		tDot11fIEVHTCaps *vht_caps, struct pe_session *pe_session)
 {
@@ -3498,7 +3498,7 @@ static void lim_update_vhtcaps_assoc_resp(tpAniSirGlobal mac_ctx,
  *
  * Return : void
  */
-static void lim_update_vht_oper_assoc_resp(tpAniSirGlobal mac_ctx,
+static void lim_update_vht_oper_assoc_resp(struct mac_context *mac_ctx,
 		tpAddBssParams pAddBssParams,
 		tDot11fIEVHTOperation *vht_oper, struct pe_session *pe_session)
 {
@@ -3562,7 +3562,7 @@ static inline void lim_set_sta_ctx_twt(tAddStaParams *sta_ctx,
  * @return None
  */
 
-QDF_STATUS lim_sta_send_add_bss(tpAniSirGlobal mac, tpSirAssocRsp pAssocRsp,
+QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp,
 				   tpSchBeaconStruct pBeaconStruct,
 				   tpSirBssDescription bssDescription,
 				   uint8_t updateEntry, struct pe_session *pe_session)
@@ -4097,7 +4097,7 @@ returnFailure:
 	return retCode;
 }
 
-QDF_STATUS lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal mac, uint8_t updateEntry,
+QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updateEntry,
 					     struct pe_session *pe_session)
 {
 	struct scheduler_msg msgQ = {0};
@@ -4594,7 +4594,7 @@ returnFailure:
  * Return: void
  */
 void
-lim_prepare_and_send_del_sta_cnf(tpAniSirGlobal mac, tpDphHashNode pStaDs,
+lim_prepare_and_send_del_sta_cnf(struct mac_context *mac, tpDphHashNode pStaDs,
 				 tSirResultCodes statusCode,
 				 struct pe_session *pe_session)
 {
@@ -4631,11 +4631,11 @@ lim_prepare_and_send_del_sta_cnf(tpAniSirGlobal mac, tpDphHashNode pStaDs,
    \fn lim_init_pre_auth_timer_table
    \brief Initialize the Pre Auth Tanle and creates the timer for
        each node for the timeout value got from cfg.
-   \param     tpAniSirGlobal    mac
+   \param     struct mac_context *   mac
    \param     tpLimPreAuthTable pPreAuthTimerTable
    \return none
    -------------------------------------------------------------*/
-void lim_init_pre_auth_timer_table(tpAniSirGlobal mac,
+void lim_init_pre_auth_timer_table(struct mac_context *mac,
 				   tpLimPreAuthTable pPreAuthTimerTable)
 {
 	uint32_t cfgValue;
@@ -4663,11 +4663,11 @@ void lim_init_pre_auth_timer_table(tpAniSirGlobal mac,
 /** -------------------------------------------------------------
    \fn lim_acquire_free_pre_auth_node
    \brief Retrives a free Pre Auth node from Pre Auth Table.
-   \param     tpAniSirGlobal    mac
+   \param     struct mac_context *   mac
    \param     tpLimPreAuthTable pPreAuthTimerTable
    \return none
    -------------------------------------------------------------*/
-tLimPreAuthNode *lim_acquire_free_pre_auth_node(tpAniSirGlobal mac,
+tLimPreAuthNode *lim_acquire_free_pre_auth_node(struct mac_context *mac,
 						tpLimPreAuthTable pPreAuthTimerTable)
 {
 	uint32_t i;
@@ -4686,12 +4686,12 @@ tLimPreAuthNode *lim_acquire_free_pre_auth_node(tpAniSirGlobal mac,
 /** -------------------------------------------------------------
    \fn lim_get_pre_auth_node_from_index
    \brief Depending on the Index this retrieves the pre auth node.
-   \param     tpAniSirGlobal    mac
+   \param     struct mac_context *   mac
    \param     tpLimPreAuthTable pAuthTable
    \param     uint32_t authNodeIdx
    \return none
    -------------------------------------------------------------*/
-tLimPreAuthNode *lim_get_pre_auth_node_from_index(tpAniSirGlobal mac,
+tLimPreAuthNode *lim_get_pre_auth_node_from_index(struct mac_context *mac,
 						  tpLimPreAuthTable pAuthTable,
 						  uint32_t authNodeIdx)
 {
@@ -4706,7 +4706,7 @@ tLimPreAuthNode *lim_get_pre_auth_node_from_index(tpAniSirGlobal mac,
 }
 
 /* Util API to check if the channels supported by STA is within range */
-QDF_STATUS lim_is_dot11h_supported_channels_valid(tpAniSirGlobal mac,
+QDF_STATUS lim_is_dot11h_supported_channels_valid(struct mac_context *mac,
 						     tSirAssocReq *assoc)
 {
 	/*
@@ -4720,7 +4720,7 @@ QDF_STATUS lim_is_dot11h_supported_channels_valid(tpAniSirGlobal mac,
 }
 
 /* Util API to check if the txpower supported by STA is within range */
-QDF_STATUS lim_is_dot11h_power_capabilities_in_range(tpAniSirGlobal mac,
+QDF_STATUS lim_is_dot11h_power_capabilities_in_range(struct mac_context *mac,
 							tSirAssocReq *assoc,
 							struct pe_session *pe_session)
 {
@@ -4756,12 +4756,12 @@ QDF_STATUS lim_is_dot11h_power_capabilities_in_range(tpAniSirGlobal mac,
    \fn     lim_fill_rx_highest_supported_rate
    \brief  Fills in the Rx Highest Supported Data Rate field from
  \       the 'supported MCS set' field in HT capability element.
-   \param  tpAniSirGlobal    mac
+   \param  struct mac_context *   mac
    \param  tpSirSupportedRates  pRates
    \param  uint8_t*  pSupportedMCSSet
    \return none
    -------------------------------------------------------------*/
-void lim_fill_rx_highest_supported_rate(tpAniSirGlobal mac,
+void lim_fill_rx_highest_supported_rate(struct mac_context *mac,
 					uint16_t *rxHighestRate,
 					uint8_t *pSupportedMCSSet)
 {
@@ -4782,14 +4782,14 @@ void lim_fill_rx_highest_supported_rate(tpAniSirGlobal mac,
 /** -------------------------------------------------------------
    \fn     lim_send_sme_unprotected_mgmt_frame_ind
    \brief  Forwards the unprotected management frame to SME.
-   \param  tpAniSirGlobal    mac
+   \param  struct mac_context *   mac
    \param  frameType - 802.11 frame type
    \param  frame - frame buffer
    \param  sessionId - id for the current session
    \param  pe_session - PE session context
    \return none
    -------------------------------------------------------------*/
-void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal mac, uint8_t frameType,
+void lim_send_sme_unprotected_mgmt_frame_ind(struct mac_context *mac, uint8_t frameType,
 					     uint8_t *frame, uint32_t frameLen,
 					     uint16_t sessionId,
 					     struct pe_session *pe_session)
@@ -4823,14 +4823,14 @@ void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal mac, uint8_t frameTy
 /** -------------------------------------------------------------
    \fn     lim_send_sme_tsm_ie_ind
    \brief  Forwards the TSM IE information to SME.
-   \param  tpAniSirGlobal    mac
+   \param  struct mac_context *   mac
    \param  pe_session - PE session context
    \param  tid - traffic id
    \param  state - tsm state (enabled/disabled)
    \param  measurementInterval - measurement interval
    \return none
    -------------------------------------------------------------*/
-void lim_send_sme_tsm_ie_ind(tpAniSirGlobal mac, struct pe_session *pe_session,
+void lim_send_sme_tsm_ie_ind(struct mac_context *mac, struct pe_session *pe_session,
 			     uint8_t tid, uint8_t state, uint16_t measInterval)
 {
 	struct scheduler_msg mmhMsg = {0};

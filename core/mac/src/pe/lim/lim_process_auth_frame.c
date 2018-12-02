@@ -69,7 +69,7 @@
  * @return 0 or 1 (Valid)
  */
 
-static inline unsigned int is_auth_valid(tpAniSirGlobal mac,
+static inline unsigned int is_auth_valid(struct mac_context *mac,
 					 tpSirMacAuthFrameBody auth,
 					 struct pe_session *pe_session)
 {
@@ -94,7 +94,7 @@ static inline unsigned int is_auth_valid(tpAniSirGlobal mac,
 	return valid;
 }
 
-static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
+static void lim_process_auth_shared_system_algo(struct mac_context *mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,
 		tSirMacAuthFrameBody *rx_auth_frm_body,
 		tSirMacAuthFrameBody *auth_frame,
@@ -235,7 +235,7 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 	}
 }
 
-static void lim_process_auth_open_system_algo(tpAniSirGlobal mac_ctx,
+static void lim_process_auth_open_system_algo(struct mac_context *mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,
 		tSirMacAuthFrameBody *rx_auth_frm_body,
 		tSirMacAuthFrameBody *auth_frame,
@@ -286,7 +286,7 @@ static void lim_process_auth_open_system_algo(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void lim_process_sae_auth_frame(tpAniSirGlobal mac_ctx,
+static void lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 		uint8_t *rx_pkt_info, struct pe_session *pe_session)
 {
 	tpSirMacMgmtHdr mac_hdr;
@@ -311,12 +311,12 @@ static void lim_process_sae_auth_frame(tpAniSirGlobal mac_ctx,
 			WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info));
 }
 #else
-static inline void  lim_process_sae_auth_frame(tpAniSirGlobal mac_ctx,
+static inline void  lim_process_sae_auth_frame(struct mac_context *mac_ctx,
 		uint8_t *rx_pkt_info, struct pe_session *pe_session)
 {}
 #endif
 
-static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
+static void lim_process_auth_frame_type1(struct mac_context *mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,
 		tSirMacAuthFrameBody *rx_auth_frm_body,
 		uint8_t *rx_pkt_info, uint16_t curr_seq_num,
@@ -555,7 +555,7 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 	}
 }
 
-static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
+static void lim_process_auth_frame_type2(struct mac_context *mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,
 		tSirMacAuthFrameBody *rx_auth_frm_body,
 		tSirMacAuthFrameBody *auth_frame,
@@ -820,7 +820,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 	}
 }
 
-static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
+static void lim_process_auth_frame_type3(struct mac_context *mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,
 		tSirMacAuthFrameBody *rx_auth_frm_body,
 		tSirMacAuthFrameBody *auth_frame,
@@ -981,7 +981,7 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 	}
 }
 
-static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
+static void lim_process_auth_frame_type4(struct mac_context *mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,
 		tSirMacAuthFrameBody *rx_auth_frm_body,
 		struct pe_session *pe_session)
@@ -1115,7 +1115,7 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 void
-lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
+lim_process_auth_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		       struct pe_session *pe_session)
 {
 	uint8_t *body_ptr, key_id, cfg_privacy_opt_imp;
@@ -1508,7 +1508,7 @@ free:
  * is received we will have a session in progress. !!!!!
  ***----------------------------------------------------------------------
  */
-QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal mac, uint8_t *pBd,
+QDF_STATUS lim_process_auth_frame_no_session(struct mac_context *mac, uint8_t *pBd,
 						void *body)
 {
 	tpSirMacMgmtHdr pHdr;

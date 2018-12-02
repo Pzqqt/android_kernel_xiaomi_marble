@@ -52,7 +52,7 @@
  * Return: 0 on success, one on failure
  */
 static QDF_STATUS
-lim_validate_ie_information_in_probe_rsp_frame(tpAniSirGlobal mac_ctx,
+lim_validate_ie_information_in_probe_rsp_frame(struct mac_context *mac_ctx,
 				uint8_t *pRxPacketInfo)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -98,7 +98,7 @@ lim_validate_ie_information_in_probe_rsp_frame(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 void
-lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
+lim_process_probe_rsp_frame(struct mac_context *mac_ctx, uint8_t *rx_Packet_info,
 			    struct pe_session *session_entry)
 {
 	uint8_t *body;

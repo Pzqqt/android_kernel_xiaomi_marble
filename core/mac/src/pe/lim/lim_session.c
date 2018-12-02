@@ -88,7 +88,7 @@ struct sDphHashNode *pe_get_session_dph_node_array(uint8_t session_id)
 
    --------------------------------------------------------------------------*/
 
-static void pe_init_beacon_params(tpAniSirGlobal mac,
+static void pe_init_beacon_params(struct mac_context *mac,
 				  struct pe_session *pe_session)
 {
 	pe_session->beaconParams.beaconInterval = 0;
@@ -134,7 +134,7 @@ static void pe_init_beacon_params(tpAniSirGlobal mac,
 static void pe_reset_protection_callback(void *ptr)
 {
 	struct pe_session *pe_session_entry = (struct pe_session *)ptr;
-	tpAniSirGlobal mac_ctx = pe_session_entry->mac_ctx;
+	struct mac_context *mac_ctx = pe_session_entry->mac_ctx;
 	int8_t i = 0;
 	tUpdateBeaconParams beacon_params;
 	uint16_t current_protection_state = 0;
@@ -278,7 +278,7 @@ restart_timer:
  *
  * Return: void
  */
-static void pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx,
+static void pe_init_pmf_comeback_timer(struct mac_context *mac_ctx,
 struct pe_session *session, uint8_t session_id)
 {
 	QDF_STATUS status;
@@ -293,7 +293,7 @@ struct pe_session *session, uint8_t session_id)
 }
 #else
 static inline void
-pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx,
+pe_init_pmf_comeback_timer(struct mac_context *mac_ctx,
 	struct pe_session *session, uint8_t session_id)
 {
 }
@@ -412,7 +412,7 @@ lim_get_peer_idxpool_size(uint16_t num_sta, tSirBssType bss_type)
 }
 #endif
 
-void lim_set_bcn_probe_filter(tpAniSirGlobal mac_ctx,
+void lim_set_bcn_probe_filter(struct mac_context *mac_ctx,
 				struct pe_session *session,
 				tSirMacSSid *ibss_ssid,
 				uint8_t sap_channel)
@@ -473,7 +473,7 @@ done:
 		filter->num_sap_sessions);
 }
 
-void lim_reset_bcn_probe_filter(tpAniSirGlobal mac_ctx,
+void lim_reset_bcn_probe_filter(struct mac_context *mac_ctx,
 				struct pe_session *session)
 {
 	struct mgmt_beacon_probe_filter *filter;
@@ -521,7 +521,7 @@ void lim_reset_bcn_probe_filter(tpAniSirGlobal mac_ctx,
 		filter->num_sap_sessions);
 }
 
-void lim_update_bcn_probe_filter(tpAniSirGlobal mac_ctx,
+void lim_update_bcn_probe_filter(struct mac_context *mac_ctx,
 					struct pe_session *session)
 {
 	struct mgmt_beacon_probe_filter *filter;
@@ -558,7 +558,7 @@ void lim_update_bcn_probe_filter(tpAniSirGlobal mac_ctx,
 		filter->num_sap_sessions);
 }
 
-struct pe_session *pe_create_session(tpAniSirGlobal mac,
+struct pe_session *pe_create_session(struct mac_context *mac,
 			      uint8_t *bssid,
 			      uint8_t *sessionId,
 			      uint16_t numSta, tSirBssType bssType,
@@ -744,7 +744,7 @@ free_dp_hash_table:
 
    \sa
    --------------------------------------------------------------------------*/
-struct pe_session *pe_find_session_by_bssid(tpAniSirGlobal mac, uint8_t *bssid,
+struct pe_session *pe_find_session_by_bssid(struct mac_context *mac, uint8_t *bssid,
 				     uint8_t *sessionId)
 {
 	uint8_t i;
@@ -773,7 +773,7 @@ struct pe_session *pe_find_session_by_bssid(tpAniSirGlobal mac, uint8_t *bssid,
    \return struct pe_session *         - pointer to the session context or NULL if session is not found.
    \sa
    --------------------------------------------------------------------------*/
-struct pe_session *pe_find_session_by_bss_idx(tpAniSirGlobal mac, uint8_t bssIdx)
+struct pe_session *pe_find_session_by_bss_idx(struct mac_context *mac, uint8_t bssIdx)
 {
 	uint8_t i;
 
@@ -801,7 +801,7 @@ struct pe_session *pe_find_session_by_bss_idx(tpAniSirGlobal mac, uint8_t bssIdx
 
    \sa
    --------------------------------------------------------------------------*/
-struct pe_session *pe_find_session_by_session_id(tpAniSirGlobal mac,
+struct pe_session *pe_find_session_by_session_id(struct mac_context *mac,
 					  uint8_t sessionId)
 {
 	if (sessionId >= mac->lim.maxBssId) {
@@ -827,7 +827,7 @@ struct pe_session *pe_find_session_by_session_id(tpAniSirGlobal mac,
  * Return: session pointer
  */
 struct pe_session *
-pe_find_session_by_sta_id(tpAniSirGlobal mac_ctx,
+pe_find_session_by_sta_id(struct mac_context *mac_ctx,
 			  uint8_t staid,
 			  uint8_t *session_id)
 {
@@ -863,7 +863,7 @@ pe_find_session_by_sta_id(tpAniSirGlobal mac_ctx,
  *
  * Return: void
  */
-void pe_delete_session(tpAniSirGlobal mac_ctx, struct pe_session *session)
+void pe_delete_session(struct mac_context *mac_ctx, struct pe_session *session)
 {
 	uint16_t i = 0;
 	uint16_t n;
@@ -1069,7 +1069,7 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, struct pe_session *session)
    \sa
    --------------------------------------------------------------------------*/
 
-struct pe_session *pe_find_session_by_peer_sta(tpAniSirGlobal mac, uint8_t *sa,
+struct pe_session *pe_find_session_by_peer_sta(struct mac_context *mac, uint8_t *sa,
 					uint8_t *sessionId)
 {
 	uint8_t i;
@@ -1104,7 +1104,7 @@ struct pe_session *pe_find_session_by_peer_sta(tpAniSirGlobal mac, uint8_t *sa,
  *
  * Return: pe session entry for given sme session if found else NULL
  */
-struct pe_session *pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
+struct pe_session *pe_find_session_by_sme_session_id(struct mac_context *mac_ctx,
 					      uint8_t sme_session_id)
 {
 	uint8_t i;
@@ -1128,7 +1128,7 @@ struct pe_session *pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
  *
  * Return: pe session entry for given scan id if found else NULL
  */
-struct pe_session *pe_find_session_by_scan_id(tpAniSirGlobal mac_ctx,
+struct pe_session *pe_find_session_by_scan_id(struct mac_context *mac_ctx,
 				       uint32_t scan_id)
 {
 	uint8_t i;
@@ -1154,7 +1154,7 @@ struct pe_session *pe_find_session_by_scan_id(tpAniSirGlobal mac_ctx,
  * Return: 0 if there are no active sessions else return number of active
  *          sessions
  */
-uint8_t pe_get_active_session_count(tpAniSirGlobal mac_ctx)
+uint8_t pe_get_active_session_count(struct mac_context *mac_ctx)
 {
 	uint8_t i, active_session_count = 0;
 

@@ -58,7 +58,7 @@
  */
 
 void
-lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
+lim_process_deauth_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 			 struct pe_session *pe_session)
 {
 	uint8_t *pBody;
@@ -319,7 +319,7 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 
 } /*** end lim_process_deauth_frame() ***/
 
-void lim_perform_deauth(tpAniSirGlobal mac_ctx, struct pe_session *pe_session,
+void lim_perform_deauth(struct mac_context *mac_ctx, struct pe_session *pe_session,
 			uint16_t rc, tSirMacAddr addr, int32_t frame_rssi)
 {
 	tLimMlmDeauthInd mlmDeauthInd;

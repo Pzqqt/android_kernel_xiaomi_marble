@@ -40,7 +40,7 @@
  * Return: This function returns true if the session Id passed needs to be on
  *         a different channel than atleast one session already active.
  **/
-uint8_t is_lim_session_off_channel(tpAniSirGlobal mac_ctx, uint8_t session_id)
+uint8_t is_lim_session_off_channel(struct mac_context *mac_ctx, uint8_t session_id)
 {
 	uint8_t i;
 
@@ -73,7 +73,7 @@ uint8_t is_lim_session_off_channel(tpAniSirGlobal mac_ctx, uint8_t session_id)
  * Return: 1 - if channel switch is happening on any session.
  *         0 - if channel switch is not happening.
  **/
-uint8_t lim_is_chan_switch_running(tpAniSirGlobal mac_ctx)
+uint8_t lim_is_chan_switch_running(struct mac_context *mac_ctx)
 {
 	uint8_t i;
 
@@ -92,7 +92,7 @@ uint8_t lim_is_chan_switch_running(tpAniSirGlobal mac_ctx)
  * Return: true - if in MCC.
  *         false - Not in MCC
  **/
-uint8_t lim_is_in_mcc(tpAniSirGlobal mac_ctx)
+uint8_t lim_is_in_mcc(struct mac_context *mac_ctx)
 {
 	uint8_t i;
 	uint8_t chan = 0;
@@ -123,7 +123,7 @@ uint8_t lim_is_in_mcc(tpAniSirGlobal mac_ctx)
  *
  * Return: true - Number of stations active on all sessions.
  **/
-uint8_t pe_get_current_stas_count(tpAniSirGlobal mac_ctx)
+uint8_t pe_get_current_stas_count(struct mac_context *mac_ctx)
 {
 	uint8_t i;
 	uint8_t stacount = 0;

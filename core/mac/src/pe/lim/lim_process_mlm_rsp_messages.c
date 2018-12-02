@@ -45,18 +45,18 @@
 
 #define MAX_SUPPORTED_PEERS_WEP 16
 
-void lim_process_mlm_join_cnf(tpAniSirGlobal, uint32_t *);
-void lim_process_mlm_auth_cnf(tpAniSirGlobal, uint32_t *);
-void lim_process_mlm_assoc_ind(tpAniSirGlobal, uint32_t *);
-void lim_process_mlm_assoc_cnf(tpAniSirGlobal, uint32_t *);
-void lim_process_mlm_reassoc_ind(tpAniSirGlobal, uint32_t *);
-void lim_process_mlm_set_keys_cnf(tpAniSirGlobal, uint32_t *);
-void lim_process_mlm_disassoc_ind(tpAniSirGlobal, uint32_t *);
-void lim_process_mlm_disassoc_cnf(tpAniSirGlobal, uint32_t *);
-static void lim_process_mlm_deauth_ind(tpAniSirGlobal, tLimMlmDeauthInd *);
-void lim_process_mlm_deauth_cnf(tpAniSirGlobal, uint32_t *);
-void lim_process_mlm_purge_sta_ind(tpAniSirGlobal, uint32_t *);
-void lim_get_session_info(tpAniSirGlobal mac, uint8_t *, uint8_t *,
+void lim_process_mlm_join_cnf(struct mac_context *, uint32_t *);
+void lim_process_mlm_auth_cnf(struct mac_context *, uint32_t *);
+void lim_process_mlm_assoc_ind(struct mac_context *, uint32_t *);
+void lim_process_mlm_assoc_cnf(struct mac_context *, uint32_t *);
+void lim_process_mlm_reassoc_ind(struct mac_context *, uint32_t *);
+void lim_process_mlm_set_keys_cnf(struct mac_context *, uint32_t *);
+void lim_process_mlm_disassoc_ind(struct mac_context *, uint32_t *);
+void lim_process_mlm_disassoc_cnf(struct mac_context *, uint32_t *);
+static void lim_process_mlm_deauth_ind(struct mac_context *, tLimMlmDeauthInd *);
+void lim_process_mlm_deauth_cnf(struct mac_context *, uint32_t *);
+void lim_process_mlm_purge_sta_ind(struct mac_context *, uint32_t *);
+void lim_get_session_info(struct mac_context *mac, uint8_t *, uint8_t *,
 				uint16_t *);
 /**
  * lim_process_mlm_rsp_messages()
@@ -78,7 +78,7 @@ void lim_get_session_info(tpAniSirGlobal mac, uint8_t *, uint8_t *,
  * @return None
  */
 void
-lim_process_mlm_rsp_messages(tpAniSirGlobal mac, uint32_t msgType,
+lim_process_mlm_rsp_messages(struct mac_context *mac, uint32_t msgType,
 			     uint32_t *pMsgBuf)
 {
 
@@ -150,7 +150,7 @@ lim_process_mlm_rsp_messages(tpAniSirGlobal mac, uint32_t msgType,
  *
  * @return None
  */
-void lim_process_mlm_start_cnf(tpAniSirGlobal mac, uint32_t *pMsgBuf)
+void lim_process_mlm_start_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 {
 	struct pe_session *pe_session = NULL;
 	tLimMlmStartCnf *pLimMlmStartCnf;
@@ -264,7 +264,7 @@ void lim_process_mlm_start_cnf(tpAniSirGlobal mac, uint32_t *pMsgBuf)
  *
  * Return: None
  */
-void lim_process_mlm_join_cnf(tpAniSirGlobal mac_ctx,
+void lim_process_mlm_join_cnf(struct mac_context *mac_ctx,
 	uint32_t *msg)
 {
 	tSirResultCodes result_code;
@@ -325,7 +325,7 @@ void lim_process_mlm_join_cnf(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 
-static void lim_send_mlm_assoc_req(tpAniSirGlobal mac_ctx,
+static void lim_send_mlm_assoc_req(struct mac_context *mac_ctx,
 	struct pe_session *session_entry)
 {
 	tLimMlmAssocReq *assoc_req;
@@ -430,7 +430,7 @@ static void lim_send_mlm_assoc_req(tpAniSirGlobal mac_ctx,
 void lim_pmf_comeback_timer_callback(void *context)
 {
 	struct comeback_timer_info *info = context;
-	tpAniSirGlobal mac_ctx = info->mac;
+	struct mac_context *mac_ctx = info->mac;
 	struct pe_session *pe_session = &mac_ctx->lim.gpSession[info->session_id];
 
 	pe_err("comeback later timer expired. sending MLM ASSOC req");
@@ -451,7 +451,7 @@ void lim_pmf_comeback_timer_callback(void *context)
  *
  * Return: None
  */
-void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
+void lim_process_mlm_auth_cnf(struct mac_context *mac_ctx, uint32_t *msg)
 {
 	tAniAuthType auth_type, auth_mode;
 	tLimMlmAuthReq *auth_req;
@@ -590,7 +590,7 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
  *
  * Return: None
  */
-void lim_process_mlm_assoc_cnf(tpAniSirGlobal mac_ctx,
+void lim_process_mlm_assoc_cnf(struct mac_context *mac_ctx,
 	uint32_t *msg)
 {
 	struct pe_session *session_entry;
@@ -679,7 +679,7 @@ void lim_process_mlm_assoc_cnf(tpAniSirGlobal mac_ctx,
  */
 
 static void
-lim_fill_assoc_ind_params(tpAniSirGlobal mac_ctx,
+lim_fill_assoc_ind_params(struct mac_context *mac_ctx,
 	tpLimMlmAssocInd assoc_ind, tSirSmeAssocInd *sme_assoc_ind,
 	struct pe_session *session_entry)
 {
@@ -778,7 +778,7 @@ lim_fill_assoc_ind_params(tpAniSirGlobal mac_ctx,
  *
  * @return None
  */
-void lim_process_mlm_assoc_ind(tpAniSirGlobal mac, uint32_t *pMsgBuf)
+void lim_process_mlm_assoc_ind(struct mac_context *mac, uint32_t *pMsgBuf)
 {
 	uint32_t len;
 	struct scheduler_msg msg = {0};
@@ -860,7 +860,7 @@ void lim_process_mlm_assoc_ind(tpAniSirGlobal mac, uint32_t *pMsgBuf)
  *
  * @return None
  */
-void lim_process_mlm_disassoc_ind(tpAniSirGlobal mac, uint32_t *pMsgBuf)
+void lim_process_mlm_disassoc_ind(struct mac_context *mac, uint32_t *pMsgBuf)
 {
 	tLimMlmDisassocInd *pMlmDisassocInd;
 	struct pe_session *pe_session;
@@ -900,7 +900,7 @@ void lim_process_mlm_disassoc_ind(tpAniSirGlobal mac, uint32_t *pMsgBuf)
  *
  * Return: None
  */
-void lim_process_mlm_disassoc_cnf(tpAniSirGlobal mac_ctx,
+void lim_process_mlm_disassoc_cnf(struct mac_context *mac_ctx,
 	uint32_t *msg)
 {
 	tSirResultCodes result_code;
@@ -981,7 +981,7 @@ void lim_process_mlm_disassoc_cnf(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void lim_process_mlm_deauth_ind(tpAniSirGlobal mac_ctx,
+static void lim_process_mlm_deauth_ind(struct mac_context *mac_ctx,
 				       tLimMlmDeauthInd *deauth_ind)
 {
 	struct pe_session *session;
@@ -1028,7 +1028,7 @@ static void lim_process_mlm_deauth_ind(tpAniSirGlobal mac_ctx,
  *
  * @return None
  */
-void lim_process_mlm_deauth_cnf(tpAniSirGlobal mac, uint32_t *pMsgBuf)
+void lim_process_mlm_deauth_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 {
 	uint16_t aid;
 	tSirResultCodes resultCode;
@@ -1106,7 +1106,7 @@ void lim_process_mlm_deauth_cnf(tpAniSirGlobal mac, uint32_t *pMsgBuf)
  *
  * @return None
  */
-void lim_process_mlm_purge_sta_ind(tpAniSirGlobal mac, uint32_t *pMsgBuf)
+void lim_process_mlm_purge_sta_ind(struct mac_context *mac, uint32_t *pMsgBuf)
 {
 	tSirResultCodes resultCode;
 	tpLimMlmPurgeStaInd pMlmPurgeStaInd;
@@ -1192,7 +1192,7 @@ void lim_process_mlm_purge_sta_ind(tpAniSirGlobal mac, uint32_t *pMsgBuf)
  *
  * @return None
  */
-void lim_process_mlm_set_keys_cnf(tpAniSirGlobal mac, uint32_t *pMsgBuf)
+void lim_process_mlm_set_keys_cnf(struct mac_context *mac, uint32_t *pMsgBuf)
 {
 	/* Prepare and send SME_SETCONTEXT_RSP message */
 	tLimMlmSetKeysCnf *pMlmSetKeysCnf;
@@ -1249,7 +1249,7 @@ void lim_process_mlm_set_keys_cnf(tpAniSirGlobal mac, uint32_t *pMsgBuf)
  *
  * Return: None
  */
-static void lim_join_result_callback(tpAniSirGlobal mac, void *param,
+static void lim_join_result_callback(struct mac_context *mac, void *param,
 				     bool status)
 {
 	join_params *link_state_params = (join_params *) param;
@@ -1281,7 +1281,7 @@ static void lim_join_result_callback(tpAniSirGlobal mac, void *param,
 QDF_STATUS lim_sta_send_down_link(join_params *param)
 {
 	struct pe_session *session;
-	tpAniSirGlobal mac_ctx;
+	struct mac_context *mac_ctx;
 	tpDphHashNode sta_ds = NULL;
 
 	if (!param) {
@@ -1381,7 +1381,7 @@ error:
  *
  * Return: None
  */
-void lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
+void lim_handle_sme_join_result(struct mac_context *mac_ctx,
 	tSirResultCodes result_code, uint16_t prot_status_code,
 	struct pe_session *session)
 {
@@ -1410,7 +1410,7 @@ void lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
 	return;
 }
 #else
-void lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
+void lim_handle_sme_join_result(struct mac_context *mac_ctx,
 	tSirResultCodes result_code, uint16_t prot_status_code,
 	struct pe_session *session_entry)
 {
@@ -1511,7 +1511,7 @@ error:
  *
  * @return None
  */
-void lim_process_mlm_add_sta_rsp(tpAniSirGlobal mac,
+void lim_process_mlm_add_sta_rsp(struct mac_context *mac,
 				 struct scheduler_msg *limMsgQ,
 				 struct pe_session *pe_session)
 {
@@ -1538,7 +1538,7 @@ void lim_process_mlm_add_sta_rsp(tpAniSirGlobal mac,
  * Return: Null
  */
 
-void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal mac_ctx,
+void lim_process_sta_mlm_add_sta_rsp(struct mac_context *mac_ctx,
 	struct scheduler_msg *msg, struct pe_session *session_entry)
 {
 	tLimMlmAssocCnf mlm_assoc_cnf;
@@ -1685,7 +1685,7 @@ end:
 	return;
 }
 
-void lim_process_mlm_del_bss_rsp(tpAniSirGlobal mac,
+void lim_process_mlm_del_bss_rsp(struct mac_context *mac,
 				 struct scheduler_msg *limMsgQ,
 				 struct pe_session *pe_session)
 {
@@ -1712,7 +1712,7 @@ void lim_process_mlm_del_bss_rsp(tpAniSirGlobal mac,
 #endif
 }
 
-void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal mac,
+void lim_process_sta_mlm_del_bss_rsp(struct mac_context *mac,
 				     struct scheduler_msg *limMsgQ,
 				     struct pe_session *pe_session)
 {
@@ -1780,7 +1780,7 @@ end:
 	return;
 }
 
-void lim_process_ap_mlm_del_bss_rsp(tpAniSirGlobal mac,
+void lim_process_ap_mlm_del_bss_rsp(struct mac_context *mac,
 				    struct scheduler_msg *limMsgQ,
 				    struct pe_session *pe_session)
 {
@@ -1856,7 +1856,7 @@ end:
  *
  * Return: None
  */
-void lim_process_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
+void lim_process_mlm_del_sta_rsp(struct mac_context *mac_ctx,
 	struct scheduler_msg *msg)
 {
 	/*
@@ -1913,7 +1913,7 @@ void lim_process_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
  *
  * Retunrn: None
  */
-void lim_process_ap_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
+void lim_process_ap_mlm_del_sta_rsp(struct mac_context *mac_ctx,
 					   struct scheduler_msg *msg,
 					   struct pe_session *session_entry)
 {
@@ -2007,7 +2007,7 @@ end:
 	return;
 }
 
-void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal mac,
+void lim_process_sta_mlm_del_sta_rsp(struct mac_context *mac,
 				     struct scheduler_msg *limMsgQ,
 				     struct pe_session *pe_session)
 {
@@ -2085,7 +2085,7 @@ end:
 	return;
 }
 
-void lim_process_ap_mlm_add_sta_rsp(tpAniSirGlobal mac,
+void lim_process_ap_mlm_add_sta_rsp(struct mac_context *mac,
 				    struct scheduler_msg *limMsgQ,
 				    struct pe_session *pe_session)
 {
@@ -2181,7 +2181,7 @@ end:
  *
  * @return None
  */
-static void lim_process_ap_mlm_add_bss_rsp(tpAniSirGlobal mac,
+static void lim_process_ap_mlm_add_bss_rsp(struct mac_context *mac,
 					   struct scheduler_msg *limMsgQ)
 {
 	tLimMlmStartCnf mlmStartCnf;
@@ -2328,7 +2328,7 @@ end:
  * @return None
  */
 static void
-lim_process_ibss_mlm_add_bss_rsp(tpAniSirGlobal mac,
+lim_process_ibss_mlm_add_bss_rsp(struct mac_context *mac,
 				 struct scheduler_msg *limMsgQ,
 				 struct pe_session *pe_session)
 {
@@ -2427,7 +2427,7 @@ static void lim_update_fils_auth_mode(struct pe_session *session_entry,
  * Return: Null
  */
 static void
-lim_process_sta_add_bss_rsp_pre_assoc(tpAniSirGlobal mac_ctx,
+lim_process_sta_add_bss_rsp_pre_assoc(struct mac_context *mac_ctx,
 	struct scheduler_msg *msg, struct pe_session *session_entry)
 {
 	tpAddBssParams pAddBssParams = (tpAddBssParams) msg->bodyptr;
@@ -2531,7 +2531,7 @@ joinFailure:
  * Return: None
  */
 static void
-lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
+lim_process_sta_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 	struct scheduler_msg *msg, struct pe_session *session_entry)
 {
 	tpAddBssParams add_bss_params = (tpAddBssParams) msg->bodyptr;
@@ -2687,7 +2687,7 @@ end:
  *
  * Return None
  */
-void lim_process_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
+void lim_process_mlm_add_bss_rsp(struct mac_context *mac_ctx,
 	struct scheduler_msg *msg)
 {
 	tLimMlmStartCnf mlm_start_cnf;
@@ -2764,7 +2764,7 @@ void lim_process_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 #endif
 }
 
-void lim_process_mlm_update_hidden_ssid_rsp(tpAniSirGlobal mac_ctx,
+void lim_process_mlm_update_hidden_ssid_rsp(struct mac_context *mac_ctx,
 	struct scheduler_msg *msg)
 {
 	struct pe_session *session_entry;
@@ -2826,7 +2826,7 @@ free_req:
  *
  * Return: None
  */
-void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal mac_ctx,
+void lim_process_mlm_set_sta_key_rsp(struct mac_context *mac_ctx,
 	struct scheduler_msg *msg)
 {
 	uint8_t resp_reqd = 1;
@@ -2911,7 +2911,7 @@ void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal mac_ctx,
  *
  * Return: NULL
  */
-void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal mac_ctx,
+void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac_ctx,
 	struct scheduler_msg *msg)
 {
 	struct sLimMlmSetKeysCnf set_key_cnf;
@@ -3018,7 +3018,7 @@ void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal mac_ctx,
  *
  * @return None
  */
-static void lim_process_switch_channel_re_assoc_req(tpAniSirGlobal mac,
+static void lim_process_switch_channel_re_assoc_req(struct mac_context *mac,
 						    struct pe_session *pe_session,
 						    QDF_STATUS status)
 {
@@ -3086,7 +3086,7 @@ end:
  * Return None
  */
 static void lim_process_switch_channel_join_req(
-	tpAniSirGlobal mac_ctx, struct pe_session *session_entry,
+	struct mac_context *mac_ctx, struct pe_session *session_entry,
 	QDF_STATUS status)
 {
 	tSirMacSSid ssId;
@@ -3231,7 +3231,7 @@ error:
  *
  * @return None
  */
-void lim_process_switch_channel_rsp(tpAniSirGlobal mac, void *body)
+void lim_process_switch_channel_rsp(struct mac_context *mac, void *body)
 {
 	tpSwitchChannelParams pChnlParams = NULL;
 	QDF_STATUS status;
@@ -3320,7 +3320,7 @@ free:
 	qdf_mem_free(body);
 }
 
-QDF_STATUS lim_send_beacon_ind(tpAniSirGlobal mac, struct pe_session *pe_session,
+QDF_STATUS lim_send_beacon_ind(struct mac_context *mac, struct pe_session *pe_session,
 			       enum sir_bcn_update_reason reason)
 {
 	tBeaconGenParams *pBeaconGenParams = NULL;
@@ -3341,7 +3341,7 @@ QDF_STATUS lim_send_beacon_ind(tpAniSirGlobal mac, struct pe_session *pe_session
 	return sch_process_pre_beacon_ind(mac, &limMsg, reason);
 }
 
-void lim_process_rx_channel_status_event(tpAniSirGlobal mac_ctx, void *buf)
+void lim_process_rx_channel_status_event(struct mac_context *mac_ctx, void *buf)
 {
 	struct lim_channel_status *chan_status = buf;
 

@@ -61,7 +61,7 @@
  * @return None
  */
 void
-lim_collect_bss_description(tpAniSirGlobal mac,
+lim_collect_bss_description(struct mac_context *mac,
 			    tSirBssDescription *pBssDescr,
 			    tpSirProbeRespBeacon pBPR,
 			    uint8_t *pRxPacketInfo, uint8_t fScanning)

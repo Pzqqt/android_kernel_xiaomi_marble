@@ -71,7 +71,7 @@
  * @return true if passed authType is enabled else false
  */
 uint8_t
-lim_is_auth_algo_supported(tpAniSirGlobal mac, tAniAuthType authType,
+lim_is_auth_algo_supported(struct mac_context *mac, tAniAuthType authType,
 			   struct pe_session *pe_session)
 {
 	bool algoEnable, privacyOptImp;
@@ -131,7 +131,7 @@ lim_is_auth_algo_supported(tpAniSirGlobal mac, tAniAuthType authType,
  * @return None
  */
 
-void lim_init_pre_auth_list(tpAniSirGlobal mac)
+void lim_init_pre_auth_list(struct mac_context *mac)
 {
 	mac->lim.pLimPreAuthList = NULL;
 
@@ -154,7 +154,7 @@ void lim_init_pre_auth_list(tpAniSirGlobal mac)
  * @return None
  */
 
-void lim_delete_pre_auth_list(tpAniSirGlobal mac)
+void lim_delete_pre_auth_list(struct mac_context *mac)
 {
 	struct tLimPreAuthNode *pCurrNode, *pTempNode;
 
@@ -189,7 +189,7 @@ void lim_delete_pre_auth_list(tpAniSirGlobal mac)
  * @return Pointer to pre-auth node if found, else NULL
  */
 
-struct tLimPreAuthNode *lim_search_pre_auth_list(tpAniSirGlobal mac,
+struct tLimPreAuthNode *lim_search_pre_auth_list(struct mac_context *mac,
 						 tSirMacAddr macAddr)
 {
 	struct tLimPreAuthNode *pTempNode = mac->lim.pLimPreAuthList;
@@ -217,7 +217,7 @@ struct tLimPreAuthNode *lim_search_pre_auth_list(tpAniSirGlobal mac,
  * Return: return true if any preauthnode deleted else false
  */
 uint8_t
-lim_delete_open_auth_pre_auth_node(tpAniSirGlobal mac_ctx)
+lim_delete_open_auth_pre_auth_node(struct mac_context *mac_ctx)
 {
 	struct tLimPreAuthNode    *prev_node, *temp_node, *found_node;
 	uint8_t auth_node_freed = false;
@@ -276,7 +276,7 @@ lim_delete_open_auth_pre_auth_node(tpAniSirGlobal mac_ctx)
  * @return None
  */
 
-void lim_add_pre_auth_node(tpAniSirGlobal mac, struct tLimPreAuthNode *pAuthNode)
+void lim_add_pre_auth_node(struct mac_context *mac, struct tLimPreAuthNode *pAuthNode)
 {
 	mac->lim.gLimNumPreAuthContexts++;
 
@@ -303,7 +303,7 @@ void lim_add_pre_auth_node(tpAniSirGlobal mac, struct tLimPreAuthNode *pAuthNode
  * @return None
  */
 
-void lim_release_pre_auth_node(tpAniSirGlobal mac, tpLimPreAuthNode pAuthNode)
+void lim_release_pre_auth_node(struct mac_context *mac, tpLimPreAuthNode pAuthNode)
 {
 	pAuthNode->fFree = 1;
 	MTRACE(mac_trace
@@ -336,7 +336,7 @@ void lim_release_pre_auth_node(tpAniSirGlobal mac, tpLimPreAuthNode pAuthNode)
  * @return None
  */
 
-void lim_delete_pre_auth_node(tpAniSirGlobal mac, tSirMacAddr macAddr)
+void lim_delete_pre_auth_node(struct mac_context *mac, tSirMacAddr macAddr)
 {
 	struct tLimPreAuthNode *pPrevNode, *pTempNode;
 
@@ -411,7 +411,7 @@ void lim_delete_pre_auth_node(tpAniSirGlobal mac, tSirMacAddr macAddr)
  */
 
 void
-lim_restore_from_auth_state(tpAniSirGlobal mac, tSirResultCodes resultCode,
+lim_restore_from_auth_state(struct mac_context *mac, tSirResultCodes resultCode,
 			    uint16_t protStatusCode, struct pe_session *pe_session)
 {
 	tSirMacAddr currentBssId;
@@ -495,7 +495,7 @@ lim_restore_from_auth_state(tpAniSirGlobal mac, tSirResultCodes resultCode,
  */
 
 void
-lim_encrypt_auth_frame(tpAniSirGlobal mac, uint8_t keyId, uint8_t *pKey,
+lim_encrypt_auth_frame(struct mac_context *mac, uint8_t keyId, uint8_t *pKey,
 		       uint8_t *pPlainText, uint8_t *pEncrBody,
 		       uint32_t keyLength)
 {
@@ -684,7 +684,7 @@ lim_rc4(uint8_t *pDest, uint8_t *pSrc, uint8_t *seed, uint32_t keyLength,
  */
 
 uint8_t
-lim_decrypt_auth_frame(tpAniSirGlobal mac, uint8_t *pKey, uint8_t *pEncrBody,
+lim_decrypt_auth_frame(struct mac_context *mac, uint8_t *pKey, uint8_t *pEncrBody,
 		       uint8_t *pPlainBody, uint32_t keyLength, uint16_t frameLen)
 {
 	uint8_t seed[LIM_SEED_LENGTH], icv[SIR_MAC_WEP_ICV_LENGTH];
@@ -726,7 +726,7 @@ lim_decrypt_auth_frame(tpAniSirGlobal mac, uint8_t *pKey, uint8_t *pEncrBody,
  *
  * A utility API to send MLM_SETKEYS_CNF to SME
  */
-void lim_post_sme_set_keys_cnf(tpAniSirGlobal mac,
+void lim_post_sme_set_keys_cnf(struct mac_context *mac,
 			       tLimMlmSetKeysReq *pMlmSetKeysReq,
 			       tLimMlmSetKeysCnf *mlmSetKeysCnf)
 {
@@ -762,7 +762,7 @@ void lim_post_sme_set_keys_cnf(tpAniSirGlobal mac,
  * @param pMlmSetKeysReq Pointer to MLM_SETKEYS_REQ buffer
  * @return none
  */
-void lim_send_set_bss_key_req(tpAniSirGlobal mac,
+void lim_send_set_bss_key_req(struct mac_context *mac,
 			      tLimMlmSetKeysReq *pMlmSetKeysReq,
 			      struct pe_session *pe_session)
 {
@@ -862,7 +862,7 @@ end:
  * @param defWEPIdx      The default WEP key index [0..3]
  * @return none
  */
-void lim_send_set_sta_key_req(tpAniSirGlobal mac,
+void lim_send_set_sta_key_req(struct mac_context *mac,
 			      tLimMlmSetKeysReq *pMlmSetKeysReq,
 			      uint16_t staIdx,
 			      uint8_t defWEPIdx,

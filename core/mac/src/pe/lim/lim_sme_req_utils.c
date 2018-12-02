@@ -55,7 +55,7 @@
  *
  */
 static uint8_t
-lim_is_rsn_ie_valid_in_sme_req_message(tpAniSirGlobal mac_ctx,
+lim_is_rsn_ie_valid_in_sme_req_message(struct mac_context *mac_ctx,
 				       tpSirRSNie rsn_ie)
 {
 	uint8_t start = 0, privacy;
@@ -173,7 +173,7 @@ lim_is_rsn_ie_valid_in_sme_req_message(tpAniSirGlobal mac_ctx,
  */
 
 static uint8_t
-lim_is_addie_valid_in_sme_req_message(tpAniSirGlobal mac, tpSirAddie pAddie)
+lim_is_addie_valid_in_sme_req_message(struct mac_context *mac, tpSirAddie pAddie)
 {
 	int left = pAddie->length;
 	uint8_t *ptr = pAddie->addIEdata;
@@ -214,7 +214,7 @@ lim_is_addie_valid_in_sme_req_message(tpAniSirGlobal mac, tpSirAddie pAddie)
  * Return: true when RSN IE is valid, false otherwise
  */
 uint8_t
-lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal mac_ctx,
+lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(struct mac_context *mac_ctx,
 						    tpSirRSNie rsn_ie,
 						    struct pe_session *session)
 {
@@ -342,7 +342,7 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal mac_ctx,
  */
 
 static uint8_t
-lim_is_bss_descr_valid_in_sme_req_message(tpAniSirGlobal mac,
+lim_is_bss_descr_valid_in_sme_req_message(struct mac_context *mac,
 					  tpSirBssDescription pBssDescr)
 {
 	uint8_t valid = true;
@@ -370,7 +370,7 @@ end:
  */
 
 uint8_t
-lim_is_sme_start_bss_req_valid(tpAniSirGlobal mac_ctx,
+lim_is_sme_start_bss_req_valid(struct mac_context *mac_ctx,
 			       tpSirSmeStartBssReq start_bss_req)
 {
 	uint8_t i = 0;
@@ -488,7 +488,7 @@ lim_is_sme_start_bss_req_valid(tpAniSirGlobal mac_ctx,
  *         false otherwise
  */
 
-uint8_t lim_is_sme_join_req_valid(tpAniSirGlobal mac, tpSirSmeJoinReq pJoinReq)
+uint8_t lim_is_sme_join_req_valid(struct mac_context *mac, tpSirSmeJoinReq pJoinReq)
 {
 	uint8_t valid = true;
 
@@ -565,7 +565,7 @@ end:
  */
 
 uint8_t
-lim_is_sme_disassoc_req_valid(tpAniSirGlobal mac,
+lim_is_sme_disassoc_req_valid(struct mac_context *mac,
 			      tpSirSmeDisassocReq pDisassocReq,
 			      struct pe_session *pe_session)
 {
@@ -598,7 +598,7 @@ lim_is_sme_disassoc_req_valid(tpAniSirGlobal mac,
  */
 
 uint8_t
-lim_is_sme_disassoc_cnf_valid(tpAniSirGlobal mac,
+lim_is_sme_disassoc_cnf_valid(struct mac_context *mac,
 			      tpSirSmeDisassocCnf pDisassocCnf,
 			      struct pe_session *pe_session)
 {
@@ -629,7 +629,7 @@ lim_is_sme_disassoc_cnf_valid(tpAniSirGlobal mac,
  */
 
 uint8_t
-lim_is_sme_deauth_req_valid(tpAniSirGlobal mac, tpSirSmeDeauthReq pDeauthReq,
+lim_is_sme_deauth_req_valid(struct mac_context *mac, tpSirSmeDeauthReq pDeauthReq,
 			    struct pe_session *pe_session)
 {
 	if (qdf_is_macaddr_group(&pDeauthReq->peer_macaddr) &&
@@ -659,7 +659,7 @@ lim_is_sme_deauth_req_valid(tpAniSirGlobal mac, tpSirSmeDeauthReq pDeauthReq,
  */
 
 uint8_t
-lim_is_sme_set_context_req_valid(tpAniSirGlobal mac,
+lim_is_sme_set_context_req_valid(struct mac_context *mac,
 				 tpSirSmeSetContextReq pSetContextReq)
 {
 	uint8_t i = 0;

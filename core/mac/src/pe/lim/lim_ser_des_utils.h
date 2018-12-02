@@ -37,7 +37,7 @@
 #include "lim_types.h"
 #include "lim_prop_exts_utils.h"
 
-void lim_get_session_info(tpAniSirGlobal mac, uint8_t *,
+void lim_get_session_info(struct mac_context *mac, uint8_t *,
 			  uint8_t *, uint16_t *);
 
 /* Byte String <--> uint16_t/uint32_t copy functions */
@@ -111,7 +111,7 @@ static inline uint16_t lim_get_u16_be(uint8_t *buf)
 	return (buf[0] << 8) | buf[1];
 }
 
-QDF_STATUS lim_send_disassoc_frm_req_ser_des(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_send_disassoc_frm_req_ser_des(struct mac_context *mac_ctx,
 		struct sme_send_disassoc_frm_req *disassoc_frm_req,
 		uint8_t *buf);
 

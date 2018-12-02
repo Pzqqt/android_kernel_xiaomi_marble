@@ -57,7 +57,7 @@
    convert  ACTIVE DFS channel to DFS channels */
 #define ACTIVE_TO_PASSIVE_CONVERISON_TIMEOUT     1000
 
-static bool lim_create_non_ap_timers(tpAniSirGlobal mac)
+static bool lim_create_non_ap_timers(struct mac_context *mac)
 {
 	uint32_t cfgValue;
 	/* Create Channel Switch Timer */
@@ -181,7 +181,7 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal mac)
  * @return : status of operation
  */
 
-uint32_t lim_create_timers(tpAniSirGlobal mac)
+uint32_t lim_create_timers(struct mac_context *mac)
 {
 	uint32_t cfgValue, i = 0;
 
@@ -332,7 +332,7 @@ void lim_timer_handler(void *pMacGlobal, uint32_t param)
 {
 	QDF_STATUS status;
 	struct scheduler_msg msg = {0};
-	tpAniSirGlobal mac = (tpAniSirGlobal) pMacGlobal;
+	struct mac_context *mac = (struct mac_context *) pMacGlobal;
 
 	/* Prepare and post message to LIM Message Queue */
 
@@ -370,7 +370,7 @@ void lim_timer_handler(void *pMacGlobal, uint32_t param)
 void lim_addts_response_timer_handler(void *pMacGlobal, uint32_t param)
 {
 	struct scheduler_msg msg = {0};
-	tpAniSirGlobal mac = (tpAniSirGlobal) pMacGlobal;
+	struct mac_context *mac = (struct mac_context *) pMacGlobal;
 
 	/* Prepare and post message to LIM Message Queue */
 
@@ -405,7 +405,7 @@ void lim_addts_response_timer_handler(void *pMacGlobal, uint32_t param)
 void lim_auth_response_timer_handler(void *pMacGlobal, uint32_t param)
 {
 	struct scheduler_msg msg = {0};
-	tpAniSirGlobal mac = (tpAniSirGlobal) pMacGlobal;
+	struct mac_context *mac = (struct mac_context *) pMacGlobal;
 
 	/* Prepare and post message to LIM Message Queue */
 
@@ -431,7 +431,7 @@ void lim_auth_response_timer_handler(void *pMacGlobal, uint32_t param)
 void lim_assoc_failure_timer_handler(void *mac_global, uint32_t param)
 {
 	struct scheduler_msg msg = {0};
-	tpAniSirGlobal mac_ctx = (tpAniSirGlobal) mac_global;
+	struct mac_context *mac_ctx = (struct mac_context *) mac_global;
 	struct pe_session *session = NULL;
 
 	session = mac_ctx->lim.pe_session;
@@ -486,7 +486,7 @@ void lim_assoc_failure_timer_handler(void *mac_global, uint32_t param)
 void lim_update_olbc_cache_timer_handler(void *pMacGlobal, uint32_t param)
 {
 	struct scheduler_msg msg = {0};
-	tpAniSirGlobal mac = (tpAniSirGlobal) pMacGlobal;
+	struct mac_context *mac = (struct mac_context *) pMacGlobal;
 
 	/* Prepare and post message to LIM Message Queue */
 
@@ -519,7 +519,7 @@ void lim_update_olbc_cache_timer_handler(void *pMacGlobal, uint32_t param)
  * @return None
  */
 
-void lim_deactivate_and_change_timer(tpAniSirGlobal mac, uint32_t timerId)
+void lim_deactivate_and_change_timer(struct mac_context *mac, uint32_t timerId)
 {
 	uint32_t val = 0;
 	struct pe_session * session_entry;
@@ -799,7 +799,7 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal mac, uint32_t timerId)
  */
 
 void
-lim_deactivate_and_change_per_sta_id_timer(tpAniSirGlobal mac, uint32_t timerId,
+lim_deactivate_and_change_per_sta_id_timer(struct mac_context *mac, uint32_t timerId,
 					   uint16_t staId)
 {
 	uint32_t val;
@@ -888,7 +888,7 @@ lim_deactivate_and_change_per_sta_id_timer(tpAniSirGlobal mac, uint32_t timerId,
  * @return None
  */
 
-void lim_activate_cnf_timer(tpAniSirGlobal mac, uint16_t staId,
+void lim_activate_cnf_timer(struct mac_context *mac, uint16_t staId,
 			    struct pe_session *pe_session)
 {
 	mac->lim.limTimers.gpLimCnfWaitTimer[staId].sessionId =
@@ -919,7 +919,7 @@ void lim_activate_cnf_timer(tpAniSirGlobal mac, uint16_t staId,
  * @return None
  */
 
-void lim_activate_auth_rsp_timer(tpAniSirGlobal mac, tLimPreAuthNode *pAuthNode)
+void lim_activate_auth_rsp_timer(struct mac_context *mac, tLimPreAuthNode *pAuthNode)
 {
 	if (tx_timer_activate(&pAuthNode->timer) != TX_SUCCESS) {
 		/* / Could not activate auth rsp timer. */
@@ -950,7 +950,7 @@ void lim_cnf_wait_tmer_handler(void *pMacGlobal, uint32_t param)
 {
 	struct scheduler_msg msg = {0};
 	uint32_t statusCode;
-	tpAniSirGlobal mac = (tpAniSirGlobal) pMacGlobal;
+	struct mac_context *mac = (struct mac_context *) pMacGlobal;
 
 	msg.type = SIR_LIM_CNF_WAIT_TIMEOUT;
 	msg.bodyval = (uint32_t) param;
@@ -965,7 +965,7 @@ void lim_cnf_wait_tmer_handler(void *pMacGlobal, uint32_t param)
 void lim_channel_switch_timer_handler(void *pMacGlobal, uint32_t param)
 {
 	struct scheduler_msg msg = {0};
-	tpAniSirGlobal mac = (tpAniSirGlobal) pMacGlobal;
+	struct mac_context *mac = (struct mac_context *) pMacGlobal;
 
 	pe_debug("ChannelSwitch Timer expired.  Posting msg to LIM");
 

@@ -85,7 +85,7 @@
 #define MIN_VENDOR_SPECIFIC_IE_SIZE     5
 #endif
 
-static QDF_STATUS lim_tdls_setup_add_sta(tpAniSirGlobal mac,
+static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
 		tSirTdlsAddStaReq * pAddStaReq, struct pe_session *pe_session);
 
 /*
@@ -198,7 +198,7 @@ static const uint8_t *lim_trace_tdls_action_string(uint8_t tdlsActionCode)
 /*
  * initialize TDLS setup list and related data structures.
  */
-void lim_init_tdls_data(tpAniSirGlobal mac, struct pe_session *pe_session)
+void lim_init_tdls_data(struct mac_context *mac, struct pe_session *pe_session)
 {
 	lim_init_peer_idxpool(mac, pe_session);
 
@@ -206,7 +206,7 @@ void lim_init_tdls_data(tpAniSirGlobal mac, struct pe_session *pe_session)
 }
 
 static void populate_dot11f_tdls_offchannel_params(
-				tpAniSirGlobal mac,
+				struct mac_context *mac,
 				struct pe_session *pe_session,
 				tDot11fIESuppChannels *suppChannels,
 				tDot11fIESuppOperatingClasses *suppOperClasses)
@@ -318,7 +318,7 @@ static void populate_dot11f_tdls_offchannel_params(
  *
  */
 
-static void populate_dot11f_link_iden(tpAniSirGlobal mac,
+static void populate_dot11f_link_iden(struct mac_context *mac,
 				      struct pe_session *pe_session,
 				      tDot11fIELinkIdentifier *linkIden,
 				      struct qdf_mac_addr peer_mac,
@@ -345,7 +345,7 @@ static void populate_dot11f_link_iden(tpAniSirGlobal mac,
 
 }
 
-static void populate_dot11f_tdls_ext_capability(tpAniSirGlobal mac,
+static void populate_dot11f_tdls_ext_capability(struct mac_context *mac,
 						struct pe_session *pe_session,
 						tDot11fIEExtCap *extCapability)
 {
@@ -382,7 +382,7 @@ static void populate_dot11f_tdls_ext_capability(tpAniSirGlobal mac,
  * |802.11 header|RFC1042 header|TDLS_PYLOAD_TYPE|PAYLOAD
  * |             |              |                |
  */
-static uint32_t lim_prepare_tdls_frame_header(tpAniSirGlobal mac, uint8_t *pFrame,
+static uint32_t lim_prepare_tdls_frame_header(struct mac_context *mac, uint8_t *pFrame,
 					      tDot11fIELinkIdentifier *link_iden,
 					      uint8_t tdlsLinkType, uint8_t reqType,
 					      uint8_t tid,
@@ -488,7 +488,7 @@ static QDF_STATUS lim_mgmt_tdls_tx_complete(void *context,
 					    uint32_t tx_complete,
 					    void *params)
 {
-	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)context;
+	struct mac_context *mac_ctx = (struct mac_context *)context;
 
 	pe_debug("tdls_frm_session_id: %x tx_complete: %x",
 		mac_ctx->lim.tdls_frm_session_id, tx_complete);
@@ -510,7 +510,7 @@ static QDF_STATUS lim_mgmt_tdls_tx_complete(void *context,
  * This function can be used for bacst or unicast discovery request
  * We are not differentiating it here, it will all depnds on peer MAC address,
  */
-static QDF_STATUS lim_send_tdls_dis_req_frame(tpAniSirGlobal mac,
+static QDF_STATUS lim_send_tdls_dis_req_frame(struct mac_context *mac,
 						 struct qdf_mac_addr peer_mac,
 						 uint8_t dialog,
 						 struct pe_session *pe_session,
@@ -691,7 +691,7 @@ static QDF_STATUS lim_send_tdls_dis_req_frame(tpAniSirGlobal mac,
  * frames we are sending. Currently it is being used by lim_send_tdls_dis_rsp_frame,
  * lim_send_tdls_link_setup_req_frame and lim_send_tdls_setup_rsp_frame
  */
-static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal mac,
+static void populate_dot11f_tdls_ht_vht_cap(struct mac_context *mac,
 					    uint32_t selfDot11Mode,
 					    tDot11fIEHTCaps *htCap,
 					    tDot11fIEVHTCaps *vhtCap,
@@ -792,7 +792,7 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal mac,
  * Send TDLS discovery response frame on direct link.
  */
 
-static QDF_STATUS lim_send_tdls_dis_rsp_frame(tpAniSirGlobal mac,
+static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 						 struct qdf_mac_addr peer_mac,
 						 uint8_t dialog,
 						 struct pe_session *pe_session,
@@ -999,7 +999,7 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(tpAniSirGlobal mac,
  * This static function is currently used by lim_send_tdls_link_setup_req_frame and
  * lim_send_tdls_setup_rsp_frame to populate the AID if device is 11ac capable.
  */
-static void populate_dotf_tdls_vht_aid(tpAniSirGlobal mac, uint32_t selfDot11Mode,
+static void populate_dotf_tdls_vht_aid(struct mac_context *mac, uint32_t selfDot11Mode,
 				       struct qdf_mac_addr peerMac,
 				       tDot11fIEAID *Aid,
 				       struct pe_session *pe_session)
@@ -1051,7 +1051,7 @@ static void populate_dotf_tdls_vht_aid(tpAniSirGlobal mac, uint32_t selfDot11Mod
  * Return: None
  */
 static inline QDF_STATUS
-wma_tx_frame_with_tx_complete_send(tpAniSirGlobal mac, void *pPacket,
+wma_tx_frame_with_tx_complete_send(struct mac_context *mac, void *pPacket,
 				uint16_t nBytes,
 				uint8_t tid,
 				uint8_t *pFrame,
@@ -1072,7 +1072,7 @@ wma_tx_frame_with_tx_complete_send(tpAniSirGlobal mac, void *pPacket,
 #else
 
 static inline QDF_STATUS
-wma_tx_frame_with_tx_complete_send(tpAniSirGlobal mac, void *pPacket,
+wma_tx_frame_with_tx_complete_send(struct mac_context *mac, void *pPacket,
 				uint16_t nBytes,
 				uint8_t tid,
 				uint8_t *pFrame,
@@ -1105,7 +1105,7 @@ void lim_set_tdls_flags(roam_offload_synch_ind *roam_sync_ind_ptr,
  * TDLS setup Request frame on AP link
  */
 static
-QDF_STATUS lim_send_tdls_link_setup_req_frame(tpAniSirGlobal mac,
+QDF_STATUS lim_send_tdls_link_setup_req_frame(struct mac_context *mac,
 						 struct qdf_mac_addr peer_mac,
 						 uint8_t dialog,
 						 struct pe_session *pe_session,
@@ -1362,7 +1362,7 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(tpAniSirGlobal mac,
  * Send TDLS Teardown frame on Direct link or AP link, depends on reason code.
  */
 static
-QDF_STATUS lim_send_tdls_teardown_frame(tpAniSirGlobal mac,
+QDF_STATUS lim_send_tdls_teardown_frame(struct mac_context *mac,
 					   struct qdf_mac_addr peer_mac,
 					   uint16_t reason,
 					   uint8_t responder,
@@ -1556,7 +1556,7 @@ QDF_STATUS lim_send_tdls_teardown_frame(tpAniSirGlobal mac,
 /*
  * Send Setup RSP frame on AP link.
  */
-static QDF_STATUS lim_send_tdls_setup_rsp_frame(tpAniSirGlobal mac,
+static QDF_STATUS lim_send_tdls_setup_rsp_frame(struct mac_context *mac,
 						   struct qdf_mac_addr peer_mac,
 						   uint8_t dialog,
 						   struct pe_session *pe_session,
@@ -1812,7 +1812,7 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(tpAniSirGlobal mac,
  * Send TDLS setup CNF frame on AP link
  */
 static
-QDF_STATUS lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal mac,
+QDF_STATUS lim_send_tdls_link_setup_cnf_frame(struct mac_context *mac,
 						 struct qdf_mac_addr peer_mac,
 						 uint8_t dialog,
 						 uint32_t peerCapability,
@@ -2019,7 +2019,7 @@ QDF_STATUS lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal mac,
 /* This Function is similar to populate_dot11f_ht_caps, except that the HT Capabilities
  * are considered from the AddStaReq rather from the cfg.dat as in populate_dot11f_ht_caps
  */
-static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(tpAniSirGlobal mac,
+static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(struct mac_context *mac,
 						      struct pe_session *pe_session,
 						      tSirTdlsAddStaReq *
 						      pTdlsAddStaReq,
@@ -2155,7 +2155,7 @@ static QDF_STATUS lim_tdls_populate_dot11f_ht_caps(tpAniSirGlobal mac,
 }
 
 static QDF_STATUS
-lim_tdls_populate_dot11f_vht_caps(tpAniSirGlobal mac,
+lim_tdls_populate_dot11f_vht_caps(struct mac_context *mac,
 				  tSirTdlsAddStaReq *pTdlsAddStaReq,
 				  tDot11fIEVHTCaps *pDot11f)
 {
@@ -2241,7 +2241,7 @@ lim_tdls_populate_dot11f_vht_caps(tpAniSirGlobal mac,
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure.
  */
 static QDF_STATUS
-lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
+lim_tdls_populate_matching_rate_set(struct mac_context *mac_ctx, tpDphHashNode stads,
 				    uint8_t *supp_rate_set,
 				    uint8_t supp_rates_len,
 				    uint8_t *supp_mcs_set,
@@ -2422,7 +2422,7 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 /*
  * update HASH node entry info
  */
-static void lim_tdls_update_hash_node_info(tpAniSirGlobal mac,
+static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 					   tDphHashNode *pStaDs,
 					   tSirTdlsAddStaReq *pTdlsAddStaReq,
 					   struct pe_session *pe_session)
@@ -2564,7 +2564,7 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal mac,
 /*
  * Add STA for TDLS setup procedure
  */
-static QDF_STATUS lim_tdls_setup_add_sta(tpAniSirGlobal mac,
+static QDF_STATUS lim_tdls_setup_add_sta(struct mac_context *mac,
 					    tSirTdlsAddStaReq *pAddStaReq,
 					    struct pe_session *pe_session)
 {
@@ -2641,7 +2641,7 @@ static QDF_STATUS lim_tdls_setup_add_sta(tpAniSirGlobal mac,
 /*
  * Del STA, after Link is teardown or discovery response sent on direct link
  */
-static QDF_STATUS lim_tdls_del_sta(tpAniSirGlobal mac,
+static QDF_STATUS lim_tdls_del_sta(struct mac_context *mac,
 				      struct qdf_mac_addr peerMac,
 				      struct pe_session *pe_session,
 				      bool resp_reqd)
@@ -2674,7 +2674,7 @@ static QDF_STATUS lim_tdls_del_sta(tpAniSirGlobal mac,
 /*
  * Once Link is setup with PEER, send Add STA ind to SME
  */
-static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal mac,
+static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(struct mac_context *mac,
 						uint8_t sessionId,
 						tSirMacAddr peerMac,
 						uint8_t updateSta,
@@ -2717,7 +2717,7 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal mac,
 /*
  * STA RSP received from HAL
  */
-QDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal mac, void *msg,
+QDF_STATUS lim_process_tdls_add_sta_rsp(struct mac_context *mac, void *msg,
 					struct pe_session *pe_session)
 {
 	tAddStaParams *pAddStaParams = (tAddStaParams *) msg;
@@ -2774,7 +2774,7 @@ add_sta_error:
  */
 
 static void
-lim_send_tdls_comp_mgmt_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
+lim_send_tdls_comp_mgmt_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 	 tSirResultCodes result_code, uint8_t sme_session_id,
 	 uint16_t sme_transaction_id)
 {
@@ -2815,7 +2815,7 @@ lim_send_tdls_comp_mgmt_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
  *
  * Return: QDF_STATUS_SUCCESS on success, error code otherwise
  */
-QDF_STATUS lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_process_sme_tdls_mgmt_send_req(struct mac_context *mac_ctx,
 						 uint32_t *msg)
 {
 	/* get all discovery request parameters */
@@ -2940,7 +2940,7 @@ lim_tdls_send_mgmt_error:
 /*
  * Once link is teardown, send Del Peer Ind to SME
  */
-static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal mac,
+static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(struct mac_context *mac,
 						uint8_t sessionId,
 						struct qdf_mac_addr peerMac,
 						tDphHashNode *pStaDs, uint8_t status)
@@ -2976,7 +2976,7 @@ static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal mac,
 /*
  * Process Send Mgmt Request from SME and transmit to AP.
  */
-QDF_STATUS lim_process_sme_tdls_add_sta_req(tpAniSirGlobal mac,
+QDF_STATUS lim_process_sme_tdls_add_sta_req(struct mac_context *mac,
 					       uint32_t *pMsgBuf)
 {
 	/* get all discovery request parameters */
@@ -3038,7 +3038,7 @@ lim_tdls_add_sta_error:
 /*
  * Process Del Sta Request from SME .
  */
-QDF_STATUS lim_process_sme_tdls_del_sta_req(tpAniSirGlobal mac,
+QDF_STATUS lim_process_sme_tdls_del_sta_req(struct mac_context *mac,
 					       uint32_t *pMsgBuf)
 {
 	/* get all discovery request parameters */
@@ -3109,7 +3109,7 @@ lim_tdls_del_sta_error:
  *
  * Return: None
  */
-static void lim_check_aid_and_delete_peer(tpAniSirGlobal p_mac,
+static void lim_check_aid_and_delete_peer(struct mac_context *p_mac,
 					  struct pe_session *session_entry)
 {
 	tpDphHashNode stads = NULL;
@@ -3176,7 +3176,7 @@ skip:
  *
  * Return: QDF_STATUS_SUCCESS on success, error code otherwise
  */
-QDF_STATUS lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_delete_tdls_peers(struct mac_context *mac_ctx,
 				    struct pe_session *session_entry)
 {
 	pe_debug("Enter");
@@ -3210,7 +3210,7 @@ QDF_STATUS lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
  *
  * Return: Success: QDF_STATUS_SUCCESS Failure: Error value
  */
-QDF_STATUS lim_process_sme_del_all_tdls_peers(tpAniSirGlobal p_mac,
+QDF_STATUS lim_process_sme_del_all_tdls_peers(struct mac_context *p_mac,
 						 uint32_t *msg_buf)
 {
 	struct sir_del_all_tdls_peers *msg;
@@ -3246,7 +3246,7 @@ QDF_STATUS lim_process_sme_del_all_tdls_peers(tpAniSirGlobal p_mac,
  *
  * Return: None
  */
-void lim_process_tdls_del_sta_rsp(tpAniSirGlobal mac_ctx,
+void lim_process_tdls_del_sta_rsp(struct mac_context *mac_ctx,
 				  struct scheduler_msg *lim_msg,
 				  struct pe_session *session_entry)
 {

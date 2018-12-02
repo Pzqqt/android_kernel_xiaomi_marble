@@ -43,7 +43,7 @@
 
 void
 
-lim_send_sme_probe_req_ind(tpAniSirGlobal mac,
+lim_send_sme_probe_req_ind(struct mac_context *mac,
 			   tSirMacAddr peerMacAddr,
 			   uint8_t *pProbeReqIE,
 			   uint32_t ProbeReqIELen, struct pe_session *pe_session);
@@ -61,7 +61,7 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal mac,
  * @return None
  */
 
-void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, struct qdf_mac_addr addr,
+void lim_get_wpspbc_sessions(struct mac_context *mac_ctx, struct qdf_mac_addr addr,
 		uint8_t *uuid_e, eWPSPBCOverlap *overlap,
 		struct pe_session *session)
 {
@@ -111,7 +111,7 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, struct qdf_mac_addr addr,
  *
  * Return - None
  */
-static void lim_remove_timeout_pbc_sessions(tpAniSirGlobal mac,
+static void lim_remove_timeout_pbc_sessions(struct mac_context *mac,
 					    tSirWPSPBCSession *pbc)
 {
 	tSirWPSPBCSession *prev;
@@ -137,7 +137,7 @@ static void lim_remove_timeout_pbc_sessions(tpAniSirGlobal mac,
  *
  * Return: none
  */
-void lim_remove_pbc_sessions(tpAniSirGlobal mac, struct qdf_mac_addr remove_mac,
+void lim_remove_pbc_sessions(struct mac_context *mac, struct qdf_mac_addr remove_mac,
 			     struct pe_session *session_entry)
 {
 	tSirWPSPBCSession *pbc, *prev = NULL;
@@ -181,7 +181,7 @@ void lim_remove_pbc_sessions(tpAniSirGlobal mac, struct qdf_mac_addr remove_mac,
  * @return None
  */
 
-static void lim_update_pbc_session_entry(tpAniSirGlobal mac,
+static void lim_update_pbc_session_entry(struct mac_context *mac,
 					 uint8_t *addr, uint8_t *uuid_e,
 					 struct pe_session *pe_session)
 {
@@ -268,7 +268,7 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal mac,
  * @return None
  */
 
-void lim_wpspbc_close(tpAniSirGlobal mac, struct pe_session *pe_session)
+void lim_wpspbc_close(struct mac_context *mac, struct pe_session *pe_session)
 {
 
 	lim_remove_timeout_pbc_sessions(mac, pe_session->pAPWPSPBCSession);
@@ -327,7 +327,7 @@ static bool lim_check11b_rates(uint8_t rate)
  */
 
 void
-lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
+lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 		struct pe_session *session)
 {
 	uint8_t *body_ptr;
@@ -532,7 +532,7 @@ multipleSSIDcheck:
  */
 
 static void
-lim_indicate_probe_req_to_hdd(tpAniSirGlobal mac, uint8_t *pBd,
+lim_indicate_probe_req_to_hdd(struct mac_context *mac, uint8_t *pBd,
 			      struct pe_session *pe_session)
 {
 	tpSirMacMgmtHdr pHdr;
@@ -568,7 +568,7 @@ lim_indicate_probe_req_to_hdd(tpAniSirGlobal mac, uint8_t *pBd,
  * @return None
  */
 void
-lim_process_probe_req_frame_multiple_bss(tpAniSirGlobal mac_ctx,
+lim_process_probe_req_frame_multiple_bss(struct mac_context *mac_ctx,
 			uint8_t *buf_descr, struct pe_session *session)
 {
 	uint8_t i;
@@ -623,7 +623,7 @@ lim_process_probe_req_frame_multiple_bss(tpAniSirGlobal mac_ctx,
  * @return None
  */
 void
-lim_send_sme_probe_req_ind(tpAniSirGlobal mac,
+lim_send_sme_probe_req_ind(struct mac_context *mac,
 			   tSirMacAddr peerMacAddr,
 			   uint8_t *pProbeReqIE,
 			   uint32_t ProbeReqIELen, struct pe_session *pe_session)

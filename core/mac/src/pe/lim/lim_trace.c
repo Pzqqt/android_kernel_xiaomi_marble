@@ -30,7 +30,7 @@
    Include Files
    ------------------------------------------------------------------------*/
 
-#include "ani_global.h"          /* for tpAniSirGlobal */
+#include "ani_global.h"          /* for struct mac_context **/
 
 #include "lim_trace.h"
 #include "lim_timer_utils.h"
@@ -91,7 +91,7 @@ static uint8_t *__lim_trace_get_mgmt_drop_reason_string(uint16_t dropReason)
 	}
 }
 
-void lim_trace_init(tpAniSirGlobal mac)
+void lim_trace_init(struct mac_context *mac)
 {
 	qdf_trace_register(QDF_MODULE_ID_PE, &lim_trace_dump);
 }
@@ -272,7 +272,7 @@ void lim_trace_dump(void *mac, tp_qdf_trace_record pRecord,
 	}
 }
 
-void mac_trace_msg_tx(tpAniSirGlobal mac, uint8_t session, uint32_t data)
+void mac_trace_msg_tx(struct mac_context *mac, uint8_t session, uint32_t data)
 {
 
 	uint16_t msgId = (uint16_t) MAC_TRACE_GET_MSG_ID(data);
@@ -297,7 +297,7 @@ void mac_trace_msg_tx(tpAniSirGlobal mac, uint8_t session, uint32_t data)
 	}
 }
 
-void mac_trace_msg_tx_new(tpAniSirGlobal mac, uint8_t module, uint8_t session,
+void mac_trace_msg_tx_new(struct mac_context *mac, uint8_t module, uint8_t session,
 			  uint32_t data)
 {
 	uint16_t msgId = (uint16_t) MAC_TRACE_GET_MSG_ID(data);
@@ -328,7 +328,7 @@ void mac_trace_msg_tx_new(tpAniSirGlobal mac, uint8_t module, uint8_t session,
  * bit31: Rx message deferred or not
  * bit 0-15: message ID:
  */
-void mac_trace_msg_rx(tpAniSirGlobal mac, uint8_t session, uint32_t data)
+void mac_trace_msg_rx(struct mac_context *mac, uint8_t session, uint32_t data)
 {
 	uint16_t msgId = (uint16_t) MAC_TRACE_GET_MSG_ID(data);
 	uint8_t module_id = (uint8_t) MAC_TRACE_GET_MODULE_ID(data);
@@ -356,7 +356,7 @@ void mac_trace_msg_rx(tpAniSirGlobal mac, uint8_t session, uint32_t data)
  * bit31: Rx message deferred or not
  * bit 0-15: message ID:
  */
-void mac_trace_msg_rx_new(tpAniSirGlobal mac, uint8_t module, uint8_t session,
+void mac_trace_msg_rx_new(struct mac_context *mac, uint8_t module, uint8_t session,
 			  uint32_t data)
 {
 	uint16_t msgId = (uint16_t) MAC_TRACE_GET_MSG_ID(data);

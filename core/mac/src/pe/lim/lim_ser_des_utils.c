@@ -51,7 +51,7 @@
    \return None
    ------------------------------------------------------------------*/
 void
-lim_get_session_info(tpAniSirGlobal mac, uint8_t *pBuf, uint8_t *sessionId,
+lim_get_session_info(struct mac_context *mac, uint8_t *pBuf, uint8_t *sessionId,
 		     uint16_t *transactionId)
 {
 	if (!pBuf) {
@@ -78,7 +78,7 @@ lim_get_session_info(tpAniSirGlobal mac, uint8_t *pBuf, uint8_t *sessionId,
  *
  * return: QDF_STATUS_SUCCESS:Success Error value: Failure
  */
-QDF_STATUS lim_send_disassoc_frm_req_ser_des(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_send_disassoc_frm_req_ser_des(struct mac_context *mac_ctx,
 			struct sme_send_disassoc_frm_req *disassoc_frm_req,
 			uint8_t *buf)
 {

@@ -44,7 +44,7 @@
 #include "lim_send_messages.h"
 #include "lim_process_fils.h"
 
-extern QDF_STATUS sch_beacon_edca_process(tpAniSirGlobal mac,
+extern QDF_STATUS sch_beacon_edca_process(struct mac_context *mac,
 	tSirMacEdcaParamSetIE *edca, struct pe_session *pe_session);
 
 /**
@@ -60,7 +60,7 @@ extern QDF_STATUS sch_beacon_edca_process(tpAniSirGlobal mac,
  *
  * Return: None
  */
-static void lim_update_stads_htcap(tpAniSirGlobal mac_ctx,
+static void lim_update_stads_htcap(struct mac_context *mac_ctx,
 		tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 		struct pe_session *session_entry)
 {
@@ -138,7 +138,7 @@ static void lim_update_stads_htcap(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
+void lim_update_assoc_sta_datas(struct mac_context *mac_ctx,
 	tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 	struct pe_session *session_entry)
 {
@@ -290,7 +290,7 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void lim_update_ric_data(tpAniSirGlobal mac_ctx,
+static void lim_update_ric_data(struct mac_context *mac_ctx,
 	 struct pe_session *session_entry, tpSirAssocRsp assoc_rsp)
 {
 	if (session_entry->ricData != NULL) {
@@ -333,7 +333,7 @@ static void lim_update_ric_data(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void lim_update_ese_tspec(tpAniSirGlobal mac_ctx,
+static void lim_update_ese_tspec(struct mac_context *mac_ctx,
 	 struct pe_session *session_entry, tpSirAssocRsp assoc_rsp)
 {
 	if (session_entry->tspecIes != NULL) {
@@ -377,7 +377,7 @@ static void lim_update_ese_tspec(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void lim_update_ese_tsm(tpAniSirGlobal mac_ctx,
+static void lim_update_ese_tsm(struct mac_context *mac_ctx,
 	 struct pe_session *session_entry, tpSirAssocRsp assoc_rsp)
 {
 	uint8_t cnt = 0;
@@ -424,7 +424,7 @@ static void lim_update_ese_tsm(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void lim_update_stads_ext_cap(tpAniSirGlobal mac_ctx,
+static void lim_update_stads_ext_cap(struct mac_context *mac_ctx,
 	struct pe_session *session_entry, tpSirAssocRsp assoc_rsp,
 	tpDphHashNode sta_ds)
 {
@@ -461,7 +461,7 @@ static void lim_update_stads_ext_cap(tpAniSirGlobal mac_ctx,
  *
  *  Return: None
  */
-static void lim_stop_reassoc_retry_timer(tpAniSirGlobal mac_ctx)
+static void lim_stop_reassoc_retry_timer(struct mac_context *mac_ctx)
 {
 	mac_ctx->lim.reAssocRetryAttempt = 0;
 	if ((NULL != mac_ctx->lim.pe_session)
@@ -488,7 +488,7 @@ static void lim_stop_reassoc_retry_timer(tpAniSirGlobal mac_ctx)
  */
 
 void
-lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
+lim_process_assoc_rsp_frame(struct mac_context *mac_ctx,
 	uint8_t *rx_pkt_info, uint8_t subtype, struct pe_session *session_entry)
 {
 	uint8_t *body;

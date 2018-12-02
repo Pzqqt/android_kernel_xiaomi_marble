@@ -37,9 +37,9 @@
 #include "sch_api.h"
 #include "rrm_api.h"
 
-static void lim_update_config(tpAniSirGlobal mac, struct pe_session *pe_session);
+static void lim_update_config(struct mac_context *mac, struct pe_session *pe_session);
 
-void lim_set_cfg_protection(tpAniSirGlobal mac, struct pe_session *pesessionEntry)
+void lim_set_cfg_protection(struct mac_context *mac, struct pe_session *pesessionEntry)
 {
 	uint32_t val = 0;
 	struct wlan_mlme_cfg *mlme_cfg = mac->mlme_cfg;
@@ -115,7 +115,7 @@ void lim_set_cfg_protection(tpAniSirGlobal mac, struct pe_session *pesessionEntr
  * @param  cfgId - ID of CFG parameter that got updated
  * @return None
  */
-void lim_handle_param_update(tpAniSirGlobal mac, eUpdateIEsType cfgId)
+void lim_handle_param_update(struct mac_context *mac, eUpdateIEsType cfgId)
 {
 	struct scheduler_msg msg = { 0 };
 	QDF_STATUS status;
@@ -157,7 +157,7 @@ void lim_handle_param_update(tpAniSirGlobal mac, eUpdateIEsType cfgId)
  * @return None
  */
 
-void lim_apply_configuration(tpAniSirGlobal mac, struct pe_session *pe_session)
+void lim_apply_configuration(struct mac_context *mac, struct pe_session *pe_session)
 {
 	uint32_t val = 0, phyMode;
 
@@ -211,7 +211,7 @@ void lim_apply_configuration(tpAniSirGlobal mac, struct pe_session *pe_session)
  * @return None
  */
 
-static void lim_update_config(tpAniSirGlobal mac, struct pe_session *pe_session)
+static void lim_update_config(struct mac_context *mac, struct pe_session *pe_session)
 {
 	uint32_t val;
 	bool enabled;

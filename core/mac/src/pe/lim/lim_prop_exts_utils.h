@@ -32,19 +32,19 @@
 #define __LIM_PROP_EXTS_UTILS_H
 
 /* Function templates */
-void limQuietBss(tpAniSirGlobal, uint32_t);
-void lim_cleanupMeasData(tpAniSirGlobal);
-void limDeleteMeasTimers(tpAniSirGlobal);
-void limStopMeasTimers(tpAniSirGlobal mac);
-void lim_cleanupMeasResources(tpAniSirGlobal);
-void limRestorePreLearnState(tpAniSirGlobal);
-void limCollectMeasurementData(tpAniSirGlobal, uint32_t *, tpSchBeaconStruct);
-void limCollectRSSI(tpAniSirGlobal);
-void limDeleteCurrentBssWdsNode(tpAniSirGlobal);
-uint32_t limComputeAvg(tpAniSirGlobal, uint32_t, uint32_t);
+void limQuietBss(struct mac_context *, uint32_t);
+void lim_cleanupMeasData(struct mac_context *);
+void limDeleteMeasTimers(struct mac_context *);
+void limStopMeasTimers(struct mac_context *mac);
+void lim_cleanupMeasResources(struct mac_context *);
+void limRestorePreLearnState(struct mac_context *);
+void limCollectMeasurementData(struct mac_context *, uint32_t *, tpSchBeaconStruct);
+void limCollectRSSI(struct mac_context *);
+void limDeleteCurrentBssWdsNode(struct mac_context *);
+uint32_t limComputeAvg(struct mac_context *, uint32_t, uint32_t);
 
 /* / Function to extract AP's HCF capability from IE fields */
-void lim_extract_ap_capability(tpAniSirGlobal, uint8_t *, uint16_t, uint8_t *,
+void lim_extract_ap_capability(struct mac_context *, uint8_t *, uint16_t, uint8_t *,
 			       uint16_t *, uint8_t *, int8_t *, struct pe_session *);
 
 ePhyChanBondState lim_get_htcb_state(ePhyChanBondState aniCBMode);

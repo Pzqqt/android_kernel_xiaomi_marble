@@ -43,7 +43,7 @@
 #endif
 #include "wma_if.h"
 #include "rrm_api.h"
-static void lim_handle_sme_reaasoc_result(tpAniSirGlobal, tSirResultCodes,
+static void lim_handle_sme_reaasoc_result(struct mac_context *, tSirResultCodes,
 		uint16_t, struct pe_session *);
 /**
  * lim_process_mlm_reassoc_req() - process mlm reassoc request.
@@ -56,7 +56,7 @@ static void lim_handle_sme_reaasoc_result(tpAniSirGlobal, tSirResultCodes,
  *
  * Return: None
  */
-void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx,
+void lim_process_mlm_reassoc_req(struct mac_context *mac_ctx,
 				 tLimMlmReassocReq *reassoc_req)
 {
 	uint8_t channel, sec_ch_offset;
@@ -173,7 +173,7 @@ end:
  *
  * Return: None
  */
-static void lim_handle_sme_reaasoc_result(tpAniSirGlobal mac,
+static void lim_handle_sme_reaasoc_result(struct mac_context *mac,
 		tSirResultCodes resultCode, uint16_t protStatusCode,
 		struct pe_session *pe_session)
 {
@@ -232,7 +232,7 @@ error:
  *
  * @Return: void
  */
-void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
+void lim_process_mlm_reassoc_cnf(struct mac_context *mac_ctx, uint32_t *msg_buf)
 {
 	struct pe_session *session;
 	tLimMlmReassocCnf *lim_mlm_reassoc_cnf;
@@ -346,7 +346,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
  *
  *Return: None
  */
-void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal mac,
+void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 		struct scheduler_msg *limMsgQ, struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf; /* keep sme */
@@ -563,7 +563,7 @@ end:
 			     (uint32_t *) &mlmReassocCnf);
 }
 
-void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal mac,
+void lim_process_mlm_ft_reassoc_req(struct mac_context *mac,
 				    tLimMlmReassocReq *reassoc_req)
 {
 	uint8_t chanNum = 0;

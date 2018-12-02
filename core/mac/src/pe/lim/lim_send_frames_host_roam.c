@@ -64,7 +64,7 @@
  *
  * Return: None
  */
-void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
+void lim_send_reassoc_req_with_ft_ies_mgmt_frame(struct mac_context *mac_ctx,
 	tLimMlmReassocReq *mlm_reassoc_req,
 	struct pe_session *pe_session)
 {
@@ -475,7 +475,7 @@ err:
  *
  * Return: None
  */
-void lim_send_retry_reassoc_req_frame(tpAniSirGlobal mac,
+void lim_send_retry_reassoc_req_frame(struct mac_context *mac,
 				      tLimMlmReassocReq *pMlmReassocReq,
 				      struct pe_session *pe_session)
 {
@@ -539,7 +539,7 @@ end:
  *
  * Return: None
  */
-void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac,
+void lim_send_reassoc_req_mgmt_frame(struct mac_context *mac,
 				tLimMlmReassocReq *pMlmReassocReq,
 				struct pe_session *pe_session)
 {
@@ -808,7 +808,7 @@ void lim_process_rx_scan_handler(struct wlan_objmgr_vdev *vdev,
 				 struct scan_event *event,
 				 void *arg)
 {
-	tpAniSirGlobal mac_ctx;
+	struct mac_context *mac_ctx;
 	enum sir_scan_event_type event_type;
 
 	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
@@ -816,7 +816,7 @@ void lim_process_rx_scan_handler(struct wlan_objmgr_vdev *vdev,
 		  event->type, event->scan_id, event->requester,
 		  event->chan_freq, event->reason);
 
-	mac_ctx = (tpAniSirGlobal)arg;
+	mac_ctx = (struct mac_context *)arg;
 	event_type = 0x1 << event->type;
 
 	qdf_mtrace(QDF_MODULE_ID_SCAN, QDF_MODULE_ID_PE, event->type,

@@ -53,7 +53,7 @@
  * Return: None
  */
 
-void lim_init_peer_idxpool(tpAniSirGlobal mac, struct pe_session *pe_session)
+void lim_init_peer_idxpool(struct mac_context *mac, struct pe_session *pe_session)
 {
 	uint8_t i;
 	uint8_t maxAssocSta = mac->lim.maxStation;
@@ -109,7 +109,7 @@ void lim_init_peer_idxpool(tpAniSirGlobal mac, struct pe_session *pe_session)
  * @return peerIdx  - assigned peer Station IDx for STA
  */
 
-uint16_t lim_assign_peer_idx(tpAniSirGlobal mac, struct pe_session *pe_session)
+uint16_t lim_assign_peer_idx(struct mac_context *mac, struct pe_session *pe_session)
 {
 	uint16_t peerId;
 
@@ -159,7 +159,7 @@ uint16_t lim_assign_peer_idx(tpAniSirGlobal mac, struct pe_session *pe_session)
  */
 
 void
-lim_release_peer_idx(tpAniSirGlobal mac, uint16_t peerIdx,
+lim_release_peer_idx(struct mac_context *mac, uint16_t peerIdx,
 		     struct pe_session *pe_session)
 {
 	pe_session->gLimNumOfCurrentSTAs--;

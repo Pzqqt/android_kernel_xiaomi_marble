@@ -33,9 +33,9 @@
 
 /* Scan result hash related functions */
 uint8_t lim_scan_hash_function(tSirMacAddr);
-void lim_restore_pre_scan_state(tpAniSirGlobal);
-void lim_copy_scan_result(tpAniSirGlobal, uint8_t *);
-void lim_collect_bss_description(tpAniSirGlobal mac,
+void lim_restore_pre_scan_state(struct mac_context *);
+void lim_copy_scan_result(struct mac_context *, uint8_t *);
+void lim_collect_bss_description(struct mac_context *mac,
 			    tSirBssDescription *pBssDescr,
 			    tpSirProbeRespBeacon pBPR,
 			    uint8_t *pRxPacketInfo, uint8_t fScanning);

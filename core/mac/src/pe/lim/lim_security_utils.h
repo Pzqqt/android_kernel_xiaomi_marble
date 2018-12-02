@@ -49,31 +49,31 @@
 
 struct tLimPreAuthNode;
 
-uint8_t lim_is_auth_algo_supported(tpAniSirGlobal, tAniAuthType, struct pe_session *);
+uint8_t lim_is_auth_algo_supported(struct mac_context *, tAniAuthType, struct pe_session *);
 
 /* MAC based authentication related functions */
-void lim_init_pre_auth_list(tpAniSirGlobal);
-void lim_delete_pre_auth_list(tpAniSirGlobal);
-struct tLimPreAuthNode *lim_search_pre_auth_list(tpAniSirGlobal, tSirMacAddr);
-void lim_add_pre_auth_node(tpAniSirGlobal, struct tLimPreAuthNode *);
-void lim_delete_pre_auth_node(tpAniSirGlobal, tSirMacAddr);
-void lim_release_pre_auth_node(tpAniSirGlobal mac, tpLimPreAuthNode pAuthNode);
-void lim_restore_from_auth_state(tpAniSirGlobal,
+void lim_init_pre_auth_list(struct mac_context *);
+void lim_delete_pre_auth_list(struct mac_context *);
+struct tLimPreAuthNode *lim_search_pre_auth_list(struct mac_context *, tSirMacAddr);
+void lim_add_pre_auth_node(struct mac_context *, struct tLimPreAuthNode *);
+void lim_delete_pre_auth_node(struct mac_context *, tSirMacAddr);
+void lim_release_pre_auth_node(struct mac_context *mac, tpLimPreAuthNode pAuthNode);
+void lim_restore_from_auth_state(struct mac_context *,
 				 tSirResultCodes, uint16_t, struct pe_session *);
-uint8_t lim_delete_open_auth_pre_auth_node(tpAniSirGlobal mac_ctx);
+uint8_t lim_delete_open_auth_pre_auth_node(struct mac_context *mac_ctx);
 
 /* Encryption/Decryption related functions */
 void lim_compute_crc32(uint8_t *, uint8_t *, uint16_t);
 void lim_rc4(uint8_t *, uint8_t *, uint8_t *, uint32_t, uint16_t);
-void lim_encrypt_auth_frame(tpAniSirGlobal, uint8_t, uint8_t *, uint8_t *,
+void lim_encrypt_auth_frame(struct mac_context *, uint8_t, uint8_t *, uint8_t *,
 			    uint8_t *, uint32_t);
-uint8_t lim_decrypt_auth_frame(tpAniSirGlobal, uint8_t *, uint8_t *, uint8_t *,
+uint8_t lim_decrypt_auth_frame(struct mac_context *, uint8_t *, uint8_t *, uint8_t *,
 			       uint32_t, uint16_t);
 
-void lim_send_set_bss_key_req(tpAniSirGlobal, tLimMlmSetKeysReq *, struct pe_session *);
-void lim_send_set_sta_key_req(tpAniSirGlobal, tLimMlmSetKeysReq *, uint16_t, uint8_t,
+void lim_send_set_bss_key_req(struct mac_context *, tLimMlmSetKeysReq *, struct pe_session *);
+void lim_send_set_sta_key_req(struct mac_context *, tLimMlmSetKeysReq *, uint16_t, uint8_t,
 			      struct pe_session *, bool sendRsp);
-void lim_post_sme_set_keys_cnf(tpAniSirGlobal, tLimMlmSetKeysReq *,
+void lim_post_sme_set_keys_cnf(struct mac_context *, tLimMlmSetKeysReq *,
 			       tLimMlmSetKeysCnf *);
 
 #define  PTAPS  0xedb88320

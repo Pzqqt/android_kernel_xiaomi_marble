@@ -39,7 +39,7 @@
 #include "wmm_apsd.h"
 #include "wma.h"
 
-extern void lim_send_set_sta_key_req(tpAniSirGlobal mac,
+extern void lim_send_set_sta_key_req(struct mac_context *mac,
 				     tLimMlmSetKeysReq * pMlmSetKeysReq,
 				     uint16_t staIdx,
 				     uint8_t defWEPIdx,
@@ -48,14 +48,14 @@ extern void lim_send_set_sta_key_req(tpAniSirGlobal mac,
 /*--------------------------------------------------------------------------
    Initialize the FT variables.
    ------------------------------------------------------------------------*/
-void lim_ft_open(tpAniSirGlobal mac, struct pe_session *pe_session)
+void lim_ft_open(struct mac_context *mac, struct pe_session *pe_session)
 {
 	if (pe_session)
 		qdf_mem_set(&pe_session->ftPEContext, sizeof(tftPEContext),
 			    0);
 }
 
-void lim_ft_cleanup_all_ft_sessions(tpAniSirGlobal mac)
+void lim_ft_cleanup_all_ft_sessions(struct mac_context *mac)
 {
 	/* Wrapper function to cleanup all FT sessions */
 	int i;
@@ -68,7 +68,7 @@ void lim_ft_cleanup_all_ft_sessions(tpAniSirGlobal mac)
 	}
 }
 
-void lim_ft_cleanup(tpAniSirGlobal mac, struct pe_session *pe_session)
+void lim_ft_cleanup(struct mac_context *mac, struct pe_session *pe_session)
 {
 	if (NULL == pe_session) {
 		pe_err("pe_session is NULL");
@@ -118,7 +118,7 @@ void lim_ft_cleanup(tpAniSirGlobal mac, struct pe_session *pe_session)
  * The newly created ft Session entry is passed to this function
  *
  *------------------------------------------------------------------*/
-void lim_ft_prepare_add_bss_req(tpAniSirGlobal mac,
+void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		uint8_t updateEntry, struct pe_session *ft_session,
 		tpSirBssDescription bssDescription)
 {
@@ -479,7 +479,7 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal mac,
  *
  * Return: none
  */
-static void lim_fill_dot11mode(tpAniSirGlobal mac_ctx,
+static void lim_fill_dot11mode(struct mac_context *mac_ctx,
 			struct pe_session *ft_session, struct pe_session *pe_session)
 {
 	uint32_t self_dot11_mode;
@@ -505,7 +505,7 @@ static void lim_fill_dot11mode(tpAniSirGlobal mac_ctx,
  *
  * Return: none
  */
-static void lim_fill_dot11mode(tpAniSirGlobal mac_ctx,
+static void lim_fill_dot11mode(struct mac_context *mac_ctx,
 			struct pe_session *ft_session, struct pe_session *pe_session)
 {
 	ft_session->dot11mode =
@@ -520,7 +520,7 @@ static void lim_fill_dot11mode(tpAniSirGlobal mac_ctx,
  * Return the newly created session entry.
  *
  *------------------------------------------------------------------*/
-void lim_fill_ft_session(tpAniSirGlobal mac,
+void lim_fill_ft_session(struct mac_context *mac,
 			 tpSirBssDescription pbssDescription,
 			 struct pe_session *ft_session, struct pe_session *pe_session)
 {
@@ -736,7 +736,7 @@ void lim_fill_ft_session(tpAniSirGlobal mac,
  * This function is called to process the update key request from SME
  *
  *------------------------------------------------------------------*/
-bool lim_process_ft_update_key(tpAniSirGlobal mac, uint32_t *pMsgBuf)
+bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *pMsgBuf)
 {
 	tAddBssParams *pAddBssParams;
 	tSirFTUpdateKeyInfo *pKeyInfo;
@@ -824,7 +824,7 @@ bool lim_process_ft_update_key(tpAniSirGlobal mac, uint32_t *pMsgBuf)
 }
 
 static void
-lim_ft_send_aggr_qos_rsp(tpAniSirGlobal mac, uint8_t rspReqd,
+lim_ft_send_aggr_qos_rsp(struct mac_context *mac, uint8_t rspReqd,
 			 tpAggrAddTsParams aggrQosRsp, uint8_t smesessionId)
 {
 	tpSirAggrQosRsp rsp;
@@ -856,7 +856,7 @@ lim_ft_send_aggr_qos_rsp(tpAniSirGlobal mac, uint8_t rspReqd,
 	return;
 }
 
-void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal mac,
+void lim_process_ft_aggr_qo_s_rsp(struct mac_context *mac,
 				  struct scheduler_msg *limMsg)
 {
 	tpAggrAddTsParams pAggrQosRspMsg = NULL;
@@ -920,7 +920,7 @@ void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal mac,
 	return;
 }
 
-QDF_STATUS lim_process_ft_aggr_qos_req(tpAniSirGlobal mac, uint32_t *pMsgBuf)
+QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac, uint32_t *pMsgBuf)
 {
 	struct scheduler_msg msg = {0};
 	tSirAggrQosReq *aggrQosReq = (tSirAggrQosReq *) pMsgBuf;

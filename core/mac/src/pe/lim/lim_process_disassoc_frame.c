@@ -61,7 +61,7 @@
  * @return None
  */
 void
-lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
+lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 			   struct pe_session *pe_session)
 {
 	uint8_t *pBody;
@@ -315,7 +315,7 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 } /*** end lim_process_disassoc_frame() ***/
 
 #ifdef FEATURE_WLAN_TDLS
-void lim_disassoc_tdls_peers(tpAniSirGlobal mac_ctx,
+void lim_disassoc_tdls_peers(struct mac_context *mac_ctx,
 				    struct pe_session *pe_session, tSirMacAddr addr)
 {
 	tpDphHashNode sta_ds;
@@ -341,7 +341,7 @@ void lim_disassoc_tdls_peers(tpAniSirGlobal mac_ctx,
 }
 #endif
 
-void lim_perform_disassoc(tpAniSirGlobal mac_ctx, int32_t frame_rssi,
+void lim_perform_disassoc(struct mac_context *mac_ctx, int32_t frame_rssi,
 			  uint16_t rc, struct pe_session *pe_session, tSirMacAddr addr)
 {
 	tLimMlmDisassocInd mlmDisassocInd;

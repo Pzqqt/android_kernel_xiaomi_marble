@@ -35,7 +35,7 @@
  *
  * Return: TX_SUCCESS or TX_TIMER_ERROR
  */
-uint32_t lim_create_timers_host_roam(tpAniSirGlobal mac_ctx)
+uint32_t lim_create_timers_host_roam(struct mac_context *mac_ctx)
 {
 	uint32_t cfg_value;
 
@@ -66,7 +66,7 @@ err_roam_timer:
 	return TX_TIMER_ERROR;
 }
 
-void lim_delete_timers_host_roam(tpAniSirGlobal mac_ctx)
+void lim_delete_timers_host_roam(struct mac_context *mac_ctx)
 {
 	tLimTimers *lim_timer = &mac_ctx->lim.limTimers;
 
@@ -76,7 +76,7 @@ void lim_delete_timers_host_roam(tpAniSirGlobal mac_ctx)
 	tx_timer_delete(&lim_timer->gLimFTPreAuthRspTimer);
 }
 
-void lim_deactivate_timers_host_roam(tpAniSirGlobal mac_ctx)
+void lim_deactivate_timers_host_roam(struct mac_context *mac_ctx)
 {
 	tLimTimers *lim_timer = &mac_ctx->lim.limTimers;
 
@@ -96,7 +96,7 @@ void lim_deactivate_timers_host_roam(tpAniSirGlobal mac_ctx)
  *
  * Return: None
  */
-void lim_deactivate_and_change_timer_host_roam(tpAniSirGlobal mac_ctx,
+void lim_deactivate_and_change_timer_host_roam(struct mac_context *mac_ctx,
 		uint32_t timer_id)
 {
 	uint32_t val = 0;

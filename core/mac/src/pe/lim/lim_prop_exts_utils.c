@@ -77,7 +77,7 @@ static void get_local_power_constraint_probe_response(
  *
  * Return: None
  */
-static void get_ese_version_ie_probe_response(tpAniSirGlobal mac_ctx,
+static void get_ese_version_ie_probe_response(struct mac_context *mac_ctx,
 					tpSirProbeRespBeacon beacon_struct,
 					struct pe_session *session)
 {
@@ -94,7 +94,7 @@ static void get_local_power_constraint_probe_response(
 
 }
 
-static inline void get_ese_version_ie_probe_response(tpAniSirGlobal mac_ctx,
+static inline void get_ese_version_ie_probe_response(struct mac_context *mac_ctx,
 					tpSirProbeRespBeacon beacon_struct,
 					struct pe_session *session)
 {
@@ -195,7 +195,7 @@ static void lim_objmgr_update_vdev_nss(struct wlan_objmgr_psoc *psoc,
  * Return: None
  */
 void
-lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
+lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 	uint16_t ie_len, uint8_t *qos_cap, uint16_t *prop_cap, uint8_t *uapsd,
 	int8_t *local_constraint, struct pe_session *session)
 {

@@ -58,7 +58,7 @@
  * Return: None
  */
 
-void lim_update_re_assoc_globals(tpAniSirGlobal mac, tpSirAssocRsp pAssocRsp,
+void lim_update_re_assoc_globals(struct mac_context *mac, tpSirAssocRsp pAssocRsp,
 				 struct pe_session *pe_session)
 {
 	/* Update the current Bss Information */
@@ -108,7 +108,7 @@ void lim_update_re_assoc_globals(tpAniSirGlobal mac, tpSirAssocRsp pAssocRsp,
  *
  * Return: None
  */
-void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal mac,
+void lim_handle_del_bss_in_re_assoc_context(struct mac_context *mac,
 		tpDphHashNode pStaDs, struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
@@ -241,7 +241,7 @@ error:
  *
  * Return: None
  */
-void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal mac,
+void lim_handle_add_bss_in_re_assoc_context(struct mac_context *mac,
 		tpDphHashNode pStaDs, struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
@@ -357,7 +357,7 @@ Error:
  * Return: true  When STA is waiting for Reassoc response from AP
  *         else false
  */
-bool lim_is_reassoc_in_progress(tpAniSirGlobal mac, struct pe_session *pe_session)
+bool lim_is_reassoc_in_progress(struct mac_context *mac, struct pe_session *pe_session)
 {
 	if (pe_session == NULL)
 		return false;
@@ -385,7 +385,7 @@ bool lim_is_reassoc_in_progress(tpAniSirGlobal mac, struct pe_session *pe_sessio
  *
  * Return: QDF_STATUS_SUCCESS on success else QDF_STATUS failure codes
  */
-QDF_STATUS lim_add_ft_sta_self(tpAniSirGlobal mac_ctx, uint16_t assoc_id,
+QDF_STATUS lim_add_ft_sta_self(struct mac_context *mac_ctx, uint16_t assoc_id,
 				struct pe_session *session_entry)
 {
 	tpAddStaParams add_sta_params = NULL;
@@ -438,7 +438,7 @@ QDF_STATUS lim_add_ft_sta_self(tpAniSirGlobal mac_ctx, uint16_t assoc_id,
  */
 
 void
-lim_restore_pre_reassoc_state(tpAniSirGlobal mac,
+lim_restore_pre_reassoc_state(struct mac_context *mac,
 		tSirResultCodes resultCode, uint16_t protStatusCode,
 		struct pe_session *pe_session)
 {
@@ -481,7 +481,7 @@ lim_restore_pre_reassoc_state(tpAniSirGlobal mac,
  *
  * Return: None
  */
-void lim_post_reassoc_failure(tpAniSirGlobal mac,
+void lim_post_reassoc_failure(struct mac_context *mac,
 		tSirResultCodes resultCode, uint16_t protStatusCode,
 		struct pe_session *pe_session)
 {

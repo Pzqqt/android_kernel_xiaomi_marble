@@ -43,7 +43,7 @@ typedef struct sPowersaveoffloadInfo {
 
 #ifdef WLAN_FEATURE_11W
 struct comeback_timer_info {
-	tpAniSirGlobal mac;
+	struct mac_context *mac;
 	uint8_t session_id;
 	tLimMlmStates lim_prev_mlm_state;  /* Previous MLM State */
 	tLimMlmStates lim_mlm_state;       /* MLM State */
@@ -478,7 +478,7 @@ struct pe_session {
 	qdf_mc_timer_t protection_fields_reset_timer;
 	/* timer to decrement CSA/ECSA count */
 	qdf_mc_timer_t ap_ecsa_timer;
-	tpAniSirGlobal mac_ctx;
+	struct mac_context *mac_ctx;
 	/*
 	 * variable to store state of various protection struct like
 	 * gLimOlbcParams, gLimOverlap11gParams, gLimOverlapHt20Params etc
@@ -614,7 +614,7 @@ static inline void pe_free_dph_node_array_buffer(void)
  *
  * Return: ptr to the session context or NULL if session can not be created.
  */
-struct pe_session *pe_create_session(tpAniSirGlobal mac,
+struct pe_session *pe_create_session(struct mac_context *mac,
 			      uint8_t *bssid,
 			      uint8_t *sessionId,
 			      uint16_t numSta, tSirBssType bssType,
@@ -632,7 +632,7 @@ struct pe_session *pe_create_session(tpAniSirGlobal mac,
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-struct pe_session *pe_find_session_by_bssid(tpAniSirGlobal mac, uint8_t *bssid,
+struct pe_session *pe_find_session_by_bssid(struct mac_context *mac, uint8_t *bssid,
 				     uint8_t *sessionId);
 
 /**
@@ -646,7 +646,7 @@ struct pe_session *pe_find_session_by_bssid(tpAniSirGlobal mac, uint8_t *bssid,
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-struct pe_session *pe_find_session_by_bss_idx(tpAniSirGlobal mac, uint8_t bssIdx);
+struct pe_session *pe_find_session_by_bss_idx(struct mac_context *mac, uint8_t bssIdx);
 
 /**
  * pe_find_session_by_peer_sta() - looks up the PE session given the Peer
@@ -662,7 +662,7 @@ struct pe_session *pe_find_session_by_bss_idx(tpAniSirGlobal mac, uint8_t bssIdx
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-struct pe_session *pe_find_session_by_peer_sta(tpAniSirGlobal mac, uint8_t *sa,
+struct pe_session *pe_find_session_by_peer_sta(struct mac_context *mac, uint8_t *sa,
 					uint8_t *sessionId);
 
 /**
@@ -677,7 +677,7 @@ struct pe_session *pe_find_session_by_peer_sta(tpAniSirGlobal mac, uint8_t *sa,
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-struct pe_session *pe_find_session_by_session_id(tpAniSirGlobal mac,
+struct pe_session *pe_find_session_by_session_id(struct mac_context *mac,
 					  uint8_t sessionId);
 
 /**
@@ -692,7 +692,7 @@ struct pe_session *pe_find_session_by_session_id(tpAniSirGlobal mac,
  *
  * Return: pointer to the session context or NULL if session is not found.
  */
-struct pe_session *pe_find_session_by_sta_id(tpAniSirGlobal mac, uint8_t staid,
+struct pe_session *pe_find_session_by_sta_id(struct mac_context *mac, uint8_t staid,
 				      uint8_t *sessionId);
 
 /**
@@ -703,7 +703,7 @@ struct pe_session *pe_find_session_by_sta_id(tpAniSirGlobal mac, uint8_t staid,
  *
  * Return: void
  */
-void pe_delete_session(tpAniSirGlobal mac, struct pe_session *pe_session);
+void pe_delete_session(struct mac_context *mac, struct pe_session *pe_session);
 
 
 /**
@@ -716,7 +716,7 @@ void pe_delete_session(tpAniSirGlobal mac, struct pe_session *pe_session);
  *
  * Return: pe session entry for given sme session if found else NULL
  */
-struct pe_session *pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
+struct pe_session *pe_find_session_by_sme_session_id(struct mac_context *mac_ctx,
 					      uint8_t sme_session_id);
 
 /**
@@ -728,10 +728,10 @@ struct pe_session *pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
  *
  * Return: pe session entry for given scan id if found else NULL
  */
-struct pe_session *pe_find_session_by_scan_id(tpAniSirGlobal mac_ctx,
+struct pe_session *pe_find_session_by_scan_id(struct mac_context *mac_ctx,
 				       uint32_t scan_id);
 
-uint8_t pe_get_active_session_count(tpAniSirGlobal mac_ctx);
+uint8_t pe_get_active_session_count(struct mac_context *mac_ctx);
 #ifdef WLAN_FEATURE_FILS_SK
 /**
  * pe_delete_fils_info: API to delete fils session info
@@ -755,7 +755,7 @@ void pe_delete_fils_info(struct pe_session *session);
  *
  * Return: None
  */
-void lim_set_bcn_probe_filter(tpAniSirGlobal mac_ctx,
+void lim_set_bcn_probe_filter(struct mac_context *mac_ctx,
 				struct pe_session *session,
 				tSirMacSSid *ibss_ssid,
 				uint8_t sap_channel);
@@ -768,7 +768,7 @@ void lim_set_bcn_probe_filter(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_reset_bcn_probe_filter(tpAniSirGlobal mac_ctx, struct pe_session *session);
+void lim_reset_bcn_probe_filter(struct mac_context *mac_ctx, struct pe_session *session);
 
 /**
  * lim_update_bcn_probe_filter - Update the beacon/probe filter in mac context
@@ -781,6 +781,6 @@ void lim_reset_bcn_probe_filter(tpAniSirGlobal mac_ctx, struct pe_session *sessi
  *
  * Return: None
  */
-void lim_update_bcn_probe_filter(tpAniSirGlobal mac_ctx, struct pe_session *session);
+void lim_update_bcn_probe_filter(struct mac_context *mac_ctx, struct pe_session *session);
 
 #endif /* #if !defined( __LIM_SESSION_H ) */

@@ -51,7 +51,7 @@
  * @return success if GET operation is ok, else Failure.
  */
 
-QDF_STATUS lim_get_sta_hash_bssidx(tpAniSirGlobal mac, uint16_t assocId,
+QDF_STATUS lim_get_sta_hash_bssidx(struct mac_context *mac, uint16_t assocId,
 				      uint8_t *bssidx, struct pe_session *pe_session)
 {
 	tpDphHashNode pSta =

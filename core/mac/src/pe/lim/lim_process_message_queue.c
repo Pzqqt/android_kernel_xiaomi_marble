@@ -61,8 +61,8 @@
 #include <wlan_scan_ucfg_api.h>
 #include "wlan_mlme_public_struct.h"
 
-void lim_log_session_states(tpAniSirGlobal mac);
-static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
+void lim_log_session_states(struct mac_context *mac);
+static void lim_process_normal_hdd_msg(struct mac_context *mac_ctx,
 	struct scheduler_msg *msg, uint8_t rsp_reqd);
 
 #ifdef WLAN_FEATURE_SAE
@@ -73,7 +73,7 @@ static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void lim_process_sae_msg(tpAniSirGlobal mac, struct sir_sae_msg *body)
+static void lim_process_sae_msg(struct mac_context *mac, struct sir_sae_msg *body)
 {
 	struct sir_sae_msg *sae_msg = body;
 	struct pe_session *session;
@@ -126,7 +126,7 @@ static void lim_process_sae_msg(tpAniSirGlobal mac, struct sir_sae_msg *body)
 	}
 }
 #else
-static inline void lim_process_sae_msg(tpAniSirGlobal mac, void *body)
+static inline void lim_process_sae_msg(struct mac_context *mac, void *body)
 {}
 #endif
 
@@ -141,7 +141,7 @@ static inline void lim_process_sae_msg(tpAniSirGlobal mac, void *body)
  *
  * Return: None
  */
-static void lim_process_dual_mac_cfg_resp(tpAniSirGlobal mac, void *body)
+static void lim_process_dual_mac_cfg_resp(struct mac_context *mac, void *body)
 {
 	struct sir_dual_mac_config_resp *resp, *param;
 	uint32_t len, fail_resp = 0;
@@ -191,7 +191,7 @@ static void lim_process_dual_mac_cfg_resp(tpAniSirGlobal mac, void *body)
  *
  * Return: None
  */
-static void lim_process_set_hw_mode_resp(tpAniSirGlobal mac, void *body)
+static void lim_process_set_hw_mode_resp(struct mac_context *mac, void *body)
 {
 	struct sir_set_hw_mode_resp *resp, *param;
 	uint32_t len, i, fail_resp = 0;
@@ -253,7 +253,7 @@ static void lim_process_set_hw_mode_resp(tpAniSirGlobal mac, void *body)
  *
  * Return: None
  */
-static void lim_process_set_antenna_resp(tpAniSirGlobal mac, void *body)
+static void lim_process_set_antenna_resp(struct mac_context *mac, void *body)
 {
 	struct sir_antenna_mode_resp *resp, *param;
 	bool fail_resp = false;
@@ -298,7 +298,7 @@ static void lim_process_set_antenna_resp(tpAniSirGlobal mac, void *body)
  *
  * Return: None
  */
-static void lim_process_set_default_scan_ie_request(tpAniSirGlobal mac_ctx,
+static void lim_process_set_default_scan_ie_request(struct mac_context *mac_ctx,
 							uint32_t *msg_buf)
 {
 	struct hdd_default_scan_ie *set_ie_params;
@@ -361,7 +361,7 @@ scan_ie_send_fail:
  *
  * Return: None
  */
-static void lim_process_hw_mode_trans_ind(tpAniSirGlobal mac, void *body)
+static void lim_process_hw_mode_trans_ind(struct mac_context *mac, void *body)
 {
 	struct sir_hw_mode_trans_ind *ind, *param;
 	uint32_t len, i;
@@ -403,13 +403,13 @@ static void lim_process_hw_mode_trans_ind(tpAniSirGlobal mac, void *body)
 /** -------------------------------------------------------------
    \fn def_msg_decision
    \brief The function decides whether to defer a message or not in limProcessMessage function
-   \param   tpAniSirGlobal mac
+   \param   struct mac_context *mac
    \param       struct scheduler_msg  limMsg
    \param       tSirMacTspecIE   *ppInfo
    \return none
    -------------------------------------------------------------*/
 
-static uint8_t def_msg_decision(tpAniSirGlobal mac_ctx,
+static uint8_t def_msg_decision(struct mac_context *mac_ctx,
 				struct scheduler_msg *lim_msg)
 {
 	uint8_t type, subtype;
@@ -499,7 +499,7 @@ static uint8_t def_msg_decision(tpAniSirGlobal mac_ctx,
 
 #ifdef FEATURE_WLAN_EXTSCAN
 static void
-__lim_pno_match_fwd_bcn_probepsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
+__lim_pno_match_fwd_bcn_probepsp(struct mac_context *pmac, uint8_t *rx_pkt_info,
 				tSirProbeRespBeacon *frame, uint32_t ie_len,
 				uint32_t msg_type)
 {
@@ -555,7 +555,7 @@ __lim_pno_match_fwd_bcn_probepsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 
 
 static void
-__lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
+__lim_ext_scan_forward_bcn_probe_rsp(struct mac_context *pmac, uint8_t *rx_pkt_info,
 					tSirProbeRespBeacon *frame,
 					uint32_t ie_len,
 					uint32_t msg_type)
@@ -617,7 +617,7 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 }
 
 static void
-__lim_process_ext_scan_beacon_probe_rsp(tpAniSirGlobal pmac,
+__lim_process_ext_scan_beacon_probe_rsp(struct mac_context *pmac,
 					uint8_t *rx_pkt_info,
 					uint8_t sub_type)
 {
@@ -684,7 +684,7 @@ __lim_process_ext_scan_beacon_probe_rsp(tpAniSirGlobal pmac,
  * Not Scanning,
  */
 static void
-__lim_handle_beacon(tpAniSirGlobal mac, struct scheduler_msg *pMsg,
+__lim_handle_beacon(struct mac_context *mac, struct scheduler_msg *pMsg,
 		    struct pe_session *pe_session)
 {
 	uint8_t *pRxPacketInfo;
@@ -757,7 +757,7 @@ static void lim_fill_sap_bcn_pkt_meta(struct scan_cache_entry *scan_entry,
  * Return: QDF_STATUS
  */
 static QDF_STATUS lim_allocate_and_get_bcn(
-				tpAniSirGlobal mac_ctx,
+				struct mac_context *mac_ctx,
 				cds_pkt_t **pkt,
 				uint8_t **rx_pkt_info,
 				tSchBeaconStruct **bcn,
@@ -816,7 +816,7 @@ free:
 void lim_handle_sap_beacon(struct wlan_objmgr_pdev *pdev,
 				struct scan_cache_entry *scan_entry)
 {
-	tpAniSirGlobal mac_ctx;
+	struct mac_context *mac_ctx;
 	cds_pkt_t *pkt = NULL;
 	tSchBeaconStruct *bcn = NULL;
 	struct mgmt_beacon_probe_filter *filter;
@@ -893,7 +893,7 @@ void lim_handle_sap_beacon(struct wlan_objmgr_pdev *pdev,
  * @return None
  */
 
-uint32_t lim_defer_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg)
+uint32_t lim_defer_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 {
 	uint32_t retCode = TX_SUCCESS;
 
@@ -924,7 +924,7 @@ uint32_t lim_defer_msg(tpAniSirGlobal mac, struct scheduler_msg *pMsg)
  *
  * Return:      None.
  */
-static void lim_handle_unknown_a2_index_frames(tpAniSirGlobal mac_ctx,
+static void lim_handle_unknown_a2_index_frames(struct mac_context *mac_ctx,
 	void *rx_pkt_buffer, struct pe_session *session_entry)
 {
 #ifdef FEATURE_WLAN_TDLS
@@ -971,7 +971,7 @@ static void lim_handle_unknown_a2_index_frames(tpAniSirGlobal mac_ctx,
  * Return:      True or False for Match or Mismatch respectively.
  */
 static bool
-lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
+lim_check_mgmt_registered_frames(struct mac_context *mac_ctx, uint8_t *buff_desc,
 				 struct pe_session *session_entry)
 {
 	tSirMacFrameCtl fc;
@@ -1115,7 +1115,7 @@ lim_is_mgmt_frame_loggable(uint8_t type, uint8_t subtype)
  */
 
 static void
-lim_handle80211_frames(tpAniSirGlobal mac, struct scheduler_msg *limMsg,
+lim_handle80211_frames(struct mac_context *mac, struct scheduler_msg *limMsg,
 		       uint8_t *pDeferMsg)
 {
 	uint8_t *pRxPacketInfo = NULL;
@@ -1371,7 +1371,7 @@ end:
 	return;
 } /*** end lim_handle80211_frames() ***/
 
-void lim_process_abort_scan_ind(tpAniSirGlobal mac_ctx,
+void lim_process_abort_scan_ind(struct mac_context *mac_ctx,
 	uint8_t vdev_id, uint32_t scan_id, uint32_t scan_requestor_id)
 {
 	QDF_STATUS status;
@@ -1407,7 +1407,7 @@ fail:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 }
 
-static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
+static void lim_process_sme_obss_scan_ind(struct mac_context *mac_ctx,
 					  struct scheduler_msg *msg)
 {
 	struct pe_session *session;
@@ -1447,7 +1447,7 @@ static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
  *
  * Return:  None.
  */
-static void lim_process_messages(tpAniSirGlobal mac_ctx,
+static void lim_process_messages(struct mac_context *mac_ctx,
 				 struct scheduler_msg *msg)
 {
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
@@ -2061,7 +2061,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
  * @return None
  */
 
-static void lim_process_deferred_message_queue(tpAniSirGlobal mac)
+static void lim_process_deferred_message_queue(struct mac_context *mac)
 {
 	struct scheduler_msg limMsg = {0};
 	struct scheduler_msg *readMsg;
@@ -2097,7 +2097,7 @@ static void lim_process_deferred_message_queue(tpAniSirGlobal mac)
  *
  * Return:  None.
  */
-void lim_message_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
+void lim_message_processor(struct mac_context *mac_ctx, struct scheduler_msg *msg)
 {
 	if (eLIM_MLM_OFFLINE_STATE == mac_ctx->lim.gLimMlmState) {
 		pe_free_msg(mac_ctx, msg);
@@ -2125,7 +2125,7 @@ void lim_message_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
  *
  * Return: None
  */
-static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
+static void lim_process_normal_hdd_msg(struct mac_context *mac_ctx,
 				       struct scheduler_msg *msg,
 				       uint8_t rsp_reqd)
 {
@@ -2256,7 +2256,7 @@ handle_ht_capabilityand_ht_info(struct mac_context *mac,
 	}
 }
 
-void lim_log_session_states(tpAniSirGlobal mac_ctx)
+void lim_log_session_states(struct mac_context *mac_ctx)
 {
 #ifdef WLAN_DEBUG
 	int i;

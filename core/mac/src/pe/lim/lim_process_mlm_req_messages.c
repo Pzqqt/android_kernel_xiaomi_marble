@@ -41,15 +41,15 @@
 #include "lim_process_fils.h"
 #include "wlan_mlme_public_struct.h"
 
-static void lim_process_mlm_auth_req(tpAniSirGlobal, uint32_t *);
-static void lim_process_mlm_assoc_req(tpAniSirGlobal, uint32_t *);
-static void lim_process_mlm_disassoc_req(tpAniSirGlobal, uint32_t *);
-static void lim_process_mlm_set_keys_req(tpAniSirGlobal, uint32_t *);
+static void lim_process_mlm_auth_req(struct mac_context *, uint32_t *);
+static void lim_process_mlm_assoc_req(struct mac_context *, uint32_t *);
+static void lim_process_mlm_disassoc_req(struct mac_context *, uint32_t *);
+static void lim_process_mlm_set_keys_req(struct mac_context *, uint32_t *);
 
 /* MLM Timeout event handler templates */
-static void lim_process_auth_rsp_timeout(tpAniSirGlobal, uint32_t);
-static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal);
-static void lim_process_auth_retry_timer(tpAniSirGlobal);
+static void lim_process_auth_rsp_timeout(struct mac_context *, uint32_t);
+static void lim_process_periodic_join_probe_req_timer(struct mac_context *);
+static void lim_process_auth_retry_timer(struct mac_context *);
 
 /**
  * lim_process_sae_auth_timeout() - This function is called to process sae
@@ -58,7 +58,7 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal);
  *
  * @Return: None
  */
-static void lim_process_sae_auth_timeout(tpAniSirGlobal mac_ctx)
+static void lim_process_sae_auth_timeout(struct mac_context *mac_ctx)
 {
 	struct pe_session *session;
 
@@ -111,7 +111,7 @@ static void lim_process_sae_auth_timeout(tpAniSirGlobal mac_ctx)
  *
  * Return: None
  */
-void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx,
+void lim_process_mlm_req_messages(struct mac_context *mac_ctx,
 				  struct scheduler_msg *msg)
 {
 	switch (msg->type) {
@@ -183,7 +183,7 @@ void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 
-void lim_covert_channel_scan_type(tpAniSirGlobal mac_ctx, uint8_t chan_num,
+void lim_covert_channel_scan_type(struct mac_context *mac_ctx, uint8_t chan_num,
 				  bool passive_to_active)
 {
 
@@ -242,7 +242,7 @@ void lim_covert_channel_scan_type(tpAniSirGlobal mac_ctx, uint8_t chan_num,
  *
  * Return: None
  */
-void lim_set_dfs_channel_list(tpAniSirGlobal mac_ctx, uint8_t chan_num,
+void lim_set_dfs_channel_list(struct mac_context *mac_ctx, uint8_t chan_num,
 			      tSirDFSChannelList *dfs_ch_list)
 {
 	bool pass_to_active = true;
@@ -290,7 +290,7 @@ void lim_set_dfs_channel_list(tpAniSirGlobal mac_ctx, uint8_t chan_num,
  *
  * Return: None
  */
-static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
+static void mlm_add_sta(struct mac_context *mac_ctx, tpAddStaParams sta_param,
 		uint8_t *bssid, uint8_t ht_capable, struct pe_session *session_entry)
 {
 	uint32_t val;
@@ -411,7 +411,7 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
  * Return: eSIR_SME_SUCCESS on success, other error codes otherwise
  */
 tSirResultCodes
-lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
+lim_mlm_add_bss(struct mac_context *mac_ctx,
 		tLimMlmStartReq *mlm_start_req, struct pe_session *session)
 {
 	struct scheduler_msg msg_buf = {0};
@@ -599,7 +599,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	return eSIR_SME_SUCCESS;
 }
 
-void lim_process_mlm_start_req(tpAniSirGlobal mac_ctx,
+void lim_process_mlm_start_req(struct mac_context *mac_ctx,
 			       tLimMlmStartReq *mlm_start_req)
 {
 	tLimMlmStartCnf mlm_start_cnf;
@@ -661,7 +661,7 @@ end:
  *
  * Return: none
  */
-static void lim_post_join_set_link_state_callback(tpAniSirGlobal mac,
+static void lim_post_join_set_link_state_callback(struct mac_context *mac,
 		void *callback_arg, bool status)
 {
 	uint8_t chan_num, sec_chan_offset;
@@ -740,7 +740,7 @@ failure:
  * @Return None
  */
 static void
-lim_process_mlm_post_join_suspend_link(tpAniSirGlobal mac_ctx,
+lim_process_mlm_post_join_suspend_link(struct mac_context *mac_ctx,
 				       QDF_STATUS status,
 				       uint32_t *ctx)
 {
@@ -820,7 +820,7 @@ error:
  *
  * @Return: None
  */
-void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx,
+void lim_process_mlm_join_req(struct mac_context *mac_ctx,
 			      tLimMlmJoinReq *mlm_join_req)
 {
 	tLimMlmJoinCnf mlmjoin_cnf;
@@ -902,7 +902,7 @@ error:
  *
  * Return: true if expected and false otherwise
  */
-static bool lim_is_auth_req_expected(tpAniSirGlobal mac_ctx,
+static bool lim_is_auth_req_expected(struct mac_context *mac_ctx,
 				     struct pe_session *session)
 {
 	bool flag = false;
@@ -942,7 +942,7 @@ static bool lim_is_auth_req_expected(tpAniSirGlobal mac_ctx,
  *
  * Return: true if exists and false otherwise
  */
-static bool lim_is_preauth_ctx_exists(tpAniSirGlobal mac_ctx,
+static bool lim_is_preauth_ctx_exists(struct mac_context *mac_ctx,
 				      struct pe_session *session,
 				      struct tLimPreAuthNode **preauth_node_ptr)
 {
@@ -983,7 +983,7 @@ static bool lim_is_preauth_ctx_exists(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS lim_process_mlm_auth_req_sae(tpAniSirGlobal mac_ctx,
+static QDF_STATUS lim_process_mlm_auth_req_sae(struct mac_context *mac_ctx,
 		struct pe_session *session)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -1042,7 +1042,7 @@ static QDF_STATUS lim_process_mlm_auth_req_sae(tpAniSirGlobal mac_ctx,
 	return qdf_status;
 }
 #else
-static QDF_STATUS lim_process_mlm_auth_req_sae(tpAniSirGlobal mac_ctx,
+static QDF_STATUS lim_process_mlm_auth_req_sae(struct mac_context *mac_ctx,
 		struct pe_session *session)
 {
 	return QDF_STATUS_E_NOSUPPORT;
@@ -1060,7 +1060,7 @@ static QDF_STATUS lim_process_mlm_auth_req_sae(tpAniSirGlobal mac_ctx,
  *
  * @Return: None
  */
-static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
+static void lim_process_mlm_auth_req(struct mac_context *mac_ctx, uint32_t *msg)
 {
 	uint32_t num_preauth_ctx;
 	tSirMacAddr curr_bssid;
@@ -1233,7 +1233,7 @@ end:
  * @Return None
  */
 
-static void lim_process_mlm_assoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
+static void lim_process_mlm_assoc_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 {
 	tSirMacAddr curr_bssId;
 	tLimMlmAssocReq *mlm_assoc_req;
@@ -1338,7 +1338,7 @@ end:
  * Return: None
  */
 static void
-lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
+lim_process_mlm_disassoc_req_ntf(struct mac_context *mac_ctx,
 				 QDF_STATUS suspend_status, uint32_t *msg)
 {
 	uint16_t aid;
@@ -1542,7 +1542,7 @@ end:
  *
  * Return: true if pending and false otherwise.
  */
-bool lim_check_disassoc_deauth_ack_pending(tpAniSirGlobal mac_ctx,
+bool lim_check_disassoc_deauth_ack_pending(struct mac_context *mac_ctx,
 					   uint8_t *sta_mac)
 {
 	tLimMlmDisassocReq *disassoc_req;
@@ -1575,7 +1575,7 @@ bool lim_check_disassoc_deauth_ack_pending(tpAniSirGlobal mac_ctx,
  *
  * Return: void
  */
-void lim_clean_up_disassoc_deauth_req(tpAniSirGlobal mac_ctx,
+void lim_clean_up_disassoc_deauth_req(struct mac_context *mac_ctx,
 				      uint8_t *sta_mac, bool clean_rx_path)
 {
 	tLimMlmDisassocReq *mlm_disassoc_req;
@@ -1630,7 +1630,7 @@ void lim_clean_up_disassoc_deauth_req(tpAniSirGlobal mac_ctx,
  *
  * Return: void
  */
-void lim_process_disassoc_ack_timeout(tpAniSirGlobal mac_ctx)
+void lim_process_disassoc_ack_timeout(struct mac_context *mac_ctx)
 {
 	lim_send_disassoc_cnf(mac_ctx);
 }
@@ -1647,7 +1647,7 @@ void lim_process_disassoc_ack_timeout(tpAniSirGlobal mac_ctx)
  * @Return: None
  */
 static void
-lim_process_mlm_disassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
+lim_process_mlm_disassoc_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 {
 	tLimMlmDisassocReq *mlm_disassoc_req;
 
@@ -1678,7 +1678,7 @@ lim_process_mlm_disassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
  * @Return: None
  */
 static void
-lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
+lim_process_mlm_deauth_req_ntf(struct mac_context *mac_ctx,
 			       QDF_STATUS suspend_status, uint32_t *msg_buf)
 {
 	uint16_t aid;
@@ -1922,7 +1922,7 @@ end:
  *
  * Return: void
  */
-void lim_process_deauth_ack_timeout(tpAniSirGlobal mac_ctx)
+void lim_process_deauth_ack_timeout(struct mac_context *mac_ctx)
 {
 	lim_send_deauth_cnf(mac_ctx);
 }
@@ -1938,7 +1938,7 @@ void lim_process_deauth_ack_timeout(tpAniSirGlobal mac_ctx)
  *
  * @Return: None
  */
-void lim_process_mlm_deauth_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
+void lim_process_mlm_deauth_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 {
 	tLimMlmDeauthReq *mlm_deauth_req;
 	struct pe_session *session;
@@ -1978,7 +1978,7 @@ void lim_process_mlm_deauth_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
  * @Return: None
  */
 static void
-lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
+lim_process_mlm_set_keys_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 {
 	uint16_t aid;
 	uint16_t sta_idx = 0;
@@ -2158,7 +2158,7 @@ end:
 	lim_post_sme_set_keys_cnf(mac_ctx, mlm_set_keys_req, &mlm_set_keys_cnf);
 }
 
-void lim_process_join_failure_timeout(tpAniSirGlobal mac_ctx)
+void lim_process_join_failure_timeout(struct mac_context *mac_ctx)
 {
 	tLimMlmJoinCnf mlm_join_cnf;
 	uint32_t len;
@@ -2226,7 +2226,7 @@ void lim_process_join_failure_timeout(tpAniSirGlobal mac_ctx)
  *
  * @Return None
  */
-static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal mac_ctx)
+static void lim_process_periodic_join_probe_req_timer(struct mac_context *mac_ctx)
 {
 	struct pe_session *session;
 	tSirMacSSid ssid;
@@ -2271,7 +2271,7 @@ static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal mac_ctx)
  * Return: void
  */
 
-static void lim_process_auth_retry_timer(tpAniSirGlobal mac_ctx)
+static void lim_process_auth_retry_timer(struct mac_context *mac_ctx)
 {
 	struct pe_session * session_entry;
 
@@ -2323,7 +2323,7 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal mac_ctx)
 	return;
 } /*** lim_process_auth_retry_timer() ***/
 
-void lim_process_auth_failure_timeout(tpAniSirGlobal mac_ctx)
+void lim_process_auth_failure_timeout(struct mac_context *mac_ctx)
 {
 	/* fetch the pe_session based on the sessionId */
 	struct pe_session *session;
@@ -2401,7 +2401,7 @@ void lim_process_auth_failure_timeout(tpAniSirGlobal mac_ctx)
  * @Return: None
  */
 static void
-lim_process_auth_rsp_timeout(tpAniSirGlobal mac_ctx, uint32_t auth_idx)
+lim_process_auth_rsp_timeout(struct mac_context *mac_ctx, uint32_t auth_idx)
 {
 	struct tLimPreAuthNode *auth_node;
 	struct pe_session *session;
@@ -2446,7 +2446,7 @@ lim_process_auth_rsp_timeout(tpAniSirGlobal mac_ctx, uint32_t auth_idx)
 	}
 }
 
-void lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx,
+void lim_process_assoc_failure_timeout(struct mac_context *mac_ctx,
 						     uint32_t msg_type)
 {
 
@@ -2585,7 +2585,7 @@ void lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx,
  *
  * @Return: None
  */
-void lim_set_channel(tpAniSirGlobal mac_ctx, uint8_t channel,
+void lim_set_channel(struct mac_context *mac_ctx, uint8_t channel,
 		     uint8_t ch_center_freq_seg0, uint8_t ch_center_freq_seg1,
 		     enum phy_ch_width ch_width, int8_t max_tx_power,
 		     uint8_t pe_session_id, uint32_t cac_duration_ms,

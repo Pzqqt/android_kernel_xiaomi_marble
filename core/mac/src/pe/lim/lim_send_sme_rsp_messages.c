@@ -57,7 +57,7 @@
 #include "lim_process_fils.h"
 #include "wma.h"
 
-static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
+static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 	struct pe_session *session_entry, tSirResultCodes result_code,
 	tpSirSmeJoinRsp sme_join_rsp);
 
@@ -77,7 +77,7 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
  */
 
 void
-lim_send_sme_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
+lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 	 tSirResultCodes result_code, uint8_t sme_session_id,
 	 uint16_t sme_transaction_id)
 {
@@ -131,7 +131,7 @@ lim_send_sme_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
  * Return: None
  */
 void
-lim_send_sme_roc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
+lim_send_sme_roc_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 	 tSirResultCodes result_code, uint8_t sme_session_id,
 	 uint32_t scan_id)
 {
@@ -172,7 +172,7 @@ lim_send_sme_roc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
  *
  * Return: Returns the populated rate_flags
  */
-uint32_t lim_get_max_rate_flags(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds)
+uint32_t lim_get_max_rate_flags(struct mac_context *mac_ctx, tpDphHashNode sta_ds)
 {
 	uint32_t rate_flags = 0;
 
@@ -222,7 +222,7 @@ uint32_t lim_get_max_rate_flags(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds)
  *
  * Return: None
  */
-static void lim_send_sme_join_reassoc_rsp_after_resume(tpAniSirGlobal mac_ctx,
+static void lim_send_sme_join_reassoc_rsp_after_resume(struct mac_context *mac_ctx,
 	QDF_STATUS status, uint32_t *ctx)
 {
 	struct scheduler_msg msg = {0};
@@ -248,7 +248,7 @@ static void lim_send_sme_join_reassoc_rsp_after_resume(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
+static void lim_handle_join_rsp_status(struct mac_context *mac_ctx,
 	struct pe_session *session_entry, tSirResultCodes result_code,
 	tpSirSmeJoinRsp sme_join_rsp)
 {
@@ -471,7 +471,7 @@ static inline void lim_update_fils_seq_num(tpSirSmeJoinRsp sme_join_rsp,
  */
 
 void
-lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
+lim_send_sme_join_reassoc_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 	tSirResultCodes result_code, uint16_t prot_status_code,
 	struct pe_session *session_entry, uint8_t sme_session_id,
 	uint16_t sme_transaction_id)
@@ -601,7 +601,7 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
  */
 
 void
-lim_send_sme_start_bss_rsp(tpAniSirGlobal mac,
+lim_send_sme_start_bss_rsp(struct mac_context *mac,
 			   uint16_t msgType, tSirResultCodes resultCode,
 			   struct pe_session *pe_session, uint8_t smesessionId,
 			   uint16_t smetransactionId)
@@ -730,7 +730,7 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal mac,
 	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
 } /*** end lim_send_sme_start_bss_rsp() ***/
 
-void lim_send_sme_disassoc_deauth_ntf(tpAniSirGlobal mac,
+void lim_send_sme_disassoc_deauth_ntf(struct mac_context *mac,
 				      QDF_STATUS status, uint32_t *pCtx)
 {
 	struct scheduler_msg mmhMsg = {0};
@@ -774,7 +774,7 @@ void lim_send_sme_disassoc_deauth_ntf(tpAniSirGlobal mac,
  * @return None
  */
 void
-lim_send_sme_disassoc_ntf(tpAniSirGlobal mac,
+lim_send_sme_disassoc_ntf(struct mac_context *mac,
 			  tSirMacAddr peerMacAddr,
 			  tSirResultCodes reasonCode,
 			  uint16_t disassocTrigger,
@@ -955,7 +955,7 @@ error:
    \sa
    ----------------------------------------------------------------- */
 void
-lim_send_sme_disassoc_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
+lim_send_sme_disassoc_ind(struct mac_context *mac, tpDphHashNode pStaDs,
 			  struct pe_session *pe_session)
 {
 	struct scheduler_msg mmhMsg = {0};
@@ -1009,7 +1009,7 @@ lim_send_sme_disassoc_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
    \sa
    ----------------------------------------------------------------- */
 void
-lim_send_sme_deauth_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
+lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode pStaDs,
 			struct pe_session *pe_session)
 {
 	struct scheduler_msg mmhMsg = {0};
@@ -1080,7 +1080,7 @@ lim_send_sme_deauth_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
  * @return None
  */
 void
-lim_send_sme_tdls_del_sta_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
+lim_send_sme_tdls_del_sta_ind(struct mac_context *mac, tpDphHashNode pStaDs,
 			      struct pe_session *pe_session, uint16_t reasonCode)
 {
 	struct tdls_event_info info;
@@ -1117,7 +1117,7 @@ lim_send_sme_tdls_del_sta_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
  * @return None
  */
 void
-lim_send_sme_mgmt_tx_completion(tpAniSirGlobal mac,
+lim_send_sme_mgmt_tx_completion(struct mac_context *mac,
 				uint32_t sme_session_id,
 				uint32_t txCompleteStatus)
 {
@@ -1152,7 +1152,7 @@ lim_send_sme_mgmt_tx_completion(tpAniSirGlobal mac,
 
 #endif /* FEATURE_WLAN_TDLS */
 
-QDF_STATUS lim_prepare_disconnect_done_ind(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_prepare_disconnect_done_ind(struct mac_context *mac_ctx,
 					   uint32_t **msg,
 					   uint8_t session_id,
 					   tSirResultCodes reason_code,
@@ -1217,7 +1217,7 @@ QDF_STATUS lim_prepare_disconnect_done_ind(tpAniSirGlobal mac_ctx,
  * @return None
  */
 void
-lim_send_sme_deauth_ntf(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
+lim_send_sme_deauth_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 			tSirResultCodes reasonCode, uint16_t deauthTrigger,
 			uint16_t aid, uint8_t smesessionId,
 			uint16_t smetransactionId)
@@ -1339,7 +1339,7 @@ lim_send_sme_deauth_ntf(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
  * Return: None
  */
 void
-lim_send_sme_wm_status_change_ntf(tpAniSirGlobal mac_ctx,
+lim_send_sme_wm_status_change_ntf(struct mac_context *mac_ctx,
 	tSirSmeStatusChangeCode status_change_code,
 	uint32_t *status_change_info, uint16_t info_len, uint8_t session_id)
 {
@@ -1421,7 +1421,7 @@ lim_send_sme_wm_status_change_ntf(tpAniSirGlobal mac_ctx,
  * @return None
  */
 void
-lim_send_sme_set_context_rsp(tpAniSirGlobal mac,
+lim_send_sme_set_context_rsp(struct mac_context *mac,
 			     struct qdf_mac_addr peer_macaddr, uint16_t aid,
 			     tSirResultCodes resultCode,
 			     struct pe_session *pe_session, uint8_t smesessionId,
@@ -1474,7 +1474,7 @@ lim_send_sme_set_context_rsp(tpAniSirGlobal mac,
    \sa
    ----------------------------------------------------------------- */
 void
-lim_send_sme_addts_rsp(tpAniSirGlobal mac, uint8_t rspReqd, uint32_t status,
+lim_send_sme_addts_rsp(struct mac_context *mac, uint8_t rspReqd, uint32_t status,
 		       struct pe_session *pe_session, tSirMacTspecIE tspec,
 		       uint8_t smesessionId, uint16_t smetransactionId)
 {
@@ -1516,7 +1516,7 @@ lim_send_sme_addts_rsp(tpAniSirGlobal mac, uint8_t rspReqd, uint32_t status,
 }
 
 void
-lim_send_sme_delts_rsp(tpAniSirGlobal mac, tpSirDeltsReq delts, uint32_t status,
+lim_send_sme_delts_rsp(struct mac_context *mac, tpSirDeltsReq delts, uint32_t status,
 		       struct pe_session *pe_session, uint8_t smesessionId,
 		       uint16_t smetransactionId)
 {
@@ -1568,7 +1568,7 @@ lim_send_sme_delts_rsp(tpAniSirGlobal mac, tpSirDeltsReq delts, uint32_t status,
 }
 
 void
-lim_send_sme_delts_ind(tpAniSirGlobal mac, tpSirDeltsReqInfo delts, uint16_t aid,
+lim_send_sme_delts_ind(struct mac_context *mac, tpSirDeltsReqInfo delts, uint16_t aid,
 		       struct pe_session *pe_session)
 {
 	tpSirDeltsRsp rsp;
@@ -1631,7 +1631,7 @@ lim_send_sme_delts_ind(tpAniSirGlobal mac, tpSirDeltsReqInfo delts, uint16_t aid
  */
 
 void
-lim_send_sme_pe_statistics_rsp(tpAniSirGlobal mac, uint16_t msgType, void *stats)
+lim_send_sme_pe_statistics_rsp(struct mac_context *mac, uint16_t msgType, void *stats)
 {
 	struct scheduler_msg mmhMsg = {0};
 	uint8_t sessionId;
@@ -1675,7 +1675,7 @@ lim_send_sme_pe_statistics_rsp(tpAniSirGlobal mac, uint16_t msgType, void *stats
  *
  * Return: None
  */
-void lim_send_sme_pe_ese_tsm_rsp(tpAniSirGlobal mac,
+void lim_send_sme_pe_ese_tsm_rsp(struct mac_context *mac,
 				 tAniGetTsmStatsRsp *pStats)
 {
 	struct scheduler_msg mmhMsg = {0};
@@ -1717,7 +1717,7 @@ void lim_send_sme_pe_ese_tsm_rsp(tpAniSirGlobal mac,
 #endif /* FEATURE_WLAN_ESE */
 
 void
-lim_send_sme_ibss_peer_ind(tpAniSirGlobal mac,
+lim_send_sme_ibss_peer_ind(struct mac_context *mac,
 			   tSirMacAddr peerMacAddr,
 			   uint16_t staIndex,
 			   uint8_t *beacon,
@@ -1759,7 +1759,7 @@ lim_send_sme_ibss_peer_ind(tpAniSirGlobal mac,
  *
  * Return: None
  */
-static QDF_STATUS lim_process_csa_wbw_ie(tpAniSirGlobal mac_ctx,
+static QDF_STATUS lim_process_csa_wbw_ie(struct mac_context *mac_ctx,
 		struct csa_offload_params *csa_params,
 		tLimWiderBWChannelSwitchInfo *chnl_switch_info,
 		struct pe_session *session_entry)
@@ -1891,7 +1891,7 @@ prnt_log:
  *
  * Return: None
  */
-void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx,
+void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 				struct scheduler_msg *msg)
 {
 	struct pe_session *session_entry;
@@ -2164,7 +2164,7 @@ err:
    \sa
    --------------------------------------------------------------------------*/
 
-void lim_handle_delete_bss_rsp(tpAniSirGlobal mac, struct scheduler_msg *MsgQ)
+void lim_handle_delete_bss_rsp(struct mac_context *mac, struct scheduler_msg *MsgQ)
 {
 	struct pe_session *pe_session;
 	tpDeleteBssParams pDelBss = (tpDeleteBssParams) (MsgQ->bodyptr);
@@ -2208,7 +2208,7 @@ void lim_handle_delete_bss_rsp(tpAniSirGlobal mac, struct scheduler_msg *MsgQ)
    \sa
    ----------------------------------------------------------------- */
 void
-lim_send_sme_aggr_qos_rsp(tpAniSirGlobal mac, tpSirAggrQosRsp aggrQosRsp,
+lim_send_sme_aggr_qos_rsp(struct mac_context *mac, tpSirAggrQosRsp aggrQosRsp,
 			  uint8_t smesessionId)
 {
 	struct scheduler_msg mmhMsg = {0};
@@ -2223,7 +2223,7 @@ lim_send_sme_aggr_qos_rsp(tpAniSirGlobal mac, tpSirAggrQosRsp aggrQosRsp,
 	return;
 }
 
-void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
+void lim_send_sme_max_assoc_exceeded_ntf(struct mac_context *mac, tSirMacAddr peerMacAddr,
 					 uint8_t smesessionId)
 {
 	struct scheduler_msg mmhMsg = {0};
@@ -2261,7 +2261,7 @@ void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal mac, tSirMacAddr peerMac
    \param pChnlParams - Channel switch params
    --------------------------------------------------------------------*/
 void
-lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal mac,
+lim_send_sme_ap_channel_switch_resp(struct mac_context *mac,
 				    struct pe_session *pe_session,
 				    tpSwitchChannelParams pChnlParams)
 {
@@ -2342,7 +2342,7 @@ lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal mac,
  *  Return: none
  */
 static void
-lim_send_bss_color_change_ie_update(tpAniSirGlobal mac_ctx,
+lim_send_bss_color_change_ie_update(struct mac_context *mac_ctx,
 						struct pe_session *session)
 {
 	/* Update the beacon template and send to FW */
@@ -2358,7 +2358,7 @@ lim_send_bss_color_change_ie_update(tpAniSirGlobal mac_ctx,
 }
 
 static void
-lim_handle_bss_color_change_ie(tpAniSirGlobal mac_ctx,
+lim_handle_bss_color_change_ie(struct mac_context *mac_ctx,
 					struct pe_session *session)
 {
 	tUpdateBeaconParams beacon_params;
@@ -2395,14 +2395,14 @@ lim_handle_bss_color_change_ie(tpAniSirGlobal mac_ctx,
 
 #else
 static void
-lim_handle_bss_color_change_ie(tpAniSirGlobal mac_ctx,
+lim_handle_bss_color_change_ie(struct mac_context *mac_ctx,
 					struct pe_session *session)
 {
 }
 #endif
 
 void
-lim_process_beacon_tx_success_ind(tpAniSirGlobal mac_ctx, uint16_t msgType,
+lim_process_beacon_tx_success_ind(struct mac_context *mac_ctx, uint16_t msgType,
 				  void *event)
 {
 	struct pe_session *session;

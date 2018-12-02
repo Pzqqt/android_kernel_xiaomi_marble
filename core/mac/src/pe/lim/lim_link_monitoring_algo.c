@@ -57,7 +57,7 @@
  *
  * Return: None.
  */
-static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
+static void lim_delete_sta_util(struct mac_context *mac_ctx, tpDeleteStaContext msg,
 				struct pe_session *session_entry)
 {
 	tpDphHashNode stads;
@@ -193,7 +193,7 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
  *
  * Return: none
  */
-void lim_delete_sta_context(tpAniSirGlobal mac_ctx,
+void lim_delete_sta_context(struct mac_context *mac_ctx,
 			    struct scheduler_msg *lim_msg)
 {
 	tpDeleteStaContext msg = (tpDeleteStaContext) lim_msg->bodyptr;
@@ -292,7 +292,7 @@ void lim_delete_sta_context(tpAniSirGlobal mac_ctx,
  * @return None
  */
 void
-lim_trigger_sta_deletion(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
+lim_trigger_sta_deletion(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 			 struct pe_session *session_entry)
 {
 	tLimMlmDisassocInd mlm_disassoc_ind;
@@ -354,7 +354,7 @@ lim_trigger_sta_deletion(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
  */
 
 void
-lim_tear_down_link_with_ap(tpAniSirGlobal mac, uint8_t sessionId,
+lim_tear_down_link_with_ap(struct mac_context *mac, uint8_t sessionId,
 			   tSirMacReasonCodes reasonCode)
 {
 	tpDphHashNode pStaDs = NULL;
@@ -451,7 +451,7 @@ lim_tear_down_link_with_ap(tpAniSirGlobal mac, uint8_t sessionId,
  * Return: None
  */
 
-void lim_handle_heart_beat_failure(tpAniSirGlobal mac_ctx,
+void lim_handle_heart_beat_failure(struct mac_context *mac_ctx,
 				   struct pe_session *session)
 {
 	uint8_t curr_chan;
@@ -562,7 +562,7 @@ hb_handler_fail:
 					 WLAN_CONTROL_PATH);
 }
 
-void lim_rx_invalid_peer_process(tpAniSirGlobal mac_ctx,
+void lim_rx_invalid_peer_process(struct mac_context *mac_ctx,
 				 struct scheduler_msg *lim_msg)
 {
 	struct ol_rx_inv_peer_params *msg =

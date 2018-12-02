@@ -44,7 +44,7 @@
  *
  * Return: None
  */
-void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal mac,
+void lim_ft_cleanup_pre_auth_info(struct mac_context *mac,
 		struct pe_session *pe_session)
 {
 	struct pe_session *pReAssocSessionEntry = NULL;
@@ -123,7 +123,7 @@ void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal mac,
  *
  * Return: value to indicate if buffer was consumed
  */
-int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx,
+int lim_process_ft_pre_auth_req(struct mac_context *mac_ctx,
 				struct scheduler_msg *msg)
 {
 	int buf_consumed = false;
@@ -221,7 +221,7 @@ int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-void lim_perform_ft_pre_auth(tpAniSirGlobal mac, QDF_STATUS status,
+void lim_perform_ft_pre_auth(struct mac_context *mac, QDF_STATUS status,
 			     uint32_t *data, struct pe_session *pe_session)
 {
 	tSirMacAuthFrameBody authFrame;
@@ -313,7 +313,7 @@ preauth_fail:
  *
  * Return: Success or Failure Status
  */
-QDF_STATUS lim_ft_setup_auth_session(tpAniSirGlobal mac,
+QDF_STATUS lim_ft_setup_auth_session(struct mac_context *mac,
 					struct pe_session *pe_session)
 {
 	struct pe_session *ft_session = NULL;
@@ -355,7 +355,7 @@ QDF_STATUS lim_ft_setup_auth_session(tpAniSirGlobal mac,
  *
  * Return: None
  */
-static void lim_ft_process_pre_auth_result(tpAniSirGlobal mac,
+static void lim_ft_process_pre_auth_result(struct mac_context *mac,
 					   struct pe_session *pe_session)
 {
 	if (NULL == pe_session ||
@@ -396,7 +396,7 @@ static void lim_ft_process_pre_auth_result(tpAniSirGlobal mac,
  *
  * @Return: None
  */
-void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal mac, QDF_STATUS status,
+void lim_handle_ft_pre_auth_rsp(struct mac_context *mac, QDF_STATUS status,
 				uint8_t *auth_rsp, uint16_t auth_rsp_length,
 				struct pe_session *pe_session)
 {
@@ -512,7 +512,7 @@ send_rsp:
  *
  * Return: void
  */
-void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal mac_ctx)
+void lim_process_ft_preauth_rsp_timeout(struct mac_context *mac_ctx)
 {
 	struct pe_session *session;
 
@@ -587,7 +587,7 @@ void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal mac_ctx)
  *
  * Return: void
  */
-void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
+void lim_post_ft_pre_auth_rsp(struct mac_context *mac_ctx,
 			      QDF_STATUS status,
 			      uint8_t *auth_rsp,
 			      uint16_t auth_rsp_length,
@@ -666,7 +666,7 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
  *
  * Return: Status of sending message to scan module.
  */
-QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_send_preauth_scan_offload(struct mac_context *mac_ctx,
 					 struct pe_session *session_entry,
 					 tSirFTPreAuthReq *ft_preauth_req)
 {
@@ -749,7 +749,7 @@ QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
  * Return: void
  */
 
-void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
+void lim_preauth_scan_event_handler(struct mac_context *mac_ctx,
 				enum sir_scan_event_type event,
 				uint8_t session_id,
 				uint32_t scan_id)

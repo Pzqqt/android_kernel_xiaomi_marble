@@ -57,7 +57,7 @@
  *
  * Return: None
  */
-static void lim_convert_supported_channels(tpAniSirGlobal mac_ctx,
+static void lim_convert_supported_channels(struct mac_context *mac_ctx,
 					   tpLimMlmAssocInd assoc_ind,
 					   tSirAssocReq *assoc_req)
 {
@@ -134,7 +134,7 @@ static void lim_convert_supported_channels(tpAniSirGlobal mac_ctx,
  *
  * Return: True if duplicate entry found; FALSE otherwise.
  */
-static bool lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_check_sta_in_pe_entries(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 				 uint16_t sessionid)
 {
 	uint8_t i;
@@ -192,7 +192,7 @@ static bool lim_check_sta_in_pe_entries(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr 
  *
  * Return: true if source and destination address are different
  */
-static bool lim_chk_sa_da(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_chk_sa_da(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			  struct pe_session *session, uint8_t sub_type)
 {
 	if (qdf_mem_cmp((uint8_t *) hdr->sa,
@@ -217,7 +217,7 @@ static bool lim_chk_sa_da(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_chk_tkip(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_chk_tkip(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			 struct pe_session *session, uint8_t sub_type)
 {
 	/*
@@ -247,7 +247,7 @@ static bool lim_chk_tkip(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_chk_assoc_req_parse_error(tpAniSirGlobal mac_ctx,
+static bool lim_chk_assoc_req_parse_error(struct mac_context *mac_ctx,
 					  tpSirMacMgmtHdr hdr,
 					  struct pe_session *session,
 					  tpSirAssocReq assoc_req,
@@ -286,7 +286,7 @@ static bool lim_chk_assoc_req_parse_error(tpAniSirGlobal mac_ctx,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_chk_capab(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_chk_capab(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			  struct pe_session *session, tpSirAssocReq assoc_req,
 			  uint8_t sub_type, tSirMacCapabilityInfo *local_cap)
 {
@@ -330,7 +330,7 @@ static bool lim_chk_capab(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_chk_ssid(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_chk_ssid(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			 struct pe_session *session, tpSirAssocReq assoc_req,
 			 uint8_t sub_type)
 {
@@ -366,7 +366,7 @@ static bool lim_chk_ssid(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_chk_rates(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_chk_rates(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			  struct pe_session *session, tpSirAssocReq assoc_req,
 			  uint8_t sub_type)
 {
@@ -420,7 +420,7 @@ static bool lim_chk_rates(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_chk_11g_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_chk_11g_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			     struct pe_session *session, tpSirAssocReq assoc_req,
 			     uint8_t sub_type)
 {
@@ -450,7 +450,7 @@ static bool lim_chk_11g_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_chk_11n_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_chk_11n_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			     struct pe_session *session, tpSirAssocReq assoc_req,
 			     uint8_t sub_type)
 {
@@ -480,7 +480,7 @@ static bool lim_chk_11n_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_chk_11ac_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_chk_11ac_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			      struct pe_session *session, tpSirAssocReq assoc_req,
 			      uint8_t sub_type)
 {
@@ -519,7 +519,7 @@ static bool lim_chk_11ac_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  * Return: true of no error, false otherwise
  */
 #ifdef WLAN_FEATURE_11AX
-static bool lim_chk_11ax_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_chk_11ax_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			      struct pe_session *session, tpSirAssocReq assoc_req,
 			      uint8_t sub_type)
 {
@@ -547,7 +547,7 @@ static bool lim_chk_11ax_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_check_11ax_basic_mcs(tpAniSirGlobal mac_ctx,
+static bool lim_check_11ax_basic_mcs(struct mac_context *mac_ctx,
 				     tpSirMacMgmtHdr hdr,
 				     struct pe_session *session,
 				     tpSirAssocReq assoc_req,
@@ -575,14 +575,14 @@ static bool lim_check_11ax_basic_mcs(tpAniSirGlobal mac_ctx,
 }
 
 #else
-static bool lim_chk_11ax_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_chk_11ax_only(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			      struct pe_session *session, tpSirAssocReq assoc_req,
 			      uint8_t sub_type)
 {
 	return true;
 }
 
-static bool lim_check_11ax_basic_mcs(tpAniSirGlobal mac_ctx,
+static bool lim_check_11ax_basic_mcs(struct mac_context *mac_ctx,
 				     tpSirMacMgmtHdr hdr,
 				     struct pe_session *session,
 				     tpSirAssocReq assoc_req,
@@ -606,7 +606,7 @@ static bool lim_check_11ax_basic_mcs(tpAniSirGlobal mac_ctx,
  * process assoc req for spectrum mgmt
  */
 static void
-lim_process_for_spectrum_mgmt(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+lim_process_for_spectrum_mgmt(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			      struct pe_session *session, tpSirAssocReq assoc_req,
 			      uint8_t sub_type, tSirMacCapabilityInfo local_cap)
 {
@@ -692,7 +692,7 @@ lim_process_for_spectrum_mgmt(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_chk_mcs(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_chk_mcs(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			struct pe_session *session, tpSirAssocReq assoc_req,
 			uint8_t sub_type)
 {
@@ -728,7 +728,7 @@ static bool lim_chk_mcs(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_chk_is_11b_sta_supported(tpAniSirGlobal mac_ctx,
+static bool lim_chk_is_11b_sta_supported(struct mac_context *mac_ctx,
 					 tpSirMacMgmtHdr hdr,
 					 struct pe_session *session,
 					 tpSirAssocReq assoc_req,
@@ -770,7 +770,7 @@ static bool lim_chk_is_11b_sta_supported(tpAniSirGlobal mac_ctx,
  *
  * Return: void
  */
-static void lim_print_ht_cap(tpAniSirGlobal mac_ctx, struct pe_session *session,
+static void lim_print_ht_cap(struct mac_context *mac_ctx, struct pe_session *session,
 			     tpSirAssocReq assoc_req)
 {
 	if (!session->htCapability)
@@ -902,7 +902,7 @@ static tSirMacStatusCodes lim_check_wpa_ie(struct pe_session *session,
   *
   * Return: true if no error, false otherwise
   */
-static bool lim_check_wpa_rsn_ie(struct pe_session *session, tpAniSirGlobal mac_ctx,
+static bool lim_check_wpa_rsn_ie(struct pe_session *session, struct mac_context *mac_ctx,
 				 uint8_t sub_type, tpSirMacMgmtHdr hdr,
 				 tpSirAssocReq assoc_req, bool *pmf_connection)
 {
@@ -1035,7 +1035,7 @@ static bool lim_check_wpa_rsn_ie(struct pe_session *session, tpAniSirGlobal mac_
  *
  * Return: true if no error, false otherwise
  */
-static bool lim_chk_n_process_wpa_rsn_ie(tpAniSirGlobal mac_ctx,
+static bool lim_chk_n_process_wpa_rsn_ie(struct mac_context *mac_ctx,
 					 tpSirMacMgmtHdr hdr,
 					 struct pe_session *session,
 					 tpSirAssocReq assoc_req,
@@ -1080,7 +1080,7 @@ static bool lim_chk_n_process_wpa_rsn_ie(tpAniSirGlobal mac_ctx,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_process_assoc_req_no_sta_ctx(tpAniSirGlobal mac_ctx,
+static bool lim_process_assoc_req_no_sta_ctx(struct mac_context *mac_ctx,
 				tpSirMacMgmtHdr hdr, struct pe_session *session,
 				tpSirAssocReq assoc_req, uint8_t sub_type,
 				struct tLimPreAuthNode *sta_pre_auth_ctx,
@@ -1145,7 +1145,7 @@ static bool lim_process_assoc_req_no_sta_ctx(tpAniSirGlobal mac_ctx,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_process_assoc_req_sta_ctx(tpAniSirGlobal mac_ctx,
+static bool lim_process_assoc_req_sta_ctx(struct mac_context *mac_ctx,
 				tpSirMacMgmtHdr hdr, struct pe_session *session,
 				tpSirAssocReq assoc_req, uint8_t sub_type,
 				struct tLimPreAuthNode *sta_pre_auth_ctx,
@@ -1285,7 +1285,7 @@ static bool lim_process_assoc_req_sta_ctx(tpAniSirGlobal mac_ctx,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_chk_wmm(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_chk_wmm(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			struct pe_session *session, tpSirAssocReq assoc_req,
 			uint8_t sub_type, tHalBitVal qos_mode)
 {
@@ -1349,7 +1349,7 @@ static bool lim_chk_wmm(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 			      struct pe_session *session, tpSirAssocReq assoc_req,
 			      uint8_t sub_type, tpDphHashNode sta_ds,
 			      tAniAuthType auth_type,
@@ -1714,7 +1714,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
  *
  * Return: true of no error, false otherwise
  */
-static bool lim_update_sta_ctx(tpAniSirGlobal mac_ctx, struct pe_session *session,
+static bool lim_update_sta_ctx(struct mac_context *mac_ctx, struct pe_session *session,
 			       tpSirAssocReq assoc_req, uint8_t sub_type,
 			       tpDphHashNode sta_ds, uint8_t update_ctx)
 {
@@ -1825,7 +1825,7 @@ static bool lim_update_sta_ctx(tpAniSirGlobal mac_ctx, struct pe_session *sessio
  *
  * Return: void
  */
-static void lim_process_assoc_cleanup(tpAniSirGlobal mac_ctx,
+static void lim_process_assoc_cleanup(struct mac_context *mac_ctx,
 				      struct pe_session *session,
 				      tpSirAssocReq assoc_req,
 				      tpDphHashNode sta_ds,
@@ -1878,7 +1878,7 @@ static void lim_process_assoc_cleanup(tpAniSirGlobal mac_ctx,
  *
  * @Return: void
  */
-void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
+void lim_process_assoc_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 				 uint8_t sub_type, struct pe_session *session)
 {
 	bool pmf_connection = false, assoc_req_copied = false;
@@ -2219,7 +2219,7 @@ error:
  *
  * Return: None
  */
-static void lim_fill_assoc_ind_wapi_info(tpAniSirGlobal mac_ctx,
+static void lim_fill_assoc_ind_wapi_info(struct mac_context *mac_ctx,
 	tpSirAssocReq assoc_req, tpLimMlmAssocInd assoc_ind,
 	const uint8_t *wpsie)
 {
@@ -2249,7 +2249,7 @@ static void lim_fill_assoc_ind_wapi_info(tpAniSirGlobal mac_ctx,
  *
  * Return: None
  */
-static void lim_fill_assoc_ind_vht_info(tpAniSirGlobal mac_ctx,
+static void lim_fill_assoc_ind_vht_info(struct mac_context *mac_ctx,
 					struct pe_session *session_entry,
 					tpSirAssocReq assoc_req,
 					tpLimMlmAssocInd assoc_ind,
@@ -2381,7 +2381,7 @@ static void fill_mlm_assoc_ind_vht(tpSirAssocReq assocreq,
  *
  * Return: None
  */
-void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
+void lim_send_mlm_assoc_ind(struct mac_context *mac_ctx,
 	tpDphHashNode sta_ds, struct pe_session *session_entry)
 {
 	tpLimMlmAssocInd assoc_ind = NULL;

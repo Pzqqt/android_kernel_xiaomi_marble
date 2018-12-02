@@ -57,7 +57,7 @@
  *
  * @return success if message send is ok, else false.
  */
-QDF_STATUS lim_send_cf_params(tpAniSirGlobal mac, uint8_t bssIdx,
+QDF_STATUS lim_send_cf_params(struct mac_context *mac, uint8_t bssIdx,
 				 uint8_t cfpCount, uint8_t cfpPeriod)
 {
 	tpUpdateCFParams pCFParams = NULL;
@@ -98,7 +98,7 @@ QDF_STATUS lim_send_cf_params(tpAniSirGlobal mac, uint8_t bssIdx,
  *
  * @return success if message send is ok, else false.
  */
-QDF_STATUS lim_send_beacon_params(tpAniSirGlobal mac,
+QDF_STATUS lim_send_beacon_params(struct mac_context *mac,
 				     tpUpdateBeaconParams pUpdatedBcnParams,
 				     struct pe_session *pe_session)
 {
@@ -158,7 +158,7 @@ QDF_STATUS lim_send_beacon_params(tpAniSirGlobal mac,
  *
  * @return success if message send is ok, else false.
  */
-QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal mac,
+QDF_STATUS lim_send_switch_chnl_params(struct mac_context *mac,
 					  uint8_t chnlNumber,
 					  uint8_t ch_center_freq_seg0,
 					  uint8_t ch_center_freq_seg1,
@@ -275,7 +275,7 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal mac,
  *
  * @return success if message send is ok, else false.
  */
-QDF_STATUS lim_send_edca_params(tpAniSirGlobal mac,
+QDF_STATUS lim_send_edca_params(struct mac_context *mac,
 				   tSirMacEdcaParamRecord *pUpdatedEdcaParams,
 				   uint16_t bssIdx, bool mu_edca)
 {
@@ -325,7 +325,7 @@ QDF_STATUS lim_send_edca_params(tpAniSirGlobal mac,
  * Return: none
  */
 
-void lim_set_active_edca_params(tpAniSirGlobal mac_ctx,
+void lim_set_active_edca_params(struct mac_context *mac_ctx,
 				tSirMacEdcaParamRecord *edca_params,
 				struct pe_session *pe_session)
 {
@@ -426,11 +426,11 @@ void lim_set_active_edca_params(tpAniSirGlobal mac_ctx,
 /** ---------------------------------------------------------
    \fn      lim_set_link_state
    \brief   LIM sends a message to WMA to set the link state
-   \param   tpAniSirGlobal  mac
+   \param   struct mac_context * mac
    \param   tSirLinkState      state
    \return  None
    -----------------------------------------------------------*/
-QDF_STATUS lim_set_link_state(tpAniSirGlobal mac, tSirLinkState state,
+QDF_STATUS lim_set_link_state(struct mac_context *mac, tSirLinkState state,
 				 tSirMacAddr bssId, tSirMacAddr selfMacAddr,
 				 tpSetLinkStateCallback callback,
 				 void *callbackArg)
@@ -466,7 +466,7 @@ QDF_STATUS lim_set_link_state(tpAniSirGlobal mac, tSirLinkState state,
 	return retCode;
 }
 
-extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal mac, tSirLinkState
+extern QDF_STATUS lim_set_link_state_ft(struct mac_context *mac, tSirLinkState
 					   state, tSirMacAddr bssId,
 					   tSirMacAddr selfMacAddr, int ft,
 					   struct pe_session *pe_session)
@@ -505,7 +505,7 @@ extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal mac, tSirLinkState
 	return retCode;
 }
 
-QDF_STATUS lim_send_mode_update(tpAniSirGlobal mac,
+QDF_STATUS lim_send_mode_update(struct mac_context *mac,
 				   tUpdateVHTOpMode *pTempParam,
 				   struct pe_session *pe_session)
 {
@@ -540,7 +540,7 @@ QDF_STATUS lim_send_mode_update(tpAniSirGlobal mac,
 	return retCode;
 }
 
-QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal mac,
+QDF_STATUS lim_send_rx_nss_update(struct mac_context *mac,
 				     tUpdateRxNss *pTempParam,
 				     struct pe_session *pe_session)
 {
@@ -573,7 +573,7 @@ QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal mac,
 	return retCode;
 }
 
-QDF_STATUS lim_set_membership(tpAniSirGlobal mac,
+QDF_STATUS lim_set_membership(struct mac_context *mac,
 				 tUpdateMembership *pTempParam,
 				 struct pe_session *pe_session)
 {
@@ -608,7 +608,7 @@ QDF_STATUS lim_set_membership(tpAniSirGlobal mac,
 	return retCode;
 }
 
-QDF_STATUS lim_set_user_pos(tpAniSirGlobal mac,
+QDF_STATUS lim_set_user_pos(struct mac_context *mac,
 			       tUpdateUserPos *pTempParam,
 			       struct pe_session *pe_session)
 {
@@ -654,7 +654,7 @@ QDF_STATUS lim_set_user_pos(tpAniSirGlobal mac,
  *
  * Return: status of operation
  */
-QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal mac,
+QDF_STATUS lim_send_exclude_unencrypt_ind(struct mac_context *mac,
 					     bool excludeUnenc,
 					     struct pe_session *pe_session)
 {
@@ -697,7 +697,7 @@ QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal mac,
  *
  * Return: status of operation
  */
-QDF_STATUS lim_send_ht40_obss_scanind(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_send_ht40_obss_scanind(struct mac_context *mac_ctx,
 						struct pe_session *session)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;

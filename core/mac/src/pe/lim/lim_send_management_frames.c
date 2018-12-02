@@ -75,7 +75,7 @@
  * number will roll over.
  *
  */
-static void lim_add_mgmt_seq_num(tpAniSirGlobal mac, tpSirMacMgmtHdr pMacHdr)
+static void lim_add_mgmt_seq_num(struct mac_context *mac, tpSirMacMgmtHdr pMacHdr)
 {
 	if (mac->mgmtSeqNum >= WLAN_HOST_SEQ_NUM_MAX) {
 		mac->mgmtSeqNum = WLAN_HOST_SEQ_NUM_MIN - 1;
@@ -105,7 +105,7 @@ static void lim_add_mgmt_seq_num(tpAniSirGlobal mac, tpSirMacMgmtHdr pMacHdr)
  * number will roll over.
  *
  */
-void lim_populate_p2p_mac_header(tpAniSirGlobal mac, uint8_t *pBD)
+void lim_populate_p2p_mac_header(struct mac_context *mac, uint8_t *pBD)
 {
 	tpSirMacMgmtHdr pMacHdr;
 
@@ -140,7 +140,7 @@ void lim_populate_p2p_mac_header(tpAniSirGlobal mac, uint8_t *pBD)
  * Return: None
  */
 
-void lim_populate_mac_header(tpAniSirGlobal mac_ctx, uint8_t *buf,
+void lim_populate_mac_header(struct mac_context *mac_ctx, uint8_t *buf,
 		uint8_t type, uint8_t sub_type, tSirMacAddr peer_addr,
 		tSirMacAddr self_mac_addr)
 {
@@ -197,7 +197,7 @@ void lim_populate_mac_header(tpAniSirGlobal mac_ctx, uint8_t *buf,
  * Return: QDF_STATUS (QDF_STATUS_SUCCESS on success and error codes otherwise)
  */
 QDF_STATUS
-lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
+lim_send_probe_req_mgmt_frame(struct mac_context *mac_ctx,
 			      tSirMacSSid *ssid,
 			      tSirMacAddr bssid,
 			      uint8_t channel,
@@ -461,7 +461,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_SUCCESS;
 } /* End lim_send_probe_req_mgmt_frame. */
 
-static QDF_STATUS lim_get_addn_ie_for_probe_resp(tpAniSirGlobal mac,
+static QDF_STATUS lim_get_addn_ie_for_probe_resp(struct mac_context *mac,
 					     uint8_t *addIE, uint16_t *addnIELen,
 					     uint8_t probeReqP2pIe)
 {
@@ -528,7 +528,7 @@ static QDF_STATUS lim_get_addn_ie_for_probe_resp(tpAniSirGlobal mac,
  */
 
 void
-lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
+lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			      tSirMacAddr peer_macaddr,
 			      tpAniSSID ssid,
 			      short n_staid,
@@ -868,7 +868,7 @@ err_ret:
 } /* End lim_send_probe_rsp_mgmt_frame. */
 
 void
-lim_send_addts_req_action_frame(tpAniSirGlobal mac,
+lim_send_addts_req_action_frame(struct mac_context *mac,
 				tSirMacAddr peerMacAddr,
 				tSirAddtsReqInfo *pAddTS, struct pe_session *pe_session)
 {
@@ -1085,7 +1085,7 @@ lim_send_addts_req_action_frame(tpAniSirGlobal mac,
  */
 
 void
-lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
+lim_send_assoc_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	uint16_t status_code, uint16_t aid, tSirMacAddr peer_addr,
 	uint8_t subtype, tpDphHashNode sta, struct pe_session *pe_session)
 {
@@ -1425,7 +1425,7 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 }
 
 void
-lim_send_delts_req_action_frame(tpAniSirGlobal mac,
+lim_send_delts_req_action_frame(struct mac_context *mac,
 				tSirMacAddr peer,
 				uint8_t wmmTspecPresent,
 				tSirMacTSInfo *pTsinfo,
@@ -1580,7 +1580,7 @@ static QDF_STATUS lim_assoc_tx_complete_cnf(void *context,
 {
 	uint16_t assoc_ack_status;
 	uint16_t reason_code;
-	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)context;
+	struct mac_context *mac_ctx = (struct mac_context *)context;
 
 	pe_debug("tx_complete= %d", tx_complete);
 	if (tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) {
@@ -1610,7 +1610,7 @@ static QDF_STATUS lim_assoc_tx_complete_cnf(void *context,
  */
 
 void
-lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
+lim_send_assoc_req_mgmt_frame(struct mac_context *mac_ctx,
 			      tLimMlmAssocReq *mlm_assoc_req,
 			      struct pe_session *pe_session)
 {
@@ -2139,7 +2139,7 @@ static QDF_STATUS lim_addba_rsp_tx_complete_cnf(void *context,
 						uint32_t tx_complete,
 						void *params)
 {
-	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)context;
+	struct mac_context *mac_ctx = (struct mac_context *)context;
 	tSirMacMgmtHdr *mac_hdr;
 	tDot11faddba_rsp rsp;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -2211,7 +2211,7 @@ static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
 					   uint32_t tx_complete,
 					   void *params)
 {
-	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)context;
+	struct mac_context *mac_ctx = (struct mac_context *)context;
 	uint16_t auth_ack_status;
 	uint16_t reason_code;
 
@@ -2254,7 +2254,7 @@ static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
  * Return: void
  */
 void
-lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
+lim_send_auth_mgmt_frame(struct mac_context *mac_ctx,
 			 tpSirMacAuthFrameBody auth_frame,
 			 tSirMacAddr peer_addr,
 			 uint8_t wep_challenge_len,
@@ -2568,7 +2568,7 @@ alloc_packet:
 	return;
 }
 
-QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal mac_ctx)
+QDF_STATUS lim_send_deauth_cnf(struct mac_context *mac_ctx)
 {
 	uint16_t aid;
 	tpDphHashNode sta_ds;
@@ -2667,7 +2667,7 @@ end:
  * Return: QDF_STATUS_SUCCESS
  */
 
-QDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
+QDF_STATUS lim_send_disassoc_cnf(struct mac_context *mac_ctx)
 {
 	uint16_t aid;
 	tpDphHashNode sta_ds;
@@ -2748,7 +2748,7 @@ QDF_STATUS lim_disassoc_tx_complete_cnf(void *context,
 					uint32_t tx_success,
 					void *params)
 {
-	tpAniSirGlobal max_ctx = (tpAniSirGlobal)context;
+	struct mac_context *max_ctx = (struct mac_context *)context;
 
 	pe_debug("tx_success: %d", tx_success);
 
@@ -2760,7 +2760,7 @@ static QDF_STATUS lim_disassoc_tx_complete_cnf_handler(void *context,
 						       uint32_t tx_success,
 						       void *params)
 {
-	tpAniSirGlobal max_ctx = (tpAniSirGlobal)context;
+	struct mac_context *max_ctx = (struct mac_context *)context;
 	QDF_STATUS status_code;
 	struct scheduler_msg msg = {0};
 
@@ -2783,7 +2783,7 @@ QDF_STATUS lim_deauth_tx_complete_cnf(void *context,
 				      uint32_t tx_success,
 				      void *params)
 {
-	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)context;
+	struct mac_context *mac_ctx = (struct mac_context *)context;
 
 	pe_debug("tx_success: %d", tx_success);
 
@@ -2795,7 +2795,7 @@ static QDF_STATUS lim_deauth_tx_complete_cnf_handler(void *context,
 						     uint32_t tx_success,
 						     void *params)
 {
-	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)context;
+	struct mac_context *mac_ctx = (struct mac_context *)context;
 	QDF_STATUS status_code;
 	struct scheduler_msg msg = {0};
 
@@ -2830,7 +2830,7 @@ static QDF_STATUS lim_deauth_tx_complete_cnf_handler(void *context,
  */
 
 void
-lim_send_disassoc_mgmt_frame(tpAniSirGlobal mac,
+lim_send_disassoc_mgmt_frame(struct mac_context *mac,
 			     uint16_t nReason,
 			     tSirMacAddr peer,
 			     struct pe_session *pe_session, bool waitForAck)
@@ -3003,7 +3003,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal mac,
  */
 
 void
-lim_send_deauth_mgmt_frame(tpAniSirGlobal mac,
+lim_send_deauth_mgmt_frame(struct mac_context *mac,
 			   uint16_t nReason,
 			   tSirMacAddr peer,
 			   struct pe_session *pe_session, bool waitForAck)
@@ -3212,7 +3212,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal mac,
  */
 
 QDF_STATUS
-lim_send_meas_report_frame(tpAniSirGlobal mac,
+lim_send_meas_report_frame(struct mac_context *mac,
 			   tpSirMacMeasReqActionFrame pMeasReqFrame,
 			   tSirMacAddr peer, struct pe_session *pe_session)
 {
@@ -3338,7 +3338,7 @@ lim_send_meas_report_frame(tpAniSirGlobal mac,
  */
 
 void
-lim_send_tpc_request_frame(tpAniSirGlobal mac,
+lim_send_tpc_request_frame(struct mac_context *mac,
 			   tSirMacAddr peer, struct pe_session *pe_session)
 {
 	tDot11fTPCRequest frm;
@@ -3435,7 +3435,7 @@ lim_send_tpc_request_frame(tpAniSirGlobal mac,
  */
 
 QDF_STATUS
-lim_send_tpc_report_frame(tpAniSirGlobal mac,
+lim_send_tpc_report_frame(struct mac_context *mac,
 			  tpSirMacTpcReqActionFrame pTpcReqFrame,
 			  tSirMacAddr peer, struct pe_session *pe_session)
 {
@@ -3546,7 +3546,7 @@ lim_send_tpc_report_frame(tpAniSirGlobal mac,
  */
 
 QDF_STATUS
-lim_send_channel_switch_mgmt_frame(tpAniSirGlobal mac,
+lim_send_channel_switch_mgmt_frame(struct mac_context *mac,
 				   tSirMacAddr peer,
 				   uint8_t nMode,
 				   uint8_t nNewChannel,
@@ -3666,7 +3666,7 @@ lim_send_channel_switch_mgmt_frame(tpAniSirGlobal mac,
  */
 
 QDF_STATUS
-lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
+lim_send_extended_chan_switch_action_frame(struct mac_context *mac_ctx,
 		tSirMacAddr peer, uint8_t mode, uint8_t new_op_class,
 		uint8_t new_channel, uint8_t count, struct pe_session *session_entry)
 {
@@ -3837,7 +3837,7 @@ static QDF_STATUS lim_oper_chan_change_confirm_tx_complete_cnf(
  */
 
 QDF_STATUS
-lim_p2p_oper_chan_change_confirm_action_frame(tpAniSirGlobal mac_ctx,
+lim_p2p_oper_chan_change_confirm_action_frame(struct mac_context *mac_ctx,
 		tSirMacAddr peer, struct pe_session *session_entry)
 {
 	tDot11fp2p_oper_chan_change_confirm frm;
@@ -3951,7 +3951,7 @@ lim_p2p_oper_chan_change_confirm_action_frame(tpAniSirGlobal mac_ctx,
 
 
 QDF_STATUS
-lim_send_vht_opmode_notification_frame(tpAniSirGlobal mac,
+lim_send_vht_opmode_notification_frame(struct mac_context *mac,
 				       tSirMacAddr peer,
 				       uint8_t nMode, struct pe_session *pe_session)
 {
@@ -4071,7 +4071,7 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal mac,
  */
 
 QDF_STATUS
-lim_send_neighbor_report_request_frame(tpAniSirGlobal mac,
+lim_send_neighbor_report_request_frame(struct mac_context *mac,
 				       tpSirMacNeighborReportReq pNeighborReq,
 				       tSirMacAddr peer, struct pe_session *pe_session)
 {
@@ -4208,7 +4208,7 @@ returnAfterError:
  */
 
 QDF_STATUS
-lim_send_link_report_action_frame(tpAniSirGlobal mac,
+lim_send_link_report_action_frame(struct mac_context *mac,
 				  tpSirMacLinkReport pLinkReport,
 				  tSirMacAddr peer, struct pe_session *pe_session)
 {
@@ -4336,7 +4336,7 @@ returnAfterError:
 } /* End lim_send_link_report_action_frame. */
 
 QDF_STATUS
-lim_send_radio_measure_report_action_frame(tpAniSirGlobal mac,
+lim_send_radio_measure_report_action_frame(struct mac_context *mac,
 				uint8_t dialog_token,
 				uint8_t num_report,
 				bool is_last_frame,
@@ -4518,7 +4518,7 @@ returnAfterError:
  * \sa lim_send_sa_query_request_frame
  *
  *
- * \param mac    The global tpAniSirGlobal object
+ * \param mac    The global struct mac_context *object
  *
  * \param transId Transaction identifier
  *
@@ -4530,7 +4530,7 @@ returnAfterError:
  *         QDF_STATUS_E_FAILURE is some problem is encountered
  */
 
-QDF_STATUS lim_send_sa_query_request_frame(tpAniSirGlobal mac, uint8_t *transId,
+QDF_STATUS lim_send_sa_query_request_frame(struct mac_context *mac, uint8_t *transId,
 					      tSirMacAddr peer,
 					      struct pe_session *pe_session)
 {
@@ -4648,7 +4648,7 @@ returnAfterError:
  * \sa lim_send_sa_query_response_frame
  *
  *
- * \param mac    The global tpAniSirGlobal object
+ * \param mac    The global struct mac_context *object
  *
  * \param transId Transaction identifier received in SA query request action frame
  *
@@ -4660,7 +4660,7 @@ returnAfterError:
  *         QDF_STATUS_E_FAILURE is some problem is encountered
  */
 
-QDF_STATUS lim_send_sa_query_response_frame(tpAniSirGlobal mac,
+QDF_STATUS lim_send_sa_query_response_frame(struct mac_context *mac,
 					       uint8_t *transId, tSirMacAddr peer,
 					       struct pe_session *pe_session)
 {
@@ -4791,7 +4791,7 @@ returnAfterError:
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 		tSirMacAddr peer_mac, uint16_t tid,
 		struct pe_session *session, uint8_t addba_extn_present,
 		uint8_t amsdu_support)
@@ -4984,7 +4984,7 @@ error_addba_rsp:
  *
  * Return: None
  */
-static void lim_tx_mgmt_frame(tpAniSirGlobal mac_ctx,
+static void lim_tx_mgmt_frame(struct mac_context *mac_ctx,
 	struct sir_mgmt_msg *mb_msg, uint32_t msg_len,
 	void *packet, uint8_t *frame)
 {
@@ -5027,7 +5027,7 @@ static void lim_tx_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 }
 
-void lim_send_mgmt_frame_tx(tpAniSirGlobal mac_ctx,
+void lim_send_mgmt_frame_tx(struct mac_context *mac_ctx,
 		struct scheduler_msg *msg)
 {
 	struct sir_mgmt_msg *mb_msg = (struct sir_mgmt_msg *)msg->bodyptr;
