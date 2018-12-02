@@ -334,14 +334,15 @@ QDF_STATUS sme_ps_process_command(struct mac_context *mac_ctx, uint32_t session_
  */
 QDF_STATUS sme_enable_sta_ps_check(struct mac_context *mac_ctx, uint32_t session_id)
 {
-	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
+	struct wlan_mlme_powersave *powersave_params;
 
 	QDF_BUG(session_id < CSR_ROAM_SESSION_MAX);
 	if (session_id >= CSR_ROAM_SESSION_MAX)
 		return QDF_STATUS_E_INVAL;
 
 	/* Check if Sta Ps is enabled. */
-	if (!ps_global_info->ps_enabled) {
+	powersave_params = &mac_ctx->mlme_cfg->ps_params;
+	if (!powersave_params->is_bmps_enabled) {
 		sme_debug("Cannot initiate PS. PS is disabled in ini");
 		return QDF_STATUS_E_FAILURE;
 	}

@@ -1460,6 +1460,7 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 	mac_handle_t mac_handle;
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	bool is_bmps_enabled;
 
 	if (NULL == adapter) {
 		hdd_err("Adapter NULL");
@@ -1497,7 +1498,8 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 				goto end;
 		}
 
-		if (hdd_ctx->config && hdd_ctx->config->is_ps_enabled) {
+		ucfg_mlme_is_bmps_enabled(hdd_ctx->psoc, &is_bmps_enabled);
+		if (is_bmps_enabled) {
 			hdd_debug("Wlan driver Entering Power save");
 
 			/*
@@ -1533,7 +1535,8 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 		if (status != QDF_STATUS_SUCCESS)
 			goto end;
 
-		if (hdd_ctx->config && hdd_ctx->config->is_ps_enabled)
+		ucfg_mlme_is_bmps_enabled(hdd_ctx->psoc, &is_bmps_enabled);
+		if (is_bmps_enabled)
 			status = sme_ps_enable_disable(mac_handle,
 						       adapter->session_id,
 						       SME_PS_DISABLE);

@@ -2876,6 +2876,54 @@ QDF_STATUS wlan_mlme_is_sap_uapsd_enabled(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wlan_mlme_get_dtim_selection_diversity(struct wlan_objmgr_psoc *psoc,
+						  uint32_t *dtim_selection_div)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*dtim_selection_div = cfg_default(CFG_DTIM_SELECTION_DIVERSITY);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*dtim_selection_div = mlme_obj->cfg.ps_params.dtim_selection_diversity;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_bmps_min_listen_interval(struct wlan_objmgr_psoc *psoc,
+						  uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_BMPS_MINIMUM_LI);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.ps_params.bmps_min_listen_interval;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_bmps_max_listen_interval(struct wlan_objmgr_psoc *psoc,
+						  uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_BMPS_MAXIMUM_LI);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.ps_params.bmps_max_listen_interval;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS wlan_mlme_set_sap_uapsd_flag(struct wlan_objmgr_psoc *psoc,
 					bool value)
 {
@@ -2900,6 +2948,67 @@ QDF_STATUS wlan_mlme_get_rrm_enabled(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 
 	*value = mlme_obj->cfg.rrm_config.rrm_enabled;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_get_auto_bmps_timer_value(struct wlan_objmgr_psoc *psoc,
+					       uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_AUTO_BMPS_ENABLE_TIMER);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.ps_params.auto_bmps_timer_val;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_is_bmps_enabled(struct wlan_objmgr_psoc *psoc,
+				     bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_ENABLE_PS);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.ps_params.is_bmps_enabled;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_is_imps_enabled(struct wlan_objmgr_psoc *psoc,
+				     bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_ENABLE_IMPS);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.ps_params.is_imps_enabled;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_override_bmps_imps(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_FAILURE;
+
+	mlme_obj->cfg.ps_params.is_imps_enabled = 0;
+	mlme_obj->cfg.ps_params.is_bmps_enabled = 0;
 
 	return QDF_STATUS_SUCCESS;
 }

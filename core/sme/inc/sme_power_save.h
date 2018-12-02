@@ -87,8 +87,6 @@ struct ps_params {
  * @ps_params:  maintain power save state and USAPD params
  */
 struct ps_global_info {
-	bool ps_enabled;
-	uint32_t auto_bmps_timer_val;
 	struct ps_params ps_params[SIR_MAX_SUPPORTED_BSS];
 	/* Remain in Power active till DHCP completes */
 	bool remain_in_power_active_till_dhcp;

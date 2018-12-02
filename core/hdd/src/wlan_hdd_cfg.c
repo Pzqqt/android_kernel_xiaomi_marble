@@ -56,41 +56,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_CONNECTED_SCAN_MIN,
 		     CFG_ENABLE_CONNECTED_SCAN_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_IMPS_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, fIsImpsEnabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_IMPS_DEFAULT,
-		     CFG_ENABLE_IMPS_MIN,
-		     CFG_ENABLE_IMPS_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_PS_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, is_ps_enabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_PS_DEFAULT,
-		     CFG_ENABLE_PS_MIN,
-		     CFG_ENABLE_PS_MAX),
-
-	REG_VARIABLE(CFG_AUTO_PS_ENABLE_TIMER_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, auto_bmps_timer_val,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_AUTO_PS_ENABLE_TIMER_DEFAULT,
-		     CFG_AUTO_PS_ENABLE_TIMER_MIN,
-		     CFG_AUTO_PS_ENABLE_TIMER_MAX),
-
-	REG_VARIABLE(CFG_BMPS_MINIMUM_LI_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nBmpsMinListenInterval,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BMPS_MINIMUM_LI_DEFAULT,
-		     CFG_BMPS_MINIMUM_LI_MIN,
-		     CFG_BMPS_MINIMUM_LI_MAX),
-
-	REG_VARIABLE(CFG_BMPS_MAXIMUM_LI_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nBmpsMaxListenInterval,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BMPS_MAXIMUM_LI_DEFAULT,
-		     CFG_BMPS_MAXIMUM_LI_MIN,
-		     CFG_BMPS_MAXIMUM_LI_MAX),
-
 	REG_VARIABLE(CFG_DOT11_MODE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, dot11Mode,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
@@ -840,14 +805,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_OFFLOAD_NEIGHBOR_REPORT_MAX_REQ_CAP_DEFAULT,
 		     CFG_OFFLOAD_NEIGHBOR_REPORT_MAX_REQ_CAP_MIN,
 		     CFG_OFFLOAD_NEIGHBOR_REPORT_MAX_REQ_CAP_MAX),
-
-	REG_VARIABLE(CFG_DTIM_SELECTION_DIVERSITY_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, enable_dtim_selection_diversity,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_DTIM_SELECTION_DIVERSITY_DEFAULT,
-		     CFG_DTIM_SELECTION_DIVERSITY_MIN,
-		     CFG_DTIM_SELECTION_DIVERSITY_MAX),
 
 	REG_VARIABLE(CFG_TX_SCH_DELAY_NAME,
 		     WLAN_PARAM_Integer,
@@ -1629,27 +1586,27 @@ done:
  */
 static void hdd_set_power_save_offload_config(struct hdd_context *hdd_ctx)
 {
-	struct hdd_config *pConfig = hdd_ctx->config;
-	uint32_t listenInterval = 0;
+	uint32_t listen_interval = 0;
 
 	if (strcmp(ucfg_mlme_get_power_usage(hdd_ctx->psoc), "Min") == 0)
-		listenInterval = pConfig->nBmpsMinListenInterval;
+		ucfg_mlme_get_bmps_min_listen_interval(hdd_ctx->psoc,
+						       &listen_interval);
 	else if (strcmp(ucfg_mlme_get_power_usage(hdd_ctx->psoc), "Max") == 0)
-		listenInterval = pConfig->nBmpsMaxListenInterval;
-
+		ucfg_mlme_get_bmps_max_listen_interval(hdd_ctx->psoc,
+						       &listen_interval);
 	/*
 	 * Based on Mode Set the LI
 	 * Otherwise default LI value of 1 will
 	 * be taken
 	 */
-	if (listenInterval) {
+	if (listen_interval) {
 		/*
 		 * setcfg for listenInterval.
 		 * Make sure CFG is updated because PE reads this
 		 * from CFG at the time of assoc or reassoc
 		 */
 		ucfg_mlme_set_sap_listen_interval(hdd_ctx->psoc,
-						  listenInterval);
+						  listen_interval);
 	}
 }
 
@@ -1827,8 +1784,7 @@ static void hdd_override_all_ps(struct hdd_context *hdd_ctx)
 {
 	struct hdd_config *cfg_ini = hdd_ctx->config;
 
-	cfg_ini->fIsImpsEnabled = 0;
-	cfg_ini->is_ps_enabled = 0;
+	ucfg_mlme_override_bmps_imps(hdd_ctx->psoc);
 	hdd_disable_runtime_pm(cfg_ini);
 	hdd_disable_auto_shutdown(cfg_ini);
 }
@@ -2528,9 +2484,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	/* Update maximum interfaces information */
 	smeConfig->csrConfig.max_intf_count = hdd_ctx->max_intf_count;
 
-	smeConfig->csrConfig.is_ps_enabled = hdd_ctx->config->is_ps_enabled;
-	smeConfig->csrConfig.auto_bmps_timer_val =
-		hdd_ctx->config->auto_bmps_timer_val;
 	hdd_set_fine_time_meas_cap(hdd_ctx);
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);

@@ -435,6 +435,7 @@ static int __wlan_hdd_cfg80211_encrypt_decrypt_msg(struct wiphy *wiphy,
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = NULL;
 	int ret;
+	bool is_bmps_enabled;
 
 	hdd_enter_dev(dev);
 
@@ -444,7 +445,8 @@ static int __wlan_hdd_cfg80211_encrypt_decrypt_msg(struct wiphy *wiphy,
 
 	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
-	if (hdd_ctx->config->is_ps_enabled) {
+	ucfg_mlme_is_bmps_enabled(hdd_ctx->psoc, &is_bmps_enabled);
+	if (is_bmps_enabled) {
 		hdd_debug("DISA is not supported when PS is enabled");
 		return -EINVAL;
 	}

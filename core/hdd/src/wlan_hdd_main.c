@@ -4823,6 +4823,7 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx;
 	bool bval = false;
 	uint8_t max_amsdu_len;
+	uint32_t dtim_sel_diversity;
 
 	hdd_enter_dev(adapter->dev);
 
@@ -4843,12 +4844,13 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 		goto error;
 	}
 
+	ucfg_mlme_get_dtim_selection_diversity(hdd_ctx->psoc,
+					       &dtim_sel_diversity);
 
 	ret = sme_cli_set_command(
 			adapter->session_id,
 			WMI_PDEV_PARAM_1CH_DTIM_OPTIMIZED_CHAIN_SELECTION,
-			hdd_ctx->config->enable_dtim_selection_diversity,
-			PDEV_CMD);
+			dtim_sel_diversity, PDEV_CMD);
 	if (ret) {
 		hdd_err("Failed to set DTIM_OPTIMIZED_CHAIN_SELECTION");
 		goto error;
@@ -10901,7 +10903,7 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	int ret;
 	mac_handle_t mac_handle;
 	struct hdd_config *cfg;
-	bool b_cts2self;
+	bool b_cts2self, is_imps_enabled;
 
 	hdd_enter();
 
@@ -10923,10 +10925,8 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 					     cfg->
 					     etsi13_srd_chan_in_master_mode);
 
-	if (hdd_ctx->config->fIsImpsEnabled)
-		hdd_set_idle_ps_config(hdd_ctx, true);
-	else
-		hdd_set_idle_ps_config(hdd_ctx, false);
+	ucfg_mlme_is_imps_enabled(hdd_ctx->psoc, &is_imps_enabled);
+	hdd_set_idle_ps_config(hdd_ctx, is_imps_enabled);
 
 	/* Send Enable/Disable data stall detection cmd to FW */
 	sme_cli_set_command(0, WMI_PDEV_PARAM_DATA_STALL_DETECT_ENABLE,
@@ -11848,6 +11848,7 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 	int errno;
+	bool is_imps_enabled;
 
 	hdd_enter();
 
@@ -11931,7 +11932,8 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto unregister_notifiers;
 
-	hdd_set_idle_ps_config(hdd_ctx, hdd_ctx->config->fIsImpsEnabled);
+	ucfg_mlme_is_imps_enabled(hdd_ctx->psoc, &is_imps_enabled);
+	hdd_set_idle_ps_config(hdd_ctx, is_imps_enabled);
 
 	hdd_exit();
 

@@ -2673,10 +2673,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 			pParam->sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-		mac->sme.ps_global_info.ps_enabled =
-			pParam->is_ps_enabled;
-		mac->sme.ps_global_info.auto_bmps_timer_val =
-			pParam->auto_bmps_timer_val;
 		mac->dual_mac_feature_disable =
 			pParam->dual_mac_feature_disable;
 		mac->sta_sap_scc_on_dfs_chan =
@@ -2814,9 +2810,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 		mac->dual_mac_feature_disable;
 	pParam->sta_sap_scc_on_dfs_chan =
 		mac->sta_sap_scc_on_dfs_chan;
-	pParam->is_ps_enabled = mac->sme.ps_global_info.ps_enabled;
-	pParam->auto_bmps_timer_val =
-		mac->sme.ps_global_info.auto_bmps_timer_val;
 	pParam->f_sta_miracast_mcc_rest_time_val =
 		mac->f_sta_miracast_mcc_rest_time_val;
 	pParam->send_smps_action = mac->roam.configParam.send_smps_action;

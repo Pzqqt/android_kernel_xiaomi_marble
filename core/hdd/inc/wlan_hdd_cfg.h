@@ -2518,118 +2518,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gEnableImps - Enable/Disable IMPS
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/Disable IMPS(IdleModePowerSave) Mode
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_IMPS_NAME                   "gEnableImps"
-#define CFG_ENABLE_IMPS_MIN                    (0)
-#define CFG_ENABLE_IMPS_MAX                    (1)
-#define CFG_ENABLE_IMPS_DEFAULT                (1)
-
-/*
- * <ini>
- * gEnableBmps - Enable/Disable BMPS
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/Disable BMPS(BeaconModePowerSave) Mode
- *
- * Related: None
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_PS_NAME                     "gEnableBmps"
-#define CFG_ENABLE_PS_MIN                      (0)
-#define CFG_ENABLE_PS_MAX                      (1)
-#define CFG_ENABLE_PS_DEFAULT                  (1)
-
-/*
- * <ini>
- * gAutoBmpsTimerValue - Set Auto BMPS Timer value
- * @Min: 0
- * @Max: 120
- * @Default: 90
- *
- * This ini is used to set Auto BMPS Timer value in seconds
- *
- * Related: gEnableBmps
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_AUTO_PS_ENABLE_TIMER_NAME          "gAutoBmpsTimerValue"
-#define CFG_AUTO_PS_ENABLE_TIMER_MIN           (0)
-#define CFG_AUTO_PS_ENABLE_TIMER_MAX           (120)
-#define CFG_AUTO_PS_ENABLE_TIMER_DEFAULT       (90)
-
-/*
- * <ini>
- * gBmpsMinListenInterval - Set BMPS Minimum Listen Interval
- * @Min: 1
- * @Max: 65535
- * @Default: 1
- *
- * This ini is used to set BMPS Minimum Listen Interval. If gPowerUsage
- * is set "Min", this INI need to be set.
- *
- * Related: gEnableBmps, gPowerUsage
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_BMPS_MINIMUM_LI_NAME               "gBmpsMinListenInterval"
-#define CFG_BMPS_MINIMUM_LI_MIN                (1)
-#define CFG_BMPS_MINIMUM_LI_MAX                (65535)
-#define CFG_BMPS_MINIMUM_LI_DEFAULT            (1)
-
-/*
- * <ini>
- * gBmpsMaxListenInterval - Set BMPS Maximum Listen Interval
- * @Min: 1
- * @Max: 65535
- * @Default: 1
- *
- * This ini is used to set BMPS Maximum Listen Interval. If gPowerUsage
- * is set "Max", this INI need to be set.
- *
- * Related: gEnableBmps, gPowerUsage
- *
- * Supported Feature: Power Save
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_BMPS_MAXIMUM_LI_NAME               "gBmpsMaxListenInterval"
-#define CFG_BMPS_MAXIMUM_LI_MIN                (1)
-#define CFG_BMPS_MAXIMUM_LI_MAX                (65535)
-#define CFG_BMPS_MAXIMUM_LI_DEFAULT            (1)
-
-/*
- * <ini>
  * gActiveUcBpfMode - Control UC active APF mode
  * @Min: 0 (disabled)
  * @Max: 2 (adaptive)
@@ -3280,23 +3168,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gEnableDTIMSelectionDiversity - Enable/Disable chain
- * selection optimization for one chain dtim
- * @Min: 0
- * @Max: 30
- * @Default: 5
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_DTIM_SELECTION_DIVERSITY_NAME    "gEnableDTIMSelectionDiversity"
-#define CFG_DTIM_SELECTION_DIVERSITY_MIN     (0)
-#define CFG_DTIM_SELECTION_DIVERSITY_MAX     (30)
-#define CFG_DTIM_SELECTION_DIVERSITY_DEFAULT (5)
-
-/*
- * <ini>
  * gTxSchDelay - Enable/Disable Tx sch delay
  * @Min: 0
  * @Max: 5
@@ -3458,12 +3329,6 @@ struct hdd_config {
 	/* Config parameters */
 	bool enable_connected_scan;
 	char PowerUsageControl[4];
-	bool fSupplicantCountryCodeHasPriority;
-	bool fIsImpsEnabled;
-	bool is_ps_enabled;
-	uint32_t auto_bmps_timer_val;
-	uint32_t nBmpsMaxListenInterval;
-	uint32_t nBmpsMinListenInterval;
 	enum hdd_dot11_mode dot11Mode;
 	uint32_t nChannelBondingMode24GHz;
 	uint32_t nChannelBondingMode5GHz;
@@ -3664,7 +3529,6 @@ struct hdd_config {
 #ifdef WLAN_FEATURE_SAE
 	bool is_sae_enabled;
 #endif
-	bool enable_dtim_selection_diversity;
 	bool gcmp_enabled;
 	bool is_11k_offload_supported;
 	uint32_t offload_11k_enable_bitmask;

@@ -2459,15 +2459,17 @@ static int hdd_change_sta_state_authenticated(struct hdd_adapter *adapter,
 						 struct csr_roam_info *roaminfo)
 {
 	QDF_STATUS status;
-	uint32_t timeout;
+	uint32_t timeout, auto_bmps_timer_val;
 	uint8_t staid = HDD_WLAN_INVALID_STA_ID;
 	struct hdd_station_ctx *hddstactx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
+	ucfg_mlme_get_auto_bmps_timer_value(hdd_ctx->psoc,
+					    &auto_bmps_timer_val);
 	timeout = hddstactx->hdd_reassoc_scenario ?
 		AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE :
-		hdd_ctx->config->auto_bmps_timer_val * 1000;
+		(auto_bmps_timer_val * 1000);
 
 	if (QDF_IBSS_MODE == adapter->device_mode)
 		staid = hdd_get_ibss_peer_staid(hddstactx, roaminfo);
