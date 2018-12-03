@@ -703,7 +703,7 @@ struct pe_session *pe_find_session_by_sta_id(tpAniSirGlobal mac, uint8_t staid,
  *
  * Return: void
  */
-void pe_delete_session(tpAniSirGlobal mac, struct pe_session *psessionEntry);
+void pe_delete_session(tpAniSirGlobal mac, struct pe_session *pe_session);
 
 
 /**

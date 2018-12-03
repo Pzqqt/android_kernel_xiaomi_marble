@@ -2325,7 +2325,7 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal mac_ctx)
 
 void lim_process_auth_failure_timeout(tpAniSirGlobal mac_ctx)
 {
-	/* fetch the sessionEntry based on the sessionId */
+	/* fetch the pe_session based on the sessionId */
 	struct pe_session *session;
 	uint32_t val;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
@@ -2457,7 +2457,7 @@ void lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx,
 #endif
 	/*
 	 * to fetch the lim/mlm state based on the session_id, use the
-	 * below sessionEntry
+	 * below pe_session
 	 */
 	uint8_t session_id;
 

@@ -232,7 +232,7 @@ static void __lim_init_assoc_vars(tpAniSirGlobal mac)
 	qdf_mem_set(mac->lim.protStaCache,
 		    sizeof(tCacheParams) * LIM_PROT_STA_CACHE_SIZE, 0);
 
-	mac->lim.pSessionEntry = NULL;
+	mac->lim.pe_session = NULL;
 	mac->lim.reAssocRetryAttempt = 0;
 
 }
@@ -1434,13 +1434,13 @@ uint8_t lim_is_system_in_scan_state(tpAniSirGlobal mac)
 
 void
 lim_received_hb_handler(tpAniSirGlobal mac, uint8_t channelId,
-			struct pe_session *psessionEntry)
+			struct pe_session *pe_session)
 {
 	if ((channelId == 0)
-	    || (channelId == psessionEntry->currentOperChannel))
-		psessionEntry->LimRxedBeaconCntDuringHB++;
+	    || (channelId == pe_session->currentOperChannel))
+		pe_session->LimRxedBeaconCntDuringHB++;
 
-	psessionEntry->pmmOffloadInfo.bcnmiss = false;
+	pe_session->pmmOffloadInfo.bcnmiss = false;
 } /*** lim_init_wds_info_params() ***/
 
 /** -------------------------------------------------------------
@@ -1560,7 +1560,7 @@ static bool lim_ibss_enc_type_matched(tpSchBeaconStruct pBeacon,
 QDF_STATUS
 lim_handle_ibss_coalescing(tpAniSirGlobal mac,
 			   tpSchBeaconStruct pBeacon,
-			   uint8_t *pRxPacketInfo, struct pe_session *psessionEntry)
+			   uint8_t *pRxPacketInfo, struct pe_session *pe_session)
 {
 	tpSirMacMgmtHdr pHdr;
 	QDF_STATUS retCode;
@@ -1574,14 +1574,14 @@ lim_handle_ibss_coalescing(tpAniSirGlobal mac,
 	   4. Encyption type in the beacon does not match with self station
 	 */
 	if ((!pBeacon->capabilityInfo.ibss) ||
-	    lim_cmp_ssid(&pBeacon->ssId, psessionEntry) ||
-	    (psessionEntry->currentOperChannel != pBeacon->channelNumber))
+	    lim_cmp_ssid(&pBeacon->ssId, pe_session) ||
+	    (pe_session->currentOperChannel != pBeacon->channelNumber))
 		retCode = QDF_STATUS_E_INVAL;
-	else if (lim_ibss_enc_type_matched(pBeacon, psessionEntry) != true) {
+	else if (lim_ibss_enc_type_matched(pBeacon, pe_session) != true) {
 		pe_debug("peer privacy: %d peer wpa: %d peer rsn: %d self encType: %d",
 			       pBeacon->capabilityInfo.privacy,
 			       pBeacon->wpaPresent, pBeacon->rsnPresent,
-			       psessionEntry->encryptType);
+			       pe_session->encryptType);
 		retCode = QDF_STATUS_E_INVAL;
 	} else {
 		uint32_t ieLen;
@@ -1594,7 +1594,7 @@ lim_handle_ibss_coalescing(tpAniSirGlobal mac,
 		pe_debug("BEFORE Coalescing tsfLater val: %d", tsfLater);
 		retCode =
 			lim_ibss_coalesce(mac, pHdr, pBeacon, pIEs, ieLen, tsfLater,
-					  psessionEntry);
+					  pe_session);
 	}
 	return retCode;
 } /*** end lim_handle_ibs_scoalescing() ***/
@@ -1704,7 +1704,7 @@ lim_enc_type_matched(tpAniSirGlobal mac_ctx,
 void
 lim_detect_change_in_ap_capabilities(tpAniSirGlobal mac,
 				     tpSirProbeRespBeacon pBeacon,
-				     struct pe_session *psessionEntry)
+				     struct pe_session *pe_session)
 {
 	uint8_t len;
 	tSirSmeApNewCaps apNewCaps;
@@ -1717,41 +1717,41 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal mac,
 	newChannel = (uint8_t) pBeacon->channelNumber;
 
 	security_caps_matched = lim_enc_type_matched(mac, pBeacon,
-						     psessionEntry);
-	if ((false == psessionEntry->limSentCapsChangeNtf) &&
+						     pe_session);
+	if ((false == pe_session->limSentCapsChangeNtf) &&
 	    (((!lim_is_null_ssid(&pBeacon->ssId)) &&
-	       lim_cmp_ssid(&pBeacon->ssId, psessionEntry)) ||
+	       lim_cmp_ssid(&pBeacon->ssId, pe_session)) ||
 	     ((SIR_MAC_GET_ESS(apNewCaps.capabilityInfo) !=
-	       SIR_MAC_GET_ESS(psessionEntry->limCurrentBssCaps)) ||
+	       SIR_MAC_GET_ESS(pe_session->limCurrentBssCaps)) ||
 	      (SIR_MAC_GET_PRIVACY(apNewCaps.capabilityInfo) !=
-	       SIR_MAC_GET_PRIVACY(psessionEntry->limCurrentBssCaps)) ||
+	       SIR_MAC_GET_PRIVACY(pe_session->limCurrentBssCaps)) ||
 	      (SIR_MAC_GET_QOS(apNewCaps.capabilityInfo) !=
-	       SIR_MAC_GET_QOS(psessionEntry->limCurrentBssCaps)) ||
-	      ((newChannel != psessionEntry->currentOperChannel) &&
+	       SIR_MAC_GET_QOS(pe_session->limCurrentBssCaps)) ||
+	      ((newChannel != pe_session->currentOperChannel) &&
 		(newChannel != 0)) ||
 	      (false == security_caps_matched)
 	     ))) {
-		if (false == psessionEntry->fWaitForProbeRsp) {
+		if (false == pe_session->fWaitForProbeRsp) {
 			/* If Beacon capabilities is not matching with the current capability,
 			 * then send unicast probe request to AP and take decision after
 			 * receiving probe response */
-			if (true == psessionEntry->fIgnoreCapsChange) {
+			if (true == pe_session->fIgnoreCapsChange) {
 				pe_debug("Ignoring the Capability change as it is false alarm");
 				return;
 			}
-			psessionEntry->fWaitForProbeRsp = true;
+			pe_session->fWaitForProbeRsp = true;
 			pe_warn("AP capabilities are not matching, sending directed probe request");
 			status =
-				lim_send_probe_req_mgmt_frame(mac, &psessionEntry->ssId,
-					      psessionEntry->bssId,
-					      psessionEntry->currentOperChannel,
-					      psessionEntry->selfMacAddr,
-					      psessionEntry->dot11mode,
+				lim_send_probe_req_mgmt_frame(mac, &pe_session->ssId,
+					      pe_session->bssId,
+					      pe_session->currentOperChannel,
+					      pe_session->selfMacAddr,
+					      pe_session->dot11mode,
 					      NULL, NULL);
 
 			if (QDF_STATUS_SUCCESS != status) {
 				pe_err("send ProbeReq failed");
-				psessionEntry->fWaitForProbeRsp = false;
+				pe_session->fWaitForProbeRsp = false;
 			}
 			return;
 		}
@@ -1763,10 +1763,10 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal mac,
 		      pBeacon->ssId.length + 1;
 
 		qdf_mem_copy(apNewCaps.bssId.bytes,
-			     psessionEntry->bssId, QDF_MAC_ADDR_SIZE);
-		if (newChannel != psessionEntry->currentOperChannel) {
+			     pe_session->bssId, QDF_MAC_ADDR_SIZE);
+		if (newChannel != pe_session->currentOperChannel) {
 			pe_err("Channel Change from %d --> %d Ignoring beacon!",
-				psessionEntry->currentOperChannel, newChannel);
+				pe_session->currentOperChannel, newChannel);
 			return;
 		}
 
@@ -1785,18 +1785,18 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal mac,
 			pe_err("BSS Caps (Privacy) bit 0 in beacon, but WPA or RSN IE present, Ignore Beacon!");
 			return;
 		} else
-			apNewCaps.channelId = psessionEntry->currentOperChannel;
+			apNewCaps.channelId = pe_session->currentOperChannel;
 		qdf_mem_copy((uint8_t *) &apNewCaps.ssId,
 			     (uint8_t *) &pBeacon->ssId,
 			     pBeacon->ssId.length + 1);
 
-		psessionEntry->fIgnoreCapsChange = false;
-		psessionEntry->fWaitForProbeRsp = false;
-		psessionEntry->limSentCapsChangeNtf = true;
+		pe_session->fIgnoreCapsChange = false;
+		pe_session->fWaitForProbeRsp = false;
+		pe_session->limSentCapsChangeNtf = true;
 		lim_send_sme_wm_status_change_ntf(mac, eSIR_SME_AP_CAPS_CHANGED,
 						  (uint32_t *) &apNewCaps,
-						  len, psessionEntry->smeSessionId);
-	} else if (true == psessionEntry->fWaitForProbeRsp) {
+						  len, pe_session->smeSessionId);
+	} else if (true == pe_session->fWaitForProbeRsp) {
 		/* Only for probe response frames and matching capabilities the control
 		 * will come here. If beacon is with broadcast ssid then fWaitForProbeRsp
 		 * will be false, the control will not come here*/
@@ -1805,8 +1805,8 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal mac,
 				       "matching with the current setting,"
 				       "Ignoring subsequent capability"
 				       "mismatch");
-		psessionEntry->fIgnoreCapsChange = true;
-		psessionEntry->fWaitForProbeRsp = false;
+		pe_session->fIgnoreCapsChange = true;
+		pe_session->fWaitForProbeRsp = false;
 	}
 
 } /*** lim_detect_change_in_ap_capabilities() ***/
@@ -1831,7 +1831,7 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal mac,
 QDF_STATUS lim_update_short_slot(tpAniSirGlobal mac,
 				    tpSirProbeRespBeacon pBeacon,
 				    tpUpdateBeaconParams pBeaconParams,
-				    struct pe_session *psessionEntry)
+				    struct pe_session *pe_session)
 {
 
 	tSirSmeApNewCaps apNewCaps;
@@ -1843,7 +1843,7 @@ QDF_STATUS lim_update_short_slot(tpAniSirGlobal mac,
 		return QDF_STATUS_SUCCESS;
 
 	/* Check for 11a mode or 11b mode. In both cases return since slot time is constant and cannot/should not change in beacon */
-	lim_get_phy_mode(mac, &phyMode, psessionEntry);
+	lim_get_phy_mode(mac, &phyMode, pe_session);
 	if ((phyMode == WNI_CFG_PHY_MODE_11A)
 	    || (phyMode == WNI_CFG_PHY_MODE_11B))
 		return QDF_STATUS_SUCCESS;
@@ -1872,13 +1872,13 @@ QDF_STATUS lim_update_short_slot(tpAniSirGlobal mac,
 	 */
 	nShortSlot = SIR_MAC_GET_SHORT_SLOT_TIME(apNewCaps.capabilityInfo);
 
-	if (nShortSlot != psessionEntry->shortSlotTimeSupported) {
+	if (nShortSlot != pe_session->shortSlotTimeSupported) {
 		/* Short slot time capability of AP has changed. Adopt to it. */
 		pe_debug("Shortslot capability of AP changed: %d",
 			       nShortSlot);
-			((tpSirMacCapabilityInfo) & psessionEntry->
+			((tpSirMacCapabilityInfo) & pe_session->
 			limCurrentBssCaps)->shortSlotTime = (uint16_t) nShortSlot;
-		psessionEntry->shortSlotTimeSupported = nShortSlot;
+		pe_session->shortSlotTimeSupported = nShortSlot;
 		pBeaconParams->fShortSlotTime = (uint8_t) nShortSlot;
 		pBeaconParams->paramChangeBitmap |=
 			PARAM_SHORT_SLOT_TIME_CHANGED;
@@ -1888,14 +1888,14 @@ QDF_STATUS lim_update_short_slot(tpAniSirGlobal mac,
 
 
 void lim_send_heart_beat_timeout_ind(tpAniSirGlobal mac,
-				     struct pe_session *psessionEntry)
+				     struct pe_session *pe_session)
 {
 	QDF_STATUS status;
 	struct scheduler_msg msg = {0};
 
 	/* Prepare and post message to LIM Message Queue */
 	msg.type = (uint16_t) SIR_LIM_HEART_BEAT_TIMEOUT;
-	msg.bodyptr = psessionEntry;
+	msg.bodyptr = pe_session;
 	msg.bodyval = 0;
 	pe_err("Heartbeat failure from Fw");
 
@@ -1922,20 +1922,20 @@ void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal mac,
 {
 	tpSirSmeMissedBeaconInd pSirMissedBeaconInd =
 		(tpSirSmeMissedBeaconInd) pMsg->bodyptr;
-	struct pe_session *psessionEntry =
+	struct pe_session *pe_session =
 		pe_find_session_by_bss_idx(mac, pSirMissedBeaconInd->bssIdx);
 
-	if (!psessionEntry) {
+	if (!pe_session) {
 		pe_err("session does not exist for given BSSId");
 		return;
 	}
 
 	/* Set Beacon Miss in Powersave Offload */
-	psessionEntry->pmmOffloadInfo.bcnmiss = true;
+	pe_session->pmmOffloadInfo.bcnmiss = true;
 	pe_err("Received Heart Beat Failure");
 
 	/*  Do AP probing immediately */
-	lim_send_heart_beat_timeout_ind(mac, psessionEntry);
+	lim_send_heart_beat_timeout_ind(mac, pe_session);
 	return;
 }
 
@@ -2453,10 +2453,10 @@ static bool lim_is_beacon_miss_scenario(tpAniSirGlobal mac,
 {
 	tpSirMacMgmtHdr pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 	uint8_t sessionId;
-	struct pe_session *psessionEntry =
+	struct pe_session *pe_session =
 		pe_find_session_by_bssid(mac, pHdr->bssId, &sessionId);
 
-	if (psessionEntry && psessionEntry->pmmOffloadInfo.bcnmiss)
+	if (pe_session && pe_session->pmmOffloadInfo.bcnmiss)
 		return true;
 	return false;
 }
@@ -2486,7 +2486,7 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal mac,
 	uint8_t *pBody;
 	tSirMacCapabilityInfo capabilityInfo;
 	tpSirMacMgmtHdr pHdr = NULL;
-	struct pe_session *psessionEntry = NULL;
+	struct pe_session *pe_session = NULL;
 	uint8_t sessionId;
 
 	/*
@@ -2531,11 +2531,11 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal mac,
 	} else if ((subType == SIR_MAC_MGMT_PROBE_REQ) &&
 		   (!WMA_GET_RX_BEACON_SENT(pRxPacketInfo))) {
 		pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
-		psessionEntry = pe_find_session_by_bssid(mac,
+		pe_session = pe_find_session_by_bssid(mac,
 							 pHdr->bssId,
 							 &sessionId);
-		if ((psessionEntry && !LIM_IS_IBSS_ROLE(psessionEntry)) ||
-		    (!psessionEntry))
+		if ((pe_session && !LIM_IS_IBSS_ROLE(pe_session)) ||
+		    (!pe_session))
 			return eMGMT_DROP_NO_DROP;
 
 		/* Drop the Probe Request in IBSS mode, if STA did not send out the last beacon */
@@ -2546,9 +2546,9 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal mac,
 		struct tLimPreAuthNode *auth_node;
 
 		pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
-		psessionEntry = pe_find_session_by_bssid(mac, pHdr->bssId,
+		pe_session = pe_find_session_by_bssid(mac, pHdr->bssId,
 							 &sessionId);
-		if (!psessionEntry)
+		if (!pe_session)
 			return eMGMT_DROP_NO_DROP;
 
 		curr_seq_num = ((pHdr->seqControl.seqNumHi << 4) |
@@ -2569,11 +2569,11 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal mac,
 		qdf_time_t *timestamp;
 
 		pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
-		psessionEntry = pe_find_session_by_bssid(mac, pHdr->bssId,
+		pe_session = pe_find_session_by_bssid(mac, pHdr->bssId,
 				&sessionId);
-		if (!psessionEntry)
+		if (!pe_session)
 			return eMGMT_DROP_NO_DROP;
-		dph_table = &psessionEntry->dph.dphHashTable;
+		dph_table = &pe_session->dph.dphHashTable;
 		sta_ds = dph_lookup_hash_entry(mac, pHdr->sa, &assoc_id,
 					       dph_table);
 		if (!sta_ds) {

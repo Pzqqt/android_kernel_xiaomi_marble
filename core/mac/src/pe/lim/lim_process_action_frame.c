@@ -71,28 +71,28 @@ static last_processed_msg rrm_link_action_frm;
    -----------------------------------------------------------------*/
 void lim_stop_tx_and_switch_channel(tpAniSirGlobal mac, uint8_t sessionId)
 {
-	struct pe_session *psessionEntry;
+	struct pe_session *pe_session;
 
-	psessionEntry = pe_find_session_by_session_id(mac, sessionId);
+	pe_session = pe_find_session_by_session_id(mac, sessionId);
 
-	if (NULL == psessionEntry) {
+	if (NULL == pe_session) {
 		pe_err("Session: %d not active", sessionId);
 		return;
 	}
 
-	if (psessionEntry->ftPEContext.pFTPreAuthReq) {
+	if (pe_session->ftPEContext.pFTPreAuthReq) {
 		pe_debug("Avoid Switch Channel req during pre auth");
 		return;
 	}
 
 	pe_debug("Channel switch Mode: %d",
-		       psessionEntry->gLimChannelSwitch.switchMode);
+		       pe_session->gLimChannelSwitch.switchMode);
 
 	mac->lim.limTimers.gLimChannelSwitchTimer.sessionId = sessionId;
 	/* change the channel immediately only if
 	 * the channel switch count is 0
 	 */
-	if (psessionEntry->gLimChannelSwitch.switchCount == 0) {
+	if (pe_session->gLimChannelSwitch.switchCount == 0) {
 		lim_process_channel_switch_timeout(mac);
 		return;
 	}
@@ -114,28 +114,28 @@ void lim_stop_tx_and_switch_channel(tpAniSirGlobal mac, uint8_t sessionId)
    and heartbeat timer tempororily.
 
    \param  mac
-   \param  psessionEntry
+   \param  pe_session
    \return NONE
    ------------------------------------------------------------*/
 QDF_STATUS lim_start_channel_switch(tpAniSirGlobal mac,
-				       struct pe_session *psessionEntry)
+				       struct pe_session *pe_session)
 {
 	pe_debug("Starting the channel switch");
 
 	/*If channel switch is already running and it is on a different session, just return */
 	/*This need to be removed for MCC */
 	if ((lim_is_chan_switch_running(mac) &&
-	     psessionEntry->gLimSpecMgmt.dot11hChanSwState !=
-	     eLIM_11H_CHANSW_RUNNING) || psessionEntry->csaOffloadEnable) {
+	     pe_session->gLimSpecMgmt.dot11hChanSwState !=
+	     eLIM_11H_CHANSW_RUNNING) || pe_session->csaOffloadEnable) {
 		pe_warn("Ignoring channel switch on session: %d",
-			psessionEntry->peSessionId);
+			pe_session->peSessionId);
 		return QDF_STATUS_SUCCESS;
 	}
 
 	/* Deactivate and change reconfigure the timeout value */
 	/* lim_deactivate_and_change_timer(mac, eLIM_CHANNEL_SWITCH_TIMER); */
 	MTRACE(mac_trace
-		       (mac, TRACE_CODE_TIMER_DEACTIVATE, psessionEntry->peSessionId,
+		       (mac, TRACE_CODE_TIMER_DEACTIVATE, pe_session->peSessionId,
 		       eLIM_CHANNEL_SWITCH_TIMER));
 	if (tx_timer_deactivate(&mac->lim.limTimers.gLimChannelSwitchTimer) !=
 	    QDF_STATUS_SUCCESS) {
@@ -144,14 +144,14 @@ QDF_STATUS lim_start_channel_switch(tpAniSirGlobal mac,
 	}
 
 	if (tx_timer_change(&mac->lim.limTimers.gLimChannelSwitchTimer,
-			    psessionEntry->gLimChannelSwitch.switchTimeoutValue,
+			    pe_session->gLimChannelSwitch.switchTimeoutValue,
 			    0) != TX_SUCCESS) {
 		pe_err("tx_timer_change failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Prepare for 11h channel switch */
-	lim_prepare_for11h_channel_switch(mac, psessionEntry);
+	lim_prepare_for11h_channel_switch(mac, pe_session);
 
 	/** Dont add any more statements here as we posted finish scan request
 	 * to HAL, wait till we get the response
@@ -628,7 +628,7 @@ out:
 
 static void
 __lim_process_add_ts_req(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-			 struct pe_session *psessionEntry)
+			 struct pe_session *pe_session)
 {
 }
 
@@ -1056,10 +1056,10 @@ static void __lim_process_qos_map_configure_frame(tpAniSirGlobal mac_ctx,
 static void
 __lim_process_basic_meas_req(tpAniSirGlobal mac,
 			     tpSirMacMeasReqActionFrame pMeasReqFrame,
-			     tSirMacAddr peerMacAddr, struct pe_session *psessionEntry)
+			     tSirMacAddr peerMacAddr, struct pe_session *pe_session)
 {
 	if (lim_send_meas_report_frame(mac, pMeasReqFrame,
-				       peerMacAddr, psessionEntry) !=
+				       peerMacAddr, pe_session) !=
 					 QDF_STATUS_SUCCESS) {
 		pe_err("fail to send Basic Meas report");
 		return;
@@ -1068,10 +1068,10 @@ __lim_process_basic_meas_req(tpAniSirGlobal mac,
 static void
 __lim_process_cca_meas_req(tpAniSirGlobal mac,
 			   tpSirMacMeasReqActionFrame pMeasReqFrame,
-			   tSirMacAddr peerMacAddr, struct pe_session *psessionEntry)
+			   tSirMacAddr peerMacAddr, struct pe_session *pe_session)
 {
 	if (lim_send_meas_report_frame(mac, pMeasReqFrame,
-				       peerMacAddr, psessionEntry) !=
+				       peerMacAddr, pe_session) !=
 					 QDF_STATUS_SUCCESS) {
 		pe_err("fail to send CCA Meas report");
 		return;
@@ -1080,10 +1080,10 @@ __lim_process_cca_meas_req(tpAniSirGlobal mac,
 static void
 __lim_process_rpi_meas_req(tpAniSirGlobal mac,
 			   tpSirMacMeasReqActionFrame pMeasReqFrame,
-			   tSirMacAddr peerMacAddr, struct pe_session *psessionEntry)
+			   tSirMacAddr peerMacAddr, struct pe_session *pe_session)
 {
 	if (lim_send_meas_report_frame(mac, pMeasReqFrame,
-				       peerMacAddr, psessionEntry) !=
+				       peerMacAddr, pe_session) !=
 					 QDF_STATUS_SUCCESS) {
 		pe_err("fail to send RPI Meas report");
 		return;
@@ -1092,7 +1092,7 @@ __lim_process_rpi_meas_req(tpAniSirGlobal mac,
 static void
 __lim_process_measurement_request_frame(tpAniSirGlobal mac,
 					uint8_t *pRxPacketInfo,
-					struct pe_session *psessionEntry)
+					struct pe_session *pe_session)
 {
 	tpSirMacMgmtHdr pHdr;
 	uint8_t *pBody;
@@ -1115,15 +1115,15 @@ __lim_process_measurement_request_frame(tpAniSirGlobal mac,
 	switch (pMeasReqFrame->measReqIE.measType) {
 	case SIR_MAC_BASIC_MEASUREMENT_TYPE:
 		__lim_process_basic_meas_req(mac, pMeasReqFrame, pHdr->sa,
-					     psessionEntry);
+					     pe_session);
 		break;
 	case SIR_MAC_CCA_MEASUREMENT_TYPE:
 		__lim_process_cca_meas_req(mac, pMeasReqFrame, pHdr->sa,
-					   psessionEntry);
+					   pe_session);
 		break;
 	case SIR_MAC_RPI_MEASUREMENT_TYPE:
 		__lim_process_rpi_meas_req(mac, pMeasReqFrame, pHdr->sa,
-					   psessionEntry);
+					   pe_session);
 		break;
 	default:
 		pe_warn("Unknown Measurement Type: %d",
@@ -1133,7 +1133,7 @@ __lim_process_measurement_request_frame(tpAniSirGlobal mac,
 } /*** end limProcessMeasurementRequestFrame ***/
 static void
 __lim_process_tpc_request_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-				struct pe_session *psessionEntry)
+				struct pe_session *pe_session)
 {
 	tpSirMacMgmtHdr pHdr;
 	uint8_t *pBody;
@@ -1156,7 +1156,7 @@ __lim_process_tpc_request_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	}
 	if (lim_send_tpc_report_frame(mac,
 				      pTpcReqFrame,
-				      pHdr->sa, psessionEntry) != QDF_STATUS_SUCCESS) {
+				      pHdr->sa, pe_session) != QDF_STATUS_SUCCESS) {
 		pe_err("fail to send TPC Report Frame");
 		return;
 	}
@@ -1165,7 +1165,7 @@ __lim_process_tpc_request_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 
 static void
 __lim_process_sm_power_save_update(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-				   struct pe_session *psessionEntry)
+				   struct pe_session *pe_session)
 {
 
 	tpSirMacMgmtHdr pHdr;
@@ -1182,7 +1182,7 @@ __lim_process_sm_power_save_update(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 
 	pSta =
 		dph_lookup_hash_entry(mac, pHdr->sa, &aid,
-				      &psessionEntry->dph.dphHashTable);
+				      &pe_session->dph.dphHashTable);
 	if (pSta == NULL) {
 		pe_err("STA context not found - ignoring UpdateSM PSave Mode from");
 		lim_print_mac_addr(mac, pHdr->sa, LOGE);
@@ -1231,13 +1231,13 @@ __lim_process_sm_power_save_update(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	/** Update in the HAL Station Table for the Update of the Protection Mode */
 	pSta->htMIMOPSState = state;
 	lim_post_sm_state_update(mac, pSta->staIndex, pSta->htMIMOPSState,
-				 pSta->staAddr, psessionEntry->smeSessionId);
+				 pSta->staAddr, pe_session->smeSessionId);
 }
 
 
 static void
 __lim_process_radio_measure_request(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-				    struct pe_session *psessionEntry)
+				    struct pe_session *pe_session)
 {
 	tpSirMacMgmtHdr pHdr;
 	tDot11fRadioMeasurementRequest *frm;
@@ -1249,7 +1249,7 @@ __lim_process_radio_measure_request(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 
-	if (psessionEntry == NULL) {
+	if (pe_session == NULL) {
 		return;
 	}
 
@@ -1266,7 +1266,7 @@ __lim_process_radio_measure_request(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	mac->rrm.rrmPEContext.prev_rrm_report_seq_num = curr_seq_num;
 	lim_send_sme_mgmt_frame_ind(mac, pHdr->fc.subType, (uint8_t *)pHdr,
 		frameLen + sizeof(tSirMacMgmtHdr), 0,
-		WMA_GET_RX_CH(pRxPacketInfo), psessionEntry,
+		WMA_GET_RX_CH(pRxPacketInfo), pe_session,
 		WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo));
 
 	frm = qdf_mem_malloc(sizeof(*frm));
@@ -1290,14 +1290,14 @@ __lim_process_radio_measure_request(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	/* Call rrm function to handle the request. */
 
 	rrm_process_radio_measurement_request(mac, pHdr->sa, frm,
-					      psessionEntry);
+					      pe_session);
 err:
 	qdf_mem_free(frm);
 }
 
 static QDF_STATUS
 __lim_process_link_measurement_req(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-				   struct pe_session *psessionEntry)
+				   struct pe_session *pe_session)
 {
 	tpSirMacMgmtHdr pHdr;
 	tDot11fLinkMeasurementRequest frm;
@@ -1308,7 +1308,7 @@ __lim_process_link_measurement_req(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 
-	if (psessionEntry == NULL) {
+	if (pe_session == NULL) {
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1330,13 +1330,13 @@ __lim_process_link_measurement_req(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	/* Call rrm function to handle the request. */
 
 	return rrm_process_link_measurement_request(mac, pRxPacketInfo, &frm,
-					     psessionEntry);
+					     pe_session);
 
 }
 
 static void
 __lim_process_neighbor_report(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-			      struct pe_session *psessionEntry)
+			      struct pe_session *pe_session)
 {
 	tpSirMacMgmtHdr pHdr;
 	tDot11fNeighborReportResponse *pFrm;
@@ -1351,7 +1351,7 @@ __lim_process_neighbor_report(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	if (!pFrm)
 		return;
 
-	if (psessionEntry == NULL) {
+	if (pe_session == NULL) {
 		qdf_mem_free(pFrm);
 		return;
 	}
@@ -1373,7 +1373,7 @@ __lim_process_neighbor_report(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 			nStatus, frameLen);
 	}
 	/* Call rrm function to handle the request. */
-	rrm_process_neighbor_report_response(mac, pFrm, psessionEntry);
+	rrm_process_neighbor_report_response(mac, pFrm, pe_session);
 
 	qdf_mem_free(pFrm);
 }
@@ -1395,13 +1395,13 @@ __lim_process_neighbor_report(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
  *
  * @param  mac - Pointer to Global MAC structure
  * @param  *pRxPacketInfo - Handle to the Rx packet info
- * @param  psessionEntry - PE session entry
+ * @param  pe_session - PE session entry
  *
  * @return None
  */
 static void __lim_process_sa_query_request_action_frame(tpAniSirGlobal mac,
 							uint8_t *pRxPacketInfo,
-							struct pe_session *psessionEntry)
+							struct pe_session *pe_session)
 {
 	tpSirMacMgmtHdr pHdr;
 	uint8_t *pBody;
@@ -1425,7 +1425,7 @@ static void __lim_process_sa_query_request_action_frame(tpAniSirGlobal mac,
 		return;
 
 	/* 11w offload is enabled then firmware should not fwd this frame */
-	if (LIM_IS_STA_ROLE(psessionEntry) && mac->pmf_offload) {
+	if (LIM_IS_STA_ROLE(pe_session) && mac->pmf_offload) {
 		pe_err("11w offload enabled, SA Query req isn't expected");
 		return;
 	}
@@ -1442,7 +1442,7 @@ static void __lim_process_sa_query_request_action_frame(tpAniSirGlobal mac,
 	if (lim_send_sa_query_response_frame(mac,
 					     transId,
 					     pHdr->sa,
-					     psessionEntry) != QDF_STATUS_SUCCESS) {
+					     pe_session) != QDF_STATUS_SUCCESS) {
 		pe_err("fail to send SA query response action frame");
 		return;
 	}
@@ -1463,12 +1463,12 @@ static void __lim_process_sa_query_request_action_frame(tpAniSirGlobal mac,
  *
  * @param  mac - Pointer to Global MAC structure
  * @param  *pRxPacketInfo - Handle to the Rx packet info
- * @param  psessionEntry - PE session entry
+ * @param  pe_session - PE session entry
  * @return None
  */
 static void __lim_process_sa_query_response_action_frame(tpAniSirGlobal mac,
 							 uint8_t *pRxPacketInfo,
-							 struct pe_session *psessionEntry)
+							 struct pe_session *pe_session)
 {
 	tpSirMacMgmtHdr pHdr;
 	uint32_t frame_len;
@@ -1490,13 +1490,13 @@ static void __lim_process_sa_query_response_action_frame(tpAniSirGlobal mac,
 	/* When a station, supplicant handles SA Query Response.
 	 * Forward to SME to HDD to wpa_supplicant.
 	 */
-	if (LIM_IS_STA_ROLE(psessionEntry)) {
+	if (LIM_IS_STA_ROLE(pe_session)) {
 		lim_send_sme_mgmt_frame_ind(mac, pHdr->fc.subType,
 					    (uint8_t *)pHdr,
 					    frame_len + sizeof(tSirMacMgmtHdr),
 					    0,
 					    WMA_GET_RX_CH(pRxPacketInfo),
-					    psessionEntry,
+					    pe_session,
 					    WMA_GET_RX_RSSI_NORMALIZED(
 					    pRxPacketInfo));
 		return;
@@ -1508,7 +1508,7 @@ static void __lim_process_sa_query_response_action_frame(tpAniSirGlobal mac,
 
 	pSta =
 		dph_lookup_hash_entry(mac, pHdr->sa, &aid,
-				      &psessionEntry->dph.dphHashTable);
+				      &pe_session->dph.dphHashTable);
 	if (NULL == pSta)
 		return;
 
@@ -1557,28 +1557,28 @@ static void __lim_process_sa_query_response_action_frame(tpAniSirGlobal mac,
  ***NOTE:
  *
  * @param  mac - Global MAC structure
- * @param  psessionEntry - PE session entry
+ * @param  pe_session - PE session entry
  * @param  pHdr - Frame header
  * @param  category - Action frame category
  * @return true if frame should be dropped
  */
 
 static bool
-lim_drop_unprotected_action_frame(tpAniSirGlobal mac, struct pe_session *psessionEntry,
+lim_drop_unprotected_action_frame(tpAniSirGlobal mac, struct pe_session *pe_session,
 				  tpSirMacMgmtHdr pHdr, uint8_t category)
 {
 	uint16_t aid;
 	tpDphHashNode pStaDs;
 	bool rmfConnection = false;
 
-	if (LIM_IS_AP_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
 		pStaDs =
 			dph_lookup_hash_entry(mac, pHdr->sa, &aid,
-					      &psessionEntry->dph.dphHashTable);
+					      &pe_session->dph.dphHashTable);
 		if (pStaDs != NULL)
 			if (pStaDs->rmfEnabled)
 				rmfConnection = true;
-	} else if (psessionEntry->limRmfEnabled)
+	} else if (pe_session->limRmfEnabled)
 		rmfConnection = true;
 
 	if (rmfConnection && (pHdr->fc.wep == 0)) {

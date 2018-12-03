@@ -567,7 +567,7 @@ end:
 uint8_t
 lim_is_sme_disassoc_req_valid(tpAniSirGlobal mac,
 			      tpSirSmeDisassocReq pDisassocReq,
-			      struct pe_session *psessionEntry)
+			      struct pe_session *pe_session)
 {
 	if (qdf_is_macaddr_group(&pDisassocReq->peer_macaddr) &&
 	    !qdf_is_macaddr_broadcast(&pDisassocReq->peer_macaddr))
@@ -600,7 +600,7 @@ lim_is_sme_disassoc_req_valid(tpAniSirGlobal mac,
 uint8_t
 lim_is_sme_disassoc_cnf_valid(tpAniSirGlobal mac,
 			      tpSirSmeDisassocCnf pDisassocCnf,
-			      struct pe_session *psessionEntry)
+			      struct pe_session *pe_session)
 {
 	if (qdf_is_macaddr_group(&pDisassocCnf->peer_macaddr))
 		return false;
@@ -630,7 +630,7 @@ lim_is_sme_disassoc_cnf_valid(tpAniSirGlobal mac,
 
 uint8_t
 lim_is_sme_deauth_req_valid(tpAniSirGlobal mac, tpSirSmeDeauthReq pDeauthReq,
-			    struct pe_session *psessionEntry)
+			    struct pe_session *pe_session)
 {
 	if (qdf_is_macaddr_group(&pDeauthReq->peer_macaddr) &&
 	    !qdf_is_macaddr_broadcast(&pDeauthReq->peer_macaddr))

@@ -37,7 +37,7 @@
 #include "sch_api.h"
 #include "rrm_api.h"
 
-static void lim_update_config(tpAniSirGlobal mac, struct pe_session *psessionEntry);
+static void lim_update_config(tpAniSirGlobal mac, struct pe_session *pe_session);
 
 void lim_set_cfg_protection(tpAniSirGlobal mac, struct pe_session *pesessionEntry)
 {
@@ -157,33 +157,33 @@ void lim_handle_param_update(tpAniSirGlobal mac, eUpdateIEsType cfgId)
  * @return None
  */
 
-void lim_apply_configuration(tpAniSirGlobal mac, struct pe_session *psessionEntry)
+void lim_apply_configuration(tpAniSirGlobal mac, struct pe_session *pe_session)
 {
 	uint32_t val = 0, phyMode;
 
 	pe_debug("Applying config");
 
-	psessionEntry->limSentCapsChangeNtf = false;
+	pe_session->limSentCapsChangeNtf = false;
 
-	lim_get_phy_mode(mac, &phyMode, psessionEntry);
+	lim_get_phy_mode(mac, &phyMode, pe_session);
 
-	lim_update_config(mac, psessionEntry);
+	lim_update_config(mac, pe_session);
 
-	lim_get_short_slot_from_phy_mode(mac, psessionEntry, phyMode,
-					 &psessionEntry->shortSlotTimeSupported);
+	lim_get_short_slot_from_phy_mode(mac, pe_session, phyMode,
+					 &pe_session->shortSlotTimeSupported);
 
-	lim_set_cfg_protection(mac, psessionEntry);
+	lim_set_cfg_protection(mac, pe_session);
 
 	/* Added for BT - AMP Support */
-	if (LIM_IS_AP_ROLE(psessionEntry) ||
-	    LIM_IS_IBSS_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(pe_session) ||
+	    LIM_IS_IBSS_ROLE(pe_session)) {
 		/* This check is required to ensure the beacon generation is not done
 		   as a part of join request for a BT-AMP station */
 
-		if (psessionEntry->statypeForBss == STA_ENTRY_SELF) {
+		if (pe_session->statypeForBss == STA_ENTRY_SELF) {
 			pe_debug("Initializing BT-AMP beacon generation");
-			sch_set_beacon_interval(mac, psessionEntry);
-			sch_set_fixed_beacon_fields(mac, psessionEntry);
+			sch_set_beacon_interval(mac, pe_session);
+			sch_set_fixed_beacon_fields(mac, pe_session);
 		}
 	}
 
@@ -211,42 +211,42 @@ void lim_apply_configuration(tpAniSirGlobal mac, struct pe_session *psessionEntr
  * @return None
  */
 
-static void lim_update_config(tpAniSirGlobal mac, struct pe_session *psessionEntry)
+static void lim_update_config(tpAniSirGlobal mac, struct pe_session *pe_session)
 {
 	uint32_t val;
 	bool enabled;
 
-	psessionEntry->beaconParams.fShortPreamble =
+	pe_session->beaconParams.fShortPreamble =
 					mac->mlme_cfg->ht_caps.short_preamble;
 
 	/* In STA case this parameter is filled during the join request */
-	if (LIM_IS_AP_ROLE(psessionEntry) ||
-		LIM_IS_IBSS_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(pe_session) ||
+		LIM_IS_IBSS_ROLE(pe_session)) {
 		enabled = mac->mlme_cfg->wmm_params.wme_enabled;
-		psessionEntry->limWmeEnabled = enabled;
+		pe_session->limWmeEnabled = enabled;
 	}
 	enabled = mac->mlme_cfg->wmm_params.wsm_enabled;
-	psessionEntry->limWsmEnabled = enabled;
+	pe_session->limWsmEnabled = enabled;
 
-	if ((!psessionEntry->limWmeEnabled) && (psessionEntry->limWsmEnabled)) {
+	if ((!pe_session->limWmeEnabled) && (pe_session->limWsmEnabled)) {
 		pe_err("Can't enable WSM without WME");
-		psessionEntry->limWsmEnabled = 0;
+		pe_session->limWsmEnabled = 0;
 	}
 	/* In STA , this parameter is filled during the join request */
-	if (LIM_IS_AP_ROLE(psessionEntry) || LIM_IS_IBSS_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(pe_session) || LIM_IS_IBSS_ROLE(pe_session)) {
 		enabled = mac->mlme_cfg->wmm_params.qos_enabled;
-		psessionEntry->limQosEnabled = enabled;
+		pe_session->limQosEnabled = enabled;
 	}
-	psessionEntry->limHcfEnabled = mac->mlme_cfg->feature_flags.enable_hcf;
+	pe_session->limHcfEnabled = mac->mlme_cfg->feature_flags.enable_hcf;
 
 	/* AP: WSM should enable HCF as well, for STA enable WSM only after */
 	/* association response is received */
-	if (psessionEntry->limWsmEnabled && LIM_IS_AP_ROLE(psessionEntry))
-		psessionEntry->limHcfEnabled = 1;
+	if (pe_session->limWsmEnabled && LIM_IS_AP_ROLE(pe_session))
+		pe_session->limHcfEnabled = 1;
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_11D_ENABLED, &val) != QDF_STATUS_SUCCESS)
 		pe_err("cfg get 11d enabled failed");
-	psessionEntry->lim11dEnabled = (val) ? 1 : 0;
+	pe_session->lim11dEnabled = (val) ? 1 : 0;
 
 	pe_debug("Updated Lim shadow state based on CFG");
 }

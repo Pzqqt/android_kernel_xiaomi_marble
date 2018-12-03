@@ -71,18 +71,18 @@
 
 static inline unsigned int is_auth_valid(tpAniSirGlobal mac,
 					 tpSirMacAuthFrameBody auth,
-					 struct pe_session *sessionEntry)
+					 struct pe_session *pe_session)
 {
 	unsigned int valid = 1;
 
 	if (((auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_1) ||
 	    (auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_3)) &&
-	    (LIM_IS_STA_ROLE(sessionEntry)))
+	    (LIM_IS_STA_ROLE(pe_session)))
 		valid = 0;
 
 	if (((auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_2) ||
 	    (auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_4)) &&
-	    (LIM_IS_AP_ROLE(sessionEntry)))
+	    (LIM_IS_AP_ROLE(pe_session)))
 		valid = 0;
 
 	if (((auth->authTransactionSeqNumber == SIR_MAC_AUTH_FRAME_3) ||
@@ -1512,7 +1512,7 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal mac, uint8_t *pBd,
 						void *body)
 {
 	tpSirMacMgmtHdr pHdr;
-	struct pe_session *psessionEntry = NULL;
+	struct pe_session *pe_session = NULL;
 	uint8_t *pBody;
 	uint16_t frameLen;
 	tSirMacAuthFrameBody rxAuthFrame;
@@ -1537,18 +1537,18 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal mac, uint8_t *pBd,
 		    mac->lim.gpSession[i].ftPEContext.ftPreAuthSession ==
 		    true) {
 			/* Found the session */
-			psessionEntry = &mac->lim.gpSession[i];
+			pe_session = &mac->lim.gpSession[i];
 			mac->lim.gpSession[i].ftPEContext.ftPreAuthSession =
 				false;
 		}
 	}
 
-	if (psessionEntry == NULL) {
+	if (pe_session == NULL) {
 		pe_debug("cannot find session id in FT pre-auth phase");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (psessionEntry->ftPEContext.pFTPreAuthReq == NULL) {
+	if (pe_session->ftPEContext.pFTPreAuthReq == NULL) {
 		pe_err("Error: No FT");
 		/* No FT in progress. */
 		return QDF_STATUS_E_FAILURE;
@@ -1560,7 +1560,7 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal mac, uint8_t *pBd,
 	}
 	lim_print_mac_addr(mac, pHdr->bssId, LOGD);
 	lim_print_mac_addr(mac,
-			   psessionEntry->ftPEContext.pFTPreAuthReq->preAuthbssId,
+			   pe_session->ftPEContext.pFTPreAuthReq->preAuthbssId,
 			   LOGD);
 	pe_debug("seqControl: 0x%X",
 		((pHdr->seqControl.seqNumHi << 8) |
@@ -1569,7 +1569,7 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal mac, uint8_t *pBd,
 
 	/* Check that its the same bssId we have for preAuth */
 	if (qdf_mem_cmp
-		    (psessionEntry->ftPEContext.pFTPreAuthReq->preAuthbssId,
+		    (pe_session->ftPEContext.pFTPreAuthReq->preAuthbssId,
 		    pHdr->bssId, sizeof(tSirMacAddr))) {
 		pe_err("Error: Same bssid as preauth BSSID");
 		/* In this case SME if indeed has triggered a */
@@ -1578,7 +1578,7 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal mac, uint8_t *pBd,
 	}
 
 	if (true ==
-	    psessionEntry->ftPEContext.pFTPreAuthReq->bPreAuthRspProcessed) {
+	    pe_session->ftPEContext.pFTPreAuthReq->bPreAuthRspProcessed) {
 		/*
 		 * This is likely a duplicate for the same pre-auth request.
 		 * PE/LIM already posted a response to SME. Hence, drop it.
@@ -1597,14 +1597,14 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal mac, uint8_t *pBd,
 		 * pre-auth.
 		 */
 		pe_debug("Auth rsp already posted to SME"
-			       " (session %pK, FT session %pK)", psessionEntry,
-			       psessionEntry);
+			       " (session %pK, FT session %pK)", pe_session,
+			       pe_session);
 		return QDF_STATUS_SUCCESS;
 	} else {
 		pe_warn("Auth rsp not yet posted to SME"
-			       " (session %pK, FT session %pK)", psessionEntry,
-			       psessionEntry);
-		psessionEntry->ftPEContext.pFTPreAuthReq->bPreAuthRspProcessed =
+			       " (session %pK, FT session %pK)", pe_session,
+			       pe_session);
+		pe_session->ftPEContext.pFTPreAuthReq->bPreAuthRspProcessed =
 			true;
 	}
 
@@ -1617,7 +1617,7 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal mac, uint8_t *pBd,
 	     QDF_STATUS_SUCCESS)) {
 		pe_err("failed to convert Auth frame to struct");
 		lim_handle_ft_pre_auth_rsp(mac, QDF_STATUS_E_FAILURE, NULL, 0,
-					   psessionEntry);
+					   pe_session);
 		return QDF_STATUS_E_FAILURE;
 	}
 	pRxAuthFrameBody = &rxAuthFrame;
@@ -1647,7 +1647,7 @@ QDF_STATUS lim_process_auth_frame_no_session(tpAniSirGlobal mac, uint8_t *pBd,
 	}
 
 	/* Send the Auth response to SME */
-	lim_handle_ft_pre_auth_rsp(mac, ret_status, pBody, frameLen, psessionEntry);
+	lim_handle_ft_pre_auth_rsp(mac, ret_status, pBody, frameLen, pe_session);
 
 	return ret_status;
 }

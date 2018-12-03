@@ -1967,7 +1967,7 @@ static void csr_send_ese_adjacent_ap_rep_ind(tpAniSirGlobal mac,
 {
 	uint32_t roamTS2 = 0;
 	struct csr_roam_info roamInfo;
-	struct pe_session *pSessionEntry = NULL;
+	struct pe_session *pe_session = NULL;
 	uint8_t sessionId = CSR_SESSION_ID_INVALID;
 
 	if (NULL == pSession) {
@@ -1981,15 +1981,15 @@ static void csr_send_ese_adjacent_ap_rep_ind(tpAniSirGlobal mac,
 		MAC_ADDR_ARRAY(pSession->connectedProfile.bssid.bytes),
 		roamInfo.tsmRoamDelay);
 
-	pSessionEntry = pe_find_session_by_bssid(mac,
+	pe_session = pe_find_session_by_bssid(mac,
 					 pSession->connectedProfile.bssid.bytes,
 					 &sessionId);
-	if (NULL == pSessionEntry) {
+	if (NULL == pe_session) {
 		sme_err("session %d not found", sessionId);
 		return;
 	}
 
-	pSessionEntry->eseContext.tsm.tsmMetrics.RoamingDly
+	pe_session->eseContext.tsm.tsmMetrics.RoamingDly
 		= roamInfo.tsmRoamDelay;
 
 	csr_roam_call_callback(mac, pSession->sessionId, &roamInfo,

@@ -641,7 +641,7 @@ int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal mac,
  */
 
 QDF_STATUS cfg_get_capability_info(tpAniSirGlobal mac, uint16_t *pCap,
-				   struct pe_session *sessionEntry)
+				   struct pe_session *pe_session)
 {
 	uint32_t val = 0;
 	tpSirMacCapabilityInfo pCapInfo;
@@ -649,20 +649,20 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal mac, uint16_t *pCap,
 	*pCap = 0;
 	pCapInfo = (tpSirMacCapabilityInfo) pCap;
 
-	if (LIM_IS_IBSS_ROLE(sessionEntry))
+	if (LIM_IS_IBSS_ROLE(pe_session))
 		pCapInfo->ibss = 1;     /* IBSS bit */
-	else if (LIM_IS_AP_ROLE(sessionEntry) ||
-		LIM_IS_STA_ROLE(sessionEntry))
+	else if (LIM_IS_AP_ROLE(pe_session) ||
+		LIM_IS_STA_ROLE(pe_session))
 		pCapInfo->ess = 1;      /* ESS bit */
-	else if (LIM_IS_P2P_DEVICE_ROLE(sessionEntry) ||
-		LIM_IS_NDI_ROLE(sessionEntry)) {
+	else if (LIM_IS_P2P_DEVICE_ROLE(pe_session) ||
+		LIM_IS_NDI_ROLE(pe_session)) {
 		pCapInfo->ess = 0;
 		pCapInfo->ibss = 0;
 	} else
 		pe_warn("can't get capability, role is UNKNOWN!!");
 
-	if (LIM_IS_AP_ROLE(sessionEntry)) {
-		val = sessionEntry->privacy;
+	if (LIM_IS_AP_ROLE(pe_session)) {
+		val = pe_session->privacy;
 	} else {
 		/* PRIVACY bit */
 		val = mac->mlme_cfg->wep_params.is_privacy_enabled;
@@ -683,12 +683,12 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal mac, uint16_t *pCap,
 	/* If STA/AP operating in 11B mode, don't set rest of the
 	 * capability info bits.
 	 */
-	if (sessionEntry->dot11mode == WNI_CFG_DOT11_MODE_11B)
+	if (pe_session->dot11mode == WNI_CFG_DOT11_MODE_11B)
 		return QDF_STATUS_SUCCESS;
 
 	/* Short slot time bit */
-	if (LIM_IS_AP_ROLE(sessionEntry)) {
-		pCapInfo->shortSlotTime = sessionEntry->shortSlotTimeSupported;
+	if (LIM_IS_AP_ROLE(pe_session)) {
+		pCapInfo->shortSlotTime = pe_session->shortSlotTimeSupported;
 	} else {
 		/* When in STA mode, we need to check if short slot is
 		 * enabled as well as check if the current operating
@@ -704,12 +704,12 @@ QDF_STATUS cfg_get_capability_info(tpAniSirGlobal mac, uint16_t *pCap,
 		 */
 		if (mac->mlme_cfg->feature_flags.enable_short_slot_time_11g) {
 			pCapInfo->shortSlotTime =
-				sessionEntry->shortSlotTimeSupported;
+				pe_session->shortSlotTimeSupported;
 		}
 	}
 
 	/* Spectrum Management bit */
-	if (!LIM_IS_IBSS_ROLE(sessionEntry) && sessionEntry->lim11hEnable) {
+	if (!LIM_IS_IBSS_ROLE(pe_session) && pe_session->lim11hEnable) {
 		if (wlan_cfg_get_int(mac, WNI_CFG_11H_ENABLED, &val) !=
 		    QDF_STATUS_SUCCESS) {
 			pe_err("cfg get WNI_CFG_11H_ENABLED failed");

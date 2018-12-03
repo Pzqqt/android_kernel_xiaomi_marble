@@ -100,7 +100,7 @@ QDF_STATUS lim_send_cf_params(tpAniSirGlobal mac, uint8_t bssIdx,
  */
 QDF_STATUS lim_send_beacon_params(tpAniSirGlobal mac,
 				     tpUpdateBeaconParams pUpdatedBcnParams,
-				     struct pe_session *psessionEntry)
+				     struct pe_session *pe_session)
 {
 	tpUpdateBeaconParams pBcnParams = NULL;
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -117,23 +117,23 @@ QDF_STATUS lim_send_beacon_params(tpAniSirGlobal mac,
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_BEACON_IND, paramChangeBitmap in hex: %x",
 	       pUpdatedBcnParams->paramChangeBitmap);
-	if (NULL == psessionEntry) {
+	if (NULL == pe_session) {
 		qdf_mem_free(pBcnParams);
 		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 		return QDF_STATUS_E_FAILURE;
 	} else {
 		MTRACE(mac_trace_msg_tx(mac,
-					psessionEntry->peSessionId,
+					pe_session->peSessionId,
 					msgQ.type));
 	}
-	pBcnParams->smeSessionId = psessionEntry->smeSessionId;
+	pBcnParams->smeSessionId = pe_session->smeSessionId;
 	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		qdf_mem_free(pBcnParams);
 		pe_err("Posting WMA_UPDATE_BEACON_IND, reason=%X",
 			retCode);
 	}
-	lim_send_beacon_ind(mac, psessionEntry, REASON_DEFAULT);
+	lim_send_beacon_ind(mac, pe_session, REASON_DEFAULT);
 	return retCode;
 }
 
@@ -171,10 +171,10 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal mac,
 {
 	tpSwitchChannelParams pChnlParams = NULL;
 	struct scheduler_msg msgQ = {0};
-	struct pe_session *pSessionEntry;
+	struct pe_session *pe_session;
 
-	pSessionEntry = pe_find_session_by_session_id(mac, peSessionId);
-	if (pSessionEntry == NULL) {
+	pe_session = pe_find_session_by_session_id(mac, peSessionId);
+	if (pe_session == NULL) {
 		pe_err("Unable to get Session for session Id %d",
 				peSessionId);
 		return QDF_STATUS_E_FAILURE;
@@ -186,17 +186,17 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal mac,
 	pChnlParams->ch_center_freq_seg0 = ch_center_freq_seg0;
 	pChnlParams->ch_center_freq_seg1 = ch_center_freq_seg1;
 	pChnlParams->ch_width = ch_width;
-	qdf_mem_copy(pChnlParams->selfStaMacAddr, pSessionEntry->selfMacAddr,
+	qdf_mem_copy(pChnlParams->selfStaMacAddr, pe_session->selfMacAddr,
 		     sizeof(tSirMacAddr));
 	pChnlParams->maxTxPower = maxTxPower;
-	qdf_mem_copy(pChnlParams->bssId, pSessionEntry->bssId,
+	qdf_mem_copy(pChnlParams->bssId, pe_session->bssId,
 		     sizeof(tSirMacAddr));
 	pChnlParams->peSessionId = peSessionId;
-	pChnlParams->vhtCapable = pSessionEntry->vhtCapability;
-	if (lim_is_session_he_capable(pSessionEntry))
+	pChnlParams->vhtCapable = pe_session->vhtCapability;
+	if (lim_is_session_he_capable(pe_session))
 		lim_update_chan_he_capable(mac, pChnlParams);
-	pChnlParams->dot11_mode = pSessionEntry->dot11mode;
-	pChnlParams->nss = pSessionEntry->nss;
+	pChnlParams->dot11_mode = pe_session->dot11mode;
+	pChnlParams->nss = pe_session->nss;
 	pe_debug("dot11mode: %d, vht_capable: %d nss value: %d",
 		pChnlParams->dot11_mode, pChnlParams->vhtCapable,
 		pChnlParams->nss);
@@ -249,7 +249,7 @@ QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal mac,
 		pe_err("Posting  CH_SWITCH_REQ to WMA failed");
 		return QDF_STATUS_E_FAILURE;
 	}
-	pSessionEntry->ch_switch_in_progress = true;
+	pe_session->ch_switch_in_progress = true;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -469,7 +469,7 @@ QDF_STATUS lim_set_link_state(tpAniSirGlobal mac, tSirLinkState state,
 extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal mac, tSirLinkState
 					   state, tSirMacAddr bssId,
 					   tSirMacAddr selfMacAddr, int ft,
-					   struct pe_session *psessionEntry)
+					   struct pe_session *pe_session)
 {
 	struct scheduler_msg msgQ = {0};
 	QDF_STATUS retCode;
@@ -483,17 +483,17 @@ extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal mac, tSirLinkState
 	sir_copy_mac_addr(pLinkStateParams->bssid, bssId);
 	sir_copy_mac_addr(pLinkStateParams->selfMacAddr, selfMacAddr);
 	pLinkStateParams->ft = 1;
-	pLinkStateParams->session = psessionEntry;
+	pLinkStateParams->session = pe_session;
 
 	msgQ.type = WMA_SET_LINK_STATE;
 	msgQ.reserved = 0;
 	msgQ.bodyptr = pLinkStateParams;
 	msgQ.bodyval = 0;
-	if (NULL == psessionEntry) {
+	if (NULL == pe_session) {
 		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	} else {
 		MTRACE(mac_trace_msg_tx
-			       (mac, psessionEntry->peSessionId, msgQ.type));
+			       (mac, pe_session->peSessionId, msgQ.type));
 	}
 
 	retCode = (uint32_t) wma_post_ctrl_msg(mac, &msgQ);
@@ -507,7 +507,7 @@ extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal mac, tSirLinkState
 
 QDF_STATUS lim_send_mode_update(tpAniSirGlobal mac,
 				   tUpdateVHTOpMode *pTempParam,
-				   struct pe_session *psessionEntry)
+				   struct pe_session *pe_session)
 {
 	tUpdateVHTOpMode *pVhtOpMode = NULL;
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -524,11 +524,11 @@ QDF_STATUS lim_send_mode_update(tpAniSirGlobal mac,
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_OP_MODE, op_mode %d, sta_id %d",
 			pVhtOpMode->opMode, pVhtOpMode->staId);
-	if (NULL == psessionEntry)
+	if (NULL == pe_session)
 		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	else
 		MTRACE(mac_trace_msg_tx(mac,
-					psessionEntry->peSessionId,
+					pe_session->peSessionId,
 					msgQ.type));
 	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
@@ -542,7 +542,7 @@ QDF_STATUS lim_send_mode_update(tpAniSirGlobal mac,
 
 QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal mac,
 				     tUpdateRxNss *pTempParam,
-				     struct pe_session *psessionEntry)
+				     struct pe_session *pe_session)
 {
 	tUpdateRxNss *pRxNss = NULL;
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -557,11 +557,11 @@ QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal mac,
 	msgQ.bodyptr = pRxNss;
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_RX_NSS");
-	if (NULL == psessionEntry)
+	if (NULL == pe_session)
 		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	else
 		MTRACE(mac_trace_msg_tx(mac,
-					psessionEntry->peSessionId,
+					pe_session->peSessionId,
 					msgQ.type));
 	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
@@ -575,7 +575,7 @@ QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal mac,
 
 QDF_STATUS lim_set_membership(tpAniSirGlobal mac,
 				 tUpdateMembership *pTempParam,
-				 struct pe_session *psessionEntry)
+				 struct pe_session *pe_session)
 {
 	tUpdateMembership *pMembership = NULL;
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -592,11 +592,11 @@ QDF_STATUS lim_set_membership(tpAniSirGlobal mac,
 	msgQ.bodyptr = pMembership;
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_MEMBERSHIP");
-	if (NULL == psessionEntry)
+	if (NULL == pe_session)
 		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	else
 		MTRACE(mac_trace_msg_tx(mac,
-					psessionEntry->peSessionId,
+					pe_session->peSessionId,
 					msgQ.type));
 	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
@@ -610,7 +610,7 @@ QDF_STATUS lim_set_membership(tpAniSirGlobal mac,
 
 QDF_STATUS lim_set_user_pos(tpAniSirGlobal mac,
 			       tUpdateUserPos *pTempParam,
-			       struct pe_session *psessionEntry)
+			       struct pe_session *pe_session)
 {
 	tUpdateUserPos *pUserPos = NULL;
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
@@ -626,11 +626,11 @@ QDF_STATUS lim_set_user_pos(tpAniSirGlobal mac,
 	msgQ.bodyptr = pUserPos;
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_UPDATE_USERPOS");
-	if (NULL == psessionEntry)
+	if (NULL == pe_session)
 		MTRACE(mac_trace_msg_tx(mac, NO_SESSION, msgQ.type));
 	else
 		MTRACE(mac_trace_msg_tx(mac,
-					psessionEntry->peSessionId,
+					pe_session->peSessionId,
 					msgQ.type));
 	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
@@ -647,7 +647,7 @@ QDF_STATUS lim_set_user_pos(tpAniSirGlobal mac,
  * lim_send_exclude_unencrypt_ind() - sends WMA_EXCLUDE_UNENCRYPTED_IND to HAL
  * @mac:          mac global context
  * @excludeUnenc:  true: ignore, false: indicate
- * @psessionEntry: session context
+ * @pe_session: session context
  *
  * LIM sends a message to HAL to indicate whether to ignore or indicate the
  * unprotected packet error.
@@ -656,7 +656,7 @@ QDF_STATUS lim_set_user_pos(tpAniSirGlobal mac,
  */
 QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal mac,
 					     bool excludeUnenc,
-					     struct pe_session *psessionEntry)
+					     struct pe_session *pe_session)
 {
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 	struct scheduler_msg msgQ = {0};
@@ -668,7 +668,7 @@ QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal mac,
 		return QDF_STATUS_E_NOMEM;
 
 	pExcludeUnencryptParam->excludeUnencrypt = excludeUnenc;
-	qdf_mem_copy(pExcludeUnencryptParam->bssid.bytes, psessionEntry->bssId,
+	qdf_mem_copy(pExcludeUnencryptParam->bssid.bytes, pe_session->bssId,
 			QDF_MAC_ADDR_SIZE);
 
 	msgQ.type = WMA_EXCLUDE_UNENCRYPTED_IND;
@@ -676,7 +676,7 @@ QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal mac,
 	msgQ.bodyptr = pExcludeUnencryptParam;
 	msgQ.bodyval = 0;
 	pe_debug("Sending WMA_EXCLUDE_UNENCRYPTED_IND");
-	MTRACE(mac_trace_msg_tx(mac, psessionEntry->peSessionId, msgQ.type));
+	MTRACE(mac_trace_msg_tx(mac, pe_session->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		qdf_mem_free(pExcludeUnencryptParam);

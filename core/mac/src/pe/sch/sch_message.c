@@ -44,7 +44,7 @@ get_wmm_local_params(tpAniSirGlobal mac,
 static void
 set_sch_edca_params(tpAniSirGlobal mac,
 		    uint32_t params[][CFG_EDCA_DATA_LEN],
-		    struct pe_session *psessionEntry);
+		    struct pe_session *pe_session);
 
 /* -------------------------------------------------------------------- */
 /**
@@ -62,11 +62,11 @@ set_sch_edca_params(tpAniSirGlobal mac,
  * @return None
  */
 
-void sch_set_beacon_interval(tpAniSirGlobal mac, struct pe_session *psessionEntry)
+void sch_set_beacon_interval(tpAniSirGlobal mac, struct pe_session *pe_session)
 {
 	uint32_t bi;
 
-	bi = psessionEntry->beaconParams.beaconInterval;
+	bi = pe_session->beaconParams.beaconInterval;
 
 	if (bi < SCH_BEACON_INTERVAL_MIN || bi > SCH_BEACON_INTERVAL_MAX) {
 		pe_debug("Invalid beacon interval %d (should be [%d,%d]", bi,
@@ -293,7 +293,7 @@ broadcast_wmm_of_concurrent_sta_session(tpAniSirGlobal mac_ctx,
 	return true;
 }
 
-void sch_qos_update_broadcast(tpAniSirGlobal mac, struct pe_session *psessionEntry)
+void sch_qos_update_broadcast(tpAniSirGlobal mac, struct pe_session *pe_session)
 {
 	uint32_t params[4][CFG_EDCA_DATA_LEN];
 	uint32_t cwminidx, cwmaxidx, txopidx;
@@ -306,7 +306,7 @@ void sch_qos_update_broadcast(tpAniSirGlobal mac, struct pe_session *psessionEnt
 		pe_debug("QosUpdateBroadcast: failed");
 		return;
 	}
-	lim_get_phy_mode(mac, &phyMode, psessionEntry);
+	lim_get_phy_mode(mac, &phyMode, pe_session);
 
 	pe_debug("QosUpdBcast: mode %d", phyMode);
 
@@ -326,43 +326,43 @@ void sch_qos_update_broadcast(tpAniSirGlobal mac, struct pe_session *psessionEnt
 	}
 
 	for (i = 0; i < MAX_NUM_AC; i++) {
-		if (psessionEntry->gLimEdcaParamsBC[i].aci.acm !=
+		if (pe_session->gLimEdcaParamsBC[i].aci.acm !=
 			(uint8_t)params[i][CFG_EDCA_PROFILE_ACM_IDX]) {
-			psessionEntry->gLimEdcaParamsBC[i].aci.acm =
+			pe_session->gLimEdcaParamsBC[i].aci.acm =
 			(uint8_t)params[i][CFG_EDCA_PROFILE_ACM_IDX];
 			updated = true;
 		}
-		if (psessionEntry->gLimEdcaParamsBC[i].aci.aifsn !=
+		if (pe_session->gLimEdcaParamsBC[i].aci.aifsn !=
 			(uint8_t)params[i][CFG_EDCA_PROFILE_AIFSN_IDX]) {
-			psessionEntry->gLimEdcaParamsBC[i].aci.aifsn =
+			pe_session->gLimEdcaParamsBC[i].aci.aifsn =
 			(uint8_t)params[i][CFG_EDCA_PROFILE_AIFSN_IDX];
 			updated = true;
 		}
-		if (psessionEntry->gLimEdcaParamsBC[i].cw.min !=
+		if (pe_session->gLimEdcaParamsBC[i].cw.min !=
 			convert_cw(GET_CW(&params[i][cwminidx]))) {
-			psessionEntry->gLimEdcaParamsBC[i].cw.min =
+			pe_session->gLimEdcaParamsBC[i].cw.min =
 			convert_cw(GET_CW(&params[i][cwminidx]));
 			updated = true;
 		}
-		if (psessionEntry->gLimEdcaParamsBC[i].cw.max !=
+		if (pe_session->gLimEdcaParamsBC[i].cw.max !=
 			convert_cw(GET_CW(&params[i][cwmaxidx]))) {
-			psessionEntry->gLimEdcaParamsBC[i].cw.max =
+			pe_session->gLimEdcaParamsBC[i].cw.max =
 			convert_cw(GET_CW(&params[i][cwmaxidx]));
 			updated = true;
 		}
-		if (psessionEntry->gLimEdcaParamsBC[i].txoplimit !=
+		if (pe_session->gLimEdcaParamsBC[i].txoplimit !=
 			(uint16_t)params[i][txopidx]) {
-			psessionEntry->gLimEdcaParamsBC[i].txoplimit =
+			pe_session->gLimEdcaParamsBC[i].txoplimit =
 			(uint16_t)params[i][txopidx];
 			updated = true;
 		}
 
 		pe_debug("QoSUpdateBCast: AC :%d: AIFSN: %d, ACM %d, CWmin %d, CWmax %d, TxOp %d",
-			       i, psessionEntry->gLimEdcaParamsBC[i].aci.aifsn,
-			       psessionEntry->gLimEdcaParamsBC[i].aci.acm,
-			       psessionEntry->gLimEdcaParamsBC[i].cw.min,
-			       psessionEntry->gLimEdcaParamsBC[i].cw.max,
-			       psessionEntry->gLimEdcaParamsBC[i].txoplimit);
+			       i, pe_session->gLimEdcaParamsBC[i].aci.aifsn,
+			       pe_session->gLimEdcaParamsBC[i].aci.acm,
+			       pe_session->gLimEdcaParamsBC[i].cw.min,
+			       pe_session->gLimEdcaParamsBC[i].cw.max,
+			       pe_session->gLimEdcaParamsBC[i].txoplimit);
 
 	}
 
@@ -371,17 +371,17 @@ void sch_qos_update_broadcast(tpAniSirGlobal mac, struct pe_session *psessionEnt
 	 * params to broadcast in beacons. WFA Wifi Direct test plan
 	 * 6.1.14 requirement
 	 */
-	if (broadcast_wmm_of_concurrent_sta_session(mac, psessionEntry))
+	if (broadcast_wmm_of_concurrent_sta_session(mac, pe_session))
 		updated = true;
 	if (updated)
-		psessionEntry->gLimEdcaParamSetCount++;
+		pe_session->gLimEdcaParamSetCount++;
 
-	status = sch_set_fixed_beacon_fields(mac, psessionEntry);
+	status = sch_set_fixed_beacon_fields(mac, pe_session);
 	if (QDF_IS_STATUS_ERROR(status))
 		pe_err("Unable to set beacon fields!");
 }
 
-void sch_qos_update_local(tpAniSirGlobal mac, struct pe_session *psessionEntry)
+void sch_qos_update_local(tpAniSirGlobal mac, struct pe_session *pe_session)
 {
 
 	uint32_t params[4][CFG_EDCA_DATA_LEN];
@@ -393,22 +393,22 @@ void sch_qos_update_local(tpAniSirGlobal mac, struct pe_session *psessionEntry)
 		return;
 	}
 
-	set_sch_edca_params(mac, params, psessionEntry);
+	set_sch_edca_params(mac, params, pe_session);
 
 	/* For AP, the bssID is stored in LIM Global context. */
-	lim_send_edca_params(mac, psessionEntry->gLimEdcaParams,
-			     psessionEntry->bssIdx, false);
+	lim_send_edca_params(mac, pe_session->gLimEdcaParams,
+			     pe_session->bssIdx, false);
 }
 
 /**
  * sch_set_default_edca_params() - This function sets the gLimEdcaParams to the
  * default local wmm profile.
  * @mac - Global mac context
- * @psessionEntry - PE session
+ * @pe_session - PE session
  *
  * return none
  */
-void sch_set_default_edca_params(tpAniSirGlobal mac, struct pe_session *psessionEntry)
+void sch_set_default_edca_params(tpAniSirGlobal mac, struct pe_session *pe_session)
 {
 	uint32_t params[4][CFG_EDCA_DATA_LEN];
 
@@ -417,7 +417,7 @@ void sch_set_default_edca_params(tpAniSirGlobal mac, struct pe_session *psession
 		return;
 	}
 
-	set_sch_edca_params(mac, params, psessionEntry);
+	set_sch_edca_params(mac, params, pe_session);
 	return;
 }
 
@@ -425,7 +425,7 @@ void sch_set_default_edca_params(tpAniSirGlobal mac, struct pe_session *psession
  * set_sch_edca_params() - This function fills in the gLimEdcaParams structure
  * with the given edca params.
  * @mac - global mac context
- * @psessionEntry - PE session
+ * @pe_session - PE session
  * @params - EDCA parameters
  *
  * Return  none
@@ -433,13 +433,13 @@ void sch_set_default_edca_params(tpAniSirGlobal mac, struct pe_session *psession
 static void
 set_sch_edca_params(tpAniSirGlobal mac,
 		    uint32_t params[][CFG_EDCA_DATA_LEN],
-		    struct pe_session *psessionEntry)
+		    struct pe_session *pe_session)
 {
 	uint32_t i;
 	uint32_t cwminidx, cwmaxidx, txopidx;
 	uint32_t phyMode;
 
-	lim_get_phy_mode(mac, &phyMode, psessionEntry);
+	lim_get_phy_mode(mac, &phyMode, pe_session);
 
 	pe_debug("lim_get_phy_mode() = %d", phyMode);
 	/* if (mac->lim.gLimPhyMode == WNI_CFG_PHY_MODE_11G) */
@@ -461,23 +461,23 @@ set_sch_edca_params(tpAniSirGlobal mac,
 	}
 
 	for (i = 0; i < MAX_NUM_AC; i++) {
-		psessionEntry->gLimEdcaParams[i].aci.acm =
+		pe_session->gLimEdcaParams[i].aci.acm =
 			(uint8_t)params[i][CFG_EDCA_PROFILE_ACM_IDX];
-		psessionEntry->gLimEdcaParams[i].aci.aifsn =
+		pe_session->gLimEdcaParams[i].aci.aifsn =
 			(uint8_t)params[i][CFG_EDCA_PROFILE_AIFSN_IDX];
-		psessionEntry->gLimEdcaParams[i].cw.min =
+		pe_session->gLimEdcaParams[i].cw.min =
 			convert_cw(GET_CW(&params[i][cwminidx]));
-		psessionEntry->gLimEdcaParams[i].cw.max =
+		pe_session->gLimEdcaParams[i].cw.max =
 			convert_cw(GET_CW(&params[i][cwmaxidx]));
-		psessionEntry->gLimEdcaParams[i].txoplimit =
+		pe_session->gLimEdcaParams[i].txoplimit =
 			(uint16_t)params[i][txopidx];
 
 		pe_debug("AC :%d: AIFSN: %d, ACM %d, CWmin %d, CWmax %d, TxOp %d",
-			       i, psessionEntry->gLimEdcaParams[i].aci.aifsn,
-			       psessionEntry->gLimEdcaParams[i].aci.acm,
-			       psessionEntry->gLimEdcaParams[i].cw.min,
-			       psessionEntry->gLimEdcaParams[i].cw.max,
-			       psessionEntry->gLimEdcaParams[i].txoplimit);
+			       i, pe_session->gLimEdcaParams[i].aci.aifsn,
+			       pe_session->gLimEdcaParams[i].aci.acm,
+			       pe_session->gLimEdcaParams[i].cw.min,
+			       pe_session->gLimEdcaParams[i].cw.max,
+			       pe_session->gLimEdcaParams[i].txoplimit);
 
 	}
 	return;
@@ -531,12 +531,12 @@ get_wmm_local_params(tpAniSirGlobal mac_ctx,
  *
  * Return  none
  */
-void sch_edca_profile_update(tpAniSirGlobal mac, struct pe_session *psessionEntry)
+void sch_edca_profile_update(tpAniSirGlobal mac, struct pe_session *pe_session)
 {
-	if (LIM_IS_AP_ROLE(psessionEntry) ||
-	    LIM_IS_IBSS_ROLE(psessionEntry)) {
-		sch_qos_update_local(mac, psessionEntry);
-		sch_qos_update_broadcast(mac, psessionEntry);
+	if (LIM_IS_AP_ROLE(pe_session) ||
+	    LIM_IS_IBSS_ROLE(pe_session)) {
+		sch_qos_update_local(mac, pe_session);
+		sch_qos_update_broadcast(mac, pe_session);
 	}
 }
 

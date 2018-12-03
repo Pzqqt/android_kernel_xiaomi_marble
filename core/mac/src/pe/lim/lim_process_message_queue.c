@@ -675,9 +675,9 @@ __lim_process_ext_scan_beacon_probe_rsp(tpAniSirGlobal pmac,
  * Beacon Handling Cases:
  * during scanning, when no session is active:
  *    handled by lim_handle_frames_in_scan_state before __lim_handle_beacon call is invoked.
- * during scanning, when any session is active, but beacon/Pr does not belong to that session, psessionEntry will be null.
+ * during scanning, when any session is active, but beacon/Pr does not belong to that session, pe_session will be null.
  *    handled by lim_handle_frames_in_scan_state before __lim_handle_beacon call is invoked.
- * during scanning, when any session is active, and beacon/Pr belongs to one of the session, psessionEntry will not be null.
+ * during scanning, when any session is active, and beacon/Pr belongs to one of the session, pe_session will not be null.
  *    handled by lim_handle_frames_in_scan_state before __lim_handle_beacon call is invoked.
  * Not scanning, no session:
  *    there should not be any beacon coming, if coming, should be dropped.
@@ -685,7 +685,7 @@ __lim_process_ext_scan_beacon_probe_rsp(tpAniSirGlobal pmac,
  */
 static void
 __lim_handle_beacon(tpAniSirGlobal mac, struct scheduler_msg *pMsg,
-		    struct pe_session *psessionEntry)
+		    struct pe_session *pe_session)
 {
 	uint8_t *pRxPacketInfo;
 
@@ -695,13 +695,13 @@ __lim_handle_beacon(tpAniSirGlobal mac, struct scheduler_msg *pMsg,
 	/* This function should not be called if beacon is received in scan state. */
 	/* So not doing any checks for the global state. */
 
-	if (psessionEntry == NULL) {
+	if (pe_session == NULL) {
 		sch_beacon_process(mac, pRxPacketInfo, NULL);
-	} else if ((psessionEntry->limSmeState == eLIM_SME_LINK_EST_STATE) ||
-		   (psessionEntry->limSmeState == eLIM_SME_NORMAL_STATE)) {
-		sch_beacon_process(mac, pRxPacketInfo, psessionEntry);
+	} else if ((pe_session->limSmeState == eLIM_SME_LINK_EST_STATE) ||
+		   (pe_session->limSmeState == eLIM_SME_NORMAL_STATE)) {
+		sch_beacon_process(mac, pRxPacketInfo, pe_session);
 	} else
-		lim_process_beacon_frame(mac, pRxPacketInfo, psessionEntry);
+		lim_process_beacon_frame(mac, pRxPacketInfo, pe_session);
 
 	return;
 }
@@ -1121,7 +1121,7 @@ lim_handle80211_frames(tpAniSirGlobal mac, struct scheduler_msg *limMsg,
 	uint8_t *pRxPacketInfo = NULL;
 	tSirMacFrameCtl fc;
 	tpSirMacMgmtHdr pHdr = NULL;
-	struct pe_session *psessionEntry = NULL;
+	struct pe_session *pe_session = NULL;
 	uint8_t sessionId;
 	bool isFrmFt = false;
 	uint8_t channel;
@@ -1142,10 +1142,10 @@ lim_handle80211_frames(tpAniSirGlobal mac, struct scheduler_msg *limMsg,
 	   (!is_hw_sbs_capable ||
 	   (is_hw_sbs_capable && wlan_reg_is_dfs_ch(mac->pdev, channel))) &&
 	    mac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
-		psessionEntry = pe_find_session_by_bssid(mac,
+		pe_session = pe_find_session_by_bssid(mac,
 					pHdr->bssId, &sessionId);
-		if (psessionEntry &&
-		    (QDF_SAP_MODE == psessionEntry->pePersona)) {
+		if (pe_session &&
+		    (QDF_SAP_MODE == pe_session->pePersona)) {
 			pe_debug("CAC timer running - drop the frame");
 			goto end;
 		}
@@ -1188,9 +1188,9 @@ lim_handle80211_frames(tpAniSirGlobal mac, struct scheduler_msg *limMsg,
 	}
 #endif
 	/* Added For BT-AMP Support */
-	psessionEntry = pe_find_session_by_bssid(mac, pHdr->bssId,
+	pe_session = pe_find_session_by_bssid(mac, pHdr->bssId,
 						 &sessionId);
-	if (psessionEntry == NULL) {
+	if (pe_session == NULL) {
 		if (fc.subType == SIR_MAC_MGMT_AUTH) {
 			pe_debug("ProtVersion %d, Type %d, Subtype %d rateIndex=%d",
 				fc.protVer, fc.type, fc.subType,
@@ -1208,27 +1208,27 @@ lim_handle80211_frames(tpAniSirGlobal mac, struct scheduler_msg *limMsg,
 		    (fc.subType != SIR_MAC_MGMT_PROBE_REQ)
 		    && (fc.subType != SIR_MAC_MGMT_ACTION)) {
 
-			psessionEntry = pe_find_session_by_peer_sta(mac,
+			pe_session = pe_find_session_by_peer_sta(mac,
 						pHdr->sa, &sessionId);
-			if (psessionEntry == NULL) {
+			if (pe_session == NULL) {
 				pe_debug("session does not exist for bssId");
 				lim_print_mac_addr(mac, pHdr->sa, LOGD);
 				goto end;
 			} else {
 				pe_debug("SessionId:%d exists for given Bssid",
-					psessionEntry->peSessionId);
+					pe_session->peSessionId);
 			}
 		}
 		/*  For p2p resp frames search for valid session with DA as */
 		/*  BSSID will be SA and session will be present with DA only */
 		if (fc.subType == SIR_MAC_MGMT_ACTION) {
-			psessionEntry =
+			pe_session =
 				pe_find_session_by_bssid(mac, pHdr->da, &sessionId);
 		}
 	}
 
 	/* Check if frame is registered by HDD */
-	if (lim_check_mgmt_registered_frames(mac, pRxPacketInfo, psessionEntry)) {
+	if (lim_check_mgmt_registered_frames(mac, pRxPacketInfo, pe_session)) {
 		pe_debug("Received frame is passed to SME");
 		goto end;
 	}
@@ -1257,11 +1257,11 @@ lim_handle80211_frames(tpAniSirGlobal mac, struct scheduler_msg *limMsg,
 		switch (fc.subType) {
 		case SIR_MAC_MGMT_ASSOC_REQ:
 			/* Make sure the role supports Association */
-			if (LIM_IS_AP_ROLE(psessionEntry))
+			if (LIM_IS_AP_ROLE(pe_session))
 				lim_process_assoc_req_frame(mac,
 							    pRxPacketInfo,
 							    LIM_ASSOC,
-							    psessionEntry);
+							    pe_session);
 			else {
 				pe_err("unexpected message received %X",
 					limMsg->type);
@@ -1273,16 +1273,16 @@ lim_handle80211_frames(tpAniSirGlobal mac, struct scheduler_msg *limMsg,
 		case SIR_MAC_MGMT_ASSOC_RSP:
 			lim_process_assoc_rsp_frame(mac, pRxPacketInfo,
 						    LIM_ASSOC,
-						    psessionEntry);
+						    pe_session);
 			break;
 
 		case SIR_MAC_MGMT_REASSOC_REQ:
 			/* Make sure the role supports Reassociation */
-			if (LIM_IS_AP_ROLE(psessionEntry)) {
+			if (LIM_IS_AP_ROLE(pe_session)) {
 				lim_process_assoc_req_frame(mac,
 							    pRxPacketInfo,
 							    LIM_REASSOC,
-							    psessionEntry);
+							    pe_session);
 			} else {
 				pe_err("unexpected message received %X",
 					limMsg->type);
@@ -1294,43 +1294,43 @@ lim_handle80211_frames(tpAniSirGlobal mac, struct scheduler_msg *limMsg,
 		case SIR_MAC_MGMT_REASSOC_RSP:
 			lim_process_assoc_rsp_frame(mac, pRxPacketInfo,
 						    LIM_REASSOC,
-						    psessionEntry);
+						    pe_session);
 			break;
 
 		case SIR_MAC_MGMT_PROBE_REQ:
 			lim_process_probe_req_frame_multiple_bss(mac,
 								 pRxPacketInfo,
-								 psessionEntry);
+								 pe_session);
 			break;
 
 		case SIR_MAC_MGMT_PROBE_RSP:
-			if (psessionEntry)
+			if (pe_session)
 				lim_process_probe_rsp_frame(mac,
 							    pRxPacketInfo,
-							    psessionEntry);
+							    pe_session);
 			break;
 
 		case SIR_MAC_MGMT_BEACON:
-			__lim_handle_beacon(mac, limMsg, psessionEntry);
+			__lim_handle_beacon(mac, limMsg, pe_session);
 			break;
 
 		case SIR_MAC_MGMT_DISASSOC:
 			lim_process_disassoc_frame(mac, pRxPacketInfo,
-						   psessionEntry);
+						   pe_session);
 			break;
 
 		case SIR_MAC_MGMT_AUTH:
 			lim_process_auth_frame(mac, pRxPacketInfo,
-					       psessionEntry);
+					       pe_session);
 			break;
 
 		case SIR_MAC_MGMT_DEAUTH:
 			lim_process_deauth_frame(mac, pRxPacketInfo,
-						 psessionEntry);
+						 pe_session);
 			break;
 
 		case SIR_MAC_MGMT_ACTION:
-			if (psessionEntry == NULL)
+			if (pe_session == NULL)
 				lim_process_action_frame_no_session(mac,
 								    pRxPacketInfo);
 			else {
@@ -1338,11 +1338,11 @@ lim_handle80211_frames(tpAniSirGlobal mac, struct scheduler_msg *limMsg,
 					    (pRxPacketInfo))
 					lim_handle_unknown_a2_index_frames
 						(mac, pRxPacketInfo,
-						psessionEntry);
+						pe_session);
 				else
 					lim_process_action_frame(mac,
 								 pRxPacketInfo,
-								 psessionEntry);
+								 pe_session);
 			}
 			break;
 		default:
@@ -1363,7 +1363,7 @@ lim_handle80211_frames(tpAniSirGlobal mac, struct scheduler_msg *limMsg,
 	} /* switch (fc.type) */
 	if (lim_is_mgmt_frame_loggable(fc.type, fc.subType))
 		lim_diag_mgmt_rx_event_report(mac, pHdr,
-					      psessionEntry,
+					      pe_session,
 					      QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 end:
 	lim_pkt_free(mac, TXRX_FRM_802_11_MGMT, pRxPacketInfo,
@@ -2193,7 +2193,7 @@ static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
 
 void
 handle_ht_capabilityand_ht_info(struct mac_context *mac,
-				struct pe_session *psessionEntry)
+				struct pe_session *pe_session)
 {
 	struct mlme_ht_capabilities_info *ht_cap_info;
 
@@ -2243,16 +2243,16 @@ handle_ht_capabilityand_ht_info(struct mac_context *mac,
 
 	/* The lim globals for channelwidth and secondary chnl have been removed and should not be used during no session;
 	 * instead direct cfg is read and used when no session for transmission of mgmt frames (same as old);
-	 * For now, we might come here during init and join with sessionEntry = NULL; in that case just fill the globals which exist
+	 * For now, we might come here during init and join with pe_session = NULL; in that case just fill the globals which exist
 	 * Sessionized entries values will be filled in join or add bss req. The ones which are missed in join are filled below
 	 */
-	if (psessionEntry != NULL) {
-		psessionEntry->htCapability =
-			IS_DOT11_MODE_HT(psessionEntry->dot11mode);
-		psessionEntry->beaconParams.fLsigTXOPProtectionFullSupport =
+	if (pe_session != NULL) {
+		pe_session->htCapability =
+			IS_DOT11_MODE_HT(pe_session->dot11mode);
+		pe_session->beaconParams.fLsigTXOPProtectionFullSupport =
 			(uint8_t)mac->mlme_cfg->ht_caps.info_field_3.
 			lsig_txop_protection_full_support;
-		lim_init_obss_params(mac, psessionEntry);
+		lim_init_obss_params(mac, pe_session);
 	}
 }
 

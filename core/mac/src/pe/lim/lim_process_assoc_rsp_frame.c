@@ -45,7 +45,7 @@
 #include "lim_process_fils.h"
 
 extern QDF_STATUS sch_beacon_edca_process(tpAniSirGlobal mac,
-	tSirMacEdcaParamSetIE *edca, struct pe_session *psessionEntry);
+	tSirMacEdcaParamSetIE *edca, struct pe_session *pe_session);
 
 /**
  * lim_update_stads_htcap() - Updates station Descriptor HT capability
@@ -464,12 +464,12 @@ static void lim_update_stads_ext_cap(tpAniSirGlobal mac_ctx,
 static void lim_stop_reassoc_retry_timer(tpAniSirGlobal mac_ctx)
 {
 	mac_ctx->lim.reAssocRetryAttempt = 0;
-	if ((NULL != mac_ctx->lim.pSessionEntry)
+	if ((NULL != mac_ctx->lim.pe_session)
 		&& (NULL !=
-			mac_ctx->lim.pSessionEntry->pLimMlmReassocRetryReq)) {
+			mac_ctx->lim.pe_session->pLimMlmReassocRetryReq)) {
 		qdf_mem_free(
-			mac_ctx->lim.pSessionEntry->pLimMlmReassocRetryReq);
-		mac_ctx->lim.pSessionEntry->pLimMlmReassocRetryReq = NULL;
+			mac_ctx->lim.pe_session->pLimMlmReassocRetryReq);
+		mac_ctx->lim.pe_session->pLimMlmReassocRetryReq = NULL;
 	}
 	lim_deactivate_and_change_timer(mac_ctx, eLIM_REASSOC_FAIL_TIMER);
 }

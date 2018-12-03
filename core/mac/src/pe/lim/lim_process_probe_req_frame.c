@@ -46,7 +46,7 @@ void
 lim_send_sme_probe_req_ind(tpAniSirGlobal mac,
 			   tSirMacAddr peerMacAddr,
 			   uint8_t *pProbeReqIE,
-			   uint32_t ProbeReqIELen, struct pe_session *psessionEntry);
+			   uint32_t ProbeReqIELen, struct pe_session *pe_session);
 
 /**
  * lim_get_wpspbc_sessions() - to get wps pbs sessions
@@ -176,14 +176,14 @@ void lim_remove_pbc_sessions(tpAniSirGlobal mac, struct qdf_mac_addr remove_mac,
  * @param  mac   Pointer to Global MAC structure
  * @param  addr   A pointer to probe request source MAC address
  * @param  uuid_e A pointer to UUIDE element of WPS IE
- * @param  psessionEntry   A pointer to station PE session
+ * @param  pe_session   A pointer to station PE session
  *
  * @return None
  */
 
 static void lim_update_pbc_session_entry(tpAniSirGlobal mac,
 					 uint8_t *addr, uint8_t *uuid_e,
-					 struct pe_session *psessionEntry)
+					 struct pe_session *pe_session)
 {
 	tSirWPSPBCSession *pbc, *prev = NULL;
 
@@ -199,7 +199,7 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal mac,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			   uuid_e, SIR_WPS_UUID_LEN);
 
-	pbc = psessionEntry->pAPWPSPBCSession;
+	pbc = pe_session->pAPWPSPBCSession;
 
 	while (pbc) {
 		if ((!qdf_mem_cmp
@@ -210,7 +210,7 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal mac,
 			if (prev)
 				prev->next = pbc->next;
 			else
-				psessionEntry->pAPWPSPBCSession = pbc->next;
+				pe_session->pAPWPSPBCSession = pbc->next;
 			break;
 		}
 		prev = pbc;
@@ -229,8 +229,8 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal mac,
 				     (uint8_t *) uuid_e, SIR_WPS_UUID_LEN);
 	}
 
-	pbc->next = psessionEntry->pAPWPSPBCSession;
-	psessionEntry->pAPWPSPBCSession = pbc;
+	pbc->next = pe_session->pAPWPSPBCSession;
+	pe_session->pAPWPSPBCSession = pbc;
 	pbc->timestamp = curTime;
 
 	/* remove entries that have timed out */
@@ -263,15 +263,15 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal mac,
  ***NOTE:
  *
  * @param  mac   Pointer to Global MAC structure
- * @param  psessionEntry   A pointer to station PE session
+ * @param  pe_session   A pointer to station PE session
  *
  * @return None
  */
 
-void lim_wpspbc_close(tpAniSirGlobal mac, struct pe_session *psessionEntry)
+void lim_wpspbc_close(tpAniSirGlobal mac, struct pe_session *pe_session)
 {
 
-	lim_remove_timeout_pbc_sessions(mac, psessionEntry->pAPWPSPBCSession);
+	lim_remove_timeout_pbc_sessions(mac, pe_session->pAPWPSPBCSession);
 
 }
 
@@ -526,14 +526,14 @@ multipleSSIDcheck:
  *
  * @param  mac              Pointer to Global MAC structure
  * @param  *pBd              A pointer to Buffer descriptor + associated PDUs
- * @param  psessionEntry     A pointer to PE session
+ * @param  pe_session     A pointer to PE session
  *
  * @return None
  */
 
 static void
 lim_indicate_probe_req_to_hdd(tpAniSirGlobal mac, uint8_t *pBd,
-			      struct pe_session *psessionEntry)
+			      struct pe_session *pe_session)
 {
 	tpSirMacMgmtHdr pHdr;
 	uint32_t frameLen;
@@ -547,8 +547,8 @@ lim_indicate_probe_req_to_hdd(tpAniSirGlobal mac, uint8_t *pBd,
 	lim_send_sme_mgmt_frame_ind(mac, pHdr->fc.subType,
 				    (uint8_t *) pHdr,
 				    (frameLen + sizeof(tSirMacMgmtHdr)),
-				    psessionEntry->smeSessionId, WMA_GET_RX_CH(pBd),
-				    psessionEntry,
+				    pe_session->smeSessionId, WMA_GET_RX_CH(pBd),
+				    pe_session,
 				    WMA_GET_RX_RSSI_NORMALIZED(pBd));
 } /*** end lim_indicate_probe_req_to_hdd() ***/
 
@@ -618,7 +618,7 @@ lim_process_probe_req_frame_multiple_bss(tpAniSirGlobal mac_ctx,
  *                          is generated.
  * @param pProbeReqIE       pointer to RAW probe request IE
  * @param ProbeReqIELen     The length of probe request IE.
- * @param psessionEntry     A pointer to PE session
+ * @param pe_session     A pointer to PE session
  *
  * @return None
  */
@@ -626,7 +626,7 @@ void
 lim_send_sme_probe_req_ind(tpAniSirGlobal mac,
 			   tSirMacAddr peerMacAddr,
 			   uint8_t *pProbeReqIE,
-			   uint32_t ProbeReqIELen, struct pe_session *psessionEntry)
+			   uint32_t ProbeReqIELen, struct pe_session *pe_session)
 {
 	tSirSmeProbeReqInd *pSirSmeProbeReqInd;
 	struct scheduler_msg msgQ = {0};
@@ -641,15 +641,15 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal mac,
 
 	pSirSmeProbeReqInd->messageType = eWNI_SME_WPS_PBC_PROBE_REQ_IND;
 	pSirSmeProbeReqInd->length = sizeof(tSirSmeProbeReq);
-	pSirSmeProbeReqInd->sessionId = psessionEntry->smeSessionId;
+	pSirSmeProbeReqInd->sessionId = pe_session->smeSessionId;
 
-	qdf_mem_copy(pSirSmeProbeReqInd->bssid.bytes, psessionEntry->bssId,
+	qdf_mem_copy(pSirSmeProbeReqInd->bssid.bytes, pe_session->bssId,
 		     QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(pSirSmeProbeReqInd->WPSPBCProbeReq.peer_macaddr.bytes,
 		     peerMacAddr, QDF_MAC_ADDR_SIZE);
 
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
-				psessionEntry->peSessionId, msgQ.type));
+				pe_session->peSessionId, msgQ.type));
 
 	if (ProbeReqIELen > sizeof(pSirSmeProbeReqInd->WPSPBCProbeReq.
 	    probeReqIE)) {

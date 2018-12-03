@@ -62,7 +62,7 @@
  */
 void
 lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-			   struct pe_session *psessionEntry)
+			   struct pe_session *pe_session)
 {
 	uint8_t *pBody;
 	uint16_t aid, reasonCode;
@@ -91,18 +91,18 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 		return;
 	}
 	if (!lim_validate_received_frame_a1_addr(mac,
-			pHdr->da, psessionEntry)) {
+			pHdr->da, pe_session)) {
 		pe_err("rx frame doesn't have valid a1 address, drop it");
 		return;
 	}
 
-	if (LIM_IS_STA_ROLE(psessionEntry) &&
-		((eLIM_SME_WT_DISASSOC_STATE == psessionEntry->limSmeState) ||
-		(eLIM_SME_WT_DEAUTH_STATE == psessionEntry->limSmeState))) {
+	if (LIM_IS_STA_ROLE(pe_session) &&
+		((eLIM_SME_WT_DISASSOC_STATE == pe_session->limSmeState) ||
+		(eLIM_SME_WT_DEAUTH_STATE == pe_session->limSmeState))) {
 		if (!(mac->lim.disassocMsgCnt & 0xF)) {
 			pe_debug("received Disassoc frame in %s"
 				"already processing previously received Disassoc frame, dropping this %d",
-				 lim_sme_state_str(psessionEntry->limSmeState),
+				 lim_sme_state_str(pe_session->limSmeState),
 				 ++mac->lim.disassocMsgCnt);
 		} else {
 			mac->lim.disassocMsgCnt++;
@@ -111,7 +111,7 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	}
 #ifdef WLAN_FEATURE_11W
 	/* PMF: If this session is a PMF session, then ensure that this frame was protected */
-	if (psessionEntry->limRmfEnabled
+	if (pe_session->limRmfEnabled
 	    && (WMA_GET_RX_DPU_FEEDBACK(pRxPacketInfo) &
 		DPU_FEEDBACK_UNPROTECTED_ERROR)) {
 		pe_err("received an unprotected disassoc from AP");
@@ -119,7 +119,7 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 		 * When 11w offload is enabled then
 		 * firmware should not fwd this frame
 		 */
-		if (LIM_IS_STA_ROLE(psessionEntry) &&  mac->pmf_offload) {
+		if (LIM_IS_STA_ROLE(pe_session) &&  mac->pmf_offload) {
 			pe_err("11w offload is enable,unprotected disassoc is not expected");
 			return;
 		}
@@ -131,8 +131,8 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 							(uint8_t *) pHdr,
 							(frame_len +
 							 sizeof(tSirMacMgmtHdr)),
-							psessionEntry->smeSessionId,
-							psessionEntry);
+							pe_session->smeSessionId,
+							pe_session);
 		return;
 	}
 #endif
@@ -149,11 +149,11 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 		 "(mlm state=%s, sme state=%d RSSI=%d),"
 		 "with reason code %d [%s] from " MAC_ADDRESS_STR,
 		 MAC_ADDR_ARRAY(pHdr->da),
-		 lim_mlm_state_str(psessionEntry->limMlmState),
-		 psessionEntry->limSmeState, frame_rssi, reasonCode,
+		 lim_mlm_state_str(pe_session->limMlmState),
+		 pe_session->limSmeState, frame_rssi, reasonCode,
 		 lim_dot11_reason_str(reasonCode), MAC_ADDR_ARRAY(pHdr->sa));
 	lim_diag_event_report(mac, WLAN_PE_DIAG_DISASSOC_FRAME_EVENT,
-		psessionEntry, 0, reasonCode);
+		pe_session, 0, reasonCode);
 
 	if (mac->mlme_cfg->gen.fatal_event_trigger &&
 	    (reasonCode != eSIR_MAC_UNSPEC_FAILURE_REASON &&
@@ -170,7 +170,7 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	 */
 	pStaDs =
 		dph_lookup_hash_entry(mac, pHdr->sa, &aid,
-				      &psessionEntry->dph.dphHashTable);
+				      &pe_session->dph.dphHashTable);
 
 	if (pStaDs == NULL) {
 		/**
@@ -194,17 +194,17 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	}
 
 	/** If we are in the Wait for ReAssoc Rsp state */
-	if (lim_is_reassoc_in_progress(mac, psessionEntry)) {
+	if (lim_is_reassoc_in_progress(mac, pe_session)) {
 		/*
 		 * For LFR3, the roaming bssid is not known during ROAM_START,
 		 * so check if the disassoc is received from current AP when
 		 * roaming is being done in the firmware
 		 */
-		if (psessionEntry->fw_roaming_started &&
-		    IS_CURRENT_BSSID(mac, pHdr->sa, psessionEntry)) {
+		if (pe_session->fw_roaming_started &&
+		    IS_CURRENT_BSSID(mac, pHdr->sa, pe_session)) {
 			pe_debug("Dropping disassoc frame from connected AP");
-			psessionEntry->recvd_disassoc_while_roaming = true;
-			psessionEntry->deauth_disassoc_rc = reasonCode;
+			pe_session->recvd_disassoc_while_roaming = true;
+			pe_session->deauth_disassoc_rc = reasonCode;
 			return;
 		}
 		/** If we had received the DisAssoc from,
@@ -212,24 +212,24 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 		 *     b. Unknown AP
 		 *   drop/ignore the DisAssoc received
 		 */
-		if (!IS_REASSOC_BSSID(mac, pHdr->sa, psessionEntry)) {
+		if (!IS_REASSOC_BSSID(mac, pHdr->sa, pe_session)) {
 			pe_err("Ignore DisAssoc while Processing ReAssoc");
 			return;
 		}
 		/** If the Disassoc is received from the new AP to which we tried to ReAssociate
 		 *  Drop ReAssoc and Restore the Previous context( current connected AP).
 		 */
-		if (!IS_CURRENT_BSSID(mac, pHdr->sa, psessionEntry)) {
+		if (!IS_CURRENT_BSSID(mac, pHdr->sa, pe_session)) {
 			pe_debug("received Disassoc from the New AP to which ReAssoc is sent");
 			lim_restore_pre_reassoc_state(mac,
 						      eSIR_SME_REASSOC_REFUSED,
 						      reasonCode,
-						      psessionEntry);
+						      pe_session);
 			return;
 		}
 	}
 
-	if (LIM_IS_AP_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
 		switch (reasonCode) {
 		case eSIR_MAC_UNSPEC_FAILURE_REASON:
 		case eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON:
@@ -248,17 +248,17 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 				reasonCode, MAC_ADDR_ARRAY(pHdr->sa));
 			break;
 		}
-	} else if (LIM_IS_STA_ROLE(psessionEntry) &&
-		   ((psessionEntry->limSmeState != eLIM_SME_WT_JOIN_STATE) &&
-		   (psessionEntry->limSmeState != eLIM_SME_WT_AUTH_STATE) &&
-		   (psessionEntry->limSmeState != eLIM_SME_WT_ASSOC_STATE) &&
-		   (psessionEntry->limSmeState != eLIM_SME_WT_REASSOC_STATE))) {
+	} else if (LIM_IS_STA_ROLE(pe_session) &&
+		   ((pe_session->limSmeState != eLIM_SME_WT_JOIN_STATE) &&
+		   (pe_session->limSmeState != eLIM_SME_WT_AUTH_STATE) &&
+		   (pe_session->limSmeState != eLIM_SME_WT_ASSOC_STATE) &&
+		   (pe_session->limSmeState != eLIM_SME_WT_REASSOC_STATE))) {
 		switch (reasonCode) {
 		case eSIR_MAC_DEAUTH_LEAVING_BSS_REASON:
 		case eSIR_MAC_DISASSOC_LEAVING_BSS_REASON:
 			/* Valid reasonCode in received Disassociation frame */
 			/* as long as we're not about to channel switch */
-			if (psessionEntry->gLimChannelSwitch.state !=
+			if (pe_session->gLimChannelSwitch.state !=
 			    eLIM_CHANNEL_SWITCH_IDLE) {
 				pe_err("Ignoring disassoc frame due to upcoming channel switch, from "MAC_ADDRESS_STR,
 					MAC_ADDR_ARRAY(pHdr->sa));
@@ -274,7 +274,7 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 		/* or un-known role. Log and ignore it */
 		pe_err("received Disassoc frame with invalid reasonCode: %d in role:"
 				"%d in sme state: %d from " MAC_ADDRESS_STR, reasonCode,
-			GET_LIM_SYSTEM_ROLE(psessionEntry), psessionEntry->limSmeState,
+			GET_LIM_SYSTEM_ROLE(pe_session), pe_session->limSmeState,
 			MAC_ADDR_ARRAY(pHdr->sa));
 
 		return;
@@ -293,7 +293,7 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 		return;
 	}
 	pStaDs->sta_deletion_in_progress = true;
-	lim_disassoc_tdls_peers(mac, psessionEntry, pHdr->sa);
+	lim_disassoc_tdls_peers(mac, pe_session, pHdr->sa);
 	if (pStaDs->mlmStaContext.mlmState != eLIM_MLM_LINK_ESTABLISHED_STATE) {
 		/**
 		 * Requesting STA is in some 'transient' state?
@@ -310,7 +310,7 @@ lim_process_disassoc_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	} /* if (pStaDs->mlmStaContext.mlmState != eLIM_MLM_LINK_ESTABLISHED_STATE) */
 
 	lim_perform_disassoc(mac, frame_rssi, reasonCode,
-			     psessionEntry, pHdr->sa);
+			     pe_session, pHdr->sa);
 
 } /*** end lim_process_disassoc_frame() ***/
 

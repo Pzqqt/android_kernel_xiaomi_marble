@@ -1007,19 +1007,19 @@ void lim_handle_update_olbc_cache(tpAniSirGlobal mac_ctx)
 	static int enable;
 	tUpdateBeaconParams beaconParams;
 
-	struct pe_session *psessionEntry = lim_is_ap_session_active(mac_ctx);
+	struct pe_session *pe_session = lim_is_ap_session_active(mac_ctx);
 
-	if (psessionEntry == NULL) {
+	if (pe_session == NULL) {
 		pe_err(" Session not found");
 		return;
 	}
 
-	if (psessionEntry->is_session_obss_offload_enabled) {
+	if (pe_session->is_session_obss_offload_enabled) {
 		pe_debug("protection offloaded");
 		return;
 	}
 	qdf_mem_set((uint8_t *) &beaconParams, sizeof(tUpdateBeaconParams), 0);
-	beaconParams.bssIdx = psessionEntry->bssIdx;
+	beaconParams.bssIdx = pe_session->bssIdx;
 
 	beaconParams.paramChangeBitmap = 0;
 	/*
@@ -1029,42 +1029,42 @@ void lim_handle_update_olbc_cache(tpAniSirGlobal mac_ctx)
 	 */
 	if (!enable) {
 		pe_debug("Resetting OLBC cache");
-		psessionEntry->gLimOlbcParams.numSta = 0;
-		psessionEntry->gLimOverlap11gParams.numSta = 0;
-		psessionEntry->gLimOverlapHt20Params.numSta = 0;
-		psessionEntry->gLimNonGfParams.numSta = 0;
-		psessionEntry->gLimLsigTxopParams.numSta = 0;
+		pe_session->gLimOlbcParams.numSta = 0;
+		pe_session->gLimOverlap11gParams.numSta = 0;
+		pe_session->gLimOverlapHt20Params.numSta = 0;
+		pe_session->gLimNonGfParams.numSta = 0;
+		pe_session->gLimLsigTxopParams.numSta = 0;
 
 		for (i = 0; i < LIM_PROT_STA_OVERLAP_CACHE_SIZE; i++)
 			mac_ctx->lim.protStaOverlapCache[i].active = false;
 
 		enable = 1;
 	} else {
-		if ((!psessionEntry->gLimOlbcParams.numSta) &&
-			(psessionEntry->gLimOlbcParams.protectionEnabled) &&
-			(!psessionEntry->gLim11bParams.protectionEnabled)) {
+		if ((!pe_session->gLimOlbcParams.numSta) &&
+			(pe_session->gLimOlbcParams.protectionEnabled) &&
+			(!pe_session->gLim11bParams.protectionEnabled)) {
 			pe_debug("Overlap cache clear and no 11B STA set");
 			lim_enable11g_protection(mac_ctx, false, true,
 						&beaconParams,
-						psessionEntry);
+						pe_session);
 		}
 
-		if ((!psessionEntry->gLimOverlap11gParams.numSta) &&
-			(psessionEntry->gLimOverlap11gParams.protectionEnabled)
-			&& (!psessionEntry->gLim11gParams.protectionEnabled)) {
+		if ((!pe_session->gLimOverlap11gParams.numSta) &&
+			(pe_session->gLimOverlap11gParams.protectionEnabled)
+			&& (!pe_session->gLim11gParams.protectionEnabled)) {
 			pe_debug("Overlap cache clear and no 11G STA set");
 			lim_enable_ht_protection_from11g(mac_ctx, false, true,
 							&beaconParams,
-							psessionEntry);
+							pe_session);
 		}
 
-		if ((!psessionEntry->gLimOverlapHt20Params.numSta) &&
-			(psessionEntry->gLimOverlapHt20Params.protectionEnabled)
-			&& (!psessionEntry->gLimHt20Params.protectionEnabled)) {
+		if ((!pe_session->gLimOverlapHt20Params.numSta) &&
+			(pe_session->gLimOverlapHt20Params.protectionEnabled)
+			&& (!pe_session->gLimHt20Params.protectionEnabled)) {
 			pe_debug("Overlap cache clear and no HT20 STA set");
 			lim_enable11g_protection(mac_ctx, false, true,
 						&beaconParams,
-						psessionEntry);
+						pe_session);
 		}
 
 		enable = 0;
@@ -1072,8 +1072,8 @@ void lim_handle_update_olbc_cache(tpAniSirGlobal mac_ctx)
 
 	if ((false == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running)
 					&& beaconParams.paramChangeBitmap) {
-		sch_set_fixed_beacon_fields(mac_ctx, psessionEntry);
-		lim_send_beacon_params(mac_ctx, &beaconParams, psessionEntry);
+		sch_set_fixed_beacon_fields(mac_ctx, pe_session);
+		lim_send_beacon_params(mac_ctx, &beaconParams, pe_session);
 	}
 	/* Start OLBC timer */
 	if (tx_timer_activate(&mac_ctx->lim.limTimers.gLimUpdateOlbcCacheTimer)
@@ -1144,7 +1144,7 @@ lim_update_prot_sta_params(tpAniSirGlobal mac,
 			   tSirMacAddr peerMacAddr,
 			   tLimProtStaCacheType protStaCacheType,
 			   tHalBitVal gfSupported, tHalBitVal lsigTxopSupported,
-			   struct pe_session *psessionEntry)
+			   struct pe_session *pe_session)
 {
 	uint32_t i;
 
@@ -1152,14 +1152,14 @@ lim_update_prot_sta_params(tpAniSirGlobal mac,
 	lim_print_mac_addr(mac, peerMacAddr, LOGD);
 
 	for (i = 0; i < LIM_PROT_STA_CACHE_SIZE; i++) {
-		if (psessionEntry->protStaCache[i].active) {
+		if (pe_session->protStaCache[i].active) {
 			pe_debug("Addr:");
 				lim_print_mac_addr
-				(mac, psessionEntry->protStaCache[i].addr,
+				(mac, pe_session->protStaCache[i].addr,
 				LOGD);
 
 			if (!qdf_mem_cmp
-				    (psessionEntry->protStaCache[i].addr,
+				    (pe_session->protStaCache[i].addr,
 				    peerMacAddr, sizeof(tSirMacAddr))) {
 				pe_debug("matching cache entry at: %d already active",
 					i);
@@ -1169,7 +1169,7 @@ lim_update_prot_sta_params(tpAniSirGlobal mac,
 	}
 
 	for (i = 0; i < LIM_PROT_STA_CACHE_SIZE; i++) {
-		if (!psessionEntry->protStaCache[i].active)
+		if (!pe_session->protStaCache[i].active)
 			break;
 	}
 
@@ -1178,28 +1178,28 @@ lim_update_prot_sta_params(tpAniSirGlobal mac,
 		return;
 	}
 
-	qdf_mem_copy(psessionEntry->protStaCache[i].addr,
+	qdf_mem_copy(pe_session->protStaCache[i].addr,
 		     peerMacAddr, sizeof(tSirMacAddr));
 
-	psessionEntry->protStaCache[i].protStaCacheType = protStaCacheType;
-	psessionEntry->protStaCache[i].active = true;
+	pe_session->protStaCache[i].protStaCacheType = protStaCacheType;
+	pe_session->protStaCache[i].active = true;
 	if (eLIM_PROT_STA_CACHE_TYPE_llB == protStaCacheType) {
-		psessionEntry->gLim11bParams.numSta++;
+		pe_session->gLim11bParams.numSta++;
 		pe_debug("11B,");
 	} else if (eLIM_PROT_STA_CACHE_TYPE_llG == protStaCacheType) {
-		psessionEntry->gLim11gParams.numSta++;
+		pe_session->gLim11gParams.numSta++;
 		pe_debug("11G,");
 	} else if (eLIM_PROT_STA_CACHE_TYPE_HT20 == protStaCacheType) {
-		psessionEntry->gLimHt20Params.numSta++;
+		pe_session->gLimHt20Params.numSta++;
 		pe_debug("HT20,");
 	}
 
 	if (!gfSupported) {
-		psessionEntry->gLimNonGfParams.numSta++;
+		pe_session->gLimNonGfParams.numSta++;
 		pe_debug("NonGf,");
 	}
 	if (!lsigTxopSupported) {
-		psessionEntry->gLimLsigTxopParams.numSta++;
+		pe_session->gLimLsigTxopParams.numSta++;
 		pe_debug("!lsigTxopSupported");
 	}
 } /* --------------------------------------------------------------------- */
@@ -1216,7 +1216,7 @@ lim_update_prot_sta_params(tpAniSirGlobal mac,
 void
 lim_decide_ap_protection(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
 			 tpUpdateBeaconParams pBeaconParams,
-			 struct pe_session *psessionEntry)
+			 struct pe_session *pe_session)
 {
 	uint16_t tmpAid;
 	tpDphHashNode pStaDs;
@@ -1230,32 +1230,32 @@ lim_decide_ap_protection(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
 	/* check whether to enable protection or not */
 	pStaDs =
 		dph_lookup_hash_entry(mac, peerMacAddr, &tmpAid,
-				      &psessionEntry->dph.dphHashTable);
+				      &pe_session->dph.dphHashTable);
 	if (NULL == pStaDs) {
 		pe_err("pStaDs is NULL");
 		return;
 	}
-	lim_get_rf_band_new(mac, &rfBand, psessionEntry);
+	lim_get_rf_band_new(mac, &rfBand, pe_session);
 	/* if we are in 5 GHZ band */
 	if (BAND_5G == rfBand) {
 		/* We are 11N. we need to protect from 11A and Ht20. we don't need any other protection in 5 GHZ. */
 		/* HT20 case is common between both the bands and handled down as common code. */
-		if (true == psessionEntry->htCapability) {
+		if (true == pe_session->htCapability) {
 			/* we are 11N and 11A station is joining. */
 			/* protection from 11A required. */
 			if (false == pStaDs->mlmStaContext.htCapability) {
 				lim_update_11a_protection(mac, true, false,
 							 pBeaconParams,
-							 psessionEntry);
+							 pe_session);
 				return;
 			}
 		}
 	} else if (BAND_2G == rfBand) {
-		lim_get_phy_mode(mac, &phyMode, psessionEntry);
+		lim_get_phy_mode(mac, &phyMode, pe_session);
 
 		/* We are 11G. Check if we need protection from 11b Stations. */
 		if ((phyMode == WNI_CFG_PHY_MODE_11G) &&
-		    (false == psessionEntry->htCapability)) {
+		    (false == pe_session->htCapability)) {
 
 			if (pStaDs->erpEnabled == eHAL_CLEAR) {
 				protStaCacheType = eLIM_PROT_STA_CACHE_TYPE_llB;
@@ -1263,11 +1263,11 @@ lim_decide_ap_protection(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
 				pe_debug("Enabling protection from 11B");
 				lim_enable11g_protection(mac, true, false,
 							 pBeaconParams,
-							 psessionEntry);
+							 pe_session);
 			}
 		}
 		/* HT station. */
-		if (true == psessionEntry->htCapability) {
+		if (true == pe_session->htCapability) {
 			/* check if we need protection from 11b station */
 			if ((pStaDs->erpEnabled == eHAL_CLEAR) &&
 			    (!pStaDs->mlmStaContext.htCapability)) {
@@ -1276,7 +1276,7 @@ lim_decide_ap_protection(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
 				pe_debug("Enabling protection from 11B");
 				lim_enable11g_protection(mac, true, false,
 							 pBeaconParams,
-							 psessionEntry);
+							 pe_session);
 			}
 			/* station being joined is non-11b and non-ht ==> 11g device */
 			else if (!pStaDs->mlmStaContext.htCapability) {
@@ -1284,7 +1284,7 @@ lim_decide_ap_protection(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
 				/* enable protection */
 				lim_enable_ht_protection_from11g(mac, true, false,
 								 pBeaconParams,
-								 psessionEntry);
+								 pe_session);
 			}
 			/* ERP mode is enabled for the latest station joined */
 			/* latest station joined is HT capable */
@@ -1292,34 +1292,34 @@ lim_decide_ap_protection(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
 		}
 	}
 	/* we are HT and HT station is joining. This code is common for both the bands. */
-	if ((true == psessionEntry->htCapability) &&
+	if ((true == pe_session->htCapability) &&
 	    (true == pStaDs->mlmStaContext.htCapability)) {
 		if (!pStaDs->htGreenfield) {
 			lim_enable_ht_non_gf_protection(mac, true, false,
 							pBeaconParams,
-							psessionEntry);
+							pe_session);
 			gfSupported = eHAL_CLEAR;
 		}
 		/* Station joining is HT 20Mhz */
 		if ((eHT_CHANNEL_WIDTH_20MHZ ==
 		pStaDs->htSupportedChannelWidthSet) &&
 		(eHT_CHANNEL_WIDTH_20MHZ !=
-		 psessionEntry->htSupportedChannelWidthSet)){
+		 pe_session->htSupportedChannelWidthSet)){
 			protStaCacheType = eLIM_PROT_STA_CACHE_TYPE_HT20;
 			lim_enable_ht20_protection(mac, true, false,
-						   pBeaconParams, psessionEntry);
+						   pBeaconParams, pe_session);
 		}
 		/* Station joining does not support LSIG TXOP Protection */
 		if (!pStaDs->htLsigTXOPProtection) {
 			lim_enable_ht_lsig_txop_protection(mac, false, false,
 							   pBeaconParams,
-							   psessionEntry);
+							   pe_session);
 			lsigTxopSupported = eHAL_CLEAR;
 		}
 	}
 
 	lim_update_prot_sta_params(mac, peerMacAddr, protStaCacheType,
-				   gfSupported, lsigTxopSupported, psessionEntry);
+				   gfSupported, lsigTxopSupported, pe_session);
 
 	return;
 }
@@ -1335,17 +1335,17 @@ lim_decide_ap_protection(tpAniSirGlobal mac, tSirMacAddr peerMacAddr,
 void
 lim_enable_overlap11g_protection(tpAniSirGlobal mac,
 				 tpUpdateBeaconParams pBeaconParams,
-				 tpSirMacMgmtHdr pMh, struct pe_session *psessionEntry)
+				 tpSirMacMgmtHdr pMh, struct pe_session *pe_session)
 {
 	lim_update_overlap_sta_param(mac, pMh->bssId,
-				     &(psessionEntry->gLimOlbcParams));
+				     &(pe_session->gLimOlbcParams));
 
-	if (psessionEntry->gLimOlbcParams.numSta &&
-	    !psessionEntry->gLimOlbcParams.protectionEnabled) {
+	if (pe_session->gLimOlbcParams.numSta &&
+	    !pe_session->gLimOlbcParams.protectionEnabled) {
 		/* enable protection */
 		pe_debug("OLBC happens!!!");
 		lim_enable11g_protection(mac, true, true, pBeaconParams,
-					 psessionEntry);
+					 pe_session);
 	}
 }
 
@@ -1601,24 +1601,24 @@ lim_update_short_slot_time(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
 void
 lim_decide_sta_protection_on_assoc(tpAniSirGlobal mac,
 				   tpSchBeaconStruct pBeaconStruct,
-				   struct pe_session *psessionEntry)
+				   struct pe_session *pe_session)
 {
 	enum band_info rfBand = BAND_UNKNOWN;
 	uint32_t phyMode = WNI_CFG_PHY_MODE_NONE;
 
-	lim_get_rf_band_new(mac, &rfBand, psessionEntry);
-	lim_get_phy_mode(mac, &phyMode, psessionEntry);
+	lim_get_rf_band_new(mac, &rfBand, pe_session);
+	lim_get_phy_mode(mac, &phyMode, pe_session);
 
 	if (BAND_5G == rfBand) {
 		if ((eSIR_HT_OP_MODE_MIXED == pBeaconStruct->HTInfo.opMode) ||
 		    (eSIR_HT_OP_MODE_OVERLAP_LEGACY ==
 		     pBeaconStruct->HTInfo.opMode)) {
 			if (mac->lim.cfgProtection.fromlla)
-				psessionEntry->beaconParams.llaCoexist = true;
+				pe_session->beaconParams.llaCoexist = true;
 		} else if (eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT ==
 			   pBeaconStruct->HTInfo.opMode) {
 			if (mac->lim.cfgProtection.ht20)
-				psessionEntry->beaconParams.ht20Coexist = true;
+				pe_session->beaconParams.ht20Coexist = true;
 		}
 
 	} else if (BAND_2G == rfBand) {
@@ -1637,20 +1637,20 @@ lim_decide_sta_protection_on_assoc(tpAniSirGlobal mac,
 			    pBeaconStruct->erpPresent &&
 			    (pBeaconStruct->erpIEInfo.useProtection ||
 			     pBeaconStruct->erpIEInfo.nonErpPresent)) {
-				psessionEntry->beaconParams.llbCoexist = true;
+				pe_session->beaconParams.llbCoexist = true;
 			}
 			/* AP has no 11b station associated. */
 			else {
-				psessionEntry->beaconParams.llbCoexist = false;
+				pe_session->beaconParams.llbCoexist = false;
 			}
 		}
 		/* following code block is only for HT station. */
-		if ((psessionEntry->htCapability) &&
+		if ((pe_session->htCapability) &&
 		    (pBeaconStruct->HTInfo.present)) {
 			tDot11fIEHTInfo htInfo = pBeaconStruct->HTInfo;
 
 			/* Obss Non HT STA present mode */
-			psessionEntry->beaconParams.gHTObssMode =
+			pe_session->beaconParams.gHTObssMode =
 				(uint8_t) htInfo.obssNonHTStaPresent;
 
 			/* CFG protection from 11G is enabled and */
@@ -1658,9 +1658,9 @@ lim_decide_sta_protection_on_assoc(tpAniSirGlobal mac,
 			if (mac->lim.cfgProtection.fromllg &&
 			    ((eSIR_HT_OP_MODE_MIXED == htInfo.opMode) ||
 			     (eSIR_HT_OP_MODE_OVERLAP_LEGACY == htInfo.opMode))
-			    && (!psessionEntry->beaconParams.llbCoexist)) {
+			    && (!pe_session->beaconParams.llbCoexist)) {
 				if (mac->lim.cfgProtection.fromllg)
-					psessionEntry->beaconParams.llgCoexist =
+					pe_session->beaconParams.llgCoexist =
 						true;
 			}
 			/* AP has only HT stations associated and at least one station is HT 20 */
@@ -1668,30 +1668,30 @@ lim_decide_sta_protection_on_assoc(tpAniSirGlobal mac,
 			/* decision for disabling protection from 11b has already been taken above. */
 			if (eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT == htInfo.opMode) {
 				/* Disable protection from 11G station. */
-				psessionEntry->beaconParams.llgCoexist = false;
+				pe_session->beaconParams.llgCoexist = false;
 				/* CFG protection from HT 20 is enabled. */
 				if (mac->lim.cfgProtection.ht20)
-					psessionEntry->beaconParams.
+					pe_session->beaconParams.
 					ht20Coexist = true;
 			}
 			/* Disable protection from non-HT and HT20 devices. */
 			/* decision for disabling protection from 11b has already been taken above. */
 			if (eSIR_HT_OP_MODE_PURE == htInfo.opMode) {
-				psessionEntry->beaconParams.llgCoexist = false;
-				psessionEntry->beaconParams.ht20Coexist = false;
+				pe_session->beaconParams.llgCoexist = false;
+				pe_session->beaconParams.ht20Coexist = false;
 			}
 
 		}
 	}
 	/* protection related factors other than HT operating mode. Applies to 2.4 GHZ as well as 5 GHZ. */
-	if ((psessionEntry->htCapability) && (pBeaconStruct->HTInfo.present)) {
+	if ((pe_session->htCapability) && (pBeaconStruct->HTInfo.present)) {
 		tDot11fIEHTInfo htInfo = pBeaconStruct->HTInfo;
 
-		psessionEntry->beaconParams.fRIFSMode =
+		pe_session->beaconParams.fRIFSMode =
 			(uint8_t) htInfo.rifsMode;
-		psessionEntry->beaconParams.llnNonGFCoexist =
+		pe_session->beaconParams.llnNonGFCoexist =
 			(uint8_t) htInfo.nonGFDevicesPresent;
-		psessionEntry->beaconParams.fLsigTXOPProtectionFullSupport =
+		pe_session->beaconParams.fLsigTXOPProtectionFullSupport =
 			(uint8_t) htInfo.lsigTXOPProtectionFullSupport;
 	}
 }
@@ -1957,35 +1957,35 @@ lim_decide_sta_protection(tpAniSirGlobal mac_ctx,
  */
 static void __lim_process_channel_switch_timeout(tpAniSirGlobal mac)
 {
-	struct pe_session *psessionEntry = NULL;
+	struct pe_session *pe_session = NULL;
 	uint8_t channel; /* This is received and stored from channelSwitch Action frame */
 
-	psessionEntry = pe_find_session_by_session_id(mac,
+	pe_session = pe_find_session_by_session_id(mac,
 			mac->lim.limTimers.gLimChannelSwitchTimer.sessionId);
-	if (psessionEntry == NULL) {
+	if (pe_session == NULL) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
 
-	if (!LIM_IS_STA_ROLE(psessionEntry)) {
+	if (!LIM_IS_STA_ROLE(pe_session)) {
 		pe_warn("Channel switch can be done only in STA role, Current Role: %d",
-			       GET_LIM_SYSTEM_ROLE(psessionEntry));
+			       GET_LIM_SYSTEM_ROLE(pe_session));
 		return;
 	}
 
-	if (psessionEntry->gLimSpecMgmt.dot11hChanSwState !=
+	if (pe_session->gLimSpecMgmt.dot11hChanSwState !=
 	   eLIM_11H_CHANSW_RUNNING) {
 		pe_warn("Channel switch timer should not have been running in state: %d",
-			psessionEntry->gLimSpecMgmt.dot11hChanSwState);
+			pe_session->gLimSpecMgmt.dot11hChanSwState);
 		return;
 	}
 
-	channel = psessionEntry->gLimChannelSwitch.primaryChannel;
+	channel = pe_session->gLimChannelSwitch.primaryChannel;
 	/* Restore Channel Switch parameters to default */
-	psessionEntry->gLimChannelSwitch.switchTimeoutValue = 0;
+	pe_session->gLimChannelSwitch.switchTimeoutValue = 0;
 
 	/* Channel-switch timeout has occurred. reset the state */
-	psessionEntry->gLimSpecMgmt.dot11hChanSwState = eLIM_11H_CHANSW_END;
+	pe_session->gLimSpecMgmt.dot11hChanSwState = eLIM_11H_CHANSW_END;
 
 	/* Check if the AP is switching to a channel that we support.
 	 * Else, just don't bother to switch. Indicate HDD to look for a
@@ -1993,7 +1993,7 @@ static void __lim_process_channel_switch_timeout(tpAniSirGlobal mac)
 	 */
 	if (!lim_is_channel_valid_for_channel_switch(mac, channel)) {
 		/* We need to restore pre-channelSwitch state on the STA */
-		if (lim_restore_pre_channel_switch_state(mac, psessionEntry) !=
+		if (lim_restore_pre_channel_switch_state(mac, pe_session) !=
 		    QDF_STATUS_SUCCESS) {
 			pe_err("Could not restore pre-channelSwitch (11h) state, resetting the system");
 			return;
@@ -2004,10 +2004,10 @@ static void __lim_process_channel_switch_timeout(tpAniSirGlobal mac)
 		 * then we cannot switch the channel. Just disassociate from AP.
 		 * We will find a better AP !!!
 		 */
-		if ((psessionEntry->limMlmState ==
+		if ((pe_session->limMlmState ==
 		   eLIM_MLM_LINK_ESTABLISHED_STATE) &&
-		   (psessionEntry->limSmeState != eLIM_SME_WT_DISASSOC_STATE) &&
-		   (psessionEntry->limSmeState != eLIM_SME_WT_DEAUTH_STATE)) {
+		   (pe_session->limSmeState != eLIM_SME_WT_DISASSOC_STATE) &&
+		   (pe_session->limSmeState != eLIM_SME_WT_DEAUTH_STATE)) {
 			pe_err("Invalid channel! Disconnect");
 			lim_tear_down_link_with_ap(mac,
 					   mac->lim.limTimers.
@@ -2016,34 +2016,34 @@ static void __lim_process_channel_switch_timeout(tpAniSirGlobal mac)
 			return;
 		}
 	}
-	lim_covert_channel_scan_type(mac, psessionEntry->currentOperChannel,
+	lim_covert_channel_scan_type(mac, pe_session->currentOperChannel,
 				     false);
-	mac->lim.dfschannelList.timeStamp[psessionEntry->currentOperChannel] =
+	mac->lim.dfschannelList.timeStamp[pe_session->currentOperChannel] =
 		0;
-	switch (psessionEntry->gLimChannelSwitch.state) {
+	switch (pe_session->gLimChannelSwitch.state) {
 	case eLIM_CHANNEL_SWITCH_PRIMARY_ONLY:
 		pe_warn("CHANNEL_SWITCH_PRIMARY_ONLY");
 		lim_switch_primary_channel(mac,
-					   psessionEntry->gLimChannelSwitch.
-					   primaryChannel, psessionEntry);
-		psessionEntry->gLimChannelSwitch.state =
+					   pe_session->gLimChannelSwitch.
+					   primaryChannel, pe_session);
+		pe_session->gLimChannelSwitch.state =
 			eLIM_CHANNEL_SWITCH_IDLE;
 		break;
 	case eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY:
 		pe_warn("CHANNEL_SWITCH_PRIMARY_AND_SECONDARY");
-		lim_switch_primary_secondary_channel(mac, psessionEntry,
-			psessionEntry->gLimChannelSwitch.primaryChannel,
-			psessionEntry->gLimChannelSwitch.ch_center_freq_seg0,
-			psessionEntry->gLimChannelSwitch.ch_center_freq_seg1,
-			psessionEntry->gLimChannelSwitch.ch_width);
-		psessionEntry->gLimChannelSwitch.state =
+		lim_switch_primary_secondary_channel(mac, pe_session,
+			pe_session->gLimChannelSwitch.primaryChannel,
+			pe_session->gLimChannelSwitch.ch_center_freq_seg0,
+			pe_session->gLimChannelSwitch.ch_center_freq_seg1,
+			pe_session->gLimChannelSwitch.ch_width);
+		pe_session->gLimChannelSwitch.state =
 			eLIM_CHANNEL_SWITCH_IDLE;
 		break;
 
 	case eLIM_CHANNEL_SWITCH_IDLE:
 	default:
 		pe_err("incorrect state");
-		if (lim_restore_pre_channel_switch_state(mac, psessionEntry) !=
+		if (lim_restore_pre_channel_switch_state(mac, pe_session) !=
 		    QDF_STATUS_SUCCESS) {
 			pe_err("Could not restore pre-channelSwitch (11h) state, resetting the system");
 		}
@@ -2190,16 +2190,16 @@ lim_update_channel_switch(struct mac_context *mac_ctx,
  * @return None
  */
 void lim_cancel_dot11h_channel_switch(tpAniSirGlobal mac,
-				      struct pe_session *psessionEntry)
+				      struct pe_session *pe_session)
 {
-	if (!LIM_IS_STA_ROLE(psessionEntry))
+	if (!LIM_IS_STA_ROLE(pe_session))
 		return;
 
 	pe_debug("Received a beacon without channel switch IE");
 
 	MTRACE(mac_trace
 		       (mac, TRACE_CODE_TIMER_DEACTIVATE,
-		       psessionEntry->peSessionId, eLIM_CHANNEL_SWITCH_TIMER));
+		       pe_session->peSessionId, eLIM_CHANNEL_SWITCH_TIMER));
 
 	if (tx_timer_deactivate(&mac->lim.limTimers.gLimChannelSwitchTimer) !=
 	    QDF_STATUS_SUCCESS) {
@@ -2207,7 +2207,7 @@ void lim_cancel_dot11h_channel_switch(tpAniSirGlobal mac,
 	}
 
 	/* We need to restore pre-channelSwitch state on the STA */
-	if (lim_restore_pre_channel_switch_state(mac, psessionEntry) !=
+	if (lim_restore_pre_channel_switch_state(mac, pe_session) !=
 	    QDF_STATUS_SUCCESS) {
 		pe_err("LIM: Could not restore pre-channelSwitch (11h) state, resetting the system");
 	}
@@ -2223,7 +2223,7 @@ void lim_cancel_dot11h_channel_switch(tpAniSirGlobal mac,
  */
 void
 lim_util_count_sta_add(tpAniSirGlobal mac,
-		       tpDphHashNode pSta, struct pe_session *psessionEntry)
+		       tpDphHashNode pSta, struct pe_session *pe_session)
 {
 
 	if ((!pSta) || (!pSta->valid) || (pSta->fAniCount))
@@ -2235,12 +2235,12 @@ lim_util_count_sta_add(tpAniSirGlobal mac,
 		return;
 
 	/* get here only if this is the first ANI peer in the BSS */
-	sch_edca_profile_update(mac, psessionEntry);
+	sch_edca_profile_update(mac, pe_session);
 }
 
 void
 lim_util_count_sta_del(tpAniSirGlobal mac,
-		       tpDphHashNode pSta, struct pe_session *psessionEntry)
+		       tpDphHashNode pSta, struct pe_session *pe_session)
 {
 
 	if ((pSta == NULL) || (!pSta->fAniCount))
@@ -2267,7 +2267,7 @@ lim_util_count_sta_del(tpAniSirGlobal mac,
 		return;
 
 	/* get here only if this is the last ANI peer in the BSS */
-	sch_edca_profile_update(mac, psessionEntry);
+	sch_edca_profile_update(mac, pe_session);
 }
 
 /**
@@ -2281,11 +2281,11 @@ lim_util_count_sta_del(tpAniSirGlobal mac,
  * @param  mac               Pointer to Global MAC structure
  * @param  status             Status of channel switch request
  * @param  data               User data
- * @param  psessionEntry      Session information
+ * @param  pe_session      Session information
  * @return NONE
  */
 void lim_switch_channel_cback(tpAniSirGlobal mac, QDF_STATUS status,
-			      uint32_t *data, struct pe_session *psessionEntry)
+			      uint32_t *data, struct pe_session *pe_session)
 {
 	struct scheduler_msg mmhMsg = { 0 };
 	tSirSmeSwitchChannelInd *pSirSmeSwitchChInd;
@@ -2293,10 +2293,10 @@ void lim_switch_channel_cback(tpAniSirGlobal mac, QDF_STATUS status,
 	QDF_STATUS evt_status;
 #endif
 
-	psessionEntry->currentOperChannel = psessionEntry->currentReqChannel;
+	pe_session->currentOperChannel = pe_session->currentReqChannel;
 
 	/* We need to restore pre-channelSwitch state on the STA */
-	if (lim_restore_pre_channel_switch_state(mac, psessionEntry) !=
+	if (lim_restore_pre_channel_switch_state(mac, pe_session) !=
 	    QDF_STATUS_SUCCESS) {
 		pe_err("Could not restore pre-channelSwitch (11h) state, resetting the system");
 		return;
@@ -2310,16 +2310,16 @@ void lim_switch_channel_cback(tpAniSirGlobal mac, QDF_STATUS status,
 	pSirSmeSwitchChInd->messageType = eWNI_SME_SWITCH_CHL_IND;
 	pSirSmeSwitchChInd->length = sizeof(tSirSmeSwitchChannelInd);
 	pSirSmeSwitchChInd->newChannelId =
-		psessionEntry->gLimChannelSwitch.primaryChannel;
-	pSirSmeSwitchChInd->sessionId = psessionEntry->smeSessionId;
+		pe_session->gLimChannelSwitch.primaryChannel;
+	pSirSmeSwitchChInd->sessionId = pe_session->smeSessionId;
 	pSirSmeSwitchChInd->chan_params.ch_width =
-			psessionEntry->gLimChannelSwitch.ch_width;
+			pe_session->gLimChannelSwitch.ch_width;
 	pSirSmeSwitchChInd->chan_params.sec_ch_offset =
-			psessionEntry->gLimChannelSwitch.sec_ch_offset;
+			pe_session->gLimChannelSwitch.sec_ch_offset;
 	pSirSmeSwitchChInd->chan_params.center_freq_seg0 =
-			psessionEntry->gLimChannelSwitch.ch_center_freq_seg0;
+			pe_session->gLimChannelSwitch.ch_center_freq_seg0;
 	pSirSmeSwitchChInd->chan_params.center_freq_seg1 =
-			psessionEntry->gLimChannelSwitch.ch_center_freq_seg1;
+			pe_session->gLimChannelSwitch.ch_center_freq_seg1;
 
 	pe_debug("session: %d chan: %d width: %d sec offset: %d seg0: %d seg1: %d",
 		pSirSmeSwitchChInd->sessionId,
@@ -2329,23 +2329,23 @@ void lim_switch_channel_cback(tpAniSirGlobal mac, QDF_STATUS status,
 		pSirSmeSwitchChInd->chan_params.center_freq_seg0,
 		pSirSmeSwitchChInd->chan_params.center_freq_seg1);
 
-	qdf_mem_copy(pSirSmeSwitchChInd->bssid.bytes, psessionEntry->bssId,
+	qdf_mem_copy(pSirSmeSwitchChInd->bssid.bytes, pe_session->bssId,
 		     QDF_MAC_ADDR_SIZE);
 	mmhMsg.bodyptr = pSirSmeSwitchChInd;
 	mmhMsg.bodyval = 0;
 
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
-			 psessionEntry->peSessionId, mmhMsg.type));
+			 pe_session->peSessionId, mmhMsg.type));
 
 	sys_process_mmh_msg(mac, &mmhMsg);
 #ifdef CONFIG_VDEV_SM
 	evt_status = wlan_vdev_mlme_sm_deliver_evt(
-				psessionEntry->vdev,
+				pe_session->vdev,
 				WLAN_VDEV_SM_EV_START_SUCCESS,
-				sizeof(*psessionEntry), psessionEntry);
+				sizeof(*pe_session), pe_session);
 	if (QDF_IS_STATUS_ERROR(evt_status)) {
 		pe_err("Failed to post WLAN_VDEV_SM_EV_START_SUCCESS for vdevid %d",
-		       psessionEntry->smeSessionId);
+		       pe_session->smeSessionId);
 	}
 #endif
 }
@@ -2363,22 +2363,22 @@ void lim_switch_channel_cback(tpAniSirGlobal mac, QDF_STATUS status,
  * @return NONE
  */
 void lim_switch_primary_channel(tpAniSirGlobal mac, uint8_t newChannel,
-				struct pe_session *psessionEntry)
+				struct pe_session *pe_session)
 {
 	pe_debug("old chnl: %d --> new chnl: %d",
-		       psessionEntry->currentOperChannel, newChannel);
+		       pe_session->currentOperChannel, newChannel);
 
-	psessionEntry->currentReqChannel = newChannel;
-	psessionEntry->limRFBand = lim_get_rf_band(newChannel);
+	pe_session->currentReqChannel = newChannel;
+	pe_session->limRFBand = lim_get_rf_band(newChannel);
 
-	psessionEntry->channelChangeReasonCode = LIM_SWITCH_CHANNEL_OPERATION;
+	pe_session->channelChangeReasonCode = LIM_SWITCH_CHANNEL_OPERATION;
 
 	mac->lim.gpchangeChannelCallback = lim_switch_channel_cback;
 	mac->lim.gpchangeChannelData = NULL;
 
 	lim_send_switch_chnl_params(mac, newChannel, 0, 0, CH_WIDTH_20MHZ,
-				    psessionEntry->maxTxPower,
-				    psessionEntry->peSessionId, false, 0, 0);
+				    pe_session->maxTxPower,
+				    pe_session->peSessionId, false, 0, 0);
 	return;
 }
 
@@ -2402,7 +2402,7 @@ void lim_switch_primary_channel(tpAniSirGlobal mac, uint8_t newChannel,
  * @return NONE
  */
 void lim_switch_primary_secondary_channel(tpAniSirGlobal mac,
-					struct pe_session *psessionEntry,
+					struct pe_session *pe_session,
 					uint8_t newChannel,
 					uint8_t ch_center_freq_seg0,
 					uint8_t ch_center_freq_seg1,
@@ -2410,41 +2410,41 @@ void lim_switch_primary_secondary_channel(tpAniSirGlobal mac,
 {
 
 	/* Assign the callback to resume TX once channel is changed. */
-	psessionEntry->currentReqChannel = newChannel;
-	psessionEntry->limRFBand = lim_get_rf_band(newChannel);
-	psessionEntry->channelChangeReasonCode = LIM_SWITCH_CHANNEL_OPERATION;
+	pe_session->currentReqChannel = newChannel;
+	pe_session->limRFBand = lim_get_rf_band(newChannel);
+	pe_session->channelChangeReasonCode = LIM_SWITCH_CHANNEL_OPERATION;
 	mac->lim.gpchangeChannelCallback = lim_switch_channel_cback;
 	mac->lim.gpchangeChannelData = NULL;
 
 	lim_send_switch_chnl_params(mac, newChannel, ch_center_freq_seg0,
 					ch_center_freq_seg1, ch_width,
-					psessionEntry->maxTxPower,
-					psessionEntry->peSessionId,
+					pe_session->maxTxPower,
+					pe_session->peSessionId,
 					false, 0, 0);
 
 	/* Store the new primary and secondary channel in session entries if different */
-	if (psessionEntry->currentOperChannel != newChannel) {
+	if (pe_session->currentOperChannel != newChannel) {
 		pe_warn("switch old chnl: %d --> new chnl: %d",
-			psessionEntry->currentOperChannel, newChannel);
-		psessionEntry->currentOperChannel = newChannel;
+			pe_session->currentOperChannel, newChannel);
+		pe_session->currentOperChannel = newChannel;
 	}
-	if (psessionEntry->htSecondaryChannelOffset !=
-			psessionEntry->gLimChannelSwitch.sec_ch_offset) {
+	if (pe_session->htSecondaryChannelOffset !=
+			pe_session->gLimChannelSwitch.sec_ch_offset) {
 		pe_warn("switch old sec chnl: %d --> new sec chnl: %d",
-			psessionEntry->htSecondaryChannelOffset,
-			psessionEntry->gLimChannelSwitch.sec_ch_offset);
-		psessionEntry->htSecondaryChannelOffset =
-			psessionEntry->gLimChannelSwitch.sec_ch_offset;
-		if (psessionEntry->htSecondaryChannelOffset ==
+			pe_session->htSecondaryChannelOffset,
+			pe_session->gLimChannelSwitch.sec_ch_offset);
+		pe_session->htSecondaryChannelOffset =
+			pe_session->gLimChannelSwitch.sec_ch_offset;
+		if (pe_session->htSecondaryChannelOffset ==
 		    PHY_SINGLE_CHANNEL_CENTERED) {
-			psessionEntry->htSupportedChannelWidthSet =
+			pe_session->htSupportedChannelWidthSet =
 				WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
 		} else {
-			psessionEntry->htSupportedChannelWidthSet =
+			pe_session->htSupportedChannelWidthSet =
 				WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
 		}
-		psessionEntry->htRecommendedTxWidthSet =
-			psessionEntry->htSupportedChannelWidthSet;
+		pe_session->htRecommendedTxWidthSet =
+			pe_session->htSupportedChannelWidthSet;
 	}
 
 	return;
@@ -2478,7 +2478,7 @@ void lim_switch_primary_secondary_channel(tpAniSirGlobal mac,
  */
 
 uint8_t lim_get_ht_capability(tpAniSirGlobal mac,
-			      uint32_t htCap, struct pe_session *psessionEntry)
+			      uint32_t htCap, struct pe_session *pe_session)
 {
 	uint8_t retVal = 0;
 	uint8_t *ptr;
@@ -2532,24 +2532,24 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal mac,
 		break;
 
 	case eHT_MAX_AMSDU_NUM:
-		retVal = (uint8_t) psessionEntry->max_amsdu_num;
+		retVal = (uint8_t) pe_session->max_amsdu_num;
 		break;
 
 	case eHT_RX_STBC:
-		retVal = (uint8_t) psessionEntry->htConfig.ht_rx_stbc;
+		retVal = (uint8_t) pe_session->htConfig.ht_rx_stbc;
 		break;
 
 	case eHT_TX_STBC:
-		retVal = (uint8_t) psessionEntry->htConfig.ht_tx_stbc;
+		retVal = (uint8_t) pe_session->htConfig.ht_tx_stbc;
 		break;
 
 	case eHT_SHORT_GI_40MHZ:
-		retVal = (uint8_t)(psessionEntry->htConfig.ht_sgi40) ?
+		retVal = (uint8_t)(pe_session->htConfig.ht_sgi40) ?
 			mac->mlme_cfg->ht_caps.ht_cap_info.short_gi_40_mhz : 0;
 		break;
 
 	case eHT_SHORT_GI_20MHZ:
-		retVal = (uint8_t)(psessionEntry->htConfig.ht_sgi20) ?
+		retVal = (uint8_t)(pe_session->htConfig.ht_sgi20) ?
 			mac->mlme_cfg->ht_caps.ht_cap_info.short_gi_20_mhz : 0;
 		break;
 
@@ -2563,11 +2563,11 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal mac,
 		break;
 
 	case eHT_SUPPORTED_CHANNEL_WIDTH_SET:
-		retVal = (uint8_t) psessionEntry->htSupportedChannelWidthSet;
+		retVal = (uint8_t) pe_session->htSupportedChannelWidthSet;
 		break;
 
 	case eHT_ADVANCED_CODING:
-		retVal = (uint8_t) psessionEntry->htConfig.ht_rx_ldpc;
+		retVal = (uint8_t) pe_session->htConfig.ht_rx_ldpc;
 		break;
 
 	case eHT_MAX_RX_AMPDU_FACTOR:
@@ -2609,20 +2609,20 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal mac,
 		break;
 
 	case eHT_RIFS_MODE:
-		retVal = psessionEntry->beaconParams.fRIFSMode;
+		retVal = pe_session->beaconParams.fRIFSMode;
 		break;
 
 	case eHT_RECOMMENDED_TX_WIDTH_SET:
-		retVal = psessionEntry->htRecommendedTxWidthSet;
+		retVal = pe_session->htRecommendedTxWidthSet;
 		break;
 
 	case eHT_EXTENSION_CHANNEL_OFFSET:
-		retVal = psessionEntry->htSecondaryChannelOffset;
+		retVal = pe_session->htSecondaryChannelOffset;
 		break;
 
 	case eHT_OP_MODE:
-		if (LIM_IS_AP_ROLE(psessionEntry))
-			retVal = psessionEntry->htOperMode;
+		if (LIM_IS_AP_ROLE(pe_session))
+			retVal = pe_session->htOperMode;
 		else
 			retVal = mac->lim.gHTOperMode;
 		break;
@@ -2637,7 +2637,7 @@ uint8_t lim_get_ht_capability(tpAniSirGlobal mac,
 
 	case eHT_LSIG_TXOP_PROTECTION_FULL_SUPPORT:
 		retVal =
-			psessionEntry->beaconParams.fLsigTXOPProtectionFullSupport;
+			pe_session->beaconParams.fLsigTXOPProtectionFullSupport;
 		break;
 
 	case eHT_PCO_ACTIVE:
@@ -3130,27 +3130,27 @@ QDF_STATUS
 lim_enable_ht_protection_from11g(tpAniSirGlobal mac, uint8_t enable,
 				 uint8_t overlap,
 				 tpUpdateBeaconParams pBeaconParams,
-				 struct pe_session *psessionEntry)
+				 struct pe_session *pe_session)
 {
-	if (!psessionEntry->htCapability)
+	if (!pe_session->htCapability)
 		return QDF_STATUS_SUCCESS;  /* protection from 11g is only for HT stations. */
 
 	/* overlapping protection configuration check. */
 	if (overlap) {
-		if ((LIM_IS_AP_ROLE(psessionEntry))
-		    && (!psessionEntry->cfgProtection.overlapFromllg)) {
+		if ((LIM_IS_AP_ROLE(pe_session))
+		    && (!pe_session->cfgProtection.overlapFromllg)) {
 			/* protection disabled. */
 			pe_debug("overlap protection from 11g is disabled");
 			return QDF_STATUS_SUCCESS;
 		}
 	} else {
 		/* normal protection config check */
-		if (LIM_IS_AP_ROLE(psessionEntry) &&
-		    !psessionEntry->cfgProtection.fromllg) {
+		if (LIM_IS_AP_ROLE(pe_session) &&
+		    !pe_session->cfgProtection.fromllg) {
 			/* protection disabled. */
 			pe_debug("protection from 11g is disabled");
 			return QDF_STATUS_SUCCESS;
-		} else if (!LIM_IS_AP_ROLE(psessionEntry)) {
+		} else if (!LIM_IS_AP_ROLE(pe_session)) {
 			if (!mac->lim.cfgProtection.fromllg) {
 				/* protection disabled. */
 				pe_debug("protection from 11g is disabled");
@@ -3162,54 +3162,54 @@ lim_enable_ht_protection_from11g(tpAniSirGlobal mac, uint8_t enable,
 		/* If we are AP and HT capable, we need to set the HT OP mode */
 		/* appropriately. */
 
-		if (LIM_IS_AP_ROLE(psessionEntry)) {
+		if (LIM_IS_AP_ROLE(pe_session)) {
 			if (overlap) {
-				psessionEntry->gLimOverlap11gParams.
+				pe_session->gLimOverlap11gParams.
 				protectionEnabled = true;
 				/* 11g exists in overlap BSS. */
 				/* need not to change the operating mode to overlap_legacy */
 				/* if higher or same protection operating mode is enabled right now. */
 				if ((eSIR_HT_OP_MODE_OVERLAP_LEGACY !=
-				     psessionEntry->htOperMode)
+				     pe_session->htOperMode)
 				    && (eSIR_HT_OP_MODE_MIXED !=
-					psessionEntry->htOperMode)) {
-					psessionEntry->htOperMode =
+					pe_session->htOperMode)) {
+					pe_session->htOperMode =
 						eSIR_HT_OP_MODE_OVERLAP_LEGACY;
 				}
 				lim_enable_ht_rifs_protection(mac, true, overlap,
 							      pBeaconParams,
-							      psessionEntry);
+							      pe_session);
 				lim_enable_ht_obss_protection(mac, true, overlap,
 							      pBeaconParams,
-							      psessionEntry);
+							      pe_session);
 			} else {
 				/* 11g is associated to an AP operating in 11n mode. */
 				/* Change the HT operating mode to 'mixed mode'. */
-				psessionEntry->gLim11gParams.protectionEnabled =
+				pe_session->gLim11gParams.protectionEnabled =
 					true;
 				if (eSIR_HT_OP_MODE_MIXED !=
-				    psessionEntry->htOperMode) {
-					psessionEntry->htOperMode =
+				    pe_session->htOperMode) {
+					pe_session->htOperMode =
 						eSIR_HT_OP_MODE_MIXED;
 					lim_enable_ht_rifs_protection(mac, true,
 								      overlap,
 								      pBeaconParams,
-								      psessionEntry);
+								      pe_session);
 					lim_enable_ht_obss_protection(mac, true,
 								      overlap,
 								      pBeaconParams,
-								      psessionEntry);
+								      pe_session);
 				}
 			}
 		}
 		/* This part is common for staiton as well. */
-		if (false == psessionEntry->beaconParams.llgCoexist) {
+		if (false == pe_session->beaconParams.llgCoexist) {
 			pBeaconParams->llgCoexist =
-				psessionEntry->beaconParams.llgCoexist = true;
+				pe_session->beaconParams.llgCoexist = true;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_llGCOEXIST_CHANGED;
 		} else if (true ==
-			   psessionEntry->gLimOverlap11gParams.
+			   pe_session->gLimOverlap11gParams.
 			   protectionEnabled) {
 			/* As operating mode changed after G station assoc some way to update beacon */
 			/* This addresses the issue of mode not changing to - 11 in beacon when OBSS overlap is enabled */
@@ -3217,59 +3217,59 @@ lim_enable_ht_protection_from11g(tpAniSirGlobal mac, uint8_t enable,
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_llGCOEXIST_CHANGED;
 		}
-	} else if (true == psessionEntry->beaconParams.llgCoexist) {
+	} else if (true == pe_session->beaconParams.llgCoexist) {
 		/* for AP role. */
 		/* we need to take care of HT OP mode change if needed. */
 		/* We need to take care of Overlap cases. */
 
-		if (LIM_IS_AP_ROLE(psessionEntry)) {
+		if (LIM_IS_AP_ROLE(pe_session)) {
 			if (overlap) {
 				/* Overlap Legacy protection disabled. */
-				if (psessionEntry->gLim11gParams.numSta == 0)
-					psessionEntry->gLimOverlap11gParams.
+				if (pe_session->gLim11gParams.numSta == 0)
+					pe_session->gLimOverlap11gParams.
 					protectionEnabled = false;
 
 				/* no HT op mode change if any of the overlap protection enabled. */
 				if (!
-				    (psessionEntry->gLimOlbcParams.
+				    (pe_session->gLimOlbcParams.
 				     protectionEnabled
-				     || psessionEntry->gLimOverlapHt20Params.
+				     || pe_session->gLimOverlapHt20Params.
 				     protectionEnabled
-				     || psessionEntry->gLimOverlapNonGfParams.
+				     || pe_session->gLimOverlapNonGfParams.
 				     protectionEnabled)) {
 					/* Check if there is a need to change HT OP mode. */
 					if (eSIR_HT_OP_MODE_OVERLAP_LEGACY ==
-					    psessionEntry->htOperMode) {
+					    pe_session->htOperMode) {
 						lim_enable_ht_rifs_protection(mac,
 									      false,
 									      overlap,
 									      pBeaconParams,
-									      psessionEntry);
+									      pe_session);
 						lim_enable_ht_obss_protection(mac,
 									      false,
 									      overlap,
 									      pBeaconParams,
-									      psessionEntry);
+									      pe_session);
 
-						if (psessionEntry->gLimHt20Params.protectionEnabled) {
+						if (pe_session->gLimHt20Params.protectionEnabled) {
 						if (eHT_CHANNEL_WIDTH_20MHZ ==
-							psessionEntry->htSupportedChannelWidthSet)
-							psessionEntry->htOperMode =
+							pe_session->htSupportedChannelWidthSet)
+							pe_session->htOperMode =
 								eSIR_HT_OP_MODE_PURE;
 						else
-							psessionEntry->htOperMode =
+							pe_session->htOperMode =
 								eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT;
 						} else
-							psessionEntry->htOperMode =
+							pe_session->htOperMode =
 								eSIR_HT_OP_MODE_PURE;
 					}
 				}
 			} else {
 				/* Disable protection from 11G stations. */
-				psessionEntry->gLim11gParams.protectionEnabled =
+				pe_session->gLim11gParams.protectionEnabled =
 					false;
 				/* Check if any other non-HT protection enabled. */
-				if (!psessionEntry->gLim11bParams.
+				if (!pe_session->gLim11bParams.
 				    protectionEnabled) {
 
 					/* Right now we are in HT OP Mixed mode. */
@@ -3277,57 +3277,57 @@ lim_enable_ht_protection_from11g(tpAniSirGlobal mac, uint8_t enable,
 					lim_enable_ht_obss_protection(mac, false,
 								      overlap,
 								      pBeaconParams,
-								      psessionEntry);
+								      pe_session);
 
 					/* Change HT OP mode to 01 if any overlap protection enabled */
-					if (psessionEntry->gLimOlbcParams.
+					if (pe_session->gLimOlbcParams.
 					    protectionEnabled
-					    || psessionEntry->
+					    || pe_session->
 					    gLimOverlap11gParams.
 					    protectionEnabled
-					    || psessionEntry->
+					    || pe_session->
 					    gLimOverlapHt20Params.
 					    protectionEnabled
-					    || psessionEntry->
+					    || pe_session->
 					    gLimOverlapNonGfParams.
 					    protectionEnabled) {
-						psessionEntry->htOperMode =
+						pe_session->htOperMode =
 							eSIR_HT_OP_MODE_OVERLAP_LEGACY;
 						lim_enable_ht_rifs_protection(mac,
 									      true,
 									      overlap,
 									      pBeaconParams,
-									      psessionEntry);
-					} else if (psessionEntry->
+									      pe_session);
+					} else if (pe_session->
 						   gLimHt20Params.
 						   protectionEnabled) {
 						/* Commenting because of CR 258588 WFA cert */
-						/* psessionEntry->htOperMode = eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT; */
-						psessionEntry->htOperMode =
+						/* pe_session->htOperMode = eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT; */
+						pe_session->htOperMode =
 							eSIR_HT_OP_MODE_PURE;
 						lim_enable_ht_rifs_protection(mac,
 									      false,
 									      overlap,
 									      pBeaconParams,
-									      psessionEntry);
+									      pe_session);
 					} else {
-						psessionEntry->htOperMode =
+						pe_session->htOperMode =
 							eSIR_HT_OP_MODE_PURE;
 						lim_enable_ht_rifs_protection(mac,
 									      false,
 									      overlap,
 									      pBeaconParams,
-									      psessionEntry);
+									      pe_session);
 					}
 				}
 			}
-			if (!psessionEntry->gLimOverlap11gParams.
+			if (!pe_session->gLimOverlap11gParams.
 			    protectionEnabled
-			    && !psessionEntry->gLim11gParams.
+			    && !pe_session->gLim11gParams.
 			    protectionEnabled) {
 				pe_debug("===> Protection from 11G Disabled");
 				pBeaconParams->llgCoexist =
-					psessionEntry->beaconParams.llgCoexist =
+					pe_session->beaconParams.llgCoexist =
 						false;
 				pBeaconParams->paramChangeBitmap |=
 					PARAM_llGCOEXIST_CHANGED;
@@ -3337,7 +3337,7 @@ lim_enable_ht_protection_from11g(tpAniSirGlobal mac, uint8_t enable,
 		else {
 			pe_debug("===> Protection from 11G Disabled");
 			pBeaconParams->llgCoexist =
-				psessionEntry->beaconParams.llgCoexist = false;
+				pe_session->beaconParams.llgCoexist = false;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_llGCOEXIST_CHANGED;
 		}
@@ -3359,10 +3359,10 @@ lim_enable_ht_protection_from11g(tpAniSirGlobal mac, uint8_t enable,
 QDF_STATUS
 lim_enable_ht_obss_protection(tpAniSirGlobal mac, uint8_t enable,
 			      uint8_t overlap, tpUpdateBeaconParams pBeaconParams,
-			      struct pe_session *psessionEntry)
+			      struct pe_session *pe_session)
 {
 
-	if (!psessionEntry->htCapability)
+	if (!pe_session->htCapability)
 		return QDF_STATUS_SUCCESS;  /* this protection  is only for HT stations. */
 
 	/* overlapping protection configuration check. */
@@ -3370,12 +3370,12 @@ lim_enable_ht_obss_protection(tpAniSirGlobal mac, uint8_t enable,
 		/* overlapping protection configuration check. */
 	} else {
 		/* normal protection config check */
-		if ((LIM_IS_AP_ROLE(psessionEntry)) &&
-		    !psessionEntry->cfgProtection.obss) { /* ToDo Update this field */
+		if ((LIM_IS_AP_ROLE(pe_session)) &&
+		    !pe_session->cfgProtection.obss) { /* ToDo Update this field */
 			/* protection disabled. */
 			pe_debug("protection from Obss is disabled");
 			return QDF_STATUS_SUCCESS;
-		} else if (!LIM_IS_AP_ROLE(psessionEntry)) {
+		} else if (!LIM_IS_AP_ROLE(pe_session)) {
 			if (!mac->lim.cfgProtection.obss) { /* ToDo Update this field */
 				/* protection disabled. */
 				pe_debug("protection from Obss is disabled");
@@ -3384,39 +3384,39 @@ lim_enable_ht_obss_protection(tpAniSirGlobal mac, uint8_t enable,
 		}
 	}
 
-	if (LIM_IS_AP_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
 		if ((enable)
-		    && (false == psessionEntry->beaconParams.gHTObssMode)) {
+		    && (false == pe_session->beaconParams.gHTObssMode)) {
 			pe_debug("=>obss protection enabled");
-			psessionEntry->beaconParams.gHTObssMode = true;
+			pe_session->beaconParams.gHTObssMode = true;
 			pBeaconParams->paramChangeBitmap |= PARAM_OBSS_MODE_CHANGED; /* UPDATE AN ENUM FOR OBSS MODE <todo> */
 
 		} else if (!enable
 			   && (true ==
-			       psessionEntry->beaconParams.gHTObssMode)) {
+			       pe_session->beaconParams.gHTObssMode)) {
 			pe_debug("===> obss Protection disabled");
-			psessionEntry->beaconParams.gHTObssMode = false;
+			pe_session->beaconParams.gHTObssMode = false;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_OBSS_MODE_CHANGED;
 
 		}
 /* CR-263021: OBSS bit is not switching back to 0 after disabling the overlapping legacy BSS */
 		if (!enable && !overlap) {
-			psessionEntry->gLimOverlap11gParams.protectionEnabled =
+			pe_session->gLimOverlap11gParams.protectionEnabled =
 				false;
 		}
 	} else {
 		if ((enable)
-		    && (false == psessionEntry->beaconParams.gHTObssMode)) {
+		    && (false == pe_session->beaconParams.gHTObssMode)) {
 			pe_debug("=>obss protection enabled");
-			psessionEntry->beaconParams.gHTObssMode = true;
+			pe_session->beaconParams.gHTObssMode = true;
 			pBeaconParams->paramChangeBitmap |= PARAM_OBSS_MODE_CHANGED; /* UPDATE AN ENUM FOR OBSS MODE <todo> */
 
 		} else if (!enable
 			   && (true ==
-			       psessionEntry->beaconParams.gHTObssMode)) {
+			       pe_session->beaconParams.gHTObssMode)) {
 			pe_debug("===> obss Protection disabled");
-			psessionEntry->beaconParams.gHTObssMode = false;
+			pe_session->beaconParams.gHTObssMode = false;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_OBSS_MODE_CHANGED;
 
@@ -3628,21 +3628,21 @@ QDF_STATUS lim_enable_ht20_protection(tpAniSirGlobal mac_ctx, uint8_t enable,
 QDF_STATUS
 lim_enable_ht_non_gf_protection(tpAniSirGlobal mac, uint8_t enable,
 				uint8_t overlap, tpUpdateBeaconParams pBeaconParams,
-				struct pe_session *psessionEntry)
+				struct pe_session *pe_session)
 {
-	if (!psessionEntry->htCapability)
+	if (!pe_session->htCapability)
 		return QDF_STATUS_SUCCESS;  /* this protection  is only for HT stations. */
 
 	/* overlapping protection configuration check. */
 	if (overlap) {
 	} else {
 		/* normal protection config check */
-		if (LIM_IS_AP_ROLE(psessionEntry) &&
-		    !psessionEntry->cfgProtection.nonGf) {
+		if (LIM_IS_AP_ROLE(pe_session) &&
+		    !pe_session->cfgProtection.nonGf) {
 			/* protection disabled. */
 			pe_debug("protection from NonGf is disabled");
 			return QDF_STATUS_SUCCESS;
-		} else if (!LIM_IS_AP_ROLE(psessionEntry)) {
+		} else if (!LIM_IS_AP_ROLE(pe_session)) {
 			/* normal protection config check */
 			if (!mac->lim.cfgProtection.nonGf) {
 				/* protection disabled. */
@@ -3651,37 +3651,37 @@ lim_enable_ht_non_gf_protection(tpAniSirGlobal mac, uint8_t enable,
 			}
 		}
 	}
-	if (LIM_IS_AP_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
 		if ((enable)
-		    && (false == psessionEntry->beaconParams.llnNonGFCoexist)) {
+		    && (false == pe_session->beaconParams.llnNonGFCoexist)) {
 			pe_debug(" => Protection from non GF Enabled");
 			pBeaconParams->llnNonGFCoexist =
-				psessionEntry->beaconParams.llnNonGFCoexist = true;
+				pe_session->beaconParams.llnNonGFCoexist = true;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_NON_GF_DEVICES_PRESENT_CHANGED;
 		} else if (!enable
 			   && (true ==
-			       psessionEntry->beaconParams.llnNonGFCoexist)) {
+			       pe_session->beaconParams.llnNonGFCoexist)) {
 			pe_debug("===> Protection from Non GF Disabled");
 			pBeaconParams->llnNonGFCoexist =
-				psessionEntry->beaconParams.llnNonGFCoexist = false;
+				pe_session->beaconParams.llnNonGFCoexist = false;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_NON_GF_DEVICES_PRESENT_CHANGED;
 		}
 	} else {
 		if ((enable)
-		    && (false == psessionEntry->beaconParams.llnNonGFCoexist)) {
+		    && (false == pe_session->beaconParams.llnNonGFCoexist)) {
 			pe_debug(" => Protection from non GF Enabled");
 			pBeaconParams->llnNonGFCoexist =
-				psessionEntry->beaconParams.llnNonGFCoexist = true;
+				pe_session->beaconParams.llnNonGFCoexist = true;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_NON_GF_DEVICES_PRESENT_CHANGED;
 		} else if (!enable
 			   && (true ==
-			       psessionEntry->beaconParams.llnNonGFCoexist)) {
+			       pe_session->beaconParams.llnNonGFCoexist)) {
 			pe_debug("===> Protection from Non GF Disabled");
 			pBeaconParams->llnNonGFCoexist =
-				psessionEntry->beaconParams.llnNonGFCoexist = false;
+				pe_session->beaconParams.llnNonGFCoexist = false;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_NON_GF_DEVICES_PRESENT_CHANGED;
 		}
@@ -3702,21 +3702,21 @@ QDF_STATUS
 lim_enable_ht_lsig_txop_protection(tpAniSirGlobal mac, uint8_t enable,
 				   uint8_t overlap,
 				   tpUpdateBeaconParams pBeaconParams,
-				   struct pe_session *psessionEntry)
+				   struct pe_session *pe_session)
 {
-	if (!psessionEntry->htCapability)
+	if (!pe_session->htCapability)
 		return QDF_STATUS_SUCCESS;  /* this protection  is only for HT stations. */
 
 	/* overlapping protection configuration check. */
 	if (overlap) {
 	} else {
 		/* normal protection config check */
-		if (LIM_IS_AP_ROLE(psessionEntry) &&
-			!psessionEntry->cfgProtection.lsigTxop) {
+		if (LIM_IS_AP_ROLE(pe_session) &&
+			!pe_session->cfgProtection.lsigTxop) {
 			/* protection disabled. */
 			pe_debug("protection from LsigTxop not supported is disabled");
 			return QDF_STATUS_SUCCESS;
-		} else if (!LIM_IS_AP_ROLE(psessionEntry)) {
+		} else if (!LIM_IS_AP_ROLE(pe_session)) {
 			/* normal protection config check */
 			if (!mac->lim.cfgProtection.lsigTxop) {
 				/* protection disabled. */
@@ -3726,24 +3726,24 @@ lim_enable_ht_lsig_txop_protection(tpAniSirGlobal mac, uint8_t enable,
 		}
 	}
 
-	if (LIM_IS_AP_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
 		if ((enable)
 		    && (false ==
-			psessionEntry->beaconParams.
+			pe_session->beaconParams.
 			fLsigTXOPProtectionFullSupport)) {
 			pe_debug(" => Protection from LsigTxop Enabled");
 			pBeaconParams->fLsigTXOPProtectionFullSupport =
-				psessionEntry->beaconParams.
+				pe_session->beaconParams.
 				fLsigTXOPProtectionFullSupport = true;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_LSIG_TXOP_FULL_SUPPORT_CHANGED;
 		} else if (!enable
 			   && (true ==
-			       psessionEntry->beaconParams.
+			       pe_session->beaconParams.
 			       fLsigTXOPProtectionFullSupport)) {
 			pe_debug("===> Protection from LsigTxop Disabled");
 			pBeaconParams->fLsigTXOPProtectionFullSupport =
-				psessionEntry->beaconParams.
+				pe_session->beaconParams.
 				fLsigTXOPProtectionFullSupport = false;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_LSIG_TXOP_FULL_SUPPORT_CHANGED;
@@ -3751,21 +3751,21 @@ lim_enable_ht_lsig_txop_protection(tpAniSirGlobal mac, uint8_t enable,
 	} else {
 		if ((enable)
 		    && (false ==
-			psessionEntry->beaconParams.
+			pe_session->beaconParams.
 			fLsigTXOPProtectionFullSupport)) {
 			pe_debug(" => Protection from LsigTxop Enabled");
 			pBeaconParams->fLsigTXOPProtectionFullSupport =
-				psessionEntry->beaconParams.
+				pe_session->beaconParams.
 				fLsigTXOPProtectionFullSupport = true;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_LSIG_TXOP_FULL_SUPPORT_CHANGED;
 		} else if (!enable
 			   && (true ==
-			       psessionEntry->beaconParams.
+			       pe_session->beaconParams.
 			       fLsigTXOPProtectionFullSupport)) {
 			pe_debug("===> Protection from LsigTxop Disabled");
 			pBeaconParams->fLsigTXOPProtectionFullSupport =
-				psessionEntry->beaconParams.
+				pe_session->beaconParams.
 				fLsigTXOPProtectionFullSupport = false;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_LSIG_TXOP_FULL_SUPPORT_CHANGED;
@@ -3787,21 +3787,21 @@ lim_enable_ht_lsig_txop_protection(tpAniSirGlobal mac, uint8_t enable,
 QDF_STATUS
 lim_enable_ht_rifs_protection(tpAniSirGlobal mac, uint8_t enable,
 			      uint8_t overlap, tpUpdateBeaconParams pBeaconParams,
-			      struct pe_session *psessionEntry)
+			      struct pe_session *pe_session)
 {
-	if (!psessionEntry->htCapability)
+	if (!pe_session->htCapability)
 		return QDF_STATUS_SUCCESS;  /* this protection  is only for HT stations. */
 
 	/* overlapping protection configuration check. */
 	if (overlap) {
 	} else {
 		/* normal protection config check */
-		if (LIM_IS_AP_ROLE(psessionEntry) &&
-		    !psessionEntry->cfgProtection.rifs) {
+		if (LIM_IS_AP_ROLE(pe_session) &&
+		    !pe_session->cfgProtection.rifs) {
 			/* protection disabled. */
 			pe_debug("protection from Rifs is disabled");
 			return QDF_STATUS_SUCCESS;
-		} else if (!LIM_IS_AP_ROLE(psessionEntry)) {
+		} else if (!LIM_IS_AP_ROLE(pe_session)) {
 			/* normal protection config check */
 			if (!mac->lim.cfgProtection.rifs) {
 				/* protection disabled. */
@@ -3811,41 +3811,41 @@ lim_enable_ht_rifs_protection(tpAniSirGlobal mac, uint8_t enable,
 		}
 	}
 
-	if (LIM_IS_AP_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
 		/* Disabling the RIFS Protection means Enable the RIFS mode of operation in the BSS */
 		if ((!enable)
-		    && (false == psessionEntry->beaconParams.fRIFSMode)) {
+		    && (false == pe_session->beaconParams.fRIFSMode)) {
 			pe_debug(" => Rifs protection Disabled");
 			pBeaconParams->fRIFSMode =
-				psessionEntry->beaconParams.fRIFSMode = true;
+				pe_session->beaconParams.fRIFSMode = true;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_RIFS_MODE_CHANGED;
 		}
 		/* Enabling the RIFS Protection means Disable the RIFS mode of operation in the BSS */
 		else if (enable
-			 && (true == psessionEntry->beaconParams.fRIFSMode)) {
+			 && (true == pe_session->beaconParams.fRIFSMode)) {
 			pe_debug("===> Rifs Protection Enabled");
 			pBeaconParams->fRIFSMode =
-				psessionEntry->beaconParams.fRIFSMode = false;
+				pe_session->beaconParams.fRIFSMode = false;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_RIFS_MODE_CHANGED;
 		}
 	} else {
 		/* Disabling the RIFS Protection means Enable the RIFS mode of operation in the BSS */
 		if ((!enable)
-		    && (false == psessionEntry->beaconParams.fRIFSMode)) {
+		    && (false == pe_session->beaconParams.fRIFSMode)) {
 			pe_debug(" => Rifs protection Disabled");
 			pBeaconParams->fRIFSMode =
-				psessionEntry->beaconParams.fRIFSMode = true;
+				pe_session->beaconParams.fRIFSMode = true;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_RIFS_MODE_CHANGED;
 		}
 		/* Enabling the RIFS Protection means Disable the RIFS mode of operation in the BSS */
 		else if (enable
-			 && (true == psessionEntry->beaconParams.fRIFSMode)) {
+			 && (true == pe_session->beaconParams.fRIFSMode)) {
 			pe_debug("===> Rifs Protection Enabled");
 			pBeaconParams->fRIFSMode =
-				psessionEntry->beaconParams.fRIFSMode = false;
+				pe_session->beaconParams.fRIFSMode = false;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_RIFS_MODE_CHANGED;
 		}
@@ -3873,7 +3873,7 @@ lim_enable_ht_rifs_protection(tpAniSirGlobal mac, uint8_t enable,
 QDF_STATUS
 lim_enable_short_preamble(tpAniSirGlobal mac, uint8_t enable,
 			  tpUpdateBeaconParams pBeaconParams,
-			  struct pe_session *psessionEntry)
+			  struct pe_session *pe_session)
 {
 	if (!mac->mlme_cfg->ht_caps.short_preamble)
 		return QDF_STATUS_SUCCESS;
@@ -3882,22 +3882,22 @@ lim_enable_short_preamble(tpAniSirGlobal mac, uint8_t enable,
 	if (!mac->mlme_cfg->feature_flags.enable_short_preamble_11g)
 		return QDF_STATUS_SUCCESS;
 
-	if (LIM_IS_AP_ROLE(psessionEntry)) {
-		if (enable && (psessionEntry->beaconParams.fShortPreamble == 0)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
+		if (enable && (pe_session->beaconParams.fShortPreamble == 0)) {
 			pe_debug("===> Short Preamble Enabled");
-			psessionEntry->beaconParams.fShortPreamble = true;
+			pe_session->beaconParams.fShortPreamble = true;
 			pBeaconParams->fShortPreamble =
-				(uint8_t) psessionEntry->beaconParams.
+				(uint8_t) pe_session->beaconParams.
 				fShortPreamble;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_SHORT_PREAMBLE_CHANGED;
 		} else if (!enable
-			   && (psessionEntry->beaconParams.fShortPreamble ==
+			   && (pe_session->beaconParams.fShortPreamble ==
 			       1)) {
 			pe_debug("===> Short Preamble Disabled");
-			psessionEntry->beaconParams.fShortPreamble = false;
+			pe_session->beaconParams.fShortPreamble = false;
 			pBeaconParams->fShortPreamble =
-				(uint8_t) psessionEntry->beaconParams.
+				(uint8_t) pe_session->beaconParams.
 				fShortPreamble;
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_SHORT_PREAMBLE_CHANGED;
@@ -3970,23 +3970,23 @@ QDF_STATUS lim_tx_complete(void *context, qdf_nbuf_t buf, bool free)
 void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal mac,
 						   tDot11fIEHTInfo *pHTInfo,
 						   uint8_t bssIdx,
-						   struct pe_session *psessionEntry)
+						   struct pe_session *pe_session)
 {
 	uint8_t center_freq = 0;
 	enum phy_ch_width ch_width = CH_WIDTH_20MHZ;
 
 	/* If self capability is set to '20Mhz only', then do not change the CB mode. */
 	if (!lim_get_ht_capability
-		    (mac, eHT_SUPPORTED_CHANNEL_WIDTH_SET, psessionEntry))
+		    (mac, eHT_SUPPORTED_CHANNEL_WIDTH_SET, pe_session))
 		return;
 
-	if (WLAN_REG_IS_24GHZ_CH(psessionEntry->currentOperChannel) &&
-		psessionEntry->force_24ghz_in_ht20) {
+	if (WLAN_REG_IS_24GHZ_CH(pe_session->currentOperChannel) &&
+		pe_session->force_24ghz_in_ht20) {
 		pe_debug("force_24ghz_in_ht20 is set and channel is 2.4 Ghz");
 		return;
 	}
 
-	if (psessionEntry->ftPEContext.ftPreAuthSession) {
+	if (pe_session->ftPEContext.ftPreAuthSession) {
 		pe_err("FT PREAUTH channel change is in progress");
 		return;
 	}
@@ -4005,7 +4005,7 @@ void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal mac,
 		return;
 	}
 
-	if (psessionEntry->ch_switch_in_progress == true) {
+	if (pe_session->ch_switch_in_progress == true) {
 		pe_debug("ch switch is in progress, ignore HT IE BW update");
 		return;
 	}
@@ -4015,16 +4015,16 @@ void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal mac,
 		return;
 	}
 
-	if (psessionEntry->htSecondaryChannelOffset !=
+	if (pe_session->htSecondaryChannelOffset !=
 	    (uint8_t) pHTInfo->secondaryChannelOffset
-	    || psessionEntry->htRecommendedTxWidthSet !=
+	    || pe_session->htRecommendedTxWidthSet !=
 	    (uint8_t) pHTInfo->recommendedTxWidthSet) {
-		psessionEntry->htSecondaryChannelOffset =
+		pe_session->htSecondaryChannelOffset =
 			(ePhyChanBondState) pHTInfo->secondaryChannelOffset;
-		psessionEntry->htRecommendedTxWidthSet =
+		pe_session->htRecommendedTxWidthSet =
 			(uint8_t) pHTInfo->recommendedTxWidthSet;
 		if (eHT_CHANNEL_WIDTH_40MHZ ==
-		    psessionEntry->htRecommendedTxWidthSet) {
+		    pe_session->htRecommendedTxWidthSet) {
 			ch_width = CH_WIDTH_40MHZ;
 			if (PHY_DOUBLE_CHANNEL_LOW_PRIMARY ==
 					pHTInfo->secondaryChannelOffset)
@@ -4042,21 +4042,21 @@ void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal mac,
 		pe_debug("Primary Channel: %d Secondary Chan"
 				       "nel Offset: %d Channel Width: %d",
 			pHTInfo->primaryChannel, center_freq,
-			psessionEntry->htRecommendedTxWidthSet);
-		psessionEntry->channelChangeReasonCode =
+			pe_session->htRecommendedTxWidthSet);
+		pe_session->channelChangeReasonCode =
 			LIM_SWITCH_CHANNEL_OPERATION;
 		mac->lim.gpchangeChannelCallback = NULL;
 		mac->lim.gpchangeChannelData = NULL;
 
 		lim_send_switch_chnl_params(mac, (uint8_t) pHTInfo->primaryChannel,
 					    center_freq, 0, ch_width,
-					    psessionEntry->maxTxPower,
-					    psessionEntry->peSessionId,
+					    pe_session->maxTxPower,
+					    pe_session->peSessionId,
 					    true, 0, 0);
 
 		/* In case of IBSS, if STA should update HT Info IE in its beacons. */
-		if (LIM_IS_IBSS_ROLE(psessionEntry)) {
-			sch_set_fixed_beacon_fields(mac, psessionEntry);
+		if (LIM_IS_IBSS_ROLE(pe_session)) {
+			sch_set_fixed_beacon_fields(mac, pe_session);
 		}
 
 	}
@@ -4116,18 +4116,18 @@ void lim_update_sta_run_time_ht_capability(tpAniSirGlobal mac,
 
 void lim_update_sta_run_time_ht_info(tpAniSirGlobal mac,
 				     tDot11fIEHTInfo *pHTInfo,
-				     struct pe_session *psessionEntry)
+				     struct pe_session *pe_session)
 {
-	if (psessionEntry->htRecommendedTxWidthSet !=
+	if (pe_session->htRecommendedTxWidthSet !=
 	    (uint8_t) pHTInfo->recommendedTxWidthSet) {
-		psessionEntry->htRecommendedTxWidthSet =
+		pe_session->htRecommendedTxWidthSet =
 			(uint8_t) pHTInfo->recommendedTxWidthSet;
 		/* Send change notification to HAL */
 	}
 
-	if (psessionEntry->beaconParams.fRIFSMode !=
+	if (pe_session->beaconParams.fRIFSMode !=
 	    (uint8_t) pHTInfo->rifsMode) {
-		psessionEntry->beaconParams.fRIFSMode =
+		pe_session->beaconParams.fRIFSMode =
 			(uint8_t) pHTInfo->rifsMode;
 		/* Send change notification to HAL */
 	}
@@ -4145,9 +4145,9 @@ void lim_update_sta_run_time_ht_info(tpAniSirGlobal mac,
 		/* Send change notification to HAL */
 	}
 
-	if (psessionEntry->beaconParams.llnNonGFCoexist !=
+	if (pe_session->beaconParams.llnNonGFCoexist !=
 	    pHTInfo->nonGFDevicesPresent) {
-		psessionEntry->beaconParams.llnNonGFCoexist =
+		pe_session->beaconParams.llnNonGFCoexist =
 			(uint8_t) pHTInfo->nonGFDevicesPresent;
 	}
 
@@ -4169,9 +4169,9 @@ void lim_update_sta_run_time_ht_info(tpAniSirGlobal mac,
 		/* Send change notification to HAL */
 	}
 
-	if (psessionEntry->beaconParams.fLsigTXOPProtectionFullSupport !=
+	if (pe_session->beaconParams.fLsigTXOPProtectionFullSupport !=
 	    (uint8_t) pHTInfo->lsigTXOPProtectionFullSupport) {
-		psessionEntry->beaconParams.fLsigTXOPProtectionFullSupport =
+		pe_session->beaconParams.fLsigTXOPProtectionFullSupport =
 			(uint8_t) pHTInfo->lsigTXOPProtectionFullSupport;
 		/* Send change notification to HAL */
 	}
@@ -4539,16 +4539,16 @@ bool lim_is_channel_valid_for_channel_switch(tpAniSirGlobal mac, uint8_t channel
  */
 
 QDF_STATUS
-lim_restore_pre_channel_switch_state(tpAniSirGlobal mac, struct pe_session *psessionEntry)
+lim_restore_pre_channel_switch_state(tpAniSirGlobal mac, struct pe_session *pe_session)
 {
 
 	QDF_STATUS retCode = QDF_STATUS_SUCCESS;
 
-	if (!LIM_IS_STA_ROLE(psessionEntry))
+	if (!LIM_IS_STA_ROLE(pe_session))
 		return retCode;
 
 	/* Channel switch should be ready for the next time */
-	psessionEntry->gLimSpecMgmt.dot11hChanSwState = eLIM_11H_CHANSW_INIT;
+	pe_session->gLimSpecMgmt.dot11hChanSwState = eLIM_11H_CHANSW_INIT;
 
 	return retCode;
 }
@@ -4569,17 +4569,17 @@ lim_restore_pre_channel_switch_state(tpAniSirGlobal mac, struct pe_session *pses
  *          NA
  *
  * @param  mac - Pointer to Global MAC structure
- * @param  psessionEntry
+ * @param  pe_session
  * @return None
  */
 void
-lim_prepare_for11h_channel_switch(tpAniSirGlobal mac, struct pe_session *psessionEntry)
+lim_prepare_for11h_channel_switch(tpAniSirGlobal mac, struct pe_session *pe_session)
 {
-	if (!LIM_IS_STA_ROLE(psessionEntry))
+	if (!LIM_IS_STA_ROLE(pe_session))
 		return;
 
 	/* Flag to indicate 11h channel switch in progress */
-	psessionEntry->gLimSpecMgmt.dot11hChanSwState = eLIM_11H_CHANSW_RUNNING;
+	pe_session->gLimSpecMgmt.dot11hChanSwState = eLIM_11H_CHANSW_RUNNING;
 
 	if (mac->lim.gLimSmeState == eLIM_SME_LINK_EST_WT_SCAN_STATE ||
 	    mac->lim.gLimSmeState == eLIM_SME_CHANNEL_SCAN_STATE) {
@@ -4590,13 +4590,13 @@ lim_prepare_for11h_channel_switch(tpAniSirGlobal mac, struct pe_session *psessio
 			/* This will instruct HAL to set it to any previous valid channel. */
 			pe_set_resume_channel(mac, 0, 0);
 		} else {
-			lim_restore_pre_channel_switch_state(mac, psessionEntry);
+			lim_restore_pre_channel_switch_state(mac, pe_session);
 		}
 		return;
 	} else {
 		pe_debug("Not in scan state, start channel switch timer");
 		/** We are safe to switch channel at this point */
-		lim_stop_tx_and_switch_channel(mac, psessionEntry->peSessionId);
+		lim_stop_tx_and_switch_channel(mac, pe_session->peSessionId);
 	}
 }
 
@@ -4672,7 +4672,7 @@ uint8_t lim_get_channel_from_beacon(tpAniSirGlobal mac, tpSchBeaconStruct pBeaco
 }
 
 void lim_set_tspec_uapsd_mask_per_session(tpAniSirGlobal mac,
-					  struct pe_session *psessionEntry,
+					  struct pe_session *pe_session,
 					  tSirMacTSInfo *pTsInfo, uint32_t action)
 {
 	uint8_t userPrio = (uint8_t) pTsInfo->traffic.userPrio;
@@ -4692,35 +4692,35 @@ void lim_set_tspec_uapsd_mask_per_session(tpAniSirGlobal mac,
 
 	if (action == CLEAR_UAPSD_MASK) {
 		if (direction == SIR_MAC_DIRECTION_UPLINK)
-			psessionEntry->gUapsdPerAcTriggerEnableMask &=
+			pe_session->gUapsdPerAcTriggerEnableMask &=
 				~(1 << ac);
 		else if (direction == SIR_MAC_DIRECTION_DNLINK)
-			psessionEntry->gUapsdPerAcDeliveryEnableMask &=
+			pe_session->gUapsdPerAcDeliveryEnableMask &=
 				~(1 << ac);
 		else if (direction == SIR_MAC_DIRECTION_BIDIR) {
-			psessionEntry->gUapsdPerAcTriggerEnableMask &=
+			pe_session->gUapsdPerAcTriggerEnableMask &=
 				~(1 << ac);
-			psessionEntry->gUapsdPerAcDeliveryEnableMask &=
+			pe_session->gUapsdPerAcDeliveryEnableMask &=
 				~(1 << ac);
 		}
 	} else if (action == SET_UAPSD_MASK) {
 		if (direction == SIR_MAC_DIRECTION_UPLINK)
-			psessionEntry->gUapsdPerAcTriggerEnableMask |=
+			pe_session->gUapsdPerAcTriggerEnableMask |=
 				(1 << ac);
 		else if (direction == SIR_MAC_DIRECTION_DNLINK)
-			psessionEntry->gUapsdPerAcDeliveryEnableMask |=
+			pe_session->gUapsdPerAcDeliveryEnableMask |=
 				(1 << ac);
 		else if (direction == SIR_MAC_DIRECTION_BIDIR) {
-			psessionEntry->gUapsdPerAcTriggerEnableMask |=
+			pe_session->gUapsdPerAcTriggerEnableMask |=
 				(1 << ac);
-			psessionEntry->gUapsdPerAcDeliveryEnableMask |=
+			pe_session->gUapsdPerAcDeliveryEnableMask |=
 				(1 << ac);
 		}
 	}
 
-	pe_debug("New psessionEntry->gUapsdPerAcTriggerEnableMask 0x%x psessionEntry->gUapsdPerAcDeliveryEnableMask 0x%x",
-		psessionEntry->gUapsdPerAcTriggerEnableMask,
-		psessionEntry->gUapsdPerAcDeliveryEnableMask);
+	pe_debug("New pe_session->gUapsdPerAcTriggerEnableMask 0x%x pe_session->gUapsdPerAcDeliveryEnableMask 0x%x",
+		pe_session->gUapsdPerAcTriggerEnableMask,
+		pe_session->gUapsdPerAcDeliveryEnableMask);
 
 	return;
 }
@@ -4997,7 +4997,7 @@ void lim_handle_defer_msg_error(tpAniSirGlobal mac,
    \return void
    -----------------------------------------------------------*/
 void lim_diag_event_report(tpAniSirGlobal mac, uint16_t eventType,
-			   struct pe_session *pSessionEntry, uint16_t status,
+			   struct pe_session *pe_session, uint16_t status,
 			   uint16_t reasonCode)
 {
 	tSirMacAddr nullBssid = { 0, 0, 0, 0, 0, 0 };
@@ -5006,16 +5006,16 @@ void lim_diag_event_report(tpAniSirGlobal mac, uint16_t eventType,
 
 	qdf_mem_set(&peEvent, sizeof(host_event_wlan_pe_payload_type), 0);
 
-	if (NULL == pSessionEntry) {
+	if (NULL == pe_session) {
 		qdf_mem_copy(peEvent.bssid, nullBssid, sizeof(tSirMacAddr));
 		peEvent.sme_state = (uint16_t) mac->lim.gLimSmeState;
 		peEvent.mlm_state = (uint16_t) mac->lim.gLimMlmState;
 
 	} else {
-		qdf_mem_copy(peEvent.bssid, pSessionEntry->bssId,
+		qdf_mem_copy(peEvent.bssid, pe_session->bssId,
 			     sizeof(tSirMacAddr));
-		peEvent.sme_state = (uint16_t) pSessionEntry->limSmeState;
-		peEvent.mlm_state = (uint16_t) pSessionEntry->limMlmState;
+		peEvent.sme_state = (uint16_t) pe_session->limSmeState;
+		peEvent.mlm_state = (uint16_t) pe_session->limMlmState;
 	}
 	peEvent.event_type = eventType;
 	peEvent.status = status;
@@ -5142,74 +5142,74 @@ uint8_t lim_get_noa_attr_stream_in_mult_p2p_ies(tpAniSirGlobal mac,
 
 /* Returns length of NoA stream and Pointer pNoaStream passed to this function is filled with noa stream */
 uint8_t lim_get_noa_attr_stream(tpAniSirGlobal mac, uint8_t *pNoaStream,
-				struct pe_session *psessionEntry)
+				struct pe_session *pe_session)
 {
 	uint8_t len = 0;
 
 	uint8_t *pBody = pNoaStream;
 
-	if ((psessionEntry != NULL) && (psessionEntry->valid) &&
-	    (psessionEntry->pePersona == QDF_P2P_GO_MODE)) {
-		if ((!(psessionEntry->p2pGoPsUpdate.uNoa1Duration))
-		    && (!(psessionEntry->p2pGoPsUpdate.uNoa2Duration))
-		    && (!psessionEntry->p2pGoPsUpdate.oppPsFlag)
+	if ((pe_session != NULL) && (pe_session->valid) &&
+	    (pe_session->pePersona == QDF_P2P_GO_MODE)) {
+		if ((!(pe_session->p2pGoPsUpdate.uNoa1Duration))
+		    && (!(pe_session->p2pGoPsUpdate.uNoa2Duration))
+		    && (!pe_session->p2pGoPsUpdate.oppPsFlag)
 		    )
 			return 0;  /* No NoA Descriptor then return 0 */
 
 		pBody[0] = SIR_P2P_NOA_ATTR;
 
-		pBody[3] = psessionEntry->p2pGoPsUpdate.index;
+		pBody[3] = pe_session->p2pGoPsUpdate.index;
 		pBody[4] =
-			psessionEntry->p2pGoPsUpdate.ctWin | (psessionEntry->
+			pe_session->p2pGoPsUpdate.ctWin | (pe_session->
 							      p2pGoPsUpdate.
 							      oppPsFlag << 7);
 		len = 5;
 		pBody += len;
 
-		if (psessionEntry->p2pGoPsUpdate.uNoa1Duration) {
-			*pBody = psessionEntry->p2pGoPsUpdate.uNoa1IntervalCnt;
+		if (pe_session->p2pGoPsUpdate.uNoa1Duration) {
+			*pBody = pe_session->p2pGoPsUpdate.uNoa1IntervalCnt;
 			pBody += 1;
 			len += 1;
 
 			*((uint32_t *) (pBody)) =
-				sir_swap_u32if_needed(psessionEntry->p2pGoPsUpdate.
+				sir_swap_u32if_needed(pe_session->p2pGoPsUpdate.
 						      uNoa1Duration);
 			pBody += sizeof(uint32_t);
 			len += 4;
 
 			*((uint32_t *) (pBody)) =
-				sir_swap_u32if_needed(psessionEntry->p2pGoPsUpdate.
+				sir_swap_u32if_needed(pe_session->p2pGoPsUpdate.
 						      uNoa1Interval);
 			pBody += sizeof(uint32_t);
 			len += 4;
 
 			*((uint32_t *) (pBody)) =
-				sir_swap_u32if_needed(psessionEntry->p2pGoPsUpdate.
+				sir_swap_u32if_needed(pe_session->p2pGoPsUpdate.
 						      uNoa1StartTime);
 			pBody += sizeof(uint32_t);
 			len += 4;
 
 		}
 
-		if (psessionEntry->p2pGoPsUpdate.uNoa2Duration) {
-			*pBody = psessionEntry->p2pGoPsUpdate.uNoa2IntervalCnt;
+		if (pe_session->p2pGoPsUpdate.uNoa2Duration) {
+			*pBody = pe_session->p2pGoPsUpdate.uNoa2IntervalCnt;
 			pBody += 1;
 			len += 1;
 
 			*((uint32_t *) (pBody)) =
-				sir_swap_u32if_needed(psessionEntry->p2pGoPsUpdate.
+				sir_swap_u32if_needed(pe_session->p2pGoPsUpdate.
 						      uNoa2Duration);
 			pBody += sizeof(uint32_t);
 			len += 4;
 
 			*((uint32_t *) (pBody)) =
-				sir_swap_u32if_needed(psessionEntry->p2pGoPsUpdate.
+				sir_swap_u32if_needed(pe_session->p2pGoPsUpdate.
 						      uNoa2Interval);
 			pBody += sizeof(uint32_t);
 			len += 4;
 
 			*((uint32_t *) (pBody)) =
-				sir_swap_u32if_needed(psessionEntry->p2pGoPsUpdate.
+				sir_swap_u32if_needed(pe_session->p2pGoPsUpdate.
 						      uNoa2StartTime);
 			pBody += sizeof(uint32_t);
 			len += 4;
@@ -5268,7 +5268,7 @@ void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)
 {
 	tpAniSirGlobal mac = (tpAniSirGlobal) pMacGlobal;
 	tPmfSaQueryTimerId timerId;
-	struct pe_session *psessionEntry;
+	struct pe_session *pe_session;
 	tpDphHashNode pSta;
 	uint8_t maxretries;
 
@@ -5276,15 +5276,15 @@ void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)
 	timerId.value = param;
 
 	/* Check that SA Query is in progress */
-	psessionEntry = pe_find_session_by_session_id(mac,
+	pe_session = pe_find_session_by_session_id(mac,
 			timerId.fields.sessionId);
-	if (psessionEntry == NULL) {
+	if (pe_session == NULL) {
 		pe_err("Session does not exist for given session ID: %d",
 			timerId.fields.sessionId);
 		return;
 	}
 	pSta = dph_get_hash_entry(mac, timerId.fields.peerIdx,
-			       &psessionEntry->dph.dphHashTable);
+			       &pe_session->dph.dphHashTable);
 	if (pSta == NULL) {
 		pe_err("Entry does not exist for given peer index: %d",
 			timerId.fields.peerIdx);
@@ -5301,8 +5301,8 @@ void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)
 		lim_print_mac_addr(mac, pSta->staAddr, LOGE);
 		lim_send_disassoc_mgmt_frame(mac,
 			eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON,
-			pSta->staAddr, psessionEntry, false);
-		lim_trigger_sta_deletion(mac, pSta, psessionEntry);
+			pSta->staAddr, pe_session, false);
+		lim_trigger_sta_deletion(mac, pSta, pe_session);
 		pSta->pmfSaQueryState = DPH_SA_QUERY_TIMED_OUT;
 		return;
 	}
@@ -5310,7 +5310,7 @@ void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)
 	lim_send_sa_query_request_frame(mac,
 					(uint8_t *) &(pSta->
 						      pmfSaQueryCurrentTransId),
-					pSta->staAddr, psessionEntry);
+					pSta->staAddr, pe_session);
 	pSta->pmfSaQueryCurrentTransId++;
 	pe_debug("Starting SA Query retry: %d", pSta->pmfSaQueryRetryCount);
 	if (tx_timer_activate(&pSta->pmfSaQueryTimer) != TX_SUCCESS) {
@@ -5320,7 +5320,7 @@ void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)
 }
 #endif
 
-bool lim_check_vht_op_mode_change(tpAniSirGlobal mac, struct pe_session *psessionEntry,
+bool lim_check_vht_op_mode_change(tpAniSirGlobal mac, struct pe_session *pe_session,
 				  uint8_t chanWidth, uint8_t staId,
 				  uint8_t *peerMac)
 {
@@ -5328,10 +5328,10 @@ bool lim_check_vht_op_mode_change(tpAniSirGlobal mac, struct pe_session *psessio
 
 	tempParam.opMode = chanWidth;
 	tempParam.staId = staId;
-	tempParam.smesessionId = psessionEntry->smeSessionId;
+	tempParam.smesessionId = pe_session->smeSessionId;
 	qdf_mem_copy(tempParam.peer_mac, peerMac, sizeof(tSirMacAddr));
 
-	lim_send_mode_update(mac, &tempParam, psessionEntry);
+	lim_send_mode_update(mac, &tempParam, pe_session);
 
 	return true;
 }
@@ -5351,7 +5351,7 @@ bool lim_send_he_ie_update(tpAniSirGlobal mac_ctx, struct pe_session *pe_session
 }
 #endif
 
-bool lim_set_nss_change(tpAniSirGlobal mac, struct pe_session *psessionEntry,
+bool lim_set_nss_change(tpAniSirGlobal mac, struct pe_session *pe_session,
 			uint8_t rxNss, uint8_t staId, uint8_t *peerMac)
 {
 	tUpdateRxNss tempParam;
@@ -5363,16 +5363,16 @@ bool lim_set_nss_change(tpAniSirGlobal mac, struct pe_session *psessionEntry,
 
 	tempParam.rxNss = rxNss;
 	tempParam.staId = staId;
-	tempParam.smesessionId = psessionEntry->smeSessionId;
+	tempParam.smesessionId = pe_session->smeSessionId;
 	qdf_mem_copy(tempParam.peer_mac, peerMac, sizeof(tSirMacAddr));
 
-	lim_send_rx_nss_update(mac, &tempParam, psessionEntry);
+	lim_send_rx_nss_update(mac, &tempParam, pe_session);
 
 	return true;
 }
 
 bool lim_check_membership_user_position(tpAniSirGlobal mac,
-					struct pe_session *psessionEntry,
+					struct pe_session *pe_session,
 					uint32_t membership, uint32_t userPosition,
 					uint8_t staId)
 {
@@ -5381,24 +5381,24 @@ bool lim_check_membership_user_position(tpAniSirGlobal mac,
 
 	tempParamMembership.membership = membership;
 	tempParamMembership.staId = staId;
-	tempParamMembership.smesessionId = psessionEntry->smeSessionId;
-	qdf_mem_copy(tempParamMembership.peer_mac, psessionEntry->bssId,
+	tempParamMembership.smesessionId = pe_session->smeSessionId;
+	qdf_mem_copy(tempParamMembership.peer_mac, pe_session->bssId,
 		     sizeof(tSirMacAddr));
 
-	lim_set_membership(mac, &tempParamMembership, psessionEntry);
+	lim_set_membership(mac, &tempParamMembership, pe_session);
 
 	tempParamUserPosition.userPos = userPosition;
 	tempParamUserPosition.staId = staId;
-	tempParamUserPosition.smesessionId = psessionEntry->smeSessionId;
-	qdf_mem_copy(tempParamUserPosition.peer_mac, psessionEntry->bssId,
+	tempParamUserPosition.smesessionId = pe_session->smeSessionId;
+	qdf_mem_copy(tempParamUserPosition.peer_mac, pe_session->bssId,
 		     sizeof(tSirMacAddr));
 
-	lim_set_user_pos(mac, &tempParamUserPosition, psessionEntry);
+	lim_set_user_pos(mac, &tempParamUserPosition, pe_session);
 
 	return true;
 }
 
-void lim_get_short_slot_from_phy_mode(tpAniSirGlobal mac, struct pe_session *psessionEntry,
+void lim_get_short_slot_from_phy_mode(tpAniSirGlobal mac, struct pe_session *pe_session,
 				      uint32_t phyMode, uint8_t *pShortSlotEnabled)
 {
 	uint8_t val = 0;
@@ -5406,22 +5406,22 @@ void lim_get_short_slot_from_phy_mode(tpAniSirGlobal mac, struct pe_session *pse
 	/* only 2.4G band should have short slot enable, rest it should be default */
 	if (phyMode == WNI_CFG_PHY_MODE_11G) {
 		/* short slot is default in all other modes */
-		if ((psessionEntry->pePersona == QDF_SAP_MODE) ||
-		    (psessionEntry->pePersona == QDF_IBSS_MODE) ||
-		    (psessionEntry->pePersona == QDF_P2P_GO_MODE)) {
+		if ((pe_session->pePersona == QDF_SAP_MODE) ||
+		    (pe_session->pePersona == QDF_IBSS_MODE) ||
+		    (pe_session->pePersona == QDF_P2P_GO_MODE)) {
 			val = true;
 		}
 		/* Program Polaris based on AP capability */
-		if (psessionEntry->limMlmState == eLIM_MLM_WT_JOIN_BEACON_STATE) {
+		if (pe_session->limMlmState == eLIM_MLM_WT_JOIN_BEACON_STATE) {
 			/* Joining BSS. */
 			val =
-				SIR_MAC_GET_SHORT_SLOT_TIME(psessionEntry->
+				SIR_MAC_GET_SHORT_SLOT_TIME(pe_session->
 							    limCurrentBssCaps);
-		} else if (psessionEntry->limMlmState ==
+		} else if (pe_session->limMlmState ==
 			   eLIM_MLM_WT_REASSOC_RSP_STATE) {
 			/* Reassociating with AP. */
 			val =
-				SIR_MAC_GET_SHORT_SLOT_TIME(psessionEntry->
+				SIR_MAC_GET_SHORT_SLOT_TIME(pe_session->
 							    limReassocBssCaps);
 		}
 	} else {
@@ -5445,7 +5445,7 @@ void lim_get_short_slot_from_phy_mode(tpAniSirGlobal mac, struct pe_session *pse
  *
  * \param  mac Pointer to Global MAC structure
  *
- * \param psessionEntry Pointer to session corresponding to the connection
+ * \param pe_session Pointer to session corresponding to the connection
  *
  * \param peer Peer address of the STA to which the frame is to be sent
  *
@@ -5457,16 +5457,16 @@ void lim_get_short_slot_from_phy_mode(tpAniSirGlobal mac, struct pe_session *pse
  */
 void
 lim_set_protected_bit(tpAniSirGlobal mac,
-		      struct pe_session *psessionEntry,
+		      struct pe_session *pe_session,
 		      tSirMacAddr peer, tpSirMacMgmtHdr pMacHdr)
 {
 	uint16_t aid;
 	tpDphHashNode pStaDs;
 
-	if (LIM_IS_AP_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
 
 		pStaDs = dph_lookup_hash_entry(mac, peer, &aid,
-					       &psessionEntry->dph.dphHashTable);
+					       &pe_session->dph.dphHashTable);
 		if (pStaDs != NULL) {
 			/* rmfenabled will be set at the time of addbss.
 			 * but sometimes EAP auth fails and keys are not
@@ -5478,8 +5478,8 @@ lim_set_protected_bit(tpAniSirGlobal mac,
 			if (pStaDs->rmfEnabled && pStaDs->is_key_installed)
 				pMacHdr->fc.wep = 1;
 		}
-	} else if (psessionEntry->limRmfEnabled &&
-			psessionEntry->is_key_installed) {
+	} else if (pe_session->limRmfEnabled &&
+			pe_session->is_key_installed) {
 		pMacHdr->fc.wep = 1;
 	}
 } /*** end lim_set_protected_bit() ***/

@@ -59,7 +59,7 @@
 
 void
 lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
-			 struct pe_session *psessionEntry)
+			 struct pe_session *pe_session)
 {
 	uint8_t *pBody;
 	uint16_t reasonCode;
@@ -81,9 +81,9 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 		return ;
 	}
 
-	if (LIM_IS_STA_ROLE(psessionEntry) &&
-	    ((eLIM_SME_WT_DISASSOC_STATE == psessionEntry->limSmeState) ||
-	     (eLIM_SME_WT_DEAUTH_STATE == psessionEntry->limSmeState))) {
+	if (LIM_IS_STA_ROLE(pe_session) &&
+	    ((eLIM_SME_WT_DISASSOC_STATE == pe_session->limSmeState) ||
+	     (eLIM_SME_WT_DEAUTH_STATE == pe_session->limSmeState))) {
 		/*Every 15th deauth frame will be logged in kmsg */
 		if (!(mac->lim.deauthMsgCnt & 0xF)) {
 			pe_debug("received Deauth frame in DEAUTH_WT_STATE"
@@ -110,13 +110,13 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 		return;
 	}
 	if (!lim_validate_received_frame_a1_addr(mac,
-			pHdr->da, psessionEntry)) {
+			pHdr->da, pe_session)) {
 		pe_err("rx frame doesn't have valid a1 address, drop it");
 		return;
 	}
 #ifdef WLAN_FEATURE_11W
 	/* PMF: If this session is a PMF session, then ensure that this frame was protected */
-	if (psessionEntry->limRmfEnabled
+	if (pe_session->limRmfEnabled
 	    && (WMA_GET_RX_DPU_FEEDBACK(pRxPacketInfo) &
 		DPU_FEEDBACK_UNPROTECTED_ERROR)) {
 		pe_debug("received an unprotected deauth from AP");
@@ -124,7 +124,7 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 		 * When 11w offload is enabled then
 		 * firmware should not fwd this frame
 		 */
-		if (LIM_IS_STA_ROLE(psessionEntry) && mac->pmf_offload) {
+		if (LIM_IS_STA_ROLE(pe_session) && mac->pmf_offload) {
 			pe_err("11w offload is enable,unprotected deauth is not expected");
 			return;
 		}
@@ -137,8 +137,8 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 							(uint8_t *) pHdr,
 							(frameLen +
 							 sizeof(tSirMacMgmtHdr)),
-							psessionEntry->smeSessionId,
-							psessionEntry);
+							pe_session->smeSessionId,
+							pe_session);
 		return;
 	}
 #endif
@@ -150,9 +150,9 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 			"(mlm state = %s, sme state = %d systemrole = %d "
 			"RSSI = %d) with reason code %d [%s] from "
 			MAC_ADDRESS_STR, MAC_ADDR_ARRAY(pHdr->da),
-			lim_mlm_state_str(psessionEntry->limMlmState),
-			psessionEntry->limSmeState,
-			GET_LIM_SYSTEM_ROLE(psessionEntry), frame_rssi,
+			lim_mlm_state_str(pe_session->limMlmState),
+			pe_session->limSmeState,
+			GET_LIM_SYSTEM_ROLE(pe_session), frame_rssi,
 			reasonCode, lim_dot11_reason_str(reasonCode),
 			MAC_ADDR_ARRAY(pHdr->sa));
 
@@ -167,7 +167,7 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	}
 
 	lim_diag_event_report(mac, WLAN_PE_DIAG_DEAUTH_FRAME_EVENT,
-		psessionEntry, 0, reasonCode);
+		pe_session, 0, reasonCode);
 
 	if (lim_check_disassoc_deauth_ack_pending(mac, (uint8_t *) pHdr->sa)) {
 		pe_debug("Ignore the Deauth received, while waiting for ack of "
@@ -176,7 +176,7 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 		return;
 	}
 
-	if (LIM_IS_AP_ROLE(psessionEntry)) {
+	if (LIM_IS_AP_ROLE(pe_session)) {
 		switch (reasonCode) {
 		case eSIR_MAC_UNSPEC_FAILURE_REASON:
 		case eSIR_MAC_DEAUTH_LEAVING_BSS_REASON:
@@ -192,7 +192,7 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 
 			break;
 		}
-	} else if (LIM_IS_STA_ROLE(psessionEntry)) {
+	} else if (LIM_IS_STA_ROLE(pe_session)) {
 		switch (reasonCode) {
 		case eSIR_MAC_UNSPEC_FAILURE_REASON:
 		case eSIR_MAC_PREV_AUTH_NOT_VALID_REASON:
@@ -217,7 +217,7 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 		/* or un-known role. Log and ignore it */
 		pe_err("received Deauth frame with reasonCode %d in role %d from "
 			MAC_ADDRESS_STR, reasonCode,
-			GET_LIM_SYSTEM_ROLE(psessionEntry),
+			GET_LIM_SYSTEM_ROLE(pe_session),
 			MAC_ADDR_ARRAY(pHdr->sa));
 
 		return;
@@ -242,19 +242,19 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	 *     with normal deauth processing.
 	 */
 	pRoamSessionEntry =
-		pe_find_session_by_bssid(mac, psessionEntry->limReAssocbssId,
+		pe_find_session_by_bssid(mac, pe_session->limReAssocbssId,
 							&roamSessionId);
 
-	if (lim_is_reassoc_in_progress(mac, psessionEntry) ||
+	if (lim_is_reassoc_in_progress(mac, pe_session) ||
 	    lim_is_reassoc_in_progress(mac, pRoamSessionEntry) ||
-	    psessionEntry->fw_roaming_started) {
+	    pe_session->fw_roaming_started) {
 		/*
 		 * For LFR3, the roaming bssid is not known during ROAM_START,
 		 * so check if the deauth is received from current AP when
 		 * roaming is being done in the firmware
 		 */
-		if (psessionEntry->fw_roaming_started &&
-		    IS_CURRENT_BSSID(mac, pHdr->sa, psessionEntry)) {
+		if (pe_session->fw_roaming_started &&
+		    IS_CURRENT_BSSID(mac, pHdr->sa, pe_session)) {
 			pe_debug("LFR3: Drop deauth frame from connected AP");
 			/*
 			 * recvd_deauth_while_roaming will be stored in the
@@ -265,33 +265,33 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 			 * roaming succeeds, then this session gets deleted and
 			 * new session is created.
 			 */
-			psessionEntry->recvd_deauth_while_roaming = true;
-			psessionEntry->deauth_disassoc_rc = reasonCode;
+			pe_session->recvd_deauth_while_roaming = true;
+			pe_session->deauth_disassoc_rc = reasonCode;
 			return;
 		}
-		if (!IS_REASSOC_BSSID(mac, pHdr->sa, psessionEntry)) {
+		if (!IS_REASSOC_BSSID(mac, pHdr->sa, pe_session)) {
 			pe_debug("Rcv Deauth from unknown/different "
 				"AP while ReAssoc. Ignore " MAC_ADDRESS_STR
 				"limReAssocbssId : " MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(pHdr->sa),
-				MAC_ADDR_ARRAY(psessionEntry->limReAssocbssId));
+				MAC_ADDR_ARRAY(pe_session->limReAssocbssId));
 			return;
 		}
 
 		/** Received deauth from the new AP to which we tried to ReAssociate.
 		 *  Drop ReAssoc and Restore the Previous context( current connected AP).
 		 */
-		if (!IS_CURRENT_BSSID(mac, pHdr->sa, psessionEntry)) {
+		if (!IS_CURRENT_BSSID(mac, pHdr->sa, pe_session)) {
 			pe_debug("received DeAuth from the New AP to "
 				"which ReAssoc is sent " MAC_ADDRESS_STR
-				"psessionEntry->bssId: " MAC_ADDRESS_STR,
+				"pe_session->bssId: " MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(pHdr->sa),
-				MAC_ADDR_ARRAY(psessionEntry->bssId));
+				MAC_ADDR_ARRAY(pe_session->bssId));
 
 			lim_restore_pre_reassoc_state(mac,
 						      eSIR_SME_REASSOC_REFUSED,
 						      reasonCode,
-						      psessionEntry);
+						      pe_session);
 			return;
 		}
 	}
@@ -299,8 +299,8 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 	/* If received DeAuth from AP other than the one we're trying to join with
 	 * nor associated with, then ignore deauth and delete Pre-auth entry.
 	 */
-	if (!LIM_IS_AP_ROLE(psessionEntry)) {
-		if (!IS_CURRENT_BSSID(mac, pHdr->bssId, psessionEntry)) {
+	if (!LIM_IS_AP_ROLE(pe_session)) {
+		if (!IS_CURRENT_BSSID(mac, pHdr->bssId, pe_session)) {
 			pe_err("received DeAuth from an AP other "
 				"than we're trying to join. Ignore. "
 				MAC_ADDRESS_STR, MAC_ADDR_ARRAY(pHdr->sa));
@@ -313,7 +313,7 @@ lim_process_deauth_frame(tpAniSirGlobal mac, uint8_t *pRxPacketInfo,
 		}
 	}
 
-	lim_perform_deauth(mac, psessionEntry, reasonCode, pHdr->sa,
+	lim_perform_deauth(mac, pe_session, reasonCode, pHdr->sa,
 			   frame_rssi);
 
 

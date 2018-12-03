@@ -51,7 +51,7 @@
  * lim_update_re_assoc_globals() - Update reassoc global data
  * @mac: Global MAC context
  * @pAssocRsp: Reassociation response data
- * @psessionEntry: PE Session
+ * @pe_session: PE Session
  *
  * This function is called to Update the Globals (LIM) during ReAssoc.
  *
@@ -59,35 +59,35 @@
  */
 
 void lim_update_re_assoc_globals(tpAniSirGlobal mac, tpSirAssocRsp pAssocRsp,
-				 struct pe_session *psessionEntry)
+				 struct pe_session *pe_session)
 {
 	/* Update the current Bss Information */
-	qdf_mem_copy(psessionEntry->bssId,
-		     psessionEntry->limReAssocbssId, sizeof(tSirMacAddr));
-	psessionEntry->currentOperChannel = psessionEntry->limReassocChannelId;
-	psessionEntry->htSecondaryChannelOffset =
-		psessionEntry->reAssocHtSupportedChannelWidthSet;
-	psessionEntry->htRecommendedTxWidthSet =
-		psessionEntry->reAssocHtRecommendedTxWidthSet;
-	psessionEntry->htSecondaryChannelOffset =
-		psessionEntry->reAssocHtSecondaryChannelOffset;
-	psessionEntry->limCurrentBssCaps = psessionEntry->limReassocBssCaps;
-	psessionEntry->limCurrentBssQosCaps =
-		psessionEntry->limReassocBssQosCaps;
-	psessionEntry->limCurrentBssPropCap =
-		psessionEntry->limReassocBssPropCap;
+	qdf_mem_copy(pe_session->bssId,
+		     pe_session->limReAssocbssId, sizeof(tSirMacAddr));
+	pe_session->currentOperChannel = pe_session->limReassocChannelId;
+	pe_session->htSecondaryChannelOffset =
+		pe_session->reAssocHtSupportedChannelWidthSet;
+	pe_session->htRecommendedTxWidthSet =
+		pe_session->reAssocHtRecommendedTxWidthSet;
+	pe_session->htSecondaryChannelOffset =
+		pe_session->reAssocHtSecondaryChannelOffset;
+	pe_session->limCurrentBssCaps = pe_session->limReassocBssCaps;
+	pe_session->limCurrentBssQosCaps =
+		pe_session->limReassocBssQosCaps;
+	pe_session->limCurrentBssPropCap =
+		pe_session->limReassocBssPropCap;
 
-	qdf_mem_copy((uint8_t *) &psessionEntry->ssId,
-		     (uint8_t *) &psessionEntry->limReassocSSID,
-		     psessionEntry->limReassocSSID.length + 1);
+	qdf_mem_copy((uint8_t *) &pe_session->ssId,
+		     (uint8_t *) &pe_session->limReassocSSID,
+		     pe_session->limReassocSSID.length + 1);
 
 	/* Store assigned AID for TIM processing */
-	psessionEntry->limAID = pAssocRsp->aid & 0x3FFF;
+	pe_session->limAID = pAssocRsp->aid & 0x3FFF;
 	/** Set the State Back to ReAssoc Rsp*/
-	psessionEntry->limMlmState = eLIM_MLM_WT_REASSOC_RSP_STATE;
+	pe_session->limMlmState = eLIM_MLM_WT_REASSOC_RSP_STATE;
 	MTRACE(mac_trace
-		       (mac, TRACE_CODE_MLM_STATE, psessionEntry->peSessionId,
-		       psessionEntry->limMlmState));
+		       (mac, TRACE_CODE_MLM_STATE, pe_session->peSessionId,
+		       pe_session->limMlmState));
 
 }
 
@@ -95,7 +95,7 @@ void lim_update_re_assoc_globals(tpAniSirGlobal mac, tpSirAssocRsp pAssocRsp,
  * @lim_handle_del_bss_in_re_assoc_context() - DEL BSS during reassociation
  * @mac: Global MAC Context
  * @pStaDs: Station Hash entry
- * @psessionEntry: PE Session
+ * @pe_session: PE Session
  *
  * While Processing the ReAssociation Response Frame in STA,
  *     a.immediately after receiving the Reassoc Response the RxCleanUp is
@@ -109,7 +109,7 @@ void lim_update_re_assoc_globals(tpAniSirGlobal mac, tpSirAssocRsp pAssocRsp,
  * Return: None
  */
 void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal mac,
-		tpDphHashNode pStaDs, struct pe_session *psessionEntry)
+		tpDphHashNode pStaDs, struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
 	tpSirBssDescription bss_desc;
@@ -117,10 +117,10 @@ void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal mac,
 	 * Skipped the DeleteDPH Hash Entry as we need it for the new BSS
 	 * Set the MlmState to IDLE
 	 */
-	psessionEntry->limMlmState = eLIM_MLM_IDLE_STATE;
+	pe_session->limMlmState = eLIM_MLM_IDLE_STATE;
 	/* Update PE session Id */
-	mlmReassocCnf.sessionId = psessionEntry->peSessionId;
-	switch (psessionEntry->limSmeState) {
+	mlmReassocCnf.sessionId = pe_session->peSessionId;
+	switch (pe_session->limSmeState) {
 	case eLIM_SME_WT_REASSOC_STATE:
 	{
 		tpSirAssocRsp assocRsp;
@@ -134,26 +134,26 @@ void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal mac,
 					eSIR_SME_RESOURCES_UNAVAILABLE;
 			mlmReassocCnf.protStatusCode =
 					eSIR_MAC_UNSPEC_FAILURE_STATUS;
-			lim_delete_dph_hash_entry(mac, psessionEntry->bssId,
-				DPH_STA_HASH_INDEX_PEER, psessionEntry);
+			lim_delete_dph_hash_entry(mac, pe_session->bssId,
+				DPH_STA_HASH_INDEX_PEER, pe_session);
 			goto error;
 		}
 		/* Delete the older STA Table entry */
-		lim_delete_dph_hash_entry(mac, psessionEntry->bssId,
-				DPH_STA_HASH_INDEX_PEER, psessionEntry);
+		lim_delete_dph_hash_entry(mac, pe_session->bssId,
+				DPH_STA_HASH_INDEX_PEER, pe_session);
 		/*
 		 * Add an entry for AP to hash table
 		 * maintained by DPH module
 		 */
 		pStaDs = dph_add_hash_entry(mac,
-				psessionEntry->limReAssocbssId,
+				pe_session->limReAssocbssId,
 				DPH_STA_HASH_INDEX_PEER,
-				&psessionEntry->dph.dphHashTable);
+				&pe_session->dph.dphHashTable);
 		if (pStaDs == NULL) {
 			/* Could not add hash table entry */
 			pe_err("could not add hash entry at DPH for");
 			lim_print_mac_addr(mac,
-				psessionEntry->limReAssocbssId, LOGE);
+				pe_session->limReAssocbssId, LOGE);
 			mlmReassocCnf.resultCode =
 				eSIR_SME_RESOURCES_UNAVAILABLE;
 			mlmReassocCnf.protStatusCode = eSIR_SME_SUCCESS;
@@ -165,11 +165,11 @@ void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal mac,
 		 * is being stored to be used here for sending ADDBSS
 		 */
 		assocRsp =
-			(tpSirAssocRsp) psessionEntry->limAssocResponseData;
+			(tpSirAssocRsp) pe_session->limAssocResponseData;
 		lim_update_assoc_sta_datas(mac, pStaDs, assocRsp,
-			psessionEntry);
-		lim_update_re_assoc_globals(mac, assocRsp, psessionEntry);
-		bss_desc = &psessionEntry->pLimReAssocReq->bssDescription;
+			pe_session);
+		lim_update_re_assoc_globals(mac, assocRsp, pe_session);
+		bss_desc = &pe_session->pLimReAssocReq->bssDescription;
 		lim_extract_ap_capabilities(mac,
 			(uint8_t *) bss_desc->ieFields,
 			lim_get_ielen_from_bss_description(bss_desc),
@@ -178,12 +178,12 @@ void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal mac,
 		    MLME_FORCE_POLICY_PROTECTION_DISABLE)
 			lim_decide_sta_protection_on_assoc(mac,
 				beacon_struct,
-				psessionEntry);
+				pe_session);
 		if (beacon_struct->erpPresent) {
 			if (beacon_struct->erpIEInfo.barkerPreambleMode)
-				psessionEntry->beaconParams.fShortPreamble = 0;
+				pe_session->beaconParams.fShortPreamble = 0;
 			else
-				psessionEntry->beaconParams.fShortPreamble = 1;
+				pe_session->beaconParams.fShortPreamble = 1;
 		}
 		/*
 		 * updateBss flag is false, as in this case, PE is first
@@ -192,7 +192,7 @@ void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal mac,
 		if (QDF_STATUS_SUCCESS !=
 		    lim_sta_send_add_bss(mac, assocRsp, beacon_struct,
 				bss_desc,
-				false, psessionEntry)) {
+				false, pe_session)) {
 			pe_err("Posting ADDBSS in the ReAssocCtx Failed");
 			retStatus = QDF_STATUS_E_FAILURE;
 		}
@@ -208,7 +208,7 @@ void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal mac,
 		}
 		qdf_mem_free(assocRsp);
 		qdf_mem_free(beacon_struct);
-		psessionEntry->limAssocResponseData = NULL;
+		pe_session->limAssocResponseData = NULL;
 	}
 	break;
 	default:
@@ -228,7 +228,7 @@ error:
  * @lim_handle_add_bss_in_re_assoc_context() - ADD BSS during reassociation
  * @mac: Global MAC Context
  * @pStaDs: Station Hash entry
- * @psessionEntry: PE Session
+ * @pe_session: PE Session
  *
  * While Processing the ReAssociation Response Frame in STA,
  *     a. immediately after receiving the Reassoc Response the RxCleanUp is
@@ -242,16 +242,16 @@ error:
  * Return: None
  */
 void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal mac,
-		tpDphHashNode pStaDs, struct pe_session *psessionEntry)
+		tpDphHashNode pStaDs, struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
 	/** Skipped the DeleteDPH Hash Entry as we need it for the new BSS*/
 	/** Set the MlmState to IDLE*/
-	psessionEntry->limMlmState = eLIM_MLM_IDLE_STATE;
+	pe_session->limMlmState = eLIM_MLM_IDLE_STATE;
 	MTRACE(mac_trace
-		       (mac, TRACE_CODE_MLM_STATE, psessionEntry->peSessionId,
-		       psessionEntry->limMlmState));
-	switch (psessionEntry->limSmeState) {
+		       (mac, TRACE_CODE_MLM_STATE, pe_session->peSessionId,
+		       pe_session->limMlmState));
+	switch (pe_session->limSmeState) {
 	case eLIM_SME_WT_REASSOC_STATE: {
 		tpSirAssocRsp assocRsp;
 		tpDphHashNode pStaDs;
@@ -270,7 +270,7 @@ void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal mac,
 		/* Get the AP entry from DPH hash table */
 		pStaDs =
 			dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
-					   &psessionEntry->dph.dphHashTable);
+					   &pe_session->dph.dphHashTable);
 		if (pStaDs == NULL) {
 			pe_err("Fail to get STA PEER entry from hash");
 			mlmReassocCnf.resultCode =
@@ -284,16 +284,16 @@ void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal mac,
 		 * is being stored to be used here for sending ADDBSS
 		 */
 		assocRsp =
-			(tpSirAssocRsp) psessionEntry->limAssocResponseData;
+			(tpSirAssocRsp) pe_session->limAssocResponseData;
 		lim_update_assoc_sta_datas(mac, pStaDs, assocRsp,
-					   psessionEntry);
-		lim_update_re_assoc_globals(mac, assocRsp, psessionEntry);
+					   pe_session);
+		lim_update_re_assoc_globals(mac, assocRsp, pe_session);
 		lim_extract_ap_capabilities(mac,
-					    (uint8_t *) psessionEntry->
+					    (uint8_t *) pe_session->
 					    pLimReAssocReq->bssDescription.
 					    ieFields,
 					    lim_get_ielen_from_bss_description
-						    (&psessionEntry->
+						    (&pe_session->
 						    pLimReAssocReq->
 						    bssDescription),
 					    pBeaconStruct);
@@ -301,23 +301,23 @@ void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal mac,
 		    MLME_FORCE_POLICY_PROTECTION_DISABLE)
 			lim_decide_sta_protection_on_assoc(mac,
 							   pBeaconStruct,
-							   psessionEntry);
+							   pe_session);
 
 		if (pBeaconStruct->erpPresent) {
 			if (pBeaconStruct->erpIEInfo.barkerPreambleMode)
-				psessionEntry->beaconParams.
+				pe_session->beaconParams.
 				fShortPreamble = 0;
 			else
-				psessionEntry->beaconParams.
+				pe_session->beaconParams.
 				fShortPreamble = 1;
 		}
 
-		psessionEntry->isNonRoamReassoc = 1;
+		pe_session->isNonRoamReassoc = 1;
 		if (QDF_STATUS_SUCCESS !=
 		    lim_sta_send_add_bss(mac, assocRsp, pBeaconStruct,
-					 &psessionEntry->pLimReAssocReq->
+					 &pe_session->pLimReAssocReq->
 					 bssDescription, true,
-					 psessionEntry)) {
+					 pe_session)) {
 			pe_err("Post ADDBSS in the ReAssocCtxt Failed");
 			retStatus = QDF_STATUS_E_FAILURE;
 		}
@@ -332,7 +332,7 @@ void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal mac,
 			goto Error;
 		}
 		qdf_mem_free(assocRsp);
-		psessionEntry->limAssocResponseData = NULL;
+		pe_session->limAssocResponseData = NULL;
 		qdf_mem_free(pBeaconStruct);
 	}
 	break;
@@ -352,18 +352,18 @@ Error:
 /**
  * lim_is_reassoc_in_progress() - Check if reassoiciation is in progress
  * @mac: Global MAC Context
- * @psessionEntry: PE Session
+ * @pe_session: PE Session
  *
  * Return: true  When STA is waiting for Reassoc response from AP
  *         else false
  */
-bool lim_is_reassoc_in_progress(tpAniSirGlobal mac, struct pe_session *psessionEntry)
+bool lim_is_reassoc_in_progress(tpAniSirGlobal mac, struct pe_session *pe_session)
 {
-	if (psessionEntry == NULL)
+	if (pe_session == NULL)
 		return false;
 
-	if (LIM_IS_STA_ROLE(psessionEntry) &&
-	    (psessionEntry->limSmeState == eLIM_SME_WT_REASSOC_STATE))
+	if (LIM_IS_STA_ROLE(pe_session) &&
+	    (pe_session->limSmeState == eLIM_SME_WT_REASSOC_STATE))
 		return true;
 
 	return false;
@@ -427,7 +427,7 @@ QDF_STATUS lim_add_ft_sta_self(tpAniSirGlobal mac_ctx, uint16_t assoc_id,
  * @mac: Global MAC Context
  * @resultCode: Assoc response result
  * @protStatusCode: Internal protocol status code
- * @psessionEntry: PE Session
+ * @pe_session: PE Session
  *
  * This function is called on STA role whenever Reasociation
  * Response with a reject code is received from AP.
@@ -440,34 +440,34 @@ QDF_STATUS lim_add_ft_sta_self(tpAniSirGlobal mac_ctx, uint16_t assoc_id,
 void
 lim_restore_pre_reassoc_state(tpAniSirGlobal mac,
 		tSirResultCodes resultCode, uint16_t protStatusCode,
-		struct pe_session *psessionEntry)
+		struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
 
 	pe_debug("sessionid: %d protStatusCode: %d resultCode: %d",
-		psessionEntry->smeSessionId, protStatusCode, resultCode);
+		pe_session->smeSessionId, protStatusCode, resultCode);
 
-	psessionEntry->limMlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
+	pe_session->limMlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 	MTRACE(mac_trace
-		       (mac, TRACE_CODE_MLM_STATE, psessionEntry->peSessionId,
+		       (mac, TRACE_CODE_MLM_STATE, pe_session->peSessionId,
 		       eLIM_MLM_LINK_ESTABLISHED_STATE));
 
 	/* 'Change' timer for future activations */
 	lim_deactivate_and_change_timer(mac, eLIM_REASSOC_FAIL_TIMER);
 
-	lim_set_channel(mac, psessionEntry->currentOperChannel,
-			psessionEntry->ch_center_freq_seg0,
-			psessionEntry->ch_center_freq_seg1,
-			psessionEntry->ch_width,
-			psessionEntry->maxTxPower,
-			psessionEntry->peSessionId,
+	lim_set_channel(mac, pe_session->currentOperChannel,
+			pe_session->ch_center_freq_seg0,
+			pe_session->ch_center_freq_seg1,
+			pe_session->ch_width,
+			pe_session->maxTxPower,
+			pe_session->peSessionId,
 			0, 0);
 
 	/* @ToDo:Need to Integrate the STOP the Dataxfer to AP from 11H code */
 
 	mlmReassocCnf.resultCode = resultCode;
 	mlmReassocCnf.protStatusCode = protStatusCode;
-	mlmReassocCnf.sessionId = psessionEntry->peSessionId;
+	mlmReassocCnf.sessionId = pe_session->peSessionId;
 	lim_post_sme_message(mac,
 			     LIM_MLM_REASSOC_CNF, (uint32_t *) &mlmReassocCnf);
 }
@@ -477,26 +477,26 @@ lim_restore_pre_reassoc_state(tpAniSirGlobal mac,
  * @mac: Global MAC Context
  * @resultCode: Result Code
  * @protStatusCode: Protocol Status Code
- * @psessionEntry: PE Session
+ * @pe_session: PE Session
  *
  * Return: None
  */
 void lim_post_reassoc_failure(tpAniSirGlobal mac,
 		tSirResultCodes resultCode, uint16_t protStatusCode,
-		struct pe_session *psessionEntry)
+		struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
 
-	psessionEntry->limMlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
+	pe_session->limMlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
 	MTRACE(mac_trace
-		       (mac, TRACE_CODE_MLM_STATE, psessionEntry->peSessionId,
+		       (mac, TRACE_CODE_MLM_STATE, pe_session->peSessionId,
 		       eLIM_MLM_LINK_ESTABLISHED_STATE));
 
 	lim_deactivate_and_change_timer(mac, eLIM_REASSOC_FAIL_TIMER);
 
 	mlmReassocCnf.resultCode = resultCode;
 	mlmReassocCnf.protStatusCode = protStatusCode;
-	mlmReassocCnf.sessionId = psessionEntry->peSessionId;
+	mlmReassocCnf.sessionId = pe_session->peSessionId;
 	lim_post_sme_message(mac,
 			     LIM_MLM_REASSOC_CNF, (uint32_t *) &mlmReassocCnf);
 }

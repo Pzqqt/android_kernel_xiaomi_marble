@@ -247,7 +247,7 @@ enum wifi_logging_ring_id {
 /* Change channel generic scheme */
 typedef void (*CHANGE_CHANNEL_CALLBACK)(tpAniSirGlobal mac, QDF_STATUS status,
 					uint32_t *data,
-					struct pe_session *psessionEntry);
+					struct pe_session *pe_session);
 
 /* / LIM global definitions */
 typedef struct sAniSirLimIbss {
@@ -711,7 +711,7 @@ typedef struct sAniSirLim {
 	uint32_t mgmtFrameSessionId;
 	uint32_t tdls_frm_session_id;
 
-	struct pe_session *pSessionEntry;
+	struct pe_session *pe_session;
 	uint8_t reAssocRetryAttempt;
 	tLimDisassocDeauthCnfReq limDisassocDeauthCnfReq;
 	uint8_t deferredMsgCnt;

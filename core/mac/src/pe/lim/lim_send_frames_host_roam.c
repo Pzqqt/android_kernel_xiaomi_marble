@@ -471,13 +471,13 @@ err:
  * lim_send_retry_reassoc_req_frame() - Retry for reassociation
  * @mac: Global MAC Context
  * @pMlmReassocReq: Request buffer to be sent
- * @psessionEntry: PE Session
+ * @pe_session: PE Session
  *
  * Return: None
  */
 void lim_send_retry_reassoc_req_frame(tpAniSirGlobal mac,
 				      tLimMlmReassocReq *pMlmReassocReq,
-				      struct pe_session *psessionEntry)
+				      struct pe_session *pe_session)
 {
 	tLimMlmReassocCnf mlmReassocCnf;        /* keep sme */
 	tLimMlmReassocReq *pTmpMlmReassocReq = NULL;
@@ -492,10 +492,10 @@ void lim_send_retry_reassoc_req_frame(tpAniSirGlobal mac,
 	/* Prepare and send Reassociation request frame */
 	/* start reassoc timer. */
 	mac->lim.limTimers.gLimReassocFailureTimer.sessionId =
-		psessionEntry->peSessionId;
+		pe_session->peSessionId;
 	/* Start reassociation failure timer */
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TIMER_ACTIVATE,
-			 psessionEntry->peSessionId, eLIM_REASSOC_FAIL_TIMER));
+			 pe_session->peSessionId, eLIM_REASSOC_FAIL_TIMER));
 	if (tx_timer_activate(&mac->lim.limTimers.gLimReassocFailureTimer)
 	    != TX_SUCCESS) {
 		/* Could not start reassoc failure timer. */
@@ -509,7 +509,7 @@ void lim_send_retry_reassoc_req_frame(tpAniSirGlobal mac,
 	}
 
 	lim_send_reassoc_req_with_ft_ies_mgmt_frame(mac, pTmpMlmReassocReq,
-						    psessionEntry);
+						    pe_session);
 	return;
 
 end:
@@ -525,7 +525,7 @@ end:
 	mlmReassocCnf.resultCode = eSIR_SME_FT_REASSOC_FAILURE;
 	mlmReassocCnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
 	/* Update PE sessio Id */
-	mlmReassocCnf.sessionId = psessionEntry->peSessionId;
+	mlmReassocCnf.sessionId = pe_session->peSessionId;
 
 	lim_post_sme_message(mac, LIM_MLM_REASSOC_CNF,
 			     (uint32_t *) &mlmReassocCnf);
@@ -535,13 +535,13 @@ end:
  * lim_send_reassoc_req_mgmt_frame() - Send the reassociation frame
  * @mac: Global MAC Context
  * @pMlmReassocReq: Reassociation request buffer to be sent
- * @psessionEntry: PE Session
+ * @pe_session: PE Session
  *
  * Return: None
  */
 void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac,
 				tLimMlmReassocReq *pMlmReassocReq,
-				struct pe_session *psessionEntry)
+				struct pe_session *pe_session)
 {
 	tDot11fReAssocRequest *frm;
 	uint16_t caps;
@@ -559,18 +559,18 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac,
 	bool isVHTEnabled = false;
 	tpSirMacMgmtHdr pMacHdr;
 
-	if (NULL == psessionEntry)
+	if (NULL == pe_session)
 		return;
 
-	smeSessionId = psessionEntry->smeSessionId;
-	if (NULL == psessionEntry->pLimReAssocReq)
+	smeSessionId = pe_session->smeSessionId;
+	if (NULL == pe_session->pLimReAssocReq)
 		return;
 
 	frm = qdf_mem_malloc(sizeof(*frm));
 	if (!frm)
 		goto err;
-	nAddIELen = psessionEntry->pLimReAssocReq->addIEAssoc.length;
-	pAddIE = psessionEntry->pLimReAssocReq->addIEAssoc.addIEdata;
+	nAddIELen = pe_session->pLimReAssocReq->addIEAssoc.length;
+	pAddIE = pe_session->pLimReAssocReq->addIEAssoc.addIEdata;
 
 	qdf_mem_set((uint8_t *) frm, sizeof(*frm), 0);
 
@@ -585,7 +585,7 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac,
 	 * ignore the Privacy subfield within received Association and
 	 * Reassociation management frames.
 	 */
-	if (psessionEntry->encryptType == eSIR_ED_WPI)
+	if (pe_session->encryptType == eSIR_ED_WPI)
 		((tSirMacCapabilityInfo *) &caps)->privacy = 0;
 #endif
 	swap_bit_field16(caps, (uint16_t *) &frm->Capabilities);
@@ -593,48 +593,48 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac,
 	frm->ListenInterval.interval = pMlmReassocReq->listenInterval;
 
 	qdf_mem_copy((uint8_t *) frm->CurrentAPAddress.mac,
-		     (uint8_t *) psessionEntry->bssId, 6);
+		     (uint8_t *) pe_session->bssId, 6);
 
 	populate_dot11f_ssid2(mac, &frm->SSID);
 	populate_dot11f_supp_rates(mac, POPULATE_DOT11F_RATES_OPERATIONAL,
-				   &frm->SuppRates, psessionEntry);
+				   &frm->SuppRates, pe_session);
 
-	fQosEnabled = (psessionEntry->limQosEnabled) &&
-		      SIR_MAC_GET_QOS(psessionEntry->limReassocBssCaps);
+	fQosEnabled = (pe_session->limQosEnabled) &&
+		      SIR_MAC_GET_QOS(pe_session->limReassocBssCaps);
 
-	fWmeEnabled = (psessionEntry->limWmeEnabled) &&
-		     LIM_BSS_CAPS_GET(WME, psessionEntry->limReassocBssQosCaps);
+	fWmeEnabled = (pe_session->limWmeEnabled) &&
+		     LIM_BSS_CAPS_GET(WME, pe_session->limReassocBssQosCaps);
 
-	fWsmEnabled = (psessionEntry->limWsmEnabled) && fWmeEnabled &&
-		     LIM_BSS_CAPS_GET(WSM, psessionEntry->limReassocBssQosCaps);
+	fWsmEnabled = (pe_session->limWsmEnabled) && fWmeEnabled &&
+		     LIM_BSS_CAPS_GET(WSM, pe_session->limReassocBssQosCaps);
 
-	if (psessionEntry->lim11hEnable &&
-	    psessionEntry->pLimReAssocReq->spectrumMgtIndicator == true) {
+	if (pe_session->lim11hEnable &&
+	    pe_session->pLimReAssocReq->spectrumMgtIndicator == true) {
 		PowerCapsPopulated = true;
 		populate_dot11f_power_caps(mac, &frm->PowerCaps, LIM_REASSOC,
-					   psessionEntry);
+					   pe_session);
 		populate_dot11f_supp_channels(mac, &frm->SuppChannels,
-				LIM_REASSOC, psessionEntry);
+				LIM_REASSOC, pe_session);
 	}
 	if (mac->rrm.rrmPEContext.rrmEnable &&
-	    SIR_MAC_GET_RRM(psessionEntry->limCurrentBssCaps)) {
+	    SIR_MAC_GET_RRM(pe_session->limCurrentBssCaps)) {
 		if (PowerCapsPopulated == false) {
 			PowerCapsPopulated = true;
 			populate_dot11f_power_caps(mac, &frm->PowerCaps,
-						   LIM_REASSOC, psessionEntry);
+						   LIM_REASSOC, pe_session);
 		}
 	}
 
 	if (fQosEnabled)
-		populate_dot11f_qos_caps_station(mac, psessionEntry,
+		populate_dot11f_qos_caps_station(mac, pe_session,
 						&frm->QOSCapsStation);
 
 	populate_dot11f_ext_supp_rates(mac, POPULATE_DOT11F_RATES_OPERATIONAL,
-				       &frm->ExtSuppRates, psessionEntry);
+				       &frm->ExtSuppRates, pe_session);
 
 	if (mac->rrm.rrmPEContext.rrmEnable &&
-	    SIR_MAC_GET_RRM(psessionEntry->limCurrentBssCaps))
-		populate_dot11f_rrm_ie(mac, &frm->RRMEnabledCap, psessionEntry);
+	    SIR_MAC_GET_RRM(pe_session->limCurrentBssCaps))
+		populate_dot11f_rrm_ie(mac, &frm->RRMEnabledCap, pe_session);
 	/* The join request *should* contain zero or one of the WPA and RSN */
 	/* IEs.  The payload send along with the request is a */
 	/* 'tSirSmeJoinReq'; the IE portion is held inside a 'tSirRSNie': */
@@ -659,41 +659,41 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac,
 		wpsIe = limGetWscIEPtr(mac, pAddIE, nAddIELen);
 	if (NULL == wpsIe) {
 		populate_dot11f_rsn_opaque(mac,
-				&(psessionEntry->pLimReAssocReq->rsnIE),
+				&(pe_session->pLimReAssocReq->rsnIE),
 				&frm->RSNOpaque);
 		populate_dot11f_wpa_opaque(mac,
-				&(psessionEntry->pLimReAssocReq->rsnIE),
+				&(pe_session->pLimReAssocReq->rsnIE),
 				&frm->WPAOpaque);
 #if defined(FEATURE_WLAN_WAPI)
 		populate_dot11f_wapi_opaque(mac,
-					    &(psessionEntry->pLimReAssocReq->
+					    &(pe_session->pLimReAssocReq->
 					      rsnIE), &frm->WAPIOpaque);
 #endif /* defined(FEATURE_WLAN_WAPI) */
 	}
 	/* include WME EDCA IE as well */
 	if (fWmeEnabled) {
 		populate_dot11f_wmm_info_station_per_session(mac,
-				psessionEntry, &frm->WMMInfoStation);
+				pe_session, &frm->WMMInfoStation);
 
 		if (fWsmEnabled)
 			populate_dot11f_wmm_caps(&frm->WMMCaps);
 	}
 
-	if (psessionEntry->htCapability &&
+	if (pe_session->htCapability &&
 	    mac->lim.htCapabilityPresentInBeacon) {
-		populate_dot11f_ht_caps(mac, psessionEntry, &frm->HTCaps);
+		populate_dot11f_ht_caps(mac, pe_session, &frm->HTCaps);
 	}
-	if (psessionEntry->vhtCapability &&
-	    psessionEntry->vhtCapabilityPresentInBeacon) {
+	if (pe_session->vhtCapability &&
+	    pe_session->vhtCapabilityPresentInBeacon) {
 		pe_warn("Populate VHT IEs in Re-Assoc Request");
-		populate_dot11f_vht_caps(mac, psessionEntry, &frm->VHTCaps);
+		populate_dot11f_vht_caps(mac, pe_session, &frm->VHTCaps);
 		isVHTEnabled = true;
 	}
-	populate_dot11f_ext_cap(mac, isVHTEnabled, &frm->ExtCap, psessionEntry);
+	populate_dot11f_ext_cap(mac, isVHTEnabled, &frm->ExtCap, pe_session);
 
-	if (lim_is_session_he_capable(psessionEntry)) {
+	if (lim_is_session_he_capable(pe_session)) {
 		pe_debug("Populate HE IEs");
-		populate_dot11f_he_caps(mac, psessionEntry,
+		populate_dot11f_he_caps(mac, pe_session,
 					&frm->he_cap);
 	}
 
@@ -712,10 +712,10 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac,
 	qdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				      (void **)&pPacket);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		psessionEntry->limMlmState = psessionEntry->limPrevMlmState;
+		pe_session->limMlmState = pe_session->limPrevMlmState;
 		MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_MLM_STATE,
-				 psessionEntry->peSessionId,
-				 psessionEntry->limMlmState));
+				 pe_session->peSessionId,
+				 pe_session->limMlmState));
 		pe_err("Failed to alloc %d bytes for a ReAssociation Req",
 			nBytes);
 		goto end;
@@ -725,8 +725,8 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac,
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac, pFrame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_REASSOC_REQ, psessionEntry->limReAssocbssId,
-		psessionEntry->selfMacAddr);
+		SIR_MAC_MGMT_REASSOC_REQ, pe_session->limReAssocbssId,
+		pe_session->selfMacAddr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
 	/* That done, pack the Probe Request: */
@@ -743,10 +743,10 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac,
 
 	pe_debug("*** Sending Re-Association Request length: %d" "to", nBytes);
 
-	if (psessionEntry->assocReq != NULL) {
-		qdf_mem_free(psessionEntry->assocReq);
-		psessionEntry->assocReq = NULL;
-		psessionEntry->assocReqLen = 0;
+	if (pe_session->assocReq != NULL) {
+		qdf_mem_free(pe_session->assocReq);
+		pe_session->assocReq = NULL;
+		pe_session->assocReqLen = 0;
 	}
 
 	if (nAddIELen) {
@@ -755,30 +755,30 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac,
 		nPayload += nAddIELen;
 	}
 
-	psessionEntry->assocReq = qdf_mem_malloc(nPayload);
-	if (psessionEntry->assocReq) {
+	pe_session->assocReq = qdf_mem_malloc(nPayload);
+	if (pe_session->assocReq) {
 		/* Store the Assocrequest. It is sent to csr in joincnfrsp */
-		qdf_mem_copy(psessionEntry->assocReq,
+		qdf_mem_copy(pe_session->assocReq,
 			     pFrame + sizeof(tSirMacMgmtHdr), nPayload);
-		psessionEntry->assocReqLen = nPayload;
+		pe_session->assocReqLen = nPayload;
 	}
 
 	if ((BAND_5G ==
-		lim_get_rf_band(psessionEntry->currentOperChannel))
-			|| (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
-			(psessionEntry->pePersona == QDF_P2P_GO_MODE))
+		lim_get_rf_band(pe_session->currentOperChannel))
+			|| (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
+			(pe_session->pePersona == QDF_P2P_GO_MODE))
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
-	if (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE ||
-		psessionEntry->pePersona == QDF_STA_MODE)
+	if (pe_session->pePersona == QDF_P2P_CLIENT_MODE ||
+		pe_session->pePersona == QDF_STA_MODE)
 		txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
-			 psessionEntry->peSessionId, pMacHdr->fc.subType));
+			 pe_session->peSessionId, pMacHdr->fc.subType));
 	lim_diag_event_report(mac, WLAN_PE_DIAG_REASSOC_START_EVENT,
-			      psessionEntry, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
+			      pe_session, QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 	lim_diag_mgmt_tx_event_report(mac, pMacHdr,
-				      psessionEntry, QDF_STATUS_SUCCESS,
+				      pe_session, QDF_STATUS_SUCCESS,
 				      QDF_STATUS_SUCCESS);
 	qdf_status =
 		wma_tx_frame(mac, pPacket,
@@ -788,7 +788,7 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac,
 			   RATEID_DEFAULT);
 	MTRACE(qdf_trace
 		       (QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-		       psessionEntry->peSessionId, qdf_status));
+		       pe_session->peSessionId, qdf_status));
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pe_err("Failed to send Re-Association Request: %X!",
 			qdf_status);
@@ -800,7 +800,7 @@ end:
 err:
 	/* Free up buffer allocated for mlmAssocReq */
 	qdf_mem_free(pMlmReassocReq);
-	psessionEntry->pLimMlmReassocReq = NULL;
+	pe_session->pLimMlmReassocReq = NULL;
 
 }
 

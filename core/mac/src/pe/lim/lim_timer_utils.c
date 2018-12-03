@@ -434,7 +434,7 @@ void lim_assoc_failure_timer_handler(void *mac_global, uint32_t param)
 	tpAniSirGlobal mac_ctx = (tpAniSirGlobal) mac_global;
 	struct pe_session *session = NULL;
 
-	session = mac_ctx->lim.pSessionEntry;
+	session = mac_ctx->lim.pe_session;
 	if (LIM_REASSOC == param && NULL != session
 	    && session->limMlmState == eLIM_MLM_WT_FT_REASSOC_RSP_STATE) {
 		pe_err("Reassoc timeout happened");
@@ -889,10 +889,10 @@ lim_deactivate_and_change_per_sta_id_timer(tpAniSirGlobal mac, uint32_t timerId,
  */
 
 void lim_activate_cnf_timer(tpAniSirGlobal mac, uint16_t staId,
-			    struct pe_session *psessionEntry)
+			    struct pe_session *pe_session)
 {
 	mac->lim.limTimers.gpLimCnfWaitTimer[staId].sessionId =
-		psessionEntry->peSessionId;
+		pe_session->peSessionId;
 	if (tx_timer_activate(&mac->lim.limTimers.gpLimCnfWaitTimer[staId])
 	    != TX_SUCCESS) {
 		pe_err("could not activate cnf wait timer");

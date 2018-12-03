@@ -38,22 +38,22 @@ QDF_STATUS lim_send_cf_params(tpAniSirGlobal mac, uint8_t bssIdx,
 				 uint8_t cfpCount, uint8_t cfpPeriod);
 QDF_STATUS lim_send_beacon_params(tpAniSirGlobal mac,
 				     tpUpdateBeaconParams pUpdatedBcnParams,
-				     struct pe_session *psessionEntry);
+				     struct pe_session *pe_session);
 /* QDF_STATUS lim_send_beacon_params(tpAniSirGlobal mac, tpUpdateBeaconParams pUpdatedBcnParams); */
 QDF_STATUS lim_send_mode_update(tpAniSirGlobal mac,
 				   tUpdateVHTOpMode *tempParam,
-				   struct pe_session *psessionEntry);
+				   struct pe_session *pe_session);
 QDF_STATUS lim_send_rx_nss_update(tpAniSirGlobal mac,
 				     tUpdateRxNss *tempParam,
-				     struct pe_session *psessionEntry);
+				     struct pe_session *pe_session);
 
 QDF_STATUS lim_set_membership(tpAniSirGlobal mac,
 				 tUpdateMembership *pTempParam,
-				 struct pe_session *psessionEntry);
+				 struct pe_session *pe_session);
 
 QDF_STATUS lim_set_user_pos(tpAniSirGlobal mac,
 			       tUpdateUserPos *pTempParam,
-			       struct pe_session *psessionEntry);
+			       struct pe_session *pe_session);
 QDF_STATUS lim_send_switch_chnl_params(tpAniSirGlobal mac,
 					  uint8_t chnlNumber,
 					  uint8_t ch_center_freq_seg0,
@@ -75,10 +75,10 @@ QDF_STATUS lim_set_link_state(tpAniSirGlobal mac, tSirLinkState state,
 extern QDF_STATUS lim_set_link_state_ft(tpAniSirGlobal mac, tSirLinkState
 					   state, tSirMacAddr bssId,
 					   tSirMacAddr selfMacAddr, int ft,
-					   struct pe_session *psessionEntry);
+					   struct pe_session *pe_session);
 void lim_set_active_edca_params(tpAniSirGlobal mac,
 				tSirMacEdcaParamRecord *plocalEdcaParams,
-				struct pe_session *psessionEntry);
+				struct pe_session *pe_session);
 #define CAPABILITY_FILTER_MASK  0x73CF
 #define ERP_FILTER_MASK         0xF8
 #define EDCA_FILTER_MASK        0xF0
@@ -92,7 +92,7 @@ void lim_set_active_edca_params(tpAniSirGlobal mac,
 #ifdef WLAN_FEATURE_11W
 QDF_STATUS lim_send_exclude_unencrypt_ind(tpAniSirGlobal mac,
 					     bool excludeUnenc,
-					     struct pe_session *psessionEntry);
+					     struct pe_session *pe_session);
 #endif
 QDF_STATUS lim_send_ht40_obss_scanind(tpAniSirGlobal mac_ctx,
 						struct pe_session *session);

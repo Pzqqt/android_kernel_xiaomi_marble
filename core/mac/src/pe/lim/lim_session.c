@@ -89,33 +89,33 @@ struct sDphHashNode *pe_get_session_dph_node_array(uint8_t session_id)
    --------------------------------------------------------------------------*/
 
 static void pe_init_beacon_params(tpAniSirGlobal mac,
-				  struct pe_session *psessionEntry)
+				  struct pe_session *pe_session)
 {
-	psessionEntry->beaconParams.beaconInterval = 0;
-	psessionEntry->beaconParams.fShortPreamble = 0;
-	psessionEntry->beaconParams.llaCoexist = 0;
-	psessionEntry->beaconParams.llbCoexist = 0;
-	psessionEntry->beaconParams.llgCoexist = 0;
-	psessionEntry->beaconParams.ht20Coexist = 0;
-	psessionEntry->beaconParams.llnNonGFCoexist = 0;
-	psessionEntry->beaconParams.fRIFSMode = 0;
-	psessionEntry->beaconParams.fLsigTXOPProtectionFullSupport = 0;
-	psessionEntry->beaconParams.gHTObssMode = 0;
+	pe_session->beaconParams.beaconInterval = 0;
+	pe_session->beaconParams.fShortPreamble = 0;
+	pe_session->beaconParams.llaCoexist = 0;
+	pe_session->beaconParams.llbCoexist = 0;
+	pe_session->beaconParams.llgCoexist = 0;
+	pe_session->beaconParams.ht20Coexist = 0;
+	pe_session->beaconParams.llnNonGFCoexist = 0;
+	pe_session->beaconParams.fRIFSMode = 0;
+	pe_session->beaconParams.fLsigTXOPProtectionFullSupport = 0;
+	pe_session->beaconParams.gHTObssMode = 0;
 
 	/* Number of legacy STAs associated */
-	qdf_mem_set((void *)&psessionEntry->gLim11bParams,
+	qdf_mem_set((void *)&pe_session->gLim11bParams,
 		    sizeof(tLimProtStaParams), 0);
-	qdf_mem_set((void *)&psessionEntry->gLim11aParams,
+	qdf_mem_set((void *)&pe_session->gLim11aParams,
 		    sizeof(tLimProtStaParams), 0);
-	qdf_mem_set((void *)&psessionEntry->gLim11gParams,
+	qdf_mem_set((void *)&pe_session->gLim11gParams,
 		    sizeof(tLimProtStaParams), 0);
-	qdf_mem_set((void *)&psessionEntry->gLimNonGfParams,
+	qdf_mem_set((void *)&pe_session->gLimNonGfParams,
 		    sizeof(tLimProtStaParams), 0);
-	qdf_mem_set((void *)&psessionEntry->gLimHt20Params,
+	qdf_mem_set((void *)&pe_session->gLimHt20Params,
 		    sizeof(tLimProtStaParams), 0);
-	qdf_mem_set((void *)&psessionEntry->gLimLsigTxopParams,
+	qdf_mem_set((void *)&pe_session->gLimLsigTxopParams,
 		    sizeof(tLimProtStaParams), 0);
-	qdf_mem_set((void *)&psessionEntry->gLimOlbcParams,
+	qdf_mem_set((void *)&pe_session->gLimOlbcParams,
 		    sizeof(tLimProtStaParams), 0);
 }
 
@@ -123,7 +123,7 @@ static void pe_init_beacon_params(tpAniSirGlobal mac,
  * pe_reset_protection_callback() - resets protection structs so that when an AP
  * causing use of protection goes away, corresponding protection bit can be
  * reset
- * @ptr:        pointer to pSessionEntry
+ * @ptr:        pointer to pe_session
  *
  * This function resets protection structs so that when an AP causing use of
  * protection goes away, corresponding protection bit can be reset. This allowes

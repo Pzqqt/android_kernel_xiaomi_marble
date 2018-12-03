@@ -43,19 +43,19 @@
 #include "scheduler_api.h"
 
 /* Macro to count heartbeat */
-#define limResetHBPktCount(psessionEntry)   (psessionEntry->LimRxedBeaconCntDuringHB = 0)
+#define limResetHBPktCount(pe_session)   (pe_session->LimRxedBeaconCntDuringHB = 0)
 
 /* Useful macros for fetching various states in mac->lim */
 /* gLimSystemRole */
-#define GET_LIM_SYSTEM_ROLE(psessionEntry)      (psessionEntry->limSystemRole)
-#define LIM_IS_AP_ROLE(psessionEntry)           (GET_LIM_SYSTEM_ROLE(psessionEntry) == eLIM_AP_ROLE)
-#define LIM_IS_STA_ROLE(psessionEntry)          (GET_LIM_SYSTEM_ROLE(psessionEntry) == eLIM_STA_ROLE)
-#define LIM_IS_IBSS_ROLE(psessionEntry)         (GET_LIM_SYSTEM_ROLE(psessionEntry) == eLIM_STA_IN_IBSS_ROLE)
-#define LIM_IS_UNKNOWN_ROLE(psessionEntry)      (GET_LIM_SYSTEM_ROLE(psessionEntry) == eLIM_UNKNOWN_ROLE)
-#define LIM_IS_P2P_DEVICE_ROLE(psessionEntry)   (GET_LIM_SYSTEM_ROLE(psessionEntry) == eLIM_P2P_DEVICE_ROLE)
-#define LIM_IS_P2P_DEVICE_GO(psessionEntry)     (GET_LIM_SYSTEM_ROLE(psessionEntry) == eLIM_P2P_DEVICE_GO)
-#define LIM_IS_NDI_ROLE(psessionEntry) \
-		(GET_LIM_SYSTEM_ROLE(psessionEntry) == eLIM_NDI_ROLE)
+#define GET_LIM_SYSTEM_ROLE(pe_session)      (pe_session->limSystemRole)
+#define LIM_IS_AP_ROLE(pe_session)           (GET_LIM_SYSTEM_ROLE(pe_session) == eLIM_AP_ROLE)
+#define LIM_IS_STA_ROLE(pe_session)          (GET_LIM_SYSTEM_ROLE(pe_session) == eLIM_STA_ROLE)
+#define LIM_IS_IBSS_ROLE(pe_session)         (GET_LIM_SYSTEM_ROLE(pe_session) == eLIM_STA_IN_IBSS_ROLE)
+#define LIM_IS_UNKNOWN_ROLE(pe_session)      (GET_LIM_SYSTEM_ROLE(pe_session) == eLIM_UNKNOWN_ROLE)
+#define LIM_IS_P2P_DEVICE_ROLE(pe_session)   (GET_LIM_SYSTEM_ROLE(pe_session) == eLIM_P2P_DEVICE_ROLE)
+#define LIM_IS_P2P_DEVICE_GO(pe_session)     (GET_LIM_SYSTEM_ROLE(pe_session) == eLIM_P2P_DEVICE_GO)
+#define LIM_IS_NDI_ROLE(pe_session) \
+		(GET_LIM_SYSTEM_ROLE(pe_session) == eLIM_NDI_ROLE)
 /* gLimSmeState */
 #define GET_LIM_SME_STATE(mac)                 (mac->lim.gLimSmeState)
 #define SET_LIM_SME_STATE(mac, state)          (mac->lim.gLimSmeState = state)
@@ -65,7 +65,7 @@
 /*tpdphHashNode mlmStaContext*/
 #define GET_LIM_STA_CONTEXT_MLM_STATE(pStaDs)   (pStaDs->mlmStaContext.mlmState)
 #define SET_LIM_STA_CONTEXT_MLM_STATE(pStaDs, state)  (pStaDs->mlmStaContext.mlmState = state)
-#define LIM_IS_CONNECTION_ACTIVE(psessionEntry)  (psessionEntry->LimRxedBeaconCntDuringHB)
+#define LIM_IS_CONNECTION_ACTIVE(pe_session)  (pe_session->LimRxedBeaconCntDuringHB)
 /*mac->lim.gLimProcessDefdMsgs*/
 #define GET_LIM_PROCESS_DEFD_MESGS(mac) (mac->lim.gLimProcessDefdMsgs)
 #define SET_LIM_PROCESS_DEFD_MESGS(mac, val) \
@@ -210,12 +210,12 @@ static inline tLimSmeStates lim_get_sme_state(tpAniSirGlobal mac)
 extern void lim_received_hb_handler(tpAniSirGlobal, uint8_t, struct pe_session *);
 /* / Function that triggers STA context deletion */
 extern void lim_trigger_sta_deletion(tpAniSirGlobal mac, tpDphHashNode pStaDs,
-				     struct pe_session *psessionEntry);
+				     struct pe_session *pe_session);
 
 #ifdef FEATURE_WLAN_TDLS
 /* Function that sends TDLS Del Sta indication to SME */
 extern void lim_send_sme_tdls_del_sta_ind(tpAniSirGlobal mac, tpDphHashNode pStaDs,
-					  struct pe_session *psessionEntry,
+					  struct pe_session *pe_session,
 					  uint16_t reasonCode);
 /**
  * lim_set_tdls_flags() - update tdls flags based on newer STA connection
@@ -246,7 +246,7 @@ QDF_STATUS lim_update_short_slot(tpAniSirGlobal mac,
 
 void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal mac,
 					     struct scheduler_msg *pMsg);
-void lim_send_heart_beat_timeout_ind(tpAniSirGlobal mac, struct pe_session *psessionEntry);
+void lim_send_heart_beat_timeout_ind(tpAniSirGlobal mac, struct pe_session *pe_session);
 tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal mac,
 						 uint8_t *pRxPacketInfo,
 						 uint32_t subType);
@@ -284,24 +284,24 @@ void lim_update_lost_link_info(tpAniSirGlobal mac, struct pe_session *session,
 void lim_mon_init_session(tpAniSirGlobal mac_ptr,
 			  struct sir_create_session *msg);
 
-#define limGetQosMode(psessionEntry, pVal) (*(pVal) = (psessionEntry)->limQosEnabled)
-#define limGetWmeMode(psessionEntry, pVal) (*(pVal) = (psessionEntry)->limWmeEnabled)
-#define limGetWsmMode(psessionEntry, pVal) (*(pVal) = (psessionEntry)->limWsmEnabled)
-#define limGet11dMode(psessionEntry, pVal) (*(pVal) = (psessionEntry)->lim11dEnabled)
+#define limGetQosMode(pe_session, pVal) (*(pVal) = (pe_session)->limQosEnabled)
+#define limGetWmeMode(pe_session, pVal) (*(pVal) = (pe_session)->limWmeEnabled)
+#define limGetWsmMode(pe_session, pVal) (*(pVal) = (pe_session)->limWsmEnabled)
+#define limGet11dMode(pe_session, pVal) (*(pVal) = (pe_session)->lim11dEnabled)
 /* ----------------------------------------------------------------------- */
 static inline void lim_get_phy_mode(tpAniSirGlobal mac, uint32_t *phyMode,
-				    struct pe_session *psessionEntry)
+				    struct pe_session *pe_session)
 {
 	*phyMode =
-		psessionEntry ? psessionEntry->gLimPhyMode : mac->lim.gLimPhyMode;
+		pe_session ? pe_session->gLimPhyMode : mac->lim.gLimPhyMode;
 }
 
 /* ----------------------------------------------------------------------- */
 static inline void lim_get_rf_band_new(tpAniSirGlobal mac,
 				       enum band_info *band,
-				       struct pe_session *psessionEntry)
+				       struct pe_session *pe_session)
 {
-	*band = psessionEntry ? psessionEntry->limRFBand : BAND_UNKNOWN;
+	*band = pe_session ? pe_session->limRFBand : BAND_UNKNOWN;
 }
 
 /**

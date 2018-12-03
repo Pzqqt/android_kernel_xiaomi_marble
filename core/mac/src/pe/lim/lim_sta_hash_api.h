@@ -36,6 +36,6 @@
 #include "lim_types.h"
 
 QDF_STATUS lim_get_sta_hash_bssidx(tpAniSirGlobal mac, uint16_t assocId,
-				      uint8_t *bssidx, struct pe_session *psessionEntry);
+				      uint8_t *bssidx, struct pe_session *pe_session);
 
 #endif

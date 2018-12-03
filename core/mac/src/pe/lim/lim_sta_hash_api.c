@@ -52,10 +52,10 @@
  */
 
 QDF_STATUS lim_get_sta_hash_bssidx(tpAniSirGlobal mac, uint16_t assocId,
-				      uint8_t *bssidx, struct pe_session *psessionEntry)
+				      uint8_t *bssidx, struct pe_session *pe_session)
 {
 	tpDphHashNode pSta =
-		dph_get_hash_entry(mac, assocId, &psessionEntry->dph.dphHashTable);
+		dph_get_hash_entry(mac, assocId, &pe_session->dph.dphHashTable);
 
 	if (pSta == NULL) {
 		pe_err("invalid STA: %d", assocId);

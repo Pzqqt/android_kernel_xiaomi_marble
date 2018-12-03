@@ -667,7 +667,7 @@ sir_convert_meas_req_frame2_struct(struct mac_context *, uint8_t *,
 QDF_STATUS
 populate_dot11f_capabilities(tpAniSirGlobal mac,
 			tDot11fFfCapabilities *pDot11f,
-			struct pe_session *psessionEntry);
+			struct pe_session *pe_session);
 
 /**
  * \brief Populated a tDot11fFfCapabilities
@@ -694,13 +694,13 @@ QDF_STATUS
 populate_dot11f_capabilities2(tpAniSirGlobal mac,
 			tDot11fFfCapabilities *pDot11f,
 			struct sDphHashNode *pSta,
-			struct pe_session *psessionEntry);
+			struct pe_session *pe_session);
 
 /* / Populate a tDot11fIEChanSwitchAnn */
 void
 populate_dot11f_chan_switch_ann(tpAniSirGlobal mac,
 				tDot11fIEChanSwitchAnn *pDot11f,
-				struct pe_session *psessionEntry);
+				struct pe_session *pe_session);
 
 void
 populate_dot_11_f_ext_chann_switch_ann(tpAniSirGlobal mac_ptr,
@@ -711,12 +711,12 @@ populate_dot_11_f_ext_chann_switch_ann(tpAniSirGlobal mac_ptr,
 void
 populate_dot11f_chan_switch_wrapper(tpAniSirGlobal mac,
 				tDot11fIEChannelSwitchWrapper *pDot11f,
-				struct pe_session *psessionEntry);
+				struct pe_session *pe_session);
 
 /* / Populate a tDot11fIECountry */
 QDF_STATUS
 populate_dot11f_country(tpAniSirGlobal mac,
-			tDot11fIECountry *pDot11f, struct pe_session *psessionEntry);
+			tDot11fIECountry *pDot11f, struct pe_session *pe_session);
 
 /* Populated a populate_dot11f_ds_params */
 QDF_STATUS
@@ -727,16 +727,16 @@ populate_dot11f_ds_params(tpAniSirGlobal mac,
 void
 populate_dot11f_edca_param_set(tpAniSirGlobal mac,
 			tDot11fIEEDCAParamSet *pDot11f,
-			struct pe_session *psessionEntry);
+			struct pe_session *pe_session);
 
 QDF_STATUS
 populate_dot11f_erp_info(tpAniSirGlobal mac,
-			tDot11fIEERPInfo *pDot11f, struct pe_session *psessionEntry);
+			tDot11fIEERPInfo *pDot11f, struct pe_session *pe_session);
 
 QDF_STATUS
 populate_dot11f_ext_supp_rates(tpAniSirGlobal mac,
 			uint8_t nChannelNum, tDot11fIEExtSuppRates *pDot11f,
-			struct pe_session *psessionEntry);
+			struct pe_session *pe_session);
 
 /**
  * populate_dot11f_beacon_report() - Populate the Beacon Report IE
@@ -776,15 +776,15 @@ populate_dot11f_ext_supp_rates1(tpAniSirGlobal mac,
 
 QDF_STATUS
 populate_dot11f_ht_caps(tpAniSirGlobal mac,
-			struct pe_session *psessionEntry, tDot11fIEHTCaps *pDot11f);
+			struct pe_session *pe_session, tDot11fIEHTCaps *pDot11f);
 
 QDF_STATUS
 populate_dot11f_ht_info(tpAniSirGlobal mac,
-			tDot11fIEHTInfo *pDot11f, struct pe_session *psessionEntry);
+			tDot11fIEHTInfo *pDot11f, struct pe_session *pe_session);
 
 void populate_dot11f_ibss_params(tpAniSirGlobal mac,
 				tDot11fIEIBSSParams *pDot11f,
-				struct pe_session *psessionEntry);
+				struct pe_session *pe_session);
 
 #ifdef ANI_SUPPORT_11H
 QDF_STATUS
@@ -809,7 +809,7 @@ populate_dot11f_measurement_report2(tpAniSirGlobal mac,
 void
 populate_dot11f_power_caps(tpAniSirGlobal mac,
 			tDot11fIEPowerCaps *pCaps,
-			uint8_t nAssocType, struct pe_session *psessionEntry);
+			uint8_t nAssocType, struct pe_session *pe_session);
 
 /* / Populate a tDot11fIEPowerConstraints */
 QDF_STATUS
@@ -819,7 +819,7 @@ populate_dot11f_power_constraints(tpAniSirGlobal mac,
 void
 populate_dot11f_qos_caps_ap(tpAniSirGlobal mac,
 			tDot11fIEQOSCapsAp *pDot11f,
-			struct pe_session *psessionEntry);
+			struct pe_session *pe_session);
 
 void
 populate_dot11f_qos_caps_station(tpAniSirGlobal mac, struct pe_session *session,
@@ -874,7 +874,7 @@ populate_dot11f_schedule(tSirMacScheduleIE *pSchedule,
 void
 populate_dot11f_supp_channels(tpAniSirGlobal mac,
 			tDot11fIESuppChannels *pDot11f,
-			uint8_t nAssocType, struct pe_session *psessionEntry);
+			uint8_t nAssocType, struct pe_session *pe_session);
 
 /**
  * \brief Populated a tDot11fIESuppRates
@@ -912,7 +912,7 @@ populate_dot11f_rates_tdls(tpAniSirGlobal p_mac,
 
 QDF_STATUS populate_dot11f_tpc_report(tpAniSirGlobal mac,
 					tDot11fIETPCReport *pDot11f,
-					struct pe_session *psessionEntry);
+					struct pe_session *pe_session);
 
 /* / Populate a tDot11FfTSInfo */
 void populate_dot11f_ts_info(tSirMacTSInfo *pInfo, tDot11fFfTSInfo *pDot11f);
@@ -920,7 +920,7 @@ void populate_dot11f_ts_info(tSirMacTSInfo *pInfo, tDot11fFfTSInfo *pDot11f);
 void populate_dot11f_wmm(tpAniSirGlobal mac,
 			tDot11fIEWMMInfoAp *pInfo,
 			tDot11fIEWMMParams *pParams,
-			tDot11fIEWMMCaps *pCaps, struct pe_session *psessionEntry);
+			tDot11fIEWMMCaps *pCaps, struct pe_session *pe_session);
 
 void populate_dot11f_wmm_caps(tDot11fIEWMMCaps *pCaps);
 
@@ -940,7 +940,7 @@ void populate_dot11_tsrsie(tpAniSirGlobal mac,
 			uint8_t rate_length);
 void populate_dot11f_re_assoc_tspec(tpAniSirGlobal mac,
 				tDot11fReAssocRequest *pReassoc,
-				struct pe_session *psessionEntry);
+				struct pe_session *pe_session);
 QDF_STATUS
 sir_beacon_ie_ese_bcn_report(tpAniSirGlobal mac,
 		uint8_t *pPayload, const uint32_t payloadLength,
@@ -963,15 +963,15 @@ void ese_populate_wmm_tspec(tSirMacTspecIE *source, ese_wmm_tspec_ie *dest);
 
 void populate_dot11f_wmm_info_ap(tpAniSirGlobal mac,
 				tDot11fIEWMMInfoAp *pInfo,
-				struct pe_session *psessionEntry);
+				struct pe_session *pe_session);
 
 void populate_dot11f_wmm_info_station_per_session(tpAniSirGlobal mac,
-					struct pe_session *psessionEntry,
+					struct pe_session *pe_session,
 					tDot11fIEWMMInfoStation *pInfo);
 
 void populate_dot11f_wmm_params(tpAniSirGlobal mac,
 				tDot11fIEWMMParams *pParams,
-				struct pe_session *psessionEntry);
+				struct pe_session *pe_session);
 
 /**
  * \brief Populate a tDot11fIEWMMSchedule
@@ -1021,13 +1021,13 @@ QDF_STATUS de_populate_dot11f_wsc_registrar_info(tpAniSirGlobal mac,
 
 QDF_STATUS populate_dot11f_probe_res_wpsi_es(tpAniSirGlobal mac,
 						tDot11fIEWscProbeRes *pDot11f,
-						struct pe_session *psessionEntry);
+						struct pe_session *pe_session);
 QDF_STATUS populate_dot11f_assoc_res_wpsi_es(tpAniSirGlobal mac,
 						tDot11fIEWscAssocRes *pDot11f,
-						struct pe_session *psessionEntry);
+						struct pe_session *pe_session);
 QDF_STATUS populate_dot11f_beacon_wpsi_es(tpAniSirGlobal mac,
 					tDot11fIEWscBeacon *pDot11f,
-					struct pe_session *psessionEntry);
+					struct pe_session *pe_session);
 
 QDF_STATUS populate_dot11f_wsc_in_probe_res(tpAniSirGlobal mac,
 					tDot11fIEWscProbeRes *pDot11f);
@@ -1057,7 +1057,7 @@ QDF_STATUS populate_dot11f_wfatpc(tpAniSirGlobal mac,
 
 QDF_STATUS populate_dot11f_rrm_ie(tpAniSirGlobal mac,
 				tDot11fIERRMEnabledCap *pDot11f,
-				struct pe_session *psessionEntry);
+				struct pe_session *pe_session);
 
 void populate_mdie(tpAniSirGlobal mac,
 		tDot11fIEMobilityDomain * pDot11f, uint8_t mdie[]);
@@ -1073,17 +1073,17 @@ int find_ie_location(tpAniSirGlobal mac, tpSirRSNie pRsnIe, uint8_t EID);
 void lim_log_vht_cap(tpAniSirGlobal mac, tDot11fIEVHTCaps *pDot11f);
 
 QDF_STATUS
-populate_dot11f_vht_caps(tpAniSirGlobal mac, struct pe_session *psessionEntry,
+populate_dot11f_vht_caps(tpAniSirGlobal mac, struct pe_session *pe_session,
 			tDot11fIEVHTCaps *pDot11f);
 
 QDF_STATUS
 populate_dot11f_vht_operation(tpAniSirGlobal mac,
-			struct pe_session *psessionEntry,
+			struct pe_session *pe_session,
 			tDot11fIEVHTOperation *pDot11f);
 
 QDF_STATUS
 populate_dot11f_ext_cap(tpAniSirGlobal mac, bool isVHTEnabled,
-			tDot11fIEExtCap *pDot11f, struct pe_session *psessionEntry);
+			tDot11fIEExtCap *pDot11f, struct pe_session *pe_session);
 
 void populate_dot11f_qcn_ie(tDot11fIEQCN_IE *pDot11f);
 
@@ -1111,12 +1111,12 @@ static inline void populate_dot11f_fils_params(tpAniSirGlobal mac_ctx,
 QDF_STATUS
 populate_dot11f_operating_mode(tpAniSirGlobal mac,
 			tDot11fIEOperatingMode *pDot11f,
-			struct pe_session *psessionEntry);
+			struct pe_session *pe_session);
 
 void
 populate_dot11f_wider_bw_chan_switch_ann(tpAniSirGlobal mac,
 					tDot11fIEWiderBWChanSwitchAnn *pDot11f,
-					struct pe_session *psessionEntry);
+					struct pe_session *pe_session);
 
 void populate_dot11f_timeout_interval(tpAniSirGlobal mac,
 				tDot11fIETimeoutInterval *pDot11f,

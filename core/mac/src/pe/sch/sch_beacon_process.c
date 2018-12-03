@@ -284,12 +284,12 @@ static void __sch_beacon_process_no_session(tpAniSirGlobal mac,
 					    tpSchBeaconStruct pBeacon,
 					    uint8_t *pRxPacketInfo)
 {
-	struct pe_session *psessionEntry = NULL;
+	struct pe_session *pe_session = NULL;
 
-	psessionEntry = lim_is_ibss_session_active(mac);
-	if (psessionEntry != NULL) {
+	pe_session = lim_is_ibss_session_active(mac);
+	if (pe_session != NULL) {
 		lim_handle_ibss_coalescing(mac, pBeacon, pRxPacketInfo,
-					   psessionEntry);
+					   pe_session);
 	}
 	return;
 }

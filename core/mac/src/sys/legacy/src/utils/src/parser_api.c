@@ -149,12 +149,12 @@ int find_ie_location(tpAniSirGlobal mac, tpSirRSNie pRsnIe, uint8_t EID)
 QDF_STATUS
 populate_dot11f_capabilities(tpAniSirGlobal mac,
 			     tDot11fFfCapabilities *pDot11f,
-			     struct pe_session *psessionEntry)
+			     struct pe_session *pe_session)
 {
 	uint16_t cfg;
 	QDF_STATUS nSirStatus;
 
-	nSirStatus = cfg_get_capability_info(mac, &cfg, psessionEntry);
+	nSirStatus = cfg_get_capability_info(mac, &cfg, pe_session);
 	if (QDF_STATUS_SUCCESS != nSirStatus) {
 		pe_err("Failed to retrieve the Capabilities bitfield from CFG status: %d",
 			   nSirStatus);
@@ -209,12 +209,12 @@ void populate_dot_11_f_ext_chann_switch_ann(tpAniSirGlobal mac_ptr,
 void
 populate_dot11f_chan_switch_ann(tpAniSirGlobal mac,
 				tDot11fIEChanSwitchAnn *pDot11f,
-				struct pe_session *psessionEntry)
+				struct pe_session *pe_session)
 {
-	pDot11f->switchMode = psessionEntry->gLimChannelSwitch.switchMode;
-	pDot11f->newChannel = psessionEntry->gLimChannelSwitch.primaryChannel;
+	pDot11f->switchMode = pe_session->gLimChannelSwitch.switchMode;
+	pDot11f->newChannel = pe_session->gLimChannelSwitch.primaryChannel;
 	pDot11f->switchCount =
-		(uint8_t) psessionEntry->gLimChannelSwitch.switchCount;
+		(uint8_t) pe_session->gLimChannelSwitch.switchCount;
 
 	pDot11f->present = 1;
 }
@@ -264,7 +264,7 @@ populate_dot11_supp_operating_classes(tpAniSirGlobal mac_ptr,
 void
 populate_dot11f_chan_switch_wrapper(tpAniSirGlobal mac,
 				    tDot11fIEChannelSwitchWrapper *pDot11f,
-				    struct pe_session *psessionEntry)
+				    struct pe_session *pe_session)
 {
 	const uint8_t *ie_ptr = NULL;
 
@@ -290,11 +290,11 @@ populate_dot11f_chan_switch_wrapper(tpAniSirGlobal mac,
 	 * Add the Wide Channel Bandwidth Sublement.
 	 */
 	pDot11f->WiderBWChanSwitchAnn.newChanWidth =
-		psessionEntry->gLimWiderBWChannelSwitch.newChanWidth;
+		pe_session->gLimWiderBWChannelSwitch.newChanWidth;
 	pDot11f->WiderBWChanSwitchAnn.newCenterChanFreq0 =
-		psessionEntry->gLimWiderBWChannelSwitch.newCenterChanFreq0;
+		pe_session->gLimWiderBWChannelSwitch.newCenterChanFreq0;
 	pDot11f->WiderBWChanSwitchAnn.newCenterChanFreq1 =
-		psessionEntry->gLimWiderBWChannelSwitch.newCenterChanFreq1;
+		pe_session->gLimWiderBWChannelSwitch.newCenterChanFreq1;
 	pDot11f->WiderBWChanSwitchAnn.present = 1;
 
 	/*
@@ -302,8 +302,8 @@ populate_dot11f_chan_switch_wrapper(tpAniSirGlobal mac,
 	 */
 	ie_ptr = wlan_get_ie_ptr_from_eid(
 			DOT11F_EID_VHT_TRANSMIT_POWER_ENV,
-			psessionEntry->addIeParams.probeRespBCNData_buff,
-			psessionEntry->addIeParams.probeRespBCNDataLen);
+			pe_session->addIeParams.probeRespBCNData_buff,
+			pe_session->addIeParams.probeRespBCNDataLen);
 	if (ie_ptr) {
 		/* Ignore EID field */
 		pDot11f->vht_transmit_power_env.present = 1;
@@ -332,27 +332,27 @@ populate_dot11f_avoid_channel_ie(tpAniSirGlobal mac_ctx,
 void
 populate_dot11f_wider_bw_chan_switch_ann(tpAniSirGlobal mac,
 					 tDot11fIEWiderBWChanSwitchAnn *pDot11f,
-					 struct pe_session *psessionEntry)
+					 struct pe_session *pe_session)
 {
 	pDot11f->present = 1;
 	pDot11f->newChanWidth =
-		psessionEntry->gLimWiderBWChannelSwitch.newChanWidth;
+		pe_session->gLimWiderBWChannelSwitch.newChanWidth;
 	pDot11f->newCenterChanFreq0 =
-		psessionEntry->gLimWiderBWChannelSwitch.newCenterChanFreq0;
+		pe_session->gLimWiderBWChannelSwitch.newCenterChanFreq0;
 	pDot11f->newCenterChanFreq1 =
-		psessionEntry->gLimWiderBWChannelSwitch.newCenterChanFreq1;
+		pe_session->gLimWiderBWChannelSwitch.newCenterChanFreq1;
 }
 
 QDF_STATUS
 populate_dot11f_country(tpAniSirGlobal mac,
-			tDot11fIECountry *pDot11f, struct pe_session *psessionEntry)
+			tDot11fIECountry *pDot11f, struct pe_session *pe_session)
 {
 	uint32_t len;
 	enum band_info rfBand;
 	uint8_t temp[CFG_MAX_STR_LEN], code[3];
 
-	if (psessionEntry->lim11dEnabled) {
-		lim_get_rf_band_new(mac, &rfBand, psessionEntry);
+	if (pe_session->lim11dEnabled) {
+		lim_get_rf_band_new(mac, &rfBand, pe_session);
 		if (rfBand == BAND_5G) {
 			len = mac->mlme_cfg->power.max_tx_power_5.len;
 			qdf_mem_copy(temp,
@@ -418,67 +418,67 @@ populate_dot11f_ds_params(tpAniSirGlobal mac_ctx,
 void
 populate_dot11f_edca_param_set(tpAniSirGlobal mac,
 			       tDot11fIEEDCAParamSet *pDot11f,
-			       struct pe_session *psessionEntry)
+			       struct pe_session *pe_session)
 {
 
-	if (psessionEntry->limQosEnabled) {
+	if (pe_session->limQosEnabled) {
 		/* change to bitwise operation, after this is fixed in frames. */
 		pDot11f->qos =
 			(uint8_t) (0xf0 &
-				   (psessionEntry->gLimEdcaParamSetCount << 4));
+				   (pe_session->gLimEdcaParamSetCount << 4));
 
 		/* Fill each EDCA parameter set in order: be, bk, vi, vo */
 		pDot11f->acbe_aifsn =
 			(0xf &
-			 SET_AIFSN(psessionEntry->gLimEdcaParamsBC[0].aci.aifsn));
+			 SET_AIFSN(pe_session->gLimEdcaParamsBC[0].aci.aifsn));
 		pDot11f->acbe_acm =
-			(0x1 & psessionEntry->gLimEdcaParamsBC[0].aci.acm);
+			(0x1 & pe_session->gLimEdcaParamsBC[0].aci.acm);
 		pDot11f->acbe_aci = (0x3 & SIR_MAC_EDCAACI_BESTEFFORT);
 		pDot11f->acbe_acwmin =
-			(0xf & psessionEntry->gLimEdcaParamsBC[0].cw.min);
+			(0xf & pe_session->gLimEdcaParamsBC[0].cw.min);
 		pDot11f->acbe_acwmax =
-			(0xf & psessionEntry->gLimEdcaParamsBC[0].cw.max);
+			(0xf & pe_session->gLimEdcaParamsBC[0].cw.max);
 		pDot11f->acbe_txoplimit =
-			psessionEntry->gLimEdcaParamsBC[0].txoplimit;
+			pe_session->gLimEdcaParamsBC[0].txoplimit;
 
 		pDot11f->acbk_aifsn =
 			(0xf &
-			 SET_AIFSN(psessionEntry->gLimEdcaParamsBC[1].aci.aifsn));
+			 SET_AIFSN(pe_session->gLimEdcaParamsBC[1].aci.aifsn));
 		pDot11f->acbk_acm =
-			(0x1 & psessionEntry->gLimEdcaParamsBC[1].aci.acm);
+			(0x1 & pe_session->gLimEdcaParamsBC[1].aci.acm);
 		pDot11f->acbk_aci = (0x3 & SIR_MAC_EDCAACI_BACKGROUND);
 		pDot11f->acbk_acwmin =
-			(0xf & psessionEntry->gLimEdcaParamsBC[1].cw.min);
+			(0xf & pe_session->gLimEdcaParamsBC[1].cw.min);
 		pDot11f->acbk_acwmax =
-			(0xf & psessionEntry->gLimEdcaParamsBC[1].cw.max);
+			(0xf & pe_session->gLimEdcaParamsBC[1].cw.max);
 		pDot11f->acbk_txoplimit =
-			psessionEntry->gLimEdcaParamsBC[1].txoplimit;
+			pe_session->gLimEdcaParamsBC[1].txoplimit;
 
 		pDot11f->acvi_aifsn =
 			(0xf &
-			 SET_AIFSN(psessionEntry->gLimEdcaParamsBC[2].aci.aifsn));
+			 SET_AIFSN(pe_session->gLimEdcaParamsBC[2].aci.aifsn));
 		pDot11f->acvi_acm =
-			(0x1 & psessionEntry->gLimEdcaParamsBC[2].aci.acm);
+			(0x1 & pe_session->gLimEdcaParamsBC[2].aci.acm);
 		pDot11f->acvi_aci = (0x3 & SIR_MAC_EDCAACI_VIDEO);
 		pDot11f->acvi_acwmin =
-			(0xf & psessionEntry->gLimEdcaParamsBC[2].cw.min);
+			(0xf & pe_session->gLimEdcaParamsBC[2].cw.min);
 		pDot11f->acvi_acwmax =
-			(0xf & psessionEntry->gLimEdcaParamsBC[2].cw.max);
+			(0xf & pe_session->gLimEdcaParamsBC[2].cw.max);
 		pDot11f->acvi_txoplimit =
-			psessionEntry->gLimEdcaParamsBC[2].txoplimit;
+			pe_session->gLimEdcaParamsBC[2].txoplimit;
 
 		pDot11f->acvo_aifsn =
 			(0xf &
-			 SET_AIFSN(psessionEntry->gLimEdcaParamsBC[3].aci.aifsn));
+			 SET_AIFSN(pe_session->gLimEdcaParamsBC[3].aci.aifsn));
 		pDot11f->acvo_acm =
-			(0x1 & psessionEntry->gLimEdcaParamsBC[3].aci.acm);
+			(0x1 & pe_session->gLimEdcaParamsBC[3].aci.acm);
 		pDot11f->acvo_aci = (0x3 & SIR_MAC_EDCAACI_VOICE);
 		pDot11f->acvo_acwmin =
-			(0xf & psessionEntry->gLimEdcaParamsBC[3].cw.min);
+			(0xf & pe_session->gLimEdcaParamsBC[3].cw.min);
 		pDot11f->acvo_acwmax =
-			(0xf & psessionEntry->gLimEdcaParamsBC[3].cw.max);
+			(0xf & pe_session->gLimEdcaParamsBC[3].cw.max);
 		pDot11f->acvo_txoplimit =
-			psessionEntry->gLimEdcaParamsBC[3].txoplimit;
+			pe_session->gLimEdcaParamsBC[3].txoplimit;
 
 		pDot11f->present = 1;
 	}
@@ -487,35 +487,35 @@ populate_dot11f_edca_param_set(tpAniSirGlobal mac,
 
 QDF_STATUS
 populate_dot11f_erp_info(tpAniSirGlobal mac,
-			 tDot11fIEERPInfo *pDot11f, struct pe_session *psessionEntry)
+			 tDot11fIEERPInfo *pDot11f, struct pe_session *pe_session)
 {
 	uint32_t val;
 	enum band_info rfBand = BAND_UNKNOWN;
 
-	lim_get_rf_band_new(mac, &rfBand, psessionEntry);
+	lim_get_rf_band_new(mac, &rfBand, pe_session);
 	if (BAND_2G == rfBand) {
 		pDot11f->present = 1;
 
-		val = psessionEntry->cfgProtection.fromllb;
+		val = pe_session->cfgProtection.fromllb;
 		if (!val) {
 			pe_err("11B protection not enabled. Not populating ERP IE %d",
 				val);
 			return QDF_STATUS_SUCCESS;
 		}
 
-		if (psessionEntry->gLim11bParams.protectionEnabled) {
+		if (pe_session->gLim11bParams.protectionEnabled) {
 			pDot11f->non_erp_present = 1;
 			pDot11f->use_prot = 1;
 		}
 
-		if (psessionEntry->gLimOlbcParams.protectionEnabled) {
+		if (pe_session->gLimOlbcParams.protectionEnabled) {
 			/* FIXME_PROTECTION: we should be setting non_erp present also. */
 			/* check the test plan first. */
 			pDot11f->use_prot = 1;
 		}
 
-		if ((psessionEntry->gLimNoShortParams.numNonShortPreambleSta)
-		    || !psessionEntry->beaconParams.fShortPreamble) {
+		if ((pe_session->gLimNoShortParams.numNonShortPreambleSta)
+		    || !pe_session->beaconParams.fShortPreamble) {
 			pDot11f->barker_preamble = 1;
 
 		}
@@ -527,7 +527,7 @@ populate_dot11f_erp_info(tpAniSirGlobal mac,
 QDF_STATUS
 populate_dot11f_ext_supp_rates(tpAniSirGlobal mac, uint8_t nChannelNum,
 			       tDot11fIEExtSuppRates *pDot11f,
-			       struct pe_session *psessionEntry)
+			       struct pe_session *pe_session)
 {
 	QDF_STATUS nsir_status;
 	qdf_size_t nRates = 0;
@@ -538,9 +538,9 @@ populate_dot11f_ext_supp_rates(tpAniSirGlobal mac, uint8_t nChannelNum,
 	   sending mgmt frames (lile probe req) which need to go out before any session is present.
 	 */
 	if (POPULATE_DOT11F_RATES_OPERATIONAL == nChannelNum) {
-		if (psessionEntry != NULL) {
-			nRates = psessionEntry->extRateSet.numRates;
-			qdf_mem_copy(rates, psessionEntry->extRateSet.rate,
+		if (pe_session != NULL) {
+			nRates = pe_session->extRateSet.numRates;
+			qdf_mem_copy(rates, pe_session->extRateSet.rate,
 				     nRates);
 		} else {
 			pe_err("no session context exists while populating Operational Rate Set");
@@ -606,7 +606,7 @@ populate_dot11f_ext_supp_rates1(tpAniSirGlobal mac,
 
 QDF_STATUS
 populate_dot11f_ht_caps(tpAniSirGlobal mac,
-			struct pe_session *psessionEntry, tDot11fIEHTCaps *pDot11f)
+			struct pe_session *pe_session, tDot11fIEHTCaps *pDot11f)
 {
 	uint32_t nCfgValue;
 	uint8_t nCfgValue8;
@@ -630,7 +630,7 @@ populate_dot11f_ht_caps(tpAniSirGlobal mac,
 	pDot11f->lsigTXOPProtection = ht_cap_info->l_sig_tx_op_protection;
 
 	/* All sessionized entries will need the check below */
-	if (psessionEntry == NULL) {     /* Only in case of NO session */
+	if (pe_session == NULL) {     /* Only in case of NO session */
 		pDot11f->supportedChannelWidthSet =
 			ht_cap_info->supported_channel_width_set;
 		pDot11f->advCodingCap = ht_cap_info->adv_coding_cap;
@@ -639,13 +639,13 @@ populate_dot11f_ht_caps(tpAniSirGlobal mac,
 		pDot11f->shortGI20MHz = ht_cap_info->short_gi_20_mhz;
 		pDot11f->shortGI40MHz = ht_cap_info->short_gi_40_mhz;
 	} else {
-		pDot11f->advCodingCap = psessionEntry->htConfig.ht_rx_ldpc;
+		pDot11f->advCodingCap = pe_session->htConfig.ht_rx_ldpc;
 		pDot11f->supportedChannelWidthSet =
-			psessionEntry->htSupportedChannelWidthSet;
-		pDot11f->txSTBC = psessionEntry->htConfig.ht_tx_stbc;
-		pDot11f->rxSTBC = psessionEntry->htConfig.ht_rx_stbc;
-		pDot11f->shortGI20MHz = psessionEntry->htConfig.ht_sgi20;
-		pDot11f->shortGI40MHz = psessionEntry->htConfig.ht_sgi40;
+			pe_session->htSupportedChannelWidthSet;
+		pDot11f->txSTBC = pe_session->htConfig.ht_tx_stbc;
+		pDot11f->rxSTBC = pe_session->htConfig.ht_rx_stbc;
+		pDot11f->shortGI20MHz = pe_session->htConfig.ht_sgi20;
+		pDot11f->shortGI40MHz = pe_session->htConfig.ht_sgi40;
 	}
 
 	/* Ensure that shortGI40MHz is Disabled if supportedChannelWidthSet is
@@ -671,16 +671,16 @@ populate_dot11f_ht_caps(tpAniSirGlobal mac,
 			return nSirStatus;
 	}
 
-	if (psessionEntry) {
+	if (pe_session) {
 		disable_high_ht_mcs_2x2 =
 				mac->mlme_cfg->rates.disable_high_ht_mcs_2x2;
 		pe_debug("disable HT high MCS INI param[%d]",
 			 disable_high_ht_mcs_2x2);
-		if (psessionEntry->nss == NSS_1x1_MODE) {
+		if (pe_session->nss == NSS_1x1_MODE) {
 			pDot11f->supportedMCSSet[1] = 0;
-		} else if (IS_24G_CH(psessionEntry->currentOperChannel) &&
+		} else if (IS_24G_CH(pe_session->currentOperChannel) &&
 			   disable_high_ht_mcs_2x2 &&
-			   (psessionEntry->pePersona == QDF_STA_MODE)) {
+			   (pe_session->pePersona == QDF_STA_MODE)) {
 				pe_debug("Disabling high HT MCS [%d]",
 					 disable_high_ht_mcs_2x2);
 				pDot11f->supportedMCSSet[1] =
@@ -692,13 +692,13 @@ populate_dot11f_ht_caps(tpAniSirGlobal mac,
 	/* If STA mode, session supported NSS > 1 and
 	 * SMPS enabled publish HT SMPS IE
 	 */
-	if (psessionEntry &&
-	    LIM_IS_STA_ROLE(psessionEntry) &&
-	    (psessionEntry->enableHtSmps) &&
-	    (!psessionEntry->supported_nss_1x1)) {
+	if (pe_session &&
+	    LIM_IS_STA_ROLE(pe_session) &&
+	    (pe_session->enableHtSmps) &&
+	    (!pe_session->supported_nss_1x1)) {
 		pe_debug("Add SM power save IE: %d",
-			psessionEntry->htSmpsvalue);
-		pDot11f->mimoPowerSave = psessionEntry->htSmpsvalue;
+			pe_session->htSmpsvalue);
+		pDot11f->mimoPowerSave = pe_session->htSmpsvalue;
 	}
 
 	pDot11f->pco = mac->mlme_cfg->ht_caps.ext_cap_info.pco;
@@ -850,7 +850,7 @@ static void lim_log_qos_map_set(tpAniSirGlobal mac, tSirQosMapSet *pQosMapSet)
 
 QDF_STATUS
 populate_dot11f_vht_caps(tpAniSirGlobal mac,
-			 struct pe_session *psessionEntry, tDot11fIEVHTCaps *pDot11f)
+			 struct pe_session *pe_session, tDot11fIEVHTCaps *pDot11f)
 {
 	uint32_t nCfgValue = 0;
 	struct mlme_vht_capabilities_info vht_cap_info;
@@ -871,60 +871,60 @@ populate_dot11f_vht_caps(tpAniSirGlobal mac,
 
 	nCfgValue = 0;
 	/* With VHT it suffices if we just examine HT */
-	if (psessionEntry) {
-		if (psessionEntry->htConfig.ht_rx_ldpc)
+	if (pe_session) {
+		if (pe_session->htConfig.ht_rx_ldpc)
 			pDot11f->ldpcCodingCap =
-				psessionEntry->vht_config.ldpc_coding;
-		if (psessionEntry->ch_width < CH_WIDTH_80MHZ) {
+				pe_session->vht_config.ldpc_coding;
+		if (pe_session->ch_width < CH_WIDTH_80MHZ) {
 			 pDot11f->shortGI80MHz = 0;
 		} else {
 			pDot11f->shortGI80MHz =
-				psessionEntry->vht_config.shortgi80;
+				pe_session->vht_config.shortgi80;
 		}
 
-		if (psessionEntry->ch_width < CH_WIDTH_160MHZ) {
+		if (pe_session->ch_width < CH_WIDTH_160MHZ) {
 			pDot11f->shortGI160and80plus80MHz = 0;
 			pDot11f->supportedChannelWidthSet = 0;
 		} else {
 			pDot11f->shortGI160and80plus80MHz =
-				psessionEntry->vht_config.shortgi160and80plus80;
+				pe_session->vht_config.shortgi160and80plus80;
 		}
 
-		if (psessionEntry->htConfig.ht_tx_stbc)
-			pDot11f->txSTBC = psessionEntry->vht_config.tx_stbc;
+		if (pe_session->htConfig.ht_tx_stbc)
+			pDot11f->txSTBC = pe_session->vht_config.tx_stbc;
 
-		if (psessionEntry->htConfig.ht_rx_stbc)
-			pDot11f->rxSTBC = psessionEntry->vht_config.rx_stbc;
+		if (pe_session->htConfig.ht_rx_stbc)
+			pDot11f->rxSTBC = pe_session->vht_config.rx_stbc;
 
 		pDot11f->suBeamformeeCap =
-			psessionEntry->vht_config.su_beam_formee;
-		if (psessionEntry->vht_config.su_beam_formee) {
+			pe_session->vht_config.su_beam_formee;
+		if (pe_session->vht_config.su_beam_formee) {
 			pDot11f->muBeamformeeCap =
-				psessionEntry->vht_config.mu_beam_formee;
+				pe_session->vht_config.mu_beam_formee;
 			pDot11f->csnofBeamformerAntSup =
-			      psessionEntry->vht_config.csnof_beamformer_antSup;
+			      pe_session->vht_config.csnof_beamformer_antSup;
 		} else {
 			pDot11f->muBeamformeeCap = 0;
 		}
 		pDot11f->suBeamFormerCap =
-			psessionEntry->vht_config.su_beam_former;
+			pe_session->vht_config.su_beam_former;
 
-		pDot11f->vhtTXOPPS = psessionEntry->vht_config.vht_txops;
+		pDot11f->vhtTXOPPS = pe_session->vht_config.vht_txops;
 
 		pDot11f->numSoundingDim =
-				psessionEntry->vht_config.num_soundingdim;
+				pe_session->vht_config.num_soundingdim;
 
-		pDot11f->htcVHTCap = psessionEntry->vht_config.htc_vhtcap;
+		pDot11f->htcVHTCap = pe_session->vht_config.htc_vhtcap;
 
-		pDot11f->rxAntPattern = psessionEntry->vht_config.rx_antpattern;
+		pDot11f->rxAntPattern = pe_session->vht_config.rx_antpattern;
 
-		pDot11f->txAntPattern = psessionEntry->vht_config.tx_antpattern;
+		pDot11f->txAntPattern = pe_session->vht_config.tx_antpattern;
 
 		pDot11f->maxAMPDULenExp =
-				psessionEntry->vht_config.max_ampdu_lenexp;
+				pe_session->vht_config.max_ampdu_lenexp;
 
 		pDot11f->vhtLinkAdaptCap =
-				psessionEntry->vht_config.vht_link_adapt;
+				pe_session->vht_config.vht_link_adapt;
 	} else {
 		nCfgValue = vht_cap_info.ldpc_coding_cap;
 		pDot11f->ldpcCodingCap = (nCfgValue & 0x0001);
@@ -994,15 +994,15 @@ populate_dot11f_vht_caps(tpAniSirGlobal mac,
 	pDot11f->txSupDataRate = (nCfgValue & 0x00001FFF);
 
 	pDot11f->reserved3 = 0;
-	if (psessionEntry) {
-		if (psessionEntry->nss == NSS_1x1_MODE) {
+	if (pe_session) {
+		if (pe_session->nss == NSS_1x1_MODE) {
 			pDot11f->txMCSMap |= DISABLE_NSS2_MCS;
 			pDot11f->rxMCSMap |= DISABLE_NSS2_MCS;
 			pDot11f->txSupDataRate =
 				VHT_TX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
 			pDot11f->rxHighSupDataRate =
 				VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
-			if (!psessionEntry->ch_width &&
+			if (!pe_session->ch_width &&
 			    !vht_cap_info.enable_vht20_mcs9 &&
 			    ((pDot11f->txMCSMap & VHT_1x1_MCS_MASK) ==
 			     VHT_1x1_MCS9_MAP)) {
@@ -1012,7 +1012,7 @@ populate_dot11f_vht_caps(tpAniSirGlobal mac,
 						NSS_1x1_MODE);
 			}
 		} else {
-			if (!psessionEntry->ch_width &&
+			if (!pe_session->ch_width &&
 			    !vht_cap_info.enable_vht20_mcs9 &&
 			    ((pDot11f->txMCSMap & VHT_2x2_MCS_MASK) ==
 			     VHT_2x2_MCS9_MAP)) {
@@ -1029,19 +1029,19 @@ populate_dot11f_vht_caps(tpAniSirGlobal mac,
 
 QDF_STATUS
 populate_dot11f_vht_operation(tpAniSirGlobal mac,
-			      struct pe_session *psessionEntry,
+			      struct pe_session *pe_session,
 			      tDot11fIEVHTOperation *pDot11f)
 {
 	pDot11f->present = 1;
 
-	if (psessionEntry->ch_width > CH_WIDTH_40MHZ) {
+	if (pe_session->ch_width > CH_WIDTH_40MHZ) {
 		pDot11f->chanWidth = 1;
 		pDot11f->chanCenterFreqSeg1 =
-			psessionEntry->ch_center_freq_seg0;
-		if (psessionEntry->ch_width == CH_WIDTH_80P80MHZ ||
-				psessionEntry->ch_width == CH_WIDTH_160MHZ)
+			pe_session->ch_center_freq_seg0;
+		if (pe_session->ch_width == CH_WIDTH_80P80MHZ ||
+				pe_session->ch_width == CH_WIDTH_160MHZ)
 			pDot11f->chanCenterFreqSeg2 =
-				psessionEntry->ch_center_freq_seg1;
+				pe_session->ch_center_freq_seg1;
 		else
 			pDot11f->chanCenterFreqSeg2 = 0;
 	} else {
@@ -1062,20 +1062,20 @@ populate_dot11f_vht_operation(tpAniSirGlobal mac,
 QDF_STATUS
 populate_dot11f_ext_cap(tpAniSirGlobal mac,
 			bool isVHTEnabled, tDot11fIEExtCap *pDot11f,
-			struct pe_session *psessionEntry)
+			struct pe_session *pe_session)
 {
 	struct s_ext_cap *p_ext_cap;
 
 	pDot11f->present = 1;
 
-	if (!psessionEntry) {
+	if (!pe_session) {
 		pe_debug("11MC - enabled for non-SAP cases");
 		pDot11f->num_bytes = DOT11F_IE_EXTCAP_MAX_LEN;
-	} else if (psessionEntry->sap_dot11mc) {
+	} else if (pe_session->sap_dot11mc) {
 		pe_debug("11MC support enabled");
 		pDot11f->num_bytes = DOT11F_IE_EXTCAP_MAX_LEN;
 	} else {
-		if (eLIM_AP_ROLE != psessionEntry->limSystemRole) {
+		if (eLIM_AP_ROLE != pe_session->limSystemRole) {
 			pe_debug("11MC support enabled");
 			pDot11f->num_bytes = DOT11F_IE_EXTCAP_MAX_LEN;
 		} else  {
@@ -1090,12 +1090,12 @@ populate_dot11f_ext_cap(tpAniSirGlobal mac,
 
 	if (mac->mlme_cfg->gen.rtt3_enabled) {
 		uint32_t ftm = ucfg_wifi_pos_get_ftm_cap(mac->psoc);
-		if (!psessionEntry || LIM_IS_STA_ROLE(psessionEntry)) {
+		if (!pe_session || LIM_IS_STA_ROLE(pe_session)) {
 			p_ext_cap->fine_time_meas_initiator =
 				(ftm & WMI_FW_STA_RTT_INITR) ? 1 : 0;
 			p_ext_cap->fine_time_meas_responder =
 				(ftm & WMI_FW_STA_RTT_RESPR) ? 1 : 0;
-		} else if (LIM_IS_AP_ROLE(psessionEntry)) {
+		} else if (LIM_IS_AP_ROLE(pe_session)) {
 			p_ext_cap->fine_time_meas_initiator =
 				(ftm & WMI_FW_AP_RTT_INITR) ? 1 : 0;
 			p_ext_cap->fine_time_meas_responder =
@@ -1108,7 +1108,7 @@ populate_dot11f_ext_cap(tpAniSirGlobal mac,
 #endif
 	p_ext_cap->ext_chan_switch = 1;
 
-	if (psessionEntry && psessionEntry->enable_bcast_probe_rsp)
+	if (pe_session && pe_session->enable_bcast_probe_rsp)
 		p_ext_cap->fils_capability = 1;
 
 	/* Need to calculate the num_bytes based on bits set */
@@ -1130,47 +1130,47 @@ void populate_dot11f_qcn_ie(tDot11fIEQCN_IE *pDot11f)
 QDF_STATUS
 populate_dot11f_operating_mode(tpAniSirGlobal mac,
 			       tDot11fIEOperatingMode *pDot11f,
-			       struct pe_session *psessionEntry)
+			       struct pe_session *pe_session)
 {
 	pDot11f->present = 1;
 
-	pDot11f->chanWidth = psessionEntry->gLimOperatingMode.chanWidth;
-	pDot11f->rxNSS = psessionEntry->gLimOperatingMode.rxNSS;
-	pDot11f->rxNSSType = psessionEntry->gLimOperatingMode.rxNSSType;
+	pDot11f->chanWidth = pe_session->gLimOperatingMode.chanWidth;
+	pDot11f->rxNSS = pe_session->gLimOperatingMode.rxNSS;
+	pDot11f->rxNSSType = pe_session->gLimOperatingMode.rxNSSType;
 
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS
 populate_dot11f_ht_info(tpAniSirGlobal mac,
-			tDot11fIEHTInfo *pDot11f, struct pe_session *psessionEntry)
+			tDot11fIEHTInfo *pDot11f, struct pe_session *pe_session)
 {
 	qdf_size_t ncfglen;
 	QDF_STATUS nSirStatus;
 
-	if (NULL == psessionEntry) {
+	if (NULL == pe_session) {
 		pe_err("Invalid session entry");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pDot11f->primaryChannel = psessionEntry->currentOperChannel;
+	pDot11f->primaryChannel = pe_session->currentOperChannel;
 
 	pDot11f->secondaryChannelOffset =
-		psessionEntry->htSecondaryChannelOffset;
+		pe_session->htSecondaryChannelOffset;
 	pDot11f->recommendedTxWidthSet =
-		psessionEntry->htRecommendedTxWidthSet;
-	pDot11f->rifsMode = psessionEntry->beaconParams.fRIFSMode;
+		pe_session->htRecommendedTxWidthSet;
+	pDot11f->rifsMode = pe_session->beaconParams.fRIFSMode;
 	pDot11f->controlledAccessOnly =
 		mac->mlme_cfg->ht_caps.info_field_1.controlled_access_only;
 	pDot11f->serviceIntervalGranularity =
 		mac->lim.gHTServiceIntervalGranularity;
 
-	if (LIM_IS_AP_ROLE(psessionEntry)) {
-		pDot11f->opMode = psessionEntry->htOperMode;
+	if (LIM_IS_AP_ROLE(pe_session)) {
+		pDot11f->opMode = pe_session->htOperMode;
 		pDot11f->nonGFDevicesPresent =
-			psessionEntry->beaconParams.llnNonGFCoexist;
+			pe_session->beaconParams.llnNonGFCoexist;
 		pDot11f->obssNonHTStaPresent =
-			psessionEntry->beaconParams.gHTObssMode;
+			pe_session->beaconParams.gHTObssMode;
 		pDot11f->reserved = 0;
 	} else {
 		pDot11f->opMode = 0;
@@ -1183,7 +1183,7 @@ populate_dot11f_ht_info(tpAniSirGlobal mac,
 	pDot11f->dualCTSProtection = mac->lim.gHTDualCTSProtection;
 	pDot11f->secondaryBeacon = mac->lim.gHTSecondaryBeacon;
 	pDot11f->lsigTXOPProtectionFullSupport =
-		psessionEntry->beaconParams.fLsigTXOPProtectionFullSupport;
+		pe_session->beaconParams.fLsigTXOPProtectionFullSupport;
 	pDot11f->pcoActive = mac->lim.gHTPCOActive;
 	pDot11f->pcoPhase = mac->lim.gHTPCOPhase;
 	pDot11f->reserved2 = 0;
@@ -1207,11 +1207,11 @@ populate_dot11f_ht_info(tpAniSirGlobal mac,
 void
 populate_dot11f_ibss_params(tpAniSirGlobal mac,
 			    tDot11fIEIBSSParams *pDot11f,
-			    struct pe_session *psessionEntry)
+			    struct pe_session *pe_session)
 {
 	uint32_t val = 0;
 
-	if (LIM_IS_IBSS_ROLE(psessionEntry)) {
+	if (LIM_IS_IBSS_ROLE(pe_session)) {
 		if (wlan_cfg_get_int(mac,
 				     WNI_CFG_IBSS_ATIM_WIN_SIZE,
 				     &val) != QDF_STATUS_SUCCESS) {
@@ -1272,18 +1272,18 @@ populate_dot11f_measurement_report2(tpAniSirGlobal mac,
 void
 populate_dot11f_power_caps(tpAniSirGlobal mac,
 			   tDot11fIEPowerCaps *pCaps,
-			   uint8_t nAssocType, struct pe_session *psessionEntry)
+			   uint8_t nAssocType, struct pe_session *pe_session)
 {
 	if (nAssocType == LIM_REASSOC) {
 		pCaps->minTxPower =
-			psessionEntry->pLimReAssocReq->powerCap.minTxPower;
+			pe_session->pLimReAssocReq->powerCap.minTxPower;
 		pCaps->maxTxPower =
-			psessionEntry->pLimReAssocReq->powerCap.maxTxPower;
+			pe_session->pLimReAssocReq->powerCap.maxTxPower;
 	} else {
 		pCaps->minTxPower =
-			psessionEntry->pLimJoinReq->powerCap.minTxPower;
+			pe_session->pLimJoinReq->powerCap.minTxPower;
 		pCaps->maxTxPower =
-			psessionEntry->pLimJoinReq->powerCap.maxTxPower;
+			pe_session->pLimJoinReq->powerCap.maxTxPower;
 
 	}
 
@@ -1307,9 +1307,9 @@ populate_dot11f_power_constraints(tpAniSirGlobal mac,
 
 void
 populate_dot11f_qos_caps_ap(tpAniSirGlobal mac,
-			    tDot11fIEQOSCapsAp *pDot11f, struct pe_session *psessionEntry)
+			    tDot11fIEQOSCapsAp *pDot11f, struct pe_session *pe_session)
 {
-	pDot11f->count = psessionEntry->gLimEdcaParamSetCount;
+	pDot11f->count = pe_session->gLimEdcaParamSetCount;
 	pDot11f->reserved = 0;
 	pDot11f->txopreq = 0;
 	pDot11f->qreq = 0;
@@ -1477,21 +1477,21 @@ populate_dot11f_schedule(tSirMacScheduleIE *pSchedule,
 void
 populate_dot11f_supp_channels(tpAniSirGlobal mac,
 			      tDot11fIESuppChannels *pDot11f,
-			      uint8_t nAssocType, struct pe_session *psessionEntry)
+			      uint8_t nAssocType, struct pe_session *pe_session)
 {
 	uint8_t i;
 	uint8_t *p;
 
 	if (nAssocType == LIM_REASSOC) {
-		p = (uint8_t *) psessionEntry->pLimReAssocReq->
+		p = (uint8_t *) pe_session->pLimReAssocReq->
 		    supportedChannels.channelList;
 		pDot11f->num_bands =
-			psessionEntry->pLimReAssocReq->supportedChannels.numChnl;
+			pe_session->pLimReAssocReq->supportedChannels.numChnl;
 	} else {
-		p = (uint8_t *) psessionEntry->pLimJoinReq->supportedChannels.
+		p = (uint8_t *) pe_session->pLimJoinReq->supportedChannels.
 		    channelList;
 		pDot11f->num_bands =
-			psessionEntry->pLimJoinReq->supportedChannels.numChnl;
+			pe_session->pLimJoinReq->supportedChannels.numChnl;
 	}
 	for (i = 0U; i < pDot11f->num_bands; ++i, ++p) {
 		pDot11f->bands[i][0] = *p;
@@ -1505,7 +1505,7 @@ populate_dot11f_supp_channels(tpAniSirGlobal mac,
 QDF_STATUS
 populate_dot11f_supp_rates(tpAniSirGlobal mac,
 			   uint8_t nChannelNum,
-			   tDot11fIESuppRates *pDot11f, struct pe_session *psessionEntry)
+			   tDot11fIESuppRates *pDot11f, struct pe_session *pe_session)
 {
 	QDF_STATUS nsir_status;
 	qdf_size_t nRates;
@@ -1520,9 +1520,9 @@ populate_dot11f_supp_rates(tpAniSirGlobal mac,
 		CFG_GET_STR(nsir_status, mac, WNI_CFG_OPERATIONAL_RATE_SET,
 			    rates, nRates, SIR_MAC_MAX_NUMBER_OF_RATES);
 #endif /* TO SUPPORT BT-AMP */
-		if (psessionEntry != NULL) {
-			nRates = psessionEntry->rateSet.numRates;
-			qdf_mem_copy(rates, psessionEntry->rateSet.rate,
+		if (pe_session != NULL) {
+			nRates = pe_session->rateSet.numRates;
+			qdf_mem_copy(rates, pe_session->rateSet.rate,
 				     nRates);
 		} else {
 			pe_err("no session context exists while populating Operational Rate Set");
@@ -1674,13 +1674,13 @@ populate_dot11f_rates_tdls(tpAniSirGlobal p_mac,
 
 QDF_STATUS
 populate_dot11f_tpc_report(tpAniSirGlobal mac,
-			   tDot11fIETPCReport *pDot11f, struct pe_session *psessionEntry)
+			   tDot11fIETPCReport *pDot11f, struct pe_session *pe_session)
 {
 	uint16_t staid;
 	uint8_t tx_power;
 	QDF_STATUS nSirStatus;
 
-	nSirStatus = lim_get_mgmt_staid(mac, &staid, psessionEntry);
+	nSirStatus = lim_get_mgmt_staid(mac, &staid, pe_session);
 	if (QDF_STATUS_SUCCESS != nSirStatus) {
 		pe_err("Failed to get the STAID in Populate Dot11fTPCReport; lim_get_mgmt_staid returned status %d",
 			nSirStatus);
@@ -1689,7 +1689,7 @@ populate_dot11f_tpc_report(tpAniSirGlobal mac,
 	/* FramesToDo: This function was "misplaced" in the move to Gen4_TVM... */
 	/* txPower = halGetRateToPwrValue( mac, staid, mac->lim.gLimCurrentChannelId, isBeacon ); */
 	tx_power = cfg_get_regulatory_max_transmit_power(mac,
-				psessionEntry->currentOperChannel);
+				pe_session->currentOperChannel);
 	pDot11f->tx_power = tx_power;
 	pDot11f->link_margin = 0;
 	pDot11f->present = 1;
@@ -1713,22 +1713,22 @@ void populate_dot11f_ts_info(tSirMacTSInfo *pInfo, tDot11fFfTSInfo *pDot11f)
 void populate_dot11f_wmm(tpAniSirGlobal mac,
 			 tDot11fIEWMMInfoAp *pInfo,
 			 tDot11fIEWMMParams *pParams,
-			 tDot11fIEWMMCaps *pCaps, struct pe_session *psessionEntry)
+			 tDot11fIEWMMCaps *pCaps, struct pe_session *pe_session)
 {
-	if (psessionEntry->limWmeEnabled) {
-		if (LIM_IS_IBSS_ROLE(psessionEntry)) {
+	if (pe_session->limWmeEnabled) {
+		if (LIM_IS_IBSS_ROLE(pe_session)) {
 			/* if ( ! sirIsPropCapabilityEnabled( mac, SIR_MAC_PROP_CAPABILITY_WME ) ) */
 			{
 				populate_dot11f_wmm_info_ap(mac, pInfo,
-							    psessionEntry);
+							    pe_session);
 			}
 		} else {
 			{
 				populate_dot11f_wmm_params(mac, pParams,
-							   psessionEntry);
+							   pe_session);
 			}
 
-			if (psessionEntry->limWsmEnabled) {
+			if (pe_session->limWsmEnabled) {
 				populate_dot11f_wmm_caps(pCaps);
 			}
 		}
@@ -1748,13 +1748,13 @@ void populate_dot11f_wmm_caps(tDot11fIEWMMCaps *pCaps)
 #ifdef FEATURE_WLAN_ESE
 void populate_dot11f_re_assoc_tspec(tpAniSirGlobal mac,
 				    tDot11fReAssocRequest *pReassoc,
-				    struct pe_session *psessionEntry)
+				    struct pe_session *pe_session)
 {
 	uint8_t numTspecs = 0, idx;
 	tTspecInfo *pTspec = NULL;
 
-	numTspecs = psessionEntry->pLimReAssocReq->eseTspecInfo.numTspecs;
-	pTspec = &psessionEntry->pLimReAssocReq->eseTspecInfo.tspec[0];
+	numTspecs = pe_session->pLimReAssocReq->eseTspecInfo.numTspecs;
+	pTspec = &pe_session->pLimReAssocReq->eseTspecInfo.tspec[0];
 	pReassoc->num_WMMTSPEC = numTspecs;
 	if (numTspecs) {
 		for (idx = 0; idx < numTspecs; idx++) {
@@ -1802,21 +1802,21 @@ void ese_populate_wmm_tspec(tSirMacTspecIE *source,
 #endif
 
 void populate_dot11f_wmm_info_ap(tpAniSirGlobal mac, tDot11fIEWMMInfoAp *pInfo,
-				 struct pe_session *psessionEntry)
+				 struct pe_session *pe_session)
 {
 	pInfo->version = SIR_MAC_OUI_VERSION_1;
 
 	/* WMM Specification 3.1.3, 3.2.3
 	 * An IBSS station shall always use its default WMM parameters.
 	 */
-	if (LIM_IS_IBSS_ROLE(psessionEntry)) {
+	if (LIM_IS_IBSS_ROLE(pe_session)) {
 		pInfo->param_set_count = 0;
 		pInfo->uapsd = 0;
 	} else {
 		pInfo->param_set_count =
-			(0xf & psessionEntry->gLimEdcaParamSetCount);
-		if (LIM_IS_AP_ROLE(psessionEntry)) {
-			pInfo->uapsd = (0x1 & psessionEntry->apUapsdEnable);
+			(0xf & pe_session->gLimEdcaParamSetCount);
+		if (LIM_IS_AP_ROLE(pe_session)) {
+			pInfo->uapsd = (0x1 & pe_session->apUapsdEnable);
 		} else
 			pInfo->uapsd = (0x1 & mac->lim.gUapsdEnable);
 	}
@@ -1824,7 +1824,7 @@ void populate_dot11f_wmm_info_ap(tpAniSirGlobal mac, tDot11fIEWMMInfoAp *pInfo,
 }
 
 void populate_dot11f_wmm_info_station_per_session(tpAniSirGlobal mac,
-						  struct pe_session *psessionEntry,
+						  struct pe_session *pe_session,
 						  tDot11fIEWMMInfoStation *pInfo)
 {
 	uint8_t max_sp_length = 0;
@@ -1832,13 +1832,13 @@ void populate_dot11f_wmm_info_station_per_session(tpAniSirGlobal mac,
 	max_sp_length = mac->mlme_cfg->wmm_params.max_sp_length;
 	pInfo->version = SIR_MAC_OUI_VERSION_1;
 	pInfo->acvo_uapsd =
-		LIM_UAPSD_GET(ACVO, psessionEntry->gUapsdPerAcBitmask);
+		LIM_UAPSD_GET(ACVO, pe_session->gUapsdPerAcBitmask);
 	pInfo->acvi_uapsd =
-		LIM_UAPSD_GET(ACVI, psessionEntry->gUapsdPerAcBitmask);
+		LIM_UAPSD_GET(ACVI, pe_session->gUapsdPerAcBitmask);
 	pInfo->acbk_uapsd =
-		LIM_UAPSD_GET(ACBK, psessionEntry->gUapsdPerAcBitmask);
+		LIM_UAPSD_GET(ACBK, pe_session->gUapsdPerAcBitmask);
 	pInfo->acbe_uapsd =
-		LIM_UAPSD_GET(ACBE, psessionEntry->gUapsdPerAcBitmask);
+		LIM_UAPSD_GET(ACBE, pe_session->gUapsdPerAcBitmask);
 
 	pInfo->max_sp_length = max_sp_length;
 	pInfo->present = 1;
@@ -1846,73 +1846,73 @@ void populate_dot11f_wmm_info_station_per_session(tpAniSirGlobal mac,
 
 void populate_dot11f_wmm_params(tpAniSirGlobal mac,
 				tDot11fIEWMMParams *pParams,
-				struct pe_session *psessionEntry)
+				struct pe_session *pe_session)
 {
 	pParams->version = SIR_MAC_OUI_VERSION_1;
 
-	if (LIM_IS_AP_ROLE(psessionEntry))
+	if (LIM_IS_AP_ROLE(pe_session))
 		pParams->qosInfo =
-			(psessionEntry->
-			 apUapsdEnable << 7) | ((uint8_t) (0x0f & psessionEntry->
+			(pe_session->
+			 apUapsdEnable << 7) | ((uint8_t) (0x0f & pe_session->
 							   gLimEdcaParamSetCount));
 	else
 		pParams->qosInfo =
 			(mac->lim.
-			 gUapsdEnable << 7) | ((uint8_t) (0x0f & psessionEntry->
+			 gUapsdEnable << 7) | ((uint8_t) (0x0f & pe_session->
 							  gLimEdcaParamSetCount));
 
 	/* Fill each EDCA parameter set in order: be, bk, vi, vo */
 	pParams->acbe_aifsn =
-		(0xf & SET_AIFSN(psessionEntry->gLimEdcaParamsBC[0].aci.aifsn));
-	pParams->acbe_acm = (0x1 & psessionEntry->gLimEdcaParamsBC[0].aci.acm);
+		(0xf & SET_AIFSN(pe_session->gLimEdcaParamsBC[0].aci.aifsn));
+	pParams->acbe_acm = (0x1 & pe_session->gLimEdcaParamsBC[0].aci.acm);
 	pParams->acbe_aci = (0x3 & SIR_MAC_EDCAACI_BESTEFFORT);
 	pParams->acbe_acwmin =
-		(0xf & psessionEntry->gLimEdcaParamsBC[0].cw.min);
+		(0xf & pe_session->gLimEdcaParamsBC[0].cw.min);
 	pParams->acbe_acwmax =
-		(0xf & psessionEntry->gLimEdcaParamsBC[0].cw.max);
-	pParams->acbe_txoplimit = psessionEntry->gLimEdcaParamsBC[0].txoplimit;
+		(0xf & pe_session->gLimEdcaParamsBC[0].cw.max);
+	pParams->acbe_txoplimit = pe_session->gLimEdcaParamsBC[0].txoplimit;
 
 	pParams->acbk_aifsn =
-		(0xf & SET_AIFSN(psessionEntry->gLimEdcaParamsBC[1].aci.aifsn));
-	pParams->acbk_acm = (0x1 & psessionEntry->gLimEdcaParamsBC[1].aci.acm);
+		(0xf & SET_AIFSN(pe_session->gLimEdcaParamsBC[1].aci.aifsn));
+	pParams->acbk_acm = (0x1 & pe_session->gLimEdcaParamsBC[1].aci.acm);
 	pParams->acbk_aci = (0x3 & SIR_MAC_EDCAACI_BACKGROUND);
 	pParams->acbk_acwmin =
-		(0xf & psessionEntry->gLimEdcaParamsBC[1].cw.min);
+		(0xf & pe_session->gLimEdcaParamsBC[1].cw.min);
 	pParams->acbk_acwmax =
-		(0xf & psessionEntry->gLimEdcaParamsBC[1].cw.max);
-	pParams->acbk_txoplimit = psessionEntry->gLimEdcaParamsBC[1].txoplimit;
+		(0xf & pe_session->gLimEdcaParamsBC[1].cw.max);
+	pParams->acbk_txoplimit = pe_session->gLimEdcaParamsBC[1].txoplimit;
 
-	if (LIM_IS_AP_ROLE(psessionEntry))
+	if (LIM_IS_AP_ROLE(pe_session))
 		pParams->acvi_aifsn =
-			(0xf & psessionEntry->gLimEdcaParamsBC[2].aci.aifsn);
+			(0xf & pe_session->gLimEdcaParamsBC[2].aci.aifsn);
 	else
 		pParams->acvi_aifsn =
 			(0xf &
-			 SET_AIFSN(psessionEntry->gLimEdcaParamsBC[2].aci.aifsn));
+			 SET_AIFSN(pe_session->gLimEdcaParamsBC[2].aci.aifsn));
 
-	pParams->acvi_acm = (0x1 & psessionEntry->gLimEdcaParamsBC[2].aci.acm);
+	pParams->acvi_acm = (0x1 & pe_session->gLimEdcaParamsBC[2].aci.acm);
 	pParams->acvi_aci = (0x3 & SIR_MAC_EDCAACI_VIDEO);
 	pParams->acvi_acwmin =
-		(0xf & psessionEntry->gLimEdcaParamsBC[2].cw.min);
+		(0xf & pe_session->gLimEdcaParamsBC[2].cw.min);
 	pParams->acvi_acwmax =
-		(0xf & psessionEntry->gLimEdcaParamsBC[2].cw.max);
-	pParams->acvi_txoplimit = psessionEntry->gLimEdcaParamsBC[2].txoplimit;
+		(0xf & pe_session->gLimEdcaParamsBC[2].cw.max);
+	pParams->acvi_txoplimit = pe_session->gLimEdcaParamsBC[2].txoplimit;
 
-	if (LIM_IS_AP_ROLE(psessionEntry))
+	if (LIM_IS_AP_ROLE(pe_session))
 		pParams->acvo_aifsn =
-			(0xf & psessionEntry->gLimEdcaParamsBC[3].aci.aifsn);
+			(0xf & pe_session->gLimEdcaParamsBC[3].aci.aifsn);
 	else
 		pParams->acvo_aifsn =
 			(0xf &
-			 SET_AIFSN(psessionEntry->gLimEdcaParamsBC[3].aci.aifsn));
+			 SET_AIFSN(pe_session->gLimEdcaParamsBC[3].aci.aifsn));
 
-	pParams->acvo_acm = (0x1 & psessionEntry->gLimEdcaParamsBC[3].aci.acm);
+	pParams->acvo_acm = (0x1 & pe_session->gLimEdcaParamsBC[3].aci.acm);
 	pParams->acvo_aci = (0x3 & SIR_MAC_EDCAACI_VOICE);
 	pParams->acvo_acwmin =
-		(0xf & psessionEntry->gLimEdcaParamsBC[3].cw.min);
+		(0xf & pe_session->gLimEdcaParamsBC[3].cw.min);
 	pParams->acvo_acwmax =
-		(0xf & psessionEntry->gLimEdcaParamsBC[3].cw.max);
-	pParams->acvo_txoplimit = psessionEntry->gLimEdcaParamsBC[3].txoplimit;
+		(0xf & pe_session->gLimEdcaParamsBC[3].cw.max);
+	pParams->acvo_txoplimit = pe_session->gLimEdcaParamsBC[3].txoplimit;
 
 	pParams->present = 1;
 
@@ -5150,12 +5150,12 @@ QDF_STATUS de_populate_dot11f_wsc_registrar_info(tpAniSirGlobal mac,
 
 QDF_STATUS populate_dot11f_probe_res_wpsi_es(tpAniSirGlobal mac,
 					     tDot11fIEWscProbeRes *pDot11f,
-					     struct pe_session *psessionEntry)
+					     struct pe_session *pe_session)
 {
 
 	tSirWPSProbeRspIE *pSirWPSProbeRspIE;
 
-	pSirWPSProbeRspIE = &psessionEntry->APWPSIEs.SirWPSProbeRspIE;
+	pSirWPSProbeRspIE = &pe_session->APWPSIEs.SirWPSProbeRspIE;
 
 	if (pSirWPSProbeRspIE->FieldPresent & SIR_WPS_PROBRSP_VER_PRESENT) {
 		pDot11f->present = 1;
@@ -5309,11 +5309,11 @@ QDF_STATUS populate_dot11f_probe_res_wpsi_es(tpAniSirGlobal mac,
 
 QDF_STATUS populate_dot11f_assoc_res_wpsi_es(tpAniSirGlobal mac,
 					     tDot11fIEWscAssocRes *pDot11f,
-					     struct pe_session *psessionEntry)
+					     struct pe_session *pe_session)
 {
 	tSirWPSProbeRspIE *pSirWPSProbeRspIE;
 
-	pSirWPSProbeRspIE = &psessionEntry->APWPSIEs.SirWPSProbeRspIE;
+	pSirWPSProbeRspIE = &pe_session->APWPSIEs.SirWPSProbeRspIE;
 
 	if (pSirWPSProbeRspIE->FieldPresent & SIR_WPS_PROBRSP_VER_PRESENT) {
 		pDot11f->present = 1;
@@ -5339,12 +5339,12 @@ QDF_STATUS populate_dot11f_assoc_res_wpsi_es(tpAniSirGlobal mac,
 
 QDF_STATUS populate_dot11f_beacon_wpsi_es(tpAniSirGlobal mac,
 					  tDot11fIEWscBeacon *pDot11f,
-					  struct pe_session *psessionEntry)
+					  struct pe_session *pe_session)
 {
 
 	tSirWPSBeaconIE *pSirWPSBeaconIE;
 
-	pSirWPSBeaconIE = &psessionEntry->APWPSIEs.SirWPSBeaconIE;
+	pSirWPSBeaconIE = &pe_session->APWPSIEs.SirWPSBeaconIE;
 
 	if (pSirWPSBeaconIE->FieldPresent & SIR_WPS_PROBRSP_VER_PRESENT) {
 		pDot11f->present = 1;
@@ -5728,12 +5728,12 @@ populate_dot11f_beacon_report(tpAniSirGlobal mac,
 
 QDF_STATUS populate_dot11f_rrm_ie(tpAniSirGlobal mac,
 				  tDot11fIERRMEnabledCap *pDot11f,
-				  struct pe_session *psessionEntry)
+				  struct pe_session *pe_session)
 {
 	tpRRMCaps pRrmCaps;
 	uint8_t *bytes;
 
-	pRrmCaps = rrm_get_capabilities(mac, psessionEntry);
+	pRrmCaps = rrm_get_capabilities(mac, pe_session);
 
 	pDot11f->LinkMeasurement = pRrmCaps->LinkMeasurement;
 	pDot11f->NeighborRpt = pRrmCaps->NeighborRpt;

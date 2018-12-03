@@ -43,7 +43,7 @@
 /**
  * lim_init_peer_idxpool() -- initializes peer index pool
  * @mac: mac context
- * @pSessionEntry: session entry
+ * @pe_session: session entry
  *
  * This function is called while starting a BSS at AP
  * to initialize AID pool. This may also be called while
@@ -53,12 +53,12 @@
  * Return: None
  */
 
-void lim_init_peer_idxpool(tpAniSirGlobal mac, struct pe_session *pSessionEntry)
+void lim_init_peer_idxpool(tpAniSirGlobal mac, struct pe_session *pe_session)
 {
 	uint8_t i;
 	uint8_t maxAssocSta = mac->lim.maxStation;
 
-	pSessionEntry->gpLimPeerIdxpool[0] = 0;
+	pe_session->gpLimPeerIdxpool[0] = 0;
 
 #ifdef FEATURE_WLAN_TDLS
 	/*
@@ -67,25 +67,25 @@ void lim_init_peer_idxpool(tpAniSirGlobal mac, struct pe_session *pSessionEntry)
 	* and get index starting from (DPH_STA_HASH_INDEX_PEER + 1)
 	* (index 2) for TDLS stations;
 	*/
-	if (LIM_IS_STA_ROLE(pSessionEntry)) {
-		pSessionEntry->freePeerIdxHead = DPH_STA_HASH_INDEX_PEER + 1;
+	if (LIM_IS_STA_ROLE(pe_session)) {
+		pe_session->freePeerIdxHead = DPH_STA_HASH_INDEX_PEER + 1;
 	} else
 #endif
 #ifdef QCA_IBSS_SUPPORT
-	if (LIM_IS_IBSS_ROLE(pSessionEntry)) {
-		pSessionEntry->freePeerIdxHead = LIM_START_PEER_IDX;
+	if (LIM_IS_IBSS_ROLE(pe_session)) {
+		pe_session->freePeerIdxHead = LIM_START_PEER_IDX;
 	} else
 #endif
 	{
-		pSessionEntry->freePeerIdxHead = LIM_START_PEER_IDX;
+		pe_session->freePeerIdxHead = LIM_START_PEER_IDX;
 	}
 
-	for (i = pSessionEntry->freePeerIdxHead; i < maxAssocSta; i++) {
-		pSessionEntry->gpLimPeerIdxpool[i] = i + 1;
+	for (i = pe_session->freePeerIdxHead; i < maxAssocSta; i++) {
+		pe_session->gpLimPeerIdxpool[i] = i + 1;
 	}
-	pSessionEntry->gpLimPeerIdxpool[i] = 0;
+	pe_session->gpLimPeerIdxpool[i] = 0;
 
-	pSessionEntry->freePeerIdxTail = i;
+	pe_session->freePeerIdxTail = i;
 
 }
 
@@ -109,7 +109,7 @@ void lim_init_peer_idxpool(tpAniSirGlobal mac, struct pe_session *pSessionEntry)
  * @return peerIdx  - assigned peer Station IDx for STA
  */
 
-uint16_t lim_assign_peer_idx(tpAniSirGlobal mac, struct pe_session *pSessionEntry)
+uint16_t lim_assign_peer_idx(tpAniSirGlobal mac, struct pe_session *pe_session)
 {
 	uint16_t peerId;
 
@@ -123,14 +123,14 @@ uint16_t lim_assign_peer_idx(tpAniSirGlobal mac, struct pe_session *pSessionEntr
 
 	/* return head of free list */
 
-	if (pSessionEntry->freePeerIdxHead) {
-		peerId = pSessionEntry->freePeerIdxHead;
-		pSessionEntry->freePeerIdxHead =
-			pSessionEntry->gpLimPeerIdxpool[pSessionEntry->
+	if (pe_session->freePeerIdxHead) {
+		peerId = pe_session->freePeerIdxHead;
+		pe_session->freePeerIdxHead =
+			pe_session->gpLimPeerIdxpool[pe_session->
 							freePeerIdxHead];
-		if (pSessionEntry->freePeerIdxHead == 0)
-			pSessionEntry->freePeerIdxTail = 0;
-		pSessionEntry->gLimNumOfCurrentSTAs++;
+		if (pe_session->freePeerIdxHead == 0)
+			pe_session->freePeerIdxTail = 0;
+		pe_session->gLimNumOfCurrentSTAs++;
 		return peerId;
 	}
 
@@ -160,19 +160,19 @@ uint16_t lim_assign_peer_idx(tpAniSirGlobal mac, struct pe_session *pSessionEntr
 
 void
 lim_release_peer_idx(tpAniSirGlobal mac, uint16_t peerIdx,
-		     struct pe_session *pSessionEntry)
+		     struct pe_session *pe_session)
 {
-	pSessionEntry->gLimNumOfCurrentSTAs--;
+	pe_session->gLimNumOfCurrentSTAs--;
 
 	/* insert at tail of free list */
-	if (pSessionEntry->freePeerIdxTail) {
-		pSessionEntry->gpLimPeerIdxpool[pSessionEntry->
+	if (pe_session->freePeerIdxTail) {
+		pe_session->gpLimPeerIdxpool[pe_session->
 						freePeerIdxTail] =
 			(uint8_t) peerIdx;
-		pSessionEntry->freePeerIdxTail = (uint8_t) peerIdx;
+		pe_session->freePeerIdxTail = (uint8_t) peerIdx;
 	} else {
-		pSessionEntry->freePeerIdxTail =
-			pSessionEntry->freePeerIdxHead = (uint8_t) peerIdx;
+		pe_session->freePeerIdxTail =
+			pe_session->freePeerIdxHead = (uint8_t) peerIdx;
 	}
-	pSessionEntry->gpLimPeerIdxpool[(uint8_t) peerIdx] = 0;
+	pe_session->gpLimPeerIdxpool[(uint8_t) peerIdx] = 0;
 }

@@ -47,33 +47,33 @@ QDF_STATUS rrm_process_link_measurement_request(tpAniSirGlobal mac,
 						tDot11fLinkMeasurementRequest
 							  *pLinkReq,
 						struct pe_session *
-							  pSessionEntry);
+							  pe_session);
 
 QDF_STATUS rrm_process_radio_measurement_request(tpAniSirGlobal mac,
 						 tSirMacAddr peer,
 						 tDot11fRadioMeasurementRequest
 							   *pRRMReq,
 						 struct pe_session *
-							   pSessionEntry);
+							   pe_session);
 
 QDF_STATUS rrm_process_neighbor_report_response(tpAniSirGlobal mac,
 						tDot11fNeighborReportResponse
 							  *pNeighborRep,
 						struct pe_session *
-							  pSessionEntry);
+							  pe_session);
 
 QDF_STATUS rrm_send_set_max_tx_power_req(tpAniSirGlobal mac,
 					 int8_t txPower,
-					 struct pe_session *pSessionEntry);
+					 struct pe_session *pe_session);
 
 int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal mac,
-			     struct pe_session *pSessionEntry);
+			     struct pe_session *pe_session);
 
 void rrm_cache_mgmt_tx_power(tpAniSirGlobal mac,
-			     int8_t txPower, struct pe_session *pSessionEntry);
+			     int8_t txPower, struct pe_session *pe_session);
 
 tpRRMCaps rrm_get_capabilities(tpAniSirGlobal mac,
-			       struct pe_session *pSessionEntry);
+			       struct pe_session *pe_session);
 
 void rrm_get_start_tsf(tpAniSirGlobal mac, uint32_t *pStartTSF);
 

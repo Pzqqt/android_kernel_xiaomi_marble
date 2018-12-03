@@ -72,16 +72,16 @@
  */
 uint8_t
 lim_is_auth_algo_supported(tpAniSirGlobal mac, tAniAuthType authType,
-			   struct pe_session *psessionEntry)
+			   struct pe_session *pe_session)
 {
 	bool algoEnable, privacyOptImp;
 	struct wlan_mlme_wep_cfg *wep_params = &mac->mlme_cfg->wep_params;
 
 	if (authType == eSIR_OPEN_SYSTEM) {
 
-		if (LIM_IS_AP_ROLE(psessionEntry)) {
-			if ((psessionEntry->authType == eSIR_OPEN_SYSTEM)
-			    || (psessionEntry->authType == eSIR_AUTO_SWITCH))
+		if (LIM_IS_AP_ROLE(pe_session)) {
+			if ((pe_session->authType == eSIR_OPEN_SYSTEM)
+			    || (pe_session->authType == eSIR_AUTO_SWITCH))
 				return true;
 			else
 				return false;
@@ -92,9 +92,9 @@ lim_is_auth_algo_supported(tpAniSirGlobal mac, tAniAuthType authType,
 
 	} else {
 
-		if (LIM_IS_AP_ROLE(psessionEntry)) {
-			if ((psessionEntry->authType == eSIR_SHARED_KEY)
-			    || (psessionEntry->authType == eSIR_AUTO_SWITCH))
+		if (LIM_IS_AP_ROLE(pe_session)) {
+			if ((pe_session->authType == eSIR_SHARED_KEY)
+			    || (pe_session->authType == eSIR_AUTO_SWITCH))
 				algoEnable = true;
 			else
 				algoEnable = false;
@@ -103,8 +103,8 @@ lim_is_auth_algo_supported(tpAniSirGlobal mac, tAniAuthType authType,
 			algoEnable = wep_params->is_shared_key_auth;
 		}
 
-		if (LIM_IS_AP_ROLE(psessionEntry))
-			privacyOptImp = psessionEntry->privacy;
+		if (LIM_IS_AP_ROLE(pe_session))
+			privacyOptImp = pe_session->privacy;
 		else
 			privacyOptImp = wep_params->is_privacy_enabled;
 
@@ -412,13 +412,13 @@ void lim_delete_pre_auth_node(tpAniSirGlobal mac, tSirMacAddr macAddr)
 
 void
 lim_restore_from_auth_state(tpAniSirGlobal mac, tSirResultCodes resultCode,
-			    uint16_t protStatusCode, struct pe_session *sessionEntry)
+			    uint16_t protStatusCode, struct pe_session *pe_session)
 {
 	tSirMacAddr currentBssId;
 	tLimMlmAuthCnf mlmAuthCnf;
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
-	lim_diag_event_report(mac, WLAN_PE_DIAG_AUTH_COMP_EVENT, sessionEntry,
+	lim_diag_event_report(mac, WLAN_PE_DIAG_AUTH_COMP_EVENT, pe_session,
 			      resultCode, protStatusCode);
 #endif
 
@@ -430,18 +430,18 @@ lim_restore_from_auth_state(tpAniSirGlobal mac, tSirResultCodes resultCode,
 	mlmAuthCnf.protStatusCode = protStatusCode;
 
 	/* Update PE session ID */
-	mlmAuthCnf.sessionId = sessionEntry->peSessionId;
+	mlmAuthCnf.sessionId = pe_session->peSessionId;
 
 	/* / Free up buffer allocated */
 	/* / for mac->lim.gLimMlmAuthReq */
 	qdf_mem_free(mac->lim.gpLimMlmAuthReq);
 	mac->lim.gpLimMlmAuthReq = NULL;
 
-	sessionEntry->limMlmState = sessionEntry->limPrevMlmState;
+	pe_session->limMlmState = pe_session->limPrevMlmState;
 
 	MTRACE(mac_trace
-		       (mac, TRACE_CODE_MLM_STATE, sessionEntry->peSessionId,
-		       sessionEntry->limMlmState));
+		       (mac, TRACE_CODE_MLM_STATE, pe_session->peSessionId,
+		       pe_session->limMlmState));
 
 	/*
 	 * Set the auth_ack_status status flag as success as
@@ -461,9 +461,9 @@ lim_restore_from_auth_state(tpAniSirGlobal mac, tSirResultCodes resultCode,
 		lim_deactivate_and_change_timer(mac,
 				eLIM_AUTH_FAIL_TIMER);
 
-	sir_copy_mac_addr(currentBssId, sessionEntry->bssId);
+	sir_copy_mac_addr(currentBssId, pe_session->bssId);
 
-	if (sessionEntry->limSmeState == eLIM_SME_WT_PRE_AUTH_STATE) {
+	if (pe_session->limSmeState == eLIM_SME_WT_PRE_AUTH_STATE) {
 		mac->lim.gLimPreAuthChannelNumber = 0;
 	}
 
@@ -764,7 +764,7 @@ void lim_post_sme_set_keys_cnf(tpAniSirGlobal mac,
  */
 void lim_send_set_bss_key_req(tpAniSirGlobal mac,
 			      tLimMlmSetKeysReq *pMlmSetKeysReq,
-			      struct pe_session *psessionEntry)
+			      struct pe_session *pe_session)
 {
 	struct scheduler_msg msgQ = {0};
 	tpSetBssKeyParams pSetBssKeyParams = NULL;
@@ -789,13 +789,13 @@ void lim_send_set_bss_key_req(tpAniSirGlobal mac,
 	}
 
 	/* Update the WMA_SET_BSSKEY_REQ parameters */
-	pSetBssKeyParams->bssIdx = psessionEntry->bssIdx;
+	pSetBssKeyParams->bssIdx = pe_session->bssIdx;
 	pSetBssKeyParams->encType = pMlmSetKeysReq->edType;
 
 	pSetBssKeyParams->singleTidRc =
 		(uint8_t)(mac->mlme_cfg->sta.single_tid);
 	/* Update PE session Id */
-	pSetBssKeyParams->sessionId = psessionEntry->peSessionId;
+	pSetBssKeyParams->sessionId = pe_session->peSessionId;
 
 	pSetBssKeyParams->smesessionId = pMlmSetKeysReq->smesessionId;
 
@@ -825,7 +825,7 @@ void lim_send_set_bss_key_req(tpAniSirGlobal mac,
 	msgQ.bodyval = 0;
 
 	pe_debug("Sending WMA_SET_BSSKEY_REQ...");
-	MTRACE(mac_trace_msg_tx(mac, psessionEntry->peSessionId, msgQ.type));
+	MTRACE(mac_trace_msg_tx(mac, pe_session->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		pe_err("Posting SET_BSSKEY to HAL failed, reason=%X",
@@ -866,7 +866,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal mac,
 			      tLimMlmSetKeysReq *pMlmSetKeysReq,
 			      uint16_t staIdx,
 			      uint8_t defWEPIdx,
-			      struct pe_session *sessionEntry, bool sendRsp)
+			      struct pe_session *pe_session, bool sendRsp)
 {
 	struct scheduler_msg msgQ = {0};
 	tpSetStaKeyParams pSetStaKeyParams = NULL;
@@ -885,7 +885,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal mac,
 	pSetStaKeyParams->singleTidRc =
 		(uint8_t)(mac->mlme_cfg->sta.single_tid);
 	/* Update  PE session ID */
-	pSetStaKeyParams->sessionId = sessionEntry->peSessionId;
+	pSetStaKeyParams->sessionId = pe_session->peSessionId;
 
 	/**
 	 * For WEP - defWEPIdx indicates the default WEP
@@ -903,25 +903,25 @@ void lim_send_set_sta_key_req(tpAniSirGlobal mac,
 
 	if (sendRsp == true) {
 		/** Store the Previous MlmState*/
-		sessionEntry->limPrevMlmState = sessionEntry->limMlmState;
+		pe_session->limPrevMlmState = pe_session->limMlmState;
 		SET_LIM_PROCESS_DEFD_MESGS(mac, false);
 	}
 
-	if (LIM_IS_IBSS_ROLE(sessionEntry)
+	if (LIM_IS_IBSS_ROLE(pe_session)
 	    && !pMlmSetKeysReq->key[0].unicast) {
 		if (sendRsp == true)
-			sessionEntry->limMlmState =
+			pe_session->limMlmState =
 				eLIM_MLM_WT_SET_STA_BCASTKEY_STATE;
 		msgQ.type = WMA_SET_STA_BCASTKEY_REQ;
 	} else {
 		if (sendRsp == true)
-			sessionEntry->limMlmState =
+			pe_session->limMlmState =
 				eLIM_MLM_WT_SET_STA_KEY_STATE;
 		msgQ.type = WMA_SET_STAKEY_REQ;
 	}
 	MTRACE(mac_trace
-		       (mac, TRACE_CODE_MLM_STATE, sessionEntry->peSessionId,
-		       sessionEntry->limMlmState));
+		       (mac, TRACE_CODE_MLM_STATE, pe_session->peSessionId,
+		       pe_session->limMlmState));
 
 	/**
 	 * In the Case of WEP_DYNAMIC, ED_TKIP and ED_CCMP
@@ -942,12 +942,12 @@ void lim_send_set_sta_key_req(tpAniSirGlobal mac,
 					     key[i], sizeof(tSirKeys));
 			}
 			pSetStaKeyParams->wepType = eSIR_WEP_STATIC;
-			sessionEntry->limMlmState =
+			pe_session->limMlmState =
 				eLIM_MLM_WT_SET_STA_KEY_STATE;
 			MTRACE(mac_trace
 				       (mac, TRACE_CODE_MLM_STATE,
-				       sessionEntry->peSessionId,
-				       sessionEntry->limMlmState));
+				       pe_session->peSessionId,
+				       pe_session->limMlmState));
 		} else {
 			/*This case the keys are coming from upper layer so need to fill the
 			 * key at the default wep key index and send to the HAL */
@@ -989,7 +989,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal mac,
 	msgQ.bodyval = 0;
 
 	pe_debug("Sending WMA_SET_STAKEY_REQ...");
-	MTRACE(mac_trace_msg_tx(mac, sessionEntry->peSessionId, msgQ.type));
+	MTRACE(mac_trace_msg_tx(mac, pe_session->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(mac, &msgQ);
 	if (QDF_STATUS_SUCCESS != retCode) {
 		pe_err("Posting SET_STAKEY to HAL failed, reason=%X",

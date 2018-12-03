@@ -650,17 +650,17 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, struct pe_session *session)
 QDF_STATUS
 lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal mac,
 						tDot11fBeacon1 *beacon1,
-						struct pe_session *psessionEntry)
+						struct pe_session *pe_session)
 {
 	uint32_t *DefProbeRspIeBitmap;
 	tDot11fProbeResponse *prb_rsp;
 
-	if (!psessionEntry) {
+	if (!pe_session) {
 		pe_debug("PESession is null!");
 		return QDF_STATUS_E_FAILURE;
 	}
-	DefProbeRspIeBitmap = &psessionEntry->DefProbeRspIeBitmap[0];
-	prb_rsp = &psessionEntry->probeRespFrame;
+	DefProbeRspIeBitmap = &pe_session->DefProbeRspIeBitmap[0];
+	prb_rsp = &pe_session->probeRespFrame;
 	prb_rsp->BeaconInterval = beacon1->BeaconInterval;
 	qdf_mem_copy((void *)&prb_rsp->Capabilities,
 		     (void *)&beacon1->Capabilities,
@@ -670,7 +670,7 @@ lim_update_probe_rsp_template_ie_bitmap_beacon1(tpAniSirGlobal mac,
 	if (beacon1->SSID.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, SIR_MAC_SSID_EID);
 		/* populating it, because probe response has to go with SSID even in hidden case */
-		populate_dot11f_ssid(mac, &psessionEntry->ssId, &prb_rsp->SSID);
+		populate_dot11f_ssid(mac, &pe_session->ssId, &prb_rsp->SSID);
 	}
 	/* supported rates */
 	if (beacon1->SuppRates.present) {
@@ -894,14 +894,14 @@ void set_probe_rsp_ie_bitmap(uint32_t *IeBitmap, uint32_t pos)
  * @mac: pointer to mac structure
  * @size: Size of the beacon to write to memory
  * @length: Length field of the beacon to write to memory
- * @psessionEntry: pe session
+ * @pe_session: pe session
  * @reason: beacon update reason
  *
  * return: success: QDF_STATUS_SUCCESS failure: QDF_STATUS_E_FAILURE
  */
 static QDF_STATUS write_beacon_to_memory(tpAniSirGlobal mac, uint16_t size,
 					 uint16_t length,
-					 struct pe_session *psessionEntry,
+					 struct pe_session *pe_session,
 					 enum sir_bcn_update_reason reason)
 {
 	uint16_t i;
@@ -910,12 +910,12 @@ static QDF_STATUS write_beacon_to_memory(tpAniSirGlobal mac, uint16_t size,
 
 	/* copy end of beacon only if length > 0 */
 	if (length > 0) {
-		for (i = 0; i < psessionEntry->schBeaconOffsetEnd; i++)
-			psessionEntry->pSchBeaconFrameBegin[size++] =
-				psessionEntry->pSchBeaconFrameEnd[i];
+		for (i = 0; i < pe_session->schBeaconOffsetEnd; i++)
+			pe_session->pSchBeaconFrameBegin[size++] =
+				pe_session->pSchBeaconFrameEnd[i];
 	}
 	/* Update the beacon length */
-	pBeacon = (tpAniBeaconStruct) psessionEntry->pSchBeaconFrameBegin;
+	pBeacon = (tpAniBeaconStruct) pe_session->pSchBeaconFrameBegin;
 	/* Do not include the beaconLength indicator itself */
 	if (length == 0) {
 		pBeacon->beaconLength = 0;
@@ -933,8 +933,8 @@ static QDF_STATUS write_beacon_to_memory(tpAniSirGlobal mac, uint16_t size,
 	 */
 
 	size = (size + 3) & (~3);
-	status = sch_send_beacon_req(mac, psessionEntry->pSchBeaconFrameBegin,
-				     size, psessionEntry, reason);
+	status = sch_send_beacon_req(mac, pe_session->pSchBeaconFrameBegin,
+				     size, pe_session, reason);
 	if (QDF_IS_STATUS_ERROR(status))
 		pe_err("sch_send_beacon_req() returned an error %d, size %d",
 		       status, size);
@@ -1002,52 +1002,52 @@ QDF_STATUS sch_process_pre_beacon_ind(tpAniSirGlobal mac,
 {
 	tpBeaconGenParams pMsg = (tpBeaconGenParams) limMsg->bodyptr;
 	uint32_t beaconSize;
-	struct pe_session *psessionEntry;
+	struct pe_session *pe_session;
 	uint8_t sessionId;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	psessionEntry = pe_find_session_by_bssid(mac, pMsg->bssId, &sessionId);
-	if (!psessionEntry) {
+	pe_session = pe_find_session_by_bssid(mac, pMsg->bssId, &sessionId);
+	if (!pe_session) {
 		pe_err("session lookup fails");
 		goto end;
 	}
 
-	beaconSize = psessionEntry->schBeaconOffsetBegin;
+	beaconSize = pe_session->schBeaconOffsetBegin;
 
 	/* If SME is not in normal mode, no need to generate beacon */
-	if (psessionEntry->limSmeState != eLIM_SME_NORMAL_STATE) {
+	if (pe_session->limSmeState != eLIM_SME_NORMAL_STATE) {
 		pe_debug("PreBeaconInd received in invalid state: %d",
-			 psessionEntry->limSmeState);
+			 pe_session->limSmeState);
 		goto end;
 	}
 
-	switch (GET_LIM_SYSTEM_ROLE(psessionEntry)) {
+	switch (GET_LIM_SYSTEM_ROLE(pe_session)) {
 
 	case eLIM_STA_IN_IBSS_ROLE:
 		/* generate IBSS parameter set */
-		if (psessionEntry->statypeForBss == STA_ENTRY_SELF)
+		if (pe_session->statypeForBss == STA_ENTRY_SELF)
 			status =
 			    write_beacon_to_memory(mac, (uint16_t) beaconSize,
 						   (uint16_t) beaconSize,
-						   psessionEntry, reason);
+						   pe_session, reason);
 		else
 			pe_err("can not send beacon for PEER session entry");
 		break;
 
 	case eLIM_AP_ROLE: {
 		uint8_t *ptr =
-			&psessionEntry->pSchBeaconFrameBegin[psessionEntry->
+			&pe_session->pSchBeaconFrameBegin[pe_session->
 							     schBeaconOffsetBegin];
 		uint16_t timLength = 0;
 
-		if (psessionEntry->statypeForBss == STA_ENTRY_SELF) {
+		if (pe_session->statypeForBss == STA_ENTRY_SELF) {
 			sch_generate_tim(mac, &ptr, &timLength,
-					 psessionEntry->dtimPeriod);
+					 pe_session->dtimPeriod);
 			beaconSize += 2 + timLength;
 			status =
 			    write_beacon_to_memory(mac, (uint16_t) beaconSize,
 						   (uint16_t) beaconSize,
-						   psessionEntry, reason);
+						   pe_session, reason);
 		} else
 			pe_err("can not send beacon for PEER session entry");
 			}
@@ -1055,7 +1055,7 @@ QDF_STATUS sch_process_pre_beacon_ind(tpAniSirGlobal mac,
 
 	default:
 		pe_err("Error-PE has Receive PreBeconGenIndication when System is in %d role",
-		       GET_LIM_SYSTEM_ROLE(psessionEntry));
+		       GET_LIM_SYSTEM_ROLE(pe_session));
 	}
 
 end:

@@ -67,7 +67,7 @@ void lim_send_sme_deauth_ntf(tpAniSirGlobal, tSirMacAddr, tSirResultCodes, uint1
 			     uint16_t, uint8_t, uint16_t);
 void lim_send_sme_disassoc_ind(tpAniSirGlobal, tpDphHashNode, struct pe_session *);
 void lim_send_sme_deauth_ind(tpAniSirGlobal, tpDphHashNode,
-			     struct pe_session *psessionEntry);
+			     struct pe_session *pe_session);
 void lim_send_sme_wm_status_change_ntf(tpAniSirGlobal, tSirSmeStatusChangeCode,
 				       uint32_t *, uint16_t, uint8_t);
 void lim_send_sme_set_context_rsp(tpAniSirGlobal, struct qdf_mac_addr, uint16_t,
@@ -81,10 +81,10 @@ lim_send_sme_aggr_qos_rsp(tpAniSirGlobal mac, tpSirAggrQosRsp aggrQosRsp,
 			  uint8_t smesessionId);
 
 void lim_send_sme_addts_rsp(tpAniSirGlobal mac, uint8_t rspReqd, uint32_t status,
-			    struct pe_session *psessionEntry, tSirMacTspecIE tspec,
+			    struct pe_session *pe_session, tSirMacTspecIE tspec,
 			    uint8_t smesessionId, uint16_t smetransactionId);
 void lim_send_sme_delts_rsp(tpAniSirGlobal mac, tpSirDeltsReq delts,
-			    uint32_t status, struct pe_session *psessionEntry,
+			    uint32_t status, struct pe_session *pe_session,
 			    uint8_t smessionId, uint16_t smetransactionId);
 void lim_send_sme_delts_ind(tpAniSirGlobal mac, tpSirDeltsReqInfo delts,
 			    uint16_t aid, struct pe_session *);
@@ -110,7 +110,7 @@ void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal mac, tSirMacAddr peerMac
 					 uint8_t smesessionId);
 
 void lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal mac,
-					 struct pe_session *psessionEntry,
+					 struct pe_session *pe_session,
 					 tpSwitchChannelParams pChnlParams);
 /*
  * lim_process_beacon_tx_success_ind() - handle successful beacon transmission

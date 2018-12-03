@@ -359,11 +359,11 @@ lim_tear_down_link_with_ap(tpAniSirGlobal mac, uint8_t sessionId,
 {
 	tpDphHashNode pStaDs = NULL;
 
-	/* tear down the following sessionEntry */
-	struct pe_session *psessionEntry;
+	/* tear down the following pe_session */
+	struct pe_session *pe_session;
 
-	psessionEntry = pe_find_session_by_session_id(mac, sessionId);
-	if (psessionEntry == NULL) {
+	pe_session = pe_find_session_by_session_id(mac, sessionId);
+	if (pe_session == NULL) {
 		pe_err("Session Does not exist for given sessionID");
 		return;
 	}
@@ -372,7 +372,7 @@ lim_tear_down_link_with_ap(tpAniSirGlobal mac, uint8_t sessionId,
 	 * and AP did not respond for Probe request.
 	 * Trigger link tear down.
 	 */
-	psessionEntry->pmmOffloadInfo.bcnmiss = false;
+	pe_session->pmmOffloadInfo.bcnmiss = false;
 
 	pe_info("No ProbeRsp from AP after HB failure. Tearing down link");
 
@@ -381,14 +381,14 @@ lim_tear_down_link_with_ap(tpAniSirGlobal mac, uint8_t sessionId,
 
 	pStaDs =
 		dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
-				   &psessionEntry->dph.dphHashTable);
+				   &pe_session->dph.dphHashTable);
 
 	if (pStaDs != NULL) {
 		tLimMlmDeauthInd mlmDeauthInd;
 
 #ifdef FEATURE_WLAN_TDLS
 		/* Delete all TDLS peers connected before leaving BSS */
-		lim_delete_tdls_peers(mac, psessionEntry);
+		lim_delete_tdls_peers(mac, pe_session);
 #endif
 
 		pStaDs->mlmStaContext.disassocReason = reasonCode;
@@ -426,7 +426,7 @@ lim_tear_down_link_with_ap(tpAniSirGlobal mac, uint8_t sessionId,
 		mlmDeauthInd.deauthTrigger =
 			pStaDs->mlmStaContext.cleanupTrigger;
 
-		if (LIM_IS_STA_ROLE(psessionEntry))
+		if (LIM_IS_STA_ROLE(pe_session))
 			lim_post_sme_message(mac, LIM_MLM_DEAUTH_IND,
 				     (uint32_t *) &mlmDeauthInd);
 		if (mac->mlme_cfg->gen.fatal_event_trigger)
@@ -435,7 +435,7 @@ lim_tear_down_link_with_ap(tpAniSirGlobal mac, uint8_t sessionId,
 					WLAN_LOG_REASON_HB_FAILURE,
 					false, false);
 
-		lim_send_sme_deauth_ind(mac, pStaDs, psessionEntry);
+		lim_send_sme_deauth_ind(mac, pStaDs, pe_session);
 	}
 } /*** lim_tear_down_link_with_ap() ***/
 
