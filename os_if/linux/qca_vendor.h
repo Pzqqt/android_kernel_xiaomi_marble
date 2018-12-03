@@ -43,7 +43,12 @@
  * @QCA_NL80211_VENDOR_SUBCMD_ROAMING: Roaming
  * @QCA_NL80211_VENDOR_SUBCMD_AVOID_FREQUENCY: Avoid frequency.
  * @QCA_NL80211_VENDOR_SUBCMD_DFS_CAPABILITY: DFS capability
- * @QCA_NL80211_VENDOR_SUBCMD_NAN: Nan
+ * @QCA_NL80211_VENDOR_SUBCMD_NAN: NAN command/event which is used to pass
+ *	NAN Request/Response and NAN Indication messages. These messages are
+ *	interpreted between the framework and the firmware component. While
+ *	sending the command from userspace to the driver, payload is not
+ *	encapsulated inside any attribute. Attribute QCA_WLAN_VENDOR_ATTR_NAN
+ *	is used when receiving vendor events in userspace from the driver.
  * @QCA_NL80211_VENDOR_SUBCMD_STATS_EXT: Ext stats
  * @QCA_NL80211_VENDOR_SUBCMD_LL_STATS_SET: Link layer stats set
  * @QCA_NL80211_VENDOR_SUBCMD_LL_STATS_GET: Link layer stats get
@@ -262,6 +267,13 @@
  * @QCA_NL80211_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION: Sub command to set WiFi
  *	test configuration. Attributes for this command are defined in
  *	enum qca_wlan_vendor_attr_wifi_test_config.
+ * @QCA_NL80211_VENDOR_SUBCMD_NAN_EXT: An extendable version of NAN vendor
+ *	command. The earlier command for NAN, QCA_NL80211_VENDOR_SUBCMD_NAN,
+ *	carried a payload which was a binary blob of data. The command was not
+ *	extendable to send more information. The newer version carries the
+ *	legacy blob encapsulated within an attribute and can be extended with
+ *	additional vendor attributes that can enhance the NAN command
+ *	interface.
  *
  */
 
@@ -469,6 +481,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_SET_QDEPTH_THRESH = 166,
 	/* Wi-Fi test configuration subcommand */
 	QCA_NL80211_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION = 169,
+	QCA_NL80211_VENDOR_SUBCMD_NAN_EXT = 171,
 	QCA_NL80211_VENDOR_SUBCMD_THROUGHPUT_CHANGE_EVENT = 174,
 };
 
@@ -809,14 +822,13 @@ enum qca_wlan_vendor_attr_get_station_info {
  * @QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_GET_INDEX: NUD DEBUG Stats index
  * @QCA_NL80211_VENDOR_SUBCMD_HANG_REASON_INDEX: hang event reason index
  * @QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO_INDEX: MAC mode info index
+ * @QCA_NL80211_VENDOR_SUBCMD_NAN_EXT_INDEX: NAN Extended index
  */
 
 enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_AVOID_FREQUENCY_INDEX = 0,
 
-#ifdef WLAN_FEATURE_NAN
 	QCA_NL80211_VENDOR_SUBCMD_NAN_INDEX,
-#endif /* WLAN_FEATURE_NAN */
 
 #ifdef WLAN_FEATURE_STATS_EXT
 	QCA_NL80211_VENDOR_SUBCMD_STATS_EXT_INDEX,
@@ -881,9 +893,7 @@ enum qca_nl80211_vendor_subcmds_index {
 #ifdef WLAN_FEATURE_TSF
 	QCA_NL80211_VENDOR_SUBCMD_TSF_INDEX,
 #endif
-#ifdef WLAN_FEATURE_NAN_DATAPATH
 	QCA_NL80211_VENDOR_SUBCMD_NDP_INDEX,
-#endif /* WLAN_FEATURE_NAN_DATAPATH */
 	QCA_NL80211_VENDOR_SUBCMD_P2P_LO_EVENT_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_SAP_CONDITIONAL_CHAN_SWITCH_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_UPDATE_EXTERNAL_ACS_CONFIG,
@@ -892,6 +902,7 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_HANG_REASON_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_HTT_STATS_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_NAN_EXT_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_THROUGHPUT_CHANGE_EVENT_INDEX,
 };
 
@@ -6449,4 +6460,51 @@ enum qca_wlan_vendor_attr_throughput_change {
 	QCA_WLAN_VENDOR_ATTR_THROUGHPUT_CHANGE_AFTER_LAST - 1,
 };
 
+/* enum qca_wlan_nan_subcmd_type - Type of NAN command used by attribute
+ * QCA_WLAN_VENDOR_ATTR_NAN_SUBCMD_TYPE as a part of vendor command
+ * QCA_NL80211_VENDOR_SUBCMD_NAN_EXT.
+ */
+enum qca_wlan_nan_ext_subcmd_type {
+	/* Subcmd of type NAN Enable Request */
+	QCA_WLAN_NAN_EXT_SUBCMD_TYPE_ENABLE_REQ = 1,
+	/* Subcmd of type NAN Disable Request */
+	QCA_WLAN_NAN_EXT_SUBCMD_TYPE_DISABLE_REQ = 2,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_nan_params - Used by the vendor command
+ * QCA_NL80211_VENDOR_SUBCMD_NAN_EXT.
+ */
+enum qca_wlan_vendor_attr_nan_params {
+	QCA_WLAN_VENDOR_ATTR_NAN_INVALID = 0,
+	/* Carries NAN command for firmware component. Every vendor command
+	 * QCA_NL80211_VENDOR_SUBCMD_NAN_EXT must contain this attribute with a
+	 * payload containing the NAN command. NLA_BINARY attribute.
+	 */
+	QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA = 1,
+	/* Indicates the type of NAN command sent with
+	 * QCA_NL80211_VENDOR_SUBCMD_NAN_EXT. enum qca_wlan_nan_ext_subcmd_type
+	 * describes the possible range of values. This attribute is mandatory
+	 * if the command being issued is either
+	 * QCA_WLAN_NAN_EXT_SUBCMD_TYPE_ENABLE_REQ or
+	 * QCA_WLAN_NAN_EXT_SUBCMD_TYPE_DISABLE_REQ. NLA_U32 attribute.
+	 */
+	QCA_WLAN_VENDOR_ATTR_NAN_SUBCMD_TYPE = 2,
+	/* Frequency (in MHz) of primary NAN discovery social channel in 2.4 GHz
+	 * band. This attribute is mandatory when command type is
+	 * QCA_WLAN_NAN_EXT_SUBCMD_TYPE_ENABLE_REQ. NLA_U32 attribute.
+	 */
+	QCA_WLAN_VENDOR_ATTR_NAN_DISC_24GHZ_BAND_FREQ = 3,
+	/* Frequency (in MHz) of secondary NAN discovery social channel in 5 GHz
+	 * band. This attribute is optional and should be included when command
+	 * type is QCA_WLAN_NAN_EXT_SUBCMD_TYPE_ENABLE_REQ and NAN discovery
+	 * has to be started on 5GHz along with 2.4GHz. NLA_U32 attribute.
+	 */
+	QCA_WLAN_VENDOR_ATTR_NAN_DISC_5GHZ_BAND_FREQ = 4,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_NAN_PARAMS_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_NAN_PARAMS_MAX =
+		QCA_WLAN_VENDOR_ATTR_NAN_PARAMS_AFTER_LAST - 1
+};
 #endif
