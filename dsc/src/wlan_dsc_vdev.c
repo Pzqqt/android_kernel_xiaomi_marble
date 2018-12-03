@@ -17,8 +17,8 @@
  */
 
 #include "qdf_list.h"
-#include "qdf_mem.h"
 #include "qdf_status.h"
+#include "qdf_talloc.h"
 #include "qdf_types.h"
 #include "__wlan_dsc.h"
 #include "wlan_dsc.h"
@@ -39,7 +39,7 @@ __dsc_vdev_create(struct dsc_psoc *psoc, struct dsc_vdev **out_vdev)
 
 	*out_vdev = NULL;
 
-	vdev = qdf_mem_malloc(sizeof(*vdev));
+	vdev = qdf_talloc_type(psoc, vdev);
 	if (!vdev)
 		return QDF_STATUS_E_NOMEM;
 
@@ -96,7 +96,7 @@ static void __dsc_vdev_destroy(struct dsc_vdev **out_vdev)
 	__dsc_trans_deinit(&vdev->trans);
 	vdev->psoc = NULL;
 
-	qdf_mem_free(vdev);
+	qdf_tfree(vdev);
 }
 
 void dsc_vdev_destroy(struct dsc_vdev **out_vdev)

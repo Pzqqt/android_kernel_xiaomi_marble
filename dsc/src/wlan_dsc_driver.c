@@ -17,6 +17,7 @@
  */
 
 #include "qdf_list.h"
+#include "qdf_mem.h"
 #include "qdf_status.h"
 #include "qdf_types.h"
 #include "__wlan_dsc.h"
