@@ -11959,8 +11959,13 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_BEACON_RECEPTION_STATS;
 	wmi_service[wmi_service_vdev_latency_config] =
 			WMI_SERVICE_VDEV_LATENCY_CONFIG;
+	wmi_service[wmi_service_nan_dbs_support] = WMI_SERVICE_NAN_DBS_SUPPORT;
+	wmi_service[wmi_service_ndi_dbs_support] = WMI_SERVICE_NDI_DBS_SUPPORT;
+	wmi_service[wmi_service_nan_sap_support] = WMI_SERVICE_NAN_SAP_SUPPORT;
+	wmi_service[wmi_service_ndi_sap_support] = WMI_SERVICE_NDI_SAP_SUPPORT;
+	wmi_service[wmi_service_nan_disable_support] =
+			WMI_SERVICE_NAN_DISABLE_SUPPORT;
 }
-
 #ifndef CONFIG_MCL
 
 /**
