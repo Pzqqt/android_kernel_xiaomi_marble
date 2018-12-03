@@ -454,6 +454,7 @@ static void get_station_stats_cb(struct stats_event *ev, void *cookie)
 	priv->num_summary_stats = ev->num_summary_stats;
 	priv->num_chain_rssi_stats = ev->num_chain_rssi_stats;
 	priv->tx_rate = ev->tx_rate;
+	priv->rx_rate = ev->rx_rate;
 	priv->tx_rate_flags = ev->tx_rate_flags;
 	qdf_mem_copy(priv->vdev_chain_rssi, ev->vdev_chain_rssi, rssi_size);
 	qdf_mem_copy(priv->vdev_summary_stats, ev->vdev_summary_stats,
@@ -533,6 +534,7 @@ wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 	}
 
 	out->tx_rate = priv->tx_rate;
+	out->rx_rate = priv->rx_rate;
 	out->tx_rate_flags = priv->tx_rate_flags;
 	out->num_summary_stats = priv->num_summary_stats;
 	out->num_chain_rssi_stats = priv->num_chain_rssi_stats;
