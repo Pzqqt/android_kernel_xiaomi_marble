@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -243,7 +243,6 @@ static void wcd_clsh_set_hph_mode(struct snd_soc_component *component,
 
 	switch (mode) {
 	case CLS_H_NORMAL:
-	case CLS_H_LOHIFI:
 		val = 0x00;
 		break;
 	case CLS_AB:
@@ -255,6 +254,7 @@ static void wcd_clsh_set_hph_mode(struct snd_soc_component *component,
 		val = 0x08;
 		break;
 	case CLS_H_LP:
+	case CLS_H_LOHIFI:
 		val = 0x04;
 		break;
 	default:
