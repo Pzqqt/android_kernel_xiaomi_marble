@@ -655,6 +655,9 @@ void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
 		qdf_nbuf_t mpdu, bool mpdu_done);
 void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf,
 			     uint8_t *rx_tlv_hdr, struct dp_peer *peer);
+void dp_2k_jump_handle(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
+		       uint16_t peer_id, uint8_t tid);
+
 
 #define DP_RX_LIST_APPEND(head, tail, elem) \
 	do {                                                          \

@@ -509,7 +509,7 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
  *
  */
 
-static void
+void
 dp_2k_jump_handle(struct dp_soc *soc,
 		  qdf_nbuf_t nbuf,
 		  uint8_t *rx_tlv_hdr,
@@ -556,6 +556,8 @@ dp_2k_jump_handle(struct dp_soc *soc,
 	}
 
 free_nbuf:
+	if (peer)
+		dp_peer_unref_del_find_by_id(peer);
 	qdf_nbuf_free(nbuf);
 	return;
 }
