@@ -397,8 +397,8 @@ int dfs_control(struct wlan_dfs *dfs,
 
 			if (dfs->dfs_is_offload_enabled) {
 				error = dfs_fill_emulate_bang_radar_test
-							(dfs, SEG_ID_PRIMARY,
-							 &dfs_unit_test);
+						 (dfs, dfs->dfs_seg_id,
+						  &dfs_unit_test);
 			} else {
 				dfs->dfs_enh_bangradar = true;
 				dfs->dfs_bangradar = 0;
