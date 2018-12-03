@@ -4142,6 +4142,13 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 
 	TAILQ_INIT(&vdev->peer_list);
 
+	if ((soc->intr_mode == DP_INTR_POLL) &&
+	    wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx) != 0) {
+		if ((pdev->vdev_count == 0) ||
+		    (wlan_op_mode_monitor == vdev->opmode))
+			qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
+	}
+
 	if (wlan_op_mode_monitor == vdev->opmode) {
 		pdev->monitor_vdev = vdev;
 		return (struct cdp_vdev *)vdev;
@@ -4160,13 +4167,6 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	pdev->vdev_count++;
 
 	dp_tx_vdev_attach(vdev);
-
-
-	if ((soc->intr_mode == DP_INTR_POLL) &&
-			wlan_cfg_get_num_contexts(soc->wlan_cfg_ctx) != 0) {
-		if (pdev->vdev_count == 1)
-			qdf_timer_mod(&soc->int_timer, DP_INTR_POLL_TIMER_MS);
-	}
 
 	if (pdev->vdev_count == 1)
 		dp_lro_hash_setup(soc, pdev);
