@@ -82,15 +82,24 @@ QDF_STATUS ucfg_policy_mgr_psoc_open(struct wlan_objmgr_psoc *psoc)
 	QDF_STATUS status;
 
 	status = policy_mgr_init_cfg(psoc);
-	if (status != QDF_STATUS_SUCCESS) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		policy_mgr_err("pm_ctx is NULL");
 		return status;
 	}
+
+	status = policy_mgr_psoc_open(psoc);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		policy_mgr_err("psoc open fail");
+		policy_mgr_psoc_close(psoc);
+		return status;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
 void ucfg_policy_mgr_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+	policy_mgr_psoc_close(psoc);
 	policy_mgr_deinit_cfg(psoc);
 }
 

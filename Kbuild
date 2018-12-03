@@ -986,17 +986,17 @@ P2P_OBJS := $(P2P_DISPATCHER_OBJ_DIR)/wlan_p2p_ucfg_api.o \
 	    $(P2P_TARGET_IF_SRC)/target_if_p2p.o
 
 ###### UMAC POLICY MGR ########
-UMAC_POLICY_MGR_DIR := $(WLAN_COMMON_ROOT)/umac/cmn_services/policy_mgr
+POLICY_MGR_DIR := components/cmn_services/policy_mgr
 
-UMAC_POLICY_MGR_INC := -I$(WLAN_COMMON_INC)/umac/cmn_services/policy_mgr/inc \
-		-I$(WLAN_COMMON_INC)/umac/cmn_services/policy_mgr/src
+POLICY_MGR_INC := -I$(WLAN_ROOT)/$(POLICY_MGR_DIR)/inc \
+		  -I$(WLAN_ROOT)/$(POLICY_MGR_DIR)/src
 
-UMAC_POLICY_MGR_OBJS := $(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_action.o \
-	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_core.o \
-	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_get_set_utils.o \
-	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_init_deinit.o \
-	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_ucfg.o \
-	$(UMAC_POLICY_MGR_DIR)/src/wlan_policy_mgr_pcl.o \
+POLICY_MGR_OBJS := $(POLICY_MGR_DIR)/src/wlan_policy_mgr_action.o \
+	$(POLICY_MGR_DIR)/src/wlan_policy_mgr_core.o \
+	$(POLICY_MGR_DIR)/src/wlan_policy_mgr_get_set_utils.o \
+	$(POLICY_MGR_DIR)/src/wlan_policy_mgr_init_deinit.o \
+	$(POLICY_MGR_DIR)/src/wlan_policy_mgr_ucfg.o \
+	$(POLICY_MGR_DIR)/src/wlan_policy_mgr_pcl.o \
 
 ###### UMAC TDLS ########
 UMAC_TDLS_DIR := $(WLAN_COMMON_ROOT)/umac/tdls
@@ -1714,7 +1714,7 @@ INCS +=		$(UMAC_OBJMGR_INC)
 INCS +=		$(UMAC_MGMT_TXRX_INC)
 INCS +=		$(PMO_INC)
 INCS +=		$(P2P_INC)
-INCS +=		$(UMAC_POLICY_MGR_INC)
+INCS +=		$(POLICY_MGR_INC)
 INCS +=		$(TARGET_INC)
 INCS +=		$(UMAC_TDLS_INC)
 INCS +=		$(UMAC_SER_INC)
@@ -1803,7 +1803,7 @@ OBJS +=		$(UMAC_MGMT_TXRX_OBJS)
 OBJS +=		$(UMAC_TDLS_OBJS)
 OBJS +=		$(PMO_OBJS)
 OBJS +=		$(P2P_OBJS)
-OBJS +=		$(UMAC_POLICY_MGR_OBJS)
+OBJS +=		$(POLICY_MGR_OBJS)
 OBJS +=		$(WLAN_LOGGING_OBJS)
 OBJS +=		$(NLINK_OBJS)
 OBJS +=		$(PTT_OBJS)
