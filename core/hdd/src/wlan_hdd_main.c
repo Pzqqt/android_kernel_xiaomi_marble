@@ -9313,6 +9313,19 @@ static void hdd_init_packet_log(struct hdd_config *config,
 }
 #endif
 
+#ifdef ENABLE_MTRACE_LOG
+static void hdd_init_mtrace_log(struct hdd_config *config,
+				struct wlan_objmgr_psoc *psoc)
+{
+	config->enable_mtrace = cfg_get(psoc, CFG_ENABLE_MTRACE);
+}
+#else
+static void hdd_init_mtrace_log(struct hdd_config *config,
+				struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
 #ifdef FEATURE_RUNTIME_PM
 static void hdd_init_runtime_pm(struct hdd_config *config,
 				struct wlan_objmgr_psoc *psoc)
@@ -9379,7 +9392,6 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	config->enable_fw_log = cfg_get(psoc, CFG_ENABLE_FW_LOG);
 	config->operating_channel = cfg_get(psoc, CFG_OPERATING_CHANNEL);
 	config->num_vdevs = cfg_get(psoc, CFG_NUM_VDEV_ENABLE);
-
 	qdf_str_lcopy(config->enable_concurrent_sta,
 		      cfg_get(psoc, CFG_ENABLE_CONCURRENT_STA),
 		      CFG_CONCURRENT_IFACE_MAX_LEN);
@@ -9422,6 +9434,7 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	hdd_init_wlan_auto_shutdown(config, psoc);
 	hdd_init_wlan_logging_params(config, psoc);
 	hdd_init_packet_log(config, psoc);
+	hdd_init_mtrace_log(config, psoc);
 	hdd_dp_cfg_update(psoc, hdd_ctx);
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1035,6 +1035,30 @@ enum hdd_wext_control {
 	"Used to specify action OUIs to disable aggressive TX")
 
  /* End of action oui inis */
+#ifdef ENABLE_MTRACE_LOG
+/*
+ * <ini>
+ * enable_mtrace - Enable Mtrace.
+ * @Default: 0
+ *
+ * This ini is used to enable MTRACE logging
+ *
+ * Related: None.
+ *
+ * Supported Feature: MTRACE
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_MTRACE CFG_INI_BOOL( \
+			"enable_mtrace", \
+			false, \
+			"Enable MTRACE")
+#define CFG_ENABLE_MTRACE_ALL CFG(CFG_ENABLE_MTRACE)
+#else
+#define CFG_ENABLE_MTRACE_ALL
+#endif
 
 /*
  * gEnableRTTsupport
@@ -1071,6 +1095,7 @@ enum hdd_wext_control {
 	CFG(CFG_ENABLE_FW_LOG) \
 	CFG(CFG_ENABLE_FW_UART_PRINT) \
 	CFG(CFG_ENABLE_MAC_PROVISION) \
+	CFG_ENABLE_MTRACE_ALL \
 	CFG(CFG_ENABLE_RAMDUMP_COLLECTION) \
 	CFG(CFG_ENABLE_RTT_SUPPORT) \
 	CFG(CFG_INTERFACE_CHANGE_WAIT) \

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -791,16 +791,6 @@ enum hdd_dot11_mode {
 #define CFG_ENABLE_DFS_CHNL_SCAN_MIN               (0)
 #define CFG_ENABLE_DFS_CHNL_SCAN_MAX               (1)
 #define CFG_ENABLE_DFS_CHNL_SCAN_DEFAULT           (1)
-
-#ifdef ENABLE_MTRACE_LOG
-/*
- * Enable MTRACE for all modules
- */
-#define CFG_ENABLE_MTRACE            "enable_mtrace"
-#define CFG_ENABLE_MTRACE_MIN        (0)
-#define CFG_ENABLE_MTRACE_MAX        (1)
-#define CFG_ENABLE_MTRACE_DEFAULT    (0)
-#endif
 
 /*
  * <ini>

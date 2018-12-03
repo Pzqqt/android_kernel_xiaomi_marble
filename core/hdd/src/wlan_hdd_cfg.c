@@ -124,16 +124,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_RA_RATE_LIMIT_INTERVAL_MIN,
 		     CFG_RA_RATE_LIMIT_INTERVAL_MAX),
 #endif
-
-#ifdef ENABLE_MTRACE_LOG
-	REG_VARIABLE(CFG_ENABLE_MTRACE, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_mtrace,
-		     VAR_FLAGS_OPTIONAL,
-		     CFG_ENABLE_MTRACE_DEFAULT,
-		     CFG_ENABLE_MTRACE_MIN,
-		     CFG_ENABLE_MTRACE_MAX),
-#endif
-
 	REG_VARIABLE(CFG_ENABLE_DFS_CHNL_SCAN_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enableDFSChnlScan,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
