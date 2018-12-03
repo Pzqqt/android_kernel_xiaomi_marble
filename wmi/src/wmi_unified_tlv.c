@@ -7972,6 +7972,7 @@ static QDF_STATUS extract_ready_event_params_tlv(wmi_unified_t wmi_handle,
 	ev_param->num_extra_peer = ev->num_extra_peers;
 	/* Agile_cap in ready event is not supported in TLV target */
 	ev_param->agile_capability = false;
+	ev_param->max_ast_index = ev->max_ast_index;
 
 	return QDF_STATUS_SUCCESS;
 }

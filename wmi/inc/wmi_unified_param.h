@@ -7255,6 +7255,7 @@ struct tbttoffset_params {
  *                  agile DFS, by means of using one 80 MHz radio chain for
  *                  radar detection, concurrently with using another radio
  *                  chain for non-160 MHz regular operation.
+ * @max_ast_index: Max number of AST entries that FW could allocate.
  */
 struct wmi_host_ready_ev_param {
 	uint32_t status;
@@ -7263,6 +7264,7 @@ struct wmi_host_ready_ev_param {
 	uint32_t num_total_peer;
 	uint32_t num_extra_peer;
 	bool agile_capability;
+	uint32_t max_ast_index;
 };
 
 enum bcn_offload_control_param {

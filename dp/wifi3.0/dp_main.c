@@ -6532,6 +6532,7 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 	char rxdma_error[DP_RXDMA_ERR_LENGTH];
 	uint8_t index = 0;
 
+	DP_PRINT_STATS("No of AST Entries = %d", soc->num_ast_entries);
 	DP_PRINT_STATS("SOC Rx Stats:\n");
 	DP_PRINT_STATS("Fragmented packets: %u",
 		       soc->stats.rx.rx_frags);
@@ -8990,13 +8991,16 @@ dp_enable_peer_based_pktlog(
 
 static QDF_STATUS dp_peer_map_attach_wifi3(struct cdp_soc_t  *soc_hdl,
 					   uint32_t max_peers,
+					   uint32_t max_ast_index,
 					   bool peer_map_unmap_v2)
 {
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
 
 	soc->max_peers = max_peers;
 
-	qdf_print ("%s max_peers %u\n", __func__, max_peers);
+	qdf_print ("%s max_peers %u, max_ast_index: %u\n",
+		   __func__, max_peers, max_ast_index);
+	wlan_cfg_set_max_ast_idx(soc->wlan_cfg_ctx, max_ast_index);
 
 	if (dp_peer_find_attach(soc))
 		return QDF_STATUS_E_FAILURE;

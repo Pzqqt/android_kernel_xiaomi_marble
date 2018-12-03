@@ -409,6 +409,7 @@ struct cdp_cmn_ops {
 
 	QDF_STATUS (*txrx_peer_map_attach)(ol_txrx_soc_handle soc,
 					   uint32_t num_peers,
+					   uint32_t max_ast_index,
 					   bool peer_map_unmap_v2);
 
 	void (*txrx_pdev_set_ctrl_pdev)(struct cdp_pdev *pdev_hdl,

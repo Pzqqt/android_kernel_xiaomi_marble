@@ -1,5 +1,5 @@
 /*
-* * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+* * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -207,6 +207,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool enable_data_stall_detection;
 	bool disable_intra_bss_fwd;
 	bool rxdma1_enable;
+	int max_ast_idx;
 };
 
 /**
@@ -281,7 +282,8 @@ void wlan_cfg_set_ce_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 void wlan_cfg_set_rxbuf_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg, int context,
 				  int mask);
 void wlan_cfg_set_max_peer_id(struct wlan_cfg_dp_soc_ctxt *cfg, uint32_t val);
-
+void wlan_cfg_set_max_ast_idx(struct wlan_cfg_dp_soc_ctxt *cfg, uint32_t val);
+int wlan_cfg_get_max_ast_idx(struct wlan_cfg_dp_soc_ctxt *cfg);
 int wlan_cfg_set_rx_err_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 				int context, int mask);
 int wlan_cfg_set_rx_wbm_rel_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,

@@ -110,7 +110,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 		sa_idx = hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr);
 
 		if ((sa_idx < 0) ||
-				(sa_idx >= (WLAN_UMAC_PSOC_MAX_PEERS * 2))) {
+		    (sa_idx >= wlan_cfg_get_max_ast_idx(soc->wlan_cfg_ctx))) {
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 					"invalid sa_idx: %d", sa_idx);

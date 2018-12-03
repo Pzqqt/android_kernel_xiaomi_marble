@@ -352,6 +352,7 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 	wmi_legacy_service_ready_callback legacy_callback;
 	uint8_t num_radios, i;
 	uint32_t max_peers;
+	uint32_t max_ast_index;
 	target_resource_config *tgt_cfg;
 
 	if (!scn_handle) {
@@ -409,9 +410,10 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 	if (ready_ev.num_total_peer != 0) {
 		tgt_cfg = &info->wlan_res_cfg;
 		max_peers = tgt_cfg->num_peers + ready_ev.num_extra_peer + 1;
+		max_ast_index = ready_ev.max_ast_index + 1;
 
 		cdp_peer_map_attach(wlan_psoc_get_dp_handle(psoc), max_peers,
-				    tgt_cfg->peer_map_unmap_v2);
+				    max_ast_index, tgt_cfg->peer_map_unmap_v2);
 	}
 
 	/* Indicate to the waiting thread that the ready

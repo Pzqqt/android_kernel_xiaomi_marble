@@ -1013,6 +1013,8 @@ struct dp_soc {
 	uint8_t per_tid_basize_max_tid;
 	/* Soc level flag to enable da_war */
 	uint8_t da_war_enabled;
+	/* number of active ast entries */
+	uint32_t num_ast_entries;
 };
 
 #ifdef IPA_OFFLOAD
