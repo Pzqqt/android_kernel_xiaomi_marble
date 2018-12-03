@@ -4507,7 +4507,8 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		*/
 		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
 			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
-				vdev->vdev_id, peer->mac_addr.raw);
+				peer->mac_addr.raw, vdev->mac_addr.raw,
+				vdev->opmode);
 		}
 		peer->ctrl_peer = ctrl_peer;
 
@@ -5002,8 +5003,9 @@ static void dp_reset_and_release_peer_mem(struct dp_soc *soc,
 		    vdev->vap_bss_peer = NULL;
 		m_addr = peer->mac_addr.raw;
 		if (soc->cdp_soc.ol_ops->peer_unref_delete)
-		    soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
-							   vdev_id, m_addr);
+			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
+				m_addr, vdev->mac_addr.raw, vdev->opmode);
+
 		if (vdev && vdev->vap_bss_peer) {
 		    bss_peer = vdev->vap_bss_peer;
 		    DP_UPDATE_STATS(vdev, peer);

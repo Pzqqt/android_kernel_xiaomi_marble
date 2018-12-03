@@ -856,8 +856,8 @@ struct ol_if_ops {
 	(*peer_rx_reorder_queue_remove)(struct cdp_ctrl_objmgr_pdev *ctrl_pdev,
 					uint8_t vdev_id, uint8_t *peer_macaddr,
 					uint32_t tid_mask);
-	int (*peer_unref_delete)(void *scn_handle, uint8_t vdev_id,
-			uint8_t *peer_macaddr);
+	int (*peer_unref_delete)(void *scn_handle, uint8_t *peer_mac,
+				 uint8_t *vdev_mac, enum wlan_op_mode opmode);
 	bool (*is_hw_dbs_2x2_capable)(struct wlan_objmgr_psoc *psoc);
 	int (*peer_add_wds_entry)(void *vdev_handle,
 				  struct cdp_peer *peer_handle,
