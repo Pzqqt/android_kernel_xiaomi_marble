@@ -1670,6 +1670,30 @@ int pld_force_assert_target(struct device *dev)
 }
 
 /**
+ * pld_collect_rddm() - Collect ramdump before FW assert.
+ * This can used to collect ramdump before FW assert.
+ * @dev: device
+ *
+ *  Return: 0 if ramdump is collected successfully
+ *          Non zero failure code for errors
+ */
+int pld_collect_rddm(struct device *dev)
+{
+	enum pld_bus_type type = pld_get_bus_type(dev);
+
+	switch (type) {
+	case PLD_BUS_TYPE_PCIE:
+		return pld_pcie_collect_rddm(dev);
+	case PLD_BUS_TYPE_SNOC:
+	case PLD_BUS_TYPE_SDIO:
+		return 0;
+	default:
+		pr_err("Invalid device type %d\n", type);
+		return -EINVAL;
+	}
+}
+
+/**
  * pld_is_fw_dump_skipped() - get fw dump skipped status.
  *  The subsys ssr status help the driver to decide whether to skip
  *  the FW memory dump when FW assert.

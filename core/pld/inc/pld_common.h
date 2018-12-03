@@ -603,6 +603,7 @@ int pld_is_qmi_disable(struct device *dev);
 int pld_is_fw_down(struct device *dev);
 void pld_block_shutdown(struct device *dev, bool status);
 int pld_force_assert_target(struct device *dev);
+int pld_collect_rddm(struct device *dev);
 bool pld_is_fw_dump_skipped(struct device *dev);
 
 /**

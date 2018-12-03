@@ -1753,6 +1753,7 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 	QDF_STATUS status;
 	qdf_runtime_lock_t rtl;
 	qdf_device_t qdf;
+	int ret = 0;
 
 	/* NOTE! This code path is delicate! Think very carefully before
 	 * modifying the content or order of the following. Please review any
@@ -1774,6 +1775,16 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 		return;
 	}
 
+	qdf = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	if (!qdf) {
+		cds_err("Qdf context is null");
+		return;
+	}
+
+	ret = pld_collect_rddm(qdf->dev);
+	if (ret < 0)
+		QDF_DEBUG_PANIC("Fail to collect FW ramdump %d", ret);
+
 	/* if *wlan* recovery is disabled, crash here for debugging */
 	if (!cds_is_self_recovery_enabled()) {
 		QDF_DEBUG_PANIC("WLAN recovery is not enabled (via %s:%d)",
@@ -1784,12 +1795,6 @@ static void cds_trigger_recovery_handler(const char *func, const uint32_t line)
 	/* ignore recovery if we are unloading; it would be a waste anyway */
 	if (cds_is_driver_unloading()) {
 		cds_info("WLAN is unloading; ignore recovery");
-		return;
-	}
-
-	qdf = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	if (!qdf) {
-		cds_err("Qdf context is null");
 		return;
 	}
 

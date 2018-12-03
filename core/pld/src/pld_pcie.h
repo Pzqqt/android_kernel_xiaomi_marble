@@ -284,6 +284,11 @@ static inline int pld_pcie_force_assert_target(struct device *dev)
 	return -EINVAL;
 }
 
+static inline int pld_pcie_collect_rddm(struct device *dev)
+{
+	return 0;
+}
+
 static inline int pld_pcie_get_user_msi_assignment(struct device *dev,
 						   char *user_name,
 						   int *num_vectors,
@@ -319,6 +324,10 @@ void pld_pcie_schedule_recovery_work(struct device *dev,
 				     enum pld_recovery_reason reason);
 void pld_pcie_device_self_recovery(struct device *dev,
 				   enum pld_recovery_reason reason);
+static inline int pld_pcie_collect_rddm(struct device *dev)
+{
+	return cnss_force_collect_rddm(dev);
+}
 
 static inline void *pld_pcie_smmu_get_mapping(struct device *dev)
 {
