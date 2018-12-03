@@ -136,26 +136,6 @@ enum wlan_vdev_sm_evt {
 	WLAN_VDEV_SM_EV_ROAM = 28,
 };
 
-/**
- * wlan_vdev_mlme_init - Initializes MLME component
- *
- * Registers callbacks with object manager for create/destroy
- *
- * Return: SUCCESS on successful registration
- *         FAILURE, if registration fails
- */
-QDF_STATUS wlan_vdev_mlme_init(void);
-
-/**
- * wlan_vdev_mlme_deinit - Uninitializes MLME component
- *
- * Unregisters callbacks with object manager for create/destroy
- *
- * Return: SUCCESS on successful registration
- *         FAILURE, if registration fails
- */
-QDF_STATUS wlan_vdev_mlme_deinit(void);
-
 #else
 
 /**
@@ -179,6 +159,31 @@ enum wlan_vdev_state {
 	WLAN_VDEV_S_RESET    = 6,
 	WLAN_VDEV_S_MAX,
 };
+#endif
+
+#ifdef CMN_VDEV_MLME_CMPT_ENABLE
+
+/**
+ * wlan_vdev_mlme_init - Initializes MLME component
+ *
+ * Registers callbacks with object manager for create/destroy
+ *
+ * Return: SUCCESS on successful registration
+ *         FAILURE, if registration fails
+ */
+QDF_STATUS wlan_vdev_mlme_init(void);
+
+/**
+ * wlan_vdev_mlme_deinit - Uninitializes MLME component
+ *
+ * Unregisters callbacks with object manager for create/destroy
+ *
+ * Return: SUCCESS on successful registration
+ *         FAILURE, if registration fails
+ */
+QDF_STATUS wlan_vdev_mlme_deinit(void);
+
+#else
 
 /**
  * wlan_vdev_mlme_init - Initializes MLME component

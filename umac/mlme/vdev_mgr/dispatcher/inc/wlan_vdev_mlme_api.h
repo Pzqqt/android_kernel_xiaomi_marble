@@ -34,14 +34,14 @@
 struct vdev_mlme_obj *wlan_vdev_mlme_get_cmpt_obj(
 						struct wlan_objmgr_vdev *vdev);
 /**
- * wlan_vdev_mlme_get_legacy_hdl - Returns legacy handle
+ * wlan_vdev_mlme_get_ext_hdl - Returns legacy handle
  *
  * Retrieves legacy handle from vdev mlme component object
  *
  * Return: legacy handle on SUCCESS
  *         NULL, if it fails to retrieve
  */
-void *wlan_vdev_mlme_get_legacy_hdl(struct wlan_objmgr_vdev *vdev);
+void *wlan_vdev_mlme_get_ext_hdl(struct wlan_objmgr_vdev *vdev);
 
 #ifdef CMN_VDEV_MLME_SM_ENABLE
 /**

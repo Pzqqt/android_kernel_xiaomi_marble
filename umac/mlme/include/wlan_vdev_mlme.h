@@ -85,11 +85,11 @@ enum vdev_cmd_type {
  *                                      peer delete completion
  * @mlme_vdev_down_send:                callback to initiate actions of VDEV
  *                                      MLME down operation
- * @mlme_vdev_legacy_hdl_create:        callback to invoke creation of legacy
+ * @mlme_vdev_ext_hdl_create:           callback to invoke creation of legacy
  *                                      vdev object
- * @mlme_vdev_legacy_hdl_post_create:   callback to invoke post creation actions
+ * @mlme_vdev_ext_hdl_post_create:      callback to invoke post creation actions
  *                                      of legacy vdev object
- * @mlme_vdev_legacy_hdl_destroy:       callback to invoke destroy of legacy
+ * @mlme_vdev_ext_hdl_destroy:          callback to invoke destroy of legacy
  *                                      vdev object
  */
 struct vdev_mlme_ops {
@@ -149,11 +149,11 @@ struct vdev_mlme_ops {
 	QDF_STATUS (*mlme_vdev_notify_down_complete)(
 				struct vdev_mlme_obj *vdev_mlme,
 				uint16_t event_data_len, void *event_data);
-	QDF_STATUS (*mlme_vdev_legacy_hdl_create)(
+	QDF_STATUS (*mlme_vdev_ext_hdl_create)(
 				struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_legacy_hdl_post_create)(
+	QDF_STATUS (*mlme_vdev_ext_hdl_post_create)(
 				struct vdev_mlme_obj *vdev_mlme);
-	QDF_STATUS (*mlme_vdev_legacy_hdl_destroy)(
+	QDF_STATUS (*mlme_vdev_ext_hdl_destroy)(
 				struct vdev_mlme_obj *vdev_mlme);
 
 };
@@ -164,7 +164,7 @@ struct vdev_mlme_ops {
  * @sm_lock:              VDEV SM lock
  * @sm_hdl:               VDEV SM handle
  * @ops:                  VDEV MLME callback table
- * @legacy_vdev_ptr:      VDEV MLME legacy pointer
+ * @ext_vdev_ptr:         VDEV MLME legacy pointer
  */
 struct vdev_mlme_obj {
 	struct vdev_mlme_proto vdev_proto;
@@ -174,7 +174,7 @@ struct vdev_mlme_obj {
 	struct wlan_sm *sm_hdl;
 	struct wlan_objmgr_vdev *vdev;
 	struct vdev_mlme_ops *ops;
-	void *legacy_vdev_ptr;
+	void *ext_vdev_ptr;
 };
 
 /**
@@ -616,7 +616,7 @@ static inline QDF_STATUS mlme_vdev_notify_down_complete(
 }
 
 /**
- * mlme_vdev_legacy_hdl_create - VDEV legacy pointer allocation
+ * mlme_vdev_ext_hdl_create - VDEV legacy pointer allocation
  * @vdev_mlme_obj:  VDEV MLME comp object
  *
  * API invokes legacy pointer allocation and initialization
@@ -624,19 +624,19 @@ static inline QDF_STATUS mlme_vdev_notify_down_complete(
  * Return: SUCCESS on successful creation of legacy handle
  *         FAILURE, if it fails due to any
  */
-static inline QDF_STATUS mlme_vdev_legacy_hdl_create(
+static inline QDF_STATUS mlme_vdev_ext_hdl_create(
 			      struct vdev_mlme_obj *vdev_mlme)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_legacy_hdl_create)
-		ret = vdev_mlme->ops->mlme_vdev_legacy_hdl_create(vdev_mlme);
+	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_ext_hdl_create)
+		ret = vdev_mlme->ops->mlme_vdev_ext_hdl_create(vdev_mlme);
 
 	return ret;
 }
 
 /**
- * mlme_vdev_legacy_hdl_post_create - VDEV post legacy pointer allocation
+ * mlme_vdev_ext_hdl_post_create - VDEV post legacy pointer allocation
  * @vdev_mlme_obj:  VDEV MLME comp object
  *
  * API invokes post legacy pointer allocation operation
@@ -644,21 +644,21 @@ static inline QDF_STATUS mlme_vdev_legacy_hdl_create(
  * Return: SUCCESS on successful creation of legacy handle
  *         FAILURE, if it fails due to any
  */
-static inline QDF_STATUS mlme_vdev_legacy_hdl_post_create(
+static inline QDF_STATUS mlme_vdev_ext_hdl_post_create(
 				struct vdev_mlme_obj *vdev_mlme)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
 	if ((vdev_mlme->ops) &&
-	    vdev_mlme->ops->mlme_vdev_legacy_hdl_post_create)
-		ret = vdev_mlme->ops->mlme_vdev_legacy_hdl_post_create(
+	    vdev_mlme->ops->mlme_vdev_ext_hdl_post_create)
+		ret = vdev_mlme->ops->mlme_vdev_ext_hdl_post_create(
 								vdev_mlme);
 
 	return ret;
 }
 
 /**
- * mlme_vdev_legacy_hdl_destroy - VDEV legacy pointer free
+ * mlme_vdev_ext_hdl_destroy - VDEV legacy pointer free
  * @vdev_mlme_obj:  VDEV MLME comp object
  *
  * API invokes legacy pointer free
@@ -666,13 +666,13 @@ static inline QDF_STATUS mlme_vdev_legacy_hdl_post_create(
  * Return: SUCCESS on successful free of legacy handle
  *         FAILURE, if it fails due to any
  */
-static inline QDF_STATUS mlme_vdev_legacy_hdl_destroy(
+static inline QDF_STATUS mlme_vdev_ext_hdl_destroy(
 			      struct vdev_mlme_obj *vdev_mlme)
 {
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_legacy_hdl_destroy)
-		ret = vdev_mlme->ops->mlme_vdev_legacy_hdl_destroy(vdev_mlme);
+	if ((vdev_mlme->ops) && vdev_mlme->ops->mlme_vdev_ext_hdl_destroy)
+		ret = vdev_mlme->ops->mlme_vdev_ext_hdl_destroy(vdev_mlme);
 
 	return ret;
 }

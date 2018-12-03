@@ -46,18 +46,18 @@ struct vdev_mlme_obj *wlan_vdev_mlme_get_cmpt_obj(struct wlan_objmgr_vdev *vdev)
 	return vdev_mlme;
 }
 
-void *wlan_vdev_mlme_get_legacy_hdl(struct wlan_objmgr_vdev *vdev)
+void *wlan_vdev_mlme_get_ext_hdl(struct wlan_objmgr_vdev *vdev)
 {
 	struct vdev_mlme_obj *vdev_mlme;
 
 	vdev_mlme = wlan_vdev_mlme_get_cmpt_obj(vdev);
 	if (vdev_mlme)
-		return vdev_mlme->legacy_vdev_ptr;
+		return vdev_mlme->ext_vdev_ptr;
 
 	return NULL;
 }
 
-qdf_export_symbol(wlan_vdev_mlme_get_legacy_hdl);
+qdf_export_symbol(wlan_vdev_mlme_get_ext_hdl);
 
 #ifdef CMN_VDEV_MLME_SM_ENABLE
 QDF_STATUS wlan_vdev_mlme_sm_deliver_evt(struct wlan_objmgr_vdev *vdev,

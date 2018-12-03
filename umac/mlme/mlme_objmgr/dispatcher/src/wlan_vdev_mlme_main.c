@@ -63,9 +63,9 @@ static QDF_STATUS mlme_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev,
 		goto init_failed;
 	}
 
-	if (mlme_vdev_legacy_hdl_create(vdev_mlme) != QDF_STATUS_SUCCESS) {
+	if (mlme_vdev_ext_hdl_create(vdev_mlme) != QDF_STATUS_SUCCESS) {
 		mlme_err("Legacy vdev object creation failed");
-		goto legacy_hdl_create_failed;
+		goto ext_hdl_create_failed;
 	}
 
 	wlan_objmgr_vdev_component_obj_attach((struct wlan_objmgr_vdev *)vdev,
@@ -73,18 +73,18 @@ static QDF_STATUS mlme_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev,
 					      (void *)vdev_mlme,
 					      QDF_STATUS_SUCCESS);
 
-	if (mlme_vdev_legacy_hdl_post_create(vdev_mlme) != QDF_STATUS_SUCCESS) {
+	if (mlme_vdev_ext_hdl_post_create(vdev_mlme) != QDF_STATUS_SUCCESS) {
 		mlme_err("Legacy vdev object post creation failed");
-		goto legacy_hdl_post_create_failed;
+		goto ext_hdl_post_create_failed;
 	}
 
 	return QDF_STATUS_SUCCESS;
 
-legacy_hdl_post_create_failed:
-	mlme_vdev_legacy_hdl_destroy(vdev_mlme);
+ext_hdl_post_create_failed:
+	mlme_vdev_ext_hdl_destroy(vdev_mlme);
 	wlan_objmgr_vdev_component_obj_detach(vdev, WLAN_UMAC_COMP_MLME,
 					      vdev_mlme);
-legacy_hdl_create_failed:
+ext_hdl_create_failed:
 	mlme_vdev_sm_destroy(vdev_mlme);
 init_failed:
 	qdf_mem_free(vdev_mlme);
@@ -111,7 +111,7 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 
 	mlme_vdev_sm_destroy(vdev_mlme);
 
-	mlme_vdev_legacy_hdl_destroy(vdev_mlme);
+	mlme_vdev_ext_hdl_destroy(vdev_mlme);
 
 	wlan_objmgr_vdev_component_obj_detach(vdev, WLAN_UMAC_COMP_MLME,
 					      vdev_mlme);
