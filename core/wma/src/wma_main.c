@@ -4035,6 +4035,7 @@ void wma_process_pdev_hw_mode_trans_ind(void *handle,
 {
 	uint32_t i;
 	tp_wma_handle wma = (tp_wma_handle) handle;
+
 	if (fixed_param->num_vdev_mac_entries > MAX_VDEV_SUPPORTED) {
 		WMA_LOGE("Number of Vdev mac entries %d exceeded"
 			 " max vdev supported %d",
@@ -4050,6 +4051,11 @@ void wma_process_pdev_hw_mode_trans_ind(void *handle,
 		__func__, fixed_param->old_hw_mode_index,
 		fixed_param->new_hw_mode_index,
 		fixed_param->num_vdev_mac_entries);
+
+	if (!vdev_mac_entry) {
+		WMA_LOGE("Invalid vdev_mac_entry");
+		return;
+	}
 
 	/* Store the vdev-mac map in WMA and send to policy manager */
 	for (i = 0; i < fixed_param->num_vdev_mac_entries; i++) {
