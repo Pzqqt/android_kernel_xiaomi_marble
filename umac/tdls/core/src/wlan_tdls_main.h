@@ -59,6 +59,9 @@
 
 #define tdls_debug(params...) \
 	QDF_TRACE_DEBUG(QDF_MODULE_ID_TDLS, params)
+#define tdls_debug_rl(params...) \
+	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_TDLS, params)
+
 #define tdls_notice(params...) \
 	QDF_TRACE_INFO(QDF_MODULE_ID_TDLS, params)
 #define tdls_warn(params...) \

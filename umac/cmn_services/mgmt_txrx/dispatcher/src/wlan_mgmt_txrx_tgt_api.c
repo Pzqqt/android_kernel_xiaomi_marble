@@ -809,9 +809,10 @@ static QDF_STATUS wlan_mgmt_txrx_rx_handler_list_copy(
 	struct mgmt_rx_handler *rx_handler_node;
 
 	while (rx_handler) {
-		rx_handler_node = qdf_mem_malloc(sizeof(*rx_handler_node));
+		rx_handler_node =
+				qdf_mem_malloc_atomic(sizeof(*rx_handler_node));
 		if (!rx_handler_node) {
-			mgmt_txrx_err("Couldn't allocate memory for rx handler node");
+			mgmt_txrx_err_rl("Couldn't allocate memory for rx handler node");
 			return QDF_STATUS_E_NOMEM;
 		}
 

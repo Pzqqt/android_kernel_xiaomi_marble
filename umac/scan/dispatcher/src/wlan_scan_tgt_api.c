@@ -272,14 +272,14 @@ QDF_STATUS tgt_scan_bcn_probe_rx_callback(struct wlan_objmgr_psoc *psoc,
 	bcn = qdf_mem_malloc_atomic(sizeof(*bcn));
 
 	if (!bcn) {
-		scm_err("Failed to allocate memory for bcn");
+		scm_debug_rl("Failed to allocate memory for bcn");
 		status = QDF_STATUS_E_NOMEM;
 		goto free;
 	}
 	bcn->rx_data =
 		qdf_mem_malloc_atomic(sizeof(*rx_param));
 	if (!bcn->rx_data) {
-		scm_err("Failed to allocate memory for rx_data");
+		scm_debug_rl("Failed to allocate memory for rx_data");
 		status = QDF_STATUS_E_NOMEM;
 		goto free;
 	}

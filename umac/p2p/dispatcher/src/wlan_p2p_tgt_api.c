@@ -331,17 +331,17 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 		vdev_id = wlan_vdev_get_id(vdev);
 	}
 
-	rx_mgmt_event = qdf_mem_malloc(sizeof(*rx_mgmt_event));
+	rx_mgmt_event = qdf_mem_malloc_atomic(sizeof(*rx_mgmt_event));
 	if (!rx_mgmt_event) {
-		p2p_err("Failed to allocate rx mgmt event");
+		p2p_debug_rl("Failed to allocate rx mgmt event");
 		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	rx_mgmt = qdf_mem_malloc(sizeof(*rx_mgmt) +
+	rx_mgmt = qdf_mem_malloc_atomic(sizeof(*rx_mgmt) +
 			mgmt_rx_params->buf_len);
 	if (!rx_mgmt) {
-		p2p_err("Failed to allocate rx mgmt frame");
+		p2p_debug_rl("Failed to allocate rx mgmt frame");
 		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_NOMEM;
 	}
