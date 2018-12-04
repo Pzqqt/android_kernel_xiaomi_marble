@@ -2903,8 +2903,8 @@ void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	length = qdf_nbuf_len(tx_desc->nbuf);
 	/* Update peer level stats */
 	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				"invalid peer");
+		QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_DP,
+				   "peer is null or deletion in progress");
 		DP_STATS_INC_PKT(soc, tx.tx_invalid_peer, 1, length);
 		goto out;
 	}
