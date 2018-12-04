@@ -634,10 +634,21 @@ bool htc_is_endpoint_active(HTC_HANDLE HTCHandle,
  * @isNodropPkt - indicates whether it is nodrop pkt
  *
  * Return: None
- * Return:
  *
  */
 void htc_set_nodrop_pkt(HTC_HANDLE HTCHandle, A_BOOL isNodropPkt);
+
+/**
+ * htc_enable_hdr_length_check - Set up htc_hdr_length_check flag
+ * @HTCHandle - HTC handle
+ * @htc_hdr_length_check - flag to indicate whether htc header length check is
+ *                         required
+ *
+ * Return: None
+ *
+ */
+void
+htc_enable_hdr_length_check(HTC_HANDLE htc_handle, bool htc_hdr_length_check);
 
 /**
  * htc_get_num_recv_buffers - Get the number of recv buffers currently queued

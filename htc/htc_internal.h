@@ -240,6 +240,8 @@ typedef struct _HTC_TARGET {
 	 * reflect the actual count.
 	 */
 	uint8_t wmi_ep_count;
+	/* Flag to indicate whether htc header length check is required */
+	bool htc_hdr_length_check;
 } HTC_TARGET;
 
 

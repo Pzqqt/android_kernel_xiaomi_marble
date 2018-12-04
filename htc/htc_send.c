@@ -1500,17 +1500,18 @@ qdf_export_symbol(htc_send_pkt);
  *
  * Return: QDF_STATUS_SUCCESS for success or an appropriate QDF_STATUS error
  */
-QDF_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, qdf_nbuf_t netbuf, int Epid,
-			   int ActualLength)
+QDF_STATUS htc_send_data_pkt(HTC_HANDLE htc_hdl, qdf_nbuf_t netbuf, int ep_id,
+			     int actual_length)
 {
-	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_hdl);
 	HTC_ENDPOINT *pEndpoint;
-	HTC_FRAME_HDR *pHtcHdr;
+	HTC_FRAME_HDR *p_htc_hdr;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int tx_resources;
 	uint32_t data_attr = 0;
+	int htc_payload_len = actual_length;
 
-	pEndpoint = &target->endpoint[Epid];
+	pEndpoint = &target->endpoint[ep_id];
 
 	tx_resources = hif_get_free_queue_number(target->hif_dev,
 						 pEndpoint->UL_PipeID);
@@ -1530,13 +1531,16 @@ QDF_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, qdf_nbuf_t netbuf, int Epid,
 	if (hif_pm_runtime_get(target->hif_dev))
 		return QDF_STATUS_E_FAILURE;
 
-	pHtcHdr = (HTC_FRAME_HDR *) qdf_nbuf_get_frag_vaddr(netbuf, 0);
-	AR_DEBUG_ASSERT(pHtcHdr);
+	p_htc_hdr = (HTC_FRAME_HDR *)qdf_nbuf_get_frag_vaddr(netbuf, 0);
+	AR_DEBUG_ASSERT(p_htc_hdr);
 
 	data_attr = qdf_nbuf_data_attr_get(netbuf);
 
-	HTC_WRITE32(pHtcHdr, SM(ActualLength, HTC_FRAME_HDR_PAYLOADLEN) |
-		    SM(Epid, HTC_FRAME_HDR_ENDPOINTID));
+	if (target->htc_hdr_length_check)
+		htc_payload_len = actual_length - HTC_HEADER_LEN;
+
+	HTC_WRITE32(p_htc_hdr, SM(htc_payload_len, HTC_FRAME_HDR_PAYLOADLEN)
+		    | SM(ep_id, HTC_FRAME_HDR_ENDPOINTID));
 	/*
 	 * If the HIF pipe for the data endpoint is polled rather than
 	 * interrupt-driven, this is a good point to check whether any
@@ -1554,7 +1558,7 @@ QDF_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, qdf_nbuf_t netbuf, int Epid,
 
 	LOCK_HTC_TX(target);
 
-	HTC_WRITE32(((uint32_t *) pHtcHdr) + 1,
+	HTC_WRITE32(((uint32_t *)p_htc_hdr) + 1,
 		    SM(pEndpoint->SeqNo, HTC_FRAME_HDR_CONTROLBYTES1));
 
 	pEndpoint->SeqNo++;
@@ -1565,7 +1569,7 @@ QDF_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, qdf_nbuf_t netbuf, int Epid,
 		sizeof(qdf_nbuf_data(netbuf)), QDF_TX));
 	status = hif_send_head(target->hif_dev,
 			       pEndpoint->UL_PipeID,
-			       pEndpoint->Id, ActualLength, netbuf, data_attr);
+			       pEndpoint->Id, actual_length, netbuf, data_attr);
 
 	UNLOCK_HTC_TX(target);
 	return status;
@@ -2129,6 +2133,13 @@ void htc_set_nodrop_pkt(HTC_HANDLE HTCHandle, A_BOOL isNodropPkt)
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
 
 	target->is_nodrop_pkt = isNodropPkt;
+}
+
+void htc_enable_hdr_length_check(HTC_HANDLE htc_hdl, bool htc_hdr_length_check)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_hdl);
+
+	target->htc_hdr_length_check = htc_hdr_length_check;
 }
 
 /**

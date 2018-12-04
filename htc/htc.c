@@ -283,6 +283,7 @@ HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 		qdf_spinlock_create(&pEndpoint->lookup_queue_lock);
 	}
 	target->is_nodrop_pkt = false;
+	target->htc_hdr_length_check = false;
 	target->wmi_ep_count = 1;
 
 	do {
