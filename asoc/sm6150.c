@@ -8063,7 +8063,7 @@ static int msm_init_aux_dev(struct platform_device *pdev,
 	struct device_node *aux_codec_of_node;
 	u32 wsa_max_devs;
 	u32 wsa_dev_cnt;
-	u32 codec_max_aux_devs;
+	u32 codec_max_aux_devs = 0;
 	u32 codec_aux_dev_cnt = 0;
 	int i;
 	struct msm_wsa881x_dev_info *wsa881x_dev_info = NULL;
