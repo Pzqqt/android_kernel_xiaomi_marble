@@ -3090,6 +3090,10 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 
 		ol_txrx_dump_peer_access_list(peer);
 
+		if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam() &&
+		    pdev->self_peer == peer)
+			pdev->self_peer = NULL;
+
 		qdf_mem_free(peer);
 	} else {
 		access_list = qdf_atomic_read(&peer->access_list[debug_id]);
