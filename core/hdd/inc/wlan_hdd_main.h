@@ -3545,15 +3545,6 @@ static inline void hdd_driver_memdump_deinit(void)
 }
 #endif /* WLAN_FEATURE_MEMDUMP_ENABLE */
 /**
- * hdd_is_cli_iface_up() - check if there is any cli iface up
- * @hdd_ctx: HDD context
- *
- * Return: return true if there is any cli iface(STA/P2P_CLI) is up
- *         else return false
- */
-bool hdd_is_cli_iface_up(struct hdd_context *hdd_ctx);
-
-/**
  * hdd_set_disconnect_status() - set adapter disconnection status
  * @hdd_adapter: Pointer to hdd adapter
  * @disconnecting: Disconnect status to set

@@ -3317,13 +3317,6 @@ static int __hdd_stop(struct net_device *dev)
 	/* DeInit the adapter. This ensures datapath cleanup as well */
 	hdd_deinit_adapter(hdd_ctx, adapter, true);
 
-	/*
-	 * Upon wifi turn off, DUT has to flush the scan results so if
-	 * this is the last cli iface, flush the scan database.
-	 */
-	if (!hdd_is_cli_iface_up(hdd_ctx))
-		sme_scan_flush_result(mac_handle);
-
 	if (!hdd_is_any_interface_open(hdd_ctx))
 		hdd_psoc_idle_timer_start(hdd_ctx);
 
@@ -14934,22 +14927,6 @@ void hdd_set_rx_mode_rps(bool enable)
 		else if (!enable && cds_cfg->rps_enabled)
 			hdd_send_rps_disable_ind(adapter);
 	}
-}
-
-bool hdd_is_cli_iface_up(struct hdd_context *hdd_ctx)
-{
-	struct hdd_adapter *adapter = NULL;
-
-	hdd_for_each_adapter(hdd_ctx, adapter) {
-		if ((adapter->device_mode == QDF_STA_MODE ||
-		     adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
-		    qdf_atomic_test_bit(DEVICE_IFACE_OPENED,
-					&adapter->event_flags)){
-			return true;
-		}
-	}
-
-	return false;
 }
 
 /* Register the module init/exit functions */
