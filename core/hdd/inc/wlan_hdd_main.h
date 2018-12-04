@@ -765,29 +765,6 @@ struct action_pkt_buffer {
 };
 
 /**
- * struct hdd_scan_req - Scan Request entry
- * @node : List entry element
- * @adapter: Adapter address
- * @scan_request: scan request holder
- * @scan_id: scan identifier used across host layers which is generated at WMI
- * @cookie: scan request identifier sent to userspace
- * @source: scan request originator (NL/Vendor scan)
- * @timestamp: scan request timestamp
- *
- * Scan request linked list element
- */
-struct hdd_scan_req {
-	qdf_list_node_t node;
-	struct hdd_adapter *adapter;
-	struct cfg80211_scan_request *scan_request;
-	uint32_t scan_id;
-	uint8_t source;
-	uint32_t timestamp;
-	qdf_timer_t hdd_scan_inactivity_timer;
-	uint32_t scan_req_flags;
-};
-
-/**
  * struct hdd_mon_set_ch_info - Holds monitor mode channel switch params
  * @channel: Channel number.
  * @cb_mode: Channel bonding
