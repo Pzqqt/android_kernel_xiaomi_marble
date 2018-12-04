@@ -1308,12 +1308,6 @@ void csr_set_global_cfgs(struct mac_context *mac)
 {
 	wlan_mlme_set_frag_threshold(mac->psoc, csr_get_frag_thresh(mac));
 	wlan_mlme_set_rts_threshold(mac->psoc, csr_get_rts_thresh(mac));
-	cfg_set_int(mac, WNI_CFG_11D_ENABLED,
-			((mac->roam.configParam.Is11hSupportEnabled) ?
-			mac->roam.configParam.Is11dSupportEnabled :
-			mac->roam.configParam.Is11dSupportEnabled));
-	cfg_set_int(mac, WNI_CFG_11H_ENABLED,
-			mac->roam.configParam.Is11hSupportEnabled);
 	/* For now we will just use the 5GHz CB mode ini parameter to decide
 	 * whether CB supported or not in Probes when there is no session
 	 * Once session is established we will use the session related params
@@ -1667,9 +1661,9 @@ static void init_config_param(struct mac_context *mac)
 	mac->roam.configParam.uCfgDot11Mode = eCSR_CFG_DOT11_MODE_AUTO;
 	mac->roam.configParam.HeartbeatThresh24 = 40;
 	mac->roam.configParam.HeartbeatThresh50 = 40;
-	mac->roam.configParam.Is11dSupportEnabled = false;
+	mac->mlme_cfg->gen.enabled_11d = false;
 	mac->roam.configParam.Is11eSupportEnabled = true;
-	mac->roam.configParam.Is11hSupportEnabled = true;
+	mac->mlme_cfg->gen.enabled_11h = true;
 	mac->roam.configParam.WMMSupportMode = eCsrRoamWmmAuto;
 	mac->roam.configParam.ProprietaryRatesEnabled = true;
 	for (i = 0; i < CSR_NUM_RSSI_CAT; i++)
@@ -2495,14 +2489,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 			(pParam->WMMSupportMode == eCsrRoamWmmNoQos) ? 0 : 1;
 		mac->roam.configParam.Is11eSupportEnabled =
 			pParam->Is11eSupportEnabled;
-		mac->roam.configParam.Is11dSupportEnabled =
-			pParam->Is11dSupportEnabled;
-
-		if (mac->mlme_cfg->gen.band_capability == BAND_2G)
-			mac->roam.configParam.Is11hSupportEnabled = 0;
-		else
-			mac->roam.configParam.Is11hSupportEnabled =
-				pParam->Is11hSupportEnabled;
 
 		mac->roam.configParam.fenableMCCMode = pParam->fEnableMCCMode;
 		mac->roam.configParam.mcc_rts_cts_prot_enable =
@@ -2812,8 +2798,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 	pParam->is_force_1x1 = cfg_params->is_force_1x1;
 	pParam->WMMSupportMode = cfg_params->WMMSupportMode;
 	pParam->Is11eSupportEnabled = cfg_params->Is11eSupportEnabled;
-	pParam->Is11dSupportEnabled = cfg_params->Is11dSupportEnabled;
-	pParam->Is11hSupportEnabled = cfg_params->Is11hSupportEnabled;
 	pParam->channelBondingMode24GHz = csr_convert_phy_cb_state_to_ini_value(
 					cfg_params->channelBondingMode24GHz);
 	pParam->channelBondingMode5GHz = csr_convert_phy_cb_state_to_ini_value(
@@ -4184,7 +4168,7 @@ QDF_STATUS csr_roam_prepare_bss_config(struct mac_context *mac,
 		pBssConfig->f11hSupport = false;
 	else
 		pBssConfig->f11hSupport =
-			mac->roam.configParam.Is11hSupportEnabled;
+			mac->mlme_cfg->gen.enabled_11h;
 	/* power constraint */
 	pBssConfig->uPowerLimit =
 		csr_get11h_power_constraint(mac, &pIes->PowerConstraints);
@@ -4934,9 +4918,11 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 	mac->mlme_cfg->feature_flags.enable_short_slot_time_11g =
 						pBssConfig->uShortSlotTime;
 	/* 11d */
-	cfg_set_int(mac, WNI_CFG_11D_ENABLED,
-			((pBssConfig->f11hSupport) ? pBssConfig->f11hSupport :
-			 pProfile->ieee80211d));
+	if (pBssConfig->f11hSupport)
+		mac->mlme_cfg->gen.enabled_11d = pBssConfig->f11hSupport;
+	else
+		mac->mlme_cfg->gen.enabled_11d = pProfile->ieee80211d;
+
 	cfg_set_int(mac, WNI_CFG_LOCAL_POWER_CONSTRAINT,
 			pBssConfig->uPowerLimit);
 	/* CB */
@@ -16658,13 +16644,13 @@ QDF_STATUS csr_roam_open_session(struct mac_context *mac_ctx,
 	uint32_t existing_session_id;
 	struct mlme_ht_capabilities_info *ht_cap_info;
 	struct csr_roam_session *session;
-	struct mlme_vht_capabilities_info vht_cap_info;
+	struct mlme_vht_capabilities_info *vht_cap_info;
 
 	if (!(mac_ctx->mlme_cfg)) {
 		pe_err("invalid mlme cfg");
 		return QDF_STATUS_E_FAILURE;
 	}
-	vht_cap_info = mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
+	vht_cap_info = &mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
 
 	/* check to see if the mac address already belongs to a session */
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
@@ -16740,28 +16726,29 @@ QDF_STATUS csr_roam_open_session(struct mac_context *mac_ctx,
 	}
 #endif /* FEATURE_WLAN_BTAMP_UT_RF */
 
-	session->vht_config.max_mpdu_len = vht_cap_info.ampdu_len;
+	session->vht_config.max_mpdu_len = vht_cap_info->ampdu_len;
 	session->vht_config.supported_channel_widthset =
-			vht_cap_info.supp_chan_width;
-	session->vht_config.ldpc_coding = vht_cap_info.ldpc_coding_cap;
-	session->vht_config.shortgi80 = vht_cap_info.short_gi_80mhz;
+			vht_cap_info->supp_chan_width;
+	session->vht_config.ldpc_coding = vht_cap_info->ldpc_coding_cap;
+	session->vht_config.shortgi80 = vht_cap_info->short_gi_80mhz;
 	session->vht_config.shortgi160and80plus80 =
-			vht_cap_info.short_gi_160mhz;
-	session->vht_config.tx_stbc = vht_cap_info.tx_stbc;
-	session->vht_config.rx_stbc = vht_cap_info.rx_stbc;
-	session->vht_config.su_beam_former = vht_cap_info.su_bformer;
-	session->vht_config.su_beam_formee = vht_cap_info.su_bformee;
+			vht_cap_info->short_gi_160mhz;
+	session->vht_config.tx_stbc = vht_cap_info->tx_stbc;
+	session->vht_config.rx_stbc = vht_cap_info->rx_stbc;
+	session->vht_config.su_beam_former = vht_cap_info->su_bformer;
+	session->vht_config.su_beam_formee = vht_cap_info->su_bformee;
 	session->vht_config.csnof_beamformer_antSup =
-		vht_cap_info.tx_bfee_ant_supp;
-	session->vht_config.num_soundingdim = vht_cap_info.num_soundingdim;
-	session->vht_config.mu_beam_former = vht_cap_info.mu_bformer;
-	session->vht_config.mu_beam_formee = vht_cap_info.enable_mu_bformee;
-	session->vht_config.vht_txops = vht_cap_info.txop_ps;
-	session->vht_config.htc_vhtcap = vht_cap_info.htc_vhtc;
-	session->vht_config.rx_antpattern = vht_cap_info.rx_antpattern;
-	session->vht_config.tx_antpattern = vht_cap_info.tx_antpattern;
+			vht_cap_info->tx_bfee_ant_supp;
+	session->vht_config.num_soundingdim = vht_cap_info->num_soundingdim;
+	session->vht_config.mu_beam_former = vht_cap_info->mu_bformer;
+	session->vht_config.mu_beam_formee = vht_cap_info->enable_mu_bformee;
+	session->vht_config.vht_txops = vht_cap_info->txop_ps;
+	session->vht_config.htc_vhtcap = vht_cap_info->htc_vhtc;
+	session->vht_config.rx_antpattern = vht_cap_info->rx_antpattern;
+	session->vht_config.tx_antpattern = vht_cap_info->tx_antpattern;
 
-	session->vht_config.max_ampdu_lenexp = vht_cap_info.ampdu_len_exponent;
+	session->vht_config.max_ampdu_lenexp =
+			vht_cap_info->ampdu_len_exponent;
 
 	csr_update_session_he_cap(mac_ctx, session);
 
@@ -18762,7 +18749,7 @@ static void csr_update_driver_assoc_ies(struct mac_context *mac_ctx,
 	else
 		power_cap_ie_data[1] = MAX_TX_PWR_CAP;
 
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_11H_ENABLED, &csr_11henable);
+	csr_11henable = mac_ctx->mlme_cfg->gen.enabled_11h;
 
 	if (csr_11henable && csr_is11h_supported(mac_ctx)) {
 		/* Append power cap IE */

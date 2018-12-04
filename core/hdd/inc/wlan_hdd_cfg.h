@@ -88,28 +88,6 @@ struct hdd_context;
 
 /*
  * <ini>
- * g11dSupportEnabled - Enable/Disable 11d support
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable or disable 11d support.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_11D_SUPPORT_ENABLED_NAME           "g11dSupportEnabled"
-#define CFG_11D_SUPPORT_ENABLED_MIN            WNI_CFG_11D_ENABLED_STAMIN
-#define CFG_11D_SUPPORT_ENABLED_MAX            WNI_CFG_11D_ENABLED_STAMAX
-#define CFG_11D_SUPPORT_ENABLED_DEFAULT        WNI_CFG_11D_ENABLED_STADEF       /* Default is ON */
-
-/*
- * <ini>
  * enable_11d_in_world_mode - enable 11d in world mode
  * @Min: 0
  * @Max: 1
@@ -126,29 +104,6 @@ struct hdd_context;
  #define CFG_ENABLE_11D_IN_WORLD_MODE_MIN     (0)
  #define CFG_ENABLE_11D_IN_WORLD_MODE_MAX     (1)
  #define CFG_ENABLE_11D_IN_WORLD_MODE_DEFAULT (0)
-
-/*
- * <ini>
- * g11hSupportEnabled - Enable/Disable 11h support
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable or disable 11h support.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_11H_SUPPORT_ENABLED_NAME           "g11hSupportEnabled"
-#define CFG_11H_SUPPORT_ENABLED_MIN            (0)
-#define CFG_11H_SUPPORT_ENABLED_MAX            (1)
-#define CFG_11H_SUPPORT_ENABLED_DEFAULT        (1)    /* Default is ON */
 
 #define CFG_REG_CHANGE_DEF_COUNTRY_NAME          "gRegulatoryChangeCountry"
 #define CFG_REG_CHANGE_DEF_COUNTRY_DEFAULT       (0)
@@ -2744,11 +2699,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_TX_STBC_MAX                   (1)
 #define CFG_ENABLE_TX_STBC_DEFAULT               (0)
 
-#define CFG_DISABLE_LDPC_WITH_TXBF_AP             "gDisableLDPCWithTxbfAP"
-#define CFG_DISABLE_LDPC_WITH_TXBF_AP_MIN         (0)
-#define CFG_DISABLE_LDPC_WITH_TXBF_AP_MAX         (1)
-#define CFG_DISABLE_LDPC_WITH_TXBF_AP_DEFAULT     (0)
-
 /*
  * <ini>
  * gEnableSNRMonitoring - Enables SNR Monitoring
@@ -4914,8 +4864,6 @@ struct hdd_config {
 
 	/* Config parameters */
 	bool enable_connected_scan;
-	bool Is11dSupportEnabled;
-	bool Is11hSupportEnabled;
 	char PowerUsageControl[4];
 	bool fSupplicantCountryCodeHasPriority;
 	bool fIsImpsEnabled;
@@ -5042,7 +4990,6 @@ struct hdd_config {
 	bool enableFirstScan2GOnly;
 	bool prevent_link_down;
 	uint8_t scanAgingTimeout;
-	uint8_t disableLDPCWithTxbfAP;
 	bool fEnableSNRMonitoring;
 	/*PNO related parameters */
 #ifdef FEATURE_WLAN_SCAN_PNO

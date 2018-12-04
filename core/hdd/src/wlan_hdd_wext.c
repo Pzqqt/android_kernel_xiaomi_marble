@@ -3943,11 +3943,13 @@ int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 			goto free;
 		}
 
-		if (curr_band == BAND_2G)
-			sme_config->csrConfig.Is11hSupportEnabled = 0;
-		else
-			sme_config->csrConfig.Is11hSupportEnabled =
-				phddctx->config->Is11hSupportEnabled;
+		if (curr_band == BAND_2G) {
+			status = ucfg_mlme_set_11h_enabled(phddctx->psoc, 0);
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
+				hdd_err("Failed to set 11h_enable flag");
+				goto free;
+			}
+		}
 		if (curr_band == BAND_2G)
 			sme_config->csrConfig.channelBondingMode24GHz = chwidth;
 		else if (curr_band == BAND_5G)
@@ -4085,9 +4087,9 @@ free_config:
 static int hdd_we_set_11d_state(struct hdd_adapter *adapter, int state_11d)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	tSmeConfigParams *sme_config;
 	bool enable_11d;
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
+	QDF_STATUS status;
 
 	if (!mac_handle)
 		return -EINVAL;
@@ -4103,17 +4105,9 @@ static int hdd_we_set_11d_state(struct hdd_adapter *adapter, int state_11d)
 		return -EINVAL;
 	}
 
-	sme_config = qdf_mem_malloc(sizeof(*sme_config));
-	if (!sme_config) {
-		hdd_err("failed to allocate memory for sme_config");
-		return -ENOMEM;
-	}
-
-	sme_get_config_param(mac_handle, sme_config);
-	sme_config->csrConfig.Is11dSupportEnabled = enable_11d;
-	sme_update_config(mac_handle, sme_config);
-
-	qdf_mem_free(sme_config);
+	status = ucfg_mlme_set_11d_enabled(hdd_ctx->psoc, enable_11d);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Invalid 11d_enable flag");
 
 	hdd_debug("11D state=%d", enable_11d);
 
@@ -5654,10 +5648,10 @@ static int __iw_setnone_getint(struct net_device *dev,
 	switch (value[0]) {
 	case WE_GET_11D_STATE:
 	{
-		sme_get_config_param(mac_handle, sme_config);
-
-		*value = sme_config->csrConfig.Is11dSupportEnabled;
-
+		status = ucfg_mlme_is_11d_enabled(hdd_ctx->psoc, &bval);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("Invalid 11d_enable flag");
+		*value = bval;
 		hdd_debug("11D state=%d!!", *value);
 
 		break;

@@ -126,6 +126,42 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"VHT TX SUPP DATA RATE")
 
+#define CFG_TX_BF_CAP CFG_INT( \
+		"tx_bf_cap", \
+		0, \
+		-1, \
+		0, \
+		CFG_VALUE_OR_DEFAULT, \
+		"TX BF CAP")
+
+#define CFG_AS_CAP CFG_UINT( \
+		"as_cap", \
+		0, \
+		255, \
+		0, \
+		CFG_VALUE_OR_DEFAULT, \
+		"AS CAP")
+
+/*
+ * <ini>
+ * gDisableLDPCWithTxbfAP - Disable LDPC with tx bf AP
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AC
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DISABLE_LDPC_WITH_TXBF_AP CFG_INI_BOOL( \
+		"gDisableLDPCWithTxbfAP", \
+		0, \
+		"Disable LDPC with tx bf AP")
+
 /*
  * <ini>
  * gTxBFEnable - Enables SU beamformee caps
@@ -591,6 +627,9 @@
 	CFG(CFG_VHT_AMPDU_LEN_EXPONENT) \
 	CFG(CFG_VHT_MPDU_LEN) \
 	CFG(CFG_VHT_ENABLE_TXBF_SAP_MODE) \
-	CFG(CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE)
+	CFG(CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE) \
+	CFG(CFG_TX_BF_CAP) \
+	CFG(CFG_AS_CAP) \
+	CFG(CFG_DISABLE_LDPC_WITH_TXBF_AP)
 
 #endif /* __CFG_MLME_VHT_CAPS_H */

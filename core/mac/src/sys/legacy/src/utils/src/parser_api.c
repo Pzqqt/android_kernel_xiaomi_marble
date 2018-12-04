@@ -608,8 +608,6 @@ QDF_STATUS
 populate_dot11f_ht_caps(struct mac_context *mac,
 			struct pe_session *pe_session, tDot11fIEHTCaps *pDot11f)
 {
-	uint32_t nCfgValue;
-	uint8_t nCfgValue8;
 	qdf_size_t ncfglen;
 	QDF_STATUS nSirStatus;
 	uint8_t disable_high_ht_mcs_2x2 = 0;
@@ -617,8 +615,10 @@ populate_dot11f_ht_caps(struct mac_context *mac,
 	tSirMacTxBFCapabilityInfo *pTxBFCapabilityInfo;
 	tSirMacASCapabilityInfo *pASCapabilityInfo;
 	struct mlme_ht_capabilities_info *ht_cap_info;
+	struct mlme_vht_capabilities_info *vht_cap_info;
 
 	ht_cap_info = &mac->mlme_cfg->ht_caps.ht_cap_info;
+	vht_cap_info = &mac->mlme_cfg->vht_caps.vht_cap_info;
 
 	pDot11f->mimoPowerSave = ht_cap_info->mimo_power_save;
 	pDot11f->greenField = ht_cap_info->green_field;
@@ -707,9 +707,8 @@ populate_dot11f_ht_caps(struct mac_context *mac,
 	pDot11f->mcsFeedback =
 		mac->mlme_cfg->ht_caps.ext_cap_info.mcs_feedback;
 
-	CFG_GET_INT(nSirStatus, mac, WNI_CFG_TX_BF_CAP, nCfgValue);
-
-	pTxBFCapabilityInfo = (tSirMacTxBFCapabilityInfo *) &nCfgValue;
+	pTxBFCapabilityInfo =
+		(tSirMacTxBFCapabilityInfo *)&vht_cap_info->tx_bf_cap;
 	pDot11f->txBF = pTxBFCapabilityInfo->txBF;
 	pDot11f->rxStaggeredSounding = pTxBFCapabilityInfo->rxStaggeredSounding;
 	pDot11f->txStaggeredSounding = pTxBFCapabilityInfo->txStaggeredSounding;
@@ -732,11 +731,7 @@ populate_dot11f_ht_caps(struct mac_context *mac,
 	pDot11f->compressedSteeringMatrixBFAntennae =
 		pTxBFCapabilityInfo->compressedSteeringMatrixBFAntennae;
 
-	CFG_GET_INT(nSirStatus, mac, WNI_CFG_AS_CAP, nCfgValue);
-
-	nCfgValue8 = (uint8_t) nCfgValue;
-
-	pASCapabilityInfo = (tSirMacASCapabilityInfo *) &nCfgValue8;
+	pASCapabilityInfo = (tSirMacASCapabilityInfo *)&vht_cap_info->as_cap;
 	pDot11f->antennaSelection = pASCapabilityInfo->antennaSelection;
 	pDot11f->explicitCSIFeedbackTx =
 		pASCapabilityInfo->explicitCSIFeedbackTx;
@@ -853,20 +848,20 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 			 struct pe_session *pe_session, tDot11fIEVHTCaps *pDot11f)
 {
 	uint32_t nCfgValue = 0;
-	struct mlme_vht_capabilities_info vht_cap_info;
+	struct mlme_vht_capabilities_info *vht_cap_info;
 
 	if (!(mac->mlme_cfg)) {
 		pe_err("invalid mlme cfg");
 		return QDF_STATUS_E_FAILURE;
 	}
-	vht_cap_info = mac->mlme_cfg->vht_caps.vht_cap_info;
+	vht_cap_info = &mac->mlme_cfg->vht_caps.vht_cap_info;
 
 	pDot11f->present = 1;
 
-	nCfgValue = vht_cap_info.ampdu_len;
+	nCfgValue = vht_cap_info->ampdu_len;
 	pDot11f->maxMPDULen = (nCfgValue & 0x0003);
 
-	nCfgValue = vht_cap_info.supp_chan_width;
+	nCfgValue = vht_cap_info->supp_chan_width;
 	pDot11f->supportedChannelWidthSet = (nCfgValue & 0x0003);
 
 	nCfgValue = 0;
@@ -926,71 +921,71 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 		pDot11f->vhtLinkAdaptCap =
 				pe_session->vht_config.vht_link_adapt;
 	} else {
-		nCfgValue = vht_cap_info.ldpc_coding_cap;
+		nCfgValue = vht_cap_info->ldpc_coding_cap;
 		pDot11f->ldpcCodingCap = (nCfgValue & 0x0001);
 
-		nCfgValue = vht_cap_info.short_gi_80mhz;
+		nCfgValue = vht_cap_info->short_gi_80mhz;
 		pDot11f->shortGI80MHz = (nCfgValue & 0x0001);
 
-		nCfgValue = vht_cap_info.short_gi_160mhz;
+		nCfgValue = vht_cap_info->short_gi_160mhz;
 		pDot11f->shortGI160and80plus80MHz = (nCfgValue & 0x0001);
 
-		nCfgValue = vht_cap_info.tx_stbc;
+		nCfgValue = vht_cap_info->tx_stbc;
 		pDot11f->txSTBC = (nCfgValue & 0x0001);
 
-		nCfgValue = vht_cap_info.rx_stbc;
+		nCfgValue = vht_cap_info->rx_stbc;
 		pDot11f->rxSTBC = (nCfgValue & 0x0007);
 
-		nCfgValue = vht_cap_info.su_bformee;
+		nCfgValue = vht_cap_info->su_bformee;
 		pDot11f->suBeamformeeCap = (nCfgValue & 0x0001);
 
-		nCfgValue = vht_cap_info.enable_mu_bformee;
+		nCfgValue = vht_cap_info->enable_mu_bformee;
 		pDot11f->muBeamformeeCap = (nCfgValue & 0x0001);
 
-		nCfgValue = vht_cap_info.su_bformer;
+		nCfgValue = vht_cap_info->su_bformer;
 		pDot11f->suBeamFormerCap = (nCfgValue & 0x0001);
 
-		nCfgValue = vht_cap_info.tx_bfee_ant_supp;
+		nCfgValue = vht_cap_info->tx_bfee_ant_supp;
 		pDot11f->csnofBeamformerAntSup = (nCfgValue & 0x0007);
 
-		nCfgValue = vht_cap_info.txop_ps;
+		nCfgValue = vht_cap_info->txop_ps;
 		pDot11f->vhtTXOPPS = (nCfgValue & 0x0001);
 
-		nCfgValue = vht_cap_info.num_soundingdim;
+		nCfgValue = vht_cap_info->num_soundingdim;
 		pDot11f->numSoundingDim = (nCfgValue & 0x0007);
 
-		nCfgValue = vht_cap_info.htc_vhtc;
+		nCfgValue = vht_cap_info->htc_vhtc;
 		pDot11f->htcVHTCap = (nCfgValue & 0x0001);
 
-		pDot11f->rxAntPattern = vht_cap_info.rx_antpattern;
+		pDot11f->rxAntPattern = vht_cap_info->rx_antpattern;
 
-		pDot11f->txAntPattern = vht_cap_info.tx_antpattern;
+		pDot11f->txAntPattern = vht_cap_info->tx_antpattern;
 
-		nCfgValue = vht_cap_info.ampdu_len_exponent;
+		nCfgValue = vht_cap_info->ampdu_len_exponent;
 		pDot11f->maxAMPDULenExp = (nCfgValue & 0x0007);
 
-		nCfgValue = vht_cap_info.link_adap_cap;
+		nCfgValue = vht_cap_info->link_adap_cap;
 		pDot11f->vhtLinkAdaptCap = (nCfgValue & 0x0003);
 
 	}
 
-	nCfgValue = vht_cap_info.mu_bformer;
+	nCfgValue = vht_cap_info->mu_bformer;
 	pDot11f->muBeamformerCap = (nCfgValue & 0x0001);
 
 	pDot11f->reserved1 = 0;
 
-	nCfgValue = vht_cap_info.rx_mcs_map;
+	nCfgValue = vht_cap_info->rx_mcs_map;
 	pDot11f->rxMCSMap = (nCfgValue & 0x0000FFFF);
 
-	nCfgValue = vht_cap_info.rx_supp_data_rate;
+	nCfgValue = vht_cap_info->rx_supp_data_rate;
 	pDot11f->rxHighSupDataRate = (nCfgValue & 0x00001FFF);
 
 	pDot11f->reserved2 = 0;
 
-	nCfgValue = vht_cap_info.tx_mcs_map;
+	nCfgValue = vht_cap_info->tx_mcs_map;
 	pDot11f->txMCSMap = (nCfgValue & 0x0000FFFF);
 
-	nCfgValue = vht_cap_info.tx_supp_data_rate;
+	nCfgValue = vht_cap_info->tx_supp_data_rate;
 	pDot11f->txSupDataRate = (nCfgValue & 0x00001FFF);
 
 	pDot11f->reserved3 = 0;
@@ -1003,7 +998,7 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 			pDot11f->rxHighSupDataRate =
 				VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
 			if (!pe_session->ch_width &&
-			    !vht_cap_info.enable_vht20_mcs9 &&
+			    !vht_cap_info->enable_vht20_mcs9 &&
 			    ((pDot11f->txMCSMap & VHT_1x1_MCS_MASK) ==
 			     VHT_1x1_MCS9_MAP)) {
 				DISABLE_VHT_MCS_9(pDot11f->txMCSMap,
@@ -1013,7 +1008,7 @@ populate_dot11f_vht_caps(struct mac_context *mac,
 			}
 		} else {
 			if (!pe_session->ch_width &&
-			    !vht_cap_info.enable_vht20_mcs9 &&
+			    !vht_cap_info->enable_vht20_mcs9 &&
 			    ((pDot11f->txMCSMap & VHT_2x2_MCS_MASK) ==
 			     VHT_2x2_MCS9_MAP)) {
 				DISABLE_VHT_MCS_9(pDot11f->txMCSMap,
@@ -5855,8 +5850,7 @@ populate_dot11f_timing_advert_frame(struct mac_context *mac_ctx,
 	if (mac_ctx->mlme_cfg->ht_caps.short_preamble)
 		frame->Capabilities.shortPreamble = 1;
 
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_11H_ENABLED, &val);
-	if (val)
+	if (mac_ctx->mlme_cfg->gen.enabled_11h)
 		frame->Capabilities.spectrumMgt = 1;
 
 	if (mac_ctx->mlme_cfg->wmm_params.qos_enabled)

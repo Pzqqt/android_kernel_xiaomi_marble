@@ -213,7 +213,6 @@ void lim_apply_configuration(struct mac_context *mac, struct pe_session *pe_sess
 
 static void lim_update_config(struct mac_context *mac, struct pe_session *pe_session)
 {
-	uint32_t val;
 	bool enabled;
 
 	pe_session->beaconParams.fShortPreamble =
@@ -244,9 +243,7 @@ static void lim_update_config(struct mac_context *mac, struct pe_session *pe_ses
 	if (pe_session->limWsmEnabled && LIM_IS_AP_ROLE(pe_session))
 		pe_session->limHcfEnabled = 1;
 
-	if (wlan_cfg_get_int(mac, WNI_CFG_11D_ENABLED, &val) != QDF_STATUS_SUCCESS)
-		pe_err("cfg get 11d enabled failed");
-	pe_session->lim11dEnabled = (val) ? 1 : 0;
+	pe_session->lim11dEnabled = mac->mlme_cfg->gen.enabled_11d ? 1 : 0;
 
 	pe_debug("Updated Lim shadow state based on CFG");
 }

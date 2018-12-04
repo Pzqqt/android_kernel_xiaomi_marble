@@ -349,6 +349,9 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 	gen->debug_packet_log = cfg_get(psoc, CFG_ENABLE_DEBUG_PACKET_LOG);
 	mlme_init_pmf_cfg(psoc, gen);
 	mlme_init_lpass_support_cfg(psoc, gen);
+
+	gen->enabled_11h = cfg_default(CFG_11H_SUPPORT_ENABLED);
+	gen->enabled_11d = cfg_default(CFG_11D_SUPPORT_ENABLED);
 }
 
 static void mlme_init_edca_ani_cfg(struct wlan_mlme_edca_params *edca_params)
@@ -806,6 +809,11 @@ static void mlme_init_vht_cap_cfg(struct wlan_objmgr_psoc *psoc,
 
 	if (vht_cap_info->enable2x2 && vht_cap_info->su_bformer)
 		vht_cap_info->num_soundingdim = NUM_OF_SOUNDING_DIMENSIONS;
+
+	vht_cap_info->tx_bf_cap = cfg_default(CFG_TX_BF_CAP);
+	vht_cap_info->as_cap = cfg_default(CFG_AS_CAP);
+	vht_cap_info->disable_ldpc_with_txbf_ap =
+			cfg_get(psoc, CFG_DISABLE_LDPC_WITH_TXBF_AP);
 }
 
 static void mlme_init_rates_in_cfg(struct wlan_objmgr_psoc *psoc,

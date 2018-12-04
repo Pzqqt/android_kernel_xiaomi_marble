@@ -386,8 +386,6 @@ struct csr_config {
 	uint32_t HeartbeatThresh24;
 	eCsrRoamWmmUserModeType WMMSupportMode;
 	bool Is11eSupportEnabled;
-	bool Is11dSupportEnabled;
-	bool Is11hSupportEnabled;
 	bool ProprietaryRatesEnabled;
 	bool fenableMCCMode;
 	bool mcc_rts_cts_prot_enable;

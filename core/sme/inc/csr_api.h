@@ -1023,8 +1023,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t HeartbeatThresh50;
 	eCsrRoamWmmUserModeType WMMSupportMode;
 	bool Is11eSupportEnabled;
-	bool Is11dSupportEnabled;
-	bool Is11hSupportEnabled;
 	bool ProprietaryRatesEnabled;
 	uint8_t AdHocChannel24;
 	uint8_t AdHocChannel5G;

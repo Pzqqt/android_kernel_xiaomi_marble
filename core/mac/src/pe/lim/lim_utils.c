@@ -2482,9 +2482,11 @@ uint8_t lim_get_ht_capability(struct mac_context *mac,
 {
 	uint8_t retVal = 0;
 	uint8_t *ptr;
-	uint32_t cfgValue;
 	tSirMacTxBFCapabilityInfo macTxBFCapabilityInfo = { 0 };
 	tSirMacASCapabilityInfo macASCapabilityInfo = { 0 };
+	struct mlme_vht_capabilities_info *vht_cap_info;
+
+	vht_cap_info = &mac->mlme_cfg->vht_caps.vht_cap_info;
 
 	/* */
 	/* Determine which CFG to read from. Not ALL of the HT */
@@ -2493,19 +2495,13 @@ uint8_t lim_get_ht_capability(struct mac_context *mac,
 	/* */
 	if (htCap >= eHT_ANTENNA_SELECTION && htCap < eHT_SI_GRANULARITY) {
 		/* Get Antenna Seletion HT Capabilities */
-		if (QDF_STATUS_SUCCESS !=
-		    wlan_cfg_get_int(mac, WNI_CFG_AS_CAP, &cfgValue))
-			cfgValue = 0;
 		ptr = (uint8_t *) &macASCapabilityInfo;
-		*((uint8_t *) ptr) = (uint8_t) (cfgValue & 0xff);
+		*((uint8_t *)ptr) = (uint8_t)(vht_cap_info->as_cap & 0xff);
 	} else if (htCap >= eHT_TX_BEAMFORMING &&
 		   htCap < eHT_ANTENNA_SELECTION) {
 		/* Get Transmit Beam Forming HT Capabilities */
-		if (QDF_STATUS_SUCCESS !=
-		    wlan_cfg_get_int(mac, WNI_CFG_TX_BF_CAP, &cfgValue))
-			cfgValue = 0;
 		ptr = (uint8_t *)&macTxBFCapabilityInfo;
-		*((uint32_t *)ptr) = (uint32_t)(cfgValue);
+		*((uint32_t *)ptr) = (uint32_t)(vht_cap_info->tx_bf_cap);
 	}
 
 	switch (htCap) {

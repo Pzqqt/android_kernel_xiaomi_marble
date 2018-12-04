@@ -779,7 +779,7 @@ QDF_STATUS sme_init_chan_list(mac_handle_t mac_handle, uint8_t *alpha2,
 
 	if ((cc_src == SOURCE_USERSPACE) &&
 	    (pmac->mlme_cfg->sap_cfg.country_code_priority)) {
-		pmac->roam.configParam.Is11dSupportEnabled = false;
+		pmac->mlme_cfg->gen.enabled_11d = false;
 	}
 
 	return csr_init_chan_list(pmac, alpha2);
@@ -5973,12 +5973,10 @@ sme_handle_generic_change_country_code(struct mac_context *mac_ctx,
 	if (SOURCE_11D != mac_ctx->reg_hint_src) {
 		if (SOURCE_DRIVER != mac_ctx->reg_hint_src) {
 			if (user_ctry_priority)
-				mac_ctx->roam.configParam.Is11dSupportEnabled =
-					false;
+				mac_ctx->mlme_cfg->gen.enabled_11d = false;
 			else {
-				if (mac_ctx->roam.configParam.
-					Is11dSupportEnabled &&
-					mac_ctx->scan.countryCode11d[0] != 0) {
+				if (mac_ctx->mlme_cfg->gen.enabled_11d &&
+				    mac_ctx->scan.countryCode11d[0] != 0) {
 
 					sme_debug("restore 11d");
 
@@ -12592,14 +12590,14 @@ QDF_STATUS sme_update_nss(mac_handle_t mac_handle, uint8_t nss)
 	uint32_t i;
 	struct mlme_ht_capabilities_info *ht_cap_info;
 	struct csr_roam_session *csr_session;
-	struct mlme_vht_capabilities_info vht_cap_info;
+	struct mlme_vht_capabilities_info *vht_cap_info;
 
-	vht_cap_info = mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
+	vht_cap_info = &mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 
 	if (QDF_STATUS_SUCCESS == status) {
-		vht_cap_info.enable2x2 = (nss == 1) ? 0 : 1;
+		vht_cap_info->enable2x2 = (nss == 1) ? 0 : 1;
 
 		/* get the HT capability info*/
 		ht_cap_info = &mac_ctx->mlme_cfg->ht_caps.ht_cap_info;
@@ -12646,15 +12644,16 @@ int sme_update_tx_bfee_nsts(mac_handle_t mac_handle, uint8_t session_id,
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	uint8_t nsts_set_val;
+	struct mlme_vht_capabilities_info *vht_cap_info;
 
+	vht_cap_info = &mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
 	mac_ctx->usr_cfg_tx_bfee_nsts = usr_cfg_val;
 	if (usr_cfg_val)
 		nsts_set_val = usr_cfg_val;
 	else
 		nsts_set_val = nsts_val;
 
-	mac_ctx->mlme_cfg->vht_caps.vht_cap_info.tx_bfee_ant_supp =
-		nsts_set_val;
+	vht_cap_info->tx_bfee_ant_supp = nsts_set_val;
 
 	if (usr_cfg_val)
 		sme_set_he_tx_bf_cbf_rates(session_id);

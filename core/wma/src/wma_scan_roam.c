@@ -2651,7 +2651,6 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	struct mac_context *mac = NULL;
 	tSirMacCapabilityInfo selfCaps;
 	uint32_t val = 0;
-	uint32_t nCfgValue;
 	uint16_t *pCfgValue16;
 	uint8_t nCfgValue8, *pCfgValue8;
 	tSirMacQosInfoStation macQosInfoSta;
@@ -2682,13 +2681,8 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 
 	if (mac->mlme_cfg->feature_flags.enable_short_slot_time_11g)
 		selfCaps.shortSlotTime = 1;
-	if (wlan_cfg_get_int(mac, WNI_CFG_11H_ENABLED, &val) !=
-							QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_11H_ENABLED");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (val)
+
+	if (mac->mlme_cfg->gen.enabled_11h)
 		selfCaps.spectrumMgt = 1;
 
 	if (mac->mlme_cfg->wmm_params.qos_enabled)
@@ -2743,23 +2737,11 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (wlan_cfg_get_int(mac, WNI_CFG_TX_BF_CAP, &nCfgValue) !=
-							QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_TX_BF_CAP");
-		return QDF_STATUS_E_FAILURE;
-	}
 	/* tSirMacTxBFCapabilityInfo */
-	nCfgValue8 = (uint8_t) nCfgValue;
+	nCfgValue8 = (uint8_t)mac->mlme_cfg->vht_caps.vht_cap_info.tx_bf_cap;
 	roam_offload_params->ht_txbf = nCfgValue8 & 0xFF;
-	if (wlan_cfg_get_int(mac, WNI_CFG_AS_CAP, &nCfgValue) !=
-							QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_AS_CAP");
-		return QDF_STATUS_E_FAILURE;
-	}
 	/* tSirMacASCapabilityInfo */
-	nCfgValue8 = (uint8_t) nCfgValue;
+	nCfgValue8 = (uint8_t)mac->mlme_cfg->vht_caps.vht_cap_info.as_cap;
 	roam_offload_params->asel_cap = nCfgValue8 & 0xFF;
 
 	/* QOS Info */

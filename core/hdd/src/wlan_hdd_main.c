@@ -9025,6 +9025,7 @@ void hdd_acs_response_timeout_handler(void *context)
  */
 static void hdd_override_ini_config(struct hdd_context *hdd_ctx)
 {
+	QDF_STATUS status;
 
 	if (0 == enable_dfs_chan_scan || 1 == enable_dfs_chan_scan) {
 		hdd_ctx->config->enableDFSChnlScan = enable_dfs_chan_scan;
@@ -9032,8 +9033,9 @@ static void hdd_override_ini_config(struct hdd_context *hdd_ctx)
 			   enable_dfs_chan_scan);
 	}
 	if (0 == enable_11d || 1 == enable_11d) {
-		hdd_ctx->config->Is11dSupportEnabled = enable_11d;
-		hdd_debug("Module enable_11d set to %d", enable_11d);
+		status = ucfg_mlme_set_11d_enabled(hdd_ctx->psoc, enable_11d);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("Failed to set 11d_enable flag");
 	}
 
 	if (hdd_ctx->config->action_oui_enable && !ucfg_action_oui_enabled()) {
@@ -9814,6 +9816,7 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 	bool skip_dfs_in_p2p_search = false;
 	uint8_t band_capability;
 	QDF_STATUS status;
+	bool value = false;
 
 	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -9828,10 +9831,18 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->dual_mac_feature_disable;
 	user_config->indoor_channel_support =
 		hdd_ctx->config->indoor_channel_support;
-	user_config->is_11d_support_enabled =
-		hdd_ctx->config->Is11dSupportEnabled;
-	user_config->is_11h_support_enabled =
-		hdd_ctx->config->Is11hSupportEnabled;
+
+	status = ucfg_mlme_is_11d_enabled(hdd_ctx->psoc, &value);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Invalid 11d_enable flag");
+	user_config->is_11d_support_enabled = value;
+
+	value = false;
+	status = ucfg_mlme_is_11h_enabled(hdd_ctx->psoc, &value);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Invalid 11h_enable flag");
+	user_config->is_11h_support_enabled = value;
+
 	cfg_p2p_get_skip_dfs_channel_p2p_search(hdd_ctx->psoc,
 						&skip_dfs_in_p2p_search);
 	user_config->skip_dfs_chnl_in_p2p_search = skip_dfs_in_p2p_search;

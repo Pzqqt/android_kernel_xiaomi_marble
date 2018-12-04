@@ -210,12 +210,17 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 	uint8_t band_capability = 0;
 	QDF_STATUS status;
 	bool country_priority = 0;
+	bool value = false;
 
 	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to get MLME band cap, defaulting to BAND_ALL");
 
-	config_vars->enable_11d_support = hdd_ctx->config->Is11dSupportEnabled;
+	status = ucfg_mlme_is_11d_enabled(hdd_ctx->psoc, &value);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Invalid 11d_enable flag");
+	config_vars->enable_11d_support = value;
+
 	config_vars->scan_11d_interval = hdd_ctx->config->scan_11d_interval;
 	ucfg_mlme_get_sap_country_priority(hdd_ctx->psoc,
 					   &country_priority);

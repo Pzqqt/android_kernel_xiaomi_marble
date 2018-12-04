@@ -699,9 +699,9 @@ static void populate_dot11f_tdls_ht_vht_cap(struct mac_context *mac,
 {
 	uint8_t nss;
 	qdf_size_t val_len;
-	struct mlme_vht_capabilities_info vht_cap_info;
+	struct mlme_vht_capabilities_info *vht_cap_info;
 
-	vht_cap_info = mac->mlme_cfg->vht_caps.vht_cap_info;
+	vht_cap_info = &mac->mlme_cfg->vht_caps.vht_cap_info;
 
 	if (IS_5G_CH(pe_session->currentOperChannel))
 		nss = mac->vdev_type_nss_5g.tdls;
@@ -741,7 +741,7 @@ static void populate_dot11f_tdls_ht_vht_cap(struct mac_context *mac,
 	pe_debug("HT present: %hu, Chan Width: %hu",
 		htCap->present, htCap->supportedChannelWidthSet);
 	if (((pe_session->currentOperChannel <= SIR_11B_CHANNEL_END) &&
-	     mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band) ||
+	     vht_cap_info->b24ghz_band) ||
 	    (pe_session->currentOperChannel >= SIR_11B_CHANNEL_END)) {
 		if (IS_DOT11_MODE_VHT(selfDot11Mode) &&
 		    IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
@@ -763,12 +763,12 @@ static void populate_dot11f_tdls_ht_vht_cap(struct mac_context *mac,
 			vhtCap->muBeamformeeCap = 0;
 			vhtCap->muBeamformerCap = 0;
 
-			vhtCap->rxMCSMap = vht_cap_info.rx_mcs_map;
+			vhtCap->rxMCSMap = vht_cap_info->rx_mcs_map;
 
 			vhtCap->rxHighSupDataRate =
-				vht_cap_info.rx_supp_data_rate;
-			vhtCap->txMCSMap = vht_cap_info.tx_mcs_map;
-			vhtCap->txSupDataRate = vht_cap_info.tx_supp_data_rate;
+				vht_cap_info->rx_supp_data_rate;
+			vhtCap->txMCSMap = vht_cap_info->tx_mcs_map;
+			vhtCap->txSupDataRate = vht_cap_info->tx_supp_data_rate;
 			if (nss == NSS_1x1_MODE) {
 				vhtCap->txMCSMap |= DISABLE_NSS2_MCS;
 				vhtCap->rxMCSMap |= DISABLE_NSS2_MCS;

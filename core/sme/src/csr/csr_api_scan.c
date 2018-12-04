@@ -724,7 +724,7 @@ static void csr_diag_reset_country_information(struct mac_context *mac)
 				mac->roam.configParam.nTxPowerCap);
 		}
 	}
-	if (!mac->roam.configParam.Is11dSupportEnabled)
+	if (!mac->mlme_cfg->gen.enabled_11d)
 		p11dLog->supportMultipleDomain = WLAN_80211D_DISABLED;
 	else
 		p11dLog->supportMultipleDomain =
@@ -834,7 +834,7 @@ static void csr_diag_apply_country_info(struct mac_context *mac_ctx)
 		}
 	}
 diag_end:
-	if (!mac_ctx->roam.configParam.Is11dSupportEnabled)
+	if (!mac_ctx->mlme_cfg->gen.enabled_11d)
 		p11dLog->supportMultipleDomain = WLAN_80211D_DISABLED;
 	else
 		p11dLog->supportMultipleDomain =

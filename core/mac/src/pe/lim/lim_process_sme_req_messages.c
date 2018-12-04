@@ -1009,11 +1009,8 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 		if (mlm_start_req->bssType != eSIR_IBSS_MODE &&
 		    (CHAN_HOP_ALL_BANDS_ENABLE ||
 		     BAND_5G == session->limRFBand)) {
-			if (wlan_cfg_get_int(mac_ctx,
-				WNI_CFG_11H_ENABLED, &val) != QDF_STATUS_SUCCESS)
-				pe_err("Fail to get WNI_CFG_11H_ENABLED");
-			else
-				session->lim11hEnable = val;
+			session->lim11hEnable =
+				mac_ctx->mlme_cfg->gen.enabled_11h;
 
 			if (session->lim11hEnable &&
 				(eSIR_INFRA_AP_MODE ==
@@ -1711,19 +1708,11 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 			lim_get_rf_band(session->currentOperChannel);
 
 		/* Initialize 11h Enable Flag */
-		if (BAND_5G == session->limRFBand) {
-			if (wlan_cfg_get_int(mac_ctx, WNI_CFG_11H_ENABLED,
-				&val) != QDF_STATUS_SUCCESS) {
-				pe_err("Fail to get WNI_CFG_11H_ENABLED");
-				session->lim11hEnable =
-					WNI_CFG_11H_ENABLED_STADEF;
-			} else {
-				session->lim11hEnable = val;
-			}
-		} else {
+		if (session->limRFBand == BAND_5G)
+			session->lim11hEnable =
+				mac_ctx->mlme_cfg->gen.enabled_11h;
+		else
 			session->lim11hEnable = 0;
-		}
-
 		/*
 		 * To care of the scenario when STA transitions from
 		 * IBSS to Infrastructure mode.
@@ -5220,7 +5209,6 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 	struct pe_session *session_entry;
 	uint8_t session_id;      /* PE session_id */
 	int8_t max_tx_pwr;
-	uint32_t val = 0;
 
 	if (msg_buf == NULL) {
 		pe_err("msg_buf is NULL");
@@ -5291,13 +5279,12 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 
 	/* Initialize 11h Enable Flag */
 	if (CHAN_HOP_ALL_BANDS_ENABLE ||
-	    BAND_5G == session_entry->limRFBand) {
-		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_11H_ENABLED, &val) !=
-				QDF_STATUS_SUCCESS)
-			pe_err("Fail to get WNI_CFG_11H_ENABLED");
-	}
+	    session_entry->limRFBand == BAND_5G)
+		session_entry->lim11hEnable =
+			mac_ctx->mlme_cfg->gen.enabled_11h;
+	else
+		session_entry->lim11hEnable = 0;
 
-	session_entry->lim11hEnable = val;
 	session_entry->dot11mode = ch_change_req->dot11mode;
 	session_entry->nwType = ch_change_req->nw_type;
 	qdf_mem_copy(&session_entry->rateSet,

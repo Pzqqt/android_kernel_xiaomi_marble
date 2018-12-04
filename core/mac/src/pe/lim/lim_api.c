@@ -301,12 +301,6 @@ static QDF_STATUS __lim_init_config(struct mac_context *mac)
 	/* This was initially done after resume notification from HAL. Now, DAL is
 	   started before PE so this can be done here */
 	handle_ht_capabilityand_ht_info(mac, NULL);
-	if (QDF_STATUS_SUCCESS !=
-	    wlan_cfg_get_int(mac, WNI_CFG_DISABLE_LDPC_WITH_TXBF_AP,
-			     (uint32_t *) &mac->lim.disableLDPCWithTxbfAP)) {
-		pe_err("cfg get disableLDPCWithTxbfAP failed");
-		return QDF_STATUS_E_FAILURE;
-	}
 #ifdef FEATURE_WLAN_TDLS
 	status = cfg_tdls_get_buffer_sta_enable(mac->psoc, &valb);
 	if (QDF_STATUS_SUCCESS != status) {

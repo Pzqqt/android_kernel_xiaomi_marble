@@ -710,12 +710,7 @@ QDF_STATUS cfg_get_capability_info(struct mac_context *mac, uint16_t *pCap,
 
 	/* Spectrum Management bit */
 	if (!LIM_IS_IBSS_ROLE(pe_session) && pe_session->lim11hEnable) {
-		if (wlan_cfg_get_int(mac, WNI_CFG_11H_ENABLED, &val) !=
-		    QDF_STATUS_SUCCESS) {
-			pe_err("cfg get WNI_CFG_11H_ENABLED failed");
-			return QDF_STATUS_E_FAILURE;
-		}
-		if (val)
+		if (mac->mlme_cfg->gen.enabled_11h)
 			pCapInfo->spectrumMgt = 1;
 	}
 	/* QoS bit */

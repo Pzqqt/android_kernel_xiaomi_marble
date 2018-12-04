@@ -1341,20 +1341,21 @@ QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 	uint32_t self_sta_dot11mode = 0;
 	uint16_t mcs_map_mask = MCSMAPMASK1x1;
 	uint16_t mcs_map_mask2x2 = 0;
-	struct mlme_vht_capabilities_info vht_cap_info;
+	struct mlme_vht_capabilities_info *vht_cap_info;
 
 	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &self_sta_dot11mode);
 
 	if (!IS_DOT11_MODE_VHT(self_sta_dot11mode))
 		return QDF_STATUS_SUCCESS;
 
-	vht_cap_info = mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
+	vht_cap_info = &mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
 
-	rates->vhtRxMCSMap = (uint16_t)vht_cap_info.rx_mcs_map;
-	rates->vhtTxMCSMap = (uint16_t)vht_cap_info.tx_mcs_map;
+	rates->vhtRxMCSMap = (uint16_t)vht_cap_info->rx_mcs_map;
+	rates->vhtTxMCSMap = (uint16_t)vht_cap_info->tx_mcs_map;
 	rates->vhtRxHighestDataRate =
-			(uint16_t)vht_cap_info.rx_supp_data_rate;
-	rates->vhtTxHighestDataRate = (uint16_t)vht_cap_info.tx_supp_data_rate;
+			(uint16_t)vht_cap_info->rx_supp_data_rate;
+	rates->vhtTxHighestDataRate =
+			(uint16_t)vht_cap_info->tx_supp_data_rate;
 
 	if (NSS_1x1_MODE == nss) {
 		rates->vhtRxMCSMap |= VHT_MCS_1x1;
@@ -1364,7 +1365,7 @@ QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 		rates->vhtRxHighestDataRate =
 			VHT_RX_HIGHEST_SUPPORTED_DATA_RATE_1_1;
 		if (session_entry && !session_entry->ch_width &&
-		    !vht_cap_info.enable_vht20_mcs9 &&
+		    !vht_cap_info->enable_vht20_mcs9 &&
 		    ((rates->vhtRxMCSMap & VHT_1x1_MCS_MASK) ==
 				 VHT_1x1_MCS9_MAP)) {
 			DISABLE_VHT_MCS_9(rates->vhtRxMCSMap,
@@ -1374,9 +1375,9 @@ QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 		}
 	} else {
 		if (session_entry && !session_entry->ch_width &&
-				!mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable_vht20_mcs9 &&
-				((rates->vhtRxMCSMap & VHT_2x2_MCS_MASK) ==
-				 VHT_2x2_MCS9_MAP)) {
+			!vht_cap_info->enable_vht20_mcs9 &&
+			((rates->vhtRxMCSMap & VHT_2x2_MCS_MASK) ==
+			VHT_2x2_MCS9_MAP)) {
 			DISABLE_VHT_MCS_9(rates->vhtRxMCSMap,
 					NSS_2x2_MODE);
 			DISABLE_VHT_MCS_9(rates->vhtTxMCSMap,
@@ -1440,7 +1441,7 @@ QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 	}
 
 	pe_debug("enable2x2 - %d nss %d vhtRxMCSMap - %x vhtTxMCSMap - %x",
-		mac_ctx->mlme_cfg->vht_caps.vht_cap_info.enable2x2, nss,
+		vht_cap_info->enable2x2, nss,
 		rates->vhtRxMCSMap, rates->vhtTxMCSMap);
 
 	if (NULL != session_entry) {
@@ -2118,6 +2119,9 @@ lim_add_sta(struct mac_context *mac_ctx,
 	tLimIbssPeerNode *peer_node; /* for IBSS mode */
 	const uint8_t *p2p_ie = NULL;
 	tDot11fIEVHTCaps vht_caps;
+	struct mlme_vht_capabilities_info *vht_cap_info;
+
+	vht_cap_info = &mac_ctx->mlme_cfg->vht_caps.vht_cap_info;
 
 	sir_copy_mac_addr(sta_mac, session_entry->selfMacAddr);
 
@@ -2310,7 +2314,7 @@ lim_add_sta(struct mac_context *mac_ctx,
 		 * HT/VHT capability
 		 */
 		if (add_sta_params->vhtTxBFCapable
-		    && mac_ctx->lim.disableLDPCWithTxbfAP) {
+		    && vht_cap_info->disable_ldpc_with_txbf_ap) {
 			add_sta_params->htLdpcCapable = 0;
 			add_sta_params->vhtLdpcCapable = 0;
 		} else {
@@ -3577,9 +3581,9 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 	tDot11fIEVHTOperation *vht_oper = NULL;
 	tAddStaParams *sta_context;
 	uint32_t listen_interval = MLME_CFG_LISTEN_INTERVAL;
-	struct mlme_vht_capabilities_info vht_cap_info;
+	struct mlme_vht_capabilities_info *vht_cap_info;
 
-	vht_cap_info = mac->mlme_cfg->vht_caps.vht_cap_info;
+	vht_cap_info = &mac->mlme_cfg->vht_caps.vht_cap_info;
 
 	/* Package SIR_HAL_ADD_BSS_REQ message parameters */
 	pAddBssParams = qdf_mem_malloc(sizeof(tAddBssParams));
@@ -3861,7 +3865,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 					pe_session->ch_width;
 		} else {
 			sta_context->ch_width =	CH_WIDTH_20MHZ;
-			if (!vht_cap_info.enable_txbf_20mhz)
+			if (!vht_cap_info->enable_txbf_20mhz)
 				sta_context->vhtTxBFCapable = 0;
 		}
 
@@ -3914,7 +3918,7 @@ QDF_STATUS lim_sta_send_add_bss(struct mac_context *mac, tpSirAssocRsp pAssocRsp
 				pAssocRsp->HTCaps.maxRxAMPDUFactor;
 		}
 		if (pAddBssParams->staContext.vhtTxBFCapable
-				&& mac->lim.disableLDPCWithTxbfAP) {
+		    && vht_cap_info->disable_ldpc_with_txbf_ap) {
 			pAddBssParams->staContext.htLdpcCapable = 0;
 			pAddBssParams->staContext.vhtLdpcCapable = 0;
 		} else {
@@ -4108,9 +4112,11 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 	tDot11fIEVHTOperation *vht_oper = NULL;
 	tDot11fIEVHTCaps *vht_caps = NULL;
 	uint32_t listen_interval = MLME_CFG_LISTEN_INTERVAL;
-
 	tpSirBssDescription bssDescription =
 		&pe_session->pLimJoinReq->bssDescription;
+	struct mlme_vht_capabilities_info *vht_cap_info;
+
+	vht_cap_info = &mac->mlme_cfg->vht_caps.vht_cap_info;
 
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 	if (!pBeaconStruct)
@@ -4425,7 +4431,7 @@ QDF_STATUS lim_sta_send_add_bss_pre_assoc(struct mac_context *mac, uint8_t updat
 		pAddBssParams->staContext.maxAmpduSize =
 			pBeaconStruct->HTCaps.maxRxAMPDUFactor;
 		if (pAddBssParams->staContext.vhtTxBFCapable
-				&& mac->lim.disableLDPCWithTxbfAP) {
+		    && vht_cap_info->disable_ldpc_with_txbf_ap) {
 			pAddBssParams->staContext.htLdpcCapable = 0;
 			pAddBssParams->staContext.vhtLdpcCapable = 0;
 		} else {

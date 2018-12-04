@@ -1447,12 +1447,12 @@ bool csr_is_privacy(tSirBssDescription *pSirBssDesc)
 
 bool csr_is11d_supported(struct mac_context *mac)
 {
-	return mac->roam.configParam.Is11dSupportEnabled;
+	return mac->mlme_cfg->gen.enabled_11d;
 }
 
 bool csr_is11h_supported(struct mac_context *mac)
 {
-	return mac->roam.configParam.Is11hSupportEnabled;
+	return mac->mlme_cfg->gen.enabled_11h;
 }
 
 bool csr_is11e_supported(struct mac_context *mac)
@@ -2229,10 +2229,9 @@ uint32_t csr_get11h_power_constraint(struct mac_context *mac_ctx,
 	/* check if .11h support is enabled, if not,
 	 * the power constraint is 0.
 	 */
-	if (mac_ctx->roam.configParam.Is11hSupportEnabled &&
-	    constraints->present) {
+	if (mac_ctx->mlme_cfg->gen.enabled_11h &&
+	    constraints->present)
 		localPowerConstraint = constraints->localPowerConstraints;
-	}
 
 	return localPowerConstraint;
 }

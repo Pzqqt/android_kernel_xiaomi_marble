@@ -56,21 +56,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_CONNECTED_SCAN_MIN,
 		     CFG_ENABLE_CONNECTED_SCAN_MAX),
 
-	REG_VARIABLE(CFG_11D_SUPPORT_ENABLED_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, Is11dSupportEnabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_11D_SUPPORT_ENABLED_DEFAULT,
-		     CFG_11D_SUPPORT_ENABLED_MIN,
-		     CFG_11D_SUPPORT_ENABLED_MAX),
-
-	REG_VARIABLE(CFG_11H_SUPPORT_ENABLED_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, Is11hSupportEnabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_11H_SUPPORT_ENABLED_DEFAULT,
-		     CFG_11H_SUPPORT_ENABLED_MIN,
-		     CFG_11H_SUPPORT_ENABLED_MAX),
-
-
 	REG_VARIABLE(CFG_ENABLE_IMPS_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fIsImpsEnabled,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -514,13 +499,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_IBSS_ADHOC_CHANNEL_24GHZ_DEFAULT,
 		     CFG_IBSS_ADHOC_CHANNEL_24GHZ_MIN,
 		     CFG_IBSS_ADHOC_CHANNEL_24GHZ_MAX),
-
-	REG_VARIABLE(CFG_DISABLE_LDPC_WITH_TXBF_AP, WLAN_PARAM_Integer,
-		     struct hdd_config, disableLDPCWithTxbfAP,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_DISABLE_LDPC_WITH_TXBF_AP_DEFAULT,
-		     CFG_DISABLE_LDPC_WITH_TXBF_AP_MIN,
-		     CFG_DISABLE_LDPC_WITH_TXBF_AP_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_SNR_MONITORING_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fEnableSNRMonitoring,
@@ -2628,18 +2606,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Fail to pass WNI_CFG_PS_WOW_DATA_INACTIVITY_TO CFG");
 	}
 
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_11D_ENABLED,
-		     config->Is11dSupportEnabled) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_11D_ENABLED to CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_DISABLE_LDPC_WITH_TXBF_AP,
-		    config->disableLDPCWithTxbfAP) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_DISABLE_LDPC_WITH_TXBF_AP to CFG");
-	}
-
 	if (sme_cfg_set_int(mac_handle, WNI_CFG_IBSS_ATIM_WIN_SIZE,
 			    config->ibssATIMWinSize) ==
 			QDF_STATUS_E_FAILURE) {
@@ -2818,8 +2784,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	/* Config params obtained from the registry
 	 * To Do: set regulatory information here
 	 */
-	smeConfig->csrConfig.Is11dSupportEnabled = pConfig->Is11dSupportEnabled;
-
 	smeConfig->csrConfig.phyMode =
 		hdd_cfg_xlate_to_csr_phy_mode(pConfig->dot11Mode);
 
@@ -2888,7 +2852,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.AdHocChannel24 = pConfig->AdHocChannel24G;
 	smeConfig->csrConfig.ProprietaryRatesEnabled = 0;
 	smeConfig->csrConfig.HeartbeatThresh50 = 40;
-	smeConfig->csrConfig.Is11hSupportEnabled = pConfig->Is11hSupportEnabled;
 	smeConfig->csrConfig.nTxPowerCap = pConfig->nTxPowerCap;
 	smeConfig->csrConfig.fEnableDFSChnlScan = pConfig->enableDFSChnlScan;
 
