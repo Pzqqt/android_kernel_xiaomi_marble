@@ -14366,7 +14366,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 	tSirMacRateSet OpRateSet;
 	tSirMacRateSet ExRateSet;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-	uint32_t dwTmp, ucDot11Mode = 0;
+	uint32_t dw_tmp, dot11mode = 0;
 	uint8_t *wpaRsnIE = NULL;
 	uint8_t txBFCsnValue = 0;
 	tSirSmeJoinReq *csr_join_req;
@@ -14491,19 +14491,19 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 			mac->scan.countryCodeCurrent[0],
 			mac->scan.countryCodeCurrent[1]);
 		/* bsstype */
-		dwTmp = csr_translate_bsstype_to_mac_type
+		dw_tmp = csr_translate_bsstype_to_mac_type
 						(pProfile->BSSType);
-		csr_join_req->bsstype = dwTmp;
+		csr_join_req->bsstype = dw_tmp;
 		/* dot11mode */
-		ucDot11Mode =
+		dot11mode =
 			csr_translate_to_wni_cfg_dot11_mode(mac,
 							    pSession->bssParams.
 							    uCfgDot11Mode);
 		if (pBssDescription->channelId <= 14 &&
 		    !mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
-		    WNI_CFG_DOT11_MODE_11AC == ucDot11Mode) {
+		    dot11mode == WNI_CFG_DOT11_MODE_11AC) {
 			/* Need to disable VHT operation in 2.4 GHz band */
-			ucDot11Mode = WNI_CFG_DOT11_MODE_11N;
+			dot11mode = WNI_CFG_DOT11_MODE_11N;
 		}
 
 		if (IS_5G_CH(pBssDescription->channelId))
@@ -14519,10 +14519,10 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 
 		if (pSession->nss > csr_get_nss_supported_by_sta_and_ap(
 						&pIes->VHTCaps,
-						&pIes->HTCaps, ucDot11Mode)) {
+						&pIes->HTCaps, dot11mode)) {
 			pSession->nss = csr_get_nss_supported_by_sta_and_ap(
 						&pIes->VHTCaps, &pIes->HTCaps,
-						ucDot11Mode);
+						dot11mode);
 			pSession->vdev_nss = pSession->nss;
 		}
 
@@ -14545,7 +14545,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		vendor_ap_search_attr.mac_addr = &pBssDescription->bssId[0];
 		vendor_ap_search_attr.nss = csr_get_nss_supported_by_sta_and_ap(
 						&pIes->VHTCaps, &pIes->HTCaps,
-						ucDot11Mode);
+						dot11mode);
 		vendor_ap_search_attr.ht_cap = pIes->HTCaps.present;
 		vendor_ap_search_attr.vht_cap = pIes->VHTCaps.present;
 		vendor_ap_search_attr.enable_2g =
@@ -14617,16 +14617,16 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 		if (mac->roam.configParam.is_force_1x1 &&
 		    mac->lteCoexAntShare &&
 		    is_vendor_ap_present &&
-		    (ucDot11Mode == WNI_CFG_DOT11_MODE_ALL ||
-		     ucDot11Mode == WNI_CFG_DOT11_MODE_11AC ||
-		     ucDot11Mode == WNI_CFG_DOT11_MODE_11AC_ONLY))
-			ucDot11Mode = WNI_CFG_DOT11_MODE_11N;
+		    (dot11mode == WNI_CFG_DOT11_MODE_ALL ||
+		     dot11mode == WNI_CFG_DOT11_MODE_11AC ||
+		     dot11mode == WNI_CFG_DOT11_MODE_11AC_ONLY))
+			dot11mode = WNI_CFG_DOT11_MODE_11N;
 
 		csr_join_req->supported_nss_1x1 = pSession->supported_nss_1x1;
 		csr_join_req->vdev_nss = pSession->vdev_nss;
 		csr_join_req->nss = pSession->nss;
 		csr_join_req->nss_forced_1x1 = pSession->nss_forced_1x1;
-		csr_join_req->dot11mode = (uint8_t) ucDot11Mode;
+		csr_join_req->dot11mode = (uint8_t)dot11mode;
 		sme_debug("dot11mode=%d, uCfgDot11Mode=%d nss=%d",
 			  csr_join_req->dot11mode,
 			  pSession->bssParams.uCfgDot11Mode,
@@ -19654,7 +19654,7 @@ QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,
 				       struct csr_roam_profile *profile)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSirChanChangeRequest *pMsg;
+	tSirChanChangeRequest *msg;
 	struct csr_roamstart_bssparams param;
 	bool skip_hostapd_rate = !profile->chan_switch_hostapd_rate_enabled;
 
@@ -19674,36 +19674,37 @@ QDF_STATUS csr_roam_channel_change_req(struct mac_context *mac,
 		return status;
 	}
 
-	pMsg = qdf_mem_malloc(sizeof(tSirChanChangeRequest));
-	if (!pMsg)
+	msg = qdf_mem_malloc(sizeof(tSirChanChangeRequest));
+	if (!msg)
 		return QDF_STATUS_E_NOMEM;
 
-	pMsg->messageType = eWNI_SME_CHANNEL_CHANGE_REQ;
-	pMsg->messageLen = sizeof(tSirChanChangeRequest);
-	pMsg->targetChannel = profile->ChannelInfo.ChannelList[0];
-	pMsg->sec_ch_offset = ch_params->sec_ch_offset;
-	pMsg->ch_width = profile->ch_params.ch_width;
-	pMsg->dot11mode = csr_translate_to_wni_cfg_dot11_mode(mac,
+	msg->messageType = eWNI_SME_CHANNEL_CHANGE_REQ;
+	msg->messageLen = sizeof(tSirChanChangeRequest);
+	msg->targetChannel = profile->ChannelInfo.ChannelList[0];
+	msg->sec_ch_offset = ch_params->sec_ch_offset;
+	msg->ch_width = profile->ch_params.ch_width;
+	msg->dot11mode = csr_translate_to_wni_cfg_dot11_mode(mac,
 					param.uCfgDot11Mode);
-	if (IS_24G_CH(pMsg->targetChannel) &&
+	if (IS_24G_CH(msg->targetChannel) &&
 	    !mac->mlme_cfg->vht_caps.vht_cap_info.b24ghz_band &&
-	    (WNI_CFG_DOT11_MODE_11AC == pMsg->dot11mode ||
-	    WNI_CFG_DOT11_MODE_11AC_ONLY == pMsg->dot11mode))
-		pMsg->dot11mode = WNI_CFG_DOT11_MODE_11N;
-	pMsg->nw_type = param.sirNwType;
-	pMsg->center_freq_seg_0 = ch_params->center_freq_seg0;
-	pMsg->center_freq_seg_1 = ch_params->center_freq_seg1;
-	pMsg->cac_duration_ms = profile->cac_duration_ms;
-	pMsg->dfs_regdomain = profile->dfs_regdomain;
-	qdf_mem_copy(pMsg->bssid, bssid.bytes, QDF_MAC_ADDR_SIZE);
-	qdf_mem_copy(&pMsg->operational_rateset,
-		&param.operationalRateSet, sizeof(pMsg->operational_rateset));
-	qdf_mem_copy(&pMsg->extended_rateset,
-		&param.extendedRateSet, sizeof(pMsg->extended_rateset));
+	    (msg->dot11mode == WNI_CFG_DOT11_MODE_11AC ||
+	    msg->dot11mode == WNI_CFG_DOT11_MODE_11AC_ONLY))
+		msg->dot11mode = WNI_CFG_DOT11_MODE_11N;
+	msg->nw_type = param.sirNwType;
+	msg->center_freq_seg_0 = ch_params->center_freq_seg0;
+	msg->center_freq_seg_1 = ch_params->center_freq_seg1;
+	msg->cac_duration_ms = profile->cac_duration_ms;
+	msg->dfs_regdomain = profile->dfs_regdomain;
+	qdf_mem_copy(msg->bssid, bssid.bytes, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(&msg->operational_rateset,
+		     &param.operationalRateSet,
+		     sizeof(msg->operational_rateset));
+	qdf_mem_copy(&msg->extended_rateset, &param.extendedRateSet,
+		     sizeof(msg->extended_rateset));
 
 	sme_debug("target_chan %d ch_width %d dot11mode %d",
-		  pMsg->targetChannel, pMsg->ch_width, pMsg->dot11mode);
-	status = umac_send_mb_message_to_mac(pMsg);
+		  msg->targetChannel, msg->ch_width, msg->dot11mode);
+	status = umac_send_mb_message_to_mac(msg);
 
 	return status;
 }
