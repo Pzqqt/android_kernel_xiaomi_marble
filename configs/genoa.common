@@ -197,4 +197,7 @@ CONFIG_SIR_MAX_SUPPORTED_BSS := 3
 #Number of STA sessions max connected to our SAP, used for allocating memory
 #should never be less then number of max peers - INI
 CONFIG_SIR_SAP_MAX_NUM_PEERS := 10
+
+#Max no of offloaded beaconing entities supported
+CONFIG_BEACON_TX_OFFLOAD_MAX_VDEV := 3
 ###################################
