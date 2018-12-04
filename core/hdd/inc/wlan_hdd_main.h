@@ -2094,18 +2094,18 @@ struct hdd_channel_info {
 };
 
 /*
- * @eHDD_DRV_OP_PROBE: Refers to .probe operation
- * @eHDD_DRV_OP_REMOVE: Refers to .remove operation
- * @eHDD_DRV_OP_SHUTDOWN: Refers to .shutdown operation
- * @eHDD_DRV_OP_REINIT: Refers to .reinit operation
- * @eHDD_DRV_OP_IFF_UP: Refers to IFF_UP operation
+ * @HDD_DRV_OP_PROBE: Refers to .probe operation
+ * @HDD_DRV_OP_REMOVE: Refers to .remove operation
+ * @HDD_DRV_OP_SHUTDOWN: Refers to .shutdown operation
+ * @HDD_DRV_OP_REINIT: Refers to .reinit operation
+ * @HDD_DRV_OP_IFF_UP: Refers to IFF_UP operation
  */
 enum {
-	eHDD_DRV_OP_PROBE = 0,
-	eHDD_DRV_OP_REMOVE,
-	eHDD_DRV_OP_SHUTDOWN,
-	eHDD_DRV_OP_REINIT,
-	eHDD_DRV_OP_IFF_UP
+	HDD_DRV_OP_PROBE = 0,
+	HDD_DRV_OP_REMOVE,
+	HDD_DRV_OP_SHUTDOWN,
+	HDD_DRV_OP_REINIT,
+	HDD_DRV_OP_IFF_UP
 };
 
 /*

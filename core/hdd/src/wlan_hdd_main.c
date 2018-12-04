@@ -3158,7 +3158,7 @@ static int __hdd_open(struct net_device *dev)
 	}
 
 	mutex_lock(&hdd_init_deinit_lock);
-	hdd_start_driver_ops_timer(eHDD_DRV_OP_IFF_UP);
+	hdd_start_driver_ops_timer(HDD_DRV_OP_IFF_UP);
 
 	/*
 	 * This scenario can be hit in cases where in the wlan driver after
@@ -14840,19 +14840,19 @@ void hdd_start_driver_ops_timer(int drv_op)
 {
 	memset(drv_ops_string, 0, MAX_OPS_NAME_STRING_SIZE);
 	switch (drv_op) {
-	case eHDD_DRV_OP_PROBE:
+	case HDD_DRV_OP_PROBE:
 		memcpy(drv_ops_string, "probe", sizeof("probe"));
 		break;
-	case eHDD_DRV_OP_REMOVE:
+	case HDD_DRV_OP_REMOVE:
 		memcpy(drv_ops_string, "remove", sizeof("remove"));
 		break;
-	case eHDD_DRV_OP_SHUTDOWN:
+	case HDD_DRV_OP_SHUTDOWN:
 		memcpy(drv_ops_string, "shutdown", sizeof("shutdown"));
 		break;
-	case eHDD_DRV_OP_REINIT:
+	case HDD_DRV_OP_REINIT:
 		memcpy(drv_ops_string, "reinit", sizeof("reinit"));
 		break;
-	case eHDD_DRV_OP_IFF_UP:
+	case HDD_DRV_OP_IFF_UP:
 		memcpy(drv_ops_string, "iff_up", sizeof("iff_up"));
 		break;
 	}

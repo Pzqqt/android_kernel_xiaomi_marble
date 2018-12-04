@@ -457,7 +457,7 @@ static int hdd_soc_probe(struct device *dev,
 		goto free_psoc;
 	}
 
-	hdd_soc_load_lock(dev, eHDD_DRV_OP_PROBE);
+	hdd_soc_load_lock(dev, HDD_DRV_OP_PROBE);
 	cds_set_load_in_progress(true);
 	cds_set_driver_in_bad_state(false);
 
@@ -549,7 +549,7 @@ static int hdd_soc_recovery_reinit(struct device *dev,
 	/* SSR transition is initiated at the beginning of soc shutdown */
 	dsc_psoc_assert_trans_protected(hdd_psoc->dsc_psoc);
 
-	hdd_soc_load_lock(dev, eHDD_DRV_OP_REINIT);
+	hdd_soc_load_lock(dev, HDD_DRV_OP_REINIT);
 	cds_set_driver_in_bad_state(false);
 
 	errno = hdd_init_qdf_ctx(dev, bdev, bus_type, bid);
@@ -613,7 +613,7 @@ static void hdd_soc_remove(struct device *dev)
 		hdd_warn("Debugfs threads are still active attempting driver unload anyway");
 
 	mutex_lock(&hdd_init_deinit_lock);
-	hdd_start_driver_ops_timer(eHDD_DRV_OP_REMOVE);
+	hdd_start_driver_ops_timer(HDD_DRV_OP_REMOVE);
 	if (hdd_get_conparam() == QDF_GLOBAL_EPPING_MODE) {
 		epping_disable();
 		epping_close();
@@ -748,7 +748,7 @@ static void hdd_soc_recovery_shutdown(void)
 	dsc_psoc_wait_for_ops(hdd_psoc->dsc_psoc);
 
 	mutex_lock(&hdd_init_deinit_lock);
-	hdd_start_driver_ops_timer(eHDD_DRV_OP_SHUTDOWN);
+	hdd_start_driver_ops_timer(HDD_DRV_OP_SHUTDOWN);
 
 	/* nothing to do if the soc is already unloaded */
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
