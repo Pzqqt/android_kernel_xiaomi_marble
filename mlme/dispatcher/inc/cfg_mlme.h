@@ -45,6 +45,7 @@
 #include "cfg_mlme_fe_wmm.h"
 #include "cfg_mlme_powersave.h"
 #include "cfg_mlme_sap.h"
+#include "cfg_mlme_stats.h"
 #include "cfg_mlme_twt.h"
 #include "cfg_mlme_scoring.h"
 #include "cfg_mlme_oce.h"
@@ -87,6 +88,7 @@
 	CFG_SAP_PROTECTION_ALL \
 	CFG_SCORING_ALL \
 	CFG_STA_ALL \
+	CFG_STATS_ALL \
 	CFG_THRESHOLD_ALL \
 	CFG_TIMEOUT_ALL \
 	CFG_TWT_ALL \

@@ -1137,6 +1137,22 @@ struct wlan_mlme_sta_cfg {
 };
 
 /**
+ * struct wlan_mlme_stats_cfg - MLME stats configuration items
+ * @stats_periodic_display_time: time after which stats will be printed
+ * @stats_link_speed_rssi_high: rssi link speed, high
+ * @stats_link_speed_rssi_med: medium rssi link speed
+ * @stats_link_speed_rssi_low: rssi link speed, low
+ * @stats_report_max_link_speed_rssi: report speed limit
+ */
+struct wlan_mlme_stats_cfg {
+	uint32_t stats_periodic_display_time;
+	int stats_link_speed_rssi_high;
+	int stats_link_speed_rssi_med;
+	int stats_link_speed_rssi_low;
+	uint32_t stats_report_max_link_speed_rssi;
+};
+
+/**
  * enum roaming_dfs_channel_type - Allow dfs channel in roam
  * @CFG_ROAMING_DFS_CHANNEL_DISABLED:   Disallow dfs channel in roam
  * @CFG_ROAMING_DFS_CHANNEL_ENABLED_NORMAL: Allow dfs channel
@@ -1804,6 +1820,7 @@ struct wlan_mlme_reg {
  * @sap_cfg: sap CFG items
  * @nss_chains_ini_cfg: Per vdev nss, chains related CFG items
  * @sta: sta CFG Items
+ * @stats: stats CFG Items
  * @scoring: BSS Scoring related CFG Items
  * @oce: OCE related CFG items
  * @threshold: threshold related cfg items
@@ -1843,6 +1860,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_cfg_sap sap_cfg;
 	struct wlan_mlme_nss_chains nss_chains_ini_cfg;
 	struct wlan_mlme_sta_cfg sta;
+	struct wlan_mlme_stats_cfg stats;
 	struct wlan_mlme_scoring_cfg scoring;
 	struct wlan_mlme_oce oce;
 	struct wlan_mlme_threshold threshold;

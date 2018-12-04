@@ -2485,6 +2485,64 @@ ucfg_mlme_get_sta_keepalive_method(struct wlan_objmgr_psoc *psoc,
 				   enum station_keepalive_method *val);
 
 /**
+ * ucfg_mlme_stats_get_periodic_display_time() - get display time
+ * @psoc: pointer to psoc object
+ * @periodic_display_time: buffer to hold value
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_stats_get_periodic_display_time(struct wlan_objmgr_psoc *psoc,
+					  uint32_t *periodic_display_time);
+
+/**
+ * ucfg_mlme_stats_get_cfg_values() - get stats cfg values
+ * @psoc: pointer to psoc object
+ * @link_speed_rssi_high: link speed high limit
+ * @link_speed_rssi_mid: link speed high mid
+ * @link_speed_rssi_low: link speed high low
+ * @link_speed_rssi_report: link speed report limit
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_stats_get_cfg_values(struct wlan_objmgr_psoc *psoc,
+			       int *link_speed_rssi_high,
+			       int *link_speed_rssi_mid,
+			       int *link_speed_rssi_low,
+			       uint32_t *link_speed_rssi_report);
+
+/**
+ * ucfg_mlme_stats_is_link_speed_report_actual() - is link speed report set
+ * actual
+ * @psoc: pointer to psoc object
+ *
+ * Return: True is report set to actual
+ */
+bool
+ucfg_mlme_stats_is_link_speed_report_actual(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_mlme_stats_is_link_speed_report_max() - is link speed report set
+ * max
+ * @psoc: pointer to psoc object
+ *
+ * Return: True is report set to max
+ */
+bool
+ucfg_mlme_stats_is_link_speed_report_max(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_mlme_stats_is_link_speed_report_max_scaled() - is link speed report set
+ * max scaled
+ * @psoc: pointer to psoc object
+ *
+ * Return: True is report set to max scaled
+ */
+bool
+ucfg_mlme_stats_is_link_speed_report_max_scaled(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_mlme_get_wmm_dir_ac_vi() - Get TSPEC direction
  * for VI
  * @psoc: pointer to psoc object

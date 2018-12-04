@@ -1117,6 +1117,105 @@ ucfg_mlme_set_wmi_wq_watchdog_timeout(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
+ucfg_mlme_stats_get_periodic_display_time(struct wlan_objmgr_psoc *psoc,
+					  uint32_t *periodic_display_time)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*periodic_display_time =
+			cfg_default(CFG_PERIODIC_STATS_DISPLAY_TIME);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*periodic_display_time =
+		mlme_obj->cfg.stats.stats_periodic_display_time;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_stats_get_cfg_values(struct wlan_objmgr_psoc *psoc,
+			       int *link_speed_rssi_high,
+			       int *link_speed_rssi_mid,
+			       int *link_speed_rssi_low,
+			       uint32_t *link_speed_rssi_report)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*link_speed_rssi_high =
+			cfg_default(CFG_LINK_SPEED_RSSI_HIGH);
+		*link_speed_rssi_mid =
+			cfg_default(CFG_LINK_SPEED_RSSI_MID);
+		*link_speed_rssi_low =
+			cfg_default(CFG_LINK_SPEED_RSSI_LOW);
+		*link_speed_rssi_report =
+			cfg_default(CFG_REPORT_MAX_LINK_SPEED);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*link_speed_rssi_high =
+		mlme_obj->cfg.stats.stats_link_speed_rssi_high;
+	*link_speed_rssi_mid =
+		mlme_obj->cfg.stats.stats_link_speed_rssi_med;
+	*link_speed_rssi_low =
+		mlme_obj->cfg.stats.stats_link_speed_rssi_low;
+	*link_speed_rssi_report =
+		mlme_obj->cfg.stats.stats_report_max_link_speed_rssi;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool ucfg_mlme_stats_is_link_speed_report_actual(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+	int report_link_speed = 0;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		report_link_speed = cfg_default(CFG_REPORT_MAX_LINK_SPEED);
+	else
+		report_link_speed =
+			mlme_obj->cfg.stats.stats_report_max_link_speed_rssi;
+
+	return (report_link_speed == CFG_STATS_LINK_SPEED_REPORT_ACTUAL);
+}
+
+bool ucfg_mlme_stats_is_link_speed_report_max(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+	int report_link_speed = 0;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		report_link_speed = cfg_default(CFG_REPORT_MAX_LINK_SPEED);
+	else
+		report_link_speed =
+			mlme_obj->cfg.stats.stats_report_max_link_speed_rssi;
+
+	return (report_link_speed == CFG_STATS_LINK_SPEED_REPORT_MAX);
+}
+
+bool
+ucfg_mlme_stats_is_link_speed_report_max_scaled(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+	int report_link_speed = 0;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		report_link_speed = cfg_default(CFG_REPORT_MAX_LINK_SPEED);
+	else
+		report_link_speed =
+			mlme_obj->cfg.stats.stats_report_max_link_speed_rssi;
+
+	return (report_link_speed == CFG_STATS_LINK_SPEED_REPORT_MAX_SCALED);
+}
+
+QDF_STATUS
 ucfg_mlme_get_ps_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *inactivity_timeout)
 {
