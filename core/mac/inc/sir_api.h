@@ -1573,6 +1573,7 @@ typedef struct sSirSmeSwitchChannelInd {
 	uint16_t newChannelId;
 	struct ch_params chan_params;
 	struct qdf_mac_addr bssid;      /* BSSID */
+	QDF_STATUS status;
 } tSirSmeSwitchChannelInd, *tpSirSmeSwitchChannelInd;
 
 /* / Definition for MIC failure indication */

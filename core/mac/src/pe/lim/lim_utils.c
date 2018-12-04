@@ -2054,7 +2054,7 @@ static void __lim_process_channel_switch_timeout(struct mac_context *mac)
 #ifdef CONFIG_VDEV_SM
 void lim_process_channel_switch_timeout(struct mac_context *mac_ctx)
 {
-	tpPESession session_entry = NULL;
+	struct pe_session *session_entry = NULL;
 	QDF_STATUS status;
 
 	session_entry = pe_find_session_by_session_id(
@@ -2321,13 +2321,16 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 	pSirSmeSwitchChInd->chan_params.center_freq_seg1 =
 			pe_session->gLimChannelSwitch.ch_center_freq_seg1;
 
-	pe_debug("session: %d chan: %d width: %d sec offset: %d seg0: %d seg1: %d",
+	pSirSmeSwitchChInd->status = status;
+	pe_debug(
+		"session: %d chan: %d width: %d sec offset: %d seg0: %d seg1: %d status %d",
 		pSirSmeSwitchChInd->sessionId,
 		pSirSmeSwitchChInd->newChannelId,
 		pSirSmeSwitchChInd->chan_params.ch_width,
 		pSirSmeSwitchChInd->chan_params.sec_ch_offset,
 		pSirSmeSwitchChInd->chan_params.center_freq_seg0,
-		pSirSmeSwitchChInd->chan_params.center_freq_seg1);
+		pSirSmeSwitchChInd->chan_params.center_freq_seg1,
+		status);
 
 	qdf_mem_copy(pSirSmeSwitchChInd->bssid.bytes, pe_session->bssId,
 		     QDF_MAC_ADDR_SIZE);
@@ -2339,6 +2342,9 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 
 	sys_process_mmh_msg(mac, &mmhMsg);
 #ifdef CONFIG_VDEV_SM
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+
 	evt_status = wlan_vdev_mlme_sm_deliver_evt(
 				pe_session->vdev,
 				WLAN_VDEV_SM_EV_START_SUCCESS,

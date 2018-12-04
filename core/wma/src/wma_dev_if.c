@@ -1402,6 +1402,16 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			wma->interfaces[resp_event->vdev_id].is_channel_switch =
 				false;
 		}
+#else
+		/* Indicate channel switch failure to LIM */
+		if (QDF_IS_STATUS_ERROR(params->status) &&
+		    (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id) ||
+		     mlme_is_chan_switch_in_progress(iface->vdev))) {
+			mlme_set_chan_switch_in_progress(iface->vdev, false);
+			wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
+						   (void *)params, 0);
+			goto error;
+		}
 #endif
 		if ((QDF_IS_STATUS_SUCCESS(resp_event->status) &&
 		     (resp_event->resp_type == WMI_VDEV_RESTART_RESP_EVENT) &&
@@ -1484,7 +1494,9 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 #endif
 		ucfg_ocb_config_channel(wma->pdev);
 	}
-
+#ifdef CONFIG_VDEV_SM
+error:
+#endif
 	if ((wma->interfaces[resp_event->vdev_id].type == WMI_VDEV_TYPE_AP) &&
 		wma_is_vdev_up(resp_event->vdev_id))
 		wma_set_sap_keepalive(wma, resp_event->vdev_id);
@@ -3763,14 +3775,10 @@ void wma_vdev_resp_timer(void *data)
 		} else {
 #ifdef CONFIG_VDEV_SM
 			iface = &wma->interfaces[tgt_req->vdev_id];
-
-			wlan_vdev_mlme_sm_deliver_evt(iface->vdev,
-						   WLAN_VDEV_SM_EV_RESTART_RESP,
-						   sizeof(*params), params);
-#else
+			mlme_set_chan_switch_in_progress(iface->vdev, false);
+#endif
 			wma_send_msg_high_priority(wma, WMA_SWITCH_CHANNEL_RSP,
 				    (void *)params, 0);
-#endif
 		}
 #ifndef CONFIG_VDEV_SM
 		if (wma->interfaces[tgt_req->vdev_id].is_channel_switch) {
