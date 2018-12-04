@@ -4809,6 +4809,7 @@ typedef enum {
 	wmi_wlan_sar2_result_event_id,
 	wmi_esp_estimate_event_id,
 	wmi_pdev_ctl_failsafe_check_event_id,
+	wmi_vdev_bcn_reception_stats_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -5267,6 +5268,7 @@ typedef enum {
 	wmi_service_per_vdev_chain_support,
 	wmi_service_new_htt_msg_format,
 	wmi_service_peer_unmap_cnf_support,
+	wmi_service_beacon_reception_stats,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
