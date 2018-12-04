@@ -1097,108 +1097,6 @@ enum hdd_dot11_mode {
 #define CFG_ENABLE_DFS_CHNL_SCAN_MAX               (1)
 #define CFG_ENABLE_DFS_CHNL_SCAN_DEFAULT           (1)
 
-enum hdd_link_speed_rpt_type {
-	eHDD_LINK_SPEED_REPORT_ACTUAL = 0,
-	eHDD_LINK_SPEED_REPORT_MAX = 1,
-	eHDD_LINK_SPEED_REPORT_MAX_SCALED = 2,
-};
-
-/*
- * <ini>
- * gReportMaxLinkSpeed - Reporting of max link speed
- * @Min: 0
- * @Max: 2
- * @Default: 0
- *
- * This ini is used to control how max link speed is reported to OS when
- * driver is handling NL80211_CMD_GET_STATION request.
- * 0: report actual link speed;
- * 1: report max possible link speed;
- * 2: report max possible link speed with RSSI scaling.
- *
- * Related: NA.
- *
- * Supported Feature SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_REPORT_MAX_LINK_SPEED           "gReportMaxLinkSpeed"
-#define CFG_REPORT_MAX_LINK_SPEED_MIN       (eHDD_LINK_SPEED_REPORT_ACTUAL)
-#define CFG_REPORT_MAX_LINK_SPEED_MAX       (eHDD_LINK_SPEED_REPORT_MAX_SCALED)
-#define CFG_REPORT_MAX_LINK_SPEED_DEFAULT   (eHDD_LINK_SPEED_REPORT_ACTUAL)
-
-/*
- * <ini>
- * gLinkSpeedRssiHigh - Report the max possible speed with RSSI scaling
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set default eHDD_LINK_SPEED_REPORT
- * Used when eHDD_LINK_SPEED_REPORT_SCALED is selected
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_LINK_SPEED_RSSI_HIGH                   "gLinkSpeedRssiHigh"
-#define CFG_LINK_SPEED_RSSI_HIGH_MIN               (-127)
-#define CFG_LINK_SPEED_RSSI_HIGH_MAX               (0)
-#define CFG_LINK_SPEED_RSSI_HIGH_DEFAULT           (-55)
-
-/*
- * <ini>
- * gLinkSpeedRssiMed - Used when eHDD_LINK_SPEED_REPORT_SCALED is selected
- * @Min: -127
- * @Max: 0
- * @Default: -65
- *
- * This ini is used to set medium rssi link speed
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_LINK_SPEED_RSSI_MID                    "gLinkSpeedRssiMed"
-#define CFG_LINK_SPEED_RSSI_MID_MIN                (-127)
-#define CFG_LINK_SPEED_RSSI_MID_MAX                (0)
-#define CFG_LINK_SPEED_RSSI_MID_DEFAULT            (-65)
-
-/*
- * <ini>
- * gLinkSpeedRssiLow - Used when eHDD_LINK_SPEED_REPORT_SCALED is selected
- * @Min: -127
- * @Max: 0
- * @Default: -80
- *
- * This ini is used to set low rssi link speed
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_LINK_SPEED_RSSI_LOW                    "gLinkSpeedRssiLow"
-#define CFG_LINK_SPEED_RSSI_LOW_MIN                (-127)
-#define CFG_LINK_SPEED_RSSI_LOW_MAX                (0)
-#define CFG_LINK_SPEED_RSSI_LOW_DEFAULT            (-80)
-
 #ifdef ENABLE_MTRACE_LOG
 /*
  * Enable MTRACE for all modules
@@ -1238,28 +1136,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_RA_RATE_LIMIT_INTERVAL_MAX             (3600)
 #define CFG_RA_RATE_LIMIT_INTERVAL_DEFAULT         (60) /*60 SEC */
 #endif
-
-#ifdef MSM_PLATFORM
-/*
- * <ini>
- * periodic_stats_display_time - time(seconds) after which stats will be printed
- * @Min: 0
- * @Max: 256
- * @Default: 10
- *
- * This values specifies the recurring time period after which stats will be
- * printed in wlan driver logs.
- *
- * Usage: Internal / External
- *
- * </ini>
- */
-#define CFG_PERIODIC_STATS_DISPLAY_TIME_NAME       "periodic_stats_display_time"
-#define CFG_PERIODIC_STATS_DISPLAY_TIME_DEFAULT    (10)
-#define CFG_PERIODIC_STATS_DISPLAY_TIME_MIN        (0)
-#define CFG_PERIODIC_STATS_DISPLAY_TIME_MAX        (256)
-
-#endif /* MSM_PLATFORM */
 
 #ifdef DHCP_SERVER_OFFLOAD
 #define CFG_DHCP_SERVER_IP_NAME     "gDHCPServerIP"
@@ -1592,56 +1468,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_HE_STA_OBSSPD_DEFAULT (0x15b8c2ae)
 
 #endif /* WLAN_FEATURE_11AX */
-#ifdef WLAN_SUPPORT_TWT
-/*
- * <ini>
- * enable_twt - Enable Target Wake Time support.
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable or disable TWT support.
- *
- * Related: NA
- *
- * Supported Feature: 11AX
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_TWT_NAME    "enable_twt"
-#define CFG_ENABLE_TWT_MIN     (0)
-#define CFG_ENABLE_TWT_MAX     (1)
-#define CFG_ENABLE_TWT_DEFAULT (1)
-
-/*
- * <ini>
- * twt_congestion_timeout - Target wake time congestion timeout.
- * @Min: 0
- * @Max: 10000
- * @Default: 100
- *
- * STA uses this timer to continuously monitor channel congestion levels to
- * decide whether to start or stop TWT. This ini is used to configure the
- * target wake time congestion timeout value in the units of milliseconds.
- * A value of Zero indicates that this is a host triggered TWT and all the
- * necessary configuration for TWT will be directed from the host.
- *
- * Related: NA
- *
- * Supported Feature: 11AX
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_TWT_CONGESTION_TIMEOUT_NAME    "twt_congestion_timeout"
-#define CFG_TWT_CONGESTION_TIMEOUT_MIN     (0)
-#define CFG_TWT_CONGESTION_TIMEOUT_MAX     (10000)
-#define CFG_TWT_CONGESTION_TIMEOUT_DEFAULT (100)
-
-#endif /* WLAN_SUPPORT_TWT */
 
 /*
  * <ini>
@@ -2148,10 +1974,6 @@ struct hdd_config {
 #endif
 	uint8_t enableDFSChnlScan;
 	uint8_t enable_dfs_pno_chnl_scan;
-	enum hdd_link_speed_rpt_type reportMaxLinkSpeed;
-	int32_t linkSpeedRssiHigh;
-	int32_t linkSpeedRssiMid;
-	int32_t linkSpeedRssiLow;
 	bool prevent_link_down;
 	uint8_t scanAgingTimeout;
 	bool fEnableSNRMonitoring;
@@ -2214,10 +2036,6 @@ struct hdd_config {
 	bool enable_ul_mimo;
 	bool enable_ul_ofdma;
 	uint32_t he_sta_obsspd;
-#endif
-#ifdef WLAN_SUPPORT_TWT
-	bool enable_twt;
-	uint32_t twt_congestion_timeout;
 #endif
 	bool tx_orphan_enable;
 
@@ -2287,7 +2105,6 @@ struct hdd_config {
 	uint32_t tcp_tx_high_tput_thres;
 	uint32_t tcp_delack_timer_count;
 	bool     enable_tcp_param_update;
-	u8  periodic_stats_disp_time;
 #endif /* MSM_PLATFORM */
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	uint32_t tx_flow_low_watermark;

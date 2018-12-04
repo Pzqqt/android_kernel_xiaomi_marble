@@ -3474,34 +3474,43 @@ static void hdd_fill_station_info_flags(struct station_info *sinfo)
 
 /**
  * hdd_fill_rate_info() - fill rate info of sinfo
+ * @psoc: psoc context
  * @sinfo: station_info struct pointer
  * @stainfo: stainfo pointer
  * @stats: fw txrx status pointer
- * @cfg: hdd config pointer
  *
  * This function will fill rate info of sinfo
  *
  * Return: None
  */
-static void hdd_fill_rate_info(struct station_info *sinfo,
+static void hdd_fill_rate_info(struct wlan_objmgr_psoc *psoc,
+			       struct station_info *sinfo,
 			       struct hdd_station_info *stainfo,
-			       struct hdd_fw_txrx_stats *stats,
-			       struct hdd_config *cfg)
+			       struct hdd_fw_txrx_stats *stats)
 {
 	uint8_t rate_flags;
 	uint8_t mcsidx = 0xff;
 	uint32_t myrate, maxrate, tmprate;
 	int rssidx;
 	int nss = 1;
+	int link_speed_rssi_high = 0;
+	int link_speed_rssi_mid = 0;
+	int link_speed_rssi_low = 0;
+	uint32_t link_speed_rssi_report = 0;
 
-	hdd_info("reportMaxLinkSpeed %d", cfg->reportMaxLinkSpeed);
+	ucfg_mlme_stats_get_cfg_values(psoc,
+				       &link_speed_rssi_high,
+				       &link_speed_rssi_mid,
+				       &link_speed_rssi_low,
+				       &link_speed_rssi_report);
 
+	hdd_info("reportMaxLinkSpeed %d", link_speed_rssi_report);
 	/* convert to 100kbps expected in rate table */
 	myrate = stats->tx_rate.rate / 100;
 	rate_flags = stainfo->rate_flags;
 	if (!(rate_flags & TX_RATE_LEGACY)) {
 		nss = stainfo->nss;
-		if (eHDD_LINK_SPEED_REPORT_ACTUAL == cfg->reportMaxLinkSpeed) {
+		if (ucfg_mlme_stats_is_link_speed_report_actual(psoc)) {
 			/* Get current rate flags if report actual */
 			if (stats->tx_rate.rate_flags)
 				rate_flags =
@@ -3513,23 +3522,21 @@ static void hdd_fill_rate_info(struct station_info *sinfo,
 			rate_flags = TX_RATE_LEGACY;
 	}
 
-	if (eHDD_LINK_SPEED_REPORT_ACTUAL != cfg->reportMaxLinkSpeed) {
+	if (!ucfg_mlme_stats_is_link_speed_report_actual(psoc)) {
 		/* we do not want to necessarily report the current speed */
-		if (eHDD_LINK_SPEED_REPORT_MAX == cfg->reportMaxLinkSpeed) {
+		if (ucfg_mlme_stats_is_link_speed_report_max(psoc)) {
 			/* report the max possible speed */
 			rssidx = 0;
-		} else if (eHDD_LINK_SPEED_REPORT_MAX_SCALED ==
-				cfg->reportMaxLinkSpeed) {
+		} else if (ucfg_mlme_stats_is_link_speed_report_max_scaled(
+					psoc)) {
 			/* report the max possible speed with RSSI scaling */
-			if (stats->rssi >= cfg->linkSpeedRssiHigh) {
+			if (stats->rssi >= link_speed_rssi_high) {
 				/* report the max possible speed */
 				rssidx = 0;
-			} else if (stats->rssi >=
-					cfg->linkSpeedRssiMid) {
+			} else if (stats->rssi >= link_speed_rssi_mid) {
 				/* report middle speed */
 				rssidx = 1;
-			} else if (stats->rssi >=
-					cfg->linkSpeedRssiLow) {
+			} else if (stats->rssi >= link_speed_rssi_low) {
 				/* report middle speed */
 				rssidx = 2;
 			} else {
@@ -3539,7 +3546,7 @@ static void hdd_fill_rate_info(struct station_info *sinfo,
 		} else {
 			/* unknown, treat as eHDD_LINK_SPEED_REPORT_MAX */
 			hdd_err("Invalid value for reportMaxLinkSpeed: %u",
-				cfg->reportMaxLinkSpeed);
+				link_speed_rssi_report);
 			rssidx = 0;
 		}
 
@@ -3618,19 +3625,19 @@ static void hdd_fill_rate_info(struct station_info *sinfo,
 
 /**
  * wlan_hdd_fill_station_info() - fill station_info struct
+ * @psoc: psoc context
  * @sinfo: station_info struct pointer
  * @stainfo: stainfo pointer
  * @stats: fw txrx status pointer
- * @cfg: hdd config pointer
  *
  * This function will fill station_info struct
  *
  * Return: None
  */
-static void wlan_hdd_fill_station_info(struct station_info *sinfo,
+static void wlan_hdd_fill_station_info(struct wlan_objmgr_psoc *psoc,
+				       struct station_info *sinfo,
 				       struct hdd_station_info *stainfo,
-				       struct hdd_fw_txrx_stats *stats,
-				       struct hdd_config *cfg)
+				       struct hdd_fw_txrx_stats *stats)
 {
 	qdf_time_t curr_time, dur;
 
@@ -3648,7 +3655,7 @@ static void wlan_hdd_fill_station_info(struct station_info *sinfo,
 	sinfo->tx_retries = stats->tx_retries;
 
 	/* tx rate info */
-	hdd_fill_rate_info(sinfo, stainfo, stats, cfg);
+	hdd_fill_rate_info(psoc, sinfo, stainfo, stats);
 
 	hdd_fill_station_info_flags(sinfo);
 
@@ -3929,7 +3936,8 @@ int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 		peer_info.rssi + WLAN_HDD_TGT_NOISE_FLOOR_DBM;
 	wlan_hdd_fill_rate_info(ap_ctx, &peer_info);
 
-	wlan_hdd_fill_station_info(sinfo, stainfo, &ap_ctx->txrx_stats, cfg);
+	wlan_hdd_fill_station_info(hddctx->psoc, sinfo, stainfo,
+				   &ap_ctx->txrx_stats);
 
 	return status;
 }
@@ -3939,7 +3947,6 @@ int wlan_hdd_get_station_remote(struct wiphy *wiphy,
  * to be sent to the userspace.
  *
  * @mac_handle: The mac handle
- * @config: The HDD config structure
  * @sinfo: The station_info struct to be filled
  * @tx_rate_flags: The TX rate flags computed from tx rate
  * @tx_mcs_index; The TX mcs index computed from tx rate
@@ -3949,7 +3956,6 @@ int wlan_hdd_get_station_remote(struct wiphy *wiphy,
  * Return: 0 for success
  */
 static int hdd_report_max_rate(mac_handle_t mac_handle,
-			       struct hdd_config *config,
 			       struct station_info *sinfo,
 			       uint8_t tx_rate_flags,
 			       uint8_t tx_mcs_index,
@@ -3974,6 +3980,10 @@ static int hdd_report_max_rate(mac_handle_t mac_handle,
 	int mode = 0, max_ht_idx;
 	QDF_STATUS stat = QDF_STATUS_E_FAILURE;
 	struct hdd_context *hdd_ctx;
+	int link_speed_rssi_high = 0;
+	int link_speed_rssi_mid = 0;
+	int link_speed_rssi_low = 0;
+	uint32_t link_speed_rssi_report = 0;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -3981,20 +3991,26 @@ static int hdd_report_max_rate(mac_handle_t mac_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	ucfg_mlme_stats_get_cfg_values(hdd_ctx->psoc,
+				       &link_speed_rssi_high,
+				       &link_speed_rssi_mid,
+				       &link_speed_rssi_low,
+				       &link_speed_rssi_report);
+
 	/* we do not want to necessarily report the current speed */
-	if (eHDD_LINK_SPEED_REPORT_MAX == config->reportMaxLinkSpeed) {
+	if (ucfg_mlme_stats_is_link_speed_report_max(hdd_ctx->psoc)) {
 		/* report the max possible speed */
 		rssidx = 0;
-	} else if (eHDD_LINK_SPEED_REPORT_MAX_SCALED ==
-		   config->reportMaxLinkSpeed) {
+	} else if (ucfg_mlme_stats_is_link_speed_report_max_scaled(
+				hdd_ctx->psoc)) {
 		/* report the max possible speed with RSSI scaling */
-		if (sinfo->signal >= config->linkSpeedRssiHigh) {
+		if (sinfo->signal >= link_speed_rssi_high) {
 			/* report the max possible speed */
 			rssidx = 0;
-		} else if (sinfo->signal >= config->linkSpeedRssiMid) {
+		} else if (sinfo->signal >= link_speed_rssi_mid) {
 			/* report middle speed */
 			rssidx = 1;
-		} else if (sinfo->signal >= config->linkSpeedRssiLow) {
+		} else if (sinfo->signal >= link_speed_rssi_low) {
 			/* report middle speed */
 			rssidx = 2;
 		} else {
@@ -4004,7 +4020,7 @@ static int hdd_report_max_rate(mac_handle_t mac_handle,
 	} else {
 		/* unknown, treat as eHDD_LINK_SPEED_REPORT_MAX */
 		hdd_err("Invalid value for reportMaxLinkSpeed: %u",
-			config->reportMaxLinkSpeed);
+			link_speed_rssi_report);
 		rssidx = 0;
 	}
 
@@ -4365,13 +4381,16 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 	uint8_t rate_flags, tx_rate_flags, rx_rate_flags;
 	uint8_t tx_mcs_index, rx_mcs_index;
 	struct hdd_context *hdd_ctx = (struct hdd_context *) wiphy_priv(wiphy);
-	struct hdd_config *pCfg = hdd_ctx->config;
 	mac_handle_t mac_handle;
 	uint16_t maxRate = 0;
 	int8_t snr = 0;
 	uint16_t my_tx_rate, my_rx_rate;
 	uint8_t tx_nss = 1, rx_nss = 1;
 	int32_t rcpi_value;
+	int link_speed_rssi_high = 0;
+	int link_speed_rssi_mid = 0;
+	int link_speed_rssi_low = 0;
+	uint32_t link_speed_rssi_report = 0;
 
 	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
 		hdd_debug("Not associated");
@@ -4390,6 +4409,12 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 		sinfo->filled |= HDD_INFO_SIGNAL;
 		return 0;
 	}
+
+	ucfg_mlme_stats_get_cfg_values(hdd_ctx->psoc,
+				       &link_speed_rssi_high,
+				       &link_speed_rssi_mid,
+				       &link_speed_rssi_low,
+				       &link_speed_rssi_report);
 
 	if (hdd_ctx->rcpi_enabled)
 		wlan_hdd_get_rcpi(adapter, (uint8_t *)mac, &rcpi_value,
@@ -4457,7 +4482,8 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 			rx_nss--;
 		}
 
-		if (eHDD_LINK_SPEED_REPORT_ACTUAL == pCfg->reportMaxLinkSpeed) {
+		if (ucfg_mlme_stats_is_link_speed_report_actual(
+					hdd_ctx->psoc)) {
 			/* Get current rate flags if report actual */
 			/* WMA fails to find mcs_index for legacy tx rates */
 			if (tx_mcs_index == INVALID_MCS_IDX && my_tx_rate)
@@ -4480,9 +4506,9 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 	}
 
 	hdd_debug("RSSI %d, RLMS %u, rssi high %d, rssi mid %d, rssi low %d",
-		  sinfo->signal, pCfg->reportMaxLinkSpeed,
-		  (int)pCfg->linkSpeedRssiHigh, (int)pCfg->linkSpeedRssiMid,
-		  (int)pCfg->linkSpeedRssiLow);
+		  sinfo->signal, link_speed_rssi_report,
+		  link_speed_rssi_high, link_speed_rssi_mid,
+		  link_speed_rssi_low);
 	hdd_debug("Rate info: TX: %d, RX: %d", my_tx_rate, my_rx_rate);
 	hdd_debug("Rate flags: TX: 0x%x, RX: 0x%x", (int)tx_rate_flags,
 		  (int)rx_rate_flags);
@@ -4493,8 +4519,8 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 	/* assume basic BW. anything else will override this later */
 	hdd_set_rate_bw(&sinfo->txrate, HDD_RATE_BW_20);
 
-	if (eHDD_LINK_SPEED_REPORT_ACTUAL != pCfg->reportMaxLinkSpeed) {
-		if (!hdd_report_max_rate(mac_handle, pCfg, sinfo,
+	if (!ucfg_mlme_stats_is_link_speed_report_actual(hdd_ctx->psoc)) {
+		if (!hdd_report_max_rate(mac_handle, sinfo,
 					 tx_rate_flags, tx_mcs_index,
 					 my_tx_rate, tx_nss)) {
 			/* Keep GUI happy */

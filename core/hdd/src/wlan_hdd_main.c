@@ -7677,8 +7677,11 @@ static void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
 	static bool data_in_time_period;
 	ol_txrx_pdev_handle pdev;
 	ol_txrx_soc_handle soc;
+	uint32_t periodic_stats_disp_time = 0;
 
-	if (hdd_ctx->config->periodic_stats_disp_time == 0)
+	ucfg_mlme_stats_get_periodic_display_time(hdd_ctx->psoc,
+						  &periodic_stats_disp_time);
+	if (!periodic_stats_disp_time)
 		return;
 
 	soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -7698,7 +7701,7 @@ static void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
 		data_in_time_period = data_in_interval;
 
 	if (counter * hdd_ctx->config->bus_bw_compute_interval >=
-		hdd_ctx->config->periodic_stats_disp_time * 1000) {
+		periodic_stats_disp_time * 1000) {
 		if (data_in_time_period) {
 			wlan_hdd_display_txrx_stats(hdd_ctx);
 			dp_txrx_ext_dump_stats(soc);

@@ -1270,6 +1270,21 @@ static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_STA_KEEPALIVE_METHOD);
 }
 
+static void mlme_init_stats_cfg(struct wlan_objmgr_psoc *psoc,
+				struct wlan_mlme_stats_cfg *stats)
+{
+	stats->stats_periodic_display_time =
+		cfg_get(psoc, CFG_PERIODIC_STATS_DISPLAY_TIME);
+	stats->stats_link_speed_rssi_high =
+		cfg_get(psoc, CFG_LINK_SPEED_RSSI_HIGH);
+	stats->stats_link_speed_rssi_med =
+		cfg_get(psoc, CFG_LINK_SPEED_RSSI_MID);
+	stats->stats_link_speed_rssi_low =
+		cfg_get(psoc, CFG_LINK_SPEED_RSSI_LOW);
+	stats->stats_report_max_link_speed_rssi =
+		cfg_get(psoc, CFG_REPORT_MAX_LINK_SPEED);
+}
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static void mlme_init_roam_offload_cfg(struct wlan_objmgr_psoc *psoc,
 				       struct wlan_mlme_lfr_cfg *lfr)
@@ -1986,6 +2001,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_product_details_cfg(&mlme_cfg->product_details);
 	mlme_init_powersave_params(psoc, &mlme_cfg->ps_params);
 	mlme_init_sta_cfg(psoc, &mlme_cfg->sta);
+	mlme_init_stats_cfg(psoc, &mlme_cfg->stats);
 	mlme_init_twt_cfg(psoc, &mlme_cfg->twt_cfg);
 	mlme_init_lfr_cfg(psoc, &mlme_cfg->lfr);
 	mlme_init_feature_flag_in_cfg(psoc, &mlme_cfg->feature_flags);
