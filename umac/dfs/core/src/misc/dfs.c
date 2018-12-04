@@ -423,8 +423,10 @@ int dfs_control(struct wlan_dfs *dfs,
 
 			if (dfs->dfs_is_offload_enabled) {
 				error = dfs_fill_emulate_bang_radar_test
-						 (dfs, dfs->dfs_seg_id,
-						  &dfs_unit_test);
+							(dfs, dfs->dfs_seg_id,
+							 dfs->dfs_is_chirp,
+							 dfs->dfs_freq_offset,
+							 &dfs_unit_test);
 			} else {
 				error = dfs_start_host_based_bangradar(dfs);
 			}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -25,22 +25,26 @@
 #ifndef _DFS_FULL_OFFLOAD_H_
 #define _DFS_FULL_OFFLOAD_H_
 
+#if defined(WLAN_DFS_FULL_OFFLOAD)
+
 /**
  * dfs_fill_emulate_bang_radar_test() - Update dfs unit test arguments and
  * send bangradar command to firmware.
  * @dfs: Pointer to wlan_dfs structure.
  * @segid: Segment Identifier(Primary and Secondary)
+ * @is_chirp: Boolean to determine if Chirp or Non Chirp.
+ * @freq_offset: Value of frequency offset from centre frequency.
  * @dfs_unit_test: Pointer to Unit test command structure
  *
  * Return: If the event is received return 0.
  */
-#if defined(WLAN_DFS_FULL_OFFLOAD)
 int dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,
-		uint32_t segid,
+		uint8_t segid, bool is_chirp, int32_t freq_offset,
 		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test);
+
 #else
 static inline int dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,
-		uint32_t segid,
+		uint8_t segid, bool is_chirp, int32_t freq_offset,
 		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
 {
 	return 0;

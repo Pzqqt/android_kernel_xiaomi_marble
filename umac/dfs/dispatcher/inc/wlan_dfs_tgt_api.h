@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -27,14 +27,8 @@
 
 #include <wlan_dfs_public_struct.h>
 
-/* Max number arguments for DFS unit test command */
-#define DFS_MAX_NUM_UNIT_TEST_ARGS 3
-
 /* Command id to send test radar to firmware */
 #define DFS_PHYERR_OFFLOAD_TEST_SET_RADAR 0
-
-/* Number of arguments for  DFS unit test command */
-#define DFS_UNIT_TEST_NUM_ARGS 3
 
 /* Segment ID corresponding to primary segment */
 #define SEG_ID_PRIMARY 0
@@ -42,14 +36,43 @@
 /* Segment ID corresponding to secondary segment */
 #define SEG_ID_SECONDARY 1
 
-/* Index id pointing to command id value */
-#define IDX_CMD_ID 0
+/* dfs_radar_args_for_unit_test: Radar parameters to be sent in unit test cmd.
+ * @IDX_CMD_ID:          Index id pointing to command id value
+ * @IDX_PDEV_ID:         Index id pointing to pdev id value
+ * @IDX_RADAR_PARAM1_ID: Index pointing to packed arguments value that includes
+ *                         1). Segment ID,
+ *                         2). Chirp information (is chirp or non chirp),
+ *                         3). Frequency offset.
+ *
+ * The packed argument structure is:
+ *
+ * ------------------------------32 bits arg-------------------------
+ *
+ * ------------21 bits-------------|-------8 bits------|1 bit|2 bits|
+ * __________________________________________________________________
+ *|                                | | | | | | | | | | |     |   |   |
+ *|---------21 Unused bits---------|x|x|x| |x|x|x|x| |x|  x  | x | x |
+ *|________________________________|_|_|_|_|_|_|_|_|_|_|_____|___|___|
+ *
+ *                                 |___________________|_____|_______|
+ *                                   freq.offset        Chirp  segID
+ *
+ * @DFS_UNIT_TEST_NUM_ARGS:     Number of arguments for bangradar unit test
+ *                              command.
+ * @DFS_MAX_NUM_UNIT_TEST_ARGS: Maximum number of arguments for unit test
+ *                              command in radar simulation.
+ */
+enum {
+	IDX_CMD_ID = 0,
+	IDX_PDEV_ID,
+	IDX_RADAR_PARAM1_ID,
+	DFS_UNIT_TEST_NUM_ARGS,
+	DFS_MAX_NUM_UNIT_TEST_ARGS = DFS_UNIT_TEST_NUM_ARGS
+};
 
-/* Index id pointing to pdev id value */
-#define IDX_PDEV_ID 1
-
-/* Index pointing to segment id value */
-#define IDX_SEG_ID 2
+#define SEG_ID_SIZE 2
+#define IS_CHIRP_SIZE 1
+#define MASK 0xFF
 
 /**
  * struct dfs_emulate_bang_radar_test_cmd - Unit test command structure to send
