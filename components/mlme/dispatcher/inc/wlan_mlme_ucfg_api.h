@@ -702,6 +702,115 @@ QDF_STATUS
 ucfg_mlme_get_dfs_master_capability(struct wlan_objmgr_psoc *psoc,
 				    bool *val);
 
+/*
+ * ucfg_mlme_get_dfs_disable_channel_switch() - Get the dfs channel switch
+ * @psoc: pointer to psoc object
+ * @dfs_disable_channel_switch:  Pointer to the value which will be filled
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_dfs_disable_channel_switch(struct wlan_objmgr_psoc *psoc,
+					 bool *dfs_disable_channel_switch);
+
+/*
+ * ucfg_mlme_set_dfs_disable_channel_switch() - Set the dfs channel switch
+ * @psoc: pointer to psoc object
+ * @dfs_disable_channel_switch: Value that needs to be set.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_dfs_disable_channel_switch(struct wlan_objmgr_psoc *psoc,
+					 bool dfs_disable_channel_switch);
+/*
+ * ucfg_mlme_get_dfs_ignore_cac() - GSet the dfs ignore cac
+ * @psoc: pointer to psoc object
+ * @dfs_ignore_cac: Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_dfs_ignore_cac(struct wlan_objmgr_psoc *psoc,
+			     bool *dfs_ignore_cac);
+
+/*
+ * ucfg_mlme_set_dfs_ignore_cac() - Set the dfs ignore cac
+ * @psoc: pointer to psoc object
+ * @dfs_ignore_cac: Value that needs to be set.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_dfs_ignore_cac(struct wlan_objmgr_psoc *psoc,
+			     bool dfs_ignore_cac);
+
+/*
+ * ucfg_mlme_get_sap_tx_leakage_threshold() - Get sap tx leakage threshold
+ * @psoc: pointer to psoc object
+ * @sap_tx_leakage_threshold: Pointer to the value which will be filled
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_sap_tx_leakage_threshold(struct wlan_objmgr_psoc *psoc,
+				       uint32_t *sap_tx_leakage_threshold);
+
+/*
+ * ucfg_mlme_set_sap_tx_leakage_threshold() - Set sap tx leakage threshold
+ * @psoc: pointer to psoc object
+ * @sap_tx_leakage_threshold: Value that needs to be set.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_sap_tx_leakage_threshold(struct wlan_objmgr_psoc *psoc,
+				       uint32_t sap_tx_leakage_threshold);
+
+/*
+ * ucfg_mlme_get_dfs_filter_offload() - Get the dfs filter offload
+ * @psoc: pointer to psoc object
+ * @dfs_filter_offload: Pointer to the value which will be filled
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_dfs_filter_offload(struct wlan_objmgr_psoc *psoc,
+				 bool *dfs_filter_offload);
+
+/*
+ * ucfg_mlme_set_dfs_filter_offload() - Set the dfs filter offload
+ * @psoc: pointer to psoc object
+ * @dfs_filter_offload: Value that needs to be set.
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_dfs_filter_offload(struct wlan_objmgr_psoc *psoc,
+				 bool dfs_filter_offload);
+
+/**
+ * ucfg_mlme_get_fine_time_meas_cap() - Get fine timing measurement capability
+ * @psoc: pointer to psoc object
+ * @fine_time_meas_cap: Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_fine_time_meas_cap(struct wlan_objmgr_psoc *psoc,
+				 uint32_t *fine_time_meas_cap);
+
+/**
+ * ucfg_mlme_set_fine_time_meas_cap() - Set fine timing measurement capability
+ * @psoc: pointer to psoc object
+ * @fine_time_meas_cap:  Value to be set
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_fine_time_meas_cap(struct wlan_objmgr_psoc *psoc,
+				 uint32_t fine_time_meas_cap);
+
 /**
  * ucfg_mlme_get_pmkid_modes() - Get PMKID modes
  * @psoc: pointer to psoc object
@@ -1115,6 +1224,28 @@ ucfg_mlme_get_home_away_time(struct wlan_objmgr_psoc *psoc, uint16_t *val);
 QDF_STATUS
 ucfg_mlme_set_fast_roam_in_concurrency_enabled(struct wlan_objmgr_psoc *psoc,
 					       bool val);
+
+/**
+ * ucfg_mlme_get_wmi_wq_watchdog_timeout() - Get timeout for wmi watchdog bite
+ * @psoc: pointer to psoc object
+ * @wmi_wq_watchdog_timeout: buffer to hold value
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_wmi_wq_watchdog_timeout(struct wlan_objmgr_psoc *psoc,
+				      uint32_t *wmi_wq_watchdog_timeout);
+
+/**
+ * ucfg_mlme_set_wmi_wq_watchdog_timeout() - Set timeout for wmi watchdog bite
+ * @psoc: pointer to psoc object
+ * @wmi_wq_watchdog_timeout: value to be set
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_wmi_wq_watchdog_timeout(struct wlan_objmgr_psoc *psoc,
+				      uint32_t wmi_wq_watchdog_timeout);
 
 /**
  * ucfg_mlme_get_ps_data_inactivity_timeout() - Get data inactivity timeout

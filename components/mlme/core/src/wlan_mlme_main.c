@@ -28,13 +28,16 @@
 
 #define NUM_OF_SOUNDING_DIMENSIONS     1 /*Nss - 1, (Nss = 2 for 2x2)*/
 
-struct wlan_mlme_psoc_obj *mlme_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
+struct wlan_mlme_psoc_obj *mlme_get_psoc_obj_fl(struct wlan_objmgr_psoc *psoc,
+						const char *func, uint32_t line)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
 	mlme_obj = (struct wlan_mlme_psoc_obj *)
 		wlan_objmgr_psoc_get_comp_private_obj(psoc,
 						      WLAN_UMAC_COMP_MLME);
+	if (!mlme_obj)
+		mlme_err("mlme obj is null, %s:%d", func, line);
 
 	return mlme_obj;
 }
@@ -585,6 +588,8 @@ static void mlme_init_timeout_cfg(struct wlan_objmgr_psoc *psoc,
 			cfg_get(psoc, CFG_AP_LINK_MONITOR_TIMEOUT);
 	timeouts->ps_data_inactivity_timeout =
 			cfg_get(psoc, CFG_PS_DATA_INACTIVITY_TIMEOUT);
+	timeouts->wmi_wq_watchdog_timeout =
+			cfg_get(psoc, CFG_WMI_WQ_WATCHDOG);
 }
 
 static void mlme_init_ht_cap_in_cfg(struct wlan_objmgr_psoc *psoc,
@@ -850,8 +855,19 @@ static void mlme_init_rates_in_cfg(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_dfs_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_dfs_cfg *dfs_cfg)
 {
-	dfs_cfg->dfs_master_capable = cfg_get(psoc,
-					      CFG_ENABLE_DFS_MASTER_CAPABILITY);
+	dfs_cfg->dfs_ignore_cac = cfg_get(psoc, CFG_IGNORE_CAC);
+	dfs_cfg->dfs_master_capable =
+		cfg_get(psoc, CFG_ENABLE_DFS_MASTER_CAPABILITY);
+	dfs_cfg->dfs_disable_channel_switch =
+		cfg_get(psoc, CFG_DISABLE_DFS_CH_SWITCH);
+	dfs_cfg->dfs_filter_offload =
+		cfg_get(psoc, CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD);
+	dfs_cfg->dfs_prefer_non_dfs =
+		cfg_get(psoc, CFG_ENABLE_NON_DFS_CHAN_ON_RADAR);
+	dfs_cfg->dfs_beacon_tx_enhanced =
+		cfg_get(psoc, CFG_DFS_BEACON_TX_ENHANCED);
+	dfs_cfg->sap_tx_leakage_threshold =
+		cfg_get(psoc, CFG_SAP_TX_LEAKAGE_THRESHOLD);
 }
 
 static void mlme_init_feature_flag_in_cfg(
@@ -1687,6 +1703,13 @@ static void mlme_init_wep_cfg(struct wlan_mlme_wep_cfg *wep_params)
 	mlme_init_wep_keys(wep_params);
 }
 
+static void mlme_init_wifi_pos_cfg(struct wlan_objmgr_psoc *psoc,
+				   struct wlan_mlme_wifi_pos_cfg *wifi_pos_cfg)
+{
+	wifi_pos_cfg->fine_time_meas_cap =
+		cfg_get(psoc, CFG_FINE_TIME_MEAS_CAPABILITY);
+}
+
 #ifdef FEATURE_WLAN_ESE
 static void mlme_init_inactivity_intv(struct wlan_objmgr_psoc *psoc,
 				      struct wlan_mlme_wmm_params *wmm_params)
@@ -1844,6 +1867,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_power_cfg(psoc, &mlme_cfg->power);
 	mlme_init_oce_cfg(psoc, &mlme_cfg->oce);
 	mlme_init_wep_cfg(&mlme_cfg->wep_params);
+	mlme_init_wifi_pos_cfg(psoc, &mlme_cfg->wifi_pos_cfg);
 	mlme_init_wps_params_cfg(psoc, &mlme_cfg->wps_params);
 
 	return status;

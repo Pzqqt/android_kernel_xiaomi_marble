@@ -573,9 +573,21 @@ struct wlan_mlme_cfg_sap {
 /**
  * struct wlan_mlme_dfs_cfg - DFS Capabilities related config items
  * @dfs_master_capable: Is DFS master mode support enabled
+ * @dfs_disable_channel_switch: disable channel switch on radar detection
+ * @dfs_ignore_cac: Disable cac
+ * @dfs_filter_offload: dfs filter offloaad
+ * @dfs_beacon_tx_enhanced: enhance dfs beacon tx
+ * @dfs_prefer_non_dfs: perefer non dfs channel after radar
+ * @sap_tx_leakage_threshold: sap tx leakage threshold
  */
 struct wlan_mlme_dfs_cfg {
 	bool dfs_master_capable;
+	bool dfs_disable_channel_switch;
+	bool dfs_ignore_cac;
+	bool dfs_filter_offload;
+	bool dfs_beacon_tx_enhanced;
+	bool dfs_prefer_non_dfs;
+	uint32_t sap_tx_leakage_threshold;
 };
 
 /**
@@ -1556,6 +1568,7 @@ struct wlan_mlme_power {
  * @ap_keep_alive_timeout: AP keep alive timeout value
  * @ap_link_monitor_timeout: AP link monitor timeout value
  * @ps_data_inactivity_timeout: PS data inactivity timeout
+ * @wmi_wq_watchdog_timeout: timeout period for wmi watchdog bite
  */
 struct wlan_mlme_timeout {
 	uint32_t join_failure_timeout;
@@ -1570,6 +1583,7 @@ struct wlan_mlme_timeout {
 	uint32_t ap_keep_alive_timeout;
 	uint32_t ap_link_monitor_timeout;
 	uint32_t ps_data_inactivity_timeout;
+	uint32_t wmi_wq_watchdog_timeout;
 };
 
 /**
@@ -1631,6 +1645,14 @@ struct wlan_mlme_wep_cfg {
 };
 
 /**
+ * struct wlan_mlme_wifi_pos_cfg - WIFI POS configs
+ * @fine_time_meas_cap: fine timing measurement capability information
+ */
+struct wlan_mlme_wifi_pos_cfg {
+	uint32_t fine_time_meas_cap;
+};
+
+/**
  * struct wlan_mlme_cfg - MLME config items
  * @chainmask_cfg: VHT chainmask related cfg items
  * @edca_params: edca related CFG items
@@ -1658,6 +1680,7 @@ struct wlan_mlme_wep_cfg {
  * @acs: ACS related CFG items
  * @feature_flags: Feature flag config items
  * @wep_params:  WEP related config items
+ * @wifi_pos_cfg: WIFI POS config
  * @wmm_params: WMM related CFG & INI Items
  * @wps_params: WPS related CFG itmes
  */
@@ -1690,6 +1713,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_acs acs;
 	struct wlan_mlme_feature_flag feature_flags;
 	struct wlan_mlme_wep_cfg wep_params;
+	struct wlan_mlme_wifi_pos_cfg wifi_pos_cfg;
 	struct wlan_mlme_wmm_params wmm_params;
 	struct wlan_mlme_wps_params wps_params;
 };

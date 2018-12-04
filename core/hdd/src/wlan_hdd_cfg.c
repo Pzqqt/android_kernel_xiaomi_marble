@@ -48,14 +48,6 @@
 #include "cfg_ucfg_api.h"
 #include "hdd_dp_cfg.h"
 
-static void ch_notify_set_g_disable_dfs_japan_w53(struct hdd_context *hdd_ctx,
-						  unsigned long notify_id)
-{
-	bool disabled = hdd_ctx->config->gDisableDfsJapanW53;
-
-	wlansap_set_dfs_restrict_japan_w53(hdd_ctx->mac_handle, disabled);
-}
-
 struct reg_table_entry g_registry_table[] = {
 	REG_VARIABLE(CFG_ENABLE_CONNECTED_SCAN_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_connected_scan,
@@ -495,22 +487,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_THROTTLE_DUTY_CYCLE_LEVEL3_MIN,
 		     CFG_THROTTLE_DUTY_CYCLE_LEVEL3_MAX),
 
-	REG_VARIABLE(CFG_DISABLE_DFS_CH_SWITCH, WLAN_PARAM_Integer,
-		     struct hdd_config, disableDFSChSwitch,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_DISABLE_DFS_CH_SWITCH_DEFAULT,
-		     CFG_DISABLE_DFS_CH_SWITCH_MIN,
-		     CFG_DISABLE_DFS_CH_SWITCH_MAX),
-
-	REG_DYNAMIC_VARIABLE(CFG_DISABLE_DFS_JAPAN_W53, WLAN_PARAM_Integer,
-			     struct hdd_config, gDisableDfsJapanW53,
-			     VAR_FLAGS_OPTIONAL |
-			     VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-			     CFG_DISABLE_DFS_JAPAN_W53_DEFAULT,
-			     CFG_DISABLE_DFS_JAPAN_W53_MIN,
-			     CFG_DISABLE_DFS_JAPAN_W53_MAX,
-			     ch_notify_set_g_disable_dfs_japan_w53, 0),
-
 	REG_VARIABLE(CFG_ENABLE_FIRST_SCAN_2G_ONLY_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enableFirstScan2GOnly,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -640,14 +616,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MIN,
 		     CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config, fDfsPhyerrFilterOffload,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_DEFAULT,
-		     CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_MIN,
-		     CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_OVERLAP_CH, WLAN_PARAM_Integer,
 		     struct hdd_config, gEnableOverLapCh,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
@@ -697,20 +665,6 @@ struct reg_table_entry g_registry_table[] = {
 			    struct hdd_config, enableFwModuleLogLevel,
 			    VAR_FLAGS_OPTIONAL,
 			    (void *)CFG_ENABLE_FW_MODULE_LOG_DEFAULT),
-
-	REG_VARIABLE(CFG_IGNORE_CAC_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, ignoreCAC,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_IGNORE_CAC_DEFAULT,
-		     CFG_IGNORE_CAC_MIN,
-		     CFG_IGNORE_CAC_MAX),
-
-	REG_VARIABLE(CFG_DFS_RADAR_PRI_MULTIPLIER_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, dfsRadarPriMultiplier,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_DFS_RADAR_PRI_MULTIPLIER_DEFAULT,
-		     CFG_DFS_RADAR_PRI_MULTIPLIER_MIN,
-		     CFG_DFS_RADAR_PRI_MULTIPLIER_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_SAP_SUSPEND, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_sap_suspend,
@@ -772,20 +726,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_GO_11AC_OVERRIDE_DEFAULT,
 		     CFG_GO_11AC_OVERRIDE_MIN,
 		     CFG_GO_11AC_OVERRIDE_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_NON_DFS_CHAN_ON_RADAR, WLAN_PARAM_Integer,
-		     struct hdd_config, prefer_non_dfs_on_radar,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_DEFAULT,
-		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MIN,
-		     CFG_ENABLE_NON_DFS_CHAN_ON_RADAR_MAX),
-
-	REG_VARIABLE(CFG_FINE_TIME_MEAS_CAPABILITY, WLAN_PARAM_HexInteger,
-		struct hdd_config, fine_time_meas_cap,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_FINE_TIME_MEAS_CAPABILITY_DEFAULT,
-		CFG_FINE_TIME_MEAS_CAPABILITY_MIN,
-		CFG_FINE_TIME_MEAS_CAPABILITY_MAX),
 
 	REG_VARIABLE(CFG_MAX_SCAN_COUNT_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, max_scan_count,
@@ -995,14 +935,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_MARK_INDOOR_AS_DISABLE_DEFAULT,
 		     CFG_MARK_INDOOR_AS_DISABLE_MIN,
 		     CFG_MARK_INDOOR_AS_DISABLE_MAX),
-
-	REG_VARIABLE(CFG_SAP_TX_LEAKAGE_THRESHOLD_NAME,
-		WLAN_PARAM_Integer,
-		struct hdd_config, sap_tx_leakage_threshold,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_SAP_TX_LEAKAGE_THRESHOLD_DEFAULT,
-		CFG_SAP_TX_LEAKAGE_THRESHOLD_MIN,
-		CFG_SAP_TX_LEAKAGE_THRESHOLD_MAX),
 
 	REG_VARIABLE(CFG_RESTART_BEACONING_ON_CH_AVOID_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, restart_beaconing_on_chan_avoid_event,
@@ -1223,14 +1155,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_LATENCY_FLAGS_ULTRALOW_MIN,
 		     CFG_LATENCY_FLAGS_ULTRALOW_MAX),
 
-
-	REG_VARIABLE(CFG_DFS_BEACON_TX_ENHANCED, WLAN_PARAM_Integer,
-		struct hdd_config, dfs_beacon_tx_enhanced,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_DFS_BEACON_TX_ENHANCED_DEFAULT,
-		CFG_DFS_BEACON_TX_ENHANCED_MIN,
-		CFG_DFS_BEACON_TX_ENHANCED_MAX),
-
 	REG_VARIABLE(CFG_BTM_ENABLE_NAME, WLAN_PARAM_HexInteger,
 		     struct hdd_config, btm_offload_config,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1340,13 +1264,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_OFFLOAD_NEIGHBOR_REPORT_MAX_REQ_CAP_DEFAULT,
 		     CFG_OFFLOAD_NEIGHBOR_REPORT_MAX_REQ_CAP_MIN,
 		     CFG_OFFLOAD_NEIGHBOR_REPORT_MAX_REQ_CAP_MAX),
-
-	REG_VARIABLE(CFG_WMI_WQ_WATCHDOG, WLAN_PARAM_Integer,
-		     struct hdd_config, wmi_wq_watchdog_timeout,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_WMI_WQ_WATCHDOG_DEFAULT,
-		     CFG_WMI_WQ_WATCHDOG_MIN,
-		     CFG_WMI_WQ_WATCHDOG_MAX),
 
 	REG_VARIABLE(CFG_DTIM_SELECTION_DIVERSITY_NAME,
 		     WLAN_PARAM_Integer,
@@ -2540,16 +2457,11 @@ QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *hdd_ctx, bool val)
  */
 static void hdd_set_fine_time_meas_cap(struct hdd_context *hdd_ctx)
 {
-	struct hdd_config *config = hdd_ctx->config;
-	uint32_t capability = config->fine_time_meas_cap;
+	uint32_t capability = 0;
 
-	/* Make sure only supported capabilities are enabled in INI */
-	capability &= CFG_FINE_TIME_MEAS_CAPABILITY_MAX;
+	ucfg_mlme_get_fine_time_meas_cap(hdd_ctx->psoc, &capability);
 	ucfg_wifi_pos_set_ftm_cap(hdd_ctx->psoc, capability);
-
-	hdd_debug("fine time meas capability - INI: %04x Enabled: %04x",
-		config->fine_time_meas_cap,
-		capability);
+	hdd_debug("fine time meas capability - Enabled: %04x", capability);
 }
 
 /**
@@ -3028,9 +2940,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.sap_channel_avoidance =
 		hdd_ctx->config->sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-
-	smeConfig->csrConfig.f_prefer_non_dfs_on_radar =
-		hdd_ctx->config->prefer_non_dfs_on_radar;
 
 	smeConfig->csrConfig.is_ps_enabled = hdd_ctx->config->is_ps_enabled;
 	smeConfig->csrConfig.auto_bmps_timer_val =

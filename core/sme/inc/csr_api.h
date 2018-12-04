@@ -880,7 +880,6 @@ struct csr_roam_profile {
 	uint8_t wps_state;
 	tCsrMobilityDomainInfo MDID;
 	enum QDF_OPMODE csrPersona;
-	uint8_t disableDFSChSwitch;
 	/* addIe params */
 	tSirAddIeParams addIeParams;
 	uint16_t beacon_tx_rate;
@@ -1119,7 +1118,6 @@ typedef struct tagCsrConfigParam {
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	bool sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-	uint8_t f_prefer_non_dfs_on_radar;
 	bool is_ps_enabled;
 	uint32_t auto_bmps_timer_val;
 	uint32_t dual_mac_feature_disable;

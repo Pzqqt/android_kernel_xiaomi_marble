@@ -721,8 +721,6 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	 * Copy the DFS Test Mode setting to pmac for
 	 * access in lower layers
 	 */
-	pmac->sap.SapDfsInfo.disable_dfs_ch_switch =
-				pConfig->disableDFSChSwitch;
 	pmac->sap.SapDfsInfo.sap_ch_switch_beacon_cnt =
 				pConfig->sap_chanswitch_beacon_cnt;
 	pmac->sap.SapDfsInfo.sap_ch_switch_mode =
@@ -733,8 +731,6 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 		sap_ctx->csr_roamProfile.csrPersona;
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sessionID =
 		sap_ctx->sessionId;
-	pmac->sap.SapDfsInfo.dfs_beacon_tx_enhanced =
-		pConfig->dfs_beacon_tx_enhanced;
 	pmac->sap.SapDfsInfo.reduced_beacon_interval =
 				pConfig->reduced_beacon_interval;
 
@@ -1857,47 +1853,6 @@ QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t mac_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-wlansap_set_dfs_restrict_japan_w53(mac_handle_t mac_handle,
-				   uint8_t disable_dfs_w53)
-{
-	tpAniSirGlobal mac = NULL;
-	QDF_STATUS status;
-	enum dfs_reg dfs_region;
-
-	if (NULL != mac_handle) {
-		mac = MAC_CONTEXT(mac_handle);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid mac_handle pointer", __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	wlan_reg_get_dfs_region(mac->pdev, &dfs_region);
-
-	/*
-	 * Set the JAPAN W53 restriction only if the current
-	 * regulatory domain is JAPAN.
-	 */
-	if (DFS_MKK_REGION == dfs_region) {
-		mac->sap.SapDfsInfo.is_dfs_w53_disabled = disable_dfs_w53;
-		QDF_TRACE(QDF_MODULE_ID_SAP,
-			  QDF_TRACE_LEVEL_INFO_LOW,
-			  FL("sapdfs: SET DFS JAPAN W53 DISABLED = %d"),
-			  mac->sap.SapDfsInfo.is_dfs_w53_disabled);
-
-		status = QDF_STATUS_SUCCESS;
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL
-			 ("Regdomain not japan, set disable JP W53 not valid"));
-
-		status = QDF_STATUS_E_FAULT;
-	}
-
-	return status;
-}
-
 bool sap_is_auto_channel_select(struct sap_context *sapcontext)
 {
 	if (NULL == sapcontext) {
@@ -2446,25 +2401,6 @@ void wlan_sap_enable_phy_error_logs(mac_handle_t mac_handle,
 uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx)
 {
 	return wlan_sap_get_vht_ch_width(sap_ctx);
-}
-
-QDF_STATUS wlansap_set_tx_leakage_threshold(mac_handle_t mac_handle,
-					    uint16_t tx_leakage_threshold)
-{
-	tpAniSirGlobal mac;
-
-	if (NULL == mac_handle) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			"%s: Invalid mac_handle pointer", __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	mac = MAC_CONTEXT(mac_handle);
-	tgt_dfs_set_tx_leakage_threshold(mac->pdev, tx_leakage_threshold);
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: leakage_threshold %d", __func__,
-		  tx_leakage_threshold);
-	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlansap_set_invalid_session(struct sap_context *sap_ctx)

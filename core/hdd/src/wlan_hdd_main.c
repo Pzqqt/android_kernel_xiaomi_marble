@@ -1885,6 +1885,7 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	mac_handle_t mac_handle;
 	bool bval = false;
 	uint8_t value = 0;
+	uint32_t fine_time_meas_cap = 0;
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
@@ -2051,10 +2052,19 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	hdd_update_hw_dbs_capable(hdd_ctx);
 	hdd_ctx->dynamic_nss_chains_support =
 					cfg->dynamic_nss_chains_support;
-	hdd_ctx->config->fine_time_meas_cap &= cfg->fine_time_measurement_cap;
+	ucfg_mlme_get_fine_time_meas_cap(hdd_ctx->psoc, &fine_time_meas_cap);
+	fine_time_meas_cap &= cfg->fine_time_measurement_cap;
+	status = ucfg_mlme_set_fine_time_meas_cap(hdd_ctx->psoc,
+						  fine_time_meas_cap);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("failed to set fine_time_meas_cap, 0x%x, ox%x",
+			fine_time_meas_cap, cfg->fine_time_measurement_cap);
+		ucfg_mlme_get_fine_time_meas_cap(hdd_ctx->psoc,
+						 &fine_time_meas_cap);
+	}
+
 	hdd_ctx->fine_time_meas_cap_target = cfg->fine_time_measurement_cap;
-	hdd_debug("fine_time_meas_cap: 0x%x",
-		  hdd_ctx->config->fine_time_meas_cap);
+	hdd_debug("fine_time_meas_cap: 0x%x", fine_time_meas_cap);
 
 	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &bval);
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -2126,15 +2136,18 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
 	struct hdd_ap_ctx *ap_ctx;
+	bool dfs_disable_channel_switch = false;
 
 	if (!hdd_ctx) {
 		hdd_info("Couldn't get hdd_ctx");
 		return true;
 	}
 
-	if (hdd_ctx->config->disableDFSChSwitch) {
+	ucfg_mlme_get_dfs_disable_channel_switch(hdd_ctx->psoc,
+						 &dfs_disable_channel_switch);
+	if (dfs_disable_channel_switch) {
 		hdd_info("skip tx block hdd_ctx=%pK, disableDFSChSwitch=%d",
-			 hdd_ctx, hdd_ctx->config->disableDFSChSwitch);
+			 hdd_ctx, dfs_disable_channel_switch);
 		return true;
 	}
 
@@ -9577,6 +9590,7 @@ int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 	bool is_ssr = false;
 	int ret;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint32_t fine_time_meas_cap = 0;
 
 	hdd_enter();
 
@@ -9606,12 +9620,14 @@ int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 		return ret;
 	}
 
-	if (adapter->device_mode == QDF_SAP_MODE)
+	if (adapter->device_mode == QDF_SAP_MODE) {
+		ucfg_mlme_get_fine_time_meas_cap(hdd_ctx->psoc,
+						 &fine_time_meas_cap);
 		sme_cli_set_command(adapter->session_id,
 			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_RESPONDER_ROLE,
-			(bool)(hdd_ctx->config->fine_time_meas_cap &
-							WMI_FW_AP_RTT_RESPR),
+			(bool)(fine_time_meas_cap & WMI_FW_AP_RTT_RESPR),
 			VDEV_CMD);
+	}
 
 	status = hdd_init_ap_mode(adapter, is_ssr);
 
@@ -9712,14 +9728,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	ucfg_mlme_get_sap_max_modulated_dtim(hdd_ctx->psoc,
 					     &cds_cfg->sta_maxlimod_dtim);
 
-	/*
-	 * Copy the DFS Phyerr Filtering Offload status.
-	 * This parameter reflects the value of the
-	 * dfs_phyerr_filter_offload flag as set in the ini.
-	 */
-	cds_cfg->dfs_phyerr_filter_offload =
-		hdd_ctx->config->fDfsPhyerrFilterOffload;
-
 	status = ucfg_mlme_get_crash_inject(hdd_ctx->psoc, &crash_inject);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to get crash inject ini config");
@@ -9754,8 +9762,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 						    &value);
 	cds_cfg->ap_maxoffload_reorderbuffs = value;
 
-	cds_cfg->dfs_pri_multiplier =
-		hdd_ctx->config->dfsRadarPriMultiplier;
 	cds_cfg->reorder_offload =
 			cfg_get(hdd_ctx->psoc, CFG_DP_REORDER_OFFLOAD_SUPPORT);
 
@@ -14229,11 +14235,11 @@ QDF_STATUS hdd_update_score_config(
 static int hdd_update_dfs_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
-	struct hdd_config *cfg = hdd_ctx->config;
 	struct dfs_user_config dfs_cfg;
 	QDF_STATUS status;
 
-	dfs_cfg.dfs_is_phyerr_filter_offload = !!cfg->fDfsPhyerrFilterOffload;
+	ucfg_mlme_get_dfs_filter_offload(hdd_ctx->psoc,
+					 &dfs_cfg.dfs_is_phyerr_filter_offload);
 	status = ucfg_dfs_update_config(psoc, &dfs_cfg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed dfs psoc configuration");

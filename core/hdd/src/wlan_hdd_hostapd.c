@@ -4628,10 +4628,11 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	uint16_t prev_rsn_length = 0;
 	enum dfs_mode mode;
 	struct hdd_adapter *sta_adapter;
-	uint8_t ignore_cac = 0;
+	bool ignore_cac = 0;
 	uint8_t beacon_fixed_len;
 	int value;
 	bool val;
+	uint32_t tx_leakage_threshold = 0;
 	uint32_t auto_channel_select_weight =
 		cfg_default(CFG_AUTO_CHANNEL_SELECT_WEIGHT);
 	uint8_t pref_chan_location = 0;
@@ -4768,7 +4769,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		hdd_err("ucfg_mlme_get_auto_channel_weight failed, set def");
 
 	pConfig->auto_channel_select_weight = auto_channel_select_weight;
-	pConfig->disableDFSChSwitch = iniConfig->disableDFSChSwitch;
 	ucfg_mlme_get_sap_chn_switch_bcn_count(hdd_ctx->psoc, &value);
 	pConfig->sap_chanswitch_beacon_cnt = value;
 	ucfg_mlme_get_sap_channel_switch_mode(hdd_ctx->psoc, &val);
@@ -4793,7 +4793,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	ucfg_mlme_get_sap_reduces_beacon_interval(hdd_ctx->psoc, &value);
 	pConfig->dtim_period = pBeacon->dtim_period;
-	pConfig->dfs_beacon_tx_enhanced = iniConfig->dfs_beacon_tx_enhanced;
 
 	pConfig->reduced_beacon_interval = value;
 	hdd_debug("acs_mode %d", pConfig->acs_cfg.acs_mode);
@@ -4866,14 +4865,13 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			goto error;
 		}
 
-		if (iniConfig->ignoreCAC ||
+		ucfg_mlme_get_dfs_ignore_cac(hdd_ctx->psoc, &ignore_cac);
+		if (ignore_cac ||
 		    ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
 		    iniConfig->sta_sap_scc_on_dfs_chan))
 			ignore_cac = 1;
 
 		wlansap_set_dfs_ignore_cac(mac_handle, ignore_cac);
-		wlansap_set_dfs_restrict_japan_w53(mac_handle,
-			iniConfig->gDisableDfsJapanW53);
 		ucfg_mlme_get_pref_chan_location(hdd_ctx->psoc,
 						 &pref_chan_location);
 		wlansap_set_dfs_preferred_channel_location(mac_handle,
@@ -4890,8 +4888,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		pConfig->ieee80211d = 0;
 	}
 
-	wlansap_set_tx_leakage_threshold(mac_handle,
-		iniConfig->sap_tx_leakage_threshold);
+	ucfg_mlme_get_sap_tx_leakage_threshold(hdd_ctx->psoc,
+					       &tx_leakage_threshold);
+	tgt_dfs_set_tx_leakage_threshold(hdd_ctx->pdev, tx_leakage_threshold);
 
 	capab_info = pMgmt_frame->u.beacon.capab_info;
 

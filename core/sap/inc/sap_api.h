@@ -587,7 +587,6 @@ typedef struct sap_config {
 	uint32_t ap_table_expiration_time;
 	uint32_t ht_op_mode_fixed;
 	enum QDF_OPMODE persona; /* Tells us which persona, GO or AP */
-	uint8_t disableDFSChSwitch;
 	bool enOverLapCh;
 #ifdef WLAN_FEATURE_11W
 	bool mfpRequired;
@@ -625,7 +624,6 @@ typedef struct sap_config {
 	uint8_t sap_chanswitch_beacon_cnt;
 	uint8_t sap_chanswitch_mode;
 	bool chan_switch_hostapd_rate_enabled;
-	bool dfs_beacon_tx_enhanced;
 	uint16_t reduced_beacon_interval;
 } tsap_config_t;
 
@@ -720,7 +718,6 @@ typedef struct sSapDfsInfo {
 	/* beacon count before channel switch */
 	uint8_t sap_ch_switch_beacon_cnt;
 	uint8_t sap_ch_switch_mode;
-	bool dfs_beacon_tx_enhanced;
 	uint16_t reduced_beacon_interval;
 } tSapDfsInfo;
 
@@ -1268,19 +1265,6 @@ QDF_STATUS wlansap_get_dfs_ignore_cac(mac_handle_t mac_handle,
 QDF_STATUS wlansap_set_dfs_ignore_cac(mac_handle_t mac_handle,
 				      uint8_t ignore_cac);
 
-/**
- * wlansap_set_dfs_restrict_japan_w53() - enable/disable dfS for japan
- * @mac_handle: Opaque handle to the global MAC context
- * @disable_dfs_w53: Indicates if Japan W53 is disabled when set to 1
- *                   Indicates if Japan W53 is enabled when set to 0
- *
- * This API is used to enable or disable Japan W53 Band
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success
- */
-QDF_STATUS wlansap_set_dfs_restrict_japan_w53(mac_handle_t mac_handle,
-					      uint8_t disable_dfs_w53);
-
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 QDF_STATUS
 wlan_sap_set_channel_avoidance(mac_handle_t mac_handle,
@@ -1437,18 +1421,6 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
  * Return: sap channel width
  */
 uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx);
-
-/**
- * wlansap_set_tx_leakage_threshold() - set sap tx leakage threshold.
- * @mac_handle: Opaque handle to the global MAC context
- * @tx_leakage_threshold: sap tx leakage threshold
- *
- * This function set sap tx leakage threshold.
- *
- * Return: QDF_STATUS.
- */
-QDF_STATUS wlansap_set_tx_leakage_threshold(mac_handle_t mac_handle,
-					    uint16_t tx_leakage_threshold);
 
 /*
  * wlansap_set_invalid_session() - set session ID to invalid

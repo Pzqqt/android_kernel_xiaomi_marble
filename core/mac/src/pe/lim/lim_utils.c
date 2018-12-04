@@ -7936,7 +7936,7 @@ void lim_process_ap_ecsa_timeout(void *data)
 
 		ch = session->gLimChannelSwitch.primaryChannel;
 		ch_width = session->gLimChannelSwitch.ch_width;
-		if (mac_ctx->sap.SapDfsInfo.dfs_beacon_tx_enhanced)
+		if (mac_ctx->mlme_cfg->dfs_cfg.dfs_beacon_tx_enhanced)
 			/* Send Action frame after updating beacon */
 			lim_send_chan_switch_action_frame(mac_ctx, ch, ch_width,
 							  session);

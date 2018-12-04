@@ -193,7 +193,7 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 	uint8_t ch_wd;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	struct ch_params *ch_params;
-	uint32_t hw_mode;
+	uint32_t hw_mode, flag  = 0;
 	struct mac_context *mac_ctx;
 	struct dfs_acs_info acs_info = {0};
 
@@ -226,8 +226,12 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 	} else {
 		acs_info.acs_mode = false;
 	}
+
+	if (mac_ctx->mlme_cfg->dfs_cfg.dfs_prefer_non_dfs)
+		flag |= DFS_RANDOM_CH_FLAG_NO_DFS_CH;
+
 	if (QDF_IS_STATUS_ERROR(utils_dfs_get_random_channel(
-	    pdev, 0, ch_params, &hw_mode, &ch, &acs_info))) {
+	    pdev, flag, ch_params, &hw_mode, &ch, &acs_info))) {
 		/* No available channel found */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("No available channel found!!!"));
@@ -544,32 +548,10 @@ void sap_dfs_set_current_channel(void *ctx)
 			tgt_dfs_get_radars(pdev);
 		}
 		tgt_dfs_set_phyerr_filter_offload(pdev);
-		if (sap_ctx->csr_roamProfile.disableDFSChSwitch)
+		if (mac_ctx->mlme_cfg->dfs_cfg.dfs_disable_channel_switch)
 			tgt_dfs_control(pdev, DFS_SET_USENOL, &use_nol,
 					sizeof(uint32_t), NULL, NULL, &error);
 	}
-}
-
-bool sap_dfs_is_w53_invalid(mac_handle_t mac_handle, uint8_t channel_id)
-{
-	tpAniSirGlobal mac;
-
-	mac = MAC_CONTEXT(mac_handle);
-	if (NULL == mac) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("invalid mac"));
-		return false;
-	}
-
-	/*
-	 * Check for JAPAN W53 Channel operation capability
-	 */
-	if (true == mac->sap.SapDfsInfo.is_dfs_w53_disabled &&
-	    true == IS_CHAN_JAPAN_W53(channel_id)) {
-		return true;
-	}
-
-	return false;
 }
 
 bool sap_dfs_is_channel_in_preferred_location(mac_handle_t mac_handle,
@@ -2826,7 +2808,6 @@ sapconvert_to_csr_profile(tsap_config_t *pconfig_params, eCsrRoamBssType bssType
 	profile->BSSType = eCSR_BSS_TYPE_INFRA_AP;
 	profile->SSIDs.numOfSSIDs = 1;
 	profile->csrPersona = pconfig_params->persona;
-	profile->disableDFSChSwitch = pconfig_params->disableDFSChSwitch;
 
 	qdf_mem_zero(profile->SSIDs.SSIDList[0].SSID.ssId,
 		     sizeof(profile->SSIDs.SSIDList[0].SSID.ssId));
@@ -3462,7 +3443,7 @@ uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
 	if (sap_ctx->fsm_state == SAP_STARTED)
 		mac->sap.SapDfsInfo.csaIERequired = true;
 
-	if (sap_ctx->csr_roamProfile.disableDFSChSwitch)
+	if (mac->mlme_cfg->dfs_cfg.dfs_disable_channel_switch)
 		return sap_ctx->channel;
 
 	/* set the Radar Found flag in SapDfsInfo */

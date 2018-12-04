@@ -285,6 +285,32 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"PS data inactivity timeout")
 
+/*
+ * <ini>
+ * wmi_wq_watchdog - Sets timeout period for wmi watchdog bite.
+ * @Min: 0
+ * @Max: 30
+ * @Default: 20
+ *
+ * This ini is used to set timeout period for wmi watchdog bite. If it is
+ * 0 then wmi watchdog bite is disabled.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_WMI_WQ_WATCHDOG CFG_INI_UINT( \
+		"wmi_wq_watchdog", \
+		0, \
+		30, \
+		20, \
+		CFG_VALUE_OR_DEFAULT, \
+		"timeout period for wmi watchdog bite")
+
 #define CFG_TIMEOUT_ALL \
 	CFG(CFG_JOIN_FAILURE_TIMEOUT) \
 	CFG(CFG_AUTH_FAILURE_TIMEOUT) \
@@ -297,6 +323,7 @@
 	CFG(CFG_HEART_BEAT_THRESHOLD) \
 	CFG(CFG_AP_KEEP_ALIVE_TIMEOUT) \
 	CFG(CFG_AP_LINK_MONITOR_TIMEOUT) \
+	CFG(CFG_WMI_WQ_WATCHDOG) \
 	CFG(CFG_PS_DATA_INACTIVITY_TIMEOUT)
 
 #endif /* __CFG_MLME_TIMEOUT_H */
