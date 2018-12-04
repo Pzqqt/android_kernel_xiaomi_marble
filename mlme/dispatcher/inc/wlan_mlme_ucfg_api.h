@@ -2359,6 +2359,66 @@ ucfg_mlme_update_nss_vht_cap(struct wlan_objmgr_psoc *psoc)
 }
 
 /**
+ * ucfg_mlme_is_11h_enabled() - Get 11h flag
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_is_11h_enabled(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	return wlan_mlme_is_11h_enabled(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_11h_enabled() - Set 11h flag
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_set_11h_enabled(struct wlan_objmgr_psoc *psoc, bool value)
+{
+	return wlan_mlme_set_11h_enabled(psoc, value);
+}
+
+/**
+ * ucfg_mlme_is_11d_enabled() - Get 11d flag
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_is_11d_enabled(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	return wlan_mlme_is_11d_enabled(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_11d_enabled() - Set 11d flag
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_set_11d_enabled(struct wlan_objmgr_psoc *psoc, bool value)
+{
+	return wlan_mlme_set_11d_enabled(psoc, value);
+}
+
+/**
  * ucfg_mlme_get_opr_rate_set() - Get operational rate set
  * @psoc: pointer to psoc object
  * @buf: buffer to get rates set

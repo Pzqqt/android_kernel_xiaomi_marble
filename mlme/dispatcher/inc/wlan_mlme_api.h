@@ -1857,4 +1857,41 @@ QDF_STATUS wlan_mlme_is_sap_uapsd_enabled(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_mlme_set_sap_uapsd_flag(struct wlan_objmgr_psoc *psoc,
 					bool value);
+
+/**
+ * wlan_mlme_is_11h_enabled() - Get the 11h flag
+ * @psoc: psoc context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_is_11h_enabled(struct wlan_objmgr_psoc *psoc, bool *value);
+
+/**
+ * wlan_mlme_set_11h_enabled() - Set the 11h flag
+ * @psoc: psoc context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_set_11h_enabled(struct wlan_objmgr_psoc *psoc, bool value);
+
+/**
+ * wlan_mlme_is_11d_enabled() - Get the 11d flag
+ * @psoc: psoc context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_is_11d_enabled(struct wlan_objmgr_psoc *psoc, bool *value);
+
+/**
+ * wlan_mlme_set_11d_enabled() - Set the 11h flag
+ * @psoc: psoc context
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_set_11d_enabled(struct wlan_objmgr_psoc *psoc, bool value);
+
 #endif /* _WLAN_MLME_API_H_ */

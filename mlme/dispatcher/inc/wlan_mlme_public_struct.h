@@ -646,6 +646,9 @@ struct wlan_mlme_mbo {
  * @ampdu_len: To handle maximum receive AMPDU ampdu len
  * @tx_bfee_sap: enable tx bfee SAp
  * @subfee_vendor_vhtie: enable subfee vendor vht ie
+ * @tx_bf_cap: Transmit bf capability
+ * @as_cap: Antenna sharing capability info
+ * @disable_ldpc_with_txbf_ap: Disable ldpc capability
  */
 struct mlme_vht_capabilities_info {
 	uint8_t supp_chan_width;
@@ -686,6 +689,9 @@ struct mlme_vht_capabilities_info {
 	uint8_t ampdu_len;
 	bool tx_bfee_sap;
 	bool vendor_vhtie;
+	uint8_t tx_bf_cap;
+	uint8_t as_cap;
+	bool disable_ldpc_with_txbf_ap;
 };
 
 /**
@@ -902,6 +908,8 @@ struct wlan_mlme_chainmask {
  * @optimize_ca_event: Enable/Disable Optimization of CA events
  * @fw_timeout_crash: Enable/Disable FW Timeout Crash *
  * @debug_packet_log: Debug packet log flags
+ * @enabled_11h: enable 11h flag
+ * @enabled_11d: enable 11d flag
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -925,6 +933,8 @@ struct wlan_mlme_generic {
 	bool optimize_ca_event;
 	bool fw_timeout_crash;
 	uint8_t debug_packet_log;
+	bool enabled_11h;
+	bool enabled_11d;
 };
 
 /*

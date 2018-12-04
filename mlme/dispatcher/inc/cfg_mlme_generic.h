@@ -96,6 +96,50 @@
 
 /*
  * <ini>
+ * g11hSupportEnabled - Enable 11h support
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set 11h support flag
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_11H_SUPPORT_ENABLED CFG_INI_BOOL( \
+		"g11hSupportEnabled", \
+		1, \
+		"11h Enable Flag")
+
+/*
+ * <ini>
+ * g11dSupportEnabled - Enable 11d support
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set 11d support flag
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_11D_SUPPORT_ENABLED CFG_INI_BOOL( \
+		"g11dSupportEnabled", \
+		1, \
+		"11d Enable Flag")
+
+/*
+ * <ini>
  * BandCapability - Preferred band (0: Both,  1: 2.4G only,  2: 5G only)
  * @Min: 0
  * @Max: 2
@@ -494,6 +538,8 @@
 	CFG(CFG_PMF_SA_QUERY_RETRY_INTERVAL) \
 	CFG(CFG_ENABLE_RTT_MAC_RANDOMIZATION) \
 	CFG(CFG_RTT3_ENABLE) \
+	CFG(CFG_11H_SUPPORT_ENABLED) \
+	CFG(CFG_11D_SUPPORT_ENABLED) \
 	CFG(CFG_BAND_CAPABILITY) \
 	CFG(CFG_PREVENT_LINK_DOWN) \
 	CFG(CFG_SELECT_5GHZ_MARGIN) \
