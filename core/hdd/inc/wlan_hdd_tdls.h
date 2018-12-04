@@ -72,44 +72,6 @@ typedef int (*cfg80211_exttdls_callback)(const uint8_t *mac,
 					 uint32_t state,
 					 int32_t reason, void *ctx);
 
-/**
- * struct tdlsInfo_t - tdls info
- *
- * @vdev_id: vdev id
- * @tdls_state: tdls state
- * @notification_interval_ms: notification interval in ms
- * @tx_discovery_threshold: tx discovery threshold
- * @tx_teardown_threshold: tx teardown threshold
- * @rssi_teardown_threshold: rx teardown threshold
- * @rssi_delta: rssi delta
- * @tdls_options: tdls options
- * @peer_traffic_ind_window: peer traffic indication window
- * @peer_traffic_response_timeout: peer traffic response timeout
- * @puapsd_mask: puapsd mask
- * @puapsd_inactivity_time: puapsd inactivity time
- * @puapsd_rx_frame_threshold: puapsd rx frame threshold
- * @teardown_notification_ms: tdls teardown notification interval
- * @tdls_peer_kickout_threshold: tdls packets threshold
- *    for peer kickout operation
- */
-typedef struct {
-	uint32_t vdev_id;
-	uint32_t tdls_state;
-	uint32_t notification_interval_ms;
-	uint32_t tx_discovery_threshold;
-	uint32_t tx_teardown_threshold;
-	int32_t rssi_teardown_threshold;
-	int32_t rssi_delta;
-	uint32_t tdls_options;
-	uint32_t peer_traffic_ind_window;
-	uint32_t peer_traffic_response_timeout;
-	uint32_t puapsd_mask;
-	uint32_t puapsd_inactivity_time;
-	uint32_t puapsd_rx_frame_threshold;
-	uint32_t teardown_notification_ms;
-	uint32_t tdls_peer_kickout_threshold;
-} tdlsInfo_t;
-
 int wlan_hdd_tdls_set_params(struct net_device *dev,
 			     struct hdd_tdls_config_params *config);
 
