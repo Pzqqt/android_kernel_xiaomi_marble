@@ -851,8 +851,7 @@ QDF_STATUS wlan_mlme_set_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
  * Return: QDF Status
  */
 QDF_STATUS
-wlan_mlme_get_wmm_dir_ac_vi(struct wlan_objmgr_psoc *psoc,
-			    uint8_t *value);
+wlan_mlme_get_wmm_dir_ac_vi(struct wlan_objmgr_psoc *psoc, uint8_t *value);
 
 /**
  * wlan_mlme_get_wmm_nom_msdu_size_ac_vi() - Get normal
@@ -862,9 +861,8 @@ wlan_mlme_get_wmm_dir_ac_vi(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF Status
  */
-QDF_STATUS
-wlan_mlme_get_wmm_nom_msdu_size_ac_vi(struct wlan_objmgr_psoc *psoc,
-				      uint16_t *value);
+QDF_STATUS wlan_mlme_get_wmm_nom_msdu_size_ac_vi(struct wlan_objmgr_psoc *psoc,
+						 uint16_t *value);
 
 /**
  * wlan_mlme_get_wmm_mean_data_rate_ac_vi() - mean data
@@ -876,7 +874,7 @@ wlan_mlme_get_wmm_nom_msdu_size_ac_vi(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS
 wlan_mlme_get_wmm_mean_data_rate_ac_vi(struct wlan_objmgr_psoc *psoc,
-				       uint32_t *value);
+					uint32_t *value);
 
 /**
  * wlan_mlme_get_wmm_min_phy_rate_ac_vi() - min PHY
@@ -886,9 +884,8 @@ wlan_mlme_get_wmm_mean_data_rate_ac_vi(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF Status
  */
-QDF_STATUS
-wlan_mlme_get_wmm_min_phy_rate_ac_vi(struct wlan_objmgr_psoc *psoc,
-				     uint32_t *value);
+QDF_STATUS wlan_mlme_get_wmm_min_phy_rate_ac_vi(struct wlan_objmgr_psoc *psoc,
+						uint32_t *value);
 
 /**
  * wlan_mlme_get_wmm_sba_ac_vi() - surplus bandwidth
@@ -945,9 +942,8 @@ wlan_mlme_get_wmm_dir_ac_be(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF Status
  */
-QDF_STATUS
-wlan_mlme_get_wmm_nom_msdu_size_ac_be(struct wlan_objmgr_psoc *psoc,
-				      uint16_t *value);
+QDF_STATUS wlan_mlme_get_wmm_nom_msdu_size_ac_be(struct wlan_objmgr_psoc *psoc,
+						 uint16_t *value);
 
 /**
  * wlan_mlme_get_wmm_mean_data_rate_ac_be() - mean data
@@ -957,9 +953,8 @@ wlan_mlme_get_wmm_nom_msdu_size_ac_be(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF Status
  */
-QDF_STATUS
-wlan_mlme_get_wmm_mean_data_rate_ac_be(struct wlan_objmgr_psoc *psoc,
-				       uint32_t *value);
+QDF_STATUS wlan_mlme_get_wmm_mean_data_rate_ac_be(struct wlan_objmgr_psoc *psoc,
+						  uint32_t *value);
 
 /**
  * wlan_mlme_get_wmm_min_phy_rate_ac_be() - min PHY
@@ -980,8 +975,8 @@ QDF_STATUS wlan_mlme_get_wmm_min_phy_rate_ac_be(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF Status
  */
-QDF_STATUS wlan_mlme_get_wmm_sba_ac_be(struct wlan_objmgr_psoc *psoc,
-				       uint16_t *value);
+QDF_STATUS
+wlan_mlme_get_wmm_sba_ac_be(struct wlan_objmgr_psoc *psoc, uint16_t *value);
 
 /**
  * wlan_mlme_get_wmm_uapsd_be_srv_intv() - Get Uapsd service
@@ -991,8 +986,9 @@ QDF_STATUS wlan_mlme_get_wmm_sba_ac_be(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF Status
  */
-QDF_STATUS wlan_mlme_get_wmm_uapsd_be_srv_intv(struct wlan_objmgr_psoc *psoc,
-					       uint32_t *value);
+QDF_STATUS
+wlan_mlme_get_wmm_uapsd_be_srv_intv(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *value);
 
 /**
  * wlan_mlme_get_wmm_uapsd_be_sus_intv() - Get Uapsd suspension
@@ -1002,8 +998,9 @@ QDF_STATUS wlan_mlme_get_wmm_uapsd_be_srv_intv(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF Status
  */
-QDF_STATUS wlan_mlme_get_wmm_uapsd_be_sus_intv(struct wlan_objmgr_psoc *psoc,
-					       uint32_t *value);
+QDF_STATUS
+wlan_mlme_get_wmm_uapsd_be_sus_intv(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *value);
 
 /**
  * wlan_mlme_get_wmm_dir_ac_bk() - Get TSPEC direction
@@ -1024,9 +1021,8 @@ wlan_mlme_get_wmm_dir_ac_bk(struct wlan_objmgr_psoc *psoc, uint8_t *value);
  *
  * Return: QDF Status
  */
-QDF_STATUS
-wlan_mlme_get_wmm_nom_msdu_size_ac_bk(struct wlan_objmgr_psoc *psoc,
-				      uint16_t *value);
+QDF_STATUS wlan_mlme_get_wmm_nom_msdu_size_ac_bk(struct wlan_objmgr_psoc *psoc,
+						 uint16_t *value);
 
 /**
  * wlan_mlme_get_wmm_mean_data_rate_ac_bk() - mean data
@@ -1036,9 +1032,8 @@ wlan_mlme_get_wmm_nom_msdu_size_ac_bk(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF Status
  */
-QDF_STATUS
-wlan_mlme_get_wmm_mean_data_rate_ac_bk(struct wlan_objmgr_psoc *psoc,
-				       uint32_t *value);
+QDF_STATUS wlan_mlme_get_wmm_mean_data_rate_ac_bk(struct wlan_objmgr_psoc *psoc,
+						  uint32_t *value);
 
 /**
  * wlan_mlme_get_wmm_min_phy_rate_ac_bk() - min PHY
@@ -1048,9 +1043,8 @@ wlan_mlme_get_wmm_mean_data_rate_ac_bk(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF Status
  */
-QDF_STATUS
-wlan_mlme_get_wmm_min_phy_rate_ac_bk(struct wlan_objmgr_psoc *psoc,
-				     uint32_t *value);
+QDF_STATUS wlan_mlme_get_wmm_min_phy_rate_ac_bk(struct wlan_objmgr_psoc *psoc,
+						uint32_t *value);
 
 /**
  * wlan_mlme_get_wmm_sba_ac_bk() - surplus bandwidth
@@ -1124,9 +1118,8 @@ wlan_mlme_get_wmm_uapsd_mask(struct wlan_objmgr_psoc *psoc, uint8_t *value);
  *
  * Return: QDF Status
  */
-QDF_STATUS
-wlan_mlme_get_implicit_qos_is_enabled(struct wlan_objmgr_psoc *psoc,
-				      bool *value);
+QDF_STATUS wlan_mlme_get_implicit_qos_is_enabled(struct wlan_objmgr_psoc *psoc,
+						 bool *value);
 
 #ifdef FEATURE_WLAN_ESE
 /**
@@ -1136,8 +1129,9 @@ wlan_mlme_get_implicit_qos_is_enabled(struct wlan_objmgr_psoc *psoc,
  *
  * Return: None
  */
-void wlan_mlme_get_inactivity_interval(struct wlan_objmgr_psoc *psoc,
-				       uint32_t *value);
+void
+wlan_mlme_get_inactivity_interval(struct wlan_objmgr_psoc *psoc,
+				  uint32_t *value);
 #endif
 
 /**
@@ -1178,8 +1172,8 @@ wlan_mlme_get_ts_acm_value_for_ac(struct wlan_objmgr_psoc *psoc, bool *value);
  *
  * Return: QDF Status
  */
-QDF_STATUS wlan_mlme_get_wmm_dir_ac_vo(struct wlan_objmgr_psoc *psoc,
-				       uint8_t *value);
+QDF_STATUS
+wlan_mlme_get_wmm_dir_ac_vo(struct wlan_objmgr_psoc *psoc, uint8_t *value);
 
 /**
  * wlan_mlme_get_wmm_nom_msdu_size_ac_vo() - Get normal
@@ -1189,9 +1183,8 @@ QDF_STATUS wlan_mlme_get_wmm_dir_ac_vo(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF Status
  */
-QDF_STATUS
-wlan_mlme_get_wmm_nom_msdu_size_ac_vo(struct wlan_objmgr_psoc *psoc,
-				      uint16_t *value);
+QDF_STATUS wlan_mlme_get_wmm_nom_msdu_size_ac_vo(struct wlan_objmgr_psoc *psoc,
+						 uint16_t *value);
 
 /**
  * wlan_mlme_get_wmm_mean_data_rate_ac_vo() - mean data rate for VO
@@ -1200,9 +1193,8 @@ wlan_mlme_get_wmm_nom_msdu_size_ac_vo(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF Status
  */
-QDF_STATUS
-wlan_mlme_get_wmm_mean_data_rate_ac_vo(struct wlan_objmgr_psoc *psoc,
-				       uint32_t *value);
+QDF_STATUS wlan_mlme_get_wmm_mean_data_rate_ac_vo(struct wlan_objmgr_psoc *psoc,
+						  uint32_t *value);
 /**
  * wlan_mlme_get_wmm_min_phy_rate_ac_vo() - min PHY
  * rate for VO
@@ -1211,9 +1203,8 @@ wlan_mlme_get_wmm_mean_data_rate_ac_vo(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF Status
  */
-QDF_STATUS
-wlan_mlme_get_wmm_min_phy_rate_ac_vo(struct wlan_objmgr_psoc *psoc,
-				     uint32_t *value);
+QDF_STATUS wlan_mlme_get_wmm_min_phy_rate_ac_vo(struct wlan_objmgr_psoc *psoc,
+						uint32_t *value);
 /**
  * wlan_mlme_get_wmm_sba_ac_vo() - surplus bandwidth allowance for VO
  * @psoc: pointer to psoc object
@@ -1265,8 +1256,9 @@ wlan_mlme_get_wmm_uapsd_vo_sus_intv(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_get_vht_max_mpdu_len(struct wlan_objmgr_psoc *psoc,
-					      uint8_t *value);
+QDF_STATUS
+wlan_mlme_cfg_get_vht_max_mpdu_len(struct wlan_objmgr_psoc *psoc,
+				   uint8_t *value);
 
 /**
  * wlan_mlme_cfg_set_vht_max_mpdu_len() - sets vht max mpdu length into cfg item
@@ -1275,8 +1267,9 @@ QDF_STATUS wlan_mlme_cfg_get_vht_max_mpdu_len(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_set_vht_max_mpdu_len(struct wlan_objmgr_psoc *psoc,
-					      uint8_t value);
+QDF_STATUS
+wlan_mlme_cfg_set_vht_max_mpdu_len(struct wlan_objmgr_psoc *psoc,
+				   uint8_t value);
 
 /**
  * wlan_mlme_cfg_get_vht_chan_width() - gets vht supported channel width from
@@ -1331,7 +1324,7 @@ QDF_STATUS wlan_mlme_cfg_get_vht_ldpc_coding_cap(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlme_cfg_set_vht_ldpc_coding_cap(struct wlan_objmgr_psoc *psoc,
-					         bool value);
+						 bool value);
 
 /**
  * wlan_mlme_cfg_get_vht_short_gi_80mhz() - gets vht short gi 80MHz from
@@ -1342,7 +1335,7 @@ QDF_STATUS wlan_mlme_cfg_set_vht_ldpc_coding_cap(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlme_cfg_get_vht_short_gi_80mhz(struct wlan_objmgr_psoc *psoc,
-					        bool *value);
+						bool *value);
 
 /**
  * wlan_mlme_cfg_set_vht_short_gi_80mhz() - sets vht short gi 80MHz into
@@ -1353,7 +1346,7 @@ QDF_STATUS wlan_mlme_cfg_get_vht_short_gi_80mhz(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlme_cfg_set_vht_short_gi_80mhz(struct wlan_objmgr_psoc *psoc,
-					        bool value);
+						bool value);
 
 /**
  * wlan_mlme_cfg_get_short_gi_160_mhz() - gets vht short gi 160MHz from
@@ -1363,8 +1356,8 @@ QDF_STATUS wlan_mlme_cfg_set_vht_short_gi_80mhz(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_get_short_gi_160_mhz(struct wlan_objmgr_psoc *psoc,
-					      bool *value);
+QDF_STATUS
+wlan_mlme_cfg_get_short_gi_160_mhz(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_cfg_set_short_gi_160_mhz() - sets vht short gi 160MHz into
@@ -1374,8 +1367,8 @@ QDF_STATUS wlan_mlme_cfg_get_short_gi_160_mhz(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_set_short_gi_160_mhz(struct wlan_objmgr_psoc *psoc,
-					      bool value);
+QDF_STATUS
+wlan_mlme_cfg_set_short_gi_160_mhz(struct wlan_objmgr_psoc *psoc, bool value);
 
 /**
  * wlan_mlme_cfg_get_vht_tx_stbc() - gets vht tx stbc from
@@ -1385,8 +1378,8 @@ QDF_STATUS wlan_mlme_cfg_set_short_gi_160_mhz(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_get_vht_tx_stbc(struct wlan_objmgr_psoc *psoc,
-				         bool *value);
+QDF_STATUS
+wlan_mlme_cfg_get_vht_tx_stbc(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_cfg_get_vht_rx_stbc() - gets vht rx stbc from
@@ -1396,8 +1389,8 @@ QDF_STATUS wlan_mlme_cfg_get_vht_tx_stbc(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_get_vht_rx_stbc(struct wlan_objmgr_psoc *psoc,
-				         bool *value);
+QDF_STATUS
+wlan_mlme_cfg_get_vht_rx_stbc(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_cfg_set_vht_tx_stbc() - sets vht tx stbc into
@@ -1407,8 +1400,8 @@ QDF_STATUS wlan_mlme_cfg_get_vht_rx_stbc(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_set_vht_tx_stbc(struct wlan_objmgr_psoc *psoc,
-				         bool value);
+QDF_STATUS
+wlan_mlme_cfg_set_vht_tx_stbc(struct wlan_objmgr_psoc *psoc, bool value);
 
 /**
  * wlan_mlme_cfg_get_vht_rx_stbc() - gets vht rx stbc from
@@ -1418,8 +1411,8 @@ QDF_STATUS wlan_mlme_cfg_set_vht_tx_stbc(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_get_vht_rx_stbc(struct wlan_objmgr_psoc *psoc,
-				         bool *value);
+QDF_STATUS
+wlan_mlme_cfg_get_vht_rx_stbc(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_cfg_set_vht_rx_stbc() - sets vht rx stbc into
@@ -1429,8 +1422,8 @@ QDF_STATUS wlan_mlme_cfg_get_vht_rx_stbc(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_set_vht_rx_stbc(struct wlan_objmgr_psoc *psoc,
-				         bool value);
+QDF_STATUS
+wlan_mlme_cfg_set_vht_rx_stbc(struct wlan_objmgr_psoc *psoc, bool value);
 
 /**
  * wlan_mlme_cfg_get_vht_su_bformer() - gets vht su beam former cap from
@@ -1440,8 +1433,8 @@ QDF_STATUS wlan_mlme_cfg_set_vht_rx_stbc(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_get_vht_su_bformer(struct wlan_objmgr_psoc *psoc,
-				            bool *value);
+QDF_STATUS
+wlan_mlme_cfg_get_vht_su_bformer(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_cfg_set_vht_su_bformer() - sets vht su beam former cap into
@@ -1451,8 +1444,8 @@ QDF_STATUS wlan_mlme_cfg_get_vht_su_bformer(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_set_vht_su_bformer(struct wlan_objmgr_psoc *psoc,
-				            bool value);
+QDF_STATUS
+wlan_mlme_cfg_set_vht_su_bformer(struct wlan_objmgr_psoc *psoc, bool value);
 
 /**
  * wlan_mlme_cfg_set_vht_su_bformee() - sets vht su beam formee cap into
@@ -1462,8 +1455,8 @@ QDF_STATUS wlan_mlme_cfg_set_vht_su_bformer(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_set_vht_su_bformee(struct wlan_objmgr_psoc *psoc,
-				            bool value);
+QDF_STATUS
+wlan_mlme_cfg_set_vht_su_bformee(struct wlan_objmgr_psoc *psoc, bool value);
 
 /**
  * wlan_mlme_cfg_set_vht_tx_bfee_ant_supp() - sets vht Beamformee antenna
@@ -1475,7 +1468,7 @@ QDF_STATUS wlan_mlme_cfg_set_vht_su_bformee(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlme_cfg_set_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
-					           uint8_t value);
+						  uint8_t value);
 
 /**
  * wlan_mlme_cfg_get_vht_tx_bfee_ant_supp() - Gets vht Beamformee antenna
@@ -1498,7 +1491,7 @@ QDF_STATUS wlan_mlme_cfg_get_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlme_cfg_set_vht_num_sounding_dim(struct wlan_objmgr_psoc *psoc,
-					          uint8_t value);
+						  uint8_t value);
 
 /**
  * wlan_mlme_cfg_get_vht_mu_bformer() - gets vht mu beam former cap from
@@ -1508,8 +1501,8 @@ QDF_STATUS wlan_mlme_cfg_set_vht_num_sounding_dim(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_get_vht_mu_bformer(struct wlan_objmgr_psoc *psoc,
-				            bool *value);
+QDF_STATUS
+wlan_mlme_cfg_get_vht_mu_bformer(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_cfg_set_vht_mu_bformer() - sets vht mu beam former cap into
@@ -1519,8 +1512,8 @@ QDF_STATUS wlan_mlme_cfg_get_vht_mu_bformer(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_set_vht_mu_bformer(struct wlan_objmgr_psoc *psoc,
-				            bool value);
+QDF_STATUS
+wlan_mlme_cfg_set_vht_mu_bformer(struct wlan_objmgr_psoc *psoc, bool value);
 
 /**
  * wlan_mlme_cfg_get_vht_mu_bformee() - gets vht mu beam formee cap from
@@ -1530,8 +1523,8 @@ QDF_STATUS wlan_mlme_cfg_set_vht_mu_bformer(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_get_vht_mu_bformee(struct wlan_objmgr_psoc *psoc,
-				            bool *value);
+QDF_STATUS
+wlan_mlme_cfg_get_vht_mu_bformee(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_cfg_set_vht_mu_bformee() - sets vht mu beam formee cap into
@@ -1541,8 +1534,8 @@ QDF_STATUS wlan_mlme_cfg_get_vht_mu_bformee(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_set_vht_mu_bformee(struct wlan_objmgr_psoc *psoc,
-				            bool value);
+QDF_STATUS
+wlan_mlme_cfg_set_vht_mu_bformee(struct wlan_objmgr_psoc *psoc, bool value);
 
 /**
  * wlan_mlme_cfg_get_vht_txop_ps() - gets vht tx ops ps cap from
@@ -1552,8 +1545,8 @@ QDF_STATUS wlan_mlme_cfg_set_vht_mu_bformee(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_get_vht_txop_ps(struct wlan_objmgr_psoc *psoc,
-				         bool *value);
+QDF_STATUS
+wlan_mlme_cfg_get_vht_txop_ps(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_cfg_set_vht_txop_ps() - sets vht tx ops ps cap into
@@ -1563,8 +1556,8 @@ QDF_STATUS wlan_mlme_cfg_get_vht_txop_ps(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_set_vht_txop_ps(struct wlan_objmgr_psoc *psoc,
-				         bool value);
+QDF_STATUS
+wlan_mlme_cfg_set_vht_txop_ps(struct wlan_objmgr_psoc *psoc, bool value);
 
 /**
  * wlan_mlme_cfg_get_vht_ampdu_len_exp() - gets vht max AMPDU length exponent from
@@ -1574,8 +1567,9 @@ QDF_STATUS wlan_mlme_cfg_set_vht_txop_ps(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_get_vht_ampdu_len_exp(struct wlan_objmgr_psoc *psoc,
-					       uint8_t *value);
+QDF_STATUS
+wlan_mlme_cfg_get_vht_ampdu_len_exp(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *value);
 
 /**
  * wlan_mlme_cfg_set_vht_ampdu_len_exp() - sets vht max AMPDU length exponent into
@@ -1585,8 +1579,9 @@ QDF_STATUS wlan_mlme_cfg_get_vht_ampdu_len_exp(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_set_vht_ampdu_len_exp(struct wlan_objmgr_psoc *psoc,
-					       uint8_t value);
+QDF_STATUS
+wlan_mlme_cfg_set_vht_ampdu_len_exp(struct wlan_objmgr_psoc *psoc,
+				    uint8_t value);
 
 /**
  * wlan_mlme_cfg_get_vht_rx_mcs_map() - gets vht rx mcs map from
@@ -1597,7 +1592,7 @@ QDF_STATUS wlan_mlme_cfg_set_vht_ampdu_len_exp(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlme_cfg_get_vht_rx_mcs_map(struct wlan_objmgr_psoc *psoc,
-				            uint32_t *value);
+					    uint32_t *value);
 
 /**
  * wlan_mlme_cfg_set_vht_rx_mcs_map() - sets rx mcs map into
@@ -1607,8 +1602,8 @@ QDF_STATUS wlan_mlme_cfg_get_vht_rx_mcs_map(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_set_vht_rx_mcs_map(struct wlan_objmgr_psoc *psoc,
-				            uint32_t value);
+QDF_STATUS
+wlan_mlme_cfg_set_vht_rx_mcs_map(struct wlan_objmgr_psoc *psoc, uint32_t value);
 
 /**
  * wlan_mlme_cfg_get_vht_tx_mcs_map() - gets vht tx mcs map from
@@ -1619,7 +1614,7 @@ QDF_STATUS wlan_mlme_cfg_set_vht_rx_mcs_map(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlme_cfg_get_vht_tx_mcs_map(struct wlan_objmgr_psoc *psoc,
-				            uint32_t *value);
+					    uint32_t *value);
 
 /**
  * wlan_mlme_cfg_set_vht_tx_mcs_map() - sets tx mcs map into
@@ -1630,7 +1625,7 @@ QDF_STATUS wlan_mlme_cfg_get_vht_tx_mcs_map(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlme_cfg_set_vht_tx_mcs_map(struct wlan_objmgr_psoc *psoc,
-				            uint32_t value);
+					    uint32_t value);
 
 /**
  * wlan_mlme_cfg_set_vht_rx_supp_data_rate() - sets rx supported data rate into
@@ -1664,8 +1659,9 @@ wlan_mlme_cfg_set_vht_tx_supp_data_rate(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_get_vht_basic_mcs_set(struct wlan_objmgr_psoc *psoc,
-					       uint32_t *value);
+QDF_STATUS
+wlan_mlme_cfg_get_vht_basic_mcs_set(struct wlan_objmgr_psoc *psoc,
+				    uint32_t *value);
 
 /**
  * wlan_mlme_cfg_set_vht_basic_mcs_set() - sets basic mcs set into
@@ -1675,8 +1671,9 @@ QDF_STATUS wlan_mlme_cfg_get_vht_basic_mcs_set(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_cfg_set_vht_basic_mcs_set(struct wlan_objmgr_psoc *psoc,
-					       uint32_t value);
+QDF_STATUS
+wlan_mlme_cfg_set_vht_basic_mcs_set(struct wlan_objmgr_psoc *psoc,
+				    uint32_t value);
 
 /**
  * wlan_mlme_get_vht_enable_tx_bf() - Get vht enable tx bf
@@ -1685,8 +1682,8 @@ QDF_STATUS wlan_mlme_cfg_set_vht_basic_mcs_set(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_get_vht_enable_tx_bf(struct wlan_objmgr_psoc *psoc,
-					  bool *value);
+QDF_STATUS
+wlan_mlme_get_vht_enable_tx_bf(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_get_vht_tx_su_beamformer() - VHT enable tx su beamformer
@@ -1695,8 +1692,8 @@ QDF_STATUS wlan_mlme_get_vht_enable_tx_bf(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_get_vht_tx_su_beamformer(struct wlan_objmgr_psoc *psoc,
-					      bool *value);
+QDF_STATUS
+wlan_mlme_get_vht_tx_su_beamformer(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_get_vht_channel_width() - gets Channel width capability
@@ -1707,7 +1704,7 @@ QDF_STATUS wlan_mlme_get_vht_tx_su_beamformer(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_mlme_get_vht_channel_width(struct wlan_objmgr_psoc *psoc,
-				           uint8_t *value);
+					   uint8_t *value);
 
 /**
  * wlan_mlme_get_vht_rx_mcs_8_9() - VHT Rx MCS capability for 1x1 mode
@@ -1726,8 +1723,8 @@ QDF_STATUS wlan_mlme_get_vht_rx_mcs_8_9(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_get_vht_tx_mcs_8_9(struct wlan_objmgr_psoc *psoc,
-				        uint8_t *value);
+QDF_STATUS
+wlan_mlme_get_vht_tx_mcs_8_9(struct wlan_objmgr_psoc *psoc, uint8_t *value);
 
 /**
  * wlan_mlme_get_vht_rx_mcs_2x2() - VHT Rx MCS capability for 2x2 mode
@@ -1756,8 +1753,8 @@ QDF_STATUS wlan_mlme_get_vht_tx_mcs_2x2(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_get_vht20_mcs9(struct wlan_objmgr_psoc *psoc,
-				    bool *value);
+QDF_STATUS
+wlan_mlme_get_vht20_mcs9(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_get_vht_enable2x2() - Enables/disables VHT Tx/Rx MCS values for 2x2
@@ -1766,8 +1763,8 @@ QDF_STATUS wlan_mlme_get_vht20_mcs9(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_get_vht_enable2x2(struct wlan_objmgr_psoc *psoc,
-				       bool *value);
+QDF_STATUS
+wlan_mlme_get_vht_enable2x2(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_set_vht_enable2x2() - Enables/disables VHT Tx/Rx MCS values for 2x2
@@ -1776,8 +1773,8 @@ QDF_STATUS wlan_mlme_get_vht_enable2x2(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_set_vht_enable2x2(struct wlan_objmgr_psoc *psoc,
-				       bool value);
+QDF_STATUS
+wlan_mlme_set_vht_enable2x2(struct wlan_objmgr_psoc *psoc, bool value);
 
 /**
  * wlan_mlme_get_vht_enable_paid() - Enables/disables paid feature
@@ -1786,8 +1783,8 @@ QDF_STATUS wlan_mlme_set_vht_enable2x2(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_get_vht_enable_paid(struct wlan_objmgr_psoc *psoc,
-					 bool *value);
+QDF_STATUS
+wlan_mlme_get_vht_enable_paid(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_get_vht_enable_gid() - Enables/disables VHT GID feature
@@ -1796,8 +1793,8 @@ QDF_STATUS wlan_mlme_get_vht_enable_paid(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_get_vht_enable_gid(struct wlan_objmgr_psoc *psoc,
-					bool *value);
+QDF_STATUS
+wlan_mlme_get_vht_enable_gid(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_get_vht_for_24ghz() - Enables/disables VHT for 24 ghz
@@ -1806,8 +1803,8 @@ QDF_STATUS wlan_mlme_get_vht_enable_gid(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_get_vht_for_24ghz(struct wlan_objmgr_psoc *psoc,
-				       bool *value);
+QDF_STATUS
+wlan_mlme_get_vht_for_24ghz(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * wlan_mlme_get_vendor_vht_for_24ghz() - nables/disables vendor VHT for 24 ghz
@@ -1816,8 +1813,8 @@ QDF_STATUS wlan_mlme_get_vht_for_24ghz(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_mlme_get_vendor_vht_for_24ghz(struct wlan_objmgr_psoc *psoc,
-					      bool *value);
+QDF_STATUS
+wlan_mlme_get_vendor_vht_for_24ghz(struct wlan_objmgr_psoc *psoc, bool *value);
 
 /**
  * mlme_update_vht_cap() - update vht capabilities
@@ -1826,8 +1823,8 @@ QDF_STATUS wlan_mlme_get_vendor_vht_for_24ghz(struct wlan_objmgr_psoc *psoc,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc,
-			       struct wma_tgt_vht_cap *cfg);
+QDF_STATUS
+mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc, struct wma_tgt_vht_cap *cfg);
 
 /**
  * mlme_update_nss_vht_cap() - Update the number of spatial

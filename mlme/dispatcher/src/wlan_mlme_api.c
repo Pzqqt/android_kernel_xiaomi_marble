@@ -1005,7 +1005,7 @@ QDF_STATUS wlan_mlme_get_wmm_nom_msdu_size_ac_vo(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS
 wlan_mlme_get_wmm_mean_data_rate_ac_vo(struct wlan_objmgr_psoc *psoc,
-				       uint32_t *value)
+					uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1031,8 +1031,8 @@ QDF_STATUS wlan_mlme_get_wmm_min_phy_rate_ac_vo(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_mlme_get_wmm_sba_ac_vo(struct wlan_objmgr_psoc *psoc,
-				       uint16_t *value)
+QDF_STATUS
+wlan_mlme_get_wmm_sba_ac_vo(struct wlan_objmgr_psoc *psoc, uint16_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1047,7 +1047,7 @@ QDF_STATUS wlan_mlme_get_wmm_sba_ac_vo(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS wlan_mlme_get_wmm_uapsd_vo_srv_intv(struct wlan_objmgr_psoc *psoc,
-					       uint32_t *value)
+						uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1061,7 +1061,7 @@ QDF_STATUS wlan_mlme_get_wmm_uapsd_vo_srv_intv(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS wlan_mlme_get_wmm_uapsd_vo_sus_intv(struct wlan_objmgr_psoc *psoc,
-					       uint32_t *value)
+						uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1074,8 +1074,8 @@ QDF_STATUS wlan_mlme_get_wmm_uapsd_vo_sus_intv(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlan_mlme_get_wmm_dir_ac_vi(struct wlan_objmgr_psoc *psoc,
-				       uint8_t *value)
+QDF_STATUS
+wlan_mlme_get_wmm_dir_ac_vi(struct wlan_objmgr_psoc *psoc, uint8_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1105,7 +1105,7 @@ QDF_STATUS wlan_mlme_get_wmm_nom_msdu_size_ac_vi(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS
 wlan_mlme_get_wmm_mean_data_rate_ac_vi(struct wlan_objmgr_psoc *psoc,
-				       uint32_t *value)
+					uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1118,9 +1118,8 @@ wlan_mlme_get_wmm_mean_data_rate_ac_vi(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-wlan_mlme_get_wmm_min_phy_rate_ac_vi(struct wlan_objmgr_psoc *psoc,
-				     uint32_t *value)
+QDF_STATUS wlan_mlme_get_wmm_min_phy_rate_ac_vi(struct wlan_objmgr_psoc *psoc,
+						uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1134,7 +1133,7 @@ wlan_mlme_get_wmm_min_phy_rate_ac_vi(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS wlan_mlme_get_wmm_sba_ac_vi(struct wlan_objmgr_psoc *psoc,
-				       uint16_t *value)
+					uint16_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1206,7 +1205,7 @@ QDF_STATUS wlan_mlme_get_wmm_nom_msdu_size_ac_be(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS
 wlan_mlme_get_wmm_mean_data_rate_ac_be(struct wlan_objmgr_psoc *psoc,
-				       uint32_t *value)
+					uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1219,9 +1218,8 @@ wlan_mlme_get_wmm_mean_data_rate_ac_be(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-wlan_mlme_get_wmm_min_phy_rate_ac_be(struct wlan_objmgr_psoc *psoc,
-				     uint32_t *value)
+QDF_STATUS wlan_mlme_get_wmm_min_phy_rate_ac_be(struct wlan_objmgr_psoc *psoc,
+						uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1249,7 +1247,7 @@ wlan_mlme_get_wmm_sba_ac_be(struct wlan_objmgr_psoc *psoc, uint16_t *value)
 }
 
 QDF_STATUS wlan_mlme_get_wmm_uapsd_be_srv_intv(struct wlan_objmgr_psoc *psoc,
-					       uint32_t *value)
+						uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1263,7 +1261,7 @@ QDF_STATUS wlan_mlme_get_wmm_uapsd_be_srv_intv(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS wlan_mlme_get_wmm_uapsd_be_sus_intv(struct wlan_objmgr_psoc *psoc,
-					       uint32_t *value)
+						uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1306,7 +1304,7 @@ QDF_STATUS wlan_mlme_get_wmm_nom_msdu_size_ac_bk(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS
 wlan_mlme_get_wmm_mean_data_rate_ac_bk(struct wlan_objmgr_psoc *psoc,
-				       uint32_t *value)
+					uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1319,9 +1317,8 @@ wlan_mlme_get_wmm_mean_data_rate_ac_bk(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-wlan_mlme_get_wmm_min_phy_rate_ac_bk(struct wlan_objmgr_psoc *psoc,
-				     uint32_t *value)
+QDF_STATUS wlan_mlme_get_wmm_min_phy_rate_ac_bk(struct wlan_objmgr_psoc *psoc,
+						uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1420,9 +1417,8 @@ wlan_mlme_get_wmm_uapsd_mask(struct wlan_objmgr_psoc *psoc, uint8_t *value)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-wlan_mlme_get_implicit_qos_is_enabled(struct wlan_objmgr_psoc *psoc,
-				      bool *value)
+QDF_STATUS wlan_mlme_get_implicit_qos_is_enabled(struct wlan_objmgr_psoc *psoc,
+						 bool *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -1437,7 +1433,7 @@ wlan_mlme_get_implicit_qos_is_enabled(struct wlan_objmgr_psoc *psoc,
 
 #ifdef FEATURE_WLAN_ESE
 void wlan_mlme_get_inactivity_interval(struct wlan_objmgr_psoc *psoc,
-				       uint32_t *value)
+					uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -2185,9 +2181,8 @@ QDF_STATUS mlme_set_wep_key(struct wlan_mlme_wep_cfg *wep_params,
 			    enum wep_key_id wep_keyid, uint8_t *key_to_set,
 			    qdf_size_t len)
 {
-	if (len == 0) {
+	if (len == 0)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	mlme_debug("WEP set key for key_id:%d key_len:%zd", wep_keyid, len);
 	switch (wep_keyid) {
@@ -2306,9 +2301,8 @@ wlan_mlme_cfg_get_vht_chan_width(struct wlan_objmgr_psoc *psoc, uint8_t *value)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-wlan_mlme_cfg_set_vht_ldpc_coding_cap(struct wlan_objmgr_psoc *psoc,
-				      bool value)
+QDF_STATUS wlan_mlme_cfg_set_vht_ldpc_coding_cap(struct wlan_objmgr_psoc *psoc,
+						 bool value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -2380,7 +2374,7 @@ wlan_mlme_cfg_get_vht_rx_stbc(struct wlan_objmgr_psoc *psoc, bool *value)
 
 QDF_STATUS
 wlan_mlme_cfg_set_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
-				       uint8_t value)
+					uint8_t value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -2395,7 +2389,7 @@ wlan_mlme_cfg_set_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS
 wlan_mlme_cfg_get_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
-				       uint8_t *value)
+					uint8_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -2408,9 +2402,8 @@ wlan_mlme_cfg_get_vht_tx_bfee_ant_supp(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-wlan_mlme_cfg_get_vht_rx_mcs_map(struct wlan_objmgr_psoc *psoc,
-				 uint32_t *value)
+QDF_STATUS wlan_mlme_cfg_get_vht_rx_mcs_map(struct wlan_objmgr_psoc *psoc,
+					    uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -2423,9 +2416,8 @@ wlan_mlme_cfg_get_vht_rx_mcs_map(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-wlan_mlme_cfg_set_vht_rx_mcs_map(struct wlan_objmgr_psoc *psoc,
-				 uint32_t value)
+QDF_STATUS wlan_mlme_cfg_set_vht_rx_mcs_map(struct wlan_objmgr_psoc *psoc,
+					    uint32_t value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -2438,9 +2430,8 @@ wlan_mlme_cfg_set_vht_rx_mcs_map(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-wlan_mlme_cfg_get_vht_tx_mcs_map(struct wlan_objmgr_psoc *psoc,
-				 uint32_t *value)
+QDF_STATUS wlan_mlme_cfg_get_vht_tx_mcs_map(struct wlan_objmgr_psoc *psoc,
+					    uint32_t *value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -2453,9 +2444,8 @@ wlan_mlme_cfg_get_vht_tx_mcs_map(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS
-wlan_mlme_cfg_set_vht_tx_mcs_map(struct wlan_objmgr_psoc *psoc,
-				 uint32_t value)
+QDF_STATUS wlan_mlme_cfg_set_vht_tx_mcs_map(struct wlan_objmgr_psoc *psoc,
+					    uint32_t value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -2470,7 +2460,7 @@ wlan_mlme_cfg_set_vht_tx_mcs_map(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS
 wlan_mlme_cfg_set_vht_rx_supp_data_rate(struct wlan_objmgr_psoc *psoc,
-				        uint32_t value)
+					uint32_t value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -2485,7 +2475,7 @@ wlan_mlme_cfg_set_vht_rx_supp_data_rate(struct wlan_objmgr_psoc *psoc,
 
 QDF_STATUS
 wlan_mlme_cfg_set_vht_tx_supp_data_rate(struct wlan_objmgr_psoc *psoc,
-				        uint32_t value)
+					uint32_t value)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 
@@ -2725,8 +2715,8 @@ wlan_mlme_get_vendor_vht_for_24ghz(struct wlan_objmgr_psoc *psoc, bool *value)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc,
-			       struct wma_tgt_vht_cap *cfg)
+QDF_STATUS
+mlme_update_vht_cap(struct wlan_objmgr_psoc *psoc, struct wma_tgt_vht_cap *cfg)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
 	struct mlme_vht_capabilities_info *vht_cap_info;
