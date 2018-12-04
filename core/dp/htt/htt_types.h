@@ -449,6 +449,9 @@ struct htt_pdev_t {
 	tp_rx_pkt_dump_cb rx_pkt_dump_cb;
 
 	struct mon_channel mon_ch_info;
+
+	/* Flag to indicate whether new htt format is supported */
+	bool new_htt_format_enabled;
 };
 
 #define HTT_EPID_GET(_htt_pdev_hdl)  \

@@ -505,6 +505,13 @@ htt_attach(struct htt_pdev_t *pdev, int desc_pool_size)
 	if (ol_cfg_ipa_uc_offload_enabled(pdev->ctrl_pdev))
 		pdev->is_ipa_uc_enabled = true;
 
+	pdev->new_htt_format_enabled = false;
+	if (ol_cfg_is_htt_new_format_enabled(pdev->ctrl_pdev))
+		pdev->new_htt_format_enabled = true;
+
+	htc_enable_hdr_length_check(pdev->htc_pdev,
+				    pdev->new_htt_format_enabled);
+
 	ret = htt_tx_attach(pdev, desc_pool_size);
 	if (ret)
 		goto fail1;

@@ -109,6 +109,8 @@ struct txrx_pdev_cfg_t {
 	uint32_t uc_rx_indication_ring_count;
 	/* IPA Micro controller data path offload TX partition base */
 	uint32_t uc_tx_partition_base;
+	/* Flag to indicate whether new htt format is supported */
+	bool new_htt_format_enabled;
 };
 
 /**
@@ -678,6 +680,37 @@ static inline uint8_t ol_cfg_is_flow_steering_enabled(struct cdp_cfg *cfg_pdev)
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)cfg_pdev;
 
 	return cfg->flow_steering_enabled;
+}
+
+/**
+ * ol_set_cfg_new_htt_format - Set whether FW supports new htt format
+ *
+ * @pdev - handle to the physical device
+ * @val - true - supported, false - not supported
+ *
+ * Return: None
+ */
+static inline void
+ol_set_cfg_new_htt_format(struct cdp_cfg *cfg_pdev, bool val)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)cfg_pdev;
+
+	cfg->new_htt_format_enabled = val;
+}
+
+/**
+ * ol_cfg_is_htt_new_format_enabled - Return whether FW supports new htt format
+ *
+ * @pdev - handle to the physical device
+ *
+ * Return: value of configured htt_new_format
+ */
+static inline bool
+ol_cfg_is_htt_new_format_enabled(struct cdp_cfg *cfg_pdev)
+{
+	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)cfg_pdev;
+
+	return cfg->new_htt_format_enabled;
 }
 
 /**

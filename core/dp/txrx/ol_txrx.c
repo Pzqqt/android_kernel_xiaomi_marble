@@ -880,6 +880,11 @@ ol_txrx_pdev_post_attach(struct cdp_pdev *ppdev)
 
 	ol_tx_setup_fastpath_ce_handles(osc, pdev);
 
+	if ((ol_txrx_get_new_htt_msg_format(pdev)))
+		ol_set_cfg_new_htt_format(pdev->ctrl_pdev, true);
+	else
+		ol_set_cfg_new_htt_format(pdev->ctrl_pdev, false);
+
 	ret = htt_attach(pdev->htt_pdev, desc_pool_size);
 	if (ret)
 		goto htt_attach_fail;
