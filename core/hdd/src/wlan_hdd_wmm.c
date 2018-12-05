@@ -123,6 +123,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 	uint32_t suspension_interval;
 	enum sme_qos_wmm_dir_type direction;
 	bool psb;
+	uint32_t delayed_trgr_frm_int;
 
 	/* The TSPEC must be valid */
 	if (pAc->wmmAcTspecValid == false) {
@@ -155,6 +156,9 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 		hdd_debug("No change in U-APSD parameters");
 		return;
 	}
+
+	ucfg_mlme_get_tl_delayed_trgr_frm_int(hdd_ctx->psoc,
+					      &delayed_trgr_frm_int);
 	/* everything is in place to notify TL */
 	status =
 		sme_enable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR(adapter))->
@@ -163,7 +167,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 					   pAc->wmmAcTspecInfo.ts_info.up,
 					   service_interval, suspension_interval,
 					   direction, psb, adapter->vdev_id,
-					   hdd_ctx->config->DelayedTriggerFrmInt);
+					   delayed_trgr_frm_int);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Failed to enable U-APSD for AC=%d", acType);
@@ -2005,6 +2009,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 	uint32_t srv_value = 0;
 	uint32_t sus_value = 0;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	uint32_t delayed_trgr_frm_int;
 
 	/* when we associate we need to notify TL if it needs to
 	 * enable UAPSD for any access categories
@@ -2032,6 +2037,9 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 
 	hdd_debug("U-APSD mask is 0x%02x", (int)uapsdMask);
 
+	ucfg_mlme_get_tl_delayed_trgr_frm_int(hdd_ctx->psoc,
+					      &delayed_trgr_frm_int);
+
 	if (uapsdMask & HDD_AC_VO) {
 		status = ucfg_mlme_get_wmm_uapsd_vo_srv_intv(hdd_ctx->psoc,
 							     &srv_value);
@@ -2052,7 +2060,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 				SME_AC_VO, 7, 7, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
 				adapter->vdev_id,
-				hdd_ctx->config->DelayedTriggerFrmInt);
+				delayed_trgr_frm_int);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
@@ -2077,7 +2085,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 				SME_AC_VI, 5, 5, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
 				adapter->vdev_id,
-				hdd_ctx->config->DelayedTriggerFrmInt);
+				delayed_trgr_frm_int);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
@@ -2102,7 +2110,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 				SME_AC_BK, 2, 2, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
 				adapter->vdev_id,
-				hdd_ctx->config->DelayedTriggerFrmInt);
+				delayed_trgr_frm_int);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
@@ -2127,7 +2135,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 				SME_AC_BE, 3, 3, srv_value, sus_value,
 				SME_QOS_WMM_TS_DIR_BOTH, 1,
 				adapter->vdev_id,
-				hdd_ctx->config->DelayedTriggerFrmInt);
+				delayed_trgr_frm_int);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}

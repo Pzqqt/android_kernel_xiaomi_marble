@@ -1943,6 +1943,9 @@ static void mlme_init_wmm_in_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_QOS_WMM_TS_INFO_ACK_POLICY);
 	wmm_params->wmm_tspec_element.ts_acm_is_off =
 		cfg_get(psoc, CFG_QOS_ADDTS_WHEN_ACM_IS_OFF);
+	wmm_params->delayed_trigger_frm_int =
+		cfg_get(psoc, CFG_TL_DELAYED_TRGR_FRM_INTERVAL);
+
 }
 
 static void mlme_init_wps_params_cfg(struct wlan_objmgr_psoc *psoc,

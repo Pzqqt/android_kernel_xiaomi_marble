@@ -63,13 +63,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_DOT11_MODE_MIN,
 		     CFG_DOT11_MODE_MAX),
 
-	REG_VARIABLE(CFG_TL_DELAYED_TRGR_FRM_INT_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, DelayedTriggerFrmInt,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_TL_DELAYED_TRGR_FRM_INT_DEFAULT,
-		     CFG_TL_DELAYED_TRGR_FRM_INT_MIN,
-		     CFG_TL_DELAYED_TRGR_FRM_INT_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_SNR_MONITORING_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fEnableSNRMonitoring,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,

@@ -2680,6 +2680,23 @@ QDF_STATUS ucfg_mlme_ibss_power_save_setup(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_get_tl_delayed_trgr_frm_int() - Get delay interval(in ms)
+ * of UAPSD auto trigger.
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: None
+ */
+static inline
+void ucfg_mlme_get_tl_delayed_trgr_frm_int(struct wlan_objmgr_psoc *psoc,
+					   uint32_t *value)
+{
+	wlan_mlme_get_tl_delayed_trgr_frm_int(psoc, value);
+}
+
+/**
  * ucfg_mlme_get_wmm_dir_ac_vi() - Get TSPEC direction
  * for VI
  * @psoc: pointer to psoc object

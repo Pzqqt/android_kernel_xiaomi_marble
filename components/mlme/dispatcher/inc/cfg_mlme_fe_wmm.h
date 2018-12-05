@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -960,6 +960,29 @@
 		0, \
 		"ACM value for AC")
 
+/*
+ * <ini>
+ * DelayedTriggerFrmInt - UAPSD delay interval
+ * @Min: 1
+ * @Max: 4294967295
+ * @Default: 3000
+ *
+ * This parameter controls the delay interval(in ms) of UAPSD auto trigger.
+ *
+ * Supported Feature: WMM
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_TL_DELAYED_TRGR_FRM_INTERVAL CFG_INI_UINT( \
+		"DelayedTriggerFrmInt", \
+		1, \
+		4294967295UL, \
+		3000, \
+		CFG_VALUE_OR_DEFAULT, \
+		"UAPSD auto trigger Interval")
+
 #define CFG_WMM_PARAMS_ALL \
 	CFG(CFG_QOS_ENABLED) \
 	CFG(CFG_WME_ENABLED) \
@@ -1001,6 +1024,7 @@
 	QOS_CFG \
 	CFG(CFG_QOS_WMM_BURST_SIZE_DEFN) \
 	CFG(CFG_QOS_WMM_TS_INFO_ACK_POLICY) \
-	CFG(CFG_QOS_ADDTS_WHEN_ACM_IS_OFF)
+	CFG(CFG_QOS_ADDTS_WHEN_ACM_IS_OFF) \
+	CFG(CFG_TL_DELAYED_TRGR_FRM_INTERVAL)
 
 #endif /* __CFG_MLME_FE_WMM_H */

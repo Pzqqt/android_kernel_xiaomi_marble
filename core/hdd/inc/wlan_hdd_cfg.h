@@ -149,28 +149,6 @@ enum hdd_dot11_mode {
 #define CFG_DOT11_MODE_DEFAULT                 eHDD_DOT11_MODE_11ax
 #define CFG_DOT11_MODE_MAX                     eHDD_DOT11_MODE_11ax
 
-/* WMM configuration */
-/*
- * <ini>
- * DelayedTriggerFrmInt - UAPSD delay interval
- * @Min: 1
- * @Max: 4294967295
- * @Default: 3000
- *
- * This parameter controls the delay interval(in ms) of UAPSD auto trigger.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_TL_DELAYED_TRGR_FRM_INT_NAME                 "DelayedTriggerFrmInt"
-#define CFG_TL_DELAYED_TRGR_FRM_INT_MIN                  1
-#define CFG_TL_DELAYED_TRGR_FRM_INT_MAX                  (4294967295UL)
-#define CFG_TL_DELAYED_TRGR_FRM_INT_DEFAULT              3000
-
 /*
  * <ini>
  * gEnableSNRMonitoring - Enables SNR Monitoring
@@ -289,8 +267,6 @@ struct hdd_config {
 	/* Bitmap for operating voltage corner mode */
 	uint32_t vc_mode_cfg_bitmap;
 #endif
-	uint32_t DelayedTriggerFrmInt;
-
 #ifdef ENABLE_MTRACE_LOG
 	bool enable_mtrace;
 #endif

@@ -897,6 +897,17 @@ QDF_STATUS wlan_mlme_set_fils_enabled_info(struct wlan_objmgr_psoc *psoc,
 					   bool value);
 
 /**
+ * wlan_mlme_get_tl_delayed_trgr_frm_int() - Get delay interval(in ms)
+ * of UAPSD auto trigger
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: None
+ */
+void wlan_mlme_get_tl_delayed_trgr_frm_int(struct wlan_objmgr_psoc *psoc,
+					   uint32_t *value);
+
+/**
  * wlan_mlme_get_wmm_dir_ac_vi() - Get TSPEC direction
  * for VI
  * @psoc: pointer to psoc object

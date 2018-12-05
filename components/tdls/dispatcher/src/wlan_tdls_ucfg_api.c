@@ -201,7 +201,7 @@ static QDF_STATUS tdls_object_init_params(
 	tdls_soc_obj->tdls_configs.tdls_peer_kickout_threshold =
 			cfg_get(psoc, CFG_TDLS_PEER_KICKOUT_THRESHOLD);
 	tdls_soc_obj->tdls_configs.delayed_trig_framint =
-			cfg_get(psoc, CFG_TDLS_DELAYED_TRGR_FRM_INT);
+			cfg_get(psoc, CFG_TL_DELAYED_TRGR_FRM_INTERVAL);
 	tdls_soc_obj->tdls_configs.tdls_wmm_mode_enable =
 			cfg_get(psoc,  CFG_TDLS_WMM_MODE_ENABLE);
 	tdls_soc_obj->tdls_configs.tdls_off_chan_enable =
