@@ -60,64 +60,6 @@ typedef struct sGenericQosCmd {
 	uint8_t tspec_mask;
 } tGenericQosCmd;
 
-#ifdef FEATURE_WLAN_TDLS
-typedef struct TdlsSendMgmtInfo {
-	tSirMacAddr peerMac;
-	uint8_t frameType;
-	uint8_t dialog;
-	uint16_t statusCode;
-	uint8_t responder;
-	uint32_t peerCapability;
-	uint8_t *buf;
-	uint8_t len;
-	enum wifi_traffic_ac ac;
-} tTdlsSendMgmtCmdInfo;
-
-typedef struct TdlsLinkEstablishInfo {
-	struct qdf_mac_addr peermac;
-	uint8_t uapsdQueues;
-	uint8_t maxSp;
-	uint8_t isBufSta;
-	uint8_t isOffChannelSupported;
-	uint8_t isResponder;
-	uint8_t supportedChannelsLen;
-	uint8_t supportedChannels[SIR_MAC_MAX_SUPP_CHANNELS];
-	uint8_t supportedOperClassesLen;
-	uint8_t supportedOperClasses[REG_MAX_SUPP_OPER_CLASSES];
-} tTdlsLinkEstablishCmdInfo;
-
-typedef struct TdlsAddStaInfo {
-	enum tdls_add_oper tdlsAddOper;
-	struct qdf_mac_addr peermac;
-	uint16_t capability;
-	uint8_t extnCapability[SIR_MAC_MAX_EXTN_CAP];
-	uint8_t supportedRatesLen;
-	uint8_t supportedRates[SIR_MAC_MAX_SUPP_RATES];
-	uint8_t htcap_present;
-	tSirHTCap HTCap;
-	uint8_t vhtcap_present;
-	tSirVHTCap VHTCap;
-	uint8_t uapsdQueues;
-	uint8_t maxSp;
-} tTdlsAddStaCmdInfo;
-
-typedef struct TdlsDelStaInfo {
-	struct qdf_mac_addr peermac;
-} tTdlsDelStaCmdInfo;
-/*
- * TDLS cmd info, CMD from SME to PE.
- */
-typedef struct s_tdls_cmd {
-	uint32_t size;
-	union {
-		tTdlsLinkEstablishCmdInfo tdlsLinkEstablishCmdInfo;
-		tTdlsSendMgmtCmdInfo tdlsSendMgmtCmdInfo;
-		tTdlsAddStaCmdInfo tdlsAddStaCmdInfo;
-		tTdlsDelStaCmdInfo tdlsDelStaCmdInfo;
-	} u;
-} tTdlsCmd;
-#endif /* FEATURE_WLAN_TDLS */
-
 /**
  * struct s_nss_update_cmd - Format of nss update request
  * @new_nss: new nss value
@@ -148,9 +90,6 @@ typedef struct tagSmeCmd {
 		struct wmstatus_changecmd wmStatusChangeCmd;
 		tGenericQosCmd qosCmd;
 		struct delstafor_sessionCmd delStaSessionCmd;
-#ifdef FEATURE_WLAN_TDLS
-		tTdlsCmd tdlsCmd;
-#endif
 		struct policy_mgr_hw_mode set_hw_mode_cmd;
 		struct s_nss_update_cmd nss_update_cmd;
 		struct policy_mgr_dual_mac_config set_dual_mac_cmd;
