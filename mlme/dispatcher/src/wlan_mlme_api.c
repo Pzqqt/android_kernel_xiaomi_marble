@@ -3012,3 +3012,11 @@ QDF_STATUS wlan_mlme_override_bmps_imps(struct wlan_objmgr_psoc *psoc)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+void wlan_mlme_get_wps_uuid(struct wlan_mlme_wps_params *wps_params,
+			    uint8_t *data)
+{
+	qdf_size_t len = wps_params->wps_uuid.len;
+
+	wlan_mlme_get_cfg_str(data, &wps_params->wps_uuid, &len);
+}

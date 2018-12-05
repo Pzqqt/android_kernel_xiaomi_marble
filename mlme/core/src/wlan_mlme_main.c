@@ -1848,6 +1848,11 @@ static void mlme_init_wps_params_cfg(struct wlan_objmgr_psoc *psoc,
 				cfg_default(CFG_WPS_PIMARY_DEVICE_OUI);
 	wps_params->wps_state = cfg_default(CFG_WPS_STATE);
 	wps_params->wps_version = cfg_default(CFG_WPS_VERSION);
+	wps_params->wps_uuid.max_len = MLME_CFG_WPS_UUID_MAX_LEN;
+	qdf_uint8_array_parse(cfg_default(CFG_WPS_UUID),
+			      wps_params->wps_uuid.data,
+			      MLME_CFG_WPS_UUID_MAX_LEN,
+			      &wps_params->wps_uuid.len);
 }
 
 static void mlme_init_btm_cfg(struct wlan_mlme_btm *btm)
