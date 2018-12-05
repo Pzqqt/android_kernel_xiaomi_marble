@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -702,31 +702,6 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"Timer to defer for enabling TDLS on P2P listen")
 
-/*
- * <ini>
- * DelayedTriggerFrmInt - delayed trigger frame interval.
- * @Min: 500
- * @Max: 6000
- * @Default: 2000
- *
- * This ini is used to set the delayed trigger frame interval.
- *
- * Related: gEnableTDLSSupport.
- *
- * Supported Feature: TDLS
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_TDLS_DELAYED_TRGR_FRM_INT CFG_INI_UINT( \
-	"DelayedTriggerFrmInt", \
-	1, \
-	4294967295UL, \
-	3000, \
-	CFG_VALUE_OR_DEFAULT, \
-	"delayed trigger frame interval")
-
 #define CFG_TDLS_ALL \
 	CFG(CFG_TDLS_QOS_WMM_UAPSD_MASK) \
 	CFG(CFG_TDLS_BUF_STA_ENABLED) \
@@ -753,7 +728,6 @@
 	CFG(CFG_TDLS_WMM_MODE_ENABLE) \
 	CFG(CFG_TDLS_SCAN_ENABLE) \
 	CFG(CFG_TDLS_PEER_KICKOUT_THRESHOLD) \
-	CFG(CFG_TDLS_ENABLE_DEFER_TIMER) \
-	CFG(CFG_TDLS_DELAYED_TRGR_FRM_INT)
+	CFG(CFG_TDLS_ENABLE_DEFER_TIMER)
 
 #endif

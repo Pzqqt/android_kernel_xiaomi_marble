@@ -1530,6 +1530,7 @@ struct wlan_mlme_wmm_ac_bk {
  * @ac_vi: Default TSPEC parameters for AC_VI
  * @ac_be: Default TSPEC parameters for AC_BE
  * @ac_bk: Default TSPEC parameters for AC_BK
+ * @delayed_trigger_frm_int: delay int(in ms) of UAPSD auto trigger
  */
 struct wlan_mlme_wmm_params {
 	bool qos_enabled;
@@ -1543,6 +1544,7 @@ struct wlan_mlme_wmm_params {
 	struct wlan_mlme_wmm_ac_vi ac_vi;
 	struct wlan_mlme_wmm_ac_be ac_be;
 	struct wlan_mlme_wmm_ac_bk ac_bk;
+	uint32_t delayed_trigger_frm_int;
 };
 
 /**

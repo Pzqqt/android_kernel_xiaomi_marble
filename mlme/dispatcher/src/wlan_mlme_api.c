@@ -976,6 +976,22 @@ wlan_mlme_get_manufacture_product_name(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+
+void wlan_mlme_get_tl_delayed_trgr_frm_int(struct wlan_objmgr_psoc *psoc,
+					   uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_TL_DELAYED_TRGR_FRM_INTERVAL);
+		return;
+	}
+
+	*value = mlme_obj->cfg.wmm_params.delayed_trigger_frm_int;
+}
+
+
 QDF_STATUS wlan_mlme_get_wmm_dir_ac_vo(struct wlan_objmgr_psoc *psoc,
 				       uint8_t *value)
 {
