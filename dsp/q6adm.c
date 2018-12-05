@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -2943,9 +2943,18 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 			open_v8.endpoint_id_2 = 0xFFFF;
 			open_v8.endpoint_id_3 = 0xFFFF;
 
-			if (this_adm.ec_ref_rx && (path != ADM_PATH_PLAYBACK)) {
-				open_v8.endpoint_id_2 = this_adm.ec_ref_rx;
-				this_adm.ec_ref_rx = -1;
+			if ((this_adm.ec_ref_rx != -1) &&
+			    (path != ADM_PATH_PLAYBACK)) {
+				if (this_adm.num_ec_ref_rx_chans != 0) {
+					open_v8.endpoint_id_2 =
+						this_adm.ec_ref_rx;
+					this_adm.ec_ref_rx = -1;
+				} else {
+					pr_err("%s: EC channels not set %d\n",
+						__func__,
+						this_adm.num_ec_ref_rx_chans);
+					return -EINVAL;
+				}
 			}
 
 			open_v8.topology_id = topology;
