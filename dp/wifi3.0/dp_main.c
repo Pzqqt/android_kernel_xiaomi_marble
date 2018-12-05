@@ -6976,6 +6976,12 @@ dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 	struct dp_peer *peer;
 	uint8_t local_id;
 
+	if (!mac_addr) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid MAC address\n");
+		return;
+	}
+
 	peer = (struct dp_peer *)dp_find_peer_by_addr(pdev_handle, mac_addr,
 			&local_id);
 
