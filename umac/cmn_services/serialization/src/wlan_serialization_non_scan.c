@@ -364,7 +364,8 @@ wlan_ser_move_non_scan_pending_to_active(
 
 		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
 
-		wlan_serialization_activate_cmd(active_cmd_list, ser_pdev_obj);
+		wlan_serialization_activate_cmd(active_cmd_list, ser_pdev_obj,
+						SER_PENDING_TO_ACTIVE);
 
 		wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
 

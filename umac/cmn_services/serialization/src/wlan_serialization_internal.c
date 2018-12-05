@@ -276,7 +276,7 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
 
 	if (WLAN_SER_CMD_ACTIVE == status)
 		wlan_serialization_activate_cmd(cmd_list,
-						ser_pdev_obj);
+						ser_pdev_obj, ser_reason);
 
 error:
 	ser_exit();
@@ -286,7 +286,8 @@ error:
 
 QDF_STATUS wlan_serialization_activate_cmd(
 			struct wlan_serialization_command_list *cmd_list,
-			struct wlan_ser_pdev_obj *ser_pdev_obj)
+			struct wlan_ser_pdev_obj *ser_pdev_obj,
+			enum ser_queue_reason ser_reason)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct wlan_objmgr_psoc *psoc = NULL;
@@ -318,6 +319,8 @@ QDF_STATUS wlan_serialization_activate_cmd(
 		  cmd_list->cmd.cmd_type,
 		  cmd_list->cmd.cmd_id,
 		  "WLAN_SER_CB_ACTIVATE_CMD");
+
+	cmd_list->cmd.activation_reason = ser_reason;
 
 	status = cmd_list->cmd.cmd_cb(&cmd_list->cmd,
 				WLAN_SER_CB_ACTIVATE_CMD);

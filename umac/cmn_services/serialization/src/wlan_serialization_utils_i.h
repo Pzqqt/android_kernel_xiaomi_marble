@@ -629,16 +629,6 @@ QDF_STATUS wlan_serialization_peek_next(
 #include "wlan_serialization_debug_i.h"
 #endif
 
-enum ser_queue_reason {
-	SER_REQUEST,
-	SER_REMOVE,
-	SER_CANCEL,
-	SER_TIMEOUT,
-	SER_ACTIVATION_FAILED,
-	SER_PENDING_TO_ACTIVE,
-	SER_QUEUE_ACTION_MAX,
-};
-
 /*
  * Below bit positions are used to identify if a
  * serialization command is in use or marked for

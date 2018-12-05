@@ -83,7 +83,8 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
 QDF_STATUS
 wlan_serialization_activate_cmd(
 		struct wlan_serialization_command_list *cmd_list,
-		struct wlan_ser_pdev_obj *ser_pdev_obj);
+		struct wlan_ser_pdev_obj *ser_pdev_obj,
+		enum ser_queue_reason ser_reason);
 
 /**
  * wlan_serialization_move_pending_to_active() - Move a cmd from pending

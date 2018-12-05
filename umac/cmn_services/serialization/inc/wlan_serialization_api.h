@@ -500,6 +500,16 @@ void *wlan_serialization_get_active_cmd(struct wlan_objmgr_psoc *psoc,
 
 /* Preprocessor Definitions and Constants */
 
+enum ser_queue_reason {
+	SER_REQUEST,
+	SER_REMOVE,
+	SER_CANCEL,
+	SER_TIMEOUT,
+	SER_ACTIVATION_FAILED,
+	SER_PENDING_TO_ACTIVE,
+	SER_QUEUE_ACTION_MAX,
+};
+
 /*
  * struct wlan_serialization_queued_cmd_info member queue_type specifies the
  * below values to cancel the commands in these queues. Setting both the
@@ -712,9 +722,10 @@ struct wlan_serialization_command {
 	uint32_t cmd_id;
 	wlan_serialization_cmd_callback cmd_cb;
 	enum wlan_umac_comp_id source;
-	bool is_high_priority;
-	bool is_blocking;
-	bool queue_disable;
+	uint8_t is_high_priority:1,
+		is_blocking:1,
+		queue_disable:1,
+		activation_reason:3;
 	uint16_t cmd_timeout_duration;
 	union {
 		struct wlan_objmgr_vdev *vdev;
