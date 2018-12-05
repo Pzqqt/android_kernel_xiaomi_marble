@@ -50,41 +50,21 @@
 #include <wlan_utility.h>
 #include "wlan_reg_services_api.h"
 
-/* Purpose of HIDDEN_TIMER
- * When we remove hidden ssid from the profile i.e., forget the SSID via GUI
- * that SSID shouldn't see in the profile For above requirement we used timer
- * limit, logic is explained below Timer value is initialsed to current time
- * when it receives corresponding probe response of hidden SSID (The probe
- * request is received regularly till SSID in the profile. Once it is removed
- * from profile probe request is not sent.) when we receive probe response for
- * broadcast probe request, during update SSID with saved SSID we will diff
- * current time with saved SSID time if it is greater than 1 min then we are
- * not updating with old one
- */
+static void csr_set_cfg_valid_channel_list(struct mac_context *mac,
+					   uint8_t *pChannelList,
+					   uint8_t NumChannels);
 
-#define HIDDEN_TIMER (1*60*1000)
-/* must be less than 100, represent the persentage of new RSSI */
-#define CSR_SCAN_RESULT_RSSI_WEIGHT     80
-#define MAX_ACTIVE_SCAN_FOR_ONE_CHANNEL 140
-#define MIN_ACTIVE_SCAN_FOR_ONE_CHANNEL 120
+static void csr_save_tx_power_to_cfg(struct mac_context *mac,
+				     tDblLinkList *pList,
+				     uint32_t cfgId);
 
-#define MAX_ACTIVE_SCAN_FOR_ONE_CHANNEL_FASTREASSOC 30
-#define MIN_ACTIVE_SCAN_FOR_ONE_CHANNEL_FASTREASSOC 20
+static void csr_set_cfg_country_code(struct mac_context *mac,
+				     uint8_t *countryCode);
 
-#define PCL_ADVANTAGE 30
-#define PCL_RSSI_THRESHOLD -75
+static void csr_purge_channel_power(struct mac_context *mac,
+				    tDblLinkList *pChannelList);
 
-static void csr_set_cfg_valid_channel_list(struct mac_context *mac, uint8_t
-					*pChannelList, uint8_t NumChannels);
-static void csr_save_tx_power_to_cfg(struct mac_context *mac, tDblLinkList *pList,
-			      uint32_t cfgId);
-static void csr_set_cfg_country_code(struct mac_context *mac, uint8_t *countryCode);
-static void csr_purge_channel_power(struct mac_context *mac, tDblLinkList
-							*pChannelList);
 static bool csr_roam_is_valid_channel(struct mac_context *mac, uint8_t channel);
-
-#define CSR_IS_SOCIAL_CHANNEL(channel) \
-	(((channel) == 1) || ((channel) == 6) || ((channel) == 11))
 
 /* pResult is invalid calling this function. */
 void csr_free_scan_result_entry(struct mac_context *mac, struct tag_csrscan_result
