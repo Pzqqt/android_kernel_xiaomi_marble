@@ -8251,7 +8251,6 @@ QDF_STATUS lim_ap_mlme_vdev_start_req_failed(struct vdev_mlme_obj *vdev_mlme,
 {
 	struct mac_context *mac_ctx;
 
-	/* store mac ctx in vdev_mlme legacy_vdev_ptr?*/
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac_ctx) {
 		pe_err("mac_ctx is NULL");
