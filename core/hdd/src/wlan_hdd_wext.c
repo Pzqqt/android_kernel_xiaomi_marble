@@ -6505,7 +6505,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 					  mac_trace_get_lim_sme_state
 						  (sme_get_lim_sme_state(mac_handle)),
 					  mac_trace_get_lim_mlm_state
-						  (sme_get_lim_sme_state(mac_handle))
+						  (sme_get_lim_mlm_state(mac_handle))
 					  );
 			len += buf;
 
