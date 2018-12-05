@@ -619,11 +619,6 @@ sir_convert_auth_frame2_struct(struct mac_context *mac,
 			tpSirMacAuthFrameBody auth);
 
 QDF_STATUS
-sir_convert_addts_req2_struct(struct mac_context *mac,
-			uint8_t *frame, uint32_t len,
-			tSirAddtsReqInfo *addTs);
-
-QDF_STATUS
 sir_convert_addts_rsp2_struct(struct mac_context *mac,
 			uint8_t *frame, uint32_t len,
 			tSirAddtsRspInfo *addts);
