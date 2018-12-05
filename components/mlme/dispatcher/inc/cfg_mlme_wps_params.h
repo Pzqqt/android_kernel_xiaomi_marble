@@ -87,6 +87,16 @@
 				CFG_VALUE_OR_DEFAULT, \
 				"wps device password id")
 
+#define WPS_UUID_DEF_STR "0xa, 0xb, 0xc, 0xd, 0xe, 0xf"
+#define WPS_UUID_DEF_LEN (sizeof(WPS_UUID_DEF_STR) - 1)
+
+#define CFG_WPS_UUID CFG_STRING( \
+		"wps_uuid", \
+		0, \
+		WPS_UUID_DEF_LEN, \
+		WPS_UUID_DEF_STR, \
+		"wps uuid")
+
 #define CFG_WPS_ALL \
 	CFG(CFG_WPS_ENABLE) \
 	CFG(CFG_WPS_STATE) \
@@ -95,7 +105,8 @@
 	CFG(CFG_WPS_PRIMARY_DEVICE_CATEGORY) \
 	CFG(CFG_WPS_PIMARY_DEVICE_OUI) \
 	CFG(CFG_WPS_DEVICE_SUB_CATEGORY) \
-	CFG(CFG_WPS_DEVICE_PASSWORD_ID)
+	CFG(CFG_WPS_DEVICE_PASSWORD_ID) \
+	CFG(CFG_WPS_UUID)
 
 #endif /* __CFG_MLME_WPS_PARAMS_H */
 

@@ -5315,14 +5315,12 @@ QDF_STATUS populate_dot11f_wsc_in_probe_res(struct mac_context *mac,
 		pDot11f->ResponseType.resType = RESP_TYPE_AP;
 	}
 
-	/* UUID is a 16 byte long binary. Still use wlan_cfg_get_str to get it. */
+	/* UUID is a 16 byte long binary*/
 	pDot11f->UUID_E.present = 1;
-	cfgStrLen = WNI_CFG_WPS_UUID_LEN;
-	if (wlan_cfg_get_str(mac,
-			     WNI_CFG_WPS_UUID,
-			     pDot11f->UUID_E.uuid, &cfgStrLen) != QDF_STATUS_SUCCESS) {
-		*(pDot11f->UUID_E.uuid) = '\0';
-	}
+	*pDot11f->UUID_E.uuid = '\0';
+
+	wlan_mlme_get_wps_uuid(&mac->mlme_cfg->wps_params,
+			       pDot11f->UUID_E.uuid);
 
 	pDot11f->Manufacturer.present = 1;
 	cfgStrLen = sizeof(pDot11f->Manufacturer.name);

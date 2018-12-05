@@ -83,9 +83,6 @@ cgstatic cfg_static[CFG_PARAM_MAX_NUM] = {
 	WNI_CFG_IBSS_AUTO_BSSID_STAMIN,
 	WNI_CFG_IBSS_AUTO_BSSID_STAMAX,
 	WNI_CFG_IBSS_AUTO_BSSID_STADEF},
-	{WNI_CFG_WPS_UUID,
-	CFG_CTL_VALID | CFG_CTL_RE | CFG_CTL_WE | CFG_CTL_NTF_LIM,
-	0, 0, 0},
 	{WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
 	CFG_CTL_VALID | CFG_CTL_RE | CFG_CTL_WE | CFG_CTL_INT,
 	WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED_STAMIN,
@@ -144,10 +141,6 @@ cfgstatic_string cfg_static_string[CFG_MAX_STATIC_STRING] = {
 	 0x8c, 0x0, 0x90, 0x0, 0x95, 0x1, 0x97, 0x1, 0x99, 0x1, 0x9b, 0x1, 0x9d,
 	 0x1, 0x9f, 0x1, 0xa1, 0x1, 0xa5, 0x1, 0xf0, 0x1, 0xf2, 0x1, 0xf4, 0x1,
 	 0xf6, 0x1, 0xf8, 0x1, 0xfa, 0x1, 0xfc, 0x1} },
-	{WNI_CFG_WPS_UUID,
-	WNI_CFG_WPS_UUID_LEN,
-	6,
-	{0xa, 0xb, 0xc, 0xd, 0xe, 0xf} },
 };
 
 /*--------------------------------------------------------------------*/

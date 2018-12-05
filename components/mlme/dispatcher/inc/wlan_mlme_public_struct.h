@@ -482,6 +482,7 @@ struct wlan_mlme_ht_caps {
 	bool short_slot_time_enabled;
 };
 
+#define MLME_CFG_WPS_UUID_MAX_LEN    16
 /*
  * struct wlan_mlme_wps_params - All wps based related cfg items
  *
@@ -493,6 +494,7 @@ struct wlan_mlme_ht_caps {
  * @wps_primary_device_oui - primary device OUI
  * @wps_device_sub_category - device sub category
  * @wps_device_password_id - password id of device
+ * @wps_uuid - wps uuid to be sent in probe
  */
 struct wlan_mlme_wps_params {
 	uint8_t enable_wps;
@@ -503,6 +505,7 @@ struct wlan_mlme_wps_params {
 	uint32_t wps_primary_device_oui;
 	uint16_t wps_device_sub_category;
 	uint32_t wps_device_password_id;
+	struct mlme_cfg_str wps_uuid;
 };
 
 #define MLME_CFG_LISTEN_INTERVAL        1

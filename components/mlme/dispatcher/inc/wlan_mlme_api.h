@@ -2050,4 +2050,15 @@ QDF_STATUS wlan_mlme_override_bmps_imps(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS wlan_mlme_is_imps_enabled(struct wlan_objmgr_psoc *psoc,
 				     bool *value);
 
+/*
+ * wlan_mlme_get_wps_uuid() - get the wps uuid string
+ * @wps_params:   pointer to mlme wps parameters structure
+ * @data:          data to which the parameter is to be copied
+ *
+ * Return None
+ *
+ */
+void
+wlan_mlme_get_wps_uuid(struct wlan_mlme_wps_params *wps_params, uint8_t *data);
+
 #endif /* _WLAN_MLME_API_H_ */
