@@ -828,9 +828,6 @@ void wma_update_noa(struct beacon_info *beacon,
 void wma_update_probe_resp_noa(tp_wma_handle wma_handle,
 				      struct p2p_sub_element_noa *noa_ie);
 
-int wma_p2p_noa_event_handler(void *handle, uint8_t *event,
-				     uint32_t len);
-
 void wma_process_set_mimops_req(tp_wma_handle wma_handle,
 				       tSetMIMOPS *mimops);
 
