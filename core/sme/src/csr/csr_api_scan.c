@@ -67,8 +67,8 @@ static void csr_purge_channel_power(struct mac_context *mac,
 static bool csr_roam_is_valid_channel(struct mac_context *mac, uint8_t channel);
 
 /* pResult is invalid calling this function. */
-void csr_free_scan_result_entry(struct mac_context *mac, struct tag_csrscan_result
-				*pResult)
+void csr_free_scan_result_entry(struct mac_context *mac,
+				struct tag_csrscan_result *pResult)
 {
 	if (NULL != pResult->Result.pvIes)
 		qdf_mem_free(pResult->Result.pvIes);
@@ -113,6 +113,7 @@ QDF_STATUS csr_scan_close(struct mac_context *mac)
 	ucfg_scan_set_enable(mac->psoc, false);
 	return QDF_STATUS_SUCCESS;
 }
+
 QDF_STATUS csr_scan_handle_search_for_ssid(struct mac_context *mac_ctx,
 					   uint32_t session_id)
 {
@@ -230,7 +231,7 @@ csr_handle_fils_scan_for_ssid_failure(struct csr_roam_profile *roam_profile,
 #endif
 
 QDF_STATUS csr_scan_handle_search_for_ssid_failure(struct mac_context *mac_ctx,
-						  uint32_t session_id)
+						   uint32_t session_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct csr_roam_profile *profile;
@@ -461,8 +462,7 @@ static bool csr_scan_flush_denied(struct mac_context *mac)
 }
 
 static bool csr_scan_save_bss_description(struct mac_context *mac,
-						     tSirBssDescription *
-						     pBSSDescription)
+					  tSirBssDescription *pBSSDescription)
 {
 	struct tag_csrscan_result *pCsrBssDescription = NULL;
 	uint32_t cbBSSDesc;
@@ -498,12 +498,11 @@ static bool csr_scan_save_bss_description(struct mac_context *mac,
 bool csr_scan_append_bss_description(struct mac_context *mac,
 				     tSirBssDescription *pSirBssDescription)
 {
-	return csr_scan_save_bss_description(mac,
-					pSirBssDescription);
+	return csr_scan_save_bss_description(mac, pSirBssDescription);
 }
 
-static void csr_purge_channel_power(struct mac_context *mac, tDblLinkList
-					*pChannelList)
+static void csr_purge_channel_power(struct mac_context *mac,
+				    tDblLinkList *pChannelList)
 {
 	struct csr_channel_powerinfo *pChannelSet;
 	tListElem *pEntry;
@@ -643,8 +642,8 @@ void csr_apply_power2_current(struct mac_context *mac)
 }
 
 void csr_apply_channel_power_info_to_fw(struct mac_context *mac_ctx,
-					  struct csr_channel *ch_lst,
-					  uint8_t *countryCode)
+					struct csr_channel *ch_lst,
+					uint8_t *countryCode)
 {
 	int i;
 	uint8_t num_ch = 0;
@@ -748,7 +747,8 @@ void csr_clear_votes_for_country_info(struct mac_context *mac)
 /* caller allocated memory for pNumChn and pChnPowerInfo */
 /* As input, *pNumChn has the size of the array of pChnPowerInfo */
 /* Upon return, *pNumChn has the number of channels assigned. */
-static void csr_get_channel_power_info(struct mac_context *mac, tDblLinkList *list,
+static void csr_get_channel_power_info(struct mac_context *mac,
+				       tDblLinkList *list,
 				       uint32_t *num_ch,
 				       struct channel_power *chn_pwr_info)
 {
@@ -930,8 +930,8 @@ bool csr_is_supported_channel(struct mac_context *mac, uint8_t channelId)
  * pAdapter->channels11d
  */
 bool csr_learn_11dcountry_information(struct mac_context *mac,
-				   tSirBssDescription *pSirBssDesc,
-				   tDot11fBeaconIEs *pIes, bool fForce)
+				      tSirBssDescription *pSirBssDesc,
+				      tDot11fBeaconIEs *pIes, bool fForce)
 {
 	QDF_STATUS status;
 	uint8_t *pCountryCodeSelected;
@@ -996,11 +996,11 @@ free_ie:
 	return fRet;
 }
 
-static enum csr_scancomplete_nextcommand csr_scan_get_next_command_state(
-						struct mac_context *mac_ctx,
-						uint32_t session_id,
-						eCsrScanStatus scan_status,
-						uint8_t *chan)
+static enum csr_scancomplete_nextcommand
+csr_scan_get_next_command_state(struct mac_context *mac_ctx,
+				uint32_t session_id,
+				eCsrScanStatus scan_status,
+				uint8_t *chan)
 {
 	enum csr_scancomplete_nextcommand NextCommand = eCsrNextScanNothing;
 	int8_t channel;
@@ -1213,9 +1213,9 @@ error:
 }
 
 static void csr_handle_nxt_cmd(struct mac_context *mac_ctx,
-		   enum csr_scancomplete_nextcommand nxt_cmd,
-		   uint32_t session_id,
-		   uint8_t chan)
+			       enum csr_scancomplete_nextcommand nxt_cmd,
+			       uint32_t session_id,
+			       uint8_t chan)
 {
 	QDF_STATUS status, ret;
 
@@ -1260,7 +1260,7 @@ static void csr_handle_nxt_cmd(struct mac_context *mac_ctx,
 }
 
 void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
-				struct scan_event *event, void *arg)
+		       struct scan_event *event, void *arg)
 {
 	eCsrScanStatus scan_status = eCSR_SCAN_FAILURE;
 	enum csr_scancomplete_nextcommand NextCommand = eCsrNextScanNothing;
@@ -1421,8 +1421,8 @@ QDF_STATUS csr_move_bss_to_head_from_bssid(struct mac_context *mac,
  * Return: Success - QDF_STATUS_SUCCESS, Failure - error number
  */
 QDF_STATUS csr_scan_for_ssid(struct mac_context *mac_ctx, uint32_t session_id,
-			struct csr_roam_profile *profile, uint32_t roam_id,
-			bool notify)
+			     struct csr_roam_profile *profile, uint32_t roam_id,
+			     bool notify)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	uint32_t num_ssid = profile->SSIDs.numOfSSIDs;
@@ -1559,7 +1559,8 @@ error:
 }
 
 static void csr_set_cfg_valid_channel_list(struct mac_context *mac,
-				uint8_t *pChannelList, uint8_t NumChannels)
+					   uint8_t *pChannelList,
+					   uint8_t NumChannels)
 {
 	uint32_t dataLen = sizeof(uint8_t) * NumChannels;
 	QDF_STATUS status;
@@ -1690,7 +1691,8 @@ static void csr_save_tx_power_to_cfg(struct mac_context *pMac,
 	qdf_mem_free(p_buf);
 }
 
-static void csr_set_cfg_country_code(struct mac_context *mac, uint8_t *countryCode)
+static void csr_set_cfg_country_code(struct mac_context *mac,
+				     uint8_t *countryCode)
 {
 	uint8_t cc[WNI_CFG_COUNTRY_CODE_LEN];
 	/* v_REGDOMAIN_t DomainId */
@@ -1740,7 +1742,8 @@ QDF_STATUS csr_get_country_code(struct mac_context *mac, uint8_t *pBuf,
 	return QDF_STATUS_E_INVAL;
 }
 
-void csr_set_cfg_scan_control_list(struct mac_context *mac, uint8_t *countryCode,
+void csr_set_cfg_scan_control_list(struct mac_context *mac,
+				   uint8_t *countryCode,
 				   struct csr_channel *pChannelList)
 {
 	uint8_t i, j;
@@ -1784,7 +1787,8 @@ void csr_set_cfg_scan_control_list(struct mac_context *mac, uint8_t *countryCode
 	} /* AllocateMemory */
 }
 
-QDF_STATUS csr_scan_abort_mac_scan(struct mac_context *mac_ctx, uint32_t vdev_id,
+QDF_STATUS csr_scan_abort_mac_scan(struct mac_context *mac_ctx,
+				   uint32_t vdev_id,
 				   uint32_t scan_id)
 {
 	struct scan_cancel_request *req;
@@ -1829,8 +1833,8 @@ QDF_STATUS csr_scan_abort_mac_scan(struct mac_context *mac_ctx, uint32_t vdev_id
 	return status;
 }
 QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(struct mac_context *mac,
-						uint8_t sessionId,
-						eSmeCommandType commandType)
+						    uint8_t sessionId,
+						    eSmeCommandType commandType)
 {
 	tDblLinkList localList;
 	tListElem *pEntry;
@@ -1877,6 +1881,7 @@ QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(struct mac_context *mac,
 	csr_ll_close(&localList);
 	return status;
 }
+
 bool csr_roam_is_valid_channel(struct mac_context *mac, uint8_t channel)
 {
 	bool fValid = false;
@@ -1967,8 +1972,8 @@ void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
  */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(struct mac_context *mac,
-		roam_offload_synch_ind *roam_sync_ind_ptr,
-		tpSirBssDescription  bss_desc_ptr)
+				roam_offload_synch_ind *roam_sync_ind_ptr,
+				tpSirBssDescription  bss_desc_ptr)
 {
 	uint32_t length = 0;
 	struct tag_csrscan_result *scan_res_ptr = NULL;
@@ -1991,6 +1996,7 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
 /**
  * csr_get_fst_bssdescr_ptr() - This function returns the pointer to first bss
  * description from scan handle
@@ -2037,9 +2043,9 @@ tpSirBssDescription csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle)
  *
  * Return: first bss descriptor from the scan handle.
  */
-tSirBssDescription*
+tSirBssDescription *
 csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
-				tSirBssDescription *bss_descr)
+				  tSirBssDescription *bss_descr)
 {
 	tListElem *first_element = NULL;
 	struct tag_csrscan_result *scan_result = NULL;
@@ -2162,9 +2168,9 @@ end:
 }
 
 uint8_t
-csr_scan_get_channel_for_hw_mode_change(
-	struct mac_context *mac_ctx, uint32_t session_id,
-	struct csr_roam_profile *profile)
+csr_scan_get_channel_for_hw_mode_change(struct mac_context *mac_ctx,
+					uint32_t session_id,
+					struct csr_roam_profile *profile)
 {
 	tScanResultHandle result_handle = NULL;
 	QDF_STATUS status;
@@ -2398,7 +2404,7 @@ static eCsrEncryptionType csr_covert_enc_type_old(enum wlan_enc_type enc)
  * Return: None
  */
 static void csr_update_pmf_cap(tCsrScanResultFilter *src_filter,
-		struct scan_filter *dst_filter) {
+			       struct scan_filter *dst_filter) {
 
 	if (src_filter->MFPCapable || src_filter->MFPEnabled)
 		dst_filter->pmf_cap = WLAN_PMF_CAPABLE;
@@ -2407,7 +2413,7 @@ static void csr_update_pmf_cap(tCsrScanResultFilter *src_filter,
 }
 #else
 static inline void csr_update_pmf_cap(tCsrScanResultFilter *src_filter,
-		struct scan_filter *dst_filter)
+				      struct scan_filter *dst_filter)
 {}
 #endif
 
@@ -2471,7 +2477,8 @@ static enum wlan_phymode csr_convert_dotllmod_phymode(eCsrPhyMode dotllmode)
 }
 
 static QDF_STATUS csr_prepare_scan_filter(struct mac_context *mac_ctx,
-	tCsrScanResultFilter *pFilter, struct scan_filter *filter)
+					  tCsrScanResultFilter *pFilter,
+					  struct scan_filter *filter)
 {
 	int i;
 	uint32_t len = 0;
@@ -2647,8 +2654,8 @@ static void csr_update_bss_with_fils_data(struct mac_context *mac_ctx,
 #endif
 
 static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
-	struct scan_cache_entry *scan_entry,
-	struct tag_csrscan_result **p_result)
+					struct scan_cache_entry *scan_entry,
+					struct tag_csrscan_result **p_result)
 {
 	tDot11fBeaconIEs *bcn_ies;
 	tSirBssDescription *bss_desc;
@@ -2774,8 +2781,8 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(struct mac_context *mac_ctx,
 }
 
 static QDF_STATUS csr_parse_scan_list(struct mac_context *mac_ctx,
-	struct scan_result_list *ret_list,
-	qdf_list_t *scan_list)
+				      struct scan_result_list *ret_list,
+				      qdf_list_t *scan_list)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct tag_csrscan_result *pResult = NULL;
@@ -2820,7 +2827,7 @@ static QDF_STATUS csr_parse_scan_list(struct mac_context *mac_ctx,
  * Return: true if connection cannot be tried with AP else false
  */
 static bool csr_remove_ap_due_to_rssi(qdf_list_t *list,
-	tSirBssDescription *bss_descr)
+				      tSirBssDescription *bss_descr)
 {
 	QDF_STATUS status;
 	struct sir_rssi_disallow_lst *cur_node = NULL;
@@ -2895,7 +2902,7 @@ static bool csr_remove_ap_due_to_rssi(qdf_list_t *list,
  * Return: void
  */
 static void csr_filter_ap_due_to_rssi_reject(struct mac_context *mac_ctx,
-	struct scan_result_list *scan_list)
+					     struct scan_result_list *scan_list)
 {
 	tListElem *cur_entry;
 	tListElem *next_entry;
@@ -3014,8 +3021,8 @@ error:
 }
 
 QDF_STATUS csr_scan_get_result_for_bssid(struct mac_context *mac_ctx,
-					struct qdf_mac_addr *bssid,
-					tCsrScanResultInfo *res)
+					 struct qdf_mac_addr *bssid,
+					 tCsrScanResultInfo *res)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tCsrScanResultFilter *scan_filter = NULL;
@@ -3076,7 +3083,7 @@ free_filter:
 
 static inline QDF_STATUS
 csr_flush_scan_results(struct mac_context *mac_ctx,
-	struct scan_filter *filter)
+		       struct scan_filter *filter)
 {
 	struct wlan_objmgr_pdev *pdev = NULL;
 	QDF_STATUS status;
@@ -3105,7 +3112,7 @@ QDF_STATUS csr_scan_flush_result(struct mac_context *mac_ctx)
 }
 
 QDF_STATUS csr_scan_flush_selective_result(struct mac_context *mac_ctx,
-	bool flush_p2p)
+					   bool flush_p2p)
 {
 	struct scan_filter *filter;
 	QDF_STATUS status;
@@ -3124,7 +3131,7 @@ end:
 }
 
 static inline void csr_flush_bssid(struct mac_context *mac_ctx,
-	uint8_t *bssid)
+				   uint8_t *bssid)
 {
 	struct scan_filter *filter;
 
@@ -3143,20 +3150,20 @@ static inline void csr_flush_bssid(struct mac_context *mac_ctx,
 }
 
 void csr_scan_flush_bss_entry(struct mac_context *mac_ctx,
-			tpSmeCsaOffloadInd csa_off_ind)
+			      tpSmeCsaOffloadInd csa_off_ind)
 {
 	csr_flush_bssid(mac_ctx,
 		csa_off_ind->bssid.bytes);
 }
 
 void csr_remove_bssid_from_scan_list(struct mac_context *mac_ctx,
-			tSirMacAddr bssid)
+				     tSirMacAddr bssid)
 {
 	csr_flush_bssid(mac_ctx, bssid);
 }
 
 void csr_init_occupied_channels_list(struct mac_context *mac_ctx,
-	uint8_t sessionId)
+				     uint8_t sessionId)
 {
 	tScanResultHandle results;
 	struct scan_result_list *scan_list = NULL;
