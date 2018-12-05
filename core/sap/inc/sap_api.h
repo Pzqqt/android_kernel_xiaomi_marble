@@ -1155,43 +1155,6 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 			      eSapACLType list_type, eSapACLCmdType cmd);
 
 /**
- * wlansap_register_mgmt_frame() - register management frame
- * @sap_ctx: Pointer to SAP context
- * @frame_type: frame type that needs to be registered with PE.
- * @match_data: pointer to data which should be matched after @frame_type
- *              is matched.
- * @match_len: Length of the @match_data
- *
- * HDD use this API to register specified type of frame with CORE stack.
- * On receiving such kind of frame CORE stack should pass this frame to HDD
- *
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success and error code otherwise
- */
-QDF_STATUS wlansap_register_mgmt_frame(struct sap_context *sap_ctx,
-				       uint16_t frame_type,
-				       uint8_t *match_data,
-				       uint16_t match_len);
-
-/**
- * wlansap_de_register_mgmt_frame() - de register management frame
- * @sap_ctx: Pointer to SAP context
- * @frame_type: frame type that needs to be de-registered with PE.
- * @match_data: pointer to data which should be matched after @frame_type
- *              is matched.
- * @match_len: Length of the @match_data
- *
- * HDD use this API to deregister a previously registered frame
- *
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success and error code otherwise
- */
-QDF_STATUS wlansap_de_register_mgmt_frame(struct sap_context *sap_ctx,
-					  uint16_t frame_type,
-					  uint8_t *match_data,
-					  uint16_t match_len);
-
-/**
  * wlansap_channel_change_request() - Send channel change request
  * @sapContext: Pointer to the SAP context
  * @target_channel: Target channel

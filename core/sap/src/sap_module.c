@@ -1600,66 +1600,6 @@ QDF_STATUS wlan_sap_get_pre_cac_vdev_id(mac_handle_t handle, uint8_t *vdev_id)
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wlansap_register_mgmt_frame(struct sap_context *sap_ctx,
-				       uint16_t frameType,
-				       uint8_t *matchData,
-				       uint16_t matchLen)
-{
-	struct mac_context *mac;
-	QDF_STATUS status;
-
-	if (NULL == sap_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx",
-			  __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	mac = sap_get_mac_context();
-	if (!mac) {
-		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid MAC context");
-		return QDF_STATUS_E_FAULT;
-	}
-
-	status = sme_register_mgmt_frame(MAC_HANDLE(mac), sap_ctx->sessionId,
-					 frameType, matchData, matchLen);
-	if (QDF_IS_STATUS_ERROR(status))
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to Register MGMT frame");
-
-	return status;
-}
-
-QDF_STATUS wlansap_de_register_mgmt_frame(struct sap_context *sap_ctx,
-					  uint16_t frameType,
-					  uint8_t *matchData,
-					  uint16_t matchLen)
-{
-	struct mac_context *mac;
-	QDF_STATUS status;
-
-	if (NULL == sap_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx",
-			  __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	mac = sap_get_mac_context();
-	if (!mac) {
-		QDF_TRACE_ERROR(QDF_MODULE_ID_SAP, "Invalid MAC context");
-		return QDF_STATUS_E_FAULT;
-	}
-
-	status = sme_deregister_mgmt_frame(MAC_HANDLE(mac), sap_ctx->sessionId,
-					   frameType, matchData, matchLen);
-	if (QDF_IS_STATUS_ERROR(status))
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to Deregister MGMT frame");
-
-	return status;
-}
-
 QDF_STATUS wlansap_channel_change_request(struct sap_context *sapContext,
 					  uint8_t target_channel)
 {
