@@ -242,8 +242,6 @@ QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value);
 bool wma_is_csa_offload_enabled(void);
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD
 bool wma_is_p2p_lo_capable(void);
-QDF_STATUS wma_p2p_lo_start(struct sir_p2p_lo_start *params);
-QDF_STATUS wma_p2p_lo_stop(u_int32_t vdev_id);
 #else
 static inline bool wma_is_p2p_lo_capable(void)
 {
