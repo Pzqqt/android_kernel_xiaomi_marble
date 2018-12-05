@@ -147,7 +147,6 @@ typedef struct tagSmeCmd {
 		struct roam_cmd roamCmd;
 		struct wmstatus_changecmd wmStatusChangeCmd;
 		tGenericQosCmd qosCmd;
-		struct addstafor_sessioncmd addStaSessionCmd;
 		struct delstafor_sessionCmd delStaSessionCmd;
 #ifdef FEATURE_WLAN_TDLS
 		tTdlsCmd tdlsCmd;

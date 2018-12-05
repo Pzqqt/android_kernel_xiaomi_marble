@@ -349,15 +349,6 @@ struct wmstatus_changecmd {
 
 };
 
-struct addstafor_sessioncmd {
-	/* Session self mac addr */
-	tSirMacAddr selfMacAddr;
-	enum QDF_OPMODE currDeviceMode;
-	uint32_t type;
-	uint32_t subType;
-	uint8_t sessionId;
-};
-
 struct delstafor_sessionCmd {
 	/* Session self mac addr */
 	tSirMacAddr selfMacAddr;
