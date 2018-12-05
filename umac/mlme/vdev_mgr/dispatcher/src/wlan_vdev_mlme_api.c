@@ -204,4 +204,16 @@ void wlan_vdev_mlme_cmd_unlock(struct wlan_objmgr_vdev *vdev)
 	mlme_vdev_cmd_mutex_release(vdev_mlme);
 }
 
+QDF_STATUS wlan_vdev_mlme_is_scan_allowed(struct wlan_objmgr_vdev *vdev)
+{
+	enum wlan_vdev_state state;
+
+	state = wlan_vdev_mlme_get_state(vdev);
+	if ((state == WLAN_VDEV_S_INIT) ||  (state == WLAN_VDEV_S_UP) ||
+	    (state == WLAN_VDEV_S_STOP))
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 #endif

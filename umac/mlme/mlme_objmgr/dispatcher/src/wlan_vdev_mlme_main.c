@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,8 @@
 #include <wlan_mlme_dbg.h>
 #include "include/wlan_vdev_mlme.h"
 #include "vdev_mgr/core/src/vdev_mlme_sm.h"
+#include "wlan_serialization_api.h"
+#include "wlan_utility.h"
 
 static QDF_STATUS mlme_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev,
 					       void *arg)
@@ -116,6 +118,64 @@ static QDF_STATUS mlme_vdev_obj_destroy_handler(struct wlan_objmgr_vdev *vdev,
 	wlan_objmgr_vdev_component_obj_detach(vdev, WLAN_UMAC_COMP_MLME,
 					      vdev_mlme);
 	qdf_mem_free(vdev_mlme);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static void mlme_scan_serialization_comp_info_cb(
+		struct wlan_objmgr_vdev *vdev,
+		union wlan_serialization_rules_info *comp_info)
+{
+	struct wlan_objmgr_pdev *pdev;
+	QDF_STATUS status;
+
+	if (!comp_info || !vdev) {
+		mlme_err("comp_info or vdev is NULL");
+		return;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		mlme_err("pdev is NULL");
+		return;
+	}
+
+	comp_info->scan_info.is_mlme_op_in_progress = false;
+
+	status = wlan_util_is_pdev_scan_allowed(pdev, WLAN_MLME_SER_IF_ID);
+	if (status != QDF_STATUS_SUCCESS)
+		comp_info->scan_info.is_mlme_op_in_progress = true;
+}
+
+QDF_STATUS wlan_mlme_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS status;
+
+	status = wlan_serialization_register_comp_info_cb
+			(psoc,
+			 WLAN_UMAC_COMP_MLME,
+			 WLAN_SER_CMD_SCAN,
+			 mlme_scan_serialization_comp_info_cb);
+	if (status != QDF_STATUS_SUCCESS) {
+		mlme_err("Serialize scan cmd register failed");
+		return status;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mlme_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS status;
+
+	status = wlan_serialization_deregister_comp_info_cb
+						(psoc,
+						 WLAN_UMAC_COMP_MLME,
+						 WLAN_SER_CMD_SCAN);
+	if (status != QDF_STATUS_SUCCESS) {
+		mlme_err("Serialize scan cmd deregister failed");
+		return status;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

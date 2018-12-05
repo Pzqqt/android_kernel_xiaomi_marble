@@ -2186,6 +2186,12 @@ static bool scm_serialization_scan_rules_cb(
 			return false;
 		}
 		break;
+	case WLAN_UMAC_COMP_MLME:
+		if (comp_info->scan_info.is_mlme_op_in_progress) {
+			scm_debug("Cancel scan. MLME operation in progress");
+			return false;
+		}
+		break;
 	default:
 		scm_debug("not handled comp_id %d", comp_id);
 		break;

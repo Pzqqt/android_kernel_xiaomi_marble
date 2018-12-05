@@ -167,6 +167,7 @@ struct vdev_mlme_ops {
  * struct vdev_mlme_obj - VDEV MLME component object
  * @vdev_proto:           VDEV MLME proto substructure
  * @sm_lock:              VDEV SM lock
+ * @vdev_cmd_lock:        VDEV MLME command atomicity
  * @sm_hdl:               VDEV SM handle
  * @ops:                  VDEV MLME callback table
  * @ext_vdev_ptr:         VDEV MLME legacy pointer

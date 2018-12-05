@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -461,6 +461,43 @@ QDF_STATUS wlan_util_pdev_vdevs_deschan_match(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_SUCCESS;
 
 	return QDF_STATUS_E_FAILURE;
+}
+
+static void wlan_vdev_scan_allowed(struct wlan_objmgr_pdev *pdev, void *object,
+				   void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
+	uint8_t *flag = (uint8_t *)arg;
+
+	wlan_vdev_obj_lock(vdev);
+	if (wlan_vdev_mlme_is_scan_allowed(vdev) != QDF_STATUS_SUCCESS)
+		*flag = 1;
+
+	wlan_vdev_obj_unlock(vdev);
+}
+
+QDF_STATUS wlan_util_is_pdev_scan_allowed(struct wlan_objmgr_pdev *pdev,
+					  wlan_objmgr_ref_dbgid dbg_id)
+{
+	uint8_t flag = 0;
+
+	if (!pdev)
+		return QDF_STATUS_E_INVAL;
+
+	wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_VDEV_OP,
+					  wlan_vdev_scan_allowed,
+					  &flag, 0, dbg_id);
+
+	if (flag == 1)
+		return QDF_STATUS_E_FAILURE;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+QDF_STATUS wlan_util_is_pdev_scan_allowed(struct wlan_objmgr_pdev *pdev,
+					  wlan_objmgr_ref_dbgid dbg_id)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 

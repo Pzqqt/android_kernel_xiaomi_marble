@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -284,5 +284,18 @@ QDF_STATUS wlan_chan_eq(struct wlan_channel *chan1, struct wlan_channel *chan2);
 void
 wlan_util_stats_get_rssi(bool db2dbm_enabled, int32_t bcn_snr, int32_t dat_snr,
 			 int8_t *rssi);
+
+/**
+ * wlan_util_is_pdev_scan_allowed() - Check for vdev is allowed to scan
+ * @pdev: pdev pointer
+ * @dbg_id: module id
+ *
+ * Iterates through all vdevs, checks if any VDEV is not either in S_INIT or in
+ * S_UP state
+ *
+ * Return: QDF_STATUS_SUCCESS,if scan is allowed, otherwise QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS wlan_util_is_pdev_scan_allowed(struct wlan_objmgr_pdev *pdev,
+					  wlan_objmgr_ref_dbgid dbg_id);
 
 #endif /* _WLAN_UTILITY_H_ */

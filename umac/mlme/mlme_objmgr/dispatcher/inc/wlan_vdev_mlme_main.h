@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -183,6 +183,25 @@ QDF_STATUS wlan_vdev_mlme_init(void);
  */
 QDF_STATUS wlan_vdev_mlme_deinit(void);
 
+/**
+ * wlan_mlme_psoc_enable - MLME initializations on PSOC enable
+ *
+ * Initializes MLME params on PSOC eable
+ *
+ * Return: SUCCESS on successful initialization
+ *         FAILURE, if initialization fails
+ */
+QDF_STATUS wlan_mlme_psoc_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mlme_psoc_disable - MLME clean up on PSOC disable
+ *
+ * cleanup MLME params on PSOC eable
+ *
+ * Return: SUCCESS on successful cleanup
+ *         FAILURE, if cleanup fails
+ */
+QDF_STATUS wlan_mlme_psoc_disable(struct wlan_objmgr_psoc *psoc);
 #else
 
 /**
@@ -210,5 +229,32 @@ static inline QDF_STATUS wlan_vdev_mlme_deinit(void)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * wlan_mlme_psoc_enable - MLME initializations on PSOC enable
+ *
+ * Initializes MLME params on PSOC eable
+ *
+ * Return: SUCCESS on successful initialization
+ *         FAILURE, if initialization fails
+ */
+static inline QDF_STATUS wlan_mlme_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_mlme_psoc_disable - MLME clean up on PSOC disable
+ *
+ * cleanup MLME params on PSOC eable
+ *
+ * Return: SUCCESS on successful cleanup
+ *         FAILURE, if cleanup fails
+ */
+static inline QDF_STATUS wlan_mlme_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif
 #endif

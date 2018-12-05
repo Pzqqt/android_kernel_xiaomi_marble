@@ -61,6 +61,7 @@ enum wlan_serialization_cb_reason {
  * struct wlan_serialization_scan_info - Information needed for scan cmd
  * @is_cac_in_progress: boolean to check the cac status
  * @is_tdls_in_progress: boolean to check the tdls status
+ * @is_mlme_op_in_progress: boolean to check the mlme op status
  *
  * This information is needed for scan command from other components
  * to apply the rules and check whether the cmd is allowed or not
@@ -68,6 +69,7 @@ enum wlan_serialization_cb_reason {
 struct wlan_serialization_scan_info {
 	bool is_cac_in_progress;
 	bool is_tdls_in_progress;
+	bool is_mlme_op_in_progress;
 };
 
 /**
@@ -547,6 +549,7 @@ enum wlan_serialization_cb_reason {
  * struct wlan_serialization_scan_info - Information needed for scan cmd
  * @is_cac_in_progress: boolean to check the cac status
  * @is_tdls_in_progress: boolean to check the tdls status
+ * @is_mlme_op_in_progress: boolean to check the mlme op status
  *
  * This information is needed for scan command from other components
  * to apply the rules and check whether the cmd is allowed or not
@@ -554,6 +557,7 @@ enum wlan_serialization_cb_reason {
 struct wlan_serialization_scan_info {
 	bool is_cac_in_progress;
 	bool is_tdls_in_progress;
+	bool is_mlme_op_in_progress;
 };
 
 /**

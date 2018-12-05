@@ -152,5 +152,16 @@ void wlan_vdev_mlme_cmd_lock(struct wlan_objmgr_vdev *vdev);
  * Return: void
  */
 void wlan_vdev_mlme_cmd_unlock(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_vdev_mlme_is_scan_allowed() - Checks whether scan is allowed
+ * @vdev: Object manager VDEV object
+ *
+ * API to checks the VDEV MLME SM state to check scan is allowed
+ *
+ * Return: SUCCESS: if scan is allowed
+ *         FAILURE: otherwise failure
+ */
+QDF_STATUS wlan_vdev_mlme_is_scan_allowed(struct wlan_objmgr_vdev *vdev);
 #endif
 #endif
