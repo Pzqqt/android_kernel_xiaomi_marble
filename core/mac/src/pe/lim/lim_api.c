@@ -2658,3 +2658,59 @@ QDF_STATUS lim_update_ext_cap_ie(struct mac_context *mac_ctx,
 	(*local_ie_len) += driver_ext_cap.num_bytes;
 	return QDF_STATUS_SUCCESS;
 }
+
+#define LIM_RSN_OUI_SIZE 4
+
+struct rsn_oui_akm_type_map {
+	enum ani_akm_type akm_type;
+	uint8_t rsn_oui[LIM_RSN_OUI_SIZE];
+};
+
+static const struct rsn_oui_akm_type_map rsn_oui_akm_type_mapping_table[] = {
+	{ANI_AKM_TYPE_RSN,                  {0x00, 0x0F, 0xAC, 0x01} },
+	{ANI_AKM_TYPE_RSN_PSK,              {0x00, 0x0F, 0xAC, 0x02} },
+	{ANI_AKM_TYPE_FT_RSN,               {0x00, 0x0F, 0xAC, 0x03} },
+	{ANI_AKM_TYPE_FT_RSN_PSK,           {0x00, 0x0F, 0xAC, 0x04} },
+	{ANI_AKM_TYPE_RSN_8021X_SHA256,     {0x00, 0x0F, 0xAC, 0x05} },
+	{ANI_AKM_TYPE_RSN_PSK_SHA256,       {0x00, 0x0F, 0xAC, 0x06} },
+#ifdef WLAN_FEATURE_SAE
+	{ANI_AKM_TYPE_SAE,                  {0x00, 0x0F, 0xAC, 0x08} },
+	{ANI_AKM_TYPE_FT_SAE,               {0x00, 0x0F, 0xAC, 0x09} },
+#endif
+	{ANI_AKM_TYPE_SUITEB_EAP_SHA256,    {0x00, 0x0F, 0xAC, 0x0B} },
+	{ANI_AKM_TYPE_SUITEB_EAP_SHA384,    {0x00, 0x0F, 0xAC, 0x0C} },
+	{ANI_AKM_TYPE_FT_SUITEB_EAP_SHA384, {0x00, 0x0F, 0xAC, 0x0D} },
+	{ANI_AKM_TYPE_FILS_SHA256,          {0x00, 0x0F, 0xAC, 0x0E} },
+	{ANI_AKM_TYPE_FILS_SHA384,          {0x00, 0x0F, 0xAC, 0x0F} },
+	{ANI_AKM_TYPE_FT_FILS_SHA256,       {0x00, 0x0F, 0xAC, 0x10} },
+	{ANI_AKM_TYPE_FT_FILS_SHA384,       {0x00, 0x0F, 0xAC, 0x11} },
+	{ANI_AKM_TYPE_OWE,                  {0x00, 0x0F, 0xAC, 0x12} },
+#ifdef FEATURE_WLAN_ESE
+	{ANI_AKM_TYPE_CCKM,                 {0x00, 0x40, 0x96, 0x00} },
+#endif
+	{ANI_AKM_TYPE_OSEN,                 {0x50, 0x6F, 0x9A, 0x01} },
+	{ANI_AKM_TYPE_DPP_RSN,              {0x50, 0x6F, 0x9A, 0x02} },
+	{ANI_AKM_TYPE_WPA,                  {0x00, 0x50, 0xF2, 0x01} },
+	{ANI_AKM_TYPE_WPA_PSK,              {0x00, 0x50, 0xF2, 0x02} },
+	/* Add akm type above here */
+	{ANI_AKM_TYPE_UNKNOWN, {0} },
+};
+
+enum ani_akm_type lim_translate_rsn_oui_to_akm_type(uint8_t auth_suite[4])
+{
+	const struct rsn_oui_akm_type_map *map;
+	enum ani_akm_type akm_type;
+
+	map = rsn_oui_akm_type_mapping_table;
+	while (true) {
+		akm_type = map->akm_type;
+		if ((akm_type == ANI_AKM_TYPE_UNKNOWN) ||
+		    (qdf_mem_cmp(auth_suite, map->rsn_oui, 4) == 0))
+			break;
+		map++;
+	}
+
+	pe_debug("akm_type: %d", akm_type);
+
+	return akm_type;
+}

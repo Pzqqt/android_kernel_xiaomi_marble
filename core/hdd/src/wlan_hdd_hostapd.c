@@ -2661,14 +2661,14 @@ stopbss:
 static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 				eCsrEncryptionType *pEncryptType,
 				eCsrEncryptionType *mcEncryptType,
-				eCsrAuthType *pAuthType,
+				tCsrAuthList *akm_list,
 				bool *pMFPCapable,
 				bool *pMFPRequired,
 				uint16_t gen_ie_len, uint8_t *gen_ie)
 {
 	uint32_t ret;
 	uint8_t *pRsnIe;
-	uint16_t RSNIeLen;
+	uint16_t RSNIeLen, i;
 	tDot11fIERSN dot11RSNIE = {0};
 	tDot11fIEWPA dot11WPAIE = {0};
 
@@ -2705,13 +2705,13 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 		hdd_debug("authentication suite count: %d",
 		       dot11RSNIE.akm_suite_cnt);
 		/*
-		 * Here we have followed the apple base code,
-		 * but probably I suspect we can do something different
-		 * dot11RSNIE.akm_suite_cnt
-		 * Just translate the FIRST one
+		 * Translate akms in akm suite
 		 */
-		*pAuthType =
-		    hdd_translate_rsn_to_csr_auth_type(dot11RSNIE.akm_suite[0]);
+		for (i = 0; i < dot11RSNIE.akm_suite_cnt; i++)
+			akm_list->authType[i] =
+				hdd_translate_rsn_to_csr_auth_type(
+						       dot11RSNIE.akm_suite[i]);
+		akm_list->numEntries = dot11RSNIE.akm_suite_cnt;
 		/* dot11RSNIE.pwise_cipher_suite_count */
 		*pEncryptType =
 			hdd_translate_rsn_to_csr_encryption_type(dot11RSNIE.
@@ -2747,9 +2747,14 @@ static int hdd_softap_unpack_ie(mac_handle_t mac_handle,
 		hdd_debug("WPA authentication suite count: %d",
 		       dot11WPAIE.auth_suite_count);
 		/* dot11WPAIE.auth_suite_count */
-		/* Just translate the FIRST one */
-		*pAuthType =
-			hdd_translate_wpa_to_csr_auth_type(dot11WPAIE.auth_suites[0]);
+		/*
+		 * Translate akms in akm suite
+		 */
+		for (i = 0; i < dot11WPAIE.auth_suite_count; i++)
+			akm_list->authType[i] =
+				hdd_translate_wpa_to_csr_auth_type(
+						     dot11WPAIE.auth_suites[i]);
+		akm_list->numEntries = dot11WPAIE.auth_suite_count;
 		/* dot11WPAIE.unicast_cipher_count */
 		*pEncryptType =
 			hdd_translate_wpa_to_csr_encryption_type(dot11WPAIE.
@@ -4862,7 +4867,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	struct ieee80211_mgmt mgmt;
 	const uint8_t *pIe = NULL;
 	uint16_t capab_info, ap_prot = cfg_default(CFG_AP_PROTECTION_MODE);
-	eCsrAuthType RSNAuthType;
 	eCsrEncryptionType RSNEncryptType;
 	eCsrEncryptionType mcRSNEncryptType;
 	int status = QDF_STATUS_SUCCESS, ret;
@@ -4871,6 +4875,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	struct hdd_hostapd_state *hostapd_state;
 	mac_handle_t mac_handle;
 	int32_t i;
+	uint32_t ii;
 	struct hdd_config *iniConfig;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t mcc_to_scc_switch = 0, conc_rule1 = 0;
@@ -5231,7 +5236,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			hdd_softap_unpack_ie(cds_get_context
 						     (QDF_MODULE_ID_SME),
 					     &RSNEncryptType, &mcRSNEncryptType,
-					     &RSNAuthType, &MFPCapable,
+					     &pConfig->akm_list,
+					     &MFPCapable,
 					     &MFPRequired,
 					     pConfig->RSNWPAReqIE[1] + 2,
 					     pConfig->RSNWPAReqIE);
@@ -5244,8 +5250,14 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			pConfig->mcRSNEncryptType = mcRSNEncryptType;
 			(WLAN_HDD_GET_AP_CTX_PTR(adapter))->
 			encryption_type = RSNEncryptType;
-			hdd_debug("CSR AuthType = %d, EncryptionType = %d mcEncryptionType = %d",
-			       RSNAuthType, RSNEncryptType, mcRSNEncryptType);
+			hdd_debug("CSR EncryptionType = %d mcEncryptionType = %d",
+				  RSNEncryptType, mcRSNEncryptType);
+			hdd_debug("CSR AKM Suites %d",
+				  pConfig->akm_list.numEntries);
+			for (ii = 0; ii < pConfig->akm_list.numEntries;
+			     ii++)
+				hdd_debug("CSR AKM Suite [%d] = %d", ii,
+					  pConfig->akm_list.authType[ii]);
 		}
 	}
 
@@ -5276,7 +5288,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			status = hdd_softap_unpack_ie
 					(cds_get_context(QDF_MODULE_ID_SME),
 					 &RSNEncryptType,
-					 &mcRSNEncryptType, &RSNAuthType,
+					 &mcRSNEncryptType,
+					 &pConfig->akm_list,
 					 &MFPCapable, &MFPRequired,
 					 pConfig->RSNWPAReqIE[1] + 2,
 					 pConfig->RSNWPAReqIE);
@@ -5290,9 +5303,15 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 				pConfig->mcRSNEncryptType = mcRSNEncryptType;
 				(WLAN_HDD_GET_AP_CTX_PTR(adapter))->
 				encryption_type = RSNEncryptType;
-				hdd_debug("CSR AuthType = %d, EncryptionType = %d mcEncryptionType = %d",
-				       RSNAuthType, RSNEncryptType,
-				       mcRSNEncryptType);
+				hdd_debug("CSR EncryptionType = %d mcEncryptionType = %d",
+					  RSNEncryptType, mcRSNEncryptType);
+				hdd_debug("CSR AKM Suites %d",
+					  pConfig->akm_list.numEntries);
+				for (ii = 0; ii < pConfig->akm_list.numEntries;
+				     ii++)
+					hdd_debug("CSR AKM Suite [%d] = %d", ii,
+						  pConfig->akm_list.
+						  authType[ii]);
 			}
 		}
 	}

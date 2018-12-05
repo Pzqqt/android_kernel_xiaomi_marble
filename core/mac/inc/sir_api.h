@@ -1084,6 +1084,7 @@ struct assoc_ind {
 	tSirMacAddr bssId;      /* Self BSSID */
 	uint16_t staId;         /* Station ID for peer */
 	tAniAuthType authType;
+	enum ani_akm_type akm_type;
 	tAniSSID ssId;          /* SSID used by STA to associate */
 	tSirWAPIie wapiIE;      /* WAPI IE received from peer */
 	tSirRSNie rsnIE;        /* RSN IE received from peer */

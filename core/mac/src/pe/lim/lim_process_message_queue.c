@@ -165,6 +165,7 @@ static void lim_process_sae_msg_ap(struct mac_context *mac,
 					      assoc_req->sub_type,
 					      &assoc_req->hdr,
 					      assoc_req->assoc_req,
+					      ANI_AKM_TYPE_SAE,
 					      assoc_req->pmf_connection,
 					      &assoc_req_copied,
 					      assoc_req->dup_entry) == false)

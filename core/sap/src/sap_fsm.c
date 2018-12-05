@@ -2851,6 +2851,8 @@ sapconvert_to_csr_profile(tsap_config_t *pconfig_params, eCsrRoamBssType bssType
 	profile->AuthType.numEntries = 1;
 	profile->AuthType.authType[0] = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 
+	profile->akm_list = pconfig_params->akm_list;
+
 	/* Always set the Encryption Type */
 	profile->EncryptionType.numEntries = 1;
 	profile->EncryptionType.encryptionType[0] =

@@ -241,7 +241,8 @@ typedef struct tLimPreAuthTable {
 /* / Per STA context structure definition */
 typedef struct sLimMlmStaContext {
 	tLimMlmStates mlmState;
-	tAniAuthType authType;
+	tAniAuthType authType;		/* auth algo in auth frame */
+	enum ani_akm_type akm_type;	/* akm in rsn/wpa ie */
 	uint16_t listenInterval;
 	tSirMacCapabilityInfo capabilityInfo;
 	tSirMacReasonCodes disassocReason;

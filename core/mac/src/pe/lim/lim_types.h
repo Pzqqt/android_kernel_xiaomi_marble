@@ -210,6 +210,7 @@ typedef struct sLimMlmAssocInd {
 	tSirMacAddr peerMacAddr;
 	uint16_t aid;
 	tAniAuthType authType;
+	enum ani_akm_type akm_type;
 	tAniSSID ssId;
 	tSirRSNie rsnIE;
 	tSirWAPIie wapiIE;
@@ -1130,6 +1131,7 @@ void lim_process_assoc_cleanup(struct mac_context *mac_ctx,
  *            Request(=1) frame
  * @hdr: A pointer to the MAC header
  * @assoc_req: pointer to ASSOC/REASSOC Request frame
+ * @akm_type: AKM type
  * @pmf_connection: flag indicating pmf connection
  * @assoc_req_copied: boolean to indicate if assoc req was copied to tmp above
  * @dup_entry: flag indicating if duplicate entry found
@@ -1141,6 +1143,7 @@ bool lim_send_assoc_ind_to_sme(struct mac_context *mac_ctx,
 			       uint8_t sub_type,
 			       tpSirMacMgmtHdr hdr,
 			       tpSirAssocReq assoc_req,
+			       enum ani_akm_type akm_type,
 			       bool pmf_connection,
 			       bool *assoc_req_copied,
 			       bool dup_entry);
