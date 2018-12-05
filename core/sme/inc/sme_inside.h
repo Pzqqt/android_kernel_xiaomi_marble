@@ -60,16 +60,6 @@ typedef struct sGenericQosCmd {
 	uint8_t tspec_mask;
 } tGenericQosCmd;
 
-typedef struct sRemainChlCmd {
-	uint8_t chn;
-	uint8_t phyMode;
-	uint32_t duration;
-	uint8_t isP2PProbeReqAllowed;
-	uint32_t scan_id;
-	void *callback;
-	void *callbackCtx;
-} tRemainChlCmd;
-
 #ifdef FEATURE_WLAN_TDLS
 typedef struct TdlsSendMgmtInfo {
 	tSirMacAddr peerMac;
@@ -157,7 +147,6 @@ typedef struct tagSmeCmd {
 		struct roam_cmd roamCmd;
 		struct wmstatus_changecmd wmStatusChangeCmd;
 		tGenericQosCmd qosCmd;
-		tRemainChlCmd remainChlCmd;
 		struct addstafor_sessioncmd addStaSessionCmd;
 		struct delstafor_sessionCmd delStaSessionCmd;
 #ifdef FEATURE_WLAN_TDLS
