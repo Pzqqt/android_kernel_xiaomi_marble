@@ -976,14 +976,6 @@ QDF_STATUS wma_wni_cfg_dnld(tp_wma_handle wma_handle);
 int wma_unified_debug_print_event_handler(void *handle, uint8_t *datap,
 					  uint32_t len);
 
-bool wma_is_sap_active(tp_wma_handle wma_handle);
-
-bool wma_is_p2p_go_active(tp_wma_handle wma_handle);
-
-bool wma_is_p2p_cli_active(tp_wma_handle wma_handle);
-
-bool wma_is_sta_active(tp_wma_handle wma_handle);
-
 WLAN_PHY_MODE wma_peer_phymode(tSirNwType nw_type, uint8_t sta_type,
 			       uint8_t is_ht, uint8_t ch_width,
 			       uint8_t is_vht, bool is_he);
