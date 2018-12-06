@@ -374,6 +374,8 @@ struct qdf_dp_trace_record_s {
  * @num:  Current index
  * @proto_bitmap: defines which protocol to be traced
  * @no_of_record: defines every nth packet to be traced
+ * @num_records_to_dump: defines number of records to be dumped
+ * @dump_counter: counter to track number of records dumped
  * @verbosity : defines verbosity level
  * @ini_conf_verbosity: Configured verbosity from INI
  * @enable: enable/disable DP trace
@@ -417,6 +419,8 @@ struct s_qdf_dp_trace_data {
 	uint32_t num;
 	uint8_t proto_bitmap;
 	uint8_t no_of_record;
+	uint16_t num_records_to_dump;
+	uint16_t dump_counter;
 	uint8_t verbosity;
 	uint8_t ini_conf_verbosity;
 	bool enable;
@@ -662,14 +666,16 @@ QDF_STATUS qdf_dpt_dump_stats_debugfs(qdf_debugfs_file_t file,
 				      uint32_t curr_pos);
 
 /**
- * qdf_dpt_set_value_debugfs() - dump DP Trace stats to debugfs file
- * @file: debugfs file to read
- * @curr_pos: curr position to start read
+ * qdf_dpt_set_value_debugfs() - set value of DP Trace debugfs params
+ * @proto_bitmap: defines which protocol to be traced
+ * @no_of_record: defines every nth packet to be traced
+ * @verbosity : defines verbosity level
+ * @num_records_to_dump: defines number of records to be dumped
  *
  * Return: none
  */
 void qdf_dpt_set_value_debugfs(uint8_t proto_bitmap, uint8_t no_of_record,
-			    uint8_t verbosity);
+			    uint8_t verbosity, uint16_t num_records_to_dump);
 
 
 /**
@@ -877,7 +883,7 @@ QDF_STATUS qdf_dpt_dump_stats_debugfs(qdf_debugfs_file_t file,
 
 static inline
 void qdf_dpt_set_value_debugfs(uint8_t proto_bitmap, uint8_t no_of_record,
-			    uint8_t verbosity)
+			    uint8_t verbosity, uint16_t num_records_to_dump)
 {
 }
 

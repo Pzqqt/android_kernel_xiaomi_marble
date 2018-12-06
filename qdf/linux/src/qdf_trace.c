@@ -841,6 +841,14 @@ static inline void free_g_qdf_dp_trace_tbl_buffer(void)
 #endif
 
 #define QDF_DP_TRACE_PREPEND_STR_SIZE 100
+/*
+ * one dp trace record can't be greater than 300 bytes.
+ * Max Size will be QDF_DP_TRACE_PREPEND_STR_SIZE(100) + BUFFER_SIZE(121).
+ * Always make sure to change this QDF_DP_TRACE_MAX_RECORD_SIZE
+ * value accordingly whenever above two mentioned MACRO value changes.
+ */
+#define QDF_DP_TRACE_MAX_RECORD_SIZE 300
+
 static void qdf_dp_unused(struct qdf_dp_trace_record_s *record,
 			  uint16_t index, uint8_t pdev_id, uint8_t info)
 {
@@ -2185,6 +2193,8 @@ void qdf_dp_trace_clear_buffer(void)
 	g_qdf_dp_trace_data.head = INVALID_QDF_DP_TRACE_ADDR;
 	g_qdf_dp_trace_data.tail = INVALID_QDF_DP_TRACE_ADDR;
 	g_qdf_dp_trace_data.num = 0;
+	g_qdf_dp_trace_data.dump_counter = 0;
+	g_qdf_dp_trace_data.num_records_to_dump = MAX_QDF_DP_TRACE_RECORDS;
 	if (g_qdf_dp_trace_data.enable)
 		memset(g_qdf_dp_trace_tbl, 0,
 		       MAX_QDF_DP_TRACE_RECORDS *
@@ -2245,8 +2255,7 @@ static void qdf_dpt_dump_hex_trace_debugfs(qdf_debugfs_file_t file,
 		hex_dump_to_buffer(ptr + i, linelen, ROW_SIZE, 1,
 				linebuf, sizeof(linebuf), false);
 
-		qdf_debugfs_printf(file, "DPT: %s %s\n",
-				  str, linebuf);
+		qdf_debugfs_printf(file, "%s %s\n", str, linebuf);
 	}
 }
 
@@ -2416,10 +2425,11 @@ uint32_t qdf_dpt_get_curr_pos_debugfs(qdf_debugfs_file_t file,
 		return g_qdf_dp_trace_data.curr_pos;
 
 	qdf_debugfs_printf(file,
-		"DPT: config - bitmap 0x%x verb %u #rec %u live_config %u thresh %u time_limit %u\n",
+		"DPT: config - bitmap 0x%x verb %u #rec %u rec_requested %u live_config %u thresh %u time_limit %u\n",
 		g_qdf_dp_trace_data.proto_bitmap,
 		g_qdf_dp_trace_data.verbosity,
 		g_qdf_dp_trace_data.no_of_record,
+		g_qdf_dp_trace_data.num_records_to_dump,
 		g_qdf_dp_trace_data.live_mode_config,
 		g_qdf_dp_trace_data.high_tput_thresh,
 		g_qdf_dp_trace_data.thresh_time_limit);
@@ -2470,7 +2480,8 @@ uint32_t qdf_dpt_get_curr_pos_debugfs(qdf_debugfs_file_t file,
 		g_qdf_dp_trace_data.saved_tail = tail;
 	}
 	spin_unlock_bh(&l_dp_trace_lock);
-	return i;
+
+	return g_qdf_dp_trace_data.saved_tail;
 }
 qdf_export_symbol(qdf_dpt_get_curr_pos_debugfs);
 
@@ -2479,17 +2490,36 @@ QDF_STATUS qdf_dpt_dump_stats_debugfs(qdf_debugfs_file_t file,
 {
 	struct qdf_dp_trace_record_s p_record;
 	uint32_t i = curr_pos;
-	uint32_t tail = g_qdf_dp_trace_data.saved_tail;
+	uint16_t num_records_to_dump = g_qdf_dp_trace_data.num_records_to_dump;
 
-	if (!g_qdf_dp_trace_data.enable)
+	if (!g_qdf_dp_trace_data.enable) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Tracing Disabled", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (num_records_to_dump > g_qdf_dp_trace_data.num)
+		num_records_to_dump = g_qdf_dp_trace_data.num;
+
+	/*
+	 * Max dp trace record size should always be less than
+	 * QDF_DP_TRACE_PREPEND_STR_SIZE(100) + BUFFER_SIZE(121).
+	 */
+	if (WARN_ON(QDF_DP_TRACE_MAX_RECORD_SIZE <
+				QDF_DP_TRACE_PREPEND_STR_SIZE + BUFFER_SIZE))
 		return QDF_STATUS_E_FAILURE;
 
 	spin_lock_bh(&l_dp_trace_lock);
-
 	p_record = g_qdf_dp_trace_tbl[i];
 	spin_unlock_bh(&l_dp_trace_lock);
+
 	for (;; ) {
-		if ((file->size - file->count) < 100) {
+		/*
+		 * Initially we get file as 1 page size, and
+		 * if remaining size in file is less than one record max size,
+		 * then return so that it gets an extra page.
+		 */
+		if ((file->size - file->count) < QDF_DP_TRACE_MAX_RECORD_SIZE) {
 			spin_lock_bh(&l_dp_trace_lock);
 			g_qdf_dp_trace_data.curr_pos = i;
 			spin_unlock_bh(&l_dp_trace_lock);
@@ -2561,17 +2591,20 @@ QDF_STATUS qdf_dpt_dump_stats_debugfs(qdf_debugfs_file_t file,
 			break;
 		}
 
-		if (i == tail)
+		if (++g_qdf_dp_trace_data.dump_counter == num_records_to_dump)
 			break;
-		i += 1;
 
 		spin_lock_bh(&l_dp_trace_lock);
-		if (i == MAX_QDF_DP_TRACE_RECORDS)
-			i = 0;
+		if (i == 0)
+			i = MAX_QDF_DP_TRACE_RECORDS;
 
+		i -= 1;
 		p_record = g_qdf_dp_trace_tbl[i];
 		spin_unlock_bh(&l_dp_trace_lock);
 	}
+
+	g_qdf_dp_trace_data.dump_counter = 0;
+
 	return QDF_STATUS_SUCCESS;
 }
 qdf_export_symbol(qdf_dpt_dump_stats_debugfs);
@@ -2585,11 +2618,14 @@ qdf_export_symbol(qdf_dpt_dump_stats_debugfs);
  * Return: None
  */
 void qdf_dpt_set_value_debugfs(uint8_t proto_bitmap, uint8_t no_of_record,
-			    uint8_t verbosity)
+			    uint8_t verbosity, uint16_t num_records_to_dump)
 {
-	g_qdf_dp_trace_data.proto_bitmap = proto_bitmap;
-	g_qdf_dp_trace_data.no_of_record = no_of_record;
-	g_qdf_dp_trace_data.verbosity    = verbosity;
+	if (g_qdf_dp_trace_data.enable) {
+		g_qdf_dp_trace_data.proto_bitmap = proto_bitmap;
+		g_qdf_dp_trace_data.no_of_record = no_of_record;
+		g_qdf_dp_trace_data.verbosity    = verbosity;
+		g_qdf_dp_trace_data.num_records_to_dump = num_records_to_dump;
+	}
 }
 qdf_export_symbol(qdf_dpt_set_value_debugfs);
 
