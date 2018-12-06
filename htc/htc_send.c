@@ -646,12 +646,15 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 			target->ce_send_cnt--;
 			pEndpoint->ul_outstanding_cnt--;
 			HTC_PACKET_REMOVE(&pEndpoint->TxLookupQueue, pPacket);
-			/* reclaim credits */
-			pEndpoint->TxCredits +=
-				pPacket->PktInfo.AsTx.CreditsUsed;
 			htc_packet_set_magic_cookie(pPacket, 0);
 			/* put it back into the callers queue */
 			HTC_PACKET_ENQUEUE_TO_HEAD(pPktQueue, pPacket);
+			/* reclaim credits */
+			HTC_PACKET_QUEUE_ITERATE_ALLOW_REMOVE(pPktQueue,
+							      pPacket) {
+			    pEndpoint->TxCredits +=
+				pPacket->PktInfo.AsTx.CreditsUsed;
+			} HTC_PACKET_QUEUE_ITERATE_END;
 			if (!pEndpoint->async_update) {
 				UNLOCK_HTC_TX(target);
 			}
