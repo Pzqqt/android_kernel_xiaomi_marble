@@ -40,14 +40,6 @@
 
 #define TX_PKT_MIN_HEADROOM          (64)
 
-/* Protocol specific packet tracking feature */
-#define CDS_PKT_TRAC_ETH_TYPE_OFFSET (12)
-#define CDS_PKT_TRAC_IP_OFFSET       (14)
-#define CDS_PKT_TRAC_IP_HEADER_SIZE  (20)
-#define CDS_PKT_TRAC_DHCP_SRV_PORT   (67)
-#define CDS_PKT_TRAC_DHCP_CLI_PORT   (68)
-#define CDS_PKT_TRAC_EAPOL_ETH_TYPE  (0x888E)
-
 /**
  * cds_pkt_return_packet  Free the cds Packet
  * @ cds Packet
