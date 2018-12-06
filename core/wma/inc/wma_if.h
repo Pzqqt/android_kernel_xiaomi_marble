@@ -1321,28 +1321,6 @@ struct del_sta_self_rsp_params {
 };
 
 /**
- * struct tP2pPsParams - P2P powersave related params
- * @opp_ps: opportunistic power save
- * @ctWindow: CT window
- * @count: count
- * @duration: duration
- * @interval: interval
- * @single_noa_duration: single shot noa duration
- * @psSelection: power save selection
- * @sessionId: session id
- */
-typedef struct sP2pPsParams {
-	uint8_t opp_ps;
-	uint32_t ctWindow;
-	uint8_t count;
-	uint32_t duration;
-	uint32_t interval;
-	uint32_t single_noa_duration;
-	uint8_t psSelection;
-	uint8_t sessionId;
-} tP2pPsParams, *tpP2pPsParams;
-
-/**
  * struct tHalHiddenSsidVdevRestart - hidden ssid vdev restart params
  * @ssidHidden: is hidden ssid or not
  * @sessionId: session id
