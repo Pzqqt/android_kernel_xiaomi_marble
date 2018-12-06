@@ -238,20 +238,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_MAX_TX_POWER_MIN,
 		     CFG_MAX_TX_POWER_MAX),
 
-	REG_VARIABLE(CFG_FW_MCC_RTS_CTS_PROT_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, mcc_rts_cts_prot_enable,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_FW_MCC_RTS_CTS_PROT_DEFAULT,
-		CFG_FW_MCC_RTS_CTS_PROT_MIN,
-		CFG_FW_MCC_RTS_CTS_PROT_MAX),
-
-	REG_VARIABLE(CFG_FW_MCC_BCAST_PROB_RESP_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, mcc_bcast_prob_resp_enable,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_FW_MCC_BCAST_PROB_RESP_DEFAULT,
-		CFG_FW_MCC_BCAST_PROB_RESP_MIN,
-		CFG_FW_MCC_BCAST_PROB_RESP_MAX),
-
 	REG_VARIABLE(CFG_WOW_DATA_INACTIVITY_TIMEOUT_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, wow_data_inactivity_timeout,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -577,24 +563,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_MAC_ADDR_SPOOFING_DEFAULT,
 		     CFG_ENABLE_MAC_ADDR_SPOOFING_MIN,
 		     CFG_ENABLE_MAC_ADDR_SPOOFING_MAX),
-
-	REG_VARIABLE(CFG_STA_MIRACAST_MCC_REST_TIME_VAL, WLAN_PARAM_Integer,
-		     struct hdd_config, sta_miracast_mcc_rest_time_val,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_STA_MIRACAST_MCC_REST_TIME_VAL_DEFAULT,
-		     CFG_STA_MIRACAST_MCC_REST_TIME_VAL_MIN,
-		     CFG_STA_MIRACAST_MCC_REST_TIME_VAL_MAX),
-
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	REG_VARIABLE(CFG_SAP_MCC_CHANNEL_AVOIDANCE_NAME,
-		     WLAN_PARAM_Integer,
-		     struct hdd_config,
-		     sap_channel_avoidance,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_SAP_MCC_CHANNEL_AVOIDANCE_DEFAULT,
-		     CFG_SAP_MCC_CHANNEL_AVOIDANCE_MIN,
-		     CFG_SAP_MCC_CHANNEL_AVOIDANCE_MAX),
-#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 	REG_VARIABLE(CFG_SAP_11AC_OVERRIDE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, sap_11ac_override,
@@ -2561,6 +2529,88 @@ QDF_STATUS hdd_set_sme_cfgs_related_to_plcy_mgr(struct hdd_context *hdd_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
+static QDF_STATUS hdd_set_sap_mcc_chnl_avoid(tSmeConfigParams *sme_cfg,
+					     uint8_t val)
+{
+	sme_cfg->csrConfig.sap_channel_avoidance = val;
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS hdd_set_sap_mcc_chnl_avoid(tSmeConfigParams *sme_cfg,
+					     uint8_t val)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+static
+QDF_STATUS hdd_set_sme_cfgs_related_to_mlme(struct hdd_context *hdd_ctx,
+					    tSmeConfigParams *sme_cfg)
+{
+	QDF_STATUS status;
+	uint8_t wmm_mode = 0, enable_mcc = 0, sap_mcc_avoid = 0;
+	uint8_t mcc_rts_cts = 0, mcc_bcast_prob_rsp = 0;
+	uint32_t mcast_mcc_rest_time = 0;
+	bool b80211e_enabled = 0;
+
+	status = ucfg_mlme_get_80211e_is_enabled(hdd_ctx->psoc,
+						 &b80211e_enabled);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Get b80211e_enabled failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	sme_cfg->csrConfig.Is11eSupportEnabled = b80211e_enabled;
+
+	status = ucfg_mlme_get_wmm_mode(hdd_ctx->psoc, &wmm_mode);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("Get wmm_mode failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+	sme_cfg->csrConfig.WMMSupportMode = hdd_to_csr_wmm_mode(wmm_mode);
+	hdd_debug("wmm_mode=%d 802_11e_enabled=%d", wmm_mode, b80211e_enabled);
+
+	status = ucfg_mlme_get_mcc_feature(hdd_ctx->psoc, &enable_mcc);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("ucfg_mlme_get_mcc_feature fail, use def");
+		return QDF_STATUS_E_FAILURE;
+	}
+	sme_cfg->csrConfig.fEnableMCCMode = enable_mcc;
+
+	status = ucfg_mlme_get_mcc_rts_cts_prot(hdd_ctx->psoc, &mcc_rts_cts);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("ucfg_mlme_get_mcc_rts_cts_prot fail, use def");
+		return QDF_STATUS_E_FAILURE;
+	}
+	sme_cfg->csrConfig.mcc_rts_cts_prot_enable = mcc_rts_cts;
+
+	status = ucfg_mlme_get_mcc_bcast_prob_resp(hdd_ctx->psoc,
+						   &mcc_bcast_prob_rsp);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("ucfg_mlme_get_mcc_bcast_prob_resp fail, use def");
+		return QDF_STATUS_E_FAILURE;
+	}
+	sme_cfg->csrConfig.mcc_bcast_prob_resp_enable = mcc_bcast_prob_rsp;
+
+	status = ucfg_mlme_get_sta_miracast_mcc_rest_time(hdd_ctx->psoc,
+							  &mcast_mcc_rest_time);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("ucfg_mlme_get_sta_miracast_mcc_rest_time, use def");
+		return QDF_STATUS_E_FAILURE;
+	}
+	sme_cfg->csrConfig.f_sta_miracast_mcc_rest_time_val =
+							mcast_mcc_rest_time;
+	status = ucfg_mlme_get_sap_mcc_chnl_avoid(hdd_ctx->psoc,
+						  &sap_mcc_avoid);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("ucfg_mlme_get_sap_mcc_chnl_avoid, use def");
+		return QDF_STATUS_E_FAILURE;
+	}
+	status = hdd_set_sap_mcc_chnl_avoid(sme_cfg, sap_mcc_avoid);
+
+	return status;
+}
+
 /**
  * hdd_set_sme_config() -initializes the sme configuration parameters
  *
@@ -2575,8 +2625,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	tSmeConfigParams *smeConfig;
 	uint8_t rrm_capab_len;
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
-	uint8_t wmm_mode = 0;
-	bool b80211e_is_enabled;
 	bool roam_scan_enabled;
 #ifdef FEATURE_WLAN_ESE
 	bool ese_enabled;
@@ -2626,26 +2674,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.nRestTimeConc = pConfig->nRestTimeConc;
 	smeConfig->csrConfig.min_rest_time_conc = pConfig->min_rest_time_conc;
 	smeConfig->csrConfig.idle_time_conc     = pConfig->idle_time_conc;
-
-	status = ucfg_mlme_get_80211e_is_enabled(hdd_ctx->psoc,
-						 &b80211e_is_enabled);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("Get b80211e_is_enabled failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-	smeConfig->csrConfig.Is11eSupportEnabled = b80211e_is_enabled;
-
-	status = ucfg_mlme_get_wmm_mode(hdd_ctx->psoc, &wmm_mode);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("Get wmm_mode failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-	smeConfig->csrConfig.WMMSupportMode = hdd_to_csr_wmm_mode(wmm_mode);
-
-	hdd_debug("%s bWmmIsEnabled=%d 802_11e_enabled=%d dot11Mode=%d",
-		  __func__, wmm_mode, b80211e_is_enabled,
-		  pConfig->dot11Mode);
-
 	smeConfig->rrmConfig.rrm_enabled = pConfig->fRrmEnable;
 	smeConfig->rrmConfig.max_randn_interval = pConfig->nRrmRandnIntvl;
 	hdd_hex_string_to_u8_array(pConfig->rm_capability,
@@ -2687,12 +2715,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 					hdd_ctx->psoc, false);
 	}
 
-	/* Enable/Disable MCC */
-	smeConfig->csrConfig.fEnableMCCMode = pConfig->enableMCC;
-	smeConfig->csrConfig.mcc_rts_cts_prot_enable =
-					pConfig->mcc_rts_cts_prot_enable;
-	smeConfig->csrConfig.mcc_bcast_prob_resp_enable =
-					pConfig->mcc_bcast_prob_resp_enable;
 	/* Scan Results Aging Time out value */
 	smeConfig->csrConfig.scanCfgAgingTime = pConfig->scanAgingTimeout;
 
@@ -2701,14 +2723,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	/* Update maximum interfaces information */
 	smeConfig->csrConfig.max_intf_count = hdd_ctx->max_intf_count;
-
-	smeConfig->csrConfig.f_sta_miracast_mcc_rest_time_val =
-		hdd_ctx->config->sta_miracast_mcc_rest_time_val;
-
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	smeConfig->csrConfig.sap_channel_avoidance =
-		hdd_ctx->config->sap_channel_avoidance;
-#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 	smeConfig->csrConfig.is_ps_enabled = hdd_ctx->config->is_ps_enabled;
 	smeConfig->csrConfig.auto_bmps_timer_val =
@@ -2755,10 +2769,17 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->wlm_latency_flags_low;
 	smeConfig->csrConfig.wlm_latency_flags[3] =
 			hdd_ctx->config->wlm_latency_flags_ultralow;
-	hdd_set_sme_cfgs_related_to_plcy_mgr(hdd_ctx, smeConfig);
+	status = hdd_set_sme_cfgs_related_to_mlme(hdd_ctx, smeConfig);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("hdd_set_sme_cfgs_related_to_mlme() fail: %d", status);
+	status = hdd_set_sme_cfgs_related_to_plcy_mgr(hdd_ctx, smeConfig);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("hdd_set_sme_cfgs_related_to_plcy_mgr fail: %d",
+			status);
 	hdd_update_11k_offload_params(hdd_ctx->config,
 					&smeConfig->csrConfig);
 
+	hdd_debug("dot11Mode=%d", pConfig->dot11Mode);
 	status = sme_update_config(mac_handle, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("sme_update_config() failure: %d", status);
