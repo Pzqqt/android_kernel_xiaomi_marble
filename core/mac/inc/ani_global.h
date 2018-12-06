@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -835,6 +835,7 @@ struct mac_context {
 	/* 11k Offload Support */
 	bool is_11k_offload_supported;
 	uint8_t reject_addba_req;
+	bool usr_cfg_ps_enable;
 	uint16_t usr_cfg_ba_buff_size;
 	bool is_usr_cfg_amsdu_enabled;
 	uint8_t no_ack_policy_cfg[MAX_NUM_AC];

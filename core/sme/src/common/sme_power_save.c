@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -358,6 +358,14 @@ QDF_STATUS sme_enable_sta_ps_check(struct mac_context *mac_ctx, uint32_t session
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+void sme_save_usr_ps_cfg(mac_handle_t mac_handle, bool val)
+{
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+
+	mac_ctx->usr_cfg_ps_enable = val;
+	sme_debug("usr_cfg_ps_enable  %d", val);
 }
 
 /**
@@ -747,10 +755,12 @@ QDF_STATUS sme_ps_enable_auto_ps_timer(mac_handle_t mac_handle,
 	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
 	QDF_STATUS qdf_status;
 
-	if (!timeout) {
+	if (!timeout && !mac_ctx->usr_cfg_ps_enable) {
 		sme_debug("auto_ps_timer called with timeout 0; ignore");
 		return QDF_STATUS_SUCCESS;
 	}
+	if (!timeout)
+		timeout = AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE;
 
 	sme_debug("Start auto_ps_timer for %d ms", timeout);
 

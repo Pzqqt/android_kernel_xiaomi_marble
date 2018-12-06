@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4129,11 +4129,13 @@ static int hdd_we_set_power(struct hdd_adapter *adapter, int value)
 	switch (value) {
 	case 1:
 		/* Enable PowerSave */
+		sme_save_usr_ps_cfg(mac_handle, true);
 		sme_ps_enable_disable(mac_handle, adapter->session_id,
 				      SME_PS_ENABLE);
 		return 0;
 	case 2:
 		/* Disable PowerSave */
+		sme_save_usr_ps_cfg(mac_handle, false);
 		sme_ps_enable_disable(mac_handle, adapter->session_id,
 				      SME_PS_DISABLE);
 		return 0;
