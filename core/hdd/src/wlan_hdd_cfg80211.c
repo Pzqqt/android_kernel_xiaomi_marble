@@ -173,14 +173,6 @@
 		.flags = flag, \
 	}
 
-#ifndef WLAN_AKM_SUITE_FT_8021X
-#define WLAN_AKM_SUITE_FT_8021X         0x000FAC03
-#endif
-
-#ifndef WLAN_AKM_SUITE_FT_PSK
-#define WLAN_AKM_SUITE_FT_PSK           0x000FAC04
-#endif
-
 #define IS_DFS_MODE_VALID(mode) ((mode >= DFS_MODE_NONE && \
 			mode <= DFS_MODE_DEPRIORITIZE))
 /*

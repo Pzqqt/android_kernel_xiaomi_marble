@@ -2260,6 +2260,9 @@ cppflags-$(CONFIG_CRYPTO_COMPONENT) += -DWLAN_CONV_CRYPTO_SUPPORTED \
                                        -DWLAN_CRYPTO_FILS_OS_DERIVATIVE \
                                        -DWLAN_CRYPTO_OMAC1_OS_DERIVATIVE
 
+cppflags-$(CONFIG_FEATURE_WLAN_FT_IEEE8021X) += -DFEATURE_WLAN_FT_IEEE8021X
+cppflags-$(CONFIG_FEATURE_WLAN_FT_PSK) += -DFEATURE_WLAN_FT_PSK
+
 #Enable host 11d scan
 cppflags-$(CONFIG_HOST_11D_SCAN) += -DHOST_11D_SCAN
 
