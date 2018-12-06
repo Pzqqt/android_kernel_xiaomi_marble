@@ -138,6 +138,7 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 {
 	struct regmap *regmap = dev_get_regmap(va_priv->dev->parent, NULL);
 	int ret = 0;
+	u16 mclk_mux_sel = MCLK_MUX0;
 
 	if (regmap == NULL) {
 		dev_err(va_priv->dev, "%s: regmap is NULL\n", __func__);
@@ -148,10 +149,21 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 		__func__, mclk_enable, dapm, va_priv->va_mclk_users);
 
 	mutex_lock(&va_priv->mclk_lock);
+	if (of_property_read_u16(va_priv->dev->of_node,
+				 "qcom,va-clk-mux-select", &mclk_mux_sel))
+		dev_dbg(va_priv->dev,
+			"%s: could not find %s entry in dt, use default\n",
+			__func__, "qcom,va-clk-mux-select");
+	if (mclk_mux_sel != MCLK_MUX0 && mclk_mux_sel != MCLK_MUX1) {
+		dev_err(va_priv->dev, "%s: mclk_mux_sel: %d is invalid\n",
+			__func__, mclk_mux_sel);
+		return -EINVAL;
+	}
+
 	if (mclk_enable) {
 		if (va_priv->va_mclk_users == 0) {
 			ret = bolero_request_clock(va_priv->dev,
-						VA_MACRO, MCLK_MUX0, true);
+						VA_MACRO, mclk_mux_sel, true);
 			if (ret < 0) {
 				dev_err(va_priv->dev,
 					"%s: va request clock en failed\n",
@@ -192,7 +204,7 @@ static int va_macro_mclk_enable(struct va_macro_priv *va_priv,
 				BOLERO_CDC_VA_CLK_RST_CTRL_MCLK_CONTROL,
 				0x01, 0x00);
 			bolero_request_clock(va_priv->dev,
-					VA_MACRO, MCLK_MUX0, false);
+					VA_MACRO, mclk_mux_sel, false);
 		}
 	}
 exit:
