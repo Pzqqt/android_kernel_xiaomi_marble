@@ -946,6 +946,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_quiet_offload_info,
     WMITLV_TAG_STRUC_wmi_get_bcn_recv_stats_fixed_param,
     WMITLV_TAG_STRUC_wmi_vdev_bcn_recv_stats_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_peer_tx_pn_request_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_peer_tx_pn_response_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1334,6 +1336,7 @@ typedef enum {
     OP(WMI_NDP_CMDID) \
     OP(WMI_PDEV_PKTLOG_FILTER_CMDID) \
     OP(WMI_VDEV_GET_BCN_RECEPTION_STATS_CMDID) \
+    OP(WMI_PEER_TX_PN_REQUEST_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1547,6 +1550,7 @@ typedef enum {
     OP(WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID) \
     OP(WMI_NDP_EVENTID) \
     OP(WMI_VDEV_BCN_RECEPTION_STATS_EVENTID) \
+    OP(WMI_PEER_TX_PN_RESPONSE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -2130,6 +2134,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_inst_rssi_stats_params, inst_rssi_params, WMITLV_SIZE_VAR)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_STATS_CMDID);
+
+/* PN Request Cmd */
+#define WMITLV_TABLE_WMI_PEER_TX_PN_REQUEST_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_tx_pn_request_cmd_fixed_param, wmi_peer_tx_pn_request_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_TX_PN_REQUEST_CMDID);
 
 /* Request for memory dump stats Cmd */
 #define WMITLV_TABLE_WMI_GET_FW_MEM_DUMP_CMDID(id,op,buf,len) \
@@ -4298,6 +4308,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_HOST_SWFDA_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_congestion_stats, congestion_stats, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_peer_extd2_stats, peer_extd2_stats, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_UPDATE_STATS_EVENTID);
+
+/* Update PN response Event */
+#define WMITLV_TABLE_WMI_PEER_TX_PN_RESPONSE_EVENTID(id,op,buf,len)\
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_tx_pn_response_event_fixed_param, wmi_peer_tx_pn_response_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_TX_PN_RESPONSE_EVENTID);
 
 /* For vdev based ht/vht info upload*/
 #define WMITLV_TABLE_WMI_UPDATE_VDEV_RATE_STATS_EVENTID(id,op,buf,len)\
