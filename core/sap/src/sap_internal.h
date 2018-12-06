@@ -88,9 +88,7 @@ extern "C" {
  */
 enum sap_fsm_state {
 	SAP_INIT,
-#ifndef CONFIG_VDEV_SM
 	SAP_DFS_CAC_WAIT,
-#endif
 	SAP_STARTING,
 	SAP_STARTED,
 	SAP_STOPPING

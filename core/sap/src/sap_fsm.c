@@ -1903,16 +1903,9 @@ static QDF_STATUS wlansap_update_pre_cac_end(struct sap_context *sap_context,
 	mac->sap.SapDfsInfo.sap_radar_found_status = false;
 	sap_context->fsm_state = SAP_STARTED;
 
-#ifndef CONFIG_VDEV_SM
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-		  "In %s, pre cac end notify on %d: from state %s => %s",
-		  __func__, intf, "SAP_DFS_CAC_WAIT", "SAP_STARTED");
-#else
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-		  "In %s, pre cac end notify on %d: from state %s => %s",
-		  __func__, intf, "SAP_STARTING", "SAP_STARTED");
-#endif
-
+		  "In %s, pre cac end notify on %d: move to state SAP_STARTED",
+		  __func__, intf);
 	qdf_status = sap_signal_hdd_event(sap_context,
 			NULL, eSAP_DFS_PRE_CAC_END,
 			(void *)eSAP_STATUS_SUCCESS);
@@ -2177,6 +2170,56 @@ sap_goto_starting(struct sap_context *sap_ctx,
 }
 
 /**
+ * sap_fsm_cac_start() - start cac wait timer
+ * @sap_ctx: SAP context
+ * @mac_ctx: global MAC context
+ * @mac_handle: Opaque handle to the global MAC context
+ *
+ * Return: QDF_STATUS
+ */
+#ifdef CONFIG_VDEV_SM
+static QDF_STATUS sap_fsm_cac_start(struct sap_context *sap_ctx,
+				    struct mac_context *mac_ctx,
+				    mac_handle_t mac_handle)
+{
+	sap_ctx->fsm_state = SAP_STARTING;
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
+		  FL("Move sap state to SAP_STARTING"));
+	if (!mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
+			  FL("sapdfs: starting dfs cac timer on sapctx[%pK]"),
+			  sap_ctx);
+		sap_start_dfs_cac_timer(sap_ctx);
+	}
+
+	return sap_cac_start_notify(mac_handle);
+}
+#else
+static QDF_STATUS sap_fsm_cac_start(struct sap_context *sap_ctx,
+				    struct mac_context *mac_ctx,
+				    mac_handle_t mac_handle)
+{
+	/*
+	 * No need of state check here, caller is expected to perform
+	 * the checks before sending the event
+	 */
+	sap_ctx->fsm_state = SAP_DFS_CAC_WAIT;
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
+		  FL("Move sap state to SAP_DFS_CAC_WAIT"));
+	if (!mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
+			  FL("sapdfs: starting dfs cac timer on sapctx[%pK]"),
+			  sap_ctx);
+		sap_start_dfs_cac_timer(sap_ctx);
+	}
+
+	return sap_cac_start_notify(mac_handle);
+}
+#endif
+
+/**
  * sap_fsm_state_init() - utility function called from sap fsm
  * @sap_ctx: SAP context
  * @sap_event: SAP event buffer
@@ -2224,28 +2267,7 @@ sap_fsm_state_init(struct sap_context *sap_ctx,
 				  QDF_TRACE_LEVEL_ERROR,
 				  FL("sap_goto_starting failed"));
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_START) {
-#ifdef CONFIG_VDEV_SM
-		sap_ctx->fsm_state = SAP_STARTING;
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			  FL("from state SAP_INIT => SAP_STARTING"));
-#else
-		/*
-		 * No need of state check here, caller is expected to perform
-		 * the checks before sending the event
-		 */
-		sap_ctx->fsm_state = SAP_DFS_CAC_WAIT;
-
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			FL("from state SAP_INIT => SAP_DFS_CAC_WAIT"));
-#endif
-		if (mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running != true) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			    FL("sapdfs: starting dfs cac timer on sapctx[%pK]"),
-			    sap_ctx);
-			sap_start_dfs_cac_timer(sap_ctx);
-		}
-
-		qdf_status = sap_cac_start_notify(mac_handle);
+		qdf_status = sap_fsm_cac_start(sap_ctx, mac_ctx, mac_handle);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, event msg %d"),
@@ -2256,7 +2278,130 @@ exit:
 	return qdf_status;
 }
 
-#ifndef CONFIG_VDEV_SM
+/**
+ * sap_fsm_handle_radar_during_cac() - uhandle radar event during cac
+ * @sap_ctx: SAP context
+ * @mac_ctx: global MAC context
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS sap_fsm_handle_radar_during_cac(struct sap_context *sap_ctx,
+						  struct mac_context *mac_ctx)
+{
+	uint8_t intf;
+
+	if (mac_ctx->sap.SapDfsInfo.target_channel) {
+		wlan_reg_set_channel_params(mac_ctx->pdev,
+				    mac_ctx->sap.SapDfsInfo.target_channel, 0,
+				    &sap_ctx->ch_params);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid target channel %d"),
+			  mac_ctx->sap.SapDfsInfo.target_channel);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
+		struct sap_context *t_sap_ctx;
+		struct csr_roam_profile *profile;
+
+		t_sap_ctx = mac_ctx->sap.sapCtxList[intf].sap_context;
+		if (((QDF_SAP_MODE ==
+		      mac_ctx->sap.sapCtxList[intf].sapPersona) ||
+		     (QDF_P2P_GO_MODE ==
+		      mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
+		    t_sap_ctx && t_sap_ctx->fsm_state != SAP_INIT) {
+			profile = &t_sap_ctx->csr_roamProfile;
+			if (!wlan_reg_is_passive_or_disable_ch(
+				mac_ctx->pdev,
+				profile->operationChannel))
+			continue;
+			t_sap_ctx->is_chan_change_inprogress = true;
+			/*
+			 * eSAP_DFS_CHANNEL_CAC_RADAR_FOUND:
+			 * A Radar is found on current DFS Channel
+			 * while in CAC WAIT period So, do a channel
+			 * switch to randomly selected	target channel.
+			 * Send the Channel change message to SME/PE.
+			 * sap_radar_found_status is set to 1
+			 */
+			wlansap_channel_change_request(t_sap_ctx,
+				mac_ctx->sap.SapDfsInfo.target_channel);
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+#ifdef CONFIG_VDEV_SM
+static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
+					     ptWLAN_SAPEvent sap_event,
+					     struct mac_context *mac_ctx,
+					     mac_handle_t mac_handle)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * sap_fsm_handle_start_failure() - handle start failure or stop during cac wait
+ * @sap_ctx: SAP context
+ * @msg: event msg
+ * @mac_handle: Opaque handle to the global MAC context
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS sap_fsm_handle_start_failure(struct sap_context *sap_ctx,
+					       uint32_t msg,
+					       mac_handle_t mac_handle)
+{
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
+
+	if (msg == eSAP_HDD_STOP_INFRA_BSS &&
+	    ((wlan_vdev_mlme_get_state(sap_ctx->vdev) ==
+	      WLAN_VDEV_S_DFS_CAC_WAIT) ||
+	     (wlan_vdev_mlme_get_substate(sap_ctx->vdev) ==
+	      WLAN_VDEV_SS_START_RESTART_PROGRESS))) {
+		/* Transition from SAP_STARTING to SAP_STOPPING */
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("In cac wait state from state %s => %s"),
+			  "SAP_STARTING", "SAP_STOPPING");
+		/*
+		 * Stop the CAC timer only in following conditions
+		 * single AP: if there is a single AP then stop timer
+		 * mulitple APs: incase of multiple APs, make sure that
+		 * all APs are down.
+		 */
+		if (!sap_find_valid_concurrent_session(mac_handle)) {
+			QDF_TRACE(QDF_MODULE_ID_SAP,
+				  QDF_TRACE_LEVEL_INFO_MED,
+				  FL("sapdfs: no sessions are valid, stopping timer"));
+			sap_stop_dfs_cac_timer(sap_ctx);
+		}
+
+		sap_ctx->fsm_state = SAP_STOPPING;
+		qdf_status = sap_goto_stopping(sap_ctx);
+	} else {
+		/*
+		 * Transition from SAP_STARTING to SAP_INIT
+		 * (both without substates)
+		 */
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("from state %s => %s"),
+			  "SAP_STARTING", "SAP_INIT");
+
+		/* Advance outer statevar */
+		sap_ctx->fsm_state = SAP_INIT;
+		qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
+						  eSAP_START_BSS_EVENT,
+						  (void *)
+						  eSAP_STATUS_FAILURE);
+		qdf_status = sap_goto_init(sap_ctx);
+	}
+
+	return qdf_status;
+}
+#else
+
 /**
  * sap_fsm_state_dfs_cac_wait() - utility function called from sap fsm
  * @sap_ctx: SAP context
@@ -2285,49 +2430,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 			sap_start_dfs_cac_timer(sap_ctx);
 		qdf_status = sap_cac_start_notify(mac_handle);
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_RADAR_FOUND) {
-		uint8_t intf;
-
-		if (mac_ctx->sap.SapDfsInfo.target_channel) {
-			wlan_reg_set_channel_params(mac_ctx->pdev,
-				mac_ctx->sap.SapDfsInfo.target_channel, 0,
-				&sap_ctx->ch_params);
-		} else {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				FL("Invalid target channel %d"),
-				mac_ctx->sap.SapDfsInfo.target_channel);
-			return qdf_status;
-		}
-
-		for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-			struct sap_context *t_sap_ctx;
-			struct csr_roam_profile *profile;
-
-			t_sap_ctx = mac_ctx->sap.sapCtxList[intf].sap_context;
-			if (((QDF_SAP_MODE ==
-				 mac_ctx->sap.sapCtxList[intf].sapPersona) ||
-			     (QDF_P2P_GO_MODE ==
-				mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
-			    t_sap_ctx != NULL &&
-			    t_sap_ctx->fsm_state != SAP_INIT) {
-				profile = &t_sap_ctx->csr_roamProfile;
-				if (!wlan_reg_is_passive_or_disable_ch(
-						mac_ctx->pdev,
-						profile->operationChannel))
-					continue;
-				t_sap_ctx->is_chan_change_inprogress = true;
-				/*
-				 * eSAP_DFS_CHANNEL_CAC_RADAR_FOUND:
-				 * A Radar is found on current DFS Channel
-				 * while in CAC WAIT period So, do a channel
-				 * switch to randomly selected  target channel.
-				 * Send the Channel change message to SME/PE.
-				 * sap_radar_found_status is set to 1
-				 */
-				wlansap_channel_change_request(
-					t_sap_ctx,
-					mac_ctx->sap.SapDfsInfo.target_channel);
-			}
-		}
+		qdf_status = sap_fsm_handle_radar_during_cac(sap_ctx, mac_ctx);
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_END) {
 		qdf_status = sap_cac_end_notify(mac_handle, roam_info);
 	} else if (msg == eSAP_HDD_STOP_INFRA_BSS) {
@@ -2358,6 +2461,24 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 	}
 
 	return qdf_status;
+}
+
+static QDF_STATUS sap_fsm_handle_start_failure(struct sap_context *sap_ctx,
+					       uint32_t msg,
+					       mac_handle_t mac_handle)
+{
+	/*
+	 * Transition from SAP_STARTING to SAP_INIT
+	 * (both without substates)
+	 */
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+		  FL("from state %s => %s"),
+		  "SAP_STARTING", "SAP_INIT");
+		/* Advance outer statevar */
+	sap_ctx->fsm_state = SAP_INIT;
+	sap_signal_hdd_event(sap_ctx, NULL, eSAP_START_BSS_EVENT,
+			     (void *)eSAP_STATUS_FAILURE);
+	return sap_goto_init(sap_ctx);
 }
 #endif
 
@@ -2439,23 +2560,8 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
 					  FL("start cac timer"));
-#ifdef CONFIG_VDEV_SM
-				sap_ctx->fsm_state = SAP_STARTING;
-#else
-				/* Move the device in CAC_WAIT_STATE */
-				sap_ctx->fsm_state = SAP_DFS_CAC_WAIT;
-#endif
-				/*
-				 * Need to stop the OS transmit queues,
-				 * so that no traffic can flow down the stack
-				 */
-
-				/* Start CAC wait timer */
-				if (sap_dfs_info->is_dfs_cac_timer_running !=
-									true)
-					sap_start_dfs_cac_timer(sap_ctx);
-				qdf_status = sap_cac_start_notify(mac_handle);
-
+				qdf_status = sap_fsm_cac_start(sap_ctx, mac_ctx,
+							       mac_handle);
 			} else {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
@@ -2464,54 +2570,9 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 			}
 		}
 	} else if (msg == eSAP_MAC_START_FAILS ||
-			msg == eSAP_HDD_STOP_INFRA_BSS) {
-
-#ifdef CONFIG_VDEV_SM
-		if (msg == eSAP_HDD_STOP_INFRA_BSS &&
-		    ((wlan_vdev_mlme_get_state(sap_ctx->vdev) ==
-		      WLAN_VDEV_S_DFS_CAC_WAIT) ||
-		     (wlan_vdev_mlme_get_substate(sap_ctx->vdev) ==
-		      WLAN_VDEV_SS_START_RESTART_PROGRESS))) {
-
-			/* Transition from SAP_STARTING to SAP_STOPPING */
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-				  FL("In cac wait state from state %s => %s"),
-				  "SAP_STARTING", "SAP_STOPPING");
-			/*
-			 * Stop the CAC timer only in following conditions
-			 * single AP: if there is a single AP then stop timer
-			 * mulitple APs: incase of multiple APs, make sure that
-			 *               all APs are down.
-			 */
-			if (!sap_find_valid_concurrent_session(mac_handle)) {
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					  QDF_TRACE_LEVEL_INFO_MED,
-					  FL("sapdfs: no sessions are valid, stopping timer"));
-				sap_stop_dfs_cac_timer(sap_ctx);
-			}
-
-			sap_ctx->fsm_state = SAP_STOPPING;
-			qdf_status = sap_goto_stopping(sap_ctx);
-		} else
-#endif
-		{
-			/*
-			 * Transition from SAP_STARTING to SAP_INIT
-			 * (both without substates)
-			 */
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-				  FL("from state %s => %s"),
-				  "SAP_STARTING", "SAP_INIT");
-
-			/* Advance outer statevar */
-			sap_ctx->fsm_state = SAP_INIT;
-			qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
-							  eSAP_START_BSS_EVENT,
-							  (void *)
-							  eSAP_STATUS_FAILURE);
-			qdf_status = sap_goto_init(sap_ctx);
-		}
-		/* Close the SME session */
+		 msg == eSAP_HDD_STOP_INFRA_BSS) {
+			qdf_status = sap_fsm_handle_start_failure(sap_ctx, msg,
+								  mac_handle);
 	} else if (msg == eSAP_OPERATING_CHANNEL_CHANGED) {
 		/* The operating channel has changed, update hostapd */
 		sap_ctx->channel =
@@ -2527,57 +2588,11 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 		qdf_status = sap_signal_hdd_event(sap_ctx, roam_info,
 				  eSAP_START_BSS_EVENT,
 				  (void *)eSAP_STATUS_SUCCESS);
-	} else
-#ifdef CONFIG_VDEV_SM
-	if (msg == eSAP_DFS_CHANNEL_CAC_RADAR_FOUND) {
-		uint8_t intf;
-
-		if (mac_ctx->sap.SapDfsInfo.target_channel) {
-			wlan_reg_set_channel_params(mac_ctx->pdev,
-						    mac_ctx->sap.SapDfsInfo.
-						    target_channel, 0,
-						    &sap_ctx->ch_params);
-		} else {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				  FL("Invalid target channel %d"),
-				  mac_ctx->sap.SapDfsInfo.target_channel);
-			return qdf_status;
-		}
-
-		for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-			struct sap_context *t_sap_ctx;
-			struct csr_roam_profile *profile;
-
-			t_sap_ctx = mac_ctx->sap.sapCtxList[intf].sap_context;
-			if (((QDF_SAP_MODE ==
-				 mac_ctx->sap.sapCtxList[intf].sapPersona) ||
-			     (QDF_P2P_GO_MODE ==
-				mac_ctx->sap.sapCtxList[intf].sapPersona)) &&
-			    t_sap_ctx && t_sap_ctx->fsm_state != SAP_INIT) {
-				profile = &t_sap_ctx->csr_roamProfile;
-				if (!wlan_reg_is_passive_or_disable_ch(
-						mac_ctx->pdev,
-						profile->operationChannel))
-					continue;
-				t_sap_ctx->is_chan_change_inprogress = true;
-				/*
-				 * eSAP_DFS_CHANNEL_CAC_RADAR_FOUND:
-				 * A Radar is found on current DFS Channel
-				 * while in CAC WAIT period So, do a channel
-				 * switch to randomly selected  target channel.
-				 * Send the Channel change message to SME/PE.
-				 * sap_radar_found_status is set to 1
-				 */
-				wlansap_channel_change_request(
-					t_sap_ctx,
-					mac_ctx->sap.SapDfsInfo.target_channel);
-			}
-		}
+	} else if (msg == eSAP_DFS_CHANNEL_CAC_RADAR_FOUND) {
+		qdf_status = sap_fsm_handle_radar_during_cac(sap_ctx, mac_ctx);
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_END) {
 		qdf_status = sap_cac_end_notify(mac_handle, roam_info);
-	} else
-#endif
-	{
+	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, invalid event msg %d"),
 			  "SAP_STARTING", msg);
@@ -2585,6 +2600,65 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 
 	return qdf_status;
 }
+
+#ifdef CONFIG_VDEV_SM
+/**
+ * sap_fsm_send_csa_restart_req() - send csa start event
+ * @mac_ctx: mac ctx
+ * @sap_ctx: SAP context
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+sap_fsm_send_csa_restart_req(struct mac_context *mac_ctx,
+			     struct sap_context *sap_ctx)
+{
+	return sme_csa_restart(mac_ctx, sap_ctx->sessionId);
+}
+
+static inline QDF_STATUS
+sap_handle_csa_anouncement_start(struct mac_context *mac_ctx,
+				 struct sap_context *sap_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS
+sap_fsm_send_csa_restart_req(struct mac_context *mac_ctx,
+			     struct sap_context *sap_ctx)
+{
+	return wlansap_dfs_send_csa_ie_request(sap_ctx);
+}
+
+/**
+ * sap_handle_csa_anouncement_start() - start csa IE announcement request
+ * @mac_ctx: mac ctx
+ * @sap_ctx: SAP context
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS
+sap_handle_csa_anouncement_start(struct mac_context *mac_ctx,
+				 struct sap_context *sap_ctx)
+{
+	enum QDF_OPMODE persona;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
+
+	if (!sap_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid sap_ctx"));
+		return QDF_STATUS_E_FAILURE;
+	}
+	persona = mac_ctx->sap.sapCtxList[sap_ctx->sessionId].sapPersona;
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
+		  FL("app trigger chan switch: mode:%d vdev:%d"),
+		  persona, sap_ctx->sessionId);
+	if ((QDF_SAP_MODE == persona) || (QDF_P2P_GO_MODE == persona))
+		qdf_status = wlansap_dfs_send_csa_ie_request(sap_ctx);
+
+	return qdf_status;
+}
+#endif
 
 /**
  * sap_fsm_state_started() - utility function called from sap fsm
@@ -2650,39 +2724,14 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 					  QDF_TRACE_LEVEL_INFO_MED,
 					  FL("sapdfs: Sending CSAIE for sapctx[%pK]"),
 					  temp_sap_ctx);
-#ifdef CONFIG_VDEV_SM
-				qdf_status = sme_csa_restart(mac_ctx,
-						       temp_sap_ctx->sessionId);
-#else
-
 				qdf_status =
-					wlansap_dfs_send_csa_ie_request(temp_sap_ctx);
-#endif
+				   sap_fsm_send_csa_restart_req(mac_ctx,
+								temp_sap_ctx);
 			}
 		}
-	}
-#ifndef CONFIG_VDEV_SM
-	else if (eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START == msg) {
-		enum QDF_OPMODE persona;
-
-		if (!sap_ctx) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-					FL("Invalid sap_ctx"));
-			return qdf_status;
-		}
-
-		persona = mac_ctx->sap.sapCtxList[sap_ctx->sessionId].
-								sapPersona;
-
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-				FL("app trigger chan switch: mode:%d vdev:%d"),
-				persona, sap_ctx->sessionId);
-
-		if ((QDF_SAP_MODE == persona) || (QDF_P2P_GO_MODE == persona))
-			qdf_status = wlansap_dfs_send_csa_ie_request(sap_ctx);
-	}
-#endif
-	else {
+	} else if (msg == eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START) {
+		qdf_status = sap_handle_csa_anouncement_start(mac_ctx, sap_ctx);
+	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, invalid event msg %d"),
 			  "SAP_STARTED", msg);
@@ -2771,12 +2820,10 @@ QDF_STATUS sap_fsm(struct sap_context *sap_ctx, ptWLAN_SAPEvent sap_event)
 						mac_ctx, mac_handle);
 		break;
 
-#ifndef CONFIG_VDEV_SM
 	case SAP_DFS_CAC_WAIT:
 		qdf_status = sap_fsm_state_dfs_cac_wait(sap_ctx, sap_event,
 							mac_ctx, mac_handle);
 		break;
-#endif
 
 	case SAP_STARTING:
 		qdf_status = sap_fsm_state_starting(sap_ctx, sap_event,
@@ -3555,6 +3602,35 @@ static int sap_stop_dfs_cac_timer(struct sap_context *sap_ctx)
 	return 0;
 }
 
+#ifdef CONFIG_VDEV_SM
+/**
+ * sap_move_to_cac_wait_state() - move to cac wait state
+ * @sap_ctx: SAP context
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS sap_move_to_cac_wait_state(struct sap_context *sap_ctx)
+{
+	QDF_STATUS status;
+
+	status =
+	     wlan_vdev_mlme_sm_deliver_evt(sap_ctx->vdev,
+					   WLAN_VDEV_SM_EV_DFS_CAC_WAIT,
+					   0, NULL);
+	if (QDF_IS_STATUS_ERROR(status))
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: failed to post WLAN_VDEV_SM_EV_DFS_CAC_WAIT",
+			  __func__);
+
+	return status;
+}
+#else
+static inline QDF_STATUS sap_move_to_cac_wait_state(struct sap_context *sap_ctx)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /*
  * Function to start the DFS CAC Timer
  * when SAP is started on a DFS channel
@@ -3582,16 +3658,8 @@ static int sap_start_dfs_cac_timer(struct sap_context *sap_ctx)
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: cac timer offloaded to firmware", __func__);
 		mac->sap.SapDfsInfo.is_dfs_cac_timer_running = true;
-#ifdef CONFIG_VDEV_SM
-		status =
-		     wlan_vdev_mlme_sm_deliver_evt(sap_ctx->vdev,
-						   WLAN_VDEV_SM_EV_DFS_CAC_WAIT,
-						   0, NULL);
-		if (QDF_IS_STATUS_ERROR(status))
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				  "%s: failed to post WLAN_VDEV_SM_EV_DFS_CAC_WAIT",
-				  __func__);
-#endif
+		sap_move_to_cac_wait_state(sap_ctx);
+
 		return 1;
 	}
 
@@ -3620,18 +3688,11 @@ static int sap_start_dfs_cac_timer(struct sap_context *sap_ctx)
 	}
 
 	mac->sap.SapDfsInfo.is_dfs_cac_timer_running = true;
-#ifdef CONFIG_VDEV_SM
-	status = wlan_vdev_mlme_sm_deliver_evt(sap_ctx->vdev,
-					       WLAN_VDEV_SM_EV_DFS_CAC_WAIT,
-					       0, NULL);
+	status = sap_move_to_cac_wait_state(sap_ctx);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to post WLAN_VDEV_SM_EV_DFS_CAC_WAIT",
-			  __func__);
 		qdf_mc_timer_stop(&mac->sap.SapDfsInfo.sap_dfs_cac_timer);
 		goto destroy_timer;
 	}
-#endif
 	return 0;
 
 destroy_timer:

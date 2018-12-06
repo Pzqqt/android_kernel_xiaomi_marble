@@ -1202,6 +1202,39 @@ wlansap_update_csa_channel_params(struct sap_context *sap_context,
 }
 
 /**
+ * sap_start_csa_restart() - send csa start event
+ * @mac_ctx: mac ctx
+ * @sap_ctx: SAP context
+ *
+ * Return: QDF_STATUS
+ */
+#ifdef CONFIG_VDEV_SM
+static inline void sap_start_csa_restart(struct mac_context *mac,
+					 struct sap_context *sap_ctx)
+{
+	sme_csa_restart(mac, sap_ctx->sessionId);
+}
+#else
+static void sap_start_csa_restart(struct mac_context *mac,
+				  struct sap_context *sap_ctx)
+{
+	tWLAN_SAPEvent sap_event;
+
+	/*
+	 * Post the eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START
+	 * to SAP state machine to process the channel
+	 * request with CSA IE set in the beacons.
+	 */
+	sap_event.event =
+		eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START;
+	sap_event.params = 0;
+	sap_event.u1 = 0;
+	sap_event.u2 = 0;
+
+	sap_fsm(sap_ctx, &sap_event);
+}
+#endif
+/**
  * wlansap_set_channel_change_with_csa() - Set channel change with CSA
  * @sapContext: Pointer to SAP context
  * @targetChannel: Target channel
@@ -1220,9 +1253,6 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 					       enum phy_ch_width target_bw,
 					       bool strict)
 {
-#ifndef CONFIG_VDEV_SM
-	tWLAN_SAPEvent sapEvent;
-#endif
 	struct mac_context *mac;
 	mac_handle_t mac_handle;
 	bool valid;
@@ -1351,22 +1381,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 			mac->sap.SapDfsInfo.cac_state =
 					eSAP_DFS_DO_NOT_SKIP_CAC;
 			sap_cac_reset_notify(mac_handle);
-#ifdef CONFIG_VDEV_SM
-			sme_csa_restart(mac, sapContext->sessionId);
-#else
-			/*
-			 * Post the eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START
-			 * to SAP state machine to process the channel
-			 * request with CSA IE set in the beacons.
-			 */
-			sapEvent.event =
-				eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START;
-			sapEvent.params = 0;
-			sapEvent.u1 = 0;
-			sapEvent.u2 = 0;
-
-			sap_fsm(sapContext, &sapEvent);
-#endif
+			sap_start_csa_restart(mac, sapContext);
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Failed to request Channel Change, since SAP is not in SAP_STARTED state",
