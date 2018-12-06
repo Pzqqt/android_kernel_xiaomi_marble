@@ -2180,6 +2180,7 @@ QDF_STATUS send_pdev_set_dual_mac_config_cmd_tlv(wmi_unified_t wmi_handle,
 		WMI_LOGE("%s: Failed to send WMI_PDEV_SET_MAC_CONFIG_CMDID",
 			 __func__);
 		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
 }
