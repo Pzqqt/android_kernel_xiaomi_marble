@@ -205,8 +205,9 @@ static QDF_STATUS init_deinit_alloc_num_units(struct wlan_objmgr_psoc *psoc,
 	uint32_t num_units;
 	QDF_STATUS status;
 
-	if (!tgt_hdl) {
-		target_if_err("target_psoc_info is null");
+	if (!tgt_hdl || !mem_reqs) {
+		target_if_err("Invalid parameters, tgt_hdl: %pK, mem_reqs: %pK",
+			      tgt_hdl, mem_reqs);
 		return QDF_STATUS_E_INVAL;
 	}
 
