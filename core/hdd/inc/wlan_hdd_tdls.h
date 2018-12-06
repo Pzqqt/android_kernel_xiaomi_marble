@@ -244,12 +244,6 @@ static inline int wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
 	return 0;
 }
 
-static inline void
-hdd_tdls_notify_p2p_roc(struct hdd_context *hdd_ctx,
-			enum tdls_concerned_external_events event)
-{
-}
-
 static inline
 QDF_STATUS hdd_tdls_register_peer(void *userdata, uint32_t vdev_id,
 				  const uint8_t *mac, uint16_t sta_id,
