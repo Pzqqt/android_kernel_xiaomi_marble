@@ -491,3 +491,17 @@ QDF_STATUS wmi_unified_get_arp_stats_req(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_unified_peer_unmap_conf_send(void *wmi_hdl,
+					    uint8_t vdev_id,
+					    uint32_t peer_id_cnt,
+					    uint16_t *peer_id_list)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_peer_unmap_conf_cmd)
+		return wmi_handle->ops->send_peer_unmap_conf_cmd(wmi_handle,
+				  vdev_id, peer_id_cnt, peer_id_list);
+
+	return QDF_STATUS_E_FAILURE;
+}
+

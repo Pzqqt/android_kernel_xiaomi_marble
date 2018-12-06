@@ -6360,6 +6360,10 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 			resource_cfg->flag1, 1);
 	}
 
+	if (tgt_res_cfg->peer_unmap_conf_support)
+		WMI_RSRC_CFG_FLAG_PEER_UNMAP_RESPONSE_SUPPORT_SET(
+			resource_cfg->flag1, 1);
+
 	wmi_copy_twt_resource_config(resource_cfg, tgt_res_cfg);
 	resource_cfg->peer_map_unmap_v2_support =
 		tgt_res_cfg->peer_map_unmap_v2;
@@ -11947,6 +11951,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_PER_VDEV_CHAINMASK_CONFIG_SUPPORT;
 	wmi_service[wmi_service_new_htt_msg_format] =
 			WMI_SERVICE_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN;
+	wmi_service[wmi_service_peer_unmap_cnf_support] =
+			WMI_SERVICE_PEER_UNMAP_RESPONSE_SUPPORT;
 
 }
 
