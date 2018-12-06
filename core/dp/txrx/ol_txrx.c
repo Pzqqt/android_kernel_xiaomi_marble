@@ -98,6 +98,7 @@ enum dpt_set_param_debugfs {
 	DPT_SET_PARAM_PROTO_BITMAP = 1,
 	DPT_SET_PARAM_NR_RECORDS = 2,
 	DPT_SET_PARAM_VERBOSITY = 3,
+	DPT_SET_PARAM_NUM_RECORDS_TO_DUMP = 4,
 	DPT_SET_PARAM_MAX,
 };
 
@@ -511,7 +512,8 @@ static QDF_STATUS ol_txrx_read_dpt_buff_debugfs(qdf_debugfs_file_t file,
 static int ol_txrx_conv_str_to_int_debugfs(char *buf, qdf_size_t len,
 					   int *proto_bitmap,
 					   int *nr_records,
-					   int *verbosity)
+					   int *verbosity,
+					   int *num_records_to_dump)
 {
 	int num_value = DPT_SET_PARAM_PROTO_BITMAP;
 	int ret, param_value = 0;
@@ -556,9 +558,14 @@ static int ol_txrx_conv_str_to_int_debugfs(char *buf, qdf_size_t len,
 		case DPT_SET_PARAM_VERBOSITY:
 			*verbosity = param_value;
 			break;
+		case DPT_SET_PARAM_NUM_RECORDS_TO_DUMP:
+			if (param_value > MAX_QDF_DP_TRACE_RECORDS)
+				param_value = MAX_QDF_DP_TRACE_RECORDS;
+			*num_records_to_dump = param_value;
+			break;
 		default:
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				  "%s %d: :Set command needs exactly 3 arguments in format <proto_bitmap> <number of record> <Verbosity>.",
+				  "%s %d: :Set command needs exactly 4 arguments in format <proto_bitmap> <number of record> <Verbosity> <number of records to dump>.",
 				__func__, __LINE__);
 			break;
 		}
@@ -567,10 +574,10 @@ static int ol_txrx_conv_str_to_int_debugfs(char *buf, qdf_size_t len,
 		buf_param = buf;
 	}
 
-	/* buf is not yet NULL implies more than 3 params are passed. */
+	/* buf is not yet NULL implies more than 4 params are passed. */
 	if (*buf) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "%s %d: :Set command needs exactly 3 arguments in format <proto_bitmap> <number of record> <Verbosity>.",
+			  "%s %d: :Set command needs exactly 4 arguments in format <proto_bitmap> <number of record> <Verbosity> <number of records to dump>.",
 			__func__, __LINE__);
 		return -EINVAL;
 	}
@@ -593,6 +600,7 @@ static QDF_STATUS ol_txrx_write_dpt_buff_debugfs(void *priv,
 	int proto_bitmap = 0;
 	int nr_records = 0;
 	int verbosity = 0;
+	int num_records_to_dump = 0;
 	char *buf1 = NULL;
 
 	if (!buf || !len) {
@@ -608,13 +616,15 @@ static QDF_STATUS ol_txrx_write_dpt_buff_debugfs(void *priv,
 
 	qdf_mem_copy(buf1, buf, len);
 	ret = ol_txrx_conv_str_to_int_debugfs(buf1, len, &proto_bitmap,
-					      &nr_records, &verbosity);
+					      &nr_records, &verbosity,
+					      &num_records_to_dump);
 	if (ret) {
 		qdf_mem_free(buf1);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	qdf_dpt_set_value_debugfs(proto_bitmap, nr_records, verbosity);
+	qdf_dpt_set_value_debugfs(proto_bitmap, nr_records, verbosity,
+				  num_records_to_dump);
 	qdf_mem_free(buf1);
 	return QDF_STATUS_SUCCESS;
 }
