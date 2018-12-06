@@ -141,6 +141,17 @@ struct comp_hdls {
 };
 
 /**
+ * struct target_supported_modes - List of HW modes supported by target.
+ *
+ * @num_modes: Number of modes supported
+ * @hw_mode_ids: List of HW mode ids
+ */
+struct target_supported_modes {
+	uint8_t num_modes;
+	uint32_t hw_mode_ids[WMI_HOST_HW_MODE_MAX];
+};
+
+/**
  * struct tgt_info - FW or lower layer related info(required by target_if),
  *                   it is a sub structure of taarget psoc information
  * @version: Host FW version struct
@@ -162,6 +173,7 @@ struct comp_hdls {
  * @mac_phy_cap: phy caps array
  * @reg_cap: regulatory caps array
  * @num_mem_chunks: number of mem chunks allocated
+ * @hw_mode_caps: HW mode caps of preferred mode
  * @mem_chunks: allocated memory blocks for FW
  */
 struct tgt_info {
@@ -186,6 +198,8 @@ struct tgt_info {
 	struct wlan_psoc_host_dbr_ring_caps *dbr_ring_cap;
 	uint32_t num_mem_chunks;
 	struct wmi_host_mem_chunk mem_chunks[MAX_MEM_CHUNKS];
+	struct wlan_psoc_host_hw_mode_caps hw_mode_cap;
+	struct target_supported_modes hw_modes;
 };
 
 /**
@@ -670,6 +684,23 @@ static inline uint32_t target_psoc_get_preferred_hw_mode
 		return WMI_HOST_HW_MODE_MAX;
 
 	return psoc_info->info.preferred_hw_mode;
+}
+
+/**
+ * target_psoc_get_supported_hw_modes() - get supported_hw_mode in target
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get list of supported HW modes
+ *
+ * Return: pointer to target_supported_modes
+ */
+static inline struct target_supported_modes *target_psoc_get_supported_hw_modes
+		(struct target_psoc_info *psoc_info)
+{
+	if (!psoc_info)
+		return NULL;
+
+	return &psoc_info->info.hw_modes;
 }
 
 /**

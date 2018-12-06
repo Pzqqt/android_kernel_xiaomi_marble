@@ -218,6 +218,76 @@ static int get_sar_version(void *handle, uint8_t *evt,
 	return 0;
 }
 
+static bool new_hw_mode_preferred(uint32_t current_hw_mode,
+				  uint32_t new_hw_mode)
+{
+	uint8_t hw_mode_id_precedence[WMI_HOST_HW_MODE_MAX + 1] = { 5, 1, 4,
+								    3, 0, 2,
+								    6 };
+
+	if (current_hw_mode > WMI_HOST_HW_MODE_MAX ||
+	    new_hw_mode > WMI_HOST_HW_MODE_MAX)
+		return false;
+
+	/* Above precedence is defined by low to high, lower the value
+	 * higher the precedence
+	 */
+	if (hw_mode_id_precedence[current_hw_mode] >
+	    hw_mode_id_precedence[new_hw_mode])
+		return true;
+
+	return false;
+}
+
+/**
+ * select_preferred_mode() - Select preferred hw mode based on current mode.
+ * @tgt_hdl: target_psoc_info object
+ * @hw_mode_caps: HW mode caps of new mode id that needs to checked for
+ *                selection.
+ * @current_mode: Current mode.
+ *
+ * API to select preferred hw mode based on the current config.
+ * Based on host config for preferred mode, final mode selected as follows-
+ * 1) If preferred_mode == WMI_HOST_HW_MODE_DETECT, Then select mode from FW
+ *    supported modes such that it is a super set of all modes FW advertises.
+ *    For e.g., If FW supports DBS(2 radio) and DBS_SBS(3 radio)- Choose DBS_SBS
+ * 2) If preferred_mode == WMI_HOST_HW_MODE_MAX, Then do not select any mode
+ *    from FW advertised modes. Host needs to maintain all modes supported in FW
+ *    and can switch dynamically.
+ * 3) Else, A valid preferred_mode is set, Hence check if this is part of FW
+ *    supported modes. If it is found, then use it to bring up the device.
+ *
+ * Return: selected_mode based on the above criteria.
+ */
+static uint32_t
+select_preferred_hw_mode(struct target_psoc_info *tgt_hdl,
+			 struct wlan_psoc_host_hw_mode_caps *hw_mode_caps,
+			 uint32_t current_mode)
+{
+	uint32_t preferred_mode, selected_mode = current_mode;
+	struct tgt_info *info;
+
+	info = &tgt_hdl->info;
+	preferred_mode = target_psoc_get_preferred_hw_mode(tgt_hdl);
+	if (preferred_mode == WMI_HOST_HW_MODE_DETECT) {
+		uint32_t new_mode = hw_mode_caps->hw_mode_id;
+
+		/* Choose hw_mode_id based on precedence */
+		if (new_hw_mode_preferred(selected_mode, new_mode)) {
+			selected_mode = new_mode;
+			qdf_mem_copy(&info->hw_mode_cap, hw_mode_caps,
+				     sizeof(info->hw_mode_cap));
+		}
+	} else if ((preferred_mode != WMI_HOST_HW_MODE_MAX) &&
+		   (preferred_mode == hw_mode_caps->hw_mode_id)) {
+		selected_mode = preferred_mode;
+		qdf_mem_copy(&info->hw_mode_cap, hw_mode_caps,
+			     sizeof(info->hw_mode_cap));
+	}
+
+	return selected_mode;
+}
+
 int init_deinit_populate_hw_mode_capability(void *wmi_handle,
 		uint8_t *event, struct target_psoc_info *tgt_hdl)
 {
@@ -225,7 +295,7 @@ int init_deinit_populate_hw_mode_capability(void *wmi_handle,
 	uint8_t hw_idx;
 	uint32_t num_hw_modes;
 	struct wlan_psoc_host_hw_mode_caps hw_mode_caps[PSOC_MAX_HW_MODE];
-	uint32_t preferred_mode;
+	uint32_t preferred_mode, selected_mode = WMI_HOST_HW_MODE_MAX;
 	struct tgt_info *info;
 
 	info = &tgt_hdl->info;
@@ -237,6 +307,8 @@ int init_deinit_populate_hw_mode_capability(void *wmi_handle,
 	target_if_debug("num_hw_modes %d", num_hw_modes);
 
 	qdf_mem_zero(&hw_mode_caps, sizeof(hw_mode_caps));
+	info->hw_modes.num_modes = 0;
+	info->hw_mode_cap.hw_mode_id = WMI_HOST_HW_MODE_MAX;
 
 	preferred_mode = target_psoc_get_preferred_hw_mode(tgt_hdl);
 	for (hw_idx = 0; hw_idx < num_hw_modes; hw_idx++) {
@@ -245,21 +317,28 @@ int init_deinit_populate_hw_mode_capability(void *wmi_handle,
 		if (status)
 			goto return_exit;
 
-		if ((preferred_mode != WMI_HOST_HW_MODE_MAX) &&
-		    (hw_mode_caps[hw_idx].hw_mode_id != preferred_mode))
-			continue;
+		if (hw_idx < WMI_HOST_HW_MODE_MAX) {
+			info->hw_modes.hw_mode_ids[hw_idx] =
+				hw_mode_caps[hw_idx].hw_mode_id;
+			info->hw_modes.num_modes++;
+		}
 
 		status = init_deinit_populate_mac_phy_capability(wmi_handle,
 				event, &hw_mode_caps[hw_idx], info);
 		if (status)
 			goto return_exit;
 
-		if ((preferred_mode != WMI_HOST_HW_MODE_MAX) &&
-		    (hw_mode_caps[hw_idx].hw_mode_id == preferred_mode)) {
-			info->num_radios = info->total_mac_phy_cnt;
-			target_if_debug("num radios is %d\n", info->num_radios);
-		}
+		selected_mode = select_preferred_hw_mode(tgt_hdl,
+							 &hw_mode_caps[hw_idx],
+							 selected_mode);
 	}
+
+	if (preferred_mode == WMI_HOST_HW_MODE_DETECT) {
+		target_if_info("Preferred mode is not set, use mode id %d\n",
+			       selected_mode);
+		target_psoc_set_preferred_hw_mode(tgt_hdl, selected_mode);
+	}
+
 	status = get_sar_version(wmi_handle, event, &info->service_ext_param);
 	target_if_debug("sar version %d", info->service_ext_param.sar_version);
 

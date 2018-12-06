@@ -6853,6 +6853,8 @@ enum wmi_userspace_log_level {
  * @WMI_HOST_HW_MODE_DBS_OR_SBS: Two PHY with one PHY capabale of both 2G and
  *                        5G. It can support SBS (5G + 5G) OR DBS (5G + 2G).
  * @WMI_HOST_HW_MODE_MAX: Max hw_mode_id. Used to indicate invalid mode.
+ * @WMI_HOST_HW_MODE_DETECT: Mode id used by host to choose mode from target
+ *                        supported modes.
  */
 enum wmi_host_hw_mode_config_type {
 	WMI_HOST_HW_MODE_SINGLE       = 0,
@@ -6862,6 +6864,7 @@ enum wmi_host_hw_mode_config_type {
 	WMI_HOST_HW_MODE_DBS_SBS      = 4,
 	WMI_HOST_HW_MODE_DBS_OR_SBS   = 5,
 	WMI_HOST_HW_MODE_MAX,
+	WMI_HOST_HW_MODE_DETECT,
 };
 
 /*

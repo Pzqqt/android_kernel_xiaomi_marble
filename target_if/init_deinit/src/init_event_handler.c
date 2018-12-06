@@ -222,8 +222,26 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 		goto exit;
 
 	if (init_deinit_is_preferred_hw_mode_supported(psoc, tgt_hdl)
-			== FALSE)
+			== FALSE) {
+		target_if_err("Preferred mode %d not supported",
+			      info->preferred_hw_mode);
 		return -EINVAL;
+	}
+
+	if (info->preferred_hw_mode != WMI_HOST_HW_MODE_MAX) {
+		struct wlan_psoc_host_hw_mode_caps *hw_cap = &info->hw_mode_cap;
+		/* prune info mac_phy cap to preferred/selected mode caps */
+		info->total_mac_phy_cnt = 0;
+		err_code = init_deinit_populate_mac_phy_capability(wmi_handle,
+								   event,
+								   hw_cap,
+								   info);
+		if (err_code)
+			goto exit;
+
+		info->num_radios = info->total_mac_phy_cnt;
+		target_if_debug("num radios is %d\n", info->num_radios);
+	}
 
 	target_if_print_service_ready_ext_param(psoc, tgt_hdl);
 
