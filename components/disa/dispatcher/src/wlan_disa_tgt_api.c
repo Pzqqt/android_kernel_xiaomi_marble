@@ -38,7 +38,7 @@ QDF_STATUS tgt_disa_encrypt_decrypt_req(struct wlan_objmgr_psoc *psoc,
 
 	DISA_ENTER();
 
-	disa_tx_ops = GET_DISA_TX_OPS_FROM_VDEV(psoc);
+	disa_tx_ops = GET_DISA_TX_OPS_FROM_PSOC(psoc);
 	QDF_ASSERT(disa_tx_ops->disa_encrypt_decrypt_req);
 
 	if (disa_tx_ops->disa_encrypt_decrypt_req)
@@ -101,7 +101,7 @@ QDF_STATUS tgt_disa_register_ev_handlers(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_disa_tx_ops *disa_tx_ops;
 
-	disa_tx_ops = GET_DISA_TX_OPS_FROM_VDEV(psoc);
+	disa_tx_ops = GET_DISA_TX_OPS_FROM_PSOC(psoc);
 
 	QDF_ASSERT(disa_tx_ops->disa_register_ev_handlers);
 
@@ -121,7 +121,7 @@ QDF_STATUS tgt_disa_unregister_ev_handlers(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_disa_tx_ops *disa_tx_ops;
 
-	disa_tx_ops = GET_DISA_TX_OPS_FROM_VDEV(psoc);
+	disa_tx_ops = GET_DISA_TX_OPS_FROM_PSOC(psoc);
 
 	QDF_ASSERT(disa_tx_ops->disa_unregister_ev_handlers);
 
