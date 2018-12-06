@@ -812,8 +812,8 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 	wh = (struct ieee80211_frame *)rx_pkt_hdr;
 
 	if (!DP_FRAME_IS_DATA(wh)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "only for data frames");
+		QDF_TRACE_ERROR_RL(QDF_MODULE_ID_DP,
+				   "only for data frames");
 		goto free;
 	}
 
@@ -822,7 +822,7 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 			  "Invalid nbuf length");
 		goto free;
 	}
-	/* reset the head and tail pointers */
+
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		pdev = soc->pdev_list[i];
 		if (!pdev) {
@@ -831,9 +831,6 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 				  "PDEV not found");
 			continue;
 		}
-
-		pdev->invalid_peer_head_msdu = NULL;
-		pdev->invalid_peer_tail_msdu = NULL;
 
 		qdf_spin_lock_bh(&pdev->vdev_list_lock);
 		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
@@ -856,6 +853,20 @@ out:
 	if (soc->cdp_soc.ol_ops->rx_invalid_peer)
 		soc->cdp_soc.ol_ops->rx_invalid_peer(vdev->vdev_id, wh);
 free:
+	/* reset the head and tail pointers */
+	for (i = 0; i < MAX_PDEV_CNT; i++) {
+		pdev = soc->pdev_list[i];
+		if (!pdev) {
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				  QDF_TRACE_LEVEL_ERROR,
+				  "PDEV not found");
+			continue;
+		}
+
+		pdev->invalid_peer_head_msdu = NULL;
+		pdev->invalid_peer_tail_msdu = NULL;
+	}
+
 	/* Drop and free packet */
 	curr_nbuf = mpdu;
 	while (curr_nbuf) {

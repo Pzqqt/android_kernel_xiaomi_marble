@@ -407,6 +407,16 @@ dp_rx_2k_jump_handle(struct dp_soc *soc, void *ring_desc,
 				mac_id, quota);
 }
 
+#ifdef CONFIG_MCL
+#define DP_PDEV_INVALID_PEER_MSDU_CHECK(head, tail) \
+		do {                                \
+			qdf_assert_always(!(head)); \
+			qdf_assert_always(!(tail)); \
+		} while (0)
+#else
+#define DP_PDEV_INVALID_PEER_MSDU_CHECK(head, tail) /* no op */
+#endif
+
 /**
  * dp_rx_chain_msdus() - Function to chain all msdus of a mpdu
  *                       to pdev invalid peer list
@@ -466,6 +476,13 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 		mpdu_done = true;
 	}
 
+	/*
+	 * For MCL, invalid_peer_head_msdu and invalid_peer_tail_msdu
+	 * should be NULL here, add the checking for debugging purpose
+	 * in case some corner case.
+	 */
+	DP_PDEV_INVALID_PEER_MSDU_CHECK(dp_pdev->invalid_peer_head_msdu,
+					dp_pdev->invalid_peer_tail_msdu);
 	DP_RX_LIST_APPEND(dp_pdev->invalid_peer_head_msdu,
 				dp_pdev->invalid_peer_tail_msdu,
 				nbuf);
