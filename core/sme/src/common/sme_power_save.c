@@ -773,7 +773,12 @@ QDF_STATUS sme_ps_disable_auto_ps_timer(mac_handle_t mac_handle,
 {
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
-	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
+	struct ps_params *ps_param;
+
+	if (!sme_is_session_id_valid(mac_handle, session_id))
+		return QDF_STATUS_SUCCESS;
+
+	ps_param = &ps_global_info->ps_params[session_id];
 	/*
 	 * Stop the auto ps entry timer if runnin
 	 */
