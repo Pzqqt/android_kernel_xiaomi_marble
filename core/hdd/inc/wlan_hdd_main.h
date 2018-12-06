@@ -161,11 +161,7 @@ static inline bool in_compat_syscall(void) { return is_compat_task(); }
 #define HDD_NETDEV_TX_QUEUE_LEN (3000)
 
 /** Hdd Tx Time out value */
-#ifdef LIBRA_LINUX_PC
-#define HDD_TX_TIMEOUT          (8000)
-#else
 #define HDD_TX_TIMEOUT          msecs_to_jiffies(5000)
-#endif
 
 #define HDD_TX_STALL_THRESHOLD 4
 
