@@ -365,6 +365,7 @@ typedef  enum  {
     WMI_SERVICE_BEACON_RECEPTION_STATS=180, /* Support per vdev beacon stats info */
     WMI_SERVICE_FETCH_TX_PN=181,
     WMI_SERVICE_PEER_UNMAP_RESPONSE_SUPPORT = 182, /* support peer ids unmap response from host */
+    WMI_SERVICE_TX_PER_PEER_AMPDU_SIZE = 183, /* indicate FW support per peer TX AMPDU size */
 
 
     /******* ADD NEW SERVICES HERE *******/
