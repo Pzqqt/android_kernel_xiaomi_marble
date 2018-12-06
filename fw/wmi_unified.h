@@ -3191,6 +3191,43 @@ typedef struct {
      */
 } wmi_tlv_buf_len_param;
 
+/**
+ * TLV used for specifying the demensions of a multi-dimensional array
+ * that has been stored in a flat buffer
+ */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tlv_arrays_len_param */
+    /**
+     * d1_len, d2_len, d3_len, and d4_len are the lengths of each dimension
+     * for a multi-dimensional array.
+     * If the length of outer dimension is not 1, the inner dimension
+     * shouldn't be 1.
+     * If the multi-dimensional array has less than 4 dimensions, the outer
+     * dimensions' lengths should be 1.  For example, a buf[3][4] array
+     * would have d1_len = 4, d2_len = 3, d3_len = 1, d4_len = 1.
+     * The outermost dimension of the array can be inferred from the array
+     * length; thus, this struct supports up to 5-D arrays.  For a 5-D array,
+     * the outermost (5th) dimension would be
+     *     array length / (d1_len * d2_len * d3_len * d4_len)
+     *
+     * For security (to ensure no out-of-bounds memory access),
+     * the receiver shall validate that the product of all dimensions
+     * is equal to (or less than) the array length.
+     */
+    A_UINT32 d1_len;  /* the length of 1st (innermost) dimension array */
+    A_UINT32 d2_len;  /* the length of 2nd dimension array */
+    A_UINT32 d3_len;  /* the length of 3rd dimension array */
+    A_UINT32 d4_len;  /* the length of 4th dimension array */
+    /**
+     * Following this structure is the TLV multi-dimension array buffer:
+     * <type> buf[L1*L2*L3*L4];
+     * where, L1, L2, L3, and L4 are the values of
+     * d1_len, d2_len, d3_len and d4_len.
+     * To access the 4-D element a[i][j][k][l], the buf[] array would be
+     * indexed as buf[i*L3*L2*L1 + j*L2*L1 + k*L1 + l].
+     */
+} wmi_tlv_arrays_len_param;
+
 typedef struct {
     /** Len of the SSID */
     A_UINT32 ssid_len;
@@ -5690,8 +5727,21 @@ typedef struct {
       * See macros starting with WMI_PDEV_ID_ for values.
       */
     A_UINT32 pdev_id;
-/* This TLV is followed by a byte array:
+/* This TLV is followed by further TLVs:
+ * 1.  byte array:
  *      A_UINT8 ratesArray[];
+ * 2a. multi-dimensional array dimension spec:
+ *      wmi_tlv_arrays_len_param ctlPwrTbl_param[0 or 1]
+ *
+ * 2b. ctl power table
+ *      A_UINT8 ctlPwrTbl_buf[bf][modes][nss], i.e.
+ *      A_UINT8 ctlPwrTbl_buf[d3_len * d2_len * d1_len]
+ *      bf is [0 or 1] for [on or off].
+ *      For 2G, modes is [0,   1,      2,       or 3] for
+ *                       [cck, legacy, (v)ht20, or (v)ht40]
+ *      For 5G, modes is [0,      1,       2,       or 3] for
+ *                       [legacy, (v)ht20, (v)ht40, or vht80]
+ *      nss is [0, 1, 2, or 3] for the number of streams 1~4.
  */
 } wmi_pdev_tpc_config_event_fixed_param;
 

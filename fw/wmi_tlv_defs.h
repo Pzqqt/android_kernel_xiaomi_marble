@@ -948,6 +948,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_vdev_bcn_recv_stats_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_tx_pn_request_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_tx_pn_response_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_tlv_arrays_len_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -3960,14 +3961,16 @@ WMITLV_CREATE_PARAM_STRUC(WMI_EXTSCAN_CAPABILITIES_EVENTID);
 WMITLV_CREATE_PARAM_STRUC(WMI_EXTSCAN_HOTLIST_SSID_MATCH_EVENTID);
 
 /* Update_whal_mib_stats Event */
-#define WMITLV_TABLE_WMI_UPDATE_WHAL_MIB_STATS_EVENTID(id,op,buf,len)                                                                                                 \
+#define WMITLV_TABLE_WMI_UPDATE_WHAL_MIB_STATS_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_update_whal_mib_stats_event_fixed_param, wmi_update_whal_mib_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_UPDATE_WHAL_MIB_STATS_EVENTID);
 
 /* PDEV TPC Config Event */
-#define WMITLV_TABLE_WMI_PDEV_TPC_CONFIG_EVENTID(id,op,buf,len)                                                                                                 \
+#define WMITLV_TABLE_WMI_PDEV_TPC_CONFIG_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_tpc_config_event_fixed_param, wmi_pdev_tpc_config_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, ratesArray, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, ratesArray, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_tlv_arrays_len_param, ctlPwrTbl_param, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, ctlPwrTbl_buf, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_TPC_CONFIG_EVENTID);
 
 /* PDEV DIV RSSI Antenna index Event */
