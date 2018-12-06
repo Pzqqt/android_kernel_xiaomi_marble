@@ -460,4 +460,18 @@ QDF_STATUS wmi_unified_set_arp_stats_req(void *wmi_hdl,
 QDF_STATUS wmi_unified_get_arp_stats_req(void *wmi_hdl,
 					 struct get_arp_stats *req_buf);
 
+/**
+ * wmi_unified_peer_unmap_conf_send() - send PEER unmap conf command to fw
+ * @wmi: wmi handle
+ * @vdev_id: vdev id
+ * @peer_id_cnt: number of peer id
+ * @peer_id_list: list of peer ids
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_peer_unmap_conf_send(void *wmi_hdl,
+					    uint8_t vdev_id,
+					    uint32_t peer_id_cnt,
+					    uint16_t *peer_id_list);
+
 #endif /* _WMI_UNIFIED_STA_API_H_ */
