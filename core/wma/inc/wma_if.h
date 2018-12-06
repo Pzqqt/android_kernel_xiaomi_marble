@@ -1343,38 +1343,6 @@ typedef struct sP2pPsParams {
 } tP2pPsParams, *tpP2pPsParams;
 
 /**
- * struct tTdlsLinkEstablishParams - TDLS Link establish parameters
- * @staIdx: station index
- * @isResponder: responder flag
- * @uapsdQueues: uapsd queue
- * @maxSp: max SP period
- * @isBufsta: is station flag
- * @isOffChannelSupported: offchannel supported or not
- * @peerCurrOperClass: peer current operating class
- * @selfCurrOperClass: self current operating class
- * @validChannelsLen: valid channel length
- * @validChannels: valid channels
- * @validOperClassesLen: valid operating class length
- * @validOperClasses: valid operating class
- * @status: return status of command
- */
-typedef struct sTdlsLinkEstablishParams {
-	uint16_t staIdx;
-	uint8_t isResponder;
-	uint8_t uapsdQueues;
-	uint8_t maxSp;
-	uint8_t isBufsta;
-	uint8_t isOffChannelSupported;
-	uint8_t peerCurrOperClass;
-	uint8_t selfCurrOperClass;
-	uint8_t validChannelsLen;
-	uint8_t validChannels[HAL_MAX_SUPP_CHANNELS];
-	uint8_t validOperClassesLen;
-	uint8_t validOperClasses[HAL_MAX_SUPP_OPER_CLASSES];
-	uint32_t status;
-} tTdlsLinkEstablishParams, *tpTdlsLinkEstablishParams;
-
-/**
  * struct tHalHiddenSsidVdevRestart - hidden ssid vdev restart params
  * @ssidHidden: is hidden ssid or not
  * @sessionId: session id
