@@ -498,6 +498,40 @@ QDF_STATUS qdf_ipv4_parse(const char *ipv4_str, struct qdf_ipv4_addr *out_addr)
 }
 qdf_export_symbol(qdf_ipv4_parse);
 
+static inline void qdf_ipv6_apply_zero_comp(struct qdf_ipv6_addr *addr,
+					    uint8_t hextets,
+					    uint8_t zero_comp_index)
+{
+	/* Given the following hypothetical ipv6 address:
+	 * |---------------------------------------|
+	 * | 01 | ab | cd | ef |    |    |    |    |
+	 * |---------------------------------------|
+	 *           ^--- zero_comp_index (2)
+	 * from -----^
+	 * to ---------------------------^
+	 * |    hextets (4)    |
+	 *                     |   zero comp size  |
+	 *           | to move |
+	 *
+	 * We need to apply the zero compression such that we get:
+	 * |---------------------------------------|
+	 * | 01 | ab | 00 | 00 | 00 | 00 | cd | ef |
+	 * |---------------------------------------|
+	 *           |     zero comp     |
+	 *                               |  moved  |
+	 */
+
+	size_t zero_comp_size = (QDF_IPV6_ADDR_HEXTET_COUNT - hextets) * 2;
+	size_t bytes_to_move = (hextets - zero_comp_index) * 2;
+	uint8_t *from = &addr->bytes[zero_comp_index * 2];
+	uint8_t *to = from + zero_comp_size;
+
+	if (bytes_to_move)
+		qdf_mem_move(to, from, bytes_to_move);
+
+	qdf_mem_zero(from, to - from);
+}
+
 QDF_STATUS qdf_ipv6_parse(const char *ipv6_str, struct qdf_ipv6_addr *out_addr)
 {
 	QDF_STATUS status;
@@ -558,22 +592,18 @@ QDF_STATUS qdf_ipv6_parse(const char *ipv6_str, struct qdf_ipv6_addr *out_addr)
 		}
 	}
 
-	/* we must have max hextets or a zero compression */
-	if (hextets_found < QDF_IPV6_ADDR_HEXTET_COUNT && zero_comp == -1)
-		return QDF_STATUS_E_FAILURE;
-
 	ipv6_str = qdf_str_left_trim(ipv6_str);
 	if (ipv6_str[0] != '\0')
 		return QDF_STATUS_E_FAILURE;
 
-	/* shift lower hextets if zero compressed */
-	if (zero_comp >= 0) {
-		uint8_t shift = QDF_IPV6_ADDR_HEXTET_COUNT - hextets_found;
-		void *to = &addr.bytes[(zero_comp + shift) * 2];
-		void *from = &addr.bytes[zero_comp * 2];
+	/* we must have max hextets or a zero compression, but not both */
+	if (hextets_found < QDF_IPV6_ADDR_HEXTET_COUNT) {
+		if (zero_comp < 0)
+			return QDF_STATUS_E_FAILURE;
 
-		qdf_mem_move(to, from, (hextets_found - zero_comp) * 2);
-		qdf_mem_set(from, shift * 2, 0);
+		qdf_ipv6_apply_zero_comp(&addr, hextets_found, zero_comp);
+	} else if (zero_comp > -1) {
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	*out_addr = addr;
