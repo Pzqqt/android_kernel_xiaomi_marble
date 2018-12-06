@@ -123,9 +123,6 @@ typedef struct _cds_sched_context {
 	/* Spinlock to synchronize between tasklet and thread */
 	spinlock_t ol_rx_queue_lock;
 
-	/* Rx queue length */
-	unsigned int ol_rx_queue_len;
-
 	/* Lock to synchronize free buffer queue access */
 	spinlock_t cds_ol_rx_pkt_freeq_lock;
 
