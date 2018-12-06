@@ -298,6 +298,12 @@ QDF_STATUS (*send_peer_delete_cmd)(wmi_unified_t wmi,
 				    uint8_t peer_addr[IEEE80211_ADDR_LEN],
 				    uint8_t vdev_id);
 
+QDF_STATUS
+(*send_peer_unmap_conf_cmd)(wmi_unified_t wmi,
+			    uint8_t vdev_id,
+			    uint32_t peer_id_cnt,
+			    uint16_t *peer_id_list);
+
 QDF_STATUS (*send_peer_param_cmd)(wmi_unified_t wmi,
 				uint8_t peer_addr[IEEE80211_ADDR_LEN],
 				struct peer_set_params *param);
