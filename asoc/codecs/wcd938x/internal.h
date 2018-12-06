@@ -177,6 +177,4 @@ extern int wcd938x_mbhc_micb_adjust_voltage(struct snd_soc_component *component,
 extern int wcd938x_get_micb_vout_ctl_val(u32 micb_mv);
 extern int wcd938x_micbias_control(struct snd_soc_component *component,
 			int micb_num, int req, bool is_dapm);
-extern int wcd938x_info_create_codec_entry(struct snd_info_entry *codec_root,
-				    struct snd_soc_component *component);
 #endif /* _WCD938X_INTERNAL_H */
