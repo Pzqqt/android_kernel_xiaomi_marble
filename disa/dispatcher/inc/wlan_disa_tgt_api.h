@@ -28,7 +28,7 @@ struct wlan_objmgr_psoc;
 struct disa_encrypt_decrypt_req_params;
 struct disa_encrypt_decrypt_resp_params;
 
-#define GET_DISA_TX_OPS_FROM_VDEV(vedv) \
+#define GET_DISA_TX_OPS_FROM_PSOC(psoc) \
 	(&disa_psoc_get_priv(psoc)->disa_tx_ops)
 
 /**
