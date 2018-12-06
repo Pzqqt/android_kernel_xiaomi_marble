@@ -145,10 +145,6 @@ struct wifi_scan_cmd_req_params;
  * wma_main.c functions declarations
  */
 
-int
-wmi_unified_pdev_set_param(wmi_unified_t wmi_handle, WMI_PDEV_PARAM param_id,
-			   uint32_t param_value);
-
 /**
  * wma_send_msg_by_priority() - Send wma message to PE with priority.
  * @wma_handle: wma handle
