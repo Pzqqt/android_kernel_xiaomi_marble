@@ -949,6 +949,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_peer_tx_pn_request_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_tx_pn_response_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_tlv_arrays_len_param,
+    WMITLV_TAG_STRUC_wmi_peer_unmap_response_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1338,6 +1339,7 @@ typedef enum {
     OP(WMI_PDEV_PKTLOG_FILTER_CMDID) \
     OP(WMI_VDEV_GET_BCN_RECEPTION_STATS_CMDID) \
     OP(WMI_PEER_TX_PN_REQUEST_CMDID) \
+    OP(WMI_PEER_UNMAP_RESPONSE_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1579,7 +1581,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_CREATE_CMDID);
 
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_DELETE_CMDID);
 
-/* Peer flush Cmd*/
+/* Peer unmap response Cmd */
+#define WMITLV_TABLE_WMI_PEER_UNMAP_RESPONSE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_unmap_response_cmd_fixed_param, wmi_peer_unmap_response_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, peer_ids, WMITLV_SIZE_VAR)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_UNMAP_RESPONSE_CMDID);
+
+/* Peer flush Cmd */
 #define WMITLV_TABLE_WMI_PEER_FLUSH_TIDS_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_flush_tids_cmd_fixed_param, wmi_peer_flush_tids_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 

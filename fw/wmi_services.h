@@ -364,6 +364,7 @@ typedef  enum  {
     WMI_SERVICE_SUPPORT_EXTEND_ADDRESS=179, /* indicates firmware supports host memory addresses larger than 32 bit */
     WMI_SERVICE_BEACON_RECEPTION_STATS=180, /* Support per vdev beacon stats info */
     WMI_SERVICE_FETCH_TX_PN=181,
+    WMI_SERVICE_PEER_UNMAP_RESPONSE_SUPPORT = 182, /* support peer ids unmap response from host */
 
 
     /******* ADD NEW SERVICES HERE *******/

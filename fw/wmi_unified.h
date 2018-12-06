@@ -558,6 +558,10 @@ typedef enum {
     /** WMI command to fetch current tx PN for the peer */
     WMI_PEER_TX_PN_REQUEST_CMDID,
 
+    /** unmap response with peer ids */
+    WMI_PEER_UNMAP_RESPONSE_CMDID,
+
+
     /* beacon/management specific commands */
 
     /** transmit beacon by reference . used for transmitting beacon on low latency interface like pcie */
@@ -2881,6 +2885,9 @@ typedef struct {
     #define WMI_RSRC_CFG_FLAG_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN_S 19
     #define WMI_RSRC_CFG_FLAG_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN_M 0x80000
 
+    #define WMI_RSRC_CFG_FLAG_PEER_UNMAP_RESPONSE_SUPPORT_S 20
+    #define WMI_RSRC_CFG_FLAG_PEER_UNMAP_RESPONSE_SUPPORT_M 0x100000
+
     A_UINT32 flag1;
 
     /** @brief smart_ant_cap - Smart Antenna capabilities information
@@ -3118,6 +3125,12 @@ typedef struct {
     WMI_RSRC_CFG_FLAG_SET((word32), HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN, (value))
 #define WMI_RSRC_CFG_FLAG_HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN_GET(word32) \
     WMI_RSRC_CFG_FLAG_GET((word32), HTT_H2T_NO_HTC_HDR_LEN_IN_MSG_LEN)
+
+#define WMI_RSRC_CFG_FLAG_PEER_UNMAP_RESPONSE_SUPPORT_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), PEER_UNMAP_RESPONSE_SUPPORT, (value))
+#define WMI_RSRC_CFG_FLAG_PEER_UNMAP_RESPONSE_SUPPORT_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), PEER_UNMAP_RESPONSE_SUPPORT)
+
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
@@ -10257,6 +10270,16 @@ typedef struct {
     /** peer MAC address */
     wmi_mac_addr peer_macaddr;
 } wmi_peer_delete_cmd_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_unmap_response_cmd_fixed_param */
+    A_UINT32 tlv_header;
+    /*
+     * Following this struct is the TLV:
+     * A_UINT32 peer_ids[]; <-- variable-length array of peer_ids
+     *                          that have been unmapped by the host
+     */
+} wmi_peer_unmap_response_cmd_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_set_rx_blocksize_cmd_fixed_param */
@@ -22236,6 +22259,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PEER_MCAST_GROUP_CMDID);
         /* request peer info from FW to get PEER_INFO_EVENTID */
         WMI_RETURN_STRING(WMI_PEER_INFO_REQ_CMDID);
+        /* unmap response for a peer */
+        WMI_RETURN_STRING(WMI_PEER_UNMAP_RESPONSE_CMDID);
 
         /* beacon/management specific commands */
 
