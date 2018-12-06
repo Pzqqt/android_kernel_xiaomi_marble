@@ -85,6 +85,11 @@
 #define WLAN_CRYPTO_KEY_SWMIC        (WLAN_CRYPTO_KEY_SWENMIC \
 						| WLAN_CRYPTO_KEY_SWDEMIC)
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
+#define WLAN_AKM_SUITE_FT_8021X         0x000FAC03
+#define WLAN_AKM_SUITE_FT_PSK           0x000FAC04
+#endif
+
 /*
  * Cipher types
  */
