@@ -21,6 +21,8 @@
 #include "qdf_types.h"
 #include "qdf_types_test.h"
 
+#define WHITESPACE "\t\n\r \x20"
+
 #define ut_bool_pass(str, exp) __ut_bool(str, QDF_STATUS_SUCCESS, exp)
 #define ut_bool_fail(str) __ut_bool(str, QDF_STATUS_E_FAILURE, false)
 
@@ -59,10 +61,208 @@ static uint32_t qdf_types_ut_bool_parse(void)
 	errors += ut_bool_pass("0", false);
 	errors += ut_bool_pass("n", false);
 	errors += ut_bool_pass("N", false);
+	errors += ut_bool_pass(WHITESPACE "1" WHITESPACE, true);
 
 	errors += ut_bool_fail("true");
 	errors += ut_bool_fail("false");
 	errors += ut_bool_fail("日本");
+
+	return errors;
+}
+
+#define ut_int32_pass(str, exp) __ut_int32(str, QDF_STATUS_SUCCESS, exp)
+#define ut_int32_fail(str, exp_status) __ut_int32(str, exp_status, 0)
+
+static uint32_t
+__ut_int32(const char *str, QDF_STATUS exp_status, int32_t exp_value)
+{
+	int32_t value;
+	QDF_STATUS status = qdf_int32_parse(str, &value);
+
+	if (status != exp_status) {
+		qdf_nofl_alert("FAIL: qdf_int32_parse(\"%s\") -> status %d; expected status %d",
+			       str, status, exp_status);
+		return 1;
+	}
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return 0;
+
+	if (value != exp_value) {
+		qdf_nofl_alert("FAIL: qdf_int32_parse(\"%s\") -> %d; expected %d",
+			       str, value, exp_value);
+		return 1;
+	}
+
+	return 0;
+}
+
+static uint32_t qdf_types_ut_int32_parse(void)
+{
+	uint32_t errors = 0;
+
+	errors += ut_int32_pass("1", 1);
+	errors += ut_int32_pass("+1", 1);
+	errors += ut_int32_pass("-1", -1);
+	errors += ut_int32_pass(WHITESPACE "1" WHITESPACE, 1);
+	errors += ut_int32_fail("1;", QDF_STATUS_E_FAILURE);
+	errors += ut_int32_pass(" 2147483647", 2147483647);
+	errors += ut_int32_fail(" 2147483648", QDF_STATUS_E_RANGE);
+	errors += ut_int32_pass("-2147483648", -2147483648);
+	errors += ut_int32_fail("-2147483649", QDF_STATUS_E_RANGE);
+	errors += ut_int32_fail("日本", QDF_STATUS_E_FAILURE);
+
+	return errors;
+}
+
+#define ut_int64_pass(str, exp) __ut_int64(str, QDF_STATUS_SUCCESS, exp)
+#define ut_int64_fail(str, exp_status) __ut_int64(str, exp_status, 0)
+
+static uint32_t
+__ut_int64(const char *str, QDF_STATUS exp_status, int64_t exp_value)
+{
+	int64_t value;
+	QDF_STATUS status = qdf_int64_parse(str, &value);
+
+	if (status != exp_status) {
+		qdf_nofl_alert("FAIL: qdf_int64_parse(\"%s\") -> status %d; expected status %d",
+			       str, status, exp_status);
+		return 1;
+	}
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return 0;
+
+	if (value != exp_value) {
+		qdf_nofl_alert("FAIL: qdf_int64_parse(\"%s\") -> %lld; expected %lld",
+			       str, value, exp_value);
+		return 1;
+	}
+
+	return 0;
+}
+
+static uint32_t qdf_types_ut_int64_parse(void)
+{
+	uint32_t errors = 0;
+
+	errors += ut_int64_pass("1", 1);
+	errors += ut_int64_pass("+1", 1);
+	errors += ut_int64_pass("-1", -1);
+	errors += ut_int64_pass(WHITESPACE "1" WHITESPACE, 1);
+	errors += ut_int64_fail("1;", QDF_STATUS_E_FAILURE);
+	errors += ut_int64_pass(" 9223372036854775807", 9223372036854775807ll);
+	errors += ut_int64_fail(" 9223372036854775808", QDF_STATUS_E_RANGE);
+	errors += ut_int64_pass("-9223372036854775808",
+				-9223372036854775807ll - 1);
+	errors += ut_int64_fail("-9223372036854775809", QDF_STATUS_E_RANGE);
+	errors += ut_int64_fail("日本", QDF_STATUS_E_FAILURE);
+
+	return errors;
+}
+
+#define ut_uint32_pass(str, exp) __ut_uint32(str, QDF_STATUS_SUCCESS, exp)
+#define ut_uint32_fail(str, exp_status) __ut_uint32(str, exp_status, 0)
+
+static uint32_t
+__ut_uint32(const char *str, QDF_STATUS exp_status, uint32_t exp_value)
+{
+	uint32_t value;
+	QDF_STATUS status = qdf_uint32_parse(str, &value);
+
+	if (status != exp_status) {
+		qdf_nofl_alert("FAIL: qdf_uint32_parse(\"%s\") -> status %d; expected status %d",
+			       str, status, exp_status);
+		return 1;
+	}
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return 0;
+
+	if (value != exp_value) {
+		qdf_nofl_alert("FAIL: qdf_uint32_parse(\"%s\") -> %d; expected %d",
+			       str, value, exp_value);
+		return 1;
+	}
+
+	return 0;
+}
+
+static uint32_t qdf_types_ut_uint32_parse(void)
+{
+	uint32_t errors = 0;
+
+	errors += ut_uint32_pass("1", 1);
+	errors += ut_uint32_pass("+1", 1);
+	errors += ut_uint32_pass(WHITESPACE "1" WHITESPACE, 1);
+	errors += ut_uint32_fail("1;", QDF_STATUS_E_FAILURE);
+	errors += ut_uint32_pass("4294967295", 4294967295);
+	errors += ut_uint32_fail("4294967296", QDF_STATUS_E_RANGE);
+	errors += ut_uint32_pass(" 0", 0);
+	errors += ut_uint32_fail("-1", QDF_STATUS_E_RANGE);
+	errors += ut_uint32_fail("日本", QDF_STATUS_E_FAILURE);
+
+	return errors;
+}
+
+#define ut_uint64_pass(str, exp) __ut_uint64(str, QDF_STATUS_SUCCESS, exp)
+#define ut_uint64_fail(str, exp_status) __ut_uint64(str, exp_status, 0)
+
+static uint32_t
+__ut_uint64(const char *str, QDF_STATUS exp_status, uint64_t exp_value)
+{
+	uint64_t value;
+	QDF_STATUS status = qdf_uint64_parse(str, &value);
+
+	if (status != exp_status) {
+		qdf_nofl_alert("FAIL: qdf_uint64_parse(\"%s\") -> status %d; expected status %d",
+			       str, status, exp_status);
+		return 1;
+	}
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return 0;
+
+	if (value != exp_value) {
+		qdf_nofl_alert("FAIL: qdf_uint64_parse(\"%s\") -> %llu; expected %llu",
+			       str, value, exp_value);
+		return 1;
+	}
+
+	return 0;
+}
+
+static uint32_t qdf_types_ut_uint64_parse(void)
+{
+	uint32_t errors = 0;
+
+	errors += ut_uint64_pass("1", 1);
+	errors += ut_uint64_pass("+1", 1);
+	errors += ut_uint64_pass(WHITESPACE "1" WHITESPACE, 1);
+	errors += ut_uint64_fail("1;", QDF_STATUS_E_FAILURE);
+	errors += ut_uint64_pass("18446744073709551615",
+				 18446744073709551615ull);
+	errors += ut_uint64_fail("18446744073709551616", QDF_STATUS_E_RANGE);
+	errors += ut_uint64_pass(" 0", 0);
+	errors += ut_uint64_fail("-1", QDF_STATUS_E_RANGE);
+	errors += ut_uint64_fail("日本", QDF_STATUS_E_FAILURE);
+
+	return errors;
+}
+
+static uint32_t qdf_types_ut_int_formats_parse(void)
+{
+	uint32_t errors = 0;
+
+	errors += ut_uint64_pass("0b01", 1);
+	errors += ut_uint64_pass("0o01234567", 342391);
+	errors += ut_uint64_pass("0123456789", 123456789);
+	errors += ut_uint64_pass("0x0123456789abcdef", 81985529216486895ll);
+
+	errors += ut_uint64_fail("0b012", QDF_STATUS_E_FAILURE);
+	errors += ut_uint64_fail("0o012345678", QDF_STATUS_E_FAILURE);
+	errors += ut_uint64_fail("0123456789a", QDF_STATUS_E_FAILURE);
+	errors += ut_uint64_fail("0x0123456789abcdefg", QDF_STATUS_E_FAILURE);
 
 	return errors;
 }
@@ -107,8 +307,6 @@ static uint32_t qdf_types_ut_mac_parse(void)
 		0x01, 0x23, 0x45, 0x67, 0x89, 0xab } };
 
 	errors += ut_mac_fail("");
-	errors += ut_mac_fail(" ");
-	errors += ut_mac_fail("\t");
 	errors += ut_mac_fail("test");
 	errors += ut_mac_fail("¥円");
 	errors += ut_mac_pass("aabbccddeeff", addr_aabbccddeeff);
@@ -119,7 +317,8 @@ static uint32_t qdf_types_ut_mac_parse(void)
 	errors += ut_mac_pass("01:23:45:67:89:ab", addr_0123456789ab);
 	errors += ut_mac_fail("01:23:45:67:89:ab:cd:ef");
 	errors += ut_mac_fail("01:23:45\0:67:89:ab");
-	errors += ut_mac_pass(" \t01:23:45:67:89:ab\t ", addr_0123456789ab);
+	errors += ut_mac_pass(WHITESPACE "01:23:45:67:89:ab" WHITESPACE,
+			      addr_0123456789ab);
 	errors += ut_mac_pass("01:23:45:67:89:ab\n", addr_0123456789ab);
 	errors += ut_mac_fail("01:23:45:67:89:ab\t ,");
 
@@ -166,8 +365,6 @@ static uint32_t qdf_types_ut_ipv4_parse(void)
 	struct qdf_ipv4_addr addr_255255255255 = { { 255, 255, 255, 255 } };
 
 	errors += ut_ipv4_fail("");
-	errors += ut_ipv4_fail(" ");
-	errors += ut_ipv4_fail("\t");
 	errors += ut_ipv4_fail("test");
 	errors += ut_ipv4_fail("¥円");
 	errors += ut_ipv4_pass("0.0.0.0", addr_0000);
@@ -178,7 +375,8 @@ static uint32_t qdf_types_ut_ipv4_parse(void)
 	errors += ut_ipv4_fail("abc.123.123.123");
 	errors += ut_ipv4_fail("256.0.0.0");
 	errors += ut_ipv4_pass("0.1.12.123", addr_0112123);
-	errors += ut_ipv4_pass(" 0.1.12.123\t\n", addr_0112123);
+	errors += ut_ipv4_pass(WHITESPACE "0.1.12.123" WHITESPACE,
+			       addr_0112123);
 	errors += ut_ipv4_fail("0.1.12\0.123");
 	errors += ut_ipv4_fail("0.1.12.123 ,");
 
@@ -253,8 +451,6 @@ static uint32_t qdf_types_ut_ipv6_parse(void)
 	} };
 
 	errors += ut_ipv6_fail("");
-	errors += ut_ipv6_fail(" ");
-	errors += ut_ipv6_fail("\t");
 	errors += ut_ipv6_fail("test");
 	errors += ut_ipv6_fail("¥円");
 	errors += ut_ipv6_pass("::",
@@ -287,7 +483,7 @@ static uint32_t qdf_types_ut_ipv6_parse(void)
 	errors += ut_ipv6_fail("0:0:0::0:0:");
 	errors += ut_ipv6_fail("0:0::0:0::0:0");
 	errors += ut_ipv6_fail("xyz::zyx");
-	errors += ut_ipv6_pass(" 1::1\t\n",
+	errors += ut_ipv6_pass(WHITESPACE "1::1" WHITESPACE,
 			       addr_00010000000000000000000000000001);
 	errors += ut_ipv6_fail("1\0::1");
 	errors += ut_ipv6_fail("1::1 ,");
@@ -301,6 +497,11 @@ uint32_t qdf_types_unit_test(void)
 	uint32_t errors = 0;
 
 	errors += qdf_types_ut_bool_parse();
+	errors += qdf_types_ut_int32_parse();
+	errors += qdf_types_ut_int64_parse();
+	errors += qdf_types_ut_uint32_parse();
+	errors += qdf_types_ut_uint64_parse();
+	errors += qdf_types_ut_int_formats_parse();
 	errors += qdf_types_ut_mac_parse();
 	errors += qdf_types_ut_ipv4_parse();
 	errors += qdf_types_ut_ipv6_parse();
