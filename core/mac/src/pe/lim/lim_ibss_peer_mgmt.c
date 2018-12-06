@@ -392,6 +392,67 @@ ibss_coalesce_save(struct mac_context *mac,
 	qdf_mem_copy(mac->lim.ibssInfo.pBeacon, pBeacon, sizeof(*pBeacon));
 }
 
+#ifdef CONFIG_VDEV_SM
+static QDF_STATUS lim_ibss_add_bss(
+			struct mac_context *mac,
+			struct pe_session *session,
+			tLimMlmStartReq mlmStartReq)
+{
+	return wlan_vdev_mlme_sm_deliver_evt(
+				session->vdev,
+				WLAN_VDEV_SM_EV_START,
+				sizeof(mlmStartReq), &mlmStartReq);
+}
+
+void lim_ibss_delete(struct mac_context *mac, struct pe_session *session)
+{
+	ibss_coalesce_free(mac);
+}
+
+static void lim_ibss_delete_peers(struct mac_context *mac,
+				  struct pe_session *session)
+{}
+#else
+/**
+ * lim_ibss_add_bss() - ibss add bss
+ *
+ * @mac: Pointer to Global MAC structure
+ * @session: Pointer to session entry
+ * @mlmStartReq: Pointer to mlme start request
+ *
+ * Return: none
+ */
+static QDF_STATUS lim_ibss_add_bss(
+			struct mac_context *mac,
+			struct pe_session *session,
+			tLimMlmStartReq mlmStartReq)
+{
+	return lim_mlm_add_bss(mac, &mlmStartReq, session) ==
+		eSIR_SME_SUCCESS ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
+}
+
+void lim_ibss_delete(struct mac_context *mac, struct pe_session *session)
+{
+	lim_ibss_delete_all_peers(mac, session);
+	ibss_coalesce_free(mac);
+}
+
+/**
+ * lim_ibss_delete_peers() - Delete ibss peer entries
+ *
+ * @mac: Pointer to Global MAC structure
+ * @session: Pointer to session entry
+ *
+ * Return: none
+ */
+static void lim_ibss_delete_peers(struct mac_context *mac,
+				  struct pe_session *session)
+{
+	/* Delete peer entries. */
+	lim_ibss_delete_all_peers(mac, session);
+}
+#endif
+
 /*
  * tries to add a new entry to dph hash node
  * if necessary, an existing entry is eliminated
@@ -483,6 +544,7 @@ void ibss_bss_add(struct mac_context *mac, struct pe_session *pe_session)
 	tpSchBeaconStruct pBeacon =
 		(tpSchBeaconStruct) mac->lim.ibssInfo.pBeacon;
 	qdf_size_t num_ext_rates = 0;
+	QDF_STATUS status;
 
 	if ((pHdr == NULL) || (pBeacon == NULL)) {
 		pe_err("Unable to add BSS (no cached BSS info)");
@@ -568,17 +630,12 @@ void ibss_bss_add(struct mac_context *mac, struct pe_session *pe_session)
 		     pe_session->pLimStartBssReq->ssId.length + 1);
 
 	pe_debug("invoking ADD_BSS as part of coalescing!");
-#ifdef CONFIG_VDEV_SM
-	wlan_vdev_mlme_sm_deliver_evt(pe_session->vdev,
-				      WLAN_VDEV_SM_EV_START,
-				      sizeof(mlmStartReq), &mlmStartReq);
-#else
-	if (lim_mlm_add_bss(mac, &mlmStartReq, pe_session) !=
-	    eSIR_SME_SUCCESS) {
+
+	status = lim_ibss_add_bss(mac, pe_session, mlmStartReq);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("AddBss failure");
 		return;
 	}
-#endif
 	/* Update fields in Beacon */
 	if (sch_set_fixed_beacon_fields(mac, pe_session) != QDF_STATUS_SUCCESS) {
 		pe_err("Unable to set fixed Beacon fields");
@@ -650,9 +707,6 @@ void lim_ibss_delete_all_peers(struct mac_context *mac,
 	tLimIbssPeerNode *pCurrNode, *pTempNode;
 	tpDphHashNode pStaDs;
 	uint16_t peerIdx;
-#ifdef CONFIG_VDEV_SM
-	QDF_STATUS status;
-#endif
 
 	pCurrNode = pTempNode = mac->lim.gLimIbssPeerList;
 
@@ -706,35 +760,7 @@ void lim_ibss_delete_all_peers(struct mac_context *mac,
 
 	mac->lim.gLimNumIbssPeers = 0;
 	mac->lim.gLimIbssPeerList = NULL;
-#ifdef CONFIG_VDEV_SM
-	status =
-	   wlan_vdev_mlme_sm_deliver_evt(pe_session->vdev,
-					 WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE,
-					 sizeof(*pe_session), pe_session);
-	if (!mac->lim.gLimIbssCoalescingHappened &&
-	    QDF_IS_STATUS_ERROR(status)) {
-		pe_err("failed to post WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE for vdevid %d",
-		       pe_session->smeSessionId);
-		lim_send_stop_bss_failure_resp(mac, pe_session);
-	}
-#endif
-}
-
-/**
- * lim_ibss_delete() - This function is called while tearing down an IBSS
- *
- * @mac: Pointer to Global MAC structure
- * @pe_session: Pointer to session entry
- *
- * Return: none
- */
-
-void lim_ibss_delete(struct mac_context *mac, struct pe_session *pe_session)
-{
-#ifndef CONFIG_VDEV_SM
-	lim_ibss_delete_all_peers(mac, pe_session);
-#endif
-	ibss_coalesce_free(mac);
+	lim_disconnect_complete(pe_session, false);
 }
 
 /** -------------------------------------------------------------
@@ -1247,10 +1273,8 @@ void lim_ibss_del_bss_rsp_when_coalescing(struct mac_context *mac, void *msg,
 		goto end;
 	}
 
-#ifndef CONFIG_VDEV_SM
 	/* Delete peer entries. */
-	lim_ibss_delete_all_peers(mac, pe_session);
-#endif
+	lim_ibss_delete_peers(mac, pe_session);
 	/* add the new bss */
 	ibss_bss_add(mac, pe_session);
 end:
@@ -1376,6 +1400,28 @@ end:
 	}
 }
 
+#ifdef CONFIG_VDEV_SM
+static void lim_ibss_bss_delete(struct mac_context *mac,
+				struct pe_session *pe_session)
+{
+	QDF_STATUS status;
+
+	status = wlan_vdev_mlme_sm_deliver_evt(
+				pe_session->vdev,
+				WLAN_VDEV_SM_EV_DOWN,
+				sizeof(*pe_session),
+				pe_session);
+	if (QDF_IS_STATUS_ERROR(status))
+		pe_err("Deliver WLAN_VDEV_SM_EV_DOWN failed");
+}
+#else
+static void lim_ibss_bss_delete(struct mac_context *mac,
+				struct pe_session *pe_session)
+{
+	ibss_bss_delete(mac, pe_session);
+}
+#endif
+
 /**
  * lim_ibss_coalesce()
  *
@@ -1451,14 +1497,8 @@ lim_ibss_coalesce(struct mac_context *mac,
 		ibss_coalesce_save(mac, pHdr, pBeacon);
 		pe_debug("IBSS Coalescing happened Delete BSSID :" MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(currentBssId));
-#ifdef CONFIG_VDEV_SM
-		wlan_vdev_mlme_sm_deliver_evt(pe_session->vdev,
-					      WLAN_VDEV_SM_EV_DOWN,
-					      sizeof(*pe_session),
-					      pe_session);
-#else
-		ibss_bss_delete(mac, pe_session);
-#endif
+		lim_ibss_bss_delete(mac, pe_session);
+
 		return QDF_STATUS_SUCCESS;
 	} else {
 		if (qdf_mem_cmp

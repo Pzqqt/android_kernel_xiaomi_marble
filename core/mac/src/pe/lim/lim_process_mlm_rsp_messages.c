@@ -2013,10 +2013,6 @@ void lim_process_sta_mlm_del_sta_rsp(struct mac_context *mac,
 {
 	tSirResultCodes statusCode = eSIR_SME_SUCCESS;
 	tpDeleteStaParams pDelStaParams = (tpDeleteStaParams) limMsgQ->bodyptr;
-	tpDphHashNode pStaDs = NULL;
-#ifdef CONFIG_VDEV_SM
-	QDF_STATUS status;
-#endif
 
 	if (NULL == pDelStaParams) {
 		pe_err("Encountered NULL Pointer");
@@ -2036,22 +2032,12 @@ void lim_process_sta_mlm_del_sta_rsp(struct mac_context *mac,
 		pe_err("Del STA failed! Status:%d, proceeding with Del BSS",
 			pDelStaParams->status);
 
-	pStaDs = dph_get_hash_entry(mac, DPH_STA_HASH_INDEX_PEER,
-			&pe_session->dph.dphHashTable);
-	if (pStaDs == NULL) {
-		pe_err("DPH Entry for STA %X missing",
-				pDelStaParams->assocId);
-		statusCode = eSIR_SME_REFUSED;
-		goto end;
-	}
 	if (eLIM_MLM_WT_DEL_STA_RSP_STATE != pe_session->limMlmState) {
 		pe_err("Received unexpected WDA_DELETE_STA_RSP in state %s",
 			lim_mlm_state_str(pe_session->limMlmState));
 		statusCode = eSIR_SME_REFUSED;
 		goto end;
 	}
-	pe_debug("STA AssocID %d MAC", pStaDs->assocId);
-	lim_print_mac_addr(mac, pStaDs->staAddr, LOGD);
 	/*
 	 * we must complete all cleanup related to delSta before
 	 * calling limDelBSS.
@@ -2060,21 +2046,8 @@ void lim_process_sta_mlm_del_sta_rsp(struct mac_context *mac,
 		qdf_mem_free(pDelStaParams);
 		limMsgQ->bodyptr = NULL;
 	}
-#ifdef CONFIG_VDEV_SM
-	status =
-	    wlan_vdev_mlme_sm_deliver_evt(pe_session->vdev,
-					  WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE,
-					  sizeof(*pe_session),
-					  pe_session);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_err("failed to post WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE for vdevid %d",
-		       pe_session->smeSessionId);
-	}
-#else
-	/* Proceed to do DelBSS even if DelSta resulted in failure */
-	statusCode = (tSirResultCodes)lim_del_bss(mac, pStaDs, 0,
-			pe_session);
-#endif
+
+	lim_disconnect_complete(pe_session, true);
 
 	return;
 end:

@@ -11237,14 +11237,12 @@ csr_roam_chk_lnk_swt_ch_ind(struct mac_context *mac_ctx, tSirSmeRsp *msg_ptr)
 		return;
 	}
 
-#ifdef CONFIG_VDEV_SM
 	if (QDF_IS_STATUS_ERROR(pSwitchChnInd->status)) {
 		sme_err("Channel switch failed");
 		csr_roam_disconnect_internal(mac_ctx, sessionId,
 					     eCSR_DISCONNECT_REASON_DEAUTH);
 		return;
 	}
-#endif
 	session->connectedProfile.operationChannel =
 			(uint8_t) pSwitchChnInd->newChannelId;
 	if (session->pConnectBssDesc) {

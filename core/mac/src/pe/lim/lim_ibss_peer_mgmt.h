@@ -58,7 +58,17 @@ void ibss_bss_delete(struct mac_context *mac_ctx, struct pe_session *session);
 void lim_ibss_delete_all_peers(struct mac_context *mac_ctx, struct pe_session *session);
 
 void lim_ibss_init(struct mac_context *);
+
+/**
+ * lim_ibss_delete() - Delete ibss while tearing down an IBSS
+ *
+ * @mac: Pointer to Global MAC structure
+ * @session: Pointer to session entry
+ *
+ * Return: none
+ */
 void lim_ibss_delete(struct mac_context *, struct pe_session *pe_session);
+
 QDF_STATUS lim_ibss_coalesce(struct mac_context *, tpSirMacMgmtHdr,
 				tpSchBeaconStruct, uint8_t *, uint32_t, uint16_t,
 				struct pe_session *);

@@ -2985,19 +2985,7 @@ void lim_delete_all_peers(struct pe_session *session)
 			QDF_ASSERT(0);
 		}
 	}
-
-#ifdef CONFIG_VDEV_SM
-	status =
-	    wlan_vdev_mlme_sm_deliver_evt(session->vdev,
-					  WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE,
-					  sizeof(*session), session);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_err("failed to post WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE for vdevid %d",
-		       session->smeSessionId);
-		lim_send_stop_bss_failure_resp(mac_ctx, session);
-	}
-#endif
-
+	lim_disconnect_complete(session, false);
 }
 
 QDF_STATUS lim_sta_send_del_bss(struct pe_session *session)
@@ -3973,15 +3961,7 @@ static void lim_process_roam_invoke(struct mac_context *mac_ctx,
 }
 #endif
 
-/*
- * lim_handle_update_ssid_hidden() - Processes SSID hidden update
- * @mac_ctx: Pointer to global mac context
- * @session: Pointer to PE session
- * @ssid_hidden: SSID hidden value to set; 0 - Broadcast SSID,
- *    1 - Disable broadcast SSID
- *
- * Return: None
- */
+#ifdef CONFIG_VDEV_SM
 static void lim_handle_update_ssid_hidden(struct mac_context *mac_ctx,
 				struct pe_session *session, uint8_t ssid_hidden)
 {
@@ -3995,20 +3975,42 @@ static void lim_handle_update_ssid_hidden(struct mac_context *mac_ctx,
 		return;
 	}
 
-#ifdef CONFIG_VDEV_SM
 	ap_mlme_set_hidden_ssid_restart_in_progress(session->vdev, true);
 	wlan_vdev_mlme_sm_deliver_evt(session->vdev,
 				      WLAN_VDEV_SM_EV_FW_VDEV_RESTART,
 				      sizeof(*session), session);
+}
 #else
+/*
+ * lim_handle_update_ssid_hidden() - Processes SSID hidden update
+ * @mac_ctx: Pointer to global mac context
+ * @session: Pointer to PE session
+ * @ssid_hidden: SSID hidden value to set; 0 - Broadcast SSID,
+ *    1 - Disable broadcast SSID
+ *
+ * Return: None
+ */
+static void lim_handle_update_ssid_hidden(
+				struct mac_context *mac_ctx,
+				struct pe_session *session,
+				uint8_t ssid_hidden)
+{
+	pe_debug("rcvd HIDE_SSID message old HIDE_SSID: %d new HIDE_SSID: %d",
+		 session->ssidHidden, ssid_hidden);
+
+	if (ssid_hidden != session->ssidHidden) {
+		session->ssidHidden = ssid_hidden;
+	} else {
+		pe_debug("Dont process HIDE_SSID msg with existing setting");
+		return;
+	}
 
 	/* Send vdev restart */
 	lim_send_vdev_restart(mac_ctx, session, session->smeSessionId);
-#endif
 
 	return;
 }
-
+#endif
 /**
  * __lim_process_sme_session_update - process SME session update msg
  *
@@ -4806,12 +4808,10 @@ static void lim_process_disconnect_sta(struct pe_session *session,
 					      WLAN_VDEV_SM_EV_DOWN,
 					      sizeof(*msg), msg);
 }
-#endif
 
 static void lim_process_sme_disassoc_cnf(struct mac_context *mac_ctx,
 					 struct scheduler_msg *msg)
 {
-#ifdef CONFIG_VDEV_SM
 	tSirSmeDisassocCnf sme_disassoc_cnf;
 	struct pe_session *session;
 	uint8_t session_id;
@@ -4828,15 +4828,11 @@ static void lim_process_sme_disassoc_cnf(struct mac_context *mac_ctx,
 	else
 		__lim_process_sme_disassoc_cnf(mac_ctx,
 					       (uint32_t *)msg->bodyptr);
-#else
-	__lim_process_sme_disassoc_cnf(mac_ctx, (uint32_t *)msg->bodyptr);
-#endif
 }
 
 static void lim_process_sme_disassoc_req(struct mac_context *mac_ctx,
 					 struct scheduler_msg *msg)
 {
-#ifdef CONFIG_VDEV_SM
 	tSirSmeDisassocReq disassoc_req;
 	struct pe_session *session;
 	uint8_t session_id;
@@ -4851,15 +4847,11 @@ static void lim_process_sme_disassoc_req(struct mac_context *mac_ctx,
 	else
 		__lim_process_sme_disassoc_req(mac_ctx,
 					       (uint32_t *)msg->bodyptr);
-#else
-	__lim_process_sme_disassoc_req(mac_ctx, (uint32_t *)msg->bodyptr);
-#endif
 }
 
 static void lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 				       struct scheduler_msg *msg)
 {
-#ifdef CONFIG_VDEV_SM
 	tSirSmeDeauthReq sme_deauth_req;
 	struct pe_session *session;
 	uint8_t session_id;
@@ -4874,10 +4866,56 @@ static void lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 	else
 		__lim_process_sme_deauth_req(mac_ctx,
 					     (uint32_t *)msg->bodyptr);
-#else
-	__lim_process_sme_deauth_req(mac_ctx, (uint32_t *)msg->bodyptr);
-#endif
 }
+#else
+/**
+ * lim_process_sme_disassoc_cnf() - process sme disassoc cnf message
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg: pointer to message buffer
+ *
+ * This function is called to process SME_DISASSOC_CNF message
+ * from HDD or upper layer application.
+ *
+ * Return: None
+ */
+static void lim_process_sme_disassoc_cnf(struct mac_context *mac_ctx,
+					 struct scheduler_msg *msg)
+{
+	__lim_process_sme_disassoc_cnf(mac_ctx, (uint32_t *)msg->bodyptr);
+}
+
+/**
+ * lim_process_sme_disassoc_req() - process sme deauth req
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg: pointer to message buffer
+ *
+ * This function is called to process SME_DISASSOC_REQ message
+ * from HDD or upper layer application.
+ *
+ * Return: None
+ */
+static void lim_process_sme_disassoc_req(struct mac_context *mac_ctx,
+					 struct scheduler_msg *msg)
+{
+	__lim_process_sme_disassoc_req(mac_ctx, (uint32_t *)msg->bodyptr);
+}
+
+/**
+ * lim_process_sme_deauth_req() - process sme deauth req
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg: pointer to message buffer
+ *
+ * This function is called to process SME_DEAUTH_REQ message
+ * from HDD or upper layer application.
+ *
+ * Return: None
+ */
+static void lim_process_sme_deauth_req(struct mac_context *mac_ctx,
+				       struct scheduler_msg *msg)
+{
+	__lim_process_sme_deauth_req(mac_ctx, (uint32_t *)msg->bodyptr);
+}
+#endif
 
 /**
  * lim_process_sme_req_messages()
@@ -5191,6 +5229,50 @@ static void lim_process_sme_start_beacon_req(struct mac_context *mac, uint32_t *
 	}
 }
 
+#ifdef CONFIG_VDEV_SM
+static void lim_change_channel(
+	struct mac_context *mac_ctx,
+	struct pe_session *session_entry)
+{
+	mlme_set_chan_switch_in_progress(session_entry->vdev, true);
+	if (wlan_vdev_mlme_get_state(session_entry->vdev) ==
+	    WLAN_VDEV_S_DFS_CAC_WAIT)
+		wlan_vdev_mlme_sm_deliver_evt(session_entry->vdev,
+					      WLAN_VDEV_SM_EV_RADAR_DETECTED,
+					      sizeof(*session_entry),
+					      session_entry);
+	else
+		wlan_vdev_mlme_sm_deliver_evt(session_entry->vdev,
+					      WLAN_VDEV_SM_EV_CSA_COMPLETE,
+					      sizeof(*session_entry),
+					      session_entry);
+}
+#else
+/**
+ * lim_change_channel() - lim change channel api
+ *
+ * @mac_ctx: Pointer to Global MAC structure
+ * @session_entry: pointer to the SME message buffer
+ *
+ * This function is called to process SME_CHANNEL_CHANGE_REQ message
+ *
+ * Return: None
+ */
+static void lim_change_channel(
+	struct mac_context *mac_ctx,
+	struct pe_session *session_entry)
+{
+	lim_set_channel(mac_ctx, session_entry->currentOperChannel,
+			session_entry->ch_center_freq_seg0,
+			session_entry->ch_center_freq_seg1,
+			session_entry->ch_width,
+			session_entry->maxTxPower,
+			session_entry->peSessionId,
+			session_entry->cac_duration_ms,
+			session_entry->dfs_regdomain);
+}
+#endif
+
 /**
  * lim_process_sme_channel_change_request() - process sme ch change req
  *
@@ -5293,30 +5375,7 @@ static void lim_process_sme_channel_change_request(struct mac_context *mac_ctx,
 			&ch_change_req->extended_rateset,
 			sizeof(session_entry->extRateSet));
 
-#ifdef CONFIG_VDEV_SM
-	mlme_set_chan_switch_in_progress(session_entry->vdev, true);
-	if (wlan_vdev_mlme_get_state(session_entry->vdev) ==
-	    WLAN_VDEV_S_DFS_CAC_WAIT)
-		wlan_vdev_mlme_sm_deliver_evt(session_entry->vdev,
-					      WLAN_VDEV_SM_EV_RADAR_DETECTED,
-					      sizeof(*session_entry),
-					      session_entry);
-	else
-		wlan_vdev_mlme_sm_deliver_evt(session_entry->vdev,
-					      WLAN_VDEV_SM_EV_CSA_COMPLETE,
-					      sizeof(*session_entry),
-					      session_entry);
-
-
-#else
-	lim_set_channel(mac_ctx, ch_change_req->targetChannel,
-			session_entry->ch_center_freq_seg0,
-			session_entry->ch_center_freq_seg1,
-			session_entry->ch_width,
-			max_tx_pwr, session_entry->peSessionId,
-			ch_change_req->cac_duration_ms,
-			ch_change_req->dfs_regdomain);
-#endif
+	lim_change_channel(mac_ctx, session_entry);
 }
 
 /******************************************************************************

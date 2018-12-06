@@ -293,6 +293,13 @@ uint8_t lim_is_null_ssid(tSirMacSSid *pSsid);
 
 /* 11h Support */
 void lim_stop_tx_and_switch_channel(struct mac_context *mac, uint8_t sessionId);
+
+/**
+ * lim_process_channel_switch_timeout() - Process chanel switch timeout
+ * @mac: pointer to Global MAC structure
+ *
+ * Return: none
+ */
 void lim_process_channel_switch_timeout(struct mac_context *);
 QDF_STATUS lim_start_channel_switch(struct mac_context *mac,
 		struct pe_session *pe_session);
@@ -1518,6 +1525,18 @@ void lim_send_beacon(struct mac_context *mac_ctx, struct pe_session *session);
  * Return: None
  */
 void lim_ndi_mlme_vdev_up_transition(struct pe_session *session);
+
+/**
+ * lim_disconnect_complete - Deliver vdev disconnect complete event or
+ * STA send deleting bss
+ * @session: PE session pointer
+ * @del_bss:  Whether to call lim_sta_send_del_bss
+ *
+ * API delivers vdev disconnect complete event
+ *
+ * Return: None
+ */
+void lim_disconnect_complete(struct pe_session *session, bool del_bss);
 
 #ifdef CONFIG_VDEV_SM
 /**

@@ -2052,6 +2052,23 @@ static void __lim_process_channel_switch_timeout(struct mac_context *mac)
 }
 
 #ifdef CONFIG_VDEV_SM
+void lim_disconnect_complete(struct pe_session *session, bool del_bss)
+{
+	QDF_STATUS status;
+	struct mac_context *mac = session->mac_ctx;
+
+	status =
+	   wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					 WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE,
+					 sizeof(*session), session);
+	if (!mac->lim.gLimIbssCoalescingHappened &&
+	    QDF_IS_STATUS_ERROR(status)) {
+		pe_err("failed to post WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE for vdevid %d",
+		       session->smeSessionId);
+		lim_send_stop_bss_failure_resp(mac, session);
+	}
+}
+
 void lim_process_channel_switch_timeout(struct mac_context *mac_ctx)
 {
 	struct pe_session *session_entry = NULL;
@@ -2073,6 +2090,18 @@ void lim_process_channel_switch_timeout(struct mac_context *mac_ctx)
 	}
 }
 #else
+void lim_disconnect_complete(struct pe_session *session, bool del_bss)
+{
+	if (del_bss)
+		lim_sta_send_del_bss(session);
+}
+
+/**
+ * lim_process_channel_switch_timeout() - process chanel switch timeout
+ * @mac: pointer to Global MAC structure
+ *
+ * Return: none
+ */
 void lim_process_channel_switch_timeout(struct mac_context *mac)
 {
 	__lim_process_channel_switch_timeout(mac);
@@ -2270,6 +2299,33 @@ lim_util_count_sta_del(struct mac_context *mac,
 	sch_edca_profile_update(mac, pe_session);
 }
 
+#ifdef CONFIG_VDEV_SM
+/**
+ * lim_switch_channel_vdev_started() - Send vdev started when switch channel
+ *
+ * @pe_session: PE session entry
+ *
+ * This function is called to deliver WLAN_VDEV_SM_EV_START_SUCCESS to VDEV SM
+ *
+ * Return: None
+ */
+static void lim_switch_channel_vdev_started(struct pe_session *pe_session)
+{
+	QDF_STATUS status;
+
+	status = wlan_vdev_mlme_sm_deliver_evt(
+				pe_session->vdev,
+				WLAN_VDEV_SM_EV_START_SUCCESS,
+				sizeof(*pe_session), pe_session);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Failed to post WLAN_VDEV_SM_EV_START_SUCCESS for vdevid %d",
+		       pe_session->smeSessionId);
+	}
+}
+#else
+static void lim_switch_channel_vdev_started(struct pe_session *pe_session) {}
+#endif
+
 /**
  * lim_switch_channel_cback()
  *
@@ -2289,9 +2345,6 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 {
 	struct scheduler_msg mmhMsg = { 0 };
 	tSirSmeSwitchChannelInd *pSirSmeSwitchChInd;
-#ifdef CONFIG_VDEV_SM
-	QDF_STATUS evt_status;
-#endif
 
 	pe_session->currentOperChannel = pe_session->currentReqChannel;
 
@@ -2341,19 +2394,9 @@ void lim_switch_channel_cback(struct mac_context *mac, QDF_STATUS status,
 			 pe_session->peSessionId, mmhMsg.type));
 
 	sys_process_mmh_msg(mac, &mmhMsg);
-#ifdef CONFIG_VDEV_SM
-	if (QDF_IS_STATUS_ERROR(status))
-		return;
 
-	evt_status = wlan_vdev_mlme_sm_deliver_evt(
-				pe_session->vdev,
-				WLAN_VDEV_SM_EV_START_SUCCESS,
-				sizeof(*pe_session), pe_session);
-	if (QDF_IS_STATUS_ERROR(evt_status)) {
-		pe_err("Failed to post WLAN_VDEV_SM_EV_START_SUCCESS for vdevid %d",
-		       pe_session->smeSessionId);
-	}
-#endif
+	if (QDF_IS_STATUS_SUCCESS(status))
+		lim_switch_channel_vdev_started(pe_session);
 }
 
 /**
