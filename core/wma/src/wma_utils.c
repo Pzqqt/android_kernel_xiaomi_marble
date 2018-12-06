@@ -4441,8 +4441,26 @@ int wma_rcpi_event_handler(void *handle, uint8_t *cmd_param_info,
 	return 0;
 }
 
+#ifdef CONFIG_VDEV_SM
+QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
+				  struct vdev_up_params *params,
+				  uint8_t bssid[IEEE80211_ADDR_LEN])
+{
+	QDF_STATUS status;
+	struct wma_txrx_node *vdev;
 
+	if (!wma_is_vdev_valid(params->vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id:%d", __func__, params->vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	vdev = &wma->interfaces[params->vdev_id];
 
+	status = wmi_unified_vdev_up_send(wma->wmi_handle, bssid, params);
+	wma_release_wakelock(&vdev->vdev_start_wakelock);
+
+	return status;
+}
+#else
 QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 				  struct vdev_up_params *params,
 				  uint8_t bssid[IEEE80211_ADDR_LEN])
@@ -4455,13 +4473,12 @@ QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-#ifndef CONFIG_VDEV_SM
 	if (wma_is_vdev_up(params->vdev_id)) {
 		WMA_LOGD("vdev %d is already up for bssid %pM. Do not send",
 			 params->vdev_id, bssid);
 		return QDF_STATUS_SUCCESS;
 	}
-#endif
+
 	vdev = &wma->interfaces[params->vdev_id];
 
 	status = wmi_unified_vdev_up_send(wma->wmi_handle, bssid, params);
@@ -4469,6 +4486,7 @@ QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 
 	return status;
 }
+#endif
 
 QDF_STATUS wma_send_vdev_down_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 {
@@ -4738,7 +4756,6 @@ void wma_remove_peer_on_add_bss_failure(tpAddBssParams add_bss_params)
 }
 
 #ifdef CONFIG_VDEV_SM
-
 QDF_STATUS wma_sta_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 				uint16_t data_len, void *data)
 {
@@ -4782,6 +4799,14 @@ bool wma_get_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface)
 		return false;
 
 	return ap_mlme_is_hidden_ssid_restart_in_progress(iface->vdev);
+}
+
+bool wma_get_channel_switch_in_progress(struct wma_txrx_node *iface)
+{
+	if (!iface)
+		return false;
+
+	return mlme_is_chan_switch_in_progress(iface->vdev);
 }
 
 static QDF_STATUS wma_vdev_send_start_resp(tp_wma_handle wma,
@@ -4849,7 +4874,7 @@ QDF_STATUS wma_ap_mlme_vdev_start_continue(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS wma_mlme_vdev_stop_continue(struct vdev_mlme_obj *vdev_mlme,
 				       uint16_t data_len, void *data)
 {
-	return __wma_vdev_stop_resp_handler(
+	return __wma_handle_vdev_stop_rsp(
 			(wmi_vdev_stopped_event_fixed_param *)data);
 }
 
@@ -4858,7 +4883,7 @@ QDF_STATUS wma_ap_mlme_vdev_down_send(struct vdev_mlme_obj *vdev_mlme,
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	wma_send_vdev_down_bss(wma, (struct wma_target_req *)data);
+	wma_send_vdev_down(wma, (struct wma_target_req *)data);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4908,5 +4933,31 @@ bool wma_get_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface)
 		return true;
 
 	return false;
+}
+
+void wma_set_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface,
+					     int val)
+{
+	if (!iface)
+		return;
+
+	qdf_atomic_set(
+	     &iface->vdev_restart_params.hidden_ssid_restart_in_progress, val);
+}
+
+bool wma_get_channel_switch_in_progress(struct wma_txrx_node *iface)
+{
+	if (!iface)
+		return false;
+
+	return iface->is_channel_switch;
+}
+
+void wma_set_channel_switch_in_progress(struct wma_txrx_node *iface)
+{
+	if (!iface)
+		return;
+
+	iface->is_channel_switch = true;
 }
 #endif

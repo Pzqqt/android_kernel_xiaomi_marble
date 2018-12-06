@@ -2946,6 +2946,12 @@ QDF_STATUS wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
 
 	return status;
 }
+
+static inline
+QDF_STATUS wma_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #else
 QDF_STATUS wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
 {
@@ -2967,12 +2973,25 @@ QDF_STATUS wma_set_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
 				wma->psoc, false);
 			return status;
 		}
-		wma_vdev_set_mlme_state(wma, vdev_id, WLAN_VDEV_S_RUN);
+		wma_vdev_set_mlme_state_run(wma, vdev_id);
 		wma_set_sap_keepalive(wma, vdev_id);
 		wma_set_vdev_mgmt_rate(wma, vdev_id);
 	}
 
 	return status;
+}
+
+/**
+ * wma_ap_vdev_up() - wrapper for vdev up req
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS
+ */
+static inline
+QDF_STATUS wma_ap_vdev_up(tp_wma_handle wma, uint8_t vdev_id)
+{
+	return wma_set_ap_vdev_up(wma, vdev_id);
 }
 #endif
 
@@ -3031,9 +3050,7 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 		WMA_LOGE("%s : wma_store_bcn_tmpl Failed", __func__);
 		goto send_rsp;
 	}
-#ifndef CONFIG_VDEV_SM
-	wma_set_ap_vdev_up(wma, vdev_id);
-#endif
+	wma_ap_vdev_up(wma, vdev_id);
 
 send_rsp:
 	bcn_info->status = status;
@@ -3473,10 +3490,7 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma,
 	}
 
 	intr[vdev_id].vdev_restart_params.ssidHidden = pReq->ssidHidden;
-#ifndef CONFIG_VDEV_SM
-	qdf_atomic_set(&intr[vdev_id].vdev_restart_params.
-		       hidden_ssid_restart_in_progress, 1);
-#endif
+	wma_set_hidden_ssid_restart_in_progress(&intr[vdev_id], 1);
 	WMA_LOGD(FL("hidden ssid set using IOCTL for vdev %d ssid_hidden %d"),
 		 vdev_id, pReq->ssidHidden);
 
@@ -3488,10 +3502,7 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma,
 	if (!msg) {
 		WMA_LOGE(FL("Failed to fill vdev request, vdev_id %d"),
 			 vdev_id);
-#ifndef CONFIG_VDEV_SM
-		qdf_atomic_set(&intr[vdev_id].vdev_restart_params.
-			       hidden_ssid_restart_in_progress, 0);
-#endif
+		wma_set_hidden_ssid_restart_in_progress(&intr[vdev_id], 0);
 		qdf_mem_free(pReq);
 		return;
 	}
@@ -3519,17 +3530,12 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma,
 	params.reg_info_1 = intr[vdev_id].vdev_restart_params.chan.reg_info_1;
 	params.reg_info_2 = intr[vdev_id].vdev_restart_params.chan.reg_info_2;
 
-#ifndef CONFIG_VDEV_SM
-	wma_vdev_set_mlme_state(wma, vdev_id, WLAN_VDEV_S_STOP);
-#endif
+	wma_vdev_set_mlme_state_stop(wma, vdev_id);
 	status = wmi_unified_hidden_ssid_vdev_restart_send(wma->wmi_handle,
 							   &params);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE(FL("Failed to send vdev restart command"));
-#ifndef CONFIG_VDEV_SM
-		qdf_atomic_set(&intr[vdev_id].vdev_restart_params.
-			       hidden_ssid_restart_in_progress, 0);
-#endif
+		wma_set_hidden_ssid_restart_in_progress(&intr[vdev_id], 0);
 		wma_remove_vdev_req(wma, vdev_id,
 				    WMA_TARGET_REQ_TYPE_VDEV_START);
 		qdf_mem_free(pReq);

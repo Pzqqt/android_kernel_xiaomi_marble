@@ -624,7 +624,7 @@ void wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req);
 void wma_send_set_link_response(tp_wma_handle wma, struct wma_target_req *req);
 
 /**
- * __wma_vdev_stop_resp_handler() - vdev stop response handler
+ * __wma_handle_vdev_stop_rsp() - vdev stop response handler
  * @handle: wma handle
  * @cmd_param_info: event buffer
  * @len: buffer length
@@ -632,7 +632,7 @@ void wma_send_set_link_response(tp_wma_handle wma, struct wma_target_req *req);
  * Return: QDF_STATUS_SUCCESS for success or QDF_ERROR code
  */
 QDF_STATUS
-__wma_vdev_stop_resp_handler(wmi_vdev_stopped_event_fixed_param *resp_event);
+__wma_handle_vdev_stop_rsp(wmi_vdev_stopped_event_fixed_param *resp_event);
 
 /**
  * wma_vdev_stop_resp_handler() - vdev stop response handler
@@ -1551,7 +1551,7 @@ int wma_roam_scan_stats_event_handler(void *handle, uint8_t *event,
 				      uint32_t len);
 
 /**
- * wma_send_del_bss_response() - send del bss resp to upper layer
+ * wma_send_vdev_down() - send del bss req to firmware
  * @wma: wma handle.
  * @vdev_id: vdev ID of device for which MCC has to be checked
  *
@@ -1559,7 +1559,7 @@ int wma_roam_scan_stats_event_handler(void *handle, uint8_t *event,
  *
  * Return: none
  */
-void wma_send_vdev_down_bss(tp_wma_handle wma, struct wma_target_req *req);
+void wma_send_vdev_down(tp_wma_handle wma, struct wma_target_req *req);
 
 /**
  * wma_sta_send_vdev_down_bss() - send vdev down to firmware

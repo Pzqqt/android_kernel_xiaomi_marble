@@ -2236,9 +2236,7 @@ static void wma_roam_update_vdev(tp_wma_handle wma,
 	wma_set_linkstate(wma, set_link_params);
 	wma_add_bss(wma, (tpAddBssParams)roam_synch_ind_ptr->add_bss_params);
 	wma_add_sta(wma, add_sta_params);
-#ifndef CONFIG_VDEV_SM
-	wma_vdev_set_mlme_state(wma, vdev_id, WLAN_VDEV_S_RUN);
-#endif
+	wma_vdev_set_mlme_state_run(wma, vdev_id);
 	qdf_mem_copy(wma->interfaces[vdev_id].bssid,
 			roam_synch_ind_ptr->bssid.bytes, IEEE80211_ADDR_LEN);
 	qdf_mem_free(del_bss_params);
@@ -3012,9 +3010,8 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	 */
 	if ((wma_is_vdev_in_ap_mode(wma, req.vdev_id) == true) ||
 	    (params->restart_on_chan_switch == true)) {
-#ifndef CONFIG_VDEV_SM
-		wma->interfaces[req.vdev_id].is_channel_switch = true;
-#endif
+		wma_set_channel_switch_in_progress(
+						&wma->interfaces[req.vdev_id]);
 		req.hidden_ssid = intr[vdev_id].vdev_restart_params.ssidHidden;
 	}
 
@@ -3054,9 +3051,8 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	    wma_is_vdev_up(vdev_id)) {
 		WMA_LOGD("%s: setting channel switch to true for vdev_id:%d",
 			 __func__, req.vdev_id);
-#ifndef CONFIG_VDEV_SM
-		wma->interfaces[req.vdev_id].is_channel_switch = true;
-#endif
+		wma_set_channel_switch_in_progress(
+						&wma->interfaces[req.vdev_id]);
 	}
 
 	msg = wma_fill_vdev_req(wma, req.vdev_id, WMA_CHNL_SWITCH_REQ,
@@ -3068,14 +3064,9 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		status = QDF_STATUS_E_NOMEM;
 		goto send_resp;
 	}
-#ifdef CONFIG_VDEV_SM
-	status = wma_vdev_start(wma, &req,
-				mlme_is_chan_switch_in_progress(
-				wma->interfaces[req.vdev_id].vdev));
-#else
-	status = wma_vdev_start(wma, &req,
-			wma->interfaces[req.vdev_id].is_channel_switch);
-#endif
+
+	status = wma_vdev_start(wma, &req, wma_get_channel_switch_in_progress(
+						&wma->interfaces[req.vdev_id]));
 	if (status != QDF_STATUS_SUCCESS) {
 		wma_remove_vdev_req(wma, req.vdev_id,
 				    WMA_TARGET_REQ_TYPE_VDEV_START);
