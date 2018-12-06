@@ -132,6 +132,7 @@ enum cap_bitmap {
 	ADVANCE_TDLS = 29,
 	TDLS_OFF_CHANNEL = 30,
 #endif
+	VDEV_LATENCY_CONFIG = 31,
 
 	/* MAX_FEATURE_SUPPORTED = 32 */
 };

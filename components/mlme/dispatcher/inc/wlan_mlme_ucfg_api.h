@@ -3208,4 +3208,15 @@ QDF_STATUS ucfg_wlan_mlme_get_rrm_enabled(struct wlan_objmgr_psoc *psoc,
 {
 	return wlan_mlme_get_rrm_enabled(psoc, value);
 }
+
+/**
+ * ucfg_mlme_get_latency_enable() - Get the latency_enable
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be get from the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_latency_enable(struct wlan_objmgr_psoc *psoc, bool *value);
+
 #endif /* _WLAN_MLME_UCFG_API_H_ */

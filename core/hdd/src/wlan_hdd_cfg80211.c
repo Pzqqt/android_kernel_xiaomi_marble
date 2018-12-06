@@ -3082,6 +3082,29 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter)
 	}
 }
 
+/**
+ * hdd_is_wlm_latency_manager_supported - Checks if WLM Latency manager is
+ *                                        supported
+ * @hdd_ctx: The HDD context
+ *
+ * Return: True if supported, false otherwise
+ */
+static inline
+bool hdd_is_wlm_latency_manager_supported(struct hdd_context *hdd_ctx)
+{
+	bool latency_enable;
+
+	if (QDF_IS_STATUS_ERROR(ucfg_mlme_get_latency_enable
+				(hdd_ctx->psoc, &latency_enable)))
+		return false;
+
+	if (latency_enable &&
+	    sme_is_feature_supported_by_fw(VDEV_LATENCY_CONFIG))
+		return true;
+	else
+		return false;
+}
+
 static int
 __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 					 struct wireless_dev *wdev,
@@ -3177,6 +3200,9 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 
 	if (hdd_scan_random_mac_addr_supported())
 		fset |= WIFI_FEATURE_SCAN_RAND;
+
+	if (hdd_is_wlm_latency_manager_supported(hdd_ctx))
+		fset |= WIFI_FEATURE_SET_LATENCY_MODE;
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, sizeof(fset) +
 						  NLMSG_HDRLEN);

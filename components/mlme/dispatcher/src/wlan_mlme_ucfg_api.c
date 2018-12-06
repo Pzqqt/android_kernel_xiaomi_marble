@@ -1195,3 +1195,18 @@ ucfg_mlme_get_ap_random_bssid_enable(struct wlan_objmgr_psoc *psoc,
 	*value = mlme_obj->cfg.sap_cfg.ap_random_bssid_enable;
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+ucfg_mlme_get_latency_enable(struct wlan_objmgr_psoc *psoc, bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*value = mlme_obj->cfg.wlm_config.latency_enable;
+	return QDF_STATUS_SUCCESS;
+}
