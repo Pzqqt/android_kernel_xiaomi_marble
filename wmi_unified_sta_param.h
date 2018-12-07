@@ -302,10 +302,7 @@ struct sar_limit_event {
  * @action_flag: add/delete the entry
  */
 struct wmi_unified_pmk_cache {
-	union {
 	uint8_t             vdev_id;
-	uint8_t             session_id;
-	};
 	uint32_t            pmk_len;
 	uint8_t             pmk[WMI_UNIFIED_MAX_PMK_LEN];
 	uint32_t            pmkid_len;
