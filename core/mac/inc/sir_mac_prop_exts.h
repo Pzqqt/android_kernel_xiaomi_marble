@@ -69,14 +69,6 @@
 #define WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ		2
 #define WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ	3
 
-/* / Proprietary IE definition */
-typedef struct sSirMacPropIE {
-	uint8_t elementID;      /* SIR_MAC_ANI_PROP_IE_EID */
-	uint8_t length;
-	uint8_t oui[3];         /* ANI_OUI for Airgo products */
-	uint8_t info[1];
-} tSirMacPropIE, *tpSirMacPropIE;
-
 typedef struct sSirMacPropRateSet {
 	uint8_t numPropRates;
 	uint8_t propRate[8];
