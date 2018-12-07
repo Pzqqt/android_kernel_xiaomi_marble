@@ -1333,16 +1333,6 @@ typedef struct sSirSmeDisassocReq {
 	bool process_ho_fail;
 } qdf_packed tSirSmeDisassocReq, *tpSirSmeDisassocReq;
 
-/* / Definition for Tkip countermeasures request */
-typedef struct sSirSmeTkipCntrMeasReq {
-	uint16_t messageType;   /* eWNI_SME_DISASSOC_REQ */
-	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
-	uint16_t transactionId; /* Transaction ID for cmd */
-	struct qdf_mac_addr bssId; /* Peer BSSID */
-	bool bEnable;           /* Start/stop countermeasures */
-} qdf_packed tSirSmeTkipCntrMeasReq, *tpSirSmeTkipCntrMeasReq;
-
 typedef enum sPacketType {
 	ePACKET_TYPE_UNKNOWN,
 	ePACKET_TYPE_11A,
