@@ -37,7 +37,7 @@
  *
  * Return: zero if success, non-zero otherwise
  */
-int hdd_enable_default_pkt_filters(struct hdd_adapter *pAadapter);
+int hdd_enable_default_pkt_filters(struct hdd_adapter *adapter);
 
 /**
  * hdd_disable_default_pkt_filters() - Disable default packet filters based
