@@ -43,8 +43,6 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 				      unsigned char name_assign_type,
 				      uint8_t *name);
 
-QDF_STATUS hdd_unregister_hostapd(struct hdd_adapter *adapter, bool rtnl_held);
-
 eCsrAuthType
 hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4]);
 
