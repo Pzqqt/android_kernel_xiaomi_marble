@@ -53,6 +53,7 @@
 #include <ol_txrx.h>
 #include <pktlog_ac_fmt.h>
 #include <cdp_txrx_handle.h>
+#include <wlan_reg_services_api.h>
 
 #ifdef QCA_HL_NETDEV_FLOW_CONTROL
 static u16 ol_txrx_tx_desc_alloc_table[TXRX_FC_MAX] = {

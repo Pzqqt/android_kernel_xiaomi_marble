@@ -34,7 +34,6 @@
 #include <qdf_lock.h>           /* qdf_spinlock */
 #include <pktlog.h>             /* ol_pktlog_dev_handle */
 #include <ol_txrx_stats.h>
-#include <txrx.h>
 #include "ol_txrx_htt_api.h"
 #include "ol_htt_tx_api.h"
 #include "ol_htt_rx_api.h"
@@ -237,6 +236,18 @@ struct ol_rx_reorder_timeout_list_elem_t {
 	struct ol_txrx_peer_t *peer;
 	uint8_t tid;
 	uint8_t active;
+};
+
+/* wait on peer deletion timeout value in milliseconds */
+#define PEER_DELETION_TIMEOUT 500
+
+enum txrx_wmm_ac {
+	TXRX_WMM_AC_BE,
+	TXRX_WMM_AC_BK,
+	TXRX_WMM_AC_VI,
+	TXRX_WMM_AC_VO,
+
+	TXRX_NUM_WMM_AC
 };
 
 #define TXRX_TID_TO_WMM_AC(_tid) ( \

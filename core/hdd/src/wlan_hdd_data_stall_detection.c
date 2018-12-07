@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,10 @@
 #include "cdp_txrx_cmn.h"
 #include "cdp_txrx_misc.h"
 #include "ol_txrx_types.h"
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+#include "host_diag_core_event.h"
+#include "host_diag_core_log.h"
+#endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 
