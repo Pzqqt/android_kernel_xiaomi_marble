@@ -167,8 +167,6 @@ struct cds_log_complete {
 	bool recovery_needed;
 };
 
-/* forward-declare hdd_context_s as it is used ina function type */
-struct hdd_context_s;
 struct cds_context {
 	/* Scheduler Context */
 	cds_sched_context qdf_sched;
