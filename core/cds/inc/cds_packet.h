@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -68,41 +68,6 @@ QDF_STATUS cds_pkt_get_packet_length(cds_pkt_t *pPacket,
  * from HDD and other layers
  * below code will be removed
  */
-/* The size of AMSDU frame per spec can be a max of 3839 bytes
-   in BD/PDUs that means 30 (one BD = 128 bytes)
-   we must add the size of the 802.11 header to that */
-#define CDS_PKT_SIZE_BUFFER  ((30 * 128) + 32)
-
-/* cds Packet Types */
-typedef enum {
-	/* cds Packet is used to transmit 802.11 Management frames. */
-	CDS_PKT_TYPE_TX_802_11_MGMT,
-
-	/* cds Packet is used to transmit 802.11 Data frames. */
-	CDS_PKT_TYPE_TX_802_11_DATA,
-
-	/* cds Packet is used to transmit 802.3 Data frames. */
-	CDS_PKT_TYPE_TX_802_3_DATA,
-
-	/* cds Packet contains Received data of an unknown frame type */
-	CDS_PKT_TYPE_RX_RAW,
-
-	/* Invalid sentinel value */
-	CDS_PKT_TYPE_MAXIMUM
-} CDS_PKT_TYPE;
-
-/* user IDs.   These IDs are needed on the cds_pkt_get/set_user_data_ptr()
-   to identify the user area in the cds Packet. */
-typedef enum {
-	CDS_PKT_USER_DATA_ID_TL = 0,
-	CDS_PKT_USER_DATA_ID_BAL,
-	CDS_PKT_USER_DATA_ID_WMA,
-	CDS_PKT_USER_DATA_ID_HDD,
-	CDS_PKT_USER_DATA_ID_BSL,
-
-	CDS_PKT_USER_DATA_ID_MAX
-} CDS_PKT_USER_DATA_ID;
-
 #ifdef MEMORY_DEBUG
 #define cds_packet_alloc(s, d, p)	\
 	cds_packet_alloc_debug(s, d, p, __FILE__, __LINE__)
@@ -114,8 +79,5 @@ QDF_STATUS cds_packet_alloc(uint16_t size, void **data, void **ppPacket);
 #endif
 
 void cds_packet_free(void *pPacket);
-
-typedef QDF_STATUS (*cds_pkt_get_packet_callback)(cds_pkt_t *pPacket,
-						  void *userData);
 
 #endif /* !defined( __CDS_PKT_H ) */
