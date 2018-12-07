@@ -74,51 +74,9 @@ enum cds_driver_state {
 
 #define __CDS_IS_DRIVER_STATE(_state, _mask) (((_state) & (_mask)) == (_mask))
 
-/**
- * enum cds_fw_state - Firmware state
- * @CDS_FW_STATE_UNINITIALIZED: Firmware is in uninitialized state.
- */
-enum cds_fw_state {
-	CDS_FW_STATE_UNINITIALIZED = 0,
-};
-
-#define __CDS_IS_FW_STATE(_state, _mask) (((_state) & (_mask)) == (_mask))
-
 void cds_set_driver_state(enum cds_driver_state);
 void cds_clear_driver_state(enum cds_driver_state);
 enum cds_driver_state cds_get_driver_state(void);
-
-/**
- * cds_set_fw_state() - Set current firmware state
- * @state:	Firmware state to be set to.
- *
- * This API sets firmware state to state. This API only sets the state and
- * doesn't clear states, please make sure to use cds_clear_firmware_state
- * to clear any state if required.
- *
- * Return: None
- */
-void cds_set_fw_state(enum cds_fw_state);
-
-/**
- * cds_clear_fw_state() - Clear current fw state
- * @state:	Driver state to be cleared.
- *
- * This API clears fw state. This API only clears the state, please make
- * sure to use cds_set_fw_state to set any new states.
- *
- * Return: None
- */
-void cds_clear_fw_state(enum cds_fw_state);
-
-/**
- * cds_get_fw_state() - Get current firmware state
- *
- * This API returns current firmware state stored in global context.
- *
- * Return: Firmware state enum
- */
-enum cds_fw_state cds_get_fw_state(void);
 
 /**
  * cds_is_driver_loading() - Is driver load in progress

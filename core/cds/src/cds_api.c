@@ -1397,39 +1397,6 @@ void cds_clear_driver_state(enum cds_driver_state state)
 	gp_cds_context->driver_state &= ~state;
 }
 
-enum cds_fw_state cds_get_fw_state(void)
-{
-	if (gp_cds_context == NULL) {
-		cds_err("global cds context is NULL");
-
-		return CDS_FW_STATE_UNINITIALIZED;
-	}
-
-	return gp_cds_context->fw_state;
-}
-
-void cds_set_fw_state(enum cds_fw_state state)
-{
-	if (gp_cds_context == NULL) {
-		cds_err("global cds context is NULL: %d", state);
-
-		return;
-	}
-
-	qdf_atomic_set_bit(state, &gp_cds_context->fw_state);
-}
-
-void cds_clear_fw_state(enum cds_fw_state state)
-{
-	if (gp_cds_context == NULL) {
-		cds_err("global cds context is NULL: %d", state);
-
-		return;
-	}
-
-	qdf_atomic_clear_bit(state, &gp_cds_context->fw_state);
-}
-
 /**
  * cds_alloc_context() - allocate a context within the CDS global Context
  * @module_id: module ID who's context area is being allocated.

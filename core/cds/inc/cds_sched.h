@@ -175,7 +175,6 @@ struct cds_context {
 	void *mac_context;
 
 	uint32_t driver_state;
-	unsigned long fw_state;
 
 	qdf_event_t wma_complete_event;
 
