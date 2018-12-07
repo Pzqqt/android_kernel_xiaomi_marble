@@ -342,14 +342,6 @@ enum eWniMsgTypes {
 
 #define IS_CFG_MSG(msg) ((msg & 0xff00) == WNI_CFG_MSG_TYPES_BEGIN)
 
-/* Clear stats types. */
-#define ANI_CLEAR_ALL_STATS          0
-#define ANI_CLEAR_RX_STATS           1
-#define ANI_CLEAR_TX_STATS           2
-#define ANI_CLEAR_PER_STA_STATS      3
-#define ANI_CLEAR_AGGR_PER_STA_STATS 4
-#define ANI_CLEAR_STAT_TYPES_END     5
-
 /*---------------------------------------------------------------------*/
 /* HDD to CFG message types                                            */
 /*---------------------------------------------------------------------*/
