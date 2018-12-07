@@ -72,15 +72,7 @@ enum active_apf_mode {
  * @reorder_offload: is RX re-ordering offloaded to the fw
  * @dfs_pri_multiplier: dfs radar pri multiplier
  * @uc_offload_enabled: IPA Micro controller data path offload enable flag
- * @uc_txbuf_count: IPA Micro controller data path offload TX buffer count
- * @uc_txbuf_size: IPA Micro controller data path offload TX buffer size
- * @uc_rxind_ringcount: IPA Micro controller data path offload RX indication
- * ring count
- * @uc_tx_partition_base: IPA Micro controller datapath offload TX partition
- * base
  * @enable_rxthread: Rx processing in thread from TXRX
- * @ip_tcp_udp_checksum_offload: checksum offload enabled or not
- * @ce_classify_enabled: CE based classification enabled
  * @max_scan: Maximum number of parallel scans
  * @tx_flow_stop_queue_th: Threshold to stop queue in percentage
  * @tx_flow_start_queue_offset: Start queue offset in percentage
@@ -90,7 +82,6 @@ enum active_apf_mode {
  * @tx_chain_mask_cck: Tx chain mask enabled or not
  * @self_gen_frm_pwr: Self gen from power
  * @sub_20_channel_width: Sub 20 MHz ch width, ini intersected with fw cap
- * @flow_steering_enabled: Receive flow steering.
  * @is_fw_timeout: Indicate whether crash host when fw timesout or not
  * @active_uc_apf_mode: Setting that determines how APF is applied in active
  *	mode for uc packets
@@ -117,13 +108,7 @@ struct cds_config_info {
 #endif
 	uint8_t reorder_offload;
 	uint8_t uc_offload_enabled;
-	uint32_t uc_txbuf_count;
-	uint32_t uc_txbuf_size;
-	uint32_t uc_rxind_ringcount;
-	uint32_t uc_tx_partition_base;
 	bool enable_rxthread;
-	bool ip_tcp_udp_checksum_offload;
-	bool ce_classify_enabled;
 	uint8_t max_scan;
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 	uint32_t tx_flow_stop_queue_th;
@@ -136,7 +121,6 @@ struct cds_config_info {
 #endif
 	uint16_t self_gen_frm_pwr;
 	enum cfg_sub_20_channel_width sub_20_channel_width;
-	bool flow_steering_enabled;
 	uint8_t max_msdus_per_rxinorderind;
 	bool self_recovery_enabled;
 	bool fw_timeout_crash;
