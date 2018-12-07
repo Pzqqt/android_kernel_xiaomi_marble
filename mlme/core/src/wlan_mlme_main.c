@@ -896,6 +896,11 @@ static void mlme_init_feature_flag_in_cfg(
 				cfg_default(CFG_CHANNEL_BONDING_MODE);
 	feature_flags->enable_block_ack = cfg_default(CFG_BLOCK_ACK_ENABLED);
 	feature_flags->enable_ampdu = cfg_get(psoc, CFG_ENABLE_AMPDUPS);
+	feature_flags->mcc_rts_cts_prot = cfg_get(psoc,
+						  CFG_FW_MCC_RTS_CTS_PROT);
+	feature_flags->mcc_bcast_prob_rsp = cfg_get(psoc,
+						    CFG_FW_MCC_BCAST_PROB_RESP);
+	feature_flags->enable_mcc = cfg_get(psoc, CFG_MCC_FEATURE);
 }
 
 static void mlme_init_sap_protection_cfg(struct wlan_objmgr_psoc *psoc,
@@ -1154,7 +1159,8 @@ static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_GO_FORCE_11N_FOR_11AC);
 	sap_cfg->ap_random_bssid_enable =
 		cfg_get(psoc, CFG_AP_ENABLE_RANDOM_BSSID);
-
+	sap_cfg->sap_mcc_chnl_avoid =
+		cfg_get(psoc, CFG_SAP_MCC_CHANNEL_AVOIDANCE);
 }
 
 static void mlme_init_obss_ht40_cfg(struct wlan_objmgr_psoc *psoc,
@@ -1250,6 +1256,8 @@ static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_FORCE_RSNE_OVERRIDE);
 	sta->single_tid =
 		cfg_get(psoc, CFG_SINGLE_TID_RC);
+	sta->sta_miracast_mcc_rest_time =
+		cfg_get(psoc, CFG_STA_MCAST_MCC_REST_TIME);
 	sta->wait_cnf_timeout =
 		(uint32_t)cfg_default(CFG_WT_CNF_TIMEOUT);
 	sta->current_rssi =

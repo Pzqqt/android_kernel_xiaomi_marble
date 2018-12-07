@@ -355,6 +355,33 @@
 	"Wait confirm timeout")
 
 /*
+ * <ini>
+ * gStaMiracastMccRestTimeVal - Rest time when Miracast is running.
+ * @Min: 100
+ * @Max: 500
+ * @Default: 400
+ *
+ * This ini is used to set rest time for home channel for Miracast before
+ * going for scan.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_STA_MCAST_MCC_REST_TIME CFG_INI_UINT( \
+	"gStaMiracastMccRestTimeVal", \
+	100, \
+	500, \
+	400, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Rest time when Miracast is running")
+
+/*
  * current_rssi - current rssi
  * @Min: 0
  * @Max: 127
@@ -435,6 +462,7 @@
 	CFG(CFG_DOT11P_MODE) \
 	CFG(CFG_ENABLE_GO_CTS2SELF_FOR_STA) \
 	CFG(CFG_QCN_IE_SUPPORT) \
+	CFG(CFG_STA_MCAST_MCC_REST_TIME) \
 	CFG(CFG_FILS_MAX_CHAN_GUARD_TIME) \
 	CFG(CFG_FORCE_RSNE_OVERRIDE) \
 	CFG(CFG_SINGLE_TID_RC) \

@@ -601,6 +601,31 @@
 	0, \
 	"Create ramdom BSSID")
 
+/*
+ * <ini>
+ * gSapChannelAvoidance - SAP MCC channel avoidance.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to sets sap mcc channel avoidance.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_SAP_MCC_CHANNEL_AVOIDANCE CFG_INI_UINT( \
+			"gSapChannelAvoidance", \
+			0, \
+			1, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"SAP MCC channel avoidance")
+
  #define CFG_SAP_ALL \
 	CFG(CFG_AP_ENABLE_RANDOM_BSSID) \
 	CFG(CFG_SSID) \
@@ -616,6 +641,7 @@
 	CFG(CFG_RATE_FOR_TX_MGMT_5G) \
 	CFG(CFG_TELE_BCN_WAKEUP_EN) \
 	CFG(CFG_TELE_BCN_MAX_LI) \
+	CFG(CFG_SAP_MCC_CHANNEL_AVOIDANCE) \
 	CFG(CFG_SAP_GET_PEER_INFO) \
 	CFG(CFG_SAP_ALLOW_ALL_CHANNEL_PARAM) \
 	CFG(CFG_SAP_MAX_NO_PEERS) \

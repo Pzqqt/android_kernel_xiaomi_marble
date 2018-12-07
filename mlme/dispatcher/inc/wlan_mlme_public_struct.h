@@ -537,6 +537,7 @@ struct wlan_mlme_wps_params {
  * @max_li_modulated_dtim_time: Max modulated DTIM time.
  * @country_code_priority: Country code priority.
  * @sap_pref_chan_location: SAP Preferred channel location.
+ * @sap_mcc_chnl_avoid: SAP MCC channel avoidance flag
  */
 struct wlan_mlme_cfg_sap {
 	uint8_t cfg_ssid[MLME_CFG_SSID_LEN];
@@ -569,6 +570,7 @@ struct wlan_mlme_cfg_sap {
 	bool sap_force_11n_for_11ac;
 	bool go_force_11n_for_11ac;
 	bool ap_random_bssid_enable;
+	uint8_t sap_mcc_chnl_avoid;
 };
 
 /**
@@ -837,9 +839,12 @@ struct wlan_mlme_feature_flag {
 	bool enable_rsn;
 	bool enable_short_preamble_11g;
 	bool enable_short_slot_time_11g;
+	bool enable_ampdu;
+	bool enable_mcc;
+	uint8_t mcc_rts_cts_prot;
+	uint8_t mcc_bcast_prob_rsp;
 	uint32_t channel_bonding_mode;
 	uint32_t enable_block_ack;
-	bool enable_ampdu;
 };
 
 /*
@@ -1067,6 +1072,7 @@ enum station_keepalive_method {
  * @tgt_gtx_usr_cfg:                Target gtx user config
  * @pmkid_modes:                    Enable PMKID modes
  * @wait_cnf_timeout:               Wait assoc cnf timeout
+ * @sta_miracast_mcc_rest_time:     STA+MIRACAST(P2P) MCC rest time
  * @dot11p_mode:                    Set 802.11p mode
  * @fils_max_chan_guard_time:       Set maximum channel guard time
  * @current_rssi:                   Current rssi
@@ -1085,6 +1091,7 @@ struct wlan_mlme_sta_cfg {
 	uint32_t tgt_gtx_usr_cfg;
 	uint32_t pmkid_modes;
 	uint32_t wait_cnf_timeout;
+	uint32_t sta_miracast_mcc_rest_time;
 	enum dot11p_mode dot11p_mode;
 	uint8_t fils_max_chan_guard_time;
 	uint8_t current_rssi;

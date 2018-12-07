@@ -1857,7 +1857,6 @@ QDF_STATUS wlan_mlme_is_sap_uapsd_enabled(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_mlme_set_sap_uapsd_flag(struct wlan_objmgr_psoc *psoc,
 					bool value);
-
 /**
  * wlan_mlme_is_11h_enabled() - Get the 11h flag
  * @psoc: psoc context
@@ -1894,4 +1893,74 @@ wlan_mlme_is_11d_enabled(struct wlan_objmgr_psoc *psoc, bool *value);
 QDF_STATUS
 wlan_mlme_set_11d_enabled(struct wlan_objmgr_psoc *psoc, bool value);
 
+/**
+ * wlan_mlme_get_sta_miracast_mcc_rest_time() - Get STA/MIRACAST MCC rest time
+ *
+ * @psoc: pointer to psoc object
+ * @value: value which needs to filled by API
+ *
+ * This API gives rest time to be used when STA and MIRACAST MCC conc happens
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_get_sta_miracast_mcc_rest_time(struct wlan_objmgr_psoc *psoc,
+					 uint32_t *value);
+/**
+ * wlan_mlme_get_sap_mcc_chnl_avoid() - Check if SAP MCC needs to be avoided
+ *
+ * @psoc: pointer to psoc object
+ * @value: value which needs to filled by API
+ *
+ * This API fetches the user setting to determine if SAP MCC with other persona
+ * to be avoided.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_get_sap_mcc_chnl_avoid(struct wlan_objmgr_psoc *psoc,
+				 uint8_t *value);
+/**
+ * wlan_mlme_get_mcc_bcast_prob_resp() - Get broadcast probe rsp in MCC
+ *
+ * @psoc: pointer to psoc object
+ * @value: value which needs to filled by API
+ *
+ * To get INI value which helps to determe whether to enable/disable use of
+ * broadcast probe response to increase the detectability of SAP in MCC mode.
+ *
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_get_mcc_bcast_prob_resp(struct wlan_objmgr_psoc *psoc,
+				  uint8_t *value);
+/**
+ * wlan_mlme_get_mcc_rts_cts_prot() - To get RTS-CTS protection in MCC.
+ *
+ * @psoc: pointer to psoc object
+ * @value: value which needs to filled by API
+ *
+ * To get INI value which helps to determine whether to enable/disable
+ * use of long duration RTS-CTS protection when SAP goes off
+ * channel in MCC mode.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_get_mcc_rts_cts_prot(struct wlan_objmgr_psoc *psoc,
+			       uint8_t *value);
+/**
+ * wlan_mlme_get_mcc_feature() - To find out to enable/disable MCC feature
+ *
+ * @psoc: pointer to psoc object
+ * @value: value which needs to filled by API
+ *
+ * To get INI value which helps to determine whether to enable MCC feature
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_mlme_get_mcc_feature(struct wlan_objmgr_psoc *psoc,
+			  uint8_t *value);
 #endif /* _WLAN_MLME_API_H_ */
