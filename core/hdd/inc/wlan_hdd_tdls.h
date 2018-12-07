@@ -72,9 +72,6 @@ typedef int (*cfg80211_exttdls_callback)(const uint8_t *mac,
 					 uint32_t state,
 					 int32_t reason, void *ctx);
 
-int wlan_hdd_tdls_set_params(struct net_device *dev,
-			     struct hdd_tdls_config_params *config);
-
 int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *adapter, char *buf,
 				int buflen);
 
