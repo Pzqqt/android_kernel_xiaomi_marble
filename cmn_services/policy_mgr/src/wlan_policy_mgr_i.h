@@ -220,6 +220,14 @@ struct sta_ap_intf_check_work_ctx {
  * @max_conc_cxns: Max allowed concurrenct active connections
  * @conc_rule1: concurrency rule1
  * @conc_rule2: concurrency rule2
+ * @allow_mcc_go_diff_bi: Allow GO and STA diff beacon interval in MCC
+ * @enable_overlap_chnl: Enable overlap channels for SAP's channel selection
+ * @dual_mac_feature: To enable/disable dual mac features
+ * @is_force_1x1_enable: Is 1x1 forced for connection
+ * @sta_sap_scc_on_dfs_chnl: STA-SAP SCC on DFS channel
+ * @sta_sap_scc_on_lte_coex_chnl: STA-SAP SCC on LTE Co-ex channel
+ * @sap_mandatory_chnl_enable: To enable/disable SAP mandatory channels
+ * @mark_indoor_chnl_disable: Mark indoor channel as disable or enable
  * @dbs_selection_plcy: DBS selection policy for concurrency
  * @vdev_priority_list: Priority list for various vdevs
  * @chnl_select_plcy: Channel selection policy
@@ -233,6 +241,14 @@ struct policy_mgr_cfg {
 	uint8_t conc_rule1;
 	uint8_t conc_rule2;
 	uint8_t enable_mcc_adaptive_sch;
+	uint8_t allow_mcc_go_diff_bi;
+	uint8_t enable_overlap_chnl;
+	uint8_t dual_mac_feature;
+	uint8_t is_force_1x1_enable;
+	uint8_t sta_sap_scc_on_dfs_chnl;
+	uint8_t sta_sap_scc_on_lte_coex_chnl;
+	uint8_t sap_mandatory_chnl_enable;
+	uint8_t mark_indoor_chnl_disable;
 	uint8_t enable_sta_cxn_5g_band;
 	uint32_t dbs_selection_plcy;
 	uint32_t vdev_priority_list;

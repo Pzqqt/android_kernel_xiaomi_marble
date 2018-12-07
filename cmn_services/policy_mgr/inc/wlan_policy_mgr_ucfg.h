@@ -178,4 +178,110 @@ ucfg_policy_mgr_get_mcc_adaptive_sch(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS ucfg_policy_mgr_get_sta_cxn_5g_band(struct wlan_objmgr_psoc *psoc,
 					       uint8_t *enable_sta_cxn_5g_band);
+/**
+ * ucfg_policy_mgr_get_allow_mcc_go_diff_bi() - to get information on whether GO
+ *						can have diff BI than STA in MCC
+ * @psoc: pointer to psoc
+ * @allow_mcc_go_diff_bi: value to be filled
+ *
+ * This API is used to find out whether GO's BI can different than STA in MCC
+ * scenario
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS
+ucfg_policy_mgr_get_allow_mcc_go_diff_bi(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *allow_mcc_go_diff_bi);
+/**
+ * ucfg_policy_mgr_get_enable_overlap_chnl() - to find out if overlap channels
+ *						are enabled for SAP
+ * @psoc: pointer to psoc
+ * @enable_overlap_chnl: value to be filled
+ *
+ * This API is used to find out whether overlap channels are enabled for SAP
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS
+ucfg_policy_mgr_get_enable_overlap_chnl(struct wlan_objmgr_psoc *psoc,
+					uint8_t *enable_overlap_chnl);
+/**
+ * ucfg_policy_mgr_get_dual_mac_feature() - to find out if DUAL MAC feature is
+ *					    enabled
+ * @psoc: pointer to psoc
+ * @dual_mac_feature: value to be filled
+ *
+ * This API is used to find out whether dual mac (dual radio) specific feature
+ * is enabled or not
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS ucfg_policy_mgr_get_dual_mac_feature(struct wlan_objmgr_psoc *psoc,
+						uint8_t *dual_mac_feature);
+/**
+ * ucfg_policy_mgr_get_force_1x1() - to find out if 1x1 connection is enforced
+ *
+ * @psoc: pointer to psoc
+ * @force_1x1: value to be filled
+ *
+ * This API is used to find out if 1x1 connection is enforced.
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS ucfg_policy_mgr_get_force_1x1(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *force_1x1);
+/**
+ * ucfg_policy_mgr_get_sta_sap_scc_on_dfs_chnl() - to find out if STA and SAP
+ *						   SCC is allowed on DFS channel
+ * @psoc: pointer to psoc
+ * @sta_sap_scc_on_dfs_chnl: value to be filled
+ *
+ * This API is used to find out whether STA and SAP SCC is allowed on
+ * DFS channels
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS
+ucfg_policy_mgr_get_sta_sap_scc_on_dfs_chnl(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *sta_sap_scc_on_dfs_chnl);
+/**
+ * ucfg_policy_mgr_get_sta_sap_scc_lte_coex_chnl() - to find out if STA & SAP
+ *						     SCC is allowed on LTE COEX
+ * @psoc: pointer to psoc
+ * @sta_sap_scc_lte_coex: value to be filled
+ *
+ * This API is used to find out whether STA and SAP scc is allowed on LTE COEX
+ * channel
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS
+ucfg_policy_mgr_get_sta_sap_scc_lte_coex_chnl(struct wlan_objmgr_psoc *psoc,
+					      uint8_t *sta_sap_scc_lte_coex);
+/**
+ * ucfg_policy_mgr_get_sap_mandt_chnl() - to find out if SAP mandatory channel
+ *					  support is enabled
+ * @psoc: pointer to psoc
+ * @sap_mandt_chnl: value to be filled
+ *
+ * This API is used to find out whether SAP's mandatory channel support
+ * is enabled
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS ucfg_policy_mgr_get_sap_mandt_chnl(struct wlan_objmgr_psoc *psoc,
+					      uint8_t *sap_mandt_chnl);
+/**
+ * ucfg_policy_mgr_get_indoor_chnl_marking() - to get if indoor channel can be
+ *						marked as disabled
+ * @psoc: pointer to psoc
+ * @indoor_chnl_marking: value to be filled
+ *
+ * This API is used to find out whether indoor channel can be marked as disabled
+ *
+ * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
+ */
+QDF_STATUS
+ucfg_policy_mgr_get_indoor_chnl_marking(struct wlan_objmgr_psoc *psoc,
+					uint8_t *indoor_chnl_marking);
 #endif //__WLAN_POLICY_MGR_UCFG
