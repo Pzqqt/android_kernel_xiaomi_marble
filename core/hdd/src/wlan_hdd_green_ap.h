@@ -86,12 +86,6 @@ int hdd_green_ap_enable_egap(struct hdd_context *hdd_ctx)
 }
 
 static inline
-int hdd_green_ap_update_config(struct hdd_context *hdd_ctx)
-{
-	return 0;
-}
-
-static inline
 int hdd_green_ap_start_state_mc(struct hdd_context *hdd_ctx,
 				enum QDF_OPMODE mode, bool is_session_start)
 {
