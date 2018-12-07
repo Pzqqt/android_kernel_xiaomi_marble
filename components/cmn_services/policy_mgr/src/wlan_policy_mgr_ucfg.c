@@ -44,6 +44,22 @@ static QDF_STATUS policy_mgr_init_cfg(struct wlan_objmgr_psoc *psoc)
 		cfg_get(psoc, CFG_ENABLE_MCC_ADATIVE_SCH_ENABLED_NAME);
 	cfg->enable_sta_cxn_5g_band =
 		cfg_get(psoc, CFG_ENABLE_STA_CONNECTION_IN_5GHZ);
+	cfg->allow_mcc_go_diff_bi =
+		cfg_get(psoc, CFG_ALLOW_MCC_GO_DIFF_BI);
+	cfg->enable_overlap_chnl =
+		cfg_get(psoc, CFG_ENABLE_OVERLAP_CH);
+	cfg->dual_mac_feature =
+		cfg_get(psoc, CFG_DUAL_MAC_FEATURE_DISABLE);
+	cfg->is_force_1x1_enable =
+		cfg_get(psoc, CFG_FORCE_1X1_FEATURE);
+	cfg->sta_sap_scc_on_dfs_chnl =
+		cfg_get(psoc, CFG_STA_SAP_SCC_ON_DFS_CHAN);
+	cfg->sta_sap_scc_on_lte_coex_chnl =
+		cfg_get(psoc, CFG_STA_SAP_SCC_ON_LTE_COEX_CHAN);
+	cfg->sap_mandatory_chnl_enable =
+		cfg_get(psoc, CFG_ENABLE_SAP_MANDATORY_CHAN_LIST);
+	cfg->mark_indoor_chnl_disable =
+		cfg_get(psoc, CFG_MARK_INDOOR_AS_DISABLE_FEATURE);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -143,4 +159,59 @@ QDF_STATUS ucfg_policy_mgr_get_sta_cxn_5g_band(struct wlan_objmgr_psoc *psoc,
 					       uint8_t *enable_sta_cxn_5g_band)
 {
 	return policy_mgr_get_sta_cxn_5g_band(psoc, enable_sta_cxn_5g_band);
+}
+
+QDF_STATUS
+ucfg_policy_mgr_get_allow_mcc_go_diff_bi(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *allow_mcc_go_diff_bi)
+{
+	return policy_mgr_get_allow_mcc_go_diff_bi(psoc, allow_mcc_go_diff_bi);
+}
+
+QDF_STATUS
+ucfg_policy_mgr_get_enable_overlap_chnl(struct wlan_objmgr_psoc *psoc,
+					uint8_t *enable_overlap_chnl)
+{
+	return policy_mgr_get_enable_overlap_chnl(psoc, enable_overlap_chnl);
+}
+
+QDF_STATUS ucfg_policy_mgr_get_dual_mac_feature(struct wlan_objmgr_psoc *psoc,
+						uint8_t *dual_mac_feature)
+{
+	return policy_mgr_get_dual_mac_feature(psoc, dual_mac_feature);
+}
+
+QDF_STATUS ucfg_policy_mgr_get_force_1x1(struct wlan_objmgr_psoc *psoc,
+					 uint8_t *force_1x1)
+{
+	return policy_mgr_get_force_1x1(psoc, force_1x1);
+}
+
+QDF_STATUS
+ucfg_policy_mgr_get_sta_sap_scc_on_dfs_chnl(struct wlan_objmgr_psoc *psoc,
+					    uint8_t *sta_sap_scc_on_dfs_chnl)
+{
+	return policy_mgr_get_sta_sap_scc_on_dfs_chnl(psoc,
+						      sta_sap_scc_on_dfs_chnl);
+}
+
+QDF_STATUS
+ucfg_policy_mgr_get_sta_sap_scc_lte_coex_chnl(struct wlan_objmgr_psoc *psoc,
+					      uint8_t *sta_sap_scc_lte_coex)
+{
+	return policy_mgr_get_sta_sap_scc_lte_coex_chnl(psoc,
+							sta_sap_scc_lte_coex);
+}
+
+QDF_STATUS ucfg_policy_mgr_get_sap_mandt_chnl(struct wlan_objmgr_psoc *psoc,
+					      uint8_t *sap_mandt_chnl)
+{
+	return policy_mgr_get_sap_mandt_chnl(psoc, sap_mandt_chnl);
+}
+
+QDF_STATUS
+ucfg_policy_mgr_get_indoor_chnl_marking(struct wlan_objmgr_psoc *psoc,
+					uint8_t *indoor_chnl_marking)
+{
+	return policy_mgr_get_indoor_chnl_marking(psoc, indoor_chnl_marking);
 }
