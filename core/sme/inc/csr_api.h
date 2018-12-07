@@ -653,13 +653,6 @@ typedef enum {
 	eCSR_OPERATING_CHANNEL_ANY = eCSR_OPERATING_CHANNEL_ALL,
 } eOperationChannel;
 
-typedef enum {
-	eCSR_DOT11_FRAG_THRESH_AUTO = -1,
-	eCSR_DOT11_FRAG_THRESH_MIN = 256,
-	eCSR_DOT11_FRAG_THRESH_MAX = 2346,
-	eCSR_DOT11_FRAG_THRESH_DEFAULT = 2000
-} eCsrDot11FragThresh;
-
 /*
  * For channel bonding, the channel number gap is 4, either up or down.
  * For both 11a and 11g mode.
