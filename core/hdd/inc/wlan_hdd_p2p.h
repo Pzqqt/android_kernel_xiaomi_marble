@@ -108,8 +108,6 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev);
 
 void wlan_hdd_cleanup_remain_on_channel_ctx(struct hdd_adapter *adapter);
 
-void wlan_hdd_roc_request_dequeue(struct work_struct *work);
-
 /**
  * wlan_hdd_set_power_save() - hdd set power save
  * @adapter:    adapter context
