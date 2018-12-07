@@ -6175,7 +6175,9 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 	int *value = (int *)extra;
 	int sub_cmd = value[0];
 	int ret;
+	uint8_t dual_mac_feature = DISABLE_DBS_CXN_AND_SCAN;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	QDF_STATUS status;
 
 	hdd_enter_dev(dev);
 
@@ -6204,8 +6206,12 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 
 	case WE_SET_DUAL_MAC_SCAN_CONFIG:
 		hdd_debug("Ioctl to set dual mac scan config");
-		if (hdd_ctx->config->dual_mac_feature_disable ==
-				DISABLE_DBS_CXN_AND_SCAN) {
+		status =
+		ucfg_policy_mgr_get_dual_mac_feature(hdd_ctx->psoc,
+						     &dual_mac_feature);
+		if (status != QDF_STATUS_SUCCESS)
+			hdd_err("can't get dual mac feature val, use def");
+		if (dual_mac_feature == DISABLE_DBS_CXN_AND_SCAN) {
 			hdd_err("Dual mac feature is disabled from INI");
 			return -EPERM;
 		}
@@ -9177,7 +9183,9 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 	int *value = (int *)extra;
 	int sub_cmd = value[0];
 	int ret;
+	uint8_t dual_mac_feature = DISABLE_DBS_CXN_AND_SCAN;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	QDF_STATUS status;
 
 	hdd_enter_dev(dev);
 
@@ -9217,8 +9225,12 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 		break;
 	case WE_SET_DUAL_MAC_FW_MODE_CONFIG:
 		hdd_debug("Ioctl to set dual fw mode config");
-		if (hdd_ctx->config->dual_mac_feature_disable ==
-				DISABLE_DBS_CXN_AND_SCAN) {
+		status =
+		ucfg_policy_mgr_get_dual_mac_feature(hdd_ctx->psoc,
+						     &dual_mac_feature);
+		if (status != QDF_STATUS_SUCCESS)
+			hdd_err("can't get dual mac feature val, use def");
+		if (dual_mac_feature == DISABLE_DBS_CXN_AND_SCAN) {
 			hdd_err("Dual mac feature is disabled from INI");
 			return -EPERM;
 		}

@@ -41,6 +41,7 @@
 #include "wlan_p2p_ucfg_api.h"
 #include <wlan_hdd_regulatory.h>
 #include "wlan_ipa_ucfg_api.h"
+#include "wlan_policy_mgr_ucfg.h"
 #include <wma_types.h>
 
 /* Preprocessor definitions and constants */
@@ -1152,29 +1153,33 @@ static QDF_STATUS hdd_softap_deregister_bc_sta(struct hdd_adapter *adapter)
 
 QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	uint8_t sta_id = 0;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	uint8_t sta_id = 0, indoor_chnl_marking = 0;
 	struct hdd_context *hdd_ctx;
 	struct hdd_ap_ctx *ap_ctx;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 
+	status = ucfg_policy_mgr_get_indoor_chnl_marking(hdd_ctx->psoc,
+							 &indoor_chnl_marking);
+	if (QDF_STATUS_SUCCESS != status)
+		hdd_err("can't get indoor channel marking, using default");
 	/* This is stop bss callback running in scheduler thread so do not
 	 * driver unload in progress check otherwise it can lead to peer
 	 * object leak
 	 */
-	qdf_status = hdd_softap_deregister_bc_sta(adapter);
+	status = hdd_softap_deregister_bc_sta(adapter);
 
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Failed to deregister BC sta Id %d",
 			ap_ctx->broadcast_sta_id);
 
 	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
 		/* This excludes BC sta as it is already deregistered */
 		if (adapter->sta_info[sta_id].in_use) {
-			qdf_status = hdd_softap_deregister_sta(adapter, sta_id);
-			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			status = hdd_softap_deregister_sta(adapter, sta_id);
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				hdd_err("Failed to deregister sta Id %d",
 					sta_id);
 			}
@@ -1184,7 +1189,7 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 		wlan_hdd_restore_channels(hdd_ctx, true);
 
 	/*  Mark the indoor channel (passive) to enable  */
-	if (hdd_ctx->config->force_ssc_disable_indoor_channel) {
+	if (indoor_chnl_marking) {
 		hdd_update_indoor_channel(hdd_ctx, false);
 		sme_update_channel_list(hdd_ctx->mac_handle);
 	}
@@ -1201,7 +1206,7 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 			hdd_err("WLAN_AP_DISCONNECT event failed");
 	}
 
-	return qdf_status;
+	return status;
 }
 
 QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,

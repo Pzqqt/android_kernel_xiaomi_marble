@@ -1581,18 +1581,26 @@ static void hdd_update_wiphy_vhtcap(struct hdd_context *hdd_ctx)
  */
 static void hdd_update_hw_dbs_capable(struct hdd_context *hdd_ctx)
 {
-	struct hdd_config *cfg_ini = hdd_ctx->config;
 	uint8_t hw_dbs_capable = 0;
+	uint8_t dual_mac_feature = DISABLE_DBS_CXN_AND_SCAN;
+	QDF_STATUS status;
 
-	if (policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc) &&
-		((cfg_ini->dual_mac_feature_disable ==
-			ENABLE_DBS_CXN_AND_SCAN) ||
-		(cfg_ini->dual_mac_feature_disable ==
-			ENABLE_DBS_CXN_AND_ENABLE_SCAN_WITH_ASYNC_SCAN_OFF) ||
-		(cfg_ini->dual_mac_feature_disable ==
-			ENABLE_DBS_CXN_AND_DISABLE_SIMULTANEOUS_SCAN)))
-		hw_dbs_capable = 1;
-
+	status = ucfg_policy_mgr_get_dual_mac_feature(hdd_ctx->psoc,
+						      &dual_mac_feature);
+	if (status != QDF_STATUS_SUCCESS)
+		hdd_err("can't get dual_mac_feature value");
+	if (policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc)) {
+		switch (dual_mac_feature) {
+		case ENABLE_DBS_CXN_AND_SCAN:
+		case ENABLE_DBS_CXN_AND_ENABLE_SCAN_WITH_ASYNC_SCAN_OFF:
+		case ENABLE_DBS_CXN_AND_DISABLE_SIMULTANEOUS_SCAN:
+			hw_dbs_capable = 1;
+			break;
+		default:
+			hw_dbs_capable = 0;
+			break;
+		}
+	}
 	sme_update_hw_dbs_capable(hdd_ctx->mac_handle, hw_dbs_capable);
 }
 
@@ -2305,6 +2313,7 @@ wlan_hdd_update_dbs_scan_and_fw_mode_config(void)
 	QDF_STATUS status;
 	uint32_t channel_select_logic_conc = 0;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	uint8_t dual_mac_feature = DISABLE_DBS_CXN_AND_SCAN;
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
@@ -2318,15 +2327,26 @@ wlan_hdd_update_dbs_scan_and_fw_mode_config(void)
 	cfg.scan_config = 0;
 	cfg.fw_mode_config = 0;
 	cfg.set_dual_mac_cb = policy_mgr_soc_set_dual_mac_cfg_cb;
+	status =
 	ucfg_policy_mgr_get_chnl_select_plcy(hdd_ctx->psoc,
 					     &channel_select_logic_conc);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("ucfg_policy_mgr_get_chnl_select_plcy failed, use def");
+		return status;
+	}
+	status =
+	ucfg_policy_mgr_get_dual_mac_feature(hdd_ctx->psoc,
+					     &dual_mac_feature);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("ucfg_policy_mgr_get_dual_mac_feature failed, use def");
+		return status;
+	}
 
-	if (hdd_ctx->config->dual_mac_feature_disable !=
-	    DISABLE_DBS_CXN_AND_SCAN) {
+	if (dual_mac_feature != DISABLE_DBS_CXN_AND_SCAN) {
 		status = policy_mgr_get_updated_scan_and_fw_mode_config(
 				hdd_ctx->psoc, &cfg.scan_config,
 				&cfg.fw_mode_config,
-				hdd_ctx->config->dual_mac_feature_disable,
+				dual_mac_feature,
 				channel_select_logic_conc);
 
 		if (status != QDF_STATUS_SUCCESS) {
@@ -4574,6 +4594,12 @@ static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 	struct wma_caps_per_phy non_dbs_phy_cap;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	bool enable2x2 = false, enable_bt_chain_sep = false;
+	uint8_t dual_mac_feature = DISABLE_DBS_CXN_AND_SCAN;
+
+	status = ucfg_policy_mgr_get_dual_mac_feature(hdd_ctx->psoc,
+						      &dual_mac_feature);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("unable to get dual mac feature");
 
 	status = ucfg_mlme_get_vht_enable2x2(hdd_ctx->psoc, &enable2x2);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -4586,7 +4612,7 @@ static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 
 	hdd_debug("enable2x2: %d, lte_coex: %d, disable_DBS: %d",
 		  enable2x2, hdd_ctx->lte_coex_ant_share,
-		  hdd_ctx->config->dual_mac_feature_disable);
+		  dual_mac_feature);
 	hdd_debug("enable_bt_chain_separation %d", enable_bt_chain_sep);
 
 	status = wma_get_caps_for_phyidx_hwmode(&non_dbs_phy_cap,
@@ -4610,10 +4636,9 @@ static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 		return 0;
 	}
 
-	if (hdd_ctx->config->dual_mac_feature_disable !=
-	    DISABLE_DBS_CXN_AND_SCAN) {
+	if (dual_mac_feature != DISABLE_DBS_CXN_AND_SCAN) {
 		hdd_debug("DBS enabled(%d). skip chain mask programming",
-			  hdd_ctx->config->dual_mac_feature_disable);
+			  dual_mac_feature);
 		return 0;
 	}
 
@@ -8676,6 +8701,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 	uint32_t i;
 	bool found = false;
 	uint8_t restart_chan;
+	uint8_t scc_on_lte_coex = 0;
 	bool value;
 	QDF_STATUS status;
 	bool is_acs_support_for_dfs_ltecoex = cfg_default(CFG_USER_ACS_DFS_LTE);
@@ -8693,13 +8719,18 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 		}
 
 		found = false;
+		status =
+		ucfg_policy_mgr_get_sta_sap_scc_lte_coex_chnl(hdd_ctxt->psoc,
+							      &scc_on_lte_coex);
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			hdd_err("can't get scc on lte coex chnl, use def");
 		/*
 		 * If STA+SAP is doing SCC & g_sta_sap_scc_on_lte_coex_chan
 		 * is set, no need to move SAP.
 		 */
 		if (policy_mgr_is_sta_sap_scc(hdd_ctxt->psoc,
 			adapter->session.ap.operating_channel) &&
-			hdd_ctxt->config->sta_sap_scc_on_lte_coex_chan)
+			scc_on_lte_coex)
 			hdd_debug("SAP is allowed on SCC channel, no need to move SAP");
 		else {
 			for (i = 0; i < hdd_ctxt->unsafe_channel_count; i++) {
@@ -9864,10 +9895,16 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 	struct wlan_objmgr_psoc_user_config *user_config;
 	bool skip_dfs_in_p2p_search = false;
 	uint8_t band_capability;
+	uint8_t dual_mac_feature = DISABLE_DBS_CXN_AND_SCAN;
 	QDF_STATUS status;
 	bool value = false;
 
 	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
+	if (QDF_IS_STATUS_ERROR(status))
+		return -EIO;
+
+	status = ucfg_policy_mgr_get_dual_mac_feature(hdd_ctx->psoc,
+						      &dual_mac_feature);
 	if (QDF_IS_STATUS_ERROR(status))
 		return -EIO;
 
@@ -9876,8 +9913,7 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 		return -ENOMEM;
 
 	user_config->dot11_mode = hdd_ctx->config->dot11Mode;
-	user_config->dual_mac_feature_disable =
-		hdd_ctx->config->dual_mac_feature_disable;
+	user_config->dual_mac_feature_disable = dual_mac_feature;
 	user_config->indoor_channel_support =
 		hdd_ctx->config->indoor_channel_support;
 
@@ -10495,9 +10531,6 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 
 	hdd_init_channel_avoidance(hdd_ctx);
 
-	/* update enable sap mandatory chan list */
-	policy_mgr_enable_disable_sap_mandatory_chan_list(hdd_ctx->psoc,
-			hdd_ctx->config->enable_sap_mandatory_chan_list);
 out:
 	return ret;
 }
@@ -10619,14 +10652,20 @@ int hdd_dbs_scan_selection_init(struct hdd_context *hdd_ctx)
 	struct wmi_dbs_scan_sel_params dbs_scan_params;
 	uint32_t i = 0;
 	uint8_t count = 0, numentries = 0;
+	uint8_t dual_mac_feature;
 	uint8_t dbs_scan_config[CDS_DBS_SCAN_PARAM_PER_CLIENT
 				* CDS_DBS_SCAN_CLIENTS_MAX];
 
+	status = ucfg_policy_mgr_get_dual_mac_feature(hdd_ctx->psoc,
+						      &dual_mac_feature);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("can't get dual mac feature flag");
+		return -EINVAL;
+	}
 	/* check if DBS is enabled or supported */
-	if ((hdd_ctx->config->dual_mac_feature_disable ==
-	     DISABLE_DBS_CXN_AND_SCAN) ||
-	    (hdd_ctx->config->dual_mac_feature_disable ==
-	     ENABLE_DBS_CXN_AND_DISABLE_DBS_SCAN))
+	if ((dual_mac_feature == DISABLE_DBS_CXN_AND_SCAN) ||
+	    (dual_mac_feature == ENABLE_DBS_CXN_AND_DISABLE_DBS_SCAN))
 		return -EINVAL;
 
 	hdd_string_to_u8_array(hdd_ctx->config->dbs_scan_selection,
@@ -10994,7 +11033,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	mac_handle_t mac_handle;
 	bool enable_rts_sifsbursting;
 	uint8_t enable_phy_reg_retention;
-	uint8_t max_mpdus_inampdu;
+	uint8_t max_mpdus_inampdu, is_force_1x1 = 0;
 	uint32_t num_abg_tx_chains = 0;
 	uint16_t num_11b_tx_chains = 0;
 	uint16_t num_11ag_tx_chains = 0;
@@ -11006,8 +11045,12 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	mac_handle = hdd_ctx->mac_handle;
 
 	hdd_action_oui_send(hdd_ctx);
-
-	if (hdd_ctx->config->is_force_1x1)
+	status = ucfg_policy_mgr_get_force_1x1(hdd_ctx->psoc, &is_force_1x1);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Failed to get force 1x1 value");
+		goto out;
+	}
+	if (is_force_1x1)
 		sme_cli_set_command(0, (int)WMI_PDEV_PARAM_SET_IOT_PATTERN,
 				1, PDEV_CMD);
 	/* set chip power save failure detected callback */
@@ -11016,8 +11059,10 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 
 	status = ucfg_get_max_mpdus_inampdu(hdd_ctx->psoc,
 					    &max_mpdus_inampdu);
-	if (status)
-		return status;
+	if (status) {
+		hdd_err("Failed to get max mpdus in ampdu value");
+		goto out;
+	}
 
 	if (max_mpdus_inampdu) {
 		set_value = max_mpdus_inampdu;
@@ -11027,8 +11072,10 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 
 	status = ucfg_get_enable_rts_sifsbursting(hdd_ctx->psoc,
 						  &enable_rts_sifsbursting);
-	if (status)
-		return status;
+	if (status) {
+		hdd_err("Failed to get rts sifs bursting value");
+		goto out;
+	}
 
 	if (enable_rts_sifsbursting) {
 		set_value = enable_rts_sifsbursting;
