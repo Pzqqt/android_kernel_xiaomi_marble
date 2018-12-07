@@ -321,6 +321,16 @@ bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc)
 		return true;
 	}
 
+	if (pmo_core_is_lpass_enabled(psoc)) {
+		pmo_info("lpass enabled, enabling wow");
+		return true;
+	}
+
+	if (cfg_nan_get_enable(psoc)) {
+		pmo_debug("nan enabled, enabling wow");
+		return true;
+	}
+
 	/* Iterate through VDEV list */
 	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
 		vdev = pmo_psoc_get_vdev(psoc, vdev_id);
@@ -342,12 +352,6 @@ bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc)
 			is_wow_applicable = true;
 		} else if (pmo_core_is_p2plo_in_progress(vdev)) {
 			pmo_debug("P2P LO is in progress, enabling wow");
-			is_wow_applicable = true;
-		} else if (pmo_core_is_lpass_enabled(vdev)) {
-			pmo_debug("LPASS is enabled, enabling WoW");
-			is_wow_applicable = true;
-		} else if (cfg_nan_get_enable(psoc)) {
-			pmo_debug("NAN is enabled, enabling WoW");
 			is_wow_applicable = true;
 		} else if (pmo_core_get_vdev_op_mode(vdev) == QDF_NDI_MODE) {
 			pmo_debug("vdev %d is in NAN data mode, enabling wow",

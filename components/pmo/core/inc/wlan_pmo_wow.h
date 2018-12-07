@@ -614,8 +614,8 @@ void pmo_core_update_p2plo_in_progress(struct wlan_objmgr_vdev *vdev,
 
 #ifdef WLAN_FEATURE_LPSS
 /**
- * pmo_is_lpass_enabled() - check if lpass is enabled
- * @vdev: objmgr vdev handle
+ * pmo_core_is_lpass_enabled() - check if lpass is enabled
+ * @posc: objmgr psoc object
  *
  * WoW is needed if LPASS or NaN feature is enabled in INI because
  * target can't wake up itself if its put in PDEV suspend when LPASS
@@ -624,21 +624,15 @@ void pmo_core_update_p2plo_in_progress(struct wlan_objmgr_vdev *vdev,
  * Return: true if lpass is enabled else false
  */
 static inline
-bool pmo_core_is_lpass_enabled(struct wlan_objmgr_vdev *vdev)
+bool pmo_core_is_lpass_enabled(struct wlan_objmgr_psoc *psoc)
 {
-	bool lpass_enable;
-	struct pmo_vdev_priv_obj *vdev_ctx;
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
 
-	vdev_ctx = pmo_vdev_get_priv(vdev);
-	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	lpass_enable = vdev_ctx->pmo_psoc_ctx->psoc_cfg.lpass_enable;
-	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
-
-	return lpass_enable;
+	return pmo_psoc_ctx->psoc_cfg.lpass_enable;
 }
 #else
 static inline
-bool pmo_core_is_lpass_enabled(struct wlan_objmgr_vdev *vdev)
+bool pmo_core_is_lpass_enabled(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
 }
