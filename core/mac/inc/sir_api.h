@@ -1359,21 +1359,6 @@ typedef struct sAniSecurityStat {
 
 } tAniSecurityStat, *tpAniSecurityStat;
 
-typedef struct sAniSecStats {
-	tAniSecurityStat aes;
-	tAni64BitCounters aesReplays;
-	tAniSecurityStat tkip;
-	tAni64BitCounters tkipReplays;
-	tAni64BitCounters tkipMicError;
-
-	tAniSecurityStat wep;
-#if defined(FEATURE_WLAN_WAPI) && !defined(LIBRA_WAPI_SUPPORT)
-	tAniSecurityStat wpi;
-	tAni64BitCounters wpiReplays;
-	tAni64BitCounters wpiMicError;
-#endif
-} tAniSecStats, *tpAniSecStats;
-
 typedef enum sPacketType {
 	ePACKET_TYPE_UNKNOWN,
 	ePACKET_TYPE_11A,
