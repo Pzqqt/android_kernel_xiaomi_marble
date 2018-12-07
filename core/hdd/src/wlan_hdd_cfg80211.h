@@ -142,8 +142,6 @@ struct hdd_context;
 #define USE_CFG80211_DEL_STA_V2
 #endif
 
-#define OL_TXRX_INVALID_TDLS_PEER_ID 0xff
-
 /**
  * enum eDFS_CAC_STATUS: CAC status
  *
