@@ -1662,6 +1662,20 @@ struct wlan_mlme_wifi_pos_cfg {
 	uint32_t fine_time_meas_cap;
 };
 
+/*
+ * struct wlan_mlme_btm - BTM related configs
+ * @btm_offload_config: configure btm offload
+ * @btm_solicited_timeout: configure timeout value for waiting BTM request
+ * @btm_max_attempt_cnt: configure maximum attempt for sending BTM query to ESS
+ * @btm_sticky_time: configure Stick time after roaming to new AP by BTM
+ */
+struct wlan_mlme_btm {
+	uint32_t btm_offload_config;
+	uint32_t btm_solicited_timeout;
+	uint32_t btm_max_attempt_cnt;
+	uint32_t btm_sticky_time;
+};
+
 /**
  * struct wlan_mlme_cfg - MLME config items
  * @chainmask_cfg: VHT chainmask related cfg items
@@ -1693,6 +1707,7 @@ struct wlan_mlme_wifi_pos_cfg {
  * @wifi_pos_cfg: WIFI POS config
  * @wmm_params: WMM related CFG & INI Items
  * @wps_params: WPS related CFG itmes
+ * @btm: BTM related CFG itmes
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_chainmask chainmask_cfg;
@@ -1726,6 +1741,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_wifi_pos_cfg wifi_pos_cfg;
 	struct wlan_mlme_wmm_params wmm_params;
 	struct wlan_mlme_wps_params wps_params;
+	struct wlan_mlme_btm btm;
 };
 
 #endif
