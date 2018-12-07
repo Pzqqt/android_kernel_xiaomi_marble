@@ -2558,7 +2558,7 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(struct mac_context *mac,
 		   (subType == SIR_MAC_MGMT_DISASSOC) &&
 		   (subType == SIR_MAC_MGMT_DEAUTH)) {
 		uint16_t assoc_id;
-		dphHashTableClass *dph_table;
+		struct dph_hash_table *dph_table;
 		tDphHashNode *sta_ds;
 		qdf_time_t *timestamp;
 

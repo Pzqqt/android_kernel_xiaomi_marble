@@ -42,48 +42,52 @@ static inline uint8_t dph_compare_mac_addr(uint8_t addr1[], uint8_t addr2[])
 		(addr1[4] == addr2[4]) && (addr1[5] == addr2[5]);
 }
 
-/* Hash table class */
-typedef struct {
-
-	/* The hash table itself */
+/**
+ * struct dph_hash_table - DPH hash table
+ * @pHashTable: The actual hash table
+ * @pDphNodeArray: The state array
+ * @size: The size of the hash table
+ */
+struct dph_hash_table {
 	tpDphHashNode *pHashTable;
-
-	/* The state array */
 	tDphHashNode *pDphNodeArray;
 	uint16_t size;
-} dphHashTableClass;
-
-/* The hash table object */
-extern dphHashTableClass dphHashTable;
+};
 
 tpDphHashNode dph_lookup_hash_entry(struct mac_context *mac, uint8_t staAddr[],
 				    uint16_t *pStaId,
-				    dphHashTableClass *pDphHashTable);
+				    struct dph_hash_table *pDphHashTable);
 tpDphHashNode dph_lookup_assoc_id(struct mac_context *mac, uint16_t staIdx,
 				  uint16_t *assocId,
-				  dphHashTableClass *pDphHashTable);
+				  struct dph_hash_table *pDphHashTable);
 
 /* Get a pointer to the hash node */
 extern tpDphHashNode dph_get_hash_entry(struct mac_context *mac, uint16_t staId,
-					dphHashTableClass *pDphHashTable);
+					struct dph_hash_table *pDphHashTable);
 
 /* Add an entry to the hash table */
 extern tpDphHashNode dph_add_hash_entry(struct mac_context *mac,
 					tSirMacAddr staAddr,
 					uint16_t staId,
-					dphHashTableClass *pDphHashTable);
+					struct dph_hash_table *pDphHashTable);
 
 /* Delete an entry from the hash table */
 QDF_STATUS dph_delete_hash_entry(struct mac_context *mac,
 				 tSirMacAddr staAddr, uint16_t staId,
-				 dphHashTableClass *pDphHashTable);
+				 struct dph_hash_table *pDphHashTable);
 
-void dph_hash_table_class_init(struct mac_context *mac,
-			       dphHashTableClass *pDphHashTable);
+/**
+ * dph_hash_table_init - Initialize a DPH Hash Table
+ * @mac: Global MAC Context
+ * @pDphHashTable: Pointer to the Hash Table to initialize
+ */
+void dph_hash_table_init(struct mac_context *mac,
+			 struct dph_hash_table *pDphHashTable);
+
 /* Initialize STA state */
-extern tpDphHashNode dph_init_sta_state(struct mac_context *mac,
-					tSirMacAddr staAddr,
-					uint16_t staId, uint8_t validStaIdx,
-					dphHashTableClass *pDphHashTable);
+tpDphHashNode dph_init_sta_state(struct mac_context *mac,
+				 tSirMacAddr staAddr,
+				 uint16_t staId, uint8_t validStaIdx,
+				 struct dph_hash_table *pDphHashTable);
 
 #endif

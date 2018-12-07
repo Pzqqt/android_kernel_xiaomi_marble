@@ -1346,7 +1346,7 @@ void lim_ibss_del_bss_rsp(struct mac_context *mac, void *msg, struct pe_session 
 
 	lim_ibss_delete(mac, pe_session);
 
-	dph_hash_table_class_init(mac, &pe_session->dph.dphHashTable);
+	dph_hash_table_init(mac, &pe_session->dph.dphHashTable);
 	lim_delete_pre_auth_list(mac);
 
 	pe_session->limMlmState = eLIM_MLM_IDLE_STATE;

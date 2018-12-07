@@ -243,7 +243,7 @@ typedef struct sDphHashNode {
 /* ------------------------------------------------------------------- */
 typedef struct sAniSirDph {
 	/* The hash table object */
-	dphHashTableClass dphHashTable;
+	struct dph_hash_table dphHashTable;
 } tAniSirDph, *tpAniSirDph;
 
 #endif

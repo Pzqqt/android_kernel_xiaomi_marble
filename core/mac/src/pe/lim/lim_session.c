@@ -592,7 +592,7 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	session_ptr->dph.dphHashTable.pDphNodeArray =
 					pe_get_session_dph_node_array(i);
 	session_ptr->dph.dphHashTable.size = numSta + 1;
-	dph_hash_table_class_init(mac, &session_ptr->dph.dphHashTable);
+	dph_hash_table_init(mac, &session_ptr->dph.dphHashTable);
 	session_ptr->gpLimPeerIdxpool = qdf_mem_malloc(
 		sizeof(*(session_ptr->gpLimPeerIdxpool)) *
 		lim_get_peer_idxpool_size(numSta, bssType));
@@ -833,7 +833,7 @@ pe_find_session_by_sta_id(struct mac_context *mac_ctx,
 {
 	uint8_t i, j;
 	struct pe_session *session_ptr;
-	dphHashTableClass *dph_ptr;
+	struct dph_hash_table *dph_ptr;
 
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 		if (!mac_ctx->lim.gpSession[i].valid)

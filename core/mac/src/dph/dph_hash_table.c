@@ -36,25 +36,8 @@
 #include "wma_if.h"
 #include "wlan_mlme_api.h"
 
-/* --------------------------------------------------------------------- */
-/**
- * dphHashTableClass()
- *
- * FUNCTION:
- * Constructor function
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- *
- * NOTE:
- *
- * @param None
- * @return None
- */
-
-void dph_hash_table_class_init(struct mac_context *mac,
-			       dphHashTableClass *pDphHashTable)
+void dph_hash_table_init(struct mac_context *mac,
+			 struct dph_hash_table *pDphHashTable)
 {
 	uint16_t i;
 
@@ -120,7 +103,7 @@ static uint16_t hash_function(struct mac_context *mac, uint8_t staAddr[],
 
 tpDphHashNode dph_lookup_hash_entry(struct mac_context *mac, uint8_t staAddr[],
 				    uint16_t *pAssocId,
-				    dphHashTableClass *pDphHashTable)
+				    struct dph_hash_table *pDphHashTable)
 {
 	tpDphHashNode ptr = NULL;
 	uint16_t index = hash_function(mac, staAddr, pDphHashTable->size);
@@ -158,7 +141,7 @@ tpDphHashNode dph_lookup_hash_entry(struct mac_context *mac, uint8_t staAddr[],
  */
 
 tpDphHashNode dph_get_hash_entry(struct mac_context *mac, uint16_t peerIdx,
-				 dphHashTableClass *pDphHashTable)
+				 struct dph_hash_table *pDphHashTable)
 {
 	if (peerIdx < pDphHashTable->size) {
 		if (pDphHashTable->pDphNodeArray[peerIdx].added)
@@ -171,7 +154,7 @@ tpDphHashNode dph_get_hash_entry(struct mac_context *mac, uint16_t peerIdx,
 }
 
 static inline tpDphHashNode get_node(struct mac_context *mac, uint8_t assocId,
-				     dphHashTableClass *pDphHashTable)
+				     struct dph_hash_table *pDphHashTable)
 {
 	return &pDphHashTable->pDphNodeArray[assocId];
 }
@@ -196,7 +179,7 @@ static inline tpDphHashNode get_node(struct mac_context *mac, uint8_t assocId,
  */
 tpDphHashNode dph_lookup_assoc_id(struct mac_context *mac, uint16_t staIdx,
 				  uint16_t *assocId,
-				  dphHashTableClass *pDphHashTable)
+				  struct dph_hash_table *pDphHashTable)
 {
 	uint8_t i;
 
@@ -228,7 +211,7 @@ tpDphHashNode dph_lookup_assoc_id(struct mac_context *mac, uint16_t staIdx,
 
 tpDphHashNode dph_init_sta_state(struct mac_context *mac, tSirMacAddr staAddr,
 				 uint16_t assocId, uint8_t validStaIdx,
-				 dphHashTableClass *pDphHashTable)
+				 struct dph_hash_table *pDphHashTable)
 {
 	uint32_t val;
 
@@ -295,7 +278,7 @@ tpDphHashNode dph_init_sta_state(struct mac_context *mac, tSirMacAddr staAddr,
 
 tpDphHashNode dph_add_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 				 uint16_t assocId,
-				 dphHashTableClass *pDphHashTable)
+				 struct dph_hash_table *pDphHashTable)
 {
 	tpDphHashNode ptr, node;
 	uint16_t index = hash_function(mac, staAddr, pDphHashTable->size);
@@ -368,7 +351,7 @@ tpDphHashNode dph_add_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 
 QDF_STATUS dph_delete_hash_entry(struct mac_context *mac, tSirMacAddr staAddr,
 				 uint16_t assocId,
-				 dphHashTableClass *pDphHashTable)
+				 struct dph_hash_table *pDphHashTable)
 {
 	tpDphHashNode ptr, prev;
 	uint16_t index = hash_function(mac, staAddr, pDphHashTable->size);
