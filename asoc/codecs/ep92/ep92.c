@@ -725,9 +725,9 @@ static irqreturn_t ep92_irq(int irq, void *data)
 	return IRQ_HANDLED;
 };
 
-void ep92_poll_status(unsigned long data)
+void ep92_poll_status(struct timer_list *t)
 {
-	struct ep92_pdata *ep92 = (struct ep92_pdata *)data;
+	struct ep92_pdata *ep92 = from_timer(ep92, t, timer);
 	u32 poll_msec;
 
 	if ((ep92->gc.ctl & EP92_GC_POWER_MASK) == 0)
@@ -1485,8 +1485,7 @@ static int ep92_i2c_probe(struct i2c_client *client,
 	}
 	/* poll status if IRQ is not configured */
 	if (ep92->irq == 0) {
-		setup_timer(&ep92->timer, ep92_poll_status,
-			(unsigned long)ep92);
+		timer_setup(&ep92->timer, ep92_poll_status, 0);
 		mod_timer(&ep92->timer, jiffies +
 			msecs_to_jiffies(EP92_POLL_INTERVAL_OFF_MSEC));
 	}
