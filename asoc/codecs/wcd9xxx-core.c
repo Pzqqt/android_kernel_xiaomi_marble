@@ -844,7 +844,7 @@ static int wcd9xxx_i2c_write_device(struct wcd9xxx *wcd9xxx, u16 reg, u8 *value,
 	struct i2c_msg *msg;
 	int ret = 0;
 	u8 reg_addr = 0;
-	u8 data[bytes + 1];
+	u8 *data = NULL;
 	struct wcd9xxx_i2c *wcd9xxx_i2c;
 
 	wcd9xxx_i2c = wcd9xxx_i2c_get_device_info(wcd9xxx, reg);
@@ -852,6 +852,11 @@ static int wcd9xxx_i2c_write_device(struct wcd9xxx *wcd9xxx, u16 reg, u8 *value,
 		pr_err("failed to get device info\n");
 		return -ENODEV;
 	}
+
+	data = kzalloc(bytes + 1, GFP_KERNEL);
+	if (!data)
+		return -ENOMEM;
+
 	reg_addr = (u8)reg;
 	msg = &wcd9xxx_i2c->xfer_msg[0];
 	msg->addr = wcd9xxx_i2c->client->addr;
@@ -868,11 +873,13 @@ static int wcd9xxx_i2c_write_device(struct wcd9xxx *wcd9xxx, u16 reg, u8 *value,
 						wcd9xxx_i2c->xfer_msg, 1);
 		if (ret != 1) {
 			pr_err("failed to write the device\n");
-			return ret;
+			goto fail;
 		}
 	}
 	pr_debug("write success register = %x val = %x\n", reg, data[1]);
-	return 0;
+fail:
+	kfree(data);
+	return ret;
 }
 
 
