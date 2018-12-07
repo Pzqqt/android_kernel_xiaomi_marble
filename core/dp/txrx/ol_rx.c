@@ -839,61 +839,6 @@ ol_rx_sec_ind_handler(ol_txrx_pdev_handle pdev,
 	}
 }
 
-#if defined(PERE_IP_HDR_ALIGNMENT_WAR)
-
-#include <cds_ieee80211_common.h>
-
-static void transcap_nwifi_to_8023(qdf_nbuf_t msdu)
-{
-	struct ieee80211_frame *wh;
-	uint32_t hdrsize;
-	struct llc *llchdr;
-	struct ether_header *eth_hdr;
-	uint16_t ether_type = 0;
-	uint8_t a1[IEEE80211_ADDR_LEN];
-	uint8_t a2[IEEE80211_ADDR_LEN];
-	uint8_t a3[IEEE80211_ADDR_LEN];
-	uint8_t fc1;
-
-	wh = (struct ieee80211_frame *)qdf_nbuf_data(msdu);
-	qdf_mem_copy(a1, wh->i_addr1, IEEE80211_ADDR_LEN);
-	qdf_mem_copy(a2, wh->i_addr2, IEEE80211_ADDR_LEN);
-	qdf_mem_copy(a3, wh->i_addr3, IEEE80211_ADDR_LEN);
-	fc1 = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
-	/* Native Wifi header is 80211 non-QoS header */
-	hdrsize = sizeof(struct ieee80211_frame);
-
-	llchdr = (struct llc *)(((uint8_t *) qdf_nbuf_data(msdu)) + hdrsize);
-	ether_type = llchdr->llc_un.type_snap.ether_type;
-
-	/*
-	 * Now move the data pointer to the beginning of the mac header :
-	 * new-header = old-hdr + (wifhdrsize + llchdrsize - ethhdrsize)
-	 */
-	qdf_nbuf_pull_head(msdu,
-			   (hdrsize + sizeof(struct llc) -
-			    sizeof(struct ether_header)));
-	eth_hdr = (struct ether_header *)(qdf_nbuf_data(msdu));
-	switch (fc1) {
-	case IEEE80211_FC1_DIR_NODS:
-		qdf_mem_copy(eth_hdr->ether_dhost, a1, IEEE80211_ADDR_LEN);
-		qdf_mem_copy(eth_hdr->ether_shost, a2, IEEE80211_ADDR_LEN);
-		break;
-	case IEEE80211_FC1_DIR_TODS:
-		qdf_mem_copy(eth_hdr->ether_dhost, a3, IEEE80211_ADDR_LEN);
-		qdf_mem_copy(eth_hdr->ether_shost, a2, IEEE80211_ADDR_LEN);
-		break;
-	case IEEE80211_FC1_DIR_FROMDS:
-		qdf_mem_copy(eth_hdr->ether_dhost, a1, IEEE80211_ADDR_LEN);
-		qdf_mem_copy(eth_hdr->ether_shost, a3, IEEE80211_ADDR_LEN);
-		break;
-	case IEEE80211_FC1_DIR_DSTODS:
-		break;
-	}
-	eth_hdr->ether_type = ether_type;
-}
-#endif
-
 void ol_rx_notify(struct cdp_cfg *cfg_pdev,
 		  uint8_t vdev_id,
 		  uint8_t *peer_mac_addr,
@@ -1390,12 +1335,6 @@ DONE:
 	/* sanity check - are there any frames left to give to the OS shim? */
 	if (!deliver_list_head)
 		return;
-
-#if defined(PERE_IP_HDR_ALIGNMENT_WAR)
-	if (pdev->host_80211_enable)
-		for (msdu = deliver_list_head; msdu; msdu = qdf_nbuf_next(msdu))
-			transcap_nwifi_to_8023(msdu);
-#endif
 
 	ol_txrx_frms_dump("rx delivering:",
 			  pdev, deliver_list_head,

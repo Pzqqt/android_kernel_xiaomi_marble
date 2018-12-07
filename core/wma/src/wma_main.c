@@ -206,22 +206,6 @@ static uint32_t wma_get_number_of_tids_supported(uint8_t no_of_peers_supported,
 }
 #endif
 
-#ifdef PERE_IP_HDR_ALIGNMENT_WAR
-static void wma_reset_rx_decap_mode(target_resource_config *tgt_cfg)
-{
-	/*
-	 * To make the IP header begins at dword aligned address,
-	 * we make the decapsulation mode as Native Wifi.
-	 */
-	tgt_cfg->rx_decap_mode = CFG_TGT_RX_DECAP_MODE_NWIFI;
-}
-#else
-static void wma_reset_rx_decap_mode(target_resource_config *tgt_cfg)
-{
-}
-
-#endif
-
 #ifndef NUM_OF_ADDITIONAL_FW_PEERS
 #define NUM_OF_ADDITIONAL_FW_PEERS	2
 #endif
@@ -304,9 +288,6 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
 
 	tgt_cfg->mgmt_comp_evt_bundle_support = true;
 	tgt_cfg->tx_msdu_new_partition_id_support = true;
-
-	/* reduce the peer/vdev if CFG_TGT_NUM_MSDU_DESC exceeds 1000 */
-	wma_reset_rx_decap_mode(tgt_cfg);
 
 	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
 		tgt_cfg->rx_decap_mode = CFG_TGT_RX_DECAP_MODE_RAW;

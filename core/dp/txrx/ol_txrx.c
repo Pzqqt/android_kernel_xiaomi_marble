@@ -1172,10 +1172,6 @@ ol_txrx_pdev_post_attach(struct cdp_pdev *ppdev)
 		goto pn_trace_attach_fail;
 	}
 
-#ifdef PERE_IP_HDR_ALIGNMENT_WAR
-	pdev->host_80211_enable = ol_scn_host_80211_enable_get(pdev->ctrl_pdev);
-#endif
-
 	/*
 	 * WDI event attach
 	 */

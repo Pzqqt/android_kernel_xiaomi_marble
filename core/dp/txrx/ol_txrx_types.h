@@ -871,10 +871,6 @@ struct ol_txrx_pdev_t {
 	} rx_pn_trace;
 #endif /* ENABLE_RX_PN_TRACE */
 
-#if defined(PERE_IP_HDR_ALIGNMENT_WAR)
-	bool host_80211_enable;
-#endif
-
 	/*
 	 * tx_sched only applies for HL, but is defined unconditionally
 	 * rather than  only if defined(CONFIG_HL_SUPPORT).
