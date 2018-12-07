@@ -373,28 +373,6 @@ enum hdd_wext_control {
 
 /*
  * <ini>
- * gEnableMCCMode - Enable/Disable MCC feature.
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable MCC feature.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_ENABLE_MCC_ENABLED CFG_INI_BOOL( \
-		"gEnableMCCMode", \
-		1, \
-		"Enable/Disable MCC feature")
-
-/*
- * <ini>
  * gInformBssRssiRaw - Report rssi in cfg80211_inform_bss_frame
  * @Min: 0
  * @Max: 1
@@ -1017,7 +995,6 @@ enum hdd_wext_control {
 	CFG(CFG_ENABLE_ACTION_OUI) \
 	CFG(CFG_ENABLE_FW_LOG) \
 	CFG(CFG_ENABLE_FW_UART_PRINT) \
-	CFG(CFG_ENABLE_MCC_ENABLED) \
 	CFG(CFG_ENABLE_RAMDUMP_COLLECTION) \
 	CFG(CFG_INTERFACE_CHANGE_WAIT) \
 	CFG(CFG_INFORM_BSS_RSSI_RAW) \

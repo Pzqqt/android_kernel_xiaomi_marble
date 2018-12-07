@@ -4599,6 +4599,23 @@ hdd_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
 }
 #endif
 
+#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
+static void wlan_hdd_set_sap_mcc_chnl_avoid(struct hdd_context *hdd_ctx)
+{
+	uint8_t sap_mcc_avoid = 0;
+
+	status = ucfg_mlme_get_sap_mcc_chnl_avoid(hdd_ctx->psoc,
+						  &sap_mcc_avoid);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("can't get sap mcc chnl avoid, use def");
+	wlan_sap_set_channel_avoidance(hdd_ctx->mac_handle, sap_mcc_avoid);
+}
+#else
+static void wlan_hdd_set_sap_mcc_chnl_avoid(struct hdd_context *hdd_ctx)
+{
+}
+#endif
+
 /**
  * wlan_hdd_cfg80211_start_bss() - start bss
  * @adapter: Pointer to hostapd adapter
@@ -4917,10 +4934,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 						 &pref_chan_location);
 		wlansap_set_dfs_preferred_channel_location(mac_handle,
 							   pref_chan_location);
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-		wlan_sap_set_channel_avoidance(mac_handle,
-					iniConfig->sap_channel_avoidance);
-#endif
+		wlan_hdd_set_sap_mcc_chnl_avoid(hdd_ctx);
 	} else if (adapter->device_mode == QDF_P2P_GO_MODE) {
 		pConfig->countryCode[0] = hdd_ctx->reg.alpha2[0];
 		pConfig->countryCode[1] = hdd_ctx->reg.alpha2[1];

@@ -9383,7 +9383,6 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	qdf_str_lcopy(config->dbs_scan_selection,
 		      cfg_get(psoc, CFG_DBS_SCAN_SELECTION),
 		      CFG_DBS_SCAN_PARAM_LENGTH);
-	config->enableMCC = cfg_get(psoc, CFG_ENABLE_MCC_ENABLED);
 	config->inform_bss_rssi_raw = cfg_get(psoc, CFG_INFORM_BSS_RSSI_RAW);
 	config->intfMacAddr[0] = cfg_get(psoc, CFG_INTF0_MAC_ADDR);
 	config->intfMacAddr[1] = cfg_get(psoc, CFG_INTF1_MAC_ADDR);
@@ -14371,6 +14370,7 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	uint8_t scan_bucket_thre;
 	uint8_t select_5ghz_margin;
 	bool roam_prefer_5ghz;
+	uint32_t mcast_mcc_rest_time = 0;
 
 	status = ucfg_mlme_get_select_5ghz_margin(hdd_ctx->psoc,
 						  &select_5ghz_margin);
@@ -14402,8 +14402,13 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	scan_cfg.usr_cfg_num_probes = cfg->scan_num_probes;
 	scan_cfg.is_bssid_hint_priority = cfg->is_bssid_hint_priority;
 	scan_cfg.enable_mac_spoofing = cfg->enable_mac_spoofing;
-	scan_cfg.sta_miracast_mcc_rest_time =
-				cfg->sta_miracast_mcc_rest_time_val;
+	status = ucfg_mlme_get_sta_miracast_mcc_rest_time(hdd_ctx->psoc,
+							  &mcast_mcc_rest_time);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("ucfg_mlme_get_sta_miracast_mcc_rest_time, use def");
+		return -EIO;
+	}
+	scan_cfg.sta_miracast_mcc_rest_time = mcast_mcc_rest_time;
 	hdd_update_pno_config(&scan_cfg.pno_cfg, hdd_ctx);
 	hdd_update_ie_whitelist_attr(&scan_cfg.ie_whitelist, hdd_ctx);
 

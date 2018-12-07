@@ -1712,53 +1712,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gFWMccRtsCtsProtection - RTS-CTS protection in MCC.
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable use of long duration RTS-CTS protection
- * when SAP goes off channel in MCC mode.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_FW_MCC_RTS_CTS_PROT_NAME           "gFWMccRtsCtsProtection"
-#define CFG_FW_MCC_RTS_CTS_PROT_MIN            (0)
-#define CFG_FW_MCC_RTS_CTS_PROT_MAX            (1)
-#define CFG_FW_MCC_RTS_CTS_PROT_DEFAULT        (0)
-
-/*
- * <ini>
- * gFWMccBCastProbeResponse - Broadcast Probe Response in MCC.
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable use of broadcast probe response to
- * increase the detectability of SAP in MCC mode.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_FW_MCC_BCAST_PROB_RESP_NAME        "gFWMccBCastProbeResponse"
-#define CFG_FW_MCC_BCAST_PROB_RESP_MIN         (0)
-#define CFG_FW_MCC_BCAST_PROB_RESP_MAX         (1)
-#define CFG_FW_MCC_BCAST_PROB_RESP_DEFAULT     (0)
-
-/*
- * <ini>
  * g_wow_data_inactivity_timeout - Data activity timeout in wow mode.
  * @Min: 1
  * @Max: 255
@@ -2499,53 +2452,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_MAC_ADDR_SPOOFING_MIN            (0)
 #define CFG_ENABLE_MAC_ADDR_SPOOFING_MAX            (1)
 #define CFG_ENABLE_MAC_ADDR_SPOOFING_DEFAULT        (1)
-
-/*
- * <ini>
- * gStaMiracastMccRestTimeVal - Rest time when Miracast is running.
- * @Min: 100
- * @Max: 500
- * @Default: 400
- *
- * This ini is used to set rest time for home channel for Miracast before
- * going for scan.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_STA_MIRACAST_MCC_REST_TIME_VAL          "gStaMiracastMccRestTimeVal"
-#define CFG_STA_MIRACAST_MCC_REST_TIME_VAL_MIN     (100)
-#define CFG_STA_MIRACAST_MCC_REST_TIME_VAL_MAX     (500)
-#define CFG_STA_MIRACAST_MCC_REST_TIME_VAL_DEFAULT (400)
-
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-/*
- * <ini>
- * gSapChannelAvoidance - SAP MCC channel avoidance.
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to sets sap mcc channel avoidance.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_SAP_MCC_CHANNEL_AVOIDANCE_NAME         "gSapChannelAvoidance"
-#define CFG_SAP_MCC_CHANNEL_AVOIDANCE_MIN          (0)
-#define CFG_SAP_MCC_CHANNEL_AVOIDANCE_MAX          (1)
-#define CFG_SAP_MCC_CHANNEL_AVOIDANCE_DEFAULT      (0)
-#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 /*
  * <ini>
@@ -3988,8 +3894,6 @@ struct hdd_config {
 
 	uint8_t nRssiFilterPeriod;
 
-	bool mcc_rts_cts_prot_enable;
-	bool mcc_bcast_prob_resp_enable;
 	uint8_t wow_data_inactivity_timeout;
 
 	uint32_t DelayedTriggerFrmInt;
@@ -4078,10 +3982,6 @@ struct hdd_config {
 	uint8_t dhcpServerIP[IPADDR_STRING_LENGTH];
 #endif /* DHCP_SERVER_OFFLOAD */
 	bool enable_mac_spoofing;
-	uint32_t sta_miracast_mcc_rest_time_val;
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	bool sap_channel_avoidance;
-#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	uint8_t sap_11ac_override;
 	uint8_t go_11ac_override;
 	uint8_t max_scan_count;
@@ -4263,7 +4163,6 @@ struct hdd_config {
 #ifdef FEATURE_RUNTIME_PM
 	bool runtime_pm;
 #endif
-	uint8_t enableMCC;
 	uint8_t inform_bss_rssi_raw;
 	struct qdf_mac_addr intfMacAddr[QDF_MAX_CONCURRENCY_PERSONA];
 };

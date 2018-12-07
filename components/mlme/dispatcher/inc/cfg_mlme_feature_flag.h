@@ -86,10 +86,85 @@
 				0, \
 				"Enable AMPDU")
 
+/*
+ * <ini>
+ * gFWMccRtsCtsProtection - RTS-CTS protection in MCC.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable use of long duration RTS-CTS protection
+ * when SAP goes off channel in MCC mode.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_FW_MCC_RTS_CTS_PROT CFG_INI_UINT( \
+		"gFWMccRtsCtsProtection", \
+		0, 1, 0, \
+		CFG_VALUE_OR_DEFAULT, \
+		"RTS-CTS protection in MCC")
+
+/*
+ * <ini>
+ * gFWMccBCastProbeResponse - Broadcast Probe Response in MCC.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable use of broadcast probe response to
+ * increase the detectability of SAP in MCC mode.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_FW_MCC_BCAST_PROB_RESP CFG_INI_UINT( \
+		"gFWMccBCastProbeResponse", \
+		0, 1, 0, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Broadcast Probe Response in MCC")
+
+/*
+ * <ini>
+ * gEnableMCCMode - Enable/Disable MCC feature.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable MCC feature.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_MCC_FEATURE CFG_INI_UINT( \
+		"gEnableMCCMode", \
+		0, 1, 1, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Enable/Disable MCC feature.")
+
 #define CFG_FEATURE_FLAG_ALL \
 	CFG(CFG_ACCEPT_SHORT_SLOT_ASSOC_ONLY) \
 	CFG(CFG_HCF_ENABLED) \
 	CFG(CFG_RSN_ENABLED) \
+	CFG(CFG_FW_MCC_RTS_CTS_PROT) \
+	CFG(CFG_FW_MCC_BCAST_PROB_RESP) \
+	CFG(CFG_MCC_FEATURE) \
 	CFG(CFG_11G_SHORT_PREAMBLE_ENABLED) \
 	CFG(CFG_11G_SHORT_SLOT_TIME_ENABLED) \
 	CFG(CFG_CHANNEL_BONDING_MODE) \
