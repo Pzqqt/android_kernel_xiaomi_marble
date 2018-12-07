@@ -42,6 +42,8 @@
 #include <sir_api.h>
 #endif
 #include "hif.h"
+#include "wlan_scan_ucfg_api.h"
+#include "cfg_ucfg_api.h"
 
 #if defined(LINUX_QCMBR)
 #define SIOCIOCTLTX99 (SIOCDEVPRIVATE+13)
@@ -2281,16 +2283,13 @@ static int hdd_conc_set_dwell_time(hdd_context_t *hdd_ctx, uint8_t *command)
 
 		value = value + 28;
 		temp = kstrtou32(value, 10, &val);
-		if (temp != 0 || val < CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_MIN ||
-		    val > CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_MAX) {
-			hdd_err("Argument passed for CONCSETDWELLTIME ACTIVE MAX is incorrect");
+		if (temp != 0 ||
+		    cfg_in_range(CFG_ACTIVE_MAX_CHANNEL_TIME_CONC, val)) {
+			hdd_err("CONC ACTIVE MAX value %d incorrect", val);
 			retval = -EFAULT;
 			goto sme_config_free;
 		}
-
-		p_cfg->nActiveMaxChnTimeConc = val;
-		sme_config->csrConfig.nActiveMaxChnTimeConc = val;
-		sme_update_config(mac_handle, sme_config);
+		ucfg_scan_cfg_set_conc_active_dwelltime(hdd_ctx->psoc, val);
 	} else if (strncmp(command, "CONCSETDWELLTIME PASSIVE MAX", 28) == 0) {
 		if (drv_cmd_validate(command, 28)) {
 			hdd_err("Invalid driver command");
@@ -2300,16 +2299,13 @@ static int hdd_conc_set_dwell_time(hdd_context_t *hdd_ctx, uint8_t *command)
 
 		value = value + 29;
 		temp = kstrtou32(value, 10, &val);
-		if (temp != 0 || val < CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_MIN ||
-		    val > CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_MAX) {
-			hdd_err("Argument passed for CONCSETDWELLTIME PASSIVE MAX is incorrect");
+		if (temp != 0 ||
+		    cfg_in_range(CFG_PASSIVE_MAX_CHANNEL_TIME_CONC, val)) {
+			hdd_err("CONC PASSIVE MAX val %d incorrect", val);
 			retval = -EFAULT;
 			goto sme_config_free;
 		}
-
-		p_cfg->nPassiveMaxChnTimeConc = val;
-		sme_config->csrConfig.nPassiveMaxChnTimeConc = val;
-		sme_update_config(mac_handle, sme_config);
+		ucfg_scan_cfg_set_conc_passive_dwelltime(hdd_ctx->psoc, val);
 	} else {
 		retval = -EINVAL;
 	}

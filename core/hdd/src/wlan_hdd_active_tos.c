@@ -30,6 +30,7 @@
 #include <linux/if_ether.h>
 #include <wlan_hdd_active_tos.h>
 #include "wlan_policy_mgr_ucfg.h"
+#include "wlan_scan_ucfg_api.h"
 
 /**
  * tos - Type of service requested by the application
@@ -95,6 +96,7 @@ hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	int ret;
 	uint8_t def_sys_pref = 0;
+	uint32_t rest_conc_time;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -134,11 +136,12 @@ hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter,
 						    def_sys_pref);
 	}
 
+	ucfg_scan_cfg_get_conc_max_resttime(hdd_ctx->psoc, &rest_conc_time);
 	status = sme_send_limit_off_channel_params(hdd_ctx->mac_handle,
 					adapter->session_id,
 					is_tos_active,
 					max_off_chan_time,
-					hdd_ctx->config->nRestTimeConc,
+					rest_conc_time,
 					true);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("failed to set limit off chan params");

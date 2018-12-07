@@ -3525,14 +3525,6 @@ struct hdd_config {
 	uint32_t nInitialDwellTime;     /* in units of milliseconds */
 	bool initial_scan_no_dfs_chnl;
 
-	uint32_t nPassiveMaxChnTimeConc;        /* in units of milliseconds */
-	uint32_t nActiveMaxChnTimeConc; /* in units of milliseconds */
-	uint32_t nRestTimeConc; /* in units of milliseconds */
-	/* In units of milliseconds */
-	uint32_t       min_rest_time_conc;
-	/* In units of milliseconds */
-	uint32_t       idle_time_conc;
-
 	uint8_t nRssiFilterPeriod;
 
 	uint8_t wow_data_inactivity_timeout;

@@ -1672,13 +1672,6 @@ static void init_config_param(struct mac_context *mac)
 	mac->roam.configParam.nActiveMaxChnTime = CSR_ACTIVE_MAX_CHANNEL_TIME;
 	mac->roam.configParam.nPassiveMaxChnTime =
 		CSR_PASSIVE_MAX_CHANNEL_TIME;
-	mac->roam.configParam.nActiveMaxChnTimeConc =
-		CSR_ACTIVE_MAX_CHANNEL_TIME_CONC;
-	mac->roam.configParam.nPassiveMaxChnTimeConc =
-		CSR_PASSIVE_MAX_CHANNEL_TIME_CONC;
-	mac->roam.configParam.nRestTimeConc = CSR_REST_TIME_CONC;
-	mac->roam.configParam.min_rest_time_conc =  CSR_MIN_REST_TIME_CONC;
-	mac->roam.configParam.idle_time_conc = CSR_IDLE_TIME_CONC;
 	mac->roam.configParam.nTxPowerCap = CSR_MAX_TX_POWER;
 	mac->roam.configParam.statsReqPeriodicity =
 		CSR_MIN_GLOBAL_STAT_QUERY_PERIOD;
@@ -2544,19 +2537,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 			cfg_set_int(mac, WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
 				    pParam->nPassiveMaxChnTime);
 		}
-		if (pParam->nActiveMaxChnTimeConc) {
-			mac->roam.configParam.nActiveMaxChnTimeConc =
-				pParam->nActiveMaxChnTimeConc;
-		}
-		if (pParam->nPassiveMaxChnTimeConc) {
-			mac->roam.configParam.nPassiveMaxChnTimeConc =
-				pParam->nPassiveMaxChnTimeConc;
-		}
-		mac->roam.configParam.nRestTimeConc = pParam->nRestTimeConc;
-		mac->roam.configParam.min_rest_time_conc =
-			pParam->min_rest_time_conc;
-		mac->roam.configParam.idle_time_conc = pParam->idle_time_conc;
-
 		mac->roam.configParam.uCfgDot11Mode =
 			csr_get_cfg_dot11_mode_from_csr_phy_mode(NULL,
 							mac->roam.configParam.
@@ -2777,11 +2757,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 	pParam->AdHocChannel5G = cfg_params->AdHocChannel5G;
 	pParam->nActiveMaxChnTime = cfg_params->nActiveMaxChnTime;
 	pParam->nPassiveMaxChnTime = cfg_params->nPassiveMaxChnTime;
-	pParam->nActiveMaxChnTimeConc = cfg_params->nActiveMaxChnTimeConc;
-	pParam->nPassiveMaxChnTimeConc = cfg_params->nPassiveMaxChnTimeConc;
-	pParam->nRestTimeConc = cfg_params->nRestTimeConc;
-	pParam->min_rest_time_conc = cfg_params->min_rest_time_conc;
-	pParam->idle_time_conc = cfg_params->idle_time_conc;
 	pParam->nScanResultAgeCount = cfg_params->agingCount;
 	pParam->bCatRssiOffset = cfg_params->bCatRssiOffset;
 	pParam->nTxPowerCap = cfg_params->nTxPowerCap;

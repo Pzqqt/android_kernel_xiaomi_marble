@@ -182,41 +182,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_SCAN_PROBE_REPEAT_TIME_MIN,
 		     CFG_SCAN_PROBE_REPEAT_TIME_MAX),
 
-	REG_VARIABLE(CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nPassiveMaxChnTimeConc,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_DEFAULT,
-		     CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_MIN,
-		     CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_MAX),
-
-	REG_VARIABLE(CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nActiveMaxChnTimeConc,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_DEFAULT,
-		     CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_MIN,
-		     CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_MAX),
-
-	REG_VARIABLE(CFG_REST_TIME_CONC_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nRestTimeConc,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_REST_TIME_CONC_DEFAULT,
-		     CFG_REST_TIME_CONC_MIN,
-		     CFG_REST_TIME_CONC_MAX),
-
-	REG_VARIABLE(CFG_MIN_REST_TIME_NAME, WLAN_PARAM_Integer,
-		      struct hdd_config, min_rest_time_conc,
-		      VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		      CFG_MIN_REST_TIME_DEFAULT,
-		      CFG_MIN_REST_TIME_MIN,
-		      CFG_MIN_REST_TIME_MAX),
-
-	REG_VARIABLE(CFG_IDLE_TIME_NAME, WLAN_PARAM_Integer,
-		      struct hdd_config, idle_time_conc,
-		      VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		      CFG_IDLE_TIME_DEFAULT,
-		      CFG_IDLE_TIME_MIN,
-		      CFG_IDLE_TIME_MAX),
-
 	REG_VARIABLE(CFG_MAX_TX_POWER_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, nTxPowerCap,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2527,13 +2492,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 					pConfig->initial_scan_no_dfs_chnl;
 	smeConfig->csrConfig.nActiveMaxChnTime = pConfig->nActiveMaxChnTime;
 	smeConfig->csrConfig.nPassiveMaxChnTime = pConfig->nPassiveMaxChnTime;
-	smeConfig->csrConfig.nActiveMaxChnTimeConc =
-		pConfig->nActiveMaxChnTimeConc;
-	smeConfig->csrConfig.nPassiveMaxChnTimeConc =
-		pConfig->nPassiveMaxChnTimeConc;
-	smeConfig->csrConfig.nRestTimeConc = pConfig->nRestTimeConc;
-	smeConfig->csrConfig.min_rest_time_conc = pConfig->min_rest_time_conc;
-	smeConfig->csrConfig.idle_time_conc     = pConfig->idle_time_conc;
 	/* Remaining config params not obtained from registry
 	 * On RF EVB beacon using channel 1.
 	 */

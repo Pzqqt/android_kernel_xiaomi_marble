@@ -14544,11 +14544,6 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 
 	scan_cfg.active_dwell = cfg->nActiveMaxChnTime;
 	scan_cfg.passive_dwell = cfg->nPassiveMaxChnTime;
-	scan_cfg.conc_active_dwell = cfg->nActiveMaxChnTimeConc;
-	scan_cfg.conc_passive_dwell = cfg->nPassiveMaxChnTimeConc;
-	scan_cfg.conc_max_rest_time = cfg->nRestTimeConc;
-	scan_cfg.conc_min_rest_time = cfg->min_rest_time_conc;
-	scan_cfg.conc_idle_time = cfg->idle_time_conc;
 	/* convert to ms */
 	scan_cfg.scan_cache_aging_time =
 		cfg->scanAgingTimeout * 1000;
