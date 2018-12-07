@@ -4273,9 +4273,26 @@ static void dp_vdev_flush_peers(struct dp_vdev *vdev)
 	}
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
-	for (i = 0; i < j ; i++)
+	for (i = 0; i < j ; i++) {
+		peer = dp_peer_find_by_id(soc, peer_ids[i]);
+		if (peer) {
+			dp_info("peer: %pM is getting flush",
+				peer->mac_addr.raw);
+			dp_peer_delete_wifi3(peer, 0);
+			/*
+			 * we need to call dp_peer_unref_del_find_by_id()
+			 * to remove additional ref count incremented
+			 * by dp_peer_find_by_id() call.
+			 *
+			 * Hold the ref count while executing
+			 * dp_peer_delete_wifi3() call.
+			 *
+			 */
+			dp_peer_unref_del_find_by_id(peer);
+		}
 		dp_rx_peer_unmap_handler(soc, peer_ids[i], vdev->vdev_id,
 					 NULL, 0);
+	}
 
 	qdf_mem_free(peer_ids);
 
@@ -4313,7 +4330,8 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	 * this will free all references held due to missing
 	 * unmap commands from Target
 	 */
-	if (hif_get_target_status(soc->hif_handle) == TARGET_STATUS_RESET)
+	if ((hif_get_target_status(soc->hif_handle) == TARGET_STATUS_RESET) ||
+	    !hif_is_target_ready(HIF_GET_SOFTC(soc->hif_handle)))
 		dp_vdev_flush_peers(vdev);
 
 	/*
@@ -5093,9 +5111,6 @@ void dp_peer_unref_delete(void *peer_handle)
 	uint16_t vdev_id;
 	bool delete_vdev;
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: peer %pK ref_cnt(before decrement): %d\n", __func__,
-		  peer, qdf_atomic_read(&peer->ref_cnt));
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
 	 * is zero until the peer references are removed from the hash
@@ -5876,7 +5891,6 @@ dp_aggregate_pdev_ctrl_frames_stats(struct dp_pdev *pdev)
 					FL("DP Peer deletion in progress"));
 				continue;
 			}
-
 			qdf_atomic_inc(&peer->ref_cnt);
 			waitcnt = 0;
 			dp_peer_rxtid_stats(peer, dp_rx_bar_stats_cb, pdev);

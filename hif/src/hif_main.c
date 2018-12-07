@@ -1131,9 +1131,14 @@ bool hif_is_target_ready(struct hif_softc *scn)
 
 	if (cbk && cbk->is_target_ready)
 		return cbk->is_target_ready(cbk->context);
-
-	return false;
+	/*
+	 * if callback is not registered then there is no way to determine
+	 * if target is ready. In-such case return true to indicate that
+	 * target is ready.
+	 */
+	return true;
 }
+qdf_export_symbol(hif_is_target_ready);
 
 /**
  * hif_batch_send() - API to access hif specific function
