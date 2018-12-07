@@ -1586,7 +1586,7 @@ static QDF_STATUS send_set_del_pmkid_cache_cmd_tlv(wmi_unified_t wmi_handle,
 		 WMITLV_GET_STRUCT_TLVLEN(
 			wmi_pdev_update_pmk_cache_cmd_fixed_param));
 
-	cmd->vdev_id = pmk_info->session_id;
+	cmd->vdev_id = pmk_info->vdev_id;
 
 	/* If pmk_info->pmk_len is 0, this is a flush request */
 	if (!pmk_info->pmk_len) {
