@@ -392,6 +392,8 @@ struct pmo_psoc_cfg {
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 	uint8_t packet_filters_bitmap;
 #endif
+	bool enable_sap_suspend;
+
 };
 
 /**

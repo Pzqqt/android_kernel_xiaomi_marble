@@ -342,6 +342,132 @@ enum hdd_wext_control {
 #define CFG_ENABLE_PACKET_LOG_ALL
 #endif
 
+#ifdef FEATURE_RUNTIME_PM
+/*
+ * <ini>
+ * gRuntimePM - enable runtime suspend
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable runtime_suspend
+ *
+ * Related: None
+ *
+ * Supported Feature: Power Save
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_RUNTIME_PM CFG_INI_BOOL( \
+		"gRuntimePM", \
+		0, \
+		"This ini is used to enable runtime_suspend")
+#define CFG_ENABLE_RUNTIME_PM_ALL \
+	CFG(CFG_ENABLE_RUNTIME_PM)
+#else
+#define CFG_ENABLE_RUNTIME_PM_ALL
+#endif
+
+/*
+ * <ini>
+ * gEnableMCCMode - Enable/Disable MCC feature.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable MCC feature.
+ *
+ * Related: None.
+ *
+ * Supported Feature: Concurrency
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_MCC_ENABLED CFG_INI_BOOL( \
+		"gEnableMCCMode", \
+		1, \
+		"Enable/Disable MCC feature")
+
+/*
+ * <ini>
+ * gInformBssRssiRaw - Report rssi in cfg80211_inform_bss_frame
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * Option to report rssi in cfg80211_inform_bss_frame()
+ *
+ * Related: None
+ *
+ * Supported Feature: N/A
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_INFORM_BSS_RSSI_RAW CFG_INI_BOOL( \
+		"gInformBssRssiRaw", \
+		1, \
+		"Option to report rssi in cfg80211_inform_bss_frame")
+
+#ifdef FEATURE_WLAN_DYNAMIC_CVM
+/*
+ * <ini>
+ * gConfigVCmodeBitmap - Bitmap for operating voltage corner mode
+ * @Min: 0x00000000
+ * @Max: 0x0fffffff
+ * @Default: 0x0000000a
+ * This ini is used to set operating voltage corner mode for differenet
+ * phymode and bw configurations. Every 2 bits till BIT27 are dedicated
+ * for a specific configuration. Bit values decide the type of voltage
+ * corner mode. All the details below -
+ *
+ * Configure operating voltage corner mode based on phymode and bw.
+ * bit 0-1 -   operating voltage corner mode for 11a/b.
+ * bit 2-3 -   operating voltage corner mode for 11g.
+ * bit 4-5 -   operating voltage corner mode for 11n, 20MHz, 1x1.
+ * bit 6-7 -   operating voltage corner mode for 11n, 20MHz, 2x2.
+ * bit 8-9 -   operating voltage corner mode for 11n, 40MHz, 1x1.
+ * bit 10-11 - operating voltage corner mode for 11n, 40MHz, 2x2.
+ * bit 12-13 - operating voltage corner mode for 11ac, 20MHz, 1x1.
+ * bit 14-15 - operating voltage corner mode for 11ac, 20MHz, 2x2.
+ * bit 16-17 - operating voltage corner mode for 11ac, 40MHz, 1x1.
+ * bit 18-19 - operating voltage corner mode for 11ac, 40MHz, 2x2.
+ * bit 20-21 - operating voltage corner mode for 11ac, 80MHz, 1x1.
+ * bit 22-23 - operating voltage corner mode for 11ac, 80MHz, 2x2.
+ * bit 24-25 - operating voltage corner mode for 11ac, 160MHz, 1x1.
+ * bit 26-27 - operating voltage corner mode for 11ac, 160MHz, 2x2.
+ * ---------------------------------------------
+ * 00 - Static voltage corner SVS
+ * 01 - static voltage corner LOW SVS
+ * 10 - Dynamic voltage corner selection based on TPUT
+ * 11 - Dynamic voltage corner selection based on TPUT and Tx Flush counters
+
+ * Related: None
+ *
+ * Supported Feature: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_VC_MODE_BITMAP CFG_INI_INT( \
+	"gConfigVCmode", \
+	0x00000000, \
+	0x0fffffff, \
+	0x00000005, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Bitmap for operating voltage corner mode")
+
+#define CFG_VC_MODE_BITMAP_ALL CFG(CFG_VC_MODE_BITMAP)
+#else
+#define CFG_VC_MODE_BITMAP_ALL
+#endif
+
 /*
  * <ini>
  * gOperatingChannel- Default STA operating channel
@@ -399,10 +525,11 @@ enum hdd_wext_control {
  * along with the creation of wlan0 and p2p0. The name of the interface is
  * specified as the parameter
  *
- * Usage: Internal/External
+ * Usage: Internal
  *
  * </ini>
  */
+
 #define CFG_ENABLE_CONCURRENT_STA CFG_INI_STRING( \
 		"gEnableConcurrentSTA", \
 		0, \
@@ -443,6 +570,8 @@ enum hdd_wext_control {
 
 #define CFG_HDD_ALL \
 	CFG_ENABLE_PACKET_LOG_ALL \
+	CFG_ENABLE_RUNTIME_PM_ALL \
+	CFG_VC_MODE_BITMAP_ALL \
 	CFG_WLAN_AUTO_SHUTDOWN_ALL \
 	CFG_WLAN_LOGGING_SUPPORT_ALL \
 	CFG(CFG_BUG_ON_REINIT_FAILURE) \
@@ -451,7 +580,9 @@ enum hdd_wext_control {
 	CFG(CFG_ENABLE_FW_LOG) \
 	CFG(CFG_ENABLE_FW_UART_PRINT) \
 	CFG(CFG_ENABLE_RAMDUMP_COLLECTION) \
+	CFG(CFG_ENABLE_MCC_ENABLED) \
 	CFG(CFG_INTERFACE_CHANGE_WAIT) \
+	CFG(CFG_INFORM_BSS_RSSI_RAW) \
 	CFG(CFG_MULTICAST_HOST_FW_MSGS) \
 	CFG(CFG_NUM_VDEV_ENABLE) \
 	CFG(CFG_OPERATING_CHANNEL) \

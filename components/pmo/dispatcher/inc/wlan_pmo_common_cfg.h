@@ -346,7 +346,29 @@
 					 CFG_VALUE_OR_DEFAULT, \
 					 "Auto detect power save failure mode")
 
+/*
+ * <ini>
+ * gEnableSapSuspend - Enable/disable SAP Suspend
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ *
+ * Related: None
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_SAP_SUSPEND CFG_INI_BOOL( \
+			"gEnableSapSuspend", \
+			1, \
+			"Enable/disable SAP Suspend")
+
 #define CFG_PMO_COMMON_ALL \
+	CFG(CFG_ENABLE_SAP_SUSPEND) \
 	CFG(CFG_PMO_ENABLE_HOST_ARPOFFLOAD) \
 	CFG(CFG_PMO_HW_FILTER_MODE) \
 	CFG(CFG_PMO_ENABLE_HOST_SSDP) \

@@ -1231,3 +1231,52 @@ ucfg_mlme_set_ps_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS
+ucfg_mlme_get_sta_keepalive_method(struct wlan_objmgr_psoc *psoc,
+				   enum station_keepalive_method *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*val = mlme_obj->cfg.sta.sta_keepalive_method;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_enable_deauth_to_disassoc_map(struct wlan_objmgr_psoc *psoc,
+					    bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*value = mlme_obj->cfg.gen.enable_deauth_to_disassoc_map;
+	return QDF_STATUS_SUCCESS;
+}
+
+
+QDF_STATUS
+ucfg_mlme_get_ap_random_bssid_enable(struct wlan_objmgr_psoc *psoc,
+				     bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		mlme_err("mlme obj null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*value = mlme_obj->cfg.sap_cfg.ap_random_bssid_enable;
+	return QDF_STATUS_SUCCESS;
+}

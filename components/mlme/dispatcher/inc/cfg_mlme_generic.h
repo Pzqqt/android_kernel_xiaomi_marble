@@ -505,6 +505,28 @@
 
 /*
  * <ini>
+ * gEnableDeauthToDisassocMap - Enables deauth to disassoc map
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set default  disassoc map
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_DEAUTH_TO_DISASSOC_MAP CFG_INI_BOOL( \
+		"gEnableDeauthToDisassocMap", \
+		0, \
+		"Enables deauth to disassoc map")
+
+/*
+ * <ini>
  * gEnableDebugLog - Enable/Disable the Connection related logs
  * @Min: 0
  * @Max: 0xFF
@@ -548,6 +570,7 @@
 	CFG(CFG_ENABLE_CRASH_INJECT) \
 	CFG(CFG_ENABLE_LPASS_SUPPORT) \
 	CFG(CFG_ENABLE_SELF_RECOVERY) \
+	CFG(CFG_ENABLE_DEAUTH_TO_DISASSOC_MAP) \
 	CFG(CFG_SAP_DOT11MC) \
 	CFG(CFG_ENABLE_FATAL_EVENT_TRIGGER) \
 	CFG(CFG_SUB_20_CHANNEL_WIDTH) \

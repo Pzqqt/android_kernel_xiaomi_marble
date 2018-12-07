@@ -347,6 +347,8 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 	gen->fw_timeout_crash =
 		cfg_get(psoc, CFG_CRASH_FW_TIMEOUT);
 	gen->debug_packet_log = cfg_get(psoc, CFG_ENABLE_DEBUG_PACKET_LOG);
+	gen->enable_deauth_to_disassoc_map =
+		cfg_get(psoc, CFG_ENABLE_DEAUTH_TO_DISASSOC_MAP);
 	mlme_init_pmf_cfg(psoc, gen);
 	mlme_init_lpass_support_cfg(psoc, gen);
 
@@ -1150,6 +1152,8 @@ static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_SAP_FORCE_11N_FOR_11AC);
 	sap_cfg->go_force_11n_for_11ac =
 		cfg_get(psoc, CFG_GO_FORCE_11N_FOR_11AC);
+	sap_cfg->ap_random_bssid_enable =
+		cfg_get(psoc, CFG_AP_ENABLE_RANDOM_BSSID);
 
 }
 
@@ -1251,6 +1255,8 @@ static void mlme_init_sta_cfg(struct wlan_objmgr_psoc *psoc,
 	sta->current_rssi =
 		(uint32_t)cfg_default(CFG_CURRENT_RSSI);
 	sta->allow_tpc_from_ap = cfg_get(psoc, CFG_TX_POWER_CTRL);
+	sta->sta_keepalive_method =
+		cfg_get(psoc, CFG_STA_KEEPALIVE_METHOD);
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

@@ -9280,6 +9280,33 @@ static void hdd_init_packet_log(struct hdd_config *config,
 }
 #endif
 
+#ifdef FEATURE_RUNTIME_PM
+static void hdd_init_runtime_pm(struct hdd_config *config,
+				struct wlan_objmgr_psoc *psoc)
+{
+	config->runtime_pm = cfg_get(psoc, CFG_ENABLE_RUNTIME_PM);
+}
+#else
+static void hdd_init_runtime_pm(struct hdd_config *config,
+				struct wlan_objmgr_psoc *psoc)
+
+{
+}
+#endif
+
+#ifdef FEATURE_WLAN_DYNAMIC_CVM
+static void hdd_init_vc_mode_cfg_bitmap(struct hdd_config *config,
+					struct wlan_objmgr_psoc *psoc)
+{
+	config->vc_mode_cfg_bitmap = cfg_get(psoc, CFG_VC_MODE_BITMAP);
+}
+#else
+static void hdd_init_vc_mode_cfg_bitmap(struct hdd_config *config,
+					struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
 /**
  * hdd_cfg_params_init() - Initialize hdd params in hdd_config strucuture
  * @hdd_ctx - Pointer to HDD context
@@ -9326,7 +9353,11 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 	qdf_str_lcopy(config->dbs_scan_selection,
 		      cfg_get(psoc, CFG_DBS_SCAN_SELECTION),
 		      CFG_DBS_SCAN_PARAM_LENGTH);
+	config->enableMCC = cfg_get(psoc, CFG_ENABLE_MCC_ENABLED);
+	config->inform_bss_rssi_raw = cfg_get(psoc, CFG_INFORM_BSS_RSSI_RAW);
 
+	hdd_init_vc_mode_cfg_bitmap(config, psoc);
+	hdd_init_runtime_pm(config, psoc);
 	hdd_init_wlan_auto_shutdown(config, psoc);
 	hdd_init_wlan_logging_params(config, psoc);
 	hdd_init_packet_log(config, psoc);

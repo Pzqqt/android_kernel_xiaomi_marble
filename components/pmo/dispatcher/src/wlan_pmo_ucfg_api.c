@@ -782,3 +782,11 @@ ucfg_pmo_extwow_app2_tcp_rx_timeout(struct wlan_objmgr_psoc *psoc)
 	return pmo_psoc_ctx->psoc_cfg.extwow_app2_tcp_rx_timeout;
 }
 #endif
+
+bool
+ucfg_pmo_get_enable_sap_suspend(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.enable_sap_suspend;
+}
