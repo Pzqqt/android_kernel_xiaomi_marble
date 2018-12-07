@@ -4792,6 +4792,20 @@ QDF_STATUS lim_sta_mlme_vdev_disconnect_bss(struct vdev_mlme_obj *vdev_mlme,
 	}
 	return QDF_STATUS_SUCCESS;
 }
+
+static void lim_process_disconnect_sta(struct pe_session *session,
+				       struct scheduler_msg *msg)
+{
+	if (wlan_vdev_mlme_get_substate(session->vdev) ==
+	    WLAN_VDEV_SS_START_RESTART_PROGRESS)
+		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					      WLAN_VDEV_SM_EV_RESTART_REQ_FAIL,
+					      sizeof(*msg), msg);
+	else
+		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
+					      WLAN_VDEV_SM_EV_DOWN,
+					      sizeof(*msg), msg);
+}
 #endif
 
 static void lim_process_sme_disassoc_cnf(struct mac_context *mac_ctx,
@@ -4801,7 +4815,6 @@ static void lim_process_sme_disassoc_cnf(struct mac_context *mac_ctx,
 	tSirSmeDisassocCnf sme_disassoc_cnf;
 	struct pe_session *session;
 	uint8_t session_id;
-	QDF_STATUS status;
 
 	qdf_mem_copy(&sme_disassoc_cnf, msg->bodyptr,
 		     sizeof(struct sSirSmeDisassocCnf));
@@ -4810,15 +4823,11 @@ static void lim_process_sme_disassoc_cnf(struct mac_context *mac_ctx,
 					   sme_disassoc_cnf.bssid.bytes,
 					   &session_id);
 
-	if (LIM_IS_STA_ROLE(session)) {
-		status = wlan_vdev_mlme_sm_deliver_evt(session->vdev,
-						       WLAN_VDEV_SM_EV_DOWN,
-						       sizeof(*msg),
-						       msg);
-	} else {
+	if (LIM_IS_STA_ROLE(session))
+		lim_process_disconnect_sta(session, msg);
+	else
 		__lim_process_sme_disassoc_cnf(mac_ctx,
 					       (uint32_t *)msg->bodyptr);
-	}
 #else
 	__lim_process_sme_disassoc_cnf(mac_ctx, (uint32_t *)msg->bodyptr);
 #endif
@@ -4831,22 +4840,17 @@ static void lim_process_sme_disassoc_req(struct mac_context *mac_ctx,
 	tSirSmeDisassocReq disassoc_req;
 	struct pe_session *session;
 	uint8_t session_id;
-	QDF_STATUS status;
 
 	qdf_mem_copy(&disassoc_req, msg->bodyptr, sizeof(tSirSmeDisassocReq));
 
 	session = pe_find_session_by_bssid(mac_ctx,
 					   disassoc_req.bssid.bytes,
 					   &session_id);
-	if (LIM_IS_STA_ROLE(session)) {
-		status = wlan_vdev_mlme_sm_deliver_evt(session->vdev,
-						       WLAN_VDEV_SM_EV_DOWN,
-						       sizeof(*msg),
-						       msg);
-	} else {
+	if (LIM_IS_STA_ROLE(session))
+		lim_process_disconnect_sta(session, msg);
+	else
 		__lim_process_sme_disassoc_req(mac_ctx,
 					       (uint32_t *)msg->bodyptr);
-	}
 #else
 	__lim_process_sme_disassoc_req(mac_ctx, (uint32_t *)msg->bodyptr);
 #endif
@@ -4859,22 +4863,17 @@ static void lim_process_sme_deauth_req(struct mac_context *mac_ctx,
 	tSirSmeDeauthReq sme_deauth_req;
 	struct pe_session *session;
 	uint8_t session_id;
-	QDF_STATUS status;
 
 	qdf_mem_copy(&sme_deauth_req, msg->bodyptr, sizeof(tSirSmeDeauthReq));
 
 	session = pe_find_session_by_bssid(mac_ctx,
 					   sme_deauth_req.bssid.bytes,
 					   &session_id);
-	if (LIM_IS_STA_ROLE(session)) {
-		status = wlan_vdev_mlme_sm_deliver_evt(session->vdev,
-						       WLAN_VDEV_SM_EV_DOWN,
-						       sizeof(*msg),
-						       msg);
-	} else {
+	if (LIM_IS_STA_ROLE(session))
+		lim_process_disconnect_sta(session, msg);
+	else
 		__lim_process_sme_deauth_req(mac_ctx,
 					     (uint32_t *)msg->bodyptr);
-	}
 #else
 	__lim_process_sme_deauth_req(mac_ctx, (uint32_t *)msg->bodyptr);
 #endif
