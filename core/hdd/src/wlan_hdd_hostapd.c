@@ -4603,6 +4603,7 @@ hdd_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
 static void wlan_hdd_set_sap_mcc_chnl_avoid(struct hdd_context *hdd_ctx)
 {
 	uint8_t sap_mcc_avoid = 0;
+	QDF_STATUS status;
 
 	status = ucfg_mlme_get_sap_mcc_chnl_avoid(hdd_ctx->psoc,
 						  &sap_mcc_avoid);
