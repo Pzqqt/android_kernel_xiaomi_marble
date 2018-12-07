@@ -23,6 +23,8 @@
 #include "cdp_txrx_ipa.h"
 #include "wal_rx_desc.h"
 #include "qdf_str.h"
+#include "sir_api.h"
+#include "host_diag_core_event.h"
 
 static struct wlan_ipa_priv *gp_ipa;
 
