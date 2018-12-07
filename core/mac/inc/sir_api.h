@@ -1359,14 +1359,6 @@ typedef struct sAniSecurityStat {
 
 } tAniSecurityStat, *tpAniSecurityStat;
 
-typedef struct sAniTxRxStats {
-	tAni64BitCounters txFrames;
-	tAni64BitCounters rxFrames;
-	tAni64BitCounters nRcvBytes;
-	tAni64BitCounters nXmitBytes;
-
-} tAniTxRxStats, *tpAniTxRxStats;
-
 typedef struct sAniSecStats {
 	tAniSecurityStat aes;
 	tAni64BitCounters aesReplays;
