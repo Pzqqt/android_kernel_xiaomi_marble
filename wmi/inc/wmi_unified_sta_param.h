@@ -287,7 +287,7 @@ struct sar_limit_event {
 
 /**
  * struct wmi_unified_pmk_cache - used to set del pmkid cache
- * @tlv_header: TLV header, TLV tag and len; tag equals WMITLV_TAG_ARRAY_UINT32
+ * @vdev_id: ID of the vdev being configured
  * @pmk_len: PMK len
  *	for big-endian hosts, manual endian conversion will be needed to keep
  *	the array values in their original order in spite of the automatic
@@ -302,9 +302,11 @@ struct sar_limit_event {
  * @action_flag: add/delete the entry
  */
 struct wmi_unified_pmk_cache {
-	uint32_t            tlv_header;
-	uint32_t            pmk_len;
+	union {
+	uint8_t             vdev_id;
 	uint8_t             session_id;
+	};
+	uint32_t            pmk_len;
 	uint8_t             pmk[WMI_UNIFIED_MAX_PMK_LEN];
 	uint32_t            pmkid_len;
 	uint8_t             pmkid[WMI_UNIFIED_MAX_PMKID_LEN];
