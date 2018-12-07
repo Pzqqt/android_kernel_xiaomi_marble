@@ -758,12 +758,6 @@ struct hdd_beacon_data {
 	int dtim_period;
 };
 
-struct action_pkt_buffer {
-	uint8_t *frame_ptr;
-	uint32_t frame_length;
-	uint16_t freq;
-};
-
 /**
  * struct hdd_mon_set_ch_info - Holds monitor mode channel switch params
  * @channel: Channel number.
