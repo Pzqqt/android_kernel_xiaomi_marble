@@ -44,19 +44,19 @@ static inline int wcd_irq_exit(struct wcd_irq_info *irq_info,
 {
 	return 0;
 };
-static inline int wcd_request_irq(struct wcd_irq_info *irq,
+static inline int wcd_request_irq(struct wcd_irq_info *irq_info,
 				  int irq, const char *name,
 				  irq_handler_t handler, void *data)
 {
 	return 0;
 };
-static inline void wcd_free_irq(struct wcd_irq_info *irq, int irq, void *data);
+static inline void wcd_free_irq(struct wcd_irq_info *irq_info, int irq, void *data);
 {
 };
-static inline void wcd_enable_irq(struct wcd_irq_info *irq, int irq);
+static inline void wcd_enable_irq(struct wcd_irq_info *irq_info, int irq);
 {
 };
-static inline void wcd_disable_irq(struct wcd_irq_info *irq, int irq);
+static inline void wcd_disable_irq(struct wcd_irq_info *irq_info, int irq);
 {
 };
 #endif
