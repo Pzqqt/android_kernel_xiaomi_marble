@@ -1462,7 +1462,6 @@ typedef struct sSirSmeDisassocRsp {
 	uint16_t transactionId; /* Transaction ID for cmd */
 	tSirResultCodes statusCode;
 	struct qdf_mac_addr peer_macaddr;
-	tAniStaStatStruct perStaStats;  /* STA stats */
 	uint16_t staId;
 } tSirSmeDisassocRsp, *tpSirSmeDisassocRsp;
 
@@ -1475,7 +1474,6 @@ typedef struct sSirSmeDisassocInd {
 	tSirResultCodes statusCode;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peer_macaddr;
-	tAniStaStatStruct perStaStats;  /* STA stats */
 	uint16_t staId;
 	uint32_t reasonCode;
 } tSirSmeDisassocInd, *tpSirSmeDisassocInd;
