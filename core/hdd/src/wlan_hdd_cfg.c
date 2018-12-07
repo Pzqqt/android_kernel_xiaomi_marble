@@ -189,26 +189,12 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_MIN,
 		     CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_MAX),
 
-	REG_VARIABLE(CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nPassiveMinChnTimeConc,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_DEFAULT,
-		     CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_MIN,
-		     CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_MAX),
-
 	REG_VARIABLE(CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, nActiveMaxChnTimeConc,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_DEFAULT,
 		     CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_MIN,
 		     CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_MAX),
-
-	REG_VARIABLE(CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nActiveMinChnTimeConc,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_DEFAULT,
-		     CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_MIN,
-		     CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_MAX),
 
 	REG_VARIABLE(CFG_REST_TIME_CONC_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, nRestTimeConc,
@@ -2583,12 +2569,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.nPassiveMaxChnTime = pConfig->nPassiveMaxChnTime;
 	smeConfig->csrConfig.nActiveMaxChnTimeConc =
 		pConfig->nActiveMaxChnTimeConc;
-	smeConfig->csrConfig.nActiveMinChnTimeConc =
-		pConfig->nActiveMinChnTimeConc;
 	smeConfig->csrConfig.nPassiveMaxChnTimeConc =
 		pConfig->nPassiveMaxChnTimeConc;
-	smeConfig->csrConfig.nPassiveMinChnTimeConc =
-		pConfig->nPassiveMinChnTimeConc;
 	smeConfig->csrConfig.nRestTimeConc = pConfig->nRestTimeConc;
 	smeConfig->csrConfig.min_rest_time_conc = pConfig->min_rest_time_conc;
 	smeConfig->csrConfig.idle_time_conc     = pConfig->idle_time_conc;

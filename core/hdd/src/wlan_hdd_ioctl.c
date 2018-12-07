@@ -2291,25 +2291,6 @@ static int hdd_conc_set_dwell_time(hdd_context_t *hdd_ctx, uint8_t *command)
 		p_cfg->nActiveMaxChnTimeConc = val;
 		sme_config->csrConfig.nActiveMaxChnTimeConc = val;
 		sme_update_config(mac_handle, sme_config);
-	} else if (strncmp(command, "CONCSETDWELLTIME ACTIVE MIN", 27) == 0) {
-		if (drv_cmd_validate(command, 27)) {
-			hdd_err("Invalid driver command");
-			retval = -EINVAL;
-			goto sme_config_free;
-		}
-
-		value = value + 28;
-		temp = kstrtou32(value, 10, &val);
-		if (temp != 0 || val < CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_MIN ||
-		    val > CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_MAX) {
-			hdd_err("argument passed for CONCSETDWELLTIME ACTIVE MIN is incorrect");
-			retval = -EFAULT;
-			goto sme_config_free;
-		}
-
-		p_cfg->nActiveMinChnTimeConc = val;
-		sme_config->csrConfig.nActiveMinChnTimeConc = val;
-		sme_update_config(mac_handle, sme_config);
 	} else if (strncmp(command, "CONCSETDWELLTIME PASSIVE MAX", 28) == 0) {
 		if (drv_cmd_validate(command, 28)) {
 			hdd_err("Invalid driver command");
@@ -2328,25 +2309,6 @@ static int hdd_conc_set_dwell_time(hdd_context_t *hdd_ctx, uint8_t *command)
 
 		p_cfg->nPassiveMaxChnTimeConc = val;
 		sme_config->csrConfig.nPassiveMaxChnTimeConc = val;
-		sme_update_config(mac_handle, sme_config);
-	} else if (strncmp(command, "CONCSETDWELLTIME PASSIVE MIN", 28) == 0) {
-		if (drv_cmd_validate(command, 28)) {
-			hdd_err("Invalid driver command");
-			retval = -EINVAL;
-			goto sme_config_free;
-		}
-
-		value = value + 29;
-		temp = kstrtou32(value, 10, &val);
-		if (temp != 0 || val < CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_MIN ||
-		    val > CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_MAX) {
-			hdd_err("argument passed for SETDWELLTIME PASSIVE MIN is incorrect");
-			retval = -EFAULT;
-			goto sme_config_free;
-		}
-
-		p_cfg->nPassiveMinChnTimeConc = val;
-		sme_config->csrConfig.nPassiveMinChnTimeConc = val;
 		sme_update_config(mac_handle, sme_config);
 	} else {
 		retval = -EINVAL;

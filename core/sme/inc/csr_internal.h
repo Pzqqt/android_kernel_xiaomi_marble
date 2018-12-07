@@ -400,9 +400,7 @@ struct csr_config {
 
 	uint32_t nInitialDwellTime;     /* in units of milliseconds */
 	bool initial_scan_no_dfs_chnl;
-	uint32_t nPassiveMinChnTimeConc;/* in units of milliseconds */
 	uint32_t nPassiveMaxChnTimeConc;/* in units of milliseconds */
-	uint32_t nActiveMinChnTimeConc; /* in units of milliseconds */
 	uint32_t nActiveMaxChnTimeConc; /* in units of milliseconds */
 	uint32_t nRestTimeConc;         /* in units of milliseconds */
 	/* In units of milliseconds */

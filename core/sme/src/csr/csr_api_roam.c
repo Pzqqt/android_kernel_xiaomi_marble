@@ -1674,12 +1674,8 @@ static void init_config_param(struct mac_context *mac)
 		CSR_PASSIVE_MAX_CHANNEL_TIME;
 	mac->roam.configParam.nActiveMaxChnTimeConc =
 		CSR_ACTIVE_MAX_CHANNEL_TIME_CONC;
-	mac->roam.configParam.nActiveMinChnTimeConc =
-		CSR_ACTIVE_MIN_CHANNEL_TIME_CONC;
 	mac->roam.configParam.nPassiveMaxChnTimeConc =
 		CSR_PASSIVE_MAX_CHANNEL_TIME_CONC;
-	mac->roam.configParam.nPassiveMinChnTimeConc =
-		CSR_PASSIVE_MIN_CHANNEL_TIME_CONC;
 	mac->roam.configParam.nRestTimeConc = CSR_REST_TIME_CONC;
 	mac->roam.configParam.min_rest_time_conc =  CSR_MIN_REST_TIME_CONC;
 	mac->roam.configParam.idle_time_conc = CSR_IDLE_TIME_CONC;
@@ -2552,17 +2548,9 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 			mac->roam.configParam.nActiveMaxChnTimeConc =
 				pParam->nActiveMaxChnTimeConc;
 		}
-		if (pParam->nActiveMinChnTimeConc) {
-			mac->roam.configParam.nActiveMinChnTimeConc =
-				pParam->nActiveMinChnTimeConc;
-		}
 		if (pParam->nPassiveMaxChnTimeConc) {
 			mac->roam.configParam.nPassiveMaxChnTimeConc =
 				pParam->nPassiveMaxChnTimeConc;
-		}
-		if (pParam->nPassiveMinChnTimeConc) {
-			mac->roam.configParam.nPassiveMinChnTimeConc =
-				pParam->nPassiveMinChnTimeConc;
 		}
 		mac->roam.configParam.nRestTimeConc = pParam->nRestTimeConc;
 		mac->roam.configParam.min_rest_time_conc =
@@ -2790,9 +2778,7 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 	pParam->nActiveMaxChnTime = cfg_params->nActiveMaxChnTime;
 	pParam->nPassiveMaxChnTime = cfg_params->nPassiveMaxChnTime;
 	pParam->nActiveMaxChnTimeConc = cfg_params->nActiveMaxChnTimeConc;
-	pParam->nActiveMinChnTimeConc = cfg_params->nActiveMinChnTimeConc;
 	pParam->nPassiveMaxChnTimeConc = cfg_params->nPassiveMaxChnTimeConc;
-	pParam->nPassiveMinChnTimeConc = cfg_params->nPassiveMinChnTimeConc;
 	pParam->nRestTimeConc = cfg_params->nRestTimeConc;
 	pParam->min_rest_time_conc = cfg_params->min_rest_time_conc;
 	pParam->idle_time_conc = cfg_params->idle_time_conc;
