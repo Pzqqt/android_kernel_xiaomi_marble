@@ -1348,17 +1348,6 @@ typedef struct sAni64BitCounters {
 	uint32_t Lo;
 } tAni64BitCounters, *tpAni64BitCounters;
 
-typedef struct sAniSecurityStat {
-	tAni64BitCounters txBlks;
-	tAni64BitCounters rxBlks;
-	tAni64BitCounters formatErrorCnt;
-	tAni64BitCounters decryptErr;
-	tAni64BitCounters protExclCnt;
-	tAni64BitCounters unDecryptableCnt;
-	tAni64BitCounters decryptOkCnt;
-
-} tAniSecurityStat, *tpAniSecurityStat;
-
 typedef enum sPacketType {
 	ePACKET_TYPE_UNKNOWN,
 	ePACKET_TYPE_11A,
