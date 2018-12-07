@@ -1139,10 +1139,6 @@ typedef struct tagCsrConfigParam {
 	uint32_t wlm_latency_flags[CSR_NUM_WLM_LATENCY_LEVEL];
 	bool is_force_1x1;
 	uint8_t oce_feature_bitmap;
-	uint32_t btm_offload_config;
-	uint32_t btm_solicited_timeout;
-	uint32_t btm_max_attempt_cnt;
-	uint32_t btm_sticky_time;
 	uint32_t offload_11k_enable_bitmask;
 	bool wep_tkip_in_he;
 	struct csr_neighbor_report_offload_params neighbor_report_offload;

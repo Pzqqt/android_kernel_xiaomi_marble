@@ -1835,6 +1835,14 @@ static void mlme_init_wps_params_cfg(struct wlan_objmgr_psoc *psoc,
 	wps_params->wps_version = cfg_default(CFG_WPS_VERSION);
 }
 
+static void mlme_init_btm_cfg(struct wlan_mlme_btm *btm)
+{
+	btm->btm_offload_config = cfg_default(CFG_BTM_ENABLE);
+	btm->btm_solicited_timeout = cfg_default(CFG_BTM_SOLICITED_TIMEOUT);
+	btm->btm_max_attempt_cnt = cfg_default(CFG_BTM_MAX_ATTEMPT_CNT);
+	btm->btm_sticky_time = cfg_default(CFG_BTM_STICKY_TIME);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -1877,6 +1885,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_wep_cfg(&mlme_cfg->wep_params);
 	mlme_init_wifi_pos_cfg(psoc, &mlme_cfg->wifi_pos_cfg);
 	mlme_init_wps_params_cfg(psoc, &mlme_cfg->wps_params);
+	mlme_init_btm_cfg(&mlme_cfg->btm);
 
 	return status;
 }

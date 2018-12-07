@@ -1133,13 +1133,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_LATENCY_FLAGS_ULTRALOW_MIN,
 		     CFG_LATENCY_FLAGS_ULTRALOW_MAX),
 
-	REG_VARIABLE(CFG_BTM_ENABLE_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, btm_offload_config,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BTM_ENABLE_DEFAULT,
-		     CFG_BTM_ENABLE_MIN,
-		     CFG_BTM_ENABLE_MAX),
-
 #ifdef WLAN_FEATURE_SAE
 	REG_VARIABLE(CFG_IS_SAE_ENABLED_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, is_sae_enabled,
@@ -1148,27 +1141,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_IS_SAE_ENABLED_MIN,
 		CFG_IS_SAE_ENABLED_MAX),
 #endif
-
-	REG_VARIABLE(CFG_BTM_SOLICITED_TIMEOUT, WLAN_PARAM_Integer,
-		     struct hdd_config, btm_solicited_timeout,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BTM_SOLICITED_TIMEOUT_DEFAULT,
-		     CFG_BTM_SOLICITED_TIMEOUT_MIN,
-		     CFG_BTM_SOLICITED_TIMEOUT_MAX),
-
-	REG_VARIABLE(CFG_BTM_MAX_ATTEMPT_CNT, WLAN_PARAM_Integer,
-		     struct hdd_config, btm_max_attempt_cnt,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BTM_MAX_ATTEMPT_CNT_DEFAULT,
-		     CFG_BTM_MAX_ATTEMPT_CNT_MIN,
-		     CFG_BTM_MAX_ATTEMPT_CNT_MAX),
-
-	REG_VARIABLE(CFG_BTM_STICKY_TIME, WLAN_PARAM_Integer,
-		     struct hdd_config, btm_sticky_time,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_BTM_STICKY_TIME_DEFAULT,
-		     CFG_BTM_STICKY_TIME_MIN,
-		     CFG_BTM_STICKY_TIME_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_GCMP_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, gcmp_enabled,
@@ -2952,15 +2924,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	smeConfig->csrConfig.is_force_1x1 =
 			hdd_ctx->config->is_force_1x1;
-
-	smeConfig->csrConfig.btm_offload_config =
-			hdd_ctx->config->btm_offload_config;
-	smeConfig->csrConfig.btm_solicited_timeout =
-			hdd_ctx->config->btm_solicited_timeout;
-	smeConfig->csrConfig.btm_max_attempt_cnt =
-			hdd_ctx->config->btm_max_attempt_cnt;
-	smeConfig->csrConfig.btm_sticky_time =
-			hdd_ctx->config->btm_sticky_time;
 	hdd_set_sme_cfgs_related_to_plcy_mgr(hdd_ctx, smeConfig);
 	hdd_update_11k_offload_params(hdd_ctx->config,
 					&smeConfig->csrConfig);
