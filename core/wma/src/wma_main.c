@@ -8661,8 +8661,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case SIR_HAL_SET_DEL_PMKID_CACHE:
-		wma_set_del_pmkid_cache(wma_handle,
-			(struct wmi_unified_pmk_cache *) msg->bodyptr);
+		wma_set_del_pmkid_cache(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case SIR_HAL_HLP_IE_INFO:

@@ -15307,7 +15307,7 @@ QDF_STATUS sme_set_del_pmkid_cache(mac_handle_t mac_handle, uint8_t session_id,
 
 	qdf_mem_set(pmk_cache, sizeof(*pmk_cache), 0);
 
-	pmk_cache->session_id = session_id;
+	pmk_cache->vdev_id = session_id;
 
 	if (!pmk_cache_info)
 		goto send_flush_cmd;
