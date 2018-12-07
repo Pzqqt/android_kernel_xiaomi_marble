@@ -1343,11 +1343,6 @@ typedef struct sSirSmeTkipCntrMeasReq {
 	bool bEnable;           /* Start/stop countermeasures */
 } qdf_packed tSirSmeTkipCntrMeasReq, *tpSirSmeTkipCntrMeasReq;
 
-typedef struct sAni64BitCounters {
-	uint32_t Hi;
-	uint32_t Lo;
-} tAni64BitCounters, *tpAni64BitCounters;
-
 typedef enum sPacketType {
 	ePACKET_TYPE_UNKNOWN,
 	ePACKET_TYPE_11A,
