@@ -1333,14 +1333,6 @@ typedef struct sSirSmeDisassocReq {
 	bool process_ho_fail;
 } qdf_packed tSirSmeDisassocReq, *tpSirSmeDisassocReq;
 
-typedef enum sPacketType {
-	ePACKET_TYPE_UNKNOWN,
-	ePACKET_TYPE_11A,
-	ePACKET_TYPE_11G,
-	ePACKET_TYPE_11B,
-	ePACKET_TYPE_11N
-} tPacketType, *tpPacketType;
-
 /* / Definition for Disassociation response */
 typedef struct sSirSmeDisassocRsp {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_RSP */
