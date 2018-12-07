@@ -191,7 +191,6 @@ int hdd_sap_context_init(struct hdd_context *hdd_ctx)
 
 	mutex_init(&hdd_ctx->sap_lock);
 	qdf_wake_lock_create(&hdd_ctx->sap_wake_lock, "qcom_sap_wakelock");
-	qdf_spinlock_create(&hdd_ctx->sap_update_info_lock);
 
 	return 0;
 }
@@ -386,9 +385,6 @@ void hdd_sap_context_destroy(struct hdd_context *hdd_ctx)
 
 	mutex_destroy(&hdd_ctx->sap_lock);
 	qdf_wake_lock_destroy(&hdd_ctx->sap_wake_lock);
-
-	qdf_spinlock_destroy(&hdd_ctx->sap_update_info_lock);
-
 }
 
 /**
@@ -5465,7 +5461,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	struct hdd_beacon_data *old;
 	int ret;
 	mac_handle_t mac_handle;
-	uint8_t conc_rule1 = 0;
 
 	hdd_enter();
 
@@ -5520,19 +5515,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		wlan_hdd_del_station(adapter);
 
 	cds_flush_work(&adapter->sap_stop_bss_work);
-	ucfg_policy_mgr_get_conc_rule1(hdd_ctx->psoc, &conc_rule1);
-	/*
-	 * When ever stop ap adapter gets called, we need to check
-	 * whether any restart AP work is pending. If any restart is pending
-	 * then lets finish it and go ahead from there.
-	 */
-	if (conc_rule1 && (QDF_SAP_MODE == adapter->device_mode)) {
-		cds_flush_work(&hdd_ctx->sap_start_work);
-		hdd_debug("Canceled the pending restart work");
-		qdf_spin_lock(&hdd_ctx->sap_update_info_lock);
-		hdd_ctx->is_sap_restart_required = false;
-		qdf_spin_unlock(&hdd_ctx->sap_update_info_lock);
-	}
 	adapter->session.ap.sap_config.acs_cfg.acs_mode = false;
 	qdf_atomic_set(&adapter->session.ap.acs_in_progress, 0);
 	wlan_hdd_undo_acs(adapter);

@@ -7330,7 +7330,6 @@ void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	}
 
 	qdf_spinlock_destroy(&hdd_ctx->hdd_adapter_lock);
-	qdf_spinlock_destroy(&hdd_ctx->sta_update_info_lock);
 	qdf_spinlock_destroy(&hdd_ctx->connection_status_lock);
 	wlan_hdd_cache_chann_mutex_destroy(hdd_ctx);
 
@@ -9120,7 +9119,6 @@ static int hdd_context_init(struct hdd_context *hdd_ctx)
 	init_completion(&hdd_ctx->ready_to_suspend);
 
 	qdf_spinlock_create(&hdd_ctx->connection_status_lock);
-	qdf_spinlock_create(&hdd_ctx->sta_update_info_lock);
 	qdf_spinlock_create(&hdd_ctx->hdd_adapter_lock);
 
 	qdf_list_create(&hdd_ctx->hdd_adapters, 0);
