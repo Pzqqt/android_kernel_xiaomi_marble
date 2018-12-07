@@ -449,7 +449,7 @@ QDF_STATUS mlme_set_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	mlme_priv->chan_switch_in_progress = val;
 
@@ -467,7 +467,7 @@ bool mlme_is_chan_switch_in_progress(struct wlan_objmgr_vdev *vdev)
 		return false;
 	}
 
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	return mlme_priv->chan_switch_in_progress;
 }
@@ -485,7 +485,7 @@ ap_mlme_set_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	mlme_priv->hidden_ssid_restart_in_progress = val;
 
@@ -503,7 +503,7 @@ bool ap_mlme_is_hidden_ssid_restart_in_progress(struct wlan_objmgr_vdev *vdev)
 		return false;
 	}
 
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	return mlme_priv->hidden_ssid_restart_in_progress;
 }
@@ -519,7 +519,7 @@ QDF_STATUS mlme_set_connection_fail(struct wlan_objmgr_vdev *vdev, bool val)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	mlme_priv->connection_fail = val;
 
@@ -537,7 +537,7 @@ bool mlme_is_connection_fail(struct wlan_objmgr_vdev *vdev)
 		return false;
 	}
 
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	return mlme_priv->connection_fail;
 }
@@ -554,7 +554,7 @@ QDF_STATUS mlme_set_assoc_type(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	mlme_priv->assoc_type = assoc_type;
 
@@ -572,7 +572,7 @@ enum vdev_assoc_type  mlme_get_assoc_type(struct wlan_objmgr_vdev *vdev)
 		return false;
 	}
 
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	return mlme_priv->assoc_type;
 }
@@ -589,7 +589,7 @@ mlme_set_vdev_start_failed(struct wlan_objmgr_vdev *vdev, bool val)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	mlme_priv->vdev_start_failed = val;
 
@@ -607,25 +607,25 @@ bool mlme_get_vdev_start_failed(struct wlan_objmgr_vdev *vdev)
 		return false;
 	}
 
-	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->legacy_vdev_ptr;
+	mlme_priv = (struct mlme_legacy_priv *)vdev_mlme->ext_vdev_ptr;
 
 	return mlme_priv->vdev_start_failed;
 }
 
 
 /**
- * mlme_legacy_hdl_create () - Create mlme legacy priv object
+ * vdevmgr_mlme_ext_hdl_create () - Create mlme legacy priv object
  * @vdev_mlme: vdev mlme object
  *
  * Return: QDF_STATUS
  */
 static
-QDF_STATUS mlme_legacy_hdl_create(struct vdev_mlme_obj *vdev_mlme)
+QDF_STATUS vdevmgr_mlme_ext_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 {
-	vdev_mlme->legacy_vdev_ptr =
+	vdev_mlme->ext_vdev_ptr =
 		qdf_mem_malloc(sizeof(struct mlme_legacy_priv));
-	if (!vdev_mlme->legacy_vdev_ptr) {
-		mlme_err("failed to allocate meory for legacy_vdev_ptr");
+	if (!vdev_mlme->ext_vdev_ptr) {
+		mlme_err("failed to allocate meory for ext_vdev_ptr");
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -633,16 +633,16 @@ QDF_STATUS mlme_legacy_hdl_create(struct vdev_mlme_obj *vdev_mlme)
 }
 
 /**
- * mlme_legacy_hdl_destroy () - Destroy mlme legacy priv object
+ * vdevmgr_mlme_ext_hdl_destroy () - Destroy mlme legacy priv object
  * @vdev_mlme: vdev mlme object
  *
  * Return: QDF_STATUS
  */
 static
-QDF_STATUS mlme_legacy_hdl_destroy(struct vdev_mlme_obj *vdev_mlme)
+QDF_STATUS vdevmgr_mlme_ext_hdl_destroy(struct vdev_mlme_obj *vdev_mlme)
 {
-	qdf_mem_free(vdev_mlme->legacy_vdev_ptr);
-	vdev_mlme->legacy_vdev_ptr = NULL;
+	qdf_mem_free(vdev_mlme->ext_vdev_ptr);
+	vdev_mlme->ext_vdev_ptr = NULL;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -666,14 +666,13 @@ static QDF_STATUS ap_vdev_dfs_cac_timer_stop(struct vdev_mlme_obj *vdev_mlme,
 
 /**
  * struct sta_mlme_ops - VDEV MLME operation callbacks strucutre for sta
- * @mlme_vdev_validate_basic_params:    callback to validate VDEV basic params
- * @mlme_vdev_reset_proto_params:       callback to Reset protocol params
  * @mlme_vdev_start_send:               callback to initiate actions of VDEV
  *                                      MLME start operation
  * @mlme_vdev_restart_send:             callback to initiate actions of VDEV
  *                                      MLME restart operation
  * @mlme_vdev_stop_start_send:          callback to block start/restart VDEV
  *                                      request command
+ * @mlme_vdev_sta_conn_start:           callback to initiate connection
  * @mlme_vdev_start_continue:           callback to initiate operations on
  *                                      LMAC/FW start response
  * @mlme_vdev_up_send:                  callback to initiate actions of VDEV
@@ -683,20 +682,17 @@ static QDF_STATUS ap_vdev_dfs_cac_timer_stop(struct vdev_mlme_obj *vdev_mlme,
  * @mlme_vdev_update_beacon:            callback to initiate beacon update
  * @mlme_vdev_disconnect_peers:         callback to initiate disconnection of
  *                                      peers
- * @mlme_vdev_dfs_cac_timer_stop:       callback to stop the DFS CAC timer
  * @mlme_vdev_stop_send:                callback to initiate actions of VDEV
  *                                      MLME stop operation
  * @mlme_vdev_stop_continue:            callback to initiate operations on
  *                                      LMAC/FW stop response
- * @mlme_vdev_bss_peer_delete_continue: callback to initiate operations on BSS
- *                                      peer delete completion
  * @mlme_vdev_down_send:                callback to initiate actions of VDEV
  *                                      MLME down operation
- * @mlme_vdev_legacy_hdl_create:        callback to invoke creation of legacy
+ * @mlme_vdev_notify_down_complete:     callback to notify VDEV MLME on moving
+ *                                      to INIT state
+ * @mlme_vdev_ext_hdl_create:           callback to invoke creation of legacy
  *                                      vdev object
- * @mlme_vdev_legacy_hdl_post_create:   callback to invoke post creation actions
- *                                      of legacy vdev object
- * @mlme_vdev_legacy_hdl_destroy:       callback to invoke destroy of legacy
+ * @mlme_vdev_ext_hdl_destroy:          callback to invoke destroy of legacy
  *                                      vdev object
  */
 static struct vdev_mlme_ops sta_mlme_ops = {
@@ -711,8 +707,8 @@ static struct vdev_mlme_ops sta_mlme_ops = {
 	.mlme_vdev_stop_continue = vdevmgr_mlme_stop_continue,
 	.mlme_vdev_down_send = vdevmgr_mlme_vdev_down_send,
 	.mlme_vdev_notify_down_complete = vdevmgr_notify_down_complete,
-	.mlme_vdev_legacy_hdl_create = mlme_legacy_hdl_create,
-	.mlme_vdev_legacy_hdl_destroy = mlme_legacy_hdl_destroy,
+	.mlme_vdev_ext_hdl_create = vdevmgr_mlme_ext_hdl_create,
+	.mlme_vdev_ext_hdl_destroy = vdevmgr_mlme_ext_hdl_destroy,
 };
 
 /**
@@ -742,9 +738,9 @@ static struct vdev_mlme_ops sta_mlme_ops = {
  *                                      MLME down operation
  * @mlme_vdev_notify_down_complete:     callback to notify VDEV MLME on moving
  *                                      to INIT state
- * @mlme_vdev_legacy_hdl_create:        callback to invoke creation of legacy
+ * @mlme_vdev_ext_hdl_create:           callback to invoke creation of legacy
  *                                      vdev object
- * @mlme_vdev_legacy_hdl_destroy:       callback to invoke destroy of legacy
+ * @mlme_vdev_ext_hdl_destroy:          callback to invoke destroy of legacy
  *                                      vdev object
  */
 static struct vdev_mlme_ops ap_mlme_ops = {
@@ -762,6 +758,6 @@ static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_stop_continue = vdevmgr_mlme_stop_continue,
 	.mlme_vdev_down_send = vdevmgr_mlme_vdev_down_send,
 	.mlme_vdev_notify_down_complete = vdevmgr_notify_down_complete,
-	.mlme_vdev_legacy_hdl_create = mlme_legacy_hdl_create,
-	.mlme_vdev_legacy_hdl_destroy = mlme_legacy_hdl_destroy,
+	.mlme_vdev_ext_hdl_create = vdevmgr_mlme_ext_hdl_create,
+	.mlme_vdev_ext_hdl_destroy = vdevmgr_mlme_ext_hdl_destroy,
 };
