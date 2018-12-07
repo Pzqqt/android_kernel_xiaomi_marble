@@ -1280,10 +1280,6 @@ int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 				uint32_t len);
 void wma_remove_req(tp_wma_handle wma, uint8_t vdev_id,
 			    uint8_t type);
-#ifdef FEATURE_P2P_LISTEN_OFFLOAD
-int wma_p2p_lo_event_handler(void *handle, uint8_t *event_buf,
-				uint32_t len);
-#endif
 
 QDF_STATUS wma_process_hal_pwr_dbg_cmd(WMA_HANDLE handle,
 				       struct sir_mac_pwr_dbg_cmd *
