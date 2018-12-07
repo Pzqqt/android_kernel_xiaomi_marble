@@ -893,7 +893,7 @@ MLME_OBJS :=	$(MLME_DIR)/core/src/wlan_mlme_main.o \
 		$(MLME_DIR)/dispatcher/src/wlan_mlme_api.o \
 		$(MLME_DIR)/dispatcher/src/wlan_mlme_ucfg_api.o
 
-ifeq ($(CONFIG_VDEV_SM), y)
+ifeq ($(CONFIG_CMN_VDEV_MLME_SM), y)
 MLME_OBJS += $(MLME_DIR)/core/src/wlan_mlme_vdev_mgr_interface.o
 endif
 
@@ -2357,8 +2357,12 @@ cppflags-$(CONFIG_LITHIUM) += -DPEER_PROTECTED_ACCESS
 #Enable STATE MACHINE HISTORY
 cppflags-$(CONFIG_SM_ENG_HIST) += -DSM_ENG_HIST_ENABLE
 #Enable VDEV STATE MACHINE
-cppflags-$(CONFIG_CMN_VDEV_MLME_SM) += -DCMN_VDEV_MLME_SM_ENABLE
-cppflags-$(CONFIG_VDEV_SM) += -DCONFIG_VDEV_SM
+ifeq ($(CONFIG_CMN_VDEV_MLME_SM), y)
+cppflags-y += -DCMN_VDEV_MLME_SM_ENABLE \
+              -DCMN_VDEV_MLME_CMPT_ENABLE \
+              -DCONFIG_VDEV_SM
+cppflags-$(CONFIG_SM_ENG_HIST) += -DSM_ENG_HIST_ENABLE
+endif
 
 # Vendor Commands
 cppflags-$(CONFIG_FEATURE_RSSI_MONITOR) += -DFEATURE_RSSI_MONITOR

@@ -55,7 +55,7 @@ struct wlan_mlme_nss_chains *mlme_get_dynamic_vdev_config(
 		return NULL;
 	}
 
-	mlme_priv = vdev_mlme->legacy_vdev_ptr;
+	mlme_priv = vdev_mlme->ext_vdev_ptr;
 
 	return &mlme_priv->dynamic_cfg;
 }
@@ -72,7 +72,7 @@ struct wlan_mlme_nss_chains *mlme_get_ini_vdev_config(
 		return NULL;
 	}
 
-	mlme_priv = vdev_mlme->legacy_vdev_ptr;
+	mlme_priv = vdev_mlme->ext_vdev_ptr;
 
 	return &mlme_priv->ini_cfg;
 }
