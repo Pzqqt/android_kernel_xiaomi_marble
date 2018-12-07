@@ -1909,6 +1909,8 @@ struct roam_fils_params {
  * @roam_offload_params: roam offload tlv params
  * @min_delay_btw_roam_scans: Delay btw two scans
  * @roam_trigger_reason_bitmask: Roam reason bitmark
+ * @roam_offload_params: roam offload tlv params, unused
+ *     in non tlv target, only for roam offload feature
  * @assoc_ie_length: Assoc IE length
  * @assoc_ie: Assoc IE buffer
  * @add_fils_tlv: add FILS TLV boolean
@@ -1940,10 +1942,7 @@ struct roam_offload_scan_params {
 	bool is_ese_assoc;
 	bool is_11r_assoc;
 	struct mobility_domain_info mdid;
-#ifdef CONFIG_MCL
-	/* THis is not available in non tlv target.
-	* please remove this and replace with a host based
-	* structure */
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	roam_offload_param roam_offload_params;
 #endif
 	uint32_t assoc_ie_length;
