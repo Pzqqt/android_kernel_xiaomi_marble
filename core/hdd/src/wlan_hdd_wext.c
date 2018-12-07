@@ -109,10 +109,6 @@
 #include "wlan_pmo_cfg.h"
 #include "wlan_pmo_ucfg_api.h"
 
-#define HDD_FINISH_ULA_TIME_OUT         800
-#define HDD_SET_MCBC_FILTERS_TO_FW      1
-#define HDD_DELETE_MCBC_FILTERS_FROM_FW 0
-
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_INT_GET_NONE    (SIOCIWFIRSTPRIV + 0)
 #define WE_SET_11D_STATE     1
