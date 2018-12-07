@@ -793,30 +793,6 @@ typedef enum eSirMacReasonCodes {
 	eSIR_BEACON_MISSED = 65534,     /* We invented this to tell beacon missed case */
 } tSirMacReasonCodes;
 
-/* BA Initiator v/s Recipient */
-typedef enum eBADirection {
-	eBA_RECIPIENT,
-	eBA_INITIATOR
-} tBADirection;
-
-/* A-MPDU/BA Enable/Disable in Tx/Rx direction */
-typedef enum eBAEnable {
-	eBA_DISABLE,
-	eBA_ENABLE
-} tBAEnable;
-
-/* A-MPDU/BA Policy */
-typedef enum eBAPolicy {
-	eBA_UNCOMPRESSED,
-	eBA_COMPRESSED
-} tBAPolicy;
-
-/* A-MPDU/BA Policy */
-typedef enum eBAPolicyType {
-	eBA_POLICY_DELAYED,
-	eBA_POLICY_IMMEDIATE
-} tBAPolicyType;
-
 /* / Frame control field format (2 bytes) */
 typedef struct sSirMacFrameCtl {
 
