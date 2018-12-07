@@ -9034,8 +9034,7 @@ static void hdd_override_ini_config(struct hdd_context *hdd_ctx)
 
 	if (hdd_ctx->config->action_oui_enable && !ucfg_action_oui_enabled()) {
 		hdd_ctx->config->action_oui_enable = 0;
-		hdd_err("Ignore ini: %s, since no action_oui component",
-			CFG_ENABLE_ACTION_OUI);
+		hdd_err("Ignore action oui ini, since no action_oui component");
 	}
 }
 
@@ -9355,6 +9354,31 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 		      CFG_DBS_SCAN_PARAM_LENGTH);
 	config->enableMCC = cfg_get(psoc, CFG_ENABLE_MCC_ENABLED);
 	config->inform_bss_rssi_raw = cfg_get(psoc, CFG_INFORM_BSS_RSSI_RAW);
+	config->intfMacAddr[0] = cfg_get(psoc, CFG_INTF0_MAC_ADDR);
+	config->intfMacAddr[1] = cfg_get(psoc, CFG_INTF1_MAC_ADDR);
+	config->intfMacAddr[2] = cfg_get(psoc, CFG_INTF2_MAC_ADDR);
+	config->intfMacAddr[3] = cfg_get(psoc, CFG_INTF3_MAC_ADDR);
+	config->action_oui_enable = cfg_get(psoc, CFG_ENABLE_ACTION_OUI);
+
+	qdf_str_lcopy(config->action_oui_str[0],
+		      cfg_get(psoc, CFG_ACTION_OUI_CONNECT_1X1),
+			      ACTION_OUI_MAX_STR_LEN);
+	qdf_str_lcopy(config->action_oui_str[1],
+		      cfg_get(psoc, CFG_ACTION_OUI_ITO_EXTENSION),
+			      ACTION_OUI_MAX_STR_LEN);
+	qdf_str_lcopy(config->action_oui_str[2],
+		      cfg_get(psoc, CFG_ACTION_OUI_CCKM_1X1),
+			      ACTION_OUI_MAX_STR_LEN);
+	qdf_str_lcopy(config->action_oui_str[3],
+		      cfg_get(psoc, CFG_ACTION_OUI_ITO_ALTERNATE),
+			      ACTION_OUI_MAX_STR_LEN);
+	qdf_str_lcopy(config->action_oui_str[4],
+		      cfg_get(psoc, CFG_ACTION_OUI_SWITCH_TO_11N_MODE),
+			      ACTION_OUI_MAX_STR_LEN);
+	qdf_str_lcopy(config->action_oui_str[5],
+		      cfg_get(psoc,
+			      CFG_ACTION_OUI_CONNECT_1X1_WITH_1_CHAIN),
+			      ACTION_OUI_MAX_STR_LEN);
 
 	hdd_init_vc_mode_cfg_bitmap(config, psoc);
 	hdd_init_runtime_pm(config, psoc);
