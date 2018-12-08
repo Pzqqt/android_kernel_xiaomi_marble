@@ -29,6 +29,7 @@
 #include <qdf_list.h>
 #include <qdf_lock.h>
 #include <qdf_idr.h>
+#include <qdf_mc_timer.h>
 
 #define MAX_QUEUE_LENGTH 20
 #define P2P_NOA_ATTR_IND 0x1090
