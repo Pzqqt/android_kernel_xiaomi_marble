@@ -30,6 +30,7 @@
 #include <wlan_cmn.h>
 #include <wlan_cmn_ieee80211.h>
 
+struct wlan_objmgr_psoc;
 
 #define WLAN_TDLS_STA_MAX_NUM                        8
 #define WLAN_TDLS_STA_P_UAPSD_OFFCHAN_MAX_NUM        1
