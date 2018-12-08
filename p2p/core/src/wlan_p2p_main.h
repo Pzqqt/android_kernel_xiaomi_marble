@@ -44,6 +44,9 @@
 	QDF_TRACE_WARN(QDF_MODULE_ID_P2P, params)
 #define p2p_err(params ...) \
 	QDF_TRACE_ERROR(QDF_MODULE_ID_P2P, params)
+#define p2p_debug_rl(params...) \
+	QDF_TRACE_DEBUG_RL(QDF_MODULE_ID_P2P, params)
+
 #define p2p_alert(params ...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_P2P, params)
 
