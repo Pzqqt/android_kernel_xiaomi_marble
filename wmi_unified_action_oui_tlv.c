@@ -47,6 +47,10 @@ bool wmi_get_action_oui_id(enum action_oui_id action_id,
 		*id = WMI_VENDOR_OUI_ACTION_CONNECTION_1X1_NUM_TX_RX_CHAINS_1;
 		return true;
 
+	case ACTION_OUI_DISABLE_AGGRESSIVE_TX:
+		*id = WMI_VENDOR_OUI_ACTION_DISABLE_AGGRESSIVE_TX;
+		return true;
+
 	default:
 		return false;
 	}
