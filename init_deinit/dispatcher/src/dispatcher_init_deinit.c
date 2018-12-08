@@ -52,10 +52,6 @@
 #include <wlan_offchan_txrx_api.h>
 #endif
 
-#ifdef CONVERGED_TDLS_ENABLE
-#include "wlan_tdls_ucfg_api.h"
-#endif
-
 #ifdef WLAN_SUPPORT_SPLITMAC
 #include <wlan_splitmac.h>
 #endif
@@ -143,69 +139,6 @@ static QDF_STATUS cp_stats_psoc_enable(struct wlan_objmgr_psoc *psoc)
 }
 
 static QDF_STATUS cp_stats_psoc_disable(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
-#ifdef CONVERGED_TDLS_ENABLE
-static QDF_STATUS tdls_init(void)
-{
-	return ucfg_tdls_init();
-}
-
-static QDF_STATUS tdls_deinit(void)
-{
-	return ucfg_tdls_deinit();
-}
-
-static QDF_STATUS tdls_psoc_open(struct wlan_objmgr_psoc *psoc)
-{
-	return ucfg_tdls_psoc_open(psoc);
-}
-
-static QDF_STATUS tdls_psoc_close(struct wlan_objmgr_psoc *psoc)
-{
-	return ucfg_tdls_psoc_close(psoc);
-}
-
-static QDF_STATUS tdls_psoc_enable(struct wlan_objmgr_psoc *psoc)
-{
-	return ucfg_tdls_psoc_enable(psoc);
-}
-
-static QDF_STATUS tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
-{
-	return ucfg_tdls_psoc_disable(psoc);
-}
-#else
-static QDF_STATUS tdls_init(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS tdls_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS tdls_psoc_open(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS tdls_psoc_close(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS tdls_psoc_enable(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-
-static QDF_STATUS tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -740,9 +673,6 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != ucfg_scan_init())
 		goto ucfg_scan_init_fail;
 
-	if (QDF_STATUS_SUCCESS != tdls_init())
-		goto tdls_init_fail;
-
 	if (QDF_STATUS_SUCCESS != wlan_serialization_init())
 		goto serialization_init_fail;
 
@@ -839,8 +769,6 @@ cp_stats_init_fail:
 crypto_init_fail:
 	wlan_serialization_deinit();
 serialization_init_fail:
-	tdls_deinit();
-tdls_init_fail:
 	ucfg_scan_deinit();
 ucfg_scan_init_fail:
 	wlan_mgmt_txrx_deinit();
@@ -893,8 +821,6 @@ QDF_STATUS dispatcher_deinit(void)
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_serialization_deinit());
 
-	QDF_BUG(QDF_STATUS_SUCCESS == tdls_deinit());
-
 	QDF_BUG(QDF_STATUS_SUCCESS == ucfg_scan_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_deinit());
@@ -931,9 +857,6 @@ QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != ucfg_scan_psoc_open(psoc))
 		goto scan_psoc_open_fail;
 
-	if (QDF_STATUS_SUCCESS != tdls_psoc_open(psoc))
-		goto tdls_psoc_open_fail;
-
 	if (QDF_STATUS_SUCCESS != wlan_serialization_psoc_open(psoc))
 		goto serialization_psoc_open_fail;
 
@@ -965,8 +888,6 @@ atf_psoc_open_fail:
 cp_stats_psoc_open_fail:
 	wlan_serialization_psoc_close(psoc);
 serialization_psoc_open_fail:
-	tdls_psoc_close(psoc);
-tdls_psoc_open_fail:
 	ucfg_scan_psoc_close(psoc);
 scan_psoc_open_fail:
 	wlan_mgmt_txrx_psoc_close(psoc);
@@ -990,8 +911,6 @@ QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_serialization_psoc_close(psoc));
 
-	QDF_BUG(QDF_STATUS_SUCCESS == tdls_psoc_close(psoc));
-
 	QDF_BUG(QDF_STATUS_SUCCESS == ucfg_scan_psoc_close(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_psoc_close(psoc));
@@ -1004,9 +923,6 @@ QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	if (QDF_STATUS_SUCCESS != ucfg_scan_psoc_enable(psoc))
 		goto out;
-
-	if (QDF_STATUS_SUCCESS != tdls_psoc_enable(psoc))
-		goto tdls_psoc_enable_fail;
 
 	if (QDF_STATUS_SUCCESS != sa_api_psoc_enable(psoc))
 		goto sa_api_psoc_enable_fail;
@@ -1044,8 +960,6 @@ atf_psoc_enable_fail:
 cp_stats_psoc_enable_fail:
 	sa_api_psoc_disable(psoc);
 sa_api_psoc_enable_fail:
-	tdls_psoc_disable(psoc);
-tdls_psoc_enable_fail:
 	ucfg_scan_psoc_disable(psoc);
 
 out:
@@ -1068,8 +982,6 @@ QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	QDF_BUG(QDF_STATUS_SUCCESS == cp_stats_psoc_disable(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == sa_api_psoc_disable(psoc));
-
-	QDF_BUG(QDF_STATUS_SUCCESS == tdls_psoc_disable(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == ucfg_scan_psoc_disable(psoc));
 
