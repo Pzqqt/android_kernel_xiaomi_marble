@@ -319,7 +319,7 @@ fail:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
 }
 
-QDF_STATUS wlan_p2p_start(struct wlan_objmgr_psoc *psoc)
+QDF_STATUS p2p_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct p2p_start_param start_param;
 
@@ -339,7 +339,7 @@ QDF_STATUS wlan_p2p_start(struct wlan_objmgr_psoc *psoc)
 	return ucfg_p2p_psoc_start(psoc, &start_param);
 }
 
-QDF_STATUS wlan_p2p_stop(struct wlan_objmgr_psoc *psoc)
+QDF_STATUS p2p_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	if (!psoc) {
 		cfg80211_err("psoc null");

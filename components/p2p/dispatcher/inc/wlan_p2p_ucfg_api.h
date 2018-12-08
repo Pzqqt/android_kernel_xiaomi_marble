@@ -34,6 +34,7 @@ struct p2p_mgmt_tx;
 struct p2p_ps_config;
 struct p2p_lo_start;
 struct p2p_lo_event;
+struct p2p_protocol_callbacks;
 
 /**
  * p2p_rx_callback() - Callback for rx mgmt frame

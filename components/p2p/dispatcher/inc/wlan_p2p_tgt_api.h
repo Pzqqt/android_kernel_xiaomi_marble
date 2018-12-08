@@ -33,6 +33,7 @@ struct p2p_noa_info;
 struct p2p_lo_event;
 struct mgmt_rx_event_params;
 enum mgmt_frame_type;
+struct p2p_set_mac_filter_evt;
 
 #ifdef FEATURE_P2P_LISTEN_OFFLOAD
 

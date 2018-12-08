@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,24 +30,24 @@ struct wlan_objmgr_vdev;
 struct ieee80211_channel;
 
 /**
- * wlan_p2p_start() - start p2p component
+ * p2p_psoc_enable() - psoc API to enable p2p component
  * @psoc: soc object
  *
- * This function used to start P2P component and register events.
+ * This function used to enable P2P component and register events.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS wlan_p2p_start(struct wlan_objmgr_psoc *psoc);
+QDF_STATUS p2p_psoc_enable(struct wlan_objmgr_psoc *psoc);
 
 /**
- * wlan_p2p_stop() - stop p2p component
+ * p2p_psoc_disable() - psoc API to disable p2p component
  * @psoc: soc object
  *
- * This function used to stop P2P component and unregister events.
+ * This function used to disable P2P component and unregister events.
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS wlan_p2p_stop(struct wlan_objmgr_psoc *psoc);
+QDF_STATUS p2p_psoc_disable(struct wlan_objmgr_psoc *psoc);
 
 /**
  * wlan_cfg80211_roc() - API to process cfg80211 roc request

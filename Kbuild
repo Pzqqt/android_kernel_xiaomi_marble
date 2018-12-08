@@ -595,15 +595,13 @@ QAL_OBJS := 	$(QAL_LINUX_OBJ_DIR)/qal_devcfg.o \
 ##########OS_IF #######
 OS_IF_DIR := $(WLAN_COMMON_ROOT)/os_if
 
-OS_IF_INC := -I$(WLAN_COMMON_INC)/os_if/linux \
+OS_IF_INC += -I$(WLAN_COMMON_INC)/os_if/linux \
             -I$(WLAN_COMMON_INC)/os_if/linux/scan/inc \
-            -I$(WLAN_COMMON_INC)/os_if/linux/p2p/inc \
             -I$(WLAN_COMMON_INC)/os_if/linux/spectral/inc \
             -I$(WLAN_COMMON_INC)/os_if/linux/tdls/inc \
             -I$(WLAN_COMMON_INC)/os_if/linux/crypto/inc
 
-OS_IF_OBJ := $(OS_IF_DIR)/linux/p2p/src/wlan_cfg80211_p2p.o \
-	     $(OS_IF_DIR)/linux/wlan_osif_request_manager.o \
+OS_IF_OBJ += $(OS_IF_DIR)/linux/wlan_osif_request_manager.o \
 	     $(OS_IF_DIR)/linux/crypto/src/wlan_nl_to_crypto_params.o
 
 ############ UMAC_DISP ############
@@ -955,22 +953,26 @@ CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/action_oui/src/target_if_action_oui.o
 endif
 
 ############## UMAC P2P ###########
-P2P_DIR := umac/p2p
-P2P_CORE_DIR := $(P2P_DIR)/core
-P2P_CORE_SRC_DIR := $(P2P_CORE_DIR)/src
-P2P_CORE_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(P2P_CORE_SRC_DIR)
+P2P_DIR := components/p2p
+P2P_CORE_OBJ_DIR := $(P2P_DIR)/core/src
 P2P_DISPATCHER_DIR := $(P2P_DIR)/dispatcher
 P2P_DISPATCHER_INC_DIR := $(P2P_DISPATCHER_DIR)/inc
-P2P_DISPATCHER_SRC_DIR := $(P2P_DISPATCHER_DIR)/src
-P2P_DISPATCHER_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(P2P_DISPATCHER_SRC_DIR)
-UMAC_P2P_INC := -I$(WLAN_COMMON_INC)/$(P2P_DISPATCHER_INC_DIR) \
-		-I$(WLAN_COMMON_INC)/umac/scan/dispatcher/inc
-UMAC_P2P_OBJS := $(P2P_DISPATCHER_OBJ_DIR)/wlan_p2p_ucfg_api.o \
-                 $(P2P_DISPATCHER_OBJ_DIR)/wlan_p2p_tgt_api.o \
-                 $(P2P_DISPATCHER_OBJ_DIR)/wlan_p2p_cfg.o \
-                 $(P2P_CORE_OBJ_DIR)/wlan_p2p_main.o \
-                 $(P2P_CORE_OBJ_DIR)/wlan_p2p_roc.o \
-                 $(P2P_CORE_OBJ_DIR)/wlan_p2p_off_chan_tx.o
+P2P_DISPATCHER_OBJ_DIR := $(P2P_DISPATCHER_DIR)/src
+P2P_OS_IF_INC := os_if/p2p/inc
+P2P_OS_IF_SRC := os_if/p2p/src
+P2P_TARGET_IF_INC := components/target_if/p2p/inc
+P2P_TARGET_IF_SRC := components/target_if/p2p/src
+P2P_INC := -I$(WLAN_ROOT)/$(P2P_DISPATCHER_INC_DIR) \
+	   -I$(WLAN_ROOT)/$(P2P_OS_IF_INC) \
+	   -I$(WLAN_ROOT)/$(P2P_TARGET_IF_INC)
+P2P_OBJS := $(P2P_DISPATCHER_OBJ_DIR)/wlan_p2p_ucfg_api.o \
+	    $(P2P_DISPATCHER_OBJ_DIR)/wlan_p2p_tgt_api.o \
+	    $(P2P_DISPATCHER_OBJ_DIR)/wlan_p2p_cfg.o \
+	    $(P2P_CORE_OBJ_DIR)/wlan_p2p_main.o \
+	    $(P2P_CORE_OBJ_DIR)/wlan_p2p_roc.o \
+	    $(P2P_CORE_OBJ_DIR)/wlan_p2p_off_chan_tx.o \
+	    $(P2P_OS_IF_SRC)/wlan_cfg80211_p2p.o \
+	    $(P2P_TARGET_IF_SRC)/target_if_p2p.o
 
 ###### UMAC POLICY MGR ########
 UMAC_POLICY_MGR_DIR := $(WLAN_COMMON_ROOT)/umac/cmn_services/policy_mgr
@@ -1019,12 +1021,10 @@ TARGET_IF_DIR := $(WLAN_COMMON_ROOT)/target_if
 TARGET_IF_INC := -I$(WLAN_COMMON_INC)/target_if/core/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/core/src \
 		 -I$(WLAN_COMMON_INC)/target_if/init_deinit/inc \
-		 -I$(WLAN_COMMON_INC)/target_if/p2p/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/regulatory/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/tdls/inc
 
 TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
-		$(TARGET_IF_DIR)/p2p/src/target_if_p2p.o \
 		$(TARGET_IF_DIR)/regulatory/src/target_if_reg.o \
 		$(TARGET_IF_DIR)/tdls/src/target_if_tdls.o \
 		$(TARGET_IF_DIR)/init_deinit/src/init_cmd_api.o \
@@ -1702,7 +1702,7 @@ INCS +=		$(NAN_OS_IF_INC)
 INCS +=		$(UMAC_OBJMGR_INC)
 INCS +=		$(UMAC_MGMT_TXRX_INC)
 INCS +=		$(PMO_INC)
-INCS +=		$(UMAC_P2P_INC)
+INCS +=		$(P2P_INC)
 INCS +=		$(UMAC_POLICY_MGR_INC)
 INCS +=		$(TARGET_INC)
 INCS +=		$(UMAC_TDLS_INC)
@@ -1791,7 +1791,7 @@ OBJS +=		$(WLAN_NAN_OBJS)
 OBJS +=		$(UMAC_MGMT_TXRX_OBJS)
 OBJS +=		$(UMAC_TDLS_OBJS)
 OBJS +=		$(PMO_OBJS)
-OBJS +=		$(UMAC_P2P_OBJS)
+OBJS +=		$(P2P_OBJS)
 OBJS +=		$(UMAC_POLICY_MGR_OBJS)
 OBJS +=		$(WLAN_LOGGING_OBJS)
 OBJS +=		$(NLINK_OBJS)

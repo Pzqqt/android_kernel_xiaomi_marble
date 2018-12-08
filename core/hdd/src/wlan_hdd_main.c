@@ -143,6 +143,7 @@
 #include "qc_sap_ioctl.h"
 #include "wlan_mlme_main.h"
 #include "wlan_p2p_cfg_api.h"
+#include "wlan_cfg80211_p2p.h"
 #include "wlan_tdls_cfg_api.h"
 #include <wlan_hdd_rssi_monitor.h>
 #include "wlan_mlme_ucfg_api.h"
@@ -13016,8 +13017,14 @@ static QDF_STATUS hdd_component_init(void)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto action_oui_deinit;
 
+	status = ucfg_p2p_init();
+	if (QDF_IS_STATUS_ERROR(status))
+		goto nan_deinit;
+
 	return QDF_STATUS_SUCCESS;
 
+nan_deinit:
+	nan_deinit();
 action_oui_deinit:
 	ucfg_action_oui_deinit();
 ipa_deinit:
@@ -13046,6 +13053,7 @@ dispatcher_deinit:
 static void hdd_component_deinit(void)
 {
 	/* deinitialize non-converged components */
+	ucfg_p2p_deinit();
 	nan_deinit();
 	ucfg_action_oui_deinit();
 	ipa_deinit();
@@ -13079,8 +13087,13 @@ QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto err_plcy_mgr;
 
+	status = ucfg_p2p_psoc_open(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto err_p2p;
 	return status;
 
+err_p2p:
+	ucfg_p2p_psoc_close(psoc);
 err_plcy_mgr:
 	ucfg_pmo_psoc_close(psoc);
 err_pmo:
@@ -13093,6 +13106,7 @@ err_fwol:
 
 void hdd_component_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+	ucfg_p2p_psoc_close(psoc);
 	ucfg_policy_mgr_psoc_close(psoc);
 	ucfg_pmo_psoc_close(psoc);
 	ucfg_fwol_psoc_close(psoc);
@@ -13104,10 +13118,12 @@ void hdd_component_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	ocb_psoc_enable(psoc);
 	disa_psoc_enable(psoc);
 	nan_psoc_enable(psoc);
+	p2p_psoc_enable(psoc);
 }
 
 void hdd_component_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
+	p2p_psoc_disable(psoc);
 	nan_psoc_disable(psoc);
 	disa_psoc_disable(psoc);
 	ocb_psoc_disable(psoc);
