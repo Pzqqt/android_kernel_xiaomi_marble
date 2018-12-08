@@ -9405,6 +9405,10 @@ static void hdd_cfg_params_init(struct hdd_context *hdd_ctx)
 		      cfg_get(psoc,
 			      CFG_ACTION_OUI_CONNECT_1X1_WITH_1_CHAIN),
 			      ACTION_OUI_MAX_STR_LEN);
+	qdf_str_lcopy(config->action_oui_str[6],
+		      cfg_get(psoc,
+			      CFG_ACTION_OUI_DISABLE_AGGRESSIVE_TX),
+			      ACTION_OUI_MAX_STR_LEN);
 
 	hdd_init_vc_mode_cfg_bitmap(config, psoc);
 	hdd_init_runtime_pm(config, psoc);

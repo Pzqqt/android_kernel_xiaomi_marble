@@ -747,6 +747,9 @@ check_for_vendor_oui_data(struct action_oui_extension *extension,
 	uint8_t i, j, elem_len, data_len;
 	uint8_t data_mask = 0x80;
 
+	if (!oui_ptr)
+		return false;
+
 	elem_len = oui_ptr[1];
 	if (elem_len < extension->oui_length)
 		return false;
@@ -857,6 +860,19 @@ check_for_vendor_ap_capabilities(struct action_oui_extension *extension,
 	return true;
 }
 
+static const uint8_t *
+action_oui_get_oui_ptr(struct action_oui_extension *extension,
+		       struct action_oui_search_attr *attr)
+{
+	if (!attr->ie_data || !attr->ie_length)
+		return NULL;
+
+	return wlan_get_vendor_ie_ptr_from_oui(extension->oui,
+					       extension->oui_length,
+					       attr->ie_data,
+					       attr->ie_length);
+}
+
 bool
 action_oui_search(struct action_oui_psoc_priv *psoc_priv,
 		  struct action_oui_search_attr *attr,
@@ -904,10 +920,8 @@ action_oui_search(struct action_oui_psoc_priv *psoc_priv,
 			wildcard_oui = true;
 		}
 
-		oui_ptr = wlan_get_vendor_ie_ptr_from_oui(extension->oui,
-							 extension->oui_length,
-							 attr->ie_data,
-							 attr->ie_length);
+		oui_ptr = action_oui_get_oui_ptr(extension, attr);
+
 		if (!oui_ptr  && !wildcard_oui) {
 			action_oui_debug("No matching IE found for OUI");
 			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
@@ -940,7 +954,7 @@ action_oui_search(struct action_oui_psoc_priv *psoc_priv,
 			goto next;
 		}
 
-		action_oui_debug("Vendor AP found for OUI");
+		action_oui_debug("Vendor AP/STA found for OUI");
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 				   extension->oui, extension->oui_length);
 		qdf_mutex_release(&oui_priv->extension_lock);

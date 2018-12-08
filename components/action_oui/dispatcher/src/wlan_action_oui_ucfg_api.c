@@ -179,8 +179,7 @@ bool ucfg_action_oui_search(struct wlan_objmgr_psoc *psoc,
 		goto exit;
 	}
 
-	if (action_id >= ACTION_OUI_MAXIMUM_ID ||
-	    !attr->ie_data || !attr->ie_length) {
+	if (action_id >= ACTION_OUI_MAXIMUM_ID) {
 		action_oui_err("Invalid action_oui id: %u", action_id);
 		goto exit;
 	}

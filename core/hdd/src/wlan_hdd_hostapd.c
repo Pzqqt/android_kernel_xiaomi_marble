@@ -85,6 +85,7 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "cfg_ucfg_api.h"
 #include "wlan_crypto_global_api.h"
+#include "wlan_action_oui_ucfg_api.h"
 
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
 
@@ -1574,6 +1575,63 @@ hdd_stop_sap_due_to_invalid_channel(struct work_struct *work)
 	cds_ssr_unprotect(__func__);
 }
 
+/**
+ * hdd_hostapd_apply_action_oui() - Check for action_ouis to be applied on peers
+ * @hdd_ctx: pointer to hdd context
+ * @adapter: pointer to adapter
+ * @event: assoc complete params
+ *
+ * This function is used to check whether aggressive tx should be disabled
+ * based on the soft-ap configuration and action_oui ini
+ * gActionOUIDisableAggressiveTX
+ *
+ * Return: None
+ */
+static void
+hdd_hostapd_apply_action_oui(struct hdd_context *hdd_ctx,
+			     struct hdd_adapter *adapter,
+			     tSap_StationAssocReassocCompleteEvent *event)
+{
+	bool found;
+	uint32_t freq;
+	tSirMacHTChannelWidth ch_width;
+	enum sir_sme_phy_mode mode;
+	struct action_oui_search_attr attr = {0};
+	QDF_STATUS status;
+
+	ch_width = event->ch_width;
+	if (ch_width != eHT_CHANNEL_WIDTH_20MHZ)
+		return;
+
+	freq = cds_chan_to_freq(event->chan_info.chan_id);
+	if (WLAN_REG_IS_24GHZ_CH_FREQ(freq))
+		attr.enable_2g = true;
+	else if (WLAN_REG_IS_5GHZ_CH_FREQ(freq))
+		attr.enable_5g = true;
+	else
+		return;
+
+	mode = event->mode;
+	if (event->vht_caps.present && mode == SIR_SME_PHY_MODE_VHT)
+		attr.vht_cap = true;
+	else if (event->ht_caps.present && mode == SIR_SME_PHY_MODE_HT)
+		attr.ht_cap = true;
+
+	attr.mac_addr = (uint8_t *)(&event->staMac);
+
+	found = ucfg_action_oui_search(hdd_ctx->psoc,
+				       &attr,
+				       ACTION_OUI_DISABLE_AGGRESSIVE_TX);
+	if (!found)
+		return;
+
+	status = sme_set_peer_param(attr.mac_addr,
+				    WMI_PEER_PARAM_DISABLE_AGGRESSIVE_TX,
+				    true, adapter->session_id);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to disable aggregation for peer");
+}
+
 QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				    void *context)
 {
@@ -2052,6 +2110,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				 MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 			break;
 		}
+
+		hdd_hostapd_apply_action_oui(hdd_ctx, adapter, event);
 
 		wrqu.addr.sa_family = ARPHRD_ETHER;
 		memcpy(wrqu.addr.sa_data,
