@@ -84,6 +84,10 @@
  * @ACTION_OUI_CONNECT_1X1: for 1x1 connection only
  * @ACTION_OUI_ITO_EXTENSION: for extending inactivity time of station
  * @ACTION_OUI_CCKM_1X1: for TX with CCKM 1x1 only
+ * @ACTION_OUI_ITO_ALTERNATE: alternate ITO extensions used by firmware
+ * @ACTION_OUI_SWITCH_TO_11N_MODE: connect in 11n
+ * @ACTION_OUI_CONNECT_1X1_WITH_1_CHAIN: connect in 1x1 & disable diversity gain
+ * @ACTION_OUI_DISABLE_AGGRESSIVE_TX: disable aggressive TX in firmware
  * @ACTION_OUI_MAXIMUM_ID: maximun number of action oui types
  */
 enum action_oui_id {
@@ -93,6 +97,7 @@ enum action_oui_id {
 	ACTION_OUI_ITO_ALTERNATE = 3,
 	ACTION_OUI_SWITCH_TO_11N_MODE = 4,
 	ACTION_OUI_CONNECT_1X1_WITH_1_CHAIN = 5,
+	ACTION_OUI_DISABLE_AGGRESSIVE_TX = 6,
 	ACTION_OUI_MAXIMUM_ID
 };
 
