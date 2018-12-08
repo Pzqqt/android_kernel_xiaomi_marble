@@ -43,10 +43,6 @@
 #ifdef WIFI_POS_CONVERGED
 #include "wifi_pos_api.h"
 #endif /* WIFI_POS_CONVERGED */
-#ifdef CONVERGED_P2P_ENABLE
-#include <wlan_cfg80211_p2p.h>
-#include <wlan_p2p_ucfg_api.h>
-#endif
 #include <wlan_reg_services_api.h>
 #ifdef WLAN_CONV_CRYPTO_SUPPORTED
 #include "wlan_crypto_main.h"
@@ -154,68 +150,6 @@ static QDF_STATUS cp_stats_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 #endif
-
-#ifdef CONVERGED_P2P_ENABLE
-static QDF_STATUS p2p_init(void)
-{
-	return ucfg_p2p_init();
-}
-
-static QDF_STATUS p2p_deinit(void)
-{
-	return ucfg_p2p_deinit();
-}
-
-static QDF_STATUS p2p_psoc_open(struct wlan_objmgr_psoc *psoc)
-{
-	return ucfg_p2p_psoc_open(psoc);
-}
-
-static QDF_STATUS p2p_psoc_close(struct wlan_objmgr_psoc *psoc)
-{
-	return ucfg_p2p_psoc_close(psoc);
-}
-
-static QDF_STATUS p2p_psoc_enable(struct wlan_objmgr_psoc *psoc)
-{
-	return wlan_p2p_start(psoc);
-}
-
-static QDF_STATUS p2p_psoc_disable(struct wlan_objmgr_psoc *psoc)
-{
-	return wlan_p2p_stop(psoc);
-}
-#else
-static QDF_STATUS p2p_init(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS p2p_deinit(void)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS p2p_psoc_open(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS p2p_psoc_close(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS p2p_psoc_enable(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static QDF_STATUS p2p_psoc_disable(struct wlan_objmgr_psoc *psoc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* END of CONVERGED_P2P_ENABLE */
 
 #ifdef CONVERGED_TDLS_ENABLE
 static QDF_STATUS tdls_init(void)
@@ -879,9 +813,6 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != ucfg_scan_init())
 		goto ucfg_scan_init_fail;
 
-	if (QDF_STATUS_SUCCESS != p2p_init())
-		goto p2p_init_fail;
-
 	if (QDF_STATUS_SUCCESS != tdls_init())
 		goto tdls_init_fail;
 
@@ -988,8 +919,6 @@ crypto_init_fail:
 serialization_init_fail:
 	tdls_deinit();
 tdls_init_fail:
-	p2p_deinit();
-p2p_init_fail:
 	ucfg_scan_deinit();
 ucfg_scan_init_fail:
 	wlan_mgmt_txrx_deinit();
@@ -1046,8 +975,6 @@ QDF_STATUS dispatcher_deinit(void)
 
 	QDF_BUG(QDF_STATUS_SUCCESS == tdls_deinit());
 
-	QDF_BUG(QDF_STATUS_SUCCESS == p2p_deinit());
-
 	QDF_BUG(QDF_STATUS_SUCCESS == ucfg_scan_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_deinit());
@@ -1083,9 +1010,6 @@ QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 
 	if (QDF_STATUS_SUCCESS != ucfg_scan_psoc_open(psoc))
 		goto scan_psoc_open_fail;
-
-	if (QDF_STATUS_SUCCESS != p2p_psoc_open(psoc))
-		goto p2p_psoc_open_fail;
 
 	if (QDF_STATUS_SUCCESS != tdls_psoc_open(psoc))
 		goto tdls_psoc_open_fail;
@@ -1128,8 +1052,6 @@ cp_stats_psoc_open_fail:
 serialization_psoc_open_fail:
 	tdls_psoc_close(psoc);
 tdls_psoc_open_fail:
-	p2p_psoc_close(psoc);
-p2p_psoc_open_fail:
 	ucfg_scan_psoc_close(psoc);
 scan_psoc_open_fail:
 	wlan_mgmt_txrx_psoc_close(psoc);
@@ -1157,8 +1079,6 @@ QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 
 	QDF_BUG(QDF_STATUS_SUCCESS == tdls_psoc_close(psoc));
 
-	QDF_BUG(QDF_STATUS_SUCCESS == p2p_psoc_close(psoc));
-
 	QDF_BUG(QDF_STATUS_SUCCESS == ucfg_scan_psoc_close(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_psoc_close(psoc));
@@ -1171,9 +1091,6 @@ QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	if (QDF_STATUS_SUCCESS != ucfg_scan_psoc_enable(psoc))
 		goto out;
-
-	if (QDF_STATUS_SUCCESS != p2p_psoc_enable(psoc))
-		goto p2p_psoc_enable_fail;
 
 	if (QDF_STATUS_SUCCESS != tdls_psoc_enable(psoc))
 		goto tdls_psoc_enable_fail;
@@ -1221,8 +1138,6 @@ sa_api_psoc_enable_fail:
 policy_mgr_psoc_enable_fail:
 	tdls_psoc_disable(psoc);
 tdls_psoc_enable_fail:
-	p2p_psoc_disable(psoc);
-p2p_psoc_enable_fail:
 	ucfg_scan_psoc_disable(psoc);
 
 out:
@@ -1250,8 +1165,6 @@ QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 		dispatcher_policy_mgr_psoc_disable(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == tdls_psoc_disable(psoc));
-
-	QDF_BUG(QDF_STATUS_SUCCESS == p2p_psoc_disable(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == ucfg_scan_psoc_disable(psoc));
 
