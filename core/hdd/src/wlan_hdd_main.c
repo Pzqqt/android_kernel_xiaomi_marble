@@ -13025,8 +13025,14 @@ static QDF_STATUS hdd_component_init(void)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto p2p_deinit;
 
+	status = ucfg_tdls_init();
+	if (QDF_IS_STATUS_ERROR(status))
+		goto policy_deinit;
+
 	return QDF_STATUS_SUCCESS;
 
+policy_deinit:
+	policy_mgr_deinit();
 p2p_deinit:
 	ucfg_p2p_deinit();
 nan_deinit:
@@ -13059,6 +13065,7 @@ dispatcher_deinit:
 static void hdd_component_deinit(void)
 {
 	/* deinitialize non-converged components */
+	ucfg_tdls_deinit();
 	policy_mgr_deinit();
 	ucfg_p2p_deinit();
 	nan_deinit();
@@ -13097,8 +13104,15 @@ QDF_STATUS hdd_component_psoc_open(struct wlan_objmgr_psoc *psoc)
 	status = ucfg_p2p_psoc_open(psoc);
 	if (QDF_IS_STATUS_ERROR(status))
 		goto err_p2p;
+
+	status = ucfg_tdls_psoc_open(psoc);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto err_tdls;
+
 	return status;
 
+err_tdls:
+	ucfg_tdls_psoc_close(psoc);
 err_p2p:
 	ucfg_p2p_psoc_close(psoc);
 err_plcy_mgr:
@@ -13113,6 +13127,7 @@ err_fwol:
 
 void hdd_component_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+	ucfg_tdls_psoc_close(psoc);
 	ucfg_p2p_psoc_close(psoc);
 	ucfg_policy_mgr_psoc_close(psoc);
 	ucfg_pmo_psoc_close(psoc);

@@ -610,7 +610,6 @@ OS_IF_DIR := $(WLAN_COMMON_ROOT)/os_if
 OS_IF_INC += -I$(WLAN_COMMON_INC)/os_if/linux \
             -I$(WLAN_COMMON_INC)/os_if/linux/scan/inc \
             -I$(WLAN_COMMON_INC)/os_if/linux/spectral/inc \
-            -I$(WLAN_COMMON_INC)/os_if/linux/tdls/inc \
             -I$(WLAN_COMMON_INC)/os_if/linux/crypto/inc
 
 OS_IF_OBJ += $(OS_IF_DIR)/linux/wlan_osif_request_manager.o \
@@ -1000,20 +999,26 @@ POLICY_MGR_OBJS := $(POLICY_MGR_DIR)/src/wlan_policy_mgr_action.o \
 	$(POLICY_MGR_DIR)/src/wlan_policy_mgr_pcl.o \
 
 ###### UMAC TDLS ########
-UMAC_TDLS_DIR := $(WLAN_COMMON_ROOT)/umac/tdls
+TDLS_DIR := components/tdls
 
-UMAC_TDLS_INC := -I$(WLAN_COMMON_INC)/umac/tdls/dispatcher/inc
-
-UMAC_TDLS_OBJS := $(UMAC_TDLS_DIR)/core/src/wlan_tdls_main.o \
-       $(UMAC_TDLS_DIR)/core/src/wlan_tdls_cmds_process.o \
-       $(UMAC_TDLS_DIR)/core/src/wlan_tdls_peer.o \
-       $(UMAC_TDLS_DIR)/core/src/wlan_tdls_mgmt.o \
-       $(UMAC_TDLS_DIR)/core/src/wlan_tdls_ct.o \
-       $(UMAC_TDLS_DIR)/dispatcher/src/wlan_tdls_tgt_api.o \
-       $(UMAC_TDLS_DIR)/dispatcher/src/wlan_tdls_ucfg_api.o \
-       $(UMAC_TDLS_DIR)/dispatcher/src/wlan_tdls_utils_api.o \
-       $(UMAC_TDLS_DIR)/dispatcher/src/wlan_tdls_cfg.o \
-       $(WLAN_COMMON_ROOT)/os_if/linux/tdls/src/wlan_cfg80211_tdls.o
+TDLS_OS_IF_INC := os_if/tdls/inc
+TDLS_OS_IF_SRC := os_if/tdls/src
+TDLS_TARGET_IF_INC := components/target_if/tdls/inc
+TDLS_TARGET_IF_SRC := components/target_if/tdls/src
+TDLS_INC := -I$(WLAN_ROOT)/$(TDLS_DIR)/dispatcher/inc \
+	    -I$(WLAN_ROOT)/$(TDLS_OS_IF_INC) \
+	    -I$(WLAN_ROOT)/$(TDLS_TARGET_IF_INC)
+TDLS_OBJS := $(TDLS_DIR)/core/src/wlan_tdls_main.o \
+       $(TDLS_DIR)/core/src/wlan_tdls_cmds_process.o \
+       $(TDLS_DIR)/core/src/wlan_tdls_peer.o \
+       $(TDLS_DIR)/core/src/wlan_tdls_mgmt.o \
+       $(TDLS_DIR)/core/src/wlan_tdls_ct.o \
+       $(TDLS_DIR)/dispatcher/src/wlan_tdls_tgt_api.o \
+       $(TDLS_DIR)/dispatcher/src/wlan_tdls_ucfg_api.o \
+       $(TDLS_DIR)/dispatcher/src/wlan_tdls_utils_api.o \
+       $(TDLS_DIR)/dispatcher/src/wlan_tdls_cfg.o \
+       $(TDLS_OS_IF_SRC)/wlan_cfg80211_tdls.o \
+       $(TDLS_TARGET_IF_SRC)/target_if_tdls.o
 
 ########### BMI ###########
 BMI_DIR := core/bmi
@@ -1034,11 +1039,9 @@ TARGET_IF_INC := -I$(WLAN_COMMON_INC)/target_if/core/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/core/src \
 		 -I$(WLAN_COMMON_INC)/target_if/init_deinit/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/regulatory/inc \
-		 -I$(WLAN_COMMON_INC)/target_if/tdls/inc
 
 TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/regulatory/src/target_if_reg.o \
-		$(TARGET_IF_DIR)/tdls/src/target_if_tdls.o \
 		$(TARGET_IF_DIR)/init_deinit/src/init_cmd_api.o \
 		$(TARGET_IF_DIR)/init_deinit/src/init_deinit_lmac.o \
 		$(TARGET_IF_DIR)/init_deinit/src/init_event_handler.o \
@@ -1717,7 +1720,7 @@ INCS +=		$(PMO_INC)
 INCS +=		$(P2P_INC)
 INCS +=		$(POLICY_MGR_INC)
 INCS +=		$(TARGET_INC)
-INCS +=		$(UMAC_TDLS_INC)
+INCS +=		$(TDLS_INC)
 INCS +=		$(UMAC_SER_INC)
 INCS +=		$(NLINK_INC) \
 		$(PTT_INC) \
@@ -1801,7 +1804,7 @@ OBJS +=		$(WIFI_POS_OBJS)
 OBJS +=		$(CP_STATS_OBJS)
 OBJS +=		$(WLAN_NAN_OBJS)
 OBJS +=		$(UMAC_MGMT_TXRX_OBJS)
-OBJS +=		$(UMAC_TDLS_OBJS)
+OBJS +=		$(TDLS_OBJS)
 OBJS +=		$(PMO_OBJS)
 OBJS +=		$(P2P_OBJS)
 OBJS +=		$(POLICY_MGR_OBJS)
