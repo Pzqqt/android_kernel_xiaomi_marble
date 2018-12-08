@@ -289,16 +289,16 @@ QDF_STATUS tgt_tdls_mgmt_frame_process_rx_cb(
 		vdev_id = wlan_vdev_get_id(vdev);
 	}
 
-	rx_mgmt_event = qdf_mem_malloc(sizeof(*rx_mgmt_event));
+	rx_mgmt_event = qdf_mem_malloc_atomic(sizeof(*rx_mgmt_event));
 	if (!rx_mgmt_event) {
-		tdls_err("Failed to allocate rx mgmt event");
+		tdls_debug_rl("Failed to allocate rx mgmt event");
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	rx_mgmt = qdf_mem_malloc(sizeof(*rx_mgmt) +
+	rx_mgmt = qdf_mem_malloc_atomic(sizeof(*rx_mgmt) +
 			mgmt_rx_params->buf_len);
 	if (!rx_mgmt) {
-		tdls_err("Failed to allocate rx mgmt frame");
+		tdls_debug_rl("Failed to allocate rx mgmt frame");
 		qdf_mem_free(rx_mgmt_event);
 		return QDF_STATUS_E_NOMEM;
 	}
