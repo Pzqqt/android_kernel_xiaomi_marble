@@ -263,15 +263,7 @@ typedef struct sap_StationAssocReassocCompleteEvent_s {
 	uint8_t ies[MAX_ASSOC_IND_IE_LEN];
 	uint16_t iesLen;
 	uint32_t statusCode;
-	eSapAuthType SapAuthType;
 	bool wmmEnabled;
-	/* Required for indicating the frames to upper layer */
-	uint32_t beaconLength;
-	uint8_t *beaconPtr;
-	uint32_t assocReqLength;
-	uint8_t *assocReqPtr;
-	uint32_t assocRespLength;
-	uint8_t *assocRespPtr;
 	uint8_t timingMeasCap;
 	tSirSmeChanInfo chan_info;
 	bool ampdu;
