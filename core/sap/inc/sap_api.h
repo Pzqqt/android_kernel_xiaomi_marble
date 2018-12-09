@@ -739,24 +739,6 @@ typedef struct tagSapStruct {
 	bool enable_etsi13_srd_chan_support;
 } tSapStruct, *tpSapStruct;
 
-typedef struct sap_SoftapStats_s {
-	uint32_t txUCFcnt;
-	uint32_t txMCFcnt;
-	uint32_t txBCFcnt;
-	uint32_t txUCBcnt;
-	uint32_t txMCBcnt;
-	uint32_t txBCBcnt;
-	uint32_t rxUCFcnt;
-	uint32_t rxMCFcnt;
-	uint32_t rxBCFcnt;
-	uint32_t rxUCBcnt;
-	uint32_t rxMCBcnt;
-	uint32_t rxBCBcnt;
-	uint32_t rxBcnt;
-	uint32_t rxBcntCRCok;
-	uint32_t rxRate;
-} tSap_SoftapStats, *tpSap_SoftapStats;
-
 #ifdef FEATURE_WLAN_CH_AVOID
 /* Store channel safety information */
 typedef struct {
