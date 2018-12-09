@@ -661,6 +661,7 @@ enum wlan_serialization_cancel_type {
  * @WLAN_SER_CMD_ACTIVE: Command is activated and put in active queue
  * @WLAN_SER_CMD_DENIED_RULES_FAILED: Command denied as the rules fail
  * @WLAN_SER_CMD_DENIED_LIST_FULL: Command denied as the pending list is full
+ * @WLAN_SER_CMD_QUEUE_DISABLED: Command denied as the queue is disabled
  * @WLAN_SER_CMD_DENIED_UNSPECIFIED: Command denied due to unknown reason
  */
 enum wlan_serialization_status {
@@ -668,6 +669,7 @@ enum wlan_serialization_status {
 	WLAN_SER_CMD_ACTIVE,
 	WLAN_SER_CMD_DENIED_RULES_FAILED,
 	WLAN_SER_CMD_DENIED_LIST_FULL,
+	WLAN_SER_CMD_QUEUE_DISABLED,
 	WLAN_SER_CMD_DENIED_UNSPECIFIED,
 };
 
@@ -694,6 +696,8 @@ enum wlan_serialization_cmd_status {
  * @cmd_cb: Command callback
  * @source: component ID of the source of the command
  * @is_high_priority: Normal/High Priority at which the cmd has to be queued
+ * @is_blocking: Is the command blocking
+ * @queue_disable: Should the command disable the queues
  * @cmd_timeout_cb: Command timeout callback
  * @cmd_timeout_duration: Timeout duration in milliseconds
  * @vdev: VDEV object associated to the command
@@ -710,6 +714,7 @@ struct wlan_serialization_command {
 	enum wlan_umac_comp_id source;
 	bool is_high_priority;
 	bool is_blocking;
+	bool queue_disable;
 	uint16_t cmd_timeout_duration;
 	union {
 		struct wlan_objmgr_vdev *vdev;

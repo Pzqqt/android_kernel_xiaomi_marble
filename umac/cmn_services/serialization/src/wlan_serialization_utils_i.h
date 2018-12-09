@@ -720,10 +720,12 @@ struct wlan_serialization_pdev_queue {
  * struct wlan_serialization_vdev_queue - queue data related to vdev
  * @active_list: list to hold the commands currently being executed
  * @pending_list list: to hold the commands currently pending
+ * @queue_disable: is the queue disabled
  */
 struct wlan_serialization_vdev_queue {
 	qdf_list_t active_list;
 	qdf_list_t pending_list;
+	bool queue_disable;
 };
 
 /**

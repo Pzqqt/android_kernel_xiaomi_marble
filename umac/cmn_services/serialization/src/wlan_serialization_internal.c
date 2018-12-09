@@ -95,6 +95,8 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
 	struct wlan_objmgr_pdev *pdev;
 	struct wlan_ser_pdev_obj *ser_pdev_obj;
 	struct wlan_serialization_pdev_queue *pdev_queue;
+	struct wlan_ser_vdev_obj *ser_vdev_obj;
+	struct wlan_serialization_vdev_queue *vdev_queue;
 	bool active_queue;
 
 	/* Enqueue process
@@ -166,6 +168,53 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
 		  cmd->is_blocking);
 
 	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
+
+	/* Before queuing any non scan command,
+	 * as part of wlan_serialization_request,
+	 * we check if the vdev queues are disabled.
+	 *
+	 * The serialization command structure has an
+	 * attribute, where after a given command is queued,
+	 * we can block the vdev queues.
+	 *
+	 * For example, after VDEV_DOWN command is queued as
+	 * part of a vdev deletion, no other commands should be queued
+	 * until the deletion is complete, so with VDEV_DOWN(in case of
+	 * vdev deletion) with pass the attribute to disable vdev queues
+	 */
+	if (cmd->cmd_type > WLAN_SER_CMD_SCAN &&
+	    ser_reason == SER_REQUEST) {
+		ser_vdev_obj =
+			wlan_serialization_get_vdev_obj(
+				wlan_serialization_get_vdev_from_cmd(cmd));
+
+		if (!ser_vdev_obj) {
+			wlan_serialization_release_lock(
+				&pdev_queue->pdev_queue_lock);
+			goto error;
+		}
+
+		vdev_queue =
+			wlan_serialization_get_vdev_queue_obj(
+				ser_vdev_obj,
+				cmd->cmd_type);
+
+		if (!vdev_queue) {
+			wlan_serialization_release_lock(
+				&pdev_queue->pdev_queue_lock);
+			goto error;
+		}
+
+		if (vdev_queue->queue_disable) {
+			wlan_serialization_release_lock(
+				&pdev_queue->pdev_queue_lock);
+			ser_err("VDEV queue is disabled, ser request denied");
+			ser_err("cmd id[%d] cmd type[%d]", cmd->cmd_id,
+				cmd->cmd_type);
+			status = WLAN_SER_CMD_QUEUE_DISABLED;
+			goto error;
+		}
+	}
 
 	active_queue = wlan_serialization_is_active_cmd_allowed(cmd);
 

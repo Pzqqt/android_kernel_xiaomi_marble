@@ -126,11 +126,17 @@ wlan_serialization_add_cmd_to_vdev_queue(
 	enum wlan_serialization_status status;
 	struct wlan_serialization_command *cmd;
 	struct wlan_ser_vdev_obj *vdev_obj;
+	struct wlan_serialization_vdev_queue *vdev_queue_obj;
 
 	cmd = &cmd_list->cmd;
 
 	vdev_obj = wlan_serialization_get_vdev_obj(
 			wlan_serialization_get_vdev_from_cmd(cmd));
+
+	vdev_queue_obj =
+			wlan_serialization_get_vdev_queue_obj(
+				vdev_obj,
+				cmd->cmd_type);
 
 	queue = wlan_serialization_get_list_from_vdev_queue(vdev_obj,
 							    cmd->cmd_type,
@@ -140,6 +146,9 @@ wlan_serialization_add_cmd_to_vdev_queue(
 						     pdev_obj,
 						     for_active_queue,
 						     WLAN_SER_VDEV_NODE);
+
+	if (cmd->queue_disable)
+		vdev_queue_obj->queue_disable = true;
 
 	return status;
 }
