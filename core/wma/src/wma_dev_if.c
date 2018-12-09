@@ -2134,6 +2134,8 @@ err:
  */
 static void wma_cleanup_target_req_param(struct wma_target_req *tgt_req)
 {
+	WMA_LOGE("%s: Free target req user_data msg_type:%d", __func__,
+		 tgt_req->msg_type);
 	if (tgt_req->msg_type == WMA_CHNL_SWITCH_REQ ||
 	   tgt_req->msg_type == WMA_DELETE_BSS_REQ ||
 	   tgt_req->msg_type == WMA_ADD_BSS_REQ) {
@@ -2155,7 +2157,6 @@ static void wma_cleanup_target_req_param(struct wma_target_req *tgt_req)
  * wma_remove_bss_peer() - remove BSS peer
  * @wma: pointer to WMA handle
  * @pdev: pointer to PDEV
- * @req_msg: pointer to WMA target Request
  * @vdev_id: vdev id on which delete BSS request was received
  * @params: pointer to Delete BSS params
  *
@@ -2166,9 +2167,8 @@ static void wma_cleanup_target_req_param(struct wma_target_req *tgt_req)
  *
  * Return: 0 on success, ERROR code on failure
  */
-static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
-		struct wma_target_req *req_msg, uint32_t vdev_id,
-		tpDeleteBssParams params)
+static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev, uint32_t vdev_id,
+			       tpDeleteBssParams params)
 {
 	void *peer, *vdev;
 	uint8_t peer_id;
@@ -2181,7 +2181,6 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
 	if (!vdev) {
 		WMA_LOGE(FL("vdev is NULL for vdev_id = %d"), vdev_id);
-		wma_cleanup_target_req_param(req_msg);
 		return -EINVAL;
 	}
 
@@ -2191,7 +2190,6 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 		if (!mac_addr) {
 			WMA_LOGE(FL("mac_addr is NULL for vdev_id = %d"),
 				 vdev_id);
-			wma_cleanup_target_req_param(req_msg);
 			return -EINVAL;
 		}
 	} else {
@@ -2201,30 +2199,28 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 	peer = cdp_peer_find_by_addr(soc, pdev, mac_addr, &peer_id);
 	if (!peer) {
 		WMA_LOGE(FL("peer NULL for vdev_id = %d"), vdev_id);
-		wma_cleanup_target_req_param(req_msg);
 		return -EINVAL;
 	}
 
 	qdf_status = wma_remove_peer(wma, mac_addr, vdev_id, peer, false);
 
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
-		WMA_LOGE(FL("wma_remove_peer failed"));
-		wma_cleanup_target_req_param(req_msg);
+		WMA_LOGE(FL("wma_remove_peer failed vdev_id:%d"), vdev_id);
 		return -EINVAL;
 	}
 
 	if (wmi_service_enabled(wma->wmi_handle,
 				wmi_service_sync_delete_cmds)) {
 		WMA_LOGD(FL("Wait for the peer delete. vdev_id %d"),
-			 req_msg->vdev_id);
-		del_req = wma_fill_hold_req(wma, req_msg->vdev_id,
+			 vdev_id);
+		del_req = wma_fill_hold_req(wma, vdev_id,
 					    WMA_DELETE_STA_REQ,
 					    WMA_DELETE_PEER_RSP,
 					    params,
 					    WMA_DELETE_STA_TIMEOUT);
 		if (!del_req) {
 			WMA_LOGE(FL("Failed to allocate request. vdev_id %d"),
-				 req_msg->vdev_id);
+				 vdev_id);
 			params->status = QDF_STATUS_E_NOMEM;
 			ret_value = -EINVAL;
 		}
@@ -2566,14 +2562,17 @@ __wma_handle_vdev_stop_rsp(wmi_vdev_stopped_event_fixed_param *resp_event)
 		qdf_mem_zero(&iface->arp_offload_req,
 			sizeof(iface->arp_offload_req));
 
-		status = wma_remove_bss_peer(wma, pdev, req_msg,
-					     resp_event->vdev_id, params);
-		if (status != 0)
+		status = wma_remove_bss_peer(wma, pdev, resp_event->vdev_id,
+					     params);
+		if (status != 0) {
+			WMA_LOGE("%s Del bss failed vdev:%d", __func__,
+				 resp_event->vdev_id);
+			wma_cleanup_target_req_param(req_msg);
 			goto free_req_msg;
+		}
 
-		if (wmi_service_enabled(
-		   wma->wmi_handle,
-		   wmi_service_sync_delete_cmds))
+		if (wmi_service_enabled(wma->wmi_handle,
+					wmi_service_sync_delete_cmds))
 			goto free_req_msg;
 
 		wma_send_vdev_down_bss(wma, req_msg);
@@ -4074,19 +4073,17 @@ void wma_vdev_resp_timer(void *data)
 			goto free_tgt_req;
 		}
 
-		status = wma_remove_bss_peer(wma, pdev, tgt_req,
-					     tgt_req->vdev_id, params);
+		status = wma_remove_bss_peer(wma, pdev, tgt_req->vdev_id,
+					     params);
 		if (status != 0) {
+			WMA_LOGE("Del BSS failed vdev_id:%d", tgt_req->vdev_id);
 			wma_cleanup_target_req_param(tgt_req);
 			goto free_tgt_req;
 		}
 
-		if (wmi_service_enabled(
-		   wma->wmi_handle,
-		   wmi_service_sync_delete_cmds)) {
-			wma_cleanup_target_req_param(tgt_req);
+		if (wmi_service_enabled(wma->wmi_handle,
+					wmi_service_sync_delete_cmds))
 			goto free_tgt_req;
-		}
 
 		if (wma_send_vdev_down_to_fw(wma, tgt_req->vdev_id) !=
 		    QDF_STATUS_SUCCESS) {
