@@ -53,6 +53,26 @@ wlan_serialization_active_scan_cmd_count_handler(struct wlan_objmgr_psoc *psoc,
 }
 
 bool
+wlan_serialization_is_scan_pending_queue_empty(
+		struct wlan_serialization_command *cmd)
+{
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_ser_pdev_obj *ser_pdev_obj = NULL;
+	struct wlan_serialization_pdev_queue *pdev_q;
+	bool status = false;
+
+	pdev = wlan_serialization_get_pdev_from_cmd(cmd);
+	ser_pdev_obj = wlan_serialization_get_pdev_obj(pdev);
+
+	pdev_q = &ser_pdev_obj->pdev_q[SER_PDEV_QUEUE_COMP_SCAN];
+
+	if (qdf_list_empty(&pdev_q->pending_list))
+		status = true;
+
+	return status;
+}
+
+bool
 wlan_serialization_is_active_scan_cmd_allowed(
 		struct wlan_serialization_command *cmd)
 {
@@ -371,6 +391,11 @@ enum wlan_serialization_status wlan_ser_move_scan_pending_to_active(
 
 	qdf_mem_copy(&cmd_to_remove, &pending_cmd_list->cmd,
 		     sizeof(struct wlan_serialization_command));
+
+	if (!wlan_serialization_is_active_scan_cmd_allowed(&cmd_to_remove)) {
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
+		goto error;
+	}
 
 	qdf_status =
 		wlan_ser_remove_scan_cmd(ser_pdev_obj,

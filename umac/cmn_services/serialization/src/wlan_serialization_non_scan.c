@@ -28,6 +28,32 @@
 #include "wlan_serialization_utils_i.h"
 #include "wlan_serialization_non_scan_i.h"
 
+bool
+wlan_serialization_is_non_scan_pending_queue_empty(
+		struct wlan_serialization_command *cmd)
+{
+	struct wlan_objmgr_vdev *vdev = NULL;
+	struct wlan_ser_vdev_obj *ser_vdev_obj = NULL;
+	struct wlan_serialization_vdev_queue *vdev_q;
+	bool status = false;
+
+	vdev = wlan_serialization_get_vdev_from_cmd(cmd);
+
+	if (!vdev) {
+		ser_err("vdev object  is invalid");
+		goto error;
+	}
+
+	ser_vdev_obj = wlan_serialization_get_vdev_obj(vdev);
+	vdev_q = &ser_vdev_obj->vdev_q[SER_VDEV_QUEUE_COMP_NON_SCAN];
+
+	if (qdf_list_empty(&vdev_q->pending_list))
+		status = true;
+
+error:
+	return status;
+}
+
 /**
  * wlan_serialization_is_active_nonscan_cmd_allowed() - find if cmd allowed
  * @pdev: pointer to pdev object
@@ -36,6 +62,7 @@
  *
  * Return: true or false
  */
+
 bool
 wlan_serialization_is_active_non_scan_cmd_allowed(
 		struct wlan_serialization_command *cmd)
@@ -267,18 +294,21 @@ wlan_ser_move_non_scan_pending_to_active(
 			goto error;
 		}
 
+		vdev_id = wlan_vdev_get_id(pending_cmd_list->cmd.vdev);
+		vdev_cmd_active =
+			pdev_queue->vdev_active_cmd_bitmap &
+			(1 << vdev_id);
+
 		if (!vdev_queue_lookup) {
 			if (pending_cmd_list->cmd.is_blocking &&
 			    pdev_queue->vdev_active_cmd_bitmap) {
 				break;
 			}
-
-			vdev_id = wlan_vdev_get_id(pending_cmd_list->cmd.vdev);
-			vdev_cmd_active =
-				pdev_queue->vdev_active_cmd_bitmap &
-				(1 << vdev_id);
 			if (vdev_cmd_active)
 				continue;
+		} else {
+			if (vdev_cmd_active)
+				break;
 		}
 
 		qdf_mem_copy(&cmd_to_remove, &pending_cmd_list->cmd,
@@ -320,6 +350,7 @@ wlan_ser_move_non_scan_pending_to_active(
 				&pdev_queue->cmd_pool_list,
 				&active_cmd_list->pdev_node);
 			status = WLAN_SER_CMD_DENIED_UNSPECIFIED;
+			QDF_ASSERT(0);
 			goto error;
 		}
 

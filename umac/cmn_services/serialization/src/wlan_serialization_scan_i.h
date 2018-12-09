@@ -51,6 +51,19 @@ wlan_serialization_active_scan_cmd_count_handler(struct wlan_objmgr_psoc *psoc,
 						 void *obj, void *arg);
 
 /**
+ * wlan_serialization_is_scan_pending_queue_empty()
+ *
+ * @cmd: Serialization command information
+ *
+ * This API will be find out if scan cmd pending queue is empty.
+ *
+ * Return: true or false
+ */
+bool
+wlan_serialization_is_scan_pending_queue_empty(
+		struct wlan_serialization_command *cmd);
+
+/**
  * wlan_serialization_is_active_scan_cmd_allowed() - find if scan cmd allowed
  * @pdev: pointer to pdev object
  *

@@ -318,10 +318,12 @@ wlan_serialization_is_active_cmd_allowed(struct wlan_serialization_command *cmd)
 
 	if (cmd->cmd_type < WLAN_SER_CMD_NONSCAN)
 		active_cmd_allowed =
-			wlan_serialization_is_active_scan_cmd_allowed(cmd);
+		(wlan_serialization_is_active_scan_cmd_allowed(cmd) &&
+			wlan_serialization_is_scan_pending_queue_empty(cmd));
 	else
 		active_cmd_allowed =
-			wlan_serialization_is_active_non_scan_cmd_allowed(cmd);
+		(wlan_serialization_is_active_non_scan_cmd_allowed(cmd) &&
+		 wlan_serialization_is_non_scan_pending_queue_empty(cmd));
 
 	ser_debug("active cmd_type[%d] cmd_id[%d] allowed: %d",
 		  cmd->cmd_type,

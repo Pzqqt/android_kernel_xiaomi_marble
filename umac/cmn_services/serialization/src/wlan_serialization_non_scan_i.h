@@ -36,6 +36,19 @@
 #include "wlan_serialization_queue_i.h"
 
 /**
+ * wlan_serialization_is_non_scan_pending_queue_empty()
+ *
+ * @cmd: Serialization command information
+ *
+ * This API will be find out if non scan cmd pending queue is empty.
+ *
+ * Return: true or false
+ */
+bool
+wlan_serialization_is_non_scan_pending_queue_empty(
+		struct wlan_serialization_command *cmd);
+
+/**
  * wlan_serialization_is_active_nonscan_cmd_allowed() - find if cmd allowed
  *			to be enqueued in active queue
  * @cmd: Serialization command information
