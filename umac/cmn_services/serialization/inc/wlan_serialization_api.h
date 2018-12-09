@@ -983,5 +983,18 @@ void *wlan_serialization_get_active_cmd(
 		struct wlan_objmgr_psoc *psoc,
 		uint8_t vdev_id,
 		enum wlan_serialization_cmd_type cmd_type);
+
+/**
+ * wlan_serialization_get_active_cmd() - Return active umac command which
+ *  matches vdev and cmd type
+ * @vdev: vdev object
+ *
+ * This API fetches command type of the command in the vdev active queue
+ *
+ * Return: command type of the command in the vdev active queue
+ */
+
+enum wlan_serialization_cmd_type
+wlan_serialization_get_vdev_active_cmd_type(struct wlan_objmgr_vdev *vdev);
 #endif
 #endif

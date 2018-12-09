@@ -1009,4 +1009,51 @@ error:
 	ser_exit();
 	return umac_cmd;
 }
+
+enum wlan_serialization_cmd_type
+wlan_serialization_get_vdev_active_cmd_type(struct wlan_objmgr_vdev *vdev)
+{
+	enum wlan_serialization_cmd_type cmd_type = WLAN_SER_CMD_MAX;
+	struct wlan_ser_pdev_obj *ser_pdev_obj;
+	struct wlan_ser_vdev_obj *ser_vdev_obj;
+	struct wlan_serialization_pdev_queue *pdev_queue;
+	struct wlan_serialization_vdev_queue *vdev_queue;
+	struct wlan_serialization_command_list *cmd_list = NULL;
+	qdf_list_node_t *node;
+
+	ser_pdev_obj = wlan_serialization_get_pdev_obj(
+			wlan_vdev_get_pdev(vdev));
+
+	if (!ser_pdev_obj) {
+		ser_err("invalid ser_pdev_obj");
+		goto error;
+	}
+	pdev_queue = wlan_serialization_get_pdev_queue_obj(
+			ser_pdev_obj, cmd_type);
+
+	ser_vdev_obj = wlan_serialization_get_vdev_obj(vdev);
+	if (!ser_vdev_obj) {
+		ser_err("invalid ser_vdev_obj");
+		goto error;
+	}
+	vdev_queue = wlan_serialization_get_vdev_queue_obj(
+			ser_vdev_obj, WLAN_SER_CMD_NONSCAN);
+
+	wlan_serialization_acquire_lock(&pdev_queue->pdev_queue_lock);
+
+	if (wlan_serialization_peek_front(
+		&vdev_queue->active_list, &node) == QDF_STATUS_SUCCESS) {
+		cmd_list = qdf_container_of(
+				node,
+				struct wlan_serialization_command_list,
+				vdev_node);
+
+		cmd_type = cmd_list->cmd.cmd_type;
+	}
+
+	wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
+
+error:
+	return cmd_type;
+}
 #endif

@@ -1396,7 +1396,7 @@ wlan_serialization_remove_cmd_from_queue(
 	if (!cmd)
 		goto error;
 
-	if (wlan_serialization_list_empty(queue)) {
+	if (!queue || wlan_serialization_list_empty(queue)) {
 		ser_err("Empty queue");
 		goto error;
 	}
