@@ -615,6 +615,55 @@ static void wlan_serialization_timer_handler(void *arg)
 #endif
 
 QDF_STATUS
+wlan_serialization_find_and_update_timer(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_serialization_command *cmd)
+{
+	struct wlan_ser_psoc_obj *psoc_ser_obj;
+	struct wlan_serialization_timer *ser_timer;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	int i = 0;
+
+	if (!psoc || !cmd) {
+		ser_err("invalid param");
+		goto exit;
+	}
+
+	psoc_ser_obj = wlan_serialization_get_psoc_obj(psoc);
+	/*
+	 * Here cmd_id and cmd_type are used to locate the timer being
+	 * associated with command.
+	 */
+	wlan_serialization_acquire_lock(&psoc_ser_obj->timer_lock);
+
+	for (i = 0; psoc_ser_obj->max_active_cmds > i; i++) {
+		ser_timer = &psoc_ser_obj->timers[i];
+		if (!(ser_timer->cmd) ||
+		    (ser_timer->cmd->cmd_id != cmd->cmd_id) ||
+		    (ser_timer->cmd->cmd_type != cmd->cmd_type) ||
+		    (ser_timer->cmd->vdev != cmd->vdev))
+			continue;
+
+		status = QDF_STATUS_SUCCESS;
+		break;
+	}
+
+	wlan_serialization_release_lock(&psoc_ser_obj->timer_lock);
+
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		qdf_timer_mod(&ser_timer->timer,
+			      cmd->cmd_timeout_duration);
+		ser_debug("Updating the timer for cmd type:%d, id: %d",
+			  cmd->cmd_type, cmd->cmd_id);
+	} else {
+		ser_err("Can't find timer for cmd_type[%d]", cmd->cmd_type);
+	}
+
+exit:
+	return status;
+}
+
+QDF_STATUS
 wlan_serialization_find_and_stop_timer(struct wlan_objmgr_psoc *psoc,
 				       struct wlan_serialization_command *cmd)
 {

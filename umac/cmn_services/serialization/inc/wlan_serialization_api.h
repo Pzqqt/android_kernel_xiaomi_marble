@@ -784,6 +784,16 @@ void wlan_serialization_remove_cmd(
  */
 void wlan_serialization_flush_cmd(
 		struct wlan_serialization_queued_cmd_info *cmd);
+
+/**
+ * wlan_serialization_update_timer() -Update timer for an active command
+ * @cmd: Command information
+ *
+ * Return: Status of the timer update
+ */
+QDF_STATUS
+wlan_serialization_update_timer(struct wlan_serialization_command *cmd);
+
 /**
  * wlan_serialization_request() - Request to serialize a command
  * @cmd: Command information

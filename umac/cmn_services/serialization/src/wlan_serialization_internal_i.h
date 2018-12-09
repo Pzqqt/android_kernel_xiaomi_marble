@@ -144,6 +144,20 @@ wlan_serialization_find_and_start_timer(struct wlan_objmgr_psoc *psoc,
 					struct wlan_serialization_command *cmd);
 
 /**
+ * wlan_serialization_find_and_update_timer() - to find and update the timer
+ * @psoc: pointer to psoc
+ * @cmd: pointer to command attributes
+ *
+ * Find the timer associated with command, and update it
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+wlan_serialization_find_and_update_timer(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_serialization_command *cmd);
+
+/**
  * wlan_serialization_find_and_stop_timer() - to find and stop the timer
  * @psoc: pointer to psoc
  * @cmd: pointer to actual command

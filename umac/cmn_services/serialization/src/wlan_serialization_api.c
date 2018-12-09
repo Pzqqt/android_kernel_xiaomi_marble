@@ -799,6 +799,36 @@ error:
 	return serialization_status;
 }
 
+QDF_STATUS
+wlan_serialization_update_timer(struct wlan_serialization_command *cmd)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_psoc *psoc;
+
+	if (!cmd) {
+		ser_err("NULL command");
+		goto error;
+	}
+
+	pdev = wlan_serialization_get_pdev_from_cmd(cmd);
+	if (!pdev) {
+		ser_err("invalid pdev");
+		goto error;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		ser_err("invalid psoc");
+		goto error;
+	}
+
+	status = wlan_serialization_find_and_update_timer(psoc, cmd);
+
+error:
+	return status;
+}
+
 enum wlan_serialization_cmd_status
 wlan_serialization_vdev_scan_status(struct wlan_objmgr_vdev *vdev)
 {
