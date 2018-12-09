@@ -2350,26 +2350,6 @@ static void wma_update_tx_send_params(struct tx_send_params *tx_param,
 		     tx_param->preamble_type);
 }
 
-/**
- * wma_tx_packet() - Sends Tx Frame to TxRx
- * @wma_context: wma context
- * @tx_frame: frame buffer
- * @frmLen: frame length
- * @frmType: frame type
- * @txDir: tx diection
- * @tid: TID
- * @tx_frm_download_comp_cb: tx download callback handler
- * @tx_frm_ota_comp_cb: OTA complition handler
- * @tx_flag: tx flag
- * @vdev_id: vdev id
- * @tdlsFlag: tdls flag
- *
- * This function sends the frame corresponding to the
- * given vdev id.
- * This is blocking call till the downloading of frame is complete.
- *
- * Return: QDF status
- */
 QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 eFrameType frmType, eFrameTxDir txDir, uint8_t tid,
 			 wma_tx_dwnld_comp_callback tx_frm_download_comp_cb,
