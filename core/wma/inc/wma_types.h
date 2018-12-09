@@ -605,8 +605,6 @@ typedef QDF_STATUS (*wma_tx_dwnld_comp_callback)(void *context, qdf_nbuf_t buf,
 typedef QDF_STATUS (*wma_tx_ota_comp_callback)(void *context, qdf_nbuf_t buf,
 				      uint32_t status, void *params);
 
-typedef void (*wma_txFailIndCallback)(uint8_t *, uint8_t);
-
 /* generic callback for updating parameters from target to HDD */
 typedef void (*wma_tgt_cfg_cb)(hdd_handle_t handle, struct wma_tgt_cfg *cfg);
 
