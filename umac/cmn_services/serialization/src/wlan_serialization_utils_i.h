@@ -646,9 +646,10 @@ enum ser_queue_reason {
  * CMD_MARKED_FOR_ACTIVATION - The command is about to be activated
  * CMD_IS_ACTIVE - The command is active and currently in use
  */
-#define CMD_MARKED_FOR_ACTIVATION 1
-#define CMD_IS_ACTIVE             2
-#define CMD_ACTIVE_MARKED_FOR_CANCEL 3
+#define CMD_MARKED_FOR_ACTIVATION     1
+#define CMD_IS_ACTIVE                 2
+#define CMD_ACTIVE_MARKED_FOR_CANCEL  3
+#define CMD_ACTIVE_MARKED_FOR_REMOVAL 4
 /**
  * struct wlan_serialization_timer - Timer used for serialization
  * @cmd:      Cmd to which the timer is linked

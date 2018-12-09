@@ -1425,6 +1425,14 @@ wlan_serialization_remove_cmd_from_queue(
 			  cmd_list->cmd.is_high_priority,
 			  cmd_list->cmd.is_blocking);
 
+	if (qdf_atomic_test_bit(CMD_MARKED_FOR_ACTIVATION,
+				&cmd_list->cmd_in_use)) {
+		qdf_atomic_set_bit(CMD_ACTIVE_MARKED_FOR_REMOVAL,
+				   &cmd_list->cmd_in_use);
+		status = QDF_STATUS_E_PENDING;
+		goto error;
+	}
+
 	status = wlan_serialization_remove_node(queue, node);
 
 	if (QDF_STATUS_SUCCESS != status)

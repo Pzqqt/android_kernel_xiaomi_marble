@@ -290,10 +290,18 @@ QDF_STATUS wlan_serialization_activate_cmd(
 	}
 
 	/*
-	 * Cmd was marked for activation and cancel
-	 * was received before activation so the command
+	 * Cmd was marked for activation and delete or cancel
+	 * is received before activation completed, then the command
 	 * should be immediately removed after activation
 	 */
+	if (qdf_atomic_test_bit(CMD_ACTIVE_MARKED_FOR_REMOVAL,
+				&cmd_list->cmd_in_use)) {
+		wlan_serialization_dequeue_cmd(&cmd_list->cmd,
+					       SER_REMOVE,
+					       true);
+		return status;
+	}
+
 	if (qdf_atomic_test_bit(CMD_ACTIVE_MARKED_FOR_CANCEL,
 				&cmd_list->cmd_in_use))
 		wlan_serialization_cmd_cancel_handler(
@@ -419,6 +427,12 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 	else {
 		qdf_status = wlan_ser_remove_non_scan_cmd(
 				ser_pdev_obj, &cmd_list, cmd, active_cmd);
+	}
+
+	if (qdf_status == QDF_STATUS_E_PENDING) {
+		status = WLAN_SER_CMD_MARKED_FOR_ACTIVATION;
+		wlan_serialization_release_lock(&pdev_queue->pdev_queue_lock);
+		goto error;
 	}
 
 	if (qdf_status != QDF_STATUS_SUCCESS) {
