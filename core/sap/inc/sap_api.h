@@ -382,11 +382,6 @@ typedef struct sap_MaxAssocExceededEvent_s {
 	struct qdf_mac_addr macaddr;
 } tSap_MaxAssocExceededEvent;
 
-typedef struct sap_DfsNolInfo_s {
-	uint16_t sDfsList;              /* size of pDfsList in byte */
-	void *pDfsList;             /* pointer to pDfsList buffer */
-} tSap_DfsNolInfo;
-
 /**
  * sap_acs_ch_selected_s - the structure to hold the selected channels
  * @pri_channel:	   Holds the ACS selected primary channel
@@ -469,8 +464,6 @@ typedef struct sap_Event_s {
 		tSap_UnknownSTAJoinEvent sapUnknownSTAJoin;
 		/* eSAP_MAX_ASSOC_EXCEEDED */
 		tSap_MaxAssocExceededEvent sapMaxAssocExceeded;
-		/*eSAP_DFS_NOL_XXX */
-		tSap_DfsNolInfo sapDfsNolInfo;
 		struct sap_ch_selected_s sap_ch_selected;
 		struct sap_roc_ready_ind_s sap_roc_ind;
 		struct sap_ch_change_ind sap_chan_cng_ind;
