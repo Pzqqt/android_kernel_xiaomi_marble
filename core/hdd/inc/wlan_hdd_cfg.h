@@ -3689,7 +3689,6 @@ struct hdd_config {
 	uint32_t ibssPs1RxChainInAtimEnable;
 	uint32_t IpaConfig;
 	bool IpaClkScalingEnable;
-	uint8_t gDisableDfsJapanW53;
 	bool fRegChangeDefCountry;
 	bool advertiseConcurrentOperation;
 	uint8_t enableFwModuleLogLevel[FW_MODULE_LOG_LEVEL_STRING_LENGTH];

@@ -674,12 +674,6 @@ typedef struct sSapDfsInfo {
 	struct ch_params new_ch_params;
 
 	/*
-	 * INI param to enable/disable SAP W53
-	 * channel operation.
-	 */
-	uint8_t is_dfs_w53_disabled;
-
-	/*
 	 * sap_operating_channel_location holds SAP indoor,
 	 * outdoor location information. Currently, if this
 	 * param is  set this Indoor/outdoor channel interop

@@ -58,7 +58,6 @@ extern "C" {
 
 #define IS_ETSI_WEATHER_CH(_ch)   ((_ch >= 120) && (_ch <= 130))
 #define IS_CH_BONDING_WITH_WEATHER_CH(_ch)   (_ch == 116)
-#define IS_CHAN_JAPAN_W53(_ch)    ((_ch >= 52)  && (_ch <= 64))
 #define IS_CHAN_JAPAN_INDOOR(_ch) ((_ch >= 36)  && (_ch <= 64))
 #define IS_CHAN_JAPAN_OUTDOOR(_ch)((_ch >= 100) && (_ch <= 140))
 #define DEFAULT_CAC_TIMEOUT (60 * 1000) /* msecs - 1 min */
