@@ -18681,7 +18681,7 @@ static void csr_update_driver_assoc_ies(struct mac_context *mac_ctx,
 					tSirRoamOffloadScanReq *req_buf)
 {
 	bool power_caps_populated = false;
-	uint32_t csr_11henable = WNI_CFG_11H_ENABLED_STADEF;
+	uint32_t csr_11henable;
 
 	uint8_t *rrm_cap_ie_data
 			= (uint8_t *) &mac_ctx->rrm.rrmPEContext.rrmEnabledCaps;
