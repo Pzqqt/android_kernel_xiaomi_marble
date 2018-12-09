@@ -1248,8 +1248,6 @@ QDF_STATUS sap_set_session_param(mac_handle_t mac_handle,
 		return status;
 	}
 
-	mac_ctx->sap.sapCtxList[sapctx->sessionId].sessionID =
-				sapctx->sessionId;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sap_context = sapctx;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
 				sapctx->csr_roamProfile.csrPersona;
@@ -1271,8 +1269,6 @@ QDF_STATUS sap_clear_session_param(mac_handle_t mac_handle,
 
 	sap_release_vdev_ref(sapctx);
 
-	mac_ctx->sap.sapCtxList[sapctx->sessionId].sessionID =
-		CSR_SESSION_ID_INVALID;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sap_context = NULL;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
 		QDF_MAX_NO_OF_MODE;

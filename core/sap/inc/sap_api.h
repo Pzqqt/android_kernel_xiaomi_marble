@@ -722,7 +722,6 @@ typedef struct sSapDfsInfo {
 } tSapDfsInfo;
 
 typedef struct tagSapCtxList {
-	uint8_t sessionID;
 	void *sap_context;
 	enum QDF_OPMODE sapPersona;
 } tSapCtxList, tpSapCtxList;

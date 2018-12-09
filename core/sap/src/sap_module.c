@@ -700,8 +700,6 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sap_context = sap_ctx;
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sapPersona =
 		sap_ctx->csr_roamProfile.csrPersona;
-	pmac->sap.sapCtxList[sap_ctx->sessionId].sessionID =
-		sap_ctx->sessionId;
 	pmac->sap.SapDfsInfo.reduced_beacon_interval =
 				pConfig->reduced_beacon_interval;
 
