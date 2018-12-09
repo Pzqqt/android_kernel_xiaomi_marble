@@ -525,32 +525,22 @@ typedef struct sUapsd_Params {
  * struct sEnablePsParams - Enable PowerSave Params
  * @psSetting: power save setting
  * @uapsdParams: UAPSD Parameters
- * @bssid: mac address
  * @sessionid: sme session id / vdev id
- * @bcnDtimPeriod: beacon DTIM Period
- * @status: success/failure
  */
 typedef struct sEnablePsParams {
 	tSirAddonPsReq psSetting;
 	tUapsd_Params uapsdParams;
-	tSirMacAddr bssid;
 	uint32_t sessionid;
-	uint8_t bcnDtimPeriod;
-	uint32_t status;
 } tEnablePsParams, *tpEnablePsParams;
 
 /**
  * struct sDisablePsParams - Disable PowerSave Params
  * @psSetting: power save setting
- * @bssid: mac address
  * @sessionid: sme session id / vdev id
- * @status: success/failure
  */
 typedef struct sDisablePsParams {
 	tSirAddonPsReq psSetting;
-	tSirMacAddr bssid;
 	uint32_t sessionid;
-	uint32_t status;
 } tDisablePsParams, *tpDisablePsParams;
 
 /**
