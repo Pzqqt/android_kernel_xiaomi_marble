@@ -31,8 +31,6 @@
 #include "ol_params.h"
 #include <wdi_event_api.h>
 
-#include "ol_ctrl_addba_api.h"
-
 struct ol_version {
 	uint32_t host_ver;
 	uint32_t target_ver;
