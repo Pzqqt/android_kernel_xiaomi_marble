@@ -240,7 +240,6 @@ typedef struct sap_StopBssCompleteEvent_s {
 
 typedef struct sap_StationAssocIndication_s {
 	struct qdf_mac_addr staMac;
-	uint8_t assoId;
 	uint8_t staId;
 	uint8_t status;
 	/* Required for indicating the frames to upper layer */
