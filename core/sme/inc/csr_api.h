@@ -857,8 +857,6 @@ struct csr_roam_profile {
 	/* WPS Association if true => auth and ecryption should be ignored */
 	bool bWPSAssociation;
 	bool bOSENAssociation;
-	uint32_t nWSCReqIELength; /* The byte count in the pWSCReqIE */
-	uint8_t *pWSCReqIE;       /* If not null,it's IE byte stream for WSC */
 	uint8_t ieee80211d;
 	uint8_t privacy;
 	bool fwdWPSPBCProbeReq;
@@ -884,7 +882,6 @@ struct csr_roam_profile {
 	bool supplicant_disabled_roaming;
 	bool driver_disabled_roaming;
 #ifdef WLAN_FEATURE_FILS_SK
-	bool fils_connection;
 	uint8_t *hlp_ie;
 	uint32_t hlp_ie_len;
 	struct cds_fils_connection_info *fils_con_info;
