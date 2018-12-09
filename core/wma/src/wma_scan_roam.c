@@ -4474,32 +4474,6 @@ QDF_STATUS wma_stop_extscan(tp_wma_handle wma,
 	return status;
 }
 
-/** wma_get_hotlist_entries_per_page() - hotlist entries per page
- * @wmi_handle: wmi handle.
- * @cmd: size of command structure.
- * @per_entry_size: per entry size.
- *
- * This utility function calculates how many hotlist entries can
- * fit in one page.
- *
- * Return: number of entries
- */
-static inline int wma_get_hotlist_entries_per_page(wmi_unified_t wmi_handle,
-						   size_t cmd_size,
-						   size_t per_entry_size)
-{
-	uint32_t avail_space = 0;
-	int num_entries = 0;
-	uint16_t max_msg_len = wmi_get_max_msg_len(wmi_handle);
-
-	/* Calculate number of hotlist entries that can
-	 * be passed in wma message request.
-	 */
-	avail_space = max_msg_len - cmd_size;
-	num_entries = avail_space / per_entry_size;
-	return num_entries;
-}
-
 QDF_STATUS wma_extscan_start_hotlist_monitor(tp_wma_handle wma,
 			struct extscan_bssid_hotlist_set_params *params)
 {
