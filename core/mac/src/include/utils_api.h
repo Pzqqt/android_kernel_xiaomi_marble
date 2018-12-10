@@ -25,19 +25,6 @@
 #include "sys_wrapper.h"
 #include "wlan_vdev_mlme_api.h"
 
-/* / System role definition on a per BSS */
-typedef enum eBssSystemRole {
-	eSYSTEM_UNKNOWN_ROLE,
-	eSYSTEM_AP_ROLE,
-	eSYSTEM_STA_IN_IBSS_ROLE,
-	eSYSTEM_STA_ROLE,
-	eSYSTEM_BTAMP_STA_ROLE,
-	eSYSTEM_BTAMP_AP_ROLE,
-
-	eSYSTEM_LAST_ROLE,
-	eSYSTEM_MULTI_BSS_ROLE = eSYSTEM_LAST_ROLE
-} tBssSystemRole;
-
 QDF_STATUS cfg_init(struct mac_context *);
 void cfg_de_init(struct mac_context *);
 
