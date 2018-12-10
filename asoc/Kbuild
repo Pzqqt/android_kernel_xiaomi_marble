@@ -84,6 +84,11 @@ ifdef CONFIG_SND_SOC_QCS405
 	MACHINE_OBJS += qcs405.o
 endif
 
+# for KONA sound card driver
+ifdef CONFIG_SND_SOC_KONA
+	MACHINE_OBJS += kona.o
+endif
+
 ifdef CONFIG_SND_SOC_CPE
 	CPE_LSM_OBJS += msm-cpe-lsm.o
 endif
@@ -175,6 +180,9 @@ obj-$(CONFIG_SND_SOC_SM6150) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_QCS405) += machine_dlkm.o
+machine_dlkm-y := $(MACHINE_OBJS)
+
+obj-$(CONFIG_SND_SOC_KONA) += machine_dlkm.o
 machine_dlkm-y := $(MACHINE_OBJS)
 
 obj-$(CONFIG_SND_SOC_CPE) += cpe_lsm_dlkm.o
