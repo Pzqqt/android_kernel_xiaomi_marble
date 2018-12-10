@@ -645,9 +645,6 @@ sir_convert_meas_req_frame2_struct(struct mac_context *, uint8_t *,
 /**
  * \brief Populated a tDot11fFfCapabilities
  *
- * \sa PopulatedDot11fCapabilities2
- *
- *
  * \param mac Pointer to the global MAC data structure
  *
  * \param pDot11f Address of a tDot11fFfCapabilities to be filled in
@@ -662,33 +659,6 @@ sir_convert_meas_req_frame2_struct(struct mac_context *, uint8_t *,
 QDF_STATUS
 populate_dot11f_capabilities(struct mac_context *mac,
 			tDot11fFfCapabilities *pDot11f,
-			struct pe_session *pe_session);
-
-/**
- * \brief Populated a tDot11fFfCapabilities
- *
- * \sa PopulatedDot11fCapabilities2
- *
- *
- * \param mac Pointer to the global MAC data structure
- *
- * \param pDot11f Address of a tDot11fFfCapabilities to be filled in
- *
- * \param pSta Pointer to a tDphHashNode representing a peer
- *
- *
- * \note If SIR_MAC_PROP_CAPABILITY_11EQOS is enabled on our peer, we'll
- * clear the QOS bit in pDot11f
- *
- *
- */
-
-struct sDphHashNode;
-
-QDF_STATUS
-populate_dot11f_capabilities2(struct mac_context *mac,
-			tDot11fFfCapabilities *pDot11f,
-			struct sDphHashNode *pSta,
 			struct pe_session *pe_session);
 
 /* / Populate a tDot11fIEChanSwitchAnn */
@@ -1042,9 +1012,6 @@ QDF_STATUS populate_dot11f_assoc_res_wsc_ie(struct mac_context *mac,
 QDF_STATUS populate_dot11_assoc_res_p2p_ie(struct mac_context *mac,
 					tDot11fIEP2PAssocRes *pDot11f,
 					tpSirAssocReq pRcvdAssocReq);
-
-QDF_STATUS populate_dot11f_wscInAssocRes(struct mac_context *mac,
-					tDot11fIEWscAssocRes *pDot11f);
 
 QDF_STATUS populate_dot11f_wfatpc(struct mac_context *mac,
 				tDot11fIEWFATPC *pDot11f, uint8_t txPower,
