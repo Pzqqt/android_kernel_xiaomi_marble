@@ -131,8 +131,6 @@ bool wma_needshutdown(void);
 
 QDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle);
 
-uint8_t wma_map_channel(uint8_t mapChannel);
-
 int wma_cli_get_command(int vdev_id, int param_id, int vpdev);
 int wma_cli_set_command(int vdev_id, int param_id, int sval, int vpdev);
 int wma_cli_set2_command(int vdev_id, int param_id, int sval1,
