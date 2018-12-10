@@ -1473,13 +1473,11 @@ QDF_STATUS csr_scan_for_ssid(struct mac_context *mac_ctx, uint32_t session_id,
 				session->selfMacAddr.bytes,
 				WLAN_LEGACY_SME_ID);
 	ucfg_scan_init_default_params(vdev, req);
-	req->scan_req.dwell_time_active = 0;
 	req->scan_req.scan_id = scan_id;
 	req->scan_req.vdev_id = session_id;
 	req->scan_req.scan_req_id = mac_ctx->scan.requester_id;
 	req->scan_req.scan_f_passive = false;
 	req->scan_req.scan_f_bcast_probe = false;
-
 
 	if (QDF_P2P_CLIENT_MODE == profile->csrPersona)
 		req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
