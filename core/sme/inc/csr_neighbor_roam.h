@@ -172,9 +172,6 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(struct mac_context *mac,
 		uint8_t sessionId);
 QDF_STATUS csr_neighbor_roam_init(struct mac_context *mac, uint8_t sessionId);
 void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId);
-QDF_STATUS csr_neighbor_roam_transit_to_cfg_chan_scan(struct mac_context *mac,
-		uint8_t sessionId);
-QDF_STATUS csrNeighborRoamTransitionToPreauthDone(struct mac_context *mac);
 QDF_STATUS csr_neighbor_roam_prepare_scan_profile_filter(struct mac_context *mac,
 		tCsrScanResultFilter *pScanFilter, uint8_t sessionId);
 QDF_STATUS csr_neighbor_roam_preauth_rsp_handler(struct mac_context *mac,
