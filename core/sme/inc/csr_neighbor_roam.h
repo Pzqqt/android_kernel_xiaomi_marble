@@ -123,11 +123,6 @@ typedef enum {
 	eMaxEmptyScan = eFifthEmptyScan,
 } eNeighborRoamEmptyScanCount;
 
-typedef enum {
-	DEFAULT_SCAN = 0,
-	SPLIT_SCAN_OCCUPIED_LIST = 1,
-} eNeighborRoamScanMode;
-
 /* Complete control information for neighbor roam algorithm */
 typedef struct sCsrNeighborRoamControlInfo {
 	eCsrNeighborRoamState neighborRoamState;
