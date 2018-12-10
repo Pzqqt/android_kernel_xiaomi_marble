@@ -6985,10 +6985,7 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 		session->pWapiRspIE = NULL;
 	}
 #endif /* FEATURE_WLAN_WAPI */
-#ifdef FEATURE_WLAN_BTAMP_UT_RF
-	session->maxRetryCount = 0;
-	csr_roam_stop_join_retry_timer(mac_ctx, session_id);
-#endif
+
 	/*
 	 * Reset remain_in_power_active_till_dhcp as
 	 * it might have been set by last failed secured connection.
@@ -8113,9 +8110,7 @@ QDF_STATUS csr_roam_connect(struct mac_context *mac, uint32_t sessionId,
 			mac->roam.roamSession[sessionId].connectState)
 		mac->roam.roamSession[sessionId].connectState =
 			eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED;
-#ifdef FEATURE_WLAN_BTAMP_UT_RF
-	pSession->maxRetryCount = CSR_JOIN_MAX_RETRY_COUNT;
-#endif
+
 	pScanFilter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
 	if (NULL == pScanFilter) {
 		status = QDF_STATUS_E_NOMEM;
@@ -8683,11 +8678,6 @@ QDF_STATUS csr_roam_disconnect_internal(struct mac_context *mac, uint32_t sessio
 		sme_err("session: %d not found", sessionId);
 		return QDF_STATUS_E_FAILURE;
 	}
-#ifdef FEATURE_WLAN_BTAMP_UT_RF
-	/* Stop the retry */
-	pSession->maxRetryCount = 0;
-	csr_roam_stop_join_retry_timer(mac, sessionId);
-#endif
 	/* Not to call cancel roaming here */
 	/* Only issue disconnect when necessary */
 	if (csr_is_conn_state_connected(mac, sessionId)
@@ -16676,16 +16666,6 @@ QDF_STATUS csr_roam_open_session(struct mac_context *mac_ctx,
 	session->htConfig.ht_sgi20 = ht_cap_info->short_gi_20_mhz;
 	session->htConfig.ht_sgi40 = ht_cap_info->short_gi_40_mhz;
 
-#ifdef FEATURE_WLAN_BTAMP_UT_RF
-	status = qdf_mc_timer_init(&session->hTimerJoinRetry, QDF_TIMER_TYPE_SW,
-				   csr_roam_join_retry_timer_handler,
-				   &session->joinRetryTimerInfo);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		sme_err("cannot allocate memory for join retry timer");
-		return status;
-	}
-#endif /* FEATURE_WLAN_BTAMP_UT_RF */
-
 	session->vht_config.max_mpdu_len = vht_cap_info->ampdu_len;
 	session->vht_config.supported_channel_widthset =
 			vht_cap_info->supp_chan_width;
@@ -16822,9 +16802,6 @@ void csr_cleanup_session(struct mac_context *mac, uint32_t sessionId)
 		csr_roam_free_connected_info(mac, &pSession->connectedInfo);
 		qdf_mc_timer_destroy(&pSession->hTimerRoaming);
 		qdf_mc_timer_destroy(&pSession->roaming_offload_timer);
-#ifdef FEATURE_WLAN_BTAMP_UT_RF
-		qdf_mc_timer_destroy(&pSession->hTimerJoinRetry);
-#endif
 		csr_purge_vdev_pending_ser_cmd_list(mac, sessionId);
 		csr_init_session(mac, sessionId);
 	}

@@ -204,14 +204,11 @@ void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
 void csr_release_command_roam(struct mac_context *mac, tSmeCmd *pCommand);
 void csr_release_command_wm_status_change(struct mac_context *mac,
 					  tSmeCmd *pCommand);
-void csr_release_roc_req_cmd(struct mac_context *mac_ctx,
-			     tSmeCmd *pCommand);
 
 QDF_STATUS csr_roam_save_connected_bss_desc(struct mac_context *mac,
 					    uint32_t sessionId,
 					    tSirBssDescription *pBssDesc);
-bool csr_is_network_type_equal(tSirBssDescription *pSirBssDesc1,
-			       tSirBssDescription *pSirBssDesc2);
+
 /*
  * Prepare a filter base on a profile for parsing the scan results.
  * Upon successful return, caller MUST call csr_free_scan_filter on
@@ -227,10 +224,6 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 				 struct csr_roam_profile *pSrcProfile);
 QDF_STATUS csr_roam_start(struct mac_context *mac);
 void csr_roam_stop(struct mac_context *mac, uint32_t sessionId);
-void csr_roam_startMICFailureTimer(struct mac_context *mac);
-void csr_roam_stopMICFailureTimer(struct mac_context *mac);
-void csr_roam_startTKIPCounterMeasureTimer(struct mac_context *mac);
-void csr_roam_stopTKIPCounterMeasureTimer(struct mac_context *mac);
 
 QDF_STATUS csr_scan_open(struct mac_context *mac);
 QDF_STATUS csr_scan_close(struct mac_context *mac);
@@ -406,8 +399,7 @@ void csr_apply_channel_power_info_to_fw(struct mac_context *mac,
 void csr_apply_power2_current(struct mac_context *mac);
 void csr_assign_rssi_for_category(struct mac_context *mac, int8_t bestApRssi,
 				  uint8_t catOffset);
-QDF_STATUS csr_roam_start_roaming(struct mac_context *mac, uint32_t sessionId,
-				  enum csr_roaming_reason roamingReason);
+
 /* return a bool to indicate whether roaming completed or continue. */
 bool csr_roam_complete_roaming(struct mac_context *mac, uint32_t sessionId,
 			       bool fForce, eCsrRoamResult roamResult);
@@ -1023,7 +1015,7 @@ csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 				  tSirBssDescription *bss_descr);
 bool is_disconnect_pending(struct mac_context *mac_ctx,
 				   uint8_t sessionid);
-void csr_scan_active_list_timeout_handle(void *userData);
+
 QDF_STATUS csr_prepare_disconnect_command(struct mac_context *mac,
 			uint32_t session_id, tSmeCmd **sme_cmd);
 
