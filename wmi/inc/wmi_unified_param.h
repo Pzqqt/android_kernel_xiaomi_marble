@@ -1334,36 +1334,6 @@ struct ap_ps_params {
 
 /**
  * struct scan_chan_list_params  - scan channel list cmd parameter
- * @num_scan_chans: no of scan channels
- * @chan_info: pointer to wmi channel info
- */
-#ifdef CONFIG_MCL
-/* TODO: This needs clean-up based on how its processed. */
-typedef struct {
-	/* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_channel */
-	uint32_t tlv_header;
-	/** primary 20 MHz channel frequency in mhz */
-	uint32_t mhz;
-	/** Center frequency 1 in MHz*/
-	uint32_t band_center_freq1;
-	/** Center frequency 2 in MHz - valid only for 11acvht 80plus80 mode*/
-	uint32_t band_center_freq2;
-	/** channel info described below */
-	uint32_t info;
-	/** contains min power, max power, reg power and reg class id.  */
-	uint32_t reg_info_1;
-	/** contains antennamax */
-	uint32_t reg_info_2;
-} wmi_channel_param;
-
-struct scan_chan_list_params {
-	uint32_t pdev_id;
-	uint8_t num_scan_chans;
-	wmi_channel_param *chan_info;
-};
-#else
-/**
- * struct scan_chan_list_params  - scan channel list cmd parameter
  * @pdev_id: pdev_id
  * @num_chan: no of scan channels
  * @nallchans: nall chans
@@ -1376,7 +1346,6 @@ struct scan_chan_list_params {
 	bool append;
 	struct channel_param ch_param[1];
 };
-#endif
 
 /**
  * struct multiple_vdev_restart_params - Multiple vdev restart cmd parameter

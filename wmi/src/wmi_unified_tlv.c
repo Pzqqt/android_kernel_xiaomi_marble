@@ -2712,86 +2712,6 @@ error:
 	return ret;
 }
 
-#ifdef CONFIG_MCL
-/**
- *  send_scan_chan_list_cmd_tlv() - WMI scan channel list function
- *  @param wmi_handle      : handle to WMI.
- *  @param param    : pointer to hold scan channel list parameter
- *
- *  Return: 0  on success and -ve on failure.
- */
-static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
-				struct scan_chan_list_params *chan_list)
-{
-	wmi_buf_t buf;
-	QDF_STATUS qdf_status;
-	wmi_scan_chan_list_cmd_fixed_param *cmd;
-	int i;
-	uint8_t *buf_ptr;
-	wmi_channel_param *chan_info, *tchan_info;
-	uint16_t len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
-
-	len += sizeof(wmi_channel) * chan_list->num_scan_chans;
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMI_LOGE("Failed to allocate memory");
-		qdf_status = QDF_STATUS_E_NOMEM;
-		goto end;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmd = (wmi_scan_chan_list_cmd_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_scan_chan_list_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_scan_chan_list_cmd_fixed_param));
-
-	WMI_LOGD("no of channels = %d, len = %d", chan_list->num_scan_chans, len);
-
-	cmd->num_scan_chans = chan_list->num_scan_chans;
-	WMITLV_SET_HDR((buf_ptr + sizeof(wmi_scan_chan_list_cmd_fixed_param)),
-		       WMITLV_TAG_ARRAY_STRUC,
-		       sizeof(wmi_channel) * chan_list->num_scan_chans);
-	chan_info = (wmi_channel_param *)
-			(buf_ptr + sizeof(*cmd) + WMI_TLV_HDR_SIZE);
-	tchan_info = chan_list->chan_info;
-
-	for (i = 0; i < chan_list->num_scan_chans; ++i) {
-		WMITLV_SET_HDR(&chan_info->tlv_header,
-			       WMITLV_TAG_STRUC_wmi_channel,
-			       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
-		chan_info->mhz = tchan_info->mhz;
-		chan_info->band_center_freq1 =
-				 tchan_info->band_center_freq1;
-		chan_info->band_center_freq2 =
-				tchan_info->band_center_freq2;
-		chan_info->info = tchan_info->info;
-		chan_info->reg_info_1 = tchan_info->reg_info_1;
-		chan_info->reg_info_2 = tchan_info->reg_info_2;
-		WMI_LOGD("chan[%d] = %u", i, chan_info->mhz);
-
-		/*TODO: Set WMI_SET_CHANNEL_MIN_POWER */
-		/*TODO: Set WMI_SET_CHANNEL_ANTENNA_MAX */
-		/*TODO: WMI_SET_CHANNEL_REG_CLASSID */
-		tchan_info++;
-		chan_info++;
-	}
-	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
-							chan_list->pdev_id);
-
-	wmi_mtrace(WMI_SCAN_CHAN_LIST_CMDID, NO_SESSION, 0);
-	qdf_status = wmi_unified_cmd_send(wmi_handle,
-			buf, len, WMI_SCAN_CHAN_LIST_CMDID);
-
-	if (QDF_IS_STATUS_ERROR(qdf_status)) {
-		WMI_LOGE("Failed to send WMI_SCAN_CHAN_LIST_CMDID");
-		wmi_buf_free(buf);
-	}
-
-end:
-	return qdf_status;
-}
-#else
 static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 				struct scan_chan_list_params *chan_list)
 {
@@ -2845,38 +2765,41 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 
 		if (tchan_info->is_chan_passive)
 			WMI_SET_CHANNEL_FLAG(chan_info,
-					WMI_CHAN_FLAG_PASSIVE);
+					     WMI_CHAN_FLAG_PASSIVE);
+		if (tchan_info->dfs_set)
+			WMI_SET_CHANNEL_FLAG(chan_info,
+					     WMI_CHAN_FLAG_DFS);
 
 		if (tchan_info->allow_vht)
 			WMI_SET_CHANNEL_FLAG(chan_info,
-					WMI_CHAN_FLAG_ALLOW_VHT);
-		else  if (tchan_info->allow_ht)
+					     WMI_CHAN_FLAG_ALLOW_VHT);
+		if (tchan_info->allow_ht)
 			WMI_SET_CHANNEL_FLAG(chan_info,
-					WMI_CHAN_FLAG_ALLOW_HT);
+					     WMI_CHAN_FLAG_ALLOW_HT);
 		WMI_SET_CHANNEL_MODE(chan_info,
-				tchan_info->phy_mode);
+				     tchan_info->phy_mode);
 
 		if (tchan_info->half_rate)
 			WMI_SET_CHANNEL_FLAG(chan_info,
-					WMI_CHAN_FLAG_HALF_RATE);
+					     WMI_CHAN_FLAG_HALF_RATE);
 
 		if (tchan_info->quarter_rate)
 			WMI_SET_CHANNEL_FLAG(chan_info,
-					WMI_CHAN_FLAG_QUARTER_RATE);
+					     WMI_CHAN_FLAG_QUARTER_RATE);
 
 		/* also fill in power information */
 		WMI_SET_CHANNEL_MIN_POWER(chan_info,
-				tchan_info->minpower);
+					  tchan_info->minpower);
 		WMI_SET_CHANNEL_MAX_POWER(chan_info,
-				tchan_info->maxpower);
+					  tchan_info->maxpower);
 		WMI_SET_CHANNEL_REG_POWER(chan_info,
-				tchan_info->maxregpower);
+					  tchan_info->maxregpower);
 		WMI_SET_CHANNEL_ANTENNA_MAX(chan_info,
-				tchan_info->antennamax);
+					    tchan_info->antennamax);
 		WMI_SET_CHANNEL_REG_CLASSID(chan_info,
-				tchan_info->reg_class_id);
+					    tchan_info->reg_class_id);
 		WMI_SET_CHANNEL_MAX_TX_POWER(chan_info,
-				tchan_info->maxregpower);
+					     tchan_info->maxregpower);
 
 		WMI_LOGD("chan[%d] = %u", i, chan_info->mhz);
 
@@ -2899,7 +2822,6 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 end:
 	return qdf_status;
 }
-#endif
 
 /**
  * populate_tx_send_params - Populate TX param TLV for mgmt and offchan tx
