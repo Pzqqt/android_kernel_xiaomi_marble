@@ -40,6 +40,7 @@
 #include <dbglog_host.h>
 #include <wlan_logging_sock_svc.h>
 #include <wlan_roam_debug.h>
+#include "wlan_hdd_dsc.h"
 #include <wlan_hdd_wowl.h>
 #include <wlan_hdd_misc.h>
 #include <wlan_hdd_wext.h>
@@ -12917,13 +12918,15 @@ static inline int hdd_state_query_cb(void)
 int hdd_init(void)
 {
 	QDF_STATUS status;
-	int ret = 0;
+	int ret;
+
+	hdd_dsc_init();
 
 	status = cds_init();
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to allocate CDS context");
 		ret = -ENOMEM;
-		goto err_out;
+		goto deinit_dsc;
 	}
 	qdf_register_module_state_query_callback(hdd_state_query_cb);
 
@@ -12941,7 +12944,11 @@ int hdd_init(void)
 	hdd_register_debug_callback();
 	wlan_roam_debug_init();
 
-err_out:
+	return 0;
+
+deinit_dsc:
+	hdd_dsc_deinit();
+
 	return ret;
 }
 
@@ -12963,6 +12970,8 @@ void hdd_deinit(void)
 
 	wlan_destroy_bug_report_lock();
 	cds_deinit();
+
+	hdd_dsc_deinit();
 }
 
 #ifdef QCA_WIFI_NAPIER_EMULATION
