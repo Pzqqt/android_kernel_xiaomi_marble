@@ -129,19 +129,6 @@ sme_QosEdcaAcType sme_qos_u_pto_ac_map[SME_QOS_WMM_UP_MAX] = {
 };
 
 /*
- * Table to map access category (AC) to appropriate user priority as specified
- * in 802.11e/WMM
- * Note: there is a quantization loss here because 4 ACs are mapped to 8 UPs
- * Mapping is done for consistency
- */
-enum sme_qos_wmmuptype sme_qos_a_cto_up_map[SME_QOS_EDCA_AC_MAX] = {
-	SME_QOS_WMM_UP_BE,      /* AC BE */
-	SME_QOS_WMM_UP_BK,      /* AC BK */
-	SME_QOS_WMM_UP_VI,      /* AC VI */
-	SME_QOS_WMM_UP_VO       /* AC VO */
-};
-
-/*
  * DESCRIPTION
  * SME QoS module's FLOW Link List structure. This list can hold information
  * per flow/request, like TSPEC params requested, which AC it is running on
