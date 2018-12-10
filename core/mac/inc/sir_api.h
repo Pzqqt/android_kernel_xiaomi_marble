@@ -975,16 +975,6 @@ typedef struct sSirPlmReq {
 
 #endif /* FEATURE_WLAN_ESE */
 
-/* / Definition for response message to previously issued scan request */
-typedef struct sSirSmeScanRsp {
-	uint16_t messageType;   /* eWNI_SME_SCAN_RSP */
-	uint16_t length;
-	uint8_t sessionId;
-	tSirResultCodes statusCode;
-	uint16_t transcationId;
-	uint32_t scan_id;
-} tSirSmeScanRsp, *tpSirSmeScanRsp;
-
 /* / Definition for join request */
 /* / ---> MAC */
 /* / WARNING! If you add a field in JOIN REQ. */
