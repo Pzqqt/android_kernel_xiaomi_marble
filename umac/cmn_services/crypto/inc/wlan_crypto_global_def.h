@@ -24,7 +24,9 @@
 #define _WLAN_CRYPTO_GLOBAL_DEF_H_
 
 #include <wlan_cmn.h>
+#ifdef WLAN_CRYPTO_SUPPORT_FILS
 #include "wlan_crypto_fils_def.h"
+#endif
 
 #define WLAN_CRYPTO_TID_SIZE         (17)
 #define WLAN_CRYPTO_KEYBUF_SIZE      (32)
@@ -284,7 +286,9 @@ struct wlan_crypto_req_key {
 	uint8_t    keydata[WLAN_CRYPTO_KEYBUF_SIZE + WLAN_CRYPTO_MICBUF_SIZE];
 	uint8_t    txiv[WLAN_CRYPTO_WAPI_IV_SIZE];
 	uint8_t    recviv[WLAN_CRYPTO_WAPI_IV_SIZE];
+#ifdef WLAN_CRYPTO_SUPPORT_FILS
 	struct     wlan_crypto_fils_aad_key   filsaad;
+#endif
 };
 
 /**

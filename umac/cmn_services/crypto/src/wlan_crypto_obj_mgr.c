@@ -34,7 +34,9 @@
 #include "wlan_crypto_def_i.h"
 #include "wlan_crypto_main_i.h"
 #include "wlan_crypto_obj_mgr_i.h"
+#ifdef WLAN_CRYPTO_SUPPORT_FILS
 #include "wlan_crypto_fils_api.h"
+#endif
 
 
 extern const struct wlan_crypto_cipher

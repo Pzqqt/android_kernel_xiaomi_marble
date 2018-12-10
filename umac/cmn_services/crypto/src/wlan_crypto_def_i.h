@@ -22,7 +22,10 @@
 #ifndef _WLAN_CRYPTO_DEF_I_H_
 #define _WLAN_CRYPTO_DEF_I_H_
 
+#include <wlan_cmn_ieee80211.h>
+#ifdef WLAN_CRYPTO_AES
 #include "wlan_crypto_aes_i.h"
+#endif
 
 /* IEEE 802.11 defines */
 #define WLAN_FC0_PVER      0x0003
@@ -480,8 +483,8 @@ struct wlan_crypto_cipher {
  */
 static inline bool wlan_crypto_is_data_protected(const void *data)
 {
-	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;
-	if (hdr->frame_control[1] & WLAN_FC1_ISWEP)
+	const struct wlan_frame_hdr *hdr = (const struct wlan_frame_hdr *)data;
+	if (hdr->i_fc[1] & WLAN_FC1_ISWEP)
 		return true;
 	else
 		return false;
@@ -497,19 +500,19 @@ static inline bool wlan_crypto_is_data_protected(const void *data)
  */
 static inline uint8_t ieee80211_hdrsize(const void *data)
 {
-	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;
-	uint8_t size = sizeof(struct ieee80211_hdr);
+	const struct wlan_frame_hdr *hdr = (const struct wlan_frame_hdr *)data;
+	uint8_t size = sizeof(struct wlan_frame_hdr);
 
-	if ((hdr->frame_control[1] & WLAN_FC1_DIR_MASK)
+	if ((hdr->i_fc[1] & WLAN_FC1_DIR_MASK)
 				== (WLAN_FC1_DSTODS)) {
-		size += WLAN_ALEN;
+		size += QDF_MAC_ADDR_SIZE;
 	}
 
-	if (((WLAN_FC0_GET_STYPE(hdr->frame_control[0])
+	if (((WLAN_FC0_GET_STYPE(hdr->i_fc[0])
 			== WLAN_FC0_STYPE_QOS_DATA))) {
 		size += sizeof(uint16_t);
 		/* Qos frame with Order bit set indicates an HTC frame */
-		if (hdr->frame_control[1] & WLAN_FC1_ORDER)
+		if (hdr->i_fc[1] & WLAN_FC1_ORDER)
 			size += (sizeof(uint8_t)*4);
 	}
 	return size;
@@ -547,16 +550,16 @@ ieee80211_hdrspace(struct wlan_objmgr_pdev *pdev, const void *data)
  */
 static inline int wlan_get_tid(const void *data)
 {
-	const struct ieee80211_hdr *hdr = (const struct ieee80211_hdr *)data;
+	const struct wlan_frame_hdr *hdr = (const struct wlan_frame_hdr *)data;
 
-	if (((WLAN_FC0_GET_STYPE(hdr->frame_control[0])
+	if (((WLAN_FC0_GET_STYPE(hdr->i_fc[0])
 				== WLAN_FC0_STYPE_QOS_DATA))) {
-		if ((hdr->frame_control[1] & WLAN_FC1_DIR_MASK)
+		if ((hdr->i_fc[1] & WLAN_FC1_DIR_MASK)
 					== (WLAN_FC1_DSTODS)) {
-			return ((struct ieee80211_hdr_qos_addr4 *)data)->qos[0]
+			return ((struct wlan_frame_hdr_qos_addr4 *)data)->i_qos[0]
 							& WLAN_QOS_TID_MASK;
 		} else {
-			return ((struct ieee80211_hdr_qos *)data)->qos[0]
+			return ((struct wlan_frame_hdr_qos *)data)->i_qos[0]
 							& WLAN_QOS_TID_MASK;
 		}
 	} else

@@ -561,6 +561,37 @@ struct wlan_frame_hdr {
 	uint8_t i_seq[2];
 } qdf_packed;
 
+struct wlan_frame_hdr_qos {
+	uint8_t i_fc[2];
+	uint8_t i_dur[2];
+	union {
+		struct {
+			uint8_t i_addr1[QDF_MAC_ADDR_SIZE];
+			uint8_t i_addr2[QDF_MAC_ADDR_SIZE];
+			uint8_t i_addr3[QDF_MAC_ADDR_SIZE];
+		};
+		uint8_t i_addr_all[3 * QDF_MAC_ADDR_SIZE];
+	};
+	uint8_t i_seq[2];
+	uint8_t i_qos[2];
+} qdf_packed;
+
+struct wlan_frame_hdr_qos_addr4 {
+	uint8_t i_fc[2];
+	uint8_t i_dur[2];
+	union {
+		struct {
+			uint8_t i_addr1[QDF_MAC_ADDR_SIZE];
+			uint8_t i_addr2[QDF_MAC_ADDR_SIZE];
+			uint8_t i_addr3[QDF_MAC_ADDR_SIZE];
+		};
+		uint8_t i_addr_all[3 * QDF_MAC_ADDR_SIZE];
+	};
+	uint8_t i_seq[2];
+	uint8_t i_addr4[QDF_MAC_ADDR_SIZE];
+	uint8_t i_qos[2];
+} qdf_packed;
+
 /* sequence number offset base on begin of mac header */
 #define WLAN_SEQ_CTL_OFFSET         22
 #define WLAN_LOW_SEQ_NUM_MASK       0x000F

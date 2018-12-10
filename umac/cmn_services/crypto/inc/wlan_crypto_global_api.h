@@ -656,4 +656,27 @@ bool wlan_crypto_check_wpa_match(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS wlan_set_vdev_crypto_prarams_from_ie(struct wlan_objmgr_vdev *vdev,
 						uint8_t *ie_ptr,
 						uint16_t ie_len);
+#ifdef WLAN_CRYPTO_GCM_OS_DERIVATIVE
+static inline int wlan_crypto_aes_gmac(const uint8_t *key, size_t key_len,
+				       const uint8_t *iv, size_t iv_len,
+				       const uint8_t *aad, size_t aad_len,
+				       uint8_t *tag)
+{
+	return 0;
+}
+#endif
+#ifdef WLAN_CRYPTO_OMAC1_OS_DERIVATIVE
+static inline int omac1_aes_128(const uint8_t *key, const uint8_t *data,
+				size_t data_len, uint8_t *mac)
+{
+	return 0;
+}
+
+static inline int omac1_aes_256(const uint8_t *key, const uint8_t *data,
+				size_t data_len, uint8_t *mac)
+{
+	return 0;
+}
+#endif
+
 #endif /* end of _WLAN_CRYPTO_GLOBAL_API_H_ */

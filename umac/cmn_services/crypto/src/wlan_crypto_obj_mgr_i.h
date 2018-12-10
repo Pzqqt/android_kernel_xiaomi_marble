@@ -80,6 +80,23 @@ static inline const struct wlan_crypto_cipher *wapi_register(void)
 const struct wlan_crypto_cipher *wapi_register(void);
 #endif
 
+#ifdef WLAN_CRYPTO_FILS_OS_DERIVATIVE
+static inline const struct wlan_crypto_cipher *fils_register(void)
+{
+	return NULL;
+}
+#else
+/**
+ * fils_register() - Register all callback functions to Crypto manager
+ *
+ * This function is invoked from crypto object manager to register
+ * FILS specific callbacks.
+ *
+ * Return: Pointer to wlan_crypto_cipher Object
+ */
+const struct wlan_crypto_cipher *fils_register(void);
+#endif
+
 
 static inline void *wlan_get_vdev_crypto_obj(struct wlan_objmgr_vdev *vdev)
 {

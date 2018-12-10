@@ -33,6 +33,7 @@ INCS += -I$(obj)/$(DEPTH)/cmn_dev/wbuff/inc
 
 ifeq ($(WLAN_CONV_CRYPTO_SUPPORTED), 1)
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/crypto/inc
+INCS += -I$(obj)/$(DEPTH)/component_dev/crypto/inc
 endif
 
 ifeq ($(WLAN_SUPPORT_GREEN_AP), 1)
