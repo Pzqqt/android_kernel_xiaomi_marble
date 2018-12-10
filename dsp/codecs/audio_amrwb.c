@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: GPL-2.0
+// SPDX-License-Identifier: GPL-2.0-only
 /* amrwb audio output device
  *
  * Copyright (C) 2008 Google, Inc.
