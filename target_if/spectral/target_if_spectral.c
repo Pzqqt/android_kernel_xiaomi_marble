@@ -27,13 +27,11 @@
 #include <wlan_osif_priv.h>
 #include <init_deinit_lmac.h>
 #include <reg_services_public_struct.h>
-#ifdef CONFIG_WIN
-#include <wlan_mlme_dispatcher.h>
-#endif /*CONFIG_WIN*/
 #include <reg_services_public_struct.h>
 #include <target_if_spectral_sim.h>
 #include <target_if.h>
 #include <qdf_module.h>
+
 /**
  * @spectral_ops - Spectral function table, holds the Spectral functions that
  * depend on whether the architecture is Direct Attach or Offload. This is used
@@ -1942,12 +1940,10 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 {
 	struct target_if_spectral_ops *p_sops = NULL;
 	struct target_if_spectral *spectral = NULL;
-#ifdef CONFIG_WIN
 	uint32_t target_type;
 	uint32_t target_revision;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_target_tx_ops *tx_ops;
-#endif
 
 	if (!pdev) {
 		spectral_err("SPECTRAL: pdev is NULL!");
@@ -1963,7 +1959,6 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	/* Store pdev in Spectral */
 	spectral->pdev_obj = pdev;
 
-#ifdef CONFIG_WIN
 	psoc = wlan_pdev_get_psoc(pdev);
 
 	tx_ops = &psoc->soc_cb.tx_ops.target_tx_ops;
@@ -1981,7 +1976,6 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		qdf_mem_free(spectral);
 		return NULL;
 	}
-#endif
 
 	/* init the function ptr table */
 	target_if_spectral_init_dummy_function_table(spectral);
@@ -2005,7 +1999,6 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	qdf_spinlock_create(&spectral->noise_pwr_reports_lock);
 	target_if_spectral_clear_stats(spectral);
 
-#ifdef CONFIG_WIN
 	if (target_type == TARGET_TYPE_QCA8074V2 ||
 	    target_type == TARGET_TYPE_QCA6018)
 		spectral->fftbin_size_war =
@@ -2036,9 +2029,7 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		    TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3;
 		spectral->tag_sscan_fft_exp = TLV_TAG_SEARCH_FFT_REPORT_GEN3;
 		spectral->tlvhdr_size = SPECTRAL_PHYERR_TLVSIZE_GEN3;
-	} else
-#endif
-	{
+	} else {
 		spectral->spectral_gen = SPECTRAL_GEN2;
 		spectral->hdr_sig_exp = SPECTRAL_PHYERR_SIGNATURE_GEN2;
 		spectral->tag_sscan_summary_exp =
@@ -2072,7 +2063,6 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		spectral->is_160_format = false;
 		spectral->is_lb_edge_extrabins_format = false;
 		spectral->is_rb_edge_extrabins_format = false;
-#ifdef CONFIG_WIN
 
 		if (target_type == TARGET_TYPE_QCA9984 ||
 		    target_type == TARGET_TYPE_QCA9888) {
@@ -2087,6 +2077,7 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		if (target_type == TARGET_TYPE_QCA9984 ||
 		    target_type == TARGET_TYPE_QCA9888)
 			spectral->is_sec80_rssi_war_required = true;
+#ifdef CONFIG_WIN
 		spectral->use_nl_bcast = true;
 #else
 		spectral->use_nl_bcast = false;

@@ -35,6 +35,7 @@
 #define WCN3990_v2                      0x40010000
 #define WCN3990_v2_1                    0x40010002
 #define WCN3998                         0x40030001
+#define AR900B_REV_2                    0x1
 
 struct qwlan_hw {
 	u32 id;

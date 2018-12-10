@@ -30,9 +30,6 @@
 #include <qdf_util.h>
 #include <wlan_spectral_public_structs.h>
 #include <wlan_spectral_utils_api.h>
-#ifdef CONFIG_WIN
-#include <if_athioctl.h>
-#endif /*CONFIG_WIN*/
 #include <spectral_ioctl.h>
 
 #define spectral_log(level, args...) \
