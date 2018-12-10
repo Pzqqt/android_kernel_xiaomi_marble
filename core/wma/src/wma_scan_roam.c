@@ -119,84 +119,76 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	int i;
-	struct scan_chan_list_params scan_ch_param = {0};
-	wmi_channel_param *tchan_info;
+	int i, len;
+	struct scan_chan_list_params *scan_ch_param;
+	struct channel_param *chan_p;
 
-	scan_ch_param.chan_info = qdf_mem_malloc(sizeof(wmi_channel) *
-				 chan_list->numChan);
-	if (!scan_ch_param.chan_info)
+	len = sizeof(struct channel_param) * chan_list->numChan +
+		offsetof(struct scan_chan_list_params, ch_param[0]);
+	scan_ch_param = qdf_mem_malloc(len);
+	if (!scan_ch_param)
 		return QDF_STATUS_E_NOMEM;
 
-	qdf_mem_zero(scan_ch_param.chan_info, sizeof(wmi_channel) *
-				 chan_list->numChan);
+	qdf_mem_zero(scan_ch_param, len);
 	WMA_LOGD("no of channels = %d", chan_list->numChan);
-	tchan_info = scan_ch_param.chan_info;
-	scan_ch_param.num_scan_chans = chan_list->numChan;
+	chan_p = &scan_ch_param->ch_param[0];
+	scan_ch_param->nallchans = chan_list->numChan;
 	wma_handle->saved_chan.num_channels = chan_list->numChan;
 	WMA_LOGD("ht %d, vht %d, vht_24 %d", chan_list->ht_en,
 			chan_list->vht_en, chan_list->vht_24_en);
 
 	for (i = 0; i < chan_list->numChan; ++i) {
-		tchan_info->mhz =
+		chan_p->mhz =
 			cds_chan_to_freq(chan_list->chanParam[i].chanId);
-		tchan_info->band_center_freq1 =
-					  tchan_info->mhz;
-		tchan_info->band_center_freq2 = 0;
+		chan_p->cfreq1 = chan_p->mhz;
+		chan_p->cfreq2 = 0;
 		wma_handle->saved_chan.channel_list[i] =
 				chan_list->chanParam[i].chanId;
 
 		WMA_LOGD("chan[%d] = freq:%u chan:%d DFS:%d tx power:%d",
-			 i, tchan_info->mhz,
+			 i, chan_p->mhz,
 			 chan_list->chanParam[i].chanId,
 			 chan_list->chanParam[i].dfsSet,
 			 chan_list->chanParam[i].pwr);
 
 		if (chan_list->chanParam[i].dfsSet) {
-			WMI_SET_CHANNEL_FLAG(tchan_info,
-					     WMI_CHAN_FLAG_PASSIVE);
-			WMI_SET_CHANNEL_FLAG(tchan_info,
-					     WMI_CHAN_FLAG_DFS);
+			chan_p->is_chan_passive = 1;
+			chan_p->dfs_set = 1;
 		}
 
-		if (tchan_info->mhz < WMA_2_4_GHZ_MAX_FREQ) {
-			WMI_SET_CHANNEL_MODE(tchan_info, MODE_11G);
+		if (chan_p->mhz < WMA_2_4_GHZ_MAX_FREQ) {
+			chan_p->phy_mode = MODE_11G;
 			if (chan_list->vht_en && chan_list->vht_24_en)
-				WMI_SET_CHANNEL_FLAG(tchan_info,
-						WMI_CHAN_FLAG_ALLOW_VHT);
+				chan_p->allow_vht = 1;
 		} else {
-			WMI_SET_CHANNEL_MODE(tchan_info, MODE_11A);
+			chan_p->phy_mode = MODE_11A;
 			if (chan_list->vht_en)
-				WMI_SET_CHANNEL_FLAG(tchan_info,
-					WMI_CHAN_FLAG_ALLOW_VHT);
+				chan_p->allow_vht = 1;
 		}
 
 		if (chan_list->ht_en)
-			WMI_SET_CHANNEL_FLAG(tchan_info,
-					WMI_CHAN_FLAG_ALLOW_HT);
+			chan_p->allow_ht = 1;
 
 		if (chan_list->chanParam[i].half_rate)
-			WMI_SET_CHANNEL_FLAG(tchan_info,
-				WMI_CHAN_FLAG_HALF_RATE);
+			chan_p->half_rate = 1;
 		else if (chan_list->chanParam[i].quarter_rate)
-			WMI_SET_CHANNEL_FLAG(tchan_info,
-				WMI_CHAN_FLAG_QUARTER_RATE);
+			chan_p->quarter_rate = 1;
 
-		WMI_SET_CHANNEL_MAX_TX_POWER(tchan_info,
-					     chan_list->chanParam[i].pwr);
+		/*TODO: Set WMI_SET_CHANNEL_MIN_POWER */
+		/*TODO: Set WMI_SET_CHANNEL_ANTENNA_MAX */
+		/*TODO: WMI_SET_CHANNEL_REG_CLASSID */
+		chan_p->maxregpower = chan_list->chanParam[i].pwr;
 
-		WMI_SET_CHANNEL_REG_POWER(tchan_info,
-					  chan_list->chanParam[i].pwr);
-		tchan_info++;
+		chan_p++;
 	}
 
 	qdf_status = wmi_unified_scan_chan_list_cmd_send(wma_handle->wmi_handle,
-				&scan_ch_param);
+				scan_ch_param);
 
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		WMA_LOGE("Failed to send WMI_SCAN_CHAN_LIST_CMDID");
 
-	qdf_mem_free(scan_ch_param.chan_info);
+	qdf_mem_free(scan_ch_param);
 
 	return qdf_status;
 }
