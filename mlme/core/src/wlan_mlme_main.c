@@ -1300,7 +1300,7 @@ static void mlme_init_ese_cfg(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_lfr_cfg *lfr)
 {
-	qdf_size_t neighbor_scan_chan_list_num;
+	qdf_size_t neighbor_scan_chan_list_num = 0;
 
 	lfr->mawc_roam_enabled =
 		cfg_get(psoc, CFG_LFR_MAWC_ROAM_ENABLED);
@@ -1434,7 +1434,7 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_LFR_ROAM_SCAN_N_PROBES);
 	lfr->delay_before_vdev_stop =
 		cfg_get(psoc, CFG_LFR_DELAY_BEFORE_VDEV_STOP);
-	qdf_uint8_array_parse(cfg_default(CFG_LFR_NEIGHBOR_SCAN_CHANNEL_LIST),
+	qdf_uint8_array_parse(cfg_get(psoc, CFG_LFR_NEIGHBOR_SCAN_CHANNEL_LIST),
 			      lfr->neighbor_scan_channel_list,
 			      CFG_VALID_CHANNEL_LIST_STRING_LEN,
 			      &neighbor_scan_chan_list_num);
