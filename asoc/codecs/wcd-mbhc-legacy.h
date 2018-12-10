@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0-only */
 /* Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
  */
 #ifndef __WCD_MBHC_LEGACY_H__
