@@ -300,13 +300,15 @@ uint8_t *wlan_crypto_build_wpaie(struct wlan_objmgr_vdev *vdev,
  * wlan_crypto_build_rsnie - called by mlme to build rsnie
  * @vdev: vdev
  * @iebuf: ie buffer
+ * @bssid: bssid mac address to add pmkid in rsnie
  *
  * This function gets called by mlme to build rsnie from given vdev
  *
  * Return: end of buffer
  */
 uint8_t *wlan_crypto_build_rsnie(struct wlan_objmgr_vdev *vdev,
-					uint8_t *iebuf);
+					uint8_t *iebuf,
+					struct qdf_mac_addr *bssid);
 
 /**
  * wlan_crypto_wapiie_check - called by mlme to check the wapiie
@@ -799,5 +801,29 @@ static inline QDF_STATUS wlan_crypto_set_key_req(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* CRYPTO_SET_KEY_CONVERGED */
+/**
+ * wlan_crypto_pmksa_flush - called to flush saved pmksa
+ * @crypto_params: crypto_params
+ *
+ * This function flush saved pmksa from crypto params.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_crypto_pmksa_flush(struct wlan_crypto_params *crypto_params);
+
+/**
+ * wlan_crypto_set_vdev_param - called by ucfg to set crypto param
+ * @vdev: vdev
+ * @pmksa: pmksa to be set/del.
+ * @set: set(set=1) or del(set=0) pmksa from the list.
+ *
+ * This function gets called from ucfg to set or del pmksa.
+ * when given pmksa is NULL and set is 0, it is for flush all entries.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_crypto_set_del_pmksa(struct wlan_objmgr_vdev *vdev,
+				     struct wlan_crypto_pmksa *pmksa,
+				     bool set);
 
 #endif /* end of _WLAN_CRYPTO_GLOBAL_API_H_ */

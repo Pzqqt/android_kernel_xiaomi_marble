@@ -311,6 +311,156 @@ int32_t wlan_crypto_get_peer_param(struct wlan_objmgr_peer *peer,
 	return value;
 }
 qdf_export_symbol(wlan_crypto_get_peer_param);
+
+static
+QDF_STATUS wlan_crypto_set_pmksa(struct wlan_crypto_params *crypto_params,
+				 struct wlan_crypto_pmksa *pmksa)
+{
+	uint8_t i, first_available_slot;
+	uint8_t slot_found = 0;
+
+	/* find the empty slot or slot with same bssid */
+	for (i = 0; i < WLAN_CRYPTO_MAX_PMKID; i++) {
+		if (!crypto_params->pmksa[i]) {
+			if (!slot_found) {
+				slot_found = 1;
+				first_available_slot = i;
+			}
+			continue;
+		}
+		if (qdf_is_macaddr_equal(&pmksa->bssid,
+					 &crypto_params->pmksa[i]->bssid)) {
+			/* free the current pmksa and use this slot */
+			qdf_mem_free(crypto_params->pmksa[i]);
+			crypto_params->pmksa[i] = pmksa;
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+
+	if (i == WLAN_CRYPTO_MAX_PMKID && !slot_found) {
+		crypto_err("no entry available for pmksa");
+		qdf_mem_free(pmksa);
+		return QDF_STATUS_E_INVAL;
+	}
+	crypto_params->pmksa[first_available_slot] = pmksa;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static
+QDF_STATUS wlan_crypto_del_pmksa(struct wlan_crypto_params *crypto_params,
+				 struct wlan_crypto_pmksa *pmksa)
+{
+	uint8_t i;
+
+	/* find slot with same bssid */
+	for (i = 0; i < WLAN_CRYPTO_MAX_PMKID; i++) {
+		if (!crypto_params->pmksa[i])
+			continue;
+		if (qdf_is_macaddr_equal(&pmksa->bssid,
+					 &crypto_params->pmksa[i]->bssid)) {
+			qdf_mem_free(crypto_params->pmksa[i]);
+			crypto_params->pmksa[i] = NULL;
+			return QDF_STATUS_SUCCESS;
+		}
+	}
+
+	return QDF_STATUS_E_INVAL;
+}
+
+QDF_STATUS wlan_crypto_pmksa_flush(struct wlan_crypto_params *crypto_params)
+{
+	uint8_t i;
+
+	for (i = 0; i < WLAN_CRYPTO_MAX_PMKID; i++) {
+		if (!crypto_params->pmksa[i])
+			continue;
+		qdf_mem_free(crypto_params->pmksa[i]);
+		crypto_params->pmksa[i] = NULL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_crypto_set_del_pmksa(struct wlan_objmgr_vdev *vdev,
+				     struct wlan_crypto_pmksa *pmksa,
+				     bool set)
+{
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct wlan_crypto_comp_priv *crypto_priv;
+	struct wlan_crypto_params *crypto_params;
+
+	if (wlan_vdev_mlme_get_opmode(vdev) != QDF_STA_MODE)
+		return QDF_STATUS_E_NOSUPPORT;
+
+	if (!pmksa && set) {
+		crypto_err("pmksa is NULL for set operation");
+		return QDF_STATUS_E_INVAL;
+	}
+	crypto_priv = (struct wlan_crypto_comp_priv *)
+					wlan_get_vdev_crypto_obj(vdev);
+
+	if (!crypto_priv) {
+		crypto_err("crypto_priv NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	crypto_params = &crypto_priv->crypto_params;
+	if (set) {
+		status = wlan_crypto_set_pmksa(crypto_params, pmksa);
+		/* Set pmksa */
+	} else {
+		/* del pmksa */
+		if (!pmksa)
+			status = wlan_crypto_pmksa_flush(crypto_params);
+		else
+			status = wlan_crypto_del_pmksa(crypto_params, pmksa);
+	}
+
+	return status;
+}
+
+/**
+ * wlan_crypto_get_pmksa - called to get pmksa of bssid passed.
+ * @vdev: vdev
+ * @bssid: bssid
+ *
+ * This function gets called from to get pmksa for the bssid.
+ *
+ * Return: wlan_crypto_pmksa when match found else NULL.
+ */
+static struct wlan_crypto_pmksa *
+wlan_crypto_get_pmksa(struct wlan_objmgr_vdev *vdev, struct qdf_mac_addr *bssid)
+{
+	struct wlan_crypto_comp_priv *crypto_priv;
+	struct wlan_crypto_params *crypto_params;
+	uint8_t i;
+
+	if (!bssid) {
+		crypto_err("bssid is NULL");
+		return NULL;
+	}
+	crypto_priv = (struct wlan_crypto_comp_priv *)
+					wlan_get_vdev_crypto_obj(vdev);
+
+	if (!crypto_priv) {
+		crypto_err("crypto_priv NULL");
+		return NULL;
+	}
+
+	crypto_params = &crypto_priv->crypto_params;
+
+	for (i = 0; i < WLAN_CRYPTO_MAX_PMKID; i++) {
+		if (!crypto_params->pmksa[i])
+			continue;
+		if (qdf_is_macaddr_equal(bssid,
+					 &crypto_params->pmksa[i]->bssid)) {
+			return crypto_params->pmksa[i];
+		}
+	}
+
+	return NULL;
+}
 /**
  * wlan_crypto_is_htallowed - called to check is HT allowed for cipher
  * @vdev:  vdev
@@ -2412,13 +2562,16 @@ uint8_t *wlan_crypto_build_wpaie(struct wlan_objmgr_vdev *vdev,
  * wlan_crypto_build_rsnie - called by mlme to build rsnie
  * @vdev: vdev
  * @iebuf: ie buffer
+ * @bssid: bssid mac address to add pmkid in rsnie
  *
  * This function gets called by mlme to build rsnie from given vdev
  *
  * Return: end of buffer
  */
 uint8_t *wlan_crypto_build_rsnie(struct wlan_objmgr_vdev *vdev,
-				 uint8_t *iebuf){
+					uint8_t *iebuf,
+					struct qdf_mac_addr *bssid)
+{
 	uint8_t *frm = iebuf;
 	uint8_t *selcnt;
 	struct wlan_crypto_comp_priv *crypto_priv;
@@ -2569,7 +2722,21 @@ add_rsn_caps:
 	/* optional capabilities */
 	if (crypto_params->rsn_caps & WLAN_CRYPTO_RSN_CAP_MFP_ENABLED) {
 		/* PMK list */
-		WLAN_CRYPTO_ADDSHORT(frm, 0);
+		if (bssid) {
+			struct wlan_crypto_pmksa *pmksa;
+
+			pmksa = wlan_crypto_get_pmksa(vdev, bssid);
+
+			if (pmksa) {
+				WLAN_CRYPTO_ADDSHORT(frm, 1);
+				qdf_mem_copy(frm, pmksa->pmkid, PMKID_LEN);
+				frm += PMKID_LEN;
+			} else {
+				WLAN_CRYPTO_ADDSHORT(frm, 0);
+			}
+		} else
+			WLAN_CRYPTO_ADDSHORT(frm, 0);
+
 		if (HAS_MGMT_CIPHER(crypto_params,
 						WLAN_CRYPTO_CIPHER_AES_CMAC)) {
 			RSN_ADD_CIPHER_TO_SUITE(frm,
@@ -2592,6 +2759,20 @@ add_rsn_caps:
 			RSN_ADD_CIPHER_TO_SUITE(frm,
 						WLAN_CRYPTO_CIPHER_AES_GMAC_256
 						);
+		}
+	} else {
+		/* PMK list */
+		if (bssid) {
+			struct wlan_crypto_pmksa *pmksa;
+
+			pmksa = wlan_crypto_get_pmksa(vdev, bssid);
+			if (pmksa) {
+				WLAN_CRYPTO_ADDSHORT(frm, 1);
+				qdf_mem_copy(frm, pmksa->pmkid, PMKID_LEN);
+				frm += PMKID_LEN;
+			} else {
+				WLAN_CRYPTO_ADDSHORT(frm, 0);
+			}
 		}
 	}
 

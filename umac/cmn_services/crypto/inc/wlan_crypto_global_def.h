@@ -48,6 +48,7 @@
 #define WLAN_CRYPTO_KEYIX_NONE       ((uint16_t)-1)
 #define WLAN_CRYPTO_MAXKEYIDX        (4)
 #define WLAN_CRYPTO_MAXIGTKKEYIDX    (2)
+#define WLAN_CRYPTO_MAX_PMKID        (3)
 
 /* 40 bit wep key len */
 #define WLAN_CRYPTO_KEY_WEP40_LEN    (5)
@@ -206,14 +207,26 @@ enum wlan_crypto_key_type {
 };
 
 /**
+ * struct wlan_crypto_pmksa - structure of crypto to contain pmkid
+ * @bssid: bssid for which pmkid is saved
+ * @pmkid: pmkid
+ */
+
+struct wlan_crypto_pmksa {
+	struct qdf_mac_addr bssid;
+	uint8_t    pmkid[PMKID_LEN];
+};
+
+/**
  * struct wlan_crypto_params - holds crypto params
  * @authmodeset:        authentication mode
  * @ucastcipherset:     unicast ciphers
  * @mcastcipherset:     multicast cipher
  * @mgmtcipherset:      mgmt cipher
  * @cipher_caps:        cipher capability
- * @rsn_caps:           rsn_capability
  * @key_mgmt:           key mgmt
+ * @pmksa:              pmksa
+ * @rsn_caps:           rsn_capability
  *
  * This structure holds crypto params for peer or vdev
  */
@@ -224,6 +237,7 @@ struct wlan_crypto_params {
 	uint32_t mgmtcipherset;
 	uint32_t cipher_caps;
 	uint32_t key_mgmt;
+	struct   wlan_crypto_pmksa *pmksa[WLAN_CRYPTO_MAX_PMKID];
 	uint16_t rsn_caps;
 };
 
@@ -235,6 +249,7 @@ typedef enum wlan_crypto_param_type {
 	WLAN_CRYPTO_PARAM_CIPHER_CAP,
 	WLAN_CRYPTO_PARAM_RSN_CAP,
 	WLAN_CRYPTO_PARAM_KEY_MGMT,
+	WLAN_CRYPTO_PARAM_PMKSA,
 } wlan_crypto_param_type;
 
 /**

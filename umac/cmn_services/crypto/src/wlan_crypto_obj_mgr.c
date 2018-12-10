@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -214,9 +214,12 @@ static QDF_STATUS wlan_crypto_vdev_obj_destroy_handler(
 		crypto_err("crypto_priv NULL");
 		return QDF_STATUS_E_INVAL;
 	}
+
 	wlan_objmgr_vdev_component_obj_detach(vdev,
 						WLAN_UMAC_COMP_CRYPTO,
 						(void *)crypto_priv);
+
+	wlan_crypto_pmksa_flush(&crypto_priv->crypto_params);
 	wlan_crypto_free_key(crypto_priv);
 	qdf_mem_free(crypto_priv);
 
