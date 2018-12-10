@@ -227,7 +227,7 @@ static int wma_wake_reason_nlod(t_wma_handle *wma, uint8_t vdev_id)
 						 sizeof(param));
 }
 #else
-static inline int wma_wake_reason_nlod(uint8_t vdev_id)
+static inline int wma_wake_reason_nlod(t_wma_handle *wma, uint8_t vdev_id)
 {
 	return 0;
 }

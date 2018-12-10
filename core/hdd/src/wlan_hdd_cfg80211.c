@@ -3182,7 +3182,7 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 		fset |= WIFI_FEATURE_D2AP_RTT;
 	}
 #ifdef FEATURE_WLAN_SCAN_PNO
-	if (hdd_ctx->config->configPNOScanSupport &&
+	if (ucfg_scan_get_pno_scan_support(hdd_ctx->psoc) &&
 	    sme_is_feature_supported_by_fw(PNO)) {
 		hdd_debug("PNO is supported by firmware");
 		fset |= WIFI_FEATURE_PNO;
@@ -12386,93 +12386,6 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	FEATURE_NAN_VENDOR_COMMANDS
 };
 
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
-static inline void
-hdd_wiphy_set_max_sched_scans(struct wiphy *wiphy, uint8_t max_scans)
-{
-	if (max_scans == 0)
-		wiphy->flags &= ~WIPHY_FLAG_SUPPORTS_SCHED_SCAN;
-	else
-		wiphy->flags |= WIPHY_FLAG_SUPPORTS_SCHED_SCAN;
-}
-#else
-static inline void
-hdd_wiphy_set_max_sched_scans(struct wiphy *wiphy, uint8_t max_scans)
-{
-	wiphy->max_sched_scan_reqs = max_scans;
-}
-#endif /* KERNEL_VERSION(4, 12, 0) */
-
-/**
- * wlan_hdd_cfg80211_add_connected_pno_support() - Set connected PNO support
- * @wiphy: Pointer to wireless phy
- *
- * This function is used to set connected PNO support to kernel
- *
- * Return: None
- */
-#if defined(CFG80211_REPORT_BETTER_BSS_IN_SCHED_SCAN) || \
-	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 11, 0))
-static void wlan_hdd_cfg80211_add_connected_pno_support(struct wiphy *wiphy)
-{
-	wiphy_ext_feature_set(wiphy,
-		NL80211_EXT_FEATURE_SCHED_SCAN_RELATIVE_RSSI);
-}
-#else
-static void wlan_hdd_cfg80211_add_connected_pno_support(struct wiphy *wiphy)
-{
-}
-#endif
-
-#if ((LINUX_VERSION_CODE > KERNEL_VERSION(4, 4, 0)) || \
-	defined(CFG80211_MULTI_SCAN_PLAN_BACKPORT)) && \
-	defined(FEATURE_WLAN_SCAN_PNO)
-/**
- * hdd_config_sched_scan_plans_to_wiphy() - configure sched scan plans to wiphy
- * @wiphy: pointer to wiphy
- * @config: pointer to config
- *
- * Return: None
- */
-static void hdd_config_sched_scan_plans_to_wiphy(struct wiphy *wiphy,
-						 struct hdd_config *config)
-{
-	struct wlan_objmgr_psoc *psoc;
-	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-
-	psoc = hdd_ctx->psoc;
-
-	if (!psoc) {
-		hdd_err("Invalid psoc");
-		return;
-	}
-
-	if (config->configPNOScanSupport) {
-		hdd_wiphy_set_max_sched_scans(wiphy, 1);
-		wiphy->max_sched_scan_ssids = SCAN_PNO_MAX_SUPP_NETWORKS;
-		wiphy->max_match_sets = SCAN_PNO_MAX_SUPP_NETWORKS;
-		wiphy->max_sched_scan_ie_len = SIR_MAC_MAX_IE_LENGTH;
-		wiphy->max_sched_scan_plans = SCAN_PNO_MAX_PLAN_REQUEST;
-
-		/*
-		 * Exception: Using cfg_get() here because these two
-		 * schedule scan params are used only at this place
-		 * to copy to wiphy structure
-		 */
-		wiphy->max_sched_scan_plan_interval =
-			cfg_get(psoc, CFG_MAX_SCHED_SCAN_PLAN_INTERVAL);
-
-		wiphy->max_sched_scan_plan_iterations =
-			cfg_get(psoc, CFG_MAX_SCHED_SCAN_PLAN_ITERATIONS);
-	}
-}
-#else
-static void hdd_config_sched_scan_plans_to_wiphy(struct wiphy *wiphy,
-						 struct hdd_config *config)
-{
-}
-#endif
-
 struct hdd_context *hdd_cfg80211_wiphy_alloc(void)
 {
 	struct wiphy *wiphy;
@@ -12803,8 +12716,8 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	wlan_hdd_cfg80211_set_wiphy_sae_feature(wiphy);
 
-	hdd_config_sched_scan_plans_to_wiphy(wiphy, pCfg);
-	wlan_hdd_cfg80211_add_connected_pno_support(wiphy);
+	wlan_config_sched_scan_plans_to_wiphy(wiphy, hdd_ctx->psoc);
+	wlan_scan_cfg80211_add_connected_pno_support(wiphy);
 
 	wiphy->max_scan_ssids = MAX_SCAN_SSID;
 
@@ -13197,35 +13110,6 @@ int wlan_hdd_cfg80211_register(struct wiphy *wiphy)
 
 	hdd_exit();
 	return 0;
-}
-
-/*
- * HDD function to update wiphy capability based on target offload status.
- *
- * wlan_hdd_cfg80211_init() does initialization of all wiphy related
- * capability even before downloading firmware to the target. In discrete
- * case, host will get know certain offload capability (say sched_scan
- * caps) only after downloading firmware to the target and target boots up.
- * This function is used to override setting done in wlan_hdd_cfg80211_init()
- * based on target capability.
- */
-void wlan_hdd_cfg80211_update_wiphy_caps(struct wiphy *wiphy)
-{
-#ifdef FEATURE_WLAN_SCAN_PNO
-	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct hdd_config *pCfg = hdd_ctx->config;
-
-	/* wlan_hdd_cfg80211_init() sets sched_scan caps already in wiphy before
-	 * control comes here. Here just we need to clear it if firmware doesn't
-	 * have PNO support.
-	 */
-	if (!pCfg->PnoOffload) {
-		hdd_wiphy_set_max_sched_scans(wiphy, 0);
-		wiphy->max_sched_scan_ssids = 0;
-		wiphy->max_match_sets = 0;
-		wiphy->max_sched_scan_ie_len = 0;
-	}
-#endif
 }
 
 /* This function registers for all frame which supplicant is interested in */

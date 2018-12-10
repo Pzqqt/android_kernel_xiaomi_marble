@@ -1400,7 +1400,7 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 	/* PNO offload */
 	hdd_debug("PNO Capability in f/w = %d", cfg->pno_offload);
 	if (cfg->pno_offload)
-		config->PnoOffload = true;
+		ucfg_scan_set_pno_offload(hdd_ctx->psoc, true);
 #endif
 #ifdef FEATURE_WLAN_TDLS
 	cfg_tdls_get_support_enable(hdd_ctx->psoc, &tdls_support);
@@ -14378,35 +14378,6 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 	return qdf_status_to_os_return(status);
 }
 
-#ifdef FEATURE_WLAN_SCAN_PNO
-static inline void hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
-	struct hdd_context *hdd_ctx)
-{
-	struct nlo_mawc_params *mawc_cfg = &pno_cfg->mawc_params;
-	struct hdd_config *cfg = hdd_ctx->config;
-	bool mawc_enabled;
-
-	pno_cfg->channel_prediction = cfg->pno_channel_prediction;
-	pno_cfg->top_k_num_of_channels = cfg->top_k_num_of_channels;
-	pno_cfg->stationary_thresh = cfg->stationary_thresh;
-	pno_cfg->adaptive_dwell_mode = cfg->pnoscan_adaptive_dwell_mode;
-	pno_cfg->channel_prediction_full_scan =
-		cfg->channel_prediction_full_scan;
-
-	ucfg_mlme_is_mawc_enabled(hdd_ctx->psoc, &mawc_enabled);
-	mawc_cfg->enable = mawc_enabled && cfg->mawc_nlo_enabled;
-	mawc_cfg->exp_backoff_ratio = cfg->mawc_nlo_exp_backoff_ratio;
-	mawc_cfg->init_scan_interval = cfg->mawc_nlo_init_scan_interval;
-	mawc_cfg->max_scan_interval = cfg->mawc_nlo_max_scan_interval;
-}
-#else
-static inline void
-hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
-		      struct hdd_context *hdd_ctx)
-{
-}
-#endif
-
 void hdd_update_ie_whitelist_attr(struct probe_req_whitelist_attr *ie_whitelist,
 				  struct hdd_context *hdd_ctx)
 {
@@ -14567,7 +14538,6 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 		return -EIO;
 	}
 	scan_cfg.sta_miracast_mcc_rest_time = mcast_mcc_rest_time;
-	hdd_update_pno_config(&scan_cfg.pno_cfg, hdd_ctx);
 	hdd_update_ie_whitelist_attr(&scan_cfg.ie_whitelist, hdd_ctx);
 
 	status = hdd_update_score_config(&scan_cfg.score_config, hdd_ctx);

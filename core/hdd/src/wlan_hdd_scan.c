@@ -40,6 +40,7 @@
 #include "wma_api.h"
 #include "cds_utils.h"
 #include "wlan_p2p_ucfg_api.h"
+#include "cfg_ucfg_api.h"
 
 #ifdef WLAN_UMAC_CONVERGENCE
 #include "wlan_cfg80211.h"
@@ -1268,6 +1269,8 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx;
 	struct wlan_objmgr_vdev *vdev;
 	int ret;
+	bool pno_offload_enabled;
+	uint8_t scan_backoff_multiplier;
 
 	hdd_enter();
 
@@ -1289,8 +1292,9 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	if (ret)
 		return ret;
 
-	if (!hdd_ctx->config->PnoOffload) {
-		hdd_debug("PnoOffload is not enabled!!!");
+	pno_offload_enabled = ucfg_scan_is_pno_offload_enabled(hdd_ctx->psoc);
+	if (!pno_offload_enabled) {
+		hdd_debug("Pno Offload is not enabled");
 		return -EINVAL;
 	}
 
@@ -1305,8 +1309,11 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	vdev = hdd_objmgr_get_vdev(adapter);
 	if (!vdev)
 		return -EINVAL;
+
+	scan_backoff_multiplier =
+			ucfg_get_scan_backoff_multiplier(hdd_ctx->psoc);
 	ret = wlan_cfg80211_sched_scan_start(vdev, request,
-				      hdd_ctx->config->scan_backoff_multiplier);
+					     scan_backoff_multiplier);
 	hdd_objmgr_put_vdev(adapter);
 
 	return ret;
@@ -1340,6 +1347,7 @@ int wlan_hdd_sched_scan_stop(struct net_device *dev)
 	struct hdd_context *hdd_ctx;
 	struct wlan_objmgr_vdev *vdev;
 	int ret;
+	bool pno_offload_enabled;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -1354,7 +1362,9 @@ int wlan_hdd_sched_scan_stop(struct net_device *dev)
 		hdd_err("HDD context is Null");
 		return -EINVAL;
 	}
-	if (!hdd_ctx->config->PnoOffload) {
+
+	pno_offload_enabled = ucfg_scan_is_pno_offload_enabled(hdd_ctx->psoc);
+	if (!pno_offload_enabled) {
 		hdd_debug("PnoOffload is not enabled!!!");
 		return -EINVAL;
 	}

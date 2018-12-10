@@ -2193,7 +2193,6 @@ struct hdd_adapter *hdd_get_first_valid_adapter(struct hdd_context *hdd_ctx);
 void hdd_allow_suspend(uint32_t reason);
 void hdd_prevent_suspend_timeout(uint32_t timeout, uint32_t reason);
 
-void wlan_hdd_cfg80211_update_wiphy_caps(struct wiphy *wiphy);
 QDF_STATUS hdd_set_ibss_power_save_params(struct hdd_adapter *adapter);
 
 /**
