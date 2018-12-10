@@ -114,15 +114,6 @@ typedef struct sCsr11rAssocNeighborInfo {
 	tCsrNeighborReportBssInfo neighboReportBssInfo[MAX_BSS_IN_NEIGHBOR_RPT];
 } tCsr11rAssocNeighborInfo, *tpCsr11rAssocNeighborInfo;
 
-typedef enum {
-	eFirstEmptyScan = 1,
-	eSecondEmptyScan,
-	eThirdEmptyScan,
-	eFourthEmptyScan,
-	eFifthEmptyScan,
-	eMaxEmptyScan = eFifthEmptyScan,
-} eNeighborRoamEmptyScanCount;
-
 /* Complete control information for neighbor roam algorithm */
 typedef struct sCsrNeighborRoamControlInfo {
 	eCsrNeighborRoamState neighborRoamState;
