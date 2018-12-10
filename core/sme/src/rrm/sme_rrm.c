@@ -771,7 +771,6 @@ static QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx)
 			goto free_ch_lst;
 		}
 		ucfg_scan_init_default_params(vdev, req);
-		req->scan_req.dwell_time_active = 0;
 		req->scan_req.scan_id = ucfg_scan_get_scan_id(mac_ctx->psoc);
 		req->scan_req.scan_f_passive =
 				(scan_type == eSIR_ACTIVE_SCAN) ? false : true;
