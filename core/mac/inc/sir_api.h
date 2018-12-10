@@ -30,8 +30,9 @@
 #define __SIR_API_H
 
 /* legacy definition */
-typedef struct mac_context *tpAniSirGlobal;
+typedef void *tpAniSirGlobal;
 
+struct mac_context;
 #include "qdf_types.h"
 #include "cds_regdomain.h"
 #include "sir_types.h"
