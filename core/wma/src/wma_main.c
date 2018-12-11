@@ -1984,7 +1984,6 @@ static void wma_shutdown_notifier_cb(void *priv)
 	struct scheduler_msg msg = { 0 };
 	QDF_STATUS status;
 
-	qdf_event_set(&wma_handle->wma_resume_event);
 	ucfg_pmo_psoc_wakeup_host_event_received(wma_handle->psoc);
 	wmi_stop(wma_handle->wmi_handle);
 
@@ -3395,13 +3394,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		goto err_event_init;
 	}
 
-	qdf_status = qdf_event_create(&wma_handle->wma_resume_event);
-	if (qdf_status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: wma_resume_event initialization failed",
-			 __func__);
-		goto err_event_init;
-	}
-
 	qdf_status = cds_shutdown_notifier_register(wma_shutdown_notifier_cb,
 						    wma_handle);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
@@ -4794,7 +4786,6 @@ QDF_STATUS wma_close(void)
 			__func__);
 
 	qdf_event_destroy(&wma_handle->target_suspend);
-	qdf_event_destroy(&wma_handle->wma_resume_event);
 	qdf_event_destroy(&wma_handle->runtime_suspend);
 	qdf_event_destroy(&wma_handle->recovery_event);
 	qdf_event_destroy(&wma_handle->tx_frm_download_comp_event);

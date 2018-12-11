@@ -994,7 +994,6 @@ struct wma_valid_channels {
  * @mac_context: mac context
  * @psoc: psoc context
  * @pdev: physical device global object
- * @wma_resume_event: wma resume event
  * @target_suspend: target suspend event
  * @recovery_event: wma FW recovery event
  * @max_station: max stations
@@ -1031,8 +1030,6 @@ struct wma_valid_channels {
  * @vht_supp_mcs: VHT supported MCS
  * @is_fw_assert: is fw asserted
  * @wow: wow related patterns & parameters
- * @no_of_suspend_ind: number of suspend indications
- * @no_of_resume_ind: number of resume indications
  * @ack_work_ctx: Context for deferred processing of TX ACK
  * @powersave_mode: power save mode
  * @ptrn_match_enable_all_vdev: is pattern match is enable/disable
@@ -1141,7 +1138,6 @@ typedef struct {
 	void *mac_context;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
-	qdf_event_t wma_resume_event;
 	qdf_event_t target_suspend;
 	qdf_event_t runtime_suspend;
 	qdf_event_t recovery_event;
@@ -1179,8 +1175,6 @@ typedef struct {
 	uint32_t vht_supp_mcs;
 	uint8_t is_fw_assert;
 	struct wma_wow wow;
-	uint8_t no_of_suspend_ind;
-	uint8_t no_of_resume_ind;
 	struct wma_tx_ack_work_ctx *ack_work_ctx;
 	uint8_t powersave_mode;
 	bool ptrn_match_enable_all_vdev;
