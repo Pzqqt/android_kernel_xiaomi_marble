@@ -70,7 +70,6 @@ static void nan_cfg_dp_init(struct wlan_objmgr_psoc *psoc,
 		return;
 	nan_obj->cfg_param.dp_enable = cfg_get(psoc,
 					       CFG_NAN_DATAPATH_ENABLE);
-	nan_obj->cfg_param.ndi_ch = cfg_get(psoc, CFG_NAN_NDI_CHANNEL);
 	nan_obj->cfg_param.ndi_mac_randomize =
 				cfg_get(psoc, CFG_NAN_RANDOMIZE_NDI_MAC);
 }

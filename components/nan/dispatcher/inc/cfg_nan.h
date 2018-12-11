@@ -74,31 +74,6 @@
 
 /*
  * <ini>
- * gnan_datapath_ndi_channel - Default channel for NAN Datapath
- * @Min: 6
- * @Max: 149
- * @Default: 6
- *
- * Host suggests this channel for NAN datapath. But FW is free to
- * choose other channels based on system constraints.
- *
- * Related: genable_nan_datapath
- *
- * Supported Feature: NAN
- *
- * Usage: External
- *
- * </ini>
- */
-/*
- * NAN channel on which NAN data interface to start
- */
-#define CFG_NAN_NDI_CHANNEL CFG_INI_UINT("gnan_datapath_ndi_channel", \
-					 6, 149, 6, \
-					 CFG_VALUE_OR_DEFAULT, \
-					 "NAN Datapath Channel")
-/*
- * <ini>
  * gEnableNDIMacRandomization - When enabled this will randomize NDI Mac
  * @Min: 0
  * @Max: 1
@@ -126,7 +101,6 @@
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 #define CFG_NAN_DP      CFG(CFG_NAN_DATAPATH_ENABLE) \
-			CFG(CFG_NAN_NDI_CHANNEL) \
 			CFG(CFG_NAN_RANDOMIZE_NDI_MAC)
 #else
 #define CFG_NAN_DP

@@ -547,8 +547,8 @@ int hdd_ndi_open(char *iface_name)
 int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
 {
 	int ret;
-	uint8_t op_channel;
 	QDF_STATUS status;
+	uint8_t op_channel;
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
@@ -558,7 +558,6 @@ int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
 		return -EINVAL;
 	}
 
-	op_channel = cfg_nan_get_ndi_channel(hdd_ctx->psoc);
 	adapter = hdd_get_adapter_by_iface_name(hdd_ctx, iface_name);
 	if (!adapter) {
 		hdd_err("adapter is null");
@@ -588,13 +587,16 @@ int hdd_ndi_start(char *iface_name, uint16_t transaction_id)
 	 * layer initiates connect / join / start, the NAN data
 	 * interface does not have any such formal requests. The NDI
 	 * create request is responsible for starting the BSS as well.
+	 * Use the 5GHz Band NAN Social channel for BSS start if target
+	 * supports it, since a 2.4GHz channel will require a DBS HW mode change
+	 * first on a DBS 2x2 MAC target. Use a 2.4 GHz Band NAN Social channel
+	 * if the target is not 5GHz capable.
 	 */
-	if (op_channel != NAN_SOCIAL_CHANNEL_2_4GHZ &&
-	    op_channel != NAN_SOCIAL_CHANNEL_5GHZ_LOWER_BAND &&
-	    op_channel != NAN_SOCIAL_CHANNEL_5GHZ_UPPER_BAND) {
-		/* start NDI on the default 2.4 GHz social channel */
+
+	if (hdd_is_5g_supported(hdd_ctx))
+		op_channel = NAN_SOCIAL_CHANNEL_5GHZ_LOWER_BAND;
+	else
 		op_channel = NAN_SOCIAL_CHANNEL_2_4GHZ;
-	}
 
 	if (hdd_ndi_start_bss(adapter, op_channel)) {
 		hdd_err("NDI start bss failed");
