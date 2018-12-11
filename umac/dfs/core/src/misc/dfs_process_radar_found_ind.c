@@ -123,7 +123,7 @@
 int dfs_set_nol_subchannel_marking(struct wlan_dfs *dfs,
 				   bool nol_subchannel_marking)
 {
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!dfs)
 		return -EIO;
@@ -131,8 +131,9 @@ int dfs_set_nol_subchannel_marking(struct wlan_dfs *dfs,
 	dfs->dfs_use_nol_subchannel_marking = nol_subchannel_marking;
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "NOL subchannel marking is %s ",
 		 (nol_subchannel_marking) ? "set" : "disabled");
-	status = tgt_dfs_send_subchan_marking(dfs->dfs_pdev_obj,
-					      nol_subchannel_marking);
+	if (dfs->dfs_is_offload_enabled)
+		status = tgt_dfs_send_subchan_marking(dfs->dfs_pdev_obj,
+						      nol_subchannel_marking);
 
 	return qdf_status_to_os_return(status);
 }
