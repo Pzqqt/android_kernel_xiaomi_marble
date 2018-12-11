@@ -655,11 +655,6 @@ QDF_STATUS wmi_unified_set_thermal_mgmt_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_peer_rate_report_cmd(void *wmi_hdl,
 		struct wmi_peer_rate_report_params *rate_report_params);
 
-#ifdef CONFIG_MCL
-QDF_STATUS wmi_unified_bcn_buf_ll_cmd(void *wmi_hdl,
-			wmi_bcn_send_from_host_cmd_fixed_param *param);
-#endif
-
 QDF_STATUS wmi_unified_process_update_edca_param(void *wmi_hdl,
 		     uint8_t vdev_id, bool mu_edca_param,
 		     struct wmi_host_wme_vparams wmm_vparams[WMI_MAX_NUM_AC]);
