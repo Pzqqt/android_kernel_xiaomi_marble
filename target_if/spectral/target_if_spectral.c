@@ -269,6 +269,12 @@ target_if_spectral_info_init_defaults(struct target_if_spectral *spectral)
 	    wlan_vdev_mlme_get_rxchainmask(vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
 
+	info->osps_cache.osc_params.ss_short_report =
+		SPECTRAL_SCAN_SHORT_REPORT_DEFAULT;
+
+	info->osps_cache.osc_params.ss_fft_period =
+		SPECTRAL_SCAN_FFT_PERIOD_DEFAULT;
+
 	/* The cache is now valid */
 	info->osps_cache.osc_is_valid = 1;
 
@@ -1795,57 +1801,6 @@ target_if_spectral_check_hw_capability(struct target_if_spectral *spectral)
 	return is_spectral_supported;
 }
 
-/**
- * target_if_spectral_init_param_defaults() - Initialize Spectral
- * parameter defaults
- * @spectral: Pointer to Spectral target_if internal private data
- *
- * It is the caller's responsibility to ensure that the Spectral parameters
- * structure passed as part of Spectral target_if internal private data is
- * valid.
- *
- * Return: None
- */
-static void
-target_if_spectral_init_param_defaults(struct target_if_spectral *spectral)
-{
-	struct spectral_config *params = &spectral->params;
-
-	params->ss_count = SPECTRAL_SCAN_COUNT_DEFAULT;
-	if (spectral->spectral_gen == SPECTRAL_GEN3)
-		params->ss_period = SPECTRAL_SCAN_PERIOD_GEN_III_DEFAULT;
-	else
-		params->ss_period = SPECTRAL_SCAN_PERIOD_GEN_II_DEFAULT;
-	params->ss_spectral_pri = SPECTRAL_SCAN_PRIORITY_DEFAULT;
-	params->ss_fft_size = SPECTRAL_SCAN_FFT_SIZE_DEFAULT;
-	params->ss_gc_ena = SPECTRAL_SCAN_GC_ENA_DEFAULT;
-	params->ss_restart_ena = SPECTRAL_SCAN_RESTART_ENA_DEFAULT;
-	params->ss_noise_floor_ref = SPECTRAL_SCAN_NOISE_FLOOR_REF_DEFAULT;
-	params->ss_init_delay = SPECTRAL_SCAN_INIT_DELAY_DEFAULT;
-	params->ss_nb_tone_thr = SPECTRAL_SCAN_NB_TONE_THR_DEFAULT;
-	params->ss_str_bin_thr = SPECTRAL_SCAN_STR_BIN_THR_DEFAULT;
-	params->ss_wb_rpt_mode = SPECTRAL_SCAN_WB_RPT_MODE_DEFAULT;
-	params->ss_rssi_rpt_mode = SPECTRAL_SCAN_RSSI_RPT_MODE_DEFAULT;
-	params->ss_rssi_thr = SPECTRAL_SCAN_RSSI_THR_DEFAULT;
-	params->ss_pwr_format = SPECTRAL_SCAN_PWR_FORMAT_DEFAULT;
-	params->ss_rpt_mode = SPECTRAL_SCAN_RPT_MODE_DEFAULT;
-	params->ss_bin_scale = SPECTRAL_SCAN_BIN_SCALE_DEFAULT;
-	params->ss_dbm_adj = SPECTRAL_SCAN_DBM_ADJ_DEFAULT;
-	/*
-	 * XXX
-	 * SPECTRAL_SCAN_CHN_MASK_DEFAULT (0x1) specifies that chain 0 is to be
-	 * used
-	 * for Spectral. This is expected to be an optimal configuration for
-	 * most chipsets considering aspects like power save. But this can later
-	 * optionally be changed to be set to the default system Rx chainmask
-	 * advertised by FW (if required for some purpose), once the Convergence
-	 * framework supports such retrieval at pdev attach time.
-	 */
-	params->ss_chn_mask = SPECTRAL_SCAN_CHN_MASK_DEFAULT;
-	params->ss_short_report = SPECTRAL_SCAN_SHORT_REPORT_DEFAULT;
-	params->ss_fft_period = SPECTRAL_SCAN_FFT_PERIOD_DEFAULT;
-}
-
 #ifdef QCA_SUPPORT_SPECTRAL_SIMULATION
 /**
  * target_if_spectral_detach_simulation() - De-initialize Spectral
@@ -2038,8 +1993,7 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		spectral->tlvhdr_size = sizeof(struct spectral_phyerr_tlv_gen2);
 	}
 
-	/* Set the default values for spectral parameters */
-	target_if_spectral_init_param_defaults(spectral);
+	spectral->params_valid = false;
 	/* Init spectral capability */
 	target_if_init_spectral_capability(spectral);
 	if (target_if_spectral_attach_simulation(spectral) < 0)
@@ -2136,6 +2090,14 @@ target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
 	if (!spectral) {
 		spectral_err("spectral object is NULL");
 		return -EPERM;
+	}
+
+	if (!spectral->params_valid) {
+		target_if_spectral_info_read(spectral,
+					     TARGET_IF_SPECTRAL_INFO_PARAMS,
+					     &spectral->params,
+					     sizeof(spectral->params));
+		spectral->params_valid = true;
 	}
 
 	switch (threshtype) {
@@ -2633,6 +2595,14 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev)
 		return -EPERM;
 	}
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
+
+	if (!spectral->params_valid) {
+		target_if_spectral_info_read(spectral,
+					     TARGET_IF_SPECTRAL_INFO_PARAMS,
+					     &spectral->params,
+					     sizeof(spectral->params));
+		spectral->params_valid = true;
+	}
 
 	qdf_spin_lock(&spectral->spectral_lock);
 	target_if_spectral_scan_enable_params(spectral, &spectral->params);
