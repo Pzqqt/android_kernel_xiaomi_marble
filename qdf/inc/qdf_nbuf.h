@@ -1102,6 +1102,122 @@ static inline int qdf_nbuf_is_rx_chfrag_end(qdf_nbuf_t buf)
 }
 
 /**
+ * qdf_nbuf_set_da_mcbc() - set da is mcbc
+ * @buf: Network buffer
+ * @val: 0/1
+ *
+ * Return: void
+ */
+static inline void
+qdf_nbuf_set_da_mcbc(qdf_nbuf_t buf, uint8_t val)
+{
+	__qdf_nbuf_set_da_mcbc(buf, val);
+}
+
+/**
+ * qdf_nbuf_is_da_mcbc() - get da is mcbc bit
+ * @buf: Network buffer
+ *
+ * Return: integer value - 0/1
+ */
+static inline int qdf_nbuf_is_da_mcbc(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_da_mcbc(buf);
+}
+
+/**
+ * qdf_nbuf_set_da_valid() - set  da valid bit
+ * @buf: Network buffer
+ * @val: 0/1
+ *
+ * Return: void
+ */
+static inline void qdf_nbuf_set_da_valid(qdf_nbuf_t buf, uint8_t val)
+{
+	__qdf_nbuf_set_da_valid(buf, val);
+}
+
+/**
+ * qdf_nbuf_is_da_valid() - get da valid bit
+ * @buf: Network buffer
+ *
+ * Return: integer value - 0/1
+ */
+static inline int qdf_nbuf_is_da_valid(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_da_valid(buf);
+}
+
+/**
+ * qdf_nbuf_set_sa_valid() - set  sa valid bit
+ * @buf: Network buffer
+ * @val: 0/1
+ *
+ * Return: void
+ */
+static inline void qdf_nbuf_set_sa_valid(qdf_nbuf_t buf, uint8_t val)
+{
+	__qdf_nbuf_set_sa_valid(buf, val);
+}
+
+/**
+ * qdf_nbuf_is_sa_valid() - get da valid bit
+ * @buf: Network buffer
+ *
+ * Return: integer value - 0/1
+ */
+static inline int qdf_nbuf_is_sa_valid(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_sa_valid(buf);
+}
+
+/**
+ * qdf_nbuf_set_raw_frame() - set  raw_frame bit
+ * @buf: Network buffer
+ * @val: 0/1
+ *
+ * Return: void
+ */
+static inline void qdf_nbuf_set_raw_frame(qdf_nbuf_t buf, uint8_t val)
+{
+	__qdf_nbuf_set_raw_frame(buf, val);
+}
+
+/**
+ * qdf_nbuf_is_raw_frame() -  get raw_frame bit
+ * @buf: Network buffer
+ *
+ * Return: integer value - 0/1
+ */
+static inline int qdf_nbuf_is_raw_frame(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_raw_frame(buf);
+}
+
+/**
+ * qdf_nbuf_set_frag_list() - set  frag list bit
+ * @buf: Network buffer
+ * @val: 0/1
+ *
+ * Return: void
+ */
+static inline void qdf_nbuf_set_is_frag(qdf_nbuf_t buf, uint8_t val)
+{
+	__qdf_nbuf_set_is_frag(buf, val);
+}
+
+/**
+ * qdf_nbuf_is_sa_valid() - get da frag list bit
+ * @buf: Network buffer
+ *
+ * Return: integer value - 0/1
+ */
+static inline int qdf_nbuf_is_frag(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_frag(buf);
+}
+
+/**
  * qdf_nbuf_set_tx_chfrag_start() - set msdu start bit
  * @buf: Network buffer
  * @val: 0/1

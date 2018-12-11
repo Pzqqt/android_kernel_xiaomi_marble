@@ -49,6 +49,18 @@
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.priv_cb_m. \
 	dma_option.bi_map)
 
+#define QDF_NBUF_CB_RX_PEER_ID(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_m.dp. \
+	wifi3.peer_id)
+
+#define QDF_NBUF_CB_RX_PKT_LEN(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_m.dp. \
+	wifi3.msdu_len)
+
+#define QDF_NBUF_CB_RX_MAP_IDX(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_m.dp. \
+	wifi2.map_index)
+
 #define __qdf_nbuf_ipa_owned_get(skb) \
 	QDF_NBUF_CB_TX_IPA_OWNED(skb)
 

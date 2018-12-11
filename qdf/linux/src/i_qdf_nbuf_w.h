@@ -48,6 +48,12 @@
 #define QDF_NBUF_CB_TX_FCTX(skb) \
 	(((struct qdf_nbuf_cb *)((skb)->cb))->u.tx.dev.priv_cb_w.fctx)
 
+#define QDF_NBUF_CB_RX_PEER_ID(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_w.peer_id)
+
+#define QDF_NBUF_CB_RX_PKT_LEN(skb) \
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_w.msdu_len)
+
 #define __qdf_nbuf_set_rx_fctx_type(skb, ctx, type) \
 	do { \
 		QDF_NBUF_CB_RX_FCTX((skb)) = (ctx); \

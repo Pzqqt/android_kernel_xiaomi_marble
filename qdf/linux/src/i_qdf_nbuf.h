@@ -99,13 +99,16 @@ typedef union {
  *
  * @rx.dev.priv_cb_w.ext_cb_ptr: extended cb pointer
  * @rx.dev.priv_cb_w.fctx: ctx to handle special pkts defined by ftype
+ * @rx.dev.priv_cb_w.msdu_len: length of RX packet
+ * @rx.dev.priv_cb_w.peer_id: peer_id for RX packet
  * @rx.dev.priv_cb_w.reserved1: reserved
- * @rx.dev.priv_cb_w.reserved2: reserved
  *
  * @rx.dev.priv_cb_m.tcp_seq_num: TCP sequence number
  * @rx.dev.priv_cb_m.tcp_ack_num: TCP ACK number
  * @rx.dev.priv_cb_m.lro_ctx: LRO context
- * @rx.dev.priv_cb_m.map_index:
+ * @rx.dev.priv_cb_m.dp.wifi3.msdu_len: length of RX packet
+ * @rx.dev.priv_cb_m.dp.wifi3.peer_id:  peer_id for RX packet
+ * @rx.dev.priv_cb_m.dp.wifi2.map_index:
  * @rx.dev.priv_cb_m.peer_local_id: peer_local_id for RX pkt
  * @rx.dev.priv_cb_m.ipa_owned: packet owned by IPA
  *
@@ -129,6 +132,10 @@ typedef union {
  * @rx.flag_chfrag_cont: middle or part of MSDU in an AMSDU
  * @rx.flag_chfrag_end: last MSDU in an AMSDU
  * @rx.packet_buff_pool: indicate packet from pre-allocated pool for Rx ring
+ * @rx.flag_da_mcbc: flag to indicate mulicast or broadcast packets
+ * @rx.flag_da_valid: flag to indicate DA is valid for RX packet
+ * @rx.flag_sa_valid: flag to indicate SA is valid for RX packet
+ * @rx.flag_is_frag: flag to indicate skb has frag list
  * @rx.rsrvd: reserved
  *
  * @rx.trace: combined structure for DP and protocol trace
@@ -139,6 +146,7 @@ typedef union {
  * @rx.trace.rsrvd: enable packet logging
  *
  * @rx.ftype: mcast2ucast, TSO, SG, MESH
+ * @rx.is_raw_frame: RAW frame
  * @rx.reserved: reserved
  *
  * @tx.dev.priv_cb_w.fctx: ctx to handle special pkts defined by ftype
@@ -196,8 +204,9 @@ struct qdf_nbuf_cb {
 				struct {
 					void *ext_cb_ptr;
 					void *fctx;
+					uint16_t msdu_len;
+					uint16_t peer_id;
 					uint32_t reserved1;
-					uint32_t reserved2;
 				} priv_cb_w;
 				struct {
 					/* ipa_owned bit is common between rx
@@ -209,7 +218,15 @@ struct qdf_nbuf_cb {
 						 peer_local_id:16;
 					uint32_t tcp_seq_num;
 					uint32_t tcp_ack_num;
-					uint32_t map_index;
+					union {
+						struct {
+							uint16_t msdu_len;
+							uint16_t peer_id;
+						} wifi3;
+						struct {
+							uint32_t map_index;
+						} wifi2;
+					} dp;
 					unsigned char *lro_ctx;
 				} priv_cb_m;
 			} dev;
@@ -230,7 +247,10 @@ struct qdf_nbuf_cb {
 				flag_chfrag_cont:1,
 				flag_chfrag_end:1,
 				packet_buff_pool:1,
-				rsrvd:4;
+				flag_da_mcbc:1,
+				flag_da_valid:1,
+				flag_sa_valid:1,
+				flag_is_frag:1;
 			union {
 				uint8_t packet_state;
 				uint8_t dp_trace:1,
@@ -238,7 +258,8 @@ struct qdf_nbuf_cb {
 					rsrvd:3;
 			} trace;
 			uint8_t ftype;
-			uint8_t reserved;
+			uint8_t is_raw_frame:1,
+				reserved:7;
 		} rx;
 
 		/* Note: MAX: 40 bytes */
@@ -364,6 +385,26 @@ QDF_COMPILE_TIME_ASSERT(qdf_nbuf_cb_size,
 #define QDF_NBUF_CB_RX_PACKET_BUFF_POOL(skb) \
 		(((struct qdf_nbuf_cb *) \
 		((skb)->cb))->u.rx.packet_buff_pool)
+
+#define QDF_NBUF_CB_RX_DA_MCBC(skb) \
+	(((struct qdf_nbuf_cb *) \
+	((skb)->cb))->u.rx.flag_da_mcbc)
+
+#define QDF_NBUF_CB_RX_DA_VALID(skb) \
+	(((struct qdf_nbuf_cb *) \
+	((skb)->cb))->u.rx.flag_da_valid)
+
+#define QDF_NBUF_CB_RX_SA_VALID(skb) \
+	(((struct qdf_nbuf_cb *) \
+	((skb)->cb))->u.rx.flag_sa_valid)
+
+#define QDF_NBUF_CB_RX_RAW_FRAME(skb) \
+	(((struct qdf_nbuf_cb *) \
+	((skb)->cb))->u.rx.is_raw_frame)
+
+#define QDF_NBUF_CB_RX_IS_FRAG(skb) \
+	(((struct qdf_nbuf_cb *) \
+	((skb)->cb))->u.rx.flag_is_frag)
 
 #define QDF_NBUF_UPDATE_TX_PKT_COUNT(skb, PACKET_STATE) \
 	qdf_nbuf_set_state(skb, PACKET_STATE)
@@ -570,6 +611,35 @@ typedef void (*qdf_nbuf_free_t)(__qdf_nbuf_t);
 #define __qdf_nbuf_is_rx_chfrag_end(skb) \
 	(QDF_NBUF_CB_RX_CHFRAG_END((skb)))
 
+#define __qdf_nbuf_set_da_mcbc(skb, val) \
+	((QDF_NBUF_CB_RX_DA_MCBC((skb))) = val)
+
+#define __qdf_nbuf_is_da_mcbc(skb) \
+	(QDF_NBUF_CB_RX_DA_MCBC((skb)))
+
+#define __qdf_nbuf_set_da_valid(skb, val) \
+	((QDF_NBUF_CB_RX_DA_VALID((skb))) = val)
+
+#define __qdf_nbuf_is_da_valid(skb) \
+	(QDF_NBUF_CB_RX_DA_VALID((skb)))
+
+#define __qdf_nbuf_set_sa_valid(skb, val) \
+	((QDF_NBUF_CB_RX_SA_VALID((skb))) = val)
+
+#define __qdf_nbuf_is_sa_valid(skb) \
+	(QDF_NBUF_CB_RX_SA_VALID((skb)))
+
+#define __qdf_nbuf_set_raw_frame(skb, val) \
+	((QDF_NBUF_CB_RX_RAW_FRAME((skb))) = val)
+
+#define __qdf_nbuf_is_raw_frame(skb) \
+	(QDF_NBUF_CB_RX_RAW_FRAME((skb)))
+
+#define __qdf_nbuf_set_is_frag(skb, val) \
+	((QDF_NBUF_CB_RX_IS_FRAG((skb))) = val)
+
+#define __qdf_nbuf_is_frag(skb) \
+	(QDF_NBUF_CB_RX_IS_FRAG((skb)))
 
 #define __qdf_nbuf_set_tx_chfrag_start(skb, val) \
 	((QDF_NBUF_CB_TX_EXTRA_FRAG_FLAGS_CHFRAG_START((skb))) = val)
