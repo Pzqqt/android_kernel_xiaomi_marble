@@ -1136,6 +1136,10 @@ WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_sta_api.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_sta_tlv.o
 endif
 
+ifeq ($(CONFIG_WMI_BCN_OFFLOAD), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_bcn_api.o
+endif
+
 ########### FWLOG ###########
 FWLOG_DIR := $(WLAN_COMMON_ROOT)/utils/fwlog
 

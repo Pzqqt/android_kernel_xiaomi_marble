@@ -76,7 +76,7 @@
 #include "cfg_ucfg_api.h"
 #include "cfg_mlme_sta.h"
 #include "wlan_mlme_api.h"
-
+#include "wmi_unified_bcn_api.h"
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
  * @wma: wma handle

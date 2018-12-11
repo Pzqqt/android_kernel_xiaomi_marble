@@ -201,4 +201,8 @@ CONFIG_SIR_SAP_MAX_NUM_PEERS := 10
 
 #Max no of offloaded beaconing entities supported
 CONFIG_BEACON_TX_OFFLOAD_MAX_VDEV := 3
+
+#Beacon offload config
+CONFIG_WMI_BCN_OFFLOAD := y
+
 ###################################
