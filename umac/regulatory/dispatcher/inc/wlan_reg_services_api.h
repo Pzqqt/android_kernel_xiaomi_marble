@@ -39,6 +39,7 @@
 #define WLAN_REG_IS_5GHZ_CH(chan) REG_IS_5GHZ_CH(chan)
 
 #define WLAN_REG_IS_24GHZ_CH_FREQ(freq) REG_IS_24GHZ_CH_FREQ(freq)
+#define WLAN_REG_IS_5GHZ_CH_FREQ(freq) REG_IS_5GHZ_FREQ(freq)
 
 #ifndef CONFIG_LEGACY_CHAN_ENUM
 #define WLAN_REG_IS_49GHZ_FREQ(freq) REG_IS_49GHZ_FREQ(freq)
