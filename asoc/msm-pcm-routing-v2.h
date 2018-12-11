@@ -4,6 +4,7 @@
 #ifndef _MSM_PCM_ROUTING_H
 #define _MSM_PCM_ROUTING_H
 #include <dsp/apr_audio-v2.h>
+#include <dsp/q6adm-v2.h>
 
 /*
  * These names are used by HAL to specify the BE. If any changes are
@@ -594,4 +595,13 @@ int msm_pcm_routing_send_chmix_cfg(int fe_id, int ip_channel_cnt,
 	int op_channel_cnt, int *ch_wght_coeff,
 	int session_type, int stream_type);
 int msm_pcm_routing_get_pp_ch_cnt(int fe_id, int session_type);
+
+int msm_pcm_routing_set_channel_mixer_cfg(
+	int fe_id, int session_type,
+	struct msm_pcm_channel_mixer *params);
+
+int msm_pcm_routing_set_channel_mixer_runtime(
+	int be_id, int session_id,
+	int session_type,
+	struct msm_pcm_channel_mixer *params);
 #endif /*_MSM_PCM_H*/

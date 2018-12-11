@@ -84,6 +84,11 @@ static int msm_ec_ref_port_id;
 #define WEIGHT_0_DB 0x4000
 /* all the FEs which can support channel mixer */
 static struct msm_pcm_channel_mixer channel_mixer[MSM_FRONTEND_DAI_MM_SIZE];
+
+/* all the FES which can support channel mixer for bidirection */
+static struct msm_pcm_channel_mixer
+	channel_mixer_v2[MSM_FRONTEND_DAI_MM_SIZE][2];
+
 /* input BE for each FE */
 static int channel_input[MSM_FRONTEND_DAI_MM_SIZE][ADM_MAX_CHANNELS];
 
@@ -928,6 +933,51 @@ int msm_pcm_routing_send_chmix_cfg(int fe_id, int ip_channel_cnt,
 }
 EXPORT_SYMBOL(msm_pcm_routing_send_chmix_cfg);
 
+/**
+ * msm_pcm_routing_set_channel_mixer_cfg - cache channel mixer
+ * setting before use case start.
+ *
+ * @fe_id: frontend idx
+ * @type: stream direction type
+ * @params: parameters of channel mixer setting
+ *
+ * Return 0 for success
+ */
+int msm_pcm_routing_set_channel_mixer_cfg(
+	int fe_id, int type,
+	struct msm_pcm_channel_mixer *params)
+{
+	int i, j = 0;
+
+	channel_mixer_v2[fe_id][type].enable = params->enable;
+	channel_mixer_v2[fe_id][type].rule = params->rule;
+	channel_mixer_v2[fe_id][type].input_channel =
+		params->input_channel;
+	channel_mixer_v2[fe_id][type].output_channel =
+		params->output_channel;
+	channel_mixer_v2[fe_id][type].port_idx = params->port_idx;
+
+	for (i = 0; i < ADM_MAX_CHANNELS; i++)
+		channel_mixer_v2[fe_id][type].in_ch_map[i] =
+			params->in_ch_map[i];
+	for (i = 0; i < ADM_MAX_CHANNELS; i++)
+		channel_mixer_v2[fe_id][type].out_ch_map[i] =
+			params->out_ch_map[i];
+
+	for (i = 0; i < ADM_MAX_CHANNELS; i++)
+		for (j = 0; j < ADM_MAX_CHANNELS; j++)
+			channel_mixer_v2[fe_id][type].channel_weight[i][j] =
+				params->channel_weight[i][j];
+
+	channel_mixer_v2[fe_id][type].override_in_ch_map =
+			params->override_in_ch_map;
+	channel_mixer_v2[fe_id][type].override_out_ch_map =
+			params->override_out_ch_map;
+
+	return 0;
+}
+EXPORT_SYMBOL(msm_pcm_routing_set_channel_mixer_cfg);
+
 int msm_pcm_routing_reg_stream_app_type_cfg(
 	int fedai_id, int session_type, int be_id,
 	struct msm_pcm_stream_app_type_cfg *cfg_data)
@@ -1490,6 +1540,60 @@ static u32 msm_pcm_routing_get_voc_sessionid(u16 val)
 	return session_id;
 }
 
+static int msm_pcm_routing_channel_mixer_v2(int fe_id, bool perf_mode,
+				int dspst_id, int stream_type)
+{
+	int copp_idx = 0;
+	int sess_type = 0;
+	int j = 0, be_id = 0;
+	int ret = 0;
+
+	if (fe_id >= MSM_FRONTEND_DAI_MM_SIZE) {
+		pr_err("%s: invalid FE %d\n", __func__, fe_id);
+		return 0;
+	}
+
+	if (stream_type == SNDRV_PCM_STREAM_PLAYBACK)
+		sess_type = SESSION_TYPE_RX;
+	else
+		sess_type = SESSION_TYPE_TX;
+
+	if (!(channel_mixer_v2[fe_id][sess_type].enable)) {
+		pr_debug("%s: channel mixer not enabled for FE %d direction %d\n",
+			__func__, fe_id, sess_type);
+		return 0;
+	}
+
+	be_id = channel_mixer_v2[fe_id][sess_type].port_idx - 1;
+	channel_mixer_v2[fe_id][sess_type].input_channels[0] =
+		channel_mixer_v2[fe_id][sess_type].input_channel;
+
+	pr_debug("%s sess type %d,fe_id %d,override in:%d out:%d,be active %d\n",
+			__func__, sess_type, fe_id,
+			channel_mixer_v2[fe_id][sess_type].override_in_ch_map,
+			channel_mixer_v2[fe_id][sess_type].override_out_ch_map,
+			msm_bedais[be_id].active);
+
+	if ((msm_bedais[be_id].active) &&
+		test_bit(fe_id, &msm_bedais[be_id].fe_sessions[0])) {
+		unsigned long copp =
+			session_copp_map[fe_id][sess_type][be_id];
+		for (j = 0; j < MAX_COPPS_PER_PORT; j++) {
+			if (test_bit(j, &copp)) {
+				copp_idx = j;
+				break;
+			}
+		}
+
+		ret = adm_programable_channel_mixer(
+			msm_bedais[be_id].port_id,
+			copp_idx, dspst_id, sess_type,
+			&channel_mixer_v2[fe_id][sess_type], 0);
+	}
+
+	return ret;
+}
+
 static int msm_pcm_routing_channel_mixer(int fe_id, bool perf_mode,
 				int dspst_id, int stream_type)
 {
@@ -1497,6 +1601,14 @@ static int msm_pcm_routing_channel_mixer(int fe_id, bool perf_mode,
 	int sess_type = 0;
 	int i = 0, j = 0, be_id;
 	int ret = 0;
+
+	ret = msm_pcm_routing_channel_mixer_v2(fe_id, perf_mode,
+				dspst_id, stream_type);
+	if (ret) {
+		pr_err("%s channel mixer v2 cmd  set failure%d\n", __func__,
+				fe_id);
+		return ret;
+	}
 
 	if (fe_id >= MSM_FRONTEND_DAI_MM_SIZE) {
 		pr_err("%s: invalid FE %d\n", __func__, fe_id);
@@ -1545,6 +1657,72 @@ static int msm_pcm_routing_channel_mixer(int fe_id, bool perf_mode,
 
 	return ret;
 }
+
+/**
+ * msm_pcm_routing_set_channel_mixer_runtime - apply channel mixer
+ * setting during runtime.
+ *
+ * @be_id: backend index
+ * @session_id: session index
+ * @session_type: session type
+ * @params: parameters for channel mixer
+ *
+ * Retuen: 0 for success, else error
+ */
+int msm_pcm_routing_set_channel_mixer_runtime(int be_id, int session_id,
+			int session_type,
+			struct msm_pcm_channel_mixer *params)
+{
+	int rc = 0;
+	int port_id, copp_idx = 0;
+
+	be_id--;
+	if (be_id < 0 || be_id >= MSM_BACKEND_DAI_MAX) {
+		pr_err("%s: invalid backend id %d\n", __func__,
+				be_id);
+		return -EINVAL;
+	}
+
+	port_id = msm_bedais[be_id].port_id;
+	copp_idx = adm_get_default_copp_idx(port_id);
+	pr_debug("%s: port_id - %d, copp_idx %d session id - %d\n",
+		 __func__, port_id, copp_idx, session_id);
+
+	if ((params->input_channel < 0) ||
+		(params->input_channel > ADM_MAX_CHANNELS)) {
+		pr_err("%s: invalid input channel %d\n", __func__,
+				params->input_channel);
+		return -EINVAL;
+	}
+
+	if ((params->output_channel < 0) ||
+		(params->output_channel > ADM_MAX_CHANNELS)) {
+		pr_err("%s: invalid output channel %d\n", __func__,
+				params->output_channel);
+		return -EINVAL;
+	}
+
+	params->input_channels[0] = params->input_channel;
+
+	pr_debug("%s sess type %d,override in:%d out:%d,be active %d\n",
+			__func__, session_type,
+			params->override_in_ch_map,
+			params->override_out_ch_map,
+			msm_bedais[be_id].active);
+
+	rc = adm_programable_channel_mixer(port_id,
+					copp_idx,
+					session_id,
+					session_type,
+					params,
+					0);
+	if (rc) {
+		pr_err("%s: send params failed rc=%d\n", __func__, rc);
+		rc = -EINVAL;
+	}
+	return rc;
+}
+EXPORT_SYMBOL(msm_pcm_routing_set_channel_mixer_runtime);
 
 int msm_pcm_routing_reg_phy_stream(int fedai_id, int perf_mode,
 					int dspst_id, int stream_type)
