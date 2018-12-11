@@ -1642,6 +1642,10 @@ static void mlme_init_scoring_cfg(struct wlan_objmgr_psoc *psoc,
 	scoring_cfg->oce_wan_scoring.score_pcnt15_to_12 =
 		mlme_limit_max_per_index_score(
 			cfg_get(psoc, CFG_SCORING_OCE_WAN_SCORE_IDX_15_TO_12));
+
+	scoring_cfg->roam_trigger_bitmap =
+				cfg_get(psoc, CFG_ROAM_TRIGGER_BITMAP);
+	scoring_cfg->roam_score_delta = cfg_get(psoc, CFG_ROAM_SCORE_DELTA);
 }
 
 static void mlme_init_oce_cfg(struct wlan_objmgr_psoc *psoc,
