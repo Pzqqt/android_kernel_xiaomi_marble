@@ -54,14 +54,6 @@ static inline bool cfg_nan_get_enable(struct wlan_objmgr_psoc *psoc)
 bool cfg_nan_get_datapath_enable(struct wlan_objmgr_psoc *psoc);
 
 /**
- * cfg_nan_get_ndi_channel() - get NAN Datapath channel
- * @psoc: pointer to psoc object
- *
- * This function returns NAN Datapath channel
- */
-uint32_t cfg_nan_get_ndi_channel(struct wlan_objmgr_psoc *psoc);
-
-/**
  * cfg_nan_get_ndi_mac_randomize() - get NDI MAC randomize enable status
  * @psoc: pointer to psoc object
  *
@@ -72,11 +64,6 @@ bool cfg_nan_get_ndi_mac_randomize(struct wlan_objmgr_psoc *psoc);
 static inline bool cfg_nan_get_datapath_enable(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
-}
-
-static inline uint32_t cfg_nan_get_ndi_channel(struct wlan_objmgr_psoc *psoc)
-{
-	return 0;
 }
 
 static inline bool cfg_nan_get_ndi_mac_randomize(struct wlan_objmgr_psoc *psoc)

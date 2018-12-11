@@ -56,17 +56,6 @@ bool cfg_nan_get_datapath_enable(struct wlan_objmgr_psoc *psoc)
 	return nan_obj->cfg_param.dp_enable;
 }
 
-uint32_t cfg_nan_get_ndi_channel(struct wlan_objmgr_psoc *psoc)
-{
-	struct nan_psoc_priv_obj *nan_obj = cfg_nan_get_priv_obj(psoc);
-
-	if (!nan_obj) {
-		nan_err("NAN obj null");
-		return 0;
-	}
-	return nan_obj->cfg_param.ndi_ch;
-}
-
 bool cfg_nan_get_ndi_mac_randomize(struct wlan_objmgr_psoc *psoc)
 {
 	struct nan_psoc_priv_obj *nan_obj = cfg_nan_get_priv_obj(psoc);
