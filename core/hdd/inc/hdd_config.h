@@ -745,8 +745,6 @@ enum hdd_wext_control {
  *
  */
 
-#define CFG_ACTION_OUI_MAX_LEN 256
-
 /*
  * <ini>
  * gEnableActionOUI - Enable/Disable action oui feature
