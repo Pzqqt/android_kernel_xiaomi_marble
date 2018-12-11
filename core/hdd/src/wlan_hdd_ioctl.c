@@ -2236,7 +2236,6 @@ struct link_status_priv {
 	uint8_t link_status;
 };
 
-#ifdef WLAN_AP_STA_CONCURRENCY
 /**
  * hdd_conc_set_dwell_time() - Set Concurrent dwell time parameters
  * @adapter: Adapter upon which the command was received
@@ -2250,16 +2249,17 @@ struct link_status_priv {
  *
  * Return: 0 for success non-zero for failure
  */
-static int hdd_conc_set_dwell_time(hdd_context_t *hdd_ctx, uint8_t *command)
+static int hdd_conc_set_dwell_time(struct hdd_adapter *adapter,
+				   uint8_t *command)
 {
-	mac_handle_t mac_handle = hdd_ctx->mac_handle;
+	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
 	struct hdd_config *p_cfg;
 	u8 *value = command;
 	tSmeConfigParams *sme_config;
 	int val = 0, temp = 0;
 	int retval = 0;
 
-	p_cfg = hdd_ctx->config;
+	p_cfg = (WLAN_HDD_GET_CTX(adapter))->config;
 	if (!p_cfg || !mac_handle) {
 		hdd_err("Argument passed for CONCSETDWELLTIME is incorrect");
 		return -EINVAL;
@@ -2289,7 +2289,8 @@ static int hdd_conc_set_dwell_time(hdd_context_t *hdd_ctx, uint8_t *command)
 			retval = -EFAULT;
 			goto sme_config_free;
 		}
-		ucfg_scan_cfg_set_conc_active_dwelltime(hdd_ctx->psoc, val);
+		ucfg_scan_cfg_set_conc_active_dwelltime(
+				(WLAN_HDD_GET_CTX(adapter))->psoc, val);
 	} else if (strncmp(command, "CONCSETDWELLTIME PASSIVE MAX", 28) == 0) {
 		if (drv_cmd_validate(command, 28)) {
 			hdd_err("Invalid driver command");
@@ -2305,7 +2306,8 @@ static int hdd_conc_set_dwell_time(hdd_context_t *hdd_ctx, uint8_t *command)
 			retval = -EFAULT;
 			goto sme_config_free;
 		}
-		ucfg_scan_cfg_set_conc_passive_dwelltime(hdd_ctx->psoc, val);
+		ucfg_scan_cfg_set_conc_passive_dwelltime(
+				(WLAN_HDD_GET_CTX(adapter))->psoc, val);
 	} else {
 		retval = -EINVAL;
 	}
@@ -2314,7 +2316,6 @@ sme_config_free:
 	qdf_mem_free(sme_config);
 	return retval;
 }
-#endif
 
 static void hdd_get_link_status_cb(uint8_t status, void *context)
 {
@@ -4612,16 +4613,14 @@ static int drv_cmd_set_dwell_time(struct hdd_adapter *adapter,
 	return hdd_set_dwell_time(adapter, command);
 }
 
-#ifdef WLAN_AP_STA_CONCURRENCY
-static int drv_cmd_conc_set_dwell_time(hdd_adapter_t *adapter,
-				       hdd_context_t *hdd_ctx,
+static int drv_cmd_conc_set_dwell_time(struct hdd_adapter *adapter,
+				       struct hdd_context *hdd_ctx,
 				       u8 *command,
 				       u8 command_len,
-				       hdd_priv_data_t *priv_data)
+				       struct hdd_priv_data *priv_data)
 {
-	return hdd_conc_set_dwell_time(hdd_ctx, command);
+	return hdd_conc_set_dwell_time(adapter, command);
 }
-#endif
 
 static int drv_cmd_miracast(struct hdd_adapter *adapter,
 			    struct hdd_context *hdd_ctx,
@@ -7441,9 +7440,7 @@ static const struct hdd_drv_cmd hdd_drv_cmds[] = {
 	{"BTCOEXMODE",                drv_cmd_bt_coex_mode, true},
 	{"SCAN-ACTIVE",               drv_cmd_scan_active, false},
 	{"SCAN-PASSIVE",              drv_cmd_scan_passive, false},
-#ifdef WLAN_AP_STA_CONCURRENCY
 	{"CONCSETDWELLTIME",          drv_cmd_conc_set_dwell_time, true},
-#endif
 	{"GETDWELLTIME",              drv_cmd_get_dwell_time, false},
 	{"SETDWELLTIME",              drv_cmd_set_dwell_time, true},
 	{"MIRACAST",                  drv_cmd_miracast, true},
