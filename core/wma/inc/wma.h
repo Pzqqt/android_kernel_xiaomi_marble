@@ -1093,7 +1093,6 @@ struct wma_valid_channels {
  * @saved_chan: saved channel list sent as part of
  *   WMI_SCAN_CHAN_LIST_CMDID
  * @nan_datapath_enabled: Is NAN datapath support enabled in firmware?
- * @pe_ndp_event_handler: Handler function for NAN Data Path events
  * @fw_timeout_crash: Should firmware be reset upon response timeout?
  * @sub_20_support: Does target support sub-20MHz bandwidth (aka
  *   half-rate and quarter-rate)?
@@ -1237,8 +1236,6 @@ typedef struct {
 	struct wma_ini_config ini_config;
 	struct wma_valid_channels saved_chan;
 	bool nan_datapath_enabled;
-	QDF_STATUS (*pe_ndp_event_handler)(struct mac_context *mac_ctx,
-					   struct scheduler_msg *msg);
 	bool fw_timeout_crash;
 	bool sub_20_support;
 	bool is_dfs_offloaded;
