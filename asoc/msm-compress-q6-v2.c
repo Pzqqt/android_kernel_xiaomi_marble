@@ -4273,7 +4273,6 @@ static int msm_compr_add_audio_adsp_stream_cmd_control(
 			__func__, mixer_str, ret);
 
 	kfree(mixer_str);
-done:
 	return ret;
 }
 
@@ -4587,7 +4586,6 @@ static int msm_compr_add_io_fd_cmd_control(struct snd_soc_pcm_runtime *rtd)
 		pr_err("%s: failed to add ctl %s\n", __func__, mixer_str);
 
 	kfree(mixer_str);
-done:
 	return ret;
 }
 
@@ -4636,7 +4634,6 @@ static int msm_compr_add_event_ack_cmd_control(struct snd_soc_pcm_runtime *rtd)
 		pr_err("%s: failed to add ctl %s\n", __func__, mixer_str);
 
 	kfree(mixer_str);
-done:
 	return ret;
 }
 
