@@ -189,22 +189,22 @@ static inline uint16_t wma_mcs_rate_match(uint16_t match_rate, bool *is_sgi,
 		return 0;
 }
 
-uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
-			uint8_t *nss, uint8_t *mcsRateFlag)
+uint8_t wma_get_mcs_idx(uint16_t max_rate, uint8_t rate_flags,
+			uint8_t *nss, uint8_t *mcs_rate_flag)
 {
 	uint8_t  index = 0;
 	uint16_t match_rate = 0;
 	bool is_sgi = false;
 
 	WMA_LOGD("%s rate:%d rate_flgs: 0x%x, nss: %d",
-		 __func__, maxRate, rate_flags, *nss);
+		 __func__, max_rate, rate_flags, *nss);
 
-	*mcsRateFlag = rate_flags;
-	*mcsRateFlag &= ~TX_RATE_SGI;
+	*mcs_rate_flag = rate_flags;
+	*mcs_rate_flag &= ~TX_RATE_SGI;
 	for (index = 0; index < MAX_VHT_MCS_IDX; index++) {
 		if (rate_flags & TX_RATE_VHT80) {
 			/* check for vht80 nss1/2 rate set */
-			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
+			match_rate = wma_mcs_rate_match(max_rate, &is_sgi, nss,
 					vht_mcs_nss1[index].ht80_rate[0],
 					vht_mcs_nss1[index].ht80_rate[1],
 					vht_mcs_nss2[index].ht80_rate[0],
@@ -215,13 +215,13 @@ uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 		if ((rate_flags & TX_RATE_VHT40) |
 		    (rate_flags & TX_RATE_VHT80)) {
 			/* check for vht40 nss1/2 rate set */
-			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
+			match_rate = wma_mcs_rate_match(max_rate, &is_sgi, nss,
 					vht_mcs_nss1[index].ht40_rate[0],
 					vht_mcs_nss1[index].ht40_rate[1],
 					vht_mcs_nss2[index].ht40_rate[0],
 					vht_mcs_nss2[index].ht40_rate[1]);
 			if (match_rate) {
-				*mcsRateFlag &= ~TX_RATE_VHT80;
+				*mcs_rate_flag &= ~TX_RATE_VHT80;
 				goto rate_found;
 			}
 		}
@@ -229,13 +229,13 @@ uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 		    (rate_flags & TX_RATE_VHT40) |
 		    (rate_flags & TX_RATE_VHT80)) {
 			/* check for vht20 nss1/2 rate set */
-			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
+			match_rate = wma_mcs_rate_match(max_rate, &is_sgi, nss,
 					vht_mcs_nss1[index].ht20_rate[0],
 					vht_mcs_nss1[index].ht20_rate[1],
 					vht_mcs_nss2[index].ht20_rate[0],
 					vht_mcs_nss2[index].ht20_rate[1]);
 			if (match_rate) {
-				*mcsRateFlag &= ~(TX_RATE_VHT80 |
+				*mcs_rate_flag &= ~(TX_RATE_VHT80 |
 						TX_RATE_VHT40);
 				goto rate_found;
 			}
@@ -244,13 +244,13 @@ uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 	for (index = 0; index < MAX_HT_MCS_IDX; index++) {
 		if (rate_flags & TX_RATE_HT40) {
 			/* check for ht40 nss1/2 rate set */
-			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
+			match_rate = wma_mcs_rate_match(max_rate, &is_sgi, nss,
 					mcs_nss1[index].ht40_rate[0],
 					mcs_nss1[index].ht40_rate[1],
 					mcs_nss2[index].ht40_rate[0],
 					mcs_nss2[index].ht40_rate[1]);
 			if (match_rate) {
-				*mcsRateFlag = TX_RATE_HT40;
+				*mcs_rate_flag = TX_RATE_HT40;
 				if (*nss == 2)
 					index += MAX_HT_MCS_IDX;
 				goto rate_found;
@@ -259,13 +259,13 @@ uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 		if ((rate_flags & TX_RATE_HT20) ||
 			(rate_flags & TX_RATE_HT40)) {
 			/* check for ht20 nss1/2 rate set */
-			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
+			match_rate = wma_mcs_rate_match(max_rate, &is_sgi, nss,
 					mcs_nss1[index].ht20_rate[0],
 					mcs_nss1[index].ht20_rate[1],
 					mcs_nss2[index].ht20_rate[0],
 					mcs_nss2[index].ht20_rate[1]);
 			if (match_rate) {
-				*mcsRateFlag = TX_RATE_HT20;
+				*mcs_rate_flag = TX_RATE_HT20;
 				if (*nss == 2)
 					index += MAX_HT_MCS_IDX;
 				goto rate_found;
@@ -276,10 +276,10 @@ uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 rate_found:
 	/* set SGI flag only if this is SGI rate */
 	if (match_rate && is_sgi == true)
-		*mcsRateFlag |= TX_RATE_SGI;
+		*mcs_rate_flag |= TX_RATE_SGI;
 
 	WMA_LOGD("%s - match_rate: %d index: %d rate_flag: 0x%x is_sgi: %d",
-		 __func__, match_rate, index, *mcsRateFlag, is_sgi);
+		 __func__, match_rate, index, *mcs_rate_flag, is_sgi);
 
 	return match_rate ? index : INVALID_MCS_IDX;
 }
