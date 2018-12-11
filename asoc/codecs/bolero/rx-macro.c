@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -332,6 +332,7 @@ struct rx_macro_priv {
 	u16 prim_int_users[INTERP_MAX];
 	int rx_mclk_users;
 	int swr_clk_users;
+	bool reset_swr;
 	int clsh_users;
 	int rx_mclk_cnt;
 	bool is_native_on;
@@ -1183,6 +1184,8 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 		break;
 	case BOLERO_MACRO_EVT_SSR_UP:
 		rx_priv->dev_up = true;
+		/* reset swr after ssr/pdr */
+		rx_priv->reset_swr = true;
 		/* enable&disable MCLK_MUX1 to reset GFMUX reg */
 		bolero_request_clock(rx_priv->dev,
 				RX_MACRO, MCLK_MUX1, true);
@@ -3088,15 +3091,18 @@ static int rx_swrm_clock(void *handle, bool enable)
 					__func__);
 				goto exit;
 			}
-			regmap_update_bits(regmap,
-				BOLERO_CDC_RX_CLK_RST_CTRL_SWR_CONTROL,
-				0x02, 0x02);
+			if (rx_priv->reset_swr)
+				regmap_update_bits(regmap,
+					BOLERO_CDC_RX_CLK_RST_CTRL_SWR_CONTROL,
+					0x02, 0x02);
 			regmap_update_bits(regmap,
 				BOLERO_CDC_RX_CLK_RST_CTRL_SWR_CONTROL,
 				0x01, 0x01);
-			regmap_update_bits(regmap,
-				BOLERO_CDC_RX_CLK_RST_CTRL_SWR_CONTROL,
-				0x02, 0x00);
+			if (rx_priv->reset_swr)
+				regmap_update_bits(regmap,
+					BOLERO_CDC_RX_CLK_RST_CTRL_SWR_CONTROL,
+					0x02, 0x00);
+			rx_priv->reset_swr = false;
 			msm_cdc_pinctrl_select_active_state(
 						rx_priv->rx_swr_gpio_p);
 		}
@@ -3444,6 +3450,7 @@ static int rx_macro_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 	rx_priv->rx_mclk_mode_muxsel = muxsel_io;
+	rx_priv->reset_swr = true;
 	INIT_WORK(&rx_priv->rx_macro_add_child_devices_work,
 		  rx_macro_add_child_devices);
 	rx_priv->swr_plat_data.handle = (void *) rx_priv;
