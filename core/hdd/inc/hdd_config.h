@@ -1036,6 +1036,20 @@ enum hdd_wext_control {
 
  /* End of action oui inis */
 
+/*
+ * gEnableRTTsupport
+ *
+ * @Min: 0 - Disabled
+ * @Max: 1 - Enabled
+ * @Default: 1 - Enabled
+ *
+ * The param is used to enable/disable support for RTT
+ */
+#define CFG_ENABLE_RTT_SUPPORT CFG_INI_BOOL( \
+		"gEnableRTTSupport", \
+		1, \
+		"The param is used to enable/disable support for RTT")
+
 #define CFG_HDD_ALL \
 	CFG_ENABLE_PACKET_LOG_ALL \
 	CFG_ENABLE_RUNTIME_PM_ALL \
@@ -1058,6 +1072,7 @@ enum hdd_wext_control {
 	CFG(CFG_ENABLE_FW_UART_PRINT) \
 	CFG(CFG_ENABLE_MAC_PROVISION) \
 	CFG(CFG_ENABLE_RAMDUMP_COLLECTION) \
+	CFG(CFG_ENABLE_RTT_SUPPORT) \
 	CFG(CFG_INTERFACE_CHANGE_WAIT) \
 	CFG(CFG_INFORM_BSS_RSSI_RAW) \
 	CFG(CFG_MULTICAST_HOST_FW_MSGS) \
