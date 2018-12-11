@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3049,6 +3049,26 @@ static void wma_register_stats_events(wmi_unified_t wmi_handle)
 }
 #endif
 
+#ifdef CONFIG_WMI_BCN_OFFLOAD
+static QDF_STATUS
+wma_register_swba_events(wmi_unified_t wmi_handle)
+{
+	QDF_STATUS status;
+
+	status = wmi_unified_register_event_handler(wmi_handle,
+						    wmi_host_swba_event_id,
+						    wma_beacon_swba_handler,
+						    WMA_RX_SERIALIZER_CTX);
+
+	return status;
+}
+#else
+static QDF_STATUS wma_register_swba_events(wmi_unified_t wmi_handle)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #ifdef FEATURE_WLAN_APF
 static void wma_register_apf_events(tp_wma_handle wma_handle)
 {
@@ -5922,10 +5942,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		wmi_service_enabled(wmi_handle, wmi_service_mgmt_tx_wmi));
 	cdp_set_desc_global_pool_size(soc, ev->num_msdu_desc);
 	/* SWBA event handler for beacon transmission */
-	status = wmi_unified_register_event_handler(wmi_handle,
-						    wmi_host_swba_event_id,
-						    wma_beacon_swba_handler,
-						    WMA_RX_SERIALIZER_CTX);
+	status = wma_register_swba_events(wma_handle->wmi_handle);
+
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Failed to register swba beacon event cb");
 		goto free_hw_mode_list;

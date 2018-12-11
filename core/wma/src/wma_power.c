@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1251,6 +1251,7 @@ QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_WMI_BCN_OFFLOAD
 /**
  * wma_add_p2p_ie() - add p2p IE
  * @frm: ptr where p2p ie needs to add
@@ -1453,6 +1454,37 @@ void wma_update_probe_resp_noa(tp_wma_handle wma_handle,
 	WMA_LOGI("Sending SIR_HAL_P2P_NOA_ATTR_IND to LIM");
 	wma_send_msg(wma_handle, SIR_HAL_P2P_NOA_ATTR_IND, (void *)noa_attr, 0);
 }
+
+#else
+static inline uint8_t *wma_add_p2p_ie(uint8_t *frm)
+{
+	return 0;
+}
+
+static inline void
+wma_update_beacon_noa_ie(struct beacon_info *bcn,
+			 uint16_t new_noa_sub_ie_len)
+{
+}
+
+static inline void
+wma_p2p_create_sub_ie_noa(uint8_t *buf,
+			  struct p2p_sub_element_noa *noa,
+			  uint16_t *new_noa_sub_ie_len)
+{
+}
+
+void wma_update_noa(struct beacon_info *beacon,
+		    struct p2p_sub_element_noa *noa_ie)
+{
+}
+
+void wma_update_probe_resp_noa(tp_wma_handle wma_handle,
+			       struct p2p_sub_element_noa *noa_ie)
+{
+}
+
+#endif
 
 /**
  * wma_process_set_mimops_req() - Set the received MiMo PS state to firmware

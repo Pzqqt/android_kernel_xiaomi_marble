@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,6 +86,7 @@
  *
  * Return: none
  */
+#ifdef CONFIG_WMI_BCN_OFFLOAD
 static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 				struct cdp_pdev *pdev,
 				uint8_t vdev_id,
@@ -241,7 +242,15 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 
 	qdf_spin_unlock_bh(&bcn->lock);
 }
-
+#else
+static inline void
+wma_send_bcn_buf_ll(tp_wma_handle wma,
+		    struct cdp_pdev *pdev,
+		    uint8_t vdev_id,
+		    WMI_HOST_SWBA_EVENTID_param_tlvs *param_buf)
+{
+}
+#endif
 /**
  * wma_beacon_swba_handler() - swba event handler
  * @handle: wma handle
@@ -253,6 +262,7 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
  *
  * Return: 0 for success or error code
  */
+#ifdef CONFIG_WMI_BCN_OFFLOAD
 int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
@@ -289,6 +299,13 @@ int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len)
 	}
 	return 0;
 }
+#else
+static inline int
+wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len)
+{
+	return 0;
+}
+#endif
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 void wma_sta_kickout_event(uint32_t kickout_reason, uint8_t vdev_id,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -694,8 +694,9 @@ uint32_t wma_get_bcn_rate_code(uint16_t rate);
 /*
  * wma_mgmt.c functions declarations
  */
-
+#ifdef CONFIG_WMI_BCN_OFFLOAD
 int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len);
+#endif
 
 int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 				       uint32_t len);
