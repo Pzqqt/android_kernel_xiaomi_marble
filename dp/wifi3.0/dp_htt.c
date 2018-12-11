@@ -2848,8 +2848,7 @@ dp_ppdu_stats_ind_handler(struct htt_soc *soc,
 	u_int8_t pdev_id;
 	bool free_buf;
 	qdf_nbuf_set_pktlen(htt_t2h_msg, HTT_T2H_MAX_MSG_SIZE);
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-		"received HTT_T2H_MSG_TYPE_PPDU_STATS_IND");
+	dp_debug("received HTT_T2H_MSG_TYPE_PPDU_STATS_IND");
 	pdev_id = HTT_T2H_PPDU_STATS_PDEV_ID_GET(*msg_word);
 	pdev_id = DP_HW2SW_MACID(pdev_id);
 	free_buf = dp_txrx_ppdu_stats_handler(soc->dp_soc, pdev_id,
@@ -2884,8 +2883,8 @@ dp_pktlog_msg_handler(struct htt_soc *soc,
 {
 	uint8_t pdev_id;
 	uint32_t *pl_hdr;
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-		"received HTT_T2H_MSG_TYPE_PKTLOG");
+
+	dp_debug("received HTT_T2H_MSG_TYPE_PKTLOG");
 	pdev_id = HTT_T2H_PKTLOG_PDEV_ID_GET(*msg_word);
 	pdev_id = DP_HW2SW_MACID(pdev_id);
 	pl_hdr = (msg_word + 1);
