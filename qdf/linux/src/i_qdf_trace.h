@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,7 +34,6 @@
 #define __printf(a, b)
 #endif
 
-#ifdef CONFIG_MCL
 /* QDF_TRACE is the macro invoked to add trace messages to code.  See the
  * documenation for qdf_trace_msg() for the parameters etc. for this function.
  *
@@ -45,17 +44,7 @@
  * This allows us to build 'performance' builds where we can measure performance
  * without being bogged down by all the tracing in the code
  */
-#if defined(WLAN_DEBUG) || defined(DEBUG)
-#define QDF_TRACE qdf_trace_msg
-#define QDF_VTRACE qdf_vtrace_msg
-#define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
-#else
-#define QDF_TRACE(arg ...)
-#define QDF_VTRACE(arg ...)
-#define QDF_TRACE_HEX_DUMP(arg ...)
-#endif
-#else /* CONFIG_MCL */
-
+#if defined(QDF_TRACE_PRINT_ENABLE)
 #define qdf_trace(log_level, args...) \
 		do {	\
 			extern int qdf_dbg_mask; \
@@ -64,14 +53,19 @@
 				printk("\n"); \
 			} \
 		} while (0)
+#endif
 
+#if defined(WLAN_DEBUG) || defined(DEBUG) || defined(QDF_TRACE_PRINT_ENABLE)
 #define QDF_TRACE qdf_trace_msg
-
 #define QDF_VTRACE qdf_vtrace_msg
 #define QDF_TRACE_HEX_DUMP qdf_trace_hex_dump
-#endif /* CONFIG_MCL */
+#else
+#define QDF_TRACE(arg ...)
+#define QDF_VTRACE(arg ...)
+#define QDF_TRACE_HEX_DUMP(arg ...)
+#endif
 
-#if defined(WLAN_DEBUG) || defined(DEBUG)
+#if defined(WLAN_DEBUG) || defined(DEBUG) || defined(QDF_TRACE_PRINT_ENABLE)
 #define QDF_MAX_LOGS_PER_SEC 2
 /**
  * __QDF_TRACE_RATE_LIMITED() - rate limited version of QDF_TRACE
