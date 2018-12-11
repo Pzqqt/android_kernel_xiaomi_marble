@@ -2497,22 +2497,22 @@ static void wma_wow_dump_mgmt_buffer(uint8_t *wow_packet_buffer,
 			wh->i_fc[1] & IEEE80211_FC1_DIR_TODS,
 			wh->i_fc[1] & IEEE80211_FC1_DIR_FROMDS);
 
-		to_from_ds = wh->i_fc[1] & IEEE80211_FC1_DIR_DSTODS;
+		to_from_ds = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
 
 		switch (to_from_ds) {
-		case IEEE80211_NO_DS:
+		case IEEE80211_FC1_DIR_NODS:
 			WMA_LOGE("BSSID: " MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(wh->i_addr3));
 			break;
-		case IEEE80211_TO_DS:
+		case IEEE80211_FC1_DIR_TODS:
 			WMA_LOGE("DA: " MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(wh->i_addr3));
 			break;
-		case IEEE80211_FROM_DS:
+		case IEEE80211_FC1_DIR_FROMDS:
 			WMA_LOGE("SA: " MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(wh->i_addr3));
 			break;
-		case IEEE80211_DS_TO_DS:
+		case IEEE80211_FC1_DIR_DSTODS:
 			if (buf_len >= sizeof(struct ieee80211_frame_addr4))
 				WMA_LOGE("DA: " MAC_ADDRESS_STR " SA: "
 					MAC_ADDRESS_STR,

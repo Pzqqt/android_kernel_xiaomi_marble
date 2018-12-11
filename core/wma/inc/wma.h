@@ -152,20 +152,6 @@
 #define WMA_BEACON_TX_RATE_48_M           480
 #define WMA_BEACON_TX_RATE_54_M           540
 
-/**
- * ds_mode: distribution system mode
- * @IEEE80211_NO_DS: NO DS at either side
- * @IEEE80211_TO_DS: DS at receiver side
- * @IEEE80211_FROM_DS: DS at sender side
- * @IEEE80211_DS_TO_DS: DS at both sender and revceiver side
- */
-enum ds_mode {
-	IEEE80211_NO_DS,
-	IEEE80211_TO_DS,
-	IEEE80211_FROM_DS,
-	IEEE80211_DS_TO_DS
-};
-
 /* Roaming default values
  * All time and period values are in milliseconds.
  * All rssi values are in dB except for WMA_NOISE_FLOOR_DBM_DEFAULT.
