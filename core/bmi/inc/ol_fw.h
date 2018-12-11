@@ -38,7 +38,6 @@
 void ol_target_failure(void *instance, QDF_STATUS status);
 
 void ol_target_ready(struct hif_opaque_softc *scn, void *cfg_ctx);
-QDF_STATUS ol_get_fw_files(struct ol_context *ol_ctx);
 QDF_STATUS ol_extra_initialization(struct ol_context *ol_ctx);
 #else /* WLAN_FEATURE_BMI */
 static inline void ol_target_failure(void *instance, QDF_STATUS status) {}
