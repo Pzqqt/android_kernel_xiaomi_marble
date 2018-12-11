@@ -263,15 +263,6 @@ enum ds_mode {
 #define WMA_TX_FRAME_BUFFER_NO_FREE    0
 #define WMA_TX_FRAME_BUFFER_FREE       1
 
-/* Default InActivity Time is 200 ms */
-#define POWERSAVE_DEFAULT_INACTIVITY_TIME 200
-
-/* Default WOW InActivity Time is 50 ms */
-#define WOW_POWERSAVE_DEFAULT_INACTIVITY_TIME 50
-
-/* Default Listen Interval */
-#define POWERSAVE_DEFAULT_LISTEN_INTERVAL 1
-
 /*
  * TODO: Add WMI_CMD_ID_MAX as part of WMI_CMD_ID
  * instead of assigning it to the last valid wmi
