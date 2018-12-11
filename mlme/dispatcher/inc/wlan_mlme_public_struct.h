@@ -1576,6 +1576,8 @@ struct wlan_mlme_per_slot_scoring {
  * @bandwidth_weight_per_index: Bandwidth weight per index for scoring logic
  * @nss_weight_per_index: NSS weight per index for scoring logic
  * @band_weight_per_index: Band weight per index for scoring logic
+ * @roam_trigger_bitmap: bitmap for various roam triggers
+ * @roam_score_delta: percentage delta in roam score
  */
 struct wlan_mlme_scoring_cfg {
 	bool enable_scoring_for_roam;
@@ -1586,6 +1588,8 @@ struct wlan_mlme_scoring_cfg {
 	uint32_t bandwidth_weight_per_index;
 	uint32_t nss_weight_per_index;
 	uint32_t band_weight_per_index;
+	uint32_t roam_trigger_bitmap;
+	uint32_t roam_score_delta;
 };
 
 /* struct wlan_mlme_threshold - Threshold related config items

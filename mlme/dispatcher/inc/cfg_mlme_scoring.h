@@ -963,6 +963,78 @@
 
 /*
  * <ini>
+ * roam_score_delta_bitmap - bitmap to enable roam triggers on
+ * which roam score delta is to be applied during roam candidate
+ * selection
+ * @Min: 0
+ * @Max: 0xffffffff
+ * @Default: 0xffffffff
+ *
+ * Bitmap value of the following roam triggers:
+ * ROAM_TRIGGER_REASON_NONE       - B0,
+ * ROAM_TRIGGER_REASON_PER        - B1,
+ * ROAM_TRIGGER_REASON_BMISS      - B2,
+ * ROAM_TRIGGER_REASON_LOW_RSSI   - B3,
+ * ROAM_TRIGGER_REASON_HIGH_RSSI  - B4,
+ * ROAM_TRIGGER_REASON_PERIODIC   - B5,
+ * ROAM_TRIGGER_REASON_MAWC       - B6,
+ * ROAM_TRIGGER_REASON_DENSE      - B7,
+ * ROAM_TRIGGER_REASON_BACKGROUND - B8,
+ * ROAM_TRIGGER_REASON_FORCED     - B9,
+ * ROAM_TRIGGER_REASON_BTM        - B10,
+ * ROAM_TRIGGER_REASON_UNIT_TEST  - B11,
+ * ROAM_TRIGGER_REASON_BSS_LOAD   - B12
+ *
+ * When the bit corresponding to a particular roam trigger reason
+ * is set, the value of "roam_score_delta" is expected over the
+ * roam score of the current connected AP, for that triggered roam
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ROAM_TRIGGER_BITMAP CFG_INI_UINT( \
+			"roam_score_delta_bitmap", \
+			0, \
+			0xFFFFFFFF, \
+			0xFFFFFFFF, \
+			CFG_VALUE_OR_DEFAULT, \
+			"Bitmap for various roam triggers")
+
+/*
+ * <ini>
+ * roam_score_delta - Percentage increment in roam score value
+ * that is expected from a roaming candidate AP.
+ * @Min: 0
+ * @Max: 100
+ * @Default: 0
+ *
+ * This ini is used to provide the percentage increment value over roam
+ * score for the candidate APs so that they can be preferred over current
+ * AP for roaming.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ROAM_SCORE_DELTA CFG_INI_UINT( \
+			"roam_score_delta", \
+			0, \
+			100, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"candidate AP's percentage roam score delta")
+
+/*
+ * <ini>
  * enable_scoring_for_roam - enable/disable scoring logic in FW for candidate
  * selection during roaming
  *
@@ -1018,6 +1090,8 @@
 	CFG(CFG_SCORING_OCE_WAN_SCORE_IDX_7_TO_4) \
 	CFG(CFG_SCORING_OCE_WAN_SCORE_IDX_11_TO_8) \
 	CFG(CFG_SCORING_OCE_WAN_SCORE_IDX_15_TO_12) \
+	CFG(CFG_ROAM_TRIGGER_BITMAP) \
+	CFG(CFG_ROAM_SCORE_DELTA) \
 	CFG(CFG_ENABLE_SCORING_FOR_ROAM)
 
 #endif /* __CFG_MLME_SCORING_H */
