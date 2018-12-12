@@ -1915,6 +1915,8 @@ struct roam_fils_params {
  * @assoc_ie: Assoc IE buffer
  * @add_fils_tlv: add FILS TLV boolean
  * @roam_fils_params: roam fils params
+ * @rct_validity_timer: duration value for which the entries in
+ * roam candidate table are valid
  */
 struct roam_offload_scan_params {
 	uint8_t is_roam_req_valid;
@@ -1936,6 +1938,7 @@ struct roam_offload_scan_params {
 	int auth_mode;
 	bool fw_okc;
 	bool fw_pmksa_cache;
+	uint32_t rct_validity_timer;
 #endif
 	uint32_t min_delay_btw_roam_scans;
 	uint32_t roam_trigger_reason_bitmask;
