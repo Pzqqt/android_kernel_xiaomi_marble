@@ -430,7 +430,7 @@ static const char *const rx_macro_hph_hd2_mode_text[] = {"OFF", "ON"};
 static const struct soc_enum rx_macro_hph_hd2_mode_enum =
 	SOC_ENUM_SINGLE_EXT(2, rx_macro_hph_hd2_mode_text);
 
-static const char *const rx_macro_hph_pwr_mode_text[] = {"ULP", "LoHIFI"};
+static const char *const rx_macro_hph_pwr_mode_text[] = {"ULP", "LOHIFI"};
 static const struct soc_enum rx_macro_hph_pwr_mode_enum =
 	SOC_ENUM_SINGLE_EXT(2, rx_macro_hph_pwr_mode_text);
 
