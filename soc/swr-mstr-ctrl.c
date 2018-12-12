@@ -26,7 +26,8 @@
 #include "swr-mstr-ctrl.h"
 #include "swrm_port_config.h"
 
-
+#define SWRM_SYSTEM_RESUME_TIMEOUT_MS 700
+#define SWRM_SYS_SUSPEND_WAIT 1
 #define SWR_BROADCAST_CMD_ID            0x0F
 #define SWR_AUTO_SUSPEND_DELAY          3 /* delay in sec */
 #define SWR_DEV_ID_MASK			0xFFFFFFFF
@@ -82,6 +83,8 @@ static struct dentry *debugfs_poke;
 static struct dentry *debugfs_reg_dump;
 static unsigned int read_data;
 
+static bool swrm_lock_sleep(struct swr_mstr_ctrl *swrm);
+static void swrm_unlock_sleep(struct swr_mstr_ctrl *swrm);
 
 static bool swrm_is_msm_variant(int val)
 {
@@ -974,6 +977,7 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 		pr_err("%s: swrm is null\n", __func__);
 		return -EFAULT;
 	}
+
 	mutex_lock(&swrm->mlock);
 
 	bank = get_inactive_bank_num(swrm);
@@ -993,7 +997,7 @@ static int swrm_slvdev_datapath_control(struct swr_master *master, bool enable)
 			return -EINVAL;
 		}
 		swr_master_write(swrm, SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN,
-					SWRM_INTERRUPT_STATUS_MASK);
+				 SWRM_INTERRUPT_STATUS_MASK);
 		/* apply the new port config*/
 		swrm_apply_port_config(master);
 	} else {
@@ -1254,7 +1258,7 @@ static int swrm_check_slave_change_status(struct swr_mstr_ctrl *swrm,
 static irqreturn_t swr_mstr_interrupt(int irq, void *dev)
 {
 	struct swr_mstr_ctrl *swrm = dev;
-	u32 value, intr_sts, intr_mask;
+	u32 value, intr_sts, intr_sts_masked;
 	u32 temp = 0;
 	u32 status, chg_sts, i;
 	u8 devnum = 0;
@@ -1262,17 +1266,20 @@ static irqreturn_t swr_mstr_interrupt(int irq, void *dev)
 	struct swr_device *swr_dev;
 	struct swr_master *mstr = &swrm->master;
 
+	if (unlikely(swrm_lock_sleep(swrm) == false)) {
+		dev_err(swrm->dev, "%s Failed to hold suspend\n", __func__);
+		return IRQ_NONE;
+	}
 
 	mutex_lock(&swrm->reslock);
 	swrm_clk_request(swrm, true);
 	mutex_unlock(&swrm->reslock);
 
 	intr_sts = swr_master_read(swrm, SWRM_INTERRUPT_STATUS);
-	intr_mask = swr_master_read(swrm, SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN);
-	intr_sts &= intr_mask;
+	intr_sts_masked = intr_sts & swrm->intr_mask;
 handle_irq:
 	for (i = 0; i < SWRM_INTERRUPT_MAX; i++) {
-		value = intr_sts & (1 << i);
+		value = intr_sts_masked & (1 << i);
 		if (!value)
 			continue;
 
@@ -1364,16 +1371,16 @@ handle_irq:
 			break;
 		case SWRM_INTERRUPT_STATUS_DOUT_PORT_COLLISION:
 			dev_err_ratelimited(swrm->dev, "SWR Port collision detected\n");
-			intr_mask &= ~SWRM_INTERRUPT_STATUS_DOUT_PORT_COLLISION;
+			swrm->intr_mask &= ~SWRM_INTERRUPT_STATUS_DOUT_PORT_COLLISION;
 			swr_master_write(swrm,
-				SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, intr_mask);
+				SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, swrm->intr_mask);
 			break;
 		case SWRM_INTERRUPT_STATUS_READ_EN_RD_VALID_MISMATCH:
 			dev_dbg(swrm->dev, "SWR read enable valid mismatch\n");
-			intr_mask &=
+			swrm->intr_mask &=
 				~SWRM_INTERRUPT_STATUS_READ_EN_RD_VALID_MISMATCH;
 			swr_master_write(swrm,
-				 SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, intr_mask);
+				 SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN, swrm->intr_mask);
 			break;
 		case SWRM_INTERRUPT_STATUS_SPECIAL_CMD_ID_FINISHED:
 			complete(&swrm->broadcast);
@@ -1401,9 +1408,9 @@ handle_irq:
 	swr_master_write(swrm, SWRM_INTERRUPT_CLEAR, 0x0);
 
 	intr_sts = swr_master_read(swrm, SWRM_INTERRUPT_STATUS);
-	intr_sts &= intr_mask;
+	intr_sts_masked = intr_sts & swrm->intr_mask;
 
-	if (intr_sts) {
+	if (intr_sts_masked) {
 		dev_dbg(swrm->dev, "%s: new interrupt received\n", __func__);
 		goto handle_irq;
 	}
@@ -1411,6 +1418,7 @@ handle_irq:
 	mutex_lock(&swrm->reslock);
 	swrm_clk_request(swrm, false);
 	mutex_unlock(&swrm->reslock);
+	swrm_unlock_sleep(swrm);
 	return ret;
 }
 
@@ -1454,12 +1462,19 @@ static void swrm_wakeup_work(struct work_struct *work)
 	mutex_lock(&swrm->devlock);
 	if (!swrm->dev_up) {
 		mutex_unlock(&swrm->devlock);
-		return;
+		goto exit;
 	}
 	mutex_unlock(&swrm->devlock);
+	if (unlikely(swrm_lock_sleep(swrm) == false)) {
+		dev_err(swrm->dev, "%s Failed to hold suspend\n", __func__);
+		goto exit;
+	}
 	pm_runtime_get_sync(swrm->dev);
 	pm_runtime_mark_last_busy(swrm->dev);
 	pm_runtime_put_autosuspend(swrm->dev);
+	swrm_unlock_sleep(swrm);
+exit:
+	pm_relax(swrm->dev);
 }
 
 static int swrm_get_device_status(struct swr_mstr_ctrl *swrm, u8 devnum)
@@ -1545,6 +1560,10 @@ static void swrm_device_wakeup_vote(struct swr_master *mstr)
 			__func__);
 		return;
 	}
+	if (unlikely(swrm_lock_sleep(swrm) == false)) {
+		dev_err(swrm->dev, "%s Failed to hold suspend\n", __func__);
+		return;
+	}
 	pm_runtime_get_sync(swrm->dev);
 }
 
@@ -1559,6 +1578,7 @@ static void swrm_device_wakeup_unvote(struct swr_master *mstr)
 	}
 	pm_runtime_mark_last_busy(swrm->dev);
 	pm_runtime_put_autosuspend(swrm->dev);
+	swrm_unlock_sleep(swrm);
 }
 
 static int swrm_master_init(struct swr_mstr_ctrl *swrm)
@@ -1610,12 +1630,13 @@ static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 	reg[len] = SWRM_INTERRUPT_CLEAR;
 	value[len++] = 0xFFFFFFFF;
 
+	swrm->intr_mask = SWRM_INTERRUPT_STATUS_MASK;
 	/* Mask soundwire interrupts */
 	reg[len] = SWRM_INTERRUPT_MASK_ADDR;
-	value[len++] = 0x1FFFD;
+	value[len++] = swrm->intr_mask;
 
 	reg[len] = SWR_MSTR_RX_SWRM_CPU_INTERRUPT_EN;
-	value[len++] = SWRM_INTERRUPT_STATUS_MASK;
+	value[len++] = swrm->intr_mask;
 
 	swr_master_bulk_write(swrm, reg, value, len);
 
@@ -1639,6 +1660,7 @@ static int swrm_event_notify(struct notifier_block *self,
 	case SWR_WAKE_IRQ_EVENT:
 		if (swrm->ipc_wakeup && !swrm->ipc_wakeup_triggered) {
 			swrm->ipc_wakeup_triggered = true;
+			pm_stay_awake(swrm->dev);
 			schedule_work(&swrm->wakeup_work);
 		}
 		break;
@@ -1745,6 +1767,21 @@ static int swrm_probe(struct platform_device *pdev)
 			&swrm->clk_stop_mode0_supp)) {
 		swrm->clk_stop_mode0_supp = FALSE;
 	}
+
+	ret = of_property_read_u32(swrm->dev->of_node, "qcom,swr-num-dev",
+				   &swrm->num_dev);
+	if (ret) {
+		dev_dbg(&pdev->dev, "%s: Looking up %s property failed\n",
+			__func__, "qcom,swr-num-dev");
+	} else {
+		if (swrm->num_dev > SWR_MAX_SLAVE_DEVICES) {
+			dev_err(&pdev->dev, "%s: num_dev %d > max limit %d\n",
+				__func__, swrm->num_dev, SWR_MAX_SLAVE_DEVICES);
+			ret = -EINVAL;
+			goto err_pdata_fail;
+		}
+	}
+
 	/* Parse soundwire port mapping */
 	ret = of_property_read_u32(pdev->dev.of_node, "qcom,swr-num-ports",
 				&num_ports);
@@ -1827,23 +1864,16 @@ static int swrm_probe(struct platform_device *pdev)
 	mutex_init(&swrm->iolock);
 	mutex_init(&swrm->clklock);
 	mutex_init(&swrm->devlock);
+	mutex_init(&swrm->pm_lock);
+	swrm->wlock_holders = 0;
+	swrm->pm_state = SWRM_PM_SLEEPABLE;
+	init_waitqueue_head(&swrm->pm_wq);
+	pm_qos_add_request(&swrm->pm_qos_req,
+			   PM_QOS_CPU_DMA_LATENCY,
+			   PM_QOS_DEFAULT_VALUE);
 
 	for (i = 0 ; i < SWR_MSTR_PORT_LEN; i++)
 		INIT_LIST_HEAD(&swrm->mport_cfg[i].port_req_list);
-
-	ret = of_property_read_u32(swrm->dev->of_node, "qcom,swr-num-dev",
-				   &swrm->num_dev);
-	if (ret) {
-		dev_dbg(&pdev->dev, "%s: Looking up %s property failed\n",
-			__func__, "qcom,swr-num-dev");
-	} else {
-		if (swrm->num_dev > SWR_MAX_SLAVE_DEVICES) {
-			dev_err(&pdev->dev, "%s: num_dev %d > max limit %d\n",
-				__func__, swrm->num_dev, SWR_MAX_SLAVE_DEVICES);
-			ret = -EINVAL;
-			goto err_pdata_fail;
-		}
-	}
 
 	if (swrm->reg_irq) {
 		ret = swrm->reg_irq(swrm->handle, swr_mstr_interrupt, swrm,
@@ -1940,6 +1970,9 @@ err_irq_fail:
 	mutex_destroy(&swrm->force_down_lock);
 	mutex_destroy(&swrm->iolock);
 	mutex_destroy(&swrm->clklock);
+	mutex_destroy(&swrm->pm_lock);
+	pm_qos_remove_request(&swrm->pm_qos_req);
+
 err_pdata_fail:
 err_memory_fail:
 	return ret;
@@ -1956,7 +1989,7 @@ static int swrm_remove(struct platform_device *pdev)
 		free_irq(swrm->irq, swrm);
 	else if (swrm->wake_irq > 0)
 		free_irq(swrm->wake_irq, swrm);
-
+	cancel_work_sync(&swrm->wakeup_work);
 	pm_runtime_disable(&pdev->dev);
 	pm_runtime_set_suspended(&pdev->dev);
 	swr_unregister_master(&swrm->master);
@@ -1966,6 +1999,8 @@ static int swrm_remove(struct platform_device *pdev)
 	mutex_destroy(&swrm->iolock);
 	mutex_destroy(&swrm->clklock);
 	mutex_destroy(&swrm->force_down_lock);
+	mutex_destroy(&swrm->pm_lock);
+	pm_qos_remove_request(&swrm->pm_qos_req);
 	devm_kfree(&pdev->dev, swrm);
 	return 0;
 }
@@ -2301,6 +2336,94 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 }
 EXPORT_SYMBOL(swrm_wcd_notify);
 
+/*
+ * swrm_pm_cmpxchg:
+ *      Check old state and exchange with pm new state
+ *      if old state matches with current state
+ *
+ * @swrm: pointer to wcd core resource
+ * @o: pm old state
+ * @n: pm new state
+ *
+ * Returns old state
+ */
+static enum swrm_pm_state swrm_pm_cmpxchg(
+				struct swr_mstr_ctrl *swrm,
+				enum swrm_pm_state o,
+				enum swrm_pm_state n)
+{
+	enum swrm_pm_state old;
+
+	if (!swrm)
+		return o;
+
+	mutex_lock(&swrm->pm_lock);
+	old = swrm->pm_state;
+	if (old == o)
+		swrm->pm_state = n;
+	mutex_unlock(&swrm->pm_lock);
+
+	return old;
+}
+
+static bool swrm_lock_sleep(struct swr_mstr_ctrl *swrm)
+{
+	enum swrm_pm_state os;
+
+	/*
+	 * swrm_{lock/unlock}_sleep will be called by swr irq handler
+	 * and slave wake up requests..
+	 *
+	 * If system didn't resume, we can simply return false so
+	 * IRQ handler can return without handling IRQ.
+	 */
+	mutex_lock(&swrm->pm_lock);
+	if (swrm->wlock_holders++ == 0) {
+		dev_dbg(swrm->dev, "%s: holding wake lock\n", __func__);
+		pm_qos_update_request(&swrm->pm_qos_req,
+					  msm_cpuidle_get_deep_idle_latency());
+		pm_stay_awake(swrm->dev);
+	}
+	mutex_unlock(&swrm->pm_lock);
+
+	if (!wait_event_timeout(swrm->pm_wq,
+				((os =  swrm_pm_cmpxchg(swrm,
+				  SWRM_PM_SLEEPABLE,
+				  SWRM_PM_AWAKE)) ==
+					SWRM_PM_SLEEPABLE ||
+					(os == SWRM_PM_AWAKE)),
+					msecs_to_jiffies(
+					SWRM_SYSTEM_RESUME_TIMEOUT_MS))) {
+		dev_err(swrm->dev, "%s: system didn't resume within %dms, s %d, w %d\n",
+			__func__, SWRM_SYSTEM_RESUME_TIMEOUT_MS, swrm->pm_state,
+				swrm->wlock_holders);
+		swrm_unlock_sleep(swrm);
+		return false;
+	}
+	wake_up_all(&swrm->pm_wq);
+	return true;
+}
+
+static void swrm_unlock_sleep(struct swr_mstr_ctrl *swrm)
+{
+	mutex_lock(&swrm->pm_lock);
+	if (--swrm->wlock_holders == 0) {
+		dev_dbg(swrm->dev, "%s: releasing wake lock pm_state %d -> %d\n",
+			 __func__, swrm->pm_state, SWRM_PM_SLEEPABLE);
+		/*
+		 * if swrm_lock_sleep failed, pm_state would be still
+		 * swrm_PM_ASLEEP, don't overwrite
+		 */
+		if (likely(swrm->pm_state == SWRM_PM_AWAKE))
+			swrm->pm_state = SWRM_PM_SLEEPABLE;
+		pm_qos_update_request(&swrm->pm_qos_req,
+				  PM_QOS_DEFAULT_VALUE);
+		pm_relax(swrm->dev);
+	}
+	mutex_unlock(&swrm->pm_lock);
+	wake_up_all(&swrm->pm_wq);
+}
+
 #ifdef CONFIG_PM_SLEEP
 static int swrm_suspend(struct device *dev)
 {
@@ -2309,7 +2432,49 @@ static int swrm_suspend(struct device *dev)
 	struct swr_mstr_ctrl *swrm = platform_get_drvdata(pdev);
 
 	dev_dbg(dev, "%s: system suspend, state: %d\n", __func__, swrm->state);
-	if (!pm_runtime_enabled(dev) || !pm_runtime_suspended(dev)) {
+
+	mutex_lock(&swrm->pm_lock);
+
+	if (swrm->pm_state == SWRM_PM_SLEEPABLE) {
+		dev_dbg(swrm->dev, "%s: suspending system, state %d, wlock %d\n",
+			 __func__, swrm->pm_state,
+			swrm->wlock_holders);
+		swrm->pm_state = SWRM_PM_ASLEEP;
+	} else if (swrm->pm_state == SWRM_PM_AWAKE) {
+		/*
+		 * unlock to wait for pm_state == SWRM_PM_SLEEPABLE
+		 * then set to SWRM_PM_ASLEEP
+		 */
+		dev_dbg(swrm->dev, "%s: waiting to suspend system, state %d, wlock %d\n",
+			 __func__, swrm->pm_state,
+			 swrm->wlock_holders);
+		mutex_unlock(&swrm->pm_lock);
+		if (!(wait_event_timeout(swrm->pm_wq, swrm_pm_cmpxchg(
+					 swrm, SWRM_PM_SLEEPABLE,
+						 SWRM_PM_ASLEEP) ==
+						   SWRM_PM_SLEEPABLE,
+						   msecs_to_jiffies(
+						   SWRM_SYS_SUSPEND_WAIT)))) {
+			dev_dbg(swrm->dev, "%s: suspend failed state %d, wlock %d\n",
+				 __func__, swrm->pm_state,
+				 swrm->wlock_holders);
+			return -EBUSY;
+		} else {
+			dev_dbg(swrm->dev,
+				"%s: done, state %d, wlock %d\n",
+				__func__, swrm->pm_state,
+				swrm->wlock_holders);
+		}
+		mutex_lock(&swrm->pm_lock);
+	} else if (swrm->pm_state == SWRM_PM_ASLEEP) {
+		dev_dbg(swrm->dev, "%s: system is already suspended, state %d, wlock %d\n",
+			__func__, swrm->pm_state,
+			swrm->wlock_holders);
+	}
+
+	mutex_unlock(&swrm->pm_lock);
+
+	if ((!pm_runtime_enabled(dev) || !pm_runtime_suspended(dev))) {
 		ret = swrm_runtime_suspend(dev);
 		if (!ret) {
 			/*
@@ -2355,6 +2520,21 @@ static int swrm_resume(struct device *dev)
 			pm_request_autosuspend(dev);
 		}
 	}
+	mutex_lock(&swrm->pm_lock);
+	if (swrm->pm_state == SWRM_PM_ASLEEP) {
+		dev_dbg(swrm->dev,
+			"%s: resuming system, state %d, wlock %d\n",
+			__func__, swrm->pm_state,
+			swrm->wlock_holders);
+		swrm->pm_state = SWRM_PM_SLEEPABLE;
+	} else {
+		dev_dbg(swrm->dev, "%s: system is already awake, state %d wlock %d\n",
+			__func__, swrm->pm_state,
+			swrm->wlock_holders);
+	}
+	mutex_unlock(&swrm->pm_lock);
+	wake_up_all(&swrm->pm_wq);
+
 	return ret;
 }
 #endif /* CONFIG_PM_SLEEP */
