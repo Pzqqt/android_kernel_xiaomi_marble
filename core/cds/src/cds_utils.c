@@ -223,49 +223,6 @@ QDF_STATUS cds_crypto_deinit(uint32_t hCryptProv)
 	return uResult;
 }
 
-/*--------------------------------------------------------------------------
-
-   \brief cds_rand_get_bytes() - Generates random byte
-
-   The cds_rand_get_bytes() function generate random bytes.
-
-   Buffer should be allocated before calling cds_rand_get_bytes().
-
-   Attempting to initialize an already initialized lock results in
-   a failure.
-
-   \param lock - pointer to the opaque lock object to initialize
-
-   \return QDF_STATUS_SUCCESS - Successfully generated random memory.
-
-   QDF_STATUS_E_FAULT  - pbBuf is an invalid pointer.
-
-   QDF_STATUS_E_FAILURE - default return value if it fails due to
-   unknown reasons
-
-  ***QDF_STATUS_E_RESOURCES - System resources (other than memory)
-  are unavailable
-   \sa
-
-    ( *** return value not considered yet )
-   --------------------------------------------------------------------------*/
-QDF_STATUS
-cds_rand_get_bytes(uint32_t cryptHandle, uint8_t *pbBuf, uint32_t numBytes)
-{
-	QDF_STATUS uResult = QDF_STATUS_E_FAILURE;
-
-	/* check for invalid pointer */
-	if (NULL == pbBuf) {
-		uResult = QDF_STATUS_E_FAULT;
-		return uResult;
-	}
-
-	get_random_bytes(pbBuf, numBytes);
-	/* "Random sequence generated." */
-	uResult = QDF_STATUS_SUCCESS;
-	return uResult;
-}
-
 #ifdef WLAN_FEATURE_11W
 uint8_t cds_get_mmie_size(void)
 {

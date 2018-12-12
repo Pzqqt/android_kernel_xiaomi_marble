@@ -39,6 +39,7 @@
 #include "nan_public_structs.h"
 #include "cfg_nan_api.h"
 #include "wlan_mlme_ucfg_api.h"
+#include "qdf_util.h"
 
 /**
  * hdd_nan_datapath_target_config() - Configure NAN datapath features
@@ -252,7 +253,7 @@ static int hdd_get_random_nan_mac_addr(struct hdd_context *hdd_ctx,
 			hdd_debug("NDI already exists, deriving next mac");
 			qdf_mem_copy(mac_addr, &adapter->mac_addr,
 				     sizeof(*mac_addr));
-			cds_rand_get_bytes(0, &pos, sizeof(pos));
+			qdf_get_random_bytes(&pos, sizeof(pos));
 			/* skipping byte 0, 5 leaves 8*4=32 positions */
 			pos = pos % 32;
 			bit_pos = pos % 8;
@@ -261,8 +262,7 @@ static int hdd_get_random_nan_mac_addr(struct hdd_context *hdd_ctx,
 			/* flip the required bit */
 			mac_addr->bytes[byte_pos + 1] ^= mask;
 		} else {
-			cds_rand_get_bytes(0, (uint8_t *)mac_addr,
-					   sizeof(*mac_addr));
+			qdf_get_random_bytes(mac_addr, sizeof(*mac_addr));
 			/*
 			 * Reset multicast bit (bit-0) and set
 			 * locally-administered bit

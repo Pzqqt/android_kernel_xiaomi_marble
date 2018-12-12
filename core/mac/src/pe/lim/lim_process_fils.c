@@ -25,6 +25,7 @@
 #include <lim_session.h>
 #include <cds_ieee80211_defines.h>
 #include <qdf_crypto.h>
+#include "qdf_util.h"
 
 #ifdef WLAN_FEATURE_FILS_SK
 
@@ -1007,7 +1008,7 @@ void lim_add_fils_data_to_auth_frame(struct pe_session *session,
 	*body = SIR_FILS_NONCE_EXT_EID;
 	body++;
 	/* Add data */
-	cds_rand_get_bytes(0, fils_info->fils_nonce, SIR_FILS_NONCE_LENGTH);
+	qdf_get_random_bytes(fils_info->fils_nonce, SIR_FILS_NONCE_LENGTH);
 	qdf_mem_copy(body, fils_info->fils_nonce, SIR_FILS_NONCE_LENGTH);
 	body = body + SIR_FILS_NONCE_LENGTH;
 	/* Dump data */
@@ -1025,7 +1026,7 @@ void lim_add_fils_data_to_auth_frame(struct pe_session *session,
 	*body = SIR_FILS_SESSION_EXT_EID;
 	body++;
 	/* Add data */
-	cds_rand_get_bytes(0, fils_info->fils_session, SIR_FILS_SESSION_LENGTH);
+	qdf_get_random_bytes(fils_info->fils_session, SIR_FILS_SESSION_LENGTH);
 	qdf_mem_copy(body, fils_info->fils_session, SIR_FILS_SESSION_LENGTH);
 	body = body + SIR_FILS_SESSION_LENGTH;
 	/* dump data */

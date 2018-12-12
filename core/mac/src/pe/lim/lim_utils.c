@@ -65,6 +65,7 @@
 #include "cfg_ucfg_api.h"
 #include "lim_ft.h"
 #include "wlan_mlme_main.h"
+#include "qdf_util.h"
 
 #define ASCII_SPACE_CHARACTER 0x20
 
@@ -7006,7 +7007,7 @@ void lim_decide_he_op(struct mac_context *mac_ctx, tpAddBssParams add_bss,
 	if (he_ops_from_ie->bss_color) {
 		he_ops->bss_color = he_ops_from_ie->bss_color;
 	} else {
-		cds_rand_get_bytes(0, &color, 1);
+		qdf_get_random_bytes(&color, sizeof(color));
 		/* make sure color is within 1-63*/
 		he_ops->bss_color = (color % WNI_CFG_HE_OPS_BSS_COLOR_MAX) + 1;
 	}

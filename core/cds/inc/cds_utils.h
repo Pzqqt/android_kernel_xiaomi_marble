@@ -105,22 +105,6 @@ QDF_STATUS cds_crypto_init(uint32_t *phCryptProv);
 
 QDF_STATUS cds_crypto_deinit(uint32_t hCryptProv);
 
-/**
- * cds_rand_get_bytes
-
- * FUNCTION:
- * Returns cryptographically secure pseudo-random bytes.
- *
- *
- * @param pbBuf - the caller allocated location where the bytes should be copied
- * @param numBytes the number of bytes that should be generated and
- * copied
- *
- * @return QDF_STATUS_SUCCSS if the operation succeeds
- */
-QDF_STATUS cds_rand_get_bytes(uint32_t handle, uint8_t *pbBuf,
-			      uint32_t numBytes);
-
 uint32_t cds_chan_to_freq(uint8_t chan);
 uint8_t cds_freq_to_chan(uint32_t freq);
 enum cds_band_type cds_chan_to_band(uint32_t chan);

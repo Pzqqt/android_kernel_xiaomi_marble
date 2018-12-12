@@ -10461,7 +10461,7 @@ static int hdd_initialize_mac_address(struct hdd_context *hdd_ctx)
 		struct qdf_mac_addr mac_addr;
 
 		hdd_err("MAC failure from device serial no.");
-		cds_rand_get_bytes(0, (uint8_t *)(&mac_addr), sizeof(mac_addr));
+		qdf_get_random_bytes(&mac_addr, sizeof(mac_addr));
 		/*
 		 * Reset multicast bit (bit-0) and set
 		 * locally-administered bit
