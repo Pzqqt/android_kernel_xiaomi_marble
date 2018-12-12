@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/clk.h>
@@ -113,6 +113,9 @@ enum {
 	TX_CDC_DMA_TX_0,
 	TX_CDC_DMA_TX_3,
 	TX_CDC_DMA_TX_4,
+	VA_CDC_DMA_TX_0,
+	VA_CDC_DMA_TX_1,
+	VA_CDC_DMA_TX_2,
 	CDC_DMA_TX_MAX,
 };
 
@@ -321,6 +324,9 @@ static struct dev_config cdc_dma_tx_cfg[] = {
 	[TX_CDC_DMA_TX_0] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[TX_CDC_DMA_TX_3] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[TX_CDC_DMA_TX_4] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+	[VA_CDC_DMA_TX_0] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 8},
+	[VA_CDC_DMA_TX_1] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 8},
+	[VA_CDC_DMA_TX_2] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 8},
 };
 
 static char const *bit_format_text[] = {"S16_LE", "S24_LE", "S24_3LE",
@@ -408,6 +414,9 @@ static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_2_chs, cdc_dma_tx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_0_chs, cdc_dma_tx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_3_chs, cdc_dma_tx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_4_chs, cdc_dma_tx_ch_text);
+static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_0_chs, cdc_dma_tx_ch_text);
+static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_1_chs, cdc_dma_tx_ch_text);
+static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_2_chs, cdc_dma_tx_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_rx_0_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_rx_1_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(rx_cdc_dma_rx_0_format, bit_format_text);
@@ -420,6 +429,9 @@ static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_tx_2_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_0_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_3_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_4_format, bit_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_0_format, bit_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_1_format, bit_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_2_format, bit_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_rx_0_sample_rate,
 				cdc_dma_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(wsa_cdc_dma_rx_1_sample_rate,
@@ -445,6 +457,12 @@ static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_0_sample_rate,
 static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_3_sample_rate,
 				cdc_dma_sample_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tx_cdc_dma_tx_4_sample_rate,
+				cdc_dma_sample_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_0_sample_rate,
+				cdc_dma_sample_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_1_sample_rate,
+				cdc_dma_sample_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(va_cdc_dma_tx_2_sample_rate,
 				cdc_dma_sample_rate_text);
 
 static bool is_initial_boot;
@@ -2003,6 +2021,15 @@ static int cdc_dma_get_port_idx(struct snd_kcontrol *kcontrol)
 	else if (strnstr(kcontrol->id.name, "TX_CDC_DMA_TX_4",
 		sizeof("TX_CDC_DMA_TX_4")))
 		idx = TX_CDC_DMA_TX_4;
+	else if (strnstr(kcontrol->id.name, "VA_CDC_DMA_TX_0",
+		sizeof("VA_CDC_DMA_TX_0")))
+		idx = VA_CDC_DMA_TX_0;
+	else if (strnstr(kcontrol->id.name, "VA_CDC_DMA_TX_1",
+		sizeof("VA_CDC_DMA_TX_1")))
+		idx = VA_CDC_DMA_TX_1;
+	else if (strnstr(kcontrol->id.name, "VA_CDC_DMA_TX_2",
+		sizeof("VA_CDC_DMA_TX_2")))
+		idx = VA_CDC_DMA_TX_2;
 	else {
 		pr_err("%s: unsupported channel: %s\n",
 			__func__, kcontrol->id.name);
@@ -2516,6 +2543,15 @@ static int msm_cdc_dma_get_idx_from_beid(int32_t be_id)
 	case MSM_BACKEND_DAI_TX_CDC_DMA_TX_4:
 		idx = TX_CDC_DMA_TX_4;
 		break;
+	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_0:
+		idx = VA_CDC_DMA_TX_0;
+		break;
+	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_1:
+		idx = VA_CDC_DMA_TX_1;
+		break;
+	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_2:
+		idx = VA_CDC_DMA_TX_2;
+		break;
 	default:
 		idx = RX_CDC_DMA_RX_0;
 		break;
@@ -2551,6 +2587,12 @@ static const struct snd_kcontrol_new msm_int_snd_controls[] = {
 			cdc_dma_tx_ch_get, cdc_dma_tx_ch_put),
 	SOC_ENUM_EXT("TX_CDC_DMA_TX_4 Channels", tx_cdc_dma_tx_4_chs,
 			cdc_dma_tx_ch_get, cdc_dma_tx_ch_put),
+	SOC_ENUM_EXT("VA_CDC_DMA_TX_0 Channels", va_cdc_dma_tx_0_chs,
+			cdc_dma_tx_ch_get, cdc_dma_tx_ch_put),
+	SOC_ENUM_EXT("VA_CDC_DMA_TX_1 Channels", va_cdc_dma_tx_1_chs,
+			cdc_dma_tx_ch_get, cdc_dma_tx_ch_put),
+	SOC_ENUM_EXT("VA_CDC_DMA_TX_2 Channels", va_cdc_dma_tx_2_chs,
+			cdc_dma_tx_ch_get, cdc_dma_tx_ch_put),
 	SOC_ENUM_EXT("WSA_CDC_DMA_RX_0 Format", wsa_cdc_dma_rx_0_format,
 			cdc_dma_rx_format_get, cdc_dma_rx_format_put),
 	SOC_ENUM_EXT("WSA_CDC_DMA_RX_1 Format", wsa_cdc_dma_rx_1_format,
@@ -2574,6 +2616,12 @@ static const struct snd_kcontrol_new msm_int_snd_controls[] = {
 	SOC_ENUM_EXT("TX_CDC_DMA_TX_3 Format", tx_cdc_dma_tx_3_format,
 			cdc_dma_tx_format_get, cdc_dma_tx_format_put),
 	SOC_ENUM_EXT("TX_CDC_DMA_TX_4 Format", tx_cdc_dma_tx_4_format,
+			cdc_dma_tx_format_get, cdc_dma_tx_format_put),
+	SOC_ENUM_EXT("VA_CDC_DMA_TX_0 Format", va_cdc_dma_tx_0_format,
+			cdc_dma_tx_format_get, cdc_dma_tx_format_put),
+	SOC_ENUM_EXT("VA_CDC_DMA_TX_1 Format", va_cdc_dma_tx_1_format,
+			cdc_dma_tx_format_get, cdc_dma_tx_format_put),
+	SOC_ENUM_EXT("VA_CDC_DMA_TX_2 Format", va_cdc_dma_tx_2_format,
 			cdc_dma_tx_format_get, cdc_dma_tx_format_put),
 	SOC_ENUM_EXT("WSA_CDC_DMA_RX_0 SampleRate",
 			wsa_cdc_dma_rx_0_sample_rate,
@@ -2625,6 +2673,18 @@ static const struct snd_kcontrol_new msm_int_snd_controls[] = {
 			cdc_dma_tx_sample_rate_put),
 	SOC_ENUM_EXT("TX_CDC_DMA_TX_4 SampleRate",
 			tx_cdc_dma_tx_4_sample_rate,
+			cdc_dma_tx_sample_rate_get,
+			cdc_dma_tx_sample_rate_put),
+	SOC_ENUM_EXT("VA_CDC_DMA_TX_0 SampleRate",
+			va_cdc_dma_tx_0_sample_rate,
+			cdc_dma_tx_sample_rate_get,
+			cdc_dma_tx_sample_rate_put),
+	SOC_ENUM_EXT("VA_CDC_DMA_TX_1 SampleRate",
+			va_cdc_dma_tx_1_sample_rate,
+			cdc_dma_tx_sample_rate_get,
+			cdc_dma_tx_sample_rate_put),
+	SOC_ENUM_EXT("VA_CDC_DMA_TX_2 SampleRate",
+			va_cdc_dma_tx_2_sample_rate,
 			cdc_dma_tx_sample_rate_get,
 			cdc_dma_tx_sample_rate_put),
 };
@@ -2795,7 +2855,7 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 					SNDRV_PCM_HW_PARAM_RATE);
 	struct snd_interval *channels = hw_param_interval(params,
 					SNDRV_PCM_HW_PARAM_CHANNELS);
-	int rc = 0;
+	int idx, rc = 0;
 
 	pr_debug("%s: format = %d, rate = %d\n",
 		  __func__, params_format(params), params_rate(params));
@@ -2967,6 +3027,16 @@ static int msm_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 		rate->min = rate->max = mi2s_tx_cfg[TERT_MI2S].sample_rate;
 		channels->min = channels->max =
 			mi2s_tx_cfg[TERT_MI2S].channels;
+		break;
+
+	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_0:
+	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_1:
+	case MSM_BACKEND_DAI_VA_CDC_DMA_TX_2:
+		idx = msm_cdc_dma_get_idx_from_beid(dai_link->id);
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+			       cdc_dma_tx_cfg[idx].bit_format);
+		rate->min = rate->max = cdc_dma_tx_cfg[idx].sample_rate;
+		channels->min = channels->max = cdc_dma_tx_cfg[idx].channels;
 		break;
 
 	default:
@@ -3143,6 +3213,9 @@ static int msm_snd_cdc_dma_hw_params(struct snd_pcm_substream *substream,
 		case MSM_BACKEND_DAI_TX_CDC_DMA_TX_0:
 		case MSM_BACKEND_DAI_TX_CDC_DMA_TX_3:
 		case MSM_BACKEND_DAI_TX_CDC_DMA_TX_4:
+		case MSM_BACKEND_DAI_VA_CDC_DMA_TX_0:
+		case MSM_BACKEND_DAI_VA_CDC_DMA_TX_1:
+		case MSM_BACKEND_DAI_VA_CDC_DMA_TX_2:
 		{
 			ch_id = msm_cdc_dma_get_idx_from_beid(dai_link->id);
 			pr_debug("%s: id %d tx_ch=%d\n", __func__,
@@ -4585,6 +4658,51 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 	},
 };
 
+static struct snd_soc_dai_link msm_va_cdc_dma_be_dai_links[] = {
+	{
+		.name = LPASS_BE_VA_CDC_DMA_TX_0,
+		.stream_name = "VA CDC DMA0 Capture",
+		.cpu_dai_name = "msm-dai-cdc-dma-dev.45089",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "bolero_codec",
+		.codec_dai_name = "va_macro_tx1",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_VA_CDC_DMA_TX_0,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ignore_suspend = 1,
+		.ops = &msm_cdc_dma_be_ops,
+	},
+	{
+		.name = LPASS_BE_VA_CDC_DMA_TX_1,
+		.stream_name = "VA CDC DMA1 Capture",
+		.cpu_dai_name = "msm-dai-cdc-dma-dev.45091",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "bolero_codec",
+		.codec_dai_name = "va_macro_tx2",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_VA_CDC_DMA_TX_1,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ignore_suspend = 1,
+		.ops = &msm_cdc_dma_be_ops,
+	},
+	{
+		.name = LPASS_BE_VA_CDC_DMA_TX_2,
+		.stream_name = "VA CDC DMA2 Capture",
+		.cpu_dai_name = "msm-dai-cdc-dma-dev.45093",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "bolero_codec",
+		.codec_dai_name = "va_macro_tx3",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_VA_CDC_DMA_TX_2,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ignore_suspend = 1,
+		.ops = &msm_cdc_dma_be_ops,
+	},
+};
+
 static struct snd_soc_dai_link msm_kona_dai_links[
 			ARRAY_SIZE(msm_common_dai_links) +
 			ARRAY_SIZE(msm_bolero_fe_dai_links) +
@@ -4593,7 +4711,8 @@ static struct snd_soc_dai_link msm_kona_dai_links[
 			ARRAY_SIZE(msm_mi2s_be_dai_links) +
 			ARRAY_SIZE(msm_auxpcm_be_dai_links) +
 			ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links) +
-			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links)];
+			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links) +
+			ARRAY_SIZE(msm_va_cdc_dma_be_dai_links)];
 
 static int msm_populate_dai_link_component_of_node(
 					struct snd_soc_card *card)
@@ -4839,6 +4958,12 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 		       sizeof(msm_rx_tx_cdc_dma_be_dai_links));
 		total_links +=
 			ARRAY_SIZE(msm_rx_tx_cdc_dma_be_dai_links);
+
+		memcpy(msm_kona_dai_links + total_links,
+		       msm_va_cdc_dma_be_dai_links,
+		       sizeof(msm_va_cdc_dma_be_dai_links));
+		total_links +=
+			ARRAY_SIZE(msm_va_cdc_dma_be_dai_links);
 
 		rc = of_property_read_u32(dev->of_node, "qcom,mi2s-audio-intf",
 					  &mi2s_audio_intf);
