@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -399,6 +399,43 @@ err:
 	return rc;
 }
 EXPORT_SYMBOL(msm_audio_ion_alloc);
+
+/**
+ * msm_audio_ion_dma_map -
+ *        Memory maps for a given DMA buffer
+ *
+ * @phys_addr: Physical address of DMA buffer to be mapped
+ * @iova_base: IOVA address of memory mapped DMA buffer
+ * @size: buffer size
+ * @dir: DMA direction
+ * Returns 0 on success or error on failure
+ */
+int msm_audio_ion_dma_map(dma_addr_t *phys_addr, dma_addr_t *iova_base,
+			u32 size, enum dma_data_direction dir)
+{
+	dma_addr_t iova;
+	struct device *cb_dev = msm_audio_ion_data.cb_dev;
+
+	if (!phys_addr || !iova_base || !size)
+		return -EINVAL;
+
+	iova = dma_map_resource(cb_dev, *phys_addr, size,
+				dir, 0);
+	if (dma_mapping_error(cb_dev, iova)) {
+		pr_err("%s: dma_mapping_error\n", __func__);
+		return -EIO;
+	}
+	pr_debug("%s: dma_mapping_success iova:0x%lx\n", __func__,
+			 (unsigned long)iova);
+	if (msm_audio_ion_data.smmu_enabled)
+		/* Append the SMMU SID information to the IOVA address */
+		iova |= msm_audio_ion_data.smmu_sid_bits;
+
+	*iova_base = iova;
+
+	return 0;
+}
+EXPORT_SYMBOL(msm_audio_ion_dma_map);
 
 /**
  * msm_audio_ion_import-
