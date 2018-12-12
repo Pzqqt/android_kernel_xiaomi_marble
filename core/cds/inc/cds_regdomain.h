@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -65,7 +65,7 @@
 #include <reg_services_public_struct.h>
 
 #define MIN_TX_PWR_CAP    8
-#define MAX_TX_PWR_CAP    22
+#define MAX_TX_PWR_CAP    30
 
 #define CTRY_DEFAULT          0
 #define CTRY_FLAG             0x8000

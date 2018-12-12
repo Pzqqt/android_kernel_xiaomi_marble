@@ -43,8 +43,6 @@
 #include "rrm_global.h"
 #include "rrm_api.h"
 
-#define MAX_RRM_TX_PWR_CAP 22
-
 uint8_t
 rrm_get_min_of_max_tx_power(struct mac_context *mac,
 			    int8_t regMax, int8_t apTxPower)
