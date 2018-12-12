@@ -133,6 +133,10 @@ ifeq ($(call cc-option-yn, -Wheader-guard),y)
 EXTRA_CFLAGS += -Wheader-guard
 endif
 
+ifeq ($(CONFIG_SND_SOC_GCOV), y)
+GCOV_PROFILE := y
+endif
+
 # Module information used by KBuild framework
 obj-$(CONFIG_PINCTRL_WCD) += pinctrl_wcd_dlkm.o
 pinctrl_wcd_dlkm-y := $(PINCTRL_WCD_OBJS)
