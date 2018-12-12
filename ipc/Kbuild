@@ -131,6 +131,10 @@ CHIP_NAME ?= $(MODNAME)
 CDEFINES += -DMULTI_IF_NAME=\"$(CHIP_NAME)\"
 endif
 
+ifeq ($(CONFIG_SND_SOC_GCOV), y)
+GCOV_PROFILE := y
+endif
+
 # Module information used by KBuild framework
 obj-$(CONFIG_MSM_QDSP6_APRV2_RPMSG) += apr_dlkm.o
 obj-$(CONFIG_MSM_QDSP6_APRV3_RPMSG) += apr_dlkm.o
