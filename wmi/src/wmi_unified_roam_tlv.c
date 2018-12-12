@@ -1155,6 +1155,8 @@ static QDF_STATUS send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
 			req_offload_params->roam_preauth_no_ack_timeout;
 		roam_offload_params->reassoc_failure_timeout =
 			roam_req->reassoc_failure_timeout;
+		roam_offload_params->roam_candidate_validity_time =
+			roam_req->rct_validity_timer;
 
 		/* Fill the capabilities */
 		roam_offload_params->capability =
@@ -2033,6 +2035,7 @@ static QDF_STATUS send_btm_config_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->max_attempt_cnt = params->btm_max_attempt_cnt;
 	cmd->solicited_timeout_ms = params->btm_solicited_timeout;
 	cmd->stick_time_seconds = params->btm_sticky_time;
+	cmd->disassoc_timer_threshold = params->disassoc_timer_threshold;
 
 	wmi_mtrace(WMI_ROAM_BTM_CONFIG_CMDID, cmd->vdev_id, 0);
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
