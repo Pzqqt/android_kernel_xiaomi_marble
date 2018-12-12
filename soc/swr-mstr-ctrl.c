@@ -1535,6 +1535,32 @@ static int swrm_get_logical_dev_num(struct swr_master *mstr, u64 dev_id,
 	pm_runtime_put_autosuspend(swrm->dev);
 	return ret;
 }
+
+static void swrm_device_wakeup_vote(struct swr_master *mstr)
+{
+	struct swr_mstr_ctrl *swrm = swr_get_ctrl_data(mstr);
+
+	if (!swrm) {
+		pr_err("%s: Invalid handle to swr controller\n",
+			__func__);
+		return;
+	}
+	pm_runtime_get_sync(swrm->dev);
+}
+
+static void swrm_device_wakeup_unvote(struct swr_master *mstr)
+{
+	struct swr_mstr_ctrl *swrm = swr_get_ctrl_data(mstr);
+
+	if (!swrm) {
+		pr_err("%s: Invalid handle to swr controller\n",
+			__func__);
+		return;
+	}
+	pm_runtime_mark_last_busy(swrm->dev);
+	pm_runtime_put_autosuspend(swrm->dev);
+}
+
 static int swrm_master_init(struct swr_mstr_ctrl *swrm)
 {
 	int ret = 0;
@@ -1777,6 +1803,8 @@ static int swrm_probe(struct platform_device *pdev)
 	swrm->master.disconnect_port = swrm_disconnect_port;
 	swrm->master.slvdev_datapath_control = swrm_slvdev_datapath_control;
 	swrm->master.remove_from_group = swrm_remove_from_group;
+	swrm->master.device_wakeup_vote = swrm_device_wakeup_vote;
+	swrm->master.device_wakeup_unvote = swrm_device_wakeup_unvote;
 	swrm->master.dev.parent = &pdev->dev;
 	swrm->master.dev.of_node = pdev->dev.of_node;
 	swrm->master.num_port = 0;

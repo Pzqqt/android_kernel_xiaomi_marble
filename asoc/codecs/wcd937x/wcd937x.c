@@ -2426,6 +2426,25 @@ struct wcd937x_pdata *wcd937x_populate_dt_data(struct device *dev)
 	return pdata;
 }
 
+static int wcd937x_wakeup(void *handle, bool enable)
+{
+	struct wcd937x_priv *priv;
+
+	if (!handle) {
+		pr_err("%s: NULL handle\n", __func__);
+		return -EINVAL;
+	}
+	priv = (struct wcd937x_priv *)handle;
+	if (!priv->tx_swr_dev) {
+		pr_err("%s: tx swr dev is NULL\n", __func__);
+		return -EINVAL;
+	}
+	if (enable)
+		return swr_device_wakeup_vote(priv->tx_swr_dev);
+	else
+		return swr_device_wakeup_unvote(priv->tx_swr_dev);
+}
+
 static int wcd937x_bind(struct device *dev)
 {
 	int ret = 0, i = 0;
@@ -2495,6 +2514,7 @@ static int wcd937x_bind(struct device *dev)
 	 * as per HW requirement.
 	 */
 	usleep_range(5000, 5010);
+	wcd937x->wakeup = wcd937x_wakeup;
 
 	ret = component_bind_all(dev, wcd937x);
 	if (ret) {
