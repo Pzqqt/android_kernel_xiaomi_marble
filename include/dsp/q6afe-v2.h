@@ -449,4 +449,6 @@ int afe_send_port_island_mode(u16 port_id);
 int afe_send_cmd_wakeup_register(void *handle, bool enable);
 void afe_register_wakeup_irq_callback(
 	void (*afe_cb_wakeup_irq)(void *handle));
+int afe_get_doa_tracking_mon(u16 port_id,
+	struct doa_tracking_mon_param *doa_tracking_data);
 #endif /* __Q6AFE_V2_H__ */

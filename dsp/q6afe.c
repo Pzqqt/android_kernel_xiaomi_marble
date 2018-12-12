@@ -122,6 +122,7 @@ struct afe_ctl {
 	struct afe_sp_th_vi_get_param_resp	th_vi_resp;
 	struct afe_sp_ex_vi_get_param_resp	ex_vi_resp;
 	struct afe_av_dev_drift_get_param_resp	av_dev_drift_resp;
+	struct afe_doa_tracking_mon_get_param_resp	doa_tracking_mon_resp;
 	int vi_tx_port;
 	int vi_rx_port;
 	uint32_t afe_sample_rates[AFE_MAX_PORTS];
@@ -264,8 +265,56 @@ static void av_dev_drift_afe_cb_handler(uint32_t opcode, uint32_t *payload,
 	if (!this_afe.av_dev_drift_resp.status) {
 		atomic_set(&this_afe.state, 0);
 	} else {
-		pr_debug("%s: av_dev_drift_resp status: %d", __func__,
+		pr_debug("%s: av_dev_drift_resp status: %d\n", __func__,
 			 this_afe.av_dev_drift_resp.status);
+		atomic_set(&this_afe.state, -1);
+	}
+}
+
+static void doa_tracking_mon_afe_cb_handler(uint32_t opcode, uint32_t *payload,
+					uint32_t payload_size)
+{
+	size_t expected_size =
+		sizeof(u32) + sizeof(struct doa_tracking_mon_param);
+
+	switch (opcode) {
+	case AFE_PORT_CMDRSP_GET_PARAM_V2:
+		expected_size += sizeof(struct param_hdr_v1);
+		if (payload_size < expected_size) {
+			pr_err("%s: Error: received size %d, expected size %zu\n",
+				 __func__, payload_size, expected_size);
+			return;
+		}
+		/* Repack response to add IID */
+		this_afe.doa_tracking_mon_resp.status = payload[0];
+		this_afe.doa_tracking_mon_resp.pdata.module_id = payload[1];
+		this_afe.doa_tracking_mon_resp.pdata.instance_id =
+			INSTANCE_ID_0;
+		this_afe.doa_tracking_mon_resp.pdata.param_id = payload[2];
+		this_afe.doa_tracking_mon_resp.pdata.param_size = payload[3];
+		memcpy(&this_afe.doa_tracking_mon_resp.doa, &payload[4],
+			sizeof(struct doa_tracking_mon_param));
+		break;
+	case AFE_PORT_CMDRSP_GET_PARAM_V3:
+		expected_size += sizeof(struct param_hdr_v3);
+		if (payload_size < expected_size) {
+			pr_err("%s: Error: received size %d, expected size %zu\n",
+				 __func__, payload_size, expected_size);
+			return;
+		}
+		memcpy(&this_afe.doa_tracking_mon_resp, payload,
+			sizeof(this_afe.doa_tracking_mon_resp));
+		break;
+	default:
+		pr_err("%s: Unrecognized command %d\n", __func__, opcode);
+		return;
+	}
+
+	if (!this_afe.doa_tracking_mon_resp.status) {
+		atomic_set(&this_afe.state, 0);
+	} else {
+		pr_debug("%s: doa_tracking_mon_resp status: %d\n", __func__,
+			 this_afe.doa_tracking_mon_resp.status);
 		atomic_set(&this_afe.state, -1);
 	}
 }
@@ -479,7 +528,10 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 		param_id = (data->opcode == AFE_PORT_CMDRSP_GET_PARAM_V3) ?
 				   payload[3] :
 				   payload[2];
-		if (param_id == AFE_PARAM_ID_DEV_TIMING_STATS) {
+		if (param_id == AUDPROC_PARAM_ID_FFV_DOA_TRACKING_MONITOR) {
+			doa_tracking_mon_afe_cb_handler(data->opcode,
+				data->payload, data->payload_size);
+		} else if (param_id == AFE_PARAM_ID_DEV_TIMING_STATS) {
 			av_dev_drift_afe_cb_handler(data->opcode, data->payload,
 						    data->payload_size);
 		} else {
@@ -7351,6 +7403,53 @@ exit:
 	return ret;
 }
 EXPORT_SYMBOL(afe_get_av_dev_drift);
+
+/**
+ * afe_get_doa_tracking_mon -
+ *       command to retrieve doa tracking monitor data
+ *
+ * @port: AFE port ID
+ * @doa_tracking_data: param to be updated with doa tracking data
+ *
+ * Returns 0 on success or error on failure
+ */
+int afe_get_doa_tracking_mon(u16 port,
+		struct doa_tracking_mon_param *doa_tracking_data)
+{
+	struct param_hdr_v3 param_hdr;
+	int ret = -EINVAL, i = 0;
+
+	if (!doa_tracking_data) {
+		pr_err("%s: Invalid params\n", __func__);
+		goto exit;
+	}
+
+	memset(&param_hdr, 0, sizeof(param_hdr));
+	param_hdr.module_id = AUDPROC_MODULE_ID_FFNS;
+	param_hdr.instance_id = INSTANCE_ID_0;
+	param_hdr.param_id = AUDPROC_PARAM_ID_FFV_DOA_TRACKING_MONITOR;
+	param_hdr.param_size = sizeof(struct doa_tracking_mon_param);
+
+	ret = q6afe_get_params(port, NULL, &param_hdr);
+	if (ret < 0) {
+		pr_err("%s: get param port 0x%x param id[0x%x] failed %d\n",
+			 __func__, port, param_hdr.param_id, ret);
+		goto exit;
+	}
+
+	memcpy(doa_tracking_data, &this_afe.doa_tracking_mon_resp.doa,
+			param_hdr.param_size);
+	for (i = 0; i < MAX_DOA_TRACKING_ANGLES; i++) {
+		pr_debug("%s: target angle[%d] = %d\n",
+			 __func__, i, doa_tracking_data->target_angle_L16[i]);
+		pr_debug("%s: interference angle[%d] = %d\n",
+			 __func__, i, doa_tracking_data->interf_angle_L16[i]);
+	}
+
+exit:
+	return ret;
+}
+EXPORT_SYMBOL(afe_get_doa_tracking_mon);
 
 int afe_spk_prot_get_calib_data(struct afe_spkr_prot_get_vi_calib *calib_resp)
 {

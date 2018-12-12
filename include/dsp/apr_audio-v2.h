@@ -12189,6 +12189,7 @@ struct adm_set_compressed_device_latency {
 #define MAX_SECTORS                                         8
 #define MAX_NOISE_SOURCE_INDICATORS                         3
 #define MAX_POLAR_ACTIVITY_INDICATORS                       360
+#define MAX_DOA_TRACKING_ANGLES                             2
 
 struct sound_focus_param {
 	uint16_t start_angle[MAX_SECTORS];
@@ -12200,6 +12201,12 @@ struct source_tracking_param {
 	uint8_t vad[MAX_SECTORS];
 	uint16_t doa_speech;
 	uint16_t doa_noise[MAX_NOISE_SOURCE_INDICATORS];
+	uint8_t polar_activity[MAX_POLAR_ACTIVITY_INDICATORS];
+} __packed;
+
+struct doa_tracking_mon_param {
+	uint16_t target_angle_L16[MAX_DOA_TRACKING_ANGLES];
+	uint16_t interf_angle_L16[MAX_DOA_TRACKING_ANGLES];
 	uint8_t polar_activity[MAX_POLAR_ACTIVITY_INDICATORS];
 } __packed;
 
@@ -12217,6 +12224,18 @@ struct adm_param_fluence_sourcetracking_t {
 	uint8_t polar_activity[MAX_POLAR_ACTIVITY_INDICATORS];
 } __packed;
 
+struct adm_param_doa_tracking_mon_t {
+	uint16_t target_angle_L16[MAX_DOA_TRACKING_ANGLES];
+	uint16_t interf_angle_L16[MAX_DOA_TRACKING_ANGLES];
+	uint8_t polar_activity[MAX_POLAR_ACTIVITY_INDICATORS];
+} __packed;
+
+struct afe_doa_tracking_mon_get_param_resp {
+	uint32_t status;
+	struct param_hdr_v3 pdata;
+	struct doa_tracking_mon_param doa;
+} __packed;
+
 #define AUDPROC_MODULE_ID_AUDIOSPHERE               0x00010916
 #define AUDPROC_PARAM_ID_AUDIOSPHERE_ENABLE         0x00010917
 #define AUDPROC_PARAM_ID_AUDIOSPHERE_STRENGTH       0x00010918
@@ -12231,6 +12250,11 @@ struct adm_param_fluence_sourcetracking_t {
 
 #define AUDPROC_MODULE_ID_VOICE_TX_SECNS   0x10027059
 #define AUDPROC_PARAM_IDX_SEC_PRIMARY_MIC_CH 0x10014444
+
+#define AUDPROC_MODULE_ID_FFECNS 0x00010952
+#define AUDPROC_MODULE_ID_FFNS 0x00010962
+#define AUDPROC_PARAM_ID_FFV_DOA_TRACKING_PARAM 0x11003
+#define AUDPROC_PARAM_ID_FFV_DOA_TRACKING_MONITOR 0x11004
 
 struct admx_sec_primary_mic_ch {
 	uint16_t version;
