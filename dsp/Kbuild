@@ -124,6 +124,10 @@ ifdef CONFIG_MSM_MDF
 	Q6_OBJS += msm_mdf.o
 endif
 
+ifdef CONFIG_VOICE_MHI
+	Q6_OBJS += voice_mhi.o
+endif
+
 LINUX_INC +=	-Iinclude/linux
 
 INCS +=		$(COMMON_INC) \

@@ -1,7 +1,7 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
-*/
+ * Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
+ */
 
 #ifndef __Q6_INIT_H__
 #define __Q6_INIT_H__
@@ -53,6 +53,20 @@ static inline int audio_slimslave_init(void)
 static inline void audio_slimslave_exit(void)
 {
 };
+#endif
+#ifdef CONFIG_VOICE_MHI
+int voice_mhi_init(void);
+void voice_mhi_exit(void);
+#else
+static inline int voice_mhi_init(void)
+{
+	return 0;
+}
+
+static inline void voice_mhi_exit(void)
+{
+	return;
+}
 #endif
 #endif
 
