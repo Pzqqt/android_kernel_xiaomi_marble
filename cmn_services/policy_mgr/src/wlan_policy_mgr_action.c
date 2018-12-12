@@ -850,7 +850,13 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 		goto done;
 	}
 
-	if (pm_ctx->hdd_cbacks.hdd_get_device_mode)
+	/*
+	 * There is no adapter associated with NAN Discovery, hence skip the
+	 * HDD callback and fill separately.
+	 */
+	if (reason == POLICY_MGR_UPDATE_REASON_NAN_DISCOVERY)
+		new_conn_mode = QDF_NAN_DISC_MODE;
+	else if (pm_ctx->hdd_cbacks.hdd_get_device_mode)
 		new_conn_mode = pm_ctx->hdd_cbacks.
 					hdd_get_device_mode(session_id);
 

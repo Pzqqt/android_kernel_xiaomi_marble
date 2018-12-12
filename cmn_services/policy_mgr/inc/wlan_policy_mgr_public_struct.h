@@ -231,6 +231,7 @@ enum policy_mgr_conc_priority_mode {
  * @PM_P2P_GO_MODE: P2P Go mode
  * @PM_IBSS_MODE: IBSS mode
  * @PM_NDI_MODE: NDI mode
+ * @PM_NAN_DISC_MODE: NAN Discovery mode
  * @PM_MAX_NUM_OF_MODE: max value place holder
  */
 enum policy_mgr_con_mode {
@@ -240,6 +241,7 @@ enum policy_mgr_con_mode {
 	PM_P2P_GO_MODE,
 	PM_IBSS_MODE,
 	PM_NDI_MODE,
+	PM_NAN_DISC_MODE,
 	PM_MAX_NUM_OF_MODE
 };
 
@@ -347,6 +349,8 @@ enum policy_mgr_pcl_type {
  * @PM_IBSS_24_2x2:  IBSS connection using 2x2@2.4 Ghz
  * @PM_IBSS_5_1x1:  IBSS connection using 1x1@5 Ghz
  * @PM_IBSS_5_2x2:  IBSS connection using 2x2@5 Ghz
+ * @PM_NAN_DISC_24_1x1:  NAN Discovery using 1x1@2.4 Ghz
+ * @PM_NAN_DISC_24_2x2:  NAN Discovery using 2x2@2.4 Ghz
  * @PM_MAX_ONE_CONNECTION_MODE: Max place holder
  *
  * These are generic IDs that identify the various roles
@@ -373,6 +377,8 @@ enum policy_mgr_one_connection_mode {
 	PM_IBSS_24_2x2,
 	PM_IBSS_5_1x1,
 	PM_IBSS_5_2x2,
+	PM_NAN_DISC_24_1x1,
+	PM_NAN_DISC_24_2x2,
 
 	PM_MAX_ONE_CONNECTION_MODE
 };
@@ -755,6 +761,7 @@ enum policy_mgr_band {
  *        2x2 preference enabled, the vdev down may cause prioritized active
  *        vdev change, then DBS hw mode may needs to change from one DBS mode
  *        to the other DBS mode. This reason code indicates such condition.
+ * @POLICY_MGR_UPDATE_REASON_NAN_DISCOVERY: NAN Discovery related
  */
 enum policy_mgr_conn_update_reason {
 	POLICY_MGR_UPDATE_REASON_SET_OPER_CHAN,
@@ -769,6 +776,7 @@ enum policy_mgr_conn_update_reason {
 	POLICY_MGR_UPDATE_REASON_CHANNEL_SWITCH_STA,
 	POLICY_MGR_UPDATE_REASON_PRE_CAC,
 	POLICY_MGR_UPDATE_REASON_PRI_VDEV_CHANGE,
+	POLICY_MGR_UPDATE_REASON_NAN_DISCOVERY,
 };
 
 /**

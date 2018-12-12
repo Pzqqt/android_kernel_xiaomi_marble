@@ -22,11 +22,14 @@
 
 #ifndef _WLAN_NAN_API_H_
 #define _WLAN_NAN_API_H_
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
 
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_objmgr_psoc_obj.h"
+#include "wlan_policy_mgr_public_struct.h"
 #include "qdf_status.h"
+
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+
 #include "../src/nan_main_i.h"
 
 struct wlan_objmgr_psoc;
@@ -150,6 +153,17 @@ struct wlan_nan_rx_ops *nan_psoc_get_rx_ops(struct wlan_objmgr_psoc *psoc)
 
 	return &nan_priv->rx_ops;
 }
+
+/**
+ * wlan_nan_get_connection_info: Get NAN related connection info
+ * @psoc: pointer to psoc object
+ * @conn_info: Coonection info structure pointer
+ *
+ * Return: status of operation
+ */
+QDF_STATUS
+wlan_nan_get_connection_info(struct wlan_objmgr_psoc *psoc,
+			     struct policy_mgr_vdev_entry_info *conn_info);
 #else /* WLAN_FEATURE_NAN_CONVERGENCE */
 static inline QDF_STATUS nan_init(void)
 {
@@ -171,5 +185,11 @@ static inline QDF_STATUS nan_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 
+static inline QDF_STATUS
+wlan_nan_get_connection_info(struct wlan_objmgr_psoc *psoc,
+			     struct policy_mgr_vdev_entry_info *conn_info)
+{
+	return QDF_STATUS_SUCCESS;
+}
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 #endif /* _WLAN_NAN_API_H_ */

@@ -45,6 +45,7 @@ first_connection_pcl_table[PM_MAX_NUM_OF_MODE]
 	[PM_P2P_CLIENT_MODE] = {PM_5G,   PM_5G,   PM_5G  },
 	[PM_P2P_GO_MODE] = {PM_5G,   PM_5G,   PM_5G  },
 	[PM_IBSS_MODE] = {PM_NONE, PM_NONE, PM_NONE},
+	[PM_NAN_DISC_MODE] = {PM_5G, PM_5G, PM_5G},
 };
 
 pm_dbs_pcl_second_connection_table_type
@@ -492,6 +493,7 @@ static QDF_STATUS policy_mgr_mode_specific_modification_on_pcl(
 	case PM_STA_MODE:
 	case PM_P2P_CLIENT_MODE:
 	case PM_IBSS_MODE:
+	case PM_NAN_DISC_MODE:
 		status = QDF_STATUS_SUCCESS;
 		break;
 	default:
@@ -733,6 +735,11 @@ enum policy_mgr_one_connection_mode
 			else
 				index = PM_IBSS_5_2x2;
 		}
+	} else if (PM_NAN_DISC_MODE == pm_conc_connection_list[0].mode) {
+		if (POLICY_MGR_ONE_ONE == pm_conc_connection_list[0].chain_mask)
+			index = PM_NAN_DISC_24_1x1;
+		else
+			index = PM_NAN_DISC_24_2x2;
 	}
 
 	policy_mgr_debug("mode:%d chan:%d chain:%d index:%d",

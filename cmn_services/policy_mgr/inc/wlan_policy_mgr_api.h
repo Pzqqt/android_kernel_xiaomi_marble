@@ -2872,4 +2872,19 @@ QDF_STATUS policy_mgr_get_hw_mode_from_idx(
 		struct wlan_objmgr_psoc *psoc,
 		uint32_t idx,
 		struct policy_mgr_hw_mode_params *hw_mode);
+
+/**
+ * policy_mgr_update_nan_vdev_mac_info() - Update the NAN vdev id and MAC id in
+ * policy manager
+ * @psoc: psoc object
+ * @nan_vdev_id: NAN Discovery pseudo vdev id
+ * @mac_id: NAN Discovery MAC ID
+ *
+ * Stores NAN Discovery related vdev and MAC id in policy manager
+ *
+ * Return: QDF Success
+ */
+QDF_STATUS policy_mgr_update_nan_vdev_mac_info(struct wlan_objmgr_psoc *psoc,
+					       uint8_t nan_vdev_id,
+					       uint8_t mac_id);
 #endif /* __WLAN_POLICY_MGR_API_H */
