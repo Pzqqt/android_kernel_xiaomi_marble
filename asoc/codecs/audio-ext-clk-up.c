@@ -29,7 +29,8 @@ enum {
 	AUDIO_EXT_CLK_LPASS7,
 	AUDIO_EXT_CLK_LPASS_NPA_RSC_ISLAND,
 	AUDIO_EXT_CLK_LPASS_MAX,
-	AUDIO_EXT_CLK_MAX = AUDIO_EXT_CLK_LPASS_MAX,
+	AUDIO_EXT_CLK_EXTERNAL_PLL = AUDIO_EXT_CLK_LPASS_MAX,
+	AUDIO_EXT_CLK_MAX,
 };
 
 struct pinctrl_info {
@@ -322,6 +323,17 @@ static struct audio_ext_clk audio_clk_array[] = {
 			.hw.init = &(struct clk_init_data){
 				.name = "lpass_npa_rsc_island_clk",
 				.ops = &lpass_npa_rsc_ops,
+			},
+		},
+	},
+	{
+		.pnctrl_info = {NULL},
+		.fact = {
+			.mult = 1,
+			.div = 1,
+			.hw.init = &(struct clk_init_data){
+				.name = "audio_external_pll_clk",
+				.ops = &audio_ext_clk_ops,
 			},
 		},
 	},
