@@ -366,6 +366,7 @@ typedef  enum  {
     WMI_SERVICE_FETCH_TX_PN=181,
     WMI_SERVICE_PEER_UNMAP_RESPONSE_SUPPORT = 182, /* support peer ids unmap response from host */
     WMI_SERVICE_TX_PER_PEER_AMPDU_SIZE = 183, /* indicate FW support per peer TX AMPDU size */
+    WMI_SERVICE_BSS_COLOR_SWITCH_COUNT = 184, /* Firmware supports bss-color switch count handling */
 
 
     /******* ADD NEW SERVICES HERE *******/

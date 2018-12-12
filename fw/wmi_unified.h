@@ -1280,6 +1280,9 @@ typedef enum {
     /** WMI Event to deliver CTL Failsafe application */
     WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID,
 
+    /* Event to report the switch count in BSS color of one or more VDEVs */
+    WMI_PDEV_CSC_SWITCH_COUNT_STATUS_EVENTID,
+
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -9552,6 +9555,16 @@ typedef struct {
     A_UINT32 mbssid_ie_offset;
     /** offset (in octets/bytes) of ESP IE in beacon frame */
     A_UINT32 esp_ie_offset;
+    /** CSC IE color switch count offset from the beginning of data[]
+     *  Value 0 indicates CSC IE is not present in beacon template.
+     */
+    A_UINT32 csc_switch_count_offset; /* units = bytes */
+    /** Specify when to send the CSC switch count status from FW to host.
+     * See WMI_CSC_EVENT_BMAP* below for more information.
+     * E.g. if CSA switch count event is needed to be sent when the switch count
+     * is 0, 1, 4 and 5, set the bitmap to (0X80000033)
+     */
+    A_UINT32 csc_event_bitmap;
 
 /*
  * The TLVs follows:
@@ -9564,6 +9577,11 @@ typedef struct {
 #define WMI_CSA_EVENT_BMAP_SWITCH_COUNT_ZERO    0           /* Send only when the switch count becomes zero, added for backward compatibility
                                                             Same can also be achieved by setting bitmap to 0X80000001 */
 #define WMI_CSA_EVENT_BMAP_ALL                  0XFFFFFFFF  /* Send CSA switch count event for every update to switch count */
+
+#define WMI_CSC_EVENT_BMAP_VALID_MASK           0X80000000  /* Follow bitmap for sending the CSC switch count event */
+#define WMI_CSC_EVENT_BMAP_SWITCH_COUNT_ZERO    0           /* Send only when the switch count becomes zero, added for backward compatibility
+                                                            Same can also be achieved by setting bitmap to 0X80000001 */
+#define WMI_CSC_EVENT_BMAP_ALL                  0XFFFFFFFF  /* Send CSC switch count event for every update to switch count */
 
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_prb_tmpl_cmd_fixed_param */
@@ -23091,6 +23109,22 @@ typedef struct {
      * A_UINT32 vdev_ids[]; <--- Array of VDEV ids.
      */
 } wmi_pdev_csa_switch_count_status_event_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_csc_switch_count_status_event_fixed_param */
+    A_UINT32 tlv_header;
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     * In non-DBDC case host should set it to 0
+     */
+    A_UINT32 pdev_id;
+    /** CSC switch count value in the last transmitted beacon */
+    A_UINT32 current_switch_count;
+
+    /* The TLVs follows this structure:
+     * A_UINT32 vdev_ids[]; // IDs of vdevs whose color-switch countdown expired
+     */
+} wmi_pdev_csc_switch_count_status_event_fixed_param;
 
 /* Operation types for packet routing command */
 typedef enum {

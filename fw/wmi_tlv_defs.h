@@ -950,6 +950,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_peer_tx_pn_response_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_tlv_arrays_len_param,
     WMITLV_TAG_STRUC_wmi_peer_unmap_response_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_csc_switch_count_status_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1554,6 +1555,7 @@ typedef enum {
     OP(WMI_NDP_EVENTID) \
     OP(WMI_VDEV_BCN_RECEPTION_STATS_EVENTID) \
     OP(WMI_PEER_TX_PN_RESPONSE_EVENTID) \
+    OP(WMI_PDEV_CSC_SWITCH_COUNT_STATUS_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -5089,6 +5091,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_ADD_MAC_ADDR_TO_RX_FILTER_STATUS_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_csa_switch_count_status_event_fixed_param, wmi_pdev_csa_switch_count_status_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, vdev_ids, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_CSA_SWITCH_COUNT_STATUS_EVENTID);
+
+#define WMITLV_TABLE_WMI_PDEV_CSC_SWITCH_COUNT_STATUS_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_csc_switch_count_status_event_fixed_param, wmi_pdev_csc_switch_count_status_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, vdev_ids, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_CSC_SWITCH_COUNT_STATUS_EVENTID);
 
 /* cal version response event */
 #define WMITLV_TABLE_WMI_PDEV_CHECK_CAL_VERSION_EVENTID(id,op,buf,len) \
