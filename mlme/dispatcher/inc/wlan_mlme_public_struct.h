@@ -1752,17 +1752,25 @@ struct wlan_mlme_wifi_pos_cfg {
 /*
  * struct wlan_mlme_btm - BTM related configs
  * @prefer_btm_query: flag to prefer btm query over 11k
+ * @abridge_flag: set this flag to enable firmware to sort candidates based on
+ * roam score rather than selecting preferred APs.
  * @btm_offload_config: configure btm offload
  * @btm_solicited_timeout: configure timeout value for waiting BTM request
  * @btm_max_attempt_cnt: configure maximum attempt for sending BTM query to ESS
  * @btm_sticky_time: configure Stick time after roaming to new AP by BTM
+ * @rct_validity_timer: Timeout values for roam cache table entries
+ * @disassoc_timer_threshold: Disassociation timeout till which roam scan need
+ * not be triggered
  */
 struct wlan_mlme_btm {
 	bool prefer_btm_query;
+	bool abridge_flag;
 	uint32_t btm_offload_config;
 	uint32_t btm_solicited_timeout;
 	uint32_t btm_max_attempt_cnt;
 	uint32_t btm_sticky_time;
+	uint32_t rct_validity_timer;
+	uint32_t disassoc_timer_threshold;
 };
 
 /**

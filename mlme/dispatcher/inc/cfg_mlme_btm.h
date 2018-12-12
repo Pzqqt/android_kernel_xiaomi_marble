@@ -46,6 +46,29 @@
 
 /*
  * <ini>
+ * prefer_roam_score_for_candidate_selection - choose to sort the candidates on
+ * roam score or preferred AP
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable the the firmware to sort the candidates
+ * based on the roam score rather than selecting APs as per the order
+ * of the APs sent by the connected AP.
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_BTM_ABRIDGE CFG_INI_BOOL( \
+			"prefer_roam_score_for_candidate_selection", \
+			1, \
+			"sort candidate based on roam score")
+
+/*
+ * <ini>
  * btm_offload_config - Configure BTM
  * @Min: 0x00000000
  * @Max: 0xFFFFFFFF
@@ -159,11 +182,68 @@
 	CFG_VALUE_OR_DEFAULT, \
 	"configure Stick time after roaming to new AP by BTM")
 
+/*
+ * <ini>
+ * roam_candidate_validity_timer - roam cache entries validity timer
+ * @Min: 0
+ * @Max: 0xffffffff
+ * @Default: 0xffffffff
+ *
+ * This value is the timeout values for the cached roam candidate
+ * entries in firmware. If this value is 0, then that entry is not
+ * valid
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_BTM_VALIDITY_TIMER CFG_INI_UINT( \
+			"roam_candidate_validity_timer", \
+			0, \
+			0xffffffff, \
+			0xffffffff, \
+			CFG_VALUE_OR_DEFAULT, \
+			"BTM validity timer")
+
+/*
+ * <ini>
+ * btm_disassoc_timer_threshold - Disassociation timer threshold to wait
+ * after which the full scan for roaming can be started after the AP has sent
+ * the disassoc imminent
+ * @Min: 0
+ * @Max: 0xffffffff
+ * @Default: 0
+ *
+ * When AP sends, BTM request with disassoc imminent bit set, the STA should
+ * roam to a new AP within the disassc timeout provided by the ap. If the Roam
+ * scan period is less than the disassoc timeout value, then instead of
+ * triggering the roam scan immediately, STA can wait for this
+ * btm_disassoc_timer_threshold and then start roaming.
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_BTM_DISASSOC_TIMER_THRESHOLD CFG_INI_UINT( \
+			"btm_disassoc_timer_threshold", \
+			0, \
+			0xffffffff, \
+			0, \
+			CFG_VALUE_OR_DEFAULT, \
+			"BTM disassociation timer threshold")
+
 #define CFG_BTM_ALL \
 	CFG(CFG_PREFER_BTM_QUERY) \
+	CFG(CFG_ENABLE_BTM_ABRIDGE) \
 	CFG(CFG_BTM_ENABLE) \
 	CFG(CFG_BTM_SOLICITED_TIMEOUT) \
 	CFG(CFG_BTM_MAX_ATTEMPT_CNT) \
-	CFG(CFG_BTM_STICKY_TIME)
+	CFG(CFG_BTM_STICKY_TIME) \
+	CFG(CFG_BTM_VALIDITY_TIMER) \
+	CFG(CFG_BTM_DISASSOC_TIMER_THRESHOLD)
 
 #endif /* CFG_MLME_BTM_H_ */
