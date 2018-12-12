@@ -376,6 +376,10 @@ struct param_slot_scoring {
  *                  BITS 16-23 :- It contains scoring percentage of 3x3
  *                  BITS 24-31 :- It contains scoring percentage of 4x4
  *                  The value of each index must be 0-100
+ * @roam_score_delta: delta value expected over the roam score of the candidate
+ * ap over the roam score of the current ap
+ * @roam_trigger_bitmap: bitmap of roam triggers on which roam_score_delta
+ * will be applied
  * @rssi_scoring: RSSI scoring information.
  * @esp_qbss_scoring: ESP/QBSS scoring percentage information
  * @oce_wan_scoring: OCE WAN metrics percentage information
@@ -396,6 +400,8 @@ struct scoring_param {
 	uint32_t bw_index_score;
 	uint32_t band_index_score;
 	uint32_t nss_index_score;
+	uint32_t roam_score_delta;
+	uint32_t roam_trigger_bitmap;
 	struct rssi_scoring rssi_scoring;
 	struct param_slot_scoring esp_qbss_scoring;
 	struct param_slot_scoring oce_wan_scoring;
