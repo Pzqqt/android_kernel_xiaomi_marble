@@ -413,6 +413,12 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 		qdf_spin_unlock_bh(&pdev->neighbour_peer_mutex);
 	}
 
+	/* need not generate wdi event when mcopy and
+	 * enhanced stats are not enabled
+	 */
+	if (!pdev->mcopy_mode && !pdev->enhanced_stats_en)
+		return;
+
 	if (!pdev->mcopy_mode) {
 		if (!ppdu_info->rx_status.frame_control_info_valid)
 			return;
@@ -550,21 +556,22 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 					     status_nbuf, HTT_INVALID_PEER,
 					     WDI_NO_VAL, mac_id);
 		}
+
+		/* smart monitor vap and m_copy cannot co-exist */
 		if (ppdu_info->rx_status.monitor_direct_used && pdev->neighbour_peers_added
 		    && pdev->monitor_vdev) {
 			smart_mesh_status = dp_rx_handle_smart_mesh_mode(soc,
 						pdev, ppdu_info, status_nbuf);
 			if (smart_mesh_status)
 				qdf_nbuf_free(status_nbuf);
-		}
-		if (pdev->mcopy_mode) {
+		} else if (pdev->mcopy_mode) {
 			m_copy_status = dp_rx_handle_mcopy_mode(soc,
 						pdev, ppdu_info, status_nbuf);
 			if (m_copy_status == QDF_STATUS_SUCCESS)
 				qdf_nbuf_free(status_nbuf);
-		}
-		if (!pdev->neighbour_peers_added && !pdev->mcopy_mode)
+		} else {
 			qdf_nbuf_free(status_nbuf);
+		}
 
 		if (tlv_status == HAL_TLV_STATUS_PPDU_NON_STD_DONE) {
 			dp_rx_mon_deliver_non_std(soc, mac_id);
