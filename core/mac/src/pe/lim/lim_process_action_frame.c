@@ -418,6 +418,15 @@ static void __lim_process_operating_mode_action_frame(struct mac_context *mac_ct
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 
 	pe_debug("Received Operating Mode action frame");
+
+	/*
+	 * Ignore opmode change during channel change The opmode will be updated
+	 * with the beacons on new channel once the AP move to new channel.
+	 */
+	if (session->ch_switch_in_progress) {
+		pe_debug("Ignore opmode change as channel switch is in progress");
+		return;
+	}
 	operating_mode_frm = qdf_mem_malloc(sizeof(*operating_mode_frm));
 	if (!operating_mode_frm)
 		return;

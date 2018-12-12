@@ -3307,6 +3307,11 @@ void wma_process_update_opmode(tp_wma_handle wma_handle,
 				ch_width);
 		return;
 	}
+	WMA_LOGD("%s: phymode = %d", __func__, iface->chanmode);
+	/* Always send phymode before BW to avoid any mismatch in FW */
+	wma_set_peer_param(wma_handle, update_vht_opmode->peer_mac,
+			   WMI_PEER_PHYMODE, iface->chanmode,
+			   update_vht_opmode->smesessionId);
 	WMA_LOGD("%s: opMode = %d", __func__, update_vht_opmode->opMode);
 	wma_set_peer_param(wma_handle, update_vht_opmode->peer_mac,
 			   WMI_PEER_CHWIDTH, update_vht_opmode->opMode,

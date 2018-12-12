@@ -368,6 +368,16 @@ sch_bcn_process_sta(struct mac_context *mac_ctx,
 		       bcn->channelNumber);
 		return false;
 	}
+
+	/*
+	 * Ignore bcn as channel switch IE present and csa offload is enabled,
+	 * as in CSA offload enabled case FW will send Event to switch channel
+	 */
+	if (bcn->channelSwitchPresent && wma_is_csa_offload_enabled()) {
+		pe_err_rl("Ignore bcn as channel switch IE present and csa offload is enabled");
+		return false;
+	}
+
 	lim_detect_change_in_ap_capabilities(mac_ctx, bcn, session);
 	if (lim_get_sta_hash_bssidx(mac_ctx, DPH_STA_HASH_INDEX_PEER, bssIdx,
 				    session) != QDF_STATUS_SUCCESS)
@@ -551,6 +561,15 @@ sch_bcn_update_opmode_change(struct mac_context *mac_ctx, tpDphHashNode sta_ds,
 	uint8_t oper_mode;
 	uint32_t fw_vht_ch_wd = wma_get_vht_ch_width();
 	uint8_t ch_width = 0;
+
+	/*
+	 * Ignore opmode change during channel change The opmode will be updated
+	 * with the beacons on new channel once the AP move to new channel.
+	 */
+	if (session->ch_switch_in_progress) {
+		pe_debug("Ignore opmode change as channel switch is in progress");
+		return;
+	}
 
 	if (session->vhtCapability && bcn->OperatingMode.present) {
 		update_nss(mac_ctx, sta_ds, bcn, session, mac_hdr);
