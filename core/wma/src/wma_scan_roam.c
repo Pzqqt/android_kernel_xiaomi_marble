@@ -341,6 +341,7 @@ static void wma_roam_scan_offload_set_params(
 				     &params->roam_offload_params, roam_req);
 	params->fw_okc = roam_req->pmkid_modes.fw_okc;
 	params->fw_pmksa_cache = roam_req->pmkid_modes.fw_pmksa_cache;
+	params->rct_validity_timer = roam_req->rct_validity_timer;
 	WMA_LOGD(FL("qos_caps: %d, qos_enabled: %d, ho_delay_for_rx: %d, roam_scan_mode: %d"),
 		 params->roam_offload_params.qos_caps,
 		 params->roam_offload_params.qos_enabled,
@@ -1400,6 +1401,7 @@ static QDF_STATUS wma_roam_scan_btm_offload(tp_wma_handle wma_handle,
 	params->btm_solicited_timeout = roam_req->btm_solicited_timeout;
 	params->btm_max_attempt_cnt = roam_req->btm_max_attempt_cnt;
 	params->btm_sticky_time = roam_req->btm_sticky_time;
+	params->disassoc_timer_threshold = roam_req->disassoc_timer_threshold;
 
 	WMA_LOGD("%s: Sending BTM offload to FW for vdev %u btm_offload_config %u",
 		 __func__, params->vdev_id, params->btm_offload_config);

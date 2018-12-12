@@ -1890,14 +1890,21 @@ static void mlme_init_wps_params_cfg(struct wlan_objmgr_psoc *psoc,
 static void mlme_init_btm_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_btm *btm)
 {
-	btm->btm_offload_config = cfg_default(CFG_BTM_ENABLE);
+	btm->btm_offload_config = cfg_get(psoc, CFG_BTM_ENABLE);
 	btm->prefer_btm_query = cfg_get(psoc, CFG_PREFER_BTM_QUERY);
 	if (btm->prefer_btm_query)
 		MLME_SET_BIT(btm->btm_offload_config, BTM_OFFLOAD_CONFIG_BIT_8);
 
+	btm->abridge_flag = cfg_get(psoc, CFG_ENABLE_BTM_ABRIDGE);
+	if (btm->abridge_flag)
+		MLME_SET_BIT(btm->btm_offload_config, BTM_OFFLOAD_CONFIG_BIT_7);
+
 	btm->btm_solicited_timeout = cfg_default(CFG_BTM_SOLICITED_TIMEOUT);
 	btm->btm_max_attempt_cnt = cfg_default(CFG_BTM_MAX_ATTEMPT_CNT);
 	btm->btm_sticky_time = cfg_default(CFG_BTM_STICKY_TIME);
+	btm->rct_validity_timer = cfg_get(psoc, CFG_BTM_VALIDITY_TIMER);
+	btm->disassoc_timer_threshold =
+			cfg_get(psoc, CFG_BTM_DISASSOC_TIMER_THRESHOLD);
 }
 
 /**
