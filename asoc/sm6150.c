@@ -8082,7 +8082,7 @@ static int msm_init_aux_dev(struct platform_device *pdev,
 			ret = -EINVAL;
 			goto err;
 		}
-		if (soc_find_component(wsa_of_node, NULL)) {
+		if (soc_find_component_locked(wsa_of_node, NULL)) {
 			/* WSA device registered with ALSA core */
 			wsa881x_dev_info[found].of_node = wsa_of_node;
 			wsa881x_dev_info[found].index = i;
@@ -8180,7 +8180,7 @@ codec_aux_dev:
 				ret = -EINVAL;
 				goto err;
 			}
-			if (soc_find_component(aux_codec_of_node, NULL)) {
+			if (soc_find_component_locked(aux_codec_of_node, NULL)) {
 				/* AUX codec registered with ALSA core */
 				aux_cdc_dev_info[codecs_found].of_node =
 							aux_codec_of_node;
