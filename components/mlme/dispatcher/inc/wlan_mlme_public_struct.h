@@ -1744,14 +1744,21 @@ struct wlan_mlme_wifi_pos_cfg {
 	uint32_t fine_time_meas_cap;
 };
 
+#define MLME_SET_BIT(value, bit_offset) ((value) |= (1 << (bit_offset)))
+
+#define BTM_OFFLOAD_CONFIG_BIT_8    8
+#define BTM_OFFLOAD_CONFIG_BIT_7    7
+
 /*
  * struct wlan_mlme_btm - BTM related configs
+ * @prefer_btm_query: flag to prefer btm query over 11k
  * @btm_offload_config: configure btm offload
  * @btm_solicited_timeout: configure timeout value for waiting BTM request
  * @btm_max_attempt_cnt: configure maximum attempt for sending BTM query to ESS
  * @btm_sticky_time: configure Stick time after roaming to new AP by BTM
  */
 struct wlan_mlme_btm {
+	bool prefer_btm_query;
 	uint32_t btm_offload_config;
 	uint32_t btm_solicited_timeout;
 	uint32_t btm_max_attempt_cnt;

@@ -25,6 +25,27 @@
 
 /*
  * <ini>
+ * prefer_btm_query - Prefer btm query over 11k neighbor report
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable the STA to send BTM query instead of
+ * 11k neighbor report.
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PREFER_BTM_QUERY CFG_INI_BOOL( \
+			"prefer_btm_query", \
+			1, \
+			"prefer btm query over 11k neighbor report")
+
+/*
+ * <ini>
  * btm_offload_config - Configure BTM
  * @Min: 0x00000000
  * @Max: 0xFFFFFFFF
@@ -139,6 +160,7 @@
 	"configure Stick time after roaming to new AP by BTM")
 
 #define CFG_BTM_ALL \
+	CFG(CFG_PREFER_BTM_QUERY) \
 	CFG(CFG_BTM_ENABLE) \
 	CFG(CFG_BTM_SOLICITED_TIMEOUT) \
 	CFG(CFG_BTM_MAX_ATTEMPT_CNT) \
