@@ -14131,6 +14131,7 @@ static int hdd_update_dp_config(struct hdd_context *hdd_ctx)
 	params.tcp_udp_checksumoffload =
 			cfg_get(hdd_ctx->psoc,
 				CFG_DP_TCP_UDP_CKSUM_OFFLOAD);
+	params.ipa_enable = ucfg_ipa_is_enabled();
 
 	status = cdp_update_config_parameters(soc, &params);
 	if (status) {
