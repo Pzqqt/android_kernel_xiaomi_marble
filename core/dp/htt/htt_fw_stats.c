@@ -34,9 +34,6 @@
 
 #include <wlan_defs.h>
 
-#define ROUND_UP_TO_4(val) (((val) + 3) & ~0x3)
-
-
 static char *bw_str_arr[] = {"20MHz", "40MHz", "80MHz", "160MHz"};
 
 /*
