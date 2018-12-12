@@ -48,6 +48,7 @@
 #include <wlan_cfg80211_scan.h>
 #include "wlan_utility.h"
 #include "wlan_hdd_object_manager.h"
+#include "nan_ucfg_api.h"
 
 #define MAX_RATES                       12
 #define HDD_WAKE_LOCK_SCAN_DURATION (5 * 1000) /* in msec */
@@ -669,6 +670,12 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			scan_info->scan_add_ie.addIEdata;
 		roam_profile->nAddIEScanLength =
 			scan_info->scan_add_ie.length;
+	}
+
+	if (QDF_P2P_CLIENT_MODE == adapter->device_mode ||
+	    QDF_P2P_DEVICE_MODE == adapter->device_mode) {
+		/* Disable NAN Discovery if enabled */
+		ucfg_nan_disable_concurrency(hdd_ctx->psoc);
 	}
 
 	vdev = hdd_objmgr_get_vdev(adapter);

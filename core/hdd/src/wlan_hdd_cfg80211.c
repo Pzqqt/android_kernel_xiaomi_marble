@@ -131,6 +131,7 @@
 #include "wlan_crypto_global_def.h"
 #include "cdp_txrx_cfg.h"
 #include "wlan_hdd_object_manager.h"
+#include "nan_ucfg_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -17064,6 +17065,10 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
+	/* Disable NAN Discovery if enabled */
+	if (adapter->device_mode == QDF_P2P_CLIENT_MODE)
+		ucfg_nan_disable_concurrency(hdd_ctx->psoc);
+
 	if (req->bssid)
 		bssid = req->bssid;
 	else if (bssid_hint)
@@ -17722,6 +17727,9 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 			return -EINVAL;
 		}
 	}
+
+	/* Disable NAN Discovery if enabled */
+	ucfg_nan_disable_concurrency(hdd_ctx->psoc);
 
 	if (!policy_mgr_allow_concurrency(hdd_ctx->psoc,
 		PM_IBSS_MODE, channelNum, HW_MODE_20_MHZ)) {

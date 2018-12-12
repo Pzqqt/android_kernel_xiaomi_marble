@@ -235,6 +235,16 @@ QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type);
 
 /**
+ * ucfg_is_nan_disable_supported() - ucfg API to query NAN Disable support
+ * @psoc: pointer to psoc object
+ *
+ * This function returns NAN Disable support status
+ *
+ * Return: True if NAN Disable is supported, False otherwise
+ */
+bool ucfg_is_nan_disable_supported(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_is_nan_dbs_supported() - ucfg API to query NAN DBS support
  * @psoc: pointer to psoc object
  *
@@ -248,13 +258,12 @@ bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc);
  * ucfg_is_nan_enable_allowed() - ucfg API to query if NAN Discovery is
  * allowed
  * @psoc: pointer to psoc object
+ * @nan_chan: NAN Discovery primary social channel
  *
  * Return: True if NAN Discovery enable is allowed, False otherwise
  */
-static inline bool ucfg_is_nan_enable_allowed(struct wlan_objmgr_psoc *psoc)
-{
-	return true;
-}
+bool ucfg_is_nan_enable_allowed(struct wlan_objmgr_psoc *psoc,
+				uint8_t nan_chan);
 
 /**
  * ucfg_nan_set_tgt_caps: ucfg API to set the NAN capabilities of the Target
@@ -266,11 +275,23 @@ static inline bool ucfg_is_nan_enable_allowed(struct wlan_objmgr_psoc *psoc)
 void ucfg_nan_set_tgt_caps(struct wlan_objmgr_psoc *psoc,
 			   struct nan_tgt_caps *nan_caps);
 
+/**
+ * ucfg_nan_disable_concurrency: ucfg API to explicitly disable NAN Discovery
+ * @psoc: pointer to psoc object
+ *
+ * Return: None
+ */
+void ucfg_nan_disable_concurrency(struct wlan_objmgr_psoc *psoc);
+
 #else /* WLAN_FEATURE_NAN */
 
 static inline
 void ucfg_nan_set_tgt_caps(struct wlan_objmgr_psoc *psoc,
 			   struct nan_tgt_caps *nan_caps)
+{
+}
+
+static inline void ucfg_nan_disable_concurrency(struct wlan_objmgr_psoc *psoc)
 {
 }
 #endif /* WLAN_FEATURE_NAN */

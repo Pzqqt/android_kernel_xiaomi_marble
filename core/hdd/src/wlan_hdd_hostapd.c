@@ -86,6 +86,7 @@
 #include "cfg_ucfg_api.h"
 #include "wlan_crypto_global_api.h"
 #include "wlan_action_oui_ucfg_api.h"
+#include "nan_ucfg_api.h"
 
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
 
@@ -5940,6 +5941,10 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		}
 		sap_cfg->SapHw_mode = eCSR_DOT11_MODE_abg;
 	}
+
+	/* Disable NAN Discovery before starting P2P GO */
+	if (adapter->device_mode == QDF_P2P_GO_MODE)
+		ucfg_nan_disable_concurrency(hdd_ctx->psoc);
 
 	/* check if concurrency is allowed */
 	if (!policy_mgr_allow_concurrency(hdd_ctx->psoc,

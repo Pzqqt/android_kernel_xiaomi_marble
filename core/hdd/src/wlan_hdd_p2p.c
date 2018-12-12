@@ -49,6 +49,7 @@
 #include "wlan_cfg80211_p2p.h"
 #include "wlan_p2p_cfg_api.h"
 #include "wlan_policy_mgr_ucfg.h"
+#include "nan_ucfg_api.h"
 
 /* Ms to Time Unit Micro Sec */
 #define MS_TO_TU_MUS(x)   ((x) * 1024)
@@ -145,6 +146,9 @@ static int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 
 	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
+
+	/* Disable NAN Discovery if enabled */
+	ucfg_nan_disable_concurrency(hdd_ctx->psoc);
 
 	status = wlan_cfg80211_roc(adapter->vdev, chan, duration, cookie);
 	hdd_debug("remain on channel request, status:%d, cookie:0x%llx",

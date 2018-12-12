@@ -2323,6 +2323,8 @@ static int os_if_process_nan_disable_req(struct wlan_objmgr_psoc *psoc,
 	}
 
 	nan_req->psoc = psoc;
+	nan_req->disable_2g_discovery = true;
+	nan_req->disable_5g_discovery = true;
 	nan_req->params.request_data_len = buf_len;
 	nla_memcpy(nan_req->params.request_data,
 		   tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA], buf_len);
@@ -2343,14 +2345,10 @@ static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
 					struct nlattr **tb)
 {
 	uint32_t chan_freq_2g, chan_freq_5g = 0;
+	uint8_t nan_chan_2g;
 	uint32_t buf_len;
 	QDF_STATUS status;
 	struct nan_enable_req *nan_req;
-
-	if (!ucfg_is_nan_enable_allowed(psoc)) {
-		cfg80211_err("NAN Enable not allowed at this moment");
-		return -EINVAL;
-	}
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NAN_DISC_24GHZ_BAND_FREQ]) {
 		cfg80211_err("NAN Social channel for 2.4Gz is unavailable!");
@@ -2363,6 +2361,13 @@ static int os_if_process_nan_enable_req(struct wlan_objmgr_psoc *psoc,
 		chan_freq_5g =
 			nla_get_u32(tb[
 				QCA_WLAN_VENDOR_ATTR_NAN_DISC_5GHZ_BAND_FREQ]);
+
+	nan_chan_2g = wlan_freq_to_chan(chan_freq_2g);
+	if (!ucfg_is_nan_enable_allowed(psoc, nan_chan_2g)) {
+		cfg80211_err("NAN Enable not allowed at this moment for channel %d",
+			     nan_chan_2g);
+		return -EINVAL;
+	}
 
 	buf_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NAN_CMD_DATA]);
 
