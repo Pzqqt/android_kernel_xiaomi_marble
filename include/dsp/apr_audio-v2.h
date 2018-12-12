@@ -3915,6 +3915,11 @@ struct afe_id_aptx_adaptive_enc_init
  */
 #define AFE_DECODER_PARAM_ID_DEPACKETIZER_ID        0x00013235
 
+#define CAPI_V2_PARAM_ID_APTX_ENC_SWITCH_TO_MONO    0x0001332A
+
+struct aptx_channel_mode_param_t {
+	u32 channel_mode;
+} __packed;
 /*
  * Decoder buffer ID parameter for the #AVS_MODULE_ID_DECODER module.
  * This parameter cannot be set runtime.
@@ -4419,6 +4424,7 @@ union afe_enc_config_data {
 struct afe_enc_config {
 	u32 format;
 	u32 scrambler_mode;
+	u32 mono_mode;
 	union afe_enc_config_data data;
 };
 

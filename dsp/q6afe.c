@@ -3667,7 +3667,7 @@ static int q6afe_send_enc_config(u16 port_id,
 				 union afe_enc_config_data *cfg, u32 format,
 				 union afe_port_config afe_config,
 				 u16 afe_in_channels, u16 afe_in_bit_width,
-				 u32 scrambler_mode)
+				 u32 scrambler_mode, u32 mono_mode)
 {
 	u32 enc_fmt;
 	struct afe_enc_cfg_blk_param_t enc_blk_param;
@@ -3678,6 +3678,7 @@ static int q6afe_send_enc_config(u16 port_id,
 	struct afe_enc_level_to_bitrate_map_param_t map_param;
 	struct afe_enc_dec_imc_info_param_t imc_info_param;
 	struct afe_port_media_type_t media_type;
+	struct aptx_channel_mode_param_t channel_mode_param;
 	struct param_hdr_v3 param_hdr;
 	int ret;
 
@@ -3812,6 +3813,23 @@ static int q6afe_send_enc_config(u16 port_id,
 		goto exit;
 	}
 
+	if (format == ASM_MEDIA_FMT_APTX) {
+		pr_debug("%s:sending CAPI_V2_PARAM_ID_APTX_ENC_SWITCH_TO_MONO mode= %d to DSP payload\n",
+			__func__, mono_mode);
+		param_hdr.param_id = CAPI_V2_PARAM_ID_APTX_ENC_SWITCH_TO_MONO;
+		param_hdr.param_size = sizeof(channel_mode_param);
+		channel_mode_param.channel_mode = mono_mode;
+		ret = q6afe_pack_and_set_param_in_band(port_id,
+				q6audio_get_port_index(port_id),
+							param_hdr,
+					(u8 *) &channel_mode_param);
+
+		if (ret) {
+			pr_err("%s: CAPI_V2_PARAM_ID_APTX_ENC_SWITCH_TO_MONO for port 0x%x failed %d\n",
+				__func__, port_id, ret);
+		}
+	}
+
 	if ((format == ASM_MEDIA_FMT_LDAC &&
 	     cfg->ldac_config.abr_config.is_abr_enabled) ||
 	     format == ASM_MEDIA_FMT_APTX_ADAPTIVE) {
@@ -3895,10 +3913,38 @@ exit:
 	return ret;
 }
 
+int afe_set_tws_channel_mode(u16 port_id, u32 channel_mode)
+{
+	struct aptx_channel_mode_param_t channel_mode_param;
+	struct param_hdr_v3 param_info;
+	int ret = 0;
+
+	memset(&param_info, 0, sizeof(param_info));
+	memset(&channel_mode_param, 0, sizeof(channel_mode_param));
+
+	param_info.module_id = AFE_MODULE_ID_ENCODER;
+	param_info.instance_id = INSTANCE_ID_0;
+	param_info.param_id = CAPI_V2_PARAM_ID_APTX_ENC_SWITCH_TO_MONO;
+	param_info.param_size = sizeof(channel_mode_param);
+
+	channel_mode_param.channel_mode = channel_mode;
+
+	ret = q6afe_pack_and_set_param_in_band(port_id,
+			q6audio_get_port_index(port_id),
+						param_info,
+				(u8 *) &channel_mode_param);
+	if (ret)
+		pr_err("%s: AFE set channel mode cfg for port 0x%x failed %d\n",
+			 __func__, port_id, ret);
+
+	return ret;
+}
+EXPORT_SYMBOL(afe_set_tws_channel_mode);
+
 static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 			    u32 rate, u16 afe_in_channels, u16 afe_in_bit_width,
 			    union afe_enc_config_data *enc_cfg,
-			    u32 codec_format, u32 scrambler_mode,
+			    u32 codec_format, u32 scrambler_mode, u32 mono_mode,
 			    struct afe_dec_config *dec_cfg)
 {
 	union afe_port_config port_cfg;
@@ -4201,7 +4247,7 @@ static int __afe_port_start(u16 port_id, union afe_port_config *afe_config,
 						    codec_format, *afe_config,
 						    afe_in_channels,
 						    afe_in_bit_width,
-						    scrambler_mode);
+						    scrambler_mode, mono_mode);
 			if (ret) {
 				pr_err("%s: AFE encoder config for port 0x%x failed %d\n",
 					__func__, port_id, ret);
@@ -4268,7 +4314,7 @@ int afe_port_start(u16 port_id, union afe_port_config *afe_config,
 		   u32 rate)
 {
 	return __afe_port_start(port_id, afe_config, rate,
-				0, 0, NULL, ASM_MEDIA_FMT_NONE, 0, NULL);
+				0, 0, NULL, ASM_MEDIA_FMT_NONE, 0, 0, NULL);
 }
 EXPORT_SYMBOL(afe_port_start);
 
@@ -4297,11 +4343,12 @@ int afe_port_start_v2(u16 port_id, union afe_port_config *afe_config,
 		ret = __afe_port_start(port_id, afe_config, rate,
 					afe_in_channels, afe_in_bit_width,
 					&enc_cfg->data, enc_cfg->format,
-					enc_cfg->scrambler_mode, dec_cfg);
+					enc_cfg->scrambler_mode,
+					enc_cfg->mono_mode, dec_cfg);
 	else if (dec_cfg != NULL)
 		ret = __afe_port_start(port_id, afe_config, rate,
 					afe_in_channels, afe_in_bit_width,
-					NULL, dec_cfg->format, 0, dec_cfg);
+					NULL, dec_cfg->format, 0, 0, dec_cfg);
 
 	return ret;
 }
