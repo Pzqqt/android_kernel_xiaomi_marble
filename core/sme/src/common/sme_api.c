@@ -13872,11 +13872,15 @@ void sme_update_vdev_type_nss(mac_handle_t mac_handle, uint8_t max_supp_nss,
 						nss_chains_ini_cfg->
 							num_rx_chains[band],
 						OCB_NSS_CHAINS_SHIFT));
+	vdev_nss->nan = QDF_MIN(max_supp_nss, GET_VDEV_NSS_CHAIN(
+						nss_chains_ini_cfg->
+							num_rx_chains[band],
+						NAN_NSS_CHAIN_SHIFT));
 
-	sme_debug("band %d NSS:sta %d sap %d cli %d go %d dev %d ibss %d tdls %d ocb %d",
-		band, vdev_nss->sta, vdev_nss->sap, vdev_nss->p2p_cli,
-		vdev_nss->p2p_go, vdev_nss->p2p_dev, vdev_nss->ibss,
-		vdev_nss->tdls, vdev_nss->ocb);
+	sme_debug("band %d NSS:sta %d sap %d cli %d go %d dev %d ibss %d tdls %d ocb %d nan %d",
+		  band, vdev_nss->sta, vdev_nss->sap, vdev_nss->p2p_cli,
+		  vdev_nss->p2p_go, vdev_nss->p2p_dev, vdev_nss->ibss,
+		  vdev_nss->tdls, vdev_nss->ocb, vdev_nss->nan);
 }
 
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR

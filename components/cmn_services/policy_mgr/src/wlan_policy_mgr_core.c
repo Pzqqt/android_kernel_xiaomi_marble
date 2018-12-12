@@ -888,7 +888,9 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 		return;
 	}
 
-	if (!vdev_mac_map) {
+	/* vdev mac map for NAN Discovery is expected in NAN Enable resp */
+	if (reason != POLICY_MGR_UPDATE_REASON_NAN_DISCOVERY &&
+	    !vdev_mac_map) {
 		policy_mgr_err("vdev_mac_map is NULL");
 		return;
 	}
@@ -918,9 +920,10 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 			 hw_mode.sbs_cap);
 
 	/* update pm_conc_connection_list */
-	policy_mgr_update_hw_mode_conn_info(context, num_vdev_mac_entries,
-			vdev_mac_map,
-			hw_mode);
+	policy_mgr_update_hw_mode_conn_info(context,
+					    num_vdev_mac_entries,
+					    vdev_mac_map,
+					    hw_mode);
 	if (pm_ctx->mode_change_cb)
 		pm_ctx->mode_change_cb();
 
@@ -979,6 +982,9 @@ static uint32_t policy_mgr_dump_current_concurrency_one_connection(
 	case PM_IBSS_MODE:
 		count = strlcat(cc_mode, "IBSS",
 					length);
+		break;
+	case PM_NAN_DISC_MODE:
+		count = strlcat(cc_mode, "NAN DISC", length);
 		break;
 	default:
 		policy_mgr_err("unexpected mode %d", mode);
@@ -1474,6 +1480,8 @@ enum policy_mgr_con_mode policy_mgr_get_mode(uint8_t type,
 		}
 	} else if (type == WMI_VDEV_TYPE_IBSS) {
 		mode = PM_IBSS_MODE;
+	} else if (type == WMI_VDEV_TYPE_NAN) {
+		mode = PM_NAN_DISC_MODE;
 	} else {
 		policy_mgr_err("Unknown type %d", type);
 	}

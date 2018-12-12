@@ -32,6 +32,8 @@
 #include "wlan_objmgr_global_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
+#include "wlan_nan_api.h"
+#include "nan_public_structs.h"
 
 /* invalid channel id. */
 #define INVALID_CHANNEL_ID 0
@@ -1511,13 +1513,14 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 	case QDF_P2P_GO_MODE:
 	case QDF_SAP_MODE:
 	case QDF_IBSS_MODE:
+	case QDF_NAN_DISC_MODE:
 		pm_ctx->no_of_active_sessions[mode]++;
 		break;
 	default:
 		break;
 	}
 
-	if (pm_ctx->dp_cbacks.hdd_v2_flow_pool_map)
+	if (mode != QDF_NAN_DISC_MODE && pm_ctx->dp_cbacks.hdd_v2_flow_pool_map)
 		pm_ctx->dp_cbacks.hdd_v2_flow_pool_map(session_id);
 
 	policy_mgr_debug("No.# of active sessions for mode %d = %d",
@@ -1590,6 +1593,7 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 	case QDF_P2P_GO_MODE:
 	case QDF_SAP_MODE:
 	case QDF_IBSS_MODE:
+	case QDF_NAN_DISC_MODE:
 		if (pm_ctx->no_of_active_sessions[mode])
 			pm_ctx->no_of_active_sessions[mode]--;
 		break;
@@ -1597,7 +1601,8 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 		break;
 	}
 
-	if (pm_ctx->dp_cbacks.hdd_v2_flow_pool_unmap)
+	if (mode != QDF_NAN_DISC_MODE &&
+	    pm_ctx->dp_cbacks.hdd_v2_flow_pool_unmap)
 		pm_ctx->dp_cbacks.hdd_v2_flow_pool_unmap(session_id);
 
 	policy_mgr_debug("No.# of active sessions for mode %d = %d",
@@ -1670,7 +1675,14 @@ QDF_STATUS policy_mgr_incr_connection_count(
 			pm_ctx->cfg.max_conc_cxns);
 		return status;
 	}
-	if (pm_ctx->wma_cbacks.wma_get_connection_info) {
+
+	if (vdev_id == NAN_PSEUDO_VDEV_ID) {
+		status = wlan_nan_get_connection_info(psoc, &conn_table_entry);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			policy_mgr_err("Can't get NAN Connection info");
+			return status;
+		}
+	} else if (pm_ctx->wma_cbacks.wma_get_connection_info) {
 		status = pm_ctx->wma_cbacks.wma_get_connection_info(
 				vdev_id, &conn_table_entry);
 		if (QDF_STATUS_SUCCESS != status) {
@@ -1796,6 +1808,9 @@ bool policy_mgr_map_concurrency_mode(enum QDF_OPMODE *old_mode,
 		break;
 	case QDF_IBSS_MODE:
 		*new_mode = PM_IBSS_MODE;
+		break;
+	case QDF_NAN_DISC_MODE:
+		*new_mode = PM_NAN_DISC_MODE;
 		break;
 	default:
 		*new_mode = PM_MAX_NUM_OF_MODE;
@@ -2513,6 +2528,9 @@ enum policy_mgr_con_mode policy_mgr_convert_device_mode_to_qdf_type(
 	case QDF_IBSS_MODE:
 		mode = PM_IBSS_MODE;
 		break;
+	case QDF_NAN_DISC_MODE:
+		mode = PM_NAN_DISC_MODE;
+		break;
 	default:
 		policy_mgr_debug("Unsupported mode (%d)",
 				 device_mode);
@@ -2541,6 +2559,9 @@ enum QDF_OPMODE policy_mgr_get_qdf_mode_from_pm(
 		break;
 	case PM_IBSS_MODE:
 		mode = QDF_IBSS_MODE;
+		break;
+	case PM_NAN_DISC_MODE:
+		mode = QDF_NAN_DISC_MODE;
 		break;
 	default:
 		policy_mgr_debug("Unsupported policy mgr mode (%d)",
@@ -3602,4 +3623,24 @@ bool policy_mgr_is_sta_sap_scc(struct wlan_objmgr_psoc *psoc, uint8_t sap_ch)
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
 	return is_scc;
+}
+
+QDF_STATUS policy_mgr_update_nan_vdev_mac_info(struct wlan_objmgr_psoc *psoc,
+					       uint8_t nan_vdev_id,
+					       uint8_t mac_id)
+{
+	struct policy_mgr_hw_mode_params hw_mode = {0};
+	struct policy_mgr_vdev_mac_map vdev_mac_map = {0};
+	QDF_STATUS status;
+
+	vdev_mac_map.vdev_id = nan_vdev_id;
+	vdev_mac_map.mac_id = mac_id;
+
+	status = policy_mgr_get_current_hw_mode(psoc, &hw_mode);
+
+	if (QDF_IS_STATUS_SUCCESS(status))
+		policy_mgr_update_hw_mode_conn_info(psoc, 1, &vdev_mac_map,
+						    hw_mode);
+
+	return status;
 }

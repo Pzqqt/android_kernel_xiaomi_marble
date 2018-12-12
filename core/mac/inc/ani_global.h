@@ -753,6 +753,7 @@ enum auth_tx_ack_status {
  * @ibss: IBSS Nss value.
  * @tdls: TDLS Nss value.
  * @ocb: OCB Nss value.
+ * @nan: NAN Nss value.
  *
  * Holds the Nss values of different vdev types.
  */
@@ -765,6 +766,7 @@ struct vdev_type_nss {
 	uint8_t ibss;
 	uint8_t tdls;
 	uint8_t ocb;
+	uint8_t nan;
 };
 
 /**

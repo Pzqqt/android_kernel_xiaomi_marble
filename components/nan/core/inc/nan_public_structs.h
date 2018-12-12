@@ -26,6 +26,7 @@
 #include "qdf_types.h"
 #include "qdf_status.h"
 #include "scheduler_api.h"
+#include "wlan_tgt_def_config.h"
 
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;
@@ -40,6 +41,8 @@ struct wlan_objmgr_vdev;
 #define NAN_PASSPHRASE_MIN_LEN 8
 #define NAN_PASSPHRASE_MAX_LEN 63
 #define NAN_CH_INFO_MAX_CHANNELS 4
+
+#define NAN_PSEUDO_VDEV_ID CFG_TGT_NUM_VDEV
 
 /**
  * enum nan_discovery_msg_type - NAN msg type

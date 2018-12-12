@@ -20,6 +20,7 @@
  * DOC: contains core nan function definitions
  */
 
+#include "wlan_utility.h"
 #include "nan_ucfg_api.h"
 #include "wlan_nan_api.h"
 #include "target_if_nan.h"
@@ -763,4 +764,11 @@ QDF_STATUS nan_discovery_scheduled_handler(struct scheduler_msg *msg)
 
 	nan_discovery_flush_callback(msg);
 	return status;
+}
+
+QDF_STATUS
+wlan_nan_get_connection_info(struct wlan_objmgr_psoc *psoc,
+			     struct policy_mgr_vdev_entry_info *conn_info)
+{
+	return QDF_STATUS_SUCCESS;
 }
