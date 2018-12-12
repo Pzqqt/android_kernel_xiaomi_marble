@@ -1555,6 +1555,13 @@ static QDF_STATUS send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_ha
 		 score_param->oce_wan_scoring.score_pcnt11_to_8,
 		 score_param->oce_wan_scoring.score_pcnt15_to_12);
 
+	score_param->roam_score_delta_pcnt = ap_profile->param.roam_score_delta;
+	score_param->roam_score_delta_mask =
+				ap_profile->param.roam_trigger_bitmap;
+	WMI_LOGD("Roam score delta:%d Roam_trigger_bitmap:%x",
+		 score_param->roam_score_delta_pcnt,
+		 score_param->roam_score_delta_mask);
+
 	wmi_mtrace(WMI_ROAM_AP_PROFILE, NO_SESSION, 0);
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_ROAM_AP_PROFILE);
