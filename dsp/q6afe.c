@@ -88,7 +88,6 @@ struct afe_ctl {
 	atomic_t status;
 	wait_queue_head_t wait[AFE_MAX_PORTS];
 	wait_queue_head_t wait_wakeup;
-	struct task_struct *task;
 	void (*tx_cb)(uint32_t opcode,
 		uint32_t token, uint32_t *payload, void *priv);
 	void (*rx_cb)(uint32_t opcode,
@@ -487,12 +486,6 @@ static int32_t afe_callback(struct apr_client_data *data, void *priv)
 			this_afe.apr = NULL;
 			rtac_set_afe_handle(this_afe.apr);
 		}
-		/* send info to user */
-		if (this_afe.task == NULL)
-			this_afe.task = current;
-		pr_debug("%s: task_name = %s pid = %d\n",
-			__func__,
-			this_afe.task->comm, this_afe.task->pid);
 
 		/*
 		 * Pass reset events to proxy driver, if cb is registered
@@ -2852,7 +2845,7 @@ EXPORT_SYMBOL(afe_send_spdif_ch_status_cfg);
 int afe_send_cmd_wakeup_register(void *handle, bool enable)
 {
 	struct afe_svc_cmd_evt_cfg_payload wakeup_irq;
-	int ret;
+	int ret = 0;
 
 	pr_debug("%s: enter\n", __func__);
 
@@ -2866,18 +2859,13 @@ int afe_send_cmd_wakeup_register(void *handle, bool enable)
 	wakeup_irq.hdr.opcode = AFE_SVC_CMD_EVENT_CFG;
 	wakeup_irq.event_id = AFE_EVENT_ID_MBHC_DETECTION_SW_WA;
 	wakeup_irq.reg_flag = enable;
-	pr_debug("%s: cmd device start opcode[0x%x] register:%d\n",
+	pr_debug("%s: cmd wakeup register opcode[0x%x] register:%d\n",
 		 __func__, wakeup_irq.hdr.opcode, wakeup_irq.reg_flag);
 
 	ret = afe_apr_send_pkt(&wakeup_irq, &this_afe.wait_wakeup);
-	if (ret) {
+	if (ret)
 		pr_err("%s: AFE wakeup command register %d failed %d\n",
 			__func__, enable, ret);
-	} else if (this_afe.task != current) {
-		this_afe.task = current;
-		pr_debug("task_name = %s pid = %d\n",
-			 this_afe.task->comm, this_afe.task->pid);
-	}
 
 	return ret;
 }
@@ -2914,14 +2902,9 @@ static int afe_send_cmd_port_start(u16 port_id)
 		 __func__, start.hdr.opcode, start.port_id);
 
 	ret = afe_apr_send_pkt(&start, &this_afe.wait[index]);
-	if (ret) {
+	if (ret)
 		pr_err("%s: AFE enable for port 0x%x failed %d\n", __func__,
 		       port_id, ret);
-	} else if (this_afe.task != current) {
-		this_afe.task = current;
-		pr_debug("task_name = %s pid = %d\n",
-			 this_afe.task->comm, this_afe.task->pid);
-	}
 
 	return ret;
 }
