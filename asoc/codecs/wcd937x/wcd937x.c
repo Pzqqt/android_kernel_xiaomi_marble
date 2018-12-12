@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -1422,6 +1422,8 @@ static int wcd937x_event_notify(struct notifier_block *block,
 					0x80, 0x00);
 		break;
 	case BOLERO_WCD_EVT_SSR_DOWN:
+		mbhc = &wcd937x->mbhc->wcd_mbhc;
+		wcd937x_mbhc_ssr_down(wcd937x->mbhc, component);
 		wcd937x_reset_low(wcd937x->dev);
 		break;
 	case BOLERO_WCD_EVT_SSR_UP:
