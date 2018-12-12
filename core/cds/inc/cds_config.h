@@ -155,7 +155,7 @@ struct cds_fils_connection_info {
 	uint8_t auth_type;
 	uint8_t pmk[MAX_PMK_LEN];
 	uint8_t pmk_len;
-	uint8_t pmkid[16];
+	uint8_t pmkid[MAX_PMKID_LEN];
 };
 #endif
 #endif /* !defined( __CDS_CONFIG_H ) */
