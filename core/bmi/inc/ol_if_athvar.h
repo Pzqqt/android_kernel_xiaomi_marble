@@ -31,31 +31,4 @@
 #include "ol_params.h"
 #include <wdi_event_api.h>
 
-struct ol_version {
-	uint32_t host_ver;
-	uint32_t target_ver;
-	uint32_t wlan_ver;
-	uint32_t wlan_ver_1;
-	uint32_t abi_ver;
-};
-
-enum ol_ath_tx_ecodes {
-	TX_IN_PKT_INCR = 0,
-	TX_OUT_HDR_COMPL,
-	TX_OUT_PKT_COMPL,
-	PKT_ENCAP_FAIL,
-	TX_PKT_BAD,
-	RX_RCV_MSG_RX_IND,
-	RX_RCV_MSG_PEER_MAP,
-	RX_RCV_MSG_TYPE_TEST
-};
-
-/*
- * structure to hold the packet error count for CE and hif layer
- */
-struct ol_ath_stats {
-	int hif_pipe_no_resrc_count;
-	int ce_ring_delta_fail_count;
-};
-
 #endif /* _DEV_OL_ATH_ATHVAR_H  */
