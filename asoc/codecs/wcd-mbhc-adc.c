@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2017-2019, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -313,7 +313,7 @@ static int wcd_check_cross_conn(struct wcd_mbhc *mbhc)
 		goto done;
 	}
 
-	if (hphl_adc_res > 100 && hphr_adc_res > 100) {
+	if (hphl_adc_res > 100 || hphr_adc_res > 100) {
 		plug_type = MBHC_PLUG_TYPE_GND_MIC_SWAP;
 		pr_debug("%s: Cross connection identified\n", __func__);
 	} else {
