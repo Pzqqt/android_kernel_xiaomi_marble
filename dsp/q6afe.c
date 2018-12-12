@@ -2828,9 +2828,10 @@ int afe_send_spdif_ch_status_cfg(struct afe_param_id_spdif_ch_status_cfg
 	struct param_hdr_v3 param_hdr;
 	int ret = 0;
 
-	if (!ch_status_cfg)
+	if (!ch_status_cfg) {
 		pr_err("%s: Error, no configuration data\n", __func__);
-	return -EINVAL;
+		return -EINVAL;
+	}
 
 	memset(&param_hdr, 0, sizeof(param_hdr));
 	param_hdr.module_id = AFE_MODULE_AUDIO_DEV_INTERFACE;
