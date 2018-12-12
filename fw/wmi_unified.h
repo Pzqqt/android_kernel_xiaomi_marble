@@ -10611,7 +10611,11 @@ typedef struct {
  * param_value = follow 11ax spec definition
  *               bit0:VHT(1), bit1:HE(1), bit2-31:A-Control
  */
-#define WMI_PEER_RARAM_XMIT_OMI                         0x1c
+#define WMI_PEER_PARAM_XMIT_OMI                         0x1c
+#define WMI_PEER_RARAM_XMIT_OMI WMI_PEER_PARAM_XMIT_OMI /* alias due to prior typo */
+
+/* Disable burst and assist */
+#define WMI_PEER_PARAM_DISABLE_AGGRESSIVE_TX            0x1d
 
 /** mimo ps values for the parameter WMI_PEER_MIMO_PS_STATE  */
 #define WMI_PEER_MIMO_PS_NONE                          0x0
@@ -14026,6 +14030,9 @@ typedef enum
      * to avoid IOT issues due to change in number of Tx and Rx chains
      */
     WMI_VENDOR_OUI_ACTION_CONNECTION_1X1_NUM_TX_RX_CHAINS_1 = 5,
+
+    /* Disable burst and assist, and restrict A-MPDU size to 32 */
+    WMI_VENDOR_OUI_ACTION_DISABLE_AGGRESSIVE_TX = 6,
 
     /* Add any action before this line */
     WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID
