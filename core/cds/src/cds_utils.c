@@ -58,7 +58,6 @@
  * Preprocessor Definitions and Constants
  * -------------------------------------------------------------------------*/
 #define AAD_LEN 20
-#define IV_SIZE_AES_128 16
 #define CMAC_IPN_LEN 6
 #define CMAC_TLEN 8             /* CMAC TLen = 64 bits (8 octets) */
 #define GMAC_NONCE_LEN 12
