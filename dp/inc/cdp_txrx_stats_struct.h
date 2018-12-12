@@ -26,7 +26,9 @@
 #ifndef CONFIG_WIN
 #include <wlan_defs.h>
 #endif
-
+#if defined(WDI_EVENT_ENABLE) && defined(CONFIG_MCL)
+#include <wdi_event.h>
+#endif
 #define TXRX_STATS_LEVEL_OFF   0
 #define TXRX_STATS_LEVEL_BASIC 1
 #define TXRX_STATS_LEVEL_FULL  2
@@ -104,6 +106,12 @@
  * HTT_PPDU_STATS_MAX_TAG declared in FW
  */
 #define CDP_PPDU_STATS_MAX_TAG 14
+
+#ifdef CONFIG_MCL
+#define CDP_WDI_NUM_EVENTS WDI_NUM_EVENTS
+#else
+#define CDP_WDI_NUM_EVENTS 22
+#endif
 
 /* Different Packet Types */
 enum cdp_packet_type {
@@ -1054,6 +1062,9 @@ struct cdp_pdev_stats {
 
 	struct cdp_htt_tx_pdev_stats  htt_tx_pdev_stats;
 	struct cdp_htt_rx_pdev_stats  htt_rx_pdev_stats;
+
+	/* Received wdi messages from fw */
+	uint32_t wdi_event[CDP_WDI_NUM_EVENTS];
 };
 
 #ifndef BIG_ENDIAN_HOST

@@ -81,6 +81,7 @@ static void dp_ppdu_ring_cfg(struct dp_pdev *pdev);
 #define DP_INTR_POLL_TIMER_MS	10
 /* Generic AST entry aging timer value */
 #define DP_AST_AGING_TIMER_DEFAULT_MS	1000
+
 /* WDS AST entry aging timer value */
 #define DP_WDS_AST_AGING_TIMER_DEFAULT_MS	120000
 #define DP_WDS_AST_AGING_TIMER_CNT \
@@ -89,6 +90,7 @@ static void dp_ppdu_ring_cfg(struct dp_pdev *pdev);
 #define DP_NSS_LENGTH (6*SS_COUNT)
 #define DP_MU_GROUP_SHOW 16
 #define DP_MU_GROUP_LENGTH (6 * DP_MU_GROUP_SHOW)
+
 #define DP_RXDMA_ERR_LENGTH (6*HAL_RXDMA_ERR_MAX)
 #define DP_MAX_INT_CONTEXTS_STRING_LENGTH (6 * WLAN_CFG_INT_NUM_CONTEXTS)
 #define DP_REO_ERR_LENGTH (6*HAL_REO_ERR_MAX)
@@ -6278,7 +6280,7 @@ static void dp_get_device_stats(void *handle,
 static inline void
 dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 {
-	uint8_t index = 0;
+	uint8_t i = 0, index = 0;
 
 	DP_PRINT_STATS("PDEV Tx Stats:\n");
 	DP_PRINT_STATS("Received From Stack:");
@@ -6404,6 +6406,12 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 	for (index = 0; index < CDP_PPDU_STATS_MAX_TAG; index++) {
 		DP_PRINT_STATS("	Tag[%d] = %llu", index,
 				pdev->stats.ppdu_stats_counter[index]);
+	}
+
+	for (i = 0; i < CDP_WDI_NUM_EVENTS; i++) {
+		if (!pdev->stats.wdi_event[i])
+			DP_PRINT_STATS("Wdi msgs received from fw[%d]:%d",
+				       i, pdev->stats.wdi_event[i]);
 	}
 
 }

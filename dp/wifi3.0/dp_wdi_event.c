@@ -138,6 +138,7 @@ dp_wdi_event_handler(
 	 */
 	event_index = event - WDI_EVENT_BASE;
 
+	DP_STATS_INC(txrx_pdev, wdi_event[event_index], 1);
 	wdi_sub = txrx_pdev->wdi_event_list[event_index];
 
 	/* Find the subscriber */
