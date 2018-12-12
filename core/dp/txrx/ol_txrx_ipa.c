@@ -306,10 +306,12 @@ static inline void ol_txrx_setup_mcc_sys_pipes(
 		qdf_ipa_sys_connect_params_t *sys_in,
 		qdf_ipa_wdi_conn_in_params_t *pipe_in)
 {
+	int i = 0;
+
 	/* Setup MCC sys pipe */
 	QDF_IPA_WDI_CONN_IN_PARAMS_NUM_SYS_PIPE_NEEDED(pipe_in) =
 			OL_TXRX_IPA_MAX_IFACE;
-	for (int i = 0; i < OL_TXRX_IPA_MAX_IFACE; i++)
+	for (i = 0; i < OL_TXRX_IPA_MAX_IFACE; i++)
 		memcpy(&QDF_IPA_WDI_CONN_IN_PARAMS_SYS_IN(pipe_in)[i],
 		       &sys_in[i], sizeof(qdf_ipa_sys_connect_params_t));
 }
