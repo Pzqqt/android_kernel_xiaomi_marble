@@ -2866,6 +2866,7 @@ typedef struct {
 #define HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS      8
 #define HTT_RX_PDEV_STATS_NUM_PREAMBLE_TYPES       HTT_STATS_PREAM_COUNT
 #define HTT_RX_PDEV_MAX_OFDMA_NUM_USER             8
+#define HTT_RX_PDEV_STATS_RXEVM_MAX_PILOTS_PER_NSS 16
 
 #define HTT_RX_PDEV_RATE_STATS_MAC_ID_M     0x000000ff
 #define HTT_RX_PDEV_RATE_STATS_MAC_ID_S              0
@@ -2933,6 +2934,16 @@ typedef struct {
     A_UINT32 rx_ulofdma_data_ppdu[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];     /* ppdu level */
     A_UINT32 rx_ulofdma_mpdu_ok[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];       /* mpdu level */
     A_UINT32 rx_ulofdma_mpdu_fail[HTT_RX_PDEV_MAX_OFDMA_NUM_USER];     /* mpdu level */
+
+    A_UINT32 nss_count;
+    A_UINT32 pilot_count;
+    /* RxEVM stats in dB */
+    A_INT32  rx_pilot_evm_dB[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_STATS_RXEVM_MAX_PILOTS_PER_NSS];
+    /* rx_pilot_evm_dB_mean:
+     * EVM mean across pilots, computed as
+     *     mean(10*log10(rx_pilot_evm_linear)) = mean(rx_pilot_evm_dB)
+     */
+    A_INT32  rx_pilot_evm_dB_mean[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS];
 } htt_rx_pdev_rate_stats_tlv;
 
 
