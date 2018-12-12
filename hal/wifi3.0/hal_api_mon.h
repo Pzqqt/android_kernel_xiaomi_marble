@@ -119,15 +119,16 @@
 #define HAL_LEGACY_MCS7  7
 
 #define HE_GI_0_8 0
-#define HE_GI_0_4 1
-#define HE_GI_1_6 2
-#define HE_GI_3_2 3
+#define HE_GI_1_6 1
+#define HE_GI_3_2 2
+#define HE_GI_0_4 3
 
 #define HT_SGI_PRESENT 0x80
 
-#define HE_LTF_1_X 0
-#define HE_LTF_2_X 1
-#define HE_LTF_4_X 2
+#define HE_LTF_1_X 1
+#define HE_LTF_2_X 2
+#define HE_LTF_4_X 3
+#define HE_LTF_UNKNOWN 0
 #define VHT_SIG_SU_NSS_MASK	0x7
 
 #define HAL_TID_INVALID 31
