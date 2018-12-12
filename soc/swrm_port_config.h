@@ -27,7 +27,7 @@ struct port_params wsa_frame_superset[SWR_MSTR_PORT_LEN] = {
 
 struct port_params rx_frame_params[SWR_MSTR_PORT_LEN] = {
 	{3,  0,  0,  0xFF, 0xFF, 1,    0xFF, 0xFF, 1},
-	{63, 0,  0,  3,    6,    7,    0,    0xFF, 0},
+	{31, 0,  0,  3,    6,    7,    0,    0xFF, 0},
 	{31, 11, 11, 0xFF, 0xFF, 4,    1,    0xFF, 0},
 	{3,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 1,    0},
 	{0,  0,  0,  0xFF, 0xFF, 0xFF, 0xFF, 0,    0},
@@ -35,7 +35,7 @@ struct port_params rx_frame_params[SWR_MSTR_PORT_LEN] = {
 
 struct port_params rx_frame_params_dsd[SWR_MSTR_PORT_LEN] = {
 	{3,  0,  0,  0xFF, 0xFF, 1,    0xFF, 0xFF, 1},
-	{63, 0,  0,  3,    6,    7,    0,    0xFF, 0},
+	{31, 0,  0,  3,    6,    7,    0,    0xFF, 0},
 	{31, 11, 11, 0xFF, 0xFF, 4,    1,    0xFF, 0},
 	{7,  9,  0,  0xFF, 0xFF, 0xFF, 0xFF, 1,    0},
 	{3,  1,  0,  0xFF, 0xFF, 0xFF, 0xFF, 3,    0},
