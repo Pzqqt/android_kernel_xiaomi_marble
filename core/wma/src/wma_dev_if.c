@@ -1736,7 +1736,10 @@ QDF_STATUS wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 		QDF_BUG(0);
 		return QDF_STATUS_E_INVAL;
 	}
-	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
+	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
+		vdev = cdp_get_mon_vdev_from_pdev(soc, pdev);
+	else
+		vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
 	if (!vdev) {
 		WMA_LOGE("%s vdev is null for peer peer->mac_addr %pM",
 			 __func__, peer_mac_addr);
