@@ -690,6 +690,8 @@ struct nan_datapath_sch_update_event {
  * struct nan_callbacks - struct containing callback to non-converged driver
  * @os_if_nan_event_handler: OS IF Callback for handling NAN Discovery events
  * @os_if_ndp_event_handler: OS IF Callback for handling NAN Datapath events
+ * @ucfg_explicit_disable_cb: UCFG Callback to indicate NAN explicit disable is
+ * complete
  * @ndi_open: HDD callback for creating the NAN Datapath Interface
  * @ndi_start: HDD callback for starting the NAN Datapath Interface
  * @ndi_close: HDD callback for closing the NAN Datapath Interface
@@ -709,6 +711,7 @@ struct nan_callbacks {
 	void (*os_if_ndp_event_handler)(struct wlan_objmgr_psoc *psoc,
 					struct wlan_objmgr_vdev *vdev,
 					uint32_t type, void *msg);
+	void (*ucfg_explicit_disable_cb)(void *cookie);
 	int (*ndi_open)(char *iface_name);
 	int (*ndi_start)(char *iface_name, uint16_t);
 	void (*ndi_close)(uint8_t);

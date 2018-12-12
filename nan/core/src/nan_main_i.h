@@ -103,6 +103,11 @@ struct nan_cfg_params {
  * @tx_ops: Tx ops registered with Target IF interface
  * @rx_ops: Rx  ops registered with Target IF interface
  * @disc_state: Present NAN Discovery state
+ * @nan_social_channel: NAN Social channel for discovery
+ * @nan_disc_mac_id: MAC id used for NAN Discovery
+ * @is_explicit_disable: Flag to indicate that NAN is being explicitly
+ * disabled by driver
+ * @disable_context: Explicit disable context
  */
 struct nan_psoc_priv_obj {
 	qdf_spinlock_t lock;
@@ -112,6 +117,10 @@ struct nan_psoc_priv_obj {
 	struct wlan_nan_tx_ops tx_ops;
 	struct wlan_nan_rx_ops rx_ops;
 	enum nan_disc_state disc_state;
+	uint8_t nan_social_channel;
+	uint8_t nan_disc_mac_id;
+	bool is_explicit_disable;
+	void *disable_context;
 };
 
 /**
@@ -215,6 +224,27 @@ QDF_STATUS nan_discovery_pre_enable(struct wlan_objmgr_psoc *psoc,
  * Return: Current NAN Discovery state
  */
 enum nan_disc_state nan_get_discovery_state(struct wlan_objmgr_psoc *psoc);
+
+/*
+ * nan_is_enable_allowed: Queries whether NAN Discovery is allowed
+ * @psoc: PSOC object
+ * @nan_chan: Possible primary social channel for NAN Discovery
+ *
+ * Return: True if NAN Enable is allowed on given channel, False otherwise
+ */
+bool nan_is_enable_allowed(struct wlan_objmgr_psoc *psoc, uint8_t nan_chan);
+
+/*
+ * nan_get_connection_info: Gets connection info of the NAN Discovery interface
+ * @psoc: PSOC object
+ * @chan: NAN Social channel to be returned
+ * @mac_if: MAC ID associated with NAN Discovery
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+nan_get_connection_info(struct wlan_objmgr_psoc *psoc, uint8_t *chan,
+			uint8_t *mac_id);
 
 #endif /* _WLAN_NAN_MAIN_I_H_ */
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */

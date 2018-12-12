@@ -28,6 +28,7 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_objmgr_vdev_obj.h"
+#include "wlan_osif_request_manager.h"
 
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;
@@ -397,6 +398,20 @@ void ucfg_nan_datapath_event_handler(struct wlan_objmgr_psoc *psoc,
 	psoc_obj->cb_obj.os_if_ndp_event_handler(psoc, vdev, type, msg);
 }
 
+static void ucfg_concurrency_nan_disable_callback(void *cookie)
+{
+	struct osif_request *request;
+
+	request = osif_request_get(cookie);
+
+	if (request) {
+		osif_request_complete(request);
+		osif_request_put(request);
+	} else {
+		nan_err("Obsolete request (cookie:0x%pK), do nothing", cookie);
+	}
+}
+
 int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
 				    struct nan_callbacks *cb_obj)
 {
@@ -423,6 +438,8 @@ int ucfg_nan_register_hdd_callbacks(struct wlan_objmgr_psoc *psoc,
 				cb_obj->os_if_ndp_event_handler;
 	psoc_obj->cb_obj.os_if_nan_event_handler =
 				cb_obj->os_if_nan_event_handler;
+	psoc_obj->cb_obj.ucfg_explicit_disable_cb =
+				ucfg_concurrency_nan_disable_callback;
 
 	return 0;
 }
@@ -457,6 +474,19 @@ void ucfg_nan_set_tgt_caps(struct wlan_objmgr_psoc *psoc,
 	psoc_priv->nan_caps = *nan_caps;
 }
 
+bool ucfg_is_nan_disable_supported(struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_psoc_priv_obj *psoc_priv;
+
+	psoc_priv = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_priv) {
+		nan_err("nan psoc priv object is NULL");
+		return false;
+	}
+
+	return (psoc_priv->nan_caps.nan_disable_supported == 1);
+}
+
 bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc)
 {
 	struct nan_psoc_priv_obj *psoc_priv;
@@ -468,6 +498,11 @@ bool ucfg_is_nan_dbs_supported(struct wlan_objmgr_psoc *psoc)
 	}
 
 	return (psoc_priv->nan_caps.nan_dbs_supported == 1);
+}
+
+bool ucfg_is_nan_enable_allowed(struct wlan_objmgr_psoc *psoc, uint8_t nan_chan)
+{
+	return nan_is_enable_allowed(psoc, nan_chan);
 }
 
 QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type)
@@ -573,4 +608,73 @@ QDF_STATUS ucfg_nan_discovery_req(void *in_req, uint32_t req_type)
 	}
 
 	return status;
+}
+
+void ucfg_nan_disable_concurrency(struct wlan_objmgr_psoc *psoc)
+{
+	struct nan_disable_req nan_req = {0};
+	enum nan_disc_state curr_nan_state;
+	struct nan_psoc_priv_obj *psoc_priv;
+	struct osif_request *request;
+	static const struct osif_request_params params = {
+		.priv_size = 0,
+		.timeout_ms = 1000,
+	};
+	QDF_STATUS status;
+	int err;
+
+	if (!psoc) {
+		nan_err("psoc object is NULL, no action will be taken");
+		return;
+	}
+
+	psoc_priv = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_priv) {
+		nan_err("nan psoc priv object is NULL");
+		return;
+	}
+
+	if (!ucfg_is_nan_disable_supported(psoc))
+		return;
+
+	qdf_spin_lock_bh(&psoc_priv->lock);
+	curr_nan_state = nan_get_discovery_state(psoc);
+
+	if (curr_nan_state == NAN_DISC_DISABLED ||
+	    curr_nan_state == NAN_DISC_DISABLE_IN_PROGRESS) {
+		qdf_spin_unlock_bh(&psoc_priv->lock);
+		return;
+	}
+	qdf_spin_unlock_bh(&psoc_priv->lock);
+
+	request = osif_request_alloc(&params);
+	if (!request) {
+		nan_err("Request allocation failure");
+		return;
+	}
+
+	nan_req.psoc = psoc;
+	nan_req.disable_2g_discovery = true;
+	nan_req.disable_5g_discovery = true;
+
+	status = ucfg_nan_discovery_req(&nan_req, NAN_DISABLE_REQ);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		nan_err("Unable to disable NAN Discovery");
+		osif_request_put(request);
+		return;
+	}
+
+	psoc_priv->disable_context = osif_request_cookie(request);
+	psoc_priv->is_explicit_disable = true;
+	nan_debug("Successfully sent NAN Disable request");
+
+	err = osif_request_wait_for_response(request);
+	if (err)
+		nan_err("NAN Disable timed out waiting for disable ind-%d",
+			err);
+	else
+		nan_debug("NAN Disabled successfully");
+	psoc_priv->is_explicit_disable = false;
+	osif_request_put(request);
 }
