@@ -5455,6 +5455,60 @@ void *ol_get_pldev(struct cdp_pdev *txrx_pdev)
 }
 #endif
 
+/**
+ * ol_register_packetdump_callback() - registers
+ *  tx data packet, tx mgmt. packet and rx data packet
+ *  dump callback handler.
+ *
+ * @ol_tx_packetdump_cb: tx packetdump cb
+ * @ol_rx_packetdump_cb: rx packetdump cb
+ *
+ * This function is used to register tx data pkt, tx mgmt.
+ * pkt and rx data pkt dump callback
+ *
+ * Return: None
+ *
+ */
+static inline
+void ol_register_packetdump_callback(ol_txrx_pktdump_cb ol_tx_packetdump_cb,
+				     ol_txrx_pktdump_cb ol_rx_packetdump_cb)
+{
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (!pdev) {
+		ol_txrx_err("pdev is NULL");
+		return;
+	}
+
+	pdev->ol_tx_packetdump_cb = ol_tx_packetdump_cb;
+	pdev->ol_rx_packetdump_cb = ol_rx_packetdump_cb;
+}
+
+/**
+ * ol_deregister_packetdump_callback() - deregidters
+ *  tx data packet, tx mgmt. packet and rx data packet
+ *  dump callback handler
+ *
+ * This function is used to deregidter tx data pkt.,
+ * tx mgmt. pkt and rx data pkt. dump callback
+ *
+ * Return: None
+ *
+ */
+static inline
+void ol_deregister_packetdump_callback(void)
+{
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (!pdev) {
+		ol_txrx_err("pdev is NULL");
+		return;
+	}
+
+	pdev->ol_tx_packetdump_cb = NULL;
+	pdev->ol_rx_packetdump_cb = NULL;
+}
+
 static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_soc_attach_target = ol_txrx_soc_attach_target,
 	.txrx_vdev_attach = ol_txrx_vdev_attach,
@@ -5513,7 +5567,9 @@ static struct cdp_misc_ops ol_ops_misc = {
 	.flush_rx_frames = ol_txrx_wrapper_flush_rx_frames,
 	.get_intra_bss_fwd_pkts_count = ol_get_intra_bss_fwd_pkts_count,
 	.pkt_log_init = htt_pkt_log_init,
-	.pkt_log_con_service = ol_txrx_pkt_log_con_service
+	.pkt_log_con_service = ol_txrx_pkt_log_con_service,
+	.register_pktdump_cb = ol_register_packetdump_callback,
+	.unregister_pktdump_cb = ol_deregister_packetdump_callback
 };
 
 static struct cdp_flowctl_ops ol_ops_flowctl = {

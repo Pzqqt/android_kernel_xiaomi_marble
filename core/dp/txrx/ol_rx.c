@@ -1540,7 +1540,7 @@ void ol_rx_pkt_dump_call(
 {
 	ol_txrx_pdev_handle pdev;
 	struct ol_txrx_peer_t *peer = NULL;
-	tp_ol_packetdump_cb packetdump_cb;
+	ol_txrx_pktdump_cb packetdump_cb;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 

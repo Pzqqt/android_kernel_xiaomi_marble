@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -759,7 +759,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 	struct ol_tx_desc_t *tx_desc;
 	uint32_t byte_cnt = 0;
 	qdf_nbuf_t netbuf;
-	tp_ol_packetdump_cb packetdump_cb;
+	ol_txrx_pktdump_cb packetdump_cb;
 	uint32_t is_tx_desc_freed = 0;
 	struct htt_tx_compl_ind_append_tx_tstamp *txtstamp_list = NULL;
 	u_int32_t *msg_word = (u_int32_t *)msg;
@@ -1032,7 +1032,7 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 {
 	struct ol_tx_desc_t *tx_desc;
 	qdf_nbuf_t netbuf;
-	tp_ol_packetdump_cb packetdump_cb;
+	ol_txrx_pktdump_cb packetdump_cb;
 
 	tx_desc = ol_tx_desc_find_check(pdev, tx_desc_id);
 	if (tx_desc == NULL) {
@@ -1486,58 +1486,6 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 }
 
 #endif /* QCA_COMPUTE_TX_DELAY */
-
-/**
- * ol_register_packetdump_callback() - registers
- *  tx data packet, tx mgmt. packet and rx data packet
- *  dump callback handler.
- *
- * @ol_tx_packetdump_cb: tx packetdump cb
- * @ol_rx_packetdump_cb: rx packetdump cb
- *
- * This function is used to register tx data pkt, tx mgmt.
- * pkt and rx data pkt dump callback
- *
- * Return: None
- *
- */
-void ol_register_packetdump_callback(tp_ol_packetdump_cb ol_tx_packetdump_cb,
-					tp_ol_packetdump_cb ol_rx_packetdump_cb)
-{
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (!pdev) {
-		ol_txrx_err("pdev is NULL");
-		return;
-	}
-
-	pdev->ol_tx_packetdump_cb = ol_tx_packetdump_cb;
-	pdev->ol_rx_packetdump_cb = ol_rx_packetdump_cb;
-}
-
-/**
- * ol_deregister_packetdump_callback() - deregidters
- *  tx data packet, tx mgmt. packet and rx data packet
- *  dump callback handler
- *
- * This function is used to deregidter tx data pkt.,
- * tx mgmt. pkt and rx data pkt. dump callback
- *
- * Return: None
- *
- */
-void ol_deregister_packetdump_callback(void)
-{
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (!pdev) {
-		ol_txrx_err("pdev is NULL");
-		return;
-	}
-
-	pdev->ol_tx_packetdump_cb = NULL;
-	pdev->ol_rx_packetdump_cb = NULL;
-}
 
 #ifdef WLAN_FEATURE_TSF_PLUS
 void ol_register_timestamp_callback(tp_ol_timestamp_cb ol_tx_timestamp_cb)

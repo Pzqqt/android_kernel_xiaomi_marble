@@ -748,8 +748,8 @@ struct ol_txrx_pdev_t {
 
 	data_stall_detect_cb data_stall_detect_callback;
 	/* packetdump callback functions */
-	tp_ol_packetdump_cb ol_tx_packetdump_cb;
-	tp_ol_packetdump_cb ol_rx_packetdump_cb;
+	ol_txrx_pktdump_cb ol_tx_packetdump_cb;
+	ol_txrx_pktdump_cb ol_rx_packetdump_cb;
 
 #ifdef WLAN_FEATURE_TSF_PLUS
 	tp_ol_timestamp_cb ol_tx_timestamp_cb;
