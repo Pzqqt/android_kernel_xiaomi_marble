@@ -1793,31 +1793,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gEnableMemoryDebug - Enables the memory debug
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable default memory debug
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#ifdef MEMORY_DEBUG
-#define CFG_ENABLE_MEMORY_DEBUG_NAME             "gEnableMemoryDebug"
-#define CFG_ENABLE_MEMORY_DEBUG_MIN              (0)
-#define CFG_ENABLE_MEMORY_DEBUG_MAX              (1)
-#define CFG_ENABLE_MEMORY_DEBUG_DEFAULT          (1)
-#endif
-
-/*
- * <ini>
  * gInitialDwellTime - Used to set initial dwell time
  * @Min: 0
  * @Max: 0
