@@ -953,11 +953,6 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"%d rx desc added back to free list", num_desc_to_free);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] desc_list=%pK, tail=%pK rx_desc=%pK, cookie=%d",
-		__func__, __LINE__, desc_list, tail, &(*desc_list)->rx_desc,
-		(*desc_list)->rx_desc.cookie);
-
 	/*
 	 * add any available free desc back to the free list
 	 */
