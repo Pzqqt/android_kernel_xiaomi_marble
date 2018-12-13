@@ -355,6 +355,8 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 
 	gen->enabled_11h = cfg_default(CFG_11H_SUPPORT_ENABLED);
 	gen->enabled_11d = cfg_default(CFG_11D_SUPPORT_ENABLED);
+	gen->enable_beacon_reception_stats =
+		cfg_get(psoc, CFG_ENABLE_BEACON_RECEPTION_STATS);
 }
 
 static void mlme_init_edca_ani_cfg(struct wlan_mlme_edca_params *edca_params)

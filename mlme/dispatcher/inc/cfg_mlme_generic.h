@@ -554,6 +554,29 @@
 				CFG_VALUE_OR_DEFAULT, \
 				"Enable debug log")
 
+/*
+ * <ini>
+ * enable_beacon_reception_stats - Enable disable beacon reception stats
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable the beacon reception stats collected per
+ * vdev and then sent to the driver to be displayed in sysfs
+ *
+ * Related: None
+ *
+ * Supported Feature: Stats
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+ #define CFG_ENABLE_BEACON_RECEPTION_STATS CFG_INI_BOOL( \
+			"enable_beacon_reception_stats", \
+			0, \
+			"Enable disable beacon reception stats")
+
 #define CFG_GENERIC_ALL \
 	CFG(CFG_ENABLE_DEBUG_PACKET_LOG) \
 	CFG(CFG_PMF_SA_QUERY_MAX_RETRIES) \
@@ -577,6 +600,7 @@
 	CFG(CFG_OPTIMIZE_CA_EVENT) \
 	CFG(CFG_CRASH_FW_TIMEOUT) \
 	CFG(CFG_DROPPED_PKT_DISCONNECT_THRESHOLD) \
-	CFG(CFG_ITO_REPEAT_COUNT)
+	CFG(CFG_ITO_REPEAT_COUNT) \
+	CFG(CFG_ENABLE_BEACON_RECEPTION_STATS)
 
 #endif /* __CFG_MLME_GENERIC_H */
