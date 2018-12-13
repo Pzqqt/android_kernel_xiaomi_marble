@@ -943,6 +943,7 @@ struct wlan_mlme_chainmask {
  * @debug_packet_log: Debug packet log flags
  * @enabled_11h: enable 11h flag
  * @enabled_11d: enable 11d flag
+ * @enable_beacon_reception_stats: enable beacon reception stats
  */
 struct wlan_mlme_generic {
 	enum band_info band_capability;
@@ -969,6 +970,7 @@ struct wlan_mlme_generic {
 	bool enabled_11h;
 	bool enabled_11d;
 	bool enable_deauth_to_disassoc_map;
+	bool enable_beacon_reception_stats;
 };
 
 /*
