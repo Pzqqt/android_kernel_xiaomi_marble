@@ -23,6 +23,8 @@
 #ifndef _I_BMI_H_
 #define _I_BMI_H_
 
+#include "qdf_types.h"
+#include "qdf_defer.h"
 #include "hif.h"
 #include "bmi_msg.h"
 #include "bmi.h"
