@@ -2027,15 +2027,6 @@ enum hdd_link_speed_rpt_type {
 #endif
 
 #ifdef CONFIG_DP_TRACE
-/*
- * Enable/disable DPTRACE
- * Enabling this might have performace impact.
- */
-#define CFG_ENABLE_DP_TRACE		"enable_dp_trace"
-#define CFG_ENABLE_DP_TRACE_MIN		(0)
-#define CFG_ENABLE_DP_TRACE_MAX	(1)
-#define CFG_ENABLE_DP_TRACE_DEFAULT	(1)
-
 /* Max length of gDptraceConfig string. e.g.- "1, 6, 1, 62" */
 #define DP_TRACE_CONFIG_STRING_LENGTH		(20)
 
@@ -2079,8 +2070,6 @@ enum hdd_link_speed_rpt_type {
 /* Default verbosity, in case its missing in gDptraceConfig string*/
 #define DP_TRACE_CONFIG_DEFAULT_VERBOSTY QDF_DP_TRACE_VERBOSITY_LOW
 
-#define CFG_ENABLE_DP_TRACE_CONFIG		"gDptraceConfig"
-#define CFG_ENABLE_DP_TRACE_CONFIG_DEFAULT	"1, 6, 2, 126"
 #endif
 
 /*
