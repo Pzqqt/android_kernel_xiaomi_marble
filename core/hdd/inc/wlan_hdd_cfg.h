@@ -1313,29 +1313,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gPassiveMinChannelTimeConc - Minimum passive scan time in milliseconds.
- * @Min: 0
- * @Max: 10000
- * @Default: 60
- *
- * This ini is used to set minimum passive scan time in STA+SAP concurrent
- * mode.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_NAME      "gPassiveMinChannelTimeConc"
-#define CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_MIN       (0)
-#define CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_MAX       (10000)
-#define CFG_PASSIVE_MIN_CHANNEL_TIME_CONC_DEFAULT   (60)
-
-/*
- * <ini>
  * gActiveMaxChannelTimeConc - Maximum active scan time in milliseconds.
  * @Min: 0
  * @Max: 10000
@@ -1356,29 +1333,6 @@ enum hdd_dot11_mode {
 #define CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_MIN        (0)
 #define CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_MAX        (10000)
 #define CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_DEFAULT    (40)
-
-/*
- * <ini>
- * gActiveMinChannelTimeConc - Minimum active scan time in milliseconds..
- * @Min: 0
- * @Max: 10000
- * @Default: 20
- *
- * This ini is used to set minimum active scan time in STA+SAP concurrent
- * mode.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_NAME       "gActiveMinChannelTimeConc"
-#define CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_MIN        (0)
-#define CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_MAX        (10000)
-#define CFG_ACTIVE_MIN_CHANNEL_TIME_CONC_DEFAULT    (20)
 
 /*
  * <ini>
