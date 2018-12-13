@@ -56,11 +56,6 @@ struct hdd_context;
 /* Number of items that can be configured */
 #define MAX_CFG_INI_ITEMS   1024
 
-#define CFG_TX_AGGREGATION_SIZE_MIN  0
-#define CFG_TX_AGGREGATION_SIZE_MAX  64
-#define CFG_RX_AGGREGATION_SIZE_MIN  1
-#define CFG_RX_AGGREGATION_SIZE_MAX  64
-
 /* Defines for all of the things we read from the configuration (registry). */
 /*
  * <ini>
