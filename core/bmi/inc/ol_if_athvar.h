@@ -22,13 +22,7 @@
 #ifndef _DEV_OL_ATH_ATHVAR_H
 #define _DEV_OL_ATH_ATHVAR_H
 
-#include <osapi_linux.h>
-#include "qdf_types.h"
-#include "qdf_lock.h"
-#include "wmi_unified_api.h"
 #include "htc_api.h"
 #include "bmi_msg.h"
-#include "ol_params.h"
-#include <wdi_event_api.h>
 
 #endif /* _DEV_OL_ATH_ATHVAR_H  */
