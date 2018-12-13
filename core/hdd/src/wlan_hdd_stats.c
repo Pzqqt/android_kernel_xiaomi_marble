@@ -5906,6 +5906,8 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 	/* save class a stats to legacy location */
 	adapter->hdd_stats.class_a_stat.tx_nss =
 		wlan_vdev_mlme_get_nss(adapter->vdev);
+	adapter->hdd_stats.class_a_stat.rx_nss =
+		wlan_vdev_mlme_get_nss(adapter->vdev);
 	adapter->hdd_stats.class_a_stat.tx_rate = stats->tx_rate;
 	adapter->hdd_stats.class_a_stat.rx_rate = stats->rx_rate;
 	adapter->hdd_stats.class_a_stat.tx_rx_rate_flags = stats->tx_rate_flags;
