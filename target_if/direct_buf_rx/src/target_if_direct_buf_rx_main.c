@@ -804,6 +804,7 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 	struct direct_buf_rx_buf_info *dbr_buf_pool;
 	struct direct_buf_rx_pdev_obj *dbr_pdev_obj;
 	struct direct_buf_rx_module_param *mod_param;
+	struct common_wmi_handle *wmi_handle;
 
 	direct_buf_rx_enter();
 
@@ -813,8 +814,14 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (wmi_extract_dbr_buf_release_fixed(GET_WMI_HDL_FROM_PSOC(psoc),
-			data_buf, &dbr_rsp) != QDF_STATUS_SUCCESS) {
+	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	if (!wmi_handle) {
+		direct_buf_rx_err("WMI handle is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (wmi_extract_dbr_buf_release_fixed(
+		wmi_handle, data_buf, &dbr_rsp) != QDF_STATUS_SUCCESS) {
 		direct_buf_rx_err("unable to extract DBR rsp fixed param");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -860,7 +867,7 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 
 	for (i = 0; i < dbr_rsp.num_buf_release_entry; i++) {
 		if (wmi_extract_dbr_buf_release_entry(
-			GET_WMI_HDL_FROM_PSOC(psoc), data_buf, i,
+			wmi_handle, data_buf, i,
 			&dbr_rsp.dbr_entries[i]) != QDF_STATUS_SUCCESS) {
 			direct_buf_rx_err("Unable to extract DBR buf entry %d",
 					  i+1);
@@ -883,7 +890,7 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 		dbr_data.meta_data_valid = false;
 		if (i < dbr_rsp.num_meta_data_entry) {
 			if (wmi_extract_dbr_buf_metadata(
-				GET_WMI_HDL_FROM_PSOC(psoc), data_buf, i,
+				wmi_handle, data_buf, i,
 				&dbr_data.meta_data) == QDF_STATUS_SUCCESS)
 				dbr_data.meta_data_valid = true;
 		}
