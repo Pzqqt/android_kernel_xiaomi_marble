@@ -3763,6 +3763,7 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 	uint8_t ie_len = 0;
 	tDot11fBeaconIEs *local_ap_ie = ap_ie;
 	uint16_t rsn_cap = 0;
+	struct qdf_mac_addr bssid;
 
 	if (!local_ap_ie &&
 	    (!QDF_IS_STATUS_SUCCESS(csr_get_parsed_bss_description_ies
@@ -3788,7 +3789,9 @@ uint8_t csr_construct_rsn_ie(struct mac_context *mac, uint32_t sessionId,
 	rsn_cap &= (uint16_t)wlan_crypto_get_param(vdev,
 						   WLAN_CRYPTO_PARAM_RSN_CAP);
 	wlan_crypto_set_vdev_param(vdev, WLAN_CRYPTO_PARAM_RSN_CAP, rsn_cap);
-	rsn_ie_end = wlan_crypto_build_rsnie(vdev, rsn_ie);
+	qdf_mem_copy(bssid.bytes, pSirBssDesc->bssId, QDF_MAC_ADDR_SIZE);
+	rsn_ie_end = wlan_crypto_build_rsnie(vdev, rsn_ie, &bssid);
+
 	if (rsn_ie_end)
 		ie_len = rsn_ie_end - rsn_ie;
 
