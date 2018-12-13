@@ -1519,39 +1519,6 @@ enum hdd_dot11_mode {
 #define CFG_TL_DELAYED_TRGR_FRM_INT_DEFAULT              3000
 
 /*
- * <ini>
- * gHwFilterMode - configure hardware filter for DTIM mode
- * @Min: 0
- * @Max: 3
- * @Default: 1
- *
- * The hardware filter is only effective in DTIM mode. Use this configuration
- * to blanket drop broadcast/multicast packets at the hardware level, without
- * waking up the firmware
- *
- * Takes a bitmap of frame types to drop
- * @E.g.
- *	# disable feature
- *	gHwFilterMode=0
- *	# drop all broadcast frames, except ARP (default)
- *	gHwFilterMode=1
- *	# drop all multicast frames, except ICMPv6
- *	gHwFilterMode=2
- *	# drop all broadcast and multicast frames, except ARP and ICMPv6
- *	gHwFilterMode=3
- *
- * Related: N/A
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_HW_FILTER_MODE_BITMAP_NAME	"gHwFilterMode"
-#define CFG_HW_FILTER_MODE_BITMAP_MIN		(0)
-#define CFG_HW_FILTER_MODE_BITMAP_MAX		(3)
-#define CFG_HW_FILTER_MODE_BITMAP_DEFAULT	(1)
-
-/*
  * gEnableDFSChnlScan - enable dfs channel scan.
  * @Min: 0
  * @Max: 1
@@ -1690,30 +1657,6 @@ enum hdd_link_speed_rpt_type {
 #define HDD_MCASTBCASTFILTER_FILTER_ALL_MULTICAST_BROADCAST    0x03
 #define HDD_MULTICAST_FILTER_LIST                              0x04
 #define HDD_MULTICAST_FILTER_LIST_CLEAR                        0x05
-
-/*
- * <ini>
- * gMCAddrListEnable - Enable/Disable Multicast MAC Address List feature
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to set default MAC Address
- * Default: Enable
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_MC_ADDR_LIST_ENABLE_NAME          "gMCAddrListEnable"
-#define CFG_MC_ADDR_LIST_ENABLE_MIN           (0)
-#define CFG_MC_ADDR_LIST_ENABLE_MAX           (1)
-#define CFG_MC_ADDR_LIST_ENABLE_DEFAULT       (1)
 
 /*
  * <ini>
@@ -2518,46 +2461,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_IS_SAE_ENABLED_DEFAULT (1)
 #define CFG_IS_SAE_ENABLED_MIN     (0)
 #define CFG_IS_SAE_ENABLED_MAX     (1)
-
-#ifdef WLAN_FEATURE_PACKET_FILTERING
-/*
- * <ini>
- * g_enable_packet_filter_bitmap - Enable Packet filters before going into
- * suspend mode
- * @Min: 0
- * @Max: 63
- * @Default: 0
- * Below is the Detailed bit map of the Filters
- * bit-0 : IPv6 multicast
- * bit-1 : IPv4 multicast
- * bit-2 : IPv4 broadcast
- * bit-3 : XID - Exchange station Identification packet, solicits the
- * identification of the receiving station
- * bit-4 : STP - Spanning Tree Protocol, builds logical loop free topology
- * bit-5 : DTP/LLC/CDP
- * DTP - Dynamic Trunking Protocol is used by Ciscoswitches to negotiate
- * whether an interconnection between two switches should be put into access or
- * trunk mode
- * LLC - Logical link control, used for multiplexing, flow & error control
- * CDP - Cisco Discovery Protocol packet contains information about the cisco
- * devices in the network
- *
- * This ini support to enable above mentioned packet filters
- * when target goes to suspend mode, clear those when resume
- *
- * Related: None
- *
- * Supported Feature: PACKET FILTERING
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ENABLE_PACKET_FILTERS_NAME     "g_enable_packet_filter_bitmap"
-#define CFG_ENABLE_PACKET_FILTERS_DEFAULT  (0)
-#define CFG_ENABLE_PACKET_FILTERS_MIN      (0)
-#define CFG_ENABLE_PACKET_FILTERS_MAX      (63)
-#endif /* WLAN_FEATURE_PACKET_FILTERING */
 
 /*
  * <ini>
