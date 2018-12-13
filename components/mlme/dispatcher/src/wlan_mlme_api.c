@@ -3020,3 +3020,21 @@ void wlan_mlme_get_wps_uuid(struct wlan_mlme_wps_params *wps_params,
 
 	wlan_mlme_get_cfg_str(data, &wps_params->wps_uuid, &len);
 }
+
+QDF_STATUS
+wlan_mlme_get_self_gen_frm_pwr(struct wlan_objmgr_psoc *psoc,
+			       uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_SELF_GEN_FRM_PWR);
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*value = mlme_obj->cfg.reg.self_gen_frm_pwr;
+
+	return QDF_STATUS_SUCCESS;
+}

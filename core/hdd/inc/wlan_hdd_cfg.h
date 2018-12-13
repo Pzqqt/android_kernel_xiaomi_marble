@@ -99,11 +99,6 @@ struct hdd_context;
  #define CFG_ENABLE_11D_IN_WORLD_MODE_MAX     (1)
  #define CFG_ENABLE_11D_IN_WORLD_MODE_DEFAULT (0)
 
-#define CFG_REG_CHANGE_DEF_COUNTRY_NAME          "gRegulatoryChangeCountry"
-#define CFG_REG_CHANGE_DEF_COUNTRY_DEFAULT       (0)
-#define CFG_REG_CHANGE_DEF_COUNTRY_MIN           (0)
-#define CFG_REG_CHANGE_DEF_COUNTRY_MAX           (1)
-
 /*
  * <ini>
  * gAdvertiseConcurrentOperation - Iface combination advertising
@@ -1739,39 +1734,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_GO_11AC_OVERRIDE_DEFAULT          (1)
 
 /*
- * set the self gen power value from
- * 0 to 0xffff
- */
-#define CFG_SELF_GEN_FRM_PWR        "gSelfGenFrmPwr"
-#define CFG_SELF_GEN_FRM_PWR_MIN      (0)
-#define CFG_SELF_GEN_FRM_PWR_MAX      (0xffff)
-#define CFG_SELF_GEN_FRM_PWR_DEFAULT  (0)
-
-/*
- * <ini>
- * etsi13_srd_chan_in_master_mode - Enable/disable ETSI SRD channels in
- * master mode PCL and ACS functionality
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * etsi13_srd_chan_in_master_mode is to enable/disable ETSI SRD channels in
- * master mode PCL and ACS functionality
- *
- * Related: None
- *
- * Supported Feature: SAP/P2P-GO
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE    "etsi13_srd_chan_in_master_mode"
-#define CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_DEF (0)
-#define CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_MIN (0)
-#define CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE_MAX (1)
-
-/*
  * gPNOChannelPrediction will allow user to enable/disable the
  * PNO channel prediction feature.
  * In current PNO implementation, scan is always done until all configured
@@ -1892,46 +1854,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ADAPT_DWELL_WIFI_THRESH_MIN        (0)
 #define CFG_ADAPT_DWELL_WIFI_THRESH_MAX        (100)
 #define CFG_ADAPT_DWELL_WIFI_THRESH_DEFAULT    (10)
-
-/*
- * <ini>
- * restart_beaconing_on_chan_avoid_event - control the beaconing entity to move
- * away from active LTE channels
- * @Min: 0
- * @Max: 2
- * @Default: 1
- *
- * This ini is used to control the beaconing entity (SAP/GO) to move away from
- * active LTE channels when channel avoidance event is received
- * restart_beaconing_on_chan_avoid_event=0: Don't allow beaconing entity move
- * from active LTE channels
- * restart_beaconing_on_chan_avoid_event=1: Allow beaconing entity move from
- * active LTE channels
- * restart_beaconing_on_chan_avoid_event=2: Allow beaconing entity move from
- * 2.4G active LTE channels only
- *
- * Related: None
- *
- * Supported Feature: channel avoidance
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_RESTART_BEACONING_ON_CH_AVOID_NAME    "restart_beaconing_on_chan_avoid_event"
-#define CFG_RESTART_BEACONING_ON_CH_AVOID_MIN     (CH_AVOID_RULE_DO_NOT_RESTART)
-#define CFG_RESTART_BEACONING_ON_CH_AVOID_MAX     (CH_AVOID_RULE_RESTART_24G_ONLY)
-#define CFG_RESTART_BEACONING_ON_CH_AVOID_DEFAULT (CH_AVOID_RULE_RESTART)
-
-/*
- * Support to start sap in indoor channel
- * Customer can config this item to enable/disable sap in indoor channel
- * Default: Disable
- */
-#define CFG_INDOOR_CHANNEL_SUPPORT_NAME     "gindoor_channel_support"
-#define CFG_INDOOR_CHANNEL_SUPPORT_MIN      (0)
-#define CFG_INDOOR_CHANNEL_SUPPORT_MAX      (1)
-#define CFG_INDOOR_CHANNEL_SUPPORT_DEFAULT  (0)
 
 /*
  * <ini>
@@ -2266,28 +2188,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_LPRx_MAX         (1)
 #define CFG_LPRx_DEFAULT     (1)
 
-/*
- * <ini>
- * scan_11d_interval - 11d scan interval in ms
- * @Min: 1 sec
- * @Max: 10 hr
- * @Default: 1 hr
- *
- * This ini sets the 11d scan interval in FW
- *
- *
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_SCAN_11D_INTERVAL_NAME      "scan_11d_interval"
-#define CFG_SCAN_11D_INTERVAL_DEFAULT   (3600000)
-#define CFG_SCAN_11D_INTERVAL_MIN       (1000)
-#define CFG_SCAN_11D_INTERVAL_MAX       (36000000)
 /*
  * <ini>
  * is_bssid_hint_priority - Set priority for connection with bssid_hint
@@ -2720,7 +2620,6 @@ struct hdd_config {
 	uint32_t ibssTxSpEndInactivityTime;
 	uint32_t ibssPsWarmupTime;
 	uint32_t ibssPs1RxChainInAtimEnable;
-	bool fRegChangeDefCountry;
 	bool advertiseConcurrentOperation;
 #ifdef DHCP_SERVER_OFFLOAD
 	uint8_t dhcpServerIP[IPADDR_STRING_LENGTH];
@@ -2729,8 +2628,6 @@ struct hdd_config {
 	uint8_t sap_11ac_override;
 	uint8_t go_11ac_override;
 	uint8_t max_scan_count;
-	bool etsi13_srd_chan_in_master_mode;
-	uint16_t  self_gen_frm_pwr;
 #ifdef FEATURE_WLAN_SCAN_PNO
 	bool pno_channel_prediction;
 	uint8_t top_k_num_of_channels;
@@ -2765,11 +2662,8 @@ struct hdd_config {
 	uint8_t adapt_dwell_passive_mon_intval;
 	uint8_t adapt_dwell_wifi_act_threshold;
 	bool bug_report_for_no_scan_results;
-	bool indoor_channel_support;
 	uint16_t sap_tx_leakage_threshold;
 	bool sap_internal_restart;
-	enum restart_beaconing_on_ch_avoid_rule
-		restart_beaconing_on_chan_avoid_event;
 	enum active_apf_mode active_uc_apf_mode;
 	enum active_apf_mode active_mc_bc_apf_mode;
 	uint8_t he_dynamic_frag_support;
@@ -2791,7 +2685,6 @@ struct hdd_config {
 	uint32_t mawc_nlo_max_scan_interval;
 	bool enable_11d_in_world_mode;
 	bool enable_lprx;
-	uint32_t scan_11d_interval;
 	bool is_bssid_hint_priority;
 #ifdef WLAN_FEATURE_SAE
 	bool is_sae_enabled;

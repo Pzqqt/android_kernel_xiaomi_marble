@@ -1768,6 +1768,24 @@ struct wlan_mlme_mwc {
 #endif
 
 /**
+ * struct wlan_mlme_reg - REG related configs
+ * @self_gen_frm_pwr: self-generated frame power in tx chain mask
+ * for CCK rates
+ * @etsi13_srd_chan_in_master_mode: etsi13 srd chan in master mode
+ * @restart_beaconing_on_ch_avoid: restart beaconing on ch avoid
+ * @indoor_channel_support: indoor channel support
+ * @scan_11d_interval: scan 11d interval
+ */
+struct wlan_mlme_reg {
+	uint32_t self_gen_frm_pwr;
+	bool etsi13_srd_chan_in_master_mode;
+	enum restart_beaconing_on_ch_avoid_rule
+		restart_beaconing_on_ch_avoid;
+	bool indoor_channel_support;
+	uint32_t scan_11d_interval;
+};
+
+/**
  * struct wlan_mlme_cfg - MLME config items
  * @chainmask_cfg: VHT chainmask related cfg items
  * @edca_params: edca related CFG items
@@ -1803,6 +1821,7 @@ struct wlan_mlme_mwc {
  * @wlm_config: WLM related CFG items
  * @rrm_config: RRM related CFG items
  * @mwc: MWC related CFG items
+ * @reg: REG related CFG itmes
  */
 struct wlan_mlme_cfg {
 	struct wlan_mlme_chainmask chainmask_cfg;
@@ -1841,6 +1860,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_fe_wlm wlm_config;
 	struct wlan_mlme_fe_rrm rrm_config;
 	struct wlan_mlme_mwc mwc;
+	struct wlan_mlme_reg reg;
 };
 
 #endif

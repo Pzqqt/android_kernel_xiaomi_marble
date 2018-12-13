@@ -2538,6 +2538,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		cfg_default(CFG_EXTERNAL_ACS_POLICY);
 	bool sap_force_11n_for_11ac = 0;
 	bool go_force_11n_for_11ac = 0;
+	bool etsi13_srd_chan;
 
 	/* ***Note*** Donot set SME config related to ACS operation here because
 	 * ACS operation is not synchronouse and ACS for Second AP may come when
@@ -2715,8 +2716,10 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		goto out;
 	}
 
+	ucfg_mlme_get_etsi13_srd_chan_in_master_mode(hdd_ctx->psoc,
+						     &etsi13_srd_chan);
 	skip_etsi13_srd_chan =
-		!hdd_ctx->config->etsi13_srd_chan_in_master_mode &&
+		!etsi13_srd_chan &&
 		wlan_reg_is_etsi13_regdmn(hdd_ctx->pdev);
 
 	if (skip_etsi13_srd_chan) {

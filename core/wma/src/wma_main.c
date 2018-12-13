@@ -3166,6 +3166,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	target_resource_config *wlan_res_cfg;
 	enum pmo_wow_enable_type wow_enable;
 	uint8_t delay_before_vdev_stop;
+	uint32_t self_gen_frm_pwr = 0;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -3313,7 +3314,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		goto err_wma_handle;
 	}
 	wma_handle->tx_chain_mask_cck = val;
-	wma_handle->self_gen_frm_pwr = cds_cfg->self_gen_frm_pwr;
+
+	qdf_status = wlan_mlme_get_self_gen_frm_pwr(psoc, &self_gen_frm_pwr);
+	if (qdf_status != QDF_STATUS_SUCCESS)
+		WMA_LOGE("%s: Failed to get self_gen_frm_pwr", __func__);
+	wma_handle->self_gen_frm_pwr = self_gen_frm_pwr;
 
 	cds_cfg->max_bssid = WMA_MAX_SUPPORTED_BSS;
 

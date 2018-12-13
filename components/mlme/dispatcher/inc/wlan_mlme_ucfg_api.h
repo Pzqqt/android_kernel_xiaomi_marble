@@ -3357,4 +3357,49 @@ ucfg_mlme_get_mws_coex_5g_nr_pwr_limit(struct wlan_objmgr_psoc *psoc,
 				       uint32_t *val);
 #endif
 
+/**
+ * ucfg_mlme_get_etsi13_srd_chan_in_master_mode  - get etsi13 srd chan
+ * in master mode
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_etsi13_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
+					     bool *value);
+
+/**
+ * ucfg_mlme_restart_beaconing_on_ch_avoid() - get restart beaconing on ch avoid
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_restart_beaconing_on_ch_avoid(struct wlan_objmgr_psoc *psoc,
+					    uint32_t *value);
+
+/**
+ * ucfg_mlme_get_indoor_channel_support() - get indoor channel support
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_indoor_channel_support(struct wlan_objmgr_psoc *psoc,
+				     bool *value);
+
+/**
+ * ucfg_mlme_get_scan_11d_interval() - get scan 11d interval
+ * @psoc: pointer to psoc object
+ * @val:  Pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_scan_11d_interval(struct wlan_objmgr_psoc *psoc,
+				uint32_t *value);
+
 #endif /* _WLAN_MLME_UCFG_API_H_ */

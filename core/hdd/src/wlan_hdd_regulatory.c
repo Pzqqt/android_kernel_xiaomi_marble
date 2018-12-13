@@ -209,6 +209,10 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 				    struct reg_config_vars *config_vars)
 {
 	uint8_t band_capability = 0, indoor_chnl_marking = 0;
+	uint32_t scan_11d_interval = 0;
+	bool indoor_chan_enabled = false;
+	uint32_t restart_beaconing = 0;
+	bool enable_srd_chan = false;
 	QDF_STATUS status;
 	bool country_priority = 0;
 	bool value = false;
@@ -227,19 +231,30 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 		hdd_err("Invalid 11d_enable flag");
 	config_vars->enable_11d_support = value;
 
-	config_vars->scan_11d_interval = hdd_ctx->config->scan_11d_interval;
+	ucfg_mlme_get_scan_11d_interval(hdd_ctx->psoc, &scan_11d_interval);
+	config_vars->scan_11d_interval = scan_11d_interval;
+
 	ucfg_mlme_get_sap_country_priority(hdd_ctx->psoc,
 					   &country_priority);
 	config_vars->userspace_ctry_priority = country_priority;
+
 	config_vars->dfs_enabled = hdd_ctx->config->enableDFSChnlScan;
-	config_vars->indoor_chan_enabled =
-		hdd_ctx->config->indoor_channel_support;
+
+	ucfg_mlme_get_indoor_channel_support(hdd_ctx->psoc,
+					     &indoor_chan_enabled);
+	config_vars->indoor_chan_enabled = indoor_chan_enabled;
+
 	config_vars->force_ssc_disable_indoor_channel = indoor_chnl_marking;
 	config_vars->band_capability = band_capability;
-	config_vars->restart_beaconing = hdd_ctx->config->
-		restart_beaconing_on_chan_avoid_event;
-	config_vars->enable_srd_chan_in_master_mode =
-		hdd_ctx->config->etsi13_srd_chan_in_master_mode;
+
+	ucfg_mlme_get_restart_beaconing_on_ch_avoid(hdd_ctx->psoc,
+						    &restart_beaconing);
+	config_vars->restart_beaconing = restart_beaconing;
+
+	ucfg_mlme_get_etsi13_srd_chan_in_master_mode(hdd_ctx->psoc,
+						     &enable_srd_chan);
+	config_vars->enable_srd_chan_in_master_mode = enable_srd_chan;
+
 	config_vars->enable_11d_in_world_mode =
 		hdd_ctx->config->enable_11d_in_world_mode;
 }
@@ -266,9 +281,6 @@ static void hdd_regulatory_wiphy_init(struct hdd_context *hdd_ctx,
 	if (hdd_is_world_regdomain(reg->reg_domain)) {
 		reg_rules = hdd_get_world_regrules(reg);
 		wiphy->regulatory_flags |= REGULATORY_CUSTOM_REG;
-	} else if (hdd_ctx->config->fRegChangeDefCountry) {
-		wiphy->regulatory_flags |= REGULATORY_CUSTOM_REG;
-		reg_rules = &hdd_world_regrules_60_61_62;
 	} else {
 		wiphy->regulatory_flags |= REGULATORY_STRICT_REG;
 		reg_rules = &hdd_world_regrules_60_61_62;
@@ -309,9 +321,6 @@ static void hdd_regulatory_wiphy_init(struct hdd_context *hdd_ctx,
 	if (hdd_is_world_regdomain(reg->reg_domain)) {
 		reg_rules = hdd_get_world_regrules(reg);
 		wiphy->flags |= WIPHY_FLAG_CUSTOM_REGULATORY;
-	} else if (hdd_ctx->config->fRegChangeDefCountry) {
-		wiphy->flags |= WIPHY_FLAG_CUSTOM_REGULATORY;
-		reg_rules = &hdd_world_regrules_60_61_62;
 	} else {
 		wiphy->flags |= WIPHY_FLAG_STRICT_REGULATORY;
 		reg_rules = &hdd_world_regrules_60_61_62;
@@ -430,6 +439,7 @@ static void hdd_process_regulatory_data(struct hdd_context *hdd_ctx,
 	struct ieee80211_channel *wiphy_chan, *wiphy_chan_144 = NULL;
 	struct regulatory_channel *cds_chan;
 	uint8_t band_capability, indoor_chnl_marking = 0;
+	bool indoor;
 	QDF_STATUS status;
 
 	band_capability = hdd_ctx->curr_band;
@@ -484,8 +494,10 @@ static void hdd_process_regulatory_data(struct hdd_context *hdd_ctx,
 				     IEEE80211_CHAN_INDOOR_ONLY) {
 				cds_chan->chan_flags |=
 						REGULATORY_CHAN_INDOOR_ONLY;
-				if (hdd_ctx->config->indoor_channel_support
-				    == false) {
+
+				ucfg_mlme_get_indoor_chan_enabled(hdd_ctx->psoc,
+								  &indoor);
+				if (!indoor) {
 					cds_chan->state = CHANNEL_STATE_DFS;
 					wiphy_chan->flags |=
 						IEEE80211_CHAN_PASSIVE_SCAN;
@@ -598,7 +610,9 @@ void hdd_modify_indoor_channel_state_flags(
 	struct regulatory_channel *cds_chan,
 	enum channel_enum chan_enum, int chan_num, bool disable)
 {
-	bool indoor_support = hdd_ctx->config->indoor_channel_support;
+	bool indoor_support;
+
+	ucfg_mlme_get_indoor_channel_support(hdd_ctx->psoc, &indoor_support);
 
 	/* Mark indoor channel to disable in wiphy and cds */
 	if (disable) {

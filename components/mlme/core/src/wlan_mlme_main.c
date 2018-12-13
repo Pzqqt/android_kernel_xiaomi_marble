@@ -1942,6 +1942,18 @@ static void mlme_init_mwc_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
+			      struct wlan_mlme_reg *reg)
+{
+	reg->self_gen_frm_pwr = cfg_get(psoc, CFG_SELF_GEN_FRM_PWR);
+	reg->etsi13_srd_chan_in_master_mode =
+			cfg_get(psoc, CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE);
+	reg->restart_beaconing_on_ch_avoid =
+			cfg_get(psoc, CFG_RESTART_BEACONING_ON_CH_AVOID);
+	reg->indoor_channel_support = cfg_get(psoc, CFG_INDOOR_CHANNEL_SUPPORT);
+	reg->scan_11d_interval = cfg_get(psoc, CFG_SCAN_11D_INTERVAL);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -1989,6 +2001,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_fe_wlm_in_cfg(psoc, &mlme_cfg->wlm_config);
 	mlme_init_fe_rrm_in_cfg(psoc, &mlme_cfg->rrm_config);
 	mlme_init_mwc_cfg(psoc, &mlme_cfg->mwc);
+	mlme_init_reg_cfg(psoc, &mlme_cfg->reg);
 
 	return status;
 }

@@ -79,7 +79,6 @@ enum active_apf_mode {
  * @enable_dp_rx_threads: enable dp rx threads
  * @is_lpass_enabled: Indicate whether LPASS is enabled or not
  * @tx_chain_mask_cck: Tx chain mask enabled or not
- * @self_gen_frm_pwr: Self gen from power
  * @sub_20_channel_width: Sub 20 MHz ch width, ini intersected with fw cap
  * @is_fw_timeout: Indicate whether crash host when fw timesout or not
  * @active_uc_apf_mode: Setting that determines how APF is applied in active
@@ -117,7 +116,6 @@ struct cds_config_info {
 #ifdef WLAN_FEATURE_LPSS
 	bool is_lpass_enabled;
 #endif
-	uint16_t self_gen_frm_pwr;
 	enum cfg_sub_20_channel_width sub_20_channel_width;
 	uint8_t max_msdus_per_rxinorderind;
 	bool self_recovery_enabled;

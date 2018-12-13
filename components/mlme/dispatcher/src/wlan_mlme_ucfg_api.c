@@ -1248,3 +1248,75 @@ ucfg_mlme_get_mws_coex_5g_nr_pwr_limit(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+QDF_STATUS
+ucfg_mlme_get_etsi13_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
+					     bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_ETSI13_SRD_CHAN_IN_MASTER_MODE);
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*value = mlme_obj->cfg.reg.etsi13_srd_chan_in_master_mode;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_restart_beaconing_on_ch_avoid(struct wlan_objmgr_psoc *psoc,
+					    uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_RESTART_BEACONING_ON_CH_AVOID);
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*value = mlme_obj->cfg.reg.restart_beaconing_on_ch_avoid;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_indoor_channel_support(struct wlan_objmgr_psoc *psoc,
+				     bool *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_INDOOR_CHANNEL_SUPPORT);
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*value = mlme_obj->cfg.reg.indoor_channel_support;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_scan_11d_interval(struct wlan_objmgr_psoc *psoc,
+				uint32_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_SCAN_11D_INTERVAL);
+		mlme_err("Failed to get MLME Obj");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*value = mlme_obj->cfg.reg.scan_11d_interval;
+
+	return QDF_STATUS_SUCCESS;
+}

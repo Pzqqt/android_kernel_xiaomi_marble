@@ -9931,7 +9931,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 	cds_cfg->max_scan = hdd_ctx->config->max_scan_count;
 
 	cds_cfg->enable_rxthread = hdd_ctx->enable_rxthread;
-	cds_cfg->self_gen_frm_pwr = hdd_ctx->config->self_gen_frm_pwr;
 	ucfg_mlme_get_sap_max_peers(hdd_ctx->psoc, &value);
 	cds_cfg->max_station = value;
 	cds_cfg->sub_20_channel_width = WLAN_SUB_20_CH_WIDTH_NONE;
@@ -9992,10 +9991,6 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 		return -ENOMEM;
 
 	user_config->dot11_mode = hdd_ctx->config->dot11Mode;
-	user_config->dual_mac_feature_disable = dual_mac_feature;
-	user_config->indoor_channel_support =
-		hdd_ctx->config->indoor_channel_support;
-
 	status = ucfg_mlme_is_11d_enabled(hdd_ctx->psoc, &value);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Invalid 11d_enable flag");
@@ -10006,7 +10001,6 @@ static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Invalid 11h_enable flag");
 	user_config->is_11h_support_enabled = value;
-
 	cfg_p2p_get_skip_dfs_channel_p2p_search(hdd_ctx->psoc,
 						&skip_dfs_in_p2p_search);
 	user_config->skip_dfs_chnl_in_p2p_search = skip_dfs_in_p2p_search;
@@ -10936,9 +10930,6 @@ static int hdd_features_init(struct hdd_context *hdd_ctx)
 	/* FW capabilities received, Set the Dot11 mode */
 	mac_handle = hdd_ctx->mac_handle;
 	sme_setdef_dot11mode(mac_handle);
-	sme_set_etsi13_srd_ch_in_master_mode(mac_handle,
-					     cfg->
-					     etsi13_srd_chan_in_master_mode);
 
 	ucfg_mlme_is_imps_enabled(hdd_ctx->psoc, &is_imps_enabled);
 	hdd_set_idle_ps_config(hdd_ctx, is_imps_enabled);

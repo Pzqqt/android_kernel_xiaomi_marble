@@ -9301,16 +9301,6 @@ QDF_STATUS sme_deregister_for_dcc_stats_event(mac_handle_t mac_handle)
 
 	return status;
 }
-#else
-void sme_set_etsi13_srd_ch_in_master_mode(mac_handle_t mac_handle,
-					  bool etsi13_srd_chan_support)
-{
-	struct mac_context *mac;
-
-	mac = MAC_CONTEXT(mac_handle);
-	mac->sap.enable_etsi13_srd_chan_support = etsi13_srd_chan_support;
-	sme_debug("srd_ch_support %d", mac->sap.enable_etsi13_srd_chan_support);
-}
 #endif
 
 void sme_get_recovery_stats(mac_handle_t mac_handle)

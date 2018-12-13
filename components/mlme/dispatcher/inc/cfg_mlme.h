@@ -56,6 +56,7 @@
 #include "cfg_mlme_fe_wlm.h"
 #include "cfg_mlme_fe_rrm.h"
 #include "cfg_mlme_mwc.h"
+#include "cfg_mlme_reg.h"
 
 /* Please Maintain Alphabetic Order here */
 #define CFG_MLME_ALL \
@@ -81,6 +82,7 @@
 	CFG_POWERSAVE_ALL \
 	CFG_QOS_ALL \
 	CFG_RATES_ALL \
+	CFG_REG_ALL \
 	CFG_SAP_ALL \
 	CFG_SAP_PROTECTION_ALL \
 	CFG_SCORING_ALL \
