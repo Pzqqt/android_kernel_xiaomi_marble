@@ -1454,29 +1454,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gAddTSWhenACMIsOff - Set ACM value for AC
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set ACM value for AC
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_NAME               "gAddTSWhenACMIsOff"
-#define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_MIN                (0)
-/* Send AddTs even when ACM is not set for the AC */
-#define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_MAX                (1)
-#define CFG_QOS_ADDTS_WHEN_ACM_IS_OFF_DEFAULT            (0)
-
-/*
- * <ini>
  * DelayedTriggerFrmInt - UAPSD delay interval
  * @Min: 1
  * @Max: 4294967295
