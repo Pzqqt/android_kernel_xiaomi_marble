@@ -6595,7 +6595,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			hdd_err("unable to get tx_bfee_ant_supp");
 
-		if (cfg_val > value) {
+		if (!cfg_in_range(CFG_VHT_BEAMFORMEE_ANT_SUPP, cfg_val)) {
 			hdd_err("NSTS %d not supported, supp_val %d", cfg_val,
 				value);
 			ret_val = -ENOTSUPP;
