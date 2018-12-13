@@ -32,6 +32,7 @@
 #include "wma.h"
 #include "ol_txrx_api.h"
 #include "pktlog_ac.h"
+#include <cdp_txrx_misc.h>
 #endif
 #include <wlan_logging_sock_svc.h>
 #include <linux/kthread.h>
@@ -1425,8 +1426,13 @@ static void send_packetdump_monitor(uint8_t type)
  */
 void wlan_deregister_txrx_packetdump(void)
 {
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (!soc)
+		return;
+
 	if (gtx_count || grx_count) {
-		ol_deregister_packetdump_callback();
+		cdp_deregister_packetdump_cb(soc);
 		wma_deregister_packetdump_callback();
 		send_packetdump_monitor(STOP_MONITOR);
 		csr_packetdump_timer_stop();
@@ -1527,8 +1533,12 @@ static void rx_packetdump_cb(qdf_nbuf_t netbuf, uint8_t status,
  */
 void wlan_register_txrx_packetdump(void)
 {
-	ol_register_packetdump_callback(tx_packetdump_cb,
-			rx_packetdump_cb);
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (!soc)
+		return;
+
+	cdp_register_packetdump_cb(soc, tx_packetdump_cb, rx_packetdump_cb);
 	wma_register_packetdump_callback(tx_packetdump_cb,
 			rx_packetdump_cb);
 	send_packetdump_monitor(START_MONITOR);
