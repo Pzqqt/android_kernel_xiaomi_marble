@@ -2655,6 +2655,7 @@ dp_tx_update_peer_stats(struct dp_peer *peer,
 		return;
 	}
 
+	DP_STATS_INC_PKT(peer, tx.comp_pkt, 1, length);
 	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
 		     (ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
 
@@ -2679,7 +2680,6 @@ dp_tx_update_peer_stats(struct dp_peer *peer,
 	if (ts->status != HAL_TX_TQM_RR_FRAME_ACKED) {
 		return;
 	}
-
 	DP_STATS_INCC(peer, tx.ofdma, 1, ts->ofdma);
 
 	DP_STATS_INCC(peer, tx.amsdu_cnt, 1, ts->msdu_part_of_amsdu);

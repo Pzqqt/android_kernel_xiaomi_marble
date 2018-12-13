@@ -6236,6 +6236,7 @@ static inline void
 dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 {
 	uint8_t index = 0;
+
 	DP_PRINT_STATS("PDEV Tx Stats:\n");
 	DP_PRINT_STATS("Received From Stack:");
 	DP_PRINT_STATS("	Packets = %d",
@@ -6361,6 +6362,7 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 		DP_PRINT_STATS("	Tag[%d] = %llu", index,
 				pdev->stats.ppdu_stats_counter[index]);
 	}
+
 }
 
 /**
@@ -6482,7 +6484,7 @@ dp_print_soc_tx_stats(struct dp_soc *soc)
 
 	DP_PRINT_STATS("Tx Descriptors In Use = %d",
 			soc->stats.tx.desc_in_use);
-	DP_PRINT_STATS("Invalid peer:");
+	DP_PRINT_STATS("Tx Invalid peer:");
 	DP_PRINT_STATS("	Packets = %d",
 			soc->stats.tx.tx_invalid_peer.num);
 	DP_PRINT_STATS("	Bytes = %llu",
@@ -8381,7 +8383,7 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->stats.tx.dropped.fw_rem_tx);
 		DP_TRACE_STATS(INFO_HIGH, "firmware removed notx %u",
 			       pdev->stats.tx.dropped.fw_rem_notx);
-		DP_TRACE_STATS(INFO_HIGH, "peer_invalid: %u",
+		DP_TRACE_STATS(INFO_HIGH, "Invalid peer on tx path: %u",
 			       pdev->soc->stats.tx.tx_invalid_peer.num);
 
 		DP_TRACE_STATS(INFO_HIGH, "Tx packets sent per interrupt:");
@@ -8427,7 +8429,7 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 			       pdev->stats.rx.raw.bytes);
 		DP_TRACE_STATS(INFO_HIGH, "dropped: error %u msdus",
 			       pdev->stats.rx.err.mic_err);
-		DP_TRACE_STATS(INFO_HIGH, "peer invalid %u",
+		DP_TRACE_STATS(INFO_HIGH, "Invalid peer on rx path: %u",
 			       pdev->soc->stats.rx.err.rx_invalid_peer.num);
 
 		DP_TRACE_STATS(INFO_HIGH, "Reo Statistics");

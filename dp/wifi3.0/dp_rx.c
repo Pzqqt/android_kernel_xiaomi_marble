@@ -895,8 +895,6 @@ free:
 	curr_nbuf = mpdu;
 	while (curr_nbuf) {
 		next_nbuf = qdf_nbuf_next(curr_nbuf);
-		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
-				 qdf_nbuf_len(curr_nbuf));
 		qdf_nbuf_free(curr_nbuf);
 		curr_nbuf = next_nbuf;
 	}
