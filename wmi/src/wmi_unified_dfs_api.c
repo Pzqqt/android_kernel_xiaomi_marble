@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -25,6 +25,7 @@
 #include <qdf_module.h>
 #include <wmi_unified_api.h>
 #include <wmi_unified_priv.h>
+#include <wlan_objmgr_vdev_obj.h>
 #include <wlan_dfs_utils_api.h>
 #include <wmi_unified_dfs_api.h>
 #include <init_deinit_lmac.h>

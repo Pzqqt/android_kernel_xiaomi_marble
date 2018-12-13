@@ -26,6 +26,7 @@
 #include "../dfs_etsi_precac.h"
 #include "../dfs_process_radar_found_ind.h"
 #include <wlan_reg_services_api.h>
+#include <wlan_objmgr_vdev_obj.h>
 #include <wlan_dfs_utils_api.h>
 #include <wlan_dfs_tgt_api.h>
 #include "wlan_dfs_mlme_api.h"

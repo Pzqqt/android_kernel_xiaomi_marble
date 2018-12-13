@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2006, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -29,6 +29,7 @@
 #include "../dfs_internal.h"
 #include "../dfs_filter_init.h"
 #include "../dfs_full_offload.h"
+#include <wlan_objmgr_vdev_obj.h>
 #include "wlan_dfs_utils_api.h"
 #include "../dfs_etsi_precac.h"
 #include "../dfs_partial_offload_radar.h"

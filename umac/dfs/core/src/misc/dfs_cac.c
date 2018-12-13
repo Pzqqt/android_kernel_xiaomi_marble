@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  * Copyright (c) 2007-2008 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -31,6 +31,7 @@
 #include "../dfs_channel.h"
 #include "../dfs_zero_cac.h"
 #include "../dfs_etsi_precac.h"
+#include <wlan_objmgr_vdev_obj.h>
 #include "wlan_dfs_utils_api.h"
 #include "wlan_dfs_mlme_api.h"
 #include "../dfs_internal.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,6 +23,7 @@
 #ifndef _WMI_UNIFIED_DFS_API_H_
 #define _WMI_UNIFIED_DFS_API_H_
 
+#include <wlan_objmgr_vdev_obj.h>
 #include <wlan_dfs_utils_api.h>
 
 /**

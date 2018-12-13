@@ -50,6 +50,7 @@
 #include "wlan_scan_cache_db_i.h"
 #include "wlan_reg_services_api.h"
 #include "wlan_reg_ucfg_api.h"
+#include <wlan_objmgr_vdev_obj.h>
 #include <wlan_dfs_utils_api.h>
 
 /**

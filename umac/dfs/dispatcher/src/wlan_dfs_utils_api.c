@@ -21,6 +21,7 @@
  * DOC: This file has the DFS dispatcher API implementation which is exposed
  * to outside of DFS component.
  */
+#include <wlan_objmgr_vdev_obj.h>
 #include "wlan_dfs_utils_api.h"
 #include "wlan_dfs_init_deinit_api.h"
 #include "wlan_dfs_mlme_api.h"
@@ -882,7 +883,8 @@ QDF_STATUS utils_dfs_bw_reduced_channel(
 		return status;
 	}
 
-	ch_state = reg_get_channel_state(pdev, dfs->dfs_curchan->dfs_ch_ieee);
+	ch_state = wlan_reg_get_channel_state(pdev,
+					      dfs->dfs_curchan->dfs_ch_ieee);
 
 	if (ch_state == CHANNEL_STATE_DFS ||
 	    ch_state == CHANNEL_STATE_ENABLE) {

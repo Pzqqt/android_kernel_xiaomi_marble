@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -27,6 +27,7 @@
 
 #include "wlan_dfs_ucfg_api.h"
 #include "wlan_reg_services_api.h"
+#include <wlan_objmgr_vdev_obj.h>
 
 /* Add channel to nol */
 #define DFS_NOL_SET                  1

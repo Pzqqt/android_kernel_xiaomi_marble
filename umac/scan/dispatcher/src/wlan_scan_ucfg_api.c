@@ -37,6 +37,7 @@
 #include <wlan_pmo_obj_mgmt_api.h>
 #endif
 #ifdef WLAN_POLICY_MGR_ENABLE
+#include <wlan_objmgr_vdev_obj.h>
 #include <wlan_dfs_utils_api.h>
 #include <wlan_policy_mgr_api.h>
 #endif

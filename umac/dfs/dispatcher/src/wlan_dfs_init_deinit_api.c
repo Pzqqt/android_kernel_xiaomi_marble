@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -23,6 +23,7 @@
 
 #include "wlan_dfs_ucfg_api.h"
 #include "wlan_dfs_tgt_api.h"
+#include <wlan_objmgr_vdev_obj.h>
 #include "wlan_dfs_utils_api.h"
 #ifndef QCA_MCL_DFS_SUPPORT
 #include "ieee80211_mlme_dfs_interface.h"
