@@ -2682,8 +2682,6 @@ struct hdd_config {
 	uint32_t nInitialDwellTime;     /* in units of milliseconds */
 	bool initial_scan_no_dfs_chnl;
 
-	uint8_t nRssiFilterPeriod;
-
 	uint8_t wow_data_inactivity_timeout;
 
 	uint32_t DelayedTriggerFrmInt;
