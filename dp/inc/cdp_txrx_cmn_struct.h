@@ -491,7 +491,7 @@ enum connectivity_stats_pkt_status {
 };
 
 /**
- * cdp_mgmt_tx_cb - tx management delivery notification
+ * ol_txrx_mgmt_tx_cb - tx management delivery notification
  * callback function
  */
 typedef void
@@ -631,6 +631,12 @@ typedef int (*ol_txrx_mcast_me_fp)(ol_osif_vdev_handle vdev,
 typedef void (*ol_txrx_stats_callback)(void *ctxt,
 				       enum htt_cmn_dbg_stats_type type,
 				       uint8_t *buf, int bytes);
+
+/**
+ * ol_txrx_pktdump_cb - callback for packet dump feature
+ */
+typedef void (*ol_txrx_pktdump_cb)(qdf_nbuf_t netbuf, uint8_t status,
+				   uint8_t vdev_id, uint8_t type);
 
 /**
  * ol_txrx_ops - (pointers to) the functions used for tx and rx

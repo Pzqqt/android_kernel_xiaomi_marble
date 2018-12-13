@@ -570,4 +570,51 @@ static inline int cdp_get_num_rx_contexts(ol_txrx_soc_handle soc)
 
 	return 0;
 }
+
+/**
+ * cdp_register_packetdump_cb() - API to register packetdump callback
+ *
+ * Register TX/RX callback for data packets, during connection. And per packet
+ * stats will be passed to user-space by @tx_cb/@rx_cb.
+ *
+ * @soc: soc handle
+ * @tx_cb: tx packet callback
+ * @rx_cb: rx packet callback
+ *
+ * Return: void
+ */
+static inline void cdp_register_packetdump_cb(ol_txrx_soc_handle soc,
+					      ol_txrx_pktdump_cb tx_cb,
+					      ol_txrx_pktdump_cb rx_cb)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->misc_ops->register_pktdump_cb)
+		return soc->ops->misc_ops->register_pktdump_cb(tx_cb, rx_cb);
+}
+
+/**
+ * cdp_deregister_packetdump_cb() - API to unregister packetdump callback
+ *
+ * Deregister callback for TX/RX data packets.
+ *
+ * @soc: soc handle
+ *
+ * Return: void
+ */
+static inline void cdp_deregister_packetdump_cb(ol_txrx_soc_handle soc)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->misc_ops->unregister_pktdump_cb)
+		return soc->ops->misc_ops->unregister_pktdump_cb();
+}
 #endif /* _CDP_TXRX_MISC_H_ */
