@@ -1432,28 +1432,6 @@ enum hdd_dot11_mode {
 /* WMM configuration */
 /*
  * <ini>
- * ImplicitQosIsEnabled - Enableimplicit QOS
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable implicit QOS.
- *
- * Related: None.
- *
- * Supported Feature: WMM
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_QOS_IMPLICIT_SETUP_ENABLED_NAME             "ImplicitQosIsEnabled"
-#define CFG_QOS_IMPLICIT_SETUP_ENABLED_MIN              (0)
-#define CFG_QOS_IMPLICIT_SETUP_ENABLED_MAX              (1)
-#define CFG_QOS_IMPLICIT_SETUP_ENABLED_DEFAULT          (0)
-
-/*
- * <ini>
  * DelayedTriggerFrmInt - UAPSD delay interval
  * @Min: 1
  * @Max: 4294967295
