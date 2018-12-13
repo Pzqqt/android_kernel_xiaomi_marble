@@ -1579,13 +1579,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_MTRACE_DEFAULT    (0)
 #endif
 
-#define HDD_MCASTBCASTFILTER_FILTER_NONE                       0x00
-#define HDD_MCASTBCASTFILTER_FILTER_ALL_MULTICAST              0x01
-#define HDD_MCASTBCASTFILTER_FILTER_ALL_BROADCAST              0x02
-#define HDD_MCASTBCASTFILTER_FILTER_ALL_MULTICAST_BROADCAST    0x03
-#define HDD_MULTICAST_FILTER_LIST                              0x04
-#define HDD_MULTICAST_FILTER_LIST_CLEAR                        0x05
-
 /*
  * <ini>
  * gEnableSNRMonitoring - Enables SNR Monitoring
