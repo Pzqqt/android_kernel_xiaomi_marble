@@ -7463,6 +7463,22 @@ static struct snd_soc_dai_link msm_spdif_be_dai_links[] = {
 	},
 };
 
+static struct snd_soc_dai_link msm_afe_rxtx_lb_be_dai_link[] = {
+	{
+		.name = LPASS_BE_AFE_LOOPBACK_TX,
+		.stream_name = "AFE Loopback Capture",
+		.cpu_dai_name = "msm-dai-q6-dev.24577",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-tx",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_AFE_LOOPBACK_TX,
+		.ignore_pmdown_time = 1,
+		.ignore_suspend = 1,
+	},
+};
+
 static struct snd_soc_dai_link msm_qcs405_dai_links[
 			 ARRAY_SIZE(msm_common_dai_links) +
 			 ARRAY_SIZE(msm_common_misc_fe_dai_links) +
@@ -7474,7 +7490,8 @@ static struct snd_soc_dai_link msm_qcs405_dai_links[
 			 ARRAY_SIZE(msm_va_cdc_dma_be_dai_links) +
 			 ARRAY_SIZE(msm_wsa_cdc_dma_be_dai_links) +
 			 ARRAY_SIZE(msm_bolero_fe_dai_links) +
-			 ARRAY_SIZE(msm_spdif_be_dai_links)];
+			 ARRAY_SIZE(msm_spdif_be_dai_links) +
+			 ARRAY_SIZE(msm_afe_rxtx_lb_be_dai_link)];
 
 static int msm_snd_card_tasha_late_probe(struct snd_soc_card *card)
 {
@@ -7724,6 +7741,7 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 	uint32_t tasha_codec = 0, auxpcm_audio_intf = 0;
 	uint32_t va_bolero_codec = 0, wsa_bolero_codec = 0, mi2s_audio_intf = 0;
 	uint32_t spdif_audio_intf = 0, wcn_audio_intf = 0;
+	uint32_t afe_loopback_intf = 0;
 	const struct of_device_id *match;
 	char __iomem *spdif_cfg, *spdif_pin_ctl;
 	int rc = 0;
@@ -7879,6 +7897,20 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 				sizeof(msm_wcn_be_dai_links));
 				total_links +=
 				ARRAY_SIZE(msm_wcn_be_dai_links);
+			}
+		}
+		rc = of_property_read_u32(dev->of_node, "qcom,afe-rxtx-lb",
+					  &afe_loopback_intf);
+		if (rc) {
+			dev_dbg(dev, "%s: No DT match AFE loopback audio interface\n",
+				__func__);
+		} else {
+			if (afe_loopback_intf) {
+				memcpy(msm_qcs405_dai_links + total_links,
+				msm_afe_rxtx_lb_be_dai_link,
+				sizeof(msm_afe_rxtx_lb_be_dai_link));
+				total_links +=
+				ARRAY_SIZE(msm_afe_rxtx_lb_be_dai_link);
 			}
 		}
 		dailink = msm_qcs405_dai_links;
