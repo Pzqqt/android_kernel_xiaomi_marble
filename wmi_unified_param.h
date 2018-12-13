@@ -5269,6 +5269,7 @@ typedef enum {
 	wmi_service_new_htt_msg_format,
 	wmi_service_peer_unmap_cnf_support,
 	wmi_service_beacon_reception_stats,
+	wmi_service_vdev_latency_config,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF
