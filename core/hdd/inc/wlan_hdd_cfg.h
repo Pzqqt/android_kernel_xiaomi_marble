@@ -2724,8 +2724,6 @@ struct hdd_config {
 	uint32_t ibssTxSpEndInactivityTime;
 	uint32_t ibssPsWarmupTime;
 	uint32_t ibssPs1RxChainInAtimEnable;
-	uint32_t IpaConfig;
-	bool IpaClkScalingEnable;
 	bool fRegChangeDefCountry;
 	bool advertiseConcurrentOperation;
 
