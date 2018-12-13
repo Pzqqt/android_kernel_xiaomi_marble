@@ -3449,7 +3449,6 @@ struct hdd_config {
 	uint32_t mawc_nlo_exp_backoff_ratio;
 	uint32_t mawc_nlo_init_scan_interval;
 	uint32_t mawc_nlo_max_scan_interval;
-	enum pmo_auto_pwr_detect_failure_mode auto_pwr_save_fail_mode;
 	bool enable_11d_in_world_mode;
 	/* 5G preference parameters for boosting RSSI */
 	bool                        enable_5g_band_pref;
@@ -3463,9 +3462,6 @@ struct hdd_config {
 	bool enable_lprx;
 	uint32_t scan_11d_interval;
 	bool is_bssid_hint_priority;
-#ifdef WLAN_FEATURE_PACKET_FILTERING
-	uint8_t packet_filters_bitmap;
-#endif
 #ifdef WLAN_FEATURE_SAE
 	bool is_sae_enabled;
 #endif
