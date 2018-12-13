@@ -11957,7 +11957,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_PEER_UNMAP_RESPONSE_SUPPORT;
 	wmi_service[wmi_service_beacon_reception_stats] =
 			WMI_SERVICE_BEACON_RECEPTION_STATS;
-
+	wmi_service[wmi_service_vdev_latency_config] =
+			WMI_SERVICE_VDEV_LATENCY_CONFIG;
 }
 
 #ifndef CONFIG_MCL
