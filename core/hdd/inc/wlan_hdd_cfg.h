@@ -1638,52 +1638,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * gEnableRXSTBC - Enables/disables Rx STBC capability in STA mode
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to set default Rx STBC capability
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_RX_STBC                       "gEnableRXSTBC"
-#define CFG_ENABLE_RX_STBC_MIN                   (0)
-#define CFG_ENABLE_RX_STBC_MAX                   (1)
-#define CFG_ENABLE_RX_STBC_DEFAULT               (1)
-
-/*
- * <ini>
- * gEnableTXSTBC - Enables/disables Tx STBC capability in STA mode
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to set default Tx STBC capability
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_TX_STBC                       "gEnableTXSTBC"
-#define CFG_ENABLE_TX_STBC_MIN                   (0)
-#define CFG_ENABLE_TX_STBC_MAX                   (1)
-#define CFG_ENABLE_TX_STBC_DEFAULT               (0)
-
-/*
- * <ini>
  * gEnableSNRMonitoring - Enables SNR Monitoring
  * @Min: 0
  * @Max: 1
