@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4850,6 +4850,8 @@ QDF_STATUS reg_save_new_11d_country(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *country)
 {
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	struct wlan_lmac_if_reg_tx_ops *tx_ops;
+	struct set_country country_code;
 	uint8_t pdev_id;
 
 	psoc_priv_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
@@ -4863,6 +4865,19 @@ QDF_STATUS reg_save_new_11d_country(struct wlan_objmgr_psoc *psoc,
 
 	pdev_id = psoc_priv_obj->def_pdev_id;
 	psoc_priv_obj->new_11d_ctry_pending[pdev_id] = true;
+	qdf_mem_copy(country_code.country, country, REG_ALPHA2_LEN + 1);
+	country_code.pdev_id = pdev_id;
+
+	if (psoc_priv_obj->offload_enabled) {
+		tx_ops = reg_get_psoc_tx_ops(psoc);
+		if (tx_ops->set_country_code) {
+			tx_ops->set_country_code(psoc, &country_code);
+		} else {
+			reg_err("country set handler is not present");
+			psoc_priv_obj->new_11d_ctry_pending[pdev_id] = false;
+			return QDF_STATUS_E_FAULT;
+		}
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
