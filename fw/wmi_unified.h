@@ -671,7 +671,9 @@ typedef enum {
     /** Enable or Disable Fast Initial Link Setup (FILS) feature */
     WMI_ENABLE_FILS_CMDID,
     /** Request for roam scan stats */
-  WMI_REQUEST_ROAM_SCAN_STATS_CMDID,
+    WMI_REQUEST_ROAM_SCAN_STATS_CMDID,
+    /** Configure BSS load parameters for roam trigger */
+    WMI_ROAM_BSS_LOAD_CONFIG_CMDID,
 
     /** offload scan specific commands */
     /** set offload scan AP profile   */
@@ -1441,7 +1443,9 @@ typedef enum {
     /** roam synch frame event */
     WMI_ROAM_SYNCH_FRAME_EVENTID,
     /** various roam scan stats */
-  WMI_ROAM_SCAN_STATS_EVENTID,
+    WMI_ROAM_SCAN_STATS_EVENTID,
+    /** Blacklisted AP information event */
+    WMI_ROAM_BLACKLIST_EVENTID,
 
     /** P2P disc found */
     WMI_P2P_DISC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_P2P),
@@ -11227,7 +11231,9 @@ typedef struct {
  *  BIT 1-2   : Action on non matching candidate with cache. Used WMI_ROAM_BTM_OFLD_NON_MATCHING_CND_XXX
  *  BIT 3-5   : Roaming handoff decisions. Use WMI_ROAM_BTM_OFLD_CNDS_MATCH_XXX
  *  BIT 6     : Enable/Disable solicited BTM
- *  BIT 7-31  : Reserved
+ *  BIT 7     : Roam BTM candidates based on the roam score instead of BTM preferred value
+ *  BIT 8     : BTM query preference over 11k neighbor report request
+ *  BIT 9-31  : Reserved
  */
 #define WMI_ROAM_BTM_SET_ENABLE(flags, val)                    WMI_SET_BITS(flags, 0, 1, val)
 #define WMI_ROAM_BTM_GET_ENABLE(flags)                         WMI_GET_BITS(flags, 0, 1)
@@ -11237,6 +11243,10 @@ typedef struct {
 #define WMI_ROAM_BTM_GET_CNDS_MATCH_CONDITION(flags)           WMI_GET_BITS(flags, 3, 3)
 #define WMI_ROAM_BTM_SET_SOLICITED_BTM_ENABLE(flags, val)      WMI_SET_BITS(flags, 6, 1, val)
 #define WMI_ROAM_BTM_GET_SOLICITED_BTM_ENABLE(flags)           WMI_GET_BITS(flags, 6, 1)
+#define WMI_ROAM_BTM_SET_CNDS_SELECT_BASED_ON_SCORE(flags)     WMI_SET_BITS(flags, 7, 1, val)
+#define WMI_ROAM_BTM_GET_CNDS_SELECT_BASED_ON_SCORE(flags)     WMI_GET_BITS(flags, 7, 1)
+#define WMI_ROAM_BTM_SET_BTM_QUERY_PREFERENCE_OVER_11K(flags)  WMI_SET_BITS(flags, 8, 1, val)
+#define WMI_ROAM_BTM_GET_BTM_QUERY_PREFERENCE_OVER_11K(flags)  WMI_GET_BITS(flags, 8, 1)
 
 /** WMI_ROAM_BTM_SET_NON_MATCHING_CNDS_ACTION definition: When BTM candidate is not matched with cache by WMI_ROAM_BTM_SET_CNDS_MATCH_CONDITION, determine what to do */
 #define WMI_ROAM_BTM_NON_MATCHING_CNDS_SCAN_CONSUME      0 /** Invoke roam scan and consume within firmware. Applicable only when ROAM_SCAN_MODE is enabled. If ROAM_SCAN_MODE is disabled, firmware won't scan and forward it to host */
@@ -11273,6 +11283,14 @@ typedef struct {
      *  Default value: 300 will be set if invalid value is given
      */
      A_UINT32 stick_time_seconds;
+    /*  Disassoc time threshold in milli seconds
+     *  This time threshold allows the target to judge whether the STA
+     *  should can move to another AP immediately, or if the STA has time
+     *  to calculate roaming candidates.
+     *  If the disassoc_timer_threshold value is 0x0, the field should be
+     *  disregarded.
+     */
+    A_UINT32 disassoc_timer_threshold;
 } wmi_btm_config_fixed_param;
 
 #define WMI_ROAM_5G_BOOST_PENALIZE_ALGO_FIXED  0x0
@@ -11603,6 +11621,8 @@ typedef struct {
     nss_scoring :- NSS scoring percentage information.
     esp_qbss_scoring :- ESP/QBSS scoring percentage information
     oce_wan_scoring : OCE WAN metrics percentage information
+    roam_score_delta_pcnt :- consider scanned AP as roam eligible candidate only if scanned AP score is at least roam_score_delta % better than connected AP score
+    roam_score_delta_mask :- roam trigger bitmap for which roam_score_delta needs to apply. The WMI_ROAM_TRIGGER_REASON_ID enum values identify which bit within the mask is used for which roam trigger cause.
 */
 typedef struct {
     A_UINT32 tlv_header;     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_cnd_scoring_param */
@@ -11624,6 +11644,8 @@ typedef struct {
     wmi_roam_cnd_nss_scoring nss_scoring;
     wmi_roam_cnd_esp_qbss_scoring esp_qbss_scoring;
     wmi_roam_cnd_oce_wan_scoring oce_wan_scoring;
+    A_UINT32 roam_score_delta_pcnt;
+    A_UINT32 roam_score_delta_mask;
 } wmi_roam_cnd_scoring_param;
 
 /** To match an open AP, the rs_authmode should be set to WMI_AUTH_NONE
@@ -11878,6 +11900,7 @@ typedef struct {
     A_UINT32 handoff_delay_for_rx; /* In msec. Delay Hand-Off by this duration to receive pending Rx frames from current BSS */
     A_UINT32 max_mlme_sw_retries; /* maximum number of software retries for preauth and reassoc req */
     A_UINT32 no_ack_timeout; /* In msec. duration to wait before another SW retry made if no ack seen for previous frame */
+    A_UINT32 roam_candidate_validity_time; /* In msec. validity duration of each entry in roam cache.  If the value is 0x0, this field should be disregarded. */
 } wmi_roam_offload_tlv_param;
 
 
@@ -11937,6 +11960,27 @@ typedef struct {
     A_UINT32 krk[ROAM_OFFLOAD_KRK_BYTES>>2]; /* KRK offload. As this 4 byte aligned, we don't declare it as tlv array */
     A_UINT32 btk[ROAM_OFFLOAD_BTK_BYTES>>2]; /* BTK offload. As this 4 byte aligned, we don't declare it as tlv array */
 } wmi_roam_ese_offload_tlv_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_blacklist_with_timeout_tlv_param */
+    A_UINT32 tlv_header;
+    /** Blaclisted AP mac address */
+    wmi_mac_addr bssid;
+    /** How much time in milli seconds to keep AP in blacklist */
+    A_UINT32 timeout;
+} wmi_roam_blacklist_with_timeout_tlv_param;
+
+/** WMI_ROAM_BLACKLIST_EVENT: generated whenever STA needs to move AP to blacklist for a particluar time
+ *  Ex: AP which sends BTM request with disassoc imminent is set should be
+ *  moved to blacklist until disassociation timer expires
+ */
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_blacklist_event_fixed_param */
+    A_UINT32 vdev_id;
+    /* This TLV is followed by further TLVs:
+     *     wmi_roam_blacklist_with_timeout_tlv_param blacklist_with_timeout[]
+     */
+} wmi_roam_blacklist_event_fixed_param;
 
 /** WMI_ROAM_EVENT: roam event triggering the host roam logic.
  * generated when ever a better AP is found in the recent roam scan (or)
@@ -12147,7 +12191,7 @@ enum {
 #define WMI_ROAM_LCA_DISALLOW_SOURCE_FORCED     0x100
 
 typedef struct {
-    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_rssi_rejection_oce_config_param */
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_rejection_list_config_param */
     A_UINT32 tlv_header;
      /** BSSID of AP, who reject (re-)assoc due to low RSSI */
     wmi_mac_addr bssid;
@@ -12155,7 +12199,8 @@ typedef struct {
     A_UINT32 remaining_disallow_duration;
    /** AP will be allowed for candidate, when AP RSSI better than expected RSSI units in dBm */
     A_INT32 requested_rssi;
-} wmi_roam_rssi_rejection_oce_config_param;
+} wmi_roam_rejection_list_config_param;
+typedef wmi_roam_rejection_list_config_param wmi_roam_rssi_rejection_oce_config_param; /* retain old struct name as an alias for the new name */
 
 typedef struct {
     A_UINT32 tlv_header;     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_filter_list_fixed_param */
@@ -12174,7 +12219,7 @@ typedef struct {
      *     wmi_mac_addr bssid_preferred_list[];
      *     A_UINT32 bssid_preferred_factor[];
      *     wmi_roam_lca_disallow_config_tlv_param lca_disallow_param[0/1] (opt)
-     *     wmi_roam_rssi_rejection_oce_config_param rssi_rejection_list[]
+     *     wmi_roam_rejection_list_config_param rssi_rejection_list[]
      */
 } wmi_roam_filter_fixed_param;
 
@@ -22818,6 +22863,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_SET_CURRENT_COUNTRY_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_GET_BCN_RECEPTION_STATS_CMDID);
         WMI_RETURN_STRING(WMI_PEER_TX_PN_REQUEST_CMDID);
+        WMI_RETURN_STRING(WMI_ROAM_BSS_LOAD_CONFIG_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -23823,6 +23869,7 @@ typedef enum {
     WMI_ROAM_TRIGGER_REASON_FORCED,
     WMI_ROAM_TRIGGER_REASON_BTM,
     WMI_ROAM_TRIGGER_REASON_UNIT_TEST,
+    WMI_ROAM_TRIGGER_REASON_BSS_LOAD,
     WMI_ROAM_TRIGGER_REASON_MAX,
 } WMI_ROAM_TRIGGER_REASON_ID;
 
@@ -23849,6 +23896,18 @@ typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_request_roam_scan_stats_cmd_fixed_param */
     A_UINT32 vdev_id;
 } wmi_request_roam_scan_stats_cmd_fixed_param;
+
+/** BSS load configuration parameters for roam trigger */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_bss_load_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    /** Minimum number of beacons to be consider for calculating average AP BSS load within time monitor_time_window */
+    A_UINT32 beacons_min_count;
+    /** Monitor time window in seconds */
+    A_UINT32 monitor_time_window;
+    /** BSS load threshold after which roam scan should trigger */
+    A_UINT32 bss_load_threshold;
+} wmi_roam_bss_load_config_cmd_fixed_param;
 
 typedef struct {
     /*

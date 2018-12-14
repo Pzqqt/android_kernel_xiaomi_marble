@@ -839,6 +839,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_roam_lca_disallow_config_tlv_param,
     WMITLV_TAG_STRUC_wmi_vdev_limit_offchan_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_rssi_rejection_oce_config_param,
+    WMITLV_TAG_STRUC_wmi_roam_rejection_list_config_param = /* alias */
+        WMITLV_TAG_STRUC_wmi_roam_rssi_rejection_oce_config_param,
     WMITLV_TAG_STRUC_wmi_unit_test_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_fils_offload_tlv_param,
     WMITLV_TAG_STRUC_wmi_pdev_update_pmk_cache_cmd_fixed_param,
@@ -951,6 +953,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_tlv_arrays_len_param,
     WMITLV_TAG_STRUC_wmi_peer_unmap_response_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_csc_switch_count_status_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_bss_load_config_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_blacklist_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1341,6 +1345,7 @@ typedef enum {
     OP(WMI_VDEV_GET_BCN_RECEPTION_STATS_CMDID) \
     OP(WMI_PEER_TX_PN_REQUEST_CMDID) \
     OP(WMI_PEER_UNMAP_RESPONSE_CMDID) \
+    OP(WMI_ROAM_BSS_LOAD_CONFIG_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1556,6 +1561,7 @@ typedef enum {
     OP(WMI_VDEV_BCN_RECEPTION_STATS_EVENTID) \
     OP(WMI_PEER_TX_PN_RESPONSE_EVENTID) \
     OP(WMI_PDEV_CSC_SWITCH_COUNT_STATUS_EVENTID) \
+    OP(WMI_ROAM_BLACKLIST_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -2967,6 +2973,16 @@ WMITLV_CREATE_PARAM_STRUC(WMI_LPI_STOP_SCAN_CMDID);
 
 WMITLV_CREATE_PARAM_STRUC(WMI_REQUEST_ROAM_SCAN_STATS_CMDID);
 
+/* BSS load parameters for roam trigger */
+#define WMITLV_TABLE_WMI_ROAM_BSS_LOAD_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_bss_load_config_cmd_fixed_param, wmi_roam_bss_load_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_BSS_LOAD_CONFIG_CMDID);
+
+#define WMITLV_TABLE_WMI_ROAM_BLACKLIST_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_blacklist_event_fixed_param, wmi_roam_blacklist_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_blacklist_with_timeout_tlv_param, blacklist_with_timeout, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_BLACKLIST_EVENTID);
+
 #define WMITLV_TABLE_WMI_LPI_RESULT_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_lpi_result_event_fixed_param, wmi_lpi_result_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
@@ -3314,7 +3330,7 @@ WMITLV_CREATE_PARAM_STRUC(WMI_DCC_UPDATE_NDL_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_FIXED_STRUC, wmi_mac_addr, bssid_preferred_list, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, bssid_preferred_factor, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_lca_disallow_config_tlv_param, lca_disallow_param, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_rssi_rejection_oce_config_param, rssi_rejection_list, WMITLV_SIZE_VAR)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_roam_rejection_list_config_param, rssi_rejection_list, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_FILTER_CMDID);
 
 /* TSF timestamp action cmd */
