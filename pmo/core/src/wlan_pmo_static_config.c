@@ -352,7 +352,17 @@ void pmo_register_wow_default_patterns(struct wlan_objmgr_vdev *vdev)
 			  vdev_id);
 		pmo_configure_wow_sta(vdev);
 		psoc_ctx = vdev_ctx->pmo_psoc_ctx;
-		if (psoc_ctx && psoc_ctx->psoc_cfg.ra_ratelimit_enable) {
+		if (!psoc_ctx) {
+			pmo_err("PMO PSOC Context is NULL!");
+			return;
+		}
+
+		/*
+		 * No need for configuring RA filter while APF is enabled, since
+		 * APF internally handles RA filtering.
+		 */
+		if (psoc_ctx->psoc_cfg.ra_ratelimit_enable &&
+		    !pmo_intersect_apf(psoc_ctx)) {
 			pmo_debug("Config STA RA wow pattern vdev_id %d",
 				  vdev_id);
 			pmo_tgt_send_ra_filter_req(vdev);
