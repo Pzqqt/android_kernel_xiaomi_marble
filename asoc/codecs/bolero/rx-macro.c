@@ -3384,9 +3384,8 @@ static int rx_macro_init(struct snd_soc_component *component)
 	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX2_RX_PATH_CFG3,
 				0x03, 0x02);
 
-	rx_macro_init_bcl_pmic_reg(component);
-
 	rx_priv->component = component;
+	rx_macro_init_bcl_pmic_reg(component);
 
 	return 0;
 }
