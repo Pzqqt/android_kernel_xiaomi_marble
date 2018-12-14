@@ -790,14 +790,15 @@ void policy_mgr_restore_deleted_conn_info(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	conn_index = policy_mgr_get_connection_count(psoc);
 	if (MAX_NUMBER_OF_CONC_CONNECTIONS <= conn_index) {
+		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 		policy_mgr_err("Failed to restore the deleted information %d/%d",
 			conn_index, MAX_NUMBER_OF_CONC_CONNECTIONS);
 		return;
 	}
 
-	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	qdf_mem_copy(&pm_conc_connection_list[conn_index], info,
 			num_cxn_del * sizeof(*info));
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
@@ -1245,31 +1246,14 @@ void policy_mgr_dump_current_concurrency(struct wlan_objmgr_psoc *psoc)
 	return;
 }
 
-/**
- * policy_mgr_pdev_set_pcl() - Sets PCL to FW
- * @mode: adapter mode
- *
- * Fetches the PCL and sends the PCL to SME
- * module which in turn will send the WMI
- * command WMI_PDEV_SET_PCL_CMDID to the fw
- *
- * Return: None
- */
-void policy_mgr_pdev_set_pcl(struct wlan_objmgr_psoc *psoc,
-				enum QDF_OPMODE mode)
+QDF_STATUS policy_mgr_pdev_get_pcl(struct wlan_objmgr_psoc *psoc,
+				   enum QDF_OPMODE mode,
+				   struct policy_mgr_pcl_list *pcl)
 {
 	QDF_STATUS status;
 	enum policy_mgr_con_mode con_mode;
-	struct policy_mgr_pcl_list pcl;
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("Invalid Context");
-		return;
-	}
-
-	pcl.pcl_len = 0;
+	pcl->pcl_len = 0;
 
 	switch (mode) {
 	case QDF_STA_MODE:
@@ -1289,24 +1273,18 @@ void policy_mgr_pdev_set_pcl(struct wlan_objmgr_psoc *psoc,
 		break;
 	default:
 		policy_mgr_err("Unable to set PCL to FW: %d", mode);
-		return;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	policy_mgr_debug("get pcl to set it to the FW");
 
 	status = policy_mgr_get_pcl(psoc, con_mode,
-			pcl.pcl_list, &pcl.pcl_len,
-			pcl.weight_list, QDF_ARRAY_SIZE(pcl.weight_list));
-	if (status != QDF_STATUS_SUCCESS) {
-		policy_mgr_err("Unable to set PCL to FW, Get PCL failed");
-		return;
-	}
-
-	status = pm_ctx->sme_cbacks.sme_pdev_set_pcl(&pcl);
+			pcl->pcl_list, &pcl->pcl_len,
+			pcl->weight_list, QDF_ARRAY_SIZE(pcl->weight_list));
 	if (status != QDF_STATUS_SUCCESS)
-		policy_mgr_err("Send soc set PCL to SME failed");
-	else
-		policy_mgr_debug("Set PCL to FW for mode:%d", mode);
+		policy_mgr_err("Unable to set PCL to FW, Get PCL failed");
+
+	return status;
 }
 
 /**
@@ -1320,11 +1298,13 @@ void policy_mgr_pdev_set_pcl(struct wlan_objmgr_psoc *psoc,
 void policy_mgr_set_pcl_for_existing_combo(
 		struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode)
 {
+	QDF_STATUS status;
 	struct policy_mgr_conc_connection_info
 			info[MAX_NUMBER_OF_CONC_CONNECTIONS] = { {0} };
 	enum QDF_OPMODE pcl_mode;
 	uint8_t num_cxn_del = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct policy_mgr_pcl_list pcl;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -1337,18 +1317,24 @@ void policy_mgr_set_pcl_for_existing_combo(
 		return;
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	if (policy_mgr_mode_specific_connection_count(psoc, mode, NULL) > 0) {
+		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 		/* Check, store and temp delete the mode's parameter */
 		policy_mgr_store_and_del_conn_info(psoc, mode, false,
 						info, &num_cxn_del);
-		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 		/* Set the PCL to the FW since connection got updated */
-		policy_mgr_pdev_set_pcl(psoc, pcl_mode);
+		status = policy_mgr_pdev_get_pcl(psoc, pcl_mode, &pcl);
 		policy_mgr_debug("Set PCL to FW for mode:%d", mode);
-		qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 		/* Restore the connection info */
 		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
+
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			status = pm_ctx->sme_cbacks.sme_pdev_set_pcl(&pcl);
+			if (QDF_IS_STATUS_ERROR(status))
+				policy_mgr_err("Send set PCL to SME failed");
+		}
+	} else {
+		qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 	}
-	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 }
 
 static uint32_t pm_get_vdev_id_of_first_conn_idx(struct wlan_objmgr_psoc *psoc)
