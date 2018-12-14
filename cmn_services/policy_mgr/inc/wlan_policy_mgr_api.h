@@ -2014,6 +2014,19 @@ QDF_STATUS policy_mgr_register_wma_cb(struct wlan_objmgr_psoc *psoc,
 		struct policy_mgr_wma_cbacks *wma_cbacks);
 
 /**
+ * policy_mgr_find_if_fw_supports_dbs() - to find if FW/HW supports DBS
+ * @psoc: PSOC object information
+ *
+ * This API checks if legacy service ready event contains DBS or no.
+ * This API doesn't check service ready extension which contains actual
+ * hw mode list that tells if all supported HW modes' caps.
+ *
+ * Return: true (if service ready indication supports DBS or no) else false
+ *
+ */
+bool policy_mgr_find_if_fw_supports_dbs(struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_is_dbs_enable() - Check if master DBS control is enabled
  * @psoc: PSOC object information
  * Checks if the master DBS control is enabled. This will be used
