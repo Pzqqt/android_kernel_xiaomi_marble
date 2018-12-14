@@ -5523,11 +5523,13 @@ static int __iw_setchar_getnone(struct net_device *dev,
 	switch (sub_cmd) {
 	case WE_WOWL_ADD_PTRN:
 		hdd_debug("ADD_PTRN");
-		hdd_add_wowl_ptrn(adapter, str_arg);
+		if (!hdd_add_wowl_ptrn(adapter, str_arg))
+			return -EINVAL;
 		break;
 	case WE_WOWL_DEL_PTRN:
 		hdd_debug("DEL_PTRN");
-		hdd_del_wowl_ptrn(adapter, str_arg);
+		if (!hdd_del_wowl_ptrn(adapter, str_arg))
+			return -EINVAL;
 		break;
 	case WE_NEIGHBOR_REPORT_REQUEST:
 	{

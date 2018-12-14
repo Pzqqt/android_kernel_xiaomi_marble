@@ -107,6 +107,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 	uint8_t sessionId = adapter->session_id;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	uint8_t num_filters;
+	bool invalid_ptrn = false;
 
 	status = hdd_get_num_wow_filters(hdd_ctx, &num_filters);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -127,11 +128,13 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 				continue;
 			}
 
-			if (!memcmp(ptrn, g_hdd_wowl_ptrns[i], len)) {
-				hdd_err("WoWL pattern '%s' already configured",
-					g_hdd_wowl_ptrns[i]);
-				ptrn += len;
-				goto next_ptrn;
+			if (strlen(g_hdd_wowl_ptrns[i]) == len) {
+				if (!memcmp(ptrn, g_hdd_wowl_ptrns[i], len)) {
+					hdd_err("WoWL pattern '%s' already configured",
+						g_hdd_wowl_ptrns[i]);
+					ptrn += len;
+					goto next_ptrn;
+				}
 			}
 		}
 
@@ -145,6 +148,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		if (ptrn[2] != WOWL_INTRA_PTRN_TOKENIZER ||
 		    ptrn[5] != WOWL_INTRA_PTRN_TOKENIZER) {
 			hdd_err("Malformed pattern string. Skip!");
+			invalid_ptrn = true;
 			ptrn += len;
 			goto next_ptrn;
 		}
@@ -161,6 +165,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		    || localPattern.pattern_mask_size >
 		    WOWL_PTRN_MASK_MAX_SIZE) {
 			hdd_err("Invalid length specified. Skip!");
+			invalid_ptrn = true;
 			ptrn += len;
 			goto next_ptrn;
 		}
@@ -170,6 +175,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		if ((offset >= len) ||
 		    (ptrn[offset] != WOWL_INTRA_PTRN_TOKENIZER)) {
 			hdd_err("Malformed pattern string..skip!");
+			invalid_ptrn = true;
 			ptrn += len;
 			goto next_ptrn;
 		}
@@ -179,6 +185,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		if (offset + 1 != len) {
 			/* offset begins with 0 */
 			hdd_err("Malformed pattern string...skip!");
+			invalid_ptrn = true;
 			ptrn += len;
 			goto next_ptrn;
 		}
@@ -243,6 +250,9 @@ next_ptrn:
 			break;
 		}
 	}
+
+	if (invalid_ptrn)
+		return false;
 
 	return true;
 }
