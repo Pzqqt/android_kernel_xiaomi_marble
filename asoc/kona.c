@@ -21,6 +21,7 @@
 #include <sound/info.h>
 #include <soc/snd_event.h>
 #include <dsp/audio_notifier.h>
+#include <soc/swr-common.h>
 #include <dsp/q6afe-v2.h>
 #include <dsp/q6core.h>
 #include "device_event.h"
@@ -31,6 +32,7 @@
 #include "codecs/bolero/bolero-cdc.h"
 #include <dt-bindings/sound/audio-codec-port-types.h>
 #include "codecs/bolero/wsa-macro.h"
+#include "sm8250-port-config.h"
 
 #define DRV_NAME "kona-asoc-snd"
 #define __CHIPSET__ "KONA "
@@ -3452,6 +3454,8 @@ static int msm_int_audrx_init(struct snd_soc_pcm_runtime *rtd)
 			wsa_macro_set_spkr_gain_offset(component,
 					WSA_MACRO_GAIN_OFFSET_M1P5_DB);
 		}
+		bolero_set_port_map(component, ARRAY_SIZE(sm_port_map),
+				    sm_port_map);
 	}
 	card = rtd->card->snd_card;
 	if (!pdata->codec_root) {
