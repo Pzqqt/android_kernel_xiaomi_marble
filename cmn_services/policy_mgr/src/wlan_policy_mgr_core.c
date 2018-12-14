@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1844,8 +1844,8 @@ void policy_mgr_set_weight_of_dfs_passive_channels_to_zero(
 	policy_mgr_debug("Set weight of DFS/passive channels to 0");
 
 	for (i = 0; i < orig_channel_count; i++) {
-		channel_state = reg_get_channel_state(pm_ctx->pdev,
-				pcl_channels[i]);
+		channel_state = wlan_reg_get_channel_state(pm_ctx->pdev,
+							   pcl_channels[i]);
 		if ((channel_state == CHANNEL_STATE_DISABLE) ||
 				(channel_state == CHANNEL_STATE_INVALID))
 			/* Set weight of inactive channels to 0 */
@@ -2789,14 +2789,14 @@ enum policy_mgr_conc_next_action
 	 */
 	switch (num_connections) {
 	case 1:
-		band1 = reg_chan_to_band(pm_conc_connection_list[0].chan);
+		band1 = wlan_reg_chan_to_band(pm_conc_connection_list[0].chan);
 		if (band1 == BAND_2G)
 			return PM_DBS;
 		else
 			return PM_NOP;
 	case 2:
-		band1 = reg_chan_to_band(pm_conc_connection_list[0].chan);
-		band2 = reg_chan_to_band(pm_conc_connection_list[1].chan);
+		band1 = wlan_reg_chan_to_band(pm_conc_connection_list[0].chan);
+		band2 = wlan_reg_chan_to_band(pm_conc_connection_list[1].chan);
 		if ((band1 == BAND_2G) ||
 			(band2 == BAND_2G)) {
 			if (!hw_mode.dbs_cap)
@@ -2821,9 +2821,9 @@ enum policy_mgr_conc_next_action
 		} else
 			return PM_NOP;
 	case 3:
-		band1 = reg_chan_to_band(pm_conc_connection_list[0].chan);
-		band2 = reg_chan_to_band(pm_conc_connection_list[1].chan);
-		band3 = reg_chan_to_band(pm_conc_connection_list[2].chan);
+		band1 = wlan_reg_chan_to_band(pm_conc_connection_list[0].chan);
+		band2 = wlan_reg_chan_to_band(pm_conc_connection_list[1].chan);
+		band3 = wlan_reg_chan_to_band(pm_conc_connection_list[2].chan);
 		if ((band1 == BAND_2G) ||
 			(band2 == BAND_2G) ||
 			(band3 == BAND_2G)) {
@@ -2912,8 +2912,8 @@ enum policy_mgr_conc_next_action
 		next_action = PM_NOP;
 		break;
 	case 2:
-		band1 = reg_chan_to_band(pm_conc_connection_list[0].chan);
-		band2 = reg_chan_to_band(pm_conc_connection_list[1].chan);
+		band1 = wlan_reg_chan_to_band(pm_conc_connection_list[0].chan);
+		band2 = wlan_reg_chan_to_band(pm_conc_connection_list[1].chan);
 		if ((band1 == band2) && (hw_mode.dbs_cap))
 			next_action = PM_SINGLE_MAC_UPGRADE;
 		else if ((band1 != band2) && (!hw_mode.dbs_cap))
@@ -2924,9 +2924,9 @@ enum policy_mgr_conc_next_action
 		break;
 
 	case 3:
-		band1 = reg_chan_to_band(pm_conc_connection_list[0].chan);
-		band2 = reg_chan_to_band(pm_conc_connection_list[1].chan);
-		band3 = reg_chan_to_band(pm_conc_connection_list[2].chan);
+		band1 = wlan_reg_chan_to_band(pm_conc_connection_list[0].chan);
+		band2 = wlan_reg_chan_to_band(pm_conc_connection_list[1].chan);
+		band3 = wlan_reg_chan_to_band(pm_conc_connection_list[2].chan);
 		if (((band1 == band2) && (band2 == band3)) &&
 				(hw_mode.dbs_cap)) {
 			next_action = PM_SINGLE_MAC_UPGRADE;

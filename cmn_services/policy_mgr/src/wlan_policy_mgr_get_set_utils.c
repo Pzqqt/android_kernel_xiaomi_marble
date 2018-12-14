@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3351,11 +3351,11 @@ void policy_mgr_trim_acs_channel_list(struct wlan_objmgr_psoc *psoc,
 				org_ch_list[i];
 		}
 	} else if (band_mask == 2) {
-		if ((reg_get_channel_state(pm_ctx->pdev, ch_5g) ==
+		if ((wlan_reg_get_channel_state(pm_ctx->pdev, ch_5g) ==
 			CHANNEL_STATE_DFS) &&
 		      policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc))
 			ch_list[ch_list_count++] = ch_5g;
-		else if (!(reg_get_channel_state(pm_ctx->pdev, ch_5g) ==
+		else if (!(wlan_reg_get_channel_state(pm_ctx->pdev, ch_5g) ==
 			CHANNEL_STATE_DFS))
 			ch_list[ch_list_count++] = ch_5g;
 		for (i = 0; i < *org_ch_list_count; i++) {
@@ -3530,7 +3530,7 @@ bool policy_mgr_is_valid_for_channel_switch(struct wlan_objmgr_psoc *psoc,
 	sap_count = policy_mgr_mode_specific_connection_count(psoc,
 							      PM_SAP_MODE,
 							      NULL);
-	state = reg_get_channel_state(pm_ctx->pdev, channel);
+	state = wlan_reg_get_channel_state(pm_ctx->pdev, channel);
 
 	policy_mgr_debug("sta_sap_scc_on_dfs_chan %u, sap_count %u, channel %u, state %u",
 			 sta_sap_scc_on_dfs_chan, sap_count, channel, state);

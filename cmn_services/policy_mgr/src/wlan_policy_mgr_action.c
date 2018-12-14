@@ -1489,8 +1489,9 @@ QDF_STATUS policy_mgr_valid_sap_conc_channel_check(
 		    wlan_reg_is_passive_or_disable_ch(pm_ctx->pdev, channel) ||
 		    !(policy_mgr_sta_sap_scc_on_lte_coex_chan(psoc) ||
 		      policy_mgr_is_safe_channel(psoc, channel)) ||
-		    (!reg_is_etsi13_srd_chan_allowed_master_mode(pm_ctx->pdev)
-		    && reg_is_etsi13_srd_chan(pm_ctx->pdev, channel))) {
+		    (!wlan_reg_is_etsi13_srd_chan_allowed_master_mode(
+								pm_ctx->pdev) &&
+		     wlan_reg_is_etsi13_srd_chan(pm_ctx->pdev, channel))) {
 			if (wlan_reg_is_dfs_ch(pm_ctx->pdev, channel) &&
 			    sta_sap_scc_on_dfs_chan) {
 				policy_mgr_debug("STA SAP SCC is allowed on DFS channel");
