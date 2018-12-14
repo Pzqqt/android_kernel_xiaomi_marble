@@ -1371,18 +1371,22 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_LFR3_ROAM_RSSI_CHANNEL_PENALIZATION);
 	lfr->lfr3_num_disallowed_aps =
 		cfg_get(psoc, CFG_LFR3_ROAM_NUM_DISALLOWED_APS);
-	lfr->rssi_boost_threshold_5g =
-		cfg_get(psoc, CFG_LFR_5G_RSSI_BOOST_THRESHOLD);
-	lfr->rssi_boost_factor_5g =
-		cfg_get(psoc, CFG_LFR_5G_RSSI_BOOST_FACTOR);
-	lfr->max_rssi_boost_5g =
-		cfg_get(psoc, CFG_LFR_5G_MAX_RSSI_BOOST);
-	lfr->rssi_penalize_threshold_5g =
-		cfg_get(psoc, CFG_LFR_5G_RSSI_PENALIZE_THRESHOLD);
-	lfr->rssi_penalize_factor_5g =
-		cfg_get(psoc, CFG_LFR_5G_RSSI_PENALIZE_FACTOR);
-	lfr->max_rssi_penalize_5g =
-		cfg_get(psoc, CFG_LFR_5G_MAX_RSSI_PENALIZE);
+
+	if (lfr->enable_5g_band_pref) {
+		lfr->rssi_boost_threshold_5g =
+			cfg_get(psoc, CFG_LFR_5G_RSSI_BOOST_THRESHOLD);
+		lfr->rssi_boost_factor_5g =
+			cfg_get(psoc, CFG_LFR_5G_RSSI_BOOST_FACTOR);
+		lfr->max_rssi_boost_5g =
+			cfg_get(psoc, CFG_LFR_5G_MAX_RSSI_BOOST);
+		lfr->rssi_penalize_threshold_5g =
+			cfg_get(psoc, CFG_LFR_5G_RSSI_PENALIZE_THRESHOLD);
+		lfr->rssi_penalize_factor_5g =
+			cfg_get(psoc, CFG_LFR_5G_RSSI_PENALIZE_FACTOR);
+		lfr->max_rssi_penalize_5g =
+			cfg_get(psoc, CFG_LFR_5G_MAX_RSSI_PENALIZE);
+	}
+
 	lfr->max_num_pre_auth = (uint32_t)
 		cfg_default(CFG_LFR_MAX_NUM_PRE_AUTH);
 	lfr->roam_preauth_no_ack_timeout =

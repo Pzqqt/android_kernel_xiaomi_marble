@@ -2790,15 +2790,6 @@ struct hdd_config {
 	uint32_t mawc_nlo_init_scan_interval;
 	uint32_t mawc_nlo_max_scan_interval;
 	bool enable_11d_in_world_mode;
-	/* 5G preference parameters for boosting RSSI */
-	bool                        enable_5g_band_pref;
-	int8_t                      rssi_boost_threshold_5g;
-	uint8_t                     rssi_boost_factor_5g;
-	uint8_t                     max_rssi_boost_5g;
-	/* 5G preference parameters for dropping RSSI*/
-	int8_t                      rssi_penalize_threshold_5g;
-	uint8_t                     rssi_penalize_factor_5g;
-	uint8_t                     max_rssi_penalize_5g;
 	bool enable_lprx;
 	uint32_t scan_11d_interval;
 	bool is_bssid_hint_priority;
