@@ -1245,6 +1245,15 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 static void dp_srng_deinit(struct dp_soc *soc, struct dp_srng *srng,
 			   int ring_type, int ring_num)
 {
+	if (!srng->hal_srng) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Ring type: %d, num:%d not setup"),
+			  ring_type, ring_num);
+		return;
+	}
+
+	hal_srng_cleanup(soc->hal_soc, srng->hal_srng);
+	srng->hal_srng = NULL;
 }
 
 /**
@@ -1255,20 +1264,27 @@ static void dp_srng_deinit(struct dp_soc *soc, struct dp_srng *srng,
 static void dp_srng_cleanup(struct dp_soc *soc, struct dp_srng *srng,
 	int ring_type, int ring_num)
 {
-	if (!srng->hal_srng) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("Ring type: %d, num:%d not setup"),
-			ring_type, ring_num);
-		return;
+	if (!soc->dp_soc_reinit) {
+		if (!srng->hal_srng && (srng->alloc_size == 0)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Ring type: %d, num:%d not setup"),
+				  ring_type, ring_num);
+			return;
+		}
+
+		if (srng->hal_srng) {
+			hal_srng_cleanup(soc->hal_soc, srng->hal_srng);
+			srng->hal_srng = NULL;
+		}
 	}
 
-	hal_srng_cleanup(soc->hal_soc, srng->hal_srng);
-
-	qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
-				srng->alloc_size,
-				srng->base_vaddr_unaligned,
-				srng->base_paddr_unaligned, 0);
-	srng->hal_srng = NULL;
+	if (srng->alloc_size) {
+		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
+					srng->alloc_size,
+					srng->base_vaddr_unaligned,
+					srng->base_paddr_unaligned, 0);
+		srng->alloc_size = 0;
+	}
 }
 
 /* TODO: Need this interface from HIF */
