@@ -2977,15 +2977,6 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	/* Initialize roaming offload state */
 	if ((self_sta_req->type == WMI_VDEV_TYPE_STA) &&
 	    (self_sta_req->sub_type == 0)) {
-		wma_handle->roam_offload_enabled = true;
-		ret = wma_vdev_set_param(wma_handle->wmi_handle,
-					self_sta_req->session_id,
-					WMI_VDEV_PARAM_ROAM_FW_OFFLOAD,
-					(WMI_ROAM_FW_OFFLOAD_ENABLE_FLAG |
-					WMI_ROAM_BMISS_FINAL_SCAN_ENABLE_FLAG));
-		if (QDF_IS_STATUS_ERROR(ret))
-			WMA_LOGE("Failed to set WMI_VDEV_PARAM_ROAM_FW_OFFLOAD");
-
 		/* Pass down enable/disable bcast probe rsp to FW */
 		ret = wma_vdev_set_param(
 				wma_handle->wmi_handle,
@@ -6196,6 +6187,7 @@ static void wma_wait_tx_complete(tp_wma_handle wma,
 		max_wait_iterations--;
 	}
 }
+
 /**
  * wma_delete_bss() - process delete bss request from upper layer
  * @wma: wma handle

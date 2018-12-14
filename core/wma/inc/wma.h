@@ -804,6 +804,7 @@ struct roam_synch_frame_ind {
  * @vdev_stop_wakelock: wakelock to protect vdev stop op with firmware
  * @vdev_set_key_wakelock: wakelock to protect vdev set key op with firmware
  * @channel: channel
+ * @roam_offload_enabled: is roam offload enable/disable
  * @roam_scan_stats_req: cached roam scan stats request
  *
  * It stores parameters per vdev in wma.
@@ -894,6 +895,7 @@ struct wma_txrx_node {
 	qdf_wake_lock_t vdev_set_key_wakelock;
 	struct roam_synch_frame_ind roam_synch_frame_ind;
 	bool is_waiting_for_key;
+	bool roam_offload_enabled;
 	uint8_t channel;
 	struct sir_roam_scan_stats *roam_scan_stats_req;
 };
@@ -1004,7 +1006,6 @@ struct wma_valid_channels {
  * @get_sta_peer_info: Is a "get peer info" request active?
  * @peer_macaddr: When @get_one_peer_info is true, the peer's mac address
  * @thermal_mgmt_info: Thermal mitigation related info
- * @roam_offload_enabled: is roam offload enable/disable
  * @ssdp: ssdp flag
  * @enable_mc_list: To Check if Multicast list filtering is enabled in FW
  * @ibss_started: is IBSS started or not
@@ -1141,7 +1142,6 @@ typedef struct {
 	bool get_sta_peer_info;
 	struct qdf_mac_addr peer_macaddr;
 	t_thermal_mgmt thermal_mgmt_info;
-	bool roam_offload_enabled;
 	bool ssdp;
 	bool enable_mc_list;
 	uint8_t ibss_started;

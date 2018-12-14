@@ -1558,7 +1558,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!wma_handle->roam_offload_enabled) {
+	if (!wma_handle->interfaces[roam_req->sessionId].roam_offload_enabled) {
 		/* roam scan offload is not enabled in firmware.
 		 * Cannot initialize it in the middle of connection.
 		 */
@@ -1750,28 +1750,26 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		}
 
 		wma_handle->suitable_ap_hb_failure = false;
-		if (wma_handle->roam_offload_enabled) {
-			uint32_t mode;
 
-			wma_roam_scan_fill_scan_params(wma_handle, mac,
-						       NULL, &scan_params);
+		wma_roam_scan_fill_scan_params(wma_handle, mac,
+					       NULL, &scan_params);
 
-			if (roam_req->reason == REASON_ROAM_STOP_ALL ||
-			    roam_req->reason == REASON_DISCONNECTED ||
-			    roam_req->reason == REASON_ROAM_SYNCH_FAILED) {
+		if (roam_req->reason == REASON_ROAM_STOP_ALL ||
+		    roam_req->reason == REASON_DISCONNECTED ||
+		    roam_req->reason == REASON_ROAM_SYNCH_FAILED) {
+			mode = WMI_ROAM_SCAN_MODE_NONE;
+		} else {
+			if (csr_is_roam_offload_enabled(mac))
+				mode = WMI_ROAM_SCAN_MODE_NONE |
+				WMI_ROAM_SCAN_MODE_ROAMOFFLOAD;
+			else
 				mode = WMI_ROAM_SCAN_MODE_NONE;
-			} else {
-				if (csr_is_roam_offload_enabled(mac))
-					mode = WMI_ROAM_SCAN_MODE_NONE |
-						WMI_ROAM_SCAN_MODE_ROAMOFFLOAD;
-				else
-					mode = WMI_ROAM_SCAN_MODE_NONE;
-			}
-
-			qdf_status = wma_roam_scan_offload_mode(wma_handle,
-						&scan_params, NULL, mode,
-						roam_req->sessionId);
 		}
+
+		qdf_status = wma_roam_scan_offload_mode(
+					wma_handle,
+					&scan_params, NULL, mode,
+					roam_req->sessionId);
 		/*
 		 * After sending the roam scan mode because of a disconnect,
 		 * clear the scan bitmap client as well by sending
