@@ -77,6 +77,7 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
  * wlan_serialization_activate_cmd() - activate cmd in active queue
  * @cmd_list: Command needs to be activated
  * @ser_pdev_obj: Serialization private pdev object
+ * @ser_reason: reason the activation cb would be called
  *
  * Return: Status of activation of the command
  */

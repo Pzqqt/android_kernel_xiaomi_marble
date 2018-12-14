@@ -500,6 +500,15 @@ void *wlan_serialization_get_active_cmd(struct wlan_objmgr_psoc *psoc,
 
 /* Preprocessor Definitions and Constants */
 
+/**
+ * enum ser_queue_reason- reason for changes to serialization queue
+ * @: SER_REQUEST: queue updated for serialization request
+ * @: SER_REMOVE : queue updated for serialization remove request
+ * @: SER_CANCEL : queue updated for serialization cancel request
+ * @: SER_TIMEOUT : queue updated for command timeout
+ * @: SER_ACTIVATION_FAILED : queue updated since command activation failed
+ * @: SER_PENDING_TO_ACTIVE : queue updated for pending to active movement
+ */
 enum ser_queue_reason {
 	SER_REQUEST,
 	SER_REMOVE,
@@ -708,6 +717,7 @@ enum wlan_serialization_cmd_status {
  * @is_high_priority: Normal/High Priority at which the cmd has to be queued
  * @is_blocking: Is the command blocking
  * @queue_disable: Should the command disable the queues
+ * @activation_reason: reason the activation cb was called
  * @cmd_timeout_cb: Command timeout callback
  * @cmd_timeout_duration: Timeout duration in milliseconds
  * @vdev: VDEV object associated to the command
@@ -726,7 +736,7 @@ struct wlan_serialization_command {
 		is_blocking:1,
 		queue_disable:1,
 		activation_reason:3;
-	uint16_t cmd_timeout_duration;
+	uint32_t cmd_timeout_duration;
 	union {
 		struct wlan_objmgr_vdev *vdev;
 	};
