@@ -1033,7 +1033,7 @@ int wlan_hdd_send_hang_reason_event(struct hdd_context *hdd_ctx,
  */
 int wlan_hdd_get_adjacent_chan(uint8_t chan, bool upper)
 {
-	enum channel_enum ch_idx = reg_get_chan_enum(chan);
+	enum channel_enum ch_idx = wlan_reg_get_chan_enum(chan);
 
 	if (ch_idx == INVALID_CHANNEL)
 		return -EINVAL;
@@ -1100,11 +1100,11 @@ int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *hdd_ctx, uint8_t op_ch
 	}
 
 	if (WLAN_REG_IS_24GHZ_CH(op_chan)) {
-		min_chan = REG_MIN_24GHZ_CH_NUM;
-		max_chan = REG_MAX_24GHZ_CH_NUM;
-	} else if WLAN_REG_IS_5GHZ_CH(op_chan) {
-		min_chan = REG_MIN_5GHZ_CH_NUM;
-		max_chan = REG_MAX_5GHZ_CH_NUM;
+		min_chan = WLAN_REG_MIN_24GHZ_CH_NUM;
+		max_chan = WLAN_REG_MAX_24GHZ_CH_NUM;
+	} else if (WLAN_REG_IS_5GHZ_CH(op_chan)) {
+		min_chan = WLAN_REG_MIN_5GHZ_CH_NUM;
+		max_chan = WLAN_REG_MAX_5GHZ_CH_NUM;
 	} else {
 		hdd_err("invalid channel:%d", op_chan);
 		return -EINVAL;
@@ -8603,7 +8603,7 @@ static int hdd_validate_avoid_freq_chanlist(
 		     ch_idx <= channel_list->
 					avoid_freq_range[range_idx].end_freq;
 		     ch_idx++) {
-			 if (INVALID_CHANNEL == reg_get_chan_enum(ch_idx))
+			if (INVALID_CHANNEL == wlan_reg_get_chan_enum(ch_idx))
 				continue;
 			for (unsafe_channel_index = 0;
 			     unsafe_channel_index < unsafe_channel_count;

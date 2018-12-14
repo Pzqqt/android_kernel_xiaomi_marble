@@ -86,6 +86,7 @@
 #include "wlan_crypto_global_api.h"
 #include "wlan_action_oui_ucfg_api.h"
 #include "nan_ucfg_api.h"
+#include <wlan_reg_services_api.h>
 
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
 
@@ -4508,7 +4509,7 @@ int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx,
 	}
 
 	for (i = 0; i < cache_chann->num_channels; i++) {
-		freq = reg_chan_to_freq(
+		freq = wlan_reg_chan_to_freq(
 				hdd_ctx->pdev,
 				cache_chann->channel_info[i].channel_num);
 		if (!freq)
@@ -4580,8 +4581,8 @@ static int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 	}
 
 	for (i = 0; i < cache_chann->num_channels; i++) {
-		freq = reg_chan_to_freq(hdd_ctx->pdev,
-					cache_chann->
+		freq = wlan_reg_chan_to_freq(hdd_ctx->pdev,
+					     cache_chann->
 						channel_info[i].channel_num);
 		if (!freq)
 			continue;
@@ -4594,7 +4595,7 @@ static int wlan_hdd_disable_channels(struct hdd_context *hdd_ctx)
 		 * the channels
 		 */
 		cache_chann->channel_info[i].reg_status =
-					reg_get_channel_state(
+					wlan_reg_get_channel_state(
 							hdd_ctx->pdev,
 							rf_channel);
 		cache_chann->channel_info[i].wiphy_status =
@@ -5916,13 +5917,13 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	/* if sta_sap_scc_on_dfs_chan ini is set, DFS master capability is
 	 * assumed disabled in the driver.
 	 */
-	if ((reg_get_channel_state(hdd_ctx->pdev, channel) ==
+	if ((wlan_reg_get_channel_state(hdd_ctx->pdev, channel) ==
 	     CHANNEL_STATE_DFS) && sta_sap_scc_on_dfs_chan && !sta_cnt) {
 		hdd_err("SAP not allowed on DFS channel!!");
 		return -EINVAL;
 	}
-	if (!reg_is_etsi13_srd_chan_allowed_master_mode(hdd_ctx->pdev) &&
-	    reg_is_etsi13_srd_chan(hdd_ctx->pdev, channel)) {
+	if (!wlan_reg_is_etsi13_srd_chan_allowed_master_mode(hdd_ctx->pdev) &&
+	    wlan_reg_is_etsi13_srd_chan(hdd_ctx->pdev, channel)) {
 		hdd_err("SAP not allowed on SRD channel.");
 		return -EINVAL;
 	}

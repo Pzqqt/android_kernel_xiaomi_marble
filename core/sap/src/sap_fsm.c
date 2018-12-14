@@ -2493,8 +2493,8 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("ap_ctx->ch_params.ch_width %d, channel %d"),
 			     sap_ctx->ch_params.ch_width,
-			     reg_get_channel_state(mac_ctx->pdev,
-						   sap_ctx->channel));
+			     wlan_reg_get_channel_state(mac_ctx->pdev,
+							sap_ctx->channel));
 
 		/*
 		 * The upper layers have been informed that AP is up and

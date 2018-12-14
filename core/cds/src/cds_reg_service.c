@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +24,7 @@
 
 #include "qdf_types.h"
 #include "qdf_trace.h"
+#include <wlan_objmgr_pdev_obj.h>
 #include "wlan_reg_services_api.h"
 #include "cds_reg_service.h"
 #include "cds_ieee80211_common_i.h"

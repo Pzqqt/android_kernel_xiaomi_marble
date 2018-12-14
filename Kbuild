@@ -1045,6 +1045,8 @@ TARGET_IF_INC := -I$(WLAN_COMMON_INC)/target_if/core/inc \
 
 TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
 		$(TARGET_IF_DIR)/regulatory/src/target_if_reg.o \
+		$(TARGET_IF_DIR)/regulatory/src/target_if_reg_lte.o \
+		$(TARGET_IF_DIR)/regulatory/src/target_if_reg_11d.o \
 		$(TARGET_IF_DIR)/init_deinit/src/init_cmd_api.o \
 		$(TARGET_IF_DIR)/init_deinit/src/init_deinit_lmac.o \
 		$(TARGET_IF_DIR)/init_deinit/src/init_event_handler.o \
@@ -1311,12 +1313,18 @@ REG_CORE_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(REGULATORY_CORE_SRC_DIR)
 REG_DISPATCHER_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(REG_DISPATCHER_SRC_DIR)
 REGULATORY_INC := -I$(WLAN_COMMON_INC)/$(REGULATORY_CORE_INC_DIR)
 REGULATORY_INC += -I$(WLAN_COMMON_INC)/$(REG_DISPATCHER_INC_DIR)
-REGULATORY_OBJS := $(REG_CORE_OBJ_DIR)/reg_db.o \
-                   $(REG_CORE_OBJ_DIR)/reg_services.o \
-                   $(REG_CORE_OBJ_DIR)/reg_db_parser.o \
-                   $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_services_api.o \
-                   $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_tgt_api.o \
-                   $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_ucfg_api.o
+REGULATORY_OBJS := $(REG_CORE_OBJ_DIR)/reg_build_chan_list.o \
+		    $(REG_CORE_OBJ_DIR)/reg_callbacks.o \
+		    $(REG_CORE_OBJ_DIR)/reg_db.o \
+		    $(REG_CORE_OBJ_DIR)/reg_db_parser.o \
+		    $(REG_CORE_OBJ_DIR)/reg_getset.o \
+		    $(REG_CORE_OBJ_DIR)/reg_lte.o \
+		    $(REG_CORE_OBJ_DIR)/reg_opclass.o \
+		    $(REG_CORE_OBJ_DIR)/reg_priv_objs.o \
+		    $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_services_api.o \
+		    $(REG_CORE_OBJ_DIR)/reg_services_common.o \
+		    $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_tgt_api.o \
+		    $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_ucfg_api.o
 ifeq ($(CONFIG_HOST_11D_SCAN), y)
 REGULATORY_OBJS += $(REG_CORE_OBJ_DIR)/reg_host_11d.o
 endif
@@ -2457,6 +2465,12 @@ cppflags-$(CONFIG_WLAN_NUD_TRACKING) += -DWLAN_NUD_TRACKING
 
 #Flag to enable set and get disable channel list feature
 cppflags-$(CONFIG_DISABLE_CHANNEL_LIST) += -DDISABLE_CHANNEL_LIST
+
+#Flag to enable/disable LTE COEX support
+cppflags-$(CONFIG_CONFIG_LTE_COEX) += -DCONFIG_LTE_COEX
+
+#Flag to enable/disable HOST_OPCLASS
+cppflags-$(CONFIG_HOST_OPCLASS) += -DHOST_OPCLASS
 
 #Flag to enable Dynamic Voltage WDCVS (Config Voltage Mode)
 cppflags-$(CONFIG_WLAN_DYNAMIC_CVM) += -DFEATURE_WLAN_DYNAMIC_CVM

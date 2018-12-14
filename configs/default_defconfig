@@ -579,6 +579,15 @@ CONFIG_WLAN_WBUFF := y
 #Flag to enable set and get disable channel list feature
 CONFIG_DISABLE_CHANNEL_LIST :=y
 
+#Flag to enable LTE COEX feature
+CONFIG_CONFIG_LTE_COEX := y
+
+#Flag to enable/disable HOST 11d scan
+CONFIG_HOST_11D_SCAN :=y
+
+#Flag to enable HOST OPCLASS feature
+CONFIG_HOST_OPCLASS := y
+
 #Flag to enable Dynamic Voltage WDCVS (Config Voltage Mode)
 CONFIG_WLAN_DYNAMIC_CVM := y
 
