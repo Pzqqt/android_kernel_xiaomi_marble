@@ -2305,7 +2305,7 @@ wlan_hdd_update_dbs_scan_and_fw_mode_config(void)
 {
 	struct policy_mgr_dual_mac_config cfg = {0};
 	QDF_STATUS status;
-	uint32_t channel_select_logic_conc = 0;
+	uint32_t chnl_sel_logic_conc = 0;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	uint8_t dual_mac_feature = DISABLE_DBS_CXN_AND_SCAN;
 
@@ -2314,19 +2314,27 @@ wlan_hdd_update_dbs_scan_and_fw_mode_config(void)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-
-	if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc))
+	/*
+	 * ROME platform doesn't support any DBS related commands in FW,
+	 * so if driver sends wmi command with dual_mac_config with all set to
+	 * 0 then FW wouldn't respond back and driver would timeout on waiting
+	 * for response. Check if FW supports DBS to eliminate ROME vs
+	 * NON-ROME platform.
+	 */
+	if (!policy_mgr_find_if_fw_supports_dbs(hdd_ctx->psoc))
 		return QDF_STATUS_SUCCESS;
 
 	cfg.scan_config = 0;
 	cfg.fw_mode_config = 0;
 	cfg.set_dual_mac_cb = policy_mgr_soc_set_dual_mac_cfg_cb;
-	status =
-	ucfg_policy_mgr_get_chnl_select_plcy(hdd_ctx->psoc,
-					     &channel_select_logic_conc);
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("ucfg_policy_mgr_get_chnl_select_plcy failed, use def");
-		return status;
+	if (policy_mgr_is_hw_dbs_capable(hdd_ctx->psoc)) {
+		status =
+		ucfg_policy_mgr_get_chnl_select_plcy(hdd_ctx->psoc,
+						     &chnl_sel_logic_conc);
+		if (status != QDF_STATUS_SUCCESS) {
+			hdd_err("can't get chnl sel policy, use def");
+			return status;
+		}
 	}
 	status =
 	ucfg_policy_mgr_get_dual_mac_feature(hdd_ctx->psoc,
@@ -2341,7 +2349,7 @@ wlan_hdd_update_dbs_scan_and_fw_mode_config(void)
 				hdd_ctx->psoc, &cfg.scan_config,
 				&cfg.fw_mode_config,
 				dual_mac_feature,
-				channel_select_logic_conc);
+				chnl_sel_logic_conc);
 
 		if (status != QDF_STATUS_SUCCESS) {
 			hdd_err("wma_get_updated_scan_and_fw_mode_config failed %d",

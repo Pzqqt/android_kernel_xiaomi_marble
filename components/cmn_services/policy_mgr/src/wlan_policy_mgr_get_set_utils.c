@@ -810,11 +810,11 @@ int8_t policy_mgr_get_num_dbs_hw_modes(struct wlan_objmgr_psoc *psoc)
 	return pm_ctx->num_dbs_hw_modes;
 }
 
-bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc)
+bool policy_mgr_find_if_fw_supports_dbs(struct wlan_objmgr_psoc *psoc)
 {
-	uint32_t param, i, found = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 	struct wmi_unified *wmi_handle;
+	bool dbs_support;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 
@@ -822,30 +822,38 @@ bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc)
 		policy_mgr_err("Invalid Context");
 		return false;
 	}
-
-	if (!policy_mgr_is_dbs_enable(psoc)) {
-		policy_mgr_debug("DBS is disabled");
-		return false;
-	}
-
 	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
 		policy_mgr_debug("Invalid WMI handle");
 		return false;
 	}
-
-	policy_mgr_debug("DBS service bit map: %d",
-		wmi_service_enabled(wmi_handle,
-		wmi_service_dual_band_simultaneous_support));
+	dbs_support =
+	wmi_service_enabled(wmi_handle,
+			    wmi_service_dual_band_simultaneous_support);
+	policy_mgr_debug("is DBS supported by FW/HW: %s",
+			 dbs_support ? "yes" : "no");
 
 	/* The agreement with FW is that: To know if the target is DBS
 	 * capable, DBS needs to be supported both in the HW mode list
 	 * and in the service ready event
 	 */
-	if (!(wmi_service_enabled(wmi_handle,
-		wmi_service_dual_band_simultaneous_support)))
+	if (!dbs_support)
 		return false;
 
+	return true;
+}
+
+static bool policy_mgr_find_if_hwlist_has_dbs(struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t param, i, found = 0;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return false;
+	}
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		param = pm_ctx->hw_mode.hw_mode_list[i];
 		policy_mgr_debug("HW param: %x", param);
@@ -855,43 +863,23 @@ bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc)
 			break;
 		}
 	}
-
 	if (found)
 		return true;
 
 	return false;
 }
 
-bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc)
+static bool policy_mgr_find_if_hwlist_has_sbs(struct wlan_objmgr_psoc *psoc)
 {
-	uint32_t param, i, found = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
-	struct wmi_unified *wmi_handle;
+	uint32_t param, i, found = 0;
 
 	pm_ctx = policy_mgr_get_context(psoc);
+
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return false;
 	}
-
-	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
-	if (!wmi_handle) {
-		policy_mgr_debug("Invalid WMI handle");
-		return false;
-	}
-
-	policy_mgr_debug("DBS service bit map: %d",
-		wmi_service_enabled(wmi_handle,
-		wmi_service_dual_band_simultaneous_support));
-
-	/* The agreement with FW is that: To know if the target is SBS
-	 * capable, SBS needs to be supported both in the HW mode list
-	 * and DBS needs to be supported in the service ready event
-	 */
-	if (!(wmi_service_enabled(wmi_handle,
-		wmi_service_dual_band_simultaneous_support)))
-		return false;
-
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		param = pm_ctx->hw_mode.hw_mode_list[i];
 		policy_mgr_debug("HW param: %x", param);
@@ -901,11 +889,35 @@ bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc)
 			break;
 		}
 	}
-
 	if (found)
 		return true;
 
 	return false;
+}
+
+bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc)
+{
+	if (!policy_mgr_is_dbs_enable(psoc)) {
+		policy_mgr_debug("DBS is disabled");
+		return false;
+	}
+
+	if (!policy_mgr_find_if_fw_supports_dbs(psoc)) {
+		policy_mgr_debug("HW mode list has no DBS");
+		return false;
+	}
+
+	return policy_mgr_find_if_hwlist_has_dbs(psoc);
+}
+
+bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc)
+{
+	if (!policy_mgr_find_if_fw_supports_dbs(psoc)) {
+		policy_mgr_debug("HW mode list has no DBS");
+		return false;
+	}
+
+	return policy_mgr_find_if_hwlist_has_sbs(psoc);
 }
 
 QDF_STATUS policy_mgr_get_dbs_hw_modes(struct wlan_objmgr_psoc *psoc,
