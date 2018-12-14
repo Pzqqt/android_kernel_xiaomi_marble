@@ -649,7 +649,7 @@ static struct CE_attr host_ce_config_wlan_qca8074[] = {
 	{ /* CE9 */ CE_ATTR_FLAGS, 0, 32,  2048, 0, NULL,},
 	/* target->host HTT */
 	{ /* CE10 */ CE_ATTR_FLAGS, 0, 0,  2048, 512, NULL,},
-	/* CE11 unused */
+	{ /* CE11 unused */ 0, 0, 0, 0, 0, NULL,},
 };
 
 static struct CE_pipe_config target_ce_config_wlan_qca8074[] = {
@@ -704,7 +704,7 @@ static struct CE_attr host_ce_config_wlan_qca8074_pci[] = {
 	{ /* CE9 */ EPPING_CE_FLAGS_POLL, 0, 32,  2048, 0, NULL,},
 	/* target->host HTT */
 	{ /* CE10 */ CE_ATTR_FLAGS, 0, 0,  2048, 512, NULL,},
-	/* CE11 unused */
+	{ /* CE11 unused */ 0, 0, 0, 0, 0, NULL,},
 };
 
 static struct CE_pipe_config target_ce_config_wlan_qca8074_pci[] = {
