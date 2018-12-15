@@ -502,47 +502,4 @@ typedef struct sLimSpecMgmtInfo {
 	tLimDot11hChanSwStates dot11hChanSwState;
 } tLimSpecMgmtInfo, *tpLimSpecMgmtInfo;
 
-#ifdef FEATURE_WLAN_TDLS
-/*
- * Peer info needed for TDLS setup..
- */
-typedef struct tLimTDLSPeerSta {
-	struct tLimTDLSPeerSta *next;
-	uint8_t dialog;
-	tSirMacAddr peerMac;
-	tSirMacCapabilityInfo capabilityInfo;
-	tSirMacRateSet supportedRates;
-	tSirMacRateSet extendedRates;
-	tSirMacQosCapabilityStaIE qosCaps;
-	tSirMacEdcaParamSetIE edcaParams;
-	uint8_t mcsSet[SIZE_OF_SUPPORTED_MCS_SET];
-	uint8_t tdls_bIsResponder;
-	/* HT Capabilties */
-	tDot11fIEHTCaps tdlsPeerHTCaps;
-	tDot11fIEExtCap tdlsPeerExtCaps;
-	uint8_t tdls_flags;
-	uint8_t tdls_link_state;
-	uint8_t tdls_prev_link_state;
-	uint8_t tdls_sessionId;
-	uint8_t ExtRatesPresent;
-	TX_TIMER gLimTdlsLinkSetupRspTimeoutTimer;
-	TX_TIMER gLimTdlsLinkSetupCnfTimeoutTimer;
-} tLimTdlsLinkSetupPeer, *tpLimTdlsLinkSetupPeer;
-
-typedef struct tLimTdlsLinkSetupInfo {
-	tLimTdlsLinkSetupPeer *tdlsLinkSetupList;
-	uint8_t num_tdls_peers;
-	uint8_t tdls_flags;
-	uint8_t tdls_state;
-	uint8_t tdls_prev_state;
-} tLimTdlsLinkSetupInfo, *tpLimTdlsLinkSetupInfo;
-
-typedef enum tdlsLinkMode {
-	TDLS_LINK_MODE_BG,
-	TDLS_LINK_MODE_N,
-	TDLS_LINK_MODE_AC,
-	TDLS_LINK_MODE_NONE
-} eLimTdlsLinkMode;
-#endif /* FEATURE_WLAN_TDLS */
-
 #endif
