@@ -45,7 +45,6 @@ struct hdd_context;
 #define CFG_DP_RPS_RX_QUEUE_CPU_MAP_LIST_LEN 30
 
 #define FW_MODULE_LOG_LEVEL_STRING_LENGTH  (512)
-#define TX_SCHED_WRR_PARAM_STRING_LENGTH   (50)
 #define TX_SCHED_WRR_PARAMS_NUM            (5)
 
 #ifdef DHCP_SERVER_OFFLOAD
