@@ -361,10 +361,6 @@ enum hdd_driver_flags {
 	(((center_freq) == 2412) || ((center_freq) == 2437) || \
 	((center_freq) == 2462))
 
-#define WLAN_HDD_CHANNEL_IN_UNII_1_BAND(center_freq) \
-	(((center_freq) == 5180) || ((center_freq) == 5200) \
-	 || ((center_freq) == 5220) || ((center_freq) == 5240))
-
 #ifdef WLAN_FEATURE_11W
 #define WLAN_HDD_SA_QUERY_ACTION_FRAME 8
 #endif
