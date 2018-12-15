@@ -2253,10 +2253,6 @@ typedef struct sSirNoAParam {
 	uint8_t psSelection;
 } tSirNoAParam, *tpSirNoAParam;
 
-typedef struct sSirWlanResumeParam {
-	uint8_t configuredMcstBcstFilterSetting;
-} tSirWlanResumeParam, *tpSirWlanResumeParam;
-
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 
 typedef enum ext_wow_type {
