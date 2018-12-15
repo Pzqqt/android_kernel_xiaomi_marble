@@ -222,7 +222,6 @@ static struct attribute *attrs[] = {
 
 #define HDD_OPS_INACTIVITY_TIMEOUT (120000)
 #define MAX_OPS_NAME_STRING_SIZE 20
-#define RATE_LIMIT_ERROR_LOG (256)
 
 static qdf_timer_t hdd_drv_ops_inactivity_timer;
 static struct task_struct *hdd_drv_ops_task;
