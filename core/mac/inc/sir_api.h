@@ -793,13 +793,6 @@ typedef enum eSirLinkTrafficCheck {
 	eSIR_CHECK_ROAMING_SCAN = 2,
 } tSirLinkTrafficCheck;
 
-#define SIR_BG_SCAN_RETURN_CACHED_RESULTS              0x0
-#define SIR_BG_SCAN_PURGE_RESUTLS                      0x80
-#define SIR_BG_SCAN_RETURN_FRESH_RESULTS               0x01
-#define SIR_SCAN_MAX_NUM_SSID                          0x0A
-#define SIR_BG_SCAN_RETURN_LFR_CACHED_RESULTS          0x02
-#define SIR_BG_SCAN_PURGE_LFR_RESULTS                  0x40
-
 typedef struct sSirSmeScanAbortReq {
 	uint16_t type;
 	uint16_t msgLen;
