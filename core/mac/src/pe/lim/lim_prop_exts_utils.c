@@ -47,8 +47,6 @@
 #include "wma.h"
 #include "wlan_utility.h"
 
-#define LIM_GET_NOISE_MAX_TRY 5
-
 #ifdef FEATURE_WLAN_ESE
 /**
  * get_local_power_constraint_probe_response() - extracts local constraint
