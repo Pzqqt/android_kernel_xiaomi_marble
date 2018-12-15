@@ -47,7 +47,7 @@
 #define    IS_UP_AUTO(_ic) \
 	(IS_UP((_ic)->ic_dev) && (_ic)->ic_roaming == IEEE80211_ROAMING_AUTO)
 #define WE_WLAN_VERSION     1
-#define WE_GET_STA_INFO_SIZE 30
+
 /* WEXT limitation: MAX allowed buf len for any *
  * IW_PRIV_TYPE_CHAR is 2Kbytes *
  */
