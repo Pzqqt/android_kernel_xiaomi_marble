@@ -107,14 +107,13 @@ typedef enum eMgmtFrmDropReason {
  * Function to initialize LIM state machines.
  * This called upon LIM thread creation.
  */
-extern QDF_STATUS lim_initialize(struct mac_context *);
+QDF_STATUS lim_initialize(struct mac_context *);
 QDF_STATUS pe_open(struct mac_context *mac, struct cds_config_info *cds_cfg);
 QDF_STATUS pe_close(struct mac_context *mac);
 void pe_register_tl_handle(struct mac_context *mac);
 QDF_STATUS lim_start(struct mac_context *mac);
 QDF_STATUS pe_start(struct mac_context *mac);
 void pe_stop(struct mac_context *mac);
-QDF_STATUS peProcessMsg(struct mac_context *mac, struct scheduler_msg *limMsg);
 
 /**
  * pe_register_mgmt_rx_frm_callback() - registers callback for receiving
