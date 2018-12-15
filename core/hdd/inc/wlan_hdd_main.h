@@ -1145,16 +1145,6 @@ struct hdd_runtime_pm_context {
 	qdf_runtime_lock_t connect;
 };
 
-/**
- * struct hdd_connect_pm_context - Runtime PM connect context per adapter
- * @connect: Runtime Connect Context
- *
- * Structure to hold runtime pm connect context for each adapter.
- */
-struct hdd_connect_pm_context {
-	qdf_runtime_lock_t connect;
-};
-
 /*
  * WLAN_HDD_ADAPTER_MAGIC is a magic number used to identify net devices
  * belonging to this driver from net devices belonging to other devices.
