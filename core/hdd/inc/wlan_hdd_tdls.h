@@ -25,16 +25,6 @@
 
 struct hdd_context;
 
-/**
- * enum tdls_concerned_external_events - External events that affect TDLS
- * @P2P_ROC_START: P2P remain on channel starts
- * @P2P_ROC_END: P2P remain on channel ends
- */
-enum tdls_concerned_external_events {
-	P2P_ROC_START,
-	P2P_ROC_END,
-};
-
 #ifdef FEATURE_WLAN_TDLS
 
 /* Bit mask flag for tdls_option to FW */
