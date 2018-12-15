@@ -1480,14 +1480,7 @@ QDF_STATUS csr_roam_copy_connect_profile(struct mac_context *mac,
 			sizeof(struct qdf_mac_addr));
 		qdf_mem_copy(&pProfile->SSID, &connected_prof->SSID,
 			sizeof(tSirMacSSid));
-		if (connected_prof->MDID.mdiePresent) {
-			pProfile->MDID.mdiePresent = 1;
-			pProfile->MDID.mobilityDomain =
-				connected_prof->MDID.mobilityDomain;
-		} else {
-			pProfile->MDID.mdiePresent = 0;
-			pProfile->MDID.mobilityDomain = 0;
-		}
+		pProfile->mdid = connected_prof->mdid;
 #ifdef FEATURE_WLAN_ESE
 		pProfile->isESEAssoc = connected_prof->isESEAssoc;
 		if (csr_is_auth_type_ese(connected_prof->AuthType)) {
@@ -7577,11 +7570,7 @@ QDF_STATUS csr_roam_copy_profile(struct mac_context *mac,
 	pDstProfile->MFPRequired = pSrcProfile->MFPRequired;
 	pDstProfile->MFPCapable = pSrcProfile->MFPCapable;
 #endif
-	if (pSrcProfile->MDID.mdiePresent) {
-		pDstProfile->MDID.mdiePresent = 1;
-		pDstProfile->MDID.mobilityDomain =
-			pSrcProfile->MDID.mobilityDomain;
-	}
+	pDstProfile->mdid = pSrcProfile->mdid;
 	qdf_mem_copy(&pDstProfile->addIeParams, &pSrcProfile->addIeParams,
 			sizeof(tSirAddIeParams));
 
@@ -7684,11 +7673,7 @@ QDF_STATUS csr_roam_copy_connected_profile(struct mac_context *mac,
 	pDstProfile->BSSType = pSrcProfile->BSSType;
 	qdf_mem_copy(&pDstProfile->Keys, &pSrcProfile->Keys,
 		sizeof(pDstProfile->Keys));
-	if (pSrcProfile->MDID.mdiePresent) {
-		pDstProfile->MDID.mdiePresent = 1;
-		pDstProfile->MDID.mobilityDomain =
-			pSrcProfile->MDID.mobilityDomain;
-	}
+	pDstProfile->mdid = pSrcProfile->mdid;
 #ifdef WLAN_FEATURE_11W
 	pDstProfile->MFPEnabled = pSrcProfile->MFPEnabled;
 	pDstProfile->MFPRequired = pSrcProfile->MFPRequired;
@@ -8521,8 +8506,8 @@ QDF_STATUS csr_roam_save_connected_information(struct mac_context *mac,
 		sme_err("ERROR: Beacon interval is ZERO");
 	csr_get_bss_id_bss_desc(pSirBssDesc, &pConnectProfile->bssid);
 	if (pSirBssDesc->mdiePresent) {
-		pConnectProfile->MDID.mdiePresent = 1;
-		pConnectProfile->MDID.mobilityDomain =
+		pConnectProfile->mdid.mdie_present = 1;
+		pConnectProfile->mdid.mobility_domain =
 			(pSirBssDesc->mdie[1] << 8) | (pSirBssDesc->mdie[0]);
 	}
 	if (NULL == pIesTemp)
@@ -10379,10 +10364,7 @@ csr_roam_prepare_filter_from_profile(struct mac_context *mac_ctx,
 		qdf_mem_copy(scan_fltr->countryCode, profile->countryCode,
 			     WNI_CFG_COUNTRY_CODE_LEN);
 	}
-	if (profile->MDID.mdiePresent) {
-		scan_fltr->MDID.mdiePresent = 1;
-		scan_fltr->MDID.mobilityDomain = profile->MDID.mobilityDomain;
-	}
+	scan_fltr->mdid = profile->mdid;
 	qdf_mem_copy(scan_fltr->bssid_hint.bytes,
 		profile->bssid_hint.bytes, QDF_MAC_ADDR_SIZE);
 
@@ -12824,9 +12806,9 @@ bool csr_is_same_profile(struct mac_context *mac,
 		fCheck = false;
 		goto free_scan_filter;
 	}
-	if (pProfile1->MDID.mdiePresent || pProfile2->MDID.mdiePresent) {
-		if (pProfile1->MDID.mobilityDomain
-			!= pProfile2->MDID.mobilityDomain) {
+	if (pProfile1->mdid.mdie_present || pProfile2->mdid.mdie_present) {
+		if (pProfile1->mdid.mobility_domain !=
+		    pProfile2->mdid.mobility_domain) {
 			fCheck = false;
 			goto free_scan_filter;
 		}
@@ -14916,7 +14898,7 @@ QDF_STATUS csr_send_join_req_msg(struct mac_context *mac, uint32_t sessionId,
 #ifdef FEATURE_WLAN_ESE
 		ese_config =  mac->mlme_cfg->lfr.ese_enabled;
 #endif
-		pProfile->MDID.mdiePresent = pBssDescription->mdiePresent;
+		pProfile->mdid.mdie_present = pBssDescription->mdiePresent;
 		if (csr_is_profile11r(mac, pProfile)
 #ifdef FEATURE_WLAN_ESE
 		    &&
@@ -17740,12 +17722,8 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		  req_buf->ChannelCacheType,
 		  req_buf->ConnectedNetwork.ChannelCount, ch_cache_str);
 
-	req_buf->MDID.mdiePresent =
-		mac_ctx->roam.roamSession[session_id].
-		connectedProfile.MDID.mdiePresent;
-	req_buf->MDID.mobilityDomain =
-		mac_ctx->roam.roamSession[session_id].
-		connectedProfile.MDID.mobilityDomain;
+	req_buf->mdid =
+		mac_ctx->roam.roamSession[session_id].connectedProfile.mdid;
 	req_buf->sessionId = session_id;
 	req_buf->nProbes = mac_ctx->mlme_cfg->lfr.roam_scan_n_probes;
 	req_buf->HomeAwayTime = mac_ctx->mlme_cfg->lfr.roam_scan_home_away_time;

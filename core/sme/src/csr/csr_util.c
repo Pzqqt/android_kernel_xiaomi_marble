@@ -2587,7 +2587,7 @@ bool csr_is_profile11r(struct mac_context *mac,
 			struct csr_roam_profile *pProfile)
 {
 	return csr_is_auth_type11r(mac, pProfile->negotiatedAuthType,
-				   pProfile->MDID.mdiePresent);
+				   pProfile->mdid.mdie_present);
 }
 
 bool csr_is_auth_type_ese(eCsrAuthType AuthType)

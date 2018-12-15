@@ -279,11 +279,6 @@ typedef struct tagCsrAuthList {
 	eCsrAuthType authType[eCSR_NUM_OF_SUPPORT_AUTH_TYPE];
 } tCsrAuthList, *tpCsrAuthList;
 
-typedef struct tagCsrMobilityDomainInfo {
-	uint8_t mdiePresent;
-	uint16_t mobilityDomain;
-} tCsrMobilityDomainInfo;
-
 #ifdef FEATURE_WLAN_ESE
 typedef struct tagCsrEseCckmInfo {
 	uint32_t reassoc_req_num;
@@ -333,7 +328,7 @@ typedef struct tagCsrScanResultFilter {
 	 * BSSID and channel is considered for filtering.
 	 */
 	bool fMeasurement;
-	tCsrMobilityDomainInfo MDID;
+	struct mobility_domain_info mdid;
 	bool p2pResult;
 #ifdef WLAN_FEATURE_11W
 	/* Management Frame Protection */
@@ -868,7 +863,7 @@ struct csr_roam_profile {
 	bool chan_switch_hostapd_rate_enabled;
 	uint16_t cfg_protection;
 	uint8_t wps_state;
-	tCsrMobilityDomainInfo MDID;
+	struct mobility_domain_info mdid;
 	enum QDF_OPMODE csrPersona;
 	/* addIe params */
 	tSirAddIeParams addIeParams;
@@ -934,7 +929,7 @@ typedef struct tagCsrRoamConnectedProfile {
 	uint8_t *pAddIEAssoc;
 	tSirBssDescription *pBssDesc;
 	bool qap;               /* AP supports QoS */
-	tCsrMobilityDomainInfo MDID;
+	struct mobility_domain_info mdid;
 #ifdef FEATURE_WLAN_ESE
 	tCsrEseCckmInfo eseCckmInfo;
 	bool isESEAssoc;

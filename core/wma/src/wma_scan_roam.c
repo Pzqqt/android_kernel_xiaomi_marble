@@ -389,8 +389,7 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 				roam_req->roam_trigger_reason_bitmask;
 		params->is_ese_assoc = roam_req->IsESEAssoc;
 		params->is_11r_assoc = roam_req->is_11r_assoc;
-		params->mdid.mdie_present = roam_req->MDID.mdiePresent;
-		params->mdid.mobility_domain = roam_req->MDID.mobilityDomain;
+		params->mdid = roam_req->mdid;
 		params->assoc_ie_length = roam_req->assoc_ie.length;
 		qdf_mem_copy(params->assoc_ie, roam_req->assoc_ie.addIEdata,
 						roam_req->assoc_ie.length);

@@ -2246,11 +2246,6 @@ typedef struct {
 
 } tSirRoamNetworkType;
 
-typedef struct SirMobilityDomainInfo {
-	uint8_t mdiePresent;
-	uint16_t mobilityDomain;
-} tSirMobilityDomainInfo;
-
 typedef enum {
 	SIR_ROAMING_DFS_CHANNEL_DISABLED = 0,
 	SIR_ROAMING_DFS_CHANNEL_ENABLED_NORMAL = 1,
@@ -2398,7 +2393,7 @@ typedef struct sSirRoamOffloadScanReq {
 	uint8_t nProbes;
 	uint16_t HomeAwayTime;
 	tSirRoamNetworkType ConnectedNetwork;
-	tSirMobilityDomainInfo MDID;
+	struct mobility_domain_info mdid;
 	uint8_t sessionId;
 	uint8_t RoamBmissFirstBcnt;
 	uint8_t RoamBmissFinalBcnt;

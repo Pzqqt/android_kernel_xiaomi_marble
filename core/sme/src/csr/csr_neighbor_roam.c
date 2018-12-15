@@ -462,15 +462,12 @@ csr_neighbor_roam_prepare_scan_profile_filter(struct mac_context *mac,
 		pScanFilter->ChannelInfo.ChannelList = NULL;
 	}
 
-	if (nbr_roam_info->is11rAssoc) {
+	if (nbr_roam_info->is11rAssoc)
 		/*
 		 * MDIE should be added as a part of profile. This should be
 		 * added as a part of filter as well
 		 */
-		pScanFilter->MDID.mdiePresent = pCurProfile->MDID.mdiePresent;
-		pScanFilter->MDID.mobilityDomain =
-			pCurProfile->MDID.mobilityDomain;
-	}
+		pScanFilter->mdid = pCurProfile->mdid;
 
 #ifdef WLAN_FEATURE_11W
 	pScanFilter->MFPEnabled = pCurProfile->MFPEnabled;
@@ -994,7 +991,7 @@ static void csr_neighbor_roam_info_ctx_init(
 	/* Based on the auth scheme tell if we are 11r */
 	if (csr_is_auth_type11r
 		(mac, session->connectedProfile.AuthType,
-		session->connectedProfile.MDID.mdiePresent)) {
+		session->connectedProfile.mdid.mdie_present)) {
 		if (mac->mlme_cfg->lfr.fast_transition_enabled)
 			init_ft_flag = true;
 		ngbr_roam_info->is11rAssoc = true;

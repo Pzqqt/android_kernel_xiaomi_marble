@@ -2505,15 +2505,15 @@ static QDF_STATUS csr_prepare_scan_filter(struct mac_context *mac_ctx,
 			  csr_covert_enc_type_new(
 			  pFilter->mcEncryptionType.encryptionType[i]);
 	}
-	qdf_mem_copy(filter->country,
-		pFilter->countryCode, WNI_CFG_COUNTRY_CODE_LEN);
+	qdf_mem_copy(filter->country, pFilter->countryCode,
+		     WNI_CFG_COUNTRY_CODE_LEN);
 
 	if (pFilter->bWPSAssociation || pFilter->bOSENAssociation)
 		filter->ignore_auth_enc_type = true;
 
 	filter->rrm_measurement_filter = pFilter->fMeasurement;
 
-	filter->mobility_domain = pFilter->MDID.mobilityDomain;
+	filter->mobility_domain = pFilter->mdid.mobility_domain;
 
 	filter->p2p_results = pFilter->p2pResult;
 
