@@ -1798,7 +1798,14 @@ int wmi_unified_register_event(wmi_unified_t wmi_handle,
 {
 	uint32_t idx = 0;
 	uint32_t evt_id;
-	struct wmi_soc *soc = wmi_handle->soc;
+	struct wmi_soc *soc;
+
+	if (!wmi_handle) {
+		WMI_LOGE("WMI handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc = wmi_handle->soc;
 
 	if (event_id >= wmi_events_max ||
 		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
@@ -1848,7 +1855,14 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 {
 	uint32_t idx = 0;
 	uint32_t evt_id;
-	struct wmi_soc *soc = wmi_handle->soc;
+	struct wmi_soc *soc;
+
+	if (!wmi_handle) {
+		WMI_LOGE("WMI handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc = wmi_handle->soc;
 
 	if (event_id >= wmi_events_max ||
 		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
@@ -1935,7 +1949,14 @@ int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 {
 	uint32_t idx = 0;
 	uint32_t evt_id;
-	struct wmi_soc *soc = wmi_handle->soc;
+	struct wmi_soc *soc;
+
+	if (!wmi_handle) {
+		WMI_LOGE("WMI handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc = wmi_handle->soc;
 
 	if (event_id >= wmi_events_max ||
 		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
