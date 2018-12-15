@@ -51,9 +51,8 @@ uint8_t lim_check_rx_rsn_ie_match(struct mac_context *mac_ctx,
 uint8_t lim_check_rx_wpa_ie_match(struct mac_context *, tDot11fIEWPA *, struct pe_session *,
 				  uint8_t);
 uint8_t lim_check_mcs_set(struct mac_context *mac, uint8_t *supportedMCSSet);
-void limPostDummyToTmRing(struct mac_context *, tpDphHashNode);
-void limPostPacketToTdRing(struct mac_context *, tpDphHashNode, uint8_t);
-QDF_STATUS lim_cleanup_rx_path(struct mac_context *, tpDphHashNode, struct pe_session *);
+QDF_STATUS lim_cleanup_rx_path(struct mac_context *, tpDphHashNode,
+			       struct pe_session *);
 void lim_reject_association(struct mac_context *, tSirMacAddr, uint8_t,
 			    uint8_t, tAniAuthType, uint16_t, uint8_t,
 			    enum eSirMacStatusCodes, struct pe_session *);
