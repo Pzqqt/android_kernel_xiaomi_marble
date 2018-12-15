@@ -1331,8 +1331,6 @@ struct hdd_adapter {
 	struct hdd_multicast_addr_list mc_addr_list;
 	uint8_t addr_filter_pattern;
 
-	bool survey_idx;
-
 	struct hdd_scan_info scan_info;
 
 	/* Flag to ensure PSB is configured through framework */
