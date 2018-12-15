@@ -2723,11 +2723,6 @@ struct hdd_config {
 	uint32_t ibssPs1RxChainInAtimEnable;
 	bool fRegChangeDefCountry;
 	bool advertiseConcurrentOperation;
-
-#ifdef FEATURE_WLAN_FORCE_SAP_SCC
-	uint8_t SapSccChanAvoidance;
-#endif /* FEATURE_WLAN_FORCE_SAP_SCC */
-
 #ifdef DHCP_SERVER_OFFLOAD
 	uint8_t dhcpServerIP[IPADDR_STRING_LENGTH];
 #endif /* DHCP_SERVER_OFFLOAD */
