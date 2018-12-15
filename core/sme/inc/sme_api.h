@@ -772,8 +772,6 @@ uint8_t sme_get_roam_scan_n_probes(mac_handle_t mac_handle);
 uint16_t sme_get_roam_scan_home_away_time(mac_handle_t mac_handle);
 QDF_STATUS sme_update_roam_rssi_diff(mac_handle_t mac_handle, uint8_t sessionId,
 		uint8_t RoamRssiDiff);
-QDF_STATUS sme_update_fast_transition_enabled(mac_handle_t mac_handle,
-		bool isFastTransitionEnabled);
 QDF_STATUS sme_update_wes_mode(mac_handle_t mac_handle, bool isWESModeEnabled,
 		uint8_t sessionId);
 QDF_STATUS sme_set_roam_scan_control(mac_handle_t mac_handle, uint8_t sessionId,
