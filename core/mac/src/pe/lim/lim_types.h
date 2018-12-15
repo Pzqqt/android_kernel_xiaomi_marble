@@ -710,9 +710,6 @@ void lim_handle_heart_beat_failure(struct mac_context *, struct pe_session *);
 /* / Function that triggers link tear down with AP upon HB failure */
 void lim_tear_down_link_with_ap(struct mac_context *, uint8_t, tSirMacReasonCodes);
 
-/* / Function that processes Max retries interrupt from TFP */
-void limHandleMaxRetriesInterrupt(uint32_t);
-
 /* / Function that defers the messages received */
 uint32_t lim_defer_msg(struct mac_context *, struct scheduler_msg *);
 
