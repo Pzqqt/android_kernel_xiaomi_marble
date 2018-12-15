@@ -49,7 +49,6 @@ void lim_process_mlm_join_cnf(struct mac_context *, uint32_t *);
 void lim_process_mlm_auth_cnf(struct mac_context *, uint32_t *);
 void lim_process_mlm_assoc_ind(struct mac_context *, uint32_t *);
 void lim_process_mlm_assoc_cnf(struct mac_context *, uint32_t *);
-void lim_process_mlm_reassoc_ind(struct mac_context *, uint32_t *);
 void lim_process_mlm_set_keys_cnf(struct mac_context *, uint32_t *);
 void lim_process_mlm_disassoc_ind(struct mac_context *, uint32_t *);
 void lim_process_mlm_disassoc_cnf(struct mac_context *, uint32_t *);
