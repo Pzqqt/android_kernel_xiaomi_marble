@@ -1339,9 +1339,6 @@ struct hdd_adapter {
 	uint8_t psb_changed;
 	/* UAPSD psb value configured through framework */
 	uint8_t configured_psb;
-#ifdef IPA_OFFLOAD
-	void *ipa_context;
-#endif
 	/* Use delayed work for Sec AP ACS as Pri AP Startup need to complete
 	 * since CSR (PMAC Struct) Config is same for both AP
 	 */
@@ -1779,8 +1776,6 @@ struct hdd_context {
 
 	qdf_wake_lock_t rx_wake_lock;
 	qdf_wake_lock_t sap_wake_lock;
-
-	void *hdd_ipa;
 
 	/* Flag keeps track of wiphy suspend/resume */
 	bool is_wiphy_suspended;
