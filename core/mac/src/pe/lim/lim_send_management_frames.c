@@ -3247,8 +3247,7 @@ lim_send_meas_report_frame(struct mac_context *mac,
 							    &frm.MeasurementReport);
 		break;
 	default:
-		pe_err("Unknown measurement type %d in limSen"
-		       "dMeasReportFrame",
+		pe_err("Unknown measurement type %d in limSendMeasReportFrame",
 			pMeasReqFrame->measReqIE.measType);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3274,8 +3273,8 @@ lim_send_meas_report_frame(struct mac_context *mac,
 				 (uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		pe_err("Failed to allocate %d bytes for a "
-		       "De-Authentication", nBytes);
+		pe_err("Failed to allocate %d bytes for a De-Authentication",
+		       nBytes);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Paranoia: */
