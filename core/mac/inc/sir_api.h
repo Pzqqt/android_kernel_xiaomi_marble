@@ -2139,15 +2139,6 @@ typedef struct sSirSmeProbeReqInd {
 	tSirWPSPBCProbeReq WPSPBCProbeReq;
 } tSirSmeProbeReqInd, *tpSirSmeProbeReqInd;
 
-typedef struct sSirUpdateAPWPARSNIEsReq {
-	uint16_t messageType;   /* eWNI_SME_SET_APWPARSNIEs_REQ */
-	uint16_t length;
-	uint16_t transactionId; /* Transaction ID for cmd */
-	struct qdf_mac_addr bssid;      /* BSSID */
-	uint8_t sessionId;      /* Session ID */
-	tSirRSNie APWPARSNIEs;
-} tSirUpdateAPWPARSNIEsReq, *tpSirUpdateAPWPARSNIEsReq;
-
 #define SIR_ROAM_MAX_CHANNELS            80
 #define SIR_ROAM_SCAN_MAX_PB_REQ_SIZE    450
 /* Occupied channel list remains static */
