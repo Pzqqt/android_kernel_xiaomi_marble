@@ -99,10 +99,6 @@ static inline mac_handle_t MAC_HANDLE(struct mac_context *mac)
 /* max number of legacy bssid we can store during scan on one channel */
 #define MAX_NUM_LEGACY_BSSID_PER_CHANNEL    10
 
-#ifdef WLAN_FEATURE_CONCURRENT_P2P
-#define MAX_NO_OF_P2P_SESSIONS  5
-#endif /* WLAN_FEATURE_CONCURRENT_P2P */
-
 #define SPACE_ASCII_VALUE  32
 
 #define WLAN_HOST_SEQ_NUM_MIN                           2048
