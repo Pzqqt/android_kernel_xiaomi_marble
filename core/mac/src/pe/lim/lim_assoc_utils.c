@@ -2769,71 +2769,57 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 	pAddStaParams->shortPreambleSupported =
 					mac->mlme_cfg->ht_caps.short_preamble;
 
-	lim_populate_own_rate_set(mac, &pAddStaParams->supportedRates, NULL, false,
+	lim_populate_own_rate_set(mac, &pAddStaParams->supportedRates,
+				  NULL, false,
 				  pe_session, NULL, NULL);
 	if (IS_DOT11_MODE_HT(selfStaDot11Mode)) {
 		pAddStaParams->htCapable = true;
-#ifdef DISABLE_GF_FOR_INTEROP
-		if ((pe_session->pLimJoinReq != NULL)
-		    && (!pe_session->pLimJoinReq->bssDescription.
-			aniIndicator)) {
-			pe_err("Turning off Greenfield, when adding self entry");
-			pAddStaParams->greenFieldCapable =
-				WNI_CFG_GREENFIELD_CAPABILITY_DISABLE;
-		} else
-#endif
-		{
-			pAddStaParams->greenFieldCapable =
-				lim_get_ht_capability(mac, eHT_GREENFIELD,
-						      pe_session);
-			pAddStaParams->ch_width =
-				mac->roam.configParam.channelBondingMode5GHz;
-			pAddStaParams->mimoPS =
-				lim_get_ht_capability(mac, eHT_MIMO_POWER_SAVE,
-						      pe_session);
-			pAddStaParams->rifsMode =
-				lim_get_ht_capability(mac, eHT_RIFS_MODE,
-						      pe_session);
-			pAddStaParams->lsigTxopProtection =
-				lim_get_ht_capability(mac, eHT_LSIG_TXOP_PROTECTION,
-						      pe_session);
-			pAddStaParams->maxAmpduDensity =
-				lim_get_ht_capability(mac, eHT_MPDU_DENSITY,
-						      pe_session);
-			pAddStaParams->maxAmpduSize =
-				lim_get_ht_capability(mac, eHT_MAX_RX_AMPDU_FACTOR,
-						      pe_session);
-			pAddStaParams->maxAmsduSize =
-				lim_get_ht_capability(mac, eHT_MAX_AMSDU_LENGTH,
-						      pe_session);
-			pAddStaParams->max_amsdu_num =
-				lim_get_ht_capability(mac, eHT_MAX_AMSDU_NUM,
-						      pe_session);
-			pAddStaParams->fDsssCckMode40Mhz =
-				lim_get_ht_capability(mac, eHT_DSSS_CCK_MODE_40MHZ,
-						      pe_session);
-			pAddStaParams->fShortGI20Mhz =
-					pe_session->htConfig.ht_sgi20;
-			pAddStaParams->fShortGI40Mhz =
-					pe_session->htConfig.ht_sgi40;
-			pe_debug("greenFieldCapable: %d maxAmpduDensity: %d "
-				 "maxAmpduSize: %d",
-				pAddStaParams->greenFieldCapable,
-				pAddStaParams->maxAmpduDensity,
-				pAddStaParams->maxAmpduSize);
+		pAddStaParams->greenFieldCapable =
+			lim_get_ht_capability(mac, eHT_GREENFIELD,
+					      pe_session);
+		pAddStaParams->ch_width =
+			mac->roam.configParam.channelBondingMode5GHz;
+		pAddStaParams->mimoPS =
+			lim_get_ht_capability(mac, eHT_MIMO_POWER_SAVE,
+					      pe_session);
+		pAddStaParams->rifsMode =
+			lim_get_ht_capability(mac, eHT_RIFS_MODE,
+					      pe_session);
+		pAddStaParams->lsigTxopProtection =
+			lim_get_ht_capability(mac, eHT_LSIG_TXOP_PROTECTION,
+					      pe_session);
+		pAddStaParams->maxAmpduDensity =
+			lim_get_ht_capability(mac, eHT_MPDU_DENSITY,
+					      pe_session);
+		pAddStaParams->maxAmpduSize =
+			lim_get_ht_capability(mac, eHT_MAX_RX_AMPDU_FACTOR,
+					      pe_session);
+		pAddStaParams->maxAmsduSize =
+			lim_get_ht_capability(mac, eHT_MAX_AMSDU_LENGTH,
+					      pe_session);
+		pAddStaParams->max_amsdu_num =
+			lim_get_ht_capability(mac, eHT_MAX_AMSDU_NUM,
+					      pe_session);
+		pAddStaParams->fDsssCckMode40Mhz =
+			lim_get_ht_capability(mac, eHT_DSSS_CCK_MODE_40MHZ,
+					      pe_session);
+		pAddStaParams->fShortGI20Mhz = pe_session->htConfig.ht_sgi20;
+		pAddStaParams->fShortGI40Mhz = pe_session->htConfig.ht_sgi40;
+		pe_debug("greenFieldCapable: %d maxAmpduDensity: %d maxAmpduSize: %d",
+			 pAddStaParams->greenFieldCapable,
+			 pAddStaParams->maxAmpduDensity,
+			 pAddStaParams->maxAmpduSize);
 
-			pe_debug("fDsssCckMode40Mhz: %d fShortGI20Mhz: %d "
-				 "fShortGI40Mhz: %d lsigTxopProtection: %d",
-				pAddStaParams->fDsssCckMode40Mhz,
-				pAddStaParams->fShortGI20Mhz,
-				pAddStaParams->fShortGI40Mhz,
-				pAddStaParams->lsigTxopProtection);
+		pe_debug("fDsssCckMode40Mhz: %d fShortGI20Mhz: %d fShortGI40Mhz: %d lsigTxopProtection: %d",
+			 pAddStaParams->fDsssCckMode40Mhz,
+			 pAddStaParams->fShortGI20Mhz,
+			 pAddStaParams->fShortGI40Mhz,
+			 pAddStaParams->lsigTxopProtection);
 
-			pe_debug("maxAmsduSize: %d txChannelWidth: %d mimoPS: %d rifsMode %d",
-				pAddStaParams->maxAmsduSize,
-				pAddStaParams->ch_width,
-				pAddStaParams->mimoPS, pAddStaParams->rifsMode);
-		}
+		pe_debug("maxAmsduSize: %d txChannelWidth: %d mimoPS: %d rifsMode %d",
+			 pAddStaParams->maxAmsduSize,
+			 pAddStaParams->ch_width,
+			 pAddStaParams->mimoPS, pAddStaParams->rifsMode);
 	}
 	pAddStaParams->vhtCapable = IS_DOT11_MODE_VHT(selfStaDot11Mode);
 	if (pAddStaParams->vhtCapable) {
