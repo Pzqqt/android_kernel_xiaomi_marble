@@ -25,7 +25,6 @@
 #define __WLAN_HDD_NAN_DATAPATH_H
 
 struct hdd_context;
-struct hdd_tgt_cfg;
 struct hdd_config;
 struct hdd_adapter;
 struct wireless_dev;
