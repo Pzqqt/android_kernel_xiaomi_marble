@@ -57,9 +57,6 @@ struct hdd_context;
 #define SA_QUERY_FRAME_RSP "\x08\x01"
 #define SA_QUERY_FRAME_RSP_SIZE 2
 
-#define HDD_P2P_WILDCARD_SSID "DIRECT-"
-#define HDD_P2P_WILDCARD_SSID_LEN 7
-
 #define WNM_BSS_ACTION_FRAME "\x0a\x07"
 #define WNM_BSS_ACTION_FRAME_SIZE 2
 
