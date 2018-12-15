@@ -1041,7 +1041,6 @@ struct wma_valid_channels {
  * @roam_ho_wl: wake lock for roam handoff req
  * @wow_nack: wow negative ack flag
  * @is_wow_bus_suspended: is wow bus suspended flag
- * @wma_scan_comp_timer: scan completion timer
  * @suitable_ap_hb_failure: better ap found
  * @suitable_ap_hb_failure_rssi: RSSI when suitable_ap_hb_failure
  *   triggered for later usage to report RSSI at beacon miss scenario
@@ -1186,7 +1185,6 @@ typedef struct {
 	qdf_wake_lock_t roam_ho_wl;
 	int wow_nack;
 	qdf_atomic_t is_wow_bus_suspended;
-	qdf_mc_timer_t wma_scan_comp_timer;
 	bool suitable_ap_hb_failure;
 	uint32_t suitable_ap_hb_failure_rssi;
 	ibss_power_save_params wma_ibss_power_save_params;
