@@ -131,15 +131,6 @@ static inline bool wlan_hdd_nan_is_supported(struct hdd_context *hdd_ctx)
 {
 	return false;
 }
-static inline void hdd_nan_populate_cds_config(struct cds_config_info *cds_cfg,
-			struct hdd_context *hdd_ctx)
-{
-}
-
-static inline void hdd_nan_populate_pmo_config(struct pmo_psoc_cfg *pmo_cfg,
-			struct hdd_context *hdd_ctx)
-{
-}
 
 static inline
 void wlan_hdd_cfg80211_nan_callback(hdd_handle_t hdd_handle, tSirNanEvent *msg)
