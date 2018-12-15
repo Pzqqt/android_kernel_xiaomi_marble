@@ -40,7 +40,6 @@
 
 /* Max key size  including the WAPI and TKIP */
 #define WLAN_MAX_KEY_RSC_LEN         16
-#define WLAN_WAPI_KEY_RSC_LEN        16
 
 #ifndef false
 #undef false
