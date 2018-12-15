@@ -427,7 +427,6 @@ typedef struct sLimMlmSetKeysReq {
  * @maxTxPower: max power to be used after applying the power constraint
  * @extSetStaKeyParamValid: Ext Bss Config Msg if set
  * @extSetStaKeyParam: SetStaKeyParams for ext bss msg
- * @ucMaxProbeRespRetryLimit: probe Response Max retries
  * @bHiddenSSIDEn: To Enable Hidden ssid.
  * @bProxyProbeRespEn: To Enable Disable FW Proxy Probe Resp
  * @halPersona: Persona for the BSS can be STA,AP,GO,CLIENT value
@@ -484,7 +483,6 @@ typedef struct {
 	uint8_t extSetStaKeyParamValid;
 	tSetStaKeyParams extSetStaKeyParam;
 
-	uint8_t ucMaxProbeRespRetryLimit;
 	uint8_t bHiddenSSIDEn;
 	uint8_t bProxyProbeRespEn;
 	uint8_t halPersona;
