@@ -4002,16 +4002,6 @@ inline QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
 {
 	return QDF_STATUS_SUCCESS;
 }
-
-static inline QDF_STATUS
-hdd_roam_tdls_status_update_handler(struct hdd_adapter *adapter,
-				    struct csr_roam_info *roam_info,
-				    uint32_t roamId,
-				    eRoamCmdStatus roamStatus,
-				    eCsrRoamResult roamResult)
-{
-	return QDF_STATUS_SUCCESS;
-}
 #endif
 
 #ifdef WLAN_FEATURE_11W
