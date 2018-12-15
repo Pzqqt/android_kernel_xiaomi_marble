@@ -30,8 +30,6 @@
 #include "csr_inside_api.h"
 #include <wlan_cfg80211_scan.h>
 
-#define MAX_PENDING_LOG 5
-
 /* (30 Mins) */
 #define MIN_TIME_REQUIRED_FOR_NEXT_BUG_REPORT (30 * 60 * 1000)
 
