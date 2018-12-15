@@ -2473,11 +2473,9 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 						   rxHighestDataRate,
 						   htCaps->supportedMCSSet);
 		pStaDs->baPolicyFlag = 0xFF;
-		mac->lim.gLimTdlsLinkMode = TDLS_LINK_MODE_N;
 		pStaDs->ht_caps = pTdlsAddStaReq->htCap.hc_cap;
 	} else {
 		pStaDs->mlmStaContext.htCapability = 0;
-		mac->lim.gLimTdlsLinkMode = TDLS_LINK_MODE_BG;
 	}
 	lim_tdls_populate_dot11f_vht_caps(mac, pTdlsAddStaReq, &vhtCap);
 	pVhtCaps = &vhtCap;
@@ -2503,7 +2501,6 @@ static void lim_tdls_update_hash_node_info(struct mac_context *mac,
 
 		pStaDs->vhtLdpcCapable = pVhtCaps->ldpcCodingCap;
 		pStaDs->vhtBeamFormerCapable = 0;
-		mac->lim.gLimTdlsLinkMode = TDLS_LINK_MODE_AC;
 		pVhtCaps_txbf = (tDot11fIEVHTCaps *) (&pTdlsAddStaReq->vhtCap);
 		pVhtCaps_txbf->suBeamformeeCap = 0;
 		pVhtCaps_txbf->suBeamFormerCap = 0;

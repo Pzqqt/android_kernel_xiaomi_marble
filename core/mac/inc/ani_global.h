@@ -684,19 +684,15 @@ typedef struct sAniSirLim {
 
 	uint8_t gHTNonGFDevicesPresent;
 
-	/* //////////////////////////////  HT RELATED           ////////////////////////////////////////// */
-
-#ifdef FEATURE_WLAN_TDLS
-	uint8_t gLimTdlsLinkMode;
-	/* //////////////////////////////  TDLS RELATED         ////////////////////////////////////////// */
-#endif
+	/* HT RELATED END */
 
 	/* wsc info required to form the wsc IE */
 	tLimWscIeInfo wscIeInfo;
 	struct pe_session *gpSession;  /* Pointer to  session table */
 	/*
-	 * sessionID and transactionID from SME is stored here for those messages, for which
-	 * there is no session context in PE, e.g. Scan related messages.
+	 * sessionID and transactionID from SME is stored here for
+	 * those messages, for which there is no session context in
+	 * PE, e.g. Scan related messages.
 	 **/
 	uint8_t gSmeSessionId;
 
