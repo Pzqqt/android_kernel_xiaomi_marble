@@ -41,30 +41,6 @@ enum tdls_concerned_external_events {
 #define ENA_TDLS_OFFCHAN      (1 << 0)  /* TDLS Off Channel support */
 #define ENA_TDLS_BUFFER_STA   (1 << 1)  /* TDLS Buffer STA support */
 #define ENA_TDLS_SLEEP_STA    (1 << 2)  /* TDLS Sleep STA support */
-/**
- * struct hdd_tdls_config_params - tdls config params
- *
- * @tdls: tdls
- * @tx_period_t: tx period
- * @tx_packet_n: tx packets number
- * @discovery_tries_n: discovery tries
- * @idle_timeout_t: idle traffic time out value
- * @idle_packet_n: idle packet number
- * @rssi_trigger_threshold: rssi trigger threshold
- * @rssi_teardown_threshold: rssi tear down threshold
- * @rssi_delta: rssi delta
- */
-struct hdd_tdls_config_params {
-	uint32_t tdls;
-	uint32_t tx_period_t;
-	uint32_t tx_packet_n;
-	uint32_t discovery_tries_n;
-	uint32_t idle_timeout_t;
-	uint32_t idle_packet_n;
-	int32_t rssi_trigger_threshold;
-	int32_t rssi_teardown_threshold;
-	int32_t rssi_delta;
-};
 
 typedef int (*cfg80211_exttdls_callback)(const uint8_t *mac,
 					 uint32_t opclass,
