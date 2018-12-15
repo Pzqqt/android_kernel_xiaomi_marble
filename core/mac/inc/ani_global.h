@@ -96,9 +96,6 @@ static inline mac_handle_t MAC_HANDLE(struct mac_context *mac)
 /* 40 beacons per heart beat interval is the default + 1 to count the rest */
 #define MAX_NO_BEACONS_PER_HEART_BEAT_INTERVAL 41
 
-/* max number of legacy bssid we can store during scan on one channel */
-#define MAX_NUM_LEGACY_BSSID_PER_CHANNEL    10
-
 #define SPACE_ASCII_VALUE  32
 
 #define WLAN_HOST_SEQ_NUM_MIN                           2048
