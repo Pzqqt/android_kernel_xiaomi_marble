@@ -770,7 +770,6 @@ void lim_covert_channel_scan_type(struct mac_context *mac, uint8_t channelNum,
 				  bool passiveToActive);
 void lim_set_dfs_channel_list(struct mac_context *mac, uint8_t channelNum,
 			      tSirDFSChannelList *dfsChannelList);
-void limContinueChannelLearn(struct mac_context *);
 QDF_STATUS lim_sta_send_down_link(join_params *param);
 
 #ifdef WLAN_FEATURE_11W
