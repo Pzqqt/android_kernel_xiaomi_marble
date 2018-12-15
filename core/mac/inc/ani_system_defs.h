@@ -35,9 +35,6 @@
 
 #define ANI_OUI  0x000AF5
 
-/* / Max WDS info length. */
-#define ANI_WDS_INFO_MAX_LENGTH        64
-
 /* This is to force compiler to use the maximum of an int for enum */
 #define SIR_MAX_ENUM_SIZE    0x7FFFFFFF
 
