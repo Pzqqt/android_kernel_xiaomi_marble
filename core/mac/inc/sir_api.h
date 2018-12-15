@@ -1130,15 +1130,6 @@ typedef struct sSirSmeJoinRsp {
 	uint8_t frames[1];
 } tSirSmeJoinRsp, *tpSirSmeJoinRsp;
 
-/* / probereq from peer, when wsc is enabled */
-typedef struct sSirSmeProbereq {
-	uint16_t messageType;
-	uint16_t length;
-	uint8_t sessionId;
-	struct qdf_mac_addr peer_macaddr;
-	uint16_t devicePasswdId;
-} tSirSmeProbeReq, *tpSirSmeProbeReq;
-
 typedef struct sSirSmeChanInfo {
 	uint8_t chan_id;
 	uint32_t mhz;

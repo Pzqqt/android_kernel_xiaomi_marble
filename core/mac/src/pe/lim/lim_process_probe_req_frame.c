@@ -640,7 +640,7 @@ lim_send_sme_probe_req_ind(struct mac_context *mac,
 	msgQ.bodyptr = pSirSmeProbeReqInd;
 
 	pSirSmeProbeReqInd->messageType = eWNI_SME_WPS_PBC_PROBE_REQ_IND;
-	pSirSmeProbeReqInd->length = sizeof(tSirSmeProbeReq);
+	pSirSmeProbeReqInd->length = sizeof(*pSirSmeProbeReqInd);
 	pSirSmeProbeReqInd->sessionId = pe_session->smeSessionId;
 
 	qdf_mem_copy(pSirSmeProbeReqInd->bssid.bytes, pe_session->bssId,
