@@ -2654,7 +2654,6 @@ struct hdd_config {
 
 	/* Config parameters */
 	bool enable_connected_scan;
-	char PowerUsageControl[4];
 	enum hdd_dot11_mode dot11Mode;
 	uint32_t nChannelBondingMode24GHz;
 	uint32_t nChannelBondingMode5GHz;
