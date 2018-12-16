@@ -220,9 +220,6 @@ static void __lim_init_assoc_vars(struct mac_context *mac)
 	qdf_mem_set(&mac->lim.gLimPreAuthTimerTable, sizeof(tLimPreAuthTable),
 		    0);
 
-	/* Placed holder to deauth reason */
-	mac->lim.gLimDeauthReasonCode = 0;
-
 	/* Place holder for Pre-authentication node list */
 	mac->lim.pLimPreAuthList = NULL;
 

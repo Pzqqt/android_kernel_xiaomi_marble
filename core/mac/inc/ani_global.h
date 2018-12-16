@@ -561,9 +561,6 @@ typedef struct sAniSirLim {
 	uint32_t gLimNumPreAuthContexts;
 	tLimPreAuthTable gLimPreAuthTimerTable;
 
-	/* Placed holder to deauth reason */
-	uint16_t gLimDeauthReasonCode;
-
 	/* Place holder for Pre-authentication node list */
 	struct tLimPreAuthNode *pLimPreAuthList;
 
