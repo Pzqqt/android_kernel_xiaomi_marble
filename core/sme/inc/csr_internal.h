@@ -500,7 +500,6 @@ struct csr_scanstruct {
 	int8_t roam_candidate_count[CSR_ROAM_SESSION_MAX];
 	int8_t inScanResultBestAPRssi;
 	bool fcc_constraint;
-	bool defer_update_channel_list;
 	wlan_scan_requester requester_id;
 };
 

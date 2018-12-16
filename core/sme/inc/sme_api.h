@@ -1465,10 +1465,6 @@ QDF_STATUS sme_soc_set_antenna_mode(mac_handle_t mac_handle,
 
 void sme_setdef_dot11mode(mac_handle_t mac_handle);
 
-QDF_STATUS sme_handle_set_fcc_channel(mac_handle_t mac_handle,
-				      bool fcc_constraint,
-				      bool scan_pending);
-
 /**
  * sme_update_tx_bfee_supp() - sets the Tx Bfee support
  * @mac_handle: Opaque handle to the global MAC context

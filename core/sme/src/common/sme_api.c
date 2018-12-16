@@ -13755,38 +13755,6 @@ QDF_STATUS sme_set_peer_authorized(uint8_t *peer_addr,
 				  1, vdev_id);
 }
 
-/*
- * sme_handle_set_fcc_channel() - set spec. tx power for non-fcc channel
- * @mac_handle: Opaque handle to the global MAC context
- * @fcc_constraint: flag to enable/disable the constraint
- * @scan_pending: whether there is pending scan
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_handle_set_fcc_channel(mac_handle_t mac_handle,
-				      bool fcc_constraint,
-				      bool scan_pending)
-{
-	QDF_STATUS status;
-	struct mac_context *mac_ptr  = MAC_CONTEXT(mac_handle);
-
-	status = sme_acquire_global_lock(&mac_ptr->sme);
-
-	if (QDF_STATUS_SUCCESS == status) {
-
-		if (fcc_constraint != mac_ptr->scan.fcc_constraint) {
-			mac_ptr->scan.fcc_constraint = fcc_constraint;
-			if (scan_pending)
-				mac_ptr->scan.defer_update_channel_list = true;
-			else
-				status = csr_update_channel_list(mac_ptr);
-		}
-
-		sme_release_global_lock(&mac_ptr->sme);
-	}
-
-	return status;
-}
 /**
  * sme_setdef_dot11mode() - Updates mac with default dot11mode
  * @mac_handle: Global MAC pointer
