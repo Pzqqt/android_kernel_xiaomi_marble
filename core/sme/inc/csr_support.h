@@ -300,7 +300,6 @@ bool csr_is_security_match(struct mac_context *mac_ctx, tCsrAuthList *auth_type,
 			   uint8_t *mfp_required, uint8_t *mfp_capable,
 			   tSirBssDescription *bss_desc,
 			   tDot11fBeaconIEs *ies_ptr, uint8_t session_id);
-bool csr_is_bss_type_match(eCsrRoamBssType bssType1, eCsrRoamBssType bssType2);
 bool csr_is_bss_type_ibss(eCsrRoamBssType bssType);
 bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 			struct qdf_mac_addr *BssBssid);

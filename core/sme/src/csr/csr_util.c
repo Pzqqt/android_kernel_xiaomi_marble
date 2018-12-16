@@ -5537,15 +5537,6 @@ bool csr_is_bssid_match(struct qdf_mac_addr *pProfBssid,
 	return fMatch;
 }
 
-bool csr_is_bss_type_match(eCsrRoamBssType bssType1, eCsrRoamBssType bssType2)
-{
-	if ((eCSR_BSS_TYPE_ANY != bssType1 && eCSR_BSS_TYPE_ANY != bssType2)
-	    && (bssType1 != bssType2))
-		return false;
-	else
-		return true;
-}
-
 bool csr_is_bss_type_ibss(eCsrRoamBssType bssType)
 {
 	return (bool)
