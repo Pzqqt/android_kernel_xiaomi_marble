@@ -299,6 +299,16 @@ QDF_STATUS wmi_unified_send_btm_config(void *wmi_hdl,
 				       struct wmi_btm_config *params);
 
 /**
+ * wmi_unified_send_bss_load_config() - Send bss load trigger params to fw
+ * @wmi_hdl:  wmi handle
+ * @params: pointer to wmi_bss_load_config
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wmi_unified_send_bss_load_config(void *wmi_hdl,
+					    struct wmi_bss_load_config *params);
+
+/**
  * wmi_unified_offload_11k_cmd() - send 11k offload command
  * @wmi_hdl: wmi handle
  * @params: 11k offload params
