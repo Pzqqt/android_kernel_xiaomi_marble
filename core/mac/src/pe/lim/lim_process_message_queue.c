@@ -2224,8 +2224,6 @@ handle_ht_capabilityand_ht_info(struct mac_context *mac,
 	mac->lim.gHTControlledAccessOnly =
 		(uint8_t)mac->mlme_cfg->ht_caps.info_field_1.
 		controlled_access_only;
-	mac->lim.gHTRifsMode = (uint8_t)mac->mlme_cfg->ht_caps.info_field_1.
-		rifs_mode;
 
 	mac->lim.gHTOperMode = (tSirMacHTOperatingMode)mac->mlme_cfg->ht_caps.
 		info_field_2.op_mode;

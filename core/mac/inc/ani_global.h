@@ -641,8 +641,6 @@ typedef struct sAniSirLim {
 	/* Indicates whether an AP wants to associate PSMP enabled Stations */
 	uint8_t gHTControlledAccessOnly;
 
-	/* RIFS Mode. Set if no APSD legacy devices associated */
-	uint8_t gHTRifsMode;
 	/* OBss Mode . set when we have Non HT STA is associated or with in overlap bss */
 	uint8_t gHTObssMode;
 
