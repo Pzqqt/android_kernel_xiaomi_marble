@@ -1531,34 +1531,6 @@ typedef struct sAniGetSnrReq {
 	int8_t snr;
 } tAniGetSnrReq, *tpAniGetSnrReq;
 
-/**
- * struct ani_roc_req - Remain on channel request
- * @msg_type: Message type
- * @msg_len: Message Length
- * @session_id: SME session Id
- * @channel: channel number
- * @callback: call back function for scan result
- * @duration: Roc duration
- * @is_p2pprobe_allowed : flag for p2p probe request
- * @ctx: Global context
- * @scan_id: Scan Identifier
- *
- * Remain on channel request message structure
- */
-struct ani_roc_req {
-	/* message type is same as the request type */
-	uint16_t msg_type;
-	/* length of the entire request */
-	uint16_t msg_len;
-	uint16_t session_id;
-	uint8_t channel;
-	uint32_t duration;
-	uint8_t is_p2pprobe_allowed;
-	void *callback;
-	void *ctx;
-	uint32_t scan_id;
-};
-
 /* generic country code change request MSG structure */
 typedef struct sAniGenericChangeCountryCodeReq {
 	uint16_t msgType;       /* message type is same as the request type */
