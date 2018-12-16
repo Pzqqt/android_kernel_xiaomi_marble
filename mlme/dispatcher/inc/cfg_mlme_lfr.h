@@ -1846,6 +1846,56 @@
 	20, \
 	CFG_VALUE_OR_DEFAULT, \
 	"wait time for tx complete before vdev stop")
+/*
+ * <ini>
+ * enable_bss_load_roam_trigger - enable/disable bss load based roam trigger
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini when enabled, allows the firmware to roam when bss load outpaces
+ * the configured bss load threshold. When this ini is disabled, firmware
+ * doesn't consider bss load values to trigger roam.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_BSS_LOAD_TRIGGERED_ROAM CFG_INI_BOOL( \
+			"enable_bss_load_roam_trigger", \
+			1, \
+			"enable bss load triggered roaming")
+
+/*
+ * <ini>
+ * bss_load_threshold - bss load above which the STA should trigger roaming
+ * @Min: 0
+ * @Max: 100
+ * @Default: 70
+ *
+ * When the bss laod value that is sampled exceeds this threshold, firmware
+ * will trigger roaming if bss load trigger is enabled.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_BSS_LOAD_THRESHOLD CFG_INI_UINT( \
+		"bss_load_threshold", \
+		0, \
+		100, \
+		70, \
+		CFG_VALUE_OR_DEFAULT, \
+		"bss load threshold")
+
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /*
@@ -1972,6 +2022,8 @@
 	CFG(CFG_LFR_ROAM_SCAN_N_PROBES) \
 	CFG(CFG_LFR_ROAM_SCAN_HOME_AWAY_TIME) \
 	CFG(CFG_LFR_DELAY_BEFORE_VDEV_STOP) \
+	CFG(CFG_ENABLE_BSS_LOAD_TRIGGERED_ROAM) \
+	CFG(CFG_BSS_LOAD_THRESHOLD) \
 	ROAM_OFFLOAD_ALL \
 	LFR_ESE_ALL
 
