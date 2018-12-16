@@ -5237,24 +5237,6 @@ void pe_set_resume_channel(struct mac_context *mac, uint16_t channel,
 	mac->lim.gResumePhyCbState = phyCbState;
 }
 
-bool lim_is_noa_insert_reqd(struct mac_context *mac)
-{
-	uint8_t i;
-
-	for (i = 0; i < mac->lim.maxBssId; i++) {
-		if (mac->lim.gpSession[i].valid == true) {
-			if ((eLIM_AP_ROLE ==
-			     mac->lim.gpSession[i].limSystemRole)
-			    && (QDF_P2P_GO_MODE ==
-				mac->lim.gpSession[i].pePersona)
-			    ) {
-				return true;
-			}
-		}
-	}
-	return false;
-}
-
 bool lim_isconnected_on_dfs_channel(struct mac_context *mac_ctx,
 		uint8_t currentChannel)
 {

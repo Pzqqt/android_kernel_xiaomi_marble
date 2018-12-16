@@ -535,7 +535,7 @@ uint8_t lim_get_noa_attr_stream(struct mac_context *mac, uint8_t *pNoaStream,
 
 uint8_t lim_build_p2p_ie(struct mac_context *mac, uint8_t *ie, uint8_t *data,
 		uint8_t ie_len);
-bool lim_is_noa_insert_reqd(struct mac_context *mac);
+
 bool lim_isconnected_on_dfs_channel(struct mac_context *mac_ctx,
 				    uint8_t currentChannel);
 
