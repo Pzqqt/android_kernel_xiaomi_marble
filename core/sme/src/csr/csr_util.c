@@ -5943,18 +5943,6 @@ tSirScanType csr_get_scan_type(struct mac_context *mac, uint8_t chnId)
 	return scanType;
 }
 
-uint8_t csr_to_upper(uint8_t ch)
-{
-	uint8_t chOut;
-
-	if (ch >= 'a' && ch <= 'z')
-		chOut = ch - 'a' + 'A';
-	else
-		chOut = ch;
-
-	return chOut;
-}
-
 tSirBssType csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype)
 {
 	tSirBssType ret;
