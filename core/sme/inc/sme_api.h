@@ -873,7 +873,7 @@ QDF_STATUS sme_set_phy_mode(mac_handle_t mac_handle, eCsrPhyMode phyMode);
 eCsrPhyMode sme_get_phy_mode(mac_handle_t mac_handle);
 QDF_STATUS sme_handoff_request(mac_handle_t mac_handle, uint8_t sessionId,
 			       tCsrHandoffRequest *pHandoffInfo);
-QDF_STATUS sme_is_sta_p2p_client_connected(mac_handle_t mac_handle);
+
 QDF_STATUS sme_add_periodic_tx_ptrn(mac_handle_t mac_handle,
 		tSirAddPeriodicTxPtrn *addPeriodicTxPtrnParams);
 QDF_STATUS sme_del_periodic_tx_ptrn(mac_handle_t mac_handle,

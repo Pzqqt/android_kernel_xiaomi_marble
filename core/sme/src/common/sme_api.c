@@ -8353,20 +8353,6 @@ QDF_STATUS sme_handoff_request(mac_handle_t mac_handle,
 	return status;
 }
 
-/*
- * SME API to check if there is any infra station or
- * P2P client is connected
- */
-QDF_STATUS sme_is_sta_p2p_client_connected(mac_handle_t mac_handle)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	if (csr_is_infra_connected(mac))
-		return QDF_STATUS_SUCCESS;
-
-	return QDF_STATUS_E_FAILURE;
-}
-
 /**
  * sme_add_periodic_tx_ptrn() - Add Periodic TX Pattern
  * @mac_handle: Opaque handle to the global MAC context
