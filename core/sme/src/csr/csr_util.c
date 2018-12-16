@@ -1445,11 +1445,6 @@ bool csr_is_privacy(tSirBssDescription *pSirBssDesc)
 	return (bool) dot11Caps.privacy;
 }
 
-bool csr_is11d_supported(struct mac_context *mac)
-{
-	return mac->mlme_cfg->gen.enabled_11d;
-}
-
 bool csr_is11h_supported(struct mac_context *mac)
 {
 	return mac->mlme_cfg->gen.enabled_11h;
