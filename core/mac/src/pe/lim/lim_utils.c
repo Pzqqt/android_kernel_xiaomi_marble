@@ -5144,31 +5144,6 @@ uint8_t lim_build_p2p_ie(struct mac_context *mac, uint8_t *ie, uint8_t *data,
 }
 
 /* Returns length of NoA stream and Pointer pNoaStream passed to this function is filled with noa stream */
-
-uint8_t lim_get_noa_attr_stream_in_mult_p2p_ies(struct mac_context *mac,
-						uint8_t *noaStream, uint8_t noaLen,
-						uint8_t overFlowLen)
-{
-	uint8_t overFlowP2pStream[SIR_MAX_NOA_ATTR_LEN];
-
-	if ((noaLen <= (SIR_MAX_NOA_ATTR_LEN + SIR_P2P_IE_HEADER_LEN)) &&
-	    (noaLen >= overFlowLen) && (overFlowLen <= SIR_MAX_NOA_ATTR_LEN)) {
-		qdf_mem_copy(overFlowP2pStream,
-			     noaStream + noaLen - overFlowLen, overFlowLen);
-		noaStream[noaLen - overFlowLen] = SIR_MAC_EID_VENDOR;
-		noaStream[noaLen - overFlowLen + 1] =
-			overFlowLen + SIR_MAC_P2P_OUI_SIZE;
-		qdf_mem_copy(noaStream + noaLen - overFlowLen + 2,
-			     SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE);
-		qdf_mem_copy(noaStream + noaLen + 2 + SIR_MAC_P2P_OUI_SIZE -
-			     overFlowLen, overFlowP2pStream, overFlowLen);
-	}
-
-	return noaLen + SIR_P2P_IE_HEADER_LEN;
-
-}
-
-/* Returns length of NoA stream and Pointer pNoaStream passed to this function is filled with noa stream */
 uint8_t lim_get_noa_attr_stream(struct mac_context *mac, uint8_t *pNoaStream,
 				struct pe_session *pe_session)
 {

@@ -530,9 +530,6 @@ void lim_handle_heart_beat_failure_timeout(struct mac_context *mac);
 	wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_P2P_OUI, \
 			SIR_MAC_P2P_OUI_SIZE, ie, ie_len)
 
-uint8_t lim_get_noa_attr_stream_in_mult_p2p_ies(struct mac_context *mac,
-		uint8_t *noaStream, uint8_t noaLen,
-		uint8_t overFlowLen);
 uint8_t lim_get_noa_attr_stream(struct mac_context *mac, uint8_t *pNoaStream,
 		struct pe_session *pe_session);
 
