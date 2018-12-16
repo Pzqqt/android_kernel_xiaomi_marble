@@ -2108,19 +2108,6 @@ typedef struct sSirSmeProbeReqInd {
 #define SIR_OFFLOAD_DISABLE                         0
 #define SIR_OFFLOAD_ENABLE                          1
 
-#ifdef WLAN_NS_OFFLOAD
-typedef struct sSirNsOffloadReq {
-	uint8_t srcIPv6Addr[SIR_MAC_IPV6_ADDR_LEN];
-	uint8_t selfIPv6Addr[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA][SIR_MAC_IPV6_ADDR_LEN];
-	uint8_t targetIPv6Addr[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA][SIR_MAC_IPV6_ADDR_LEN];
-	struct qdf_mac_addr self_macaddr;
-	uint8_t srcIPv6AddrValid;
-	uint8_t targetIPv6AddrValid[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
-	uint8_t target_ipv6_addr_ac_type[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
-	uint8_t slotIdx;
-} tSirNsOffloadReq, *tpSirNsOffloadReq;
-#endif /* WLAN_NS_OFFLOAD */
-
 typedef struct sSirHostOffloadReq {
 	uint8_t offloadType;
 	uint8_t enableOrDisable;
@@ -2129,9 +2116,6 @@ typedef struct sSirHostOffloadReq {
 		uint8_t hostIpv4Addr[SIR_IPV4_ADDR_LEN];
 		uint8_t hostIpv6Addr[SIR_MAC_IPV6_ADDR_LEN];
 	} params;
-#ifdef WLAN_NS_OFFLOAD
-	tSirNsOffloadReq nsOffloadInfo;
-#endif /* WLAN_NS_OFFLOAD */
 	struct qdf_mac_addr bssid;
 } tSirHostOffloadReq, *tpSirHostOffloadReq;
 

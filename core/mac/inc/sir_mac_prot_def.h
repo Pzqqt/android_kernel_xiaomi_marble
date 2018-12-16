@@ -520,8 +520,6 @@
 #define SIR_MAC_OUI_WSM_SCHEDULE_MAX        20
 
 #define SIR_MAC_NS_OFFLOAD_SIZE             1   /* support only one IPv6 offload */
-/* Number of target IP V6 addresses for NS offload */
-#define SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA   16
 #define SIR_MAC_IPV6_ADDR_LEN               16
 #define SIR_IPV6_ADDR_VALID                 1
 #define SIR_IPV6_ADDR_UC_TYPE               0
