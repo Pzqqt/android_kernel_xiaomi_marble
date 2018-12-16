@@ -8334,19 +8334,6 @@ end:
 	return status;
 }
 
-QDF_STATUS csr_roam_reconnect(struct mac_context *mac, uint32_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-
-	if (csr_is_conn_state_connected(mac, sessionId)) {
-		status = csr_roam_issue_disassociate_cmd(mac, sessionId,
-					eCSR_DISCONNECT_REASON_UNSPECIFIED);
-		if (QDF_IS_STATUS_SUCCESS(status))
-			status = csr_roam_join_last_profile(mac, sessionId);
-	}
-	return status;
-}
-
 QDF_STATUS csr_roam_connect_to_last_profile(struct mac_context *mac,
 						uint32_t sessionId)
 {

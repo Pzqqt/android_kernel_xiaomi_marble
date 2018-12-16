@@ -695,14 +695,6 @@ QDF_STATUS csr_roam_reassoc(struct mac_context *mac, uint32_t sessionId,
 			    uint32_t *pRoamId);
 
 /*
- * csr_roam_reconnect() -
- * To disconnect and reconnect with the same profile
- *
- * Return QDF_STATUS. It returns fail if currently not connected
- */
-QDF_STATUS csr_roam_reconnect(struct mac_context *mac, uint32_t sessionId);
-
-/*
  * csr_roam_set_pmkid_cache() -
  * return the PMKID candidate list
  *
