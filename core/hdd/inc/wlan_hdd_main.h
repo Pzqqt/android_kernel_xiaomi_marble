@@ -2286,7 +2286,6 @@ int __wlan_hdd_validate_session_id(uint8_t session_id, const char *func);
  */
 bool hdd_is_valid_mac_address(const uint8_t *mac_addr);
 
-QDF_STATUS hdd_issta_p2p_clientconnected(struct hdd_context *hdd_ctx);
 bool wlan_hdd_validate_modules_state(struct hdd_context *hdd_ctx);
 
 /**

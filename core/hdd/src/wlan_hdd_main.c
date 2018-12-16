@@ -12271,19 +12271,6 @@ void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
 			     pDelStaParams);
 }
 
-/**
- * hdd_issta_p2p_clientconnected() - check if sta or p2p client is connected
- * @hdd_ctx:	HDD Context
- *
- * API to find if there is any STA or P2P-Client is connected
- *
- * Return: true if connected; false otherwise
- */
-QDF_STATUS hdd_issta_p2p_clientconnected(struct hdd_context *hdd_ctx)
-{
-	return sme_is_sta_p2p_client_connected(hdd_ctx->mac_handle);
-}
-
 void wlan_hdd_disable_roaming(struct hdd_adapter *cur_adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(cur_adapter);
