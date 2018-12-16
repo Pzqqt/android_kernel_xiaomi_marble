@@ -659,16 +659,6 @@ uint8_t cds_freq_to_chan(uint32_t freq)
 	return chan;
 }
 
-void cds_upper_to_lower(uint8_t *txt, uint32_t length)
-{
-	int i;
-
-	for (i = 0; i < length; i++) {
-		if (txt[i] >= 'A' && txt[i] <= 'Z')
-			txt[i] = txt[i] + 32;
-	}
-}
-
 enum cds_band_type cds_chan_to_band(uint32_t chan)
 {
 	if (chan <= CDS_24_GHZ_CHANNEL_14)
