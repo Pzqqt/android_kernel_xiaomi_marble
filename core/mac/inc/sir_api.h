@@ -1790,11 +1790,6 @@ typedef struct sSirIbssPeerInactivityInd {
 	struct qdf_mac_addr peer_addr;
 } tSirIbssPeerInactivityInd, *tpSirIbssPeerInactivityInd;
 
-typedef struct sLimScanChn {
-	uint16_t numTimeScan;   /* how many time this channel is scan */
-	uint8_t channelId;
-} tLimScanChn;
-
 /**
  * struct lim_channel_status
  * @channelfreq: Channel freq
@@ -1837,16 +1832,6 @@ struct lim_scan_channel_status {
 	struct lim_channel_status
 		 channel_status_list[SIR_MAX_SUPPORTED_CHANNEL_LIST];
 };
-
-typedef struct sSmeGetScanChnRsp {
-	/* Message Type */
-	uint16_t mesgType;
-	/* Message Length */
-	uint16_t mesgLen;
-	uint8_t sessionId;
-	uint8_t numChn;
-	tLimScanChn scanChn[1];
-} tSmeGetScanChnRsp, *tpSmeGetScanChnRsp;
 
 typedef struct sSirSmeGetAssocSTAsReq {
 	uint16_t messageType;   /* eWNI_SME_GET_ASSOC_STAS_REQ */
