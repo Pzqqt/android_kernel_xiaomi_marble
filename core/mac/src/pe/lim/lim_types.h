@@ -731,10 +731,6 @@ QDF_STATUS lim_send_tpc_report_frame(struct mac_context *, tpSirMacTpcReqActionF
 					tSirMacAddr, struct pe_session *pe_session);
 #endif
 
-/* / Function that sends TPC Request action frame */
-void lim_send_tpc_request_frame(struct mac_context *, tSirMacAddr,
-				struct pe_session *pe_session);
-
 /* Function(s) to handle responses received from HAL */
 void lim_process_mlm_add_bss_rsp(struct mac_context *mac,
 				 struct scheduler_msg *limMsgQ);
