@@ -297,33 +297,6 @@ void mac_trace_msg_tx(struct mac_context *mac, uint8_t session, uint32_t data)
 	}
 }
 
-void mac_trace_msg_tx_new(struct mac_context *mac, uint8_t module, uint8_t session,
-			  uint32_t data)
-{
-	uint16_t msgId = (uint16_t) MAC_TRACE_GET_MSG_ID(data);
-	uint8_t module_id = (uint8_t) MAC_TRACE_GET_MODULE_ID(data);
-
-	switch (module_id) {
-	case SIR_LIM_MODULE_ID:
-		if (msgId >= SIR_LIM_ITC_MSG_TYPES_BEGIN)
-			mac_trace_new(mac, module, TRACE_CODE_TX_LIM_MSG,
-				      session, data);
-		else
-			mac_trace_new(mac, module, TRACE_CODE_TX_SME_MSG,
-				      session, data);
-		break;
-	case SIR_WMA_MODULE_ID:
-		mac_trace_new(mac, module, TRACE_CODE_TX_WMA_MSG, session, data);
-		break;
-	case SIR_CFG_MODULE_ID:
-		mac_trace_new(mac, module, TRACE_CODE_TX_CFG_MSG, session, data);
-		break;
-	default:
-		mac_trace(mac, module_id, session, data);
-		break;
-	}
-}
-
 /*
  * bit31: Rx message deferred or not
  * bit 0-15: message ID:
@@ -345,37 +318,6 @@ void mac_trace_msg_rx(struct mac_context *mac, uint8_t session, uint32_t data)
 		break;
 	case SIR_CFG_MODULE_ID:
 		mac_trace(mac, TRACE_CODE_RX_CFG_MSG, session, data);
-		break;
-	default:
-		mac_trace(mac, module_id, session, data);
-		break;
-	}
-}
-
-/*
- * bit31: Rx message deferred or not
- * bit 0-15: message ID:
- */
-void mac_trace_msg_rx_new(struct mac_context *mac, uint8_t module, uint8_t session,
-			  uint32_t data)
-{
-	uint16_t msgId = (uint16_t) MAC_TRACE_GET_MSG_ID(data);
-	uint8_t module_id = (uint8_t) MAC_TRACE_GET_MODULE_ID(data);
-
-	switch (module_id) {
-	case SIR_LIM_MODULE_ID:
-		if (msgId >= SIR_LIM_ITC_MSG_TYPES_BEGIN)
-			mac_trace_new(mac, module, TRACE_CODE_RX_LIM_MSG,
-				      session, data);
-		else
-			mac_trace_new(mac, module, TRACE_CODE_RX_SME_MSG,
-				      session, data);
-		break;
-	case SIR_WMA_MODULE_ID:
-		mac_trace_new(mac, module, TRACE_CODE_RX_WMA_MSG, session, data);
-		break;
-	case SIR_CFG_MODULE_ID:
-		mac_trace_new(mac, module, TRACE_CODE_RX_CFG_MSG, session, data);
 		break;
 	default:
 		mac_trace(mac, module_id, session, data);

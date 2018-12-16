@@ -81,10 +81,6 @@ void lim_trace_dump(void *mac, tp_qdf_trace_record pRecord,
 void mac_trace_msg_tx(struct mac_context *mac, uint8_t session, uint32_t data);
 void mac_trace_msg_rx(struct mac_context *mac, uint8_t session, uint32_t data);
 
-void mac_trace_msg_rx_new(struct mac_context *mac, uint8_t module, uint8_t session,
-			  uint32_t data);
-void mac_trace_msg_tx_new(struct mac_context *mac, uint8_t module, uint8_t session,
-			  uint32_t data);
 #endif /* endof LIM_TRACE_RECORD MACRO */
 
 #endif
