@@ -1075,11 +1075,6 @@ populate_dot11f_operating_mode(struct mac_context *mac,
 			tDot11fIEOperatingMode *pDot11f,
 			struct pe_session *pe_session);
 
-void
-populate_dot11f_wider_bw_chan_switch_ann(struct mac_context *mac,
-					tDot11fIEWiderBWChanSwitchAnn *pDot11f,
-					struct pe_session *pe_session);
-
 void populate_dot11f_timeout_interval(struct mac_context *mac,
 				tDot11fIETimeoutInterval *pDot11f,
 				uint8_t type, uint32_t value);

@@ -329,20 +329,6 @@ populate_dot11f_avoid_channel_ie(struct mac_context *mac_ctx,
 }
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-void
-populate_dot11f_wider_bw_chan_switch_ann(struct mac_context *mac,
-					 tDot11fIEWiderBWChanSwitchAnn *pDot11f,
-					 struct pe_session *pe_session)
-{
-	pDot11f->present = 1;
-	pDot11f->newChanWidth =
-		pe_session->gLimWiderBWChannelSwitch.newChanWidth;
-	pDot11f->newCenterChanFreq0 =
-		pe_session->gLimWiderBWChannelSwitch.newCenterChanFreq0;
-	pDot11f->newCenterChanFreq1 =
-		pe_session->gLimWiderBWChannelSwitch.newCenterChanFreq1;
-}
-
 QDF_STATUS
 populate_dot11f_country(struct mac_context *mac,
 			tDot11fIECountry *pDot11f, struct pe_session *pe_session)
