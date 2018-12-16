@@ -793,20 +793,6 @@ typedef enum eSirLinkTrafficCheck {
 	eSIR_CHECK_ROAMING_SCAN = 2,
 } tSirLinkTrafficCheck;
 
-typedef struct sSirSmeScanAbortReq {
-	uint16_t type;
-	uint16_t msgLen;
-	uint8_t sessionId;
-	uint32_t scan_id;
-} tSirSmeScanAbortReq, *tpSirSmeScanAbortReq;
-
-typedef struct sSirSmeScanChanReq {
-	uint16_t type;
-	uint16_t msgLen;
-	uint8_t sessionId;
-	uint16_t transcationId;
-} tSirSmeGetScanChanReq, *tpSirSmeGetScanChanReq;
-
 #ifdef FEATURE_OEM_DATA_SUPPORT
 struct oem_data_req {
 	uint32_t data_len;
