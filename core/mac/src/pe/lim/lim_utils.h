@@ -540,9 +540,10 @@ uint8_t lim_build_p2p_ie(struct mac_context *mac, uint8_t *ie, uint8_t *data,
 		uint8_t ie_len);
 bool lim_is_noa_insert_reqd(struct mac_context *mac);
 bool lim_isconnected_on_dfs_channel(struct mac_context *mac_ctx,
-		uint8_t currentChannel);
-uint8_t lim_get_current_operating_channel(struct mac_context *mac);
-uint32_t lim_get_max_rate_flags(struct mac_context *mac_ctx, tpDphHashNode sta_ds);
+				    uint8_t currentChannel);
+
+uint32_t lim_get_max_rate_flags(struct mac_context *mac_ctx,
+				tpDphHashNode sta_ds);
 
 bool lim_check_vht_op_mode_change(struct mac_context *mac,
 		struct pe_session *pe_session,

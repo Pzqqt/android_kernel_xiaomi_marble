@@ -4817,24 +4817,6 @@ void lim_handle_heart_beat_timeout_for_session(struct mac_context *mac_ctx,
 	}
 }
 
-uint8_t lim_get_current_operating_channel(struct mac_context *mac)
-{
-	uint8_t i;
-
-	for (i = 0; i < mac->lim.maxBssId; i++) {
-		if (mac->lim.gpSession[i].valid == true) {
-			if ((mac->lim.gpSession[i].bssType ==
-			     eSIR_INFRASTRUCTURE_MODE)
-			    && (mac->lim.gpSession[i].limSystemRole ==
-				eLIM_STA_ROLE)) {
-				return mac->lim.gpSession[i].
-				       currentOperChannel;
-			}
-		}
-	}
-	return 0;
-}
-
 /**
  * lim_process_add_sta_rsp() - process WDA_ADD_STA_RSP from WMA
  * @mac_ctx: Pointer to Global MAC structure
