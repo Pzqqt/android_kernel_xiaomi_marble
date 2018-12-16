@@ -737,13 +737,6 @@ void csr_apply_channel_power_info_wrapper(struct mac_context *mac)
 	qdf_mem_set(&mac->scan.channels11d, sizeof(mac->scan.channels11d), 0);
 }
 
-void csr_clear_votes_for_country_info(struct mac_context *mac)
-{
-	mac->scan.countryCodeCount = 0;
-	qdf_mem_set(mac->scan.votes11d,
-		    sizeof(struct csr_votes11d) * CSR_MAX_NUM_COUNTRY_CODE, 0);
-}
-
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 /* caller allocated memory for pNumChn and pChnPowerInfo */
 /* As input, *pNumChn has the size of the array of pChnPowerInfo */

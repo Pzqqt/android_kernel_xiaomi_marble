@@ -465,11 +465,6 @@ struct csr_roam_joinstatus {
 	tSirMacAddr bssId;
 };
 
-struct csr_votes11d {
-	uint8_t votes;
-	uint8_t countryCode[WNI_CFG_COUNTRY_CODE_LEN];
-};
-
 struct csr_scanstruct {
 	struct scan_profile scanProfile;
 	tSirScanType curScanType;
@@ -487,9 +482,6 @@ struct csr_scanstruct {
 	v_REGDOMAIN_t domainIdDefault;  /* default regulatory domain */
 	v_REGDOMAIN_t domainIdCurrent;  /* current regulatory domain */
 
-	uint8_t countryCodeCount;
-	/* counts for various advertized country codes */
-	struct csr_votes11d votes11d[CSR_MAX_NUM_COUNTRY_CODE];
 	/*
 	 * in 11d IE from probe rsp or beacons of neighboring APs
 	 * will use the most popular one (max count)

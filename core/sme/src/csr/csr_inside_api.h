@@ -980,10 +980,6 @@ QDF_STATUS csr_roam_del_pmkid_from_cache(struct mac_context *mac,
 					 tPmkidCacheInfo *pmksa,
 					 bool flush_cache);
 
-bool csr_elected_country_info(struct mac_context *mac);
-void csr_add_vote_for_country_info(struct mac_context *mac, uint8_t *pCountryCode);
-void csr_clear_votes_for_country_info(struct mac_context *mac);
-
 QDF_STATUS csr_send_ext_change_channel(struct mac_context *mac_ctx,
 				uint32_t channel, uint8_t session_id);
 #ifdef CONFIG_VDEV_SM

@@ -648,7 +648,7 @@ QDF_STATUS csr_init_chan_list(struct mac_context *mac, uint8_t *alpha2)
 	qdf_mem_copy(mac->scan.countryCodeElected,
 		     mac->scan.countryCodeDefault, WNI_CFG_COUNTRY_CODE_LEN);
 	status = csr_get_channel_and_power_list(mac);
-	csr_clear_votes_for_country_info(mac);
+
 	return status;
 }
 
