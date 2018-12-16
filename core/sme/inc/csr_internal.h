@@ -1038,11 +1038,6 @@ QDF_STATUS csr_stop(struct mac_context *mac);
 QDF_STATUS csr_ready(struct mac_context *mac);
 
 #ifdef FEATURE_WLAN_WAPI
-QDF_STATUS csr_roam_get_wapi_req_ie(struct mac_context *mac,
-		uint32_t sessionId, uint32_t *pLen, uint8_t *pBuf);
-QDF_STATUS csr_roam_get_wapi_rsp_ie(struct mac_context *mac,
-						uint32_t sessionId,
-		uint32_t *pLen, uint8_t *pBuf);
 uint8_t csr_construct_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 		struct csr_roam_profile *pProfile,
 		tSirBssDescription *pSirBssDesc,

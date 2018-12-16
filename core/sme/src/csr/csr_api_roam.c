@@ -14144,59 +14144,6 @@ QDF_STATUS csr_roam_get_wpa_rsn_rsp_ie(struct mac_context *mac, uint32_t session
 	return status;
 }
 
-#ifdef FEATURE_WLAN_WAPI
-QDF_STATUS csr_roam_get_wapi_req_ie(struct mac_context *mac, uint32_t sessionId,
-				    uint32_t *pLen, uint8_t *pBuf)
-{
-	QDF_STATUS status = QDF_STATUS_E_INVAL;
-	uint32_t len;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-
-	if (!pSession) {
-		sme_err("session %d not found", sessionId);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (pLen) {
-		len = *pLen;
-		*pLen = pSession->nWapiReqIeLength;
-		if (pBuf) {
-			if (len >= pSession->nWapiReqIeLength) {
-				qdf_mem_copy(pBuf, pSession->pWapiReqIE,
-					     pSession->nWapiReqIeLength);
-				status = QDF_STATUS_SUCCESS;
-			}
-		}
-	}
-	return status;
-}
-
-QDF_STATUS csr_roam_get_wapi_rsp_ie(struct mac_context *mac, uint32_t sessionId,
-				    uint32_t *pLen, uint8_t *pBuf)
-{
-	QDF_STATUS status = QDF_STATUS_E_INVAL;
-	uint32_t len;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-
-	if (!pSession) {
-		sme_err("session %d not found", sessionId);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (pLen) {
-		len = *pLen;
-		*pLen = pSession->nWapiRspIeLength;
-		if (pBuf) {
-			if (len >= pSession->nWapiRspIeLength) {
-				qdf_mem_copy(pBuf, pSession->pWapiRspIE,
-					     pSession->nWapiRspIeLength);
-				status = QDF_STATUS_SUCCESS;
-			}
-		}
-	}
-	return status;
-}
-#endif /* FEATURE_WLAN_WAPI */
 eRoamCmdStatus csr_get_roam_complete_status(struct mac_context *mac,
 						uint32_t sessionId)
 {
