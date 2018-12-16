@@ -115,52 +115,6 @@ lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 	lim_sys_process_mmh_msg_api(mac_ctx, &msg, ePROT);
 }
 
-
-
-/**
- * lim_send_sme_roc_rsp() - Send Response to SME
- * @mac_ctx:          Pointer to Global MAC structure
- * @status:           Resume link status
- * @result_code:  Result of the ROC request
- * @sme_session_id:   SME sesson Id
- * @scan_id:  Scan Identifier
- *
- * This function is called to send ROC rsp
- * message to SME.
- *
- * Return: None
- */
-void
-lim_send_sme_roc_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
-	 tSirResultCodes result_code, uint8_t sme_session_id,
-	 uint32_t scan_id)
-{
-	struct scheduler_msg msg = {0};
-	struct sir_roc_rsp *sme_rsp;
-
-	pe_debug("Sending message: %s with reasonCode: %s scanId: %d",
-		lim_msg_str(msg_type), lim_result_code_str(result_code),
-		scan_id);
-
-	sme_rsp = qdf_mem_malloc(sizeof(struct sir_roc_rsp));
-	if (!sme_rsp)
-		return;
-
-	sme_rsp->message_type = msg_type;
-	sme_rsp->length = sizeof(struct sir_roc_rsp);
-	sme_rsp->status = result_code;
-
-	sme_rsp->session_id = sme_session_id;
-	sme_rsp->scan_id = scan_id;
-
-	msg.type = msg_type;
-	msg.bodyptr = sme_rsp;
-	msg.bodyval = 0;
-	MTRACE(mac_trace_msg_tx(mac_ctx, sme_session_id, msg.type));
-	lim_sys_process_mmh_msg_api(mac_ctx, &msg, ePROT);
-}
-
-
 /**
  * lim_get_max_rate_flags() - Get rate flags
  * @mac_ctx: Pointer to global MAC structure

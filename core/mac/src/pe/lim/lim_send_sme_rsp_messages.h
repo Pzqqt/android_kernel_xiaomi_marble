@@ -37,9 +37,6 @@
 /* Functions for sending responses to Host */
 void lim_send_sme_rsp(struct mac_context *, uint16_t, tSirResultCodes, uint8_t,
 		      uint16_t);
-void lim_send_sme_roc_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
-	 tSirResultCodes result_code, uint8_t sme_session_id,
-	 uint32_t scan_id);
 void lim_send_sme_start_bss_rsp(struct mac_context *, uint16_t, tSirResultCodes,
 				struct pe_session *, uint8_t, uint16_t);
 void lim_send_sme_join_reassoc_rsp(struct mac_context *, uint16_t, tSirResultCodes,
