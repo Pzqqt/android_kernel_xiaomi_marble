@@ -1903,20 +1903,6 @@ void cds_reset_recovery_reason(void)
 }
 
 /**
- * cds_get_monotonic_boottime() - Get kernel boot time.
- *
- * Return: Time in microseconds
- */
-
-uint64_t cds_get_monotonic_boottime(void)
-{
-	struct timespec ts;
-
-	get_monotonic_boottime(&ts);
-	return ((uint64_t) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
-}
-
-/**
  * cds_set_wakelock_logging() - Logging of wakelock enabled/disabled
  * @value: Boolean value
  *

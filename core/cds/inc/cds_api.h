@@ -356,8 +356,6 @@ bool cds_is_packet_log_enabled(void)
 bool cds_is_packet_log_enabled(void);
 #endif
 
-uint64_t cds_get_monotonic_boottime(void);
-
 /**
  * cds_get_recovery_reason() - get self recovery reason
  * @reason: cds hang reason
