@@ -42,7 +42,6 @@ uint8_t lim_is_sme_disassoc_req_valid(struct mac_context *, tpSirSmeDisassocReq,
 uint8_t lim_is_sme_deauth_req_valid(struct mac_context *, tpSirSmeDeauthReq, struct pe_session *);
 uint8_t lim_is_sme_set_context_req_valid(struct mac_context *, tpSirSmeSetContextReq);
 uint8_t lim_is_sme_stop_bss_req_valid(uint32_t *);
-uint8_t *lim_get_bss_id_from_sme_join_req_msg(uint8_t *);
 uint8_t lim_is_sme_disassoc_cnf_valid(struct mac_context *, tpSirSmeDisassocCnf,
 				      struct pe_session *);
 
