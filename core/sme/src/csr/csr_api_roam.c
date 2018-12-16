@@ -17202,6 +17202,14 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 			mac_ctx->roam.configParam.roam_trigger_reason_bitmask;
 	req_buf->roam_force_rssi_trigger =
 			mac_ctx->roam.configParam.roam_force_rssi_trigger;
+
+	/* fill bss load triggered roam related configs */
+	req_buf->bss_load_trig_enabled =
+			mac_ctx->mlme_cfg->lfr.bss_load_trig.enabled;
+	req_buf->bss_load_config.bss_load_threshold =
+		mac_ctx->mlme_cfg->lfr.bss_load_trig.threshold;
+	req_buf->bss_load_config.vdev_id = session->sessionId;
+
 	req_buf->ReassocFailureTimeout =
 		mac_ctx->mlme_cfg->timeouts.reassoc_failure_timeout;
 	csr_update_roam_scan_ese_params(req_buf, session);

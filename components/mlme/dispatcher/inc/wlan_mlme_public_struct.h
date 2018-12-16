@@ -1165,6 +1165,16 @@ enum roaming_dfs_channel_type {
 };
 
 /*
+ * struct bss_load_trigger - parameters related to bss load triggered roam
+ * @enabled - flag to check if this trigger is enabled/disabled
+ * @threshold - Bss load threshold value above which roaming should start
+ */
+struct bss_load_trigger {
+	bool enabled;
+	uint32_t threshold;
+};
+
+/*
  * @mawc_roam_enabled:              Enable/Disable MAWC during roaming
  * @enable_fast_roam_in_concurrency:Enable LFR roaming on STA during concurrency
  * @lfr3_roaming_offload:           Enable/disable roam offload feature
@@ -1315,6 +1325,7 @@ struct wlan_mlme_lfr_cfg {
 	uint8_t delay_before_vdev_stop;
 	uint8_t neighbor_scan_channel_list[CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t neighbor_scan_channel_list_num;
+	struct bss_load_trigger bss_load_trig;
 };
 
 /**

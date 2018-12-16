@@ -1314,6 +1314,15 @@ static void mlme_init_ese_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+static void
+mlme_init_bss_load_trigger_params(struct wlan_objmgr_psoc *psoc,
+				  struct bss_load_trigger *bss_load_trig)
+{
+	bss_load_trig->enabled =
+		cfg_get(psoc, CFG_ENABLE_BSS_LOAD_TRIGGERED_ROAM);
+	bss_load_trig->threshold = cfg_get(psoc, CFG_BSS_LOAD_THRESHOLD);
+}
+
 static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 			      struct wlan_mlme_lfr_cfg *lfr)
 {
@@ -1463,6 +1472,7 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 				(uint8_t)neighbor_scan_chan_list_num;
 	mlme_init_roam_offload_cfg(psoc, lfr);
 	mlme_init_ese_cfg(psoc, lfr);
+	mlme_init_bss_load_trigger_params(psoc, &lfr->bss_load_trig);
 }
 
 static uint32_t
