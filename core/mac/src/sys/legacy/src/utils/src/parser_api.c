@@ -1899,22 +1899,6 @@ void populate_dot11f_wmm_params(struct mac_context *mac,
 
 } /* End populate_dot11f_wmm_params. */
 
-void populate_dot11f_wmm_schedule(tSirMacScheduleIE *pSchedule,
-				  tDot11fIEWMMSchedule *pDot11f)
-{
-	pDot11f->version = 1;
-	pDot11f->aggregation = pSchedule->info.aggregation;
-	pDot11f->tsid = pSchedule->info.tsid;
-	pDot11f->direction = pSchedule->info.direction;
-	pDot11f->reserved = pSchedule->info.rsvd;
-	pDot11f->service_start_time = pSchedule->svcStartTime;
-	pDot11f->service_interval = pSchedule->svcInterval;
-	pDot11f->max_service_dur = pSchedule->maxSvcDuration;
-	pDot11f->spec_interval = pSchedule->specInterval;
-
-	pDot11f->present = 1;
-} /* End populate_dot11f_wmm_schedule. */
-
 QDF_STATUS
 populate_dot11f_wpa(struct mac_context *mac,
 		    tpSirRSNie pRsnIe, tDot11fIEWPA *pDot11f)

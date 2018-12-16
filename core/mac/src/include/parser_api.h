@@ -938,23 +938,6 @@ void populate_dot11f_wmm_params(struct mac_context *mac,
 				tDot11fIEWMMParams *pParams,
 				struct pe_session *pe_session);
 
-/**
- * \brief Populate a tDot11fIEWMMSchedule
- *
- * \sa PopulatedDot11fSchedule
- *
- *
- * \param pSchedule Address of a tSirMacScheduleIE struct
- *
- * \param pDot11f Address of a tDot11fIEWMMSchedule to be filled in
- *
- *
- */
-
-void
-populate_dot11f_wmm_schedule(tSirMacScheduleIE *pSchedule,
-			tDot11fIEWMMSchedule *pDot11f);
-
 QDF_STATUS
 populate_dot11f_wpa(struct mac_context *mac,
 		tpSirRSNie pRsnIe, tDot11fIEWPA *pDot11f);
