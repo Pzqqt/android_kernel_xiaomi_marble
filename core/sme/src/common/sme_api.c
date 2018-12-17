@@ -5969,7 +5969,7 @@ QDF_STATUS sme_update_fils_config(mac_handle_t mac_handle, uint8_t session_id,
 	}
 
 	csr_update_fils_config(mac, session_id, src_profile);
-	if (csr_roamIsRoamOffloadEnabled(mac)) {
+	if (csr_is_roam_offload_enabled(mac)) {
 		status = sme_acquire_global_lock(&mac->sme);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			sme_debug("Updating fils config to fw");

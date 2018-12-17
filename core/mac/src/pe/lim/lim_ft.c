@@ -480,12 +480,13 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
  * Return: none
  */
 static void lim_fill_dot11mode(struct mac_context *mac_ctx,
-			struct pe_session *ft_session, struct pe_session *pe_session)
+			       struct pe_session *ft_session,
+			       struct pe_session *pe_session)
 {
 	uint32_t self_dot11_mode;
 
 	if (pe_session->ftPEContext.pFTPreAuthReq &&
-			!mac_ctx->roam.configParam.isRoamOffloadEnabled) {
+	    !csr_is_roam_offload_enabled(mac_ctx)) {
 		ft_session->dot11mode =
 			pe_session->ftPEContext.pFTPreAuthReq->dot11mode;
 	} else {

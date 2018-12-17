@@ -17811,11 +17811,11 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		  req_buf->lca_config_params.disallow_duration,
 		  req_buf->lca_config_params.rssi_channel_penalization,
 		  req_buf->lca_config_params.num_disallowed_aps);
-	req_buf->RoamOffloadEnabled = csr_roamIsRoamOffloadEnabled(mac_ctx);
+	req_buf->roam_offload_enabled = csr_is_roam_offload_enabled(mac_ctx);
 	req_buf->RoamKeyMgmtOffloadEnabled = session->RoamKeyMgmtOffloadEnabled;
 	req_buf->pmkid_modes = session->pmkid_modes;
 	/* Roam Offload piggybacks upon the Roam Scan offload command. */
-	if (req_buf->RoamOffloadEnabled)
+	if (req_buf->roam_offload_enabled)
 		csr_update_roam_scan_offload_request(mac_ctx, req_buf, session);
 	qdf_mem_copy(&req_buf->roam_params,
 		&mac_ctx->roam.configParam.roam_params,

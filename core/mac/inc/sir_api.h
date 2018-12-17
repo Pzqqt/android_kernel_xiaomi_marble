@@ -2405,7 +2405,7 @@ typedef struct sSirRoamOffloadScanReq {
 	uint8_t RoamBeaconRssiWeight;
 	eSirDFSRoamScanMode allowDFSChannelRoam;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	uint8_t RoamOffloadEnabled;
+	uint8_t roam_offload_enabled;
 	uint8_t PSK_PMK[SIR_ROAM_SCAN_PSK_SIZE];
 	uint32_t pmk_len;
 	uint8_t Prefer5GHz;

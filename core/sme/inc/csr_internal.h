@@ -422,9 +422,6 @@ struct csr_config {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	bool isRoamOffloadEnabled;
-#endif
 	bool obssEnabled;
 	uint8_t conc_custom_rule1;
 	uint8_t conc_custom_rule2;

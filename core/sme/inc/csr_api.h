@@ -1109,11 +1109,11 @@ typedef struct tagCsrUpdateConfigParam {
 	tCsr11dinfo Csr11dinfo;
 } tCsrUpdateConfigParam;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#define csr_roamIsRoamOffloadEnabled(mac) \
+#define csr_is_roam_offload_enabled(mac) \
 	(mac->mlme_cfg->lfr.lfr3_roaming_offload)
 #define DEFAULT_REASSOC_FAILURE_TIMEOUT 1000
 #else
-#define csr_roamIsRoamOffloadEnabled(mac)  false
+#define csr_is_roam_offload_enabled(mac)  false
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

@@ -310,7 +310,7 @@ static void wma_roam_scan_offload_set_params(
 				 roam_req->ConnectedNetwork.encryption);
 	WMA_LOGD("%s : auth mode = %d", __func__, params->auth_mode);
 
-	params->roam_offload_enabled = roam_req->RoamOffloadEnabled;
+	params->roam_offload_enabled = roam_req->roam_offload_enabled;
 	params->roam_offload_params.ho_delay_for_rx =
 				roam_req->ho_delay_for_rx;
 	params->roam_offload_params.roam_preauth_retry_count =
@@ -765,7 +765,7 @@ A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr)
 static uint32_t wma_roam_scan_get_cckm_mode(tSirRoamOffloadScanReq *roam_req,
 		uint32_t auth_mode)
 {
-	if (roam_req->RoamOffloadEnabled)
+	if (roam_req->roam_offload_enabled)
 		return auth_mode;
 	else
 		return WMI_AUTH_CCKM;
@@ -1615,7 +1615,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 			    roam_req->reason == REASON_ROAM_SYNCH_FAILED) {
 				mode = WMI_ROAM_SCAN_MODE_NONE;
 			} else {
-				if (csr_roamIsRoamOffloadEnabled(mac))
+				if (csr_is_roam_offload_enabled(mac))
 					mode = WMI_ROAM_SCAN_MODE_NONE |
 						WMI_ROAM_SCAN_MODE_ROAMOFFLOAD;
 				else
