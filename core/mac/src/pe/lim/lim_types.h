@@ -641,10 +641,6 @@ QDF_STATUS lim_p2p_oper_chan_change_confirm_action_frame(
 	struct mac_context *mac_ctx, tSirMacAddr peer,
 	struct pe_session *session_entry);
 
-QDF_STATUS lim_send_vht_opmode_notification_frame(struct mac_context *mac,
-						     tSirMacAddr peer, uint8_t nMode,
-						     struct pe_session *pe_session);
-
 QDF_STATUS lim_send_neighbor_report_request_frame(struct mac_context *,
 						     tpSirMacNeighborReportReq,
 						     tSirMacAddr, struct pe_session *);
