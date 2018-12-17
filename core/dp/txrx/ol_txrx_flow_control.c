@@ -83,16 +83,16 @@ ol_tx_deregister_global_mgmt_pool(struct ol_txrx_pdev_t *pdev)
 }
 #endif
 
-bool
-ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev)
+bool ol_txrx_fwd_desc_thresh_check(struct cdp_vdev *vdev)
 {
+	struct ol_txrx_vdev_t *txrx_vdev = (struct ol_txrx_vdev_t *)vdev;
 	struct ol_tx_flow_pool_t *pool;
 	bool enough_desc_flag;
 
-	if (!vdev)
+	if (!txrx_vdev)
 		return false;
 
-	pool = vdev->pool;
+	pool = txrx_vdev->pool;
 
 	if (!pool)
 		return false;

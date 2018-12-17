@@ -190,7 +190,8 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 						 QDF_NBUF_TX_EXT_TID_INVALID);
 			}
 
-			if (!ol_txrx_fwd_desc_thresh_check(vdev)) {
+			if (!ol_txrx_fwd_desc_thresh_check(
+						(struct cdp_vdev *)vdev)) {
 				/* Drop the packet*/
 				htt_rx_msdu_desc_free(pdev->htt_pdev, msdu);
 				TXRX_STATS_MSDU_LIST_INCR(

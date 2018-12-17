@@ -5556,6 +5556,7 @@ static struct cdp_flowctl_ops ol_ops_flowctl = {
 	.register_pause_cb = ol_txrx_register_pause_cb,
 	.set_desc_global_pool_size = ol_tx_set_desc_global_pool_size,
 	.dump_flow_pool_info = ol_tx_dump_flow_pool_info,
+	.tx_desc_thresh_reached = ol_txrx_fwd_desc_thresh_check,
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 };
 

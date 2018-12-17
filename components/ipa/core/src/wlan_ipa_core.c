@@ -710,13 +710,12 @@ static enum wlan_ipa_forward_type wlan_ipa_intrabss_forward(
 {
 	int ret = WLAN_IPA_FORWARD_PKT_NONE;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if ((desc & FW_RX_DESC_FORWARD_M)) {
-		if (!ol_txrx_fwd_desc_thresh_check(
-			(struct ol_txrx_vdev_t *)cdp_get_vdev_from_vdev_id(soc,
-						(struct cdp_pdev *)pdev,
-						iface_ctx->session_id))) {
+		void *vdev = cdp_get_vdev_from_vdev_id(soc, pdev,
+						       iface_ctx->session_id);
+		if (cdp_tx_desc_thresh_reached(soc, vdev)) {
 			/* Drop the packet*/
 			ipa_ctx->stats.num_tx_fwd_err++;
 			dev_kfree_skb_any(skb);

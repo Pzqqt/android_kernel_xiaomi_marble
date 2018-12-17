@@ -314,7 +314,7 @@ QDF_STATUS ol_txrx_register_pause_cb(struct cdp_soc_t *soc,
  * Return: true ; forward the packet, i.e., below threshold
  *         false; not enough descriptors, drop the packet
  */
-bool ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev);
+bool ol_txrx_fwd_desc_thresh_check(struct cdp_vdev *vdev);
 #else
 /**
  * ol_tx_get_total_free_desc() - get total free descriptors
@@ -329,7 +329,7 @@ uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev)
 }
 
 static inline
-bool ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev)
+bool ol_txrx_fwd_desc_thresh_check(struct cdp_vdev *vdev)
 {
 	return true;
 }
