@@ -286,8 +286,75 @@ static inline void wma_roam_scan_fill_fils_params(
 #endif
 
 /**
+ * wma_roam_scan_offload_set_params() - Set roam scan offload params
+ * @wma_handle: pointer to wma context
+ * @params: pointer to roam scan offload params
+ * @roam_req: roam request param
+ *
+ * Get roam scan offload parameters from roam req and prepare to fill
+ * WMI_ROAM_SCAN_MODE TLV
+ *
+ * Return: None
+ */
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static void wma_roam_scan_offload_set_params(
+				tp_wma_handle wma_handle,
+				struct roam_offload_scan_params *params,
+				tSirRoamOffloadScanReq *roam_req)
+{
+	params->auth_mode = WMI_AUTH_NONE;
+	if (!roam_req)
+		return;
+	params->auth_mode = e_csr_auth_type_to_rsn_authmode
+				(roam_req->ConnectedNetwork.authentication,
+				 roam_req->ConnectedNetwork.encryption);
+	WMA_LOGD("%s : auth mode = %d", __func__, params->auth_mode);
+
+	params->roam_offload_enabled = roam_req->RoamOffloadEnabled;
+	params->roam_offload_params.ho_delay_for_rx =
+				roam_req->ho_delay_for_rx;
+	params->roam_offload_params.roam_preauth_retry_count =
+				roam_req->roam_preauth_retry_count;
+	params->roam_offload_params.roam_preauth_no_ack_timeout =
+				roam_req->roam_preauth_no_ack_timeout;
+	params->prefer_5ghz = roam_req->Prefer5GHz;
+	params->roam_rssi_cat_gap = roam_req->RoamRssiCatGap;
+	params->select_5ghz_margin = roam_req->Select5GHzMargin;
+	params->reassoc_failure_timeout =
+				roam_req->ReassocFailureTimeout;
+	params->rokh_id_length = roam_req->R0KH_ID_Length;
+	qdf_mem_copy(params->rokh_id, roam_req->R0KH_ID,
+		     WMI_ROAM_R0KH_ID_MAX_LEN);
+	qdf_mem_copy(params->krk, roam_req->KRK, WMI_KRK_KEY_LEN);
+	qdf_mem_copy(params->btk, roam_req->BTK, WMI_BTK_KEY_LEN);
+	qdf_mem_copy(params->psk_pmk, roam_req->PSK_PMK,
+		     WMI_ROAM_SCAN_PSK_SIZE);
+	params->pmk_len = roam_req->pmk_len;
+	params->roam_key_mgmt_offload_enabled =
+				roam_req->RoamKeyMgmtOffloadEnabled;
+	wma_roam_scan_fill_self_caps(wma_handle,
+				     &params->roam_offload_params, roam_req);
+	params->fw_okc = roam_req->pmkid_modes.fw_okc;
+	params->fw_pmksa_cache = roam_req->pmkid_modes.fw_pmksa_cache;
+	WMA_LOGD(FL("qos_caps: %d, qos_enabled: %d, ho_delay_for_rx: %d, roam_scan_mode: %d"),
+		 params->roam_offload_params.qos_caps,
+		 params->roam_offload_params.qos_enabled,
+		 params->roam_offload_params.ho_delay_for_rx, params->mode);
+	WMA_LOGD(FL("roam_preauth_retry_count: %d, roam_preauth_no_ack_timeout: %d"),
+		 params->roam_offload_params.roam_preauth_retry_count,
+		 params->roam_offload_params.roam_preauth_no_ack_timeout);
+}
+#else
+static void wma_roam_scan_offload_set_params(
+				tp_wma_handle wma_handle,
+				struct roam_offload_scan_params *params,
+				tSirRoamOffloadScanReq *roam_req)
+{}
+#endif
+
+/**
  * wma_roam_scan_offload_mode() - send roam scan mode request to fw
- * @wma_handle: wma handle
+ * @wma_handle: pointer to wma context
  * @scan_cmd_fp: start scan command ptr
  * @roam_req: roam request param
  * @mode: mode
@@ -311,48 +378,11 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 	if (!params)
 		return QDF_STATUS_E_NOMEM;
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	params->auth_mode = WMI_AUTH_NONE;
-	if (roam_req)
-		params->auth_mode = e_csr_auth_type_to_rsn_authmode
-				    (roam_req->ConnectedNetwork.authentication,
-				    roam_req->ConnectedNetwork.encryption);
-	WMA_LOGD("%s : auth mode = %d", __func__, params->auth_mode);
-#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
-
 	params->is_roam_req_valid = 0;
 	params->mode = mode;
 	params->vdev_id = vdev_id;
 	if (roam_req) {
 		params->is_roam_req_valid = 1;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-		params->roam_offload_enabled = roam_req->RoamOffloadEnabled;
-		params->roam_offload_params.ho_delay_for_rx =
-				roam_req->ho_delay_for_rx;
-		params->roam_offload_params.roam_preauth_retry_count =
-				roam_req->roam_preauth_retry_count;
-		params->roam_offload_params.roam_preauth_no_ack_timeout =
-				roam_req->roam_preauth_no_ack_timeout;
-		params->prefer_5ghz = roam_req->Prefer5GHz;
-		params->roam_rssi_cat_gap = roam_req->RoamRssiCatGap;
-		params->select_5ghz_margin = roam_req->Select5GHzMargin;
-		params->reassoc_failure_timeout =
-				roam_req->ReassocFailureTimeout;
-		params->rokh_id_length = roam_req->R0KH_ID_Length;
-		qdf_mem_copy(params->rokh_id, roam_req->R0KH_ID,
-				WMI_ROAM_R0KH_ID_MAX_LEN);
-		qdf_mem_copy(params->krk, roam_req->KRK, WMI_KRK_KEY_LEN);
-		qdf_mem_copy(params->btk, roam_req->BTK, WMI_BTK_KEY_LEN);
-		qdf_mem_copy(params->psk_pmk, roam_req->PSK_PMK,
-				WMI_ROAM_SCAN_PSK_SIZE);
-		params->pmk_len = roam_req->pmk_len;
-		params->roam_key_mgmt_offload_enabled =
-				roam_req->RoamKeyMgmtOffloadEnabled;
-		wma_roam_scan_fill_self_caps(wma_handle,
-			&params->roam_offload_params, roam_req);
-		params->fw_okc = roam_req->pmkid_modes.fw_okc;
-		params->fw_pmksa_cache = roam_req->pmkid_modes.fw_pmksa_cache;
-#endif
 		params->min_delay_btw_roam_scans =
 				roam_req->min_delay_btw_roam_scans;
 		params->roam_trigger_reason_bitmask =
@@ -367,19 +397,14 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 
 		wma_roam_scan_fill_fils_params(wma_handle, params, roam_req);
 	}
-
-	WMA_LOGD(FL("qos_caps: %d, qos_enabled: %d, ho_delay_for_rx: %d, roam_scan_mode: %d"),
-		params->roam_offload_params.qos_caps,
-		params->roam_offload_params.qos_enabled,
-		params->roam_offload_params.ho_delay_for_rx, params->mode);
-
 	WMA_LOGD(FL("min_delay_btw_roam_scans:%d, roam_tri_reason_bitmask:%d"),
 		 params->min_delay_btw_roam_scans,
 		 params->roam_trigger_reason_bitmask);
 
-	WMA_LOGD(FL("roam_preauth_retry_count: %d, roam_preauth_no_ack_timeout: %d"),
-		 params->roam_offload_params.roam_preauth_retry_count,
-		 params->roam_offload_params.roam_preauth_no_ack_timeout);
+	wma_roam_scan_offload_set_params(
+				wma_handle,
+				params,
+				roam_req);
 
 	status = wmi_unified_roam_scan_offload_mode_cmd(wma_handle->wmi_handle,
 				scan_cmd_fp, params);
