@@ -1078,6 +1078,8 @@ struct cdp_flowctl_ops {
 	void (*set_desc_global_pool_size)(uint32_t num_msdu_desc);
 
 	void (*dump_flow_pool_info)(void *);
+
+	bool (*tx_desc_thresh_reached)(struct cdp_vdev *vdev);
 };
 
 /**

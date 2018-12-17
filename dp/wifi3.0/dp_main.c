@@ -9166,6 +9166,7 @@ static struct cdp_flowctl_ops dp_ops_flowctl = {
 	.flow_pool_unmap_handler = dp_tx_flow_pool_unmap,
 	.register_pause_cb = dp_txrx_register_pause_cb,
 	.dump_flow_pool_info = dp_tx_dump_flow_pool_info,
+	.tx_desc_thresh_reached = dp_tx_desc_thresh_reached,
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 };
 

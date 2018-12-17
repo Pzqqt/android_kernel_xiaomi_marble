@@ -374,6 +374,16 @@ dp_tx_desc_free(struct dp_soc *soc, struct dp_tx_desc_s *tx_desc,
 	qdf_spin_unlock_bh(&pool->flow_pool_lock);
 }
 #else /* QCA_AC_BASED_FLOW_CONTROL */
+
+static inline bool
+dp_tx_is_threshold_reached(struct dp_tx_desc_pool_s *pool, uint16_t avail_desc)
+{
+	if (qdf_unlikely(avail_desc < pool->stop_th))
+		return true;
+	else
+		return false;
+}
+
 /**
  * dp_tx_desc_alloc() - Allocate a Software Tx Descriptor from given pool
  *
@@ -482,6 +492,21 @@ out:
 }
 
 #endif /* QCA_AC_BASED_FLOW_CONTROL */
+
+static inline bool
+dp_tx_desc_thresh_reached(struct cdp_vdev *vdev)
+{
+	struct dp_vdev *dp_vdev = (struct dp_vdev *)vdev;
+	struct dp_tx_desc_pool_s *pool;
+
+	if (!vdev)
+		return false;
+
+	pool = dp_vdev->pool;
+
+	return  dp_tx_is_threshold_reached(pool, pool->avail_desc);
+}
+
 #else /* QCA_LL_TX_FLOW_CONTROL_V2 */
 
 static inline void dp_tx_flow_control_init(struct dp_soc *handle)
