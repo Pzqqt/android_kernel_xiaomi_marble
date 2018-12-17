@@ -6102,24 +6102,21 @@ static QDF_STATUS send_vdev_spectral_enable_cmd_tlv(wmi_unified_t wmi_handle,
 	}
 
 	wmi_mtrace(WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID, cmd->vdev_id, 0);
+
+	WMI_LOGI("%s: Sent WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID", __func__);
+
+	WMI_LOGI("vdev_id = %u, trigger_cmd = %u, enable_cmd = %u",
+		 cmd->vdev_id, cmd->trigger_cmd, cmd->enable_cmd);
+
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID);
+
+	WMI_LOGI("%s: Status: %d\n", __func__, ret);
 
 	if (ret != 0) {
 		WMI_LOGE("Sending scan enable CMD failed");
 		wmi_buf_free(buf);
 	}
-
-	WMI_LOGI("%s: Sent WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID", __func__);
-
-	WMI_LOGI("vdev_id = %u"
-				 "trigger_cmd = %u"
-				 "enable_cmd = %u",
-				 cmd->vdev_id,
-				 cmd->trigger_cmd,
-				 cmd->enable_cmd);
-
-	WMI_LOGI("%s: Status: %d\n", __func__, ret);
 
 	return ret;
 }
