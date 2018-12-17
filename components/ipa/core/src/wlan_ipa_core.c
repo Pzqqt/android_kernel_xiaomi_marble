@@ -1300,6 +1300,43 @@ end:
 	return status;
 }
 
+#if defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390)
+/**
+ * wlan_ipa_uc_handle_first_con() - Handle first uC IPA connection
+ * @ipa_ctx: IPA context
+ *
+ * Return: QDF STATUS
+ */
+static QDF_STATUS wlan_ipa_uc_handle_first_con(struct wlan_ipa_priv *ipa_ctx)
+{
+	ipa_debug("enter");
+
+	if (wlan_ipa_uc_enable_pipes(ipa_ctx) != QDF_STATUS_SUCCESS) {
+		ipa_err("IPA WDI Pipe activation failed");
+		return QDF_STATUS_E_BUSY;
+	}
+
+	ipa_debug("exit");
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wlan_ipa_uc_handle_last_discon() - Handle last uC IPA disconnection
+ * @ipa_ctx: IPA context
+ *
+ * Return: None
+ */
+static void wlan_ipa_uc_handle_last_discon(struct wlan_ipa_priv *ipa_ctx)
+{
+	ipa_debug("enter");
+
+	wlan_ipa_uc_disable_pipes(ipa_ctx);
+
+	ipa_debug("exit: IPA WDI Pipes deactivated");
+}
+#else
+
 /**
  * wlan_ipa_uc_handle_first_con() - Handle first uC IPA connection
  * @ipa_ctx: IPA context
@@ -1365,6 +1402,7 @@ static void wlan_ipa_uc_handle_last_discon(struct wlan_ipa_priv *ipa_ctx)
 
 	ipa_debug("exit: IPA WDI Pipes deactivated");
 }
+#endif
 
 /**
  * wlan_ipa_uc_offload_enable_disable() - wdi enable/disable notify to fw
