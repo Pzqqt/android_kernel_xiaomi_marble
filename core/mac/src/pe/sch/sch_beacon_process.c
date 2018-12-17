@@ -415,10 +415,6 @@ sch_bcn_process_sta(struct mac_context *mac_ctx,
 			return false;
 		}
 		mac_ctx->mlme_cfg->rates.cfp_period = bcn->cfParamSet.cfpPeriod;
-
-		lim_send_cf_params(mac_ctx, *bssIdx,
-				   bcn->cfParamSet.cfpCount,
-				   bcn->cfParamSet.cfpPeriod);
 	}
 
 	/* No need to send DTIM Period and Count to HAL/SMAC */

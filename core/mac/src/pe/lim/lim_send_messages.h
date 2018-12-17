@@ -34,8 +34,6 @@
 #include "lim_types.h"
 #include "wma_if.h"
 #include "sir_params.h"
-QDF_STATUS lim_send_cf_params(struct mac_context *mac, uint8_t bssIdx,
-				 uint8_t cfpCount, uint8_t cfpPeriod);
 QDF_STATUS lim_send_beacon_params(struct mac_context *mac,
 				     tpUpdateBeaconParams pUpdatedBcnParams,
 				     struct pe_session *pe_session);

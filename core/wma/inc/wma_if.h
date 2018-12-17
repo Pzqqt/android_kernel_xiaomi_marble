@@ -862,23 +862,6 @@ typedef struct {
 } tUpdateUserPos, *tpUpdateUserPos;
 
 /**
- * struct tUpdateCFParams -CF parameters
- * @bssIdx: BSSID index
- * @cfpCount: CFP count
- * @cfpPeriod: the number of DTIM intervals between the start of CFPs
- */
-typedef struct {
-	uint8_t bssIdx;
-	/*
-	 * cfpCount indicates how many DTIMs (including the current frame)
-	 * appear before the next CFP start. A CFPCount of 0 indicates that
-	 * the current DTIM marks the start of the CFP.
-	 */
-	uint8_t cfpCount;
-	uint8_t cfpPeriod;
-} tUpdateCFParams, *tpUpdateCFParams;
-
-/**
  * struct tSwitchChannelParams - switch channel request parameter
  * @channelNumber: channel number
  * @localPowerConstraint: local power constraint
