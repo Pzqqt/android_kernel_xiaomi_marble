@@ -311,14 +311,8 @@ void wma_update_edca_params_for_ac(tSirMacEdcaParamRecord *edca_param,
 				   struct wmi_host_wme_vparams *wmm_param,
 				   int ac, bool mu_edca_param)
 {
-#define WMA_WMM_EXPO_TO_VAL(val)        ((1 << (val)) - 1)
-	if (mu_edca_param) {
-		wmm_param->cwmin = edca_param->cw.min;
-		wmm_param->cwmax = edca_param->cw.max;
-	} else {
-		wmm_param->cwmin = WMA_WMM_EXPO_TO_VAL(edca_param->cw.min);
-		wmm_param->cwmax = WMA_WMM_EXPO_TO_VAL(edca_param->cw.max);
-	}
+	wmm_param->cwmin = WMA_WMM_EXPO_TO_VAL(edca_param->cw.min);
+	wmm_param->cwmax = WMA_WMM_EXPO_TO_VAL(edca_param->cw.max);
 	wmm_param->aifs = edca_param->aci.aifsn;
 	if (mu_edca_param)
 		wmm_param->mu_edca_timer = edca_param->mu_edca_timer;

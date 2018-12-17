@@ -92,6 +92,7 @@
 
 #define WMI_MAX_MHF_ENTRIES 32
 
+#define WMA_WMM_EXPO_TO_VAL(val)        ((1 << (val)) - 1)
 
 #define MAX_HT_MCS_IDX 8
 #define MAX_VHT_MCS_IDX 10
