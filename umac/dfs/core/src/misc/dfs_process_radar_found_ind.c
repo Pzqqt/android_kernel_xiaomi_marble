@@ -577,7 +577,8 @@ static inline void dfs_reset_bangradar(struct wlan_dfs *dfs)
  */
 static void dfs_prepare_nol_ie_bitmap(struct wlan_dfs *dfs,
 				      struct radar_found_info *radar_found,
-				      uint8_t *in_sub_channels)
+				      uint8_t *in_sub_channels,
+				      uint8_t n_in_sub_channels)
 {
 	uint8_t cur_subchans[NUM_CHANNELS_160MHZ];
 	uint8_t n_cur_subchans;
@@ -592,17 +593,16 @@ static void dfs_prepare_nol_ie_bitmap(struct wlan_dfs *dfs,
 	dfs->dfs_nol_ie_startfreq =
 		(uint16_t)utils_dfs_chan_to_freq(cur_subchans[0]);
 
-	/* To fill the bitmap, only one loop is required
-	 * since both the arrays (current channel's subchannel list
-	 * and radar affected subchannels list) are sorted.
-
-	 * We're doing a sorted search, please change it to O(n^2)
-	 * if the arrays ever become non sorted.
+	/* Search through the array list of radar affected subchannels
+	 * to find if the subchannel in our current channel has radar hit.
+	 * Break if found to reduce loop count.
 	 */
-	for (i = 0, j = 0; i < n_cur_subchans; i++) {
-		if (cur_subchans[i] == in_sub_channels[j]) {
-			j++;
-			dfs->dfs_nol_ie_bitmap |= bits;
+	for (i = 0; i < n_cur_subchans; i++) {
+		for (j = 0; j < n_in_sub_channels; j++) {
+			if (cur_subchans[i] == in_sub_channels[j]) {
+				dfs->dfs_nol_ie_bitmap |= bits;
+				break;
+			}
 		}
 		bits <<= 1;
 	}
@@ -812,7 +812,8 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		(dfs->dfs_is_rcsa_ie_sent = false) :
 		(dfs->dfs_is_rcsa_ie_sent = true);
 	if (dfs->dfs_use_nol_subchannel_marking) {
-		dfs_prepare_nol_ie_bitmap(dfs, radar_found, channels);
+		dfs_prepare_nol_ie_bitmap(dfs, radar_found, channels,
+					  num_channels);
 		dfs->dfs_is_nol_ie_sent = true;
 	}
 	dfs_mlme_start_rcsa(dfs->dfs_pdev_obj, &wait_for_csa);
