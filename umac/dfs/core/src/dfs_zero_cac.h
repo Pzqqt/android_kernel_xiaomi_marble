@@ -32,8 +32,12 @@
 #define _DFS_ZERO_CAC_H_
 
 #include "dfs.h"
+#include <wlan_dfs_tgt_api.h>
 
 #define VHT160_IEEE_FREQ_DIFF 16
+#define OCAC_SUCCESS 0
+#define OCAC_RESET 1
+#define OCAC_CANCEL 2
 
 /**
  * struct dfs_precac_entry - PreCAC entry.
@@ -67,10 +71,16 @@ enum precac_chan_state {
 
 /**
  * dfs_zero_cac_timer_init() - Initialize zero-cac timers
- * @dfs: Pointer to DFS structure.
+ * @dfs_soc_obj: Pointer to DFS SOC object structure.
  */
-void dfs_zero_cac_timer_init(struct wlan_dfs *dfs);
-
+#if !defined(QCA_MCL_DFS_SUPPORT)
+void dfs_zero_cac_timer_init(struct dfs_soc_priv_obj *dfs_soc_obj);
+#else
+static inline void
+dfs_zero_cac_timer_init(struct dfs_soc_priv_obj *dfs_soc_obj)
+{
+}
+#endif
 /**
  * dfs_print_precaclists() - Print precac list.
  * @dfs: Pointer to wlan_dfs structure.
@@ -186,12 +196,13 @@ static inline void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 
 /**
  * dfs_zero_cac_timer_detach() - Free Zero cac DFS variables.
- * @dfs: Pointer to wlan_dfs structure.
+ * @dfs_soc_obj: Pointer to dfs_soc_priv_obj structure.
  */
-#if defined(WLAN_DFS_PARTIAL_OFFLOAD) && !defined(QCA_MCL_DFS_SUPPORT)
-void dfs_zero_cac_timer_detach(struct wlan_dfs *dfs);
+#if !defined(QCA_MCL_DFS_SUPPORT)
+void dfs_zero_cac_timer_detach(struct dfs_soc_priv_obj *dfs_soc_obj);
 #else
-static inline void dfs_zero_cac_timer_detach(struct wlan_dfs *dfs)
+static inline void
+dfs_zero_cac_timer_detach(struct dfs_soc_priv_obj *dfs_soc_obj)
 {
 }
 #endif
@@ -339,6 +350,108 @@ static inline void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 }
 #endif
 
+#if defined(QCA_SUPPORT_AGILE_DFS)
+/**
+ * dfs_find_pdev_for_agile_precac() - Find pdev to select channel for precac.
+ * @pdev: Pointer to wlan_objmgr_pdev structure.
+ * @cur_precac_dfs_index: current precac index
+ */
+void dfs_find_pdev_for_agile_precac(struct wlan_objmgr_pdev *pdev,
+				    uint8_t *cur_precac_dfs_index);
+
+/**
+ * dfs_prepare_agile_precac_chan() - Send Agile set request for given pdev.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs);
+
+/**
+ * dfs_process_ocac_complete() - Process Off-Channel CAC complete indication.
+ * @pdev :Pointer to wlan_objmgr_pdev structure.
+ * @ocac_status: Off channel CAC complete status
+ * @center_freq : Center Frequency of O-CAC done indication.
+ */
+void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
+			       uint32_t ocac_status,
+			       uint32_t center_freq);
+
+/**
+ * dfs_find_vht80_chan_for_agile_precac() - .
+ * @pdev :Pointer to wlan_objmgr_pdev structure.
+ * @*ch_freq: Pointer to channel number for agile set request.
+ * @ch_freq_seg1 : Current primary beaconing channel number.
+ * @ch_freq_seg2 : Current secondary segment channel number.
+ */
+void dfs_find_vht80_chan_for_agile_precac(struct wlan_dfs *dfs,
+					  uint8_t *ch_freq,
+					  uint8_t ch_freq_seg1,
+					  uint8_t ch_freq_seg2);
+/**
+ * dfs_agile_precac_start() - Start agile precac.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_agile_precac_start(struct wlan_dfs *dfs);
+
+/**
+ * dfs_start_agile_precac_timer() - Start precac timer.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @precac_chan: Start thr precac timer in this channel.
+ * @ocac_status: Status of the off channel CAC.
+ */
+void dfs_start_agile_precac_timer(struct wlan_dfs *dfs,
+				  uint8_t precac_chan,
+				  uint8_t ocac_status);
+#else
+static inline void dfs_find_pdev_for_agile_precac(struct wlan_objmgr_pdev *pdev,
+						  uint8_t *cur_precac_dfs_index)
+{
+}
+
+static inline void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
+{
+}
+
+static inline void
+dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
+			  uint32_t ocac_status,
+			  uint32_t center_freq)
+{
+}
+
+static inline void dfs_find_vht80_chan_for_agile_precac(struct wlan_dfs *dfs,
+							uint8_t *ch_freq,
+							uint8_t ch_freq_seg1,
+							uint8_t ch_freq_seg2)
+{
+}
+
+static inline void dfs_agile_precac_start(struct wlan_dfs *dfs)
+{
+}
+
+static inline void dfs_start_agile_precac_timer(struct wlan_dfs *dfs,
+						uint8_t precac_chan,
+						uint8_t ocac_status)
+{
+}
+#endif
+
+#if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
+/**
+ * dfs_agile_soc_obj_init() - Initialize soc obj for agile precac.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @precac_chan: Start thr precac timer in this channel.
+ * @ocac_status: Status of the off channel CAC.
+ */
+void dfs_agile_soc_obj_init(struct wlan_dfs *dfs,
+			    struct wlan_objmgr_psoc *psoc);
+#else
+static inline void dfs_agile_soc_obj_init(struct wlan_dfs *dfs,
+					  struct wlan_objmgr_psoc *psoc)
+{
+}
+#endif
+
 /**
  * dfs_set_precac_enable() - Set precac enable flag.
  * @dfs: Pointer to wlan_dfs structure.
@@ -464,13 +577,17 @@ bool dfs_is_ht8080_ht160_chan_in_precac_done_list(struct wlan_dfs *dfs,
 /**
  * dfs_mark_precac_dfs() - Mark the precac channel as radar.
  * @dfs: Pointer to wlan_dfs structure.
+ * @is_radar_found_on_secondary_seg: Radar found on secondary seg for Cascade.
+ * @detector_id: detector id which found RADAR in HW.
  */
 #if defined(WLAN_DFS_PARTIAL_OFFLOAD) && !defined(QCA_MCL_DFS_SUPPORT)
 void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
-		uint8_t is_radar_found_on_secondary_seg);
+		uint8_t is_radar_found_on_secondary_seg,
+		uint8_t detector_id);
 #else
 static inline void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
-		uint8_t is_radar_found_on_secondary_seg)
+		uint8_t is_radar_found_on_secondary_seg,
+		uint8_t detector_id)
 {
 }
 #endif

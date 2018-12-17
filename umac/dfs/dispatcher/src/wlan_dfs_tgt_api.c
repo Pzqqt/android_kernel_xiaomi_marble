@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -23,6 +23,7 @@
  */
 #include <wlan_objmgr_pdev_obj.h>
 #include "wlan_dfs_tgt_api.h"
+#include "wlan_dfs_utils_api.h"
 #include "wlan_dfs_init_deinit_api.h"
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
@@ -339,6 +340,91 @@ QDF_STATUS tgt_dfs_control(struct wlan_objmgr_pdev *pdev,
 	return  QDF_STATUS_SUCCESS;
 }
 qdf_export_symbol(tgt_dfs_control);
+
+#ifdef QCA_SUPPORT_AGILE_DFS
+QDF_STATUS tgt_dfs_agile_precac_start(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return  QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_agile_precac_start(dfs);
+
+	return  QDF_STATUS_SUCCESS;
+}
+#else
+QDF_STATUS tgt_dfs_agile_precac_start(struct wlan_objmgr_pdev *pdev)
+{
+	return  QDF_STATUS_SUCCESS;
+}
+#endif
+qdf_export_symbol(tgt_dfs_agile_precac_start);
+
+#ifdef QCA_SUPPORT_AGILE_DFS
+QDF_STATUS tgt_dfs_set_agile_precac_state(struct wlan_objmgr_pdev *pdev,
+					  int agile_precac_state)
+{
+	struct wlan_dfs *dfs;
+	int i;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is NULL");
+		return  QDF_STATUS_E_FAILURE;
+	}
+
+	dfs->dfs_soc_obj->precac_state_started = agile_precac_state;
+	if (!dfs->dfs_soc_obj->precac_state_started) {
+		for (i = 0; i < dfs->dfs_soc_obj->num_dfs_privs; i++)
+			dfs->dfs_soc_obj->dfs_priv[i].agile_precac_active = 0;
+	}
+
+	return  QDF_STATUS_SUCCESS;
+}
+#else
+QDF_STATUS tgt_dfs_set_agile_precac_state(struct wlan_objmgr_pdev *pdev,
+					  int agile_precac_state)
+{
+	return  QDF_STATUS_SUCCESS;
+}
+#endif
+qdf_export_symbol(tgt_dfs_set_agile_precac_state);
+
+#ifdef QCA_SUPPORT_AGILE_DFS
+QDF_STATUS tgt_dfs_ocac_complete(struct wlan_objmgr_pdev *pdev,
+				 struct vdev_adfs_complete_status *adfs_status)
+{
+	struct wlan_dfs *dfs;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (!pdev) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS, "null pdev");
+		return status;
+	}
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (!dfs) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS, "dfs is null");
+		return status;
+	}
+
+	dfs_process_ocac_complete(pdev, adfs_status->ocac_status,
+				  adfs_status->center_freq);
+
+	return  QDF_STATUS_SUCCESS;
+}
+#else
+QDF_STATUS tgt_dfs_ocac_complete(struct wlan_objmgr_pdev *pdev,
+				 struct vdev_adfs_complete_status *adfs_status)
+{
+	return  QDF_STATUS_SUCCESS;
+}
+#endif
+qdf_export_symbol(tgt_dfs_ocac_complete);
 
 QDF_STATUS tgt_dfs_find_vht80_chan_for_precac(struct wlan_objmgr_pdev *pdev,
 					      uint32_t chan_mode,

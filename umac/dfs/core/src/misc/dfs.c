@@ -239,7 +239,7 @@ void dfs_reset(struct wlan_dfs *dfs)
 void dfs_timer_detach(struct wlan_dfs *dfs)
 {
 	dfs_cac_timer_detach(dfs);
-	dfs_zero_cac_timer_detach(dfs);
+	dfs_zero_cac_timer_detach(dfs->dfs_soc_obj);
 
 	if (!dfs->dfs_is_offload_enabled) {
 		dfs_main_timer_detach(dfs);

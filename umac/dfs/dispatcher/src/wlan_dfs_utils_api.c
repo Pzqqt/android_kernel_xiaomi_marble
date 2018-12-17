@@ -140,9 +140,11 @@ QDF_STATUS utils_dfs_start_precac_timer(struct wlan_objmgr_pdev *pdev)
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "NULL dfs");
 		return  QDF_STATUS_E_FAILURE;
 	}
+
 	if (!dfs->dfs_precac_secondary_freq)
 		return QDF_STATUS_E_FAILURE;
-	dfs_start_precac_timer(dfs, dfs->dfs_precac_secondary_freq);
+	dfs_start_precac_timer(dfs,
+			       dfs->dfs_precac_secondary_freq);
 	return QDF_STATUS_SUCCESS;
 }
 

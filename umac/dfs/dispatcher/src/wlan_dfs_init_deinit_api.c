@@ -37,6 +37,7 @@
 #include <qdf_trace.h>
 #include "wlan_scan_ucfg_api.h"
 #include "wlan_dfs_mlme_api.h"
+#include "../../core/src/dfs_zero_cac.h"
 
 struct dfs_to_mlme global_dfs_to_mlme;
 
@@ -157,6 +158,8 @@ static QDF_STATUS dfs_psoc_obj_create_notification(struct wlan_objmgr_psoc *psoc
 		qdf_mem_free(dfs_soc_obj);
 		return status;
 	}
+	/* Initialize precac timer here*/
+	dfs_zero_cac_timer_init(dfs_soc_obj);
 
 	dfs_debug(NULL, WLAN_DEBUG_DFS1,
 		"DFS obj attach to psoc successfully");
@@ -184,6 +187,8 @@ static QDF_STATUS dfs_psoc_obj_destroy_notification(struct wlan_objmgr_psoc *pso
 			"Failed to get dfs obj in psoc");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	dfs_zero_cac_timer_detach(dfs_soc_obj);
 
 	status = wlan_objmgr_psoc_component_obj_detach(psoc,
 						       WLAN_UMAC_COMP_DFS,
@@ -380,8 +385,8 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 	dfs->dfs_is_offload_enabled = dfs_tx_ops->dfs_is_tgt_offload(psoc);
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs_offload %d",
 		 dfs->dfs_is_offload_enabled);
+	dfs_agile_soc_obj_init(dfs, psoc);
 
-	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (dfs_attach(dfs) == 1) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs_attch failed");
 		dfs_destroy_object(dfs);

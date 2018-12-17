@@ -400,6 +400,7 @@
  * in host. NOL timer can be configured by user. NOL in FW (for FO) is disabled.
  */
 #define USENOL_ENABLE_NOL_HOST_DISABLE_NOL_FW 2
+#define AGILE_DETECTOR_ID 2
 
 /**
  * struct dfs_pulseparams - DFS pulse param structure.
@@ -933,7 +934,6 @@ struct dfs_event_log {
  * @dfs_precac_enable:               Enable the precac.
  * @dfs_precac_secondary_freq:       Second segment freq for precac.
  * @dfs_precac_primary_freq:         Primary freq.
- * @dfs_precac_timer_running:        Precac timer running.
  * @dfs_defer_precac_channel_change: Defer precac channel change.
  * @dfs_precac_inter_chan:           Intermediate non-DFS channel used while
  *                                   doing precac.
@@ -977,7 +977,6 @@ struct dfs_event_log {
  * @dfs_cac_valid:                   DFS CAC valid.
  * @dfs_cac_valid_time:              Time for which CAC will be valid and will
  *                                   not be re-done.
- * @dfs_precac_timer:                PRECAC timer.
  * @dfs_precac_timeout_override:     Overridden precac timeout.
  * @dfs_num_precac_freqs:            Number of PreCAC VHT80 frequencies.
  * @dfs_precac_required_list:        PreCAC required list.
@@ -1082,7 +1081,6 @@ struct wlan_dfs {
 	bool           dfs_precac_enable;
 	uint8_t        dfs_precac_secondary_freq;
 	uint8_t        dfs_precac_primary_freq;
-	uint8_t        dfs_precac_timer_running;
 	uint8_t        dfs_defer_precac_channel_change;
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
 	uint8_t        dfs_precac_inter_chan;
@@ -1123,7 +1121,6 @@ struct wlan_dfs {
 				   dfs_ignore_cac:1,
 				   dfs_cac_valid:1;
 	uint32_t       dfs_cac_valid_time;
-	qdf_timer_t    dfs_precac_timer;
 	int            dfs_precac_timeout_override;
 	uint8_t        dfs_num_precac_freqs;
 #if defined(WLAN_DFS_FULL_OFFLOAD) && defined(QCA_DFS_NOL_OFFLOAD)
@@ -1141,6 +1138,11 @@ struct wlan_dfs {
 	struct dfs_channel *dfs_curchan;
 	struct dfs_channel dfs_cac_started_chan;
 	struct wlan_objmgr_pdev *dfs_pdev_obj;
+	struct dfs_soc_priv_obj *dfs_soc_obj;
+#if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
+	uint8_t dfs_psoc_idx;
+	uint8_t        dfs_agile_precac_freq;
+#endif
 	bool           dfs_is_offload_enabled;
 	int            dfs_use_nol;
 	qdf_spinlock_t dfs_nol_lock;
@@ -1173,7 +1175,20 @@ struct wlan_dfs {
 	uint8_t        dfs_nol_ie_bitmap;
 	bool           dfs_is_rcsa_ie_sent;
 	bool           dfs_is_nol_ie_sent;
+	bool           dfs_agile_precac_enable;
 };
+
+#if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
+/**
+ * struct wlan_dfs_priv - dfs private struct with agile capability info
+ * @wlan_dfs: pointer to wlan_dfs object.
+ * @agile_precac_active: agile precac active information for wlan_dfs_priv obj
+ */
+struct wlan_dfs_priv {
+	struct wlan_dfs *dfs;
+	bool agile_precac_active;
+};
+#endif
 
 /**
  * struct dfs_soc_priv_obj - dfs private data
@@ -1185,11 +1200,26 @@ struct wlan_dfs {
  *                                FW will do the pre-check, filter out some
  *                                kinds of invalid phyerrors and indicate
  *                                radar detection related information to host.
+ * @dfs_priv: array of dfs private structs with agile capability info
+ * @num_dfs_privs: array size of dfs private structs for given psoc.
+ * @cur_precac_dfs_index: current precac dfs index
+ * @dfs_precac_timer: agile precac timer
+ * @dfs_precac_timer_running: precac timer running flag
+ * @ocac_status: Off channel CAC complete status
  */
 struct dfs_soc_priv_obj {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
 	bool dfs_is_phyerr_filter_offload;
+#if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
+	struct wlan_dfs_priv dfs_priv[WLAN_UMAC_MAX_PDEVS];
+	uint8_t num_dfs_privs;
+	uint8_t cur_precac_dfs_index;
+	qdf_timer_t     dfs_precac_timer;
+	uint8_t dfs_precac_timer_running;
+	bool precac_state_started;
+	bool ocac_status;
+#endif
 };
 
 /**

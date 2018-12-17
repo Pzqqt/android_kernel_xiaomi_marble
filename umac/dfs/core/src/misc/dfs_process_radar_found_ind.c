@@ -770,6 +770,17 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 							channels);
 
 	dfs_reset_bangradar(dfs);
+
+	if (dfs->dfs_agile_precac_enable && radar_found->detector_id ==
+			AGILE_DETECTOR_ID) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			  "%s: %d Radar found on agile detector:%d , STAY in Same operating Channel",
+			  __func__, __LINE__, radar_found->detector_id);
+		dfs_mark_precac_dfs(dfs, dfs->is_radar_found_on_secondary_seg,
+				    radar_found->detector_id);
+		return QDF_STATUS_SUCCESS;
+	}
+
 	status = dfs_radar_add_channel_list_to_nol(dfs, channels, num_channels);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		dfs_err(dfs, WLAN_DEBUG_DFS,
@@ -802,8 +813,14 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	 * precac-nol-list.
 	 */
 
-	if (dfs->dfs_precac_enable)
-		dfs_mark_precac_dfs(dfs, dfs->is_radar_found_on_secondary_seg);
+	if (dfs->dfs_precac_enable || dfs->dfs_agile_precac_enable) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			  "%s: %d Radar found on dfs detector:%d",
+			  __func__, __LINE__, radar_found->detector_id);
+		dfs_mark_precac_dfs(dfs,
+				    dfs->is_radar_found_on_secondary_seg,
+				    radar_found->detector_id);
+	}
 
 	if (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_ETSI_DOMAIN) {
 		/* Remove chan from ETSI Pre-CAC Cleared List*/

@@ -92,6 +92,22 @@ struct dfs_emulate_bang_radar_test_cmd {
 	uint32_t args[DFS_MAX_NUM_UNIT_TEST_ARGS];
 };
 
+/**
+ * struct vdev_adfs_complete_status - OCAC complete status event param
+ * @vdev_id: Physical device identifier
+ * @chan_freq: Channel number
+ * @chan_width: Channel Width
+ * @center_freq: Center Frequency channel number
+ * @ocac_status: off channel cac status
+ */
+struct vdev_adfs_complete_status {
+	uint32_t vdev_id;
+	uint32_t chan_freq;
+	uint32_t chan_width;
+	uint32_t center_freq;
+	uint32_t ocac_status;
+};
+
 extern struct dfs_to_mlme global_dfs_to_mlme;
 
 /**
@@ -286,6 +302,39 @@ static inline QDF_STATUS tgt_dfs_set_tx_leakage_threshold
  */
 QDF_STATUS tgt_dfs_is_precac_timer_running(struct wlan_objmgr_pdev *pdev,
 	bool *is_precac_timer_running);
+
+/**
+ * tgt_dfs_set_agile_precac_state() - set state for Agile Precac.
+ *
+ * @pdev: Pointer to DFS pdev object.
+ * @agile_precac_state: Agile Precac state
+ *
+ * wrapper function for  dfs_set_agile_precac_state.
+ * This function called from outside of dfs component.
+ */
+QDF_STATUS tgt_dfs_set_agile_precac_state(struct wlan_objmgr_pdev *pdev,
+					  int agile_precac_state);
+
+/**
+ * tgt_dfs_agile_precac_start() - Start agile precac
+ *
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * wrapper function for  dfs_set_agile_precac_state.
+ * This function called from outside of dfs component.
+ */
+QDF_STATUS tgt_dfs_agile_precac_start(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * tgt_dfs_ocac_complete() - Process off channel cac complete indication.
+ * @pdev: Pointer to DFS pdev object.
+ * @vdev_adfs_complete_status: Off channel CAC complete status.
+ *
+ * wrapper function for  dfs_set_agile_precac_state.
+ * This function called from outside of dfs component.
+ */
+QDF_STATUS tgt_dfs_ocac_complete(struct wlan_objmgr_pdev *pdev,
+				 struct vdev_adfs_complete_status *ocac_status);
 
 /**
  * utils_dfs_find_vht80_chan_for_precac() - Find VHT80 channel for precac.
