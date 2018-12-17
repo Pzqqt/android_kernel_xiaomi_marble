@@ -8,6 +8,7 @@
 
 #include <asoc/wcd-mbhc-v2.h>
 #include <asoc/wcd-irq.h>
+#include <asoc/wcd-clsh.h>
 #include "wcd938x-mbhc.h"
 
 #define WCD938X_MAX_MICBIAS 4

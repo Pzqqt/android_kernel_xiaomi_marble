@@ -87,7 +87,6 @@ static struct regmap_irq_chip wcd938x_regmap_irq_chip = {
 	.type_base = WCD938X_DIGITAL_INTR_LEVEL_0,
 	.ack_base = WCD938X_DIGITAL_INTR_CLEAR_0,
 	.use_ack = 1,
-	.clear_ack = 1,
 	.runtime_pm = true,
 	.handle_post_irq = wcd938x_handle_post_irq,
 	.irq_drv_data = NULL,
@@ -161,7 +160,7 @@ static int wcd938x_set_port_params(struct snd_soc_component *component,
 
 	for (i = 0; i <= num_ports; i++) {
 		for (j = 0; j < MAX_CH_PER_PORT; j++) {
-			if ((*map)[i][j].port_type == slv_prt_type)
+			if ((*map)[i][j].slave_port_type == slv_prt_type)
 				goto found;
 		}
 	}
@@ -236,7 +235,7 @@ static int wcd938x_parse_port_mapping(struct device *dev,
 		if (port_num != old_port_num)
 			ch_iter = 0;
 
-		(*map)[port_num][ch_iter].port_type = slave_port_type;
+		(*map)[port_num][ch_iter].slave_port_type = slave_port_type;
 		(*map)[port_num][ch_iter].ch_mask = ch_mask;
 		(*map)[port_num][ch_iter].master_port_type = master_port_type;
 		(*map)[port_num][ch_iter].num_ch = __sw_hweight8(ch_mask);
@@ -405,7 +404,7 @@ static int wcd938x_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 				WCD938X_DIGITAL_CDC_COMP_CTL_0, 0x02, 0x02);
 			/* 5msec compander delay as per HW requirement */
 			if (!wcd938x->comp2_enable ||
-				(snd_soc_component_read(component,
+				(snd_soc_component_read32(component,
 					WCD938X_DIGITAL_CDC_COMP_CTL_0) & 0x01))
 			usleep_range(5000, 5010);
 			snd_soc_component_update_bits(component,
@@ -457,7 +456,7 @@ static int wcd938x_codec_hphr_dac_event(struct snd_soc_dapm_widget *w,
 				WCD938X_DIGITAL_CDC_COMP_CTL_0, 0x01, 0x01);
 			/* 5msec compander delay as per HW requirement */
 			if (!wcd938x->comp1_enable ||
-				(snd_soc_component_read(component,
+				(snd_soc_component_read32(component,
 					WCD938X_DIGITAL_CDC_COMP_CTL_0) & 0x02))
 				usleep_range(5000, 5010);
 			snd_soc_component_update_bits(component,
@@ -615,7 +614,7 @@ static int wcd938x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 					     &wcd938x->mbhc->wcd_mbhc);
 		snd_soc_component_update_bits(component, WCD938X_ANA_HPH,
 						0x10, 0x00);
-		wcd_cls_h_fsm(component, &wcd93x->clsh_info,
+		wcd_cls_h_fsm(component, &wcd938x->clsh_info,
 			     WCD_CLSH_EVENT_POST_PA,
 			     WCD_CLSH_STATE_HPHR,
 			     hph_mode);
@@ -1342,7 +1341,7 @@ static int wcd938x_event_notify(struct notifier_block *block,
 		if (amic == 0x1 || amic == 0x2)
 			reg = WCD938X_ANA_TX_CH2;
 		else if (amic == 0x3)
-			reg = WCD938X_ANA_TX_CH3_HPF;
+			reg = WCD938X_ANA_TX_CH4;
 		else
 			return 0;
 		if (amic == 0x2)
@@ -1377,8 +1376,9 @@ static int wcd938x_event_notify(struct notifier_block *block,
 		}
 		break;
 	case BOLERO_WCD_EVT_CLK_NOTIFY:
-		snd_soc_update_bits(codec, WCD938X_DIGITAL_TOP_CLK_CFG, 0x06,
-				    ((val >> 0x10) << 0x01));
+		snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_TOP_CLK_CFG, 0x06,
+				((val >> 0x10) << 0x01));
 		break;
 	default:
 		dev_dbg(component->dev, "%s: invalid event %d\n", __func__, event);
@@ -1547,7 +1547,7 @@ static int wcd938x_codec_enable_vdd_buck(struct snd_soc_dapm_widget *w,
 						pdata->num_supplies,
 						"cdc-vdd-buck");
 		if (ret == -EINVAL) {
-			dev_err(dev, "%s: vdd buck is not disabled\n",
+			dev_err(component->dev, "%s: vdd buck is not disabled\n",
 				__func__);
 			return 0;
 		}
@@ -2149,6 +2149,8 @@ EXPORT_SYMBOL(wcd938x_info_create_codec_entry);
 static int wcd938x_soc_codec_probe(struct snd_soc_component *component)
 {
 	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+	struct snd_soc_dapm_context *dapm =
+			snd_soc_component_get_dapm(component);
 	int variant;
 	int ret = -EINVAL;
 
@@ -2602,44 +2604,52 @@ static int wcd938x_probe(struct platform_device *pdev)
 	struct component_match *match = NULL;
 	struct wcd938x_priv *wcd938x = NULL;
 	struct wcd938x_pdata *pdata = NULL;
+	struct wcd_ctrl_platform_data *plat_data = NULL;
+	struct device *dev = &pdev->dev;
 	int ret;
 
-	wcd938x = devm_kzalloc(&pdev->dev, sizeof(struct wcd938x_priv),
+	wcd938x = devm_kzalloc(dev, sizeof(struct wcd938x_priv),
 				GFP_KERNEL);
 	if (!wcd938x)
 		return -ENOMEM;
 
-	dev_set_drvdata(&pdev->dev, wcd938x);
+	dev_set_drvdata(dev, wcd938x);
 
-	pdata = wcd938x_populate_dt_data(&pdev->dev);
+	pdata = wcd938x_populate_dt_data(dev);
 	if (!pdata) {
-		dev_err(&pdev->dev, "%s: Fail to obtain platform data\n", __func__);
+		dev_err(dev, "%s: Fail to obtain platform data\n", __func__);
 		return -EINVAL;
 	}
 	dev->platform_data = pdata;
 
 	wcd938x->rst_np = pdata->rst_np;
-	ret = msm_cdc_init_supplies(&pdev->dev, &wcd938x->supplies,
+	ret = msm_cdc_init_supplies(dev, &wcd938x->supplies,
 				    pdata->regulator, pdata->num_supplies);
 	if (!wcd938x->supplies) {
-		dev_err(&pdev->dev, "%s: Cannot init wcd supplies\n",
+		dev_err(dev, "%s: Cannot init wcd supplies\n",
 			__func__);
 		return ret;
 	}
 
-	wcd938x->handle = (void *)pdata->handle;
+	plat_data = dev_get_platdata(dev->parent);
+	if (!plat_data) {
+		dev_err(dev, "%s: platform data from parent is NULL\n",
+			__func__);
+		return -EINVAL;
+	}
+	wcd938x->handle = (void *)plat_data->handle;
 	if (!wcd938x->handle) {
 		dev_err(dev, "%s: handle is NULL\n", __func__);
 		return -EINVAL;
 	}
 
-	wcd938x->update_wcd_event = pdata->update_wcd_event;
+	wcd938x->update_wcd_event = plat_data->update_wcd_event;
 	if (!wcd938x->update_wcd_event) {
 		dev_err(dev, "%s: update_wcd_event api is null!\n",
 			__func__);
 		return -EINVAL;
 	}
-	wcd938x->register_notifier = pdata->register_notifier;
+	wcd938x->register_notifier = plat_data->register_notifier;
 	if (!wcd938x->register_notifier) {
 		dev_err(dev, "%s: register_notifier api is null!\n",
 			__func__);
@@ -2650,22 +2660,22 @@ static int wcd938x_probe(struct platform_device *pdev)
 					     pdata->regulator,
 					     pdata->num_supplies);
 	if (ret) {
-		dev_err(&pdev->dev, "%s: wcd static supply enable failed!\n",
+		dev_err(dev, "%s: wcd static supply enable failed!\n",
 			__func__);
 		return ret;
 	}
 
-	ret = wcd938x_parse_port_mapping(&pdev->dev, "qcom,rx_swr_ch_map",
+	ret = wcd938x_parse_port_mapping(dev, "qcom,rx_swr_ch_map",
 					CODEC_RX);
-	ret |= wcd938x_parse_port_mapping(&pdev->dev, "qcom,tx_swr_ch_map",
+	ret |= wcd938x_parse_port_mapping(dev, "qcom,tx_swr_ch_map",
 					CODEC_TX);
 
 	if (ret) {
-		dev_err(&pdev->dev, "Failed to read port mapping\n");
+		dev_err(dev, "Failed to read port mapping\n");
 		goto err;
 	}
 
-	ret = wcd938x_add_slave_components(&pdev->dev, &match);
+	ret = wcd938x_add_slave_components(dev, &match);
 	if (ret)
 		goto err;
 
@@ -2673,7 +2683,7 @@ static int wcd938x_probe(struct platform_device *pdev)
 
 	wcd938x->wakeup = wcd938x_wakeup;
 
-	return component_master_add_with_match(&pdev->dev,
+	return component_master_add_with_match(dev,
 					&wcd938x_comp_ops, match);
 
 err:
