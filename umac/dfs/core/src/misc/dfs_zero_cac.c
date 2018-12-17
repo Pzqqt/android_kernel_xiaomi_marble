@@ -95,6 +95,8 @@
 #include "wlan_dfs_utils_api.h"
 #include "dfs_internal.h"
 #include "dfs_etsi_precac.h"
+#include "target_if.h"
+#include "wlan_dfs_init_deinit_api.h"
 
 void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 {
@@ -102,7 +104,6 @@ void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 
 	dfs_get_override_precac_timeout(dfs,
 			&(dfs->dfs_precac_timeout_override));
-	qdf_timer_sync_cancel(&dfs->dfs_precac_timer);
 	dfs->dfs_precac_primary_freq = 0;
 	dfs->dfs_precac_secondary_freq = 0;
 
@@ -120,9 +121,9 @@ void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 	PRECAC_LIST_UNLOCK(dfs);
 }
 
-void dfs_zero_cac_timer_detach(struct wlan_dfs *dfs)
+void dfs_zero_cac_timer_detach(struct dfs_soc_priv_obj *dfs_soc_obj)
 {
-	qdf_timer_free(&dfs->dfs_precac_timer);
+	qdf_timer_free(&dfs_soc_obj->dfs_precac_timer);
 }
 
 int dfs_override_precac_timeout(struct wlan_dfs *dfs, int precac_timeout)
@@ -265,30 +266,115 @@ bool dfs_is_precac_done(struct wlan_dfs *dfs, struct dfs_channel *chan)
 	return ret_val;
 }
 
+#ifdef QCA_SUPPORT_AGILE_DFS
+void dfs_find_pdev_for_agile_precac(struct wlan_objmgr_pdev *pdev,
+				    uint8_t *cur_precac_dfs_index)
+{
+	struct wlan_dfs *dfs;
+	struct dfs_soc_priv_obj *dfs_soc_obj;
+	struct wlan_objmgr_psoc *psoc;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	dfs_soc_obj = dfs->dfs_soc_obj;
+
+	*cur_precac_dfs_index =
+	   (dfs_soc_obj->cur_precac_dfs_index + 1) % dfs_soc_obj->num_dfs_privs;
+}
+
+void dfs_prepare_agile_precac_chan(struct wlan_dfs *dfs)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_dfs *temp_dfs;
+	struct dfs_soc_priv_obj *dfs_soc_obj;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+	uint8_t ch_freq = 0;
+	uint8_t cur_dfs_idx = 0;
+	int i;
+
+	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
+	dfs_soc_obj = dfs->dfs_soc_obj;
+
+	dfs_tx_ops = wlan_psoc_get_dfs_txops(psoc);
+
+	pdev = dfs->dfs_pdev_obj;
+
+	for (i = 0; i < dfs_soc_obj->num_dfs_privs; i++) {
+		dfs_find_pdev_for_agile_precac(pdev, &cur_dfs_idx);
+		dfs_soc_obj->cur_precac_dfs_index = cur_dfs_idx;
+		temp_dfs = dfs_soc_obj->dfs_priv[cur_dfs_idx].dfs;
+		pdev = temp_dfs->dfs_pdev_obj;
+		if (!dfs_soc_obj->dfs_priv[cur_dfs_idx].agile_precac_active)
+			continue;
+
+		dfs_find_vht80_chan_for_agile_precac(temp_dfs,
+						     &ch_freq,
+			temp_dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1,
+			temp_dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2);
+
+		if (!ch_freq) {
+			qdf_info(" %s : %d No preCAC required channels left in current pdev: %pK",
+				 __func__, __LINE__, pdev);
+			continue;
+		} else {
+			break;
+		}
+	}
+
+	if (ch_freq) {
+		qdf_info("%s : %d ADFS channel set request sent for pdev: %pK ch_freq: %d",
+			 __func__, __LINE__, pdev, ch_freq);
+		if (dfs_tx_ops && dfs_tx_ops->dfs_agile_ch_cfg_cmd)
+			dfs_tx_ops->dfs_agile_ch_cfg_cmd(pdev, &ch_freq);
+		else
+			dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+				"dfs_tx_ops=%pK", dfs_tx_ops);
+	} else {
+		qdf_info("No channels in preCAC required list");
+	}
+}
+#endif
+
 #define VHT80_IEEE_FREQ_OFFSET 6
 
 void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
-		uint8_t is_radar_found_on_secondary_seg)
+		uint8_t is_radar_found_on_secondary_seg, uint8_t detector_id)
 {
 	struct dfs_precac_entry *precac_entry = NULL, *tmp_precac_entry = NULL;
 	uint8_t found = 0;
+	struct wlan_objmgr_psoc *psoc;
+	struct dfs_soc_priv_obj *dfs_soc_obj;
 
-	dfs_debug(dfs, WLAN_DEBUG_DFS,
-		"is_radar_found_on_secondary_seg = %u secondary_freq = %u primary_freq = %u",
-		is_radar_found_on_secondary_seg,
-		dfs->dfs_precac_secondary_freq,
-		dfs->dfs_precac_primary_freq);
+	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
+	dfs_soc_obj = dfs->dfs_soc_obj;
 
-	/*
-	 * Even if radar found on primary, we need to move the channel from
-	 * precac-required-list and precac-done-list to precac-nol-list.
-	 */
-	PRECAC_LIST_LOCK(dfs);
-	if (!TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
-		TAILQ_FOREACH_SAFE(precac_entry,
-				&dfs->dfs_precac_required_list,
-				pe_list,
-				tmp_precac_entry) {
+	if (is_radar_found_on_secondary_seg) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			  "is_radar_found_on_secondary_seg = %u secondary_freq = %u primary_freq = %u",
+			  is_radar_found_on_secondary_seg,
+			  dfs->dfs_precac_secondary_freq,
+			  dfs->dfs_precac_primary_freq);
+	} else {
+		dfs->dfs_precac_secondary_freq = dfs->dfs_agile_precac_freq;
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			  "agile_precac_freq = %u ",
+			  dfs->dfs_agile_precac_freq);
+	}
+
+	if (detector_id != AGILE_DETECTOR_ID) {
+		/*
+		 * Even if radar found on primary, we need to move
+		 * the channel from precac-required-list and precac-done-list
+		 * to precac-nol-list.
+		 */
+		PRECAC_LIST_LOCK(dfs);
+		if (!TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
+			TAILQ_FOREACH_SAFE(precac_entry,
+					   &dfs->dfs_precac_required_list,
+					   pe_list,
+					   tmp_precac_entry) {
 			/*
 			 * If on primary then use IS_WITHIN_RANGE else use
 			 * equality directly.
@@ -300,52 +386,110 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
 				     precac_entry->vht80_freq,
 				     VHT80_IEEE_FREQ_OFFSET)) {
 				TAILQ_REMOVE(&dfs->dfs_precac_required_list,
-						precac_entry, pe_list);
+					     precac_entry, pe_list);
 
 				dfs_debug(dfs, WLAN_DEBUG_DFS,
-					"removing the freq = %u from required list and adding to NOL list",
-					precac_entry->vht80_freq);
+					  "removing the freq = %u from required list and adding to NOL list",
+					  precac_entry->vht80_freq);
 				TAILQ_INSERT_TAIL(&dfs->dfs_precac_nol_list,
-						precac_entry, pe_list);
+						  precac_entry, pe_list);
 				qdf_timer_mod(&precac_entry->precac_nol_timer,
-						dfs_get_nol_timeout(dfs)*1000);
+					      dfs_get_nol_timeout(dfs) * 1000);
 				found = 1;
 				break;
+				}
 			}
 		}
-	}
 
-	/* If not found in precac-required-list remove from precac-done-list */
-	if (!found && !TAILQ_EMPTY(&dfs->dfs_precac_done_list)) {
-		TAILQ_FOREACH_SAFE(precac_entry,
-				&dfs->dfs_precac_done_list,
-				pe_list,
-				tmp_precac_entry) {
-			/*
-			 * If on primary then use IS_WITHIN_RANGE else use
-			 * equality directly.
-			 */
-			if (is_radar_found_on_secondary_seg ?
+		/*
+		 * If not found in precac-required-list
+		 * remove from precac-done-list
+		 */
+		if (!found && !TAILQ_EMPTY(&dfs->dfs_precac_done_list)) {
+			TAILQ_FOREACH_SAFE(precac_entry,
+					   &dfs->dfs_precac_done_list,
+					   pe_list,
+					   tmp_precac_entry) {
+				/*
+				 * If on primary then use IS_WITHIN_RANGE
+				 * else use equality directly.
+				 */
+				if (is_radar_found_on_secondary_seg ?
 					(dfs->dfs_precac_secondary_freq ==
 					 precac_entry->vht80_freq) :
 					IS_WITHIN_RANGE(
 						dfs->dfs_curchan->dfs_ch_ieee,
 						precac_entry->vht80_freq, 6)) {
-				TAILQ_REMOVE(&dfs->dfs_precac_done_list,
-					precac_entry, pe_list);
+					TAILQ_REMOVE(&dfs->dfs_precac_done_list,
+						     precac_entry, pe_list);
 
-				dfs_debug(dfs, WLAN_DEBUG_DFS,
-					"removing the the freq = %u from done list and adding to NOL list",
-					precac_entry->vht80_freq);
-				TAILQ_INSERT_TAIL(&dfs->dfs_precac_nol_list,
+					dfs_debug(dfs, WLAN_DEBUG_DFS,
+						  "removing the freq = %u from done list and adding to NOL list",
+						  precac_entry->vht80_freq);
+					TAILQ_INSERT_TAIL(
+						&dfs->dfs_precac_nol_list,
 						precac_entry, pe_list);
-				qdf_timer_mod(&precac_entry->precac_nol_timer,
-						dfs_get_nol_timeout(dfs)*1000);
-				break;
+					qdf_timer_mod(
+					&precac_entry->precac_nol_timer,
+					dfs_get_nol_timeout(dfs) * 1000);
+					break;
+				}
 			}
 		}
+		PRECAC_LIST_UNLOCK(dfs);
+	} else {
+		PRECAC_LIST_LOCK(dfs);
+		if (!TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
+			TAILQ_FOREACH_SAFE(precac_entry,
+					   &dfs->dfs_precac_required_list,
+					   pe_list,
+					   tmp_precac_entry) {
+			if (dfs->dfs_precac_secondary_freq ==
+				 precac_entry->vht80_freq) {
+				TAILQ_REMOVE(&dfs->dfs_precac_required_list,
+					     precac_entry, pe_list);
+
+				dfs_debug(dfs, WLAN_DEBUG_DFS,
+					  "removing the freq = %u from required list and adding to NOL list",
+					  precac_entry->vht80_freq);
+				TAILQ_INSERT_TAIL(&dfs->dfs_precac_nol_list,
+						  precac_entry, pe_list);
+				qdf_timer_mod(&precac_entry->precac_nol_timer,
+					      dfs_get_nol_timeout(dfs) * 1000);
+				found = 1;
+				break;
+				}
+			}
+		}
+
+		/* If not found in precac-required-list
+		 * remove from precac-done-list
+		 */
+		if (!found && !TAILQ_EMPTY(&dfs->dfs_precac_done_list)) {
+			TAILQ_FOREACH_SAFE(precac_entry,
+					   &dfs->dfs_precac_done_list,
+					   pe_list,
+					   tmp_precac_entry) {
+				if (dfs->dfs_precac_secondary_freq ==
+					 precac_entry->vht80_freq) {
+					TAILQ_REMOVE(&dfs->dfs_precac_done_list,
+						     precac_entry, pe_list);
+
+					dfs_debug(dfs, WLAN_DEBUG_DFS,
+						  "removing the the freq = %u from done list and adding to NOL list",
+						  precac_entry->vht80_freq);
+					TAILQ_INSERT_TAIL(
+						&dfs->dfs_precac_nol_list,
+						precac_entry, pe_list);
+					qdf_timer_mod(
+					&precac_entry->precac_nol_timer,
+					dfs_get_nol_timeout(dfs) * 1000);
+					break;
+				}
+			}
+		}
+		PRECAC_LIST_UNLOCK(dfs);
 	}
-	PRECAC_LIST_UNLOCK(dfs);
 
 	/* TO BE DONE  xxx:- Need to lock the channel change */
 	/*
@@ -353,10 +497,10 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
 	 * channel change will happen after RANDOM channel selection anyway.
 	 */
 
-	if (dfs->dfs_precac_timer_running) {
+	if (dfs_soc_obj->dfs_precac_timer_running) {
 		/* Cancel the PreCAC timer */
-		qdf_timer_stop(&dfs->dfs_precac_timer);
-		dfs->dfs_precac_timer_running = 0;
+		qdf_timer_stop(&dfs_soc_obj->dfs_precac_timer);
+		dfs_soc_obj->dfs_precac_timer_running = 0;
 
 		/*
 		 * Change the channel
@@ -368,19 +512,57 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
 			if (dfs_is_ap_cac_timer_running(dfs)) {
 				dfs->dfs_defer_precac_channel_change = 1;
 				dfs_debug(dfs, WLAN_DEBUG_DFS,
-					"Primary CAC is running, defer the channel change"
-					);
+					  "Primary CAC is running, defer the channel change"
+					  );
 			} else {
 				dfs_mlme_channel_change_by_precac(
 						dfs->dfs_pdev_obj);
 			}
+		} else {
+			dfs_debug(dfs, WLAN_DEBUG_DFS,
+				  "PreCAC timer interrupted due to RADAR, Sending Agile channel set command"
+				  );
+			dfs_prepare_agile_precac_chan(dfs);
 		}
 	}
 }
 
+#ifdef QCA_SUPPORT_AGILE_DFS
+void dfs_process_ocac_complete(struct wlan_objmgr_pdev *pdev,
+			       uint32_t ocac_status,
+			       uint32_t center_freq)
+{
+	struct wlan_dfs *dfs = NULL;
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+
+	/* STOP TIMER irrespective of status */
+	utils_dfs_cancel_precac_timer(pdev);
+	if (ocac_status == OCAC_RESET) {
+		dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			  "PreCAC timer reset, Sending Agile chan set command");
+		dfs_prepare_agile_precac_chan(dfs);
+	} else if (ocac_status == OCAC_CANCEL) {
+		dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			  "PreCAC timer abort, agile precac stopped");
+	} else if (ocac_status == OCAC_SUCCESS) {
+		dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			  "PreCAC timer Completed for agile freq: %d",
+			  center_freq);
+		/*
+		 * TRIGGER agile precac timer with 0sec timeout
+		 * with ocac_status 0 for old pdev
+		 */
+		dfs_start_agile_precac_timer(dfs, center_freq, ocac_status);
+	} else {
+		dfs_debug(NULL, WLAN_DEBUG_DFS_ALWAYS, "Error Unknown");
+	}
+}
+#endif
+
 bool dfs_is_precac_timer_running(struct wlan_dfs *dfs)
 {
-	return dfs->dfs_precac_timer_running ? true : false;
+	return dfs->dfs_soc_obj->dfs_precac_timer_running ? true : false;
 }
 
 #define VHT80_IEEE_FREQ_OFFSET 6
@@ -498,59 +680,102 @@ static os_timer_func(dfs_precac_timeout)
 {
 	struct dfs_precac_entry *precac_entry, *tmp_precac_entry;
 	struct wlan_dfs *dfs = NULL;
+	struct dfs_soc_priv_obj *dfs_soc_obj = NULL;
+	uint32_t current_time;
 
-	OS_GET_TIMER_ARG(dfs, struct wlan_dfs *);
-	dfs->dfs_precac_timer_running = 0;
+	OS_GET_TIMER_ARG(dfs_soc_obj, struct dfs_soc_priv_obj *);
 
-	/*
-	 * Remove the HVT80 freq from the precac-required-list and add it to the
-	 * precac-done-list
-	 */
+	dfs = dfs_soc_obj->dfs_priv[dfs_soc_obj->cur_precac_dfs_index].dfs;
+	dfs_soc_obj->dfs_precac_timer_running = 0;
 
-	PRECAC_LIST_LOCK(dfs);
-	if (!TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
-		TAILQ_FOREACH_SAFE(precac_entry,
-				&dfs->dfs_precac_required_list,
-				pe_list,
-				tmp_precac_entry) {
-			if (dfs->dfs_precac_secondary_freq ==
-					precac_entry->vht80_freq) {
+	if (!dfs->dfs_agile_precac_enable) {
+		/*
+		 * Remove the HT80 freq from the precac-required-list
+		 * and add it to the precac-done-list
+		 */
+
+		PRECAC_LIST_LOCK(dfs);
+		if (!TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
+			TAILQ_FOREACH_SAFE(precac_entry,
+					   &dfs->dfs_precac_required_list,
+					   pe_list,
+					   tmp_precac_entry) {
+				if (dfs->dfs_precac_secondary_freq !=
+						precac_entry->vht80_freq)
+					continue;
+
 				TAILQ_REMOVE(&dfs->dfs_precac_required_list,
-						precac_entry, pe_list);
+					     precac_entry, pe_list);
 				dfs_debug(dfs, WLAN_DEBUG_DFS,
-					"removing the the freq = %u from required list and adding to done list",
-					precac_entry->vht80_freq);
+					  "removing the the freq = %u from required list and adding to done list",
+					  precac_entry->vht80_freq);
 				TAILQ_INSERT_TAIL(&dfs->dfs_precac_done_list,
-						precac_entry, pe_list);
+						  precac_entry, pe_list);
 				break;
 			}
 		}
-	}
-	PRECAC_LIST_UNLOCK(dfs);
+		PRECAC_LIST_UNLOCK(dfs);
 
-	dfs_debug(dfs, WLAN_DEBUG_DFS,
-		"Pre-cac expired, Precac Secondary chan %u curr time %d",
-		dfs->dfs_precac_secondary_freq,
-		(qdf_system_ticks_to_msecs(qdf_system_ticks()) / 1000));
-	/*
-	 * Do vdev restart so that we can change the secondary VHT80 channel.
-	 */
-	dfs_precac_check_home_chan_change(dfs);
+		current_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			  "Pre-cac expired, Precac Secondary chan %u curr time %d",
+			  dfs->dfs_precac_secondary_freq,
+			  (current_time) / 1000);
+		/*
+		 * Do vdev restart so that we can change
+		 * the secondary VHT80 channel.
+		 */
+		dfs_precac_check_home_chan_change(dfs);
+	} else {
+		current_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			 "Pre-cac expired, Agile Precac chan %u curr time %d",
+			 dfs->dfs_agile_precac_freq,
+			 current_time / 1000);
+		if (dfs_soc_obj->ocac_status == OCAC_SUCCESS) {
+			dfs_soc_obj->ocac_status = OCAC_RESET;
+			PRECAC_LIST_LOCK(dfs);
+				if (!TAILQ_EMPTY(
+					&dfs->dfs_precac_required_list)) {
+					TAILQ_FOREACH_SAFE(
+						precac_entry,
+						&dfs->dfs_precac_required_list,
+						pe_list,
+						tmp_precac_entry) {
+					if (dfs->dfs_agile_precac_freq !=
+						precac_entry->vht80_freq)
+						continue;
+
+					TAILQ_REMOVE(
+						&dfs->dfs_precac_required_list,
+						precac_entry, pe_list);
+					dfs_info(dfs, WLAN_DEBUG_DFS,
+						 "removing the freq = %u from required list and adding to done list",
+						 precac_entry->vht80_freq);
+					TAILQ_INSERT_TAIL(
+						&dfs->dfs_precac_done_list,
+						precac_entry, pe_list);
+					break;
+				}
+			}
+			PRECAC_LIST_UNLOCK(dfs);
+		}
+		dfs_prepare_agile_precac_chan(dfs);
+	}
 }
 
-void dfs_zero_cac_timer_init(struct wlan_dfs *dfs)
+void dfs_zero_cac_timer_init(struct dfs_soc_priv_obj *dfs_soc_obj)
 {
-	qdf_timer_init(NULL,
-			&(dfs->dfs_precac_timer),
-			dfs_precac_timeout,
-			(void *) dfs,
-			QDF_TIMER_TYPE_WAKE_APPS);
+	dfs_soc_obj->precac_state_started = false;
+	qdf_timer_init(NULL, &dfs_soc_obj->dfs_precac_timer,
+		       dfs_precac_timeout,
+		       (void *)dfs_soc_obj,
+		       QDF_TIMER_TYPE_WAKE_APPS);
 }
 
 void dfs_zero_cac_attach(struct wlan_dfs *dfs)
 {
 	dfs->dfs_precac_timeout_override = -1;
-	dfs_zero_cac_timer_init(dfs);
 	PRECAC_LIST_LOCK_CREATE(dfs);
 }
 
@@ -573,16 +798,24 @@ static os_timer_func(dfs_precac_nol_timeout)
 		/* Move the channel from precac-NOL to precac-required-list */
 		TAILQ_REMOVE(&dfs->dfs_precac_nol_list, precac_entry, pe_list);
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
-			"removing the the freq = %u from PreCAC NOL-list and adding Precac-required list",
-			 precac_entry->vht80_freq);
-		TAILQ_INSERT_TAIL(&dfs->dfs_precac_required_list, precac_entry,
-				pe_list);
+			  "removing the the freq = %u from PreCAC NOL-list and adding Precac-required list",
+			  precac_entry->vht80_freq);
+		TAILQ_INSERT_TAIL(&dfs->dfs_precac_required_list,
+				  precac_entry,
+				  pe_list);
 	}
 	PRECAC_LIST_UNLOCK(dfs);
 
-	/* TO BE DONE xxx : Need to lock the channel change */
-	/* Do a channel change */
-	dfs_mlme_channel_change_by_precac(dfs->dfs_pdev_obj);
+	if (!dfs->dfs_agile_precac_enable) {
+		/* TO BE DONE xxx : Need to lock the channel change */
+		/* Do a channel change */
+		dfs_mlme_channel_change_by_precac(dfs->dfs_pdev_obj);
+	} else {
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			  "Precac NOL timeout, sending agile channel set command"
+			  );
+		dfs_prepare_agile_precac_chan(dfs);
+	}
 }
 
 void dfs_init_precac_list(struct wlan_dfs *dfs)
@@ -719,6 +952,26 @@ void dfs_deinit_precac_list(struct wlan_dfs *dfs)
 
 }
 
+#if defined(QCA_SUPPORT_AGILE_DFS) || defined(ATH_SUPPORT_ZERO_CAC_DFS)
+void dfs_agile_soc_obj_init(struct wlan_dfs *dfs,
+			    struct wlan_objmgr_psoc *psoc)
+{
+	struct dfs_soc_priv_obj *dfs_soc_obj;
+
+	dfs_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							    WLAN_UMAC_COMP_DFS);
+	dfs->dfs_psoc_idx = dfs_soc_obj->num_dfs_privs;
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		 "dfs->dfs_psoc_idx: %d ", dfs->dfs_psoc_idx);
+	dfs_soc_obj->dfs_priv[dfs_soc_obj->num_dfs_privs].dfs = dfs;
+	dfs_soc_obj->num_dfs_privs++;
+	dfs->dfs_soc_obj = dfs_soc_obj;
+
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs_soc_obj->num_dfs_privs: %d ",
+		 dfs_soc_obj->num_dfs_privs);
+}
+#endif
+
 void dfs_zero_cac_detach(struct wlan_dfs *dfs)
 {
 	dfs_deinit_precac_list(dfs);
@@ -731,13 +984,15 @@ uint8_t dfs_get_freq_from_precac_required_list(struct wlan_dfs *dfs,
 	struct dfs_precac_entry *precac_entry;
 	uint8_t ieee_freq = 0;
 
-	dfs_debug(dfs, WLAN_DEBUG_DFS, "exclude_ieee_freq = %u",
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "exclude_ieee_freq = %u",
 		 exclude_ieee_freq);
 
 	PRECAC_LIST_LOCK(dfs);
 	if (!TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
 		TAILQ_FOREACH(precac_entry, &dfs->dfs_precac_required_list,
 				pe_list) {
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				 "freq: %d ", precac_entry->vht80_freq);
 			if (precac_entry->vht80_freq != exclude_ieee_freq) {
 				ieee_freq = precac_entry->vht80_freq;
 				break;
@@ -745,27 +1000,75 @@ uint8_t dfs_get_freq_from_precac_required_list(struct wlan_dfs *dfs,
 		}
 	}
 	PRECAC_LIST_UNLOCK(dfs);
-	dfs_debug(dfs, WLAN_DEBUG_DFS, "ieee_freq = %u", ieee_freq);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "ieee_freq = %u", ieee_freq);
 
 	return ieee_freq;
 }
 
 void dfs_cancel_precac_timer(struct wlan_dfs *dfs)
 {
-	qdf_timer_stop(&dfs->dfs_precac_timer);
-	dfs->dfs_precac_timer_running = 0;
+	struct dfs_soc_priv_obj *dfs_soc_obj;
+
+	dfs_soc_obj = dfs->dfs_soc_obj;
+	qdf_timer_stop(&dfs_soc_obj->dfs_precac_timer);
+	dfs_soc_obj->dfs_precac_timer_running = 0;
 }
 
-void dfs_start_precac_timer(struct wlan_dfs *dfs, uint8_t precac_chan)
+#ifdef QCA_SUPPORT_AGILE_DFS
+void dfs_start_agile_precac_timer(struct wlan_dfs *dfs, uint8_t precac_chan,
+				  uint8_t ocac_status)
+{
+	struct dfs_channel *ichan, lc;
+	uint8_t first_primary_dfs_ch_ieee;
+	int agile_cac_timeout;
+	struct dfs_soc_priv_obj *dfs_soc_obj;
+
+	dfs_soc_obj = dfs->dfs_soc_obj;
+	dfs_soc_obj->dfs_precac_timer_running = 1;
+
+	first_primary_dfs_ch_ieee = precac_chan - VHT80_IEEE_FREQ_OFFSET;
+	ichan = &lc;
+	dfs_mlme_find_dot11_channel(dfs->dfs_pdev_obj,
+				    first_primary_dfs_ch_ieee, 0,
+				    WLAN_PHYMODE_11AC_VHT80,
+				    &ichan->dfs_ch_freq,
+				    &ichan->dfs_ch_flags,
+				    &ichan->dfs_ch_flagext,
+				    &ichan->dfs_ch_ieee,
+				    &ichan->dfs_ch_vhtop_ch_freq_seg1,
+				    &ichan->dfs_ch_vhtop_ch_freq_seg2);
+	agile_cac_timeout = (dfs->dfs_precac_timeout_override != -1) ?
+				dfs->dfs_precac_timeout_override :
+	dfs_mlme_get_cac_timeout(dfs->dfs_pdev_obj,
+				 ichan->dfs_ch_freq,
+				 ichan->dfs_ch_vhtop_ch_freq_seg2,
+				 ichan->dfs_ch_flags);
+	if (ocac_status == OCAC_SUCCESS) {
+		dfs_soc_obj->ocac_status = OCAC_SUCCESS;
+		agile_cac_timeout = 0;
+	}
+
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		 "precactimeout = %d", (agile_cac_timeout) * 1000);
+	qdf_timer_mod(&dfs_soc_obj->dfs_precac_timer,
+		      (agile_cac_timeout) * 1000);
+}
+#endif
+
+void dfs_start_precac_timer(struct wlan_dfs *dfs,
+			    uint8_t precac_chan)
 {
 	struct dfs_channel *ichan, lc;
 	uint8_t first_primary_dfs_ch_ieee;
 	int primary_cac_timeout;
 	int secondary_cac_timeout;
 	int precac_timeout;
+	struct dfs_soc_priv_obj *dfs_soc_obj;
 
+	dfs_soc_obj = dfs->dfs_soc_obj;
+	dfs = dfs_soc_obj->dfs_priv[dfs_soc_obj->cur_precac_dfs_index].dfs;
 #define EXTRA_TIME_IN_SEC 5
-	dfs->dfs_precac_timer_running = 1;
+	dfs_soc_obj->dfs_precac_timer_running = 1;
 
 	/*
 	 * Get the first primary ieee chan in the HT80 band and find the channel
@@ -823,7 +1126,7 @@ void dfs_start_precac_timer(struct wlan_dfs *dfs, uint8_t precac_chan)
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
 		"precactimeout = %d", (precac_timeout)*1000);
-	qdf_timer_mod(&dfs->dfs_precac_timer, (precac_timeout) * 1000);
+	qdf_timer_mod(&dfs_soc_obj->dfs_precac_timer, (precac_timeout) * 1000);
 }
 
 void dfs_print_precaclists(struct wlan_dfs *dfs)
@@ -1072,6 +1375,39 @@ end:
 }
 #endif
 
+#ifdef QCA_SUPPORT_AGILE_DFS
+void dfs_find_vht80_chan_for_agile_precac(struct wlan_dfs *dfs,
+					  uint8_t *ch_freq,
+					  uint8_t ch_freq_seg1,
+					  uint8_t ch_freq_seg2)
+{
+	uint8_t ieee_freq;
+
+	dfs->dfs_soc_obj->ocac_status = OCAC_RESET;
+	ieee_freq = dfs_get_freq_from_precac_required_list(
+				dfs,
+				ch_freq_seg1);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		 "ieee_freq: %d  ch_freq_seg1: %d , ch_freq_seg2 : %d ",
+		 ieee_freq, ch_freq_seg1, ch_freq_seg2);
+	if (ieee_freq == ch_freq_seg2 && ieee_freq != 0)
+		ieee_freq = dfs_get_freq_from_precac_required_list(
+				dfs,
+				ch_freq_seg2);
+	if (ieee_freq) {
+		dfs->dfs_agile_precac_freq = ieee_freq;
+		/* Start the pre_cac_timer */
+		dfs_start_agile_precac_timer(dfs,
+					     dfs->dfs_agile_precac_freq,
+					     dfs->dfs_soc_obj->ocac_status);
+	} else {
+		dfs->dfs_agile_precac_freq = 0;
+	}
+
+	*ch_freq = dfs->dfs_agile_precac_freq;
+}
+#endif
+
 void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 				    uint32_t chan_mode,
 				    uint8_t ch_freq_seg1,
@@ -1089,7 +1425,7 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
 		  "precac_secondary_freq = %u precac_running = %u",
 		  dfs->dfs_precac_secondary_freq,
-		  dfs->dfs_precac_timer_running);
+		  dfs->dfs_soc_obj->dfs_precac_timer_running);
 
 	/*
 	 * If Pre-CAC is enabled then find a center frequency for
@@ -1103,7 +1439,7 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 		 * channel. If precac timer is not running then try to
 		 * find a new channel from precac-required-list.
 		 */
-		if (dfs->dfs_precac_timer_running) {
+		if (dfs->dfs_soc_obj->dfs_precac_timer_running) {
 			/*
 			 * Primary and secondary VHT80 cannot be the
 			 * same. Therefore exclude the primary
@@ -1191,41 +1527,137 @@ void dfs_set_precac_enable(struct wlan_dfs *dfs, uint32_t value)
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_target_tx_ops *tx_ops;
 	uint32_t target_type;
+	struct target_psoc_info *tgt_hdl;
+	struct tgt_info *info;
 
 	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
 	if (!psoc) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "psoc is NULL");
 		dfs->dfs_precac_enable = 0;
+		dfs->dfs_agile_precac_enable = 0;
 		return;
 	}
 
 	tx_ops = &psoc->soc_cb.tx_ops.target_tx_ops;
 	target_type = lmac_get_target_type(dfs->dfs_pdev_obj);
 
+	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_hdl) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "target_psoc_info is null");
+		return;
+	}
+
+	info = (struct tgt_info *)(&tgt_hdl->info);
+
+	if (!info) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "tgt_info is null");
+		return;
+	}
+
 	/*
 	 * If
 	 * 1) The chip is CASCADE,
-	 * 3) The user has enabled Pre-CAC and
-	 * 4) The regdomain the ETSI,
+	 * 2) The user has enabled Pre-CAC and
+	 * 3) The regdomain the ETSI,
 	 * then enable preCAC.
+	 *
+	 * OR
+	 *
+	 * If
+	 * 1) The chip has agile_capability enabled
+	 * 2) The user has enabled Pre-CAC and
+	 * 3) The regdomain the ETSI,
+	 * then enable Agile preCAC.
 	 */
+
 	if ((1 == value) && tx_ops->tgt_is_tgt_type_qca9984(target_type) &&
 	    (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_ETSI_DOMAIN)) {
 		dfs->dfs_precac_enable = value;
+	} else if ((1 == value) && (info->wlan_res_cfg.agile_capability == 1) &&
+		(utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_ETSI_DOMAIN)) {
+		dfs->dfs_agile_precac_enable = value;
 	} else {
+		dfs->dfs_agile_precac_enable = 0;
 		dfs->dfs_precac_enable = 0;
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "preCAC disabled");
 	}
+
 	if (dfs_is_precac_timer_running(dfs)) {
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 			 "Precac flag changed. Cancel the precac timer");
 		dfs_cancel_precac_timer(dfs);
+		dfs->dfs_soc_obj->precac_state_started = 0;
 	}
 }
 
+#ifdef QCA_SUPPORT_AGILE_DFS
+void dfs_agile_precac_start(struct wlan_dfs *dfs)
+{
+	uint8_t agile_freq = 0;
+	uint8_t ocac_status = 0;
+	struct dfs_soc_priv_obj *dfs_soc_obj;
+	uint8_t cur_dfs_idx;
+
+	dfs_soc_obj = dfs->dfs_soc_obj;
+	/*
+	 * Initiate first call to start preCAC here, for agile_freq as 0,
+	 * and ocac_status as 0
+	 */
+
+	qdf_info("%s : %d agile_precac_started: %d",
+		 __func__, __LINE__,
+		dfs_soc_obj->precac_state_started);
+
+	if (!dfs_soc_obj->precac_state_started)
+		dfs_soc_obj->cur_precac_dfs_index = dfs->dfs_psoc_idx;
+
+	cur_dfs_idx = dfs_soc_obj->cur_precac_dfs_index;
+	dfs_soc_obj->dfs_priv[cur_dfs_idx].agile_precac_active = true;
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		 " setting true to cur_precac_dfs_index = %d, dfs: %pK",
+		 dfs_soc_obj->cur_precac_dfs_index,
+		 dfs->dfs_soc_obj->dfs_priv[cur_dfs_idx].dfs);
+
+	if (!dfs->dfs_soc_obj->precac_state_started) {
+		qdf_info("%s : %d Initiated agile precac",
+			 __func__, __LINE__);
+		dfs->dfs_soc_obj->precac_state_started = true;
+		dfs_start_agile_precac_timer(dfs,
+					     agile_freq,
+					     ocac_status);
+	}
+}
+#endif
+
 uint32_t dfs_get_precac_enable(struct wlan_dfs *dfs)
 {
-	return dfs->dfs_precac_enable;
+	struct wlan_objmgr_psoc *psoc;
+	struct target_psoc_info *tgt_hdl;
+	uint32_t retval = 0;
+	struct tgt_info *info;
+
+	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
+	if (!psoc) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "psoc is NULL");
+		dfs->dfs_agile_precac_enable = 0;
+		retval = 0;
+	}
+
+	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(psoc);
+
+	info = (struct tgt_info *)(&tgt_hdl->info);
+	if (!tgt_hdl) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "target_psoc_info is null");
+		dfs->dfs_agile_precac_enable = 0;
+		retval = 0;
+	}
+
+	if (info->wlan_res_cfg.agile_capability == 0)
+		retval = dfs->dfs_precac_enable;
+	else
+		retval = dfs->dfs_agile_precac_enable;
+
+	return retval;
 }
 
 #ifdef WLAN_DFS_PRECAC_AUTO_CHAN_SUPPORT
