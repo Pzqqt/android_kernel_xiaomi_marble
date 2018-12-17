@@ -1048,7 +1048,6 @@ struct wma_valid_channels {
  * @IsRArateLimitEnabled: RA rate limiti s enabled or not
  * @RArateLimitInterval: RA rate limit interval
  * @is_lpass_enabled: Flag to indicate if LPASS feature is enabled or not
- * @is_nan_enabled: Flag to indicate if NaN feature is enabled or not
  * @staMaxLIModDtim: station max listen interval
  * @staModDtim: station mode DTIM
  * @staDynamicDtim: station dynamic DTIM
@@ -1194,9 +1193,6 @@ typedef struct {
 #endif
 #ifdef WLAN_FEATURE_LPSS
 	bool is_lpass_enabled;
-#endif
-#ifdef WLAN_FEATURE_NAN
-	bool is_nan_enabled;
 #endif
 	uint8_t staMaxLIModDtim;
 	uint8_t staModDtim;

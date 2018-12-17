@@ -1835,26 +1835,6 @@ int wma_process_fw_event_handler(void *ctx, void *htc_packet, uint8_t rx_ctx)
 	return err;
 }
 
-#ifdef WLAN_FEATURE_NAN
-/**
- * wma_set_nan_enable() - set nan enable flag in WMA handle
- * @wma_handle: Pointer to wma handle
- * @cds_cfg: Pointer to CDS Configuration
- *
- * Return: none
- */
-static void wma_set_nan_enable(tp_wma_handle wma_handle,
-				struct cds_config_info *cds_cfg)
-{
-	wma_handle->is_nan_enabled = cfg_nan_get_enable(wma_handle->psoc);
-}
-#else
-static void wma_set_nan_enable(tp_wma_handle wma_handle,
-				struct cds_config_info *cds_cfg)
-{
-}
-#endif
-
 /**
  * wma_init_max_no_of_peers - API to initialize wma configuration params
  * @wma_handle: WMA Handle
@@ -3337,7 +3317,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 #ifdef WLAN_FEATURE_LPSS
 	wma_handle->is_lpass_enabled = cds_cfg->is_lpass_enabled;
 #endif
-	wma_set_nan_enable(wma_handle, cds_cfg);
 	wma_handle->interfaces = qdf_mem_malloc(sizeof(struct wma_txrx_node) *
 						wma_handle->max_bssid);
 	if (!wma_handle->interfaces) {
