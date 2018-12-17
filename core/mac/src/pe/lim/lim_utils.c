@@ -4037,20 +4037,6 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 		return;
 	}
 
-	/*
-	 * Do not try to switch channel if RoC is in progress. RoC code path
-	 * uses mac->lim.gpLimRemainOnChanReq to notify the upper layers that
-	 * the device has started listening on the channel requested as part of
-	 * RoC, if we set mac->lim.gpLimRemainOnChanReq to NULL as we do below
-	 * then the upper layers will think that the channel change is not
-	 * successful and the RoC from the upper layer perspective will never
-	 * end...
-	 */
-	if (mac->lim.gpLimRemainOnChanReq) {
-		pe_debug("RoC is in progress");
-		return;
-	}
-
 	if (pe_session->ch_switch_in_progress == true) {
 		pe_debug("ch switch is in progress, ignore HT IE BW update");
 		return;

@@ -485,9 +485,6 @@ void lim_cleanup(struct mac_context *mac)
 
 	pe_deregister_mgmt_rx_frm_callback(mac);
 
-	qdf_mem_free(mac->lim.gpLimRemainOnChanReq);
-	mac->lim.gpLimRemainOnChanReq = NULL;
-
 	/* free up preAuth table */
 	if (mac->lim.gLimPreAuthTimerTable.pTable != NULL) {
 		for (i = 0; i < mac->lim.gLimPreAuthTimerTable.numEntry; i++)

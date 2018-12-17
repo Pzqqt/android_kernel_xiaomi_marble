@@ -665,17 +665,13 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 			&frm->WAPI);
 #endif /* defined(FEATURE_WLAN_WAPI) */
 
-	if (mac_ctx->lim.gpLimRemainOnChanReq)
-		bytes += (mac_ctx->lim.gpLimRemainOnChanReq->length -
-			 sizeof(tSirRemainOnChnReq));
-	else
-		/*
-		 * Only use CFG for non-listen mode. This CFG is not working for
-		 * concurrency. In listening mode, probe rsp IEs is passed in
-		 * the message from SME to PE.
-		 */
-		addn_ie_present =
-			(pe_session->addIeParams.probeRespDataLen != 0);
+	/*
+	 * Only use CFG for non-listen mode. This CFG is not working for
+	 * concurrency. In listening mode, probe rsp IEs is passed in
+	 * the message from SME to PE.
+	 */
+	addn_ie_present =
+		(pe_session->addIeParams.probeRespDataLen != 0);
 
 	if (addn_ie_present) {
 
@@ -778,12 +774,6 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 
 	pe_debug("Sending Probe Response frame to");
 	lim_print_mac_addr(mac_ctx, peer_macaddr, LOGD);
-
-	if (mac_ctx->lim.gpLimRemainOnChanReq)
-		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
-			     mac_ctx->lim.gpLimRemainOnChanReq->probeRspIe,
-			     (mac_ctx->lim.gpLimRemainOnChanReq->length -
-			      sizeof(tSirRemainOnChnReq)));
 
 	if (addn_ie_present)
 		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,

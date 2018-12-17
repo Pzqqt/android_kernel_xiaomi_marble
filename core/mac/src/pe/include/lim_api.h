@@ -327,21 +327,6 @@ QDF_STATUS pe_mc_process_handler(struct scheduler_msg *msg);
    -----------------------------------------------------------------*/
 void pe_free_msg(struct mac_context *mac, struct scheduler_msg *pMsg);
 
-/*--------------------------------------------------------------------------
-
-   \brief lim_remain_on_chn_rsp() - API for sending remain on channel response.
-
-   LIM calls this api to send the remain on channel response to SME.
-
-   \param mac - Pointer to Global MAC structure
-   \param status - status of the response
-   \param data - pointer to msg
-
-   \return  void
-
-   --------------------------------------------------------------------------*/
-void lim_remain_on_chn_rsp(struct mac_context *mac, QDF_STATUS status, uint32_t *data);
-
 /**
  * lim_process_abort_scan_ind() - abort the scan which is presently being run
  *

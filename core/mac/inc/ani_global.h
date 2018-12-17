@@ -676,7 +676,6 @@ typedef struct sAniSirLim {
 	tLimWscIeInfo wscIeInfo;
 	struct pe_session *gpSession;  /* Pointer to  session table */
 
-	tSirRemainOnChnReq *gpLimRemainOnChanReq;       /* hold remain on chan request in this buf */
 	qdf_mutex_t lim_frame_register_lock;
 	qdf_list_t gLimMgmtFrameRegistratinQueue;
 	uint32_t tdls_frm_session_id;

@@ -928,9 +928,6 @@ void lim_wpspbc_close(struct mac_context *mac, struct pe_session *pe_session);
 
 #define LIM_WPS_OVERLAP_TIMER_MS                 10000
 
-void lim_process_remain_on_chn_timeout(struct mac_context *mac);
-void lim_send_p2p_action_frame(struct mac_context *mac, struct scheduler_msg *pMsg);
-
 void lim_process_disassoc_ack_timeout(struct mac_context *mac);
 void lim_process_deauth_ack_timeout(struct mac_context *mac);
 QDF_STATUS lim_send_disassoc_cnf(struct mac_context *mac);
@@ -968,8 +965,6 @@ typedef struct sSetLinkCbackParams {
 	void *cbackDataPtr;
 } tSetLinkCbackParams;
 
-int lim_process_remain_on_chnl_req(struct mac_context *mac, uint32_t *pMsg);
-void lim_remain_on_chn_rsp(struct mac_context *mac, QDF_STATUS status, uint32_t *data);
 void lim_send_sme_disassoc_deauth_ntf(struct mac_context *mac_ctx,
 				QDF_STATUS status, uint32_t *ctx);
 

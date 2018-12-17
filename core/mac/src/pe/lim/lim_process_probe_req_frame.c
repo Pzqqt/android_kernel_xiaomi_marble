@@ -259,15 +259,6 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	if (mac_ctx->lim.gLimProbeRespDisableFlag)
 		return;
 
-	/*
-	 * Don't send probe response if P2P go is scanning till scan
-	 * come to idle state.
-	 */
-	if ((session->pePersona == QDF_P2P_GO_MODE) &&
-	    mac_ctx->lim.gpLimRemainOnChanReq) {
-		pe_debug("GO is scanning, don't send probersp on diff chnl");
-		return;
-	}
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	if (LIM_IS_AP_ROLE(session) ||
 		(LIM_IS_IBSS_ROLE(session) &&

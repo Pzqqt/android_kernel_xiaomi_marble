@@ -360,35 +360,6 @@ typedef struct sSirSupportedRates {
 #endif
 } tSirSupportedRates, *tpSirSupportedRates;
 
-typedef struct sSirRemainOnChnReq {
-	uint16_t messageType;
-	uint16_t length;
-	uint8_t sessionId;
-	struct qdf_mac_addr selfMacAddr;
-	uint8_t chnNum;
-	uint8_t phyMode;
-	uint32_t duration;
-	uint8_t isProbeRequestAllowed;
-	uint32_t scan_id;
-	uint8_t probeRspIe[1];
-} tSirRemainOnChnReq, *tpSirRemainOnChnReq;
-
-/**
- * struct sir_roc_rsp - Structure to store the remain on channel response
- * @message_type: Message Type
- * @length: Message Length
- * @session_id: SME session Id
- * @scan_id : scan identifier
- * @status: result status
- */
-struct sir_roc_rsp {
-	uint16_t message_type;
-	uint16_t length;
-	uint8_t session_id;
-	uint32_t scan_id;
-	tSirResultCodes status;
-};
-
 typedef struct sSirRegisterMgmtFrame {
 	uint16_t messageType;
 	uint16_t length;
