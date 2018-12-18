@@ -7518,14 +7518,7 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 }
 #endif
 
-/**
- * lim_assoc_rej_get_remaining_delta() - Get remaining time delta for
- * the rssi based disallowed list entry
- * @node: rssi based disallowed list entry
- *
- * Return: remaining delta, can be -ve if time has already expired.
- */
-static inline int
+int
 lim_assoc_rej_get_remaining_delta(struct sir_rssi_disallow_lst *node)
 {
 	qdf_time_t cur_time;
@@ -7538,15 +7531,8 @@ lim_assoc_rej_get_remaining_delta(struct sir_rssi_disallow_lst *node)
 	return node->retry_delay - time_diff;
 }
 
-/**
- * lim_assoc_rej_rem_entry_with_lowest_delta() - Remove the entry
- * with lowest time delta
- * @list: rssi based rejected BSSID list
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS
-lim_assoc_rej_rem_entry_with_lowest_delta(qdf_list_t *list)
+QDF_STATUS
+lim_rem_blacklist_entry_with_lowest_delta(qdf_list_t *list)
 {
 	struct sir_rssi_disallow_lst *oldest_node = NULL;
 	struct sir_rssi_disallow_lst *cur_node;
@@ -7606,7 +7592,7 @@ void lim_assoc_rej_add_to_rssi_based_reject_list(struct mac_context *mac_ctx,
 
 	if (qdf_list_size(&mac_ctx->roam.rssi_disallow_bssid) >=
 		MAX_RSSI_AVOID_BSSID_LIST) {
-		status = lim_assoc_rej_rem_entry_with_lowest_delta(
+		status = lim_rem_blacklist_entry_with_lowest_delta(
 					&mac_ctx->roam.rssi_disallow_bssid);
 		if (QDF_IS_STATUS_ERROR(status))
 			pe_err("Failed to remove entry with lowest delta");

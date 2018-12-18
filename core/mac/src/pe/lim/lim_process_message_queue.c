@@ -2040,6 +2040,13 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
+	case WMA_ROAM_BLACKLIST_MSG:
+		lim_add_roam_blacklist_ap(mac_ctx,
+					  (struct roam_blacklist_event *)
+					  msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
+		msg->bodyptr = NULL;
+		break;
 	default:
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;

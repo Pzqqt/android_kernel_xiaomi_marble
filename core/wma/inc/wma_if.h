@@ -1321,4 +1321,26 @@ typedef struct sNanRequest {
 } tNanRequest, *tpNanRequest;
 #endif /* WLAN_FEATURE_NAN */
 
+/*
+ * struct roam_blacklist_timeout - BTM blacklist entry
+ * @bssid - bssid that is to be blacklisted
+ * @timeout - time duration for which the bssid is blacklisted
+ * @received_time - boot timestamp at which the firmware event was received
+ */
+struct roam_blacklist_timeout {
+	struct qdf_mac_addr bssid;
+	uint32_t timeout;
+	qdf_time_t received_time;
+};
+
+/*
+ * struct roam_blacklist_event - Blacklist event entries destination structure
+ * @num_entries: total entries sent over the event
+ * @roam_blacklist: blacklist details
+ */
+struct roam_blacklist_event {
+	uint32_t num_entries;
+	struct roam_blacklist_timeout roam_blacklist[];
+};
+
 #endif /* _HALMSGAPI_H_ */

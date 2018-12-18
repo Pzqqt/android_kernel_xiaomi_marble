@@ -136,7 +136,7 @@
 #endif
 
 #define LIM_DOS_PROTECTION_TIME 1000 //1000ms
-
+#define LIM_MIN_RSSI 0 /* 0dbm */
 /* enums used by LIM are as follows */
 
 enum eLimDisassocTrigger {
@@ -988,6 +988,27 @@ QDF_STATUS lim_process_sme_del_all_tdls_peers(struct mac_context *p_mac,
  * Return: None
  */
 void lim_send_bcn_rsp(struct mac_context *mac_ctx, tpSendbeaconParams rsp);
+
+/**
+ * lim_remove_duplicate_bssid_node() - remove duplicate bssid from the
+ * @entry: entry to check for which the duplicate entry is present
+ * @list:  mac_ctx->roam.rssi_disallow_bssid list
+ *
+ * Return: None
+ */
+void lim_remove_duplicate_bssid_node(struct sir_rssi_disallow_lst *entry,
+				     qdf_list_t *list);
+
+/**
+ * lim_add_roam_blacklist_ap() - handle the blacklist bssid list received from
+ * firmware
+ * @mac_ctx: Pointer to Global MAC structure
+ * @list: roam blacklist ap list
+ *
+ * Return: None
+ */
+void lim_add_roam_blacklist_ap(struct mac_context *mac_ctx,
+			       struct roam_blacklist_event *src_lst);
 
 /**
  * lim_process_rx_channel_status_event() - processes

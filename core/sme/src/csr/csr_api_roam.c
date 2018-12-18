@@ -18800,13 +18800,13 @@ csr_roam_offload_scan(struct mac_context *mac_ctx, uint8_t session_id,
 		check_allowed_ssid_list(req_buf, roam_params_src);
 
 	/*
-	 * For CTX INT cmd if rssi disallow bssid list have any member
+	 * If rssi disallow bssid list have any member
 	 * fill it and send it to firmware so that firmware does not
 	 * try to roam to these BSS until RSSI OR time condition are
 	 * matched.
 	 */
-	if (reason == REASON_CTX_INIT)
-		csr_add_rssi_reject_ap_list(mac_ctx, roam_params_src);
+	csr_add_rssi_reject_ap_list(mac_ctx, roam_params_src);
+
 	/*
 	 * Configure the lookup threshold either from INI or from framework.
 	 * If both are present, give higher priority to the one from framework.
