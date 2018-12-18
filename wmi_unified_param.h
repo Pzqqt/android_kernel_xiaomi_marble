@@ -4809,6 +4809,7 @@ typedef enum {
 	wmi_esp_estimate_event_id,
 	wmi_pdev_ctl_failsafe_check_event_id,
 	wmi_vdev_bcn_reception_stats_event_id,
+	wmi_roam_blacklist_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
