@@ -4817,10 +4817,6 @@ struct send_extcap_ie {
 	uint8_t session_id;
 };
 
-typedef void (*hw_mode_transition_cb)(uint32_t old_hw_mode_index,
-		uint32_t new_hw_mode_index,
-		uint32_t num_vdev_mac_entries,
-		struct policy_mgr_vdev_mac_map *vdev_mac_map);
 typedef void (*antenna_mode_cb)(uint32_t status, void *context);
 
 /**

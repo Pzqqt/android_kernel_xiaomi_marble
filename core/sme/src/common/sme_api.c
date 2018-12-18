@@ -13205,24 +13205,6 @@ QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
 }
 
 /**
- * sme_register_hw_mode_trans_cb() - HW mode transition callback registration
- * @mac_handle: Handle returned by macOpen
- * @callback: HDD callback to be registered
- *
- * Registers the HDD callback with SME. This callback will be invoked when
- * HW mode transition event is received from the FW
- *
- * Return: None
- */
-void sme_register_hw_mode_trans_cb(mac_handle_t mac_handle,
-				   hw_mode_transition_cb callback)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	mac->sme.sme_hw_mode_trans_cb = callback;
-}
-
-/**
  * sme_nss_update_request() - Send beacon templete update to FW with new
  * nss value
  * @mac_handle: Handle returned by macOpen
