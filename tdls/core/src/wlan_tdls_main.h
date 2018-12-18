@@ -679,6 +679,15 @@ QDF_STATUS
 tdls_process_policy_mgr_notification(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * tdls_process_decrement_active_session() - process policy manager decrement
+ * sessions.
+ * @psoc: soc object manager
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+tdls_process_decrement_active_session(struct wlan_objmgr_psoc *psoc);
+/**
  * tdls_scan_complete_event_handler() - scan complete event handler for tdls
  * @vdev: vdev object
  * @event: scan event
