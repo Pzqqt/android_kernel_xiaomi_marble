@@ -11735,6 +11735,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 		WMI_PDEV_CTL_FAILSAFE_CHECK_EVENTID;
 	event_ids[wmi_vdev_bcn_reception_stats_event_id] =
 		WMI_VDEV_BCN_RECEPTION_STATS_EVENTID;
+	event_ids[wmi_roam_blacklist_event_id] = WMI_ROAM_BLACKLIST_EVENTID;
 }
 
 /**
