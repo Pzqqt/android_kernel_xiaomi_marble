@@ -7173,21 +7173,6 @@ QDF_STATUS sme_set_roam_bmiss_final_bcnt(mac_handle_t mac_handle,
 }
 
 /*
- * sme_get_roam_beacon_rssi_weight() -
- * gets Roam beacon rssi weight
- *	  This is a synchronous call
- *
- * mac_handle - The handle returned by mac_open
- * Return uint8_t - nRoamBeaconRssiWeight
- */
-uint8_t sme_get_roam_beacon_rssi_weight(mac_handle_t mac_handle)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	return mac->mlme_cfg->lfr.roam_beacon_rssi_weight;
-}
-
-/*
  * sme_set_neighbor_lookup_rssi_threshold() - update neighbor lookup
  *	rssi threshold
  *  This is a synchronous call
