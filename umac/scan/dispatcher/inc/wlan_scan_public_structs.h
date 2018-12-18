@@ -1311,52 +1311,19 @@ struct pno_user_cfg {
 
 /**
  * struct scan_user_cfg - user configuration required for for scan
- * @active_dwell: default active dwell time
- * @passive_dwell:default passive dwell time
- * @conc_active_dwell: default concurrent active dwell time
- * @conc_passive_dwell: default concurrent passive dwell time
- * @conc_max_rest_time: default concurrent max rest time
- * @conc_min_rest_time: default concurrent min rest time
- * @conc_idle_time: default concurrent idle time
  * @scan_cache_aging_time: default scan cache aging time
  * @is_snr_monitoring_enabled: whether snr monitoring enabled or not
- * @prefer_5ghz: Prefer 5ghz AP over 2.4Ghz AP
- * @select_5gh_margin: Prefer connecting to 5G AP even if
- *    its RSSI is lower by select_5gh_margin dbm than 2.4G AP.
- *    applicable if prefer_5ghz is set.
- * @scan_bucket_threshold: first scan bucket
- * threshold to the mentioned value and all the AP's which
- * have RSSI under this threshold will fall under this
- * bucket
- * @rssi_cat_gap: set rssi category gap
- * @scan_dwell_time_mode: Adaptive dweltime mode
  * @pno_cfg: Pno related config params
  * @ie_whitelist: probe req IE whitelist attrs
- * @is_bssid_hint_priority: True if bssid_hint is priority
  * @enable_mac_spoofing: enable mac address spoof in scan
  * @sta_miracast_mcc_rest_time: sta miracast mcc rest time
  * @score_config: scoring logic configuration
  */
 struct scan_user_cfg {
-	uint32_t active_dwell;
-	uint32_t passive_dwell;
-	uint32_t conc_active_dwell;
-	uint32_t conc_passive_dwell;
-	uint32_t conc_max_rest_time;
-	uint32_t conc_min_rest_time;
-	uint32_t conc_idle_time;
 	uint32_t scan_cache_aging_time;
 	bool is_snr_monitoring_enabled;
-	uint32_t prefer_5ghz;
-	uint32_t select_5ghz_margin;
-	int32_t scan_bucket_threshold;
-	uint32_t rssi_cat_gap;
-	enum scan_dwelltime_adaptive_mode scan_dwell_time_mode;
 	struct pno_user_cfg pno_cfg;
 	struct probe_req_whitelist_attr ie_whitelist;
-	uint32_t usr_cfg_probe_rpt_time;
-	uint32_t usr_cfg_num_probes;
-	bool is_bssid_hint_priority;
 	bool enable_mac_spoofing;
 	uint32_t sta_miracast_mcc_rest_time;
 	struct scoring_config score_config;

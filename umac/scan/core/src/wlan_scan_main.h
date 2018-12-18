@@ -293,14 +293,11 @@ struct extscan_def_config {
  * @max_scan_time: default max scan time
  * @num_probes: default maximum number of probes to sent
  * @cache_aging_time: default scan cache aging time
- * @prefer_5ghz: Prefer 5ghz AP over 2.4Ghz AP
  * @select_5gh_margin: Prefer connecting to 5G AP even if
  *      its RSSI is lower by select_5gh_margin dbm than 2.4G AP.
  *      applicable if prefer_5ghz is set.
  * @is_bssid_hint_priority: True if bssid_hint is given priority
  * @enable_mac_spoofing: enable mac address spoof in scan
- * @bss_prefer_val: bss prefer value for the RSSI category
- * @rssi_cat: RSSI category
  * @max_bss_per_pdev: maximum number of bss entries to be maintained per pdev
  * @max_active_scans_allowed: maximum number of active parallel scan allowed
  *                            per psoc
@@ -369,15 +366,11 @@ struct scan_default_params {
 	uint32_t max_scan_time;
 	uint32_t num_probes;
 	uint32_t scan_cache_aging_time;
-	uint32_t prefer_5ghz;
 	uint32_t select_5ghz_margin;
 	bool enable_mac_spoofing;
 	bool is_bssid_hint_priority;
 	uint32_t usr_cfg_probe_rpt_time;
 	uint32_t usr_cfg_num_probes;
-	/* each RSSI category has one value */
-	uint32_t bss_prefer_val[SCM_NUM_RSSI_CAT];
-	int rssi_cat[SCM_NUM_RSSI_CAT];
 	uint16_t max_bss_per_pdev;
 	uint32_t max_active_scans_allowed;
 	enum scan_priority scan_priority;
