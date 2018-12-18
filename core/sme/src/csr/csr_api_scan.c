@@ -2213,6 +2213,8 @@ static enum wlan_auth_type csr_covert_auth_type_new(eCsrAuthType auth)
 		return WLAN_AUTH_TYPE_SUITEB_EAP_SHA384;
 	case eCSR_AUTH_TYPE_SAE:
 		return WLAN_AUTH_TYPE_SAE;
+	case eCSR_AUTH_TYPE_OSEN:
+		return WLAN_AUTH_TYPE_OSEN;
 	case eCSR_NUM_OF_SUPPORT_AUTH_TYPE:
 	default:
 		return WLAN_AUTH_TYPE_OPEN_SYSTEM;
@@ -2272,6 +2274,8 @@ static eCsrAuthType csr_covert_auth_type_old(enum wlan_auth_type auth)
 		return eCSR_AUTH_TYPE_SUITEB_EAP_SHA384;
 	case WLAN_AUTH_TYPE_SAE:
 		return eCSR_AUTH_TYPE_SAE;
+	case WLAN_AUTH_TYPE_OSEN:
+		return eCSR_AUTH_TYPE_OSEN;
 	case WLAN_NUM_OF_SUPPORT_AUTH_TYPE:
 	default:
 		return eCSR_AUTH_TYPE_OPEN_SYSTEM;

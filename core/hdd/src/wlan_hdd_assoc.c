@@ -129,6 +129,8 @@ uint8_t ccp_rsn_oui_18[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x12};
 uint8_t ccp_rsn_oui_80[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x08};
 uint8_t ccp_rsn_oui_90[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x09};
 #endif
+static const
+u8 ccp_rsn_oui_13[HDD_RSN_OUI_SIZE] = {0x50, 0x6F, 0x9A, 0x01};
 
 /* Offset where the EID-Len-IE, start. */
 #define FT_ASSOC_RSP_IES_OFFSET 6  /* Capability(2) + AID(2) + Status Code(2) */
@@ -5008,6 +5010,8 @@ eCsrAuthType hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4])
 	} else if (memcmp(auth_suite, ccp_rsn_oui_0c, 4) == 0) {
 		/* Check for Suite B EAP 384 */
 		auth_type = eCSR_AUTH_TYPE_SUITEB_EAP_SHA384;
+	} else if (memcmp(auth_suite, ccp_rsn_oui_13, 4) == 0) {
+		auth_type = eCSR_AUTH_TYPE_OSEN;
 	} else {
 		hdd_translate_fils_rsn_to_csr_auth(auth_suite, &auth_type);
 		hdd_translate_sae_rsn_to_csr_auth(auth_suite, &auth_type);
@@ -5507,6 +5511,9 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 			if (RSNAuthType == eCSR_AUTH_TYPE_DPP_RSN) {
 				roam_profile->AuthType.authType[0] =
 							eCSR_AUTH_TYPE_DPP_RSN;
+			} else if (RSNAuthType == eCSR_AUTH_TYPE_OSEN) {
+				roam_profile->AuthType.authType[0] =
+							eCSR_AUTH_TYPE_OSEN;
 			} else if ((RSNAuthType == eCSR_AUTH_TYPE_FT_RSN) &&
 			    ((key_mgmt & HDD_AUTH_KEY_MGMT_802_1X)
 			     == HDD_AUTH_KEY_MGMT_802_1X)) {
