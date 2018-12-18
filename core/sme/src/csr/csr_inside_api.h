@@ -826,15 +826,6 @@ void csr_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
 QDF_STATUS csr_apply_channel_and_power_list(struct mac_context *mac);
 
 /*
- * csr_roam_connect_to_last_profile() -
- * To disconnect and reconnect with the same profile
- *
- * Return QDF_STATUS. It returns fail if currently connected
- */
-QDF_STATUS csr_roam_connect_to_last_profile(struct mac_context *mac,
-					uint32_t sessionId);
-
-/*
  * csr_roam_disconnect() -
  *  To disconnect from a network
  *
