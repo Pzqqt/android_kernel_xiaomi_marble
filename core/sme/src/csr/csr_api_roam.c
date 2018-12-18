@@ -17886,8 +17886,6 @@ csr_create_roam_scan_offload_request(struct mac_context *mac_ctx,
 		roam_info->cfgParams.neighborScanPeriod;
 	req_buf->neighbor_scan_min_timer_period =
 		roam_info->cfgParams.neighbor_scan_min_period;
-	req_buf->NeighborRoamScanRefreshPeriod =
-		roam_info->cfgParams.neighborResultsRefreshPeriod;
 	req_buf->NeighborScanChannelMinTime =
 		roam_info->cfgParams.minChannelScanTime;
 	req_buf->NeighborScanChannelMaxTime =
