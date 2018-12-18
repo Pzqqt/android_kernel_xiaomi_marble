@@ -1235,23 +1235,6 @@ bool csr_is_p2p_session_connected(struct mac_context *mac)
 	return false;
 }
 
-bool csr_is_any_session_connected(struct mac_context *mac)
-{
-	uint32_t i, count;
-	bool fRc = false;
-
-	count = 0;
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
-		if (CSR_IS_SESSION_VALID(mac, i)
-		    && !csr_is_conn_state_disconnected(mac, i))
-			count++;
-	}
-
-	if (count > 0)
-		fRc = true;
-	return fRc;
-}
-
 bool csr_is_infra_connected(struct mac_context *mac)
 {
 	uint32_t i;
