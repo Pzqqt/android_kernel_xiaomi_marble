@@ -559,11 +559,6 @@ QDF_STATUS sme_roam_get_wpa_rsn_rsp_ie(mac_handle_t mac_handle,
 				       uint8_t session_id,
 				       uint32_t *len, uint8_t *buf);
 
-uint32_t sme_roam_get_num_pmkid_cache(mac_handle_t mac_handle,
-				      uint8_t sessionId);
-QDF_STATUS sme_roam_get_pmkid_cache(mac_handle_t mac_handle, uint8_t sessionId,
-		uint32_t *pNum,
-		tPmkidCacheInfo *pPmkidCache);
 QDF_STATUS sme_get_config_param(mac_handle_t mac_handle,
 				tSmeConfigParams *pParam);
 #ifndef QCA_SUPPORT_CP_STATS
