@@ -876,23 +876,6 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(struct mac_context *mac,
 		uint32_t sessionId,
 		struct csr_del_sta_params *pDelStaParams);
 
-/*
- * csr_roam_get_associated_stas
- *  csr function that HDD calls to get list of associated stations based on
- * module ID
- * sessionId - session Id for Soft AP
- * modId - module ID - PE/HAL/TL
- * pUsrContext - Opaque HDD context
- * pfnSapEventCallback - Sap event callback in HDD
- * pAssocStasBuf - Caller allocated memory to be filled with associatd
- * stations info
- * Return QDF_STATUS
- */
-QDF_STATUS csr_roam_get_associated_stas(struct mac_context *mac, uint32_t sessionId,
-					QDF_MODULE_ID modId, void *pUsrContext,
-					void *pfnSapEventCallback,
-					uint8_t *pAssocStasBuf);
-
 QDF_STATUS csr_send_mb_get_associated_stas_req_msg(struct mac_context *mac,
 						   uint32_t sessionId,
 						   QDF_MODULE_ID modId,

@@ -3811,37 +3811,6 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(struct mac_context *mac,
 	return status;
 }
 
-QDF_STATUS
-csr_roam_get_associated_stas(struct mac_context *mac, uint32_t sessionId,
-			     QDF_MODULE_ID modId, void *pUsrContext,
-			     void *pfnSapEventCallback, uint8_t *pAssocStasBuf)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct qdf_mac_addr bssId = QDF_MAC_ADDR_BCAST_INIT;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-
-	if (!pSession) {
-		sme_err("CSR Session not found");
-		return status;
-	}
-	if (pSession->pConnectBssDesc) {
-		qdf_mem_copy(bssId.bytes, pSession->pConnectBssDesc->bssId,
-			     sizeof(struct qdf_mac_addr));
-	} else {
-		sme_err("Connected BSS Description in CSR Session not found");
-		return status;
-	}
-	sme_debug("CSR getting associated stations for Bssid: " MAC_ADDRESS_STR,
-		  MAC_ADDR_ARRAY(bssId.bytes));
-	status =
-		csr_send_mb_get_associated_stas_req_msg(mac, sessionId, modId,
-							bssId,
-							pUsrContext,
-							pfnSapEventCallback,
-							pAssocStasBuf);
-	return status;
-}
-
 static
 QDF_STATUS csr_roam_issue_deauth(struct mac_context *mac, uint32_t sessionId,
 				 enum csr_roam_substate NewSubstate)
