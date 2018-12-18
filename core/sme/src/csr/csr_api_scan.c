@@ -3101,25 +3101,6 @@ QDF_STATUS csr_scan_flush_result(struct mac_context *mac_ctx)
 	return csr_flush_scan_results(mac_ctx, NULL);
 }
 
-QDF_STATUS csr_scan_flush_selective_result(struct mac_context *mac_ctx,
-					   bool flush_p2p)
-{
-	struct scan_filter *filter;
-	QDF_STATUS status;
-
-	filter = qdf_mem_malloc(sizeof(*filter));
-	if (!filter) {
-		status = QDF_STATUS_E_NOMEM;
-		goto end;
-	}
-	filter->p2p_results = flush_p2p;
-	status = csr_flush_scan_results(mac_ctx, filter);
-	if (filter)
-		qdf_mem_free(filter);
-end:
-	return status;
-}
-
 static inline void csr_flush_bssid(struct mac_context *mac_ctx,
 				   uint8_t *bssid)
 {

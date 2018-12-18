@@ -467,8 +467,6 @@ QDF_STATUS csr_scan_flush_result(struct mac_context *mac_ctx);
  */
 QDF_STATUS csr_scan_filter_results(struct mac_context *mac);
 
-QDF_STATUS csr_scan_flush_selective_result(struct mac_context *mac, bool flushP2P);
-
 /*
  * csr_scan_result_get_first
  * Returns the first element of scan result.
