@@ -525,7 +525,6 @@ typedef struct sAniSirLim {
 
 	/* admission control policy information */
 	tLimAdmitPolicyInfo admitPolicyInfo;
-	qdf_mutex_t lkPeGlobalLock;
 #ifdef FEATURE_WLAN_TDLS
 	uint8_t gLimTDLSBufStaEnabled;
 	uint8_t gLimTDLSUapsdMask;

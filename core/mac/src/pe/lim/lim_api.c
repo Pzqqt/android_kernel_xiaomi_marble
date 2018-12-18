@@ -421,12 +421,6 @@ QDF_STATUS lim_initialize(struct mac_context *mac)
 	mac->lim.deauthMsgCnt = 0;
 	mac->lim.disassocMsgCnt = 0;
 
-	if (QDF_IS_STATUS_ERROR(qdf_mutex_create(
-			&mac->lim.lkPeGlobalLock))) {
-		pe_err("lim lock init failed!");
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	__lim_init_assoc_vars(mac);
 	__lim_init_vars(mac);
 	__lim_init_states(mac);
@@ -441,9 +435,8 @@ QDF_STATUS lim_initialize(struct mac_context *mac)
 	rrm_initialize(mac);
 
 	if (QDF_IS_STATUS_ERROR(qdf_mutex_create(
-		&mac->lim.lim_frame_register_lock))) {
+					&mac->lim.lim_frame_register_lock))) {
 		pe_err("lim lock init failed!");
-		qdf_mutex_destroy(&mac->lim.lkPeGlobalLock);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -888,10 +881,6 @@ QDF_STATUS pe_close(struct mac_context *mac)
 
 	pe_free_dph_node_array_buffer();
 
-	if (!QDF_IS_STATUS_SUCCESS
-		    (qdf_mutex_destroy(&mac->lim.lkPeGlobalLock))) {
-		return QDF_STATUS_E_FAILURE;
-	}
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2623,32 +2612,6 @@ void lim_update_lost_link_info(struct mac_context *mac, struct pe_session *sessi
 		lost_link_info->vdev_id, lost_link_info->rssi);
 
 	lim_sys_process_mmh_msg_api(mac, &mmh_msg, ePROT);
-}
-
-QDF_STATUS pe_acquire_global_lock(tAniSirLim *psPe)
-{
-	QDF_STATUS status = QDF_STATUS_E_INVAL;
-
-	if (psPe) {
-		if (QDF_IS_STATUS_SUCCESS
-			    (qdf_mutex_acquire(&psPe->lkPeGlobalLock))) {
-			status = QDF_STATUS_SUCCESS;
-		}
-	}
-	return status;
-}
-
-QDF_STATUS pe_release_global_lock(tAniSirLim *psPe)
-{
-	QDF_STATUS status = QDF_STATUS_E_INVAL;
-
-	if (psPe) {
-		if (QDF_IS_STATUS_SUCCESS
-			    (qdf_mutex_release(&psPe->lkPeGlobalLock))) {
-			status = QDF_STATUS_SUCCESS;
-		}
-	}
-	return status;
 }
 
 /**

@@ -50,8 +50,6 @@ uint8_t *mac_trace_get_info_log_string(uint16_t infoLog);
 
 #endif
 uint8_t *mac_trace_get_wma_msg_string(uint16_t wmaMsg);
-QDF_STATUS pe_acquire_global_lock(tAniSirLim *psPe);
-QDF_STATUS pe_release_global_lock(tAniSirLim *psPe);
 uint8_t *mac_trace_get_neighbour_roam_state(uint16_t neighbourRoamState);
 uint8_t *mac_trace_getcsr_roam_state(uint16_t csr_roamState);
 uint8_t *mac_trace_getcsr_roam_sub_state(uint16_t csr_roamSubState);
