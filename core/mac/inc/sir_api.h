@@ -5467,14 +5467,11 @@ struct sir_apf_set_offload {
  * @apf_version: fw's implement version
  * @max_apf_filters: max filters that fw supports
  * @max_bytes_for_apf_inst: the max bytes that can be used as apf instructions
- * @remaining_bytes_for_apf_inst: remaining bytes for apf instructions
- *
  */
 struct sir_apf_get_offload {
 	uint32_t apf_version;
 	uint32_t max_apf_filters;
 	uint32_t max_bytes_for_apf_inst;
-	uint32_t remaining_bytes_for_apf_inst;
 };
 
 #ifndef QCA_SUPPORT_CP_STATS
