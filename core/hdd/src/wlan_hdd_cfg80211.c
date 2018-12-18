@@ -13454,18 +13454,6 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	/* Reset the current device mode bit mask */
 	policy_mgr_clear_concurrency_mode(hdd_ctx->psoc, adapter->device_mode);
 
-	/* TDLS ignores p2p-device mode for concurrency considerations */
-	if (new_mode != QDF_P2P_DEVICE_MODE) {
-		struct wlan_objmgr_vdev *vdev;
-
-		vdev = hdd_objmgr_get_vdev(adapter);
-		if (vdev) {
-			hdd_debug("Disable tdls; new interface is coming up");
-			hdd_notify_teardown_tdls_links(vdev);
-			hdd_objmgr_put_vdev(adapter);
-		}
-	}
-
 	if (hdd_is_client_mode(adapter->device_mode)) {
 		if (hdd_is_client_mode(new_mode)) {
 			if (new_mode == QDF_IBSS_MODE)
