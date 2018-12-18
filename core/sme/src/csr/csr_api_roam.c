@@ -17757,10 +17757,9 @@ csr_fetch_valid_ch_lst(struct mac_context *mac_ctx,
 			*ch_lst;
 		ch_lst++;
 	}
-	req_buf->ValidChannelCount = num_channels;
-
 	req_buf->ChannelCacheType = CHANNEL_LIST_DYNAMIC;
 	req_buf->ConnectedNetwork.ChannelCount = num_channels;
+
 	return status;
 }
 

@@ -2393,8 +2393,6 @@ typedef struct sSirRoamOffloadScanReq {
 	uint16_t NeighborScanChannelMinTime;
 	uint16_t NeighborScanChannelMaxTime;
 	uint16_t EmptyRefreshScanPeriod;
-	uint8_t ValidChannelCount;
-	uint8_t ValidChannelList[SIR_ROAM_MAX_CHANNELS];
 	bool IsESEAssoc;
 	bool is_11r_assoc;
 	uint8_t nProbes;
