@@ -679,14 +679,6 @@ QDF_STATUS sme_neighbor_report_request(mac_handle_t mac_handle,
 		 uint8_t sessionId,
 		tpRrmNeighborReq pRrmNeighborReq,
 		tpRrmNeighborRspCallbackInfo callbackInfo);
-QDF_STATUS sme_get_wcnss_wlan_compiled_version(mac_handle_t mac_handle,
-		tSirVersionType * pVersion);
-QDF_STATUS sme_get_wcnss_wlan_reported_version(mac_handle_t mac_handle,
-		tSirVersionType *pVersion);
-QDF_STATUS sme_get_wcnss_software_version(mac_handle_t mac_handle,
-		uint8_t *pVersion, uint32_t versionBufferSize);
-QDF_STATUS sme_get_wcnss_hardware_version(mac_handle_t mac_handle,
-		uint8_t *pVersion, uint32_t versionBufferSize);
 #ifdef FEATURE_OEM_DATA_SUPPORT
 QDF_STATUS sme_oem_data_req(mac_handle_t mac_handle,
 			    struct oem_data_req *hdd_oem_req);

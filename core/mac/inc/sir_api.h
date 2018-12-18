@@ -2508,16 +2508,6 @@ typedef struct sSirRcvFltMcAddrList {
 	uint8_t action;
 } tSirRcvFltMcAddrList, *tpSirRcvFltMcAddrList;
 
-/* */
-/* Generic version information */
-/* */
-typedef struct {
-	uint8_t revision;
-	uint8_t version;
-	uint8_t minor;
-	uint8_t major;
-} tSirVersionType;
-
 /**
  * struct sir_wifi_start_log - Structure to store the params sent to start/
  * stop logging
