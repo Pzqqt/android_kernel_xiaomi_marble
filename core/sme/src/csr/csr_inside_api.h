@@ -1000,9 +1000,6 @@ csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 bool is_disconnect_pending(struct mac_context *mac_ctx,
 				   uint8_t sessionid);
 
-QDF_STATUS csr_prepare_disconnect_command(struct mac_context *mac,
-			uint32_t session_id, tSmeCmd **sme_cmd);
-
 QDF_STATUS
 csr_roam_prepare_bss_config_from_profile(struct mac_context *mac_ctx,
 					 struct csr_roam_profile *profile,

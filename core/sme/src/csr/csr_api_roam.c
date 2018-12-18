@@ -8423,35 +8423,6 @@ QDF_STATUS csr_roam_process_disassoc_deauth(struct mac_context *mac,
 	return status;
 }
 
-/**
- * csr_prepare_disconnect_command() - function to prepare disconnect command
- * @mac: pointer to global mac structure
- * @session_id: sme session index
- * @sme_cmd: pointer to sme command being prepared
- *
- * Function to prepare internal sme disconnect command
- * Return: QDF_STATUS_SUCCESS on success else QDF_STATUS_E_RESOURCES on failure
- */
-
-QDF_STATUS csr_prepare_disconnect_command(struct mac_context *mac,
-			uint32_t session_id, tSmeCmd **sme_cmd)
-{
-	tSmeCmd *command;
-
-	command = csr_get_command_buffer(mac);
-	if (!command) {
-		sme_err("fail to get command buffer");
-		return QDF_STATUS_E_RESOURCES;
-	}
-
-	command->command = eSmeCommandRoam;
-	command->sessionId = (uint8_t)session_id;
-	command->u.roamCmd.roamReason = eCsrForcedDisassoc;
-
-	*sme_cmd = command;
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS csr_roam_issue_disassociate_cmd(struct mac_context *mac,
 					uint32_t sessionId,
 					eCsrRoamDisconnectReason reason)
