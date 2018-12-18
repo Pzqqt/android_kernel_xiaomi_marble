@@ -3166,34 +3166,6 @@ QDF_STATUS sme_roam_deauth_sta(mac_handle_t mac_handle, uint8_t sessionId,
 }
 
 /*
- * sme_roam_get_connect_state() -
- * A wrapper function to request CSR to return the current connect state
- *	of Roaming
- * This is a synchronous call.
- *
- * Return QDF_STATUS
- */
-QDF_STATUS sme_roam_get_connect_state(mac_handle_t mac_handle,
-				      uint8_t sessionId,
-				      eCsrConnectState *pState)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(mac, sessionId))
-			status = csr_roam_get_connect_state(mac, sessionId,
-							pState);
-		else
-			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-
-/*
  * sme_roam_get_connect_profile() -
  * A wrapper function to request CSR to return the current connect
  * profile. Caller must call csr_roam_free_connect_profile after it is done
