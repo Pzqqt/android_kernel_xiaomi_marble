@@ -51,6 +51,8 @@ struct macro_ops {
 	int (*event_handler)(struct snd_soc_component *component, u16 event,
 			     u32 data);
 	int (*reg_wake_irq)(struct snd_soc_component *component, u32 data);
+	int (*set_port_map)(struct snd_soc_component *component, u32 uc,
+			    u32 size, void *data);
 	char __iomem *io_base;
 };
 
@@ -69,6 +71,7 @@ int bolero_register_wake_irq(struct snd_soc_component *component, u32 data);
 void bolero_clear_amic_tx_hold(struct device *dev, u16 adc_n);
 int bolero_runtime_resume(struct device *dev);
 int bolero_runtime_suspend(struct device *dev);
+int bolero_set_port_map(struct snd_soc_component *component, u32 size, void *data);
 #else
 static inline int bolero_register_macro(struct device *dev,
 					u16 macro_id,
@@ -107,11 +110,22 @@ static inline void bolero_clear_amic_tx_hold(struct device *dev, u16 adc_n)
 
 static inline int bolero_register_wake_irq(struct snd_soc_component *component,
 					   u32 data)
+{
+	return 0;
+}
+
 static inline int bolero_runtime_resume(struct device *dev)
 {
 	return 0;
 }
+
 static int bolero_runtime_suspend(struct device *dev)
+{
+	return 0;
+}
+
+static inline int bolero_set_port_map(struct snd_soc_component *component,
+				u32 size, void *data)
 {
 	return 0;
 }

@@ -19,15 +19,17 @@
 #include <linux/debugfs.h>
 #include <linux/uaccess.h>
 #include <soc/soundwire.h>
-#include <soc/swr-wcd.h>
+#include <soc/swr-common.h>
 #include <linux/regmap.h>
 #include <dsp/msm-audio-event-notify.h>
 #include "swrm_registers.h"
 #include "swr-mstr-ctrl.h"
-#include "swrm_port_config.h"
 
 #define SWRM_SYSTEM_RESUME_TIMEOUT_MS 700
 #define SWRM_SYS_SUSPEND_WAIT 1
+
+#define SWRM_DSD_PARAMS_PORT 4
+
 #define SWR_BROADCAST_CMD_ID            0x0F
 #define SWR_AUTO_SUSPEND_DELAY          3 /* delay in sec */
 #define SWR_DEV_ID_MASK			0xFFFFFFFFFFFF
@@ -377,27 +379,16 @@ static void copy_port_tables(struct swr_mstr_ctrl *swrm,
 static int swrm_get_port_config(struct swr_mstr_ctrl *swrm)
 {
 	struct port_params *params;
+	u32 usecase = 0;
 
-	switch (swrm->master_id) {
-	case MASTER_ID_WSA:
-		params = wsa_frame_superset;
-		break;
-	case MASTER_ID_RX:
-		/* Two RX tables for dsd and without dsd enabled */
-		if (swrm->mport_cfg[4].port_en)
-			params = rx_frame_params_dsd;
-		else
-			params = rx_frame_params;
-		break;
-	case MASTER_ID_TX:
-		params = tx_frame_params_superset;
-		break;
-	default: /* MASTER_GENERIC*/
-		/* computer generic frame parameters */
-		return -EINVAL;
-	}
+	/* TODO - Send usecase information to avoid checking for master_id */
+	if (swrm->mport_cfg[SWRM_DSD_PARAMS_PORT].port_en &&
+				(swrm->master_id == MASTER_ID_RX))
+		usecase = 1;
 
+	params = swrm->port_param[usecase];
 	copy_port_tables(swrm, params);
+
 	return 0;
 }
 
@@ -2187,6 +2178,53 @@ int swrm_register_wake_irq(struct swr_mstr_ctrl *swrm)
 	return ret;
 }
 
+static int swrm_alloc_port_mem(struct device *dev, struct swr_mstr_ctrl *swrm,
+				u32 uc, u32 size)
+{
+	if (!swrm->port_param) {
+		swrm->port_param = devm_kzalloc(dev,
+					sizeof(swrm->port_param) * SWR_UC_MAX,
+					GFP_KERNEL);
+		if (!swrm->port_param)
+			return -ENOMEM;
+	}
+	if (!swrm->port_param[uc]) {
+		swrm->port_param[uc] = devm_kcalloc(dev, size,
+					sizeof(struct port_params),
+					GFP_KERNEL);
+		if (!swrm->port_param[uc])
+			return -ENOMEM;
+	} else {
+		dev_err_ratelimited(swrm->dev, "%s: called more than once\n",
+				    __func__);
+	}
+
+	return 0;
+}
+
+static int swrm_copy_port_config(struct swr_mstr_ctrl *swrm,
+				struct swrm_port_config *port_cfg,
+				u32 size)
+{
+	int idx;
+	struct port_params *params;
+	int uc = port_cfg->uc;
+	int ret = 0;
+
+	for (idx = 0; idx < size; idx++) {
+		params = &((struct port_params *)port_cfg->params)[idx];
+		if (!params) {
+			dev_err(swrm->dev, "%s: Invalid params\n", __func__);
+			ret = -EINVAL;
+			break;
+		}
+		memcpy(&swrm->port_param[uc][idx], params,
+					sizeof(struct port_params));
+	}
+
+	return ret;
+}
+
 /**
  * swrm_wcd_notify - parent device can notify to soundwire master through
  * this function
@@ -2200,6 +2238,7 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 	int ret = 0;
 	struct swr_master *mstr;
 	struct swr_device *swr_dev;
+	struct swrm_port_config *port_cfg;
 
 	if (!pdev) {
 		pr_err("%s: pdev is NULL\n", __func__);
@@ -2324,6 +2363,27 @@ int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data)
 			if (ret)
 				dev_err(swrm->dev, "%s: register wake_irq failed\n",
 					__func__);
+			mutex_unlock(&swrm->mlock);
+		}
+		break;
+	case SWR_SET_PORT_MAP:
+		if (!data) {
+			dev_err(swrm->dev, "%s: data is NULL for id=%d\n",
+				__func__, id);
+			ret = -EINVAL;
+		} else {
+			mutex_lock(&swrm->mlock);
+			port_cfg = (struct swrm_port_config *)data;
+			if (!port_cfg->size) {
+				ret = -EINVAL;
+				goto done;
+			}
+			ret = swrm_alloc_port_mem(&pdev->dev, swrm,
+						port_cfg->uc, port_cfg->size);
+			if (!ret)
+				swrm_copy_port_config(swrm, port_cfg,
+						      port_cfg->size);
+done:
 			mutex_unlock(&swrm->mlock);
 		}
 		break;

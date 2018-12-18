@@ -9,6 +9,7 @@
 #include <soc/swr-wcd.h>
 #include <linux/pm_qos.h>
 #include <soc/qcom/pm.h>
+#include <soc/swr-common.h>
 
 #define SWR_ROW_48		0
 #define SWR_ROW_50		1
@@ -59,18 +60,6 @@ struct usecase {
 	u8 num_port;
 	u8 num_ch;
 	u32 chrate;
-};
-
-struct port_params {
-	u8 si;
-	u8 off1;
-	u8 off2;
-	u8 hstart;/* head start */
-	u8 hstop; /* head stop */
-	u8 wd_len;/* word length */
-	u8 bp_mode; /* block pack mode */
-	u8 bgp_ctrl;/* block group control */
-	u8 lane_ctrl;/* lane to be used */
 };
 
 struct swrm_mports {
@@ -163,6 +152,8 @@ struct swr_mstr_ctrl {
 	wait_queue_head_t pm_wq;
 	int wlock_holders;
 	u32 intr_mask;
+	struct port_params **port_param;
+	u8 num_usecase;
 };
 
 #endif /* _SWR_WCD_CTRL_H */

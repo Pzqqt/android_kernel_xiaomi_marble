@@ -11,6 +11,7 @@
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
 #include <sound/tlv.h>
+#include <soc/swr-common.h>
 #include <soc/swr-wcd.h>
 #include "bolero-cdc.h"
 #include "bolero-cdc-registers.h"
@@ -1709,6 +1710,29 @@ err:
 	return;
 }
 
+static int tx_macro_set_port_map(struct snd_soc_component *component,
+				u32 usecase, u32 size, void *data)
+{
+	struct device *tx_dev = NULL;
+	struct tx_macro_priv *tx_priv = NULL;
+	struct swrm_port_config port_cfg;
+	int ret = 0;
+
+	if (!tx_macro_get_data(component, &tx_dev, &tx_priv, __func__))
+		return -EINVAL;
+
+	memset(&port_cfg, 0, sizeof(port_cfg));
+	port_cfg.uc = usecase;
+	port_cfg.size = size;
+	port_cfg.params = data;
+
+	ret = swrm_wcd_notify(
+		tx_priv->swr_ctrl_data[0].tx_swr_pdev,
+		SWR_SET_PORT_MAP, &port_cfg);
+
+	return ret;
+}
+
 static void tx_macro_init_ops(struct macro_ops *ops,
 			       char __iomem *tx_io_base)
 {
@@ -1721,6 +1745,7 @@ static void tx_macro_init_ops(struct macro_ops *ops,
 	ops->mclk_fn = tx_macro_mclk_ctrl;
 	ops->event_handler = tx_macro_event_handler;
 	ops->reg_wake_irq = tx_macro_reg_wake_irq;
+	ops->set_port_map = tx_macro_set_port_map;
 }
 
 static int tx_macro_probe(struct platform_device *pdev)
