@@ -77,20 +77,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_CHANNEL_BONDING_MODE_MIN,
 		     CFG_CHANNEL_BONDING_MODE_MAX),
 
-	REG_VARIABLE(CFG_SCAN_RESULT_AGE_COUNT_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, ScanResultAgeCount,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
-		     CFG_SCAN_RESULT_AGE_COUNT_DEFAULT,
-		     CFG_SCAN_RESULT_AGE_COUNT_MIN,
-		     CFG_SCAN_RESULT_AGE_COUNT_MAX),
-
-	REG_VARIABLE(CFG_RSSI_CATEGORY_GAP_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nRssiCatGap,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_RSSI_CATEGORY_GAP_DEFAULT,
-		     CFG_RSSI_CATEGORY_GAP_MIN,
-		     CFG_RSSI_CATEGORY_GAP_MAX),
-
 	REG_VARIABLE_STRING(CFG_IBSS_BSSID_NAME, WLAN_PARAM_MacAddr,
 			    struct hdd_config, IbssBssid,
 			    VAR_FLAGS_OPTIONAL,
@@ -109,34 +95,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_DISABLE_PACKET_FILTER_DEFAULT,
 		     CFG_DISABLE_PACKET_FILTER_MIN,
 		     CFG_DISABLE_PACKET_FILTER_MAX),
-
-	REG_VARIABLE(CFG_PASSIVE_MAX_CHANNEL_TIME_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nPassiveMaxChnTime,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_PASSIVE_MAX_CHANNEL_TIME_DEFAULT,
-		     CFG_PASSIVE_MAX_CHANNEL_TIME_MIN,
-		     CFG_PASSIVE_MAX_CHANNEL_TIME_MAX),
-
-	REG_VARIABLE(CFG_ACTIVE_MAX_CHANNEL_TIME_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nActiveMaxChnTime,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ACTIVE_MAX_CHANNEL_TIME_DEFAULT,
-		     CFG_ACTIVE_MAX_CHANNEL_TIME_MIN,
-		     CFG_ACTIVE_MAX_CHANNEL_TIME_MAX),
-
-	REG_VARIABLE(CFG_SCAN_NUM_PROBES_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, scan_num_probes,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_SCAN_NUM_PROBES_DEFAULT,
-		     CFG_SCAN_NUM_PROBES_MIN,
-		     CFG_SCAN_NUM_PROBES_MAX),
-
-	REG_VARIABLE(CFG_SCAN_PROBE_REPEAT_TIME_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, scan_probe_repeat_time,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_SCAN_PROBE_REPEAT_TIME_DEFAULT,
-		     CFG_SCAN_PROBE_REPEAT_TIME_MIN,
-		     CFG_SCAN_PROBE_REPEAT_TIME_MAX),
 
 	REG_VARIABLE(CFG_MAX_TX_POWER_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, nTxPowerCap,
@@ -230,13 +188,6 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_LINK_SPEED_RSSI_LOW_MIN,
 			     CFG_LINK_SPEED_RSSI_LOW_MAX,
 			     NULL, 0),
-
-	REG_VARIABLE(CFG_ENABLE_FIRST_SCAN_2G_ONLY_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enableFirstScan2GOnly,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_FIRST_SCAN_2G_ONLY_DEFAULT,
-		     CFG_ENABLE_FIRST_SCAN_2G_ONLY_MIN,
-		     CFG_ENABLE_FIRST_SCAN_2G_ONLY_MAX),
 
 	REG_VARIABLE(CFG_SCAN_AGING_PARAM_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, scanAgingTimeout,
@@ -352,20 +303,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_DEFAULT,
 		     CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MIN,
 		     CFG_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_MAX),
-
-	REG_VARIABLE(CFG_INITIAL_DWELL_TIME_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nInitialDwellTime,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_INITIAL_DWELL_TIME_DEFAULT,
-		     CFG_INITIAL_DWELL_TIME_MIN,
-		     CFG_INITIAL_DWELL_TIME_MAX),
-
-	REG_VARIABLE(CFG_INITIAL_SCAN_NO_DFS_CHNL_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, initial_scan_no_dfs_chnl,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_INITIAL_SCAN_NO_DFS_CHNL_DEFAULT,
-		     CFG_INITIAL_SCAN_NO_DFS_CHNL_MIN,
-		     CFG_INITIAL_SCAN_NO_DFS_CHNL_MAX),
 
 	REG_VARIABLE(CFG_ADVERTISE_CONCURRENT_OPERATION_NAME,
 		     WLAN_PARAM_Integer,
@@ -510,20 +447,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_CREATE_BUG_REPORT_FOR_SCAN_DEFAULT,
 		CFG_CREATE_BUG_REPORT_FOR_SCAN_DISABLE,
 		CFG_CREATE_BUG_REPORT_FOR_SCAN_ENABLE),
-
-	REG_VARIABLE(CFG_ADAPTIVE_SCAN_DWELL_MODE_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, scan_adaptive_dwell_mode,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_ADAPTIVE_SCAN_DWELL_MODE_DEFAULT,
-		CFG_ADAPTIVE_SCAN_DWELL_MODE_MIN,
-		CFG_ADAPTIVE_SCAN_DWELL_MODE_MAX),
-
-	REG_VARIABLE(CFG_ADAPTIVE_SCAN_DWELL_MODE_NC_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, scan_adaptive_dwell_mode_nc,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ADAPTIVE_SCAN_DWELL_MODE_NC_DEFAULT,
-		     CFG_ADAPTIVE_SCAN_DWELL_MODE_NC_MIN,
-		     CFG_ADAPTIVE_SCAN_DWELL_MODE_NC_MAX),
 
 	REG_VARIABLE(CFG_ADAPTIVE_EXTSCAN_DWELL_MODE_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, extscan_adaptive_dwell_mode,
@@ -674,13 +597,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_LPRx_DEFAULT,
 		CFG_LPRx_MIN,
 		CFG_LPRx_MAX),
-
-	REG_VARIABLE(CFG_IS_BSSID_HINT_PRIORITY_NAME, WLAN_PARAM_Integer,
-		struct hdd_config, is_bssid_hint_priority,
-		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		CFG_IS_BSSID_HINT_PRIORITY_DEFAULT,
-		CFG_IS_BSSID_HINT_PRIORITY_MIN,
-		CFG_IS_BSSID_HINT_PRIORITY_MAX),
 
 #ifdef WLAN_FEATURE_SAE
 	REG_VARIABLE(CFG_IS_SAE_ENABLED_NAME, WLAN_PARAM_Integer,
@@ -2077,14 +1993,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 	mac_handle = hdd_ctx->mac_handle;
 
 	if (sme_cfg_set_int(mac_handle,
-				WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
-				config->nPassiveMaxChnTime)
-				== QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME to CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle,
 		WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT,
 		config->wow_data_inactivity_timeout) == QDF_STATUS_E_FAILURE) {
 		status = false;
@@ -2376,13 +2284,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		smeConfig->csrConfig.channelBondingMode5GHz =
 			pConfig->nChannelBondingMode5GHz;
 	}
-	smeConfig->csrConfig.nScanResultAgeCount = pConfig->ScanResultAgeCount;
-	smeConfig->csrConfig.bCatRssiOffset = pConfig->nRssiCatGap;
-	smeConfig->csrConfig.nInitialDwellTime = pConfig->nInitialDwellTime;
-	smeConfig->csrConfig.initial_scan_no_dfs_chnl =
-					pConfig->initial_scan_no_dfs_chnl;
-	smeConfig->csrConfig.nActiveMaxChnTime = pConfig->nActiveMaxChnTime;
-	smeConfig->csrConfig.nPassiveMaxChnTime = pConfig->nPassiveMaxChnTime;
 	/* Remaining config params not obtained from registry
 	 * On RF EVB beacon using channel 1.
 	 */
@@ -2394,9 +2295,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.HeartbeatThresh50 = 40;
 	smeConfig->csrConfig.nTxPowerCap = pConfig->nTxPowerCap;
 	smeConfig->csrConfig.fEnableDFSChnlScan = pConfig->enableDFSChnlScan;
-
-	smeConfig->csrConfig.fFirstScanOnly2GChnl =
-		pConfig->enableFirstScan2GOnly;
 
 	smeConfig->csrConfig.Csr11dinfo.Channels.numChannels = 0;
 
@@ -2419,9 +2317,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 					hdd_ctx->psoc, false);
 	}
 
-	/* Scan Results Aging Time out value */
-	smeConfig->csrConfig.scanCfgAgingTime = pConfig->scanAgingTimeout;
-
 	smeConfig->csrConfig.isCoalesingInIBSSAllowed =
 		hdd_ctx->config->isCoalesingInIBSSAllowed;
 
@@ -2432,19 +2327,12 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
 
-	smeConfig->csrConfig.max_scan_count =
-			hdd_ctx->config->max_scan_count;
-
 	smeConfig->csrConfig.ho_delay_for_rx =
 		hdd_ctx->config->ho_delay_for_rx;
 	smeConfig->csrConfig.min_delay_btw_roam_scans =
 		hdd_ctx->config->min_delay_btw_roam_scans;
 	smeConfig->csrConfig.roam_trigger_reason_bitmask =
 		hdd_ctx->config->roam_trigger_reason_bitmask;
-	smeConfig->csrConfig.scan_adaptive_dwell_mode =
-			hdd_ctx->config->scan_adaptive_dwell_mode;
-	smeConfig->csrConfig.scan_adaptive_dwell_mode_nc =
-			hdd_ctx->config->scan_adaptive_dwell_mode_nc;
 	smeConfig->csrConfig.enable_ftopen =
 			hdd_ctx->config->enable_ftopen;
 	smeConfig->csrConfig.roam_force_rssi_trigger =

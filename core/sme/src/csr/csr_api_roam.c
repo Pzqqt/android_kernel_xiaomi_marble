@@ -1669,9 +1669,6 @@ static void init_config_param(struct mac_context *mac)
 		mac->roam.configParam.BssPreferValue[i] = i;
 	csr_assign_rssi_for_category(mac, CSR_BEST_RSSI_VALUE,
 			CSR_DEFAULT_RSSI_DB_GAP);
-	mac->roam.configParam.nActiveMaxChnTime = CSR_ACTIVE_MAX_CHANNEL_TIME;
-	mac->roam.configParam.nPassiveMaxChnTime =
-		CSR_PASSIVE_MAX_CHANNEL_TIME;
 	mac->roam.configParam.nTxPowerCap = CSR_MAX_TX_POWER;
 	mac->roam.configParam.statsReqPeriodicity =
 		CSR_MIN_GLOBAL_STAT_QUERY_PERIOD;
@@ -1686,9 +1683,6 @@ static void init_config_param(struct mac_context *mac)
 	/* Remove this code once SLM_Sessionization is supported */
 	/* BMPS_WORKAROUND_NOT_NEEDED */
 	mac->roam.configParam.doBMPSWorkaround = 0;
-
-	mac->roam.configParam.nInitialDwellTime = 0;
-	mac->roam.configParam.initial_scan_no_dfs_chnl = 0;
 }
 
 enum band_info csr_get_current_band(struct mac_context *mac)
@@ -2515,41 +2509,12 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 		mac->roam.configParam.AdHocChannel5G = pParam->AdHocChannel5G;
 		mac->roam.configParam.wep_tkip_in_he = pParam->wep_tkip_in_he;
 
-		/* if HDD passed down non zero values then only update, */
-		/* otherwise keep using the defaults */
-		if (pParam->initial_scan_no_dfs_chnl) {
-			mac->roam.configParam.initial_scan_no_dfs_chnl =
-				pParam->initial_scan_no_dfs_chnl;
-		}
-		if (pParam->nInitialDwellTime) {
-			mac->roam.configParam.nInitialDwellTime =
-				pParam->nInitialDwellTime;
-		}
-		if (pParam->nActiveMaxChnTime) {
-			mac->roam.configParam.nActiveMaxChnTime =
-				pParam->nActiveMaxChnTime;
-			cfg_set_int(mac, WNI_CFG_ACTIVE_MAXIMUM_CHANNEL_TIME,
-				    pParam->nActiveMaxChnTime);
-		}
-		if (pParam->nPassiveMaxChnTime) {
-			mac->roam.configParam.nPassiveMaxChnTime =
-				pParam->nPassiveMaxChnTime;
-			cfg_set_int(mac, WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
-				    pParam->nPassiveMaxChnTime);
-		}
 		mac->roam.configParam.uCfgDot11Mode =
 			csr_get_cfg_dot11_mode_from_csr_phy_mode(NULL,
 							mac->roam.configParam.
 							phyMode,
 							mac->roam.configParam.
 						ProprietaryRatesEnabled);
-		/* if HDD passed down non zero values for age params,
-		 * then only update, otherwise keep using the defaults
-		 */
-		if (pParam->nScanResultAgeCount) {
-			mac->roam.configParam.agingCount =
-				pParam->nScanResultAgeCount;
-		}
 
 		csr_assign_rssi_for_category(mac,
 			mac->mlme_cfg->lfr.first_scan_bucket_threshold,
@@ -2612,10 +2577,7 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 		sme_debug("roam_beacon_rssi_weight: %d",
 			  mac->mlme_cfg->lfr.roam_beacon_rssi_weight);
 		mac->scan.fEnableDFSChnlScan = pParam->fEnableDFSChnlScan;
-		mac->scan.scanResultCfgAgingTime = pParam->scanCfgAgingTime;
 		mac->roam.configParam.fScanTwice = pParam->fScanTwice;
-		mac->scan.fFirstScanOnly2GChnl = pParam->fFirstScanOnly2GChnl;
-		mac->scan.max_scan_count = pParam->max_scan_count;
 		/* This parameter is not available in cfg and not passed from
 		 * upper layers. Instead it is initialized here This parametere
 		 * is used in concurrency to determine if there are concurrent
@@ -2658,10 +2620,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 
 		mac->roam.configParam.enable_ftopen =
 			pParam->enable_ftopen;
-		mac->roam.configParam.scan_adaptive_dwell_mode =
-			pParam->scan_adaptive_dwell_mode;
-		mac->roam.configParam.scan_adaptive_dwell_mode_nc =
-			pParam->scan_adaptive_dwell_mode_nc;
 
 		/* update interface configuration */
 		mac->sme.max_intf_count = pParam->max_intf_count;
@@ -2751,19 +2709,14 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 	pParam->ProprietaryRatesEnabled = cfg_params->ProprietaryRatesEnabled;
 	pParam->AdHocChannel24 = cfg_params->AdHocChannel24;
 	pParam->AdHocChannel5G = cfg_params->AdHocChannel5G;
-	pParam->nActiveMaxChnTime = cfg_params->nActiveMaxChnTime;
-	pParam->nPassiveMaxChnTime = cfg_params->nPassiveMaxChnTime;
-	pParam->nScanResultAgeCount = cfg_params->agingCount;
 	pParam->bCatRssiOffset = cfg_params->bCatRssiOffset;
 	pParam->nTxPowerCap = cfg_params->nTxPowerCap;
 	pParam->statsReqPeriodicity = cfg_params->statsReqPeriodicity;
 	pParam->statsReqPeriodicityInPS = cfg_params->statsReqPeriodicityInPS;
 	pParam->fEnableDFSChnlScan = mac->scan.fEnableDFSChnlScan;
 	pParam->fScanTwice = cfg_params->fScanTwice;
-	pParam->fFirstScanOnly2GChnl = mac->scan.fFirstScanOnly2GChnl;
 	pParam->fEnableMCCMode = cfg_params->fenableMCCMode;
 	pParam->fAllowMCCGODiffBI = cfg_params->fAllowMCCGODiffBI;
-	pParam->scanCfgAgingTime = mac->scan.scanResultCfgAgingTime;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	pParam->cc_switch_mode = cfg_params->cc_switch_mode;
@@ -2775,8 +2728,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 	pParam->roam_trigger_reason_bitmask =
 			cfg_params->roam_trigger_reason_bitmask;
 	pParam->isCoalesingInIBSSAllowed = cfg_params->isCoalesingInIBSSAllowed;
-	pParam->nInitialDwellTime = cfg_params->nInitialDwellTime;
-	pParam->initial_scan_no_dfs_chnl = cfg_params->initial_scan_no_dfs_chnl;
 	csr_set_channels(mac, pParam);
 	pParam->obssEnabled = cfg_params->obssEnabled;
 	pParam->vendor_vht_sap =
@@ -2792,16 +2743,10 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 		cfg_params->roam_params.roam_bad_rssi_thresh_offset_2g;
 
 	pParam->enable_ftopen = cfg_params->enable_ftopen;
-	pParam->scan_adaptive_dwell_mode =
-			cfg_params->scan_adaptive_dwell_mode;
-	pParam->scan_adaptive_dwell_mode_nc =
-			cfg_params->scan_adaptive_dwell_mode_nc;
-
 	pParam->conc_custom_rule1 = cfg_params->conc_custom_rule1;
 	pParam->conc_custom_rule2 = cfg_params->conc_custom_rule2;
 	pParam->is_sta_connection_in_5gz_enabled =
 		cfg_params->is_sta_connection_in_5gz_enabled;
-	pParam->max_scan_count = mac->scan.max_scan_count;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	pParam->sap_channel_avoidance = mac->sap.sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */

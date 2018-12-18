@@ -793,30 +793,26 @@ static QDF_STATUS sme_rrm_issue_scan_req(struct mac_context *mac_ctx)
 		 */
 		if (eRRM_MSG_SOURCE_ESE_UPLOAD == sme_rrm_ctx->msgSource ||
 			eRRM_MSG_SOURCE_LEGACY_ESE == sme_rrm_ctx->msgSource)
-			req->scan_req.dwell_time_active = sme_rrm_ctx->duration[
-						sme_rrm_ctx->currentIndex];
+			max_chan_time =
+			      sme_rrm_ctx->duration[sme_rrm_ctx->currentIndex];
 		else
-			req->scan_req.dwell_time_active =
-						sme_rrm_ctx->duration[0];
+			max_chan_time = sme_rrm_ctx->duration[0];
 
-		sme_debug("Scan Type(%d) Max Dwell Time(%d)",
-				scan_type,
-				req->scan_req.dwell_time_active);
 		/*
-		 * Use gPassive/gActiveMaxChannelTime if maxChanTime is less
-		 * than default.
+		 * Use max_chan_time if max_chan_time is more than def value
+		 * depending on type of scan.
 		 */
-		if (eSIR_ACTIVE_SCAN == scan_type)
-			max_chan_time =
-				mac_ctx->roam.configParam.nActiveMaxChnTime;
-		else
-			max_chan_time =
-				mac_ctx->roam.configParam.nPassiveMaxChnTime;
-
-		if (req->scan_req.dwell_time_active < max_chan_time) {
-			req->scan_req.dwell_time_active = max_chan_time;
-			sme_debug("Setting default max %d ChanTime",
-				max_chan_time);
+		if (req->scan_req.scan_f_passive) {
+			if (max_chan_time > req->scan_req.dwell_time_passive)
+				req->scan_req.dwell_time_passive =
+								max_chan_time;
+			sme_debug("Passive Max Dwell Time(%d)",
+				  req->scan_req.dwell_time_passive);
+		} else {
+			if (max_chan_time > req->scan_req.dwell_time_active)
+				req->scan_req.dwell_time_active = max_chan_time;
+			sme_debug("Active Max Dwell Time(%d)",
+				  req->scan_req.dwell_time_active);
 		}
 
 		req->scan_req.adaptive_dwell_time_mode = SCAN_DWELL_MODE_STATIC;

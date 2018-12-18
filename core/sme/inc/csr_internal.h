@@ -389,18 +389,6 @@ struct csr_config {
 	int RSSICat[CSR_NUM_RSSI_CAT];
 	uint8_t bCatRssiOffset; /* to set RSSI difference for each category */
 	/*
-	 * Whether to limit the channels to the ones set in Csr11dInfo.
-	 * If true, the opertaional channels are limited to the default channel
-	 * list. It is an "AND" operation between the default channels and
-	 * the channels in the 802.11d IE.
-	 */
-
-	uint32_t nPassiveMaxChnTime;    /* in units of milliseconds */
-	uint32_t nActiveMaxChnTime;     /* in units of milliseconds */
-
-	uint32_t nInitialDwellTime;     /* in units of milliseconds */
-	bool initial_scan_no_dfs_chnl;
-	/*
 	 * in dBm, the max TX power. The actual TX power is the lesser of this
 	 * value & 11d. If 11d is disable, the lesser of this & default setting.
 	 */
@@ -443,8 +431,6 @@ struct csr_config {
 	uint8_t is_sta_connection_in_5gz_enabled;
 	struct roam_ext_params roam_params;
 	bool vendor_vht_sap;
-	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
-	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;
 	struct csr_sta_roam_policy_params sta_roam_policy;
 	bool enable_bcast_probe_rsp;
 	bool is_fils_enabled;
@@ -486,7 +472,6 @@ struct csr_votes11d {
 
 struct csr_scanstruct {
 	struct scan_profile scanProfile;
-	uint8_t scanResultCfgAgingTime;
 	tSirScanType curScanType;
 	struct csr_channel channels11d;
 	struct channel_power defaultPowerTable[WNI_CFG_VALID_CHANNEL_LIST_LEN];
@@ -516,10 +501,6 @@ struct csr_scanstruct {
 	 * (apprx 1.3 sec)
 	 */
 	uint8_t fEnableDFSChnlScan;
-	/*
-	 * To enable/disable scanning only 2.4Ghz channels on first scan
-	 */
-	bool fFirstScanOnly2GChnl;
 	bool fDropScanCmd;      /* true means we don't accept scan commands */
 
 	/* This includes all channels on which candidate APs are found */
@@ -527,7 +508,6 @@ struct csr_scanstruct {
 	int8_t roam_candidate_count[CSR_ROAM_SESSION_MAX];
 	int8_t inScanResultBestAPRssi;
 	bool fcc_constraint;
-	uint8_t max_scan_count;
 	bool defer_update_channel_list;
 	wlan_scan_requester requester_id;
 };

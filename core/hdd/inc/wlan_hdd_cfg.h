@@ -187,29 +187,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gScanResultAgeCount - Set scan result age count
- * @Min: 1
- * @Max: 100
- * @Default: 1
- *
- * This ini parameter is the number of times a scan
- * doesn't find it before it is removed from results.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_SCAN_RESULT_AGE_COUNT_NAME         "gScanResultAgeCount"
-#define CFG_SCAN_RESULT_AGE_COUNT_MIN          (1)
-#define CFG_SCAN_RESULT_AGE_COUNT_MAX          (100)
-#define CFG_SCAN_RESULT_AGE_COUNT_DEFAULT      (1)
-
-/*
- * <ini>
  * gEnableDFSChnlScan - Enable DFS channel scan
  * @Min: 0
  * @Max: 1
@@ -245,28 +222,6 @@ enum hdd_dot11_mode {
 #define CFG_ENABLE_DFS_PNO_CHNL_SCAN_MIN               (0)
 #define CFG_ENABLE_DFS_PNO_CHNL_SCAN_MAX               (1)
 #define CFG_ENABLE_DFS_PNO_CHNL_SCAN_DEFAULT           (1)
-
-/*
- * <ini>
- * gEnableFirstScan2GOnly - Enable first scan 2G only
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to scan 2G channels only in first scan.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_FIRST_SCAN_2G_ONLY_NAME            "gEnableFirstScan2GOnly"
-#define CFG_ENABLE_FIRST_SCAN_2G_ONLY_MIN        (0)
-#define CFG_ENABLE_FIRST_SCAN_2G_ONLY_MAX        (1)
-#define CFG_ENABLE_FIRST_SCAN_2G_ONLY_DEFAULT    (0)
 
 /*
  * <ini>
@@ -400,98 +355,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gPassiveMaxChannelTime - Set max channel time for passive scan
- * @Min: 0
- * @Max: 10000
- * @Default: 110
- *
- * This ini is used to set maximum channel time in secs spent in
- * passive scan
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_PASSIVE_MAX_CHANNEL_TIME_NAME      "gPassiveMaxChannelTime"
-#define CFG_PASSIVE_MAX_CHANNEL_TIME_MIN       (0)
-#define CFG_PASSIVE_MAX_CHANNEL_TIME_MAX       (10000)
-#define CFG_PASSIVE_MAX_CHANNEL_TIME_DEFAULT   (110)
-
-/*
- * <ini>
- * gActiveMaxChannelTime - Set max channel time for active scan
- * @Min: 0
- * @Max: 10000
- * @Default: 40
- *
- * This ini is used to set maximum channel time in secs spent in
- * active scan
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ACTIVE_MAX_CHANNEL_TIME_NAME       "gActiveMaxChannelTime"
-#define CFG_ACTIVE_MAX_CHANNEL_TIME_MIN        (0)
-#define CFG_ACTIVE_MAX_CHANNEL_TIME_MAX        (10000)
-#define CFG_ACTIVE_MAX_CHANNEL_TIME_DEFAULT    (40)
-
-/*
- * <ini>
- * gScanNumProbes - Set the number of probes on each channel for active scan
- * @Min: 0
- * @Max: 20
- * @Default: 0
- *
- * This ini is used to set number of probes on each channel for
- * active scan
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_SCAN_NUM_PROBES_NAME       "gScanNumProbes"
-#define CFG_SCAN_NUM_PROBES_MIN        (0)
-#define CFG_SCAN_NUM_PROBES_MAX        (20)
-#define CFG_SCAN_NUM_PROBES_DEFAULT    (0)
-
-/*
- * <ini>
- * gScanProbeRepeatTime - Set the probe repeat time on each channel for active scan
- * @Min: 0
- * @Max: 30
- * @Default: 0
- *
- * This ini is used to set probe repeat time on each channel for
- * active scan
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_SCAN_PROBE_REPEAT_TIME_NAME       "gScanProbeRepeatTime"
-#define CFG_SCAN_PROBE_REPEAT_TIME_MIN        (0)
-#define CFG_SCAN_PROBE_REPEAT_TIME_MAX        (30)
-#define CFG_SCAN_PROBE_REPEAT_TIME_DEFAULT    (0)
-
-/*
- * <ini>
  * gChPredictionFullScanMs - Set periodic timer for channel
  * prediction
  * @Min: 3000
@@ -538,68 +401,6 @@ enum hdd_dot11_mode {
 #define CFG_CREATE_BUG_REPORT_FOR_SCAN_DISABLE    (0)
 #define CFG_CREATE_BUG_REPORT_FOR_SCAN_ENABLE     (1)
 #define CFG_CREATE_BUG_REPORT_FOR_SCAN_DEFAULT    (0)
-
-/*
- * <ini>
- * hostscan_adaptive_dwell_mode - Enable adaptive dwell mode
- * during host scan with conneciton
- * @Min: 0
- * @Max: 4
- * @Default: 2
- *
- * This ini will set the algo used in dwell time optimization
- * during host scan with connection.
- * See enum scan_dwelltime_adaptive_mode.
- * Acceptable values for this:
- * 0: Default (Use firmware default mode)
- * 1: Conservative optimization
- * 2: Moderate optimization
- * 3: Aggressive optimization
- * 4: Static
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ADAPTIVE_SCAN_DWELL_MODE_NAME        "hostscan_adaptive_dwell_mode"
-#define CFG_ADAPTIVE_SCAN_DWELL_MODE_MIN         (0)
-#define CFG_ADAPTIVE_SCAN_DWELL_MODE_MAX         (4)
-#define CFG_ADAPTIVE_SCAN_DWELL_MODE_DEFAULT     (2)
-
-/*
- * <ini>
- * hostscan_adaptive_dwell_mode_no_conn - Enable adaptive dwell mode
- * during host scan without connection
- * @Min: 0
- * @Max: 4
- * @Default: 1
- *
- * This ini will set the algo used in dwell time optimization
- * during host scan without connection.
- * See enum scan_dwelltime_adaptive_mode.
- * Acceptable values for this:
- * 0: Default (Use firmware default mode)
- * 1: Conservative optimization
- * 2: Moderate optimization
- * 3: Aggressive optimization
- * 4: Static
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ADAPTIVE_SCAN_DWELL_MODE_NC_NAME    "hostscan_adaptive_dwell_mode_no_conn"
-#define CFG_ADAPTIVE_SCAN_DWELL_MODE_NC_MIN     (0)
-#define CFG_ADAPTIVE_SCAN_DWELL_MODE_NC_MAX     (4)
-#define CFG_ADAPTIVE_SCAN_DWELL_MODE_NC_DEFAULT (1)
 
 /*
  * <ini>
@@ -711,29 +512,6 @@ enum hdd_dot11_mode {
 #define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_MIN        (0)
 #define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_MAX        (4)
 #define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_DEFAULT    (0)
-
-/*
- * <ini>
- * gRssiCatGap - Set Rssi CatGap
- * @Min: 5
- * @Max: 100
- * @Default: 5
- *
- * This ini is used to set default RssiCatGap
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_RSSI_CATEGORY_GAP_NAME             "gRssiCatGap"
-#define CFG_RSSI_CATEGORY_GAP_MIN              (5)
-#define CFG_RSSI_CATEGORY_GAP_MAX              (100)
-#define CFG_RSSI_CATEGORY_GAP_DEFAULT          (5)
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 /*
@@ -1257,125 +1035,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gPassiveMaxChannelTimeConc - Maximum passive scan time in milliseconds.
- * @Min: 0
- * @Max: 10000
- * @Default: 110
- *
- * This ini is used to set maximum passive scan time in STA+SAP concurrent
- * mode.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_NAME      "gPassiveMaxChannelTimeConc"
-#define CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_MIN       (0)
-#define CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_MAX       (10000)
-#define CFG_PASSIVE_MAX_CHANNEL_TIME_CONC_DEFAULT   (110)
-
-/*
- * <ini>
- * gActiveMaxChannelTimeConc - Maximum active scan time in milliseconds.
- * @Min: 0
- * @Max: 10000
- * @Default: 40
- *
- * This ini is used to set maximum active scan time in STA+SAP concurrent
- * mode.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_NAME       "gActiveMaxChannelTimeConc"
-#define CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_MIN        (0)
-#define CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_MAX        (10000)
-#define CFG_ACTIVE_MAX_CHANNEL_TIME_CONC_DEFAULT    (40)
-
-/*
- * <ini>
- * gRestTimeConc - Rest time before moving to a new channel to scan.
- * @Min: 0
- * @Max: 10000
- * @Default: 100
- *
- * This ini is used to configure rest time.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_REST_TIME_CONC_NAME                     "gRestTimeConc"
-#define CFG_REST_TIME_CONC_MIN                      (0)
-#define CFG_REST_TIME_CONC_MAX                      (10000)
-#define CFG_REST_TIME_CONC_DEFAULT                  (100)
-
-/*
- * <ini>
- * gMinRestTimeConc - Mininum time spent on home channel before moving to a
- * new channel to scan.
- * @Min: 0
- * @Max: 50
- * @Default: 50
- *
- * This ini is used to configure minimum time spent on home channel before
- * moving to a new channel to scan.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_MIN_REST_TIME_NAME                      "gMinRestTimeConc"
-#define CFG_MIN_REST_TIME_MIN                       (0)
-#define CFG_MIN_REST_TIME_MAX                       (50)
-#define CFG_MIN_REST_TIME_DEFAULT                   (50)
-
-/*
- * <ini>
- * gIdleTimeConc - Data inactivity time in msec.
- * @Min: 0
- * @Max: 25
- * @Default: 25
- *
- * This ini is used to configure data inactivity time in msec on bss channel
- * that will be used by scan engine in firmware.
- * For example if this value is 25ms then firmware will check for data
- * inactivity every 25ms till gRestTimeConc is reached.
- * If inactive then scan engine will move from home channel to scan the next
- * frequency.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_IDLE_TIME_NAME                          "gIdleTimeConc"
-#define CFG_IDLE_TIME_MIN                           (0)
-#define CFG_IDLE_TIME_MAX                           (25)
-#define CFG_IDLE_TIME_DEFAULT                       (25)
-
-/*
- * <ini>
  * gTxPowerCap - WLAN max tx power
  * @Min: 0
  * @Max: 128
@@ -1602,52 +1261,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_RA_RATE_LIMIT_INTERVAL_MAX             (3600)
 #define CFG_RA_RATE_LIMIT_INTERVAL_DEFAULT         (60) /*60 SEC */
 #endif
-
-/*
- * <ini>
- * gInitialDwellTime - Used to set initial dwell time
- * @Min: 0
- * @Max: 0
- * @Default: 100
- *
- * This ini is used to set default initial dwell time
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_INITIAL_DWELL_TIME_NAME            "gInitialDwellTime"
-#define CFG_INITIAL_DWELL_TIME_DEFAULT         (0)
-#define CFG_INITIAL_DWELL_TIME_MIN             (0)
-#define CFG_INITIAL_DWELL_TIME_MAX             (100)
-
-/*
- * <ini>
- * gInitialScanNoDFSChnl - WLAN skips scanning the DFS channels
- * @Min: 0
- * @Max: 0
- * @Default: 1
- *
- * This ini is used to set for the first scan after driver
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_INITIAL_SCAN_NO_DFS_CHNL_NAME         "gInitialScanNoDFSChnl"
-#define CFG_INITIAL_SCAN_NO_DFS_CHNL_DEFAULT      (0)
-#define CFG_INITIAL_SCAN_NO_DFS_CHNL_MIN          (0)
-#define CFG_INITIAL_SCAN_NO_DFS_CHNL_MAX          (1)
 
 #ifdef MSM_PLATFORM
 /*
@@ -2190,31 +1803,6 @@ enum hdd_link_speed_rpt_type {
 
 /*
  * <ini>
- * is_bssid_hint_priority - Set priority for connection with bssid_hint
- * BSSID.
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to give priority to BSS for connection which comes
- * as part of bssid_hint
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_IS_BSSID_HINT_PRIORITY_NAME    "is_bssid_hint_priority"
-#define CFG_IS_BSSID_HINT_PRIORITY_DEFAULT (0)
-#define CFG_IS_BSSID_HINT_PRIORITY_MIN     (0)
-#define CFG_IS_BSSID_HINT_PRIORITY_MAX     (1)
-
-/*
- * <ini>
  * sae_enabled - Enable/Disable SAE support in driver
  * @Min: 0
  * @Max: 1
@@ -2556,8 +2144,6 @@ struct hdd_config {
 	enum hdd_dot11_mode dot11Mode;
 	uint32_t nChannelBondingMode24GHz;
 	uint32_t nChannelBondingMode5GHz;
-	uint32_t ScanResultAgeCount;
-	uint8_t nRssiCatGap;
 	struct qdf_mac_addr IbssBssid;
 	uint32_t AdHocChannel5G;
 	uint32_t AdHocChannel24G;
@@ -2570,16 +2156,6 @@ struct hdd_config {
 	/* Bitmap for operating voltage corner mode */
 	uint32_t vc_mode_cfg_bitmap;
 #endif
-
-	/* Additional Handoff params */
-	uint32_t nPassiveMaxChnTime;    /* in units of milliseconds */
-	uint32_t nActiveMaxChnTime;     /* in units of milliseconds */
-	uint32_t scan_probe_repeat_time;
-	uint32_t scan_num_probes;
-
-	uint32_t nInitialDwellTime;     /* in units of milliseconds */
-	bool initial_scan_no_dfs_chnl;
-
 	uint8_t wow_data_inactivity_timeout;
 
 	uint32_t DelayedTriggerFrmInt;
@@ -2599,7 +2175,6 @@ struct hdd_config {
 	int32_t linkSpeedRssiHigh;
 	int32_t linkSpeedRssiMid;
 	int32_t linkSpeedRssiLow;
-	bool enableFirstScan2GOnly;
 	bool prevent_link_down;
 	uint8_t scanAgingTimeout;
 	bool fEnableSNRMonitoring;
@@ -2653,8 +2228,6 @@ struct hdd_config {
 
 	bool apf_enabled;
 	bool adaptive_dwell_mode_enabled;
-	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
-	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;
 	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
 	enum scan_dwelltime_adaptive_mode pnoscan_adaptive_dwell_mode;
 	enum scan_dwelltime_adaptive_mode global_adapt_dwelltime_mode;
@@ -2685,7 +2258,6 @@ struct hdd_config {
 	uint32_t mawc_nlo_max_scan_interval;
 	bool enable_11d_in_world_mode;
 	bool enable_lprx;
-	bool is_bssid_hint_priority;
 #ifdef WLAN_FEATURE_SAE
 	bool is_sae_enabled;
 #endif

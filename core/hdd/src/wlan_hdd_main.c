@@ -14556,35 +14556,12 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	struct scan_user_cfg scan_cfg;
 	struct hdd_config *cfg = hdd_ctx->config;
 	QDF_STATUS status;
-	uint8_t scan_bucket_thre;
-	uint8_t select_5ghz_margin;
-	bool roam_prefer_5ghz;
 	uint32_t mcast_mcc_rest_time = 0;
 
-	status = ucfg_mlme_get_select_5ghz_margin(hdd_ctx->psoc,
-						  &select_5ghz_margin);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to get select_5ghz_margin");
-		return -EIO;
-	}
-
-	scan_cfg.active_dwell = cfg->nActiveMaxChnTime;
-	scan_cfg.passive_dwell = cfg->nPassiveMaxChnTime;
 	/* convert to ms */
 	scan_cfg.scan_cache_aging_time =
 		cfg->scanAgingTimeout * 1000;
-	ucfg_mlme_is_roam_prefer_5ghz(hdd_ctx->psoc, &roam_prefer_5ghz);
-	scan_cfg.prefer_5ghz = (uint32_t)roam_prefer_5ghz;
-	scan_cfg.select_5ghz_margin = select_5ghz_margin;
-	ucfg_mlme_get_first_scan_bucket_threshold(hdd_ctx->psoc,
-						  &scan_bucket_thre);
-	scan_cfg.scan_bucket_threshold = (int32_t)scan_bucket_thre;
-	scan_cfg.rssi_cat_gap = cfg->nRssiCatGap;
-	scan_cfg.scan_dwell_time_mode = cfg->scan_adaptive_dwell_mode;
 	scan_cfg.is_snr_monitoring_enabled = cfg->fEnableSNRMonitoring;
-	scan_cfg.usr_cfg_probe_rpt_time = cfg->scan_probe_repeat_time;
-	scan_cfg.usr_cfg_num_probes = cfg->scan_num_probes;
-	scan_cfg.is_bssid_hint_priority = cfg->is_bssid_hint_priority;
 	scan_cfg.enable_mac_spoofing = cfg->enable_mac_spoofing;
 	status = ucfg_mlme_get_sta_miracast_mcc_rest_time(hdd_ctx->psoc,
 							  &mcast_mcc_rest_time);

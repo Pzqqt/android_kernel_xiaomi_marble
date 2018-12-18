@@ -1019,7 +1019,6 @@ typedef struct tagCsrConfigParam {
 	 * this number minus one is the number of times a scan doesn't find it
 	 * before it is removed
 	 */
-	uint32_t nScanResultAgeCount;
 	/* to set the RSSI difference for each category */
 	uint8_t bCatRssiOffset;
 	/* to set MCC Enable/Disable mode */
@@ -1034,11 +1033,6 @@ typedef struct tagCsrConfigParam {
 	 */
 	uint8_t fAllowMCCGODiffBI;
 	tCsr11dinfo Csr11dinfo;
-
-	uint32_t nPassiveMaxChnTime;        /* in units of milliseconds */
-	uint32_t nActiveMaxChnTime;         /* in units of milliseconds */
-	uint32_t nInitialDwellTime;         /* in units of milliseconds */
-	bool initial_scan_no_dfs_chnl;
 	/*
 	 * in dBm, the maximum TX power The actual TX power is the lesser of
 	 * this value and 11d. If 11d is disable, the lesser of this and
@@ -1068,12 +1062,7 @@ typedef struct tagCsrConfigParam {
 	bool enableVhtFor24GHz;
 	bool vendor_vht_sap;
 	bool send_smps_action;
-	/*
-	 * To enable/disable scanning only 2.4Ghz channels on first scan
-	 */
-	bool fFirstScanOnly2GChnl;
 
-	uint8_t scanCfgAgingTime;
 	uint8_t disable_high_ht_mcs_2x2;
 	uint32_t ho_delay_for_rx;
 	uint32_t min_delay_btw_roam_scans;
@@ -1088,7 +1077,6 @@ typedef struct tagCsrConfigParam {
 	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
 
-	uint8_t max_scan_count;
 	int8_t first_scan_bucket_threshold;
 	uint8_t max_intf_count;
 	uint32_t f_sta_miracast_mcc_rest_time_val;
@@ -1102,8 +1090,6 @@ typedef struct tagCsrConfigParam {
 	int8_t roam_bg_scan_bad_rssi_thresh;
 	uint8_t roam_bad_rssi_thresh_offset_2g;
 	uint32_t roam_bg_scan_client_bitmap;
-	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
-	enum scan_dwelltime_adaptive_mode scan_adaptive_dwell_mode_nc;
 	struct csr_sta_roam_policy_params sta_roam_policy_params;
 	bool enable_bcast_probe_rsp;
 	bool is_fils_enabled;

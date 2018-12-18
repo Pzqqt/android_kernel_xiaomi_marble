@@ -950,7 +950,6 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 				    scan_params)
 {
 	uint8_t channels_per_burst = 0;
-	uint32_t val = 0;
 
 	if (NULL == mac) {
 		WMA_LOGE("%s: mac is NULL", __func__);
@@ -975,32 +974,8 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 			 roam_req->neighbor_scan_min_timer_period,
 			 roam_req->HomeAwayTime, roam_req->nProbes);
 
-		/*
-		 * roam_req->NeighborScanChannelMaxTime = SCAN_CHANNEL_TIME
-		 * roam_req->HomeAwayTime               = SCAN_HOME_AWAY_TIME
-		 * roam_req->NeighborScanTimerPeriod    = SCAN_HOME_TIME
-		 *
-		 * scan_params->dwell_time_active :time station stays on channel
-		 *                                   and sends probes;
-		 * scan_params->dwell_time_passive:time station stays on channel
-		 *                                   and listens probes;
-		 * scan_params->burst_duration    :time station goes off channel
-		 *                                   to scan;
-		 */
-
-		if (wlan_cfg_get_int
-			    (mac, WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
-			    &val) != QDF_STATUS_SUCCESS) {
-			/*
-			 * Could not get max channel value from CFG. Log error.
-			 */
-			WMA_LOGE("could not retrieve passive max channel value");
-
-			/* use a default value of 110ms */
-			val = WMA_ROAM_DWELL_TIME_PASSIVE_DEFAULT;
-		}
-
-		scan_params->dwell_time_passive = val;
+		wlan_scan_cfg_get_passive_dwelltime(wma_handle->psoc,
+					&scan_params->dwell_time_passive);
 		/*
 		 * Here is the formula,
 		 * T(HomeAway) = N * T(dwell) + (N+1) * T(cs)

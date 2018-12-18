@@ -43,7 +43,6 @@
 #endif
 #include "hif.h"
 #include "wlan_scan_ucfg_api.h"
-#include "cfg_ucfg_api.h"
 
 #if defined(LINUX_QCMBR)
 #define SIOCIOCTLTX99 (SIOCDEVPRIVATE+13)
@@ -2127,55 +2126,46 @@ static int hdd_parse_setmaxtxpower_command(uint8_t *pValue, int *pTxPower)
 	return 0;
 } /* End of hdd_parse_setmaxtxpower_command */
 
-static int hdd_get_dwell_time(struct hdd_config *pCfg, uint8_t *command,
+static int hdd_get_dwell_time(struct wlan_objmgr_psoc *psoc, uint8_t *command,
 			      char *extra, uint8_t n, uint8_t *len)
 {
-	if (!pCfg || !command || !extra || !len) {
+	uint32_t val = 0;
+
+	if (!psoc || !command || !extra || !len) {
 		hdd_err("argument passed for GETDWELLTIME is incorrect");
 		return -EINVAL;
 	}
 
 	if (strncmp(command, "GETDWELLTIME ACTIVE MAX", 23) == 0) {
-		*len = scnprintf(extra, n, "GETDWELLTIME ACTIVE MAX %u\n",
-				 (int)pCfg->nActiveMaxChnTime);
+		ucfg_scan_cfg_get_active_dwelltime(psoc, &val);
+		*len = scnprintf(extra, n, "GETDWELLTIME ACTIVE MAX %u\n", val);
 		return 0;
 	}
 	if (strncmp(command, "GETDWELLTIME PASSIVE MAX", 24) == 0) {
+		ucfg_scan_cfg_get_passive_dwelltime(psoc, &val);
 		*len = scnprintf(extra, n, "GETDWELLTIME PASSIVE MAX %u\n",
-				 (int)pCfg->nPassiveMaxChnTime);
+				 val);
 		return 0;
 	}
 	if (strncmp(command, "GETDWELLTIME", 12) == 0) {
-		*len = scnprintf(extra, n, "GETDWELLTIME %u\n",
-				 (int)pCfg->nActiveMaxChnTime);
+		ucfg_scan_cfg_get_active_dwelltime(psoc, &val);
+		*len = scnprintf(extra, n, "GETDWELLTIME %u\n", val);
 		return 0;
 	}
 
 	return -EINVAL;
 }
 
-static int hdd_set_dwell_time(struct hdd_adapter *adapter, uint8_t *command)
+static int hdd_set_dwell_time(struct wlan_objmgr_psoc *psoc, uint8_t *command)
 {
-	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
-	struct hdd_config *pCfg;
 	uint8_t *value = command;
-	tSmeConfigParams *sme_config;
 	int val = 0, temp = 0;
 	int retval = 0;
 
-	pCfg = (WLAN_HDD_GET_CTX(adapter))->config;
-	if (!pCfg || !mac_handle) {
-		hdd_err("argument passed for SETDWELLTIME is incorrect");
+	if (!psoc) {
+		hdd_err("psoc is null");
 		return -EINVAL;
 	}
-
-	sme_config = qdf_mem_malloc(sizeof(*sme_config));
-	if (!sme_config) {
-		hdd_err("failed to allocate memory for sme_config");
-		return -ENOMEM;
-	}
-	qdf_mem_zero(sme_config, sizeof(*sme_config));
-	sme_get_config_param(mac_handle, sme_config);
 
 	if (strncmp(command, "SETDWELLTIME ACTIVE MAX", 23) == 0) {
 		if (drv_cmd_validate(command, 23))
@@ -2183,52 +2173,37 @@ static int hdd_set_dwell_time(struct hdd_adapter *adapter, uint8_t *command)
 
 		value = value + 24;
 		temp = kstrtou32(value, 10, &val);
-		if (temp != 0 || val < CFG_ACTIVE_MAX_CHANNEL_TIME_MIN ||
-		    val > CFG_ACTIVE_MAX_CHANNEL_TIME_MAX) {
+		if (temp || !cfg_in_range(CFG_ACTIVE_MAX_CHANNEL_TIME, val)) {
 			hdd_err("argument passed for SETDWELLTIME ACTIVE MAX is incorrect");
-			retval = -EFAULT;
-			goto free;
+			return -EFAULT;
 		}
-		pCfg->nActiveMaxChnTime = val;
-		sme_config->csrConfig.nActiveMaxChnTime = val;
-		sme_update_config(mac_handle, sme_config);
+		ucfg_scan_cfg_set_active_dwelltime(psoc, val);
 	} else if (strncmp(command, "SETDWELLTIME PASSIVE MAX", 24) == 0) {
 		if (drv_cmd_validate(command, 24))
 			return -EINVAL;
 
 		value = value + 25;
 		temp = kstrtou32(value, 10, &val);
-		if (temp != 0 || val < CFG_PASSIVE_MAX_CHANNEL_TIME_MIN ||
-		    val > CFG_PASSIVE_MAX_CHANNEL_TIME_MAX) {
+		if (temp || !cfg_in_range(CFG_PASSIVE_MAX_CHANNEL_TIME, val)) {
 			hdd_err("argument passed for SETDWELLTIME PASSIVE MAX is incorrect");
-			retval = -EFAULT;
-			goto free;
+			return -EFAULT;
 		}
-		pCfg->nPassiveMaxChnTime = val;
-		sme_config->csrConfig.nPassiveMaxChnTime = val;
-		sme_update_config(mac_handle, sme_config);
+		ucfg_scan_cfg_set_passive_dwelltime(psoc, val);
 	} else if (strncmp(command, "SETDWELLTIME", 12) == 0) {
 		if (drv_cmd_validate(command, 12))
 			return -EINVAL;
 
 		value = value + 13;
 		temp = kstrtou32(value, 10, &val);
-		if (temp != 0 || val < CFG_ACTIVE_MAX_CHANNEL_TIME_MIN ||
-		    val > CFG_ACTIVE_MAX_CHANNEL_TIME_MAX) {
+		if (temp || !cfg_in_range(CFG_ACTIVE_MAX_CHANNEL_TIME, val)) {
 			hdd_err("argument passed for SETDWELLTIME is incorrect");
-			retval = -EFAULT;
-			goto free;
+			return -EFAULT;
 		}
-		pCfg->nActiveMaxChnTime = val;
-		sme_config->csrConfig.nActiveMaxChnTime = val;
-		sme_update_config(mac_handle, sme_config);
+		ucfg_scan_cfg_set_active_dwelltime(psoc, val);
 	} else {
 		retval = -EINVAL;
-		goto free;
 	}
 
-free:
-	qdf_mem_free(sme_config);
 	return retval;
 }
 
@@ -2252,59 +2227,37 @@ struct link_status_priv {
 static int hdd_conc_set_dwell_time(struct hdd_adapter *adapter,
 				   uint8_t *command)
 {
-	mac_handle_t mac_handle = hdd_adapter_get_mac_handle(adapter);
-	struct hdd_config *p_cfg;
 	u8 *value = command;
-	tSmeConfigParams *sme_config;
 	int val = 0, temp = 0;
 	int retval = 0;
-
-	p_cfg = (WLAN_HDD_GET_CTX(adapter))->config;
-	if (!p_cfg || !mac_handle) {
-		hdd_err("Argument passed for CONCSETDWELLTIME is incorrect");
-		return -EINVAL;
-	}
-
-	sme_config = qdf_mem_malloc(sizeof(*sme_config));
-	if (!sme_config) {
-		hdd_err("Failed to allocate memory for sme_config");
-		return -ENOMEM;
-	}
-
-	qdf_mem_zero(sme_config, sizeof(*sme_config));
-	sme_get_config_param(mac_handle, sme_config);
 
 	if (strncmp(command, "CONCSETDWELLTIME ACTIVE MAX", 27) == 0) {
 		if (drv_cmd_validate(command, 27)) {
 			hdd_err("Invalid driver command");
-			retval = -EINVAL;
-			goto sme_config_free;
+			return -EINVAL;
 		}
 
 		value = value + 28;
 		temp = kstrtou32(value, 10, &val);
-		if (temp != 0 ||
-		    cfg_in_range(CFG_ACTIVE_MAX_CHANNEL_TIME_CONC, val)) {
+		if (temp ||
+		    !cfg_in_range(CFG_ACTIVE_MAX_CHANNEL_TIME_CONC, val)) {
 			hdd_err("CONC ACTIVE MAX value %d incorrect", val);
-			retval = -EFAULT;
-			goto sme_config_free;
+			return -EFAULT;
 		}
 		ucfg_scan_cfg_set_conc_active_dwelltime(
 				(WLAN_HDD_GET_CTX(adapter))->psoc, val);
 	} else if (strncmp(command, "CONCSETDWELLTIME PASSIVE MAX", 28) == 0) {
 		if (drv_cmd_validate(command, 28)) {
 			hdd_err("Invalid driver command");
-			retval = -EINVAL;
-			goto sme_config_free;
+			return -EINVAL;
 		}
 
 		value = value + 29;
 		temp = kstrtou32(value, 10, &val);
-		if (temp != 0 ||
-		    cfg_in_range(CFG_PASSIVE_MAX_CHANNEL_TIME_CONC, val)) {
+		if (temp ||
+		    !cfg_in_range(CFG_PASSIVE_MAX_CHANNEL_TIME_CONC, val)) {
 			hdd_err("CONC PASSIVE MAX val %d incorrect", val);
-			retval = -EFAULT;
-			goto sme_config_free;
+			return -EFAULT;
 		}
 		ucfg_scan_cfg_set_conc_passive_dwelltime(
 				(WLAN_HDD_GET_CTX(adapter))->psoc, val);
@@ -2312,8 +2265,6 @@ static int hdd_conc_set_dwell_time(struct hdd_adapter *adapter,
 		retval = -EINVAL;
 	}
 
-sme_config_free:
-	qdf_mem_free(sme_config);
 	return retval;
 }
 
@@ -4586,13 +4537,12 @@ static int drv_cmd_get_dwell_time(struct hdd_adapter *adapter,
 				  struct hdd_priv_data *priv_data)
 {
 	int ret = 0;
-	struct hdd_config *pCfg =
-		(WLAN_HDD_GET_CTX(adapter))->config;
 	char extra[32];
 	uint8_t len = 0;
 
 	memset(extra, 0, sizeof(extra));
-	ret = hdd_get_dwell_time(pCfg, command, extra, sizeof(extra), &len);
+	ret = hdd_get_dwell_time(hdd_ctx->psoc, command, extra,
+				 sizeof(extra), &len);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 	if (ret != 0 || copy_to_user(priv_data->buf, &extra, len)) {
 		hdd_err("failed to copy data to user buffer");
@@ -4610,7 +4560,7 @@ static int drv_cmd_set_dwell_time(struct hdd_adapter *adapter,
 				  uint8_t command_len,
 				  struct hdd_priv_data *priv_data)
 {
-	return hdd_set_dwell_time(adapter, command);
+	return hdd_set_dwell_time(hdd_ctx->psoc, command);
 }
 
 static int drv_cmd_conc_set_dwell_time(struct hdd_adapter *adapter,
