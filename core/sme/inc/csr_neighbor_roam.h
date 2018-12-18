@@ -82,7 +82,6 @@ typedef struct sCsrNeighborRoamBSSInfo {
 } tCsrNeighborRoamBSSInfo, *tpCsrNeighborRoamBSSInfo;
 
 #define CSR_NEIGHBOR_ROAM_REPORT_QUERY_TIMEOUT  1000       /* in milliseconds */
-#define CSR_NEIGHBOR_ROAM_PREAUTH_RSP_WAIT_MULTIPLIER   10 /* in milliseconds */
 /* Max number of MAC addresses with which the pre-auth was failed */
 #define MAX_NUM_PREAUTH_FAIL_LIST_ADDRESS          10
 #define MAX_BSS_IN_NEIGHBOR_RPT                    15
@@ -106,7 +105,6 @@ typedef struct sCsr11rAssocNeighborInfo {
 	uint8_t currentNeighborRptRetryNum;
 	tCsrPreauthFailListInfo preAuthFailList;
 	uint32_t neighborReportTimeout;
-	uint32_t PEPreauthRespTimeout;
 	uint8_t numPreAuthRetries;
 	tDblLinkList preAuthDoneList;   /* llist which consists/preauth nodes */
 	uint8_t numBssFromNeighborReport;

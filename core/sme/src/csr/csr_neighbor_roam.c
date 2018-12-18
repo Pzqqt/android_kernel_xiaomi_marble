@@ -1185,9 +1185,6 @@ static QDF_STATUS csr_neighbor_roam_init11r_assoc_info(struct mac_context *mac)
 
 		pFTRoamInfo->neighborReportTimeout =
 			CSR_NEIGHBOR_ROAM_REPORT_QUERY_TIMEOUT;
-		pFTRoamInfo->PEPreauthRespTimeout =
-			CSR_NEIGHBOR_ROAM_PREAUTH_RSP_WAIT_MULTIPLIER *
-			pNeighborRoamInfo->cfgParams.neighborScanPeriod;
 		pFTRoamInfo->neighborRptPending = false;
 		pFTRoamInfo->preauthRspPending = false;
 
