@@ -147,7 +147,6 @@ enum eWniMsgTypes {
 	eWNI_SME_GET_TSM_STATS_RSP,
 	eWNI_SME_TSM_IE_IND,
 
-	eWNI_SME_READY_TO_SUSPEND_IND,
 	/* DFS EVENTS */
 	eWNI_SME_DFS_RADAR_FOUND,       /* RADAR found indication from DFS */
 	eWNI_SME_CHANNEL_CHANGE_REQ,    /* Channel Change Request from SAP */

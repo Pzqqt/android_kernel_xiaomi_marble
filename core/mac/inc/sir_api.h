@@ -3090,11 +3090,6 @@ typedef struct {
 	tSirPeerInfoRspParams ibssPeerInfoRspParams;
 } tSirIbssGetPeerInfoRspParams, *tpSirIbssGetPeerInfoRspParams;
 
-typedef struct {
-	uint16_t mesgType;
-	uint16_t mesgLen;
-	bool suspended;
-} tSirReadyToSuspendInd, *tpSirReadyToSuspendInd;
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 typedef struct {
 	uint16_t mesgType;

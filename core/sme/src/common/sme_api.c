@@ -1075,34 +1075,6 @@ QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
 	return 0;
 }
 
-/**
- * sme_process_ready_to_suspend() -
- * @mac: Global MAC context
- * @pReadyToSuspend: Parameter received along with ready to suspend
- *			    indication from WMA.
- *
- * On getting ready to suspend indication, this function calls
- * callback registered (HDD callbacks) with SME to inform ready
- * to suspend indication.
- *
- * Return: None
- */
-static void sme_process_ready_to_suspend(struct mac_context *mac,
-					 tpSirReadyToSuspendInd pReadyToSuspend)
-{
-	if (NULL == mac) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
-			  "%s: mac is null", __func__);
-		return;
-	}
-
-	if (NULL != mac->readyToSuspendCallback) {
-		mac->readyToSuspendCallback(mac->readyToSuspendContext,
-					    pReadyToSuspend->suspended);
-		mac->readyToSuspendCallback = NULL;
-	}
-}
-
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 
 /**
@@ -2077,14 +2049,6 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 		if (pMsg->bodyptr) {
 			sme_ibss_peer_info_response_handler(mac,
 							    pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sme_err("Empty message for: %d", pMsg->type);
-		}
-		break;
-	case eWNI_SME_READY_TO_SUSPEND_IND:
-		if (pMsg->bodyptr) {
-			sme_process_ready_to_suspend(mac, pMsg->bodyptr);
 			qdf_mem_free(pMsg->bodyptr);
 		} else {
 			sme_err("Empty message for: %d", pMsg->type);

@@ -809,8 +809,6 @@ struct mac_context {
 	struct csr_scanstruct scan;
 	struct csr_roamstruct roam;
 	tRrmContext rrm;
-	csr_readyToSuspendCallback readyToSuspendCallback;
-	void *readyToSuspendContext;
 	uint8_t isCoalesingInIBSSAllowed;
 	uint8_t lteCoexAntShare;
 	uint8_t beacon_offload;
