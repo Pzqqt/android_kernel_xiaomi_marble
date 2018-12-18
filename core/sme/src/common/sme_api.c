@@ -3019,36 +3019,6 @@ QDF_STATUS sme_roam_reassoc(mac_handle_t mac_handle, uint8_t sessionId,
 	return status;
 }
 
-/*
- * sme_roam_connect_to_last_profile() -
- * A wrapper function to request CSR to disconnect and reconnect with
- *	the same profile
- *   This is an asynchronous call.
- *
- * Return QDF_STATUS. It returns fail if currently connected
- */
-QDF_STATUS sme_roam_connect_to_last_profile(mac_handle_t mac_handle,
-					    uint8_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_ROAM_GET_CONNECTPROFILE,
-			 sessionId, 0));
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(mac, sessionId))
-			status = csr_roam_connect_to_last_profile(mac,
-								sessionId);
-		else
-			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-
 QDF_STATUS sme_roam_disconnect(mac_handle_t mac_handle, uint8_t session_id,
 			       eCsrRoamDisconnectReason reason)
 {

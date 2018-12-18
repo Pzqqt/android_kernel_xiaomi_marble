@@ -476,8 +476,6 @@ QDF_STATUS sme_roam_reassoc(mac_handle_t mac_handle, uint8_t sessionId,
 		struct csr_roam_profile *pProfile,
 		tCsrRoamModifyProfileFields modProfileFields,
 		uint32_t *pRoamId, bool fForce);
-QDF_STATUS sme_roam_connect_to_last_profile(mac_handle_t mac_handle,
-					    uint8_t sessionId);
 
 /**
  * sme_roam_disconnect() - API to request CSR to disconnect
