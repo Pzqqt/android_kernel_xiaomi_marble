@@ -3711,29 +3711,6 @@ QDF_STATUS sme_cfg_set_int(mac_handle_t mac_handle, uint16_t cfg_id,
 }
 
 /**
- * sme_cfg_set_str() - Sets the cfg parameter string.
- * @mac_handle:	Opaque handle to the global MAC context.
- * @cfg_id:	Configuration parameter ID.
- * @str:	Pointer to the string buffer.
- * @length:	Length of the string.
- *
- * This function sets the string value in cfg parameter.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_cfg_set_str(mac_handle_t mac_handle, uint16_t cfg_id,
-			   uint8_t *str, uint32_t length)
-{
-	struct mac_context *pmac = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	if (QDF_STATUS_SUCCESS != cfg_set_str(pmac, cfg_id, str, length))
-		status = QDF_STATUS_E_FAILURE;
-
-	return status;
-}
-
-/**
  * sme_cfg_get_int() -  Gets the cfg parameter value.
  * @mac_handle:	Opaque handle to the global MAC context.
  * @cfg_id:	Configuration parameter ID.
