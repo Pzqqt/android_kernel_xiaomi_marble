@@ -5148,36 +5148,6 @@ QDF_STATUS populate_dot11f_probe_res_wpsi_es(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS populate_dot11f_assoc_res_wpsi_es(struct mac_context *mac,
-					     tDot11fIEWscAssocRes *pDot11f,
-					     struct pe_session *pe_session)
-{
-	tSirWPSProbeRspIE *pSirWPSProbeRspIE;
-
-	pSirWPSProbeRspIE = &pe_session->APWPSIEs.SirWPSProbeRspIE;
-
-	if (pSirWPSProbeRspIE->FieldPresent & SIR_WPS_PROBRSP_VER_PRESENT) {
-		pDot11f->present = 1;
-		pDot11f->Version.present = 1;
-		pDot11f->Version.major =
-			(uint8_t) ((pSirWPSProbeRspIE->Version & 0xF0) >> 4);
-		pDot11f->Version.minor =
-			(uint8_t) (pSirWPSProbeRspIE->Version & 0x0F);
-	} else {
-		pDot11f->present = 0;
-		pDot11f->Version.present = 0;
-	}
-
-	if (pSirWPSProbeRspIE->
-	    FieldPresent & SIR_WPS_PROBRSP_RESPONSETYPE_PRESENT) {
-		pDot11f->ResponseType.present = 1;
-		pDot11f->ResponseType.resType = pSirWPSProbeRspIE->ResponseType;
-	} else
-		pDot11f->ResponseType.present = 0;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS populate_dot11f_beacon_wpsi_es(struct mac_context *mac,
 					  tDot11fIEWscBeacon *pDot11f,
 					  struct pe_session *pe_session)

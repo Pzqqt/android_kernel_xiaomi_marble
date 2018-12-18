@@ -970,9 +970,6 @@ QDF_STATUS de_populate_dot11f_wsc_registrar_info(struct mac_context *mac,
 QDF_STATUS populate_dot11f_probe_res_wpsi_es(struct mac_context *mac,
 						tDot11fIEWscProbeRes *pDot11f,
 						struct pe_session *pe_session);
-QDF_STATUS populate_dot11f_assoc_res_wpsi_es(struct mac_context *mac,
-						tDot11fIEWscAssocRes *pDot11f,
-						struct pe_session *pe_session);
 QDF_STATUS populate_dot11f_beacon_wpsi_es(struct mac_context *mac,
 					tDot11fIEWscBeacon *pDot11f,
 					struct pe_session *pe_session);
