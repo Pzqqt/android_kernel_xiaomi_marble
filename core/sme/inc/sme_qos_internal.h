@@ -111,8 +111,6 @@ QDF_STATUS sme_qos_msg_processor(struct mac_context *mac, uint16_t msg_type,
 /*--------------------------------------------------------------------------
   Internal APIs for CSR
   ------------------------------------------------------------------------*/
-QDF_STATUS sme_qos_validate_params(struct mac_context *mac,
-		tSirBssDescription *pBssDesc);
 QDF_STATUS sme_qos_csr_event_ind(struct mac_context *mac,
 		uint8_t sessionId,
 		sme_qos_csr_event_indType ind, void *pEvent_info);

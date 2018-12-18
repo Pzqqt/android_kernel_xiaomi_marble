@@ -881,63 +881,6 @@ QDF_STATUS sme_qos_msg_processor(struct mac_context *mac_ctx,
 	return status;
 }
 
-/**
- * sme_qos_validate_params() - validate SME QOS parameters.
- * @mac: Pointer to the global MAC parameter structure.
- * @pBssDesc: Pointer to the BSS Descriptor information passed down by
- *            CSR to PE while issuing the Join request
- *
- * The SME QoS API exposed to CSR to validate AP
- * capabilities regarding QoS support & any other QoS parameter validation.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_qos_validate_params(struct mac_context *mac,
-				   tSirBssDescription *pBssDesc)
-{
-	tDot11fBeaconIEs *pIes = NULL;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: %d: validation for QAP & APSD", __func__, __LINE__);
-	do {
-		if (!QDF_IS_STATUS_SUCCESS(
-			csr_get_parsed_bss_description_ies(
-				mac, pBssDesc,	&pIes))) {
-			/* err msg */
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: %d: csr_get_parsed_bss_description_ies() failed",
-				  __func__, __LINE__);
-			break;
-		}
-		/* check if the AP is QAP & it supports APSD */
-		if (!CSR_IS_QOS_BSS(pIes)) {
-			/* err msg */
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: %d: AP doesn't support QoS",
-				  __func__, __LINE__);
-
-			break;
-		}
-		if (!(pIes->WMMParams.qosInfo & SME_QOS_AP_SUPPORTS_APSD) &&
-		    !(pIes->WMMInfoAp.uapsd)) {
-			/* err msg */
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: %d: AP doesn't support APSD",
-				  __func__, __LINE__);
-			break;
-		}
-		status = QDF_STATUS_SUCCESS;
-	} while (0);
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: %d: validated with status = %d",
-		  __func__, __LINE__, status);
-	if (pIes)
-		qdf_mem_free(pIes);
-
-	return status;
-}
-
 /*
  * sme_qos_csr_event_ind() - The QoS sub-module in SME expects notifications
  * from CSR when certain events occur as mentioned in sme_qos_csr_event_indType.
