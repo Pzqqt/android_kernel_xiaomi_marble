@@ -93,7 +93,7 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_pdev *pdev,
 	cdp_rx_ppdu->lsig_a = ppdu_info->rx_status.rate;
 
 	ast_index = ppdu_info->rx_status.ast_index;
-	if (ast_index > (WLAN_UMAC_PSOC_MAX_PEERS * 2)) {
+	if (ast_index >= (WLAN_UMAC_PSOC_MAX_PEERS * 2)) {
 		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
 		return;
 	}
@@ -528,6 +528,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 	while (!qdf_nbuf_is_queue_empty(&pdev->rx_status_q)) {
 
 		status_nbuf = qdf_nbuf_queue_remove(&pdev->rx_status_q);
+
 		rx_tlv = qdf_nbuf_data(status_nbuf);
 		rx_tlv_start = rx_tlv;
 

@@ -2636,8 +2636,13 @@ dp_tx_update_peer_stats(struct dp_peer *peer,
 			struct hal_tx_completion_status *ts, uint32_t length)
 {
 	struct dp_pdev *pdev = peer->vdev->pdev;
-	struct dp_soc *soc = pdev->soc;
+	struct dp_soc *soc = NULL;
 	uint8_t mcs, pkt_type;
+
+	if (!pdev)
+		return;
+
+	soc = pdev->soc;
 
 	mcs = ts->mcs;
 	pkt_type = ts->pkt_type;
@@ -2718,7 +2723,6 @@ dp_tx_update_peer_stats(struct dp_peer *peer,
 			     &peer->stats, ts->peer_id,
 			     UPDATE_PEER_STATS, pdev->pdev_id);
 #endif
-
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2

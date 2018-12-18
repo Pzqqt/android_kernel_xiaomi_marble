@@ -1225,6 +1225,9 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	if ((soc->process_rx_status) &&
 	    hal_rx_attn_first_mpdu_get(rx_tlv_hdr)) {
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
+		if (!vdev->pdev)
+			return;
+
 		dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
 				     &peer->stats, peer_id,
 				     UPDATE_PEER_STATS,
