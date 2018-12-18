@@ -2807,23 +2807,6 @@ QDF_STATUS sme_scan_flush_result(mac_handle_t mac_handle)
 	return status;
 }
 
-QDF_STATUS sme_scan_flush_p2p_result(mac_handle_t mac_handle, uint8_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_MSG_SCAN_FLUSH_P2PRESULTS,
-			 sessionId, 0));
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_scan_flush_selective_result(mac, true);
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-
 /*
  * sme_scan_result_get_first() -
  * A wrapper function to request CSR to returns the first element of

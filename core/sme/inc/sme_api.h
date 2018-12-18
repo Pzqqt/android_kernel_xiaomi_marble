@@ -463,8 +463,6 @@ bool sme_store_joinreq_param(mac_handle_t mac_handle,
 bool sme_clear_joinreq_param(mac_handle_t mac_handle,
 		uint32_t session_id);
 QDF_STATUS sme_scan_flush_result(mac_handle_t mac_handle);
-QDF_STATUS sme_scan_flush_p2p_result(mac_handle_t mac_handle,
-				     uint8_t sessionId);
 tCsrScanResultInfo *sme_scan_result_get_first(mac_handle_t,
 		tScanResultHandle hScanResult);
 tCsrScanResultInfo *sme_scan_result_get_next(mac_handle_t,
