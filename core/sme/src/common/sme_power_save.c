@@ -888,22 +888,3 @@ QDF_STATUS sme_ps_close_per_session(mac_handle_t mac_handle,
 		sme_err("Cannot deallocate suto PS timer");
 	return qdf_status;
 }
-
-bool sme_is_auto_ps_timer_running(mac_handle_t mac_handle,
-				  uint32_t session_id)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
-	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
-	bool status = false;
-	/*
-	 * Check if the auto ps entry timer if running
-	 */
-	if (QDF_TIMER_STATE_RUNNING ==
-			qdf_mc_timer_get_current_state(
-				&ps_param->auto_ps_enable_timer))
-		status = true;
-
-	return status;
-}
-

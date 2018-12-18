@@ -85,8 +85,5 @@ QDF_STATUS sme_ps_close(mac_handle_t mac_handle);
 QDF_STATUS sme_ps_close_per_session(mac_handle_t mac_handle,
 				    uint32_t session_id);
 
-bool sme_is_auto_ps_timer_running(mac_handle_t mac_handle,
-				  uint32_t session_id);
-
 #endif /* #if !defined(__SME_POWER_SAVE_API_H) */
 
