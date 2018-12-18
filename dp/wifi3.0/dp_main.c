@@ -3022,14 +3022,19 @@ QDF_STATUS dp_mon_rings_setup(struct dp_soc *soc, struct dp_pdev *pdev)
 void  dp_iterate_update_peer_list(void *pdev_hdl)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
+	struct dp_soc *soc = pdev->soc;
 	struct dp_vdev *vdev = NULL;
 	struct dp_peer *peer = NULL;
 
+	qdf_spin_lock_bh(&pdev->vdev_list_lock);
 	DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+		qdf_spin_lock_bh(&soc->peer_ref_mutex);
 		DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 			dp_cal_client_update_peer_stats(&peer->stats);
 		}
+		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 	}
+	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 }
 #else
 void  dp_iterate_update_peer_list(void *pdev_hdl)
@@ -5968,11 +5973,19 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev,
 			     struct cdp_vdev_stats *vdev_stats)
 {
 	struct dp_peer *peer = NULL;
+	struct dp_soc *soc = NULL;
+
+	if (!vdev)
+		return;
+
+	soc = vdev->pdev->soc;
 
 	qdf_mem_copy(vdev_stats, &vdev->stats, sizeof(vdev->stats));
 
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem)
 		dp_update_vdev_stats(vdev_stats, peer);
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 
 #if defined(FEATURE_PERPKT_INFO) && WDI_EVENT_ENABLE
 	dp_wdi_event_handler(WDI_EVENT_UPDATE_DP_STATS, vdev->pdev->soc,
