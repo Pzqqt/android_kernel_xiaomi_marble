@@ -3166,53 +3166,6 @@ QDF_STATUS sme_roam_deauth_sta(mac_handle_t mac_handle, uint8_t sessionId,
 }
 
 /*
- * sme_roam_get_associated_stas() -
- * To probe the list of associated stations from various modules
- *	 of CORE stack.
- * This is an asynchronous API.
- *
- * sessionId    - sessionId of SoftAP
- * modId        - Module from whom list of associtated stations is
- *			  to be probed. If an invalid module is passed then
- *			  by default QDF_MODULE_ID_PE will be probed.
- * pUsrContext  - Opaque HDD context
- * pfnSapEventCallback  - Sap event callback in HDD
- * pAssocBuf    - Caller allocated memory to be filled with associatd
- *			  stations info
- * Return QDF_STATUS
- */
-QDF_STATUS sme_roam_get_associated_stas(mac_handle_t mac_handle,
-					uint8_t sessionId,
-					QDF_MODULE_ID modId, void *pUsrContext,
-					void *pfnSapEventCallback,
-					uint8_t *pAssocStasBuf)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	if (NULL == mac) {
-		QDF_ASSERT(0);
-		return status;
-	}
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(mac, sessionId))
-			status =
-				csr_roam_get_associated_stas(mac, sessionId,
-							modId,
-							pUsrContext,
-							pfnSapEventCallback,
-							pAssocStasBuf);
-		else
-			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-
-/*
  * sme_roam_get_connect_state() -
  * A wrapper function to request CSR to return the current connect state
  *	of Roaming

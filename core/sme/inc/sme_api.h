@@ -490,11 +490,6 @@ QDF_STATUS sme_roam_disconnect(mac_handle_t mac_handle, uint8_t session,
 
 void sme_dhcp_done_ind(mac_handle_t mac_handle, uint8_t session_id);
 QDF_STATUS sme_roam_stop_bss(mac_handle_t mac_handle, uint8_t sessionId);
-QDF_STATUS sme_roam_get_associated_stas(mac_handle_t mac_handle,
-					uint8_t sessionId,
-					QDF_MODULE_ID modId, void *pUsrContext,
-					void *pfnSapEventCallback,
-					uint8_t *pAssocStasBuf);
 QDF_STATUS sme_roam_disconnect_sta(mac_handle_t mac_handle, uint8_t sessionId,
 		struct csr_del_sta_params *p_del_sta_params);
 QDF_STATUS sme_roam_deauth_sta(mac_handle_t mac_handle, uint8_t sessionId,
