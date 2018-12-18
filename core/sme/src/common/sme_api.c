@@ -2710,46 +2710,6 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 }
 
 /**
- * sme_store_joinreq_param() - This function will pass station's join
- * request to store to csr.
- * @mac_handle: Opaque handle to the global MAC context.
- * @profile: pointer to station's roam profile.
- * @scan_cache: pointer to station's scan cache.
- * @roam_id: reference to roam_id variable being passed.
- * @session_id: station's session id.
- *
- * This function will pass station's join request further down to csr
- * to store it. this stored parameter will be used later.
- *
- * Return: true or false based on function's overall success.
- **/
-bool sme_store_joinreq_param(mac_handle_t mac_handle,
-			     struct csr_roam_profile *profile,
-			     tScanResultHandle scan_cache,
-			     uint32_t *roam_id,
-			     uint32_t session_id)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	bool ret_status = true;
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			TRACE_CODE_SME_RX_HDD_STORE_JOIN_REQ,
-			session_id, 0));
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		if (false == csr_store_joinreq_param(mac_ctx, profile,
-					scan_cache, roam_id, session_id))
-			ret_status = false;
-		sme_release_global_lock(&mac_ctx->sme);
-	} else {
-		ret_status = false;
-	}
-
-	return ret_status;
-}
-
-/**
  * sme_clear_joinreq_param() - This function will pass station's clear
  * the join request to csr.
  * @mac_handle: Opaque handle to the global MAC context.
