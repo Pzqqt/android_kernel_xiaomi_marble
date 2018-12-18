@@ -13,10 +13,10 @@
 #include <soc/swr-common.h>
 #include <soc/swr-wcd.h>
 
+#include <asoc/msm-cdc-pinctrl.h>
 #include "bolero-cdc.h"
 #include "bolero-cdc-registers.h"
 #include "wsa-macro.h"
-#include "../msm-cdc-pinctrl.h"
 
 #define WSA_MACRO_MAX_OFFSET 0x1000
 

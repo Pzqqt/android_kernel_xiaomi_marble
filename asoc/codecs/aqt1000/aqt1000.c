@@ -25,12 +25,12 @@
 #include <sound/soc-dapm.h>
 #include <sound/tlv.h>
 #include <sound/info.h>
+#include <asoc/wcdcal-hwdep.h>
 #include "aqt1000-registers.h"
 #include "aqt1000.h"
 #include "aqt1000-api.h"
 #include "aqt1000-mbhc.h"
 #include "aqt1000-routing.h"
-#include "../wcdcal-hwdep.h"
 #include "aqt1000-internal.h"
 
 #define DRV_NAME "aqt_codec"

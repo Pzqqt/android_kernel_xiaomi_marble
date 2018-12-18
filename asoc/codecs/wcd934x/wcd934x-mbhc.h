@@ -4,7 +4,7 @@
  */
 #ifndef __WCD934X_MBHC_H__
 #define __WCD934X_MBHC_H__
-#include "../wcd-mbhc-v2.h"
+#include <asoc/wcd-mbhc-v2.h>
 
 enum wcd934x_on_demand_supply_name {
 	WCD934X_ON_DEMAND_MICBIAS = 0,

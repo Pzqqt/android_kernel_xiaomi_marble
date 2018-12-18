@@ -17,14 +17,14 @@
 #include <sound/lsm_params.h>
 #include <soc/qcom/pm.h>
 #include <dsp/audio_cal_utils.h>
-#include "core.h"
+#include <asoc/core.h>
 #include "cpe_core.h"
 #include "cpe_err.h"
 #include "cpe_cmi.h"
 #include "wcd_cpe_core.h"
 #include "wcd_cpe_services.h"
 #include "wcd_cmi_api.h"
-#include "wcd9xxx-irq.h"
+#include <asoc/wcd9xxx-irq.h>
 
 #define CMI_CMD_TIMEOUT (10 * HZ)
 #define WCD_CPE_LSM_MAX_SESSIONS 2

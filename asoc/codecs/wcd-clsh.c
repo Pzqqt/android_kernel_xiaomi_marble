@@ -9,7 +9,7 @@
 #include <linux/kernel.h>
 #include <linux/delay.h>
 #include <asoc/wcd9xxx_registers.h>
-#include "wcd-clsh.h"
+#include <asoc/wcd-clsh.h>
 
 #define WCD_USLEEP_RANGE 50
 

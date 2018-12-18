@@ -19,8 +19,8 @@
 #include <linux/of_gpio.h>
 #include <linux/pm_runtime.h>
 #include <sound/soc.h>
-#include "../msm-cdc-pinctrl.h"
-#include "../msm-cdc-supply.h"
+#include <asoc/msm-cdc-pinctrl.h>
+#include <asoc/msm-cdc-supply.h>
 #include "aqt1000-registers.h"
 #include "aqt1000-internal.h"
 #include "aqt1000.h"

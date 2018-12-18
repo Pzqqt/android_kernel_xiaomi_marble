@@ -7,9 +7,9 @@
 
 #include <dsp/apr_audio-v2.h>
 #include "wcd934x-dsp-cntl.h"
-#include "../wcd9xxx-slimslave.h"
-#include "../wcd9xxx-common-v2.h"
-#include "../wcd-mbhc-v2.h"
+#include <asoc/wcd9xxx-slimslave.h>
+#include <asoc/wcd9xxx-common-v2.h>
+#include <asoc/wcd-mbhc-v2.h>
 
 #define WCD934X_REGISTER_START_OFFSET  0x800
 #define WCD934X_SB_PGD_PORT_RX_BASE   0x40

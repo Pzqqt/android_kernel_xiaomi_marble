@@ -26,7 +26,7 @@
 #include <dsp/msm_mdf.h>
 #include "device_event.h"
 #include "msm-pcm-routing-v2.h"
-#include "codecs/msm-cdc-pinctrl.h"
+#include <asoc/msm-cdc-pinctrl.h>
 #include "codecs/wcd9335.h"
 #include "codecs/wsa881x.h"
 #include "codecs/csra66x0/csra66x0.h"

@@ -20,7 +20,7 @@
 #include <sound/soc.h>
 #include <sound/jack.h>
 #include "wcd-mbhc-legacy.h"
-#include "wcd-mbhc-v2.h"
+#include <asoc/wcd-mbhc-v2.h>
 
 static int det_extn_cable_en;
 module_param(det_extn_cable_en, int, 0664);

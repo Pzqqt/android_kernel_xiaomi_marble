@@ -19,8 +19,8 @@
 #include <linux/gpio.h>
 #include <linux/of_gpio.h>
 #include <linux/mfd/wcd9xxx/wcd9xxx_registers.h>
-#include "core.h"
-#include "wcd9xxx-irq.h"
+#include <asoc/core.h>
+#include <asoc/wcd9xxx-irq.h>
 
 #define BYTE_BIT_MASK(nr)		(1UL << ((nr) % BITS_PER_BYTE))
 #define BIT_BYTE(nr)			((nr) / BITS_PER_BYTE)

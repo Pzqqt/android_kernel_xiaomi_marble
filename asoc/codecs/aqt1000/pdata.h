@@ -8,7 +8,7 @@
 
 #include <linux/kernel.h>
 #include <linux/device.h>
-#include "../msm-cdc-supply.h"
+#include <asoc/msm-cdc-supply.h>
 
 struct aqt1000_micbias_setting {
 	u8 ldoh_v;

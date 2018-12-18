@@ -12,8 +12,8 @@
 #include <asoc/wcd934x_registers.h>
 #include "wcd934x.h"
 #include "wcd934x-dsp-cntl.h"
-#include "../wcd9xxx-irq.h"
-#include "../core.h"
+#include <asoc/wcd9xxx-irq.h>
+#include <asoc/core.h>
 
 #define WCD_CNTL_DIR_NAME_LEN_MAX 32
 #define WCD_CPE_FLL_MAX_RETRIES 5

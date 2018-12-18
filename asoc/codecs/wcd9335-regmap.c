@@ -5,9 +5,9 @@
 
 #include <linux/regmap.h>
 #include <linux/device.h>
-#include "core.h"
-#include "wcd9xxx-regmap.h"
-#include "wcd9335_registers.h"
+#include <asoc/core.h>
+#include <asoc/wcd9xxx-regmap.h>
+#include <asoc/wcd9335_registers.h>
 
 static const struct reg_sequence wcd9335_1_x_defaults[] = {
 	{ WCD9335_CODEC_RPM_CLK_GATE,                     0x03,  0x00 },

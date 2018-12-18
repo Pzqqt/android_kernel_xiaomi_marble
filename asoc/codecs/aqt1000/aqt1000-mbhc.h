@@ -3,7 +3,7 @@
  */
 #ifndef __AQT1000_MBHC_H__
 #define __AQT1000_MBHC_H__
-#include "../wcd-mbhc-v2.h"
+#include <asoc/wcd-mbhc-v2.h>
 
 struct aqt1000_mbhc {
 	struct wcd_mbhc wcd_mbhc;

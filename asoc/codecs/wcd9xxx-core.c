@@ -15,14 +15,14 @@
 #include <linux/regmap.h>
 #include <linux/mfd/wcd9xxx/wcd9xxx_registers.h>
 #include <sound/soc.h>
-#include "core.h"
-#include "pdata.h"
-#include "msm-cdc-pinctrl.h"
-#include "msm-cdc-supply.h"
-#include "wcd9xxx-irq.h"
+#include <asoc/core.h>
+#include <asoc/pdata.h>
+#include <asoc/msm-cdc-pinctrl.h>
+#include <asoc/msm-cdc-supply.h>
+#include <asoc/wcd9xxx-irq.h>
 #include "wcd9xxx-utils.h"
-#include "wcd9xxx-regmap.h"
-#include "wcd9xxx-slimslave.h"
+#include <asoc/wcd9xxx-regmap.h>
+#include <asoc/wcd9xxx-slimslave.h>
 
 #define WCD9XXX_REGISTER_START_OFFSET 0x800
 #define WCD9XXX_SLIM_RW_MAX_TRIES 3

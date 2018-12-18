@@ -25,11 +25,11 @@
 #include <dsp/q6core.h>
 #include "device_event.h"
 #include "msm-pcm-routing-v2.h"
-#include "codecs/msm-cdc-pinctrl.h"
+#include <asoc/msm-cdc-pinctrl.h>
 #include "codecs/wcd934x/wcd934x.h"
 #include "codecs/wcd934x/wcd934x-mbhc.h"
 #include "codecs/wsa881x.h"
-#include "codecs/wcd-mbhc-v2.h"
+#include <asoc/wcd-mbhc-v2.h>
 
 #define DRV_NAME "sm8150-asoc-snd"
 

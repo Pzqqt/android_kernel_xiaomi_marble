@@ -7,8 +7,8 @@
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <sound/soc.h>
-#include "wcd9xxx-resmgr-v2.h"
-#include "core.h"
+#include <asoc/wcd9xxx-resmgr-v2.h>
+#include <asoc/core.h>
 
 #define WCD9XXX_RCO_CALIBRATION_DELAY_INC_US 5000
 /* This register is valid only for WCD9335 */

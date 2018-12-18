@@ -13,9 +13,9 @@
 #include <sound/tlv.h>
 #include <soc/swr-common.h>
 #include <soc/swr-wcd.h>
+#include <asoc/msm-cdc-pinctrl.h>
 #include "bolero-cdc.h"
 #include "bolero-cdc-registers.h"
-#include "../msm-cdc-pinctrl.h"
 
 #define TX_MACRO_MAX_OFFSET 0x1000
 

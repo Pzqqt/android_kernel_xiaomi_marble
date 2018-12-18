@@ -3,7 +3,7 @@
  */
 #ifndef __WCD937X_MBHC_H__
 #define __WCD937X_MBHC_H__
-#include "../wcd-mbhc-v2.h"
+#include <asoc/wcd-mbhc-v2.h>
 
 struct wcd937x_mbhc {
 	struct wcd_mbhc wcd_mbhc;

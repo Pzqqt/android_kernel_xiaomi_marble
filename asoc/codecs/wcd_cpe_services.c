@@ -11,7 +11,7 @@
 #include <linux/delay.h>
 #include <sound/soc.h>
 #include "wcd9335_registers.h"
-#include "core.h"
+#include <asoc/core.h>
 #include "cpe_cmi.h"
 #include "wcd_cpe_services.h"
 #include "wcd_cmi_api.h"

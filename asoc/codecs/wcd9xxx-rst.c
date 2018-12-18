@@ -7,8 +7,8 @@
 #include <linux/device.h>
 #include <linux/regmap.h>
 #include <linux/delay.h>
-#include "core.h"
-#include "pdata.h"
+#include <asoc/core.h>
+#include <asoc/pdata.h>
 #include "wcd9xxx-utils.h"
 #include "wcd9335_registers.h"
 #include "wcd9335_irq.h"

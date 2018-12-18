@@ -1,10 +1,10 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  */
 #ifndef __WCD_MBHC_ADC_H__
 #define __WCD_MBHC_ADC_H__
 
-#include "wcd-mbhc-v2.h"
+#include <asoc/wcd-mbhc-v2.h>
 
 enum wcd_mbhc_adc_mux_ctl {
 	MUX_CTL_AUTO = 0,

@@ -20,8 +20,8 @@
 #include <sound/soc.h>
 #include <sound/jack.h>
 #include "wcd-mbhc-adc.h"
-#include "wcd-mbhc-v2.h"
-#include "pdata.h"
+#include <asoc/wcd-mbhc-v2.h>
+#include <asoc/pdata.h>
 
 #define WCD_MBHC_ADC_HS_THRESHOLD_MV    1700
 #define WCD_MBHC_ADC_HPH_THRESHOLD_MV   75
