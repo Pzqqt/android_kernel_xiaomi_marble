@@ -1122,6 +1122,7 @@ void csr_saved_scan_cmd_free_fields(struct mac_context *mac_ctx,
 				    struct csr_roam_session *session)
 {
 	if (session->scan_info.profile) {
+		sme_debug("Free profile for session %d", session->sessionId);
 		csr_release_profile(mac_ctx,
 				    session->scan_info.profile);
 		qdf_mem_free(session->scan_info.profile);
@@ -1212,6 +1213,7 @@ static void csr_handle_nxt_cmd(struct mac_context *mac_ctx,
 			       uint8_t chan)
 {
 	QDF_STATUS status, ret;
+	struct csr_roam_session *session;
 
 	switch (nxt_cmd) {
 
@@ -1232,7 +1234,7 @@ static void csr_handle_nxt_cmd(struct mac_context *mac_ctx,
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			/* csr_save_profile should report error */
 			sme_err("profile save failed %d", status);
-			return;
+			break;
 		}
 
 		if (QDF_STATUS_E_FAILURE == ret) {
@@ -1247,10 +1249,14 @@ static void csr_handle_nxt_cmd(struct mac_context *mac_ctx,
 		/* Else: Set hw mode was issued and the saved connect would
 		 * be issued after set hw mode response
 		 */
-		break;
+		if (QDF_IS_STATUS_SUCCESS(status))
+			return;
 	default:
 		break;
 	}
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (session)
+		csr_saved_scan_cmd_free_fields(mac_ctx, session);
 }
 
 void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
@@ -1300,14 +1306,6 @@ void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
 	/* We reuse the command here instead reissue a new command */
 	csr_handle_nxt_cmd(mac_ctx, NextCommand,
 			   session_id, chan);
-
-	if (session->scan_info.profile != NULL) {
-		sme_debug("Free the profile scan_id %d", event->scan_id);
-		csr_release_profile(mac_ctx, session->scan_info.profile);
-		qdf_mem_free(session->scan_info.profile);
-		session->scan_info.profile = NULL;
-	}
-
 }
 
 tCsrScanResultInfo *csr_scan_result_get_first(struct mac_context *mac,
