@@ -6035,51 +6035,7 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 
 		dp_aggregate_vdev_stats(vdev, vdev_stats);
 		dp_update_pdev_stats(pdev, vdev_stats);
-
-		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.nawds_mcast);
-
-		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.rcvd);
-		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.processed);
-		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.reinject_pkts);
-		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.inspect_pkts);
-		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.raw.raw_pkt);
-		DP_STATS_AGGR(pdev, vdev, tx_i.raw.dma_map_error);
-		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.tso.tso_pkt);
-		DP_STATS_AGGR(pdev, vdev, tx_i.tso.dropped_host.num);
-		DP_STATS_AGGR(pdev, vdev, tx_i.tso.dropped_target);
-		DP_STATS_AGGR(pdev, vdev, tx_i.sg.dropped_host.num);
-		DP_STATS_AGGR(pdev, vdev, tx_i.sg.dropped_target);
-		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.sg.sg_pkt);
-		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.mcast_en.mcast_pkt);
-		DP_STATS_AGGR(pdev, vdev,
-				tx_i.mcast_en.dropped_map_error);
-		DP_STATS_AGGR(pdev, vdev,
-				tx_i.mcast_en.dropped_self_mac);
-		DP_STATS_AGGR(pdev, vdev,
-				tx_i.mcast_en.dropped_send_fail);
-		DP_STATS_AGGR(pdev, vdev, tx_i.mcast_en.ucast);
-		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.dma_error);
-		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.ring_full);
-		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.enqueue_fail);
-		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.desc_na.num);
-		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.res_full);
-		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.headroom_insufficient);
-		DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified);
-		DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified_raw);
-		DP_STATS_AGGR(pdev, vdev, tx_i.mesh.exception_fw);
-		DP_STATS_AGGR(pdev, vdev, tx_i.mesh.completion_fw);
-
-		pdev->stats.tx_i.dropped.dropped_pkt.num =
-			pdev->stats.tx_i.dropped.dma_error +
-			pdev->stats.tx_i.dropped.ring_full +
-			pdev->stats.tx_i.dropped.enqueue_fail +
-			pdev->stats.tx_i.dropped.desc_na.num +
-			pdev->stats.tx_i.dropped.res_full;
-
-		pdev->stats.tx.last_ack_rssi =
-			vdev->stats.tx.last_ack_rssi;
-		pdev->stats.tx_i.tso.num_seg =
-			vdev->stats.tx_i.tso.num_seg;
+		dp_update_pdev_ingress_stats(pdev, vdev);
 	}
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 	qdf_mem_free(vdev_stats);
