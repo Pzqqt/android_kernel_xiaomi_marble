@@ -236,7 +236,7 @@ bool utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
 	struct wlan_dfs *dfs;
 	struct dfs_channel chan;
 
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs)
 		return false;
 	utils_fill_dfs_chan_info(&chan, wlan_chan);
@@ -404,7 +404,7 @@ QDF_STATUS utils_dfs_bw_reduce(struct wlan_objmgr_pdev *pdev, bool bw_reduce)
 {
 	struct wlan_dfs *dfs;
 
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
@@ -420,7 +420,7 @@ QDF_STATUS utils_dfs_is_bw_reduce(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs;
 
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
@@ -436,7 +436,7 @@ QDF_STATUS utils_dfs_fetch_nol_ie_info(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs;
 
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
@@ -452,7 +452,7 @@ QDF_STATUS utils_dfs_set_rcsa_flags(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs;
 
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
@@ -467,7 +467,7 @@ QDF_STATUS utils_dfs_get_rcsa_flags(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs;
 
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 	dfs_get_rcsa_flags(dfs, is_rcsa_ie_sent, is_nol_ie_sent);
@@ -482,7 +482,7 @@ bool utils_dfs_process_nol_ie_bitmap(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs;
 
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs)
 		return  false;
 	return dfs_process_nol_ie_bitmap(dfs, nol_ie_bandwidth,

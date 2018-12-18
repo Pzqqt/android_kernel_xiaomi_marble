@@ -71,8 +71,6 @@ struct dfs_to_mlme {
 	QDF_STATUS (*pdev_component_obj_detach)(struct wlan_objmgr_pdev *pdev,
 			enum wlan_umac_comp_id id,
 			void *comp_priv_obj);
-	struct wlan_dfs *(*pdev_get_comp_private_obj)(
-			struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_start_rcsa)(struct wlan_objmgr_pdev *pdev,
 			bool *wait_for_csa);
 	QDF_STATUS (*mlme_mark_dfs)(struct wlan_objmgr_pdev *pdev,
