@@ -13846,58 +13846,6 @@ QDF_STATUS csr_roam_del_pmkid_from_cache(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-uint32_t csr_roam_get_num_pmkid_cache(struct mac_context *mac, uint32_t sessionId)
-{
-	return mac->roam.roamSession[sessionId].NumPmkidCache;
-}
-
-QDF_STATUS csr_roam_get_pmkid_cache(struct mac_context *mac, uint32_t sessionId,
-				   uint32_t *pNum, tPmkidCacheInfo *pPmkidCache)
-{
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-	tPmkidCacheInfo *pmksa;
-	uint16_t i, j;
-
-	if (!pSession) {
-		sme_err("session %d not found", sessionId);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!pNum || !pPmkidCache) {
-		sme_err("Either pNum or pPmkidCache is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (pSession->NumPmkidCache == 0) {
-		*pNum = 0;
-		return QDF_STATUS_SUCCESS;
-	}
-
-	if (*pNum < pSession->NumPmkidCache)
-		return QDF_STATUS_E_FAILURE;
-
-	if (pSession->NumPmkidCache > CSR_MAX_PMKID_ALLOWED) {
-		sme_err("NumPmkidCache :%d is more than CSR_MAX_PMKID_ALLOWED, resetting to CSR_MAX_PMKID_ALLOWED",
-			pSession->NumPmkidCache);
-		pSession->NumPmkidCache = CSR_MAX_PMKID_ALLOWED;
-	}
-
-	for (i = 0, j = 0; ((j < pSession->NumPmkidCache) &&
-		(i < CSR_MAX_PMKID_ALLOWED)); i++) {
-		/* Fill the valid entries */
-		pmksa = &pSession->PmkidCacheInfo[i];
-		if (!qdf_is_macaddr_zero(&pmksa->BSSID)) {
-			qdf_mem_copy(pPmkidCache, pmksa,
-				     sizeof(tPmkidCacheInfo));
-			pPmkidCache++;
-			j++;
-		}
-	}
-
-	*pNum = pSession->NumPmkidCache;
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS csr_roam_get_wpa_rsn_req_ie(struct mac_context *mac, uint32_t sessionId,
 				       uint32_t *pLen, uint8_t *pBuf)
 {

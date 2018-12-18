@@ -766,29 +766,6 @@ QDF_STATUS csr_roam_get_wpa_rsn_req_ie(struct mac_context *mac, uint32_t session
 QDF_STATUS csr_roam_get_wpa_rsn_rsp_ie(struct mac_context *mac, uint32_t sessionId,
 				       uint32_t *pLen, uint8_t *pBuf);
 
-/*
- * csr_roam_get_num_pmkid_cache() -
- * Return number of PMKID cache entries
- *
- * Return uint32_t - the number of PMKID cache entries
- */
-uint32_t csr_roam_get_num_pmkid_cache(struct mac_context *mac, uint32_t sessionId);
-
-/*
- * csr_roam_get_pmkid_cache() -
- * Return PMKID cache from CSR
- *
- * pNum - caller allocated memory that has the space of the number of pBuf
- * tPmkidCacheInfo as input. Upon returned, *pNum has the needed or actually
- * number in tPmkidCacheInfo.
- * pPmkidCache - Caller allocated memory that contains PMKID cache, if any,
- * upon return
- * Return QDF_STATUS - when fail, it usually means the buffer allocated is
- * not big enough
- */
-QDF_STATUS csr_roam_get_pmkid_cache(struct mac_context *mac, uint32_t sessionId,
-				  uint32_t *pNum, tPmkidCacheInfo *pPmkidCache);
-
 /**
  * csr_roam_get_connect_profile() - To return the current connect profile,
  * caller must call csr_roam_free_connect_profile after it is done and before
