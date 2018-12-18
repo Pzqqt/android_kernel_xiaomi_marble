@@ -2251,7 +2251,6 @@ cppflags-$(CONFIG_QCACLD_FEATURE_APF) += -DFEATURE_WLAN_APF
 cppflags-$(CONFIG_WLAN_FEATURE_SARV1_TO_SARV2) += -DWLAN_FEATURE_SARV1_TO_SARV2
 #CRYPTO Coverged Component
 cppflags-$(CONFIG_CRYPTO_COMPONENT) += -DWLAN_CONV_CRYPTO_SUPPORTED \
-                                       -DWLAN_CONV_CRYPTO_IE_SUPPORT \
                                        -DWLAN_CRYPTO_WEP_OS_DERIVATIVE \
                                        -DWLAN_CRYPTO_TKIP_OS_DERIVATIVE \
                                        -DWLAN_CRYPTO_CCMP_OS_DERIVATIVE \
