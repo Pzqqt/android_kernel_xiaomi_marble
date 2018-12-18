@@ -13996,6 +13996,11 @@ static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
 	if (hdd_driver->state == driver_state_uninit)
 		return 0;
 
+	if (hdd_driver->state == driver_state_deinit) {
+		hdd_err_rl("driver is unloaded so load again");
+		return -EAGAIN;
+	}
+
 	status = dsc_driver_trans_start_wait(hdd_driver->dsc_driver,
 					     "mode change");
 	if (QDF_IS_STATUS_ERROR(status)) {
