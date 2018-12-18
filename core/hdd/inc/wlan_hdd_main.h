@@ -1249,8 +1249,6 @@ struct hdd_adapter {
 	struct completion offchannel_tx_event;
 	/* Completion variable for action frame */
 	struct completion tx_action_cnf_event;
-	/* Completion variable for remain on channel ready */
-	struct completion rem_on_chan_ready_event;
 
 	struct completion sta_authorized_event;
 
