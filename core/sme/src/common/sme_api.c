@@ -2783,44 +2783,6 @@ bool sme_clear_joinreq_param(mac_handle_t mac_handle,
 	return ret_status;
 }
 
-/**
- * sme_issue_stored_joinreq() - This function will issues station's stored
- * the join request to csr.
- * @mac_handle: Opaque handle to the global MAC context.
- * @roam_id: reference to roam_id variable being passed.
- * @session_id: station's session id.
- *
- * This function will issue station's stored join request further down to csr
- * to proceed forward.
- *
- * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE.
- **/
-QDF_STATUS sme_issue_stored_joinreq(mac_handle_t mac_handle,
-				    uint32_t *roam_id,
-				    uint32_t session_id)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	QDF_STATUS ret_status = QDF_STATUS_SUCCESS;
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-				TRACE_CODE_SME_RX_HDD_ISSUE_JOIN_REQ,
-				session_id, 0));
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		if (QDF_STATUS_SUCCESS != csr_issue_stored_joinreq(mac_ctx,
-					roam_id,
-					session_id)) {
-			ret_status = QDF_STATUS_E_FAILURE;
-		}
-		sme_release_global_lock(&mac_ctx->sme);
-	} else {
-		csr_clear_joinreq_param(mac_ctx, session_id);
-		ret_status = QDF_STATUS_E_FAILURE;
-	}
-	return ret_status;
-}
-
 /*
  * sme_scan_flush_result() -
  * A wrapper function to request CSR to clear scan results.
