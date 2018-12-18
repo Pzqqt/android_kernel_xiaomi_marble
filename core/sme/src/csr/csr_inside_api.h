@@ -804,15 +804,6 @@ QDF_STATUS csr_roam_get_pmkid_cache(struct mac_context *mac, uint32_t sessionId,
 QDF_STATUS csr_roam_get_connect_profile(struct mac_context *mac, uint32_t sessionId,
 					tCsrRoamConnectedProfile *pProfile);
 
-/*
- * csr_roam_get_connect_state()
- *  To return the current connect state of Roaming
- *
- * Return QDF_STATUS
- */
-QDF_STATUS csr_roam_get_connect_state(struct mac_context *mac, uint32_t sessionId,
-				      eCsrConnectState *pState);
-
 void csr_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
 
 /*

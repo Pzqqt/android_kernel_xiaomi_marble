@@ -1437,18 +1437,6 @@ void csr_roam_stop(struct mac_context *mac, uint32_t sessionId)
 	csr_roam_dereg_statistics_req(mac);
 }
 
-QDF_STATUS csr_roam_get_connect_state(struct mac_context *mac, uint32_t sessionId,
-				      eCsrConnectState *pState)
-{
-	QDF_STATUS status = QDF_STATUS_E_INVAL;
-
-	if (CSR_IS_SESSION_VALID(mac, sessionId) && (NULL != pState)) {
-		status = QDF_STATUS_SUCCESS;
-		*pState = mac->roam.roamSession[sessionId].connectState;
-	}
-	return status;
-}
-
 QDF_STATUS csr_roam_copy_connect_profile(struct mac_context *mac,
 			uint32_t sessionId, tCsrRoamConnectedProfile *pProfile)
 {
