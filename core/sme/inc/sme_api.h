@@ -745,7 +745,6 @@ QDF_STATUS sme_set_tm_level(mac_handle_t mac_handle, uint16_t newTMLevel,
 		uint16_t tmMode);
 void sme_feature_caps_exchange(mac_handle_t mac_handle);
 void sme_disable_feature_capablity(uint8_t feature_index);
-void sme_reset_power_values_for5_g(mac_handle_t mac_handle);
 QDF_STATUS sme_update_roam_scan_n_probes(mac_handle_t mac_handle,
 					 uint8_t sessionId,
 					 const uint8_t nProbes);

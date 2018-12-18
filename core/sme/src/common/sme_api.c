@@ -6187,24 +6187,6 @@ void sme_disable_feature_capablity(uint8_t feature_index)
 }
 
 /*
- * sme_reset_power_values_for5_g
- * Reset the power values for 5G band with default power values.
- *
- * mac_handle: Opaque handle to the global MAC context
- * Return NONE
- */
-void sme_reset_power_values_for5_g(mac_handle_t mac_handle)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_RESET_PW5G, NO_SESSION, 0));
-	csr_save_channel_power_for_band(mac, true);
-	/* Store the channel+power info in the global place: Cfg */
-	csr_apply_power2_current(mac);
-}
-
-/*
  * sme_update_roam_scan_n_probes() -
  * Function to update roam scan N probes
  *	    This function is called through dynamic setConfig callback function
