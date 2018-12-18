@@ -91,6 +91,11 @@ static void dp_ppdu_ring_cfg(struct dp_pdev *pdev);
 #define DP_CURR_FW_STATS_AVAIL 19
 #define DP_HTT_DBG_EXT_STATS_MAX 256
 #define DP_MAX_SLEEP_TIME 100
+#ifndef QCA_WIFI_3_0_EMU
+#define SUSPEND_DRAIN_WAIT 500
+#else
+#define SUSPEND_DRAIN_WAIT 3000
+#endif
 
 #ifdef IPA_OFFLOAD
 /* Exclude IPA rings from the interrupt context */
@@ -9154,6 +9159,19 @@ static QDF_STATUS dp_bus_suspend(struct cdp_pdev *opaque_pdev)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)opaque_pdev;
 	struct dp_soc *soc = pdev->soc;
+	int timeout = SUSPEND_DRAIN_WAIT;
+	int drain_wait_delay = 50; /* 50 ms */
+
+	/* Abort if there are any pending TX packets */
+	while (dp_get_tx_pending(opaque_pdev) > 0) {
+		qdf_sleep(drain_wait_delay);
+		if (timeout <= 0) {
+			dp_err("TX frames are pending, abort suspend");
+			return QDF_STATUS_E_TIMEOUT;
+		}
+		timeout = timeout - drain_wait_delay;
+	}
+
 
 	if (soc->intr_mode == DP_INTR_POLL)
 		qdf_timer_stop(&soc->int_timer);
