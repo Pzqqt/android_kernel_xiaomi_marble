@@ -1013,10 +1013,6 @@ const char *sme_bss_type_to_string(const uint8_t bss_type);
 QDF_STATUS sme_ap_disable_intra_bss_fwd(mac_handle_t mac_handle,
 					uint8_t sessionId,
 					bool disablefwd);
-QDF_STATUS sme_get_channel_bonding_mode5_g(mac_handle_t mac_handle,
-					   uint32_t *mode);
-QDF_STATUS sme_get_channel_bonding_mode24_g(mac_handle_t mac_handle,
-					    uint32_t *mode);
 
 /**
  * sme_send_unit_test_cmd() - send unit test command to lower layer
