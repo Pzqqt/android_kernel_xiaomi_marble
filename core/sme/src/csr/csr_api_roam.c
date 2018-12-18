@@ -5842,21 +5842,6 @@ void csr_reset_pmkid_candidate_list(struct mac_context *mac,
 	pSession->NumPmkidCandidate = 0;
 }
 
-#ifdef FEATURE_WLAN_WAPI
-void csr_reset_bkid_candidate_list(struct mac_context *mac, uint32_t sessionId)
-{
-	struct csr_roam_session *pSession = CSR_GET_SESSION(mac, sessionId);
-
-	if (!pSession) {
-		sme_err("session: %d not found", sessionId);
-		return;
-	}
-	qdf_mem_set(&(pSession->BkidCandidateInfo[0]),
-		    sizeof(tBkidCandidateInfo) * CSR_MAX_BKID_ALLOWED, 0);
-	pSession->NumBkidCandidate = 0;
-}
-#endif /* FEATURE_WLAN_WAPI */
-
 /**
  * csr_roam_save_params() - Helper function to save params
  * @mac_ctx: pointer to mac context
@@ -7213,9 +7198,6 @@ static void csr_roam_process_join_res(struct mac_context *mac_ctx,
 		csr_roam_completion(mac_ctx, session_id, NULL, cmd,
 				eCSR_ROAM_RESULT_NONE, true);
 		csr_reset_pmkid_candidate_list(mac_ctx, session_id);
-#ifdef FEATURE_WLAN_WAPI
-		csr_reset_bkid_candidate_list(mac_ctx, session_id);
-#endif
 	} else {
 		sme_warn("Roam command doesn't have a BSS desc");
 	}
@@ -21383,9 +21365,6 @@ static QDF_STATUS csr_process_roam_sync_callback(struct mac_context *mac_ctx,
 	csr_roam_call_callback(mac_ctx, session_id, roam_info, 0,
 		eCSR_ROAM_ASSOCIATION_COMPLETION, eCSR_ROAM_RESULT_ASSOCIATED);
 	csr_reset_pmkid_candidate_list(mac_ctx, session_id);
-#ifdef FEATURE_WLAN_WAPI
-	csr_reset_bkid_candidate_list(mac_ctx, session_id);
-#endif
 	if (!CSR_IS_WAIT_FOR_KEY(mac_ctx, session_id)) {
 		QDF_TRACE(QDF_MODULE_ID_SME,
 				QDF_TRACE_LEVEL_DEBUG,

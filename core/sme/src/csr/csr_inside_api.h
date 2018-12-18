@@ -409,9 +409,6 @@ void csr_roam_completion(struct mac_context *mac, uint32_t sessionId,
 void csr_roam_cancel_roaming(struct mac_context *mac, uint32_t sessionId);
 void csr_apply_channel_power_info_wrapper(struct mac_context *mac);
 void csr_reset_pmkid_candidate_list(struct mac_context *mac, uint32_t sessionId);
-#ifdef FEATURE_WLAN_WAPI
-void csr_reset_bkid_candidate_list(struct mac_context *mac, uint32_t sessionId);
-#endif /* FEATURE_WLAN_WAPI */
 QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 					uint32_t tableSize, tSirMacChanInfo
 					*channelTable);

@@ -707,10 +707,6 @@ struct csr_roam_session {
 	uint32_t roamingStatusCode;
 	uint16_t NumPmkidCandidate;
 	tPmkidCandidateInfo PmkidCandidateInfo[CSR_MAX_PMKID_ALLOWED];
-#ifdef FEATURE_WLAN_WAPI
-	uint16_t NumBkidCandidate;
-	tBkidCandidateInfo BkidCandidateInfo[CSR_MAX_BKID_ALLOWED];
-#endif
 	bool fWMMConnection;
 	bool fQOSConnection;
 #ifdef FEATURE_WLAN_ESE
