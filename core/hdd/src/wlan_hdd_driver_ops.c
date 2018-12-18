@@ -461,6 +461,12 @@ static int hdd_soc_probe(struct device *dev,
 	cds_set_load_in_progress(true);
 	cds_set_driver_in_bad_state(false);
 
+	/*
+	 * Set Recovery in progress flag to flase
+	 * as probe is started which ensures that FW is ready
+	 */
+	cds_set_recovery_in_progress(false);
+
 	errno = hdd_init_qdf_ctx(dev, bdev, bus_type, bid);
 	if (errno)
 		goto unlock;
