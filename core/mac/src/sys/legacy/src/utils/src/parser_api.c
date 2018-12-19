@@ -5387,64 +5387,6 @@ de_populate_dot11f_wsc_registrar_info_in_probe_res(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS populate_dot11f_assoc_res_wsc_ie(struct mac_context *mac,
-					    tDot11fIEWscAssocRes *pDot11f,
-					    tpSirAssocReq pRcvdAssocReq)
-{
-	uint32_t ret;
-	const uint8_t *wscIe;
-	tDot11fIEWscAssocReq parsedWscAssocReq = { 0, };
-
-	wscIe = limGetWscIEPtr(mac, pRcvdAssocReq->addIE.addIEdata,
-			       pRcvdAssocReq->addIE.length);
-	if (wscIe != NULL) {
-		/* retrieve WSC IE from given AssocReq */
-		ret = dot11f_unpack_ie_wsc_assoc_req(mac,
-						     /* EID, length, OUI */
-						     (uint8_t *)wscIe + 2 + 4,
-						     /* length without OUI */
-						     wscIe[1] - 4,
-						     &parsedWscAssocReq, false);
-		if (!DOT11F_SUCCEEDED(ret)) {
-			pe_err("unpack failed, ret: %d", ret);
-			return QDF_STATUS_E_INVAL;
-		}
-
-		pDot11f->present = 1;
-		/* version has to be 0x10 */
-		pDot11f->Version.present = 1;
-		pDot11f->Version.major = 0x1;
-		pDot11f->Version.minor = 0x0;
-
-		pDot11f->ResponseType.present = 1;
-
-		if ((parsedWscAssocReq.RequestType.reqType ==
-		     REQ_TYPE_REGISTRAR)
-		    || (parsedWscAssocReq.RequestType.reqType ==
-			REQ_TYPE_WLAN_MANAGER_REGISTRAR)) {
-			pDot11f->ResponseType.resType =
-				RESP_TYPE_ENROLLEE_OPEN_8021X;
-		} else {
-			pDot11f->ResponseType.resType = RESP_TYPE_AP;
-		}
-		/* Version infomration should be taken from our capability as well as peers */
-		/* TODO: currently it takes from peers only */
-		if (parsedWscAssocReq.VendorExtension.present &&
-		    parsedWscAssocReq.VendorExtension.Version2.present) {
-			pDot11f->VendorExtension.present = 1;
-			pDot11f->VendorExtension.vendorId[0] = 0x00;
-			pDot11f->VendorExtension.vendorId[1] = 0x37;
-			pDot11f->VendorExtension.vendorId[2] = 0x2A;
-			pDot11f->VendorExtension.Version2.present = 1;
-			pDot11f->VendorExtension.Version2.major =
-				parsedWscAssocReq.VendorExtension.Version2.major;
-			pDot11f->VendorExtension.Version2.minor =
-				parsedWscAssocReq.VendorExtension.Version2.minor;
-		}
-	}
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS populate_dot11_assoc_res_p2p_ie(struct mac_context *mac,
 					   tDot11fIEP2PAssocRes *pDot11f,
 					   tpSirAssocReq pRcvdAssocReq)

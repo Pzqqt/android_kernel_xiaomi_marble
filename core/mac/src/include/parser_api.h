@@ -985,10 +985,6 @@ QDF_STATUS
 de_populate_dot11f_wsc_registrar_info_in_probe_res(struct mac_context *mac,
 						tDot11fIEWscProbeRes *pDot11f);
 
-QDF_STATUS populate_dot11f_assoc_res_wsc_ie(struct mac_context *mac,
-					tDot11fIEWscAssocRes *pDot11f,
-					tpSirAssocReq pRcvdAssocReq);
-
 QDF_STATUS populate_dot11_assoc_res_p2p_ie(struct mac_context *mac,
 					tDot11fIEP2PAssocRes *pDot11f,
 					tpSirAssocReq pRcvdAssocReq);
