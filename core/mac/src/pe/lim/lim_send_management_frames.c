@@ -89,37 +89,6 @@ static void lim_add_mgmt_seq_num(struct mac_context *mac, tpSirMacMgmtHdr pMacHd
 }
 
 /**
- *
- * \brief This function is called before sending a p2p action frame
- * inorder to add sequence numbers to action packets
- *
- * \param  mac Pointer to Global MAC structure
- *
- * \param pBD Pointer to the frame buffer that needs to be populate
- *
- * The pMacHdr argument points to the MAC management header. The
- * sequence number stored in the mac structure will be incremented
- * and updated to the MAC management header. The start sequence
- * number is WLAN_HOST_SEQ_NUM_MIN and the end value is
- * WLAN_HOST_SEQ_NUM_MAX. After reaching the MAX value, the sequence
- * number will roll over.
- *
- */
-void lim_populate_p2p_mac_header(struct mac_context *mac, uint8_t *pBD)
-{
-	tpSirMacMgmtHdr pMacHdr;
-
-	/* / Prepare MAC management header */
-	pMacHdr = (tpSirMacMgmtHdr) (pBD);
-
-	/* Prepare sequence number */
-	lim_add_mgmt_seq_num(mac, pMacHdr);
-	pe_debug("seqNumLo=%d, seqNumHi=%d, mgmtSeqNum=%d",
-		pMacHdr->seqControl.seqNumLo,
-		pMacHdr->seqControl.seqNumHi, mac->mgmtSeqNum);
-}
-
-/**
  * lim_populate_mac_header() - Fill in 802.11 header of frame
  *
  * @mac_ctx: Pointer to Global MAC structure

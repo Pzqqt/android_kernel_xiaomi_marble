@@ -520,7 +520,6 @@ void lim_perform_deauth(struct mac_context *mac_ctx, struct pe_session *pe_sessi
 void lim_process_action_frame(struct mac_context *, uint8_t *, struct pe_session *);
 void lim_process_action_frame_no_session(struct mac_context *mac, uint8_t *pRxMetaInfo);
 
-void lim_populate_p2p_mac_header(struct mac_context *, uint8_t *);
 void lim_populate_mac_header(struct mac_context *, uint8_t *, uint8_t, uint8_t,
 				      tSirMacAddr, tSirMacAddr);
 QDF_STATUS lim_send_probe_req_mgmt_frame(struct mac_context *, tSirMacSSid *,
