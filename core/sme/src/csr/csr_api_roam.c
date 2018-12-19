@@ -20257,48 +20257,6 @@ static bool csr_is_conn_allow_5g_band(struct mac_context *mac_ctx, uint32_t chnl
 }
 
 /**
- * csr_store_joinreq_param() - This function will store station's join
- * request to that station's session.
- * @mac_ctx: pointer to mac context.
- * @profile: pointer to station's roam profile.
- * @scan_cache: pointer to station's scan cache.
- * @roam_id: reference to roam_id variable being passed.
- * @session_id: station's session id.
- *
- * This function will store station's join request to one of the
- * csr structure and add it to station's session.
- *
- * Return: true or false based on function's overall success.
- **/
-bool csr_store_joinreq_param(struct mac_context *mac_ctx,
-		struct csr_roam_profile *profile,
-		tScanResultHandle scan_cache,
-		uint32_t *roam_id,
-		uint32_t session_id)
-{
-	struct csr_roam_session *sta_session;
-
-	if (NULL == mac_ctx)
-		return false;
-
-	sta_session = CSR_GET_SESSION(mac_ctx, session_id);
-	if (NULL == sta_session)
-		return false;
-
-	sta_session->stored_roam_profile.session_id = session_id;
-	csr_roam_copy_profile(mac_ctx,
-			&sta_session->stored_roam_profile.profile, profile);
-	/* new bsslist_handle's memory will be relased later */
-	sta_session->stored_roam_profile.bsslist_handle = scan_cache;
-	sta_session->stored_roam_profile.reason = eCsrHddIssued;
-	sta_session->stored_roam_profile.roam_id = *roam_id;
-	sta_session->stored_roam_profile.imediate_flag = false;
-	sta_session->stored_roam_profile.clear_flag = false;
-
-	return true;
-}
-
-/**
  * csr_process_set_hw_mode() - Set HW mode command to PE
  * @mac: Globacl MAC pointer
  * @command: Command received from SME
