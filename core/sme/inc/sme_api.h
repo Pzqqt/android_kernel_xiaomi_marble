@@ -688,8 +688,6 @@ QDF_STATUS sme_configure_app_type2_params(mac_handle_t mac_handle,
 		tpSirAppType2Params wlanAppType2Params);
 #endif
 int8_t sme_get_infra_session_id(mac_handle_t mac_handle);
-uint8_t sme_get_infra_operation_channel(mac_handle_t mac_handle,
-					uint8_t sessionId);
 uint8_t sme_get_concurrent_operation_channel(mac_handle_t mac_handle);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 uint16_t sme_check_concurrent_channel_overlap(mac_handle_t mac_handle,
