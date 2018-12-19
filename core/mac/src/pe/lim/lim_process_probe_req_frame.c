@@ -49,59 +49,6 @@ lim_send_sme_probe_req_ind(struct mac_context *mac,
 			   uint32_t ProbeReqIELen, struct pe_session *pe_session);
 
 /**
- * lim_get_wpspbc_sessions() - to get wps pbs sessions
- * @mac_ctx: Pointer to Global MAC structure
- * @addr: probe request source MAC address
- * @uuid_e: A pointer to UUIDE element of WPS IE in WPS PBC probe request
- * @session: A pointer to station PE session
- *
- * This function is called to query the WPS PBC overlap. This function
- * check WPS PBC probe request link list for PBC overlap
- *
- * @return None
- */
-
-void lim_get_wpspbc_sessions(struct mac_context *mac_ctx, struct qdf_mac_addr addr,
-		uint8_t *uuid_e, eWPSPBCOverlap *overlap,
-		struct pe_session *session)
-{
-	int count = 0;
-	tSirWPSPBCSession *pbc;
-	uint32_t cur_time;
-
-	cur_time = (uint32_t) (qdf_mc_timer_get_system_ticks() /
-						QDF_TICKS_PER_SECOND);
-	qdf_zero_macaddr(&addr);
-	qdf_mem_set((uint8_t *) uuid_e, SIR_WPS_UUID_LEN, 0);
-	for (pbc = session->pAPWPSPBCSession; pbc; pbc = pbc->next) {
-		if (cur_time > pbc->timestamp + SIR_WPS_PBC_WALK_TIME)
-			break;
-		count++;
-		if (count > 1)
-			break;
-		qdf_copy_macaddr(&addr, &pbc->addr);
-		qdf_mem_copy((uint8_t *) uuid_e, (uint8_t *) pbc->uuid_e,
-				SIR_WPS_UUID_LEN);
-	}
-	if (count > 1)
-		/* Overlap */
-		*overlap = eSAP_WPSPBC_OVERLAP_IN120S;
-	else if (count == 0)
-		/* no WPS probe request in 120 second */
-		*overlap = eSAP_WPSPBC_NO_WPSPBC_PROBE_REQ_IN120S;
-	else
-		/* One WPS probe request in 120 second */
-		*overlap = eSAP_WPSPBC_ONE_WPSPBC_PROBE_REQ_IN120S;
-
-	pe_debug("overlap: %d", *overlap);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			   addr.bytes, QDF_MAC_ADDR_SIZE);
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-			   uuid_e, SIR_WPS_UUID_LEN);
-	return;
-}
-
-/**
  * lim_remove_timeout_pbc_sessions() - remove pbc probe req entries.
  * @mac - Pointer to Global MAC structure
  * @pbc - The beginning entry in WPS PBC probe request link list

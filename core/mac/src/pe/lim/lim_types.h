@@ -923,9 +923,6 @@ void
 lim_send_vdev_restart(struct mac_context *mac, struct pe_session *pe_session,
 		      uint8_t sessionId);
 
-void lim_get_wpspbc_sessions(struct mac_context *mac, struct qdf_mac_addr addr,
-			uint8_t *uuid_e, eWPSPBCOverlap *overlap,
-			struct pe_session *pe_session);
 void limWPSPBCTimeout(struct mac_context *mac, struct pe_session *pe_session);
 void lim_wpspbc_close(struct mac_context *mac, struct pe_session *pe_session);
 
