@@ -227,7 +227,7 @@ static void usb_hif_free_pipe_resources(struct HIF_USB_PIPE *pipe)
 
 }
 
-#ifdef CONFIG_QCN7605
+#ifdef QCN7605_SUPPORT
 /**
  * usb_hif_get_logical_pipe_num() - get pipe number for a particular enpoint
  * @device: pointer to HIF_DEVICE_USB structure
@@ -323,7 +323,7 @@ static uint8_t usb_hif_get_logical_pipe_num
 
 	return pipe_num;
 }
-#endif /* CONFIG_QCN7605 */
+#endif /* QCN7605_SUPPORT */
 
 /**
  * usb_hif_get_logical_pipe_num() - setup urb resources for all pipes
