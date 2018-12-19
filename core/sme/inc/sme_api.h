@@ -455,8 +455,6 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 QDF_STATUS sme_get_ap_channel_from_scan(void *profile,
 		tScanResultHandle *scan_cache,
 		uint8_t *ap_chnl_id);
-bool sme_clear_joinreq_param(mac_handle_t mac_handle,
-		uint32_t session_id);
 QDF_STATUS sme_scan_flush_result(mac_handle_t mac_handle);
 tCsrScanResultInfo *sme_scan_result_get_first(mac_handle_t,
 		tScanResultHandle hScanResult);

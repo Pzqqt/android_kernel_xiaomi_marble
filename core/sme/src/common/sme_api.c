@@ -2709,40 +2709,6 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 	return status;
 }
 
-/**
- * sme_clear_joinreq_param() - This function will pass station's clear
- * the join request to csr.
- * @mac_handle: Opaque handle to the global MAC context.
- * @session_id: station's session id.
- *
- * This function will pass station's clear join request further down to csr
- * to cleanup.
- *
- * Return: true or false based on function's overall success.
- **/
-bool sme_clear_joinreq_param(mac_handle_t mac_handle,
-			     uint32_t session_id)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	bool ret_status = true;
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-				TRACE_CODE_SME_RX_HDD_CLEAR_JOIN_REQ,
-				session_id, 0));
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		if (false == csr_clear_joinreq_param(mac_ctx,
-					session_id))
-			ret_status = false;
-		sme_release_global_lock(&mac_ctx->sme);
-	} else {
-		ret_status = false;
-	}
-
-	return ret_status;
-}
-
 /*
  * sme_scan_flush_result() -
  * A wrapper function to request CSR to clear scan results.
