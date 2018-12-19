@@ -14779,29 +14779,6 @@ QDF_STATUS sme_set_smps_cfg(uint32_t vdev_id, uint32_t param_id,
 	return wma_configure_smps_params(vdev_id, param_id, param_val);
 }
 
-QDF_STATUS sme_ipa_uc_stat_request(mac_handle_t mac_handle, uint32_t vdev_id,
-				   uint32_t param_id, uint32_t param_val,
-				   uint32_t req_cat)
-{
-	wma_cli_set_cmd_t *iwcmd;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	iwcmd = qdf_mem_malloc(sizeof(*iwcmd));
-	if (!iwcmd)
-		return QDF_STATUS_E_NOMEM;
-
-	qdf_mem_zero(iwcmd, sizeof(*iwcmd));
-	iwcmd->param_sec_value = 0;
-	iwcmd->param_vdev_id = vdev_id;
-	iwcmd->param_id = param_id;
-	iwcmd->param_vp_dev = req_cat;
-	iwcmd->param_value =  param_val;
-	wma_ipa_uc_stat_request(iwcmd);
-	qdf_mem_free(iwcmd);
-
-	return status;
-}
-
 QDF_STATUS sme_set_reorder_timeout(mac_handle_t mac_handle,
 				   struct sir_set_rx_reorder_timeout_val *req)
 {
