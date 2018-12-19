@@ -360,10 +360,8 @@ static QDF_STATUS free_sme_cmd_list(struct mac_context *mac)
 	csr_ll_close(&mac->sme.smeCmdFreeList);
 
 	status = qdf_mutex_acquire(&mac->sme.lkSmeGlobalLock);
-	if (status != QDF_STATUS_SUCCESS) {
-		sme_err("Failed to acquire the lock status: %d", status);
+	if (status != QDF_STATUS_SUCCESS)
 		goto done;
-	}
 
 	free_sme_cmds(mac);
 
@@ -852,8 +850,6 @@ void sme_update_fine_time_measurement_capab(mac_handle_t mac_handle,
 			ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 			REASON_CONNECT_IES_CHANGED);
 		sme_release_global_lock(&mac_ctx->sme);
-	} else {
-		sme_err("Failed to acquire SME lock");
 	}
 }
 
@@ -1061,8 +1057,6 @@ QDF_STATUS sme_update_roam_params(mac_handle_t mac_handle,
 				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				      update_param);
 		sme_release_global_lock(&mac_ctx->sme);
-	} else {
-		sme_err("Failed to acquire SME lock");
 	}
 
 	sme_update_scan_roam_params(mac_ctx);
@@ -1450,7 +1444,6 @@ QDF_STATUS sme_update_is_ese_feature_enabled(mac_handle_t mac_handle,
 					      REASON_ESE_INI_CFG_CHANGED);
 			sme_release_global_lock(&mac->sme);
 		} else {
-			sme_err("Failed to acquire SME lock");
 			return status;
 		}
 	}
@@ -1740,10 +1733,9 @@ QDF_STATUS sme_set_ese_roam_scan_channel_list(mac_handle_t mac_handle,
 		&pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo;
 
 	status = sme_acquire_global_lock(&mac->sme);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("Failed to acquire SME lock");
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
-	}
+
 	if (NULL != curchnl_list_info->ChannelList) {
 		for (i = 0; i < curchnl_list_info->numOfChannels; i++) {
 			j += snprintf(oldChannelList + j,
@@ -1939,7 +1931,6 @@ QDF_STATUS sme_process_msg(struct mac_context *mac, struct scheduler_msg *pMsg)
 	}
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_warn("Locking failed, bailing out");
 		if (pMsg->bodyptr)
 			qdf_mem_free(pMsg->bodyptr);
 		return status;
@@ -2643,8 +2634,6 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(
 		csr_free_scan_filter(mac_ctx, scan_filter);
 		sme_release_global_lock(&mac_ctx->sme);
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				FL("Aquiring lock failed"));
 		csr_free_scan_filter(mac_ctx, scan_filter);
 		status = QDF_STATUS_E_FAILURE;
 	}
@@ -2799,8 +2788,6 @@ QDF_STATUS sme_roam_connect(mac_handle_t mac_handle, uint8_t sessionId,
 			status = QDF_STATUS_E_INVAL;
 		}
 		sme_release_global_lock(&mac->sme);
-	} else {
-		sme_err("sme_acquire_global_lock failed");
 	}
 
 	return status;
@@ -3569,7 +3556,6 @@ QDF_STATUS sme_roam_set_default_key_index(mac_handle_t mac_handle,
 	    scheduler_post_message(QDF_MODULE_ID_SME,
 				   QDF_MODULE_ID_WMA,
 				   QDF_MODULE_ID_WMA, &msg)) {
-		sme_err("Failed to post WMA_UPDATE_WEP_DEFAULT_KEY to WMA");
 		qdf_mem_free(update_key);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3797,7 +3783,6 @@ QDF_STATUS sme_generic_change_country_code(mac_handle_t mac_handle,
 		    scheduler_post_message(QDF_MODULE_ID_SME,
 					   QDF_MODULE_ID_SME,
 					   QDF_MODULE_ID_SME, &msg)) {
-			sme_err("sme_generic_change_country_code failed to post msg to self");
 			qdf_mem_free(pMsg);
 			status = QDF_STATUS_E_FAILURE;
 		}
@@ -5646,9 +5631,6 @@ QDF_STATUS sme_set_tx_power(mac_handle_t mac_handle, uint8_t sessionId,
 							 QDF_MODULE_ID_WMA,
 							 QDF_MODULE_ID_WMA,
 							 &msg)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to post WMA_SET_TX_POWER_REQ to WMA",
-			  __func__);
 		qdf_mem_free(pTxParams);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -7676,12 +7658,9 @@ QDF_STATUS sme_enable_rmc(mac_handle_t mac_handle, uint32_t sessionId)
 						    QDF_MODULE_ID_WMA,
 						    QDF_MODULE_ID_WMA,
 						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: failed to post message to WMA",
-				  __func__);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
-		}
+
 		sme_release_global_lock(&mac->sme);
 	}
 	return status;
@@ -7711,12 +7690,9 @@ QDF_STATUS sme_disable_rmc(mac_handle_t mac_handle, uint32_t sessionId)
 						    QDF_MODULE_ID_WMA,
 						    QDF_MODULE_ID_WMA,
 						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: failed to post message to WMA",
-				  __func__);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
-		}
+
 		sme_release_global_lock(&mac->sme);
 	}
 	return status;
@@ -7745,12 +7721,9 @@ QDF_STATUS sme_send_rmc_action_period(mac_handle_t mac_handle,
 						    QDF_MODULE_ID_WMA,
 						    QDF_MODULE_ID_WMA,
 						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: failed to post message to WMA",
-				  __func__);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			status = QDF_STATUS_E_FAILURE;
-		}
+
 		sme_release_global_lock(&mac->sme);
 	}
 
@@ -7825,7 +7798,6 @@ QDF_STATUS sme_send_cesium_enable_ind(mac_handle_t mac_handle,
 				      uint32_t sessionId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
 	struct scheduler_msg message = {0};
 
@@ -7833,16 +7805,10 @@ QDF_STATUS sme_send_cesium_enable_ind(mac_handle_t mac_handle,
 	if (QDF_STATUS_SUCCESS == status) {
 		message.bodyptr = NULL;
 		message.type = WMA_IBSS_CESIUM_ENABLE_IND;
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: failed to post message to WMA",
-				  __func__);
-			status = QDF_STATUS_E_FAILURE;
-		}
+		status = scheduler_post_message(QDF_MODULE_ID_SME,
+						QDF_MODULE_ID_WMA,
+						QDF_MODULE_ID_WMA,
+						&message);
 		sme_release_global_lock(&mac->sme);
 	}
 
@@ -7878,10 +7844,6 @@ QDF_STATUS sme_set_wlm_latency_level(mac_handle_t mac_handle,
 	params.vdev_id = session_id;
 
 	status = wma_set_wlm_latency_level(wma, &params);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to set latency level",
-			  __func__);
 
 	return status;
 }
@@ -7892,19 +7854,17 @@ void sme_get_command_q_status(mac_handle_t mac_handle)
 	tListElem *pEntry;
 	struct mac_context *mac;
 
-	if (NULL != mac_handle) {
-		mac = MAC_CONTEXT(mac_handle);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid mac_handle pointer", __func__);
+	if (!mac_handle)
 		return;
-	}
+
+	mac = MAC_CONTEXT(mac_handle);
+
 	pEntry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_LOCK);
 	if (pEntry)
 		pTempCmd = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
 
 	sme_err("WLAN_BUG_RCA: Currently smeCmdActiveList has command (0x%X)",
-		(pTempCmd) ? pTempCmd->command : eSmeNoCommand);
+			(pTempCmd) ? pTempCmd->command : eSmeNoCommand);
 	if (pTempCmd) {
 		if (eSmeCsrCommandMask & pTempCmd->command)
 			/* CSR command is stuck. See what the reason code is
@@ -7914,7 +7874,7 @@ void sme_get_command_q_status(mac_handle_t mac_handle)
 	} /* if(pTempCmd) */
 
 	sme_err("Currently smeCmdPendingList has %d commands",
-		csr_nonscan_pending_ll_count(mac));
+			csr_nonscan_pending_ll_count(mac));
 
 }
 
@@ -8295,7 +8255,6 @@ int sme_send_addba_req(mac_handle_t mac_handle, uint8_t session_id, uint8_t tid,
 					QDF_MODULE_ID_WMA,
 					QDF_MODULE_ID_WMA, &msg);
 	if (QDF_STATUS_SUCCESS != status) {
-		sme_err("Failed to post WMA_SEND_ADDBA_REQ");
 		qdf_mem_free(send_ba_req);
 		return -EIO;
 	}
@@ -12624,10 +12583,8 @@ QDF_STATUS sme_get_apf_capabilities(mac_handle_t mac_handle,
 			status = QDF_STATUS_E_FAILURE;
 		}
 		sme_release_global_lock(&mac_ctx->sme);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("sme_acquire_global_lock error"));
 	}
+
 	SME_EXIT();
 	return status;
 }
@@ -13106,8 +13063,6 @@ QDF_STATUS sme_update_sta_roam_policy(mac_handle_t mac_handle,
 				ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				REASON_ROAM_SCAN_STA_ROAM_POLICY_CHANGED);
 			sme_release_global_lock(&mac_ctx->sme);
-		} else {
-			sme_err("Failed to acquire SME lock");
 		}
 	}
 	qdf_mem_free(sme_config);
@@ -13320,8 +13275,6 @@ QDF_STATUS sme_set_lost_link_info_cb(mac_handle_t mac_handle,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		mac->sme.lost_link_info_cb = cb;
 		sme_release_global_lock(&mac->sme);
-	} else {
-		sme_err("sme_acquire_global_lock error status: %d", status);
 	}
 
 	return status;
@@ -13931,8 +13884,6 @@ QDF_STATUS sme_get_rcpi(mac_handle_t mac_handle, struct sme_rcpi_req *rcpi)
 			qdf_mem_free(rcpi_req);
 		}
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("sme_acquire_global_lock failed"));
 		qdf_mem_free(rcpi_req);
 	}
 
@@ -13972,8 +13923,6 @@ QDF_STATUS sme_congestion_register_callback(mac_handle_t mac_handle,
 		mac->sme.congestion_cb = congestion_cb;
 		sme_release_global_lock(&mac->sme);
 		sme_debug("congestion callback set");
-	} else {
-		sme_err("Aquiring lock failed %d", status);
 	}
 
 	return status;
@@ -13990,8 +13939,6 @@ QDF_STATUS sme_register_tx_queue_cb(mac_handle_t mac_handle,
 		mac->sme.tx_queue_cb = tx_queue_cb;
 		sme_release_global_lock(&mac->sme);
 		sme_debug("Tx queue callback set");
-	} else {
-		sme_err("Aquiring lock failed %d", status);
 	}
 
 	return status;
@@ -14014,8 +13961,6 @@ QDF_STATUS sme_register_twt_enable_complete_cb(mac_handle_t mac_handle,
 		mac->sme.twt_enable_cb = twt_enable_cb;
 		sme_release_global_lock(&mac->sme);
 		sme_debug("TWT: enable callback set");
-	} else {
-		sme_err("Aquiring lock failed %d", status);
 	}
 
 	return status;
@@ -14032,8 +13977,6 @@ QDF_STATUS sme_register_twt_disable_complete_cb(mac_handle_t mac_handle,
 		mac->sme.twt_disable_cb = twt_disable_cb;
 		sme_release_global_lock(&mac->sme);
 		sme_debug("TWT: disable callback set");
-	} else {
-		sme_err("Aquiring lock failed %d", status);
 	}
 
 	return status;
@@ -14115,8 +14058,6 @@ QDF_STATUS sme_set_bt_activity_info_cb(mac_handle_t mac_handle,
 		mac->sme.bt_activity_info_cb = cb;
 		sme_release_global_lock(&mac->sme);
 		sme_debug("bt activity info callback set");
-	} else {
-		sme_debug("sme_acquire_global_lock failed %d", status);
 	}
 
 	return status;
@@ -14742,7 +14683,6 @@ sme_get_roam_scan_stats(mac_handle_t mac_handle,
 			qdf_mem_free(req);
 		}
 	} else {
-		sme_err("sme_acquire_global_lock failed");
 		qdf_mem_free(req);
 	}
 

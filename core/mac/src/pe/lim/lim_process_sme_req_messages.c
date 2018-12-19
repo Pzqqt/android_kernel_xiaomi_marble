@@ -3003,11 +3003,8 @@ static void lim_delete_peers_and_send_vdev_stop(struct pe_session *session)
 						       WLAN_VDEV_SM_EV_DOWN,
 						       sizeof(*session),
 						       session);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_err("failed to post WLAN_VDEV_SM_EV_DOWN for vdevid %d",
-		       session->smeSessionId);
+	if (QDF_IS_STATUS_ERROR(status))
 		lim_send_stop_bss_failure_resp(mac_ctx, session);
-	}
 }
 #else
 static void lim_delete_peers_and_send_vdev_stop(struct pe_session *session)
@@ -6030,10 +6027,8 @@ static void lim_nss_update_rsp(struct mac_context *mac_ctx,
 	msg.bodyval = 0;
 	qdf_status = scheduler_post_message(QDF_MODULE_ID_PE, QDF_MODULE_ID_SME,
 					    QDF_MODULE_ID_SME, &msg);
-	if (QDF_IS_STATUS_ERROR(qdf_status)) {
-		pe_err("Failed to post eWNI_SME_NSS_UPDATE_RSP");
+	if (QDF_IS_STATUS_ERROR(qdf_status))
 		qdf_mem_free(nss_rsp);
-	}
 }
 
 void lim_send_bcn_rsp(struct mac_context *mac_ctx, tpSendbeaconParams rsp)
@@ -6410,7 +6405,6 @@ void lim_send_obss_color_collision_cfg(struct mac_context *mac_ctx,
 						       QDF_MODULE_ID_WMA,
 						       QDF_MODULE_ID_WMA,
 						       &msg))) {
-		pe_err("Failed to post WMA_OBSS_COLOR_COLLISION_REQ to WMA");
 		qdf_mem_free(cfg_param);
 	} else {
 		session->obss_color_collision_dec_evt = event_type;

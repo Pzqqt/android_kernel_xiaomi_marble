@@ -1202,8 +1202,6 @@ QDF_STATUS csr_update_channel_list(struct mac_context *mac)
 							 QDF_MODULE_ID_WMA,
 							 QDF_MODULE_ID_WMA,
 							 &msg)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
-			  "%s: Failed to post msg to WMA", __func__);
 		qdf_mem_free(pChanList);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -16319,10 +16317,8 @@ QDF_STATUS csr_process_del_sta_session_rsp(struct mac_context *mac_ctx,
 		else {
 			rsp->sme_callback(rsp->session_id);
 			status = sme_acquire_global_lock(&mac_ctx->sme);
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				sme_debug("Failed to get Lock");
+			if (!QDF_IS_STATUS_SUCCESS(status))
 				return status;
-			}
 		}
 	}
 
@@ -16902,7 +16898,6 @@ QDF_STATUS csr_get_rssi(struct mac_context *mac,
 							 QDF_MODULE_ID_SME,
 							 QDF_MODULE_ID_SME,
 							 &msg)) {
-		sme_err("scheduler_post_msg failed to post msg to self");
 		qdf_mem_free((void *)pMsg);
 		status = QDF_STATUS_E_FAILURE;
 	}
@@ -16943,7 +16938,6 @@ QDF_STATUS csr_get_snr(struct mac_context *mac,
 							 QDF_MODULE_ID_SME,
 							 QDF_MODULE_ID_SME,
 							 &msg)) {
-		sme_err("failed to post msg to self");
 		qdf_mem_free((void *)pMsg);
 		status = QDF_STATUS_E_FAILURE;
 	}
@@ -19614,7 +19608,6 @@ QDF_STATUS csr_handoff_request(struct mac_context *mac,
 							 QDF_MODULE_ID_SME,
 							 QDF_MODULE_ID_SME,
 							 &msg)) {
-		sme_err("scheduler_post_msg failed to post msg to self");
 		qdf_mem_free((void *)pMsg);
 		status = QDF_STATUS_E_FAILURE;
 	}
@@ -21025,10 +21018,8 @@ QDF_STATUS csr_roam_synch_callback(struct mac_context *mac_ctx,
 	QDF_STATUS status;
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("LFR3: Locking failed, bailing out");
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
-	}
 
 	status = csr_process_roam_sync_callback(mac_ctx, roam_synch_data,
 					    bss_desc, reason);

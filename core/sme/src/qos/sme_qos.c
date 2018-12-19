@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -675,11 +675,8 @@ enum sme_qos_statustype sme_qos_setup_req(mac_handle_t mac_handle,
 		  "%s: %d: QoS Setup requested by client on session %d",
 		  __func__, __LINE__, sessionId);
 	lock_status = sme_acquire_global_lock(&mac->sme);
-	if (!QDF_IS_STATUS_SUCCESS(lock_status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s: %d: Unable to obtain lock", __func__, __LINE__);
+	if (!QDF_IS_STATUS_SUCCESS(lock_status))
 		return SME_QOS_STATUS_SETUP_FAILURE_RSP;
-	}
 	/* Make sure the session is valid */
 	if (!CSR_IS_SESSION_VALID(mac, sessionId)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,

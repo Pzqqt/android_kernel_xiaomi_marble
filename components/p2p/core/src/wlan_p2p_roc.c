@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -727,7 +727,6 @@ QDF_STATUS p2p_cleanup_roc_sync(
 					QDF_MODULE_ID_P2P,
 					QDF_MODULE_ID_OS_IF, &msg);
 	if (status != QDF_STATUS_SUCCESS) {
-		p2p_err("failed to post message");
 		qdf_mem_free(param);
 		return status;
 	}

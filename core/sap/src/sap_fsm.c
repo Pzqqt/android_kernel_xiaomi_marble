@@ -3588,11 +3588,6 @@ static QDF_STATUS sap_move_to_cac_wait_state(struct sap_context *sap_ctx)
 	     wlan_vdev_mlme_sm_deliver_evt(sap_ctx->vdev,
 					   WLAN_VDEV_SM_EV_DFS_CAC_WAIT,
 					   0, NULL);
-	if (QDF_IS_STATUS_ERROR(status))
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: failed to post WLAN_VDEV_SM_EV_DFS_CAC_WAIT",
-			  __func__);
-
 	return status;
 }
 #else

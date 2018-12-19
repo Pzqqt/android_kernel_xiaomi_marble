@@ -2039,8 +2039,6 @@ void lim_disconnect_complete(struct pe_session *session, bool del_bss)
 					 sizeof(*session), session);
 	if (!mac->lim.gLimIbssCoalescingHappened &&
 	    QDF_IS_STATUS_ERROR(status)) {
-		pe_err("failed to post WLAN_VDEV_SM_EV_DISCONNECT_COMPLETE for vdevid %d",
-		       session->smeSessionId);
 		lim_send_stop_bss_failure_resp(mac, session);
 	}
 }
@@ -2065,11 +2063,8 @@ void lim_process_channel_switch_timeout(struct mac_context *mac_ctx)
 					WLAN_VDEV_SM_EV_FW_VDEV_RESTART,
 					sizeof(*session_entry),
 					session_entry);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_err("Failed to post WLAN_VDEV_SM_EV_FW_VDEV_RESTART for vdevid %d",
-		       session_entry->smeSessionId);
+	if (QDF_IS_STATUS_ERROR(status))
 		mlme_set_chan_switch_in_progress(session_entry->vdev, false);
-	}
 }
 #else
 void lim_disconnect_complete(struct pe_session *session, bool del_bss)
@@ -2309,10 +2304,6 @@ static void lim_switch_channel_vdev_started(struct pe_session *pe_session)
 				pe_session->vdev,
 				WLAN_VDEV_SM_EV_START_SUCCESS,
 				sizeof(*pe_session), pe_session);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		pe_err("Failed to post WLAN_VDEV_SM_EV_START_SUCCESS for vdevid %d",
-		       pe_session->smeSessionId);
-	}
 }
 #else
 static void lim_switch_channel_vdev_started(struct pe_session *pe_session) {}
@@ -7952,10 +7943,8 @@ void lim_process_ap_ecsa_timeout(void *data)
 		status = scheduler_post_message(QDF_MODULE_ID_PE,
 						QDF_MODULE_ID_SME,
 						QDF_MODULE_ID_SME, &msg);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			sme_err("Failed to post eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND");
+		if (QDF_IS_STATUS_ERROR(status))
 			qdf_mem_free(chan_switch_tx_rsp);
-		}
 	}
 }
 
@@ -8127,8 +8116,6 @@ static inline void lim_send_csa_restart_resp(struct mac_context *mac_ctx,
 	msg.bodyval = session->smeSessionId;
 
 	status = scheduler_post_msg(QDF_MODULE_ID_SME, &msg);
-	if (QDF_IS_STATUS_ERROR(status))
-		sme_err("Failed to post eWNI_SME_CSA_RESTART_RSP");
 }
 
 QDF_STATUS lim_ap_mlme_vdev_update_beacon(struct vdev_mlme_obj *vdev_mlme,
@@ -8172,8 +8159,6 @@ QDF_STATUS lim_ap_mlme_vdev_up_send(struct vdev_mlme_obj *vdev_mlme,
 	msg.bodyval = session->smeSessionId;
 
 	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
-	if (QDF_IS_STATUS_ERROR(status))
-		WMA_LOGE("Failed to post SIR_HAL_SEND_AP_VDEV_UP");
 
 	return status;
 }

@@ -563,8 +563,6 @@ int wma_cli_set2_command(int vdev_id, int param_id, int sval1,
 	    scheduler_post_message(QDF_MODULE_ID_WMA,
 				   QDF_MODULE_ID_WMA,
 				   QDF_MODULE_ID_WMA, &msg)) {
-		WMA_LOGE("%s: Failed to post WMA_CLI_SET_CMD msg",
-			  __func__);
 		qdf_mem_free(iwcmd);
 		return -EIO;
 	}
@@ -1762,8 +1760,6 @@ static int wma_process_fw_event_mc_thread_ctx(void *ctx, void *ev)
 		scheduler_post_message(QDF_MODULE_ID_WMA,
 				       QDF_MODULE_ID_WMA,
 				       QDF_MODULE_ID_WMA, &cds_msg)) {
-		WMA_LOGE("%s: Failed to post WMA_PROCESS_FW_EVENT msg",
-			 __func__);
 		qdf_nbuf_free(ev);
 		qdf_mem_free(params_buf);
 		return -EFAULT;
@@ -1957,8 +1953,6 @@ static void wma_shutdown_notifier_cb(void *priv)
 	status = scheduler_post_message(QDF_MODULE_ID_WMA,
 					QDF_MODULE_ID_WMA,
 					QDF_MODULE_ID_TARGET_IF, &msg);
-	if (QDF_IS_STATUS_ERROR(status))
-		WMA_LOGE(FL("Failed to post SYS_MSG_ID_CLEAN_VDEV_RSP_QUEUE"));
 }
 
 struct wma_version_info g_wmi_version_info;
@@ -3800,7 +3794,6 @@ QDF_STATUS wma_pre_start(void)
 					    QDF_MODULE_ID_WMA,
 					    QDF_MODULE_ID_WMA, &wma_msg);
 	if (QDF_STATUS_SUCCESS != qdf_status) {
-		WMA_LOGE("%s: Failed to post WNI_CFG_DNLD_REQ msg", __func__);
 		QDF_ASSERT(0);
 		qdf_status = QDF_STATUS_E_FAILURE;
 	}
@@ -3823,7 +3816,6 @@ void wma_send_msg_by_priority(tp_wma_handle wma_handle, uint16_t msg_type,
 	status = scheduler_post_msg_by_priority(QDF_MODULE_ID_PE,
 					       &msg, is_high_priority);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		WMA_LOGE("Failed to post msg %d to PE", msg_type);
 		if (body_ptr)
 			qdf_mem_free(body_ptr);
 	}
@@ -9412,7 +9404,6 @@ int wma_lro_init(struct cdp_lro_hash_config *lro_config)
 		scheduler_post_message(QDF_MODULE_ID_WMA,
 				       QDF_MODULE_ID_WMA,
 				       QDF_MODULE_ID_WMA, &msg)) {
-		WMA_LOGE("Failed to post WMA_LRO_CONFIG_CMD msg!");
 		qdf_mem_free(iwcmd);
 		return -EAGAIN;
 	}

@@ -1808,10 +1808,6 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 						   QDF_MODULE_ID_SME,
 						   &cds_msg)) {
 				qdf_mem_free(scan_offload_rsp);
-				QDF_TRACE(QDF_MODULE_ID_WMA,
-					  QDF_TRACE_LEVEL_INFO,
-					  "%s: Failed to post Scan Offload Rsp to UMAC",
-					  __func__);
 			}
 		}
 		break;
@@ -4878,8 +4874,6 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 							 QDF_MODULE_ID_SCAN,
 							 &cds_msg)) {
 		qdf_mem_free(candidate_ind);
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  FL("Failed to post candidate ind to SME"));
 	}
 }
 

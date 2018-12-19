@@ -3007,7 +3007,6 @@ void ol_rx_aggregation_hole(uint32_t hole_info)
 
 	status = cds_mq_post_message(CDS_MQ_ID_SME, &cds_msg);
 	if (status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: Failed to post aggr event to SME", __func__);
 		qdf_mem_free(rx_aggr_hole_event);
 		return;
 	}

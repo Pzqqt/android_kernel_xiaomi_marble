@@ -6144,10 +6144,8 @@ bool csr_wait_for_connection_update(struct mac_context *mac,
 
 	if (do_release_reacquire_lock == true) {
 		ret = sme_acquire_global_lock(&mac->sme);
-		if (!QDF_IS_STATUS_SUCCESS(ret)) {
-			cds_err("lock acquire fail %d", ret);
+		if (!QDF_IS_STATUS_SUCCESS(ret))
 			return false;
-		}
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

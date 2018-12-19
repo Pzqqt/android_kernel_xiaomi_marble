@@ -1726,7 +1726,6 @@ QDF_STATUS p2p_cleanup_tx_sync(
 					QDF_MODULE_ID_P2P,
 					QDF_MODULE_ID_OS_IF, &msg);
 	if (status != QDF_STATUS_SUCCESS) {
-		p2p_err("failed to post message");
 		qdf_mem_free(param);
 		return status;
 	}

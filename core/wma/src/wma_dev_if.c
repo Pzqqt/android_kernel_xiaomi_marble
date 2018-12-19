@@ -548,10 +548,8 @@ static inline void wma_send_del_sta_self_resp(struct del_sta_self_params *param)
 	status = scheduler_post_message(QDF_MODULE_ID_WMA,
 					QDF_MODULE_ID_SME,
 					QDF_MODULE_ID_SME, &sme_msg);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		WMA_LOGE("Failed to post eWNI_SME_DEL_STA_SELF_RSP");
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		qdf_mem_free(param);
-	}
 }
 
 /**

@@ -145,8 +145,6 @@ QDF_STATUS csr_neighbor_roam_update_fast_roaming_enabled(struct mac_context *mac
 						REASON_DISCONNECTED);
 			}
 			sme_release_global_lock(&mac_ctx->sme);
-		} else {
-			sme_err("Failed to acquire SME lock");
 		}
 	break;
 	case eCSR_NEIGHBOR_ROAM_STATE_INIT:

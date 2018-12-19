@@ -425,8 +425,6 @@ int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
 		scheduler_post_message(QDF_MODULE_ID_WMA,
 				       QDF_MODULE_ID_SME,
 				       QDF_MODULE_ID_SME, &tsf_msg)) {
-
-		WMA_LOGP("%s: Failed to post eWNI_SME_TSF_EVENT", __func__);
 		qdf_mem_free(ptsf);
 		return -EINVAL;
 	}
@@ -3691,10 +3689,8 @@ static void wma_send_status_of_ext_wow(tp_wma_handle wma, bool status)
 	vstatus = scheduler_post_message(QDF_MODULE_ID_WMA,
 					 QDF_MODULE_ID_SME,
 					 QDF_MODULE_ID_SME, &message);
-	if (vstatus != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("Failed to post ready to suspend");
+	if (vstatus != QDF_STATUS_SUCCESS)
 		qdf_mem_free(ready_to_extwow);
-	}
 }
 
 /**
@@ -5541,10 +5537,8 @@ int wma_wlan_bt_activity_evt_handler(void *handle, uint8_t *event, uint32_t len)
 	qdf_status = scheduler_post_message(QDF_MODULE_ID_WMA,
 					    QDF_MODULE_ID_SME,
 					    QDF_MODULE_ID_SME, &sme_msg);
-	if (QDF_IS_STATUS_ERROR(qdf_status)) {
-		WMA_LOGE(FL("Failed to post msg to SME"));
+	if (QDF_IS_STATUS_ERROR(qdf_status))
 		return -EINVAL;
-	}
 
 	return 0;
 }

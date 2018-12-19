@@ -719,10 +719,8 @@ QDF_STATUS ucfg_tdls_send_mgmt_frame(
 	status = scheduler_post_message(QDF_MODULE_ID_HDD,
 					QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_OS_IF, &msg);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		tdls_err("Failed to post the mgmt tx cmd to scheduler thread");
+	if (QDF_IS_STATUS_ERROR(status))
 		goto release_ref;
-	}
 
 	return status;
 
@@ -759,10 +757,8 @@ QDF_STATUS ucfg_tdls_responder(struct tdls_set_responder_req *req)
 	status = scheduler_post_message(QDF_MODULE_ID_HDD,
 					QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_OS_IF, &msg);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		tdls_err("failed to post msg, status %d", status);
+	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_free(msg_req);
-	}
 
 	return status;
 }
@@ -840,7 +836,6 @@ QDF_STATUS ucfg_tdls_notify_sta_connect(
 					QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		tdls_err("failed to post message, status %d", status);
 		wlan_objmgr_vdev_release_ref(notify->vdev, WLAN_TDLS_NB_ID);
 		qdf_mem_free(notify);
 	}
@@ -877,7 +872,6 @@ QDF_STATUS ucfg_tdls_notify_sta_disconnect(
 					QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		tdls_err("failed to post message, status %d", status);
 		wlan_objmgr_vdev_release_ref(notify->vdev, WLAN_TDLS_NB_ID);
 		qdf_mem_free(notify);
 	}

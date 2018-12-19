@@ -484,7 +484,6 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 					QDF_MODULE_ID_SME,
 					QDF_MODULE_ID_SME, &cds_msg);
 	if (status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: Failed to post stats ext event to SME", __func__);
 		qdf_mem_free(stats_ext_event);
 		return -EFAULT;
 	}
@@ -1244,7 +1243,6 @@ static int wma_ll_stats_evt_handler(void *handle, u_int8_t *event,
 					    QDF_MODULE_ID_SME,
 					    QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		WMA_LOGP(FL("Failed to post peer stat change msg!"));
 		qdf_mem_free(link_stats_results);
 		return -EINVAL;
 	}

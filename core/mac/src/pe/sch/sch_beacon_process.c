@@ -1478,7 +1478,6 @@ QDF_STATUS lim_obss_send_detection_cfg(struct mac_context *mac_ctx,
 						QDF_MODULE_ID_WMA,
 						QDF_MODULE_ID_WMA, &msg);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			pe_err("Failed to post WMA_OBSS_DETECTION_REQ to WMA");
 			qdf_mem_free(req_param);
 			return status;
 		}
