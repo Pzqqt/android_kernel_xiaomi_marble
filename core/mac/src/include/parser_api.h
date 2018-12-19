@@ -782,11 +782,6 @@ populate_dot11f_power_constraints(struct mac_context *mac,
 				tDot11fIEPowerConstraints *pDot11f);
 
 void
-populate_dot11f_qos_caps_ap(struct mac_context *mac,
-			tDot11fIEQOSCapsAp *pDot11f,
-			struct pe_session *pe_session);
-
-void
 populate_dot11f_qos_caps_station(struct mac_context *mac, struct pe_session *session,
 				tDot11fIEQOSCapsStation *pDot11f);
 

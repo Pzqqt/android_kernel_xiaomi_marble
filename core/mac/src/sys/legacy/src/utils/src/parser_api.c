@@ -1287,18 +1287,6 @@ populate_dot11f_power_constraints(struct mac_context *mac,
 } /* End populate_dot11f_power_constraints. */
 
 void
-populate_dot11f_qos_caps_ap(struct mac_context *mac,
-			    tDot11fIEQOSCapsAp *pDot11f, struct pe_session *pe_session)
-{
-	pDot11f->count = pe_session->gLimEdcaParamSetCount;
-	pDot11f->reserved = 0;
-	pDot11f->txopreq = 0;
-	pDot11f->qreq = 0;
-	pDot11f->qack = 0;
-	pDot11f->present = 1;
-} /* End PopulatedDot11fQOSCaps. */
-
-void
 populate_dot11f_qos_caps_station(struct mac_context *mac, struct pe_session *pe_session,
 				 tDot11fIEQOSCapsStation *pDot11f)
 {
