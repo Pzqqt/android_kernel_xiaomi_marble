@@ -15331,34 +15331,6 @@ QDF_STATUS csr_send_mb_disassoc_req_msg(struct mac_context *mac, uint32_t sessio
 	return umac_send_mb_message_to_mac(pMsg);
 }
 
-QDF_STATUS
-csr_send_mb_get_associated_stas_req_msg(struct mac_context *mac, uint32_t sessionId,
-					QDF_MODULE_ID modId,
-					struct qdf_mac_addr bssid,
-					void *pUsrContext,
-					void *pfnSapEventCallback,
-					uint8_t *pAssocStasBuf)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSirSmeGetAssocSTAsReq *pMsg;
-
-	pMsg = qdf_mem_malloc(sizeof(*pMsg));
-	if (NULL == pMsg)
-		return QDF_STATUS_E_NOMEM;
-
-	pMsg->messageType = eWNI_SME_GET_ASSOC_STAS_REQ;
-	qdf_copy_macaddr(&pMsg->bssid, &bssid);
-	pMsg->modId = modId;
-	qdf_mem_copy(pMsg->pUsrContext, pUsrContext, sizeof(void *));
-	qdf_mem_copy(pMsg->pSapEventCallback,
-			pfnSapEventCallback, sizeof(void *));
-	qdf_mem_copy(pMsg->pAssocStasArray, pAssocStasBuf, sizeof(void *));
-	pMsg->length = sizeof(*pMsg);
-	status = umac_send_mb_message_to_mac(pMsg);
-
-	return status;
-}
-
 QDF_STATUS csr_send_chng_mcc_beacon_interval(struct mac_context *mac,
 						uint32_t sessionId)
 {

@@ -842,14 +842,6 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(struct mac_context *mac,
 		uint32_t sessionId,
 		struct csr_del_sta_params *pDelStaParams);
 
-QDF_STATUS csr_send_mb_get_associated_stas_req_msg(struct mac_context *mac,
-						   uint32_t sessionId,
-						   QDF_MODULE_ID modId,
-						   struct qdf_mac_addr bssId,
-						   void *pUsrContext,
-						   void *pfnSapEventCallback,
-						   uint8_t *pAssocStasBuf);
-
 /*
  * csr_send_chng_mcc_beacon_interval() -
  *   csr function that HDD calls to send Update beacon interval
