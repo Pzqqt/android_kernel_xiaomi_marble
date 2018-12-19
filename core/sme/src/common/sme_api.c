@@ -819,36 +819,6 @@ QDF_STATUS sme_set11dinfo(mac_handle_t mac_handle,
 	return status;
 }
 
-/*
- * sme_get_soft_ap_domain() - Get the current regulatory domain of softAp.
- * This is a synchronous call
- *
- * mac_handle - The handle returned by HostapdAdapter.
- * v_REGDOMAIN_t - The current Regulatory Domain requested for SoftAp.
- * Return QDF_STATUS_SUCCESS - SME successfully completed the request.
- *  Other status means, failed to get the current regulatory domain.
- */
-
-QDF_STATUS sme_get_soft_ap_domain(mac_handle_t mac_handle,
-				  v_REGDOMAIN_t *domainIdSoftAp)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_MSG_GET_SOFTAP_DOMAIN,
-			 NO_SESSION, 0));
-	if (NULL == domainIdSoftAp) {
-		sme_err("Uninitialized domain Id");
-		return status;
-	}
-
-	*domainIdSoftAp = mac->scan.domainIdCurrent;
-	status = QDF_STATUS_SUCCESS;
-
-	return status;
-}
-
 /**
  * sme_update_fine_time_measurement_capab() - Update the FTM capabitlies from
  * incoming val

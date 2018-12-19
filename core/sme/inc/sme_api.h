@@ -405,8 +405,6 @@ QDF_STATUS sme_update_config(mac_handle_t mac_handle,
 
 QDF_STATUS sme_set11dinfo(mac_handle_t mac_handle,
 			  tpSmeConfigParams pSmeConfigParams);
-QDF_STATUS sme_get_soft_ap_domain(mac_handle_t mac_handle,
-				  v_REGDOMAIN_t *domainIdSoftAp);
 QDF_STATUS sme_hdd_ready_ind(mac_handle_t mac_handle);
 /**
  * sme_ser_cmd_callback() - callback from serialization module
