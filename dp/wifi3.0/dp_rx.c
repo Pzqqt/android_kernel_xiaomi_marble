@@ -973,7 +973,7 @@ static inline bool dp_rx_adjust_nbuf_len(qdf_nbuf_t nbuf, uint16_t *mpdu_len)
 {
 	bool last_nbuf;
 
-	if (*mpdu_len >= (RX_BUFFER_SIZE - RX_PKT_TLVS_LEN)) {
+	if (*mpdu_len > (RX_BUFFER_SIZE - RX_PKT_TLVS_LEN)) {
 		qdf_nbuf_set_pktlen(nbuf, RX_BUFFER_SIZE);
 		last_nbuf = false;
 	} else {
