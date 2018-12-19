@@ -7127,53 +7127,6 @@ uint16_t sme_get_neighbor_scan_period(mac_handle_t mac_handle,
 	       neighborScanPeriod;
 }
 
-/**
- * sme_set_neighbor_scan_min_period() - Update neighbor_scan_min_period
- *          This function is called through dynamic setConfig callback function
- *          to configure neighbor_scan_min_period
- *
- * @mac_handle: Opaque handle to the global MAC context
- * @session_id - Session Identifier
- * @neighbor_scan_min_period - neighbor scan min period
- *
- * Return - QDF_STATUS
- */
-QDF_STATUS sme_set_neighbor_scan_min_period(mac_handle_t mac_handle,
-					    uint8_t session_id,
-					    const uint16_t
-					    neighbor_scan_min_period)
-{
-	struct mac_context *pmac = MAC_CONTEXT(mac_handle);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpCsrNeighborRoamControlInfo p_neighbor_roam_info = NULL;
-
-	if (session_id >= CSR_ROAM_SESSION_MAX) {
-		sme_err("Invalid sme session id: %d", session_id);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	status = sme_acquire_global_lock(&pmac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		p_neighbor_roam_info = &pmac->
-				roam.neighborRoamInfo[session_id];
-		sme_debug("LFR:set neighbor scan min period, old:%d, "
-				"new: %d, state: %s",
-				pmac->mlme_cfg->lfr.
-				neighbor_scan_min_timer_period,
-				neighbor_scan_min_period,
-				mac_trace_get_neighbour_roam_state(pmac->roam.
-				neighborRoamInfo[session_id].
-				neighborRoamState));
-		pmac->mlme_cfg->lfr.neighbor_scan_min_timer_period =
-				neighbor_scan_min_period;
-		p_neighbor_roam_info->cfgParams.neighbor_scan_min_period =
-				neighbor_scan_min_period;
-		sme_release_global_lock(&pmac->sme);
-	}
-
-	return status;
-}
-
 /*
  * sme_get_roam_rssi_diff() - get Roam rssi diff
  *  This is a synchronous call
