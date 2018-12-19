@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -375,11 +375,8 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 	status = scheduler_post_message(QDF_MODULE_ID_HDD,
 					QDF_MODULE_ID_NAN,
 					QDF_MODULE_ID_OS_IF, &msg);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		nan_err("failed to post msg to NAN component, status: %d",
-			status);
+	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_free(msg.bodyptr);
-	}
 
 	return status;
 }

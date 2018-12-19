@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -261,7 +261,6 @@ static int target_if_ndp_initiator_rsp_handler(ol_scn_t scn, uint8_t *data,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		target_if_err("failed to post msg, status: %d", status);
 		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}
@@ -312,7 +311,6 @@ static int target_if_ndp_ind_handler(ol_scn_t scn, uint8_t *data,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		target_if_err("failed to post msg, status: %d", status);
 		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}
@@ -363,7 +361,6 @@ static int target_if_ndp_confirm_handler(ol_scn_t scn, uint8_t *data,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		target_if_err("failed to post msg, status: %d", status);
 		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}
@@ -463,7 +460,6 @@ static int target_if_ndp_responder_rsp_handler(ol_scn_t scn, uint8_t *data,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		target_if_err("failed to post msg, status: %d", status);
 		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}
@@ -563,7 +559,6 @@ static int target_if_ndp_end_rsp_handler(ol_scn_t scn, uint8_t *data,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		target_if_err("failed to post msg, status: %d", status);
 		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}
@@ -615,7 +610,6 @@ static int target_if_ndp_end_ind_handler(ol_scn_t scn, uint8_t *data,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		target_if_err("failed to post msg, status: %d", status);
 		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}
@@ -666,7 +660,6 @@ static int target_if_ndp_sch_update_handler(ol_scn_t scn, uint8_t *data,
 					QDF_MODULE_ID_TARGET_IF,
 					QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
-		target_if_err("failed to post msg, status: %d", status);
 		target_if_ndp_event_flush_cb(&msg);
 		return -EINVAL;
 	}

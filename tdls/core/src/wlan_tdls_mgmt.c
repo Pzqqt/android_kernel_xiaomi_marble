@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -316,10 +316,8 @@ static QDF_STATUS tdls_activate_send_mgmt_request(
 	status = scheduler_post_message(QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_TDLS,
 					QDF_MODULE_ID_PE, &msg);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		tdls_err("failed to post msg, status %d", status);
+	if (QDF_IS_STATUS_ERROR(status))
 		qdf_mem_free(tdls_mgmt_req);
-	}
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_TDLS_SB_ID);
 
