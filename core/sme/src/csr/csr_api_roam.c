@@ -20257,50 +20257,6 @@ static bool csr_is_conn_allow_5g_band(struct mac_context *mac_ctx, uint32_t chnl
 }
 
 /**
- * csr_clear_joinreq_param() - This function will clear station's params
- * for stored join request to csr.
- * @hal_handle: pointer to hal context.
- * @session_id: station's session id.
- *
- * This function will clear station's allocated memory for cached join
- * request.
- *
- * Return: true or false based on function's overall success.
- **/
-bool csr_clear_joinreq_param(struct mac_context *mac_ctx,
-		uint32_t session_id)
-{
-	struct csr_roam_session *sta_session;
-	struct scan_result_list *bss_list;
-
-	if (NULL == mac_ctx)
-		return false;
-
-	sta_session = CSR_GET_SESSION(mac_ctx, session_id);
-	if (NULL == sta_session)
-		return false;
-
-	/* Release the memory allocated by previous join request */
-	bss_list =
-		(struct scan_result_list *)&sta_session->stored_roam_profile.
-		bsslist_handle;
-	if (NULL != bss_list) {
-		csr_scan_result_purge(mac_ctx,
-			sta_session->stored_roam_profile.bsslist_handle);
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			FL("bss list is released for session %d"), session_id);
-		sta_session->stored_roam_profile.bsslist_handle = NULL;
-	}
-	sta_session->stored_roam_profile.bsslist_handle = NULL;
-	csr_release_profile(mac_ctx, &sta_session->stored_roam_profile.profile);
-	sta_session->stored_roam_profile.reason = 0;
-	sta_session->stored_roam_profile.roam_id = 0;
-	sta_session->stored_roam_profile.imediate_flag = false;
-	sta_session->stored_roam_profile.clear_flag = false;
-	return true;
-}
-
-/**
  * csr_store_joinreq_param() - This function will store station's join
  * request to that station's session.
  * @mac_ctx: pointer to mac context.
