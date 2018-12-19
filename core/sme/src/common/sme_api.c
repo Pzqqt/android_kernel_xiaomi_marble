@@ -11366,32 +11366,6 @@ QDF_STATUS sme_set_led_flashing(mac_handle_t mac_handle, uint8_t type,
 #endif
 
 /**
- *  sme_handle_dfS_chan_scan() - handle DFS channel configuration
- *  @mac_handle:         corestack handler
- *  @dfs_flag:      flag indicating dfs channel enable/disable
- *  Return:         QDF_STATUS
- */
-QDF_STATUS sme_handle_dfs_chan_scan(mac_handle_t mac_handle, uint8_t dfs_flag)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct mac_context *mac  = MAC_CONTEXT(mac_handle);
-
-	status = sme_acquire_global_lock(&mac->sme);
-
-	if (QDF_STATUS_SUCCESS == status) {
-
-		mac->scan.fEnableDFSChnlScan = dfs_flag;
-
-		/* update the channel list to the firmware */
-		status = csr_update_channel_list(mac);
-
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return status;
-}
-
-/**
  *  sme_enable_dfS_chan_scan() - set DFS channel scan enable/disable
  *  @mac_handle:         corestack handler
  *  @dfs_flag:      flag indicating dfs channel enable/disable

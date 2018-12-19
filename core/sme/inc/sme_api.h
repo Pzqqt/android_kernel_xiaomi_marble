@@ -1275,7 +1275,6 @@ QDF_STATUS sme_set_dhcp_srv_offload(mac_handle_t mac_handle,
 QDF_STATUS sme_set_led_flashing(mac_handle_t mac_handle, uint8_t type,
 		uint32_t x0, uint32_t x1);
 #endif
-QDF_STATUS sme_handle_dfs_chan_scan(mac_handle_t mac_handle, uint8_t dfs_flag);
 QDF_STATUS sme_enable_dfs_chan_scan(mac_handle_t mac_handle, uint8_t dfs_flag);
 QDF_STATUS sme_set_mas(uint32_t val);
 QDF_STATUS sme_set_miracast(mac_handle_t mac_handle, uint8_t filter_type);
