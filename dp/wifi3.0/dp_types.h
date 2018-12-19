@@ -669,11 +669,8 @@ struct dp_soc_stats {
 		uint32_t rx_frag_err;
 		/* No of reinjected packets */
 		uint32_t reo_reinject;
-
 		/* Reap loop packet limit hit */
 		uint32_t reap_loop_pkt_limit_hit;
-		/* Head pointer Out of sync during reap loop*/
-		uint32_t hp_oos;
 		/* Head pointer Out of sync at the end of dp_rx_process */
 		uint32_t hp_oos2;
 		struct {

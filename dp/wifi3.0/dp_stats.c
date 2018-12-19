@@ -5463,8 +5463,7 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("RX frag wait: %d", soc->stats.rx.rx_frag_wait);
 	DP_PRINT_STATS("RX frag err: %d", soc->stats.rx.rx_frag_err);
 
-	DP_PRINT_STATS("RX HP out_of_sync: %d %d", soc->stats.rx.hp_oos,
-		       soc->stats.rx.hp_oos2);
+	DP_PRINT_STATS("RX HP out_of_sync: %d", soc->stats.rx.hp_oos2);
 	DP_PRINT_STATS("RX Reap Loop Pkt Limit Hit: %d",
 		       soc->stats.rx.reap_loop_pkt_limit_hit);
 	DP_PRINT_STATS("RX DESC invalid magic: %u",

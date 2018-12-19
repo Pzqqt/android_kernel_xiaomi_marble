@@ -1631,17 +1631,6 @@ bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped)
 	return limit_hit;
 }
 
-static inline
-bool dp_rx_hp_oos_update_limit_hit(struct dp_soc *soc, int hp_oos_updates)
-{
-	bool limit_hit = false;
-	struct wlan_cfg_dp_soc_ctxt *cfg = soc->wlan_cfg_ctx;
-
-	limit_hit =
-		(hp_oos_updates >= cfg->rx_hp_oos_update_limit) ? true : false;
-	return limit_hit;
-}
-
 static inline bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
 {
 	return soc->wlan_cfg_ctx->rx_enable_eol_data_check;
@@ -1650,12 +1639,6 @@ static inline bool dp_rx_enable_eol_data_check(struct dp_soc *soc)
 #else
 static inline
 bool dp_rx_reap_loop_pkt_limit_hit(struct dp_soc *soc, int num_reaped)
-{
-	return false;
-}
-
-static inline
-bool dp_rx_hp_oos_update_limit_hit(struct dp_soc *soc, int hp_oos_updates)
 {
 	return false;
 }
@@ -1717,8 +1700,10 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 	uint32_t num_rx_bufs_reaped = 0;
 	uint32_t intr_id;
 	struct hif_opaque_softc *scn;
-	uint32_t hp_oos_updates = 0;
 	int32_t tid = 0;
+	bool is_prev_msdu_last = true;
+	uint32_t num_entries_avail = 0;
+
 	DP_HIST_INIT();
 
 	qdf_assert_always(soc && hal_ring);
@@ -1763,38 +1748,8 @@ more_data:
 	 * them in per vdev queue.
 	 * Process the received pkts in a different per vdev loop.
 	 */
-	hp_oos_updates = 0;
-	while (qdf_likely(quota)) {
-		ring_desc = hal_srng_dst_get_next(hal_soc, hal_ring);
-
-		/*
-		 * in case HW has updated hp after we cached the hp
-		 * ring_desc can be NULL even there are entries
-		 * available in the ring. Update the cached_hp
-		 * and reap the buffers available to read complete
-		 * mpdu in one reap
-		 *
-		 * This is needed for RAW mode we have to read all
-		 * msdus corresponding to amsdu in one reap to create
-		 * SG list properly but due to mismatch in cached_hp
-		 * and actual hp sometimes we are unable to read
-		 * complete mpdu in one reap.
-		 */
-		if (qdf_unlikely(!ring_desc)) {
-			if (dp_rx_hp_oos_update_limit_hit(soc,
-							  hp_oos_updates)) {
-				break;
-			}
-			hp_oos_updates++;
-			if (hal_srng_dst_peek_sync(hal_soc, hal_ring)) {
-				DP_STATS_INC(soc, rx.hp_oos, 1);
-				hal_srng_access_end_unlocked(hal_soc,
-							     hal_ring);
-				continue;
-			} else {
-				break;
-			}
-		}
+	while (qdf_likely(quota &&
+			  (ring_desc = hal_srng_dst_peek(hal_soc, hal_ring)))) {
 
 		error = HAL_RX_ERROR_STATUS_GET(ring_desc);
 		ring_id = hal_srng_ring_id_get(hal_ring);
@@ -1834,8 +1789,6 @@ more_data:
 						   ring_desc, rx_desc);
 		}
 
-		rx_bufs_reaped[rx_desc->pool_id]++;
-
 		/* TODO */
 		/*
 		 * Need a separate API for unmapping based on
@@ -1851,12 +1804,44 @@ more_data:
 		/* Get MPDU DESC info */
 		hal_rx_mpdu_desc_info_get(ring_desc, &mpdu_desc_info);
 
+		/* Get MSDU DESC info */
+		hal_rx_msdu_desc_info_get(ring_desc, &msdu_desc_info);
+
+		if (qdf_unlikely(mpdu_desc_info.mpdu_flags &
+				HAL_MPDU_F_RAW_AMPDU)) {
+			/* previous msdu has end bit set, so current one is
+			 * the new MPDU
+			 */
+			if (is_prev_msdu_last) {
+				is_prev_msdu_last = false;
+				/* Get number of entries available in HW ring */
+				num_entries_avail =
+				hal_srng_dst_num_valid(hal_soc, hal_ring, 1);
+
+				/* For new MPDU check if we can read complete
+				 * MPDU by comparing the number of buffers
+				 * available and number of buffers needed to
+				 * reap this MPDU
+				 */
+				if (((msdu_desc_info.msdu_len /
+				     (RX_BUFFER_SIZE - RX_PKT_TLVS_LEN) + 1)) >
+				     num_entries_avail)
+					break;
+			} else {
+				if (msdu_desc_info.msdu_flags &
+				    HAL_MSDU_F_LAST_MSDU_IN_MPDU)
+					is_prev_msdu_last = true;
+			}
+			qdf_nbuf_set_raw_frame(rx_desc->nbuf, 1);
+		}
+
+		/* Pop out the descriptor*/
+		hal_srng_dst_get_next(hal_soc, hal_ring);
+
+		rx_bufs_reaped[rx_desc->pool_id]++;
 		peer_mdata = mpdu_desc_info.peer_meta_data;
 		QDF_NBUF_CB_RX_PEER_ID(rx_desc->nbuf) =
 			DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
-
-		/* Get MSDU DESC info */
-		hal_rx_msdu_desc_info_get(ring_desc, &msdu_desc_info);
 
 		/*
 		 * save msdu flags first, last and continuation msdu in
@@ -2050,9 +2035,7 @@ done:
 			qdf_nbuf_set_sa_valid(nbuf, is_sa_vld);
 
 			qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
-		}
-		else if (qdf_unlikely(vdev->rx_decap_type ==
-				htt_cmn_pkt_type_raw)) {
+		} else if (qdf_nbuf_is_raw_frame(nbuf)) {
 			msdu_len = QDF_NBUF_CB_RX_PKT_LEN(nbuf);
 			nbuf = dp_rx_sg_create(nbuf, rx_tlv_hdr);
 
