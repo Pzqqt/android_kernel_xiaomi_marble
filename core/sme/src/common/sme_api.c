@@ -5130,32 +5130,7 @@ QDF_STATUS sme_configure_app_type2_params(mac_handle_t mac_handle,
 }
 #endif
 
-/*
- * sme_get_infra_session_id
- * To get the session ID for infra session, if connected
- *   This is a synchronous API.
- *
- * mac_handle - The handle returned by mac_open.
- * sessionid, -1 if infra session is not connected
- */
-int8_t sme_get_infra_session_id(mac_handle_t mac_handle)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	int8_t sessionid = -1;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-
-		sessionid = csr_get_infra_session_id(mac);
-
-		sme_release_global_lock(&mac->sme);
-	}
-
-	return sessionid;
-}
-
-/* This routine will return poerating channel on which other BSS is operating
+/* This routine will return operating channel on which other BSS is operating
  * to be used for concurrency mode. If other BSS is not up or not connected it
  * will return 0
  */
