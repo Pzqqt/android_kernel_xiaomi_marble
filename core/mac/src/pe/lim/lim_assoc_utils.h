@@ -88,7 +88,6 @@ QDF_STATUS lim_del_bss(struct mac_context *, tpDphHashNode, uint16_t, struct pe_
 QDF_STATUS lim_del_sta(struct mac_context *, tpDphHashNode, bool, struct pe_session *);
 QDF_STATUS lim_add_sta_self(struct mac_context *, uint16_t, uint8_t, struct pe_session *);
 
-void lim_teardown_infra_bss(struct mac_context *, struct pe_session *);
 #ifdef WLAN_FEATURE_HOST_ROAM
 void lim_restore_pre_reassoc_state(struct mac_context *,
 				   tSirResultCodes, uint16_t, struct pe_session *);

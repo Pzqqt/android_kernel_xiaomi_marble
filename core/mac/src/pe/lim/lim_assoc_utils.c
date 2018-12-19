@@ -2906,36 +2906,6 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 }
 
 /**
- * limTeardownInfraBSS()
- *
- ***FUNCTION:
- * This function is called by various LIM functions to teardown
- * an established Infrastructure BSS
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  mac - Pointer to Global MAC structure
- * @return None
- */
-
-void lim_teardown_infra_bss(struct mac_context *mac, struct pe_session *pe_session)
-{
-	tSirMacAddr bcAddr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-
-	/**
-	 * Send Broadcast Disassociate frame with
-	 * 'leaving BSS' reason.
-	 */
-	lim_send_disassoc_mgmt_frame(mac,
-				     eSIR_MAC_DISASSOC_LEAVING_BSS_REASON,
-				     bcAddr, pe_session, false);
-} /*** end lim_teardown_infra_bss() ***/
-
-/**
  * lim_handle_cnf_wait_timeout()
  *
  ***FUNCTION:
