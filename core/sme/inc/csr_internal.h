@@ -1001,7 +1001,6 @@ bool csr_is_infra_connected(struct mac_context *mac);
  * Return: session id of the connected infra
  */
 uint8_t csr_get_connected_infra(struct mac_context *mac_ctx);
-bool csr_is_concurrent_infra_connected(struct mac_context *mac);
 bool csr_is_concurrent_session_running(struct mac_context *mac);
 bool csr_is_infra_ap_started(struct mac_context *mac);
 bool csr_is_ibss_started(struct mac_context *mac);

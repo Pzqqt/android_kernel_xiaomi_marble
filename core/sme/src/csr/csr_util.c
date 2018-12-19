@@ -1268,25 +1268,6 @@ uint8_t csr_get_connected_infra(struct mac_context *mac_ctx)
 }
 
 
-bool csr_is_concurrent_infra_connected(struct mac_context *mac)
-{
-	uint32_t i, noOfConnectedInfra = 0;
-
-	bool fRc = false;
-
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
-		if (CSR_IS_SESSION_VALID(mac, i)
-		    && csr_is_conn_state_connected_infra(mac, i)) {
-			++noOfConnectedInfra;
-		}
-	}
-
-	/* More than one Infra Sta Connected */
-	if (noOfConnectedInfra > 1)
-		fRc = true;
-	return fRc;
-}
-
 bool csr_is_ibss_started(struct mac_context *mac)
 {
 	uint32_t i;
