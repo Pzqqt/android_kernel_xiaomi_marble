@@ -43,25 +43,6 @@
 #include "rrm_global.h"
 #include "rrm_api.h"
 
-uint8_t
-rrm_get_min_of_max_tx_power(struct mac_context *mac,
-			    int8_t regMax, int8_t apTxPower)
-{
-	uint8_t maxTxPower = 0;
-	uint8_t txPower = QDF_MIN(regMax, (apTxPower));
-
-	if ((txPower >= RRM_MIN_TX_PWR_CAP) && (txPower <= RRM_MAX_TX_PWR_CAP))
-		maxTxPower = txPower;
-	else if (txPower < RRM_MIN_TX_PWR_CAP)
-		maxTxPower = RRM_MIN_TX_PWR_CAP;
-	else
-		maxTxPower = RRM_MAX_TX_PWR_CAP;
-
-	pe_debug("regulatoryMax: %d, apTxPwr: %d, maxTxpwr: %d",
-		regMax, apTxPower, maxTxPower);
-	return maxTxPower;
-}
-
 /* -------------------------------------------------------------------- */
 /**
  * rrm_cache_mgmt_tx_power

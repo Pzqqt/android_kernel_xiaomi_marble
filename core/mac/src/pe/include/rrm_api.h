@@ -29,14 +29,8 @@
 #ifndef __RRM_API_H__
 #define __RRM_API_H__
 
-#define RRM_MIN_TX_PWR_CAP    13
-#define RRM_MAX_TX_PWR_CAP    19
-
 #define RRM_BCN_RPT_NO_BSS_INFO    0
 #define RRM_BCN_RPT_MIN_RPT        1
-
-uint8_t rrm_get_min_of_max_tx_power(struct mac_context *mac, int8_t regMax,
-				    int8_t apTxPower);
 
 QDF_STATUS rrm_initialize(struct mac_context *mac);
 
