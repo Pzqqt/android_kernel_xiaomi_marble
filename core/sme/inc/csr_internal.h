@@ -987,7 +987,6 @@ bool csr_is_conn_state_disconnected_wds(struct mac_context *mac,
 bool csr_is_any_session_in_connect_state(struct mac_context *mac);
 bool csr_is_all_session_disconnected(struct mac_context *mac);
 bool csr_is_sta_session_connected(struct mac_context *mac);
-bool csr_is_p2p_session_connected(struct mac_context *mac);
 
 /**
  * csr_get_connected_infra() - get the session id of the connected infra

@@ -1200,41 +1200,6 @@ bool csr_is_sta_session_connected(struct mac_context *mac_ctx)
 	return false;
 }
 
-/**
- * csr_is_p2p_session_connected() - to find if any p2p session is active
- * @mac_ctx: pointer to mac context
- *
- * This function will iterate through each session and check if any p2p
- * session exist and active
- *
- * Return: true or false
- */
-bool csr_is_p2p_session_connected(struct mac_context *mac)
-{
-	uint32_t i;
-	struct csr_roam_session *pSession = NULL;
-	enum QDF_OPMODE persona;
-
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
-		if (!CSR_IS_SESSION_VALID(mac, i))
-			continue;
-
-		if (csr_is_conn_state_disconnected(mac, i))
-			continue;
-
-		pSession = CSR_GET_SESSION(mac, i);
-		if (pSession->pCurRoamProfile == NULL)
-			continue;
-
-		persona = pSession->pCurRoamProfile->csrPersona;
-		if (QDF_P2P_CLIENT_MODE == persona ||
-				QDF_P2P_GO_MODE == persona)
-			return true;
-	}
-
-	return false;
-}
-
 uint8_t csr_get_connected_infra(struct mac_context *mac_ctx)
 {
 	uint32_t i;
