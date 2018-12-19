@@ -1601,7 +1601,6 @@ QDF_STATUS sme_update_mimo_power_save(mac_handle_t mac_handle,
 				      uint8_t ht_smps_mode,
 				      bool send_smps_action);
 
-bool sme_is_sta_smps_allowed(mac_handle_t mac_handle, uint8_t session_id);
 QDF_STATUS sme_add_beacon_filter(mac_handle_t mac_handle,
 				 uint32_t session_id, uint32_t *ie_map);
 QDF_STATUS sme_remove_beacon_filter(mac_handle_t mac_handle,

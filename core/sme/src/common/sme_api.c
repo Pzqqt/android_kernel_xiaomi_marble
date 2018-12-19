@@ -13083,34 +13083,6 @@ QDF_STATUS sme_update_mimo_power_save(mac_handle_t mac_handle,
 }
 
 /**
- * sme_is_sta_smps_allowed() - check if the supported nss for
- * the session is greater than 1x1 to enable sta SMPS
- * @mac_handle: The handle returned by macOpen
- * @session_id: session id
- *
- * Return: bool returns true if supported nss is greater than
- * 1x1 else false
- */
-bool sme_is_sta_smps_allowed(mac_handle_t mac_handle, uint8_t session_id)
-{
-	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *csr_session;
-
-	csr_session = CSR_GET_SESSION(mac_ctx, session_id);
-	if (NULL == csr_session) {
-		sme_err("SME session not valid: %d", session_id);
-		return false;
-	}
-
-	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
-		sme_err("CSR session not valid: %d", session_id);
-		return false;
-	}
-
-	return (csr_session->supported_nss_1x1 == true) ? false : true;
-}
-
-/**
  * sme_add_beacon_filter() - set the beacon filter configuration
  * @mac_handle: The handle returned by macOpen
  * @session_id: session id
