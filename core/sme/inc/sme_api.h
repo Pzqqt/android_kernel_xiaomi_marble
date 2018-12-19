@@ -616,12 +616,6 @@ QDF_STATUS sme_roam_set_key(mac_handle_t mac_handle, uint8_t sessionId,
 QDF_STATUS sme_get_country_code(mac_handle_t mac_handle, uint8_t *pBuf,
 				uint8_t *pbLen);
 
-
-/* some support functions */
-bool sme_is11d_supported(mac_handle_t mac_handle);
-bool sme_is11h_supported(mac_handle_t mac_handle);
-bool sme_is_wmm_supported(mac_handle_t mac_handle);
-
 QDF_STATUS sme_generic_change_country_code(mac_handle_t mac_handle,
 					   uint8_t *pCountry);
 

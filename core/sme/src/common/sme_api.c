@@ -3795,28 +3795,6 @@ QDF_STATUS sme_get_country_code(mac_handle_t mac_handle, uint8_t *pBuf,
 	return csr_get_country_code(mac, pBuf, pbLen);
 }
 
-/* some support functions */
-bool sme_is11d_supported(mac_handle_t mac_handle)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	return wlan_reg_11d_enabled_on_host(mac->psoc);
-}
-
-bool sme_is11h_supported(mac_handle_t mac_handle)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	return csr_is11h_supported(mac);
-}
-
-bool sme_is_wmm_supported(mac_handle_t mac_handle)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-
-	return csr_is_wmm_supported(mac);
-}
-
 /*
  * sme_generic_change_country_code() -
  * Change Country code from upperlayer during WLAN driver operation.
