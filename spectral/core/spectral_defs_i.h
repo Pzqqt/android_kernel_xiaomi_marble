@@ -32,22 +32,27 @@
 #include <wlan_spectral_utils_api.h>
 #include <spectral_ioctl.h>
 
-#define spectral_log(level, args...) \
-QDF_PRINT_INFO(QDF_PRINT_IDX_SHARED, QDF_MODULE_ID_SPECTRAL, level, ## args)
-
-#define spectral_logfl(level, format, args...) \
-	spectral_log(level, FL(format), ## args)
-
 #define spectral_fatal(format, args...) \
-	spectral_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
+	QDF_TRACE_FATAL(QDF_MODULE_ID_SPECTRAL, format, ## args)
 #define spectral_err(format, args...) \
-	spectral_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
+	QDF_TRACE_ERROR(QDF_MODULE_ID_SPECTRAL, format, ## args)
 #define spectral_warn(format, args...) \
-	spectral_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
+	QDF_TRACE_WARN(QDF_MODULE_ID_SPECTRAL, format, ## args)
 #define spectral_info(format, args...) \
-	spectral_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
+	QDF_TRACE_INFO(QDF_MODULE_ID_SPECTRAL, format, ## args)
 #define spectral_debug(format, args...) \
-	spectral_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+	QDF_TRACE_DEBUG(QDF_MODULE_ID_SPECTRAL, format, ## args)
+
+#define spectral_fatal_nofl(format, args...) \
+	QDF_TRACE_FATAL_NO_FL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+#define spectral_err_nofl(format, args...) \
+	QDF_TRACE_ERROR_NO_FL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+#define spectral_warn_nofl(format, args...) \
+	QDF_TRACE_WARN_NO_FL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+#define spectral_info_nofl(format, args...) \
+	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_SPECTRAL, format, ## args)
+#define spectral_debug_nofl(format, args...) \
+	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_SPECTRAL, format, ## args)
 
 /**
  * struct pdev_spectral - Radio specific spectral object
