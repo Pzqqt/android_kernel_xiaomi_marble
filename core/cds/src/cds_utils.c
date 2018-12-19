@@ -181,47 +181,6 @@ static void cds_cmac_calc_mic(struct crypto_cipher *tfm,
 }
 #endif
 
-/*--------------------------------------------------------------------------
-
-   \brief cds_crypto_init() - Initializes Crypto module
-
-   The cds_crypto_init() function initializes Crypto module.
-
-   \param phCryptProv - pointer to the Crypt handle
-
-   \return QDF_STATUS_SUCCESS - Successfully generated random memory.
-
-   QDF_STATUS_E_FAULT  - pbBuf is an invalid pointer.
-
-   QDF_STATUS_E_FAILURE - default return value if it fails due to
-   unknown reasons
-
-   ***QDF_STATUS_E_RESOURCES - System resources (other than memory)
-   are unavailable
-   \sa
-
-    ( *** return value not considered yet )
-   --------------------------------------------------------------------------*/
-QDF_STATUS cds_crypto_init(uint32_t *phCryptProv)
-{
-	QDF_STATUS uResult = QDF_STATUS_E_FAILURE;
-
-	/* This implementation doesn't require a crypto context */
-	*phCryptProv = 0;
-	uResult = QDF_STATUS_SUCCESS;
-	return uResult;
-}
-
-QDF_STATUS cds_crypto_deinit(uint32_t hCryptProv)
-{
-	QDF_STATUS uResult = QDF_STATUS_E_FAILURE;
-
-	/* CryptReleaseContext succeeded */
-	uResult = QDF_STATUS_SUCCESS;
-
-	return uResult;
-}
-
 #ifdef WLAN_FEATURE_11W
 uint8_t cds_get_mmie_size(void)
 {
