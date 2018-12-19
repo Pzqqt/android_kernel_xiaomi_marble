@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -188,14 +188,16 @@ static inline QDF_STATUS scheduler_post_msg(uint32_t qid,
  * scheduler_post_msg
  * Return: QDF status
  */
-static inline QDF_STATUS scheduler_post_message(QDF_MODULE_ID src_id,
-						QDF_MODULE_ID dest_id,
-						QDF_MODULE_ID que_id,
-						struct scheduler_msg *msg)
-{
-	return scheduler_post_msg(scheduler_get_qid(src_id, dest_id, que_id),
-						    msg);
-}
+QDF_STATUS scheduler_post_message_debug(QDF_MODULE_ID src_id,
+					QDF_MODULE_ID dest_id,
+					QDF_MODULE_ID que_id,
+					struct scheduler_msg *msg,
+					int line,
+					const char *func);
+
+#define scheduler_post_message(src_id, dest_id, que_id, msg) \
+	scheduler_post_message_debug(src_id, dest_id, que_id, msg, \
+				     __LINE__, __func__)
 
 /**
  * scheduler_resume() - resume scheduler thread

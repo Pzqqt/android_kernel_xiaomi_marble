@@ -661,3 +661,22 @@ QDF_STATUS scheduler_get_queue_size(QDF_MODULE_ID qid, uint32_t *size)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS scheduler_post_message_debug(QDF_MODULE_ID src_id,
+					QDF_MODULE_ID dest_id,
+					QDF_MODULE_ID que_id,
+					struct scheduler_msg *msg,
+					int line,
+					const char *func)
+{
+	QDF_STATUS status;
+
+	status = scheduler_post_msg(scheduler_get_qid(src_id, dest_id, que_id),
+				    msg);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		sched_err("couldn't post from %d to %d - called from %d, %s",
+			  src_id, dest_id, line, func);
+
+	return status;
+}

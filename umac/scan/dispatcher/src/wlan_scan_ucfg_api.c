@@ -989,7 +989,6 @@ ucfg_scan_start(struct scan_start_request *req)
 					QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
-		scm_err("failed to post to QDF_MODULE_ID_OS_IF");
 		scm_scan_free_scan_request_mem(req);
 	}
 
@@ -1182,10 +1181,8 @@ ucfg_scan_cancel(struct scan_cancel_request *req)
 	status = scheduler_post_message(QDF_MODULE_ID_OS_IF,
 					QDF_MODULE_ID_SCAN,
 					QDF_MODULE_ID_OS_IF, &msg);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		scm_err("failed to post to QDF_MODULE_ID_OS_IF");
+	if (QDF_IS_STATUS_ERROR(status))
 		goto vdev_put;
-	}
 
 	return QDF_STATUS_SUCCESS;
 
@@ -1224,10 +1221,8 @@ ucfg_scan_cancel_sync(struct scan_cancel_request *req)
 
 	vdev = req->vdev;
 	status = ucfg_scan_cancel(req);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		scm_err("failed to post to QDF_MODULE_ID_OS_IF");
+	if (QDF_IS_STATUS_ERROR(status))
 		return status;
-	}
 
 	memset(&cancel_scan_event, 0, sizeof(cancel_scan_event));
 	/*
