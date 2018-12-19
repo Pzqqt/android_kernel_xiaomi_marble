@@ -130,34 +130,6 @@ static void lim_remove_timeout_pbc_sessions(struct mac_context *mac,
 }
 
 /**
- * lim_remove_pbc_sessions() - Remove PBC sessions
- * @mac: Pointer to Global MAC structure
- * @remove_mac: MAC Address of STA in WPS Session to be removed
- * @session_entry: session entry
- *
- * Return: none
- */
-void lim_remove_pbc_sessions(struct mac_context *mac, struct qdf_mac_addr remove_mac,
-			     struct pe_session *session_entry)
-{
-	tSirWPSPBCSession *pbc, *prev = NULL;
-
-	prev = pbc = session_entry->pAPWPSPBCSession;
-
-	while (pbc) {
-		if (qdf_is_macaddr_equal(&pbc->addr, &remove_mac)) {
-			prev->next = pbc->next;
-			if (pbc == session_entry->pAPWPSPBCSession)
-				session_entry->pAPWPSPBCSession = pbc->next;
-			qdf_mem_free(pbc);
-			return;
-		}
-		prev = pbc;
-		pbc = pbc->next;
-	}
-}
-
-/**
  * lim_update_pbc_session_entry
  *
  ***FUNCTION:

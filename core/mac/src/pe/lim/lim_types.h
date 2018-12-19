@@ -928,9 +928,6 @@ void lim_get_wpspbc_sessions(struct mac_context *mac, struct qdf_mac_addr addr,
 			struct pe_session *pe_session);
 void limWPSPBCTimeout(struct mac_context *mac, struct pe_session *pe_session);
 void lim_wpspbc_close(struct mac_context *mac, struct pe_session *pe_session);
-void lim_remove_pbc_sessions(struct mac_context *mac,
-				struct qdf_mac_addr pRemoveMac,
-				struct pe_session *pe_session);
 
 #define LIM_WPS_OVERLAP_TIMER_MS                 10000
 
