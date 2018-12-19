@@ -1177,10 +1177,10 @@ static int rx_macro_event_handler(struct snd_soc_component *component,
 		rx_priv->dev_up = false;
 		swrm_wcd_notify(
 			rx_priv->swr_ctrl_data[0].rx_swr_pdev,
-			SWR_DEVICE_SSR_DOWN, NULL);
+			SWR_DEVICE_DOWN, NULL);
 		swrm_wcd_notify(
 			rx_priv->swr_ctrl_data[0].rx_swr_pdev,
-			SWR_DEVICE_DOWN, NULL);
+			SWR_DEVICE_SSR_DOWN, NULL);
 		break;
 	case BOLERO_MACRO_EVT_SSR_UP:
 		rx_priv->dev_up = true;
