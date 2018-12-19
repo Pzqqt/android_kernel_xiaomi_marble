@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,8 @@ void pld_usb_unregister_driver(void);
 int pld_usb_get_ce_id(int irq);
 int pld_usb_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 			enum pld_driver_mode mode, const char *host_version);
+int pld_usb_is_fw_down(struct device *dev);
+
 #else
 static inline int pld_usb_register_driver(void)
 {
@@ -42,6 +44,12 @@ static inline int pld_usb_wlan_enable(struct device *dev,
 {
 	return 0;
 }
+
+static inline int pld_usb_is_fw_down(struct device *dev)
+{
+	return  0;
+}
+
 #endif
 
 static inline int

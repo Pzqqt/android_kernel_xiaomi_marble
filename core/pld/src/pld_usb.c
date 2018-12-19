@@ -253,6 +253,11 @@ int pld_usb_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 	return cnss_wlan_enable(dev, &cfg, cnss_mode, host_version);
 }
 
+int pld_usb_is_fw_down(struct device *dev)
+{
+	return cnss_usb_is_device_down(dev);
+}
+
 #else /* CONFIG_PLD_USB_CNSS */
 
 struct usb_driver pld_usb_ops = {
@@ -317,4 +322,10 @@ int pld_usb_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 {
 	return 0;
 }
+
+int pld_usb_is_fw_down(struct device *dev)
+{
+	return 0;
+}
+
 #endif /* CONFIG_PLD_USB_CNSS */

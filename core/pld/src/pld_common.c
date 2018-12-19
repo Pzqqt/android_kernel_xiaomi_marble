@@ -1615,8 +1615,8 @@ int pld_is_qmi_disable(struct device *dev)
  *
  * This API will be called to check if WLAN FW is down or not.
  *
- *  Return: 1 FW is down
- *          0 FW is not down
+ *  Return: 0 FW is not down
+ *          Otherwise FW is down
  *          Always return 0 for unsupported bus type
  */
 int pld_is_fw_down(struct device *dev)
@@ -1632,7 +1632,9 @@ int pld_is_fw_down(struct device *dev)
 		ret = pld_pcie_is_fw_down(dev);
 		break;
 	case PLD_BUS_TYPE_SDIO:
+		break;
 	case PLD_BUS_TYPE_USB:
+		ret = pld_usb_is_fw_down(dev);
 		break;
 	default:
 		pr_err("Invalid device type %d\n", type);
