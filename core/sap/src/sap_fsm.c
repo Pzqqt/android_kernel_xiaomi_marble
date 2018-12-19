@@ -554,38 +554,6 @@ void sap_dfs_set_current_channel(void *ctx)
 	}
 }
 
-bool sap_dfs_is_channel_in_preferred_location(mac_handle_t mac_handle,
-					      uint8_t channel_id)
-{
-	struct mac_context *mac;
-
-	mac = MAC_CONTEXT(mac_handle);
-	if (NULL == mac) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("invalid mac"));
-		return true;
-	}
-	if ((SAP_CHAN_PREFERRED_INDOOR ==
-	     mac->sap.SapDfsInfo.sap_operating_chan_preferred_location) &&
-	    (true == IS_CHAN_JAPAN_OUTDOOR(channel_id))) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
-			  FL
-				  ("CHAN=%d is Outdoor so invalid,preferred Indoor only"),
-			  channel_id);
-		return false;
-	} else if ((SAP_CHAN_PREFERRED_OUTDOOR ==
-		    mac->sap.SapDfsInfo.sap_operating_chan_preferred_location)
-		   && (true == IS_CHAN_JAPAN_INDOOR(channel_id))) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
-			  FL
-				  ("CHAN=%d is Indoor so invalid,preferred Outdoor only"),
-			  channel_id);
-		return false;
-	}
-
-	return true;
-}
-
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 /**
  * sap_check_in_avoid_ch_list() - checks if given channel present is channel

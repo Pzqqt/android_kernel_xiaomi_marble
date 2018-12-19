@@ -385,22 +385,6 @@ bool sap_is_conc_sap_doing_scc_dfs(mac_handle_t mac_handle,
 uint8_t sap_get_total_number_sap_intf(mac_handle_t mac_handle);
 
 /**
- * sap_dfs_is_channel_in_preferred_location() - Verify a channel is valid
- *	with respect to indoor/outdoor location setting
- * @mac_handle: Opaque handle to the global MAC context
- * @channel_id: Channel number to be verified
- *
- * This function checks if the passed @channel_id is in accordance
- * with preferred Channel location settings.
- *
- * Return:
- * * true - Channel location is same as the preferred location
- * * false - Channel location is not same as the preferred location
- */
-bool sap_dfs_is_channel_in_preferred_location(mac_handle_t mac_handle,
-					      uint8_t channel_id);
-
-/**
  * sap_channel_sel - Function for initiating scan request for ACS
  * @sap_context: Sap Context value.
  *
