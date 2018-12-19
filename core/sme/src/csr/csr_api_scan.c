@@ -1363,45 +1363,6 @@ tCsrScanResultInfo *csr_scan_result_get_next(struct mac_context *mac,
 	return pRet;
 }
 
-/*
- * This function moves the first BSS that matches the bssid to the
- * head of the result
- */
-QDF_STATUS csr_move_bss_to_head_from_bssid(struct mac_context *mac,
-					   struct qdf_mac_addr *bssid,
-					   tScanResultHandle hScanResult)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct scan_result_list *pResultList =
-				(struct scan_result_list *) hScanResult;
-	struct tag_csrscan_result *pResult = NULL;
-	tListElem *pEntry = NULL;
-
-	if (!(pResultList && bssid))
-		return status;
-
-	csr_ll_lock(&pResultList->List);
-	pEntry = csr_ll_peek_head(&pResultList->List, LL_ACCESS_NOLOCK);
-	while (pEntry) {
-		pResult = GET_BASE_ADDR(pEntry, struct tag_csrscan_result,
-					Link);
-		if (!qdf_mem_cmp(bssid, pResult->Result.BssDescriptor.bssId,
-				    sizeof(struct qdf_mac_addr))) {
-			status = QDF_STATUS_SUCCESS;
-			csr_ll_remove_entry(&pResultList->List, pEntry,
-					    LL_ACCESS_NOLOCK);
-			csr_ll_insert_head(&pResultList->List, pEntry,
-					   LL_ACCESS_NOLOCK);
-			break;
-		}
-		pEntry = csr_ll_next(&pResultList->List, pResultList->pCurEntry,
-				     LL_ACCESS_NOLOCK);
-	}
-	csr_ll_unlock(&pResultList->List);
-
-	return status;
-}
-
 /**
  * csr_scan_for_ssid() -  Function usually used for BSSs that suppresses SSID
  * @mac_ctx: Pointer to Global Mac structure

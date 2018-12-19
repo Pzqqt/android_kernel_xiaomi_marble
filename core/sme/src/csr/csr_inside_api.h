@@ -373,9 +373,6 @@ int8_t csr_get_cfg_max_tx_power(struct mac_context *mac, uint8_t channel);
 /* To free the last roaming profile */
 void csr_free_roam_profile(struct mac_context *mac, uint32_t sessionId);
 void csr_free_connect_bss_desc(struct mac_context *mac, uint32_t sessionId);
-QDF_STATUS csr_move_bss_to_head_from_bssid(struct mac_context *mac,
-					   struct qdf_mac_addr *bssid,
-					   tScanResultHandle hScanResult);
 
 /* to free memory allocated inside the profile structure */
 void csr_release_profile(struct mac_context *mac,
