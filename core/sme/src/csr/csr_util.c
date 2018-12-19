@@ -1268,22 +1268,6 @@ uint8_t csr_get_connected_infra(struct mac_context *mac_ctx)
 }
 
 
-bool csr_is_ibss_started(struct mac_context *mac)
-{
-	uint32_t i;
-	bool fRc = false;
-
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
-		if (CSR_IS_SESSION_VALID(mac, i)
-		    && csr_is_conn_state_ibss(mac, i)) {
-			fRc = true;
-			break;
-		}
-	}
-
-	return fRc;
-}
-
 bool csr_is_concurrent_session_running(struct mac_context *mac)
 {
 	uint32_t sessionId, noOfCocurrentSession = 0;

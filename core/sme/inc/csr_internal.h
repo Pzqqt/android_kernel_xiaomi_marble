@@ -1003,7 +1003,6 @@ bool csr_is_infra_connected(struct mac_context *mac);
 uint8_t csr_get_connected_infra(struct mac_context *mac_ctx);
 bool csr_is_concurrent_session_running(struct mac_context *mac);
 bool csr_is_infra_ap_started(struct mac_context *mac);
-bool csr_is_ibss_started(struct mac_context *mac);
 bool csr_is_valid_mc_concurrent_session(struct mac_context *mac,
 							 uint32_t sessionId,
 						tSirBssDescription *pBssDesc);
