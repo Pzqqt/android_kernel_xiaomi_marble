@@ -5726,60 +5726,6 @@ QDF_STATUS sme_update_session_param(mac_handle_t mac_handle, uint8_t session_id,
 }
 
 /*
- * sme_set_tm_level() -
- * Set Thermal Mitigation Level to RIVA
- *
- * mac_handle - The handle returned by mac_open.
- * newTMLevel - new Thermal Mitigation Level
- * tmMode - Thermal Mitigation handle mode, default 0
- * Return QDF_STATUS
- */
-QDF_STATUS sme_set_tm_level(mac_handle_t mac_handle,
-			    uint16_t newTMLevel,
-			    uint16_t tmMode)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct scheduler_msg message = {0};
-	tAniSetTmLevelReq *setTmLevelReq = NULL;
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_SET_TMLEVEL, NO_SESSION, 0));
-	status = sme_acquire_global_lock(&mac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		setTmLevelReq =
-			(tAniSetTmLevelReq *)
-			qdf_mem_malloc(sizeof(tAniSetTmLevelReq));
-		if (NULL == setTmLevelReq) {
-			sme_release_global_lock(&mac->sme);
-			return QDF_STATUS_E_NOMEM;
-		}
-
-		setTmLevelReq->tmMode = tmMode;
-		setTmLevelReq->newTmLevel = newTMLevel;
-
-		/* serialize the req through MC thread */
-		message.bodyptr = setTmLevelReq;
-		message.type = WMA_SET_TM_LEVEL_REQ;
-		MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_TX_WMA_MSG,
-				 NO_SESSION, message.type));
-		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
-						    QDF_MODULE_ID_WMA,
-						    QDF_MODULE_ID_WMA,
-						    &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Post Set TM Level MSG fail", __func__);
-			qdf_mem_free(setTmLevelReq);
-			status = QDF_STATUS_E_FAILURE;
-		}
-		sme_release_global_lock(&mac->sme);
-	}
-	return status;
-}
-
-/*
  * sme_update_roam_scan_n_probes() -
  * Function to update roam scan N probes
  *	    This function is called through dynamic setConfig callback function
