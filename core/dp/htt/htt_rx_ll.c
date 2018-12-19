@@ -503,7 +503,7 @@ moretofill:
 	}
 
 	if (debt_served <  qdf_atomic_read(&pdev->rx_ring.refill_debt)) {
-		num = qdf_atomic_read(&pdev->rx_ring.refill_debt);
+		num = qdf_atomic_read(&pdev->rx_ring.refill_debt) - debt_served;
 		debt_served += num;
 		goto moretofill;
 	}
