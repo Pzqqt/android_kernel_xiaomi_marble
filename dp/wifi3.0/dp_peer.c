@@ -1516,9 +1516,9 @@ static void dp_reo_desc_free(struct dp_soc *soc, void *cb_ctxt,
 			reo_status->rx_queue_status.header.status,
 			freedesc->rx_tid.tid);
 	}
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		"%s: hw_qdesc_paddr: %pK, tid:%d", __func__,
-		(void *)(rx_tid->hw_qdesc_paddr), rx_tid->tid);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+		  "%s: hw_qdesc_paddr: %pK, tid:%d", __func__,
+		  (void *)(rx_tid->hw_qdesc_paddr), rx_tid->tid);
 	qdf_mem_unmap_nbytes_single(soc->osdev,
 		rx_tid->hw_qdesc_paddr,
 		QDF_DMA_BIDIRECTIONAL,
