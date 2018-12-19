@@ -719,7 +719,6 @@ QDF_STATUS sme_hide_ssid(mac_handle_t mac_handle, uint8_t sessionId,
 		uint8_t ssidHidden);
 QDF_STATUS sme_set_tm_level(mac_handle_t mac_handle, uint16_t newTMLevel,
 		uint16_t tmMode);
-void sme_feature_caps_exchange(mac_handle_t mac_handle);
 
 QDF_STATUS sme_update_roam_scan_n_probes(mac_handle_t mac_handle,
 					 uint8_t sessionId,

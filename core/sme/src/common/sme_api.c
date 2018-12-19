@@ -5902,20 +5902,6 @@ QDF_STATUS sme_set_tm_level(mac_handle_t mac_handle,
 }
 
 /*
- * sme_feature_caps_exchange() - SME interface to exchange capabilities between
- *  Host and FW.
- *
- * mac_handle: Opaque handle to the global MAC context
- * Return NONE
- */
-void sme_feature_caps_exchange(mac_handle_t mac_handle)
-{
-	MTRACE(qdf_trace
-		       (QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_HDD_CAPS_EXCH,
-			NO_SESSION, 0));
-}
-
-/*
  * sme_update_roam_scan_n_probes() -
  * Function to update roam scan N probes
  *	    This function is called through dynamic setConfig callback function
