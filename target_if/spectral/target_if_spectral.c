@@ -2031,11 +2031,9 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		if (target_type == TARGET_TYPE_QCA9984 ||
 		    target_type == TARGET_TYPE_QCA9888)
 			spectral->is_sec80_rssi_war_required = true;
-#ifdef CONFIG_WIN
-		spectral->use_nl_bcast = true;
-#else
-		spectral->use_nl_bcast = false;
-#endif
+
+		spectral->use_nl_bcast = SPECTRAL_USE_NL_BCAST;
+
 		if (spectral->spectral_gen == SPECTRAL_GEN3)
 			init_160mhz_delivery_state_machine(spectral);
 	}

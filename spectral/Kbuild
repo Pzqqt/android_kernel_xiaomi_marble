@@ -186,6 +186,7 @@ endif
 obj-m += qca_spectral.o
 
 ccflags-y+= $(INCS) $(COPTS) -DSPECTRAL_USE_NETLINK_SOCKETS=1 -DWLAN_SPECTRAL_ENABLE=1
+ccflags-y+= -DSPECTRAL_USE_NL_BCAST=1
 
 ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
 MOD_CFLAGS = -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(qca_spectral.mod)"  -D"KBUILD_MODNAME=KBUILD_STR(qca_spectral)"

@@ -41,6 +41,10 @@
 
 #include <spectral_defs_i.h>
 
+#ifndef SPECTRAL_USE_NL_BCAST
+#define SPECTRAL_USE_NL_BCAST  (0)
+#endif
+
 #define STATUS_PASS       1
 #define STATUS_FAIL       0
 #undef spectral_dbg_line
