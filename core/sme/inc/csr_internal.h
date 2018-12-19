@@ -1037,7 +1037,6 @@ uint8_t csr_construct_wapi_ie(struct mac_context *mac, uint32_t sessionId,
 void csr_set_cfg_privacy(struct mac_context *mac,
 			 struct csr_roam_profile *pProfile,
 			 bool fPrivacy);
-int8_t csr_get_infra_session_id(struct mac_context *mac);
 uint8_t csr_get_infra_operation_channel(struct mac_context *mac,
 							uint8_t sessionId);
 bool csr_is_session_client_and_connected(struct mac_context *mac,

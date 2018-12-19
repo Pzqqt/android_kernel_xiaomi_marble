@@ -716,22 +716,6 @@ bool csr_is_any_session_in_connect_state(struct mac_context *mac)
 	return fRc;
 }
 
-int8_t csr_get_infra_session_id(struct mac_context *mac)
-{
-	uint8_t i;
-	int8_t sessionid = -1;
-
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
-		if (CSR_IS_SESSION_VALID(mac, i)
-		    && csr_is_conn_state_infra(mac, i)) {
-			sessionid = i;
-			break;
-		}
-	}
-
-	return sessionid;
-}
-
 uint8_t csr_get_infra_operation_channel(struct mac_context *mac, uint8_t sessionId)
 {
 	uint8_t channel;
