@@ -167,36 +167,35 @@ static void hal_rx_dump_msdu_start_tlv_6390(void *msdustart, uint8_t dbg_level)
 	struct rx_msdu_start *msdu_start = (struct rx_msdu_start *)msdustart;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"rx_msdu_start tlv - "
-			"rxpcu_mpdu_filter_in_category: %d "
-			"sw_frame_group_id: %d "
-			"phy_ppdu_id: %d "
-			"msdu_length: %d "
-			"ipsec_esp: %d "
-			"l3_offset: %d "
-			"ipsec_ah: %d "
-			"l4_offset: %d "
-			"msdu_number: %d "
-			"decap_format: %d "
-			"ipv4_proto: %d "
-			"ipv6_proto: %d "
-			"tcp_proto: %d "
-			"udp_proto: %d "
-			"ip_frag: %d "
-			"tcp_only_ack: %d "
-			"da_is_bcast_mcast: %d "
-			"ip4_protocol_ip6_next_header: %d "
-			"toeplitz_hash_2_or_4: %d "
-			"flow_id_toeplitz: %d "
-			"user_rssi: %d "
-			"pkt_type: %d "
-			"stbc: %d "
-			"sgi: %d "
-			"rate_mcs: %d "
-			"receive_bandwidth: %d "
-			"reception_type: %d "
-			"ppdu_start_timestamp: %d "
-			"sw_phy_meta_data: %d ",
+			"rx_msdu_start tlv (1/2) - "
+			"rxpcu_mpdu_filter_in_category: %x "
+			"sw_frame_group_id: %x "
+			"phy_ppdu_id: %x "
+			"msdu_length: %x "
+			"ipsec_esp: %x "
+			"l3_offset: %x "
+			"ipsec_ah: %x "
+			"l4_offset: %x "
+			"msdu_number: %x "
+			"decap_format: %x "
+			"ipv4_proto: %x "
+			"ipv6_proto: %x "
+			"tcp_proto: %x "
+			"udp_proto: %x "
+			"ip_frag: %x "
+			"tcp_only_ack: %x "
+			"da_is_bcast_mcast: %x "
+			"ip4_protocol_ip6_next_header: %x "
+			"toeplitz_hash_2_or_4: %x "
+			"flow_id_toeplitz: %x "
+			"user_rssi: %x "
+			"pkt_type: %x "
+			"stbc: %x "
+			"sgi: %x "
+			"rate_mcs: %x "
+			"receive_bandwidth: %x "
+			"reception_type: %x "
+			"ppdu_start_timestamp: %u ",
 			msdu_start->rxpcu_mpdu_filter_in_category,
 			msdu_start->sw_frame_group_id,
 			msdu_start->phy_ppdu_id,
@@ -224,8 +223,12 @@ static void hal_rx_dump_msdu_start_tlv_6390(void *msdustart, uint8_t dbg_level)
 			msdu_start->rate_mcs,
 			msdu_start->receive_bandwidth,
 			msdu_start->reception_type,
-			msdu_start->ppdu_start_timestamp,
-			msdu_start->sw_phy_meta_data);
+			msdu_start->ppdu_start_timestamp);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+		  "rx_msdu_start tlv (2/2) - "
+		  "sw_phy_meta_data: %x ",
+		  msdu_start->sw_phy_meta_data);
 }
 
 /**
@@ -242,53 +245,29 @@ static void hal_rx_dump_msdu_end_tlv_6390(void *msduend,
 	struct rx_msdu_end *msdu_end = (struct rx_msdu_end *)msduend;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"rx_msdu_end tlv - "
-			"rxpcu_mpdu_filter_in_category: %d "
-			"sw_frame_group_id: %d "
-			"phy_ppdu_id: %d "
-			"ip_hdr_chksum: %d "
-			"tcp_udp_chksum: %d "
-			"key_id_octet: %d "
-			"cce_super_rule: %d "
-			"cce_classify_not_done_truncat: %d "
-			"cce_classify_not_done_cce_dis: %d "
-			"ext_wapi_pn_63_48: %d "
-			"ext_wapi_pn_95_64: %d "
-			"ext_wapi_pn_127_96: %d "
-			"reported_mpdu_length: %d "
-			"first_msdu: %d "
-			"last_msdu: %d "
-			"sa_idx_timeout: %d "
-			"da_idx_timeout: %d "
-			"msdu_limit_error: %d "
-			"flow_idx_timeout: %d "
-			"flow_idx_invalid: %d "
-			"wifi_parser_error: %d "
-			"amsdu_parser_error: %d "
-			"sa_is_valid: %d "
-			"da_is_valid: %d "
-			"da_is_mcbc: %d "
-			"l3_header_padding: %d "
-			"ipv6_options_crc: %d "
-			"tcp_seq_number: %d "
-			"tcp_ack_number: %d "
-			"tcp_flag: %d "
-			"lro_eligible: %d "
-			"window_size: %d "
-			"da_offset: %d "
-			"sa_offset: %d "
-			"da_offset_valid: %d "
-			"sa_offset_valid: %d "
-			"rule_indication_31_0: %d "
-			"rule_indication_63_32: %d "
-			"sa_idx: %d "
-			"da_idx: %d "
-			"msdu_drop: %d "
-			"reo_destination_indication: %d "
-			"flow_idx: %d "
-			"fse_metadata: %d "
-			"cce_metadata: %d "
-			"sa_sw_peer_id: %d ",
+			"rx_msdu_end tlv (1/2) - "
+			"rxpcu_mpdu_filter_in_category: %x "
+			"sw_frame_group_id: %x "
+			"phy_ppdu_id: %x "
+			"ip_hdr_chksum: %x "
+			"tcp_udp_chksum: %x "
+			"key_id_octet: %x "
+			"cce_super_rule: %x "
+			"cce_classify_not_done_truncat: %x "
+			"cce_classify_not_done_cce_dis: %x "
+			"ext_wapi_pn_63_48: %x "
+			"ext_wapi_pn_95_64: %x "
+			"ext_wapi_pn_127_96: %x "
+			"reported_mpdu_length: %x "
+			"first_msdu: %x "
+			"last_msdu: %x "
+			"sa_idx_timeout: %x "
+			"da_idx_timeout: %x "
+			"msdu_limit_error: %x "
+			"flow_idx_timeout: %x "
+			"flow_idx_invalid: %x "
+			"wifi_parser_error: %x "
+			"amsdu_parser_error: %x",
 			msdu_end->rxpcu_mpdu_filter_in_category,
 			msdu_end->sw_frame_group_id,
 			msdu_end->phy_ppdu_id,
@@ -310,7 +289,34 @@ static void hal_rx_dump_msdu_end_tlv_6390(void *msduend,
 			msdu_end->flow_idx_timeout,
 			msdu_end->flow_idx_invalid,
 			msdu_end->wifi_parser_error,
-			msdu_end->amsdu_parser_error,
+			msdu_end->amsdu_parser_error);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+			"rx_msdu_end tlv (2/2)- "
+			"sa_is_valid: %x "
+			"da_is_valid: %x "
+			"da_is_mcbc: %x "
+			"l3_header_padding: %x "
+			"ipv6_options_crc: %x "
+			"tcp_seq_number: %x "
+			"tcp_ack_number: %x "
+			"tcp_flag: %x "
+			"lro_eligible: %x "
+			"window_size: %x "
+			"da_offset: %x "
+			"sa_offset: %x "
+			"da_offset_valid: %x "
+			"sa_offset_valid: %x "
+			"rule_indication_31_0: %x "
+			"rule_indication_63_32: %x "
+			"sa_idx: %x "
+			"da_idx: %x "
+			"msdu_drop: %x "
+			"reo_destination_indication: %x "
+			"flow_idx: %x "
+			"fse_metadata: %x "
+			"cce_metadata: %x "
+			"sa_sw_peer_id: %x ",
 			msdu_end->sa_is_valid,
 			msdu_end->da_is_valid,
 			msdu_end->da_is_mcbc,

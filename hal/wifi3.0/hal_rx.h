@@ -2381,57 +2381,35 @@ static inline void hal_rx_dump_rx_attention_tlv(struct rx_attention *rx_attn,
 							uint8_t dbg_level)
 {
 	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"rx_attention tlv="
-			"rxpcu_mpdu_filter_in_category: %d "
-			"sw_frame_group_id: %d "
-			"reserved_0: %d "
-			"phy_ppdu_id: %d "
-			"first_mpdu : %d "
-			"reserved_1a: %d "
-			"mcast_bcast: %d "
-			"ast_index_not_found: %d "
-			"ast_index_timeout: %d "
-			"power_mgmt: %d "
-			"non_qos: %d "
-			"null_data: %d "
-			"mgmt_type: %d "
-			"ctrl_type: %d "
-			"more_data: %d "
-			"eosp: %d "
-			"a_msdu_error: %d "
-			"fragment_flag: %d "
-			"order: %d "
-			"cce_match: %d "
-			"overflow_err: %d "
-			"msdu_length_err: %d "
-			"tcp_udp_chksum_fail: %d "
-			"ip_chksum_fail: %d "
-			"sa_idx_invalid: %d "
-			"da_idx_invalid: %d "
-			"reserved_1b: %d "
-			"rx_in_tx_decrypt_byp: %d "
-			"encrypt_required: %d "
-			"directed: %d "
-			"buffer_fragment: %d "
-			"mpdu_length_err: %d "
-			"tkip_mic_err: %d "
-			"decrypt_err: %d "
-			"unencrypted_frame_err: %d "
-			"fcs_err: %d "
-			"flow_idx_timeout: %d "
-			"flow_idx_invalid: %d "
-			"wifi_parser_error: %d "
-			"amsdu_parser_error: %d "
-			"sa_idx_timeout: %d "
-			"da_idx_timeout: %d "
-			"msdu_limit_error: %d "
-			"da_is_valid: %d "
-			"da_is_mcbc: %d "
-			"sa_is_valid: %d "
-			"decrypt_status_code: %d "
-			"rx_bitmap_not_updated: %d "
-			"reserved_2: %d "
-			"msdu_done: %d ",
+			"rx_attention tlv (1/2) - "
+			"rxpcu_mpdu_filter_in_category: %x "
+			"sw_frame_group_id: %x "
+			"reserved_0: %x "
+			"phy_ppdu_id: %x "
+			"first_mpdu : %x "
+			"reserved_1a: %x "
+			"mcast_bcast: %x "
+			"ast_index_not_found: %x "
+			"ast_index_timeout: %x "
+			"power_mgmt: %x "
+			"non_qos: %x "
+			"null_data: %x "
+			"mgmt_type: %x "
+			"ctrl_type: %x "
+			"more_data: %x "
+			"eosp: %x "
+			"a_msdu_error: %x "
+			"fragment_flag: %x "
+			"order: %x "
+			"cce_match: %x "
+			"overflow_err: %x "
+			"msdu_length_err: %x "
+			"tcp_udp_chksum_fail: %x "
+			"ip_chksum_fail: %x "
+			"sa_idx_invalid: %x "
+			"da_idx_invalid: %x "
+			"reserved_1b: %x "
+			"rx_in_tx_decrypt_byp: %x ",
 			rx_attn->rxpcu_mpdu_filter_in_category,
 			rx_attn->sw_frame_group_id,
 			rx_attn->reserved_0,
@@ -2459,7 +2437,32 @@ static inline void hal_rx_dump_rx_attention_tlv(struct rx_attention *rx_attn,
 			rx_attn->sa_idx_invalid,
 			rx_attn->da_idx_invalid,
 			rx_attn->reserved_1b,
-			rx_attn->rx_in_tx_decrypt_byp,
+			rx_attn->rx_in_tx_decrypt_byp);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+			"rx_attention tlv (2/2) - "
+			"encrypt_required: %x "
+			"directed: %x "
+			"buffer_fragment: %x "
+			"mpdu_length_err: %x "
+			"tkip_mic_err: %x "
+			"decrypt_err: %x "
+			"unencrypted_frame_err: %x "
+			"fcs_err: %x "
+			"flow_idx_timeout: %x "
+			"flow_idx_invalid: %x "
+			"wifi_parser_error: %x "
+			"amsdu_parser_error: %x "
+			"sa_idx_timeout: %x "
+			"da_idx_timeout: %x "
+			"msdu_limit_error: %x "
+			"da_is_valid: %x "
+			"da_is_mcbc: %x "
+			"sa_is_valid: %x "
+			"decrypt_status_code: %x "
+			"rx_bitmap_not_updated: %x "
+			"reserved_2: %x "
+			"msdu_done: %x ",
 			rx_attn->encrypt_required,
 			rx_attn->directed,
 			rx_attn->buffer_fragment,
@@ -2482,8 +2485,6 @@ static inline void hal_rx_dump_rx_attention_tlv(struct rx_attention *rx_attn,
 			rx_attn->rx_bitmap_not_updated,
 			rx_attn->reserved_2,
 			rx_attn->msdu_done);
-
-
 }
 
 static inline void hal_rx_dump_mpdu_start_tlv(struct rx_mpdu_start *mpdu_start,
@@ -2521,23 +2522,23 @@ static inline void hal_rx_dump_mpdu_end_tlv(struct rx_mpdu_end *mpdu_end,
 {
 	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
 			"rx_mpdu_end tlv - "
-			"rxpcu_mpdu_filter_in_category: %d "
-			"sw_frame_group_id: %d "
-			"phy_ppdu_id: %d "
-			"unsup_ktype_short_frame: %d "
-			"rx_in_tx_decrypt_byp: %d "
-			"overflow_err: %d "
-			"mpdu_length_err: %d "
-			"tkip_mic_err: %d "
-			"decrypt_err: %d "
-			"unencrypted_frame_err: %d "
-			"pn_fields_contain_valid_info: %d "
-			"fcs_err: %d "
-			"msdu_length_err: %d "
-			"rxdma0_destination_ring: %d "
-			"rxdma1_destination_ring: %d "
-			"decrypt_status_code: %d "
-			"rx_bitmap_not_updated: %d ",
+			"rxpcu_mpdu_filter_in_category: %x "
+			"sw_frame_group_id: %x "
+			"phy_ppdu_id: %x "
+			"unsup_ktype_short_frame: %x "
+			"rx_in_tx_decrypt_byp: %x "
+			"overflow_err: %x "
+			"mpdu_length_err: %x "
+			"tkip_mic_err: %x "
+			"decrypt_err: %x "
+			"unencrypted_frame_err: %x "
+			"pn_fields_contain_valid_info: %x "
+			"fcs_err: %x "
+			"msdu_length_err: %x "
+			"rxdma0_destination_ring: %x "
+			"rxdma1_destination_ring: %x "
+			"decrypt_status_code: %x "
+			"rx_bitmap_not_updated: %x ",
 			mpdu_end->rxpcu_mpdu_filter_in_category,
 			mpdu_end->sw_frame_group_id,
 			mpdu_end->phy_ppdu_id,

@@ -1710,92 +1710,27 @@ static inline void hal_rx_dump_mpdu_start_tlv_generic(void *mpdustart,
 		(struct rx_mpdu_info *)&mpdu_start->rx_mpdu_info_details;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"rx_mpdu_start tlv - "
-			"rxpcu_mpdu_filter_in_category: %d "
-			"sw_frame_group_id: %d "
-			"ndp_frame: %d "
-			"phy_err: %d "
-			"phy_err_during_mpdu_header: %d "
-			"protocol_version_err: %d "
-			"ast_based_lookup_valid: %d "
-			"phy_ppdu_id: %d "
-			"ast_index: %d "
-			"sw_peer_id: %d "
-			"mpdu_frame_control_valid: %d "
-			"mpdu_duration_valid: %d "
-			"mac_addr_ad1_valid: %d "
-			"mac_addr_ad2_valid: %d "
-			"mac_addr_ad3_valid: %d "
-			"mac_addr_ad4_valid: %d "
-			"mpdu_sequence_control_valid: %d "
-			"mpdu_qos_control_valid: %d "
-			"mpdu_ht_control_valid: %d "
-			"frame_encryption_info_valid: %d "
-			"fr_ds: %d "
-			"to_ds: %d "
-			"encrypted: %d "
-			"mpdu_retry: %d "
-			"mpdu_sequence_number: %d "
-			"epd_en: %d "
-			"all_frames_shall_be_encrypted: %d "
-			"encrypt_type: %d "
-			"mesh_sta: %d "
-			"bssid_hit: %d "
-			"bssid_number: %d "
-			"tid: %d "
-			"pn_31_0: %d "
-			"pn_63_32: %d "
-			"pn_95_64: %d "
-			"pn_127_96: %d "
-			"peer_meta_data: %d "
-			"rxpt_classify_info.reo_destination_indication: %d "
-			"rxpt_classify_info.use_flow_id_toeplitz_clfy: %d "
-			"rx_reo_queue_desc_addr_31_0: %d "
-			"rx_reo_queue_desc_addr_39_32: %d "
-			"receive_queue_number: %d "
-			"pre_delim_err_warning: %d "
-			"first_delim_err: %d "
-			"key_id_octet: %d "
-			"new_peer_entry: %d "
-			"decrypt_needed: %d "
-			"decap_type: %d "
-			"rx_insert_vlan_c_tag_padding: %d "
-			"rx_insert_vlan_s_tag_padding: %d "
-			"strip_vlan_c_tag_decap: %d "
-			"strip_vlan_s_tag_decap: %d "
-			"pre_delim_count: %d "
-			"ampdu_flag: %d "
-			"bar_frame: %d "
-			"mpdu_length: %d "
-			"first_mpdu: %d "
-			"mcast_bcast: %d "
-			"ast_index_not_found: %d "
-			"ast_index_timeout: %d "
-			"power_mgmt: %d "
-			"non_qos: %d "
-			"null_data: %d "
-			"mgmt_type: %d "
-			"ctrl_type: %d "
-			"more_data: %d "
-			"eosp: %d "
-			"fragment_flag: %d "
-			"order: %d "
-			"u_apsd_trigger: %d "
-			"encrypt_required: %d "
-			"directed: %d "
-			"mpdu_frame_control_field: %d "
-			"mpdu_duration_field: %d "
-			"mac_addr_ad1_31_0: %d "
-			"mac_addr_ad1_47_32: %d "
-			"mac_addr_ad2_15_0: %d "
-			"mac_addr_ad2_47_16: %d "
-			"mac_addr_ad3_31_0: %d "
-			"mac_addr_ad3_47_32: %d "
-			"mpdu_sequence_control_field: %d "
-			"mac_addr_ad4_31_0: %d "
-			"mac_addr_ad4_47_32: %d "
-			"mpdu_qos_control_field: %d "
-			"mpdu_ht_control_field: %d ",
+			"rx_mpdu_start tlv (1/5) - "
+			"rxpcu_mpdu_filter_in_category: %x "
+			"sw_frame_group_id: %x "
+			"ndp_frame: %x "
+			"phy_err: %x "
+			"phy_err_during_mpdu_header: %x "
+			"protocol_version_err: %x "
+			"ast_based_lookup_valid: %x "
+			"phy_ppdu_id: %x "
+			"ast_index: %x "
+			"sw_peer_id: %x "
+			"mpdu_frame_control_valid: %x "
+			"mpdu_duration_valid: %x "
+			"mac_addr_ad1_valid: %x "
+			"mac_addr_ad2_valid: %x "
+			"mac_addr_ad3_valid: %x "
+			"mac_addr_ad4_valid: %x "
+			"mpdu_sequence_control_valid: %x "
+			"mpdu_qos_control_valid: %x "
+			"mpdu_ht_control_valid: %x "
+			"frame_encryption_info_valid: %x ",
 			mpdu_info->rxpcu_mpdu_filter_in_category,
 			mpdu_info->sw_frame_group_id,
 			mpdu_info->ndp_frame,
@@ -1815,7 +1750,30 @@ static inline void hal_rx_dump_mpdu_start_tlv_generic(void *mpdustart,
 			mpdu_info->mpdu_sequence_control_valid,
 			mpdu_info->mpdu_qos_control_valid,
 			mpdu_info->mpdu_ht_control_valid,
-			mpdu_info->frame_encryption_info_valid,
+			mpdu_info->frame_encryption_info_valid);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+			"rx_mpdu_start tlv (2/5) - "
+			"fr_ds: %x "
+			"to_ds: %x "
+			"encrypted: %x "
+			"mpdu_retry: %x "
+			"mpdu_sequence_number: %x "
+			"epd_en: %x "
+			"all_frames_shall_be_encrypted: %x "
+			"encrypt_type: %x "
+			"mesh_sta: %x "
+			"bssid_hit: %x "
+			"bssid_number: %x "
+			"tid: %x "
+			"pn_31_0: %x "
+			"pn_63_32: %x "
+			"pn_95_64: %x "
+			"pn_127_96: %x "
+			"peer_meta_data: %x "
+			"rxpt_classify_info.reo_destination_indication: %x "
+			"rxpt_classify_info.use_flow_id_toeplitz_clfy: %x "
+			"rx_reo_queue_desc_addr_31_0: %x ",
 			mpdu_info->fr_ds,
 			mpdu_info->to_ds,
 			mpdu_info->encrypted,
@@ -1835,7 +1793,30 @@ static inline void hal_rx_dump_mpdu_start_tlv_generic(void *mpdustart,
 			mpdu_info->peer_meta_data,
 			mpdu_info->rxpt_classify_info_details.reo_destination_indication,
 			mpdu_info->rxpt_classify_info_details.use_flow_id_toeplitz_clfy,
-			mpdu_info->rx_reo_queue_desc_addr_31_0,
+			mpdu_info->rx_reo_queue_desc_addr_31_0);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+			"rx_mpdu_start tlv (3/5) - "
+			"rx_reo_queue_desc_addr_39_32: %x "
+			"receive_queue_number: %x "
+			"pre_delim_err_warning: %x "
+			"first_delim_err: %x "
+			"key_id_octet: %x "
+			"new_peer_entry: %x "
+			"decrypt_needed: %x "
+			"decap_type: %x "
+			"rx_insert_vlan_c_tag_padding: %x "
+			"rx_insert_vlan_s_tag_padding: %x "
+			"strip_vlan_c_tag_decap: %x "
+			"strip_vlan_s_tag_decap: %x "
+			"pre_delim_count: %x "
+			"ampdu_flag: %x "
+			"bar_frame: %x "
+			"mpdu_length: %x "
+			"first_mpdu: %x "
+			"mcast_bcast: %x "
+			"ast_index_not_found: %x "
+			"ast_index_timeout: %x ",
 			mpdu_info->rx_reo_queue_desc_addr_39_32,
 			mpdu_info->receive_queue_number,
 			mpdu_info->pre_delim_err_warning,
@@ -1855,7 +1836,30 @@ static inline void hal_rx_dump_mpdu_start_tlv_generic(void *mpdustart,
 			mpdu_info->first_mpdu,
 			mpdu_info->mcast_bcast,
 			mpdu_info->ast_index_not_found,
-			mpdu_info->ast_index_timeout,
+			mpdu_info->ast_index_timeout);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+			"rx_mpdu_start tlv (4/5) - "
+			"power_mgmt: %x "
+			"non_qos: %x "
+			"null_data: %x "
+			"mgmt_type: %x "
+			"ctrl_type: %x "
+			"more_data: %x "
+			"eosp: %x "
+			"fragment_flag: %x "
+			"order: %x "
+			"u_apsd_trigger: %x "
+			"encrypt_required: %x "
+			"directed: %x "
+			"mpdu_frame_control_field: %x "
+			"mpdu_duration_field: %x "
+			"mac_addr_ad1_31_0: %x "
+			"mac_addr_ad1_47_32: %x "
+			"mac_addr_ad2_15_0: %x "
+			"mac_addr_ad2_47_16: %x "
+			"mac_addr_ad3_31_0: %x "
+			"mac_addr_ad3_47_32: %x ",
 			mpdu_info->power_mgmt,
 			mpdu_info->non_qos,
 			mpdu_info->null_data,
@@ -1875,7 +1879,15 @@ static inline void hal_rx_dump_mpdu_start_tlv_generic(void *mpdustart,
 			mpdu_info->mac_addr_ad2_15_0,
 			mpdu_info->mac_addr_ad2_47_16,
 			mpdu_info->mac_addr_ad3_31_0,
-			mpdu_info->mac_addr_ad3_47_32,
+			mpdu_info->mac_addr_ad3_47_32);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
+			"rx_mpdu_start tlv (5/5) - "
+			"mpdu_sequence_control_field: %x "
+			"mac_addr_ad4_31_0: %x "
+			"mac_addr_ad4_47_32: %x "
+			"mpdu_qos_control_field: %x "
+			"mpdu_ht_control_field: %x ",
 			mpdu_info->mpdu_sequence_control_field,
 			mpdu_info->mac_addr_ad4_31_0,
 			mpdu_info->mac_addr_ad4_47_32,
