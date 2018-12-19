@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -281,7 +281,6 @@ target_if_spectral_info_init_defaults(struct target_if_spectral *spectral)
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef OL_SPECTRAL_DEBUG_CONFIG_INTERACTIONS
 /**
  * target_if_log_read_spectral_active() - Helper function to log whether
  * spectral is active after reading cache
@@ -430,50 +429,6 @@ target_if_log_read_spectral_params_catch_validate(
 		       pparam->ss_bin_scale,
 		       pparam->ss_dbm_adj, pparam->ss_chn_mask);
 }
-
-#else
-static void
-target_if_log_read_spectral_active(
-	const char *function_name,
-	unsigned char output)
-{
-}
-
-static void
-target_if_log_read_spectral_enabled(
-	const char *function_name,
-	unsigned char output)
-{
-}
-
-static void
-target_if_log_read_spectral_params(
-	const char *function_name,
-	struct spectral_config *pparam)
-{
-}
-
-static void
-target_if_log_read_spectral_active_catch_validate(
-	const char *function_name,
-	unsigned char output)
-{
-}
-
-static void
-target_if_log_read_spectral_enabled_catch_validate(
-	const char *function_name,
-	unsigned char output)
-{
-}
-
-static void
-target_if_log_read_spectral_params_catch_validate(
-	const char *function_name,
-	struct spectral_config *pparam)
-{
-}
-#endif
 
 /**
  * target_if_spectral_info_read() - Read spectral information from the cache.
@@ -636,7 +591,6 @@ target_if_spectral_info_read(
 	return 0;
 }
 
-#ifdef OL_SPECTRAL_DEBUG_CONFIG_INTERACTIONS
 /**
  * target_if_log_write_spectral_active() - Helper function to log inputs and
  * return value of call to configure the Spectral 'active' configuration,
@@ -713,32 +667,6 @@ target_if_log_write_spectral_params(
 		       param->ss_bin_scale,
 		       param->ss_dbm_adj, param->ss_chn_mask, ret);
 }
-#else
-static void
-target_if_log_write_spectral_active(
-	const char *function_name,
-	uint8_t pval,
-	int ret)
-{
-}
-
-static void
-target_if_log_write_spectral_enabled(
-	const char *function_name,
-	uint8_t pval,
-	int ret)
-{
-}
-
-static void
-target_if_log_write_spectral_params(
-	struct spectral_config *param,
-	const char *function_name,
-	int ret)
-{
-}
-
-#endif
 
 /**
  * target_if_spectral_info_write() - Write Spectral information to the

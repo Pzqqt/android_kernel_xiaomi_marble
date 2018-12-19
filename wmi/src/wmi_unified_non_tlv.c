@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2790,7 +2790,7 @@ static QDF_STATUS send_vdev_spectral_configure_cmd_non_tlv(wmi_unified_t wmi_han
 			   buf,
 			   len,
 			   WMI_VDEV_SPECTRAL_SCAN_CONFIGURE_CMDID);
-#ifdef OL_SPECTRAL_DEBUG_CONFIG_INTERACTIONS
+
 	WMI_LOGD("%s: Sent WMI_VDEV_SPECTRAL_SCAN_CONFIGURE_CMDID", __func__);
 
 	WMI_LOGD("vdev_id = %u\n"
@@ -2832,7 +2832,6 @@ static QDF_STATUS send_vdev_spectral_configure_cmd_non_tlv(wmi_unified_t wmi_han
 		  param->dbm_adj,
 		  param->chn_mask);
 	WMI_LOGD("%s: Status: %d", __func__, ret);
-#endif  /* OL_SPECTRAL_DEBUG_CONFIG_INTERACTIONS */
 
 	return ret;
 }
@@ -2974,10 +2973,6 @@ static QDF_STATUS send_vdev_spectral_enable_cmd_non_tlv(wmi_unified_t wmi_handle
 		cmd->enable_cmd = 0; /* 0: Ignore */
 	}
 
-#ifdef OL_SPECTRAL_DEBUG_CONFIG_INTERACTIONS
-	WMI_LOGD
-		("%s: Sent WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID\n", __func__);
-
 	WMI_LOGD("vdev_id = %u\n"
 				 "trigger_cmd = %u\n"
 				 "enable_cmd = %u",
@@ -2985,13 +2980,16 @@ static QDF_STATUS send_vdev_spectral_enable_cmd_non_tlv(wmi_unified_t wmi_handle
 				 cmd->trigger_cmd,
 				 cmd->enable_cmd);
 
-	WMI_LOGD("%s: Status: %d", __func__, ret);
-#endif /* OL_SPECTRAL_DEBUG_CONFIG_INTERACTIONS */
-
 	ret = wmi_unified_cmd_send(wmi_handle,
 				   buf,
 				   len,
 				   WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID);
+
+	WMI_LOGD
+		("%s: Sent WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID\n", __func__);
+
+	WMI_LOGD("%s: Status: %d", __func__, ret);
+
 	return ret;
 }
 
