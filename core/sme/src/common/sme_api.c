@@ -3393,24 +3393,6 @@ QDF_STATUS sme_get_modify_profile_fields(mac_handle_t mac_handle,
 	return status;
 }
 
-/*
- * sme_set_dhcp_till_power_active_flag() -
- * Sets/Clears DHCP related flag to disable/enable auto PS
- *
- * mac_handle - The handle returned by mac_open.
- */
-void sme_set_dhcp_till_power_active_flag(mac_handle_t mac_handle, uint8_t flag)
-{
-	struct mac_context *mac = MAC_CONTEXT(mac_handle);
-	struct ps_global_info *ps_global_info = &mac->sme.ps_global_info;
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-				TRACE_CODE_SME_RX_HDD_SET_DHCP_FLAG, NO_SESSION,
-				flag));
-	/* Set/Clear the DHCP flag which will disable/enable auto PS */
-	ps_global_info->remain_in_power_active_till_dhcp = flag;
-}
-
 #ifdef FEATURE_OEM_DATA_SUPPORT
 /**
  * sme_register_oem_data_rsp_callback() - Register a routine of
