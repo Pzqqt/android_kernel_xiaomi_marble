@@ -521,7 +521,6 @@ QDF_STATUS csr_get_regulatory_domain_for_country(struct mac_context *mac,
 bool csr_is11h_supported(struct mac_context *mac);
 bool csr_is11e_supported(struct mac_context *mac);
 bool csr_is_wmm_supported(struct mac_context *mac);
-bool csr_is_mcc_supported(struct mac_context *mac);
 
 /* Return SUCCESS is the command is queued, failed */
 QDF_STATUS csr_queue_sme_command(struct mac_context *mac, tSmeCmd *pCommand,

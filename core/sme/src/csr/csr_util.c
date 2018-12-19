@@ -1387,12 +1387,6 @@ bool csr_is11e_supported(struct mac_context *mac)
 	return mac->roam.configParam.Is11eSupportEnabled;
 }
 
-bool csr_is_mcc_supported(struct mac_context *mac)
-{
-	return mac->roam.configParam.fenableMCCMode;
-
-}
-
 bool csr_is_wmm_supported(struct mac_context *mac)
 {
 	if (eCsrRoamWmmNoQos == mac->roam.configParam.WMMSupportMode)
