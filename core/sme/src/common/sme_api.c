@@ -5916,17 +5916,6 @@ void sme_feature_caps_exchange(mac_handle_t mac_handle)
 }
 
 /*
- * sme_disable_feature_capablity() - SME interface to disable Active mode
- * offload capablity in Host.
- *
- * mac_handle: Opaque handle to the global MAC context
- * Return NONE
- */
-void sme_disable_feature_capablity(uint8_t feature_index)
-{
-}
-
-/*
  * sme_update_roam_scan_n_probes() -
  * Function to update roam scan N probes
  *	    This function is called through dynamic setConfig callback function
