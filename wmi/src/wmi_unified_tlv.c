@@ -6014,24 +6014,24 @@ static QDF_STATUS send_vdev_spectral_configure_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGI("%s: Sent WMI_VDEV_SPECTRAL_SCAN_CONFIGURE_CMDID",
 		 __func__);
 
-	WMI_LOGI("vdev_id = %u"
-		 "spectral_scan_count = %u"
-		 "spectral_scan_period = %u"
-		 "spectral_scan_priority = %u"
-		 "spectral_scan_fft_size = %u"
-		 "spectral_scan_gc_ena = %u"
-		 "spectral_scan_restart_ena = %u"
-		 "spectral_scan_noise_floor_ref = %u"
-		 "spectral_scan_init_delay = %u"
-		 "spectral_scan_nb_tone_thr = %u"
-		 "spectral_scan_str_bin_thr = %u"
-		 "spectral_scan_wb_rpt_mode = %u"
-		 "spectral_scan_rssi_rpt_mode = %u"
-		 "spectral_scan_rssi_thr = %u"
-		 "spectral_scan_pwr_format = %u"
-		 "spectral_scan_rpt_mode = %u"
-		 "spectral_scan_bin_scale = %u"
-		 "spectral_scan_dBm_adj = %u"
+	WMI_LOGI("vdev_id = %u\n"
+		 "spectral_scan_count = %u\n"
+		 "spectral_scan_period = %u\n"
+		 "spectral_scan_priority = %u\n"
+		 "spectral_scan_fft_size = %u\n"
+		 "spectral_scan_gc_ena = %u\n"
+		 "spectral_scan_restart_ena = %u\n"
+		 "spectral_scan_noise_floor_ref = %u\n"
+		 "spectral_scan_init_delay = %u\n"
+		 "spectral_scan_nb_tone_thr = %u\n"
+		 "spectral_scan_str_bin_thr = %u\n"
+		 "spectral_scan_wb_rpt_mode = %u\n"
+		 "spectral_scan_rssi_rpt_mode = %u\n"
+		 "spectral_scan_rssi_thr = %u\n"
+		 "spectral_scan_pwr_format = %u\n"
+		 "spectral_scan_rpt_mode = %u\n"
+		 "spectral_scan_bin_scale = %u\n"
+		 "spectral_scan_dBm_adj = %u\n"
 		 "spectral_scan_chn_mask = %u",
 		 param->vdev_id,
 		 param->count,
@@ -6052,7 +6052,7 @@ static QDF_STATUS send_vdev_spectral_configure_cmd_tlv(wmi_unified_t wmi_handle,
 		 param->bin_scale,
 		 param->dbm_adj,
 		 param->chn_mask);
-	WMI_LOGI("%s: Status: %d\n", __func__, ret);
+	WMI_LOGI("%s: Status: %d", __func__, ret);
 
 	return ret;
 }
@@ -6102,22 +6102,25 @@ static QDF_STATUS send_vdev_spectral_enable_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->enable_cmd = 0; /* 0: Ignore */
 	}
 
+	WMI_LOGI("vdev_id = %u\n"
+				 "trigger_cmd = %u\n"
+				 "enable_cmd = %u",
+				 cmd->vdev_id,
+				 cmd->trigger_cmd,
+				 cmd->enable_cmd);
+
 	wmi_mtrace(WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID, cmd->vdev_id, 0);
-
-	WMI_LOGI("%s: Sent WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID", __func__);
-
-	WMI_LOGI("vdev_id = %u, trigger_cmd = %u, enable_cmd = %u",
-		 cmd->vdev_id, cmd->trigger_cmd, cmd->enable_cmd);
-
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID);
-
-	WMI_LOGI("%s: Status: %d\n", __func__, ret);
 
 	if (ret != 0) {
 		WMI_LOGE("Sending scan enable CMD failed");
 		wmi_buf_free(buf);
 	}
+
+	WMI_LOGI("%s: Sent WMI_VDEV_SPECTRAL_SCAN_ENABLE_CMDID", __func__);
+
+	WMI_LOGI("%s: Status: %d", __func__, ret);
 
 	return ret;
 }
