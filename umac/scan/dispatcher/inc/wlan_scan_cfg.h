@@ -183,6 +183,37 @@
 
 /*
  * <ini>
+ * hostscan_adaptive_dwell_mode_no_conn - Enable adaptive dwell mode
+ * during host scan without conneciton
+ * @Min: 0
+ * @Max: 4
+ * @Default: 1
+ *
+ * This ini will set the algo used in dwell time optimization
+ * during host scan with connection.
+ * See enum wmi_dwelltime_adaptive_mode.
+ * Acceptable values for this:
+ * 0: Default (Use firmware default mode)
+ * 1: Conservative optimization
+ * 2: Moderate optimization
+ * 3: Aggressive optimization
+ * 4: Static
+ *
+ * Related: None
+ *
+ * Supported Feature: Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ADAPTIVE_SCAN_DWELL_MODE_NC CFG_INI_UINT(\
+			"hostscan_adaptive_dwell_mode_no_conn",\
+			0, 4, MCL_OR_WIN_VALUE(1, 0),\
+			CFG_VALUE_OR_DEFAULT,\
+			"Enable adaptive dwell mode without connection")
+/*
+ * <ini>
  * is_bssid_hint_priority - Set priority for connection with bssid_hint
  * BSSID.
  * @Min: 0
@@ -399,6 +430,7 @@
 	CFG(CFG_SCAN_NUM_PROBES) \
 	CFG(CFG_SCAN_PROBE_REPEAT_TIME) \
 	CFG(CFG_ADAPTIVE_SCAN_DWELL_MODE) \
+	CFG(CFG_ADAPTIVE_SCAN_DWELL_MODE_NC) \
 	CFG(CFG_IS_BSSID_HINT_PRIORITY) \
 	CFG_SCAN_PNO \
 	CFG(CFG_PASSIVE_MAX_CHANNEL_TIME_CONC) \

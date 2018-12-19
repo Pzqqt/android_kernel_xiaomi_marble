@@ -585,6 +585,9 @@ static void ucfg_scan_req_update_concurrency_params(
 		req->scan_req.idle_time = scan_obj->scan_def.conc_idle_time;
 	}
 
+	if (!wlan_vdev_is_up(req->vdev))
+		req->scan_req.adaptive_dwell_time_mode =
+			scan_obj->scan_def.adaptive_dwell_time_mode_nc;
 	/*
 	 * If AP is active set min rest time same as max rest time, so that
 	 * firmware spends more time on home channel which will increase the
@@ -1441,6 +1444,8 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 	scan_obj->scan_def.idle_time = SCAN_NETWORK_IDLE_TIMEOUT;
 	scan_obj->scan_def.adaptive_dwell_time_mode =
 			cfg_get(psoc, CFG_ADAPTIVE_SCAN_DWELL_MODE);
+	scan_obj->scan_def.adaptive_dwell_time_mode_nc =
+			cfg_get(psoc, CFG_ADAPTIVE_SCAN_DWELL_MODE_NC);
 	scan_obj->scan_def.is_bssid_hint_priority =
 			cfg_get(psoc, CFG_IS_BSSID_HINT_PRIORITY);
 	/* scan contrl flags */
