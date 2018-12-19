@@ -20343,53 +20343,6 @@ bool csr_store_joinreq_param(struct mac_context *mac_ctx,
 }
 
 /**
- * csr_issue_stored_joinreq() - This function will issues station's stored
- * the join request.
- * @mac_ctx: pointer to mac context.
- * @roam_id: reference to roam_id variable being passed.
- * @session_id: station's session id.
- *
- * This function will issue station's stored join request, from this point
- * onwards the flow will be just like normal connect request.
- *
- * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE.
- **/
-QDF_STATUS csr_issue_stored_joinreq(struct mac_context *mac_ctx,
-		uint32_t *roam_id,
-		uint32_t session_id)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct csr_roam_session *sta_session;
-	uint32_t new_roam_id;
-
-	sta_session = CSR_GET_SESSION(mac_ctx, session_id);
-	if (NULL == sta_session)
-		return QDF_STATUS_E_FAILURE;
-	new_roam_id = GET_NEXT_ROAM_ID(&mac_ctx->roam);
-	*roam_id = new_roam_id;
-	status = csr_roam_issue_connect(mac_ctx,
-			sta_session->stored_roam_profile.session_id,
-			&sta_session->stored_roam_profile.profile,
-			sta_session->stored_roam_profile.bsslist_handle,
-			sta_session->stored_roam_profile.reason,
-			new_roam_id,
-			sta_session->stored_roam_profile.imediate_flag,
-			sta_session->stored_roam_profile.clear_flag);
-
-	sta_session->stored_roam_profile.bsslist_handle =
-					CSR_INVALID_SCANRESULT_HANDLE;
-
-	if (QDF_STATUS_SUCCESS != status) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL
-			("CSR failed issuing connect cmd with status = 0x%08X"),
-				status);
-		csr_clear_joinreq_param(mac_ctx, session_id);
-	}
-	return status;
-}
-
-/**
  * csr_process_set_hw_mode() - Set HW mode command to PE
  * @mac: Globacl MAC pointer
  * @command: Command received from SME

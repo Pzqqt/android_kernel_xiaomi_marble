@@ -1144,9 +1144,6 @@ bool csr_store_joinreq_param(struct mac_context *mac_ctx,
 bool csr_find_session_by_bssid(struct mac_context *mac_ctx, uint8_t *bssid);
 bool csr_clear_joinreq_param(struct mac_context *mac_ctx,
 		uint32_t session_id);
-QDF_STATUS csr_issue_stored_joinreq(struct mac_context *mac_ctx,
-		uint32_t *roam_id,
-		uint32_t session_id);
 QDF_STATUS csr_get_channels_and_power(struct mac_context *mac);
 
 void csr_nonscan_pending_ll_unlock(struct mac_context *mac_ctx);
