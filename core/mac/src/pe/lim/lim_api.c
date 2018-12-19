@@ -99,9 +99,6 @@ static void __lim_init_stats_vars(struct mac_context *mac)
 	/* / Variable to keep track of number of currently associated STAs */
 	mac->lim.gLimNumOfAniSTAs = 0; /* count of ANI peers */
 
-	/* Heart-Beat interval value */
-	mac->lim.gLimHeartBeatCount = 0;
-
 	qdf_mem_zero(mac->lim.gLimHeartBeatApMac[0],
 			sizeof(tSirMacAddr));
 	qdf_mem_zero(mac->lim.gLimHeartBeatApMac[1],

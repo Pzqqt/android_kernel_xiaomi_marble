@@ -382,8 +382,6 @@ typedef struct sAniSirLim {
 	/* / Variable to keep track of number of currently associated STAs */
 	uint16_t gLimNumOfAniSTAs;      /* count of ANI peers */
 
-	/* Heart-Beat interval value */
-	uint32_t gLimHeartBeatCount;
 	tSirMacAddr gLimHeartBeatApMac[2];
 	uint8_t gLimHeartBeatApMacIndex;
 
