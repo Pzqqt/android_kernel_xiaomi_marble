@@ -1852,6 +1852,26 @@ static inline void wma_fill_in_wapi_key_params(
 #endif
 
 /**
+ * wma_skip_bip_key_set() - skip the BIP key step or not
+ * @wma_handle: wma handle
+ * @iface: txrx node
+ * @key_cipher: key cipher
+ *
+ * if target not support the BIP key cipher, skip the set key command.
+ *
+ * Return: true to skip set key to target, otherwise set key to target
+ */
+static bool
+wma_skip_bip_key_set(tp_wma_handle wma_handle, uint32_t key_cipher)
+{
+	if ((key_cipher == WMI_CIPHER_AES_GMAC) &&
+	    !wmi_service_enabled(wma_handle->wmi_handle,
+				 wmi_service_gmac_offload_support))
+		return true;
+	return false;
+}
+
+/**
  * wma_setup_install_key_cmd() - set key parameters
  * @wma_handle: wma handle
  * @key_params: key parameters
@@ -1878,6 +1898,7 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 	uint32_t pn[4] = {0, 0, 0, 0};
 	uint8_t peer_id;
 	struct cdp_peer *peer;
+	bool skip_set_key;
 
 	if ((key_params->key_type == eSIR_ED_NONE &&
 	     key_params->key_len) || (key_params->key_type != eSIR_ED_NONE &&
@@ -2075,8 +2096,11 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 				WMA_IV_KEY_LEN +
 				WMA_TXMIC_LEN));
 
-	status = wmi_unified_setup_install_key_cmd(wma_handle->wmi_handle,
-								&params);
+	skip_set_key = wma_skip_bip_key_set(wma_handle, params.key_cipher);
+	if (!skip_set_key)
+		status = wmi_unified_setup_install_key_cmd(
+				wma_handle->wmi_handle, &params);
+
 	if (!key_params->unicast) {
 		/* Its GTK release the wake lock */
 		WMA_LOGD("Release set key wake lock");
