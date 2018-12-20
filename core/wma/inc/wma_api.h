@@ -134,16 +134,6 @@ int wma_cli_set2_command(int vdev_id, int param_id, int sval1,
 
 QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value);
 
-/**
- * wma_get_wcnss_software_version() - get wcnss software version
- * @version: version pointer
- * @version_buffer_size: buffer size
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
-QDF_STATUS wma_get_wcnss_software_version(uint8_t *version,
-					  uint32_t version_buffer_size);
-
 void wma_set_peer_authorized_cb(void *wma_ctx, wma_peer_authorized_fp auth_cb);
 QDF_STATUS wma_set_peer_param(void *wma_ctx, uint8_t *peer_addr,
 		  uint32_t param_id,

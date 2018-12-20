@@ -4032,28 +4032,6 @@ struct wma_txrx_node  *wma_get_interface_by_vdev_id(uint8_t vdev_id)
 	return &wma->interfaces[vdev_id];
 }
 
-QDF_STATUS wma_get_wcnss_software_version(uint8_t *version,
-					  uint32_t version_buffer_size)
-{
-	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	struct target_psoc_info *tgt_hdl;
-
-	if (NULL == wma_handle) {
-		WMA_LOGE("%s: Failed to get wma", __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
-	if (!tgt_hdl) {
-		WMA_LOGE("%s: Failed to get wma", __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	snprintf(version, version_buffer_size, "%x",
-		 target_if_get_fw_version(tgt_hdl));
-	return QDF_STATUS_SUCCESS;
-}
-
 /**
  * wma_update_intf_hw_mode_params() - Update WMA params
  * @vdev_id: VDEV id whose params needs to be updated
