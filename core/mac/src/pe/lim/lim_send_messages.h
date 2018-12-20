@@ -70,10 +70,6 @@ QDF_STATUS lim_set_link_state(struct mac_context *mac, tSirLinkState state,
 				 tSirMacAddr bssId, tSirMacAddr selfMac,
 				 tpSetLinkStateCallback callback,
 				 void *callbackArg);
-extern QDF_STATUS lim_set_link_state_ft(struct mac_context *mac, tSirLinkState
-					   state, tSirMacAddr bssId,
-					   tSirMacAddr selfMacAddr, int ft,
-					   struct pe_session *pe_session);
 void lim_set_active_edca_params(struct mac_context *mac,
 				tSirMacEdcaParamRecord *plocalEdcaParams,
 				struct pe_session *pe_session);
