@@ -1953,18 +1953,21 @@ lim_decide_sta_protection(struct mac_context *mac_ctx,
  *
  *
  ***NOTE:
- * @param  mac           - Pointer to Global MAC structure
+ * @param  pe_session           - Pointer to pe session
  * @return None
  */
-static void __lim_process_channel_switch_timeout(struct mac_context *mac)
+static void __lim_process_channel_switch_timeout(struct pe_session *pe_session)
 {
-	struct pe_session *pe_session = NULL;
+	struct mac_context *mac;
 	uint8_t channel; /* This is received and stored from channelSwitch Action frame */
 
-	pe_session = pe_find_session_by_session_id(mac,
-			mac->lim.limTimers.gLimChannelSwitchTimer.sessionId);
-	if (pe_session == NULL) {
-		pe_err("Session Does not exist for given sessionID");
+	if (!pe_session) {
+		pe_err("Invalid pe session");
+		return;
+	}
+	mac = pe_session->mac_ctx;
+	if (!mac) {
+		pe_err("Invalid mac context");
 		return;
 	}
 
@@ -2072,18 +2075,24 @@ void lim_disconnect_complete(struct pe_session *session, bool del_bss)
 
 void lim_process_channel_switch_timeout(struct mac_context *mac_ctx)
 {
-	struct pe_session *session_entry = NULL;
+	struct pe_session *session_entry;
 	QDF_STATUS status;
 
 	session_entry = pe_find_session_by_session_id(
 		mac_ctx,
 		mac_ctx->lim.limTimers.gLimChannelSwitchTimer.sessionId);
+	if (!session_entry) {
+		pe_err("Session does not exist for given sessionID");
+		return;
+	}
+
+	session_entry->channelChangeReasonCode = LIM_SWITCH_CHANNEL_OPERATION;
 	mlme_set_chan_switch_in_progress(session_entry->vdev, true);
 	status = wlan_vdev_mlme_sm_deliver_evt(
 					session_entry->vdev,
 					WLAN_VDEV_SM_EV_FW_VDEV_RESTART,
-					sizeof(*mac_ctx),
-					mac_ctx);
+					sizeof(*session_entry),
+					session_entry);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		pe_err("Failed to post WLAN_VDEV_SM_EV_FW_VDEV_RESTART for vdevid %d",
 		       session_entry->smeSessionId);
@@ -2103,9 +2112,19 @@ void lim_disconnect_complete(struct pe_session *session, bool del_bss)
  *
  * Return: none
  */
-void lim_process_channel_switch_timeout(struct mac_context *mac)
+void lim_process_channel_switch_timeout(struct mac_context *mac_ctx)
 {
-	__lim_process_channel_switch_timeout(mac);
+	struct pe_session *session_entry;
+
+	session_entry = pe_find_session_by_session_id(
+		mac_ctx,
+		mac_ctx->lim.limTimers.gLimChannelSwitchTimer.sessionId);
+	if (!session_entry) {
+		pe_err("Session does not exist for given sessionID");
+		return;
+	}
+
+	__lim_process_channel_switch_timeout(session_entry);
 }
 #endif
 
@@ -3993,6 +4012,103 @@ QDF_STATUS lim_tx_complete(void *context, qdf_nbuf_t buf, bool free)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef CONFIG_VDEV_SM
+static void lim_ht_width_switch_cback(struct mac_context *mac,
+				QDF_STATUS status, uint32_t *data,
+				struct pe_session *pe_session)
+{
+	pe_debug("status %d for ht width switch for vdev %d", status,
+		 pe_session->smeSessionId);
+	if (QDF_IS_STATUS_SUCCESS(status))
+		lim_switch_channel_vdev_started(pe_session);
+}
+#else
+static void lim_ht_width_switch_cback(struct mac_context *mac,
+				QDF_STATUS status, uint32_t *data,
+				struct pe_session *pe_session)
+{
+	pe_debug("status %d for ht width switch for vdev %d", status,
+		 pe_session->smeSessionId);
+}
+#endif
+
+static void lim_ht_switch_chnl_params(struct pe_session *pe_session)
+{
+	uint8_t center_freq = 0;
+	enum phy_ch_width ch_width = CH_WIDTH_20MHZ;
+	struct mac_context *mac;
+	uint8_t primary_channel;
+
+	mac = pe_session->mac_ctx;
+	if (!mac) {
+		pe_err("Invalid mac_ctx");
+		return;
+	}
+
+	primary_channel = pe_session->gLimChannelSwitch.primaryChannel;
+	if (eHT_CHANNEL_WIDTH_40MHZ ==
+	    pe_session->htRecommendedTxWidthSet) {
+		ch_width = CH_WIDTH_40MHZ;
+		if (PHY_DOUBLE_CHANNEL_LOW_PRIMARY ==
+		    pe_session->htSecondaryChannelOffset)
+			center_freq = primary_channel + 2;
+		else if (PHY_DOUBLE_CHANNEL_HIGH_PRIMARY ==
+			 pe_session->htSecondaryChannelOffset)
+			center_freq = primary_channel - 2;
+		else
+			ch_width = CH_WIDTH_20MHZ;
+	}
+
+	/* notify HAL */
+	pe_debug("HT IE changed: Primary Channel: %d Secondary Channel Offset: %d Channel Width: %d",
+		 primary_channel, center_freq,
+		 pe_session->htRecommendedTxWidthSet);
+	pe_session->channelChangeReasonCode =
+			LIM_SWITCH_CHANNEL_HT_WIDTH;
+	mac->lim.gpchangeChannelCallback = lim_ht_width_switch_cback;
+	mac->lim.gpchangeChannelData = NULL;
+
+	lim_send_switch_chnl_params(mac, primary_channel,
+				    center_freq, 0, ch_width,
+				    pe_session->maxTxPower,
+				    pe_session->peSessionId,
+				    true, 0, 0);
+}
+
+#ifdef CONFIG_VDEV_SM
+static void lim_ht_switch_chnl_req(struct pe_session *session)
+{
+	struct mac_context *mac;
+	QDF_STATUS status;
+
+	mac = session->mac_ctx;
+	if (!mac) {
+		pe_err("Invalid mac context");
+		return;
+	}
+
+	session->channelChangeReasonCode =
+			LIM_SWITCH_CHANNEL_HT_WIDTH;
+	mlme_set_chan_switch_in_progress(session->vdev, true);
+	status = wlan_vdev_mlme_sm_deliver_evt(
+					session->vdev,
+					WLAN_VDEV_SM_EV_FW_VDEV_RESTART,
+					sizeof(*session),
+					session);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Failed to post WLAN_VDEV_SM_EV_FW_VDEV_RESTART for vdevid %d",
+		       session->smeSessionId);
+		mlme_set_chan_switch_in_progress(session->vdev, false);
+	}
+}
+#else
+static void lim_ht_switch_chnl_req(struct pe_session *session)
+{
+	lim_ht_switch_chnl_params(session);
+}
+#endif
+
+
 /**
  * \brief This function updates lim global structure, if CB parameters in the BSS
  *  have changed, and sends an indication to HAL also with the
@@ -4018,9 +4134,6 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 						   uint8_t bssIdx,
 						   struct pe_session *pe_session)
 {
-	uint8_t center_freq = 0;
-	enum phy_ch_width ch_width = CH_WIDTH_20MHZ;
-
 	/* If self capability is set to '20Mhz only', then do not change the CB mode. */
 	if (!lim_get_ht_capability
 		    (mac, eHT_SUPPORTED_CHANNEL_WIDTH_SET, pe_session))
@@ -4047,51 +4160,29 @@ void lim_update_sta_run_time_ht_switch_chnl_params(struct mac_context *mac,
 		return;
 	}
 
+	/* If channel mismatch the CSA will take care of this change */
+	if (pHTInfo->primaryChannel != pe_session->currentOperChannel) {
+		pe_debug("Current channel doesnt match HT info ignore");
+		return;
+	}
+
 	if (pe_session->htSecondaryChannelOffset !=
 	    (uint8_t) pHTInfo->secondaryChannelOffset
 	    || pe_session->htRecommendedTxWidthSet !=
 	    (uint8_t) pHTInfo->recommendedTxWidthSet) {
+		pe_session->gLimChannelSwitch.primaryChannel =
+							pHTInfo->primaryChannel;
 		pe_session->htSecondaryChannelOffset =
 			(ePhyChanBondState) pHTInfo->secondaryChannelOffset;
 		pe_session->htRecommendedTxWidthSet =
 			(uint8_t) pHTInfo->recommendedTxWidthSet;
-		if (eHT_CHANNEL_WIDTH_40MHZ ==
-		    pe_session->htRecommendedTxWidthSet) {
-			ch_width = CH_WIDTH_40MHZ;
-			if (PHY_DOUBLE_CHANNEL_LOW_PRIMARY ==
-					pHTInfo->secondaryChannelOffset)
-				center_freq = pHTInfo->primaryChannel + 2;
-			else if (PHY_DOUBLE_CHANNEL_HIGH_PRIMARY ==
-					pHTInfo->secondaryChannelOffset)
-				center_freq = pHTInfo->primaryChannel - 2;
-			else
-				ch_width = CH_WIDTH_20MHZ;
-		}
-
-		/* notify HAL */
-		pe_debug("Channel Information in HT IE change"
-				       "d; sending notification to HAL.");
-		pe_debug("Primary Channel: %d Secondary Chan"
-				       "nel Offset: %d Channel Width: %d",
-			pHTInfo->primaryChannel, center_freq,
-			pe_session->htRecommendedTxWidthSet);
-		pe_session->channelChangeReasonCode =
-			LIM_SWITCH_CHANNEL_OPERATION;
-		mac->lim.gpchangeChannelCallback = NULL;
-		mac->lim.gpchangeChannelData = NULL;
-
-		lim_send_switch_chnl_params(mac, (uint8_t) pHTInfo->primaryChannel,
-					    center_freq, 0, ch_width,
-					    pe_session->maxTxPower,
-					    pe_session->peSessionId,
-					    true, 0, 0);
+		lim_ht_switch_chnl_req(pe_session);
 
 		/* In case of IBSS, if STA should update HT Info IE in its beacons. */
-		if (LIM_IS_IBSS_ROLE(pe_session)) {
+		if (LIM_IS_IBSS_ROLE(pe_session))
 			sch_set_fixed_beacon_fields(mac, pe_session);
-		}
-
 	}
+
 } /* End limUpdateStaRunTimeHTParams. */
 
 /**
@@ -7981,6 +8072,13 @@ QDF_STATUS lim_sta_mlme_vdev_start_send(struct vdev_mlme_obj *vdev_mlme,
 QDF_STATUS lim_sta_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 					  uint16_t data_len, void *data)
 {
+	struct pe_session *session;
+
+	session = (struct pe_session *)data;
+	if (!session) {
+		pe_err("Invalid session");
+		return QDF_STATUS_E_INVAL;
+	}
 	if (!vdev_mlme) {
 		pe_err("vdev_mlme is NULL");
 		return QDF_STATUS_E_INVAL;
@@ -7989,9 +8087,18 @@ QDF_STATUS lim_sta_mlme_vdev_restart_send(struct vdev_mlme_obj *vdev_mlme,
 		pe_err("event_data is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
-	if (mlme_is_chan_switch_in_progress(vdev_mlme->vdev))
-		__lim_process_channel_switch_timeout((struct mac_context *)data);
-
+	if (mlme_is_chan_switch_in_progress(vdev_mlme->vdev)) {
+		switch (session->channelChangeReasonCode) {
+		case LIM_SWITCH_CHANNEL_OPERATION:
+			__lim_process_channel_switch_timeout(session);
+			break;
+		case LIM_SWITCH_CHANNEL_HT_WIDTH:
+			lim_ht_switch_chnl_params(session);
+			break;
+		default:
+			break;
+		}
+	}
 	return QDF_STATUS_SUCCESS;
 }
 

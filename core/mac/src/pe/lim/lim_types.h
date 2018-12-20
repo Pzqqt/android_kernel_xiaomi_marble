@@ -160,6 +160,7 @@ enum eChannelChangeReasonCodes {
 	LIM_SWITCH_CHANNEL_JOIN,
 	LIM_SWITCH_CHANNEL_OPERATION,   /* Generic change channel */
 	LIM_SWITCH_CHANNEL_SAP_DFS,     /* DFS channel change */
+	LIM_SWITCH_CHANNEL_HT_WIDTH     /* HT channel width change */
 };
 
 typedef struct sLimAuthRspTimeout {

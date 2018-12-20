@@ -3242,6 +3242,7 @@ void lim_process_switch_channel_rsp(struct mac_context *mac, void *body)
 		break;
 
 	case LIM_SWITCH_CHANNEL_OPERATION:
+	case LIM_SWITCH_CHANNEL_HT_WIDTH:
 		/*
 		 * The above code should also use the callback.
 		 * mechanism below, there is scope for cleanup here.
