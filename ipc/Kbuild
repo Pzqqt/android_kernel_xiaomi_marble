@@ -8,7 +8,7 @@ endif
 
 # These are configurable via Kconfig for kernel-based builds
 # Need to explicitly configure for Android-based builds
-KDIR := $(TOP)/kernel/msm-4.14
+KDIR := $(TOP)/kernel/msm-4.19
 
 ifeq ($(KERNEL_BUILD), 1)
 	AUDIO_ROOT := $(KDIR)/techpack/audio
