@@ -688,7 +688,6 @@ typedef struct sAniSirLim {
 	tSirRemainOnChnReq *gpLimRemainOnChanReq;       /* hold remain on chan request in this buf */
 	qdf_mutex_t lim_frame_register_lock;
 	qdf_list_t gLimMgmtFrameRegistratinQueue;
-	uint32_t mgmtFrameSessionId;
 	uint32_t tdls_frm_session_id;
 
 	struct pe_session *pe_session;

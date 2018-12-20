@@ -410,7 +410,6 @@ QDF_STATUS lim_initialize(struct mac_context *mac)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	mac->lim.mgmtFrameSessionId = NO_SESSION;
 	mac->lim.tdls_frm_session_id = NO_SESSION;
 	mac->lim.deferredMsgCnt = 0;
 	mac->lim.retry_packet_cnt = 0;
