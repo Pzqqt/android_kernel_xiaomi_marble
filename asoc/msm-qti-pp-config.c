@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/err.h>
@@ -1406,7 +1406,7 @@ static const struct snd_kcontrol_new sec_auxpcm_lb_vol_mixer_controls[] = {
 };
 
 static const struct snd_kcontrol_new multi_ch_channel_map_mixer_controls[] = {
-	SOC_SINGLE_MULTI_EXT("Playback Device Channel Map", SND_SOC_NOPM, 0, 34,
+	SOC_SINGLE_MULTI_EXT("Playback Device Channel Map", SND_SOC_NOPM, 0, 47,
 	0, PCM_FORMAT_MAX_NUM_CHANNEL_V8, msm_qti_pp_get_channel_map_mixer,
 	msm_qti_pp_put_channel_map_mixer),
 };
