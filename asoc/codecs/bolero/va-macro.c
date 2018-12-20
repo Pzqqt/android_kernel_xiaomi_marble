@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -52,6 +52,7 @@ enum {
 	VA_MACRO_AIF_INVALID = 0,
 	VA_MACRO_AIF1_CAP,
 	VA_MACRO_AIF2_CAP,
+	VA_MACRO_AIF3_CAP,
 	VA_MACRO_MAX_DAIS,
 };
 
@@ -803,6 +804,7 @@ static int va_macro_get_channel_map(struct snd_soc_dai *dai,
 	switch (dai->id) {
 	case VA_MACRO_AIF1_CAP:
 	case VA_MACRO_AIF2_CAP:
+	case VA_MACRO_AIF3_CAP:
 		*tx_slot = va_priv->active_ch_mask[dai->id];
 		*tx_num = va_priv->active_ch_cnt[dai->id];
 		break;
@@ -838,6 +840,20 @@ static struct snd_soc_dai_driver va_macro_dai[] = {
 		.id = VA_MACRO_AIF2_CAP,
 		.capture = {
 			.stream_name = "VA_AIF2 Capture",
+			.rates = VA_MACRO_RATES,
+			.formats = VA_MACRO_FORMATS,
+			.rate_max = 192000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 8,
+		},
+		.ops = &va_macro_dai_ops,
+	},
+	{
+		.name = "va_macro_tx3",
+		.id = VA_MACRO_AIF3_CAP,
+		.capture = {
+			.stream_name = "VA_AIF3 Capture",
 			.rates = VA_MACRO_RATES,
 			.formats = VA_MACRO_FORMATS,
 			.rate_max = 192000,
@@ -997,12 +1013,34 @@ static const struct snd_kcontrol_new va_aif2_cap_mixer[] = {
 			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
 };
 
+static const struct snd_kcontrol_new va_aif3_cap_mixer[] = {
+	SOC_SINGLE_EXT("DEC0", SND_SOC_NOPM, VA_MACRO_DEC0, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC1", SND_SOC_NOPM, VA_MACRO_DEC1, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC2", SND_SOC_NOPM, VA_MACRO_DEC2, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC3", SND_SOC_NOPM, VA_MACRO_DEC3, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC4", SND_SOC_NOPM, VA_MACRO_DEC4, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC5", SND_SOC_NOPM, VA_MACRO_DEC5, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC6", SND_SOC_NOPM, VA_MACRO_DEC6, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+	SOC_SINGLE_EXT("DEC7", SND_SOC_NOPM, VA_MACRO_DEC7, 1, 0,
+			va_macro_tx_mixer_get, va_macro_tx_mixer_put),
+};
+
 static const struct snd_soc_dapm_widget va_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_OUT("VA_AIF1 CAP", "VA_AIF1 Capture", 0,
 		SND_SOC_NOPM, VA_MACRO_AIF1_CAP, 0),
 
 	SND_SOC_DAPM_AIF_OUT("VA_AIF2 CAP", "VA_AIF2 Capture", 0,
 		SND_SOC_NOPM, VA_MACRO_AIF2_CAP, 0),
+
+	SND_SOC_DAPM_AIF_OUT("VA_AIF3 CAP", "VA_AIF3 Capture", 0,
+		SND_SOC_NOPM, VA_MACRO_AIF3_CAP, 0),
 
 	SND_SOC_DAPM_MIXER("VA_AIF1_CAP Mixer", SND_SOC_NOPM,
 		VA_MACRO_AIF1_CAP, 0,
@@ -1012,6 +1050,9 @@ static const struct snd_soc_dapm_widget va_macro_dapm_widgets[] = {
 		VA_MACRO_AIF2_CAP, 0,
 		va_aif2_cap_mixer, ARRAY_SIZE(va_aif2_cap_mixer)),
 
+	SND_SOC_DAPM_MIXER("VA_AIF3_CAP Mixer", SND_SOC_NOPM,
+		VA_MACRO_AIF3_CAP, 0,
+		va_aif3_cap_mixer, ARRAY_SIZE(va_aif3_cap_mixer)),
 
 	VA_MACRO_DAPM_MUX("VA DMIC MUX0", 0, va_dmic0),
 	VA_MACRO_DAPM_MUX("VA DMIC MUX1", 0, va_dmic1),
@@ -1134,9 +1175,11 @@ static const struct snd_soc_dapm_widget va_macro_wod_dapm_widgets[] = {
 static const struct snd_soc_dapm_route va_audio_map[] = {
 	{"VA_AIF1 CAP", NULL, "VA_MCLK"},
 	{"VA_AIF2 CAP", NULL, "VA_MCLK"},
+	{"VA_AIF3 CAP", NULL, "VA_MCLK"},
 
 	{"VA_AIF1 CAP", NULL, "VA_AIF1_CAP Mixer"},
 	{"VA_AIF2 CAP", NULL, "VA_AIF2_CAP Mixer"},
+	{"VA_AIF3 CAP", NULL, "VA_AIF3_CAP Mixer"},
 
 	{"VA_AIF1_CAP Mixer", "DEC0", "VA DEC0 MUX"},
 	{"VA_AIF1_CAP Mixer", "DEC1", "VA DEC1 MUX"},
@@ -1155,6 +1198,15 @@ static const struct snd_soc_dapm_route va_audio_map[] = {
 	{"VA_AIF2_CAP Mixer", "DEC5", "VA DEC5 MUX"},
 	{"VA_AIF2_CAP Mixer", "DEC6", "VA DEC6 MUX"},
 	{"VA_AIF2_CAP Mixer", "DEC7", "VA DEC7 MUX"},
+
+	{"VA_AIF3_CAP Mixer", "DEC0", "VA DEC0 MUX"},
+	{"VA_AIF3_CAP Mixer", "DEC1", "VA DEC1 MUX"},
+	{"VA_AIF3_CAP Mixer", "DEC2", "VA DEC2 MUX"},
+	{"VA_AIF3_CAP Mixer", "DEC3", "VA DEC3 MUX"},
+	{"VA_AIF3_CAP Mixer", "DEC4", "VA DEC4 MUX"},
+	{"VA_AIF3_CAP Mixer", "DEC5", "VA DEC5 MUX"},
+	{"VA_AIF3_CAP Mixer", "DEC6", "VA DEC6 MUX"},
+	{"VA_AIF3_CAP Mixer", "DEC7", "VA DEC7 MUX"},
 
 	{"VA DEC0 MUX", "MSM_DMIC", "VA DMIC MUX0"},
 	{"VA DMIC MUX0", "DMIC0", "VA DMIC0"},
@@ -1488,6 +1540,7 @@ static int va_macro_init(struct snd_soc_component *component)
 
 	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF1 Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF2 Capture");
+	snd_soc_dapm_ignore_suspend(dapm, "VA_AIF3 Capture");
 	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC0");
 	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC1");
 	snd_soc_dapm_ignore_suspend(dapm, "VA SWR_ADC2");
