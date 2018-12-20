@@ -8119,7 +8119,10 @@ static QDF_STATUS extract_hal_reg_cap_tlv(wmi_unified_t wmi_handle,
 	WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf;
 
 	param_buf = (WMI_SERVICE_READY_EVENTID_param_tlvs *) evt_buf;
-
+	if (!param_buf) {
+		WMI_LOGE("%s: Invalid arguments", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
 	qdf_mem_copy(cap, (((uint8_t *)param_buf->hal_reg_capabilities) +
 		sizeof(uint32_t)),
 		sizeof(struct wlan_psoc_hal_reg_capability));
