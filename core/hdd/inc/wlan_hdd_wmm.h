@@ -326,18 +326,6 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 			   eCsrRoamBssType eBssType);
 
 /**
- * hdd_wmm_get_uapsd_mask() - Function which will calculate the
- * initial value of the UAPSD mask based upon the device configuration
- *
- * @adapter  : [in]  pointer to adapter context
- * @pUapsdMask: [out] pointer to where the UAPSD Mask is to be stored
- *
- * Return: QDF_STATUS enumeration
- */
-QDF_STATUS hdd_wmm_get_uapsd_mask(struct hdd_adapter *adapter,
-				  uint8_t *pUapsdMask);
-
-/**
  * hdd_wmm_is_active() - Function which will determine if WMM is
  * active on the current connection
  *
