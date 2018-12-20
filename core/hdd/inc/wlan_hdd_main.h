@@ -2448,21 +2448,6 @@ struct hdd_context *hdd_context_create(struct device *dev);
 void hdd_context_destroy(struct hdd_context *hdd_ctx);
 
 int hdd_wlan_notify_modem_power_state(int state);
-#ifdef QCA_HT_2040_COEX
-/**
- * hdd_wlan_set_ht2040_mode() - notify FW with HT20/HT40 mode
- * @adapter: pointer to adapter
- * @sta_id: station id
- * @sta_mac: station MAC address
- * @channel_type: channel type
- *
- * This function notifies FW with HT20/HT40 mode
- *
- * Return: 0 if successful, error number otherwise
- */
-int hdd_wlan_set_ht2040_mode(struct hdd_adapter *adapter, uint16_t sta_id,
-			     struct qdf_mac_addr sta_mac, int channel_type);
-#endif
 
 void wlan_hdd_send_svc_nlink_msg(int radio, int type, void *data, int len);
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN

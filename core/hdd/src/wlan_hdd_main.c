@@ -7453,36 +7453,6 @@ static void hdd_skip_acs_scan_timer_handler(void *data)
 }
 #endif
 
-#ifdef QCA_HT_2040_COEX
-int hdd_wlan_set_ht2040_mode(struct hdd_adapter *adapter, uint16_t sta_id,
-			     struct qdf_mac_addr sta_mac, int channel_type)
-{
-	int status;
-	QDF_STATUS qdf_status;
-	struct hdd_context *hdd_ctx;
-	mac_handle_t mac_handle;
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (status)
-		return status;
-
-	mac_handle = hdd_ctx->mac_handle;
-	if (!mac_handle)
-		return -EINVAL;
-
-	qdf_status = sme_notify_ht2040_mode(mac_handle, sta_id, sta_mac,
-					    adapter->session_id, channel_type);
-	if (QDF_STATUS_SUCCESS != qdf_status) {
-		hdd_err("Fail to send notification with ht2040 mode");
-		return -EINVAL;
-	}
-
-	return 0;
-}
-#endif
-
 /**
  * hdd_wlan_notify_modem_power_state() - notify FW with modem power status
  * @state: state
