@@ -1430,12 +1430,17 @@ static irqreturn_t swrm_wakeup_interrupt(int irq, void *dev)
 		return ret;
 	}
 	mutex_unlock(&swrm->devlock);
+	if (unlikely(swrm_lock_sleep(swrm) == false)) {
+		dev_err(swrm->dev, "%s Failed to hold suspend\n", __func__);
+		goto exit;
+	}
 	if (swrm->wake_irq > 0)
 		disable_irq_nosync(swrm->wake_irq);
 	pm_runtime_get_sync(swrm->dev);
 	pm_runtime_mark_last_busy(swrm->dev);
 	pm_runtime_put_autosuspend(swrm->dev);
-
+	swrm_unlock_sleep(swrm);
+exit:
 	return ret;
 }
 
