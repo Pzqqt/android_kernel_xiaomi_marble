@@ -678,12 +678,6 @@ typedef struct sAniSirLim {
 	/* wsc info required to form the wsc IE */
 	tLimWscIeInfo wscIeInfo;
 	struct pe_session *gpSession;  /* Pointer to  session table */
-	/*
-	 * sessionID and transactionID from SME is stored here for
-	 * those messages, for which there is no session context in
-	 * PE, e.g. Scan related messages.
-	 **/
-	uint8_t gSmeSessionId;
 
 	tSirRemainOnChnReq *gpLimRemainOnChanReq;       /* hold remain on chan request in this buf */
 	qdf_mutex_t lim_frame_register_lock;
