@@ -381,29 +381,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gbug_report_for_scan_results - Enable bug report
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to create bug report in
- * case of nil scan results.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_CREATE_BUG_REPORT_FOR_SCAN       "gbug_report_for_scan_results"
-#define CFG_CREATE_BUG_REPORT_FOR_SCAN_DISABLE    (0)
-#define CFG_CREATE_BUG_REPORT_FOR_SCAN_ENABLE     (1)
-#define CFG_CREATE_BUG_REPORT_FOR_SCAN_DEFAULT    (0)
-
-/*
- * <ini>
  * extscan_adaptive_dwell_mode - Enable adaptive dwell mode
  * during ext scan
  * @Min: 0
@@ -2209,10 +2186,6 @@ struct hdd_config {
 	uint8_t stationary_thresh;
 	uint32_t channel_prediction_full_scan;
 #endif
-	bool early_stop_scan_enable;
-	int8_t early_stop_scan_min_threshold;
-	int8_t early_stop_scan_max_threshold;
-	int8_t first_scan_bucket_threshold;
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 	bool enable_lfr_subnet_detection;
 #endif
@@ -2224,8 +2197,6 @@ struct hdd_config {
 	uint32_t ho_delay_for_rx;
 	uint32_t min_delay_btw_roam_scans;
 	uint32_t roam_trigger_reason_bitmask;
-	uint32_t roam_bg_scan_client_bitmap;
-
 	bool apf_enabled;
 	bool adaptive_dwell_mode_enabled;
 	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
@@ -2234,7 +2205,6 @@ struct hdd_config {
 	uint8_t adapt_dwell_lpf_weight;
 	uint8_t adapt_dwell_passive_mon_intval;
 	uint8_t adapt_dwell_wifi_act_threshold;
-	bool bug_report_for_no_scan_results;
 	uint16_t sap_tx_leakage_threshold;
 	bool sap_internal_restart;
 	enum active_apf_mode active_uc_apf_mode;

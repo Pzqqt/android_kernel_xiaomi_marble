@@ -2737,8 +2737,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 
 	pParam->roam_bg_scan_bad_rssi_thresh =
 		cfg_params->roam_params.bg_scan_bad_rssi_thresh;
-	pParam->roam_bg_scan_client_bitmap =
-		cfg_params->roam_params.bg_scan_client_bitmap;
 	pParam->roam_bad_rssi_thresh_offset_2g =
 		cfg_params->roam_params.roam_bad_rssi_thresh_offset_2g;
 
