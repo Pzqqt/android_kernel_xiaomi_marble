@@ -4055,30 +4055,6 @@ QDF_STATUS wma_get_wcnss_software_version(uint8_t *version,
 }
 
 /**
- * wma_get_mac_id_of_vdev() - Get MAC id corresponding to a vdev
- * @vdev_id: VDEV whose MAC ID is required
- *
- * Get MAC id corresponding to a vdev id from the WMA structure
- *
- * Return: Negative value on failure and MAC id on success
- */
-int8_t wma_get_mac_id_of_vdev(uint32_t vdev_id)
-{
-	tp_wma_handle wma;
-
-	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (!wma) {
-		WMA_LOGE("%s: Invalid WMA handle", __func__);
-		return -EINVAL;
-	}
-
-	if (wma->interfaces)
-		return wma->interfaces[vdev_id].mac_id;
-
-	return -EINVAL;
-}
-
-/**
  * wma_update_intf_hw_mode_params() - Update WMA params
  * @vdev_id: VDEV id whose params needs to be updated
  * @mac_id: MAC id to be updated

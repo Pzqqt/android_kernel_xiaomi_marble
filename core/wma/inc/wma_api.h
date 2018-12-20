@@ -167,7 +167,6 @@ void wma_set_fw_wlan_feat_caps(enum cap_bitmap feature);
 
 QDF_STATUS wma_post_ctrl_msg(struct mac_context *mac, struct scheduler_msg *pMsg);
 
-int8_t wma_get_mac_id_of_vdev(uint32_t vdev_id);
 void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
 				uint32_t cfgd_hw_mode_index);
 void wma_set_dbs_capability_ut(uint32_t dbs);
