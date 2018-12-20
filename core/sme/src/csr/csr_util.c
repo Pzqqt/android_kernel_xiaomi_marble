@@ -1155,35 +1155,6 @@ bool csr_is_all_session_disconnected(struct mac_context *mac)
 	return fRc;
 }
 
-/**
- * csr_is_sta_session_connected() - to find if concurrent sta is active
- * @mac_ctx: pointer to mac context
- *
- * This function will iterate through each session and check if sta
- * session exist and active
- *
- * Return: true or false
- */
-bool csr_is_sta_session_connected(struct mac_context *mac_ctx)
-{
-	uint32_t i;
-	struct csr_roam_session *pSession = NULL;
-
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
-		if (CSR_IS_SESSION_VALID(mac_ctx, i) &&
-			!csr_is_conn_state_disconnected(mac_ctx, i)) {
-			pSession = CSR_GET_SESSION(mac_ctx, i);
-
-			if ((NULL != pSession->pCurRoamProfile) &&
-				(QDF_STA_MODE ==
-					pSession->pCurRoamProfile->csrPersona))
-				return true;
-		}
-	}
-
-	return false;
-}
-
 uint8_t csr_get_connected_infra(struct mac_context *mac_ctx)
 {
 	uint32_t i;
