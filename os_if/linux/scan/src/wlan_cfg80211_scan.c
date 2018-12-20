@@ -1734,7 +1734,8 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	bss_data.frame_len = wlan_get_frame_len(scan_params);
 	bss_data.mgmt = qdf_mem_malloc_atomic(bss_data.frame_len);
 	if (!bss_data.mgmt) {
-		cfg80211_err("mem alloc failed");
+		cfg80211_err("mem alloc failed for bss %pM seq %d",
+			     bss_data.mgmt->bssid, scan_params->seq_num);
 		return;
 	}
 	qdf_mem_copy(bss_data.mgmt,
@@ -1755,6 +1756,9 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	bss_data.chan = wlan_get_ieee80211_channel(wiphy, pdev,
 		scan_params->channel.chan_idx);
 	if (!bss_data.chan) {
+		cfg80211_err("Channel not found for bss %pM seq %d chan %d",
+			     bss_data.mgmt->bssid, scan_params->seq_num,
+			     scan_params->channel.chan_idx);
 		qdf_mem_free(bss_data.mgmt);
 		return;
 	}
@@ -1770,12 +1774,10 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	qdf_mem_copy(bss_data.per_chain_rssi, scan_params->per_chain_rssi,
 		     WLAN_MGMT_TXRX_HOST_MAX_ANTENNA);
 
-	cfg80211_debug("BSSID: %pM Channel:%d RSSI:%d", bss_data.mgmt->bssid,
-		       bss_data.chan->center_freq, (int)(bss_data.rssi / 100));
-
 	bss = wlan_cfg80211_inform_bss_frame_data(wiphy, &bss_data);
 	if (!bss)
-		cfg80211_err("failed to inform bss");
+		cfg80211_err("failed to inform bss %pM seq %d",
+			     bss_data.mgmt->bssid, scan_params->seq_num);
 	else
 		wlan_cfg80211_put_bss(wiphy, bss);
 

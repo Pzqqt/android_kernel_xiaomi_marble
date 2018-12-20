@@ -782,18 +782,19 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 
 		scan_entry = scan_node->entry;
 
-		scm_debug("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x  ssid:%.*s, rssi: %d pdev_id = %d",
-			  (bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
-			  "Probe Rsp" : "Beacon", scan_entry->bssid.bytes,
-			  scan_entry->tsf_delta, scan_entry->seq_num,
-			  scan_entry->ssid.length, scan_entry->ssid.ssid,
-			  scan_entry->rssi_raw,
-			  wlan_objmgr_pdev_get_pdev_id(pdev));
+		scm_nofl_debug("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %d  ssid:%.*s, rssi: %d pdev_id = %d",
+			       (bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
+			       "Probe Rsp" : "Beacon", scan_entry->bssid.bytes,
+			       scan_entry->tsf_delta, scan_entry->seq_num,
+			       scan_entry->ssid.length, scan_entry->ssid.ssid,
+			       scan_entry->rssi_raw,
+			       wlan_objmgr_pdev_get_pdev_id(pdev));
 
 		if (scan_obj->drop_bcn_on_chan_mismatch &&
 			scan_entry->channel_mismatch) {
-			scm_debug("Drop frame, as channel mismatch Received for from BSSID: %pM ",
-				   scan_entry->bssid.bytes);
+			scm_debug("Drop frame, as channel mismatch Received for from BSSID: %pM Seq Num: %d",
+				   scan_entry->bssid.bytes,
+				   scan_entry->seq_num);
 			util_scan_free_cache_entry(scan_entry);
 			qdf_mem_free(scan_node);
 			continue;
@@ -807,8 +808,9 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 
 		status = scm_add_update_entry(psoc, pdev, scan_entry);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			scm_debug("failed to add entry for BSSID: %pM",
-				  scan_entry->bssid.bytes);
+			scm_debug("failed to add entry for BSSID: %pM Seq Num: %d",
+				  scan_entry->bssid.bytes,
+				  scan_entry->seq_num);
 			util_scan_free_cache_entry(scan_entry);
 			qdf_mem_free(scan_node);
 			continue;
