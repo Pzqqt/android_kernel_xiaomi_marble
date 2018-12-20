@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -116,13 +116,15 @@ struct pld_context *pld_get_global_context(void)
  * pld_add_dev() - Add dev node to global context
  * @pld_context: PLD global context
  * @dev: device
+ * @ifdev: interface device
  * @type: Bus type
  *
  * Return: 0 for success
  *         Non zero failure code for errors
  */
 int pld_add_dev(struct pld_context *pld_context,
-		struct device *dev, enum pld_bus_type type)
+		struct device *dev, struct device *ifdev,
+		enum pld_bus_type type)
 {
 	unsigned long flags;
 	struct dev_node *dev_node;
@@ -132,6 +134,7 @@ int pld_add_dev(struct pld_context *pld_context,
 		return -ENOMEM;
 
 	dev_node->dev = dev;
+	dev_node->ifdev = ifdev;
 	dev_node->bus_type = type;
 
 	spin_lock_irqsave(&pld_context->pld_lock, flags);
@@ -164,13 +167,7 @@ void pld_del_dev(struct pld_context *pld_context,
 	spin_unlock_irqrestore(&pld_context->pld_lock, flags);
 }
 
-/**
- * pld_get_bus_type() - Bus type of the device
- * @dev: device
- *
- * Return: PLD bus type
- */
-static enum pld_bus_type pld_get_bus_type(struct device *dev)
+static struct dev_node *pld_get_dev_node(struct device *dev)
 {
 	struct pld_context *pld_context;
 	struct dev_node *dev_node;
@@ -181,19 +178,51 @@ static enum pld_bus_type pld_get_bus_type(struct device *dev)
 	if (dev == NULL || pld_context == NULL) {
 		pr_err("Invalid info: dev %pK, context %pK\n",
 		       dev, pld_context);
-		return PLD_BUS_TYPE_NONE;
+		return NULL;
 	}
 
 	spin_lock_irqsave(&pld_context->pld_lock, flags);
 	list_for_each_entry(dev_node, &pld_context->dev_list, list) {
 		if (dev_node->dev == dev) {
 			spin_unlock_irqrestore(&pld_context->pld_lock, flags);
-			return dev_node->bus_type;
+			return dev_node;
 		}
 	}
 	spin_unlock_irqrestore(&pld_context->pld_lock, flags);
 
-	return PLD_BUS_TYPE_NONE;
+	return NULL;
+}
+
+/**
+ * pld_get_bus_type() - Bus type of the device
+ * @dev: device
+ *
+ * Return: PLD bus type
+ */
+static enum pld_bus_type pld_get_bus_type(struct device *dev)
+{
+	struct dev_node *dev_node = pld_get_dev_node(dev);
+
+	if (dev_node)
+		return dev_node->bus_type;
+	else
+		return PLD_BUS_TYPE_NONE;
+}
+
+/**
+ * pld_get_if_dev() - Bus interface/pipe dev of the device
+ * @dev: device
+ *
+ * Return: Bus sub-interface or pipe dev.
+ */
+static struct device *pld_get_if_dev(struct device *dev)
+{
+	struct dev_node *dev_node = pld_get_dev_node(dev);
+
+	if (dev_node)
+		return dev_node->ifdev;
+	else
+		return NULL;
 }
 
 /**
@@ -332,6 +361,7 @@ int pld_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 		    enum pld_driver_mode mode, const char *host_version)
 {
 	int ret = 0;
+	struct device *ifdev;
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
@@ -343,7 +373,8 @@ int pld_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 	case PLD_BUS_TYPE_SDIO:
 		break;
 	case PLD_BUS_TYPE_USB:
-		ret = pld_usb_wlan_enable(dev, config, mode, host_version);
+		ifdev = pld_get_if_dev(dev);
+		ret = pld_usb_wlan_enable(ifdev, config, mode, host_version);
 		break;
 	default:
 		ret = -EINVAL;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,7 +59,7 @@ static int pld_pcie_probe(struct pci_dev *pdev,
 		goto out;
 	}
 
-	ret = pld_add_dev(pld_context, &pdev->dev, PLD_BUS_TYPE_PCIE);
+	ret = pld_add_dev(pld_context, &pdev->dev, NULL, PLD_BUS_TYPE_PCIE);
 	if (ret)
 		goto out;
 

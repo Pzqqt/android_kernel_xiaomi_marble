@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,7 +59,8 @@ static int pld_usb_probe(struct usb_interface *interface,
 		goto out;
 	}
 
-	ret = pld_add_dev(pld_context, &pdev->dev, PLD_BUS_TYPE_USB);
+	ret = pld_add_dev(pld_context, &pdev->dev, &interface->dev,
+			  PLD_BUS_TYPE_USB);
 	if (ret)
 		goto out;
 

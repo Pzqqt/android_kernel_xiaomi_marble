@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,6 +23,7 @@
 
 struct dev_node {
 	struct device *dev;
+	struct device *ifdev;
 	struct list_head list;
 	enum pld_bus_type bus_type;
 };
@@ -36,7 +37,8 @@ struct pld_context {
 
 struct pld_context *pld_get_global_context(void);
 int pld_add_dev(struct pld_context *pld_context,
-		struct device *dev, enum pld_bus_type type);
+		struct device *dev, struct device *ifdev,
+		enum pld_bus_type type);
 void pld_del_dev(struct pld_context *pld_context,
 		 struct device *dev);
 
