@@ -71,8 +71,6 @@ tpRRMCaps rrm_get_capabilities(struct mac_context *mac,
 
 void rrm_get_start_tsf(struct mac_context *mac, uint32_t *pStartTSF);
 
-void rrm_update_start_tsf(struct mac_context *mac, uint32_t startTSF[2]);
-
 QDF_STATUS rrm_set_max_tx_power_rsp(struct mac_context *mac,
 				    struct scheduler_msg *limMsgQ);
 

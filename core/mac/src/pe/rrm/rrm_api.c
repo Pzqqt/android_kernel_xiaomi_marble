@@ -1220,28 +1220,6 @@ end:
 	return status;
 }
 
-/* -------------------------------------------------------------------- */
-/**
- * rrm_update_start_tsf
- **
- * FUNCTION:  Store start TSF of measurement.
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- *
- * NOTE:
- *
- * @param startTSF - TSF value at the start of measurement.
- * @return None
- */
-void rrm_update_start_tsf(struct mac_context *mac, uint32_t startTSF[2])
-{
-	mac->rrm.rrmPEContext.startTSF[0] = startTSF[0];
-	mac->rrm.rrmPEContext.startTSF[1] = startTSF[1];
-}
-
-/* -------------------------------------------------------------------- */
 /**
  * rrm_get_start_tsf
  *
