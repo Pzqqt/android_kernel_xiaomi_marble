@@ -87,13 +87,15 @@ enum hdd_wext_control {
 /*
  * <ini>
  * gInterfaceChangeWait - Interface change wait
- * @Min: 10,
+ * @Min: 0,
  * @Max: 500000
  * @Default: 10000
  *
  * Timer waiting for interface up from the upper layer. If
  * this timer expires all the cds modules shall be closed.
  * Time Units: ms
+ *
+ * Value 0 can be used to disable idle module stop.
  *
  * Related: None
  *
@@ -103,7 +105,7 @@ enum hdd_wext_control {
  */
 #define CFG_INTERFACE_CHANGE_WAIT CFG_INI_UINT( \
 			"gInterfaceChangeWait", \
-			10, \
+			0, \
 			500000, \
 			10000, \
 			CFG_VALUE_OR_DEFAULT, \
