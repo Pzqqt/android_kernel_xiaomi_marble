@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -63,6 +63,14 @@ bool hif_is_ut_suspended(struct hif_softc *scn);
  */
 QDF_STATUS hif_ut_fw_resume(struct hif_softc *scn);
 
+/**
+ * hif_irq_trigger_ut_resume() - Test for given hif ctx unit-test resume needed
+ * @scn: The HIF context to check
+ *
+ * Return: true, if unit-test resume procedure is needed, otherwise false
+ */
+bool hif_irq_trigger_ut_resume(struct hif_softc *scn);
+
 #else /* WLAN_SUSPEND_RESUME_TEST */
 
 struct hif_ut_suspend_context {};
@@ -78,7 +86,6 @@ static inline QDF_STATUS hif_ut_fw_resume(struct hif_softc *scn)
 {
 	return QDF_STATUS_SUCCESS;
 }
-
 #endif /* WLAN_SUSPEND_RESUME_TEST */
 
 #endif /* _HIF_UNIT_TEST_SUSPEND_I_H_ */

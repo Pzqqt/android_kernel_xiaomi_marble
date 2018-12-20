@@ -316,6 +316,32 @@ uint32_t hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
 }
 qdf_export_symbol(hif_configure_ext_group_interrupts);
 
+#ifdef WLAN_SUSPEND_RESUME_TEST
+/**
+ * hif_check_and_trigger_ut_resume() - check if unit-test command was used to
+ *				       to trigger fake-suspend command, if yes
+ *				       then issue resume procedure.
+ * @scn: opaque HIF software context
+ *
+ * This API checks if unit-test command was used to trigger fake-suspend command
+ * and if answer is yes then it would trigger resume procedure.
+ *
+ * Make this API inline to save API-switch overhead and do branch-prediction to
+ * optimize performance impact.
+ *
+ * Return: void
+ */
+static inline void hif_check_and_trigger_ut_resume(struct hif_softc *scn)
+{
+	if (qdf_unlikely(hif_irq_trigger_ut_resume(scn)))
+		hif_ut_fw_resume(scn);
+}
+#else
+static inline void hif_check_and_trigger_ut_resume(struct hif_softc *scn)
+{
+}
+#endif
+
 /**
  * hif_ext_group_interrupt_handler() - handler for related interrupts
  * @irq: irq number of the interrupt
@@ -332,6 +358,19 @@ irqreturn_t hif_ext_group_interrupt_handler(int irq, void *context)
 
 	if (hif_ext_group->irq_requested) {
 		hif_ext_group->irq_disable(hif_ext_group);
+		/*
+		 * if private ioctl has issued fake suspend command to put
+		 * FW in D0-WOW state then here is our chance to bring FW out
+		 * of WOW mode.
+		 *
+		 * The reason why you need to explicitly wake-up the FW is here:
+		 * APSS should have been in fully awake through-out when
+		 * fake APSS suspend command was issued (to put FW in WOW mode)
+		 * hence organic way of waking-up the FW
+		 * (as part-of APSS-host wake-up) won't happen because
+		 * in reality APSS didn't really suspend.
+		 */
+		hif_check_and_trigger_ut_resume(scn);
 		qdf_atomic_inc(&scn->active_grp_tasklet_cnt);
 
 		hif_ext_group->sched_ops->schedule(hif_ext_group);

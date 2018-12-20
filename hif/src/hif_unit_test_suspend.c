@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -111,4 +111,12 @@ QDF_STATUS hif_ut_fw_resume(struct hif_softc *scn)
 	schedule_work(&scn->ut_suspend_ctx.resume_work);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+bool hif_irq_trigger_ut_resume(struct hif_softc *scn)
+{
+	if (!hif_is_ut_suspended(scn))
+		return false;
+
+	return true;
 }
