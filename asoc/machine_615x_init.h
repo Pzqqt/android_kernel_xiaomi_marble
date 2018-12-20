@@ -1,5 +1,5 @@
 /*
-* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
 *
 * This program is free software; you can redistribute it and/or modify
 * it under the terms of the GNU General Public License version 2 and
@@ -15,9 +15,9 @@
 #ifndef __MACHINE_615X_INIT_H__
 #define __MACHINE_615X_INIT_H__
 int sm6150_init(void);
-int sa8155_init(void);
+int sa6155_init(void);
 
 void sm6150_exit(void);
-void sa8155_exit(void);
+void sa6155_exit(void);
 #endif
 
