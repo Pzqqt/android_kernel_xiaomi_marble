@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,11 +26,13 @@
 #define MANUFACTURER_ID_AR6320_BASE        0x500
 #define MANUFACTURER_ID_QCA9377_BASE       0x700
 #define MANUFACTURER_ID_QCA9379_BASE       0x800
-#define MANUFACTURER_ID_QCN7605_BASE       0x0000 /*TODO - GenoaSDIO */
+#define MANUFACTURER_ID_QCN7605            0x400B
+#define MANUFACTURER_ID_QCN7605_BASE       0x4000
 #define MANUFACTURER_ID_AR6K_BASE_MASK     0xFF00
 #define MANUFACTURER_ID_AR6K_REV_MASK      0x00FF
 #define FUNCTION_CLASS                     0x0
-#define MANUFACTURER_CODE                  0x271
+#define MANUFACTURER_CODE                  0x271 /* Atheros Manufacturer ID */
+#define MANUFACTURER_QC_CODE               0x70  /* QC Manufacturer ID */
 
 
 #endif /* _HIF_SDIO_COMMON_H_ */

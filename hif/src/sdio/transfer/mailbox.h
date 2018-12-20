@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2019 The Linux Foundation. All rights reserved.
  *
  *
  *
@@ -146,11 +146,6 @@
  */
 #define HIF_DUMMY_SPACE_MASK                   0xFFFF0000
 
-/*
- * data written into the dummy space will not put into the final mbox FIFO
- */
-#define HIF_DUMMY_SPACE_MASK                   0xFFFF0000
-
 PREPACK struct MBOX_IRQ_PROC_REGISTERS {
 	uint8_t host_int_status;
 	uint8_t cpu_int_status;
@@ -190,4 +185,9 @@ struct devRegisters {
 #define DEV_REGISTERS_SIZE	(sizeof(struct MBOX_IRQ_PROC_REGISTERS) + \
 				 sizeof(struct MBOX_IRQ_ENABLE_REGISTERS) + \
 				 sizeof(struct MBOX_COUNTER_REGISTERS))
+
+void hif_dev_dump_registers(struct hif_sdio_device *pdev,
+			    struct MBOX_IRQ_PROC_REGISTERS *irq_proc,
+			    struct MBOX_IRQ_ENABLE_REGISTERS *irq_en,
+			    struct MBOX_COUNTER_REGISTERS *mbox_regs);
 #endif /* _MAILBOX_H_ */

@@ -91,7 +91,8 @@ QDF_STATUS hif_dev_send_buffer(struct hif_sdio_device *pdev, uint32_t xfer_id,
 	unsigned char *pData;
 	struct hif_sendContext *sctx;
 	uint32_t request = hif_get_send_buffer_flags(pdev);
-	uint32_t padded_length, addr = 0;
+	uint32_t padded_length;
+	unsigned long addr = 0;
 	int frag_count = 0, i, count, head_len;
 
 	if (hif_get_send_address(pdev, pipe, &addr)) {
@@ -381,7 +382,7 @@ QDF_STATUS hif_dev_process_trailer(struct hif_sdio_device *pdev,
 	HTC_RECORD_HDR *record;
 	HTC_LOOKAHEAD_REPORT *look_ahead;
 
-	HIF_INFO("%s: length:%d", __func__, length);
+	HIF_INFO_HI("%s: length:%d", __func__, length);
 
 	orig_buffer = buffer;
 	orig_length = length;
@@ -515,7 +516,7 @@ QDF_STATUS hif_dev_process_trailer(struct hif_sdio_device *pdev,
 		debug_dump_bytes(orig_buffer, orig_length,
 				 "BAD Recv Trailer");
 
-	HIF_INFO("%s: status = %d", __func__, status);
+	HIF_INFO_HI("%s: status = %d", __func__, status);
 
 	return status;
 }

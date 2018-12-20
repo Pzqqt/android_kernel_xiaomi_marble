@@ -1,7 +1,6 @@
 /*
  * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
- *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -19,6 +18,7 @@
 
 #ifdef CONFIG_SDIO_TRANSFER_MAILBOX
 #define ATH_MODULE_NAME hif
+#include <linux/kthread.h>
 #include <qdf_types.h>
 #include <qdf_status.h>
 #include <qdf_timer.h>
@@ -43,6 +43,24 @@
 #include "if_sdio.h"
 #include "regtable.h"
 #include "transfer.h"
+
+/* by default setup a bounce buffer for the data packets,
+ * if the underlying host controller driver
+ * does not use DMA you may be able to skip this step
+ * and save the memory allocation and transfer time
+ */
+#define HIF_USE_DMA_BOUNCE_BUFFER 1
+#if HIF_USE_DMA_BOUNCE_BUFFER
+/* macro to check if DMA buffer is WORD-aligned and DMA-able.
+ * Most host controllers assume the
+ * buffer is DMA'able and will bug-check otherwise (i.e. buffers on the stack).
+ * virt_addr_valid check fails on stack memory.
+ */
+#define BUFFER_NEEDS_BOUNCE(buffer)  (((unsigned long)(buffer) & 0x3) || \
+					!virt_addr_valid((buffer)))
+#else
+#define BUFFER_NEEDS_BOUNCE(buffer)   (false)
+#endif
 
 #ifdef SDIO_3_0
 /**
@@ -170,6 +188,40 @@ static void set_extended_mbox_window_info(uint16_t manf_id,
 	}
 }
 
+/** hif_dev_set_mailbox_swap() - Set the mailbox swap from firmware
+ * @pdev : The HIF layer object
+ *
+ * Return: none
+ */
+void hif_dev_set_mailbox_swap(struct hif_sdio_dev *pdev)
+{
+	struct hif_sdio_device *hif_device = hif_dev_from_hif(pdev);
+
+	HIF_ENTER();
+
+	hif_device->swap_mailbox = true;
+
+	HIF_EXIT();
+}
+
+/** hif_dev_get_mailbox_swap() - Get the mailbox swap setting
+ * @pdev : The HIF layer object
+ *
+ * Return: true or false
+ */
+bool hif_dev_get_mailbox_swap(struct hif_sdio_dev *pdev)
+{
+	struct hif_sdio_device *hif_device;
+
+	HIF_ENTER();
+
+	hif_device = hif_dev_from_hif(pdev);
+
+	HIF_EXIT();
+
+	return hif_device->swap_mailbox;
+}
+
 /**
  * hif_dev_get_fifo_address() - get the fifo addresses for dma
  * @pdev:  SDIO HIF object
@@ -177,22 +229,24 @@ static void set_extended_mbox_window_info(uint16_t manf_id,
  *
  * Return : 0 for success, non-zero for error
  */
-QDF_STATUS hif_dev_get_fifo_address(struct hif_sdio_dev *pdev,
-				    struct hif_device_mbox_info *config,
-				    uint32_t config_len)
+int hif_dev_get_fifo_address(struct hif_sdio_dev *pdev,
+			     void *config,
+			     uint32_t config_len)
 {
 	uint32_t count;
+	struct hif_device_mbox_info *cfg =
+				(struct hif_device_mbox_info *)config;
 
 	for (count = 0; count < 4; count++)
-		config->mbox_addresses[count] = HIF_MBOX_START_ADDR(count);
+		cfg->mbox_addresses[count] = HIF_MBOX_START_ADDR(count);
 
 	if (config_len >= sizeof(struct hif_device_mbox_info)) {
 		set_extended_mbox_window_info((uint16_t)pdev->func->device,
-					      config);
-		return QDF_STATUS_SUCCESS;
+					      cfg);
+		return 0;
 	}
 
-	return QDF_STATUS_E_INVAL;
+	return -EINVAL;
 }
 
 /**
@@ -488,7 +542,7 @@ static uint8_t hif_dev_map_mail_box_to_pipe(struct hif_sdio_device *pdev,
  * Return 0 for success and non-zero for failure to map
  */
 int hif_get_send_address(struct hif_sdio_device *pdev,
-			 uint8_t pipe, uint32_t *addr)
+			 uint8_t pipe, unsigned long *addr)
 {
 	uint8_t mbox_index = INVALID_MAILBOX_NUMBER;
 
@@ -586,9 +640,9 @@ static QDF_STATUS hif_dev_recv_packet(struct hif_sdio_device *pdev,
 	}
 
 	/* mailbox index is saved in Endpoint member */
-	HIF_INFO("%s : hdr:0x%x, len:%d, padded length: %d Mbox:0x%x",
-		 __func__, packet->PktInfo.AsRx.ExpectedHdr, recv_length,
-		 padded_length, mbox_index);
+	HIF_INFO_HI("%s : hdr:0x%x, len:%d, padded length: %d Mbox:0x%x",
+		    __func__, packet->PktInfo.AsRx.ExpectedHdr, recv_length,
+		    padded_length, mbox_index);
 
 	status = hif_read_write(pdev->HIFDevice,
 				pdev->MailBoxInfo.mbox_addresses[mbox_index],
@@ -604,11 +658,11 @@ static QDF_STATUS hif_dev_recv_packet(struct hif_sdio_device *pdev,
 		if (status == QDF_STATUS_SUCCESS) {
 			HTC_FRAME_HDR *hdr = (HTC_FRAME_HDR *) packet->pBuffer;
 
-			HIF_INFO("%s: EP:%d,Len:%d,Flag:%d,CB:0x%02X,0x%02X\n",
-				 __func__,
-				 hdr->EndpointID, hdr->PayloadLen,
-				 hdr->Flags, hdr->ControlBytes0,
-				 hdr->ControlBytes1);
+			HIF_INFO_HI("%s:EP:%d,Len:%d,Flg:%d,CB:0x%02X,0x%02X\n",
+				    __func__,
+				    hdr->EndpointID, hdr->PayloadLen,
+				    hdr->Flags, hdr->ControlBytes0,
+				    hdr->ControlBytes1);
 		}
 	}
 
@@ -745,7 +799,7 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 	HTC_PACKET_QUEUE recv_q, sync_comp_q;
 	QDF_STATUS (*rxCompletion)(void *, qdf_nbuf_t,	uint8_t);
 
-	HIF_INFO("%s: NumLookAheads: %d\n", __func__, num_look_aheads);
+	HIF_INFO_HI("%s: NumLookAheads: %d\n", __func__, num_look_aheads);
 
 	if (num_pkts_fetched)
 		*num_pkts_fetched = 0;
@@ -1321,33 +1375,610 @@ QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 	return status;
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 15, 0)) && \
-		 !defined(WITH_BACKPORTS)
+#define DEV_CHECK_RECV_YIELD(pdev) \
+	((pdev)->CurrentDSRRecvCount >= \
+	 (pdev)->HifIRQYieldParams.recv_packet_yield_count)
 /**
- * hif_sdio_set_drvdata() - set wlan driver data into upper layer private
- * @func: pointer to sdio function
- * @hifdevice: pointer to hif device
+ * hif_dev_dsr_handler() - Synchronous interrupt handler
  *
- * Return: non zero for success.
+ * @context: hif send context
+ *
+ * Return: 0 for success and non-zero for failure
  */
-int hif_sdio_set_drvdata(struct sdio_func *func,
-			 struct hif_sdio_dev *hifdevice)
+QDF_STATUS hif_dev_dsr_handler(void *context)
 {
-	return sdio_set_drvdata(func, hifdevice);
+	struct hif_sdio_device *pdev = (struct hif_sdio_device *)context;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	bool done = false;
+	bool async_proc = false;
+
+	/* reset the recv counter that tracks when we need
+	 * to yield from the DSR
+	 */
+	pdev->CurrentDSRRecvCount = 0;
+	/* reset counter used to flag a re-scan of IRQ
+	 * status registers on the target
+	 */
+	pdev->RecheckIRQStatusCnt = 0;
+
+	while (!done) {
+		status = hif_dev_process_pending_irqs(pdev, &done, &async_proc);
+		if (QDF_IS_STATUS_ERROR(status))
+			break;
+
+		if (pdev->HifIRQProcessingMode == HIF_DEVICE_IRQ_SYNC_ONLY) {
+			/* the HIF layer does not allow async IRQ processing,
+			 * override the asyncProc flag
+			 */
+			async_proc = false;
+			/* this will cause us to re-enter ProcessPendingIRQ()
+			 * and re-read interrupt status registers.
+			 * This has a nice side effect of blocking us until all
+			 * async read requests are completed. This behavior is
+			 * required as we  do not allow ASYNC processing
+			 * in interrupt handlers (like Windows CE)
+			 */
+
+			if (pdev->DSRCanYield && DEV_CHECK_RECV_YIELD(pdev))
+				/* ProcessPendingIRQs() pulled enough recv
+				 * messages to satisfy the yield count, stop
+				 * checking for more messages and return
+				 */
+				break;
+		}
+
+		if (async_proc) {
+			/* the function does some async I/O for performance,
+			 * we need to exit the ISR immediately, the check below
+			 * will prevent the interrupt from being
+			 * Ack'd while we handle it asynchronously
+			 */
+			break;
+		}
+	}
+
+	if (QDF_IS_STATUS_SUCCESS(status) && !async_proc) {
+		/* Ack the interrupt only if :
+		 *  1. we did not get any errors in processing interrupts
+		 *  2. there are no outstanding async processing requests
+		 */
+		if (pdev->DSRCanYield) {
+			/* if the DSR can yield do not ACK the interrupt, there
+			 * could be more pending messages. The HIF layer
+			 * must ACK the interrupt on behalf of HTC
+			 */
+			HIF_INFO("%s:  Yield (RX count: %d)",
+				 __func__, pdev->CurrentDSRRecvCount);
+		} else {
+			hif_ack_interrupt(pdev->HIFDevice);
+		}
+	}
+
+	return status;
 }
-#else
-int hif_sdio_set_drvdata(struct sdio_func *func,
-			 struct hif_sdio_dev *hifdevice)
+
+/**
+ * hif_read_write() - queue a read/write request
+ * @device: pointer to hif device structure
+ * @address: address to read
+ * @buffer: buffer to hold read/write data
+ * @length: length to read/write
+ * @request: read/write/sync/async request
+ * @context: pointer to hold calling context
+ *
+ * Return: 0 on success, error number otherwise.
+ */
+QDF_STATUS
+hif_read_write(struct hif_sdio_dev *device,
+	       unsigned long address,
+	       char *buffer, uint32_t length,
+	       uint32_t request, void *context)
 {
-	sdio_set_drvdata(func, hifdevice);
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct bus_request *busrequest;
+
+	AR_DEBUG_ASSERT(device);
+	AR_DEBUG_ASSERT(device->func);
+	HIF_TRACE("%s: device 0x%pK addr 0x%lX buffer 0x%pK",
+		  __func__, device, address, buffer);
+	HIF_TRACE("%s: len %d req 0x%X context 0x%pK",
+		  __func__, length, request, context);
+
+	/*sdio r/w action is not needed when suspend, so just return */
+	if ((device->is_suspend) &&
+	    (device->power_config == HIF_DEVICE_POWER_CUT)) {
+		AR_DEBUG_PRINTF(ATH_DEBUG_TRACE, ("skip io when suspending\n"));
+		return QDF_STATUS_SUCCESS;
+	}
+	do {
+		if ((request & HIF_ASYNCHRONOUS) ||
+		    (request & HIF_SYNCHRONOUS)) {
+			/* serialize all requests through the async thread */
+			AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
+					("%s: Execution mode: %s\n", __func__,
+					 (request & HIF_ASYNCHRONOUS) ? "Async"
+					 : "Synch"));
+			busrequest = hif_allocate_bus_request(device);
+			if (!busrequest) {
+				HIF_ERROR("%s:bus requests unavail", __func__);
+				HIF_ERROR("%s, addr:0x%lX, len:%d",
+					  request & HIF_SDIO_READ ? "READ" :
+					  "WRITE", address, length);
+				return QDF_STATUS_E_FAILURE;
+			}
+			busrequest->address = address;
+			busrequest->buffer = buffer;
+			busrequest->length = length;
+			busrequest->request = request;
+			busrequest->context = context;
+
+			add_to_async_list(device, busrequest);
+
+			if (request & HIF_SYNCHRONOUS) {
+				AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
+						("%s: queued sync req: 0x%lX\n",
+						 __func__,
+						 (unsigned long)busrequest));
+
+				/* wait for completion */
+				up(&device->sem_async);
+				if (down_interruptible(&busrequest->sem_req) ==
+				    0) {
+					QDF_STATUS status = busrequest->status;
+
+					HIF_TRACE("%s: sync freeing 0x%lX:0x%X",
+						  __func__,
+						  (unsigned long)busrequest,
+						  busrequest->status);
+					HIF_TRACE("%s: freeing req: 0x%X",
+						  __func__,
+						  (unsigned int)request);
+					hif_free_bus_request(device,
+							     busrequest);
+					return status;
+				} else {
+					/* interrupted, exit */
+					return QDF_STATUS_E_FAILURE;
+				}
+			} else {
+				HIF_TRACE("%s: queued async req: 0x%lX",
+					  __func__, (unsigned long)busrequest);
+				up(&device->sem_async);
+				return QDF_STATUS_E_PENDING;
+			}
+		} else {
+			HIF_ERROR("%s: Invalid execution mode: 0x%08x",
+				  __func__, (unsigned int)request);
+			status = QDF_STATUS_E_INVAL;
+			break;
+		}
+	} while (0);
+
+	return status;
+}
+
+/**
+ * hif_sdio_func_enable() - Handle device enabling as per device
+ * @device: HIF device object
+ * @func: function pointer
+ *
+ * Return success or failure
+ */
+static int hif_sdio_func_enable(struct hif_softc *ol_sc,
+				struct sdio_func *func)
+{
+	struct hif_sdio_dev *device = get_hif_device(ol_sc, func);
+
+	if (device->is_disabled) {
+		int ret = 0;
+
+		sdio_claim_host(func);
+
+		ret = hif_sdio_quirk_async_intr(ol_sc, func);
+		if (ret) {
+			HIF_ERROR("%s: Error setting async intr:%d",
+				  __func__, ret);
+			sdio_release_host(func);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		func->enable_timeout = 100;
+		ret = sdio_enable_func(func);
+		if (ret) {
+			HIF_ERROR("%s: Unable to enable function: %d",
+				  __func__, ret);
+			sdio_release_host(func);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		ret = sdio_set_block_size(func, HIF_BLOCK_SIZE);
+		if (ret) {
+			HIF_ERROR("%s: Unable to set block size 0x%X : %d\n",
+				  __func__, HIF_BLOCK_SIZE, ret);
+			sdio_release_host(func);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		ret = hif_sdio_quirk_mod_strength(ol_sc, func);
+		if (ret) {
+			HIF_ERROR("%s: Error setting mod strength : %d\n",
+				  __func__, ret);
+			sdio_release_host(func);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		sdio_release_host(func);
+	}
+
 	return 0;
 }
-#endif /* LINUX VERSION */
 
-struct hif_sdio_dev *get_hif_device(struct sdio_func *func)
+/**
+ * __hif_read_write() - sdio read/write wrapper
+ * @device: pointer to hif device structure
+ * @address: address to read
+ * @buffer: buffer to hold read/write data
+ * @length: length to read/write
+ * @request: read/write/sync/async request
+ * @context: pointer to hold calling context
+ *
+ * Return: 0 on success, error number otherwise.
+ */
+static QDF_STATUS
+__hif_read_write(struct hif_sdio_dev *device,
+		 uint32_t address, char *buffer,
+		 uint32_t length, uint32_t request, void *context)
 {
-	qdf_assert(func);
+	uint8_t opcode;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	int ret = A_OK;
+	uint8_t *tbuffer;
+	bool bounced = false;
 
-	return (struct hif_sdio_dev *)sdio_get_drvdata(func);
+	if (!device) {
+		HIF_ERROR("%s: device null!", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!device->func) {
+		HIF_ERROR("%s: func null!", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	HIF_INFO_HI("%s: addr:0X%06X, len:%08d, %s, %s", __func__,
+		    address, length,
+		    request & HIF_SDIO_READ ? "Read " : "Write",
+		    request & HIF_ASYNCHRONOUS ? "Async" : "Sync ");
+
+	do {
+		if (request & HIF_EXTENDED_IO) {
+			HIF_INFO_HI("%s: Command type: CMD53\n", __func__);
+		} else {
+			HIF_ERROR("%s: Invalid command type: 0x%08x\n",
+				  __func__, request);
+			status = QDF_STATUS_E_INVAL;
+			break;
+		}
+
+		if (request & HIF_BLOCK_BASIS) {
+			/* round to whole block length size */
+			length =
+				(length / HIF_BLOCK_SIZE) *
+				HIF_BLOCK_SIZE;
+			HIF_INFO_HI("%s: Block mode (BlockLen: %d)\n",
+				    __func__, length);
+		} else if (request & HIF_BYTE_BASIS) {
+			HIF_INFO_HI("%s: Byte mode (BlockLen: %d)\n",
+				    __func__, length);
+		} else {
+			HIF_ERROR("%s: Invalid data mode: 0x%08x\n",
+				  __func__, request);
+			status = QDF_STATUS_E_INVAL;
+			break;
+		}
+		if (request & HIF_SDIO_WRITE) {
+			hif_fixup_write_param(device, request,
+					      &length, &address);
+
+			HIF_INFO_HI("addr:%08X, len:0x%08X, dummy:0x%04X\n",
+				    address, length,
+				    (request & HIF_DUMMY_SPACE_MASK) >> 16);
+		}
+
+		if (request & HIF_FIXED_ADDRESS) {
+			opcode = CMD53_FIXED_ADDRESS;
+			HIF_INFO_HI("%s: Addr mode: fixed 0x%X\n",
+				    __func__, address);
+		} else if (request & HIF_INCREMENTAL_ADDRESS) {
+			opcode = CMD53_INCR_ADDRESS;
+			HIF_INFO_HI("%s: Address mode: Incremental 0x%X\n",
+				    __func__, address);
+		} else {
+			HIF_ERROR("%s: Invalid address mode: 0x%08x\n",
+				  __func__, request);
+			status = QDF_STATUS_E_INVAL;
+			break;
+		}
+
+		if (request & HIF_SDIO_WRITE) {
+#if HIF_USE_DMA_BOUNCE_BUFFER
+			if (BUFFER_NEEDS_BOUNCE(buffer)) {
+				AR_DEBUG_ASSERT(device->dma_buffer);
+				tbuffer = device->dma_buffer;
+				/* copy the write data to the dma buffer */
+				AR_DEBUG_ASSERT(length <= HIF_DMA_BUFFER_SIZE);
+				if (length > HIF_DMA_BUFFER_SIZE) {
+					HIF_ERROR("%s: Invalid write len: %d\n",
+						  __func__, length);
+					status = QDF_STATUS_E_INVAL;
+					break;
+				}
+				memcpy(tbuffer, buffer, length);
+				bounced = true;
+			} else {
+				tbuffer = buffer;
+			}
+#else
+			tbuffer = buffer;
+#endif
+			if (opcode == CMD53_FIXED_ADDRESS  && tbuffer) {
+				ret = sdio_writesb(device->func, address,
+						   tbuffer, length);
+				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
+					    __func__, ret, address, length,
+					    *(int *)tbuffer);
+			} else if (tbuffer) {
+				ret = sdio_memcpy_toio(device->func, address,
+						       tbuffer, length);
+				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
+					    __func__, ret, address, length,
+					    *(int *)tbuffer);
+			}
+		} else if (request & HIF_SDIO_READ) {
+#if HIF_USE_DMA_BOUNCE_BUFFER
+			if (BUFFER_NEEDS_BOUNCE(buffer)) {
+				AR_DEBUG_ASSERT(device->dma_buffer);
+				AR_DEBUG_ASSERT(length <= HIF_DMA_BUFFER_SIZE);
+				if (length > HIF_DMA_BUFFER_SIZE) {
+					HIF_ERROR("%s: Invalid read len: %d\n",
+						  __func__, length);
+					status = QDF_STATUS_E_INVAL;
+					break;
+				}
+				tbuffer = device->dma_buffer;
+				bounced = true;
+			} else {
+				tbuffer = buffer;
+			}
+#else
+			tbuffer = buffer;
+#endif
+			if (opcode == CMD53_FIXED_ADDRESS && tbuffer) {
+				ret = sdio_readsb(device->func, tbuffer,
+						  address, length);
+				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
+					    __func__, ret, address, length,
+					    *(int *)tbuffer);
+			} else if (tbuffer) {
+				ret = sdio_memcpy_fromio(device->func,
+							 tbuffer, address,
+							 length);
+				HIF_INFO_HI("%s:r=%d addr:0x%X, len:%d, 0x%X\n",
+					    __func__, ret, address, length,
+					    *(int *)tbuffer);
+			}
+#if HIF_USE_DMA_BOUNCE_BUFFER
+			if (bounced && tbuffer)
+				memcpy(buffer, tbuffer, length);
+#endif
+		} else {
+			HIF_ERROR("%s: Invalid dir: 0x%08x", __func__, request);
+			status = QDF_STATUS_E_INVAL;
+			return status;
+		}
+
+		if (ret) {
+			HIF_ERROR("%s: SDIO bus operation failed!", __func__);
+			HIF_ERROR("%s: MMC stack returned : %d", __func__, ret);
+			HIF_ERROR("%s: addr:0X%06X, len:%08d, %s, %s",
+				  __func__, address, length,
+				  request & HIF_SDIO_READ ? "Read " : "Write",
+				  request & HIF_ASYNCHRONOUS ?
+				  "Async" : "Sync");
+			status = QDF_STATUS_E_FAILURE;
+		}
+	} while (false);
+
+	return status;
+}
+
+/**
+ * async_task() - thread function to serialize all bus requests
+ * @param: pointer to hif device
+ *
+ * thread function to serialize all requests, both sync and async
+ * Return: 0 on success, error number otherwise.
+ */
+static int async_task(void *param)
+{
+	struct hif_sdio_dev *device;
+	struct bus_request *request;
+	QDF_STATUS status;
+	bool claimed = false;
+
+	device = (struct hif_sdio_dev *)param;
+	set_current_state(TASK_INTERRUPTIBLE);
+	while (!device->async_shutdown) {
+		/* wait for work */
+		if (down_interruptible(&device->sem_async) != 0) {
+			/* interrupted, exit */
+			AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
+					("%s: async task interrupted\n",
+					 __func__));
+			break;
+		}
+		if (device->async_shutdown) {
+			AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
+					("%s: async task stopping\n",
+					 __func__));
+			break;
+		}
+		/* we want to hold the host over multiple cmds
+		 * if possible, but holding the host blocks
+		 * card interrupts
+		 */
+		qdf_spin_lock_irqsave(&device->asynclock);
+		/* pull the request to work on */
+		while (device->asyncreq) {
+			request = device->asyncreq;
+			if (request->inusenext)
+				device->asyncreq = request->inusenext;
+			else
+				device->asyncreq = NULL;
+			qdf_spin_unlock_irqrestore(&device->asynclock);
+			HIF_TRACE("%s: processing req: 0x%lX",
+				  __func__, (unsigned long)request);
+
+			if (!claimed) {
+				sdio_claim_host(device->func);
+				claimed = true;
+			}
+			if (request->scatter_req) {
+				A_ASSERT(device->scatter_enabled);
+				/* pass the request to scatter routine which
+				 * executes it synchronously, note, no need
+				 * to free the request since scatter requests
+				 * are maintained on a separate list
+				 */
+				status = do_hif_read_write_scatter(device,
+								   request);
+			} else {
+				/* call hif_read_write in sync mode */
+				status =
+					__hif_read_write(device,
+							 request->address,
+							 request->buffer,
+							 request->length,
+							 request->
+							 request &
+							 ~HIF_SYNCHRONOUS,
+							 NULL);
+				if (request->request & HIF_ASYNCHRONOUS) {
+					void *context = request->context;
+
+					HIF_TRACE("%s: freeing req: 0x%lX",
+						  __func__,
+						  (unsigned long)request);
+					hif_free_bus_request(device, request);
+
+					HIF_TRACE("%s: completion req 0x%lX",
+						  __func__,
+						  (unsigned long)request);
+					device->htc_callbacks.
+					rw_compl_handler(context, status);
+				} else {
+					HIF_TRACE("%s: upping req: 0x%lX",
+						  __func__,
+						  (unsigned long)request);
+					request->status = status;
+					up(&request->sem_req);
+				}
+			}
+			qdf_spin_lock_irqsave(&device->asynclock);
+		}
+		qdf_spin_unlock_irqrestore(&device->asynclock);
+		if (claimed) {
+			sdio_release_host(device->func);
+			claimed = false;
+		}
+	}
+
+	complete_and_exit(&device->async_completion, 0);
+
+	return 0;
+}
+
+/**
+ * hif_disable_func() - Disable SDIO function
+ *
+ * @device: HIF device pointer
+ * @func: SDIO function pointer
+ * @reset: If this is called from resume or probe
+ *
+ * Return: 0 in case of success, else error value
+ */
+QDF_STATUS hif_disable_func(struct hif_sdio_dev *device,
+			    struct sdio_func *func,
+			    bool reset)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	HIF_ENTER();
+	if (!IS_ERR(device->async_task)) {
+		init_completion(&device->async_completion);
+		device->async_shutdown = 1;
+		up(&device->sem_async);
+		wait_for_completion(&device->async_completion);
+		device->async_task = NULL;
+		sema_init(&device->sem_async, 0);
+	}
+
+	status = hif_sdio_func_disable(device, func, reset);
+	if (status == QDF_STATUS_SUCCESS)
+		device->is_disabled = true;
+
+	cleanup_hif_scatter_resources(device);
+
+	HIF_EXIT();
+
+	return status;
+}
+
+/**
+ * hif_enable_func() - Enable SDIO function
+ *
+ * @ol_sc: HIF object pointer
+ * @device: HIF device pointer
+ * @sdio_func: SDIO function pointer
+ * @resume: If this is called from resume or probe
+ *
+ * Return: 0 in case of success, else error value
+ */
+QDF_STATUS hif_enable_func(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
+			   struct sdio_func *func, bool resume)
+{
+	int ret = QDF_STATUS_SUCCESS;
+
+	HIF_ENTER();
+
+	if (!device) {
+		HIF_ERROR("%s: HIF device is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (hif_sdio_func_enable(ol_sc, func))
+		return QDF_STATUS_E_FAILURE;
+
+	/* create async I/O thread */
+	if (!device->async_task && device->is_disabled) {
+		device->async_shutdown = 0;
+		device->async_task = kthread_create(async_task,
+						    (void *)device,
+						    "AR6K Async");
+		if (IS_ERR(device->async_task)) {
+			HIF_ERROR("%s: Error creating async task",
+				  __func__);
+			return QDF_STATUS_E_FAILURE;
+		}
+		device->is_disabled = false;
+		wake_up_process(device->async_task);
+	}
+
+	if (!resume)
+		ret = hif_sdio_probe(ol_sc, func, device);
+
+	HIF_EXIT();
+
+	return ret;
 }
 #endif /* CONFIG_SDIO_TRANSFER_MAILBOX */

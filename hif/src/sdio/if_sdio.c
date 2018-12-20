@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -181,7 +181,7 @@ void hif_sdio_disable_bus(struct hif_softc *hif_sc)
 {
 	struct sdio_func *func = dev_to_sdio_func(hif_sc->qdf_dev->dev);
 
-	hif_sdio_device_removed(func);
+	hif_sdio_device_removed(hif_sc, func);
 }
 
 /**

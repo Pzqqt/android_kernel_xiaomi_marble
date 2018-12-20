@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,6 +35,7 @@
 #include <qdf_status.h>
 #include <qdf_timer.h>
 #include <qdf_atomic.h>
+#include <qdf_list.h>
 #include "hif.h"
 #include "hif_debug.h"
 #include "hif_sdio_common.h"
@@ -167,7 +168,7 @@ struct bus_request {
 	struct bus_request *next;       /* link list of available requests */
 	struct bus_request *inusenext;  /* link list of in use requests */
 	struct semaphore sem_req;
-	uint32_t address;       /* request data */
+	unsigned long address;       /* request data */
 	char *buffer;
 	uint32_t length;
 	uint32_t request;
@@ -175,6 +176,14 @@ struct bus_request {
 	QDF_STATUS status;
 	struct HIF_SCATTER_REQ_PRIV *scatter_req;
 };
+
+#define HIF_ADMA_MAX_CHANS 2
+#ifdef CONFIG_SDIO_TRANSFER_ADMA
+struct rx_q_entry {
+	qdf_list_node_t entry;
+	qdf_nbuf_t nbuf;
+};
+#endif
 
 struct hif_sdio_dev {
 	struct sdio_func *func;
@@ -201,6 +210,15 @@ struct hif_sdio_dev {
 	const struct sdio_device_id *id;
 	struct mmc_host *host;
 	void *htc_context;
+#ifdef CONFIG_SDIO_TRANSFER_ADMA
+	struct sdio_al_client_handle *al_client;
+	struct sdio_al_channel_handle *al_chan[HIF_ADMA_MAX_CHANS];
+	uint8_t adma_chans_used;
+	qdf_list_t rx_q;
+	qdf_spinlock_t rx_q_lock;
+	qdf_work_t rx_q_alloc_work;
+	bool rx_q_alloc_work_scheduled;
+#endif
 };
 
 struct HIF_DEVICE_OS_DEVICE_INFO {
@@ -270,18 +288,13 @@ QDF_STATUS hif_configure_device(struct hif_softc *ol_sc,
 QDF_STATUS hif_attach_htc(struct hif_sdio_dev *device,
 			  struct htc_callbacks *callbacks);
 
-QDF_STATUS hif_read_write(struct hif_sdio_dev *device,
-			uint32_t address,
-			char *buffer,
-			uint32_t length, uint32_t request, void *context);
-
 void hif_ack_interrupt(struct hif_sdio_dev *device);
 
 void hif_mask_interrupt(struct hif_sdio_dev *device);
 
 void hif_un_mask_interrupt(struct hif_sdio_dev *device);
 
-void hif_sdio_configure_pipes(struct hif_sdio_dev *dev, struct sdio_func *func);
+int hif_sdio_configure_pipes(struct hif_sdio_dev *dev, struct sdio_func *func);
 
 struct _HIF_SCATTER_ITEM {
 	u_int8_t     *buffer; /* CPU accessible address of buffer */
@@ -400,14 +413,14 @@ static inline QDF_STATUS do_hif_read_write_scatter(struct hif_sdio_dev *device,
 #define SDIO_SET_CMD52_WRITE_ARG(arg, func, address, value) \
 	SDIO_SET_CMD52_ARG(arg, 1, (func), 0, address, value)
 
-void hif_sdio_quirk_force_drive_strength(struct sdio_func *func);
-void hif_sdio_quirk_write_cccr(struct sdio_func *func);
-int hif_sdio_quirk_mod_strength(struct sdio_func *func);
-int hif_sdio_quirk_async_intr(struct sdio_func *func);
-int hif_sdio_set_bus_speed(struct sdio_func *func);
-int hif_sdio_set_bus_width(struct sdio_func *func);
-int hif_sdio_func_enable(struct hif_sdio_dev *device,
-			 struct sdio_func *func);
+void hif_sdio_quirk_force_drive_strength(struct hif_softc *ol_sc,
+					 struct sdio_func *func);
+void hif_sdio_quirk_write_cccr(struct hif_softc *ol_sc, struct sdio_func *func);
+int hif_sdio_quirk_mod_strength(struct hif_softc *ol_sc,
+				struct sdio_func *func);
+int hif_sdio_quirk_async_intr(struct hif_softc *ol_sc, struct sdio_func *func);
+int hif_sdio_set_bus_speed(struct hif_softc *ol_sc, struct sdio_func *func);
+int hif_sdio_set_bus_width(struct hif_softc *ol_sc, struct sdio_func *func);
 QDF_STATUS hif_sdio_func_disable(struct hif_sdio_dev *device,
 				 struct sdio_func *func,
 				 bool reset);

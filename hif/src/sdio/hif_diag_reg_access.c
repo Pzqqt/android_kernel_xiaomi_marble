@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,7 +26,7 @@
 #include "hif.h"
 #include "if_sdio.h"
 #include "regtable_sdio.h"
-
+#include "hif_sdio_dev.h"
 #include "qdf_module.h"
 
 #define CPU_DBG_SEL_ADDRESS                      0x00000483

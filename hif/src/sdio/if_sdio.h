@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -83,7 +83,7 @@ int hif_sdio_device_inserted(struct hif_softc *ol_sc,
 			     const struct sdio_device_id *id);
 void hif_sdio_stop(struct hif_softc *hif_ctx);
 void hif_sdio_shutdown(struct hif_softc *hif_ctx);
-void hif_sdio_device_removed(struct sdio_func *func);
+void hif_sdio_device_removed(struct hif_softc *hif_ctx, struct sdio_func *func);
 int hif_device_suspend(struct hif_softc *ol_sc, struct device *dev);
 int hif_device_resume(struct hif_softc *ol_sc, struct device *dev);
 void hif_register_tbl_attach(struct hif_softc *scn,

@@ -465,8 +465,8 @@ enum hif_disable_type {
  * enum hif_device_config_opcode: configure mode
  *
  * @HIF_DEVICE_POWER_STATE: device power state
- * @HIF_DEVICE_GET_MBOX_BLOCK_SIZE: get mbox block size
- * @HIF_DEVICE_GET_MBOX_ADDR: get mbox block address
+ * @HIF_DEVICE_GET_BLOCK_SIZE: get block size
+ * @HIF_DEVICE_GET_ADDR: get block address
  * @HIF_DEVICE_GET_PENDING_EVENTS_FUNC: get pending events functions
  * @HIF_DEVICE_GET_IRQ_PROC_MODE: get irq proc mode
  * @HIF_DEVICE_GET_RECV_EVENT_MASK_UNMASK_FUNC: receive event function

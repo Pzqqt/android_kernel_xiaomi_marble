@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,7 +28,7 @@
 #if defined(CONFIG_SDIO_TRANSFER_MAILBOX)
 #include <transfer/mailbox.h>
 #elif defined(CONFIG_SDIO_TRANSFER_ADMA)
-#error "Error - Not implemented yet"
+#include <transfer/adma.h>
 #else
 #error "Error - Invalid transfer method"
 #endif
@@ -54,7 +54,6 @@ struct hif_sdio_device {
 	qdf_spinlock_t TxLock;
 	qdf_spinlock_t RxLock;
 	struct hif_msg_callbacks hif_callbacks;
-	struct hif_device_mbox_info MailBoxInfo;
 	uint32_t BlockSize;
 	uint32_t BlockMask;
 	enum hif_device_irq_mode HifIRQProcessingMode;
@@ -65,8 +64,11 @@ struct hif_sdio_device {
 	int RecheckIRQStatusCnt;
 	uint32_t RecvStateFlags;
 	void *pTarget;
-	bool swap_mailbox;
 	struct devRegisters devRegisters;
+#ifdef CONFIG_SDIO_TRANSFER_MAILBOX
+	bool swap_mailbox;
+	struct hif_device_mbox_info MailBoxInfo;
+#endif
 };
 
 #define LOCK_HIF_DEV(device)    qdf_spin_lock(&(device)->Lock)

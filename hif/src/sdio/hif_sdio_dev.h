@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016, 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,6 +26,7 @@
 #include <hif.h>
 #include "athstartpack.h"
 #include "hif_internal.h"
+#include "if_sdio.h"
 
 struct hif_sdio_device *hif_dev_from_hif(struct hif_sdio_dev *hif_device);
 
@@ -47,7 +48,7 @@ QDF_STATUS hif_dev_send_buffer(struct hif_sdio_device *htc_sdio_device,
 
 QDF_STATUS hif_dev_process_pending_irqs(struct hif_sdio_device *pdev,
 					bool *done,
-					      bool *async_processing);
+					bool *async_processing);
 
 void hif_dev_mask_interrupts(struct hif_sdio_device *pdev);
 
@@ -60,9 +61,9 @@ void hif_dev_unmask_interrupts(struct hif_sdio_device *pdev);
 
 int hif_dev_setup_device(struct hif_sdio_device *pdev);
 
-QDF_STATUS hif_dev_get_fifo_address(struct hif_sdio_dev *pdev,
-				    struct hif_device_mbox_info *config,
-				    uint32_t config_len);
+int hif_dev_get_fifo_address(struct hif_sdio_dev *pdev,
+			     void *config,
+			     uint32_t config_len);
 
 void hif_dev_get_block_size(void *config);
 
@@ -70,8 +71,93 @@ void hif_dev_set_mailbox_swap(struct hif_sdio_dev *pdev);
 
 bool hif_dev_get_mailbox_swap(struct hif_sdio_dev *pdev);
 
-int hif_sdio_set_drvdata(struct sdio_func *func,
-			 struct hif_sdio_dev *hifdevice);
+QDF_STATUS hif_read_write(struct hif_sdio_dev *device, unsigned long address,
+			  char *buffer,	uint32_t length, uint32_t request,
+			  void *context);
 
-struct hif_sdio_dev *get_hif_device(struct sdio_func *func);
+#ifdef CONFIG_SDIO_TRANSFER_MAILBOX
+static inline struct hif_sdio_dev *get_hif_device(struct hif_softc *hif_ctx,
+						  struct sdio_func *func)
+{
+	qdf_assert(func);
+	return (struct hif_sdio_dev *)sdio_get_drvdata(func);
+}
+
+/**
+ * hif_sdio_set_drvdata() - set wlan driver data into upper layer private
+ * @hif_ctx: HIF object
+ * @func: pointer to sdio function
+ * @hifdevice: pointer to hif device
+ *
+ * Return: zero for success.
+ */
+static inline int hif_sdio_set_drvdata(struct hif_softc *hif_ctx,
+				       struct sdio_func *func,
+				       struct hif_sdio_dev *hifdevice)
+{
+	sdio_set_drvdata(func, hifdevice);
+	return 0;
+}
+
+static inline int hif_dev_configure_pipes(struct hif_sdio_dev *pdev,
+					  struct sdio_func *func)
+{
+	return 0;
+}
+
+static inline int hif_dev_register_channels(struct hif_sdio_dev *dev,
+					    struct sdio_func *func)
+{
+	return 0;
+}
+
+static inline void hif_dev_unregister_channels(struct hif_sdio_dev *dev,
+					       struct sdio_func *func)
+{
+}
+#else
+static inline struct hif_sdio_dev *get_hif_device(struct hif_softc *hif_ctx,
+						  struct sdio_func *func)
+{
+	struct hif_sdio_softc *scn = (struct hif_sdio_softc *)hif_ctx;
+
+	return (struct hif_sdio_dev *)scn->hif_handle;
+}
+
+/**
+ * hif_sdio_set_drvdata() - set wlan driver data into upper layer private
+ * @hif_ctx: HIF object
+ * @func: pointer to sdio function
+ * @hifdevice: pointer to hif device
+ *
+ * Return: zero for success.
+ */
+static inline int hif_sdio_set_drvdata(struct hif_softc *hif_ctx,
+				       struct sdio_func *func,
+				       struct hif_sdio_dev *hifdevice)
+{
+	struct hif_sdio_softc *sc = (struct hif_sdio_softc *)hif_ctx;
+
+	sc->hif_handle = hifdevice;
+
+	return 0;
+}
+
+int hif_dev_configure_pipes(struct hif_sdio_dev *pdev,
+			    struct sdio_func *func);
+
+int hif_dev_register_channels(struct hif_sdio_dev *dev,
+			      struct sdio_func *func);
+
+void hif_dev_unregister_channels(struct hif_sdio_dev *dev,
+				 struct sdio_func *func);
+#endif /* SDIO_TRANSFER */
+QDF_STATUS hif_enable_func(struct hif_softc *ol_sc, struct hif_sdio_dev *device,
+			   struct sdio_func *func, bool resume);
+QDF_STATUS hif_disable_func(struct hif_sdio_dev *device,
+			    struct sdio_func *func,
+			    bool reset);
+A_STATUS hif_sdio_probe(struct hif_softc *ol_sc,
+			struct sdio_func *func,
+			struct hif_sdio_dev *device);
 #endif /* HIF_SDIO_DEV_H_ */

@@ -1,8 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
- *
- *
- *
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -91,8 +88,10 @@ module_param(brokenirq, uint, 0644);
 MODULE_PARM_DESC(brokenirq,
 		 "Set as 1 to use polling method instead of interrupt mode");
 
+#ifdef CONFIG_SDIO_TRANSFER_MAILBOX
 /**
  * hif_sdio_force_drive_strength() - Set SDIO drive strength
+ * @ol_sc: softc instance
  * @func: pointer to sdio_func
  *
  * This function forces the driver strength of the SDIO
@@ -100,61 +99,156 @@ MODULE_PARM_DESC(brokenirq,
  *
  * Return: none.
  */
-void hif_sdio_quirk_force_drive_strength(struct sdio_func *func)
+void hif_sdio_quirk_force_drive_strength(struct hif_softc *ol_sc,
+					 struct sdio_func *func)
 {
 	int err = 0;
 	unsigned char value = 0;
 	uint32_t mask = 0, addr = SDIO_CCCR_DRIVE_STRENGTH;
-	struct hif_sdio_dev *device = sdio_get_drvdata(func);
 
-	uint16_t  manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
-
-	switch (manfid) {
-	case MANUFACTURER_ID_QCN7605_BASE:
-		break;
-	default:
-		err = func0_cmd52_read_byte(func->card, addr, &value);
-		if (err) {
-			HIF_ERROR("%s: read driver strength 0x%02X fail %d\n",
-				  __func__, addr, err);
-			break;
-		}
-
-		mask = (SDIO_DRIVE_DTSx_MASK << SDIO_DRIVE_DTSx_SHIFT);
-		value = (value & ~mask) | SDIO_DTSx_SET_TYPE_D;
-		err = func0_cmd52_write_byte(func->card, addr, value);
-		if (err) {
-			HIF_ERROR("%s: write driver strength failed", __func__);
-			HIF_ERROR("%s: 0x%02X to 0x%02X failed: %d\n", __func__,
-				  (uint32_t)value, addr, err);
-			break;
-		}
-
-		value = 0;
-		addr = CCCR_SDIO_DRIVER_STRENGTH_ENABLE_ADDR;
-		err = func0_cmd52_read_byte(func->card,	addr, &value);
-		if (err) {
-			HIF_ERROR("%s Read CCCR 0x%02X failed: %d\n",
-				  __func__, addr, err);
-			break;
-		}
-
-		mask = CCCR_SDIO_DRIVER_STRENGTH_ENABLE_MASK;
-		value = (value & ~mask) |
-			CCCR_SDIO_DRIVER_STRENGTH_ENABLE_A |
-			CCCR_SDIO_DRIVER_STRENGTH_ENABLE_C |
-			CCCR_SDIO_DRIVER_STRENGTH_ENABLE_D;
-		err = func0_cmd52_write_byte(func->card, addr, value);
-		if (err)
-			HIF_ERROR("%s Write CCCR 0x%02X to 0x%02X failed: %d\n",
-				  __func__, addr, value, err);
-
-		break;
+	err = func0_cmd52_read_byte(func->card, addr, &value);
+	if (err) {
+		HIF_ERROR("%s: read driver strength 0x%02X fail %d\n",
+			  __func__, addr, err);
+		return;
 	}
+
+	mask = (SDIO_DRIVE_DTSx_MASK << SDIO_DRIVE_DTSx_SHIFT);
+	value = (value & ~mask) | SDIO_DTSx_SET_TYPE_D;
+	err = func0_cmd52_write_byte(func->card, addr, value);
+	if (err) {
+		HIF_ERROR("%s: write driver strength failed", __func__);
+		HIF_ERROR("%s: 0x%02X to 0x%02X failed: %d\n", __func__,
+			  (uint32_t)value, addr, err);
+		return;
+	}
+
+	value = 0;
+	addr = CCCR_SDIO_DRIVER_STRENGTH_ENABLE_ADDR;
+	err = func0_cmd52_read_byte(func->card,	addr, &value);
+	if (err) {
+		HIF_ERROR("%s Read CCCR 0x%02X failed: %d\n",
+			  __func__, addr, err);
+		return;
+	}
+
+	mask = CCCR_SDIO_DRIVER_STRENGTH_ENABLE_MASK;
+	value = (value & ~mask) | CCCR_SDIO_DRIVER_STRENGTH_ENABLE_A |
+		CCCR_SDIO_DRIVER_STRENGTH_ENABLE_C |
+		CCCR_SDIO_DRIVER_STRENGTH_ENABLE_D;
+	err = func0_cmd52_write_byte(func->card, addr, value);
+	if (err)
+		HIF_ERROR("%s Write CCCR 0x%02X to 0x%02X failed: %d\n",
+			  __func__, addr, value, err);
 }
 
 /**
+ * hif_sdio_quirk_async_intr() - Set asynchronous interrupt settings
+ * @ol_sc: softc instance
+ * @func: pointer to sdio_func
+ *
+ * The values are taken from the module parameter asyncintdelay
+ * Call this with the sdhci host claimed
+ *
+ * Return: none.
+ */
+int hif_sdio_quirk_async_intr(struct hif_softc *ol_sc, struct sdio_func *func)
+{
+	uint8_t data;
+	uint16_t manfid;
+	int set_async_irq = 0, ret = 0;
+	struct hif_sdio_dev *device = get_hif_device(ol_sc, func);
+
+	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
+
+	switch (manfid) {
+	case MANUFACTURER_ID_AR6003_BASE:
+		set_async_irq = 1;
+		ret =
+		func0_cmd52_write_byte(func->card,
+				       CCCR_SDIO_IRQ_MODE_REG_AR6003,
+				       SDIO_IRQ_MODE_ASYNC_4BIT_IRQ_AR6003);
+		if (ret)
+			return ret;
+		break;
+	case MANUFACTURER_ID_AR6320_BASE:
+	case MANUFACTURER_ID_QCA9377_BASE:
+	case MANUFACTURER_ID_QCA9379_BASE:
+		set_async_irq = 1;
+		ret = func0_cmd52_read_byte(func->card,
+					    CCCR_SDIO_IRQ_MODE_REG_AR6320,
+					    &data);
+		if (ret)
+			return ret;
+
+		data |= SDIO_IRQ_MODE_ASYNC_4BIT_IRQ_AR6320;
+		ret = func0_cmd52_write_byte(func->card,
+					     CCCR_SDIO_IRQ_MODE_REG_AR6320,
+					     data);
+		if (ret)
+			return ret;
+		break;
+	}
+
+	if (asyncintdelay) {
+		/* Set CCCR 0xF0[7:6] to increase async interrupt delay clock
+		 * to fix interrupt missing issue on dell 8460p
+		 */
+
+		ret = func0_cmd52_read_byte(func->card,
+					    CCCR_SDIO_ASYNC_INT_DELAY_ADDRESS,
+					    &data);
+		if (ret)
+			return ret;
+
+		data = (data & ~CCCR_SDIO_ASYNC_INT_DELAY_MASK) |
+			((asyncintdelay << CCCR_SDIO_ASYNC_INT_DELAY_LSB) &
+			 CCCR_SDIO_ASYNC_INT_DELAY_MASK);
+
+		ret = func0_cmd52_write_byte(func->card,
+					     CCCR_SDIO_ASYNC_INT_DELAY_ADDRESS,
+					     data);
+		if (ret)
+			return ret;
+	}
+
+	return ret;
+}
+#else
+/**
+ * hif_sdio_force_drive_strength() - Set SDIO drive strength
+ * @ol_sc: softc instance
+ * @func: pointer to sdio_func
+ *
+ * This function forces the driver strength of the SDIO
+ * Call this with the sdhci host claimed
+ *
+ * Return: none.
+ */
+void hif_sdio_quirk_force_drive_strength(struct hif_softc *ol_sc,
+					 struct sdio_func *func)
+{
+}
+
+/**
+ * hif_sdio_quirk_async_intr() - Set asynchronous interrupt settings
+ * @ol_sc: softc instance
+ * @func: pointer to sdio_func
+ *
+ * The values are taken from the module parameter asyncintdelay
+ * Call this with the sdhci host claimed
+ *
+ * Return: none.
+ */
+int hif_sdio_quirk_async_intr(struct hif_softc *ol_sc, struct sdio_func *func)
+{
+	return 0;
+}
+#endif
+
+/**
  * hif_sdio_quirk_write_cccr() - write a desired CCCR register
+ * @ol_sc: softc instance
  * @func: pointer to sdio_func
  *
  * The values are taken from the module parameter writecccr
@@ -162,7 +256,7 @@ void hif_sdio_quirk_force_drive_strength(struct sdio_func *func)
  *
  * Return: none.
  */
-void hif_sdio_quirk_write_cccr(struct sdio_func *func)
+void hif_sdio_quirk_write_cccr(struct hif_softc *ol_sc, struct sdio_func *func)
 {
 	int32_t err;
 
@@ -231,6 +325,7 @@ void hif_sdio_quirk_write_cccr(struct sdio_func *func)
 
 /**
  * hif_sdio_quirk_mod_strength() - write a desired CCCR register
+ * @ol_sc: softc instance
  * @func: pointer to sdio_func
  *
  * The values are taken from the module parameter writecccr
@@ -238,11 +333,11 @@ void hif_sdio_quirk_write_cccr(struct sdio_func *func)
  *
  * Return: none.
  */
-int hif_sdio_quirk_mod_strength(struct sdio_func *func)
+int hif_sdio_quirk_mod_strength(struct hif_softc *ol_sc, struct sdio_func *func)
 {
 	int ret = 0;
 	uint32_t addr, value;
-	struct hif_sdio_dev *device = sdio_get_drvdata(func);
+	struct hif_sdio_dev *device = get_hif_device(ol_sc, func);
 	uint16_t  manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
 
 	if (!modstrength) /* TODO: Dont set this : scn is not popolated yet */
@@ -287,82 +382,6 @@ int hif_sdio_quirk_mod_strength(struct sdio_func *func)
 	return ret;
 }
 
-/**
- * hif_sdio_quirk_async_intr() - Set asynchronous interrupt settings
- * @func: pointer to sdio_func
- *
- * The values are taken from the module parameter asyncintdelay
- * Call this with the sdhci host claimed
- *
- * Return: none.
- */
-int hif_sdio_quirk_async_intr(struct sdio_func *func)
-{
-	uint8_t data;
-	uint16_t manfid;
-	int set_async_irq = 0, ret = 0;
-	struct hif_sdio_dev *device = sdio_get_drvdata(func);
-
-	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
-
-	switch (manfid) {
-	case MANUFACTURER_ID_AR6003_BASE:
-		set_async_irq = 1;
-		ret =
-		func0_cmd52_write_byte(func->card,
-				       CCCR_SDIO_IRQ_MODE_REG_AR6003,
-				       SDIO_IRQ_MODE_ASYNC_4BIT_IRQ_AR6003);
-		if (ret)
-			return ret;
-		break;
-	case MANUFACTURER_ID_AR6320_BASE:
-	case MANUFACTURER_ID_QCA9377_BASE:
-	case MANUFACTURER_ID_QCA9379_BASE:
-		set_async_irq = 1;
-		ret = func0_cmd52_read_byte(func->card,
-					    CCCR_SDIO_IRQ_MODE_REG_AR6320,
-					    &data);
-		if (ret)
-			return ret;
-
-		data |= SDIO_IRQ_MODE_ASYNC_4BIT_IRQ_AR6320;
-		ret = func0_cmd52_write_byte(func->card,
-					     CCCR_SDIO_IRQ_MODE_REG_AR6320,
-					     data);
-		if (ret)
-			return ret;
-		break;
-	case MANUFACTURER_ID_QCN7605_BASE:
-		/* No async intr delay settings */
-		asyncintdelay = 0;
-		return ret;
-	}
-
-	if (asyncintdelay) {
-		/* Set CCCR 0xF0[7:6] to increase async interrupt delay clock
-		 * to fix interrupt missing issue on dell 8460p
-		 */
-
-		ret = func0_cmd52_read_byte(func->card,
-					    CCCR_SDIO_ASYNC_INT_DELAY_ADDRESS,
-					    &data);
-		if (ret)
-			return ret;
-
-		data = (data & ~CCCR_SDIO_ASYNC_INT_DELAY_MASK) |
-			((asyncintdelay << CCCR_SDIO_ASYNC_INT_DELAY_LSB) &
-			 CCCR_SDIO_ASYNC_INT_DELAY_MASK);
-
-		ret = func0_cmd52_write_byte(func->card,
-					     CCCR_SDIO_ASYNC_INT_DELAY_ADDRESS,
-					     data);
-		if (ret)
-			return ret;
-	}
-
-	return ret;
-}
-
 #if KERNEL_VERSION(3, 4, 0) <= LINUX_VERSION_CODE
 #ifdef SDIO_BUS_WIDTH_8BIT
 static int hif_cmd52_write_byte_8bit(struct sdio_func *func)
@@ -381,14 +400,15 @@ static int hif_cmd52_write_byte_8bit(struct sdio_func *func)
 
 /**
  * hif_sdio_set_bus_speed() - Set the sdio bus speed
+ * @ol_sc: softc instance
  * @func: pointer to sdio_func
  *
  * Return: 0 on success, error number otherwise.
  */
-int hif_sdio_set_bus_speed(struct sdio_func *func)
+int hif_sdio_set_bus_speed(struct hif_softc *ol_sc, struct sdio_func *func)
 {
 	uint32_t clock, clock_set = 12500000;
-	struct hif_sdio_dev *device = get_hif_device(func);
+	struct hif_sdio_dev *device = get_hif_device(ol_sc, func);
 	uint16_t manfid;
 
 	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
@@ -427,16 +447,17 @@ int hif_sdio_set_bus_speed(struct sdio_func *func)
 
 /**
  * hif_set_bus_width() - Set the sdio bus width
+ * @ol_sc: softc instance
  * @func: pointer to sdio_func
  *
  * Return: 0 on success, error number otherwise.
  */
-int hif_sdio_set_bus_width(struct sdio_func *func)
+int hif_sdio_set_bus_width(struct hif_softc *ol_sc, struct sdio_func *func)
 {
 	int ret = 0;
 	uint16_t manfid;
 	uint8_t data = 0;
-	struct hif_sdio_dev *device = get_hif_device(func);
+	struct hif_sdio_dev *device = get_hif_device(ol_sc, func);
 
 	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
 
@@ -491,66 +512,6 @@ int hif_sdio_set_bus_width(struct sdio_func *func)
 	return ret;
 }
 
-/**
- * hif_sdio_func_enable() - Handle device enabling as per device
- * @device: HIF device object
- * @func: function pointer
- *
- * Return success or failure
- */
-int hif_sdio_func_enable(struct hif_sdio_dev *device,
-			 struct sdio_func *func)
-{
-	uint16_t manfid;
-
-	manfid = device->id->device & MANUFACTURER_ID_AR6K_BASE_MASK;
-
-	if (manfid == MANUFACTURER_ID_QCN7605_BASE)
-		return 0;
-
-	if (device->is_disabled) {
-		int ret = 0;
-
-		sdio_claim_host(func);
-
-		ret = hif_sdio_quirk_async_intr(func);
-		if (ret) {
-			HIF_ERROR("%s: Error setting async intr:%d",
-				  __func__, ret);
-			sdio_release_host(func);
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		func->enable_timeout = 100;
-		ret = sdio_enable_func(func);
-		if (ret) {
-			HIF_ERROR("%s: Unable to enable function: %d",
-				  __func__, ret);
-			sdio_release_host(func);
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		ret = sdio_set_block_size(func, HIF_BLOCK_SIZE);
-		if (ret) {
-			HIF_ERROR("%s: Unable to set block size 0x%X : %d\n",
-				  __func__, HIF_BLOCK_SIZE, ret);
-			sdio_release_host(func);
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		ret = hif_sdio_quirk_mod_strength(func);
-		if (ret) {
-			HIF_ERROR("%s: Error setting mod strength : %d\n",
-				  __func__, ret);
-			sdio_release_host(func);
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		sdio_release_host(func);
-	}
-
-	return 0;
-}
 
 /**
  * hif_mask_interrupt() - Disable hif device irq
@@ -594,11 +555,7 @@ void hif_mask_interrupt(struct hif_sdio_dev *device)
  */
 static void hif_irq_handler(struct sdio_func *func)
 {
-	struct hif_sdio_dev *device;
-
-	HIF_ENTER();
-
-	device = get_hif_device(func);
+	struct hif_sdio_dev *device = get_hif_device(NULL, func);
 	atomic_set(&device->irq_handling, 1);
 	/* release the host during intr so we can use
 	 * it when we process cmds
@@ -607,8 +564,6 @@ static void hif_irq_handler(struct sdio_func *func)
 	device->htc_callbacks.dsr_handler(device->htc_callbacks.context);
 	sdio_claim_host(device->func);
 	atomic_set(&device->irq_handling, 0);
-
-	HIF_EXIT();
 }
 
 /**
