@@ -26,6 +26,7 @@
 #endif
 #include <wlan_spectral_public_structs.h>
 #include <wlan_cfg80211_spectral.h>
+#include <cfg_ucfg_api.h>
 
 /**
  * spectral_get_vdev() - Get pointer to vdev to be used for Spectral
@@ -550,6 +551,13 @@ wlan_spectral_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 		spectral_err("PSOC is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (cfg_get(psoc, CFG_SPECTRAL_DISABLE)) {
+		wlan_psoc_nif_feat_cap_set(psoc, WLAN_SOC_F_SPECTRAL_DISABLE);
+		spectral_info("Spectral is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
 	sc = (struct spectral_context *)
 	    qdf_mem_malloc(sizeof(struct spectral_context));
 	if (!sc) {
@@ -578,6 +586,12 @@ wlan_spectral_psoc_obj_destroy_handler(struct wlan_objmgr_psoc *psoc,
 		spectral_err("PSOC is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (wlan_spectral_is_feature_disabled(psoc)) {
+		spectral_info("Spectral is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
 	sc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 						   WLAN_UMAC_COMP_SPECTRAL);
 	if (sc) {
@@ -603,6 +617,12 @@ wlan_spectral_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 		spectral_err("PDEV is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (wlan_spectral_is_feature_disabled(wlan_pdev_get_psoc(pdev))) {
+		spectral_info("Spectral is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
 	ps = (struct pdev_spectral *)
 	    qdf_mem_malloc(sizeof(struct pdev_spectral));
 	if (!ps) {
@@ -647,6 +667,12 @@ wlan_spectral_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
 		spectral_err("PDEV is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (wlan_spectral_is_feature_disabled(wlan_pdev_get_psoc(pdev))) {
+		spectral_info("Spectral is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
+
 	sc = spectral_get_spectral_ctx_from_pdev(pdev);
 	if (!sc) {
 		spectral_err("Spectral context is NULL!");

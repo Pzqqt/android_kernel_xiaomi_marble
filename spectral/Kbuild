@@ -30,6 +30,8 @@ INCS += -I$(obj)/$(DEPTH)/cmn_dev/spectral/core
 INCS += -I$(obj)/$(DEPTH)/component_dev/direct_attach/spectral/core
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/target_if/direct_buf_rx/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/wbuff/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/cfg/inc
+INCS += -I$(obj)/$(DEPTH)/ini_cfg/inc/
 
 ifeq ($(WLAN_CONV_CRYPTO_SUPPORTED), 1)
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/crypto/inc

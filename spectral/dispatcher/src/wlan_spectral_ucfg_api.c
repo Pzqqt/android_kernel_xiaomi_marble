@@ -21,6 +21,7 @@
 #include "../../core/spectral_cmn_api_i.h"
 #include <wlan_spectral_utils_api.h>
 #include <qdf_module.h>
+#include <cfg_ucfg_api.h>
 
 int
 ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
@@ -34,6 +35,12 @@ ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
 		spectral_err("PDEV is NULL!");
 		return -EPERM;
 	}
+
+	if (wlan_spectral_is_feature_disabled(wlan_pdev_get_psoc(pdev))) {
+		spectral_info("Spectral is disabled");
+		return -EPERM;
+	}
+
 	sc = spectral_get_spectral_ctx_from_pdev(pdev);
 	if (!sc) {
 		spectral_err("spectral context is NULL!");

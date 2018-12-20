@@ -21,6 +21,20 @@
 #include <qdf_module.h>
 #include "../../core/spectral_cmn_api_i.h"
 #include <wlan_spectral_tgt_api.h>
+#include <cfg_ucfg_api.h>
+
+bool wlan_spectral_is_feature_disabled(struct wlan_objmgr_psoc *psoc)
+{
+	if (!psoc) {
+		spectral_err("PSOC is NULL!");
+		return true;
+	}
+
+	if (wlan_psoc_nif_feat_cap_get(psoc, WLAN_SOC_F_SPECTRAL_DISABLE))
+		return true;
+
+	return false;
+}
 
 QDF_STATUS
 wlan_spectral_init(void)
@@ -215,7 +229,11 @@ QDF_STATUS spectral_pdev_open(struct wlan_objmgr_pdev *pdev)
 {
 	QDF_STATUS status;
 
-	status = tgt_spectral_register_to_dbr(pdev);
+	if (wlan_spectral_is_feature_disabled(wlan_pdev_get_psoc(pdev))) {
+		spectral_info("Spectral is disabled");
+		return QDF_STATUS_COMP_DISABLED;
+	}
 
+	status = tgt_spectral_register_to_dbr(pdev);
 	return QDF_STATUS_SUCCESS;
 }

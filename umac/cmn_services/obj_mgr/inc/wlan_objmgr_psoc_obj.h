@@ -181,6 +181,8 @@
 #define WLAN_SOC_F_HOST_80211_ENABLE   0x00400000
 	/* MBSS IE enable */
 #define WLAN_SOC_F_MBSS_IE_ENABLE      0x00800000
+	/* Spectral disable */
+#define WLAN_SOC_F_SPECTRAL_DISABLE    0x01000000
 
 /* PSOC op flags */
 

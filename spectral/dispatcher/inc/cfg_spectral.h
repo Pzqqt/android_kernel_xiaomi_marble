@@ -17,24 +17,33 @@
  */
 
 /**
- * DOC: This file contains centralized definitions of converged configuration.
+ * DOC: This file contains centralized cfg definitions of Spectral component
  */
+#ifndef __CONFIG_SPECTRAL_H
+#define __CONFIG_SPECTRAL_H
 
-#ifndef __CFG_CONVERGED_H
-#define __CFG_CONVERGED_H
+/*
+ * <ini>
+ * spectral_disable - disable spectral feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to disable spectral feature.
+ *
+ * Related: None
+ *
+ * Supported Feature: Spectral
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_SPECTRAL_DISABLE \
+	CFG_INI_BOOL("spectral_disable", false, \
+			"Spectral disable")
 
-#include <wlan_scan_cfg.h>
-#include "cfg_dp.h"
-#include <wlan_extscan_cfg.h>
-#include "cfg_green_ap_params.h"
-#include <cfg_spectral.h>
+#define CFG_SPECTRAL_ALL \
+	CFG(CFG_SPECTRAL_DISABLE)
 
-#define CFG_CONVERGED_ALL \
-		CFG_SCAN_ALL \
-		CFG_DP \
-		CFG_EXTSCAN_ALL \
-		CFG_GREEN_AP_ALL \
-		CFG_SPECTRAL_ALL
-
-#endif /* __CFG_CONVERGED_H */
-
+#endif

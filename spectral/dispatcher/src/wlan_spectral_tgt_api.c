@@ -294,7 +294,7 @@ tgt_spectral_register_to_dbr(struct wlan_objmgr_pdev *pdev)
 				(pdev, 0,
 				 spectral_dbr_event_handler);
 
-	return QDF_STATUS_E_FAILURE;
+	return QDF_STATUS_SUCCESS;
 }
 #else
 QDF_STATUS

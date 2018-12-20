@@ -706,9 +706,6 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_splitmac_init())
 		goto splitmac_init_fail;
 
-	if (QDF_STATUS_SUCCESS != dispatcher_spectral_init())
-		goto spectral_init_fail;
-
 	if (QDF_STATUS_SUCCESS != dispatcher_fd_init())
 		goto fd_init_fail;
 
@@ -720,6 +717,9 @@ QDF_STATUS dispatcher_init(void)
 
 	if (QDF_IS_STATUS_ERROR(cfg_dispatcher_init()))
 		goto cfg_init_fail;
+
+	if (QDF_STATUS_SUCCESS != dispatcher_spectral_init())
+		goto spectral_init_fail;
 
 	if (QDF_STATUS_SUCCESS != wlan_vdev_mlme_init())
 		goto vdev_mlme_init_fail;
@@ -737,6 +737,8 @@ QDF_STATUS dispatcher_init(void)
 scheduler_init_fail:
 	wlan_vdev_mlme_deinit();
 vdev_mlme_init_fail:
+	dispatcher_spectral_deinit();
+spectral_init_fail:
 	cfg_dispatcher_deinit();
 cfg_init_fail:
 	dispatcher_ftm_deinit();
@@ -745,8 +747,6 @@ ftm_init_fail:
 green_ap_init_fail:
 	dispatcher_fd_deinit();
 fd_init_fail:
-	dispatcher_spectral_deinit();
-spectral_init_fail:
 	dispatcher_splitmac_deinit();
 splitmac_init_fail:
 	dispatcher_deinit_son();
@@ -991,10 +991,13 @@ qdf_export_symbol(dispatcher_psoc_disable);
 
 QDF_STATUS dispatcher_pdev_open(struct wlan_objmgr_pdev *pdev)
 {
+	QDF_STATUS status;
+
 	if (QDF_STATUS_SUCCESS != dispatcher_regulatory_pdev_open(pdev))
 		goto out;
 
-	if (QDF_STATUS_SUCCESS != dispatcher_spectral_pdev_open(pdev))
+	status = dispatcher_spectral_pdev_open(pdev);
+	if (status != QDF_STATUS_SUCCESS && status != QDF_STATUS_COMP_DISABLED)
 		goto spectral_pdev_open_fail;
 
 	if (QDF_STATUS_SUCCESS != wlan_mgmt_txrx_pdev_open(pdev))

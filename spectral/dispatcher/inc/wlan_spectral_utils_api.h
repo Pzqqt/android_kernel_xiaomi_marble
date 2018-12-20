@@ -28,6 +28,14 @@ struct direct_buf_rx_data;
 struct wmi_spectral_cmd_ops;
 
 /**
+ * wlan_spectral_is_feature_disabled() - Check if spectral feature is disabled
+ * @psoc - the physical device object.
+ *
+ * Return : true if spectral is disabled, else false.
+ */
+bool wlan_spectral_is_feature_disabled(struct wlan_objmgr_psoc *psoc);
+
+/**
  * wlan_spectral_init() - API to init spectral component
  *
  * This API is invoked from dispatcher init during all component init.
