@@ -292,9 +292,6 @@ typedef struct sLimTimers {
 	TX_TIMER gLimChannelSwitchTimer;
 	TX_TIMER gLimFTPreAuthRspTimer;
 
-#ifdef FEATURE_WLAN_ESE
-	TX_TIMER gLimEseTsmTimer;
-#endif
 	TX_TIMER gLimPeriodicJoinProbeReqTimer;
 	TX_TIMER gLimDisassocAckTimer;
 	TX_TIMER gLimDeauthAckTimer;
