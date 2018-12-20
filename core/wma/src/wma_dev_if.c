@@ -3675,13 +3675,11 @@ void wma_hold_req_timer(void *data)
 		WMA_LOGA(FL("WMA_ADD_STA_REQ timed out"));
 		WMA_LOGD(FL("Sending add sta rsp to umac (mac:%pM, status:%d)"),
 			 params->staMac, params->status);
-		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash) == true) {
+		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
 				WMA_ADD_STA_REQ);
-		} else {
-			wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP,
-						   (void *)params, 0);
-		}
+		wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP,
+					   (void *)params, 0);
 	} else if (tgt_req->msg_type == WMA_ADD_BSS_REQ) {
 		tpAddBssParams  params = (tpAddBssParams) tgt_req->user_data;
 
@@ -3689,13 +3687,11 @@ void wma_hold_req_timer(void *data)
 		WMA_LOGA(FL("WMA_ADD_BSS_REQ timed out"));
 		WMA_LOGD(FL("Sending add bss rsp to umac (mac:%pM, status:%d)"),
 			params->selfMacAddr, params->status);
-		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash) == true) {
+		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
 				WMA_ADD_BSS_REQ);
-		} else {
-			wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP,
-						   (void *)params, 0);
-		}
+		wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP,
+					   (void *)params, 0);
 	} else if ((tgt_req->msg_type == WMA_DELETE_STA_REQ) &&
 		(tgt_req->type == WMA_DELETE_STA_RSP_START)) {
 		tpDeleteStaParams params =
@@ -3705,18 +3701,11 @@ void wma_hold_req_timer(void *data)
 		WMA_LOGE(FL("Sending del sta rsp to umac (mac:%pM, status:%d)"),
 			 params->staMac, params->status);
 
-		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash) == true) {
+		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
 				WMA_DELETE_STA_REQ);
-		} else {
-			/*
-			 * Assert in development build only.
-			 * Send response in production builds.
-			 */
-			QDF_ASSERT(0);
-			wma_send_msg_high_priority(wma, WMA_DELETE_STA_RSP,
-				    (void *)params, 0);
-		}
+		wma_send_msg_high_priority(wma, WMA_DELETE_STA_RSP,
+					   (void *)params, 0);
 	} else if ((tgt_req->msg_type == WMA_DELETE_STA_REQ) &&
 		(tgt_req->type == WMA_DEL_P2P_SELF_STA_RSP_START)) {
 		struct del_sta_self_rsp_params *del_sta;
@@ -3726,13 +3715,11 @@ void wma_hold_req_timer(void *data)
 		del_sta->self_sta_param->status = QDF_STATUS_E_TIMEOUT;
 		WMA_LOGA(FL("wma delete sta p2p request timed out"));
 
-		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash)) {
+		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
 				WMA_DELETE_STA_REQ);
-		} else {
-			wma_handle_vdev_detach(wma, del_sta->self_sta_param,
-					       del_sta->generate_rsp);
-		}
+		wma_handle_vdev_detach(wma, del_sta->self_sta_param,
+				       del_sta->generate_rsp);
 		qdf_mem_free(tgt_req->user_data);
 	} else if ((tgt_req->msg_type == WMA_DELETE_STA_REQ) &&
 			(tgt_req->type == WMA_SET_LINK_PEER_RSP)) {
@@ -3741,13 +3728,10 @@ void wma_hold_req_timer(void *data)
 
 		params->status = false;
 		WMA_LOGA(FL("wma delete peer for set link timed out"));
-		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash) == true) {
+		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
 				WMA_DELETE_STA_REQ);
-		} else {
-			wma_send_msg(wma, WMA_SET_LINK_STATE_RSP,
-					params, 0);
-		}
+		wma_send_msg(wma, WMA_SET_LINK_STATE_RSP, params, 0);
 	} else if ((tgt_req->msg_type == WMA_DELETE_STA_REQ) &&
 			(tgt_req->type == WMA_DELETE_PEER_RSP)) {
 		tpDeleteBssParams params =
@@ -3755,13 +3739,11 @@ void wma_hold_req_timer(void *data)
 
 		params->status = QDF_STATUS_E_TIMEOUT;
 		WMA_LOGE(FL("wma delete peer for del bss req timed out"));
-		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash) == true) {
+		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
 				WMA_DELETE_STA_REQ);
-		} else {
-			wma_send_msg_high_priority(wma, WMA_DELETE_BSS_RSP,
-						   params, 0);
-		}
+		wma_send_msg_high_priority(wma, WMA_DELETE_BSS_RSP,
+					   params, 0);
 	} else if ((tgt_req->msg_type == SIR_HAL_PDEV_SET_HW_MODE) &&
 			(tgt_req->type == WMA_PDEV_SET_HW_MODE_RESP)) {
 		struct sir_set_hw_mode_resp *params =
@@ -3769,36 +3751,42 @@ void wma_hold_req_timer(void *data)
 
 		WMA_LOGE(FL("set hw mode req timed out"));
 
-		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash)) {
+		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
 						SIR_HAL_PDEV_SET_HW_MODE);
-		} else if (params) {
-			params->status = SET_HW_MODE_STATUS_ECANCELED;
-			params->cfgd_hw_mode_index = 0;
-			params->num_vdev_mac_entries = 0;
-			wma_send_msg_high_priority(wma,
-				SIR_HAL_PDEV_SET_HW_MODE_RESP, params, 0);
+		if (!params) {
+			WMA_LOGE(FL("Failed to allocate memory for params"));
+			goto timer_destroy;
 		}
+		params->status = SET_HW_MODE_STATUS_ECANCELED;
+		params->cfgd_hw_mode_index = 0;
+		params->num_vdev_mac_entries = 0;
+		wma_send_msg_high_priority(wma, SIR_HAL_PDEV_SET_HW_MODE_RESP,
+					   params, 0);
 	} else if ((tgt_req->msg_type == SIR_HAL_PDEV_DUAL_MAC_CFG_REQ) &&
 			(tgt_req->type == WMA_PDEV_MAC_CFG_RESP)) {
 		struct sir_dual_mac_config_resp *resp =
 						qdf_mem_malloc(sizeof(*resp));
 
 		WMA_LOGE(FL("set dual mac config timeout"));
-		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash)) {
+		if (wma_crash_on_fw_timeout(wma->fw_timeout_crash))
 			wma_trigger_recovery_assert_on_fw_timeout(
 						SIR_HAL_PDEV_DUAL_MAC_CFG_REQ);
-		} else if (resp) {
-			resp->status = SET_HW_MODE_STATUS_ECANCELED;
-			wma_send_msg_high_priority(wma,
-						   SIR_HAL_PDEV_MAC_CFG_RESP,
-						   resp, 0);
+		if (!resp) {
+			WMA_LOGE(FL("Failed to allocate memory for resp"));
+			goto timer_destroy;
 		}
+
+		resp->status = SET_HW_MODE_STATUS_ECANCELED;
+		wma_send_msg_high_priority(wma, SIR_HAL_PDEV_MAC_CFG_RESP,
+					   resp, 0);
 	} else {
 		WMA_LOGE(FL("Unhandled timeout for msg_type:%d and type:%d"),
 				tgt_req->msg_type, tgt_req->type);
 		QDF_BUG(0);
 	}
+
+timer_destroy:
 	qdf_mc_timer_destroy(&tgt_req->event_timeout);
 	qdf_mem_free(tgt_req);
 }
