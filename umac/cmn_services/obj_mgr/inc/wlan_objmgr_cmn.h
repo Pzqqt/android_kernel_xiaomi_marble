@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -229,6 +229,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_MLME_OBJ_DEL_ID:       Object delete req/resp tracking with FW
  * @WLAN_ACTION_OUI_ID:         action oui operations
  * @WLAN_LEGACY_SAP_ID:         legacy sap fsm
+ * @WLAN_TGT_IF_DP_PEER_REF_ID: cp peer reference in dp (Target IF)
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -280,6 +281,7 @@ typedef enum {
 	WLAN_MLME_OBJ_DEL_ID    = 42,
 	WLAN_ACTION_OUI_ID      = 43,
 	WLAN_LEGACY_SAP_ID      = 44,
+	WLAN_TGT_IF_DP_PEER_REF_ID = 45,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -338,6 +340,7 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_MLME_OBJ_DEL_ID",
 					"WLAN_ACTION_OUI_ID",
 					"WLAN_LEGACY_SAP_ID",
+					"WLAN_TGT_IF_DP_PEER_REF_ID",
 					"WLAN_REF_ID_MAX"};
 
 	return (char *)strings[id];

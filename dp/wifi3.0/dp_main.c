@@ -4648,7 +4648,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
 			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
 				peer->mac_addr.raw, vdev->mac_addr.raw,
-				vdev->opmode);
+				vdev->opmode, peer->ctrl_peer, ctrl_peer);
 		}
 		peer->ctrl_peer = ctrl_peer;
 
@@ -5146,7 +5146,8 @@ static void dp_reset_and_release_peer_mem(struct dp_soc *soc,
 		m_addr = peer->mac_addr.raw;
 		if (soc->cdp_soc.ol_ops->peer_unref_delete)
 			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->ctrl_pdev,
-				m_addr, vdev->mac_addr.raw, vdev->opmode);
+				m_addr, vdev->mac_addr.raw, vdev->opmode,
+				peer->ctrl_peer, NULL);
 
 		if (vdev && vdev->vap_bss_peer) {
 		    bss_peer = vdev->vap_bss_peer;
@@ -5320,7 +5321,15 @@ static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap)
 	 */
 
 	peer->rx_opt_proc = dp_rx_discard;
-	peer->ctrl_peer = NULL;
+
+	/* Do not make ctrl_peer to NULL for connected sta peers.
+	 * We need ctrl_peer to release the reference during dp
+	 * peer free. This reference was held for
+	 * obj_mgr peer during the creation of dp peer.
+	 */
+	if (!(peer->vdev && (peer->vdev->opmode != wlan_op_mode_sta) &&
+	      !peer->bss_peer))
+		peer->ctrl_peer = NULL;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 		FL("peer %pK (%pM)"),  peer, peer->mac_addr.raw);
