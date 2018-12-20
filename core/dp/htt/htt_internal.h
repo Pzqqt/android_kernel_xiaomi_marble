@@ -126,9 +126,6 @@ struct htt_host_rx_desc_base {
 #define HTT_RX_DESC_ALIGN_MASK 7        /* 8-byte alignment */
 
 #ifdef DEBUG_RX_RING_BUFFER
-#define NBUF_MAP_ID(skb) \
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_m.map_index)
-
 #ifdef MSM_PLATFORM
 #define HTT_ADDRESS_MASK   0xfffffffffffffffe
 #else
@@ -760,7 +757,7 @@ void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev, qdf_dma_addr_t paddr,
 		pdev->rx_buff_list[pdev->rx_buff_index].recved = 0;
 		pdev->rx_buff_list[pdev->rx_buff_index].cpu =
 				(1 << qdf_get_cpu());
-		NBUF_MAP_ID(rx_netbuf) = pdev->rx_buff_index;
+		QDF_NBUF_CB_RX_MAP_IDX(rx_netbuf) = pdev->rx_buff_index;
 		if (++pdev->rx_buff_index >=
 				HTT_RX_RING_BUFF_DBG_LIST)
 			pdev->rx_buff_index = 0;
@@ -782,7 +779,7 @@ void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
 
 	if (pdev->rx_buff_list) {
 		qdf_spin_lock_bh(&(pdev->rx_buff_list_lock));
-		index = NBUF_MAP_ID(netbuf);
+		index = QDF_NBUF_CB_RX_MAP_IDX(netbuf);
 		if (index < HTT_RX_RING_BUFF_DBG_LIST) {
 			pdev->rx_buff_list[index].recved =
 				qdf_get_log_timestamp();
