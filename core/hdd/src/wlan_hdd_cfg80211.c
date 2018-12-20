@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -14940,10 +14940,11 @@ wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
 	for (i = 0; i < WLAN_MGMT_TXRX_HOST_MAX_ANTENNA; i++)
 		bss_data.per_chain_rssi[i] = WLAN_INVALID_PER_CHAIN_RSSI;
 
-	hdd_debug("BSSID: " MAC_ADDRESS_STR " Channel:%d RSSI:%d TSF %u",
-	       MAC_ADDR_ARRAY(bss_data.mgmt->bssid), bss_data.chan->center_freq,
-	       (int)(bss_data.rssi / 100),
-	       bss_desc->timeStamp[0]);
+	hdd_debug("BSSID: " MAC_ADDRESS_STR " Channel:%d RSSI:%d TSF %u seq %d",
+		  MAC_ADDR_ARRAY(bss_data.mgmt->bssid),
+		  bss_data.chan->center_freq, (int)(bss_data.rssi / 100),
+		  bss_desc->timeStamp[0], ((bss_desc->seq_ctrl.seqNumHi <<
+		  HIGH_SEQ_NUM_OFFSET) | bss_desc->seq_ctrl.seqNumLo));
 
 	bss_status = wlan_cfg80211_inform_bss_frame_data(wiphy, &bss_data);
 	hdd_ctx->beacon_probe_rsp_cnt_per_scan++;
