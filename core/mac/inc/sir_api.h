@@ -2643,14 +2643,6 @@ struct sir_antenna_mode_resp {
 	enum set_antenna_mode_status status;
 };
 
-/*---------------------------------------------------------------------------
-   sAniSetTmLevelReq
-   ---------------------------------------------------------------------------*/
-typedef struct sAniSetTmLevelReq {
-	uint16_t tmMode;
-	uint16_t newTmLevel;
-} tAniSetTmLevelReq, *tpAniSetTmLevelReq;
-
 #ifdef FEATURE_WLAN_TDLS
 /* TDLS Request struct SME-->PE */
 typedef struct sSirTdlsSendMgmtReq {
