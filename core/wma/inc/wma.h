@@ -2502,14 +2502,6 @@ static inline void wma_print_wmi_mgmt_event_log(uint32_t count,
 #endif /* WMI_INTERFACE_EVENT_LOGGING */
 
 /**
- * wma_ipa_uc_stat_request() - set ipa config parameters
- * @privcmd: private command
- *
- * Return: None
- */
-void wma_ipa_uc_stat_request(wma_cli_set_cmd_t *privcmd);
-
-/**
  * wma_set_rx_reorder_timeout_val() - set rx recorder timeout value
  * @wma_handle: pointer to wma handle
  * @reorder_timeout: rx reorder timeout value

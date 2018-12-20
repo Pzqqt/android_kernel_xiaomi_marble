@@ -9117,19 +9117,6 @@ QDF_STATUS wma_configure_smps_params(uint32_t vdev_id, uint32_t param_id,
 }
 
 
-void wma_ipa_uc_stat_request(wma_cli_set_cmd_t *privcmd)
-{
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-
-	if (!wma) {
-		WMA_LOGE("%s: Failed to get wma", __func__);
-		return;
-	}
-
-	if (wma_set_priv_cfg(wma, privcmd))
-		WMA_LOGE("Failed to set wma priv congiuration");
-}
-
 /**
  * wma_config_bmiss_bcnt_params() - set bmiss config parameters
  * @vdev_id: virtual device for the command
