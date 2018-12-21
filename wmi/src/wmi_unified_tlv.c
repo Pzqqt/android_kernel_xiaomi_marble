@@ -8157,6 +8157,12 @@ static host_mem_req *extract_host_mem_req_tlv(wmi_unified_t wmi_handle,
 		return NULL;
 	}
 
+	if (ev->num_mem_reqs > param_buf->num_mem_reqs) {
+		WMI_LOGE("Invalid num_mem_reqs %d:%d",
+			 ev->num_mem_reqs, param_buf->num_mem_reqs);
+		return NULL;
+	}
+
 	*num_entries = ev->num_mem_reqs;
 
 	return (host_mem_req *)param_buf->mem_reqs;
