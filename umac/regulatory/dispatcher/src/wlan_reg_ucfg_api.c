@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -22,8 +22,16 @@
  * @brief contains regulatory user config interface definations
  */
 
+#include <wlan_objmgr_vdev_obj.h>
 #include <wlan_reg_ucfg_api.h>
-#include "../../core/src/reg_services.h"
+#include <wlan_objmgr_psoc_obj.h>
+#include <../../core/src/reg_priv_objs.h>
+#include <../../core/src/reg_getset.h>
+#include <../../core/src/reg_services_common.h>
+#include <../../core/src/reg_lte.h>
+#include <../../core/src/reg_host_11d.h>
+#include <../../core/src/reg_build_chan_list.h>
+#include <../../core/src/reg_callbacks.h>
 #include <qdf_module.h>
 
 QDF_STATUS ucfg_reg_register_event_handler(uint8_t vdev_id, reg_event_cb cb,
@@ -108,6 +116,7 @@ QDF_STATUS ucfg_reg_get_current_cc(struct wlan_objmgr_pdev *pdev,
 	return reg_get_current_cc(pdev, rd);
 }
 
+#ifdef CONFIG_MCL_REGDB
 /**
  * ucfg_reg_set_band() - Sets the band information for the PDEV
  * @pdev: The physical pdev to set the band for
@@ -134,30 +143,6 @@ QDF_STATUS ucfg_reg_notify_sap_event(struct wlan_objmgr_pdev *pdev,
 	return reg_notify_sap_event(pdev, sap_state);
 }
 
-#ifdef DISABLE_CHANNEL_LIST
-/**
- * ucfg_reg_cache_channel_state() - Cache the current state of the channles
- * @pdev: The physical dev to cache the channels for
- * @channel_list: List of the channels for which states needs to be cached
- * @num_channels: Number of channels in the list
- *
- */
-void ucfg_reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
-				  uint32_t *channel_list, uint32_t num_channels)
-{
-	reg_cache_channel_state(pdev, channel_list, num_channels);
-}
-
-/**
- * ucfg_reg_restore_cached_channels() - Cache the current state of the channles
- * @pdev: The physical dev to cache the channels for
- */
-void ucfg_reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev)
-{
-	reg_restore_cached_channels(pdev);
-}
-#endif
-
 /**
  * ucfg_reg_set_fcc_constraint() - apply fcc constraints on channels 12/13
  * @pdev: The physical pdev to reduce tx power for
@@ -173,25 +158,12 @@ QDF_STATUS ucfg_reg_set_fcc_constraint(struct wlan_objmgr_pdev *pdev,
 	return reg_set_fcc_constraint(pdev, fcc_constraint);
 }
 
-
-/**
- * ucfg_reg_get_default_country() - Get the default regulatory country
- * @psoc: The physical SoC to get default country from
- * @country_code: the buffer to populate the country code into
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS ucfg_reg_get_default_country(struct wlan_objmgr_psoc *psoc,
-					       uint8_t *country_code)
-{
-	return reg_read_default_country(psoc, country_code);
-}
-
 QDF_STATUS ucfg_reg_get_current_country(struct wlan_objmgr_psoc *psoc,
 					       uint8_t *country_code)
 {
 	return reg_read_current_country(psoc, country_code);
 }
+
 /**
  * ucfg_reg_set_default_country() - Set the default regulatory country
  * @psoc: The physical SoC to set default country for
@@ -203,6 +175,20 @@ QDF_STATUS ucfg_reg_set_default_country(struct wlan_objmgr_psoc *psoc,
 					uint8_t *country)
 {
 	return reg_set_default_country(psoc, country);
+}
+#endif
+
+/**
+ * ucfg_reg_get_default_country() - Get the default regulatory country
+ * @psoc: The physical SoC to get default country from
+ * @country_code: the buffer to populate the country code into
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_get_default_country(struct wlan_objmgr_psoc *psoc,
+					uint8_t *country_code)
+{
+	return reg_read_default_country(psoc, country_code);
 }
 
 /**
@@ -249,16 +235,17 @@ QDF_STATUS ucfg_reg_get_curr_band(struct wlan_objmgr_pdev *pdev,
 }
 
 void ucfg_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
-					    reg_chan_change_callback cbk,
-					    void *arg)
+					    void *cbk, void *arg)
 {
-	reg_register_chan_change_callback(psoc, cbk, arg);
+	reg_register_chan_change_callback(psoc, (reg_chan_change_callback)cbk,
+					  arg);
 }
 
 void ucfg_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
-					      reg_chan_change_callback cbk)
+					      void *cbk)
 {
-	reg_unregister_chan_change_callback(psoc, cbk);
+	reg_unregister_chan_change_callback(psoc,
+					    (reg_chan_change_callback)cbk);
 }
 
 enum country_src ucfg_reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
@@ -298,3 +285,27 @@ QDF_STATUS ucfg_reg_set_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
 	return reg_set_hal_reg_cap(psoc, hal_reg_cap, phy_cnt);
 }
 qdf_export_symbol(ucfg_reg_set_hal_reg_cap);
+
+#ifdef DISABLE_CHANNEL_LIST
+/**
+ * ucfg_reg_cache_channel_state() - Cache the current state of the channles
+ * @pdev: The physical dev to cache the channels for
+ * @channel_list: List of the channels for which states needs to be cached
+ * @num_channels: Number of channels in the list
+ *
+ */
+void ucfg_reg_cache_channel_state(struct wlan_objmgr_pdev *pdev,
+				  uint32_t *channel_list, uint32_t num_channels)
+{
+	reg_cache_channel_state(pdev, channel_list, num_channels);
+}
+
+/**
+ * ucfg_reg_restore_cached_channels() - Cache the current state of the channles
+ * @pdev: The physical dev to cache the channels for
+ */
+void ucfg_reg_restore_cached_channels(struct wlan_objmgr_pdev *pdev)
+{
+	reg_restore_cached_channels(pdev);
+}
+#endif

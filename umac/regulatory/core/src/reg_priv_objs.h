@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -18,18 +18,12 @@
  */
 
 /**
- * DOC: reg_priv.h
+ * DOC: reg_priv_objs.h
  * This file contains regulatory component private data structures.
  */
 
-#ifndef __REG_PRIV_H
-#define __REG_PRIV_H
-
-#include "reg_db.h"
-#include "reg_services.h"
-#ifdef HOST_11D_SCAN
-#include <qdf_mc_timer.h>
-#endif
+#ifndef __REG_PRIV_OBJS_H
+#define __REG_PRIV_OBJS_H
 
 #define reg_alert(params...) \
 	QDF_TRACE_FATAL(QDF_MODULE_ID_REGULATORY, params)
@@ -56,6 +50,31 @@
 	QDF_TRACE_INFO_NO_FL(QDF_MODULE_ID_REGULATORY, params)
 #define reg_nofl_debug(params...) \
 	QDF_TRACE_DEBUG_NO_FL(QDF_MODULE_ID_REGULATORY, params)
+
+/**
+ * typedef reg_chan_change_callback() - Regulatory channel change callback
+ * @psoc: Pointer to psoc
+ * @pdev: Pointer to pdev
+ * @chan_list: Pointer to regulatory channel list
+ * @avoid_freq_ind: Pointer to avoid frequencies
+ * @arg: list of arguments
+ */
+typedef void (*reg_chan_change_callback)(
+		struct wlan_objmgr_psoc *psoc,
+		struct wlan_objmgr_pdev *pdev,
+		struct regulatory_channel *chan_list,
+		struct avoid_freq_ind_data *avoid_freq_ind,
+		void *arg);
+
+/**
+ * struct chan_change_cbk_entry - Channel change callback entry
+ * @cbk: Callback
+ * @arg: Arguments
+ */
+struct chan_change_cbk_entry {
+	reg_chan_change_callback cbk;
+	void *arg;
+};
 
 /**
  * struct wlan_regulatory_psoc_priv_obj - wlan regulatory psoc private object
@@ -151,4 +170,73 @@ struct wlan_regulatory_pdev_priv_obj {
 	qdf_spinlock_t reg_rules_lock;
 };
 
+/**
+ * reg_get_psoc_obj() - Provides the reg component object pointer
+ * @psoc: pointer to psoc object.
+ *
+ * Return: reg component object pointer
+ */
+struct wlan_regulatory_psoc_priv_obj *reg_get_psoc_obj(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
+ * reg_get_pdev_obj() - Provides the reg component object pointer
+ * @psoc: pointer to psoc object.
+ *
+ * Return: reg component object pointer
+ */
+struct wlan_regulatory_pdev_priv_obj *reg_get_pdev_obj(
+		struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_regulatory_psoc_obj_created_notification() - PSOC obj create callback
+ * @psoc: PSOC object
+ * @arg_list: Variable argument list
+ *
+ * This callback is registered with object manager during initialization to
+ * get notified when the object is created.
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
+		struct wlan_objmgr_psoc *psoc, void *arg_list);
+
+/**
+ * wlan_regulatory_psoc_obj_destroyed_notification() - PSOC obj delete callback
+ * @psoc: PSOC object
+ * @arg_list: Variable argument list
+ *
+ * This callback is registered with object manager during initialization to
+ * get notified when the object is deleted.
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_regulatory_psoc_obj_destroyed_notification(
+	struct wlan_objmgr_psoc *psoc, void *arg_list);
+
+/**
+ * wlan_regulatory_pdev_obj_created_notification() - PDEV obj create callback
+ * @pdev: pdev object
+ * @arg_list: Variable argument list
+ *
+ * This callback is registered with object manager during initialization to
+ * get notified when the pdev object is created.
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
+	struct wlan_objmgr_pdev *pdev, void *arg_list);
+
+/**
+ * wlan_regulatory_pdev_obj_destroyed_notification() - PDEV obj destroy callback
+ * @pdev: pdev object
+ * @arg_list: Variable argument list
+ *
+ * This callback is registered with object manager during initialization to
+ * get notified when the pdev object is destroyed.
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS wlan_regulatory_pdev_obj_destroyed_notification(
+		struct wlan_objmgr_pdev *pdev, void *arg_list);
 #endif

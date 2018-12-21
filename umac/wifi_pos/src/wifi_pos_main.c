@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -270,7 +270,7 @@ static uint32_t wifi_pos_get_valid_channels(uint8_t *channels, uint32_t num_ch,
 	uint32_t i, num_valid_channels = 0;
 
 	for (i = 0; i < num_ch; i++) {
-		if (INVALID_CHANNEL == reg_get_chan_enum(channels[i]))
+		if (wlan_reg_get_chan_enum(channels[i]) == INVALID_CHANNEL)
 			continue;
 		valid_channel_list[num_valid_channels++] = channels[i];
 	}

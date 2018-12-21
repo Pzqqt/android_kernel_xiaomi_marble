@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -25,11 +25,6 @@
 
 #ifndef __WLAN_REG_UCFG_API_H
 #define __WLAN_REG_UCFG_API_H
-
-#include <qdf_types.h>
-#include <qdf_status.h>
-#include "../../core/src/reg_services.h"
-#include <reg_services_public_struct.h>
 
 typedef QDF_STATUS (*reg_event_cb)(void *status_struct);
 
@@ -274,8 +269,7 @@ QDF_STATUS ucfg_reg_get_regd_rules(struct wlan_objmgr_pdev *pdev,
  * Return: void
  */
 void ucfg_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
-					    reg_chan_change_callback cbk,
-					    void *arg);
+					    void *cbk, void *arg);
 
 /**
  * ucfg_reg_unregister_chan_change_callback () - remove chan change cbk
@@ -285,7 +279,7 @@ void ucfg_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
  * Return: void
  */
 void ucfg_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
-					      reg_chan_change_callback cbk);
+					      void *cbk);
 
 /**
  * ucfg_reg_get_cc_and_src () - get country code and src

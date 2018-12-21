@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,9 +24,6 @@
 #ifndef __REG_SERVICES_PUBLIC_STRUCT_H_
 #define __REG_SERVICES_PUBLIC_STRUCT_H_
 
-#include "../../core/src/reg_db.h"
-#include "wlan_cmn.h"
-
 #define REG_SBS_SEPARATION_THRESHOLD 100
 #define REG_MAX_CHANNELS_PER_OPERATING_CLASS  25
 #define REG_MAX_SUPP_OPER_CLASSES 32
@@ -35,6 +32,47 @@
 #define INVALID_VDEV_ID 0xFF
 #define INVALID_CHANNEL_NUM 0xBAD
 #define CH_AVOID_MAX_RANGE   4
+#define REG_ALPHA2_LEN 2
+#define MAX_REG_RULES 10
+
+#define REGULATORY_CHAN_DISABLED     BIT(0)
+#define REGULATORY_CHAN_NO_IR        BIT(1)
+#define REGULATORY_CHAN_RADAR        BIT(3)
+#define REGULATORY_CHAN_NO_OFDM      BIT(6)
+#define REGULATORY_CHAN_INDOOR_ONLY  BIT(9)
+
+#define REGULATORY_CHAN_NO_HT40      BIT(4)
+#define REGULATORY_CHAN_NO_80MHZ     BIT(7)
+#define REGULATORY_CHAN_NO_160MHZ    BIT(8)
+#define REGULATORY_CHAN_NO_20MHZ     BIT(11)
+#define REGULATORY_CHAN_NO_10MHZ     BIT(12)
+
+#define REGULATORY_PHYMODE_NO11A     BIT(0)
+#define REGULATORY_PHYMODE_NO11B     BIT(1)
+#define REGULATORY_PHYMODE_NO11G     BIT(2)
+#define REGULATORY_CHAN_NO11N        BIT(3)
+#define REGULATORY_PHYMODE_NO11AC    BIT(4)
+#define REGULATORY_PHYMODE_NO11AX    BIT(5)
+
+/**
+ * enum dfs_reg - DFS region
+ * @DFS_UNINIT_REGION: un-initialized region
+ * @DFS_FCC_REGION: FCC region
+ * @DFS_ETSI_REGION: ETSI region
+ * @DFS_MKK_REGION: MKK region
+ * @DFS_CN_REGION: China region
+ * @DFS_KR_REGION: Korea region
+ * @DFS_UNDEF_REGION: Undefined region
+ */
+enum dfs_reg {
+	DFS_UNINIT_REGION = 0,
+	DFS_FCC_REGION = 1,
+	DFS_ETSI_REGION = 2,
+	DFS_MKK_REGION = 3,
+	DFS_CN_REGION = 4,
+	DFS_KR_REGION = 5,
+	DFS_UNDEF_REGION = 0xFFFF,
+};
 
 #ifdef CONFIG_LEGACY_CHAN_ENUM
 

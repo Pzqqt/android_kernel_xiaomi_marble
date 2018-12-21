@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -24,8 +24,16 @@
 
 #include <qdf_status.h>
 #include <qdf_types.h>
+#include <wlan_cmn.h>
+#include <reg_services_public_struct.h>
 #include <wlan_reg_tgt_api.h>
-#include "../../core/src/reg_services.h"
+#include <wlan_objmgr_psoc_obj.h>
+#include <../../core/src/reg_priv_objs.h>
+#include <../../core/src/reg_getset.h>
+#include <../../core/src/reg_services_common.h>
+#include <../../core/src/reg_lte.h>
+#include <../../core/src/reg_build_chan_list.h>
+#include <../../core/src/reg_host_11d.h>
 
 /**
  * tgt_process_master_chan_list() - process master channel list

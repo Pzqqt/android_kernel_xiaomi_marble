@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -25,10 +25,6 @@
 
 #ifndef __WLAN_REG_TGT_API_H
 #define __WLAN_REG_TGT_API_H
-
-#include <qdf_types.h>
-#include <qdf_status.h>
-#include <reg_services_public_struct.h>
 
 QDF_STATUS tgt_reg_process_master_chan_list(struct cur_regulatory_info
 					    *reg_info);

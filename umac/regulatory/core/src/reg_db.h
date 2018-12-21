@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -24,48 +24,6 @@
 
 #ifndef __REG_DB_H
 #define __REG_DB_H
-
-#define REGULATORY_CHAN_DISABLED     (1<<0)
-#define REGULATORY_CHAN_NO_IR        (1<<1)
-#define REGULATORY_CHAN_RADAR        (1<<3)
-#define REGULATORY_CHAN_NO_OFDM      (1<<6)
-#define REGULATORY_CHAN_INDOOR_ONLY  (1<<9)
-
-#define REGULATORY_CHAN_NO_HT40      (1<<4)
-#define REGULATORY_CHAN_NO_80MHZ     (1<<7)
-#define REGULATORY_CHAN_NO_160MHZ    (1<<8)
-#define REGULATORY_CHAN_NO_20MHZ     (1<<11)
-#define REGULATORY_CHAN_NO_10MHZ     (1<<12)
-
-#define REGULATORY_PHYMODE_NO11A     (1<<0)
-#define REGULATORY_PHYMODE_NO11B     (1<<1)
-#define REGULATORY_PHYMODE_NO11G     (1<<2)
-#define REGULATORY_CHAN_NO11N        (1<<3)
-#define REGULATORY_PHYMODE_NO11AC    (1<<4)
-#define REGULATORY_PHYMODE_NO11AX    (1<<5)
-
-#define MAX_REG_RULES 10
-#define REG_ALPHA2_LEN 2
-
-/**
- * enum dfs_reg - DFS region
- * @DFS_UNINIT_REGION: un-initialized region
- * @DFS_FCC_REGION: FCC region
- * @DFS_ETSI_REGION: ETSI region
- * @DFS_MKK_REGION: MKK region
- * @DFS_CN_REGION: China region
- * @DFS_KR_REGION: Korea region
- * @DFS_UNDEF_REGION: Undefined region
- */
-enum dfs_reg {
-	DFS_UNINIT_REGION = 0,
-	DFS_FCC_REGION = 1,
-	DFS_ETSI_REGION = 2,
-	DFS_MKK_REGION = 3,
-	DFS_CN_REGION = 4,
-	DFS_KR_REGION = 5,
-	DFS_UNDEF_REGION = 0xFFFF,
-};
 
 /**
  * struct regulatory_rule

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -26,46 +26,137 @@
 #ifndef __WLAN_REG_SERVICES_API_H
 #define __WLAN_REG_SERVICES_API_H
 
-#include "../../core/src/reg_services.h"
-#include <reg_services_public_struct.h>
+/**
+ * wlan_reg_min_24ghz_ch_num() - Get minimum 2.4GHz channel number
+ *
+ * Return: Minimum 2.4GHz channel number
+ */
+#define WLAN_REG_MIN_24GHZ_CH_NUM wlan_reg_min_24ghz_ch_num()
+uint32_t wlan_reg_min_24ghz_ch_num(void);
 
+/**
+ * wlan_reg_max_24ghz_ch_num() - Get maximum 2.4GHz channel number
+ *
+ * Return: Maximum 2.4GHz channel number
+ */
+#define WLAN_REG_MAX_24GHZ_CH_NUM wlan_reg_max_24ghz_ch_num()
+uint32_t wlan_reg_max_24ghz_ch_num(void);
 
-#define WLAN_REG_MIN_24GHZ_CH_NUM REG_MIN_24GHZ_CH_NUM
-#define WLAN_REG_MAX_24GHZ_CH_NUM REG_MAX_24GHZ_CH_NUM
-#define WLAN_REG_MIN_5GHZ_CH_NUM REG_MIN_5GHZ_CH_NUM
-#define WLAN_REG_MAX_5GHZ_CH_NUM REG_MAX_5GHZ_CH_NUM
+/**
+ * wlan_reg_min_5ghz_ch_num() - Get minimum 5GHz channel number
+ *
+ * Return: Minimum 5GHz channel number
+ */
+#define WLAN_REG_MIN_5GHZ_CH_NUM wlan_reg_min_5ghz_ch_num()
+uint32_t wlan_reg_min_5ghz_ch_num(void);
 
-#define WLAN_REG_IS_24GHZ_CH(chan) REG_IS_24GHZ_CH(chan)
-#define WLAN_REG_IS_5GHZ_CH(chan) REG_IS_5GHZ_CH(chan)
+/**
+ * wlan_reg_max_5ghz_ch_num() - Get maximum 5GHz channel number
+ *
+ * Return: Maximum 5GHz channel number
+ */
+#define WLAN_REG_MAX_5GHZ_CH_NUM wlan_reg_max_5ghz_ch_num()
+uint32_t wlan_reg_max_5ghz_ch_num(void);
 
-#define WLAN_REG_IS_24GHZ_CH_FREQ(freq) REG_IS_24GHZ_CH_FREQ(freq)
-#define WLAN_REG_IS_5GHZ_CH_FREQ(freq) REG_IS_5GHZ_FREQ(freq)
+/**
+ * wlan_reg_is_24ghz_ch() - Check if the given channel number is 2.4GHz
+ * @chan: Channel number
+ *
+ * Return: true if channel number is 2.4GHz, else false
+ */
+#define WLAN_REG_IS_24GHZ_CH(chan) wlan_reg_is_24ghz_ch(chan)
+bool wlan_reg_is_24ghz_ch(uint32_t chan);
+
+/**
+ * wlan_reg_is_5ghz_ch() - Check if the given channel number is 5GHz
+ * @chan: Channel number
+ *
+ * Return: true if channel number is 5GHz, else false
+ */
+#define WLAN_REG_IS_5GHZ_CH(chan) wlan_reg_is_5ghz_ch(chan)
+bool wlan_reg_is_5ghz_ch(uint32_t chan);
+
+/**
+ * wlan_reg_is_24ghz_ch_freq() - Check if the given channel frequency is 2.4GHz
+ * @freq: Channel frequency
+ *
+ * Return: true if channel frequency is 2.4GHz, else false
+ */
+#define WLAN_REG_IS_24GHZ_CH_FREQ(freq) wlan_reg_is_24ghz_ch_freq(freq)
+bool wlan_reg_is_24ghz_ch_freq(uint32_t freq);
+
+/**
+ * wlan_reg_is_5ghz_ch_freq() - Check if the given channel frequency is 5GHz
+ * @freq: Channel frequency
+ *
+ * Return: true if channel frequency is 5GHz, else false
+ */
+#define WLAN_REG_IS_5GHZ_CH_FREQ(freq) wlan_reg_is_5ghz_ch_freq(freq)
+bool wlan_reg_is_5ghz_ch_freq(uint32_t freq);
 
 #ifndef CONFIG_LEGACY_CHAN_ENUM
-#define WLAN_REG_IS_49GHZ_FREQ(freq) REG_IS_49GHZ_FREQ(freq)
+/**
+ * wlan_reg_is_49ghz_freq() - Check if the given channel frequency is 4.9GHz
+ * @freq: Channel frequency
+ *
+ * Return: true if channel frequency is 4.9GHz, else false
+ */
+#define WLAN_REG_IS_49GHZ_FREQ(freq) wlan_reg_is_49ghz_freq(freq)
+bool wlan_reg_is_49ghz_freq(uint32_t freq);
 #endif
 
-#define WLAN_REG_CH_NUM(ch_enum) REG_CH_NUM(ch_enum)
-#define WLAN_REG_CH_TO_FREQ(ch_enum) REG_CH_TO_FREQ(ch_enum)
+/**
+ * wlan_reg_ch_num() - Get channel number from channel enum
+ * @ch_enum: Channel enum
+ *
+ * Return: channel number
+ */
+#define WLAN_REG_CH_NUM(ch_enum) wlan_reg_ch_num(ch_enum)
+uint32_t wlan_reg_ch_num(uint32_t ch_enum);
 
+/**
+ * wlan_reg_ch_to_freq() - Get channel frequency from channel enum
+ * @ch_enum: Channel enum
+ *
+ * Return: channel frequency
+ */
+#define WLAN_REG_CH_TO_FREQ(ch_enum) wlan_reg_ch_to_freq(ch_enum)
+uint32_t wlan_reg_ch_to_freq(uint32_t ch_enum);
+
+/**
+ * wlan_reg_is_same_band_channels() - Check if given channel numbers have same
+ * band
+ * @chan_num1: Channel number1
+ * @chan_num2: Channel number2
+ *
+ * Return: true if both the channels has the same band.
+ */
 #define WLAN_REG_IS_SAME_BAND_CHANNELS(chan_num1, chan_num2) \
-	(chan_num1 && chan_num2 &&					\
-	(WLAN_REG_IS_5GHZ_CH(chan_num1) == WLAN_REG_IS_5GHZ_CH(chan_num2)))
+	wlan_reg_is_same_band_channels(chan_num1, chan_num2)
+bool wlan_reg_is_same_band_channels(uint32_t chan_num1, uint32_t chan_num2);
 
-
+/**
+ * wlan_reg_is_channel_valid_5g_sbs() Check if the given channel is 5G SBS.
+ * @curchan: current channel
+ * @newchan:new channel
+ *
+ * Return: true if the given channel is a valid 5G SBS
+ */
 #define WLAN_REG_IS_CHANNEL_VALID_5G_SBS(curchan, newchan) \
-	(curchan > newchan ?				   \
-	 REG_CH_TO_FREQ(reg_get_chan_enum(curchan))	   \
-	 - REG_CH_TO_FREQ(reg_get_chan_enum(newchan))	   \
-	 > REG_SBS_SEPARATION_THRESHOLD :		   \
-	 REG_CH_TO_FREQ(reg_get_chan_enum(newchan))	   \
-	 - REG_CH_TO_FREQ(reg_get_chan_enum(curchan))	   \
-	 > REG_SBS_SEPARATION_THRESHOLD)
+	wlan_reg_is_channel_valid_5g_sbs(curchan, newchan)
+bool wlan_reg_is_channel_valid_5g_sbs(uint32_t curchan, uint32_t newchan);
 
 #define WLAN_REG_INVALID_CHANNEL_ID
 #define WLAN_REG_GET_24_END_CHAN_NUM 14
 
-#define WLAN_REG_CHAN_TO_BAND(chan_num)  reg_chan_to_band(chan_num)
+/**
+ * wlan_reg_chan_to_band() - Get band from channel number
+ * @chan_num: channel number
+ *
+ * Return: band info
+ */
+#define WLAN_REG_CHAN_TO_BAND(chan_num)  wlan_reg_chan_to_band(chan_num)
+enum band_info wlan_reg_chan_to_band(uint32_t chan_num);
 
 /**
  * wlan_reg_get_channel_list_with_power() - Provide the channel list with power
@@ -86,6 +177,7 @@ QDF_STATUS wlan_reg_get_channel_list_with_power(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS wlan_reg_read_default_country(struct wlan_objmgr_psoc *psoc,
 				   uint8_t *country);
 
+#ifdef CONFIG_MCL_REGDB
 /**
  * wlan_reg_read_current_country() - Read the current country for the regdomain
  * @country: pointer to the country code.
@@ -94,15 +186,6 @@ QDF_STATUS wlan_reg_read_default_country(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS wlan_reg_read_current_country(struct wlan_objmgr_psoc *psoc,
 				   uint8_t *country);
-
-/**
- * wlan_reg_get_channel_state() - Get channel state from regulatory
- * @ch: channel number.
- *
- * Return: channel state
- */
-enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
-					      uint32_t ch);
 
 /**
  * wlan_reg_chan_has_dfs_attribute() - check channel has dfs attribute flag
@@ -114,6 +197,61 @@ enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
  */
 bool
 wlan_reg_chan_has_dfs_attribute(struct wlan_objmgr_pdev *pdev, uint32_t ch);
+
+/**
+ * wlan_reg_is_etsi13_srd_chan () - Checks if the ch is ETSI13 srd ch or not
+ * @pdev: pdev ptr
+ * @chan_num: channel
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev,
+				 uint8_t chan_num);
+
+/**
+ * wlan_reg_is_etsi13_regdmn() - Checks if current reg domain is ETSI13 or not
+ * @pdev: pdev ptr
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_etsi13_regdmn(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_reg_is_etsi13_srd_chan_allowed_master_mode() - Checks if regdmn is
+ * ETSI13 and SRD channels are allowed in master mode or not.
+ *
+ * @pdev: pdev ptr
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_etsi13_srd_chan_allowed_master_mode(struct wlan_objmgr_pdev
+						     *pdev);
+#endif
+
+/**
+ * wlan_reg_is_world() - reg is world mode
+ * @country: The country information
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_world(uint8_t *country);
+
+/**
+ * wlan_reg_get_chan_enum() - Get channel enum for given channel number
+ * @chan_num: Channel number
+ *
+ * Return: Channel enum
+ */
+enum channel_enum wlan_reg_get_chan_enum(uint32_t chan_num);
+
+/**
+ * wlan_reg_get_channel_state() - Get channel state from regulatory
+ * @ch: channel number.
+ *
+ * Return: channel state
+ */
+enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
+					      uint32_t ch);
 
 /**
  * wlan_reg_get_5g_bonded_channel_state() - Get 5G bonded channel state
@@ -355,35 +493,6 @@ bool wlan_reg_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
 bool wlan_reg_is_dsrc_chan(struct wlan_objmgr_pdev *pdev, uint8_t chan_num);
 
 /**
- * wlan_reg_is_etsi13_srd_chan () - Checks if the ch is ETSI13 srd ch or not
- * @pdev: pdev ptr
- * @chan_num: channel
- *
- * Return: true or false
- */
-bool wlan_reg_is_etsi13_srd_chan(struct wlan_objmgr_pdev *pdev,
-				 uint8_t chan_num);
-
-/**
- * wlan_reg_is_etsi13_regdmn() - Checks if current reg domain is ETSI13 or not
- * @pdev: pdev ptr
- *
- * Return: true or false
- */
-bool wlan_reg_is_etsi13_regdmn(struct wlan_objmgr_pdev *pdev);
-
-/**
- * wlan_reg_is_etsi13_srd_chan_allowed_master_mode() - Checks if regdmn is
- * ETSI13 and SRD channels are allowed in master mode or not.
- *
- * @pdev: pdev ptr
- *
- * Return: true or false
- */
-bool wlan_reg_is_etsi13_srd_chan_allowed_master_mode(struct wlan_objmgr_pdev
-						     *pdev);
-
-/**
  * wlan_reg_is_passive_or_disable_ch () - Checks chan state for passive
  * and disabled
  * @pdev: pdev ptr
@@ -421,13 +530,6 @@ uint32_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
  */
 uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 			       uint32_t chan);
-/**
- * wlan_reg_is_world() - reg is world mode
- * @country: The country information
- *
- * Return: true or false
- */
-bool wlan_reg_is_world(uint8_t *country);
 
 /**
  * wlan_reg_is_us() - reg is us country
@@ -477,8 +579,7 @@ QDF_STATUS wlan_reg_set_11d_country(struct wlan_objmgr_pdev *pdev,
  * Return: true or false
  */
 void wlan_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
-					    reg_chan_change_callback cbk,
-					    void *arg);
+					    void *cbk, void *arg);
 
 /**
  * wlan_reg_unregister_chan_change_callback () - remove chan change cbk
@@ -488,7 +589,7 @@ void wlan_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
  * Return: true or false
  */
 void wlan_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
-					      reg_chan_change_callback cbk);
+					      void *cbk);
 
 /**
  * wlan_reg_is_11d_offloaded() - 11d offloaded supported
