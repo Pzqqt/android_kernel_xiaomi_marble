@@ -587,6 +587,7 @@ struct wlan_mlme_cfg_sap {
  * @dfs_filter_offload: dfs filter offloaad
  * @dfs_beacon_tx_enhanced: enhance dfs beacon tx
  * @dfs_prefer_non_dfs: perefer non dfs channel after radar
+ * @dfs_disable_japan_w53: Disable W53 channels
  * @sap_tx_leakage_threshold: sap tx leakage threshold
  */
 struct wlan_mlme_dfs_cfg {
@@ -596,6 +597,7 @@ struct wlan_mlme_dfs_cfg {
 	bool dfs_filter_offload;
 	bool dfs_beacon_tx_enhanced;
 	bool dfs_prefer_non_dfs;
+	bool dfs_disable_japan_w53;
 	uint32_t sap_tx_leakage_threshold;
 };
 
