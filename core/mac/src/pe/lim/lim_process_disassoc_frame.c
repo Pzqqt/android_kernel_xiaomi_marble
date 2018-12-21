@@ -162,7 +162,7 @@ lim_process_disassoc_frame(struct mac_context *mac, uint8_t *pRxPacketInfo,
 		cds_flush_logs(WLAN_LOG_TYPE_FATAL,
 			       WLAN_LOG_INDICATOR_HOST_DRIVER,
 			       WLAN_LOG_REASON_DISCONNECT,
-			       false, false);
+			       true, false);
 	}
 	/**
 	 * Extract 'associated' context for STA, if any.
