@@ -4356,7 +4356,17 @@ static int __wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	ret_val = wlan_hdd_enable_dfs_chan_scan(hdd_ctx, !no_dfs_flag);
+	if (hdd_ctx->config->enableDFSChnlScan) {
+		ret_val = wlan_hdd_enable_dfs_chan_scan(hdd_ctx, !no_dfs_flag);
+	} else {
+		if ((!no_dfs_flag) != hdd_ctx->config->enableDFSChnlScan) {
+			hdd_err("DFS chan ini configured %d, no dfs flag: %d",
+				hdd_ctx->config->enableDFSChnlScan,
+				no_dfs_flag);
+			return -EINVAL;
+		}
+	}
+
 	return ret_val;
 }
 
