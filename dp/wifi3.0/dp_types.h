@@ -1201,6 +1201,9 @@ struct dp_pdev {
 	/*tx_mutex for me*/
 	DP_MUTEX_TYPE tx_mutex;
 
+	/* monitor */
+	bool monitor_configured;
+
 	/* Smart Mesh */
 	bool filter_neighbour_peers;
 

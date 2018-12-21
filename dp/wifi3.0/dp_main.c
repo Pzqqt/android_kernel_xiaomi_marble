@@ -3221,6 +3221,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	qdf_spinlock_create(&pdev->neighbour_peer_mutex);
 	TAILQ_INIT(&pdev->neighbour_peers_list);
 	pdev->neighbour_peers_added = false;
+	pdev->monitor_configured = false;
 
 	if (dp_soc_cmn_setup(soc)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -5516,6 +5517,7 @@ static QDF_STATUS dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 
 	pdev->monitor_vdev = NULL;
 	pdev->mcopy_mode = 0;
+	pdev->monitor_configured = false;
 
 	qdf_spin_unlock_bh(&pdev->mon_lock);
 
@@ -5698,7 +5700,7 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 		  pdev, pdev->pdev_id, pdev->soc, vdev);
 
 	/*Check if current pdev's monitor_vdev exists */
-	if (pdev->monitor_vdev || pdev->mcopy_mode) {
+	if (pdev->monitor_configured) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "monitor vap already created vdev=%pK\n", vdev);
 		qdf_assert(vdev);
@@ -5706,6 +5708,7 @@ static QDF_STATUS dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	}
 
 	pdev->monitor_vdev = vdev;
+	pdev->monitor_configured = true;
 
 	/* If smart monitor mode, do not configure monitor ring */
 	if (smart_monitor)
@@ -7652,6 +7655,7 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 	case 0:
 		pdev->tx_sniffer_enable = 0;
 		pdev->mcopy_mode = 0;
+		pdev->monitor_configured = false;
 
 		if (!pdev->pktlog_ppdu_stats && !pdev->enhanced_stats_en &&
 		    !pdev->bpr_enable) {
@@ -7674,6 +7678,7 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 	case 1:
 		pdev->tx_sniffer_enable = 1;
 		pdev->mcopy_mode = 0;
+		pdev->monitor_configured = false;
 
 		if (!pdev->pktlog_ppdu_stats)
 			dp_h2t_cfg_stats_msg_send(pdev,
@@ -7687,6 +7692,7 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 
 		pdev->mcopy_mode = 1;
 		dp_pdev_configure_monitor_rings(pdev);
+		pdev->monitor_configured = true;
 		pdev->tx_sniffer_enable = 0;
 
 		if (!pdev->pktlog_ppdu_stats)
