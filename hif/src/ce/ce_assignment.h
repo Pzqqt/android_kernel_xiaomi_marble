@@ -678,6 +678,7 @@ static struct CE_pipe_config target_ce_config_wlan_qca8074[] = {
 	{ /* CE9 */ 9, PIPEDIR_OUT,  32, 2048, 8192, 0,},
 	/* CE10 target->host HTT */
 	{ /* CE10 */ 10, PIPEDIR_INOUT_H2H,  0, 0, 0, 0,},
+	{/* CE11 unused */11, PIPEDIR_NONE, 0, 0, 0, 0,},
 };
 
 static struct CE_attr host_ce_config_wlan_qca8074_pci[] = {
