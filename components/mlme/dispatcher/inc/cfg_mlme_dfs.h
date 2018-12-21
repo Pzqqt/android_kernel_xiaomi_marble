@@ -176,6 +176,28 @@
 			0, \
 			"DFS master mode capability")
 
+/*
+ * <ini>
+ * gDisableDfsJapanW53 - Block W53 channels in random channel selection
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to block W53 Japan channel in random channel selection
+ *
+ * Related: none
+ *
+ * Supported Feature: DFS
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DISABLE_DFS_JAPAN_W53 CFG_INI_BOOL( \
+			"gDisableDfsJapanW53", \
+			0, \
+			"Block W53 channels in random selection")
+
 #define CFG_DFS_ALL \
 	CFG(CFG_IGNORE_CAC) \
 	CFG(CFG_DISABLE_DFS_CH_SWITCH) \
@@ -183,6 +205,7 @@
 	CFG(CFG_SAP_TX_LEAKAGE_THRESHOLD) \
 	CFG(CFG_ENABLE_NON_DFS_CHAN_ON_RADAR) \
 	CFG(CFG_ENABLE_DFS_MASTER_CAPABILITY) \
+	CFG(CFG_DISABLE_DFS_JAPAN_W53) \
 	CFG(CFG_ENABLE_DFS_PHYERR_FILTEROFFLOAD)
 
 #endif /* __CFG_MLME_DFS_H */

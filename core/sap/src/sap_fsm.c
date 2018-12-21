@@ -229,6 +229,8 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 
 	if (mac_ctx->mlme_cfg->dfs_cfg.dfs_prefer_non_dfs)
 		flag |= DFS_RANDOM_CH_FLAG_NO_DFS_CH;
+	if (mac_ctx->mlme_cfg->dfs_cfg.dfs_disable_japan_w53)
+		flag |= DFS_RANDOM_CH_FLAG_NO_JAPAN_W53_CH;
 
 	if (QDF_IS_STATUS_ERROR(utils_dfs_get_random_channel(
 	    pdev, flag, ch_params, &hw_mode, &ch, &acs_info))) {

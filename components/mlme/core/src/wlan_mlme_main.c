@@ -879,6 +879,8 @@ static void mlme_init_dfs_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_ENABLE_NON_DFS_CHAN_ON_RADAR);
 	dfs_cfg->dfs_beacon_tx_enhanced =
 		cfg_get(psoc, CFG_DFS_BEACON_TX_ENHANCED);
+	dfs_cfg->dfs_disable_japan_w53 =
+		cfg_get(psoc, CFG_DISABLE_DFS_JAPAN_W53);
 	dfs_cfg->sap_tx_leakage_threshold =
 		cfg_get(psoc, CFG_SAP_TX_LEAKAGE_THRESHOLD);
 }
