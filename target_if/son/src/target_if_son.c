@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -49,17 +49,20 @@ QDF_STATUS son_ol_send_null(struct wlan_objmgr_pdev *pdev,
 {
 	struct stats_request_params param = {0};
 	struct wlan_objmgr_psoc *psoc = NULL;
+	wmi_unified_t wmi_handle;
 
 	psoc = wlan_pdev_get_psoc(pdev);
-
 	if (!psoc)
 		return QDF_STATUS_E_FAILURE;
 
 	param.vdev_id = wlan_vdev_get_id(vdev);
 	param.stats_id = WMI_HOST_REQUEST_INST_STAT;
 
-	return wmi_unified_stats_request_send(GET_WMI_HDL_FROM_PSOC(psoc),
-					macaddr, &param);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle)
+		return QDF_STATUS_E_FAILURE;
+
+	return wmi_unified_stats_request_send(wmi_handle, macaddr, &param);
 }
 
 int son_ol_lmac_create(struct wlan_objmgr_pdev *pdev)

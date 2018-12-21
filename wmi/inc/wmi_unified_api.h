@@ -521,9 +521,9 @@ QDF_STATUS wmi_set_peer_param_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_peer_create_send(void *wmi_hdl,
 					struct peer_create_params *param);
 
-QDF_STATUS wmi_unified_stats_request_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
-				struct stats_request_params *param);
+QDF_STATUS wmi_unified_stats_request_send(wmi_unified_t wmi_handle,
+					  uint8_t macaddr[IEEE80211_ADDR_LEN],
+					  struct stats_request_params *param);
 
 QDF_STATUS wmi_unified_green_ap_ps_send(void *wmi_hdl,
 					uint32_t value, uint8_t pdev_id);
@@ -858,10 +858,6 @@ wmi_extract_apf_read_memory_resp_event(wmi_unified_t wmi, void *evt_buf,
 				struct wmi_apf_read_memory_resp_event_params
 								*read_mem_evt);
 #endif /* FEATURE_WLAN_APF */
-
-QDF_STATUS wmi_unified_stats_request_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
-				struct stats_request_params *param);
 
 QDF_STATUS wmi_send_get_user_position_cmd(void *wmi_hdl, uint32_t value);
 

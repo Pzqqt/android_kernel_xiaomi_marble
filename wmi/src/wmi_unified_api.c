@@ -681,12 +681,10 @@ QDF_STATUS wmi_unified_sifs_trigger_send(void *wmi_hdl,
  *
  *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_stats_request_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
-				struct stats_request_params *param)
+QDF_STATUS wmi_unified_stats_request_send(wmi_unified_t wmi_handle,
+					  uint8_t macaddr[IEEE80211_ADDR_LEN],
+					  struct stats_request_params *param)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_stats_request_cmd)
 		return wmi_handle->ops->send_stats_request_cmd(wmi_handle,
 				   macaddr, param);
