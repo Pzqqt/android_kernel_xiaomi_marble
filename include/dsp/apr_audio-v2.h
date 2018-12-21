@@ -1570,6 +1570,9 @@ struct adm_cmd_connect_afe_port_v5 {
 /* AFE VA Codec DMA Tx port 1 */
 #define AFE_PORT_ID_VA_CODEC_DMA_TX_1            0xB023
 
+/* AFE VA Codec DMA Tx port 2 */
+#define AFE_PORT_ID_VA_CODEC_DMA_TX_2            0xB025
+
 /* AFE Rx Codec DMA Rx port 0 */
 #define AFE_PORT_ID_RX_CODEC_DMA_RX_0            0xB030
 
