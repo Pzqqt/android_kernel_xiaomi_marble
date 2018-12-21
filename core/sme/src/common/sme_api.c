@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -933,17 +933,6 @@ QDF_STATUS sme_update_config(mac_handle_t mac_handle, tpSmeConfigParams
 	 */
 	if (csr_is_all_session_disconnected(mac))
 		csr_set_global_cfgs(mac);
-
-	/*
-	 * If scan offload is enabled then lim has allow the sending of
-	 * scan request to firmware even in powersave mode. The firmware has
-	 * to take care of exiting from power save mode
-	 */
-	status = sme_cfg_set_int(mac_handle, WNI_CFG_SCAN_IN_POWERSAVE, true);
-
-	if (QDF_STATUS_SUCCESS != status)
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "Could not pass on WNI_CFG_SCAN_IN_POWERSAVE to CFG");
 
 	mac->snr_monitor_enabled = pSmeConfigParams->snr_monitor_enabled;
 

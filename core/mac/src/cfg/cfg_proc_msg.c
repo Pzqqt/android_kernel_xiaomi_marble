@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,12 +62,6 @@ cgstatic cfg_static[CFG_PARAM_MAX_NUM] = {
 	CFG_CTL_VALID | CFG_CTL_RE | CFG_CTL_WE | CFG_CTL_RESTART |
 	CFG_CTL_NTF_LIM,
 	0, 0, 0},
-	{WNI_CFG_SCAN_IN_POWERSAVE,
-	CFG_CTL_VALID | CFG_CTL_RE | CFG_CTL_WE | CFG_CTL_INT |
-	CFG_CTL_NTF_LIM,
-	WNI_CFG_SCAN_IN_POWERSAVE_STAMIN,
-	WNI_CFG_SCAN_IN_POWERSAVE_STAMAX,
-	WNI_CFG_SCAN_IN_POWERSAVE_STADEF},
 	{WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
 	CFG_CTL_VALID | CFG_CTL_RE | CFG_CTL_WE | CFG_CTL_INT,
 	WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED_STAMIN,

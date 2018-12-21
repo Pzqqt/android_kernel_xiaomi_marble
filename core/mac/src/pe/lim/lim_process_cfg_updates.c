@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -159,7 +159,7 @@ void lim_handle_param_update(struct mac_context *mac, eUpdateIEsType cfgId)
 
 void lim_apply_configuration(struct mac_context *mac, struct pe_session *pe_session)
 {
-	uint32_t val = 0, phyMode;
+	uint32_t phyMode;
 
 	pe_debug("Applying config");
 
@@ -185,12 +185,6 @@ void lim_apply_configuration(struct mac_context *mac, struct pe_session *pe_sess
 			sch_set_beacon_interval(mac, pe_session);
 			sch_set_fixed_beacon_fields(mac, pe_session);
 		}
-	}
-
-	if (wlan_cfg_get_int(mac, WNI_CFG_SCAN_IN_POWERSAVE, &val) !=
-	    QDF_STATUS_SUCCESS) {
-		pe_err("could not retrieve WNI_CFG_SCAN_IN_POWERSAVE");
-		return;
 	}
 } /*** end lim_apply_configuration() ***/
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,7 +32,6 @@ enum {
 	WNI_CFG_COUNTRY_CODE,
 	WNI_CFG_LOCAL_POWER_CONSTRAINT,
 	WNI_CFG_SCAN_CONTROL_LIST,
-	WNI_CFG_SCAN_IN_POWERSAVE,
 	WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
 	WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT,
 	WNI_CFG_OBSS_DETECTION_OFFLOAD,
@@ -139,10 +138,6 @@ enum {
  * Otherwise, fall back and set fw default value[3].
  */
 #define WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF    3
-
-#define WNI_CFG_SCAN_IN_POWERSAVE_STAMIN    0
-#define WNI_CFG_SCAN_IN_POWERSAVE_STAMAX    1
-#define WNI_CFG_SCAN_IN_POWERSAVE_STADEF    1
 
 #define WNI_CFG_WPS_ENABLE_AP    1
 
