@@ -9381,6 +9381,7 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 			uint8_t *event, uint8_t hw_mode_id, uint8_t phy_id,
 			struct wlan_psoc_host_mac_phy_caps *param)
 {
+#define MAX_NUM_HW_MODES 24
 	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
 	WMI_MAC_PHY_CAPABILITIES *mac_phy_caps;
 	WMI_SOC_MAC_PHY_HW_MODE_CAPS *hw_caps;
@@ -9394,6 +9395,13 @@ static QDF_STATUS extract_mac_phy_cap_service_ready_ext_tlv(
 	hw_caps = param_buf->soc_hw_mode_caps;
 	if (!hw_caps)
 		return QDF_STATUS_E_INVAL;
+	/**
+	 * The max number of hw modes is 24 including 11ax.
+	 */
+	if (hw_caps->num_hw_modes > MAX_NUM_HW_MODES) {
+		wmi_err_rl("invalid num_hw_modes %d", hw_caps->num_hw_modes);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	for (hw_idx = 0; hw_idx < hw_caps->num_hw_modes; hw_idx++) {
 		if (hw_mode_id == param_buf->hw_mode_caps[hw_idx].hw_mode_id)
