@@ -144,6 +144,12 @@ void wlan_mgmt_txrx_desc_put(
 
 	desc = &mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool[desc_id];
 	qdf_spin_lock_bh(&mgmt_txrx_pdev_ctx->mgmt_desc_pool.desc_pool_lock);
+	if (!desc->in_use) {
+		qdf_spin_unlock_bh(&mgmt_txrx_pdev_ctx->mgmt_desc_pool.
+				   desc_pool_lock);
+		mgmt_txrx_err("desc %d is freed", desc_id);
+		return;
+	}
 	desc->in_use = false;
 	qdf_list_insert_front(&mgmt_txrx_pdev_ctx->mgmt_desc_pool.free_list,
 			      &desc->entry);
