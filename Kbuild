@@ -2363,6 +2363,9 @@ ccflags-$(CONFIG_HIF_SNOC) += -DCE_SVC_CMN_INIT
 
 ifeq ($(CONFIG_QCA6290_11AX), y)
 cppflags-y += -DQCA_WIFI_QCA6290_11AX
+endif
+
+ifeq ($(CONFIG_LITHIUM), y)
 cppflags-$(CONFIG_WLAN_TX_FLOW_CONTROL_V2) += -DQCA_AC_BASED_FLOW_CONTROL
 endif
 
