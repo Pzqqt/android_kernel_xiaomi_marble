@@ -161,6 +161,9 @@ struct dfs_bangradar_enh_params {
 /* Flag to enable Reduced BW Agile DFS */
 #define DFS_RANDOM_CH_FLAG_ENABLE_REDUCED_BW    0x0080 /* 0000 0000 1000 0000 */
 
+/* Flag to exclude Japan W53 channnels */
+#define DFS_RANDOM_CH_FLAG_NO_JAPAN_W53_CH      0x0100 /* 0000 0001 0000 0000 */
+
 /**
  * struct wlan_dfs_caps - DFS capability structure.
  * @wlan_dfs_ext_chan_ok:         Can radar be detected on the extension chan?

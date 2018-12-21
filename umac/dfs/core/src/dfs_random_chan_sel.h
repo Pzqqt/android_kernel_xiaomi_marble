@@ -121,8 +121,9 @@
 #endif
 
 #define DFS_IS_CHANNEL_WEATHER_RADAR(_f) (((_f) >= 5600) && ((_f) <= 5650))
-#define DFS_IS_CHAN_JAPAN_INDOOR(_ch)  (((_ch) >= 36)  && ((_ch) <= 64))
-#define DFS_IS_CHAN_JAPAN_OUTDOOR(_ch) (((_ch) >= 100) && ((_ch) <= 140))
+#define DFS_IS_CHAN_JAPAN_INDOOR(_ch)    (((_ch) >= 36)  && ((_ch) <= 64))
+#define DFS_IS_CHAN_JAPAN_W53(_ch)       (((_ch) >= 52)  && ((_ch) <= 64))
+#define DFS_IS_CHAN_JAPAN_OUTDOOR(_ch)   (((_ch) >= 100) && ((_ch) <= 140))
 
 /**
  * struct chan_bonding_info - for holding channel bonding bitmap
