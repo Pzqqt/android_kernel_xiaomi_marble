@@ -1853,7 +1853,7 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		msg->bodyptr = NULL;
 		break;
 	case WMA_AGGR_QOS_RSP:
-		lim_process_ft_aggr_qo_s_rsp(mac_ctx, msg);
+		lim_process_ft_aggr_qos_rsp(mac_ctx, msg);
 		break;
 	case WMA_SET_LINK_STATE_RSP:
 		link_state_param = (tLinkStateParams *) msg->bodyptr;
