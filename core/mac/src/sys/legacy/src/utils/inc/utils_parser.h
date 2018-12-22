@@ -69,9 +69,12 @@ void convert_edca_param(struct mac_context *, tSirMacEdcaParamSetIE *,
 void convert_mu_edca_param(struct mac_context * mac_ctx,
 			tSirMacEdcaParamSetIE *mu_edca,
 			tDot11fIEmu_edca_param_set *ie);
-void convert_tspec(struct mac_context *, tSirMacTspecIE *, tDot11fIETSPEC *);
-QDF_STATUS convert_tclas(struct mac_context *, tSirTclasInfo *, tDot11fIETCLAS *);
-void convert_wmmtspec(struct mac_context *, tSirMacTspecIE *, tDot11fIEWMMTSPEC *);
+void convert_tspec(struct mac_context *, struct mac_tspec_ie *,
+		   tDot11fIETSPEC *);
+QDF_STATUS convert_tclas(struct mac_context *, tSirTclasInfo *,
+			 tDot11fIETCLAS *);
+void convert_wmmtspec(struct mac_context *, struct mac_tspec_ie *,
+		      tDot11fIEWMMTSPEC *);
 QDF_STATUS convert_wmmtclas(struct mac_context *, tSirTclasInfo *,
 			    tDot11fIEWMMTCLAS *);
 void convert_ts_delay(struct mac_context *, tSirMacTsDelayIE *, tDot11fIETSDelay *);

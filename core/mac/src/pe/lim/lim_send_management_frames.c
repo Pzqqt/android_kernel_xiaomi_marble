@@ -1388,7 +1388,7 @@ lim_send_delts_req_action_frame(struct mac_context *mac,
 				tSirMacAddr peer,
 				uint8_t wmmTspecPresent,
 				struct mac_ts_info *pTsinfo,
-				tSirMacTspecIE *pTspecIe,
+				struct mac_tspec_ie *pTspecIe,
 				struct pe_session *pe_session)
 {
 	uint8_t *pFrame;

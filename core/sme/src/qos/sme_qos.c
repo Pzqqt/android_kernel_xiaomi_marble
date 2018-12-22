@@ -3011,7 +3011,7 @@ QDF_STATUS sme_qos_ese_process_reassoc_tspec_rsp(struct mac_context *mac,
  */
 static void sme_qos_copy_tspec_info(struct mac_context *mac,
 				    struct sme_qos_wmmtspecinfo *pTspec_Info,
-				    tSirMacTspecIE *pTspec)
+				    struct mac_tspec_ie *pTspec)
 {
 	/* As per WMM_AC_testplan_v0.39 Minimum Service Interval, Maximum
 	 * Service Interval, Service Start Time, Suspension Interval and Delay

@@ -918,7 +918,8 @@ sir_beacon_ie_ese_bcn_report(struct mac_context *mac,
  *
  * Return: None
  */
-void ese_populate_wmm_tspec(tSirMacTspecIE *source, ese_wmm_tspec_ie *dest);
+void ese_populate_wmm_tspec(struct mac_tspec_ie *source,
+			    ese_wmm_tspec_ie *dest);
 
 #endif
 
@@ -942,9 +943,10 @@ QDF_STATUS
 populate_dot11f_wpa_opaque(struct mac_context *mac,
 			tpSirRSNie pRsnIe, tDot11fIEWPAOpaque *pDot11f);
 
-void populate_dot11f_tspec(tSirMacTspecIE *pOld, tDot11fIETSPEC *pDot11f);
+void populate_dot11f_tspec(struct mac_tspec_ie *pOld, tDot11fIETSPEC *pDot11f);
 
-void populate_dot11f_wmmtspec(tSirMacTspecIE *pOld, tDot11fIEWMMTSPEC *pDot11f);
+void populate_dot11f_wmmtspec(struct mac_tspec_ie *pOld,
+			      tDot11fIEWMMTSPEC *pDot11f);
 
 QDF_STATUS
 populate_dot11f_tclas(struct mac_context *mac,

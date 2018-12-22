@@ -35,14 +35,15 @@
 #include "ani_global.h"
 
 QDF_STATUS
-lim_tspec_find_by_assoc_id(struct mac_context *, uint16_t, tSirMacTspecIE *,
+lim_tspec_find_by_assoc_id(struct mac_context *, uint16_t,
+			   struct mac_tspec_ie *,
 			   tpLimTspecInfo, tpLimTspecInfo *);
 
 /* Add TSPEC in lim local table */
 QDF_STATUS lim_tspec_add(struct mac_context *mac,
 			    uint8_t *pAddr,
 			    uint16_t assocId,
-			    tSirMacTspecIE *pTspec,
+			    struct mac_tspec_ie *pTspec,
 			    uint32_t interval, tpLimTspecInfo *ppInfo);
 
 /* admit control interface */
@@ -75,13 +76,13 @@ QDF_STATUS lim_admit_control_init(struct mac_context *mac);
 QDF_STATUS lim_send_hal_msg_add_ts(struct mac_context *mac,
 				      uint16_t staIdx,
 				      uint8_t tspecIdx,
-				      tSirMacTspecIE tspecIE,
+				      struct mac_tspec_ie tspecIE,
 				      uint8_t sessionId, uint16_t tsm_interval);
 #else
 QDF_STATUS lim_send_hal_msg_add_ts(struct mac_context *mac,
 				      uint16_t staIdx,
 				      uint8_t tspecIdx,
-				      tSirMacTspecIE tspecIE,
+				      struct mac_tspec_ie tspecIE,
 				      uint8_t sessionId);
 #endif
 

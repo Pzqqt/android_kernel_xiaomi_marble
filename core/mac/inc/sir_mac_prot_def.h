@@ -1192,13 +1192,6 @@ typedef struct sSirMacEdcaParamSetIE {
 	tSirMacEdcaParamRecord acvo;    /* voice */
 } qdf_packed tSirMacEdcaParamSetIE;
 
-typedef struct sSirMacQoSParams {
-	uint8_t count;
-	uint16_t limit;
-	uint8_t CWmin[8];
-	uint8_t AIFS[8];
-} qdf_packed tSirMacQoSParams;
-
 /* ts info direction field can take any of these values */
 #define SIR_MAC_DIRECTION_UPLINK    0
 #define SIR_MAC_DIRECTION_DNLINK    1
@@ -1210,27 +1203,6 @@ typedef struct sSirMacQoSParams {
 #define SIR_MAC_ACCESSPOLICY_EDCA   1
 #define SIR_MAC_ACCESSPOLICY_HCCA   2
 #define SIR_MAC_ACCESSPOLICY_BOTH   3
-
-typedef struct sSirMacTspecIE {
-	uint8_t type;
-	uint8_t length;
-	struct mac_ts_info tsinfo;
-	uint16_t nomMsduSz;
-	uint16_t maxMsduSz;
-	uint32_t minSvcInterval;
-	uint32_t maxSvcInterval;
-	uint32_t inactInterval;
-	uint32_t suspendInterval;
-	uint32_t svcStartTime;
-	uint32_t minDataRate;
-	uint32_t meanDataRate;
-	uint32_t peakDataRate;
-	uint32_t maxBurstSz;
-	uint32_t delayBound;
-	uint32_t minPhyRate;
-	uint16_t surplusBw;
-	uint16_t mediumTime;
-} qdf_packed tSirMacTspecIE;
 
 /* frame classifier types */
 #define SIR_MAC_TCLASTYPE_ETHERNET 0

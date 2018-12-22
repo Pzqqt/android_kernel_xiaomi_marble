@@ -400,17 +400,18 @@ static void lim_process_hw_mode_trans_ind(struct mac_context *mac, void *body)
 	return;
 }
 
-/** -------------------------------------------------------------
-   \fn def_msg_decision
-   \brief The function decides whether to defer a message or not in limProcessMessage function
-   \param   struct mac_context *mac
-   \param       struct scheduler_msg  limMsg
-   \param       tSirMacTspecIE   *ppInfo
-   \return none
-   -------------------------------------------------------------*/
-
-static uint8_t def_msg_decision(struct mac_context *mac_ctx,
-				struct scheduler_msg *lim_msg)
+/**
+ * def_msg_decision() - Should a message be deferred?
+ * @mac_ctx: The global MAC context
+ * @lim_msg: The message to check for potential deferral
+ *
+ * This function decides whether to defer a message or not in
+ * lim_message_processor() function
+ *
+ * Return: true if the message can be deferred, false otherwise
+ */
+static bool def_msg_decision(struct mac_context *mac_ctx,
+			     struct scheduler_msg *lim_msg)
 {
 	uint8_t type, subtype;
 	QDF_STATUS status;

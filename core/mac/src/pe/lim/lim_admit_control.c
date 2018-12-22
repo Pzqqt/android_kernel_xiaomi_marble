@@ -55,40 +55,21 @@
 /* ------------------------------------------------------------------------------ */
 /* local protos */
 
-static QDF_STATUS
-lim_calculate_svc_int(struct mac_context *, tSirMacTspecIE *, uint32_t *);
-static QDF_STATUS
-lim_validate_tspec_edca(struct mac_context *, tSirMacTspecIE *, struct pe_session *);
-static QDF_STATUS
-lim_validate_tspec(struct mac_context *, tSirMacTspecIE *, struct pe_session *);
-static void
-lim_compute_mean_bw_used(struct mac_context *, uint32_t *, uint32_t, tpLimTspecInfo,
-			 struct pe_session *);
 static void lim_get_available_bw(struct mac_context *, uint32_t *, uint32_t *, uint32_t,
 				 uint32_t);
-static QDF_STATUS lim_admit_policy_oversubscription(struct mac_context *,
-						       tSirMacTspecIE *,
-						       tpLimAdmitPolicyInfo,
-						       tpLimTspecInfo,
-						       struct pe_session *);
-static QDF_STATUS lim_tspec_find_by_sta_addr(struct mac_context *, uint8_t *,
-						tSirMacTspecIE *, tpLimTspecInfo,
-						tpLimTspecInfo *);
-static QDF_STATUS lim_validate_access_policy(struct mac_context *, uint8_t, uint16_t,
-						struct pe_session *);
 
 /** -------------------------------------------------------------
    \fn lim_calculate_svc_int
    \brief TSPEC validation and servcie interval determination
    \param     struct mac_context *   mac
-   \param         tSirMacTspecIE *pTspec
+   \param         struct mac_tspec_ie *pTspec
    \param         uint32_t            *pSvcInt
    \return QDF_STATUS - status of the comparison
    -------------------------------------------------------------*/
 
 static QDF_STATUS
 lim_calculate_svc_int(struct mac_context *mac,
-		      tSirMacTspecIE *pTspec, uint32_t *pSvcInt)
+		      struct mac_tspec_ie *pTspec, uint32_t *pSvcInt)
 {
 	uint32_t msduSz, dataRate;
 	*pSvcInt = 0;
@@ -145,7 +126,8 @@ lim_calculate_svc_int(struct mac_context *mac,
  **/
 static QDF_STATUS
 lim_validate_tspec_edca(struct mac_context *mac_ctx,
-			tSirMacTspecIE *tspec, struct pe_session *session_entry)
+			struct mac_tspec_ie *tspec,
+			struct pe_session *session_entry)
 {
 	uint32_t max_phy_rate, min_phy_rate;
 	uint32_t phy_mode;
@@ -175,13 +157,13 @@ lim_validate_tspec_edca(struct mac_context *mac_ctx,
    \fn lim_validate_tspec
    \brief validate the offered tspec
    \param   struct mac_context *mac
-   \param         tSirMacTspecIE *pTspec
+   \param         struct mac_tspec_ie *pTspec
    \return QDF_STATUS - status
    -------------------------------------------------------------*/
 
 static QDF_STATUS
 lim_validate_tspec(struct mac_context *mac,
-		   tSirMacTspecIE *pTspec, struct pe_session *pe_session)
+		   struct mac_tspec_ie *pTspec, struct pe_session *pe_session)
 {
 	QDF_STATUS retval = QDF_STATUS_SUCCESS;
 
@@ -296,7 +278,7 @@ lim_get_available_bw(struct mac_context *mac,
  **/
 static QDF_STATUS
 lim_admit_policy_oversubscription(struct mac_context *mac_ctx,
-				  tSirMacTspecIE *tspec,
+				  struct mac_tspec_ie *tspec,
 				  tpLimAdmitPolicyInfo admit_policy,
 				  tpLimTspecInfo tspec_info,
 				  struct pe_session *session_entry)
@@ -329,12 +311,12 @@ lim_admit_policy_oversubscription(struct mac_context *mac_ctx,
    \fn lim_admit_policy
    \brief determine the current admit control policy and apply it for the offered tspec
    \param   struct mac_context *mac
-   \param         tSirMacTspecIE   *pTspec
+   \param         struct mac_tspec_ie   *pTspec
    \return QDF_STATUS - status
    -------------------------------------------------------------*/
 
 static QDF_STATUS lim_admit_policy(struct mac_context *mac,
-				      tSirMacTspecIE *pTspec,
+				      struct mac_tspec_ie *pTspec,
 				      struct pe_session *pe_session)
 {
 	QDF_STATUS retval = QDF_STATUS_E_FAILURE;
@@ -394,7 +376,7 @@ static void lim_tspec_delete(struct mac_context *mac, tpLimTspecInfo pInfo)
    \brief Send halMsg_AddTs to HAL
    \param   struct mac_context *mac
    \param   \param       uint8_t               *pAddr
-   \param       tSirMacTspecIE    *pTspecIE
+   \param       struct mac_tspec_ie    *pTspecIE
    \param       tpLimTspecInfo    pTspecList
    \param       tpLimTspecInfo   *ppInfo
    \return QDF_STATUS - status
@@ -404,7 +386,7 @@ static void lim_tspec_delete(struct mac_context *mac, tpLimTspecInfo pInfo)
 static QDF_STATUS
 lim_tspec_find_by_sta_addr(struct mac_context *mac,
 			   uint8_t *pAddr,
-			   tSirMacTspecIE *pTspecIE,
+			   struct mac_tspec_ie *pTspecIE,
 			   tpLimTspecInfo pTspecList, tpLimTspecInfo *ppInfo)
 {
 	int ctspec;
@@ -412,14 +394,11 @@ lim_tspec_find_by_sta_addr(struct mac_context *mac,
 	*ppInfo = NULL;
 
 	for (ctspec = 0; ctspec < LIM_NUM_TSPEC_MAX; ctspec++, pTspecList++) {
-		if ((pTspecList->inuse)
-		    &&
-		    (!qdf_mem_cmp
-			     (pAddr, pTspecList->staAddr, sizeof(pTspecList->staAddr)))
-		    &&
-		    (!qdf_mem_cmp
-			     ((uint8_t *) pTspecIE, (uint8_t *) &pTspecList->tspec,
-			     sizeof(tSirMacTspecIE)))) {
+		if ((pTspecList->inuse) &&
+		    (!qdf_mem_cmp(pAddr, pTspecList->staAddr,
+				  sizeof(pTspecList->staAddr))) &&
+		    (!qdf_mem_cmp(pTspecIE, &pTspecList->tspec,
+				  sizeof(*pTspecIE)))) {
 			*ppInfo = pTspecList;
 			return QDF_STATUS_SUCCESS;
 		}
@@ -432,7 +411,7 @@ lim_tspec_find_by_sta_addr(struct mac_context *mac,
    \brief find tspec with matchin staid and Tspec
    \param   struct mac_context *mac
    \param       uint32_t               staid
-   \param       tSirMacTspecIE    *pTspecIE
+   \param       struct mac_tspec_ie    *pTspecIE
    \param       tpLimTspecInfo    pTspecList
    \param       tpLimTspecInfo   *ppInfo
    \return QDF_STATUS - status
@@ -441,7 +420,7 @@ lim_tspec_find_by_sta_addr(struct mac_context *mac,
 QDF_STATUS
 lim_tspec_find_by_assoc_id(struct mac_context *mac,
 			   uint16_t assocId,
-			   tSirMacTspecIE *pTspecIE,
+			   struct mac_tspec_ie *pTspecIE,
 			   tpLimTspecInfo pTspecList, tpLimTspecInfo *ppInfo)
 {
 	int ctspec;
@@ -453,12 +432,10 @@ lim_tspec_find_by_assoc_id(struct mac_context *mac,
 		pTspecIE->tsinfo.traffic.tsid);
 
 	for (ctspec = 0; ctspec < LIM_NUM_TSPEC_MAX; ctspec++, pTspecList++) {
-		if ((pTspecList->inuse)
-		    && (assocId == pTspecList->assocId)
-		    &&
-		    (!qdf_mem_cmp
-			     ((uint8_t *) pTspecIE, (uint8_t *) &pTspecList->tspec,
-			     sizeof(tSirMacTspecIE)))) {
+		if ((pTspecList->inuse) &&
+		    (assocId == pTspecList->assocId) &&
+		    (!qdf_mem_cmp(pTspecIE, &pTspecList->tspec,
+				  sizeof(*pTspecIE)))) {
 			*ppInfo = pTspecList;
 			return QDF_STATUS_SUCCESS;
 		}
@@ -510,7 +487,7 @@ lim_find_tspec(struct mac_context *mac,
    \param struct mac_context *   mac
    \param uint8_t               *pAddr
    \param uint16_t               assocId
-   \param tSirMacTspecIE   *pTspec
+   \param struct mac_tspec_ie   *pTspec
    \param uint32_t               interval
    \param tpLimTspecInfo   *ppInfo
 
@@ -520,7 +497,7 @@ lim_find_tspec(struct mac_context *mac,
 QDF_STATUS lim_tspec_add(struct mac_context *mac,
 			    uint8_t *pAddr,
 			    uint16_t assocId,
-			    tSirMacTspecIE *pTspec,
+			    struct mac_tspec_ie *pTspec,
 			    uint32_t interval, tpLimTspecInfo *ppInfo)
 {
 	tpLimTspecInfo pTspecList = &mac->lim.tspecInfo[0];
@@ -821,7 +798,7 @@ QDF_STATUS lim_admit_control_init(struct mac_context *mac)
    \param   struct mac_context *mac
    \param     uint16_t        staIdx
    \param     uint8_t         tspecIdx
-   \param       tSirMacTspecIE tspecIE
+   \param       struct mac_tspec_ie tspecIE
    \param       tSirTclasInfo   *tclasInfo
    \param       uint8_t           tclasProc
    \param       uint16_t          tsm_interval
@@ -832,13 +809,15 @@ QDF_STATUS
 lim_send_hal_msg_add_ts(struct mac_context *mac,
 			uint16_t staIdx,
 			uint8_t tspecIdx,
-			tSirMacTspecIE tspecIE,
+			struct mac_tspec_ie tspecIE,
 			uint8_t sessionId, uint16_t tsm_interval)
 #else
 QDF_STATUS
 lim_send_hal_msg_add_ts(struct mac_context *mac,
 			uint16_t staIdx,
-			uint8_t tspecIdx, tSirMacTspecIE tspecIE, uint8_t sessionId)
+			uint8_t tspecIdx,
+			struct mac_tspec_ie tspecIE,
+			uint8_t sessionId)
 #endif
 {
 	struct scheduler_msg msg = {0};
@@ -858,7 +837,8 @@ lim_send_hal_msg_add_ts(struct mac_context *mac,
 
 	pAddTsParam->staIdx = staIdx;
 	pAddTsParam->tspecIdx = tspecIdx;
-	qdf_mem_copy(&pAddTsParam->tspec, &tspecIE, sizeof(tSirMacTspecIE));
+	qdf_mem_copy(&pAddTsParam->tspec, &tspecIE,
+		     sizeof(struct mac_tspec_ie));
 	pAddTsParam->sessionId = sessionId;
 	pAddTsParam->sme_session_id = pe_session->smeSessionId;
 

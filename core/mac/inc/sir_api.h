@@ -808,7 +808,7 @@ typedef struct ese_wmm_tspec_ie {
 
 typedef struct sTspecInfo {
 	uint8_t valid;
-	tSirMacTspecIE tspec;
+	struct mac_tspec_ie tspec;
 } tTspecInfo;
 
 #define SIR_ESE_MAX_TSPEC_IES   4
@@ -1604,7 +1604,7 @@ typedef struct sSirTclasInfo {
 
 typedef struct sSirAddtsReqInfo {
 	uint8_t dialogToken;
-	tSirMacTspecIE tspec;
+	struct mac_tspec_ie tspec;
 
 	uint8_t numTclas;       /* number of Tclas elements */
 	tSirTclasInfo tclasInfo[SIR_MAC_TCLASIE_MAXNUM];
@@ -1624,7 +1624,7 @@ typedef struct sSirAddtsRspInfo {
 	tSirMacStatusCodes status;
 	tSirMacTsDelayIE delay;
 
-	tSirMacTspecIE tspec;
+	struct mac_tspec_ie tspec;
 	uint8_t numTclas;       /* number of Tclas elements */
 	tSirTclasInfo tclasInfo[SIR_MAC_TCLASIE_MAXNUM];
 	uint8_t tclasProc;
@@ -1642,7 +1642,7 @@ typedef struct sSirAddtsRspInfo {
 
 typedef struct sSirDeltsReqInfo {
 	struct mac_ts_info tsinfo;
-	tSirMacTspecIE tspec;
+	struct mac_tspec_ie tspec;
 	uint8_t wmeTspecPresent:1;
 	uint8_t wsmTspecPresent:1;
 	uint8_t lleTspecPresent:1;

@@ -971,7 +971,7 @@ QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac, uint32_t *pMsgBu
 
 	for (i = 0; i < HAL_QOS_NUM_AC_MAX; i++) {
 		if (aggrQosReq->aggrInfo.tspecIdx & (1 << i)) {
-			tSirMacTspecIE *pTspec =
+			struct mac_tspec_ie *pTspec =
 				&aggrQosReq->aggrInfo.aggrAddTsInfo[i].tspec;
 			/* Since AddTS response was successful, check for the PSB flag
 			 * and directional flag inside the TS Info field.

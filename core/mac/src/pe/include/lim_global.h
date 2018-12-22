@@ -458,7 +458,7 @@ typedef struct sLimTspecInfo {
 	uint8_t idx;
 	tSirMacAddr staAddr;
 	uint16_t assocId;
-	tSirMacTspecIE tspec;
+	struct mac_tspec_ie tspec;
 	/* number of Tclas elements */
 	uint8_t numTclas;
 	tSirTclasInfo tclasInfo[SIR_MAC_TCLASIE_MAXNUM];

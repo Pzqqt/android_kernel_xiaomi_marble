@@ -77,15 +77,18 @@ void
 lim_send_sme_aggr_qos_rsp(struct mac_context *mac, tpSirAggrQosRsp aggrQosRsp,
 			  uint8_t smesessionId);
 
-void lim_send_sme_addts_rsp(struct mac_context *mac, uint8_t rspReqd, uint32_t status,
-			    struct pe_session *pe_session, tSirMacTspecIE tspec,
+void lim_send_sme_addts_rsp(struct mac_context *mac,
+			    uint8_t rspReqd, uint32_t status,
+			    struct pe_session *pe_session,
+			    struct mac_tspec_ie tspec,
 			    uint8_t smesessionId, uint16_t smetransactionId);
 void lim_send_sme_delts_rsp(struct mac_context *mac, tpSirDeltsReq delts,
 			    uint32_t status, struct pe_session *pe_session,
 			    uint8_t smessionId, uint16_t smetransactionId);
 void lim_send_sme_delts_ind(struct mac_context *mac, tpSirDeltsReqInfo delts,
 			    uint16_t aid, struct pe_session *);
-void lim_send_sme_stats_rsp(struct mac_context *mac, uint16_t msgtype, void *stats);
+void lim_send_sme_stats_rsp(struct mac_context *mac, uint16_t msgtype,
+			    void *stats);
 
 #ifdef QCA_SUPPORT_CP_STATS
 static inline void lim_send_sme_pe_statistics_rsp(struct mac_context *mac,

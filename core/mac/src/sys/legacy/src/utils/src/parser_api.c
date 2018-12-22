@@ -1734,8 +1734,8 @@ void populate_dot11f_re_assoc_tspec(struct mac_context *mac,
 	}
 }
 
-void ese_populate_wmm_tspec(tSirMacTspecIE *source,
-	ese_wmm_tspec_ie *dest)
+void ese_populate_wmm_tspec(struct mac_tspec_ie *source,
+			    ese_wmm_tspec_ie *dest)
 {
 	dest->traffic_type = source->tsinfo.traffic.trafficType;
 	dest->tsid = source->tsinfo.traffic.tsid;
@@ -4647,7 +4647,7 @@ sir_convert_meas_req_frame2_struct(struct mac_context *mac,
 } /* End sir_convert_meas_req_frame2_struct. */
 #endif
 
-void populate_dot11f_tspec(tSirMacTspecIE *pOld, tDot11fIETSPEC *pDot11f)
+void populate_dot11f_tspec(struct mac_tspec_ie *pOld, tDot11fIETSPEC *pDot11f)
 {
 	pDot11f->traffic_type = pOld->tsinfo.traffic.trafficType;
 	pDot11f->tsid = pOld->tsinfo.traffic.tsid;
@@ -4682,7 +4682,8 @@ void populate_dot11f_tspec(tSirMacTspecIE *pOld, tDot11fIETSPEC *pDot11f)
 
 } /* End populate_dot11f_tspec. */
 
-void populate_dot11f_wmmtspec(tSirMacTspecIE *pOld, tDot11fIEWMMTSPEC *pDot11f)
+void populate_dot11f_wmmtspec(struct mac_tspec_ie *pOld,
+			      tDot11fIEWMMTSPEC *pDot11f)
 {
 	pDot11f->traffic_type = pOld->tsinfo.traffic.trafficType;
 	pDot11f->tsid = pOld->tsinfo.traffic.tsid;

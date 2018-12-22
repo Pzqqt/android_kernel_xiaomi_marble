@@ -1428,8 +1428,9 @@ lim_send_sme_set_context_rsp(struct mac_context *mac,
    \sa
    ----------------------------------------------------------------- */
 void
-lim_send_sme_addts_rsp(struct mac_context *mac, uint8_t rspReqd, uint32_t status,
-		       struct pe_session *pe_session, tSirMacTspecIE tspec,
+lim_send_sme_addts_rsp(struct mac_context *mac, uint8_t rspReqd,
+		       uint32_t status,
+		       struct pe_session *pe_session, struct mac_tspec_ie tspec,
 		       uint8_t smesessionId, uint16_t smetransactionId)
 {
 	tpSirAddtsRsp rsp;

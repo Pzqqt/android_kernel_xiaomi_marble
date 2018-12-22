@@ -953,7 +953,7 @@ typedef struct sLinkStateParams {
 typedef struct {
 	uint16_t staIdx;
 	uint16_t tspecIdx;
-	tSirMacTspecIE tspec;
+	struct mac_tspec_ie tspec;
 	QDF_STATUS status;
 	uint8_t sessionId;
 #ifdef FEATURE_WLAN_ESE
@@ -1003,7 +1003,7 @@ typedef struct {
 typedef struct {
 	uint16_t staIdx;
 	uint16_t tspecIdx;
-	tSirMacTspecIE tspec[HAL_QOS_NUM_AC_MAX];
+	struct mac_tspec_ie tspec[HAL_QOS_NUM_AC_MAX];
 	QDF_STATUS status[HAL_QOS_NUM_AC_MAX];
 	uint8_t sessionId;
 	uint8_t vdev_id;
