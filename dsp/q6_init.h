@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
- * Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
 */
 
 #ifndef __Q6_INIT_H__
@@ -15,7 +15,6 @@ int audio_cal_init(void);
 int core_init(void);
 int rtac_init(void);
 int msm_audio_ion_init(void);
-int audio_slimslave_init(void);
 int avtimer_init(void);
 #ifdef CONFIG_MSM_MDF
 int msm_mdf_init(void);
@@ -33,7 +32,6 @@ static inline void msm_mdf_exit(void)
 #endif
 
 void avtimer_exit(void);
-void audio_slimslave_exit(void);
 void msm_audio_ion_exit(void);
 void rtac_exit(void);
 void core_exit(void);
@@ -44,5 +42,17 @@ void q6asm_exit(void);
 void afe_exit(void);
 void adm_exit(void);
 void adsp_err_exit(void);
+#if IS_ENABLED(CONFIG_WCD9XXX_CODEC_CORE)
+int audio_slimslave_init(void);
+void audio_slimslave_exit(void);
+#else
+static inline int audio_slimslave_init(void)
+{
+	return 0;
+};
+static inline void audio_slimslave_exit(void)
+{
+};
+#endif
 #endif
 

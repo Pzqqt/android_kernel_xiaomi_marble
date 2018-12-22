@@ -11,9 +11,13 @@ ifeq ($(call is-board-platform,$(MSMSTEPPE) $(TRINKET)),true)
 AUDIO_SELECT  := CONFIG_SND_SOC_SM6150=m
 endif
 
+ifeq ($(call is-board-platform,kona),true)
+AUDIO_SELECT  := CONFIG_SND_SOC_KONA=m
+endif
+
 AUDIO_CHIPSET := audio
 # Build/Package only in case of supported target
-ifeq ($(call is-board-platform-in-list,msmnile $(MSMSTEPPE) $(TRINKET)),true)
+ifeq ($(call is-board-platform-in-list,msmnile $(MSMSTEPPE) $(TRINKET) kona),true)
 
 LOCAL_PATH := $(call my-dir)
 
@@ -74,7 +78,7 @@ LOCAL_MODULE_DEBUG_ENABLE := true
 LOCAL_MODULE_PATH         := $(KERNEL_MODULES_OUT)
 include $(DLKM_DIR)/AndroidKernelModule.mk
 ###########################################################
-ifeq ($(call is-board-platform-in-list, $(MSMSTEPPE)),true)
+ifeq ($(call is-board-platform-in-list, $(MSMSTEPPE) kona),true)
 include $(CLEAR_VARS)
 LOCAL_MODULE              := $(AUDIO_CHIPSET)_snd_event.ko
 LOCAL_MODULE_KBUILD_NAME  := snd_event_dlkm.ko

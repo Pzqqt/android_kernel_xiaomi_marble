@@ -29,6 +29,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/sm6150autoconf.h
 	endif
+	ifeq ($(CONFIG_ARCH_KONA), y)
+		include $(AUDIO_ROOT)/config/konaauto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/konaautoconf.h
+	endif
 	ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
 		include $(AUDIO_ROOT)/config/sm8150auto.conf
 		export
@@ -99,7 +104,6 @@ ifdef CONFIG_SND_SOC_QDSP6V2
 	PLATFORM_OBJS += msm-dai-fe.o
 	PLATFORM_OBJS += msm-dai-q6-hdmi-v2.o
 	PLATFORM_OBJS += msm-dai-q6-v2.o
-	PLATFORM_OBJS += msm-dai-slim.o
 	PLATFORM_OBJS += msm-dai-stub-v2.o
 	PLATFORM_OBJS += msm-lsm-client.o
 	PLATFORM_OBJS += msm-pcm-afe-v2.o
@@ -114,6 +118,9 @@ ifdef CONFIG_SND_SOC_QDSP6V2
 	PLATFORM_OBJS += msm-pcm-voip-v2.o
 	PLATFORM_OBJS += msm-transcode-loopback-q6-v2.o
 	PLATFORM_OBJS += platform_init.o
+endif
+ifdef CONFIG_WCD9XXX_CODEC_CORE
+	PLATFORM_OBJS += msm-dai-slim.o
 endif
 ifdef CONFIG_DOLBY_DS2
 	PLATFORM_OBJS += msm-ds2-dap-config.o

@@ -18,7 +18,8 @@ struct wcd_irq_info {
 	struct device *dev;
 };
 
-#if IS_ENABLED(CONFIG_WCD9XXX_CODEC_CORE)
+#if (IS_ENABLED(CONFIG_WCD9XXX_CODEC_CORE) | \
+	IS_ENABLED(CONFIG_WCD9XXX_CODEC_CORE_V2))
 int wcd_irq_init(struct wcd_irq_info *irq_info, struct irq_domain **virq);
 int wcd_irq_exit(struct wcd_irq_info *irq_info, struct irq_domain *virq);
 int wcd_request_irq(struct wcd_irq_info *irq_info, int irq, const char *name,

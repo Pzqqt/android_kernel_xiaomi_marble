@@ -29,6 +29,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/sm6150autoconf.h
 	endif
+	ifeq ($(CONFIG_ARCH_KONA), y)
+		include $(AUDIO_ROOT)/config/konaauto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/konaautoconf.h
+	endif
 	ifeq ($(CONFIG_ARCH_SDMSHRIKE), y)
 		include $(AUDIO_ROOT)/config/sm8150auto.conf
 		export
@@ -81,10 +86,18 @@ ifdef CONFIG_WCD9XXX_CODEC_CORE
 	CORE_OBJS += wcd934x/wcd934x-tables.o
 endif
 
+ifdef CONFIG_WCD9XXX_CODEC_CORE_V2
+	CORE_OBJS += msm-cdc-pinctrl.o
+	CORE_OBJS += msm-cdc-supply.o
+endif
+
 ifdef CONFIG_SND_SOC_WCD9XXX_V2
-	WCD9XXX_OBJS += wcd-clsh.o
+ifdef CONFIG_WCD9XXX_CODEC_CORE
 	WCD9XXX_OBJS += wcd9xxx-common-v2.o
 	WCD9XXX_OBJS += wcd9xxx-resmgr-v2.o
+else
+	WCD9XXX_OBJS += wcd-clsh.o
+endif
 	WCD9XXX_OBJS += wcdcal-hwdep.o
 	WCD9XXX_OBJS += wcd9xxx-soc-init.o
 	WCD9XXX_OBJS += wcd-dsp-utils.o
@@ -181,6 +194,7 @@ ifeq ($(KERNEL_BUILD), 1)
 endif
 # Module information used by KBuild framework
 obj-$(CONFIG_WCD9XXX_CODEC_CORE) += wcd_core_dlkm.o
+obj-$(CONFIG_WCD9XXX_CODEC_CORE_V2) += wcd_core_dlkm.o
 wcd_core_dlkm-y := $(CORE_OBJS)
 
 obj-$(CONFIG_SND_SOC_WCD9XXX_V2) += wcd9xxx_dlkm.o
