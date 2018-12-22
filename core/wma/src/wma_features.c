@@ -3013,22 +3013,10 @@ void wma_del_ts_req(tp_wma_handle wma, tDelTsParams *msg)
 	qdf_mem_free(msg);
 }
 
-/**
- * wma_aggr_qos_req() - send aggr qos request to fw
- * @wma: handle to wma
- * @pAggrQosRspMsg - combined struct for all ADD_TS requests.
- *
- * A function to handle WMA_AGGR_QOS_REQ. This will send out
- * ADD_TS requestes to firmware in loop for all the ACs with
- * active flow.
- *
- * Return: none
- */
 void wma_aggr_qos_req(tp_wma_handle wma,
-		      tAggrAddTsParams *pAggrQosRspMsg)
+		      struct aggr_add_ts_param *pAggrQosRspMsg)
 {
-	wmi_unified_aggr_qos_cmd(wma->wmi_handle,
-			   (struct aggr_add_ts_param *)pAggrQosRspMsg);
+	wmi_unified_aggr_qos_cmd(wma->wmi_handle, pAggrQosRspMsg);
 	/* send response to upper layers from here only. */
 	wma_send_msg_high_priority(wma, WMA_AGGR_QOS_RSP, pAggrQosRspMsg, 0);
 }

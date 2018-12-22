@@ -8182,7 +8182,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 
 	case WMA_AGGR_QOS_REQ:
-		wma_aggr_qos_req(wma_handle, (tAggrAddTsParams *) msg->bodyptr);
+		wma_aggr_qos_req(wma_handle, msg->bodyptr);
 		break;
 
 	case WMA_8023_MULTICAST_LIST_REQ:

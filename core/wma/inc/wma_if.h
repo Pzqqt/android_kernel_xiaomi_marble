@@ -987,29 +987,6 @@ typedef struct {
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 } tDelTsParams, *tpDelTsParams;
 
-
-#define HAL_QOS_NUM_TSPEC_MAX 2
-#define HAL_QOS_NUM_AC_MAX 4
-
-/**
- * struct tAggrAddTsParams - ADDTS parameters
- * @staIdx: station index
- * @tspecIdx: TSPEC handler uniquely identifying a TSPEC for a STA in a BSS
- * @tspec: tspec value
- * @status: QDF status
- * @sessionId: session id
- * @vdev_id: vdev id
- */
-typedef struct {
-	uint16_t staIdx;
-	uint16_t tspecIdx;
-	struct mac_tspec_ie tspec[HAL_QOS_NUM_AC_MAX];
-	QDF_STATUS status[HAL_QOS_NUM_AC_MAX];
-	uint8_t sessionId;
-	uint8_t vdev_id;
-} tAggrAddTsParams, *tpAggrAddTsParams;
-
-
 typedef QDF_STATUS (*tHalMsgCallback)(struct mac_context *mac, uint32_t mesgId,
 				      void *mesgParam);
 

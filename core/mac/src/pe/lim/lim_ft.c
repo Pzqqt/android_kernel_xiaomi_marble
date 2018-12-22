@@ -826,7 +826,8 @@ bool lim_process_ft_update_key(struct mac_context *mac, uint32_t *pMsgBuf)
 
 static void
 lim_ft_send_aggr_qos_rsp(struct mac_context *mac, uint8_t rspReqd,
-			 tpAggrAddTsParams aggrQosRsp, uint8_t smesessionId)
+			 struct aggr_add_ts_param *aggrQosRsp,
+			 uint8_t smesessionId)
 {
 	tpSirAggrQosRsp rsp;
 	int i = 0;
@@ -860,7 +861,7 @@ lim_ft_send_aggr_qos_rsp(struct mac_context *mac, uint8_t rspReqd,
 void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 				 struct scheduler_msg *limMsg)
 {
-	tpAggrAddTsParams pAggrQosRspMsg = NULL;
+	struct aggr_add_ts_param *pAggrQosRspMsg;
 	tAddTsParams addTsParam = { 0 };
 	tpDphHashNode pSta = NULL;
 	uint16_t assocId = 0;
@@ -871,7 +872,7 @@ void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 
 	pe_debug(" Received AGGR_QOS_RSP from HAL");
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
-	pAggrQosRspMsg = (tpAggrAddTsParams) (limMsg->bodyptr);
+	pAggrQosRspMsg = limMsg->bodyptr;
 	if (NULL == pAggrQosRspMsg) {
 		pe_err("NULL pAggrQosRspMsg");
 		return;
@@ -889,7 +890,7 @@ void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 		pe_err("pe_session is not in STA mode");
 		return;
 	}
-	for (i = 0; i < HAL_QOS_NUM_AC_MAX; i++) {
+	for (i = 0; i < WMI_QOS_NUM_AC_MAX; i++) {
 		if ((((1 << i) & pAggrQosRspMsg->tspecIdx)) &&
 		    (pAggrQosRspMsg->status[i] != QDF_STATUS_SUCCESS)) {
 			sir_copy_mac_addr(peerMacAddr, pe_session->bssId);
@@ -921,11 +922,12 @@ void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 	return;
 }
 
-QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac, uint32_t *pMsgBuf)
+QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac,
+				       uint32_t *pMsgBuf)
 {
 	struct scheduler_msg msg = {0};
 	tSirAggrQosReq *aggrQosReq = (tSirAggrQosReq *) pMsgBuf;
-	tpAggrAddTsParams pAggrAddTsParam;
+	struct aggr_add_ts_param *pAggrAddTsParam;
 	struct pe_session *pe_session = NULL;
 	tpLimTspecInfo tspecInfo;
 	uint8_t ac;
@@ -934,12 +936,12 @@ QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac, uint32_t *pMsgBu
 	uint8_t sessionId;
 	int i;
 
-	pAggrAddTsParam = qdf_mem_malloc(sizeof(tAggrAddTsParams));
+	pAggrAddTsParam = qdf_mem_malloc(sizeof(*pAggrAddTsParam));
 	if (!pAggrAddTsParam)
 		return QDF_STATUS_E_NOMEM;
 
 	pe_session = pe_find_session_by_bssid(mac, aggrQosReq->bssid.bytes,
-						 &sessionId);
+					      &sessionId);
 
 	if (pe_session == NULL) {
 		pe_err("psession Entry Null for sessionId: %d",
@@ -969,7 +971,7 @@ QDF_STATUS lim_process_ft_aggr_qos_req(struct mac_context *mac, uint32_t *pMsgBu
 	pAggrAddTsParam->tspecIdx = aggrQosReq->aggrInfo.tspecIdx;
 	pAggrAddTsParam->vdev_id = pe_session->smeSessionId;
 
-	for (i = 0; i < HAL_QOS_NUM_AC_MAX; i++) {
+	for (i = 0; i < WMI_QOS_NUM_AC_MAX; i++) {
 		if (aggrQosReq->aggrInfo.tspecIdx & (1 << i)) {
 			struct mac_tspec_ie *pTspec =
 				&aggrQosReq->aggrInfo.aggrAddTsInfo[i].tspec;

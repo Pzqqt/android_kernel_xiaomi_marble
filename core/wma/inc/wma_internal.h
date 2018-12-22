@@ -1076,8 +1076,19 @@ int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len);
 
 void wma_del_ts_req(tp_wma_handle wma, tDelTsParams *msg);
 
+/**
+ * wma_aggr_qos_req() - send aggr qos request to fw
+ * @wma: handle to wma
+ * @pAggrQosRspMsg - combined struct for all ADD_TS requests.
+ *
+ * A function to handle WMA_AGGR_QOS_REQ. This will send out
+ * ADD_TS requestes to firmware in loop for all the ACs with
+ * active flow.
+ *
+ * Return: none
+ */
 void wma_aggr_qos_req(tp_wma_handle wma,
-			     tAggrAddTsParams *pAggrQosRspMsg);
+		      struct aggr_add_ts_param *pAggrQosRspMsg);
 
 void wma_add_ts_req(tp_wma_handle wma, tAddTsParams *msg);
 
