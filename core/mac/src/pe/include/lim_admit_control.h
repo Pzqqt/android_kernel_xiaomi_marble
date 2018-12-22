@@ -67,7 +67,7 @@ lim_admit_control_delete_sta(struct mac_context *mac, uint16_t assocId);
 extern QDF_STATUS
 lim_admit_control_delete_ts(struct mac_context *mac,
 			    uint16_t assocId,
-			    tSirMacTSInfo *tsinfo,
+			    struct mac_ts_info *tsinfo,
 			    uint8_t *tsStatus, uint8_t *tspecIdx);
 
 QDF_STATUS lim_admit_control_init(struct mac_context *mac);

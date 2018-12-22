@@ -497,7 +497,7 @@ tSirNwType lim_get_nw_type(struct mac_context *mac, uint8_t channelNum,
 
 void lim_set_tspec_uapsd_mask_per_session(struct mac_context *mac,
 		struct pe_session *pe_session,
-		tSirMacTSInfo *pTsInfo, uint32_t action);
+		struct mac_ts_info *pTsInfo, uint32_t action);
 
 void lim_handle_heart_beat_timeout_for_session(struct mac_context *mac,
 		struct pe_session *pe_session);

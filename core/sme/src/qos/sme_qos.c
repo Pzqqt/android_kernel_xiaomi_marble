@@ -4145,7 +4145,8 @@ static QDF_STATUS sme_qos_process_del_ts_rsp(struct mac_context *mac, void *pMsg
  *
  * Return QDF_STATUS
  */
-static QDF_STATUS sme_qos_process_del_ts_ind(struct mac_context *mac, void *pMsgBuf)
+static QDF_STATUS sme_qos_process_del_ts_ind(struct mac_context *mac,
+					     void *pMsgBuf)
 {
 	tpSirDeltsRsp pdeltsind = (tpSirDeltsRsp) pMsgBuf;
 	struct sme_qos_sessioninfo *pSession;
@@ -4153,7 +4154,7 @@ static QDF_STATUS sme_qos_process_del_ts_ind(struct mac_context *mac, void *pMsg
 	uint8_t sessionId = pdeltsind->sessionId;
 	sme_QosEdcaAcType ac;
 	struct sme_qos_searchinfo search_key;
-	tSirMacTSInfo *tsinfo;
+	struct mac_ts_info *tsinfo;
 	enum sme_qos_wmmuptype up =
 		(enum sme_qos_wmmuptype)
 		pdeltsind->rsp.tspec.tsinfo.traffic.userPrio;

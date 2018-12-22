@@ -903,7 +903,7 @@ static void __lim_process_del_ts_req(struct mac_context *mac_ctx,
 	uint16_t aid;
 	uint8_t *body_ptr;
 	uint8_t ts_status;
-	tSirMacTSInfo *tsinfo;
+	struct mac_ts_info *tsinfo;
 	uint8_t tspec_idx;
 	uint8_t ac;
 	tpDphHashNode sta_ds_ptr = NULL;

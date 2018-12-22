@@ -1655,8 +1655,6 @@ populate_dot11f_tpc_report(struct mac_context *mac,
 			nSirStatus);
 		return QDF_STATUS_E_FAILURE;
 	}
-	/* FramesToDo: This function was "misplaced" in the move to Gen4_TVM... */
-	/* txPower = halGetRateToPwrValue( mac, staid, mac->lim.gLimCurrentChannelId, isBeacon ); */
 	tx_power = cfg_get_regulatory_max_transmit_power(mac,
 				pe_session->currentOperChannel);
 	pDot11f->tx_power = tx_power;
@@ -1666,7 +1664,8 @@ populate_dot11f_tpc_report(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 } /* End populate_dot11f_tpc_report. */
 
-void populate_dot11f_ts_info(tSirMacTSInfo *pInfo, tDot11fFfTSInfo *pDot11f)
+void populate_dot11f_ts_info(struct mac_ts_info *pInfo,
+			     tDot11fFfTSInfo *pDot11f)
 {
 	pDot11f->traffic_type = pInfo->traffic.trafficType;
 	pDot11f->tsid = pInfo->traffic.tsid;

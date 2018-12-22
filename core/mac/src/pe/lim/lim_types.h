@@ -606,7 +606,7 @@ static inline void lim_send_obss_color_collision_cfg(struct mac_context *mac_ctx
 #endif
 void lim_send_delts_req_action_frame(struct mac_context *mac, tSirMacAddr peer,
 				     uint8_t wmmTspecPresent,
-				     tSirMacTSInfo * pTsinfo,
+				     struct mac_ts_info * pTsinfo,
 				     tSirMacTspecIE * pTspecIe,
 				     struct pe_session *pe_session);
 void lim_send_addts_req_action_frame(struct mac_context *mac, tSirMacAddr peerMacAddr,

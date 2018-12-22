@@ -471,7 +471,7 @@ lim_tspec_find_by_assoc_id(struct mac_context *mac,
    \brief finding a TSPEC entry with assocId, tsinfo.direction and tsinfo.tsid
    \param    uint16_t               assocId
    \param     struct mac_context *   mac
-   \param     tSirMacTSInfo   *pTsInfo
+   \param     struct mac_ts_info   *pTsInfo
    \param         tpLimTspecInfo    pTspecList
    \param         tpLimTspecInfo   *ppInfo
    \return QDF_STATUS - status of the comparison
@@ -480,7 +480,7 @@ lim_tspec_find_by_assoc_id(struct mac_context *mac,
 static QDF_STATUS
 lim_find_tspec(struct mac_context *mac,
 	       uint16_t assocId,
-	       tSirMacTSInfo *pTsInfo,
+	       struct mac_ts_info *pTsInfo,
 	       tpLimTspecInfo pTspecList, tpLimTspecInfo *ppInfo)
 {
 	int ctspec;
@@ -746,7 +746,7 @@ QDF_STATUS lim_admit_control_add_ts(struct mac_context *mac, uint8_t *pAddr,
    \brief Delete the specified Tspec for the specified STA
    \param   struct mac_context *mac
    \param       uint16_t               assocId
-   \param       tSirMacTSInfo    *pTsInfo
+   \param       struct mac_ts_info    *pTsInfo
    \param       uint8_t               *pTsStatus
    \param       uint8_t             *ptspecIdx
    \return QDF_STATUS - status
@@ -755,7 +755,7 @@ QDF_STATUS lim_admit_control_add_ts(struct mac_context *mac, uint8_t *pAddr,
 QDF_STATUS
 lim_admit_control_delete_ts(struct mac_context *mac,
 			    uint16_t assocId,
-			    tSirMacTSInfo *pTsInfo,
+			    struct mac_ts_info *pTsInfo,
 			    uint8_t *pTsStatus, uint8_t *ptspecIdx)
 {
 	tpLimTspecInfo pTspecInfo = NULL;

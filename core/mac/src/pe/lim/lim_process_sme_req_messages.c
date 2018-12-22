@@ -3512,7 +3512,7 @@ static void __lim_process_sme_delts_req(struct mac_context *mac, uint32_t *pMsgB
 {
 	tSirMacAddr peerMacAddr;
 	uint8_t ac;
-	tSirMacTSInfo *pTsinfo;
+	struct mac_ts_info *pTsinfo;
 	tpSirDeltsReq pDeltsReq = (tpSirDeltsReq) pMsgBuf;
 	tpDphHashNode pStaDs = NULL;
 	struct pe_session *pe_session;

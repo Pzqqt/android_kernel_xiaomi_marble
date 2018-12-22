@@ -1641,7 +1641,7 @@ typedef struct sSirAddtsRspInfo {
 } tSirAddtsRspInfo, *tpSirAddtsRspInfo;
 
 typedef struct sSirDeltsReqInfo {
-	tSirMacTSInfo tsinfo;
+	struct mac_ts_info tsinfo;
 	tSirMacTspecIE tspec;
 	uint8_t wmeTspecPresent:1;
 	uint8_t wsmTspecPresent:1;

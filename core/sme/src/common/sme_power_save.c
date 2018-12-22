@@ -507,8 +507,8 @@ QDF_STATUS sme_ps_uapsd_disable(mac_handle_t mac_handle, uint32_t session_id)
  * Return: QDF_STATUS
  */
 void sme_set_tspec_uapsd_mask_per_session(struct mac_context *mac_ctx,
-		tSirMacTSInfo *ts_info,
-		uint8_t session_id)
+					  struct mac_ts_info *ts_info,
+					  uint8_t session_id)
 {
 	uint8_t user_prio = (uint8_t) ts_info->traffic.userPrio;
 	uint16_t direction = ts_info->traffic.direction;

@@ -34,15 +34,17 @@ QDF_STATUS sme_ps_uapsd_enable(mac_handle_t mac_handle, uint32_t session_id);
 QDF_STATUS sme_ps_uapsd_disable(mac_handle_t mac_handle, uint32_t session_id);
 
 /* Condition check if driver is ready to enter in PS */
-QDF_STATUS sme_enable_sta_ps_check(struct mac_context *mac_ctx, uint32_t session_id);
+QDF_STATUS sme_enable_sta_ps_check(struct mac_context *mac_ctx,
+				   uint32_t session_id);
 
 QDF_STATUS sme_ps_process_command(struct mac_context *mac_ctx,
-		uint32_t session_id,
-		enum sme_ps_cmd command);
+				  uint32_t session_id,
+				  enum sme_ps_cmd command);
 
 void sme_set_tspec_uapsd_mask_per_session(struct mac_context *mac_ctx,
-		tSirMacTSInfo *ts_info,
-		uint8_t session_id);
+					  struct mac_ts_info *ts_info,
+					  uint8_t session_id);
+
 /* Full Power Req Callback */
 typedef void (*uapsd_start_indication_cb)(void *callback_context,
 		uint32_t session_id, QDF_STATUS status);

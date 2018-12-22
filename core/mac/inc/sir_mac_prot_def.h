@@ -1211,55 +1211,10 @@ typedef struct sSirMacQoSParams {
 #define SIR_MAC_ACCESSPOLICY_HCCA   2
 #define SIR_MAC_ACCESSPOLICY_BOTH   3
 
-typedef struct sSirMacTSInfoTfc {
-#ifndef ANI_LITTLE_BIT_ENDIAN
-	uint8_t burstSizeDefn:1;
-	uint8_t reserved:7;
-#else
-	uint8_t reserved:7;
-	uint8_t burstSizeDefn:1;
-#endif
-
-#ifndef ANI_LITTLE_BIT_ENDIAN
-	uint16_t ackPolicy:2;
-	uint16_t userPrio:3;
-	uint16_t psb:1;
-	uint16_t aggregation:1;
-	uint16_t accessPolicy:2;
-	uint16_t direction:2;
-	uint16_t tsid:4;
-	uint16_t trafficType:1;
-#else
-	uint16_t trafficType:1;
-	uint16_t tsid:4;
-	uint16_t direction:2;
-	uint16_t accessPolicy:2;
-	uint16_t aggregation:1;
-	uint16_t psb:1;
-	uint16_t userPrio:3;
-	uint16_t ackPolicy:2;
-#endif
-} qdf_packed tSirMacTSInfoTfc;
-
-typedef struct sSirMacTSInfoSch {
-#ifndef ANI_LITTLE_BIT_ENDIAN
-	uint8_t rsvd:7;
-	uint8_t schedule:1;
-#else
-	uint8_t schedule:1;
-	uint8_t rsvd:7;
-#endif
-} qdf_packed tSirMacTSInfoSch;
-
-typedef struct sSirMacTSInfo {
-	tSirMacTSInfoTfc traffic;
-	tSirMacTSInfoSch schedule;
-} qdf_packed tSirMacTSInfo;
-
 typedef struct sSirMacTspecIE {
 	uint8_t type;
 	uint8_t length;
-	tSirMacTSInfo tsinfo;
+	struct mac_ts_info tsinfo;
 	uint16_t nomMsduSz;
 	uint16_t maxMsduSz;
 	uint32_t minSvcInterval;

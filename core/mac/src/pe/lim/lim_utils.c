@@ -4225,6 +4225,7 @@ void lim_update_sta_run_time_ht_info(struct mac_context *mac,
  * @mac_ctx: pointer to Global Mac structure
  * @delts_req: pointer to delete traffic stream structure
  * @peer_mac_addr: variable for peer mac address
+ * @session: pe session entry
  *
  * Function validates DelTs req originated by SME or by HAL and also
  * sends halMsg_DelTs to HAL
@@ -4234,11 +4235,12 @@ void lim_update_sta_run_time_ht_info(struct mac_context *mac,
 
 QDF_STATUS
 lim_validate_delts_req(struct mac_context *mac_ctx, tpSirDeltsReq delts_req,
-		       tSirMacAddr peer_mac_addr, struct pe_session *psession_entry)
+		       tSirMacAddr peer_mac_addr,
+		       struct pe_session *session)
 {
 	tpDphHashNode sta;
 	uint8_t ts_status;
-	tSirMacTSInfo *tsinfo;
+	struct mac_ts_info *tsinfo;
 	uint32_t i;
 	uint8_t tspec_idx;
 
@@ -4255,15 +4257,15 @@ lim_validate_delts_req(struct mac_context *mac_ctx, tpSirDeltsReq delts_req,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (LIM_IS_STA_ROLE(psession_entry)) {
+	if (LIM_IS_STA_ROLE(session)) {
 		uint32_t val;
 
 		/* station always talks to the AP */
 		sta = dph_get_hash_entry(mac_ctx, DPH_STA_HASH_INDEX_PEER,
-					&psession_entry->dph.dphHashTable);
+					&session->dph.dphHashTable);
 
 		val = sizeof(tSirMacAddr);
-		sir_copy_mac_addr(peer_mac_addr, psession_entry->bssId);
+		sir_copy_mac_addr(peer_mac_addr, session->bssId);
 
 	} else {
 		uint16_t associd;
@@ -4272,12 +4274,12 @@ lim_validate_delts_req(struct mac_context *mac_ctx, tpSirDeltsReq delts_req,
 		associd = delts_req->aid;
 		if (associd != 0)
 			sta = dph_get_hash_entry(mac_ctx, associd,
-					&psession_entry->dph.dphHashTable);
+					&session->dph.dphHashTable);
 		else
 			sta = dph_lookup_hash_entry(mac_ctx,
 						delts_req->macaddr.bytes,
 						&associd,
-						&psession_entry->dph.
+						&session->dph.
 							dphHashTable);
 
 		if (sta != NULL)
@@ -4339,8 +4341,8 @@ lim_validate_delts_req(struct mac_context *mac_ctx, tpSirDeltsReq delts_req,
 		if (QDF_STATUS_SUCCESS !=
 			lim_send_hal_msg_del_ts(mac_ctx, sta->staIndex,
 						tspec_idx, delts_req->req,
-						psession_entry->peSessionId,
-						psession_entry->bssId)) {
+						session->peSessionId,
+						session->bssId)) {
 			pe_warn("DelTs with UP: %d failed in lim_send_hal_msg_del_ts - ignoring request",
 				tsinfo->traffic.userPrio);
 			return QDF_STATUS_E_FAILURE;
@@ -4705,7 +4707,8 @@ uint8_t lim_get_channel_from_beacon(struct mac_context *mac, tpSchBeaconStruct p
 
 void lim_set_tspec_uapsd_mask_per_session(struct mac_context *mac,
 					  struct pe_session *pe_session,
-					  tSirMacTSInfo *pTsInfo, uint32_t action)
+					  struct mac_ts_info *pTsInfo,
+					  uint32_t action)
 {
 	uint8_t userPrio = (uint8_t) pTsInfo->traffic.userPrio;
 	uint16_t direction = pTsInfo->traffic.direction;

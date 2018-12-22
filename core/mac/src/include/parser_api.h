@@ -875,7 +875,8 @@ QDF_STATUS populate_dot11f_tpc_report(struct mac_context *mac,
 					struct pe_session *pe_session);
 
 /* / Populate a tDot11FfTSInfo */
-void populate_dot11f_ts_info(tSirMacTSInfo *pInfo, tDot11fFfTSInfo *pDot11f);
+void populate_dot11f_ts_info(struct mac_ts_info *pInfo,
+			     tDot11fFfTSInfo *pDot11f);
 
 void populate_dot11f_wmm(struct mac_context *mac,
 			tDot11fIEWMMInfoAp *pInfo,

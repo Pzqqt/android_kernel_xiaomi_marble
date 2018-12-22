@@ -1387,8 +1387,9 @@ void
 lim_send_delts_req_action_frame(struct mac_context *mac,
 				tSirMacAddr peer,
 				uint8_t wmmTspecPresent,
-				tSirMacTSInfo *pTsinfo,
-				tSirMacTspecIE *pTspecIe, struct pe_session *pe_session)
+				struct mac_ts_info *pTsinfo,
+				tSirMacTspecIE *pTspecIe,
+				struct pe_session *pe_session)
 {
 	uint8_t *pFrame;
 	tpSirMacMgmtHdr pMacHdr;
@@ -1400,9 +1401,8 @@ lim_send_delts_req_action_frame(struct mac_context *mac,
 	uint8_t txFlag = 0;
 	uint8_t smeSessionId = 0;
 
-	if (NULL == pe_session) {
+	if (!pe_session)
 		return;
-	}
 
 	smeSessionId = pe_session->smeSessionId;
 
@@ -1415,7 +1415,8 @@ lim_send_delts_req_action_frame(struct mac_context *mac,
 
 		nStatus = dot11f_get_packed_del_ts_size(mac, &DelTS, &nPayload);
 		if (DOT11F_FAILED(nStatus)) {
-			pe_err("Failed to calculate the packed size for a Del TS (0x%08x)", nStatus);
+			pe_err("Failed to calculate the packed size for a Del TS (0x%08x)",
+			       nStatus);
 			/* We'll fall back on the worst case scenario: */
 			nPayload = sizeof(tDot11fDelTS);
 		} else if (DOT11F_WARNED(nStatus)) {
@@ -1433,7 +1434,8 @@ lim_send_delts_req_action_frame(struct mac_context *mac,
 		nStatus =
 			dot11f_get_packed_wmm_del_ts_size(mac, &WMMDelTS, &nPayload);
 		if (DOT11F_FAILED(nStatus)) {
-			pe_err("Failed to calculate the packed size for a WMM Del TS (0x%08x)", nStatus);
+			pe_err("Failed to calculate the packed size for a WMM Del TS (0x%08x)",
+			       nStatus);
 			/* We'll fall back on the worst case scenario: */
 			nPayload = sizeof(tDot11fDelTS);
 		} else if (DOT11F_WARNED(nStatus)) {
