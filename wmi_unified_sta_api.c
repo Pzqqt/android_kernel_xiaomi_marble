@@ -323,18 +323,14 @@ QDF_STATUS wmi_unified_add_ts_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-QDF_STATUS wmi_unified_process_add_periodic_tx_ptrn_cmd(void *wmi_hdl,
-						struct periodic_tx_pattern  *
-						pAddPeriodicTxPtrnParams,
-						uint8_t vdev_id)
+QDF_STATUS wmi_unified_process_add_periodic_tx_ptrn_cmd(
+					wmi_unified_t wmi_handle,
+					struct periodic_tx_pattern *pattern,
+					uint8_t vdev_id)
 {
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
 	if (wmi_handle->ops->send_process_add_periodic_tx_ptrn_cmd)
 		return wmi_handle->ops->send_process_add_periodic_tx_ptrn_cmd(
-				wmi_handle,
-				pAddPeriodicTxPtrnParams,
-				vdev_id);
+						wmi_handle, pattern, vdev_id);
 
 	return QDF_STATUS_E_FAILURE;
 }

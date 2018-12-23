@@ -1705,16 +1705,17 @@ static QDF_STATUS send_add_ts_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
- * send_process_add_periodic_tx_ptrn_cmd_tlv - add periodic tx ptrn
+ * send_process_add_periodic_tx_ptrn_cmd_tlv() - add periodic tx pattern
  * @wmi_handle: wmi handle
- * @pAddPeriodicTxPtrnParams: tx ptrn params
+ * @pattern: tx pattern params
+ * @vdev_id: vdev id
  *
- * Retrun: CDF status
+ * Return: QDF status
  */
-static QDF_STATUS send_process_add_periodic_tx_ptrn_cmd_tlv(wmi_unified_t wmi_handle,
-						struct periodic_tx_pattern  *
-						pAddPeriodicTxPtrnParams,
-						uint8_t vdev_id)
+static QDF_STATUS send_process_add_periodic_tx_ptrn_cmd_tlv(
+					wmi_unified_t wmi_handle,
+					struct periodic_tx_pattern *pattern,
+					uint8_t vdev_id)
 {
 	WMI_ADD_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param *cmd;
 	wmi_buf_t wmi_buf;
@@ -1723,7 +1724,7 @@ static QDF_STATUS send_process_add_periodic_tx_ptrn_cmd_tlv(wmi_unified_t wmi_ha
 	uint32_t ptrn_len, ptrn_len_aligned;
 	int j;
 
-	ptrn_len = pAddPeriodicTxPtrnParams->ucPtrnSize;
+	ptrn_len = pattern->ucPtrnSize;
 	ptrn_len_aligned = roundup(ptrn_len, sizeof(uint32_t));
 	len = sizeof(WMI_ADD_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param) +
 	      WMI_TLV_HDR_SIZE + ptrn_len_aligned;
@@ -1743,16 +1744,16 @@ static QDF_STATUS send_process_add_periodic_tx_ptrn_cmd_tlv(wmi_unified_t wmi_ha
 
 	/* Pass the pattern id to delete for the corresponding vdev id */
 	cmd->vdev_id = vdev_id;
-	cmd->pattern_id = pAddPeriodicTxPtrnParams->ucPtrnId;
-	cmd->timeout = pAddPeriodicTxPtrnParams->usPtrnIntervalMs;
-	cmd->length = pAddPeriodicTxPtrnParams->ucPtrnSize;
+	cmd->pattern_id = pattern->ucPtrnId;
+	cmd->timeout = pattern->usPtrnIntervalMs;
+	cmd->length = pattern->ucPtrnSize;
 
 	/* Pattern info */
 	buf_ptr += sizeof(WMI_ADD_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, ptrn_len_aligned);
 	buf_ptr += WMI_TLV_HDR_SIZE;
-	qdf_mem_copy(buf_ptr, pAddPeriodicTxPtrnParams->ucPattern, ptrn_len);
-	for (j = 0; j < pAddPeriodicTxPtrnParams->ucPtrnSize; j++)
+	qdf_mem_copy(buf_ptr, pattern->ucPattern, ptrn_len);
+	for (j = 0; j < pattern->ucPtrnSize; j++)
 		WMI_LOGD("%s: Add Ptrn: %02x", __func__, buf_ptr[j] & 0xff);
 
 	WMI_LOGD("%s: Add ptrn id: %d vdev_id: %d",
@@ -1770,14 +1771,15 @@ static QDF_STATUS send_process_add_periodic_tx_ptrn_cmd_tlv(wmi_unified_t wmi_ha
 }
 
 /**
- * send_process_del_periodic_tx_ptrn_cmd_tlv - del periodic tx ptrn
+ * send_process_del_periodic_tx_ptrn_cmd_tlv() - del periodic tx pattern
  * @wmi_handle: wmi handle
  * @vdev_id: vdev id
  * @pattern_id: pattern id
  *
- * Retrun: CDF status
+ * Return: QDF status
  */
-static QDF_STATUS send_process_del_periodic_tx_ptrn_cmd_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS send_process_del_periodic_tx_ptrn_cmd_tlv(
+						wmi_unified_t wmi_handle,
 						uint8_t vdev_id,
 						uint8_t pattern_id)
 {
