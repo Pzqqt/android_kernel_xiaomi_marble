@@ -884,7 +884,8 @@ QDF_STATUS
 lim_send_hal_msg_del_ts(struct mac_context *mac,
 			uint16_t staIdx,
 			uint8_t tspecIdx,
-			tSirDeltsReqInfo delts, uint8_t sessionId, uint8_t *bssId)
+			struct delts_req_info delts,
+			uint8_t sessionId, uint8_t *bssId)
 {
 	struct scheduler_msg msg = {0};
 	tpDelTsParams pDelTsParam;
@@ -918,7 +919,7 @@ lim_send_hal_msg_del_ts(struct mac_context *mac,
 	if (mac->mlme_cfg->lfr.lfr3_roaming_offload &&
 	    pe_session->is11Rconnection) {
 		qdf_mem_copy(&pDelTsParam->delTsInfo, &delts,
-			     sizeof(tSirDeltsReqInfo));
+			     sizeof(struct delts_req_info));
 		pDelTsParam->setRICparams = 1;
 	}
 #endif

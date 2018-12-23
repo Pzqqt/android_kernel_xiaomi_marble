@@ -89,7 +89,7 @@ QDF_STATUS lim_send_hal_msg_add_ts(struct mac_context *mac,
 QDF_STATUS lim_send_hal_msg_del_ts(struct mac_context *mac,
 				      uint16_t staIdx,
 				      uint8_t tspecIdx,
-				      tSirDeltsReqInfo delts,
+				      struct delts_req_info delts,
 				      uint8_t sessionId, uint8_t *bssId);
 void lim_process_hal_add_ts_rsp(struct mac_context *mac,
 				struct scheduler_msg *limMsg);

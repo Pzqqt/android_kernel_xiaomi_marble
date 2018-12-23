@@ -982,7 +982,7 @@ typedef struct {
 	uint8_t sessionId;
 	uint8_t userPrio;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	tSirDeltsReqInfo delTsInfo;
+	struct delts_req_info delTsInfo;
 	uint8_t setRICparams;
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 } tDelTsParams, *tpDelTsParams;

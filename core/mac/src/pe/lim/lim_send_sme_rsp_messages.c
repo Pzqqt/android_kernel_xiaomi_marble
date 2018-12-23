@@ -1494,7 +1494,7 @@ lim_send_sme_delts_rsp(struct mac_context *mac, tpSirDeltsReq delts, uint32_t st
 		rsp->aid = delts->aid;
 		qdf_copy_macaddr(&rsp->macaddr, &delts->macaddr);
 		qdf_mem_copy((uint8_t *) &rsp->rsp, (uint8_t *) &delts->req,
-			     sizeof(tSirDeltsReqInfo));
+			     sizeof(struct delts_req_info));
 	}
 
 	rsp->messageType = eWNI_SME_DELTS_RSP;
@@ -1523,8 +1523,8 @@ lim_send_sme_delts_rsp(struct mac_context *mac, tpSirDeltsReq delts, uint32_t st
 }
 
 void
-lim_send_sme_delts_ind(struct mac_context *mac, tpSirDeltsReqInfo delts, uint16_t aid,
-		       struct pe_session *pe_session)
+lim_send_sme_delts_ind(struct mac_context *mac, struct delts_req_info *delts,
+		       uint16_t aid, struct pe_session *pe_session)
 {
 	tpSirDeltsRsp rsp;
 	struct scheduler_msg mmhMsg = {0};

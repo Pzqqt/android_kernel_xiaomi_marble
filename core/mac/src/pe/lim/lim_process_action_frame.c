@@ -896,7 +896,7 @@ static void __lim_process_del_ts_req(struct mac_context *mac_ctx,
 		uint8_t *rx_pkt_info, struct pe_session *session)
 {
 	QDF_STATUS retval;
-	tSirDeltsReqInfo delts;
+	struct delts_req_info delts;
 	tpSirMacMgmtHdr mac_hdr;
 	tpDphHashNode sta_ptr;
 	uint32_t frame_len;

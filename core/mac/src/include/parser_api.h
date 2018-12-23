@@ -626,7 +626,7 @@ sir_convert_addts_rsp2_struct(struct mac_context *mac,
 QDF_STATUS
 sir_convert_delts_req2_struct(struct mac_context *mac,
 			uint8_t *frame, uint32_t len,
-			tSirDeltsReqInfo *delTs);
+			struct delts_req_info *delTs);
 QDF_STATUS
 sir_convert_qos_map_configure_frame2_struct(struct mac_context *mac,
 					uint8_t *pFrame, uint32_t nFrame,

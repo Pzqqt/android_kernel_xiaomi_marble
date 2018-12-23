@@ -1640,14 +1640,6 @@ typedef struct sSirAddtsRspInfo {
 	uint8_t schedulePresent:1;
 } tSirAddtsRspInfo, *tpSirAddtsRspInfo;
 
-typedef struct sSirDeltsReqInfo {
-	struct mac_ts_info tsinfo;
-	struct mac_tspec_ie tspec;
-	uint8_t wmeTspecPresent:1;
-	uint8_t wsmTspecPresent:1;
-	uint8_t lleTspecPresent:1;
-} tSirDeltsReqInfo, *tpSirDeltsReqInfo;
-
 /* / Add a tspec as defined */
 typedef struct sSirAddtsReq {
 	uint16_t messageType;   /* eWNI_SME_ADDTS_REQ */
@@ -1678,7 +1670,7 @@ typedef struct sSirDeltsReq {
 	uint16_t aid;           /* use 0 if macAddr is being specified */
 	struct qdf_mac_addr macaddr;    /* only on AP to specify the STA */
 	uint8_t rspReqd;
-	tSirDeltsReqInfo req;
+	struct delts_req_info req;
 } tSirDeltsReq, *tpSirDeltsReq;
 
 typedef struct sSirDeltsRsp {
@@ -1689,7 +1681,7 @@ typedef struct sSirDeltsRsp {
 	uint32_t rc;
 	uint16_t aid;           /* use 0 if macAddr is being specified */
 	struct qdf_mac_addr macaddr;    /* only on AP to specify the STA */
-	tSirDeltsReqInfo rsp;
+	struct delts_req_info rsp;
 } tSirDeltsRsp, *tpSirDeltsRsp;
 
 #define SIR_QOS_NUM_AC_MAX 4

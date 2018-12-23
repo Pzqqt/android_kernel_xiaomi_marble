@@ -4433,7 +4433,7 @@ sir_convert_addts_rsp2_struct(struct mac_context *mac,
 QDF_STATUS
 sir_convert_delts_req2_struct(struct mac_context *mac,
 			      uint8_t *pFrame,
-			      uint32_t nFrame, tSirDeltsReqInfo *pDelTs)
+			      uint32_t nFrame, struct delts_req_info *pDelTs)
 {
 	tDot11fDelTS delts = { {0} };
 	tDot11fWMMDelTS wmmdelts = { {0} };
@@ -4447,7 +4447,7 @@ sir_convert_delts_req2_struct(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Zero-init our [out] parameter, */
-	qdf_mem_set((uint8_t *) pDelTs, sizeof(tSirDeltsReqInfo), 0);
+	qdf_mem_set(pDelTs, sizeof(*pDelTs), 0);
 
 	/* delegate to the framesc-generated code, */
 	switch (*pFrame) {
