@@ -8178,7 +8178,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 
 	case WMA_DEL_TS_REQ:
-		wma_del_ts_req(wma_handle, (tDelTsParams *) msg->bodyptr);
+		wma_del_ts_req(wma_handle, msg->bodyptr);
 		break;
 
 	case WMA_AGGR_QOS_REQ:

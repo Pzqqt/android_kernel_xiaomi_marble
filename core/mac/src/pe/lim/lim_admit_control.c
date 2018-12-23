@@ -888,10 +888,10 @@ lim_send_hal_msg_del_ts(struct mac_context *mac,
 			uint8_t sessionId, uint8_t *bssId)
 {
 	struct scheduler_msg msg = {0};
-	tpDelTsParams pDelTsParam;
+	struct del_ts_params *pDelTsParam;
 	struct pe_session *pe_session = NULL;
 
-	pDelTsParam = qdf_mem_malloc(sizeof(tDelTsParams));
+	pDelTsParam = qdf_mem_malloc(sizeof(*pDelTsParam));
 	if (!pDelTsParam)
 		return QDF_STATUS_E_NOMEM;
 

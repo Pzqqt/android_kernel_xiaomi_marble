@@ -2992,7 +2992,7 @@ int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len)
  *
  * Return: none
  */
-void wma_del_ts_req(tp_wma_handle wma, tDelTsParams *msg)
+void wma_del_ts_req(tp_wma_handle wma, struct del_ts_params *msg)
 {
 	if (!wma_is_vdev_valid(msg->sessionId)) {
 		WMA_LOGE("%s: vdev id:%d is not active ", __func__,

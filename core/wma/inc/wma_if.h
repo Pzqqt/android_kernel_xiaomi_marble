@@ -940,31 +940,6 @@ typedef struct sLinkStateParams {
 } tLinkStateParams, *tpLinkStateParams;
 
 /**
- * struct tDelTsParams - DELTS related parameters
- * @staIdx: station index
- * @tspecIdx: TSPEC identifier uniquely identifying a TSPEC for a STA in a BSS
- * @bssId: BSSID
- * @sessionId: session id
- * @userPrio: user priority
- * @delTsInfo: DELTS info
- * @setRICparams: RIC parameters
- */
-typedef struct {
-	uint16_t staIdx;
-	uint16_t tspecIdx;
-	tSirMacAddr bssId;
-	uint8_t sessionId;
-	uint8_t userPrio;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	struct delts_req_info delTsInfo;
-	uint8_t setRICparams;
-#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
-} tDelTsParams, *tpDelTsParams;
-
-typedef QDF_STATUS (*tHalMsgCallback)(struct mac_context *mac, uint32_t mesgId,
-				      void *mesgParam);
-
-/**
  * struct tEdcaParams - EDCA parameters
  * @bssIdx: BSSID index
  * @acbe: best effort access category

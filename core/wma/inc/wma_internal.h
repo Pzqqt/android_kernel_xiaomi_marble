@@ -1074,7 +1074,7 @@ int wma_d0_wow_disable_ack_event(void *handle, uint8_t *event, uint32_t len);
 
 int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len);
 
-void wma_del_ts_req(tp_wma_handle wma, tDelTsParams *msg);
+void wma_del_ts_req(tp_wma_handle wma, struct del_ts_params *msg);
 
 /**
  * wma_aggr_qos_req() - send aggr qos request to fw
