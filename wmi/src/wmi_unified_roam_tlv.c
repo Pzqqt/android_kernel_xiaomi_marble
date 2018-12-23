@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -696,7 +696,7 @@ static QDF_STATUS send_set_ric_req_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_ric_tspec *tspec_param;
 	wmi_buf_t buf;
 	uint8_t *buf_ptr;
-	struct mac_tspec_ie *ptspecIE = NULL;
+	struct mac_tspec_ie *tspec_ie = NULL;
 	int32_t len = sizeof(wmi_ric_request_fixed_param) +
 		      WMI_TLV_HDR_SIZE + sizeof(wmi_ric_tspec);
 
@@ -728,33 +728,33 @@ static QDF_STATUS send_set_ric_req_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_ric_tspec));
 
 	if (is_add_ts)
-		ptspecIE = &(((struct add_ts_param *) msg)->tspec);
+		tspec_ie = &(((struct add_ts_param *) msg)->tspec);
 	else
-		ptspecIE = &(((struct del_ts_params *) msg)->delTsInfo.tspec);
-	if (ptspecIE) {
+		tspec_ie = &(((struct del_ts_params *) msg)->delTsInfo.tspec);
+	if (tspec_ie) {
 		/* Fill the tsinfo in the format expected by firmware */
 #ifndef ANI_LITTLE_BIT_ENDIAN
 		qdf_mem_copy(((uint8_t *) &tspec_param->ts_info) + 1,
-			     ((uint8_t *) &ptspecIE->tsinfo) + 1, 2);
+			     ((uint8_t *) &tspec_ie->tsinfo) + 1, 2);
 #else
 		qdf_mem_copy(((uint8_t *) &tspec_param->ts_info),
-			     ((uint8_t *) &ptspecIE->tsinfo) + 1, 2);
+			     ((uint8_t *) &tspec_ie->tsinfo) + 1, 2);
 #endif /* ANI_LITTLE_BIT_ENDIAN */
 
-		tspec_param->nominal_msdu_size = ptspecIE->nomMsduSz;
-		tspec_param->maximum_msdu_size = ptspecIE->maxMsduSz;
-		tspec_param->min_service_interval = ptspecIE->minSvcInterval;
-		tspec_param->max_service_interval = ptspecIE->maxSvcInterval;
-		tspec_param->inactivity_interval = ptspecIE->inactInterval;
-		tspec_param->suspension_interval = ptspecIE->suspendInterval;
-		tspec_param->svc_start_time = ptspecIE->svcStartTime;
-		tspec_param->min_data_rate = ptspecIE->minDataRate;
-		tspec_param->mean_data_rate = ptspecIE->meanDataRate;
-		tspec_param->peak_data_rate = ptspecIE->peakDataRate;
-		tspec_param->max_burst_size = ptspecIE->maxBurstSz;
-		tspec_param->delay_bound = ptspecIE->delayBound;
-		tspec_param->min_phy_rate = ptspecIE->minPhyRate;
-		tspec_param->surplus_bw_allowance = ptspecIE->surplusBw;
+		tspec_param->nominal_msdu_size = tspec_ie->nomMsduSz;
+		tspec_param->maximum_msdu_size = tspec_ie->maxMsduSz;
+		tspec_param->min_service_interval = tspec_ie->minSvcInterval;
+		tspec_param->max_service_interval = tspec_ie->maxSvcInterval;
+		tspec_param->inactivity_interval = tspec_ie->inactInterval;
+		tspec_param->suspension_interval = tspec_ie->suspendInterval;
+		tspec_param->svc_start_time = tspec_ie->svcStartTime;
+		tspec_param->min_data_rate = tspec_ie->minDataRate;
+		tspec_param->mean_data_rate = tspec_ie->meanDataRate;
+		tspec_param->peak_data_rate = tspec_ie->peakDataRate;
+		tspec_param->max_burst_size = tspec_ie->maxBurstSz;
+		tspec_param->delay_bound = tspec_ie->delayBound;
+		tspec_param->min_phy_rate = tspec_ie->minPhyRate;
+		tspec_param->surplus_bw_allowance = tspec_ie->surplusBw;
 		tspec_param->medium_time = 0;
 	}
 	WMI_LOGI("%s: Set RIC Req is_add_ts:%d", __func__, is_add_ts);
