@@ -304,24 +304,25 @@ QDF_STATUS wmi_unified_add_ts_cmd(void *wmi_hdl,
 				  struct add_ts_param *msg);
 
 /**
- * wmi_unified_process_add_periodic_tx_ptrn_cmd - add periodic tx ptrn
+ * wmi_unified_process_add_periodic_tx_ptrn_cmd() - add periodic tx pattern
  * @wmi_handle: wmi handle
- * @pAddPeriodicTxPtrnParams: tx ptrn params
+ * @pattern: tx pattern parameters
+ * @vdev_id: vdev id
  *
- * Retrun: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_process_add_periodic_tx_ptrn_cmd(void *wmi_hdl,
-						struct periodic_tx_pattern  *
-						pAddPeriodicTxPtrnParams,
-						uint8_t vdev_id);
+QDF_STATUS wmi_unified_process_add_periodic_tx_ptrn_cmd(
+					wmi_unified_t wmi_handle,
+					struct periodic_tx_pattern *pattern,
+					uint8_t vdev_id);
 
 /**
- * wmi_unified_process_del_periodic_tx_ptrn_cmd - del periodic tx ptrn
+ * wmi_unified_process_del_periodic_tx_ptrn_cmd() - del periodic tx ptrn
  * @wmi_handle: wmi handle
  * @vdev_id: vdev id
  * @pattern_id: pattern id
  *
- * Retrun: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_process_del_periodic_tx_ptrn_cmd(void *wmi_hdl,
 							uint8_t vdev_id,
