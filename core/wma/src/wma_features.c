@@ -3514,15 +3514,14 @@ QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma)
 #endif /* FEATURE_WLAN_RMC */
 
 /**
- * wma_process_add_periodic_tx_ptrn_ind - add periodic tx ptrn
+ * wma_process_add_periodic_tx_ptrn_ind() - add periodic tx pattern
  * @handle: wma handle
- * @pAddPeriodicTxPtrnParams: tx ptrn params
+ * @pattern: tx pattern params
  *
- * Retrun: QDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
-						tSirAddPeriodicTxPtrn *
-						pAddPeriodicTxPtrnParams)
+						tSirAddPeriodicTxPtrn *pattern)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	struct periodic_tx_pattern *params_ptr;
@@ -3536,10 +3535,10 @@ QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 	}
 
 	if (!wma_find_vdev_by_addr(wma_handle,
-				   pAddPeriodicTxPtrnParams->mac_address.bytes,
+				   pattern->mac_address.bytes,
 				   &vdev_id)) {
 		WMA_LOGE("%s: Failed to find vdev id for %pM", __func__,
-			 pAddPeriodicTxPtrnParams->mac_address.bytes);
+			 pattern->mac_address.bytes);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -3547,19 +3546,16 @@ QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 	if (!params_ptr)
 		return QDF_STATUS_E_NOMEM;
 
-	params_ptr->ucPtrnId = pAddPeriodicTxPtrnParams->ucPtrnId;
-	params_ptr->ucPtrnSize = pAddPeriodicTxPtrnParams->ucPtrnSize;
-	params_ptr->usPtrnIntervalMs =
-				pAddPeriodicTxPtrnParams->usPtrnIntervalMs;
-	qdf_mem_copy(&params_ptr->mac_address,
-			&pAddPeriodicTxPtrnParams->mac_address,
-			sizeof(struct qdf_mac_addr));
-	qdf_mem_copy(params_ptr->ucPattern,
-			pAddPeriodicTxPtrnParams->ucPattern,
-			params_ptr->ucPtrnSize);
+	params_ptr->ucPtrnId = pattern->ucPtrnId;
+	params_ptr->ucPtrnSize = pattern->ucPtrnSize;
+	params_ptr->usPtrnIntervalMs = pattern->usPtrnIntervalMs;
+	qdf_mem_copy(&params_ptr->mac_address, &pattern->mac_address,
+		     sizeof(struct qdf_mac_addr));
+	qdf_mem_copy(params_ptr->ucPattern, pattern->ucPattern,
+		     params_ptr->ucPtrnSize);
 
-	status =  wmi_unified_process_add_periodic_tx_ptrn_cmd(
-			wma_handle->wmi_handle,	params_ptr, vdev_id);
+	status = wmi_unified_process_add_periodic_tx_ptrn_cmd(
+				wma_handle->wmi_handle, params_ptr, vdev_id);
 
 	qdf_mem_free(params_ptr);
 	return status;
@@ -3570,7 +3566,7 @@ QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
  * @handle: wma handle
  * @pDelPeriodicTxPtrnParams: tx ptrn params
  *
- * Retrun: QDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_process_del_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 						tSirDelPeriodicTxPtrn *

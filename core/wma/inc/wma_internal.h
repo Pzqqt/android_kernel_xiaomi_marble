@@ -1140,8 +1140,7 @@ QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma)
 #endif
 
 QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
-						tSirAddPeriodicTxPtrn *
-						pAddPeriodicTxPtrnParams);
+						tSirAddPeriodicTxPtrn *pattern);
 
 QDF_STATUS wma_process_del_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 						tSirDelPeriodicTxPtrn *
