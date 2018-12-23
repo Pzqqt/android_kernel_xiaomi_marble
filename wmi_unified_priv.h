@@ -821,14 +821,14 @@ QDF_STATUS (*send_aggr_qos_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_add_ts_cmd)(wmi_unified_t wmi_handle,
 		 struct add_ts_param *msg);
 
-QDF_STATUS (*send_process_add_periodic_tx_ptrn_cmd)(wmi_unified_t wmi_handle,
-						struct periodic_tx_pattern  *
-						pAddPeriodicTxPtrnParams,
-						uint8_t vdev_id);
+QDF_STATUS (*send_process_add_periodic_tx_ptrn_cmd)(
+					wmi_unified_t wmi_handle,
+					struct periodic_tx_pattern *pattern,
+					uint8_t vdev_id);
 
 QDF_STATUS (*send_process_del_periodic_tx_ptrn_cmd)(wmi_unified_t wmi_handle,
-						uint8_t vdev_id,
-						uint8_t pattern_id);
+						    uint8_t vdev_id,
+						    uint8_t pattern_id);
 
 QDF_STATUS (*send_set_auto_shutdown_timer_cmd)(wmi_unified_t wmi_handle,
 						  uint32_t timer_val);
