@@ -940,32 +940,6 @@ typedef struct sLinkStateParams {
 } tLinkStateParams, *tpLinkStateParams;
 
 /**
- * struct tAddTsParams - ADDTS related parameters
- * @staIdx: station index
- * @tspecIdx: TSPEC handler uniquely identifying a TSPEC for a STA in a BSS
- * @tspec: tspec value
- * @status: QDF status
- * @sessionId: session id
- * @tsm_interval: TSM interval period passed from lim to WMA
- * @setRICparams: RIC parameters
- * @sme_session_id: sme session id
- */
-typedef struct {
-	uint16_t staIdx;
-	uint16_t tspecIdx;
-	struct mac_tspec_ie tspec;
-	QDF_STATUS status;
-	uint8_t sessionId;
-#ifdef FEATURE_WLAN_ESE
-	uint16_t tsm_interval;
-#endif /* FEATURE_WLAN_ESE */
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	uint8_t setRICparams;
-#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
-	uint8_t sme_session_id;
-} tAddTsParams, *tpAddTsParams;
-
-/**
  * struct tDelTsParams - DELTS related parameters
  * @staIdx: station index
  * @tspecIdx: TSPEC identifier uniquely identifying a TSPEC for a STA in a BSS

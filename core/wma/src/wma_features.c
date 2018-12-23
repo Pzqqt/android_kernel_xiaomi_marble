@@ -3028,7 +3028,7 @@ void wma_aggr_qos_req(tp_wma_handle wma,
  *
  * Return: QDF_STATUS_E_FAILURE or QDF_STATUS_SUCCESS
  */
-static QDF_STATUS wma_set_tsm_interval(tAddTsParams *req)
+static QDF_STATUS wma_set_tsm_interval(struct add_ts_param *req)
 {
 	/*
 	 * msmt_interval is in unit called TU (1 TU = 1024 us)
@@ -3052,7 +3052,7 @@ static QDF_STATUS wma_set_tsm_interval(tAddTsParams *req)
 	return QDF_STATUS_SUCCESS;
 }
 #else
-static inline QDF_STATUS wma_set_tsm_interval(tAddTsParams *req)
+static inline QDF_STATUS wma_set_tsm_interval(struct add_ts_param *req)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -3065,7 +3065,7 @@ static inline QDF_STATUS wma_set_tsm_interval(tAddTsParams *req)
  *
  * Return: none
  */
-void wma_add_ts_req(tp_wma_handle wma, tAddTsParams *msg)
+void wma_add_ts_req(tp_wma_handle wma, struct add_ts_param *msg)
 {
 	struct add_ts_param cmd = {0};
 

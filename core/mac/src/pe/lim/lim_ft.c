@@ -862,7 +862,7 @@ void lim_process_ft_aggr_qos_rsp(struct mac_context *mac,
 				 struct scheduler_msg *limMsg)
 {
 	struct aggr_add_ts_param *pAggrQosRspMsg;
-	tAddTsParams addTsParam = { 0 };
+	struct add_ts_param addTsParam = { 0 };
 	tpDphHashNode pSta = NULL;
 	uint16_t assocId = 0;
 	tSirMacAddr peerMacAddr;

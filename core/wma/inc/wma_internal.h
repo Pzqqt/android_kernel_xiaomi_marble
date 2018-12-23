@@ -1090,7 +1090,7 @@ void wma_del_ts_req(tp_wma_handle wma, tDelTsParams *msg);
 void wma_aggr_qos_req(tp_wma_handle wma,
 		      struct aggr_add_ts_param *pAggrQosRspMsg);
 
-void wma_add_ts_req(tp_wma_handle wma, tAddTsParams *msg);
+void wma_add_ts_req(tp_wma_handle wma, struct add_ts_param *msg);
 
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,

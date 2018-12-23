@@ -8174,7 +8174,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 
 	case WMA_ADD_TS_REQ:
-		wma_add_ts_req(wma_handle, (tAddTsParams *) msg->bodyptr);
+		wma_add_ts_req(wma_handle, msg->bodyptr);
 		break;
 
 	case WMA_DEL_TS_REQ:

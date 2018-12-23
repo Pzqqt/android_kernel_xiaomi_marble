@@ -821,7 +821,7 @@ lim_send_hal_msg_add_ts(struct mac_context *mac,
 #endif
 {
 	struct scheduler_msg msg = {0};
-	tpAddTsParams pAddTsParam;
+	struct add_ts_param *pAddTsParam;
 
 	struct pe_session *pe_session = pe_find_session_by_session_id(mac, sessionId);
 
@@ -831,7 +831,7 @@ lim_send_hal_msg_add_ts(struct mac_context *mac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pAddTsParam = qdf_mem_malloc(sizeof(tAddTsParams));
+	pAddTsParam = qdf_mem_malloc(sizeof(*pAddTsParam));
 	if (!pAddTsParam)
 		return QDF_STATUS_E_NOMEM;
 
@@ -949,7 +949,7 @@ err:
 void lim_process_hal_add_ts_rsp(struct mac_context *mac,
 				struct scheduler_msg *limMsg)
 {
-	tpAddTsParams pAddTsRspMsg = NULL;
+	struct add_ts_param *pAddTsRspMsg = NULL;
 	tpDphHashNode pSta = NULL;
 	uint16_t assocId = 0;
 	tSirMacAddr peerMacAddr;
@@ -961,12 +961,12 @@ void lim_process_hal_add_ts_rsp(struct mac_context *mac,
 	 */
 	SET_LIM_PROCESS_DEFD_MESGS(mac, true);
 
-	if (NULL == limMsg->bodyptr) {
+	if (!limMsg->bodyptr) {
 		pe_err("Received WMA_ADD_TS_RSP with NULL");
 		goto end;
 	}
 
-	pAddTsRspMsg = (tpAddTsParams) (limMsg->bodyptr);
+	pAddTsRspMsg = limMsg->bodyptr;
 
 	/* 090803: Use pe_find_session_by_session_id() to obtain the PE session context */
 	/* from the sessionId in the Rsp Msg from HAL */
