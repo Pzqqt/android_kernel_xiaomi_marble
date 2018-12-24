@@ -1656,9 +1656,7 @@ static void init_config_param(struct mac_context *mac)
 	mac->roam.configParam.uCfgDot11Mode = eCSR_CFG_DOT11_MODE_AUTO;
 	mac->roam.configParam.HeartbeatThresh24 = 40;
 	mac->roam.configParam.HeartbeatThresh50 = 40;
-	mac->mlme_cfg->gen.enabled_11d = false;
 	mac->roam.configParam.Is11eSupportEnabled = true;
-	mac->mlme_cfg->gen.enabled_11h = true;
 	mac->roam.configParam.WMMSupportMode = eCsrRoamWmmAuto;
 	mac->roam.configParam.ProprietaryRatesEnabled = true;
 	for (i = 0; i < CSR_NUM_RSSI_CAT; i++)

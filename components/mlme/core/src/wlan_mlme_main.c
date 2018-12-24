@@ -353,8 +353,8 @@ static void mlme_init_generic_cfg(struct wlan_objmgr_psoc *psoc,
 	mlme_init_pmf_cfg(psoc, gen);
 	mlme_init_lpass_support_cfg(psoc, gen);
 
-	gen->enabled_11h = cfg_default(CFG_11H_SUPPORT_ENABLED);
-	gen->enabled_11d = cfg_default(CFG_11D_SUPPORT_ENABLED);
+	gen->enabled_11h = cfg_get(psoc, CFG_11H_SUPPORT_ENABLED);
+	gen->enabled_11d = cfg_get(psoc, CFG_11D_SUPPORT_ENABLED);
 	gen->enable_beacon_reception_stats =
 		cfg_get(psoc, CFG_ENABLE_BEACON_RECEPTION_STATS);
 }
