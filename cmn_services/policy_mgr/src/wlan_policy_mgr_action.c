@@ -925,21 +925,20 @@ QDF_STATUS policy_mgr_validate_dbs_switch(
 		return status;
 	}
 
-	if (hw_mode.sbs_cap) {
-		if ((action == PM_SBS) || (action == PM_SBS_DOWNGRADE)) {
-			if (!policy_mgr_is_hw_sbs_capable(psoc)) {
-				/* No action */
-				policy_mgr_notice("firmware is not sbs capable");
-				return QDF_STATUS_E_NOSUPPORT;
-			}
-			/* current mode is already SBS nothing to be
-			 * done
-			 */
-			 policy_mgr_notice("current mode is already SBS");
-			return QDF_STATUS_E_ALREADY;
-		} else {
-			return QDF_STATUS_SUCCESS;
+	if ((action == PM_SBS) || (action == PM_SBS_DOWNGRADE)) {
+		if (!policy_mgr_is_hw_sbs_capable(psoc)) {
+			/* No action */
+			policy_mgr_notice("firmware is not sbs capable");
+			return QDF_STATUS_E_NOSUPPORT;
 		}
+		/* current mode is already SBS nothing to be
+		 * done
+		 */
+		if (hw_mode.sbs_cap && action == PM_SBS) {
+			policy_mgr_notice("current mode is already SBS");
+			return QDF_STATUS_E_ALREADY;
+		}
+		return QDF_STATUS_SUCCESS;
 	}
 
 	if (!hw_mode.dbs_cap) {
