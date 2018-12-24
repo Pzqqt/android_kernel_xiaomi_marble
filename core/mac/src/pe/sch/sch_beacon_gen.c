@@ -429,6 +429,9 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 			}
 		}
 	}
+	if (mac_ctx->rrm.rrmSmeContext.rrmConfig.rrm_enabled)
+		populate_dot11f_rrm_ie(mac_ctx, &bcn_2->RRMEnabledCap,
+			session);
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	/* populate proprietary IE for MDM device operating in AP-MCC */
