@@ -528,10 +528,13 @@ struct wmi_btm_config {
  * struct wmi_bss_load_config - BSS load trigger parameters
  * @vdev_id: VDEV on which the parameters should be applied
  * @bss_load_threshold: BSS load threshold after which roam scan should trigger
+ * @bss_load_sample_time: Time duration in milliseconds for which the bss load
+ * trigger needs to be enabled
  */
 struct wmi_bss_load_config {
 	uint32_t vdev_id;
 	uint32_t bss_load_threshold;
+	uint32_t bss_load_sample_time;
 };
 
 /**
