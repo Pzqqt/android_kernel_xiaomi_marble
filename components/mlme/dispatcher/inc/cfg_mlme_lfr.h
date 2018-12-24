@@ -1851,7 +1851,7 @@
  * enable_bss_load_roam_trigger - enable/disable bss load based roam trigger
  * @Min: 0
  * @Max: 1
- * @Default: 1
+ * @Default: 0
  *
  * This ini when enabled, allows the firmware to roam when bss load outpaces
  * the configured bss load threshold. When this ini is disabled, firmware
@@ -1867,7 +1867,7 @@
  */
 #define CFG_ENABLE_BSS_LOAD_TRIGGERED_ROAM CFG_INI_BOOL( \
 			"enable_bss_load_roam_trigger", \
-			1, \
+			0, \
 			"enable bss load triggered roaming")
 
 /*
@@ -1896,6 +1896,29 @@
 		CFG_VALUE_OR_DEFAULT, \
 		"bss load threshold")
 
+/*
+ * <ini>
+ * bss_load_sample_time - Time in milliseconds for which the bss load values
+ * obtained from the beacons is sampled.
+ * @Min: 0
+ * @Max: 0xffffffff
+ * @Default: 10000
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_BSS_LOAD_SAMPLE_TIME CFG_INI_UINT( \
+			"bss_load_sample_time", \
+			0, \
+			0xffffffff, \
+			10000, \
+			CFG_VALUE_OR_DEFAULT, \
+			"bss load sampling time")
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /*
@@ -2024,6 +2047,7 @@
 	CFG(CFG_LFR_DELAY_BEFORE_VDEV_STOP) \
 	CFG(CFG_ENABLE_BSS_LOAD_TRIGGERED_ROAM) \
 	CFG(CFG_BSS_LOAD_THRESHOLD) \
+	CFG(CFG_BSS_LOAD_SAMPLE_TIME) \
 	ROAM_OFFLOAD_ALL \
 	LFR_ESE_ALL
 

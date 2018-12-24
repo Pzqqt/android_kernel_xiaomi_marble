@@ -1414,7 +1414,6 @@ static QDF_STATUS wma_roam_scan_btm_offload(tp_wma_handle wma_handle,
 /**
  * wma_send_roam_bss_load_config() - API to send load bss trigger
  * related parameters to fw
- *
  * @handle: WMA handle
  * @roam_req: bss load config parameters from csr to be sent to fw
  *
@@ -1432,8 +1431,9 @@ void wma_send_roam_bss_load_config(WMA_HANDLE handle,
 		return;
 	}
 
-	WMA_LOGD("%s: Sending bss load trig params vdev %u bss_load_threshold %u",
-		 __func__, params->vdev_id, params->bss_load_threshold);
+	WMA_LOGD("%s: Sending bss load trig params vdev %u bss_load_threshold %u bss_load_sample_time: %u",
+		 __func__, params->vdev_id, params->bss_load_threshold,
+		 params->bss_load_sample_time);
 
 	status = wmi_unified_send_bss_load_config(wma_handle->wmi_handle,
 						  params);
@@ -1631,7 +1631,8 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		}
 
 		/*
-		 * Send 11k offload enable to FW as part of RSO Start
+		 * Send 11k offload enable and bss load trigger parameters
+		 * to FW as part of RSO Start
 		 */
 		if (roam_req->reason == REASON_CTX_INIT) {
 			qdf_status = wma_send_offload_11k_params(wma_handle,
@@ -1641,11 +1642,12 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 					 qdf_status);
 				break;
 			}
-		}
 
-		if (roam_req->bss_load_trig_enabled) {
-			bss_load_cfg = &roam_req->bss_load_config;
-			wma_send_roam_bss_load_config(wma_handle, bss_load_cfg);
+			if (roam_req->bss_load_trig_enabled) {
+				bss_load_cfg = &roam_req->bss_load_config;
+				wma_send_roam_bss_load_config(wma_handle,
+							      bss_load_cfg);
+			}
 		}
 		break;
 

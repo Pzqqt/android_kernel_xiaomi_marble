@@ -17208,6 +17208,8 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 			mac_ctx->mlme_cfg->lfr.bss_load_trig.enabled;
 	req_buf->bss_load_config.bss_load_threshold =
 		mac_ctx->mlme_cfg->lfr.bss_load_trig.threshold;
+	req_buf->bss_load_config.bss_load_sample_time =
+		mac_ctx->mlme_cfg->lfr.bss_load_trig.sample_time;
 	req_buf->bss_load_config.vdev_id = session->sessionId;
 
 	req_buf->ReassocFailureTimeout =

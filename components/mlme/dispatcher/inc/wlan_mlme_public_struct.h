@@ -1166,12 +1166,15 @@ enum roaming_dfs_channel_type {
 
 /*
  * struct bss_load_trigger - parameters related to bss load triggered roam
- * @enabled - flag to check if this trigger is enabled/disabled
- * @threshold - Bss load threshold value above which roaming should start
+ * @enabled: flag to check if this trigger is enabled/disabled
+ * @threshold: Bss load threshold value above which roaming should start
+ * @sample_time: Time duration in milliseconds for which the bss load value
+ * should be monitored
  */
 struct bss_load_trigger {
 	bool enabled;
 	uint32_t threshold;
+	uint32_t sample_time;
 };
 
 /*
