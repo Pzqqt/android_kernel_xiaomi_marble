@@ -140,6 +140,7 @@ struct afe_ctl {
 	struct afe_sp_th_vi_get_param_resp	th_vi_resp;
 	struct afe_sp_th_vi_v_vali_get_param_resp	th_vi_v_vali_resp;
 	struct afe_sp_ex_vi_get_param_resp	ex_vi_resp;
+	struct afe_sp_rx_tmax_xmax_logging_resp	xt_logging_resp;
 	struct afe_av_dev_drift_get_param_resp	av_dev_drift_resp;
 	struct afe_doa_tracking_mon_get_param_resp	doa_tracking_mon_resp;
 	int vi_tx_port;
@@ -384,6 +385,11 @@ static int32_t sp_make_afe_callback(uint32_t opcode, uint32_t *payload,
 	case AFE_PARAM_ID_SP_V2_EX_VI_FTM_PARAMS:
 		expected_size += sizeof(struct afe_sp_ex_vi_ftm_params);
 		data_dest = (u32 *) &this_afe.ex_vi_resp;
+		break;
+	case AFE_PARAM_ID_SP_RX_TMAX_XMAX_LOGGING:
+		expected_size += sizeof(
+				struct afe_sp_rx_tmax_xmax_logging_param);
+		data_dest = (u32 *) &this_afe.xt_logging_resp;
 		break;
 	default:
 		pr_err("%s: Unrecognized param ID %d\n", __func__,
@@ -7619,6 +7625,57 @@ int afe_get_sp_ex_vi_ftm_data(struct afe_sp_ex_vi_get_param *ex_vi)
 done:
 	return ret;
 }
+
+/**
+ * afe_get_sp_rx_tmax_xmax_logging_data -
+ *       command to get excursion logging data from DSP
+ *
+ * @xt_logging: excursion logging params
+ * @port: AFE port ID
+ *
+ * Returns 0 on success or error on failure
+ */
+int afe_get_sp_rx_tmax_xmax_logging_data(
+			struct afe_sp_rx_tmax_xmax_logging_param *xt_logging,
+			u16 port_id)
+{
+	struct param_hdr_v3 param_hdr;
+	int ret = -EINVAL;
+
+	if (!xt_logging) {
+		pr_err("%s: Invalid params\n", __func__);
+		goto done;
+	}
+
+	memset(&param_hdr, 0, sizeof(param_hdr));
+
+	param_hdr.module_id = AFE_MODULE_FB_SPKR_PROT_V2_RX;
+	param_hdr.instance_id = INSTANCE_ID_0;
+	param_hdr.param_id = AFE_PARAM_ID_SP_RX_TMAX_XMAX_LOGGING;
+	param_hdr.param_size = sizeof(struct afe_sp_rx_tmax_xmax_logging_param);
+
+	ret = q6afe_get_params(port_id, NULL, &param_hdr);
+	if (ret < 0) {
+		pr_err("%s: get param port 0x%x param id[0x%x]failed %d\n",
+		       __func__, port_id, param_hdr.param_id, ret);
+		goto done;
+	}
+
+	memcpy(xt_logging, &this_afe.xt_logging_resp.param,
+		sizeof(this_afe.xt_logging_resp.param));
+	pr_debug("%s: max_excursion %d %d count_exceeded_excursion %d %d max_temperature %d %d count_exceeded_temperature %d %d\n",
+		 __func__, xt_logging->max_excursion[SP_V2_SPKR_1],
+		 xt_logging->max_excursion[SP_V2_SPKR_2],
+		 xt_logging->count_exceeded_excursion[SP_V2_SPKR_1],
+		 xt_logging->count_exceeded_excursion[SP_V2_SPKR_2],
+		 xt_logging->max_temperature[SP_V2_SPKR_1],
+		 xt_logging->max_temperature[SP_V2_SPKR_2],
+		 xt_logging->count_exceeded_temperature[SP_V2_SPKR_1],
+		 xt_logging->count_exceeded_temperature[SP_V2_SPKR_2]);
+done:
+	return ret;
+}
+EXPORT_SYMBOL(afe_get_sp_rx_tmax_xmax_logging_data);
 
 /**
  * afe_get_av_dev_drift -

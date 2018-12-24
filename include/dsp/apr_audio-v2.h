@@ -10408,6 +10408,7 @@ struct cmd_set_topologies {
 #define AFE_PARAM_ID_SP_RX_LIMITER_TH 0x000102B1
 #define AFE_PARAM_ID_FBSP_MODE_RX_CFG 0x0001021D
 #define AFE_PARAM_ID_FBSP_PTONE_RAMP_CFG 0x00010260
+#define AFE_PARAM_ID_SP_RX_TMAX_XMAX_LOGGING 0x000102BC
 
 struct asm_fbsp_mode_rx_cfg {
 	uint32_t minor_version;
@@ -10663,6 +10664,33 @@ struct afe_sp_ex_vi_ftm_params {
 	 * 4 - Success.
 	 * 5 - Failed.
 	 */
+} __packed;
+
+struct afe_sp_rx_tmax_xmax_logging_param {
+	/*
+	 * Maximum excursion since the last grasp of xmax in mm.
+	 */
+	int32_t max_excursion[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * Number of periods when the monitored excursion exceeds to and
+	 * stays at Xmax during logging_count_period.
+	 */
+	uint32_t count_exceeded_excursion[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * Maximum temperature since the last grasp of tmax in C.
+	 */
+	int32_t max_temperature[SP_V2_NUM_MAX_SPKR];
+	/*
+	 * Number of periods when the monitored temperature exceeds to and
+	 * stays at Tmax during logging_count_period
+	 */
+	uint32_t count_exceeded_temperature[SP_V2_NUM_MAX_SPKR];
+} __packed;
+
+struct afe_sp_rx_tmax_xmax_logging_resp {
+	uint32_t status;
+	struct param_hdr_v3 pdata;
+	struct afe_sp_rx_tmax_xmax_logging_param param;
 } __packed;
 
 struct afe_sp_ex_vi_get_param {
