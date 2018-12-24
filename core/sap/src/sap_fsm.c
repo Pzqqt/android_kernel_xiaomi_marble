@@ -1004,6 +1004,7 @@ QDF_STATUS sap_channel_sel(struct sap_context *sap_context)
 	req->scan_req.scan_id = scan_id;
 	vdev_id = wlan_vdev_get_id(vdev);
 	req->scan_req.vdev_id = vdev_id;
+	req->scan_req.scan_f_passive = false;
 	req->scan_req.scan_req_id = sap_context->req_id;
 	req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
 	req->scan_req.scan_f_bcast_probe = true;
