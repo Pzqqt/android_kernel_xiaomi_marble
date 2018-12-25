@@ -2638,43 +2638,6 @@ struct fw_dump_req_param {
 };
 
 /**
- * struct wmi_tdls_params - TDLS parameters
- * @vdev_id: vdev id
- * @tdls_state: TDLS state
- * @notification_interval_ms: notification inerval
- * @tx_discovery_threshold: tx discovery threshold
- * @tx_teardown_threshold: tx teardown threashold
- * @rssi_teardown_threshold: RSSI teardown threshold
- * @rssi_delta: RSSI delta
- * @tdls_options: TDLS options
- * @peer_traffic_ind_window: raffic indication window
- * @peer_traffic_response_timeout: traffic response timeout
- * @puapsd_mask: uapsd mask
- * @puapsd_inactivity_time: uapsd inactivity time
- * @puapsd_rx_frame_threshold: uapsd rx frame threshold
- * @teardown_notification_ms: tdls teardown notification interval
- * @tdls_peer_kickout_threshold: tdls packet threshold for
- *    peer kickout operation
- */
-struct wmi_tdls_params {
-	uint32_t vdev_id;
-	uint32_t tdls_state;
-	uint32_t notification_interval_ms;
-	uint32_t tx_discovery_threshold;
-	uint32_t tx_teardown_threshold;
-	int32_t rssi_teardown_threshold;
-	int32_t rssi_delta;
-	uint32_t tdls_options;
-	uint32_t peer_traffic_ind_window;
-	uint32_t peer_traffic_response_timeout;
-	uint32_t puapsd_mask;
-	uint32_t puapsd_inactivity_time;
-	uint32_t puapsd_rx_frame_threshold;
-	uint32_t teardown_notification_ms;
-	uint32_t tdls_peer_kickout_threshold;
-};
-
-/**
  * struct dhcp_offload_info_params - dhcp offload parameters
  * @vdev_id: request data length
  * @dhcp_offload_enabled: dhcp offload enabled

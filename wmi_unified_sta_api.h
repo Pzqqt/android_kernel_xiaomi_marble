@@ -185,13 +185,14 @@ QDF_STATUS wmi_unified_set_tdls_offchan_mode_cmd(void *wmi_hdl,
 /**
  * wmi_unified_update_fw_tdls_state_cmd() - send enable/disable tdls for a vdev
  * @wmi_handle: wmi handle
- * @pwmaTdlsparams: TDLS params
+ * @tdls_param: TDLS params
+ * @tdls_state: TDLS state
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_update_fw_tdls_state_cmd(void *wmi_hdl,
-						void *tdls_param,
-						uint8_t tdls_state);
+						struct tdls_info *tdls_param,
+						enum wmi_tdls_state tdls_state);
 
 /**
  * wmi_unified_update_tdls_peer_state_cmd() - update TDLS peer state

@@ -935,7 +935,8 @@ QDF_STATUS (*send_set_tdls_offchan_mode_cmd)(wmi_unified_t wmi_handle,
 			      struct tdls_channel_switch_params *chan_switch_params);
 
 QDF_STATUS (*send_update_fw_tdls_state_cmd)(wmi_unified_t wmi_handle,
-					 void *tdls_param, uint8_t tdls_state);
+					    struct tdls_info *tdls_param,
+					    enum wmi_tdls_state tdls_state);
 
 QDF_STATUS (*send_update_tdls_peer_state_cmd)(wmi_unified_t wmi_handle,
 				struct tdls_peer_state_params *peerStateParams,
