@@ -505,6 +505,7 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 		     sizeof(struct wlan_serialization_command));
 	qdf_mem_zero(&cmd_list->cmd,
 		     sizeof(struct wlan_serialization_command));
+	cmd_list->cmd_in_use = 0;
 	qdf_status = wlan_serialization_insert_back(
 			&pdev_queue->cmd_pool_list,
 			&cmd_list->pdev_node);

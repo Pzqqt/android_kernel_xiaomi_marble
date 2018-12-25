@@ -589,7 +589,7 @@ wlan_ser_cancel_non_scan_cmd(
 
 		qdf_mem_zero(&cmd_list->cmd,
 			     sizeof(struct wlan_serialization_command));
-
+		cmd_list->cmd_in_use = 0;
 		qdf_status = wlan_serialization_insert_back(
 			&pdev_q->cmd_pool_list,
 			&cmd_list->pdev_node);
