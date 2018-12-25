@@ -3285,9 +3285,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		policy_mgr_check_concurrent_intf_and_restart_sap(
 			hdd_ctx->psoc);
 		if (roam_info->pBssDesc)
-			policy_mgr_checkn_update_hw_mode_single_mac_mode
-				(hdd_ctx->psoc,
-				 roam_info->pBssDesc->channelId);
+			policy_mgr_check_n_start_opportunistic_timer(
+					hdd_ctx->psoc);
 	} else {
 		bool connect_timeout = false;
 		/* do we need to change the HW mode */
