@@ -927,8 +927,12 @@ static QDF_STATUS wlan_serialization_vdev_destroy_handler(
 		ser_err("ser_vdev_obj NULL");
 		return QDF_STATUS_E_INVAL;
 	}
+
 	status = wlan_objmgr_vdev_component_obj_detach(
 			vdev, WLAN_UMAC_COMP_SERIALIZATION, ser_vdev_obj);
+
+	/*Clean up serialization timers if any for this vdev*/
+	wlan_serialization_cleanup_vdev_timers(vdev);
 
 	for (index = 0; index < SER_VDEV_QUEUE_COMP_MAX; index++) {
 		vdev_q = &ser_vdev_obj->vdev_q[index];

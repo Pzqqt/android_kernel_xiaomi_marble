@@ -1125,6 +1125,52 @@ wlan_serialization_stop_timer(struct wlan_serialization_timer *ser_timer)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS wlan_serialization_cleanup_vdev_timers(
+			struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_ser_psoc_obj *psoc_ser_obj;
+	struct wlan_serialization_timer *ser_timer;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint32_t i = 0;
+
+	ser_enter();
+	psoc_ser_obj = wlan_serialization_get_psoc_obj(
+			wlan_vdev_get_psoc(vdev));
+
+	if (!psoc_ser_obj) {
+		ser_err("Invalid psoc_ser_obj");
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	wlan_serialization_acquire_lock(&psoc_ser_obj->timer_lock);
+
+	for (i = 0; psoc_ser_obj->max_active_cmds > i; i++) {
+		ser_timer = &psoc_ser_obj->timers[i];
+		if (!ser_timer->cmd)
+			continue;
+		/*
+		 * Check if the timer is for the given vdev
+		 */
+		if (ser_timer->cmd->vdev != vdev)
+			continue;
+
+		ser_debug("Stopping the timer for vdev id[%d]",
+			  wlan_vdev_get_id(vdev));
+
+		status = wlan_serialization_stop_timer(ser_timer);
+		if (QDF_STATUS_SUCCESS != status) {
+			/* lets not break the loop but report error */
+			ser_err("some error in stopping timer");
+		}
+	}
+
+	wlan_serialization_release_lock(&psoc_ser_obj->timer_lock);
+error:
+	ser_exit();
+	return status;
+}
+
 QDF_STATUS wlan_serialization_cleanup_all_timers(
 			struct wlan_ser_psoc_obj *psoc_ser_obj)
 {

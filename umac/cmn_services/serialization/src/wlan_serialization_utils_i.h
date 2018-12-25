@@ -895,6 +895,21 @@ QDF_STATUS wlan_serialization_get_cmd_from_queue(
  */
 QDF_STATUS
 wlan_serialization_stop_timer(struct wlan_serialization_timer *ser_timer);
+/**
+ * wlan_serialization_cleanup_vdev_timers() - clean-up all timers for a vdev
+ *
+ * @vdev: pointer to vdev object
+ *
+ * This API is to cleanup all the timers for a vdev.
+ * It can be used when serialization vdev destroy is called.
+ * It will make sure that if timer is running then it will
+ * stop and destroys the timer
+ *
+ * Return: QDF_STATUS
+ */
+
+QDF_STATUS wlan_serialization_cleanup_vdev_timers(
+			struct wlan_objmgr_vdev *vdev);
 
 /**
  * wlan_serialization_cleanup_all_timers() - to clean-up all timers
