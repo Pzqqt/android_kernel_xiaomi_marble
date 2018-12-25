@@ -72,17 +72,24 @@ wlan_vdev_mlme_ser_start_bss(struct wlan_serialization_command *cmd)
 enum wlan_serialization_status
 wlan_vdev_mlme_ser_stop_bss(struct wlan_serialization_command *cmd)
 {
+	uint8_t stop_cmd_pending;
+	uint8_t ret;
+
 	if (!cmd || !cmd->vdev) {
 		mlme_err("Null input");
 		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
 	}
 	/*
 	 * Serialization command filtering logic
-	 * a.Cancel any existing start/stop/restart command in the pending
-	 * queue.
-	 * b.If there is a stop cmd in active queue then return
-	 * c.Else enqueue the cmd
+	 * a. Cancel any existing start/stop/restart command in the pending
+	 *  queue.
+	 * b. If there is a stop cmd in active queue then return
+	 * c. Else enqueue the cmd
+	 * d. If stop cmd already existed in pending queue then return with
+	 *  already exists else return the enqueued return value.
 	 */
+	stop_cmd_pending =
+		wlan_serialization_is_cmd_present_in_pending_queue(NULL, cmd);
 	wlan_vdev_mlme_ser_cancel_request(cmd->vdev,
 					  WLAN_SER_CMD_NONSCAN,
 					  WLAN_SER_CANCEL_VDEV_NON_SCAN_CMD);
@@ -92,7 +99,12 @@ wlan_vdev_mlme_ser_stop_bss(struct wlan_serialization_command *cmd)
 		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
 	}
 
-	return wlan_serialization_request(cmd);
+	ret = wlan_serialization_request(cmd);
+
+	if (stop_cmd_pending && ret == WLAN_SER_CMD_PENDING)
+		return WLAN_SER_CMD_ALREADY_EXISTS;
+	else
+		return ret;
 }
 
 enum wlan_serialization_status
