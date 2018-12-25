@@ -161,13 +161,14 @@ QDF_STATUS wmi_unified_set_tdls_offchan_mode_cmd(void *wmi_hdl,
 }
 
 QDF_STATUS wmi_unified_update_fw_tdls_state_cmd(void *wmi_hdl,
-					 void *tdls_param, uint8_t tdls_state)
+						struct tdls_info *tdls_param,
+						enum wmi_tdls_state tdls_state)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_update_fw_tdls_state_cmd)
-		return wmi_handle->ops->send_update_fw_tdls_state_cmd(wmi_handle,
-			    tdls_param, tdls_state);
+		return wmi_handle->ops->send_update_fw_tdls_state_cmd(
+				wmi_handle, tdls_param, tdls_state);
 
 	return QDF_STATUS_E_FAILURE;
 }

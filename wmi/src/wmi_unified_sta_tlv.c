@@ -22,6 +22,9 @@
 #include "wmi_unified_priv.h"
 #include "wmi_unified_sta_param.h"
 #include "wmi_unified_sta_api.h"
+#ifdef CONVERGED_TDLS_ENABLE
+#include <wlan_tdls_public_structs.h>
+#endif
 
 /**
  * send_set_sta_sa_query_param_cmd_tlv() - set sta sa query parameters
@@ -635,13 +638,14 @@ static QDF_STATUS send_set_tdls_offchan_mode_cmd_tlv(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code
  */
-static QDF_STATUS send_update_fw_tdls_state_cmd_tlv(wmi_unified_t wmi_handle,
-					 void *tdls_param, uint8_t tdls_state)
+static QDF_STATUS
+send_update_fw_tdls_state_cmd_tlv(wmi_unified_t wmi_handle,
+				  struct tdls_info *tdls_param,
+				  enum wmi_tdls_state tdls_state)
 {
 	wmi_tdls_set_state_cmd_fixed_param *cmd;
 	wmi_buf_t wmi_buf;
 
-	struct wmi_tdls_params *wmi_tdls = (struct wmi_tdls_params *) tdls_param;
 	uint16_t len = sizeof(wmi_tdls_set_state_cmd_fixed_param);
 
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
@@ -653,25 +657,26 @@ static QDF_STATUS send_update_fw_tdls_state_cmd_tlv(wmi_unified_t wmi_handle,
 		  WMITLV_TAG_STRUC_wmi_tdls_set_state_cmd_fixed_param,
 		  WMITLV_GET_STRUCT_TLVLEN
 			(wmi_tdls_set_state_cmd_fixed_param));
-	cmd->vdev_id = wmi_tdls->vdev_id;
-	cmd->state = tdls_state;
-	cmd->notification_interval_ms = wmi_tdls->notification_interval_ms;
-	cmd->tx_discovery_threshold = wmi_tdls->tx_discovery_threshold;
-	cmd->tx_teardown_threshold = wmi_tdls->tx_teardown_threshold;
-	cmd->rssi_teardown_threshold = wmi_tdls->rssi_teardown_threshold;
-	cmd->rssi_delta = wmi_tdls->rssi_delta;
-	cmd->tdls_options = wmi_tdls->tdls_options;
-	cmd->tdls_peer_traffic_ind_window = wmi_tdls->peer_traffic_ind_window;
+	cmd->vdev_id = tdls_param->vdev_id;
+	cmd->state = (A_UINT32)tdls_state;
+	cmd->notification_interval_ms = tdls_param->notification_interval_ms;
+	cmd->tx_discovery_threshold = tdls_param->tx_discovery_threshold;
+	cmd->tx_teardown_threshold = tdls_param->tx_teardown_threshold;
+	cmd->rssi_teardown_threshold = tdls_param->rssi_teardown_threshold;
+	cmd->rssi_delta = tdls_param->rssi_delta;
+	cmd->tdls_options = tdls_param->tdls_options;
+	cmd->tdls_peer_traffic_ind_window = tdls_param->peer_traffic_ind_window;
 	cmd->tdls_peer_traffic_response_timeout_ms =
-		wmi_tdls->peer_traffic_response_timeout;
-	cmd->tdls_puapsd_mask = wmi_tdls->puapsd_mask;
-	cmd->tdls_puapsd_inactivity_time_ms = wmi_tdls->puapsd_inactivity_time;
+		tdls_param->peer_traffic_response_timeout;
+	cmd->tdls_puapsd_mask = tdls_param->puapsd_mask;
+	cmd->tdls_puapsd_inactivity_time_ms =
+		tdls_param->puapsd_inactivity_time;
 	cmd->tdls_puapsd_rx_frame_threshold =
-		wmi_tdls->puapsd_rx_frame_threshold;
+		tdls_param->puapsd_rx_frame_threshold;
 	cmd->teardown_notification_ms =
-		wmi_tdls->teardown_notification_ms;
+		tdls_param->teardown_notification_ms;
 	cmd->tdls_peer_kickout_threshold =
-		wmi_tdls->tdls_peer_kickout_threshold;
+		tdls_param->tdls_peer_kickout_threshold;
 
 	WMI_LOGD("%s: tdls_state: %d, state: %d, "
 		 "notification_interval_ms: %d, "
@@ -709,7 +714,7 @@ static QDF_STATUS send_update_fw_tdls_state_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_buf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
-	WMI_LOGD("%s: vdev_id %d", __func__, wmi_tdls->vdev_id);
+	WMI_LOGD("%s: vdev_id %d", __func__, tdls_param->vdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }
