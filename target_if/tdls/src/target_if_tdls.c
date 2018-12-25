@@ -86,7 +86,7 @@ target_if_tdls_update_fw_state(struct wlan_objmgr_psoc *psoc,
 			       struct tdls_info *param)
 {
 	QDF_STATUS status;
-	uint8_t tdls_state;
+	enum wmi_tdls_state tdls_state;
 	struct wmi_unified *wmi_handle;
 
 	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
