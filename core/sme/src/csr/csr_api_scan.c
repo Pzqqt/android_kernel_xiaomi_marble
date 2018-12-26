@@ -1410,15 +1410,17 @@ QDF_STATUS csr_scan_for_ssid(struct mac_context *mac_ctx, uint32_t session_id,
 		status = csr_roam_copy_profile(mac_ctx,
 					session->scan_info.profile,
 					profile);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	if (QDF_IS_STATUS_ERROR(status))
 		goto error;
 	scan_id = ucfg_scan_get_scan_id(mac_ctx->psoc);
 	session->scan_info.scan_id = scan_id;
 	session->scan_info.scan_reason = eCsrScanForSsid;
 	session->scan_info.roam_id = roam_id;
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req)
+	if (!req) {
+		status = QDF_STATUS_E_NOMEM;
 		goto error;
+	}
 
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_psoc(mac_ctx->psoc,
 				pdev_id,
@@ -1494,7 +1496,7 @@ QDF_STATUS csr_scan_for_ssid(struct mac_context *mac_ctx, uint32_t session_id,
 	status = ucfg_scan_start(req);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 error:
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_err("failed to initiate scan with status: %d", status);
 		csr_release_profile(mac_ctx, session->scan_info.profile);
 		qdf_mem_free(session->scan_info.profile);
