@@ -2001,34 +2001,15 @@ static void wmi_process_fw_event_default_ctx(struct wmi_unified *wmi_handle,
 	wmi_buf_t evt_buf;
 	evt_buf = (wmi_buf_t) htc_packet->pPktContext;
 
-#ifndef CONFIG_MCL
 	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk
 		(wmi_handle->scn_handle, evt_buf, exec_ctx);
-#else
-	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk(wmi_handle,
-					 htc_packet, exec_ctx);
-#endif
 
 	return;
 }
 
-/**
- * wmi_process_fw_event_worker_thread_ctx() - process in worker thread context
- * @wmi_handle: handle to wmi
- * @htc_packet: pointer to htc packet
- *
- * Event process by below function will be in worker thread context.
- * Use this method for events which are not critical and not
- * handled in protocol stack.
- *
- * Return: none
- */
 void wmi_process_fw_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
-					    HTC_PACKET *htc_packet)
+					    void *evt_buf)
 {
-	wmi_buf_t evt_buf;
-
-	evt_buf = (wmi_buf_t) htc_packet->pPktContext;
 
 	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
 	qdf_nbuf_queue_add(&wmi_handle->event_queue, evt_buf);
@@ -2154,7 +2135,7 @@ static void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 
 	if (exec_ctx == WMI_RX_WORK_CTX) {
 		wmi_process_fw_event_worker_thread_ctx
-					(wmi_handle, htc_packet);
+					(wmi_handle, evt_buf);
 	} else if (exec_ctx > WMI_RX_WORK_CTX) {
 		wmi_process_fw_event_default_ctx
 					(wmi_handle, htc_packet, exec_ctx);

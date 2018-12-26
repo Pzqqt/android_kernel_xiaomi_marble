@@ -123,16 +123,17 @@ typedef qdf_nbuf_t wmi_buf_t;
 struct wmi_soc;
 struct policy_mgr_dual_mac_config;
 /**
- * struct wmi_ops - service callbacks to upper layer
- * @service_ready_cbk: service ready callback
- * @service_ready_ext_cbk: service ready ext callback
- * @ready_cbk: ready calback
+ * struct wmi_rx_ops - handle to wmi rx ops
+ * @scn_handle: handle to scn
+ * @ev: event buffer
+ * @rx_ctx: rx execution context
  * @wma_process_fw_event_handler_cbk: generic event handler callback
  */
 struct wmi_rx_ops {
 
-	int (*wma_process_fw_event_handler_cbk)(void *ctx,
-				  void *ev, uint8_t rx_ctx);
+	int (*wma_process_fw_event_handler_cbk)(ol_scn_t scn_handle,
+						void *ev,
+						uint8_t rx_ctx);
 };
 
 /**
@@ -1581,8 +1582,19 @@ QDF_STATUS wmi_extract_smartlog_ev
 
 #endif /* OL_ATH_SMART_LOGGING */
 
+/**
+ * wmi_process_fw_event_worker_thread_ctx() - process in worker thread context
+ * @wmi_handle: handle to wmi
+ * @evt_buf: pointer to event buffer
+ *
+ * Event process by below function will be in worker thread context.
+ * Use this method for events which are not critical and not
+ * handled in protocol stack.
+ *
+ * Return: none
+ */
 void wmi_process_fw_event_worker_thread_ctx(struct wmi_unified *wmi_handle,
-					    HTC_PACKET * htc_packet);
+					    void *evt_buf);
 
 /**
  * wmi_extract_ctl_failsafe_check_ev_param() - extract ctl failsafe
