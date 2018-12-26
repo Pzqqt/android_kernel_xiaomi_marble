@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/of_platform.h>
@@ -615,6 +615,9 @@ static int bolero_ssr_enable(struct device *dev, void *data)
 			BOLERO_MACRO_EVT_WAIT_VA_CLK_RESET, 0x0);
 
 	regcache_cache_only(priv->regmap, false);
+	mutex_lock(&priv->clk_lock);
+	priv->dev_up = true;
+	mutex_unlock(&priv->clk_lock);
 	/* call ssr event for supported macros */
 	for (macro_idx = START_MACRO; macro_idx < MAX_MACRO; macro_idx++) {
 		if (!priv->macro_params[macro_idx].event_handler)
@@ -623,9 +626,6 @@ static int bolero_ssr_enable(struct device *dev, void *data)
 			priv->component,
 			BOLERO_MACRO_EVT_SSR_UP, 0x0);
 	}
-	mutex_lock(&priv->clk_lock);
-	priv->dev_up = true;
-	mutex_unlock(&priv->clk_lock);
 	bolero_cdc_notifier_call(priv, BOLERO_WCD_EVT_SSR_UP);
 	return 0;
 }
