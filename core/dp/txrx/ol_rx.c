@@ -1350,20 +1350,12 @@ ol_rx_discard(struct ol_txrx_vdev_t *vdev,
 	      struct ol_txrx_peer_t *peer, unsigned int tid,
 	      qdf_nbuf_t msdu_list)
 {
-	ol_txrx_pdev_handle pdev = vdev->pdev;
-	htt_pdev_handle htt_pdev = pdev->htt_pdev;
-
 	while (msdu_list) {
 		qdf_nbuf_t msdu = msdu_list;
 
 		msdu_list = qdf_nbuf_next(msdu_list);
-		ol_txrx_dbg(
-			"discard rx %pK from partly-deleted peer %pK (%02x:%02x:%02x:%02x:%02x:%02x)\n",
-			msdu, peer,
-			peer->mac_addr.raw[0], peer->mac_addr.raw[1],
-			peer->mac_addr.raw[2], peer->mac_addr.raw[3],
-			peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
-		htt_rx_desc_frame_free(htt_pdev, msdu);
+		ol_txrx_dbg("discard rx %pK", msdu);
+		qdf_nbuf_free(msdu);
 	}
 }
 
