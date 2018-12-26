@@ -772,6 +772,15 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 			"radar event received on invalid channel");
 		return status;
 	}
+	dfs->dfs_is_nol_ie_sent = false;
+	(dfs->is_radar_during_precac) ?
+		(dfs->dfs_is_rcsa_ie_sent = false) :
+		(dfs->dfs_is_rcsa_ie_sent = true);
+	if (dfs->dfs_use_nol_subchannel_marking) {
+		dfs_prepare_nol_ie_bitmap(dfs, radar_found, channels,
+					  num_channels);
+		dfs->dfs_is_nol_ie_sent = true;
+	}
 
 	/*
 	 * If precac is running and the radar found in secondary
@@ -808,15 +817,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	 * saying not to send RCSA, but only the radar affected subchannel
 	 * information.
 	 */
-	dfs->dfs_is_nol_ie_sent = false;
-	(dfs->is_radar_during_precac) ?
-		(dfs->dfs_is_rcsa_ie_sent = false) :
-		(dfs->dfs_is_rcsa_ie_sent = true);
-	if (dfs->dfs_use_nol_subchannel_marking) {
-		dfs_prepare_nol_ie_bitmap(dfs, radar_found, channels,
-					  num_channels);
-		dfs->dfs_is_nol_ie_sent = true;
-	}
+
 	dfs_mlme_start_rcsa(dfs->dfs_pdev_obj, &wait_for_csa);
 
 	if (!dfs->dfs_is_offload_enabled &&
