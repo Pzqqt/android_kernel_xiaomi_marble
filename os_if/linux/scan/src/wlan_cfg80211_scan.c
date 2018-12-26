@@ -445,7 +445,6 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 								  &ok);
 				if (QDF_IS_STATUS_ERROR(status)) {
 					cfg80211_err("DNBS check failed");
-					qdf_mem_free(req);
 					ret = -EINVAL;
 					goto error;
 				}
