@@ -187,7 +187,7 @@
  * during host scan without conneciton
  * @Min: 0
  * @Max: 4
- * @Default: 1
+ * @Default: 4
  *
  * This ini will set the algo used in dwell time optimization
  * during host scan with connection.
@@ -209,7 +209,7 @@
  */
 #define CFG_ADAPTIVE_SCAN_DWELL_MODE_NC CFG_INI_UINT(\
 			"hostscan_adaptive_dwell_mode_no_conn",\
-			0, 4, MCL_OR_WIN_VALUE(1, 0),\
+			0, 4, MCL_OR_WIN_VALUE(4, 0),\
 			CFG_VALUE_OR_DEFAULT,\
 			"Enable adaptive dwell mode without connection")
 /*
