@@ -1667,7 +1667,17 @@ typedef struct {
 	void *evt_buf;
 } wma_process_fw_event_params;
 
-int wma_process_fw_event_handler(void *ctx, void *ev, uint8_t rx_ctx);
+/**
+ * wma_process_fw_event_handler() - common event handler to serialize
+ *                                  event processing through mc_thread
+ * @scn_handle: scn handle
+ * @ev: event buffer
+ * @rx_ctx: rx execution context
+ *
+ * Return: 0 on success, errno on failure
+ */
+int wma_process_fw_event_handler(ol_scn_t scn_handle, void *ev,
+				 uint8_t rx_ctx);
 
 A_UINT32 e_csr_auth_type_to_rsn_authmode(eCsrAuthType authtype,
 					 eCsrEncryptionType encr);

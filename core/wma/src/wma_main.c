@@ -1772,31 +1772,24 @@ static int wma_process_fw_event_mc_thread_ctx(void *ctx, void *ev)
 
 }
 
-/**
- * wma_process_fw_event_handler() - common event handler to serialize
- *                                  event processing through mc_thread
- * @ctx: wmi context
- * @ev: event buffer
- * @rx_ctx: rx execution context
- *
- * Return: 0 on success, errno on failure
- */
-int wma_process_fw_event_handler(void *ctx, void *htc_packet, uint8_t rx_ctx)
+int wma_process_fw_event_handler(ol_scn_t scn_handle, void *evt_buf,
+				 uint8_t rx_ctx)
 {
 	int err = 0;
-	ol_scn_t scn_handle;
+	struct wmi_unified *wmi_handle;
 	struct wlan_objmgr_psoc *psoc;
 	struct target_psoc_info *tgt_hdl;
-	wmi_buf_t evt_buf;
 	bool is_wmi_ready = false;
-
-	evt_buf = (wmi_buf_t) ((HTC_PACKET *)htc_packet)->pPktContext;
-
-	scn_handle = ((wmi_unified_t)ctx)->scn_handle;
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn_handle);
 	if (!psoc) {
 		WMA_LOGE("psoc is null");
+		return err;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		WMA_LOGE("wmi_handle is null");
 		return err;
 	}
 
@@ -1810,14 +1803,14 @@ int wma_process_fw_event_handler(void *ctx, void *htc_packet, uint8_t rx_ctx)
 	if (!is_wmi_ready) {
 		WMA_LOGD("fw event recvd before ready event processed");
 		WMA_LOGD("therefore use worker thread");
-		wmi_process_fw_event_worker_thread_ctx(ctx, htc_packet);
+		wmi_process_fw_event_worker_thread_ctx(wmi_handle, evt_buf);
 		return err;
 	}
 
 	if (rx_ctx == WMA_RX_SERIALIZER_CTX) {
-		err = wma_process_fw_event_mc_thread_ctx(ctx, evt_buf);
+		err = wma_process_fw_event_mc_thread_ctx(wmi_handle, evt_buf);
 	} else if (rx_ctx == WMA_RX_TASKLET_CTX) {
-		wma_process_fw_event_tasklet_ctx(ctx, evt_buf);
+		wma_process_fw_event_tasklet_ctx(wmi_handle, evt_buf);
 	} else {
 		WMA_LOGE("%s: invalid wmi event execution context", __func__);
 		qdf_nbuf_free(evt_buf);
