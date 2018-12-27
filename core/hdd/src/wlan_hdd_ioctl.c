@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -5067,8 +5067,6 @@ static int drv_cmd_set_rmc_tx_rate(struct hdd_adapter *adapter,
 		goto exit;
 	}
 	hdd_debug("uRate %d", uRate);
-	/* -1 implies ignore this param */
-	rateUpdateParams.ucastDataRate = -1;
 
 	/*
 	 * Fill the user specifieed RMC rate param

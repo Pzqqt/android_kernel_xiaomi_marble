@@ -3035,14 +3035,6 @@ typedef struct sSirRateUpdateInd {
 	struct qdf_mac_addr bssid;
 	enum QDF_OPMODE dev_mode;
 	int32_t bcastDataRate;  /* bcast rate unit Mbpsx10, -1:not used */
-	/*
-	 * 0 implies RA, positive value implies fixed rate, -1 implies ignore
-	 * this param.
-	 */
-	int32_t ucastDataRate;
-
-	/* TX flag to differentiate between HT20, HT40 etc */
-	enum tx_rate_info ucastDataRateTxFlag;
 
 	/*
 	 * 0 implies MCAST RA, positive value implies fixed rate,
