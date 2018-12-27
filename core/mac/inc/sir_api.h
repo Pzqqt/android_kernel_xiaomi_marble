@@ -2978,8 +2978,6 @@ typedef struct sSirAddPeriodicTxPtrn {
 typedef struct sSirDelPeriodicTxPtrn {
 	/* MAC Address for the adapter */
 	struct qdf_mac_addr mac_address;
-	/* Bitmap of pattern IDs that need to be deleted */
-	uint32_t ucPatternIdBitmap;
 	uint8_t ucPtrnId;       /* Pattern ID */
 } tSirDelPeriodicTxPtrn, *tpSirDelPeriodicTxPtrn;
 

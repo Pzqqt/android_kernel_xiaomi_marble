@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -302,7 +302,6 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 			return -ENOMEM;
 		}
 		delPeriodicTxPtrnParams->ucPtrnId = pattern_idx;
-		delPeriodicTxPtrnParams->ucPatternIdBitmap = 1 << pattern_idx;
 		qdf_copy_macaddr(&delPeriodicTxPtrnParams->mac_address,
 				 &adapter->mac_addr);
 
