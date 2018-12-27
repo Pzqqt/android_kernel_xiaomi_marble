@@ -3430,11 +3430,6 @@ struct ext_scan_capabilities_response {
 };
 
 typedef struct {
-	uint32_t requestId;
-	uint32_t status;
-} tSirExtScanGetCachedResultsRspParams, *tpSirExtScanGetCachedResultsRspParams;
-
-typedef struct {
 	/* Time of discovery */
 	uint64_t ts;
 
