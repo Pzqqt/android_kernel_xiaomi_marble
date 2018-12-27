@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,12 +32,6 @@
 
 /* (30 Mins) */
 #define MIN_TIME_REQUIRED_FOR_NEXT_BUG_REPORT (30 * 60 * 1000)
-
-/* HDD Scan inactivity timeout set to double
- * of the CSR CMD Timeout.
- */
-#define HDD_SCAN_INACTIVITY_TIMEOUT \
-	(CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT * 2)
 
 int hdd_scan_context_init(struct hdd_context *hdd_ctx);
 void hdd_scan_context_destroy(struct hdd_context *hdd_ctx);
