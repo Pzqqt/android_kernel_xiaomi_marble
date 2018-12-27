@@ -405,38 +405,6 @@ enum eWniMsgTypes {
 #define WNI_CFG_GET_PER_STA_STAT_RSP_STAID                      1
 #define WNI_CFG_GET_PER_STA_STAT_RSP_FIRST_PARAM                2
 
-/* Per STA statistic structure */
-typedef struct sAniCfgPerStaStatStruct {
-	unsigned long sentAesBlksUcastHi;
-	unsigned long sentAesBlksUcastLo;
-
-	unsigned long recvAesBlksUcastHi;
-	unsigned long recvAesBlksUcastLo;
-
-	unsigned long aesFormatErrorUcastCnts;
-
-	unsigned long aesReplaysUcast;
-
-	unsigned long aesDecryptErrUcast;
-
-	unsigned long singleRetryPkts;
-
-	unsigned long failedTxPkts;
-
-	unsigned long ackTimeouts;
-
-	unsigned long multiRetryPkts;
-
-	unsigned long fragTxCntsHi;
-	unsigned long fragTxCntsLo;
-
-	unsigned long transmittedPktsHi;
-	unsigned long transmittedPktsLo;
-
-	unsigned long phyStatHi;
-	unsigned long phyStatLo;
-} tCfgPerStaStatStruct, *tpAniCfgPerStaStatStruct;
-
 #define WNI_CFG_GET_PER_STA_STAT_RSP_NUM                       23
 #define WNI_CFG_GET_PER_STA_STAT_RSP_LEN    (WNI_CFG_MB_HDR_LEN + \
 					     (WNI_CFG_GET_PER_STA_STAT_RSP_NUM << 2))
