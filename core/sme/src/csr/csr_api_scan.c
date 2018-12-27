@@ -1249,7 +1249,7 @@ static void csr_handle_nxt_cmd(struct mac_context *mac_ctx,
 		/* Else: Set hw mode was issued and the saved connect would
 		 * be issued after set hw mode response
 		 */
-		if (QDF_IS_STATUS_SUCCESS(status))
+		if (QDF_IS_STATUS_SUCCESS(ret))
 			return;
 	default:
 		break;
@@ -1402,6 +1402,8 @@ QDF_STATUS csr_scan_for_ssid(struct mac_context *mac_ctx, uint32_t session_id,
 	}
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(mac_ctx->pdev);
 
+	/* Free old memory if any before its overwritten */
+	csr_saved_scan_cmd_free_fields(mac_ctx, session);
 	session->scan_info.profile =
 			qdf_mem_malloc(sizeof(struct csr_roam_profile));
 	if (!session->scan_info.profile)
