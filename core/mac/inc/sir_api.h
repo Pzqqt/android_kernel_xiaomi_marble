@@ -748,13 +748,6 @@ typedef enum eSirBackgroundScanMode {
 	eSIR_ROAMING_SCAN = 2,
 } tSirBackgroundScanMode;
 
-/* / Two types of traffic check */
-typedef enum eSirLinkTrafficCheck {
-	eSIR_DONT_CHECK_LINK_TRAFFIC_BEFORE_SCAN = 0,
-	eSIR_CHECK_LINK_TRAFFIC_BEFORE_SCAN = 1,
-	eSIR_CHECK_ROAMING_SCAN = 2,
-} tSirLinkTrafficCheck;
-
 #ifdef FEATURE_OEM_DATA_SUPPORT
 struct oem_data_req {
 	uint32_t data_len;

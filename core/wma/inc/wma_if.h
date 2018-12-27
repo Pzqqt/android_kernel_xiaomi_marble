@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -535,45 +535,6 @@ typedef struct {
 	uint8_t smesessionId;
 } tDeleteBssParams, *tpDeleteBssParams;
 
-/**
- * struct sSirScanEntry - scan entry
- * @bssIdx: BSSID
- * @activeBSScnt: active BSS count
- */
-typedef struct sSirScanEntry {
-	uint8_t bssIdx[HAL_NUM_BSSID];
-	uint8_t activeBSScnt;
-} tSirScanEntry, *ptSirScanEntry;
-
-/**
- * struct tInitScanParams - params required for init scan request
- * @bssid: BSSID
- * @notifyBss: notify BSS
- * @useNoA: use NOA
- * @notifyHost: notify UMAC if set
- * @frameLength: frame length
- * @frameType: frame type
- * @scanDuration: Indicates the scan duration (in ms)
- * @macMgmtHdr: For creation of CTS-to-Self and Data-NULL MAC packets
- * @scanEntry: scan entry
- * @checkLinkTraffic: when this flag is set, HAL should check for
- *                    link traffic prior to scan
- * @status: status
- */
-typedef struct {
-	tSirMacAddr bssid;
-	uint8_t notifyBss;
-	uint8_t useNoA;
-	uint8_t notifyHost;
-	uint8_t frameLength;
-	uint8_t frameType;
-	uint16_t scanDuration;
-	tSirMacMgmtHdr macMgmtHdr;
-	tSirScanEntry scanEntry;
-	tSirLinkTrafficCheck checkLinkTraffic;
-	QDF_STATUS status;
-} tInitScanParams, *tpInitScanParams;
-
 typedef enum eDelStaReasonCode {
 	HAL_DEL_STA_REASON_CODE_KEEP_ALIVE = 0x1,
 	HAL_DEL_STA_REASON_CODE_TIM_BASED = 0x2,
@@ -632,39 +593,6 @@ typedef struct {
 	uint8_t scanChannel;
 	QDF_STATUS status;
 } tEndScanParams, *tpEndScanParams;
-
-/**
- * struct tFinishScanParams - params required for finish scan request
- * @bssid: BSSID
- * @currentOperChannel: Current operating channel
- * @cbState: channel bond state
- * @notifyBss: notify BSS flag
- * @notifyHost: notify host flag
- * @frameLength: frame length
- * @frameType: frame type
- * @macMgmtHdr: For creation of CTS-to-Self and Data-NULL MAC packets
- * @scanEntry: scan entry
- * @status: return status
- * Request Type = SIR_HAL_FINISH_SCAN_REQ
- */
-typedef struct {
-	tSirMacAddr bssid;
-	uint8_t currentOperChannel;
-	/* If 20/40 MHz is operational, this will indicate the 40 MHz extension
-	 * channel in combination with the control channel
-	 */
-	ePhyChanBondState cbState;
-	/* For an STA, indicates if a Data NULL frame needs to be sent
-	 * to the AP with FrameControl.PwrMgmt bit set to 0
-	 */
-	uint8_t notifyBss;
-	uint8_t notifyHost;
-	uint8_t frameLength;
-	uint8_t frameType;
-	tSirMacMgmtHdr macMgmtHdr;
-	tSirScanEntry scanEntry;
-	QDF_STATUS status;
-} tFinishScanParams, *tpFinishScanParams;
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 
