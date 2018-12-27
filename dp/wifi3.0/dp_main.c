@@ -3027,13 +3027,13 @@ void  dp_iterate_update_peer_list(void *pdev_hdl)
 	struct dp_peer *peer = NULL;
 
 	qdf_spin_lock_bh(&pdev->vdev_list_lock);
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
-		qdf_spin_lock_bh(&soc->peer_ref_mutex);
 		DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
 			dp_cal_client_update_peer_stats(&peer->stats);
 		}
-		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 	}
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 	qdf_spin_unlock_bh(&pdev->vdev_list_lock);
 }
 #else
