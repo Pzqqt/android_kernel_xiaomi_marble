@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -141,10 +141,6 @@ struct sap_context {
 
 	/* Include the associations MAC addresses */
 	uint8_t self_mac_addr[CDS_MAC_ADDRESS_LEN];
-
-	/* Own SSID */
-	uint8_t ownSsid[MAX_SSID_LEN];
-	uint32_t ownSsidLen;
 
 	/* Flag for signaling if security is enabled */
 	uint8_t ucSecEnabled;
