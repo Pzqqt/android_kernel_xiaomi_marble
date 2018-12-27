@@ -14133,7 +14133,7 @@ void hdd_clean_up_pre_cac_interface(struct hdd_context *hdd_ctx)
  */
 static void hdd_update_ol_config(struct hdd_context *hdd_ctx)
 {
-	struct ol_config_info cfg;
+	struct ol_config_info cfg = {0};
 	struct ol_context *ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
 	bool self_recovery = false;
 	QDF_STATUS status;
@@ -14185,7 +14185,7 @@ static void hdd_populate_runtime_cfg(struct hdd_context *hdd_ctx,
 static void hdd_update_hif_config(struct hdd_context *hdd_ctx)
 {
 	struct hif_opaque_softc *scn = cds_get_context(QDF_MODULE_ID_HIF);
-	struct hif_config_info cfg;
+	struct hif_config_info cfg = {0};
 	bool prevent_link_down = false;
 	bool self_recovery = false;
 	QDF_STATUS status;
@@ -14219,7 +14219,7 @@ static void hdd_update_hif_config(struct hdd_context *hdd_ctx)
  */
 static int hdd_update_dp_config(struct hdd_context *hdd_ctx)
 {
-	struct cdp_config_params params;
+	struct cdp_config_params params = {0};
 	QDF_STATUS status;
 	void *soc;
 
@@ -14317,7 +14317,7 @@ static inline void hdd_ra_populate_pmo_config(
  */
 static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 {
-	struct pmo_psoc_cfg psoc_cfg;
+	struct pmo_psoc_cfg psoc_cfg = {0};
 	QDF_STATUS status;
 	enum pmo_wow_enable_type wow_enable;
 
@@ -14442,6 +14442,7 @@ QDF_STATUS hdd_update_score_config(
 	struct wlan_mlme_nss_chains vdev_ini_cfg;
 	bool bval = false;
 
+	qdf_mem_zero(&vdev_ini_cfg, sizeof(struct wlan_mlme_nss_chains));
 	/* Populate the nss chain params from ini for this vdev type */
 	sme_populate_nss_chain_params(hdd_ctx->mac_handle, &vdev_ini_cfg,
 				      QDF_STA_MODE,
@@ -14495,7 +14496,7 @@ QDF_STATUS hdd_update_score_config(
 static int hdd_update_dfs_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
-	struct dfs_user_config dfs_cfg;
+	struct dfs_user_config dfs_cfg = {0};
 	QDF_STATUS status;
 
 	ucfg_mlme_get_dfs_filter_offload(hdd_ctx->psoc,
@@ -14518,7 +14519,7 @@ static int hdd_update_dfs_config(struct hdd_context *hdd_ctx)
 static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->psoc;
-	struct scan_user_cfg scan_cfg;
+	struct scan_user_cfg scan_cfg = {0};
 	struct hdd_config *cfg = hdd_ctx->config;
 	QDF_STATUS status;
 	uint32_t mcast_mcc_rest_time = 0;
