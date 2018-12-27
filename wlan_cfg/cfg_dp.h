@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -252,7 +252,7 @@
 
 #define WLAN_CFG_REO_STATUS_RING_SIZE 256
 #define WLAN_CFG_REO_STATUS_RING_SIZE_MIN 128
-#define WLAN_CFG_REO_STATUS_RING_SIZE_MAX 256
+#define WLAN_CFG_REO_STATUS_RING_SIZE_MAX 2048
 
 #define WLAN_CFG_RXDMA_BUF_RING_SIZE 1024
 #define WLAN_CFG_RXDMA_BUF_RING_SIZE_MIN 1024
