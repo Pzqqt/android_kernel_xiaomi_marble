@@ -166,32 +166,6 @@ typedef struct sSirMbMsg {
 	uint32_t data[1];
 } tSirMbMsg, *tpSirMbMsg;
 
-/* / Mailbox Message Structure for P2P */
-typedef struct sSirMbMsgP2p {
-	uint16_t type;
-
-	/**
-	 * This length includes 4 bytes of header, that is,
-	 * 2 bytes type + 2 bytes msgLen + n*4 bytes of data.
-	 * This field is byte length.
-	 */
-	uint16_t msgLen;
-
-	uint8_t sessionId;
-	uint8_t noack;
-	uint16_t wait;
-	uint16_t channel_freq;
-	uint32_t scan_id;
-
-	/**
-	 * This is the first data word in the mailbox message.
-	 * It is followed by n words of data.
-	 * NOTE: data[1] is not a place holder to store data
-	 * instead to dereference the message body.
-	 */
-	uint32_t data[1];
-} tSirMbMsgP2p, *tpSirMbMsgP2p;
-
 /**
  * struct sir_mgmt_msg - Structure used to send auth frame from CSR to LIM
  * @type: Message type
