@@ -694,9 +694,22 @@ static int wcd937x_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 		blocking_notifier_call_chain(&wcd937x->mbhc->notifier,
 					     WCD_EVENT_PRE_HPHR_PA_OFF,
 					     &wcd937x->mbhc->wcd_mbhc);
+		set_bit(HPH_PA_DELAY, &wcd937x->status_mask);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		usleep_range(7000, 7010);
+		/*
+		 * 7ms sleep is required after PA is disabled as per
+		 * HW requirement. If compander is disabled, then
+		 * 20ms delay is required.
+		 */
+		if (test_bit(HPH_PA_DELAY, &wcd937x->status_mask)) {
+			if (!wcd937x->comp2_enable)
+				usleep_range(20000, 20100);
+			else
+				usleep_range(7000, 7100);
+			clear_bit(HPH_PA_DELAY, &wcd937x->status_mask);
+		}
+
 		snd_soc_component_update_bits(component,
 				WCD937X_DIGITAL_PDM_WD_CTL1, 0x17, 0x00);
 		blocking_notifier_call_chain(&wcd937x->mbhc->notifier,
@@ -776,9 +789,22 @@ static int wcd937x_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 		blocking_notifier_call_chain(&wcd937x->mbhc->notifier,
 					     WCD_EVENT_PRE_HPHL_PA_OFF,
 					     &wcd937x->mbhc->wcd_mbhc);
+		set_bit(HPH_PA_DELAY, &wcd937x->status_mask);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		usleep_range(7000, 7010);
+		/*
+		 * 7ms sleep is required after PA is disabled as per
+		 * HW requirement. If compander is disabled, then
+		 * 20ms delay is required.
+		 */
+		if (test_bit(HPH_PA_DELAY, &wcd937x->status_mask)) {
+			if (!wcd937x->comp1_enable)
+				usleep_range(20000, 20100);
+			else
+				usleep_range(7000, 7100);
+			clear_bit(HPH_PA_DELAY, &wcd937x->status_mask);
+		}
+
 		snd_soc_component_update_bits(component,
 				WCD937X_DIGITAL_PDM_WD_CTL0, 0x17, 0x00);
 		blocking_notifier_call_chain(&wcd937x->mbhc->notifier,
