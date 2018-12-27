@@ -258,10 +258,6 @@ wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
  */
 struct hdd_context *hdd_cfg80211_wiphy_alloc(void);
 
-int wlan_hdd_cfg80211_tdls_scan(struct wiphy *wiphy,
-				struct cfg80211_scan_request *request,
-				uint8_t source);
-
 int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			   struct cfg80211_scan_request *request);
 
@@ -295,10 +291,6 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 
 QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 					       int channel);
-#ifdef FEATURE_WLAN_TDLS
-int wlan_hdd_cfg80211_send_tdls_discover_req(struct wiphy *wiphy,
-					     struct net_device *dev, u8 *peer);
-#endif
 
 void hdd_select_cbmode(struct hdd_adapter *adapter, uint8_t operationChannel,
 		       struct ch_params *ch_params);

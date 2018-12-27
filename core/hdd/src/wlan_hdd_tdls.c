@@ -597,45 +597,6 @@ int wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 }
 
 /**
- * wlan_hdd_tdls_extctrl_config_peer() - configure an externally controllable
- *                                       TDLS peer
- * @adapter: HDD adapter
- * @peer: MAC address of the TDLS peer
- * @callback: Callback to set on the peer
- * @chan: Channel
- * @max_latency: Maximum latency
- * @op_class: Operation class
- * @min_bandwidth: Minimal bandwidth
- *
- * Return: 0 on success; negative otherwise
- */
-int wlan_hdd_tdls_extctrl_config_peer(struct hdd_adapter *adapter,
-				      const uint8_t *peer,
-				      cfg80211_exttdls_callback callback,
-				      u32 chan,
-				      u32 max_latency,
-				      u32 op_class, u32 min_bandwidth)
-{
-	/* TODO */
-	return 0;
-}
-
-/**
- * wlan_hdd_tdls_extctrl_deconfig_peer() - de-configure an externally
- *                                         controllable TDLS peer
- * @adapter: HDD adapter
- * @peer: MAC address of the tdls peer
- *
- * Return: 0 if success; negative errno otherwisw
- */
-int wlan_hdd_tdls_extctrl_deconfig_peer(struct hdd_adapter *adapter,
-					const uint8_t *peer)
-{
-	/* TODO */
-	return 0;
-}
-
-/**
  * __wlan_hdd_cfg80211_tdls_oper() - helper function to handle cfg80211 operation
  *                                   on an TDLS peer
  * @wiphy: wiphy
@@ -730,46 +691,6 @@ int wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 
 	return ret;
 }
-
-/**
- * wlan_hdd_cfg80211_send_tdls_discover_req() - send out TDLS discovery for
- *                                              a TDLS peer
- * @wiphy: wiphy
- * @dev: net device
- * @peer: MAC address of the peer
- *
- * Return: 0 if success; negative errno otherwise
- */
-int wlan_hdd_cfg80211_send_tdls_discover_req(struct wiphy *wiphy,
-					     struct net_device *dev, u8 *peer)
-{
-	hdd_debug("tdls send discover req: " MAC_ADDRESS_STR,
-		   MAC_ADDR_ARRAY(peer));
-#if TDLS_MGMT_VERSION2
-	return wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer,
-					   WLAN_TDLS_DISCOVERY_REQUEST, 1, 0, 0,
-					   NULL, 0);
-#else
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0))
-	return wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer,
-					   WLAN_TDLS_DISCOVERY_REQUEST, 1, 0,
-					   0, 0, NULL, 0);
-#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 16, 0))
-	return wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer,
-					   WLAN_TDLS_DISCOVERY_REQUEST, 1, 0,
-					   0, NULL, 0);
-#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 15, 0))
-	return wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer,
-					   WLAN_TDLS_DISCOVERY_REQUEST, 1, 0,
-					   0, NULL, 0);
-#else
-	return wlan_hdd_cfg80211_tdls_mgmt(wiphy, dev, peer,
-					   WLAN_TDLS_DISCOVERY_REQUEST, 1, 0,
-					   NULL, 0);
-#endif
-#endif
-}
-
 
 int hdd_set_tdls_offchannel(struct hdd_context *hdd_ctx,
 			    struct hdd_adapter *adapter,

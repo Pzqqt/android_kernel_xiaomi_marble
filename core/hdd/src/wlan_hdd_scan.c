@@ -724,31 +724,6 @@ int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 }
 
 /**
- * wlan_hdd_cfg80211_tdls_scan() - API to process cfg80211 scan request
- * @wiphy: Pointer to wiphy
- * @request: Pointer to scan request
- * @source: scan request source(NL/Vendor scan)
- *
- * This API responds to scan trigger and update cfg80211 scan database
- * later, scan dump command can be used to receive scan results. This
- * function gets called when tdls module queues the scan request.
- *
- * Return: 0 for success, non zero for failure.
- */
-int wlan_hdd_cfg80211_tdls_scan(struct wiphy *wiphy,
-				struct cfg80211_scan_request *request,
-				uint8_t source)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_scan(wiphy,
-				request, source);
-	cds_ssr_unprotect(__func__);
-	return ret;
-}
-
-/**
  * wlan_hdd_get_rates() -API to get the rates from scan request
  * @wiphy: Pointer to wiphy
  * @band: Band

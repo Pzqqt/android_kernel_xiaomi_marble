@@ -41,16 +41,6 @@ typedef int (*cfg80211_exttdls_callback)(const uint8_t *mac,
 int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *adapter, char *buf,
 				int buflen);
 
-int wlan_hdd_tdls_extctrl_deconfig_peer(struct hdd_adapter *adapter,
-					const uint8_t *peer);
-int wlan_hdd_tdls_extctrl_config_peer(struct hdd_adapter *adapter,
-				      const uint8_t *peer,
-				      cfg80211_exttdls_callback callback,
-				      uint32_t chan,
-				      uint32_t max_latency,
-				      uint32_t op_class,
-				      uint32_t min_bandwidth);
-
 int wlan_hdd_cfg80211_exttdls_enable(struct wiphy *wiphy,
 				     struct wireless_dev *wdev,
 				     const void *data,
