@@ -13182,10 +13182,12 @@ void hdd_component_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	nan_psoc_enable(psoc);
 	p2p_psoc_enable(psoc);
 	policy_mgr_psoc_enable(psoc);
+	ucfg_tdls_psoc_enable(psoc);
 }
 
 void hdd_component_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
+	ucfg_tdls_psoc_disable(psoc);
 	policy_mgr_psoc_disable(psoc);
 	p2p_psoc_disable(psoc);
 	nan_psoc_disable(psoc);
