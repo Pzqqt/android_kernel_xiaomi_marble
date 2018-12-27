@@ -2406,36 +2406,6 @@ typedef struct sSirRoamOffloadScanRsp {
 #define    SIR_MAX_NUM_FILTERS               20
 #define    SIR_MAX_NUM_TESTS_PER_FILTER      10
 
-#ifdef WLAN_FEATURE_PACKET_FILTERING
-/* */
-/* Filter Packet Match Count Parameters */
-/* */
-typedef struct sSirRcvFltPktMatchCnt {
-	uint8_t filterId;
-	uint32_t matchCnt;
-} tSirRcvFltPktMatchCnt, tpSirRcvFltPktMatchCnt;
-
-typedef struct sSirRcvFltPktMatchRsp {
-	uint16_t mesgType;
-	uint16_t mesgLen;
-
-	/* Success or Failure */
-	uint32_t status;
-	tSirRcvFltPktMatchCnt filterMatchCnt[SIR_MAX_NUM_FILTERS];
-	struct qdf_mac_addr bssid;
-} tSirRcvFltPktMatchRsp, *tpSirRcvFltPktMatchRsp;
-
-/* */
-/* Receive Filter Clear Parameters */
-/* */
-typedef struct sSirRcvFltPktClearParam {
-	uint32_t status;        /* only valid for response message */
-	uint8_t filterId;
-	struct qdf_mac_addr self_macaddr;
-	struct qdf_mac_addr bssid;
-} tSirRcvFltPktClearParam, *tpSirRcvFltPktClearParam;
-#endif /* WLAN_FEATURE_PACKET_FILTERING */
-
 /* */
 /* Multicast Address List Parameters */
 /* */
