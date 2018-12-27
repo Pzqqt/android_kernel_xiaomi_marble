@@ -95,6 +95,7 @@ static QDF_STATUS p2p_tx_context_check_valid(struct tx_action_context *tx_ctx)
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
+#ifdef SUPPORT_P2P_BY_ONE_INTF_WLAN
 static QDF_STATUS p2p_vdev_check_valid(struct tx_action_context *tx_ctx)
 {
 	enum QDF_OPMODE mode;
@@ -105,8 +106,41 @@ static QDF_STATUS p2p_vdev_check_valid(struct tx_action_context *tx_ctx)
 
 	p2p_soc_obj = tx_ctx->p2p_soc_obj;
 	psoc = p2p_soc_obj->soc;
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
-			tx_ctx->vdev_id, WLAN_P2P_ID);
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+			psoc, tx_ctx->vdev_id, WLAN_P2P_ID);
+	if (!vdev) {
+		p2p_err("null vdev object");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mode = wlan_vdev_mlme_get_opmode(vdev);
+	p2p_debug("vdev mode:%d", mode);
+
+	/* drop probe response for go, sap */
+	if ((mode == QDF_SAP_MODE ||
+	     mode == QDF_P2P_GO_MODE) &&
+	    tx_ctx->frame_info.sub_type == P2P_MGMT_PROBE_RSP) {
+		p2p_debug("drop probe response, mode:%d", mode);
+		status = QDF_STATUS_E_FAILURE;
+	}
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_P2P_ID);
+
+	return status;
+}
+#else
+static QDF_STATUS p2p_vdev_check_valid(struct tx_action_context *tx_ctx)
+{
+	enum QDF_OPMODE mode;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_psoc *psoc;
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	p2p_soc_obj = tx_ctx->p2p_soc_obj;
+	psoc = p2p_soc_obj->soc;
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+			psoc, tx_ctx->vdev_id, WLAN_P2P_ID);
 	if (!vdev) {
 		p2p_err("null vdev object");
 		return QDF_STATUS_E_INVAL;
@@ -117,9 +151,9 @@ static QDF_STATUS p2p_vdev_check_valid(struct tx_action_context *tx_ctx)
 
 	/* drop probe response for sta, go, sap */
 	if ((mode == QDF_STA_MODE ||
-		mode == QDF_SAP_MODE ||
-		mode == QDF_P2P_GO_MODE) &&
-		tx_ctx->frame_info.sub_type == P2P_MGMT_PROBE_RSP) {
+	     mode == QDF_SAP_MODE ||
+	     mode == QDF_P2P_GO_MODE) &&
+	    tx_ctx->frame_info.sub_type == P2P_MGMT_PROBE_RSP) {
 		p2p_debug("drop probe response, mode:%d", mode);
 		status = QDF_STATUS_E_FAILURE;
 	}
@@ -128,6 +162,7 @@ static QDF_STATUS p2p_vdev_check_valid(struct tx_action_context *tx_ctx)
 
 	return status;
 }
+#endif /* SUPPORT_P2P_BY_ONE_INTF_WLAN */
 
 /**
  * p2p_get_p2pie_ptr() - get the pointer to p2p ie

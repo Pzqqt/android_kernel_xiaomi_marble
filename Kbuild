@@ -2212,6 +2212,13 @@ ifeq ($(CONFIG_RX_THREAD_PRIORITY), y)
 cppflags-y += -DRX_THREAD_PRIORITY
 endif
 
+ifeq ($(CONFIG_SUPPORT_P2P_BY_ONE_INTF_WLAN), y)
+#sta support to tx P2P action frames
+cppflags-y += -DSUPPORT_P2P_BY_ONE_INTF_WLAN
+else
+#Open P2P device interface only for non-Mobile router use cases
+cppflags-$(CONFIG_WLAN_OPEN_P2P_INTERFACE) += -DWLAN_OPEN_P2P_INTERFACE
+endif
 
 #Enable wbuff
 cppflags-$(CONFIG_WLAN_WBUFF) += -DWLAN_FEATURE_WBUFF
@@ -2250,9 +2257,6 @@ cppflags-$(CONFIG_MDM_PLATFORM) += -DMDM_PLATFORM
 
 #Disable STA-AP Mode DFS support
 cppflags-$(CONFIG_FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE) += -DFEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
-
-#Open P2P device interface only for non-Mobile router use cases
-cppflags-$(CONFIG_WLAN_OPEN_P2P_INTERFACE) += -DWLAN_OPEN_P2P_INTERFACE
 
 #Enable 2.4 GHz social channels in 5 GHz only mode for p2p usage
 cppflags-$(CONFIG_WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY) += -DWLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
