@@ -2639,6 +2639,12 @@ hdd_roam_set_key_complete_handler(struct hdd_adapter *adapter,
 						    roamResult);
 	}
 
+	if (!adapter->hdd_ctx || !adapter->hdd_ctx->psoc) {
+		hdd_err("hdd_ctx or psoc is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	policy_mgr_restart_opportunistic_timer(adapter->hdd_ctx->psoc, false);
+
 	hdd_exit();
 	return QDF_STATUS_SUCCESS;
 }
@@ -3289,8 +3295,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		policy_mgr_check_concurrent_intf_and_restart_sap(
 			hdd_ctx->psoc);
 		if (roam_info->pBssDesc)
-			policy_mgr_check_n_start_opportunistic_timer(
-					hdd_ctx->psoc);
+			policy_mgr_checkn_update_hw_mode_single_mac_mode
+				(hdd_ctx->psoc,
+				 roam_info->pBssDesc->channelId);
 	} else {
 		bool connect_timeout = false;
 		/* do we need to change the HW mode */
