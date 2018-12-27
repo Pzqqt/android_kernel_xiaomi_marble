@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1431,10 +1431,6 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 	 * the station, before assuming that the station is no more associated
 	 * and disassociates it
 	 */
-
-	/* timWaitCount used by PMM for monitoring the STA's in PS for LINK */
-	sta_ds->timWaitCount =
-		(uint8_t) GET_TIM_WAIT_COUNT(assoc_req->listenInterval);
 
 	/* Init the Current successful MPDU's tranfered to this STA count = 0 */
 	sta_ds->curTxMpduCnt = 0;

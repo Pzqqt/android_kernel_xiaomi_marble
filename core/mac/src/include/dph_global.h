@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -124,8 +124,6 @@ typedef struct sDphHashNode {
 	uint8_t staAuthenticated:1;
 	uint8_t fAniCount:1;
 	uint8_t rmfEnabled:1;
-	/* Number of Tim to wait if the STA doesn't respond / fetch data */
-	uint8_t timWaitCount;
 	/* Fragmentation size */
 	uint16_t fragSize;
 	/* Taurus capabilities */
