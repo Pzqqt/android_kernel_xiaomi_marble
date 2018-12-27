@@ -181,7 +181,6 @@ void hdd_tx_resume_timer_expired_handler(void *adapter_context)
 	wlan_hdd_netif_queue_control(adapter, WLAN_WAKE_ALL_NETIF_QUEUE,
 				     WLAN_CONTROL_PATH);
 }
-#if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
 
 /**
  * hdd_tx_resume_false() - Resume OS TX Q false leads to queue disabling
@@ -219,13 +218,6 @@ hdd_tx_resume_false(struct hdd_adapter *adapter, bool tx_resume)
 	adapter->hdd_stats.tx_rx_stats.txflow_pause_cnt++;
 	adapter->hdd_stats.tx_rx_stats.is_txflow_paused = true;
 }
-#else
-
-static inline void
-hdd_tx_resume_false(struct hdd_adapter *adapter, bool tx_resume)
-{
-}
-#endif
 
 static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 		struct sk_buff *skb)

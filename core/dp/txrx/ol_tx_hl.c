@@ -227,7 +227,7 @@ struct ol_tx_desc_t *ol_tx_hl_desc_alloc(struct ol_txrx_pdev_t *pdev,
 }
 #endif
 
-#ifdef CONFIG_PER_VDEV_TX_DESC_POOL
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
 /**
  * ol_txrx_rsrc_threshold_lo() - set threshold low - when to start tx desc
  *				 margin replenishment

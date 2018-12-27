@@ -102,8 +102,6 @@ void hdd_softap_tx_resume_timer_expired_handler(void *adapter_context)
 				     WLAN_CONTROL_PATH);
 }
 
-#if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
-
 /**
  * hdd_softap_tx_resume_false() - Resume OS TX Q false leads to queue disabling
  * @adapter: pointer to hdd adapter
@@ -136,13 +134,6 @@ hdd_softap_tx_resume_false(struct hdd_adapter *adapter, bool tx_resume)
 			adapter->hdd_stats.tx_rx_stats.txflow_timer_cnt++;
 	}
 }
-#else
-
-static inline void
-hdd_softap_tx_resume_false(struct hdd_adapter *adapter, bool tx_resume)
-{
-}
-#endif
 
 void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
 {

@@ -98,7 +98,7 @@ ol_tx_desc_pool_size_hl(struct cdp_cfg *ctrl_pdev);
 #define FW_STATS_DESC_POOL_SIZE 10
 #endif
 
-#ifdef CONFIG_PER_VDEV_TX_DESC_POOL
+#ifdef QCA_HL_NETDEV_FLOW_CONTROL
 #define TXRX_HL_TX_FLOW_CTRL_VDEV_LOW_WATER_MARK 400
 #define TXRX_HL_TX_FLOW_CTRL_MGMT_RESERVED 100
 #endif
