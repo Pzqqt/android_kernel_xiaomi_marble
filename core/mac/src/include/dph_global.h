@@ -119,8 +119,6 @@ typedef struct sDphHashNode {
 	uint8_t wsmEnabled:1;
 	/* station gave version info */
 	uint8_t versionPresent:1;
-	/* allow bursting regardless of qosMode */
-	uint8_t burstEnableForce:1;
 	uint8_t staAuthenticated:1;
 	uint8_t fAniCount:1;
 	uint8_t rmfEnabled:1;
