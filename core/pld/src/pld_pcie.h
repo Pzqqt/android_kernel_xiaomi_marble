@@ -278,7 +278,7 @@ static inline int pld_pcie_get_user_msi_assignment(struct device *dev,
 						   uint32_t *user_base_data,
 						   uint32_t *base_vector)
 {
-	return 0;
+	return -EINVAL;
 }
 
 static inline int pld_pcie_get_msi_irq(struct device *dev, unsigned int vector)
