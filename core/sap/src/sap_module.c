@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -289,14 +289,7 @@ QDF_STATUS sap_init_ctx(struct sap_context *sap_ctx,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	/*------------------------------------------------------------------------
-	    For now, presume security is not enabled.
-	   -----------------------------------------------------------------------*/
-	sap_ctx->ucSecEnabled = WLANSAP_SECURITY_ENABLED_STATE;
-
-	/*------------------------------------------------------------------------
-	    Now configure the roaming profile links. To SSID and bssid.
-	   ------------------------------------------------------------------------*/
+	/* Now configure the roaming profile links. To SSID and bssid.*/
 	/* We have room for two SSIDs. */
 	sap_ctx->csr_roamProfile.SSIDs.numOfSSIDs = 1;   /* This is true for now. */
 	sap_ctx->csr_roamProfile.SSIDs.SSIDList = sap_ctx->SSIDList;     /* Array of two */

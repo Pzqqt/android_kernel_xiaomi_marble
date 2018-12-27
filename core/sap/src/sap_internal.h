@@ -50,8 +50,6 @@ extern "C" {
 #define SAP_DFS_NON_OCCUPANCY_PERIOD      (30 * 60 * 1000 * 1000)
 
 #define SAP_DEBUG
-/* Used to enable or disable security on the BT-AMP link */
-#define WLANSAP_SECURITY_ENABLED_STATE true
 
 /* MAC Address length */
 #define ANI_EAPOL_KEY_RSN_NONCE_SIZE      32
@@ -141,9 +139,6 @@ struct sap_context {
 
 	/* Include the associations MAC addresses */
 	uint8_t self_mac_addr[CDS_MAC_ADDRESS_LEN];
-
-	/* Flag for signaling if security is enabled */
-	uint8_t ucSecEnabled;
 
 	/* Include the SME(CSR) context here */
 	struct csr_roam_profile csr_roamProfile;
