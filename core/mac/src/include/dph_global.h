@@ -39,7 +39,6 @@
 
 #include "lim_global.h"
 #include "sir_mac_prot_def.h"
-#include "sir_mac_prop_exts.h"
 #include "sir_api.h"
 
 /* Following determines whether statistics are maintained or not */
@@ -117,8 +116,6 @@ typedef struct sDphHashNode {
 	/* BYTE 2 */
 	/* set if both ap and sta are wsm capable */
 	uint8_t wsmEnabled:1;
-	/* station gave version info */
-	uint8_t versionPresent:1;
 	uint8_t staAuthenticated:1;
 	uint8_t fAniCount:1;
 	uint8_t rmfEnabled:1;
@@ -134,8 +131,6 @@ typedef struct sDphHashNode {
 	uint32_t curTxMpduCnt;
 	/* qos parameter info */
 	tDphQosParams qos;
-	/* station version info - valid only if versionPresent is set */
-	tSirMacPropVersion version;
 #ifdef PLM_WDS
 	uint8_t wdsIndex;
 	uint8_t wdsPeerBeaconSeen;

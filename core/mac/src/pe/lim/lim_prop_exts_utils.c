@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -176,26 +176,11 @@ static void lim_objmgr_update_vdev_nss(struct wlan_objmgr_psoc *psoc,
 	wlan_vdev_obj_unlock(vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 }
-/**
- * lim_extract_ap_capability() - extract AP's HCF/WME/WSM capability
- * @mac_ctx: Pointer to Global MAC structure
- * @p_ie: Pointer to starting IE in Beacon/Probe Response
- * @ie_len: Length of all IEs combined
- * @qos_cap: Bits are set according to capabilities
- * @prop_cap: Pointer to prop info IE.
- * @uapsd: pointer to uapsd
- * @local_constraint: Pointer to local power constraint.
- * @session: A pointer to session entry.
- *
- * This function is called to extract AP's HCF/WME/WSM capability
- * from the IEs received from it in Beacon/Probe Response frames
- *
- * Return: None
- */
+
 void
 lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
-	uint16_t ie_len, uint8_t *qos_cap, uint16_t *prop_cap, uint8_t *uapsd,
-	int8_t *local_constraint, struct pe_session *session)
+			  uint16_t ie_len, uint8_t *qos_cap, uint8_t *uapsd,
+			  int8_t *local_constraint, struct pe_session *session)
 {
 	tSirProbeRespBeacon *beacon_struct;
 	uint8_t ap_bcon_ch_width;
@@ -211,7 +196,6 @@ lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 		return;
 
 	*qos_cap = 0;
-	*prop_cap = 0;
 	*uapsd = 0;
 	pe_debug("The IE's being received:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
@@ -230,8 +214,6 @@ lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
 	if (LIM_BSS_CAPS_GET(WME, *qos_cap)
 			&& beacon_struct->wsmCapablePresent)
 		LIM_BSS_CAPS_SET(WSM, *qos_cap);
-	if (beacon_struct->propIEinfo.capabilityPresent)
-		*prop_cap = beacon_struct->propIEinfo.capability;
 	if (beacon_struct->HTCaps.present)
 		mac_ctx->lim.htCapabilityPresentInBeacon = 1;
 	else

@@ -233,7 +233,6 @@ typedef struct sLimMlmStaContext {
 
 	tSirResultCodes resultCode;
 
-	tSirMacPropRateSet propRateSet;
 	uint8_t subType:1;      /* Indicates ASSOC (0) or REASSOC (1) */
 	uint8_t updateContext:1;
 	uint8_t schClean:1;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -68,39 +68,5 @@
 #define WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ		1
 #define WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ		2
 #define WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ	3
-
-typedef struct sSirMacPropRateSet {
-	uint8_t numPropRates;
-	uint8_t propRate[8];
-} tSirMacPropRateSet, *tpSirMacPropRateSet;
-
-#define SIR_PROP_VERSION_STR_MAX 20
-typedef struct sSirMacPropVersion {
-	uint32_t chip_rev;      /* board, chipset info */
-	uint8_t card_type;      /* Type of Card */
-	/* build version string */
-	uint8_t build_version[SIR_PROP_VERSION_STR_MAX];
-} tSirMacPropVersion, *tpSirMacPropVersion;
-
-/* generic proprietary IE structure definition */
-typedef struct sSirPropIEStruct {
-	uint8_t propRatesPresent:1;
-	uint8_t apNamePresent:1;
-	uint8_t loadBalanceInfoPresent:1;
-	uint8_t versionPresent:1;
-	uint8_t edcaParamPresent:1;
-	uint8_t capabilityPresent:1;
-	uint8_t propChannelSwitchPresent:1;
-	uint8_t triggerStaScanPresent:1;
-	uint8_t rsvd:8;
-
-	tSirMacPropRateSet propRates;
-	tAniApName apName;      /* used in beacon/probe only */
-	uint16_t capability;    /* capability bit map */
-	tSirMacPropVersion version;
-	tSirMacEdcaParamSetIE edca;
-	uint8_t triggerStaScanEnable;
-
-} tSirPropIEStruct, *tpSirPropIEStruct;
 
 #endif /* __MAC_PROP_EXTS_H */

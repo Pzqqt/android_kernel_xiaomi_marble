@@ -665,13 +665,11 @@ void lim_fill_ft_session(struct mac_context *mac,
 	lim_extract_ap_capability(mac, (uint8_t *) pbssDescription->ieFields,
 		lim_get_ielen_from_bss_description(pbssDescription),
 		&ft_session->limCurrentBssQosCaps,
-		&ft_session->limCurrentBssPropCap, &currentBssUapsd,
+		&currentBssUapsd,
 		&localPowerConstraint, ft_session);
 
 	ft_session->limReassocBssQosCaps =
 		ft_session->limCurrentBssQosCaps;
-	ft_session->limReassocBssPropCap =
-		ft_session->limCurrentBssPropCap;
 
 	ft_session->is11Rconnection = pe_session->is11Rconnection;
 #ifdef FEATURE_WLAN_ESE

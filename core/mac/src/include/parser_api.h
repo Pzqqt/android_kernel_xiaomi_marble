@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -213,7 +213,6 @@ typedef struct sSirProbeRespBeacon {
 
 	tSirMacErpInfo erpIEInfo;
 
-	tSirPropIEStruct propIEinfo;
 	tDot11fIEPowerConstraints localPowerConstraint;
 	tDot11fIETPCReport tpcReport;
 	tDot11fIEChanSwitchAnn channelSwitchIE;
@@ -326,7 +325,6 @@ typedef struct sSirAssocReq {
 	tSirMacRsnInfo rsn;
 	tSirAddie addIE;
 
-	tSirPropIEStruct propIEinfo;
 	tSirMacPowerCapabilityIE powerCapability;
 	tSirMacSupportedChannelIE supportedChannels;
 	tDot11fIEHTCaps HTCaps;
@@ -370,7 +368,6 @@ typedef struct sSirAssocRsp {
 	uint16_t statusCode;
 	tSirMacRateSet supportedRates;
 	tSirMacRateSet extendedRates;
-	tSirPropIEStruct propIEinfo;
 	tSirMacEdcaParamSetIE edca;
 	tSirAddtsRspInfo addtsRsp;
 	tDot11fIEHTCaps HTCaps;
@@ -536,8 +533,6 @@ struct s_ext_cap {
 	uint8_t twt_requestor_support:1;
 	uint8_t twt_responder_support:1;
 };
-
-uint8_t sirIsPropCapabilityEnabled(struct mac_context *mac, uint32_t bitnum);
 
 #define CFG_GET_INT(nStatus, mac, nItem, cfg)  do { \
 		(nStatus) = wlan_cfg_get_int((mac), (nItem), &(cfg)); \

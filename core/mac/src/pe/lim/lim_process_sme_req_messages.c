@@ -1641,7 +1641,6 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 			lim_get_ielen_from_bss_description(
 			&session->pLimJoinReq->bssDescription),
 			&session->limCurrentBssQosCaps,
-			&session->limCurrentBssPropCap,
 			&session->gLimCurrentBssUapsd,
 			&local_power_constraint, session);
 
@@ -1958,7 +1957,6 @@ static void __lim_process_sme_reassoc_req(struct mac_context *mac_ctx,
 		lim_get_ielen_from_bss_description(
 			&session_entry->pLimReAssocReq->bssDescription),
 		&session_entry->limReassocBssQosCaps,
-		&session_entry->limReassocBssPropCap,
 		&session_entry->gLimCurrentBssUapsd,
 		&local_pwr_constraint, session_entry);
 	session_entry->maxTxPower = QDF_MIN(reg_max, (local_pwr_constraint));

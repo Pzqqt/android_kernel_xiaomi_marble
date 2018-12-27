@@ -1403,7 +1403,6 @@ static bool lim_update_sta_ds(struct mac_context *mac_ctx, tpSirMacMgmtHdr hdr,
 		(assoc_req->addtsPresent == 0) ? false : true;
 	sta_ds->qos.addts = assoc_req->addtsReq;
 	sta_ds->qos.capability = assoc_req->qosCapability;
-	sta_ds->versionPresent = 0;
 	/*
 	 * short slot and short preamble should be updated before doing
 	 * limaddsta

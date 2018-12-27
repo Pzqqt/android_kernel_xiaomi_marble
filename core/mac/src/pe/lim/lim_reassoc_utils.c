@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -74,8 +74,6 @@ void lim_update_re_assoc_globals(struct mac_context *mac, tpSirAssocRsp pAssocRs
 	pe_session->limCurrentBssCaps = pe_session->limReassocBssCaps;
 	pe_session->limCurrentBssQosCaps =
 		pe_session->limReassocBssQosCaps;
-	pe_session->limCurrentBssPropCap =
-		pe_session->limReassocBssPropCap;
 
 	qdf_mem_copy((uint8_t *) &pe_session->ssId,
 		     (uint8_t *) &pe_session->limReassocSSID,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -165,7 +165,6 @@ struct pe_session {
 	tAniAuthType limCurrentAuthType;
 	uint16_t limCurrentBssCaps;
 	uint8_t limCurrentBssQosCaps;
-	uint16_t limCurrentBssPropCap;
 	uint8_t limSentCapsChangeNtf;
 	uint16_t limAID;
 
@@ -179,7 +178,6 @@ struct pe_session {
 	tSirMacSSid limReassocSSID;
 	uint16_t limReassocBssCaps;
 	uint8_t limReassocBssQosCaps;
-	uint16_t limReassocBssPropCap;
 
 	/* Assoc or ReAssoc Response Data/Frame */
 	void *limAssocResponseData;

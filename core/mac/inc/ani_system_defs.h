@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -108,11 +108,6 @@ typedef struct sAniSSID {
 	uint8_t length;
 	uint8_t ssId[SIR_MAC_MAX_SSID_LENGTH];
 } tAniSSID, *tpAniSSID;
-
-typedef struct sAniApName {
-	uint8_t length;
-	uint8_t name[SIR_MAC_MAX_SSID_LENGTH];
-} tAniApName, *tpAniApName;
 
 /* / RSN IE information */
 typedef struct sSirRSNie {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014, 2016, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014, 2016, 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,21 +31,25 @@
 #ifndef __LIM_PROP_EXTS_UTILS_H
 #define __LIM_PROP_EXTS_UTILS_H
 
-/* Function templates */
-void limQuietBss(struct mac_context *, uint32_t);
-void lim_cleanupMeasData(struct mac_context *);
-void limDeleteMeasTimers(struct mac_context *);
-void limStopMeasTimers(struct mac_context *mac);
-void lim_cleanupMeasResources(struct mac_context *);
-void limRestorePreLearnState(struct mac_context *);
-void limCollectMeasurementData(struct mac_context *, uint32_t *, tpSchBeaconStruct);
-void limCollectRSSI(struct mac_context *);
-void limDeleteCurrentBssWdsNode(struct mac_context *);
-uint32_t limComputeAvg(struct mac_context *, uint32_t, uint32_t);
-
-/* / Function to extract AP's HCF capability from IE fields */
-void lim_extract_ap_capability(struct mac_context *, uint8_t *, uint16_t, uint8_t *,
-			       uint16_t *, uint8_t *, int8_t *, struct pe_session *);
+/**
+ * lim_extract_ap_capability() - extract AP's HCF/WME/WSM capability
+ * @mac_ctx: Pointer to Global MAC structure
+ * @p_ie: Pointer to starting IE in Beacon/Probe Response
+ * @ie_len: Length of all IEs combined
+ * @qos_cap: Bits are set according to capabilities
+ * @uapsd: pointer to uapsd
+ * @local_constraint: Pointer to local power constraint.
+ * @session: A pointer to session entry.
+ *
+ * This function is called to extract AP's HCF/WME/WSM capability
+ * from the IEs received from it in Beacon/Probe Response frames
+ *
+ * Return: None
+ */
+void
+lim_extract_ap_capability(struct mac_context *mac_ctx, uint8_t *p_ie,
+			  uint16_t ie_len, uint8_t *qos_cap, uint8_t *uapsd,
+			  int8_t *local_constraint, struct pe_session *session);
 
 ePhyChanBondState lim_get_htcb_state(ePhyChanBondState aniCBMode);
 
