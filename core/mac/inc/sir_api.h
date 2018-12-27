@@ -743,11 +743,6 @@ typedef struct sSirChannelList {
 	uint8_t channelNumber[SIR_ESE_MAX_MEAS_IE_REQS];
 } tSirChannelList, *tpSirChannelList;
 
-/* / Two Background Scan mode */
-typedef enum eSirBackgroundScanMode {
-	eSIR_ROAMING_SCAN = 2,
-} tSirBackgroundScanMode;
-
 #ifdef FEATURE_OEM_DATA_SUPPORT
 struct oem_data_req {
 	uint32_t data_len;
