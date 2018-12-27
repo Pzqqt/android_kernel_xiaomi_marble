@@ -2995,14 +2995,12 @@ typedef struct {
  * @mac_addr: mac address received from target
  * @txRate: TX rate
  * @mcsIndex: MCS index
- * @txRateFlags: TX rate flags
  * @rssi: RSSI
  */
 typedef struct {
 	uint8_t  mac_addr[QDF_MAC_ADDR_SIZE];
 	uint32_t txRate;
 	uint32_t mcsIndex;
-	uint32_t txRateFlags;
 	int8_t  rssi;
 } tSirIbssPeerInfoParams;
 

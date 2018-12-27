@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2132,7 +2132,6 @@ int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 						WMA_TGT_NOISE_FLOOR_DBM;
 
 		pSmeRsp->txRate = peer_info->data_rate;
-		pSmeRsp->txRateFlags = 0;
 
 		WMA_LOGE("peer " MAC_ADDRESS_STR "rssi %d txRate %d",
 			MAC_ADDR_ARRAY(peer_mac),
