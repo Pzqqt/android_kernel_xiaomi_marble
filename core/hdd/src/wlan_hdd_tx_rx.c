@@ -292,6 +292,8 @@ void hdd_tx_resume_cb(void *adapter_context, bool tx_resume)
 		wlan_hdd_netif_queue_control(adapter,
 					     WLAN_WAKE_ALL_NETIF_QUEUE,
 					     WLAN_DATA_FLOW_CONTROL);
+		adapter->hdd_stats.tx_rx_stats.is_txflow_paused = false;
+		adapter->hdd_stats.tx_rx_stats.txflow_unpause_cnt++;
 	}
 	hdd_tx_resume_false(adapter, tx_resume);
 }

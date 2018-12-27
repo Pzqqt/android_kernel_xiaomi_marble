@@ -360,6 +360,8 @@ void wlan_hdd_mod_fc_timer(struct hdd_adapter *adapter,
 
 	if (action == WLAN_WAKE_NON_PRIORITY_QUEUE) {
 		qdf_mc_timer_stop(&adapter->tx_flow_control_timer);
+		adapter->hdd_stats.tx_rx_stats.is_txflow_paused = false;
+		adapter->hdd_stats.tx_rx_stats.txflow_unpause_cnt++;
 	} else if (action == WLAN_STOP_NON_PRIORITY_QUEUE) {
 		QDF_STATUS status =
 		qdf_mc_timer_start(&adapter->tx_flow_control_timer,
