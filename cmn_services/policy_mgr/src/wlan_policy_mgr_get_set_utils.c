@@ -208,21 +208,6 @@ QDF_STATUS policy_mgr_set_sys_pref(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS policy_mgr_get_max_conc_cxns(struct wlan_objmgr_psoc *psoc,
-						uint8_t *max_conc_cxns)
-{
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("pm_ctx is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	*max_conc_cxns = pm_ctx->cfg.max_conc_cxns;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS policy_mgr_get_conc_rule1(struct wlan_objmgr_psoc *psoc,
 						uint8_t *conc_rule1)
 {
@@ -253,36 +238,6 @@ QDF_STATUS policy_mgr_get_conc_rule2(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS policy_mgr_get_dbs_selection_plcy(struct wlan_objmgr_psoc *psoc,
-						uint32_t *dbs_selection_plcy)
-{
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("pm_ctx is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	*dbs_selection_plcy = pm_ctx->cfg.dbs_selection_plcy;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS policy_mgr_get_vdev_priority_list(struct wlan_objmgr_psoc *psoc,
-						uint32_t *vdev_priority_list)
-{
-	struct policy_mgr_psoc_priv_obj *pm_ctx;
-
-	pm_ctx = policy_mgr_get_context(psoc);
-	if (!pm_ctx) {
-		policy_mgr_err("pm_ctx is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	*vdev_priority_list = pm_ctx->cfg.vdev_priority_list;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS policy_mgr_get_chnl_select_plcy(struct wlan_objmgr_psoc *psoc,
 						uint32_t *chnl_select_plcy)
 {
@@ -297,7 +252,6 @@ QDF_STATUS policy_mgr_get_chnl_select_plcy(struct wlan_objmgr_psoc *psoc,
 
 	return QDF_STATUS_SUCCESS;
 }
-
 
 QDF_STATUS policy_mgr_get_mcc_adaptive_sch(struct wlan_objmgr_psoc *psoc,
 					   uint8_t *enable_mcc_adaptive_sch)

@@ -121,12 +121,6 @@ QDF_STATUS ucfg_policy_mgr_set_sys_pref(struct wlan_objmgr_psoc *psoc,
 	return policy_mgr_set_sys_pref(psoc, sys_pref);
 }
 
-QDF_STATUS ucfg_policy_mgr_get_max_conc_cxns(struct wlan_objmgr_psoc *psoc,
-						uint8_t *max_conc_cxns)
-{
-	return policy_mgr_get_max_conc_cxns(psoc, max_conc_cxns);;
-}
-
 QDF_STATUS ucfg_policy_mgr_get_conc_rule1(struct wlan_objmgr_psoc *psoc,
 						uint8_t *conc_rule1)
 {
@@ -137,18 +131,6 @@ QDF_STATUS ucfg_policy_mgr_get_conc_rule2(struct wlan_objmgr_psoc *psoc,
 						uint8_t *conc_rule2)
 {
 	return policy_mgr_get_conc_rule2(psoc, conc_rule2);
-}
-
-QDF_STATUS ucfg_policy_mgr_get_dbs_selection_plcy(struct wlan_objmgr_psoc *psoc,
-						uint32_t *dbs_selection_plcy)
-{
-	return policy_mgr_get_dbs_selection_plcy(psoc, dbs_selection_plcy);
-}
-
-QDF_STATUS ucfg_policy_mgr_get_vdev_priority_list(struct wlan_objmgr_psoc *psoc,
-						uint32_t *vdev_priority_list)
-{
-	return policy_mgr_get_vdev_priority_list(psoc, vdev_priority_list);
 }
 
 QDF_STATUS ucfg_policy_mgr_get_chnl_select_plcy(struct wlan_objmgr_psoc *psoc,
