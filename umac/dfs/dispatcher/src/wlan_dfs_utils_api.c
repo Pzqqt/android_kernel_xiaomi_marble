@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -212,15 +212,15 @@ void utils_dfs_clear_cac_started_chan(struct wlan_objmgr_pdev *pdev)
 	dfs_clear_cac_started_chan(dfs);
 }
 
-/** utils_fill_dfs_chan_info() - Fill the dfs channel structure with wlan
+/** dfs_fill_chan_info() - Fill the dfs channel structure with wlan
  * channel.
  * @chan: Pointer to DFS channel structure.
  * @wlan_chan: Pointer to WLAN Channel structure.
  *
  * Return: void
  */
-static void utils_fill_dfs_chan_info(struct dfs_channel *chan,
-				     struct wlan_channel *wlan_chan)
+static void dfs_fill_chan_info(struct dfs_channel *chan,
+			       struct wlan_channel *wlan_chan)
 {
 	chan->dfs_ch_freq = wlan_chan->ch_freq;
 	chan->dfs_ch_flags = wlan_chan->ch_flags;
@@ -239,7 +239,9 @@ bool utils_dfs_is_precac_done(struct wlan_objmgr_pdev *pdev,
 	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs)
 		return false;
-	utils_fill_dfs_chan_info(&chan, wlan_chan);
+
+	dfs_fill_chan_info(&chan, wlan_chan);
+
 	return dfs_is_precac_done(dfs, &chan);
 }
 
