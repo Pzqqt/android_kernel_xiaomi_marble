@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1185,13 +1185,21 @@ static QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
 				tSirRoamOffloadScanReq *roam_req)
 {
 	struct ap_profile_params ap_profile;
+	bool db2dbm_enabled;
 
 	ap_profile.vdev_id = roam_req->sessionId;
 	wma_roam_scan_fill_ap_profile(roam_req, &ap_profile.profile);
-	if (!wmi_service_enabled(wma_handle->wmi_handle,
-				 wmi_service_hw_db2dbm_support))
-		ap_profile.profile.rssi_abs_thresh -=
+
+	db2dbm_enabled = wmi_service_enabled(wma_handle->wmi_handle,
+					     wmi_service_hw_db2dbm_support);
+	if (!ap_profile.profile.rssi_abs_thresh) {
+		if (db2dbm_enabled)
+			ap_profile.profile.rssi_abs_thresh = WMA_RSSI_MIN_VALUE;
+	} else {
+		if (!db2dbm_enabled)
+			ap_profile.profile.rssi_abs_thresh -=
 						WMA_NOISE_FLOOR_DBM_DEFAULT;
+	}
 	ap_profile.param = roam_req->score_params;
 	return wmi_unified_send_roam_scan_offload_ap_cmd(wma_handle->wmi_handle,
 							 &ap_profile);
