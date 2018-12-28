@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -567,8 +567,6 @@ typedef struct sap_config {
 	uint16_t ht_capab;
 	uint16_t RSNWPAReqIELength;     /* The byte count in the pWPAReqIE */
 	uint32_t beacon_int;            /* Beacon Interval */
-	uint32_t ap_table_max_size;
-	uint32_t ap_table_expiration_time;
 	uint32_t ht_op_mode_fixed;
 	enum QDF_OPMODE persona; /* Tells us which persona, GO or AP */
 	bool enOverLapCh;
