@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1075,33 +1075,33 @@ lim_send_sme_mgmt_tx_completion(struct mac_context *mac,
 				uint32_t sme_session_id,
 				uint32_t txCompleteStatus)
 {
-	struct scheduler_msg mmhMsg = {0};
-	tSirMgmtTxCompletionInd *pSirMgmtTxCompletionInd;
+	struct scheduler_msg msg = {0};
+	struct tdls_mgmt_tx_completion_ind *mgmt_tx_completion_ind;
+	QDF_STATUS status;
 
-	pSirMgmtTxCompletionInd =
-		qdf_mem_malloc(sizeof(tSirMgmtTxCompletionInd));
-	if (!pSirMgmtTxCompletionInd)
+	mgmt_tx_completion_ind =
+		qdf_mem_malloc(sizeof(*mgmt_tx_completion_ind));
+	if (!mgmt_tx_completion_ind)
 		return;
-	/* messageType */
-	pSirMgmtTxCompletionInd->messageType =
-		eWNI_SME_MGMT_FRM_TX_COMPLETION_IND;
-	pSirMgmtTxCompletionInd->length = sizeof(tSirMgmtTxCompletionInd);
 
 	/* sessionId */
-	pSirMgmtTxCompletionInd->sessionId = sme_session_id;
+	mgmt_tx_completion_ind->session_id = sme_session_id;
 
-	pSirMgmtTxCompletionInd->txCompleteStatus = txCompleteStatus;
+	mgmt_tx_completion_ind->tx_complete_status = txCompleteStatus;
 
-	mmhMsg.type = eWNI_SME_MGMT_FRM_TX_COMPLETION_IND;
-	mmhMsg.bodyptr = pSirMgmtTxCompletionInd;
-	mmhMsg.bodyval = 0;
+	msg.type = eWNI_SME_MGMT_FRM_TX_COMPLETION_IND;
+	msg.bodyptr = mgmt_tx_completion_ind;
+	msg.bodyval = 0;
 
-	pSirMgmtTxCompletionInd->psoc = mac->psoc;
-	mmhMsg.callback = tgt_tdls_send_mgmt_tx_completion;
-	scheduler_post_message(QDF_MODULE_ID_PE,
+	mgmt_tx_completion_ind->psoc = mac->psoc;
+	msg.callback = tgt_tdls_send_mgmt_tx_completion;
+	status = scheduler_post_message(QDF_MODULE_ID_PE,
 			       QDF_MODULE_ID_TDLS,
-			       QDF_MODULE_ID_TARGET_IF, &mmhMsg);
-	return;
+			       QDF_MODULE_ID_TARGET_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("post msg fail, %d", status);
+		qdf_mem_free(mgmt_tx_completion_ind);
+	}
 } /*** end lim_send_sme_tdls_delete_all_peer_ind() ***/
 
 #endif /* FEATURE_WLAN_TDLS */

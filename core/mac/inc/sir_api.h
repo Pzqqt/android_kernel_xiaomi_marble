@@ -2597,50 +2597,6 @@ typedef struct sSirTdlsAddStaReq {
 	uint8_t max_sp;
 } tSirTdlsAddStaReq, *tpSirSmeTdlsAddStaReq;
 
-/* TDLS Response struct PE-->SME */
-typedef struct sSirTdlsAddStaRsp {
-	uint16_t messageType;
-	uint16_t length;
-	tSirResultCodes statusCode;
-	struct qdf_mac_addr peermac;
-	uint8_t sessionId;      /* Session ID */
-	uint16_t staId;
-	uint16_t staType;
-	enum tdls_add_oper tdlsAddOper;
-	struct wlan_objmgr_psoc *psoc;
-} tSirTdlsAddStaRsp;
-
-/* TDLS Request struct SME-->PE */
-typedef struct {
-	uint16_t messageType;   /* eWNI_SME_TDLS_LINK_ESTABLISH_REQ */
-	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
-	uint16_t transactionId; /* Transaction ID for cmd */
-	uint8_t uapsdQueues;    /* Peer's uapsd Queues Information */
-	uint8_t maxSp;          /* Peer's Supported Maximum Service Period */
-	uint8_t isBufSta;       /* Does Peer Support as Buffer Station. */
-	/* Does Peer Support as TDLS Off Channel. */
-	uint8_t isOffChannelSupported;
-	uint8_t isResponder;    /* Is Peer a responder. */
-	/* For multi-session, for PE to locate peSession ID */
-	struct qdf_mac_addr bssid;
-	struct qdf_mac_addr peermac;
-	uint8_t supportedChannelsLen;
-	uint8_t supportedChannels[SIR_MAC_MAX_SUPP_CHANNELS];
-	uint8_t supportedOperClassesLen;
-	uint8_t supportedOperClasses[REG_MAX_SUPP_OPER_CLASSES];
-} tSirTdlsLinkEstablishReq, *tpSirTdlsLinkEstablishReq;
-
-/* TDLS Request struct SME-->PE */
-typedef struct {
-	uint16_t messageType;   /* eWNI_SME_TDLS_LINK_ESTABLISH_RSP */
-	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
-	uint16_t transactionId; /* Transaction ID for cmd */
-	tSirResultCodes statusCode;
-	struct qdf_mac_addr peermac;
-} tSirTdlsLinkEstablishReqRsp, *tpSirTdlsLinkEstablishReqRsp;
-
 /* TDLS Request struct SME-->PE */
 typedef struct sSirTdlsDelStaReq {
 	uint16_t messageType;   /* eWNI_SME_TDLS_DISCOVERY_START_REQ */
@@ -2651,44 +2607,6 @@ typedef struct sSirTdlsDelStaReq {
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peermac;
 } tSirTdlsDelStaReq, *tpSirSmeTdlsDelStaReq;
-/* TDLS Response struct PE-->SME */
-typedef struct sSirTdlsDelStaRsp {
-	uint16_t messageType;
-	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
-	tSirResultCodes statusCode;
-	struct qdf_mac_addr peermac;
-	uint16_t staId;
-	struct wlan_objmgr_psoc *psoc;
-} tSirTdlsDelStaRsp, *tpSirTdlsDelStaRsp;
-/* TDLS Delete Indication struct PE-->SME */
-typedef struct sSirTdlsDelStaInd {
-	uint16_t messageType;
-	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
-	struct qdf_mac_addr peermac;
-	uint16_t staId;
-	uint16_t reasonCode;
-} tSirTdlsDelStaInd, *tpSirTdlsDelStaInd;
-typedef struct sSirTdlsDelAllPeerInd {
-	uint16_t messageType;
-	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
-} tSirTdlsDelAllPeerInd, *tpSirTdlsDelAllPeerInd;
-typedef struct sSirMgmtTxCompletionInd {
-	uint16_t messageType;
-	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
-	uint32_t txCompleteStatus;
-	struct wlan_objmgr_psoc *psoc;
-} tSirMgmtTxCompletionInd, *tpSirMgmtTxCompletionInd;
-
-typedef struct sSirTdlsEventnotify {
-	uint8_t sessionId;
-	struct qdf_mac_addr peermac;
-	uint16_t messageType;
-	uint32_t peer_reason;
-} tSirTdlsEventnotify;
 #endif /* FEATURE_WLAN_TDLS */
 
 /* Reset AP Caps Changed */

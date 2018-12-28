@@ -73,6 +73,7 @@
 #include "wlan_tdls_tgt_api.h"
 #include "wlan_mlme_public_struct.h"
 #include "wlan_mlme_api.h"
+#include "wlan_tdls_public_structs.h"
 
 /* define NO_PAD_TDLS_MIN_8023_SIZE to NOT padding: See CR#447630
    There was IOT issue with cisco 1252 open mode, where it pads
@@ -2677,38 +2678,43 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(struct mac_context *mac,
 						uint8_t updateSta,
 						tDphHashNode *pStaDs, uint8_t status)
 {
-	struct scheduler_msg mmhMsg = { 0 };
-	tSirTdlsAddStaRsp *addStaRsp = NULL;
+	struct scheduler_msg msg = { 0 };
+	struct tdls_add_sta_rsp *add_sta_rsp;
+	QDF_STATUS ret;
 
-	mmhMsg.type = eWNI_SME_TDLS_ADD_STA_RSP;
+	msg.type = eWNI_SME_TDLS_ADD_STA_RSP;
 
-	addStaRsp = qdf_mem_malloc(sizeof(tSirTdlsAddStaRsp));
-	if (!addStaRsp)
+	add_sta_rsp = qdf_mem_malloc(sizeof(*add_sta_rsp));
+	if (!add_sta_rsp)
 		return QDF_STATUS_E_NOMEM;
 
-	addStaRsp->sessionId = sessionId;
-	addStaRsp->statusCode = status;
+	add_sta_rsp->session_id = sessionId;
+	add_sta_rsp->status_code = status;
 	if (pStaDs) {
-		addStaRsp->staId = pStaDs->staIndex;
+		add_sta_rsp->sta_id = pStaDs->staIndex;
 	}
 	if (peerMac) {
-		qdf_mem_copy(addStaRsp->peermac.bytes,
+		qdf_mem_copy(add_sta_rsp->peermac.bytes,
 			     (uint8_t *) peerMac, QDF_MAC_ADDR_SIZE);
 	}
 	if (updateSta)
-		addStaRsp->tdlsAddOper = TDLS_OPER_UPDATE;
+		add_sta_rsp->tdls_oper = TDLS_OPER_UPDATE;
 	else
-		addStaRsp->tdlsAddOper = TDLS_OPER_ADD;
+		add_sta_rsp->tdls_oper = TDLS_OPER_ADD;
 
-	addStaRsp->length = sizeof(tSirTdlsAddStaRsp);
-	addStaRsp->messageType = eWNI_SME_TDLS_ADD_STA_RSP;
-	addStaRsp->psoc = mac->psoc;
-	mmhMsg.bodyptr = addStaRsp;
-	mmhMsg.callback = tgt_tdls_add_peer_rsp;
+	add_sta_rsp->psoc = mac->psoc;
+	msg.bodyptr = add_sta_rsp;
+	msg.callback = tgt_tdls_add_peer_rsp;
 
-	return scheduler_post_message(QDF_MODULE_ID_PE,
-				      QDF_MODULE_ID_TDLS,
-				      QDF_MODULE_ID_TARGET_IF, &mmhMsg);
+	ret = scheduler_post_message(QDF_MODULE_ID_PE,
+				     QDF_MODULE_ID_TDLS,
+				     QDF_MODULE_ID_TARGET_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		pe_err("post msg fail, %d", ret);
+		qdf_mem_free(add_sta_rsp);
+	}
+
+	return ret;
 }
 
 /*
@@ -2776,30 +2782,32 @@ lim_send_tdls_comp_mgmt_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 	 uint16_t sme_transaction_id)
 {
 	struct scheduler_msg msg = {0};
-	tSirSmeRsp *sme_rsp;
+	struct tdls_send_mgmt_rsp *sme_rsp;
+	QDF_STATUS status;
 
 	pe_debug("Sending message %s with reasonCode %s",
 		lim_msg_str(msg_type), lim_result_code_str(result_code));
 
-	sme_rsp = qdf_mem_malloc(sizeof(tSirSmeRsp));
+	sme_rsp = qdf_mem_malloc(sizeof(*sme_rsp));
 	if (!sme_rsp)
 		return;
 
-	sme_rsp->messageType = msg_type;
-	sme_rsp->length = sizeof(tSirSmeRsp);
-	sme_rsp->statusCode = result_code;
+	sme_rsp->status_code = (enum legacy_result_code)result_code;
 
-	sme_rsp->sessionId = sme_session_id;
-	sme_rsp->transactionId = sme_transaction_id;
+	sme_rsp->session_id = sme_session_id;
+	sme_rsp->transaction_id = sme_transaction_id;
 
 	msg.type = msg_type;
 	sme_rsp->psoc = mac_ctx->psoc;
 	msg.bodyptr = sme_rsp;
 	msg.callback = tgt_tdls_send_mgmt_rsp;
-	scheduler_post_message(QDF_MODULE_ID_PE,
-			       QDF_MODULE_ID_TDLS,
-			       QDF_MODULE_ID_TARGET_IF, &msg);
-
+	status = scheduler_post_message(QDF_MODULE_ID_PE,
+					QDF_MODULE_ID_TDLS,
+					QDF_MODULE_ID_TARGET_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("post msg fail, %d", status);
+		qdf_mem_free(sme_rsp);
+	}
 }
 
 /**
@@ -2942,32 +2950,37 @@ static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(struct mac_context *mac,
 						struct qdf_mac_addr peerMac,
 						tDphHashNode *pStaDs, uint8_t status)
 {
-	struct scheduler_msg mmhMsg = { 0 };
-	tSirTdlsDelStaRsp *pDelSta = NULL;
+	struct scheduler_msg msg = { 0 };
+	struct tdls_del_sta_rsp *del_sta_rsp;
+	QDF_STATUS ret;
 
-	mmhMsg.type = eWNI_SME_TDLS_DEL_STA_RSP;
+	msg.type = eWNI_SME_TDLS_DEL_STA_RSP;
 
-	pDelSta = qdf_mem_malloc(sizeof(tSirTdlsDelStaRsp));
-	if (!pDelSta)
+	del_sta_rsp = qdf_mem_malloc(sizeof(*del_sta_rsp));
+	if (!del_sta_rsp)
 		return QDF_STATUS_E_NOMEM;
 
-	pDelSta->sessionId = sessionId;
-	pDelSta->statusCode = status;
+	del_sta_rsp->session_id = sessionId;
+	del_sta_rsp->status_code = status;
 	if (pStaDs) {
-		pDelSta->staId = pStaDs->staIndex;
+		del_sta_rsp->sta_id = pStaDs->staIndex;
 	} else
-		pDelSta->staId = STA_INVALID_IDX;
+		del_sta_rsp->sta_id = STA_INVALID_IDX;
 
-	qdf_copy_macaddr(&pDelSta->peermac, &peerMac);
+	qdf_copy_macaddr(&del_sta_rsp->peermac, &peerMac);
 
-	pDelSta->length = sizeof(tSirTdlsDelStaRsp);
-	pDelSta->messageType = eWNI_SME_TDLS_DEL_STA_RSP;
-	pDelSta->psoc = mac->psoc;
-	mmhMsg.bodyptr = pDelSta;
-	mmhMsg.callback = tgt_tdls_del_peer_rsp;
-	return scheduler_post_message(QDF_MODULE_ID_PE,
-				      QDF_MODULE_ID_TDLS,
-				      QDF_MODULE_ID_TARGET_IF, &mmhMsg);
+	del_sta_rsp->psoc = mac->psoc;
+	msg.bodyptr = del_sta_rsp;
+	msg.callback = tgt_tdls_del_peer_rsp;
+	ret = scheduler_post_message(QDF_MODULE_ID_PE,
+				     QDF_MODULE_ID_TDLS,
+				     QDF_MODULE_ID_TARGET_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		pe_err("post msg fail, %d", ret);
+		qdf_mem_free(del_sta_rsp);
+	}
+
+	return ret;
 }
 
 /*
