@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1711,7 +1711,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 	bool status = true;
 	struct hdd_config *config = hdd_ctx->config;
 	mac_handle_t mac_handle;
-	uint8_t mcc_adaptive_sch = 0;
 
 	/*
 	 * During the initialization both 2G and 5G capabilities should be same.
@@ -1730,14 +1729,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		config->wow_data_inactivity_timeout) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Fail to pass WNI_CFG_PS_WOW_DATA_INACTIVITY_TO CFG");
-	}
-
-	ucfg_policy_mgr_get_mcc_adaptive_sch(hdd_ctx->psoc,
-					     &mcc_adaptive_sch);
-	if (sme_cfg_set_int(mac_handle, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
-			    mcc_adaptive_sch) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED to CFG");
 	}
 
 	if (sme_cfg_set_int(mac_handle,

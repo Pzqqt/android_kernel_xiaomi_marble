@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -74,6 +74,7 @@
 #include "wlan_ocb_ucfg_api.h"
 #include "init_deinit_lmac.h"
 #include <target_if.h>
+#include "wlan_policy_mgr_ucfg.h"
 #include "wlan_mlme_public_struct.h"
 #include "wlan_mlme_api.h"
 #include "wlan_mlme_main.h"
@@ -2709,6 +2710,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t cfg_val;
+	uint8_t mcc_adapt_sch;
 	QDF_STATUS ret;
 	struct mlme_ht_capabilities_info *ht_cap_info;
 	struct scheduler_msg sme_msg = { 0 };
@@ -3040,11 +3042,13 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 		mac->mlme_cfg->lfr.roam_bmiss_final_bcnt,
 		self_sta_req->session_id);
 
-	if (wlan_cfg_get_int(mac, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
-			     &cfg_val) == QDF_STATUS_SUCCESS) {
+	if (policy_mgr_get_mcc_adaptive_sch(mac->psoc,
+					    &mcc_adapt_sch) ==
+	    QDF_STATUS_SUCCESS) {
 		WMA_LOGD("%s: setting ini value for WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED: %d",
-			__func__, cfg_val);
-		ret = wma_set_enable_disable_mcc_adaptive_scheduler(cfg_val);
+			__func__, mcc_adapt_sch);
+		ret =
+		wma_set_enable_disable_mcc_adaptive_scheduler(mcc_adapt_sch);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			WMA_LOGE("Failed to set WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED");
 		}

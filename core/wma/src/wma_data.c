@@ -73,6 +73,8 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_objmgr_peer_obj.h"
 #include <cdp_txrx_handle.h>
+#include "cfg_ucfg_api.h"
+#include "wlan_policy_mgr_ucfg.h"
 #include <wlan_pmo_ucfg_api.h>
 #include "wlan_lmac_if_api.h"
 #include <wlan_cp_stats_mc_ucfg_api.h>
@@ -1065,7 +1067,7 @@ QDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
 QDF_STATUS wma_set_mcc_channel_time_latency(tp_wma_handle wma,
 	uint32_t mcc_channel, uint32_t mcc_channel_time_latency)
 {
-	uint32_t cfg_val = 0;
+	uint8_t mcc_adapt_sch = 0;
 	struct mac_context *mac = NULL;
 	uint32_t channel1 = mcc_channel;
 	uint32_t chan1_freq = cds_chan_to_freq(channel1);
@@ -1089,9 +1091,11 @@ QDF_STATUS wma_set_mcc_channel_time_latency(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Confirm MCC adaptive scheduler feature is disabled */
-	if (wlan_cfg_get_int(mac, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
-			     &cfg_val) == QDF_STATUS_SUCCESS) {
-		if (cfg_val == WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED_STAMAX) {
+	if (policy_mgr_get_mcc_adaptive_sch(mac->psoc,
+					    &mcc_adapt_sch) ==
+	    QDF_STATUS_SUCCESS) {
+		if (mcc_adapt_sch ==
+		    cfg_max(CFG_ENABLE_MCC_ADAPTIVE_SCH_ENABLED_NAME)) {
 			WMA_LOGD("%s: Can't set channel latency while MCC ADAPTIVE SCHED is enabled. Exit",
 				__func__);
 			return QDF_STATUS_SUCCESS;
@@ -1128,7 +1132,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota(tp_wma_handle wma,
 		uint32_t adapter_1_chan_number,	uint32_t adapter_1_quota,
 		uint32_t adapter_2_chan_number)
 {
-	uint32_t cfg_val = 0;
+	uint8_t mcc_adapt_sch = 0;
 	struct mac_context *mac = NULL;
 	uint32_t chan1_freq = cds_chan_to_freq(adapter_1_chan_number);
 	uint32_t chan2_freq = cds_chan_to_freq(adapter_2_chan_number);
@@ -1153,9 +1157,11 @@ QDF_STATUS wma_set_mcc_channel_time_quota(tp_wma_handle wma,
 	}
 
 	/* Confirm MCC adaptive scheduler feature is disabled */
-	if (wlan_cfg_get_int(mac, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
-			     &cfg_val) == QDF_STATUS_SUCCESS) {
-		if (cfg_val == WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED_STAMAX) {
+	if (policy_mgr_get_mcc_adaptive_sch(mac->psoc,
+					    &mcc_adapt_sch) ==
+	    QDF_STATUS_SUCCESS) {
+		if (mcc_adapt_sch ==
+		    cfg_max(CFG_ENABLE_MCC_ADAPTIVE_SCH_ENABLED_NAME)) {
 			WMA_LOGD("%s: Can't set channel quota while MCC_ADAPTIVE_SCHED is enabled. Exit",
 				 __func__);
 			return QDF_STATUS_SUCCESS;

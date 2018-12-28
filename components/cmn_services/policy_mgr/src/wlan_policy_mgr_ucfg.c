@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,7 +41,7 @@ static QDF_STATUS policy_mgr_init_cfg(struct wlan_objmgr_psoc *psoc)
 	cfg->vdev_priority_list = cfg_get(psoc, CFG_VDEV_CUSTOM_PRIORITY_LIST);
 	cfg->chnl_select_plcy = cfg_get(psoc, CFG_CHNL_SELECT_LOGIC_CONC);
 	cfg->enable_mcc_adaptive_sch =
-		cfg_get(psoc, CFG_ENABLE_MCC_ADATIVE_SCH_ENABLED_NAME);
+		cfg_get(psoc, CFG_ENABLE_MCC_ADAPTIVE_SCH_ENABLED_NAME);
 	cfg->enable_sta_cxn_5g_band =
 		cfg_get(psoc, CFG_ENABLE_STA_CONNECTION_IN_5GHZ);
 	cfg->allow_mcc_go_diff_bi =
