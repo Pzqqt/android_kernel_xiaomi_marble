@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,7 +62,8 @@ struct channel_list_info {
 #define QCSAP_PRIV_GET_CHAR_SET_NONE   (SIOCIWFIRSTPRIV + 13)
 #define QCSAP_GET_STATS 1
 #define QCSAP_LIST_FW_PROFILE 2
-#define QCSAP_IOCTL_CLR_STATS         (SIOCIWFIRSTPRIV + 14)
+
+/* (SIOCIWFIRSTPRIV + 14) is unused */
 
 #define QCSAP_IOCTL_PRIV_SET_THREE_INT_GET_NONE (SIOCIWFIRSTPRIV + 15)
 #define WE_SET_WLAN_DBG 1
