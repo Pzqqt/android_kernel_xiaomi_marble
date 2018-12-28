@@ -920,7 +920,6 @@ void
 lim_send_vdev_restart(struct mac_context *mac, struct pe_session *pe_session,
 		      uint8_t sessionId);
 
-void limWPSPBCTimeout(struct mac_context *mac, struct pe_session *pe_session);
 void lim_wpspbc_close(struct mac_context *mac, struct pe_session *pe_session);
 
 #define LIM_WPS_OVERLAP_TIMER_MS                 10000
