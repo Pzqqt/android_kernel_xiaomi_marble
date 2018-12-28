@@ -1171,23 +1171,6 @@ extern void sys_process_mmh_msg(struct mac_context *mac,
 				struct scheduler_msg *pMsg);
 
 /**
- * struct tBeaconFilterMsg - Beacon Filtering data structure
- * @capabilityInfo: capability info
- * @capabilityMask: capabality mask
- * @beaconInterval: beacon interval
- * @ieNum: IE number
- * @reserved: reserved
- */
-typedef struct sBeaconFilterMsg {
-	uint16_t capabilityInfo;
-	uint16_t capabilityMask;
-	uint16_t beaconInterval;
-	uint16_t ieNum;
-	uint8_t bssIdx;
-	uint8_t reserved;
-} qdf_packed tBeaconFilterMsg, *tpBeaconFilterMsg;
-
-/**
  * struct tEidByteInfo - Eid byte info
  * @offset: offset
  * @value: value
