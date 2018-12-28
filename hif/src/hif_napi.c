@@ -814,7 +814,6 @@ bool hif_napi_correct_cpu(struct qca_napi_info *napi_info)
 {
 	bool right_cpu = true;
 	int rc = 0;
-	cpumask_t cpumask;
 	int cpu;
 	struct qca_napi_data *napid;
 	QDF_STATUS ret;
@@ -830,12 +829,12 @@ bool hif_napi_correct_cpu(struct qca_napi_info *napi_info)
 			right_cpu = false;
 
 			NAPI_DEBUG("interrupt on wrong CPU, correcting");
-			cpumask.bits[0] = (0x01 << napi_info->cpu);
+			napi_info->cpumask.bits[0] = (0x01 << napi_info->cpu);
 
 			irq_modify_status(napi_info->irq, IRQ_NO_BALANCING, 0);
 			ret = qdf_dev_set_irq_affinity(napi_info->irq,
 						       (struct qdf_cpu_mask *)
-						       &cpumask);
+						       &napi_info->cpumask);
 			rc = qdf_status_to_os_return(ret);
 			irq_modify_status(napi_info->irq, 0, IRQ_NO_BALANCING);
 
@@ -1472,18 +1471,19 @@ static int hncm_migrate_to(struct qca_napi_data *napid,
 			   int                   didx)
 {
 	int rc = 0;
-	cpumask_t cpumask;
 	QDF_STATUS status;
 
 	NAPI_DEBUG("-->%s(napi_cd=%d, didx=%d)", __func__, napi_ce, didx);
 
-	cpumask.bits[0] = (1 << didx);
 	if (!napid->napis[napi_ce])
 		return -EINVAL;
 
+	napid->napis[napi_ce]->cpumask.bits[0] = (1 << didx);
+
 	irq_modify_status(napid->napis[napi_ce]->irq, IRQ_NO_BALANCING, 0);
 	status = qdf_dev_set_irq_affinity(napid->napis[napi_ce]->irq,
-					  (struct qdf_cpu_mask *)&cpumask);
+					  (struct qdf_cpu_mask *)
+					  &napid->napis[napi_ce]->cpumask);
 	rc = qdf_status_to_os_return(status);
 
 	/* unmark the napis bitmap in the cpu table */

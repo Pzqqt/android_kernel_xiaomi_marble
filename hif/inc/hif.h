@@ -190,6 +190,7 @@ struct qca_napi_info {
 	uint8_t              id;
 	uint8_t              cpu;
 	int                  irq;
+	cpumask_t            cpumask;
 	struct qca_napi_stat stats[NR_CPUS];
 #ifdef RECEIVE_OFFLOAD
 	/* will only be present for data rx CE's */

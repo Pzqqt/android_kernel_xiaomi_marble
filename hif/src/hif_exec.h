@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,7 +20,7 @@
 #define __HIF_EXEC_H__
 
 #include <hif.h>
-
+#include <linux/cpumask.h>
 
 struct hif_exec_context;
 
@@ -55,6 +55,7 @@ struct hif_exec_context {
 	uint32_t numirq;
 	uint32_t irq[HIF_MAX_GRP_IRQ];
 	uint32_t os_irq[HIF_MAX_GRP_IRQ];
+	cpumask_t cpumask;
 	uint32_t grp_id;
 	uint32_t scale_bin_shift;
 	const char *context_name;

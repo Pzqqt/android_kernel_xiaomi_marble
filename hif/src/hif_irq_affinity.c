@@ -249,22 +249,21 @@ static int hncm_exec_migrate_to(struct qca_napi_data *napid, uint8_t ctx_id,
 	int rc = 0;
 	int status = 0;
 	int ind;
-	cpumask_t cpumask;
-
 
 	NAPI_DEBUG("-->%s(napi_cd=%d, didx=%d)", __func__, napi_ce, didx);
 
-	cpumask.bits[0] = (1 << didx);
 	exec_ctx = hif_exec_get_ctx(&napid->hif_softc->osc, ctx_id);
 	if (exec_ctx == NULL)
 		return -EINVAL;
+
+	exec_ctx->cpumask.bits[0] = (1 << didx);
 
 	for (ind = 0; ind < exec_ctx->numirq; ind++) {
 		if (exec_ctx->os_irq[ind]) {
 			irq_modify_status(exec_ctx->os_irq[ind],
 					  IRQ_NO_BALANCING, 0);
 			rc = irq_set_affinity_hint(exec_ctx->os_irq[ind],
-						   &cpumask);
+						   &exec_ctx->cpumask);
 			if (rc)
 				status = rc;
 		}
