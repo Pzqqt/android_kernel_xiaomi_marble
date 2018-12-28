@@ -22,7 +22,6 @@
  *  DOC: CDS Scheduler Implementation
  */
 
- /* Include Files */
 #include <cds_api.h>
 #include <ani_global.h>
 #include <sir_types.h>
@@ -36,10 +35,10 @@
 #include <linux/spinlock.h>
 #include <linux/kthread.h>
 #include <linux/cpu.h>
-/* Preprocessor Definitions and Constants */
-#define CDS_SCHED_THREAD_HEART_BEAT    INFINITE
+
 /* Milli seconds to delay SSR thread when an Entry point is Active */
 #define SSR_WAIT_SLEEP_TIME 200
+
 /* MAX iteration count to wait for Entry point to exit before
  * we proceed with SSR in WD Thread
  */
