@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1054,8 +1054,6 @@ struct wma_valid_channels {
  * @staMaxLIModDtim: station max listen interval
  * @staModDtim: station mode DTIM
  * @staDynamicDtim: station dynamic DTIM
- * @enable_mhf_offload: is MHF offload enable/disable
- * @last_mhf_entries_timestamp: timestamp when last entries where set
  * @hw_bd_id: hardware board id
  * @hw_bd_info: hardware board info
  * @miracast_value: miracast value
@@ -1200,8 +1198,6 @@ typedef struct {
 	uint8_t staMaxLIModDtim;
 	uint8_t staModDtim;
 	uint8_t staDynamicDtim;
-	uint8_t enable_mhf_offload;
-	unsigned long last_mhf_entries_timestamp;
 	uint32_t hw_bd_id;
 	uint32_t hw_bd_info[HW_BD_INFO_SIZE];
 	uint32_t miracast_value;
