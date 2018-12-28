@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3005,7 +3005,6 @@ void qdf_trace_msg_cmn(unsigned int idx,
 #else
 		pr_err("%s\n", str_buffer);
 #endif
-		va_end(val);
 	}
 }
 qdf_export_symbol(qdf_trace_msg_cmn);
