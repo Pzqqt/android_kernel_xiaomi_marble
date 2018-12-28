@@ -3083,8 +3083,10 @@ static int __hdd_open(struct net_device *dev)
 	int ret;
 
 	hdd_enter_dev(dev);
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_OPEN_REQUEST,
-		adapter->session_id, adapter->device_mode));
+
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_OPEN_REQUEST,
+		   adapter->session_id, adapter->device_mode);
 
 	/* Nothing to be done if device is unloading */
 	if (cds_is_driver_unloading()) {
@@ -3196,8 +3198,9 @@ static int __hdd_stop(struct net_device *dev)
 
 	hdd_enter_dev(dev);
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_STOP_REQUEST,
-			 adapter->session_id, adapter->device_mode));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_STOP_REQUEST,
+		   adapter->session_id, adapter->device_mode);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret) {

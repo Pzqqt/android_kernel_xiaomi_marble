@@ -1327,9 +1327,9 @@ hdd_parse_set_roam_scan_channels_v1(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_SETROAMSCANCHANNELS_IOCTL,
-			 adapter->session_id, num_chan));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_SETROAMSCANCHANNELS_IOCTL,
+		   adapter->session_id, num_chan);
 
 	if (num_chan > CFG_VALID_CHANNEL_LIST_LEN) {
 		hdd_err("number of channels (%d) supported exceeded max (%d)",
@@ -1400,9 +1400,10 @@ hdd_parse_set_roam_scan_channels_v2(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_SETROAMSCANCHANNELS_IOCTL,
-			 adapter->session_id, num_chan));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_SETROAMSCANCHANNELS_IOCTL,
+		   adapter->session_id, num_chan);
+
 
 	for (i = 0; i < num_chan; i++) {
 		channel = *value++;
@@ -2775,13 +2776,14 @@ static int drv_cmd_p2p_dev_addr(struct hdd_adapter *adapter,
 	size_t user_size = qdf_min(sizeof(addr->bytes),
 				   (size_t)priv_data->total_len);
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_P2P_DEV_ADDR_IOCTL,
-			 adapter->session_id,
-			 (unsigned int)(*(addr->bytes + 2) << 24 |
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_P2P_DEV_ADDR_IOCTL,
+		   adapter->session_id,
+		   (unsigned int)(*(addr->bytes + 2) << 24 |
 				*(addr->bytes + 3) << 16 |
 				*(addr->bytes + 4) << 8 |
-				*(addr->bytes + 5))));
+				*(addr->bytes + 5)));
+
 
 	if (copy_to_user(priv_data->buf, addr->bytes, user_size)) {
 		hdd_err("failed to copy data to user buffer");
@@ -2939,9 +2941,10 @@ static int drv_cmd_set_roam_trigger(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_SETROAMTRIGGER_IOCTL,
-			 adapter->session_id, lookup_threshold));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_SETROAMTRIGGER_IOCTL,
+		   adapter->session_id, lookup_threshold);
+
 	hdd_debug("Received Command to Set Roam trigger (Neighbor lookup threshold) = %d",
 		  lookup_threshold);
 
@@ -2971,9 +2974,9 @@ static int drv_cmd_get_roam_trigger(struct hdd_adapter *adapter,
 	char extra[32];
 	uint8_t len = 0;
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_GETROAMTRIGGER_IOCTL,
-			 adapter->session_id, lookup_threshold));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_GETROAMTRIGGER_IOCTL,
+		   adapter->session_id, lookup_threshold);
 
 	len = scnprintf(extra, sizeof(extra), "%s %d", command, rssi);
 	len = QDF_MIN(priv_data->total_len, len + 1);
@@ -3025,9 +3028,11 @@ static int drv_cmd_set_roam_scan_period(struct hdd_adapter *adapter,
 		ret = -EINVAL;
 		goto exit;
 	}
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_SETROAMSCANPERIOD_IOCTL,
-			 adapter->session_id, roam_scan_period));
+
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_SETROAMSCANPERIOD_IOCTL,
+		   adapter->session_id, roam_scan_period);
+
 	empty_scan_refresh_period = roam_scan_period * 1000;
 
 	hdd_debug("Received Command to Set roam scan period (Empty Scan refresh period) = %d",
@@ -3053,10 +3058,11 @@ static int drv_cmd_get_roam_scan_period(struct hdd_adapter *adapter,
 	char extra[32];
 	uint8_t len;
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_GETROAMSCANPERIOD_IOCTL,
-			 adapter->session_id,
-			 nEmptyScanRefreshPeriod));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_GETROAMSCANPERIOD_IOCTL,
+		   adapter->session_id,
+		   nEmptyScanRefreshPeriod);
+
 	len = scnprintf(extra, sizeof(extra), "%s %d",
 			"GETROAMSCANPERIOD",
 			(nEmptyScanRefreshPeriod / 1000));
@@ -3314,9 +3320,9 @@ static int drv_cmd_get_roam_delta(struct hdd_adapter *adapter,
 	char extra[32];
 	uint8_t len;
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_GETROAMDELTA_IOCTL,
-			 adapter->session_id, roamRssiDiff));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_GETROAMDELTA_IOCTL,
+		   adapter->session_id, roamRssiDiff);
 
 	len = scnprintf(extra, sizeof(extra), "%s %d",
 			command, roamRssiDiff);
@@ -3343,9 +3349,9 @@ static int drv_cmd_get_band(struct hdd_adapter *adapter,
 
 	hdd_get_band_helper(hdd_ctx, &band);
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_GETBAND_IOCTL,
-			 adapter->session_id, band));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_GETBAND_IOCTL,
+		   adapter->session_id, band);
 
 	len = scnprintf(extra, sizeof(extra), "%s %d", command, band);
 	len = QDF_MIN(priv_data->total_len, len + 1);
@@ -3390,9 +3396,10 @@ static int drv_cmd_get_roam_scan_channels(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_GETROAMSCANCHANNELS_IOCTL,
-			 adapter->session_id, numChannels));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_GETROAMSCANCHANNELS_IOCTL,
+		   adapter->session_id, numChannels);
+
 	/*
 	 * output channel list is of the format
 	 * [Number of roam scan channels][Channel1][Channel2]...
@@ -3575,9 +3582,10 @@ static int drv_cmd_set_roam_scan_channel_min_time(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_SETROAMSCANCHANNELMINTIME_IOCTL,
-			 adapter->session_id, min_time));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_SETROAMSCANCHANNELMINTIME_IOCTL,
+		   adapter->session_id, min_time);
+
 	hdd_debug("Received Command to change channel min time = %d",
 		  min_time);
 
@@ -3616,9 +3624,9 @@ static int drv_cmd_get_roam_scan_channel_min_time(struct hdd_adapter *adapter,
 			"GETROAMSCANCHANNELMINTIME", val);
 	len = QDF_MIN(priv_data->total_len, len + 1);
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_GETROAMSCANCHANNELMINTIME_IOCTL,
-			 adapter->session_id, val));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_GETROAMSCANCHANNELMINTIME_IOCTL,
+		   adapter->session_id, val);
 
 	if (copy_to_user(priv_data->buf, &extra, len)) {
 		hdd_err("failed to copy data to user buffer");
@@ -6817,9 +6825,9 @@ static int drv_cmd_invalid(struct hdd_adapter *adapter,
 			   uint8_t command_len,
 			   struct hdd_priv_data *priv_data)
 {
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_UNSUPPORTED_IOCTL,
-			 adapter->session_id, 0));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_UNSUPPORTED_IOCTL,
+		   adapter->session_id, 0);
 
 	hdd_warn("%s: Unsupported driver command \"%s\"",
 		 adapter->dev->name, command);

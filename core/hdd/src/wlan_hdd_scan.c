@@ -487,9 +487,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_SCAN,
-			 adapter->session_id, request->n_channels));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_CFG80211_SCAN,
+		   adapter->session_id, request->n_channels);
 
 	if (!sme_is_session_id_valid(hdd_ctx->mac_handle, adapter->session_id))
 		return -EINVAL;

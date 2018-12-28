@@ -404,8 +404,10 @@ static int __hdd_hostapd_open(struct net_device *dev)
 
 	hdd_enter_dev(dev);
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_HOSTAPD_OPEN_REQUEST, NO_SESSION, 0));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_HOSTAPD_OPEN_REQUEST,
+		   NO_SESSION, 0);
+
 	/* Nothing to be done if device is unloading */
 	if (cds_is_driver_unloading()) {
 		hdd_err("Driver is unloading can not open the hdd");
@@ -477,6 +479,11 @@ static int __hdd_hostapd_stop(struct net_device *dev)
 	int ret;
 
 	hdd_enter_dev(dev);
+
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_HOSTAPD_STOP_REQUEST,
+		   NO_SESSION, 0);
+
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret) {
 		set_bit(DOWN_DURING_SSR, &adapter->event_flags);
@@ -3424,9 +3431,9 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 	}
 	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_SET_CHANNEL,
-			 adapter->session_id, channel_type));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_CFG80211_SET_CHANNEL,
+		   adapter->session_id, channel_type);
 
 	hdd_debug("Device_mode %s(%d)  freq = %d",
 		  qdf_opmode_str(adapter->device_mode),
@@ -5538,9 +5545,9 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_STOP_AP,
-			 adapter->session_id, adapter->device_mode));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_CFG80211_STOP_AP,
+		   adapter->session_id, adapter->device_mode);
 
 	if (!(adapter->device_mode == QDF_SAP_MODE ||
 	      adapter->device_mode == QDF_P2P_GO_MODE)) {
@@ -5821,9 +5828,10 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_START_AP, adapter->session_id,
-			 params->beacon_interval));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_CFG80211_START_AP,
+		   adapter->session_id, params->beacon_interval);
+
 	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
 		hdd_err("HDD adapter magic is invalid");
 		return -ENODEV;
@@ -6159,9 +6167,10 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_CHANGE_BEACON,
-			 adapter->session_id, adapter->device_mode));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_CFG80211_CHANGE_BEACON,
+		   adapter->session_id, adapter->device_mode);
+
 	hdd_debug("Device_mode %s(%d)",
 		  qdf_opmode_str(adapter->device_mode), adapter->device_mode);
 

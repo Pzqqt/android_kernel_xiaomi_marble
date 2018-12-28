@@ -4382,7 +4382,6 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 	uint8_t tx_mcs_index, rx_mcs_index;
 	struct hdd_context *hdd_ctx = (struct hdd_context *) wiphy_priv(wiphy);
 	mac_handle_t mac_handle;
-	uint16_t maxRate = 0;
 	int8_t snr = 0;
 	uint16_t my_tx_rate, my_rx_rate;
 	uint8_t tx_nss = 1, rx_nss = 1;
@@ -4391,6 +4390,10 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 	int link_speed_rssi_mid = 0;
 	int link_speed_rssi_low = 0;
 	uint32_t link_speed_rssi_report = 0;
+
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_CFG80211_GET_STA,
+		   adapter->session_id, 0);
 
 	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
 		hdd_debug("Not associated");
@@ -4563,10 +4566,6 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 			sinfo->tx_packets, sinfo->rx_packets);
 
 	hdd_wlan_fill_per_chain_rssi_stats(sinfo, adapter);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_GET_STA,
-			 adapter->session_id, maxRate));
 
 	hdd_exit();
 

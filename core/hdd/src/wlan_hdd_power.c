@@ -1647,10 +1647,10 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	if (hdd_ctx->enable_dp_rx_threads)
 		dp_txrx_resume(cds_get_context(QDF_MODULE_ID_SOC));
 
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_CFG80211_RESUME_WLAN,
+		   NO_SESSION, hdd_ctx->is_wiphy_suspended);
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_RESUME_WLAN,
-			 NO_SESSION, hdd_ctx->is_wiphy_suspended));
 	hdd_ctx->is_wiphy_suspended = false;
 
 	hdd_ctx->suspend_resume_stats.resumes++;
@@ -1831,14 +1831,15 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	if (hdd_ctx->enable_dp_rx_threads)
 		dp_txrx_suspend(cds_get_context(QDF_MODULE_ID_SOC));
 
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_CFG80211_SUSPEND_WLAN,
+		   NO_SESSION, hdd_ctx->is_wiphy_suspended);
+
 	if (hdd_suspend_wlan() < 0) {
 		hdd_err("Failed to suspend WLAN");
 		goto resume_dp_thread;
 	}
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_SUSPEND_WLAN,
-			 NO_SESSION, hdd_ctx->is_wiphy_suspended));
 	hdd_ctx->is_wiphy_suspended = true;
 
 	pld_request_bus_bandwidth(hdd_ctx->parent_dev, PLD_BUS_WIDTH_NONE);
@@ -1957,9 +1958,9 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 	if (wlan_hdd_validate_session_id(adapter->session_id))
 		return -EINVAL;
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_SET_POWER_MGMT,
-			 adapter->session_id, timeout));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_CFG80211_SET_POWER_MGMT,
+		   adapter->session_id, timeout);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = wlan_hdd_validate_context(hdd_ctx);
@@ -2028,9 +2029,9 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_SET_TXPOWER,
-			 NO_SESSION, type));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_CFG80211_SET_TXPOWER,
+		   NO_SESSION, type);
 
 	errno = wlan_hdd_validate_context(hdd_ctx);
 	if (errno)
@@ -2175,9 +2176,9 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 		return 0;
 	}
 
-	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_GET_TXPOWER,
-			 adapter->session_id, adapter->device_mode));
+	qdf_mtrace(QDF_MODULE_ID_HDD, QDF_MODULE_ID_HDD,
+		   TRACE_CODE_HDD_CFG80211_GET_TXPOWER,
+		   adapter->session_id, adapter->device_mode);
 
 	wlan_hdd_get_tx_power(adapter, dbm);
 	hdd_debug("power: %d", *dbm);
