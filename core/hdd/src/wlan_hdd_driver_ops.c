@@ -600,7 +600,13 @@ unlock:
 static void hdd_soc_remove(struct device *dev)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_psoc *hdd_psoc = hdd_ctx->hdd_psoc;
+	struct hdd_psoc *hdd_psoc;
+
+	if (!hdd_ctx) {
+		hdd_warn_rl("previous probe was not successful");
+		return;
+	}
+	hdd_psoc = hdd_ctx->hdd_psoc;
 
 	pr_info("%s: Removing driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
