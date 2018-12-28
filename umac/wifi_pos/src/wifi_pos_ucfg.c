@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,7 +31,6 @@ QDF_STATUS ucfg_wifi_pos_process_req(struct wlan_objmgr_psoc *psoc,
 {
 	uint8_t err;
 	uint32_t app_pid;
-	QDF_STATUS status;
 	bool is_app_registered;
 	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc_obj =
 					wifi_pos_get_psoc_priv_obj(psoc);
@@ -47,12 +46,13 @@ QDF_STATUS ucfg_wifi_pos_process_req(struct wlan_objmgr_psoc *psoc,
 	wifi_pos_psoc_obj->wifi_pos_send_rsp = send_rsp_cb;
 	is_app_registered = wifi_pos_psoc_obj->is_app_registered;
 	app_pid = wifi_pos_psoc_obj->app_pid;
+	qdf_spin_unlock_bh(&wifi_pos_psoc_obj->wifi_pos_lock);
+
 	if (!wifi_pos_psoc_obj->wifi_pos_req_handler) {
 		wifi_pos_err("wifi_pos_psoc_obj->wifi_pos_req_handler is null");
 		err = OEM_ERR_NULL_CONTEXT;
 		send_rsp_cb(app_pid, ANI_MSG_OEM_ERROR, sizeof(err), &err);
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto unlock_and_exit;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	if (req->msg_type != ANI_MSG_APP_REG_REQ &&
@@ -61,15 +61,10 @@ QDF_STATUS ucfg_wifi_pos_process_req(struct wlan_objmgr_psoc *psoc,
 			is_app_registered, req->pid, app_pid);
 		err = OEM_ERR_APP_NOT_REGISTERED;
 		send_rsp_cb(app_pid, ANI_MSG_OEM_ERROR, sizeof(err), &err);
-		status = QDF_STATUS_E_INVAL;
-		goto unlock_and_exit;
+		return QDF_STATUS_E_INVAL;
 	}
 
-	status = wifi_pos_psoc_obj->wifi_pos_req_handler(psoc, req);
-
-unlock_and_exit:
-	qdf_spin_unlock_bh(&wifi_pos_psoc_obj->wifi_pos_lock);
-	return status;
+	return wifi_pos_psoc_obj->wifi_pos_req_handler(psoc, req);
 }
 
 

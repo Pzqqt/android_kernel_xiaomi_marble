@@ -403,8 +403,10 @@ static QDF_STATUS wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
 	}
 
 	wifi_pos_debug("Valid App Req Req from pid(%d)", req->pid);
+	qdf_spin_lock_bh(&wifi_pos_obj->wifi_pos_lock);
 	wifi_pos_obj->is_app_registered = true;
 	wifi_pos_obj->app_pid = req->pid;
+	qdf_spin_unlock_bh(&wifi_pos_obj->wifi_pos_lock);
 
 	vdev_idx = 0;
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
