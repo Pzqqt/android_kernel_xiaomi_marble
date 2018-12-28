@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -259,7 +259,7 @@
  *
  * </ini>
  */
-#define CFG_ENABLE_MCC_ADATIVE_SCH_ENABLED_NAME CFG_INI_UINT(\
+#define CFG_ENABLE_MCC_ADAPTIVE_SCH_ENABLED_NAME CFG_INI_UINT(\
 					"gEnableMCCAdaptiveScheduler", \
 					0, 1, 1, \
 					CFG_VALUE_OR_DEFAULT, \
@@ -513,7 +513,7 @@ CFG_INI_UINT("g_mark_sap_indoor_as_disable", 0, 1, 0, CFG_VALUE_OR_DEFAULT, \
 		CFG(CFG_CHNL_SELECT_LOGIC_CONC) \
 		CFG(CFG_ENABLE_CONC_RULE1) \
 		CFG(CFG_ENABLE_CONC_RULE2) \
-		CFG(CFG_ENABLE_MCC_ADATIVE_SCH_ENABLED_NAME)\
+		CFG(CFG_ENABLE_MCC_ADAPTIVE_SCH_ENABLED_NAME)\
 		CFG(CFG_ENABLE_STA_CONNECTION_IN_5GHZ)\
 		CFG(CFG_ENABLE_OVERLAP_CH)\
 		CFG(CFG_DUAL_MAC_FEATURE_DISABLE)\
