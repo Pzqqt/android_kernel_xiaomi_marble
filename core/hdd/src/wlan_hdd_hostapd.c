@@ -4816,7 +4816,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 						    &indoor_chnl_marking))
 		hdd_err("can't get indoor channel marking, using default");
 	/* Mark the indoor channel (passive) to disable */
-	if (indoor_chnl_marking) {
+	if (indoor_chnl_marking && adapter->device_mode == QDF_SAP_MODE) {
 		hdd_update_indoor_channel(hdd_ctx, true);
 		if (QDF_IS_STATUS_ERROR(
 		    sme_update_channel_list(mac_handle))) {
@@ -5466,7 +5466,7 @@ error:
 		wlan_hdd_restore_channels(hdd_ctx, true);
 
 	/* Revert the indoor to passive marking if START BSS fails */
-	if (indoor_chnl_marking) {
+	if (indoor_chnl_marking && adapter->device_mode == QDF_SAP_MODE) {
 		hdd_update_indoor_channel(hdd_ctx, false);
 		sme_update_channel_list(mac_handle);
 	}
