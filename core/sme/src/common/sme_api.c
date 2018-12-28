@@ -762,7 +762,6 @@ QDF_STATUS sme_open(mac_handle_t mac_handle)
 	}
 	sme_trace_init(mac);
 	sme_register_debug_callback();
-	wlan_serialization_legacy_init_callback();
 
 	return status;
 }
