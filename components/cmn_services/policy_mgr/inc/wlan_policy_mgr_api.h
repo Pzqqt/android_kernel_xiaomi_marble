@@ -206,17 +206,7 @@ QDF_STATUS policy_mgr_get_sys_pref(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_set_sys_pref(struct wlan_objmgr_psoc *psoc,
 				   uint8_t sys_pref);
-/**
- * policy_mgr_get_max_conc_cxns() - to get max num of conc connections
- * @psoc: pointer to psoc
- * @max_conc_cxns: value to be filled
- *
- * This API pulls max number of active connections which can be allowed
- *
- * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
- */
-QDF_STATUS policy_mgr_get_max_conc_cxns(struct wlan_objmgr_psoc *psoc,
-					uint8_t *max_conc_cxns);
+
 /**
  * policy_mgr_get_conc_rule1() - to find out if conc rule1 is enabled
  * @psoc: pointer to psoc
@@ -239,28 +229,7 @@ QDF_STATUS policy_mgr_get_conc_rule1(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS policy_mgr_get_conc_rule2(struct wlan_objmgr_psoc *psoc,
 				     uint8_t *conc_rule2);
-/**
- * policy_mgr_get_dbs_selection_plcy() - DBS HW mode selection setting
- * @psoc: pointer to psoc
- * @dbs_selection_plcy: value to be filled
- *
- * This API is used to find out DBS HW mode preference.
- *
- * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
- */
-QDF_STATUS policy_mgr_get_dbs_selection_plcy(struct wlan_objmgr_psoc *psoc,
-					     uint32_t *dbs_selection_plcy);
-/**
- * policy_mgr_get_vdev_priority_list() - to get vdev priority list
- * @psoc: pointer to psoc
- * @vdev_priority_list: value to be filled
- *
- * This API is used to find out vdev_priority_list setting
- *
- * Return: QDF_STATUS_SUCCESS up on success and any other status for failure.
- */
-QDF_STATUS policy_mgr_get_vdev_priority_list(struct wlan_objmgr_psoc *psoc,
-					     uint32_t *vdev_priority_list);
+
 /**
  * policy_mgr_get_chnl_select_plcy() - to get channel selection policy
  * @psoc: pointer to psoc
