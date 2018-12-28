@@ -579,7 +579,7 @@ static inline void dfs_radarfound_reset_vars(
  * @dfs: Pointer to wlan_dfs structure.
  * @chan: Current channel.
  * @rs: Pointer to dfs_state.
- * Return: if bangradar then  return 0.  Otherwise, return 1.
+ * Return: if bangradar then  return 1.  Otherwise, return 0.
  */
 static inline int dfs_handle_bangradar(
 	struct wlan_dfs *dfs,
@@ -589,42 +589,38 @@ static inline int dfs_handle_bangradar(
 	int *retval)
 {
 
-	if (dfs->dfs_enh_bangradar || dfs->dfs_bangradar) {
-		/*
-		* Bangradar will always simulate radar found on
-		* the primary channel.
-		*
-		* Enhanced Bangradar will save the params in dfs
-		* and simulate radar on given frequency
-		*/
+	if (dfs->dfs_bangradar_type) {
+		if (dfs->dfs_bangradar_type >= DFS_INVALID_BANGRADAR_TYPE) {
+			dfs_debug(dfs, WLAN_DEBUG_DFS,
+				  "Invalid bangradar type");
+			return 1;
+		}
+		/* All bangradars are processed similarly.
+		 * arguments for the bangradar are already stored in
+		 * respective dfs structures.
+		 */
+
 		*rs = &dfs->dfs_radar[dfs->dfs_curchan_radindex];
-		if (dfs->dfs_enh_bangradar)
-			*seg_id = dfs->dfs_seg_id;
-		dfs_debug(dfs, WLAN_DEBUG_DFS,
-			  "bangradar %d, Enhanced Bangradar %d",
-			  dfs->dfs_bangradar, dfs->dfs_enh_bangradar);
+		if (dfs->dfs_seg_id == SEG_ID_SECONDARY) {
+			if (dfs_is_precac_timer_running(dfs) ||
+			    WLAN_IS_CHAN_11AC_VHT160(chan) ||
+			    WLAN_IS_CHAN_11AC_VHT80_80(chan)) {
+				dfs->is_radar_found_on_secondary_seg = 1;
+				dfs_debug(dfs, WLAN_DEBUG_DFS,
+					  "bangradar on 2nd segment cfreq = %u",
+					  dfs->dfs_precac_secondary_freq);
+			} else {
+				dfs_debug(dfs, WLAN_DEBUG_DFS,
+					  "No second segment");
+				return 1;
+			}
+		}
+		*seg_id = dfs->dfs_seg_id;
+		dfs_debug(dfs, WLAN_DEBUG_DFS, "bangradar %d",
+			  dfs->dfs_bangradar_type);
 		*retval = 1;
 		return 1;
 	}
-
-	if (dfs->dfs_second_segment_bangradar) {
-		if (dfs_is_precac_timer_running(dfs) ||
-				WLAN_IS_CHAN_11AC_VHT160(chan) ||
-				WLAN_IS_CHAN_11AC_VHT80_80(chan)) {
-			dfs->is_radar_found_on_secondary_seg = 1;
-			*rs = &dfs->dfs_radar[dfs->dfs_curchan_radindex];
-			dfs_debug(dfs, WLAN_DEBUG_DFS,
-					"second segment bangradar on cfreq = %u",
-					dfs->dfs_precac_secondary_freq);
-			*retval = 1;
-			*seg_id = SEG_ID_SECONDARY;
-		} else {
-			dfs_debug(dfs, WLAN_DEBUG_DFS,
-					"Do not process the second segment bangradar");
-		}
-		return 1;
-	}
-
 	return 0;
 }
 

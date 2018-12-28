@@ -315,7 +315,7 @@ int dfs_control(struct wlan_dfs *dfs,
 {
 	struct wlan_dfs_phyerr_param peout;
 	struct dfs_ioctl_params *dfsparams;
-	struct dfs_bangradar_enh_params *bangradar_enh_params;
+	struct dfs_bangradar_params *bangradar_params;
 	int error = 0;
 	uint32_t val = 0;
 	struct dfsreq_nolinfo *nol;
@@ -370,43 +370,67 @@ int dfs_control(struct wlan_dfs *dfs,
 					dfsparams->dfs_maxlen))
 			error = -EINVAL;
 		break;
-	case DFS_BANGRADAR_ENH:
-		if (insize < sizeof(struct dfs_bangradar_enh_params) ||
+	case DFS_BANGRADAR:
+		/*
+		 * Handle all types of Bangradar here.
+		 * Bangradar arguments:
+		 * seg_id      : Segment ID where radar should be injected.
+		 * is_chirp    : Is chirp radar or non chirp radar.
+		 * freq_offset : Frequency offset from center frequency.
+		 *
+		 * Type 1 (DFS_BANGRADAR_FOR_ALL_SUBCHANS): To add all subchans.
+		 * Type 2 (DFS_BANGRADAR_FOR_ALL_SUBCHANS_OF_SEGID): To add all
+		 *               subchans of given segment_id.
+		 * Type 3 (DFS_BANGRADAR_FOR_SPECIFIC_SUBCHANS): To add specific
+		 *               subchans based on the arguments.
+		 *
+		 * The arguments will already be filled in the indata structure
+		 * based on the type.
+		 * If an argument is not specified by user, it will be set to
+		 * default (0) in the indata already and correspondingly,
+		 * the type will change.
+		 */
+		if (insize < sizeof(struct dfs_bangradar_params) ||
 		    !indata) {
 			dfs_debug(dfs, WLAN_DEBUG_DFS1,
 				  "insize = %d, expected = %zu bytes, indata = %pK",
 				  insize,
-				  sizeof(struct dfs_bangradar_enh_params),
+				  sizeof(struct dfs_bangradar_params),
 				  indata);
 			error = -EINVAL;
 			break;
 		}
-		bangradar_enh_params =
-				      (struct dfs_bangradar_enh_params *)indata;
-		if (bangradar_enh_params) {
-			if (abs(bangradar_enh_params->freq_offset) >
+		bangradar_params = (struct dfs_bangradar_params *)indata;
+		if (bangradar_params) {
+			if (abs(bangradar_params->freq_offset) >
 			    FREQ_OFFSET_BOUNDARY_FOR_80MHZ) {
 				dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 					 "Frequency Offset out of bound");
 				error = -EINVAL;
 				break;
+			} else if (bangradar_params->seg_id >
+				   SEG_ID_SECONDARY) {
+				dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					 "Illegal segment ID");
+				error = -EINVAL;
+				break;
 			}
-			dfs->dfs_seg_id = bangradar_enh_params->seg_id;
-			dfs->dfs_is_chirp = bangradar_enh_params->is_chirp;
-			dfs->dfs_freq_offset =
-					      bangradar_enh_params->freq_offset;
+			dfs->dfs_bangradar_type =
+				bangradar_params->bangradar_type;
+			dfs->dfs_seg_id = bangradar_params->seg_id;
+			dfs->dfs_is_chirp = bangradar_params->is_chirp;
+			dfs->dfs_freq_offset = bangradar_params->freq_offset;
 
 			if (dfs->dfs_is_offload_enabled) {
 				error = dfs_fill_emulate_bang_radar_test
 						 (dfs, dfs->dfs_seg_id,
 						  &dfs_unit_test);
 			} else {
-				dfs->dfs_enh_bangradar = true;
-				dfs->dfs_bangradar = 0;
 				error = dfs_start_host_based_bangradar(dfs);
 			}
 		} else {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "bangradar_enh_params is NULL");
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				 "bangradar_params is NULL");
 		}
 
 		break;
@@ -677,16 +701,6 @@ int dfs_control(struct wlan_dfs *dfs,
 	case DFS_SHOW_NOLHISTORY:
 		dfs_print_nolhistory(dfs);
 		break;
-	case DFS_BANGRADAR:
-		dfs->dfs_bangradar = 1;
-		if (dfs->dfs_is_offload_enabled) {
-			error = dfs_fill_emulate_bang_radar_test(dfs,
-					SEG_ID_PRIMARY,
-					&dfs_unit_test);
-		} else {
-			error = dfs_start_host_based_bangradar(dfs);
-		}
-		break;
 	case DFS_SHOW_PRECAC_LISTS:
 		dfs_print_precaclists(dfs);
 		dfs_print_etsi_precaclists(dfs);
@@ -694,16 +708,6 @@ int dfs_control(struct wlan_dfs *dfs,
 	case DFS_RESET_PRECAC_LISTS:
 		dfs_reset_precac_lists(dfs);
 		dfs_reset_etsi_precac_lists(dfs);
-		break;
-	case DFS_SECOND_SEGMENT_BANGRADAR:
-		if (dfs->dfs_is_offload_enabled) {
-			error = dfs_fill_emulate_bang_radar_test(dfs,
-					SEG_ID_SECONDARY,
-					&dfs_unit_test);
-		} else {
-			dfs->dfs_second_segment_bangradar = 1;
-			error = dfs_start_host_based_bangradar(dfs);
-		}
 		break;
 	default:
 		error = -EINVAL;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2016-2019 The Linux Foundation. All rights reserved.
  * Copyright (c) 2010, Atheros Communications Inc.
  * All Rights Reserved.
  *
@@ -48,19 +48,17 @@
 #define DFS_GET_CAC_VALID_TIME   20
 #define DFS_SET_CAC_VALID_TIME   21
 #define DFS_SHOW_NOLHISTORY      22
-#define DFS_SECOND_SEGMENT_BANGRADAR  23
-#define DFS_SHOW_PRECAC_LISTS    24
-#define DFS_RESET_PRECAC_LISTS   25
-#define DFS_BANGRADAR_ENH        26
-#define DFS_SET_DISABLE_RADAR_MARKING 27
-#define DFS_GET_DISABLE_RADAR_MARKING 28
+#define DFS_SHOW_PRECAC_LISTS    23
+#define DFS_RESET_PRECAC_LISTS   24
+#define DFS_SET_DISABLE_RADAR_MARKING 25
+#define DFS_GET_DISABLE_RADAR_MARKING 26
 
 /*
  * Spectral IOCTLs use DFS_LAST_IOCTL as the base.
  * This must always be the last IOCTL in DFS and have
  * the highest value.
  */
-#define DFS_LAST_IOCTL 29
+#define DFS_LAST_IOCTL 27
 
 #ifndef DFS_CHAN_MAX
 #define DFS_CHAN_MAX 1023
@@ -122,13 +120,40 @@ struct dfs_ioctl_params {
 	int32_t dfs_maxlen;
 };
 
-/**
- * struct dfs_bangradar_enh_params - DFS enhanced bangradr params.
- * @seg_id:      Segment ID information.
- * @is_chirp:    Chirp radar or not.
- * @freq_offset: Frequency offset at which radar was found.
+/* Types of Bangradar commands:
+ * @DFS_BANGRADAR_FOR_ALL_SUBCHANS          : Bangradar with no arguments.
+ *                                            All the subchannels in the current
+ *                                            channel shall be added.
+ * @DFS_BANGRADAR_FOR_ALL_SUBCHANS_OF_SEGID : Bangradar with 1 (seg_id) argument
+ *                                            All subchannels of the specific
+ *                                            seg_id shall be added.
+ * @DFS_BANGRADAR_FOR_SPECIFIC_SUBCHANS     : Bangradar with all (segment ID,
+ *                                            is_chirp and frequency offset)
+ *                                            arguments.
+ *                                            Only radar infected subchannels
+ *                                            of the specific seg_id shall be
+ *                                            added.
+ *
+ * (Unless all arguments are given, we cannot determine which specific
+ * subchannels to simulate the radar on, hence simulate in all subchans).
  */
-struct dfs_bangradar_enh_params {
+enum dfs_bangradar_types {
+	DFS_NO_BANGRADAR = 0,
+	DFS_BANGRADAR_FOR_ALL_SUBCHANS,
+	DFS_BANGRADAR_FOR_ALL_SUBCHANS_OF_SEGID,
+	DFS_BANGRADAR_FOR_SPECIFIC_SUBCHANS,
+	DFS_INVALID_BANGRADAR_TYPE
+};
+
+/**
+ * struct dfs_bangradar_params - DFS bangradar params.
+ * @bangradar_type: Type of Bangradar.
+ * @seg_id:         Segment ID information.
+ * @is_chirp:       Chirp radar or not.
+ * @freq_offset:    Frequency offset at which radar was found.
+ */
+struct dfs_bangradar_params {
+	enum dfs_bangradar_types bangradar_type;
 	uint8_t seg_id;
 	uint8_t is_chirp;
 	int32_t freq_offset;

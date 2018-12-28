@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016-2018 The Linux Foundation.  All rights reserved.
+ * Copyright (c) 2013, 2016-2019 The Linux Foundation.  All rights reserved.
  * Copyright (c) 2005-2006 Atheros Communications, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -922,11 +922,7 @@ struct dfs_event_log {
  * @wlan_dfswaittimer:               Dfs wait timer.
  * @wlan_dfstesttimer:               Dfs mute test timer.
  * @wlan_dfs_debug_timer:            Dfs debug timer.
- * @dfs_bangradar:                   Radar simulation on entire segment.
- * @dfs_enh_bangradar:               Radar (Chirp or non-chirp) simulation on
- *                                   particular frequency.
- * @dfs_second_segment_bangradar:    Bangaradar on second segment of
- *                                   VHT80_80/160.
+ * @dfs_bangradar_type:              Radar simulation type.
  * @is_radar_found_on_secondary_seg: Radar on second segment.
  * @dfs_radar_found_for_fo:          Radar found event for FO(Full Offload) is
  *                                   received.
@@ -1073,9 +1069,7 @@ struct wlan_dfs {
 	os_timer_t     wlan_dfswaittimer;
 	os_timer_t     wlan_dfstesttimer;
 	os_timer_t     wlan_dfs_debug_timer;
-	uint8_t        dfs_bangradar;
-	bool           dfs_enh_bangradar;
-	bool           dfs_second_segment_bangradar;
+	enum dfs_bangradar_types dfs_bangradar_type;
 	bool           is_radar_found_on_secondary_seg;
 	bool           dfs_radar_found_for_fo;
 	bool           is_radar_during_precac;
