@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -60,6 +60,7 @@ typedef __in6_addr_t in6_addr_t;
 
 #define QDF_ETH_TYPE_IPV4              0x0800  /* IPV4 */
 #define QDF_ETH_TYPE_IPV6              0x86dd  /* IPV6 */
+#define QDF_ETH_TYPE_8021Q             0x8100  /* 802.1Q vlan protocol */
 #define QDF_IEEE80211_4ADDR_HDR_LEN     30
 #define QDF_IEEE80211_3ADDR_HDR_LEN     24
 #define QDF_IEEE80211_FC0_SUBTYPE_QOS   0x80
@@ -67,6 +68,13 @@ typedef __in6_addr_t in6_addr_t;
 #define QDF_IEEE80211_FC1_FROMDS        0x02
 
 #define QDF_NET_IS_MAC_MULTICAST(_a)   (*(_a) & 0x01)
+
+/**
+ * In LLC header individual LSAP address 0x42 in
+ * DSAP and SSAP signifies IEEE 802.1 Bridge
+ * Spanning Tree Protocol
+ */
+#define QDF_LLC_STP 0x4242
 
 typedef struct qdf_net_ethaddr {
 	uint8_t addr[QDF_NET_ETH_LEN];

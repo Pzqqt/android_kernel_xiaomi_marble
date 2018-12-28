@@ -1144,6 +1144,7 @@ struct cdp_htt_rx_pdev_stats {
  * @mec:Multicast Echo check
  * @mesh_filter: Mesh Filtered packets
  * @mon_rx_drop: packets dropped on monitor vap
+ * @wifi_parse: rxdma errors due to wifi parse error
  * @pkts: total packets replenished
  * @rxdma_err: rxdma errors for replenished
  * @nbuf_alloc_fail: nbuf alloc failed
@@ -1154,6 +1155,7 @@ struct cdp_htt_rx_pdev_stats {
  * @mesh_mem_alloc: Mesh Rx Stats Alloc fail
  * @tso_desc_cnt: TSO descriptors
  * @sg_desc_cnt: SG Descriptors
+ * @vlan_tag_stp_cnt: Vlan tagged Stp packets in wifi parse error
  * @desc_alloc_fail: desc alloc failed errors
  * @ip_csum_err: ip checksum errors
  * @tcp_udp_csum_err: tcp/udp checksum errors
@@ -1173,6 +1175,7 @@ struct cdp_pdev_stats {
 		uint32_t mec;
 		uint32_t mesh_filter;
 		uint32_t mon_rx_drop;
+		uint32_t wifi_parse;
 	} dropped;
 
 	struct {
@@ -1188,6 +1191,7 @@ struct cdp_pdev_stats {
 	uint32_t mesh_mem_alloc;
 	uint32_t tso_desc_cnt;
 	uint32_t sg_desc_cnt;
+	uint32_t vlan_tag_stp_cnt;
 
 	/* Rx errors */
 	struct {

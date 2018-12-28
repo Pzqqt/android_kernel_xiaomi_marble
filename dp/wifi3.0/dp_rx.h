@@ -119,6 +119,16 @@ struct dp_rx_desc {
 	(((_cookie) & RX_DESC_COOKIE_INDEX_MASK) >>	\
 			RX_DESC_COOKIE_INDEX_SHIFT)
 
+/* DOC: Offset to obtain LLC hdr
+ *
+ * In the case of Wifi parse error
+ * to reach LLC header from beginning
+ * of VLAN tag we need to skip 8 bytes.
+ * Vlan_tag(4)+length(2)+length added
+ * by HW(2) = 8 bytes.
+ */
+#define DP_SKIP_VLAN		8
+
 /*
  *dp_rx_xor_block() - xor block of data
  *@b: destination data block
@@ -1036,4 +1046,9 @@ static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
 	rx_desc->unmapped = 0;
 }
 #endif /* RX_DESC_DEBUG_CHECK */
+
+void dp_rx_process_rxdma_err(struct dp_soc *soc, qdf_nbuf_t nbuf,
+			     uint8_t *rx_tlv_hdr, struct dp_peer *peer,
+			     uint8_t err_code);
+
 #endif /* _DP_RX_H */

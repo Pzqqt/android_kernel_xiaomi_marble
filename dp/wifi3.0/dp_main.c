@@ -6726,6 +6726,8 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 	DP_PRINT_STATS("Dropped:");
 	DP_PRINT_STATS("	msdu_not_done = %d",
 			pdev->stats.dropped.msdu_not_done);
+	DP_PRINT_STATS("        wifi parse = %d",
+			pdev->stats.dropped.wifi_parse);
 	DP_PRINT_STATS("        mon_rx_drop = %d",
 			pdev->stats.dropped.mon_rx_drop);
 	DP_PRINT_STATS("        mec_drop = %d",
@@ -6737,6 +6739,8 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 			pdev->stats.rx.to_stack.num);
 	DP_PRINT_STATS("	Bytes = %llu",
 			pdev->stats.rx.to_stack.bytes);
+	DP_PRINT_STATS("        vlan_tag_stp_cnt = %d",
+			pdev->stats.vlan_tag_stp_cnt);
 	DP_PRINT_STATS("Multicast/Broadcast:");
 	DP_PRINT_STATS("	Packets = %d",
 			pdev->stats.rx.multicast.num);

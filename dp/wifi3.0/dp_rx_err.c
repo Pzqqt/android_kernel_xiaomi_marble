@@ -31,6 +31,7 @@
 #endif
 #include "dp_rx_defrag.h"
 #include <enet.h>	/* LLC_SNAP_HDR_LEN */
+#include "qdf_net_types.h"
 
 /**
  * dp_rx_mcast_echo_check() - check if the mcast pkt is a loop
@@ -843,18 +844,20 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, qdf_nbuf_t nbuf,
 }
 
 /**
- * dp_rx_process_err_unencrypted() - Function to deliver rxdma unencrypted_err
- *				     frames to OS
+ * dp_rx_process_rxdma_err() - Function to deliver rxdma unencrypted_err
+ *			       frames to OS or wifi parse errors.
  * @soc: core DP main context
  * @nbuf: buffer pointer
  * @rx_tlv_hdr: start of rx tlv header
  * @peer: peer reference
+ * @err_code: rxdma err code
  *
  * Return: None
  */
-static void
-dp_rx_process_err_unencrypted(struct dp_soc *soc, qdf_nbuf_t nbuf,
-			      uint8_t *rx_tlv_hdr, struct dp_peer *peer)
+void
+dp_rx_process_rxdma_err(struct dp_soc *soc, qdf_nbuf_t nbuf,
+			uint8_t *rx_tlv_hdr, struct dp_peer *peer,
+			uint8_t err_code)
 {
 	uint32_t pkt_len, l2_hdr_offset;
 	uint16_t msdu_len;
@@ -913,6 +916,21 @@ dp_rx_process_err_unencrypted(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	 */
 	qdf_nbuf_pull_head(nbuf, l2_hdr_offset + RX_PKT_TLVS_LEN);
 
+	if (err_code == HAL_RXDMA_ERR_WIFI_PARSE) {
+		uint8_t *pkt_type;
+
+		pkt_type = qdf_nbuf_data(nbuf) + (2 * QDF_MAC_ADDR_SIZE);
+		if (*(uint16_t *)pkt_type == htons(QDF_ETH_TYPE_8021Q) &&
+		    *(uint16_t *)(pkt_type + DP_SKIP_VLAN) == htons(QDF_LLC_STP)) {
+			DP_STATS_INC(vdev->pdev, vlan_tag_stp_cnt, 1);
+			goto process_mesh;
+		} else {
+			DP_STATS_INC(vdev->pdev, dropped.wifi_parse, 1);
+			qdf_nbuf_free(nbuf);
+			return;
+		}
+	}
+
 	if (vdev->rx_decap_type == htt_cmn_pkt_type_raw)
 		goto process_mesh;
 
@@ -937,24 +955,24 @@ dp_rx_process_err_unencrypted(struct dp_soc *soc, qdf_nbuf_t nbuf,
 
 process_mesh:
 
-	/* Drop & free packet if mesh mode not enabled */
-	if (!vdev->mesh_vdev) {
+	if (!vdev->mesh_vdev && err_code == HAL_RXDMA_ERR_UNENCRYPTED) {
 		qdf_nbuf_free(nbuf);
 		DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
 		return;
 	}
 
-	if (dp_rx_filter_mesh_packets(vdev, nbuf, rx_tlv_hdr)
-							== QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_MED,
-				FL("mesh pkt filtered"));
-		DP_STATS_INC(vdev->pdev, dropped.mesh_filter, 1);
+	if (vdev->mesh_vdev) {
+		if (dp_rx_filter_mesh_packets(vdev, nbuf, rx_tlv_hdr)
+				      == QDF_STATUS_SUCCESS) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_MED,
+				  FL("mesh pkt filtered"));
+			DP_STATS_INC(vdev->pdev, dropped.mesh_filter, 1);
 
-		qdf_nbuf_free(nbuf);
-		return;
+			qdf_nbuf_free(nbuf);
+			return;
+		}
+		dp_rx_fill_mesh_stats(vdev, nbuf, rx_tlv_hdr, peer);
 	}
-	dp_rx_fill_mesh_stats(vdev, nbuf, rx_tlv_hdr, peer);
-
 process_rx:
 	if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr) &&
 				(vdev->rx_decap_type ==
@@ -1481,13 +1499,14 @@ done:
 
 				switch (wbm_err_info.rxdma_err_code) {
 				case HAL_RXDMA_ERR_UNENCRYPTED:
-					dp_rx_process_err_unencrypted(
-							soc, nbuf,
-							rx_tlv_hdr, peer);
+
+				case HAL_RXDMA_ERR_WIFI_PARSE:
+					dp_rx_process_rxdma_err(soc, nbuf,
+								rx_tlv_hdr, peer,
+								wbm_err_info.rxdma_err_code);
 					nbuf = next;
 					if (peer)
-						dp_peer_unref_del_find_by_id(
-									peer);
+						dp_peer_unref_del_find_by_id(peer);
 					continue;
 
 				case HAL_RXDMA_ERR_TKIP_MIC:
