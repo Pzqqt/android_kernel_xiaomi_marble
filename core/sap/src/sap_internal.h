@@ -51,9 +51,6 @@ extern "C" {
 
 #define SAP_DEBUG
 
-/* MAC Address length */
-#define ANI_EAPOL_KEY_RSN_NONCE_SIZE      32
-
 #define IS_ETSI_WEATHER_CH(_ch)   ((_ch >= 120) && (_ch <= 130))
 #define IS_CH_BONDING_WITH_WEATHER_CH(_ch)   (_ch == 116)
 #define IS_CHAN_JAPAN_INDOOR(_ch) ((_ch >= 36)  && (_ch <= 64))
