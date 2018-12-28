@@ -178,14 +178,6 @@ struct sap_context {
 
 	/* session to scan */
 	bool isScanSessionOpen;
-	/*
-	 * This list of channels will hold 5Ghz enabled,DFS in the
-	 * Current RegDomain.This list will be used to select a channel,
-	 * for SAP to start including any DFS channel and also to select
-	 * any random channel[5Ghz-(NON-DFS/DFS)],if SAP is operating
-	 * on a DFS channel and a RADAR is detected on the channel.
-	 */
-	tAll5GChannelList SapAllChnlList;
 	uint32_t auto_channel_select_weight;
 	tSapAcsChannelInfo acsBestChannelInfo;
 	bool enableOverLapCh;
