@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -866,24 +866,6 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	wh = (struct ieee80211_frame *)data;
 	buflen = qdf_nbuf_len(buf);
 
-	/* peer can be NULL in following 2 scenarios:
-	 * 1. broadcast frame received
-	 * 2. operating in monitor mode
-	 *
-	 * and in both scenarios, the receiver of frame
-	 * is expected to do processing accordingly considerng
-	 * the fact that peer = NULL can be received and is a valid
-	 * scenario.
-	 */
-	mac_addr = (uint8_t *)wh->i_addr2;
-	peer = wlan_objmgr_get_peer(psoc, mgmt_rx_params->pdev_id,
-				    mac_addr, WLAN_MGMT_SB_ID);
-	if (!peer) {
-		mac_addr = (uint8_t *)wh->i_addr1;
-		peer = wlan_objmgr_get_peer(psoc, mgmt_rx_params->pdev_id,
-					    mac_addr, WLAN_MGMT_SB_ID);
-	}
-
 	/**
 	 * TO DO (calculate pdev)
 	 * Waiting for a new parameter: pdev id to get added in rx event
@@ -896,8 +878,7 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 		mgmt_txrx_err("Rx event doesn't conatin a mgmt. packet, %d",
 			mgmt_type);
 		qdf_nbuf_free(buf);
-		status = QDF_STATUS_E_FAILURE;
-		goto dec_peer_ref_cnt;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* mpdu_data_ptr is pointer to action header */
@@ -919,16 +900,14 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 			if (buflen <= (sizeof(struct ieee80211_frame)
 					+ IEEE80211_CCMP_HEADERLEN)) {
 				qdf_nbuf_free(buf);
-				status = QDF_STATUS_E_FAILURE;
-				goto dec_peer_ref_cnt;
+				return QDF_STATUS_E_FAILURE;
 			}
 			mpdu_data_ptr += IEEE80211_CCMP_HEADERLEN;
 		} else {
 			if (buflen <= (sizeof(struct ieee80211_frame)
 					+ WLAN_HDR_EXT_IV_LEN)) {
 				qdf_nbuf_free(buf);
-				status = QDF_STATUS_E_FAILURE;
-				goto dec_peer_ref_cnt;
+				return QDF_STATUS_E_FAILURE;
 			}
 			mpdu_data_ptr += WLAN_HDR_EXT_IV_LEN;
 		}
@@ -939,13 +918,14 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 		mgmt_txrx_err_rl("Unspecified mgmt frame type fc: %x %x",
 				 wh->i_fc[0], wh->i_fc[1]);
 		qdf_nbuf_free(buf);
-		status = QDF_STATUS_E_FAILURE;
-		goto dec_peer_ref_cnt;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	mgmt_txrx_debug("Rcvd mgmt frame, mgmt txrx frm type: %u seq. no.: %u, peer: %pK fc: %x %x",
-			frm_type, *(uint16_t *)wh->i_seq, peer, wh->i_fc[0],
-			wh->i_fc[1]);
+	mgmt_txrx_debug("Rcvd mgmt frame subtype %x (frame type %u) from %pM, seq_num = %d, rssi = %d tsf_delta: %u",
+			mgmt_subtype, frm_type, wh->i_addr2,
+			(le16toh(*(uint16_t *)wh->i_seq) >>
+			WLAN_SEQ_SEQ_SHIFT), mgmt_rx_params->rssi,
+			mgmt_rx_params->tsf_delta);
 
 	mgmt_txrx_psoc_ctx = (struct mgmt_txrx_priv_psoc_context *)
 			wlan_objmgr_psoc_get_comp_private_obj(psoc,
@@ -979,10 +959,30 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 		mgmt_txrx_debug("No rx callback registered for frm_type: %d",
 				frm_type);
 		qdf_nbuf_free(buf);
-		status = QDF_STATUS_E_FAILURE;
-		goto dec_peer_ref_cnt;
+		return QDF_STATUS_E_FAILURE;
 	}
 	qdf_spin_unlock_bh(&mgmt_txrx_psoc_ctx->mgmt_txrx_psoc_ctx_lock);
+
+	mac_addr = (uint8_t *)wh->i_addr2;
+	/*
+	 * peer can be NULL in following 2 scenarios:
+	 * 1. broadcast frame received
+	 * 2. operating in monitor mode
+	 *
+	 * and in both scenarios, the receiver of frame
+	 * is expected to do processing accordingly considerng
+	 * the fact that peer = NULL can be received and is a valid
+	 * scenario.
+	 */
+	peer = wlan_objmgr_get_peer(psoc, mgmt_rx_params->pdev_id,
+				    mac_addr, WLAN_MGMT_SB_ID);
+	if (!peer && !qdf_is_macaddr_broadcast(
+	    (struct qdf_mac_addr *)wh->i_addr1)) {
+		mac_addr = (uint8_t *)wh->i_addr1;
+		peer = wlan_objmgr_get_peer(psoc,
+					    mgmt_rx_params->pdev_id,
+					    mac_addr, WLAN_MGMT_SB_ID);
+	}
 
 	rx_handler = rx_handler_head;
 	while (rx_handler->next) {
@@ -998,15 +998,15 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	rx_handler->rx_cb(psoc, peer, buf,
 				mgmt_rx_params, frm_type);
 
+	if (peer)
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
+
 rx_handler_mem_free:
 	while (rx_handler_head) {
 		rx_handler = rx_handler_head;
 		rx_handler_head = rx_handler_head->next;
 		qdf_mem_free(rx_handler);
 	}
-dec_peer_ref_cnt:
-	if (peer)
-		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
 
 	return status;
 }
