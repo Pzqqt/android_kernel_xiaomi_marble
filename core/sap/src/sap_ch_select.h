@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -155,13 +155,5 @@ typedef struct {
 	tSapSpectChInfo *pSpectCh;      /* tDfsSpectChInfo *pSpectCh;  // Ptr to the channels in the entire spectrum band */
 	uint8_t numSpectChans;  /* Total num of channels in the spectrum */
 } tSapChSelSpectInfo;           /* tDfsChSelParams; */
-
-/**
- * Structure for channel weight calculation parameters
- */
-typedef struct sSapChSelParams {
-	void *pSpectInfoParams; /**pDfsParams;   // Filled with tSapChSelSpectInfo */
-	uint16_t numChannels;
-} tSapChSelParams;
 
 #endif /* if !defined __SAP_CH_SELECT_H */
