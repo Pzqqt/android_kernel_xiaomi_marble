@@ -1584,6 +1584,7 @@ static void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	sta_ctx->auth_key_mgmt = 0;
 	qdf_zero_macaddr(&sta_ctx->requested_bssid);
+	hdd_clear_fils_connection_info(adapter);
 	hdd_exit();
 }
 
