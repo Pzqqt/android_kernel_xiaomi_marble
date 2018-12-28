@@ -63,11 +63,18 @@ void wlan_crypto_try_wep(const uint8_t *key, size_t key_len,
 
 uint8_t *wlan_crypto_wep_encrypt(const uint8_t *key, uint16_t key_len,
 					uint8_t *data, size_t data_len){
-	uint8_t k[16];
+	uint8_t k[WLAN_CRYPTO_KEY_WEP128_LEN + WLAN_CRYPTO_IV_LEN];
 	uint32_t icv;
 
 	if (data_len < 4 + 4) {
 		crypto_err("invalid len");
+		return NULL;
+	}
+
+	if (!((key_len == WLAN_CRYPTO_KEY_WEP40_LEN) ||
+	    (key_len == WLAN_CRYPTO_KEY_WEP104_LEN) ||
+	    (key_len == WLAN_CRYPTO_KEY_WEP128_LEN))) {
+		crypto_err("invalid key len");
 		return NULL;
 	}
 
