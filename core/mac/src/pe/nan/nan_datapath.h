@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -146,12 +146,6 @@ static inline void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx,
 }
 
 #endif /* WLAN_FEATURE_NAN_DATAPATH || WLAN_FEATURE_NAN_CONVERGENCE */
-
-static inline QDF_STATUS lim_handle_ndp_event_message(struct mac_context *mac_ctx,
-						      struct scheduler_msg *msg)
-{
-	return QDF_STATUS_SUCCESS;
-}
 
 #endif /* __MAC_NAN_DATAPATH_H */
 
