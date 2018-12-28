@@ -45,10 +45,6 @@ void sme_set_tspec_uapsd_mask_per_session(struct mac_context *mac_ctx,
 					  struct mac_ts_info *ts_info,
 					  uint8_t session_id);
 
-/* Full Power Req Callback */
-typedef void (*uapsd_start_indication_cb)(void *callback_context,
-		uint32_t session_id, QDF_STATUS status);
-
 QDF_STATUS sme_ps_start_uapsd(mac_handle_t mac_handle, uint32_t session_id);
 QDF_STATUS sme_set_ps_host_offload(mac_handle_t mac_handle,
 				   tpSirHostOffloadReq request,
