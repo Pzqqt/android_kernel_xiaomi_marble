@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,8 +36,6 @@
 #ifdef FEATURE_WLAN_TDLS
 #define IS_ADVANCE_TDLS_ENABLE 0
 #endif
-
-#define WMA_NVDownload_Start(x)    ({ QDF_STATUS_SUCCESS; })
 
 #define DPU_FEEDBACK_UNPROTECTED_ERROR 0x0F
 
