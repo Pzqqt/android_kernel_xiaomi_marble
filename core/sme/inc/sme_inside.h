@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -168,8 +168,6 @@ QDF_STATUS sme_release_global_lock(tSmeStruct *psSme);
 
 QDF_STATUS csr_process_add_sta_session_rsp(struct mac_context *mac, uint8_t *pMsg);
 QDF_STATUS csr_process_del_sta_session_rsp(struct mac_context *mac, uint8_t *pMsg);
-
-bool csr_roamGetConcurrencyConnectStatusForBmps(struct mac_context *mac);
 
 QDF_STATUS csr_flush_cfg_bg_scan_roam_channel_list(struct mac_context *mac,
 		uint8_t sessionId);
