@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -173,18 +173,6 @@ typedef void (*rssi_threshold_breached_cb)(hdd_handle_t hdd_handle,
 					   struct rssi_breach_event *event);
 
 /**
- * typedef sme_encrypt_decrypt_callback - encrypt/decrypt callback
- *    signature
- * @context: Opaque context that the client can use to associate the
- *    callback with the request
- * @response: Encrypt/Decrypt response from firmware
- */
-struct sir_encrypt_decrypt_rsp_params;
-typedef void (*sme_encrypt_decrypt_callback)(
-			void *context,
-			struct sir_encrypt_decrypt_rsp_params *response);
-
-/**
  * typedef get_chain_rssi_callback - get chain rssi callback
  * @context: Opaque context that the client can use to associate the
  *    callback with the request
@@ -307,8 +295,6 @@ typedef struct tagSmeStruct {
 #ifdef FEATURE_OEM_DATA_SUPPORT
 	sme_send_oem_data_rsp_msg oem_data_rsp_callback;
 #endif
-	sme_encrypt_decrypt_callback encrypt_decrypt_cb;
-	void *encrypt_decrypt_context;
 	lost_link_info_cb lost_link_info_cb;
 
 	bool (*set_connection_info_cb)(bool);

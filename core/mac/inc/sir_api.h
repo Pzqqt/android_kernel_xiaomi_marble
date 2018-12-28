@@ -5713,20 +5713,6 @@ struct sme_update_access_policy_vendor_ie {
 };
 
 /**
- * struct sir_encrypt_decrypt_rsp_params - encrypt/decrypt rsp params
- * @vdev_id: vdev id
- * @status: status
- * @data_length: data length
- * @data: data pointer
- */
-struct sir_encrypt_decrypt_rsp_params {
-	uint32_t vdev_id;
-	int32_t status;
-	uint32_t data_length;
-	uint8_t *data;
-};
-
-/**
  * struct sme_tx_fail_cnt_threshold - tx failure count for disconnect to fw
  * @session_id: Session id
  * @tx_fail_cnt_threshold: Tx failure count to do disconnect
