@@ -125,16 +125,6 @@ uint32_t wlan_serialization_get_pending_list_count(
 		uint8_t is_cmd_from_pending_scan_queue);
 
 /**
- * wlan_serialization_legacy_init_callback() - Initialize the legacy callbacks
- *
- * This API will be called only from legacy modules to initialize the
- * purge command callbacks
- *
- * Return: none
- */
-void wlan_serialization_legacy_init_callback(void);
-
-/**
  * wlan_serialization_purge_cmd_list_by_vdev_id() - Purge given list
  * @psoc: pointer to soc
  * @vdev_id: vdev_id variable

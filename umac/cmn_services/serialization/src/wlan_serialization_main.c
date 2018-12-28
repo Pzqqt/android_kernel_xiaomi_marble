@@ -32,8 +32,6 @@
 #include "wlan_serialization_rules_i.h"
 #include "wlan_serialization_utils_i.h"
 
-struct serialization_legacy_callback ser_legacy_cb;
-
 QDF_STATUS wlan_serialization_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
@@ -306,52 +304,6 @@ static QDF_STATUS wlan_serialization_pdev_obj_destroy_notification(
 	return status;
 }
 
-/**
- * wlan_serialization_vdev_obj_create_notification() - VDEV obj create callback
- * @vdev: VDEV object
- * @arg_list: Variable argument list
- *
- * This callback is registered with object manager during initialization and
- * when obj manager gets its turn to create the object, it would notify each
- * component with the corresponding callback registered to inform the
- * completion of the creation of the respective object.
- *
- * Return: QDF Status
- */
-static QDF_STATUS wlan_serialization_vdev_obj_create_notification(
-		struct wlan_objmgr_vdev *vdev, void *arg_list)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wlan_serialization_vdev_obj_destroy_notification() - vdev obj delete callback
- * @vdev: VDEV object
- * @arg_list: Variable argument list
- *
- * This callback is registered with object manager during initialization and
- * when obj manager gets its turn to delete the object, it would notify each
- * component with the corresponding callback registered to inform the
- * completion of the deletion of the respective object.
- *
- * Return: QDF Status
- */
-static QDF_STATUS wlan_serialization_vdev_obj_destroy_notification(
-		struct wlan_objmgr_vdev *vdev, void *arg_list)
-{
-	uint8_t vdev_id = wlan_vdev_get_id(vdev);
-
-	if (!ser_legacy_cb.serialization_purge_cmd_list)
-		return QDF_STATUS_SUCCESS;
-
-	serialization_debug("for vdev_id[%d] vdev[%pK] flush all cmds",
-			  vdev_id, vdev);
-	ser_legacy_cb.serialization_purge_cmd_list(wlan_vdev_get_psoc(vdev),
-			vdev, false, false, false, false, true);
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS wlan_serialization_init(void)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -388,27 +340,7 @@ QDF_STATUS wlan_serialization_init(void)
 		goto err_pdev_delete;
 	}
 
-	status = wlan_objmgr_register_vdev_create_handler(
-			WLAN_UMAC_COMP_SERIALIZATION,
-			wlan_serialization_vdev_obj_create_notification, NULL);
-	if (status != QDF_STATUS_SUCCESS) {
-		serialization_err("Failed to reg vdev ser obj create handler");
-		goto err_vdev_create;
-	}
-
-	status = wlan_objmgr_register_vdev_destroy_handler(
-			WLAN_UMAC_COMP_SERIALIZATION,
-			wlan_serialization_vdev_obj_destroy_notification, NULL);
-	if (status != QDF_STATUS_SUCCESS) {
-		serialization_err("Failed to reg vdev ser obj delete handler");
-		goto err_vdev_delete;
-	}
 	serialization_debug("serialization handlers registered with obj mgr");
-	/*
-	 * Initialize the structure so all callbacks are registered
-	 * initially as NULL.
-	 */
-	qdf_mem_zero(&ser_legacy_cb, sizeof(ser_legacy_cb));
 
 	return QDF_STATUS_SUCCESS;
 
@@ -479,11 +411,6 @@ QDF_STATUS wlan_serialization_deinit(void)
 	}
 
 	serialization_alert("deregistered callbacks with obj mgr successfully");
-	/*
-	 * Initialize the structure so all callbacks are registered
-	 * initially as NULL.
-	 */
-	qdf_mem_zero(&ser_legacy_cb, sizeof(ser_legacy_cb));
 
 	return ret_status;
 }
@@ -496,8 +423,6 @@ QDF_STATUS wlan_serialization_deinit(void)
 #include "wlan_serialization_main_i.h"
 #include "wlan_serialization_rules_i.h"
 #include "wlan_serialization_utils_i.h"
-
-struct serialization_legacy_callback ser_legacy_cb;
 
 QDF_STATUS wlan_serialization_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
@@ -920,7 +845,6 @@ static QDF_STATUS wlan_serialization_vdev_destroy_handler(
 	struct wlan_serialization_vdev_queue *vdev_q;
 	struct wlan_ser_vdev_obj *ser_vdev_obj =
 		wlan_serialization_get_vdev_obj(vdev);
-	uint8_t vdev_id = wlan_vdev_get_id(vdev);
 	uint8_t index;
 
 	if (!ser_vdev_obj) {
@@ -941,16 +865,7 @@ static QDF_STATUS wlan_serialization_vdev_destroy_handler(
 	}
 
 	qdf_mem_free(ser_vdev_obj);
-	if (!ser_legacy_cb.serialization_purge_cmd_list)
-		goto error;
 
-	ser_debug("for vdev_id[%d] vdev[%pK] flush all cmds",
-		  vdev_id, vdev);
-	ser_legacy_cb.serialization_purge_cmd_list(wlan_vdev_get_psoc(vdev),
-						   vdev, false, false,
-						   false, false, true);
-
-error:
 	return status;
 }
 
@@ -1005,11 +920,6 @@ QDF_STATUS wlan_serialization_init(void)
 		ser_err("Failed to reg vdev ser obj delete handler");
 		goto err_vdev_delete;
 	}
-	/*
-	 * Initialize the structure so all callbacks are registered
-	 * initially as NULL.
-	 */
-	qdf_mem_zero(&ser_legacy_cb, sizeof(ser_legacy_cb));
 
 	status = QDF_STATUS_SUCCESS;
 	goto exit;
@@ -1088,11 +998,6 @@ QDF_STATUS wlan_serialization_deinit(void)
 	}
 
 	ser_alert("deregistered callbacks with obj mgr successfully");
-	/*
-	 * Initialize the structure so all callbacks are registered
-	 * initially as NULL.
-	 */
-	qdf_mem_zero(&ser_legacy_cb, sizeof(ser_legacy_cb));
 
 	return ret_status;
 }

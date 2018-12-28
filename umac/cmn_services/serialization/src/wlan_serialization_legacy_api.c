@@ -30,8 +30,6 @@
 #include "wlan_serialization_scan_i.h"
 #include "wlan_serialization_non_scan_i.h"
 
-extern struct serialization_legacy_callback ser_legacy_cb;
-
 static struct wlan_objmgr_pdev *wlan_serialization_get_first_pdev(
 			struct wlan_objmgr_psoc *psoc)
 {
@@ -344,12 +342,6 @@ wlan_serialization_get_pending_list_next_node_using_psoc(
 	queue = &pdev_queue->pending_list;
 	return wlan_serialization_get_list_next_node(queue, prev_cmd,
 						     ser_pdev_obj);
-}
-
-void wlan_serialization_legacy_init_callback(void)
-{
-	ser_legacy_cb.serialization_purge_cmd_list =
-			wlan_serialization_purge_cmd_list;
 }
 
 void wlan_serialization_purge_cmd_list_by_vdev_id(
