@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,7 +43,6 @@
 #define MAX_APF_MEMORY_LEN	4096
 
 /* APF commands wait times in msec */
-#define WLAN_WAIT_TIME_APF_GET_CAPS     1000
 #define WLAN_WAIT_TIME_APF_READ_MEM     10000
 
 /**
