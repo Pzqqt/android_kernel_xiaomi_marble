@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -12566,67 +12566,6 @@ void hdd_bus_bw_compute_timer_try_stop(struct hdd_context *hdd_ctx)
 	hdd_exit();
 }
 #endif
-
-/**
- * wlan_hdd_check_custom_con_channel_rules() - This function checks the sap's
- *                                            and sta's operating channel.
- * @sta_adapter:  Describe the first argument to foobar.
- * @ap_adapter:   Describe the second argument to foobar.
- * @roam_profile: Roam profile of AP to which STA wants to connect.
- * @concurrent_chnl_same: If both SAP and STA channels are same then
- *                        set this flag to true else false.
- *
- * This function checks the sap's operating channel and sta's operating channel.
- * if both are same then it will return false else it will restart the sap in
- * sta's channel and return true.
- *
- * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE.
- */
-QDF_STATUS
-wlan_hdd_check_custom_con_channel_rules(struct hdd_adapter *sta_adapter,
-					struct hdd_adapter *ap_adapter,
-					struct csr_roam_profile *roam_profile,
-					tScanResultHandle *scan_cache,
-					bool *concurrent_chnl_same)
-{
-	struct hdd_ap_ctx *hdd_ap_ctx;
-	uint8_t channel_id;
-	QDF_STATUS status;
-	enum QDF_OPMODE device_mode = ap_adapter->device_mode;
-	*concurrent_chnl_same = true;
-
-	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
-	status =
-	 sme_get_ap_channel_from_scan_cache(roam_profile,
-					    scan_cache,
-					    &channel_id);
-	if (QDF_STATUS_SUCCESS == status) {
-		if ((QDF_SAP_MODE == device_mode) &&
-			(channel_id < SIR_11A_CHANNEL_BEGIN)) {
-			if (hdd_ap_ctx->operating_channel != channel_id) {
-				*concurrent_chnl_same = false;
-				hdd_debug("channels are different");
-			}
-		} else if ((QDF_P2P_GO_MODE == device_mode) &&
-				(channel_id >= SIR_11A_CHANNEL_BEGIN)) {
-			if (hdd_ap_ctx->operating_channel != channel_id) {
-				*concurrent_chnl_same = false;
-				hdd_debug("channels are different");
-			}
-		}
-	} else {
-		/*
-		 * Lets handle worst case scenario here, Scan cache lookup is
-		 * failed so we have to stop the SAP to avoid any channel
-		 * discrepancy  between SAP's channel and STA's channel.
-		 * Return the status as failure so caller function could know
-		 * that scan look up is failed.
-		 */
-		hdd_err("Finding AP from scan cache failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-	return QDF_STATUS_SUCCESS;
-}
 
 /**
  * wlan_hdd_stop_sap() - This function stops bss of SAP.

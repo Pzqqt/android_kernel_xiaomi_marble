@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2659,13 +2659,6 @@ void wlan_hdd_enable_roaming(struct hdd_adapter *cur_adapter);
 QDF_STATUS hdd_post_cds_enable_config(struct hdd_context *hdd_ctx);
 
 QDF_STATUS hdd_abort_mac_scan_all_adapters(struct hdd_context *hdd_ctx);
-
-QDF_STATUS
-wlan_hdd_check_custom_con_channel_rules(struct hdd_adapter *sta_adapter,
-					struct hdd_adapter *ap_adapter,
-					struct csr_roam_profile *roam_profile,
-					tScanResultHandle *scan_cache,
-					bool *concurrent_chnl_same);
 
 void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter);
 void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit);
