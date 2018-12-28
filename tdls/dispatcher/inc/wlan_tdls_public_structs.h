@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1165,6 +1165,83 @@ struct tdls_set_secoffchanneloffset {
 	struct wlan_objmgr_vdev *vdev;
 	int offchan_offset;
 	tdls_offchan_parms_callback callback;
+};
+
+/**
+ * enum legacy_result_code - defined to comply with tSirResultCodes, need refine
+ *                           when mlme converged.
+ * @legacy_result_success: success
+ * @legacy_result_max: max result value
+ */
+enum legacy_result_code {
+	legacy_result_success,
+	legacy_result_max = 0x7FFFFFFF
+};
+
+/**
+ * struct tdls_send_mgmt_rsp - TDLS Response struct PE --> TDLS module
+ *                           same as struct tSirSmeRsp
+ * @session_id: session id
+ * @transaction_id: transaction id
+ * @status_code: status code as tSirResultCodes
+ * @psoc: soc object
+ */
+struct tdls_send_mgmt_rsp {
+	uint8_t session_id;
+	uint16_t transaction_id;
+	enum legacy_result_code status_code;
+	struct wlan_objmgr_psoc *psoc;
+};
+
+/**
+ * struct tdls_mgmt_tx_completion_ind - TDLS TX completion PE --> TDLS module
+ *                           same as struct sSirMgmtTxCompletionInd
+ * @session_id: session id
+ * @tx_complete_status: tx complete status
+ * @psoc: soc object
+ */
+struct tdls_mgmt_tx_completion_ind {
+	uint8_t session_id;      /* Session ID */
+	uint32_t tx_complete_status;
+	struct wlan_objmgr_psoc *psoc;
+};
+
+/**
+ * struct tdls_add_sta_rsp - TDLS Response struct PE --> TDLS module
+ *                           same as struct sSirTdlsAddStaRsp
+ * @status_code: status code as tSirResultCodes
+ * @peermac: MAC address of the TDLS peer
+ * @session_id: session id
+ * @sta_id: sta id
+ * @sta_type: sta type
+ * @tdls_oper: add peer type
+ * @psoc: soc object
+ */
+struct tdls_add_sta_rsp {
+	QDF_STATUS status_code;
+	struct qdf_mac_addr peermac;
+	uint8_t session_id;
+	uint16_t sta_id;
+	uint16_t sta_type;
+	enum tdls_add_oper tdls_oper;
+	struct wlan_objmgr_psoc *psoc;
+};
+
+/**
+ * struct tdls_del_sta_rsp - TDLS Response struct PE --> TDLS module
+ *                           same as sSirTdlsDelStaRsp
+ * @session_id: session id
+ * @status_code: status code as tSirResultCodes
+ * @peermac: MAC address of the TDLS peer
+ * @sta_id: sta id
+ * @psoc: soc object
+ */
+struct tdls_del_sta_rsp {
+	uint8_t session_id;
+	QDF_STATUS status_code;
+	struct qdf_mac_addr peermac;
+	uint16_t sta_id;
+	struct wlan_objmgr_psoc *psoc;
 };
 
 #endif

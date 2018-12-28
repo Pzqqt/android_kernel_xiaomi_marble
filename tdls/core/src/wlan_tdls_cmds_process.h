@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,53 +28,6 @@
 #define TDLS_IS_SETUP_ACTION(action) \
 	((TDLS_SETUP_REQUEST <= action) && \
 	(TDLS_SETUP_CONFIRM >= action))
-
-/**
- * enum legacy_result_code - defined to comply with tSirResultCodes, need refine
- *                           when mlme converged.
- * @legacy_result_success: success
- * @legacy_result_max: max result value
- */
-enum legacy_result_code {
-	legacy_result_success,
-	legacy_result_max = 0x7FFFFFFF
-};
-
-/**
- * struct tdls_send_mgmt_rsp - TDLS Response struct PE --> TDLS module
- *                           same as struct tSirSmeRsp
- * @message_type: message type eWNI_SME_TDLS_SEND_MGMT_RSP
- * @length: message length
- * @session_id: session id
- * @transaction_id: transaction id
- * @status_code: status code as tSirResultCodes
- * @psoc: soc object
- */
-struct tdls_send_mgmt_rsp {
-	uint16_t message_type;
-	uint16_t length;
-	uint8_t session_id;
-	uint16_t transaction_id;
-	enum legacy_result_code status_code;
-	struct wlan_objmgr_psoc *psoc;
-};
-
-/**
- * struct tdls_mgmt_tx_completion_ind - TDLS TX completion PE --> TDLS module
- *                           same as struct sSirMgmtTxCompletionInd
- * @message_type: message type eWNI_SME_MGMT_FRM_TX_COMPLETION_IND
- * @length: message length
- * @session_id: session id
- * @tx_complete_status: tx complete status
- * @psoc: soc object
- */
-struct tdls_mgmt_tx_completion_ind {
-	uint16_t message_type;
-	uint16_t length;
-	uint8_t session_id;      /* Session ID */
-	uint32_t tx_complete_status;
-	struct wlan_objmgr_psoc *psoc;
-};
 
 /**
  * struct tdls_add_sta_req - TDLS request struct TDLS module --> PE
@@ -118,31 +71,6 @@ struct tdls_add_sta_req {
 };
 
 /**
- * struct tdls_add_sta_rsp - TDLS Response struct PE --> TDLS module
- *                           same as struct sSirTdlsAddStaRsp
- * @message_type: message type eWNI_SME_TDLS_ADD_STA_RSP
- * @length: message length
- * @status_code: status code as tSirResultCodes
- * @peermac: MAC address of the TDLS peer
- * @session_id: session id
- * @sta_id: sta id
- * @sta_type: sta type
- * @tdls_oper: add peer type
- * @psoc: soc object
- */
-struct tdls_add_sta_rsp {
-	uint16_t message_type;
-	uint16_t length;
-	QDF_STATUS status_code;
-	struct qdf_mac_addr peermac;
-	uint8_t session_id;
-	uint16_t sta_id;
-	uint16_t sta_type;
-	enum tdls_add_oper tdls_oper;
-	struct wlan_objmgr_psoc *psoc;
-};
-
-/**
  * struct tdls_del_sta_req - TDLS Request struct TDLS module --> PE
  *                           same as sSirTdlsDelStaReq
  * @message_type: message type eWNI_SME_TDLS_DEL_STA_REQ
@@ -159,27 +87,6 @@ struct tdls_del_sta_req {
 	uint16_t transaction_id;
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peermac;
-};
-
-/**
- * struct tdls_del_sta_rsp - TDLS Response struct PE --> TDLS module
- *                           same as sSirTdlsDelStaRsp
- * @message_type: message type eWNI_SME_TDLS_DEL_STA_RSP
- * @length: message length
- * @session_id: session id
- * @status_code: status code as tSirResultCodes
- * @peermac: MAC address of the TDLS peer
- * @sta_id: sta id
- * @psoc: soc object
- */
-struct tdls_del_sta_rsp {
-	uint16_t message_type;
-	uint16_t length;
-	uint8_t session_id;
-	QDF_STATUS status_code;
-	struct qdf_mac_addr peermac;
-	uint16_t sta_id;
-	struct wlan_objmgr_psoc *psoc;
 };
 
 /**
