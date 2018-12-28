@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -723,21 +723,6 @@ typedef enum {
 	eCSR_UMA_GAN,
 	eCSR_HDD
 } eCsrStatsRequesterType;
-
-/**
- * enum csr_hi_rssi_scan_id - Parameter ids for hi rssi scan feature
- *
- * @eCSR_HI_RSSI_SCAN_MAXCOUNT_ID: how many times scan can be performed
- * @eCSR_HI_RSSI_SCAN_RSSI_DELTA_ID: rssi difference to trigger scan
- * @eCSR_HI_RSSI_SCAN_DELAY_ID: delay in millseconds between scans
- * @eCSR_HI_RSSI_SCAN_RSSI_UB_ID: rssi upper bound for scan trigger
- */
-enum csr_hi_rssi_scan_id {
-	eCSR_HI_RSSI_SCAN_MAXCOUNT_ID,
-	eCSR_HI_RSSI_SCAN_RSSI_DELTA_ID,
-	eCSR_HI_RSSI_SCAN_DELAY_ID,
-	eCSR_HI_RSSI_SCAN_RSSI_UB_ID
-};
 
 typedef struct tagPmkidCandidateInfo {
 	struct qdf_mac_addr BSSID;
