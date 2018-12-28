@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -934,7 +934,7 @@ QDF_STATUS policy_mgr_validate_dbs_switch(
 		/* current mode is already SBS nothing to be
 		 * done
 		 */
-		if (hw_mode.sbs_cap && action == PM_SBS) {
+		if (hw_mode.sbs_cap) {
 			policy_mgr_notice("current mode is already SBS");
 			return QDF_STATUS_E_ALREADY;
 		}
