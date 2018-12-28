@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014, 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,15 +30,6 @@
 
 #include "ani_global.h"
 
-extern QDF_STATUS sys_init_globals(struct mac_context *);
-extern void sysBbtEntry(uint32_t dummy);
-extern void sysSchEntry(uint32_t dummy);
-extern void sysPmmEntry(uint32_t dummy);
-extern void sysDphEntry(uint32_t dummy);
-extern void sysLimEntry(uint32_t dummy);
-extern void sysMmhEntry(uint32_t dummy);
-extern void sysMntEntry(uint32_t dummy);
-extern void sysHalEntry(uint32_t dummy);
-extern void sysNimPttEntry(uint32_t dummy);
+QDF_STATUS sys_init_globals(struct mac_context *mac);
 
 #endif /* __SYS_ENTRY_FUNC_H */
