@@ -928,8 +928,6 @@ struct csr_roamstruct {
 		CSR_IS_RADIO_BG_ONLY((mac)) || CSR_IS_24_BAND_ONLY((mac)))
 #define CSR_GET_BAND(ch_num) \
 	((WLAN_REG_IS_24GHZ_CH(ch_num)) ? BAND_2G : BAND_5G)
-#define CSR_IS_11D_INFO_FOUND(mac) \
-	(0 != (mac)->scan.channelOf11dInfo)
 #define CSR_IS_ROAMING(pSession) \
 	((CSR_IS_LOSTLINK_ROAMING((pSession)->roamingReason)) || \
 		(eCsrDynamicRoaming == (pSession)->roamingReason)  ||	\
