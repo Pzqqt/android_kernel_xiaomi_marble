@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -755,11 +755,7 @@ struct csr_roam_session {
 
 struct csr_roamstruct {
 	uint32_t nextRoamId;
-	tDblLinkList channelList5G;
-	tDblLinkList channelList24;
 	struct csr_config configParam;
-	uint32_t numChannelsEeprom;     /* total channels of eeprom */
-	struct csr_channel baseChannels;  /* The channel base to work on */
 	enum csr_roam_state curState[CSR_ROAM_SESSION_MAX];
 	enum csr_roam_substate curSubState[CSR_ROAM_SESSION_MAX];
 	/*
