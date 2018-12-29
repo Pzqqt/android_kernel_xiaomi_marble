@@ -1135,32 +1135,6 @@ extern void sys_process_mmh_msg(struct mac_context *mac,
 				struct scheduler_msg *pMsg);
 
 /**
- * struct tEidByteInfo - Eid byte info
- * @offset: offset
- * @value: value
- * @bitMask: BIT mask
- * @ref: reference
- */
-typedef struct sEidByteInfo {
-	uint8_t offset;
-	uint8_t value;
-	uint8_t bitMask;
-	uint8_t ref;
-} qdf_packed tEidByteInfo, *tpEidByteInfo;
-
-/**
- * struct tBeaconFilterIe - beacon filter IE
- * @elementId: element IE
- * @checkIePresence: check IE presence
- * @byte: Eid byte info
- */
-typedef struct sBeaconFilterIe {
-	uint8_t elementId;
-	uint8_t checkIePresence;
-	tEidByteInfo byte;
-} qdf_packed tBeaconFilterIe, *tpBeaconFilterIe;
-
-/**
  * struct tDisableIntraBssFwd - intra bss forward parameters
  * @sessionId: session id
  * @disableintrabssfwd: disable intra bss forward flag
