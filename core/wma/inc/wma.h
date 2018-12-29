@@ -171,14 +171,6 @@
 #define WMA_MIN_RF_CHAINS               (1)
 #define WMA_MAX_NSS               (2)
 
-
-#ifdef FEATURE_WLAN_EXTSCAN
-#define WMA_MAX_EXTSCAN_MSG_SIZE        1536
-#define WMA_EXTSCAN_REST_TIME           100
-#define WMA_EXTSCAN_MAX_SCAN_TIME       50000
-#define WMA_EXTSCAN_BURST_DURATION      150
-#endif
-
 #define WMA_BCN_BUF_MAX_SIZE 512
 #define WMA_NOA_IE_SIZE(num_desc) (2 + (13 * (num_desc)))
 #define WMA_MAX_NOA_DESCRIPTORS 4
