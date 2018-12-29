@@ -296,7 +296,6 @@ struct tdls_peer_mlme_info {
  * @is_forced_peer: is forced peer
  * @op_class_for_pref_off_chan: op class for preferred off channel
  * @pref_off_chan_num: preferred off channel number
- * @op_class_for_pref_off_chan_is_set: op class for preferred off channel set
  * @peer_idle_timer: time to check idle traffic in tdls peers
  * @is_peer_idle_timer_initialised: Flag to check idle timer init
  * @spatial_streams: Number of TX/RX spatial streams for TDLS
@@ -328,7 +327,6 @@ struct tdls_peer {
 	bool is_forced_peer;
 	uint8_t op_class_for_pref_off_chan;
 	uint8_t pref_off_chan_num;
-	uint8_t op_class_for_pref_off_chan_is_set;
 	qdf_mc_timer_t peer_idle_timer;
 	bool is_peer_idle_timer_initialised;
 	uint8_t spatial_streams;
