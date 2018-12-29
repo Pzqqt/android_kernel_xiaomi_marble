@@ -237,7 +237,6 @@
 #define WMA_TGT_IS_INVALID_SNR(x) (!WMA_TGT_IS_VALID_SNR(x))
 
 #define WMA_TX_Q_RECHECK_TIMER_WAIT      2      /* 2 ms */
-#define WMA_TX_Q_RECHECK_TIMER_MAX_WAIT  20     /* 20 ms */
 #define WMA_MAX_NUM_ARGS 8
 
 #define WMA_SMPS_MASK_LOWER_16BITS 0xFF
