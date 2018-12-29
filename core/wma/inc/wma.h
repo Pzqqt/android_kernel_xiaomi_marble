@@ -179,9 +179,6 @@
 #define WMA_EXTSCAN_BURST_DURATION      150
 #endif
 
-#define WMA_CHAN_START_RESP          0
-#define WMA_CHAN_END_RESP            1
-
 #define WMA_BCN_BUF_MAX_SIZE 512
 #define WMA_NOA_IE_SIZE(num_desc) (2 + (13 * (num_desc)))
 #define WMA_MAX_NOA_DESCRIPTORS 4
