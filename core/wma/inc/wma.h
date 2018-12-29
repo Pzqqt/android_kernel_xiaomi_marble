@@ -116,8 +116,6 @@
 
 #define WMA_HW_DEF_SCAN_MAX_DURATION      30000 /* 30 secs */
 
-#define WMA_SCAN_NPROBES_DEFAULT            (2)
-
 #define WMA_BCAST_MAC_ADDR (0xFF)
 #define WMA_MCAST_IPV4_MAC_ADDR (0x01)
 #define WMA_MCAST_IPV6_MAC_ADDR (0x33)
