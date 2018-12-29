@@ -702,7 +702,6 @@ struct hdd_roaming_info {
 
 #ifdef FEATURE_WLAN_WAPI
 /* Define WAPI macros for Length, BKID count etc*/
-#define MAC_ADDR_LEN           6
 #define MAX_NUM_AKM_SUITES    16
 
 /** WAPI AUTH mode definition */
