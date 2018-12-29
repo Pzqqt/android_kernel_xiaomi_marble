@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -242,7 +242,6 @@ struct tdls_soc_priv_obj {
  * @threshold_config: threshold config
  * @discovery_peer_cnt: discovery peer count
  * @discovery_sent_cnt: discovery sent count
- * @ap_rssi: ap rssi
  * @curr_candidate: current candidate
  * @ct_peer_table: linear mac address table for counting the packets
  * @valid_mac_entries: number of valid mac entry in @ct_peer_mac_table
@@ -257,7 +256,6 @@ struct tdls_vdev_priv_obj {
 	struct tdls_config_params threshold_config;
 	int32_t discovery_peer_cnt;
 	uint32_t discovery_sent_cnt;
-	int8_t ap_rssi;
 	struct tdls_peer *curr_candidate;
 	struct tdls_conn_tracker_mac_table
 			ct_peer_table[WLAN_TDLS_CT_TABLE_SIZE];
