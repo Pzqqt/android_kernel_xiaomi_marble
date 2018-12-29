@@ -112,14 +112,6 @@ enum csr_roamcomplete_result {
 	eCsrStopBssFailure,
 };
 
-struct tag_scanreq_param {
-	uint8_t bReturnAfter1stMatch;
-	uint8_t fUniqueResult;
-	uint8_t freshScan;
-	uint8_t hiddenSsid;
-	uint8_t reserved;
-};
-
 struct tag_csrscan_result {
 	tListElem Link;
 	/* This BSS is removed when it reaches 0 or less */
