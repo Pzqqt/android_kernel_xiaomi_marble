@@ -142,10 +142,10 @@ typedef struct sAniBeaconStruct {
  * struct sAniProbeRspStruct - probeRsp template structure
  * @macHdr: mac header for probe response
  */
-typedef struct sAniProbeRspStruct {
+struct sAniProbeRspStruct {
 	tSirMacMgmtHdr macHdr;
 	/* probeRsp body follows here */
-} qdf_packed tAniProbeRspStruct, *tpAniProbeRspStruct;
+} qdf_packed;
 
 /**
  * struct tAddStaParams - add sta related parameters
