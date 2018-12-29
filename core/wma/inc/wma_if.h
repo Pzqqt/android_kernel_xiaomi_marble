@@ -570,30 +570,6 @@ typedef struct {
 	int8_t rssi;
 } tDeleteStaContext, *tpDeleteStaContext;
 
-/**
- * struct tStartScanParams - params required for start scan request
- * @scanChannel: Indicates the current scan channel
- * @status: return status
- * @startTSF: TSF value
- * @txMgmtPower: TX mgmt power
- */
-typedef struct {
-	uint8_t scanChannel;
-	QDF_STATUS status;
-	uint32_t startTSF[2];
-	int8_t txMgmtPower;
-} tStartScanParams, *tpStartScanParams;
-
-/**
- * struct tEndScanParams - params required for end scan request
- * @scanChannel: Indicates the current scan channel
- * @status: return status
- */
-typedef struct {
-	uint8_t scanChannel;
-	QDF_STATUS status;
-} tEndScanParams, *tpEndScanParams;
-
 #ifdef FEATURE_OEM_DATA_SUPPORT
 
 #ifndef OEM_DATA_RSP_SIZE
@@ -1117,18 +1093,6 @@ typedef struct tdls_chan_switch_params_struct {
 } tdls_chan_switch_params;
 
 #endif /* FEATURE_WLAN_TDLS */
-
-/**
- * struct tAbortScanParams - Abort scan parameters
- * @SessionId: PE session id
- * @scan_id: Scan ID used for original scan request
- * @scan_requestor_id: Scan requesting entity
- */
-typedef struct sAbortScanParams {
-	uint8_t SessionId;
-	uint32_t scan_id;
-	uint32_t scan_requestor_id;
-} tAbortScanParams, *tpAbortScanParams;
 
 /**
  * struct del_sta_self_params - Del Sta Self params
