@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -429,11 +429,6 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 
 #define HTT_TX_MUTEX_DESTROY(_mutex)			\
 	qdf_spinlock_destroy(_mutex)
-
-#define HTT_TX_DESC_PADDR(_pdev, _tx_desc_vaddr)       \
-	((_pdev)->tx_descs.pool_paddr +  (uint32_t)	  \
-	 ((char *)(_tx_desc_vaddr) -			   \
-	  (char *)((_pdev)->tx_descs.pool_vaddr)))
 
 #ifdef ATH_11AC_TXCOMPACT
 
