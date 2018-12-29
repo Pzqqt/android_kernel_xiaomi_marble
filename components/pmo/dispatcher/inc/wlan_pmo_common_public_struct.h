@@ -59,18 +59,6 @@
 #define PMO_WOW_REQUIRED_CREDITS 1
 
 /**
- * enum pmo_offload_type: tell offload type
- * @pmo_arp_offload: arp offload
- * @pmo_ns_offload: ns offload
- * @pmo_gtk_offload: gtk offload
- */
-enum pmo_offload_type {
-	pmo_arp_offload = 0,
-	pmo_ns_offload,
-	pmo_gtk_offload,
-};
-
-/**
  * enum pmo_vdev_param_id: tell vdev param id
  * @pmo_vdev_param_listen_interval: vdev listen interval param id
  * @pmo_vdev_param_dtim_policy: vdev param dtim policy
