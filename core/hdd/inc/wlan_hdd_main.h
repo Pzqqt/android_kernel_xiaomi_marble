@@ -1329,7 +1329,6 @@ struct hdd_adapter {
 	unsigned long prev_tx_packets;
 	uint64_t prev_fwd_tx_packets;
 	uint64_t prev_fwd_rx_packets;
-	int connection;
 #endif
 #if  defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || \
 				defined(QCA_HL_NETDEV_FLOW_CONTROL)
