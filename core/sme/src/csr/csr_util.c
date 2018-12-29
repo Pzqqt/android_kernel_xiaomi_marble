@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -143,8 +143,6 @@ uint8_t csr_wapi_oui[][CSR_WAPI_OUI_SIZE] = {
 	{0x00, 0x14, 0x72, 0x02} /* WAI PSK */
 };
 #endif /* FEATURE_WLAN_WAPI */
-uint8_t csr_wme_info_oui[CSR_WME_OUI_SIZE] = { 0x00, 0x50, 0xf2, 0x02 };
-uint8_t csr_wme_parm_oui[CSR_WME_OUI_SIZE] = { 0x00, 0x50, 0xf2, 0x02 };
 
 uint8_t csr_group_mgmt_oui[][CSR_RSN_OUI_SIZE] = {
 #define ENUM_CMAC 0
