@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -311,7 +311,6 @@ enum pmo_auto_pwr_detect_failure_mode {
  * @magic_ptrn_enable: true when magic pattern is enabled else false
  * @deauth_enable: true when wake up on deauth is enabled else false
  * @disassoc_enable:  true when wake up on disassoc is enabled else false
- * @bmiss_enable: true when wake up on bmiss is enabled else false
  * @lpass_enable: true when lpass is enabled else false
  * @max_ps:poll: max power save poll
  * @sta_dynamic_dtim: station dynamic DTIM value
@@ -356,7 +355,6 @@ struct pmo_psoc_cfg {
 	bool magic_ptrn_enable;
 	bool deauth_enable;
 	bool disassoc_enable;
-	bool bmiss_enable;
 	bool lpass_enable;
 	bool wowlan_deauth_enable;
 	bool wowlan_disassoc_enable;
