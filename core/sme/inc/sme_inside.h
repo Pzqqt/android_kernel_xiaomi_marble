@@ -127,7 +127,6 @@ tSmeCmd *sme_get_command_buffer(struct mac_context *mac);
 void sme_release_command(struct mac_context *mac, tSmeCmd *pCmd);
 bool qos_process_command(struct mac_context *mac, tSmeCmd *pCommand);
 void qos_release_command(struct mac_context *mac, tSmeCmd *pCommand);
-QDF_STATUS csr_process_scan_command(struct mac_context *mac, tSmeCmd *pCommand);
 QDF_STATUS csr_roam_process_command(struct mac_context *mac, tSmeCmd *pCommand);
 
 /**
