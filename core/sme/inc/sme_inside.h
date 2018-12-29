@@ -182,8 +182,6 @@ QDF_STATUS csr_create_roam_scan_channel_list(struct mac_context *mac,
 		const enum band_info eBand);
 #endif
 
-QDF_STATUS p2p_process_remain_on_channel_cmd(struct mac_context *mac,
-					     tSmeCmd *p2pRemainonChn);
 ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
 void csr_process_set_dual_mac_config(struct mac_context *mac, tSmeCmd *command);
 void csr_process_set_antenna_mode(struct mac_context *mac, tSmeCmd *command);
