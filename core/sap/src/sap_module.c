@@ -1177,7 +1177,11 @@ wlansap_update_csa_channel_params(struct sap_context *sap_context,
 			op_class = wlan_reg_dmn_get_opclass_from_channel(
 					mac_ctx->scan.countryCodeCurrent,
 					channel, bw);
-			if (!op_class)
+			/*
+			 * Do not continue if bw is 20. This mean channel is not
+			 * found and thus set BW20 for the channel.
+			 */
+			if (!op_class && bw > BW20)
 				continue;
 
 			if (bw == BW80) {
