@@ -378,17 +378,6 @@ lim_get_mgmt_staid(struct mac_context *mac, uint16_t *staid,
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline uint8_t
-is_entering_mimo_ps(tSirMacHTMIMOPowerSaveState curState,
-		tSirMacHTMIMOPowerSaveState newState)
-{
-	if (curState == eSIR_HT_MIMO_PS_NO_LIMIT &&
-			(newState == eSIR_HT_MIMO_PS_DYNAMIC
-			 || newState == eSIR_HT_MIMO_PS_STATIC))
-		return true;
-	return false;
-}
-
 static inline int lim_select_cb_mode(tDphHashNode *pStaDs,
 		struct pe_session *pe_session, uint8_t channel,
 		uint8_t chan_bw)
