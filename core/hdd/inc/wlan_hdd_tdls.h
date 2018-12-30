@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,12 +31,6 @@ struct hdd_context;
 #define ENA_TDLS_OFFCHAN      (1 << 0)  /* TDLS Off Channel support */
 #define ENA_TDLS_BUFFER_STA   (1 << 1)  /* TDLS Buffer STA support */
 #define ENA_TDLS_SLEEP_STA    (1 << 2)  /* TDLS Sleep STA support */
-
-typedef int (*cfg80211_exttdls_callback)(const uint8_t *mac,
-					 uint32_t opclass,
-					 uint32_t channel,
-					 uint32_t state,
-					 int32_t reason, void *ctx);
 
 int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *adapter, char *buf,
 				int buflen);
