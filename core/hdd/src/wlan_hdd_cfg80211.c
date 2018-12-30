@@ -8912,15 +8912,6 @@ static int wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 	return ret;
 }
 
-#undef APF_INVALID
-#undef APF_SET_RESET
-#undef APF_VERSION
-#undef APF_ID
-#undef APF_PACKET_SIZE
-#undef APF_CURRENT_OFFSET
-#undef APF_PROGRAM
-#undef APF_MAX
-
 #ifndef QCA_SUPPORT_CP_STATS
 /**
  * define short names for the global vendor params
