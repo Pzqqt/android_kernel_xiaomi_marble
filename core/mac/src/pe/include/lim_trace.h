@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -71,9 +71,6 @@ enum {
 };
 
 void lim_trace_init(struct mac_context *mac);
-void limTraceReset(struct mac_context *mac);
-void limTraceUpdateMgmtStat(struct mac_context *mac, uint8_t subtype);
-void lim_trace_dumpMgmtStat(struct mac_context *mac, uint8_t subtype);
 uint8_t *lim_trace_get_mlm_state_string(uint32_t mlmState);
 uint8_t *lim_trace_get_sme_state_string(uint32_t smeState);
 void lim_trace_dump(void *mac, tp_qdf_trace_record pRecord,
