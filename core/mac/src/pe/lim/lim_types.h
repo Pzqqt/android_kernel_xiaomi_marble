@@ -326,12 +326,6 @@ typedef struct sLimMlmDisassocInd {
 	uint8_t sessionId;
 } tLimMlmDisassocInd, *tpLimMlmDisassocInd;
 
-typedef struct sLimMlmPurgeStaReq {
-	tSirMacAddr peerMacAddr;
-	uint16_t aid;
-	uint8_t sessionId;      /* Added For BT-AMP Support */
-} tLimMlmPurgeStaReq, *tpLimMlmPurgeStaReq;
-
 typedef struct sLimMlmPurgeStaInd {
 	tSirMacAddr peerMacAddr;
 	uint16_t reasonCode;
