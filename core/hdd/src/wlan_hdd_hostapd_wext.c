@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,10 +42,6 @@
 #include <wlan_cfg80211_mc_cp_stats.h>
 #include "wlan_mlme_ucfg_api.h"
 
-#define    IS_UP(_dev) \
-	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
-#define    IS_UP_AUTO(_ic) \
-	(IS_UP((_ic)->ic_dev) && (_ic)->ic_roaming == IEEE80211_ROAMING_AUTO)
 #define WE_WLAN_VERSION     1
 
 /* WEXT limitation: MAX allowed buf len for any *
