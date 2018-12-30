@@ -126,11 +126,6 @@ typedef struct sChannelInfo {
 	bool valid;             /* if the channel is valid to be picked as new channel */
 } tChannelInfo;
 
-typedef struct sSapChannelListInfo {
-	uint8_t numChannel;
-	uint8_t *channelList;
-} tSapChannelListInfo;
-
 typedef struct {
 	uint16_t chNum;         /* Channel Number */
 	uint16_t channelWidth;  /* Channel Width */
