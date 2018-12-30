@@ -37,7 +37,6 @@
 #include "qdf_trace.h"
 
 #ifdef LIM_TRACE_RECORD
-uint32_t g_mgmt_frame_stats[14];
 
 #define LIM_TRACE_MAX_SUBTYPES 14
 
