@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -84,12 +84,10 @@ void lim_send_sme_addts_rsp(struct mac_context *mac,
 			    uint8_t smesessionId, uint16_t smetransactionId);
 void lim_send_sme_delts_rsp(struct mac_context *mac, tpSirDeltsReq delts,
 			    uint32_t status, struct pe_session *pe_session,
-			    uint8_t smessionId, uint16_t smetransactionId);
+			    uint8_t smesessionId, uint16_t smetransactionId);
 void lim_send_sme_delts_ind(struct mac_context *mac,
 			    struct delts_req_info *delts,
 			    uint16_t aid, struct pe_session *);
-void lim_send_sme_stats_rsp(struct mac_context *mac, uint16_t msgtype,
-			    void *stats);
 
 #ifdef QCA_SUPPORT_CP_STATS
 static inline void lim_send_sme_pe_statistics_rsp(struct mac_context *mac,
