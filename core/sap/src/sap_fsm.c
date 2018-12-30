@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -83,9 +83,9 @@ extern sapSafeChannelType safe_channels[];
  * Static Function Declarations and Definitions
  * -------------------------------------------------------------------------*/
 #ifdef SOFTAP_CHANNEL_RANGE
-static QDF_STATUS sap_get_channel_list(struct sap_context *sapContext,
-				    uint8_t **channelList,
-				    uint8_t *numberOfChannels);
+static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
+				       uint8_t **ch_list,
+				       uint8_t *num_ch);
 #endif
 
 /*==========================================================================
