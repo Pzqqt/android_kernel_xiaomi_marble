@@ -50,8 +50,6 @@
 #include "wlan_hdd_object_manager.h"
 #include "nan_ucfg_api.h"
 
-#define MAX_RATES                       12
-
 #define SCAN_DONE_EVENT_BUF_SIZE 4096
 #define RATE_MASK 0x7f
 
