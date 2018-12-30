@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,9 +34,6 @@
 #include <wlan_hdd_main.h>
 
 /* Preprocessor definitions and constants */
-
-/* max length of command string in hostapd ioctl */
-#define HOSTAPD_IOCTL_COMMAND_STRLEN_MAX   8192
 
 struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 				      tSirMacAddr macAddr,
