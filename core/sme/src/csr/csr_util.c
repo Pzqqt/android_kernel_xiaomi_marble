@@ -2489,23 +2489,11 @@ static bool csr_validate_sta_bcn_intrvl(struct mac_context *mac_ctx,
 	return false;
 }
 
-/**
- * csr_validate_mcc_beacon_interval() - to validate the mcc beacon interval
- * @mac_ctx: pointer to mac context
- * @chnl_id: channel number
- * @bcn_interval: provided beacon interval
- * @cur_session_id: current session id
- * @cur_bss_persona: Current BSS persona
- *
- * This API will validate the mcc beacon interval
- *
- * Return: QDF_STATUS
- */
 QDF_STATUS csr_validate_mcc_beacon_interval(struct mac_context *mac_ctx,
-					uint8_t chnl_id,
-					uint16_t *bcn_interval,
-					uint32_t cur_session_id,
-					enum QDF_OPMODE cur_bss_persona)
+					    uint8_t chnl_id,
+					    uint16_t *bcn_interval,
+					    uint32_t cur_session_id,
+					    enum QDF_OPMODE cur_bss_persona)
 {
 	uint32_t session_id = 0;
 	QDF_STATUS status;

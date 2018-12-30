@@ -335,10 +335,24 @@ QDF_STATUS csr_reassoc(struct mac_context *mac, uint32_t sessionId,
 		tCsrRoamModifyProfileFields *pModProfileFields,
 		uint32_t *pRoamId, bool fForce);
 
-/* BeaconInterval validation for MCC support */
-QDF_STATUS csr_validate_mcc_beacon_interval(struct mac_context *mac, uint8_t channelId,
-		uint16_t *beaconInterval, uint32_t cursessionId,
-		enum QDF_OPMODE currBssPersona);
+/**
+ * csr_validate_mcc_beacon_interval() - to validate the mcc beacon interval
+ * @mac_ctx: pointer to mac context
+ * @chnl_id: channel number
+ * @bcn_interval: provided beacon interval
+ * @cur_session_id: current session id
+ * @cur_bss_persona: Current BSS persona
+ *
+ * This API will validate the mcc beacon interval
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS csr_validate_mcc_beacon_interval(struct mac_context *mac_ctx,
+					    uint8_t chnl_id,
+					    uint16_t *bcn_interval,
+					    uint32_t cur_session_id,
+					    enum QDF_OPMODE cur_bss_persona);
+
 bool csr_is_profile11r(struct mac_context *mac, struct csr_roam_profile *pProfile);
 bool csr_is_auth_type11r(struct mac_context *mac, eCsrAuthType AuthType,
 			 uint8_t mdiePresent);
