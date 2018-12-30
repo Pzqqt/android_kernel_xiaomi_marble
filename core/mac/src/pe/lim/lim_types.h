@@ -199,11 +199,6 @@ typedef struct sLimMlmStartCnf {
 	uint8_t sessionId;
 } tLimMlmStartCnf, *tpLimMlmStartCnf;
 
-typedef struct sLimScanResult {
-	uint16_t numBssDescriptions;
-	tSirBssDescription bssDescription[1];
-} tLimScanResult;
-
 typedef struct sLimMlmJoinCnf {
 	tSirResultCodes resultCode;
 	uint16_t protStatusCode;
