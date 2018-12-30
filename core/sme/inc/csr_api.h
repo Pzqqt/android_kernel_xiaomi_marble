@@ -236,23 +236,6 @@ typedef struct tagCsrBSSIDs {
 	struct qdf_mac_addr *bssid;
 } tCsrBSSIDs;
 
-typedef struct tagCsrStaParams {
-	uint16_t capability;
-	uint8_t extn_capability[SIR_MAC_MAX_EXTN_CAP];
-	uint8_t supported_rates_len;
-	uint8_t supported_rates[SIR_MAC_MAX_SUPP_RATES];
-	uint8_t htcap_present;
-	tSirHTCap HTCap;
-	uint8_t vhtcap_present;
-	tSirVHTCap VHTCap;
-	uint8_t uapsd_queues;
-	uint8_t max_sp;
-	uint8_t supported_channels_len;
-	uint8_t supported_channels[SIR_MAC_MAX_SUPP_CHANNELS];
-	uint8_t supported_oper_classes_len;
-	uint8_t supported_oper_classes[REG_MAX_SUPP_OPER_CLASSES];
-} tCsrStaParams;
-
 typedef struct tagCsrScanResultInfo {
 	/*
 	 * Carry the IEs for the current BSSDescription.
