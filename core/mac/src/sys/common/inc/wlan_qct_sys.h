@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -55,43 +55,28 @@
  */
 typedef void (*sys_rsp_cb)(void *user_data);
 
-/*---------------------------------------------------------------------------
-   Preprocessor definitions and constants
-   -------------------------------------------------------------------------*/
+/**
+ * sys_build_message_header() - to build the sys message header
+ * @msg_id: message id
+ * @msg: pointer to message context
+ *
+ * This function will initialize the SYS message header with the
+ * message type and any internal fields needed for a new SYS
+ * message. This function sets all but the message body, which is up
+ * to the caller to setup based on the specific message being built.
+ *
+ * NOTE: There are internal / reserved items in a SYS message that
+ * must be set correctly for the message to be recognized as a SYS
+ * message by the SYS message handlers.  It is important for every SYS
+ * message to be setup / built / initialized through this function.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sys_build_message_header(SYS_MSG_ID msg_id,
+				    struct scheduler_msg *msg);
 
-/*---------------------------------------------------------------------------
-   Function declarations and documenation
-   -------------------------------------------------------------------------*/
-
-/*----------------------------------------------------------------------------
-
-   \brief sys_build_message_header() - Build / initialize a SYS message header
-
-   This function will initialize the SYS message header with the message type
-   and any internal fields needed for a new SYS message.  This function sets
-   all but the message body, which is up to the caller to setup based on the
-   specific message being built.
-
-   \note There are internal / reserved items in a SYS message that must be
-   set correctly for the message to be recognized as a SYS message by
-   the SYS message handlers.  It is important for every SYS message to
-   be setup / built / initialized through this function.
-
-   \param sysMsgId - a valid message ID for a SYS message.  See the
-   SYS_MSG_ID enum for all the valid SYS message IDs.
-
-   \param pMsg - pointer to the message structure to be setup.
-
-   \return
-
-   \sa
-
-   --------------------------------------------------------------------------*/
-QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId,
-				    struct scheduler_msg *pMsg);
 /**
  * umac_stop() - send schedule message to mc thread to stop umac (sme and mac)
- * @p_cds_context: cds context
  *
  * Return: status of operation
  */

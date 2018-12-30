@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -39,19 +39,10 @@
 #define SYS_STOP_TIMEOUT (30000)
 static qdf_event_t g_stop_evt;
 
-/**
- * sys_build_message_header() - to build the sys message header
- * @umac_stop_msgId: message id
- * @pMsg: pointer to message context
- *
- * This API is used to build the sys message header.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sys_build_message_header(SYS_MSG_ID umac_stop_msg_id,
+QDF_STATUS sys_build_message_header(SYS_MSG_ID msg_id,
 				    struct scheduler_msg *msg)
 {
-	msg->type = umac_stop_msg_id;
+	msg->type = msg_id;
 	msg->reserved = SYS_MSG_COOKIE;
 
 	return QDF_STATUS_SUCCESS;
