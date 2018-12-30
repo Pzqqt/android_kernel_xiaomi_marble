@@ -1068,10 +1068,6 @@ typedef struct tagCsrConfigParam {
 	bool roam_force_rssi_trigger;
 } tCsrConfigParam;
 
-/* Tush */
-typedef struct tagCsrUpdateConfigParam {
-	tCsr11dinfo Csr11dinfo;
-} tCsrUpdateConfigParam;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define csr_is_roam_offload_enabled(mac) \
 	(mac->mlme_cfg->lfr.lfr3_roaming_offload)
