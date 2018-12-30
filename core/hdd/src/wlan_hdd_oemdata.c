@@ -403,7 +403,7 @@ void hdd_update_channel_bw_info(struct hdd_context *hdd_ctx,
 	uint16_t sec_ch_2g = 0;
 	WLAN_PHY_MODE phy_mode;
 	uint32_t wni_dot11_mode;
-	tHddChannelInfo *hdd_chan_info = chan_info;
+	struct hdd_channel_info *hdd_chan_info = chan_info;
 
 	wni_dot11_mode = sme_get_wni_dot11_mode(hdd_ctx->mac_handle);
 
