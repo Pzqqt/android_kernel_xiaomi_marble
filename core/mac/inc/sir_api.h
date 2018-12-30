@@ -1891,15 +1891,6 @@ typedef struct sSirAPWPSIEs {
 	tSirWPSAssocRspIE SirWPSAssocRspIE;     /*WPS Set Assoc Response IE */
 } tSirAPWPSIEs, *tpSiriAPWPSIEs;
 
-typedef struct sSirUpdateAPWPSIEsReq {
-	uint16_t messageType;   /* eWNI_SME_UPDATE_APWPSIE_REQ */
-	uint16_t length;
-	uint16_t transactionId; /* Transaction ID for cmd */
-	struct qdf_mac_addr bssid;      /* BSSID */
-	uint8_t sessionId;      /* Session ID */
-	tSirAPWPSIEs APWPSIEs;
-} tSirUpdateAPWPSIEsReq, *tpSirUpdateAPWPSIEsReq;
-
 struct update_config {
 	uint16_t messageType;   /* eWNI_SME_UPDATE_CONFIG */
 	uint16_t length;
