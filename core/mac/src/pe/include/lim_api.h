@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -285,7 +285,6 @@ void lim_mon_init_session(struct mac_context *mac_ptr,
 #define limGetQosMode(pe_session, pVal) (*(pVal) = (pe_session)->limQosEnabled)
 #define limGetWmeMode(pe_session, pVal) (*(pVal) = (pe_session)->limWmeEnabled)
 #define limGetWsmMode(pe_session, pVal) (*(pVal) = (pe_session)->limWsmEnabled)
-#define limGet11dMode(pe_session, pVal) (*(pVal) = (pe_session)->lim11dEnabled)
 /* ----------------------------------------------------------------------- */
 static inline void lim_get_phy_mode(struct mac_context *mac, uint32_t *phyMode,
 				    struct pe_session *pe_session)
