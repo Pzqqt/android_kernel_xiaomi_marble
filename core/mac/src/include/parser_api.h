@@ -1156,21 +1156,6 @@ QDF_STATUS populate_dot11f_twt_extended_caps(struct mac_context *mac_ctx,
 #endif
 
 /**
- * sir_unpack_beacon_ie: wrapper to unpack beacon and update def RSN params
- * if optional fields are not present.
- * @mac_ctx: mac context
- * @buf: beacon buffer pointer
- * @buf_len: beacon buffer length
- * @frame: outframe frame structure
- * @append_ie: flag to indicate if the frame need to be appended from buf
- *
- * Return: parse status
- */
-uint32_t sir_unpack_beacon_ie(struct mac_context *mac_ctx, uint8_t *buf,
-				       uint32_t buf_len,
-				       tDot11fBeaconIEs *frame, bool append_ie);
-
-/**
  * lim_truncate_ppet: truncates ppet of trailling zeros
  * @ppet: ppet to truncate
  * max_len: max length of ppet
