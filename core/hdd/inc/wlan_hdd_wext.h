@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -142,14 +142,6 @@ typedef enum {
 
 /** Disable 11d */
 #define DISABLE_11D 0
-
-/*
- * refer wpa.h in wpa supplicant code for REASON_MICHAEL_MIC_FAILURE
- *
- * supplicant sets REASON_MICHAEL_MIC_FAILURE as the reason code when it
- * sends the MLME deauth IOCTL for TKIP counter measures
- */
-#define HDD_REASON_MICHAEL_MIC_FAILURE 14
 
 #define HDD_RTSCTS_EN_MASK                  0xF
 #define HDD_RTSCTS_ENABLE                   1
