@@ -1213,12 +1213,6 @@ struct csr_roam_info {
 #endif
 };
 
-typedef struct tagCsrFreqScanInfo {
-	uint32_t nStartFreq;    /* in unit of MHz */
-	uint32_t nEndFreq;      /* in unit of MHz */
-	tSirScanType scanType;
-} tCsrFreqScanInfo;
-
 typedef struct sSirSmeAssocIndToUpperLayerCnf {
 	uint16_t messageType;   /* eWNI_SME_ASSOC_CNF */
 	uint16_t length;
