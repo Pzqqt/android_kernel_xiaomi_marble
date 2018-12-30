@@ -9581,7 +9581,6 @@ static int hdd_parse_vendor_acs_chan_config(struct hdd_vendor_chan_info
  * Undef short names for vendor set channel configuration
  */
 #undef SET_CHAN_REASON
-#undef SET_CHAN_CHANNEL_COUNT
 #undef SET_CHAN_CHAN_LIST
 #undef SET_CHAN_PRIMARY_CHANNEL
 #undef SET_CHAN_SECONDARY_CHANNEL
