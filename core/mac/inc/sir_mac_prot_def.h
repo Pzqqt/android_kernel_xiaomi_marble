@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1468,26 +1468,6 @@ typedef struct sSirVHtCap {
 	uint32_t vhtCapInfo;
 	tSirVhtMcsInfo suppMcs;
 } tSirVHTCap;
-
-/**
- * struct sSirHtCap - HT capabilities
- *
- * This structure refers to "HT capabilities element" as
- * described in 802.11n draft section 7.3.2.52
- */
-
-typedef struct sSirHtCap {
-	uint16_t capInfo;
-	uint8_t ampduParamsInfo;
-	uint8_t suppMcsSet[16];
-	uint16_t extendedHtCapInfo;
-	uint32_t txBFCapInfo;
-	uint8_t antennaSelectionInfo;
-} tSirHTCap;
-
-/* HT Cap and HT IE Size defines */
-#define HT_CAPABILITY_IE_SIZE                       28
-#define HT_INFO_IE_SIZE                                          24
 
 /* */
 /* Determines the current operating mode of the 802.11n STA */
