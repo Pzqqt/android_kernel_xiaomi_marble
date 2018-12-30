@@ -176,8 +176,6 @@ struct sap_context {
 	uint16_t ch_width_orig;
 	struct ch_params ch_params;
 
-	/* session to scan */
-	bool isScanSessionOpen;
 	uint32_t auto_channel_select_weight;
 	tSapAcsChannelInfo acsBestChannelInfo;
 	bool enableOverLapCh;
