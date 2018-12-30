@@ -30,9 +30,6 @@
 #include "csr_inside_api.h"
 #include <wlan_cfg80211_scan.h>
 
-/* (30 Mins) */
-#define MIN_TIME_REQUIRED_FOR_NEXT_BUG_REPORT (30 * 60 * 1000)
-
 int hdd_scan_context_init(struct hdd_context *hdd_ctx);
 void hdd_scan_context_destroy(struct hdd_context *hdd_ctx);
 
