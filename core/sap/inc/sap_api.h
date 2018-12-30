@@ -494,20 +494,6 @@ struct sap_acs_cfg {
 };
 
 /*
- * enum vendor_ie_access_policy- access policy
- * @ACCESS_POLICY_NONE: access policy attribute is not valid
- * @ACCESS_POLICY_RESPOND_IF_IE_IS_PRESENT: respond to probe req/assoc req
- *  only if ie is present
- * @ACCESS_POLICY_DONOT_RESPOND_IF_IE_IS_PRESENT: do not respond to probe req/
- *  assoc req if ie is present
-*/
-enum vendor_ie_access_policy {
-	ACCESS_POLICY_NONE,
-	ACCESS_POLICY_RESPOND_IF_IE_IS_PRESENT,
-	ACCESS_POLICY_DONOT_RESPOND_IF_IE_IS_PRESENT,
-};
-
-/*
  * enum sap_acs_dfs_mode- state of DFS mode
  * @ACS_DFS_MODE_NONE: DFS mode attribute is not valid
  * @ACS_DFS_MODE_ENABLE:  DFS mode is enabled
@@ -579,7 +565,6 @@ typedef struct sap_config {
 	void *pProbeRespBcnIEsBuffer;
 	uint16_t beacon_tx_rate;
 	uint8_t *vendor_ie;
-	enum vendor_ie_access_policy vendor_ie_access_policy;
 	uint16_t sta_inactivity_timeout;
 	uint16_t tx_pkt_fail_cnt_threshold;
 	uint8_t short_retry_limit;
