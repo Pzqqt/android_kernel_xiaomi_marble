@@ -870,19 +870,6 @@ static inline void lim_deactivate_and_change_timer_host_roam(
 bool lim_is_robust_mgmt_action_frame(uint8_t action_category);
 uint8_t lim_compute_ext_cap_ie_length(tDot11fIEExtCap *ext_cap);
 
-/**
- * lim_p2p_action_cnf() - callback to indicate Tx completion
- * @mac_ctx: pointer to mac structure
- * @buf: buffer
- * @tx_complete_success: indicates tx success/failure
- * @params: tx completion params
- *
- * function will be invoked on receiving tx completion indication
- *
- * return: success: eHAL_STATUS_SUCCESS failure: eHAL_STATUS_FAILURE
- */
-QDF_STATUS lim_p2p_action_cnf(void *mac_ctx, qdf_nbuf_t buf,
-			uint32_t tx_complete_success, void *params);
 void lim_update_caps_info_for_bss(struct mac_context *mac_ctx,
 			uint16_t *caps, uint16_t bss_caps);
 void lim_send_set_dtim_period(struct mac_context *mac_ctx, uint8_t dtim_period,
