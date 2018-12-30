@@ -270,30 +270,6 @@ typedef struct sLimMlmReassocCnf {
 	uint8_t sessionId;
 } tLimMlmReassocCnf, *tpLimMlmReassocCnf;
 
-typedef struct sLimMlmReassocInd {
-	tSirMacAddr peerMacAddr;
-	tSirMacAddr currentApAddr;
-	uint16_t aid;
-	tAniAuthType authType;
-	tAniSSID ssId;
-	tSirRSNie rsnIE;
-	tSirWAPIie wapiIE;
-	tSirAddie addIE;        /* additional IE received from the peer, which can be WSC IE and/or P2P IE. */
-	tSirMacCapabilityInfo capabilityInfo;
-	bool spectrumMgtIndicator;
-	tSirMacPowerCapInfo powerCap;
-	tSirSupChnl supportedChannels;
-
-	bool WmmStaInfoPresent;
-
-	/* Required for indicating the frames to upper layer */
-	uint32_t beaconLength;
-	uint8_t *beaconPtr;
-	uint32_t assocReqLength;
-	uint8_t *assocReqPtr;
-	uint8_t ecsa_capable;
-} tLimMlmReassocInd, *tpLimMlmReassocInd;
-
 typedef struct sLimMlmAuthCnf {
 	tSirMacAddr peerMacAddr;
 	tAniAuthType authType;
