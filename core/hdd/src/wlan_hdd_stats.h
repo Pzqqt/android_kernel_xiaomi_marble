@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -454,14 +454,6 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter);
  *
  */
 int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature);
-
-/**
- * wlan_hdd_request_station_stats() - Get station statistics
- * @adapter: adapter for which statistics are desired
- *
- * Return: QDF_STATUS_SUCCESS if adapter's statistics were updated
- */
-int wlan_hdd_request_station_stats(struct hdd_adapter *adapter);
 
 /**
  * wlan_hdd_display_txrx_stats() - display HDD txrx stats summary
