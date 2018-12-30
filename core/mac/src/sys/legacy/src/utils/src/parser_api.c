@@ -1465,21 +1465,20 @@ populate_dot11f_supp_channels(struct mac_context *mac,
 QDF_STATUS
 populate_dot11f_supp_rates(struct mac_context *mac,
 			   uint8_t nChannelNum,
-			   tDot11fIESuppRates *pDot11f, struct pe_session *pe_session)
+			   tDot11fIESuppRates *pDot11f,
+			   struct pe_session *pe_session)
 {
 	QDF_STATUS nsir_status;
 	qdf_size_t nRates;
 	uint8_t rates[SIR_MAC_MAX_NUMBER_OF_RATES];
 
-	/* Use the operational rates present in session entry whenever nChannelNum is set to OPERATIONAL
-	   else use the supported rate set from CFG, which is fixed and does not change dynamically and is used for
-	   sending mgmt frames (lile probe req) which need to go out before any session is present.
+	/* Use the operational rates present in session entry whenever
+	 * nChannelNum is set to OPERATIONAL else use the supported
+	 * rate set from CFG, which is fixed and does not change
+	 * dynamically and is used for sending mgmt frames (lile probe
+	 * req) which need to go out before any session is present.
 	 */
 	if (POPULATE_DOT11F_RATES_OPERATIONAL == nChannelNum) {
-#if 0
-		CFG_GET_STR(nsir_status, mac, WNI_CFG_OPERATIONAL_RATE_SET,
-			    rates, nRates, SIR_MAC_MAX_NUMBER_OF_RATES);
-#endif /* TO SUPPORT BT-AMP */
 		if (pe_session != NULL) {
 			nRates = pe_session->rateSet.numRates;
 			qdf_mem_copy(rates, pe_session->rateSet.rate,
