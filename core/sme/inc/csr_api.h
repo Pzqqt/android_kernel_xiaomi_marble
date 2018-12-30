@@ -1326,12 +1326,6 @@ typedef struct tagCsrRoamSetKey {
 	uint8_t keyRsc[CSR_MAX_RSC_LEN];
 } tCsrRoamSetKey;
 
-typedef struct tagCsrRoamRemoveKey {
-	eCsrEncryptionType encType;
-	struct qdf_mac_addr peerMac; /* Peer MAC. ALL 1's for group key */
-	uint8_t keyId;          /* key index */
-} tCsrRoamRemoveKey;
-
 #ifdef FEATURE_WLAN_TDLS
 
 typedef struct tagCsrLinkEstablishParams {
