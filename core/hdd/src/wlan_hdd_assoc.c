@@ -2052,7 +2052,6 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 					struct csr_roam_info *roam_info,
 					uint8_t staId,
-					struct qdf_mac_addr *pPeerMacAddress,
 					struct bss_description *pBssDesc)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -3200,7 +3199,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				qdf_status = hdd_roam_register_sta(adapter,
 						roam_info,
 						sta_ctx->conn_info.staId[0],
-						NULL, roam_info->pBssDesc);
+						roam_info->pBssDesc);
 				hdd_debug("Enabling queues");
 				wlan_hdd_netif_queue_control(adapter,
 						WLAN_WAKE_ALL_NETIF_QUEUE,
@@ -3470,7 +3469,6 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 	{
 		struct hdd_station_ctx *hdd_sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		struct qdf_mac_addr broadcastMacAddr = QDF_MAC_ADDR_BCAST_INIT;
 
 		if (NULL == roam_info) {
 			QDF_ASSERT(0);
@@ -3497,7 +3495,6 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 
 		hdd_roam_register_sta(adapter, roam_info,
 				      roam_info->staId,
-				      &broadcastMacAddr,
 				      roam_info->pBssDesc);
 
 		if (roam_info->pBssDesc) {
@@ -3862,14 +3859,13 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 		if (hdd_is_key_install_required_for_ibss(encr_type))
 			roam_info->fAuthRequired = true;
 
-		/* Register the Station with TL for the new peer. */
+		/* Register the Station with datapath for the new peer. */
 		qdf_status = hdd_roam_register_sta(adapter,
 						   roam_info,
 						   roam_info->staId,
-						   &roam_info->peerMac,
 						   roam_info->pBssDesc);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			hdd_err("Cannot register STA with TL for IBSS. qdf_status: %d [%08X]",
+			hdd_err("Cannot register STA for IBSS. qdf_status: %d [%08X]",
 				qdf_status, qdf_status);
 		}
 		sta_ctx->ibss_sta_generation++;

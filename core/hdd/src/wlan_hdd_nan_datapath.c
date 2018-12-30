@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -701,8 +701,8 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 	sta_ctx->broadcast_staid = ndi_rsp->sta_id;
 	hdd_save_peer(sta_ctx, sta_ctx->broadcast_staid, &bc_mac_addr);
 	hdd_roam_register_sta(adapter, &roam_info,
-				sta_ctx->broadcast_staid,
-				&bc_mac_addr, &tmp_bss_descp);
+			      sta_ctx->broadcast_staid,
+			      &tmp_bss_descp);
 	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_staid] = adapter;
 }
 
@@ -819,8 +819,7 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 	}
 
 	/* this function is called for each new peer */
-	hdd_roam_register_sta(adapter, &roam_info, sta_id,
-				peer_mac_addr, &tmp_bss_descp);
+	hdd_roam_register_sta(adapter, &roam_info, sta_id, &tmp_bss_descp);
 	hdd_ctx->sta_to_adapter[sta_id] = adapter;
 	/* perform following steps for first new peer ind */
 	if (fist_peer) {
