@@ -334,15 +334,6 @@ typedef struct sap_AssocStaListEvent_s {
 	 */
 } tSap_AssocStaListEvent;
 
-typedef struct sap_GetWPSPBCSessionEvent_s {
-	uint8_t status;
-	/* module id that was passed in wlansap_get_assoc_stations API */
-	QDF_MODULE_ID module;
-	uint8_t UUID_E[16];             /* Unique identifier of the AP. */
-	struct qdf_mac_addr addr;
-	eWPSPBCOverlap wpsPBCOverlap;
-} tSap_GetWPSPBCSessionEvent;
-
 typedef struct sap_WPSPBCProbeReqEvent_s {
 	uint8_t status;
 	/* module id that was passed in wlansap_get_assoc_stations API */
@@ -447,8 +438,6 @@ typedef struct sap_Event_s {
 		tSap_StationMICFailureEvent sapStationMICFailureEvent;
 		/*SAP_ASSOC_STA_CALLBACK_EVENT */
 		tSap_AssocStaListEvent sapAssocStaListEvent;
-		/*SAP_GET_WPSPBC_SESSION_EVENT */
-		tSap_GetWPSPBCSessionEvent sapGetWPSPBCSessionEvent;
 		/*eSAP_WPS_PBC_PROBE_REQ_EVENT */
 		tSap_WPSPBCProbeReqEvent sapPBCProbeReqEvent;
 		tSap_SendActionCnf sapActionCnf;
