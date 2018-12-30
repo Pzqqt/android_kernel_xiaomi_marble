@@ -504,8 +504,15 @@ void lim_set_tspec_uapsd_mask_per_session(struct mac_context *mac,
 void lim_handle_heart_beat_timeout_for_session(struct mac_context *mac,
 		struct pe_session *pe_session);
 
-void lim_process_add_sta_rsp(struct mac_context *mac,
-			     struct scheduler_msg *pMsgQ);
+/**
+ * lim_process_add_sta_rsp() - process WDA_ADD_STA_RSP from WMA
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg: msg from WMA
+ *
+ * Return: void
+ */
+void lim_process_add_sta_rsp(struct mac_context *mac_ctx,
+			     struct scheduler_msg *msg);
 
 void lim_update_beacon(struct mac_context *mac);
 

@@ -4878,14 +4878,8 @@ void lim_handle_heart_beat_timeout_for_session(struct mac_context *mac_ctx,
 	}
 }
 
-/**
- * lim_process_add_sta_rsp() - process WDA_ADD_STA_RSP from WMA
- * @mac_ctx: Pointer to Global MAC structure
- * @msg: msg from WMA
- *
- * @Return: void
- */
-void lim_process_add_sta_rsp(struct mac_context *mac_ctx, struct scheduler_msg *msg)
+void lim_process_add_sta_rsp(struct mac_context *mac_ctx,
+			     struct scheduler_msg *msg)
 {
 	struct pe_session *session;
 	tpAddStaParams add_sta_params;
