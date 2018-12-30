@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -44,8 +44,6 @@
 #include "qdf_types.h"
 #include "cds_packet.h"
 
-#define MAX_DEAUTH_ALLOWED 5
-/* --------------------------------------------------------------------------- */
 /**
  * sys_init_globals
  *
