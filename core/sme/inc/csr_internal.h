@@ -559,27 +559,6 @@ enum csr_roamoffload_authstatus {
 	/* unknown error */
 	eSIR_ROAM_AUTH_STATUS_UNKNOWN = 0xff
 };
-struct csr_roam_offload_synch_params {
-	uint8_t roamedVdevId;   /* vdevId after roaming */
-	int8_t txMgmtPower;     /* HAL fills in the tx power used for */
-	uint8_t rssi;           /* RSSI */
-	uint8_t roamReason;     /* Roam reason */
-	uint8_t nss;            /* no of spatial streams */
-	uint16_t chainMask;     /* chainmask */
-	uint16_t smpsMode;      /* smps.mode */
-	struct qdf_mac_addr bssid;      /* MAC address of roamed AP */
-	enum csr_roamoffload_authstatus authStatus;   /* auth status */
-	uint8_t kck[SIR_KCK_KEY_LEN];
-	uint8_t kek[SIR_KEK_KEY_LEN_FILS];
-	uint32_t kek_len;
-	uint32_t pmk_len;
-	uint8_t pmk[SIR_PMK_LEN];
-	uint8_t pmkid[SIR_PMKID_LEN];
-	bool update_erp_next_seq_num;
-	uint16_t next_erp_seq_num;
-	uint8_t replay_ctr[SIR_REPLAY_CTR_LEN];
-	tpSirBssDescription  bss_desc_ptr;      /*BSS descriptor*/
-};
 #endif
 
 struct csr_roam_stored_profile {
@@ -722,7 +701,6 @@ struct csr_roam_session {
 	uint32_t he_sta_obsspd;
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	struct csr_roam_offload_synch_params roamOffloadSynchParams;
 	uint8_t psk_pmk[SIR_ROAM_SCAN_PSK_SIZE];
 	size_t pmk_len;
 	uint8_t RoamKeyMgmtOffloadEnabled;
