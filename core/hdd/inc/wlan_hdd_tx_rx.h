@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -55,7 +55,6 @@ struct hdd_context;
 #define hdd_dp_exit() hdd_dp_debug("exit")
 
 #define HDD_ETHERTYPE_802_1_X              0x888E
-#define HDD_ETHERTYPE_802_1_X_FRAME_OFFSET 12
 #ifdef FEATURE_WLAN_WAPI
 #define HDD_ETHERTYPE_WAI                  0x88b4
 #define IS_HDD_ETHERTYPE_WAI(_skb) (ntohs(_skb->protocol) == \
