@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -94,7 +94,7 @@ static int populate_oem_data_cap(struct hdd_adapter *adapter,
 	ucfg_mlme_get_neighbor_scan_min_chan_time(psoc,
 						  &neighbor_scan_min_chan_time);
 	data_cap->allowed_dwell_time_min = neighbor_scan_min_chan_time;
-	data_cap->allowed_dwell_time_max = neighbor_scan_max_chan_timee;
+	data_cap->allowed_dwell_time_max = neighbor_scan_max_chan_time;
 	data_cap->curr_dwell_time_min =
 		sme_get_neighbor_scan_min_chan_time(hdd_ctx->mac_handle,
 						    adapter->session_id);
