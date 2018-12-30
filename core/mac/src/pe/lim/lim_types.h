@@ -380,18 +380,6 @@ typedef struct sLimMlmSetKeysCnf {
 	bool key_len_nonzero;
 } tLimMlmSetKeysCnf, *tpLimMlmSetKeysCnf;
 
-typedef struct sLimMlmResetReq {
-	tSirMacAddr macAddr;
-	uint8_t performCleanup;
-	uint8_t sessionId;
-} tLimMlmResetReq, *tpLimMlmResetReq;
-
-typedef struct sLimMlmResetCnf {
-	tSirMacAddr macAddr;
-	tSirResultCodes resultCode;
-	uint8_t sessionId;
-} tLimMlmResetCnf, *tpLimMlmResetCnf;
-
 typedef struct sLimMlmLinkTestStopReq {
 	tSirMacAddr peerMacAddr;
 	uint8_t sessionId;
