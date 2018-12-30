@@ -776,8 +776,6 @@ QDF_STATUS lim_send_action_frm_tb_ppdu_cfg(struct mac_context *mac_ctx,
 					   uint32_t session_id,
 					   uint8_t cfg);
 
-QDF_STATUS lim_strip_extcap_ie(struct mac_context *mac_ctx, uint8_t *addn_ie,
-			  uint16_t *addn_ielen, uint8_t *extracted_extcap);
 void lim_update_extcap_struct(struct mac_context *mac_ctx, uint8_t *buf,
 			      tDot11fIEExtCap *ext_cap);
 QDF_STATUS lim_strip_extcap_update_struct(struct mac_context *mac_ctx,
