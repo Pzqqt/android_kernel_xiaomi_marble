@@ -302,9 +302,6 @@ void lim_switch_primary_secondary_channel(struct mac_context *mac,
 					uint8_t ch_center_freq_seg0,
 					uint8_t ch_center_freq_seg1,
 					enum phy_ch_width ch_width);
-void limUpdateStaRunTimeHTSwtichChnlParams(struct mac_context *mac,
-		tDot11fIEHTInfo *pRcvdHTInfo,
-		uint8_t bssIdx);
 void lim_update_sta_run_time_ht_capability(struct mac_context *mac,
 		tDot11fIEHTCaps *pHTCaps);
 void lim_update_sta_run_time_ht_info(struct mac_context *mac,
