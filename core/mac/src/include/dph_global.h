@@ -131,10 +131,6 @@ typedef struct sDphHashNode {
 	uint32_t curTxMpduCnt;
 	/* qos parameter info */
 	tDphQosParams qos;
-#ifdef PLM_WDS
-	uint8_t wdsIndex;
-	uint8_t wdsPeerBeaconSeen;
-#endif
 	/*
 	 * All the legacy and airgo supported rates.
 	 */
