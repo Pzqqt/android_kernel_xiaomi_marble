@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4253,11 +4253,6 @@ int wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 
 	return ret;
 }
-
-#undef PARAM_ID
-#undef PARAM_REALM
-#undef PARAM_ROAM_ID
-#undef PARAM_ROAM_PLMN
 
 /**
  * wlan_hdd_cfg80211_extscan_init() - Initialize the ExtScan feature
