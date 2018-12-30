@@ -3686,7 +3686,6 @@ typedef struct {
 
 typedef int tSirWifiRadio;
 typedef int tSirWifiChannel;
-typedef int tSirwifiTxRate;
 
 typedef struct {
 	uint32_t reqId;
