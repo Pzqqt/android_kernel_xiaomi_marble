@@ -163,10 +163,6 @@ enum eChannelChangeReasonCodes {
 	LIM_SWITCH_CHANNEL_HT_WIDTH     /* HT channel width change */
 };
 
-typedef struct sLimAuthRspTimeout {
-	tSirMacAddr peerMacAddr;
-} tLimAuthRspTimeout;
-
 typedef struct sLimMlmStartReq {
 	tSirMacSSid ssId;
 	tSirBssType bssType;
