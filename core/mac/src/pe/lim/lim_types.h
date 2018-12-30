@@ -350,11 +350,6 @@ typedef struct sLimMlmSetKeysCnf {
 	bool key_len_nonzero;
 } tLimMlmSetKeysCnf, *tpLimMlmSetKeysCnf;
 
-typedef struct sLimMlmLinkTestStopReq {
-	tSirMacAddr peerMacAddr;
-	uint8_t sessionId;
-} tLimMlmLinkTestStopReq, *tpLimMlmLinkTestStopReq;
-
 /* Function templates */
 
 bool lim_process_sme_req_messages(struct mac_context *, struct scheduler_msg *);
