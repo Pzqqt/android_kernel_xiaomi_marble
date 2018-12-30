@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -70,9 +70,27 @@ QDF_STATUS lim_set_link_state(struct mac_context *mac, tSirLinkState state,
 				 tSirMacAddr bssId, tSirMacAddr selfMac,
 				 tpSetLinkStateCallback callback,
 				 void *callbackArg);
-void lim_set_active_edca_params(struct mac_context *mac,
-				tSirMacEdcaParamRecord *plocalEdcaParams,
+
+/**
+ * lim_set_active_edca_params() - Choose best EDCA parameters
+ * @mac_ctx:  pointer to Global Mac structure.
+ * @edca_params: pointer to the local EDCA parameters
+ * @pe_session: point to the session entry
+ *
+ *  This function is called to set the most up-to-date EDCA parameters
+ *  given the default local EDCA parameters.  The rules are as following:
+ *  - If ACM bit is set for all ACs, then downgrade everything to Best Effort.
+ *  - If ACM is not set for any AC, then PE will use the default EDCA
+ *    parameters as advertised by AP.
+ *  - If ACM is set in any of the ACs, PE will use the EDCA parameters
+ *    from the next best AC for which ACM is not enabled.
+ *
+ * Return: none
+ */
+void lim_set_active_edca_params(struct mac_context *mac_ctx,
+				tSirMacEdcaParamRecord *edca_params,
 				struct pe_session *pe_session);
+
 #define CAPABILITY_FILTER_MASK  0x73CF
 #define ERP_FILTER_MASK         0xF8
 #define EDCA_FILTER_MASK        0xF0
