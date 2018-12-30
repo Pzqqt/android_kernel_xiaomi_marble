@@ -117,15 +117,6 @@ typedef struct __chan_bonding_bitmap {
 	tChannelBondingInfo chanBondingSet[MAX_80MHZ_BANDS];
 } chan_bonding_bitmap;
 
-/**
- * Structure holding information of each channel in the spectrum,
- * it contains the channel number, the computed weight
- */
-typedef struct sChannelInfo {
-	uint8_t channel;
-	bool valid;             /* if the channel is valid to be picked as new channel */
-} tChannelInfo;
-
 typedef struct {
 	uint16_t chNum;         /* Channel Number */
 	uint16_t channelWidth;  /* Channel Width */
