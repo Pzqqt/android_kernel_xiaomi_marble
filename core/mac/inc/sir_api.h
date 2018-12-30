@@ -3412,25 +3412,6 @@ struct extscan_cached_scan_result {
 };
 
 /**
- * struct tSirWifiScanResultEvent - wifi scan result event
- * @requestId: request identifier
- * @ap_found: flag to indicate ap found or not
- *		true: AP was found
- *		false: AP was lost
- * @numOfAps: number of aps
- * @moreData: more data
- * @ap: bssid information
- *
- */
-typedef struct {
-	uint32_t     requestId;
-	bool         ap_found;
-	uint32_t     numOfAps;
-	bool         moreData;
-	tSirWifiScanResult   ap[];
-} tSirWifiScanResultEvent, *tpSirWifiScanResultEvent;
-
-/**
  * struct extscan_cached_scan_results - extscan cached scan results
  * @request_id: request identifier
  * @more_data: 0 - for last fragment
