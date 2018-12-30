@@ -350,11 +350,6 @@ void sap_dfs_cac_timer_callback(void *data);
  */
 void sap_cac_reset_notify(mac_handle_t mac_handle);
 
-bool
-sap_channel_matrix_check(struct sap_context *sapContext,
-			 ePhyChanBondState cbMode,
-			 uint8_t target_channel);
-
 bool is_concurrent_sap_ready_for_channel_change(mac_handle_t mac_handle,
 						struct sap_context *sapContext);
 
