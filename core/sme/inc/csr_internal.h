@@ -241,8 +241,6 @@ struct scan_profile       {
 struct bss_config_param {
 	eCsrMediaAccessType qosType;
 	tSirMacSSid SSID;
-	uint32_t uRTSThresh;
-	uint32_t uDeferThresh;
 	enum csr_cfgdot11mode uCfgDot11Mode;
 	enum band_info eBand;
 	tAniAuthType authType;
