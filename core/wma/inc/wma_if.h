@@ -86,9 +86,6 @@
 #define ENC_POLICY_TKIP        3
 #define ENC_POLICY_AES_CCM     4
 
-#define HAL_MAX_SUPP_CHANNELS     128
-#define HAL_MAX_SUPP_OPER_CLASSES 32
-
 /**
  * enum eFrameType - frame types
  * @TXRX_FRM_RAW: raw frame
