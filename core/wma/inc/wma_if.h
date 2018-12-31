@@ -86,11 +86,6 @@
 #define ENC_POLICY_TKIP        3
 #define ENC_POLICY_AES_CCM     4
 
-/* Max number of bytes required for stations bitmap aligned at 4 bytes boundary
- */
-#define HALMSG_NUMBYTES_STATION_BITMAP(x) (((x / 32) + ((x % 32) ? 1 : 0)) * 4)
-
-
 #define HAL_MAX_SUPP_CHANNELS     128
 #define HAL_MAX_SUPP_OPER_CLASSES 32
 
