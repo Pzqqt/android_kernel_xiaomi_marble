@@ -750,11 +750,6 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_PMM_CHANGE_PM_MODE         (SIR_PMM_MSG_TYPES_BEGIN)
 #define SIR_PMM_MSG_TYPES_END          (SIR_PMM_MSG_TYPES_BEGIN+0xFF)
 
-/* MNT message types */
-#define SIR_MNT_MSG_TYPES_BEGIN        (SIR_MNT_MODULE_ID << 8)
-#define SIR_MNT_RELEASE_BD             (SIR_MNT_MSG_TYPES_BEGIN + 0)
-#define SIR_MNT_MSG_TYPES_END          (SIR_MNT_MSG_TYPES_BEGIN + 0xFF)
-
 /* ****************************************** *
 *                                            *
 *         EVENT TYPE Definitions              *
