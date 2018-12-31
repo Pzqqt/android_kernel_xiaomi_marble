@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -455,7 +455,7 @@ void wlan_ipa_uc_stat_query(struct wlan_ipa_priv *ipa_ctx,
 	*ipa_rx_diff = 0;
 
 	qdf_mutex_acquire(&ipa_ctx->ipa_lock);
-	if ((ipa_ctx->activated_fw_pipe == WLAN_IPA_UC_NUM_WDI_PIPE) &&
+	if (wlan_ipa_is_fw_wdi_activated(ipa_ctx) &&
 	    (false == ipa_ctx->resource_loading)) {
 		*ipa_tx_diff = ipa_ctx->ipa_tx_packets_diff;
 		*ipa_rx_diff = ipa_ctx->ipa_rx_packets_diff;
@@ -466,7 +466,7 @@ void wlan_ipa_uc_stat_query(struct wlan_ipa_priv *ipa_ctx,
 void wlan_ipa_uc_stat_request(struct wlan_ipa_priv *ipa_ctx, uint8_t reason)
 {
 	qdf_mutex_acquire(&ipa_ctx->ipa_lock);
-	if ((ipa_ctx->activated_fw_pipe == WLAN_IPA_UC_NUM_WDI_PIPE) &&
+	if (wlan_ipa_is_fw_wdi_activated(ipa_ctx) &&
 	    (false == ipa_ctx->resource_loading)) {
 		ipa_ctx->stat_req_reason = reason;
 		cdp_ipa_get_stat(ipa_ctx->dp_soc, ipa_ctx->dp_pdev);
