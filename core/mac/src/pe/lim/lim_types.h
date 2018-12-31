@@ -544,9 +544,6 @@ void lim_send_delts_req_action_frame(struct mac_context *mac, tSirMacAddr peer,
 				     struct pe_session *pe_session);
 void lim_send_addts_req_action_frame(struct mac_context *mac, tSirMacAddr peerMacAddr,
 				     tSirAddtsReqInfo *addts, struct pe_session *);
-void lim_send_addts_rsp_action_frame(struct mac_context *mac, tSirMacAddr peerMacAddr,
-				     uint16_t statusCode, tSirAddtsReqInfo *addts,
-				     tSirMacScheduleIE *pSchedule, struct pe_session *);
 
 void lim_send_assoc_rsp_mgmt_frame(struct mac_context *, uint16_t, uint16_t, tSirMacAddr,
 				   uint8_t, tpDphHashNode pSta, struct pe_session *);
