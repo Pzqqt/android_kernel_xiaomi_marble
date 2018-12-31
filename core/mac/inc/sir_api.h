@@ -159,29 +159,13 @@ enum sir_roam_op_code {
  * Module ID definitions.
  */
 enum {
-	SIR_BOOT_MODULE_ID = 1,
 	SIR_HAL_MODULE_ID = 0x10,
 	SIR_CFG_MODULE_ID = 0x12,
 	SIR_LIM_MODULE_ID,
-	SIR_ARQ_MODULE_ID,
-	SIR_SCH_MODULE_ID,
 	SIR_SME_MODULE_ID,
-	SIR_DBG_MODULE_ID,
-	SIR_DPH_MODULE_ID,
-	SIR_SYS_MODULE_ID,
-	SIR_SMS_MODULE_ID,
 };
 
 #define SIR_WMA_MODULE_ID SIR_HAL_MODULE_ID
-
-/**
- * First and last module definition for logging utility
- *
- * NOTE:  The following definitions need to be updated if
- *        the above list is changed.
- */
-#define SIR_FIRST_MODULE_ID     SIR_HAL_MODULE_ID
-#define SIR_LAST_MODULE_ID      SIR_SMS_MODULE_ID
 
 /* Type declarations used by Firmware and Host software */
 
