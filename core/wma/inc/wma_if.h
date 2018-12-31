@@ -46,7 +46,6 @@
 
 #define WMA_CONFIG_PARAM_UPDATE_REQ    SIR_CFG_PARAM_UPDATE_IND
 
-#define HAL_NUM_BSSID 2
 /* operMode in ADD BSS message */
 #define BSS_OPERATIONAL_MODE_AP     0
 #define BSS_OPERATIONAL_MODE_STA    1
