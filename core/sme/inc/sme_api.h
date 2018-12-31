@@ -1689,8 +1689,7 @@ QDF_STATUS sme_fips_request(mac_handle_t mac_handle, struct fips_params *param,
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_set_cts2self_for_p2p_go(mac_handle_t mac_handle);
-void sme_set_prefer_80MHz_over_160MHz(mac_handle_t mac_handle,
-		bool sta_prefer_80MHz_over_160MHz);
+
 QDF_STATUS sme_update_tx_fail_cnt_threshold(mac_handle_t mac_handle,
 		uint8_t session_id, uint32_t tx_fail_count);
 
