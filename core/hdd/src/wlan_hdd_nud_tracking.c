@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,12 +28,16 @@ void hdd_nud_set_gateway_addr(struct hdd_adapter *adapter,
 	qdf_mem_copy(adapter->nud_tracking.gw_mac_addr.bytes,
 		     gw_mac_addr.bytes,
 		     sizeof(struct qdf_mac_addr));
+	adapter->nud_tracking.is_gw_updated = true;
 }
 
 void hdd_nud_incr_gw_rx_pkt_cnt(struct hdd_adapter *adapter,
 				struct qdf_mac_addr *mac_addr)
 {
 	if (!adapter->nud_tracking.is_gw_rx_pkt_track_enabled)
+		return;
+
+	if (!adapter->nud_tracking.is_gw_updated)
 		return;
 
 	if (qdf_is_macaddr_equal(&adapter->nud_tracking.gw_mac_addr,
@@ -83,6 +87,7 @@ void hdd_nud_reset_tracking(struct hdd_adapter *adapter)
 		hdd_debug("Reset the NUD tracking");
 
 		qdf_zero_macaddr(&adapter->nud_tracking.gw_mac_addr);
+		adapter->nud_tracking.is_gw_updated = false;
 		qdf_mem_zero(&adapter->nud_tracking.tx_rx_stats,
 			     sizeof(struct hdd_nud_tx_rx_stats));
 
@@ -171,11 +176,13 @@ static bool hdd_nud_honour_failure(struct hdd_adapter *adapter)
 			->nud_tracking.tx_rx_stats.gw_rx_packets);
 
 	if (!tx_transmitted || !tx_acked || !gw_rx_pkt) {
-		hdd_debug("NUD_FAILURE_HONORED");
+		hdd_debug("NUD_FAILURE_HONORED [mac:%pM]",
+			  adapter->nud_tracking.gw_mac_addr.bytes);
 		hdd_nud_stats_info(adapter);
 		return true;
 	}
-	hdd_debug("NUD_FAILURE_NOT_HONORED");
+	hdd_debug("NUD_FAILURE_NOT_HONORED [mac:%pM]",
+		  adapter->nud_tracking.gw_mac_addr.bytes);
 	hdd_nud_stats_info(adapter);
 	return false;
 }
@@ -288,6 +295,7 @@ void hdd_nud_init_tracking(struct hdd_adapter *adapter)
 
 		adapter->nud_tracking.curr_state = NUD_NONE;
 		adapter->nud_tracking.ignore_nud_tracking = false;
+		adapter->nud_tracking.is_gw_updated = false;
 
 		qdf_atomic_init(&adapter
 				->nud_tracking.tx_rx_stats.gw_rx_packets);
@@ -352,6 +360,14 @@ static void hdd_nud_filter_netevent(struct neighbour *neigh)
 	if (status)
 		return;
 
+	if (adapter->nud_tracking.ignore_nud_tracking) {
+		hdd_debug("NUD Tracking is Disabled");
+		return;
+	}
+
+	if (!adapter->nud_tracking.is_gw_updated)
+		return;
+
 	if (adapter->device_mode != QDF_STA_MODE)
 		return;
 
@@ -360,11 +376,6 @@ static void hdd_nud_filter_netevent(struct neighbour *neigh)
 
 	if (eConnectionState_Associated != conn_state) {
 		hdd_debug("Not in Connected State");
-		return;
-	}
-
-	if (adapter->nud_tracking.ignore_nud_tracking) {
-		hdd_debug("NUD Tracking is Disabled");
 		return;
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -55,6 +55,7 @@ struct hdd_nud_tx_rx_stats {
   * @nud_event_work: work to be scheduled during NUD_FAILED
   * @is_gw_rx_pkt_track_enabled: true if rx pkt capturing is enabled for GW,
   *                              else false
+  * @is_gw_updated: true if GW is updated for NUD Tracking
   */
 struct hdd_nud_tracking_info {
 	uint8_t curr_state;
@@ -63,6 +64,7 @@ struct hdd_nud_tracking_info {
 	struct qdf_mac_addr gw_mac_addr;
 	qdf_work_t nud_event_work;
 	bool is_gw_rx_pkt_track_enabled;
+	bool is_gw_updated;
 };
 
 /**
