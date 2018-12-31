@@ -382,16 +382,6 @@ struct sap_ch_selected_s {
 };
 
 /**
- * sap_roc_ready_ind_s - the structure to hold the scan id
- * @scan_id: scan identifier
- *
- * Holds scan identifier
- */
-struct sap_roc_ready_ind_s {
-	uint32_t scan_id;
-};
-
-/**
  * struct sap_acs_scan_complete_event - acs scan complete event
  * @status: status of acs scan
  * @channellist: acs scan channels
@@ -446,7 +436,6 @@ typedef struct sap_Event_s {
 		/* eSAP_MAX_ASSOC_EXCEEDED */
 		tSap_MaxAssocExceededEvent sapMaxAssocExceeded;
 		struct sap_ch_selected_s sap_ch_selected;
-		struct sap_roc_ready_ind_s sap_roc_ind;
 		struct sap_ch_change_ind sap_chan_cng_ind;
 		struct sap_acs_scan_complete_event sap_acs_scan_comp;
 	} sapevt;
