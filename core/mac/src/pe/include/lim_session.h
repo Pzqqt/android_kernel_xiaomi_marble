@@ -29,15 +29,8 @@
 
    ========================================================================*/
 
-/* Powersave Offload Implementation */
-typedef enum ePowersaveState {
-	PMM_FULL_POWER,
-	PMM_POWER_SAVE
-} tPowersaveState;
-
 /* Master Structure: This will be part of PE Session Entry */
 typedef struct sPowersaveoffloadInfo {
-	tPowersaveState psstate;
 	uint8_t bcnmiss;
 } tPowersaveoffloadInfo, tpPowersaveoffloadInfo;
 
