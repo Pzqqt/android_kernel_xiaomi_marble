@@ -1136,18 +1136,6 @@ typedef struct sStatsExtRequest {
 } tStatsExtRequest, *tpStatsExtRequest;
 #endif /* WLAN_FEATURE_STATS_EXT */
 
-#ifdef WLAN_FEATURE_NAN
-/**
- * struct tNanRequest - NAN request params
- * @request_data_len: request data length
- * @request_data: request data
- */
-typedef struct sNanRequest {
-	uint16_t request_data_len;
-	uint8_t request_data[];
-} tNanRequest, *tpNanRequest;
-#endif /* WLAN_FEATURE_NAN */
-
 /*
  * struct roam_blacklist_timeout - BTM blacklist entry
  * @bssid - bssid that is to be blacklisted
