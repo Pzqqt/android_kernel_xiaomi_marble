@@ -225,14 +225,10 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_HAL_ADD_BSS_RSP                (SIR_HAL_ITC_MSG_TYPES_BEGIN + 6)
 #define SIR_HAL_DELETE_BSS_REQ             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 7)
 #define SIR_HAL_DELETE_BSS_RSP             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 8)
-#define SIR_HAL_INIT_SCAN_REQ              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 9)
-#define SIR_HAL_INIT_SCAN_RSP              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 10)
-#define SIR_HAL_START_SCAN_REQ             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 11)
-#define SIR_HAL_START_SCAN_RSP             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 12)
-#define SIR_HAL_END_SCAN_REQ               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 13)
-#define SIR_HAL_END_SCAN_RSP               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 14)
-#define SIR_HAL_FINISH_SCAN_REQ            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 15)
-#define SIR_HAL_FINISH_SCAN_RSP            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 16)
+/*
+ * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 9) thru
+ * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 16) are unused
+ */
 #define SIR_HAL_SEND_BEACON_REQ            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 17)
 
 #define SIR_HAL_SET_BSSKEY_REQ             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 18)
@@ -277,13 +273,10 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_HAL_SET_TX_POWER_REQ           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 70)
 #define SIR_HAL_SET_TX_POWER_RSP           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 71)
 #define SIR_HAL_GET_TX_POWER_REQ           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 72)
-#define SIR_HAL_GET_TX_POWER_RSP           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 73)
-#define SIR_HAL_GET_NOISE_RSP              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 74)
-
-#define SIR_HAL_LOW_RSSI_IND               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 80)
-#define SIR_HAL_BEACON_FILTER_IND          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 81)
-
-/* 82-87 are unused */
+/*
+ * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 73) thru
+ * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 87) are unused
+ */
 
 /* / PE <-> HAL statistics messages */
 #define SIR_HAL_GET_STATISTICS_REQ         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 88)
@@ -298,11 +291,9 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 /* PE <-> HAL addr2 mismatch message */
 #define SIR_LIM_ADDR2_MISS_IND             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 95)
-#ifdef FEATURE_OEM_DATA_SUPPORT
-/* PE <-> HAL OEM_DATA RELATED MESSAGES */
-#define SIR_HAL_START_OEM_DATA_REQ         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 96)
-#define SIR_HAL_START_OEM_DATA_RSP         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 97)
-#endif
+
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 96) is unused */
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 97) is unused */
 
 #define SIR_HAL_SET_MAX_TX_POWER_REQ       (SIR_HAL_ITC_MSG_TYPES_BEGIN + 98)
 #define SIR_HAL_SET_MAX_TX_POWER_RSP       (SIR_HAL_ITC_MSG_TYPES_BEGIN + 99)
@@ -313,19 +304,17 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_HAL_ADD_STA_SELF_REQ           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 101)
 #define SIR_HAL_ADD_STA_SELF_RSP           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 102)
 #define SIR_HAL_DEL_STA_SELF_REQ           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 103)
-#define SIR_HAL_DEL_STA_SELF_RSP           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 104)
-
-#define SIR_HAL_CFG_RXP_FILTER_REQ         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 106)
-
-#define SIR_HAL_AGGR_ADD_TS_REQ            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 107)
-#define SIR_HAL_AGGR_ADD_TS_RSP            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 108)
+/*
+ * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 104) thru
+ * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 108) are unused
+ */
 #define SIR_HAL_AGGR_QOS_REQ               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 109)
 #define SIR_HAL_AGGR_QOS_RSP               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 110)
 
 /* P2P <-> HAL P2P msg */
-#define SIR_HAL_SET_P2P_GO_NOA_REQ         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 111)
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 111) is unused */
 #define SIR_HAL_P2P_NOA_ATTR_IND           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 112)
-#define SIR_HAL_P2P_NOA_START_IND          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 113)
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 113) is unused */
 
 #define SIR_HAL_SET_LINK_STATE_RSP         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 114)
 
@@ -375,11 +364,9 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 #define SIR_HAL_UPDATE_OP_MODE             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 135)
 
-#ifdef FEATURE_WLAN_TDLS
-/* / PE <-> HAL TDLS messages */
-#define SIR_HAL_TDLS_LINK_ESTABLISH        (SIR_HAL_ITC_MSG_TYPES_BEGIN + 136)
-#define SIR_HAL_TDLS_LINK_TEARDOWN         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 137)
-#endif
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 136) is unused */
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 137) is unused */
+
 #define SIR_HAL_ROAM_SCAN_OFFLOAD_REQ      (SIR_HAL_ITC_MSG_TYPES_BEGIN + 138)
 
 #define SIR_HAL_TRAFFIC_STATS_IND          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 141)
@@ -446,7 +433,7 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 /* Handling of beacon tx indication from FW */
 #define SIR_HAL_BEACON_TX_SUCCESS_IND       (SIR_HAL_ITC_MSG_TYPES_BEGIN + 179)
-#define SIR_HAL_DFS_RADAR_IND               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 180)
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 180) is unused */
 
 #define SIR_HAL_IBSS_CESIUM_ENABLE_IND      (SIR_HAL_ITC_MSG_TYPES_BEGIN + 181)
 
@@ -472,12 +459,12 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 #ifdef WLAN_FEATURE_STATS_EXT
 #define SIR_HAL_STATS_EXT_REQUEST           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 194)
-#define SIR_HAL_STATS_EXT_EVENT             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 195)
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 195) is unused */
 #endif /* WLAN_FEATURE_STATS_EXT */
 
 #define SIR_HAL_HIDE_SSID_VDEV_RESTART      (SIR_HAL_ITC_MSG_TYPES_BEGIN + 196)
 
-#define SIR_HAL_GET_LINK_SPEED              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 197)
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 197) is unused */
 
 #ifdef FEATURE_WLAN_EXTSCAN
 #define SIR_HAL_EXTSCAN_GET_CAPABILITIES_REQ (SIR_HAL_ITC_MSG_TYPES_BEGIN + 198)
@@ -504,9 +491,8 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_HAL_LL_STATS_RESULTS_RSP         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 210)
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#define SIR_HAL_ROAM_OFFLOAD_SYNCH_CNF       (SIR_HAL_ITC_MSG_TYPES_BEGIN + 211)
-#endif
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 211) is unused */
+
 #ifdef WLAN_FEATURE_NAN
 #define SIR_HAL_NAN_REQUEST                  (SIR_HAL_ITC_MSG_TYPES_BEGIN + 212)
 #endif /* WLAN_FEATURE_NAN */
@@ -552,7 +538,7 @@ struct sir_cfg_action_frm_tb_ppdu {
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 #define SIR_HAL_CONFIG_STATS_FACTOR        (SIR_HAL_ITC_MSG_TYPES_BEGIN + 232)
 #define SIR_HAL_CONFIG_GUARD_TIME          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 233)
-#define SIR_HAL_IPA_OFFLOAD_ENABLE_DISABLE (SIR_HAL_ITC_MSG_TYPES_BEGIN + 234)
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 234) is unused */
 
 #define SIR_HAL_ENTER_PS_REQ                 (SIR_HAL_ITC_MSG_TYPES_BEGIN + 235)
 #define SIR_HAL_EXIT_PS_REQ                  (SIR_HAL_ITC_MSG_TYPES_BEGIN + 236)
@@ -560,8 +546,8 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_HAL_DISABLE_UAPSD_REQ            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 238)
 #define SIR_HAL_GATEWAY_PARAM_UPDATE_REQ    (SIR_HAL_ITC_MSG_TYPES_BEGIN + 239)
 
-#define SIR_HAL_RUNTIME_PM_SUSPEND_IND	(SIR_HAL_ITC_MSG_TYPES_BEGIN + 308)
-#define SIR_HAL_RUNTIME_PM_RESUME_IND	(SIR_HAL_ITC_MSG_TYPES_BEGIN + 309)
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 308) is unused */
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 309) is unused */
 
 #define SIR_HAL_SET_EPNO_LIST_REQ          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 313)
 #define SIR_HAL_SET_PASSPOINT_LIST_REQ     (SIR_HAL_ITC_MSG_TYPES_BEGIN + 316)
@@ -609,23 +595,16 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_HAL_TDLS_CONNECTION_TRACKER_NOTIFICATION (SIR_HAL_ITC_MSG_TYPES_BEGIN + 346)
 #endif
 
-#define SIR_HAL_NDP_GET_CAP_REQ             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 347)
-#define SIR_HAL_NDP_INITIATOR_REQ           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 348)
-#define SIR_HAL_NDP_RESPONDER_REQ           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 349)
-#define SIR_HAL_NDP_END_REQ                 (SIR_HAL_ITC_MSG_TYPES_BEGIN + 350)
-#define SIR_HAL_NDI_CAP_RSP                 (SIR_HAL_ITC_MSG_TYPES_BEGIN + 351)
-#define SIR_HAL_NDP_INITIATOR_RSP           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 352)
-#define SIR_HAL_NDP_RESPONDER_RSP           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 353)
-#define SIR_HAL_NDP_END_RSP                 (SIR_HAL_ITC_MSG_TYPES_BEGIN + 354)
-#define SIR_HAL_NDP_INDICATION              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 355)
-#define SIR_HAL_NDP_CONFIRM                 (SIR_HAL_ITC_MSG_TYPES_BEGIN + 356)
-#define SIR_HAL_NDP_END_IND                 (SIR_HAL_ITC_MSG_TYPES_BEGIN + 357)
+/*
+ * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 347) thru
+ * (SIR_HAL_ITC_MSG_TYPES_BEGIN + 357) are unused
+ */
 #define SIR_HAL_UPDATE_WEP_DEFAULT_KEY      (SIR_HAL_ITC_MSG_TYPES_BEGIN + 358)
 
 #define SIR_HAL_SEND_FREQ_RANGE_CONTROL_IND (SIR_HAL_ITC_MSG_TYPES_BEGIN + 360)
 #define SIR_HAL_POWER_DBG_CMD               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 362)
 #define SIR_HAL_SET_DTIM_PERIOD             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 363)
-#define SIR_HAL_ENCRYPT_DECRYPT_MSG         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 364)
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 364) is unused */
 #define SIR_HAL_SHORT_RETRY_LIMIT_CNT       (SIR_HAL_ITC_MSG_TYPES_BEGIN + 365)
 #define SIR_HAL_LONG_RETRY_LIMIT_CNT        (SIR_HAL_ITC_MSG_TYPES_BEGIN + 366)
 #define SIR_HAL_UPDATE_TX_FAIL_CNT_TH       (SIR_HAL_ITC_MSG_TYPES_BEGIN + 367)
@@ -633,7 +612,7 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 #define SIR_HAL_SET_WOW_PULSE_CMD           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 369)
 
-#define SIR_HAL_SET_UDP_RESP_OFFLOAD        (SIR_HAL_ITC_MSG_TYPES_BEGIN + 370)
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 370) is unused */
 
 #define SIR_HAL_SET_PER_ROAM_CONFIG_CMD     (SIR_HAL_ITC_MSG_TYPES_BEGIN + 371)
 #define SIR_HAL_RX_CHN_STATUS_EVENT         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 372)
@@ -730,8 +709,7 @@ struct sir_cfg_action_frm_tb_ppdu {
 #define SIR_LIM_FT_PREAUTH_RSP_TIMEOUT   (SIR_LIM_TIMEOUT_MSG_START + 0x1E)
 
 #define SIR_LIM_BEACON_GEN_IND          (SIR_LIM_TIMEOUT_MSG_START + 0x23)
-#define SIR_LIM_PERIODIC_PROBE_REQ_TIMEOUT    (SIR_LIM_TIMEOUT_MSG_START + 0x24)
-
+/* currently unused                     (SIR_LIM_TIMEOUT_MSG_START + 0x24) */
 /* currently unused                     (SIR_LIM_TIMEOUT_MSG_START + 0x25) */
 
 #define SIR_LIM_DISASSOC_ACK_TIMEOUT       (SIR_LIM_TIMEOUT_MSG_START + 0x26)
@@ -750,13 +728,6 @@ struct sir_cfg_action_frm_tb_ppdu {
 *         EVENT TYPE Definitions              *
 *                                            *
 * ****************************************** */
-
-/* MMH Events that are used in other modules to post events to MMH */
-#define SIR_HSTEMUL_TXMB_DONE_EVT         0x00000100
-#define SIR_HSTEMUL_RXMB_READY_EVT        0x00000200
-#define SIR_HSTEMUL_MSGQ_NE_EVT           0x00000400
-
-#define SIR_TST_XMIT_MSG_QS_EMPTY_EVT     0x00000080
 
 /* Param Change Bitmap sent to HAL */
 #define PARAM_BCN_INTERVAL_CHANGED                      (1 << 0)
