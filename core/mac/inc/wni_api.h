@@ -32,18 +32,12 @@
 #ifndef __WNI_API_H
 #define __WNI_API_H
 
-#define SIR_SME_MODULE_ID 0x16
+#include "sir_api.h"
 
-/* / Start of Sirius/Host message types */
-#define WNI_HOST_MSG_START             0x1500
+#define SIR_SME_MSG_TYPES_BEGIN        (SIR_SME_MODULE_ID << 8)
 
 enum eWniMsgTypes {
-	/* / CFG message types */
-	eWNI_CFG_MSG_TYPES_BEGIN = WNI_HOST_MSG_START,
-	eWNI_CFG_MSG_TYPES_END = eWNI_CFG_MSG_TYPES_BEGIN + 0xFF,
-
-	/* / SME message types */
-	eWNI_SME_MSG_TYPES_BEGIN = eWNI_CFG_MSG_TYPES_END,
+	eWNI_SME_MSG_TYPES_BEGIN = SIR_SME_MSG_TYPES_BEGIN,
 	eWNI_SME_SYS_READY_IND,
 	eWNI_SME_JOIN_REQ,
 	eWNI_SME_JOIN_RSP,

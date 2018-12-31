@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -122,7 +122,7 @@ QDF_STATUS u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 		status = wma_post_cfg_msg(mac, &msg);
 		break;
 
-	case SIR_PMM_MSG_TYPES_BEGIN:   /* Posts a message to the LIM MsgQ */
+	case SIR_SME_MSG_TYPES_BEGIN:   /* Posts a message to the LIM MsgQ */
 		status = sme_post_pe_message(mac, &msg);
 		break;
 

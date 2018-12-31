@@ -745,11 +745,6 @@ struct sir_cfg_action_frm_tb_ppdu {
 
 #define SIR_LIM_MSG_TYPES_END            (SIR_LIM_MSG_TYPES_BEGIN+0xFF)
 
-/* PMM message types */
-#define SIR_PMM_MSG_TYPES_BEGIN        (SIR_PMM_MODULE_ID << 8)
-#define SIR_PMM_CHANGE_PM_MODE         (SIR_PMM_MSG_TYPES_BEGIN)
-#define SIR_PMM_MSG_TYPES_END          (SIR_PMM_MSG_TYPES_BEGIN+0xFF)
-
 /* ****************************************** *
 *                                            *
 *         EVENT TYPE Definitions              *
