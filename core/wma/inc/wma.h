@@ -1123,8 +1123,6 @@ typedef struct {
 	wma_tx_dwnld_comp_callback tx_frm_download_comp_cb;
 	qdf_event_t tx_frm_download_comp_event;
 	qdf_event_t tx_queue_empty_event;
-	wma_tx_ota_comp_callback
-				umac_ota_ack_cb[SIR_MAC_MGMT_RESERVED15];
 	wma_tx_ota_comp_callback umac_data_ota_ack_cb;
 	unsigned long last_umac_data_ota_timestamp;
 	qdf_nbuf_t last_umac_data_nbuf;
