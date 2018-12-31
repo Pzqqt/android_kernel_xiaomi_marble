@@ -414,33 +414,6 @@ typedef struct sLimWiderBWChannelSwitch {
 	uint8_t newCenterChanFreq1;
 } tLimWiderBWChannelSwitchInfo, *tpLimWiderBWChannelSwitchInfo;
 
-/* Enums used when stopping the Tx. */
-typedef enum eLimQuietTxMode {
-	/* Stop/resume transmission of all stations,Uses the global flag */
-	eLIM_TX_ALL = 0,
-	/*
-	 * Stops/resumes the transmission of specific stations identified
-	 * by staId.
-	 */
-	eLIM_TX_STA,
-	/* Stops/resumes the transmission of all the packets in BSS */
-	eLIM_TX_BSS,
-	/*
-	 * Stops/resumes the transmission of all packets except beacons in BSS
-	 * This is used when radar is detected in the current operating channel.
-	 * Beacon has to be sent to notify the stations associated about the
-	 * scheduled channel switch
-	 */
-	eLIM_TX_BSS_BUT_BEACON
-} tLimQuietTxMode;
-
-typedef enum eLimControlTx {
-	eLIM_RESUME_TX = 0,
-	eLIM_STOP_TX
-} tLimControlTx;
-
-/* -------------------------------------------------------------------- */
-
 typedef struct sLimTspecInfo {
 	/* 0==free, else used */
 	uint8_t inuse;
