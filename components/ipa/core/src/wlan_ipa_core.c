@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1335,6 +1335,11 @@ static void wlan_ipa_uc_handle_last_discon(struct wlan_ipa_priv *ipa_ctx)
 
 	ipa_debug("exit: IPA WDI Pipes deactivated");
 }
+
+bool wlan_ipa_is_fw_wdi_activated(struct wlan_ipa_priv *ipa_ctx)
+{
+	return !ipa_ctx->ipa_pipes_down;
+}
 #else
 
 /**
@@ -1401,6 +1406,11 @@ static void wlan_ipa_uc_handle_last_discon(struct wlan_ipa_priv *ipa_ctx)
 	cdp_ipa_set_active(ipa_ctx->dp_soc, ipa_ctx->dp_pdev, false, false);
 
 	ipa_debug("exit: IPA WDI Pipes deactivated");
+}
+
+bool wlan_ipa_is_fw_wdi_activated(struct wlan_ipa_priv *ipa_ctx)
+{
+	return (WLAN_IPA_UC_NUM_WDI_PIPE == ipa_ctx->activated_fw_pipe);
 }
 #endif
 
@@ -2955,11 +2965,6 @@ QDF_STATUS wlan_ipa_uc_ol_deinit(struct wlan_ipa_priv *ipa_ctx)
 
 	ipa_debug("exit: ret=%d", status);
 	return status;
-}
-
-bool wlan_ipa_is_fw_wdi_activated(struct wlan_ipa_priv *ipa_ctx)
-{
-	return (WLAN_IPA_UC_NUM_WDI_PIPE == ipa_ctx->activated_fw_pipe);
 }
 
 /**
