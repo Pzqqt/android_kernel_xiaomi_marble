@@ -184,22 +184,6 @@ typedef struct sLimMlmJoinReq {
 	 */
 } tLimMlmJoinReq, *tpLimMlmJoinReq;
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-
-/* OEM Data related structure definitions */
-typedef struct sLimMlmOemDataReq {
-	struct qdf_mac_addr selfMacAddr;
-	uint32_t data_len;
-	uint8_t *data;
-} tLimMlmOemDataReq, *tpLimMlmOemDataReq;
-
-typedef struct sLimMlmOemDataRsp {
-	bool target_rsp;
-	uint32_t rsp_len;
-	uint8_t *oem_data_rsp;
-} tLimMlmOemDataRsp, *tpLimMlmOemDataRsp;
-#endif
-
 /* Pre-authentication structure definition */
 typedef struct tLimPreAuthNode {
 	struct tLimPreAuthNode *next;
