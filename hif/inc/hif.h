@@ -929,6 +929,15 @@ void hif_update_pipe_callback(struct hif_opaque_softc *osc,
 				struct hif_msg_callbacks *callbacks);
 
 void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx);
+
+/* hif_clear_napi_stats() - function clears the stats of the
+ * latency when called.
+ * @hif_ctx - the HIF context to assign the callback to
+ *
+ * Return: None
+ */
+void hif_clear_napi_stats(struct hif_opaque_softc *hif_ctx);
+
 #ifdef __cplusplus
 }
 #endif

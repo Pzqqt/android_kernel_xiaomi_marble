@@ -3424,6 +3424,19 @@ static void hif_exec_grp_irq_enable(struct hif_exec_context *hif_ext_group)
 		enable_irq(hif_ext_group->os_irq[i]);
 }
 
+/**
+ * hif_pci_get_irq_name() - get irqname
+ * This function gives irqnumber to irqname
+ * mapping.
+ *
+ * @irq_no: irq number
+ *
+ * Return: irq name
+ */
+const char *hif_pci_get_irq_name(int irq_no)
+{
+	return "pci-dummy";
+}
 
 int hif_pci_configure_grp_irq(struct hif_softc *scn,
 			      struct hif_exec_context *hif_ext_group)
@@ -3434,6 +3447,7 @@ int hif_pci_configure_grp_irq(struct hif_softc *scn,
 
 	hif_ext_group->irq_enable = &hif_exec_grp_irq_enable;
 	hif_ext_group->irq_disable = &hif_exec_grp_irq_disable;
+	hif_ext_group->irq_name = &hif_pci_get_irq_name;
 	hif_ext_group->work_complete = &hif_dummy_grp_done;
 
 	for (j = 0; j < hif_ext_group->numirq; j++) {

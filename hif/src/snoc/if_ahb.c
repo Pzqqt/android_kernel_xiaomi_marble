@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -100,6 +100,19 @@ const char *ic_irqname[HIF_IC_MAX_IRQ] = {
 "wbm2host-tx-completions-ring1",
 "tcl2host-status-ring",
 };
+
+/** hif_ahb_get_irq_name() - get irqname
+ * This function gives irqnumber to irqname
+ * mapping.
+ *
+ * @irq_no: irq number
+ *
+ * Return: irq name
+ */
+const char *hif_ahb_get_irq_name(int irq_no)
+{
+	return ic_irqname[irq_no];
+}
 
 /**
  * hif_disable_isr() - disable isr
@@ -289,6 +302,7 @@ int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 	/* configure external interrupts */
 	hif_ext_group->irq_enable = &hif_ahb_exec_grp_irq_enable;
 	hif_ext_group->irq_disable = &hif_ahb_exec_grp_irq_disable;
+	hif_ext_group->irq_name = &hif_ahb_get_irq_name;
 	hif_ext_group->work_complete = &hif_dummy_grp_done;
 
 	qdf_spin_lock_irqsave(&hif_ext_group->irq_lock);

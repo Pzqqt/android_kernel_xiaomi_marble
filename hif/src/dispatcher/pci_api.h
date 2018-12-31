@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -52,4 +52,5 @@ void hif_pci_display_stats(struct hif_softc *hif_ctx);
 void hif_pci_clear_stats(struct hif_softc *hif_ctx);
 int hif_pci_legacy_map_ce_to_irq(struct hif_softc *scn, int ce_id);
 bool hif_pci_needs_bmi(struct hif_softc *scn);
+const char *hif_pci_get_irq_name(int irq_no);
 #endif /* _PCI_API_H_ */

@@ -199,6 +199,7 @@ enum htt_cmn_dbg_stats_type {
  * @TXRX_REO_QUEUE_STATS: Print Per peer REO Queue Stats
  * @TXRX_SOC_CFG_PARAMS: Print soc cfg params info
  * @TXRX_PDEV_CFG_PARAMS: Print pdev cfg params info
+ * @TXRX_NAPI_STATS: Print NAPI scheduling statistics
  */
 enum cdp_host_txrx_stats {
 	TXRX_HOST_STATS_INVALID  = -1,
@@ -213,6 +214,7 @@ enum cdp_host_txrx_stats {
 	TXRX_REO_QUEUE_STATS = 8,
 	TXRX_SOC_CFG_PARAMS   = 9,
 	TXRX_PDEV_CFG_PARAMS  = 10,
+	TXRX_NAPI_STATS       = 11,
 	TXRX_HOST_STATS_MAX,
 };
 

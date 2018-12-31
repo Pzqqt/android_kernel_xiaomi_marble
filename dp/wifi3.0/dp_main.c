@@ -1447,7 +1447,6 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
 			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
 								pdev->pdev_id);
-
 			if (int_ctx->rx_mon_ring_mask & (1 << mac_for_pdev)) {
 				work_done = dp_mon_process(soc, mac_for_pdev,
 						remaining_quota);
@@ -6981,6 +6980,15 @@ dp_print_ring_stat_from_hal(struct dp_soc *soc,  struct dp_srng *srng,
 
 }
 
+/*
+ * dp_print_napi_stats(): NAPI stats
+ * @soc - soc handle
+ */
+static void dp_print_napi_stats(struct dp_soc *soc)
+{
+	hif_print_napi_stats(soc->hif_handle);
+}
+
 /**
  * dp_print_mon_ring_stats_from_hal() - Print stat for monitor rings based
  *					on target
@@ -7079,7 +7087,6 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 		dp_print_ring_stat_from_hal(pdev->soc,
 					    &pdev->rxdma_err_dst_ring[i],
 					    RXDMA_DST);
-
 }
 
 /**
@@ -7099,6 +7106,9 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev)
 	DP_STATS_CLR(vdev->pdev);
 	DP_STATS_CLR(vdev->pdev->soc);
 	DP_STATS_CLR(vdev);
+
+	hif_clear_napi_stats(vdev->pdev->soc->hif_handle);
+
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 		if (!peer)
 			return;
@@ -7855,6 +7865,9 @@ dp_print_host_stats(struct cdp_vdev *vdev_handle,
 		break;
 	case TXRX_PDEV_CFG_PARAMS:
 		dp_print_pdev_cfg_params(pdev);
+		break;
+	case TXRX_NAPI_STATS:
+		dp_print_napi_stats(pdev->soc);
 		break;
 	default:
 		dp_info("Wrong Input For TxRx Host Stats");
@@ -8760,15 +8773,6 @@ QDF_STATUS dp_txrx_stats_request(struct cdp_vdev *vdev,
 				"Wrong Input for TxRx Stats");
 
 	return QDF_STATUS_SUCCESS;
-}
-
-/*
- * dp_print_napi_stats(): NAPI stats
- * @soc - soc handle
- */
-static void dp_print_napi_stats(struct dp_soc *soc)
-{
-	hif_print_napi_stats(soc->hif_handle);
 }
 
 /*
