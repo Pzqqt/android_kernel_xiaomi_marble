@@ -858,33 +858,6 @@ typedef struct sSet_MIMOPS {
 } tSetMIMOPS, *tpSetMIMOPS;
 
 /**
- * struct tUapsdParams - Uapsd related parameters
- * @bkDeliveryEnabled: BK delivery enable flag
- * @beDeliveryEnabled: BE delivery enable flag
- * @viDeliveryEnabled: VI delivery enable flag
- * @voDeliveryEnabled: VO delivery enable flag
- * @bkTriggerEnabled: BK trigger enable flag
- * @beTriggerEnabled: BE trigger enable flag
- * @viTriggerEnabled: VI trigger enable flag
- * @voTriggerEnabled: VO trigger enable flag
- * @status: response status
- * @bssIdx: BSSID index
- * Request Type = SIR_HAL_ENTER_UAPSD_REQ
- */
-typedef struct sUapsdParams {
-	uint8_t bkDeliveryEnabled:1;
-	uint8_t beDeliveryEnabled:1;
-	uint8_t viDeliveryEnabled:1;
-	uint8_t voDeliveryEnabled:1;
-	uint8_t bkTriggerEnabled:1;
-	uint8_t beTriggerEnabled:1;
-	uint8_t viTriggerEnabled:1;
-	uint8_t voTriggerEnabled:1;
-	QDF_STATUS status;
-	uint8_t bssIdx;
-} tUapsdParams, *tpUapsdParams;
-
-/**
  * struct tMaxTxPowerParams - Max Tx Power parameters
  * @bssId: BSSID is needed to identify which session issued this request
  * @selfStaMacAddr: self mac address
