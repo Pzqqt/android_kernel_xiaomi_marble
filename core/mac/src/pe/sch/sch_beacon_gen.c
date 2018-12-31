@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1003,13 +1003,13 @@ QDF_STATUS sch_process_pre_beacon_ind(struct mac_context *mac,
 				      struct scheduler_msg *limMsg,
 				      enum sir_bcn_update_reason reason)
 {
-	tpBeaconGenParams pMsg = (tpBeaconGenParams) limMsg->bodyptr;
+	struct beacon_gen_params *pMsg = limMsg->bodyptr;
 	uint32_t beaconSize;
 	struct pe_session *pe_session;
 	uint8_t sessionId;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	pe_session = pe_find_session_by_bssid(mac, pMsg->bssId, &sessionId);
+	pe_session = pe_find_session_by_bssid(mac, pMsg->bssid, &sessionId);
 	if (!pe_session) {
 		pe_err("session lookup fails");
 		goto end;

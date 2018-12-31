@@ -590,27 +590,12 @@ typedef struct {
 #endif /* FEATURE_OEM_DATA_SUPPORT */
 
 /**
- * struct tBeaconGenParams - params required for beacon gen request
- * @bssIdx: Identifies the BSSID for which it is time to generate a beacon
- * @bssId: BSSID
- * @numOfSta: Number of stations in power save, who have data pending
- * @numOfStaWithoutData: Number of stations in power save,
- *                       who don't have any data pending
- * @fBroadcastTrafficPending: broadcast traffic pending flag
- * @dtimCount: DTIM count
- * @rsvd: reserved(padding)
+ * struct beacon_gen_params - params required for beacon gen request
+ * @bssdd: BSSID for which it is time to generate a beacon
  */
-typedef struct sBeaconGenParams {
-	uint8_t bssIdx;
-	tSirMacAddr bssId;
-#ifdef FIXME_VOLANS
-	uint8_t numOfSta;
-	uint8_t numOfStaWithoutData;
-	uint8_t fBroadcastTrafficPending;
-	uint8_t dtimCount;
-#endif /* FIXME_VOLANS */
-	uint8_t rsvd[3];
-} tBeaconGenParams, *tpBeaconGenParams;
+struct beacon_gen_params {
+	tSirMacAddr bssid;
+};
 
 /**
  * struct tSendbeaconParams - send beacon parameters

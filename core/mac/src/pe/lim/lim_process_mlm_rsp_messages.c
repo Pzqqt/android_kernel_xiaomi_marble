@@ -3306,25 +3306,24 @@ free:
 	qdf_mem_free(body);
 }
 
-QDF_STATUS lim_send_beacon_ind(struct mac_context *mac, struct pe_session *pe_session,
+QDF_STATUS lim_send_beacon_ind(struct mac_context *mac,
+			       struct pe_session *pe_session,
 			       enum sir_bcn_update_reason reason)
 {
-	tBeaconGenParams *pBeaconGenParams = NULL;
-	struct scheduler_msg limMsg = {0};
-	/** Allocate the Memory for Beacon Pre Message and for Stations in PoweSave*/
+	struct beacon_gen_params *params;
+	struct scheduler_msg msg = {0};
+
 	if (!pe_session) {
 		pe_err("Error:Unable to get the PESessionEntry");
 		return QDF_STATUS_E_INVAL;
 	}
-	pBeaconGenParams = qdf_mem_malloc(sizeof(*pBeaconGenParams));
-	if (!pBeaconGenParams) {
-		pe_err("Unable to allocate memory during sending beaconPreMessage");
+	params = qdf_mem_malloc(sizeof(*params));
+	if (!params)
 		return QDF_STATUS_E_NOMEM;
-	}
-	qdf_mem_copy((void *)pBeaconGenParams->bssId,
-		     (void *)pe_session->bssId, QDF_MAC_ADDR_SIZE);
-	limMsg.bodyptr = pBeaconGenParams;
-	return sch_process_pre_beacon_ind(mac, &limMsg, reason);
+	qdf_mem_copy(params->bssid, pe_session->bssId, QDF_MAC_ADDR_SIZE);
+	msg.bodyptr = params;
+
+	return sch_process_pre_beacon_ind(mac, &msg, reason);
 }
 
 void lim_process_rx_channel_status_event(struct mac_context *mac_ctx, void *buf)
