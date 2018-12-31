@@ -221,8 +221,6 @@ struct sap_context {
 	uint8_t dfs_vendor_chan_bw;
 	uint8_t chan_before_pre_cac;
 	uint16_t beacon_tx_rate;
-	tSirMacRateSet supp_rate_set;
-	tSirMacRateSet extended_rate_set;
 	enum sap_acs_dfs_mode dfs_mode;
 	wlan_scan_requester req_id;
 	uint8_t sap_sta_id;
