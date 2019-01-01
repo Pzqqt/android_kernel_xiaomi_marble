@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -254,10 +254,6 @@ lim_process_probe_req_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	uint32_t frame_len;
 	tSirProbeReq probe_req;
 	tAniSSID ssid;
-
-	/* Don't send probe responses if disabled */
-	if (mac_ctx->lim.gLimProbeRespDisableFlag)
-		return;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	if (LIM_IS_AP_ROLE(session) ||

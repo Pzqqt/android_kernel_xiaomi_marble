@@ -465,10 +465,8 @@ typedef struct sAniSirLim {
 
 	/* */
 	/* ---------------- DPH ----------------------- */
-	/* these used to live in DPH but are now moved here (where they belong) */
 	uint32_t gLimPhyMode;
 
-	uint8_t gLimProbeRespDisableFlag:1;    /* control over probe response */
 	/* ---------------- DPH ----------------------- */
 
 	/* ////////////////////////////////////////     STATES RELATED END /////////////////////////////////////////// */

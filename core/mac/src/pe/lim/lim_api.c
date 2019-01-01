@@ -158,7 +158,6 @@ static void __lim_init_states(struct mac_context *mac)
 		    sizeof(tLimNoShortSlotParams));
 
 	mac->lim.gLimPhyMode = 0;
-	mac->lim.gLimProbeRespDisableFlag = 0; /* control over probe resp */
 }
 
 static void __lim_init_vars(struct mac_context *mac)
