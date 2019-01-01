@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -127,18 +127,6 @@ struct wma_tgt_vht_cap {
 	uint32_t vht_mu_bformee;
 	uint32_t vht_max_ampdu_len_exp;
 	uint32_t vht_txop_ps;
-};
-
-/**
- * struct wma_dfs_radar_ind - dfs radar indication
- * @ieee_chan_number: ieee channel number
- * @chan_freq: channel freq
- * @dfs_radar_status: dfs radar status
- */
-struct wma_dfs_radar_ind {
-	uint8_t ieee_chan_number;
-	uint32_t chan_freq;
-	uint32_t dfs_radar_status;
 };
 
 /**
