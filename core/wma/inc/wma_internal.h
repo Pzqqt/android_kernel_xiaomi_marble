@@ -488,8 +488,6 @@ wma_reset_passpoint_network_list(tp_wma_handle wma,
 
 QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui);
 
-int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data, uint32_t len);
-
 void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id);
 
 int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
