@@ -1592,14 +1592,4 @@ int wma_roam_scan_stats_event_handler(void *handle, uint8_t *event,
  */
 void wma_send_vdev_down(tp_wma_handle wma, struct wma_target_req *req);
 
-/**
- * wma_sta_send_vdev_down_bss() - send vdev down to firmware
- * @wma: wma handle.
- * @req: vdev request
- *
- * This function sends vdev down to firmware
- *
- * Return: none
- */
-void wma_sta_send_vdev_down_bss(tp_wma_handle wma, struct wma_target_req *req);
 #endif
