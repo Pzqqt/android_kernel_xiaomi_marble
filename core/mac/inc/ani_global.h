@@ -676,9 +676,6 @@ typedef struct sAniSirLim {
 	uint8_t disassocMsgCnt;
 	uint8_t gLimIbssStaLimit;
 
-	/* Number of channel switch IEs sent so far */
-	uint8_t gLimDfsChanSwTxCount;
-	uint8_t gLimDfsTargetChanNum;
 	QDF_STATUS(*sme_msg_callback)
 		(struct mac_context *mac, struct scheduler_msg *msg);
 	QDF_STATUS(*stop_roaming_callback)
