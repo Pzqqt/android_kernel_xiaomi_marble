@@ -295,19 +295,6 @@ QDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
 QDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
 					 uint32_t command, uint32_t vdev_id);
 
-QDF_STATUS wma_roam_preauth_chan_set(tp_wma_handle wma_handle,
-				     tpSwitchChannelParams params,
-				     uint8_t vdev_id);
-
-QDF_STATUS wma_roam_preauth_chan_cancel(tp_wma_handle wma_handle,
-					tpSwitchChannelParams params,
-					uint8_t vdev_id);
-
-void wma_roam_preauth_scan_event_handler(tp_wma_handle wma_handle,
-						uint8_t vdev_id,
-						wmi_scan_event_fixed_param *
-						wmi_event);
-
 void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
