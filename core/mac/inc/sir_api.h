@@ -4987,28 +4987,6 @@ struct sir_vdev_wow_stats {
 };
 #endif
 
-/**
- * enum ht_capability_fields - HT Capabilities bit fields
- * @HT_CAPS_LDPC: ldpc coding capability bit field
- * @HT_CAPS_SUPPORTED_CHANNEL_SET: channel width set bit field
- * @HT_CAPS_SM_PWR_SAVE: SM power save bit field
- * @HT_CAPS_GREENFIELD: greenfield capability bit field
- * @HT_CAPS_SHORT_GI20: short GI 20 bit field
- * @HT_CAPS_SHORT_GI40: short GI 40 bit field
- * @HT_CAPS_TX_STBC: Tx STBC bit field
- * @HT_CAPS_RX_STBC: Rx STBC bit fields
- */
-enum ht_capability_fields {
-	HT_CAPS_LDPC = 0x0001,
-	HT_CAPS_SUPPORTED_CHANNEL_SET = 0x0002,
-	HT_CAPS_SM_PWR_SAVE = 0x000c,
-	HT_CAPS_GREENFIELD = 0x0010,
-	HT_CAPS_SHORT_GI20 = 0x0020,
-	HT_CAPS_SHORT_GI40 = 0x0040,
-	HT_CAPS_TX_STBC = 0x0080,
-	HT_CAPS_RX_STBC = 0x0300
-};
-
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 
 #define IFACE_NAME_SIZE 64
