@@ -468,11 +468,6 @@ typedef struct sAniSirLim {
 	/* these used to live in DPH but are now moved here (where they belong) */
 	uint32_t gLimPhyMode;
 
-	uint8_t gLimQosEnabled:1;       /* 11E */
-	uint8_t gLimWmeEnabled:1;       /* WME */
-	uint8_t gLimWsmEnabled:1;       /* WSM */
-	uint8_t gLimHcfEnabled:1;
-	uint8_t gLim11dEnabled:1;
 	uint8_t gLimProbeRespDisableFlag:1;    /* control over probe response */
 	/* ---------------- DPH ----------------------- */
 
