@@ -2887,8 +2887,6 @@ enum host_target_comm_log {
 		}							\
 	} while (0)
 
-#define VERSION_VALUE_MAX_LEN 32
-
 #define TX_PER_TRACKING_DEFAULT_RATIO             5
 #define TX_PER_TRACKING_MAX_RATIO                10
 #define TX_PER_TRACKING_DEFAULT_WATERMARK         5
