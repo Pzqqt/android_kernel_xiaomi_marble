@@ -60,9 +60,10 @@
 #define REPT_MU_MIMO 1
 #define REPT_MU_OFDMA_MIMO 3
 #define DP_VO_TID 6
-
-#define DP_MAX_TID_MAPS 16 /* MAX TID MAPS AVAILABLE PER PDEV*/
-#define DSCP_TID_MAP_MAX    (64)
+ /** MAX TID MAPS AVAILABLE PER PDEV */
+#define DP_MAX_TID_MAPS 16
+/** pad DSCP_TID_MAP_MAX with 6 to fix oob issue */
+#define DSCP_TID_MAP_MAX (64 + 6)
 #define DP_IP_DSCP_SHIFT 2
 #define DP_IP_DSCP_MASK 0x3f
 #define DP_FC0_SUBTYPE_QOS 0x80
