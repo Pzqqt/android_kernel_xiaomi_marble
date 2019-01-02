@@ -11250,18 +11250,18 @@ typedef struct {
  *  BIT 8     : BTM query preference over 11k neighbor report request
  *  BIT 9-31  : Reserved
  */
-#define WMI_ROAM_BTM_SET_ENABLE(flags, val)                    WMI_SET_BITS(flags, 0, 1, val)
-#define WMI_ROAM_BTM_GET_ENABLE(flags)                         WMI_GET_BITS(flags, 0, 1)
-#define WMI_ROAM_BTM_SET_NON_MATCHING_CND_ACTION(flags, val)   WMI_SET_BITS(flags, 1, 2, val)
-#define WMI_ROAM_BTM_GET_NON_MATCHING_CND_ACTION(flags)        WMI_GET_BITS(flags, 1, 2)
-#define WMI_ROAM_BTM_SET_CNDS_MATCH_CONDITION(flags, val)      WMI_SET_BITS(flags, 3, 3, val)
-#define WMI_ROAM_BTM_GET_CNDS_MATCH_CONDITION(flags)           WMI_GET_BITS(flags, 3, 3)
-#define WMI_ROAM_BTM_SET_SOLICITED_BTM_ENABLE(flags, val)      WMI_SET_BITS(flags, 6, 1, val)
-#define WMI_ROAM_BTM_GET_SOLICITED_BTM_ENABLE(flags)           WMI_GET_BITS(flags, 6, 1)
-#define WMI_ROAM_BTM_SET_CNDS_SELECT_BASED_ON_SCORE(flags)     WMI_SET_BITS(flags, 7, 1, val)
-#define WMI_ROAM_BTM_GET_CNDS_SELECT_BASED_ON_SCORE(flags)     WMI_GET_BITS(flags, 7, 1)
-#define WMI_ROAM_BTM_SET_BTM_QUERY_PREFERENCE_OVER_11K(flags)  WMI_SET_BITS(flags, 8, 1, val)
-#define WMI_ROAM_BTM_GET_BTM_QUERY_PREFERENCE_OVER_11K(flags)  WMI_GET_BITS(flags, 8, 1)
+#define WMI_ROAM_BTM_SET_ENABLE(flags, val)                        WMI_SET_BITS(flags, 0, 1, val)
+#define WMI_ROAM_BTM_GET_ENABLE(flags)                             WMI_GET_BITS(flags, 0, 1)
+#define WMI_ROAM_BTM_SET_NON_MATCHING_CND_ACTION(flags, val)       WMI_SET_BITS(flags, 1, 2, val)
+#define WMI_ROAM_BTM_GET_NON_MATCHING_CND_ACTION(flags)            WMI_GET_BITS(flags, 1, 2)
+#define WMI_ROAM_BTM_SET_CNDS_MATCH_CONDITION(flags, val)          WMI_SET_BITS(flags, 3, 3, val)
+#define WMI_ROAM_BTM_GET_CNDS_MATCH_CONDITION(flags)               WMI_GET_BITS(flags, 3, 3)
+#define WMI_ROAM_BTM_SET_SOLICITED_BTM_ENABLE(flags, val)          WMI_SET_BITS(flags, 6, 1, val)
+#define WMI_ROAM_BTM_GET_SOLICITED_BTM_ENABLE(flags)               WMI_GET_BITS(flags, 6, 1)
+#define WMI_ROAM_BTM_SET_CNDS_SELECT_BASED_ON_SCORE(flags, val)    WMI_SET_BITS(flags, 7, 1, val)
+#define WMI_ROAM_BTM_GET_CNDS_SELECT_BASED_ON_SCORE(flags)         WMI_GET_BITS(flags, 7, 1)
+#define WMI_ROAM_BTM_SET_BTM_QUERY_PREFERENCE_OVER_11K(flags, val) WMI_SET_BITS(flags, 8, 1, val)
+#define WMI_ROAM_BTM_GET_BTM_QUERY_PREFERENCE_OVER_11K(flags)      WMI_GET_BITS(flags, 8, 1)
 
 /** WMI_ROAM_BTM_SET_NON_MATCHING_CNDS_ACTION definition: When BTM candidate is not matched with cache by WMI_ROAM_BTM_SET_CNDS_MATCH_CONDITION, determine what to do */
 #define WMI_ROAM_BTM_NON_MATCHING_CNDS_SCAN_CONSUME      0 /** Invoke roam scan and consume within firmware. Applicable only when ROAM_SCAN_MODE is enabled. If ROAM_SCAN_MODE is disabled, firmware won't scan and forward it to host */
@@ -21538,6 +21538,20 @@ typedef enum wmi_coex_config_type {
     WMI_COEX_CONFIG_WLAN_CONN_OVER_LE      = 30, /* config to elevate Wifi priority over BLE during WLAN association */
     WMI_COEX_CONFIG_LE_OVER_WLAN_TRAFFIC   = 31, /* config to elevate BLE traffic over WiFi traffic */
     WMI_COEX_CONFIG_THREE_WAY_COEX_RESET   = 32, /* config to reset the weights to default  */
+    /* WMI_COEX_CONFIG_THREE_WAY_DELAY_PARA
+     * config to T_PRIO T_DELAY parameter for each case
+     *   arg1 - wlan/bt state
+     *       0: beacon tx
+     *       1: wlan connecting
+     *       2: wlan in dhcp
+     *       3: a2dp critical
+     *       4: eSCO
+     *   arg2 - t_prio for low priority traffic (microsecond units)
+     *   arg3 - t_delay for low priority traffic (microsecond units)
+     *   arg4 - t_prio for high priority traffic (microsecond units)
+     *   arg5 - t_delay for high priority traffic (microsecond units)
+     */
+    WMI_COEX_CONFIG_THREE_WAY_DELAY_PARA   = 33,
 } WMI_COEX_CONFIG_TYPE;
 
 typedef struct {
