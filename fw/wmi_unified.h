@@ -2895,6 +2895,14 @@ typedef struct {
     #define WMI_RSRC_CFG_FLAG_PEER_UNMAP_RESPONSE_SUPPORT_S 20
     #define WMI_RSRC_CFG_FLAG_PEER_UNMAP_RESPONSE_SUPPORT_M 0x100000
 
+    /*
+     * If this HTT_PEER_STATS is set, then the target should use the
+     * the HTT_T2H_MSG_TYPE_PEER_STATS_IND message to upload peer stats;
+     * else the target should avoid sending the PEER_STATS_IND message.
+     */
+    #define WMI_RSRC_CFG_FLAG_HTT_PEER_STATS_S 21
+    #define WMI_RSRC_CFG_FLAG_HTT_PEER_STATS_M 0x200000
+
     A_UINT32 flag1;
 
     /** @brief smart_ant_cap - Smart Antenna capabilities information
@@ -3137,6 +3145,11 @@ typedef struct {
     WMI_RSRC_CFG_FLAG_SET((word32), PEER_UNMAP_RESPONSE_SUPPORT, (value))
 #define WMI_RSRC_CFG_FLAG_PEER_UNMAP_RESPONSE_SUPPORT_GET(word32) \
     WMI_RSRC_CFG_FLAG_GET((word32), PEER_UNMAP_RESPONSE_SUPPORT)
+
+#define WMI_RSRC_CFG_FLAG_HTT_PEER_STATS_SET(word32, value) \
+    WMI_RSRC_CFG_FLAG_SET((word32), HTT_PEER_STATS, (value))
+#define WMI_RSRC_CFG_FLAG_HTT_PEER_STATS_GET(word32) \
+    WMI_RSRC_CFG_FLAG_GET((word32), HTT_PEER_STATS)
 
 
 typedef struct {
@@ -7473,7 +7486,7 @@ typedef struct {
 typedef struct {
     /** peer MAC address */
     wmi_mac_addr peer_macaddr;
-    /* rx duration in microseconds*/
+    /* lower 32 bits of rx duration in microseconds */
     A_UINT32 rx_duration;
     /** Total TX bytes (including dot11 header) sent to peer */
     A_UINT32 peer_tx_bytes;
@@ -7486,7 +7499,9 @@ typedef struct {
 
     /* Total number of received multicast & broadcast data frames corresponding to this peer */
     A_UINT32 rx_mc_bc_cnt; /* 1 in the MSB of rx_mc_bc_cnt represents a valid data */
-    A_UINT32 reserved[3]; /** for future use - add new peer stats here */
+    /* upper 32 bits of rx duration in microseconds */
+    A_UINT32 rx_duration_u32; /* 1 in the most significant bit indicates this field contains valid data */
+    A_UINT32 reserved[2]; /** for future use - add new peer stats here */
 } wmi_peer_extd_stats;
 
 typedef struct {

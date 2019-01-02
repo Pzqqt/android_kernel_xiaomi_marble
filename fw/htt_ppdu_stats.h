@@ -114,6 +114,19 @@ typedef enum htt_ppdu_stats_tlv_tag htt_ppdu_stats_tlv_tag_t;
          ((_var) |= ((_val) << HTT_PPDU_STATS_ARRAY_ITEM_TLV_SGI_S)); \
      } while (0)
 
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_SR_M     0x00008000
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_SR_S             15
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_SR_GET(_var) \
+    (((_var) & HTT_PPDU_STATS_ARRAY_ITEM_TLV_SR_M) >> \
+    HTT_PPDU_STATS_ARRAY_ITEM_TLV_SR_S)
+
+#define HTT_PPDU_STATS_ARRAY_ITEM_TLV_SR_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_PPDU_STATS_ARRAY_ITEM_TLV_SR, _val); \
+        ((_var) |= ((_val) << HTT_PPDU_STATS_ARRAY_ITEM_TLV_SR_S)); \
+    } while (0)
+
 #define HTT_PPDU_STATS_ARRAY_ITEM_TLV_PEERID_M     0xffff0000
 #define HTT_PPDU_STATS_ARRAY_ITEM_TLV_PEERID_S             16
 
@@ -193,13 +206,23 @@ PREPACK struct htt_tx_ppdu_stats_info {
                  3: 160 MHz or 80+80 MHz */
              bw:                3,
              sgi:               1,
-             reserved0:         1,
+             skipped_rate_ctrl: 1,
              peer_id:          16;
     A_UINT32 tx_success_msdus: 16,
              tx_retry_msdus:   16;
     A_UINT32 tx_failed_msdus:  16,
              /* united in us */
              tx_duration:      16;
+    /*
+     * 1 in bit 0 of valid_bitmap represents that bitmap itself is valid.
+     * If the bitmap is valid (i.e. bit 0 is set), then check the other bits
+     * of bitmap to know which fields within htt_tx_ppdu_stats_info are valid.
+     * If bit 1 is set, tx_success_bytes is valid
+     * If bit 2 is set, tx_retry_bytes is valid
+     * ...
+     * If bit 14 is set, tx_duration is valid
+     */
+    A_UINT32 valid_bitmap;
 } POSTPACK;
 
 typedef struct {
