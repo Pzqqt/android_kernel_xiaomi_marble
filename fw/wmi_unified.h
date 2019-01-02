@@ -23193,6 +23193,12 @@ typedef struct {
 } wmi_pdev_csa_switch_count_status_event_fixed_param;
 
 typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_csc_vdev_list */
+    A_UINT32 vdev_id;
+    A_UINT32 current_switch_count; /** CSC switch count value in the last transmitted beacon */
+} wmi_csc_vdev_list;
+
+typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_csc_switch_count_status_event_fixed_param */
     A_UINT32 tlv_header;
     /** pdev_id for identifying the MAC
@@ -23204,7 +23210,7 @@ typedef struct {
     A_UINT32 current_switch_count;
 
     /* The TLVs follows this structure:
-     * A_UINT32 vdev_ids[]; // IDs of vdevs whose color-switch countdown expired
+     * struct wmi_csc_vdev_list vdev_info[]; // IDs of vdevs and their current switch countdown values
      */
 } wmi_pdev_csc_switch_count_status_event_fixed_param;
 
