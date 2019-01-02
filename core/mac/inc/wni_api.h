@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -84,7 +84,6 @@ enum eWniMsgTypes {
 	eWNI_SME_UPPER_LAYER_ASSOC_CNF,
 	eWNI_SME_SESSION_UPDATE_PARAM,
 	eWNI_SME_CHNG_MCC_BEACON_INTERVAL,
-	eWNI_SME_CLEAR_DFS_CHANNEL_LIST,
 	eWNI_SME_GET_SNR_REQ,
 
 	eWNI_SME_RRM_MSG_TYPE_BEGIN,

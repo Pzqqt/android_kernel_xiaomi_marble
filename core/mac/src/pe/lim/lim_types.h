@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -755,10 +755,6 @@ void lim_process_mlm_set_bss_key_rsp(struct mac_context *mac,
 /* Function to process WMA_SWITCH_CHANNEL_RSP message */
 void lim_process_switch_channel_rsp(struct mac_context *mac, void *);
 
-void lim_covert_channel_scan_type(struct mac_context *mac, uint8_t channelNum,
-				  bool passiveToActive);
-void lim_set_dfs_channel_list(struct mac_context *mac, uint8_t channelNum,
-			      tSirDFSChannelList *dfsChannelList);
 QDF_STATUS lim_sta_send_down_link(join_params *param);
 
 #ifdef WLAN_FEATURE_11W

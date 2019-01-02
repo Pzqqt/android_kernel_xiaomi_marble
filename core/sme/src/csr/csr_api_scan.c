@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -619,20 +619,6 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 	return QDF_STATUS_SUCCESS;
 }
 
-static void csr_clear_dfs_channel_list(struct mac_context *mac)
-{
-	tSirMbMsg *pMsg;
-	uint16_t msgLen;
-
-	msgLen = (uint16_t) (sizeof(tSirMbMsg));
-	pMsg = qdf_mem_malloc(msgLen);
-	if (NULL != pMsg) {
-		pMsg->type = eWNI_SME_CLEAR_DFS_CHANNEL_LIST;
-		pMsg->msgLen = msgLen;
-		umac_send_mb_message_to_mac(pMsg);
-	}
-}
-
 void csr_apply_power2_current(struct mac_context *mac)
 {
 	sme_debug("Updating Cfg with power settings");
@@ -663,14 +649,6 @@ void csr_apply_channel_power_info_to_fw(struct mac_context *mac_ctx,
 		csr_apply_power2_current(mac_ctx);
 		csr_set_cfg_valid_channel_list(mac_ctx, tmp_ch_lst.channelList,
 					       tmp_ch_lst.numChannels);
-		/*
-		 * extend scan capability, build a scan list based on the
-		 * channel list : channel# + active/passive scan
-		 */
-		csr_set_cfg_scan_control_list(mac_ctx, countryCode,
-					      &tmp_ch_lst);
-		/* Send msg to Lim to clear DFS channel list */
-		csr_clear_dfs_channel_list(mac_ctx);
 	} else {
 		sme_err("11D channel list is empty");
 	}
@@ -1693,51 +1671,6 @@ QDF_STATUS csr_get_country_code(struct mac_context *mac, uint8_t *pBuf,
 	}
 
 	return QDF_STATUS_E_INVAL;
-}
-
-void csr_set_cfg_scan_control_list(struct mac_context *mac,
-				   uint8_t *countryCode,
-				   struct csr_channel *pChannelList)
-{
-	uint8_t i, j;
-	bool found = false;
-	uint8_t *pControlList = NULL;
-	uint32_t len = WNI_CFG_SCAN_CONTROL_LIST_LEN;
-
-	pControlList = qdf_mem_malloc(WNI_CFG_SCAN_CONTROL_LIST_LEN);
-	if (pControlList != NULL) {
-		if (QDF_IS_STATUS_SUCCESS(wlan_cfg_get_str(mac,
-					WNI_CFG_SCAN_CONTROL_LIST,
-					pControlList, &len))) {
-			for (i = 0; i < pChannelList->numChannels; i++) {
-				for (j = 0; j < len; j += 2) {
-					if (pControlList[j] ==
-					    pChannelList->channelList[i]) {
-						found = true;
-						break;
-					}
-				}
-
-				if (found) {
-					/* insert a pair(channel#, flag) */
-					pControlList[j + 1] =
-						csr_get_scan_type(mac,
-							pControlList[j]);
-					found = false;  /* reset the flag */
-				}
-
-			}
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-				  "%s: dump scan control list", __func__);
-			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME,
-					   QDF_TRACE_LEVEL_DEBUG, pControlList,
-					   len);
-
-			cfg_set_str(mac, WNI_CFG_SCAN_CONTROL_LIST,
-					pControlList, len);
-		} /* Successfully getting scan control list */
-		qdf_mem_free(pControlList);
-	} /* AllocateMemory */
 }
 
 QDF_STATUS csr_scan_abort_mac_scan(struct mac_context *mac_ctx,

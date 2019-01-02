@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -183,17 +183,6 @@ void lim_send_sme_mgmt_frame_ind(struct mac_context *mac_ctx, uint8_t frame_type
 				 uint8_t *frame, uint32_t frame_len,
 				 uint16_t session_id, uint32_t rx_channel,
 				 struct pe_session *psession_entry, int8_t rx_rssi);
-
-/*
- * lim_convert_active_channel_to_passive_channel() - Timer callback function
- * @mac_ctx : Pointer to Global MAC structure
- *
- * It check active DFS channels and convert them to passive channels
- * if there was no beacon/proberesp for MAX_TIME_TO_BE_ACTIVE_CHANNEL time
- *
- * Return: None
-*/
-void lim_convert_active_channel_to_passive_channel(struct mac_context *mac_ctx);
 
 /*
  * lim_deactivate_timers() - Function to deactivate lim timers

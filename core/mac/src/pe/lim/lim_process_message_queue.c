@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1642,7 +1642,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case eWNI_SME_FT_PRE_AUTH_REQ:
 	case eWNI_SME_FT_AGGR_QOS_REQ:
 	case eWNI_SME_REGISTER_MGMT_FRAME_REQ:
-	case eWNI_SME_CLEAR_DFS_CHANNEL_LIST:
 	case eWNI_SME_GET_STATISTICS_REQ:
 #ifdef FEATURE_WLAN_ESE
 	case eWNI_SME_GET_TSM_STATS_REQ:
@@ -1767,7 +1766,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case SIR_LIM_FT_PREAUTH_RSP_TIMEOUT:
 	case SIR_LIM_DISASSOC_ACK_TIMEOUT:
 	case SIR_LIM_DEAUTH_ACK_TIMEOUT:
-	case SIR_LIM_CONVERT_ACTIVE_CHANNEL_TO_PASSIVE:
 	case SIR_LIM_AUTH_RETRY_TIMEOUT:
 	case SIR_LIM_AUTH_SAE_TIMEOUT:
 		/* These timeout messages are handled by MLM sub module */

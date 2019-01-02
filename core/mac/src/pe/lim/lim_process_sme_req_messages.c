@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1116,29 +1116,6 @@ void lim_get_random_bssid(struct mac_context *mac, uint8_t *data)
 	random[0] |= (random[0] << 15);
 	random[1] = random[0] >> 1;
 	qdf_mem_copy(data, (uint8_t *) random, sizeof(tSirMacAddr));
-}
-
-/**
- * __lim_process_clear_dfs_channel_list()
- *
- ***FUNCTION:
- ***Clear DFS channel list  when country is changed/acquired.
-   .*This message is sent from SME.
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  mac      Pointer to Global MAC structure
- * @param  *pMsgBuf  A pointer to the SME message buffer
- * @return None
- */
-static void __lim_process_clear_dfs_channel_list(struct mac_context *mac,
-						 struct scheduler_msg *pMsg)
-{
-	qdf_mem_set(&mac->lim.dfschannelList, sizeof(tSirDFSChannelList), 0);
 }
 
 #ifdef WLAN_FEATURE_SAE
@@ -4949,9 +4926,6 @@ bool lim_process_sme_req_messages(struct mac_context *mac,
 		bufConsumed = __lim_process_sme_start_bss_req(mac, pMsg);
 		break;
 
-	case eWNI_SME_CLEAR_DFS_CHANNEL_LIST:
-		__lim_process_clear_dfs_channel_list(mac, pMsg);
-		break;
 	case eWNI_SME_JOIN_REQ:
 		__lim_process_sme_join_req(mac, pMsgBuf);
 		break;

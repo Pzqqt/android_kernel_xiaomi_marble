@@ -295,11 +295,6 @@ typedef struct sLimTimers {
 	TX_TIMER gLimPeriodicJoinProbeReqTimer;
 	TX_TIMER gLimDisassocAckTimer;
 	TX_TIMER gLimDeauthAckTimer;
-	/* This timer is used to convert active channel to
-	 * passive channel when there is no beacon
-	 * for a period of time on a particular DFS channel
-	 */
-	TX_TIMER gLimActiveToPassiveChannelTimer;
 	TX_TIMER g_lim_periodic_auth_retry_timer;
 
 	/* SAE authentication related timer */
@@ -684,7 +679,6 @@ typedef struct sAniSirLim {
 	uint8_t reAssocRetryAttempt;
 	tLimDisassocDeauthCnfReq limDisassocDeauthCnfReq;
 	uint8_t deferredMsgCnt;
-	tSirDFSChannelList dfschannelList;
 	uint8_t deauthMsgCnt;
 	uint8_t disassocMsgCnt;
 	uint8_t gLimIbssStaLimit;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -526,13 +526,7 @@ void lim_handle_heart_beat_failure(struct mac_context *mac_ctx,
 					session->dot11mode, NULL, NULL);
 			}
 		} else {
-			pe_debug("HB missed from AP on DFS chanel moving to passive");
-			if (curr_chan < SIR_MAX_24G_5G_CHANNEL_RANGE) {
-				lim_covert_channel_scan_type(mac_ctx, curr_chan,
-					false);
-				mac_ctx->lim.dfschannelList.
-					timeStamp[curr_chan] = 0;
-			}
+			pe_debug("HB missed from AP on DFS channel");
 			/*
 			 * Connected on DFS channel so should not send the
 			 * probe request tear down the link directly

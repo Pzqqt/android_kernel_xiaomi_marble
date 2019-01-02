@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -260,7 +260,6 @@ uint8_t *mac_trace_get_sme_msg_string(uint16_t sme_msg)
 		CASE_RETURN_STRING(eWNI_SME_UPPER_LAYER_ASSOC_CNF);
 		CASE_RETURN_STRING(eWNI_SME_SESSION_UPDATE_PARAM);
 		CASE_RETURN_STRING(eWNI_SME_CHNG_MCC_BEACON_INTERVAL);
-		CASE_RETURN_STRING(eWNI_SME_CLEAR_DFS_CHANNEL_LIST);
 		CASE_RETURN_STRING(eWNI_SME_GET_SNR_REQ);
 		CASE_RETURN_STRING(eWNI_SME_LINK_STATUS_IND);
 		CASE_RETURN_STRING(eWNI_SME_RRM_MSG_TYPE_BEGIN);
@@ -685,7 +684,6 @@ uint8_t *mac_trace_get_lim_msg_string(uint16_t lim_msg)
 		CASE_RETURN_STRING(SIR_LIM_CHANNEL_SWITCH_TIMEOUT);
 		CASE_RETURN_STRING(SIR_LIM_WPS_OVERLAP_TIMEOUT);
 		CASE_RETURN_STRING(SIR_LIM_FT_PREAUTH_RSP_TIMEOUT);
-		CASE_RETURN_STRING(SIR_LIM_CONVERT_ACTIVE_CHANNEL_TO_PASSIVE);
 		CASE_RETURN_STRING(SIR_LIM_BEACON_GEN_IND);
 		CASE_RETURN_STRING(SIR_LIM_DISASSOC_ACK_TIMEOUT);
 		CASE_RETURN_STRING(SIR_LIM_DEAUTH_ACK_TIMEOUT);

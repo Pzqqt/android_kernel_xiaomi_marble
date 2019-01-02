@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -74,11 +74,6 @@
 #include <wlan_tdls_cfg_api.h>
 #include "cfg_ucfg_api.h"
 #include "wlan_mlme_public_struct.h"
-
-static void __lim_init_scan_vars(struct mac_context *mac)
-{
-	qdf_mem_set(&mac->lim.dfschannelList, sizeof(tSirDFSChannelList), 0);
-}
 
 static void __lim_init_bss_vars(struct mac_context *mac)
 {
@@ -422,7 +417,6 @@ QDF_STATUS lim_initialize(struct mac_context *mac)
 	__lim_init_states(mac);
 	__lim_init_stats_vars(mac);
 	__lim_init_bss_vars(mac);
-	__lim_init_scan_vars(mac);
 	__lim_init_ht_vars(mac);
 
 	/* Initializations for maintaining peers in IBSS */

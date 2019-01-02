@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,7 +46,6 @@ const char *cfg_get_string(uint16_t cfg_id)
 	CASE_RETURN_STRING(WNI_CFG_CURRENT_TX_POWER_LEVEL);
 	CASE_RETURN_STRING(WNI_CFG_COUNTRY_CODE);
 	CASE_RETURN_STRING(WNI_CFG_LOCAL_POWER_CONSTRAINT);
-	CASE_RETURN_STRING(WNI_CFG_SCAN_CONTROL_LIST);
 	CASE_RETURN_STRING(WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED);
 	CASE_RETURN_STRING(WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT);
 	CASE_RETURN_STRING(WNI_CFG_OBSS_DETECTION_OFFLOAD);

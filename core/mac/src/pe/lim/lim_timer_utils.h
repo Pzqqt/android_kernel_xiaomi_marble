@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014, 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014, 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -55,7 +55,6 @@ enum {
 	eLIM_DEAUTH_ACK_TIMER,
 	eLIM_PERIODIC_JOIN_PROBE_REQ_TIMER,
 	eLIM_INSERT_SINGLESHOT_NOA_TIMER,
-	eLIM_CONVERT_ACTIVE_CHANNEL_TO_PASSIVE,
 	eLIM_AUTH_RETRY_TIMER,
 	eLIM_AUTH_SAE_TIMER
 };

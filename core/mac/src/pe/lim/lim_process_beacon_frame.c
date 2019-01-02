@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -110,18 +110,7 @@ lim_process_beacon_frame(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_RX_MGMT_TSF, 0,
 		bcn_ptr->timeStamp[1]));
 
-	if ((mac_ctx->lim.gLimMlmState ==
-				eLIM_MLM_WT_PROBE_RESP_STATE) ||
-		(mac_ctx->lim.gLimMlmState ==
-				eLIM_MLM_PASSIVE_SCAN_STATE)) {
-		/*
-		 * Calling dfsChannelList which will convert DFS channel
-		 * to active channel for x secs if this channel is DFS
-		 */
-		lim_set_dfs_channel_list(mac_ctx,
-			bcn_ptr->channelNumber,
-			&mac_ctx->lim.dfschannelList);
-	} else if (session->limMlmState ==
+	if (session->limMlmState ==
 			eLIM_MLM_WT_JOIN_BEACON_STATE) {
 		if (session->beacon != NULL) {
 			qdf_mem_free(session->beacon);

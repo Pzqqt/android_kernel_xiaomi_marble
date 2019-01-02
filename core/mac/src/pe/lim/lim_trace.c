@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -65,7 +65,6 @@ static uint8_t *__lim_trace_get_timer_string(uint16_t timerId)
 		CASE_RETURN_STRING(eLIM_DISASSOC_ACK_TIMER);
 		CASE_RETURN_STRING(eLIM_DEAUTH_ACK_TIMER);
 		CASE_RETURN_STRING(eLIM_PERIODIC_JOIN_PROBE_REQ_TIMER);
-		CASE_RETURN_STRING(eLIM_CONVERT_ACTIVE_CHANNEL_TO_PASSIVE);
 		CASE_RETURN_STRING(eLIM_AUTH_RETRY_TIMER);
 	default:
 		return "UNKNOWN";

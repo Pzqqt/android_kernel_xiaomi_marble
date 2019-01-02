@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -148,9 +148,6 @@ void lim_process_mlm_req_messages(struct mac_context *mac_ctx,
 	case SIR_LIM_FT_PREAUTH_RSP_TIMEOUT:
 		lim_process_ft_preauth_rsp_timeout(mac_ctx);
 		break;
-	case SIR_LIM_CONVERT_ACTIVE_CHANNEL_TO_PASSIVE:
-		lim_convert_active_channel_to_passive_channel(mac_ctx);
-		break;
 	case SIR_LIM_DISASSOC_ACK_TIMEOUT:
 		lim_process_disassoc_ack_timeout(mac_ctx);
 		break;
@@ -167,115 +164,6 @@ void lim_process_mlm_req_messages(struct mac_context *mac_ctx,
 	default:
 		break;
 	} /* switch (msg->type) */
-}
-
-/**
- * lim_covert_channel_scan_type() - switch between ACTIVE and PASSIVE scan type
- * @mac_ctx: global MAC context
- * @chan_num: channel number to change the scan type
- * @passive_to_active: flag to indicate if switch allowed
- *
- * This function is called to get the list,
- * change the channel type and set again.
- * NOTE: If a channel is ACTIVE, this function will make it as PASSIVE
- *       If a channel is PASSIVE, this function will make it as ACTIVE
- *
- * Return: None
- */
-
-void lim_covert_channel_scan_type(struct mac_context *mac_ctx, uint8_t chan_num,
-				  bool passive_to_active)
-{
-
-	uint32_t i;
-	uint8_t chan_pair[WNI_CFG_SCAN_CONTROL_LIST_LEN];
-	uint32_t len = WNI_CFG_SCAN_CONTROL_LIST_LEN;
-	QDF_STATUS status;
-
-	status  = wlan_cfg_get_str(mac_ctx, WNI_CFG_SCAN_CONTROL_LIST,
-				   chan_pair, &len);
-	if (QDF_STATUS_SUCCESS != status) {
-		pe_err("Unable to get scan control list");
-		return;
-	}
-	if (len > WNI_CFG_SCAN_CONTROL_LIST_LEN) {
-		pe_err("Invalid scan control list length: %d", len);
-		return;
-	}
-	for (i = 0; (i + 1) < len; i += 2) {
-		if (chan_pair[i] != chan_num) /* skip this channel */
-			continue;
-		if ((eSIR_PASSIVE_SCAN == chan_pair[i + 1]) &&
-		     true == passive_to_active) {
-			pe_debug("Channel %d changed from Passive to Active",
-				chan_num);
-			chan_pair[i + 1] = eSIR_ACTIVE_SCAN;
-			break;
-		}
-		if ((eSIR_ACTIVE_SCAN == chan_pair[i + 1]) &&
-		     false == passive_to_active) {
-			pe_debug("Channel %d changed from Active to Passive",
-				chan_num);
-			chan_pair[i + 1] = eSIR_PASSIVE_SCAN;
-			break;
-		}
-	}
-
-	cfg_set_str_notify(mac_ctx, WNI_CFG_SCAN_CONTROL_LIST,
-			   (uint8_t *) chan_pair, len, false);
-	return;
-}
-
-/**
- * lim_set_dfs_channel_list() - convert dfs channel list to active channel list
- * @mac_ctx: global MAC context.
- * @chan_num: channel number
- * @dfs_ch_list: list of DFS channels
- *
- * This function is called to convert DFS channel list to active channel list
- * when any beacon is present on that channel. This function store time for
- * passive channels which help to know that for how much time channel has been
- * passive.
- *
- * NOTE: If a channel is ACTIVE, it won't store any time
- *       If a channel is PAssive, it will store time as timestamp
- *
- * Return: None
- */
-void lim_set_dfs_channel_list(struct mac_context *mac_ctx, uint8_t chan_num,
-			      tSirDFSChannelList *dfs_ch_list)
-{
-	bool pass_to_active = true;
-
-	if (!((1 <= chan_num) && (165 >= chan_num))) {
-		pe_err("Invalid Channel: %d", chan_num);
-		return;
-	}
-
-	if (lim_isconnected_on_dfs_channel(mac_ctx, chan_num)) {
-		if (dfs_ch_list->timeStamp[chan_num] == 0) {
-			/*
-			 * Received first beacon;
-			 * Convert DFS channel to Active channel.
-			 */
-			pe_debug("Received first beacon on DFS channel: %d",
-				chan_num);
-			lim_covert_channel_scan_type(mac_ctx, chan_num,
-						     pass_to_active);
-		}
-		dfs_ch_list->timeStamp[chan_num] =
-					qdf_mc_timer_get_system_time();
-	} else {
-		return;
-	}
-
-	if (!tx_timer_running
-		    (&mac_ctx->lim.limTimers.gLimActiveToPassiveChannelTimer)) {
-		tx_timer_activate(
-		    &mac_ctx->lim.limTimers.gLimActiveToPassiveChannelTimer);
-	}
-
-	return;
 }
 
 /**

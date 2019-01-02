@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,10 +62,6 @@ struct mac_context;
 
 #define SIR_MAX_ELEMENT_ID         255
 
-/* Max number of channels are 165, but to access 165th element of array,
-   *array of 166 is required.
- */
-#define SIR_MAX_24G_5G_CHANNEL_RANGE      166
 #define SIR_BCN_REPORT_MAX_BSS_DESC       4
 
 #define SIR_NUM_11B_RATES 4     /* 1,2,5.5,11 */
@@ -746,11 +742,6 @@ typedef struct sSirChannelList {
 	uint8_t numChannels;
 	uint8_t channelNumber[SIR_ESE_MAX_MEAS_IE_REQS];
 } tSirChannelList, *tpSirChannelList;
-
-typedef struct sSirDFSChannelList {
-	uint32_t timeStamp[SIR_MAX_24G_5G_CHANNEL_RANGE];
-
-} tSirDFSChannelList, *tpSirDFSChannelList;
 
 /* / Two Background Scan mode */
 typedef enum eSirBackgroundScanMode {
