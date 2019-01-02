@@ -5733,9 +5733,14 @@ typedef struct {
 #define WMI_TPC_TX_NUM_CHAIN        4
 
 typedef enum {
-    WMI_TPC_CONFIG_EVENT_FLAG_TABLE_CDD = 0x1,
+    /* bits 0-7 for table flags */
+    WMI_TPC_CONFIG_EVENT_FLAG_TABLE_CDD  = 0x1,
     WMI_TPC_CONFIG_EVENT_FLAG_TABLE_STBC = 0x2,
     WMI_TPC_CONFIG_EVENT_FLAG_TABLE_TXBF = 0x4,
+
+    /* bits 8-11 for interface version flags */
+    WMI_TPC_CONFIG_EVENT_FLAG_IF_MASK = 0x0F00,
+    WMI_TPC_CONFIG_EVENT_FLAG_IF_V1   = 0x0100,
 } WMI_TPC_CONFIG_EVENT_FLAG;
 
 typedef struct {
