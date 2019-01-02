@@ -425,6 +425,7 @@ typedef struct {
  * because the host should have no references to these target-only data
  * structures.
  */
+#ifndef CONFIG_MOVE_RC_STRUCT_TO_MACCORE
 #if !((NUM_SPATIAL_STREAM > 4) || SUPPORT_11AX)
   #if defined(CONFIG_AR900B_SUPPORT) || defined(AR900B)
   typedef struct{
@@ -494,6 +495,7 @@ typedef struct {
       A_UINT8     dd_profile;
   } RC_TX_RATE_INFO;
 #endif /* !((NUM_SPATIAL_STREAM > 4) || SUPPORT_11AX) */
+#endif /* CONFIG_MOVE_RC_STRUCT_TO_MACCORE */
 #endif
 
 /*
