@@ -1120,6 +1120,7 @@ typedef struct _htt_rx_peer_rate_stats_tlv {
     A_UINT32 rx_ulofdma_data_ppdu;     /* ppdu level */
     A_UINT32 rx_ulofdma_mpdu_ok;       /* mpdu level */
     A_UINT32 rx_ulofdma_mpdu_fail;     /* mpdu level */
+    A_INT8   rx_ul_fd_rssi[HTT_RX_PEER_STATS_NUM_SPATIAL_STREAMS];/* dBm unit */
 } htt_rx_peer_rate_stats_tlv;
 
 typedef enum {
@@ -2943,7 +2944,8 @@ typedef struct {
      * EVM mean across pilots, computed as
      *     mean(10*log10(rx_pilot_evm_linear)) = mean(rx_pilot_evm_dB)
      */
-    A_INT32  rx_pilot_evm_dB_mean[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_INT32 rx_pilot_evm_dB_mean[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS];
+    A_INT8  rx_ul_fd_rssi[HTT_RX_PDEV_STATS_NUM_SPATIAL_STREAMS][HTT_RX_PDEV_MAX_OFDMA_NUM_USER]; /* dBm units */
 } htt_rx_pdev_rate_stats_tlv;
 
 
