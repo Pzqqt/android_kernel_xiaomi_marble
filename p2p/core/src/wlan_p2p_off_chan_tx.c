@@ -1337,18 +1337,38 @@ end:
  */
 static void p2p_tx_timeout(void *pdata)
 {
-	struct tx_action_context *tx_ctx = pdata;
+	QDF_STATUS status, ret;
+	qdf_list_node_t *p_node;
+	struct tx_action_context *tx_ctx;
+	struct p2p_soc_priv_obj *p2p_soc_obj;
 
 	p2p_info("pdata:%pK", pdata);
-
-	if (!tx_ctx || !(tx_ctx->p2p_soc_obj)) {
-		p2p_err("invalid tx context or p2p soc object");
+	p2p_soc_obj = (struct p2p_soc_priv_obj *)pdata;
+	if (!p2p_soc_obj) {
+		p2p_err("null p2p soc obj");
 		return;
 	}
 
-	qdf_mc_timer_destroy(&tx_ctx->tx_timer);
-	p2p_send_tx_conf(tx_ctx, false);
-	p2p_remove_tx_context(tx_ctx);
+	status = qdf_list_peek_front(&p2p_soc_obj->tx_q_ack, &p_node);
+	while (QDF_IS_STATUS_SUCCESS(status)) {
+		tx_ctx = qdf_container_of(p_node,
+					  struct tx_action_context, node);
+		status = qdf_list_peek_next(&p2p_soc_obj->tx_q_ack,
+					    p_node, &p_node);
+		if (QDF_TIMER_STATE_STOPPED ==
+		    qdf_mc_timer_get_current_state(&tx_ctx->tx_timer)) {
+			ret = qdf_list_remove_node(&p2p_soc_obj->tx_q_ack,
+						   &tx_ctx->node);
+			if (ret == QDF_STATUS_SUCCESS) {
+				qdf_mc_timer_destroy(&tx_ctx->tx_timer);
+				p2p_send_tx_conf(tx_ctx, false);
+				qdf_mem_free(tx_ctx->buf);
+				qdf_mem_free(tx_ctx);
+			} else
+				p2p_err("remove %pK from roc_q fail",
+					tx_ctx);
+		}
+	}
 }
 
 /**
@@ -1366,15 +1386,15 @@ static QDF_STATUS p2p_enable_tx_timer(struct tx_action_context *tx_ctx)
 	p2p_debug("tx context:%pK", tx_ctx);
 
 	status = qdf_mc_timer_init(&tx_ctx->tx_timer,
-			QDF_TIMER_TYPE_SW, p2p_tx_timeout,
-			tx_ctx);
+				   QDF_TIMER_TYPE_SW, p2p_tx_timeout,
+				   tx_ctx->p2p_soc_obj);
 	if (status != QDF_STATUS_SUCCESS) {
 		p2p_err("failed to init tx timer");
 		return status;
 	}
 
 	status = qdf_mc_timer_start(&tx_ctx->tx_timer,
-			P2P_ACTION_FRAME_TX_TIMEOUT);
+				    P2P_ACTION_FRAME_TX_TIMEOUT);
 	if (status != QDF_STATUS_SUCCESS)
 		p2p_err("tx timer start failed");
 
@@ -1648,10 +1668,6 @@ struct tx_action_context *p2p_find_tx_ctx_by_nbuf(
 			qdf_container_of(p_node, struct tx_action_context, node);
 		if (cur_tx_ctx->nbuf == nbuf) {
 			p2p_debug("find tx ctx, nbuf:%pK", nbuf);
-			status = qdf_mc_timer_stop(&cur_tx_ctx->tx_timer);
-			if (status != QDF_STATUS_SUCCESS)
-				p2p_err("Failed to stop tx timer, status:%d",
-					status);
 			return cur_tx_ctx;
 		}
 		status = qdf_list_peek_next(&p2p_soc_obj->tx_q_ack,
@@ -2902,6 +2918,8 @@ QDF_STATUS p2p_process_mgmt_tx_ack_cnf(
 		return QDF_STATUS_SUCCESS;
 	}
 
+	/* disable tx timer */
+	p2p_disable_tx_timer(tx_ctx);
 	tx_cnf.vdev_id = tx_ctx->vdev_id;
 	tx_cnf.action_cookie = (uint64_t)tx_ctx->id;
 	tx_cnf.buf = tx_ctx->buf;
@@ -2914,9 +2932,6 @@ QDF_STATUS p2p_process_mgmt_tx_ack_cnf(
 		tx_cnf.status, tx_cnf.buf);
 
 	p2p_rand_mac_tx_done(p2p_soc_obj->soc, tx_ctx);
-
-	/* disable tx timer */
-	p2p_disable_tx_timer(tx_ctx);
 
 	start_param = p2p_soc_obj->start_param;
 	if (start_param->tx_cnf_cb)
