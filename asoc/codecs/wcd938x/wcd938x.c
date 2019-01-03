@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -30,6 +30,27 @@
 #define WCD938X_VERSION_1_0 1
 #define WCD938X_VERSION_ENTRY_SIZE 32
 
+#define ADC_MODE_VAL_HIFI     0x01
+#define ADC_MODE_VAL_LO_HIF   0x02
+#define ADC_MODE_VAL_NORMAL   0x03
+#define ADC_MODE_VAL_LP       0x05
+#define ADC_MODE_VAL_ULP1     0x09
+#define ADC_MODE_VAL_ULP2     0x0B
+
+#define STRING(name) #name
+#define WCD_DAPM_ENUM(name, reg, offset, text) \
+static SOC_ENUM_SINGLE_DECL(name##_enum, reg, offset, text); \
+static const struct snd_kcontrol_new name##_mux = \
+		SOC_DAPM_ENUM(STRING(name), name##_enum)
+
+#define WCD_DAPM_ENUM_EXT(name, reg, offset, text, getname, putname) \
+static SOC_ENUM_SINGLE_DECL(name##_enum, reg, offset, text); \
+static const struct snd_kcontrol_new name##_mux = \
+		SOC_DAPM_ENUM_EXT(STRING(name), name##_enum, getname, putname)
+
+#define WCD_DAPM_MUX(name, shift, kctl) \
+		SND_SOC_DAPM_MUX(name, SND_SOC_NOPM, shift, 0, &kctl##_mux)
+
 enum {
 	WCD9380 = 0,
 	WCD9385,
@@ -45,6 +66,16 @@ enum {
 	ALLOW_BUCK_DISABLE,
 	HPH_COMP_DELAY,
 	HPH_PA_DELAY,
+};
+
+enum {
+	ADC_MODE_INVALID = 0,
+	ADC_MODE_HIFI,
+	ADC_MODE_LO_HIF,
+	ADC_MODE_NORMAL,
+	ADC_MODE_LP,
+	ADC_MODE_ULP1,
+	ADC_MODE_ULP2,
 };
 
 static const DECLARE_TLV_DB_SCALE(line_gain, 0, 7, 1);
@@ -311,8 +342,6 @@ static int wcd938x_rx_clk_enable(struct snd_soc_component *component)
 	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
 
 	if (wcd938x->rx_clk_cnt == 0) {
-		snd_soc_component_update_bits(component,
-				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x08, 0x08);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x01, 0x01);
 		snd_soc_component_update_bits(component,
@@ -945,17 +974,22 @@ static int wcd938x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 	case 0:
 	case 1:
 		dmic_clk_cnt = &(wcd938x->dmic_0_1_clk_cnt);
-		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC_CTL;
+		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC1_CTL;
 		break;
 	case 2:
 	case 3:
 		dmic_clk_cnt = &(wcd938x->dmic_2_3_clk_cnt);
-		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC1_CTL;
+		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC2_CTL;
 		break;
 	case 4:
 	case 5:
 		dmic_clk_cnt = &(wcd938x->dmic_4_5_clk_cnt);
-		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC2_CTL;
+		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC3_CTL;
+		break;
+	case 6:
+	case 7:
+		dmic_clk_cnt = &(wcd938x->dmic_6_7_clk_cnt);
+		dmic_clk_reg = WCD938X_DIGITAL_CDC_DMIC4_CTL;
 		break;
 	default:
 		dev_err(component->dev, "%s: Invalid DMIC Selection\n",
@@ -969,6 +1003,9 @@ static int wcd938x_codec_enable_dmic(struct snd_soc_dapm_widget *w,
 	case SND_SOC_DAPM_PRE_PMU:
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x80, 0x80);
+		/* enable clock scaling */
+		snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_DMIC_CTL, 0x06, 0x06);
 		snd_soc_component_update_bits(component,
 						dmic_clk_reg, 0x07, 0x02);
 		snd_soc_component_update_bits(component,
@@ -1107,24 +1144,90 @@ static int wcd938x_tx_swr_ctrl(struct snd_soc_dapm_widget *w,
 	return ret;
 }
 
+static int wcd938x_get_adc_mode(int val)
+{
+	int ret = 0;
+
+	switch (val) {
+	case ADC_MODE_INVALID:
+		ret = ADC_MODE_VAL_NORMAL;
+		break;
+	case ADC_MODE_HIFI:
+		ret = ADC_MODE_VAL_HIFI;
+		break;
+	case ADC_MODE_LO_HIF:
+		ret = ADC_MODE_VAL_LO_HIF;
+		break;
+	case ADC_MODE_NORMAL:
+		ret = ADC_MODE_VAL_NORMAL;
+		break;
+	case ADC_MODE_LP:
+		ret = ADC_MODE_VAL_LP;
+		break;
+	case ADC_MODE_ULP1:
+		ret = ADC_MODE_VAL_ULP1;
+		break;
+	case ADC_MODE_ULP2:
+		ret = ADC_MODE_VAL_ULP2;
+		break;
+	default:
+		ret = -EINVAL;
+		pr_err("%s: invalid ADC mode value %d\n", __func__, val);
+		break;
+	}
+	return ret;
+}
+
 static int wcd938x_codec_enable_adc(struct snd_soc_dapm_widget *w,
 				    struct snd_kcontrol *kcontrol,
 				    int event){
-
+	int mode;
 	struct snd_soc_component *component =
 					snd_soc_dapm_to_component(w->dapm);
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
 
 	dev_dbg(component->dev, "%s wname: %s event: %d\n", __func__,
 		w->name, event);
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		mode = wcd938x_get_adc_mode(wcd938x->tx_mode[w->shift]);
+		if (mode < 0) {
+			dev_info(component->dev,
+				 "%s: invalid mode, setting to normal mode\n",
+				 __func__);
+			mode = ADC_MODE_VAL_NORMAL;
+		}
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_DIG_CLK_CTL, 0x80, 0x80);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x08, 0x08);
 		snd_soc_component_update_bits(component,
 				WCD938X_DIGITAL_CDC_ANA_CLK_CTL, 0x10, 0x10);
+		switch (w->shift) {
+		case 0:
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_TX_ANA_MODE_0_1, 0x0F,
+				mode);
+			break;
+		case 1:
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_TX_ANA_MODE_0_1, 0xF0,
+				mode << 4);
+			break;
+		case 2:
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_TX_ANA_MODE_2_3, 0x0F,
+				mode);
+			break;
+		case 3:
+			snd_soc_component_update_bits(component,
+				WCD938X_DIGITAL_CDC_TX_ANA_MODE_2_3, 0xF0,
+				mode << 4);
+			break;
+		default:
+			break;
+		}
 		wcd938x_tx_connect_port(component, ADC1 + (w->shift), true);
 		break;
 	case SND_SOC_DAPM_POST_PMD:
@@ -1433,6 +1536,37 @@ static int wcd938x_codec_enable_micbias(struct snd_soc_dapm_widget *w,
 	return __wcd938x_codec_enable_micbias(w, event);
 }
 
+static int wcd938x_tx_mode_get(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_dapm_widget *widget =
+			snd_soc_dapm_kcontrol_widget(kcontrol);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+
+	ucontrol->value.integer.value[0] = wcd938x->tx_mode[widget->shift];
+	return 0;
+}
+
+static int wcd938x_tx_mode_put(struct snd_kcontrol *kcontrol,
+				 struct snd_ctl_elem_value *ucontrol)
+{
+	struct snd_soc_dapm_widget *widget =
+			snd_soc_dapm_kcontrol_widget(kcontrol);
+	struct snd_soc_component *component =
+			snd_soc_kcontrol_component(kcontrol);
+	struct wcd938x_priv *wcd938x = snd_soc_component_get_drvdata(component);
+	u32 mode_val;
+
+	mode_val = ucontrol->value.enumerated.item[0];
+
+	dev_dbg(component->dev, "%s: mode: %d\n", __func__, mode_val);
+
+	wcd938x->tx_mode[widget->shift] = mode_val;
+	return 0;
+}
+
 static int wcd938x_rx_hph_mode_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
@@ -1604,6 +1738,20 @@ static int wcd938x_tx_hdr_put(struct snd_kcontrol *kcontrol,
 
 	return 0;
 }
+
+static const char * const tx_mode_mux_text[] = {
+	"ADC_INVALID", "ADC_HIFI", "ADC_LO_HIF", "ADC_NORMAL", "ADC_LP",
+	"ADC_ULP1", "ADC_ULP2",
+};
+
+WCD_DAPM_ENUM_EXT(tx0_mode, SND_SOC_NOPM, 0, tx_mode_mux_text,
+		wcd938x_tx_mode_get, wcd938x_tx_mode_put);
+WCD_DAPM_ENUM_EXT(tx1_mode, SND_SOC_NOPM, 1, tx_mode_mux_text,
+		wcd938x_tx_mode_get, wcd938x_tx_mode_put);
+WCD_DAPM_ENUM_EXT(tx2_mode, SND_SOC_NOPM, 2, tx_mode_mux_text,
+		wcd938x_tx_mode_get, wcd938x_tx_mode_put);
+WCD_DAPM_ENUM_EXT(tx3_mode, SND_SOC_NOPM, 3, tx_mode_mux_text,
+		wcd938x_tx_mode_get, wcd938x_tx_mode_put);
 
 static const char * const rx_hph_mode_mux_text[] = {
 	"CLS_H_INVALID", "CLS_H_HIFI", "CLS_H_LP", "CLS_AB", "CLS_H_LOHIFI",
@@ -1820,6 +1968,11 @@ static const struct snd_soc_dapm_widget wcd938x_dapm_widgets[] = {
 				&tx_adc3_mux),
 	SND_SOC_DAPM_MUX("ADC4 MUX", SND_SOC_NOPM, 0, 0,
 				&tx_adc4_mux),
+
+	WCD_DAPM_MUX("TX0 MODE", 0, tx0_mode),
+	WCD_DAPM_MUX("TX1 MODE", 1, tx1_mode),
+	WCD_DAPM_MUX("TX2 MODE", 2, tx2_mode),
+	WCD_DAPM_MUX("TX3 MODE", 3, tx3_mode),
 
 	/*tx mixers*/
 	SND_SOC_DAPM_MIXER_E("ADC1_MIXER", SND_SOC_NOPM, 0, 0,

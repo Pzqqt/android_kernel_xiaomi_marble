@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _WCD938X_INTERNAL_H
@@ -17,6 +17,7 @@
 #define  WCD_VOUT_CTL_TO_MICB(v)  (1000 + v * 50)
 #define MAX_PORT 8
 #define MAX_CH_PER_PORT 8
+#define TX_ADC_MAX 4
 
 enum {
 	TX_HDR12 = 0,
@@ -63,6 +64,7 @@ struct wcd938x_priv {
 	struct wcd938x_mbhc *mbhc;
 
 	u32 hph_mode;
+	u32 tx_mode[TX_ADC_MAX];
 	bool comp1_enable;
 	bool comp2_enable;
 
