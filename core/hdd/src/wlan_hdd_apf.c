@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -409,6 +409,11 @@ hdd_apf_write_memory(struct hdd_adapter *adapter, struct nlattr **tb)
 		ret = -EINVAL;
 	}
 
+	hdd_debug("Writing successful into APF work memory from offset 0x%X:",
+		  write_mem_params.addr_offset);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
+			   write_mem_params.buf, write_mem_params.length);
+
 	if (write_mem_params.buf)
 		qdf_mem_free(write_mem_params.buf);
 
@@ -577,6 +582,11 @@ static int hdd_apf_read_memory(struct hdd_adapter *adapter, struct nlattr **tb)
 	}
 
 	cfg80211_vendor_cmd_reply(skb);
+
+	hdd_debug("Reading APF work memory from offset 0x%X:",
+		  read_mem_params.addr_offset);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
+			   context->buf, read_mem_params.length);
 fail:
 	if (context->buf) {
 		qdf_mem_free(context->buf);
