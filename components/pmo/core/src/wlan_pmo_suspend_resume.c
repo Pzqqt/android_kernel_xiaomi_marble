@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -936,26 +936,44 @@ QDF_STATUS pmo_core_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
 
 	hif_pre_runtime_resume(hif_ctx);
 
-	if (pld_cb)
-		QDF_BUG(!pld_cb());
+	if (pld_cb) {
+		if (pld_cb()) {
+			status = QDF_STATUS_E_FAILURE;
+			goto fail;
+		}
+	}
 
-	QDF_BUG(!hif_runtime_resume(hif_ctx));
+	if (hif_runtime_resume(hif_ctx)) {
+		status = QDF_STATUS_E_FAILURE;
+		goto fail;
+	}
 
 	status = pmo_core_psoc_bus_resume_req(psoc, QDF_RUNTIME_SUSPEND);
-	QDF_BUG(status == QDF_STATUS_SUCCESS);
+	if (status != QDF_STATUS_SUCCESS)
+		goto fail;
 
 	status = pmo_core_psoc_configure_resume(psoc);
-	QDF_BUG(status == QDF_STATUS_SUCCESS);
+	if (status != QDF_STATUS_SUCCESS)
+		goto fail;
 
 	status = pmo_tgt_psoc_set_runtime_pm_inprogress(psoc, false);
-	QDF_BUG(status == QDF_STATUS_SUCCESS);
+	if (status != QDF_STATUS_SUCCESS)
+		goto fail;
 
-	QDF_BUG(!htc_runtime_resume(htc_ctx));
+	if (htc_runtime_resume(htc_ctx)) {
+		status = QDF_STATUS_E_FAILURE;
+		goto fail;
+	}
 
 	status = cdp_runtime_resume(dp_soc, txrx_pdev);
-	QDF_BUG(status == QDF_STATUS_SUCCESS);
+	if (status != QDF_STATUS_SUCCESS)
+		goto fail;
 
 	hif_process_runtime_resume_success(hif_ctx);
+
+fail:
+	if (status != QDF_STATUS_SUCCESS)
+		qdf_trigger_self_recovery();
 
 dec_psoc_ref:
 	pmo_psoc_put_ref(psoc);
