@@ -664,9 +664,6 @@ void lim_deactivate_and_change_timer(struct mac_context *mac, uint32_t timerId)
 
 		break;
 
-	case eLIM_LEARN_DURATION_TIMER:
-		break;
-
 	case eLIM_DISASSOC_ACK_TIMER:
 		if (tx_timer_deactivate
 			    (&mac->lim.limTimers.gLimDisassocAckTimer) != TX_SUCCESS) {
