@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0
 /*
- * Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/slab.h>
@@ -317,6 +317,8 @@ int q6audio_get_port_index(u16 port_id)
 		return IDX_AFE_PORT_ID_VA_CODEC_DMA_TX_0;
 	case AFE_PORT_ID_VA_CODEC_DMA_TX_1:
 		return IDX_AFE_PORT_ID_VA_CODEC_DMA_TX_1;
+	case AFE_PORT_ID_VA_CODEC_DMA_TX_2:
+		return IDX_AFE_PORT_ID_VA_CODEC_DMA_TX_2;
 	case AFE_PORT_ID_RX_CODEC_DMA_RX_0:
 		return IDX_AFE_PORT_ID_RX_CODEC_DMA_RX_0;
 	case AFE_PORT_ID_TX_CODEC_DMA_TX_0:
@@ -659,6 +661,8 @@ int q6audio_get_port_id(u16 port_id)
 		return AFE_PORT_ID_VA_CODEC_DMA_TX_0;
 	case AFE_PORT_ID_VA_CODEC_DMA_TX_1:
 		return AFE_PORT_ID_VA_CODEC_DMA_TX_1;
+	case AFE_PORT_ID_VA_CODEC_DMA_TX_2:
+		return AFE_PORT_ID_VA_CODEC_DMA_TX_2;
 	case AFE_PORT_ID_RX_CODEC_DMA_RX_0:
 		return AFE_PORT_ID_RX_CODEC_DMA_RX_0;
 	case AFE_PORT_ID_TX_CODEC_DMA_TX_0:
@@ -850,6 +854,7 @@ int q6audio_is_digital_pcm_interface(u16 port_id)
 	case AFE_PORT_ID_WSA_CODEC_DMA_TX_2:
 	case AFE_PORT_ID_VA_CODEC_DMA_TX_0:
 	case AFE_PORT_ID_VA_CODEC_DMA_TX_1:
+	case AFE_PORT_ID_VA_CODEC_DMA_TX_2:
 	case AFE_PORT_ID_RX_CODEC_DMA_RX_0:
 	case AFE_PORT_ID_TX_CODEC_DMA_TX_0:
 	case AFE_PORT_ID_RX_CODEC_DMA_RX_1:
@@ -1062,6 +1067,7 @@ int q6audio_validate_port(u16 port_id)
 	case AFE_PORT_ID_WSA_CODEC_DMA_TX_2:
 	case AFE_PORT_ID_VA_CODEC_DMA_TX_0:
 	case AFE_PORT_ID_VA_CODEC_DMA_TX_1:
+	case AFE_PORT_ID_VA_CODEC_DMA_TX_2:
 	case AFE_PORT_ID_RX_CODEC_DMA_RX_0:
 	case AFE_PORT_ID_TX_CODEC_DMA_TX_0:
 	case AFE_PORT_ID_RX_CODEC_DMA_RX_1:
