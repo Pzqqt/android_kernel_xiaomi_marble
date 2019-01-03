@@ -9320,6 +9320,12 @@ static QDF_STATUS extract_hw_mode_cap_service_ready_ext_tlv(
 	if (!hw_caps)
 		return QDF_STATUS_E_INVAL;
 
+	if (!hw_caps->num_hw_modes ||
+	    !param_buf->hw_mode_caps ||
+	    hw_caps->num_hw_modes > PSOC_MAX_HW_MODE ||
+	    hw_caps->num_hw_modes > param_buf->num_hw_mode_caps)
+		return QDF_STATUS_E_INVAL;
+
 	if (hw_mode_idx >= hw_caps->num_hw_modes)
 		return QDF_STATUS_E_INVAL;
 
