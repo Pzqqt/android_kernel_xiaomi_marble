@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1409,7 +1409,8 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 		      struct wlan_scan_obj *scan_obj)
 {
 	scan_obj->scan_disabled = 0;
-	scan_obj->drop_bcn_on_chan_mismatch = true;
+	scan_obj->drop_bcn_on_chan_mismatch =
+			 cfg_get(psoc, CFG_DROP_BCN_ON_CHANNEL_MISMATCH);
 	scan_obj->disable_timeout = false;
 	scan_obj->scan_def.active_dwell =
 			 cfg_get(psoc, CFG_ACTIVE_MAX_CHANNEL_TIME);
