@@ -26,7 +26,11 @@
 #include "qdf_types.h"
 #include "qdf_status.h"
 #include "scheduler_api.h"
+#if defined(CONFIG_HL_SUPPORT)
+#include "wlan_tgt_def_config_hl.h"
+#else
 #include "wlan_tgt_def_config.h"
+#endif
 
 struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;

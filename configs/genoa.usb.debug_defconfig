@@ -49,4 +49,5 @@ else
 endif
 CONFIG_LINUX_QCMBR :=y
 CONFIG_QCN7605_SUPPORT := y
+CONFIG_TGT_NUM_MSDU_DESC := 0
 ###################################

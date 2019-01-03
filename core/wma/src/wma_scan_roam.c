@@ -57,7 +57,11 @@
 #include "ol_fw.h"
 
 #include "wma_internal.h"
+#if defined(CONFIG_HL_SUPPORT)
+#include "wlan_tgt_def_config_hl.h"
+#else
 #include "wlan_tgt_def_config.h"
+#endif
 #include "wlan_reg_services_api.h"
 #include "wlan_roam_debug.h"
 #include "wlan_mlme_public_struct.h"

@@ -62,7 +62,11 @@
 
 #include "wlan_policy_mgr_api.h"
 #include "wma_nan_datapath.h"
+#if defined(CONFIG_HL_SUPPORT)
+#include "wlan_tgt_def_config_hl.h"
+#else
 #include "wlan_tgt_def_config.h"
+#endif
 #include <wlan_dfs_tgt_api.h>
 #include <cdp_txrx_handle.h>
 #include "wlan_pmo_ucfg_api.h"
