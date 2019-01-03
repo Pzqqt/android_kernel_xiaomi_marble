@@ -37,7 +37,6 @@
 
 #define IEEE80211_ADDR_LEN  6  /* size of 802.11 address */
 #define WMI_MAC_MAX_SSID_LENGTH              32
-#define WMI_SCAN_MAX_NUM_SSID                0x0A
 #ifndef CONFIG_HL_SUPPORT
 #define mgmt_tx_dl_frm_len 64
 #else

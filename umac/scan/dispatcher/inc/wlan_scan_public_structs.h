@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,9 +32,9 @@
 typedef uint16_t wlan_scan_requester;
 typedef uint32_t wlan_scan_id;
 
-#define WLAN_SCAN_MAX_NUM_SSID          10
-#define WLAN_SCAN_MAX_NUM_BSSID         10
-#define WLAN_SCAN_MAX_NUM_CHANNELS      40
+#define WLAN_SCAN_MAX_NUM_SSID          16
+#define WLAN_SCAN_MAX_NUM_BSSID         4
+#define WLAN_SCAN_MAX_NUM_CHANNELS      68
 
 #define SCM_CANCEL_SCAN_WAIT_TIME 50
 #define SCM_CANCEL_SCAN_WAIT_ITERATION 600

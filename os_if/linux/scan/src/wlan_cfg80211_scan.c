@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1225,17 +1225,24 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		int j;
 		req->scan_req.num_ssids = request->n_ssids;
 
+		if (req->scan_req.num_ssids > WLAN_SCAN_MAX_NUM_SSID) {
+			cfg80211_info("number of ssid received %d is greater than MAX %d so copy only MAX nuber of SSIDs",
+				      req->scan_req.num_ssids,
+				      WLAN_SCAN_MAX_NUM_SSID);
+			req->scan_req.num_ssids = WLAN_SCAN_MAX_NUM_SSID;
+		}
 		/* copy all the ssid's and their length */
-		for (j = 0; j < request->n_ssids; j++)  {
+		for (j = 0; j < req->scan_req.num_ssids; j++)  {
 			pssid = &req->scan_req.ssid[j];
 			/* get the ssid length */
 			pssid->length = request->ssids[j].ssid_len;
+			if (pssid->length > WLAN_SSID_MAX_LEN)
+				pssid->length = WLAN_SSID_MAX_LEN;
 			qdf_mem_copy(pssid->ssid,
 				     &request->ssids[j].ssid[0],
 				     pssid->length);
-			pssid->ssid[pssid->length] = '\0';
-			cfg80211_notice("SSID number %d: %s", j,
-				    pssid->ssid);
+			cfg80211_info("SSID number %d: %.*s", j, pssid->length,
+				      pssid->ssid);
 		}
 	}
 	if (request->ssids ||
@@ -1321,9 +1328,11 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 				req->scan_req.chan_list.chan[num_chan].phymode =
 					SCAN_PHY_MODE_11A;
 			num_chan++;
+			if (num_chan >= WLAN_SCAN_MAX_NUM_CHANNELS)
+				break;
 		}
-		cfg80211_notice("Channel-List: %s", chl);
-		cfg80211_notice("No. of Scan Channels: %d", num_chan);
+		cfg80211_info("Channel-List: %s", chl);
+		cfg80211_info("No. of Scan Channels: %d", num_chan);
 	}
 	if (!num_chan) {
 		cfg80211_err("Received zero non-dsrc channels");
