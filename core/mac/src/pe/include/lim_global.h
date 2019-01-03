@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -118,8 +118,6 @@ typedef enum eLimSmeStates {
 typedef enum eLimMlmStates {
 	eLIM_MLM_OFFLINE_STATE,
 	eLIM_MLM_IDLE_STATE,
-	eLIM_MLM_WT_PROBE_RESP_STATE,
-	eLIM_MLM_PASSIVE_SCAN_STATE,
 	eLIM_MLM_WT_JOIN_BEACON_STATE,
 	eLIM_MLM_JOINED_STATE,
 	eLIM_MLM_BSS_STARTED_STATE,
@@ -134,7 +132,6 @@ typedef enum eLimMlmStates {
 	eLIM_MLM_REASSOCIATED_STATE,
 	eLIM_MLM_LINK_ESTABLISHED_STATE,
 	eLIM_MLM_WT_ASSOC_CNF_STATE,
-	eLIM_MLM_LEARN_STATE,
 	eLIM_MLM_WT_ADD_BSS_RSP_STATE,
 	eLIM_MLM_WT_DEL_BSS_RSP_STATE,
 	eLIM_MLM_WT_ADD_BSS_RSP_ASSOC_STATE,
@@ -153,10 +150,8 @@ typedef enum eLimMlmStates {
 	eLIM_MLM_WT_SET_BSS_KEY_STATE,
 	eLIM_MLM_WT_SET_STA_KEY_STATE,
 	eLIM_MLM_WT_SET_STA_BCASTKEY_STATE,
-	eLIM_MLM_WT_SET_MIMOPS_STATE,
 	eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE,
 	eLIM_MLM_WT_FT_REASSOC_RSP_STATE,
-	eLIM_MLM_P2P_LISTEN_STATE,
 	eLIM_MLM_WT_SAE_AUTH_STATE,
 } tLimMlmStates;
 

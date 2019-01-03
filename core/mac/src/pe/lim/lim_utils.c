@@ -154,10 +154,6 @@ char *lim_mlm_state_str(tLimMlmStates state)
 		return "eLIM_MLM_OFFLINE_STATE";
 	case eLIM_MLM_IDLE_STATE:
 		return "eLIM_MLM_IDLE_STATE";
-	case eLIM_MLM_WT_PROBE_RESP_STATE:
-		return "eLIM_MLM_WT_PROBE_RESP_STATE";
-	case eLIM_MLM_PASSIVE_SCAN_STATE:
-		return "eLIM_MLM_PASSIVE_SCAN_STATE";
 	case eLIM_MLM_WT_JOIN_BEACON_STATE:
 		return "eLIM_MLM_WT_JOIN_BEACON_STATE";
 	case eLIM_MLM_JOINED_STATE:

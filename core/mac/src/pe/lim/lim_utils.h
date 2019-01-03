@@ -381,13 +381,6 @@ lim_get_mgmt_staid(struct mac_context *mac, uint16_t *staid,
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline uint8_t lim_is_system_in_set_mimops_state(struct mac_context *mac)
-{
-	if (mac->lim.gLimMlmState == eLIM_MLM_WT_SET_MIMOPS_STATE)
-		return true;
-	return false;
-}
-
 static inline uint8_t
 is_entering_mimo_ps(tSirMacHTMIMOPowerSaveState curState,
 		tSirMacHTMIMOPowerSaveState newState)
