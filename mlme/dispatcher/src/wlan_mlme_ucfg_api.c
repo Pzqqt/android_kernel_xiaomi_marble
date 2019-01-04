@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1455,3 +1455,20 @@ ucfg_mlme_get_scan_11d_interval(struct wlan_objmgr_psoc *psoc,
 	*value = mlme_obj->cfg.reg.scan_11d_interval;
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+QDF_STATUS
+ucfg_mlme_is_subnet_detection_enabled(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*val = cfg_default(CFG_LFR3_ENABLE_SUBNET_DETECTION);
+		return QDF_STATUS_E_INVAL;
+	}
+	*val = mlme_obj->cfg.lfr.enable_lfr_subnet_detection;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
