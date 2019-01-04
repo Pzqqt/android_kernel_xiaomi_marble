@@ -381,7 +381,7 @@ struct hdd_adapter *hdd_get_sta_connection_in_progress(
 		    (QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
 			if (eConnectionState_Connecting ==
 			    hdd_sta_ctx->conn_info.connState) {
-				hdd_debug("session_id %d: Connection is in progress",
+				hdd_debug("vdev_id %d: Connection is in progress",
 					  adapter->session_id);
 				return adapter;
 			} else if ((eConnectionState_Associated ==
@@ -389,13 +389,31 @@ struct hdd_adapter *hdd_get_sta_connection_in_progress(
 				   sme_is_sta_key_exchange_in_progress(
 							hdd_ctx->mac_handle,
 							adapter->session_id)) {
-				hdd_debug("session_id %d: Key exchange is in progress",
+				hdd_debug("vdev_id %d: Key exchange is in progress",
 					  adapter->session_id);
 				return adapter;
 			}
 		}
 	}
 	return NULL;
+}
+
+void hdd_abort_ongoing_sta_connection(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *sta_adapter;
+	QDF_STATUS status;
+
+	sta_adapter = hdd_get_sta_connection_in_progress(hdd_ctx);
+	if (sta_adapter) {
+		hdd_debug("Disconnecting STA on vdev: %d",
+			  sta_adapter->session_id);
+		status = wlan_hdd_disconnect(sta_adapter,
+					     eCSR_DISCONNECT_REASON_DEAUTH);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			hdd_err("wlan_hdd_disconnect failed, status: %d",
+				status);
+		}
+	}
 }
 
 /**
