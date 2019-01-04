@@ -4712,6 +4712,7 @@ typedef enum {
 	wmi_pdev_ctl_failsafe_check_event_id,
 	wmi_vdev_bcn_reception_stats_event_id,
 	wmi_roam_blacklist_event_id,
+	wmi_wlm_stats_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -5178,6 +5179,7 @@ typedef enum {
 	wmi_service_ndi_sap_support,
 	wmi_service_nan_disable_support,
 	wmi_service_hw_db2dbm_support,
+	wmi_service_wlm_stats_support,
 	wmi_services_max,
 } wmi_conv_service_ids;
 #define WMI_SERVICE_UNAVAILABLE 0xFFFF

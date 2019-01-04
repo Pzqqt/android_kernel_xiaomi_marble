@@ -11619,6 +11619,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_vdev_bcn_reception_stats_event_id] =
 		WMI_VDEV_BCN_RECEPTION_STATS_EVENTID;
 	event_ids[wmi_roam_blacklist_event_id] = WMI_ROAM_BLACKLIST_EVENTID;
+	event_ids[wmi_wlm_stats_event_id] = WMI_WLM_STATS_EVENTID;
 }
 
 /**
@@ -11860,6 +11861,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 			WMI_SERVICE_NAN_DISABLE_SUPPORT;
 	wmi_service[wmi_service_hw_db2dbm_support] =
 			WMI_SERVICE_HW_DB2DBM_CONVERSION_SUPPORT;
+	wmi_service[wmi_service_wlm_stats_support] =
+			WMI_SERVICE_WLM_STATS_REQUEST;
 }
 #ifndef CONFIG_MCL
 
