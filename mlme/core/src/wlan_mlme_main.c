@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2027,6 +2027,12 @@ static void mlme_init_reg_cfg(struct wlan_objmgr_psoc *psoc,
 	reg->scan_11d_interval = cfg_get(psoc, CFG_SCAN_11D_INTERVAL);
 }
 
+static void
+mlme_init_dot11_mode_cfg(struct wlan_mlme_dot11_mode *dot11_mode)
+{
+	dot11_mode->dot11_mode = cfg_default(CFG_DOT11_MODE);
+}
+
 QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	struct wlan_mlme_psoc_obj *mlme_obj;
@@ -2065,6 +2071,7 @@ QDF_STATUS mlme_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	mlme_init_ibss_cfg(psoc, &mlme_cfg->ibss);
 	mlme_init_feature_flag_in_cfg(psoc, &mlme_cfg->feature_flags);
 	mlme_init_scoring_cfg(psoc, &mlme_cfg->scoring);
+	mlme_init_dot11_mode_cfg(&mlme_cfg->dot11_mode);
 	mlme_init_threshold_cfg(psoc, &mlme_cfg->threshold);
 	mlme_init_acs_cfg(psoc, &mlme_cfg->acs);
 	mlme_init_power_cfg(psoc, &mlme_cfg->power);
