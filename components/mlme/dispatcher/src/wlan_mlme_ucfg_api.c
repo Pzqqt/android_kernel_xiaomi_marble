@@ -1472,3 +1472,65 @@ ucfg_mlme_is_subnet_detection_enabled(struct wlan_objmgr_psoc *psoc, bool *val)
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+QDF_STATUS
+ucfg_mlme_set_current_tx_power_level(struct wlan_objmgr_psoc *psoc,
+				     uint8_t value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj->cfg.power.current_tx_power_level = value;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_get_current_tx_power_level(struct wlan_objmgr_psoc *psoc,
+				     uint8_t *value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj) {
+		*value = cfg_default(CFG_CURRENT_TX_POWER_LEVEL);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	*value = mlme_obj->cfg.power.current_tx_power_level;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_obss_detection_offload_enabled(struct wlan_objmgr_psoc *psoc,
+					     uint8_t value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj->cfg.obss_ht40.obss_detection_offload_enabled = value;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_mlme_set_obss_color_collision_offload_enabled(
+		struct wlan_objmgr_psoc *psoc, uint8_t value)
+{
+	struct wlan_mlme_psoc_obj *mlme_obj;
+
+	mlme_obj = mlme_get_psoc_obj(psoc);
+	if (!mlme_obj)
+		return QDF_STATUS_E_INVAL;
+
+	mlme_obj->cfg.obss_ht40.obss_color_collision_offload_enabled = value;
+
+	return QDF_STATUS_SUCCESS;
+}

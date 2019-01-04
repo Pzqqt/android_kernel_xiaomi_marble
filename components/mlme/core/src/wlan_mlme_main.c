@@ -1187,6 +1187,10 @@ static void mlme_init_obss_ht40_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_default(CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD);
 	obss_ht40->is_override_ht20_40_24g =
 		cfg_get(psoc, CFG_OBSS_HT40_OVERRIDE_HT40_20_24GHZ);
+	obss_ht40->obss_detection_offload_enabled =
+		(bool)cfg_default(CFG_OBSS_DETECTION_OFFLOAD);
+	obss_ht40->obss_color_collision_offload_enabled =
+		(bool)cfg_default(CFG_OBSS_COLOR_COLLISION_OFFLOAD);
 }
 
 static void mlme_init_threshold_cfg(struct wlan_objmgr_psoc *psoc,
@@ -1567,7 +1571,13 @@ static void mlme_init_power_cfg(struct wlan_objmgr_psoc *psoc,
 	power->power_usage.len = CFG_POWER_USAGE_MAX_LEN;
 	qdf_mem_copy(power->power_usage.data, cfg_get(psoc, CFG_POWER_USAGE),
 		     power->power_usage.len);
+	power->max_tx_power = cfg_get(psoc, CFG_MAX_TX_POWER);
+	power->current_tx_power_level =
+			(uint8_t)cfg_default(CFG_CURRENT_TX_POWER_LEVEL);
+	power->local_power_constraint =
+			(uint8_t)cfg_default(CFG_LOCAL_POWER_CONSTRAINT);
 }
+
 static void mlme_init_scoring_cfg(struct wlan_objmgr_psoc *psoc,
 				  struct wlan_mlme_scoring_cfg *scoring_cfg)
 {
@@ -1696,10 +1706,10 @@ static void mlme_init_scoring_cfg(struct wlan_objmgr_psoc *psoc,
 	scoring_cfg->oce_wan_scoring.score_pcnt15_to_12 =
 		mlme_limit_max_per_index_score(
 			cfg_get(psoc, CFG_SCORING_OCE_WAN_SCORE_IDX_15_TO_12));
-
 	scoring_cfg->roam_trigger_bitmap =
 				cfg_get(psoc, CFG_ROAM_TRIGGER_BITMAP);
 	scoring_cfg->roam_score_delta = cfg_get(psoc, CFG_ROAM_SCORE_DELTA);
+	scoring_cfg->apsd_enabled = (bool)cfg_default(CFG_APSD_ENABLED);
 }
 
 static void mlme_init_oce_cfg(struct wlan_objmgr_psoc *psoc,

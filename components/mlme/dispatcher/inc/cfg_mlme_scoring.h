@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1057,6 +1057,18 @@
 		1, \
 		"Enable Scoring for Roam")
 
+/*
+ * <cfg>
+ * apsd_enabled - Enable automatic power save delivery
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ */
+#define CFG_APSD_ENABLED CFG_BOOL( \
+		"apsd_enabled", \
+		0, \
+		"Enable APSD")
+
 #define CFG_SCORING_ALL \
 	CFG(CFG_SCORING_RSSI_WEIGHTAGE) \
 	CFG(CFG_SCORING_HT_CAPS_WEIGHTAGE) \
@@ -1092,6 +1104,7 @@
 	CFG(CFG_SCORING_OCE_WAN_SCORE_IDX_15_TO_12) \
 	CFG(CFG_ROAM_TRIGGER_BITMAP) \
 	CFG(CFG_ROAM_SCORE_DELTA) \
-	CFG(CFG_ENABLE_SCORING_FOR_ROAM)
+	CFG(CFG_ENABLE_SCORING_FOR_ROAM) \
+	CFG(CFG_APSD_ENABLED)
 
 #endif /* __CFG_MLME_SCORING_H */

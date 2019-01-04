@@ -1069,6 +1069,8 @@ struct wlan_mlme_cfg_twt {
  * @width_trans_delay:       obss width transition delay
  * @scan_activity_threshold: obss scan activity threshold
  * @is_override_ht20_40_24g: use channel bonding in 2.4 GHz
+ * @obss_detection_offload_enabled:       Enable OBSS detection offload
+ * @obss_color_collision_offload_enabled: Enable obss color collision
  */
 struct wlan_mlme_obss_ht40 {
 	uint32_t active_dwelltime;
@@ -1079,6 +1081,8 @@ struct wlan_mlme_obss_ht40 {
 	uint32_t width_trans_delay;
 	uint32_t scan_activity_threshold;
 	bool is_override_ht20_40_24g;
+	bool obss_detection_offload_enabled;
+	bool obss_color_collision_offload_enabled;
 };
 
 /**
@@ -1628,6 +1632,7 @@ struct wlan_mlme_per_slot_scoring {
  * @band_weight_per_index: Band weight per index for scoring logic
  * @roam_trigger_bitmap: bitmap for various roam triggers
  * @roam_score_delta: percentage delta in roam score
+ * @apsd_enabled: Enable automatic power save delivery
  */
 struct wlan_mlme_scoring_cfg {
 	bool enable_scoring_for_roam;
@@ -1640,6 +1645,7 @@ struct wlan_mlme_scoring_cfg {
 	uint32_t band_weight_per_index;
 	uint32_t roam_trigger_bitmap;
 	uint32_t roam_score_delta;
+	bool apsd_enabled;
 };
 
 /* struct wlan_mlme_threshold - Threshold related config items
@@ -1691,6 +1697,9 @@ struct mlme_power_usage {
  * @power_usage: power usage mode, min, max, mod
  * @tx_power_2g: limit tx power in 2.4 ghz
  * @tx_power_5g: limit tx power in 5 ghz
+ * @max_tx_power: WLAN max tx power
+ * @current_tx_power_level: current tx power level
+ * @local_power_constraint: local power constraint
  */
 struct wlan_mlme_power {
 	struct mlme_max_tx_power_24 max_tx_power_24;
@@ -1698,6 +1707,9 @@ struct wlan_mlme_power {
 	struct mlme_power_usage power_usage;
 	uint8_t tx_power_2g;
 	uint8_t tx_power_5g;
+	uint8_t max_tx_power;
+	uint8_t current_tx_power_level;
+	uint8_t local_power_constraint;
 };
 
 /*
