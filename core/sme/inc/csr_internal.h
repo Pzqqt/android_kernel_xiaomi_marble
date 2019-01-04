@@ -386,11 +386,6 @@ struct csr_config {
 	uint32_t BssPreferValue[CSR_NUM_RSSI_CAT];
 	int RSSICat[CSR_NUM_RSSI_CAT];
 	uint8_t bCatRssiOffset; /* to set RSSI difference for each category */
-	/*
-	 * in dBm, the max TX power. The actual TX power is the lesser of this
-	 * value & 11d. If 11d is disable, the lesser of this & default setting.
-	 */
-	uint8_t nTxPowerCap;
 	uint32_t statsReqPeriodicity;    /* stats req freq while in fullpower */
 	uint32_t statsReqPeriodicityInPS;/* stats req freq while in powersave */
 	uint32_t dtimPeriod;

@@ -564,55 +564,6 @@ enum hdd_dot11_mode {
 #define CFG_AP_ENABLE_PROTECTION_MODE_MAX             (1)
 #define CFG_AP_ENABLE_PROTECTION_MODE_DEFAULT         (1)
 
-#define CFG_DISABLE_PACKET_FILTER		"gDisablePacketFilter"
-#define CFG_DISABLE_PACKET_FILTER_MIN		(0)
-#define CFG_DISABLE_PACKET_FILTER_MAX		(1)
-#define CFG_DISABLE_PACKET_FILTER_DEFAULT	(1)
-
-/*
- * <ini>
- * gTxPowerCap - WLAN max tx power
- * @Min: 0
- * @Max: 128
- * @Default: 128
- *
- * This ini is used to configure the device max tx power.
- *
- * Related: None.
- *
- * Supported Feature: Concurrency
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_MAX_TX_POWER_NAME                   "gTxPowerCap"
-#define CFG_MAX_TX_POWER_MIN                    WNI_CFG_CURRENT_TX_POWER_LEVEL_STAMIN
-#define CFG_MAX_TX_POWER_MAX                    WNI_CFG_CURRENT_TX_POWER_LEVEL_STAMAX
-/* Not to use CFG default because if no registry setting, this is ignored by SME. */
-#define CFG_MAX_TX_POWER_DEFAULT                WNI_CFG_CURRENT_TX_POWER_LEVEL_STAMAX
-
-/*
- * <ini>
- * g_wow_data_inactivity_timeout - Data activity timeout in wow mode.
- * @Min: 1
- * @Max: 255
- * @Default: 50
- *
- * This ini is used to set data inactivity timeout in wow mode.
- *
- * Supported Feature: inactivity timeout in wow mode
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_WOW_DATA_INACTIVITY_TIMEOUT_NAME     "g_wow_data_inactivity_timeout"
-#define CFG_WOW_DATA_INACTIVITY_TIMEOUT_MIN      (1)
-#define CFG_WOW_DATA_INACTIVITY_TIMEOUT_MAX      (255)
-#define CFG_WOW_DATA_INACTIVITY_TIMEOUT_DEFAULT  (50)
-
 /* WMM configuration */
 /*
  * <ini>
@@ -1139,15 +1090,11 @@ struct hdd_config {
 	uint32_t nChannelBondingMode24GHz;
 	uint32_t nChannelBondingMode5GHz;
 	bool apProtEnabled;
-	uint8_t nTxPowerCap;    /* In dBm */
-	uint8_t disablePacketFilter;
 
 #ifdef FEATURE_WLAN_DYNAMIC_CVM
 	/* Bitmap for operating voltage corner mode */
 	uint32_t vc_mode_cfg_bitmap;
 #endif
-	uint8_t wow_data_inactivity_timeout;
-
 	uint32_t DelayedTriggerFrmInt;
 
 #ifdef FEATURE_WLAN_SCAN_PNO

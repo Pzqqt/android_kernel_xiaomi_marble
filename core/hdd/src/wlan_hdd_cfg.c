@@ -84,30 +84,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_AP_ENABLE_PROTECTION_MODE_MIN,
 		     CFG_AP_ENABLE_PROTECTION_MODE_MAX),
 
-	REG_VARIABLE(CFG_DISABLE_PACKET_FILTER, WLAN_PARAM_Integer,
-		     struct hdd_config, disablePacketFilter,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_DISABLE_PACKET_FILTER_DEFAULT,
-		     CFG_DISABLE_PACKET_FILTER_MIN,
-		     CFG_DISABLE_PACKET_FILTER_MAX),
-
-	REG_VARIABLE(CFG_MAX_TX_POWER_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, nTxPowerCap,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_MAX_TX_POWER_DEFAULT,
-		     CFG_MAX_TX_POWER_MIN,
-		     CFG_MAX_TX_POWER_MAX),
-
-	REG_VARIABLE(CFG_WOW_DATA_INACTIVITY_TIMEOUT_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, wow_data_inactivity_timeout,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_WOW_DATA_INACTIVITY_TIMEOUT_DEFAULT,
-		     CFG_WOW_DATA_INACTIVITY_TIMEOUT_MIN,
-		     CFG_WOW_DATA_INACTIVITY_TIMEOUT_MAX),
-
-#ifdef FEATURE_WLAN_ESE
-
-#endif /* FEATURE_WLAN_ESE */
 	REG_VARIABLE(CFG_TL_DELAYED_TRGR_FRM_INT_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, DelayedTriggerFrmInt,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1653,13 +1629,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 	mac_handle = hdd_ctx->mac_handle;
 
 	if (sme_cfg_set_int(mac_handle,
-		WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT,
-		config->wow_data_inactivity_timeout) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Fail to pass WNI_CFG_PS_WOW_DATA_INACTIVITY_TO CFG");
-	}
-
-	if (sme_cfg_set_int(mac_handle,
 				WNI_CFG_REMOVE_TIME_SYNC_CMD,
 				config->remove_time_stamp_sync_cmd)
 				== QDF_STATUS_E_FAILURE) {
@@ -1916,7 +1885,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.AdHocChannel24 = ibss_cfg.adhoc_ch_2g;
 	smeConfig->csrConfig.ProprietaryRatesEnabled = 0;
 	smeConfig->csrConfig.HeartbeatThresh50 = 40;
-	smeConfig->csrConfig.nTxPowerCap = pConfig->nTxPowerCap;
 	smeConfig->csrConfig.fEnableDFSChnlScan = pConfig->enableDFSChnlScan;
 
 	smeConfig->csrConfig.Csr11dinfo.Channels.numChannels = 0;

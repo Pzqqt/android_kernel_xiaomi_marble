@@ -997,12 +997,6 @@ typedef struct tagCsrConfigParam {
 	 */
 	uint8_t fAllowMCCGODiffBI;
 	tCsr11dinfo Csr11dinfo;
-	/*
-	 * in dBm, the maximum TX power The actual TX power is the lesser of
-	 * this value and 11d. If 11d is disable, the lesser of this and
-	 * default setting.
-	 */
-	uint8_t nTxPowerCap;
 	/* stats request frequency from PE while in full power */
 	uint32_t statsReqPeriodicity;
 	/* stats request frequency from PE while in power save */

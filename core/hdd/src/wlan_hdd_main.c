@@ -14270,7 +14270,6 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 	psoc_cfg.magic_ptrn_enable = (wow_enable & 0x01) ? true : false;
 	psoc_cfg.ptrn_match_enable_all_vdev =
 				(wow_enable & 0x02) ? true : false;
-	psoc_cfg.packet_filter_enabled = !hdd_ctx->config->disablePacketFilter;
 	psoc_cfg.ap_arpns_support = hdd_ctx->ap_arpns_support;
 	psoc_cfg.d0_wow_supported = wma_d0_wow_is_supported();
 	ucfg_mlme_get_sap_max_modulated_dtim(hdd_ctx->psoc,

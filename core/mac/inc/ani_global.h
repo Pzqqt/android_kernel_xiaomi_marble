@@ -693,8 +693,6 @@ typedef struct sAniSirLim {
 	uint8_t retry_packet_cnt;
 	uint8_t beacon_probe_rsp_cnt_per_scan;
 	wlan_scan_requester req_id;
-	bool global_obss_offload_enabled;
-	bool global_obss_color_collision_det_offload;
 } tAniSirLim, *tpAniSirLim;
 
 struct mgmt_frm_reg_info {
