@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -77,6 +77,7 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 	struct gateway_param_update_req req = { 0 };
 	int ret;
 	QDF_STATUS status;
+	bool subnet_detection_enabled;
 
 	hdd_enter_dev(dev);
 
@@ -85,7 +86,9 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 		return ret;
 
 	/* user may have disabled the feature in INI */
-	if (!hdd_ctx->config->enable_lfr_subnet_detection) {
+	ucfg_mlme_is_subnet_detection_enabled(hdd_ctx->psoc,
+					      &subnet_detection_enabled);
+	if (!subnet_detection_enabled) {
 		hdd_info("LFR Subnet Detection disabled in INI");
 		return -ENOTSUPP;
 	}

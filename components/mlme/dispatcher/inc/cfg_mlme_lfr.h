@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -349,33 +349,6 @@
 	-30, \
 	CFG_VALUE_OR_DEFAULT, \
 	"Set first scan bucket")
-
-/*
- * <ini>
- * gLFRSubnetDetectionEnable - Enable LFR3 subnet detection
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * Enable IP subnet detection during legacy fast roming version 3. Legacy fast
- * roaming could roam across IP subnets without host processors' knowledge.
- * This feature enables firmware to wake up the host processor if it
- * successfully determines change in the IP subnet. Change in IP subnet could
- * potentially cause disruption in IP connnectivity if IP address is not
- * refreshed.
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_LFR3_ENABLE_SUBNET_DETECTION CFG_INI_BOOL( \
-	"gLFRSubnetDetectionEnable", \
-	1, \
-	"Set early stop scan")
 
 /*
  * <ini>
@@ -1920,6 +1893,151 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"bss load sampling time")
 
+/*
+ * <ini>
+ * ho_delay_for_rx - Delay hand-off (in msec) by this duration to receive
+ * pending rx frames from current BSS
+ * @Min: 0
+ * @Max: 200
+ * @Default: 0
+ *
+ * For LFR 3.0 roaming scenario, once roam candidate is found, firmware
+ * waits for minimum this much duration to receive pending rx frames from
+ * current BSS before switching to new channel for handoff to new AP.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR3_ROAM_HO_DELAY_FOR_RX CFG_INI_UINT( \
+	"ho_delay_for_rx", \
+	0, \
+	200, \
+	0, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Delay Hand-off by this duration to receive")
+
+/*
+ * <ini>
+ * min_delay_btw_roam_scans - Min duration (in sec) allowed btw two
+ * consecutive roam scans
+ * @Min: 0
+ * @Max: 60
+ * @Default: 10
+ *
+ * Roam scan is not allowed if duration between two consecutive
+ * roam scans is less than this time.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_MIN_DELAY_BTW_ROAM_SCAN CFG_INI_UINT( \
+	"min_delay_btw_roam_scans", \
+	0, \
+	60, \
+	10, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Min duration")
+
+/*
+ * <ini>
+ * roam_trigger_reason_bitmask - Contains roam_trigger_reasons
+ * @Min: 0
+ * @Max: 0xFFFFFFFF
+ * @Default: 0x10DA
+ *
+ * Bitmask containing roam_trigger_reasons for which
+ * min_delay_btw_roam_scans constraint should be applied.
+ * Currently supported bit positions are as follows:
+ * Bit 0 is reserved in the firmware.
+ * WMI_ROAM_TRIGGER_REASON_PER - 1
+ * WMI_ROAM_TRIGGER_REASON_BMISS - 2
+ * WMI_ROAM_TRIGGER_REASON_LOW_RSSI - 3
+ * WMI_ROAM_TRIGGER_REASON_HIGH_RSSI - 4
+ * WMI_ROAM_TRIGGER_REASON_PERIODIC - 5
+ * WMI_ROAM_TRIGGER_REASON_MAWC - 6
+ * WMI_ROAM_TRIGGER_REASON_DENSE - 7
+ * WMI_ROAM_TRIGGER_REASON_BACKGROUND - 8
+ * WMI_ROAM_TRIGGER_REASON_FORCED - 9
+ * WMI_ROAM_TRIGGER_REASON_BTM - 10
+ * WMI_ROAM_TRIGGER_REASON_UNIT_TEST - 11
+ * WMI_ROAM_TRIGGER_REASON_BSS_LOAD - 12
+ * WMI_ROAM_TRIGGER_REASON_MAX - 13
+ *
+ * For Ex: 0xDA (PER, LOW_RSSI, HIGH_RSSI, MAWC, DENSE)
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_SCAN_TRIGGER_REASON_BITMASK CFG_INI_UINT( \
+	"roam_trigger_reason_bitmask", \
+	0, \
+	0xFFFFFFFF, \
+	0x10DA, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Contains roam_trigger_reasons")
+
+/*
+ * <ini>
+ * enable_ftopen - enable/disable FT open feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This INI is used to enable/disable FT open feature
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_FT_OPEN_ENABLE CFG_INI_BOOL( \
+	"enable_ftopen", \
+	1, \
+	"enable/disable FT open feature")
+
+/*
+ * <ini>
+ * roam_force_rssi_trigger - To force RSSI trigger
+ * irrespective of channel list type
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to set roam scan mode
+ * WMI_ROAM_SCAN_MODE_RSSI_CHANGE, irrespective of whether
+ * channel list type is CHANNEL_LIST_STATIC or not
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR_ROAM_FORCE_RSSI_TRIGGER CFG_INI_BOOL( \
+	"roam_force_rssi_trigger", \
+	1, \
+	"To force RSSI trigger")
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /*
  * <ini>
@@ -1975,6 +2093,39 @@
 #define LFR_ESE_ALL
 #endif
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+/*
+ * <ini>
+ * gLFRSubnetDetectionEnable - Enable LFR3 subnet detection
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * Enable IP subnet detection during legacy fast roming version 3. Legacy fast
+ * roaming could roam across IP subnets without host processors' knowledge.
+ * This feature enables firmware to wake up the host processor if it
+ * successfully determines change in the IP subnet. Change in IP subnet could
+ * potentially cause disruption in IP connnectivity if IP address is not
+ * refreshed.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_LFR3_ENABLE_SUBNET_DETECTION CFG_INI_BOOL( \
+	"gLFRSubnetDetectionEnable", \
+	1, \
+	"Enable LFR3 subnet detection")
+
+#define LFR_SUBNET_DETECTION_ALL CFG(CFG_LFR3_ENABLE_SUBNET_DETECTION)
+#else
+#define LFR_SUBNET_DETECTION_ALL
+#endif
+
 #define CFG_LFR_ALL \
 	CFG(CFG_LFR_MAWC_ROAM_ENABLED) \
 	CFG(CFG_LFR_MAWC_ROAM_TRAFFIC_THRESHOLD) \
@@ -1988,7 +2139,6 @@
 	CFG(CFG_LFR_EARLY_STOP_SCAN_MIN_THRESHOLD) \
 	CFG(CFG_LFR_EARLY_STOP_SCAN_MAX_THRESHOLD) \
 	CFG(CFG_LFR_FIRST_SCAN_BUCKET_THRESHOLD) \
-	CFG(CFG_LFR3_ENABLE_SUBNET_DETECTION) \
 	CFG(CFG_LFR_ROAM_DENSE_TRAFFIC_THRESHOLD) \
 	CFG(CFG_LFR_ROAM_DENSE_RSSI_THRE_OFFSET) \
 	CFG(CFG_LFR_ROAM_DENSE_MIN_APS) \
@@ -2048,7 +2198,13 @@
 	CFG(CFG_ENABLE_BSS_LOAD_TRIGGERED_ROAM) \
 	CFG(CFG_BSS_LOAD_THRESHOLD) \
 	CFG(CFG_BSS_LOAD_SAMPLE_TIME) \
+	CFG(CFG_LFR3_ROAM_HO_DELAY_FOR_RX) \
+	CFG(CFG_LFR_MIN_DELAY_BTW_ROAM_SCAN) \
+	CFG(CFG_LFR_ROAM_SCAN_TRIGGER_REASON_BITMASK) \
+	CFG(CFG_LFR_ROAM_FT_OPEN_ENABLE) \
+	CFG(CFG_LFR_ROAM_FORCE_RSSI_TRIGGER) \
 	ROAM_OFFLOAD_ALL \
-	LFR_ESE_ALL
+	LFR_ESE_ALL \
+	LFR_SUBNET_DETECTION_ALL
 
 #endif /* CFG_MLME_LFR_H__ */

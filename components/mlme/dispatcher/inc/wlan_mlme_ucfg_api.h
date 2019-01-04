@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -3482,4 +3482,26 @@ QDF_STATUS
 ucfg_mlme_get_scan_11d_interval(struct wlan_objmgr_psoc *psoc,
 				uint32_t *value);
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+/**
+ * ucfg_mlme_is_subnet_detection_enabled() - check if sub net detection is
+ * enabled/disabled
+ * @psoc: pointer to psoc object
+ * @value: value that is requested by the caller
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS
+ucfg_mlme_is_subnet_detection_enabled(struct wlan_objmgr_psoc *psoc, bool *val);
+#else
+static QDF_STATUS
+ucfg_mlme_is_subnet_detection_enabled(struct wlan_objmgr_psoc *psoc, bool *val)
+{
+	*val = false;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_LFR_SUBNET_DETECTION */
 #endif /* _WLAN_MLME_UCFG_API_H_ */

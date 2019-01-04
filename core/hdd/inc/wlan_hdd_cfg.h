@@ -521,142 +521,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * enable_ftopen - enable/disable FT open feature
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This INI is used to enable/disable FT open feature
-*
-* Related: None
-*
-* Supported Feature: Roaming
-*
-* Usage: External
-*
-* </ini>
-*/
-#define CFG_ROAM_FT_OPEN_ENABLE_NAME                "enable_ftopen"
-#define CFG_ROAM_FT_OPEN_ENABLE_MIN                 (0)
-#define CFG_ROAM_FT_OPEN_ENABLE_MAX                 (1)
-#define CFG_ROAM_FT_OPEN_ENABLE_DEFAULT             (1)
-
-/*
- * <ini>
- * min_delay_btw_roam_scans - Min duration (in sec) allowed btw two
- * consecutive roam scans
- * @Min: 0
- * @Max: 60
- * @Default: 10
- *
- * Roam scan is not allowed if duration between two consecutive
- * roam scans is less than this time.
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_MIN_DELAY_BTW_ROAM_SCAN_NAME    "min_delay_btw_roam_scans"
-#define CFG_MIN_DELAY_BTW_ROAM_SCAN_MIN     (0)
-#define CFG_MIN_DELAY_BTW_ROAM_SCAN_MAX     (60)
-#define CFG_MIN_DELAY_BTW_ROAM_SCAN_DEFAULT (10)
-
-/*
- * <ini>
- * roam_trigger_reason_bitmask - Contains roam_trigger_reasons
- * @Min: 0
- * @Max: 0xFFFFFFFF
- * @Default: 0xDA
- *
- * Bitmask containing roam_trigger_reasons for which
- * min_delay_btw_roam_scans constraint should be applied.
- * Currently supported bit positions are as follows:
- * Bit 0 is reserved in the firmware.
- * WMI_ROAM_TRIGGER_REASON_PER - 1
- * WMI_ROAM_TRIGGER_REASON_BMISS - 2
- * WMI_ROAM_TRIGGER_REASON_LOW_RSSI - 3
- * WMI_ROAM_TRIGGER_REASON_HIGH_RSSI - 4
- * WMI_ROAM_TRIGGER_REASON_PERIODIC - 5
- * WMI_ROAM_TRIGGER_REASON_MAWC - 6
- * WMI_ROAM_TRIGGER_REASON_DENSE - 7
- * WMI_ROAM_TRIGGER_REASON_BACKGROUND - 8
- * WMI_ROAM_TRIGGER_REASON_FORCED - 9
- * WMI_ROAM_TRIGGER_REASON_BTM - 10
- * WMI_ROAM_TRIGGER_REASON_UNIT_TEST - 11
- * WMI_ROAM_TRIGGER_REASON_BSS_LOAD - 12
- * WMI_ROAM_TRIGGER_REASON_MAX - 13
- *
- * For Ex: 0xDA (PER, LOW_RSSI, HIGH_RSSI, MAWC, DENSE)
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ROAM_SCAN_TRIGGER_REASON_BITMASK_NAME "roam_trigger_reason_bitmask"
-#define CFG_ROAM_SCAN_TRIGGER_REASON_BITMASK_MIN     (0)
-#define CFG_ROAM_SCAN_TRIGGER_REASON_BITMASK_MAX     (0xFFFFFFFF)
-#define CFG_ROAM_SCAN_TRIGGER_REASON_BITMASK_DEFAULT (0x10DA)
-
-/*
- * <ini>
- * ho_delay_for_rx - Delay Hand-off (In msec) by this duration to receive
- * pending rx frames from current BSS
- * @Min: 0
- * @Max: 200
- * @Default: 0
- *
- * For LFR 3.0 roaming scenario, once roam candidate is found, firmware
- * waits for minimum this much duration to receive pending rx frames from
- * current BSS before switching to new channel for handoff to new AP.
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ROAM_HO_DELAY_FOR_RX_NAME    "ho_delay_for_rx"
-#define CFG_ROAM_HO_DELAY_FOR_RX_MIN     (0)
-#define CFG_ROAM_HO_DELAY_FOR_RX_MAX     (200)
-#define CFG_ROAM_HO_DELAY_FOR_RX_DEFAULT (0)
-
-/*
- * <ini>
- * roam_force_rssi_trigger - To force RSSI trigger
- * irrespective of channel list type
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to set roam scan mode
- * WMI_ROAM_SCAN_MODE_RSSI_CHANGE, irrespective of whether
- * channel list type is CHANNEL_LIST_STATIC or not
- *
- * Related: None
- *
- * Supported Feature: Roaming
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ROAM_FORCE_RSSI_TRIGGER_NAME  "roam_force_rssi_trigger"
-#define CFG_ROAM_FORCE_RSSI_TRIGGER_MIN     (0)
-#define CFG_ROAM_FORCE_RSSI_TRIGGER_MAX     (1)
-#define CFG_ROAM_FORCE_RSSI_TRIGGER_DEFAULT (1)
-
-/*
- * <ini>
  * gDot11Mode - SAP phy mode
  * @Min: 0
  * @Max: 12 (11ax)
@@ -1378,9 +1242,6 @@ struct hdd_config {
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 	bool enable_lfr_subnet_detection;
 #endif
-	uint32_t ho_delay_for_rx;
-	uint32_t min_delay_btw_roam_scans;
-	uint32_t roam_trigger_reason_bitmask;
 	bool apf_enabled;
 	bool adaptive_dwell_mode_enabled;
 	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
@@ -1411,8 +1272,6 @@ struct hdd_config {
 	bool action_oui_enable;
 	uint8_t action_oui_str[ACTION_OUI_MAXIMUM_ID][ACTION_OUI_MAX_STR_LEN];
 	bool is_unit_test_framework_enabled;
-	bool enable_ftopen;
-	bool roam_force_rssi_trigger;
 	bool enable_change_channel_bandwidth;
 
 	/* HDD converged ini items are listed below this*/

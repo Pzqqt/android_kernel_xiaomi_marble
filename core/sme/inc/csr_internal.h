@@ -413,9 +413,6 @@ struct csr_config {
 	 * Enable/Disable heartbeat offload
 	 */
 	bool enableHeartBeatOffload;
-	uint32_t ho_delay_for_rx;
-	uint32_t min_delay_btw_roam_scans;
-	uint32_t roam_trigger_reason_bitmask;
 	uint8_t isCoalesingInIBSSAllowed;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
@@ -438,8 +435,6 @@ struct csr_config {
 	uint32_t offload_11k_enable_bitmask;
 	bool wep_tkip_in_he;
 	struct csr_neighbor_report_offload_params neighbor_report_offload;
-	bool enable_ftopen;
-	bool roam_force_rssi_trigger;
 };
 
 struct csr_channel_powerinfo {

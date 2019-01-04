@@ -2560,7 +2560,7 @@ bool csr_is_auth_type11r(struct mac_context *mac, eCsrAuthType auth_type,
 	switch (auth_type) {
 	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
 		if (mdie_present &&
-		    mac->roam.configParam.enable_ftopen)
+		    mac->mlme_cfg->lfr.enable_ftopen)
 			return true;
 		break;
 	case eCSR_AUTH_TYPE_FT_RSN_PSK:

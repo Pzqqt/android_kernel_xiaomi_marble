@@ -1345,6 +1345,20 @@ static void mlme_init_ese_cfg(struct wlan_objmgr_psoc *psoc,
 }
 #endif
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+static void mlme_init_subnet_detection(struct wlan_objmgr_psoc *psoc,
+				       struct wlan_mlme_lfr_cfg *lfr)
+{
+	lfr->enable_lfr_subnet_detection =
+		cfg_get(psoc, CFG_LFR3_ENABLE_SUBNET_DETECTION);
+}
+#else
+static void mlme_init_subnet_detection(struct wlan_objmgr_psoc *psoc,
+				       struct wlan_mlme_lfr_cfg *lfr)
+{
+}
+#endif
+
 static void
 mlme_init_bss_load_trigger_params(struct wlan_objmgr_psoc *psoc,
 				  struct bss_load_trigger *bss_load_trig)
@@ -1366,8 +1380,6 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_LFR_ENABLE_FAST_ROAM_IN_CONCURRENCY);
 	lfr->early_stop_scan_enable =
 		cfg_get(psoc, CFG_LFR_EARLY_STOP_SCAN_ENABLE);
-	lfr->lfr3_enable_subnet_detection =
-		cfg_get(psoc, CFG_LFR3_ENABLE_SUBNET_DETECTION);
 	lfr->enable_5g_band_pref =
 		cfg_get(psoc, CFG_LFR_ENABLE_5G_BAND_PREF);
 	lfr->lfr_enabled = cfg_get(psoc, CFG_LFR_FEATURE_ENABLED);
@@ -1502,9 +1514,20 @@ static void mlme_init_lfr_cfg(struct wlan_objmgr_psoc *psoc,
 			      &neighbor_scan_chan_list_num);
 	lfr->neighbor_scan_channel_list_num =
 				(uint8_t)neighbor_scan_chan_list_num;
+	lfr->ho_delay_for_rx =
+		cfg_get(psoc, CFG_LFR3_ROAM_HO_DELAY_FOR_RX);
+	lfr->min_delay_btw_roam_scans =
+		cfg_get(psoc, CFG_LFR_MIN_DELAY_BTW_ROAM_SCAN);
+	lfr->roam_trigger_reason_bitmask =
+		cfg_get(psoc, CFG_LFR_ROAM_SCAN_TRIGGER_REASON_BITMASK);
+	lfr->enable_ftopen =
+		cfg_get(psoc, CFG_LFR_ROAM_FT_OPEN_ENABLE);
+	lfr->roam_force_rssi_trigger =
+		cfg_get(psoc, CFG_LFR_ROAM_FORCE_RSSI_TRIGGER);
 	mlme_init_roam_offload_cfg(psoc, lfr);
 	mlme_init_ese_cfg(psoc, lfr);
 	mlme_init_bss_load_trigger_params(psoc, &lfr->bss_load_trig);
+	mlme_init_subnet_detection(psoc, lfr);
 }
 
 static uint32_t

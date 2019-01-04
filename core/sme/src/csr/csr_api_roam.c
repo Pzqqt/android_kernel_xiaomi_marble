@@ -2588,12 +2588,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 			pParam->send_smps_action;
 		mac->roam.configParam.disable_high_ht_mcs_2x2 =
 					pParam->disable_high_ht_mcs_2x2;
-		mac->roam.configParam.ho_delay_for_rx =
-			pParam->ho_delay_for_rx;
-		mac->roam.configParam.min_delay_btw_roam_scans =
-			pParam->min_delay_btw_roam_scans;
-		mac->roam.configParam.roam_trigger_reason_bitmask =
-			pParam->roam_trigger_reason_bitmask;
 		mac->roam.configParam.isCoalesingInIBSSAllowed =
 			pParam->isCoalesingInIBSSAllowed;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
@@ -2611,9 +2605,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 
 		mac->isCoalesingInIBSSAllowed =
 			pParam->isCoalesingInIBSSAllowed;
-
-		mac->roam.configParam.enable_ftopen =
-			pParam->enable_ftopen;
 
 		/* update interface configuration */
 		mac->sme.max_intf_count = pParam->max_intf_count;
@@ -2642,8 +2633,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 			pParam->is_fils_enabled;
 		mac->roam.configParam.oce_feature_bitmap =
 			pParam->oce_feature_bitmap;
-		mac->roam.configParam.roam_force_rssi_trigger =
-			pParam->roam_force_rssi_trigger;
 
 		csr_update_he_config_param(mac, pParam);
 		csr_set_11k_offload_config_param(&mac->roam.configParam,
@@ -2717,10 +2706,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 #endif
 	pParam->wep_tkip_in_he = cfg_params->wep_tkip_in_he;
 	pParam->disable_high_ht_mcs_2x2 = cfg_params->disable_high_ht_mcs_2x2;
-	pParam->ho_delay_for_rx = cfg_params->ho_delay_for_rx;
-	pParam->min_delay_btw_roam_scans = cfg_params->min_delay_btw_roam_scans;
-	pParam->roam_trigger_reason_bitmask =
-			cfg_params->roam_trigger_reason_bitmask;
 	pParam->isCoalesingInIBSSAllowed = cfg_params->isCoalesingInIBSSAllowed;
 	csr_set_channels(mac, pParam);
 	pParam->obssEnabled = cfg_params->obssEnabled;
@@ -2734,7 +2719,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 	pParam->roam_bad_rssi_thresh_offset_2g =
 		cfg_params->roam_params.roam_bad_rssi_thresh_offset_2g;
 
-	pParam->enable_ftopen = cfg_params->enable_ftopen;
 	pParam->conc_custom_rule1 = cfg_params->conc_custom_rule1;
 	pParam->conc_custom_rule2 = cfg_params->conc_custom_rule2;
 	pParam->is_sta_connection_in_5gz_enabled =
@@ -2760,7 +2744,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 		mac->roam.configParam.is_fils_enabled;
 	pParam->oce_feature_bitmap =
 		mac->roam.configParam.oce_feature_bitmap;
-	pParam->roam_force_rssi_trigger = cfg_params->roam_force_rssi_trigger;
 
 	csr_get_he_config_param(pParam, mac);
 
@@ -17243,17 +17226,17 @@ csr_update_roam_scan_offload_request(struct mac_context *mac_ctx,
 	req_buf->Prefer5GHz = (uint8_t)mac_ctx->mlme_cfg->lfr.roam_prefer_5ghz;
 	req_buf->RoamRssiCatGap = mac_ctx->roam.configParam.bCatRssiOffset;
 	req_buf->Select5GHzMargin = mac_ctx->mlme_cfg->gen.select_5ghz_margin;
-	req_buf->ho_delay_for_rx = mac_ctx->roam.configParam.ho_delay_for_rx;
+	req_buf->ho_delay_for_rx = mac_ctx->mlme_cfg->lfr.ho_delay_for_rx;
 	req_buf->roam_preauth_retry_count =
 			mac_ctx->mlme_cfg->lfr.roam_preauth_retry_count;
 	req_buf->roam_preauth_no_ack_timeout =
 			mac_ctx->mlme_cfg->lfr.roam_preauth_no_ack_timeout;
 	req_buf->min_delay_btw_roam_scans =
-			mac_ctx->roam.configParam.min_delay_btw_roam_scans;
+			mac_ctx->mlme_cfg->lfr.min_delay_btw_roam_scans;
 	req_buf->roam_trigger_reason_bitmask =
-			mac_ctx->roam.configParam.roam_trigger_reason_bitmask;
+			mac_ctx->mlme_cfg->lfr.roam_trigger_reason_bitmask;
 	req_buf->roam_force_rssi_trigger =
-			mac_ctx->roam.configParam.roam_force_rssi_trigger;
+			mac_ctx->mlme_cfg->lfr.roam_force_rssi_trigger;
 
 	/* fill bss load triggered roam related configs */
 	req_buf->bss_load_trig_enabled =

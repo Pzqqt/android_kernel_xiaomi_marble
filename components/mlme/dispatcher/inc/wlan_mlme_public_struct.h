@@ -1221,7 +1221,6 @@ struct bss_load_trigger {
  * @enable_fast_roam_in_concurrency:Enable LFR roaming on STA during concurrency
  * @lfr3_roaming_offload:           Enable/disable roam offload feature
  * @early_stop_scan_enable:         Set early stop scan
- * @lfr3_enable_subnet_detection:   Enable LFR3 subnet detection
  * @enable_5g_band_pref:            Enable preference for 5G from INI
  * @ese_enabled:                    Enable ESE feature
  * @lfr_enabled:                    Enable fast roaming
@@ -1289,6 +1288,12 @@ struct bss_load_trigger {
  * @delay_before_vdev_stop:Wait time for tx complete before vdev stop
  * @neighbor_scan_channel_list:     Neighbor scan channel list
  * @neighbor_scan_channel_list_num: Neighbor scan channel list number
+ * @enable_lfr_subnet_detection:    Enable LFR3 subnet detection
+ * @ho_delay_for_rx:                Delay hand-off by this duration to receive
+ * @min_delay_btw_roam_scans:       Min duration
+ * @roam_trigger_reason_bitmask:    Contains roam_trigger_reasons
+ * @enable_ftopen:                  Enable/disable FT open feature
+ * @roam_force_rssi_trigger:        Force RSSI trigger or not
  */
 struct wlan_mlme_lfr_cfg {
 	bool mawc_roam_enabled;
@@ -1297,7 +1302,6 @@ struct wlan_mlme_lfr_cfg {
 	bool lfr3_roaming_offload;
 #endif
 	bool early_stop_scan_enable;
-	bool lfr3_enable_subnet_detection;
 	bool enable_5g_band_pref;
 #ifdef FEATURE_WLAN_ESE
 	bool ese_enabled;
@@ -1367,6 +1371,14 @@ struct wlan_mlme_lfr_cfg {
 	uint8_t delay_before_vdev_stop;
 	uint8_t neighbor_scan_channel_list[CFG_VALID_CHANNEL_LIST_LEN];
 	uint8_t neighbor_scan_channel_list_num;
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+	bool enable_lfr_subnet_detection;
+#endif
+	uint8_t ho_delay_for_rx;
+	uint8_t min_delay_btw_roam_scans;
+	uint32_t roam_trigger_reason_bitmask;
+	bool enable_ftopen;
+	bool roam_force_rssi_trigger;
 	struct bss_load_trigger bss_load_trig;
 };
 
