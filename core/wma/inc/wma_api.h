@@ -574,4 +574,46 @@ void wma_set_hidden_ssid_restart_in_progress(struct wma_txrx_node *iface,
 void wma_set_channel_switch_in_progress(struct wma_txrx_node *iface);
 
 #endif
-#endif
+
+#ifdef FEATURE_WLM_STATS
+/**
+ * typedef wma_wlm_stats_cb() - Callback function for WLM stats
+ * @cookie: Cookie provided by client during callback registration
+ * @data: Hex ASCII representation of the WLM stats
+ */
+typedef void (*wma_wlm_stats_cb)(void *cookie, const char *data);
+
+/**
+ * wma_wlm_stats_req() - Send a req to WLAN Latency Manager in FW
+ * @vdev_id: vdev id to be sent to FW's WLM
+ * @bitmask: A bitmask which is requested by user to be sent to FW's WLM
+ * @max_size: Size of user's buffer to store the response
+ * @cb: A callback to be called to once response is available
+ * @cookie: A cookie to be used by callback to retrieve the context of req
+ *
+ * This API is used to send a message to WLAN latency manager component
+ * in FW to retrieve some latency related data and send it to user space.
+ * Driver is just a pass-through for user to interract with FW.
+ *
+ * Return: 0 on success and non-zero for error
+ */
+int wma_wlm_stats_req(int vdev_id, uint32_t bitmask, uint32_t max_size,
+		      wma_wlm_stats_cb cb, void *cookie);
+
+/**
+ * wma_wlm_stats_rsp() - Handler to handle the response from FW's WLM component
+ * @wma_ctx: WMA context
+ * @event: WMI TLV event data
+ * @len: WMI TLV length
+ *
+ * This API is registered with WMI component in order to handle the response
+ * coming from FW's WLM correspondence to WLM REQ to FW. This API takes the
+ * data coming as HEX stream and write in to CHAR buffer as HEX CHAR stream
+ * and send this char buffer to user space through callback.
+ *
+ * Return: 0 on success and non-zero for error
+ */
+int wma_wlm_stats_rsp(void *wma_ctx, uint8_t *event, uint32_t len);
+#endif /* FEATURE_WLM_STATS */
+
+#endif /* WMA_API_H */

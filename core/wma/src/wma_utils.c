@@ -5021,3 +5021,125 @@ void wma_set_channel_switch_in_progress(struct wma_txrx_node *iface)
 	iface->is_channel_switch = true;
 }
 #endif
+
+#ifdef FEATURE_WLM_STATS
+int wma_wlm_stats_req(int vdev_id, uint32_t bitmask, uint32_t max_size,
+		      wma_wlm_stats_cb cb, void *cookie)
+{
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	wmi_unified_t wmi_handle;
+	wmi_buf_t wmi_buf;
+	uint32_t buf_len, tlv_tag, tlv_len;
+	wmi_request_wlm_stats_cmd_fixed_param *cmd;
+	QDF_STATUS status;
+
+	if (!wma_handle) {
+		wma_err("Invalid wma handle");
+		return -EINVAL;
+	}
+
+	wmi_handle = wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		wma_err("Invalid wmi handle for wlm_stats_event_handler");
+		return -EINVAL;
+	}
+
+	if (!wmi_service_enabled(wmi_handle, wmi_service_wlm_stats_support)) {
+		wma_err("Feature not supported by firmware");
+		return -ENOTSUPP;
+	}
+
+	wma_handle->wlm_data.wlm_stats_cookie = cookie;
+	wma_handle->wlm_data.wlm_stats_callback = cb;
+	wma_handle->wlm_data.wlm_stats_max_size = max_size;
+
+	buf_len = sizeof(*cmd);
+	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, buf_len);
+	if (!wmi_buf)
+		return -EINVAL;
+
+	cmd = (void *)wmi_buf_data(wmi_buf);
+
+	tlv_tag = WMITLV_TAG_STRUC_wmi_request_wlm_stats_cmd_fixed_param;
+	tlv_len =
+		WMITLV_GET_STRUCT_TLVLEN(wmi_request_wlm_stats_cmd_fixed_param);
+	WMITLV_SET_HDR(&cmd->tlv_header, tlv_tag, tlv_len);
+
+	cmd->vdev_id = vdev_id;
+	cmd->request_bitmask = bitmask;
+	status = wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, buf_len,
+				      WMI_REQUEST_WLM_STATS_CMDID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		wmi_buf_free(wmi_buf);
+		return -EINVAL;
+	}
+	/* info logging per test team request */
+	wma_info("---->sent request for vdev:%d", vdev_id);
+
+	return 0;
+}
+
+int wma_wlm_stats_rsp(void *wma_ctx, uint8_t *event, uint32_t evt_len)
+{
+	WMI_WLM_STATS_EVENTID_param_tlvs *param_tlvs;
+	wmi_wlm_stats_event_fixed_param *param;
+	tp_wma_handle wma_handle = wma_ctx;
+	char *data;
+	void *cookie;
+	uint32_t *raw_data;
+	uint32_t len, buffer_size, raw_data_num, i;
+
+	if (!wma_handle) {
+		wma_err("Invalid wma handle");
+		return -EINVAL;
+	}
+	if (!wma_handle->wlm_data.wlm_stats_callback) {
+		wma_err("No callback registered");
+		return -EINVAL;
+	}
+
+	param_tlvs = (WMI_WLM_STATS_EVENTID_param_tlvs *)event;
+	param = param_tlvs->fixed_param;
+	if (!param) {
+		wma_err("Fix size param is not present, something is wrong");
+		return -EINVAL;
+	}
+
+	/* info logging per test team request */
+	wma_info("---->Received response for vdev:%d", param->vdev_id);
+
+	raw_data = param_tlvs->data;
+	raw_data_num = param_tlvs->num_data;
+
+	len = 0;
+	buffer_size = wma_handle->wlm_data.wlm_stats_max_size;
+	data = qdf_mem_malloc(buffer_size);
+	if (!data)
+		return -ENOMEM;
+
+	len += qdf_scnprintf(data + len, buffer_size - len, "\n%x ",
+			     param->request_bitmask);
+	len += qdf_scnprintf(data + len, buffer_size - len, "%x ",
+			     param->vdev_id);
+	len += qdf_scnprintf(data + len, buffer_size - len, "%x ",
+			     param->timestamp);
+	len += qdf_scnprintf(data + len, buffer_size - len, "%x ",
+			     param->req_interval);
+	if (!raw_data)
+		goto send_data;
+
+	len += qdf_scnprintf(data + len, buffer_size - len, "\ndata:\n");
+
+	for (i = 0; i < raw_data_num; i++)
+		len += qdf_scnprintf(data + len, buffer_size - len, "%x ",
+				     *raw_data++);
+
+send_data:
+	cookie = wma_handle->wlm_data.wlm_stats_cookie;
+	wma_handle->wlm_data.wlm_stats_callback(cookie, data);
+
+	qdf_mem_free(data);
+
+	return 0;
+}
+#endif /* FEATURE_WLM_STATS */

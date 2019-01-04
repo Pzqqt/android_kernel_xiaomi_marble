@@ -668,6 +668,7 @@ endif
 ifeq ($(CONFIG_UNIT_TEST), y)
 	CONFIG_DSC_TEST := y
 	CONFIG_QDF_TEST := y
+	CONFIG_FEATURE_WLM_STATS := y
 endif
 
 # enable unit-test suspend for napier builds

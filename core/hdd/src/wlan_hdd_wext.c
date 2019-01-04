@@ -2685,7 +2685,28 @@
 #define WLAN_PRIV_SET_NONE_GET_THREE_INT   (SIOCIWFIRSTPRIV + 15)
 #define WE_GET_TSF      1
 /* (SIOCIWFIRSTPRIV + 16) is currently unused */
-/* (SIOCIWFIRSTPRIV + 17) is currently unused */
+
+#ifdef FEATURE_WLM_STATS
+/*
+ * <ioctl>
+ *
+ * get_wlm_stats - Get stats from FW for game latency
+ *
+ * @INPUT: BITMASK inform of decimal number
+ *
+ * @OUTPUT: HEX string given by FW
+ *
+ * This IOCTL is used to get game latency related STATS from FW
+ *
+ * @E.g.: iwpriv wlan0 get_wlm_stats 1
+ *
+ * Usage: internal
+ *
+ * </ioctl>
+ */
+#define WLAN_GET_WLM_STATS       (SIOCIWFIRSTPRIV + 17)
+#endif
+
 /* (SIOCIWFIRSTPRIV + 19) is currently unused */
 
 #define WLAN_PRIV_SET_FTIES             (SIOCIWFIRSTPRIV + 20)
@@ -3687,6 +3708,166 @@ static int iw_get_linkspeed(struct net_device *dev,
 
 	return ret;
 }
+
+#ifdef FEATURE_WLM_STATS
+static void wlan_get_wlm_stats_cb(void *cookie, const char *data)
+{
+	struct osif_request *request;
+	char *priv;
+
+	request = osif_request_get(cookie);
+	if (!request) {
+		hdd_err("Obsolete request");
+		return;
+	}
+	priv = osif_request_priv(request);
+	strlcpy(priv, data, WE_MAX_STR_LEN);
+	osif_request_complete(request);
+	osif_request_put(request);
+}
+
+static int wlan_get_wlm_stats(struct hdd_adapter *adapter, uint32_t bitmask,
+			      char *response)
+{
+	struct osif_request *request;
+	void *cookie;
+	int errno;
+	char *priv;
+	static const struct osif_request_params params = {
+			.priv_size = WE_MAX_STR_LEN,
+			.timeout_ms = 2000,
+	};
+
+	if (!adapter) {
+		hdd_err("NULL argument");
+		return -EINVAL;
+	}
+	request = osif_request_alloc(&params);
+	if (!request) {
+		hdd_err("Request allocation failure");
+		return -ENOMEM;
+	}
+	cookie = osif_request_cookie(request);
+	errno = wma_wlm_stats_req(adapter->session_id, bitmask,
+				  params.priv_size,
+				  wlan_get_wlm_stats_cb, cookie);
+	if (errno) {
+		hdd_err("Request failed be sent, %d", errno);
+		goto cleanup;
+	}
+	errno = osif_request_wait_for_response(request);
+	if (errno) {
+		hdd_err("Timeout happened, can't complete the req");
+		goto cleanup;
+	}
+	priv = osif_request_priv(request);
+	strlcpy(response, priv, params.priv_size);
+
+cleanup:
+	osif_request_put(request);
+
+	return errno;
+}
+
+/*
+ * Due to a limitation in iwpriv the "get_wlm_stats" ioctl is defined
+ * to take as input a variable-length string as opposed to taking a
+ * single integer "bitmask" value. Hence we must have a buffer large
+ * enough to hold a string representing the largest possible
+ * value. MAX_INT = 2,147,483,647 which can be fit in 10 chars.
+ * Round up to 12 to hold the trailing NUL and be a multiple of 4.
+ */
+#define WLM_USER_DATA_SIZE 12
+
+static int __iw_get_wlm_stats(struct net_device *dev,
+			      struct iw_request_info *info,
+			      union iwreq_data *wrqu, char *extra)
+{
+	struct iw_point priv_data;
+	char user_data[WLM_USER_DATA_SIZE] = {0};
+	uint32_t bitmask = 0;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx;
+	int errno;
+
+	hdd_enter_dev(dev);
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
+
+	if (!capable(CAP_NET_ADMIN)) {
+		hdd_err("permission check failed");
+		return -EPERM;
+	}
+
+	/*
+	 * Since this is GETTER iwpriv ioctl, driver needs to
+	 * copy SET data from user space to kernel space.
+	 * Helper function to get iwreq_data with compat handling.
+	 */
+	if (hdd_priv_get_data(&priv_data, wrqu))
+		return -EINVAL;
+
+	/*
+	 * priv_data.pointer  should be pointing to data given
+	 * to iwpriv command.
+	 *
+	 * For example "iwpriv wlan0 get_wlm_stats 1234"
+	 *
+	 * priv_data.pointer should be pointing to "1234"
+	 * priv_data.length should be zero as this GETTER iwpriv ioctl
+	 */
+	if (!priv_data.pointer) {
+		hdd_err("NULL data pointer");
+		return -EINVAL;
+	}
+
+	/*
+	 * ideally driver should have used priv_data.length to copy
+	 * data from priv_data.pointer but this iwpriv IOCTL has been
+	 * declared as GETTER in nature which makes length field zero
+	 * for input arguments but priv_data.pointer still points to
+	 * user's input argument (just doesn't pass the length of the
+	 * argument)
+	 */
+	if (copy_from_user(user_data, priv_data.pointer,
+			   sizeof(user_data) - 1)) {
+		hdd_err("failed to copy data from user buffer");
+		return -EFAULT;
+	}
+
+	/*
+	 * user data is given in ascii, convert ascii to integer
+	 */
+	if (kstrtou32(user_data, 0, &bitmask)) {
+		hdd_err("failed to parse input %s", user_data);
+		return -EFAULT;
+	}
+
+	if (wlan_get_wlm_stats(adapter, bitmask, extra)) {
+		hdd_err("returning failure");
+		return -EFAULT;
+	}
+	wrqu->data.length = strlen(extra) + 1;
+
+	return 0;
+}
+
+static int iw_get_wlm_stats(struct net_device *dev,
+			    struct iw_request_info *info,
+			    union iwreq_data *wrqu, char *extra)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __iw_get_wlm_stats(dev, info, wrqu, extra);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+#endif /* FEATURE_WLM_STATS */
 
 int wlan_hdd_update_phymode(struct hdd_adapter *adapter, int new_phymode)
 {
@@ -9601,6 +9782,9 @@ static const iw_handler we_private[] = {
 	[WLAN_PRIV_SET_MCBC_FILTER - SIOCIWFIRSTPRIV] =
 		iw_set_dynamic_mcbc_filter,
 	[WLAN_GET_LINK_SPEED - SIOCIWFIRSTPRIV] = iw_get_linkspeed,
+#ifdef FEATURE_WLM_STATS
+	[WLAN_GET_WLM_STATS - SIOCIWFIRSTPRIV] = iw_get_wlm_stats,
+#endif
 	[WLAN_PRIV_SET_TWO_INT_GET_NONE - SIOCIWFIRSTPRIV] =
 		iw_set_two_ints_getnone,
 	[WLAN_SET_DOT11P_CHANNEL_SCHED - SIOCIWFIRSTPRIV] =
@@ -10671,6 +10855,13 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_CHAR | 18,
 	 IW_PRIV_TYPE_CHAR | 5,
 	 "getLinkSpeed"},
+
+#ifdef FEATURE_WLM_STATS
+	{WLAN_GET_WLM_STATS,
+	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
+	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
+	 "get_wlm_stats"},
+#endif
 
 	/* handlers for main ioctl */
 	{WLAN_PRIV_SET_TWO_INT_GET_NONE,

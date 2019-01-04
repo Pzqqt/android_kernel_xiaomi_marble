@@ -43,6 +43,7 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include <cdp_txrx_handle.h>
 #include <wlan_policy_mgr_api.h>
+#include "wma_api.h"
 
 /* Platform specific configuration for max. no. of fragments */
 #define QCA_OL_11AC_TX_MAX_FRAGS            2
@@ -951,6 +952,20 @@ struct wma_valid_channels {
 	uint8_t channel_list[MAX_NUM_CHAN];
 };
 
+#ifdef FEATURE_WLM_STATS
+/**
+ * struct wma_wlm_stats_data - Data required to be used to send WLM req
+ * @wlm_stats_max_size: Buffer size provided by userspace
+ * @wlm_stats_cookie: Cookie to retrieve WLM req data
+ * @wlm_stats_callback: Callback to be used to send WLM response
+ */
+struct wma_wlm_stats_data {
+	uint32_t wlm_stats_max_size;
+	void *wlm_stats_cookie;
+	wma_wlm_stats_cb wlm_stats_callback;
+};
+#endif
+
 /**
  * struct t_wma_handle - wma context
  * @wmi_handle: wmi handle
@@ -1075,6 +1090,7 @@ struct wma_valid_channels {
  * @rcpi_enabled: Is RCPI enabled?
  * @link_stats_results: Structure for handing link stats from firmware
  * @tx_fail_cnt: Number of TX failures
+ * @wlm_data: Data required for WLM req and resp handling
  * @he_cap: 802.11ax capabilities
  * @bandcapability: band capability configured through ini
  * @tx_bfee_8ss_enabled: Is Tx Beamformee support for 8x8 enabled?
@@ -1208,6 +1224,9 @@ typedef struct {
 	bool rcpi_enabled;
 	tSirLLStatsResults *link_stats_results;
 	uint64_t tx_fail_cnt;
+#ifdef FEATURE_WLM_STATS
+	struct wma_wlm_stats_data wlm_data;
+#endif
 #ifdef WLAN_FEATURE_11AX
 	struct he_capability he_cap;
 #endif
