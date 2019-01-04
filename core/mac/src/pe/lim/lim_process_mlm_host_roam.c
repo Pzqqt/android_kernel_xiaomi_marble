@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -516,7 +516,7 @@ void lim_process_sta_mlm_add_bss_rsp_ft(struct mac_context *mac,
 	listenInterval = mac->mlme_cfg->sap_cfg.listen_interval;
 	pAddStaParams->listenInterval = (uint16_t) listenInterval;
 
-	wlan_cfg_get_int(mac, WNI_CFG_DOT11_MODE, &selfStaDot11Mode);
+	selfStaDot11Mode = mac->mlme_cfg->dot11_mode.dot11_mode;
 	pAddStaParams->encryptType = pe_session->encryptType;
 	pAddStaParams->maxTxPower = pe_session->maxTxPower;
 

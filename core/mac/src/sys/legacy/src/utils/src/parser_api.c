@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1551,7 +1551,7 @@ populate_dot11f_rates_tdls(struct mac_context *p_mac,
 	uint32_t self_dot11mode = 0;
 	qdf_size_t num_rates;
 
-	wlan_cfg_get_int(p_mac, WNI_CFG_DOT11_MODE, &self_dot11mode);
+	self_dot11mode = p_mac->mlme_cfg->dot11_mode.dot11_mode;
 
 	/**
 	 * Include 11b rates only when the device configured in

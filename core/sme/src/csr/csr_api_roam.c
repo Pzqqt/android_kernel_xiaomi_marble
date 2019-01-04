@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1296,11 +1296,9 @@ QDF_STATUS csr_ready(struct mac_context *mac)
 
 void csr_set_default_dot11_mode(struct mac_context *mac)
 {
-	uint32_t wniDot11mode = 0;
-
-	wniDot11mode = csr_translate_to_wni_cfg_dot11_mode(mac,
-					mac->roam.configParam.uCfgDot11Mode);
-	cfg_set_int(mac, WNI_CFG_DOT11_MODE, wniDot11mode);
+	mac->mlme_cfg->dot11_mode.dot11_mode =
+			csr_translate_to_wni_cfg_dot11_mode(mac,
+					  mac->roam.configParam.uCfgDot11Mode);
 }
 
 void csr_set_global_cfgs(struct mac_context *mac)

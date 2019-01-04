@@ -6041,7 +6041,7 @@ QDF_STATUS lim_send_ext_cap_ie(struct mac_context *mac_ctx,
 	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
 
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &dot11mode);
+	dot11mode = mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
 	if (IS_DOT11_MODE_VHT(dot11mode))
 		vht_enabled = true;
 
@@ -7511,9 +7511,7 @@ QDF_STATUS lim_populate_he_mcs_set(struct mac_context *mac_ctx,
 				   struct pe_session *session_entry, uint8_t nss)
 {
 	bool support_2x2 = false;
-	uint32_t self_sta_dot11mode = 0;
-
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &self_sta_dot11mode);
+	uint32_t self_sta_dot11mode = mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
 
 	if (!IS_DOT11_MODE_HE(self_sta_dot11mode))
 		return QDF_STATUS_SUCCESS;

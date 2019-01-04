@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -861,7 +861,7 @@ static QDF_STATUS lim_send_tdls_dis_rsp_frame(struct mac_context *mac,
 					    pe_session,
 					    &tdlsDisRsp.ExtCap);
 
-	wlan_cfg_get_int(mac, WNI_CFG_DOT11_MODE, &selfDot11Mode);
+	selfDot11Mode = mac->mlme_cfg->dot11_mode.dot11_mode;
 
 	/* Populate HT/VHT Capabilities */
 	populate_dot11f_tdls_ht_vht_cap(mac, selfDot11Mode, &tdlsDisRsp.HTCaps,
@@ -1222,7 +1222,7 @@ QDF_STATUS lim_send_tdls_link_setup_req_frame(struct mac_context *mac,
 	 * of peer caps
 	 */
 
-	wlan_cfg_get_int(mac, WNI_CFG_DOT11_MODE, &selfDot11Mode);
+	selfDot11Mode =  mac->mlme_cfg->dot11_mode.dot11_mode;
 
 	/* Populate HT/VHT Capabilities */
 	populate_dot11f_tdls_ht_vht_cap(mac, selfDot11Mode, &tdlsSetupReq.HTCaps,
@@ -1673,7 +1673,7 @@ static QDF_STATUS lim_send_tdls_setup_rsp_frame(struct mac_context *mac,
 			(mac->lim.gLimTDLSUapsdMask & 0x01);
 	}
 
-	wlan_cfg_get_int(mac, WNI_CFG_DOT11_MODE, &selfDot11Mode);
+	selfDot11Mode = mac->mlme_cfg->dot11_mode.dot11_mode;
 
 	/* Populate HT/VHT Capabilities */
 	populate_dot11f_tdls_ht_vht_cap(mac, selfDot11Mode, &tdlsSetupRsp.HTCaps,

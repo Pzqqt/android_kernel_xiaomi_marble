@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,6 +35,7 @@
 #include "cfg_mlme_obss_ht40.h"
 #include "cfg_mlme_dfs.h"
 #include "cfg_mlme_mbo.h"
+#include "cfg_mlme_dot11mode.h"
 #include "cfg_mlme_nss_chains.h"
 #include "cfg_mlme_vht_caps.h"
 #include "cfg_qos.h"
@@ -66,6 +67,7 @@
 	CFG_BTM_ALL \
 	CFG_CHAINMASK_ALL \
 	CFG_DFS_ALL \
+	CFG_DOT11_MODE_ALL \
 	CFG_EDCA_PARAMS_ALL \
 	CFG_FE_RRM_ALL \
 	CFG_FE_WLM_ALL \

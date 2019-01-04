@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -490,7 +490,7 @@ static void lim_fill_dot11mode(struct mac_context *mac_ctx,
 		ft_session->dot11mode =
 			pe_session->ftPEContext.pFTPreAuthReq->dot11mode;
 	} else {
-		wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &self_dot11_mode);
+		self_dot11_mode = mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
 		pe_debug("selfDot11Mode: %d", self_dot11_mode);
 		ft_session->dot11mode = self_dot11_mode;
 	}

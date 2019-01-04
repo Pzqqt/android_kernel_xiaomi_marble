@@ -182,9 +182,8 @@ static void mlm_add_sta(struct mac_context *mac_ctx, tpAddStaParams sta_param,
 		uint8_t *bssid, uint8_t ht_capable, struct pe_session *session_entry)
 {
 	uint32_t val;
-	uint32_t self_dot11mode = 0;
+	uint32_t self_dot11mode = mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
 
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &self_dot11mode);
 	sta_param->staType = STA_ENTRY_SELF; /* Identifying self */
 
 	qdf_mem_copy(sta_param->bssId, bssid, sizeof(tSirMacAddr));

@@ -2663,7 +2663,7 @@ QDF_STATUS lim_update_ext_cap_ie(struct mac_context *mac_ctx,
 	/* from here ext cap ie starts, set EID */
 	local_ie_buf[*local_ie_len] = DOT11F_EID_EXTCAP;
 
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &dot11mode);
+	dot11mode = mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
 	if (IS_DOT11_MODE_VHT(dot11mode))
 		vht_enabled = true;
 

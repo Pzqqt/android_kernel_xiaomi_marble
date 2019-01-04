@@ -3126,7 +3126,7 @@ static void wma_get_phy_mode_cb(uint8_t chan, uint32_t chan_width,
 		return;
 	}
 
-	wlan_cfg_get_int(mac, WNI_CFG_DOT11_MODE, &dot11_mode);
+	dot11_mode = mac->mlme_cfg->dot11_mode.dot11_mode;
 	*phy_mode = wma_chan_phy_mode(chan, chan_width, dot11_mode);
 }
 

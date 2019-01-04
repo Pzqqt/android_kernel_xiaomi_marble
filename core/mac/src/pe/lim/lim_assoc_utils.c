@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1343,7 +1343,7 @@ QDF_STATUS lim_populate_vht_mcs_set(struct mac_context *mac_ctx,
 	uint16_t mcs_map_mask2x2 = 0;
 	struct mlme_vht_capabilities_info *vht_cap_info;
 
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &self_sta_dot11mode);
+	self_sta_dot11mode = mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
 
 	if (!IS_DOT11_MODE_VHT(self_sta_dot11mode))
 		return QDF_STATUS_SUCCESS;
@@ -1495,7 +1495,7 @@ lim_populate_own_rate_set(struct mac_context *mac_ctx,
 
 	is_arate = 0;
 
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &self_sta_dot11mode);
+	self_sta_dot11mode = mac_ctx->mlme_cfg->dot11_mode.dot11_mode;
 	lim_get_phy_mode(mac_ctx, &phy_mode, session_entry);
 
 	/*
@@ -2728,7 +2728,7 @@ lim_add_sta_self(struct mac_context *mac, uint16_t staIdx, uint8_t updateSta,
 	 * command.*/
 	uint32_t selfStaDot11Mode = 0, selfTxWidth = 0;
 
-	wlan_cfg_get_int(mac, WNI_CFG_DOT11_MODE, &selfStaDot11Mode);
+	selfStaDot11Mode = mac->mlme_cfg->dot11_mode.dot11_mode;
 	wlan_cfg_get_int(mac, WNI_CFG_HT_CAP_INFO_SUPPORTED_CHAN_WIDTH_SET,
 			 &selfTxWidth);
 	pe_debug("cfgDot11Mode: %d selfTxWidth: %d",

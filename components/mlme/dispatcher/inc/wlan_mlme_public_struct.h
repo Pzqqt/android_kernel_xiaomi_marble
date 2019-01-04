@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -140,6 +140,43 @@ struct mlme_edca_ac_vo {
 	uint32_t vo_cwmin;
 	uint32_t vo_cwmax;
 	uint32_t vo_aifs;
+};
+
+/**
+ * enum dot11_mode - Dot11 mode of the vdev
+ * MLME_DOT11_MODE_ALL: vdev supports all dot11 modes
+ * MLME_DOT11_MODE_11A: vdev just supports 11A mode
+ * MLME_DOT11_MODE_11B: vdev supports 11B mode, and modes above it
+ * MLME_DOT11_MODE_11G: vdev supports 11G mode, and modes above it
+ * MLME_DOT11_MODE_11N: vdev supports 11N mode, and modes above it
+ * MLME_DOT11_MODE_11G_ONLY: vdev just supports 11G mode
+ * MLME_DOT11_MODE_1N_ONLYA: vdev just supports 11N mode
+ * MLME_DOT11_MODE_11AC: vdev supports 11AC mode, and modes above it
+ * MLME_DOT11_MODE_11AC_ONLY: vdev just supports 11AC mode
+ * MLME_DOT11_MODE_11AX: vdev supports 11AX mode, and modes above it
+ * MLME_DOT11_MODE_11AX_ONLY: vdev just supports 11AX mode
+ */
+enum mlme_dot11_mode {
+	MLME_DOT11_MODE_ALL,
+	MLME_DOT11_MODE_11A,
+	MLME_DOT11_MODE_11B,
+	MLME_DOT11_MODE_11G,
+	MLME_DOT11_MODE_11N,
+	MLME_DOT11_MODE_11G_ONLY,
+	MLME_DOT11_MODE_11N_ONLY,
+	MLME_DOT11_MODE_11AC,
+	MLME_DOT11_MODE_11AC_ONLY,
+	MLME_DOT11_MODE_11AX,
+	MLME_DOT11_MODE_11AX_ONLY
+};
+
+/**
+ * struct wlan_mlme_dot11_mode - dot11 mode
+ *
+ * @dot11_mode: dot11 mode supported
+ */
+struct wlan_mlme_dot11_mode {
+	enum mlme_dot11_mode dot11_mode;
 };
 
 /**
@@ -1906,6 +1943,7 @@ struct wlan_mlme_ibss_cfg {
  * @wlm_config: WLM related CFG items
  * @rrm_config: RRM related CFG items
  * @mwc: MWC related CFG items
+ * @dot11_mode: dot11 mode supported
  * @reg: REG related CFG itmes
  */
 struct wlan_mlme_cfg {
@@ -1947,6 +1985,7 @@ struct wlan_mlme_cfg {
 	struct wlan_mlme_fe_wlm wlm_config;
 	struct wlan_mlme_fe_rrm rrm_config;
 	struct wlan_mlme_mwc mwc;
+	struct wlan_mlme_dot11_mode dot11_mode;
 	struct wlan_mlme_reg reg;
 };
 
