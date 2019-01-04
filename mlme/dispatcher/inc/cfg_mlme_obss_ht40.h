@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -219,6 +219,30 @@
 		0, \
 		"Use channel bonding in 24 GHz")
 
+/*
+ * <cfg>
+ * obss_detection_offload - Enable OBSS detection offload
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ */
+#define CFG_OBSS_DETECTION_OFFLOAD CFG_BOOL( \
+		"obss_detection_offload", \
+		0, \
+		"Enable OBSS detection offload")
+
+/*
+ * <cfg>
+ * obss_color_collision_offload - Enable obss color collision offload
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ */
+#define CFG_OBSS_COLOR_COLLISION_OFFLOAD CFG_BOOL( \
+		"obss_color_collision_offload", \
+		0, \
+		"Enable obss color collision offload")
+
 #define CFG_OBSS_HT40_ALL \
 	CFG(CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME) \
 	CFG(CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME) \
@@ -227,6 +251,8 @@
 	CFG(CFG_OBSS_HT40_SCAN_ACTIVE_TOTAL_PER_CHANNEL) \
 	CFG(CFG_OBSS_HT40_SCAN_ACTIVITY_THRESHOLD) \
 	CFG(CFG_OBSS_HT40_WIDTH_CH_TRANSITION_DELAY) \
-	CFG(CFG_OBSS_HT40_OVERRIDE_HT40_20_24GHZ)
+	CFG(CFG_OBSS_HT40_OVERRIDE_HT40_20_24GHZ) \
+	CFG(CFG_OBSS_DETECTION_OFFLOAD) \
+	CFG(CFG_OBSS_COLOR_COLLISION_OFFLOAD)
 
 #endif /* CFG_MLME_OBSS_HT40_H__ */

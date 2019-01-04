@@ -3440,8 +3440,8 @@ ucfg_mlme_get_mws_coex_5g_nr_pwr_limit(struct wlan_objmgr_psoc *psoc,
 /**
  * ucfg_mlme_get_etsi13_srd_chan_in_master_mode  - get etsi13 srd chan
  * in master mode
- * @psoc: pointer to psoc object
- * @val:  Pointer to the value which will be filled for the caller
+ * @psoc:   pointer to psoc object
+ * @value:  pointer to the value which will be filled for the caller
  *
  * Return: QDF Status
  */
@@ -3451,8 +3451,8 @@ ucfg_mlme_get_etsi13_srd_chan_in_master_mode(struct wlan_objmgr_psoc *psoc,
 
 /**
  * ucfg_mlme_restart_beaconing_on_ch_avoid() - get restart beaconing on ch avoid
- * @psoc: pointer to psoc object
- * @val:  Pointer to the value which will be filled for the caller
+ * @psoc:   pointer to psoc object
+ * @value:  pointer to the value which will be filled for the caller
  *
  * Return: QDF Status
  */
@@ -3462,8 +3462,8 @@ ucfg_mlme_get_restart_beaconing_on_ch_avoid(struct wlan_objmgr_psoc *psoc,
 
 /**
  * ucfg_mlme_get_indoor_channel_support() - get indoor channel support
- * @psoc: pointer to psoc object
- * @val:  Pointer to the value which will be filled for the caller
+ * @psoc:   pointer to psoc object
+ * @value:  pointer to the value which will be filled for the caller
  *
  * Return: QDF Status
  */
@@ -3474,7 +3474,7 @@ ucfg_mlme_get_indoor_channel_support(struct wlan_objmgr_psoc *psoc,
 /**
  * ucfg_mlme_get_scan_11d_interval() - get scan 11d interval
  * @psoc: pointer to psoc object
- * @val:  Pointer to the value which will be filled for the caller
+ * @value:  Pointer to the value which will be filled for the caller
  *
  * Return: QDF Status
  */
@@ -3504,4 +3504,49 @@ ucfg_mlme_is_subnet_detection_enabled(struct wlan_objmgr_psoc *psoc, bool *val)
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* FEATURE_LFR_SUBNET_DETECTION */
+
+/**
+ * ucfg_mlme_set_current_tx_power_level() - set current tx power level
+ * @psoc:   pointer to psoc object
+ * @value:  data to be set
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_current_tx_power_level(struct wlan_objmgr_psoc *psoc,
+				     uint8_t value);
+
+/**
+ * ucfg_mlme_get_current_tx_power_level() - get current tx power level
+ * @psoc:   pointer to psoc object
+ * @value:  pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_get_current_tx_power_level(struct wlan_objmgr_psoc *psoc,
+				     uint8_t *value);
+
+/**
+ * ucfg_mlme_set_obss_detection_offload_enabled() - Enable obss offload
+ * @psoc:   pointer to psoc object
+ * @value:  enable or disable
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_obss_detection_offload_enabled(struct wlan_objmgr_psoc *psoc,
+					     uint8_t value);
+
+/**
+ * ucfg_mlme_set_obss_color_collision_offload_enabled() - Enable obss color
+ * collision offload
+ * @psoc:   pointer to psoc object
+ * @value:  enable or disable
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_mlme_set_obss_color_collision_offload_enabled(
+		struct wlan_objmgr_psoc *psoc, uint8_t value);
 #endif /* _WLAN_MLME_UCFG_API_H_ */
