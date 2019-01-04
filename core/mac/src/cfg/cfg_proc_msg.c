@@ -26,9 +26,6 @@
 #include "lim_trace.h"
 
 cgstatic cfg_static[CFG_PARAM_MAX_NUM] = {
-	{WNI_CFG_STA_ID,
-	CFG_CTL_VALID | CFG_CTL_RE | CFG_CTL_WE | CFG_CTL_RELOAD,
-	0, 255, 1},
 	{WNI_CFG_VALID_CHANNEL_LIST,
 	CFG_CTL_VALID | CFG_CTL_RE | CFG_CTL_WE | CFG_CTL_RESTART |
 	CFG_CTL_NTF_LIM,
@@ -72,11 +69,6 @@ cgstatic cfg_static[CFG_PARAM_MAX_NUM] = {
 
 
 cfgstatic_string cfg_static_string[CFG_MAX_STATIC_STRING] = {
-
-	{WNI_CFG_STA_ID,
-	WNI_CFG_STA_ID_LEN,
-	6,
-	{0x22, 0x22, 0x44, 0x44, 0x33, 0x33} },
 	{WNI_CFG_VALID_CHANNEL_LIST,
 	WNI_CFG_VALID_CHANNEL_LIST_LEN,
 	55,

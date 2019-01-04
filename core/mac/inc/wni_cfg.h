@@ -24,7 +24,6 @@
  */
 
 enum {
-	WNI_CFG_STA_ID,
 	WNI_CFG_VALID_CHANNEL_LIST,
 	WNI_CFG_APSD_ENABLED,
 	WNI_CFG_CURRENT_TX_POWER_LEVEL,
@@ -41,7 +40,6 @@ enum {
  * String parameter lengths
  */
 
-#define WNI_CFG_STA_ID_LEN    6
 #define WNI_CFG_VALID_CHANNEL_LIST_LEN    100
 #define WNI_CFG_COUNTRY_CODE_LEN    3
 #define WNI_CFG_PROBE_RSP_ADDNIE_DATA1_LEN    255
