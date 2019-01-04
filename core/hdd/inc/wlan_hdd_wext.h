@@ -334,4 +334,22 @@ static inline void hdd_register_wext(struct net_device *dev)
 }
 #endif /* WLAN_WEXT_SUPPORT_ENABLE */
 
+#if defined(WLAN_WEXT_SUPPORT_ENABLE) && defined(HASTINGS_BT_WAR)
+int hdd_hastings_bt_war_enable_fw(struct hdd_context *hdd_ctx);
+int hdd_hastings_bt_war_disable_fw(struct hdd_context *hdd_ctx);
+#else
+static inline
+int hdd_hastings_bt_war_enable_fw(struct hdd_context *hdd_ctx)
+{
+	return -ENOTSUPP;
+}
+
+static inline
+int hdd_hastings_bt_war_disable_fw(struct hdd_context *hdd_ctx)
+{
+	return -ENOTSUPP;
+}
+
+#endif
+
 #endif /* __WEXT_IW_H__ */

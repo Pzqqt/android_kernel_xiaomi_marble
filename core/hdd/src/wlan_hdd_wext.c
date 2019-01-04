@@ -197,8 +197,14 @@
  * </ioctl>
  */
 #define WE_SET_MAX_TX_POWER  7
-/* 8 is unused */
+
+#ifdef HASTINGS_BT_WAR
+/* Temporary WAR for Hastings 1.1 only */
+#define WE_SET_HASTINGS_BT_WAR 8
+#endif
+
 #define WE_SET_TM_LEVEL      9
+
 /*
  * <ioctl>
  * setphymode - Set the phymode dynamically
@@ -4287,6 +4293,99 @@ static int hdd_we_set_max_tx_power_5_0(struct hdd_adapter *adapter, int power)
 	return qdf_status_to_os_return(status);
 }
 
+#ifdef HASTINGS_BT_WAR
+
+/*
+ * replicate logic:
+ * iwpriv wlan0 setUnitTestCmd 19 2 23 1 => enable WAR
+ * iwpriv wlan0 setUnitTestCmd 19 2 23 0 => disable WAR
+ */
+
+#define HASTINGS_WAR_FW_PARAM_ID 23
+
+static int hdd_hastings_bt_war_set_fw(struct hdd_context *hdd_ctx,
+				      uint32_t value)
+{
+	uint32_t vdev_id = 0; /* not used */
+	uint32_t module_id = WLAN_MODULE_WAL;
+	uint32_t arg_count = 2;
+	uint32_t arg[2] = {HASTINGS_WAR_FW_PARAM_ID, value};
+	QDF_STATUS status;
+
+	status = wma_form_unit_test_cmd_and_send(vdev_id, module_id,
+						 arg_count, arg);
+
+	return qdf_status_to_os_return(status);
+}
+
+int hdd_hastings_bt_war_enable_fw(struct hdd_context *hdd_ctx)
+{
+	return hdd_hastings_bt_war_set_fw(hdd_ctx, 1);
+}
+
+int hdd_hastings_bt_war_disable_fw(struct hdd_context *hdd_ctx)
+{
+	return hdd_hastings_bt_war_set_fw(hdd_ctx, 0);
+}
+
+/* value to restore the config when the WAR is disabled */
+static uint32_t iface_change_wait_time_checkpoint;
+static void checkpoint_iface_change_wait_time(struct hdd_context *hdd_ctx)
+{
+	struct hdd_config *config = hdd_ctx->config;
+
+	/* did we already checkpoint a value ? */
+	if (iface_change_wait_time_checkpoint)
+		return;
+
+	/* checkpoint current value */
+	iface_change_wait_time_checkpoint = config->iface_change_wait_time;
+
+	/* was the timer enabled when we checkpointed? */
+	if (iface_change_wait_time_checkpoint)
+		return;
+
+	/* WAR was enabled at boot, use default when disable */
+	iface_change_wait_time_checkpoint =
+		cfg_default(CFG_INTERFACE_CHANGE_WAIT);
+}
+
+static int hdd_hastings_war_enable(struct hdd_context *hdd_ctx)
+{
+	struct hdd_config *config = hdd_ctx->config;
+
+	config->iface_change_wait_time = 0;
+
+	return hdd_hastings_bt_war_enable_fw(hdd_ctx);
+}
+
+static int hdd_hastings_war_disable(struct hdd_context *hdd_ctx)
+{
+	struct hdd_config *config = hdd_ctx->config;
+
+	config->iface_change_wait_time = iface_change_wait_time_checkpoint;
+
+	return hdd_hastings_bt_war_disable_fw(hdd_ctx);
+}
+
+static int hdd_we_set_hastings_bt_war(struct hdd_adapter *adapter, int enable)
+{
+	int errno;
+	struct hdd_context *hdd_ctx;
+
+	errno = hdd_validate_adapter(adapter);
+	if (errno)
+		return errno;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	checkpoint_iface_change_wait_time(hdd_ctx);
+
+	return enable ?
+		hdd_hastings_war_enable(hdd_ctx) :
+		hdd_hastings_war_disable(hdd_ctx);
+}
+#endif
+
 static int hdd_we_set_tm_level(struct hdd_adapter *adapter, int level)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -5246,6 +5345,9 @@ static const setint_getnone_fn setint_getnone_cb[] = {
 	[WE_SET_MAX_TX_POWER] = hdd_we_set_max_tx_power,
 	[WE_SET_MAX_TX_POWER_2_4] = hdd_we_set_max_tx_power_2_4,
 	[WE_SET_MAX_TX_POWER_5_0] = hdd_we_set_max_tx_power_5_0,
+#ifdef HASTINGS_BT_WAR
+	[WE_SET_HASTINGS_BT_WAR] = hdd_we_set_hastings_bt_war,
+#endif
 	[WE_SET_TM_LEVEL] = hdd_we_set_tm_level,
 	[WE_SET_PHYMODE] = wlan_hdd_update_phymode,
 	[WE_SET_NSS] = hdd_we_set_nss,
@@ -9596,6 +9698,13 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
 	 "setTxMaxPower"},
+
+#ifdef HASTINGS_BT_WAR
+	{WE_SET_HASTINGS_BT_WAR,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0,
+	 "hastings_bt_war"},
+#endif
 
 	{WE_SET_TM_LEVEL,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,

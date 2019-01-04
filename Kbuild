@@ -2560,6 +2560,8 @@ ccflags-y += -DQDF_LOCK_STATS_LIST=1
 ccflags-y += -DQDF_LOCK_STATS_LIST_SIZE=256
 endif
 
+ccflags-$(CONFIG_HASTINGS_BT_WAR) += -DHASTINGS_BT_WAR
+
 KBUILD_CPPFLAGS += $(cppflags-y)
 
 # Currently, for versions of gcc which support it, the kernel Makefile

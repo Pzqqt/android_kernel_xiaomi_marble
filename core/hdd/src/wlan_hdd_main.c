@@ -11145,6 +11145,14 @@ static void hdd_action_oui_send(struct hdd_context *hdd_ctx)
 		hdd_err("Failed to send one or all action_ouis");
 }
 
+static void hdd_hastings_bt_war_initialize(struct hdd_context *hdd_ctx)
+{
+	if (hdd_ctx->config->iface_change_wait_time)
+		hdd_hastings_bt_war_disable_fw(hdd_ctx);
+	else
+		hdd_hastings_bt_war_enable_fw(hdd_ctx);
+}
+
 /**
  * hdd_configure_cds() - Configure cds modules
  * @hdd_ctx:	HDD context
@@ -11343,6 +11351,8 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	if (enable_phy_reg_retention)
 		wma_cli_set_command(0, WMI_PDEV_PARAM_FAST_PWR_TRANSITION,
 			enable_phy_reg_retention, PDEV_CMD);
+
+	hdd_hastings_bt_war_initialize(hdd_ctx);
 
 	return 0;
 
