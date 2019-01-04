@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -555,11 +555,17 @@ wlan_ser_cancel_non_scan_cmd(
 
 			qdf_status = wlan_serialization_find_and_stop_timer(
 							psoc, &cmd_list->cmd);
-			if (QDF_STATUS_SUCCESS != qdf_status) {
-				ser_err("Can't fix timer for active cmd");
+			if (QDF_IS_STATUS_ERROR(qdf_status)) {
+				ser_err("Can't find timer for active cmd");
 				status = WLAN_SER_CMD_NOT_FOUND;
+				/*
+				 * This should not happen, as an active command
+				 * should always have the timer.
+				 */
+				QDF_BUG(0);
 				break;
 			}
+
 			status = WLAN_SER_CMD_IN_ACTIVE_LIST;
 		}
 

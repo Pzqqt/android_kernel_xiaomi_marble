@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -648,20 +648,19 @@ wlan_serialization_find_and_update_timer(
 		    (ser_timer->cmd->vdev != cmd->vdev))
 			continue;
 
+		qdf_timer_mod(&ser_timer->timer,
+			      cmd->cmd_timeout_duration);
 		status = QDF_STATUS_SUCCESS;
 		break;
 	}
 
 	wlan_serialization_release_lock(&psoc_ser_obj->timer_lock);
 
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		qdf_timer_mod(&ser_timer->timer,
-			      cmd->cmd_timeout_duration);
-		ser_debug("Updating the timer for cmd type:%d, id: %d",
+	if (QDF_IS_STATUS_SUCCESS(status))
+		ser_debug("Updated the timer for cmd type:%d, id: %d",
 			  cmd->cmd_type, cmd->cmd_id);
-	} else {
+	else
 		ser_err("Can't find timer for cmd_type[%d]", cmd->cmd_type);
-	}
 
 exit:
 	return status;
@@ -706,19 +705,18 @@ wlan_serialization_find_and_stop_timer(struct wlan_objmgr_psoc *psoc,
 		    (ser_timer->cmd->vdev != cmd->vdev))
 			continue;
 
-		status = QDF_STATUS_SUCCESS;
+		status = wlan_serialization_stop_timer(ser_timer);
 		break;
 	}
 
 	wlan_serialization_release_lock(&psoc_ser_obj->timer_lock);
 
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = wlan_serialization_stop_timer(ser_timer);
-		ser_debug("\n Stopping timer for cmd type:%d, id: %d",
+	if (QDF_IS_STATUS_SUCCESS(status))
+		ser_debug("Stopped timer for cmd_type %d cmd id %d",
 			  cmd->cmd_type, cmd->cmd_id);
-	} else {
-		ser_err("Can't find timer for cmd_type[%d]", cmd->cmd_type);
-	}
+	else
+		ser_err("Can't find timer for cmd_type %d cmd id %d",
+			cmd->cmd_type, cmd->cmd_id);
 
 exit:
 	return status;
