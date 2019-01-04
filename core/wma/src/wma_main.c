@@ -1521,32 +1521,22 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			if ((mac->mlme_cfg->gen.band_capability ==
 			     BAND_ALL) ||
 			    (mac->mlme_cfg->gen.band_capability ==
-			     BAND_2G)) {
-				if (cfg_set_int(mac,
-						WNI_CFG_CURRENT_TX_POWER_LEVEL,
-						privcmd->param_value) !=
-				    QDF_STATUS_SUCCESS)
-					WMA_LOGE("could not set WNI_CFG_CURRENT_TX_POWER_LEVEL");
-
-			} else {
+			     BAND_2G))
+				mac->mlme_cfg->power.current_tx_power_level =
+					(uint8_t)privcmd->param_value;
+			else
 				WMA_LOGE("Current band is not 2G");
-			}
 			break;
 		case WMI_PDEV_PARAM_TXPOWER_LIMIT5G:
 			wma->pdevconfig.txpow5g = privcmd->param_value;
 			if ((mac->mlme_cfg->gen.band_capability ==
 			     BAND_ALL) ||
 			    (mac->mlme_cfg->gen.band_capability ==
-			     BAND_5G)) {
-				if (cfg_set_int(mac,
-						WNI_CFG_CURRENT_TX_POWER_LEVEL,
-						privcmd->param_value) !=
-				    QDF_STATUS_SUCCESS)
-					WMA_LOGE("could not set WNI_CFG_CURRENT_TX_POWER_LEVEL");
-
-			} else {
+			     BAND_5G))
+				mac->mlme_cfg->power.current_tx_power_level =
+					(uint8_t)privcmd->param_value;
+			else
 				WMA_LOGE("Current band is not 5G");
-			}
 			break;
 		default:
 			WMA_LOGD("Invalid wma_cli_set pdev command/Not yet implemented 0x%x",

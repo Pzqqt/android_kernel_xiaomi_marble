@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -636,7 +636,7 @@ struct pe_session *pe_create_session(struct mac_context *mac,
 	session_ptr->fIgnoreCapsChange = 0;
 	session_ptr->ignore_assoc_disallowed = mac->ignore_assoc_disallowed;
 	session_ptr->is_session_obss_color_collision_det_enabled =
-		mac->lim.global_obss_color_collision_det_offload;
+		mac->mlme_cfg->obss_ht40.obss_color_collision_offload_enabled;
 
 	pe_debug("Create a new PE session: %d BSSID: "MAC_ADDRESS_STR" Max No of STA: %d",
 		*sessionId, MAC_ADDR_ARRAY(bssid), numSta);

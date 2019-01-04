@@ -5941,34 +5941,26 @@ static int __iw_setnone_getint(struct net_device *dev,
 
 	case WE_GET_TXPOW_2G:
 	{
-		uint32_t txpow2g = 0;
+		uint8_t txpow2g = 0;
 
 		hdd_debug("GET WMI_PDEV_PARAM_TXPOWER_LIMIT2G");
 		*value = wma_cli_get_command(adapter->session_id,
 					     WMI_PDEV_PARAM_TXPOWER_LIMIT2G,
 					     PDEV_CMD);
-		if (QDF_STATUS_SUCCESS !=
-		    sme_cfg_get_int(mac_handle, WNI_CFG_CURRENT_TX_POWER_LEVEL,
-				    &txpow2g)) {
-			return -EIO;
-		}
+		ucfg_mlme_get_current_tx_power_level(hdd_ctx->psoc, &txpow2g);
 		hdd_debug("2G tx_power %d", txpow2g);
 		break;
 	}
 
 	case WE_GET_TXPOW_5G:
 	{
-		uint32_t txpow5g = 0;
+		uint8_t txpow5g = 0;
 
 		hdd_debug("GET WMI_PDEV_PARAM_TXPOWER_LIMIT5G");
 		*value = wma_cli_get_command(adapter->session_id,
 					     WMI_PDEV_PARAM_TXPOWER_LIMIT5G,
 					     PDEV_CMD);
-		if (QDF_STATUS_SUCCESS !=
-		    sme_cfg_get_int(mac_handle, WNI_CFG_CURRENT_TX_POWER_LEVEL,
-				    &txpow5g)) {
-			return -EIO;
-		}
+		ucfg_mlme_get_current_tx_power_level(hdd_ctx->psoc, &txpow5g);
 		hdd_debug("5G tx_power %d", txpow5g);
 		break;
 	}

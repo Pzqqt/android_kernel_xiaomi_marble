@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -894,7 +894,7 @@ static void __sch_beacon_process_for_session(struct mac_context *mac_ctx,
 	}
 
 	maxTxPower = lim_get_max_tx_power(regMax, local_constraint,
-					mac_ctx->roam.configParam.nTxPowerCap);
+					mac_ctx->mlme_cfg->power.max_tx_power);
 
 	pe_debug("RegMax = %d, MaxTx pwr = %d",
 			regMax, maxTxPower);
@@ -1241,7 +1241,7 @@ void lim_enable_obss_detection_config(struct mac_context *mac_ctx,
 		return;
 	}
 
-	if (mac_ctx->lim.global_obss_offload_enabled) {
+	if (mac_ctx->mlme_cfg->obss_ht40.obss_detection_offload_enabled) {
 		status = lim_obss_send_detection_cfg(mac_ctx, session, true);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			pe_err("vdev %d: offload enable failed, trying legacy",
@@ -1255,7 +1255,7 @@ void lim_enable_obss_detection_config(struct mac_context *mac_ctx,
 		}
 	}
 
-	if (!mac_ctx->lim.global_obss_offload_enabled ||
+	if (!mac_ctx->mlme_cfg->obss_ht40.obss_detection_offload_enabled ||
 	    QDF_IS_STATUS_ERROR(status)) {
 		status = qdf_mc_timer_start(&session->
 					    protection_fields_reset_timer,

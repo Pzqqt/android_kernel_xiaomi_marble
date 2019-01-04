@@ -2837,13 +2837,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	if (mac->mlme_cfg->wmm_params.qos_enabled)
 		selfCaps.qos = 1;
 
-	if (wlan_cfg_get_int(mac, WNI_CFG_APSD_ENABLED, &val) !=
-							QDF_STATUS_SUCCESS) {
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_APSD_ENABLED");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (val)
+	if (mac->mlme_cfg->scoring.apsd_enabled)
 		selfCaps.apsd = 1;
 
 	selfCaps.rrm = mac->rrm.rrmSmeContext.rrmConfig.rrm_enabled;

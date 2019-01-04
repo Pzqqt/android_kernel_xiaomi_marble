@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -237,10 +237,10 @@ rrm_process_link_measurement_request(struct mac_context *mac,
 	}
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 
-	LinkReport.txPower = lim_get_max_tx_power(pe_session->def_max_tx_pwr,
-						pLinkReq->MaxTxPower.maxTxPower,
-						  mac->roam.configParam.
-						  nTxPowerCap);
+	LinkReport.txPower = lim_get_max_tx_power(
+					pe_session->def_max_tx_pwr,
+					pLinkReq->MaxTxPower.maxTxPower,
+					mac->mlme_cfg->power.max_tx_power);
 
 	if ((LinkReport.txPower != (uint8_t) (pe_session->maxTxPower)) &&
 	    (QDF_STATUS_SUCCESS == rrm_send_set_max_tx_power_req(mac,

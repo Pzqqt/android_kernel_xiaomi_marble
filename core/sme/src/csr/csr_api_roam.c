@@ -1663,7 +1663,6 @@ static void init_config_param(struct mac_context *mac)
 		mac->roam.configParam.BssPreferValue[i] = i;
 	csr_assign_rssi_for_category(mac, CSR_BEST_RSSI_VALUE,
 			CSR_DEFAULT_RSSI_DB_GAP);
-	mac->roam.configParam.nTxPowerCap = CSR_MAX_TX_POWER;
 	mac->roam.configParam.statsReqPeriodicity =
 		CSR_MIN_GLOBAL_STAT_QUERY_PERIOD;
 	mac->roam.configParam.statsReqPeriodicityInPS =
@@ -2518,7 +2517,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 		mac->roam.configParam.statsReqPeriodicityInPS =
 			pParam->statsReqPeriodicityInPS;
 		/* Assign this before calling csr_init11d_info */
-		mac->roam.configParam.nTxPowerCap = pParam->nTxPowerCap;
 		if (wlan_reg_11d_enabled_on_host(mac->psoc))
 			status = csr_init11d_info(mac, &pParam->Csr11dinfo);
 		else
@@ -2693,7 +2691,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 	pParam->AdHocChannel24 = cfg_params->AdHocChannel24;
 	pParam->AdHocChannel5G = cfg_params->AdHocChannel5G;
 	pParam->bCatRssiOffset = cfg_params->bCatRssiOffset;
-	pParam->nTxPowerCap = cfg_params->nTxPowerCap;
 	pParam->statsReqPeriodicity = cfg_params->statsReqPeriodicity;
 	pParam->statsReqPeriodicityInPS = cfg_params->statsReqPeriodicityInPS;
 	pParam->fEnableDFSChnlScan = mac->scan.fEnableDFSChnlScan;
@@ -2939,7 +2936,7 @@ static QDF_STATUS csr_init11d_info(struct mac_context *mac, tCsr11dinfo *ps11din
 				ps11dinfo->ChnPower[index].numChannels;
 			pChanInfo->maxTxPower =
 				QDF_MIN(ps11dinfo->ChnPower[index].maxtxPower,
-					mac->roam.configParam.nTxPowerCap);
+					mac->mlme_cfg->power.max_tx_power);
 			pChanInfo++;
 			count++;
 		}
@@ -3002,7 +2999,7 @@ QDF_STATUS csr_init_channel_power_list(struct mac_context *mac,
 				ps11dinfo->ChnPower[index].numChannels;
 			pChanInfo->maxTxPower =
 				QDF_MIN(ps11dinfo->ChnPower[index].maxtxPower,
-					mac->roam.configParam.nTxPowerCap);
+					mac->mlme_cfg->power.max_tx_power);
 			pChanInfo++;
 			count++;
 		}
@@ -4712,8 +4709,7 @@ QDF_STATUS csr_roam_set_bss_config_cfg(struct mac_context *mac, uint32_t session
 	else
 		mac->mlme_cfg->gen.enabled_11d = pProfile->ieee80211d;
 
-	cfg_set_int(mac, WNI_CFG_LOCAL_POWER_CONSTRAINT,
-			pBssConfig->uPowerLimit);
+	mac->mlme_cfg->power.local_power_constraint = pBssConfig->uPowerLimit;
 	/* CB */
 
 	if (CSR_IS_INFRA_AP(pProfile) || CSR_IS_IBSS(pProfile))

@@ -4687,19 +4687,14 @@ QDF_STATUS lim_is_dot11h_power_capabilities_in_range(struct mac_context *mac,
 							struct pe_session *pe_session)
 {
 	int8_t localMaxTxPower;
-	uint32_t localPwrConstraint;
+	uint8_t local_pwr_constraint;
 
 	localMaxTxPower =
 		cfg_get_regulatory_max_transmit_power(mac,
 						      pe_session->currentOperChannel);
 
-	if (wlan_cfg_get_int
-		    (mac, WNI_CFG_LOCAL_POWER_CONSTRAINT,
-		    &localPwrConstraint) != QDF_STATUS_SUCCESS) {
-		pe_err("Unable to get Local Power Constraint from cfg");
-		return QDF_STATUS_E_FAILURE;
-	}
-	localMaxTxPower -= (int8_t) localPwrConstraint;
+	local_pwr_constraint = mac->mlme_cfg->power.local_power_constraint;
+	localMaxTxPower -= (int8_t)local_pwr_constraint;
 
 	/**
 	 *  The min Tx Power of the associating station should not be greater than (regulatory

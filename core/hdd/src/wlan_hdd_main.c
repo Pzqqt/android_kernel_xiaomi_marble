@@ -2046,14 +2046,13 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 	hdd_ctx->dfs_cac_offload = cfg->dfs_cac_offload;
 	hdd_ctx->lte_coex_ant_share = cfg->services.lte_coex_ant_share;
 	hdd_ctx->obss_scan_offload = cfg->services.obss_scan_offload;
-	status = sme_cfg_set_int(mac_handle, WNI_CFG_OBSS_DETECTION_OFFLOAD,
-				 cfg->obss_detection_offloaded);
+	status = ucfg_mlme_set_obss_detection_offload_enabled(
+			hdd_ctx->psoc, cfg->obss_detection_offloaded);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Couldn't pass WNI_CFG_OBSS_DETECTION_OFFLOAD to CFG");
 
-	status = sme_cfg_set_int(mac_handle,
-				 WNI_CFG_OBSS_COLOR_COLLISION_OFFLOAD,
-				 cfg->obss_color_collision_offloaded);
+	status = ucfg_mlme_set_obss_color_collision_offload_enabled(
+			hdd_ctx->psoc, cfg->obss_color_collision_offloaded);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Failed to set WNI_CFG_OBSS_COLOR_COLLISION_OFFLOAD");
 }

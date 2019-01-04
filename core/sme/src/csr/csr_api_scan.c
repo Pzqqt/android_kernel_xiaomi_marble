@@ -571,7 +571,7 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(struct mac_context *mac,
 			return QDF_STATUS_E_FAILURE;
 		}
 		pChannelSet->txPower = QDF_MIN(pChannelInfo->maxTxPower,
-					mac->roam.configParam.nTxPowerCap);
+					mac->mlme_cfg->power.max_tx_power);
 		if (f2GHzInfoFound) {
 			if (!f2GListPurged) {
 				/* purge previous results if found new */
@@ -679,7 +679,7 @@ static void csr_diag_reset_country_information(struct mac_context *mac)
 		     Index++) {
 			p11dLog->TxPwr[Index] = QDF_MIN(
 				mac->scan.defaultPowerTable[Index].tx_power,
-				mac->roam.configParam.nTxPowerCap);
+				mac->mlme_cfg->power.max_tx_power);
 		}
 	}
 	if (!mac->mlme_cfg->gen.enabled_11d)
@@ -870,7 +870,7 @@ void csr_save_channel_power_for_band(struct mac_context *mac, bool fill_5f)
 		chan_info->numChannels = 1;
 		chan_info->maxTxPower =
 			QDF_MIN(mac->scan.defaultPowerTable[idx].tx_power,
-				mac->roam.configParam.nTxPowerCap);
+				mac->mlme_cfg->power.max_tx_power);
 		chan_info++;
 		count++;
 	}
@@ -1579,7 +1579,7 @@ static void csr_save_tx_power_to_cfg(struct mac_context *pMac,
 				ch_pwr_set->numChannels = 1;
 				ch_pwr_set->maxTxPower =
 					QDF_MIN(ch_set->txPower,
-					pMac->roam.configParam.nTxPowerCap);
+					pMac->mlme_cfg->power.max_tx_power);
 				sme_debug(
 					"Setting Max Transmit Power %d",
 					ch_pwr_set->maxTxPower);
@@ -1601,11 +1601,11 @@ static void csr_save_tx_power_to_cfg(struct mac_context *pMac,
 				ch_pwr_set->firstChanNum);
 			ch_pwr_set->numChannels = ch_set->numChannels;
 			ch_pwr_set->maxTxPower = QDF_MIN(ch_set->txPower,
-					pMac->roam.configParam.nTxPowerCap);
+					pMac->mlme_cfg->power.max_tx_power);
 			sme_debug(
 				"Setting Max Tx Power %d, nTxPower %d",
 				ch_pwr_set->maxTxPower,
-				pMac->roam.configParam.nTxPowerCap);
+				pMac->mlme_cfg->power.max_tx_power);
 			cbLen += sizeof(tSirMacChanInfo);
 			ch_pwr_set++;
 		}

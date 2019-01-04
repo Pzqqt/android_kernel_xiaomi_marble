@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -718,12 +718,7 @@ QDF_STATUS cfg_get_capability_info(struct mac_context *mac, uint16_t *pCap,
 		pCapInfo->qos = 1;
 
 	/* APSD bit */
-	if (wlan_cfg_get_int(mac, WNI_CFG_APSD_ENABLED, &val) !=
-							QDF_STATUS_SUCCESS) {
-		pe_err("cfg get WNI_CFG_APSD_ENABLED failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (val)
+	if (mac->mlme_cfg->scoring.apsd_enabled)
 		pCapInfo->apsd = 1;
 
 	pCapInfo->rrm = mac->rrm.rrmSmeContext.rrmConfig.rrm_enabled;

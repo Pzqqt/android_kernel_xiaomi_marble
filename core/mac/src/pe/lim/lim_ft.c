@@ -686,14 +686,14 @@ void lim_fill_ft_session(struct mac_context *mac,
 #ifdef FEATURE_WLAN_ESE
 	ft_session->maxTxPower =
 		lim_get_max_tx_power(regMax, localPowerConstraint,
-				     mac->roam.configParam.nTxPowerCap);
+				     mac->mlme_cfg->power.max_tx_power);
 #else
 	ft_session->maxTxPower = QDF_MIN(regMax, (localPowerConstraint));
 #endif
 
 	pe_debug("Reg max: %d local pwr: %d, ini tx pwr: %d max tx pwr: %d",
 		regMax, localPowerConstraint,
-		mac->roam.configParam.nTxPowerCap,
+		mac->mlme_cfg->power.max_tx_power,
 		ft_session->maxTxPower);
 	if (!lim_is_roam_synch_in_progress(pe_session)) {
 		ft_session->limPrevSmeState = ft_session->limSmeState;

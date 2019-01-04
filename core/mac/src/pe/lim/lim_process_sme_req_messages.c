@@ -1010,16 +1010,8 @@ __lim_handle_sme_start_bss_request(struct mac_context *mac_ctx, uint32_t *msg_bu
 			}
 		}
 
-		if (!session->lim11hEnable) {
-			if (cfg_set_int(mac_ctx,
-				WNI_CFG_LOCAL_POWER_CONSTRAINT, 0) !=
-				QDF_STATUS_SUCCESS)
-				/*
-				 * Failed to set the CFG param
-				 * WNI_CFG_LOCAL_POWER_CONSTRAINT
-				 */
-				pe_err("Set LOCAL_POWER_CONSTRAINT failed");
-		}
+		if (!session->lim11hEnable)
+			mac_ctx->mlme_cfg->power.local_power_constraint = 0;
 
 		mlm_start_req->beacon_tx_rate = session->beacon_tx_rate;
 
@@ -1646,7 +1638,7 @@ __lim_process_sme_join_req(struct mac_context *mac_ctx, uint32_t *msg_buf)
 
 		session->maxTxPower = lim_get_max_tx_power(reg_max,
 					local_power_constraint,
-					mac_ctx->roam.configParam.nTxPowerCap);
+					mac_ctx->mlme_cfg->power.max_tx_power);
 		session->def_max_tx_pwr = session->maxTxPower;
 
 		pe_debug("Reg max %d local power con %d max tx pwr %d",
@@ -6385,7 +6377,8 @@ void lim_send_obss_color_collision_cfg(struct mac_context *mac_ctx,
 		pe_debug("%d: obss color det not enabled, he_cap:%d, sup:%d:%d",
 			 session->smeSessionId, session->he_capable,
 			 session->is_session_obss_color_collision_det_enabled,
-			 mac_ctx->lim.global_obss_color_collision_det_offload);
+			 mac_ctx->mlme_cfg->obss_ht40.
+			 obss_color_collision_offload_enabled);
 		return;
 	}
 
@@ -6452,7 +6445,8 @@ void lim_process_obss_color_collision_info(struct mac_context *mac_ctx,
 		 obss_color_info->obss_color_bitmap_bit32to63,
 		 session->he_capable,
 		 session->is_session_obss_color_collision_det_enabled,
-		 mac_ctx->lim.global_obss_color_collision_det_offload);
+		 mac_ctx->mlme_cfg->obss_ht40.
+		 obss_color_collision_offload_enabled);
 
 	if (!session->he_capable ||
 	    !session->is_session_obss_color_collision_det_enabled) {
@@ -6464,7 +6458,8 @@ void lim_process_obss_color_collision_info(struct mac_context *mac_ctx,
 		pe_err("%d: FW disabled obss color det. he_cap:%d, sup:%d:%d",
 		       session->smeSessionId, session->he_capable,
 		       session->is_session_obss_color_collision_det_enabled,
-		       mac_ctx->lim.global_obss_color_collision_det_offload);
+		       mac_ctx->mlme_cfg->obss_ht40.
+		       obss_color_collision_offload_enabled);
 		session->is_session_obss_color_collision_det_enabled = false;
 		return;
 	case OBSS_COLOR_FREE_SLOT_AVAILABLE:

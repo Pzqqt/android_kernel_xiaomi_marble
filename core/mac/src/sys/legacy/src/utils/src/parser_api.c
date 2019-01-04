@@ -1266,12 +1266,9 @@ QDF_STATUS
 populate_dot11f_power_constraints(struct mac_context *mac,
 				  tDot11fIEPowerConstraints *pDot11f)
 {
-	uint32_t cfg;
-	QDF_STATUS nSirStatus;
+	pDot11f->localPowerConstraints =
+			mac->mlme_cfg->power.local_power_constraint;
 
-	CFG_GET_INT(nSirStatus, mac, WNI_CFG_LOCAL_POWER_CONSTRAINT, cfg);
-
-	pDot11f->localPowerConstraints = (uint8_t) cfg;
 	pDot11f->present = 1;
 
 	return QDF_STATUS_SUCCESS;
@@ -5590,8 +5587,7 @@ populate_dot11f_timing_advert_frame(struct mac_context *mac_ctx,
 	if (mac_ctx->mlme_cfg->wmm_params.qos_enabled)
 		frame->Capabilities.qos = 1;
 
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_APSD_ENABLED, &val);
-	if (val)
+	if (mac_ctx->mlme_cfg->scoring.apsd_enabled)
 		frame->Capabilities.apsd = 1;
 
 	val = mac_ctx->mlme_cfg->feature_flags.enable_block_ack;
@@ -5613,8 +5609,9 @@ populate_dot11f_timing_advert_frame(struct mac_context *mac_ctx,
 	frame->Country.present = 1;
 
 	/* PowerConstraints */
-	wlan_cfg_get_int(mac_ctx, WNI_CFG_LOCAL_POWER_CONSTRAINT, &val);
-	frame->PowerConstraints.localPowerConstraints = (uint8_t)val;
+	frame->PowerConstraints.localPowerConstraints =
+		mac_ctx->mlme_cfg->power.local_power_constraint;
+
 	frame->PowerConstraints.present = 1;
 
 	/* TimeAdvertisement */
