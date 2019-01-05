@@ -580,6 +580,8 @@ struct wlan_mlme_wps_params {
  * @country_code_priority: Country code priority.
  * @sap_pref_chan_location: SAP Preferred channel location.
  * @sap_mcc_chnl_avoid: SAP MCC channel avoidance flag
+ * @sap_11ac_override: Overrirde SAP bandwidth to 11ac
+ * @go_11ac_override: Override GO bandwidth to 11ac
  */
 struct wlan_mlme_cfg_sap {
 	uint8_t cfg_ssid[MLME_CFG_SSID_LEN];
@@ -613,6 +615,8 @@ struct wlan_mlme_cfg_sap {
 	bool go_force_11n_for_11ac;
 	bool ap_random_bssid_enable;
 	uint8_t sap_mcc_chnl_avoid;
+	bool sap_11ac_override;
+	bool go_11ac_override;
 };
 
 /**

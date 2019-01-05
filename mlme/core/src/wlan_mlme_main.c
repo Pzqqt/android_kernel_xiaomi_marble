@@ -1174,6 +1174,10 @@ static void mlme_init_sap_cfg(struct wlan_objmgr_psoc *psoc,
 		cfg_get(psoc, CFG_AP_ENABLE_RANDOM_BSSID);
 	sap_cfg->sap_mcc_chnl_avoid =
 		cfg_get(psoc, CFG_SAP_MCC_CHANNEL_AVOIDANCE);
+	sap_cfg->sap_11ac_override =
+		cfg_get(psoc, CFG_SAP_11AC_OVERRIDE);
+	sap_cfg->go_11ac_override =
+		cfg_get(psoc, CFG_GO_11AC_OVERRIDE);
 }
 
 static void mlme_init_obss_ht40_cfg(struct wlan_objmgr_psoc *psoc,

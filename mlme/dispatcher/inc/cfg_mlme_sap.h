@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -626,7 +626,59 @@
 			CFG_VALUE_OR_DEFAULT, \
 			"SAP MCC channel avoidance")
 
- #define CFG_SAP_ALL \
+/*
+ * <ini>
+ * gSAP11ACOverride - Override bw to 11ac for SAP in driver even if supplicant
+ *                    or hostapd configures HT.
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable 11AC override for SAP.
+ * Android UI does not provide advanced configuration options
+ * for SoftAP for Android O and below.
+ * Default override disabled for android. Can be enabled from
+ * ini for Android O and below.
+ *
+ *
+ * Supported Feature: SAP
+ *
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_SAP_11AC_OVERRIDE CFG_INI_BOOL( \
+				"gSAP11ACOverride", \
+				0, \
+				"Override bw to 11ac for SAP")
+
+/*
+ * <ini>
+ * gGO11ACOverride - Override bw to 11ac for P2P GO
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable 11AC override for GO.
+ * P2P GO also follows start_bss and since P2P GO could not be
+ * configured to setup VHT channel width in wpa_supplicant, driver
+ * can override 11AC.
+ *
+ *
+ * Supported Feature: P2P
+ *
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_GO_11AC_OVERRIDE CFG_INI_BOOL( \
+				"gGO11ACOverride", \
+				1, \
+				"Override bw to 11ac for P2P GO")
+
+#define CFG_SAP_ALL \
 	CFG(CFG_AP_ENABLE_RANDOM_BSSID) \
 	CFG(CFG_SSID) \
 	CFG(CFG_BEACON_INTERVAL) \
@@ -656,6 +708,8 @@
 	CFG(CFG_COUNTRY_CODE_PRIORITY) \
 	CFG(CFG_SAP_PREF_CHANNEL_LOCATION) \
 	CFG(CFG_SAP_FORCE_11N_FOR_11AC) \
-	CFG(CFG_GO_FORCE_11N_FOR_11AC)
+	CFG(CFG_SAP_11AC_OVERRIDE) \
+	CFG(CFG_GO_FORCE_11N_FOR_11AC) \
+	CFG(CFG_GO_11AC_OVERRIDE)
 
 #endif /* __CFG_MLME_SAP_H */
