@@ -235,6 +235,40 @@ typedef enum {
                                  ((mode) == MODE_11NG_HT40))
 #define IS_MODE_11GONLY(mode)   ((mode) == MODE_11GONLY)
 
+#define IS_MODE_LEGACY(phymode)  ((phymode == MODE_11A) || \
+                                  (phymode == MODE_11G) || \
+                                  (phymode == MODE_11B) || \
+                                  (phymode == MODE_11GONLY))
+
+#define IS_MODE_11N(phymode)     ((phymode >= MODE_11NA_HT20) && \
+                                  (phymode <= MODE_11NG_HT40))
+#ifdef CONFIG_160MHZ_SUPPORT
+  #define IS_MODE_11AC(phymode)  ((phymode >= MODE_11AC_VHT20) && \
+                                  (phymode <= MODE_11AC_VHT160))
+#else
+  #define IS_MODE_11AC(phymode)  ((phymode >= MODE_11AC_VHT20) && \
+                                  (phymode <= MODE_11AC_VHT80_2G))
+#endif /* CONFIG_160MHZ_SUPPORT */
+
+#if SUPPORT_11AX
+  #define IS_MODE_80MHZ(phymode) ((phymode == MODE_11AC_VHT80_2G) || \
+                                  (phymode == MODE_11AC_VHT80) || \
+                                  (phymode == MODE_11AX_HE80) || \
+                                  (phymode == MODE_11AX_HE80_2G))
+  #define IS_MODE_40MHZ(phymode) ((phymode == MODE_11AC_VHT40_2G) || \
+                                  (phymode == MODE_11AC_VHT40) || \
+                                  (phymode == MODE_11NG_HT40) || \
+                                  (phymode == MODE_11NA_HT40) || \
+                                  (phymode == MODE_11AX_HE40) || \
+                                  (phymode == MODE_11AX_HE40_2G))
+#else
+  #define IS_MODE_80MHZ(phymode) ((phymode == MODE_11AC_VHT80_2G) || \
+                                  (phymode == MODE_11AC_VHT80))
+  #define IS_MODE_40MHZ(phymode) ((phymode == MODE_11AC_VHT40_2G) || \
+                                  (phymode == MODE_11AC_VHT40) || \
+                                  (phymode == MODE_11NG_HT40) || \
+                                  (phymode == MODE_11NA_HT40))
+#endif /* SUPPORT_11AX */
 
 enum {
     REGDMN_MODE_11A              = 0x00000001,  /* 11a channels */
