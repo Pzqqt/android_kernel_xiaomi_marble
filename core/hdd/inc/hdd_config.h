@@ -1074,6 +1074,29 @@ enum hdd_wext_control {
 		1, \
 		"The param is used to enable/disable support for RTT")
 
+/*
+ * <ini>
+ * gAdvertiseConcurrentOperation - Iface combination advertising
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to control whether driver should indicate to kernel
+ * wiphy layer the combination of all its interfaces' supportability.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ADVERTISE_CONCURRENT_OPERATION CFG_INI_BOOL( \
+		"gAdvertiseConcurrentOperation", \
+		1, \
+		"Iface combination advertising")
+
 #define CFG_HDD_ALL \
 	CFG_ENABLE_PACKET_LOG_ALL \
 	CFG_ENABLE_RUNTIME_PM_ALL \
@@ -1087,6 +1110,7 @@ enum hdd_wext_control {
 	CFG(CFG_ACTION_OUI_ITO_EXTENSION) \
 	CFG(CFG_ACTION_OUI_DISABLE_AGGRESSIVE_TX) \
 	CFG(CFG_ACTION_OUI_SWITCH_TO_11N_MODE) \
+	CFG(CFG_ADVERTISE_CONCURRENT_OPERATION) \
 	CFG(CFG_BUG_ON_REINIT_FAILURE) \
 	CFG(CFG_DBS_SCAN_SELECTION) \
 	CFG(CFG_DERIVED_INTERFACE_POOL) \

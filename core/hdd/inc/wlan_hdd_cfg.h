@@ -99,30 +99,6 @@ struct hdd_context;
  #define CFG_ENABLE_11D_IN_WORLD_MODE_MAX     (1)
  #define CFG_ENABLE_11D_IN_WORLD_MODE_DEFAULT (0)
 
-/*
- * <ini>
- * gAdvertiseConcurrentOperation - Iface combination advertising
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to control whether driver should indicate to kernel
- * wiphy layer the combination of all its interfaces' supportability.
- *
- * Related: None
- *
- * Supported Feature: STA
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_ADVERTISE_CONCURRENT_OPERATION_NAME    "gAdvertiseConcurrentOperation"
-#define CFG_ADVERTISE_CONCURRENT_OPERATION_DEFAULT (1)
-#define CFG_ADVERTISE_CONCURRENT_OPERATION_MIN     (0)
-#define CFG_ADVERTISE_CONCURRENT_OPERATION_MAX     (1)
-
 enum hdd_dot11_mode {
 	eHDD_DOT11_MODE_AUTO = 0,       /* covers all things we support */
 	eHDD_DOT11_MODE_abg,    /* 11a/b/g only, no HT, no proprietary */
