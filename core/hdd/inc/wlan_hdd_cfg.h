@@ -199,58 +199,6 @@ enum hdd_dot11_mode {
 #define CFG_DHCP_SERVER_IP_DEFAULT  ""
 #endif /* DHCP_SERVER_OFFLOAD */
 
-/*
- * <ini>
- * gSAP11ACOverride - Override bw to 11ac for SAP in driver even if supplicant
- *                    or hostapd configures HT.
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable/disable 11AC override for SAP.
- * Android UI does not provide advanced configuration options
- * for SoftAP for Android O and below.
- * Default override disabled for android. Can be enabled from
- * ini for Android O and below.
- *
- *
- * Supported Feature: SAP
- *
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_SAP_11AC_OVERRIDE_NAME             "gSAP11ACOverride"
-#define CFG_SAP_11AC_OVERRIDE_MIN              (0)
-#define CFG_SAP_11AC_OVERRIDE_MAX              (1)
-#define CFG_SAP_11AC_OVERRIDE_DEFAULT          (0)
-
-/*
- * <ini>
- * gGO11ACOverride - Override bw to 11ac for P2P GO
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable 11AC override for GO.
- * P2P GO also follows start_bss and since P2P GO could not be
- * configured to setup VHT channel width in wpa_supplicant, driver
- * can override 11AC.
- *
- *
- * Supported Feature: P2P
- *
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_GO_11AC_OVERRIDE_NAME             "gGO11ACOverride"
-#define CFG_GO_11AC_OVERRIDE_MIN              (0)
-#define CFG_GO_11AC_OVERRIDE_MAX              (1)
-#define CFG_GO_11AC_OVERRIDE_DEFAULT          (1)
-
 #ifdef CONFIG_DP_TRACE
 /* Max length of gDptraceConfig string. e.g.- "1, 6, 1, 62" */
 #define DP_TRACE_CONFIG_STRING_LENGTH		(20)
@@ -352,8 +300,6 @@ struct hdd_config {
 #ifdef DHCP_SERVER_OFFLOAD
 	uint8_t dhcpServerIP[IPADDR_STRING_LENGTH];
 #endif /* DHCP_SERVER_OFFLOAD */
-	uint8_t sap_11ac_override;
-	uint8_t go_11ac_override;
 	bool apf_enabled;
 	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
 	uint16_t sap_tx_leakage_threshold;

@@ -11954,7 +11954,7 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 		goto unregister_netdev;
 	}
 
-	wlan_hdd_update_11n_mode(hdd_ctx->config);
+	wlan_hdd_update_11n_mode(hdd_ctx);
 
 	hdd_lpass_notify_wlan_version(hdd_ctx);
 

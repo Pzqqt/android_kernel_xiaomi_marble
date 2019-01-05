@@ -4367,6 +4367,8 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 	bool sap_force_11n_for_11ac = 0;
 	bool go_force_11n_for_11ac = 0;
 	uint32_t channel_bonding_mode;
+	bool go_11ac_override = 0;
+	bool sap_11ac_override = 0;
 
 	ucfg_mlme_get_sap_force_11n_for_11ac(hdd_ctx->psoc,
 					     &sap_force_11n_for_11ac);
@@ -4393,6 +4395,11 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 		return -EIO;
 	}
 
+	ucfg_mlme_is_go_11ac_override(hdd_ctx->psoc,
+				      &go_11ac_override);
+	ucfg_mlme_is_sap_11ac_override(hdd_ctx->psoc,
+				       &sap_11ac_override);
+
 	if (!sub_20_chan_width &&
 	    (sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11n ||
 	    sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ac ||
@@ -4401,10 +4408,10 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 	    sap_cfg->SapHw_mode == eCSR_DOT11_MODE_11ax_ONLY) &&
 	    ((ap_adapter->device_mode == QDF_SAP_MODE &&
 	    !sap_force_11n_for_11ac &&
-	    hdd_ctx->config->sap_11ac_override) ||
+	    sap_11ac_override) ||
 	    (ap_adapter->device_mode == QDF_P2P_GO_MODE &&
 	    !go_force_11n_for_11ac &&
-	    hdd_ctx->config->go_11ac_override))) {
+	    go_11ac_override))) {
 		hdd_debug("** Driver force 11AC override for SAP/Go **");
 
 		/* 11n only shall not be overridden since it may be on purpose*/

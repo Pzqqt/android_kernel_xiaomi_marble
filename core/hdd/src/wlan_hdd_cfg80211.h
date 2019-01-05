@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -268,7 +268,7 @@ void wlan_hdd_cfg80211_deinit(struct wiphy *wiphy);
 
 void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx);
 
-void wlan_hdd_update_11n_mode(struct hdd_config *cfg);
+void wlan_hdd_update_11n_mode(struct hdd_context *hdd_ctx);
 
 int wlan_hdd_cfg80211_register(struct wiphy *wiphy);
 

@@ -2535,6 +2535,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	bool sap_force_11n_for_11ac = 0;
 	bool go_force_11n_for_11ac = 0;
 	bool etsi13_srd_chan;
+	bool go_11ac_override = 0;
+	bool sap_11ac_override = 0;
 
 	/* ***Note*** Donot set SME config related to ACS operation here because
 	 * ACS operation is not synchronouse and ACS for Second AP may come when
@@ -2765,15 +2767,17 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		goto out;
 	}
 
+	ucfg_mlme_is_go_11ac_override(hdd_ctx->psoc, &go_11ac_override);
+	ucfg_mlme_is_sap_11ac_override(hdd_ctx->psoc, &sap_11ac_override);
 	/* ACS override for android */
 	if (ht_enabled &&
 	    sap_config->acs_cfg.end_ch >= WLAN_REG_CH_NUM(CHAN_ENUM_36) &&
 	    ((adapter->device_mode == QDF_SAP_MODE &&
 	      !sap_force_11n_for_11ac &&
-	      hdd_ctx->config->sap_11ac_override) ||
+	      sap_11ac_override) ||
 	      (adapter->device_mode == QDF_P2P_GO_MODE &&
 	      !go_force_11n_for_11ac &&
-	      hdd_ctx->config->go_11ac_override))) {
+	      go_11ac_override))) {
 		vht_enabled = 1;
 		sap_config->acs_cfg.hw_mode = eCSR_DOT11_MODE_11ac;
 		qdf_status =
@@ -13060,8 +13064,10 @@ void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx)
  *
  * Return: void
  */
-void wlan_hdd_update_11n_mode(struct hdd_config *cfg)
+void wlan_hdd_update_11n_mode(struct hdd_context *hdd_ctx)
 {
+	struct hdd_config *cfg = hdd_ctx->config;
+
 	if (sme_is_feature_supported_by_fw(DOT11AC)) {
 		hdd_debug("support 11ac");
 	} else {
@@ -13069,8 +13075,8 @@ void wlan_hdd_update_11n_mode(struct hdd_config *cfg)
 		if ((cfg->dot11Mode == eHDD_DOT11_MODE_11ac_ONLY) ||
 		    (cfg->dot11Mode == eHDD_DOT11_MODE_11ac)) {
 			cfg->dot11Mode = eHDD_DOT11_MODE_11n;
-			cfg->sap_11ac_override = 0;
-			cfg->go_11ac_override = 0;
+			ucfg_mlme_set_sap_11ac_override(hdd_ctx->psoc, 0);
+			ucfg_mlme_set_go_11ac_override(hdd_ctx->psoc, 0);
 		}
 	}
 }

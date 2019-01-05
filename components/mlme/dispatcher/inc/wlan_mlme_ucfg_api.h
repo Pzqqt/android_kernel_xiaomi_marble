@@ -1611,6 +1611,66 @@ QDF_STATUS ucfg_mlme_get_go_force_11n_for_11ac(struct wlan_objmgr_psoc
 }
 
 /**
+ * ucfg_mlme_is_sap_11ac_override() - Override 11ac bandwdith for SAP
+ *
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_is_sap_11ac_override(struct wlan_objmgr_psoc *psoc,
+					  bool *value)
+{
+	return wlan_mlme_is_sap_11ac_override(psoc, value);
+}
+
+/**
+ * ucfg_mlme_is_go_11ac_override() - Override 11ac bandwdith for P2P GO
+ *
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_is_go_11ac_override(struct wlan_objmgr_psoc *psoc,
+					 bool *value)
+{
+	return wlan_mlme_is_go_11ac_override(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_sap_11ac_override() - Set override 11ac bandwdith for SAP
+ *
+ * @psoc: pointer to psoc object
+ * @value: Value that needs to be set from the caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_sap_11ac_override(struct wlan_objmgr_psoc *psoc,
+					   bool value)
+{
+	return wlan_mlme_set_sap_11ac_override(psoc, value);
+}
+
+/**
+ * ucfg_mlme_set_go_11ac_override() - Set override 11ac bandwdith for P2P GO
+ *
+ * @psoc: pointer to psoc object
+ * @value: pointer to the value which will be filled for the caller
+ *
+ * Return: QDF Status
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_go_11ac_override(struct wlan_objmgr_psoc *psoc,
+					  bool value)
+{
+	return wlan_mlme_set_go_11ac_override(psoc, value);
+}
+
+/**
  * ucfg_mlme_get_oce_sta_enabled_info() - Get OCE feature enable/disable
  * info for STA
  *
