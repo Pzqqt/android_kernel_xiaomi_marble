@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -2082,6 +2082,36 @@ int wcd937x_info_create_codec_entry(struct snd_info_entry *codec_root,
 }
 EXPORT_SYMBOL(wcd937x_info_create_codec_entry);
 
+static int wcd937x_set_micbias_data(struct wcd937x_priv *wcd937x,
+			      struct wcd937x_pdata *pdata)
+{
+	int vout_ctl_1 = 0, vout_ctl_2 = 0, vout_ctl_3 = 0;
+	int rc = 0;
+
+	if (!pdata) {
+		dev_err(wcd937x->dev, "%s: NULL pdata\n", __func__);
+		return -ENODEV;
+	}
+
+	/* set micbias voltage */
+	vout_ctl_1 = wcd937x_get_micb_vout_ctl_val(pdata->micbias.micb1_mv);
+	vout_ctl_2 = wcd937x_get_micb_vout_ctl_val(pdata->micbias.micb2_mv);
+	vout_ctl_3 = wcd937x_get_micb_vout_ctl_val(pdata->micbias.micb3_mv);
+	if (vout_ctl_1 < 0 || vout_ctl_2 < 0 || vout_ctl_3 < 0) {
+		rc = -EINVAL;
+		goto done;
+	}
+	regmap_update_bits(wcd937x->regmap, WCD937X_ANA_MICB1, 0x3F,
+			   vout_ctl_1);
+	regmap_update_bits(wcd937x->regmap, WCD937X_ANA_MICB2, 0x3F,
+			   vout_ctl_2);
+	regmap_update_bits(wcd937x->regmap, WCD937X_ANA_MICB3, 0x3F,
+			   vout_ctl_3);
+
+done:
+	return rc;
+}
+
 static int wcd937x_soc_codec_probe(struct snd_soc_component *component)
 {
 	struct wcd937x_priv *wcd937x = snd_soc_component_get_drvdata(component);
@@ -2573,6 +2603,12 @@ static int wcd937x_bind(struct device *dev)
 		goto err;
 	}
 	wcd937x->tx_swr_dev->slave_irq = wcd937x->virq;
+
+	ret = wcd937x_set_micbias_data(wcd937x, pdata);
+	if (ret < 0) {
+		dev_err(dev, "%s: bad micbias pdata\n", __func__);
+		goto err_irq;
+	}
 
 	mutex_init(&wcd937x->micb_lock);
 	ret = snd_soc_register_component(dev, &soc_codec_dev_wcd937x,
