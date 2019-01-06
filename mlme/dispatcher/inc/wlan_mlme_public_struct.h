@@ -447,7 +447,7 @@ struct mlme_ht_info_field_2 {
 #else
 struct mlme_ht_info_field_2 {
 	uint16_t op_mode:2;
-	uint16_t nonGFDevicesPresent:1;
+	uint16_t non_gf_devices_present:1;
 	uint16_t transmit_burst_limit:1;
 	uint16_t obss_non_ht_sta_present:1;
 	uint16_t reserved:11;
