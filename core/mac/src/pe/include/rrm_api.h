@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -79,8 +79,8 @@ rrm_process_neighbor_report_req(struct mac_context *mac,
 				tpSirNeighborReportReqInd pNeighborReq);
 
 QDF_STATUS
-rrm_process_beacon_report_xmit(struct mac_context *mac,
-			       tpSirBeaconReportXmitInd pBcnReport);
+rrm_process_beacon_report_xmit(struct mac_context *mac_ctx,
+			       tpSirBeaconReportXmitInd beacon_xmit_ind);
 
 void lim_update_rrm_capability(struct mac_context *mac_ctx,
 			       tpSirSmeJoinReq join_req);
