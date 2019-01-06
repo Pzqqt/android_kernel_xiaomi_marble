@@ -304,7 +304,6 @@ struct pe_session {
 	tSirNoAParam p2pNoA;
 	tSirP2PNoaAttr p2pGoPsUpdate;
 	uint32_t defaultAuthFailureTimeout;
-	tSirP2PNoaStart p2pGoPsNoaStartInd;
 
 	/* EDCA QoS parameters
 	 * gLimEdcaParams - These EDCA parameters are used locally on AP or STA.
