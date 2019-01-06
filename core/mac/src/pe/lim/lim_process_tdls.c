@@ -106,14 +106,6 @@ enum tdlsLinks {
 	TDLS_LINK_DIRECT
 } e_tdls_link;
 
-/*
- * node status in node searching
- */
-enum tdlsLinkNodeStatus {
-	TDLS_NODE_NOT_FOUND,
-	TDLS_NODE_FOUND
-} e_tdls_link_node_status;
-
 enum tdlsReqType {
 	TDLS_INITIATOR,
 	TDLS_RESPONDER
