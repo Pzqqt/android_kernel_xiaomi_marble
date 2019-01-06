@@ -62,7 +62,8 @@ set_sch_edca_params(struct mac_context *mac,
  * @return None
  */
 
-void sch_set_beacon_interval(struct mac_context *mac, struct pe_session *pe_session)
+void sch_set_beacon_interval(struct mac_context *mac,
+			     struct pe_session *pe_session)
 {
 	uint32_t bi;
 
@@ -74,7 +75,7 @@ void sch_set_beacon_interval(struct mac_context *mac, struct pe_session *pe_sess
 		return;
 	}
 
-	mac->sch.schObject.gSchBeaconInterval = (uint16_t) bi;
+	mac->sch.beacon_interval = (uint16_t) bi;
 }
 
 static void sch_edca_profile_update_all(struct mac_context *pmac)

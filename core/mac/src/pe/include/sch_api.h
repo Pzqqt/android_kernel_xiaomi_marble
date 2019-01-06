@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -81,7 +81,8 @@ QDF_STATUS sch_beacon_edca_process(struct mac_context *mac,
 
 void sch_generate_tim(struct mac_context *, uint8_t **, uint16_t *, uint8_t);
 
-void sch_set_beacon_interval(struct mac_context *mac, struct pe_session *pe_session);
+void sch_set_beacon_interval(struct mac_context *mac,
+			     struct pe_session *pe_session);
 
 /**
  * sch_send_beacon_req() - send beacon update req to wma

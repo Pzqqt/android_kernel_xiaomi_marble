@@ -769,7 +769,7 @@ struct mac_context {
 	tAniSirCfg cfg;
 	struct wlan_mlme_cfg *mlme_cfg;
 	tAniSirLim lim;
-	tAniSirSch sch;
+	struct sch_context sch;
 	tAniSirSys sys;
 
 	/* PAL/HDD handle */

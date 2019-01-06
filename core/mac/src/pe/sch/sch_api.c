@@ -88,7 +88,7 @@ QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 		size, reason);
 
 	if (LIM_IS_AP_ROLE(pe_session) &&
-	   (mac->sch.schObject.fBeaconChanged)) {
+	   (mac->sch.beacon_changed)) {
 		retCode = lim_send_probe_rsp_template_to_hal(mac,
 				pe_session,
 				&pe_session->DefProbeRspIeBitmap[0]);
@@ -116,9 +116,9 @@ QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 		beaconParams->timIeOffset = pe_session->schBeaconOffsetBegin;
 		if (pe_session->dfsIncludeChanSwIe) {
 			beaconParams->csa_count_offset =
-				mac->sch.schObject.csa_count_offset;
+				mac->sch.csa_count_offset;
 			beaconParams->ecsa_count_offset =
-				mac->sch.schObject.ecsa_count_offset;
+				mac->sch.ecsa_count_offset;
 			pe_debug("csa_count_offset %d ecsa_count_offset %d",
 				 beaconParams->csa_count_offset,
 				 beaconParams->ecsa_count_offset);
@@ -129,16 +129,16 @@ QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 	beaconParams->reason = reason;
 
 	/* p2pIeOffset should be atleast greater than timIeOffset */
-	if ((mac->sch.schObject.p2pIeOffset != 0) &&
-	    (mac->sch.schObject.p2pIeOffset <
+	if ((mac->sch.p2p_ie_offset != 0) &&
+	    (mac->sch.p2p_ie_offset <
 	     pe_session->schBeaconOffsetBegin)) {
 		pe_err("Invalid p2pIeOffset:[%d]",
-			mac->sch.schObject.p2pIeOffset);
+			mac->sch.p2p_ie_offset);
 		QDF_ASSERT(0);
 		qdf_mem_free(beaconParams);
 		return QDF_STATUS_E_FAILURE;
 	}
-	beaconParams->p2pIeOffset = mac->sch.schObject.p2pIeOffset;
+	beaconParams->p2pIeOffset = mac->sch.p2p_ie_offset;
 #ifdef WLAN_SOFTAP_FW_BEACON_TX_PRNT_LOG
 	pe_err("TimIeOffset:[%d]", beaconParams->TimIeOffset);
 #endif

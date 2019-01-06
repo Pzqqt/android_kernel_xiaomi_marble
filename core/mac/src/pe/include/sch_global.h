@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,31 +43,20 @@
 #define tSchBeaconStruct tSirProbeRespBeacon
 #define tpSchBeaconStruct struct sSirProbeRespBeacon *
 
-/* ------------------------------------------------------------------- */
-
-/* ****************** MISC defs ********************************* */
-
-struct schMisc {
-	uint16_t gSchBeaconInterval;
-
-	/* --------- STA ONLY state ----------- */
-
-	/* / flag to indicate that beacon template has been updated */
-	uint8_t fBeaconChanged;
-
-	uint16_t p2pIeOffset;
-
-	/* CSA and ECSA Switch Count Offsets to be sent to FW */
+/**
+ * struct sch_context - SCH global context
+ * @beacon_interval: global beacon interval
+ * @beacon_changed: flag to indicate that beacon template has been updated
+ * @p2p_ie_offset: P2P IE offset
+ * @csa_count_offset: CSA Switch Count Offset to be sent to FW
+ * @ecsa_count_offset: ECSA Switch Count Offset to be sent to FW
+ */
+struct sch_context {
+	uint16_t beacon_interval;
+	uint8_t beacon_changed;
+	uint16_t p2p_ie_offset;
 	uint32_t csa_count_offset;
 	uint32_t ecsa_count_offset;
 };
-
-/* ****************** MISC defs ********************************* */
-
-/* / Global SCH structure */
-typedef struct sAniSirSch {
-	/* / The scheduler object */
-	struct schMisc schObject;
-} tAniSirSch, *tpAniSirSch;
 
 #endif

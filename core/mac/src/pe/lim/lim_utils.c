@@ -3259,7 +3259,7 @@ lim_enable_ht_protection_from11g(struct mac_context *mac, uint8_t enable,
 			   protectionEnabled) {
 			/* As operating mode changed after G station assoc some way to update beacon */
 			/* This addresses the issue of mode not changing to - 11 in beacon when OBSS overlap is enabled */
-			/* mac->sch.schObject.fBeaconChanged = 1; */
+			/* mac->sch.beacon_changed = 1; */
 			pBeaconParams->paramChangeBitmap |=
 				PARAM_llGCOEXIST_CHANGED;
 		}

@@ -4046,9 +4046,9 @@ static void __lim_process_sme_change_bi(struct mac_context *mac, uint32_t *pMsgB
 	}
 
 	/*Update sch beaconInterval */
-	if (mac->sch.schObject.gSchBeaconInterval !=
+	if (mac->sch.beacon_interval !=
 	    pChangeBIParams->beaconInterval) {
-		mac->sch.schObject.gSchBeaconInterval =
+		mac->sch.beacon_interval =
 			pChangeBIParams->beaconInterval;
 
 		pe_debug("LIM send update BeaconInterval Indication: %d",

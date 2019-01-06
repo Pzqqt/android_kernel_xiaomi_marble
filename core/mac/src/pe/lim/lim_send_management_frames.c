@@ -563,7 +563,7 @@ lim_send_probe_rsp_mgmt_frame(struct mac_context *mac_ctx,
 	 */
 	if (LIM_IS_AP_ROLE(pe_session)) {
 		frm->BeaconInterval.interval =
-			mac_ctx->sch.schObject.gSchBeaconInterval;
+			mac_ctx->sch.beacon_interval;
 	} else {
 		cfg = mac_ctx->mlme_cfg->sap_cfg.beacon_interval;
 		frm->BeaconInterval.interval = (uint16_t) cfg;

@@ -606,17 +606,17 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 					      &ecsa_count_offset);
 
 	if (csa_count_offset)
-		mac_ctx->sch.schObject.csa_count_offset =
+		mac_ctx->sch.csa_count_offset =
 				session->schBeaconOffsetBegin + TIM_IE_SIZE +
 				csa_count_offset;
 	if (ecsa_count_offset)
-		mac_ctx->sch.schObject.ecsa_count_offset =
+		mac_ctx->sch.ecsa_count_offset =
 				session->schBeaconOffsetBegin + TIM_IE_SIZE +
 				ecsa_count_offset;
 
 	pe_debug("csa_count_offset %d ecsa_count_offset %d",
-		 mac_ctx->sch.schObject.csa_count_offset,
-		 mac_ctx->sch.schObject.ecsa_count_offset);
+		 mac_ctx->sch.csa_count_offset,
+		 mac_ctx->sch.ecsa_count_offset);
 
 	extra_ie = session->pSchBeaconFrameEnd + n_bytes;
 	extra_ie_offset = n_bytes;
@@ -634,15 +634,15 @@ sch_set_fixed_beacon_fields(struct mac_context *mac_ctx, struct pe_session *sess
 	status = sch_get_p2p_ie_offset(extra_ie, extra_ie_len, &p2p_ie_offset);
 	if (QDF_STATUS_SUCCESS == status)
 		/* Update the P2P Ie Offset */
-		mac_ctx->sch.schObject.p2pIeOffset =
+		mac_ctx->sch.p2p_ie_offset =
 			session->schBeaconOffsetBegin + TIM_IE_SIZE +
 			extra_ie_offset + p2p_ie_offset;
 	else
-		mac_ctx->sch.schObject.p2pIeOffset = 0;
+		mac_ctx->sch.p2p_ie_offset = 0;
 
 	pe_debug("Initialized beacon end, offset %d",
 		session->schBeaconOffsetEnd);
-	mac_ctx->sch.schObject.fBeaconChanged = 1;
+	mac_ctx->sch.beacon_changed = 1;
 	qdf_mem_free(bcn_1);
 	qdf_mem_free(bcn_2);
 	qdf_mem_free(wsc_prb_res);
@@ -927,7 +927,7 @@ static QDF_STATUS write_beacon_to_memory(struct mac_context *mac, uint16_t size,
 	} else
 		pBeacon->beaconLength = (uint32_t) size - sizeof(uint32_t);
 
-	if (!mac->sch.schObject.fBeaconChanged)
+	if (!mac->sch.beacon_changed)
 		return QDF_STATUS_E_FAILURE;
 
 	/*
@@ -941,7 +941,7 @@ static QDF_STATUS write_beacon_to_memory(struct mac_context *mac, uint16_t size,
 	if (QDF_IS_STATUS_ERROR(status))
 		pe_err("sch_send_beacon_req() returned an error %d, size %d",
 		       status, size);
-	mac->sch.schObject.fBeaconChanged = 0;
+	mac->sch.beacon_changed = 0;
 
 	return status;
 }
