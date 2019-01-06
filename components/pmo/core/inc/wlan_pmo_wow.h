@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -300,7 +300,6 @@ static inline uint8_t pmo_get_wow_user_ptrn(
 	return count;
 }
 
-void pmo_dump_wow_ptrn(struct pmo_wow_add_pattern *ptrn);
 /**
  * pmo_core_del_wow_pattern() - Function which will delete the WoWL pattern
  * @vdev: pointer to the vdev
