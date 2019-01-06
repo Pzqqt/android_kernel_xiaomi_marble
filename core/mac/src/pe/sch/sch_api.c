@@ -139,9 +139,6 @@ QDF_STATUS sch_send_beacon_req(struct mac_context *mac, uint8_t *beaconPayload,
 		return QDF_STATUS_E_FAILURE;
 	}
 	beaconParams->p2pIeOffset = mac->sch.p2p_ie_offset;
-#ifdef WLAN_SOFTAP_FW_BEACON_TX_PRNT_LOG
-	pe_err("TimIeOffset:[%d]", beaconParams->TimIeOffset);
-#endif
 
 	if (size >= SIR_MAX_BEACON_SIZE) {
 		pe_err("beacon size (%d) exceed host limit %d",
