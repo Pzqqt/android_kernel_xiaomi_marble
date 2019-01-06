@@ -349,7 +349,6 @@ struct pe_session {
 	/*Flag to Track Status/Indicate HBFailure on this session */
 	bool LimHBFailureStatus;
 	uint32_t gLimPhyMode;
-	uint8_t amsduSupportedInBA;
 	uint8_t txLdpcIniFeatureEnabled;
 	/**
 	 * Following is the place holder for free peer index pool.
