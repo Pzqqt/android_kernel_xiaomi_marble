@@ -177,7 +177,7 @@ fail:
 	resp_msg.type = eWNI_SME_SET_HW_MODE_RESP;
 	resp_msg.bodyptr = param;
 	resp_msg.bodyval = 0;
-	lim_sys_process_mmh_msg_api(mac, &resp_msg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &resp_msg);
 	return status;
 }
 
@@ -245,7 +245,7 @@ fail:
 	resp_msg.type = eWNI_SME_SET_DUAL_MAC_CFG_RESP;
 	resp_msg.bodyptr = param;
 	resp_msg.bodyval = 0;
-	lim_sys_process_mmh_msg_api(mac, &resp_msg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &resp_msg);
 	return status;
 }
 
@@ -311,7 +311,7 @@ fail:
 	resp_msg.type = eWNI_SME_SET_ANTENNA_MODE_RESP;
 	resp_msg.bodyptr = param;
 	resp_msg.bodyval = 0;
-	lim_sys_process_mmh_msg_api(mac, &resp_msg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &resp_msg);
 	return status;
 }
 

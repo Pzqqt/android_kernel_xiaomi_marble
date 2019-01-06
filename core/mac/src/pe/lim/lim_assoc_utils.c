@@ -4771,7 +4771,7 @@ void lim_send_sme_unprotected_mgmt_frame_ind(struct mac_context *mac, uint8_t fr
 	mmhMsg.bodyptr = pSirSmeMgmtFrame;
 	mmhMsg.bodyval = 0;
 
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 	return;
 }
 #endif
@@ -4809,7 +4809,7 @@ void lim_send_sme_tsm_ie_ind(struct mac_context *mac, struct pe_session *pe_sess
 	mmhMsg.bodyptr = pSirSmeTsmIeInd;
 	mmhMsg.bodyval = 0;
 
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 	return;
 }
 #endif /* FEATURE_WLAN_ESE */

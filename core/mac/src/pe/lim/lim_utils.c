@@ -969,15 +969,6 @@ struct scheduler_msg *lim_read_deferred_msg_q(struct mac_context *mac)
 	return msg;
 }
 
-QDF_STATUS
-lim_sys_process_mmh_msg_api(struct mac_context *mac,
-			    struct scheduler_msg *pMsg, uint8_t qType)
-{
-	/* FIXME */
-	sys_process_mmh_msg(mac, pMsg);
-	return QDF_STATUS_SUCCESS;
-}
-
 /*
  * lim_handle_update_olbc_cache() - This function update olbc cache
  *

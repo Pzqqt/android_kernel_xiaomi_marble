@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -382,7 +382,7 @@ lim_process_ext_channel_switch_action_frame(struct mac_context *mac_ctx,
 		mmh_msg.type = eWNI_SME_EXT_CHANGE_CHANNEL_IND;
 		mmh_msg.bodyptr = ext_cng_chan_ind;
 		mmh_msg.bodyval = 0;
-		lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
+		lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg);
 	}
 	return;
 } /*** end lim_process_ext_channel_switch_action_frame() ***/

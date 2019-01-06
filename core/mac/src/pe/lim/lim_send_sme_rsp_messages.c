@@ -112,7 +112,7 @@ lim_send_sme_rsp(struct mac_context *mac_ctx, uint16_t msg_type,
 		break;
 	}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
-	lim_sys_process_mmh_msg_api(mac_ctx, &msg, ePROT);
+	lim_sys_process_mmh_msg_api(mac_ctx, &msg);
 }
 
 /**
@@ -186,7 +186,7 @@ static void lim_send_sme_join_reassoc_rsp_after_resume(struct mac_context *mac_c
 	msg.bodyptr = sme_join_rsp;
 	msg.bodyval = 0;
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TX_SME_MSG, NO_SESSION, msg.type));
-	lim_sys_process_mmh_msg_api(mac_ctx, &msg, ePROT);
+	lim_sys_process_mmh_msg_api(mac_ctx, &msg);
 }
 
 /**
@@ -681,7 +681,7 @@ lim_send_sme_start_bss_rsp(struct mac_context *mac,
 			      pe_session, (uint16_t) resultCode, 0);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 } /*** end lim_send_sme_start_bss_rsp() ***/
 
 void lim_send_sme_disassoc_deauth_ntf(struct mac_context *mac,
@@ -696,7 +696,7 @@ void lim_send_sme_disassoc_deauth_ntf(struct mac_context *mac,
 
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG, NO_SESSION, mmhMsg.type));
 
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 }
 
 /**
@@ -946,7 +946,7 @@ lim_send_sme_disassoc_ind(struct mac_context *mac, tpDphHashNode pStaDs,
 			      0, (uint16_t) pStaDs->mlmStaContext.disassocReason);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 
 } /*** end lim_send_sme_disassoc_ind() ***/
 
@@ -1009,7 +1009,7 @@ lim_send_sme_deauth_ind(struct mac_context *mac, tpDphHashNode pStaDs,
 			      0, pStaDs->mlmStaContext.cleanupTrigger);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 	return;
 } /*** end lim_send_sme_deauth_ind() ***/
 
@@ -1341,7 +1341,7 @@ lim_send_sme_wm_status_change_ntf(struct mac_context *mac_ctx,
 	}
 
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TX_SME_MSG, session_id, msg.type));
-	if (QDF_STATUS_SUCCESS != lim_sys_process_mmh_msg_api(mac_ctx, &msg, ePROT)) {
+	if (QDF_STATUS_SUCCESS != lim_sys_process_mmh_msg_api(mac_ctx, &msg)) {
 		qdf_mem_free(wm_status_change_ntf);
 		pe_err("lim_sys_process_mmh_msg_api failed");
 	}
@@ -1466,7 +1466,7 @@ lim_send_sme_addts_rsp(struct mac_context *mac, uint8_t rspReqd,
 			      0);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 	return;
 }
 
@@ -1519,7 +1519,7 @@ lim_send_sme_delts_rsp(struct mac_context *mac, tpSirDeltsReq delts, uint32_t st
 			      (uint16_t) status, 0);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 }
 
 void
@@ -1555,7 +1555,7 @@ lim_send_sme_delts_ind(struct mac_context *mac, struct delts_req_info *delts,
 			      0);
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 }
 
 #ifndef QCA_SUPPORT_CP_STATS
@@ -1611,7 +1611,7 @@ lim_send_sme_pe_statistics_rsp(struct mac_context *mac, uint16_t msgType, void *
 	mmhMsg.bodyptr = stats;
 	mmhMsg.bodyval = 0;
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG, NO_SESSION, mmhMsg.type));
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 
 	return;
 
@@ -1664,7 +1664,7 @@ void lim_send_sme_pe_ese_tsm_rsp(struct mac_context *mac,
 	mmhMsg.bodyptr = pStats;
 	mmhMsg.bodyval = 0;
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG, sessionId, mmhMsg.type));
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 
 	return;
 } /*** end lim_send_sme_pe_ese_tsm_rsp() ***/
@@ -1701,7 +1701,7 @@ lim_send_sme_ibss_peer_ind(struct mac_context *mac,
 	mmhMsg.type = msgType;
 	mmhMsg.bodyptr = pNewPeerInd;
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG, sessionId, mmhMsg.type));
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 
 }
 
@@ -2104,7 +2104,7 @@ void lim_handle_csa_offload_msg(struct mac_context *mac_ctx,
 			WLAN_PE_DIAG_SWITCH_CHL_IND_EVENT, session_entry,
 			QDF_STATUS_SUCCESS, QDF_STATUS_SUCCESS);
 #endif
-	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
+	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg);
 
 err:
 	qdf_mem_free(csa_params);
@@ -2173,7 +2173,7 @@ lim_send_sme_aggr_qos_rsp(struct mac_context *mac, tpSirAggrQosRsp aggrQosRsp,
 	mmhMsg.bodyval = 0;
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 			 smesessionId, mmhMsg.type));
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 
 	return;
 }
@@ -2199,7 +2199,7 @@ void lim_send_sme_max_assoc_exceeded_ntf(struct mac_context *mac, tSirMacAddr pe
 		pSmeMaxAssocInd->sessionId);
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 			 smesessionId, mmhMsg.type));
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 
 	return;
 }
@@ -2247,7 +2247,7 @@ lim_send_sme_ap_channel_switch_resp(struct mac_context *mac,
 	mmhMsg.type = eWNI_SME_CHANNEL_CHANGE_RSP;
 	mmhMsg.bodyptr = (void *)pSmeSwithChnlParams;
 	mmhMsg.bodyval = 0;
-	lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 
 	/*
 	 * We should start beacon transmission only if the new

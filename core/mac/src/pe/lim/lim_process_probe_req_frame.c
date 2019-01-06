@@ -568,7 +568,7 @@ lim_send_sme_probe_req_ind(struct mac_context *mac,
 	qdf_mem_copy(pSirSmeProbeReqInd->WPSPBCProbeReq.probeReqIE, pProbeReqIE,
 		     ProbeReqIELen);
 
-	if (lim_sys_process_mmh_msg_api(mac, &msgQ, ePROT) != QDF_STATUS_SUCCESS)
+	if (lim_sys_process_mmh_msg_api(mac, &msgQ) != QDF_STATUS_SUCCESS)
 		pe_err("couldnt send the probe req to hdd");
 
 } /*** end lim_send_sme_probe_req_ind() ***/

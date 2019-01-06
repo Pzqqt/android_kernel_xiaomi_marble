@@ -390,7 +390,7 @@ rrm_process_neighbor_report_response(struct mac_context *mac,
 	mmhMsg.bodyptr = pSmeNeighborRpt;
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 			 pe_session->peSessionId, mmhMsg.type));
-	status = lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT);
+	status = lim_sys_process_mmh_msg_api(mac, &mmhMsg);
 
 	return status;
 
@@ -638,7 +638,7 @@ rrm_process_beacon_report_req(struct mac_context *mac,
 	MTRACE(mac_trace(mac, TRACE_CODE_TX_SME_MSG,
 			 pe_session->peSessionId, mmhMsg.type));
 	if (QDF_STATUS_SUCCESS !=
-	    lim_sys_process_mmh_msg_api(mac, &mmhMsg, ePROT))
+	    lim_sys_process_mmh_msg_api(mac, &mmhMsg))
 		return eRRM_FAILURE;
 	return eRRM_SUCCESS;
 }

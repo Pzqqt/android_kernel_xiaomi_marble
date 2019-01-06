@@ -2580,7 +2580,7 @@ void lim_update_lost_link_info(struct mac_context *mac, struct pe_session *sessi
 	pe_debug("post eWNI_SME_LOST_LINK_INFO_IND, bss_idx: %d rssi: %d",
 		lost_link_info->vdev_id, lost_link_info->rssi);
 
-	lim_sys_process_mmh_msg_api(mac, &mmh_msg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &mmh_msg);
 }
 
 /**

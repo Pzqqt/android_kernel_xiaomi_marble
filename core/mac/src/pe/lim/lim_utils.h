@@ -273,8 +273,13 @@ void lim_handle_defer_msg_error(struct mac_context *mac,
 /* Deferred Message Queue Reset */
 void lim_reset_deferred_msg_q(struct mac_context *mac);
 
-QDF_STATUS lim_sys_process_mmh_msg_api(struct mac_context *,
-					  struct scheduler_msg *, uint8_t);
+static inline QDF_STATUS lim_sys_process_mmh_msg_api(struct mac_context *mac,
+						     struct scheduler_msg *msg)
+{
+	sys_process_mmh_msg(mac, msg);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 void lim_handle_update_olbc_cache(struct mac_context *mac);
 

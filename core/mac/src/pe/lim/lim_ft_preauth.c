@@ -650,7 +650,7 @@ void lim_post_ft_pre_auth_rsp(struct mac_context *mac_ctx,
 		lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_PREAUTH_DONE,
 				      session, status, 0);
 #endif
-	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
+	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg);
 }
 
 /**

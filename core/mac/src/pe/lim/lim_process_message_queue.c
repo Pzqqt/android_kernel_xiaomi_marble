@@ -176,7 +176,7 @@ static void lim_process_dual_mac_cfg_resp(struct mac_context *mac, void *body)
 	msg.bodyptr = param;
 	msg.bodyval = 0;
 	pe_debug("Send eWNI_SME_SET_DUAL_MAC_CFG_RESP to SME");
-	lim_sys_process_mmh_msg_api(mac, &msg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &msg);
 	return;
 }
 
@@ -236,7 +236,7 @@ static void lim_process_set_hw_mode_resp(struct mac_context *mac, void *body)
 	msg.bodyptr = param;
 	msg.bodyval = 0;
 	pe_err("Send eWNI_SME_SET_HW_MODE_RESP to SME");
-	lim_sys_process_mmh_msg_api(mac, &msg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &msg);
 	return;
 }
 
@@ -283,7 +283,7 @@ static void lim_process_set_antenna_resp(struct mac_context *mac, void *body)
 	msg.bodyptr = param;
 	msg.bodyval = 0;
 	pe_debug("Send eWNI_SME_SET_ANTENNA_MODE_RESP to SME");
-	lim_sys_process_mmh_msg_api(mac, &msg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &msg);
 	return;
 }
 
@@ -396,7 +396,7 @@ static void lim_process_hw_mode_trans_ind(struct mac_context *mac, void *body)
 	msg.bodyptr = param;
 	msg.bodyval = 0;
 	pe_err("Send eWNI_SME_HW_MODE_TRANS_IND to SME");
-	lim_sys_process_mmh_msg_api(mac, &msg, ePROT);
+	lim_sys_process_mmh_msg_api(mac, &msg);
 	return;
 }
 
@@ -551,7 +551,7 @@ __lim_pno_match_fwd_bcn_probepsp(struct mac_context *pmac, uint8_t *rx_pkt_info,
 	mmh_msg.type = msg_type;
 	mmh_msg.bodyptr = result;
 	mmh_msg.bodyval = 0;
-	lim_sys_process_mmh_msg_api(pmac, &mmh_msg, ePROT);
+	lim_sys_process_mmh_msg_api(pmac, &mmh_msg);
 }
 
 
@@ -614,7 +614,7 @@ __lim_ext_scan_forward_bcn_probe_rsp(struct mac_context *pmac, uint8_t *rx_pkt_i
 	mmh_msg.type = msg_type;
 	mmh_msg.bodyptr = result;
 	mmh_msg.bodyval = 0;
-	lim_sys_process_mmh_msg_api(pmac, &mmh_msg, ePROT);
+	lim_sys_process_mmh_msg_api(pmac, &mmh_msg);
 }
 
 static void

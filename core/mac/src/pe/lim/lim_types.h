@@ -947,12 +947,6 @@ typedef enum sHalBitVal         /* For Bit operations */
 	eHAL_SET
 } tHalBitVal;
 
-enum {
-	eHI_PRI,
-	ePROT,
-	eDBG
-};
-
 QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 					 tSirMacAddr peer_mac, uint16_t tid,
 					 struct pe_session *session,
