@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 
 
@@ -26,6 +26,7 @@
 
 #define DRV_NAME "msm-pcm-afe-v2"
 
+#define TIMEOUT_MS	1000
 #define MIN_PLAYBACK_PERIOD_SIZE (128 * 2)
 #define MAX_PLAYBACK_PERIOD_SIZE (128 * 2 * 2 * 6)
 #define MIN_PLAYBACK_NUM_PERIODS (4)
@@ -571,7 +572,8 @@ static int msm_afe_capture_copy(struct snd_pcm_substream *substream,
 
 		prtd->dsp_cnt++;
 		ret = wait_event_timeout(prtd->read_wait,
-				atomic_read(&prtd->rec_bytes_avail), 5 * HZ);
+				atomic_read(&prtd->rec_bytes_avail),
+				msecs_to_jiffies(TIMEOUT_MS));
 		if (ret < 0) {
 			pr_err("%s: wait_event_timeout failed\n", __func__);
 
