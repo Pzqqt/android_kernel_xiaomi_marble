@@ -603,7 +603,6 @@ typedef struct sSapDfsInfo {
 	 * detected on current Channel
 	 */
 	uint8_t target_channel;
-	uint8_t last_radar_found_channel;
 	uint8_t ignore_cac;
 	eSapDfsCACState_t cac_state;
 	uint8_t user_provided_target_channel;
