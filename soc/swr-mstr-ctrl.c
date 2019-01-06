@@ -493,9 +493,9 @@ static int swrm_cmd_fifo_wr_cmd(struct swr_mstr_ctrl *swrm, u8 cmd_data,
 	dev_dbg(swrm->dev, "%s: reg: 0x%x, cmd_id: 0x%x,wcmd_id: 0x%x, \
 			dev_num: 0x%x, cmd_data: 0x%x\n", __func__,
 			reg_addr, cmd_id, swrm->wcmd_id,dev_addr, cmd_data);
+	swr_master_write(swrm, SWRM_CMD_FIFO_WR_CMD, val);
 	/* wait for FIFO WR command to complete to avoid overflow */
 	usleep_range(250, 255);
-	swr_master_write(swrm, SWRM_CMD_FIFO_WR_CMD, val);
 	if (cmd_id == 0xF) {
 		/*
 		 * sleep for 10ms for MSM soundwire variant to allow broadcast
@@ -1430,12 +1430,17 @@ static irqreturn_t swrm_wakeup_interrupt(int irq, void *dev)
 		return ret;
 	}
 	mutex_unlock(&swrm->devlock);
+	if (unlikely(swrm_lock_sleep(swrm) == false)) {
+		dev_err(swrm->dev, "%s Failed to hold suspend\n", __func__);
+		goto exit;
+	}
 	if (swrm->wake_irq > 0)
 		disable_irq_nosync(swrm->wake_irq);
 	pm_runtime_get_sync(swrm->dev);
 	pm_runtime_mark_last_busy(swrm->dev);
 	pm_runtime_put_autosuspend(swrm->dev);
-
+	swrm_unlock_sleep(swrm);
+exit:
 	return ret;
 }
 
@@ -2042,6 +2047,7 @@ static int swrm_runtime_resume(struct device *dev)
 		if (swrm_clk_request(swrm, true))
 			goto exit;
 		if (!swrm->clk_stop_mode0_supp || swrm->state == SWR_MSTR_SSR) {
+			enable_bank_switch(swrm, 0, SWR_ROW_50, SWR_MIN_COL);
 			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
 				ret = swr_device_up(swr_dev);
 				if (ret) {
@@ -2096,6 +2102,7 @@ static int swrm_runtime_suspend(struct device *dev)
 			goto exit;
 		}
 		if (!swrm->clk_stop_mode0_supp || swrm->state == SWR_MSTR_SSR) {
+			enable_bank_switch(swrm, 0, SWR_ROW_50, SWR_MIN_COL);
 			swrm_clk_pause(swrm);
 			swr_master_write(swrm, SWRM_COMP_CFG_ADDR, 0x00);
 			list_for_each_entry(swr_dev, &mstr->devices, dev_list) {
