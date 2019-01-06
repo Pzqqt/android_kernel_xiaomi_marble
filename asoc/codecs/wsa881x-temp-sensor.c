@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2015, 2017-2018 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015, 2017-2019 The Linux Foundation. All rights reserved.
  */
 
 #include <linux/bitops.h>
@@ -109,9 +109,8 @@ temp_retry:
 
 	if (temp_val <= LOW_TEMP_THRESHOLD ||
 		temp_val >= HIGH_TEMP_THRESHOLD) {
-		printk_ratelimited("%s: T0: %d is out of range[%d, %d]\n",
-				   __func__, temp_val, LOW_TEMP_THRESHOLD,
-				   HIGH_TEMP_THRESHOLD);
+		pr_debug("%s: T0: %d is out of range[%d, %d]\n", __func__,
+			 temp_val, LOW_TEMP_THRESHOLD, HIGH_TEMP_THRESHOLD);
 		if (retry--) {
 			msleep(20);
 			goto temp_retry;
