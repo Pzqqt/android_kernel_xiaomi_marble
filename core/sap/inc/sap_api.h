@@ -341,18 +341,6 @@ typedef struct sap_WPSPBCProbeReqEvent_s {
 	tSirWPSPBCProbeReq WPSPBCProbeReq;
 } tSap_WPSPBCProbeReqEvent;
 
-typedef struct sap_ManagementFrameInfo_s {
-	uint32_t nFrameLength;
-	uint8_t frameType;
-	uint32_t rxChan;           /* Channel of where packet is received */
-	/*
-	 * Point to a buffer contain the beacon, assoc req, assoc rsp frame,
-	 * in that order user needs to use nBeaconLength, nAssocReqLength,
-	 * nAssocRspLength to desice where each frame starts and ends.
-	 */
-	uint8_t *pbFrames;
-} tSap_ManagementFrameInfo;
-
 typedef struct sap_SendActionCnf_s {
 	eSapStatus actionSendSuccess;
 } tSap_SendActionCnf;
