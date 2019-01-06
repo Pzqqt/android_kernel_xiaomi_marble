@@ -187,7 +187,6 @@ typedef struct sDphHashNode {
 	uint16_t pmfSaQueryStartTransId;
 	uint8_t pmfSaQueryState;
 	uint8_t pmfSaQueryRetryCount;
-	uint8_t proct_deauh_disassoc_cnt;
 #endif
 	uint8_t htLdpcCapable;
 	uint8_t vhtLdpcCapable;
