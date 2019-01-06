@@ -7472,6 +7472,20 @@ static struct snd_soc_dai_link msm_rx_tx_cdc_dma_be_dai_links[] = {
 	},
 	/* TX CDC DMA Backend DAI Links */
 	{
+		.name = LPASS_BE_TX_CDC_DMA_TX_0,
+		.stream_name = "TX CDC DMA0 Capture",
+		.cpu_dai_name = "msm-dai-cdc-dma-dev.45105",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "bolero_codec",
+		.codec_dai_name = "rx_macro_echo",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_TX_CDC_DMA_TX_0,
+		.be_hw_params_fixup = msm_be_hw_params_fixup,
+		.ignore_suspend = 1,
+		.ops = &msm_cdc_dma_be_ops,
+	},
+	{
 		.name = LPASS_BE_TX_CDC_DMA_TX_3,
 		.stream_name = "TX CDC DMA3 Capture",
 		.cpu_dai_name = "msm-dai-cdc-dma-dev.45111",
@@ -8033,7 +8047,6 @@ static int msm_aux_codec_init(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC1");
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC2");
 	snd_soc_dapm_ignore_suspend(dapm, "AMIC3");
-	snd_soc_dapm_ignore_suspend(dapm, "AMIC4");
 	snd_soc_dapm_sync(dapm);
 
 	pdata = snd_soc_card_get_drvdata(component->card);
