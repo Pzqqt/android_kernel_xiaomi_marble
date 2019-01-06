@@ -768,38 +768,4 @@ uint8_t *mac_trace_get_info_log_string(uint16_t info_log)
 	}
 }
 
-/**
- * mac_trace() - Main function used for MAC Trace
- * @mac_ctx:       Global MAC context
- * @code:          code
- * @session:       session id
- * @data:          data to be traced.
- *
- * Return: None
- **/
-void mac_trace(struct mac_context *mac_ctx, uint8_t code,
-		uint16_t session, uint32_t data)
-{
-	/*
-	 * Today mac_trace is being invoked by PE only, need to remove this
-	 * function once PE is migrated to using new trace API.
-	 */
-	mac_trace_new(mac_ctx, QDF_MODULE_ID_PE, code, session, data);
-}
-
-/**
- * mac_trace_new() - New function used for MAC Trace
- * @mac_ctx:       Global MAC context
- * @code:          code
- * @session:       session id
- * @data:          data to be traced.
- *
- * Return: None
- **/
-void mac_trace_new(struct mac_context *mac_ctx, uint8_t module, uint8_t code,
-		   uint16_t session, uint32_t data)
-{
-	qdf_trace(module, code, session, data);
-}
-
 #endif

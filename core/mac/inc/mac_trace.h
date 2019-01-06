@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2016, 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016, 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,19 +30,31 @@
 #define __MAC_TRACE_H
 
 #include "ani_global.h"
+#include "qdf_trace.h"
 
 #define MAC_TRACE_GET_MODULE_ID(data) ((data >> 8) & 0xff)
 #define MAC_TRACE_GET_MSG_ID(data)       (data & 0xffff)
+
+/**
+ * mac_trace() - Main function used for MAC Trace
+ * @mac_ctx:       Global MAC context
+ * @code:          trace code
+ * @session:       session id
+ * @data:          data to be traced.
+ *
+ * Return: None
+ */
+static inline void mac_trace(struct mac_context *mac_ctx, uint8_t code,
+			     uint16_t session, uint32_t data)
+{
+	qdf_trace(QDF_MODULE_ID_PE, code, session, data);
+}
 
 #ifdef TRACE_RECORD
 
 #define eLOG_NODROP_MISSED_BEACON_SCENARIO 0
 #define eLOG_PROC_DEAUTH_FRAME_SCENARIO 1
 
-void mac_trace(struct mac_context *mac, uint8_t code, uint16_t session,
-	       uint32_t data);
-void mac_trace_new(struct mac_context *mac, uint8_t module, uint8_t code,
-		   uint16_t session, uint32_t data);
 uint8_t *mac_trace_get_cfg_msg_string(uint16_t cfgMsg);
 uint8_t *mac_trace_get_lim_msg_string(uint16_t limMsg);
 uint8_t *mac_trace_get_sme_msg_string(uint16_t smeMsg);
