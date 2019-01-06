@@ -998,7 +998,6 @@ typedef struct tagCsrConfigParam {
 	 * request from HDD
 	 */
 	bool fScanTwice;
-	bool enableVhtFor24GHz;
 	bool vendor_vht_sap;
 	bool send_smps_action;
 
