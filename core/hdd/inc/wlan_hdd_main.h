@@ -220,9 +220,7 @@ enum hdd_driver_flags {
 #define WLAN_WAIT_DISCONNECT_ALREADY_IN_PROGRESS  1000
 #define WLAN_WAIT_TIME_STOP_ROAM  4000
 #define WLAN_WAIT_TIME_STATS       800
-#define WLAN_WAIT_TIME_POWER       800
 #define WLAN_WAIT_TIME_LINK_STATUS 800
-#define WLAN_WAIT_TIME_POWER_STATS 800
 
 /** Maximum time(ms) to wait for mc thread suspend **/
 #define WLAN_WAIT_TIME_MCTHREAD_SUSPEND  1200
