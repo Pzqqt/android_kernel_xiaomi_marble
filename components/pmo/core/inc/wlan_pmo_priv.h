@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -103,8 +103,6 @@ struct wlan_pmo_ctx {
  * @ptrn_match_enable: true when pattern match is enabled else false
  * @num_wow_default_patterns: number of wow default patterns for vdev
  * @num_wow_user_patterns: number of user wow patterns for vdev
- * @nlo_in_progress: true when pno/nlo in progress else false
- * @nlo_match_received: true when nlo match recevied from fwr else false
  * @extscan_in_progress: true when extscan in progress else false
  * @p2plo_in_progress: true when p2plo_in_progress in progress else false
  * @dtim_period: dtim period for vdev
@@ -127,8 +125,6 @@ struct pmo_vdev_priv_obj {
 	bool ptrn_match_enable;
 	uint8_t num_wow_default_patterns;
 	uint8_t num_wow_user_patterns;
-	bool nlo_in_progress;
-	bool nlo_match_received;
 	bool extscan_in_progress;
 	bool p2plo_in_progress;
 	uint8_t dtim_period;
