@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -316,7 +316,6 @@ struct policy_mgr_psoc_priv_obj {
 	struct policy_mgr_tdls_cbacks tdls_cbacks;
 	struct policy_mgr_cdp_cbacks cdp_cbacks;
 	struct policy_mgr_dp_cbacks dp_cbacks;
-	bool enable_sap_mandatory_chan_list;
 	uint8_t sap_mandatory_channels[QDF_MAX_NUM_CHAN];
 	uint32_t sap_mandatory_channels_len;
 	bool do_hw_mode_change;
