@@ -172,7 +172,6 @@ typedef struct sLimMlmStartReq {
 	tSirMacCfParamSet cfParamSet;
 	tSirMacChanNum channelNumber;
 	ePhyChanBondState cbMode;
-	uint16_t atimWindow;
 	tSirMacRateSet rateSet;
 	uint8_t sessionId;      /* Added For BT-AMP Support */
 
