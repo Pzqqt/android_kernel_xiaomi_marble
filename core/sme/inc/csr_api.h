@@ -667,12 +667,6 @@ typedef enum {
 #define CSR_MAX_NUM_KEY     (eCSR_SECURITY_WEP_STATIC_KEY_ID_MAX + 2 + 1)
 
 typedef enum {
-	eCSR_SECURITY_SET_KEY_ACTION_NO_CHANGE,
-	eCSR_SECURITY_SET_KEY_ACTION_SET_KEY,
-	eCSR_SECURITY_SET_KEY_ACTION_DELETE_KEY,
-} eCsrSetKeyAction;
-
-typedef enum {
 	/*
 	 * Roaming because HDD requested for reassoc by changing one of the
 	 * fields in tCsrRoamModifyProfileFields. OR Roaming because SME
