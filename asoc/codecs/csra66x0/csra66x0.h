@@ -1,6 +1,6 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
 /*
- * Copyright (c) 2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _CSRA66X0_H
@@ -198,7 +198,10 @@
 /* RESERVED (CSRA66X0_BASE+0x00C6) */
 /* ... */
 /* RESERVED (CSRA66X0_BASE+0x00FF) */
-#define CSRA66X0_MAX_REGISTER_ADDR  CSRA66X0_DCA_FREEZE_CTRL
+#define CSRA66X0_MAX_REGISTER_ADDR CSRA66X0_DCA_FREEZE_CTRL
+
+#define CSRA66X0_COEFF_BASE     0xD000
+#define CSRA66X0_MAX_COEFF_ADDR 0xD6DF
 
 #define EXPECTED_CSRA66X0_CHIP_ID 0x39
 
@@ -208,9 +211,13 @@
 #define SPK_VOLUME_LSB_MSK 0x00FF
 #define SPK_VOLUME_MSB_MSK 0x0100
 
-#define CONFIG_STATE    0x0
-#define RUN_STATE       0x1
-#define STDBY_STATE     0x2
+#define SET_CONFIG_STATE    0x0
+#define SET_RUN_STATE       0x1
+#define SET_STDBY_STATE     0x2
+
+#define CONFIG_STATE_ID 0x3
+#define WAIT_FOR_CONFIG_STATE_TIMEOUT_MS 2000
+#define SYSFS_RESET 1
 
 #define FAULT_STATUS_INTERNAL       0x01
 #define FAULT_STATUS_OTP_INTEGRITY  0x02
