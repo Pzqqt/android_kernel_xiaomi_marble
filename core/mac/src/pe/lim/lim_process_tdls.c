@@ -158,11 +158,6 @@ enum tdls_peer_capability {
 		CLEAR_BIT(peer_bitmap[1], ((aid) - (sizeof(uint32_t) << 3)));\
 	} while (0);
 
-#ifdef FEATURE_WLAN_TDLS
-#define WNI_CFG_TDLS_LINK_SETUP_RSP_TIMEOUT         (800)
-#define WNI_CFG_TDLS_LINK_SETUP_CNF_TIMEOUT         (200)
-#endif
-
 #define IS_QOS_ENABLED(pe_session) ((((pe_session)->limQosEnabled) && \
 					SIR_MAC_GET_QOS((pe_session)->limCurrentBssCaps)) ||	\
 				       (((pe_session)->limWmeEnabled) && \
