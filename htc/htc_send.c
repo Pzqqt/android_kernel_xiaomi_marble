@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1859,7 +1859,6 @@ static HTC_PACKET *htc_lookup_tx_packet(HTC_TARGET *target,
 	 */
 	HTC_PACKET_QUEUE_TRANSFER_TO_TAIL(&lookupQueue,
 					  &pEndpoint->TxLookupQueue);
-	UNLOCK_HTC_TX(target);
 
 	ITERATE_OVER_LIST_ALLOW_REMOVE(&lookupQueue.QueueHead, pPacket,
 				       HTC_PACKET, ListLink) {
@@ -1880,7 +1879,6 @@ static HTC_PACKET *htc_lookup_tx_packet(HTC_TARGET *target,
 	}
 	ITERATE_END;
 
-	LOCK_HTC_TX(target);
 	HTC_PACKET_QUEUE_TRANSFER_TO_HEAD(&pEndpoint->TxLookupQueue,
 					  &lookupQueue);
 	UNLOCK_HTC_TX(target);
