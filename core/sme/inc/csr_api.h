@@ -100,19 +100,6 @@ typedef enum {
 
 } eCsrEncryptionType;
 
-/*---------------------------------------------------------------------------
-   Enumeration of the various Security types
-   ---------------------------------------------------------------------------*/
-typedef enum {
-	eCSR_SECURITY_TYPE_WPA,
-	eCSR_SECURITY_TYPE_RSN,
-#ifdef FEATURE_WLAN_WAPI
-	eCSR_SECURITY_TYPE_WAPI,
-#endif /* FEATURE_WLAN_WAPI */
-	eCSR_SECURITY_TYPE_UNKNOWN,
-
-} eCsrSecurityType;
-
 typedef enum {
 	/* 11a/b/g only, no HT, no proprietary */
 	eCSR_DOT11_MODE_abg = 0x0001,
