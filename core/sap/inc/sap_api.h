@@ -310,6 +310,7 @@ typedef struct sap_StationMICFailureEvent_s {
 	uint8_t TSC[SIR_CIPHER_SEQ_CTR_SIZE];           /* sequence number */
 
 } tSap_StationMICFailureEvent;
+
 /*Structure to return MAC address of associated stations */
 typedef struct sap_AssocMacAddr_s {
 	struct qdf_mac_addr staMac; /* Associated station's MAC address */
@@ -318,7 +319,6 @@ typedef struct sap_AssocMacAddr_s {
 	uint8_t ShortGI40Mhz;
 	uint8_t ShortGI20Mhz;
 	uint8_t Support40Mhz;
-	uint32_t requestedMCRate;
 	tSirSupportedRates supportedRates;
 } tSap_AssocMacAddr, *tpSap_AssocMacAddr;
 
