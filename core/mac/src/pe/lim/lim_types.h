@@ -128,10 +128,6 @@
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40      /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_PEER_STA_REQUESTED_MASK   0x80  /* bit 7 will be used to control frames for p2p interface */
 
-#ifdef FEATURE_WLAN_TDLS
-#define HAL_TDLS_PEER_STA_MASK              0x80        /* bit 7 set for TDLS peer station */
-#endif
-
 #define LIM_DOS_PROTECTION_TIME 1000 //1000ms
 #define LIM_MIN_RSSI 0 /* 0dbm */
 /* enums used by LIM are as follows */
