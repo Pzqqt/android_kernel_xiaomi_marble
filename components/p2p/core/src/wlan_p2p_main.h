@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -195,15 +195,13 @@ enum p2p_connection_status {
  *                                  where we send NULL frame
  * @p2p_device_addr_admin:          enable/disable to derive the P2P
  *                                  MAC address from the primary MAC address
- * @skip_dfs_channel_p2p_search:    kip DFS Channel in case of P2P Search
- * @ignore_dynamic_dtim_in_p2p_mode:Ignore Dynamic Dtim in case of P2P options
+ * @skip_dfs_channel_p2p_search:    skip DFS Channel in case of P2P Search
  */
 struct p2p_param {
 	uint32_t go_keepalive_period;
 	uint32_t go_link_monitor_period;
 	bool p2p_device_addr_admin;
 	bool skip_dfs_channel_p2p_search;
-	bool ignore_dynamic_dtim_in_p2p_mode;
 };
 
 /**
