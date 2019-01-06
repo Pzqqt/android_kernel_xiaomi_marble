@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,12 +38,13 @@ uint32_t pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc);
 
 /**
  * pmo_set_pkt_fltr_req() - Set packet filter
- * @vdev: objmgr vdev
- * @pmo_set_pkt_fltr_req:
- * @vdev_id:
+ * @psoc: objmgr psoc
+ * @pmo_set_pkt_fltr_req: packet filter set param
+ * @vdev_id: vdev id
+ *
  *  API to set packet filter
  *
- * Return: QQDF_STATUS_SUCCESS in case of success else return error
+ * Return: QDF_STATUS_SUCCESS in case of success else return error
  */
 QDF_STATUS pmo_core_set_pkt_filter(struct wlan_objmgr_psoc *psoc,
 			struct pmo_rcv_pkt_fltr_cfg *pmo_set_pkt_fltr_req,
@@ -51,16 +52,16 @@ QDF_STATUS pmo_core_set_pkt_filter(struct wlan_objmgr_psoc *psoc,
 
 /**
  * pmo_core_clear_pkt_filter() - Clear packet filter
- * @vdev: objmgr vdev
- * @pmo_clr_pkt_fltr_req:
- * @vdev_id:
+ * @psoc: objmgr psoc
+ * @pmo_clr_pkt_fltr_param: packet filter clear param
+ * @vdev_id: vdev id
  *
  *  API to clear packet filter
  *
- * Return: QQDF_STATUS_SUCCESS in case of success else return error
+ * Return: QDF_STATUS_SUCCESS in case of success else return error
  */
 QDF_STATUS pmo_core_clear_pkt_filter(struct wlan_objmgr_psoc *psoc,
-		struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_req,
+		struct pmo_rcv_pkt_fltr_clear_param *pmo_clr_pkt_fltr_param,
 		uint8_t vdev_id);
 
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */

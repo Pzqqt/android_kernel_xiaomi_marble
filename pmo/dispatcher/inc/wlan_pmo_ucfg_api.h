@@ -552,7 +552,7 @@ uint32_t ucfg_pmo_get_num_packet_filters(struct wlan_objmgr_psoc *psoc);
 /**
  * ucfg_pmo_set_pkt_filter() - Set packet filter
  * @psoc: objmgr psoc handle
- * @pmo_set_pkt_fltr_req:
+ * @pmo_set_pkt_fltr_req: packet filter set param
  * @vdev_id: vdev id
  *
  * Return QDF_STATUS_SUCCESS -in case of success else return error
@@ -565,7 +565,7 @@ ucfg_pmo_set_pkt_filter(struct wlan_objmgr_psoc *psoc,
 /**
  * ucfg_pmo_clear_pkt_filter() - Clear packet filter
  * @psoc: objmgr psoc handle
- * @pmo_clr_pkt_fltr_req:
+ * @pmo_clr_pkt_fltr_param: packet filter clear param
  * @vdev_id: vdev id
  *
  * Return QDF_STATUS_SUCCESS -in case of success else return error
