@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -69,6 +69,10 @@ static const struct snd_kcontrol_new name##_mux = \
 #define RX_MACRO_COMP_OFFSET 0x40
 
 #define MAX_IMPED_PARAMS 6
+
+#define RX_MACRO_EC_MIX_TX0_MASK 0xf0
+#define RX_MACRO_EC_MIX_TX1_MASK 0x0f
+#define RX_MACRO_EC_MIX_TX2_MASK 0x0f
 
 struct wcd_imped_val {
 	u32 imped_val;
@@ -193,6 +197,13 @@ enum {
 };
 
 enum {
+	RX_MACRO_EC0_MUX = 0,
+	RX_MACRO_EC1_MUX,
+	RX_MACRO_EC2_MUX,
+	RX_MACRO_EC_MUX_MAX,
+};
+
+enum {
 	INTn_1_INP_SEL_ZERO = 0,
 	INTn_1_INP_SEL_DEC0,
 	INTn_1_INP_SEL_DEC1,
@@ -299,6 +310,7 @@ enum {
 	RX_MACRO_AIF2_PB,
 	RX_MACRO_AIF3_PB,
 	RX_MACRO_AIF4_PB,
+	RX_MACRO_AIF_ECHO,
 	RX_MACRO_MAX_DAIS,
 };
 
@@ -380,10 +392,6 @@ static const char * const rx_prim_mix_text[] = {
 
 static const char * const rx_sidetone_mix_text[] = {
 	"ZERO", "SRC0", "SRC1", "SRC_SUM"
-};
-
-static const char * const rx_echo_mux_text[] = {
-	"ZERO", "RX_MIX0", "RX_MIX1", "RX_MIX2"
 };
 
 static const char * const iir_inp_mux_text[] = {
@@ -477,13 +485,6 @@ RX_MACRO_DAPM_ENUM(rx_int1_mix2_inp, BOLERO_CDC_RX_INP_MUX_SIDETONE_SRC_CFG0, 4,
 RX_MACRO_DAPM_ENUM(rx_int2_mix2_inp, BOLERO_CDC_RX_INP_MUX_SIDETONE_SRC_CFG0, 6,
 		rx_sidetone_mix_text);
 
-RX_MACRO_DAPM_ENUM(rx_mix_tx0, BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG4, 4,
-	rx_echo_mux_text);
-RX_MACRO_DAPM_ENUM(rx_mix_tx1, BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG4, 0,
-	rx_echo_mux_text);
-RX_MACRO_DAPM_ENUM(rx_mix_tx2, BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG4, 0,
-	rx_echo_mux_text);
-
 RX_MACRO_DAPM_ENUM(iir0_inp0, BOLERO_CDC_RX_IIR_INP_MUX_IIR0_MIX_CFG0, 0,
 	iir_inp_mux_text);
 RX_MACRO_DAPM_ENUM(iir0_inp1, BOLERO_CDC_RX_IIR_INP_MUX_IIR0_MIX_CFG1, 0,
@@ -534,6 +535,31 @@ RX_MACRO_DAPM_ENUM_EXT(rx_macro_rx4, SND_SOC_NOPM, 0, rx_macro_mux_text,
 	rx_macro_mux_get, rx_macro_mux_put);
 RX_MACRO_DAPM_ENUM_EXT(rx_macro_rx5, SND_SOC_NOPM, 0, rx_macro_mux_text,
 	rx_macro_mux_get, rx_macro_mux_put);
+
+static const char * const rx_echo_mux_text[] = {
+	"ZERO", "RX_MIX0", "RX_MIX1", "RX_MIX2"
+};
+
+static const struct soc_enum rx_mix_tx2_mux_enum =
+	SOC_ENUM_SINGLE(BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG5, 0, 4,
+			rx_echo_mux_text);
+
+static const struct snd_kcontrol_new rx_mix_tx2_mux =
+	SOC_DAPM_ENUM("RX MIX TX2_MUX Mux", rx_mix_tx2_mux_enum);
+
+static const struct soc_enum rx_mix_tx1_mux_enum =
+	SOC_ENUM_SINGLE(BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG4, 0, 4,
+			rx_echo_mux_text);
+
+static const struct snd_kcontrol_new rx_mix_tx1_mux =
+	SOC_DAPM_ENUM("RX MIX TX1_MUX Mux", rx_mix_tx1_mux_enum);
+
+static const struct soc_enum rx_mix_tx0_mux_enum =
+	SOC_ENUM_SINGLE(BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG4, 4, 4,
+			rx_echo_mux_text);
+
+static const struct snd_kcontrol_new rx_mix_tx0_mux =
+	SOC_DAPM_ENUM("RX MIX TX0_MUX Mux", rx_mix_tx0_mux_enum);
 
 static struct snd_soc_dai_ops rx_macro_dai_ops = {
 	.hw_params = rx_macro_hw_params,
@@ -594,6 +620,20 @@ static struct snd_soc_dai_driver rx_macro_dai[] = {
 			.rate_min = 8000,
 			.channels_min = 1,
 			.channels_max = 2,
+		},
+		.ops = &rx_macro_dai_ops,
+	},
+	{
+		.name = "rx_macro_echo",
+		.id = RX_MACRO_AIF_ECHO,
+		.capture = {
+			.stream_name = "RX_AIF_ECHO Capture",
+			.rates = RX_MACRO_ECHO_RATES,
+			.formats = RX_MACRO_ECHO_FORMATS,
+			.rate_max = 48000,
+			.rate_min = 8000,
+			.channels_min = 1,
+			.channels_max = 3,
 		},
 		.ops = &rx_macro_dai_ops,
 	},
@@ -695,7 +735,7 @@ static bool rx_macro_get_data(struct snd_soc_component *component,
 
 	if (!(*rx_priv)->component) {
 		dev_err(component->dev,
-			"%s: tx_priv codec is not initialized!\n", func_name);
+			"%s: rx_priv component is not initialized!\n", func_name);
 		return false;
 	}
 
@@ -963,7 +1003,7 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 	struct device *rx_dev = NULL;
 	struct rx_macro_priv *rx_priv = NULL;
 	unsigned int temp = 0, ch_mask = 0;
-	u16 i = 0;
+	u16 val = 0, mask = 0, cnt = 0, i = 0;
 
 	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
 		return -EINVAL;
@@ -981,6 +1021,26 @@ static int rx_macro_get_channel_map(struct snd_soc_dai *dai,
 		}
 		*rx_slot = ch_mask;
 		*rx_num = rx_priv->active_ch_cnt[dai->id];
+		break;
+	case RX_MACRO_AIF_ECHO:
+		val = snd_soc_component_read32(component,
+			BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG4);
+		if (val & RX_MACRO_EC_MIX_TX0_MASK) {
+			mask |= 0x1;
+			cnt++;
+		}
+		if (val & RX_MACRO_EC_MIX_TX1_MASK) {
+			mask |= 0x2;
+			cnt++;
+		}
+		val = snd_soc_component_read32(component,
+			BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG5);
+		if (val & RX_MACRO_EC_MIX_TX2_MASK) {
+			mask |= 0x4;
+			cnt++;
+		}
+		*tx_slot = mask;
+		*tx_num = cnt;
 		break;
 	default:
 		dev_err(rx_dev, "%s: Invalid AIF\n", __func__);
@@ -2646,6 +2706,50 @@ static const struct snd_kcontrol_new rx_macro_snd_controls[] = {
 		rx_macro_iir_band_audio_mixer_put),
 };
 
+static int rx_macro_enable_echo(struct snd_soc_dapm_widget *w,
+				struct snd_kcontrol *kcontrol,
+				int event)
+{
+	struct snd_soc_component *component =
+			snd_soc_dapm_to_component(w->dapm);
+	struct device *rx_dev = NULL;
+	struct rx_macro_priv *rx_priv = NULL;
+	u16 val = 0, ec_hq_reg = 0;
+	int ec_tx = 0;
+
+	if (!rx_macro_get_data(component, &rx_dev, &rx_priv, __func__))
+		return -EINVAL;
+
+	dev_dbg(rx_dev, "%s %d %s\n", __func__, event, w->name);
+
+	val = snd_soc_component_read32(component,
+			BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG4);
+	if (!(strcmp(w->name, "RX MIX TX0 MUX")))
+		ec_tx = ((val & 0xf0) >> 0x4) - 1;
+	else if (!(strcmp(w->name, "RX MIX TX1 MUX")))
+		ec_tx = (val & 0x0f) - 1;
+
+	val = snd_soc_component_read32(component,
+			BOLERO_CDC_RX_INP_MUX_RX_MIX_CFG5);
+	if (!(strcmp(w->name, "RX MIX TX2 MUX")))
+		ec_tx = (val & 0x0f) - 1;
+
+	if (ec_tx < 0 || (ec_tx >= RX_MACRO_EC_MUX_MAX)) {
+		dev_err(rx_dev, "%s: EC mix control not set correctly\n",
+			__func__);
+		return -EINVAL;
+	}
+	ec_hq_reg = BOLERO_CDC_RX_EC_REF_HQ0_EC_REF_HQ_PATH_CTL +
+			    0x40 * ec_tx;
+	snd_soc_component_update_bits(component, ec_hq_reg, 0x01, 0x01);
+	ec_hq_reg = BOLERO_CDC_RX_EC_REF_HQ0_EC_REF_HQ_CFG0 +
+				0x40 * ec_tx;
+	/* default set to 48k */
+	snd_soc_component_update_bits(component, ec_hq_reg, 0x1E, 0x08);
+
+	return 0;
+}
+
 static const struct snd_soc_dapm_widget rx_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_IN("RX AIF1 PB", "RX_MACRO_AIF1 Playback", 0,
 		SND_SOC_NOPM, 0, 0),
@@ -2657,6 +2761,9 @@ static const struct snd_soc_dapm_widget rx_macro_dapm_widgets[] = {
 		SND_SOC_NOPM, 0, 0),
 
 	SND_SOC_DAPM_AIF_IN("RX AIF4 PB", "RX_MACRO_AIF4 Playback", 0,
+		SND_SOC_NOPM, 0, 0),
+
+	SND_SOC_DAPM_AIF_OUT("RX AIF_ECHO", "RX_AIF_ECHO Capture", 0,
 		SND_SOC_NOPM, 0, 0),
 
 	RX_MACRO_DAPM_MUX("RX_MACRO RX0 MUX", RX_MACRO_RX0, rx_macro_rx0),
@@ -2682,6 +2789,19 @@ static const struct snd_soc_dapm_widget rx_macro_dapm_widgets[] = {
 	RX_MACRO_DAPM_MUX("IIR1 INP2 MUX", 0, iir1_inp2),
 	RX_MACRO_DAPM_MUX("IIR1 INP3 MUX", 0, iir1_inp3),
 
+	SND_SOC_DAPM_MUX_E("RX MIX TX0 MUX", SND_SOC_NOPM,
+			   RX_MACRO_EC0_MUX, 0,
+			   &rx_mix_tx0_mux, rx_macro_enable_echo,
+			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MUX_E("RX MIX TX1 MUX", SND_SOC_NOPM,
+			   RX_MACRO_EC1_MUX, 0,
+			   &rx_mix_tx1_mux, rx_macro_enable_echo,
+			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+	SND_SOC_DAPM_MUX_E("RX MIX TX2 MUX", SND_SOC_NOPM,
+			   RX_MACRO_EC2_MUX, 0,
+			   &rx_mix_tx2_mux, rx_macro_enable_echo,
+			   SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_POST_PMD),
+
 	SND_SOC_DAPM_MIXER_E("IIR0", BOLERO_CDC_RX_SIDETONE_IIR0_IIR_PATH_CTL,
 		4, 0, NULL, 0, rx_macro_set_iir_gain,
 		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_PRE_PMD),
@@ -2693,9 +2813,6 @@ static const struct snd_soc_dapm_widget rx_macro_dapm_widgets[] = {
 	SND_SOC_DAPM_MIXER("SRC1", BOLERO_CDC_RX_SIDETONE_SRC1_ST_SRC_PATH_CTL,
 		4, 0, NULL, 0),
 
-	RX_MACRO_DAPM_MUX("RX MIX TX0 MUX", 0, rx_mix_tx0),
-	RX_MACRO_DAPM_MUX("RX MIX TX1 MUX", 0, rx_mix_tx1),
-	RX_MACRO_DAPM_MUX("RX MIX TX2 MUX", 0, rx_mix_tx2),
 	RX_MACRO_DAPM_MUX("RX INT0 DEM MUX", 0, rx_int0_dem_inp),
 	RX_MACRO_DAPM_MUX("RX INT1 DEM MUX", 0, rx_int1_dem_inp),
 
@@ -2904,6 +3021,20 @@ static const struct snd_soc_dapm_route rx_audio_map[] = {
 	{"RX INT2_1 MIX1", NULL, "RX INT2_1 MIX1 INP0"},
 	{"RX INT2_1 MIX1", NULL, "RX INT2_1 MIX1 INP1"},
 	{"RX INT2_1 MIX1", NULL, "RX INT2_1 MIX1 INP2"},
+
+	{"RX MIX TX0 MUX", "RX_MIX0", "RX INT0 SEC MIX"},
+	{"RX MIX TX0 MUX", "RX_MIX1", "RX INT1 SEC MIX"},
+	{"RX MIX TX0 MUX", "RX_MIX2", "RX INT2 SEC MIX"},
+	{"RX MIX TX1 MUX", "RX_MIX0", "RX INT0 SEC MIX"},
+	{"RX MIX TX1 MUX", "RX_MIX1", "RX INT1 SEC MIX"},
+	{"RX MIX TX1 MUX", "RX_MIX2", "RX INT2 SEC MIX"},
+	{"RX MIX TX2 MUX", "RX_MIX0", "RX INT0 SEC MIX"},
+	{"RX MIX TX2 MUX", "RX_MIX1", "RX INT1 SEC MIX"},
+	{"RX MIX TX2 MUX", "RX_MIX2", "RX INT2 SEC MIX"},
+	{"RX AIF_ECHO", NULL, "RX MIX TX0 MUX"},
+	{"RX AIF_ECHO", NULL, "RX MIX TX1 MUX"},
+	{"RX AIF_ECHO", NULL, "RX MIX TX2 MUX"},
+	{"RX AIF_ECHO", NULL, "RX_MCLK"},
 
 	/* Mixing path INT0 */
 	{"RX INT0_2 MUX", "RX0", "RX_RX0"},
@@ -3253,9 +3384,8 @@ static int rx_macro_init(struct snd_soc_component *component)
 	snd_soc_component_update_bits(component, BOLERO_CDC_RX_RX2_RX_PATH_CFG3,
 				0x03, 0x02);
 
-	rx_macro_init_bcl_pmic_reg(component);
-
 	rx_priv->component = component;
+	rx_macro_init_bcl_pmic_reg(component);
 
 	return 0;
 }

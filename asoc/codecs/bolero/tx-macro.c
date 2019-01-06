@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/module.h>
@@ -1563,14 +1563,14 @@ static int tx_macro_init(struct snd_soc_component *component)
 	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC1");
 	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC2");
 	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_ADC3");
-	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC0");
-	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC1");
-	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC2");
-	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC3");
-	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC4");
-	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC5");
-	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC6");
-	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_MIC7");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC0");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC1");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC2");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC3");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC4");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC5");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC6");
+	snd_soc_dapm_ignore_suspend(dapm, "TX SWR_DMIC7");
 	snd_soc_dapm_sync(dapm);
 
 	for (i = 0; i < NUM_DECIMATORS; i++) {
