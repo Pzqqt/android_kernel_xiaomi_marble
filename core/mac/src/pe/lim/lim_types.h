@@ -84,9 +84,6 @@
  * (LIM_MLM_MSG_START + 40) are unused.
  */
 
-#define LIM_HASH_ADD            0
-#define LIM_HASH_UPDATE         1
-
 #define LIM_WEP_IN_FC           1
 #define LIM_NO_WEP_IN_FC        0
 
