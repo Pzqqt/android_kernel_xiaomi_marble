@@ -289,20 +289,6 @@ enum hdd_driver_flags {
 	wlan_get_vendor_ie_ptr_from_oui(WPS_OUI_TYPE, WPS_OUI_TYPE_SIZE, \
 	ie, ie_len)
 
-#define wlan_hdd_get_p2p_ie_ptr(ie, ie_len) \
-	wlan_get_vendor_ie_ptr_from_oui(P2P_OUI_TYPE, P2P_OUI_TYPE_SIZE, \
-	ie, ie_len)
-
-#ifdef WLAN_FEATURE_WFD
-#define wlan_hdd_get_wfd_ie_ptr(ie, ie_len) \
-	wlan_get_vendor_ie_ptr_from_oui(WFD_OUI_TYPE, WFD_OUI_TYPE_SIZE, \
-	ie, ie_len)
-#endif
-
-#define wlan_hdd_get_mbo_ie_ptr(ie, ie_len) \
-	wlan_get_vendor_ie_ptr_from_oui(MBO_OUI_TYPE, MBO_OUI_TYPE_SIZE, \
-	ie, ie_len)
-
 #define hdd_alert(params...) QDF_TRACE_FATAL(QDF_MODULE_ID_HDD, params)
 #define hdd_err(params...) QDF_TRACE_ERROR(QDF_MODULE_ID_HDD, params)
 #define hdd_warn(params...) QDF_TRACE_WARN(QDF_MODULE_ID_HDD, params)
