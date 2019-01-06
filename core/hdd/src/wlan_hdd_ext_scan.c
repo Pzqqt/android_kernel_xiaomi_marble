@@ -186,14 +186,6 @@ wlan_hdd_pno_config_policy[QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1] = {
 	},
 };
 
-static const struct nla_policy
-wlan_hdd_extscan_results_policy[QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_MAX + 1] = {
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_BEACON_PERIOD] = {
-				.type = NLA_U16},
-	[QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SCAN_RESULT_CAPABILITY] = {
-				.type = NLA_U16},
-};
-
 /**
  * wlan_hdd_cfg80211_extscan_get_capabilities_rsp() - response from target
  * @hdd_ctx: Pointer to hdd context
