@@ -531,7 +531,6 @@ typedef struct sap_config {
 	uint16_t ht_capab;
 	uint16_t RSNWPAReqIELength;     /* The byte count in the pWPAReqIE */
 	uint32_t beacon_int;            /* Beacon Interval */
-	uint32_t ht_op_mode_fixed;
 	enum QDF_OPMODE persona; /* Tells us which persona, GO or AP */
 	bool enOverLapCh;
 #ifdef WLAN_FEATURE_11W
