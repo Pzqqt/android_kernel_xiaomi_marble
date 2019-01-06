@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
 /*
- * Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/irq.h>
@@ -2188,8 +2188,7 @@ int swrm_register_wake_irq(struct swr_mstr_ctrl *swrm)
 				__func__, ret);
 			return -EINVAL;
 		}
-		/* Disable wake irq - enable it after clock stop */
-		disable_irq(swrm->wake_irq);
+		irq_set_irq_wake(swrm->wake_irq, 1);
 	}
 	return ret;
 }
