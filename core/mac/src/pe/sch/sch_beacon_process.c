@@ -48,14 +48,6 @@
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 #include "wma.h"
-/**
- * Number of bytes of variation in beacon length from the last beacon
- * to trigger reprogramming of rx delay register
- */
-#define SCH_BEACON_LEN_DELTA       3
-
-/* calculate 2^cw - 1 */
-#define CW_GET(cw) (((cw) == 0) ? 1 : ((1 << (cw)) - 1))
 
 static void
 ap_beacon_process_5_ghz(struct mac_context *mac_ctx, uint8_t *rx_pkt_info,
