@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2019, The Linux Foundation. All rights reserved.
  */
 
 #include <linux/init.h>
@@ -18143,32 +18143,32 @@ static const char * const int4_mi2s_rx_vi_fb_tx_stereo_mux_text[] = {
 	"ZERO", "INT5_MI2S_TX"
 };
 
-static const int const slim0_rx_vi_fb_tx_lch_value[] = {
+static const int slim0_rx_vi_fb_tx_lch_value[] = {
 	MSM_BACKEND_DAI_MAX, MSM_BACKEND_DAI_SLIMBUS_4_TX
 };
 
-static const int const slim0_rx_vi_fb_tx_rch_value[] = {
+static const int slim0_rx_vi_fb_tx_rch_value[] = {
 	MSM_BACKEND_DAI_MAX, MSM_BACKEND_DAI_SLIMBUS_4_TX
 };
 
-static const int const wsa_rx_0_vi_fb_tx_lch_value[] = {
+static const int wsa_rx_0_vi_fb_tx_lch_value[] = {
 	MSM_BACKEND_DAI_MAX, MSM_BACKEND_DAI_WSA_CDC_DMA_TX_0
 };
 
-static const int const wsa_rx_0_vi_fb_tx_rch_value[] = {
+static const int wsa_rx_0_vi_fb_tx_rch_value[] = {
 	MSM_BACKEND_DAI_MAX, MSM_BACKEND_DAI_WSA_CDC_DMA_TX_0
 };
 
 
-static const int const mi2s_rx_vi_fb_tx_value[] = {
+static const int mi2s_rx_vi_fb_tx_value[] = {
 	MSM_BACKEND_DAI_MAX, MSM_BACKEND_DAI_SENARY_MI2S_TX
 };
 
-static const int const int4_mi2s_rx_vi_fb_tx_mono_ch_value[] = {
+static const int int4_mi2s_rx_vi_fb_tx_mono_ch_value[] = {
 	MSM_BACKEND_DAI_MAX, MSM_BACKEND_DAI_INT5_MI2S_TX
 };
 
-static const int const int4_mi2s_rx_vi_fb_tx_stereo_ch_value[] = {
+static const int int4_mi2s_rx_vi_fb_tx_stereo_ch_value[] = {
 	MSM_BACKEND_DAI_MAX, MSM_BACKEND_DAI_INT5_MI2S_TX
 };
 
