@@ -43,12 +43,11 @@ QDF_STATUS rrm_process_link_measurement_request(struct mac_context *mac,
 						struct pe_session *
 							  pe_session);
 
-QDF_STATUS rrm_process_radio_measurement_request(struct mac_context *mac,
-						 tSirMacAddr peer,
-						 tDot11fRadioMeasurementRequest
-							   *pRRMReq,
-						 struct pe_session *
-							   pe_session);
+QDF_STATUS
+rrm_process_radio_measurement_request(struct mac_context *mac_ctx,
+				      tSirMacAddr peer,
+				      tDot11fRadioMeasurementRequest *rrm_req,
+				      struct pe_session *session_entry);
 
 QDF_STATUS rrm_process_neighbor_report_response(struct mac_context *mac,
 						tDot11fNeighborReportResponse
