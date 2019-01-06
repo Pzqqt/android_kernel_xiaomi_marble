@@ -558,7 +558,6 @@ typedef struct sap_config {
 	uint16_t tx_pkt_fail_cnt_threshold;
 	uint8_t short_retry_limit;
 	uint8_t long_retry_limit;
-	uint8_t ampdu_size;
 	tSirMacRateSet supported_rates;
 	tSirMacRateSet extended_rates;
 	enum sap_acs_dfs_mode acs_dfs_mode;
