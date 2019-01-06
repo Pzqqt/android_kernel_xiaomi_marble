@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -73,15 +73,14 @@ QDF_STATUS lim_populate_own_rate_set(struct mac_context *mac,
 					tDot11fIEVHTCaps *pVHTCaps,
 					tDot11fIEhe_cap *he_caps);
 
-QDF_STATUS
-lim_populate_matching_rate_set(struct mac_context *mac,
-			       tpDphHashNode pStaDs,
-			       tSirMacRateSet *pOperRateSet,
-			       tSirMacRateSet *pExtRateSet,
-			       uint8_t *pSupportedMCSSet,
-			       struct pe_session *pe_session,
-			       tDot11fIEVHTCaps *pVHTCaps,
-			       tDot11fIEhe_cap *he_caps);
+QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
+					  tpDphHashNode sta_ds,
+					  tSirMacRateSet *oper_rate_set,
+					  tSirMacRateSet *ext_rate_set,
+					  uint8_t *supported_mcs_set,
+					  struct pe_session *session_entry,
+					  tDot11fIEVHTCaps *vht_caps,
+					  tDot11fIEhe_cap *he_caps);
 
 QDF_STATUS lim_add_sta(struct mac_context *, tpDphHashNode, uint8_t, struct pe_session *);
 QDF_STATUS lim_del_bss(struct mac_context *, tpDphHashNode, uint16_t, struct pe_session *);

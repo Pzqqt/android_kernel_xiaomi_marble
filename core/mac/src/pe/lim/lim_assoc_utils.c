@@ -1812,13 +1812,13 @@ lim_populate_peer_rate_set(struct mac_context *mac,
  * Return: QDF_STATUS_SUCCESS on success else QDF_STATUS_E_FAILURE
  */
 QDF_STATUS lim_populate_matching_rate_set(struct mac_context *mac_ctx,
-					     tpDphHashNode sta_ds,
-					     tSirMacRateSet *oper_rate_set,
-					     tSirMacRateSet *ext_rate_set,
-					     uint8_t *supported_mcs_set,
-					     struct pe_session *session_entry,
-					     tDot11fIEVHTCaps *vht_caps,
-					     tDot11fIEhe_cap *he_caps)
+					  tpDphHashNode sta_ds,
+					  tSirMacRateSet *oper_rate_set,
+					  tSirMacRateSet *ext_rate_set,
+					  uint8_t *supported_mcs_set,
+					  struct pe_session *session_entry,
+					  tDot11fIEVHTCaps *vht_caps,
+					  tDot11fIEhe_cap *he_caps)
 {
 	tSirMacRateSet temp_rate_set;
 	tSirMacRateSet temp_rate_set2;
