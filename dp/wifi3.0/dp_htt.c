@@ -3225,7 +3225,7 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			HTT_RX_PEER_UNMAP_V2_NEXT_HOP_GET(*(msg_word + 2));
 			QDF_TRACE(QDF_MODULE_ID_TXRX,
 				  QDF_TRACE_LEVEL_INFO,
-				  "HTT_T2H_MSG_TYPE_PEER_MAP msg for peer id %d vdev id %d n",
+				  "HTT_T2H_MSG_TYPE_PEER_UNMAP msg for peer id %d vdev id %d n",
 				  peer_id, vdev_id);
 
 			dp_rx_peer_unmap_handler(soc->dp_soc, peer_id,
