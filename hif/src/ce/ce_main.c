@@ -1424,10 +1424,9 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 	if (!CE_state) {
 		CE_state =
 		    (struct CE_state *)qdf_mem_malloc(sizeof(*CE_state));
-		if (!CE_state) {
-			HIF_ERROR("%s: CE_state has no mem", __func__);
+		if (!CE_state)
 			return NULL;
-		}
+
 		malloc_CE_state = true;
 		qdf_spinlock_create(&CE_state->ce_index_lock);
 
@@ -1492,11 +1491,9 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 				qdf_mem_malloc(nentries *
 					       sizeof(struct CE_src_desc) +
 					       CE_DESC_RING_ALIGN);
-			if (src_ring->shadow_base_unaligned == NULL) {
-				HIF_ERROR("%s: src ring no shadow_base mem",
-					  __func__);
+			if (!src_ring->shadow_base_unaligned)
 				goto error_no_dma_mem;
-			}
+
 			src_ring->shadow_base = (struct CE_src_desc *)
 				(((size_t) src_ring->shadow_base_unaligned +
 				CE_DESC_RING_ALIGN - 1) &

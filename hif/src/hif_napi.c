@@ -181,7 +181,6 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		napii = qdf_mem_malloc(sizeof(*napii));
 		napid->napis[i] = napii;
 		if (!napii) {
-			NAPI_DEBUG("NAPI alloc failure %d", i);
 			rc = -ENOMEM;
 			goto napii_free;
 		}

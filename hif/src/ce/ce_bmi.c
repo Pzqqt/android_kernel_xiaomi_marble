@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -149,10 +149,9 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 
 	transaction =
 		(struct BMI_transaction *)qdf_mem_malloc(sizeof(*transaction));
-	if (unlikely(!transaction)) {
-		HIF_ERROR("%s: no memory", __func__);
+	if (unlikely(!transaction))
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	transaction_id = (mux_id & MUX_ID_MASK) |
 		(transaction_id & TRANSACTION_ID_MASK);
 #ifdef QCA_WIFI_3_0

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  *
  *
@@ -130,13 +130,10 @@ QDF_STATUS hif_dev_send_buffer(struct hif_sdio_device *pdev, uint32_t xfer_id,
 	} else {
 		sctx = (struct hif_sendContext *)qdf_mem_malloc(sizeof(*sctx) +
 								padded_length);
-		if (sctx) {
+		if (sctx)
 			sctx->bNewAlloc = true;
-		} else {
-			HIF_ERROR("%s: Alloc send context fail %zu\n",
-				  __func__, sizeof(*sctx) + padded_length);
+		else
 			return QDF_STATUS_E_NOMEM;
-		}
 	}
 
 	sctx->netbuf = buf;

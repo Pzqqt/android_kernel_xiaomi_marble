@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1416,16 +1416,14 @@ static struct hif_sdio_dev *add_hif_device(struct sdio_func *func)
 	hifdevice = (struct hif_sdio_dev *) qdf_mem_malloc(sizeof(
 							struct hif_sdio_dev));
 	AR_DEBUG_ASSERT(hifdevice != NULL);
-	if (hifdevice == NULL) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERROR, ("Alloc hif device fail\n"));
+	if (!hifdevice)
 		return NULL;
-	}
+
 #if HIF_USE_DMA_BOUNCE_BUFFER
 	hifdevice->dma_buffer = qdf_mem_malloc(HIF_DMA_BUFFER_SIZE);
 	AR_DEBUG_ASSERT(hifdevice->dma_buffer != NULL);
 	if (hifdevice->dma_buffer == NULL) {
 		qdf_mem_free(hifdevice);
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERROR, ("Alloc dma buffer fail\n"));
 		return NULL;
 	}
 #endif

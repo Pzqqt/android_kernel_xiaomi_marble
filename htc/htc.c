@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,7 +61,6 @@ static void destroy_htc_tx_ctrl_packet(HTC_PACKET *pPacket)
 	qdf_nbuf_t netbuf;
 
 	netbuf = (qdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
-	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("free ctrl netbuf :0x%pK\n", netbuf));
 	if (netbuf != NULL)
 		qdf_nbuf_free(netbuf);
 	qdf_mem_free(pPacket);
@@ -81,11 +80,8 @@ static HTC_PACKET *build_htc_tx_ctrl_packet(qdf_device_t osdev)
 		if (NULL == netbuf) {
 			qdf_mem_free(pPacket);
 			pPacket = NULL;
-			qdf_print("%s: nbuf alloc failed", __func__);
 			break;
 		}
-		AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
-				("alloc ctrl netbuf :0x%pK\n", netbuf));
 		SET_HTC_PACKET_NET_BUF_CONTEXT(pPacket, netbuf);
 	} while (false);
 
@@ -268,10 +264,8 @@ HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 	A_REGISTER_MODULE_DEBUG_INFO(htc);
 
 	target = (HTC_TARGET *) qdf_mem_malloc(sizeof(HTC_TARGET));
-	if (target == NULL) {
-		HTC_ERROR("%s: Unable to allocate memory", __func__);
+	if (!target)
 		return NULL;
-	}
 
 	htc_runtime_pm_init(target);
 	htc_credit_history_init();

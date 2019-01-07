@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -151,15 +151,14 @@ static QDF_STATUS usb_hif_alloc_pipe_resources
 
 	for (i = 0; i < urb_cnt; i++) {
 		urb_context = qdf_mem_malloc(sizeof(*urb_context));
-		if (NULL == urb_context) {
+		if (!urb_context) {
 			status = QDF_STATUS_E_NOMEM;
-			HIF_ERROR("urb_context is null");
 			break;
 		}
 		urb_context->pipe = pipe;
 		urb_context->urb = usb_alloc_urb(0, GFP_KERNEL);
 
-		if (NULL == urb_context->urb) {
+		if (!urb_context->urb) {
 			status = QDF_STATUS_E_NOMEM;
 			qdf_mem_free(urb_context);
 			HIF_ERROR("urb_context->urb is null");

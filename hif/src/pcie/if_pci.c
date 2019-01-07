@@ -4261,11 +4261,8 @@ int hif_runtime_lock_init(qdf_runtime_lock_t *lock, const char *name)
 	HIF_INFO("Initializing Runtime PM wakelock %s", name);
 
 	context = qdf_mem_malloc(sizeof(*context));
-	if (!context) {
-		HIF_ERROR("%s: No memory for Runtime PM wakelock context",
-			  __func__);
+	if (!context)
 		return -ENOMEM;
-	}
 
 	context->name = name ? name : "Default";
 	lock->lock = context;

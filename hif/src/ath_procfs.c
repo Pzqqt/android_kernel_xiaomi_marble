@@ -72,10 +72,8 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 		return -EINVAL;
 
 	read_buffer = qdf_mem_malloc(count);
-	if (NULL == read_buffer) {
-		HIF_ERROR("%s: cdf_mem_alloc failed", __func__);
+	if (!read_buffer)
 		return -ENOMEM;
-	}
 
 	HIF_DBG("rd buff 0x%pK cnt %zu offset 0x%x buf 0x%pK",
 		 read_buffer, count, (int)*pos, buf);
@@ -141,10 +139,9 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 		return -EINVAL;
 
 	write_buffer = qdf_mem_malloc(count);
-	if (NULL == write_buffer) {
-		HIF_ERROR("%s: cdf_mem_alloc failed", __func__);
+	if (!write_buffer)
 		return -ENOMEM;
-	}
+
 	if (copy_from_user(write_buffer, buf, count)) {
 		qdf_mem_free(write_buffer);
 		HIF_ERROR("%s: copy_to_user error in /proc/%s",

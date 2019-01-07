@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -175,8 +175,7 @@ static QDF_STATUS hif_send_internal(struct HIF_DEVICE_USB *hif_usb_device,
 		send_context =
 		    qdf_mem_malloc(sizeof(struct hif_usb_send_context)
 				   + head_data_len + nbytes);
-		if (send_context == NULL) {
-			HIF_ERROR("%s: qdf_mem_malloc failed", __func__);
+		if (!send_context) {
 			status = QDF_STATUS_E_NOMEM;
 			goto err;
 		}

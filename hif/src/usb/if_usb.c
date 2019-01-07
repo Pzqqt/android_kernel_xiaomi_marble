@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -634,10 +634,9 @@ void hif_fw_assert_ramdump_pattern(struct hif_usb_softc *sc)
 		sc->ramdump[i] =
 			qdf_mem_malloc(sizeof(struct fw_ramdump) +
 					fw_ram_reg_size[i]);
-		if (!sc->ramdump[i]) {
-			pr_err("Fail to allocate memory for ram dump");
+		if (!sc->ramdump[i])
 			QDF_BUG(0);
-		}
+
 		(sc->ramdump[i])->mem = (uint8_t *) (sc->ramdump[i] + 1);
 		fw_ram_seg_addr[i] = (sc->ramdump[i])->mem;
 		HIF_ERROR("FW %s start addr = %#08x\n",
