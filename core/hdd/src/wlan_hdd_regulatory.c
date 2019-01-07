@@ -216,6 +216,7 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 	bool country_priority = 0;
 	bool value = false;
+	bool enable_dfs_scan = true;
 
 	status = ucfg_mlme_get_band_capability(hdd_ctx->psoc, &band_capability);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -238,7 +239,10 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 					   &country_priority);
 	config_vars->userspace_ctry_priority = country_priority;
 
-	config_vars->dfs_enabled = hdd_ctx->config->enableDFSChnlScan;
+	ucfg_scan_cfg_get_dfs_chan_scan_allowed(hdd_ctx->psoc,
+						&enable_dfs_scan);
+
+	config_vars->dfs_enabled = enable_dfs_scan;
 
 	ucfg_mlme_get_indoor_channel_support(hdd_ctx->psoc,
 					     &indoor_chan_enabled);

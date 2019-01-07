@@ -134,6 +134,7 @@
 #include "nan_ucfg_api.h"
 #include "wlan_fwol_ucfg_api.h"
 #include "wlan_cfg80211_crypto.h"
+#include "wlan_scan_ucfg_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -4267,8 +4268,12 @@ int wlan_hdd_enable_dfs_chan_scan(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 	bool err;
 	mac_handle_t mac_handle;
+	bool enable_dfs_scan = true;
 
-	if (enable_dfs_channels == hdd_ctx->config->enableDFSChnlScan) {
+	ucfg_scan_cfg_get_dfs_chan_scan_allowed(hdd_ctx->psoc,
+						&enable_dfs_scan);
+
+	if (enable_dfs_channels == enable_dfs_scan) {
 		hdd_debug("DFS channels are already %s",
 			  enable_dfs_channels ? "enabled" : "disabled");
 		return 0;
@@ -4286,7 +4291,8 @@ int wlan_hdd_enable_dfs_chan_scan(struct hdd_context *hdd_ctx,
 			return -EOPNOTSUPP;
 	}
 
-	hdd_ctx->config->enableDFSChnlScan = enable_dfs_channels;
+	ucfg_scan_cfg_set_dfs_chan_scan_allowed(hdd_ctx->psoc,
+						enable_dfs_channels);
 
 	mac_handle = hdd_ctx->mac_handle;
 	status = sme_enable_dfs_chan_scan(mac_handle, enable_dfs_channels);
@@ -4327,7 +4333,7 @@ static int __wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG_MAX + 1];
 	int ret_val;
 	uint32_t no_dfs_flag = 0;
-
+	bool enable_dfs_scan = true;
 	hdd_enter_dev(dev);
 
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
@@ -4356,13 +4362,15 @@ static int __wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
 		hdd_err("invalid value of dfs flag");
 		return -EINVAL;
 	}
+	ucfg_scan_cfg_get_dfs_chan_scan_allowed(hdd_ctx->psoc,
+						&enable_dfs_scan);
 
-	if (hdd_ctx->config->enableDFSChnlScan) {
+	if (enable_dfs_scan) {
 		ret_val = wlan_hdd_enable_dfs_chan_scan(hdd_ctx, !no_dfs_flag);
 	} else {
-		if ((!no_dfs_flag) != hdd_ctx->config->enableDFSChnlScan) {
+		if ((!no_dfs_flag) != enable_dfs_scan) {
 			hdd_err("DFS chan ini configured %d, no dfs flag: %d",
-				hdd_ctx->config->enableDFSChnlScan,
+				enable_dfs_scan,
 				no_dfs_flag);
 			return -EINVAL;
 		}

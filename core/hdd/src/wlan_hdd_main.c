@@ -9065,7 +9065,8 @@ static void hdd_override_ini_config(struct hdd_context *hdd_ctx)
 	QDF_STATUS status;
 
 	if (0 == enable_dfs_chan_scan || 1 == enable_dfs_chan_scan) {
-		hdd_ctx->config->enableDFSChnlScan = enable_dfs_chan_scan;
+		ucfg_scan_cfg_set_dfs_chan_scan_allowed(hdd_ctx->psoc,
+							enable_dfs_chan_scan);
 		hdd_debug("Module enable_dfs_chan_scan set to %d",
 			   enable_dfs_chan_scan);
 	}

@@ -91,13 +91,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_TL_DELAYED_TRGR_FRM_INT_MIN,
 		     CFG_TL_DELAYED_TRGR_FRM_INT_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_DFS_CHNL_SCAN_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enableDFSChnlScan,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_DFS_CHNL_SCAN_DEFAULT,
-		     CFG_ENABLE_DFS_CHNL_SCAN_MIN,
-		     CFG_ENABLE_DFS_CHNL_SCAN_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_DFS_PNO_CHNL_SCAN_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_dfs_pno_chnl_scan,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1838,6 +1831,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	tSmeConfigParams *smeConfig;
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
 	bool roam_scan_enabled;
+	bool enable_dfs_scan = true;
 #ifdef FEATURE_WLAN_ESE
 	bool ese_enabled;
 #endif
@@ -1885,8 +1879,9 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.AdHocChannel24 = ibss_cfg.adhoc_ch_2g;
 	smeConfig->csrConfig.ProprietaryRatesEnabled = 0;
 	smeConfig->csrConfig.HeartbeatThresh50 = 40;
-	smeConfig->csrConfig.fEnableDFSChnlScan = pConfig->enableDFSChnlScan;
-
+	ucfg_scan_cfg_get_dfs_chan_scan_allowed(hdd_ctx->psoc,
+						&enable_dfs_scan);
+	smeConfig->csrConfig.fEnableDFSChnlScan = enable_dfs_scan;
 	smeConfig->csrConfig.Csr11dinfo.Channels.numChannels = 0;
 
 	hdd_set_power_save_offload_config(hdd_ctx);
