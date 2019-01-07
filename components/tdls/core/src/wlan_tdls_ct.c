@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -229,8 +229,8 @@ static void tdls_ct_sampling_tx_rx(struct tdls_vdev_priv_obj *tdls_vdev,
 	qdf_mem_copy(mac_table, tdls_vdev->ct_peer_table,
 	       (sizeof(struct tdls_conn_tracker_mac_table)) * mac_entries);
 
-	qdf_mem_set(tdls_vdev->ct_peer_table, 0,
-	       (sizeof(struct tdls_conn_tracker_mac_table)) * mac_entries);
+	qdf_mem_set(tdls_vdev->ct_peer_table,
+	       (sizeof(struct tdls_conn_tracker_mac_table)) * mac_entries, 0);
 
 	tdls_vdev->valid_mac_entries = 0;
 
@@ -250,7 +250,8 @@ static void tdls_ct_sampling_tx_rx(struct tdls_vdev_priv_obj *tdls_vdev,
 }
 
 void tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
-				 struct qdf_mac_addr *mac_addr)
+				 struct qdf_mac_addr *mac_addr,
+				 struct qdf_mac_addr *dest_mac_addr)
 {
 	struct tdls_vdev_priv_obj *tdls_vdev_obj;
 	struct tdls_soc_priv_obj *tdls_soc_obj;
@@ -266,6 +267,9 @@ void tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 		return;
 
 	if (qdf_is_macaddr_group(mac_addr))
+		return;
+
+	if (qdf_is_macaddr_group(dest_mac_addr))
 		return;
 
 	if (qdf_mem_cmp(vdev->vdev_mlme.macaddr, mac_addr,

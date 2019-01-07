@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1992,7 +1992,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 	struct sk_buff *next = NULL;
 	struct hdd_station_ctx *sta_ctx = NULL;
 	unsigned int cpu_index;
-	struct qdf_mac_addr *mac_addr;
+	struct qdf_mac_addr *mac_addr, *dest_mac_addr;
 	bool wake_lock = false;
 	uint8_t pkt_type = 0;
 	bool track_arp = false;
@@ -2081,9 +2081,11 @@ QDF_STATUS hdd_rx_packet_cbk(void *adapter_context,
 			QDF_DP_TRACE_RX_PACKET_RECORD,
 			0, QDF_RX));
 
+		dest_mac_addr = (struct qdf_mac_addr *)(skb->data);
 		mac_addr = (struct qdf_mac_addr *)(skb->data+QDF_MAC_ADDR_SIZE);
 
-		ucfg_tdls_update_rx_pkt_cnt(adapter->vdev, mac_addr);
+		ucfg_tdls_update_rx_pkt_cnt(adapter->vdev, mac_addr,
+				dest_mac_addr);
 
 		skb->dev = adapter->dev;
 		skb->protocol = eth_type_trans(skb, skb->dev);
