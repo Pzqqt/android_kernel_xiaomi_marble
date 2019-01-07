@@ -218,26 +218,6 @@ struct csr_channel {
 	uint8_t channelList[CFG_VALID_CHANNEL_LIST_LEN];
 };
 
-struct scan_profile       {
-	uint32_t minChnTime;
-	uint32_t maxChnTime;
-	/* In units of milliseconds, ignored when not connected */
-	uint32_t restTime;
-	/* In units of milliseconds, ignored when not connected */
-	uint32_t min_rest_time;
-	/* In units of milliseconds, ignored when not connected */
-	uint32_t idle_time;
-	uint32_t numOfChannels;
-	uint8_t *pChannelList;
-	tSirScanType scanType;
-	eCsrRoamBssType bssType;
-	uint8_t ssid[MLME_CFG_SSID_LEN];
-	uint8_t bReturnAfter1stMatch;
-	uint8_t fUniqueResult;
-	uint8_t freshScan;
-	struct qdf_mac_addr bssid;
-};
-
 struct bss_config_param {
 	eCsrMediaAccessType qosType;
 	tSirMacSSid SSID;
@@ -447,7 +427,6 @@ struct csr_roam_joinstatus {
 };
 
 struct csr_scanstruct {
-	struct scan_profile scanProfile;
 	tSirScanType curScanType;
 	struct csr_channel channels11d;
 	struct channel_power defaultPowerTable[CFG_VALID_CHANNEL_LIST_LEN];
