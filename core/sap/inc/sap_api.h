@@ -626,8 +626,6 @@ typedef struct sSapDfsInfo {
 	 * generation and transmission
 	 */
 	uint8_t csaIERequired;
-	uint8_t numCurrentRegDomainDfsChannels;
-	tSapDfsNolInfo sapDfsChannelNolList[NUM_5GHZ_CHANNELS];
 	uint8_t is_dfs_cac_timer_running;
 	/*
 	 * New channel width and new channel bonding mode

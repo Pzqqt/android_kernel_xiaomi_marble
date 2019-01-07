@@ -2852,27 +2852,6 @@ QDF_STATUS csr_is_valid_channel(struct mac_context *mac, uint8_t chnNum)
 		}
 	}
 
-	if (status == QDF_STATUS_SUCCESS) {
-		/* dfs nol */
-		for (index = 0;
-		     index <
-		     mac->sap.SapDfsInfo.numCurrentRegDomainDfsChannels;
-		     index++) {
-			tSapDfsNolInfo *dfsChan = &mac->sap.SapDfsInfo.
-						sapDfsChannelNolList[index];
-			if ((dfsChan->dfs_channel_number == chnNum)
-			    && (dfsChan->radar_status_flag ==
-				eSAP_DFS_CHANNEL_UNAVAILABLE)) {
-				QDF_TRACE(QDF_MODULE_ID_SME,
-					  QDF_TRACE_LEVEL_ERROR,
-					 FL("channel %d is in dfs nol"),
-					  chnNum);
-				status = QDF_STATUS_E_FAILURE;
-				break;
-			}
-		}
-	}
-
 	if (QDF_STATUS_SUCCESS != status) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			 FL("channel %d is not available"), chnNum);
