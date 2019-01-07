@@ -779,12 +779,6 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 	struct dp_peer *peer = ast_entry->peer;
 	uint16_t peer_id = peer->peer_ids[0];
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: ast_entry->type: %d pdevid: %u vdev: %u mac_addr: %pM next_hop: %u peer_mac: %pM\n",
-		  __func__, ast_entry->type, peer->vdev->pdev->pdev_id,
-		  peer->vdev->vdev_id, ast_entry->mac_addr.raw,
-		  ast_entry->next_hop, ast_entry->peer->mac_addr.raw);
-
 	dp_peer_ast_send_wds_del(soc, ast_entry);
 
 	/*
@@ -998,6 +992,12 @@ void dp_peer_ast_send_wds_del(struct dp_soc *soc,
 
 	if (ast_entry->delete_in_progress)
 		return;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_TRACE,
+		  "%s: ast_entry->type: %d pdevid: %u vdev: %u mac_addr: %pM next_hop: %u peer_mac: %pM\n",
+		  __func__, ast_entry->type, peer->vdev->pdev->pdev_id,
+		  peer->vdev->vdev_id, ast_entry->mac_addr.raw,
+		  ast_entry->next_hop, ast_entry->peer->mac_addr.raw);
 
 	if (ast_entry->next_hop &&
 	    ast_entry->type != CDP_TXRX_AST_TYPE_WDS_HM_SEC)
@@ -1461,10 +1461,12 @@ dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id,
 				  peer->mac_addr.raw, mac_addr, vdev_id,
 				  is_wds);
 
-			if (!is_wds) {
-				qdf_spin_unlock_bh(&soc->ast_lock);
+			qdf_spin_unlock_bh(&soc->ast_lock);
+
+			if (!is_wds)
 				goto peer_unmap;
-			}
+
+			return;
 		}
 		qdf_spin_unlock_bh(&soc->ast_lock);
 
