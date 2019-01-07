@@ -324,6 +324,7 @@ enum pmo_auto_pwr_detect_failure_mode {
  * @wow_pulse_interval_high: The interval of high level in the pulse
  * @wow_pulse_interval_low: The interval of low level in the pulse
  * @packet_filters_bitmap: Packet filter bitmap configuration
+ * @wow_data_inactivity_timeout: power save wow data inactivity timeout
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
@@ -379,7 +380,7 @@ struct pmo_psoc_cfg {
 	uint8_t packet_filters_bitmap;
 #endif
 	bool enable_sap_suspend;
-
+	uint8_t wow_data_inactivity_timeout;
 };
 
 /**

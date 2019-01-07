@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -123,11 +123,15 @@ static void wlan_pmo_pkt_filter_init_cfg(struct wlan_objmgr_psoc *psoc,
 					 struct pmo_psoc_cfg *psoc_cfg)
 {
 	psoc_cfg->packet_filters_bitmap = cfg_get(psoc, CFG_PMO_PKT_FILTER);
+	psoc_cfg->packet_filter_enabled =
+		!cfg_get(psoc, CFG_PMO_DISABLE_PKT_FILTER);
 }
 #else
 static void wlan_pmo_pkt_filter_init_cfg(struct wlan_objmgr_psoc *psoc,
 					 struct pmo_psoc_cfg *psoc_cfg)
 {
+	psoc_cfg->packet_filter_enabled =
+		!cfg_get(psoc, CFG_PMO_DISABLE_PKT_FILTER);
 }
 #endif
 
@@ -176,6 +180,8 @@ static void wlan_pmo_init_cfg(struct wlan_objmgr_psoc *psoc,
 	psoc_cfg->auto_power_save_fail_mode =
 			cfg_get(psoc, CFG_PMO_PWR_FAILURE);
 	psoc_cfg->enable_sap_suspend = cfg_get(psoc, CFG_ENABLE_SAP_SUSPEND);
+	psoc_cfg->wow_data_inactivity_timeout =
+			cfg_get(psoc, CFG_PMO_WOW_DATA_INACTIVITY_TIMEOUT);
 }
 
 QDF_STATUS pmo_psoc_open(struct wlan_objmgr_psoc *psoc)

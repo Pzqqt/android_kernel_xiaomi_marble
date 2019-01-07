@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -367,6 +367,29 @@
 			1, \
 			"Enable/disable SAP Suspend")
 
+/*
+ * <ini>
+ * g_wow_data_inactivity_timeout - Data activity timeout in wow mode.
+ * @Min: 1
+ * @Max: 255
+ * @Default: 50
+ *
+ * This ini is used to set data inactivity timeout in wow mode.
+ *
+ * Supported Feature: inactivity timeout in wow mode
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PMO_WOW_DATA_INACTIVITY_TIMEOUT CFG_INI_UINT( \
+		"g_wow_data_inactivity_timeout", \
+		1, \
+		255, \
+		50, \
+		CFG_VALUE_OR_DEFAULT, \
+		"Data activity timeout in wow mode")
+
 #define CFG_PMO_COMMON_ALL \
 	CFG(CFG_ENABLE_SAP_SUSPEND) \
 	CFG(CFG_PMO_ENABLE_HOST_ARPOFFLOAD) \
@@ -382,6 +405,7 @@
 	CFG(CFG_PMO_WOWLAN_DISASSOC_ENABLE) \
 	CFG(CFG_PMO_WOW_ENABLE) \
 	CFG(CFG_PMO_ACTIVE_MODE) \
-	CFG(CFG_PMO_PWR_FAILURE)
+	CFG(CFG_PMO_PWR_FAILURE) \
+	CFG(CFG_PMO_WOW_DATA_INACTIVITY_TIMEOUT)
 
 #endif /* WLAN_PMO_COMMON_CFG_H__ */
