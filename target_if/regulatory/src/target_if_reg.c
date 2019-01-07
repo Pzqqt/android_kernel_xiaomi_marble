@@ -150,10 +150,8 @@ static int tgt_reg_chan_list_update_handler(ol_scn_t handle, uint8_t *event_buf,
 	}
 
 	reg_info = qdf_mem_malloc(sizeof(*reg_info));
-	if (!reg_info) {
-		target_if_err("memory allocation failed");
+	if (!reg_info)
 		return -ENOMEM;
-	}
 
 	if (wmi_extract_reg_chan_list_update_event(wmi_handle,
 						   event_buf, reg_info, len)

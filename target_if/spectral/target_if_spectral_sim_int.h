@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015,2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015,2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -126,7 +126,6 @@ struct spectralsim_context {
 		qdf_mem_malloc(sizeof(struct spectralsim_reportset));        \
 									  \
 	if ((reportset) == NULL) {                                        \
-		spectral_err("Spectral simulation: Could not allocate memory for report set"); \
 		target_if_depopulate_simdata((simctx));                     \
 		return -EPERM;                                              \
 	}                                                                 \

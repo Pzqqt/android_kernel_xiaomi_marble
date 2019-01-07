@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -69,10 +69,8 @@ static QDF_STATUS target_if_cp_stats_extract_pdev_stats(
 	 */
 	ev->pdev_stats = qdf_mem_malloc(sizeof(*ev->pdev_stats) *
 						ev->num_pdev_stats);
-	if (!ev->pdev_stats) {
-		cp_stats_err("malloc failed");
+	if (!ev->pdev_stats)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	for (i = 0; i < ev->num_pdev_stats; i++) {
 		status = wmi_extract_pdev_stats(wmi_hdl, data, i, &pdev_stats);
@@ -103,10 +101,8 @@ static QDF_STATUS target_if_cp_stats_extract_peer_stats(
 
 	ev->peer_stats = qdf_mem_malloc(sizeof(*ev->peer_stats) *
 						ev->num_peer_stats);
-	if (!ev->peer_stats) {
-		cp_stats_err("malloc failed");
+	if (!ev->peer_stats)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	db2dbm_enabled = wmi_service_enabled(wmi_hdl,
 					     wmi_service_hw_db2dbm_support);
@@ -145,10 +141,8 @@ static QDF_STATUS target_if_cp_stats_extract_cca_stats(
 	}
 
 	ev->cca_stats = qdf_mem_malloc(sizeof(*ev->cca_stats));
-	if (!ev->cca_stats) {
-		cp_stats_err("malloc failed");
+	if (!ev->cca_stats)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 
 	ev->cca_stats->vdev_id = stats.vdev_id;
@@ -175,10 +169,8 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_summary_stats(
 	ev->vdev_summary_stats = qdf_mem_malloc(sizeof(*ev->vdev_summary_stats)
 					* ev->num_summary_stats);
 
-	if (!ev->vdev_summary_stats) {
-		cp_stats_err("malloc failed");
+	if (!ev->vdev_summary_stats)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	db2dbm_enabled = wmi_service_enabled(wmi_hdl,
 					     wmi_service_hw_db2dbm_support);
@@ -241,10 +233,9 @@ static QDF_STATUS target_if_cp_stats_extract_vdev_chain_rssi_stats(
 
 	ev->vdev_chain_rssi = qdf_mem_malloc(sizeof(*ev->vdev_chain_rssi) *
 						ev->num_chain_rssi_stats);
-	if (!ev->vdev_chain_rssi) {
-		cp_stats_err("malloc failed");
+	if (!ev->vdev_chain_rssi)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	db2dbm_enabled = wmi_service_enabled(wmi_hdl,
 					     wmi_service_hw_db2dbm_support);
 	for (i = 0; i < ev->num_chain_rssi_stats; i++) {

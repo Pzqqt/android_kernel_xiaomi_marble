@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015,2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015,2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -85,10 +85,8 @@ target_if_populate_report_static_gen2(
 		report->data = (uint8_t *)
 		    qdf_mem_malloc(sizeof(reportdata_20_gen2));
 
-		if (!report->data) {
-			spectral_err("Spectral simulation: Could not allocate memory for report data");
+		if (!report->data)
 			goto bad;
-		}
 
 		report->datasize = sizeof(reportdata_20_gen2);
 		qdf_mem_copy(report->data,
@@ -106,10 +104,8 @@ target_if_populate_report_static_gen2(
 		report->data = (uint8_t *)
 		    qdf_mem_malloc(sizeof(reportdata_40_gen2));
 
-		if (!report->data) {
-			spectral_err("Spectral simulation: Could not allocate memory for report data");
+		if (!report->data)
 			goto bad;
-		}
 
 		report->datasize = sizeof(reportdata_40_gen2);
 		qdf_mem_copy(report->data,
@@ -127,10 +123,8 @@ target_if_populate_report_static_gen2(
 		report->data = (uint8_t *)
 		    qdf_mem_malloc(sizeof(reportdata_80_gen2));
 
-		if (!report->data) {
-			spectral_err("Spectral simulation: Could not allocate memory for report data");
+		if (!report->data)
 			goto bad;
-		}
 
 		report->datasize = sizeof(reportdata_80_gen2);
 		qdf_mem_copy(report->data,
@@ -149,10 +143,8 @@ target_if_populate_report_static_gen2(
 			report->data = (uint8_t *)
 			    qdf_mem_malloc(sizeof(reportdata_80_80_gen2));
 
-			if (!report->data) {
-				spectral_err("Spectral simulation: Could not allocate memory for report data");
+			if (!report->data)
 				goto bad;
-			}
 
 			report->datasize = sizeof(reportdata_80_80_gen2);
 			qdf_mem_copy(report->data,
@@ -171,10 +163,8 @@ target_if_populate_report_static_gen2(
 			report->data = (uint8_t *)
 			    qdf_mem_malloc(sizeof(reportdata_160_gen2));
 
-			if (!report->data) {
-				spectral_err("Spectral simulation: Could not allocate memory for report data");
+			if (!report->data)
 				goto bad;
-			}
 
 			report->datasize = sizeof(reportdata_160_gen2);
 			qdf_mem_copy(report->data,
@@ -223,10 +213,8 @@ target_if_populate_report_static_gen3(
 		report->data = (uint8_t *)
 		    qdf_mem_malloc(sizeof(reportdata_20_gen3));
 
-		if (!report->data) {
-			spectral_err("Spectral simulation: Could not allocate memory for report data");
+		if (!report->data)
 			goto bad;
-		}
 
 		report->datasize = sizeof(reportdata_20_gen3);
 		qdf_mem_copy(report->data,
@@ -244,10 +232,8 @@ target_if_populate_report_static_gen3(
 		report->data = (uint8_t *)
 		    qdf_mem_malloc(sizeof(reportdata_40_gen3));
 
-		if (!report->data) {
-			spectral_err("Spectral simulation: Could not allocate memory for report data");
+		if (!report->data)
 			goto bad;
-		}
 
 		report->datasize = sizeof(reportdata_40_gen3);
 		qdf_mem_copy(report->data,
@@ -265,10 +251,8 @@ target_if_populate_report_static_gen3(
 		report->data = (uint8_t *)
 		    qdf_mem_malloc(sizeof(reportdata_80_gen3));
 
-		if (!report->data) {
-			spectral_err("Spectral simulation: Could not allocate memory for report data");
+		if (!report->data)
 			goto bad;
-		}
 
 		report->datasize = sizeof(reportdata_80_gen3);
 		qdf_mem_copy(report->data,
@@ -287,10 +271,8 @@ target_if_populate_report_static_gen3(
 			report->data = (uint8_t *)
 			    qdf_mem_malloc(sizeof(reportdata_80_80_gen3));
 
-			if (!report->data) {
-				spectral_err("Spectral simulation: Could not allocate memory for report data");
+			if (!report->data)
 				goto bad;
-			}
 
 			report->datasize = sizeof(reportdata_80_80_gen3);
 			qdf_mem_copy(report->data,
@@ -309,10 +291,8 @@ target_if_populate_report_static_gen3(
 			report->data = (uint8_t *)
 			    qdf_mem_malloc(sizeof(reportdata_160_gen3));
 
-			if (!report->data) {
-				spectral_err("Spectral simulation: Could not allocate memory for report data");
+			if (!report->data)
 				goto bad;
-			}
 
 			report->datasize = sizeof(reportdata_160_gen3);
 			qdf_mem_copy(report->data,
@@ -390,10 +370,8 @@ target_if_populate_reportset_static(
 	report = (struct spectralsim_report *)
 	    qdf_mem_malloc(sizeof(struct spectralsim_report));
 
-	if (!report) {
-		spectral_err("Spectral simulation: Could not allocate memory for report.");
+	if (!report)
 		goto bad;
-	}
 
 	qdf_mem_zero(report, sizeof(*report));
 
@@ -660,10 +638,8 @@ target_if_spectral_sim_attach(struct target_if_spectral *spectral)
 	simctx = (struct spectralsim_context *)
 	    qdf_mem_malloc(sizeof(struct spectralsim_context));
 
-	if (!simctx) {
-		spectral_err("Spectral simulation: Could not allocate memory for context");
+	if (!simctx)
 		return -EPERM;
-	}
 
 	qdf_mem_zero(simctx, sizeof(*simctx));
 

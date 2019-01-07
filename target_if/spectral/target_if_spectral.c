@@ -1875,10 +1875,9 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	}
 	spectral = (struct target_if_spectral *)qdf_mem_malloc(
 			sizeof(struct target_if_spectral));
-	if (!spectral) {
-		spectral_err("SPECTRAL : Memory allocation failed");
+	if (!spectral)
 		return spectral;
-	}
+
 	qdf_mem_zero(spectral, sizeof(struct target_if_spectral));
 	/* Store pdev in Spectral */
 	spectral->pdev_obj = pdev;

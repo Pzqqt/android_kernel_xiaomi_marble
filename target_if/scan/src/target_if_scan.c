@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -63,10 +63,8 @@ target_if_scan_event_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 
 	event_info = qdf_mem_malloc(sizeof(*event_info));
 
-	if (!event_info) {
-		target_if_err("unable to allocate scan_event");
+	if (!event_info)
 		return -ENOMEM;
-	}
 
 	if (wmi_extract_vdev_scan_ev_param(wmi_handle, data,
 	   &(event_info->event))) {
@@ -115,10 +113,8 @@ int target_if_nlo_complete_handler(ol_scn_t scn, uint8_t *data,
 	}
 
 	event_info = qdf_mem_malloc(sizeof(*event_info));
-	if (!event_info) {
-		target_if_err("unable to allocate scan_event");
+	if (!event_info)
 		return -ENOMEM;
-	}
 
 	nlo_event = param_buf->fixed_param;
 	target_if_debug("PNO complete event received for vdev %d",
@@ -165,10 +161,8 @@ int target_if_nlo_match_event_handler(ol_scn_t scn, uint8_t *data,
 	}
 
 	event_info = qdf_mem_malloc(sizeof(*event_info));
-	if (!event_info) {
-		target_if_err("unable to allocate scan_event");
+	if (!event_info)
 		return -ENOMEM;
-	}
 
 	nlo_event = param_buf->fixed_param;
 	target_if_debug("PNO match event received for vdev %d",

@@ -147,10 +147,8 @@ QDF_STATUS target_if_direct_buf_rx_pdev_create_handler(
 
 	dbr_pdev_obj = qdf_mem_malloc(sizeof(*dbr_pdev_obj));
 
-	if (dbr_pdev_obj == NULL) {
-		direct_buf_rx_err("Failed to allocate dir buf rx pdev obj");
+	if (!dbr_pdev_obj)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	direct_buf_rx_info("Dbr pdev obj %pK", dbr_pdev_obj);
 
@@ -178,8 +176,7 @@ QDF_STATUS target_if_direct_buf_rx_pdev_create_handler(
 	dbr_pdev_obj->dbr_mod_param = qdf_mem_malloc(num_modules *
 				sizeof(struct direct_buf_rx_module_param));
 
-	if (dbr_pdev_obj->dbr_mod_param == NULL) {
-		direct_buf_rx_err("Failed to allocate dir buf rx mod param");
+	if (!dbr_pdev_obj->dbr_mod_param) {
 		wlan_objmgr_pdev_component_obj_detach(pdev,
 					WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
 					dbr_pdev_obj);
@@ -247,10 +244,8 @@ QDF_STATUS target_if_direct_buf_rx_psoc_create_handler(
 
 	dbr_psoc_obj = qdf_mem_malloc(sizeof(*dbr_psoc_obj));
 
-	if (!dbr_psoc_obj) {
-		direct_buf_rx_err("failed to alloc dir buf rx psoc obj");
+	if (!dbr_psoc_obj)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	direct_buf_rx_info("Dbr psoc obj %pK", dbr_psoc_obj);
 
@@ -470,10 +465,8 @@ static QDF_STATUS target_if_dbr_init_ring(struct wlan_objmgr_pdev *pdev,
 	dbr_ring_cfg->num_ptr = num_entries;
 	mod_param->dbr_buf_pool = qdf_mem_malloc(num_entries * sizeof(
 				struct direct_buf_rx_buf_info));
-	if (!mod_param->dbr_buf_pool) {
-		direct_buf_rx_err("dir buf rx buf pool alloc failed");
+	if (!mod_param->dbr_buf_pool)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	ring_alloc_size = (num_entries * entry_size) + DBR_RING_BASE_ALIGN - 1;
 	dbr_ring_cfg->ring_alloc_size = ring_alloc_size;
@@ -538,17 +531,14 @@ static QDF_STATUS target_if_dbr_init_srng(struct wlan_objmgr_pdev *pdev,
 	mod_param->dbr_ring_cap = qdf_mem_malloc(sizeof(
 					struct direct_buf_rx_ring_cap));
 
-	if (!mod_param->dbr_ring_cap) {
-		direct_buf_rx_err("Ring cap alloc failed");
+	if (!mod_param->dbr_ring_cap)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	/* Allocate memory for DBR Ring Config */
 	mod_param->dbr_ring_cfg = qdf_mem_malloc(sizeof(
 					struct direct_buf_rx_ring_cfg));
 
 	if (!mod_param->dbr_ring_cfg) {
-		direct_buf_rx_err("Ring config alloc failed");
 		qdf_mem_free(mod_param->dbr_ring_cap);
 		return QDF_STATUS_E_NOMEM;
 	}

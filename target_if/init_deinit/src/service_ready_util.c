@@ -365,10 +365,8 @@ int init_deinit_populate_dbr_ring_cap(struct wlan_objmgr_psoc *psoc,
 				sizeof(struct wlan_psoc_host_dbr_ring_caps) *
 				num_dbr_ring_caps);
 
-	if (!info->dbr_ring_cap) {
-		target_if_err("Mem alloc for DMA cap failed");
+	if (!info->dbr_ring_cap)
 		return -EINVAL;
-	}
 
 	for (cap_idx = 0; cap_idx < num_dbr_ring_caps; cap_idx++) {
 		status = wmi_extract_dbr_ring_cap_service_ready_ext(handle,

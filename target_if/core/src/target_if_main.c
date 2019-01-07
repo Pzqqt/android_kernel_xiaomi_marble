@@ -141,7 +141,6 @@ QDF_STATUS target_if_init(get_psoc_handle_callback psoc_hdl_cb)
 {
 	g_target_if_ctx = qdf_mem_malloc(sizeof(*g_target_if_ctx));
 	if (!g_target_if_ctx) {
-		target_if_err("Cannot allocate target if ctx");
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -501,10 +500,8 @@ QDF_STATUS target_if_alloc_pdev_tgt_info(struct wlan_objmgr_pdev *pdev)
 
 	tgt_pdev_info = qdf_mem_malloc(sizeof(*tgt_pdev_info));
 
-	if (tgt_pdev_info == NULL) {
-		target_if_err("Failed to allocate pdev target info");
+	if (!tgt_pdev_info)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	wlan_pdev_set_tgt_if_handle(pdev, tgt_pdev_info);
 
@@ -540,10 +537,8 @@ QDF_STATUS target_if_alloc_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
 
 	tgt_psoc_info = qdf_mem_malloc(sizeof(*tgt_psoc_info));
 
-	if (tgt_psoc_info == NULL) {
-		target_if_err("Failed to allocate psoc target info");
+	if (!tgt_psoc_info)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	wlan_psoc_set_tgt_if_handle(psoc, tgt_psoc_info);
 	target_psoc_set_preferred_hw_mode(tgt_psoc_info, WMI_HOST_HW_MODE_MAX);
