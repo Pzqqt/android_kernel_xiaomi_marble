@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -941,7 +941,6 @@ void lim_send_set_sta_key_req(struct mac_context *mac,
 					     (uint8_t *) &pMlmSetKeysReq->
 					     key[i], sizeof(tSirKeys));
 			}
-			pSetStaKeyParams->wepType = eSIR_WEP_STATIC;
 			pe_session->limMlmState =
 				eLIM_MLM_WT_SET_STA_KEY_STATE;
 			MTRACE(mac_trace

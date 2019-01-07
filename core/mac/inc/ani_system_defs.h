@@ -89,11 +89,6 @@ typedef enum eAniEdType {
 	eSIR_ED_NOT_IMPLEMENTED = SIR_MAX_ENUM_SIZE
 } tAniEdType;
 
-typedef enum eAniWepType {
-	eSIR_WEP_STATIC,
-	eSIR_WEP_DYNAMIC,
-} tAniWepType;
-
 /* / Enum to specify whether key is used */
 /* / for TX only, RX only or both */
 typedef enum eAniKeyDirection {
