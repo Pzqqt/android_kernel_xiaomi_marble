@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -89,10 +89,9 @@ struct osif_request *osif_request_alloc(const struct osif_request_params *params
 
 	length = sizeof(*request) + params->priv_size;
 	request = qdf_mem_malloc(length);
-	if (!request) {
-		cfg80211_err("allocation failed");
+	if (!request)
 		return NULL;
-	}
+
 	request->reference_count = 1;
 	request->params = *params;
 	qdf_event_create(&request->completed);

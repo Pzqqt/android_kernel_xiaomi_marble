@@ -418,10 +418,8 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_vdev *vdev,
 	}
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		cfg80211_err("req malloc failed");
+	if (!req)
 		return -ENOMEM;
-	}
 
 	wlan_pdev_obj_lock(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
@@ -669,10 +667,8 @@ static int wlan_scan_request_enqueue(struct wlan_objmgr_pdev *pdev,
 	struct osif_scan_pdev *osif_scan;
 
 	scan_req = qdf_mem_malloc(sizeof(*scan_req));
-	if (!scan_req) {
-		cfg80211_alert("malloc failed for Scan req");
+	if (!scan_req)
 		return -ENOMEM;
-	}
 
 	/* Get NL global context from objmgr*/
 	osif_ctx = wlan_pdev_get_ospriv(pdev);
@@ -1090,10 +1086,9 @@ QDF_STATUS wlan_cfg80211_scan_priv_init(struct wlan_objmgr_pdev *pdev)
 
 	osif_priv = wlan_pdev_get_ospriv(pdev);
 	scan_priv = qdf_mem_malloc(sizeof(*scan_priv));
-	if (!scan_priv) {
-		cfg80211_err("failed to allocate memory");
+	if (!scan_priv)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	/* Initialize the scan request queue */
 	osif_priv->osif_scan = scan_priv;
 	scan_priv->req_id = req_id;
@@ -1166,7 +1161,6 @@ wlan_cfg80211_enqueue_for_cleanup(qdf_list_t *scan_cleanup_q,
 			scan_cleanup = qdf_mem_malloc(sizeof(struct scan_req));
 			if (!scan_cleanup) {
 				qdf_mutex_release(&scan_priv->scan_req_q_lock);
-				cfg80211_err("Failed to allocate memory");
 				return;
 			}
 			scan_cleanup->scan_request = scan_req->scan_request;
@@ -1325,10 +1319,9 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	}
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		cfg80211_err("Failed to allocate scan request memory");
+	if (!req)
 		return -EINVAL;
-	}
+
 	/* Initialize the scan global params */
 	ucfg_scan_init_default_params(vdev, req);
 
@@ -1500,7 +1493,6 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 	if (request->ie_len) {
 		req->scan_req.extraie.ptr = qdf_mem_malloc(request->ie_len);
 		if (!req->scan_req.extraie.ptr) {
-			cfg80211_err("Failed to allocate memory");
 			ret = -ENOMEM;
 			goto err;
 		}
@@ -1511,7 +1503,6 @@ int wlan_cfg80211_scan(struct wlan_objmgr_vdev *vdev,
 		req->scan_req.extraie.ptr =
 			qdf_mem_malloc(params->default_ie.len);
 		if (!req->scan_req.extraie.ptr) {
-			cfg80211_err("Failed to allocate memory");
 			ret = -ENOMEM;
 			goto err;
 		}
@@ -1641,10 +1632,8 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_vdev *vdev;
 
 	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		cfg80211_err("Failed to allocate memory");
+	if (!req)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	/* Get NL global context from objmgr*/
 	osif_ctx = wlan_pdev_get_ospriv(pdev);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -277,10 +277,9 @@ void os_if_wifi_pos_send_peer_status(struct qdf_mac_addr *peer_mac,
 	}
 
 	peer_info = qdf_mem_malloc(sizeof(*peer_info));
-	if (!peer_info) {
-		cfg80211_alert("malloc failed");
+	if (!peer_info)
 		return;
-	}
+
 	qdf_mem_copy(peer_info->peer_mac_addr, peer_mac->bytes,
 		     sizeof(peer_mac->bytes));
 	peer_info->peer_status = peer_status;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -326,10 +326,8 @@ static void get_peer_rssi_cb(struct stats_event *ev, void *cookie)
 	}
 
 	priv->peer_stats = qdf_mem_malloc(rssi_size);
-	if (!priv->peer_stats) {
-		cfg80211_err("allocation failed");
+	if (!priv->peer_stats)
 		goto get_peer_rssi_cb_fail;
-	}
 
 	priv->num_peer_stats = ev->num_peer_stats;
 	qdf_mem_copy(priv->peer_stats, ev->peer_stats, rssi_size);
@@ -357,7 +355,6 @@ wlan_cfg80211_mc_cp_stats_get_peer_rssi(struct wlan_objmgr_vdev *vdev,
 
 	out = qdf_mem_malloc(sizeof(*out));
 	if (!out) {
-		cfg80211_err("allocation failed");
 		*errno = -ENOMEM;
 		return NULL;
 	}
@@ -440,16 +437,12 @@ static void get_station_stats_cb(struct stats_event *ev, void *cookie)
 	}
 
 	priv->vdev_summary_stats = qdf_mem_malloc(summary_size);
-	if (!priv->vdev_summary_stats) {
-		cfg80211_err("memory allocation failed");
+	if (!priv->vdev_summary_stats)
 		goto station_stats_cb_fail;
-	}
 
 	priv->vdev_chain_rssi = qdf_mem_malloc(rssi_size);
-	if (!priv->vdev_chain_rssi) {
-		cfg80211_err("memory allocation failed");
+	if (!priv->vdev_chain_rssi)
 		goto station_stats_cb_fail;
-	}
 
 	priv->num_summary_stats = ev->num_summary_stats;
 	priv->num_chain_rssi_stats = ev->num_chain_rssi_stats;
@@ -483,14 +476,12 @@ wlan_cfg80211_mc_cp_stats_get_station_stats(struct wlan_objmgr_vdev *vdev,
 
 	out = qdf_mem_malloc(sizeof(*out));
 	if (!out) {
-		cfg80211_err("allocation failed");
 		*errno = -ENOMEM;
 		return NULL;
 	}
 
 	request = osif_request_alloc(&params);
 	if (!request) {
-		cfg80211_err("Request allocation failure, return cached value");
 		qdf_mem_free(out);
 		*errno = -ENOMEM;
 		return NULL;
