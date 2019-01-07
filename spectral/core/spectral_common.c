@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -560,10 +560,9 @@ wlan_spectral_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 
 	sc = (struct spectral_context *)
 	    qdf_mem_malloc(sizeof(struct spectral_context));
-	if (!sc) {
-		spectral_err("Failed to allocate spectral_ctx object");
+	if (!sc)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	qdf_mem_zero(sc, sizeof(struct spectral_context));
 	sc->psoc_obj = psoc;
 	if (wlan_objmgr_psoc_get_dev_type(psoc) == WLAN_DEV_OL)
@@ -625,10 +624,9 @@ wlan_spectral_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 
 	ps = (struct pdev_spectral *)
 	    qdf_mem_malloc(sizeof(struct pdev_spectral));
-	if (!ps) {
-		spectral_err("Failed to allocate pdev_spectral object");
+	if (!ps)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	sc = spectral_get_spectral_ctx_from_pdev(pdev);
 	if (!sc) {
 		spectral_err("Spectral context is NULL!");
