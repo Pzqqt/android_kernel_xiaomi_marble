@@ -344,6 +344,7 @@ struct rx_macro_priv {
 	u16 prim_int_users[INTERP_MAX];
 	int rx_mclk_users;
 	int swr_clk_users;
+	bool dapm_mclk_enable;
 	bool reset_swr;
 	int clsh_users;
 	int rx_mclk_cnt;
@@ -1152,9 +1153,14 @@ static int rx_macro_mclk_event(struct snd_soc_dapm_widget *w,
 			rx_priv->swr_ctrl_data[0].rx_swr_pdev,
 			SWR_CLK_FREQ, &mclk_freq);
 		ret = rx_macro_mclk_enable(rx_priv, 1, true);
+		if (ret)
+			rx_priv->dapm_mclk_enable = false;
+		else
+			rx_priv->dapm_mclk_enable = true;
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		ret = rx_macro_mclk_enable(rx_priv, 0, true);
+		if (rx_priv->dapm_mclk_enable)
+			ret = rx_macro_mclk_enable(rx_priv, 0, true);
 		break;
 	default:
 		dev_err(rx_priv->dev,

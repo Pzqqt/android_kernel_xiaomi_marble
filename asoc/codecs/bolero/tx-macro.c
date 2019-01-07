@@ -127,6 +127,7 @@ struct tx_macro_priv {
 	bool dec_active[NUM_DECIMATORS];
 	int tx_mclk_users;
 	int swr_clk_users;
+	bool dapm_mclk_enable;
 	bool reset_swr;
 	struct clk *tx_core_clk;
 	struct clk *tx_npl_clk;
@@ -260,9 +261,14 @@ static int tx_macro_mclk_event(struct snd_soc_dapm_widget *w,
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		ret = tx_macro_mclk_enable(tx_priv, 1);
+		if (ret)
+			tx_priv->dapm_mclk_enable = false;
+		else
+			tx_priv->dapm_mclk_enable = true;
 		break;
 	case SND_SOC_DAPM_POST_PMD:
-		ret = tx_macro_mclk_enable(tx_priv, 0);
+		if (tx_priv->dapm_mclk_enable)
+			ret = tx_macro_mclk_enable(tx_priv, 0);
 		break;
 	default:
 		dev_err(tx_priv->dev,
