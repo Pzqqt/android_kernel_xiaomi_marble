@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -229,11 +229,9 @@ static QDF_STATUS fake_dcc_update_ndl_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGP("%s : called", __func__);
 	/* Allocate and populate the response */
 	resp = qdf_mem_malloc(sizeof(*resp));
-	if (!resp) {
-		WMI_LOGP("%s:Error allocating memory for the response.",
-			__func__);
+	if (!resp)
 		return -ENOMEM;
-	}
+
 	resp->vdev_id = update_ndl_param->vdev_id;
 	resp->status = 0;
 

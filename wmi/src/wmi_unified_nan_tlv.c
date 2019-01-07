@@ -999,10 +999,8 @@ static QDF_STATUS extract_ndp_end_ind_tlv(wmi_unified_t wmi_handle,
 	buf_size = sizeof(**rsp) + event->num_ndp_end_indication_list *
 			sizeof((*rsp)->ndp_map[0]);
 	*rsp = qdf_mem_malloc(buf_size);
-	if (!(*rsp)) {
-		WMI_LOGE("Failed to allocate memory");
+	if (!(*rsp))
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	(*rsp)->num_ndp_ids = event->num_ndp_end_indication_list;
 	for (i = 0; i < (*rsp)->num_ndp_ids; i++) {

@@ -712,10 +712,9 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 		wmi_log_max_entry * sizeof(struct wmi_command_debug));
 	cmd_log_buf->size = wmi_log_max_entry;
 
-	if (!cmd_log_buf->buf) {
-		WMI_LOGE("no memory for WMI command log buffer..");
+	if (!cmd_log_buf->buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	cmd_log_buf->p_buf_tail_idx = &cmd_log_buf->buf_tail_idx;
 
 	/* WMI commands TX completed */
@@ -725,10 +724,9 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 		wmi_log_max_entry * sizeof(struct wmi_command_debug));
 	cmd_tx_cmpl_log_buf->size = wmi_log_max_entry;
 
-	if (!cmd_tx_cmpl_log_buf->buf) {
-		WMI_LOGE("no memory for WMI Command Tx Complete log buffer..");
+	if (!cmd_tx_cmpl_log_buf->buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	cmd_tx_cmpl_log_buf->p_buf_tail_idx =
 		&cmd_tx_cmpl_log_buf->buf_tail_idx;
 
@@ -739,10 +737,9 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 		wmi_log_max_entry * sizeof(struct wmi_event_debug));
 	event_log_buf->size = wmi_log_max_entry;
 
-	if (!event_log_buf->buf) {
-		WMI_LOGE("no memory for WMI Event log buffer..");
+	if (!event_log_buf->buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	event_log_buf->p_buf_tail_idx = &event_log_buf->buf_tail_idx;
 
 	/* WMI events when queued */
@@ -752,10 +749,9 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 		wmi_log_max_entry * sizeof(struct wmi_event_debug));
 	rx_event_log_buf->size = wmi_log_max_entry;
 
-	if (!rx_event_log_buf->buf) {
-		WMI_LOGE("no memory for WMI Event Rx log buffer..");
+	if (!rx_event_log_buf->buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	rx_event_log_buf->p_buf_tail_idx = &rx_event_log_buf->buf_tail_idx;
 
 	/* WMI Management commands */
@@ -765,10 +761,9 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 		wmi_mgmt_log_max_entry * sizeof(struct wmi_command_debug));
 	mgmt_cmd_log_buf->size = wmi_mgmt_log_max_entry;
 
-	if (!mgmt_cmd_log_buf->buf) {
-		WMI_LOGE("no memory for WMI Management Command log buffer..");
+	if (!mgmt_cmd_log_buf->buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	mgmt_cmd_log_buf->p_buf_tail_idx = &mgmt_cmd_log_buf->buf_tail_idx;
 
 	/* WMI Management commands Tx completed*/
@@ -780,10 +775,9 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 		sizeof(struct wmi_command_debug));
 	mgmt_cmd_tx_cmp_log_buf->size = wmi_mgmt_log_max_entry;
 
-	if (!mgmt_cmd_tx_cmp_log_buf->buf) {
-		WMI_LOGE("no memory for WMI Management Command Tx complete log buffer..");
+	if (!mgmt_cmd_tx_cmp_log_buf->buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	mgmt_cmd_tx_cmp_log_buf->p_buf_tail_idx =
 		&mgmt_cmd_tx_cmp_log_buf->buf_tail_idx;
 
@@ -796,10 +790,9 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 		sizeof(struct wmi_event_debug));
 	mgmt_event_log_buf->size = wmi_mgmt_log_max_entry;
 
-	if (!mgmt_event_log_buf->buf) {
-		WMI_LOGE("no memory for WMI Management Event log buffer..");
+	if (!mgmt_event_log_buf->buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	mgmt_event_log_buf->p_buf_tail_idx = &mgmt_event_log_buf->buf_tail_idx;
 
 	/* WMI diag events when received */
@@ -811,10 +804,9 @@ static QDF_STATUS wmi_log_init(struct wmi_unified *wmi_handle)
 		sizeof(struct wmi_event_debug));
 	diag_event_log_buf->size = wmi_diag_log_max_entry;
 
-	if (!diag_event_log_buf->buf) {
-		qdf_print("no memory for WMI diag event log buffer..\n");
+	if (!diag_event_log_buf->buf)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	diag_event_log_buf->p_buf_tail_idx = &diag_event_log_buf->buf_tail_idx;
 
 	qdf_spinlock_create(&wmi_handle->log_info.wmi_record_lock);
@@ -1575,8 +1567,10 @@ wmi_buf_t wmi_buf_alloc_fl(wmi_unified_t wmi_handle, uint32_t len,
 				WMI_MIN_HEAD_ROOM, 4), WMI_MIN_HEAD_ROOM, 4,
 				false, func, line);
 
-	if (!wmi_buf)
+	if (!wmi_buf) {
+		wmi_nofl_err("%s:%d, failed to alloc len:%d", func, line, len);
 		return NULL;
+	}
 
 	/* Clear the wmi buffer */
 	OS_MEMZERO(qdf_nbuf_data(wmi_buf), len);
@@ -2439,11 +2433,9 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 		wmi_handle =
 			(struct wmi_unified *) qdf_mem_malloc(
 					sizeof(struct wmi_unified));
-		if (wmi_handle == NULL) {
-			WMI_LOGE("allocation of wmi handle failed %zu",
-				  sizeof(struct wmi_unified));
+		if (!wmi_handle)
 			return NULL;
-		}
+
 		wmi_handle->scn_handle = soc->scn_handle;
 		wmi_handle->event_id = soc->event_id;
 		wmi_handle->event_handler = soc->event_handler;
@@ -2552,19 +2544,14 @@ void *wmi_unified_attach(void *scn_handle,
 	struct wmi_soc *soc;
 
 	soc = (struct wmi_soc *) qdf_mem_malloc(sizeof(struct wmi_soc));
-	if (soc == NULL) {
-		WMI_LOGE("Allocation of wmi_soc failed %zu",
-			  sizeof(struct wmi_soc));
+	if (!soc)
 		return NULL;
-	}
 
 	wmi_handle =
 		(struct wmi_unified *) qdf_mem_malloc(
 			sizeof(struct wmi_unified));
-	if (wmi_handle == NULL) {
+	if (!wmi_handle) {
 		qdf_mem_free(soc);
-		WMI_LOGE("allocation of wmi handle failed %zu",
-			  sizeof(struct wmi_unified));
 		return NULL;
 	}
 	wmi_handle->soc = soc;
