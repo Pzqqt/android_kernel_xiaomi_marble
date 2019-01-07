@@ -14919,3 +14919,206 @@ void sme_enable_fw_module_log_level(mac_handle_t mac_handle, int vdev_id)
 		count += 2;
 	}
 }
+
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+/**
+ * sme_set_md_host_evt_cb - Register/set motion detection callback
+ * @mac_handle: mac handle
+ * @callback_fn: motion detection callback function pointer
+ * @hdd_ctx: hdd context
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_set_md_host_evt_cb(
+	mac_handle_t mac_handle,
+	QDF_STATUS (*callback_fn)(void *ctx, struct sir_md_evt *event),
+	void *hdd_ctx
+)
+{
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+
+	qdf_status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		mac->sme.md_host_evt_cb = callback_fn;
+		mac->sme.md_ctx = hdd_ctx;
+		sme_release_global_lock(&mac->sme);
+	}
+	return qdf_status;
+}
+
+/**
+ * sme_motion_det_config - Post motion detection configuration msg to scheduler
+ * @mac_handle: mac handle
+ * @motion_det_config: motion detection configuration
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_motion_det_config(mac_handle_t mac_handle,
+				 struct sme_motion_det_cfg *motion_det_config)
+{
+	struct scheduler_msg msg = {0};
+	struct sme_motion_det_cfg *motion_det_cfg;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	qdf_status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		motion_det_cfg =
+				qdf_mem_malloc(sizeof(*motion_det_cfg));
+		if (!motion_det_cfg) {
+			sme_release_global_lock(&mac->sme);
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		*motion_det_cfg = *motion_det_config;
+
+		qdf_mem_set(&msg, sizeof(msg), 0);
+		msg.type = WMA_SET_MOTION_DET_CONFIG;
+		msg.bodyptr = motion_det_cfg;
+
+		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
+						    QDF_MODULE_ID_WMA,
+						    QDF_MODULE_ID_WMA,
+						    &msg);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			qdf_mem_free(motion_det_cfg);
+			qdf_status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&mac->sme);
+	}
+	return qdf_status;
+}
+
+/**
+ * sme_motion_det_enable - Post motion detection start/stop msg to scheduler
+ * @mac_handle: mac handle
+ * @motion_det_enable: motion detection start/stop
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_motion_det_enable(mac_handle_t mac_handle,
+				 struct sme_motion_det_en *motion_det_enable)
+{
+	struct scheduler_msg msg = {0};
+	struct sme_motion_det_en *motion_det_en;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	qdf_status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		motion_det_en = qdf_mem_malloc(sizeof(*motion_det_en));
+		if (!motion_det_en) {
+			sme_release_global_lock(&mac->sme);
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		*motion_det_en = *motion_det_enable;
+
+		qdf_mem_set(&msg, sizeof(msg), 0);
+		msg.type = WMA_SET_MOTION_DET_ENABLE;
+		msg.bodyptr = motion_det_en;
+
+		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
+						    QDF_MODULE_ID_WMA,
+						    QDF_MODULE_ID_WMA,
+						    &msg);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			qdf_mem_free(motion_det_en);
+			qdf_status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&mac->sme);
+	}
+	return qdf_status;
+}
+
+/**
+ * sme_motion_det_base_line_config - Post md baselining cfg msg to scheduler
+ * @mac_handle: mac handle
+ * @motion_det_base_line_config: motion detection baselining configuration
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_motion_det_base_line_config(
+	mac_handle_t mac_handle,
+	struct sme_motion_det_base_line_cfg *motion_det_base_line_config)
+{
+	struct scheduler_msg msg = {0};
+	struct sme_motion_det_base_line_cfg *motion_det_base_line_cfg;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	qdf_status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		motion_det_base_line_cfg =
+			qdf_mem_malloc(sizeof(*motion_det_base_line_cfg));
+
+		if (!motion_det_base_line_cfg) {
+			sme_release_global_lock(&mac->sme);
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		*motion_det_base_line_cfg = *motion_det_base_line_config;
+
+			qdf_mem_set(&msg, sizeof(msg), 0);
+		msg.type = WMA_SET_MOTION_DET_BASE_LINE_CONFIG;
+		msg.bodyptr = motion_det_base_line_cfg;
+
+		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
+						    QDF_MODULE_ID_WMA,
+						    QDF_MODULE_ID_WMA,
+						    &msg);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			qdf_mem_free(motion_det_base_line_cfg);
+			qdf_status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&mac->sme);
+	}
+	return qdf_status;
+}
+
+/**
+ * sme_motion_det_base_line_enable - Post md baselining enable msg to scheduler
+ * @mac_handle: mac handle
+ * @motion_det_base_line_enable: motion detection baselining start/stop
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_motion_det_base_line_enable(
+	mac_handle_t mac_handle,
+	struct sme_motion_det_base_line_en *motion_det_base_line_enable)
+{
+	struct scheduler_msg msg = {0};
+	struct sme_motion_det_base_line_en *motion_det_base_line_en;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+
+	qdf_status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		motion_det_base_line_en =
+			qdf_mem_malloc(sizeof(*motion_det_base_line_en));
+
+		if (!motion_det_base_line_en) {
+			sme_release_global_lock(&mac->sme);
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		*motion_det_base_line_en = *motion_det_base_line_enable;
+
+			qdf_mem_set(&msg, sizeof(msg), 0);
+		msg.type = WMA_SET_MOTION_DET_BASE_LINE_ENABLE;
+		msg.bodyptr = motion_det_base_line_en;
+
+		qdf_status = scheduler_post_message(QDF_MODULE_ID_SME,
+						    QDF_MODULE_ID_WMA,
+						    QDF_MODULE_ID_WMA,
+						    &msg);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			qdf_mem_free(motion_det_base_line_en);
+			qdf_status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&mac->sme);
+	}
+	return qdf_status;
+}
+#endif /* WLAN_FEATURE_MOTION_DETECTION */

@@ -1570,6 +1570,12 @@ static const uint8_t *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "SAP_OBSS_DETECTION";
 	case WOW_REASON_BSS_COLOR_COLLISION_DETECT:
 		return "BSS_COLOR_COLLISION_DETECT";
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+	case WOW_REASON_WLAN_MD:
+		return "MOTION_DETECT";
+	case WOW_REASON_WLAN_BL:
+		return "MOTION_DETECT_BASELINE";
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 	default:
 		return "unknown";
 	}
@@ -1600,6 +1606,11 @@ static bool wma_wow_reason_has_stats(enum wake_reason_e reason)
 	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
 	case WOW_REASON_11D_SCAN:
 		return true;
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+	case WOW_REASON_WLAN_MD:
+	case WOW_REASON_WLAN_BL:
+		return true;
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 	default:
 		return false;
 	}
@@ -1712,6 +1723,11 @@ static void wma_print_wow_stats(t_wma_handle *wma,
 	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
 	case WOW_REASON_11D_SCAN:
 		break;
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+	case WOW_REASON_WLAN_MD:
+	case WOW_REASON_WLAN_BL:
+		break;
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 	default:
 		return;
 	}
@@ -1768,6 +1784,14 @@ static void wma_inc_wow_stats(t_wma_handle *wma,
 	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
 		stats->pwr_save_fail_detected++;
 		break;
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+	case WOW_REASON_WLAN_MD::
+		stats->motion_detect++;
+		break;
+	case WOW_REASON_WLAN_BL:
+		stats->motion_detect_bl++;
+		break;
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 	}
 }
 #endif

@@ -1095,7 +1095,12 @@
  *
  * </ioctl>
  */
-#define WE_SET_MODULATED_DTIM                 96
+#define WE_SET_MODULATED_DTIM                   96
+
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+#define WE_MOTION_DET_START_STOP                97
+#define WE_MOTION_DET_BASE_LINE_START_STOP      98
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
@@ -2545,6 +2550,13 @@
 #undef  MAX_VAR_ARGS
 #define MAX_VAR_ARGS         9
 #endif
+
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+#undef  MAX_VAR_ARGS
+#define MAX_VAR_ARGS                              15
+#define WE_MOTION_DET_CONFIG_PARAM                25
+#define WE_MOTION_DET_BASE_LINE_CONFIG_PARAM      26
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 
 /*
  * <ioctl>
@@ -5157,6 +5169,61 @@ static int hdd_we_set_modulated_dtim(struct hdd_adapter *adapter, int value)
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+/**
+ * hdd_we_motion_det_start_stop - start/stop motion detection
+ * @adapter: hdd adapter
+ * @value: start/stop value to set
+ *
+ * Return: 0 on success, error on failure
+ */
+static int hdd_we_motion_det_start_stop(struct hdd_adapter *adapter, int value)
+{
+	struct sme_motion_det_en motion_det;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (value < 0 || value > 1) {
+		hdd_err("Invalid value %d in mt_start", value);
+		return -EINVAL;
+	}
+	motion_det.vdev_id = adapter->session_id;
+	motion_det.enable = value;
+
+	if (!value)
+		adapter->motion_detection_mode = 0;
+
+	sme_motion_det_enable(hdd_ctx->mac_handle, &motion_det);
+
+	return 0;
+}
+
+/**
+ * hdd_we_motion_det_base_line_start_stop - start/stop md baselining
+ * @adapter: hdd adapter
+ * @value: start/stop value to set
+ *
+ * Return: 0 on success, error on failure
+ */
+static int hdd_we_motion_det_base_line_start_stop(struct hdd_adapter *adapter,
+						  int value)
+{
+	struct sme_motion_det_base_line_en motion_det_base_line;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (value < 0 || value > 1) {
+		hdd_err("Invalid value %d in mt_bl_start", value);
+		return -EINVAL;
+	}
+
+	motion_det_base_line.vdev_id = adapter->session_id;
+	motion_det_base_line.enable = value;
+	sme_motion_det_base_line_enable(hdd_ctx->mac_handle,
+					&motion_det_base_line);
+
+	return 0;
+}
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
+
 typedef int (*setint_getnone_fn)(struct hdd_adapter *adapter, int value);
 static const setint_getnone_fn setint_getnone_cb[] = {
 	[WE_SET_11D_STATE] = hdd_we_set_11d_state,
@@ -5252,6 +5319,11 @@ static const setint_getnone_fn setint_getnone_cb[] = {
 	[WE_SET_RANGE_EXT] = hdd_we_set_range_ext,
 	[WE_SET_PDEV_RESET] = hdd_handle_pdev_reset,
 	[WE_SET_MODULATED_DTIM] = hdd_we_set_modulated_dtim,
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+	[WE_MOTION_DET_START_STOP] = hdd_we_motion_det_start_stop,
+	[WE_MOTION_DET_BASE_LINE_START_STOP] =
+				hdd_we_motion_det_base_line_start_stop,
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 };
 
 static setint_getnone_fn hdd_get_setint_getnone_cb(int param)
@@ -7622,6 +7694,54 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		ret = cdp_txrx_stats_request(soc, vdev, &req);
 		break;
 	}
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+	case WE_MOTION_DET_CONFIG_PARAM:
+	{
+		struct sme_motion_det_cfg motion_det_cfg;
+
+		if (num_args != 15) {
+			hdd_err("mt_config: Invalid no of args");
+			return -EINVAL;
+		}
+
+		motion_det_cfg.vdev_id = adapter->session_id;
+		motion_det_cfg.time_t1 = apps_args[0];
+		motion_det_cfg.time_t2 = apps_args[1];
+		motion_det_cfg.n1 = apps_args[2];
+		motion_det_cfg.n2 = apps_args[3];
+		motion_det_cfg.time_t1_gap = apps_args[4];
+		motion_det_cfg.time_t2_gap = apps_args[5];
+		motion_det_cfg.coarse_K = apps_args[6];
+		motion_det_cfg.fine_K = apps_args[7];
+		motion_det_cfg.coarse_Q = apps_args[8];
+		motion_det_cfg.fine_Q = apps_args[9];
+		motion_det_cfg.md_coarse_thr_high = apps_args[10];
+		motion_det_cfg.md_fine_thr_high = apps_args[11];
+		motion_det_cfg.md_coarse_thr_low = apps_args[12];
+		motion_det_cfg.md_fine_thr_low = apps_args[13];
+		adapter->motion_detection_mode = apps_args[14];
+		sme_motion_det_config(hdd_ctx->mac_handle, &motion_det_cfg);
+	}
+	break;
+	case WE_MOTION_DET_BASE_LINE_CONFIG_PARAM:
+	{
+		struct sme_motion_det_base_line_cfg motion_det_base_line_cfg;
+
+		if (num_args != 4) {
+			hdd_err("mt_bl_config: Invalid no of args");
+			return -EINVAL;
+		}
+
+		motion_det_base_line_cfg.vdev_id = adapter->session_id;
+		motion_det_base_line_cfg.bl_time_t = apps_args[0];
+		motion_det_base_line_cfg.bl_packet_gap = apps_args[1];
+		motion_det_base_line_cfg.bl_n = apps_args[2];
+		motion_det_base_line_cfg.bl_num_meas = apps_args[3];
+		sme_motion_det_base_line_config(hdd_ctx->mac_handle,
+						&motion_det_base_line_cfg);
+	}
+	break;
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 	default:
 	{
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
@@ -10510,11 +10630,33 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 "range_ext"}
 	,
-
 	{WLAN_PRIV_SET_FTIES,
 	 IW_PRIV_TYPE_CHAR | MAX_FTIE_SIZE,
 	 0,
-	 "set_ft_ies"},
+	 "set_ft_ies"}
+	,
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+	{WE_MOTION_DET_START_STOP,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0,
+	 "mt_start"}
+	,
+	{WE_MOTION_DET_BASE_LINE_START_STOP,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0,
+	 "mt_bl_start"}
+	,
+	{WE_MOTION_DET_CONFIG_PARAM,
+	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
+	 0,
+	 "mt_config"}
+	,
+	{WE_MOTION_DET_BASE_LINE_CONFIG_PARAM,
+	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
+	 0,
+	 "mt_bl_config"}
+	,
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 };
 
 const struct iw_handler_def we_handler_def = {

@@ -3005,4 +3005,158 @@ void sme_update_score_config(mac_handle_t mac_handle,
  * Return: None
  */
 void sme_enable_fw_module_log_level(mac_handle_t mac_handle, int vdev_id);
+
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+/**
+ * sme_motion_det_cfg - motion detection configuration
+ * @vdev_id: vdev id
+ * @time_t1: Time T1 for motion detection in msecs
+ * @time_t2: Time T2 for motion detection in msecs
+ * @n1: number of packets for coarse detection
+ * @n2: number of packets for fine detection
+ * @time_t1_gap: gap between packets in coarse detection in msecs
+ * @time_t2_gap: gap between packets in fine detection in msecs
+ * @coarse_k: number of times fine motion detection has to be performed for
+ *	      coarse detection
+ * @fine_k: number of times fine motion detection has to be performed for
+ *	    fine detection
+ * @coarse_q: number of times motion is expected to be detected for success
+ *	      case in coarse detection
+ * @fine_q: number of times motion is expected to be detected for success
+ *	    case in fine detection
+ * @md_coarse_thr_high: higher threshold value (in percent) from host to FW,
+ *			which will be used in coarse detection phase of motion
+ *			detection. This is the threshold for the correlation of
+ *			the old RF local-scattering environment with current RF
+ *			local-scattering environment. Value of 100(%) indicates
+ *			that neither the transceiver nor any nearby objects
+ *			have changed position
+ * @md_fine_thr_high: higher threshold value (in percent) from host to FW, which
+ *		      will be used in fine detection phase of motion detection.
+ *		      This is the threshold for correlation between the old and
+ *		      current RF environments, as explained above
+ * @md_coarse_thr_low: lower threshold value (in percent) for immediate
+ *		       detection of motion in coarse detection phase. This is
+ *		       the threshold for correlation between the old and current
+ *		       RF environments, as explained above
+ * @md_fine_thr_low: lower threshold value (in percent) for immediate detection
+ *		     of motion in fine detection phase. This is the threshold
+ *		     for correlation between the old and current RF
+ *		     environments, as explained above
+ * @eSME_TDLS_PEER_REMOVE_MAC_ADDR: remove peer mac from connection table
+ */
+
+struct sme_motion_det_cfg {
+	uint8_t vdev_id;
+	uint32_t time_t1;
+	uint32_t time_t2;
+	uint32_t n1;
+	uint32_t n2;
+	uint32_t time_t1_gap;
+	uint32_t time_t2_gap;
+	uint32_t coarse_K;
+	uint32_t fine_K;
+	uint32_t coarse_Q;
+	uint32_t fine_Q;
+	uint8_t md_coarse_thr_high;
+	uint8_t md_fine_thr_high;
+	uint8_t md_coarse_thr_low;
+	uint8_t md_fine_thr_low;
+};
+
+/**
+ * sme_motion_det_base_line_cfg - motion detection base line configuration
+ * @vdev_id : vdev id
+ * @bl_time_t: time T for baseline (in ms), every bl_time_t, bl_n pkts are sent
+ * @bl_packet_gap: gap between packets for baseline  in msecs
+ * bl_n: number of packets to be sent during one baseline
+ * bl_num_meas: number of times the baseline measurement to be done
+ */
+struct sme_motion_det_base_line_cfg {
+	uint8_t vdev_id;
+	uint32_t bl_time_t;
+	uint32_t bl_packet_gap;
+	uint32_t bl_n;
+	uint32_t bl_num_meas;
+};
+
+/**
+ * sme_motion_det_en - Start/Stop motion detection
+ * @vdev_id: vdev_id
+ * @enable: start = 1, stop =0
+ */
+struct sme_motion_det_en {
+	uint8_t vdev_id;
+	bool enable;
+};
+
+/**
+ * sme_motion_det_base_line_en - Start/Stop motion detection base line
+ * @vdev_id: vdev_id
+ * @enable: start = 1, stop =0
+ */
+struct sme_motion_det_base_line_en {
+	uint8_t vdev_id;
+	bool enable;
+};
+
+/**
+ * sme_motion_det_config - Post motion detection configuration msg to scheduler
+ * @mac_handle: mac handle
+ * @motion_det_cfg: motion detection configuration
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_motion_det_config(mac_handle_t mac_handle,
+				 struct sme_motion_det_cfg *motion_det_cfg);
+
+/**
+ * sme_motion_det_enable - Post motion detection start/stop msg to scheduler
+ * @mac_handle: mac handle
+ * @motion_det_en: motion detection start/stop
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_motion_det_enable(mac_handle_t mac_handle,
+				 struct sme_motion_det_en *motion_det_en);
+
+/**
+ * sme_motion_det_base_line_config - Post md baselining cfg msg to scheduler
+ * @mac_handle: mac handle
+ * @motion_det_base_line_cfg: motion detection baselining configuration
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_motion_det_base_line_config(
+		mac_handle_t mac_handle,
+		struct sme_motion_det_base_line_cfg *motion_det_base_line_cfg);
+
+/**
+ * sme_motion_det_base_line_enable - Post md baselining enable msg to scheduler
+ * @mac_handle: mac handle
+ * @motion_det_base_line_en: motion detection baselining start/stop
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+QDF_STATUS sme_motion_det_base_line_enable(
+		mac_handle_t mac_handle,
+		struct sme_motion_det_base_line_en *motion_det_base_line_en);
+
+/**
+ * sme_set_md_host_evt_cb - Register/set motion detection callback
+ * @mac_handle: mac handle
+ * @callback_fn: motion detection callback function pointer
+ * @hdd_ctx: hdd context
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+
+QDF_STATUS sme_set_md_host_evt_cb
+(
+	mac_handle_t mac_handle,
+	QDF_STATUS (*callback_fn)(void *ctx, struct sir_md_evt *event),
+	void *hdd_ctx
+);
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
+
 #endif /* #if !defined( __SME_API_H ) */

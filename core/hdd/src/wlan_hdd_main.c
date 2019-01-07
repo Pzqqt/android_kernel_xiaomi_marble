@@ -12055,6 +12055,53 @@ void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp, void *context)
 	hdd_exit();
 }
 
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+/**
+ * hdd_md_host_evt_cb - Callback for Motion Detection Event
+ * @ctx: HDD context
+ * @event: motion detect event
+ *
+ * Callback for Motion Detection Event. Re-enables Motion
+ * Detection again upon event
+ *
+ * Return: QDF_STATUS QDF_STATUS_SUCCESS on Success and
+ * QDF_STATUS_E_FAILURE on failure
+ */
+QDF_STATUS hdd_md_host_evt_cb(void *ctx, struct sir_md_evt *event)
+{
+	struct hdd_adapter *adapter = NULL;
+	struct hdd_context *hdd_ctx;
+	QDF_STATUS status;
+	struct sme_motion_det_en motion_det;
+
+	if (!ctx || !event)
+		return QDF_STATUS_E_INVAL;
+
+	hdd_ctx = (struct hdd_context *)ctx;
+	status = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != status)
+		return QDF_STATUS_E_INVAL;
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, event->vdev_id);
+	if (!adapter || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
+		hdd_err("Invalid adapter or adapter has invalid magic");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	hdd_debug("Motion Detection CB vdev_id=%u, status=%u",
+		  event->vdev_id, event->status);
+
+	if (adapter->motion_detection_mode) {
+		motion_det.vdev_id = event->vdev_id;
+		motion_det.enable = 1;
+		hdd_debug("Motion Detect CB -> Enable Motion Detection again");
+		sme_motion_det_enable(hdd_ctx->mac_handle, &motion_det);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
+
 /**
  * hdd_register_cb - Register HDD callbacks.
  * @hdd_ctx: HDD context
@@ -12134,6 +12181,10 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 					  hdd_tx_queue_cb);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("Register tx queue callback failed");
+
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+	sme_set_md_host_evt_cb(mac_handle, hdd_md_host_evt_cb, (void *)hdd_ctx);
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 
 	hdd_exit();
 

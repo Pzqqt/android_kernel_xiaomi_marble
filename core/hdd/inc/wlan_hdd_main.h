@@ -1386,6 +1386,10 @@ struct hdd_adapter {
 #ifdef WLAN_DEBUGFS
 	struct hdd_debugfs_file_info csr_file[HDD_DEBUGFS_FILE_ID_MAX];
 #endif /* WLAN_DEBUGFS */
+
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+	bool motion_detection_mode;
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)
@@ -3700,4 +3704,20 @@ void wlan_hdd_send_tcp_param_update_event(struct hdd_context *hdd_ctx,
 }
 
 #endif /* MSM_PLATFORM */
+
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+/**
+ * hdd_md_host_evt_cb - Callback for Motion Detection Event
+ * @ctx: HDD context
+ * @sir_md_evt: motion detect event
+ *
+ * Callback for Motion Detection Event. Re-enables Motion
+ * Detection again upon event
+ *
+ * Return: QDF_STATUS QDF_STATUS_SUCCESS on Success and
+ * QDF_STATUS_E_FAILURE on failure
+ */
+QDF_STATUS hdd_md_host_evt_cb(void *ctx, struct sir_md_evt *event);
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

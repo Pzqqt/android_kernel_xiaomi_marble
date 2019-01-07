@@ -228,6 +228,10 @@ typedef void (*rso_cmd_status_cb)(hdd_handle_t hdd_handle,
 typedef void (*lost_link_info_cb)(hdd_handle_t hdd_handle,
 				  struct sir_lost_link_info *lost_link_info);
 
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+typedef QDF_STATUS (*md_host_evt_cb)(void *hdd_ctx, sir_md_evt *event);
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
+
 typedef struct tagSmeStruct {
 	eSmeState state;
 	qdf_mutex_t lkSmeGlobalLock;
@@ -315,6 +319,10 @@ typedef struct tagSmeStruct {
 	apf_get_offload_cb apf_get_offload_cb;
 	apf_read_mem_cb apf_read_mem_cb;
 #endif
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+	md_host_evt_cb md_host_evt_cb;
+	void *md_ctx;
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

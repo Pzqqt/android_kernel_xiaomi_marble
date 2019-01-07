@@ -2595,4 +2595,31 @@ void wma_update_set_key(uint8_t session_id, bool pairwise,
  */
 uint8_t *wma_get_igtk(struct wma_txrx_node *iface, uint16_t *key_len);
 
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+/**
+ * wma_motion_det_host_event_handler - motion detection event handler
+ * @handle: WMA global handle
+ * @event: motion detection event
+ * @len: Length of cmd
+ *
+ * Call motion detection event callback handler
+ *
+ * Return: 0 on success, else error on failure
+ */
+
+int wma_motion_det_host_event_handler(void *handle, u_int8_t *event,
+				      u_int32_t len);
+
+/**
+ * wma_motion_det_base_line_host_event_handler - md baselining event handler
+ * @handle: WMA global handle
+ * @event: motion detection baselining event
+ * @len: Length of cmd
+ *
+ * Return: 0 on success, else error on failure
+ */
+int wma_motion_det_base_line_host_event_handler(void *handle, u_int8_t *event,
+						u_int32_t len);
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
+
 #endif

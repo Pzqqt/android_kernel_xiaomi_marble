@@ -4955,8 +4955,10 @@ struct sir_wake_lock_stats {
  * @gscan: gscan wakeup count
  * @pno_complete: pno complete wakeup count
  * @pno_match: pno match wakeup count
- * @oem_response: oem response wakeup coun
+ * @oem_response: oem response wakeup count
  * @scan_11d: 11d scan wakeup count
+ * @motion_detect: motion detection wakeup count
+ * @motion_detect_bl: motion detection baselining wakeup count
  */
 struct sir_vdev_wow_stats {
 	uint32_t ucast;
@@ -4976,6 +4978,10 @@ struct sir_vdev_wow_stats {
 	uint32_t oem_response;
 	uint32_t pwr_save_fail_detected;
 	uint32_t scan_11d;
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+	uint32_t motion_detect;
+	uint32_t motion_detect_bl;
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 };
 #endif
 
@@ -6128,4 +6134,15 @@ struct set_pcl_req {
 	enum band_info band;
 };
 
+/**
+ * struct sir_md_evt - motion detection event status
+ * @vdev_id: vdev id
+ * @status: md event status
+ */
+#ifdef WLAN_FEATURE_MOTION_DETECTION
+struct sir_md_evt {
+	uint8_t vdev_id;
+	uint32_t status;
+};
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 #endif /* __SIR_API_H */
