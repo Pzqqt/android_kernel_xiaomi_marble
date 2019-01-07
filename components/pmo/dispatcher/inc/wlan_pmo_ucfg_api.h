@@ -1343,13 +1343,6 @@ ucfg_pmo_psoc_update_dp_handle(
 }
 
 static inline void
-ucfg_pmo_vdev_update_dp_handle(
-		struct wlan_objmgr_vdev *vdev,
-		void *dp_handle)
-{
-}
-
-static inline void
 ucfg_pmo_psoc_update_htc_handle(
 		struct wlan_objmgr_psoc *psoc,
 		void *htc_handle)
