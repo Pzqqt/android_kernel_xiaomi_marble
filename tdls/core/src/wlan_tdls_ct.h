@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -58,6 +58,7 @@ void tdls_implicit_enable(struct tdls_vdev_priv_obj *tdls_vdev);
  * tdls_update_rx_pkt_cnt() - Update rx packet count
  * @vdev: vdev object manager
  * @mac_addr: mac address of the data
+ * @dest_mac_addr: dest mac address of the data
  *
  * Increase the rx packet count, if the sender is not bssid and the packet is
  * not broadcast and multicast packet
@@ -70,7 +71,8 @@ void tdls_implicit_enable(struct tdls_vdev_priv_obj *tdls_vdev);
  * Return: None
  */
 void tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
-				     struct qdf_mac_addr *mac_addr);
+				     struct qdf_mac_addr *mac_addr,
+				     struct qdf_mac_addr *dest_mac_addr);
 
 /**
  * tdls_update_tx_pkt_cnt() - update tx packet
