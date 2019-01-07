@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1062,12 +1062,6 @@ util_scan_gen_scan_entry(struct wlan_objmgr_pdev *pdev,
 	status = util_scan_populate_bcn_ie_list(scan_entry);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		scm_debug("failed to parse beacon IE");
-		qdf_mem_free(scan_entry->raw_frame.ptr);
-		qdf_mem_free(scan_entry);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!scan_entry->ie_list.rates) {
 		qdf_mem_free(scan_entry->raw_frame.ptr);
 		qdf_mem_free(scan_entry);
 		return QDF_STATUS_E_FAILURE;
