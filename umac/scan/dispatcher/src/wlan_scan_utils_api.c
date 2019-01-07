@@ -939,10 +939,9 @@ util_scan_add_hidden_ssid(struct wlan_objmgr_pdev *pdev, qdf_nbuf_t bcnbuf)
 			 * after ssid ie.
 			 */
 			tmp = qdf_mem_malloc(tmplen * sizeof(u_int8_t));
-			if (!tmp) {
-				scm_debug("tmp memory alloc failed");
+			if (!tmp)
 				return  QDF_STATUS_E_NOMEM;
-			}
+
 			/* Copy beacon data after ssid ie to tmp */
 			qdf_nbuf_copy_bits(bcnbuf, (sizeof(*hdr) +
 					   ssid_ie_end_offset), tmplen, tmp);
@@ -1301,10 +1300,8 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 	pos = ie;
 
 	new_ie = qdf_mem_malloc(MAX_IE_LEN);
-	if (!new_ie) {
-		scm_err("Failed to allocate memory for new ie");
+	if (!new_ie)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	while (pos < ie + ielen + 2) {
 		tmp = util_scan_find_ie(WLAN_ELEMID_MULTIPLE_BSSID, pos,
@@ -1356,7 +1353,6 @@ static QDF_STATUS util_scan_parse_mbssid(struct wlan_objmgr_pdev *pdev,
 			new_frame = qdf_mem_malloc(new_frame_len);
 			if (!new_frame) {
 				qdf_mem_free(new_ie);
-				scm_err("failed to allocate memory");
 				return QDF_STATUS_E_NOMEM;
 			}
 

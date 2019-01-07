@@ -319,7 +319,6 @@ static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 			num_valid_channels;
 	buf = qdf_mem_malloc(len);
 	if (!buf) {
-		wifi_pos_alert("malloc failed");
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_WIFI_POS_CORE_ID);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -416,7 +415,6 @@ static QDF_STATUS wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
 			+ sizeof(uint8_t);
 	app_reg_rsp = qdf_mem_malloc(rsp_len);
 	if (!app_reg_rsp) {
-		wifi_pos_alert("malloc failed");
 		ret = QDF_STATUS_E_NOMEM;
 		err = OEM_ERR_NULL_CONTEXT;
 		goto app_reg_failed;
@@ -505,7 +503,6 @@ QDF_STATUS wifi_pos_psoc_obj_created_notification(
 	/* initialize wifi-pos psoc priv object */
 	wifi_pos_obj = qdf_mem_malloc(sizeof(*wifi_pos_obj));
 	if (!wifi_pos_obj) {
-		wifi_pos_alert("Mem alloc failed for wifi pos psoc priv obj");
 		wifi_pos_clear_psoc();
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -613,10 +610,9 @@ int wifi_pos_oem_rsp_handler(struct wlan_objmgr_psoc *psoc,
 	if (oem_rsp->rsp_len_2 + oem_rsp->dma_len) {
 		/* stitch togther the msg data_1 + CIR/CFR + data_2 */
 		data = qdf_mem_malloc(len);
-		if (!data) {
-			wifi_pos_err("malloc failed");
+		if (!data)
 			return -ENOMEM;
-		}
+
 		qdf_mem_copy(data, oem_rsp->data_1, oem_rsp->rsp_len_1);
 		qdf_mem_copy(&data[oem_rsp->rsp_len_1],
 			     oem_rsp->vaddr, oem_rsp->dma_len);

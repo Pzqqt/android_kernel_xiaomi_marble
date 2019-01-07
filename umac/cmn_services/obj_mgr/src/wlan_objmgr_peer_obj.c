@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -177,13 +177,9 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 	}
 	/* Allocate memory for peer object */
 	peer = qdf_mem_malloc(sizeof(*peer));
-	if (peer == NULL) {
-		obj_mgr_err(
-		"Peer(%02x:%02x:%02x:%02x:%02x:%02x) allocation failure",
-				macaddr[0], macaddr[1], macaddr[2],
-				macaddr[3], macaddr[4], macaddr[5]);
+	if (!peer)
 		return NULL;
-	}
+
 	peer->obj_state = WLAN_OBJ_STATE_ALLOCATED;
 	qdf_atomic_init(&peer->peer_objmgr.ref_cnt);
 	wlan_objmgr_peer_init_ref_id_debug(peer);

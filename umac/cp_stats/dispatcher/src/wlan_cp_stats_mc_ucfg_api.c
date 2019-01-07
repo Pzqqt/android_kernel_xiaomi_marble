@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -34,10 +34,8 @@
 QDF_STATUS wlan_cp_stats_psoc_cs_init(struct psoc_cp_stats *psoc_cs)
 {
 	psoc_cs->obj_stats = qdf_mem_malloc(sizeof(struct psoc_mc_cp_stats));
-	if (!psoc_cs->obj_stats) {
-		cp_stats_err("malloc failed");
+	if (!psoc_cs->obj_stats)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -52,10 +50,9 @@ QDF_STATUS wlan_cp_stats_psoc_cs_deinit(struct psoc_cp_stats *psoc_cs)
 QDF_STATUS wlan_cp_stats_vdev_cs_init(struct vdev_cp_stats *vdev_cs)
 {
 	vdev_cs->vdev_stats = qdf_mem_malloc(sizeof(struct vdev_mc_cp_stats));
-	if (!vdev_cs->vdev_stats) {
-		cp_stats_err("malloc failed");
+	if (!vdev_cs->vdev_stats)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -69,10 +66,9 @@ QDF_STATUS wlan_cp_stats_vdev_cs_deinit(struct vdev_cp_stats *vdev_cs)
 QDF_STATUS wlan_cp_stats_pdev_cs_init(struct pdev_cp_stats *pdev_cs)
 {
 	pdev_cs->pdev_stats = qdf_mem_malloc(sizeof(struct pdev_mc_cp_stats));
-	if (!pdev_cs->pdev_stats) {
-		cp_stats_err("malloc failed");
+	if (!pdev_cs->pdev_stats)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -86,10 +82,9 @@ QDF_STATUS wlan_cp_stats_pdev_cs_deinit(struct pdev_cp_stats *pdev_cs)
 QDF_STATUS wlan_cp_stats_peer_cs_init(struct peer_cp_stats *peer_cs)
 {
 	peer_cs->peer_stats = qdf_mem_malloc(sizeof(struct peer_mc_cp_stats));
-	if (!peer_cs->peer_stats) {
-		cp_stats_err("malloc failed");
+	if (!peer_cs->peer_stats)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	return QDF_STATUS_SUCCESS;
 }
 

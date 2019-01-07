@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,7 +46,6 @@ wlan_cp_stats_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 
 	csc = qdf_mem_malloc(sizeof(*csc));
 	if (!csc) {
-		cp_stats_err("Failed to allocate cp_stats_context object");
 		status = QDF_STATUS_E_NOMEM;
 		goto wlan_cp_stats_psoc_obj_create_handler_return;
 	}
@@ -72,7 +71,6 @@ wlan_cp_stats_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 
 	psoc_cs = qdf_mem_malloc(sizeof(*psoc_cs));
 	if (!psoc_cs) {
-		cp_stats_err("Failed to allocate psoc_cp_stats object");
 		status = QDF_STATUS_E_NOMEM;
 		goto wlan_cp_stats_psoc_obj_create_handler_return;
 	}
@@ -160,7 +158,6 @@ wlan_cp_stats_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 
 	pdev_cs = qdf_mem_malloc(sizeof(*pdev_cs));
 	if (!pdev_cs) {
-		cp_stats_err("Failed to allocate pdev_cp_stats object");
 		status = QDF_STATUS_E_NOMEM;
 		goto wlan_cp_stats_pdev_obj_create_handler_return;
 	}
@@ -248,7 +245,6 @@ wlan_cp_stats_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev, void *arg)
 
 	vdev_cs = qdf_mem_malloc(sizeof(*vdev_cs));
 	if (!vdev_cs) {
-		cp_stats_err("Failed to allocate vdev_cp_stats object");
 		status = QDF_STATUS_E_NOMEM;
 		goto wlan_cp_stats_vdev_obj_create_handler_return;
 	}
@@ -336,7 +332,6 @@ wlan_cp_stats_peer_obj_create_handler(struct wlan_objmgr_peer *peer, void *arg)
 
 	peer_cs = qdf_mem_malloc(sizeof(*peer_cs));
 	if (!peer_cs) {
-		cp_stats_err("Failed to allocate peer_cp_stats object");
 		status = QDF_STATUS_E_NOMEM;
 		goto wlan_cp_stats_peer_obj_create_handler_return;
 	}

@@ -1291,11 +1291,8 @@ void dfs_radarfound_action_generic(struct wlan_dfs *dfs, uint8_t seg_id)
 	struct radar_found_info *radar_found;
 
 	radar_found = qdf_mem_malloc(sizeof(*radar_found));
-	if (!radar_found) {
-		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			  "radar_found allocation failed");
+	if (!radar_found)
 		return;
-	}
 
 	qdf_mem_zero(radar_found, sizeof(*radar_found));
 	radar_found->segment_id = seg_id;

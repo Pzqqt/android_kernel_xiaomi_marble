@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1403,11 +1403,8 @@ uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	}
 
 	random_chan_list = qdf_mem_malloc(ch_cnt * sizeof(*random_chan_list));
-	if (!random_chan_list) {
-		dfs_alert(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
-				"Memory allocation failed");
+	if (!random_chan_list)
 		return 0;
-	}
 
 	if (flags & DFS_RANDOM_CH_FLAG_NO_CURR_OPE_CH)
 		dfs_remove_cur_ch_from_list(ch_list, &ch_cnt, ch_wd, cur_chan);
@@ -1421,8 +1418,6 @@ uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	/* list adjusted after leakage has been marked */
 	leakage_adjusted_lst = qdf_mem_malloc(random_chan_cnt);
 	if (!leakage_adjusted_lst) {
-		dfs_alert(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
-				"Memory allocation failed");
 		qdf_mem_free(random_chan_list);
 		return 0;
 	}

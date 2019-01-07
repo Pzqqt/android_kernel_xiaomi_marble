@@ -487,16 +487,14 @@ void dfs_nol_update(struct wlan_dfs *dfs)
 	dfs_nol = (struct dfsreq_nolelem *)qdf_mem_malloc(
 		sizeof(struct dfsreq_nolelem) * dfs->dfs_nol_count);
 
-	if (!dfs_nol) {
-		/*
-		 * XXX TODO: if this fails, just schedule a task to retry
-		 * updating the NOL at a later stage.  That way the NOL
-		 * update _DOES_ happen - hopefully the failure was just
-		 * temporary.
-		 */
-		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "failed to allocate NOL update memory!");
+	/*
+	 * XXX TODO: if this fails, just schedule a task to retry
+	 * updating the NOL at a later stage.  That way the NOL
+	 * update _DOES_ happen - hopefully the failure was just
+	 * temporary.
+	 */
+	if (!dfs_nol)
 		return;
-	}
 
 	DFS_GET_NOL_LOCKED(dfs, dfs_nol, &nlen);
 

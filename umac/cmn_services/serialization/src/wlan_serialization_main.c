@@ -22,7 +22,6 @@
  * serialization to initialize and de-initialize the
  * component.
  */
-
 #include <qdf_status.h>
 #include <qdf_list.h>
 #include <wlan_objmgr_cmn.h>
@@ -78,7 +77,6 @@ QDF_STATUS wlan_serialization_psoc_enable(struct wlan_objmgr_psoc *psoc)
 		qdf_mem_malloc(sizeof(struct wlan_serialization_timer) *
 				ser_soc_obj->max_active_cmds);
 	if (!ser_soc_obj->timers) {
-		ser_alert("Mem alloc failed for ser timers");
 		status = QDF_STATUS_E_NOMEM;
 		goto error;
 	}
@@ -110,10 +108,9 @@ static QDF_STATUS wlan_serialization_psoc_create_handler(
 
 	soc_ser_obj =
 		qdf_mem_malloc(sizeof(*soc_ser_obj));
-	if (!soc_ser_obj) {
-		ser_alert("Mem alloc failed for ser psoc priv obj");
+	if (!soc_ser_obj)
 		goto error;
-	}
+
 	status = wlan_objmgr_psoc_component_obj_attach(
 					psoc,
 					WLAN_UMAC_COMP_SERIALIZATION,
@@ -185,7 +182,6 @@ wlan_serialization_create_cmd_pool(
 	for (i = 0; i < cmd_pool_size; i++) {
 		cmd_list_ptr = qdf_mem_malloc(sizeof(*cmd_list_ptr));
 		if (!cmd_list_ptr) {
-			ser_alert("Mem alloc failed for cmd node");
 			wlan_serialization_destroy_cmd_pool(pdev_queue);
 			goto error;
 		}
@@ -231,10 +227,8 @@ static QDF_STATUS wlan_serialization_pdev_create_handler(
 
 	ser_pdev_obj =
 		qdf_mem_malloc(sizeof(*ser_pdev_obj));
-	if (!ser_pdev_obj) {
-		ser_alert("Mem alloc failed for ser pdev obj");
+	if (!ser_pdev_obj)
 		goto error;
-	}
 
 	for (index = 0; index < SER_PDEV_QUEUE_COMP_MAX; index++) {
 		pdev_queue = &ser_pdev_obj->pdev_q[index];
@@ -396,10 +390,8 @@ wlan_serialization_vdev_create_handler(struct wlan_objmgr_vdev *vdev,
 	uint8_t max_pending_cmds;
 
 	ser_vdev_obj = qdf_mem_malloc(sizeof(*ser_vdev_obj));
-	if (!ser_vdev_obj) {
-		ser_alert("Mem alloc failed for ser vdev obj");
+	if (!ser_vdev_obj)
 		goto error;
-	}
 
 	for (index = 0; index < SER_VDEV_QUEUE_COMP_MAX; index++) {
 		vdev_q = &ser_vdev_obj->vdev_q[index];

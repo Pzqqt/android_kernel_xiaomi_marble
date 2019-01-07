@@ -609,7 +609,6 @@ void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS *
 			sizeof(struct regulatory_channel));
 	if (!cur_chan_list) {
-		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "fail to alloc");
 		*num_chan = 0;
 		return;
 	}
@@ -677,10 +676,8 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 	}
 
 	tmp_chan_list = qdf_mem_malloc(*num_chan * sizeof(*tmp_chan_list));
-	if (!tmp_chan_list) {
-		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "mem alloc failed");
+	if (!tmp_chan_list)
 		return;
-	}
 
 	utils_dfs_get_chan_list(pdev, (void *)tmp_chan_list, num_chan);
 
@@ -815,10 +812,8 @@ QDF_STATUS utils_dfs_get_random_channel(
 
 	wlan_reg_get_dfs_region(pdev, &dfs_reg);
 	chan_list = qdf_mem_malloc(num_chan * sizeof(*chan_list));
-	if (!chan_list) {
-		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "mem alloc failed");
+	if (!chan_list)
 		goto random_chan_error;
-	}
 
 	utils_dfs_get_channel_list(pdev, chan_list, &num_chan);
 	if (!num_chan) {
@@ -933,10 +928,8 @@ void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 	}
 
 	dfs_nolinfo = qdf_mem_malloc(sizeof(*dfs_nolinfo));
-	if (!dfs_nolinfo) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs_nolinfo alloc fail");
+	if (!dfs_nolinfo)
 		return;
-	}
 
 	qdf_mem_zero(dfs_nolinfo, sizeof(*dfs_nolinfo));
 	len = pld_wlan_get_dfs_nol(qdf_dev->dev, (void *)dfs_nolinfo,
@@ -985,10 +978,8 @@ void utils_dfs_save_nol(struct wlan_objmgr_pdev *pdev)
 	}
 
 	dfs_nolinfo = qdf_mem_malloc(sizeof(*dfs_nolinfo));
-	if (!dfs_nolinfo) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs_nolinfo alloc fail");
+	if (!dfs_nolinfo)
 		return;
-	}
 
 	qdf_mem_zero(dfs_nolinfo, sizeof(*dfs_nolinfo));
 	DFS_GET_NOL_LOCKED(dfs, dfs_nolinfo->dfs_nol, &num_chans);

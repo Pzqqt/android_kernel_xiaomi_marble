@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013, 2016-2019 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -355,11 +355,8 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 		 * Malloc can return NULL if numb5radars is zero. But we still
 		 * want to reset the delay lines.
 		 */
-		if (!(dfs->dfs_b5radars)) {
-			dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
-					"cannot allocate memory for bin5 radars");
+		if (!(dfs->dfs_b5radars))
 			goto bad4;
-		}
 	}
 
 	for (n = 0; n < numb5radars; n++) {

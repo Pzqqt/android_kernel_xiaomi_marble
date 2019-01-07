@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2006, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -229,11 +229,8 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	WLAN_DFS_DATA_STRUCT_LOCK_CREATE(dfs);
 
 	dfs->events = dfs_alloc_dfs_events();
-	if (!(dfs->events)) {
-		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			  "events allocation failed");
+	if (!(dfs->events))
 		return 1;
-	}
 
 	for (i = 0; i < DFS_MAX_EVENTS; i++)
 		STAILQ_INSERT_TAIL(&(dfs->dfs_eventq), &dfs->events[i],
@@ -243,8 +240,6 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	if (!(dfs->pulses)) {
 		dfs_free_dfs_events(dfs->events);
 		dfs->events = NULL;
-		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			  "Pulse buffer allocation failed");
 		return 1;
 	}
 
@@ -254,11 +249,9 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	for (n = 0; n < DFS_MAX_RADAR_TYPES; n++) {
 		dfs->dfs_radarf[n] = (struct dfs_filtertype *)
 			qdf_mem_malloc(sizeof(struct dfs_filtertype));
-		if (!(dfs->dfs_radarf[n])) {
-			dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
-					"cannot allocate memory for radar filter types");
+		if (!(dfs->dfs_radarf[n]))
 			goto bad1;
-		}
+
 		qdf_mem_zero(dfs->dfs_radarf[n],
 			     sizeof(struct dfs_filtertype));
 		status = dfs_alloc_mem_filter(dfs->dfs_radarf[n]);
@@ -272,18 +265,14 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	/* Allocate memory for radar table. */
 	dfs->dfs_ftindextable = (int8_t **)qdf_mem_malloc(
 			DFS_NUM_FT_IDX_TBL_ROWS*sizeof(int8_t *));
-	if (!(dfs->dfs_ftindextable)) {
-		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "Cannot allocate memory for radar table");
+	if (!(dfs->dfs_ftindextable))
 		goto bad1;
-	}
+
 	for (n = 0; n < DFS_NUM_FT_IDX_TBL_ROWS; n++) {
 		dfs->dfs_ftindextable[n] = qdf_mem_malloc(
 				DFS_MAX_RADAR_OVERLAP*sizeof(int8_t));
-		if (!(dfs->dfs_ftindextable[n])) {
-			dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
-					"cannot allocate memory for radar table entry");
+		if (!(dfs->dfs_ftindextable[n]))
 			goto bad2;
-		}
 	}
 
 	dfs->dfs_use_nol = 1;

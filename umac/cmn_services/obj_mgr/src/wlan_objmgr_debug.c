@@ -1,6 +1,6 @@
 /*
  *
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -154,10 +154,9 @@ void wlan_objmgr_notify_log_delete(void *obj,
 
 	tstamp = qdf_system_ticks_to_msecs(qdf_system_ticks()) / 1000;
 	node = qdf_mem_malloc(sizeof(*node));
-	if (!node) {
-		obj_mgr_err("Object node creation failed");
+	if (!node)
 		return;
-	}
+
 	node->obj = obj;
 	node->obj_type = obj_type;
 	node->tstamp = tstamp;
@@ -363,7 +362,6 @@ void wlan_objmgr_debug_info_init(void)
 
 	debug_info = qdf_mem_malloc(sizeof(*debug_info));
 	if (!debug_info) {
-		obj_mgr_err("debug_info allocation failed");
 		g_umac_glb_obj->debug_info = NULL;
 		return;
 	}

@@ -619,10 +619,8 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 				return QDF_STATUS_E_INVAL;
 			}
 			key = qdf_mem_malloc(sizeof(struct wlan_crypto_key));
-			if (key == NULL) {
-				crypto_err("igtk key alloc failed");
+			if (!key)
 				return QDF_STATUS_E_NOMEM;
-			}
 
 			if (crypto_priv->igtk_key[igtk_idx])
 				qdf_mem_free(crypto_priv->igtk_key[igtk_idx]);
@@ -702,10 +700,9 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 				return QDF_STATUS_E_INVAL;
 			}
 			key = qdf_mem_malloc(sizeof(struct wlan_crypto_key));
-			if (key == NULL) {
-				crypto_err("igtk key alloc failed");
+			if (!key)
 				return QDF_STATUS_E_NOMEM;
-			}
+
 			if (crypto_priv->igtk_key[igtk_idx])
 				qdf_mem_free(crypto_priv->igtk_key[igtk_idx]);
 
@@ -1783,10 +1780,9 @@ uint8_t *wlan_crypto_add_mmie(struct wlan_objmgr_vdev *vdev,
 	hdr = (struct wlan_frame_hdr *) bfrm;
 
 	buf = qdf_mem_malloc(len - hdrlen + 20);
-	if (!buf) {
-		crypto_err("malloc failed");
+	if (!buf)
 		return NULL;
-	}
+
 	qdf_mem_zero(buf, len - hdrlen + 20);
 	aad = buf;
 	/* generate BIP AAD: FC(masked) || A1 || A2 || A3 */
@@ -1921,10 +1917,9 @@ bool wlan_crypto_is_mmie_valid(struct wlan_objmgr_vdev *vdev,
 	}
 
 	buf = qdf_mem_malloc(len - hdrlen + 20);
-	if (!buf) {
-		crypto_err("malloc failed");
+	if (!buf)
 		return false;
-	}
+
 	aad = buf;
 
 	/* construct AAD */
@@ -3142,10 +3137,9 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 			if (cipher_table->cipher == WLAN_CRYPTO_CIPHER_WEP) {
 				sta_key = qdf_mem_malloc(
 						sizeof(struct wlan_crypto_key));
-				if (!sta_key) {
-					crypto_err("key alloc failed");
+				if (!sta_key)
 					return QDF_STATUS_E_NOMEM;
-				}
+
 				sta_crypto_priv->key[i] = sta_key;
 				qdf_mem_copy(sta_key, key,
 						sizeof(struct wlan_crypto_key));

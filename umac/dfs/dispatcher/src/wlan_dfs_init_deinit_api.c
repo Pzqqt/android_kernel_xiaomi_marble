@@ -141,11 +141,8 @@ static QDF_STATUS dfs_psoc_obj_create_notification(struct wlan_objmgr_psoc *psoc
 	struct dfs_soc_priv_obj *dfs_soc_obj;
 
 	dfs_soc_obj = qdf_mem_malloc(sizeof(*dfs_soc_obj));
-	if (!dfs_soc_obj) {
-		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
-			"Failed to allocate memory for dfs object");
+	if (!dfs_soc_obj)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	dfs_soc_obj->psoc = psoc;
 

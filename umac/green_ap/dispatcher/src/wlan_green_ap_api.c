@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -75,10 +75,8 @@ static QDF_STATUS wlan_green_ap_pdev_obj_create_notification(
 	}
 
 	green_ap_ctx = qdf_mem_malloc(sizeof(*green_ap_ctx));
-	if (!green_ap_ctx) {
-		green_ap_err("Memory allocation for Green AP context failed!");
+	if (!green_ap_ctx)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	green_ap_ctx->ps_state = WLAN_GREEN_AP_PS_IDLE_STATE;
 	green_ap_ctx->ps_event = WLAN_GREEN_AP_PS_WAIT_EVENT;

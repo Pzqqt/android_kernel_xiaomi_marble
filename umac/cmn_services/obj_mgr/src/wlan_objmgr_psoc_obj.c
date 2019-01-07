@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -119,10 +119,9 @@ struct wlan_objmgr_psoc *wlan_objmgr_psoc_obj_create(uint32_t phy_version,
 	void *arg;
 
 	psoc = qdf_mem_malloc(sizeof(*psoc));
-	if (psoc == NULL) {
-		obj_mgr_err("PSOC allocation failed");
+	if (!psoc)
 		return NULL;
-	}
+
 	psoc->obj_state = WLAN_OBJ_STATE_ALLOCATED;
 	qdf_spinlock_create(&psoc->psoc_lock);
 	/* Initialize with default values */
@@ -1297,10 +1296,8 @@ static qdf_list_t
 	bool lock_released = false;
 
 	logical_del_peer_list = qdf_mem_malloc(sizeof(*logical_del_peer_list));
-	if (!logical_del_peer_list) {
-		obj_mgr_err("failed to allocate list");
+	if (!logical_del_peer_list)
 		return NULL;
-	}
 
 	qdf_list_create(logical_del_peer_list, WLAN_UMAC_PSOC_MAX_PEERS);
 
@@ -1337,7 +1334,6 @@ static qdf_list_t
 					if (peer_list == NULL) {
 						wlan_objmgr_peer_release_ref(peer, dbg_id);
 						/* Lock is already released */
-						obj_mgr_alert("Mem alloc failed");
 						WLAN_OBJMGR_BUG(0);
 						break;
 					}

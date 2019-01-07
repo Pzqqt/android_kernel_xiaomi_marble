@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,10 +38,9 @@ QDF_STATUS wlan_mgmt_txrx_desc_pool_init(
 			MGMT_DESC_POOL_MAX *
 			sizeof(struct mgmt_txrx_desc_elem_t));
 
-	if (!mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool) {
-		mgmt_txrx_err("Failed to allocate desc pool");
+	if (!mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	qdf_list_create(&mgmt_txrx_pdev_ctx->mgmt_desc_pool.free_list,
 					MGMT_DESC_POOL_MAX);
 

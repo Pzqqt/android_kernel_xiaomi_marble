@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -107,10 +107,9 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 	}
 	/* Allocate PDEV object's memory */
 	pdev = qdf_mem_malloc(sizeof(*pdev));
-	if (pdev == NULL) {
-		obj_mgr_err("pdev alloc failed");
+	if (!pdev)
 		return NULL;
-	}
+
 	pdev->obj_state = WLAN_OBJ_STATE_ALLOCATED;
 	/* Initialize PDEV spinlock */
 	qdf_spinlock_create(&pdev->pdev_lock);

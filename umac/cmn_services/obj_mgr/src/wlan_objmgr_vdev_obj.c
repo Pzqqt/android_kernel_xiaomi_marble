@@ -138,10 +138,9 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 	}
 	/* Allocate vdev object memory */
 	vdev = qdf_mem_malloc(sizeof(*vdev));
-	if (vdev == NULL) {
-		obj_mgr_err("Memory allocation failure");
+	if (!vdev)
 		return NULL;
-	}
+
 	vdev->obj_state = WLAN_OBJ_STATE_ALLOCATED;
 
 	vdev->vdev_mlme.bss_chan = qdf_mem_malloc(sizeof(struct wlan_channel));

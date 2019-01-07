@@ -169,10 +169,8 @@ tgt_mc_cp_stats_prepare_raw_peer_rssi(struct wlan_objmgr_psoc *psoc,
 		peer_count = wlan_pdev_get_peer_count(pdev);
 		ev.peer_stats = qdf_mem_malloc(sizeof(*ev.peer_stats) *
 								peer_count);
-		if (!ev.peer_stats) {
-			cp_stats_err("malloc failed");
+		if (!ev.peer_stats)
 			goto end;
-		}
 
 		wlan_objmgr_pdev_iterate_obj_list(pdev, WLAN_PEER_OP,
 						  peer_rssi_iterator, &ev,
@@ -192,10 +190,8 @@ tgt_mc_cp_stats_prepare_raw_peer_rssi(struct wlan_objmgr_psoc *psoc,
 		}
 
 		ev.peer_stats = qdf_mem_malloc(sizeof(*ev.peer_stats));
-		if (!ev.peer_stats) {
-			cp_stats_err("malloc failed");
+		if (!ev.peer_stats)
 			goto end;
-		}
 
 		ev.num_peer_stats = 1;
 		wlan_cp_stats_peer_obj_lock(peer_cp_stats_priv);

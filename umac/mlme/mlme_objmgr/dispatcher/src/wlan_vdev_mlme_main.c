@@ -56,10 +56,8 @@ static QDF_STATUS mlme_vdev_obj_create_handler(struct wlan_objmgr_vdev *vdev,
 	}
 
 	vdev_mlme = qdf_mem_malloc(sizeof(*vdev_mlme));
-	if (!vdev_mlme) {
-		mlme_err(" MLME component object alloc failed");
+	if (!vdev_mlme)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	vdev_mlme->vdev = vdev;
 

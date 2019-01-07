@@ -257,10 +257,8 @@ struct wlan_sm *wlan_sm_create(const char *name, void *ctx,
 	}
 
 	sm = qdf_mem_malloc(sizeof(*sm));
-	if (!sm) {
-		sm_engine_alert("%s: sm allocation failed", name);
+	if (!sm)
 		return NULL;
-	}
 
 	wlan_sm_history_init(sm);
 

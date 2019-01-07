@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -44,10 +44,9 @@ QDF_STATUS wlan_objmgr_global_obj_init(void)
 	/* Allocation of memory for Global object */
 	umac_global_obj = (struct wlan_objmgr_global *)qdf_mem_malloc(
 				sizeof(*umac_global_obj));
-	if (umac_global_obj == NULL) {
-		obj_mgr_err("Global object alloc failed due to malloc");
+	if (!umac_global_obj)
 		return QDF_STATUS_E_NOMEM;
-	}
+
 	/* Store Global object pointer in Global variable */
 	g_umac_glb_obj = umac_global_obj;
 	/* Initialize spinlock */
