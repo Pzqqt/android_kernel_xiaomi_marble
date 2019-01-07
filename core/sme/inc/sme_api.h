@@ -876,11 +876,6 @@ QDF_STATUS sme_set_ht2040_mode(mac_handle_t mac_handle, uint8_t sessionId,
 #endif
 QDF_STATUS sme_get_reg_info(mac_handle_t mac_handle, uint8_t chanId,
 			    uint32_t *regInfo1, uint32_t *regInfo2);
-#ifdef FEATURE_WLAN_TDLS
-QDF_STATUS sme_update_fw_tdls_state(mac_handle_t mac_handle,
-				    void *psmeTdlsParams,
-				    bool useSmeLock);
-#endif /* FEATURE_WLAN_TDLS */
 
 #ifdef FEATURE_WLAN_CH_AVOID
 QDF_STATUS sme_ch_avoid_update_req(mac_handle_t mac_handle);
