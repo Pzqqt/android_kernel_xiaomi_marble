@@ -587,8 +587,6 @@ QDF_STATUS sme_get_modify_profile_fields(mac_handle_t mac_handle,
 					 tCsrRoamModifyProfileFields *
 					 pModifyProfileFields);
 
-QDF_STATUS sme_set_host_power_save(mac_handle_t mac_handle, bool psMode);
-
 #ifdef FEATURE_OEM_DATA_SUPPORT
 QDF_STATUS sme_register_oem_data_rsp_callback(mac_handle_t mac_handle,
 		sme_send_oem_data_rsp_msg callback);
