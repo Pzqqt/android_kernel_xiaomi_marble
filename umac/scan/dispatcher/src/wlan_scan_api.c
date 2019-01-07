@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -113,6 +113,32 @@ void wlan_scan_cfg_set_conc_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
 		return;
 
 	scan_obj->scan_def.conc_passive_dwell = dwell_time;
+}
+
+void
+wlan_scan_cfg_get_dfs_chan_scan_allowed(struct wlan_objmgr_psoc *psoc,
+					bool *enable_dfs_scan)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return;
+
+	*enable_dfs_scan = scan_obj->scan_def.allow_dfs_chan_in_scan;
+}
+
+void
+wlan_scan_cfg_set_dfs_chan_scan_allowed(struct wlan_objmgr_psoc *psoc,
+					bool enable_dfs_scan)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj)
+		return;
+
+	scan_obj->scan_def.allow_dfs_chan_in_scan = enable_dfs_scan;
 }
 
 void wlan_scan_cfg_get_conc_max_resttime(struct wlan_objmgr_psoc *psoc,

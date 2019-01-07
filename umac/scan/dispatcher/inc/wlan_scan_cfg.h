@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -65,6 +65,46 @@
 		"gActiveMaxChannelTime",\
 		0, 10000, MCL_OR_WIN_VALUE(40, 105),\
 		CFG_VALUE_OR_DEFAULT, "active dwell time")
+
+/*
+ * <ini>
+ * gEnableDFSChnlScan - Enable/Disable scan on DFS channels
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable scan on DFS channels.
+ *
+ * Related: Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_DFS_SCAN CFG_INI_BOOL( \
+				"gEnableDFSChnlScan", \
+				true, \
+				"enable dfs scan")
+
+/*
+ * <ini>
+ * gInitialScanNoDFSChnl - Exclude DFS channels in first scan
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable scan on DFS channels, in first scan only
+ *
+ * Related: Scan
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_INITIAL_NO_DFS_SCAN CFG_INI_BOOL( \
+				"gInitialScanNoDFSChnl", \
+				false, \
+				"disable initial dfs scan")
 
 /*
  * <ini>
@@ -425,6 +465,8 @@
 #define CFG_SCAN_ALL \
 	CFG(CFG_DROP_BCN_ON_CHANNEL_MISMATCH) \
 	CFG(CFG_ACTIVE_MAX_CHANNEL_TIME) \
+	CFG(CFG_ENABLE_DFS_SCAN) \
+	CFG(CFG_INITIAL_NO_DFS_SCAN) \
 	CFG(CFG_ACTIVE_MAX_2G_CHANNEL_TIME) \
 	CFG(CFG_PASSIVE_MAX_CHANNEL_TIME) \
 	CFG(CFG_SCAN_NUM_PROBES) \

@@ -733,6 +733,66 @@ ucfg_scan_set_custom_scan_chan_list(struct wlan_objmgr_pdev *pdev,
 }
 
 /**
+ * ucfg_update_channel_list() - update scan req params depending on dfs inis
+ * and initial scan request.
+ * @req: scan request
+ * @scan_obj: scan object
+ *
+ * Return: void
+ */
+static void
+ucfg_update_channel_list(struct scan_start_request *req,
+			 struct wlan_scan_obj *scan_obj)
+{
+	uint8_t i;
+	uint8_t num_scan_channels = 0;
+	struct scan_vdev_obj *scan_vdev_obj;
+	struct wlan_objmgr_pdev *pdev;
+	bool first_scan_done = true;
+
+	pdev = wlan_vdev_get_pdev(req->vdev);
+
+	scan_vdev_obj = wlan_get_vdev_scan_obj(req->vdev);
+	if (!scan_vdev_obj) {
+		scm_err("null scan_vdev_obj");
+		return;
+	}
+
+	if (!scan_vdev_obj->first_scan_done) {
+		first_scan_done = false;
+		scan_vdev_obj->first_scan_done = true;
+	}
+
+	/*
+	 * No need to update channels if req is passive scan and single channel
+	 * ie ROC, Preauth etc
+	 */
+	if (req->scan_req.scan_f_passive &&
+	    req->scan_req.chan_list.num_chan == 1)
+		return;
+
+	/* do this only for STA and P2P-CLI mode */
+	if (!(wlan_vdev_mlme_get_opmode(req->vdev) == QDF_STA_MODE) &&
+	    !(wlan_vdev_mlme_get_opmode(req->vdev) == QDF_P2P_CLIENT_MODE))
+		return;
+
+	if (scan_obj->scan_def.allow_dfs_chan_in_scan &&
+	    (scan_obj->scan_def.allow_dfs_chan_in_first_scan ||
+	     first_scan_done))
+		return;
+
+	for (i = 0; i < req->scan_req.chan_list.num_chan; i++) {
+		if (wlan_reg_is_dfs_ch(pdev, wlan_reg_freq_to_chan(pdev,
+							req->scan_req.chan_list.
+							chan[i].freq)))
+			continue;
+		req->scan_req.chan_list.chan[num_scan_channels++] =
+				req->scan_req.chan_list.chan[i];
+	}
+	req->scan_req.chan_list.num_chan = num_scan_channels;
+}
+
+/**
  * ucfg_scan_req_update_params() - update scan req params depending on modes
  * and scan type.
  * @vdev: vdev object pointer
@@ -850,6 +910,7 @@ ucfg_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 	else if (!req->scan_req.chan_list.num_chan)
 		ucfg_scan_init_chanlist_params(req, 0, NULL, NULL);
 
+	ucfg_update_channel_list(req, scan_obj);
 	scm_debug("dwell time: active %d, passive %d, repeat_probe_time %d "
 			"n_probes %d flags_ext %x, wide_bw_scan: %d",
 			req->scan_req.dwell_time_active,
@@ -1414,6 +1475,11 @@ wlan_scan_global_init(struct wlan_objmgr_psoc *psoc,
 	scan_obj->disable_timeout = false;
 	scan_obj->scan_def.active_dwell =
 			 cfg_get(psoc, CFG_ACTIVE_MAX_CHANNEL_TIME);
+	/* the ini is disallow DFS channel scan if ini is 1, so negate that */
+	scan_obj->scan_def.allow_dfs_chan_in_first_scan =
+				!cfg_get(psoc, CFG_INITIAL_NO_DFS_SCAN);
+	scan_obj->scan_def.allow_dfs_chan_in_scan =
+				cfg_get(psoc, CFG_ENABLE_DFS_SCAN);
 	scan_obj->scan_def.active_dwell_2g =
 			 cfg_get(psoc, CFG_ACTIVE_MAX_2G_CHANNEL_TIME);
 	scan_obj->scan_def.passive_dwell =

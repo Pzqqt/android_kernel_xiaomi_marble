@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -748,6 +748,34 @@ void ucfg_scan_cfg_set_conc_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
 					      uint32_t dwell_time)
 {
 	return wlan_scan_cfg_set_conc_passive_dwelltime(psoc, dwell_time);
+}
+
+/**
+ * ucfg_scan_cfg_get_dfs_chan_scan_allowed() - API to get dfs scan enabled
+ * @psoc: pointer to psoc object
+ * @enable_dfs_scan: DFS scan enabled or not.
+ *
+ * Return: None
+ */
+static inline
+void ucfg_scan_cfg_get_dfs_chan_scan_allowed(struct wlan_objmgr_psoc *psoc,
+					     bool *dfs_scan_enable)
+{
+	return wlan_scan_cfg_get_dfs_chan_scan_allowed(psoc, dfs_scan_enable);
+}
+
+/**
+ * ucfg_scan_cfg_set_dfs_channel_scan() - API to set dfs scan enabled
+ * @psoc: pointer to psoc object
+ * @enable_dfs_scan: Set DFS scan enabled or not.
+ *
+ * Return: None
+ */
+static inline
+void ucfg_scan_cfg_set_dfs_chan_scan_allowed(struct wlan_objmgr_psoc *psoc,
+					     bool dfs_scan_enable)
+{
+	return wlan_scan_cfg_set_dfs_chan_scan_allowed(psoc, dfs_scan_enable);
 }
 
 /**

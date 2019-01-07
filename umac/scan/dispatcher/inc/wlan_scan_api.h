@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -115,6 +115,26 @@ void wlan_scan_cfg_set_conc_passive_dwelltime(struct wlan_objmgr_psoc *psoc,
  */
 void wlan_scan_cfg_get_conc_max_resttime(struct wlan_objmgr_psoc *psoc,
 					 uint32_t *rest_time);
+
+/**
+ * wlan_scan_cfg_get_dfs_chan_scan_allowed() - API to get dfs scan enabled
+ * @psoc: pointer to psoc object
+ * @enable_dfs_scan: DFS scan enabled or not.
+ *
+ * Return: None
+ */
+void wlan_scan_cfg_get_dfs_chan_scan_allowed(struct wlan_objmgr_psoc *psoc,
+					     bool *enable_dfs_scan);
+
+/**
+ * wlan_scan_cfg_set_dfs_chan_scan_allowed() - API to set dfs scan enabled.
+ * @psoc: pointer to psoc object
+ * @enable_dfs_scan: Set dfs scan enabled or not.
+ *
+ * Return: None
+ */
+void wlan_scan_cfg_set_dfs_chan_scan_allowed(struct wlan_objmgr_psoc *psoc,
+					     bool enable_dfs_scan);
 
 /**
  * wlan_scan_cfg_get_conc_min_resttime() - API to get concurrent min rest time
