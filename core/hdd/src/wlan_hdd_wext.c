@@ -4183,25 +4183,18 @@ static int hdd_we_set_wow_data_inactivity_timeout(struct hdd_adapter *adapter,
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	mac_handle_t mac_handle = hdd_ctx->mac_handle;
-	QDF_STATUS status;
 
 	if (!mac_handle)
 		return -EINVAL;
 
-	if ((value < CFG_WOW_DATA_INACTIVITY_TIMEOUT_MIN) ||
-	    (value > CFG_WOW_DATA_INACTIVITY_TIMEOUT_MAX)) {
+	if (!cfg_in_range(CFG_PMO_WOW_DATA_INACTIVITY_TIMEOUT, value)) {
 		hdd_err_rl("Invalid value %d", value);
 		return -EINVAL;
 	}
 
-	status = sme_cfg_set_int(mac_handle,
-				 WNI_CFG_PS_WOW_DATA_INACTIVITY_TIMEOUT,
-				 value);
+	ucfg_pmo_set_wow_data_inactivity_timeout(hdd_ctx->psoc, (uint8_t)value);
 
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("cfg set failed, value %d status %d", value, status);
-
-	return qdf_status_to_os_return(status);
+	return 0;
 }
 
 static int hdd_we_set_tx_power(struct hdd_adapter *adapter, int value)

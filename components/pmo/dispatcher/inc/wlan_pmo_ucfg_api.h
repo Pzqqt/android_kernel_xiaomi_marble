@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -982,6 +982,24 @@ bool ucfg_pmo_is_active_mode_offloaded(struct wlan_objmgr_psoc *psoc);
 enum pmo_auto_pwr_detect_failure_mode
 ucfg_pmo_get_auto_power_fail_mode(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * ucfg_pmo_set_wow_data_inactivity_timeout() - Set wow data inactivity timeout
+ * @psoc: pointer to psoc object
+ * @val: wow data inactivity timeout value
+ *
+ * Return: None
+ */
+void
+ucfg_pmo_set_wow_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
+					 uint8_t val);
+
+/**
+ * ucfg_pmo_is_pkt_filter_enabled() - pmo packet filter feature enable or not
+ * @psoc: objmgr psoc handle
+ *
+ * Return: pmo packet filter feature enable/disable
+ */
+bool ucfg_pmo_is_pkt_filter_enabled(struct wlan_objmgr_psoc *psoc);
 #ifdef FEATURE_WLAN_APF
 /**
  * ucfg_pmo_is_apf_enabled() - to get apf configuration
@@ -1593,6 +1611,18 @@ static inline uint8_t
 ucfg_pmo_power_save_offload_enabled(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
+}
+
+static inline void
+ucfg_pmo_set_wow_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
+					 uint8_t val)
+{
+}
+
+static inline bool
+ucfg_pmo_is_pkt_filter_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
 }
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 

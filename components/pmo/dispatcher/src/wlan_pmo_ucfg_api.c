@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -789,4 +789,20 @@ ucfg_pmo_get_enable_sap_suspend(struct wlan_objmgr_psoc *psoc)
 	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
 
 	return pmo_psoc_ctx->psoc_cfg.enable_sap_suspend;
+}
+
+void
+ucfg_pmo_set_wow_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
+					 uint8_t val)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	pmo_psoc_ctx->psoc_cfg.wow_data_inactivity_timeout = val;
+}
+
+bool ucfg_pmo_is_pkt_filter_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	struct pmo_psoc_priv_obj *pmo_psoc_ctx = pmo_psoc_get_priv(psoc);
+
+	return pmo_psoc_ctx->psoc_cfg.packet_filter_enabled;
 }

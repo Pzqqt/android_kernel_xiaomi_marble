@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -18,6 +18,25 @@
 
 #ifndef WLAN_PMO_PACKET_FILTER_CFG_H__
 #define WLAN_PMO_PACKET_FILTER_CFG_H__
+
+/*
+ * <ini>
+ * gDisablePacketFilter - Disable packet filter disable
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ *
+ * Related: None
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_PMO_DISABLE_PKT_FILTER CFG_INI_BOOL( \
+	"gDisablePacketFilter", \
+	true, \
+	"Disable packet filter feature")
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 /*
@@ -56,8 +75,10 @@
 	"Packet filter bitmap configure")
 
 #define CFG_PACKET_FILTER_ALL \
-	CFG(CFG_PMO_PKT_FILTER)
+	CFG(CFG_PMO_PKT_FILTER) \
+	CFG(CFG_PMO_DISABLE_PKT_FILTER)
 #else
-#define CFG_PACKET_FILTER_ALL
+#define CFG_PACKET_FILTER_ALL \
+	CFG(CFG_PMO_DISABLE_PKT_FILTER)
 #endif /* WLAN_FEATURE_PACKET_FILTERING */
 #endif /* WLAN_PMO_PACKET_FILTER_CFG_H__ */

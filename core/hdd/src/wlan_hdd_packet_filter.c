@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -109,7 +109,7 @@ int wlan_hdd_set_filter(struct hdd_context *hdd_ctx,
 	int i = 0;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (hdd_ctx->config->disablePacketFilter) {
+	if (!ucfg_pmo_is_pkt_filter_enabled(hdd_ctx->psoc)) {
 		hdd_warn("Packet filtering disabled in ini");
 		return 0;
 	}
