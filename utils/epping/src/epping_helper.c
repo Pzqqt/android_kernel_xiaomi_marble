@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -53,12 +53,8 @@ int epping_cookie_init(epping_context_t *pEpping_ctx)
 		pEpping_ctx->s_cookie_mem[i] =
 			qdf_mem_malloc(sizeof(struct epping_cookie) *
 				       MAX_COOKIE_SLOT_SIZE);
-		if (pEpping_ctx->s_cookie_mem[i] == NULL) {
-			EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
-				   "%s: no mem for cookie (idx = %d)", __func__,
-				   i);
+		if (!pEpping_ctx->s_cookie_mem[i])
 			goto error;
-		}
 	}
 	qdf_spinlock_create(&pEpping_ctx->cookie_lock);
 

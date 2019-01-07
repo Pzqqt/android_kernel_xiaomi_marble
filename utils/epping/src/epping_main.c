@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -81,11 +81,8 @@ int epping_open(void)
 
 	g_epping_ctx = qdf_mem_malloc(sizeof(*g_epping_ctx));
 
-	if (g_epping_ctx == NULL) {
-		EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
-				"%s: cannot alloc epping context", __func__);
+	if (!g_epping_ctx)
 		return -ENOMEM;
-	}
 
 	g_epping_ctx->con_mode = cds_get_conparam();
 	return 0;

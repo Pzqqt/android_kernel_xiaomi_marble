@@ -126,11 +126,8 @@ void host_diag_log_submit(void *plog_hdr_ptr)
 
 		pBuf = (uint8_t *) qdf_mem_malloc(total_len);
 
-		if (!pBuf) {
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "qdf_mem_malloc failed");
+		if (!pBuf)
 			return;
-		}
 
 		wmsg = (tAniHdr *) pBuf;
 		wmsg->type = PTT_MSG_DIAG_CMDS_TYPE;
@@ -219,11 +216,9 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 
 		pBuf = (uint8_t *) qdf_mem_malloc(total_len);
 
-		if (!pBuf) {
-			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "qdf_mem_malloc failed");
+		if (!pBuf)
 			return;
-		}
+
 		wmsg = (tAniHdr *) pBuf;
 		wmsg->type = PTT_MSG_DIAG_CMDS_TYPE;
 		wmsg->length = total_len;
