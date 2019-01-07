@@ -1291,35 +1291,6 @@ typedef struct tagCsrRoamSetKey {
 	uint8_t keyRsc[CSR_MAX_RSC_LEN];
 } tCsrRoamSetKey;
 
-#ifdef FEATURE_WLAN_TDLS
-
-typedef struct tagCsrLinkEstablishParams {
-	tSirMacAddr peerMac;
-	uint8_t uapsdQueues;
-	uint8_t maxSp;
-	uint8_t isBufSta;
-	uint8_t isOffChannelSupported;
-	uint8_t isResponder;
-	uint8_t supportedChannelsLen;
-	uint8_t supportedChannels[SIR_MAC_MAX_SUPP_CHANNELS];
-	uint8_t supportedOperClassesLen;
-	uint8_t supportedOperClasses[REG_MAX_SUPP_OPER_CLASSES];
-	uint8_t qos;
-} tCsrTdlsLinkEstablishParams;
-
-typedef struct tagCsrTdlsSendMgmt {
-	tSirMacAddr peerMac;
-	uint8_t frameType;
-	uint8_t dialog;
-	uint16_t statusCode;
-	uint8_t responder;
-	uint32_t peerCapability;
-	uint8_t *buf;
-	uint8_t len;
-	enum wifi_traffic_ac ac;
-} tCsrTdlsSendMgmt;
-#endif
-
 typedef void *tScanResultHandle;
 
 typedef enum {
