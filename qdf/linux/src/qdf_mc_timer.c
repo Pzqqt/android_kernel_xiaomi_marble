@@ -366,10 +366,7 @@ QDF_STATUS qdf_mc_timer_init_debug(qdf_mc_timer_t *timer,
 
 	timer->timer_node = qdf_mem_malloc(sizeof(qdf_mc_timer_node_t));
 
-	if (timer->timer_node == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Not able to allocate memory for time_node",
-			  __func__);
+	if (!timer->timer_node) {
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NOMEM;
 	}

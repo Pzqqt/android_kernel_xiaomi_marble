@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,7 +41,6 @@ QDF_STATUS qdf_file_read(const char *path, char **out_buf)
 	/* qdf_mem_malloc zeros new memory; +1 size ensures null-termination */
 	buf = qdf_mem_malloc(fw->size + 1);
 	if (!buf) {
-		qdf_err("Failed to allocate file buffer of %zuB", fw->size + 1);
 		release_firmware(fw);
 		return QDF_STATUS_E_NOMEM;
 	}

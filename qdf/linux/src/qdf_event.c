@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -298,10 +298,8 @@ QDF_STATUS qdf_wait_for_event_completion(qdf_event_t *event, uint32_t timeout)
 		return QDF_STATUS_E_INVAL;
 
 	event_node = qdf_mem_malloc(sizeof(*event_node));
-	if (!event_node) {
-		qdf_err("Out of memory");
+	if (!event_node)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	event_node->pevent = event;
 

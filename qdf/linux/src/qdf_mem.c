@@ -1268,28 +1268,21 @@ void qdf_mem_multi_pages_alloc(qdf_device_t osdev,
 		/* Pages information storage */
 		pages->cacheable_pages = qdf_mem_malloc(
 			pages->num_pages * sizeof(pages->cacheable_pages));
-		if (!pages->cacheable_pages) {
-			qdf_print("Cacheable page storage alloc fail");
+		if (!pages->cacheable_pages)
 			goto out_fail;
-		}
 
 		cacheable_pages = pages->cacheable_pages;
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
 			cacheable_pages[page_idx] = qdf_mem_malloc(PAGE_SIZE);
-			if (!cacheable_pages[page_idx]) {
-				qdf_print("cacheable page alloc fail, pi %d",
-					  page_idx);
+			if (!cacheable_pages[page_idx])
 				goto page_alloc_fail;
-			}
 		}
 		pages->dma_pages = NULL;
 	} else {
 		pages->dma_pages = qdf_mem_malloc(
 			pages->num_pages * sizeof(struct qdf_mem_dma_page_t));
-		if (!pages->dma_pages) {
-			qdf_print("dmaable page storage alloc fail");
+		if (!pages->dma_pages)
 			goto out_fail;
-		}
 
 		dma_pages = pages->dma_pages;
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
@@ -1476,10 +1469,8 @@ qdf_shared_mem_t *qdf_mem_shared_mem_alloc(qdf_device_t osdev, uint32_t size)
 	int ret;
 
 	shared_mem = qdf_mem_malloc(sizeof(*shared_mem));
-	if (!shared_mem) {
-		qdf_err("Unable to allocate memory for shared resource struct");
+	if (!shared_mem)
 		return NULL;
-	}
 
 	shared_mem->vaddr = qdf_mem_alloc_consistent(osdev, osdev->dev,
 				size, qdf_mem_get_dma_addr_ptr(osdev,

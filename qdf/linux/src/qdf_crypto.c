@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -395,8 +395,6 @@ int qdf_crypto_aes_gmac(uint8_t *key, uint16_t key_length,
 			IEEE80211_MMIE_GMAC_MICLEN + AAD_LEN;
 	req = qdf_mem_malloc(req_size);
 	if (!req) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "Memory allocation failed");
 		ret = -ENOMEM;
 		goto err_tfm;
 	}

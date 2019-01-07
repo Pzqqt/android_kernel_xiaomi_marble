@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017, 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -133,11 +133,8 @@ qdf_lro_ctx_t qdf_lro_init(void)
 	lro_mem_ptr = qdf_mem_malloc(lro_info_sz + lro_mgr_sz + desc_arr_sz +
 					desc_pool_sz + hash_table_sz);
 
-	if (unlikely(!lro_mem_ptr)) {
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			 "Unable to allocate memory for LRO");
+	if (unlikely(!lro_mem_ptr))
 		return NULL;
-	}
 
 	lro_ctx = (struct qdf_lro_s *)lro_mem_ptr;
 	lro_mem_ptr += lro_info_sz;
