@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -388,10 +388,8 @@ cfg_store_alloc(const char *path, struct cfg_value_store **out_store)
 	cfg_enter();
 
 	store = qdf_mem_malloc(sizeof(*store));
-	if (!store) {
-		cfg_err("Out of memory");
+	if (!store)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	status = qdf_str_dup(&store->path, path);
 	if (QDF_IS_STATUS_ERROR(status))
@@ -534,10 +532,8 @@ cfg_on_psoc_create(struct wlan_objmgr_psoc *psoc, void *context)
 		return QDF_STATUS_E_FAILURE;
 
 	psoc_ctx = qdf_mem_malloc(sizeof(*psoc_ctx));
-	if (!psoc_ctx) {
-		cfg_err("Out of memory");
+	if (!psoc_ctx)
 		return QDF_STATUS_E_NOMEM;
-	}
 
 	qdf_atomic_inc(&__cfg_global_store->users);
 	psoc_ctx->store = __cfg_global_store;
