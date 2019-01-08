@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,6 +28,14 @@
 #include "wlan_mlme_main.h"
 
 /**
+ * mlme_register_mlme_ext_ops() - Register mlme ext ops
+ *
+ * This function is called to register mlme ext operations
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS mlme_register_mlme_ext_ops(void);
+/**
  * mlme_register_vdev_mgr_ops() - Register vdev mgr ops
  * @vdev_mlme: vdev mlme object
  *
@@ -35,7 +43,7 @@
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_register_vdev_mgr_ops(void *mlme);
+QDF_STATUS mlme_register_vdev_mgr_ops(struct vdev_mlme_obj *vdev_mlme);
 /**
  * mlme_unregister_vdev_mgr_ops() - Unregister vdev mgr ops
  * @vdev_mlme: vdev mlme object
@@ -148,6 +156,5 @@ QDF_STATUS mlme_set_assoc_type(struct wlan_objmgr_vdev *vdev,
  * Return: associate type
  */
 enum vdev_assoc_type  mlme_get_assoc_type(struct wlan_objmgr_vdev *vdev);
-
 #endif
 #endif

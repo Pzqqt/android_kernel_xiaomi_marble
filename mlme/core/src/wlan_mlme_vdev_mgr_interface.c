@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,9 +23,11 @@
 #include "lim_utils.h"
 #include "wma_api.h"
 #include "lim_types.h"
+#include <include/wlan_mlme_cmn.h>
 
 static struct vdev_mlme_ops sta_mlme_ops;
 static struct vdev_mlme_ops ap_mlme_ops;
+static struct mlme_ext_ops ext_ops;
 
 bool mlme_is_vdev_in_beaconning_mode(enum QDF_OPMODE vdev_opmode)
 {
@@ -41,6 +43,22 @@ bool mlme_is_vdev_in_beaconning_mode(enum QDF_OPMODE vdev_opmode)
 }
 
 /**
+ * mlme_get_global_ops() - Register ext global ops
+ *
+ * Return: ext_ops global ops
+ */
+static struct mlme_ext_ops *mlme_get_global_ops(void)
+{
+	return &ext_ops;
+}
+
+QDF_STATUS mlme_register_mlme_ext_ops(void)
+{
+	mlme_set_ops_register_cb(mlme_get_global_ops);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * mlme_register_vdev_mgr_ops() - Register vdev mgr ops
  * @vdev_mlme: vdev mlme object
  *
@@ -48,10 +66,9 @@ bool mlme_is_vdev_in_beaconning_mode(enum QDF_OPMODE vdev_opmode)
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS mlme_register_vdev_mgr_ops(void *mlme)
+QDF_STATUS mlme_register_vdev_mgr_ops(struct vdev_mlme_obj *vdev_mlme)
 {
 	struct wlan_objmgr_vdev *vdev;
-	struct vdev_mlme_obj *vdev_mlme = (struct vdev_mlme_obj *)mlme;
 
 	vdev = vdev_mlme->vdev;
 
@@ -690,10 +707,6 @@ static QDF_STATUS ap_vdev_dfs_cac_timer_stop(struct vdev_mlme_obj *vdev_mlme,
  *                                      MLME down operation
  * @mlme_vdev_notify_down_complete:     callback to notify VDEV MLME on moving
  *                                      to INIT state
- * @mlme_vdev_ext_hdl_create:           callback to invoke creation of legacy
- *                                      vdev object
- * @mlme_vdev_ext_hdl_destroy:          callback to invoke destroy of legacy
- *                                      vdev object
  */
 static struct vdev_mlme_ops sta_mlme_ops = {
 	.mlme_vdev_start_send = sta_mlme_vdev_start_send,
@@ -707,8 +720,6 @@ static struct vdev_mlme_ops sta_mlme_ops = {
 	.mlme_vdev_stop_continue = vdevmgr_mlme_stop_continue,
 	.mlme_vdev_down_send = vdevmgr_mlme_vdev_down_send,
 	.mlme_vdev_notify_down_complete = vdevmgr_notify_down_complete,
-	.mlme_vdev_ext_hdl_create = vdevmgr_mlme_ext_hdl_create,
-	.mlme_vdev_ext_hdl_destroy = vdevmgr_mlme_ext_hdl_destroy,
 };
 
 /**
@@ -738,10 +749,6 @@ static struct vdev_mlme_ops sta_mlme_ops = {
  *                                      MLME down operation
  * @mlme_vdev_notify_down_complete:     callback to notify VDEV MLME on moving
  *                                      to INIT state
- * @mlme_vdev_ext_hdl_create:           callback to invoke creation of legacy
- *                                      vdev object
- * @mlme_vdev_ext_hdl_destroy:          callback to invoke destroy of legacy
- *                                      vdev object
  */
 static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_start_send = ap_mlme_vdev_start_send,
@@ -758,6 +765,16 @@ static struct vdev_mlme_ops ap_mlme_ops = {
 	.mlme_vdev_stop_continue = vdevmgr_mlme_stop_continue,
 	.mlme_vdev_down_send = vdevmgr_mlme_vdev_down_send,
 	.mlme_vdev_notify_down_complete = vdevmgr_notify_down_complete,
+};
+
+/**
+ * struct mlme_ext_ops - VDEV MLME legacy global callbacks structure
+ * @mlme_vdev_ext_hdl_create:           callback to invoke creation of legacy
+ *                                      vdev object
+ * @mlme_vdev_ext_hdl_destroy:          callback to invoke destroy of legacy
+ *                                      vdev object
+ */
+static struct mlme_ext_ops ext_ops = {
 	.mlme_vdev_ext_hdl_create = vdevmgr_mlme_ext_hdl_create,
 	.mlme_vdev_ext_hdl_destroy = vdevmgr_mlme_ext_hdl_destroy,
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -269,7 +269,7 @@ bool pmo_is_beaconing_vdev_up(struct wlan_objmgr_psoc *psoc)
 
 		vdev_opmode = pmo_get_vdev_opmode(vdev);
 		is_beaconing = pmo_is_vdev_in_beaconning_mode(vdev_opmode) &&
-			       wlan_vdev_is_up(vdev);
+			       QDF_IS_STATUS_SUCCESS(wlan_vdev_is_up(vdev));
 
 		pmo_vdev_put_ref(vdev);
 
