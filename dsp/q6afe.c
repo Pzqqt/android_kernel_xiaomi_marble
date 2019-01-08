@@ -3662,6 +3662,7 @@ static int q6afe_send_enc_config(u16 port_id,
 	struct avs_enc_set_scrambler_param_t enc_set_scrambler_param;
 	struct afe_enc_level_to_bitrate_map_param_t map_param;
 	struct afe_enc_dec_imc_info_param_t imc_info_param;
+	struct asm_aac_frame_size_control_t frame_ctl_param;
 	struct afe_port_media_type_t media_type;
 	struct aptx_channel_mode_param_t channel_mode_param;
 	struct param_hdr_v3 param_hdr;
@@ -3676,6 +3677,7 @@ static int q6afe_send_enc_config(u16 port_id,
 	memset(&enc_set_scrambler_param, 0, sizeof(enc_set_scrambler_param));
 	memset(&map_param, 0, sizeof(map_param));
 	memset(&imc_info_param, 0, sizeof(imc_info_param));
+	memset(&frame_ctl_param, 0, sizeof(frame_ctl_param));
 	memset(&media_type, 0, sizeof(media_type));
 	memset(&param_hdr, 0, sizeof(param_hdr));
 
@@ -3711,6 +3713,12 @@ static int q6afe_send_enc_config(u16 port_id,
 		enc_blk_param.enc_cfg_blk_size =
 				sizeof(union afe_enc_config_data)
 					- sizeof(struct afe_abr_enc_cfg_t);
+	} else if (format == ASM_MEDIA_FMT_AAC_V2) {
+		param_hdr.param_size = sizeof(enc_blk_param)
+				- sizeof(struct asm_aac_frame_size_control_t);
+		enc_blk_param.enc_cfg_blk_size =
+				sizeof(enc_blk_param.enc_blk_config)
+				- sizeof(struct asm_aac_frame_size_control_t);
 	} else {
 		param_hdr.param_size = sizeof(struct afe_enc_cfg_blk_param_t);
 		enc_blk_param.enc_cfg_blk_size =
@@ -3728,6 +3736,30 @@ static int q6afe_send_enc_config(u16 port_id,
 		pr_err("%s: AFE_ENCODER_PARAM_ID_ENC_CFG_BLK for port 0x%x failed %d\n",
 			__func__, port_id, ret);
 		goto exit;
+	}
+
+	if (format == ASM_MEDIA_FMT_AAC_V2) {
+		uint32_t frame_size_ctl_value = enc_blk_param.enc_blk_config.
+				aac_config.frame_ctl.ctl_value;
+		if (frame_size_ctl_value > 0) {
+			param_hdr.param_id =
+				AFE_PARAM_ID_AAC_FRM_SIZE_CONTROL;
+			param_hdr.param_size = sizeof(frame_ctl_param);
+			frame_ctl_param.ctl_type = enc_blk_param.
+				enc_blk_config.aac_config.frame_ctl.ctl_type;
+			frame_ctl_param.ctl_value = frame_size_ctl_value;
+			pr_debug("%s: send AFE_PARAM_ID_AAC_FRM_SIZE_CONTROL\n",
+				  __func__);
+			ret = q6afe_pack_and_set_param_in_band(port_id,
+					q6audio_get_port_index(port_id),
+					param_hdr,
+					(u8 *) &frame_ctl_param);
+			if (ret) {
+				pr_err("%s: AAC_FRM_SIZE_CONTROL failed %d\n",
+					__func__, ret);
+				goto exit;
+			}
+		}
 	}
 
 	if (format == ASM_MEDIA_FMT_APTX) {
