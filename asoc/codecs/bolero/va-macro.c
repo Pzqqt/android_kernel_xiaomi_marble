@@ -41,7 +41,7 @@
 #define VA_MACRO_TX_DMIC_CLK_DIV_SHFT 0x01
 
 #define BOLERO_CDC_VA_TX_UNMUTE_DELAY_MS	40
-#define MAX_RETRY_ATTEMPTS 250
+#define MAX_RETRY_ATTEMPTS 500
 
 static const DECLARE_TLV_DB_SCALE(digital_gain, 0, 1, 0);
 static int va_tx_unmute_delay = BOLERO_CDC_VA_TX_UNMUTE_DELAY_MS;
@@ -226,12 +226,15 @@ static int va_macro_event_handler(struct snd_soc_component *component,
 	switch (event) {
 	case BOLERO_MACRO_EVT_WAIT_VA_CLK_RESET:
 		while ((va_priv->va_mclk_users != 0) && (retry_cnt != 0)) {
-			dev_dbg(va_dev, "%s:retry_cnt: %d\n",
+			dev_dbg_ratelimited(va_dev, "%s:retry_cnt: %d\n",
 				__func__, retry_cnt);
 			/*
-			 * loop and check every 20ms for va_mclk user count
-			 * to get reset to 0 which ensures userspace teardown
-			 * is done and SSR powerup seq can proceed.
+			 * Userspace takes 10 seconds to close
+			 * the session when pcm_start fails due to concurrency
+			 * with PDR/SSR. Loop and check every 20ms till 10
+			 * seconds for va_mclk user count to get reset to 0
+			 * which ensures userspace teardown is done and SSR
+			 * powerup seq can proceed.
 			 */
 			msleep(20);
 			retry_cnt--;
