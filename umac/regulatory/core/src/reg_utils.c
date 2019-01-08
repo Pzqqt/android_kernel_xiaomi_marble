@@ -17,7 +17,7 @@
  */
 
 /**
- * DOC: reg_getset.c
+ * DOC: reg_utils.c
  * This file defines the APIs to set and get the regulatory variables.
  */
 
@@ -26,7 +26,7 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include "reg_priv_objs.h"
-#include "reg_getset.h"
+#include "reg_utils.h"
 #include "reg_callbacks.h"
 #include "reg_db.h"
 #include "reg_db_parser.h"

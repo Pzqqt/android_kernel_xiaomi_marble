@@ -26,7 +26,7 @@
 #include <reg_services_public_struct.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include "reg_priv_objs.h"
-#include "reg_getset.h"
+#include "reg_utils.h"
 #include "reg_db.h"
 #include "reg_db_parser.h"
 #include "reg_host_11d.h"

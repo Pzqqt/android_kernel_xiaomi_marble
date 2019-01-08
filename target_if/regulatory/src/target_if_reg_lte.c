@@ -22,7 +22,7 @@
  * This file contains regulatory target LTE interface
  */
 
-#ifdef CONFIG_LTE_COEX
+#ifdef LTE_COEX
 
 #include "target_if_reg_lte.h"
 

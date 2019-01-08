@@ -23,7 +23,7 @@
  * LTE functions
  */
 
-#ifdef CONFIG_LTE_COEX
+#ifdef LTE_COEX
 /**
  * reg_process_ch_avoid_event() - Process channel avoid event
  * @psoc: psoc for country information

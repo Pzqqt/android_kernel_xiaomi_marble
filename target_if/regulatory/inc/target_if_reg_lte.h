@@ -32,7 +32,7 @@
 #include "wmi_unified_api.h"
 #include "wmi_unified_reg_api.h"
 
-#ifdef CONFIG_LTE_COEX
+#ifdef LTE_COEX
 /**
  * tgt_if_regulatory_register_ch_avoid_event_handler() - Register avoid channel
  * list event handler

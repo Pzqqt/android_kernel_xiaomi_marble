@@ -28,7 +28,7 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <qdf_lock.h>
 #include "reg_priv_objs.h"
-#include "reg_getset.h"
+#include "reg_utils.h"
 #include "reg_services_common.h"
 #include "reg_build_chan_list.h"
 #include "reg_host_11d.h"

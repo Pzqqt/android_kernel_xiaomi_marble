@@ -26,7 +26,7 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <qdf_lock.h>
 #include "reg_priv_objs.h"
-#include "reg_getset.h"
+#include "reg_utils.h"
 #include "reg_callbacks.h"
 #include "reg_services_common.h"
 #include <wlan_objmgr_psoc_obj.h>

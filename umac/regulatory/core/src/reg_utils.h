@@ -18,12 +18,12 @@
  */
 
 /**
- * DOC: reg_getset.h
+ * DOC: reg_utils.h
  * This file provides prototypes for setting and getting regulatory variables.
  */
 
-#ifndef __REG_GETSET_H_
-#define __REG_GETSET_H_
+#ifndef __REG_UTILS_H_
+#define __REG_UTILS_H_
 
 #ifdef WLAN_FEATURE_DSRC
 #define REG_DSRC_START_FREQ channel_map[MIN_DSRC_CHANNEL].center_freq

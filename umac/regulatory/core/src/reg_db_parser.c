@@ -30,7 +30,7 @@
 #include <qdf_mem.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include "reg_priv_objs.h"
-#include "reg_getset.h"
+#include "reg_utils.h"
 
 QDF_STATUS reg_is_country_code_valid(uint8_t *alpha2)
 {

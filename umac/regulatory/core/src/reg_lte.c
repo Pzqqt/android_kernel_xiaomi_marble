@@ -34,7 +34,7 @@
 #include "reg_callbacks.h"
 #include "reg_lte.h"
 
-#ifdef CONFIG_LTE_COEX
+#ifdef LTE_COEX
 /**
  * reg_process_ch_avoid_freq() - Update unsafe frequencies in psoc_priv_obj
  * @psoc: pointer to psoc object

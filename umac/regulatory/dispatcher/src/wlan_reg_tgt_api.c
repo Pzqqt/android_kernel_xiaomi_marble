@@ -29,11 +29,11 @@
 #include <wlan_reg_tgt_api.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <../../core/src/reg_priv_objs.h>
-#include <../../core/src/reg_getset.h>
+#include <../../core/src/reg_utils.h>
 #include <../../core/src/reg_services_common.h>
 #include <../../core/src/reg_lte.h>
 #include <../../core/src/reg_build_chan_list.h>
-#include <../../core/src/reg_host_11d.h>
+#include <../../core/src/reg_offload_11d_scan.h>
 
 /**
  * tgt_process_master_chan_list() - process master channel list
