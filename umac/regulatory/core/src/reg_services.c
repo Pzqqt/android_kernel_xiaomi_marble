@@ -3209,12 +3209,18 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 			reg_err("pdev is NULL");
 			return QDF_STATUS_E_FAILURE;
 		}
-		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
 
 		if (tx_ops->set_country_failed)
 			tx_ops->set_country_failed(pdev);
 
-		return QDF_STATUS_E_FAILURE;
+		wlan_objmgr_pdev_release_ref(pdev, dbg_id);
+
+		if (regulat_info->status_code != REG_CURRENT_ALPHA2_NOT_FOUND)
+			return QDF_STATUS_E_FAILURE;
+
+		soc_reg->new_user_ctry_pending[phy_id] = false;
+		soc_reg->new_11d_ctry_pending[phy_id] = false;
+		soc_reg->world_country_pending[phy_id] = true;
 	}
 
 	mas_chan_list = soc_reg->mas_chan_params[phy_id].mas_chan_list;
