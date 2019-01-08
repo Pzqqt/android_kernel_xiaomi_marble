@@ -13118,9 +13118,13 @@ static QDF_STATUS hdd_component_init(void)
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	status = dispatcher_init();
+	status = ucfg_mlme_global_init();
 	if (QDF_IS_STATUS_ERROR(status))
 		goto target_if_deinit;
+
+	status = dispatcher_init();
+	if (QDF_IS_STATUS_ERROR(status))
+		goto mlme_global_deinit;
 
 	/* initialize non-converged components */
 	status = ucfg_mlme_init();
@@ -13191,6 +13195,8 @@ mlme_deinit:
 	ucfg_mlme_deinit();
 dispatcher_deinit:
 	dispatcher_deinit();
+mlme_global_deinit:
+	ucfg_mlme_global_deinit();
 target_if_deinit:
 	target_if_deinit();
 
@@ -13219,6 +13225,7 @@ static void hdd_component_deinit(void)
 
 	/* deinitialize converged components */
 	dispatcher_deinit();
+	ucfg_mlme_global_deinit();
 	target_if_deinit();
 }
 

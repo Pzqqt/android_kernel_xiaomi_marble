@@ -89,6 +89,18 @@ QDF_STATUS ucfg_mlme_pdev_open(struct wlan_objmgr_pdev *pdev);
  */
 QDF_STATUS ucfg_mlme_pdev_close(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * ucfg_mlme_global_init() - initialize global mlme ops and structure
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_mlme_global_init(void);
+/**
+ * ucfg_mlme_global_deinit() - deinitialize global mlme ops and structure
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_mlme_global_deinit(void);
 #else
 /**
  * ucfg_mlme_pdev_open() - MLME component pdev Open
@@ -112,6 +124,26 @@ static inline QDF_STATUS ucfg_mlme_pdev_open(struct wlan_objmgr_pdev *pdev)
  * Return: QDF Status
  */
 static inline QDF_STATUS ucfg_mlme_pdev_close(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * ucfg_mlme_global_init() - initialize global mlme ops and structure
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS ucfg_mlme_global_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * ucfg_mlme_global_deinit() - deinitialize global mlme ops and structure
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS ucfg_mlme_global_deinit(void)
 {
 	return QDF_STATUS_SUCCESS;
 }

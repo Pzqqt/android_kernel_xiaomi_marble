@@ -468,8 +468,7 @@ static inline bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx)
 	if (!sap_ctx)
 		return false;
 
-	return (wlan_vdev_mlme_get_state(sap_ctx->vdev) ==
-		WLAN_VDEV_S_DFS_CAC_WAIT);
+	return  QDF_IS_STATUS_SUCCESS(wlan_vdev_is_dfs_cac_wait(sap_ctx->vdev));
 }
 #else
 static inline bool sap_is_dfs_cac_wait_state(struct sap_context *sap_ctx)

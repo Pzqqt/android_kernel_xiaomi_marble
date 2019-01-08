@@ -26,6 +26,10 @@
 #include "wlan_mlme_ucfg_api.h"
 #include "wlan_objmgr_pdev_obj.h"
 #include "wlan_mlme_vdev_mgr_interface.h"
+#ifdef CONFIG_VDEV_SM
+#include <include/wlan_pdev_mlme.h>
+#include "wlan_pdev_mlme_api.h"
+#endif
 
 #ifdef CONFIG_VDEV_SM
 static QDF_STATUS ucfg_mlme_vdev_init(void)
@@ -34,6 +38,18 @@ static QDF_STATUS ucfg_mlme_vdev_init(void)
 }
 
 static QDF_STATUS ucfg_mlme_vdev_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_mlme_global_init(void)
+{
+	mlme_register_mlme_ext_ops();
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_mlme_global_deinit(void)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -159,7 +175,14 @@ void ucfg_mlme_psoc_close(struct wlan_objmgr_psoc *psoc)
 #ifdef CONFIG_VDEV_SM
 QDF_STATUS ucfg_mlme_pdev_open(struct wlan_objmgr_pdev *pdev)
 {
-	pdev->pdev_mlme.mlme_register_ops = mlme_register_vdev_mgr_ops;
+	struct pdev_mlme_obj *pdev_mlme;
+
+	pdev_mlme = wlan_pdev_mlme_get_cmpt_obj(pdev);
+	if (!pdev_mlme) {
+		mlme_err(" PDEV MLME is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	pdev_mlme->mlme_register_ops = mlme_register_vdev_mgr_ops;
 
 	return QDF_STATUS_SUCCESS;
 }

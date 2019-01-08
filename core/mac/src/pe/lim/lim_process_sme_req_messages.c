@@ -2991,8 +2991,8 @@ static void lim_delete_peers_and_send_vdev_stop(struct pe_session *session)
 	struct mac_context *mac_ctx = session->mac_ctx;
 	QDF_STATUS status;
 
-	if (wlan_vdev_mlme_get_substate(session->vdev) ==
-	    WLAN_VDEV_SS_START_RESTART_PROGRESS)
+	if (QDF_IS_STATUS_SUCCESS(
+	    wlan_vdev_is_restart_progress(session->vdev)))
 		status =
 		 wlan_vdev_mlme_sm_deliver_evt(session->vdev,
 					       WLAN_VDEV_SM_EV_RESTART_REQ_FAIL,
@@ -4750,8 +4750,8 @@ QDF_STATUS lim_sta_mlme_vdev_disconnect_bss(struct vdev_mlme_obj *vdev_mlme,
 static void lim_process_disconnect_sta(struct pe_session *session,
 				       struct scheduler_msg *msg)
 {
-	if (wlan_vdev_mlme_get_substate(session->vdev) ==
-	    WLAN_VDEV_SS_START_RESTART_PROGRESS)
+	if (QDF_IS_STATUS_SUCCESS(
+	    wlan_vdev_is_restart_progress(session->vdev)))
 		wlan_vdev_mlme_sm_deliver_evt(session->vdev,
 					      WLAN_VDEV_SM_EV_RESTART_REQ_FAIL,
 					      sizeof(*msg), msg);

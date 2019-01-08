@@ -4214,7 +4214,7 @@ bool wma_is_vdev_up(uint8_t vdev_id)
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc, vdev_id,
 			WLAN_LEGACY_WMA_ID);
 	if (vdev) {
-		is_up = wlan_vdev_is_up(vdev);
+		is_up = QDF_IS_STATUS_SUCCESS(wlan_vdev_is_up(vdev));
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
 	}
 	return is_up;
