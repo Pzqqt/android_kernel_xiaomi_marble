@@ -3847,15 +3847,20 @@ enum qca_iface_type {
 
 /**
  * enum qca_wlan_vendor_attr_pcl_config: attribute to vendor sub-command
- * QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_PCL.
+ * QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_PCL and
+ * QCA_NL80211_VENDOR_SUBCMD_GET_PREFERRED_FREQ_LIST.
  * @QCA_WLAN_VENDOR_ATTR_PCL_CONFIG_INVALID: invalid value
  * @QCA_WLAN_VENDOR_ATTR_PCL_CONFIG_CHANNEL: pcl channel number
  * @QCA_WLAN_VENDOR_ATTR_PCL_CONFIG_WEIGHT: pcl channel weight
+ * @QCA_WLAN_VENDOR_ATTR_PCL_CONFIG_FREQ: pcl channel frequency
+ * @QCA_WLAN_VENDOR_ATTR_PCL_CONFIG_FLAG: pcl channel flag bitmask
  */
 enum qca_wlan_vendor_attr_pcl_config {
 	QCA_WLAN_VENDOR_ATTR_PCL_INVALID = 0,
 	QCA_WLAN_VENDOR_ATTR_PCL_CHANNEL = 1,
 	QCA_WLAN_VENDOR_ATTR_PCL_WEIGHT = 2,
+	QCA_WLAN_VENDOR_ATTR_PCL_FREQ = 3,
+	QCA_WLAN_VENDOR_ATTR_PCL_FLAG = 4,
 };
 
 enum qca_set_band {
@@ -4093,6 +4098,7 @@ enum qca_tsf_cmd {
  * @QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_INVALID: invalid value
  * @QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_IFACE_TYPE: interface type
  * @QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST: preferred frequency list
+ * @QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_WEIGHED_PCL: pcl with weight
  * @QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_AFTER_LAST: after last
  * @QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX: max
  */
@@ -4107,6 +4113,13 @@ enum qca_vendor_attr_get_preferred_freq_list {
 	 * in north-bound only.
 	 */
 	QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST,
+	/* An array of nested values as per enum
+	 *  qca_wlan_vendor_attr_pcl_config attribute.
+	 *  Each element contains frequency (MHz), weight, and flag
+	 *  bit mask indicating how the frequency should be used in P2P
+	 *  negotiation.
+	 */
+	QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_WEIGHED_PCL,
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX =
