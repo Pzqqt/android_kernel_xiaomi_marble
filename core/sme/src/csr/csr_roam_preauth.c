@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -176,10 +176,6 @@ void csr_neighbor_roam_reset_preauth_control_info(struct mac_context *mac_ctx,
 	neigh_roam_info->FTRoamInfo.numPreAuthRetries = 0;
 	neigh_roam_info->FTRoamInfo.currentNeighborRptRetryNum = 0;
 	neigh_roam_info->FTRoamInfo.neighborRptPending = false;
-	neigh_roam_info->FTRoamInfo.numBssFromNeighborReport = 0;
-	qdf_mem_zero(neigh_roam_info->FTRoamInfo.neighboReportBssInfo,
-		     sizeof(tCsrNeighborReportBssInfo) *
-		     MAX_BSS_IN_NEIGHBOR_RPT);
 	neigh_roam_info->uOsRequestedHandoff = 0;
 	qdf_mem_zero(&neigh_roam_info->handoffReqInfo,
 		     sizeof(tCsrHandoffRequest));

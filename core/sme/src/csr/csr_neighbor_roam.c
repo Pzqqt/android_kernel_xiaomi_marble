@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -278,11 +278,7 @@ static void csr_neighbor_roam_reset_connected_state_control_info(
 	pNeighborRoamInfo->FTRoamInfo.currentNeighborRptRetryNum = 0;
 	pNeighborRoamInfo->FTRoamInfo.neighborRptPending = false;
 	pNeighborRoamInfo->FTRoamInfo.numPreAuthRetries = 0;
-	pNeighborRoamInfo->FTRoamInfo.numBssFromNeighborReport = 0;
 	pNeighborRoamInfo->FTRoamInfo.preauthRspPending = 0;
-	qdf_mem_zero(pNeighborRoamInfo->FTRoamInfo.neighboReportBssInfo,
-		     sizeof(tCsrNeighborReportBssInfo) *
-		     MAX_BSS_IN_NEIGHBOR_RPT);
 	pNeighborRoamInfo->uOsRequestedHandoff = 0;
 	qdf_mem_zero(&pNeighborRoamInfo->handoffReqInfo,
 		     sizeof(tCsrHandoffRequest));
@@ -1186,11 +1182,6 @@ static QDF_STATUS csr_neighbor_roam_init11r_assoc_info(struct mac_context *mac)
 		pFTRoamInfo->preauthRspPending = false;
 
 		pFTRoamInfo->currentNeighborRptRetryNum = 0;
-		pFTRoamInfo->numBssFromNeighborReport = 0;
-
-		qdf_mem_zero(pFTRoamInfo->neighboReportBssInfo,
-			     sizeof(tCsrNeighborReportBssInfo) *
-			     MAX_BSS_IN_NEIGHBOR_RPT);
 
 		status = csr_ll_open(&pFTRoamInfo->preAuthDoneList);
 		if (QDF_STATUS_SUCCESS != status) {
@@ -1381,10 +1372,6 @@ void csr_neighbor_roam_close(struct mac_context *mac, uint8_t sessionId)
 	csr_release_profile(mac, &pNeighborRoamInfo->csrNeighborRoamProfile);
 	csr_roam_free_connect_profile(&pNeighborRoamInfo->prevConnProfile);
 	pNeighborRoamInfo->FTRoamInfo.currentNeighborRptRetryNum = 0;
-	pNeighborRoamInfo->FTRoamInfo.numBssFromNeighborReport = 0;
-	qdf_mem_zero(pNeighborRoamInfo->FTRoamInfo.neighboReportBssInfo,
-		     sizeof(tCsrNeighborReportBssInfo) *
-		     MAX_BSS_IN_NEIGHBOR_RPT);
 	csr_neighbor_roam_free_roamable_bss_list(mac,
 						 &pNeighborRoamInfo->FTRoamInfo.
 						 preAuthDoneList);

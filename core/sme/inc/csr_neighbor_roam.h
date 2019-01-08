@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -107,9 +107,6 @@ typedef struct sCsr11rAssocNeighborInfo {
 	uint32_t neighborReportTimeout;
 	uint8_t numPreAuthRetries;
 	tDblLinkList preAuthDoneList;   /* llist which consists/preauth nodes */
-	uint8_t numBssFromNeighborReport;
-	/* Contains info needed during REPORT_SCAN State */
-	tCsrNeighborReportBssInfo neighboReportBssInfo[MAX_BSS_IN_NEIGHBOR_RPT];
 } tCsr11rAssocNeighborInfo, *tpCsr11rAssocNeighborInfo;
 
 /* Complete control information for neighbor roam algorithm */
