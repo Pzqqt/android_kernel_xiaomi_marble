@@ -82,7 +82,7 @@
 #include "wmi_unified_ocb_api.h"
 #endif
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#ifdef WLAN_FEATURE_NAN
 #include "wmi_unified_nan_api.h"
 #endif
 

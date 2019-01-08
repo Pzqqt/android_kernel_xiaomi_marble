@@ -40,7 +40,7 @@
 #include "wlan_green_ap_api.h"
 #endif
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#ifdef WLAN_FEATURE_NAN
 #include "nan_public_structs.h"
 #endif
 
@@ -1745,7 +1745,7 @@ QDF_STATUS (*extract_wds_entry)(wmi_unified_t wmi_handle,
 		struct wdsentry *wds_entry,
 		u_int32_t idx);
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#ifdef WLAN_FEATURE_NAN
 QDF_STATUS (*send_ndp_initiator_req_cmd)(wmi_unified_t wmi_handle,
 				struct nan_datapath_initiator_req *req);
 QDF_STATUS (*send_ndp_responder_req_cmd)(wmi_unified_t wmi_handle,
@@ -1767,7 +1767,7 @@ QDF_STATUS (*extract_ndp_end_ind)(wmi_unified_t wmi_handle,
 		uint8_t *data, struct nan_datapath_end_indication_event **ind);
 QDF_STATUS (*extract_ndp_sch_update)(wmi_unified_t wmi_handle,
 		uint8_t *data, struct nan_datapath_sch_update_event *ind);
-#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
+#endif /* WLAN_FEATURE_NAN */
 
 QDF_STATUS (*send_obss_detection_cfg_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_obss_detection_cfg_param *obss_cfg_param);
@@ -2093,7 +2093,7 @@ static inline void wmi_ocb_attach_tlv(wmi_unified_t wmi_handle)
 }
 #endif
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#ifdef WLAN_FEATURE_NAN
 void wmi_nan_attach_tlv(wmi_unified_t wmi_handle);
 #else
 static inline void wmi_nan_attach_tlv(wmi_unified_t wmi_handle)
