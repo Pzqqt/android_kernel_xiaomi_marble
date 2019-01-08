@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -126,7 +126,7 @@ dp_wdi_event_handler(
 			"Invalid WDI event in %s", __func__);
 		return;
 	}
-	if (!txrx_pdev) {
+	if (!txrx_pdev || txrx_pdev->pdev_deinit) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"Invalid pdev in WDI event handler");
 		return;
