@@ -1061,6 +1061,7 @@ enum hdd_wext_control {
 #endif
 
 /*
+ * <ini>
  * gEnableRTTsupport
  *
  * @Min: 0 - Disabled
@@ -1068,6 +1069,14 @@ enum hdd_wext_control {
  * @Default: 1 - Enabled
  *
  * The param is used to enable/disable support for RTT
+ *
+ * Related: None.
+ *
+ * Supported Feature: RTT
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
  */
 #define CFG_ENABLE_RTT_SUPPORT CFG_INI_BOOL( \
 		"gEnableRTTSupport", \
@@ -1097,6 +1106,26 @@ enum hdd_wext_control {
 		1, \
 		"Iface combination advertising")
 
+/*
+ * <ini>
+ * gEnableUnitTestFramework - Enable/Disable unit test framework
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * Related: None
+ *
+ * Supported Feature: unit test framework
+ *
+ * Usage: Internal (only for dev and test team)
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_UNIT_TEST_FRAMEWORK CFG_INI_BOOL( \
+			"gEnableUnitTestFramework", \
+			0, \
+			"Enable/Disable unit test framework")
+
 #define CFG_HDD_ALL \
 	CFG_ENABLE_PACKET_LOG_ALL \
 	CFG_ENABLE_RUNTIME_PM_ALL \
@@ -1122,6 +1151,7 @@ enum hdd_wext_control {
 	CFG_ENABLE_MTRACE_ALL \
 	CFG(CFG_ENABLE_RAMDUMP_COLLECTION) \
 	CFG(CFG_ENABLE_RTT_SUPPORT) \
+	CFG(CFG_ENABLE_UNIT_TEST_FRAMEWORK) \
 	CFG(CFG_INTERFACE_CHANGE_WAIT) \
 	CFG(CFG_INFORM_BSS_RSSI_RAW) \
 	CFG(CFG_MULTICAST_HOST_FW_MSGS) \
