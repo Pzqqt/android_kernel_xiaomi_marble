@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -534,6 +534,7 @@ QDF_STATUS ucfg_fwol_get_tsf_gpio_pin(struct wlan_objmgr_psoc *psoc,
 	fwol_obj = fwol_get_psoc_obj(psoc);
 	if (!fwol_obj) {
 		fwol_err("Failed to get FWOL obj");
+		*tsf_gpio_pin = cfg_default(CFG_SET_TSF_GPIO_PIN);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -550,6 +551,7 @@ QDF_STATUS ucfg_fwol_get_tsf_ptp_options(struct wlan_objmgr_psoc *psoc,
 	fwol_obj = fwol_get_psoc_obj(psoc);
 	if (!fwol_obj) {
 		fwol_err("Failed to get FWOL obj");
+		*tsf_ptp_options = cfg_default(CFG_SET_TSF_PTP_OPT);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -579,6 +581,7 @@ QDF_STATUS ucfg_fwol_get_lprx_enable(struct wlan_objmgr_psoc *psoc,
 	fwol_obj = fwol_get_psoc_obj(psoc);
 	if (!fwol_obj) {
 		fwol_err("Failed to get FWOL obj");
+		*lprx_enable = cfg_default(CFG_LPRX);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -595,6 +598,7 @@ QDF_STATUS ucfg_fwol_get_sae_enable(struct wlan_objmgr_psoc *psoc,
 	fwol_obj = fwol_get_psoc_obj(psoc);
 	if (!fwol_obj) {
 		fwol_err("Failed to get FWOL obj");
+		*sae_enable = cfg_default(CFG_IS_SAE_ENABLED);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -617,6 +621,7 @@ QDF_STATUS ucfg_fwol_get_gcmp_enable(struct wlan_objmgr_psoc *psoc,
 	fwol_obj = fwol_get_psoc_obj(psoc);
 	if (!fwol_obj) {
 		fwol_err("Failed to get FWOL obj");
+		*gcmp_enable = cfg_default(CFG_ENABLE_GCMP);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -632,6 +637,7 @@ QDF_STATUS ucfg_fwol_get_enable_tx_sch_delay(struct wlan_objmgr_psoc *psoc,
 	fwol_obj = fwol_get_psoc_obj(psoc);
 	if (!fwol_obj) {
 		fwol_err("Failed to get FWOL obj");
+		*enable_tx_sch_delay = cfg_default(CFG_TX_SCH_DELAY);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -647,6 +653,7 @@ QDF_STATUS ucfg_fwol_get_enable_secondary_rate(struct wlan_objmgr_psoc *psoc,
 	fwol_obj = fwol_get_psoc_obj(psoc);
 	if (!fwol_obj) {
 		fwol_err("Failed to get FWOL obj");
+		*enable_secondary_rate = cfg_default(CFG_ENABLE_SECONDARY_RATE);
 		return QDF_STATUS_E_FAILURE;
 	}
 
