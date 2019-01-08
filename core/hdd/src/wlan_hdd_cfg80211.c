@@ -12627,11 +12627,9 @@ static void wlan_hdd_cfg80211_set_wiphy_sae_feature(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	bool sae_enable;
 
-	if (QDF_IS_STATUS_SUCCESS(ucfg_fwol_get_sae_enable(
-				  hdd_ctx->psoc, &sae_enable))) {
-		if (sae_enable)
-			wiphy->features |= NL80211_FEATURE_SAE;
-	}
+	ucfg_fwol_get_sae_enable(hdd_ctx->psoc, &sae_enable);
+	if (sae_enable)
+		wiphy->features |= NL80211_FEATURE_SAE;
 }
 #else
 static void wlan_hdd_cfg80211_set_wiphy_sae_feature(struct wiphy *wiphy,
