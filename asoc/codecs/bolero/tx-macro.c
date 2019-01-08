@@ -312,10 +312,10 @@ static int tx_macro_event_handler(struct snd_soc_component *component,
 	case BOLERO_MACRO_EVT_SSR_DOWN:
 		swrm_wcd_notify(
 			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-			SWR_DEVICE_SSR_DOWN, NULL);
+			SWR_DEVICE_DOWN, NULL);
 		swrm_wcd_notify(
 			tx_priv->swr_ctrl_data[0].tx_swr_pdev,
-			SWR_DEVICE_DOWN, NULL);
+			SWR_DEVICE_SSR_DOWN, NULL);
 		break;
 	case BOLERO_MACRO_EVT_SSR_UP:
 		/* reset swr after ssr/pdr */
