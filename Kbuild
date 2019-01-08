@@ -1318,8 +1318,9 @@ REGULATORY_OBJS := $(REG_CORE_OBJ_DIR)/reg_build_chan_list.o \
 		    $(REG_CORE_OBJ_DIR)/reg_callbacks.o \
 		    $(REG_CORE_OBJ_DIR)/reg_db.o \
 		    $(REG_CORE_OBJ_DIR)/reg_db_parser.o \
-		    $(REG_CORE_OBJ_DIR)/reg_getset.o \
+		    $(REG_CORE_OBJ_DIR)/reg_utils.o \
 		    $(REG_CORE_OBJ_DIR)/reg_lte.o \
+		    $(REG_CORE_OBJ_DIR)/reg_offload_11d_scan.o \
 		    $(REG_CORE_OBJ_DIR)/reg_opclass.o \
 		    $(REG_CORE_OBJ_DIR)/reg_priv_objs.o \
 		    $(REG_DISPATCHER_OBJ_DIR)/wlan_reg_services_api.o \
@@ -2465,10 +2466,13 @@ cppflags-$(CONFIG_WLAN_NUD_TRACKING) += -DWLAN_NUD_TRACKING
 cppflags-$(CONFIG_DISABLE_CHANNEL_LIST) += -DDISABLE_CHANNEL_LIST
 
 #Flag to enable/disable LTE COEX support
-cppflags-$(CONFIG_CONFIG_LTE_COEX) += -DCONFIG_LTE_COEX
+cppflags-$(CONFIG_LTE_COEX) += -DLTE_COEX
 
 #Flag to enable/disable HOST_OPCLASS
 cppflags-$(CONFIG_HOST_OPCLASS) += -DHOST_OPCLASS
+
+#Flag to enable/disable TARGET_11D_SCAN
+cppflags-$(CONFIG_TARGET_11D_SCAN) += -DTARGET_11D_SCAN
 
 #Flag to enable Dynamic Voltage WDCVS (Config Voltage Mode)
 cppflags-$(CONFIG_WLAN_DYNAMIC_CVM) += -DFEATURE_WLAN_DYNAMIC_CVM

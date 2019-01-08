@@ -575,10 +575,10 @@ CONFIG_WLAN_WBUFF := y
 CONFIG_DISABLE_CHANNEL_LIST :=y
 
 #Flag to enable LTE COEX feature
-CONFIG_CONFIG_LTE_COEX := y
+CONFIG_LTE_COEX := y
 
-#Flag to enable/disable HOST 11d scan
-CONFIG_HOST_11D_SCAN :=y
+#Flag to enable/disable TARGET 11d scan
+CONFIG_TARGET_11D_SCAN := y
 
 #Flag to enable HOST OPCLASS feature
 CONFIG_HOST_OPCLASS := y
