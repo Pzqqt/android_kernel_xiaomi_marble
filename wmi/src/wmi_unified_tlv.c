@@ -9108,6 +9108,7 @@ static QDF_STATUS extract_chainmask_tables_tlv(wmi_unified_t wmi_handle,
 	WMI_MAC_PHY_CHAINMASK_CAPABILITY *chainmask_caps;
 	WMI_SOC_MAC_PHY_HW_MODE_CAPS *hw_caps;
 	uint8_t i = 0, j = 0;
+	uint32_t num_mac_phy_chainmask_caps = 0;
 
 	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
 	if (!param_buf)
@@ -9127,6 +9128,26 @@ static QDF_STATUS extract_chainmask_tables_tlv(wmi_unified_t wmi_handle,
 
 	if (chainmask_caps == NULL)
 		return QDF_STATUS_E_INVAL;
+
+	for (i = 0; i < hw_caps->num_chainmask_tables; i++) {
+		if (chainmask_table[i].num_valid_chainmasks >
+		    (UINT_MAX - num_mac_phy_chainmask_caps)) {
+			wmi_err_rl("integer overflow, num_mac_phy_chainmask_caps:%d, i:%d, um_valid_chainmasks:%d",
+				   num_mac_phy_chainmask_caps, i,
+				   chainmask_table[i].num_valid_chainmasks);
+			return QDF_STATUS_E_INVAL;
+		}
+		num_mac_phy_chainmask_caps +=
+			chainmask_table[i].num_valid_chainmasks;
+	}
+
+	if (num_mac_phy_chainmask_caps >
+	    param_buf->num_mac_phy_chainmask_caps) {
+		wmi_err_rl("invalid chainmask caps num, num_mac_phy_chainmask_caps:%d, param_buf->num_mac_phy_chainmask_caps:%d",
+			   num_mac_phy_chainmask_caps,
+			   param_buf->num_mac_phy_chainmask_caps);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	for (i = 0; i < hw_caps->num_chainmask_tables; i++) {
 
