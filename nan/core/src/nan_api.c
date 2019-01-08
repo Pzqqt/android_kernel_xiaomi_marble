@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,6 +32,7 @@
 #include "cfg_nan.h"
 #include "cfg_ucfg_api.h"
 
+#ifdef WLAN_FEATURE_NAN
 /**
  * nan_cfg_init() - Initialize NAN config params
  * @psoc: Pointer to PSOC Object
@@ -39,7 +40,6 @@
  *
  * This function initialize NAN config params
  */
-#ifdef WLAN_FEATURE_NAN
 static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
 			 struct nan_psoc_priv_obj *nan_obj)
 {
@@ -48,12 +48,6 @@ static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
 
 	nan_obj->cfg_param.enable = cfg_get(psoc, CFG_NAN_ENABLE);
 }
-#else
-static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
-			 struct nan_psoc_priv_obj *nan_obj)
-{
-}
-#endif
 
 /**
  * nan_cfg_dp_init() - Initialize NAN Datapath config params
@@ -62,7 +56,6 @@ static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
  *
  * This function initialize NAN config params
  */
-#ifdef WLAN_FEATURE_NAN_DATAPATH
 static void nan_cfg_dp_init(struct wlan_objmgr_psoc *psoc,
 			    struct nan_psoc_priv_obj *nan_obj)
 {
@@ -74,6 +67,11 @@ static void nan_cfg_dp_init(struct wlan_objmgr_psoc *psoc,
 				cfg_get(psoc, CFG_NAN_RANDOMIZE_NDI_MAC);
 }
 #else
+static void nan_cfg_init(struct wlan_objmgr_psoc *psoc,
+			 struct nan_psoc_priv_obj *nan_obj)
+{
+}
+
 static void nan_cfg_dp_init(struct wlan_objmgr_psoc *psoc,
 			    struct nan_psoc_priv_obj *nan_obj)
 {

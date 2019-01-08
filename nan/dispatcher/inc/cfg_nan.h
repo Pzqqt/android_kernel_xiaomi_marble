@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -95,14 +95,10 @@
 
 #ifdef WLAN_FEATURE_NAN
 #define CFG_NAN_DISC CFG(CFG_NAN_ENABLE)
-#else
-#define CFG_NAN_DISC
-#endif
-
-#ifdef WLAN_FEATURE_NAN_DATAPATH
 #define CFG_NAN_DP      CFG(CFG_NAN_DATAPATH_ENABLE) \
 			CFG(CFG_NAN_RANDOMIZE_NDI_MAC)
 #else
+#define CFG_NAN_DISC
 #define CFG_NAN_DP
 #endif
 

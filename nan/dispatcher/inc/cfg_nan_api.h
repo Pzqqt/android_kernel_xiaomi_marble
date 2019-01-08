@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -37,14 +37,7 @@ struct wlan_objmgr_psoc;
  * This function returns NAN enable status
  */
 bool cfg_nan_get_enable(struct wlan_objmgr_psoc *psoc);
-#else
-static inline bool cfg_nan_get_enable(struct wlan_objmgr_psoc *psoc)
-{
-	return false;
-}
-#endif
 
-#ifdef WLAN_FEATURE_NAN_DATAPATH
 /**
  * cfg_nan_get_datapath_enable() - get NAN Datapath support enable status
  * @psoc: pointer to psoc object
@@ -61,6 +54,11 @@ bool cfg_nan_get_datapath_enable(struct wlan_objmgr_psoc *psoc);
  */
 bool cfg_nan_get_ndi_mac_randomize(struct wlan_objmgr_psoc *psoc);
 #else
+static inline bool cfg_nan_get_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return false;
+}
+
 static inline bool cfg_nan_get_datapath_enable(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
@@ -71,5 +69,6 @@ static inline bool cfg_nan_get_ndi_mac_randomize(struct wlan_objmgr_psoc *psoc)
 	return false;
 }
 #endif
+
 #endif
 
