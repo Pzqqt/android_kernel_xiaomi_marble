@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 #include <linux/module.h>
 #include <linux/init.h>
@@ -975,6 +975,31 @@ void wcd937x_mbhc_hs_detect_exit(struct snd_soc_component *component)
 EXPORT_SYMBOL(wcd937x_mbhc_hs_detect_exit);
 
 /*
+ * wcd937x_mbhc_ssr_down: stop mbhc during
+ * wcd937x subsystem restart
+ * @mbhc: pointer to wcd937x_mbhc structure
+ * @component: handle to snd_soc_component *
+ */
+void wcd937x_mbhc_ssr_down(struct wcd937x_mbhc *mbhc,
+		         struct snd_soc_component *component)
+{
+	struct wcd_mbhc *wcd_mbhc = NULL;
+
+	if (!mbhc || !component)
+		return;
+
+	wcd_mbhc = &mbhc->wcd_mbhc;
+	if (wcd_mbhc == NULL) {
+		dev_err(component->dev, "%s: wcd_mbhc is NULL\n", __func__);
+		return;
+	}
+
+	wcd937x_mbhc_hs_detect_exit(component);
+	wcd_mbhc_deinit(wcd_mbhc);
+}
+EXPORT_SYMBOL(wcd937x_mbhc_ssr_down);
+
+/*
  * wcd937x_mbhc_post_ssr_init: initialize mbhc for
  * wcd937x post subsystem restart
  * @mbhc: poniter to wcd937x_mbhc structure
@@ -997,8 +1022,6 @@ int wcd937x_mbhc_post_ssr_init(struct wcd937x_mbhc *mbhc,
 		return -EINVAL;
 	}
 
-	wcd937x_mbhc_hs_detect_exit(component);
-	wcd_mbhc_deinit(wcd_mbhc);
 	snd_soc_component_update_bits(component, WCD937X_ANA_MBHC_MECH,
 				0x20, 0x20);
 	ret = wcd_mbhc_init(wcd_mbhc, component, &mbhc_cb, &intr_ids,
