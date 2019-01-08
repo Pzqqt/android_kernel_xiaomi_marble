@@ -25,7 +25,7 @@
 #ifndef __MAC_NAN_DATAPATH_H
 #define __MAC_NAN_DATAPATH_H
 
-#if defined(WLAN_FEATURE_NAN_DATAPATH) || defined(WLAN_FEATURE_NAN_CONVERGENCE)
+#ifdef WLAN_FEATURE_NAN
 
 #include "sir_common.h"
 #include "ani_global.h"
@@ -78,7 +78,7 @@ static inline void lim_ndp_add_sta_rsp(struct mac_context *mac_ctx,
 {
 }
 
-#endif /* WLAN_FEATURE_NAN_DATAPATH || WLAN_FEATURE_NAN_CONVERGENCE */
+#endif /* WLAN_FEATURE_NAN */
 
 #endif /* __MAC_NAN_DATAPATH_H */
 

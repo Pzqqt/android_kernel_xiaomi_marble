@@ -183,12 +183,6 @@ ifneq ($(CONFIG_MOBILE_ROUTER), y)
 	CONFIG_QCACLD_FEATURE_NAN := y
 endif
 
-ifneq ($(CONFIG_MOBILE_ROUTER), y)
-	#Flag to enable NAN Data path
-	CONFIG_WLAN_FEATURE_NAN_DATAPATH := y
-	CONFIG_NAN_CONVERGENCE := y
-endif
-
 #Flag to enable Linux QCMBR feature as default feature
 ifeq ($(CONFIG_ROME_IF),usb)
 	CONFIG_LINUX_QCMBR :=y

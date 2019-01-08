@@ -2694,7 +2694,7 @@ static void hdd_register_policy_manager_callback(
 }
 #endif
 
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#ifdef WLAN_FEATURE_NAN
 static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 {
 	struct nan_callbacks cb_obj = {0};

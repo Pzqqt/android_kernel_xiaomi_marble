@@ -1140,7 +1140,7 @@ struct csr_roam_info {
 	tSirSmeChanInfo chan_info;
 	uint8_t target_channel;
 
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#ifdef WLAN_FEATURE_NAN
 	union {
 		struct ndi_create_rsp ndi_create_params;
 		struct ndi_delete_rsp ndi_delete_params;
@@ -1357,14 +1357,14 @@ typedef QDF_STATUS (*csr_session_close_cb)(uint8_t session_id);
 				       (pProfile)->BSSType)
 #define CSR_IS_INFRA_AP(pProfile) (eCSR_BSS_TYPE_INFRA_AP ==  \
 				   (pProfile)->BSSType)
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#ifdef WLAN_FEATURE_NAN
 #define CSR_IS_NDI(profile)  (eCSR_BSS_TYPE_NDI == (profile)->BSSType)
 #else
 #define CSR_IS_NDI(profile)  (false)
 #endif
 #define CSR_IS_CONN_INFRA_AP(pProfile)  (eCSR_BSS_TYPE_INFRA_AP == \
 					 (pProfile)->BSSType)
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#ifdef WLAN_FEATURE_NAN
 #define CSR_IS_CONN_NDI(profile)  (eCSR_BSS_TYPE_NDI == (profile)->BSSType)
 #else
 #define CSR_IS_CONN_NDI(profile)  (false)

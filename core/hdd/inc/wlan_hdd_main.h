@@ -723,7 +723,6 @@ struct hdd_mon_set_ch_info {
  * @sta_debug_state: STA context debug variable
  * @broadcast_staid: STA ID assigned for broadcast frames
  * @ch_info: monitor mode channel information
- * @ndp_ctx: NAN data path context
  * @ap_supports_immediate_power_save: Does the current AP allow our STA
  *    to immediately go into power save?
  */
@@ -1367,7 +1366,7 @@ struct hdd_adapter {
 				(&(adapter)->session.ap.hostapd_state)
 #define WLAN_HDD_GET_SAP_CTX_PTR(adapter) ((adapter)->session.ap.sap_context)
 
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#ifdef WLAN_FEATURE_NAN
 #define WLAN_HDD_IS_NDP_ENABLED(hdd_ctx) ((hdd_ctx)->nan_datapath_enabled)
 #else
 /* WLAN_HDD_GET_NDP_CTX_PTR and WLAN_HDD_GET_NDP_WEXT_STATE_PTR are not defined
@@ -1799,7 +1798,7 @@ struct hdd_context {
 	qdf_work_t sap_pre_cac_work;
 	bool hbw_requested;
 	enum RX_OFFLOAD ol_enable;
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#ifdef WLAN_FEATURE_NAN
 	bool nan_datapath_enabled;
 #endif
 	/* Present state of driver cds modules */

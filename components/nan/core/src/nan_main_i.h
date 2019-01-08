@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,7 +21,7 @@
  * used in NAN modules
  */
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#ifdef WLAN_FEATURE_NAN
 #ifndef _WLAN_NAN_MAIN_I_H_
 #define _WLAN_NAN_MAIN_I_H_
 
@@ -83,13 +83,9 @@ enum nan_disc_state {
  * @ndi_mac_randomize: Randomize NAN datapath interface MAC
  */
 struct nan_cfg_params {
-#ifdef WLAN_FEATURE_NAN
 	bool enable;
-#endif
-#ifdef WLAN_FEATURE_NAN_DATAPATH
 	bool dp_enable;
 	bool ndi_mac_randomize;
-#endif
 };
 
 /**
@@ -245,4 +241,4 @@ nan_get_connection_info(struct wlan_objmgr_psoc *psoc, uint8_t *chan,
 			uint8_t *mac_id);
 
 #endif /* _WLAN_NAN_MAIN_I_H_ */
-#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
+#endif /* WLAN_FEATURE_NAN */

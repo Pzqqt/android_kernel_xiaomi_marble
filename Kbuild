@@ -131,6 +131,7 @@ endif
 
 ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_nan.o
+HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_nan_datapath.o
 endif
 
 ifeq ($(CONFIG_QCOM_TDLS), y)
@@ -155,10 +156,6 @@ endif
 
 ifeq ($(CONFIG_LFR_SUBNET_DETECTION), y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_subnet_detect.o
-endif
-
-ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
-HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_nan_datapath.o
 endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_11AX), y)
@@ -334,7 +331,7 @@ ifeq ($(CONFIG_WLAN_FEATURE_FILS), y)
 MAC_LIM_OBJS += $(MAC_SRC_DIR)/pe/lim/lim_process_fils.o
 endif
 
-ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
+ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
 MAC_NDP_OBJS += $(MAC_SRC_DIR)/pe/nan/nan_datapath.o
 endif
 
@@ -460,7 +457,7 @@ SME_CMN_OBJS := $(SME_SRC_DIR)/common/sme_api.o \
 
 SME_RRM_OBJS := $(SME_SRC_DIR)/rrm/sme_rrm.o
 
-ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
+ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
 SME_NDP_OBJS += $(SME_SRC_DIR)/nan/nan_datapath_api.o
 endif
 
@@ -1117,7 +1114,7 @@ WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_extscan_api.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_extscan_tlv.o
 endif
 
-ifeq ($(CONFIG_NAN_CONVERGENCE), y)
+ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_nan_api.o
 WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_nan_tlv.o
 endif
@@ -1409,7 +1406,7 @@ NAN_TGT_INC  := -I$(WLAN_ROOT)/components/target_if/nan/inc
 NAN_OS_IF_DIR  := os_if/nan/src
 NAN_OS_IF_INC  := -I$(WLAN_ROOT)/os_if/nan/inc
 
-ifeq ($(CONFIG_NAN_CONVERGENCE), y)
+ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
 WLAN_NAN_OBJS := $(NAN_CORE_DIR)/nan_main.o \
 		 $(NAN_CORE_DIR)/nan_api.o \
 		 $(NAN_UCFG_DIR)/nan_ucfg_api.o \
@@ -1604,7 +1601,7 @@ WMA_SRC_DIR :=  $(WMA_DIR)/src
 WMA_INC :=	-I$(WLAN_ROOT)/$(WMA_INC_DIR) \
 		-I$(WLAN_ROOT)/$(WMA_SRC_DIR)
 
-ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
+ifeq ($(CONFIG_QCACLD_FEATURE_NAN), y)
 WMA_NDP_OBJS += $(WMA_SRC_DIR)/wma_nan_datapath.o
 endif
 
@@ -2357,10 +2354,6 @@ cppflags-$(CONFIG_WLAN_FEATURE_FIPS) += -DWLAN_FEATURE_FIPS
 cppflags-$(CONFIG_LFR_SUBNET_DETECTION) += -DFEATURE_LFR_SUBNET_DETECTION
 
 cppflags-$(CONFIG_MCC_TO_SCC_SWITCH) += -DFEATURE_WLAN_MCC_TO_SCC_SWITCH
-
-cppflags-$(CONFIG_WLAN_FEATURE_NAN_DATAPATH) += -DWLAN_FEATURE_NAN_DATAPATH
-
-cppflags-$(CONFIG_NAN_CONVERGENCE) += -DWLAN_FEATURE_NAN_CONVERGENCE
 
 cppflags-$(CONFIG_FEATURE_WLAN_D0WOW) += -DFEATURE_WLAN_D0WOW
 

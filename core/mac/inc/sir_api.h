@@ -4986,8 +4986,7 @@ struct sir_vdev_wow_stats {
 };
 #endif
 
-#ifdef WLAN_FEATURE_NAN_DATAPATH
-
+#ifdef WLAN_FEATURE_NAN
 #define IFACE_NAME_SIZE 64
 
 /**
@@ -5434,8 +5433,7 @@ struct sme_ndp_peer_ind {
 	struct qdf_mac_addr peer_mac_addr;
 	uint16_t sta_id;
 };
-
-#endif /* WLAN_FEATURE_NAN_DATAPATH */
+#endif /* WLAN_FEATURE_NAN */
 
 /**
  * struct sir_set_tx_rx_aggregation_size - sets tx rx aggregation size

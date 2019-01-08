@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,18 +36,13 @@ struct wireless_dev;
 
 #define NDP_BROADCAST_STAID           (0)
 
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#ifdef WLAN_FEATURE_NAN
 #define WLAN_HDD_IS_NDI(adapter) ((adapter)->device_mode == QDF_NDI_MODE)
 
 #define WLAN_HDD_IS_NDI_CONNECTED(adapter) ( \
 	eConnectionState_NdiConnected ==\
 		(adapter)->session.station.conn_info.connState)
-#else
-#define WLAN_HDD_IS_NDI(adapter)	(false)
-#define WLAN_HDD_IS_NDI_CONNECTED(adapter) (false)
-#endif /* WLAN_FEATURE_NAN_DATAPATH */
 
-#ifdef WLAN_FEATURE_NAN_DATAPATH
 void hdd_nan_datapath_target_config(struct hdd_context *hdd_ctx,
 						struct wma_tgt_cfg *cfg);
 void hdd_ndp_event_handler(struct hdd_adapter *adapter,
@@ -59,6 +54,9 @@ int wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 int hdd_init_nan_data_mode(struct hdd_adapter *adapter);
 void hdd_ndp_session_end_handler(struct hdd_adapter *adapter);
 #else
+#define WLAN_HDD_IS_NDI(adapter)	(false)
+#define WLAN_HDD_IS_NDI_CONNECTED(adapter) (false)
+
 static inline void hdd_nan_datapath_target_config(struct hdd_context *hdd_ctx,
 						struct wma_tgt_cfg *cfg)
 {
@@ -82,7 +80,7 @@ static inline int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 static inline void hdd_ndp_session_end_handler(struct hdd_adapter *adapter)
 {
 }
-#endif /* WLAN_FEATURE_NAN_DATAPATH */
+#endif /* WLAN_FEATURE_NAN */
 
 enum nan_datapath_state;
 struct nan_datapath_inf_create_rsp;

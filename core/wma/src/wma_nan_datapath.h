@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -42,7 +42,7 @@ static inline uint32_t wma_ndp_get_eventid_from_tlvtag(uint32_t tag)
 	return 0;
 }
 
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#ifdef WLAN_FEATURE_NAN
 #define WMA_IS_VDEV_IN_NDI_MODE(intf, vdev_id) \
 				(WMI_VDEV_TYPE_NDI == intf[vdev_id].type)
 
@@ -83,7 +83,7 @@ static inline bool wma_is_ndi_active(tp_wma_handle wma_handle)
 	}
 	return false;
 }
-#else
+#else /* WLAN_FEATURE_NAN */
 #define WMA_IS_VDEV_IN_NDI_MODE(intf, vdev_id) (false)
 static inline void wma_update_hdd_cfg_ndp(tp_wma_handle wma_handle,
 					struct wma_tgt_cfg *tgt_cfg)
@@ -105,6 +105,6 @@ static inline void wma_add_sta_ndi_mode(tp_wma_handle wma,
 					tpAddStaParams add_sta) {}
 
 static inline bool wma_is_ndi_active(tp_wma_handle wma_handle) { return false; }
-#endif /* WLAN_FEATURE_NAN_DATAPATH */
+#endif /* WLAN_FEATURE_NAN */
 
 #endif /* __WMA_NAN_DATAPATH_H */

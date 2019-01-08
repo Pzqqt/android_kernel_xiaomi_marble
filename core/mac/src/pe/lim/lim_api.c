@@ -563,7 +563,7 @@ static void lim_register_debug_callback(void)
 }
 #endif /* WLAN_FEATURE_MEMDUMP_ENABLE */
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#ifdef WLAN_FEATURE_NAN
 static void lim_nan_register_callbacks(struct mac_context *mac_ctx)
 {
 	struct nan_callbacks cb_obj = {0};

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,7 +28,7 @@
 #include "wlan_policy_mgr_public_struct.h"
 #include "qdf_status.h"
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#ifdef WLAN_FEATURE_NAN
 
 #include "../src/nan_main_i.h"
 
@@ -164,7 +164,7 @@ struct wlan_nan_rx_ops *nan_psoc_get_rx_ops(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS
 wlan_nan_get_connection_info(struct wlan_objmgr_psoc *psoc,
 			     struct policy_mgr_vdev_entry_info *conn_info);
-#else /* WLAN_FEATURE_NAN_CONVERGENCE */
+#else /* WLAN_FEATURE_NAN */
 static inline QDF_STATUS nan_init(void)
 {
 	return QDF_STATUS_SUCCESS;
@@ -191,5 +191,5 @@ wlan_nan_get_connection_info(struct wlan_objmgr_psoc *psoc,
 {
 	return QDF_STATUS_SUCCESS;
 }
-#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
+#endif /* WLAN_FEATURE_NAN */
 #endif /* _WLAN_NAN_API_H_ */

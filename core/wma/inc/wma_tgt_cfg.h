@@ -193,7 +193,7 @@ struct wma_tgt_cfg {
 #ifdef FEATURE_WLAN_RA_FILTERING
 	bool is_ra_rate_limit_enabled;
 #endif
-#ifdef WLAN_FEATURE_NAN_DATAPATH
+#ifdef WLAN_FEATURE_NAN
 	bool nan_datapath_enabled;
 #endif
 	bool sub_20_support;
