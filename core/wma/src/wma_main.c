@@ -6080,14 +6080,18 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 
 	cdp_mark_first_wakeup_packet(soc,
 		wmi_service_enabled(wmi_handle,
-			wmi_service_mark_first_wakeup_packet));
+				    wmi_service_mark_first_wakeup_packet));
 	wma_handle->is_dfs_offloaded =
 		wmi_service_enabled(wmi_handle,
-			wmi_service_dfs_phyerr_offload);
+				    wmi_service_dfs_phyerr_offload);
 
 	wma_handle->nan_datapath_enabled =
 		wmi_service_enabled(wma_handle->wmi_handle,
-			wmi_service_nan_data);
+				    wmi_service_nan_data);
+
+	wma_handle->fw_therm_throt_support =
+		wmi_service_enabled(wma_handle->wmi_handle,
+				    wmi_service_tt);
 
 	wma_set_component_caps(wma_handle->psoc);
 
@@ -9002,6 +9006,25 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+	case WMA_SET_THERMAL_THROTTLE_CFG:
+		if (!wma_handle->thermal_mgmt_info.thermalMgmtEnabled)
+			wmi_unified_thermal_mitigation_param_cmd_send(
+					wma_handle->wmi_handle, msg->bodyptr);
+		else
+			qdf_status = QDF_STATUS_E_INVAL;
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_SET_THERMAL_MGMT:
+		if (!wma_handle->thermal_mgmt_info.thermalMgmtEnabled)
+			wma_set_thermal_mgmt(
+				wma_handle,
+				*((t_thermal_cmd_params *)msg->bodyptr));
+		else
+			qdf_status = QDF_STATUS_E_INVAL;
+		qdf_mem_free(msg->bodyptr);
+		break;
+#endif /* FW_THERMAL_THROTTLE_SUPPORT */
 	default:
 		WMA_LOGD("Unhandled WMA message of type %d", msg->type);
 		if (msg->bodyptr)

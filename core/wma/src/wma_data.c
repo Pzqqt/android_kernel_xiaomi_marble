@@ -891,17 +891,14 @@ wma_data_tx_ack_comp_hdlr(void *wma_context, qdf_nbuf_t netbuf, int32_t status)
 	void *pdev;
 	tp_wma_handle wma_handle = (tp_wma_handle) wma_context;
 
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("%s: Invalid WMA Handle", __func__);
 		return;
 	}
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (NULL == pdev) {
-		WMA_LOGE("%s: Failed to get pdev", __func__);
+	if (!pdev)
 		return;
-	}
 
 	/*
 	 * if netBuf does not match with pending nbuf then just free the
@@ -990,7 +987,7 @@ int wma_peer_state_change_event_handler(void *handle,
 
 	event = param_buf->fixed_param;
 	vdev = wma_find_vdev_by_id(wma_handle, event->vdev_id);
-	if (NULL == vdev) {
+	if (!vdev) {
 		WMA_LOGD("%s: Couldn't find vdev for vdev_id: %d",
 			 __func__, event->vdev_id);
 		return -EINVAL;
@@ -1032,10 +1029,8 @@ QDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
 	uint32_t pdev_id;
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (NULL == wma) {
-		WMA_LOGE("%s : Failed to get wma", __func__);
+	if (!wma)
 		return QDF_STATUS_E_FAULT;
-	}
 
 	/*
 	 * Since there could be up to two instances of OCS in FW (one per MAC),
@@ -1080,7 +1075,6 @@ QDF_STATUS wma_set_mcc_channel_time_latency(tp_wma_handle wma,
 	}
 	mac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac) {
-		WMA_LOGE("%s:NULL mac ptr. Exiting", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1145,7 +1139,6 @@ QDF_STATUS wma_set_mcc_channel_time_quota(tp_wma_handle wma,
 	}
 	mac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac) {
-		WMA_LOGE("%s:NULL mac ptr. Exiting", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1209,9 +1202,7 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 	}
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (NULL == pdev) {
-		WMA_LOGE("%s: Unable to get TXRX context", __func__);
+	if (!pdev) {
 		params->status = false;
 		goto out;
 	}
@@ -1676,16 +1667,14 @@ QDF_STATUS wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
 	struct cdp_pdev *curr_pdev;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
-	if (NULL == wma || NULL == config) {
+	if (!wma || !config) {
 		WMA_LOGE("%s Invalid input\n", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	curr_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (NULL == curr_pdev) {
-		WMA_LOGE("%s: Failed to get pdev\n", __func__);
+	if (!curr_pdev)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	WMA_LOGE("%s enable %d period %d txq limit %d\n", __func__,
 		 config->enable,
@@ -1721,6 +1710,75 @@ QDF_STATUS wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
 }
 #endif /* defined(CONFIG_HL_SUPPORT) && defined(QCA_BAD_PEER_TX_FLOW_CL) */
 
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+/**
+ * wma_update_thermal_mitigation_to_fw - update thermal mitigation to fw
+ * @wma: wma handle
+ * @thermal_level: thermal level
+ *
+ * This function sends down thermal mitigation params to the fw
+ *
+ * Returns: QDF_STATUS_SUCCESS for success otherwise failure
+ */
+static QDF_STATUS wma_update_thermal_mitigation_to_fw(tp_wma_handle wma,
+						      u_int8_t thermal_level)
+{
+	struct thermal_mitigation_params therm_data;
+
+	/* Check if vdev is in mcc, if in mcc set dc value as 10, else 100 */
+	therm_data.dc = 100;
+	therm_data.enable = 1;
+	therm_data.levelconf[0].dcoffpercent =
+		wma->thermal_mgmt_info.throttle_duty_cycle_tbl[thermal_level];
+	therm_data.levelconf[0].priority = 0;
+
+	return wmi_unified_thermal_mitigation_param_cmd_send(wma, &therm_data);
+}
+#else /* FW_THERMAL_THROTTLE_SUPPORT */
+/**
+ * wma_update_thermal_mitigation_to_fw - update thermal mitigation to fw
+ * @wma: wma handle
+ * @thermal_level: thermal level
+ *
+ * This function sends down thermal mitigation params to the fw
+ *
+ * Returns: QDF_STATUS_SUCCESS for success otherwise failure
+ */
+static QDF_STATUS wma_update_thermal_mitigation_to_fw(tp_wma_handle wma,
+						      u_int8_t thermal_level)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * wma_update_thermal_cfg_to_fw() - update thermal configuration to FW
+ * @wma: Pointer to WMA handle
+ *
+ * This function update thermal configuration to FW
+ *
+ * Returns: QDF_STATUS_SUCCESS for success otherwise failure
+ */
+static QDF_STATUS wma_update_thermal_cfg_to_fw(tp_wma_handle wma)
+{
+	t_thermal_cmd_params thermal_params;
+
+	/* Get the temperature thresholds to set in firmware */
+	thermal_params.minTemp =
+		wma->thermal_mgmt_info.thermalLevels[WLAN_WMA_THERMAL_LEVEL_0].
+		minTempThreshold;
+	thermal_params.maxTemp =
+		wma->thermal_mgmt_info.thermalLevels[WLAN_WMA_THERMAL_LEVEL_0].
+		maxTempThreshold;
+	thermal_params.thermalEnable =
+		wma->thermal_mgmt_info.thermalMgmtEnabled;
+
+	WMA_LOGE("TM sending to fw: min_temp %d max_temp %d enable %d",
+		 thermal_params.minTemp, thermal_params.maxTemp,
+		 thermal_params.thermalEnable);
+
+	return wma_set_thermal_mgmt(wma, thermal_params);
+}
 
 /**
  * wma_process_init_thermal_info() - initialize thermal info
@@ -1736,19 +1794,20 @@ QDF_STATUS wma_process_init_bad_peer_tx_ctl_info(tp_wma_handle wma,
 QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 					 t_thermal_mgmt *pThermalParams)
 {
-	t_thermal_cmd_params thermal_params;
 	struct cdp_pdev *curr_pdev;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+	int i = 0;
+#endif /* FW_THERMAL_THROTTLE_SUPPORT */
 
-	if (NULL == wma || NULL == pThermalParams) {
+	if (!wma || !pThermalParams) {
 		WMA_LOGE("TM Invalid input");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	curr_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (NULL == curr_pdev) {
-		WMA_LOGE("%s: Failed to get pdev", __func__);
+	if (!curr_pdev)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	WMA_LOGD("TM enable %d period %d", pThermalParams->thermalMgmtEnabled,
 		 pThermalParams->throttlePeriod);
@@ -1797,30 +1856,27 @@ QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 		 wma->thermal_mgmt_info.thermalLevels[3].minTempThreshold,
 		 wma->thermal_mgmt_info.thermalLevels[3].maxTempThreshold);
 
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+	for (i = 0; i < THROTTLE_LEVEL_MAX; i++)
+		wma->thermal_mgmt_info.throttle_duty_cycle_tbl[i] =
+				pThermalParams->throttle_duty_cycle_tbl[i];
+#endif /* FW_THERMAL_THROTTLE_SUPPORT */
+
 	if (wma->thermal_mgmt_info.thermalMgmtEnabled) {
-		cdp_throttle_init_period(cds_get_context(QDF_MODULE_ID_SOC),
-				curr_pdev,
-				pThermalParams->throttlePeriod,
+		if (!wma->fw_therm_throt_support) {
+			cdp_throttle_init_period(
+				cds_get_context(QDF_MODULE_ID_SOC),
+				curr_pdev, pThermalParams->throttlePeriod,
 				&pThermalParams->throttle_duty_cycle_tbl[0]);
-
-		/* Get the temperature thresholds to set in firmware */
-		thermal_params.minTemp =
-			wma->thermal_mgmt_info.thermalLevels[WLAN_WMA_THERMAL_LEVEL_0].minTempThreshold;
-		thermal_params.maxTemp =
-			wma->thermal_mgmt_info.thermalLevels[WLAN_WMA_THERMAL_LEVEL_0].maxTempThreshold;
-		thermal_params.thermalEnable =
-			wma->thermal_mgmt_info.thermalMgmtEnabled;
-
-		WMA_LOGE("TM sending the following to firmware: min %d max %d enable %d",
-			thermal_params.minTemp, thermal_params.maxTemp,
-			thermal_params.thermalEnable);
-
-		if (QDF_STATUS_SUCCESS !=
-		    wma_set_thermal_mgmt(wma, thermal_params)) {
-			WMA_LOGE("Could not send thermal mgmt command to the firmware!");
+		} else {
+			qdf_status = wma_update_thermal_mitigation_to_fw(
+					wma, WLAN_WMA_THERMAL_LEVEL_0);
+			if (QDF_STATUS_SUCCESS != qdf_status)
+				return qdf_status;
 		}
+		qdf_status = wma_update_thermal_cfg_to_fw(wma);
 	}
-	return QDF_STATUS_SUCCESS;
+	return qdf_status;
 }
 
 /**
@@ -1866,16 +1922,14 @@ QDF_STATUS wma_process_set_thermal_level(tp_wma_handle wma,
 {
 	struct cdp_pdev *curr_pdev;
 
-	if (NULL == wma) {
+	if (!wma) {
 		WMA_LOGE("TM Invalid input");
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	curr_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (NULL == curr_pdev) {
-		WMA_LOGE("%s: Failed to get pdev", __func__);
+	if (!curr_pdev)
 		return QDF_STATUS_E_FAILURE;
-	}
 
 	WMA_LOGE("TM set level %d", thermal_level);
 
@@ -1899,8 +1953,7 @@ QDF_STATUS wma_process_set_thermal_level(tp_wma_handle wma,
 	wma->thermal_mgmt_info.thermalCurrLevel = thermal_level;
 
 	cdp_throttle_set_level(cds_get_context(QDF_MODULE_ID_SOC),
-			curr_pdev,
-			thermal_level);
+			       curr_pdev, thermal_level);
 
 	/* Send SME SET_THERMAL_LEVEL_IND message */
 	wma_set_thermal_level_ind(thermal_level);
@@ -1978,13 +2031,13 @@ static uint8_t wma_thermal_mgmt_get_level(void *handle, uint32_t temp)
  * wma_thermal_mgmt_evt_handler() - thermal mgmt event handler
  * @wma_handle: Pointer to WMA handle
  * @event: Thermal event information
+ * @len: length of the event
  *
- * This function handles the thermal mgmt event from the firmware len
+ * This function handles the thermal mgmt event from the firmware
  *
  * Return: 0 for success otherwise failure
  */
-int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
-					uint32_t len)
+int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event, uint32_t len)
 {
 	tp_wma_handle wma;
 	wmi_thermal_mgmt_event_fixed_param *tm_event;
@@ -1993,14 +2046,14 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
 	WMI_THERMAL_MGMT_EVENTID_param_tlvs *param_buf;
 	struct cdp_pdev *curr_pdev;
 
-	if (NULL == event || NULL == handle) {
+	if (!event || !handle) {
 		WMA_LOGE("Invalid thermal mitigation event buffer");
 		return -EINVAL;
 	}
 
 	wma = (tp_wma_handle) handle;
 
-	if (NULL == wma) {
+	if (!wma) {
 		WMA_LOGE("%s: Failed to get wma handle", __func__);
 		return -EINVAL;
 	}
@@ -2008,10 +2061,8 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
 	param_buf = (WMI_THERMAL_MGMT_EVENTID_param_tlvs *) event;
 
 	curr_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (NULL == curr_pdev) {
-		WMA_LOGE("%s: Failed to get pdev", __func__);
+	if (!curr_pdev)
 		return -EINVAL;
-	}
 
 	/* Check if thermal mitigation is enabled */
 	if (!wma->thermal_mgmt_info.thermalMgmtEnabled) {
@@ -2036,13 +2087,21 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
 
 	wma->thermal_mgmt_info.thermalCurrLevel = thermal_level;
 
-	/* Inform txrx */
-	cdp_throttle_set_level(cds_get_context(QDF_MODULE_ID_SOC),
-			curr_pdev,
-			thermal_level);
+	if (!wma->fw_therm_throt_support) {
+		/* Inform txrx */
+		cdp_throttle_set_level(cds_get_context(QDF_MODULE_ID_SOC),
+				       curr_pdev, thermal_level);
+	}
 
 	/* Send SME SET_THERMAL_LEVEL_IND message */
 	wma_set_thermal_level_ind(thermal_level);
+
+	if (wma->fw_therm_throt_support) {
+		/* Send duty cycle info to firmware for fw to throttle */
+		if (QDF_STATUS_SUCCESS !=
+			wma_update_thermal_mitigation_to_fw(wma, thermal_level))
+			return QDF_STATUS_E_FAILURE;
+	}
 
 	/* Get the temperature thresholds to set in firmware */
 	thermal_params.minTemp =
@@ -2092,10 +2151,8 @@ int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 	}
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (NULL == pdev) {
-		WMA_LOGE("%s: could not get pdev context", __func__);
+	if (!pdev)
 		return 0;
-	}
 
 	param_tlvs = (WMI_PEER_INFO_EVENTID_param_tlvs *) data;
 	fix_param = param_tlvs->fixed_param;
@@ -2284,7 +2341,7 @@ static void wma_decap_to_8023(qdf_nbuf_t msdu, struct wma_decap_info_t *info)
 		break;
 	}
 
-	if (llc_hdr == NULL) {
+	if (!llc_hdr) {
 		ethr_hdr->ethertype[0] = (ether_type >> 8) & 0xff;
 		ethr_hdr->ethertype[1] = (ether_type) & 0xff;
 	} else {
@@ -2430,7 +2487,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	uint8_t *igtk;
 	uint16_t key_len;
 
-	if (NULL == wma_handle) {
+	if (!wma_handle) {
 		WMA_LOGE("wma_handle is NULL");
 		cds_packet_free((void *)tx_frame);
 		return QDF_STATUS_E_FAILURE;
@@ -2460,7 +2517,6 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 	mac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!mac) {
-		WMA_LOGE("mac Handle is NULL");
 		cds_packet_free((void *)tx_frame);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2610,8 +2666,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			(struct ieee80211_frame *)qdf_nbuf_data(skb);
 		unsigned long curr_timestamp = qdf_mc_timer_get_system_ticks();
 
-		if (pdev == NULL) {
-			WMA_LOGE("%s: pdev pointer is not available", __func__);
+		if (!pdev) {
 			cds_packet_free((void *)tx_frame);
 			return QDF_STATUS_E_FAULT;
 		}
@@ -2705,7 +2760,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 	ctrl_pdev = cdp_get_ctrl_pdev_from_vdev(soc,
 				txrx_vdev);
-	if (ctrl_pdev == NULL) {
+	if (!ctrl_pdev) {
 		WMA_LOGE("ol_pdev_handle is NULL\n");
 		cds_packet_free((void *)tx_frame);
 		return QDF_STATUS_E_FAILURE;
@@ -2919,7 +2974,7 @@ QDF_STATUS wma_ds_peek_rx_packet_info(cds_pkt_t *pkt, void **pkt_meta,
 				      bool bSwap)
 {
 	/* Sanity Check */
-	if (pkt == NULL) {
+	if (!pkt) {
 		WMA_LOGE("wma:Invalid parameter sent on wma_peek_rx_pkt_info");
 		return QDF_STATUS_E_FAULT;
 	}
@@ -2995,10 +3050,8 @@ void ol_rx_err(void *pdev, uint8_t vdev_id,
 	struct ether_header *eth_hdr;
 	struct scheduler_msg cds_msg = {0};
 
-	if (NULL == wma) {
-		WMA_LOGE("%s: Failed to get wma", __func__);
+	if (!wma)
 		return;
-	}
 
 	if (err_type != OL_RX_ERR_TKIP_MIC)
 		return;
@@ -3061,10 +3114,8 @@ void wma_tx_abort(uint8_t vdev_id)
 	struct peer_flush_params param = {0};
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
-	if (NULL == wma) {
-		WMA_LOGE("%s: wma is NULL", __func__);
+	if (!wma)
 		return;
-	}
 
 	iface = &wma->interfaces[vdev_id];
 	if (!iface->handle) {
@@ -3103,7 +3154,7 @@ QDF_STATUS wma_lro_config_cmd(void *handle,
 	struct wmi_lro_config_cmd_t wmi_lro_cmd = {0};
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
-	if (NULL == wma || NULL == wma_lro_cmd) {
+	if (!wma || !wma_lro_cmd) {
 		wma_err("Invalid input!");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3145,7 +3196,7 @@ wma_indicate_err(
 		struct scheduler_msg cds_msg = {0};
 		uint8_t vdev_id;
 
-		if (NULL == wma) {
+		if (!wma) {
 			WMA_LOGE("%s: Failed to get wma context",
 				 __func__);
 			return;

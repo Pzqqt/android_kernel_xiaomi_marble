@@ -1088,6 +1088,7 @@ struct wma_valid_channels {
  * @wma_fw_time_sync_timer: timer used for firmware time sync
  * @critical_events_in_flight: number of suspend-preventing events
  *   in flight
+ * * @fw_therm_throt_support: FW Supports thermal throttling?
  *
  * This structure is the global wma context.  It contains global wma
  * module parameters and handles of other modules.
@@ -1222,6 +1223,7 @@ typedef struct {
 	uint8_t  ito_repeat_count;
 	qdf_mc_timer_t wma_fw_time_sync_timer;
 	qdf_atomic_t critical_events_in_flight;
+	bool fw_therm_throt_support;
 } t_wma_handle, *tp_wma_handle;
 
 extern void cds_wma_complete_cback(void);

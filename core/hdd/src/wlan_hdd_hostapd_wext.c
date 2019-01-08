@@ -3041,6 +3041,14 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	}
 #endif
 	,
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+	{
+		WE_SET_THERMAL_THROTTLE_CFG,
+		IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
+		0, "setThermalCfg"
+	}
+	,
+#endif /* FW_THERMAL_THROTTLE_SUPPORT */
 	/* handlers for main ioctl */
 	{
 		QCSAP_IOCTL_MODIFY_ACL,

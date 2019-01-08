@@ -2554,10 +2554,11 @@
 #ifdef WLAN_FEATURE_MOTION_DETECTION
 #undef  MAX_VAR_ARGS
 #define MAX_VAR_ARGS                              15
+#endif /* WLAN_FEATURE_MOTION_DETECTION */
 #define WE_MOTION_DET_CONFIG_PARAM                25
 #define WE_MOTION_DET_BASE_LINE_CONFIG_PARAM      26
-#endif /* WLAN_FEATURE_MOTION_DETECTION */
 
+#define WE_SET_THERMAL_THROTTLE_CFG               27
 /*
  * <ioctl>
  * fips_test - Perform a FIPS test
@@ -3291,7 +3292,7 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 	case CDP_NAPI_STATS:
 		if (hdd_display_napi_stats()) {
 			hdd_err("error displaying napi stats");
-			ret = EFAULT;
+			ret = -EFAULT;
 		}
 		break;
 	case CDP_DP_RX_THREAD_STATS:
@@ -3308,7 +3309,7 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 					   QDF_STATS_VERBOSITY_LEVEL_HIGH);
 		if (status == QDF_STATUS_E_INVAL) {
 			hdd_display_stats_help();
-			ret = EINVAL;
+			ret = -EINVAL;
 		}
 		break;
 	}
@@ -7750,6 +7751,43 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	}
 	break;
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+	case WE_SET_THERMAL_THROTTLE_CFG:
+	{
+		QDF_STATUS status;
+
+		if (num_args != 7) {
+			hdd_err("set_thermal_cfg: Invalid no of args");
+			return -EINVAL;
+		}
+
+		/* Check for valid inputs */
+		if (apps_args[0] < 0 || apps_args[0] > 1 || apps_args[1] < 0 ||
+		    apps_args[2] < 0 || apps_args[2] > 100 ||
+		    apps_args[3] < 0 || apps_args[3] > 3 ||  apps_args[4] < 0 ||
+		    apps_args[5] < 0 || apps_args[6] < 0 ||
+		    apps_args[5] <= apps_args[4])
+			return -EINVAL;
+
+		status = sme_set_thermal_throttle_cfg(hdd_ctx->mac_handle,
+						      apps_args[0],
+						      apps_args[1],
+						      apps_args[2],
+						      apps_args[3],
+						      apps_args[6]);
+		if (QDF_IS_STATUS_ERROR(status))
+			return qdf_status_to_os_return(status);
+
+		if (!apps_args[6]) {
+			status = sme_set_thermal_mgmt(hdd_ctx->mac_handle,
+						      apps_args[4],
+						      apps_args[5]);
+			if (QDF_IS_STATUS_ERROR(status))
+				return qdf_status_to_os_return(status);
+		}
+		break;
+	}
+#endif /* FW_THERMAL_THROTTLE_SUPPORT */
 	default:
 	{
 		hdd_err("Invalid IOCTL command %d", sub_cmd);
@@ -9755,6 +9793,7 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
 	 "dl_type"},
+
 	{WE_DBGLOG_REPORT_ENABLE,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
@@ -9770,7 +9809,12 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 	 0,
 	 "txrx_stats"},
-
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+	{WE_SET_THERMAL_THROTTLE_CFG,
+	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
+	 0,
+	 "set_thermal_cfg"},
+#endif /* FW_THERMAL_THROTTLE_SUPPORT */
 	{WE_TXRX_FWSTATS_RESET,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
@@ -9928,8 +9972,8 @@ static const struct iw_priv_args we_private_args[] = {
 	 "getMaxAssoc"},
 
 	{WE_GET_SAP_AUTO_CHANNEL_SELECTION,
-		0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-		"getAutoChannel" },
+	 0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 "getAutoChannel"},
 
 	{WE_GET_CONCURRENCY_MODE,
 	 0,
@@ -10150,14 +10194,17 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 "get_temp"},
+
 	{WE_GET_DCM,
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 "get_dcm"},
+
 	{WE_GET_RANGE_EXT,
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 "get_range_ext"},
+
 	/* handlers for main ioctl */
 	{WLAN_PRIV_SET_CHAR_GET_NONE,
 	 IW_PRIV_TYPE_CHAR | 512,
@@ -10226,11 +10273,12 @@ static const struct iw_priv_args we_private_args[] = {
 	{WLAN_PRIV_SET_NONE_GET_THREE_INT,
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3,
-	 "" },
+	 ""},
+
 	{WE_GET_TSF,
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3,
-	 "get_tsf" },
+	 "get_tsf"},
 
 	{WE_SET_DUAL_MAC_SCAN_CONFIG,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3,
@@ -10248,69 +10296,68 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "version"},
+
 	{WE_GET_STATS,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getStats"},
+
 	{WE_GET_SUSPEND_RESUME_STATS,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getSuspendStats"},
+
 	{WE_LIST_FW_PROFILE,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "listProfile"},
+
 	{WE_GET_STATES,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getHostStates"},
+
 	{WE_GET_CFG,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getConfig"},
+
 	{WE_GET_RSSI,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getRSSI"},
+
 	{WE_GET_WMM_STATUS,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getWmmStatus"},
-	{
-		WE_GET_CHANNEL_LIST,
-		0,
-		IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
-		"getChannelList"
-	},
+
+	{WE_GET_CHANNEL_LIST,
+	 0,
+	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
+	 "getChannelList"},
 #ifdef FEATURE_WLAN_TDLS
-	{
-		WE_GET_TDLS_PEERS,
-		0,
-		IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
-		"getTdlsPeers"
-	},
+	{WE_GET_TDLS_PEERS,
+	 0,
+	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
+	 "getTdlsPeers"},
 #endif
 #ifdef WLAN_FEATURE_11W
-	{
-		WE_GET_11W_INFO,
-		0,
-		IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
-		"getPMFInfo"
-	},
+	{WE_GET_11W_INFO,
+	 0,
+	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
+	 "getPMFInfo"},
 #endif
-	{
-		WE_GET_STA_CXN_INFO,
-		0,
-		IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
-		"get_cxn_info"
-	},
+	{WE_GET_STA_CXN_INFO,
+	 0,
+	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
+	 "get_cxn_info"	},
 
-	{
-		WE_GET_IBSS_STA_INFO,
-		0,
-		IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
-		"getIbssSTAs"
-	},
+	{WE_GET_IBSS_STA_INFO,
+	 0,
+	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
+	 "getIbssSTAs"},
+
 	{WE_GET_PHYMODE,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
@@ -10338,12 +10385,11 @@ static const struct iw_priv_args we_private_args[] = {
 	 ""},
 
 	/* handlers for sub-ioctl */
-	{
-		WE_IBSS_GET_PEER_INFO_ALL,
-		0,
-		0,
-		"ibssPeerInfoAll"
-	},
+	{WE_IBSS_GET_PEER_INFO_ALL,
+	 0,
+	 0,
+	 "ibssPeerInfoAll"},
+
 	{WE_GET_RECOVERY_STAT,
 	 0,
 	 0,
@@ -10439,19 +10485,15 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 "pm_set_hw_mode"},
 #endif
-	{
-		WE_UNIT_TEST_CMD,
-		IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
-		0,
-		"setUnitTestCmd"
-	},
-	{
-		WE_MAC_PWR_DEBUG_CMD,
-		IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
-		0,
-		"halPwrDebug"
-	},
+	{WE_UNIT_TEST_CMD,
+	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
+	 0,
+	 "setUnitTestCmd"},
 
+	{WE_MAC_PWR_DEBUG_CMD,
+	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
+	 0,
+	 "halPwrDebug"},
 #ifdef WLAN_FEATURE_GPIO_LED_FLASHING
 	{WE_LED_FLASHING_PARAM,
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
@@ -10489,181 +10531,154 @@ static const struct iw_priv_args we_private_args[] = {
 	 "getTspec"},
 
 	/* handlers for main ioctl - host offload */
-	{
-		WLAN_PRIV_SET_HOST_OFFLOAD,
-		IW_PRIV_TYPE_BYTE | sizeof(struct host_offload_req),
-		0,
-		"setHostOffload"
-	}
-	,
+	{WLAN_PRIV_SET_HOST_OFFLOAD,
+	 IW_PRIV_TYPE_BYTE | sizeof(struct host_offload_req),
+	 0,
+	 "setHostOffload"},
 
-	{
-		WLAN_GET_WLAN_STATISTICS,
-		0,
-		IW_PRIV_TYPE_BYTE | WE_MAX_STR_LEN,
-		"getWlanStats"
-	}
-	,
+	{WLAN_GET_WLAN_STATISTICS,
+	 0,
+	 IW_PRIV_TYPE_BYTE | WE_MAX_STR_LEN,
+	 "getWlanStats"},
 
-	{
-		WLAN_SET_KEEPALIVE_PARAMS,
-		IW_PRIV_TYPE_BYTE | sizeof(tSirKeepAliveReq) |
-		IW_PRIV_SIZE_FIXED,
-		0,
-		"setKeepAlive"
-	}
-	,
+	{WLAN_SET_KEEPALIVE_PARAMS,
+	 IW_PRIV_TYPE_BYTE | sizeof(tSirKeepAliveReq) |
+	 IW_PRIV_SIZE_FIXED,
+	 0,
+	 "setKeepAlive"},
 #ifdef WLAN_FEATURE_PACKET_FILTERING
-	{
-		WLAN_SET_PACKET_FILTER_PARAMS,
-		IW_PRIV_TYPE_BYTE |
-		sizeof(struct pkt_filter_cfg),
-		0,
-		"setPktFilter"
-	}
-	,
+	{WLAN_SET_PACKET_FILTER_PARAMS,
+	 IW_PRIV_TYPE_BYTE |
+	 sizeof(struct pkt_filter_cfg),
+	 0,
+	 "setPktFilter"},
 #endif
 #ifdef FEATURE_WLAN_SCAN_PNO
-	{
-		WLAN_SET_PNO,
-		IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
-		0,
-		"setpno"
-	}
-	,
+	{WLAN_SET_PNO,
+	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
+	 0,
+	 "setpno"},
 #endif
-	{
-		WLAN_SET_BAND_CONFIG,
-		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-		0,
-		"SETBAND"
-	}
-	,
-	{
-		WLAN_PRIV_SET_MCBC_FILTER,
-		0,
-		0,
-		"setMCBCFilter"
-	}
-	,
+	{WLAN_SET_BAND_CONFIG,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0,
+	 "SETBAND"},
 
-	{
-		WLAN_GET_LINK_SPEED,
-		IW_PRIV_TYPE_CHAR | 18,
-		IW_PRIV_TYPE_CHAR | 5, "getLinkSpeed"
-	}
-	,
+	{WLAN_PRIV_SET_MCBC_FILTER,
+	 0,
+	 0,
+	 "setMCBCFilter"},
+
+	{WLAN_GET_LINK_SPEED,
+	 IW_PRIV_TYPE_CHAR | 18,
+	 IW_PRIV_TYPE_CHAR | 5,
+	 "getLinkSpeed"},
 
 	/* handlers for main ioctl */
 	{WLAN_PRIV_SET_TWO_INT_GET_NONE,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0,
-	 ""}
-	,
+	 ""},
+
 	{WE_SET_SMPS_PARAM,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
-	 0, "set_smps_param"}
-	,
+	 0, "set_smps_param"},
+
 	{WLAN_SET_DOT11P_CHANNEL_SCHED,
 	 IW_PRIV_TYPE_BYTE | sizeof(struct dot11p_channel_sched),
-	 0, "set_dot11p" }
-	,
+	 0, "set_dot11p" },
+
 #ifdef CONFIG_WLAN_DEBUG_CRASH_INJECT
 	{WE_SET_FW_CRASH_INJECT,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
-	 0, "crash_inject"}
-	,
+	 0, "crash_inject"},
+
 #endif
 #if defined(WMI_INTERFACE_EVENT_LOGGING) || defined(FEATURE_HTC_CREDIT_HISTORY)
 	{WE_LOG_BUFFER,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
-	 0, "log_buffer"}
-	,
+	 0, "log_buffer"},
+
 #endif
 	{WE_SET_BA_AGEING_TIMEOUT,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
-	 0, "set_ba_timeout"}
-	,
+	 0, "set_ba_timeout"},
+
 #ifdef WLAN_SUSPEND_RESUME_TEST
 	{WE_SET_WLAN_SUSPEND,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
-	 0, "wlan_suspend"}
-	,
+	 0, "wlan_suspend"},
+
 	{WE_SET_WLAN_RESUME,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
-	 0, "wlan_resume"}
-	,
+	 0, "wlan_resume"},
 #endif
 	{WE_ENABLE_FW_PROFILE,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
-	 0, "enableProfile"}
-	,
+	 0, "enableProfile"},
+
 	{WE_SET_FW_PROFILE_HIST_INTVL,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
-	 0, "set_hist_intvl"}
-	,
+	 0, "set_hist_intvl"},
+
 	{WE_SET_DUAL_MAC_FW_MODE_CONFIG,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
-	 0, "set_fw_mode_cfg"}
-	,
+	 0, "set_fw_mode_cfg"},
 #ifdef CONFIG_DP_TRACE
 	{WE_DUMP_DP_TRACE_LEVEL,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
-	 0, "dump_dp_trace"}
-	,
+	 0, "dump_dp_trace"},
 #endif
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
 	{WE_SET_MON_MODE_CHAN,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
-	 0, "setMonChan"}
-	,
+	 0, "setMonChan"},
 #endif
 	{WE_GET_ROAM_SYNCH_DELAY,
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	 "hostroamdelay"}
-	,
+	 "hostroamdelay"},
+
 	{WE_SET_11AX_RATE,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
-	 "set_11ax_rate"}
-	,
+	 "set_11ax_rate"},
+
 	{WE_SET_DCM,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
-	 "enable_dcm"}
-	,
+	 "enable_dcm"},
+
 	{WE_SET_RANGE_EXT,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
-	 "range_ext"}
-	,
+	 "range_ext"},
+
 	{WLAN_PRIV_SET_FTIES,
 	 IW_PRIV_TYPE_CHAR | MAX_FTIE_SIZE,
 	 0,
-	 "set_ft_ies"}
-	,
+	 "set_ft_ies"},
+
 #ifdef WLAN_FEATURE_MOTION_DETECTION
 	{WE_MOTION_DET_START_STOP,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
-	 "mt_start"}
-	,
+	 "mt_start"},
+
 	{WE_MOTION_DET_BASE_LINE_START_STOP,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
-	 "mt_bl_start"}
-	,
+	 "mt_bl_start"},
+
 	{WE_MOTION_DET_CONFIG_PARAM,
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 	 0,
-	 "mt_config"}
-	,
+	 "mt_config"},
+
 	{WE_MOTION_DET_BASE_LINE_CONFIG_PARAM,
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 	 0,
-	 "mt_bl_config"}
-	,
+	 "mt_bl_config"},
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
 };
 

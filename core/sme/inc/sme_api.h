@@ -3147,5 +3147,34 @@ QDF_STATUS sme_set_md_host_evt_cb
 	void *hdd_ctx
 );
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+/**
+ * sme_set_thermal_throttle_cfg() - SME API to set the thermal throttle
+ * configuration parameters
+ * @mac_handle: Opaque handle to the global MAC context
+ * @enable: Enable Throttle
+ * @dc: duty cycle in msecs
+ * @dc_off_percent: duty cycle off percentage
+ * @prio: Disables the transmit queues in fw that have lower priority
+ * than value defined by prio
+ * @target_temp: Target temperature
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_thermal_throttle_cfg(mac_handle_t mac_handle, bool enable,
+					uint32_t dc, uint32_t dc_off_percent,
+					uint32_t prio, uint32_t target_temp);
 
+/**
+ * sme_set_thermal_mgmt() - SME API to set the thermal management params
+ * @mac_handle: Opaque handle to the global MAC context
+ * @lower_thresh_deg: Lower threshold value of Temperature
+ * @higher_thresh_deg: Higher threshold value of Temperature
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_thermal_mgmt(mac_handle_t mac_handle,
+				uint16_t lower_thresh_deg,
+				uint16_t higher_thresh_deg);
+#endif /* FW_THERMAL_THROTTLE_SUPPORT */
 #endif /* #if !defined( __SME_API_H ) */

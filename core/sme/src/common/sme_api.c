@@ -14921,7 +14921,7 @@ QDF_STATUS sme_set_md_host_evt_cb(
 QDF_STATUS sme_motion_det_config(mac_handle_t mac_handle,
 				 struct sme_motion_det_cfg *motion_det_config)
 {
-	struct scheduler_msg msg = {0};
+	struct scheduler_msg msg;
 	struct sme_motion_det_cfg *motion_det_cfg;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -14964,7 +14964,7 @@ QDF_STATUS sme_motion_det_config(mac_handle_t mac_handle,
 QDF_STATUS sme_motion_det_enable(mac_handle_t mac_handle,
 				 struct sme_motion_det_en *motion_det_enable)
 {
-	struct scheduler_msg msg = {0};
+	struct scheduler_msg msg;
 	struct sme_motion_det_en *motion_det_en;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -15007,7 +15007,7 @@ QDF_STATUS sme_motion_det_base_line_config(
 	mac_handle_t mac_handle,
 	struct sme_motion_det_base_line_cfg *motion_det_base_line_config)
 {
-	struct scheduler_msg msg = {0};
+	struct scheduler_msg msg;
 	struct sme_motion_det_base_line_cfg *motion_det_base_line_cfg;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -15024,7 +15024,7 @@ QDF_STATUS sme_motion_det_base_line_config(
 
 		*motion_det_base_line_cfg = *motion_det_base_line_config;
 
-			qdf_mem_set(&msg, sizeof(msg), 0);
+		qdf_mem_set(&msg, sizeof(msg), 0);
 		msg.type = WMA_SET_MOTION_DET_BASE_LINE_CONFIG;
 		msg.bodyptr = motion_det_base_line_cfg;
 
@@ -15052,7 +15052,7 @@ QDF_STATUS sme_motion_det_base_line_enable(
 	mac_handle_t mac_handle,
 	struct sme_motion_det_base_line_en *motion_det_base_line_enable)
 {
-	struct scheduler_msg msg = {0};
+	struct scheduler_msg msg;
 	struct sme_motion_det_base_line_en *motion_det_base_line_en;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	struct mac_context *mac = MAC_CONTEXT(mac_handle);
@@ -15069,7 +15069,7 @@ QDF_STATUS sme_motion_det_base_line_enable(
 
 		*motion_det_base_line_en = *motion_det_base_line_enable;
 
-			qdf_mem_set(&msg, sizeof(msg), 0);
+		qdf_mem_set(&msg, sizeof(msg), 0);
 		msg.type = WMA_SET_MOTION_DET_BASE_LINE_ENABLE;
 		msg.bodyptr = motion_det_base_line_en;
 
@@ -15086,3 +15086,103 @@ QDF_STATUS sme_motion_det_base_line_enable(
 	return qdf_status;
 }
 #endif /* WLAN_FEATURE_MOTION_DETECTION */
+#ifdef FW_THERMAL_THROTTLE_SUPPORT
+/**
+ * sme_set_thermal_throttle_cfg() - SME API to set the thermal throttle
+ * configuration parameters
+ * @mac_handle: Opaque handle to the global MAC context
+ * @enable: Enable Throttle
+ * @dc: duty cycle in msecs
+ * @dc_off_percent: duty cycle off percentage
+ * @prio: Disables the transmit queues in fw that have lower priority
+ * than value defined by prio
+ * @target_temp: Target temperature
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_thermal_throttle_cfg(mac_handle_t mac_handle, bool enable,
+					uint32_t dc, uint32_t dc_off_percent,
+					uint32_t prio, uint32_t target_temp)
+{
+	struct scheduler_msg msg;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	struct thermal_mitigation_params *therm_cfg_params;
+
+	qdf_status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_STATUS_SUCCESS == qdf_status) {
+		therm_cfg_params = qdf_mem_malloc(sizeof(*therm_cfg_params));
+		if (!therm_cfg_params) {
+			sme_release_global_lock(&mac->sme);
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		therm_cfg_params->enable = enable;
+		therm_cfg_params->dc = dc;
+		therm_cfg_params->levelconf[0].dcoffpercent = dc_off_percent;
+		therm_cfg_params->levelconf[0].priority = prio;
+		therm_cfg_params->levelconf[0].tmplwm = target_temp;
+
+		qdf_mem_set(&msg, sizeof(msg), 0);
+		msg.type = WMA_SET_THERMAL_THROTTLE_CFG;
+		msg.reserved = 0;
+		msg.bodyptr = therm_cfg_params;
+
+		qdf_status =  scheduler_post_message(QDF_MODULE_ID_SME,
+						     QDF_MODULE_ID_WMA,
+						     QDF_MODULE_ID_WMA, &msg);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			qdf_mem_free(therm_cfg_params);
+			qdf_status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&mac->sme);
+	}
+	return qdf_status;
+}
+
+/**
+ * sme_set_thermal_mgmt() - SME API to set the thermal management params
+ * @mac_handle: Opaque handle to the global MAC context
+ * @lower_thresh_deg: Lower threshold value of Temperature
+ * @higher_thresh_deg: Higher threshold value of Temperature
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_thermal_mgmt(mac_handle_t mac_handle,
+				uint16_t lower_thresh_deg,
+				uint16_t higher_thresh_deg)
+{
+	struct scheduler_msg msg;
+	struct mac_context *mac = MAC_CONTEXT(mac_handle);
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	t_thermal_cmd_params *therm_mgmt_cmd;
+
+	qdf_status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_STATUS_SUCCESS == qdf_status) {
+		therm_mgmt_cmd = qdf_mem_malloc(sizeof(*therm_mgmt_cmd));
+		if (!therm_mgmt_cmd) {
+			sme_release_global_lock(&mac->sme);
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		therm_mgmt_cmd->minTemp = lower_thresh_deg;
+		therm_mgmt_cmd->maxTemp = higher_thresh_deg;
+		therm_mgmt_cmd->thermalEnable = 1;
+
+		qdf_mem_set(&msg, sizeof(msg), 0);
+		msg.type = WMA_SET_THERMAL_MGMT;
+		msg.reserved = 0;
+		msg.bodyptr = therm_mgmt_cmd;
+
+		qdf_status =  scheduler_post_message(QDF_MODULE_ID_SME,
+						     QDF_MODULE_ID_WMA,
+						     QDF_MODULE_ID_WMA, &msg);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			qdf_mem_free(therm_mgmt_cmd);
+			qdf_status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&mac->sme);
+	}
+	return qdf_status;
+}
+#endif /* FW_THERMAL_THROTTLE_SUPPORT */

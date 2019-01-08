@@ -91,6 +91,8 @@ struct channel_list_info {
  */
 #define WE_SET_CHAN_AVOID 21
 
+#define WE_SET_THERMAL_THROTTLE_CFG     27
+
 #define WE_P2P_NOA_CMD  2
 
 #define QCSAP_IOCTL_MODIFY_ACL          (SIOCIWFIRSTPRIV + 18)
