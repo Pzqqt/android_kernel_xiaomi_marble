@@ -54,7 +54,6 @@
 #include "ol_txrx.h"
 #include "wifi_pos_api.h"
 #include "net/cfg80211.h"
-#include <qca_vendor.h>
 #include <wlan_spectral_utils_api.h>
 #include "wlan_mlme_public_struct.h"
 #include "wlan_mlme_main.h"
@@ -11387,103 +11386,159 @@ int sme_update_he_om_ctrl_supp(mac_handle_t mac_handle, uint8_t session_id,
 	return 0;
 }
 
-int sme_send_he_om_ctrl_bw_update(mac_handle_t mac_handle, uint8_t session_id,
-				  uint8_t cfg_val)
+int sme_update_he_htc_he_supp(mac_handle_t mac_handle, uint8_t session_id,
+			      bool cfg_val)
 {
-	uint32_t om_ctrl_cmd[NUM_OM_CTRL_UPDATE_CFG_PARAMS] = {0};
-	QDF_STATUS status;
+
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
-	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
+	struct csr_roam_session *session;
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	if (!session) {
-		sme_err("Session does not exist, Session_id: %d", session_id);
+		sme_err("No session for id %d", session_id);
 		return -EINVAL;
+	}
+
+	mac_ctx->mlme_cfg->he_caps.dot11_he_cap.htc_he = cfg_val;
+	csr_update_session_he_cap(mac_ctx, session);
+
+	return 0;
+}
+
+static QDF_STATUS
+sme_validate_session_for_cap_update(struct mac_context *mac_ctx,
+				    uint8_t session_id,
+				    struct csr_roam_session *session)
+{
+	if (!session) {
+		sme_err("Session does not exist, Session_id: %d", session_id);
+		return QDF_STATUS_E_INVAL;
 	}
 	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
 		sme_info("STA is not connected, Session_id: %d", session_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+int sme_send_he_om_ctrl_update(mac_handle_t mac_handle, uint8_t session_id)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
+	struct omi_ctrl_tx omi_data = {0};
+	void *wma_handle;
+	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
+	uint32_t param_val = 0;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		sme_err("wma handle is NULL");
+		return -EIO;
+	}
+
+	status = sme_validate_session_for_cap_update(mac_ctx, session_id,
+						     session);
+	if (QDF_IS_STATUS_ERROR(status))
 		return -EINVAL;
-	}
-	if (cfg_val > session->connectedProfile.vht_channel_width) {
-		sme_info("OM ctrl BW %d is greater than connected BW %d",
-			  cfg_val, session->connectedProfile.vht_channel_width);
-		return -EINVAL;
-	}
-	mac_ctx->he_om_ctrl_cfg_bw_set = true;
-	mac_ctx->he_om_ctrl_cfg_bw = cfg_val;
-	om_ctrl_cmd[0] = 1;
-	qdf_mem_copy((void *)&om_ctrl_cmd[OM_CTRL_CMD_MAC_BITS31],
-		     (void *)session->connectedProfile.bssid.bytes,
-		     sizeof(uint32_t));
-	qdf_mem_copy((void *)&om_ctrl_cmd[OM_CTRL_CMD_MAC_BITS47],
-		     (void *)&session->connectedProfile.bssid.bytes[4],
-		     sizeof(uint16_t));
-	if (mac_ctx->he_om_ctrl_cfg_nss_set) {
-		om_ctrl_cmd[OM_CTRL_CMD_RX_NSS] =
-			mac_ctx->he_om_ctrl_cfg_nss - 1;
-		om_ctrl_cmd[OM_CTRL_CMD_TX_NSS] =
-			mac_ctx->he_om_ctrl_cfg_nss - 1;
-	} else {
-		om_ctrl_cmd[OM_CTRL_CMD_RX_NSS] = session->nss - 1;
-		om_ctrl_cmd[OM_CTRL_CMD_TX_NSS] = session->nss - 1;
-	}
-	om_ctrl_cmd[OM_CTRL_CMD_BW] = cfg_val;
-	om_ctrl_cmd[OM_CTRL_CMD_ULMU] = 1;
-	status = wma_form_unit_test_cmd_and_send(session_id, 13, 7,
-						 om_ctrl_cmd);
+
+	omi_data.a_ctrl_id = A_CTRL_ID_OMI;
+
+	if (mac_ctx->he_om_ctrl_cfg_nss_set)
+		omi_data.rx_nss = mac_ctx->he_om_ctrl_cfg_nss;
+	else
+		omi_data.rx_nss = session->nss - 1;
+
+	if (mac_ctx->he_om_ctrl_cfg_tx_nsts_set)
+		omi_data.tx_nsts = mac_ctx->he_om_ctrl_cfg_tx_nsts;
+	else
+		omi_data.tx_nsts = session->nss - 1;
+
+	if (mac_ctx->he_om_ctrl_cfg_bw_set)
+		omi_data.ch_bw = mac_ctx->he_om_ctrl_cfg_bw;
+	else
+		omi_data.ch_bw = session->connectedProfile.vht_channel_width;
+
+	omi_data.ul_mu_dis = mac_ctx->he_om_ctrl_cfg_ul_mu_dis;
+	omi_data.omi_in_vht = 0x1;
+	omi_data.omi_in_he = 0x1;
+
+	sme_info("OMI: BW %d TxNSTS %d RxNSS %d ULMU %d, OMI_VHT %d, OMI_HE %d",
+		 omi_data.ch_bw, omi_data.tx_nsts, omi_data.rx_nss,
+		 omi_data.ul_mu_dis, omi_data.omi_in_vht, omi_data.omi_in_he);
+	qdf_mem_copy(&param_val, &omi_data, sizeof(omi_data));
+	sme_debug("param val %08X, bssid:"MAC_ADDRESS_STR, param_val,
+		  MAC_ADDR_ARRAY(session->connectedProfile.bssid.bytes));
+	status = wma_set_peer_param(wma_handle,
+				    session->connectedProfile.bssid.bytes,
+				    WMI_PEER_PARAM_XMIT_OMI,
+				    param_val, session_id);
 	if (QDF_STATUS_SUCCESS != status) {
-		sme_err("send_unit_test_cmd returned %d", status);
+		sme_err("set_peer_param_cmd returned %d", status);
 		return -EIO;
 	}
 
 	return 0;
 }
 
-int sme_send_he_om_ctrl_nss_update(mac_handle_t mac_handle, uint8_t session_id,
-				   uint8_t cfg_val)
+int sme_set_he_om_ctrl_param(mac_handle_t mac_handle, uint8_t session_id,
+			     enum qca_wlan_vendor_attr_he_omi_tx param,
+			     uint8_t cfg_val)
 {
-	uint32_t om_ctrl_cmd[NUM_OM_CTRL_UPDATE_CFG_PARAMS] = {0};
 	QDF_STATUS status;
 	struct mac_context *mac_ctx = MAC_CONTEXT(mac_handle);
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
-	if (!session) {
-		sme_err("Session does not exist, Session_id: %d", session_id);
+	status = sme_validate_session_for_cap_update(mac_ctx, session_id,
+						     session);
+	if (QDF_IS_STATUS_ERROR(status))
 		return -EINVAL;
-	}
-	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
-		sme_info("STA not in connected state Session_id: %d",
-			 session_id);
-		return -EINVAL;
-	}
-	if (cfg_val > session->nss) {
-		sme_info("OM ctrl Nss %d is greater than connected Nss %d",
-			 cfg_val, session->nss);
-		return -EINVAL;
-	}
-	mac_ctx->he_om_ctrl_cfg_nss_set = true;
-	mac_ctx->he_om_ctrl_cfg_nss = cfg_val;
-	om_ctrl_cmd[0] = 1;
-	qdf_mem_copy((void *)&om_ctrl_cmd[OM_CTRL_CMD_MAC_BITS31],
-		     (void *)session->connectedProfile.bssid.bytes,
-		     sizeof(uint32_t));
-	qdf_mem_copy((void *)&om_ctrl_cmd[OM_CTRL_CMD_MAC_BITS47],
-		     (void *)&session->connectedProfile.bssid.bytes[4],
-		     sizeof(uint16_t));
 
-	if (mac_ctx->he_om_ctrl_cfg_bw_set)
-		om_ctrl_cmd[OM_CTRL_CMD_BW] = mac_ctx->he_om_ctrl_cfg_bw;
-	else
-		om_ctrl_cmd[OM_CTRL_CMD_BW] =
-			session->connectedProfile.vht_channel_width;
-
-	om_ctrl_cmd[OM_CTRL_CMD_RX_NSS] = cfg_val - 1;
-	om_ctrl_cmd[OM_CTRL_CMD_TX_NSS] = cfg_val - 1;
-	om_ctrl_cmd[OM_CTRL_CMD_ULMU] = 1;
-	status = wma_form_unit_test_cmd_and_send(session_id, 13, 7,
-						 om_ctrl_cmd);
-	if (QDF_STATUS_SUCCESS != status) {
-		sme_err("send_unit_test_cmd returned %d", status);
-		return -EIO;
+	switch(param) {
+		case QCA_WLAN_VENDOR_ATTR_HE_OMI_ULMU_DISABLE:
+			sme_debug("Set OM ctrl UL MU dis to %d", cfg_val);
+			mac_ctx->he_om_ctrl_cfg_ul_mu_dis = cfg_val;
+			break;
+		case QCA_WLAN_VENDOR_ATTR_HE_OMI_RX_NSS:
+			if ((cfg_val + 1)  > session->nss) {
+				sme_debug("OMI Nss %d is > connected Nss %d",
+					  cfg_val, session->nss);
+				mac_ctx->he_om_ctrl_cfg_nss_set = false;
+				return 0;
+			}
+			sme_debug("Set OM ctrl Rx Nss cfg to %d", cfg_val);
+			mac_ctx->he_om_ctrl_cfg_nss_set = true;
+			mac_ctx->he_om_ctrl_cfg_nss = cfg_val;
+			break;
+		case QCA_WLAN_VENDOR_ATTR_HE_OMI_CH_BW:
+			if (cfg_val >
+			    session->connectedProfile.vht_channel_width) {
+				sme_info("OMI BW %d is > connected BW %d",
+					 cfg_val,
+					 session->connectedProfile.
+					 vht_channel_width);
+				mac_ctx->he_om_ctrl_cfg_bw_set = false;
+				return 0;
+			}
+			sme_debug("Set OM ctrl BW cfg to %d", cfg_val);
+			mac_ctx->he_om_ctrl_cfg_bw_set = true;
+			mac_ctx->he_om_ctrl_cfg_bw = cfg_val;
+			break;
+		case QCA_WLAN_VENDOR_ATTR_HE_OMI_TX_NSTS:
+			if ((cfg_val + 1) > session->nss) {
+				sme_debug("OMI NSTS %d is > connected Nss %d",
+					  cfg_val, session->nss);
+				mac_ctx->he_om_ctrl_cfg_tx_nsts_set = false;
+				return 0;
+			}
+			sme_debug("Set OM ctrl tx nsts cfg to %d", cfg_val);
+			mac_ctx->he_om_ctrl_cfg_tx_nsts_set = true;
+			mac_ctx->he_om_ctrl_cfg_tx_nsts = cfg_val;
+			break;
+		default:
+			sme_debug("Invalid OMI param %d", param);
+			return -EINVAL;
 	}
 
 	return 0;
@@ -11497,6 +11552,9 @@ void sme_reset_he_om_ctrl(mac_handle_t mac_handle)
 	mac_ctx->he_om_ctrl_cfg_nss_set = false;
 	mac_ctx->he_om_ctrl_cfg_bw = 0;
 	mac_ctx->he_om_ctrl_cfg_nss = 0;
+	mac_ctx->he_om_ctrl_cfg_ul_mu_dis = false;
+	mac_ctx->he_om_ctrl_cfg_tx_nsts_set = false;
+	mac_ctx->he_om_ctrl_cfg_tx_nsts = 0;
 }
 
 int sme_config_action_tx_in_tb_ppdu(mac_handle_t mac_handle, uint8_t session_id,

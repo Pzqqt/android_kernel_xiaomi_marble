@@ -42,6 +42,7 @@
 #include "sir_types.h"
 #include "scheduler_api.h"
 #include "wlan_serialization_legacy_api.h"
+#include <qca_vendor.h>
 
 /*--------------------------------------------------------------------------
   Preprocessor definitions and constants
@@ -2691,13 +2692,21 @@ int sme_update_he_trigger_frm_mac_pad(mac_handle_t mac_handle,
 int sme_update_he_om_ctrl_supp(mac_handle_t mac_handle, uint8_t session_id,
 			       uint8_t cfg_val);
 
-#define NUM_OM_CTRL_UPDATE_CFG_PARAMS 7
-#define OM_CTRL_CMD_MAC_BITS31 1
-#define OM_CTRL_CMD_MAC_BITS47 2
-#define OM_CTRL_CMD_RX_NSS 3
-#define OM_CTRL_CMD_BW 4
-#define OM_CTRL_CMD_ULMU 5
-#define OM_CTRL_CMD_TX_NSS 6
+#define A_CTRL_ID_OMI 0x1
+struct omi_ctrl_tx {
+	uint32_t omi_in_vht:1;
+	uint32_t omi_in_he:1;
+	uint32_t a_ctrl_id:4;
+	uint32_t rx_nss:3;
+	uint32_t ch_bw:2;
+	uint32_t ul_mu_dis:1;
+	uint32_t tx_nsts:3;
+	uint32_t er_su_dis:1;
+	uint32_t dl_mu_mimo_resound:1;
+	uint32_t ul_mu_data_dis:1;
+	uint32_t reserved:14;
+};
+
 int sme_send_he_om_ctrl_bw_update(mac_handle_t mac_handle, uint8_t session_id,
 				  uint8_t cfg_val);
 
@@ -2716,6 +2725,29 @@ void sme_reset_he_om_ctrl(mac_handle_t mac_handle);
  */
 int sme_config_action_tx_in_tb_ppdu(mac_handle_t mac_handle, uint8_t session_id,
 				    uint8_t cfg_val);
+
+/**
+ * sme_send_he_om_ctrl_update() - Send HE OM ctrl Tx cmd to FW
+ * @mac_handle: Pointer to mac handle
+ * @session_id: SME session id
+ *
+ * Return: 0 on success else err code
+ */
+int sme_send_he_om_ctrl_update(mac_handle_t mac_handle, uint8_t session_id);
+
+/**
+ * sme_set_he_om_ctrl_param() - Update HE OM control params for OMI Tx
+ * @mac_handle: Pointer to mac handle
+ * @session_id: SME session id
+ * @param: HE om control parameter
+ * @cfg_val: HE OM control parameter config value
+ *
+ * Return: 0 on success else err code
+ */
+int sme_set_he_om_ctrl_param(mac_handle_t mac_handle, uint8_t session_id,
+			     enum qca_wlan_vendor_attr_he_omi_tx param,
+			     uint8_t cfg_val);
+
 /**
  * sme_set_usr_cfg_mu_edca() - sets the user cfg MU EDCA params flag
  * @mac_handle: Opaque handle to the global MAC context
@@ -2732,6 +2764,17 @@ void sme_set_usr_cfg_mu_edca(mac_handle_t mac_handle, bool val);
  * Return: none
  */
 void sme_set_he_mu_edca_def_cfg(mac_handle_t mac_handle);
+
+/**
+ * sme_update_he_htc_he_supp() - Update +HTC-HE support in HE capabilities
+ * @mac_handle: Pointer to mac handle
+ * @session_id: SME session id
+ * @cfg_val: config setting
+ *
+ * Return: 0 on success else err code
+ */
+int sme_update_he_htc_he_supp(mac_handle_t mac_handle, uint8_t session_id,
+			      bool cfg_val);
 
 /**
  * sme_update_mu_edca_params() - updates MU EDCA params values
@@ -2824,16 +2867,11 @@ static inline int sme_update_he_om_ctrl_supp(mac_handle_t mac_handle,
 	return 0;
 }
 
-static inline int sme_send_he_om_ctrl_bw_update(mac_handle_t mac_handle,
-						uint8_t session_id,
-						uint8_t cfg_val)
-{
-	return 0;
-}
 
-static inline int sme_send_he_om_ctrl_nss_update(mac_handle_t mac_handle,
-						 uint8_t session_id,
-						 uint8_t cfg_val)
+static inline int
+sme_set_he_om_ctrl_param(mac_handle_t mac_handle, uint8_t session_id,
+			 enum qca_wlan_vendor_attr_he_omi_tx param,
+			 uint8_t cfg_val)
 {
 	return 0;
 }
@@ -2849,6 +2887,18 @@ static inline int sme_config_action_tx_in_tb_ppdu(mac_handle_t mac_handle,
 	return 0;
 }
 
+static inline int sme_update_he_htc_he_supp(mac_handle_t mac_handle,
+					    uint8_t session_id,
+					    bool cfg_val)
+{
+	return 0;
+}
+
+static inline int
+sme_send_he_om_ctrl_update(mac_handle_t mac_handle, uint8_t session_id)
+{
+	return 0;
+}
 static inline void sme_set_usr_cfg_mu_edca(mac_handle_t mac_handle, bool val)
 {
 }

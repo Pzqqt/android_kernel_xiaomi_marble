@@ -5298,6 +5298,14 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 };
 
 static const struct nla_policy
+qca_wlan_vendor_attr_he_omi_tx_policy [QCA_WLAN_VENDOR_ATTR_HE_OMI_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_HE_OMI_RX_NSS] =       {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_HE_OMI_CH_BW] =        {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_HE_OMI_ULMU_DISABLE] = {.type = NLA_U8 },
+	[QCA_WLAN_VENDOR_ATTR_HE_OMI_TX_NSTS] =      {.type = NLA_U8 },
+};
+
+static const struct nla_policy
 wlan_hdd_wifi_test_config_policy[
 	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX + 1] = {
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WMM_ENABLE] = {
@@ -5344,6 +5352,10 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_FLAG},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_TX_SUPPDU] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_HTC_HE_SUPP] = {
+			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OMI_TX] = {
+			.type = NLA_NESTED},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_ACTION_TX_TB_PPDU] = {
 			.type = NLA_U8},
 };
@@ -7039,19 +7051,62 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 						     cfg_val);
 	}
 
-	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OM_CTRL_BW;
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OMI_TX;
 	if (tb[cmd_id]) {
-		cfg_val = nla_get_u8(tb[cmd_id]);
-		ret_val = sme_send_he_om_ctrl_bw_update(hdd_ctx->mac_handle,
+		struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_HE_OMI_MAX + 1];
+		struct nlattr *curr_attr;
+		int tmp, rc;
+		nla_for_each_nested(curr_attr, tb[cmd_id], tmp) {
+			rc = wlan_cfg80211_nla_parse(
+					tb2, QCA_WLAN_VENDOR_ATTR_HE_OMI_MAX,
+					nla_data(curr_attr),
+					nla_len(curr_attr),
+					qca_wlan_vendor_attr_he_omi_tx_policy);
+			if (rc) {
+				hdd_err("Invalid ATTR");
+				goto send_err;
+			}
+			cmd_id = QCA_WLAN_VENDOR_ATTR_HE_OMI_CH_BW;
+			if (tb2[cmd_id]) {
+				cfg_val = nla_get_u8(tb2[cmd_id]);
+				ret_val = sme_set_he_om_ctrl_param(
+							hdd_ctx->mac_handle,
 							adapter->vdev_id,
-							cfg_val);
-	}
-	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_OM_CTRL_NSS;
-	if (tb[cmd_id]) {
-		cfg_val = nla_get_u8(tb[cmd_id]);
-		ret_val = sme_send_he_om_ctrl_nss_update(hdd_ctx->mac_handle,
-							 adapter->vdev_id,
-							 cfg_val);
+							cmd_id, cfg_val);
+			}
+			cmd_id = QCA_WLAN_VENDOR_ATTR_HE_OMI_RX_NSS;
+			if (tb2[cmd_id]) {
+				cfg_val = nla_get_u8(tb2[cmd_id]);
+				ret_val = sme_set_he_om_ctrl_param(
+							hdd_ctx->mac_handle,
+							adapter->vdev_id,
+							cmd_id, cfg_val);
+			}
+
+			cmd_id = QCA_WLAN_VENDOR_ATTR_HE_OMI_ULMU_DISABLE;
+			if (tb2[cmd_id]) {
+				cfg_val = nla_get_u8(tb2[cmd_id]);
+				ret_val = sme_set_he_om_ctrl_param(
+							hdd_ctx->mac_handle,
+							adapter->vdev_id,
+							cmd_id, cfg_val);
+			}
+
+			cmd_id = QCA_WLAN_VENDOR_ATTR_HE_OMI_TX_NSTS;
+			if (tb2[cmd_id]) {
+				cfg_val = nla_get_u8(tb2[cmd_id]);
+				ret_val = sme_set_he_om_ctrl_param(
+							hdd_ctx->mac_handle,
+							adapter->vdev_id,
+							cmd_id, cfg_val);
+			}
+		}
+		if (ret_val) {
+			sme_reset_he_om_ctrl(hdd_ctx->mac_handle);
+			goto send_err;
+		}
+		ret_val = sme_send_he_om_ctrl_update(hdd_ctx->mac_handle,
+						     adapter->vdev_id);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_CLEAR_HE_OM_CTRL_CONFIG])
@@ -7065,6 +7120,15 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 			sme_config_su_ppdu_queue(adapter->vdev_id, true);
 		else
 			sme_config_su_ppdu_queue(adapter->vdev_id, false);
+	}
+
+	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_HTC_HE_SUPP;
+	if (tb[cmd_id]) {
+		cfg_val = nla_get_u8(tb[cmd_id]);
+		hdd_debug("Configure +HTC_HE support %d", cfg_val);
+		sme_update_he_htc_he_supp(hdd_ctx->mac_handle,
+					  adapter->vdev_id,
+					  (cfg_val ? true : false));
 	}
 
 	cmd_id = QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_ACTION_TX_TB_PPDU;
