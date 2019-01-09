@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -349,13 +349,22 @@ exit:
 #define THREAD_TIMEOUT 1000 /* ms */
 #define dsc_event_wait(event) qdf_wait_single_event(event, THREAD_TIMEOUT)
 
+#define step_assert(field, expected) \
+do { \
+	uint32_t _step = ++(field); \
+	uint32_t _expected = (expected); \
+\
+	if (_step != _expected) \
+		QDF_DEBUG_PANIC("Step count is %u; Expected %u", \
+				_step, _expected); \
+} while (false)
+
+#define trans_waiting(ctx) (!qdf_list_empty(&(ctx)->trans.queue))
+
 struct thread_ctx {
 	struct dsc_driver *driver;
 	qdf_event_t start_vdev_trans;
 	qdf_event_t start_vdev_wait;
-	qdf_event_t start_psoc_wait;
-	qdf_event_t start_driver_wait;
-	qdf_event_t stop_ops;
 	uint32_t step;
 };
 
@@ -368,21 +377,36 @@ static QDF_STATUS dsc_thread_ops(void *context)
 
 	dsc_enter();
 
+	/* thread 1 is doing some operations ... */
+	step_assert(ctx->step, 1);
 	dsc_assert_success(dsc_driver_op_start(driver));
 	dsc_assert_success(dsc_psoc_op_start(psoc));
 	dsc_assert_success(dsc_vdev_op_start(vdev));
+	step_assert(ctx->step, 2);
 
-	dsc_assert(++ctx->step == 1);
+	/* ... at which point, thread 2 starts to transition the vdevs */
 	qdf_event_set(&ctx->start_vdev_trans);
 
-	dsc_assert_success(dsc_event_wait(&ctx->stop_ops));
-	dsc_assert(++ctx->step == 7);
+	/* meanwhile, thread 3,4,5 queue up to transition vdev/psoc/driver */
+	while (!trans_waiting(driver))
+		schedule();
 
+	/* at this point, each thread is:
+	 * 1) doing operations
+	 * 2) transitioning vdevs 1/2, waiting for ops to finish
+	 * 3) waiting to transition vdev 1
+	 * 4) waiting to transition psoc
+	 * 5) waitint to transition driver
+	 */
+
+	step_assert(ctx->step, 8);
 	dsc_driver_op_stop(driver);
 	schedule();
 	dsc_psoc_op_stop(psoc);
 	schedule();
 	dsc_vdev_op_stop(vdev);
+
+	/* all operations complete; thread2 is now unblocked */
 
 	dsc_exit();
 
@@ -398,22 +422,31 @@ static QDF_STATUS dsc_thread_vdev_trans(void *context)
 
 	dsc_enter();
 
+	/* wait for thread 1 to start operations */
 	dsc_assert_success(dsc_event_wait(&ctx->start_vdev_trans));
-	dsc_assert(++ctx->step == 2);
 
+	/* start transitions on all vdevs */
+	step_assert(ctx->step, 3);
 	dsc_for_each_psoc_vdev(psoc, vdev)
 		dsc_assert_success(dsc_vdev_trans_start(vdev));
+	step_assert(ctx->step, 4);
 
-	dsc_assert(++ctx->step == 3);
+	/* meanwhile, thread 3,4,5 queue up to transition vdev/psoc/driver */
 	qdf_event_set(&ctx->start_vdev_wait);
 
-	dsc_vdev_wait_for_ops(nth_vdev(psoc, 1));
+	/* wait for thread 1 to complete pending vdev ops */
+	dsc_for_each_psoc_vdev(psoc, vdev)
+		dsc_vdev_wait_for_ops(vdev);
 
-	dsc_assert(++ctx->step == 8);
+	/* actual vdev transition work would happen here */
+
+	/* stop transition on vdev 1 */
+	step_assert(ctx->step, 9);
 	dsc_vdev_trans_stop(nth_vdev(psoc, 1));
-	schedule();
-	dsc_assert(++ctx->step == 9);
 
+	/* psoc trans should not start until both vdev trans are complete */
+	schedule();
+	step_assert(ctx->step, 10);
 	dsc_vdev_trans_stop(nth_vdev(psoc, 2));
 
 	dsc_exit();
@@ -429,15 +462,16 @@ static QDF_STATUS dsc_thread_vdev_wait(void *context)
 	dsc_enter();
 
 	dsc_assert_success(dsc_event_wait(&ctx->start_vdev_wait));
-	dsc_assert(++ctx->step == 4);
 
-	qdf_event_set(&ctx->start_psoc_wait);
+	step_assert(ctx->step, 5);
+	/* vdev trans queues first ... */
 	dsc_assert_success(dsc_vdev_trans_start_wait(vdev));
-	dsc_assert(++ctx->step == 14);
+	/* ... but de-queues third */
+	step_assert(ctx->step, 15);
 
-	schedule();
+	dsc_vdev_wait_for_ops(vdev);
 
-	dsc_assert(++ctx->step == 15);
+	step_assert(ctx->step, 16);
 	dsc_vdev_trans_stop(vdev);
 
 	dsc_exit();
@@ -449,19 +483,22 @@ static QDF_STATUS dsc_thread_psoc_wait(void *context)
 {
 	struct thread_ctx *ctx = context;
 	struct dsc_psoc *psoc = nth_psoc(ctx->driver, 1);
+	struct dsc_vdev *vdev = nth_vdev(psoc, 1);
 
 	dsc_enter();
 
-	dsc_assert_success(dsc_event_wait(&ctx->start_psoc_wait));
-	dsc_assert(++ctx->step == 5);
+	while (!trans_waiting(vdev))
+		schedule();
 
-	qdf_event_set(&ctx->start_driver_wait);
+	step_assert(ctx->step, 6);
+	/* psoc trans queues second ... */
 	dsc_assert_success(dsc_psoc_trans_start_wait(psoc));
-	dsc_assert(++ctx->step == 12);
+	/* ... and de-queues second */
+	step_assert(ctx->step, 13);
 
-	schedule();
+	dsc_psoc_wait_for_ops(psoc);
 
-	dsc_assert(++ctx->step == 13);
+	step_assert(ctx->step, 14);
 	dsc_psoc_trans_stop(psoc);
 
 	dsc_exit();
@@ -473,19 +510,22 @@ static QDF_STATUS dsc_thread_driver_wait(void *context)
 {
 	struct thread_ctx *ctx = context;
 	struct dsc_driver *driver = ctx->driver;
+	struct dsc_psoc *psoc = nth_psoc(driver, 1);
 
 	dsc_enter();
 
-	dsc_assert_success(dsc_event_wait(&ctx->start_driver_wait));
-	dsc_assert(++ctx->step == 6);
+	while (!trans_waiting(psoc))
+		schedule();
 
-	qdf_event_set(&ctx->stop_ops);
+	step_assert(ctx->step, 7);
+	/* driver trans queues third ... */
 	dsc_assert_success(dsc_driver_trans_start_wait(driver));
-	dsc_assert(++ctx->step == 10);
+	/* ... but de-queues first */
+	step_assert(ctx->step, 11);
 
-	schedule();
+	dsc_driver_wait_for_ops(driver);
 
-	dsc_assert(++ctx->step == 11);
+	step_assert(ctx->step, 12);
 	dsc_driver_trans_stop(driver);
 
 	dsc_exit();
@@ -514,9 +554,6 @@ static uint32_t dsc_test_trans_wait(void)
 
 	dsc_assert_success(qdf_event_create(&ctx.start_vdev_trans));
 	dsc_assert_success(qdf_event_create(&ctx.start_vdev_wait));
-	dsc_assert_success(qdf_event_create(&ctx.start_psoc_wait));
-	dsc_assert_success(qdf_event_create(&ctx.start_driver_wait));
-	dsc_assert_success(qdf_event_create(&ctx.stop_ops));
 
 	dsc_debug("starting threads");
 
@@ -534,9 +571,6 @@ static uint32_t dsc_test_trans_wait(void)
 
 	dsc_debug("threads joined");
 
-	qdf_event_destroy(&ctx.stop_ops);
-	qdf_event_destroy(&ctx.start_driver_wait);
-	qdf_event_destroy(&ctx.start_psoc_wait);
 	qdf_event_destroy(&ctx.start_vdev_wait);
 	qdf_event_destroy(&ctx.start_vdev_trans);
 
