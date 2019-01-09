@@ -14903,6 +14903,7 @@ void sme_enable_fw_module_log_level(mac_handle_t mac_handle, int vdev_id)
 			sme_err("Module id %d or dbglog level %d input value is more than max",
 				enable_fw_module_log_level[count],
 				enable_fw_module_log_level[count + 1]);
+			count += 2;
 			continue;
 		}
 
