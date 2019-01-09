@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4459,8 +4459,8 @@ static int wlan_hdd_get_sta_stats(struct wiphy *wiphy,
 	mac_handle = hdd_ctx->mac_handle;
 
 	/* convert to the UI units of 100kbps */
-	my_tx_rate = adapter->hdd_stats.class_a_stat.tx_rate * 5;
-	my_rx_rate = adapter->hdd_stats.class_a_stat.rx_rate * 5;
+	my_tx_rate = adapter->hdd_stats.class_a_stat.tx_rate;
+	my_rx_rate = adapter->hdd_stats.class_a_stat.rx_rate;
 
 	if (!(rate_flags & TX_RATE_LEGACY)) {
 		tx_nss = adapter->hdd_stats.class_a_stat.tx_nss;
@@ -5938,12 +5938,12 @@ int wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 	adapter->hdd_stats.class_a_stat.rx_rate = stats->rx_rate;
 	adapter->hdd_stats.class_a_stat.tx_rx_rate_flags = stats->tx_rate_flags;
 	adapter->hdd_stats.class_a_stat.tx_mcs_index =
-		sme_get_mcs_idx(stats->tx_rate * 5, stats->tx_rate_flags,
+		sme_get_mcs_idx(stats->tx_rate, stats->tx_rate_flags,
 				&adapter->hdd_stats.class_a_stat.tx_nss,
 				&mcs_rate_flags);
 	adapter->hdd_stats.class_a_stat.tx_mcs_rate_flags = mcs_rate_flags;
 	adapter->hdd_stats.class_a_stat.rx_mcs_index =
-		sme_get_mcs_idx(stats->rx_rate * 5, stats->tx_rate_flags,
+		sme_get_mcs_idx(stats->rx_rate, stats->tx_rate_flags,
 				&adapter->hdd_stats.class_a_stat.rx_nss,
 				&mcs_rate_flags);
 	adapter->hdd_stats.class_a_stat.rx_mcs_rate_flags = mcs_rate_flags;
