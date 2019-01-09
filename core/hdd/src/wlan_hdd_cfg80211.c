@@ -7869,11 +7869,102 @@ static int wlan_hdd_cfg80211_set_ns_offload(struct wiphy *wiphy,
 }
 #endif /* WLAN_NS_OFFLOAD */
 
+/**
+ * struct weighed_pcl: Preferred channel info
+ * @freq: Channel frequency
+ * @weight: Weightage of the channel
+ * @flag: Validity of the channel in p2p negotiation
+ */
+struct weighed_pcl {
+		u32 freq;
+		u32 weight;
+		u32 flag;
+};
+
 static const struct nla_policy get_preferred_freq_list_policy
 		[QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_IFACE_TYPE] = {
 		.type = NLA_U32},
 };
+
+static uint32_t wlan_hdd_populate_weigh_pcl(
+				struct policy_mgr_pcl_chan_weights *
+				chan_weights,
+				struct weighed_pcl *w_pcl,
+				enum policy_mgr_con_mode intf_mode)
+{
+	int i, j;
+	uint32_t chan_idx = 0;
+	uint32_t set = 0;
+	uint32_t pcl_len = chan_weights->pcl_len;
+	uint32_t valid_weight;
+
+	/* convert channel number to frequency */
+	for (i = 0; i < chan_weights->pcl_len; i++) {
+		if (chan_weights->pcl_list[i] <=
+		    ARRAY_SIZE(hdd_channels_2_4_ghz))
+			w_pcl[i].freq = ieee80211_channel_to_frequency(
+						chan_weights->pcl_list[i],
+						HDD_NL80211_BAND_2GHZ);
+		else
+			w_pcl[i].freq = ieee80211_channel_to_frequency(
+						chan_weights->pcl_list[i],
+						HDD_NL80211_BAND_5GHZ);
+		w_pcl[i].weight = chan_weights->weight_list[i];
+
+		if (intf_mode == PM_SAP_MODE || intf_mode == PM_P2P_GO_MODE)
+			w_pcl[i].flag = set | PCL_CHANNEL_SUPPORT_GO;
+		else
+			w_pcl[i].flag = set | PCL_CHANNEL_SUPPORT_CLI;
+	}
+	chan_idx = pcl_len;
+	if (chan_weights->weight_list[pcl_len - 1] >
+	    PCL_GROUPS_WEIGHT_DIFFERENCE)
+	/* Set non-pcl channels weight 20 point less than the last PCL entry */
+		valid_weight = chan_weights->weight_list[pcl_len - 1] -
+				PCL_GROUPS_WEIGHT_DIFFERENCE;
+	else
+		valid_weight = 1;
+
+	/* Include rest of the valid channels */
+	for (i = 0; i < chan_weights->saved_num_chan; i++) {
+		for (j = 0; j < chan_weights->pcl_len; j++) {
+			if (chan_weights->saved_chan_list[i] ==
+				chan_weights->pcl_list[j])
+				break;
+		}
+		if (j == chan_weights->pcl_len) {
+			if (chan_weights->saved_chan_list[i] <=
+				ARRAY_SIZE(hdd_channels_2_4_ghz))
+				w_pcl[chan_idx].freq =
+					ieee80211_channel_to_frequency(
+					      chan_weights->saved_chan_list[i],
+					      HDD_NL80211_BAND_2GHZ);
+			else
+				w_pcl[chan_idx].freq =
+					ieee80211_channel_to_frequency(
+					      chan_weights->saved_chan_list[i],
+					      HDD_NL80211_BAND_5GHZ);
+
+			if (!chan_weights->weighed_valid_list[i]) {
+				w_pcl[chan_idx].flag =
+					set | PCL_CHANNEL_EXCLUDE_IN_GO_NEG;
+				w_pcl[chan_idx].weight = 0;
+			} else {
+				if (intf_mode == PM_SAP_MODE ||
+				    intf_mode == PM_P2P_GO_MODE)
+					w_pcl[chan_idx].flag =
+						set | PCL_CHANNEL_SUPPORT_GO;
+				else
+					w_pcl[chan_idx].flag =
+						set | PCL_CHANNEL_SUPPORT_CLI;
+				w_pcl[chan_idx].weight = valid_weight;
+			}
+			chan_idx++;
+		}
+	}
+	return chan_idx;
+}
 
 /** __wlan_hdd_cfg80211_get_preferred_freq_list() - get preferred frequency list
  * @wiphy: Pointer to wireless phy
@@ -7894,12 +7985,14 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	int i, ret = 0;
 	QDF_STATUS status;
-	uint8_t pcl[QDF_MAX_NUM_CHAN], weight_list[QDF_MAX_NUM_CHAN];
 	uint32_t pcl_len = 0;
 	uint32_t freq_list[QDF_MAX_NUM_CHAN];
 	enum policy_mgr_con_mode intf_mode;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX + 1];
 	struct sk_buff *reply_skb;
+	struct weighed_pcl *w_pcl;
+	struct nlattr *nla_attr, *channel;
+	struct policy_mgr_pcl_chan_weights *chan_weights;
 
 	hdd_enter_dev(wdev->netdev);
 
@@ -7930,48 +8023,93 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 
 	hdd_debug("Userspace requested pref freq list");
 
+	chan_weights =
+		qdf_mem_malloc(sizeof(struct policy_mgr_pcl_chan_weights));
+	if (!chan_weights)
+		return -ENOMEM;
+
 	status = policy_mgr_get_pcl(hdd_ctx->psoc,
-				intf_mode, pcl, &pcl_len,
-				weight_list, QDF_ARRAY_SIZE(weight_list));
+				intf_mode, chan_weights->pcl_list,
+				&chan_weights->pcl_len,
+				chan_weights->weight_list,
+				QDF_ARRAY_SIZE(chan_weights->weight_list));
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Get pcl failed");
+		qdf_mem_free(chan_weights);
 		return -EINVAL;
 	}
-
-	/* convert channel number to frequency */
-	for (i = 0; i < pcl_len; i++) {
-		if (pcl[i] <= ARRAY_SIZE(hdd_channels_2_4_ghz))
-			freq_list[i] =
-				ieee80211_channel_to_frequency(pcl[i],
-							HDD_NL80211_BAND_2GHZ);
-		else
-			freq_list[i] =
-				ieee80211_channel_to_frequency(pcl[i],
-							HDD_NL80211_BAND_5GHZ);
+	sme_get_valid_channels(chan_weights->saved_chan_list,
+			       &chan_weights->saved_num_chan);
+	policy_mgr_get_valid_chan_weights(hdd_ctx->psoc, chan_weights);
+	w_pcl = qdf_mem_malloc(sizeof(struct weighed_pcl) * QDF_MAX_NUM_CHAN);
+	if (!w_pcl) {
+		qdf_mem_free(chan_weights);
+		return -ENOMEM;
 	}
+	pcl_len = wlan_hdd_populate_weigh_pcl(chan_weights, w_pcl, intf_mode);
+	qdf_mem_free(chan_weights);
+
+	for (i = 0; i < pcl_len; i++)
+		freq_list[i] = w_pcl[i].freq;
 
 	/* send the freq_list back to supplicant */
 	reply_skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, sizeof(u32) +
-							sizeof(u32) *
-							pcl_len +
-							NLMSG_HDRLEN);
+					sizeof(u32) * pcl_len +
+					sizeof(struct weighed_pcl) * pcl_len +
+					NLMSG_HDRLEN);
 
 	if (!reply_skb) {
 		hdd_err("Allocate reply_skb failed");
+		qdf_mem_free(w_pcl);
 		return -EINVAL;
 	}
 
 	if (nla_put_u32(reply_skb,
 		QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_IFACE_TYPE,
 			intf_mode) ||
-		nla_put(reply_skb,
-			QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST,
-			sizeof(uint32_t) * pcl_len,
-			freq_list)) {
+	    nla_put(reply_skb,
+		    QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST,
+		    sizeof(uint32_t) * pcl_len,
+		    freq_list)) {
 		hdd_err("nla put fail");
 		kfree_skb(reply_skb);
+		qdf_mem_free(w_pcl);
 		return -EINVAL;
 	}
+
+	i = QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_WEIGHED_PCL;
+	nla_attr = nla_nest_start(reply_skb, i);
+
+	if (!nla_attr) {
+		hdd_err("nla nest start fail");
+		kfree_skb(reply_skb);
+		qdf_mem_free(w_pcl);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < pcl_len; i++) {
+		channel = nla_nest_start(reply_skb, i);
+		if (!channel) {
+			hdd_err("updating pcl list failed");
+			kfree_skb(reply_skb);
+			qdf_mem_free(w_pcl);
+			return -EINVAL;
+		}
+		if (nla_put_u32(reply_skb, QCA_WLAN_VENDOR_ATTR_PCL_FREQ,
+				w_pcl[i].freq) ||
+		    nla_put_u32(reply_skb, QCA_WLAN_VENDOR_ATTR_PCL_WEIGHT,
+				w_pcl[i].weight) ||
+		    nla_put_u32(reply_skb, QCA_WLAN_VENDOR_ATTR_PCL_FLAG,
+				w_pcl[i].flag)) {
+			hdd_err("nla put fail");
+			kfree_skb(reply_skb);
+			qdf_mem_free(w_pcl);
+			return -EINVAL;
+		}
+		nla_nest_end(reply_skb, channel);
+	}
+	nla_nest_end(reply_skb, nla_attr);
+	qdf_mem_free(w_pcl);
 
 	return cfg80211_vendor_cmd_reply(reply_skb);
 }

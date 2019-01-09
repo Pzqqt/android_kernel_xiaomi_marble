@@ -208,6 +208,10 @@ typedef enum {
 #define CFG_PROPAGATION_DELAY_BASE             (64)
 #define CFG_AGG_RETRY_MIN                      (5)
 
+#define PCL_CHANNEL_SUPPORT_GO			BIT(0)
+#define PCL_CHANNEL_SUPPORT_CLI			BIT(1)
+#define PCL_CHANNEL_EXCLUDE_IN_GO_NEG		BIT(3)
+
 struct cfg80211_bss *
 wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
 				struct csr_roam_info *roam_info);
