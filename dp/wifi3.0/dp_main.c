@@ -3370,6 +3370,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	/* initlialize cal client timer */
 	dp_cal_client_attach(&pdev->cal_client_ctx, pdev, pdev->soc->osdev,
 			     &dp_iterate_update_peer_list);
+	qdf_event_create(&pdev->fw_peer_stats_event);
 
 	return (struct cdp_pdev *)pdev;
 
@@ -7829,6 +7830,7 @@ dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
  * @pdev_handle: DP_PDEV handle
  * @mac_addr: mac address of the peer
  * @cap: Type of htt stats requested
+ * @is_wait: if set, wait on completion from firmware response
  *
  * Currently Supporting only MAC ID based requests Only
  *	1: HTT_PEER_STATS_REQ_MODE_NO_QUERY
@@ -7839,7 +7841,7 @@ dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
  */
 static void
 dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
-		uint32_t cap)
+		uint32_t cap, uint32_t is_wait)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	int i;
@@ -7863,9 +7865,20 @@ dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
 	config_param3 |= (mac_addr[4] & 0x000000ff);
 	config_param3 |= ((mac_addr[5] << 8) & 0x0000ff00);
 
-	dp_h2t_ext_stats_msg_send(pdev, HTT_DBG_EXT_STATS_PEER_INFO,
-			config_param0, config_param1, config_param2,
-			config_param3, 0, 0, 0);
+	if (is_wait) {
+		qdf_event_reset(&pdev->fw_peer_stats_event);
+		dp_h2t_ext_stats_msg_send(pdev, HTT_DBG_EXT_STATS_PEER_INFO,
+					  config_param0, config_param1,
+					  config_param2, config_param3,
+					  0, 1, 0);
+		qdf_wait_single_event(&pdev->fw_peer_stats_event,
+				      DP_FW_PEER_STATS_CMP_TIMEOUT_MSEC);
+	} else {
+		dp_h2t_ext_stats_msg_send(pdev, HTT_DBG_EXT_STATS_PEER_INFO,
+					  config_param0, config_param1,
+					  config_param2, config_param3,
+					  0, 0, 0);
+	}
 
 }
 

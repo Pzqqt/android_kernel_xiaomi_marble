@@ -23,6 +23,8 @@
 #include "dp_types.h"
 
 #define DP_INVALID_PEER_ID 0xffff
+
+#define DP_FW_PEER_STATS_CMP_TIMEOUT_MSEC 5000
 /**
  * __dp_peer_find_by_id() - Returns peer object given the peer id
  *
@@ -196,5 +198,15 @@ bool dp_peer_find_by_id_valid(struct dp_soc *soc, uint16_t peer_id);
 			QDF_BUG(_condition); \
 		} \
 	} while (0)
+
+/**
+ * dp_peer_update_inactive_time - Update inactive time for peer
+ * @pdev: pdev object
+ * @tag_type: htt_tlv_tag type
+ * #tag_buf: buf message
+ */
+void
+dp_peer_update_inactive_time(struct dp_pdev *pdev, uint32_t tag_type,
+			     uint32_t *tag_buf);
 
 #endif /* _DP_PEER_H_ */

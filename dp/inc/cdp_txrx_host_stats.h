@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -383,7 +383,8 @@ cdp_reset_lro_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 }
 
 static inline void cdp_get_dp_fw_peer_stats(ol_txrx_soc_handle soc,
-		struct cdp_pdev *pdev, uint8_t *mac, uint32_t caps)
+		struct cdp_pdev *pdev, uint8_t *mac, uint32_t caps,
+		uint32_t copy_stats)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -397,7 +398,7 @@ static inline void cdp_get_dp_fw_peer_stats(ol_txrx_soc_handle soc,
 		return;
 
 	soc->ops->host_stats_ops->get_fw_peer_stats
-			(pdev, mac, caps);
+			(pdev, mac, caps, copy_stats);
 }
 
 static inline void cdp_get_dp_htt_stats(ol_txrx_soc_handle soc,

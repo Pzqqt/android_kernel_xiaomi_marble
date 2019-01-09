@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -646,6 +646,8 @@ static inline void dp_print_peer_stats_cmn_tlv(uint32_t *tag_buf)
 			dp_stats_buf->block_bitmap);
 	DP_TRACE_STATS(FATAL, "current_timestamp = %d\n",
 			dp_stats_buf->current_timestamp);
+	DP_TRACE_STATS(FATAL, "inactive_time = %d",
+		       dp_stats_buf->inactive_time);
 }
 
 /*
