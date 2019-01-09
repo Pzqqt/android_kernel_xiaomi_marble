@@ -12758,45 +12758,6 @@ void sme_set_chan_info_callback(mac_handle_t mac_handle,
 }
 
 /**
- * sme_set_adaptive_dwelltime_config() - Update Adaptive dwelltime configuration
- * @mac_handle: The handle returned by macOpen
- * @params: adaptive_dwelltime_params config
- *
- * Return: QDF_STATUS if adaptive dwell time update
- * configuration success else failure status
- */
-QDF_STATUS sme_set_adaptive_dwelltime_config(mac_handle_t mac_handle,
-			struct adaptive_dwelltime_params *params)
-{
-	struct scheduler_msg message = {0};
-	QDF_STATUS status;
-	struct adaptive_dwelltime_params *dwelltime_params;
-
-	dwelltime_params = qdf_mem_malloc(sizeof(*dwelltime_params));
-	if (!dwelltime_params)
-		return QDF_STATUS_E_NOMEM;
-
-	dwelltime_params->is_enabled = params->is_enabled;
-	dwelltime_params->dwelltime_mode = params->dwelltime_mode;
-	dwelltime_params->lpf_weight = params->lpf_weight;
-	dwelltime_params->passive_mon_intval = params->passive_mon_intval;
-	dwelltime_params->wifi_act_threshold = params->wifi_act_threshold;
-
-	message.type = WMA_SET_ADAPT_DWELLTIME_CONF_PARAMS;
-	message.bodyptr = dwelltime_params;
-	status = scheduler_post_message(QDF_MODULE_ID_SME,
-					QDF_MODULE_ID_WMA,
-					QDF_MODULE_ID_WMA, &message);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"%s: Not able to post msg to WMA!", __func__);
-
-		qdf_mem_free(dwelltime_params);
-	}
-	return status;
-}
-
-/**
  * sme_set_vdev_ies_per_band() - sends the per band IEs to vdev
  * @mac_handle: Opaque handle to the global MAC context
  * @vdev_id: vdev_id for which IE is targeted

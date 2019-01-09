@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -383,4 +383,112 @@ QDF_STATUS ucfg_fwol_get_enable_tx_sch_delay(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS ucfg_fwol_get_enable_secondary_rate(struct wlan_objmgr_psoc *psoc,
 					       uint32_t *enable_secondary_rate);
+/**
+ * ucfg_fwol_get_all_adaptive_dwelltime_params() - Get all adaptive
+						   dwelltime_params
+ * @psoc: Pointer to psoc object
+ * @dwelltime_params: Pointer to struct adaptive_dwelltime_params
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_fwol_get_all_adaptive_dwelltime_params(
+			struct wlan_objmgr_psoc *psoc,
+			struct adaptive_dwelltime_params *dwelltime_params);
+/**
+ * ucfg_fwol_get_adaptive_dwell_mode_enabled() - API to globally disable/enable
+ *                                               the adaptive dwell config.
+ * Acceptable values for this:
+ * 0: Config is disabled
+ * 1: Config is enabled
+ *
+ * @psoc: pointer to psoc object
+ * @adaptive_dwell_mode_enabled: adaptive dwell mode enable/disable
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_fwol_get_adaptive_dwell_mode_enabled(struct wlan_objmgr_psoc *psoc,
+					  bool *adaptive_dwell_mode_enabled);
+
+/**
+ * ucfg_fwol_get_global_adapt_dwelltime_mode() - API to set default
+ *                                               adaptive mode.
+ * It will be used if any of the scan dwell mode is set to default.
+ * For uses : see enum scan_dwelltime_adaptive_mode
+ *
+ * @psoc: pointer to psoc object
+ * global_adapt_dwelltime_mode@: global adaptive dwell mode value
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_fwol_get_global_adapt_dwelltime_mode(struct wlan_objmgr_psoc *psoc,
+					  uint8_t *global_adapt_dwelltime_mode);
+/**
+ * ucfg_fwol_get_adapt_dwell_lpf_weight() - API to get weight to calculate
+ *                       the average low pass filter for channel congestion
+ * @psoc: pointer to psoc object
+ * @adapt_dwell_lpf_weight: adaptive low pass filter weight
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_fwol_get_adapt_dwell_lpf_weight(struct wlan_objmgr_psoc *psoc,
+				     uint8_t *adapt_dwell_lpf_weight);
+
+/**
+ * ucfg_fwol_get_adapt_dwell_passive_mon_intval() - API to get interval value
+ *                      for montitoring wifi activity in passive scan in msec.
+ * @psoc: pointer to psoc object
+ * @adapt_dwell_passive_mon_intval: adaptive monitor interval in passive scan
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+ucfg_fwol_get_adapt_dwell_passive_mon_intval(
+				struct wlan_objmgr_psoc *psoc,
+				uint8_t *adapt_dwell_passive_mon_intval);
+
+/**
+ * ucfg_fwol_get_adapt_dwell_wifi_act_threshold - API to get % of wifi activity
+ *                                                used in passive scan
+ * @psoc: pointer to psoc object
+ * @adapt_dwell_wifi_act_threshold: percent of wifi activity in passive scan
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS ucfg_fwol_get_adapt_dwell_wifi_act_threshold(
+				struct wlan_objmgr_psoc *psoc,
+				uint8_t *adapt_dwell_wifi_act_threshold);
+
+/**
+ * ucfg_fwol_init_adapt_dwelltime_in_cfg - API to initialize adaptive
+ *                                         dwell params
+ * @psoc: pointer to psoc object
+ * @adaptive_dwelltime_params: pointer to adaptive_dwelltime_params structure
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_fwol_init_adapt_dwelltime_in_cfg(
+			struct wlan_objmgr_psoc *psoc,
+			struct adaptive_dwelltime_params *dwelltime_params)
+{
+	return fwol_init_adapt_dwelltime_in_cfg(psoc, dwelltime_params);
+}
+
+/**
+ * ucfg_fwol_set_adaptive_dwelltime_config - API to set adaptive
+ *                                           dwell params config
+ * @adaptive_dwelltime_params: adaptive_dwelltime_params structure
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_fwol_set_adaptive_dwelltime_config(
+			struct adaptive_dwelltime_params *dwelltime_params)
+{
+	return fwol_set_adaptive_dwelltime_config(dwelltime_params);
+}
 #endif /* _WLAN_FWOL_UCFG_API_H_ */

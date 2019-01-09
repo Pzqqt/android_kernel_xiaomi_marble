@@ -1571,8 +1571,6 @@ sme_apf_read_work_memory(mac_handle_t mac_handle,
 uint32_t sme_get_wni_dot11_mode(mac_handle_t mac_handle);
 QDF_STATUS sme_create_mon_session(mac_handle_t mac_handle, uint8_t *bssid,
 				  uint8_t vdev_id);
-QDF_STATUS sme_set_adaptive_dwelltime_config(mac_handle_t mac_handle,
-			struct adaptive_dwelltime_params *dwelltime_params);
 
 void sme_set_vdev_ies_per_band(mac_handle_t mac_handle, uint8_t vdev_id);
 void sme_set_pdev_ht_vht_ies(mac_handle_t mac_handle, bool enable2x2);

@@ -10709,19 +10709,9 @@ static int hdd_adaptive_dwelltime_init(struct hdd_context *hdd_ctx)
 	QDF_STATUS status;
 	struct adaptive_dwelltime_params dwelltime_params;
 
-	dwelltime_params.is_enabled =
-			hdd_ctx->config->adaptive_dwell_mode_enabled;
-	dwelltime_params.dwelltime_mode =
-			hdd_ctx->config->global_adapt_dwelltime_mode;
-	dwelltime_params.lpf_weight =
-			hdd_ctx->config->adapt_dwell_lpf_weight;
-	dwelltime_params.passive_mon_intval =
-			hdd_ctx->config->adapt_dwell_passive_mon_intval;
-	dwelltime_params.wifi_act_threshold =
-			hdd_ctx->config->adapt_dwell_wifi_act_threshold;
-
-	status = sme_set_adaptive_dwelltime_config(hdd_ctx->mac_handle,
-						   &dwelltime_params);
+	status = ucfg_fwol_get_all_adaptive_dwelltime_params(hdd_ctx->psoc,
+							     &dwelltime_params);
+	status = ucfg_fwol_set_adaptive_dwelltime_config(&dwelltime_params);
 
 	hdd_debug("Sending Adaptive Dwelltime Configuration to fw");
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

@@ -400,57 +400,6 @@ enum hdd_dot11_mode {
 #define CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_MAX      (4)
 #define CFG_ADAPTIVE_PNOSCAN_DWELL_MODE_DEFAULT  (1)
 
-/*
- * <ini>
- * adaptive_dwell_mode_enabled - Enable adaptive dwell mode
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This parameter will globally disable/enable the adaptive dwell config.
- * Following parameters will set different values of attributes for dwell
- * time optimization thus reducing total scan time.
- * Acceptable values for this:
- * 0: Config is disabled
- * 1: Config is enabled
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ADAPTIVE_DWELL_MODE_ENABLED_NAME      "adaptive_dwell_mode_enabled"
-#define CFG_ADAPTIVE_DWELL_MODE_ENABLED_MIN       (0)
-#define CFG_ADAPTIVE_DWELL_MODE_ENABLED_MAX       (1)
-#define CFG_ADAPTIVE_DWELL_MODE_ENABLED_DEFAULT   (1)
-
-/*
- * <ini>
- * global_adapt_dwelltime_mode - Set default adaptive mode
- * @Min: 0
- * @Max: 4
- * @Default: 0
- *
- * This parameter will set default adaptive mode, will be used if any of the
- * scan dwell mode is set to default.
- * For uses : see enum scan_dwelltime_adaptive_mode
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_NAME       "global_adapt_dwelltime_mode"
-#define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_MIN        (0)
-#define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_MAX        (4)
-#define CFG_GLOBAL_ADAPTIVE_DWELL_MODE_DEFAULT    (0)
-
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 /*
  * <ini>
@@ -714,35 +663,6 @@ enum hdd_dot11_mode {
 #endif
 
 /*
- * This parameter will set the weight to calculate the average low pass
- * filter for channel congestion.
- * Acceptable values for this: 0-100 (In %)
- */
-#define CFG_ADAPT_DWELL_LPF_WEIGHT_NAME       "adapt_dwell_lpf_weight"
-#define CFG_ADAPT_DWELL_LPF_WEIGHT_MIN        (0)
-#define CFG_ADAPT_DWELL_LPF_WEIGHT_MAX        (100)
-#define CFG_ADAPT_DWELL_LPF_WEIGHT_DEFAULT    (80)
-
-/*
- * This parameter will set interval to monitor wifi activity
- * in passive scan in msec.
- * Acceptable values for this: 0-25
- */
-#define CFG_ADAPT_DWELL_PASMON_INTVAL_NAME     "adapt_dwell_passive_mon_intval"
-#define CFG_ADAPT_DWELL_PASMON_INTVAL_MIN      (0)
-#define CFG_ADAPT_DWELL_PASMON_INTVAL_MAX      (25)
-#define CFG_ADAPT_DWELL_PASMON_INTVAL_DEFAULT  (10)
-
-/*
- * This parameter will set % of wifi activity used in passive scan 0-100.
- * Acceptable values for this: 0-100 (in %)
- */
-#define CFG_ADAPT_DWELL_WIFI_THRESH_NAME       "adapt_dwell_wifi_act_threshold"
-#define CFG_ADAPT_DWELL_WIFI_THRESH_MIN        (0)
-#define CFG_ADAPT_DWELL_WIFI_THRESH_MAX        (100)
-#define CFG_ADAPT_DWELL_WIFI_THRESH_DEFAULT    (10)
-
-/*
  * <ini>
  * gScanBackoffMultiplier - For NLO/PNO, multiply fast scan period by this every
  *	max cycles
@@ -975,13 +895,8 @@ struct hdd_config {
 	bool enable_lfr_subnet_detection;
 #endif
 	bool apf_enabled;
-	bool adaptive_dwell_mode_enabled;
 	enum scan_dwelltime_adaptive_mode extscan_adaptive_dwell_mode;
 	enum scan_dwelltime_adaptive_mode pnoscan_adaptive_dwell_mode;
-	enum scan_dwelltime_adaptive_mode global_adapt_dwelltime_mode;
-	uint8_t adapt_dwell_lpf_weight;
-	uint8_t adapt_dwell_passive_mon_intval;
-	uint8_t adapt_dwell_wifi_act_threshold;
 	uint16_t sap_tx_leakage_threshold;
 	bool sap_internal_restart;
 	bool tx_orphan_enable;
