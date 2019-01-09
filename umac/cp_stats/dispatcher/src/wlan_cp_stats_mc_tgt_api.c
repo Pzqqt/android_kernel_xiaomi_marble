@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -571,10 +571,10 @@ tgt_mc_cp_stats_prepare_n_send_raw_station_stats(struct wlan_objmgr_psoc *psoc,
 	peer_mc_stats = peer_cp_stats_priv->peer_stats;
 	/*
 	 * The linkspeed returned by fw is in kbps so convert
-	 * it in units of 500kbps which is expected by UMAC
+	 * it in units of 100kbps which is expected by UMAC
 	 */
-	info.tx_rate = peer_mc_stats->tx_rate / 500;
-	info.rx_rate = peer_mc_stats->rx_rate / 500;
+	info.tx_rate = peer_mc_stats->tx_rate / 100;
+	info.rx_rate = peer_mc_stats->rx_rate / 100;
 	wlan_cp_stats_peer_obj_unlock(peer_cp_stats_priv);
 
 end:
