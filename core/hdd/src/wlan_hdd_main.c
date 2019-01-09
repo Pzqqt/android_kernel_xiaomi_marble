@@ -11307,13 +11307,8 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx)
 	if (0 != wlan_hdd_set_wow_pulse(hdd_ctx, true))
 		hdd_debug("Failed to set wow pulse");
 
-	bval = false;
-	if (QDF_IS_STATUS_ERROR(ucfg_fwol_get_gcmp_enable(hdd_ctx->psoc,
-							  &bval)))
-		hdd_err("Unable to get GCMP enable config param");
-
 	sme_cli_set_command(0, WMI_PDEV_PARAM_GCMP_SUPPORT_ENABLE,
-			    bval, PDEV_CMD);
+			    ucfg_fwol_get_gcmp_enable(hdd_ctx->psoc), PDEV_CMD);
 
 	auto_power_fail_mode =
 		ucfg_pmo_get_auto_power_fail_mode(hdd_ctx->psoc);

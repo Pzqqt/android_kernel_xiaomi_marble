@@ -12624,25 +12624,20 @@ static void wlan_hdd_cfg80211_set_wiphy_scan_flags(struct wiphy *wiphy)
 /**
  * wlan_hdd_cfg80211_set_wiphy_sae_feature() - Indicates support of SAE feature
  * @wiphy: Pointer to wiphy
- * @config: pointer to config
  *
  * This function is used to indicate the support of SAE
  *
  * Return: None
  */
-static void wlan_hdd_cfg80211_set_wiphy_sae_feature(struct wiphy *wiphy,
-			struct hdd_config *config)
+static void wlan_hdd_cfg80211_set_wiphy_sae_feature(struct wiphy *wiphy)
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	bool sae_enable;
 
-	ucfg_fwol_get_sae_enable(hdd_ctx->psoc, &sae_enable);
-	if (sae_enable)
+	if (ucfg_fwol_get_sae_enable(hdd_ctx->psoc))
 		wiphy->features |= NL80211_FEATURE_SAE;
 }
 #else
-static void wlan_hdd_cfg80211_set_wiphy_sae_feature(struct wiphy *wiphy,
-			struct hdd_config *config)
+static void wlan_hdd_cfg80211_set_wiphy_sae_feature(struct wiphy *wiphy)
 {
 }
 #endif
@@ -12764,7 +12759,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	int num_dsrc_ch, len_dsrc_ch, num_srd_ch, len_srd_ch;
 	uint32_t *cipher_suites;
 	uint8_t allow_mcc_go_diff_bi = 0, enable_mcc = 0;
-	bool gcmp_enabled = false;
 
 	hdd_enter();
 
@@ -12803,7 +12797,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	wlan_hdd_cfg80211_set_wiphy_scan_flags(wiphy);
 
-	wlan_hdd_cfg80211_set_wiphy_sae_feature(wiphy, pCfg);
+	wlan_hdd_cfg80211_set_wiphy_sae_feature(wiphy);
 
 	hdd_config_sched_scan_plans_to_wiphy(wiphy, pCfg);
 	wlan_hdd_cfg80211_add_connected_pno_support(wiphy);
@@ -12898,11 +12892,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	}
 
 	/*Initialise the supported cipher suite details */
-	if (QDF_IS_STATUS_ERROR(ucfg_fwol_get_gcmp_enable(hdd_ctx->psoc,
-							  &gcmp_enabled)))
-		hdd_err("Unable to get GCMP feature enable config param");
-
-	if (gcmp_enabled) {
+	if (ucfg_fwol_get_gcmp_enable(hdd_ctx->psoc)) {
 		cipher_suites = qdf_mem_malloc(sizeof(hdd_cipher_suites) +
 					       sizeof(hdd_gcmp_cipher_suits));
 		if (!cipher_suites)

@@ -590,43 +590,20 @@ QDF_STATUS ucfg_fwol_get_lprx_enable(struct wlan_objmgr_psoc *psoc,
 }
 
 #ifdef WLAN_FEATURE_SAE
-QDF_STATUS ucfg_fwol_get_sae_enable(struct wlan_objmgr_psoc *psoc,
-				    bool *sae_enable)
+bool ucfg_fwol_get_sae_enable(struct wlan_objmgr_psoc *psoc)
 {
-	struct wlan_fwol_psoc_obj *fwol_obj;
-
-	fwol_obj = fwol_get_psoc_obj(psoc);
-	if (!fwol_obj) {
-		fwol_err("Failed to get FWOL obj");
-		*sae_enable = cfg_default(CFG_IS_SAE_ENABLED);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	*sae_enable = fwol_obj->cfg.sae_enable;
-	return QDF_STATUS_SUCCESS;
+	return cfg_get(psoc, CFG_IS_SAE_ENABLED);
 }
 #else
-QDF_STATUS ucfg_fwol_get_sae_enable(struct wlan_objmgr_psoc *psoc,
-				    bool *sae_enable)
+bool ucfg_fwol_get_sae_enable(struct wlan_objmgr_psoc *psoc)
 {
-	return QDF_STATUS_E_NOSUPPORT;
+	return false;
 }
 #endif
 
-QDF_STATUS ucfg_fwol_get_gcmp_enable(struct wlan_objmgr_psoc *psoc,
-				     bool *gcmp_enable)
+bool ucfg_fwol_get_gcmp_enable(struct wlan_objmgr_psoc *psoc)
 {
-	struct wlan_fwol_psoc_obj *fwol_obj;
-
-	fwol_obj = fwol_get_psoc_obj(psoc);
-	if (!fwol_obj) {
-		fwol_err("Failed to get FWOL obj");
-		*gcmp_enable = cfg_default(CFG_ENABLE_GCMP);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	*gcmp_enable = fwol_obj->cfg.gcmp_enable;
-	return QDF_STATUS_SUCCESS;
+	return cfg_get(psoc, CFG_ENABLE_GCMP);
 }
 
 QDF_STATUS ucfg_fwol_get_enable_tx_sch_delay(struct wlan_objmgr_psoc *psoc,

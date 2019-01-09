@@ -347,22 +347,18 @@ QDF_STATUS ucfg_fwol_get_lprx_enable(struct wlan_objmgr_psoc *psoc,
 /**
  * ucfg_fwol_get_sae_enable() - Get SAE feature enable status
  * @psoc: pointer to the psoc object
- * @sae_enable: Pointer to return SAE feature enable status
  *
- * Return: QDF Status
+ * Return: True if enabled else false
  */
-QDF_STATUS ucfg_fwol_get_sae_enable(struct wlan_objmgr_psoc *psoc,
-				    bool *sae_enable);
+bool ucfg_fwol_get_sae_enable(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_fwol_get_gcmp_enable() - Get GCMP feature enable status
  * @psoc: pointer to the psoc object
- * @gcmp_enable: Pointer to return GCMP feature enable status
  *
- * Return: QDF Status
+ * Return: True if enabled else false
  */
-QDF_STATUS ucfg_fwol_get_gcmp_enable(struct wlan_objmgr_psoc *psoc,
-				     bool *gcmp_enable);
+bool ucfg_fwol_get_gcmp_enable(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_fwol_get_enable_tx_sch_delay() - Get enable tx sch delay
