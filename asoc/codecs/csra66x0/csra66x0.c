@@ -336,7 +336,9 @@ struct csra66x0_cluster_device csra_clust_dev_tbl[] = {
 	{NULL, "CSRA_56"},
 	{NULL, "CSRA_78"},
 	{NULL, "CSRA_9A"},
-	{NULL, "CSRA_BC"}
+	{NULL, "CSRA_BC"},
+	{NULL, "CSRA_DE"},
+	{NULL, "CSRA_F0"}
 };
 
 static int sysfs_get_param(char *buf, u32 *param, int num_of_par)
