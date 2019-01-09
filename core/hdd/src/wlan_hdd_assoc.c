@@ -62,6 +62,7 @@
 #include "wlan_ipa_ucfg_api.h"
 #include "wlan_hdd_stats.h"
 #include "wlan_hdd_scan.h"
+#include "wlan_crypto_global_api.h"
 
 #include "wlan_hdd_nud_tracking.h"
 #include <wlan_cfg80211_crypto.h>
@@ -5211,6 +5212,9 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 	uint8_t *pRsnIe;
 	uint16_t RSNIeLen;
 	uint32_t parse_status;
+#ifdef WLAN_CONV_CRYPTO_SUPPORTED
+	uint16_t rsn_cap = 0;
+#endif
 
 	/*
 	 * Clear struct of tDot11fIERSN and tDot11fIEWPA specifically
@@ -5262,6 +5266,11 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 #ifdef WLAN_FEATURE_11W
 		*pMfpRequired = (dot11RSNIE.RSN_Cap[0] >> 6) & 0x1;
 		*pMfpCapable = csr_is_mfpc_capable(&dot11RSNIE);
+#endif
+#ifdef WLAN_CONV_CRYPTO_SUPPORTED
+		qdf_mem_copy(&rsn_cap, dot11RSNIE.RSN_Cap, sizeof(rsn_cap));
+		wlan_crypto_set_vdev_param(adapter->vdev,
+					   WLAN_CRYPTO_PARAM_RSN_CAP, rsn_cap);
 #endif
 	} else if (gen_ie[0] == DOT11F_EID_WPA) {
 		/* Validity checks */
@@ -5425,6 +5434,12 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 		hdd_debug("CSR AuthType = %d, EncryptionType = %d mcEncryptionType = %d",
 			 *RSNAuthType, RSNEncryptType, mcRSNEncryptType);
 	}
+#ifdef WLAN_CONV_CRYPTO_SUPPORTED
+	if (QDF_STATUS_SUCCESS != wlan_set_vdev_crypto_prarams_from_ie(
+				  adapter->vdev, security_ie,
+				  (security_ie[1] + 2)))
+		hdd_err("Failed to set the crypto params from IE");
+#endif
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (hdd_ctx->force_rsne_override &&
