@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1377,6 +1377,9 @@ static void hdd_is_interface_down_during_ssr(struct hdd_context *hdd_ctx)
 		status = hdd_get_next_adapter(hdd_ctx, adapter, &pnext);
 		adapter = pnext;
 	}
+
+	if (!wlansap_is_gp_sap_ctx_empty())
+		QDF_DEBUG_PANIC("gp_sap_ctx leak");
 
 	hdd_exit();
 }
