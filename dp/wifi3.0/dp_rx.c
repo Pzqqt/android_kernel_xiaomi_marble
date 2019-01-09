@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1220,7 +1220,7 @@ static void dp_rx_msdu_stats_update(struct dp_soc *soc,
 	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
 		      ((mcs >= MAX_MCS) && (pkt_type == DOT11_AX)));
 	DP_STATS_INCC(peer, rx.pkt_type[pkt_type].mcs_count[mcs], 1,
-		      ((mcs <= MAX_MCS) && (pkt_type == DOT11_AX)));
+		      ((mcs < MAX_MCS) && (pkt_type == DOT11_AX)));
 
 	if ((soc->process_rx_status) &&
 	    hal_rx_attn_first_mpdu_get(rx_tlv_hdr)) {
