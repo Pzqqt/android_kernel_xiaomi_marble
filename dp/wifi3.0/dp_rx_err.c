@@ -1253,6 +1253,19 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 			continue;
 		}
 
+		/*
+		 * this is a unlikely scenario where the host is reaping
+		 * a descriptor which it already reaped just a while ago
+		 * but is yet to replenish it back to HW.
+		 * In this case host will dump the last 128 descriptors
+		 * including the software descriptor rx_desc and assert.
+		 */
+		if (qdf_unlikely(!rx_desc->in_use)) {
+			DP_STATS_INC(soc, rx.err.hal_wbm_rel_dup, 1);
+			dp_rx_dump_info_and_assert(soc, hal_ring,
+						   ring_desc, rx_desc);
+		}
+
 		nbuf = rx_desc->nbuf;
 		qdf_nbuf_unmap_single(soc->osdev, nbuf,	QDF_DMA_BIDIRECTIONAL);
 

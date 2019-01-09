@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1334,4 +1334,48 @@ static inline void hal_setup_link_idle_list(void *halsoc,
 			num_entries);
 
 }
+
+/**
+ * hal_srng_dump_ring_desc() - Dump ring descriptor info
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring: Source ring pointer
+ * @ring_desc: Opaque ring descriptor handle
+ */
+static inline void hal_srng_dump_ring_desc(struct hal_soc *hal, void *hal_ring,
+					   void *ring_desc)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			   ring_desc, (srng->entry_size << 2));
+}
+
+/**
+ * hal_srng_dump_ring() - Dump last 128 descs of the ring
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring: Source ring pointer
+ */
+static inline void hal_srng_dump_ring(struct hal_soc *hal, void *hal_ring)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	uint32_t *desc;
+	uint32_t tp, i;
+
+	tp = srng->u.dst_ring.tp;
+
+	for (i = 0; i < 128; i++) {
+		if (!tp)
+			tp = srng->ring_size;
+
+		desc = &srng->ring_base_vaddr[tp - srng->entry_size];
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP,
+				   QDF_TRACE_LEVEL_FATAL,
+				   desc, (srng->entry_size << 2));
+
+		tp -= srng->entry_size;
+	}
+}
+
 #endif /* _HAL_APIH_ */

@@ -56,6 +56,28 @@ static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
 		return false;
 }
 #endif
+
+/*
+ * dp_rx_dump_info_and_assert() - dump RX Ring info and Rx Desc info
+ *
+ * @soc: core txrx main context
+ * @hal_ring: opaque pointer to the HAL Rx Ring, which will be serviced
+ * @ring_desc: opaque pointer to the RX ring descriptor
+ * @rx_desc: host rs descriptor
+ *
+ * Return: void
+ */
+void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
+				void *ring_desc, struct dp_rx_desc *rx_desc)
+{
+	void *hal_soc = soc->hal_soc;
+
+	dp_rx_desc_dump(rx_desc);
+	hal_srng_dump_ring_desc(hal_soc, hal_ring, ring_desc);
+	hal_srng_dump_ring(hal_soc, hal_ring);
+	qdf_assert_always(rx_desc->in_use);
+}
+
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
  *			       called during dp rx initialization
@@ -1448,9 +1470,21 @@ uint32_t dp_rx_process(struct dp_intr *int_ctx, void *hal_ring,
 		rx_buf_cookie = HAL_RX_REO_BUF_COOKIE_GET(ring_desc);
 
 		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, rx_buf_cookie);
-
-
 		qdf_assert(rx_desc);
+
+		/*
+		 * this is a unlikely scenario where the host is reaping
+		 * a descriptor which it already reaped just a while ago
+		 * but is yet to replenish it back to HW.
+		 * In this case host will dump the last 128 descriptors
+		 * including the software descriptor rx_desc and assert.
+		 */
+		if (qdf_unlikely(!rx_desc->in_use)) {
+			DP_STATS_INC(soc, rx.err.hal_reo_dest_dup, 1);
+			dp_rx_dump_info_and_assert(soc, hal_ring,
+						   ring_desc, rx_desc);
+		}
+
 		rx_bufs_reaped[rx_desc->pool_id]++;
 
 		/* TODO */

@@ -6502,6 +6502,10 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 	DP_PRINT_STATS("RX frag wait: %d", soc->stats.rx.rx_frag_wait);
 	DP_PRINT_STATS("RX frag err: %d", soc->stats.rx.rx_frag_err);
 	DP_PRINT_STATS("RX HP out_of_sync: %d", soc->stats.rx.hp_oos);
+	DP_PRINT_STATS("RX DUP DESC: %d",
+		       soc->stats.rx.err.hal_reo_dest_dup);
+	DP_PRINT_STATS("RX REL DUP DESC: %d",
+		       soc->stats.rx.err.hal_wbm_rel_dup);
 
 	for (i = 0; i < HAL_RXDMA_ERR_MAX; i++) {
 		index += qdf_snprint(&rxdma_error[index],

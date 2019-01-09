@@ -617,6 +617,10 @@ struct dp_soc_stats {
 			uint32_t reo_error[HAL_REO_ERR_MAX];
 			/* HAL REO ERR Count */
 			uint32_t hal_reo_error[MAX_REO_DEST_RINGS];
+			/* HAL REO DEST Duplicate count */
+			uint32_t hal_reo_dest_dup;
+			/* HAL WBM RELEASE Duplicate count */
+			uint32_t hal_wbm_rel_dup;
 		} err;
 
 		/* packet count per core - per ring */

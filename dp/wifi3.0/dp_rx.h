@@ -847,6 +847,19 @@ static inline QDF_STATUS dp_rx_ast_set_active(struct dp_soc *soc, uint16_t sa_id
 #endif
 
 /*
+ * dp_rx_desc_dump() - dump the sw rx descriptor
+ *
+ * @rx_desc: sw rx descriptor
+ */
+static inline void dp_rx_desc_dump(struct dp_rx_desc *rx_desc)
+{
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+		  "rx_desc->nbuf: %pK, rx_desc->cookie: %d, rx_desc->pool_id: %d, rx_desc->in_use: %d, rx_desc->unmapped: %d",
+		  rx_desc->nbuf, rx_desc->cookie, rx_desc->pool_id,
+		  rx_desc->in_use, rx_desc->unmapped);
+}
+
+/*
  * check_qwrap_multicast_loopback() - Check if rx packet is a loopback packet.
  *					In qwrap mode, packets originated from
  *					any vdev should not loopback and
@@ -961,5 +974,8 @@ int dp_wds_rx_policy_check(uint8_t *rx_tlv_hdr, struct dp_vdev *vdev,
 
 qdf_nbuf_t
 dp_rx_nbuf_prepare(struct dp_soc *soc, struct dp_pdev *pdev);
+
+void dp_rx_dump_info_and_assert(struct dp_soc *soc, void *hal_ring,
+				void *ring_desc, struct dp_rx_desc *rx_desc);
 
 #endif /* _DP_RX_H */
