@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 - 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012 - 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -162,6 +162,7 @@ struct wlan_fwol_neighbor_report_cfg {
  * @enable_secondary_rate: Enable secondary retry rate config
  * @enable_dhcp_server_offload: DHCP Offload is enabled or not
  * @dhcp_max_num_clients: Max number of DHCP client supported
+ * @dwelltime_params: adaptive dwell time parameters
  */
 struct wlan_fwol_cfg {
 	/* Add CFG and INI items here */
@@ -204,6 +205,7 @@ struct wlan_fwol_cfg {
 	bool enable_dhcp_server_offload;
 	uint32_t dhcp_max_num_clients;
 #endif
+	struct adaptive_dwelltime_params dwelltime_params;
 };
 
 /**
@@ -252,4 +254,29 @@ QDF_STATUS fwol_cfg_on_psoc_disable(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS fwol_init_neighbor_report_cfg(struct wlan_objmgr_psoc *psoc,
 					 struct wlan_fwol_neighbor_report_cfg
 					 *fwol_neighbor_report_cfg);
+
+/**
+ * wlan_fwol_init_adapt_dwelltime_in_cfg - initialize adaptive dwell time params
+ * @psoc: Pointer to struct wlan_objmgr_psoc context
+ * @dwelltime_params: Pointer to dwell time params
+ *
+ * This function parses initialize the adaptive dwell params from ini.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+fwol_init_adapt_dwelltime_in_cfg(
+			struct wlan_objmgr_psoc *psoc,
+			struct adaptive_dwelltime_params *dwelltime_params);
+
+/**
+ * fwol_set_adaptive_dwelltime_config - API to set adaptive dwell params config
+ *
+ * @adaptive_dwelltime_params: adaptive_dwelltime_params structure
+ *
+ * Return: QDF Status
+ */
+QDF_STATUS
+fwol_set_adaptive_dwelltime_config(
+			struct adaptive_dwelltime_params *dwelltime_params);
 #endif

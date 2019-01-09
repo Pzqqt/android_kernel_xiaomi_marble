@@ -692,5 +692,107 @@ QDF_STATUS ucfg_fwol_get_dhcp_max_num_clients(struct wlan_objmgr_psoc *psoc,
 	*dhcp_max_num_clients = fwol_obj->cfg.dhcp_max_num_clients;
 	return QDF_STATUS_SUCCESS;
 }
+
 #endif
 
+QDF_STATUS
+ucfg_fwol_get_all_adaptive_dwelltime_params(
+			struct wlan_objmgr_psoc *psoc,
+			struct adaptive_dwelltime_params *dwelltime_params)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get fwol obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*dwelltime_params = fwol_obj->cfg.dwelltime_params;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_fwol_get_adaptive_dwell_mode_enabled(
+				struct wlan_objmgr_psoc *psoc,
+				bool *adaptive_dwell_mode_enabled)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*adaptive_dwell_mode_enabled =
+			fwol_obj->cfg.dwelltime_params.is_enabled;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_fwol_get_global_adapt_dwelltime_mode(struct wlan_objmgr_psoc *psoc,
+					  uint8_t *global_adapt_dwelltime_mode)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*global_adapt_dwelltime_mode =
+			fwol_obj->cfg.dwelltime_params.dwelltime_mode;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+ucfg_fwol_get_adapt_dwell_lpf_weight(struct wlan_objmgr_psoc *psoc,
+				     uint8_t *adapt_dwell_lpf_weight)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*adapt_dwell_lpf_weight = fwol_obj->cfg.dwelltime_params.lpf_weight;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_fwol_get_adapt_dwell_passive_mon_intval(
+				struct wlan_objmgr_psoc *psoc,
+				uint8_t *adapt_dwell_passive_mon_intval)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*adapt_dwell_passive_mon_intval =
+			fwol_obj->cfg.dwelltime_params.passive_mon_intval;
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS ucfg_fwol_get_adapt_dwell_wifi_act_threshold(
+				struct wlan_objmgr_psoc *psoc,
+				uint8_t *adapt_dwell_wifi_act_threshold)
+{
+	struct wlan_fwol_psoc_obj *fwol_obj;
+
+	fwol_obj = fwol_get_psoc_obj(psoc);
+	if (!fwol_obj) {
+		fwol_err("Failed to get FWOL obj");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*adapt_dwell_wifi_act_threshold =
+			fwol_obj->cfg.dwelltime_params.wifi_act_threshold;
+	return QDF_STATUS_SUCCESS;
+}

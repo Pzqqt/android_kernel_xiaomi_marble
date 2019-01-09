@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -20,6 +20,8 @@
  */
 
 #include "wlan_fw_offload_main.h"
+#include "cds_api.h"
+#include "wma.h"
 
 struct wlan_fwol_psoc_obj *fwol_get_psoc_obj(struct wlan_objmgr_psoc *psoc)
 {
@@ -116,6 +118,45 @@ QDF_STATUS fwol_init_neighbor_report_cfg(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS
+fwol_init_adapt_dwelltime_in_cfg(
+			struct wlan_objmgr_psoc *psoc,
+			struct adaptive_dwelltime_params *dwelltime_params)
+{
+	if (!dwelltime_params) {
+		fwol_err("dwelltime params config pointer null");
+		return QDF_STATUS_E_FAILURE;
+	}
+	dwelltime_params->is_enabled =
+			cfg_get(psoc, CFG_ADAPTIVE_DWELL_MODE_ENABLED);
+	dwelltime_params->dwelltime_mode =
+			cfg_get(psoc, CFG_GLOBAL_ADAPTIVE_DWELL_MODE);
+	dwelltime_params->lpf_weight =
+			cfg_get(psoc, CFG_ADAPT_DWELL_LPF_WEIGHT);
+	dwelltime_params->passive_mon_intval =
+			cfg_get(psoc, CFG_ADAPT_DWELL_PASMON_INTVAL);
+	dwelltime_params->wifi_act_threshold =
+			cfg_get(psoc, CFG_ADAPT_DWELL_WIFI_THRESH);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS
+fwol_set_adaptive_dwelltime_config(
+			struct adaptive_dwelltime_params *dwelltime_params)
+{
+	tp_wma_handle wma_handle;
+	QDF_STATUS status;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		fwol_err("wma handle is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+	status = wma_send_adapt_dwelltime_params(wma_handle,
+						 dwelltime_params);
+	return status;
+}
 /**
  * fwol_parse_probe_req_ouis - form ouis from ini gProbeReqOUIs
  * @psoc: Pointer to struct wlan_objmgr_psoc context
@@ -380,6 +421,7 @@ QDF_STATUS fwol_cfg_on_psoc_enable(struct wlan_objmgr_psoc *psoc)
 	fwol_cfg->enable_tx_sch_delay = cfg_get(psoc, CFG_TX_SCH_DELAY);
 	fwol_cfg->enable_secondary_rate = cfg_get(psoc,
 						  CFG_ENABLE_SECONDARY_RATE);
+	fwol_init_adapt_dwelltime_in_cfg(psoc, &fwol_cfg->dwelltime_params);
 	ucfg_fwol_fetch_ra_filter(psoc, fwol_cfg);
 	ucfg_fwol_fetch_tsf_gpio_pin(psoc, fwol_cfg);
 	ucfg_fwol_fetch_dhcp_server_settings(psoc, fwol_cfg);

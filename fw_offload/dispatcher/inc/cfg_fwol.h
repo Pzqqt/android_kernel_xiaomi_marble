@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012 - 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012 - 2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -27,8 +27,10 @@
 #include "cfg_ie_whitelist.h"
 #include "cfg_fwol_generic.h"
 #include "cfg_neighbor_roam.h"
+#include "cfg_adaptive_dwelltime.h"
 
 #define CFG_FWOL_ALL \
+	CFG_ADAPTIVE_DWELLTIME_ALL \
 	CFG_11K_ALL \
 	CFG_COEX_ALL \
 	CFG_FWOL_GENERIC_ALL \
