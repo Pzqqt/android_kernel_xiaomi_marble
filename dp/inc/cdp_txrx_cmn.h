@@ -146,7 +146,8 @@ cdp_vdev_attach(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 	return soc->ops->cmn_drv_ops->txrx_vdev_attach(pdev,
 			vdev_mac_addr, vdev_id, op_mode);
 }
-#ifndef CONFIG_WIN
+
+#ifdef CONFIG_MCL
 /**
  * cdp_flow_pool_map() - Create flow pool for vdev
  * @soc - data path soc handle

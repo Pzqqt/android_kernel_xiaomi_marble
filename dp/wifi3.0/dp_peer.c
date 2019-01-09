@@ -2793,7 +2793,7 @@ dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 	dp_peer_unref_del_find_by_id(peer);
 }
 
-#ifndef CONFIG_WIN
+#ifdef CONFIG_MCL
 /**
  * dp_register_peer() - Register peer into physical device
  * @pdev - data path device instance

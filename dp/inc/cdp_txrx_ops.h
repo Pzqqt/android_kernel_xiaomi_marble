@@ -850,12 +850,12 @@ struct cdp_raw_ops {
 				struct cdp_raw_ast *raw_ast);
 };
 
-#ifdef CONFIG_WIN
+#ifdef PEER_FLOW_CONTROL
 struct cdp_pflow_ops {
 	uint32_t(*pflow_update_pdev_params)(void *,
 			enum _ol_ath_param_t, uint32_t, void *);
 };
-#endif /* CONFIG_WIN */
+#endif /* PEER_FLOW_CONTROL */
 
 #define LRO_IPV4_SEED_ARR_SZ 5
 #define LRO_IPV6_SEED_ARR_SZ 11
@@ -917,10 +917,10 @@ struct ol_if_ops {
 			   struct cdp_lro_hash_config *rx_offld_hash);
 	void (*update_dp_stats)(void *soc, void *stats, uint16_t id,
 			uint8_t type);
-#ifdef CONFIG_WIN
-	uint8_t (*rx_invalid_peer)(void *ctrl_pdev, void *msg);
-#else
+#ifdef CONFIG_MCL
 	uint8_t (*rx_invalid_peer)(uint8_t vdev_id, void *wh);
+#else
+	uint8_t (*rx_invalid_peer)(void *ctrl_pdev, void *msg);
 #endif
 	int  (*peer_map_event)(void *ol_soc_handle, uint16_t peer_id, uint16_t hw_peer_id,
 			uint8_t vdev_id, uint8_t *peer_mac_addr,
@@ -968,7 +968,7 @@ struct ol_if_ops {
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 
-#ifndef CONFIG_WIN
+#ifdef CONFIG_MCL
 /* From here MCL specific OPs */
 /**
  * struct cdp_misc_ops - mcl ops not classified
@@ -1317,7 +1317,7 @@ struct cdp_mob_stats_ops {
 	void (*clear_stats)(uint16_t bitmap);
 	int (*stats)(uint8_t vdev_id, char *buffer, unsigned buf_len);
 };
-#endif /* CONFIG_WIN */
+#endif /* CONFIG_MCL */
 
 #ifdef RECEIVE_OFFLOAD
 /**
@@ -1340,7 +1340,7 @@ struct cdp_ops {
 	struct cdp_wds_ops          *wds_ops;
 	struct cdp_raw_ops          *raw_ops;
 	struct cdp_pflow_ops        *pflow_ops;
-#ifndef CONFIG_WIN
+#ifdef CONFIG_MCL
 	struct cdp_misc_ops         *misc_ops;
 	struct cdp_cfg_ops          *cfg_ops;
 	struct cdp_flowctl_ops      *flowctl_ops;
@@ -1358,6 +1358,6 @@ struct cdp_ops {
 	struct cdp_mob_stats_ops    *mob_stats_ops;
 	struct cdp_tx_delay_ops     *delay_ops;
 	struct cdp_pmf_ops          *pmf_ops;
-#endif /* CONFIG_WIN */
+#endif
 };
 #endif

@@ -32,9 +32,6 @@
 #include <cdp_txrx_cmn.h>
 #ifdef CONFIG_MCL
 #include <cds_ieee80211_common.h>
-#endif
-
-#ifndef CONFIG_WIN
 #include <wdi_event_api.h>    /* WDI subscriber event list */
 #endif
 
@@ -1910,7 +1907,6 @@ struct dp_peer {
 #endif
 };
 
-#ifdef CONFIG_WIN
 /*
  * dp_invalid_peer_msg
  * @nbuf: data buffer
@@ -1922,7 +1918,6 @@ struct dp_invalid_peer_msg {
 	struct ieee80211_frame *wh;
 	uint8_t vdev_id;
 };
-#endif
 
 /*
  * dp_tx_me_buf_t: ME buffer

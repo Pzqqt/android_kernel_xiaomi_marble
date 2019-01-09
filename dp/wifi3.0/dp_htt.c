@@ -1514,7 +1514,7 @@ fail0:
 	return QDF_STATUS_E_FAILURE;
 }
 
-#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
+#if defined(HTT_STATS_ENABLE)
 static inline QDF_STATUS dp_send_htt_stat_resp(struct htt_stats_context *htt_stats,
 					struct dp_soc *soc, qdf_nbuf_t htt_msg)
 
@@ -1546,13 +1546,13 @@ static inline QDF_STATUS dp_send_htt_stat_resp(struct htt_stats_context *htt_sta
 	return QDF_STATUS_SUCCESS;
 }
 #else
-static inline QDF_STATUS dp_send_htt_stat_resp(struct htt_stats_context *htt_stats,
-					struct dp_soc *soc, qdf_nbuf_t htt_msg)
+static inline QDF_STATUS
+dp_send_htt_stat_resp(struct htt_stats_context *htt_stats,
+		      struct dp_soc *soc, qdf_nbuf_t htt_msg)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
-
 /**
  * dp_process_htt_stat_msg(): Process the list of buffers of HTT EXT stats
  * @htt_stats: htt stats info

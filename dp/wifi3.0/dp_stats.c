@@ -626,7 +626,6 @@ static inline void dp_print_tx_tid_stats_tlv(uint32_t *tag_buf)
 	qdf_mem_free(tid_name);
 }
 
-#ifdef CONFIG_WIN
 /*
  * dp_print_tx_tid_stats_v1_tlv: display htt_tx_tid_stats_v1_tlv
  * @tag_buf: buffer containing the tlv htt_tx_tid_stats_v1_tlv
@@ -682,7 +681,6 @@ static inline void dp_print_tx_tid_stats_v1_tlv(uint32_t *tag_buf)
 			dp_stats_buf->tid_tx_airtime);
 	qdf_mem_free(tid_name);
 }
-#endif
 
 /*
  * dp_print_rx_tid_stats_tlv: display htt_rx_tid_stats_tlv
@@ -3951,8 +3949,6 @@ void dp_htt_stats_copy_tag(struct dp_pdev *pdev, uint8_t tag_type, uint32_t *tag
 	if (dest_ptr)
 		qdf_mem_copy(dest_ptr, tag_buf, size);
 }
-
-#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
 QDF_STATUS dp_peer_stats_notify(struct dp_peer *peer)
 {
 	struct dp_pdev *dp_pdev;
@@ -3987,7 +3983,6 @@ QDF_STATUS dp_peer_stats_notify(struct dp_peer *peer)
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif
 
 #ifdef CONFIG_WIN
 /**

@@ -30,18 +30,18 @@
 #include "dp_rx_mon.h"
 #include "dp_ipa.h"
 
-#ifdef CONFIG_WIN
-static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
-{
-	return vdev->ap_bridge_enabled;
-}
-#else
+#ifdef CONFIG_MCL
 static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
 {
 	if (vdev->opmode != wlan_op_mode_sta)
 		return true;
 	else
 		return false;
+}
+#else
+static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
+{
+	return vdev->ap_bridge_enabled;
 }
 #endif
 
@@ -691,7 +691,7 @@ QDF_STATUS dp_rx_filter_mesh_packets(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 #endif
 
-#ifdef CONFIG_WIN
+#ifdef FEATURE_NAC_RSSI
 /**
  * dp_rx_nac_filter(): Function to perform filtering of non-associated
  * clients

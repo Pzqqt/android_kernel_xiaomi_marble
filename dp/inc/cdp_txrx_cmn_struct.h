@@ -34,9 +34,9 @@
 #include "qdf_types.h"
 #include "qdf_nbuf.h"
 #include "qdf_atomic.h"
-#ifndef CONFIG_WIN
+#ifdef CONFIG_MCL
 #include <cdp_txrx_mob_def.h>
-#endif /* CONFIG_WIN */
+#endif
 #include <cdp_txrx_handle.h>
 #include <cdp_txrx_stats_struct.h>
 #ifdef WLAN_RX_PKT_CAPTURE_ENH
