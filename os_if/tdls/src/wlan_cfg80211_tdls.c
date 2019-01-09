@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -758,7 +758,8 @@ int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_vdev *vdev,
 		&tdls_priv->tdls_mgmt_comp,
 		msecs_to_jiffies(WAIT_TIME_FOR_TDLS_MGMT));
 
-	if ((0 == rc) || (true != tdls_priv->mgmt_tx_completion_status)) {
+	if ((0 == rc) || (QDF_STATUS_SUCCESS !=
+				tdls_priv->mgmt_tx_completion_status)) {
 		cfg80211_err("%s rc %ld mgmtTxCompletionStatus %u",
 			     !rc ? "Mgmt Tx Completion timed out" :
 			     "Mgmt Tx Completion failed",

@@ -864,7 +864,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 	/* Call the Ack Cb registered by UMAC */
 	if (ack_cb)
 		ack_cb((struct mac_context *) (wma_handle->mac_context), NULL,
-			work->status ? 0 : 1, NULL);
+			work->status, NULL);
 	else
 		WMA_LOGE("Data Tx Ack Cb is NULL");
 
