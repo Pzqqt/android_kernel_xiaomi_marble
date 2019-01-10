@@ -6346,6 +6346,7 @@ static void wma_print_mac_phy_capabilities(struct wlan_psoc_host_mac_phy_caps
 	WMA_LOGD("\t: cap for hw_mode_id[%d]", cap->hw_mode_id);
 	WMA_LOGD("\t: pdev_id[%d]", cap->pdev_id);
 	WMA_LOGD("\t: phy_id[%d]", cap->phy_id);
+	WMA_LOGD("\t: hw_mode_config_type[%d]", cap->hw_mode_config_type);
 	WMA_LOGD("\t: supports_11b[%d]", cap->supports_11b);
 	WMA_LOGD("\t: supports_11g[%d]", cap->supports_11g);
 	WMA_LOGD("\t: supports_11a[%d]", cap->supports_11a);
@@ -6594,7 +6595,7 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle,
 		/* Update for MAC0 */
 		tmp = &mac_phy_cap[j++];
 		wma_get_hw_mode_params(tmp, &mac0_ss_bw_info);
-		hw_config_type = mac_phy_cap[j].hw_mode_config_type;
+		hw_config_type = tmp->hw_mode_config_type;
 		dbs_mode = HW_MODE_DBS_NONE;
 		sbs_mode = HW_MODE_SBS_NONE;
 		mac1_ss_bw_info.mac_tx_stream = 0;
