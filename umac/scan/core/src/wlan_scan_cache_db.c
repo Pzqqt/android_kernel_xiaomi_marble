@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -782,12 +782,13 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 
 		scan_entry = scan_node->entry;
 
-		scm_debug("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x  ssid:%.*s, rssi: %d",
+		scm_debug("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x  ssid:%.*s, rssi: %d pdev_id = %d",
 			  (bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
 			  "Probe Rsp" : "Beacon", scan_entry->bssid.bytes,
 			  scan_entry->tsf_delta, scan_entry->seq_num,
 			  scan_entry->ssid.length, scan_entry->ssid.ssid,
-			  scan_entry->rssi_raw);
+			  scan_entry->rssi_raw,
+			  wlan_objmgr_pdev_get_pdev_id(pdev));
 
 		if (scan_obj->drop_bcn_on_chan_mismatch &&
 			scan_entry->channel_mismatch) {
