@@ -2552,6 +2552,14 @@ typedef struct {
      * Peer ID can be up to num_total_peers + num_extra_peers.
      */
     A_UINT32 num_extra_peers;
+    /*
+     * max_ast_index - max AST index that Firmware can generate
+     * max_ast_index = (ast_table_size-1), ast_table_size is dynamically chosen
+     * based on num_peers configutation from Host. Hence Host needs to know the
+     * max_ast_index that Firmware can generate.
+     * A 0x0 value for max_ast_index means the target has not specified a limit.
+     */
+    A_UINT32 max_ast_index;
 
 /*
  * This fixed_param TLV is followed by these additional TLVs:
@@ -10662,6 +10670,8 @@ typedef struct {
 
 /* Disable burst and assist */
 #define WMI_PEER_PARAM_DISABLE_AGGRESSIVE_TX            0x1d
+/* Enable 11r FT Roaming */
+#define  WMI_PEER_PARAM_ENABLE_FT                       0x1e
 
 /** mimo ps values for the parameter WMI_PEER_MIMO_PS_STATE  */
 #define WMI_PEER_MIMO_PS_NONE                          0x0
