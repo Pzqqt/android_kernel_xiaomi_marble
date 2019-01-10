@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2121,6 +2121,9 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	if (qdf_unlikely(qdf_nbuf_is_nonlinear(nbuf))) {
 		nbuf = dp_tx_prepare_sg(vdev, nbuf, &seg_info, &msdu_info);
 
+		if (!nbuf)
+			return NULL;
+
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			 "%s non-TSO SG frame %pK", __func__, vdev);
 
@@ -3769,6 +3772,9 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 	num_pool = wlan_cfg_get_num_tx_desc_pool(soc->wlan_cfg_ctx);
 	num_desc = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
 	num_ext_desc = wlan_cfg_get_num_tx_ext_desc(soc->wlan_cfg_ctx);
+
+	if (num_pool > MAX_TXDESC_POOLS)
+		goto fail;
 
 	if (dp_tx_alloc_static_pools(soc, num_pool, num_desc))
 		goto fail;
