@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1925,6 +1925,23 @@ uint8_t cdp_get_pdev_id_frm_pdev(ol_txrx_soc_handle soc,
 {
 	if (soc->ops->cmn_drv_ops->txrx_get_pdev_id_frm_pdev)
 		return soc->ops->cmn_drv_ops->txrx_get_pdev_id_frm_pdev(pdev);
+	return 0;
+}
+
+/*
+ * cdp_get_vow_config_frm_pdev() - return carrier_vow_config from pdev
+ * @soc: opaque soc handle
+ * @pdev: data path pdev handle
+ *
+ * Return: carrier_vow_config
+ */
+static inline
+bool cdp_get_vow_config_frm_pdev(ol_txrx_soc_handle soc,
+				 struct cdp_pdev *pdev)
+{
+	if (soc->ops->cmn_drv_ops->txrx_get_vow_config_frm_pdev)
+		return soc->ops->cmn_drv_ops->txrx_get_vow_config_frm_pdev(
+				pdev);
 	return 0;
 }
 

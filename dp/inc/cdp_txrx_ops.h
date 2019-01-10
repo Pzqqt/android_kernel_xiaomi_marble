@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -166,6 +166,7 @@ struct cdp_cmn_ops {
 				      uint32_t bitmap);
 
 	uint8_t (*txrx_get_pdev_id_frm_pdev)(struct cdp_pdev *pdev);
+	bool (*txrx_get_vow_config_frm_pdev)(struct cdp_pdev *pdev);
 
 	void (*txrx_pdev_set_chan_noise_floor)(struct cdp_pdev *pdev,
 					       int16_t chan_noise_floor);
