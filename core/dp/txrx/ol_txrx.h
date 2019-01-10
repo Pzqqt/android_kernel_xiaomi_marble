@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -315,6 +315,18 @@ QDF_STATUS ol_txrx_register_pause_cb(struct cdp_soc_t *soc,
  *         false; not enough descriptors, drop the packet
  */
 bool ol_txrx_fwd_desc_thresh_check(struct cdp_vdev *vdev);
+
+/**
+ * ol_tx_desc_thresh_reached() - is tx desc threshold reached
+ * @vdev: vdev handle
+ *
+ * Return: true if tx desc available reached threshold or false otherwise
+ */
+static inline bool ol_tx_desc_thresh_reached(struct cdp_vdev *vdev)
+{
+	return !(ol_txrx_fwd_desc_thresh_check(vdev));
+}
+
 #else
 /**
  * ol_tx_get_total_free_desc() - get total free descriptors

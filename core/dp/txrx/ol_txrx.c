@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -5556,7 +5556,7 @@ static struct cdp_flowctl_ops ol_ops_flowctl = {
 	.register_pause_cb = ol_txrx_register_pause_cb,
 	.set_desc_global_pool_size = ol_tx_set_desc_global_pool_size,
 	.dump_flow_pool_info = ol_tx_dump_flow_pool_info,
-	.tx_desc_thresh_reached = ol_txrx_fwd_desc_thresh_check,
+	.tx_desc_thresh_reached = ol_tx_desc_thresh_reached,
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
 };
 
