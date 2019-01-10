@@ -117,34 +117,6 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
- * gScanAgingTime - Set scan aging time
- * @Min: 0
- * @Max: 200
- * @Default: 30
- *
- * This ini is used to set scan aging timeout value
- * in secs. For example after 30 secs the bss results
- * greater than 30secs age will be flushed.
- *
- * Related: None
- *
- * Supported Feature: Scan
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_SCAN_AGING_PARAM_NAME          "gScanAgingTime"
-#define CFG_SCAN_AGING_PARAM_MIN           (0)
-#define CFG_SCAN_AGING_PARAM_MAX           (200)
-#ifdef QCA_WIFI_NAPIER_EMULATION
-#define CFG_SCAN_AGING_PARAM_DEFAULT       (90)
-#else
-#define CFG_SCAN_AGING_PARAM_DEFAULT       (30)
-#endif
-
-/*
- * <ini>
  * extscan_adaptive_dwell_mode - Enable adaptive dwell mode
  * during ext scan
  * @Min: 0
@@ -196,28 +168,6 @@ enum hdd_dot11_mode {
 #define CFG_DOT11_MODE_DEFAULT                 eHDD_DOT11_MODE_11ax
 #define CFG_DOT11_MODE_MAX                     eHDD_DOT11_MODE_11ax
 
-/*
- * <ini>
- * gEnableApProt - Enable/Disable AP protection
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable/disable AP protection
- *
- * Related: None.
- *
- * Supported Feature: SAP
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-#define CFG_AP_ENABLE_PROTECTION_MODE_NAME            "gEnableApProt"
-#define CFG_AP_ENABLE_PROTECTION_MODE_MIN             (0)
-#define CFG_AP_ENABLE_PROTECTION_MODE_MAX             (1)
-#define CFG_AP_ENABLE_PROTECTION_MODE_DEFAULT         (1)
-
 /* WMM configuration */
 /*
  * <ini>
@@ -267,11 +217,6 @@ enum hdd_dot11_mode {
 #define CFG_DHCP_SERVER_IP_NAME     "gDHCPServerIP"
 #define CFG_DHCP_SERVER_IP_DEFAULT  ""
 #endif /* DHCP_SERVER_OFFLOAD */
-
-#define CFG_ENABLE_MAC_ADDR_SPOOFING                "gEnableMacAddrSpoof"
-#define CFG_ENABLE_MAC_ADDR_SPOOFING_MIN            (0)
-#define CFG_ENABLE_MAC_ADDR_SPOOFING_MAX            (1)
-#define CFG_ENABLE_MAC_ADDR_SPOOFING_DEFAULT        (1)
 
 /*
  * <ini>
@@ -410,7 +355,6 @@ struct hdd_config {
 	/* Config parameters */
 	bool enable_connected_scan;
 	enum hdd_dot11_mode dot11Mode;
-	bool apProtEnabled;
 
 #ifdef FEATURE_WLAN_DYNAMIC_CVM
 	/* Bitmap for operating voltage corner mode */
@@ -422,13 +366,11 @@ struct hdd_config {
 	bool enable_mtrace;
 #endif
 	bool prevent_link_down;
-	uint8_t scanAgingTimeout;
 	bool fEnableSNRMonitoring;
 	bool advertiseConcurrentOperation;
 #ifdef DHCP_SERVER_OFFLOAD
 	uint8_t dhcpServerIP[IPADDR_STRING_LENGTH];
 #endif /* DHCP_SERVER_OFFLOAD */
-	bool enable_mac_spoofing;
 	uint8_t sap_11ac_override;
 	uint8_t go_11ac_override;
 	bool apf_enabled;

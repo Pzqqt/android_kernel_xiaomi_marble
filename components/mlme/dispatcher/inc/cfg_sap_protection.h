@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -58,8 +58,30 @@
  */
 #define CFG_IGNORE_PEER_HT_MODE CFG_INI_BOOL( \
 		"gignore_peer_ht_opmode", \
-		0, \
+		false, \
 		"ignore the peer ht mode")
+
+/*
+ * <ini>
+ * gEnableApProt - Enable/Disable AP protection
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable AP protection
+ *
+ * Related: None.
+ *
+ * Supported Feature: SAP
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_AP_ENABLE_PROTECTION_MODE CFG_INI_BOOL( \
+		"gEnableApProt", \
+		true, \
+		"enable protection on sap")
 
 /*
  * <ini>
@@ -113,13 +135,14 @@
  */
 #define CFG_AP_OBSS_PROTECTION_ENABLE CFG_INI_BOOL( \
 		"gEnableApOBSSProt", \
-		0, \
+		false, \
 		"Enable/Disable AP OBSS protection")
 
 #define CFG_SAP_PROTECTION_ALL \
 	CFG(CFG_PROTECTION_ENABLED) \
 	CFG(CFG_FORCE_POLICY_PROTECTION) \
 	CFG(CFG_IGNORE_PEER_HT_MODE) \
+	CFG(CFG_AP_ENABLE_PROTECTION_MODE) \
 	CFG(CFG_AP_PROTECTION_MODE) \
 	CFG(CFG_AP_OBSS_PROTECTION_ENABLE)
 

@@ -14545,11 +14545,7 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	QDF_STATUS status;
 	uint32_t mcast_mcc_rest_time = 0;
 
-	/* convert to ms */
-	scan_cfg.scan_cache_aging_time =
-		cfg->scanAgingTimeout * 1000;
 	scan_cfg.is_snr_monitoring_enabled = cfg->fEnableSNRMonitoring;
-	scan_cfg.enable_mac_spoofing = cfg->enable_mac_spoofing;
 	status = ucfg_mlme_get_sta_miracast_mcc_rest_time(hdd_ctx->psoc,
 							  &mcast_mcc_rest_time);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

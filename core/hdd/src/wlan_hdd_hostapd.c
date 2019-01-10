@@ -4906,7 +4906,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	/* pConfig->channel = pCommitConfig->channel; */
 
 	/* Protection parameter to enable or disable */
-	pConfig->protEnabled = iniConfig->apProtEnabled;
+	pConfig->protEnabled = ucfg_mlme_is_ap_prot_enabled(hdd_ctx->psoc);
 
 	status = ucfg_mlme_get_sap_chan_switch_rate_enabled(hdd_ctx->psoc,
 							    &val);

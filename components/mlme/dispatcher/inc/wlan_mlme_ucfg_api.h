@@ -1649,6 +1649,21 @@ QDF_STATUS ucfg_mlme_get_oce_sap_enabled_info(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * ucfg_mlme_is_ap_prot_enabled() - Check if sap is enabled
+ * @psoc: pointer to psoc object
+ *
+ * Inline UCFG API to be used by HDD/OSIF callers to get the
+ * sap protection enabled/disabled
+ *
+ * Return: QDF_STATUS_SUCCESS or QDF_STATUS_FAILURE
+ */
+static inline
+bool ucfg_mlme_is_ap_prot_enabled(struct wlan_objmgr_psoc *psoc)
+{
+	return wlan_mlme_is_ap_prot_enabled(psoc);
+}
+
+/**
  * ucfg_mlme_get_ap_protection_mode() - Get ap protection mode info
  * @psoc: pointer to psoc object
  * @value: pointer to the value which will be filled for the caller

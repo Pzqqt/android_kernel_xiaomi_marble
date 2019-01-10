@@ -3291,11 +3291,11 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_SET_SCANNING_MAC_OUI_MAX + 1];
 	QDF_STATUS status;
-	int ret;
-	int len;
+	int ret, len;
 	struct net_device *ndev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	mac_handle_t mac_handle;
+	bool mac_spoofing_enabled;
 
 	hdd_enter_dev(wdev->netdev);
 
@@ -3308,7 +3308,8 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 	if (ret)
 		return ret;
 
-	if (!hdd_ctx->config->enable_mac_spoofing) {
+	mac_spoofing_enabled = ucfg_scan_is_mac_spoofing_enabled(hdd_ctx->psoc);
+	if (!mac_spoofing_enabled) {
 		hdd_debug("MAC address spoofing is not enabled");
 		return -ENOTSUPP;
 	}
@@ -12448,16 +12449,8 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wip
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 static void wlan_hdd_cfg80211_scan_randomization_init(struct wiphy *wiphy)
 {
-	struct hdd_context *hdd_ctx;
-
-	hdd_ctx = wiphy_priv(wiphy);
-
-	if (false == hdd_ctx->config->enable_mac_spoofing) {
-		hdd_warn("MAC address spoofing is not enabled");
-	} else {
-		wiphy->features |= NL80211_FEATURE_SCAN_RANDOM_MAC_ADDR;
-		wiphy->features |= NL80211_FEATURE_SCHED_SCAN_RANDOM_MAC_ADDR;
-	}
+	wiphy->features |= NL80211_FEATURE_SCAN_RANDOM_MAC_ADDR;
+	wiphy->features |= NL80211_FEATURE_SCHED_SCAN_RANDOM_MAC_ADDR;
 }
 #else
 static void wlan_hdd_cfg80211_scan_randomization_init(struct wiphy *wiphy)
@@ -12658,6 +12651,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	int num_dsrc_ch, len_dsrc_ch, num_srd_ch, len_srd_ch;
 	uint32_t *cipher_suites;
 	uint8_t allow_mcc_go_diff_bi = 0, enable_mcc = 0;
+	bool mac_spoofing_enabled;
 
 	hdd_enter();
 
@@ -12837,7 +12831,8 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	hdd_add_channel_switch_support(&wiphy->flags);
 	wiphy->max_num_csa_counters = WLAN_HDD_MAX_NUM_CSA_COUNTERS;
-	if (pCfg->enable_mac_spoofing)
+	mac_spoofing_enabled = ucfg_scan_is_mac_spoofing_enabled(hdd_ctx->psoc);
+	if (mac_spoofing_enabled)
 		wlan_hdd_cfg80211_scan_randomization_init(wiphy);
 	wlan_hdd_cfg80211_action_frame_randomization_init(wiphy);
 

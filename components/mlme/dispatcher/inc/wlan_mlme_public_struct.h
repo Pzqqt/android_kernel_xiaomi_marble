@@ -924,6 +924,7 @@ struct wlan_mlme_feature_flag {
  * @ignore_peer_ht_opmode:     Ignore the ht opmode of the peer. Dynamic via INI
  * @enable_ap_obss_protection: enable/disable AP OBSS protection
  * @protection_force_policy:   Protection force policy. Static via cfg
+ * @is_ap_prot_enabled:        Enable/disable SAP protection
  * @ap_protection_mode:        AP protection bitmap
  * @protection_enabled:        Force enable protection. static via cfg
  */
@@ -931,6 +932,7 @@ struct wlan_mlme_sap_protection {
 	bool ignore_peer_ht_opmode;
 	bool enable_ap_obss_protection;
 	uint8_t protection_force_policy;
+	bool is_ap_prot_enabled;
 	uint16_t ap_protection_mode;
 	uint32_t protection_enabled;
 };
