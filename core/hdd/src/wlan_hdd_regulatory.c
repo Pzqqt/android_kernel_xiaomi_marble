@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -495,8 +495,9 @@ static void hdd_process_regulatory_data(struct hdd_context *hdd_ctx,
 				cds_chan->chan_flags |=
 						REGULATORY_CHAN_INDOOR_ONLY;
 
-				ucfg_mlme_get_indoor_chan_enabled(hdd_ctx->psoc,
-								  &indoor);
+				ucfg_mlme_get_indoor_channel_support(
+								hdd_ctx->psoc,
+								&indoor);
 				if (!indoor) {
 					cds_chan->state = CHANNEL_STATE_DFS;
 					wiphy_chan->flags |=
