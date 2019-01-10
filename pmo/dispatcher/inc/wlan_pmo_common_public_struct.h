@@ -280,6 +280,20 @@ enum pmo_auto_pwr_detect_failure_mode {
 };
 
 /**
+ * enum active_apf_mode - the modes active APF can operate in
+ * @ACTIVE_APF_DISABLED: APF is disabled in active mode
+ * @ACTIVE_APF_ENABLED: APF is enabled for all packets
+ * @ACTIVE_APF_ADAPTIVE: APF is enabled for packets up to some threshold
+ * @ACTIVE_APF_MODE_COUNT: The number of active APF modes
+ */
+enum active_apf_mode {
+	ACTIVE_APF_DISABLED = 0,
+	ACTIVE_APF_ENABLED,
+	ACTIVE_APF_ADAPTIVE,
+	ACTIVE_APF_MODE_COUNT
+};
+
+/**
  * struct pmo_psoc_cfg - user configuration required for pmo
  * @ptrn_match_enable_all_vdev: true when pattern match is enable for all vdev
  * @apf_enable: true if psoc supports apf else false
@@ -325,6 +339,10 @@ enum pmo_auto_pwr_detect_failure_mode {
  * @wow_pulse_interval_low: The interval of low level in the pulse
  * @packet_filters_bitmap: Packet filter bitmap configuration
  * @wow_data_inactivity_timeout: power save wow data inactivity timeout
+ * @active_uc_apf_mode: Setting that determines how APF is applied in active
+ *	mode for uc packets
+ * @active_mc_bc_apf_mode: Setting that determines how APF is applied in
+ *	active mode for MC/BC packets
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
@@ -340,7 +358,9 @@ struct pmo_psoc_cfg {
 	bool ap_arpns_support;
 	bool d0_wow_supported;
 	bool ra_ratelimit_enable;
+#if FEATURE_WLAN_RA_FILTERING
 	uint16_t ra_ratelimit_interval;
+#endif
 	bool magic_ptrn_enable;
 	bool deauth_enable;
 	bool disassoc_enable;
@@ -381,6 +401,8 @@ struct pmo_psoc_cfg {
 #endif
 	bool enable_sap_suspend;
 	uint8_t wow_data_inactivity_timeout;
+	enum active_apf_mode active_uc_apf_mode;
+	enum active_apf_mode active_mc_bc_apf_mode;
 };
 
 /**

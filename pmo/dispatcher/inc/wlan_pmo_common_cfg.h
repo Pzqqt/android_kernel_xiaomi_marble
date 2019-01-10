@@ -389,6 +389,25 @@
 		50, \
 		CFG_VALUE_OR_DEFAULT, \
 		"Data activity timeout in wow mode")
+/*
+ * <ini>
+ * gRArateLimitInterval - RA rate limit interval
+ * @Min: 60
+ * @Max: 3600
+ * @Default: 60
+ * This ini is used to set RA rate limit interval.
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_RA_RATE_LIMIT_INTERVAL CFG_INI_UINT( \
+	"gRArateLimitInterval", \
+	60, \
+	3600, \
+	60, \
+	CFG_VALUE_OR_DEFAULT, \
+	"RA rate limit interval")
 
 #define CFG_PMO_COMMON_ALL \
 	CFG(CFG_ENABLE_SAP_SUSPEND) \
@@ -406,6 +425,7 @@
 	CFG(CFG_PMO_WOW_ENABLE) \
 	CFG(CFG_PMO_ACTIVE_MODE) \
 	CFG(CFG_PMO_PWR_FAILURE) \
-	CFG(CFG_PMO_WOW_DATA_INACTIVITY_TIMEOUT)
+	CFG(CFG_PMO_WOW_DATA_INACTIVITY_TIMEOUT) \
+	CFG(CFG_RA_RATE_LIMIT_INTERVAL)
 
 #endif /* WLAN_PMO_COMMON_CFG_H__ */
