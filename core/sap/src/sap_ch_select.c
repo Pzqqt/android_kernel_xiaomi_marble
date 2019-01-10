@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1962,7 +1962,7 @@ static void sap_sort_chl_weight_ht80(tSapChSelSpectInfo *pSpectInfoParams)
 	for (j = 0; j < pSpectInfoParams->numSpectChans; j++) {
 		if ((pSpectInfo[j].chNum >= WLAN_REG_CH_NUM(CHAN_ENUM_1) &&
 		     pSpectInfo[j].chNum <= WLAN_REG_CH_NUM(CHAN_ENUM_14)) ||
-		    (CHANNEL_165 == pSpectInfo[j].chNum))
+		    (pSpectInfo[j].chNum >= CHANNEL_165))
 			pSpectInfo[j].weight = SAP_ACS_WEIGHT_MAX * 4;
 	}
 
@@ -2392,7 +2392,7 @@ static void sap_sort_chl_weight_ht40_5_g(tSapChSelSpectInfo *pSpectInfoParams)
 	/* avoid channel 165 by setting its weight to max */
 	pSpectInfo = pSpectInfoParams->pSpectCh;
 	for (j = 0; j < pSpectInfoParams->numSpectChans; j++) {
-		if (CHANNEL_165 == pSpectInfo[j].chNum) {
+		if (pSpectInfo[j].chNum >= CHANNEL_165) {
 			pSpectInfo[j].weight = SAP_ACS_WEIGHT_MAX * 2;
 			break;
 		}
