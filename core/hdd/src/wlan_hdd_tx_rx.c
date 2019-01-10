@@ -2386,6 +2386,7 @@ void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 	enum netif_action_type action, enum netif_reason_type reason)
 {
 	uint32_t temp_map;
+	uint8_t index;
 
 	if ((!adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) ||
 		 (!adapter->dev)) {
@@ -2553,20 +2554,18 @@ void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 	spin_lock_bh(&adapter->pause_map_lock);
 	if (adapter->pause_map & (1 << WLAN_PEER_UNAUTHORISED))
 		wlan_hdd_process_peer_unauthorised_pause(adapter);
+
+	index = adapter->history_index++;
+	if (adapter->history_index == WLAN_HDD_MAX_HISTORY_ENTRY)
+		adapter->history_index = 0;
 	spin_unlock_bh(&adapter->pause_map_lock);
 
 	wlan_hdd_update_queue_oper_stats(adapter, action, reason);
 
-	adapter->queue_oper_history[adapter->history_index].time =
-							qdf_system_ticks();
-	adapter->queue_oper_history[adapter->history_index].netif_action =
-									action;
-	adapter->queue_oper_history[adapter->history_index].netif_reason =
-									reason;
-	adapter->queue_oper_history[adapter->history_index].pause_map =
-							adapter->pause_map;
-	if (++adapter->history_index == WLAN_HDD_MAX_HISTORY_ENTRY)
-		adapter->history_index = 0;
+	adapter->queue_oper_history[index].time = qdf_system_ticks();
+	adapter->queue_oper_history[index].netif_action = action;
+	adapter->queue_oper_history[index].netif_reason = reason;
+	adapter->queue_oper_history[index].pause_map = adapter->pause_map;
 }
 
 #ifdef FEATURE_MONITOR_MODE_SUPPORT
