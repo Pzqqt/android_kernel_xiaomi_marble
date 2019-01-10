@@ -949,7 +949,7 @@ static int bolero_probe(struct platform_device *pdev)
 	struct bolero_priv *priv;
 	u32 num_macros = 0;
 	int ret;
-	struct clk *lpass_npa_rsc_island = NULL;
+	struct clk *lpass_core_hw_vote = NULL;
 
 	priv = devm_kzalloc(&pdev->dev, sizeof(struct bolero_priv),
 			    GFP_KERNEL);
@@ -998,16 +998,16 @@ static int bolero_probe(struct platform_device *pdev)
 		  bolero_add_child_devices);
 	schedule_work(&priv->bolero_add_child_devices_work);
 
-	/* Register LPASS NPA resource */
-	lpass_npa_rsc_island = devm_clk_get(&pdev->dev, "island_lpass_npa_rsc");
-	if (IS_ERR(lpass_npa_rsc_island)) {
-		ret = PTR_ERR(lpass_npa_rsc_island);
+	/* Register LPASS core hw vote */
+	lpass_core_hw_vote = devm_clk_get(&pdev->dev, "lpass_core_hw_vote");
+	if (IS_ERR(lpass_core_hw_vote)) {
+		ret = PTR_ERR(lpass_core_hw_vote);
 		dev_dbg(&pdev->dev, "%s: clk get %s failed %d\n",
-			__func__, "island_lpass_npa_rsc", ret);
-		lpass_npa_rsc_island = NULL;
+			__func__, "lpass_core_hw_vote", ret);
+		lpass_core_hw_vote = NULL;
 		ret = 0;
 	}
-	priv->lpass_npa_rsc_island = lpass_npa_rsc_island;
+	priv->lpass_core_hw_vote = lpass_core_hw_vote;
 
 	return 0;
 }
@@ -1030,14 +1030,14 @@ int bolero_runtime_resume(struct device *dev)
 	struct bolero_priv *priv = dev_get_drvdata(dev->parent);
 	int ret = 0;
 
-	if (priv->lpass_npa_rsc_island == NULL) {
-		dev_dbg(dev, "%s: Invalid lpass npa rsc node\n", __func__);
+	if (priv->lpass_core_hw_vote == NULL) {
+		dev_dbg(dev, "%s: Invalid lpass core hw node\n", __func__);
 		return 0;
 	}
 
-	ret = clk_prepare_enable(priv->lpass_npa_rsc_island);
+	ret = clk_prepare_enable(priv->lpass_core_hw_vote);
 	if (ret < 0)
-		dev_err(dev, "%s:lpass npa rsc island enable failed\n",
+		dev_err(dev, "%s:lpass core hw enable failed\n",
 			__func__);
 
 	pm_runtime_set_autosuspend_delay(priv->dev, BOLERO_AUTO_SUSPEND_DELAY);
@@ -1050,10 +1050,10 @@ int bolero_runtime_suspend(struct device *dev)
 	struct bolero_priv *priv = dev_get_drvdata(dev->parent);
 
 	mutex_lock(&priv->clk_lock);
-	if (priv->lpass_npa_rsc_island != NULL)
-		clk_disable_unprepare(priv->lpass_npa_rsc_island);
+	if (priv->lpass_core_hw_vote != NULL)
+		clk_disable_unprepare(priv->lpass_core_hw_vote);
 	else
-		dev_dbg(dev, "%s: Invalid lpass npa rsc node\n",
+		dev_dbg(dev, "%s: Invalid lpass core hw node\n",
 			__func__);
 	mutex_unlock(&priv->clk_lock);
 	return 0;

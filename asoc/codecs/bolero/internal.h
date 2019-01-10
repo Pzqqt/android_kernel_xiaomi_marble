@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2018-2019, The Linux Foundation. All rights reserved.
  */
 
 #ifndef _BOLERO_INTERNAL_H
@@ -57,7 +57,7 @@ struct bolero_priv {
 	u16 current_mclk_mux_macro[MAX_MACRO];
 	struct work_struct bolero_add_child_devices_work;
 	u32 version;
-	struct clk *lpass_npa_rsc_island;
+	struct clk *lpass_core_hw_vote;
 
 	/* Entry for version info */
 	struct snd_info_entry *entry;
