@@ -37,6 +37,14 @@ obj-m += asoc/codecs/bolero/
 obj-m += asoc/codecs/wcd937x/
 endif
 
+ifeq ($(TARGET_SUPPORT), $(filter $(TARGET_SUPPORT), sa8155))
+obj-m := ipc/
+obj-m += dsp/
+obj-m += asoc/
+obj-m += asoc/codecs/
+KBUILD_OPTIONS += CONFIG_SND_SOC_SA8155=m
+endif
+
 all:
 	$(shell rm -fr $(shell pwd)/soc/core.h)
 	$(shell ln -s $(KERNEL_SRC)/drivers/pinctrl/core.h $(shell pwd)/soc/core.h)
