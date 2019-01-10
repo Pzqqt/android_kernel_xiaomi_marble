@@ -3686,7 +3686,7 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 	((_mask) = 1 << (_rate_info))
 #endif
 
-#ifdef HELIUMPLUS
+#if defined(HELIUMPLUS) || defined(QCN7605_SUPPORT)
 static bool wma_is_valid_fw_stats_cmd(uint32_t value)
 {
 	if (value > (HTT_DBG_NUM_STATS + 1) ||
