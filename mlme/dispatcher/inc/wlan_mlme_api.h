@@ -763,6 +763,14 @@ QDF_STATUS mlme_update_tgt_he_caps_in_cfg(struct wlan_objmgr_psoc *psoc,
 #endif
 
 /**
+ * wlan_mlme_is_ap_prot_enabled() - check if sap protection is enabled
+ * @psoc: pointer to psoc object
+ *
+ * Return: is_ap_prot_enabled flag
+ */
+bool wlan_mlme_is_ap_prot_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
  * wlan_mlme_get_ap_protection_mode() - Get ap_protection_mode value
  * @psoc: pointer to psoc object
  * @value: pointer to the value which needs to be filled for the caller
