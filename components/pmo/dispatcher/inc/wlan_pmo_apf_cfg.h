@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -38,7 +38,63 @@
 					1, \
 					"Enable APF Support")
 
+/*
+ * <ini>
+ * gActiveUcBpfMode - Control UC active APF mode
+ * @Min: 0 (disabled)
+ * @Max: 2 (adaptive)
+ * @Default: 0 (disabled)
+ *
+ * This config item controls UC APF in active mode. There are 3 modes:
+ *	0) disabled - APF is disabled in active mode
+ *	1) enabled - APF is enabled for all packets in active mode
+ *	2) adaptive - APF is enabled for packets up to some throughput threshold
+ *
+ * Related: gActiveMcBcBpfMode
+ *
+ * Supported Feature: Active Mode APF
+ *
+ * Usage: Internal/External
+ * </ini>
+ */
+#define CFG_ACTIVE_UC_APF_MODE CFG_INI_UINT( \
+	"gActiveUcBpfMode", \
+	ACTIVE_APF_DISABLED, \
+	(ACTIVE_APF_MODE_COUNT - 1), \
+	ACTIVE_APF_DISABLED, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Control UC active APF mode")
+
+/*
+ * <ini>
+ * gActiveMcBcBpfMode - Control MC/BC active APF mode
+ * @Min: 0 (disabled)
+ * @Max: 1 (enabled)
+ * @Default: 0 (disabled)
+ *
+ * This config item controls MC/BC APF in active mode. There are 3 modes:
+ *	0) disabled - APF is disabled in active mode
+ *	1) enabled - APF is enabled for all packets in active mode
+ *	2) adaptive - APF is enabled for packets up to some throughput threshold
+ *
+ * Related: gActiveUcBpfMode
+ *
+ * Supported Feature: Active Mode APF
+ *
+ * Usage: Internal/External
+ * </ini>
+ */
+#define CFG_ACTIVE_MC_BC_APF_MODE CFG_INI_UINT( \
+	"gActiveUcBpfMode", \
+	ACTIVE_APF_DISABLED, \
+	ACTIVE_APF_ENABLED, \
+	ACTIVE_APF_DISABLED, \
+	CFG_VALUE_OR_DEFAULT, \
+	"Control MC/BC active APF mode")
+
 #define CFG_PMO_APF_ALL \
-	CFG(CFG_PMO_APF_ENABLE)
+	CFG(CFG_PMO_APF_ENABLE) \
+	CFG(CFG_ACTIVE_UC_APF_MODE) \
+	CFG(CFG_ACTIVE_MC_BC_APF_MODE)
 
 #endif /* WLAN_PMO_APF_CFG_H__ */

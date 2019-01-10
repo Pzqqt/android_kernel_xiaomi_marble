@@ -1000,6 +1000,26 @@ ucfg_pmo_set_wow_data_inactivity_timeout(struct wlan_objmgr_psoc *psoc,
  * Return: pmo packet filter feature enable/disable
  */
 bool ucfg_pmo_is_pkt_filter_enabled(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_get_active_uc_apf_mode() - to get the modes active APF
+ * for MC/BC packets
+ * @psoc: objmgr psoc handle
+ *
+ * Return: the modes active APF
+ */
+enum active_apf_mode
+ucfg_pmo_get_active_uc_apf_mode(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_pmo_get_active_mc_bc_apf_mode() - to get the modes active APF
+ * for uc packets
+ * @psoc: objmgr psoc handle
+ *
+ * Return: the modes active APF
+ */
+enum active_apf_mode
+ucfg_pmo_get_active_mc_bc_apf_mode(struct wlan_objmgr_psoc *psoc);
 #ifdef FEATURE_WLAN_APF
 /**
  * ucfg_pmo_is_apf_enabled() - to get apf configuration
@@ -1624,6 +1644,18 @@ ucfg_pmo_is_pkt_filter_enabled(struct wlan_objmgr_psoc *psoc)
 {
 	return false;
 }
+
+enum active_apf_mode
+ucfg_pmo_get_active_uc_apf_mode(struct wlan_objmgr_psoc *psoc);
+{
+	return 0;
+}
+
+enum active_apf_mode
+ucfg_pmo_get_active_mc_bc_apf_mode(struct wlan_objmgr_psoc *psoc)
+{
+	return 0;
+}
 #endif /* WLAN_POWER_MANAGEMENT_OFFLOAD */
 
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
@@ -1819,5 +1851,4 @@ ucfg_pmo_get_runtime_pm_delay(struct wlan_objmgr_psoc *psoc)
  */
 bool
 ucfg_pmo_get_enable_sap_suspend(struct wlan_objmgr_psoc *psoc);
-
 #endif /* end  of _WLAN_PMO_UCFG_API_H_ */

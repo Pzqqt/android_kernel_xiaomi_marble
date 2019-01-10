@@ -3317,12 +3317,13 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_handle->ssdp = ucfg_pmo_is_ssdp_enabled(wma_handle->psoc);
 	wma_handle->enable_mc_list =
 		ucfg_pmo_is_mc_addr_list_enabled(wma_handle->psoc);
-	wma_handle->active_uc_apf_mode = cds_cfg->active_uc_apf_mode;
-	wma_handle->active_mc_bc_apf_mode = cds_cfg->active_mc_bc_apf_mode;
+	wma_handle->active_uc_apf_mode =
+		ucfg_pmo_get_active_uc_apf_mode(wma_handle->psoc);
+	wma_handle->active_mc_bc_apf_mode =
+		ucfg_pmo_get_active_mc_bc_apf_mode(wma_handle->psoc);
 	wma_handle->link_stats_results = NULL;
 #ifdef FEATURE_WLAN_RA_FILTERING
 	wma_handle->IsRArateLimitEnabled = cds_cfg->is_ra_ratelimit_enabled;
-	wma_handle->RArateLimitInterval = cds_cfg->ra_ratelimit_interval;
 #endif /* FEATURE_WLAN_RA_FILTERING */
 #ifdef WLAN_FEATURE_LPSS
 	wma_handle->is_lpass_enabled = cds_cfg->is_lpass_enabled;

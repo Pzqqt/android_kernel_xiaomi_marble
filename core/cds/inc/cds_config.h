@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -43,20 +43,6 @@ enum cfg_sub_20_channel_width {
 };
 
 /**
- * enum active_apf_mode - the modes active APF can operate in
- * @ACTIVE_APF_DISABLED: APF is disabled in active mode
- * @ACTIVE_APF_ENABLED: APF is enabled for all packets
- * @ACTIVE_APF_ADAPTIVE: APF is enabled for packets up to some threshold
- * @ACTIVE_APF_MODE_COUNT: The number of active APF modes
- */
-enum active_apf_mode {
-	ACTIVE_APF_DISABLED = 0,
-	ACTIVE_APF_ENABLED,
-	ACTIVE_APF_ADAPTIVE,
-	ACTIVE_APF_MODE_COUNT
-};
-
-/**
  * struct cds_config_info - Place Holder for cds configuration
  * @max_station: Max station supported
  * @max_bssid: Max Bssid Supported
@@ -67,7 +53,6 @@ enum active_apf_mode {
  * @ap_disable_intrabss_fwd: pass intra-bss-fwd info to txrx module
  * @ap_maxoffload_peers: max offload peer
  * @ap_maxoffload_reorderbuffs: max offload reorder buffs
- * @ra_ratelimit_interval: RA rate limit value
  * @is_ra_ratelimit_enabled: Indicate RA rate limit enabled or not
  * @reorder_offload: is RX re-ordering offloaded to the fw
  * @dfs_pri_multiplier: dfs radar pri multiplier
@@ -81,10 +66,6 @@ enum active_apf_mode {
  * @tx_chain_mask_cck: Tx chain mask enabled or not
  * @sub_20_channel_width: Sub 20 MHz ch width, ini intersected with fw cap
  * @is_fw_timeout: Indicate whether crash host when fw timesout or not
- * @active_uc_apf_mode: Setting that determines how APF is applied in active
- *	mode for uc packets
- * @active_mc_bc_apf_mode: Setting that determines how APF is applied in
- *	active mode for MC/BC packets
  * @ito_repeat_count: Indicates ito repeated count
  * @force_target_assert_enabled: Indicate whether target assert enabled or not
  * @bandcapability: Configured band by user
@@ -101,7 +82,6 @@ struct cds_config_info {
 	uint8_t ap_maxoffload_peers;
 	uint8_t ap_maxoffload_reorderbuffs;
 #ifdef FEATURE_WLAN_RA_FILTERING
-	uint16_t ra_ratelimit_interval;
 	bool is_ra_ratelimit_enabled;
 #endif
 	uint8_t reorder_offload;
@@ -121,8 +101,6 @@ struct cds_config_info {
 	bool self_recovery_enabled;
 	bool fw_timeout_crash;
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
-	enum active_apf_mode active_uc_apf_mode;
-	enum active_apf_mode active_mc_bc_apf_mode;
 	uint8_t ito_repeat_count;
 	bool force_target_assert_enabled;
 	uint8_t bandcapability;

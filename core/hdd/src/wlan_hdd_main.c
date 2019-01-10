@@ -9812,8 +9812,6 @@ static inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
 	if (QDF_IS_STATUS_ERROR(status))
 		return;
 
-	cds_cfg->ra_ratelimit_interval =
-		hdd_ctx->config->RArateLimitInterval;
 	cds_cfg->is_ra_ratelimit_enabled = is_rate_limit_enabled;
 }
 #else
@@ -9897,8 +9895,6 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 		cfg_get(hdd_ctx->psoc, CFG_DP_MAX_MSDUS_PER_RXIND);
 	cds_cfg->self_recovery_enabled = self_recovery;
 	cds_cfg->fw_timeout_crash = fw_timeout_crash;
-	cds_cfg->active_uc_apf_mode = hdd_ctx->config->active_uc_apf_mode;
-	cds_cfg->active_mc_bc_apf_mode = hdd_ctx->config->active_mc_bc_apf_mode;
 
 	cds_cfg->ito_repeat_count = ito_repeat_count;
 
@@ -14223,8 +14219,6 @@ static inline void hdd_ra_populate_pmo_config(
 	if (QDF_IS_STATUS_ERROR(status))
 		return;
 
-	psoc_cfg->ra_ratelimit_interval =
-		hdd_ctx->config->RArateLimitInterval;
 	psoc_cfg->ra_ratelimit_enable =
 		is_rate_limit_enabled;
 }

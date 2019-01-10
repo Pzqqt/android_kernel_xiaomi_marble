@@ -679,13 +679,6 @@ enum hdd_dot11_mode {
 #define CFG_ENABLE_SNR_MONITORING_MAX               (1)
 #define CFG_ENABLE_SNR_MONITORING_DEFAULT           (0)
 
-#ifdef FEATURE_WLAN_RA_FILTERING
-#define CFG_RA_RATE_LIMIT_INTERVAL_NAME            "gRArateLimitInterval"
-#define CFG_RA_RATE_LIMIT_INTERVAL_MIN             (60)
-#define CFG_RA_RATE_LIMIT_INTERVAL_MAX             (3600)
-#define CFG_RA_RATE_LIMIT_INTERVAL_DEFAULT         (60) /*60 SEC */
-#endif
-
 #ifdef DHCP_SERVER_OFFLOAD
 #define CFG_DHCP_SERVER_IP_NAME     "gDHCPServerIP"
 #define CFG_DHCP_SERVER_IP_DEFAULT  ""
@@ -857,54 +850,6 @@ enum hdd_dot11_mode {
 #define CFG_ADAPT_DWELL_WIFI_THRESH_MIN        (0)
 #define CFG_ADAPT_DWELL_WIFI_THRESH_MAX        (100)
 #define CFG_ADAPT_DWELL_WIFI_THRESH_DEFAULT    (10)
-
-/*
- * <ini>
- * gActiveUcBpfMode - Control UC active APF mode
- * @Min: 0 (disabled)
- * @Max: 2 (adaptive)
- * @Default: 0 (disabled)
- *
- * This config item controls UC APF in active mode. There are 3 modes:
- *	0) disabled - APF is disabled in active mode
- *	1) enabled - APF is enabled for all packets in active mode
- *	2) adaptive - APF is enabled for packets up to some throughput threshold
- *
- * Related: gActiveMcBcBpfMode
- *
- * Supported Feature: Active Mode APF
- *
- * Usage: Internal/External
- * </ini>
- */
-#define CFG_ACTIVE_UC_APF_MODE_NAME    "gActiveUcBpfMode"
-#define CFG_ACTIVE_UC_APF_MODE_MIN     (ACTIVE_APF_DISABLED)
-#define CFG_ACTIVE_UC_APF_MODE_MAX     (ACTIVE_APF_MODE_COUNT - 1)
-#define CFG_ACTIVE_UC_APF_MODE_DEFAULT (ACTIVE_APF_DISABLED)
-
-/*
- * <ini>
- * gActiveMcBcBpfMode - Control MC/BC active APF mode
- * @Min: 0 (disabled)
- * @Max: 1 (enabled)
- * @Default: 0 (disabled)
- *
- * This config item controls MC/BC APF in active mode. There are 3 modes:
- *	0) disabled - APF is disabled in active mode
- *	1) enabled - APF is enabled for all packets in active mode
- *	2) adaptive - APF is enabled for packets up to some throughput threshold
- *
- * Related: gActiveUcBpfMode
- *
- * Supported Feature: Active Mode APF
- *
- * Usage: Internal/External
- * </ini>
- */
-#define CFG_ACTIVE_MC_BC_APF_MODE_NAME    "gActiveMcBcBpfMode"
-#define CFG_ACTIVE_MC_BC_APF_MODE_MIN     (ACTIVE_APF_DISABLED)
-#define CFG_ACTIVE_MC_BC_APF_MODE_MAX     (ACTIVE_APF_ENABLED)
-#define CFG_ACTIVE_MC_BC_APF_MODE_DEFAULT (ACTIVE_APF_DISABLED)
 
 #ifdef WLAN_FEATURE_11AX
 /* 11AX related INI configuration */
@@ -1205,9 +1150,6 @@ struct hdd_config {
 
 	uint32_t DelayedTriggerFrmInt;
 
-#ifdef FEATURE_WLAN_RA_FILTERING
-	uint16_t RArateLimitInterval;
-#endif
 #ifdef FEATURE_WLAN_SCAN_PNO
 	bool PnoOffload;
 #endif
@@ -1252,8 +1194,6 @@ struct hdd_config {
 	uint8_t adapt_dwell_wifi_act_threshold;
 	uint16_t sap_tx_leakage_threshold;
 	bool sap_internal_restart;
-	enum active_apf_mode active_uc_apf_mode;
-	enum active_apf_mode active_mc_bc_apf_mode;
 	uint8_t he_dynamic_frag_support;
 #ifdef WLAN_FEATURE_11AX
 	bool enable_ul_mimo;
