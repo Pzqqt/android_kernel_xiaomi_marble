@@ -4932,7 +4932,6 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 		wlan_hdd_netif_queue_control(adapter,
 				WLAN_STOP_ALL_NETIF_QUEUE,
 				WLAN_CONTROL_PATH);
-		hdd_napi_serialize(1);
 		hdd_set_connection_in_progress(true);
 		hdd_set_roaming_in_progress(true);
 		policy_mgr_restart_opportunistic_timer(hdd_ctx->psoc, true);
