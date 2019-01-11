@@ -421,10 +421,6 @@ struct csr_config {
 	struct csr_sta_roam_policy_params sta_roam_policy;
 	bool enable_bcast_probe_rsp;
 	bool is_fils_enabled;
-#ifdef WLAN_FEATURE_11AX
-	bool enable_ul_ofdma;
-	bool enable_ul_mimo;
-#endif
 	bool is_force_1x1;
 	uint8_t oce_feature_bitmap;
 	uint32_t offload_11k_enable_bitmask;

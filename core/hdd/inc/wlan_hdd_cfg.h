@@ -802,106 +802,6 @@ enum hdd_dot11_mode {
 #define CFG_ADAPT_DWELL_WIFI_THRESH_MAX        (100)
 #define CFG_ADAPT_DWELL_WIFI_THRESH_DEFAULT    (10)
 
-#ifdef WLAN_FEATURE_11AX
-/* 11AX related INI configuration */
-/*
- * <ini>
- * he_dynamic_frag_support - configure dynamic fragmentation
- * @Min: 0
- * @Max: 3
- * @Default: 1
- *
- * This ini is used to configure dynamic fragmentation.
- *
- * Related: NA
- *
- * Supported Feature: 11AX
- *
- * Usage: Internal/External
- *
- * </ini>
- */
-
-#define CFG_HE_DYNAMIC_FRAGMENTATION_NAME    "he_dynamic_frag_support"
-#define CFG_HE_DYNAMIC_FRAGMENTATION_MIN     (0)
-#define CFG_HE_DYNAMIC_FRAGMENTATION_MAX     (3)
-#define CFG_HE_DYNAMIC_FRAGMENTATION_DEFAULT (0)
-
-/*
- * <ini>
- * enable_ul_mimo- Enable UL MIMO.
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable or disable UL MIMO.
- *
- * Related: NA
- *
- * Supported Feature: 11AX
- *
- * Usage: External
- *
- * </ini>
- */
-
-#define CFG_ENABLE_UL_MIMO_NAME    "enable_ul_mimo"
-#define CFG_ENABLE_UL_MIMO_MIN     (0)
-#define CFG_ENABLE_UL_MIMO_MAX     (1)
-#define CFG_ENABLE_UL_MIMO_DEFAULT (0)
-
-/*
- * <ini>
- * enable_ul_ofdma- Enable UL OFDMA.
- * @Min: 0
- * @Max: 1
- * @Default: 0
- *
- * This ini is used to enable or disable UL OFDMA.
- *
- * Related: NA
- *
- * Supported Feature: 11AX
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_UL_OFDMA_NAME    "enable_ul_ofdma"
-#define CFG_ENABLE_UL_OFDMA_MIN     (0)
-#define CFG_ENABLE_UL_OFDMA_MAX     (1)
-#define CFG_ENABLE_UL_OFDMA_DEFAULT (0)
-
-/*
- * <ini>
- * he_sta_obsspd- 11AX HE OBSS PD bit field
- * @Min: 0
- * @Max: uin32_t max
- * @Default: 0x15b8c2ae
- *
- * 4 Byte value with each byte representing a signed value for following params:
- * Param                   Bit position    Default
- * OBSS_PD min (primary)   7:0             -82 (0xae)
- * OBSS_PD max (primary)   15:8            -62 (0xc2)
- * Secondary channel Ed    23:16           -72 (0xb8)
- * TX_PWR(ref)             31:24           21  (0x15)
- * This bit field value is directly applied to FW
- *
- * Related: NA
- *
- * Supported Feature: 11AX
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_HE_STA_OBSSPD_NAME    "he_sta_obsspd"
-#define CFG_HE_STA_OBSSPD_MIN     (0)
-#define CFG_HE_STA_OBSSPD_MAX     (0xffffffff)
-#define CFG_HE_STA_OBSSPD_DEFAULT (0x15b8c2ae)
-
-#endif /* WLAN_FEATURE_11AX */
-
 /*
  * <ini>
  * gScanBackoffMultiplier - For NLO/PNO, multiply fast scan period by this every
@@ -1145,12 +1045,6 @@ struct hdd_config {
 	uint8_t adapt_dwell_wifi_act_threshold;
 	uint16_t sap_tx_leakage_threshold;
 	bool sap_internal_restart;
-	uint8_t he_dynamic_frag_support;
-#ifdef WLAN_FEATURE_11AX
-	bool enable_ul_mimo;
-	bool enable_ul_ofdma;
-	uint32_t he_sta_obsspd;
-#endif
 	bool tx_orphan_enable;
 
 	uint8_t scan_backoff_multiplier;

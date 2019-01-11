@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -94,13 +94,6 @@ int hdd_update_he_cap_in_cfg(struct hdd_context *hdd_ctx)
 	ret = ucfg_mlme_cfg_set_he_ul_mumimo(hdd_ctx->psoc, val1);
 
 	return ret;
-}
-
-void hdd_he_set_sme_config(tSmeConfigParams *sme_config,
-			   struct hdd_config *config)
-{
-	sme_config->csrConfig.enable_ul_ofdma = config->enable_ul_ofdma;
-	sme_config->csrConfig.enable_ul_mimo = config->enable_ul_mimo;
 }
 
 /*

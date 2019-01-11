@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2019 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -105,16 +105,6 @@ void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
 int hdd_update_he_cap_in_cfg(struct hdd_context *hdd_ctx);
 
 /**
- * hdd_he_set_sme_config() - set HE related SME config param
- * @sme_config: pointer to SME config
- * @config: pointer to INI config
- *
- * Return: None
- */
-void hdd_he_set_sme_config(tSmeConfigParams *sme_config,
-			   struct hdd_config *config);
-
-/**
  * wlan_hdd_cfg80211_get_he_cap() - get HE Capabilities
  * @wiphy: Pointer to wiphy
  * @wdev: Pointer to wdev
@@ -149,11 +139,6 @@ static inline void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
 static inline int hdd_update_he_cap_in_cfg(struct hdd_context *hdd_ctx)
 {
 	return 0;
-}
-
-static inline void hdd_he_set_sme_config(tSmeConfigParams *sme_config,
-					 struct hdd_config *config)
-{
 }
 
 /* dummy definition */

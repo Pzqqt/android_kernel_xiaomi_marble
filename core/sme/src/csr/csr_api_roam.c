@@ -2292,34 +2292,6 @@ uint32_t csr_convert_phy_cb_state_to_ini_value(ePhyChanBondState phyCbState)
 					(_pmac)->he_cap_2g.bfee_sts_lt_80 :  \
 					(_pmac)->he_cap_5g.bfee_sts_lt_80
 
-/**
- * csr_update_he_config_param() - Update MAC context with HE config param
- * @mac_ctx: pointer to MAC context
- * @param: pointer to CSR config params
- *
- * Return: None
- */
-static void csr_update_he_config_param(struct mac_context *mac_ctx,
-				       tCsrConfigParam *param)
-{
-	mac_ctx->roam.configParam.enable_ul_ofdma = param->enable_ul_ofdma;
-	mac_ctx->roam.configParam.enable_ul_mimo = param->enable_ul_mimo;
-}
-
-/**
- * csr_get_he_config_param() - Get HE config param from MAC context
- * @param: pointer to CSR config params
- * @mac_ctx: pointer to MAC context
- *
- * Return: None
- */
-static void csr_get_he_config_param(tCsrConfigParam *param,
-				    struct mac_context *mac_ctx)
-{
-	param->enable_ul_ofdma = mac_ctx->roam.configParam.enable_ul_ofdma;
-	param->enable_ul_mimo = mac_ctx->roam.configParam.enable_ul_mimo;
-}
-
 
 /**
  * csr_join_req_copy_he_cap() - Copy HE cap into CSR Join Req
@@ -2375,16 +2347,6 @@ void csr_update_session_he_cap(struct mac_context *mac_ctx,
 
 #else
 #define CSR_REVISE_REQ_HE_CAP_PER_BAND(_req, _pmac, _channelid)   /* no op */
-
-static inline void csr_update_he_config_param(struct mac_context *mac_ctx,
-					      tCsrConfigParam *param)
-{
-}
-
-static inline void csr_get_he_config_param(tCsrConfigParam *param,
-					   struct mac_context *mac_ctx)
-{
-}
 
 static inline void csr_join_req_copy_he_cap(tSirSmeJoinReq *csr_join_req,
 			struct csr_roam_session *session)
@@ -2632,7 +2594,6 @@ QDF_STATUS csr_change_default_config_param(struct mac_context *mac,
 		mac->roam.configParam.oce_feature_bitmap =
 			pParam->oce_feature_bitmap;
 
-		csr_update_he_config_param(mac, pParam);
 		csr_set_11k_offload_config_param(&mac->roam.configParam,
 						 pParam);
 	}
@@ -2741,8 +2702,6 @@ QDF_STATUS csr_get_config_param(struct mac_context *mac, tCsrConfigParam *pParam
 		mac->roam.configParam.is_fils_enabled;
 	pParam->oce_feature_bitmap =
 		mac->roam.configParam.oce_feature_bitmap;
-
-	csr_get_he_config_param(pParam, mac);
 
 	csr_get_11k_offload_config_param(&mac->roam.configParam, pParam);
 

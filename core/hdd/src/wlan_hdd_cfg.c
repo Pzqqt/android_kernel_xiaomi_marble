@@ -277,35 +277,6 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_ADAPT_DWELL_WIFI_THRESH_MIN,
 		CFG_ADAPT_DWELL_WIFI_THRESH_MAX),
 
-#ifdef WLAN_FEATURE_11AX
-	REG_VARIABLE(CFG_ENABLE_UL_MIMO_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_ul_mimo,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_UL_MIMO_DEFAULT,
-		     CFG_ENABLE_UL_MIMO_MIN,
-		     CFG_ENABLE_UL_MIMO_MAX),
-
-	REG_VARIABLE(CFG_HE_DYNAMIC_FRAGMENTATION_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, he_dynamic_frag_support,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_HE_DYNAMIC_FRAGMENTATION_DEFAULT,
-		     CFG_HE_DYNAMIC_FRAGMENTATION_MIN,
-		     CFG_HE_DYNAMIC_FRAGMENTATION_MAX),
-
-	REG_VARIABLE(CFG_ENABLE_UL_OFDMA_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enable_ul_ofdma,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_UL_OFDMA_DEFAULT,
-		     CFG_ENABLE_UL_OFDMA_MIN,
-		     CFG_ENABLE_UL_OFDMA_MAX),
-
-	REG_VARIABLE(CFG_HE_STA_OBSSPD_NAME, WLAN_PARAM_HexInteger,
-		     struct hdd_config, he_sta_obsspd,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_HE_STA_OBSSPD_DEFAULT,
-		     CFG_HE_STA_OBSSPD_MIN,
-		     CFG_HE_STA_OBSSPD_MAX),
-#endif
 	REG_VARIABLE(CFG_SCAN_BACKOFF_MULTIPLIER_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, scan_backoff_multiplier,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1923,8 +1894,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.sta_roam_policy_params.skip_unsafe_channels = 0;
 
 	smeConfig->snr_monitor_enabled = hdd_ctx->config->fEnableSNRMonitoring;
-
-	hdd_he_set_sme_config(smeConfig, pConfig);
 
 	status = hdd_set_sme_cfgs_related_to_mlme(hdd_ctx, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status))
