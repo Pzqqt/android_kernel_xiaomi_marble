@@ -103,6 +103,8 @@ ifneq ($(CONFIG_MOBILE_ROUTER), y)
 CONFIG_QCOM_TDLS := y
 
 CONFIG_WLAN_SYSFS := y
+#Enable Beacon Reception Stats
+CONFIG_FEATURE_BECN_STATS := y
 endif
 
 CONFIG_QCACLD_FEATURE_GREEN_AP := y
@@ -725,5 +727,3 @@ ifeq ($(CONFIG_CMN_VDEV_MLME_SM), y)
 #Enable STATE MACHINE HISTORY
 CONFIG_SM_ENG_HIST := n
 endif
-#Enable Beacon Reception Stats
-CONFIG_FEATURE_BECN_STATS := y

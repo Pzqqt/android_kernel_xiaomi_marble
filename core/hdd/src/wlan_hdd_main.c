@@ -11895,6 +11895,16 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 	hdd_driver_memdump_init();
 	hdd_bus_bandwidth_init(hdd_ctx);
 
+#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
+		status = qdf_mc_timer_init(&hdd_ctx->skip_acs_scan_timer,
+					   QDF_TIMER_TYPE_SW,
+					   hdd_skip_acs_scan_timer_handler,
+					   hdd_ctx);
+		if (QDF_IS_STATUS_ERROR(status))
+			hdd_err("Failed to init ACS Skip timer");
+		qdf_spinlock_create(&hdd_ctx->acs_skip_lock);
+#endif
+
 	errno = hdd_wlan_start_modules(hdd_ctx, false);
 	if (errno) {
 		hdd_err("Failed to start modules; errno:%d", errno);
@@ -11936,17 +11946,6 @@ int hdd_wlan_startup(struct hdd_context *hdd_ctx)
 	}
 
 	wlan_hdd_update_11n_mode(hdd_ctx->config);
-
-#ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
-	status = qdf_mc_timer_init(&hdd_ctx->skip_acs_scan_timer,
-				   QDF_TIMER_TYPE_SW,
-				   hdd_skip_acs_scan_timer_handler,
-				   hdd_ctx);
-	if (QDF_IS_STATUS_ERROR(status))
-		hdd_err("Failed to init ACS Skip timer");
-
-	qdf_spinlock_create(&hdd_ctx->acs_skip_lock);
-#endif
 
 	hdd_lpass_notify_wlan_version(hdd_ctx);
 
