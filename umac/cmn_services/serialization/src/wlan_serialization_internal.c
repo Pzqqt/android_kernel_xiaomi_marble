@@ -256,6 +256,7 @@ wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
 	if (status != WLAN_SER_CMD_PENDING && status != WLAN_SER_CMD_ACTIVE) {
 		qdf_mem_zero(&cmd_list->cmd,
 			     sizeof(struct wlan_serialization_command));
+		cmd_list->cmd_in_use = 0;
 		wlan_serialization_insert_back(
 			&pdev_queue->cmd_pool_list,
 			&cmd_list->pdev_node);
