@@ -4646,6 +4646,7 @@ static QDF_STATUS ol_txrx_enqueue_rx_frames(
 
 	buf = rx_buf_list;
 	while (buf) {
+		QDF_NBUF_CB_RX_PEER_CACHED_FRM(buf) = 1;
 		next_buf = qdf_nbuf_queue_next(buf);
 		cache_buf = qdf_mem_malloc(sizeof(*cache_buf));
 		if (!cache_buf) {
