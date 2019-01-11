@@ -24,6 +24,7 @@
 #include "wlan_pmo_obj_mgmt_public_struct.h"
 #include "wlan_pmo_cfg.h"
 #include "cfg_ucfg_api.h"
+#include "wlan_fwol_ucfg_api.h"
 
 static struct wlan_pmo_ctx *gp_pmo_ctx;
 
@@ -152,6 +153,12 @@ static void wlan_pmo_runtime_pm_init_cfg(struct wlan_objmgr_psoc *psoc,
 static void wlan_pmo_ra_filtering_init_cfg(struct wlan_objmgr_psoc *psoc,
 					   struct pmo_psoc_cfg *psoc_cfg)
 {
+	bool ra_enable;
+
+	if (QDF_IS_STATUS_SUCCESS(ucfg_fwol_get_is_rate_limit_enabled(psoc,
+								   &ra_enable)))
+		psoc_cfg->ra_ratelimit_enable = ra_enable;
+
 	psoc_cfg->ra_ratelimit_interval =
 			cfg_get(psoc, CFG_RA_RATE_LIMIT_INTERVAL);
 }
