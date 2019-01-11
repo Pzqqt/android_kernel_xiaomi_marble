@@ -5800,10 +5800,19 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			wlan_hdd_netif_queue_control(adapter,
 						     WLAN_STOP_ALL_NETIF_QUEUE,
 						     WLAN_CONTROL_PATH);
+			if (test_bit(ACS_PENDING, &adapter->event_flags)) {
+				cds_flush_delayed_work(
+						&adapter->acs_pending_work);
+				clear_bit(ACS_PENDING, &adapter->event_flags);
+			}
+
 			if (test_bit(SOFTAP_BSS_STARTED,
-						&adapter->event_flags))
+						&adapter->event_flags)) {
 				hdd_sap_indicate_disconnect_for_sta(adapter);
-			clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
+				clear_bit(SOFTAP_BSS_STARTED,
+					  &adapter->event_flags);
+			}
+
 		} else {
 			wlan_hdd_netif_queue_control(adapter,
 					   WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
@@ -5869,7 +5878,12 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		hdd_nud_ignore_tracking(adapter, true);
 		hdd_nud_reset_tracking(adapter);
 		hdd_nud_flush_work(adapter);
-		hdd_set_disconnect_status(adapter, false);
+
+		if (adapter->device_mode != QDF_SAP_MODE &&
+		    adapter->device_mode != QDF_P2P_GO_MODE &&
+		    adapter->device_mode != QDF_FTM_MODE)
+			hdd_set_disconnect_status(adapter, false);
+
 		hdd_stop_tsf_sync(adapter);
 
 		hdd_softap_deinit_tx_rx(adapter);
